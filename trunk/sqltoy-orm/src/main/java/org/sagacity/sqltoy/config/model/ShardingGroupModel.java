@@ -7,7 +7,7 @@ import java.io.Serializable;
 import java.util.List;
 
 /**
- * @project sagacity-sqltoy4.0
+ * @project sagacity-sqltoy
  * @description 批量数据操作分组分库分表模型
  * @author zhongxuchen
  * @version v1.0,Date:2017年11月3日

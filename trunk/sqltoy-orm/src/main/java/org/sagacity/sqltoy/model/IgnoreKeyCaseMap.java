@@ -22,10 +22,9 @@ public class IgnoreKeyCaseMap<K, V> extends ConcurrentHashMap<K, V> {
 	private static final long serialVersionUID = 391326207592902507L;
 
 	public IgnoreKeyCaseMap() {
-
 	}
 
-	public IgnoreKeyCaseMap(Map map) {
+	public IgnoreKeyCaseMap(Map<? extends K, ? extends V> map) {
 		if (map != null && !map.isEmpty()) {
 			Iterator<?> iter = map.entrySet().iterator();
 			Map.Entry<K, V> entry;

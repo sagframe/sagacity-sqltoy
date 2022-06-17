@@ -10,7 +10,6 @@ import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.FileUtil;
 import org.sagacity.sqltoy.utils.IdUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -24,11 +23,12 @@ import org.slf4j.LoggerFactory;
  * @version v1.0,Date:2014年12月26日
  */
 public class SqlToyConstants {
+
 	/**
 	 * 定义日志
 	 */
 	protected final static Logger logger = LoggerFactory.getLogger(SqlToyConstants.class);
-	
+
 	/**
 	 * 符号对,用来提取字符串中对称字符的过滤,如:{ name(){} }，第一个{对称的符合}是最后一位
 	 */
@@ -45,11 +45,11 @@ public class SqlToyConstants {
 			put("{", "}");
 		}
 	};
-	
-	public static final String DEFAULT_NULL = "_SQLTOY_NULL_FLAG";
 
 	// 目前还不支持此功能的提醒
 	public static String UN_SUPPORT_MESSAGE = "This feature is currently not supported!";
+
+	public static final String DEFAULT_NULL = "_SQLTOY_NULL_FLAG";
 
 	public static String UN_MATCH_DIALECT_MESSAGE = "Failed to correctly match the corresponding database dialect!";
 
@@ -136,13 +136,13 @@ public class SqlToyConstants {
 	public static int FETCH_SIZE = -1;
 
 	/**
-	 * 字符串中内嵌参数的匹配模式(update 2021-10-13 支持中文)
+	 * 字符串中内嵌参数的匹配模式
 	 */
 	public final static Pattern paramPattern = Pattern
 			.compile("\\$\\{\\s*[0-9a-zA-Z\u4e00-\u9fa5]+((\\.|\\_)[0-9a-zA-Z\u4e00-\u9fa5]+)*(\\[\\d*(\\,)?\\d*\\])?\\s*\\}");
 
 	// update 2020-9-16 将\\W 替换为[^A-Za-z0-9_:] 增加排除: 适应::jsonb 这种模式场景
-	// update 2021-10-13 支持参数名称含中文场景(应对一些极为不规范的项目场景)
+	// update 2021-10-13 增加参数名称为中文场景(应对一些极为不规范的项目场景)
 	public final static Pattern SQL_NAMED_PATTERN = Pattern.compile("[^A-Za-z0-9_:\u4e00-\u9fa5]\\:\\s*[a-zA-Z\u4e00-\u9fa5][a-zA-Z0-9_\u4e00-\u9fa5]*(\\.[\\w\u4e00-\u9fa5]+)*\\s*");
 	public final static Pattern NOSQL_NAMED_PATTERN = Pattern
 			.compile("(?i)\\@(param|blank|value)?\\(\\s*\\:\\s*[a-zA-Z\u4e00-\u9fa5][a-zA-Z0-9_\u4e00-\u9fa5]*(\\.[\\w\u4e00-\u9fa5]+)*\\s*\\)");
@@ -233,22 +233,6 @@ public class SqlToyConstants {
 	}
 
 	/**
-	 * @todo mysql 是否原生支持saveOrUpdate
-	 * @return
-	 */
-	public static boolean mysqlSupportSaveOrUpdate() {
-		return Boolean.parseBoolean(getKeyValue("sqltoy.mysql.support.saveOrUpdate", "false"));
-	}
-
-	/**
-	 * @todo mysql 是否原生支持saveOrUpdate
-	 * @return
-	 */
-	public static boolean postgresqlSupportSaveOrUpdate() {
-		return Boolean.parseBoolean(getKeyValue("sqltoy.postgresql.support.saveOrUpdate", "false"));
-	}
-
-	/**
 	 * @todo 获取记录提取的警告阀值
 	 * @return
 	 */
@@ -276,33 +260,11 @@ public class SqlToyConstants {
 	}
 
 	/**
-	 * sybase iq 主键采用identity模式时是否需要在前后开启 SET TEMPORARY OPTION
-	 * IDENTITY_INSERT=tableName
-	 * 
-	 * @return
-	 */
-	public static boolean sybaseIQIdentityOpen() {
-		return Boolean.parseBoolean(getKeyValue("sqltoy.sybase.iq.identity.open", "false"));
-	}
-
-	/**
 	 * @todo oracle分页是否忽视排序导致错乱的问题
 	 * @return
 	 */
 	public static boolean oraclePageIgnoreOrder() {
 		return Boolean.parseBoolean(getKeyValue("sqltoy.oracle.page.ignore.order", "false"));
-	}
-
-	/**
-	 * @todo 取随机记录是否采用数据库自带的方言机制
-	 * @return
-	 */
-	public static boolean randomWithDialect(Integer dbType) {
-		// 目前是不支持的
-		if (dbType == DataSourceUtils.DBType.SYBASE_IQ) {
-			return false;
-		}
-		return Boolean.parseBoolean(getKeyValue("sqltoy.random.with.dialect", "true"));
 	}
 
 	/**
@@ -422,7 +384,7 @@ public class SqlToyConstants {
 	public static boolean openSqlSign() {
 		return Boolean.parseBoolean(getKeyValue("sqltoy.open.sqlsign", "true"));
 	}
-	
+
 	/**
 	 * @TODO 针对主键策略提前设置或计算雪花算法的worker_id,dataCenterId以及22位和26位主键对应的应用id
 	 * @param workerId

@@ -23,8 +23,8 @@ import org.sagacity.sqltoy.config.model.ShardingGroupModel;
 import org.sagacity.sqltoy.config.model.ShardingModel;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
-import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.IgnoreCaseLinkedMap;
+import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.plugins.id.IdGenerator;
 import org.sagacity.sqltoy.utils.BeanUtil;
@@ -34,7 +34,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * @project sagacity-sqltoy
- * @description 提取sharding表和DataSource
+ * @description 提取sharding对应的表和对应的DataSource
  * @author zhongxuchen
  * @version v1.0,Date:2014年12月7日
  * @modify Date:2016-9-7 {修复matchReplace方法,解决因表名大小写未匹配无法替换表名错误}
@@ -226,7 +226,7 @@ public class ShardingUtils {
 	}
 
 	/**
-	 * @todo 根据条件决定使用不同的数据库类型
+	 * @todo 根据条件决定获得对应的数据库
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param queryExecutor

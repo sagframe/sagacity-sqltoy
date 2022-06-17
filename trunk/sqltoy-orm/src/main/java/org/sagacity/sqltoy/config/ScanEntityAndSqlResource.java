@@ -47,7 +47,7 @@ public class ScanEntityAndSqlResource {
 	/**
 	 * @todo 从指定包package中获取所有的sqltoy实体对象(意义已经不大,entity类目前已经改为在使用时加载的解析模式)
 	 * @param pack
-	 * @param recursive
+	 * @param recursive 是否递归往下钻取
 	 * @param charset
 	 * @return
 	 */
@@ -58,7 +58,7 @@ public class ScanEntityAndSqlResource {
 		// 获取包的名字 并进行替换
 		String packageName = pack.trim();
 		// 剔除第一个字符为目录的符合,并统一packName为xxx.xxx 格式
-		if (packageName.charAt(0) == '/') {
+		if (packageName.length() > 0 && packageName.charAt(0) == '/') {
 			packageName = packageName.substring(1);
 		}
 		if (packageName.endsWith("/")) {
@@ -86,7 +86,7 @@ public class ScanEntityAndSqlResource {
 					addEntitiesInPackage(packageName, filePath, recursive, entities);
 				} else if ("jar".equals(protocol)) {
 					// 如果是jar包文件
-					logger.debug("jar类型的扫描,加载POJO实体对象");
+					logger.debug("jar类型的扫描,加载POJO实体bean");
 					// 定义一个JarFile
 					JarFile jar;
 					try {
@@ -132,7 +132,7 @@ public class ScanEntityAndSqlResource {
 
 	/**
 	 * @todo 以文件的形式来获取包下的所有Class(意义已经不大,entity类目前已经改为使用时加载解析模式)
-	 * @param packageName
+	 * @param packageName 类似com.xxx.xx 格式
 	 * @param packagePath
 	 * @param recursive
 	 * @param entities
@@ -224,7 +224,7 @@ public class ScanEntityAndSqlResource {
 					while (urls.hasMoreElements()) {
 						url = urls.nextElement();
 						if (url.getProtocol().equals(JAR)) {
-							if (realRes.charAt(0) == '/') {
+							if (realRes.length() > 0 && realRes.charAt(0) == '/') {
 								realRes = realRes.substring(1);
 							}
 							jar = ((JarURLConnection) url.openConnection()).getJarFile();
@@ -262,7 +262,7 @@ public class ScanEntityAndSqlResource {
 					if (null != urls) {
 						while (urls.hasMoreElements()) {
 							url = urls.nextElement();
-							if (realRes.charAt(0) == '/') {
+							if (realRes.length() > 0 && realRes.charAt(0) == '/') {
 								realRes = realRes.substring(1);
 							}
 
@@ -291,11 +291,10 @@ public class ScanEntityAndSqlResource {
 	 * @param startClasspath
 	 * @return
 	 * @throws Exception
-	 * @modify update 2017-10-28 从单URL变成URL枚举数组
 	 */
 	public static Enumeration<URL> getResourceUrls(String resource, boolean startClasspath) throws Exception {
 		Enumeration<URL> urls = null;
-		if (StringUtil.isBlank(resource)) {
+		if (null == resource) {
 			return urls;
 		}
 		if (!startClasspath) {
@@ -305,13 +304,13 @@ public class ScanEntityAndSqlResource {
 				v.add(file.toURI().toURL());
 				urls = v.elements();
 			} else {
-				if (resource.charAt(0) == '/') {
+				if (resource.length() > 0 && resource.charAt(0) == '/') {
 					resource = resource.substring(1);
 				}
 				urls = Thread.currentThread().getContextClassLoader().getResources(resource);
 			}
 		} else {
-			if (resource.charAt(0) == '/') {
+			if (resource.length() > 0 && resource.charAt(0) == '/') {
 				resource = resource.substring(1);
 			}
 			urls = Thread.currentThread().getContextClassLoader().getResources(resource);
@@ -329,7 +328,7 @@ public class ScanEntityAndSqlResource {
 			return;
 		}
 		String fileName = parentFile.getName();
-		// 路径，取路径下文件
+		// 路径，取路径下的文件
 		if (parentFile.isDirectory()) {
 			File[] files = parentFile.listFiles();
 			File file;
@@ -342,7 +341,7 @@ public class ScanEntityAndSqlResource {
 					getPathFiles(files[loop], fileList);
 				}
 			}
-		} // 文件
+		} // 文件，则判断是否以.sql.xml 结尾的文件
 		else if (fileName.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)) {
 			fileList.add(parentFile);
 		}

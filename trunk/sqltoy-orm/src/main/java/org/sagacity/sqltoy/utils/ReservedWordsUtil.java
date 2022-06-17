@@ -58,8 +58,9 @@ public class ReservedWordsUtil {
 		if (dbType == DBType.MYSQL || dbType == DBType.TIDB || dbType == DBType.MYSQL57 || dbType == DBType.TDENGINE) {
 			return sql.replaceAll("\\[", "`").replaceAll("\\]", "`");
 		}
-		if (dbType == DBType.ORACLE || dbType == DBType.POSTGRESQL || dbType == DBType.DB2 || dbType == DBType.DM
-				|| dbType == DBType.GAUSSDB || dbType == DBType.OCEANBASE || dbType == DBType.ORACLE11) {
+		if (dbType == DBType.ORACLE || dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15
+				|| dbType == DBType.DB2 || dbType == DBType.DM || dbType == DBType.GAUSSDB || dbType == DBType.OCEANBASE
+				|| dbType == DBType.ORACLE11) {
 			return sql.replaceAll("\\[", "\"").replaceAll("\\]", "\"");
 		}
 		if (dbType == null || dbType == DBType.SQLSERVER || dbType == DBType.SQLITE) {
@@ -94,9 +95,9 @@ public class ReservedWordsUtil {
 		if (dbType == DBType.MYSQL || dbType == DBType.TIDB || dbType == DBType.MYSQL57 || dbType == DBType.TDENGINE) {
 			return "`".concat(column).concat("`");
 		}
-		if (dbType == DBType.ORACLE || dbType == DBType.POSTGRESQL || dbType == DBType.KINGBASE || dbType == DBType.DB2
-				|| dbType == DBType.GAUSSDB || dbType == DBType.DM || dbType == DBType.OCEANBASE
-				|| dbType == DBType.ORACLE11) {
+		if (dbType == DBType.ORACLE || dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15
+				|| dbType == DBType.KINGBASE || dbType == DBType.DB2 || dbType == DBType.GAUSSDB || dbType == DBType.DM
+				|| dbType == DBType.OCEANBASE || dbType == DBType.ORACLE11) {
 			return "\"".concat(column).concat("\"");
 		}
 		return column;
@@ -135,9 +136,9 @@ public class ReservedWordsUtil {
 				keyWord = keyWord.substring(0, keyWord.length() - 1);
 				subSize = 1;
 			}
-			if (dbType == DBType.POSTGRESQL || dbType == DBType.ORACLE || dbType == DBType.DB2
-					|| dbType == DBType.KINGBASE || dbType == DBType.GAUSSDB || dbType == DBType.DM
-					|| dbType == DBType.OCEANBASE || dbType == DBType.ORACLE11) {
+			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.ORACLE
+					|| dbType == DBType.DB2 || dbType == DBType.KINGBASE || dbType == DBType.GAUSSDB
+					|| dbType == DBType.DM || dbType == DBType.OCEANBASE || dbType == DBType.ORACLE11) {
 				sqlBuff.append("\"").append(keyWord).append("\"");
 			} else if (dbType == DBType.SQLSERVER || dbType == DBType.SQLITE) {
 				sqlBuff.append("[").append(keyWord).append("]");
@@ -158,7 +159,7 @@ public class ReservedWordsUtil {
 	}
 
 	/**
-	 * @TODO 判断列是否是关键词
+	 * @TODO 判断列名称是否是关键词
 	 * @param column
 	 * @return
 	 */

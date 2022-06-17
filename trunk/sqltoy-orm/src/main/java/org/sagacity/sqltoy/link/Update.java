@@ -11,7 +11,6 @@ import java.util.List;
 import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyContext;
-import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 
 /**
  * @project sagacity-sqltoy
@@ -59,12 +58,6 @@ public class Update extends BaseLink {
 	 * 子表分别需要强制修改的属性
 	 */
 	private HashMap<Class, String[]> subTableForceUpdateProps;
-
-	/**
-	 * 针对个别属性强制统一赋值
-	 */
-	@Deprecated
-	private ReflectPropsHandler reflectPropsHandler;
 
 	/**
 	 * @param sqlToyContext
@@ -133,11 +126,6 @@ public class Update extends BaseLink {
 		return this;
 	}
 
-	public Update reflectHandler(ReflectPropsHandler reflectPropsHandler) {
-		this.reflectPropsHandler = reflectPropsHandler;
-		return this;
-	}
-
 	/**
 	 * @todo 设置强制修改的属性
 	 * @param forceUpdateProps
@@ -197,7 +185,7 @@ public class Update extends BaseLink {
 			forceUpdate = sqlToyContext.getEntityMeta(entity.getClass()).getRejectIdFieldArray();
 		}
 		int realBatchSize = (batchSize > 0) ? batchSize : sqlToyContext.getBatchSize();
-		return dialectFactory.updateAll(sqlToyContext, entities, realBatchSize, uniqueFields, forceUpdate,
-				reflectPropsHandler, getDataSource(null), autoCommit);
+		return dialectFactory.updateAll(sqlToyContext, entities, realBatchSize, uniqueFields, forceUpdate, null,
+				getDataSource(null), autoCommit);
 	}
 }

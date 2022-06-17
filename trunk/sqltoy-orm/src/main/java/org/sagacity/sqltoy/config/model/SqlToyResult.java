@@ -9,7 +9,7 @@ import java.io.Serializable;
  * @project sqltoy-orm
  * @description 通过sqlToy工具处理后查询条件以及sql语句的最终结果
  * @author zhongxuchen
- * @version v1.0,Date:2009-12-13 下午03:16:59
+ * @version v1.0,Date:2009-12-13
  */
 public class SqlToyResult implements Serializable {
 	/**
@@ -44,8 +44,7 @@ public class SqlToyResult implements Serializable {
 	}
 
 	/**
-	 * @param sql
-	 *            the sql to set
+	 * @param sql the sql to set
 	 */
 	public void setSql(String sql) {
 		this.sql = sql;
@@ -59,8 +58,7 @@ public class SqlToyResult implements Serializable {
 	}
 
 	/**
-	 * @param paramsValue
-	 *            the paramsValue to set
+	 * @param paramsValue the paramsValue to set
 	 */
 	public void setParamsValue(Object[] paramsValue) {
 		this.paramsValue = paramsValue;

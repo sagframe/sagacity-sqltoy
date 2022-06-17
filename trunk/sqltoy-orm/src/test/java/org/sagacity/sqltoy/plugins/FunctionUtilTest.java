@@ -14,11 +14,13 @@ public class FunctionUtilTest {
 												 * funPackage.concat("SubStr"), funPackage.concat("Trim"),
 												 * funPackage.concat("Instr"), funPackage.concat("Concat"),
 												 * funPackage.concat("ConcatWs"), funPackage.concat("Nvl"),
-												 * funPackage.concat("DateFormat"), funPackage.concat("Now"),
+												 * 
 												 * funPackage.concat("Length"), funPackage.concat("ToChar"),
 												 * funPackage.concat("If"),
 												 */
-			funPackage.concat("Instr"), funPackage.concat("Concat")
+			//funPackage.concat("DateFormat"), 
+			funPackage.concat("Instr")
+			//, funPackage.concat("Concat")
 			// funPackage.concat("GroupConcat")
 	};
 
@@ -35,6 +37,14 @@ public class FunctionUtilTest {
 		FunctionUtils.setFunctionConverts(Arrays.asList(functions));
 		String sql = "select concat('\\'', t.`ORGAN_ID`, '\\'') from sys_organ_info t";
 		String dialectSql = FunctionUtils.getDialectSql(sql, "oracle");
+		System.err.println(dialectSql);
+	}
+
+	@Test
+	public void testPosition() {
+		FunctionUtils.setFunctionConverts(Arrays.asList(functions));
+		String sql = "if(position(t.valBeginString in l.CONTENTS)>0,position(t.valEndString in substr(l.CONTENTS,position(t.valBeginString in l.CONTENTS)+length(t.valBeginString))),1) valEndIndex,";
+		String dialectSql = FunctionUtils.getDialectSql(sql, "mysql");
 		System.err.println(dialectSql);
 	}
 }

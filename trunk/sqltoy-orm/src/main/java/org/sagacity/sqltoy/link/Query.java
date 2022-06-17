@@ -12,10 +12,12 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
-import org.sagacity.sqltoy.executor.QueryExecutor;
+import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.model.LockMode;
-import org.sagacity.sqltoy.model.PaginationModel;
+import org.sagacity.sqltoy.model.Page;
+import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
+import org.sagacity.sqltoy.utils.BeanUtil;
 
 /**
  * @project sagacity-sqltoy
@@ -89,7 +91,6 @@ public class Query extends BaseLink {
 		super(sqlToyContext, dataSource);
 	}
 
-	@Deprecated
 	public Query fetchSize(int fetchSize) {
 		this.fetchSize = fetchSize;
 		return this;
@@ -106,6 +107,7 @@ public class Query extends BaseLink {
 		return this;
 	}
 
+	@Deprecated
 	public Query rowhandler(RowCallbackHandler handler) {
 		this.handler = handler;
 		return this;
@@ -169,18 +171,36 @@ public class Query extends BaseLink {
 
 	/**
 	 * @todo 获取单值
+	 * @param <T>
+	 * @param resultType
+	 * @return
+	 */
+	public <T> T getValue(final Class<T> resultType) {
+		Object result = getValue();
+		try {
+			return (T) BeanUtil.convertType(result, resultType.getTypeName());
+		} catch (Exception e) {
+			throw new DataAccessException("getValue方法获取单个值失败:" + e.getMessage(), e);
+		}
+	}
+
+	/**
+	 * @todo 获取单值
 	 * @return
 	 */
 	public Object getValue() {
-		QueryExecutor queryExecute = new QueryExecutor(sql, names, values);
+		QueryExecutor queryExecute = new QueryExecutor(sql).names(names).values(values);
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecute, SqlType.search, getDialect());
 		QueryResult result = dialectFactory.findByQuery(sqlToyContext, queryExecute, sqlToyConfig, null,
 				getDataSource(sqlToyConfig));
 		List rows = result.getRows();
-		if (rows != null && rows.size() > 0) {
+		if (rows == null || rows.isEmpty()) {
+			return null;
+		}
+		if (rows.size() == 1) {
 			return ((List) rows.get(0)).get(0);
 		}
-		return null;
+		throw new IllegalArgumentException("getValue查询出:" + rows.size() + " 条记录,不符合getValue 单条单值预期!");
 	}
 
 	/**
@@ -193,10 +213,13 @@ public class Query extends BaseLink {
 		QueryResult result = dialectFactory.findByQuery(sqlToyContext, queryExecute, sqlToyConfig, lockMode,
 				getDataSource(sqlToyConfig));
 		List rows = result.getRows();
-		if (rows != null && rows.size() > 0) {
+		if (rows == null || rows.isEmpty()) {
+			return null;
+		}
+		if (rows.size() == 1) {
 			return rows.get(0);
 		}
-		return null;
+		throw new IllegalArgumentException("getOne查询出:" + rows.size() + " 条记录,不符合getOne查询预期!");
 	}
 
 	/**
@@ -249,18 +272,18 @@ public class Query extends BaseLink {
 
 	/**
 	 * @TODO 进行分页查询
-	 * @param pageModel
+	 * @param page
 	 * @return
 	 */
-	public PaginationModel<?> findPage(final PaginationModel pageModel) {
+	public Page<?> findPage(final Page page) {
 		QueryExecutor queryExecute = build();
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecute, SqlType.search, getDialect());
-		if (pageModel.getSkipQueryCount()) {
-			return (PaginationModel<?>) dialectFactory.findSkipTotalCountPage(sqlToyContext, queryExecute, sqlToyConfig,
-					pageModel.getPageNo(), pageModel.getPageSize(), getDataSource(sqlToyConfig)).getPageResult();
+		if (page.getSkipQueryCount()) {
+			return (Page<?>) dialectFactory.findSkipTotalCountPage(sqlToyContext, queryExecute, sqlToyConfig,
+					page.getPageNo(), page.getPageSize(), getDataSource(sqlToyConfig)).getPageResult();
 		}
-		return (PaginationModel<?>) dialectFactory.findPage(sqlToyContext, queryExecute, sqlToyConfig,
-				pageModel.getPageNo(), pageModel.getPageSize(), getDataSource(sqlToyConfig)).getPageResult();
+		return (Page<?>) dialectFactory.findPage(sqlToyContext, queryExecute, sqlToyConfig, page.getPageNo(),
+				page.getPageSize(), getDataSource(sqlToyConfig)).getPageResult();
 	}
 
 	private QueryExecutor build() {

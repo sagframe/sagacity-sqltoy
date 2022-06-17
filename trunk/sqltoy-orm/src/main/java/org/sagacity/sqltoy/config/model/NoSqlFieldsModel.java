@@ -3,10 +3,10 @@ package org.sagacity.sqltoy.config.model;
 import java.io.Serializable;
 
 /**
- * NoSql 字段模型
- * 
+ * @project sagacity-sqltoy
+ * @description NoSql 字段模型
  * @author zhongxuchen
- *
+ * @version v1.0,Date:2018年1月3日
  */
 public class NoSqlFieldsModel implements Serializable {
 

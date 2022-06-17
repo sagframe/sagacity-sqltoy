@@ -4,7 +4,7 @@ import java.io.Serializable;
 
 import javax.sql.DataSource;
 
-import org.sagacity.sqltoy.model.PaginationModel;
+import org.sagacity.sqltoy.model.Page;
 
 /**
  * @project sagacity-sqltoy
@@ -28,7 +28,7 @@ public class ParallQueryExtend implements Serializable {
 	/**
 	 * 分页模型
 	 */
-	public PaginationModel pageModel;
+	public Page page;
 
 	/**
 	 * 返回结果类型

@@ -14,8 +14,8 @@ import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 public abstract class AbstractMacro {
 	/**
 	 * @todo 转换器处理逻辑接口方法定义
-	 * @param params
-	 * @param keyValues
+	 * @param params    宏里面的参数名称
+	 * @param keyValues 宏涉及的参数名称和对应的值
 	 * @return
 	 */
 	public abstract String execute(String[] params, IgnoreKeyCaseMap<String, Object> keyValues);

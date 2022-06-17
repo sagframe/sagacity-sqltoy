@@ -75,8 +75,8 @@ public class QueryResult<T> extends DataSetResult<T> implements Serializable {
 	 * @todo 获取分页结果模型
 	 * @return
 	 */
-	public PaginationModel getPageResult() {
-		PaginationModel result = new PaginationModel();
+	public Page getPageResult() {
+		Page result = new Page();
 		if (this.getPageNo() != null) {
 			result.setPageNo(this.getPageNo());
 		}

@@ -15,7 +15,7 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.dialect.DialectFactory;
-import org.sagacity.sqltoy.executor.QueryExecutor;
+import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
 import org.sagacity.sqltoy.translate.model.CacheCheckResult;
 import org.sagacity.sqltoy.translate.model.CheckerConfigModel;
@@ -95,11 +95,8 @@ public class TranslateFactory {
 			dataSourceName = sqlToyConfig.getDataSource();
 		}
 		DataSourceSelector dataSourceSelector = sqlToyContext.getDataSourceSelector();
-		DataSource dataSource = dataSourceSelector.getDataSource(sqlToyContext.getApplicationContext(), null,
-				dataSourceName, null, sqlToyContext.getDefaultDataSource());
-		if (null == dataSource) {
-			dataSource = sqlToyContext.obtainDataSource(dataSourceName);
-		}
+		DataSource dataSource = dataSourceSelector.getDataSource(sqlToyContext.getAppContext(), null, dataSourceName,
+				null, sqlToyContext.getDefaultDataSource());
 		return DialectFactory.getInstance()
 				.findByQuery(sqlToyContext,
 						new QueryExecutor(checkerConfig.getSql(), sqlToyConfig.getParamsName(),
@@ -111,8 +108,8 @@ public class TranslateFactory {
 	/**
 	 * @todo 执行基于service调用的检测
 	 * @param sqlToyContext
-	 * @param checkerConfig
-	 * @param preCheckTime
+	 * @param checkerConfig 缓存更新检测配置
+	 * @param preCheckTime  上次检测时间
 	 * @return
 	 * @throws Exception
 	 */
@@ -125,8 +122,8 @@ public class TranslateFactory {
 	/**
 	 * @todo 执行基于rest请求模式的缓存更新检测
 	 * @param sqlToyContext
-	 * @param checkerConfig
-	 * @param preCheckTime
+	 * @param checkerConfig 缓存更新检测配置
+	 * @param preCheckTime  上次检测时间
 	 * @return
 	 * @throws Exception
 	 */
@@ -302,11 +299,8 @@ public class TranslateFactory {
 			dataSourceName = sqlToyConfig.getDataSource();
 		}
 		DataSourceSelector dataSourceSelector = sqlToyContext.getDataSourceSelector();
-		DataSource dataSource = dataSourceSelector.getDataSource(sqlToyContext.getApplicationContext(), null,
+		DataSource dataSource = dataSourceSelector.getDataSource(sqlToyContext.getAppContext(), null,
 				dataSourceName, null, sqlToyContext.getDefaultDataSource());
-		if (null == dataSource) {
-			dataSource = sqlToyContext.obtainDataSource(dataSourceName);
-		}
 		return DialectFactory.getInstance().findByQuery(sqlToyContext, queryExecutor, sqlToyConfig, null, dataSource)
 				.getRows();
 	}

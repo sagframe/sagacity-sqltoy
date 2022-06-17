@@ -52,6 +52,7 @@ public class DataSourceUtils {
 
 		// 9.5+ 开始
 		public final static String POSTGRESQL = "postgresql";
+		public final static String POSTGRESQL15 = "postgresql15";
 		public final static String GREENPLUM = "greenplum";
 
 		// 华为gaussdb(源于postgresql)未验证
@@ -74,15 +75,13 @@ public class DataSourceUtils {
 
 		// tidb(语法遵循mysql)未验证
 		public final static String TIDB = "tidb";
-		public final static String IMPALA = "impala";
+
 		// 达梦数据库(dm8验证)
 		public final static String DM = "dm";
 
 		// 人大金仓数据库
 		public final static String KINGBASE = "kingbase";
-
-		// 以15.4为基准起始版(基本目前没有用户)
-		public final static String SYBASE_IQ = "sybase_iq";
+		public final static String IMPALA = "impala";
 		public final static String TDENGINE = "tdengine";
 
 		public final static String UNDEFINE = "UNDEFINE";
@@ -107,6 +106,7 @@ public class DataSourceUtils {
 
 		// 默认9.5+版本
 		public final static int POSTGRESQL = 50;
+		public final static int POSTGRESQL15 = 51;
 
 		// clickhouse
 		public final static int CLICKHOUSE = 60;
@@ -128,8 +128,6 @@ public class DataSourceUtils {
 		public final static int ES = 140;
 		public final static int TDENGINE = 150;
 		public final static int IMPALA = 160;
-		// 下面将逐步淘汰
-		public final static int SYBASE_IQ = 190;
 	}
 
 	public static HashMap<String, Integer> DBNameTypeMap = new HashMap<String, Integer>();
@@ -145,6 +143,7 @@ public class DataSourceUtils {
 		DBNameTypeMap.put(Dialect.INNOSQL, DBType.MYSQL);
 
 		DBNameTypeMap.put(Dialect.POSTGRESQL, DBType.POSTGRESQL);
+		DBNameTypeMap.put(Dialect.POSTGRESQL15, DBType.POSTGRESQL15);
 		DBNameTypeMap.put(Dialect.GREENPLUM, DBType.POSTGRESQL);
 		DBNameTypeMap.put(Dialect.GAUSSDB, DBType.GAUSSDB);
 
@@ -159,11 +158,9 @@ public class DataSourceUtils {
 		DBNameTypeMap.put(Dialect.KINGBASE, DBType.KINGBASE);
 		// 2020-6-7 启动增加对tidb的支持
 		DBNameTypeMap.put(Dialect.TIDB, DBType.TIDB);
-		DBNameTypeMap.put(Dialect.IMPALA, DBType.IMPALA);
 		DBNameTypeMap.put(Dialect.TDENGINE, DBType.TDENGINE);
+		DBNameTypeMap.put(Dialect.IMPALA, DBType.IMPALA);
 		DBNameTypeMap.put(Dialect.UNDEFINE, DBType.UNDEFINE);
-		// 纳入将不再支持范围
-		DBNameTypeMap.put(Dialect.SYBASE_IQ, DBType.SYBASE_IQ);
 	}
 
 	/**
@@ -184,6 +181,9 @@ public class DataSourceUtils {
 		}
 		case DBType.POSTGRESQL: {
 			return Dialect.POSTGRESQL;
+		}
+		case DBType.POSTGRESQL15: {
+			return Dialect.POSTGRESQL15;
 		}
 		case DBType.SQLSERVER: {
 			return Dialect.SQLSERVER;
@@ -218,14 +218,11 @@ public class DataSourceUtils {
 		case DBType.MONGO: {
 			return Dialect.MONGO;
 		}
-		case DBType.TDENGINE: {
-			return Dialect.TDENGINE;
-		}
-		case DBType.SYBASE_IQ: {
-			return Dialect.SYBASE_IQ;
-		}
 		case DBType.IMPALA: {
 			return Dialect.IMPALA;
+		}
+		case DBType.TDENGINE: {
+			return Dialect.TDENGINE;
 		}
 		default:
 			return Dialect.UNDEFINE;
@@ -240,8 +237,8 @@ public class DataSourceUtils {
 	public static String getDatabaseSqlSplitSign(Connection conn) {
 		try {
 			int dbType = getDBType(conn);
-			// sybase or sqlserver
-			if (dbType == DBType.SQLSERVER || dbType == DBType.SYBASE_IQ) {
+			// sqlserver
+			if (dbType == DBType.SQLSERVER) {
 				return " go ";
 			}
 		} catch (Exception e) {
@@ -307,9 +304,6 @@ public class DataSourceUtils {
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.TIDB) != -1) {
 				return Dialect.TIDB;
 			}
-			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.IMPALA) != -1) {
-				return Dialect.IMPALA;
-			}
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.TDENGINE) != -1) {
 				return Dialect.TDENGINE;
 			}
@@ -319,16 +313,12 @@ public class DataSourceUtils {
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.GREENPLUM) != -1) {
 				return Dialect.POSTGRESQL;
 			}
+			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.IMPALA) != -1) {
+				return Dialect.IMPALA;
+			}
 			// elasticsearch
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.ES) != -1) {
 				return Dialect.ES;
-			}
-			// sybase iq
-			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.SYBASE_IQ) != -1
-					|| StringUtil.indexOfIgnoreCase(dbDialect, "sybaseiq") != -1
-					|| (StringUtil.indexOfIgnoreCase(dbDialect, "sap") != -1
-							&& StringUtil.indexOfIgnoreCase(dbDialect, "iq") != -1)) {
-				return Dialect.SYBASE_IQ;
 			}
 		}
 		return Dialect.UNDEFINE;
@@ -336,6 +326,7 @@ public class DataSourceUtils {
 
 	/**
 	 * @todo 获取当前数据库的版本
+	 * @param conn
 	 * @return
 	 * @throws SQLException
 	 */
@@ -382,6 +373,9 @@ public class DataSourceUtils {
 			// 9.5以上为标准支持模式
 			else if (dbDialect.equals(Dialect.POSTGRESQL)) {
 				dbType = DBType.POSTGRESQL;
+				if (majorVersion >= 15) {
+					dbType = DBType.POSTGRESQL15;
+				}
 			} else if (dbDialect.equals(Dialect.GREENPLUM)) {
 				dbType = DBType.POSTGRESQL;
 			}
@@ -421,9 +415,6 @@ public class DataSourceUtils {
 				dbType = DBType.TDENGINE;
 			} else if (dbDialect.equals(Dialect.KINGBASE)) {
 				dbType = DBType.KINGBASE;
-			} // sybase IQ
-			else if (dbDialect.equals(Dialect.SYBASE_IQ)) {
-				dbType = DBType.SYBASE_IQ;
 			} else if (dbDialect.equals(Dialect.ES)) {
 				dbType = DBType.ES;
 			}
@@ -463,6 +454,7 @@ public class DataSourceUtils {
 			return "select 1 from dual";
 		}
 		case DBType.POSTGRESQL:
+		case DBType.POSTGRESQL15:
 		case DBType.GAUSSDB: {
 			return "select version()";
 		}
@@ -537,6 +529,7 @@ public class DataSourceUtils {
 
 	/**
 	 * @TDDO 获取数据库类型的名称
+	 * @param sqltoyContext
 	 * @param datasource
 	 * @return
 	 */
@@ -557,6 +550,7 @@ public class DataSourceUtils {
 			case DBType.ORACLE11:
 				return Dialect.ORACLE;
 			case DBType.POSTGRESQL:
+			case DBType.POSTGRESQL15:
 				return Dialect.POSTGRESQL;
 			case DBType.MYSQL:
 			case DBType.MYSQL57:
@@ -575,6 +569,8 @@ public class DataSourceUtils {
 				return Dialect.DM;
 			case DBType.KINGBASE:
 				return Dialect.KINGBASE;
+			case DBType.IMPALA:
+				return Dialect.IMPALA;
 			default:
 				return "";
 			}

@@ -10,11 +10,12 @@ import java.util.Set;
 
 /**
  * @project sagacity-sqltoy
- * @description 用于debug提供输出工具以及执行时间统计
+ * @description 用于debug提供输出工具以及执行时间统计,sqltoy本身不使用此类
  * @author zhongxuchen
  * @version v1.0,Date:2010-8-18
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
+@Deprecated
 public class DebugUtil {
 	/**
 	 * 用于计时存储map

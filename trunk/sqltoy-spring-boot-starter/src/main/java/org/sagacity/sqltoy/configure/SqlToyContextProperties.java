@@ -67,6 +67,9 @@ public class SqlToyContextProperties implements Serializable {
 	 */
 	private Integer batchSize;
 
+	/**
+	 * 默认查询数据库端提取记录量,一般无需设置
+	 */
 	private int fetchSize = -1;
 
 	/**
@@ -79,17 +82,17 @@ public class SqlToyContextProperties implements Serializable {
 	 */
 	private Integer printSqlTimeoutMillis;
 
+	/**
+	 * sql文件脚本变更检测间隔时长(秒)
+	 */
 	private Integer scriptCheckIntervalSeconds;
 
+	/**
+	 * 缓存更新、sql脚本更新 延迟多少秒开始检测
+	 */
 	private Integer delayCheckSeconds;
 
 	private String encoding;
-
-	/**
-	 * 分页页号超出总页时转第一页，否则返回空集合
-	 */
-	//update 2022-4-23 默认改为false
-	private boolean pageOverToFirst = false;
 
 	/**
 	 * 统一字段处理器
@@ -112,11 +115,6 @@ public class SqlToyContextProperties implements Serializable {
 	private String reservedWords;
 
 	/**
-	 * 自定义获取DataSource的策略类
-	 */
-	private String obtainDataSource;
-
-	/**
 	 * 缓存管理器
 	 */
 	private String translateCacheManager;
@@ -137,14 +135,14 @@ public class SqlToyContextProperties implements Serializable {
 	private String cacheType = "ehcache";
 
 	/**
-	 * 连接管理的实现扩展定义
-	 */
-	private String connectionFactory;
-
-	/**
 	 * 当发现有重复sqlId时是否抛出异常，终止程序执行
 	 */
 	private boolean breakWhenSqlRepeat = true;
+
+	/**
+	 * 连接管理的实现扩展定义
+	 */
+	private String connectionFactory;
 
 	/**
 	 * 安全私钥
@@ -157,20 +155,20 @@ public class SqlToyContextProperties implements Serializable {
 	private String securePublicKey;
 
 	/**
-	 * 字段加解密实现类名称
+	 * 字段安全加密处理器定义(开发者可以自行扩展，sqltoy默认提供了RSA的实现)
 	 */
 	private String fieldsSecureProvider;
 
 	/**
-	 * 字段值显示脱敏处理器定义，默认为sqltoy自带的DesensitizeDefaultProvider实现
+	 * 字段展示安全脱敏处理器(sqltoy默认提供了实现，此处提供不满足的情况下的自行扩展)
 	 */
 	private String desensitizeProvider;
 
 	/**
-	 * add 2022-4-26 自定义filter处理器
+	 * add 2022-4-26 自定义filter处理器(预留备用)
 	 */
 	private String customFilterHandler;
-	
+
 	/**
 	 * @return the sqlResourcesDir
 	 */
@@ -364,14 +362,6 @@ public class SqlToyContextProperties implements Serializable {
 		this.reservedWords = reservedWords;
 	}
 
-	public String getObtainDataSource() {
-		return obtainDataSource;
-	}
-
-	public void setObtainDataSource(String obtainDataSource) {
-		this.obtainDataSource = obtainDataSource;
-	}
-
 	/**
 	 * @return the translateCacheManager
 	 */
@@ -414,14 +404,6 @@ public class SqlToyContextProperties implements Serializable {
 		this.cacheType = cacheType;
 	}
 
-	public boolean isPageOverToFirst() {
-		return pageOverToFirst;
-	}
-
-	public void setPageOverToFirst(boolean pageOverToFirst) {
-		this.pageOverToFirst = pageOverToFirst;
-	}
-
 	/**
 	 * @return the dataSourceSelector
 	 */
@@ -458,10 +440,16 @@ public class SqlToyContextProperties implements Serializable {
 		return connectionFactory;
 	}
 
+	/**
+	 * @return the breakWhenSqlRepeat
+	 */
 	public boolean isBreakWhenSqlRepeat() {
 		return breakWhenSqlRepeat;
 	}
 
+	/**
+	 * @param breakWhenSqlRepeat the breakWhenSqlRepeat to set
+	 */
 	public void setBreakWhenSqlRepeat(boolean breakWhenSqlRepeat) {
 		this.breakWhenSqlRepeat = breakWhenSqlRepeat;
 	}

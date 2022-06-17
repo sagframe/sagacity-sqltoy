@@ -15,16 +15,15 @@ import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
-import org.sagacity.sqltoy.executor.QueryExecutor;
+import org.sagacity.sqltoy.integration.AppContext;
+import org.sagacity.sqltoy.integration.ConnectionFactory;
+import org.sagacity.sqltoy.integration.impl.SpringConnectionFactory;
+import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.plugins.FilterHandler;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.plugins.TypeHandler;
-import org.sagacity.sqltoy.plugins.connection.ConnectionFactory;
-import org.sagacity.sqltoy.plugins.connection.impl.DefaultConnectionFactory;
 import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
-import org.sagacity.sqltoy.plugins.datasource.ObtainDataSource;
 import org.sagacity.sqltoy.plugins.datasource.impl.DefaultDataSourceSelector;
-import org.sagacity.sqltoy.plugins.datasource.impl.DefaultObtainDataSource;
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
 import org.sagacity.sqltoy.plugins.secure.DesensitizeProvider;
 import org.sagacity.sqltoy.plugins.secure.FieldsSecureProvider;
@@ -33,7 +32,6 @@ import org.sagacity.sqltoy.plugins.secure.impl.FieldsRSASecureProvider;
 import org.sagacity.sqltoy.plugins.sharding.ShardingStrategy;
 import org.sagacity.sqltoy.translate.TranslateManager;
 import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
-import org.sagacity.sqltoy.translate.cache.impl.TranslateCaffeineManager;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils.Dialect;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
@@ -41,9 +39,6 @@ import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeansException;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
 
 //------------------了解 sqltoy的关键优势: -------------------------------------------------------------------------------------------*/
 //1、最简最直观的sql编写方式(不仅仅是查询语句)，采用条件参数前置处理规整法，让sql语句部分跟客户端保持高度一致
@@ -60,8 +55,8 @@ import org.springframework.context.ApplicationContextAware;
 //12、提供了统一数据权限传参和数据越权校验
 //13、提供了取top、取random记录、树形表结构构造和递归查询支持、updateSaveFetch/updateFetch单次交互完成修改和查询等实用的功能
 //14、sqltoy的update、save、saveAll、load 等crud操作规避了jpa的缺陷,参见update(entity,String...forceUpdateProps)和updateFetch、updateSaveFetch
-//15、提供了极为人性化的条件处理：排它性条件、日期条件加减和提取月末月初处理等
-//16、提供了查询结果日期、数字格式化、安全脱敏处理，让复杂的事情变得简单，大幅简化sql或结果的二次处理工作
+//15、提供了极为人性化的条件处理:排它性条件、日期条件加减和提取月末月初处理等
+//16、提供了查询结果日期、数字格式化、安全脱敏处理，让复杂的事情变得简单，大幅简化sql和结果的二次处理工作
 //------------------------------------------------------------------------------------------------------------------------------------*/
 /**
  * @project sagacity-sqltoy
@@ -71,9 +66,11 @@ import org.springframework.context.ApplicationContextAware;
  * @modify {Date:2018-1-5,增加对redis缓存翻译的支持}
  * @modify {Date:2019-09-15,将跨数据库函数FunctionConverts统一提取到FunctionUtils中,实现不同数据库函数替换后的语句放入缓存,避免每次执行函数替换}
  * @modify {Date:2020-05-29,调整mongo的注入方式,剔除之前MongoDbFactory模式,直接使用MongoTemplate}
+ * @modify {Date:2022-04-23,pageOverToFirst默认值改为false}
  * @modify {Date:2022-06-11,支持多个缓存翻译定义文件}
+ * @modify {Date:2022-06-14,剔除pageOverToFirst 属性}
  */
-public class SqlToyContext implements ApplicationContextAware {
+public class SqlToyContext {
 	/**
 	 * 定义日志
 	 */
@@ -100,12 +97,6 @@ public class SqlToyContext implements ApplicationContextAware {
 	private int delayCheckSeconds = 30;
 
 	/**
-	 * 分页页号超出总页时转第一页，否则返回空集合
-	 */
-	//update 2022-4-23 默认改为false
-	private boolean pageOverToFirst = false;
-
-	/**
 	 * 默认查询数据库端提取记录量
 	 */
 	private int fetchSize = -1;
@@ -119,6 +110,11 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * 具体缓存实现(默认ehcache,可以根据自己喜好来自行扩展实现,sqltoy习惯将有争议的提供默认实现但用户可自行选择)
 	 */
 	private TranslateCacheManager translateCacheManager;
+
+	/**
+	 * 自定义参数过滤处理器(防范性预留)
+	 */
+	private FilterHandler customFilterHandler;
 
 	/**
 	 * @param unifyFieldsHandler the unifyFieldsHandler to set
@@ -154,12 +150,10 @@ public class SqlToyContext implements ApplicationContextAware {
 	 */
 	private String cacheType = "ehcache";
 
-	private String defaultDataSourceName;
-
 	/**
-	 * 获取数据源策略配置,供特殊场景下由开发者自定义获取数据(如多个数据源根据ThreadLocal中存放的信息来判断使用哪个)
+	 * 默认数据源名称，一般无需设置
 	 */
-	private ObtainDataSource obtainDataSource = new DefaultObtainDataSource();
+	private String defaultDataSourceName;
 
 	/**
 	 * @return the translateManager
@@ -193,6 +187,7 @@ public class SqlToyContext implements ApplicationContextAware {
 	 */
 	private String dialect;
 
+	/*----------------snowflake参数,如不设置框架自动以本机IP来获取----  */
 	/**
 	 * snowflake 集群节点id<31
 	 */
@@ -202,9 +197,10 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * 数据中心id<31
 	 */
 	private Integer dataCenterId;
+	/*----------------snowflake 参数---- ---------------------------- */
 
 	/**
-	 * 服务器id(3位数字)
+	 * 服务器id(3位数字)，用于22位和26位主键生成，不设置会自动根据本机IP生成
 	 */
 	private Integer serverId;
 
@@ -231,26 +227,27 @@ public class SqlToyContext implements ApplicationContextAware {
 	/**
 	 * 提供数据源获得connection的扩展(默认spring的实现)
 	 */
-	private ConnectionFactory connectionFactory = new DefaultConnectionFactory();
+	private ConnectionFactory connectionFactory;
 
 	/**
-	 * @param workerId the workerId to set
+	 * 定义TranslateCacheManager 对应实现类
 	 */
-	public void setWorkerId(Integer workerId) {
-		this.workerId = workerId;
-	}
+	private String translateCaffeineManagerClass = "org.sagacity.sqltoy.translate.cache.impl.TranslateCaffeineManager";
 
 	/**
-	 * @param dataCenterId the dataCenterId to set
+	 * 定义mongo查询的实现类,默认基于spring实现，其他框架修改成对应实现类
 	 */
-	public void setDataCenterId(Integer dataCenterId) {
-		this.dataCenterId = dataCenterId;
-	}
+	private String mongoQueryClass = "org.sagacity.sqltoy.integration.impl.SpringMongoQuery";
 
 	/**
-	 * spring 上下文容器
+	 * 分布式id产生器实现类
 	 */
-	private ApplicationContext applicationContext;
+	private String distributeIdGeneratorClass = "org.sagacity.sqltoy.integration.impl.SpringRedisIdGenerator";
+
+	/**
+	 * 获取bean的上下文容器
+	 */
+	private AppContext appContext;
 
 	/**
 	 * 对sqltoy-default.properties 值的修改(一般情况下不会涉及)
@@ -274,7 +271,7 @@ public class SqlToyContext implements ApplicationContextAware {
 	private String securePublicKey;
 
 	/**
-	 * 加解密算法实现
+	 * 字段加解密实现类，sqltoy提供了RSA的默认实现
 	 */
 	private FieldsSecureProvider fieldsSecureProvider;
 
@@ -283,17 +280,15 @@ public class SqlToyContext implements ApplicationContextAware {
 	 */
 	private boolean breakWhenSqlRepeat = true;
 
+	/**
+	 * 编码格式
+	 */
 	private String encoding = "UTF-8";
 
 	/**
 	 * 脱敏处理器
 	 */
 	private DesensitizeProvider desensitizeProvider;
-	
-	/**
-	 * 自定义参数过滤处理器
-	 */
-	private FilterHandler customFilterHandler;
 
 	/**
 	 * @todo 初始化
@@ -304,6 +299,10 @@ public class SqlToyContext implements ApplicationContextAware {
 		// 加载sqltoy的各类参数,如db2是否要增加with
 		// ur等,详见org/sagacity/sqltoy/sqltoy-default.properties
 		SqlToyConstants.loadProperties(dialectConfig);
+		// 默认使用基于spring的连接管理
+		if (connectionFactory == null) {
+			connectionFactory = new SpringConnectionFactory();
+		}
 		// 初始化默认dataSource
 		initDefaultDataSource();
 		// 设置workerId和dataCenterId,为使用snowflake主键ID产生算法服务
@@ -314,7 +313,9 @@ public class SqlToyContext implements ApplicationContextAware {
 
 		// 初始化翻译器,update 2021-1-23 增加caffeine缓存支持
 		if (translateCacheManager == null && "caffeine".equalsIgnoreCase(this.cacheType)) {
-			translateManager.initialize(this, new TranslateCaffeineManager(), delayCheckSeconds);
+			translateManager.initialize(this,
+					(TranslateCacheManager) Class.forName(translateCaffeineManagerClass).newInstance(),
+					delayCheckSeconds);
 		} else {
 			translateManager.initialize(this, translateCacheManager, delayCheckSeconds);
 		}
@@ -327,12 +328,10 @@ public class SqlToyContext implements ApplicationContextAware {
 		// 初始化sql执行统计的基本参数
 		SqlExecuteStat.setDebug(this.debug);
 		SqlExecuteStat.setPrintSqlTimeoutMillis(this.printSqlTimeoutMillis);
-
 		// 字段加解密实现类初始化
 		if (null != fieldsSecureProvider) {
 			fieldsSecureProvider.initialize(this.encoding, securePrivateKey, securePublicKey);
 		} else {
-			// 同时定义了私钥和公钥表示使用sqltoy自带的RSA算法
 			if (StringUtil.isNotBlank(securePrivateKey) && StringUtil.isNotBlank(securePublicKey)) {
 				if (fieldsSecureProvider == null) {
 					fieldsSecureProvider = new FieldsRSASecureProvider();
@@ -360,18 +359,14 @@ public class SqlToyContext implements ApplicationContextAware {
 		}
 		try {
 			Object beanDefine = null;
-			if (applicationContext.containsBean(beanName)) {
-				beanDefine = applicationContext.getBean(beanName);
+			if (appContext.containsBean(beanName)) {
+				beanDefine = appContext.getBean(beanName);
 			} else if (beanName.indexOf(".") > 0) {
-				beanDefine = applicationContext.getBean(Class.forName(beanName));
+				beanDefine = appContext.getBean(Class.forName(beanName));
 			} else {
 				return null;
 			}
 			return BeanUtil.invokeMethod(beanDefine, method, args);
-		} catch (BeansException be) {
-			be.printStackTrace();
-		} catch (IllegalStateException ie) {
-			ie.printStackTrace();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -386,10 +381,10 @@ public class SqlToyContext implements ApplicationContextAware {
 	public Object getBean(Object beanName) {
 		try {
 			if (beanName instanceof String) {
-				return applicationContext.getBean(beanName.toString());
+				return appContext.getBean(beanName.toString());
 			}
-			return applicationContext.getBean((Class) beanName);
-		} catch (BeansException e) {
+			return appContext.getBean((Class) beanName);
+		} catch (Exception e) {
 			e.printStackTrace();
 			logger.error("从springContext中获取Bean:{} 错误!{}", e.getMessage());
 		}
@@ -407,9 +402,9 @@ public class SqlToyContext implements ApplicationContextAware {
 		}
 		// 优先使用扩展来实现
 		if (dataSourceSelector != null) {
-			return dataSourceSelector.getDataSourceBean(applicationContext, dataSourceName);
-		} else if (applicationContext.containsBean(dataSourceName)) {
-			return (DataSource) applicationContext.getBean(dataSourceName);
+			return dataSourceSelector.getDataSourceBean(appContext, dataSourceName);
+		} else if (appContext.containsBean(dataSourceName)) {
+			return (DataSource) appContext.getBean(dataSourceName);
 		}
 		return null;
 	}
@@ -470,6 +465,27 @@ public class SqlToyContext implements ApplicationContextAware {
 	}
 
 	/**
+	 * @param workerId the workerId to set
+	 */
+	public void setWorkerId(Integer workerId) {
+		this.workerId = workerId;
+	}
+
+	/**
+	 * @param dataCenterId the dataCenterId to set
+	 */
+	public void setDataCenterId(Integer dataCenterId) {
+		this.dataCenterId = dataCenterId;
+	}
+
+	/**
+	 * @param serverId the serverId to set
+	 */
+	public void setServerId(Integer serverId) {
+		this.serverId = serverId;
+	}
+
+	/**
 	 * @return the batchSize
 	 */
 	public int getBatchSize() {
@@ -496,7 +512,7 @@ public class SqlToyContext implements ApplicationContextAware {
 		if (shardingStrategys.containsKey(strategyName)) {
 			return shardingStrategys.get(strategyName);
 		}
-		ShardingStrategy shardingStrategy = (ShardingStrategy) applicationContext.getBean(strategyName);
+		ShardingStrategy shardingStrategy = (ShardingStrategy) appContext.getBean(strategyName);
 		if (shardingStrategy != null) {
 			shardingStrategys.put(strategyName, shardingStrategy);
 		}
@@ -721,19 +737,12 @@ public class SqlToyContext implements ApplicationContextAware {
 		SqlToyConstants.setUncachedKeyResult(uncachedKeyResult);
 	}
 
-	public void setApplicationContext(ApplicationContext applicationContext) {
-		this.applicationContext = applicationContext;
+	public AppContext getAppContext() {
+		return appContext;
 	}
 
-	public ApplicationContext getApplicationContext() {
-		return applicationContext;
-	}
-
-	/**
-	 * @param serverId the serverId to set
-	 */
-	public void setServerId(Integer serverId) {
-		this.serverId = serverId;
+	public void setAppContext(AppContext appContext) {
+		this.appContext = appContext;
 	}
 
 	/**
@@ -747,23 +756,6 @@ public class SqlToyContext implements ApplicationContextAware {
 
 	public DataSource getDefaultDataSource() {
 		return defaultDataSource;
-	}
-
-	@Deprecated
-	public void setObtainDataSource(ObtainDataSource obtainDataSource) {
-		this.obtainDataSource = obtainDataSource;
-	}
-
-	/**
-	 * @TODO 提供给SqlToyDaoSupport等获取数据源
-	 * @return
-	 */
-	@Deprecated
-	public DataSource obtainDataSource(String sqlDataSource) {
-		if (obtainDataSource == null) {
-			return defaultDataSource;
-		}
-		return obtainDataSource.getDataSource(applicationContext, defaultDataSource, sqlDataSource);
 	}
 
 	/**
@@ -865,14 +857,6 @@ public class SqlToyContext implements ApplicationContextAware {
 		this.cacheType = cacheType;
 	}
 
-	public boolean isPageOverToFirst() {
-		return pageOverToFirst;
-	}
-
-	public void setPageOverToFirst(boolean pageOverToFirst) {
-		this.pageOverToFirst = pageOverToFirst;
-	}
-
 	public void destroy() {
 		try {
 			scriptLoader.destroy();
@@ -964,5 +948,25 @@ public class SqlToyContext implements ApplicationContextAware {
 
 	public void setCustomFilterHandler(FilterHandler customFilterHandler) {
 		this.customFilterHandler = customFilterHandler;
+	}
+
+	public void setTranslateCaffeineManagerClass(String translateCaffeineManagerClass) {
+		this.translateCaffeineManagerClass = translateCaffeineManagerClass;
+	}
+
+	public String getDistributeIdGeneratorClass() {
+		return distributeIdGeneratorClass;
+	}
+
+	public void setDistributeIdGeneratorClass(String distributeIdGeneratorClass) {
+		this.distributeIdGeneratorClass = distributeIdGeneratorClass;
+	}
+
+	public String getMongoQueryClass() {
+		return mongoQueryClass;
+	}
+
+	public void setMongoQueryClass(String mongoQueryClass) {
+		this.mongoQueryClass = mongoQueryClass;
 	}
 }

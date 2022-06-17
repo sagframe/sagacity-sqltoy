@@ -102,7 +102,7 @@ public class StringUtil {
 		if (source == null) {
 			return null;
 		}
-		return source.replaceAll("\r|\t|\n", target);
+		return source.replaceAll("\t|\r|\n", target);
 	}
 
 	/**
@@ -424,14 +424,14 @@ public class StringUtil {
 	/**
 	 * @todo 通过正则表达式判断是否匹配
 	 * @param source
-	 * @param p
+	 * @param pattern
 	 * @return
 	 */
-	public static boolean matches(String source, Pattern p) {
+	public static boolean matches(String source, Pattern pattern) {
 		if (isBlank(source)) {
 			return false;
 		}
-		return p.matcher(source).find();
+		return pattern.matcher(source).find();
 	}
 
 	/**
@@ -448,19 +448,19 @@ public class StringUtil {
 		return matchIndex(source, Pattern.compile(regex), start);
 	}
 
-	public static int matchIndex(String source, Pattern p) {
-		Matcher m = p.matcher(source);
+	public static int matchIndex(String source, Pattern pattern) {
+		Matcher m = pattern.matcher(source);
 		if (m.find()) {
 			return m.start();
 		}
 		return -1;
 	}
 
-	public static int[] matchIndex(String source, Pattern p, int start) {
+	public static int[] matchIndex(String source, Pattern pattern, int start) {
 		if (source.length() <= start) {
 			return new int[] { -1, -1 };
 		}
-		Matcher m = p.matcher(source.substring(start));
+		Matcher m = pattern.matcher(source.substring(start));
 		if (m.find()) {
 			return new int[] { m.start() + start, m.end() + start };
 		}
@@ -471,11 +471,11 @@ public class StringUtil {
 		return matchLastIndex(source, Pattern.compile(regex));
 	}
 
-	public static int matchLastIndex(String source, Pattern p) {
+	public static int matchLastIndex(String source, Pattern pattern) {
 		if (source == null) {
 			return -1;
 		}
-		Matcher m = p.matcher(source);
+		Matcher m = pattern.matcher(source);
 		int matchIndex = -1;
 		while (m.find()) {
 			matchIndex = m.start();
@@ -496,16 +496,16 @@ public class StringUtil {
 	/**
 	 * @todo 获取匹配成功的个数
 	 * @param source
-	 * @param p
+	 * @param pattern
 	 * @return
 	 */
-	public static int matchCnt(String source, Pattern p) {
+	public static int matchCnt(String source, Pattern pattern) {
 		if (source == null) {
 			return 0;
 		}
-		Matcher m = p.matcher(source);
+		Matcher matcher = pattern.matcher(source);
 		int count = 0;
-		while (m.find()) {
+		while (matcher.find()) {
 			count++;
 		}
 		return count;

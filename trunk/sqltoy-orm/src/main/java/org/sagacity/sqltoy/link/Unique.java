@@ -8,7 +8,7 @@ import java.io.Serializable;
 import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyContext;
-import org.sagacity.sqltoy.executor.UniqueExecutor;
+import org.sagacity.sqltoy.model.UniqueExecutor;
 
 /**
  * @project sagacity-sqltoy

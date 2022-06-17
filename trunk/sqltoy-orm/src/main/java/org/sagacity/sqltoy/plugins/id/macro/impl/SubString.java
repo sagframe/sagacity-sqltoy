@@ -16,8 +16,9 @@ public class SubString extends AbstractMacro {
 
 	@Override
 	public String execute(String[] params, IgnoreKeyCaseMap<String, Object> keyValues) {
-		if (params == null || params.length < 3)
+		if (params == null || params.length < 3) {
 			return "";
+		}
 		String baseParam = params[0].trim();
 		String paramValue = null;
 		// ${paramName} 格式
@@ -30,15 +31,17 @@ public class SubString extends AbstractMacro {
 				paramValue = baseParam;
 			}
 		}
-		if (StringUtil.isBlank(paramValue))
+		if (StringUtil.isBlank(paramValue)) {
 			return "";
+		}
 
 		int strLength = paramValue.length();
 		int start = Integer.parseInt(params[1]);
 		int length = Integer.parseInt(params[2]);
 		// 开始位置大于整体长度
-		if (start >= strLength)
+		if (start >= strLength) {
 			return "";
+		}
 		// start 为负数,表示截取尾部长度
 		if (start < 0) {
 			start = strLength - length;

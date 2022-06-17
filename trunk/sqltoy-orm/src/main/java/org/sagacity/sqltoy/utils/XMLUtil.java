@@ -31,7 +31,6 @@ public class XMLUtil {
 	// xml 忽视验证的特性
 	private final static String NO_VALIDATOR_FEATURE = "http://apache.org/xml/features/nonvalidating/load-external-dtd";
 
-
 	private XMLUtil() {
 	}
 
@@ -80,7 +79,7 @@ public class XMLUtil {
 	 */
 	private static IgnoreKeyCaseMap<String, String> asMap(String... keyValues) {
 		IgnoreKeyCaseMap<String, String> result = new IgnoreKeyCaseMap<String, String>();
-		if (keyValues == null||keyValues.length==0) {
+		if (keyValues == null || keyValues.length == 0) {
 			return result;
 		}
 		for (int i = 0; i < keyValues.length - 1; i = i + 2) {
@@ -94,6 +93,7 @@ public class XMLUtil {
 	 * @param elt
 	 * @param entity
 	 * @param aliasProps 属性映射,长度必须是偶数,如:a对应到a1,{a,a1,b,b1}
+	 * @throws Exception
 	 */
 	public static void setAttributes(Element elt, Serializable entity, String... aliasProps) throws Exception {
 		if (elt == null) {

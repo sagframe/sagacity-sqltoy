@@ -15,13 +15,13 @@ import org.sagacity.sqltoy.config.model.NoSqlConfigModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.exception.DataAccessException;
-import org.sagacity.sqltoy.executor.QueryExecutor;
-import org.sagacity.sqltoy.model.PaginationModel;
+import org.sagacity.sqltoy.model.Page;
+import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.plugins.nosql.ElasticSearchPlugin;
 import org.sagacity.sqltoy.plugins.nosql.ElasticSqlPlugin;
 
 /**
- * @project sagacity-sqltoy4.1
+ * @project sagacity-sqltoy
  * @description 提供基于elasticSearch的查询服务(利用sqltoy组织查询的语句机制的优势提供查询相关功能,增删改暂时不提供)
  * @author zhongxuchen
  * @version v1.0,Date:2018年1月1日
@@ -108,10 +108,13 @@ public class Elastic extends BaseLink {
 	 */
 	public Object getOne() {
 		List<?> result = find();
-		if (result != null && !result.isEmpty()) {
+		if (result == null || result.isEmpty()) {
+			return null;
+		}
+		if (result.size() == 1) {
 			return result.get(0);
 		}
-		return null;
+		throw new IllegalArgumentException("getOne查询出:" + result.size() + " 条记录,不符合getOne查询预期!");
 	}
 
 	/**
@@ -162,14 +165,14 @@ public class Elastic extends BaseLink {
 	 * @param pageModel
 	 * @return
 	 */
-	public PaginationModel findPage(PaginationModel pageModel) {
+	public Page findPage(Page pageModel) {
 		QueryExecutor queryExecutor = build();
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql, SqlType.search, "");
 		NoSqlConfigModel noSqlConfig = sqlToyConfig.getNoSqlConfigModel();
 		if (noSqlConfig == null) {
 			throw new IllegalArgumentException(ERROR_MESSAGE);
 		}
-		PaginationModel pageResult = null;
+		Page pageResult = null;
 		try {
 			if (noSqlConfig.isSqlMode()) {
 				ElasticEndpoint esConfig = sqlToyContext.getElasticEndpoint(noSqlConfig.getEndpoint());
@@ -179,9 +182,6 @@ public class Elastic extends BaseLink {
 				pageResult = ElasticSqlPlugin.findPage(sqlToyContext, sqlToyConfig, pageModel, queryExecutor);
 			} else {
 				pageResult = ElasticSearchPlugin.findPage(sqlToyContext, sqlToyConfig, pageModel, queryExecutor);
-			}
-			if (pageResult.getRecordCount() == 0 && sqlToyContext.isPageOverToFirst()) {
-				pageResult.setPageNo(1L);
 			}
 			return pageResult;
 		} catch (Exception e) {

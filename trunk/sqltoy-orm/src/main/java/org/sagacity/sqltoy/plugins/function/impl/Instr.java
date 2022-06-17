@@ -53,7 +53,7 @@ public class Instr extends IFunction {
 			realArgs = args;
 		}
 		StringBuilder result = new StringBuilder();
-		if (dialect == DBType.SQLSERVER || dialect == DBType.SYBASE_IQ) {
+		if (dialect == DBType.SQLSERVER) {
 			if (funLow.equals("charindex")) {
 				return super.IGNORE;
 			}
@@ -77,7 +77,7 @@ public class Instr extends IFunction {
 			if (funLow.equals("instr")) {
 				return super.IGNORE;
 			}
-			// mysql也支持position函数 update 2021-11-11
+			// position mysql也支持 update 2021-11-11
 			if (dialect == DBType.MYSQL || dialect == DBType.MYSQL57) {
 				if (funLow.equals("position")) {
 					return super.IGNORE;
@@ -92,7 +92,7 @@ public class Instr extends IFunction {
 			}
 			return result.append(")").toString();
 		}
-		if (dialect == DBType.POSTGRESQL || dialect == DBType.GAUSSDB) {
+		if (dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL15 || dialect == DBType.GAUSSDB) {
 			if (funLow.equals("position")) {
 				return super.IGNORE;
 			}

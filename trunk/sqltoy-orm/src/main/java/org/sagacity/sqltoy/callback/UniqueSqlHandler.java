@@ -15,11 +15,11 @@ import org.sagacity.sqltoy.config.model.EntityMeta;
 @FunctionalInterface
 public interface UniqueSqlHandler {
 	/**
-	 * @TODO 获得unique top 记录sql
+	 * @TODO 获得unique性查询对应的 top 2 记录sql，如取到2条直接就判断为重复，单条则判断是否是自身，0条表示不重复
 	 * @param entityMeta
 	 * @param paramNames
 	 * @param tableName
-	 * @param topSize
+	 * @param topSize    一般设置为2
 	 * @return
 	 */
 	public String process(EntityMeta entityMeta, String[] paramNames, String tableName, int topSize);

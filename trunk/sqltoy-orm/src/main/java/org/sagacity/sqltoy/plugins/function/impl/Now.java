@@ -45,8 +45,8 @@ public class Now extends IFunction {
 	 */
 	@Override
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
-		if (dialect == DBType.MYSQL || dialect == DBType.POSTGRESQL || dialect == DBType.TIDB
-				|| dialect == DBType.GAUSSDB || dialect == DBType.MYSQL57) {
+		if (dialect == DBType.MYSQL || dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL15
+				|| dialect == DBType.TIDB || dialect == DBType.GAUSSDB || dialect == DBType.MYSQL57) {
 			return wrapArgs("now", args);
 		}
 		if (dialect == DBType.ORACLE || dialect == DBType.OCEANBASE || dialect == DBType.DM
@@ -55,12 +55,6 @@ public class Now extends IFunction {
 		}
 		if (dialect == DBType.SQLSERVER) {
 			return wrapArgs("getdate", args);
-		}
-		if (dialect == DBType.SYBASE_IQ) {
-			if (hasArgs) {
-				return wrapArgs(functionName, args);
-			}
-			return "getdate()";
 		}
 		return super.IGNORE;
 	}

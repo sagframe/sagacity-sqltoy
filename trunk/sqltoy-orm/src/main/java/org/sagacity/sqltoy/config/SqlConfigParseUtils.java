@@ -135,7 +135,7 @@ public class SqlConfigParseUtils {
 	private static Map<String, AbstractMacro> macros = new HashMap<String, AbstractMacro>();
 
 	static {
-		//默认跳过blank loopValue[i]==null或为"" 时的忽略当前i行的循环内容
+		// 默认跳过blank loopValue[i]==null或为"" 时的忽略当前i行的循环内容
 		macros.put("@loop", new SqlLoop(true));
 		// 全量循环
 		macros.put("@loop-full", new SqlLoop(false));
@@ -922,11 +922,15 @@ public class SqlConfigParseUtils {
 				// 以where拼接")" 开头字符串,剔除where
 				if (tailSql.trim().startsWith(")")) {
 					return preSql.substring(0, index + 1).concat(" ").concat(tailSql).concat(" ");
-				} // where 后面跟order by、group by、left join、right join、full join、having、union
+				} // where 后面跟order by、group by、left join、right join、full join、having、union、limit
 				else if (StringUtil.matches(tailSql.trim().toLowerCase(), WHERE_CLOSE_PATTERN)) {
+					// 删除掉where
 					return preSql.substring(0, index + 1).concat(" ").concat(tailSql).concat(" ");
-				} else {
-					//注意这里1=1 要保留，where #[被剔除内容] limit 10，就会出现where limit 
+				} // where 后面非关键词增加1=1
+				else {
+					// 注意这里1=1 要保留，where #[被剔除内容] limit 10，就会出现where limit
+					// 同时避免where #[id=:id] #[status=:status] 这种缺少连接词错误写法
+					// 正确写法:where #[id=:id] #[and status=:status] ,注意连接词 and 不能缺少
 					return preSql.concat(" 1=1 ").concat(tailSql).concat(" ");
 				}
 			}

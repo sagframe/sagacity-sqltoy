@@ -41,9 +41,9 @@ import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.config.model.UnpivotModel;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.exception.DataAccessException;
-import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.IgnoreCaseSet;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
+import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.inner.DataSetResult;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
@@ -1053,6 +1053,7 @@ public class ResultUtils {
 		if (items == null || items.isEmpty()) {
 			return false;
 		}
+		//是否会导致列名称和数据完全不对应,导致无法映射到pojo或map
 		boolean changedCols = false;
 		List<SecureMask> secureMasks = sqlToyConfig.getSecureMasks();
 		List<FormatModel> formatModels = sqlToyConfig.getFormatModels();

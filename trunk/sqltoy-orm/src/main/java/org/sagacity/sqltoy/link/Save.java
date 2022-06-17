@@ -10,7 +10,6 @@ import java.util.List;
 import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyContext;
-import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.model.SaveMode;
 
 /**
@@ -42,25 +41,19 @@ public class Save extends BaseLink {
 	private String[] forceUpdateProps;
 
 	/**
-	 * 针对个别属性强制统一赋值
+	 * 是否深度修改(update 2022-3-23 支持更新全部字段)
 	 */
-	@Deprecated
-	private ReflectPropsHandler reflectPropsHandler;
+	private boolean deeply = false;
 
 	/**
 	 * 批处理提交记录数量
 	 */
 	private int batchSize = 0;
 
-	/**
-	 * 是否深度修改
-	 */
-	private boolean deeply = false;
-
-	/**
-	 * 实现基于唯一性索引字段进行数据修改(非主键)
-	 */
-	// private String[] uniqueFields;
+	public Save deeply(boolean deeply) {
+		this.deeply = deeply;
+		return this;
+	}
 
 	/**
 	 * @param sqlToyContext
@@ -70,11 +63,6 @@ public class Save extends BaseLink {
 		super(sqlToyContext, dataSource);
 	}
 
-	public Save reflectHandler(ReflectPropsHandler reflectPropsHandler) {
-		this.reflectPropsHandler = reflectPropsHandler;
-		return this;
-	}
-
 	/**
 	 * @todo 设置强制修改的属性
 	 * @param forceUpdateProps
@@ -82,11 +70,6 @@ public class Save extends BaseLink {
 	 */
 	public Save forceUpdateProps(String... forceUpdateProps) {
 		this.forceUpdateProps = forceUpdateProps;
-		return this;
-	}
-
-	public Save deeply(boolean deeply) {
-		this.deeply = deeply;
 		return this;
 	}
 
@@ -126,14 +109,6 @@ public class Save extends BaseLink {
 		return this;
 	}
 
-	// 暂时不开放
-//	public Save uniqueFields(String... uniqueFields) {
-//		if (uniqueFields != null && uniqueFields.length > 0) {
-//			this.uniqueFields = uniqueFields;
-//		}
-//		return this;
-//	}
-
 	/**
 	 * @todo 保存单条记录
 	 * @param entity
@@ -170,17 +145,17 @@ public class Save extends BaseLink {
 		}
 		int realBatchSize = (batchSize > 0) ? batchSize : sqlToyContext.getBatchSize();
 		if (saveMode == SaveMode.IGNORE) {
-			return dialectFactory.saveAllIgnoreExist(sqlToyContext, entities, realBatchSize, reflectPropsHandler,
-					getDataSource(null), autoCommit);
+			return dialectFactory.saveAllIgnoreExist(sqlToyContext, entities, realBatchSize, null, getDataSource(null),
+					autoCommit);
 		}
 		if (saveMode == SaveMode.UPDATE) {
+			// 深度修改获取全部字段属性
 			if (deeply) {
 				forceUpdateProps = sqlToyContext.getEntityMeta(entities.get(0).getClass()).getRejectIdFieldArray();
 			}
-			return dialectFactory.saveOrUpdateAll(sqlToyContext, entities, realBatchSize, forceUpdateProps,
-					reflectPropsHandler, getDataSource(null), autoCommit);
+			return dialectFactory.saveOrUpdateAll(sqlToyContext, entities, realBatchSize, forceUpdateProps, null,
+					getDataSource(null), autoCommit);
 		}
-		return dialectFactory.saveAll(sqlToyContext, entities, realBatchSize, reflectPropsHandler, getDataSource(null),
-				autoCommit);
+		return dialectFactory.saveAll(sqlToyContext, entities, realBatchSize, null, getDataSource(null), autoCommit);
 	}
 }

@@ -2,15 +2,16 @@ package org.sagacity.sqltoy.model;
 
 /**
  * @project sagacity-sqltoy
- * @description 定义pojo注解上的安全处理类型，这里混合了加密和脱敏处理的几种类型
+ * @description 字段安全处理(加密和脱敏)类型定义
  * @author zhongxuchen
+ * @version v1.0,Date:2021-09-25
  */
 public enum SecureType {
 	// 加密
 	ENCRYPT("encrypt"),
 	// 电话
 	TEL("tel"),
-	// 修改处理
+	// 姓名
 	NAME("name"),
 	// 邮箱
 	EMAIL("email"),

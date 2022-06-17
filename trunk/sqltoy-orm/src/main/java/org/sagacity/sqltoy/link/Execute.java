@@ -11,8 +11,8 @@ import javax.sql.DataSource;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
-import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
+import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**

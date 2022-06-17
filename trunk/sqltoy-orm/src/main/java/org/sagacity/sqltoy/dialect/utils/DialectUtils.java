@@ -25,6 +25,9 @@ import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.CallableStatementResultHandler;
 import org.sagacity.sqltoy.callback.DecryptHandler;
+import org.sagacity.sqltoy.callback.GenerateSavePKStrategy;
+import org.sagacity.sqltoy.callback.GenerateSqlHandler;
+import org.sagacity.sqltoy.callback.LockSqlHandler;
 import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
 import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
@@ -41,15 +44,12 @@ import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
 import org.sagacity.sqltoy.config.model.TableCascadeModel;
-import org.sagacity.sqltoy.dialect.handler.GenerateSavePKStrategy;
-import org.sagacity.sqltoy.dialect.handler.GenerateSqlHandler;
-import org.sagacity.sqltoy.dialect.handler.LockSqlHandler;
 import org.sagacity.sqltoy.dialect.model.SavePKStrategy;
 import org.sagacity.sqltoy.exception.DataAccessException;
-import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.IgnoreCaseSet;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.model.LockMode;
+import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.SecureType;
 import org.sagacity.sqltoy.model.StoreResult;
@@ -153,7 +153,7 @@ public class DialectUtils {
 		String[] realParamNamed = null;
 		Object[] realParamValue = null;
 		int paramLength;
-		// 针对sqlserver2008以及2005版本分页只需扩展一个参数
+		// 分页2个参数，top一个参数
 		int extendSize = (endIndex == null) ? 1 : 2;
 		if (sqlToyConfig.isNamedParam()) {
 			paramLength = paramsNamed.length;
@@ -905,7 +905,8 @@ public class DialectUtils {
 			}
 		}
 		FieldMeta fieldMeta;
-		boolean convertBlob = (dbType == DBType.POSTGRESQL || dbType == DBType.GAUSSDB || dbType == DBType.KINGBASE);
+		boolean convertBlob = (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB
+				|| dbType == DBType.KINGBASE);
 		boolean isMSsql = (dbType == DBType.SQLSERVER);
 		int meter = 0;
 		for (int i = 0, n = entityMeta.getRejectIdFieldArray().length; i < n; i++) {
@@ -1690,7 +1691,7 @@ public class DialectUtils {
 				if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.TIDB) {
 					mysqlSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, reflectPropsHandler,
 							forceUpdateProps, conn, dbType);
-				} else if (dbType == DBType.POSTGRESQL || dbType == DBType.GAUSSDB) {
+				} else if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB) {
 					postgreSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, reflectPropsHandler,
 							forceUpdateProps, conn, dbType);
 				} else if (dbType == DBType.OCEANBASE) {

@@ -30,7 +30,7 @@ import org.sagacity.sqltoy.utils.FileUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
- * @project sagacity-sqltoy4.0
+ * @project sagacity-sqltoy
  * @description es配置
  * @author zhongxuchen
  * @version v1.0,Date:2018年2月5日
@@ -395,7 +395,7 @@ public class ElasticEndpoint implements Serializable {
 				final CredentialsProvider credsProvider = new BasicCredentialsProvider();
 				final boolean hasCrede = (StringUtil.isNotBlank(this.getUsername())
 						&& StringUtil.isNotBlank(getPassword())) ? true : false;
-				//是否ssl证书模式
+				// 是否ssl证书模式
 				final boolean hasSsl = StringUtil.isNotBlank(this.keyStore);
 				// 凭据提供器
 				if (hasCrede) {

@@ -47,7 +47,7 @@ public class TranslateExtend implements Serializable {
 	public String keyColumn;
 
 	/**
-	 * 别名(预留使用)
+	 * 字段别名
 	 */
 	public String alias;
 

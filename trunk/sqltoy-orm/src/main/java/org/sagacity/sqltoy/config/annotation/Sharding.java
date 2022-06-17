@@ -9,7 +9,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * @project sagacity-sqltoy4.0
+ * @project sagacity-sqltoy
  * @description 数据库分库分表注解
  * @author zhongxuchen
  * @version v1.0,Date:2017年11月5日

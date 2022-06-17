@@ -24,8 +24,7 @@ public class CacheMatchFilter implements Serializable {
 	private CacheMatchExtend cacheFilterArgs = new CacheMatchExtend();
 
 	public static CacheMatchFilter create() {
-		CacheMatchFilter filter = new CacheMatchFilter();
-		return filter;
+		return new CacheMatchFilter();
 	}
 
 	/**
@@ -85,11 +84,11 @@ public class CacheMatchFilter implements Serializable {
 	}
 
 	/**
-	 * @TODO 优先匹配完全相等的，并放于结果的第一行返回
+	 * @TODO 优先匹配相等的，并放于结果的第一行
 	 * @param priorMatchEqual
 	 * @return
 	 */
-	public CacheMatchFilter priorMatchEqual(boolean priorMatchEqual) {
+	public CacheMatchFilter priorMatchEqual(Boolean priorMatchEqual) {
 		cacheFilterArgs.priorMatchEqual = priorMatchEqual;
 		return this;
 	}

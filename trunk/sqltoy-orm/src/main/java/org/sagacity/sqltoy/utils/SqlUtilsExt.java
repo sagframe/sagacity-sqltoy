@@ -3,7 +3,6 @@
  */
 package org.sagacity.sqltoy.utils;
 
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -13,7 +12,6 @@ import java.util.Date;
 import java.util.List;
 
 import org.sagacity.sqltoy.SqlToyConstants;
-import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
@@ -107,7 +105,7 @@ public class SqlUtilsExt {
 							pst.clearBatch();
 						}
 					} else {
-						updateCount=pst.executeUpdate();
+						updateCount = pst.executeUpdate();
 					}
 				}
 			}
@@ -222,7 +220,7 @@ public class SqlUtilsExt {
 							pst.clearBatch();
 						}
 					} else {
-						updateCount=pst.executeUpdate();
+						updateCount = pst.executeUpdate();
 					}
 				}
 			}
@@ -244,32 +242,6 @@ public class SqlUtilsExt {
 			}
 		}
 		return updateCount;
-	}
-
-	/**
-	 * @todo 自动进行类型转换,设置sql中的参数条件的值(目前仅sybaseiq中使用，后期废弃)
-	 * @param typeHandler
-	 * @param conn
-	 * @param dbType
-	 * @param pst
-	 * @param params
-	 * @param entityMeta
-	 * @throws SQLException
-	 * @throws IOException
-	 */
-	@Deprecated
-	public static void setParamsValue(TypeHandler typeHandler, Connection conn, final Integer dbType,
-			PreparedStatement pst, Object[] params, final EntityMeta entityMeta) throws SQLException, IOException {
-		if (null != params && params.length > 0) {
-			Object cellValue;
-			int fieldType;
-			for (int i = 0, n = params.length; i < n; i++) {
-				fieldType = entityMeta.getFieldsTypeArray()[i];
-				cellValue = getDefaultValue(params[i], entityMeta.getFieldsDefaultValue()[i], fieldType,
-						entityMeta.getFieldsNullable()[i]);
-				SqlUtil.setParamValue(typeHandler, conn, dbType, pst, cellValue, fieldType, 1 + i);
-			}
-		}
 	}
 
 	/**

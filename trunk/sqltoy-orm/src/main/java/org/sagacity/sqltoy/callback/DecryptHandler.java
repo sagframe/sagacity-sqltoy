@@ -5,7 +5,7 @@ import org.sagacity.sqltoy.plugins.secure.FieldsSecureProvider;
 
 /**
  * @project sagacity-sqltoy
- * @description 解密处理器
+ * @description 查询时字段密文解密处理器
  * @author zhongxuchen
  * @version v1.0,Date:2021-11-8
  */
@@ -65,4 +65,5 @@ public class DecryptHandler {
 	public void setFieldsSecureProvider(FieldsSecureProvider fieldsSecureProvider) {
 		this.fieldsSecureProvider = fieldsSecureProvider;
 	}
+
 }

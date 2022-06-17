@@ -10,12 +10,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.PageOptimize;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
-import org.sagacity.sqltoy.executor.QueryExecutor;
+import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 
 /**
- * @project sagacity-sqltoy4.0
+ * @project sagacity-sqltoy
  * @description 提供分页优化缓存实现，记录相同查询条件的总记录数,采用FIFO算法保留符合活跃时间和记录规模
  * @author zhongxuchen
  * @version v1.0,Date:2016年11月24日
@@ -114,12 +114,11 @@ public class PageOptimizeUtils {
 			long nowTime = System.currentTimeMillis();
 			// 已经失效
 			if (nowTime >= expireTime) {
-				// 剔除过时的
+				// 剔除超时的记录
 				map.remove(conditionsKey);
-				// System.err.println("删除过期的key=" + conditionsKey);
 				return null;
 			}
-			// 没有过期返回总记录数量
+			// 没有过期则返回对应的总记录数值
 			return totalCount;
 		}
 	}
@@ -148,15 +147,14 @@ public class PageOptimizeUtils {
 		} else {
 			map = pageOptimizeCache.get(id);
 			synchronized (map) {
-				// 已经存在,先移除
+				// 已经存在,先移除队列靠前的旧值
 				if (map.containsKey(conditionsKey)) {
 					map.remove(conditionsKey);
 				}
-				// 放入最新的(在最后位置)
+				// 在最后位置放入最新的记录
 				map.put(conditionsKey, new Object[] { expireTime, totalCount });
 				// 长度超阀值,移除最早进入的
 				while (map.size() > aliveMax) {
-					// System.err.println("size="+map.size()+":删除超量数据");
 					map.remove(map.keySet().iterator().next());
 				}
 			}

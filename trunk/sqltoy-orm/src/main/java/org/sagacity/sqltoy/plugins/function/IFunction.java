@@ -36,19 +36,19 @@ public abstract class IFunction {
 	public abstract Pattern regex();
 
 	/**
-	 * @TODO 函数转换
-	 * @param dialect
-	 * @param functionName
-	 * @param hasArgs
-	 * @param args
+	 * @TODO 函数转换,通过不同方言重新组织当前的函数
+	 * @param dialect      数据库方言
+	 * @param functionName 函数名称
+	 * @param hasArgs      函数中是否含参数
+	 * @param args         函数中的参数
 	 * @return
 	 */
 	public abstract String wrap(int dialect, String functionName, boolean hasArgs, String... args);
 
 	/**
 	 * @todo 提供默认的函数加工拼接方式实现
-	 * @param functionName
-	 * @param args
+	 * @param functionName 函数名称
+	 * @param args         函数中的参数如ifnull(name)这里就是name
 	 * @return
 	 */
 	protected String wrapArgs(String functionName, String... args) {
@@ -56,8 +56,9 @@ public abstract class IFunction {
 		result.append("(");
 		if (args != null && args.length > 0) {
 			for (int i = 0; i < args.length; i++) {
-				if (i > 0)
+				if (i > 0) {
 					result.append(",");
+				}
 				result.append(args[i]);
 			}
 		}

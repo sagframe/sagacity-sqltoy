@@ -5,8 +5,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.util.HashMap;
 
 import org.junit.jupiter.api.Test;
+import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
+
+import com.alibaba.fastjson.JSON;
 
 public class SqlUtilTest {
 
@@ -46,7 +49,7 @@ public class SqlUtilTest {
 	 * @TODO 测试vo属性名称转表字段名称
 	 */
 	@Test
-	public void testConvertFieldsToColsForWhere() {
+	public void testConvertFieldsToCols1() {
 		String sql = "sexType=:sexType";
 		EntityMeta entityMeta = new EntityMeta();
 		entityMeta.setTableName("staff_info");
@@ -61,6 +64,30 @@ public class SqlUtilTest {
 		sql = SqlUtil.convertFieldsToColumns(entityMeta, sql);
 		System.err.println(sql);
 	}
-	
-	
+
+	@Test
+	public void testConvertFieldsToCols2() {
+		String sql = " detail_id = :detailId and res_type = : resType";
+		EntityMeta entityMeta = new EntityMeta();
+		entityMeta.setTableName("staff_info");
+		HashMap<String, FieldMeta> fieldsMeta = new HashMap<String, FieldMeta>();
+
+		FieldMeta sexMeta = new FieldMeta();
+		sexMeta.setFieldName("detailId");
+		sexMeta.setColumnName("detail_id");
+		fieldsMeta.put("detailid", sexMeta);
+
+		FieldMeta resType = new FieldMeta();
+		resType.setFieldName("resType");
+		resType.setColumnName("res_type");
+		fieldsMeta.put("restype", resType);
+
+		entityMeta.setFieldsMeta(fieldsMeta);
+		entityMeta.setFieldsArray(new String[] { "detailId", "resType" });
+		String[] paramNames = SqlConfigParseUtils.getSqlParamsName(sql, false);
+		sql = SqlUtil.convertFieldsToColumns(entityMeta, sql);
+		System.err.println(JSON.toJSONString(paramNames));
+		System.err.println(sql);
+	}
+
 }

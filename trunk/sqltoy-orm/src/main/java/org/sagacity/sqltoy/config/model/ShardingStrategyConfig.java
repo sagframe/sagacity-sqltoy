@@ -6,7 +6,7 @@ package org.sagacity.sqltoy.config.model;
 import java.io.Serializable;
 
 /**
- * @project sagacity-sqltoy4.0
+ * @project sagacity-sqltoy
  * @description 分库分表策略配置
  * @author zhongxuchen
  * @version v1.0,Date:2017年11月5日
@@ -48,7 +48,7 @@ public class ShardingStrategyConfig implements Serializable {
 	private String[] aliasNames;
 
 	/**
-	 * 决策类别，扩展预览属性，方便一个策略中提供多种sharding策略，从而可以选择指定策略
+	 * 决策类别，扩展预留属性，方便一个策略中提供多种sharding策略，从而可以选择指定策略
 	 */
 	private String decisionType;
 

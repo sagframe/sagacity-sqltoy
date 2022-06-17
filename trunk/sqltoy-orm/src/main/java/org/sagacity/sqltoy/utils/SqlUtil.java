@@ -282,7 +282,8 @@ public class SqlUtil {
 					}
 				}
 				// postgresql bytea类型需要统一处理成BINARY
-				if (jdbcType == java.sql.Types.BLOB && (dbType == DBType.POSTGRESQL || dbType == DBType.GAUSSDB)) {
+				if (jdbcType == java.sql.Types.BLOB
+						&& (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB)) {
 					pst.setNull(paramIndex, java.sql.Types.BINARY);
 				} else {
 					pst.setNull(paramIndex, jdbcType);
@@ -394,7 +395,7 @@ public class SqlUtil {
 	 * @return
 	 * @throws Exception
 	 */
-	private static List reflectResultToValueObject(TypeHandler typeHandler, DecryptHandler decryptHandler, ResultSet rs,
+	private static List reflectResultToVO(TypeHandler typeHandler, DecryptHandler decryptHandler, ResultSet rs,
 			Class voClass, boolean ignoreAllEmptySet, HashMap<String, String> columnFieldMap) throws Exception {
 		List resultList = new ArrayList();
 		// 提取数据预警阈值
@@ -479,6 +480,7 @@ public class SqlUtil {
 	/**
 	 * @todo 提供数据查询结果集转java对象的反射处理，以java VO集合形式返回
 	 * @param typeHandler
+	 * @param decryptHandler    解密
 	 * @param rs
 	 * @param columnLabels
 	 * @param setMethods
@@ -847,8 +849,7 @@ public class SqlUtil {
 		}
 		List result;
 		if (voClass != null) {
-			result = reflectResultToValueObject(typeHandler, decryptHandler, rs, voClass, ignoreAllEmptySet,
-					colFieldMap);
+			result = reflectResultToVO(typeHandler, decryptHandler, rs, voClass, ignoreAllEmptySet, colFieldMap);
 		} else if (rowCallbackHandler != null) {
 			while (rs.next()) {
 				rowCallbackHandler.processRow(rs, index);
@@ -1395,6 +1396,7 @@ public class SqlUtil {
 	 * @param conn
 	 * @param dbType
 	 * @param autoCommit
+	 * @param processWord
 	 * @return
 	 * @throws Exception
 	 */
@@ -1414,6 +1416,7 @@ public class SqlUtil {
 		}
 		PreparedStatement pst = conn.prepareStatement(realSql);
 		Object result = preparedStatementProcess(null, pst, null, new PreparedStatementResultHandler() {
+			@Override
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
 				// sqlserver 存在timestamp不能赋值问题,通过对象完成的修改、插入忽视掉timestamp列
 				if (dbType == DBType.SQLSERVER && paramsType != null) {
@@ -1587,7 +1590,7 @@ public class SqlUtil {
 						preChar = ' ';
 					}
 					tailChar = realSql.charAt(index + field.length());
-					// 非条件参数(58为冒号)
+					// 非条件参数(58为冒号),结尾字符不能是数字、字母和(
 					if (((isBlank && preChar != 58) || (preChar > 58 && preChar < 65)
 							|| (preChar > 90 && preChar < 97 && preChar != 95) || preChar < 48 || preChar > 122)
 							&& ((tailChar > 58 && tailChar < 65) || (tailChar > 90 && tailChar < 97 && tailChar != 95)

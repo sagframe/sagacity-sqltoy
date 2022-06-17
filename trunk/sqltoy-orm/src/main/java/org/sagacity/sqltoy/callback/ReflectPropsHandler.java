@@ -95,6 +95,7 @@ public abstract class ReflectPropsHandler {
 
 	/**
 	 * 判断propertyIndexMap是否已经完成初始化
+	 * 
 	 * @return
 	 */
 	public boolean initPropsIndexMap() {
@@ -141,6 +142,7 @@ public abstract class ReflectPropsHandler {
 	 * @param value
 	 * @param properties
 	 */
+	@Deprecated
 	public void setEqualNull(Object value, String... properties) {
 		if (properties == null || properties.length == 0) {
 			return;

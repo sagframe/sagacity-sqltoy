@@ -16,11 +16,8 @@ import org.sagacity.sqltoy.config.annotation.BusinessId;
 import org.sagacity.sqltoy.config.annotation.Column;
 import org.sagacity.sqltoy.config.annotation.Entity;
 import org.sagacity.sqltoy.config.annotation.Id;
-import org.sagacity.sqltoy.config.annotation.ListSql;
-import org.sagacity.sqltoy.config.annotation.LoadSql;
 import org.sagacity.sqltoy.config.annotation.OneToMany;
 import org.sagacity.sqltoy.config.annotation.OneToOne;
-import org.sagacity.sqltoy.config.annotation.PaginationSql;
 import org.sagacity.sqltoy.config.annotation.PartitionKey;
 import org.sagacity.sqltoy.config.annotation.Secure;
 import org.sagacity.sqltoy.config.annotation.SecureConfig;
@@ -36,7 +33,6 @@ import org.sagacity.sqltoy.config.model.TableCascadeModel;
 import org.sagacity.sqltoy.model.IgnoreCaseSet;
 import org.sagacity.sqltoy.model.SecureType;
 import org.sagacity.sqltoy.plugins.id.IdGenerator;
-import org.sagacity.sqltoy.plugins.id.impl.RedisIdGenerator;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
@@ -76,7 +72,7 @@ public class EntityManager {
 		 */
 		private static final long serialVersionUID = 3964534243191167226L;
 		{
-			// 13位当前毫秒+6位纳秒+3位主机ID 构成的22位不重复的ID
+			// 13位当前毫秒+6位纳秒+3位主机ID 构成的22位不重复且有序的ID
 			put("default", "DefaultIdGenerator");
 			// 32位uuid
 			put("uuid", "UUIDGenerator");
@@ -217,7 +213,7 @@ public class EntityManager {
 	 * @todo <b>解析sqltoy entity对象获取其跟数据库相关的配置信息</b>
 	 * @param sqlToyContext
 	 * @param entityClass
-	 * @param notEntityWarn 当不是entity实体bean时是否进行日志提示
+	 * @param isWarn        当不是entity实体bean时是否进行日志提示
 	 * @return
 	 */
 	public synchronized EntityMeta parseEntityMeta(SqlToyContext sqlToyContext, Class entityClass, boolean isWarn) {
@@ -249,10 +245,7 @@ public class EntityManager {
 				if (StringUtil.isNotBlank(entity.schema())) {
 					entityMeta.setSchema(entity.schema());
 				}
-				// 解析自定义注解
-				parseCustomAnnotation(entityMeta, entityClass);
-
-				// 主键约束(for postgresql)
+				// 主键约束(已经废弃)
 				if (StringUtil.isNotBlank(entity.pk_constraint())) {
 					entityMeta.setPkConstraint(entity.pk_constraint());
 				}
@@ -345,31 +338,6 @@ public class EntityManager {
 			}
 		}
 		return entityMeta;
-	}
-
-	/**
-	 * @todo 解析自定义注解
-	 * @param entityMeta
-	 * @param entityClass
-	 */
-	private void parseCustomAnnotation(EntityMeta entityMeta, Class entityClass) {
-		// 单记录查询的自定义语句
-		if (entityClass.isAnnotationPresent(LoadSql.class)) {
-			LoadSql loadSql = (LoadSql) entityClass.getAnnotation(LoadSql.class);
-			entityMeta.setLoadSql(loadSql.value());
-		}
-
-		// 分页查询的语句
-		if (entityClass.isAnnotationPresent(PaginationSql.class)) {
-			PaginationSql paginationSql = (PaginationSql) entityClass.getAnnotation(PaginationSql.class);
-			entityMeta.setPageSql(paginationSql.value());
-		}
-
-		// 集合查询语句
-		if (entityClass.isAnnotationPresent(ListSql.class)) {
-			ListSql listSql = (ListSql) entityClass.getAnnotation(ListSql.class);
-			entityMeta.setListSql(listSql.value());
-		}
 	}
 
 	/**
@@ -506,7 +474,7 @@ public class EntityManager {
 	}
 
 	/**
-	 * @TODO 解析获取entity对象的属性
+	 * @TODO 解析获取entity对象的全部字段属性
 	 * @param entityClass
 	 * @return
 	 */
@@ -638,23 +606,10 @@ public class EntityManager {
 		} else {
 			String generator = IdGenerators.get(idGenerator.toLowerCase());
 			generator = (generator != null) ? IdGeneratorPackage.concat(generator) : idGenerator;
-			// sqltoy默认提供的实现(兼容旧版本包命名,统一到新的packageName下面)
-			if (generator.startsWith("org.sagacity.sqltoy")) {
-				generator = IdGeneratorPackage.concat(generator.substring(generator.lastIndexOf(".") + 1));
-			}
-			// redis 情况特殊,依赖redisTemplate,小心修改
-			if (generator.endsWith("RedisIdGenerator")) {
-				RedisIdGenerator redis = (RedisIdGenerator) RedisIdGenerator.getInstance(sqlToyContext);
-				if (redis == null || !redis.hasRedisTemplate()) {
-					logger.error("POJO Class={} 的redisIdGenerator 未能被正确实例化,可能的原因是未定义RedisTemplate!",
-							entityMeta.getEntityClass().getName());
-				}
-				idGenerators.put(idGenerator, redis);
-			} else {
-				// 自定义(不依赖spring模式),用法在quickvo中配置例如:com.xxxx..CustomIdGenerator
-				idGenerators.put(idGenerator,
-						(IdGenerator) Class.forName(generator).getDeclaredConstructor().newInstance());
-			}
+			// 自定义(不依赖spring模式),用法在quickvo中配置例如:com.xxxx..CustomIdGenerator
+			IdGenerator idGeneratorBean = (IdGenerator) Class.forName(generator).getDeclaredConstructor().newInstance();
+			idGeneratorBean.initialize(sqlToyContext);
+			idGenerators.put(idGenerator, idGeneratorBean);
 		}
 	}
 
@@ -814,17 +769,12 @@ public class EntityManager {
 		String[] fieldsDefaultValue = new String[fieldSize];
 		Boolean[] fieldsNullable = new Boolean[fieldSize];
 		FieldMeta fieldMeta;
-		boolean hasDefaultValue = false;
 		for (int i = 0; i < fieldSize; i++) {
 			fieldMeta = entityMeta.getFieldMeta(entityMeta.getFieldsArray()[i]);
 			fieldsTypeArray[i] = fieldMeta.getType();
-			if (fieldMeta.getDefaultValue() != null) {
-				hasDefaultValue = true;
-			}
 			fieldsDefaultValue[i] = fieldMeta.getDefaultValue();
 			fieldsNullable[i] = fieldMeta.isNullable();
 		}
-		entityMeta.setHasDefaultValue(hasDefaultValue);
 		entityMeta.setFieldsTypeArray(fieldsTypeArray);
 		entityMeta.setFieldsDefaultValue(fieldsDefaultValue);
 		entityMeta.setFieldsNullable(fieldsNullable);

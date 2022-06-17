@@ -1444,12 +1444,12 @@ public class SqlXMLConfigParse {
 
 	/**
 	 * @todo 获取Resource
-	 * @param reasource
+	 * @param resource
 	 * @return
 	 */
-	private static InputStream getResourceAsStream(String reasource) {
-		return Thread.currentThread().getContextClassLoader()
-				.getResourceAsStream((reasource.charAt(0) == '/') ? reasource.substring(1) : reasource);
+	private static InputStream getResourceAsStream(String resource) {
+		return Thread.currentThread().getContextClassLoader().getResourceAsStream(
+				(resource.length() > 0 && resource.charAt(0) == '/') ? resource.substring(1) : resource);
 	}
 
 	/**

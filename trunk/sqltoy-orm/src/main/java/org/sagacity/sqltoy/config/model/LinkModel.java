@@ -50,7 +50,7 @@ public class LinkModel implements Serializable {
 	private int decorateSize;
 
 	/**
-	 * 是否去除link中重复的值
+	 * 是否去除重复
 	 */
 	private boolean distinct = false;
 

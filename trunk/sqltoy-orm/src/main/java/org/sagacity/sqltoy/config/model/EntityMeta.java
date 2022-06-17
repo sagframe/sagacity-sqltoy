@@ -36,7 +36,7 @@ public class EntityMeta implements Serializable {
 	private String loadAllSql;
 
 	/**
-	 * schema表命名空间
+	 * schema表空间
 	 */
 	private String schema;
 
@@ -64,17 +64,6 @@ public class EntityMeta implements Serializable {
 	 * 所有字段的类别
 	 */
 	private Integer[] fieldsTypeArray;
-
-	/**
-	 * 加密字段
-	 */
-	private List<FieldSecureConfig> secureFields = new ArrayList<FieldSecureConfig>();
-
-	/**
-	 * 是否存在default值(仅用于sybaseiq,后期可废弃)
-	 */
-	@Deprecated
-	private boolean hasDefaultValue = false;
 
 	/**
 	 * 所有字段的默认值
@@ -162,16 +151,6 @@ public class EntityMeta implements Serializable {
 	private String businessIdField;
 
 	/**
-	 * 分页查询的sql
-	 */
-	private String pageSql;
-
-	/**
-	 * 批量集合查询
-	 */
-	private String listSql;
-
-	/**
 	 * 根据主键load查询的sql
 	 */
 	private String loadSql;
@@ -213,6 +192,14 @@ public class EntityMeta implements Serializable {
 	 */
 	private String allColumnNames = "*";
 
+	/**
+	 * 加密字段
+	 */
+	private List<FieldSecureConfig> secureFields = new ArrayList<FieldSecureConfig>();
+
+	/**
+	 * 加解密字段
+	 */
 	private IgnoreCaseSet secureColumns;
 
 	/**
@@ -468,7 +455,7 @@ public class EntityMeta implements Serializable {
 		if (schema == null) {
 			return table;
 		}
-		// table已经包含了schema，则直接返回
+		// table已经包含了schema，则直接返回,避免重复拼接schema
 		if (table.startsWith(schema.concat("."))) {
 			return table;
 		}
@@ -501,37 +488,6 @@ public class EntityMeta implements Serializable {
 		}
 		this.cascadeModels.add(cascadeModel);
 		return isRepeat;
-	}
-
-	/**
-	 * @return the pageSql
-	 */
-	public String getPageSql() {
-		if (StringUtil.isBlank(this.pageSql)) {
-			return this.listSql;
-		}
-		return pageSql;
-	}
-
-	/**
-	 * @param pageSql the pageSql to set
-	 */
-	public void setPageSql(String pageSql) {
-		this.pageSql = pageSql;
-	}
-
-	/**
-	 * @return the listSql
-	 */
-	public String getListSql() {
-		return listSql;
-	}
-
-	/**
-	 * @param listSql the listSql to set
-	 */
-	public void setListSql(String listSql) {
-		this.listSql = listSql;
 	}
 
 	public String getLoadSql(String shardingTable) {
@@ -615,20 +571,6 @@ public class EntityMeta implements Serializable {
 	 */
 	public void setFieldsNullable(Boolean[] fieldsNullable) {
 		this.fieldsNullable = fieldsNullable;
-	}
-
-	/**
-	 * @return the hasDefaultValue
-	 */
-	public boolean isHasDefaultValue() {
-		return hasDefaultValue;
-	}
-
-	/**
-	 * @param hasDefaultValue the hasDefaultValue to set
-	 */
-	public void setHasDefaultValue(boolean hasDefaultValue) {
-		this.hasDefaultValue = hasDefaultValue;
 	}
 
 	/**
@@ -848,5 +790,4 @@ public class EntityMeta implements Serializable {
 	public void setSecureColumns(IgnoreCaseSet secureColumns) {
 		this.secureColumns = secureColumns;
 	}
-
 }

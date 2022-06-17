@@ -48,6 +48,8 @@ public class StaffInfoVO implements Serializable {
 	private String email;
 
 	private String telNo;
+	
+	private Integer resType;
 
 	@SqlToyFieldAlias("post")
 	private String postType;
@@ -384,6 +386,14 @@ public class StaffInfoVO implements Serializable {
 
 	public void setParams(HashMap params) {
 		this.params = params;
+	}
+
+	public Integer getResType() {
+		return resType;
+	}
+
+	public void setResType(Integer resType) {
+		this.resType = resType;
 	}
 
 	

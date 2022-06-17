@@ -241,7 +241,7 @@ public class FileUtil {
 			if (StringUtil.indexOfIgnoreCase(realFile.trim(), "classpath:") == 0) {
 				realFile = realFile.trim().substring(10).trim();
 			}
-			if (realFile.charAt(0) == '/') {
+			if (realFile.length() > 0 && realFile.charAt(0) == '/') {
 				realFile = realFile.substring(1);
 			}
 			InputStream result = Thread.currentThread().getContextClassLoader().getResourceAsStream(realFile);
@@ -271,7 +271,6 @@ public class FileUtil {
 	 * @TODO 读取文件到二进制数组中
 	 * @param file
 	 * @return
-	 * @throws IOException
 	 */
 	public static byte[] readAsBytes(Object file) {
 		if (file == null) {
@@ -597,7 +596,6 @@ public class FileUtil {
 	 * @todo 复制整个文件夹的内容
 	 * @param oldPath 准备拷贝的目录
 	 * @param newPath 指定绝对路径的新目录
-	 * @return
 	 */
 	public static void copyFolder(String oldPath, String newPath) {
 		FileInputStream input = null;
@@ -784,7 +782,7 @@ public class FileUtil {
 		File result = null;
 		if (fileName.trim().toLowerCase().startsWith("classpath:")) {
 			String realPath = fileName.trim().substring(10).trim();
-			if (realPath.charAt(0) == '/') {
+			if (realPath.length() > 0 && realPath.charAt(0) == '/') {
 				realPath = realPath.substring(1);
 			}
 			URL url = Thread.currentThread().getContextClassLoader().getResource(realPath);

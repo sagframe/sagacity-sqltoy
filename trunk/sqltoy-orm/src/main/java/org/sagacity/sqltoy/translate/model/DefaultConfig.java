@@ -56,8 +56,7 @@ public class DefaultConfig implements Serializable {
 	}
 
 	/**
-	 * @param diskStorePath
-	 *            the diskStorePath to set
+	 * @param diskStorePath the diskStorePath to set
 	 */
 	public void setDiskStorePath(String diskStorePath) {
 		this.diskStorePath = diskStorePath;
@@ -79,8 +78,7 @@ public class DefaultConfig implements Serializable {
 	}
 
 	/**
-	 * @param defaultHeap
-	 *            the defaultHeap to set
+	 * @param defaultHeap the defaultHeap to set
 	 */
 	public void setDefaultHeap(int defaultHeap) {
 		this.defaultHeap = defaultHeap;
@@ -94,8 +92,7 @@ public class DefaultConfig implements Serializable {
 	}
 
 	/**
-	 * @param defaultOffHeap
-	 *            the defaultOffHeap to set
+	 * @param defaultOffHeap the defaultOffHeap to set
 	 */
 	public void setDefaultOffHeap(int defaultOffHeap) {
 		this.defaultOffHeap = defaultOffHeap;
@@ -109,8 +106,7 @@ public class DefaultConfig implements Serializable {
 	}
 
 	/**
-	 * @param dafaultDiskSize
-	 *            the dafaultDiskSize to set
+	 * @param dafaultDiskSize the dafaultDiskSize to set
 	 */
 	public void setDefaultDiskSize(int defaultDiskSize) {
 		this.defaultDiskSize = defaultDiskSize;
@@ -124,8 +120,7 @@ public class DefaultConfig implements Serializable {
 	}
 
 	/**
-	 * @param defaultKeepAlive
-	 *            the defaultKeepAlive to set
+	 * @param defaultKeepAlive the defaultKeepAlive to set
 	 */
 	public void setDefaultKeepAlive(int defaultKeepAlive) {
 		this.defaultKeepAlive = defaultKeepAlive;

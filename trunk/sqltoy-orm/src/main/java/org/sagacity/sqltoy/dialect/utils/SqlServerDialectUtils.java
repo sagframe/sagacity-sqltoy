@@ -19,6 +19,7 @@ import java.util.Map;
 import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DecryptHandler;
+import org.sagacity.sqltoy.callback.GenerateSqlHandler;
 import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
 import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
@@ -28,11 +29,10 @@ import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.TableCascadeModel;
-import org.sagacity.sqltoy.dialect.handler.GenerateSqlHandler;
-import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.model.LockMode;
+import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
@@ -620,7 +620,8 @@ public class SqlServerDialectUtils {
 			@Override
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
 				if (isIdentity) {
-					pst = conn.prepareStatement(realInsertSql, PreparedStatement.RETURN_GENERATED_KEYS);
+					pst = conn.prepareStatement(realInsertSql,
+							new String[] { entityMeta.getColumnName(entityMeta.getIdArray()[0]) });
 				} else {
 					pst = conn.prepareStatement(realInsertSql);
 				}

@@ -15,7 +15,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
  * @project sagacity-sqltoy
- * @description sqltoy 字段加解密接口基于RSA的默认实现
+ * @description sqltoy 字段加解密接口RSA默认实现
  * @author zhongxuchen
  * @version v1.0,Date:2021-11-05
  */

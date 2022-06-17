@@ -10,7 +10,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 /**
- * @project sagacity-sqltoy4.0
+ * @project sagacity-sqltoy
  * @description 业务主键,可以充当主键(一般可能是多个字段联合充当)
  * @author zhongxuchen
  * @version v1.0,Date:2018年1月12日

@@ -4,9 +4,9 @@ import java.io.Serializable;
 
 /**
  * @project sagacity-sqltoy
- * @description 数据库表基本元信息
+ * @description 数据库表元信息
  * @author zhongxuchen
- * @version v1.0,Date:2021-9-25
+ * @version v1.0,Date:2021-09-25
  */
 public class TableMeta implements Serializable {
 	/**

@@ -24,7 +24,7 @@ public class IdUtil {
 	 * 定义日志
 	 */
 	protected final static Logger logger = LoggerFactory.getLogger(IdUtil.class);
-	
+
 	// 纳秒id的ip截取位数
 	private static final int NANOTIME_IP_SUBSIZE = 3;
 
@@ -88,7 +88,7 @@ public class IdUtil {
 	 * @return
 	 */
 	public static String getDebugId() {
-		// 当前时间(毫秒)
+		// 当前时间(秒)
 		String nowTime = DateUtil.formatDate(new Date(), "HH:mm:ss");
 		// 后7位纳秒间隔
 		String nanoTime = "" + System.nanoTime();
@@ -174,7 +174,7 @@ public class IdUtil {
 			// 补足位数
 			serverIdentity = StringUtil.addLeftZero2Len(ipLastNumStr, size);
 		}
-		// 无网络无法获取ip场景下
+		// 无网络无法获取ip场景下 update 2021-09-17
 		if (serverIdentity == null) {
 			return StringUtil.addLeftZero2Len("1", size);
 		}

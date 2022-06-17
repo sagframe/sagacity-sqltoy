@@ -2,6 +2,7 @@ package org.sagacity.sqltoy.config;
 
 import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
+import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.utils.FileUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,5 +43,12 @@ public class SqlXMLConfigParseTest {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+
+	@Test
+	public void testChinaParamName() throws Exception {
+		String sql = "select * from table where 1=1 #[and id=:单据_编号_id] and name like @value(:name) #[and status=:status]";
+		SqlToyConfig sqlToyConfig = SqlConfigParseUtils.parseSqlToyConfig(sql, "mysql", SqlType.search);
+		System.err.println(JSON.toJSONString(sqlToyConfig));
 	}
 }

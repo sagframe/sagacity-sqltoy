@@ -31,7 +31,7 @@ public class DataAuthFilterConfig implements Serializable {
 	private boolean isForcelimit = true;
 
 	/**
-	 * 是否忽视类型进行越权对比
+	 * 是否忽视类型进行越权值对比(如传递的是string,实际授权数据是BigInteger)
 	 */
 	private boolean ignoreType = false;
 

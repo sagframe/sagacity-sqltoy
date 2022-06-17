@@ -19,9 +19,9 @@ import org.sagacity.sqltoy.dialect.utils.ClickHouseDialectUtils;
 import org.sagacity.sqltoy.dialect.utils.DefaultDialectUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectExtUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
-import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.model.LockMode;
+import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TableMeta;
@@ -61,8 +61,8 @@ public class ClickHouseDialect implements Dialect {
 	 * 
 	 * @see org.sagacity.sqltoy.dialect.Dialect#findPageBySql(org.sagacity.sqltoy.
 	 * SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
-	 * org.sagacity.sqltoy.executor.QueryExecutor, java.lang.Long,
-	 * java.lang.Integer, java.sql.Connection, java.lang.Integer, java.lang.String)
+	 * org.sagacity.sqltoy.model.QueryExecutor, java.lang.Long, java.lang.Integer,
+	 * java.sql.Connection, java.lang.Integer, java.lang.String)
 	 */
 	@Override
 	public QueryResult findPageBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
@@ -159,16 +159,16 @@ public class ClickHouseDialect implements Dialect {
 	}
 
 	@Override
-	public Serializable updateSaveFetch(SqlToyContext sqlToyContext, Serializable entity,
-			UpdateRowHandler updateRowHandler, String[] uniqueProps, Connection conn, Integer dbType, String dialect,
-			String tableName) throws Exception {
+	public Long saveOrUpdate(SqlToyContext sqlToyContext, Serializable entity, String[] forceUpdateFields,
+			Connection conn, Integer dbType, String dialect, Boolean autoCommit, String tableName) throws Exception {
 		// 不支持
 		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
 	}
 
 	@Override
-	public Long saveOrUpdate(SqlToyContext sqlToyContext, Serializable entity, String[] forceUpdateFields,
-			Connection conn, Integer dbType, String dialect, Boolean autoCommit, String tableName) throws Exception {
+	public Serializable updateSaveFetch(SqlToyContext sqlToyContext, Serializable entity,
+			UpdateRowHandler updateRowHandler, String[] uniqueProps, Connection conn, Integer dbType, String dialect,
+			String tableName) throws Exception {
 		// 不支持
 		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
 	}
@@ -210,22 +210,6 @@ public class ClickHouseDialect implements Dialect {
 	}
 
 	@Override
-	public QueryResult updateFetchTop(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramsValue, Integer topSize, UpdateRowHandler updateRowHandler, Connection conn, Integer dbType,
-			String dialect) throws Exception {
-		// 不支持
-		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
-	}
-
-	@Override
-	public QueryResult updateFetchRandom(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramsValue, Integer random, UpdateRowHandler updateRowHandler, Connection conn, Integer dbType,
-			String dialect) throws Exception {
-		// 不支持
-		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
-	}
-
-	@Override
 	public StoreResult executeStore(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] inParamsValue, Integer[] outParamsType, Connection conn, Integer dbType, String dialect,
 			final int fetchSize) throws Exception {
@@ -244,4 +228,5 @@ public class ClickHouseDialect implements Dialect {
 			String dialect) throws Exception {
 		return DefaultDialectUtils.getTables(catalog, schema, tableName, conn, dbType, dialect);
 	}
+
 }

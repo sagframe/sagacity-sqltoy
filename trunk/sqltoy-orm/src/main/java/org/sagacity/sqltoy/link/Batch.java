@@ -9,7 +9,6 @@ import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.InsertRowCallbackHandler;
-import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -36,11 +35,6 @@ public class Batch extends BaseLink {
 	 * 批次记录数量
 	 */
 	private int batchSize;
-
-	/**
-	 * 参数值反调处理器
-	 */
-	private ReflectPropsHandler reflectPropsHandler;
 
 	/**
 	 * 插入反调处理器
@@ -91,20 +85,8 @@ public class Batch extends BaseLink {
 		return this;
 	}
 
-	/**
-	 * 不建议使用，从4.18.46 开始已经支持List<Map>传参数
-	 * 
-	 * @param insertCallhandler
-	 * @return
-	 */
-	@Deprecated
 	public Batch insertHandler(InsertRowCallbackHandler insertCallhandler) {
 		this.insertCallhandler = insertCallhandler;
-		return this;
-	}
-
-	public Batch reflectHandler(ReflectPropsHandler reflectPropsHandler) {
-		this.reflectPropsHandler = reflectPropsHandler;
 		return this;
 	}
 
@@ -114,7 +96,7 @@ public class Batch extends BaseLink {
 		}
 		int realBatchSize = (batchSize > 0) ? batchSize : sqlToyContext.getBatchSize();
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql, SqlType.update, super.getDialect());
-		return dialectFactory.batchUpdate(sqlToyContext, sqlToyConfig, dataSet, realBatchSize, reflectPropsHandler,
-				insertCallhandler, autoCommit, getDataSource(sqlToyConfig));
+		return dialectFactory.batchUpdate(sqlToyContext, sqlToyConfig, dataSet, realBatchSize, null, insertCallhandler,
+				autoCommit, getDataSource(sqlToyConfig));
 	}
 }

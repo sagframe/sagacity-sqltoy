@@ -2,8 +2,8 @@ package org.sagacity.sqltoy.plugins.datasource;
 
 import javax.sql.DataSource;
 
+import org.sagacity.sqltoy.integration.AppContext;
 import org.sagacity.sqltoy.utils.StringUtil;
-import org.springframework.context.ApplicationContext;
 
 /**
  * @project sqltoy-orm
@@ -21,8 +21,8 @@ public interface DataSourceSelector {
 	 * @param defaultDataSource  sqltoy 默认的数据源
 	 * @return
 	 */
-	public DataSource getDataSource(ApplicationContext applicationContext, DataSource pointDataSouce,
-			String sqlDataSourceName, DataSource injectDataSource, DataSource defaultDataSource);
+	public DataSource getDataSource(AppContext appContext, DataSource pointDataSouce, String sqlDataSourceName,
+			DataSource injectDataSource, DataSource defaultDataSource);
 
 	/**
 	 * @TODO 提供通过名称获得数据库实例的扩展，便于一些dataSource插件特殊的封装方式无法用spring的getBean直接获得
@@ -30,12 +30,12 @@ public interface DataSourceSelector {
 	 * @param dataSourceName
 	 * @return
 	 */
-	public default DataSource getDataSourceBean(ApplicationContext applicationContext, String dataSourceName) {
+	public default DataSource getDataSourceBean(AppContext appContext, String dataSourceName) {
 		if (StringUtil.isBlank(dataSourceName)) {
 			return null;
 		}
-		if (applicationContext.containsBean(dataSourceName)) {
-			return (DataSource) applicationContext.getBean(dataSourceName);
+		if (appContext.containsBean(dataSourceName)) {
+			return (DataSource) appContext.getBean(dataSourceName);
 		}
 		return null;
 	}

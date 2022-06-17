@@ -16,7 +16,7 @@ import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
  */
 public interface IUnifyFieldsHandler {
 	/**
-	 * @TODO 设置创建记录时需要赋值的字段和对应的值
+	 * @TODO 设置创建记录时需要赋值的字段和对应的值(弹性模式:即优先以传递的值优先，为null再填充)
 	 * @return
 	 */
 	public default Map<String, Object> createUnifyFields() {
@@ -24,7 +24,7 @@ public interface IUnifyFieldsHandler {
 	}
 
 	/**
-	 * @TODO 设置修改记录时需要赋值的字段和对应的值
+	 * @TODO 设置修改记录时需要赋值的字段和对应的值(弹性)
 	 * @return
 	 */
 	public default Map<String, Object> updateUnifyFields() {

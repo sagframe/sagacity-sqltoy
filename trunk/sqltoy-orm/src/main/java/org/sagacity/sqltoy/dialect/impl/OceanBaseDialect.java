@@ -9,6 +9,8 @@ import java.util.List;
 import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DecryptHandler;
+import org.sagacity.sqltoy.callback.GenerateSavePKStrategy;
+import org.sagacity.sqltoy.callback.GenerateSqlHandler;
 import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
@@ -16,16 +18,14 @@ import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.dialect.Dialect;
-import org.sagacity.sqltoy.dialect.handler.GenerateSavePKStrategy;
-import org.sagacity.sqltoy.dialect.handler.GenerateSqlHandler;
 import org.sagacity.sqltoy.dialect.model.SavePKStrategy;
 import org.sagacity.sqltoy.dialect.utils.DefaultDialectUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectExtUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.dialect.utils.OracleDialectUtils;
-import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.model.LockMode;
+import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TableMeta;
@@ -66,7 +66,7 @@ public class OceanBaseDialect implements Dialect {
 	 * 
 	 * @see org.sagacity.sqltoy.dialect.Dialect#getRandomResult(org. sagacity
 	 * .sqltoy.SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
-	 * org.sagacity.sqltoy.executor.QueryExecutor, java.lang.Long, java.lang.Long,
+	 * org.sagacity.sqltoy.model.QueryExecutor, java.lang.Long, java.lang.Long,
 	 * java.sql.Connection)
 	 */
 	@Override
@@ -83,7 +83,7 @@ public class OceanBaseDialect implements Dialect {
 	 * 
 	 * @see org.sagacity.sqltoy.dialect.Dialect#findPageBySql(org.sagacity
 	 * .sqltoy.SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
-	 * org.sagacity.sqltoy.executor.QueryExecutor,
+	 * org.sagacity.sqltoy.model.QueryExecutor,
 	 * org.sagacity.sqltoy.callback.RowCallbackHandler, java.lang.Long,
 	 * java.lang.Integer, java.sql.Connection)
 	 */
@@ -101,7 +101,7 @@ public class OceanBaseDialect implements Dialect {
 	 * 
 	 * @see org.sagacity.sqltoy.dialect.Dialect#findTopBySql(org.sagacity.sqltoy.
 	 * SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
-	 * org.sagacity.sqltoy.executor.QueryExecutor, double, java.sql.Connection)
+	 * org.sagacity.sqltoy.model.QueryExecutor, double, java.sql.Connection)
 	 */
 	@Override
 	public QueryResult findTopBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, QueryExecutor queryExecutor,
@@ -119,6 +119,7 @@ public class OceanBaseDialect implements Dialect {
 	 * java.lang.reflect.Type, org.sagacity.sqltoy.callback.RowCallbackHandler,
 	 * java.sql.Connection)
 	 */
+	@Override
 	public QueryResult findBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
 			final Object[] paramsValue, final RowCallbackHandler rowCallbackHandler,
 			final DecryptHandler decryptHandler, final Connection conn, final LockMode lockMode, final Integer dbType,
@@ -196,6 +197,7 @@ public class OceanBaseDialect implements Dialect {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		return DialectUtils.saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta,
 				new GenerateSqlHandler() {
+					@Override
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = entityMeta.getSequence() + ".nextval";
@@ -256,6 +258,7 @@ public class OceanBaseDialect implements Dialect {
 				OracleDialectUtils.isAssignPKValue(pkStrategy), tableName);
 		return DialectUtils.save(sqlToyContext, entityMeta, pkStrategy, OracleDialectUtils.isAssignPKValue(pkStrategy),
 				insertSql, entity, new GenerateSqlHandler() {
+					@Override
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateField) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = entityMeta.getSequence().concat(".nextval");
@@ -267,6 +270,7 @@ public class OceanBaseDialect implements Dialect {
 								OracleDialectUtils.isAssignPKValue(pkStrategy), null);
 					}
 				}, new GenerateSavePKStrategy() {
+					@Override
 					public SavePKStrategy generate(EntityMeta entityMeta) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
@@ -317,6 +321,7 @@ public class OceanBaseDialect implements Dialect {
 			final String dialect, final String tableName) throws Exception {
 		return DialectUtils.update(sqlToyContext, entity, NVL_FUNCTION, forceUpdateFields, cascade,
 				(cascade == false) ? null : new GenerateSqlHandler() {
+					@Override
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = entityMeta.getSequence().concat(".nextval");
@@ -385,7 +390,7 @@ public class OceanBaseDialect implements Dialect {
 	 * 
 	 * @see org.sagacity.sqltoy.dialect.Dialect#updateFatch(org.sagacity.sqltoy.
 	 * SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
-	 * org.sagacity.sqltoy.executor.QueryExecutor,
+	 * org.sagacity.sqltoy.model.QueryExecutor,
 	 * org.sagacity.sqltoy.callback.UpdateRowHandler, java.sql.Connection)
 	 */
 	@Override
@@ -398,47 +403,6 @@ public class OceanBaseDialect implements Dialect {
 				dbType, 0, fetchSize, maxRows);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.dialect.Dialect#updateFetchTop(org.sagacity.sqltoy
-	 * .SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
-	 * org.sagacity.sqltoy.executor.QueryExecutor, java.lang.Integer,
-	 * org.sagacity.sqltoy.callback.UpdateRowHandler, java.sql.Connection)
-	 */
-	@Override
-	public QueryResult updateFetchTop(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramsValue, Integer topSize, UpdateRowHandler updateRowHandler, Connection conn,
-			final Integer dbType, final String dialect) throws Exception {
-		String realSql = sql + " fetch first " + topSize + " rows only for update";
-		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
-				dbType, 0, -1, -1);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.sagacity.sqltoy.dialect.Dialect#updateFetchRandom(org.sagacity.sqltoy
-	 * .SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
-	 * org.sagacity.sqltoy.executor.QueryExecutor, java.lang.Integer,
-	 * org.sagacity.sqltoy.callback.UpdateRowHandler, java.sql.Connection)
-	 */
-	@Override
-	public QueryResult updateFetchRandom(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramsValue, Integer random, UpdateRowHandler updateRowHandler, Connection conn,
-			final Integer dbType, final String dialect) throws Exception {
-		String realSql = sql + " order by dbms_random.random fetch first " + random + " rows only for update";
-		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
-				dbType, 0, -1, -1);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.dialect.Dialect#findByStore(org.sagacity.sqltoy.
-	 * SqlToyContext, org.sagacity.sqltoy.executor.StoreExecutor)
-	 */
 	@Override
 	public StoreResult executeStore(SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
 			final Object[] inParamsValue, final Integer[] outParamsType, final Connection conn, final Integer dbType,

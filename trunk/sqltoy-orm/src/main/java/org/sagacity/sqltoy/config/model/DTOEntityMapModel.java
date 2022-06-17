@@ -20,17 +20,16 @@ public class DTOEntityMapModel implements Serializable {
 	 */
 	private static final long serialVersionUID = 8851171361533403505L;
 
-	//dto
+	// dto
 	public String dtoClassName;
 
 	public String[] dtoProps;
-
 
 	public Method[] dtoSetMethods;
 
 	public Method[] dtoGetMethods;
 
-	//pojo entity
+	// pojo entity
 	public String pojoClassName;
 	public String[] pojoProps;
 

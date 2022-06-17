@@ -19,7 +19,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
  * @description 提供基于Caffeine缓存实现
  * @author 740202157@qq.com
  * @version v1.0, Date:2021-1-25
- * @modify 2021-1-25,修改说明
+ * @modify 2021-1-25,初始创建
  */
 public class TranslateCaffeineManager extends TranslateCacheManager {
 	/**

@@ -14,7 +14,7 @@ import java.sql.ResultSet;
 @FunctionalInterface
 public interface UpdateRowHandler {
 	/**
-	 * @todo 行处理抽象方法接口定义
+	 * @todo 行处理抽象方法接口定义，用于updateFetch
 	 * @param rs
 	 * @param index
 	 * @throws Exception

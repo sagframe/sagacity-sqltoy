@@ -9,12 +9,13 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.dao.SqlToyLazyDao;
 import org.sagacity.sqltoy.dao.impl.SqlToyLazyDaoImpl;
+import org.sagacity.sqltoy.integration.ConnectionFactory;
+import org.sagacity.sqltoy.integration.impl.SpringAppContext;
+import org.sagacity.sqltoy.integration.impl.SpringConnectionFactory;
 import org.sagacity.sqltoy.plugins.FilterHandler;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.plugins.TypeHandler;
-import org.sagacity.sqltoy.plugins.connection.ConnectionFactory;
 import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
-import org.sagacity.sqltoy.plugins.datasource.ObtainDataSource;
 import org.sagacity.sqltoy.plugins.secure.DesensitizeProvider;
 import org.sagacity.sqltoy.plugins.secure.FieldsSecureProvider;
 import org.sagacity.sqltoy.service.SqlToyCRUDService;
@@ -58,6 +59,26 @@ public class SqltoyAutoConfiguration {
 					"请检查sqltoy配置,是spring.sqltoy作为前缀,而不是sqltoy!\n正确范例: spring.sqltoy.sqlResourcesDir=classpath:com/sagframe/modules");
 		}
 		SqlToyContext sqlToyContext = new SqlToyContext();
+
+		// --------5.2 变化的地方----------------------------------
+		// 注意appContext注入非常关键
+		SpringAppContext appContext = new SpringAppContext();
+		appContext.setContext(applicationContext);
+		sqlToyContext.setAppContext(appContext);
+
+		// 设置默认spring的connectFactory
+		sqlToyContext.setConnectionFactory(new SpringConnectionFactory());
+
+		// 分布式id产生器实现类
+		sqlToyContext.setDistributeIdGeneratorClass("org.sagacity.sqltoy.integration.impl.SpringRedisIdGenerator");
+
+		// 针对Caffeine缓存指定实现类型
+		sqlToyContext
+				.setTranslateCaffeineManagerClass("org.sagacity.sqltoy.translate.cache.impl.TranslateCaffeineManager");
+		// 注入spring的默认mongoQuery实现类
+		sqlToyContext.setMongoQueryClass("org.sagacity.sqltoy.integration.impl.SpringMongoQuery");
+		// --------end 5.2 -----------------------------------------
+
 		// 当发现有重复sqlId时是否抛出异常，终止程序执行
 		sqlToyContext.setBreakWhenSqlRepeat(properties.isBreakWhenSqlRepeat());
 		// sql 文件资源路径
@@ -132,17 +153,17 @@ public class SqltoyAutoConfiguration {
 		if (properties.getReservedWords() != null) {
 			sqlToyContext.setReservedWords(properties.getReservedWords());
 		}
-		// 分页页号超出总页时转第一页，否则返回空集合
-		sqlToyContext.setPageOverToFirst(properties.isPageOverToFirst());
+
 		// 数据库方言
 		sqlToyContext.setDialect(properties.getDialect());
 		// sqltoy内置参数默认值修改
 		sqlToyContext.setDialectConfig(properties.getDialectConfig());
-		// 设置加解密key
-		sqlToyContext.setSecurePrivateKey(properties.getSecurePrivateKey());
-		sqlToyContext.setSecurePublicKey(properties.getSecurePublicKey());
+
 		// update 2021-01-18 设置缓存类别,默认ehcache
 		sqlToyContext.setCacheType(properties.getCacheType());
+
+		sqlToyContext.setSecurePrivateKey(properties.getSecurePrivateKey());
+		sqlToyContext.setSecurePublicKey(properties.getSecurePublicKey());
 		// 设置公共统一属性的处理器
 		String unfiyHandler = properties.getUnifyFieldsHandler();
 		if (StringUtil.isNotBlank(unfiyHandler)) {
@@ -209,18 +230,6 @@ public class SqltoyAutoConfiguration {
 			sqlToyContext.setDefaultDataSourceName(properties.getDefaultDataSource());
 		}
 
-		// 自定义获取数据源的策略配置
-		String obtainDataSource = properties.getObtainDataSource();
-		if (StringUtil.isNotBlank(obtainDataSource)) {
-			if (applicationContext.containsBean(obtainDataSource)) {
-				sqlToyContext.setObtainDataSource((ObtainDataSource) applicationContext.getBean(obtainDataSource));
-			} // 包名和类名称
-			else if (obtainDataSource.contains(".")) {
-				sqlToyContext.setObtainDataSource(
-						(ObtainDataSource) Class.forName(obtainDataSource).getDeclaredConstructor().newInstance());
-			}
-		}
-
 		// 自定义缓存实现管理器
 		String translateCacheManager = properties.getTranslateCacheManager();
 		if (StringUtil.isNotBlank(translateCacheManager)) {
@@ -285,7 +294,7 @@ public class SqltoyAutoConfiguration {
 			}
 		}
 
-		// 自定义字段字符脱敏处理器
+		// 自定义字段脱敏处理器
 		String desensitizeProvider = properties.getDesensitizeProvider();
 		if (StringUtil.isNotBlank(desensitizeProvider)) {
 			if (applicationContext.containsBean(desensitizeProvider)) {
@@ -313,23 +322,28 @@ public class SqltoyAutoConfiguration {
 	}
 
 	/**
+	 * 5.2 版本要注入sqlToyContext
 	 * 
 	 * @return 返回预定义的通用Dao实例
 	 */
 	@Bean(name = "sqlToyLazyDao")
 	@ConditionalOnMissingBean
-	SqlToyLazyDao sqlToyLazyDao() {
-		return new SqlToyLazyDaoImpl();
+	SqlToyLazyDao sqlToyLazyDao(SqlToyContext sqlToyContext) {
+		SqlToyLazyDaoImpl lazyDao = new SqlToyLazyDaoImpl();
+		lazyDao.setSqlToyContext(sqlToyContext);
+		return lazyDao;
 	}
 
 	/**
+	 * 5.2 版本要注入sqlToyLazyDao
 	 * 
 	 * @return 返回预定义的通用CRUD service实例
 	 */
 	@Bean(name = "sqlToyCRUDService")
 	@ConditionalOnMissingBean
-	SqlToyCRUDService sqlToyCRUDService() {
-		return new SqlToyCRUDServiceImpl();
+	SqlToyCRUDService sqlToyCRUDService(SqlToyLazyDao sqlToyLazyDao) {
+		SqlToyCRUDServiceImpl sqlToyCRUDService = new SqlToyCRUDServiceImpl();
+		sqlToyCRUDService.setSqlToyLazyDao(sqlToyLazyDao);
+		return sqlToyCRUDService;
 	}
-
 }

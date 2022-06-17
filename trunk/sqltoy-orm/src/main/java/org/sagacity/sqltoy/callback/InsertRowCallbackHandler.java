@@ -17,8 +17,8 @@ public interface InsertRowCallbackHandler {
 	/**
 	 * @todo 批量插入反调
 	 * @param pst
-	 * @param index
-	 * @param rowData
+	 * @param index   第几行
+	 * @param rowData 单行数据
 	 * @throws SQLException
 	 */
 	public void process(PreparedStatement pst, int index, Object rowData) throws SQLException;

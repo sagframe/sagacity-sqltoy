@@ -46,19 +46,18 @@ import org.sagacity.sqltoy.dialect.impl.OracleDialect;
 import org.sagacity.sqltoy.dialect.impl.PostgreSqlDialect;
 import org.sagacity.sqltoy.dialect.impl.SqlServerDialect;
 import org.sagacity.sqltoy.dialect.impl.SqliteDialect;
-import org.sagacity.sqltoy.dialect.impl.SybaseIQDialect;
 import org.sagacity.sqltoy.dialect.impl.TidbDialect;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.dialect.utils.PageOptimizeUtils;
 import org.sagacity.sqltoy.exception.DataAccessException;
-import org.sagacity.sqltoy.executor.QueryExecutor;
-import org.sagacity.sqltoy.executor.UniqueExecutor;
 import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.model.LockMode;
+import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.model.TreeTableModel;
+import org.sagacity.sqltoy.model.UniqueExecutor;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.plugins.secure.FieldsSecureProvider;
 import org.sagacity.sqltoy.plugins.sharding.ShardingUtils;
@@ -157,7 +156,8 @@ public class DialectFactory {
 		}
 		// 9.5+(9.5开始支持类似merge into形式的语法,参见具体实现)
 		// postgresql/greenplum
-		case DBType.POSTGRESQL: {
+		case DBType.POSTGRESQL:
+		case DBType.POSTGRESQL15: {
 			dialectSqlWrapper = new PostgreSqlDialect();
 			break;
 		}
@@ -207,12 +207,6 @@ public class DialectFactory {
 		} // 北大金仓
 		case DBType.KINGBASE: {
 			dialectSqlWrapper = new KingbaseDialect();
-			break;
-		}
-		// sybase iq基本淘汰
-		// 15.4+(必须采用15.4,最好采用16.0 并打上最新的补丁),15.4 之后的分页支持limit模式
-		case DBType.SYBASE_IQ: {
-			dialectSqlWrapper = new SybaseIQDialect();
 			break;
 		}
 		// 如果匹配不上使用默认dialect
@@ -406,9 +400,7 @@ public class DialectFactory {
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
 									sqlToyConfig, queryExecutor, dialect, (randomCount < 1) ? true : false);
 							// 判断数据库是否支持取随机记录(只有informix和sybase不支持)
-							Long totalCount = SqlToyConstants.randomWithDialect(dbType) ? null
-									: getCountBySql(sqlToyContext, realSqlToyConfig, queryExecutor, conn, dbType,
-											dialect);
+							Long totalCount = null;
 							Long randomCnt;
 							// 记录数量大于1表示取随机记录数量
 							if (randomCount >= 1) {
@@ -428,7 +420,6 @@ public class DialectFactory {
 									randomCnt = 1L;
 								}
 							}
-
 							QueryResult queryResult;
 							// 总记录数为零
 							if (totalCount != null && totalCount == 0) {
@@ -532,7 +523,7 @@ public class DialectFactory {
 				}
 
 				FieldMeta idMeta = (FieldMeta) entityMeta.getFieldMeta(entityMeta.getIdArray()[0]);
-				// 如未定义idField则使用主键作为idField(update 2020-10-16)
+				// 如未定义则使用主键(update 2020-10-16)
 				if (StringUtil.isBlank(treeModel.getIdField())) {
 					treeModel.idField(idMeta.getColumnName());
 				} else {
@@ -559,7 +550,7 @@ public class DialectFactory {
 						treeModel.setIdValue(idValue);
 					}
 				}
-				//update 2022-5-6
+				// update 2022-5-6，boolean类型转出Boolean,在未赋值情况下通过主键类型进行自动补全设置
 				if (treeModel.isChar() == null) {
 					// id字段非主键
 					if (!treeModel.getIdField().equalsIgnoreCase(idMeta.getColumnName())) {
@@ -748,11 +739,7 @@ public class DialectFactory {
 								boolean illegal = (pageNo == -1 && (limitSize != -1 && recordCnt > limitSize));
 								if (recordCnt == 0 || illegal) {
 									queryResult = new QueryResult();
-									if (recordCnt == 0 && sqlToyContext.isPageOverToFirst()) {
-										queryResult.setPageNo(1L);
-									} else {
-										queryResult.setPageNo(pageNo);
-									}
+									queryResult.setPageNo(pageNo);
 									queryResult.setPageSize(pageSize);
 									queryResult.setRecordCount(0L);
 									if (illegal) {
@@ -784,11 +771,11 @@ public class DialectFactory {
 										// 实际开始页(页数据超出总记录,则从第一页重新开始,相反如继续按指定的页查询则记录为空,且实际页号也不存在)
 										boolean isOverPage = (pageNo * pageSize >= (recordCnt + pageSize));
 										// 允许页号超出总页数，结果返回空集合
-										if (isOverPage && !sqlToyContext.isPageOverToFirst()) {
+										if (isOverPage) {
 											queryResult = new QueryResult();
 											queryResult.setPageNo(pageNo);
 										} else {
-											long realStartPage = isOverPage ? 1 : pageNo;
+											long realStartPage = pageNo;
 											queryResult = getDialectSqlWrapper(dbType).findPageBySql(sqlToyContext,
 													realSqlToyConfig, queryExecutor,
 													wrapDecryptHandler(sqlToyContext, extend.resultType), realStartPage,
@@ -931,9 +918,6 @@ public class DialectFactory {
 			// 总记录数量大于实际记录数量
 			if (rowSize < queryResult.getPageSize() && (queryResult.getRecordCount() > minCount) && minCount >= 0) {
 				queryResult.setRecordCount(minCount);
-			}
-			if (queryResult.getRecordCount() == 0 && sqlToyContext.isPageOverToFirst()) {
-				queryResult.setPageNo(1L);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -1543,6 +1527,7 @@ public class DialectFactory {
 	 * @todo 修改单个对象
 	 * @param sqlToyContext
 	 * @param entity
+	 * @param uniqueFields             唯一性索引字段
 	 * @param forceUpdateFields
 	 * @param cascade
 	 * @param forceCascadeClass

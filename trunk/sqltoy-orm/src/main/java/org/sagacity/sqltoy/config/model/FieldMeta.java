@@ -11,7 +11,7 @@ import org.sagacity.sqltoy.SqlToyConstants;
  * @project sqltoy-orm
  * @description 数据库表字段的描述信息
  * @author zhongxuchen
- * @version v1.0,Date:2012-6-1 下午5:09:48
+ * @version v1.0,Date:2012-6-1
  */
 public class FieldMeta implements Serializable {
 	/**
@@ -280,4 +280,5 @@ public class FieldMeta implements Serializable {
 	public void setPartitionKey(boolean partitionKey) {
 		this.partitionKey = partitionKey;
 	}
+
 }

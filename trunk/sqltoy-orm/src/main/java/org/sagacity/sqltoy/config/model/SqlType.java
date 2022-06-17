@@ -34,7 +34,7 @@ public enum SqlType {
 
 	/**
 	 * @todo 转换给定字符串为枚举主键策略
-	 * @param strategy
+	 * @param sqlType
 	 * @return
 	 */
 	public static SqlType getSqlType(String sqlType) {

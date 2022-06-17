@@ -14,6 +14,7 @@ import java.util.regex.Pattern;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DecryptHandler;
+import org.sagacity.sqltoy.callback.GenerateSqlHandler;
 import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
@@ -25,14 +26,13 @@ import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
 import org.sagacity.sqltoy.dialect.Dialect;
-import org.sagacity.sqltoy.dialect.handler.GenerateSqlHandler;
 import org.sagacity.sqltoy.dialect.utils.DefaultDialectUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectExtUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.dialect.utils.SqlServerDialectUtils;
-import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.model.LockMode;
+import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TableMeta;
@@ -61,8 +61,7 @@ public class SqlServerDialect implements Dialect {
 	 */
 	private static final String NVL_FUNCTION = "isnull";
 
-	// private static final Pattern FROM = Pattern.compile("(?i)\\s+from[\\(\\s+]");
-
+	// order by 匹配
 	private static final Pattern ORDER_BY = Pattern.compile("(?i)\\Worder\\s*by\\W");
 
 	@Override
@@ -80,7 +79,7 @@ public class SqlServerDialect implements Dialect {
 	 * 
 	 * @see org.sagacity.sqltoy.dialect.Dialect#getRandomResult(org. sagacity
 	 * .sqltoy.SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
-	 * org.sagacity.sqltoy.executor.QueryExecutor, java.lang.Long, java.lang.Long,
+	 * org.sagacity.sqltoy.model.QueryExecutor, java.lang.Long, java.lang.Long,
 	 * java.sql.Connection)
 	 */
 	@Override
@@ -97,7 +96,7 @@ public class SqlServerDialect implements Dialect {
 	 * 
 	 * @see org.sagacity.sqltoy.dialect.Dialect#findPageBySql(org.sagacity
 	 * .sqltoy.SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
-	 * org.sagacity.sqltoy.executor.QueryExecutor,java.lang.Long, java.lang.Integer,
+	 * org.sagacity.sqltoy.model.QueryExecutor,java.lang.Long, java.lang.Integer,
 	 * java.sql.Connection)
 	 */
 	@Override
@@ -126,7 +125,7 @@ public class SqlServerDialect implements Dialect {
 		// 避免条件用?模式,导致实际参数位置不匹配,因此只针对:name模式进行处理
 		if (isNamed) {
 			SqlToyResult tmpResult = SqlConfigParseUtils.processSql(judgeOrderSql, extend.getParamsName(sqlToyConfig),
-					extend.getParamsValue(sqlToyContext, sqlToyConfig), dialect);
+					extend.getParamsValue(sqlToyContext, sqlToyConfig),dialect);
 			judgeOrderSql = tmpResult.getSql();
 		}
 		// order by位置
@@ -153,7 +152,7 @@ public class SqlServerDialect implements Dialect {
 			sql.append(sqlToyConfig.getFastTailSql(dialect));
 		}
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
-				sql.toString(), (pageNo - 1) * pageSize, Long.valueOf(pageSize), dialect);
+				sql.toString(), (pageNo - 1) * pageSize, Long.valueOf(pageSize),dialect);
 		return findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 				extend.rowCallbackHandler, decryptHandler, conn, null, dbType, dialect, fetchSize, maxRows);
 	}
@@ -163,7 +162,7 @@ public class SqlServerDialect implements Dialect {
 	 * 
 	 * @see org.sagacity.sqltoy.dialect.Dialect#findTopBySql(org.sagacity.sqltoy.
 	 * SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
-	 * org.sagacity.sqltoy.executor.QueryExecutor, double, java.sql.Connection)
+	 * org.sagacity.sqltoy.model.QueryExecutor, double, java.sql.Connection)
 	 */
 	@Override
 	public QueryResult findTopBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, QueryExecutor queryExecutor,
@@ -202,7 +201,7 @@ public class SqlServerDialect implements Dialect {
 			sql.append(sqlToyConfig.getFastTailSql(dialect));
 		}
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
-				sql.toString(), null, null, dialect);
+				sql.toString(), null, null,dialect);
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		return findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 				extend.rowCallbackHandler, decryptHandler, conn, null, dbType, dialect, fetchSize, maxRows);
@@ -216,6 +215,7 @@ public class SqlServerDialect implements Dialect {
 	 * java.lang.reflect.Type, org.sagacity.sqltoy.callback.RowCallbackHandler,
 	 * java.sql.Connection)
 	 */
+	@Override
 	public QueryResult findBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
 			final Object[] paramsValue, final RowCallbackHandler rowCallbackHandler,
 			final DecryptHandler decryptHandler, final Connection conn, final LockMode lockMode, final Integer dbType,
@@ -287,6 +287,7 @@ public class SqlServerDialect implements Dialect {
 		// 返回变更的记录数量
 		return DialectUtils.saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta,
 				new GenerateSqlHandler() {
+					@Override
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						String sql = SqlServerDialectUtils.getSaveIgnoreExistSql(dbType, entityMeta,
 								entityMeta.getIdStrategy(), tableName, "isnull", "@mySeqVariable", false);
@@ -432,7 +433,7 @@ public class SqlServerDialect implements Dialect {
 	 * 
 	 * @see org.sagacity.sqltoy.dialect.Dialect#updateFetch(org.sagacity.sqltoy.
 	 * SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
-	 * org.sagacity.sqltoy.executor.QueryExecutor,
+	 * org.sagacity.sqltoy.model.QueryExecutor,
 	 * org.sagacity.sqltoy.callback.UpdateRowHandler, java.sql.Connection)
 	 */
 	@Override
@@ -444,49 +445,6 @@ public class SqlServerDialect implements Dialect {
 				dbType, 0, fetchSize, maxRows);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.dialect.Dialect#updateFetchTop(org.sagacity.sqltoy
-	 * .SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
-	 * org.sagacity.sqltoy.executor.QueryExecutor, java.lang.Integer,
-	 * org.sagacity.sqltoy.callback.UpdateRowHandler, java.sql.Connection)
-	 */
-	@Override
-	public QueryResult updateFetchTop(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramsValue, Integer topSize, UpdateRowHandler updateRowHandler, Connection conn,
-			final Integer dbType, final String dialect) throws Exception {
-		String realSql = SqlServerDialectUtils.lockSql(sql, null, LockMode.UPGRADE_NOWAIT) + " fetch next " + topSize
-				+ " rows only";
-		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
-				dbType, 0, -1, -1);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.sagacity.sqltoy.dialect.Dialect#updateFetchRandom(org.sagacity.sqltoy
-	 * .SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
-	 * org.sagacity.sqltoy.executor.QueryExecutor, java.lang.Integer,
-	 * org.sagacity.sqltoy.callback.UpdateRowHandler, java.sql.Connection)
-	 */
-	@Override
-	public QueryResult updateFetchRandom(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramsValue, Integer random, UpdateRowHandler updateRowHandler, Connection conn,
-			final Integer dbType, final String dialect) throws Exception {
-		String realSql = SqlServerDialectUtils.lockSql(sql, null, LockMode.UPGRADE_NOWAIT)
-				+ " order by NEWID() fetch next " + random + " rows only";
-		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
-				dbType, 0, -1, -1);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.dialect.Dialect#findByStore(org.sagacity.sqltoy.
-	 * SqlToyContext, org.sagacity.sqltoy.executor.StoreExecutor)
-	 */
 	@Override
 	public StoreResult executeStore(SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
 			final Object[] inParamsValue, final Integer[] outParamsType, final Connection conn, final Integer dbType,
@@ -522,4 +480,5 @@ public class SqlServerDialect implements Dialect {
 		return SqlServerDialectUtils.getTables(catalog, schema,
 				(tableName != null && tableName.equals("%")) ? null : tableName, conn, dbType, dialect);
 	}
+
 }

@@ -10,9 +10,10 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.sagacity.sqltoy.SqlExecuteStat;
-import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DecryptHandler;
+import org.sagacity.sqltoy.callback.GenerateSavePKStrategy;
+import org.sagacity.sqltoy.callback.GenerateSqlHandler;
 import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
@@ -21,15 +22,13 @@ import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.dialect.Dialect;
-import org.sagacity.sqltoy.dialect.handler.GenerateSavePKStrategy;
-import org.sagacity.sqltoy.dialect.handler.GenerateSqlHandler;
 import org.sagacity.sqltoy.dialect.model.SavePKStrategy;
 import org.sagacity.sqltoy.dialect.utils.DefaultDialectUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectExtUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
-import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.model.LockMode;
+import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TableMeta;
@@ -142,12 +141,14 @@ public class DefaultDialect implements Dialect {
 				NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName);
 		return DialectUtils.save(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql, entity,
 				new GenerateSqlHandler() {
+					@Override
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateField) {
 						return DialectExtUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(),
 								NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(),
 								isAssignPKValue(entityMeta.getIdStrategy()), null);
 					}
 				}, new GenerateSavePKStrategy() {
+					@Override
 					public SavePKStrategy generate(EntityMeta entityMeta) {
 						return new SavePKStrategy(entityMeta.getIdStrategy(),
 								isAssignPKValue(entityMeta.getIdStrategy()));
@@ -254,39 +255,11 @@ public class DefaultDialect implements Dialect {
 	}
 
 	@Override
-	public QueryResult updateFetchTop(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramsValue, Integer topSize, UpdateRowHandler updateRowHandler, Connection conn, Integer dbType,
-			String dialect) throws Exception {
-		// 不支持
-		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
-	}
-
-	@Override
-	public QueryResult updateFetchRandom(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramsValue, Integer random, UpdateRowHandler updateRowHandler, Connection conn, Integer dbType,
-			String dialect) throws Exception {
-		// 不支持
-		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
-	}
-
-	@Override
 	public StoreResult executeStore(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] inParamsValue, Integer[] outParamsType, Connection conn, Integer dbType, String dialect,
 			final int fetchSize) throws Exception {
 		return DialectUtils.executeStore(sqlToyConfig, sqlToyContext, sql, inParamsValue, outParamsType, conn, dbType,
 				fetchSize);
-	}
-
-	@Override
-	public List<ColumnMeta> getTableColumns(String catalog, String schema, String tableName, Connection conn,
-			Integer dbType, String dialect) throws Exception {
-		return DefaultDialectUtils.getTableColumns(catalog, schema, tableName, conn, dbType, dialect);
-	}
-
-	@Override
-	public List<TableMeta> getTables(String catalog, String schema, String tableName, Connection conn, Integer dbType,
-			String dialect) throws Exception {
-		return DefaultDialectUtils.getTables(catalog, schema, tableName, conn, dbType, dialect);
 	}
 
 	private String getLockSql(String sql, Integer dbType, LockMode lockMode) {
@@ -315,5 +288,17 @@ public class DefaultDialect implements Dialect {
 			return true;
 		}
 		return true;
+	}
+
+	@Override
+	public List<ColumnMeta> getTableColumns(String catalog, String schema, String tableName, Connection conn,
+			Integer dbType, String dialect) throws Exception {
+		return DefaultDialectUtils.getTableColumns(catalog, schema, tableName, conn, dbType, dialect);
+	}
+
+	@Override
+	public List<TableMeta> getTables(String catalog, String schema, String tableName, Connection conn, Integer dbType,
+			String dialect) throws Exception {
+		return DefaultDialectUtils.getTables(catalog, schema, tableName, conn, dbType, dialect);
 	}
 }

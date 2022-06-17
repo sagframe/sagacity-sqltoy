@@ -14,7 +14,6 @@ import java.util.Map;
 import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyContext;
-import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.config.model.FormatModel;
 import org.sagacity.sqltoy.config.model.PageOptimize;
@@ -78,12 +77,6 @@ public class QueryExecutorExtend implements Serializable {
 	public RowCallbackHandler rowCallbackHandler;
 
 	/**
-	 * 查询属性值反射处理
-	 */
-	@Deprecated
-	public ReflectPropsHandler reflectPropsHandler;
-
-	/**
 	 * 查询结果类型
 	 */
 	public Type resultType;
@@ -113,8 +106,6 @@ public class QueryExecutorExtend implements Serializable {
 	 */
 	public Class[] hiberarchyClasses;
 
-	public Map<Class, IgnoreKeyCaseMap<String, String>> fieldsMap = new HashMap<Class, IgnoreKeyCaseMap<String, String>>();
-
 	/**
 	 * 动态增加缓存翻译配置
 	 */
@@ -124,6 +115,8 @@ public class QueryExecutorExtend implements Serializable {
 	 * 动态设置filters
 	 */
 	public List<ParamsFilter> paramFilters = new ArrayList<ParamsFilter>();
+
+	public Map<Class, IgnoreKeyCaseMap<String, String>> fieldsMap = new HashMap<Class, IgnoreKeyCaseMap<String, String>>();
 
 	/**
 	 * 对字段进行安全脱敏

@@ -10,16 +10,16 @@ import java.util.List;
 
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DecryptHandler;
+import org.sagacity.sqltoy.callback.GenerateSavePKStrategy;
+import org.sagacity.sqltoy.callback.GenerateSqlHandler;
 import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
-import org.sagacity.sqltoy.dialect.handler.GenerateSavePKStrategy;
-import org.sagacity.sqltoy.dialect.handler.GenerateSqlHandler;
 import org.sagacity.sqltoy.dialect.model.SavePKStrategy;
-import org.sagacity.sqltoy.executor.QueryExecutor;
+import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
@@ -47,6 +47,8 @@ public class PostgreSqlDialectUtils {
 	 * @param conn
 	 * @param dbType
 	 * @param dialect
+	 * @param fetchSize
+	 * @param maxRows
 	 * @return
 	 * @throws Exception
 	 */
@@ -117,6 +119,7 @@ public class PostgreSqlDialectUtils {
 				isAssignPK, tableName);
 		return DialectUtils.save(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entity,
 				new GenerateSqlHandler() {
+					@Override
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateField) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = "nextval('" + entityMeta.getSequence() + "')";
@@ -129,6 +132,7 @@ public class PostgreSqlDialectUtils {
 								isAssignPKValue(pkStrategy), null);
 					}
 				}, new GenerateSavePKStrategy() {
+					@Override
 					public SavePKStrategy generate(EntityMeta entityMeta) {
 						return new SavePKStrategy(entityMeta.getIdStrategy(),
 								isAssignPKValue(entityMeta.getIdStrategy()));
@@ -168,12 +172,28 @@ public class PostgreSqlDialectUtils {
 				reflectPropsHandler, conn, dbType, autoCommit);
 	}
 
+	/**
+	 * @TODO postgresql15 开始支持merge into 语法
+	 * @param sqlToyContext
+	 * @param entities
+	 * @param batchSize
+	 * @param reflectPropsHandler
+	 * @param forceUpdateFields
+	 * @param conn
+	 * @param dbType
+	 * @param dialect
+	 * @param autoCommit
+	 * @param tableName
+	 * @return
+	 * @throws Exception
+	 */
 	public static Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			ReflectPropsHandler reflectPropsHandler, String[] forceUpdateFields, Connection conn, final Integer dbType,
 			final String dialect, final Boolean autoCommit, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		return DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta, forceUpdateFields,
 				new GenerateSqlHandler() {
+					@Override
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = "nextval('" + entityMeta.getSequence() + "')";
@@ -182,8 +202,9 @@ public class PostgreSqlDialectUtils {
 							pkStrategy = PKStrategy.SEQUENCE;
 							sequence = "DEFAULT";
 						}
-						return getSaveOrUpdateSql(dbType, entityMeta, pkStrategy, isAssignPKValue(pkStrategy), sequence,
-								forceUpdateFields, tableName);
+						return DialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
+								entityMeta, pkStrategy, forceUpdateFields, null, NVL_FUNCTION, sequence,
+								isAssignPKValue(pkStrategy), tableName);
 					}
 				}, reflectPropsHandler, conn, dbType, autoCommit);
 	}
@@ -199,6 +220,7 @@ public class PostgreSqlDialectUtils {
 	 * @param tableName
 	 * @return
 	 */
+	@Deprecated
 	public static String getSaveOrUpdateSql(Integer dbType, EntityMeta entityMeta, PKStrategy pkStrategy,
 			boolean isAssignPK, String sequence, String[] forceUpdateFields, String tableName) {
 		String realTable = entityMeta.getSchemaTable(tableName, dbType);

@@ -17,13 +17,14 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.config.model.NoSqlConfigModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
-import org.sagacity.sqltoy.executor.QueryExecutor;
-import org.sagacity.sqltoy.model.PaginationModel;
+import org.sagacity.sqltoy.model.Page;
+import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.inner.DataSetResult;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.HttpClientUtils;
 import org.sagacity.sqltoy.utils.MongoElasticUtils;
+import org.sagacity.sqltoy.utils.QueryExecutorBuilder;
 import org.sagacity.sqltoy.utils.ResultUtils;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
@@ -54,11 +55,13 @@ public class ElasticSearchPlugin {
 	 * @return
 	 * @throws Exception
 	 */
-	public static PaginationModel findPage(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			PaginationModel pageModel, QueryExecutor queryExecutor) throws Exception {
+	public static Page findPage(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, Page pageModel,
+			QueryExecutor queryExecutor) throws Exception {
 		String realMql = "";
 		JSONObject jsonQuery = null;
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		//update 2022-6-16 补全参数统一构造处理
+		QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
 		try {
 			realMql = MongoElasticUtils.wrapES(sqlToyConfig, extend.getParamsName(sqlToyConfig),
 					extend.getParamsValue(sqlToyContext, sqlToyConfig)).trim();
@@ -74,7 +77,7 @@ public class ElasticSearchPlugin {
 			throw e;
 		}
 
-		PaginationModel page = new PaginationModel();
+		Page page = new Page();
 		page.setPageNo(pageModel.getPageNo());
 		page.setPageSize(pageModel.getPageSize());
 		DataSetResult result = executeQuery(sqlToyContext, sqlToyConfig, jsonQuery, (Class) extend.resultType,
@@ -98,6 +101,8 @@ public class ElasticSearchPlugin {
 		String realMql = "";
 		JSONObject jsonQuery = null;
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		// update 2022-6-16 补全参数统一构造处理
+		QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
 		try {
 			realMql = MongoElasticUtils.wrapES(sqlToyConfig, extend.getParamsName(sqlToyConfig),
 					extend.getParamsValue(sqlToyContext, sqlToyConfig)).trim();
@@ -107,8 +112,8 @@ public class ElasticSearchPlugin {
 				jsonQuery.remove("FROM");
 				jsonQuery.remove("size");
 				jsonQuery.remove("SIZE");
-				jsonQuery.remove("from", 0);
-				jsonQuery.remove("size", topSize);
+				jsonQuery.put("from", 0);
+				jsonQuery.put("size", topSize);
 			}
 		} catch (Exception e) {
 			logger.error("解析es原生json错误,请检查json串格式是否正确!错误信息:{},json={}", e.getMessage(), realMql);

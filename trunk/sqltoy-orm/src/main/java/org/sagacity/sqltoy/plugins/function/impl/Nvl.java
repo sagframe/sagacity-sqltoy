@@ -50,11 +50,11 @@ public class Nvl extends IFunction {
 		if (dialect == DBType.SQLSERVER) {
 			return wrapArgs("isnull", args);
 		}
-		if (dialect == DBType.POSTGRESQL || dialect == DBType.DB2 || dialect == DBType.GAUSSDB) {
+		if (dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL15 || dialect == DBType.DB2
+				|| dialect == DBType.GAUSSDB) {
 			return wrapArgs("coalesce", args);
 		}
-		if (dialect == DBType.MYSQL || dialect == DBType.TIDB || dialect == DBType.MYSQL57
-				|| dialect == DBType.SYBASE_IQ) {
+		if (dialect == DBType.MYSQL || dialect == DBType.TIDB || dialect == DBType.MYSQL57) {
 			if (args.length == 1) {
 				return wrapArgs("isnull", args);
 			}

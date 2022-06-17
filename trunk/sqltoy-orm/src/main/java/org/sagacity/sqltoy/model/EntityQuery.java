@@ -67,11 +67,21 @@ public class EntityQuery implements Serializable {
 		return this;
 	}
 
+	/**
+	 * @TODO 设置jdbc pst查询最大记录数,一般不会涉及
+	 * @param maxRows
+	 * @return
+	 */
+	@Deprecated
 	public EntityQuery maxRows(int maxRows) {
 		innerModel.maxRows = maxRows;
 		return this;
 	}
 
+	/**
+	 * @TODO 查询时增加distinct
+	 * @return
+	 */
 	public EntityQuery distinct() {
 		innerModel.distinct = true;
 		return this;
@@ -115,7 +125,7 @@ public class EntityQuery implements Serializable {
 	}
 
 	/**
-	 * @TODO where 条件
+	 * @TODO where 条件，例如: "#[name like :name ] #[and status in (:status)]"
 	 * @param where
 	 * @return
 	 */
@@ -124,11 +134,31 @@ public class EntityQuery implements Serializable {
 		return this;
 	}
 
+	/**
+	 * @TODO 设置where中涉及的参数
+	 *       <p>
+	 *       EntityQuery.create().where("status=:status").names("status").values(1)
+	 *       </p>
+	 * @param names
+	 * @return
+	 */
 	public EntityQuery names(String... names) {
 		innerModel.names = names;
 		return this;
 	}
 
+	/**
+	 * <p>
+	 * 1、EntityQuery.create().where("status=:status").names("status").values(1)
+	 * 2、EntityQuery.create().where("status=?").values(1)
+	 * 3、EntityQuery.create().where("status=:status and staffName like
+	 * :staffName").values(staffInfo对象实体)
+	 * 4、EntityQuery.create().where("status=:status").values(map.put("status",1))
+	 * </p>
+	 * 
+	 * @param values
+	 * @return
+	 */
 	public EntityQuery values(Object... values) {
 		// 兼容map
 		if (values != null && values.length == 1 && values[0] != null && values[0] instanceof Map) {
@@ -140,8 +170,8 @@ public class EntityQuery implements Serializable {
 	}
 
 	/**
-	 * @see 直接使用values(map)传参,逐步减少过多的方法
-	 * @TODO 用map形式传参
+	 * @see 5.1.9 启动 EntityQuery.create().values(map)模式传参模式
+	 * @TODO 用map形式传参，EntityQuery.create().values(map) 模式也可以兼容
 	 * @param paramsMap
 	 * @return
 	 */
@@ -160,7 +190,11 @@ public class EntityQuery implements Serializable {
 		return this;
 	}
 
-	// 排序
+	/**
+	 * @TODO 设置排序默认为升序，如:EntityQuery.create().orderBy("status")
+	 * @param fields
+	 * @return
+	 */
 	public EntityQuery orderBy(String... fields) {
 		// 默认为升序
 		if (fields != null && fields.length > 0) {
@@ -193,16 +227,6 @@ public class EntityQuery implements Serializable {
 		return this;
 	}
 
-	/**
-	 * @TODO 锁记录
-	 * @param lockMode
-	 * @return
-	 */
-	public EntityQuery lock(LockMode lockMode) {
-		innerModel.lockMode = lockMode;
-		return this;
-	}
-
 	public EntityQuery groupBy(String... groups) {
 		if (groups != null && groups.length > 0) {
 			innerModel.groupBy = StringUtil.linkAry(",", true, groups);
@@ -214,7 +238,17 @@ public class EntityQuery implements Serializable {
 		innerModel.having = having;
 		return this;
 	}
-	
+
+	/**
+	 * @TODO 锁记录
+	 * @param lockMode
+	 * @return
+	 */
+	public EntityQuery lock(LockMode lockMode) {
+		innerModel.lockMode = lockMode;
+		return this;
+	}
+
 	/**
 	 * @TODO 对结果字段进行安全脱敏
 	 * @param maskType
@@ -245,6 +279,7 @@ public class EntityQuery implements Serializable {
 					throw new IllegalArgumentException("针对EntityQuery设置条件过滤必须要设置filterParams=[" + filter.getParams()
 							+ "],和filterType=[" + filter.getType() + "]!");
 				}
+				// 类别是对比型的，需要设置value值进行对比
 				if (CollectionUtil.any(filter.getType(), "eq", "neq", "gt", "gte", "lt", "lte", "between")) {
 					if (StringUtil.isBlank(filter.getValue())) {
 						throw new IllegalArgumentException(
