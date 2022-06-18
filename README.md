@@ -40,6 +40,10 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 * 5.2.1.jre11 发版日期: 2022-6-18
 * 5.2.1.jre17 发版日期: 2022-6-18
 
+# 历史版本
+* 5.1.48/5.1.48.jre11/5.1.48.jre17  发版日期: 2022-6-18
+* 4.19.44(final)                    发版日期: 2022-6-18
+
 # 1. 前言
 ## 1.1 sqltoy-orm是什么
    sqltoy-orm是比JPA+MyBatis更加贴合项目的orm框架(依赖spring)，具有jpa式的对象CRUD的同时具有比myBatis(plus)更直观简洁性能强大的查询功能。
