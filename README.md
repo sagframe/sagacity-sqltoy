@@ -44,6 +44,27 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 * 5.1.48/5.1.48.jre11/5.1.48.jre17  发版日期: 2022-6-18
 * 4.19.44(final)                    发版日期: 2022-6-18
 
+# 升级到5.2.x指南
+* 常规springboot项目无任何影响
+* 存在自定义Dao并继承SqlToyDaoSupport的场景，需改成继承SpringDaoSupport
+```java
+// 主要是@Autowired sqlToyContext 注入SqlToyContext差异
+@Repository("staffInfoDao")
+public class StaffInfoDao extends SpringDaoSupport {
+}
+```
+* 传统spring xml配置
+```xml
+<bean id="sqlToyContext" class="org.sagacity.sqltoy.SqlToyContext"
+		init-method="initialize" destroy-method="destroy">
+    <!-- 5.2.x 关键影响点:appContext -->
+    <property name="appContext">
+        <bean class="org.sagacity.sqltoy.integration.impl.SpringAppContext"/>
+    </property>
+    <!-- 其他配置保持一致 -->
+</bean>
+```
+
 # 1. 前言
 ## 1.1 sqltoy-orm是什么
    sqltoy-orm是比JPA+MyBatis更加贴合项目的orm框架(依赖spring)，具有jpa式的对象CRUD的同时具有比myBatis(plus)更直观简洁性能强大的查询功能。
