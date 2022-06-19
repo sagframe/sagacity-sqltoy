@@ -46,13 +46,7 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 
 # 升级到5.2.x指南
 * 常规springboot项目无任何影响
-* 存在自定义Dao并继承SqlToyDaoSupport的场景，需改成继承SpringDaoSupport
-```java
-// 主要是@Autowired sqlToyContext 注入SqlToyContext差异
-@Repository("staffInfoDao")
-public class StaffInfoDao extends SpringDaoSupport {
-}
-```
+* 存在自定义Dao并继承SqlToyDaoSupport的场景，需改成继承SpringDaoSupport(推荐直接使用sqlToyLazyDao公共dao即可)
 * 传统spring xml配置
 ```xml
 <bean id="sqlToyContext" class="org.sagacity.sqltoy.SqlToyContext"
