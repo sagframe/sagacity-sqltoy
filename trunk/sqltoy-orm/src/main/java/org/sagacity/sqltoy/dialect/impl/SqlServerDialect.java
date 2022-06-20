@@ -478,7 +478,7 @@ public class SqlServerDialect implements Dialect {
 	public List<TableMeta> getTables(String catalog, String schema, String tableName, Connection conn, Integer dbType,
 			String dialect) throws Exception {
 		return SqlServerDialectUtils.getTables(catalog, schema,
-				(tableName != null && tableName.equals("%")) ? null : tableName, conn, dbType, dialect);
+				(tableName != null && "%".equals(tableName)) ? null : tableName, conn, dbType, dialect);
 	}
 
 }

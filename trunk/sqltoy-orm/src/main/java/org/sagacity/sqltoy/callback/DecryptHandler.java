@@ -42,7 +42,7 @@ public class DecryptHandler {
 		}
 		if (exists) {
 			String content = value.toString();
-			if (content.trim().equals("")) {
+			if ("".equals(content.trim())) {
 				return value;
 			}
 			return fieldsSecureProvider.decrypt(content);

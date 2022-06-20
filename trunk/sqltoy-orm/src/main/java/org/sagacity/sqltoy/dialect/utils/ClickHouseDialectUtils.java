@@ -393,8 +393,8 @@ public class ClickHouseDialectUtils {
 							ColumnMeta colMeta = new ColumnMeta();
 							colMeta.setColName(rs.getString("COLUMN_NAME"));
 							colMeta.setComments(rs.getString("COMMENTS"));
-							colMeta.setPK(rs.getString("PRIMARY_KEY").equals("1") ? true : false);
-							colMeta.setPartitionKey(rs.getString("PARTITION_KEY").equals("1") ? true : false);
+							colMeta.setPK("1".equals(rs.getString("PRIMARY_KEY")) ? true : false);
+							colMeta.setPartitionKey("1".equals(rs.getString("PARTITION_KEY")) ? true : false);
 							colComments.put(colMeta.getColName(), colMeta);
 						}
 						this.setResult(colComments);

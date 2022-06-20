@@ -148,37 +148,37 @@ public class XMLUtil {
 							// 替换全角为半角
 							args = values[i].replaceAll("\\，", ",").split("\\,");
 							className = className.substring(0, className.indexOf("["));
-							if (className.equals("int")) {
+							if ("int".equals(className)) {
 								int[] arrayData = new int[args.length];
 								for (int j = 0; j < arrayData.length; j++) {
 									arrayData[j] = Integer.parseInt(args[j]);
 								}
 								method.invoke(entity, arrayData);
-							} else if (className.equals("long")) {
+							} else if ("long".equals(className)) {
 								long[] arrayData = new long[args.length];
 								for (int j = 0; j < arrayData.length; j++) {
 									arrayData[j] = Long.parseLong(args[j]);
 								}
 								method.invoke(entity, arrayData);
-							} else if (className.equals("float")) {
+							} else if ("float".equals(className)) {
 								float[] arrayData = new float[args.length];
 								for (int j = 0; j < arrayData.length; j++) {
 									arrayData[j] = Float.parseFloat(args[j]);
 								}
 								method.invoke(entity, arrayData);
-							} else if (className.equals("double")) {
+							} else if ("double".equals(className)) {
 								double[] arrayData = new double[args.length];
 								for (int j = 0; j < arrayData.length; j++) {
 									arrayData[j] = Double.parseDouble(args[j]);
 								}
 								method.invoke(entity, arrayData);
-							} else if (className.equals("short")) {
+							} else if ("short".equals(className)) {
 								short[] arrayData = new short[args.length];
 								for (int j = 0; j < arrayData.length; j++) {
 									arrayData[j] = Short.parseShort(args[j]);
 								}
 								method.invoke(entity, arrayData);
-							} else if (className.equals("boolean")) {
+							} else if ("boolean".equals(className)) {
 								boolean[] arrayData = new boolean[args.length];
 								for (int j = 0; j < arrayData.length; j++) {
 									arrayData[j] = Boolean.parseBoolean(args[j]);

@@ -141,7 +141,7 @@ public class FunctionUtils {
 	}
 
 	/**
-	 * @param functionConverts the functionConverts to set
+	 * @param functionAry the functionConverts to set
 	 */
 	public static void setFunctionConverts(List<String> functionAry) {
 		List<IFunction> converts = new ArrayList<IFunction>();
@@ -153,7 +153,7 @@ public class FunctionUtils {
 					String[] ary = convert.split("\\,|\\;");
 					for (String tmp : ary) {
 						if (StringUtil.isNotBlank(tmp)) {
-							if (tmp.equals("default") || tmp.equals("defaults")) {
+							if ("default".equals(tmp) || "defaults".equals(tmp)) {
 								hasDefault = true;
 							} else if (!realConverts.contains(tmp)) {
 								realConverts.add(tmp);

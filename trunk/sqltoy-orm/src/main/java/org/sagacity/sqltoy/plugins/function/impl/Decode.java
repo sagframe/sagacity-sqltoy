@@ -27,6 +27,7 @@ public class Decode extends IFunction {
 		return regex;
 	}
 
+	@Override
 	public String dialects() {
 		return super.ALL;
 	}

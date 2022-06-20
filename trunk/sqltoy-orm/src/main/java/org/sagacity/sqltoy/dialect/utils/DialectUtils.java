@@ -536,7 +536,7 @@ public class DialectUtils {
 	 */
 	public static SqlParamsModel convertParamsToNamed(String sql, int startIndex) {
 		SqlParamsModel sqlParam = new SqlParamsModel();
-		if (sql == null || sql.trim().equals("")) {
+		if (sql == null || "".equals(sql.trim())) {
 			return sqlParam;
 		}
 		// 以?号对字符串进行切割，并忽视'' 和"" 之间的
@@ -923,7 +923,7 @@ public class DialectUtils {
 					sql.append("?");
 				} else {
 					// 2020-6-13 修复postgresql\kingbase\guassdb bytea类型处理错误
-					if (convertBlob && fieldMeta.getFieldType().equals("byte[]")) {
+					if (convertBlob && "byte[]".equals(fieldMeta.getFieldType())) {
 						sql.append(nullFunction);
 						sql.append("(cast(? as bytea),").append(columnName).append(" )");
 						// sql.append(" cast(");
@@ -1438,6 +1438,7 @@ public class DialectUtils {
 					saveAll(sqlToyContext, subTableEntityMeta, savePkStrategy.getPkStrategy(),
 							savePkStrategy.isAssginValue(), insertSubTableSql, subTableData,
 							sqlToyContext.getBatchSize(), new ReflectPropsHandler() {
+								@Override
 								public void process() {
 									for (int i = 0; i < mappedFields.length; i++) {
 										this.setValue(mappedFields[i], mainValues[i]);
@@ -1680,6 +1681,7 @@ public class DialectUtils {
 				SqlExecuteStat.debug("执行子表级联更新操作", null);
 				// 将外键值通过反调赋到相关属性上
 				ReflectPropsHandler reflectPropsHandler = new ReflectPropsHandler() {
+					@Override
 					public void process() {
 						for (int i = 0; i < mappedFields.length; i++) {
 							this.setValue(mappedFields[i], mainFieldValues[i]);
@@ -2514,7 +2516,7 @@ public class DialectUtils {
 					}
 					if (value != null) {
 						contents = value.toString();
-						if (!contents.equals("")) {
+						if (!"".equals(contents)) {
 							// 加密
 							if (config.getSecureType().equals(SecureType.ENCRYPT)) {
 								this.setValue(field, fieldsSecureProvider.encrypt(contents));

@@ -91,7 +91,7 @@ public class QueryExecutor implements Serializable {
 					}
 				}
 				// 存在blank 过滤器自动将blank param="*" 关闭
-				if (filter.getType().equals("blank")) {
+				if ("blank".equals(filter.getType())) {
 					innerModel.blankToNull = false;
 				}
 				innerModel.paramFilters.add(filter);

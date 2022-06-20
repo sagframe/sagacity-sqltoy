@@ -14,7 +14,7 @@ public class DesensitizeDefaultProvider implements DesensitizeProvider {
 
 	@Override
 	public String desensitize(String content, SecureMask maskType) {
-		if (content == null || content.equals("")) {
+		if (content == null || "".equals(content)) {
 			return content;
 		}
 		return maskStr(maskType, content);

@@ -56,13 +56,13 @@ public class TranslateFactory {
 		List result = null;
 		try {
 			// 直接sql查询加载缓存模式
-			if (checkerConfig.getType().equals("sql")) {
+			if ("sql".equals(checkerConfig.getType())) {
 				result = doSqlCheck(sqlToyContext, checkerConfig, preCheckTime);
 			} // 调用springBean模式
-			else if (checkerConfig.getType().equals("service")) {
+			else if ("service".equals(checkerConfig.getType())) {
 				result = doServiceCheck(sqlToyContext, checkerConfig, preCheckTime);
 			} // 调用rest请求模式
-			else if (checkerConfig.getType().equals("rest")) {
+			else if ("rest".equals(checkerConfig.getType())) {
 				result = doRestCheck(sqlToyContext, checkerConfig, preCheckTime);
 			}
 			// local模式由应用自行管理
@@ -256,11 +256,11 @@ public class TranslateFactory {
 			TranslateConfigModel cacheModel, String cacheType) {
 		Object result = null;
 		try {
-			if (cacheModel.getType().equals("sql")) {
+			if ("sql".equals(cacheModel.getType())) {
 				result = getSqlCacheData(sqlToyContext, cacheModel, cacheType);
-			} else if (cacheModel.getType().equals("service")) {
+			} else if ("service".equals(cacheModel.getType())) {
 				result = getServiceCacheData(sqlToyContext, cacheModel, cacheType);
-			} else if (cacheModel.getType().equals("rest")) {
+			} else if ("rest".equals(cacheModel.getType())) {
 				result = getRestCacheData(sqlToyContext, cacheModel, cacheType);
 			}
 		} catch (Exception e) {
