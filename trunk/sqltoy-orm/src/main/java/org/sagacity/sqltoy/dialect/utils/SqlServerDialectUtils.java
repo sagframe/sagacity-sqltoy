@@ -1006,19 +1006,19 @@ public class SqlServerDialectUtils {
 		for (int i = 0; i < chipSize; i++) {
 			tmp = sqlChips[i];
 			if (tmp.toLowerCase().indexOf(realTableName.toLowerCase()) != -1) {
-				if (sqlChips[i + 1].toLowerCase().equals("as")) {
+				if ("as".equals(sqlChips[i + 1].toLowerCase())) {
 					regex = realTableName.concat("\\s+as\\s+").concat(sqlChips[i + 2]);
 					replaceStr = realTableName.concat(" as ").concat(sqlChips[i + 2]);
 					break;
-				} else if (sqlChips[i + 2].toLowerCase().equals("where")) {
+				} else if ("where".equals(sqlChips[i + 2].toLowerCase())) {
 					regex = realTableName.concat("\\s+").concat(sqlChips[i + 1]);
 					replaceStr = realTableName.concat(" ").concat(sqlChips[i + 1]);
 					break;
-				} else if (sqlChips[i + 2].equals(",")) {
+				} else if (",".equals(sqlChips[i + 2])) {
 					regex = realTableName.concat("\\s+").concat(sqlChips[i + 1]).concat(",");
 					replaceStr = realTableName.concat(" ").concat(sqlChips[i + 1]);
 					break;
-				} else if (i + 3 < chipSize && sqlChips[i + 3].toLowerCase().equals("join")) {
+				} else if (i + 3 < chipSize && "join".equals(sqlChips[i + 3].toLowerCase())) {
 					regex = realTableName.concat("\\s+").concat(sqlChips[i + 1]);
 					replaceStr = realTableName.concat(" ").concat(sqlChips[i + 1]);
 					break;
@@ -1069,7 +1069,7 @@ public class SqlServerDialectUtils {
 					TableMeta tableMeta = new TableMeta();
 					tableMeta.setTableName(rs.getString("TABLE_NAME"));
 					tableMeta.setType(rs.getString("TABLE_TYPE"));
-					if (tableMeta.getType().equals("V")) {
+					if ("V".equals(tableMeta.getType())) {
 						tableMeta.setType("VIEW");
 					} else {
 						tableMeta.setType("TABLE");

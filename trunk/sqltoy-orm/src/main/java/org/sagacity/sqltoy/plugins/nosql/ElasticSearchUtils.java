@@ -213,7 +213,7 @@ public class ElasticSearchUtils {
 				: sqlToyConfig.getNoSqlConfigModel().getValueRoot();
 		Object root = json;
 		// 确保第一个路径是聚合统一的名词
-		if (!rootPath[0].toLowerCase().equals("suggest")) {
+		if (!"suggest".equals(rootPath[0].toLowerCase())) {
 			root = ((JSONObject) root).get("suggest");
 		}
 		for (String str : rootPath) {
@@ -260,7 +260,7 @@ public class ElasticSearchUtils {
 				: sqlToyConfig.getNoSqlConfigModel().getValueRoot();
 		Object root = json;
 		// 确保第一个路径是聚合统一的名词
-		if (!rootPath[0].toLowerCase().equals("aggregations")) {
+		if (!"aggregations".equals(rootPath[0].toLowerCase())) {
 			root = ((JSONObject) root).get("aggregations");
 		}
 		for (String str : rootPath) {
@@ -430,7 +430,7 @@ public class ElasticSearchUtils {
 			}
 			Object[] keys = rowJson.keySet().toArray();
 			for (Object key : keys) {
-				if (!key.equals("key") && !key.equals("doc_count")) {
+				if (!"key".equals(key) && !"doc_count".equals(key)) {
 					result = rowJson.get(key.toString());
 					if (result instanceof JSONObject) {
 						return getRealJSONObject((JSONObject) result, realFields, isSuggest);
@@ -447,7 +447,7 @@ public class ElasticSearchUtils {
 			if (result instanceof JSONObject) {
 				JSONObject tmp = (JSONObject) result;
 				// {value:xxx} 模式
-				if (tmp.keySet().size() == 1 && tmp.keySet().iterator().next().toLowerCase().equals("value")) {
+				if (tmp.keySet().size() == 1 && "value".equals(tmp.keySet().iterator().next().toLowerCase())) {
 					return rowJson;
 				}
 				return getRealJSONObject(tmp, realFields, isSuggest);

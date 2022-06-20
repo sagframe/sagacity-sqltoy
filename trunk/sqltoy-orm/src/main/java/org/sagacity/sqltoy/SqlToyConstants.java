@@ -328,7 +328,7 @@ public class SqlToyConstants {
 	public static String getDefaultValue(Integer dbType, String defaultValue) {
 		String realDefault = getKeyValue(defaultValue);
 		if (realDefault == null) {
-			if (defaultValue.toUpperCase().equals("CURRENT TIMESTAMP")) {
+			if ("CURRENT TIMESTAMP".equals(defaultValue.toUpperCase())) {
 				return "CURRENT_TIMESTAMP";
 			}
 			return defaultValue;

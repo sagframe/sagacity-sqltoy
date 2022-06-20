@@ -47,7 +47,7 @@ public class DateFormat extends AbstractMacro {
 		}
 		// 提出单引号和双引号
 		String realFmt = fmt.replaceAll("\"", "").replaceAll("\\'", "").trim();
-		if (realFmt.equals("") || realFmt.toLowerCase().equals("null")) {
+		if ("".equals(realFmt) || "null".equals(realFmt.toLowerCase())) {
 			return "";
 		}
 		return DateUtil.formatDate(dateValue, realFmt);

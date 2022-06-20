@@ -42,11 +42,11 @@ public class ExpressionUtil {
 				isFun = false;
 				temp1 = "";
 				while (i < nCount) {
-					if (!temp1.equals("")) {
-						if (opt.equals("(")) {
+					if (!"".equals(temp1)) {
+						if ("(".equals(opt)) {
 							nFun++;
 							isFun = true;
-						} else if (opt.equals(")")) {
+						} else if (")".equals(opt)) {
 							nFun--;
 						}
 					}
@@ -62,7 +62,7 @@ public class ExpressionUtil {
 						break;
 					}
 				}
-				if (temp1.equals("")) {
+				if ("".equals(temp1)) {
 					temp = opt;
 				} else {
 					temp = temp1;
@@ -104,74 +104,74 @@ public class ExpressionUtil {
 	}
 
 	protected static int getOptPriorityOut(String opt) throws Exception {
-		if (opt.equals("+")) {
+		if ("+".equals(opt)) {
 			return 1;
-		} else if (opt.equals("-")) {
+		} else if ("-".equals(opt)) {
 			return 2;
-		} else if (opt.equals("*")) {
+		} else if ("*".equals(opt)) {
 			return 5;
-		} else if (opt.equals("/")) {
+		} else if ("/".equals(opt)) {
 			return 6;
-		} else if (opt.equals("%")) {
+		} else if ("%".equals(opt)) {
 			return 7;
-		} else if (opt.equals(">")) {
+		} else if (">".equals(opt)) {
 			return 11;
-		} else if (opt.equals("<")) {
+		} else if ("<".equals(opt)) {
 			return 12;
-		} else if (opt.equals("]")) {
+		} else if ("]".equals(opt)) {
 			return 13;
-		} else if (opt.equals("[")) {
+		} else if ("[".equals(opt)) {
 			return 14;
-		} else if (opt.equals("!")) {
+		} else if ("!".equals(opt)) {
 			return 15;
-		} else if (opt.equals("|")) {
+		} else if ("|".equals(opt)) {
 			return 16;
-		} else if (opt.equals("&")) {
+		} else if ("&".equals(opt)) {
 			return 23;
-		} else if (opt.equals("=")) {
+		} else if ("=".equals(opt)) {
 			return 25;
-		} else if (opt.equals("#")) {
+		} else if ("#".equals(opt)) {
 			return 0;
-		} else if (opt.equals("(")) {
+		} else if ("(".equals(opt)) {
 			return 1000;
-		} else if (opt.equals(")")) {
+		} else if (")".equals(opt)) {
 			return -1000;
 		}
 		throw new RuntimeException("运算符号" + opt + "非法!");
 	}
 
 	protected static int getOptPriorityIn(String opt) throws Exception {
-		if (opt.equals("+")) {
+		if ("+".equals(opt)) {
 			return 3;
-		} else if (opt.equals("-")) {
+		} else if ("-".equals(opt)) {
 			return 4;
-		} else if (opt.equals("*")) {
+		} else if ("*".equals(opt)) {
 			return 8;
-		} else if (opt.equals("/")) {
+		} else if ("/".equals(opt)) {
 			return 9;
-		} else if (opt.equals("%")) {
+		} else if ("%".equals(opt)) {
 			return 10;
-		} else if (opt.equals(">")) {
+		} else if (">".equals(opt)) {
 			return 17;
-		} else if (opt.equals("<")) {
+		} else if ("<".equals(opt)) {
 			return 18;
-		} else if (opt.equals("]")) {
+		} else if ("]".equals(opt)) {
 			return 19;
-		} else if (opt.equals("[")) {
+		} else if ("[".equals(opt)) {
 			return 20;
-		} else if (opt.equals("!")) {
+		} else if ("!".equals(opt)) {
 			return 21;
-		} else if (opt.equals("|")) {
+		} else if ("|".equals(opt)) {
 			return 22;
-		} else if (opt.equals("&")) {
+		} else if ("&".equals(opt)) {
 			return 24;
-		} else if (opt.equals("=")) {
+		} else if ("=".equals(opt)) {
 			return 26;
-		} else if (opt.equals("(")) {
+		} else if ("(".equals(opt)) {
 			return -1000;
-		} else if (opt.equals(")")) {
+		} else if (")".equals(opt)) {
 			return 1000;
-		} else if (opt.equals("#")) {
+		} else if ("#".equals(opt)) {
 			return 0;
 		}
 		throw new RuntimeException("运算符号:" + opt + "非法!");
@@ -195,60 +195,60 @@ public class ExpressionUtil {
 			double dbValue1 = Double.valueOf(value1).doubleValue();
 			double dbValue2 = Double.valueOf(value2).doubleValue();
 			long lg = 0;
-			if (opt.equals("+")) {
+			if ("+".equals(opt)) {
 				return dbValue1 + dbValue2;
-			} else if (opt.equals("-")) {
+			} else if ("-".equals(opt)) {
 				return dbValue1 - dbValue2;
-			} else if (opt.equals("*")) {
+			} else if ("*".equals(opt)) {
 				return dbValue1 * dbValue2;
-			} else if (opt.equals("/")) {
+			} else if ("/".equals(opt)) {
 				return dbValue1 / dbValue2;
-			} else if (opt.equals("%")) {
+			} else if ("%".equals(opt)) {
 				lg = (long) (dbValue1 / dbValue2);
 				return dbValue1 - lg * dbValue2;
-			} else if (opt.equals(">")) {
+			} else if (">".equals(opt)) {
 				if (dbValue1 > dbValue2) {
 					return 1;
 				} else {
 					return 0;
 				}
-			} else if (opt.equals("<")) {
+			} else if ("<".equals(opt)) {
 				if (dbValue1 < dbValue2) {
 					return 1;
 				} else {
 					return 0;
 				}
-			} else if (opt.equals("]")) {
+			} else if ("]".equals(opt)) {
 				if (dbValue1 >= dbValue2) {
 					return 1;
 				} else {
 					return 0;
 				}
-			} else if (opt.equals("[")) {
+			} else if ("[".equals(opt)) {
 				if (dbValue1 <= dbValue2) {
 					return 1;
 				} else {
 					return 0;
 				}
-			} else if (opt.equals("!")) {
+			} else if ("!".equals(opt)) {
 				if (dbValue1 != dbValue2) {
 					return 1;
 				} else {
 					return 0;
 				}
-			} else if (opt.equals("|")) {
+			} else if ("|".equals(opt)) {
 				if (dbValue1 > 0 || dbValue2 > 0) {
 					return 1;
 				} else {
 					return 0;
 				}
-			} else if (opt.equals("&")) {
+			} else if ("&".equals(opt)) {
 				if (dbValue1 > 0 && dbValue2 > 0) {
 					return 1;
 				} else {
 					return 0;
 				}
-			} else if (opt.equals("=")) {
+			} else if ("=".equals(opt)) {
 				if (dbValue1 == dbValue2) {
 					return 1;
 				} else {
@@ -282,25 +282,25 @@ public class ExpressionUtil {
 		double db = 0;
 		try {
 			db = Double.valueOf(getValue(value)).doubleValue();
-			if (lowerFun.equals("log")) {
+			if ("log".equals(lowerFun)) {
 				return String.valueOf(Math.log(db));
-			} else if (lowerFun.equals("square")) {
+			} else if ("square".equals(lowerFun)) {
 				return String.valueOf(Math.pow(db, 2));
-			} else if (lowerFun.equals("sqrt")) {
+			} else if ("sqrt".equals(lowerFun)) {
 				return String.valueOf(Math.sqrt(db));
-			} else if (lowerFun.equals("sin")) {
+			} else if ("sin".equals(lowerFun)) {
 				return String.valueOf(Math.sin(db));
-			} else if (lowerFun.equals("asin")) {
+			} else if ("asin".equals(lowerFun)) {
 				return String.valueOf(Math.asin(db));
-			} else if (lowerFun.equals("cos")) {
+			} else if ("cos".equals(lowerFun)) {
 				return String.valueOf(Math.cos(db));
-			} else if (lowerFun.equals("tan")) {
+			} else if ("tan".equals(lowerFun)) {
 				return String.valueOf(Math.tan(db));
-			} else if (lowerFun.equals("atan")) {
+			} else if ("atan".equals(lowerFun)) {
 				return String.valueOf(Math.atan(db));
-			} else if (lowerFun.equals("ceil")) {
+			} else if ("ceil".equals(lowerFun)) {
 				return String.valueOf(Math.ceil(db));
-			} else if (lowerFun.equals("exp")) {
+			} else if ("exp".equals(lowerFun)) {
 				return String.valueOf(Math.exp(db));
 			}
 		} catch (Exception e) {
