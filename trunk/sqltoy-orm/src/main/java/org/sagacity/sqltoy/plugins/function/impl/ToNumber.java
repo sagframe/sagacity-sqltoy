@@ -26,6 +26,7 @@ public class ToNumber extends IFunction {
 		return regex;
 	}
 
+	@Override
 	public String dialects() {
 		return "db2,oracle,dm";
 	}

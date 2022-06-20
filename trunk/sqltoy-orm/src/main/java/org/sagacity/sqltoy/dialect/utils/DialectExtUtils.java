@@ -61,7 +61,7 @@ public class DialectExtUtils {
 			field = entityMeta.getFieldsArray()[i];
 			fieldMeta = entityMeta.getFieldMeta(field);
 			isString = false;
-			if (fieldMeta.getFieldType().equals("java.lang.string")) {
+			if ("java.lang.string".equals(fieldMeta.getFieldType())) {
 				isString = true;
 			}
 			columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
@@ -439,23 +439,23 @@ public class DialectExtUtils {
 			} else {
 				// entityManager已经做了小写化处理
 				String fieldType = fieldMeta.getFieldType();
-				if (fieldType.equals("java.time.localdate")) {
+				if ("java.time.localdate".equals(fieldType)) {
 					return DateUtil.formatDate(unifyFieldValue, DateUtil.FORMAT.DATE_HORIZONTAL);
-				} else if (fieldType.equals("java.time.localtime") || fieldType.equals("java.sql.time")) {
+				} else if ("java.time.localtime".equals(fieldType) || "java.sql.time".equals(fieldType)) {
 					return DateUtil.formatDate(unifyFieldValue, "HH:mm:ss");
-				} else if (fieldType.equals("java.time.localdatetime") || fieldType.equals("java.sql.timestamp")
-						|| fieldType.equals("java.util.date") || fieldType.equals("java.sql.date")) {
+				} else if ("java.time.localdatetime".equals(fieldType) || "java.sql.timestamp".equals(fieldType)
+						|| "java.util.date".equals(fieldType) || "java.sql.date".equals(fieldType)) {
 					return DateUtil.formatDate(unifyFieldValue, DateUtil.FORMAT.DATETIME_HORIZONTAL);
 				}
 				// 统一传参数值为日期类型，但数据库中是数字或字符串类型
 				if ((unifyFieldValue instanceof Date) || (unifyFieldValue instanceof Timestamp)
 						|| (unifyFieldValue instanceof LocalDate) || (unifyFieldValue instanceof LocalDateTime)) {
-					if (fieldType.equals("java.lang.integer") || fieldType.equals("int")) {
+					if ("java.lang.integer".equals(fieldType) || "int".equals(fieldType)) {
 						return DateUtil.formatDate(unifyFieldValue, "yyyyMMdd");
-					} else if (fieldType.equals("java.lang.long") || fieldType.equals("java.math.biginteger")
-							|| fieldType.equals("long")) {
+					} else if ("java.lang.long".equals(fieldType) || "java.math.biginteger".equals(fieldType)
+							|| "long".equals(fieldType)) {
 						return DateUtil.formatDate(unifyFieldValue, "yyyyMMddHHmmss");
-					} else if (fieldType.equals("java.lang.string")) {
+					} else if ("java.lang.string".equals(fieldType)) {
 						if (fieldMeta.getLength() >= 19) {
 							return DateUtil.formatDate(unifyFieldValue, DateUtil.FORMAT.DATETIME_HORIZONTAL);
 						}

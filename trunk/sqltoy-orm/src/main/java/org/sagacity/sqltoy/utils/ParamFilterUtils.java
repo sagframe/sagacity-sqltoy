@@ -80,20 +80,20 @@ public class ParamFilterUtils {
 			filterParams = paramFilterModel.getParams();
 			filterType = paramFilterModel.getFilterType();
 			// 通配符表示针对所有参数
-			if (filterParams.length == 1 && filterParams[0].equals("*")) {
+			if (filterParams.length == 1 && "*".equals(filterParams[0])) {
 				filterParams = paramsName;
 			}
 			// 排他性参数(当某些参数值都不为null,则设置其他参数值为null)
-			if (filterType.equals("exclusive") && paramFilterModel.getUpdateParams() != null) {
+			if ("exclusive".equals(filterType) && paramFilterModel.getUpdateParams() != null) {
 				filterExclusive(paramIndexMap, paramFilterModel, paramValues);
 			} // 缓存中提取精准查询参数作为sql查询条件值
-			else if (filterType.equals("cache-arg")) {
+			else if ("cache-arg".equals(filterType)) {
 				filterCache(sqlToyContext, paramIndexMap, paramFilterModel, paramValues);
-			} else if (filterType.equals("clone")) {
+			} else if ("clone".equals(filterType)) {
 				filterClone(paramIndexMap, paramFilterModel, paramValues);
 			}
 			// 决定性参数不为null时即条件成立时，需要保留的参数(其他的参数全部设置为null)
-			else if (filterType.equals("primary")) {
+			else if ("primary".equals(filterType)) {
 				filterParam = paramFilterModel.getParam().toLowerCase();
 				index = (paramIndexMap.get(filterParam) == null) ? -1 : paramIndexMap.get(filterParam);
 				// 决定性参数值不为null
@@ -230,8 +230,8 @@ public class ParamFilterUtils {
 									.containsKey(cacheRow[cacheFilter.getCacheIndex()].toString());
 						}
 						// 条件成立则过滤掉
-						if ((cacheFilter.getCompareType().equals("eq") && hasEqual)
-								|| (cacheFilter.getCompareType().equals("neq") && !hasEqual)) {
+						if (("eq".equals(cacheFilter.getCompareType()) && hasEqual)
+								|| ("neq".equals(cacheFilter.getCompareType()) && !hasEqual)) {
 							skip = true;
 							break;
 						}
@@ -301,7 +301,7 @@ public class ParamFilterUtils {
 			Object paramValue = paramValues[index];
 			String compareType = paramFilterModel.getCompareType();
 			String[] compareValues = paramFilterModel.getCompareValues();
-			if (compareType.equals("==")) {
+			if ("==".equals(compareType)) {
 				if (null == paramValue && null == compareValues) {
 					isExclusive = true;
 				} else if (null != paramValue && null != compareValues) {
@@ -313,19 +313,19 @@ public class ParamFilterUtils {
 			} else {
 				if (null != paramValue && null != compareValues) {
 					Object result = paramValue;
-					if (compareType.equals(">=")) {
+					if (">=".equals(compareType)) {
 						result = filterMoreEquals(paramValue, compareValues[0]);
-					} else if (compareType.equals(">")) {
+					} else if (">".equals(compareType)) {
 						result = filterMore(paramValue, compareValues[0]);
-					} else if (compareType.equals("<=")) {
+					} else if ("<=".equals(compareType)) {
 						result = filterLessEquals(paramValue, compareValues[0]);
-					} else if (compareType.equals("<")) {
+					} else if ("<".equals(compareType)) {
 						result = filterLess(paramValue, compareValues[0]);
-					} else if (compareType.equals("<>")) {
+					} else if ("<>".equals(compareType)) {
 						result = filterNotEquals(paramValue, compareValues);
-					} else if (compareType.equals("between")) {
+					} else if ("between".equals(compareType)) {
 						result = filterBetween(paramValue, compareValues[0], compareValues[compareValues.length - 1]);
-					} else if (compareType.equals("in")) {
+					} else if ("in".equals(compareType)) {
 						result = filterEquals(paramValue, compareValues);
 					}
 					if (null == result) {
@@ -425,10 +425,10 @@ public class ParamFilterUtils {
 		}
 		Object result = paramValue;
 		String filterType = paramFilterModel.getFilterType();
-		if (filterType.equals("blank")) {
+		if ("blank".equals(filterType)) {
 			result = paramValue;
 			if (paramValue instanceof CharSequence) {
-				if (paramValue.toString().trim().equals("")) {
+				if ("".equals(paramValue.toString().trim())) {
 					result = null;
 				}
 			} else if (paramValue instanceof Collection) {
@@ -444,29 +444,29 @@ public class ParamFilterUtils {
 					result = null;
 				}
 			}
-		} else if (filterType.equals("eq")) {
+		} else if ("eq".equals(filterType)) {
 			result = filterEquals(paramValue, paramFilterModel.getValues());
-		} else if (filterType.equals("gt")) {
+		} else if ("gt".equals(filterType)) {
 			result = filterMore(paramValue, paramFilterModel.getValues()[0]);
-		} else if (filterType.equals("gte")) {
+		} else if ("gte".equals(filterType)) {
 			result = filterMoreEquals(paramValue, paramFilterModel.getValues()[0]);
-		} else if (filterType.equals("lt")) {
+		} else if ("lt".equals(filterType)) {
 			result = filterLess(paramValue, paramFilterModel.getValues()[0]);
-		} else if (filterType.equals("lte")) {
+		} else if ("lte".equals(filterType)) {
 			result = filterLessEquals(paramValue, paramFilterModel.getValues()[0]);
-		} else if (filterType.equals("between")) {
+		} else if ("between".equals(filterType)) {
 			result = filterBetween(paramValue, paramFilterModel.getValues()[0],
 					paramFilterModel.getValues()[paramFilterModel.getValues().length - 1]);
-		} else if (filterType.equals("replace")) {
+		} else if ("replace".equals(filterType)) {
 			result = replace(paramValue, paramFilterModel.getRegex(), paramFilterModel.getValues()[0],
 					paramFilterModel.isFirst());
-		} else if (filterType.equals("split")) {
+		} else if ("split".equals(filterType)) {
 			result = splitToArray(paramValue, paramFilterModel.getSplit(), paramFilterModel.getDataType());
-		} else if (filterType.equals("date-format")) {
+		} else if ("date-format".equals(filterType)) {
 			result = dateFormat(paramValue, paramFilterModel.getFormat());
-		} else if (filterType.equals("neq")) {
+		} else if ("neq".equals(filterType)) {
 			result = filterNotEquals(paramValue, paramFilterModel.getValues());
-		} else if (filterType.equals("to-date")) {
+		} else if ("to-date".equals(filterType)) {
 			if (paramValue.getClass().isArray()) {
 				Object[] arrays = CollectionUtil.convertArray(paramValue);
 				for (int i = 0, n = arrays.length; i < n; i++) {
@@ -482,7 +482,7 @@ public class ParamFilterUtils {
 			} else {
 				result = toDate(paramValue, paramFilterModel);
 			}
-		} else if (filterType.equals("to-number")) {
+		} else if ("to-number".equals(filterType)) {
 			if (paramValue.getClass().isArray()) {
 				Object[] arrays = CollectionUtil.convertArray(paramValue);
 				for (int i = 0, n = arrays.length; i < n; i++) {
@@ -498,14 +498,14 @@ public class ParamFilterUtils {
 			} else {
 				result = toNumber(paramValue, paramFilterModel.getDataType());
 			}
-		} else if (filterType.equals("to-array")) {
+		} else if ("to-array".equals(filterType)) {
 			result = toArray(paramValue, paramFilterModel.getDataType());
-		} else if (filterType.equals("l-like")) {
+		} else if ("l-like".equals(filterType)) {
 			result = like(paramValue, true);
-		} else if (filterType.equals("r-like")) {
+		} else if ("r-like".equals(filterType)) {
 			result = like(paramValue, false);
 		} // 增加将数组条件组合成in () 查询条件参数'x1','x2'的形式 ，add 2019-1-4
-		else if (filterType.equals("to-in-arg")) {
+		else if ("to-in-arg".equals(filterType)) {
 			if (paramValue instanceof CharSequence) {
 				String inArg = paramValue.toString();
 				if (!paramFilterModel.isSingleQuote()) {
@@ -519,7 +519,7 @@ public class ParamFilterUtils {
 					int cnt = 0;
 					for (String arg : args) {
 						tmp = arg.trim();
-						if (!tmp.equals("")) {
+						if (!"".equals(tmp)) {
 							if (cnt > 0) {
 								inStr.append(",");
 							}
@@ -542,7 +542,7 @@ public class ParamFilterUtils {
 					logger.error("sql 参数过滤转换过程:将数组转成in (:params) 形式的条件值过程错误:{}", e.getMessage());
 				}
 			}
-		} else if (filterType.equals("custom-handler")) {
+		} else if ("custom-handler".equals(filterType)) {
 			if (sqlToyContext.getCustomFilterHandler() == null) {
 				throw new RuntimeException("sql中filter使用了custom-handler类型,但spring.sqltoy.customFilterHandler未定义具体实现类!");
 			}
@@ -573,7 +573,8 @@ public class ParamFilterUtils {
 	 * @todo 进行字符串替换
 	 * @param paramValue
 	 * @param regex
-	 * @param value
+	 * @param valueVar
+	 * @param valueVar
 	 * @param isFirst
 	 * @return
 	 */
@@ -644,18 +645,18 @@ public class ParamFilterUtils {
 		} else {
 			String[] arrays = null;
 			String split = splitSign.trim();
-			if (split.equals(",")) {
+			if (",".equals(split)) {
 				arrays = paramValue.toString().split("\\,");
-			} else if (split.equals(";")) {
+			} else if (";".equals(split)) {
 				arrays = paramValue.toString().split("\\;");
-			} else if (split.equals(":")) {
+			} else if (":".equals(split)) {
 				arrays = paramValue.toString().split("\\:");
-			} else if (split.equals("")) {
+			} else if ("".equals(split)) {
 				arrays = paramValue.toString().split("\\s+");
 			} else {
 				arrays = paramValue.toString().split(splitSign);
 			}
-			if (dataType == null || dataType.equals("string")) {
+			if (dataType == null || "string".equals(dataType)) {
 				return arrays;
 			}
 			result = new Object[arrays.length];
@@ -665,19 +666,19 @@ public class ParamFilterUtils {
 		for (int i = 0, n = result.length; i < n; i++) {
 			if (null != result[i]) {
 				value = result[i].toString();
-				if (dataType.equals("integer") || dataType.equals("int")) {
+				if ("integer".equals(dataType) || "int".equals(dataType)) {
 					result[i] = Integer.valueOf(value);
-				} else if (dataType.equals("long")) {
+				} else if ("long".equals(dataType)) {
 					result[i] = Long.valueOf(value);
-				} else if (dataType.equals("float")) {
+				} else if ("float".equals(dataType)) {
 					result[i] = Float.valueOf(value);
-				} else if (dataType.equals("double")) {
+				} else if ("double".equals(dataType)) {
 					result[i] = Double.valueOf(value);
-				} else if (dataType.equals("decimal") || dataType.equals("number")) {
+				} else if ("decimal".equals(dataType) || "number".equals(dataType)) {
 					result[i] = new BigDecimal(value);
-				} else if (dataType.equals("date")) {
+				} else if ("date".equals(dataType)) {
 					result[i] = DateUtil.parseString(value);
-				} else if (dataType.equals("biginteger")) {
+				} else if ("biginteger".equals(dataType)) {
 					result[i] = new BigInteger(value);
 				}
 			}
@@ -703,19 +704,19 @@ public class ParamFilterUtils {
 		for (int i = 0, n = result.length; i < n; i++) {
 			if (result[i] != null) {
 				value = result[i].toString();
-				if (dataType.equals("integer") || dataType.equals("int")) {
+				if ("integer".equals(dataType) || "int".equals(dataType)) {
 					result[i] = Integer.valueOf(value);
-				} else if (dataType.equals("long")) {
+				} else if ("long".equals(dataType)) {
 					result[i] = Long.valueOf(value);
-				} else if (dataType.equals("float")) {
+				} else if ("float".equals(dataType)) {
 					result[i] = Float.valueOf(value);
-				} else if (dataType.equals("double")) {
+				} else if ("double".equals(dataType)) {
 					result[i] = Double.valueOf(value);
-				} else if (dataType.equals("decimal") || dataType.equals("number")) {
+				} else if ("decimal".equals(dataType) || "number".equals(dataType)) {
 					result[i] = new BigDecimal(value);
-				} else if (dataType.equals("string")) {
+				} else if ("string".equals(dataType)) {
 					result[i] = value;
-				} else if (dataType.equals("biginteger")) {
+				} else if ("biginteger".equals(dataType)) {
 					result[i] = new BigInteger(value);
 				}
 			}
@@ -735,15 +736,15 @@ public class ParamFilterUtils {
 		if (dataType == null) {
 			result = value;
 		} else {
-			if (dataType.equals("integer") || dataType.equals("int")) {
+			if ("integer".equals(dataType) || "int".equals(dataType)) {
 				result = Integer.valueOf(value.intValue());
-			} else if (dataType.equals("long")) {
+			} else if ("long".equals(dataType)) {
 				result = Long.valueOf(value.longValue());
-			} else if (dataType.equals("float")) {
+			} else if ("float".equals(dataType)) {
 				result = Float.valueOf(value.floatValue());
-			} else if (dataType.equals("double")) {
+			} else if ("double".equals(dataType)) {
 				result = Double.valueOf(value.doubleValue());
-			} else if (dataType.equals("biginteger")) {
+			} else if ("biginteger".equals(dataType)) {
 				result = value.toBigInteger();
 			} else {
 				result = value;
@@ -769,7 +770,7 @@ public class ParamFilterUtils {
 			// 默认为日期格式
 			type = "localdate";
 			if (fmtStyle.contains("hhmmss") || fmtStyle.contains("hh:mm:ss")) {
-				if (fmtStyle.equals("hhmmss") || fmtStyle.equals("hh:mm:ss")) {
+				if ("hhmmss".equals(fmtStyle) || "hh:mm:ss".equals(fmtStyle)) {
 					type = "localtime";
 				} else {
 					type = "localdatetime";
@@ -777,25 +778,25 @@ public class ParamFilterUtils {
 			}
 		}
 		// 取当前月份的第一天
-		if (fmtStyle.equals("first_of_month")) {
+		if ("first_of_month".equals(fmtStyle)) {
 			result = DateUtil.firstDayOfMonth(paramValue);
 		} // 年的第一天
-		else if (fmtStyle.equals("first_of_year")) {
+		else if ("first_of_year".equals(fmtStyle)) {
 			result = DateUtil.getYear(paramValue) + "-01-01";
 		} // 取当前月份的最后一天
-		else if (fmtStyle.equals("last_of_month")) {
+		else if ("last_of_month".equals(fmtStyle)) {
 			result = DateUtil.lastDayOfMonth(paramValue);
 		} // 年的最后一天
-		else if (fmtStyle.equals("last_of_year")) {
+		else if ("last_of_year".equals(fmtStyle)) {
 			result = DateUtil.getYear(paramValue) + "-12-31";
 		} // 取指定日期的星期一的日期
-		else if (fmtStyle.equals("first_of_week")) {
+		else if ("first_of_week".equals(fmtStyle)) {
 			Calendar ca = Calendar.getInstance();
 			ca.setTime(DateUtil.parse(paramValue, DAY_FORMAT));
 			ca.add(Calendar.DAY_OF_WEEK, -ca.get(Calendar.DAY_OF_WEEK) + 2);
 			result = ca.getTime();
 		} // 取指定日期的星期天的日期
-		else if (fmtStyle.equals("last_of_week")) {
+		else if ("last_of_week".equals(fmtStyle)) {
 			Calendar ca = Calendar.getInstance();
 			ca.setTime(DateUtil.parse(paramValue, DAY_FORMAT));
 			ca.add(Calendar.DAY_OF_WEEK, -ca.get(Calendar.DAY_OF_WEEK) + 8);
@@ -849,19 +850,19 @@ public class ParamFilterUtils {
 		if (realFmt != null) {
 			result = DateUtil.parse(result, realFmt);
 		}
-		if (type.equals("localdate")) {
+		if ("localdate".equals(type)) {
 			return DateUtil.asLocalDate((Date) result);
 		}
-		if (type.equals("localdatetime")) {
+		if ("localdatetime".equals(type)) {
 			return DateUtil.asLocalDateTime((Date) result);
 		}
-		if (type.equals("timestamp")) {
+		if ("timestamp".equals(type)) {
 			return java.sql.Timestamp.valueOf(DateUtil.asLocalDateTime((Date) result));
 		}
-		if (type.equals("localtime")) {
+		if ("localtime".equals(type)) {
 			return DateUtil.asLocalTime((Date) result);
 		}
-		if (type.equals("time")) {
+		if ("time".equals(type)) {
 			return java.sql.Time.valueOf(DateUtil.asLocalTime((Date) result));
 		}
 		return result;
@@ -869,7 +870,7 @@ public class ParamFilterUtils {
 
 	/**
 	 * @todo 转换sql参数,将对象数组中的值与给定的参照数值比较， 如果相等则置数组中的值为null
-	 * @param params
+	 * @param param
 	 * @param contrasts
 	 * @return
 	 */
@@ -907,7 +908,7 @@ public class ParamFilterUtils {
 						return null;
 					}
 				} else {
-					Date compareDate = contrast.toLowerCase().equals("sysdate")
+					Date compareDate = "sysdate".equals(contrast.toLowerCase())
 							? DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT)
 							: DateUtil.convertDateObject(contrast);
 					if (compareDate != null && DateUtil.convertDateObject(param).compareTo(compareDate) == 0) {
@@ -972,7 +973,7 @@ public class ParamFilterUtils {
 						return param;
 					}
 				} else {
-					Date compareDate = contrast.equalsIgnoreCase("sysdate")
+					Date compareDate = "sysdate".equalsIgnoreCase(contrast)
 							? DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT)
 							: DateUtil.convertDateObject(contrast);
 					if (DateUtil.convertDateObject(param).compareTo(compareDate) == 0) {
@@ -1005,7 +1006,7 @@ public class ParamFilterUtils {
 		String contrast = contrastParam.toString();
 		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalDateTime) {
 			Date compareDate;
-			if (contrast.toLowerCase().equals("sysdate")) {
+			if ("sysdate".equals(contrast.toLowerCase())) {
 				compareDate = DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT);
 			} else {
 				compareDate = DateUtil.convertDateObject(contrast);
@@ -1040,7 +1041,7 @@ public class ParamFilterUtils {
 		String contrast = contrastParam.toString();
 		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalDateTime) {
 			Date compareDate;
-			if (contrast.toLowerCase().equals("sysdate")) {
+			if ("sysdate".equals(contrast.toLowerCase())) {
 				compareDate = DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT);
 			} else {
 				compareDate = DateUtil.convertDateObject(contrast);
@@ -1075,7 +1076,7 @@ public class ParamFilterUtils {
 		String contrast = contrastParam.toString();
 		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalDateTime) {
 			Date compareDate;
-			if (contrast.toLowerCase().equals("sysdate")) {
+			if ("sysdate".equals(contrast.toLowerCase())) {
 				compareDate = DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT);
 			} else {
 				compareDate = DateUtil.convertDateObject(contrast);
@@ -1110,7 +1111,7 @@ public class ParamFilterUtils {
 		String contrast = contrastParam.toString();
 		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalDateTime) {
 			Date compareDate;
-			if (contrast.toLowerCase().equals("sysdate")) {
+			if ("sysdate".equals(contrast.toLowerCase())) {
 				compareDate = DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT);
 			} else {
 				compareDate = DateUtil.convertDateObject(contrast);
