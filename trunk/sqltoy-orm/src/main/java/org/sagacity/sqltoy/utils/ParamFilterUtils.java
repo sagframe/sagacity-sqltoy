@@ -574,7 +574,6 @@ public class ParamFilterUtils {
 	 * @param paramValue
 	 * @param regex
 	 * @param valueVar
-	 * @param valueVar
 	 * @param isFirst
 	 * @return
 	 */

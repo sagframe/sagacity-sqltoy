@@ -579,8 +579,7 @@ public class SqlXMLConfigParse {
 				secureMask.setMaskCode(maskCode);
 				if (secureMask.getMaskCode() == null) {
 					if ("id-card".equals(secureMask.getType()) || "bank-card".equals(secureMask.getType())
-							|| "email".equals(secureMask.getType()) || "address".equals(secureMask.getType())
-							|| "address".equals(secureMask.getType())) {
+							|| "email".equals(secureMask.getType()) || "address".equals(secureMask.getType())) {
 						secureMask.setMaskCode("******");
 					} else if ("name".equals(secureMask.getType())) {
 						secureMask.setMaskCode("**");
