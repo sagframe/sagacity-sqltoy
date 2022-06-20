@@ -15,6 +15,7 @@ public class SpringDaoSupport extends SqlToyDaoSupport {
 	/**
 	 * 针对spring提供sqlToyContext注入(差异点)
 	 */
+	@Override
 	@Autowired
 	@Qualifier(value = "sqlToyContext")
 	public void setSqlToyContext(SqlToyContext sqlToyContext) {

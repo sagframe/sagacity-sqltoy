@@ -963,6 +963,7 @@ public class SqlServerDialectUtils {
 					saveOrUpdateAll(sqlToyContext, subTableData, sqlToyContext.getBatchSize(),
 							// 设置关联外键字段的属性值(来自主表的主键)
 							new ReflectPropsHandler() {
+								@Override
 								public void process() {
 									for (int i = 0; i < mappedFields.length; i++) {
 										this.setValue(mappedFields[i], mainFieldValues[i]);

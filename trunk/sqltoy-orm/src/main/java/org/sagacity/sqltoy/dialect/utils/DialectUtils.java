@@ -1438,6 +1438,7 @@ public class DialectUtils {
 					saveAll(sqlToyContext, subTableEntityMeta, savePkStrategy.getPkStrategy(),
 							savePkStrategy.isAssginValue(), insertSubTableSql, subTableData,
 							sqlToyContext.getBatchSize(), new ReflectPropsHandler() {
+								@Override
 								public void process() {
 									for (int i = 0; i < mappedFields.length; i++) {
 										this.setValue(mappedFields[i], mainValues[i]);
@@ -1680,6 +1681,7 @@ public class DialectUtils {
 				SqlExecuteStat.debug("执行子表级联更新操作", null);
 				// 将外键值通过反调赋到相关属性上
 				ReflectPropsHandler reflectPropsHandler = new ReflectPropsHandler() {
+					@Override
 					public void process() {
 						for (int i = 0; i < mappedFields.length; i++) {
 							this.setValue(mappedFields[i], mainFieldValues[i]);

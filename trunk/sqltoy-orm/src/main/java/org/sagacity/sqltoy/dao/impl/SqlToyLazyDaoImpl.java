@@ -75,6 +75,7 @@ public class SqlToyLazyDaoImpl extends SpringDaoSupport implements SqlToyLazyDao
 		return super.getCountBySql(sqlOrNamedQuery, paramsNamed, paramsValue);
 	}
 
+	@Override
 	public Long getCount(String sqlOrNamedQuery, Map<String, Object> paramsMap) {
 		return super.getCountBySql(sqlOrNamedQuery, paramsMap);
 	}
@@ -869,6 +870,7 @@ public class SqlToyLazyDaoImpl extends SpringDaoSupport implements SqlToyLazyDao
 		return (List<T>) super.findEntity(entityClass, entityQuery, resultType);
 	}
 
+	@Override
 	public <T> Page<T> findPageEntity(Page page, Class<T> entityClass, EntityQuery entityQuery) {
 		return super.findPageEntity(page, entityClass, entityQuery, entityClass);
 	}
@@ -910,6 +912,7 @@ public class SqlToyLazyDaoImpl extends SpringDaoSupport implements SqlToyLazyDao
 	 * @param resultType
 	 * @return
 	 */
+	@Override
 	public <T extends Serializable> Page<T> convertType(Page sourcePage, Class<T> resultType) {
 		return super.convertType(sourcePage, resultType);
 	}

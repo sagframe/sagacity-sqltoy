@@ -17,6 +17,7 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 public class ToDate extends IFunction {
 	private static Pattern regex = Pattern.compile("(?i)\\W(to_date|date)\\(");
 
+	@Override
 	public String dialects() {
 		return "oracle,dm,mysql,sqlserver";
 	}

@@ -34,6 +34,7 @@ public enum SecureType {
 		return this.type;
 	}
 
+	@Override
 	public String toString() {
 		return type;
 	}

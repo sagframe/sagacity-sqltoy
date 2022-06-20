@@ -207,45 +207,53 @@ public class ExpressionUtil {
 				lg = (long) (dbValue1 / dbValue2);
 				return dbValue1 - lg * dbValue2;
 			} else if (opt.equals(">")) {
-				if (dbValue1 > dbValue2)
+				if (dbValue1 > dbValue2) {
 					return 1;
-				else
+				} else {
 					return 0;
+				}
 			} else if (opt.equals("<")) {
-				if (dbValue1 < dbValue2)
+				if (dbValue1 < dbValue2) {
 					return 1;
-				else
+				} else {
 					return 0;
+				}
 			} else if (opt.equals("]")) {
-				if (dbValue1 >= dbValue2)
+				if (dbValue1 >= dbValue2) {
 					return 1;
-				else
+				} else {
 					return 0;
+				}
 			} else if (opt.equals("[")) {
-				if (dbValue1 <= dbValue2)
+				if (dbValue1 <= dbValue2) {
 					return 1;
-				else
+				} else {
 					return 0;
+				}
 			} else if (opt.equals("!")) {
-				if (dbValue1 != dbValue2)
+				if (dbValue1 != dbValue2) {
 					return 1;
-				else
+				} else {
 					return 0;
+				}
 			} else if (opt.equals("|")) {
-				if (dbValue1 > 0 || dbValue2 > 0)
+				if (dbValue1 > 0 || dbValue2 > 0) {
 					return 1;
-				else
+				} else {
 					return 0;
+				}
 			} else if (opt.equals("&")) {
-				if (dbValue1 > 0 && dbValue2 > 0)
+				if (dbValue1 > 0 && dbValue2 > 0) {
 					return 1;
-				else
+				} else {
 					return 0;
+				}
 			} else if (opt.equals("=")) {
-				if (dbValue1 == dbValue2)
+				if (dbValue1 == dbValue2) {
 					return 1;
-				else
+				} else {
 					return 0;
+				}
 			}
 		} catch (Exception e) {
 			throw new RuntimeException("参数:" + value1 + "和:" + value2 + "在进行:" + opt + "运算时非法!");

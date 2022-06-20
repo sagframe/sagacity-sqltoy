@@ -596,6 +596,7 @@ public class DefaultDialectUtils {
 			rs = conn.createStatement().executeQuery("desc " + tableName);
 			return (Map<String, ColumnMeta>) SqlUtil.preparedStatementProcess(null, null, rs,
 					new PreparedStatementResultHandler() {
+						@Override
 						public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException {
 							Map<String, ColumnMeta> pkMeta = new HashMap<String, ColumnMeta>();
 							while (rs.next()) {
