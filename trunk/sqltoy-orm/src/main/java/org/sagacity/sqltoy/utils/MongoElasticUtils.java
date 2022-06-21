@@ -385,7 +385,7 @@ public class MongoElasticUtils {
 			start = m.end();
 			method = groupStr.substring(1, groupStr.indexOf("(")).toLowerCase().trim();
 			value = paramValues[index];
-			if (method.equals("") || method.equals("param") || method.equals("value")) {
+			if ("".equals(method) || "param".equals(method) || "value".equals(method)) {
 				isAry = true;
 				if (value.getClass().isArray()) {
 					ary = CollectionUtil.convertArray(value);

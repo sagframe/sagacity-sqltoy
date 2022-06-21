@@ -91,7 +91,7 @@ public class QueryExecutor implements Serializable {
 					}
 				}
 				// 存在blank 过滤器自动将blank param="*" 关闭
-				if (filter.getType().equals("blank")) {
+				if ("blank".equals(filter.getType())) {
 					innerModel.blankToNull = false;
 				}
 				innerModel.paramFilters.add(filter);
@@ -322,7 +322,7 @@ public class QueryExecutor implements Serializable {
 	/**
 	 * @TODO 结果日期格式化
 	 * @param format
-	 * @param params
+	 * @param columns
 	 * @return
 	 */
 	public QueryExecutor dateFmt(String format, String... columns) {
@@ -342,7 +342,7 @@ public class QueryExecutor implements Serializable {
 	 * @TODO 对结果的数字进行格式化
 	 * @param format
 	 * @param roundingMode
-	 * @param params
+	 * @param columns
 	 * @return
 	 */
 	public QueryExecutor numFmt(String format, RoundingMode roundingMode, String... columns) {
@@ -362,7 +362,7 @@ public class QueryExecutor implements Serializable {
 	/**
 	 * @TODO 对结果字段进行安全脱敏
 	 * @param maskType
-	 * @param params
+	 * @param columns
 	 * @return
 	 */
 	public QueryExecutor secureMask(MaskType maskType, String... columns) {

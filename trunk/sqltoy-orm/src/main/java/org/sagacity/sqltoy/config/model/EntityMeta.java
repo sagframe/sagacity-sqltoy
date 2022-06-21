@@ -330,7 +330,7 @@ public class EntityMeta implements Serializable {
 	}
 
 	/**
-	 * @param fieldArray the fieldArray to set
+	 * @param fieldsArray the fieldArray to set
 	 */
 	public void setFieldsArray(String[] fieldsArray) {
 		this.fieldsArray = fieldsArray;
@@ -595,7 +595,7 @@ public class EntityMeta implements Serializable {
 	}
 
 	/**
-	 * @param shardingModel the shardingModel to set
+	 * @param shardingConfig the shardingModel to set
 	 */
 	public void setShardingConfig(ShardingConfig shardingConfig) {
 		this.shardingConfig = shardingConfig;

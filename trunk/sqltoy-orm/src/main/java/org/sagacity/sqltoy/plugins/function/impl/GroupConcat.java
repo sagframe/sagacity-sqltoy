@@ -38,7 +38,7 @@ public class GroupConcat extends IFunction {
 			sign = tmp.substring(matchIndex + 11).trim();
 		}
 		if (dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL15 || dialect == DBType.GAUSSDB) {
-			if (functionName.toLowerCase().equals("string_agg")) {
+			if ("string_agg".equals(functionName.toLowerCase())) {
 				return super.IGNORE;
 			}
 			// 原则上可以通过string_agg 但如果类型不是字符串就会报错
@@ -52,7 +52,7 @@ public class GroupConcat extends IFunction {
 			}
 		}
 		if (dialect == DBType.MYSQL || dialect == DBType.TIDB || dialect == DBType.MYSQL57) {
-			if (functionName.toLowerCase().equals("group_concat")) {
+			if ("group_concat".equals(functionName.toLowerCase())) {
 				return super.IGNORE;
 			}
 			return " group_concat(" + args[0] + " separator " + args[1] + ") ";

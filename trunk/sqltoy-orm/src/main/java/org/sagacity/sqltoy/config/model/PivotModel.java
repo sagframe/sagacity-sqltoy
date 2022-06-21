@@ -93,7 +93,7 @@ public class PivotModel implements Serializable {
 	}
 
 	/**
-	 * @param pivotCols the pivotCols to set
+	 * @param startEndCols the pivotCols to set
 	 */
 	public PivotModel setStartEndCols(String... startEndCols) {
 		if (startEndCols != null && startEndCols.length > 0) {

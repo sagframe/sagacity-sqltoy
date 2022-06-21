@@ -379,12 +379,11 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @see getSingleValue(final String sqlOrNamedSql, final Map<String, Object>
-	 *      paramsMap)
 	 * @param sqlOrNamedSql
 	 * @param paramsNamed
 	 * @param paramsValue
 	 * @return
+	 * @see #getSingleValue(String, Map)
 	 */
 	@Deprecated
 	protected Object getSingleValue(final String sqlOrNamedSql, final String[] paramsNamed,
@@ -952,7 +951,7 @@ public class SqlToyDaoSupport {
 
 	/**
 	 * @todo 保存对象数据(返回插入的主键值),忽视已经存在的
-	 * @param entity
+	 * @param entities
 	 * @return
 	 */
 	protected <T extends Serializable> Long saveAllIgnoreExist(final List<T> entities) {
@@ -961,7 +960,7 @@ public class SqlToyDaoSupport {
 
 	/**
 	 * @todo 保存对象数据(返回插入的主键值),忽视已经存在的
-	 * @param entity
+	 * @param entities
 	 * @param dataSource
 	 * @return
 	 */

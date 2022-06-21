@@ -127,7 +127,7 @@ public class Page<T> implements Serializable {
 	/**
 	 * Sets the value of the pageNo property.
 	 * 
-	 * @param aPageNo the new value of the pageNo property where pageNo==-1 then
+	 * @param pageNo the new value of the pageNo property where pageNo==-1 then
 	 *                show all page
 	 */
 	public Page setPageNo(long pageNo) {

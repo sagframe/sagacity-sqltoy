@@ -715,9 +715,9 @@ public class SqlToyContext {
 			FunctionUtils.setFunctionConverts((List<String>) functionConverts);
 		} else if (functionConverts instanceof String) {
 			String converts = (String) functionConverts;
-			if (StringUtil.isBlank(converts) || converts.equals("default") || converts.equals("defaults")) {
+			if (StringUtil.isBlank(converts) || "default".equals(converts) || "defaults".equals(converts)) {
 				FunctionUtils.setFunctionConverts(null);
-			} else if (!converts.equalsIgnoreCase("close")) {
+			} else if (!"close".equalsIgnoreCase(converts)) {
 				FunctionUtils.setFunctionConverts(Arrays.asList(converts.split("\\,")));
 			}
 		}
@@ -731,7 +731,7 @@ public class SqlToyContext {
 	}
 
 	/**
-	 * @param nocacheKeyResult the nocacheKeyResult to set
+	 * @param uncachedKeyResult the nocacheKeyResult to set
 	 */
 	public void setUncachedKeyResult(String uncachedKeyResult) {
 		SqlToyConstants.setUncachedKeyResult(uncachedKeyResult);
@@ -745,9 +745,6 @@ public class SqlToyContext {
 		this.appContext = appContext;
 	}
 
-	/**
-	 * @param defaultDataSource the defaultDataSource to set
-	 */
 	public void initDefaultDataSource() {
 		if (StringUtil.isNotBlank(defaultDataSourceName)) {
 			this.defaultDataSource = getDataSourceBean(defaultDataSourceName);
@@ -759,7 +756,7 @@ public class SqlToyContext {
 	}
 
 	/**
-	 * @param elasticConfigs the elasticConfigs to set
+	 * @param elasticEndpointList the elasticConfigs to set
 	 */
 	public void setElasticEndpoints(List<ElasticEndpoint> elasticEndpointList) {
 		if (elasticEndpointList == null || elasticEndpointList.isEmpty()) {

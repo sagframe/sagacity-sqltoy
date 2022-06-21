@@ -273,7 +273,7 @@ public class ResultUtils {
 			boolean hasDecorate = (linkModel.getDecorateAppendChar() == null) ? false : true;
 			boolean isLeft = true;
 			if (hasDecorate) {
-				isLeft = linkModel.getDecorateAlign().equals("left") ? true : false;
+				isLeft = "left".equals(linkModel.getDecorateAlign()) ? true : false;
 			}
 			Object preIdentity = null;
 			Object linkValue;
@@ -527,7 +527,7 @@ public class ResultUtils {
 		boolean hasDecorate = (linkModel.getDecorateAppendChar() == null) ? false : true;
 		boolean isLeft = true;
 		if (hasDecorate) {
-			isLeft = linkModel.getDecorateAlign().equals("left") ? true : false;
+			isLeft = "left".equals(linkModel.getDecorateAlign()) ? true : false;
 		}
 		Object preIdentity = null;
 		Object[] linkValues = new Object[linkCols];
@@ -953,13 +953,13 @@ public class ResultUtils {
 		// 将字符串用分隔符切分开进行逐个翻译
 		String[] keys = null;
 		String splitReg = extend.splitRegex.trim();
-		if (splitReg.equals(",")) {
+		if (",".equals(splitReg)) {
 			keys = fieldStr.split("\\,");
-		} else if (splitReg.equals(";")) {
+		} else if (";".equals(splitReg)) {
 			keys = fieldStr.split("\\;");
-		} else if (splitReg.equals(":")) {
+		} else if (":".equals(splitReg)) {
 			keys = fieldStr.split("\\:");
-		} else if (splitReg.equals("")) {
+		} else if ("".equals(splitReg)) {
 			keys = fieldStr.split("\\s+");
 		} else {
 			keys = fieldStr.split(extend.splitRegex);
@@ -1619,7 +1619,7 @@ public class ResultUtils {
 					cacheData = cacheDatas.get(trans.column);
 					srcFieldValue = BeanUtil.getProperty(item, trans.keyColumn);
 					fieldValue = BeanUtil.getProperty(item, field);
-					if (srcFieldValue != null && !srcFieldValue.toString().equals("") && fieldValue == null) {
+					if (srcFieldValue != null && !"".equals(srcFieldValue.toString()) && fieldValue == null) {
 						BeanUtil.setProperty(item, field, translateKey(trans, cacheData, srcFieldValue));
 					}
 				}

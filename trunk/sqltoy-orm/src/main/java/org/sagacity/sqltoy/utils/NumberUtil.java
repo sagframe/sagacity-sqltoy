@@ -80,7 +80,7 @@ public class NumberUtil {
 		}
 		try {
 			String tmpStr = target.toString().replace(",", "").trim().toLowerCase();
-			if (tmpStr.equals("") || tmpStr.equals("null") || tmpStr.equals("nan")) {
+			if ("".equals(tmpStr) || "null".equals(tmpStr) || "nan".equals(tmpStr)) {
 				return "";
 			}
 			BigDecimal tmp = new BigDecimal(tmpStr);
@@ -127,7 +127,7 @@ public class NumberUtil {
 		}
 		try {
 			String tmpStr = target.toString().replace(",", "").trim().toLowerCase();
-			if (tmpStr.equals("") || tmpStr.equals("null") || tmpStr.equals("nan")) {
+			if ("".equals(tmpStr) || "null".equals(tmpStr) || "nan".equals(tmpStr)) {
 				return "";
 			}
 			String lowPattern = pattern.toLowerCase();
@@ -219,7 +219,6 @@ public class NumberUtil {
 	/**
 	 * @todo 将大写中文金额字符串转换成数字(最大支持到千万亿)
 	 * @param capitalMoney
-	 * @param firstSign    ($或￥￡等符号)
 	 * @return
 	 */
 	public static BigDecimal capitalMoneyToNum(String capitalMoney) {
@@ -281,7 +280,7 @@ public class NumberUtil {
 		if (result.startsWith("壹拾")) {
 			result = result.substring(1);
 		}
-		if (!result.equals("")) {
+		if (!"".equals(result)) {
 			result += "元";
 		}
 
@@ -291,7 +290,7 @@ public class NumberUtil {
 		}
 
 		// 没有小数
-		if (dotIndex == -1 || (decimalPartStr.equals("") || Integer.parseInt(decimalPartStr) == 0)) {
+		if (dotIndex == -1 || ("".equals(decimalPartStr) || Integer.parseInt(decimalPartStr) == 0)) {
 			result += "整";
 		} else {
 			String[] uomName = { "角", "分", "厘" };
@@ -433,7 +432,7 @@ public class NumberUtil {
 	 * @return
 	 */
 	private static BigDecimal parseMillMoney(String capitalMoneyStr) {
-		if (capitalMoneyStr.equals("") || capitalMoneyStr.equals("0")) {
+		if ("".equals(capitalMoneyStr) || "0".equals(capitalMoneyStr)) {
 			return BigDecimal.ZERO;
 		}
 		String millStr = "0";
@@ -455,7 +454,7 @@ public class NumberUtil {
 	 * @return
 	 */
 	private static String numberToChina(String sourceInt, boolean isMoney) {
-		if (sourceInt.equals("0")) {
+		if ("0".equals(sourceInt)) {
 			return "";
 		}
 		String[] chinaNum = (isMoney ? capitalMoneyNumber : captialNumber);
@@ -499,7 +498,7 @@ public class NumberUtil {
 	 * @return
 	 */
 	private static BigDecimal parseLowThousandMoney(String capitalMoneyStr) {
-		if (capitalMoneyStr.equals("0")) {
+		if ("0".equals(capitalMoneyStr)) {
 			return BigDecimal.ZERO;
 		}
 		String lastStr = capitalMoneyStr.substring(capitalMoneyStr.length() - 1);
@@ -730,7 +729,7 @@ public class NumberUtil {
 		if (s.startsWith("0")) // 是否小於100
 		{
 			value = transTwo(s.substring(1));
-		} else if (s.substring(1).equals("00")) // 是否被100整除
+		} else if ("00".equals(s.substring(1))) // 是否被100整除
 		{
 			value = parseFirst(s.substring(0, 1)) + " HUNDRED";
 		} else {

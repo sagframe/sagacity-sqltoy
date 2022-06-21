@@ -18,7 +18,7 @@ public interface ShardingStrategy {
 	 * @todo 根据条件确定当前sql语句中的表要替换成的具体表名
 	 * @param sqlToyContext
 	 * @param entityClass
-	 * @param tableName     传递过来的当前表名
+	 * @param baseTableName     传递过来的当前表名
 	 * @param decisionType  决策类别
 	 * @param paramsMap     传递{[参数1,参数1值],[参数2,参数2值]}
 	 * @return 根据参数取得具体表名,返回null表示使用原表

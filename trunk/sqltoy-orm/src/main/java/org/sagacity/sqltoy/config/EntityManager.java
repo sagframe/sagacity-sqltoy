@@ -713,7 +713,7 @@ public class EntityManager {
 			boolean isNamedSql = SqlConfigParseUtils.isNamedQuery(load);
 			if (isNamedSql && !StringUtil.matches(loadLow, "(\\>|\\<)|(\\=)|(\\<\\>)|(\\>\\=|\\<\\=)")) {
 				// 自定义加载完整sql
-				if (!loadLow.equals("default") && !loadLow.equals("true")) {
+				if (!"default".equals(loadLow) && !"true".equals(loadLow)) {
 					cascadeModel.setLoadSubTableSql(load);
 				}
 			} else {
@@ -741,7 +741,7 @@ public class EntityManager {
 		if (StringUtil.isNotBlank(update)) {
 			String updateLow = update;
 			// 表示先删除子表
-			if (updateLow.equals("delete")) {
+			if ("delete".equals(updateLow)) {
 				cascadeModel.setCascadeUpdateSql("delete from ".concat(subSchemaTable).concat(subWhereSql));
 			} else {
 				// 修改数据(如设置记录状态为失效)

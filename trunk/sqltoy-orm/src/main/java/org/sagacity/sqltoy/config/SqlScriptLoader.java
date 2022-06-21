@@ -206,7 +206,7 @@ public class SqlScriptLoader {
 		String realDialect = (dialect == null) ? "" : dialect.toLowerCase();
 		// sqlId形式
 		if (SqlConfigParseUtils.isNamedQuery(sqlKey)) {
-			if (!realDialect.equals("")) {
+			if (!"".equals(realDialect)) {
 				// sqlId_dialect
 				result = sqlCache.get(sqlKey.concat("_").concat(realDialect));
 				// dialect_sqlId
@@ -293,14 +293,14 @@ public class SqlScriptLoader {
 	}
 
 	/**
-	 * @param resourcesDir the resourcesDir to set
+	 * @param sqlResourcesDir the resourcesDir to set
 	 */
 	public void setSqlResourcesDir(String sqlResourcesDir) {
 		this.sqlResourcesDir = sqlResourcesDir;
 	}
 
 	/**
-	 * @param mappingResources the mappingResources to set
+	 * @param sqlResources the mappingResources to set
 	 */
 	public void setSqlResources(List sqlResources) {
 		this.sqlResources = sqlResources;

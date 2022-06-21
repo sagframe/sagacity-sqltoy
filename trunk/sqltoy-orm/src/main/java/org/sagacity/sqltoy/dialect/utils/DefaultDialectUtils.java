@@ -525,9 +525,9 @@ public class DefaultDialectUtils {
 							colMeta.setNumPrecRadix(rs.getInt("NUM_PREC_RADIX"));
 							colMeta.setComments(rs.getString("REMARKS"));
 							isAutoIncrement = rs.getString("IS_AUTOINCREMENT");
-							if (isAutoIncrement != null && (isAutoIncrement.equalsIgnoreCase("true")
-									|| isAutoIncrement.equalsIgnoreCase("YES") || isAutoIncrement.equalsIgnoreCase("Y")
-									|| isAutoIncrement.equals("1"))) {
+							if (isAutoIncrement != null && ("true".equalsIgnoreCase(isAutoIncrement)
+									|| "YES".equalsIgnoreCase(isAutoIncrement) || "Y".equalsIgnoreCase(isAutoIncrement)
+									|| "1".equals(isAutoIncrement))) {
 								colMeta.setAutoIncrement(true);
 							} else {
 								colMeta.setAutoIncrement(false);
@@ -596,6 +596,7 @@ public class DefaultDialectUtils {
 			rs = conn.createStatement().executeQuery("desc " + tableName);
 			return (Map<String, ColumnMeta>) SqlUtil.preparedStatementProcess(null, null, rs,
 					new PreparedStatementResultHandler() {
+						@Override
 						public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException {
 							Map<String, ColumnMeta> pkMeta = new HashMap<String, ColumnMeta>();
 							while (rs.next()) {
