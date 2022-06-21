@@ -278,7 +278,7 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	}
 
 	/**
-	 * @param hasFastPage the hasFastPage to set
+	 * @param hasFast the hasFastPage to set
 	 */
 	public void setHasFast(boolean hasFast) {
 		this.hasFast = hasFast;
@@ -313,7 +313,7 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	}
 
 	/**
-	 * @param filterMap the filterMap to set
+	 * @param paramFilters the filterMap to set
 	 */
 	public void addFilters(List<ParamFilterModel> paramFilters) {
 		if (paramFilters != null && !paramFilters.isEmpty()) {

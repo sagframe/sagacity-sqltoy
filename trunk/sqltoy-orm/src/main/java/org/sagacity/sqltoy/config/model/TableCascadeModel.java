@@ -119,7 +119,7 @@ public class TableCascadeModel implements Serializable {
 	}
 
 	/**
-	 * @param mappedColumn the mappedColumn to set
+	 * @param mappedColumns the mappedColumn to set
 	 */
 	public void setMappedColumns(String[] mappedColumns) {
 		this.mappedColumns = mappedColumns;
