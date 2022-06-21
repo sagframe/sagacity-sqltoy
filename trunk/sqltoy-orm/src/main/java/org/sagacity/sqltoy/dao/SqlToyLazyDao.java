@@ -443,11 +443,11 @@ public interface SqlToyLazyDao {
 
 	/**
 	 * @TODO 获取查询结果的第一条、第一列的值，一般用select max(x) from 等
-	 * @see getSingleValue(final String sqlOrNamedSql, final Map<String, Object> paramsMap)
 	 * @param sqlOrNamedSql
 	 * @param paramsNamed
 	 * @param paramsValue
 	 * @return
+	 * @see #getSingleValue(String, Map)
 	 */
 	@Deprecated
 	public Object getSingleValue(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue);

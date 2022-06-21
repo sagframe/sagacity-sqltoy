@@ -106,7 +106,7 @@ public class DefaultConfig implements Serializable {
 	}
 
 	/**
-	 * @param dafaultDiskSize the dafaultDiskSize to set
+	 * @param defaultDiskSize the dafaultDiskSize to set
 	 */
 	public void setDefaultDiskSize(int defaultDiskSize) {
 		this.defaultDiskSize = defaultDiskSize;

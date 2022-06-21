@@ -320,7 +320,6 @@ public class Mongo extends BaseLink {
 
 	/**
 	 * @todo 聚合统计查询
-	 * @param mongoTemplate
 	 * @param sqlToyConfig
 	 * @param mql
 	 * @param resultClass

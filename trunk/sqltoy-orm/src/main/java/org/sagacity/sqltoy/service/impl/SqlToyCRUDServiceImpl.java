@@ -54,7 +54,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.sagacity.sqltoy.service.SqlToyCRUDService#save(java.io.Serializable
+	 * @see org.sagacity.sqltoy.service.SqlToyCRUDService#save(java.io.Serializable)
 	 * )
 	 */
 	@Override
