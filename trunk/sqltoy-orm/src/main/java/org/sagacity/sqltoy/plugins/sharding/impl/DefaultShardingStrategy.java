@@ -217,7 +217,7 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 	}
 
 	/**
-	 * @param tableNamesMap the tableNamesMap to set
+	 * @param tableMap the tableNamesMap to set
 	 */
 	public void setTableNamesMap(Map<String, String> tableMap) {
 		Iterator<Map.Entry<String, String>> iter = tableMap.entrySet().iterator();

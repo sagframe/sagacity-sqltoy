@@ -1443,7 +1443,7 @@ public class SqlUtil {
 	/**
 	 * @todo 转换主键数据类型(主键生成只支持数字和字符串类型)
 	 * @param idValue
-	 * @param jdbcType
+	 * @param idType
 	 * @return
 	 */
 	public static Object convertIdValueType(Object idValue, String idType) {

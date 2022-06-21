@@ -127,14 +127,18 @@ public class SqlExecuteTrace implements Serializable {
 	}
 
 	/**
-	 * @param sqlToyResults the sqlToyResults to set
+	 * @param topic
+	 * @param sql
+	 * @param paramsValue
 	 */
 	public void addSqlLog(String topic, String sql, Object... paramsValue) {
 		executeLogs.add(new SqlExecuteLog(0, topic, sql, paramsValue));
 	}
 
 	/**
-	 * @param sqlToyResults the sqlToyResults to set
+	 * @param topic
+	 * @param content
+	 * @param paramsValue
 	 */
 	public void addLog(String topic, String content, Object... paramsValue) {
 		executeLogs.add(new SqlExecuteLog(1, topic, content, paramsValue));
@@ -148,7 +152,7 @@ public class SqlExecuteTrace implements Serializable {
 	}
 
 	/**
-	 * @param error the error to set
+	 * @param errorMsg the error to set
 	 */
 	public void setError(String errorMsg) {
 		this.error = true;

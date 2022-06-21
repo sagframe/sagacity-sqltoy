@@ -78,7 +78,7 @@ public class MapKit implements Serializable {
 	}
 
 	/**
-	 * @see map(String key, Object value)
+	 * @see #map(String key, Object value)
 	 * @return
 	 */
 	@Deprecated

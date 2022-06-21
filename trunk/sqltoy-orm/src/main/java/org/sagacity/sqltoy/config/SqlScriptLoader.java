@@ -293,14 +293,14 @@ public class SqlScriptLoader {
 	}
 
 	/**
-	 * @param resourcesDir the resourcesDir to set
+	 * @param sqlResourcesDir the resourcesDir to set
 	 */
 	public void setSqlResourcesDir(String sqlResourcesDir) {
 		this.sqlResourcesDir = sqlResourcesDir;
 	}
 
 	/**
-	 * @param mappingResources the mappingResources to set
+	 * @param sqlResources the mappingResources to set
 	 */
 	public void setSqlResources(List sqlResources) {
 		this.sqlResources = sqlResources;

@@ -219,7 +219,6 @@ public class NumberUtil {
 	/**
 	 * @todo 将大写中文金额字符串转换成数字(最大支持到千万亿)
 	 * @param capitalMoney
-	 * @param firstSign    ($或￥￡等符号)
 	 * @return
 	 */
 	public static BigDecimal capitalMoneyToNum(String capitalMoney) {

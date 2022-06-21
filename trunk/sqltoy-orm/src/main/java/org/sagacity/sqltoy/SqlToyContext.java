@@ -745,9 +745,6 @@ public class SqlToyContext {
 		this.appContext = appContext;
 	}
 
-	/**
-	 * @param defaultDataSource the defaultDataSource to set
-	 */
 	public void initDefaultDataSource() {
 		if (StringUtil.isNotBlank(defaultDataSourceName)) {
 			this.defaultDataSource = getDataSourceBean(defaultDataSourceName);

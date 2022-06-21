@@ -223,7 +223,7 @@ public class ParamFilterModel implements Serializable {
 	}
 
 	/**
-	 * @param excludesMap the excludesMap to set
+	 * @param excludeParam the excludesMap to set
 	 */
 	public void addExclude(String excludeParam) {
 		this.excludes.add(excludeParam.toLowerCase());
@@ -251,7 +251,7 @@ public class ParamFilterModel implements Serializable {
 	}
 
 	/**
-	 * @param incrementUnit the incrementUnit to set
+	 * @param timeUnit the incrementUnit to set
 	 */
 	public void setTimeUnit(TimeUnit timeUnit) {
 		this.timeUnit = timeUnit;
