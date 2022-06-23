@@ -3,13 +3,16 @@ package org.sagacity.sqltoy.utils;
 import java.math.BigDecimal;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
-import java.security.SecureRandom;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
+import org.sagacity.sqltoy.config.model.CurrentTimeMaxValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,7 +27,7 @@ public class IdUtil {
 	 * 定义日志
 	 */
 	protected final static Logger logger = LoggerFactory.getLogger(IdUtil.class);
-	
+
 	// 纳秒id的ip截取位数
 	private static final int NANOTIME_IP_SUBSIZE = 3;
 
@@ -32,6 +35,12 @@ public class IdUtil {
 	 * 安全服务器ID
 	 */
 	private static String secureServerId = getLastIp(NANOTIME_IP_SUBSIZE);
+
+	private static final String SQLTOY_ID = "SQLTOY_IDENTITY_8";
+	private static final String SQLTOY_ID_SHORT = "SQLTOY_IDENTITY_6";
+
+	// 根据表名存放当前毫秒对应的计数值，毫秒变化就重新计数
+	private static ConcurrentHashMap<String, CurrentTimeMaxValue> tablesCurrentTimeId = new ConcurrentHashMap<String, CurrentTimeMaxValue>();
 
 	private IdUtil() {
 
@@ -45,42 +54,89 @@ public class IdUtil {
 	}
 
 	/**
-	 * @todo 获取22位有序安全ID,格式:13位当前毫秒+6位纳秒+3位主机ID 目前情况下任何一次提取纳秒时间都不会一样
+	 * @todo 获取22位有序安全ID,格式:13位当前毫秒+6位计数值+3位主机ID 目前情况下任何一次提取纳秒时间都不会一样
 	 * @param workerId
 	 * @return
 	 */
 	public static BigDecimal getShortNanoTimeId(String workerId) {
-		// 13位当前时间(毫秒)
-		String nowTime = StringUtil.addLeftZero2Len("" + System.currentTimeMillis(), 13);
-		// 6位纳秒间隔
-		String nanoTime = "" + System.nanoTime();
-		nanoTime = nanoTime.substring(nanoTime.length() - 6);
-		// 3位主机ID
-		String serverId = (workerId == null) ? secureServerId : workerId;
-		String id = nowTime.concat(nanoTime).concat(serverId);
-		return new BigDecimal(id);
+		return getShortNanoTimeId(SQLTOY_ID_SHORT, workerId);
+	}
+
+	public static BigDecimal getShortNanoTimeId(String identityName, String workerId) {
+		String realIdentityName = StringUtil.isBlank(identityName) ? SQLTOY_ID_SHORT : identityName;
+		long[] currentValue = getCurrentValue(realIdentityName, 999999);
+		// 13位
+		String nowTimeStr = StringUtil.addRightZero2Len("" + currentValue[0], 13);
+		// 6位
+		String currentId = StringUtil.addLeftZero2Len("" + (currentValue[1] % 1000000), 6);
+		// 3位主机标识
+		String serverId = StringUtil.addLeftZero2Len((workerId == null) ? secureServerId : workerId, 3);
+		// 总计22位
+		return new BigDecimal(nowTimeStr.concat(currentId).concat(serverId));
+	}
+
+	public static BigDecimal getNanoTimeId(String workerId) {
+		return getNanoTimeId(SQLTOY_ID, workerId);
 	}
 
 	/**
-	 * @todo 获取26位有序安全ID,格式:15位:yyMMddHHmmssSSS+后6位纳秒+2位(线程Id+随机数)+3位主机ID
+	 * @todo 获取26位有序安全ID,格式:15位:yyMMddHHmmssSSS+8位计数+3位主机ID
+	 * @param identityName 一般用表名
 	 * @param workerId
 	 * @return
 	 */
-	public static BigDecimal getNanoTimeId(String workerId) {
-		// 当前时间(毫秒)
-		String nowTime = DateUtil.formatDate(new Date(), "yyMMddHHmmssSSS");
-		// 后6位纳秒间隔
-		String nanoTime = "" + System.nanoTime();
-		nanoTime = nanoTime.substring(nanoTime.length() - 6);
-		// 1位随机数(防范性措施)
-		String randomNum = Long.toString(Math.abs(new SecureRandom().nextLong()) % 10);
-		// 线程ID(实际线程ID+1位随机数)
-		String threadId = Thread.currentThread().getId() + randomNum;
-		// 保留2位
-		threadId = threadId.substring(threadId.length() - 2);
+	public static BigDecimal getNanoTimeId(String identityName, String workerId) {
+		String realIdentityName = StringUtil.isBlank(identityName) ? SQLTOY_ID : identityName;
+		long[] currentValue = getCurrentValue(realIdentityName, 99999999);
+		DateFormat df = new SimpleDateFormat("yyMMddHHmmssSSS");
+		// 15位
+		String nowTimeStr = df.format(new Date(currentValue[0]));
+		// 8位
+		String currentId = StringUtil.addLeftZero2Len("" + (currentValue[1] % 100000000), 8);
 		// 3位主机ID,根据IP提取,默认提取IPv4的后3位
-		String serverId = (workerId == null) ? secureServerId : workerId;
-		return new BigDecimal(nowTime.concat(nanoTime).concat(threadId).concat(serverId));
+		String serverId = StringUtil.addLeftZero2Len((workerId == null) ? secureServerId : workerId, 3);
+		// 总计26位
+		return new BigDecimal(nowTimeStr.concat(currentId).concat(serverId));
+	}
+
+	/**
+	 * @TODO 改用并发map根据表名称存放当前毫秒对应的计数值
+	 * @param identityName
+	 * @param maxValue
+	 * @return
+	 */
+	private static long[] getCurrentValue(String identityName, int maxValue) {
+		synchronized (identityName.intern()) {
+			long currentTime = System.currentTimeMillis();
+			CurrentTimeMaxValue currentValue = tablesCurrentTimeId.get(identityName);
+			// 首次获取，从1开始计数
+			if (null == currentValue) {
+				currentValue = new CurrentTimeMaxValue(currentTime, 1);
+				tablesCurrentTimeId.put(identityName, currentValue);
+			} else {
+				// 当前时间大于上次提取maxValue的时间，则从新计数
+				if (currentTime > currentValue.getCurrentTime()) {
+					currentValue.setCurrentTime(currentTime);
+					currentValue.setValue(1);
+				} // 当前时间等于上次计数时间
+				else {
+					// 超出阈值，则取历史已经取过的值，延迟时间，按最新时间重新计数
+					if (currentValue.getValue() >= maxValue) {
+						// 延时1毫秒
+						try {
+							Thread.sleep(1);
+						} catch (Exception e) {
+
+						}
+						currentValue.setCurrentTime(System.currentTimeMillis());
+						currentValue.setValue(1);
+					} else {
+						currentValue.setValue(currentValue.getValue() + 1);
+					}
+				}
+			}
+			return new long[] { currentValue.getCurrentTime(), currentValue.getValue() };
+		}
 	}
 
 	/**
@@ -88,7 +144,7 @@ public class IdUtil {
 	 * @return
 	 */
 	public static String getDebugId() {
-		// 当前时间(毫秒)
+		// 当前时间(秒)
 		String nowTime = DateUtil.formatDate(new Date(), "HH:mm:ss");
 		// 后7位纳秒间隔
 		String nanoTime = "" + System.nanoTime();
@@ -174,7 +230,7 @@ public class IdUtil {
 			// 补足位数
 			serverIdentity = StringUtil.addLeftZero2Len(ipLastNumStr, size);
 		}
-		// 无网络无法获取ip场景下
+		// 无网络无法获取ip场景下 update 2021-09-17
 		if (serverIdentity == null) {
 			return StringUtil.addLeftZero2Len("1", size);
 		}

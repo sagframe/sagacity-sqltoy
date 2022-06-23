@@ -216,7 +216,7 @@ public class CacheUpdateWatcher extends Thread {
 								cacheData.put(result.getItem()[0].toString(), result.getItem());
 								count++;
 							} else {
-								logger.warn("增量缓存更新:cacheName={},cacheType={},未取到对应缓存数据,请检查数据结构是否正确(或缓存未必调用并初始化过)!",
+								logger.debug("增量缓存更新:cacheName={},cacheType={},未取到对应缓存数据,请检查数据结构是否正确(或缓存未必调用并初始化过)!",
 										cacheName, result.getCacheType());
 							}
 						}

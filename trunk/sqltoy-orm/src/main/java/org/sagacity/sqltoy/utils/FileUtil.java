@@ -824,7 +824,7 @@ public class FileUtil {
 	 * @param fileName
 	 * @param content
 	 */
-	public static void appendFileByStream(Object fileName, String conent) {
+	public static void appendFileByStream(Object fileName, String content) {
 		BufferedWriter out = null;
 		try {
 			File appendFile = null;
@@ -837,7 +837,7 @@ public class FileUtil {
 				appendFile.createNewFile();
 			}
 			out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(appendFile, true)));
-			out.write(conent);
+			out.write(content);
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {

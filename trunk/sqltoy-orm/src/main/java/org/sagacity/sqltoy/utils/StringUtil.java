@@ -180,6 +180,10 @@ public class StringUtil {
 		return addSign2Len(source, length, 0, 0);
 	}
 
+	public static String addRightZero2Len(String source, int length) {
+		return addSign2Len(source, length, 0, 1);
+	}
+
 	/**
 	 * @todo 用空字符给字符串补足不足指定长度部分
 	 * @param source
