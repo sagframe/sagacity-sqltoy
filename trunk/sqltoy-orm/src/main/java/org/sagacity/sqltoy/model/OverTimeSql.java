@@ -15,12 +15,23 @@ public class OverTimeSql implements Serializable {
 	 */
 	private static final long serialVersionUID = -3149678048950643843L;
 
+	/**
+	 * sqlId
+	 */
 	private String id;
 
+	/**
+	 * sql内容
+	 */
 	private String sql;
 
 	/**
-	 * 耗时
+	 * 参数
+	 */
+	private Object[] paramValues;
+
+	/**
+	 * 耗时(毫秒)
 	 */
 	private long takeTime;
 
@@ -28,6 +39,14 @@ public class OverTimeSql implements Serializable {
 	 * 调用sql的代码位置
 	 */
 	private String codeTrace;
+
+	public OverTimeSql(String id, String sql, Object[] paramValues, long takeTime, String codeTrace) {
+		this.id = id;
+		this.sql = sql;
+		this.paramValues = paramValues;
+		this.takeTime = takeTime;
+		this.codeTrace = codeTrace;
+	}
 
 	public String getId() {
 		return id;
@@ -59,5 +78,13 @@ public class OverTimeSql implements Serializable {
 
 	public void setCodeTrace(String codeTrace) {
 		this.codeTrace = codeTrace;
+	}
+
+	public Object[] getParamValues() {
+		return paramValues;
+	}
+
+	public void setParamValues(Object[] paramValues) {
+		this.paramValues = paramValues;
 	}
 }
