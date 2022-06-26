@@ -5,8 +5,10 @@ package org.sagacity.sqltoy.utils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
 
 import org.junit.jupiter.api.Test;
+import org.sagacity.sqltoy.model.PriorityLimitSizeQueue;
 
 import com.alibaba.fastjson.JSON;
 
@@ -72,6 +74,15 @@ public class CollectionUtilTest {
 		} catch (Exception e) {
 			System.err.println(e.getMessage());
 		}
+	}
+
+	@Test
+	public void testQueue() {
+		Queue priorityQueue = new PriorityLimitSizeQueue(10);
+		for (int i = 0; i < 20; i++) {
+			priorityQueue.offer(i);
+		}
+		System.err.println(priorityQueue.size());
 	}
 
 }
