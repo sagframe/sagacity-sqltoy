@@ -50,7 +50,7 @@ public class SqlExecuteStat {
 	// 通过ThreadLocal 来保存进程数据
 	private static ThreadLocal<SqlExecuteTrace> threadLocal = new ThreadLocal<SqlExecuteTrace>();
 
-	private static OverTimeSqlHandler overTimeSqlHandler;
+	public static OverTimeSqlHandler overTimeSqlHandler;
 
 	/**
 	 * @todo 登记开始执行
