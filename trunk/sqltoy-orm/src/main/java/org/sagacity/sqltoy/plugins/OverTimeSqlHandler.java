@@ -21,11 +21,11 @@ public interface OverTimeSqlHandler {
 
 	/**
 	 * 获取前多少条最慢的sql
-	 * 
 	 * @param size
+	 * @param hasSqlId
 	 * @return
 	 */
-	public default List<OverTimeSql> getSlowest(int size) {
+	public default List<OverTimeSql> getSlowest(int size, boolean hasSqlId) {
 		return new ArrayList<OverTimeSql>();
 	}
 }

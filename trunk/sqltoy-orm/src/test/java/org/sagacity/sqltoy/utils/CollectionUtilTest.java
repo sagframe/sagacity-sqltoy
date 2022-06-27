@@ -89,7 +89,7 @@ public class CollectionUtilTest {
 		});
 		long[] time = new long[] { 10, 28, 7, 49, 8, 32, 82, 71, 90, 29 };
 		for (int i = 0; i < time.length; i++) {
-			priorityQueue.offer(new OverTimeSql("" + i, "sql" + i, null, time[i], ""));
+			priorityQueue.offer(new OverTimeSql("" + i, "sql" + i, time[i], ""));
 		}
 		OverTimeSql[] overSqls = new OverTimeSql[priorityQueue.size()];
 		priorityQueue.toArray(overSqls);

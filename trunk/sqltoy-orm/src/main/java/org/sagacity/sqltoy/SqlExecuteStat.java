@@ -215,7 +215,7 @@ public class SqlExecuteStat {
 			logger.warn(result.toString());
 			if (overTimeSqlHandler != null) {
 				overTimeSqlHandler
-						.log(new OverTimeSql(sqlTrace.getId(), sql, args, sqlTrace.getExecuteTime(), codeTrace));
+						.log(new OverTimeSql(sqlTrace.getId(), sql, sqlTrace.getExecuteTime(), codeTrace));
 			}
 		} else {
 			if (logger.isDebugEnabled()) {

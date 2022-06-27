@@ -1,6 +1,7 @@
 package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * 提供超时执行的sql模型
@@ -26,26 +27,32 @@ public class OverTimeSql implements Serializable {
 	private String sql;
 
 	/**
-	 * 参数
-	 */
-	private Object[] paramValues;
-
-	/**
 	 * 耗时(毫秒)
 	 */
 	private long takeTime;
+
+	/**
+	 * 执行时间
+	 */
+	private LocalDateTime logTime;
 
 	/**
 	 * 调用sql的代码位置
 	 */
 	private String codeTrace;
 
-	public OverTimeSql(String id, String sql, Object[] paramValues, long takeTime, String codeTrace) {
+	/**
+	 * 超时次数
+	 */
+	private int overTimeCount = 1;
+
+	public OverTimeSql(String id, String sql,  long takeTime, String codeTrace) {
 		this.id = id;
 		this.sql = sql;
-		this.paramValues = paramValues;
 		this.takeTime = takeTime;
 		this.codeTrace = codeTrace;
+		this.logTime = LocalDateTime.now();
+
 	}
 
 	public String getId() {
@@ -80,11 +87,20 @@ public class OverTimeSql implements Serializable {
 		this.codeTrace = codeTrace;
 	}
 
-	public Object[] getParamValues() {
-		return paramValues;
+	public LocalDateTime getLogTime() {
+		return logTime;
 	}
 
-	public void setParamValues(Object[] paramValues) {
-		this.paramValues = paramValues;
+	public void setLogTime(LocalDateTime logTime) {
+		this.logTime = logTime;
 	}
+
+	public int getOverTimeCount() {
+		return overTimeCount;
+	}
+
+	public void setOverTimeCount(int overTimeCount) {
+		this.overTimeCount = overTimeCount;
+	}
+
 }
