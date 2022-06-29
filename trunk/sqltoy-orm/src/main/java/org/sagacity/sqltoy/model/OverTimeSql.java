@@ -44,7 +44,7 @@ public class OverTimeSql implements Serializable {
 	/**
 	 * 超时次数
 	 */
-	private int overTimeCount = 1;
+	private long overTimeCount = 1;
 
 	public OverTimeSql(String id, String sql,  long takeTime, String codeTrace) {
 		this.id = id;
@@ -95,11 +95,11 @@ public class OverTimeSql implements Serializable {
 		this.logTime = logTime;
 	}
 
-	public int getOverTimeCount() {
+	public long getOverTimeCount() {
 		return overTimeCount;
 	}
 
-	public void setOverTimeCount(int overTimeCount) {
+	public void setOverTimeCount(long overTimeCount) {
 		this.overTimeCount = overTimeCount;
 	}
 

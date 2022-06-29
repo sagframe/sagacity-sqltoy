@@ -17,14 +17,17 @@ import org.sagacity.sqltoy.plugins.OverTimeSqlHandler;
  *
  */
 public class DefaultOverTimeHandler implements OverTimeSqlHandler {
-
-	private PriorityLimitSizeQueue<OverTimeSql> queues = new PriorityLimitSizeQueue<OverTimeSql>(1000,
+	/**
+	 * 无sqlId 的超时sql
+	 */
+	private PriorityLimitSizeQueue<OverTimeSql> queues = new PriorityLimitSizeQueue<OverTimeSql>(500,
 			new Comparator<OverTimeSql>() {
 				@Override
 				public int compare(OverTimeSql o1, OverTimeSql o2) {
 					return new Long(o1.getTakeTime() - o2.getTakeTime()).intValue();
 				}
 			});
+	// 所有执行超时且含sqlId的sql语句
 	private HashMap<String, OverTimeSql> slowSqlMap = new HashMap<String, OverTimeSql>();
 
 	@Override
@@ -35,7 +38,9 @@ public class DefaultOverTimeHandler implements OverTimeSqlHandler {
 			if (null == preSql) {
 				slowSqlMap.put(sqlId, overTimeSql);
 			} else {
+				// 新的相同sqlId的超时执行时长大于之前的
 				if (overTimeSql.getTakeTime() > preSql.getTakeTime()) {
+					// 执行次数进行累加
 					overTimeSql.setOverTimeCount(1 + preSql.getOverTimeCount());
 					slowSqlMap.put(sqlId, overTimeSql);
 				} else {

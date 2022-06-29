@@ -18,13 +18,16 @@ import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.integration.AppContext;
 import org.sagacity.sqltoy.integration.ConnectionFactory;
 import org.sagacity.sqltoy.integration.impl.SpringConnectionFactory;
+import org.sagacity.sqltoy.model.OverTimeSql;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.plugins.FilterHandler;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
+import org.sagacity.sqltoy.plugins.OverTimeSqlHandler;
 import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
 import org.sagacity.sqltoy.plugins.datasource.impl.DefaultDataSourceSelector;
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
+import org.sagacity.sqltoy.plugins.overtime.DefaultOverTimeHandler;
 import org.sagacity.sqltoy.plugins.secure.DesensitizeProvider;
 import org.sagacity.sqltoy.plugins.secure.FieldsSecureProvider;
 import org.sagacity.sqltoy.plugins.secure.impl.DesensitizeDefaultProvider;
@@ -115,6 +118,11 @@ public class SqlToyContext {
 	 * 自定义参数过滤处理器(防范性预留)
 	 */
 	private FilterHandler customFilterHandler;
+
+	/**
+	 * 执行超时sql自定义处理器
+	 */
+	private OverTimeSqlHandler overTimeSqlHandler = new DefaultOverTimeHandler();
 
 	/**
 	 * @param unifyFieldsHandler the unifyFieldsHandler to set
@@ -327,6 +335,7 @@ public class SqlToyContext {
 		SqlToyConstants.FETCH_SIZE = this.fetchSize;
 		// 初始化sql执行统计的基本参数
 		SqlExecuteStat.setDebug(this.debug);
+		SqlExecuteStat.setOverTimeSqlHandler(overTimeSqlHandler);
 		SqlExecuteStat.setPrintSqlTimeoutMillis(this.printSqlTimeoutMillis);
 		// 字段加解密实现类初始化
 		if (null != fieldsSecureProvider) {
@@ -965,5 +974,23 @@ public class SqlToyContext {
 
 	public void setMongoQueryClass(String mongoQueryClass) {
 		this.mongoQueryClass = mongoQueryClass;
+	}
+
+	public OverTimeSqlHandler getOverTimeSqlHandler() {
+		return overTimeSqlHandler;
+	}
+
+	public void setOverTimeSqlHandler(OverTimeSqlHandler overTimeSqlHandler) {
+		this.overTimeSqlHandler = overTimeSqlHandler;
+	}
+
+	/**
+	 * @TODO 获取执行最慢的sql
+	 * @param size     提取记录数量
+	 * @param hasSqlId 是否包含sqlId
+	 * @return
+	 */
+	public List<OverTimeSql> getSlowestSql(int size, boolean hasSqlId) {
+		return overTimeSqlHandler.getSlowest(size, hasSqlId);
 	}
 }

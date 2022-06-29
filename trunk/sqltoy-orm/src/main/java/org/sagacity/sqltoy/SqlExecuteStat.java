@@ -50,6 +50,7 @@ public class SqlExecuteStat {
 	// 通过ThreadLocal 来保存进程数据
 	private static ThreadLocal<SqlExecuteTrace> threadLocal = new ThreadLocal<SqlExecuteTrace>();
 
+	// sql执行超时处理器
 	public static OverTimeSqlHandler overTimeSqlHandler;
 
 	/**
@@ -214,8 +215,7 @@ public class SqlExecuteStat {
 		} else if (sqlTrace.isOverTime()) {
 			logger.warn(result.toString());
 			if (overTimeSqlHandler != null) {
-				overTimeSqlHandler
-						.log(new OverTimeSql(sqlTrace.getId(), sql, sqlTrace.getExecuteTime(), codeTrace));
+				overTimeSqlHandler.log(new OverTimeSql(sqlTrace.getId(), sql, sqlTrace.getExecuteTime(), codeTrace));
 			}
 		} else {
 			if (logger.isDebugEnabled()) {
@@ -246,6 +246,10 @@ public class SqlExecuteStat {
 	 */
 	public static void setDebug(boolean debug) {
 		SqlExecuteStat.debug = debug;
+	}
+
+	public static void setOverTimeSqlHandler(OverTimeSqlHandler overTimeSqlHandler) {
+		SqlExecuteStat.overTimeSqlHandler = overTimeSqlHandler;
 	}
 
 	/**

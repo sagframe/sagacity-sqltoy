@@ -6,7 +6,7 @@ import java.util.List;
 import org.sagacity.sqltoy.model.OverTimeSql;
 
 /**
- * 超时sql
+ * 超时sql处理器接口定义
  * 
  * @author zhongxuchen
  *
@@ -21,6 +21,7 @@ public interface OverTimeSqlHandler {
 
 	/**
 	 * 获取前多少条最慢的sql
+	 * 
 	 * @param size
 	 * @param hasSqlId
 	 * @return
