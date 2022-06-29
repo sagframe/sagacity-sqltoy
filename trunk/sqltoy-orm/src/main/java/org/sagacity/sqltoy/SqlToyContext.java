@@ -16,8 +16,10 @@ import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.executor.QueryExecutor;
+import org.sagacity.sqltoy.model.OverTimeSql;
 import org.sagacity.sqltoy.plugins.FilterHandler;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
+import org.sagacity.sqltoy.plugins.OverTimeSqlHandler;
 import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.sagacity.sqltoy.plugins.connection.ConnectionFactory;
 import org.sagacity.sqltoy.plugins.connection.impl.DefaultConnectionFactory;
@@ -26,6 +28,7 @@ import org.sagacity.sqltoy.plugins.datasource.ObtainDataSource;
 import org.sagacity.sqltoy.plugins.datasource.impl.DefaultDataSourceSelector;
 import org.sagacity.sqltoy.plugins.datasource.impl.DefaultObtainDataSource;
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
+import org.sagacity.sqltoy.plugins.overtime.DefaultOverTimeHandler;
 import org.sagacity.sqltoy.plugins.secure.DesensitizeProvider;
 import org.sagacity.sqltoy.plugins.secure.FieldsSecureProvider;
 import org.sagacity.sqltoy.plugins.secure.impl.DesensitizeDefaultProvider;
@@ -119,6 +122,11 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * 具体缓存实现(默认ehcache,可以根据自己喜好来自行扩展实现,sqltoy习惯将有争议的提供默认实现但用户可自行选择)
 	 */
 	private TranslateCacheManager translateCacheManager;
+	
+	/**
+	 * 执行超时sql自定义处理器
+	 */
+	private OverTimeSqlHandler overTimeSqlHandler = new DefaultOverTimeHandler();
 
 	/**
 	 * @param unifyFieldsHandler the unifyFieldsHandler to set
@@ -326,6 +334,7 @@ public class SqlToyContext implements ApplicationContextAware {
 		SqlToyConstants.FETCH_SIZE = this.fetchSize;
 		// 初始化sql执行统计的基本参数
 		SqlExecuteStat.setDebug(this.debug);
+		SqlExecuteStat.setOverTimeSqlHandler(overTimeSqlHandler);
 		SqlExecuteStat.setPrintSqlTimeoutMillis(this.printSqlTimeoutMillis);
 
 		// 字段加解密实现类初始化
@@ -964,5 +973,23 @@ public class SqlToyContext implements ApplicationContextAware {
 
 	public void setCustomFilterHandler(FilterHandler customFilterHandler) {
 		this.customFilterHandler = customFilterHandler;
+	}
+	
+	public OverTimeSqlHandler getOverTimeSqlHandler() {
+		return overTimeSqlHandler;
+	}
+
+	public void setOverTimeSqlHandler(OverTimeSqlHandler overTimeSqlHandler) {
+		this.overTimeSqlHandler = overTimeSqlHandler;
+	}
+
+	/**
+	 * @TODO 获取执行最慢的sql
+	 * @param size     提取记录数量
+	 * @param hasSqlId 是否包含sqlId
+	 * @return
+	 */
+	public List<OverTimeSql> getSlowestSql(int size, boolean hasSqlId) {
+		return overTimeSqlHandler.getSlowest(size, hasSqlId);
 	}
 }
