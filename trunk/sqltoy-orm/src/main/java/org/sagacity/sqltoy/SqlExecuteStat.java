@@ -13,6 +13,8 @@ import java.util.regex.Pattern;
 
 import org.sagacity.sqltoy.config.model.SqlExecuteLog;
 import org.sagacity.sqltoy.config.model.SqlExecuteTrace;
+import org.sagacity.sqltoy.model.OverTimeSql;
+import org.sagacity.sqltoy.plugins.OverTimeSqlHandler;
 import org.sagacity.sqltoy.utils.DateUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
@@ -47,6 +49,9 @@ public class SqlExecuteStat {
 
 	// 通过ThreadLocal 来保存进程数据
 	private static ThreadLocal<SqlExecuteTrace> threadLocal = new ThreadLocal<SqlExecuteTrace>();
+
+	// sql执行超时处理器
+	public static OverTimeSqlHandler overTimeSqlHandler;
 
 	/**
 	 * @todo 登记开始执行
@@ -152,11 +157,12 @@ public class SqlExecuteStat {
 		String uid = sqlTrace.getUid();
 		StringBuilder result = new StringBuilder();
 		String optType = sqlTrace.getType();
+		String codeTrace = getFirstTrace();
 		result.append("\n/*|----------------------开始执行报告输出 --------------------------------------------------*/");
 		result.append("\n/*|任 务 ID: " + uid);
 		result.append("\n/*|执行结果: " + reportStatus);
 		result.append("\n/*|执行类型: " + optType);
-		result.append("\n/*|代码定位: " + getFirstTrace());
+		result.append("\n/*|代码定位: " + codeTrace);
 		if (sqlTrace.getId() != null) {
 			result.append("\n/*|对应sqlId: " + sqlTrace.getId());
 		}
@@ -165,7 +171,8 @@ public class SqlExecuteStat {
 		int logType;
 		String topic;
 		String content;
-		Object[] args;
+		Object[] args = null;
+		String sql = null;
 		for (SqlExecuteLog log : executeLogs) {
 			step++;
 			logType = log.getType();
@@ -180,7 +187,8 @@ public class SqlExecuteStat {
 					result.append("\n/*|     内部sql: ").append(fitSqlParams(content, args));
 					result.append("\n/*|     save(All)|saveOrUpdate(All)|deleleAll|batchUpdate等不输出sql执行参数");
 				} else {
-					result.append("\n/*|     模拟入参后sql: ").append(fitSqlParams(content, args));
+					sql = fitSqlParams(content, args);
+					result.append("\n/*|     模拟入参后sql: ").append(sql);
 					result.append("\n/*|     sql参数: ");
 					if (args != null && args.length > 0) {
 						StringBuilder paramStr = new StringBuilder();
@@ -206,6 +214,9 @@ public class SqlExecuteStat {
 			logger.error(result.toString());
 		} else if (sqlTrace.isOverTime()) {
 			logger.warn(result.toString());
+			if (overTimeSqlHandler != null) {
+				overTimeSqlHandler.log(new OverTimeSql(sqlTrace.getId(), sql, sqlTrace.getExecuteTime(), codeTrace));
+			}
 		} else {
 			if (logger.isDebugEnabled()) {
 				logger.debug(result.toString());
@@ -235,6 +246,10 @@ public class SqlExecuteStat {
 	 */
 	public static void setDebug(boolean debug) {
 		SqlExecuteStat.debug = debug;
+	}
+
+	public static void setOverTimeSqlHandler(OverTimeSqlHandler overTimeSqlHandler) {
+		SqlExecuteStat.overTimeSqlHandler = overTimeSqlHandler;
 	}
 
 	/**

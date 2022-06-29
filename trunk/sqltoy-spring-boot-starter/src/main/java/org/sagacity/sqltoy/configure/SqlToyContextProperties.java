@@ -174,6 +174,11 @@ public class SqlToyContextProperties implements Serializable {
 	 * add 2022-4-26 自定义filter处理器(预留备用)
 	 */
 	private String customFilterHandler;
+	
+	/**
+	 * sql执行超时处理器
+	 */
+	private String overTimeSqlHandler;
 
 	/**
 	 * @return the sqlResourcesDir
@@ -506,6 +511,14 @@ public class SqlToyContextProperties implements Serializable {
 
 	public void setCustomFilterHandler(String customFilterHandler) {
 		this.customFilterHandler = customFilterHandler;
+	}
+
+	public String getOverTimeSqlHandler() {
+		return overTimeSqlHandler;
+	}
+
+	public void setOverTimeSqlHandler(String overTimeSqlHandler) {
+		this.overTimeSqlHandler = overTimeSqlHandler;
 	}
 
 }
