@@ -7,10 +7,10 @@ import java.util.PriorityQueue;
 import java.util.Queue;
 
 /**
- * 
+ * @description 固定长度优先队列
  * @author zhongxuchen
- *
  * @param <T>
+ * @version v1.0, Date:2022-06-29
  */
 public class PriorityLimitSizeQueue<T> implements Queue<T> {
 

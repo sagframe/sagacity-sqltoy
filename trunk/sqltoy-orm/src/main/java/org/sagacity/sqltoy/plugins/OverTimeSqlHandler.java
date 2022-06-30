@@ -9,7 +9,7 @@ import org.sagacity.sqltoy.model.OverTimeSql;
  * 超时sql处理器接口定义
  * 
  * @author zhongxuchen
- *
+ * @version v1.0, Date:2022-06-29
  */
 public interface OverTimeSqlHandler {
 	/**

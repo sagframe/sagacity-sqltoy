@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
  * 提供超时执行的sql模型
  * 
  * @author zhongxuchen
- *
+ * @version v1.0, Date:2022-06-29
  */
 public class OverTimeSql implements Serializable {
 

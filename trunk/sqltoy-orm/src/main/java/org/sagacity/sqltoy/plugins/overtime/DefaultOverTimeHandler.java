@@ -14,7 +14,7 @@ import org.sagacity.sqltoy.plugins.OverTimeSqlHandler;
 /**
  * @TODO 提供默认的sql执行超时日志队列，便于应用获取
  * @author zhongxuchen
- *
+ * @version v1.0, Date:2022-06-29
  */
 public class DefaultOverTimeHandler implements OverTimeSqlHandler {
 	/**
