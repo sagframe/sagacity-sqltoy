@@ -1754,7 +1754,7 @@ public class BeanUtil {
 				mappedFieldValues = reflectBeanToAry(itemEntity, mappedFields, null, null);
 				isEqual = true;
 				for (int k = 0; k < fieldLength; k++) {
-					if (!mainValues[k].equals(mappedFieldValues[k])) {
+					if (null == mainValues[k] || !mainValues[k].equals(mappedFieldValues[k])) {
 						isEqual = false;
 						break;
 					}
