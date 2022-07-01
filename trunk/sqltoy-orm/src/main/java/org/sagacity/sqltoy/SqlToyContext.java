@@ -987,7 +987,7 @@ public class SqlToyContext {
 	/**
 	 * @TODO 获取执行最慢的sql
 	 * @param size     提取记录数量
-	 * @param hasSqlId 是否包含sqlId
+	 * @param hasSqlId 是否是xml中定义含id的sql(另外一种就是代码中直接写的sql)
 	 * @return
 	 */
 	public List<OverTimeSql> getSlowestSql(int size, boolean hasSqlId) {

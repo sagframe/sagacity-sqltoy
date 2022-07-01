@@ -394,6 +394,7 @@ public class SqlExecuteStat {
 		threadLocal.set(sqlTrace);
 	}
 
+	//并行多线程场景
 	public static void mergeTrace(SqlExecuteTrace sqlTrace) {
 		if (sqlTrace != null) {
 			threadLocal.set(new SqlExecuteTrace(sqlTrace.getId(), sqlTrace.getType(), sqlTrace.isPrint()));
