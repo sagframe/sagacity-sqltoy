@@ -15,6 +15,7 @@ import org.sagacity.sqltoy.demo.vo.StaffInfoVO;
 import org.sagacity.sqltoy.demo.vo.TypeShowCase;
 import org.sagacity.sqltoy.model.IgnoreCaseLinkedMap;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
+import org.sagacity.sqltoy.model.MaskType;
 import org.sagacity.sqltoy.model.SaveMode;
 
 import com.alibaba.fastjson.JSON;
@@ -207,5 +208,19 @@ public class BeanUtilTest {
 		System.err.println(BeanUtil.isBaseDataType(int.class));
 		System.err.println(BeanUtil.isBaseDataType(Map.class));
 		System.err.println(BeanUtil.isBaseDataType(List.class));
+	}
+
+	@Test
+	public void testEnum() {
+		MaskType type = MaskType.ADDRESS;
+		try {
+			System.err.println(MaskType.values());
+			System.err.println(((Enum) type).name());
+			System.err.println(((Enum) type).ordinal());
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
 	}
 }
