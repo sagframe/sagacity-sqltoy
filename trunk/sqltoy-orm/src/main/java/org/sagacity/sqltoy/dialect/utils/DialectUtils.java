@@ -657,8 +657,9 @@ public class DialectUtils {
 		ReflectPropsHandler handler = getAddReflectHandler(reflectPropsHandler, sqlToyContext.getUnifyFieldsHandler());
 		handler = getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
-		List<Object[]> paramValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getFieldsArray(), null,
-				handler);
+		// update 2022-7-16 增加默认值代入,insert sql上去除了nvl(?,default) 适应一些框架
+		List<Object[]> paramValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getFieldsArray(),
+				SqlUtilsExt.getDefaultValues(entityMeta), handler);
 		int pkIndex = entityMeta.getIdIndex();
 		// 是否存在业务ID
 		boolean hasBizId = (entityMeta.getBusinessIdGenerator() == null) ? false : true;
