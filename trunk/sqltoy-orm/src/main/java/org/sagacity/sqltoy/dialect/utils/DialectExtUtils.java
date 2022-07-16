@@ -279,14 +279,15 @@ public class DialectExtUtils {
 				}
 				insertRejIdCols.append(columnName);
 				// 存在默认值
-				if (isSupportNUL && null != fieldMeta.getDefaultValue()) {
-					insertRejIdColValues.append(isNullFunction);
-					insertRejIdColValues.append("(tv.").append(columnName).append(",");
-					processDefaultValue(insertRejIdColValues, dbType, fieldMeta.getType(), fieldMeta.getDefaultValue());
-					insertRejIdColValues.append(")");
-				} else {
-					insertRejIdColValues.append("tv.").append(columnName);
-				}
+				// if (isSupportNUL && null != fieldMeta.getDefaultValue()) {
+				// insertRejIdColValues.append(isNullFunction);
+				// insertRejIdColValues.append("(tv.").append(columnName).append(",");
+				// processDefaultValue(insertRejIdColValues, dbType, fieldMeta.getType(),
+				// fieldMeta.getDefaultValue());
+				// insertRejIdColValues.append(")");
+				// } else {
+				insertRejIdColValues.append("tv.").append(columnName);
+				// }
 			}
 		}
 		// 主键未匹配上则进行插入操作
@@ -340,7 +341,7 @@ public class DialectExtUtils {
 	}
 
 	/**
-	 * @TODO 针对postgresql\sqlite\guassdb等数据库
+	 * @TODO 针对postgresql\kingbase\guassdb等数据库
 	 * @param dbType
 	 * @param entityMeta
 	 * @param pkStrategy
@@ -389,13 +390,14 @@ public class DialectExtUtils {
 				}
 			} else {
 				sql.append(columnName);
-				if (null != fieldMeta.getDefaultValue()) {
-					values.append(isNullFunction).append("(?,");
-					processDefaultValue(values, dbType, fieldMeta.getType(), fieldMeta.getDefaultValue());
-					values.append(")");
-				} else {
-					values.append("?");
-				}
+				// if (null != fieldMeta.getDefaultValue()) {
+				// values.append(isNullFunction).append("(?,");
+				// processDefaultValue(values, dbType, fieldMeta.getType(),
+				// fieldMeta.getDefaultValue());
+				// values.append(")");
+				// } else {
+				values.append("?");
+				// }
 				isStart = false;
 			}
 		}
