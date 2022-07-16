@@ -390,18 +390,7 @@ public class SqlServerDialectUtils {
 					}
 					insertRejIdCols.append(columnName);
 					isStart = false;
-
-					// 存在默认值
-					// if (null != fieldMeta.getDefaultValue()) {
-					// insertRejIdColValues.append(isNullFunction);
-					// insertRejIdColValues.append("(tv.").append(columnName).append(",");
-					// DialectExtUtils.processDefaultValue(insertRejIdColValues, dbType,
-					// fieldMeta.getType(),
-					// fieldMeta.getDefaultValue());
-					// insertRejIdColValues.append(")");
-					// } else {
 					insertRejIdColValues.append("tv.").append(columnName);
-					// }
 				}
 			}
 		}
@@ -522,15 +511,7 @@ public class SqlServerDialectUtils {
 					values.append(",");
 				}
 				sql.append(fieldMeta.getColumnName());
-				// if (null != fieldMeta.getDefaultValue()) {
-				// values.append(isNullFunction);
-				// values.append("(?,");
-				// DialectExtUtils.processDefaultValue(values, dbType, fieldMeta.getType(),
-				// fieldMeta.getDefaultValue());
-				// values.append(")");
-				// } else {
 				values.append("?");
-				// }
 				isStart = false;
 			}
 		}

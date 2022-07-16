@@ -637,7 +637,7 @@ public class DialectUtils {
 	}
 
 	/**
-	 * @todo 处理加工对象基于db2、oracle、sqlserver数据库的saveOrUpdateSql
+	 * @todo 处理加工对象基于db2、oracle数据库的saveOrUpdateSql
 	 * @param unifyFieldsHandler
 	 * @param dbType
 	 * @param entityMeta
@@ -850,11 +850,6 @@ public class DialectUtils {
 					if (convertBlob && "byte[]".equals(fieldMeta.getFieldType())) {
 						sql.append(nullFunction);
 						sql.append("(cast(? as bytea),").append(columnName).append(" )");
-						// sql.append(" cast(");
-						// sql.append(nullFunction);
-						// sql.append("(cast(? as
-						// varchar),").append("cast(").append(columnName).append(" as varchar))");
-						// sql.append(" as bytea)");
 					} else {
 						sql.append(nullFunction);
 						sql.append("(?,").append(columnName).append(")");
@@ -2051,9 +2046,6 @@ public class DialectUtils {
 			return 0L;
 		}
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-		// 记录数量小于1000且无级联采用一次sql执行完成删除
-		// if (entities.size() < 1000 && entityMeta.getCascadeModels().isEmpty()) {
-		// }
 		String realTable = entityMeta.getSchemaTable(tableName, dbType);
 		if (null == entityMeta.getIdArray()) {
 			throw new IllegalArgumentException("delete/deleteAll 操作,表:" + realTable + " 没有主键,请检查表设计!");
@@ -2355,10 +2347,6 @@ public class DialectUtils {
 				}
 				callStat.execute();
 				rs = callStat.getResultSet();
-				// 执行查询 解决存储过程返回多个结果集问题，取最后一个结果集
-				// while (callStat.getMoreResults()) {
-				// rs = callStat.getResultSet();
-				// }
 				StoreResult storeResult = new StoreResult();
 				if (rs != null) {
 					QueryResult tempResult = ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn, rs, null,
@@ -2649,7 +2637,5 @@ public class DialectUtils {
 			result = getUpdateReflectHandler(reflectPropsHandler, null, unifyFieldsHandler);
 		}
 		return result;
-		// return getDataAuthReflectHandler(result,
-		// unifyFieldsHandler.dataAuthFilters());
 	}
 }
