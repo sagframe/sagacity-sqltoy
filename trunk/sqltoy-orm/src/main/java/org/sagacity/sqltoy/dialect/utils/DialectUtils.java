@@ -1562,7 +1562,7 @@ public class DialectUtils {
 				entityMeta.getFieldsTypeArray(), entityMeta.getFieldsDefaultValue(), entityMeta.getFieldsNullable(),
 				batchSize, autoCommit, conn, dbType);
 	}
-	
+
 	/**
 	 * @todo 单笔记录修改
 	 * @param sqlToyContext
