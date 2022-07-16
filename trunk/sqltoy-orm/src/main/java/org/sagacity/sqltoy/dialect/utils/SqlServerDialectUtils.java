@@ -813,7 +813,7 @@ public class SqlServerDialectUtils {
 			}
 		}
 		SqlExecuteStat.showSql("mssql批量保存", insertSql, null);
-		return SqlUtilsExt.batchUpdateByJdbc(sqlToyContext.getTypeHandler(), insertSql, paramValues,
+		return SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), insertSql, paramValues,
 				entityMeta.getFieldsTypeArray(), entityMeta.getFieldsDefaultValue(), entityMeta.getFieldsNullable(),
 				sqlToyContext.getBatchSize(), autoCommit, conn, dbType);
 	}
