@@ -12,6 +12,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.sagacity.sqltoy.SqlToyConstants;
+import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
@@ -245,6 +246,31 @@ public class SqlUtilsExt {
 	}
 
 	/**
+	 * @TODO 获得全部字段的默认值
+	 * @param entityMeta
+	 * @return
+	 */
+	public static Object[] getDefaultValues(EntityMeta entityMeta) {
+		if (null == entityMeta || null == entityMeta.getFieldsDefaultValue()) {
+			return null;
+		}
+		int size = entityMeta.getFieldsDefaultValue().length;
+		Object[] result = new Object[size];
+		String defaultValue;
+		int fieldType;
+		boolean isNullable;
+		for (int i = 0; i < size; i++) {
+			defaultValue = entityMeta.getFieldsDefaultValue()[i];
+			if (null != defaultValue) {
+				fieldType = entityMeta.getFieldsTypeArray()[i];
+				isNullable = entityMeta.getFieldsNullable()[i];
+				result[i] = getDefaultValue(null, defaultValue, fieldType, isNullable);
+			}
+		}
+		return result;
+	}
+
+	/**
 	 * @TODO 针对默认值进行处理
 	 * @param paramValue
 	 * @param defaultValue
@@ -257,9 +283,23 @@ public class SqlUtilsExt {
 		// 当前值为null且默认值不为null、且字段不允许为null
 		if (realValue == null && defaultValue != null && !isNullable) {
 			if (jdbcType == java.sql.Types.DATE) {
-				realValue = new Date();
+				if (isCurrentTime(defaultValue)) {
+					realValue = new Date();
+				} else {
+					realValue = DateUtil.convertDateObject(defaultValue);
+				}
 			} else if (jdbcType == java.sql.Types.TIMESTAMP) {
-				realValue = DateUtil.getTimestamp(null);
+				if (isCurrentTime(defaultValue)) {
+					realValue = DateUtil.getTimestamp(null);
+				} else {
+					realValue = DateUtil.getTimestamp(defaultValue);
+				}
+			} else if (jdbcType == java.sql.Types.TIME) {
+				if (isCurrentTime(defaultValue)) {
+					realValue = LocalTime.now();
+				} else {
+					realValue = DateUtil.asLocalTime(DateUtil.convertDateObject(defaultValue));
+				}
 			} else if (jdbcType == java.sql.Types.INTEGER || jdbcType == java.sql.Types.BIGINT
 					|| jdbcType == java.sql.Types.TINYINT) {
 				realValue = Integer.valueOf(defaultValue);
@@ -278,6 +318,17 @@ public class SqlUtilsExt {
 			}
 		}
 		return realValue;
+	}
+
+	// 判断默认值是否系统时间或日期
+	private static boolean isCurrentTime(String defaultValue) {
+		String defaultLow = defaultValue.toLowerCase();
+		if (defaultLow.contains("sysdate") || defaultLow.contains("now") || defaultLow.contains("current")
+				|| defaultLow.contains("sysdatetime") || defaultLow.contains("systime")
+				|| defaultLow.contains("timestamp")) {
+			return true;
+		}
+		return false;
 	}
 
 	/**

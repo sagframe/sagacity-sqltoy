@@ -56,7 +56,7 @@ public class EntityMeta implements Serializable {
 	private String[] idArray;
 
 	/**
-	 * 所有字段信息
+	 * 所有字段信息(主键字段放于末尾)
 	 */
 	private String[] fieldsArray;
 

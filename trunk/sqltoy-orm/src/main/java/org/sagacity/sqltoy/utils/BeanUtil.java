@@ -1112,7 +1112,7 @@ public class BeanUtil {
 								dataAry[j] = (j >= defaultValueLength) ? null : defaultValues[j];
 							}
 						} else {
-							if (defaultValues == null) {
+							if (null == defaultValues) {
 								dataAry[j] = null;
 							} else {
 								dataAry[j] = (j >= defaultValueLength) ? null : defaultValues[j];

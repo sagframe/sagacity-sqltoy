@@ -107,20 +107,22 @@ public class DialectExtUtils {
 					values.append(",");
 				}
 				sql.append(columnName);
+				// update 2022-7-16 插入操作默认值改为对象属性赋值模式
 				// 默认值处理
-				if (isSupportNULL && null != fieldMeta.getDefaultValue()) {
-					values.append(isNullFunction);
-					values.append("(?,");
-					processDefaultValue(values, dbType, fieldMeta.getType(), fieldMeta.getDefaultValue());
-					values.append(")");
+				// if (isSupportNULL && null != fieldMeta.getDefaultValue()) {
+				// values.append(isNullFunction);
+				// values.append("(?,");
+				// processDefaultValue(values, dbType, fieldMeta.getType(),
+				// fieldMeta.getDefaultValue());
+				// values.append(")");
+				// } else {
+				// kudu 中文会产生乱码
+				if (dbType == DBType.IMPALA && isString) {
+					values.append("cast(? as string)");
 				} else {
-					// kudu 中文会产生乱码
-					if (dbType == DBType.IMPALA && isString) {
-						values.append("cast(? as string)");
-					} else {
-						values.append("?");
-					}
+					values.append("?");
 				}
+				// }
 				isStart = false;
 			}
 		}
@@ -223,8 +225,7 @@ public class DialectExtUtils {
 		// 在无主键的情况下产生insert sql语句
 		String realTable = entityMeta.getSchemaTable(tableName, dbType);
 		if (entityMeta.getIdArray() == null) {
-			return DialectExtUtils.generateInsertSql(dbType, entityMeta, pkStrategy, isNullFunction, sequence,
-					isAssignPK, realTable);
+			return generateInsertSql(dbType, entityMeta, pkStrategy, isNullFunction, sequence, isAssignPK, realTable);
 		}
 		boolean isSupportNUL = StringUtil.isBlank(isNullFunction) ? false : true;
 		int columnSize = entityMeta.getFieldsArray().length;

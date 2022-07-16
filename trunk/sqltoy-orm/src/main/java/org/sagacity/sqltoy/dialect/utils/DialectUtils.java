@@ -1331,9 +1331,10 @@ public class DialectUtils {
 		ReflectPropsHandler handler = getAddReflectHandler(null, sqlToyContext.getUnifyFieldsHandler());
 		handler = getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
-		Object[] fullParamValues = BeanUtil.reflectBeanToAry(entity, reflectColumns, null, handler);
+		// update 2022-7-16 增加默认值的代入
+		Object[] fullParamValues = BeanUtil.reflectBeanToAry(entity, reflectColumns,
+				SqlUtilsExt.getDefaultValues(entityMeta), handler);
 		boolean needUpdatePk = false;
-
 		int pkIndex = entityMeta.getIdIndex();
 		// 是否存在业务ID
 		boolean hasBizId = (entityMeta.getBusinessIdGenerator() == null) ? false : true;
@@ -1485,7 +1486,9 @@ public class DialectUtils {
 		ReflectPropsHandler handler = getAddReflectHandler(reflectPropsHandler, sqlToyContext.getUnifyFieldsHandler());
 		handler = getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
-		List paramValues = BeanUtil.reflectBeansToInnerAry(entities, reflectColumns, null, handler);
+		// update 2022-7-16 增加了默认值代入
+		List paramValues = BeanUtil.reflectBeansToInnerAry(entities, reflectColumns,
+				SqlUtilsExt.getDefaultValues(entityMeta), handler);
 		int pkIndex = entityMeta.getIdIndex();
 		// 是否存在业务ID
 		boolean hasBizId = (entityMeta.getBusinessIdGenerator() == null) ? false : true;
