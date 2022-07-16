@@ -61,7 +61,8 @@ public class SqlUtilsExt {
 		long updateCount = 0;
 		PreparedStatement pst = null;
 		// 判断是否通过default转换方式插入
-		boolean supportDefaultValue = (fieldsDefaultValue != null && fieldsNullable != null) ? true : false;
+		boolean hasDefaultValue = (fieldsDefaultValue != null && fieldsNullable != null && fieldsType != null) ? true
+				: false;
 		try {
 			boolean hasSetAutoCommit = false;
 			// 是否自动提交
@@ -79,134 +80,27 @@ public class SqlUtilsExt {
 			Object cellValue;
 			int fieldType;
 			boolean hasFieldType = (fieldsType != null);
+			boolean notSqlServer = (dbType.intValue() != DBType.SQLSERVER);
 			int[] updateRows;
+			int index = 0;
 			for (int i = 0; i < totalRows; i++) {
 				rowData = rowDatas.get(i);
 				if (rowData != null) {
 					// 使用对象properties方式传值
+					index = 0;
 					for (int j = 0, n = rowData.length; j < n; j++) {
-						fieldType = (hasFieldType) ? fieldsType[j] : -1;
-						if (supportDefaultValue) {
-							cellValue = getDefaultValue(rowData[j], fieldsDefaultValue[j], fieldType,
-									fieldsNullable[j]);
-						} else {
-							cellValue = rowData[j];
-						}
-						SqlUtil.setParamValue(typeHandler, conn, dbType, pst, cellValue, fieldType, j + 1);
-					}
-					meter++;
-					// 批量
-					if (useBatch) {
-						pst.addBatch();
-						// 判断是否是最后一条记录或到达批次量,执行批处理
-						if ((meter % batchSize) == 0 || i + 1 == totalRows) {
-							updateRows = pst.executeBatch();
-							for (int t : updateRows) {
-								updateCount = updateCount + ((t > 0) ? t : 0);
-							}
-							pst.clearBatch();
-						}
-					} else {
-						updateCount=pst.executeUpdate();
-					}
-				}
-			}
-			// 恢复conn原始autoCommit默认值
-			if (hasSetAutoCommit) {
-				conn.setAutoCommit(!autoCommit);
-			}
-		} catch (Exception e) {
-			logger.error(e.getMessage(), e);
-			throw e;
-		} finally {
-			try {
-				if (pst != null) {
-					pst.close();
-					pst = null;
-				}
-			} catch (SQLException se) {
-				logger.error(se.getMessage(), se);
-			}
-		}
-		return updateCount;
-	}
-
-	/**
-	 * @TODO 针对sqlserver进行特殊化处理(主要针对Timestamp类型的兼容)
-	 * @param typeHandler
-	 * @param updateSql
-	 * @param rowDatas
-	 * @param fieldsType
-	 * @param fieldsDefaultValue
-	 * @param fieldsNullable
-	 * @param batchSize
-	 * @param autoCommit
-	 * @param conn
-	 * @param dbType
-	 * @return
-	 * @throws Exception
-	 */
-	public static Long batchUpdateBySqlServer(TypeHandler typeHandler, final String updateSql,
-			final List<Object[]> rowDatas, final Integer[] fieldsType, final String[] fieldsDefaultValue,
-			final Boolean[] fieldsNullable, final int batchSize, final Boolean autoCommit, final Connection conn,
-			final Integer dbType) throws Exception {
-		if (rowDatas == null || rowDatas.isEmpty()) {
-			logger.warn("batchUpdateByJdbc批量插入或修改数据库操作数据为空!");
-			return 0L;
-		}
-		long updateCount = 0;
-		PreparedStatement pst = null;
-		// 判断是否通过default转换方式插入
-		boolean supportDefaultValue = (fieldsDefaultValue != null && fieldsNullable != null) ? true : false;
-		try {
-			boolean hasSetAutoCommit = false;
-			// 是否自动提交
-			if (autoCommit != null && autoCommit.booleanValue() != conn.getAutoCommit()) {
-				conn.setAutoCommit(autoCommit.booleanValue());
-				hasSetAutoCommit = true;
-			}
-			pst = conn.prepareStatement(updateSql);
-			int totalRows = rowDatas.size();
-			// 只有一条记录不采用批量
-			boolean useBatch = (totalRows > 1) ? true : false;
-			Object[] rowData;
-			// 批处理计数器
-			int meter = 0;
-			int index = 0;
-			Object cellValue;
-			int fieldType;
-			int[] updateRows;
-			boolean hasFieldType = (fieldsType != null);
-			for (int i = 0; i < totalRows; i++) {
-				rowData = rowDatas.get(i);
-				fieldType = -1;
-				if (rowData != null) {
-					// sqlserver 针对timestamp类型不能进行赋值
-					if (hasFieldType) {
-						index = 0;
-						for (int j = 0, n = rowData.length; j < n; j++) {
-							fieldType = fieldsType[j];
-							// 非timestamp类型
-							if (fieldType != java.sql.Types.TIMESTAMP) {
-								if (supportDefaultValue) {
-									cellValue = getDefaultValue(rowData[j], fieldsDefaultValue[j], fieldType,
-											fieldsNullable[j]);
-								} else {
-									cellValue = rowData[j];
-
-								}
-								SqlUtil.setParamValue(typeHandler, conn, dbType, pst, cellValue, fieldType, index + 1);
-								index++;
-							}
-						}
-					} else {
-						for (int j = 0, n = rowData.length; j < n; j++) {
-							if (supportDefaultValue) {
-								cellValue = getDefaultValue(rowData[j], fieldsDefaultValue[j], -1, fieldsNullable[j]);
+						fieldType = hasFieldType ? fieldsType[j] : -1;
+						// sqlserver timestamp 类型不支持赋值和更新
+						if (notSqlServer || fieldType != java.sql.Types.TIMESTAMP) {
+							if (hasDefaultValue) {
+								cellValue = getDefaultValue(rowData[j], fieldsDefaultValue[j], fieldType,
+										fieldsNullable[j]);
 							} else {
 								cellValue = rowData[j];
+
 							}
-							SqlUtil.setParamValue(typeHandler, conn, dbType, pst, cellValue, -1, j + 1);
+							SqlUtil.setParamValue(typeHandler, conn, dbType, pst, cellValue, fieldType, index + 1);
+							index++;
 						}
 					}
 					meter++;
@@ -222,7 +116,7 @@ public class SqlUtilsExt {
 							pst.clearBatch();
 						}
 					} else {
-						updateCount=pst.executeUpdate();
+						updateCount = pst.executeUpdate();
 					}
 				}
 			}
@@ -273,6 +167,31 @@ public class SqlUtilsExt {
 	}
 
 	/**
+	 * @TODO 获得全部字段的默认值
+	 * @param entityMeta
+	 * @return
+	 */
+	public static Object[] getDefaultValues(EntityMeta entityMeta) {
+		if (null == entityMeta || null == entityMeta.getFieldsDefaultValue()) {
+			return null;
+		}
+		int size = entityMeta.getFieldsDefaultValue().length;
+		Object[] result = new Object[size];
+		String defaultValue;
+		int fieldType;
+		boolean isNullable;
+		for (int i = 0; i < size; i++) {
+			defaultValue = entityMeta.getFieldsDefaultValue()[i];
+			if (null != defaultValue) {
+				fieldType = entityMeta.getFieldsTypeArray()[i];
+				isNullable = entityMeta.getFieldsNullable()[i];
+				result[i] = getDefaultValue(null, defaultValue, fieldType, isNullable);
+			}
+		}
+		return result;
+	}
+
+	/**
 	 * @TODO 针对默认值进行处理
 	 * @param paramValue
 	 * @param defaultValue
@@ -285,9 +204,23 @@ public class SqlUtilsExt {
 		// 当前值为null且默认值不为null、且字段不允许为null
 		if (realValue == null && defaultValue != null && !isNullable) {
 			if (jdbcType == java.sql.Types.DATE) {
-				realValue = new Date();
+				if (isCurrentTime(defaultValue)) {
+					realValue = new Date();
+				} else {
+					realValue = DateUtil.convertDateObject(defaultValue);
+				}
 			} else if (jdbcType == java.sql.Types.TIMESTAMP) {
-				realValue = DateUtil.getTimestamp(null);
+				if (isCurrentTime(defaultValue)) {
+					realValue = DateUtil.getTimestamp(null);
+				} else {
+					realValue = DateUtil.getTimestamp(defaultValue);
+				}
+			} else if (jdbcType == java.sql.Types.TIME) {
+				if (isCurrentTime(defaultValue)) {
+					realValue = LocalTime.now();
+				} else {
+					realValue = DateUtil.asLocalTime(DateUtil.convertDateObject(defaultValue));
+				}
 			} else if (jdbcType == java.sql.Types.INTEGER || jdbcType == java.sql.Types.BIGINT
 					|| jdbcType == java.sql.Types.TINYINT) {
 				realValue = Integer.valueOf(defaultValue);
@@ -306,6 +239,17 @@ public class SqlUtilsExt {
 			}
 		}
 		return realValue;
+	}
+
+	// 判断默认值是否系统时间或日期
+	private static boolean isCurrentTime(String defaultValue) {
+		String defaultLow = defaultValue.toLowerCase();
+		if (defaultLow.contains("sysdate") || defaultLow.contains("now") || defaultLow.contains("current")
+				|| defaultLow.contains("sysdatetime") || defaultLow.contains("systime")
+				|| defaultLow.contains("timestamp")) {
+			return true;
+		}
+		return false;
 	}
 
 	/**

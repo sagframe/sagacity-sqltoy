@@ -71,12 +71,6 @@ public class EntityMeta implements Serializable {
 	private List<FieldSecureConfig> secureFields = new ArrayList<FieldSecureConfig>();
 
 	/**
-	 * 是否存在default值(仅用于sybaseiq,后期可废弃)
-	 */
-	@Deprecated
-	private boolean hasDefaultValue = false;
-
-	/**
 	 * 所有字段的默认值
 	 */
 	private String[] fieldsDefaultValue;
@@ -615,20 +609,6 @@ public class EntityMeta implements Serializable {
 	 */
 	public void setFieldsNullable(Boolean[] fieldsNullable) {
 		this.fieldsNullable = fieldsNullable;
-	}
-
-	/**
-	 * @return the hasDefaultValue
-	 */
-	public boolean isHasDefaultValue() {
-		return hasDefaultValue;
-	}
-
-	/**
-	 * @param hasDefaultValue the hasDefaultValue to set
-	 */
-	public void setHasDefaultValue(boolean hasDefaultValue) {
-		this.hasDefaultValue = hasDefaultValue;
 	}
 
 	/**

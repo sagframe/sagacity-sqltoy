@@ -125,7 +125,7 @@ public class SapIQDialectUtils {
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
 				pst = conn.prepareStatement(realInsertSql);
 				// 存在默认值
-				if (entityMeta.isHasDefaultValue()) {
+				if (null != entityMeta.getFieldsDefaultValue()) {
 					SqlUtilsExt.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, pst, paramValues,
 							entityMeta);
 				} else {

@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * @project sqltoy-orm
- * @description 提供click数据库通用的操作功能实现,为不同版本提供支持
+ * @description 提供clickhouse数据库通用的操作功能实现,为不同版本提供支持
  * @author zhongxuchen
  * @version v1.0,Date:2020年1月20日
  */
@@ -67,7 +67,8 @@ public class ClickHouseDialectUtils {
 		ReflectPropsHandler handler = DialectUtils.getAddReflectHandler(null, sqlToyContext.getUnifyFieldsHandler());
 		handler = DialectUtils.getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
-		Object[] fullParamValues = BeanUtil.reflectBeanToAry(entity, reflectColumns, null, handler);
+		Object[] fullParamValues = BeanUtil.reflectBeanToAry(entity, reflectColumns,
+				SqlUtilsExt.getDefaultValues(entityMeta), handler);
 		boolean needUpdatePk = false;
 
 		int pkIndex = entityMeta.getIdIndex();
@@ -115,6 +116,7 @@ public class ClickHouseDialectUtils {
 		final Integer[] paramsType = entityMeta.getFieldsTypeArray();
 		PreparedStatement pst = null;
 		Object result = SqlUtil.preparedStatementProcess(null, pst, null, new PreparedStatementResultHandler() {
+			@Override
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
 				if (isIdentity || isSequence) {
 					pst = conn.prepareStatement(insertSql,
@@ -180,7 +182,8 @@ public class ClickHouseDialectUtils {
 				sqlToyContext.getUnifyFieldsHandler());
 		handler = DialectUtils.getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
-		List paramValues = BeanUtil.reflectBeansToInnerAry(entities, reflectColumns, null, handler);
+		List<Object[]> paramValues = BeanUtil.reflectBeansToInnerAry(entities, reflectColumns,
+				SqlUtilsExt.getDefaultValues(entityMeta), handler);
 		int pkIndex = entityMeta.getIdIndex();
 		// 是否存在业务ID
 		boolean hasBizId = (entityMeta.getBusinessIdGenerator() == null) ? false : true;
@@ -392,8 +395,8 @@ public class ClickHouseDialectUtils {
 							ColumnMeta colMeta = new ColumnMeta();
 							colMeta.setColName(rs.getString("COLUMN_NAME"));
 							colMeta.setComments(rs.getString("COMMENTS"));
-							colMeta.setPK(rs.getString("PRIMARY_KEY").equals("1") ? true : false);
-							colMeta.setPartitionKey(rs.getString("PARTITION_KEY").equals("1") ? true : false);
+							colMeta.setPK("1".equals(rs.getString("PRIMARY_KEY")) ? true : false);
+							colMeta.setPartitionKey("1".equals(rs.getString("PARTITION_KEY")) ? true : false);
 							colComments.put(colMeta.getColName(), colMeta);
 						}
 						this.setResult(colComments);

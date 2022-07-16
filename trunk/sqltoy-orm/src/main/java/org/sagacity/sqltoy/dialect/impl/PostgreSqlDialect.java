@@ -250,9 +250,9 @@ public class PostgreSqlDialect implements Dialect {
 	 */
 	@Override
 	public Long updateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			final String[] uniqueFields,String[] forceUpdateFields, ReflectPropsHandler reflectPropsHandler, Connection conn,
-			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
-			throws Exception {
+			final String[] uniqueFields, String[] forceUpdateFields, ReflectPropsHandler reflectPropsHandler,
+			Connection conn, final Integer dbType, final String dialect, final Boolean autoCommit,
+			final String tableName) throws Exception {
 		return DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropsHandler,
 				NVL_FUNCTION, conn, dbType, autoCommit, tableName, false);
 	}
@@ -292,9 +292,8 @@ public class PostgreSqlDialect implements Dialect {
 	 * java.sql.Connection, java.lang.Boolean)
 	 */
 	public Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			ReflectPropsHandler reflectPropsHandler, String[] forceUpdateFields, Connection conn,
-			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
-			throws Exception {
+			ReflectPropsHandler reflectPropsHandler, String[] forceUpdateFields, Connection conn, final Integer dbType,
+			final String dialect, final Boolean autoCommit, final String tableName) throws Exception {
 		Long updateCnt = DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields,
 				reflectPropsHandler, NVL_FUNCTION, conn, dbType, autoCommit, tableName, true);
 		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
@@ -307,28 +306,6 @@ public class PostgreSqlDialect implements Dialect {
 		SqlExecuteStat.debug("新增记录", "新建记录数量:" + saveCnt + " 条!");
 		return updateCnt + saveCnt;
 	}
-
-//	public Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-//			ReflectPropsHandler reflectPropsHandler, String[] forceUpdateFields, Connection conn,
-//			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
-//			throws Exception {
-//		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-//		return DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta, forceUpdateFields,
-//				new GenerateSqlHandler() {
-//					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
-//						PKStrategy pkStrategy = entityMeta.getIdStrategy();
-//						String sequence = "nextval('" + entityMeta.getSequence() + "')";
-//						boolean isAssignPK = PostgreSqlDialectUtils.isAssignPKValue(pkStrategy);
-//						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
-//							// 伪造成sequence模式
-//							pkStrategy = PKStrategy.SEQUENCE;
-//							sequence = "DEFAULT";
-//						}
-//						return PostgreSqlDialectUtils.getSaveOrUpdateSql(dbType, entityMeta, pkStrategy, isAssignPK,
-//								sequence, forceUpdateFields, tableName);
-//					}
-//				}, reflectPropsHandler, conn, dbType, autoCommit);
-//	}
 
 	/*
 	 * (non-Javadoc)

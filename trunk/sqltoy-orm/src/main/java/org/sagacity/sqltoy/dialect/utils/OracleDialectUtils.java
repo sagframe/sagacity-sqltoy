@@ -80,6 +80,8 @@ public class OracleDialectUtils {
 	 * @param conn
 	 * @param dbType
 	 * @param tableName
+	 * @param fetchSize
+	 * @param maxRows
 	 * @return
 	 * @throws Exception
 	 */
@@ -102,6 +104,8 @@ public class OracleDialectUtils {
 	 * @param conn
 	 * @param dbType
 	 * @param dialect
+	 * @param fetchSize
+	 * @param maxRows
 	 * @return
 	 * @throws Exception
 	 */
@@ -140,7 +144,7 @@ public class OracleDialectUtils {
 			sql.append(sqlToyConfig.getFastTailSql(dialect));
 		}
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
-				sql.toString(), (pageNo - 1) * pageSize, Long.valueOf(pageSize), dialect);
+				sql.toString(), (pageNo - 1) * pageSize, Long.valueOf(pageSize),dialect);
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 				extend.rowCallbackHandler, decryptHandler, conn, dbType, 0, fetchSize, maxRows);
@@ -155,6 +159,8 @@ public class OracleDialectUtils {
 	 * @param conn
 	 * @param dbType
 	 * @param dialect
+	 * @param fetchSize
+	 * @param maxRows
 	 * @return
 	 * @throws Exception
 	 */
@@ -205,6 +211,8 @@ public class OracleDialectUtils {
 	 * @param conn
 	 * @param dbType
 	 * @param dialect
+	 * @param fetchSize
+	 * @param maxRows
 	 * @return
 	 * @throws Exception
 	 */
@@ -261,6 +269,7 @@ public class OracleDialectUtils {
 	 * @param outParamTypes
 	 * @param conn
 	 * @param dbType
+	 * @param fetchSize
 	 * @return
 	 * @throws Exception
 	 */
@@ -270,6 +279,7 @@ public class OracleDialectUtils {
 		CallableStatement callStat = null;
 		ResultSet rs = null;
 		return (StoreResult) SqlUtil.callableStatementProcess(null, callStat, rs, new CallableStatementResultHandler() {
+			@Override
 			public void execute(Object obj, CallableStatement callStat, ResultSet rs) throws Exception {
 				callStat = conn.prepareCall(storeSql);
 				if (fetchSize > 0) {
@@ -318,6 +328,20 @@ public class OracleDialectUtils {
 				this.setResult(storeResult);
 			}
 		});
+	}
+
+	public static String getLockSql(String sql, Integer dbType, LockMode lockMode) {
+		// 判断是否已经包含for update
+		if (lockMode == null || SqlUtil.hasLock(sql, dbType)) {
+			return "";
+		}
+		if (lockMode == LockMode.UPGRADE_NOWAIT) {
+			return " for update nowait ";
+		}
+		if (lockMode == LockMode.UPGRADE_SKIPLOCK) {
+			return " for update skip locked";
+		}
+		return " for update ";
 	}
 
 	@SuppressWarnings("unchecked")
@@ -384,20 +408,6 @@ public class OracleDialectUtils {
 				this.setResult(tables);
 			}
 		});
-	}
-
-	public static String getLockSql(String sql, Integer dbType, LockMode lockMode) {
-		// 判断是否已经包含for update
-		if (lockMode == null || SqlUtil.hasLock(sql, dbType)) {
-			return "";
-		}
-		if (lockMode == LockMode.UPGRADE_NOWAIT) {
-			return " for update nowait ";
-		}
-		if (lockMode == LockMode.UPGRADE_SKIPLOCK) {
-			return " for update skip locked";
-		}
-		return " for update ";
 	}
 
 	public static boolean isAssignPKValue(PKStrategy pkStrategy) {

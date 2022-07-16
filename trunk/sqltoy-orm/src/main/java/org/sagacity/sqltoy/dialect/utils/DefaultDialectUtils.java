@@ -58,6 +58,8 @@ public class DefaultDialectUtils {
 	 * @param conn
 	 * @param dbType
 	 * @param dialect
+	 * @param fetchSize
+	 * @param maxRows
 	 * @return
 	 * @throws Exception
 	 */
@@ -112,6 +114,8 @@ public class DefaultDialectUtils {
 	 * @param conn
 	 * @param dbType
 	 * @param dialect
+	 * @param fetchSize
+	 * @param maxRows
 	 * @return
 	 * @throws Exception
 	 */
@@ -157,6 +161,8 @@ public class DefaultDialectUtils {
 	 * @param conn
 	 * @param dbType
 	 * @param dialect
+	 * @param fetchSize
+	 * @param maxRows
 	 * @return
 	 * @throws Exception
 	 */
@@ -215,6 +221,7 @@ public class DefaultDialectUtils {
 		int idSize = entityMeta.getIdArray().length;
 		// 构造delete 语句
 		StringBuilder deleteSql = new StringBuilder();
+		// clickhouse 删除语法特殊
 		if (dbType == DBType.CLICKHOUSE) {
 			deleteSql.append("alter table ");
 			deleteSql.append(realTable);
@@ -222,7 +229,7 @@ public class DefaultDialectUtils {
 		} else {
 			deleteSql.append("delete from ");
 			deleteSql.append(realTable);
-			deleteSql.append("  where ");
+			deleteSql.append(" where ");
 		}
 		String field;
 		SqlToyResult sqlToyResult = null;
@@ -316,7 +323,6 @@ public class DefaultDialectUtils {
 		for (int i = 0; i < whereParamValues.length; i++) {
 			// 唯一性属性值存在空，则表示首次插入
 			if (StringUtil.isBlank(whereParamValues[i])) {
-				// 存在组织主键值过程
 				tempFieldValues = processFieldValues(sqlToyContext, entityMeta, entity);
 				whereParamValues = BeanUtil.reflectBeanToAry(entity, whereFields);
 				break;
@@ -344,7 +350,7 @@ public class DefaultDialectUtils {
 							if (index > 0) {
 								throw new DataAccessException("updateSaveFetch操作只能针对单条记录进行操作,请检查uniqueProps参数设置!");
 							}
-							//存在修改反调函数
+							// 存在修改记录
 							if (hasUpdateRow) {
 								SqlExecuteStat.debug("执行updateRow", "记录存在调用updateRowHandler.updateRow!");
 								// 执行update反调，实现锁定行记录值的修改
@@ -396,7 +402,7 @@ public class DefaultDialectUtils {
 	}
 
 	/**
-	 * @TODO 组织sql
+	 * @TODO 组织updateSaveFetch的锁查询sql
 	 * @param entityMeta
 	 * @param dbType
 	 * @param uniqueProps
@@ -412,6 +418,7 @@ public class DefaultDialectUtils {
 			if (i > 0) {
 				sql.append(",");
 			}
+			// 含关键字处理
 			sql.append(ReservedWordsUtil.convertWord(columnName, dbType));
 		}
 		sql.append(" from ").append(realTable).append(" where ");
@@ -518,9 +525,9 @@ public class DefaultDialectUtils {
 							colMeta.setNumPrecRadix(rs.getInt("NUM_PREC_RADIX"));
 							colMeta.setComments(rs.getString("REMARKS"));
 							isAutoIncrement = rs.getString("IS_AUTOINCREMENT");
-							if (isAutoIncrement != null && (isAutoIncrement.equalsIgnoreCase("true")
-									|| isAutoIncrement.equalsIgnoreCase("YES") || isAutoIncrement.equalsIgnoreCase("Y")
-									|| isAutoIncrement.equals("1"))) {
+							if (isAutoIncrement != null && ("true".equalsIgnoreCase(isAutoIncrement)
+									|| "YES".equalsIgnoreCase(isAutoIncrement) || "Y".equalsIgnoreCase(isAutoIncrement)
+									|| "1".equals(isAutoIncrement))) {
 								colMeta.setAutoIncrement(true);
 							} else {
 								colMeta.setAutoIncrement(false);
@@ -589,6 +596,7 @@ public class DefaultDialectUtils {
 			rs = conn.createStatement().executeQuery("desc " + tableName);
 			return (Map<String, ColumnMeta>) SqlUtil.preparedStatementProcess(null, null, rs,
 					new PreparedStatementResultHandler() {
+						@Override
 						public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException {
 							Map<String, ColumnMeta> pkMeta = new HashMap<String, ColumnMeta>();
 							while (rs.next()) {

@@ -814,19 +814,20 @@ public class EntityManager {
 		String[] fieldsDefaultValue = new String[fieldSize];
 		Boolean[] fieldsNullable = new Boolean[fieldSize];
 		FieldMeta fieldMeta;
-		boolean hasDefaultValue = false;
+		boolean hasDefault = false;
 		for (int i = 0; i < fieldSize; i++) {
 			fieldMeta = entityMeta.getFieldMeta(entityMeta.getFieldsArray()[i]);
 			fieldsTypeArray[i] = fieldMeta.getType();
-			if (fieldMeta.getDefaultValue() != null) {
-				hasDefaultValue = true;
-			}
 			fieldsDefaultValue[i] = fieldMeta.getDefaultValue();
+			if (null != fieldMeta.getDefaultValue()) {
+				hasDefault = true;
+			}
 			fieldsNullable[i] = fieldMeta.isNullable();
 		}
-		entityMeta.setHasDefaultValue(hasDefaultValue);
 		entityMeta.setFieldsTypeArray(fieldsTypeArray);
-		entityMeta.setFieldsDefaultValue(fieldsDefaultValue);
+		if (hasDefault) {
+			entityMeta.setFieldsDefaultValue(fieldsDefaultValue);
+		}
 		entityMeta.setFieldsNullable(fieldsNullable);
 	}
 
