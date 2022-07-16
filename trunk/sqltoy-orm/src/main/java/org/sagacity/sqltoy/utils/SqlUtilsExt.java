@@ -89,7 +89,7 @@ public class SqlUtilsExt {
 					index = 0;
 					for (int j = 0, n = rowData.length; j < n; j++) {
 						fieldType = hasFieldType ? fieldsType[j] : -1;
-						// 非timestamp类型
+						// sqlserver timestamp 类型不支持赋值和更新
 						if (notSqlServer || fieldType != java.sql.Types.TIMESTAMP) {
 							if (hasDefaultValue) {
 								cellValue = getDefaultValue(rowData[j], fieldsDefaultValue[j], fieldType,
