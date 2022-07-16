@@ -49,12 +49,12 @@ public class SqlUtilsExt {
 	 * @return
 	 * @throws Exception
 	 */
-	public static Long batchUpdateForPOJO(TypeHandler typeHandler, final String updateSql, final List<Object[]> rowDatas,
-			final Integer[] fieldsType, final String[] fieldsDefaultValue, final Boolean[] fieldsNullable,
-			final int batchSize, final Boolean autoCommit, final Connection conn, final Integer dbType)
-			throws Exception {
+	public static Long batchUpdateForPOJO(TypeHandler typeHandler, final String updateSql,
+			final List<Object[]> rowDatas, final Integer[] fieldsType, final String[] fieldsDefaultValue,
+			final Boolean[] fieldsNullable, final int batchSize, final Boolean autoCommit, final Connection conn,
+			final Integer dbType) throws Exception {
 		if (rowDatas == null || rowDatas.isEmpty()) {
-			logger.warn("batchUpdateByJdbc批量插入或修改数据库操作数据为空!");
+			logger.warn("batchUpdateForPOJO批量插入或修改数据库操作数据为空!");
 			return 0L;
 		}
 		long updateCount = 0;
@@ -79,7 +79,7 @@ public class SqlUtilsExt {
 			Object cellValue;
 			int fieldType;
 			boolean hasFieldType = (fieldsType != null);
-			boolean notSqlServer = (dbType.intValue() != DBType.SQLSERVER);
+			boolean notSqlServer = (dbType == null || dbType.intValue() != DBType.SQLSERVER);
 			int[] updateRows;
 			int index = 0;
 			for (int i = 0; i < totalRows; i++) {
