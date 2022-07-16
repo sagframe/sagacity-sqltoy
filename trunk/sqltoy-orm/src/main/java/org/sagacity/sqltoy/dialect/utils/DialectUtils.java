@@ -1468,12 +1468,6 @@ public class DialectUtils {
 		}
 
 		SqlExecuteStat.showSql("批量保存[" + paramValues.size() + "]条记录", insertSql, null);
-		// sqlserver需要特殊化处理(针对timestamp问题)
-		if (dbType == DBType.SQLSERVER) {
-			return SqlUtilsExt.batchUpdateBySqlServer(sqlToyContext.getTypeHandler(), insertSql, paramValues,
-					entityMeta.getFieldsTypeArray(), entityMeta.getFieldsDefaultValue(), entityMeta.getFieldsNullable(),
-					batchSize, autoCommit, conn, dbType);
-		}
 		return SqlUtilsExt.batchUpdateByJdbc(sqlToyContext.getTypeHandler(), insertSql, paramValues,
 				entityMeta.getFieldsTypeArray(), entityMeta.getFieldsDefaultValue(), entityMeta.getFieldsNullable(),
 				batchSize, autoCommit, conn, dbType);
@@ -1552,12 +1546,6 @@ public class DialectUtils {
 
 		String saveAllNotExistSql = generateSqlHandler.generateSql(entityMeta, null);
 		SqlExecuteStat.showSql("批量插入且忽视已存在记录", saveAllNotExistSql, null);
-		// sqlserver需要特殊化处理(针对timestamp问题)
-		if (dbType == DBType.SQLSERVER) {
-			return SqlUtilsExt.batchUpdateBySqlServer(sqlToyContext.getTypeHandler(), saveAllNotExistSql, paramValues,
-					entityMeta.getFieldsTypeArray(), entityMeta.getFieldsDefaultValue(), entityMeta.getFieldsNullable(),
-					batchSize, autoCommit, conn, dbType);
-		}
 		return SqlUtilsExt.batchUpdateByJdbc(sqlToyContext.getTypeHandler(), saveAllNotExistSql, paramValues,
 				entityMeta.getFieldsTypeArray(), entityMeta.getFieldsDefaultValue(), entityMeta.getFieldsNullable(),
 				batchSize, autoCommit, conn, dbType);
@@ -1975,10 +1963,6 @@ public class DialectUtils {
 			throw new IllegalArgumentException("updateAll sql is null,引起问题的原因是没有设置需要修改的字段!");
 		}
 		SqlExecuteStat.showSql("批量修改[" + paramsValues.size() + "]条记录", updateSql, null);
-		if (dbType == DBType.SQLSERVER) {
-			return SqlUtilsExt.batchUpdateBySqlServer(sqlToyContext.getTypeHandler(), updateSql, paramsValues,
-					entityMeta.getFieldsTypeArray(), null, null, batchSize, autoCommit, conn, dbType);
-		}
 		return SqlUtilsExt.batchUpdateByJdbc(sqlToyContext.getTypeHandler(), updateSql, paramsValues,
 				entityMeta.getFieldsTypeArray(), null, null, batchSize, autoCommit, conn, dbType);
 	}
