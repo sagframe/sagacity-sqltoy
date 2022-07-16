@@ -74,7 +74,7 @@ public class DB2DialectUtils {
 			sql.append(sqlToyConfig.getFastTailSql(dialect));
 		}
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
-				sql.toString(), null, null,dialect);
+				sql.toString(), null, null, dialect);
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 				extend.rowCallbackHandler, decryptHandler, conn, dbType, 0, fetchSize, maxRows);
@@ -319,15 +319,16 @@ public class DB2DialectUtils {
 				}
 				insertRejIdCols.append(columnName);
 				// 存在默认值
-				if (null != fieldMeta.getDefaultValue()) {
-					insertRejIdColValues.append(isNullFunction);
-					insertRejIdColValues.append("(tv.").append(columnName).append(",");
-					DialectExtUtils.processDefaultValue(insertRejIdColValues, dbType, fieldMeta.getType(),
-							fieldMeta.getDefaultValue());
-					insertRejIdColValues.append(")");
-				} else {
-					insertRejIdColValues.append("tv.").append(columnName);
-				}
+				// if (null != fieldMeta.getDefaultValue()) {
+				// insertRejIdColValues.append(isNullFunction);
+				// insertRejIdColValues.append("(tv.").append(columnName).append(",");
+				// DialectExtUtils.processDefaultValue(insertRejIdColValues, dbType,
+				// fieldMeta.getType(),
+				// fieldMeta.getDefaultValue());
+				// insertRejIdColValues.append(")");
+				// } else {
+				insertRejIdColValues.append("tv.").append(columnName);
+				// }
 			}
 		}
 		// 主键未匹配上则进行插入操作

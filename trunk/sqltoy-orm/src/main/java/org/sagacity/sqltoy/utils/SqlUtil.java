@@ -647,7 +647,7 @@ public class SqlUtil {
 			for (String line : sqlAry) {
 				lineStr = line.trim();
 				// 排除掉-- 开头和空行
-				if (!lineStr.equals("") && !lineStr.startsWith("--")) {
+				if (!"".equals(lineStr) && !lineStr.startsWith("--")) {
 					// 不包含-- 直接拼接
 					lineMaskIndex = line.indexOf("--");
 					if (meter > 0) {
@@ -804,6 +804,7 @@ public class SqlUtil {
 			pst.setMaxRows(maxRows);
 		}
 		List result = (List) preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
+			@Override
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws Exception {
 				setParamsValue(typeHandler, conn, dbType, pst, params, null, 0);
 				rs = pst.executeQuery();
@@ -1192,13 +1193,14 @@ public class SqlUtil {
 			final int nodeLevel, Connection conn, final int dbType) throws Exception {
 		// 修改节点level和节点路径
 		batchUpdateByJdbc(typeHandler, updateLevelAndRoute, ids, 500, new InsertRowCallbackHandler() {
+			@Override
 			public void process(PreparedStatement pst, int index, Object rowData) throws SQLException {
 				String id = ((List) rowData).get(0).toString();
 				// 获得父节点id和父节点路径
 				String pid = ((List) rowData).get(2).toString();
 				String nodeRoute = (String) pidsMap.get(pid);
 				int size = treeTableModel.getIdLength();
-				if (nodeRoute == null || nodeRoute.trim().equals("")) {
+				if (nodeRoute == null || "".equals(nodeRoute.trim())) {
 					nodeRoute = "";
 					if (!treeTableModel.isChar() || treeTableModel.isAppendZero()) {
 						// 负数
@@ -1441,7 +1443,7 @@ public class SqlUtil {
 	/**
 	 * @todo 转换主键数据类型(主键生成只支持数字和字符串类型)
 	 * @param idValue
-	 * @param jdbcType
+	 * @param idType
 	 * @return
 	 */
 	public static Object convertIdValueType(Object idValue, String idType) {
@@ -1452,31 +1454,31 @@ public class SqlUtil {
 			return idValue;
 		}
 		// 按照优先顺序对比
-		if (idType.equals("java.lang.string")) {
+		if ("java.lang.string".equals(idType)) {
 			return idValue.toString();
 		}
-		if (idType.equals("java.lang.integer")) {
+		if ("java.lang.integer".equals(idType)) {
 			return Integer.valueOf(idValue.toString());
 		}
-		if (idType.equals("java.lang.long")) {
+		if ("java.lang.long".equals(idType)) {
 			return Long.valueOf(idValue.toString());
 		}
-		if (idType.equals("java.math.biginteger")) {
+		if ("java.math.biginteger".equals(idType)) {
 			return new BigInteger(idValue.toString());
 		}
-		if (idType.equals("java.math.bigdecimal")) {
+		if ("java.math.bigdecimal".equals(idType)) {
 			return new BigDecimal(idValue.toString());
 		}
-		if (idType.equals("long")) {
+		if ("long".equals(idType)) {
 			return Long.valueOf(idValue.toString()).longValue();
 		}
-		if (idType.equals("int")) {
+		if ("int".equals(idType)) {
 			return Integer.valueOf(idValue.toString()).intValue();
 		}
-		if (idType.equals("java.lang.short")) {
+		if ("java.lang.short".equals(idType)) {
 			return Short.valueOf(idValue.toString());
 		}
-		if (idType.equals("short")) {
+		if ("short".equals(idType)) {
 			return Short.valueOf(idValue.toString()).shortValue();
 		}
 		return idValue;
@@ -1584,7 +1586,7 @@ public class SqlUtil {
 					}
 					varSql = preSql.trim();
 					// 首位字符不是数字(48~57)、(A-Z|a-z)字母(65~90,97~122)、下划线(95)、冒号(58)
-					if (!varSql.equals("")) {
+					if (!"".equals(varSql)) {
 						preChar = varSql.charAt(varSql.length() - 1);
 					} else {
 						preChar = ' ';
@@ -1715,7 +1717,7 @@ public class SqlUtil {
 		if (defaultValue == null) {
 			return null;
 		}
-		if (defaultValue.trim().equals("")) {
+		if ("".equals(defaultValue.trim())) {
 			return defaultValue;
 		}
 		String result = defaultValue;

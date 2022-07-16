@@ -61,7 +61,7 @@ public class DialectExtUtils {
 			field = entityMeta.getFieldsArray()[i];
 			fieldMeta = entityMeta.getFieldMeta(field);
 			isString = false;
-			if (fieldMeta.getFieldType().equals("java.lang.string")) {
+			if ("java.lang.string".equals(fieldMeta.getFieldType())) {
 				isString = true;
 			}
 			columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
@@ -107,20 +107,22 @@ public class DialectExtUtils {
 					values.append(",");
 				}
 				sql.append(columnName);
+				// update 2022-7-16 插入操作默认值改为对象属性赋值模式
 				// 默认值处理
-				if (isSupportNULL && null != fieldMeta.getDefaultValue()) {
-					values.append(isNullFunction);
-					values.append("(?,");
-					processDefaultValue(values, dbType, fieldMeta.getType(), fieldMeta.getDefaultValue());
-					values.append(")");
+				// if (isSupportNULL && null != fieldMeta.getDefaultValue()) {
+				// values.append(isNullFunction);
+				// values.append("(?,");
+				// processDefaultValue(values, dbType, fieldMeta.getType(),
+				// fieldMeta.getDefaultValue());
+				// values.append(")");
+				// } else {
+				// kudu 中文会产生乱码
+				if (dbType == DBType.IMPALA && isString) {
+					values.append("cast(? as string)");
 				} else {
-					// kudu 中文会产生乱码
-					if (dbType == DBType.IMPALA && isString) {
-						values.append("cast(? as string)");
-					} else {
-						values.append("?");
-					}
+					values.append("?");
 				}
+				// }
 				isStart = false;
 			}
 		}
@@ -223,8 +225,7 @@ public class DialectExtUtils {
 		// 在无主键的情况下产生insert sql语句
 		String realTable = entityMeta.getSchemaTable(tableName, dbType);
 		if (entityMeta.getIdArray() == null) {
-			return DialectExtUtils.generateInsertSql(dbType, entityMeta, pkStrategy, isNullFunction, sequence,
-					isAssignPK, realTable);
+			return generateInsertSql(dbType, entityMeta, pkStrategy, isNullFunction, sequence, isAssignPK, realTable);
 		}
 		boolean isSupportNUL = StringUtil.isBlank(isNullFunction) ? false : true;
 		int columnSize = entityMeta.getFieldsArray().length;
@@ -278,14 +279,15 @@ public class DialectExtUtils {
 				}
 				insertRejIdCols.append(columnName);
 				// 存在默认值
-				if (isSupportNUL && null != fieldMeta.getDefaultValue()) {
-					insertRejIdColValues.append(isNullFunction);
-					insertRejIdColValues.append("(tv.").append(columnName).append(",");
-					processDefaultValue(insertRejIdColValues, dbType, fieldMeta.getType(), fieldMeta.getDefaultValue());
-					insertRejIdColValues.append(")");
-				} else {
-					insertRejIdColValues.append("tv.").append(columnName);
-				}
+				// if (isSupportNUL && null != fieldMeta.getDefaultValue()) {
+				// insertRejIdColValues.append(isNullFunction);
+				// insertRejIdColValues.append("(tv.").append(columnName).append(",");
+				// processDefaultValue(insertRejIdColValues, dbType, fieldMeta.getType(),
+				// fieldMeta.getDefaultValue());
+				// insertRejIdColValues.append(")");
+				// } else {
+				insertRejIdColValues.append("tv.").append(columnName);
+				// }
 			}
 		}
 		// 主键未匹配上则进行插入操作
@@ -339,7 +341,7 @@ public class DialectExtUtils {
 	}
 
 	/**
-	 * @TODO 针对postgresql\sqlite\guassdb等数据库
+	 * @TODO 针对postgresql\kingbase\guassdb等数据库
 	 * @param dbType
 	 * @param entityMeta
 	 * @param pkStrategy
@@ -388,13 +390,14 @@ public class DialectExtUtils {
 				}
 			} else {
 				sql.append(columnName);
-				if (null != fieldMeta.getDefaultValue()) {
-					values.append(isNullFunction).append("(?,");
-					processDefaultValue(values, dbType, fieldMeta.getType(), fieldMeta.getDefaultValue());
-					values.append(")");
-				} else {
-					values.append("?");
-				}
+				// if (null != fieldMeta.getDefaultValue()) {
+				// values.append(isNullFunction).append("(?,");
+				// processDefaultValue(values, dbType, fieldMeta.getType(),
+				// fieldMeta.getDefaultValue());
+				// values.append(")");
+				// } else {
+				values.append("?");
+				// }
 				isStart = false;
 			}
 		}
@@ -439,23 +442,23 @@ public class DialectExtUtils {
 			} else {
 				// entityManager已经做了小写化处理
 				String fieldType = fieldMeta.getFieldType();
-				if (fieldType.equals("java.time.localdate")) {
+				if ("java.time.localdate".equals(fieldType)) {
 					return DateUtil.formatDate(unifyFieldValue, DateUtil.FORMAT.DATE_HORIZONTAL);
-				} else if (fieldType.equals("java.time.localtime") || fieldType.equals("java.sql.time")) {
+				} else if ("java.time.localtime".equals(fieldType) || "java.sql.time".equals(fieldType)) {
 					return DateUtil.formatDate(unifyFieldValue, "HH:mm:ss");
-				} else if (fieldType.equals("java.time.localdatetime") || fieldType.equals("java.sql.timestamp")
-						|| fieldType.equals("java.util.date") || fieldType.equals("java.sql.date")) {
+				} else if ("java.time.localdatetime".equals(fieldType) || "java.sql.timestamp".equals(fieldType)
+						|| "java.util.date".equals(fieldType) || "java.sql.date".equals(fieldType)) {
 					return DateUtil.formatDate(unifyFieldValue, DateUtil.FORMAT.DATETIME_HORIZONTAL);
 				}
 				// 统一传参数值为日期类型，但数据库中是数字或字符串类型
 				if ((unifyFieldValue instanceof Date) || (unifyFieldValue instanceof Timestamp)
 						|| (unifyFieldValue instanceof LocalDate) || (unifyFieldValue instanceof LocalDateTime)) {
-					if (fieldType.equals("java.lang.integer") || fieldType.equals("int")) {
+					if ("java.lang.integer".equals(fieldType) || "int".equals(fieldType)) {
 						return DateUtil.formatDate(unifyFieldValue, "yyyyMMdd");
-					} else if (fieldType.equals("java.lang.long") || fieldType.equals("java.math.biginteger")
-							|| fieldType.equals("long")) {
+					} else if ("java.lang.long".equals(fieldType) || "java.math.biginteger".equals(fieldType)
+							|| "long".equals(fieldType)) {
 						return DateUtil.formatDate(unifyFieldValue, "yyyyMMddHHmmss");
-					} else if (fieldType.equals("java.lang.string")) {
+					} else if ("java.lang.string".equals(fieldType)) {
 						if (fieldMeta.getLength() >= 19) {
 							return DateUtil.formatDate(unifyFieldValue, DateUtil.FORMAT.DATETIME_HORIZONTAL);
 						}
