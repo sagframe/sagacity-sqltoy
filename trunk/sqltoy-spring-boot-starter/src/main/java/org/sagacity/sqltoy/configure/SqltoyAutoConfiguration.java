@@ -165,6 +165,7 @@ public class SqltoyAutoConfiguration {
 
 		sqlToyContext.setSecurePrivateKey(properties.getSecurePrivateKey());
 		sqlToyContext.setSecurePublicKey(properties.getSecurePublicKey());
+		sqlToyContext.setSaveOrUpdateNative(properties.isSaveOrUpdateNative());
 		// 设置公共统一属性的处理器
 		String unfiyHandler = properties.getUnifyFieldsHandler();
 		if (StringUtil.isNotBlank(unfiyHandler)) {

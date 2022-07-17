@@ -37,11 +37,11 @@ import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
-import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
+import org.sagacity.sqltoy.utils.SqlUtilsExt;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -355,7 +355,6 @@ public class SqlServerDialectUtils {
 			sql.append("? as ");
 			sql.append(columnName);
 		}
-		// sql.append(" from ").append(realTable);
 		sql.append(") tv on (");
 		StringBuilder idColumns = new StringBuilder();
 		// 组织on部分的主键条件判断
@@ -391,17 +390,7 @@ public class SqlServerDialectUtils {
 					}
 					insertRejIdCols.append(columnName);
 					isStart = false;
-
-					// 存在默认值
-					if (null != fieldMeta.getDefaultValue()) {
-						insertRejIdColValues.append(isNullFunction);
-						insertRejIdColValues.append("(tv.").append(columnName).append(",");
-						DialectExtUtils.processDefaultValue(insertRejIdColValues, dbType, fieldMeta.getType(),
-								fieldMeta.getDefaultValue());
-						insertRejIdColValues.append(")");
-					} else {
-						insertRejIdColValues.append("tv.").append(columnName);
-					}
+					insertRejIdColValues.append("tv.").append(columnName);
 				}
 			}
 		}
@@ -522,15 +511,7 @@ public class SqlServerDialectUtils {
 					values.append(",");
 				}
 				sql.append(fieldMeta.getColumnName());
-				if (null != fieldMeta.getDefaultValue()) {
-					values.append(isNullFunction);
-					values.append("(?,");
-					DialectExtUtils.processDefaultValue(values, dbType, fieldMeta.getType(),
-							fieldMeta.getDefaultValue());
-					values.append(")");
-				} else {
-					values.append("?");
-				}
+				values.append("?");
 				isStart = false;
 			}
 		}
@@ -570,7 +551,8 @@ public class SqlServerDialectUtils {
 		handler = DialectUtils.getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
 		Object[] fullParamValues = BeanUtil.reflectBeanToAry(entity,
-				(isIdentity) ? entityMeta.getRejectIdFieldArray() : entityMeta.getFieldsArray(), null, handler);
+				(isIdentity) ? entityMeta.getRejectIdFieldArray() : entityMeta.getFieldsArray(),
+				SqlUtilsExt.getDefaultValues(entityMeta), handler);
 		boolean needUpdatePk = false;
 		// 是否存在业务ID
 		boolean hasBizId = (entityMeta.getBusinessIdGenerator() == null) ? false : true;
@@ -758,7 +740,8 @@ public class SqlServerDialectUtils {
 				sqlToyContext.getUnifyFieldsHandler());
 		handler = DialectUtils.getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
-		List<Object[]> paramValues = BeanUtil.reflectBeansToInnerAry(entities, reflectColumns, null, handler);
+		List<Object[]> paramValues = BeanUtil.reflectBeansToInnerAry(entities, reflectColumns,
+				SqlUtilsExt.getDefaultValues(entityMeta), handler);
 		int pkIndex = entityMeta.getIdIndex();
 		// 是否存在业务ID
 		boolean hasBizId = (entityMeta.getBusinessIdGenerator() == null) ? false : true;
@@ -810,92 +793,9 @@ public class SqlServerDialectUtils {
 			}
 		}
 		SqlExecuteStat.showSql("mssql批量保存", insertSql, null);
-		return batchUpdateByJdbc(sqlToyContext.getTypeHandler(), insertSql, paramValues, sqlToyContext.getBatchSize(),
-				entityMeta.getFieldsTypeArray(), autoCommit, conn, dbType);
-	}
-
-	/**
-	 * @todo 针对sqlserver timestamp不能保存情况,提供特殊的批量执行方式，跳过类型为timestamp的值
-	 * @param updateSql
-	 * @param rowDatas
-	 * @param batchSize
-	 * @param updateTypes
-	 * @param autoCommit
-	 * @param conn
-	 * @param dbType
-	 * @return
-	 * @throws Exception
-	 */
-	private static Long batchUpdateByJdbc(TypeHandler typeHandler, final String updateSql,
-			final List<Object[]> rowDatas, final int batchSize, final Integer[] updateTypes, final Boolean autoCommit,
-			final Connection conn, final Integer dbType) throws Exception {
-		if (rowDatas == null) {
-			logger.error("batchUpdateByJdbc:{} 传递的数据为空!", updateSql);
-			return 0L;
-		}
-		PreparedStatement pst = null;
-		long updateCount = 0;
-		try {
-			boolean hasSetAutoCommit = false;
-			// 是否自动提交
-			if (autoCommit != null && !autoCommit == conn.getAutoCommit()) {
-				conn.setAutoCommit(autoCommit);
-				hasSetAutoCommit = true;
-			}
-			pst = conn.prepareStatement(updateSql);
-			int totalRows = rowDatas.size();
-			boolean useBatch = (totalRows > 1) ? true : false;
-			Object[] rowData;
-			// 批处理计数器
-			int meter = 0;
-			int pstIndex = 0;
-			for (int i = 0; i < totalRows; i++) {
-				rowData = rowDatas.get(i);
-				if (rowData != null) {
-					// 使用对象properties方式传值
-					pstIndex = 0;
-					for (int j = 0, n = rowData.length; j < n; j++) {
-						// 类型为timestamp 则跳过
-						if (!updateTypes[j].equals(java.sql.Types.TIMESTAMP)) {
-							SqlUtil.setParamValue(typeHandler, conn, dbType, pst, rowData[j], updateTypes[j],
-									pstIndex + 1);
-							pstIndex++;
-						}
-					}
-					meter++;
-					if (useBatch) {
-						pst.addBatch();
-						if ((meter % batchSize) == 0 || i + 1 == totalRows) {
-							int[] updateRows = pst.executeBatch();
-							for (int t : updateRows) {
-								updateCount = updateCount + ((t > 0) ? t : 0);
-							}
-							pst.clearBatch();
-						}
-					} else {
-						updateCount = pst.executeUpdate();
-					}
-				}
-			}
-			if (hasSetAutoCommit) {
-				conn.setAutoCommit(!autoCommit);
-			}
-		} catch (Exception e) {
-			logger.error(e.getMessage(), e);
-			e.printStackTrace();
-			throw e;
-		} finally {
-			try {
-				if (pst != null) {
-					pst.close();
-					pst = null;
-				}
-			} catch (SQLException se) {
-				logger.error(se.getMessage(), se);
-				se.printStackTrace();
-			}
-		}
-		return updateCount;
+		return SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), insertSql, paramValues,
+				entityMeta.getFieldsTypeArray(), entityMeta.getFieldsDefaultValue(), entityMeta.getFieldsNullable(),
+				sqlToyContext.getBatchSize(), autoCommit, conn, dbType);
 	}
 
 	/**

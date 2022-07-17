@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DecryptHandler;
@@ -125,7 +126,7 @@ public class SqlServerDialect implements Dialect {
 		// 避免条件用?模式,导致实际参数位置不匹配,因此只针对:name模式进行处理
 		if (isNamed) {
 			SqlToyResult tmpResult = SqlConfigParseUtils.processSql(judgeOrderSql, extend.getParamsName(sqlToyConfig),
-					extend.getParamsValue(sqlToyContext, sqlToyConfig),dialect);
+					extend.getParamsValue(sqlToyContext, sqlToyConfig), dialect);
 			judgeOrderSql = tmpResult.getSql();
 		}
 		// order by位置
@@ -152,7 +153,7 @@ public class SqlServerDialect implements Dialect {
 			sql.append(sqlToyConfig.getFastTailSql(dialect));
 		}
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
-				sql.toString(), (pageNo - 1) * pageSize, Long.valueOf(pageSize),dialect);
+				sql.toString(), (pageNo - 1) * pageSize, Long.valueOf(pageSize), dialect);
 		return findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 				extend.rowCallbackHandler, decryptHandler, conn, null, dbType, dialect, fetchSize, maxRows);
 	}
@@ -201,7 +202,7 @@ public class SqlServerDialect implements Dialect {
 			sql.append(sqlToyConfig.getFastTailSql(dialect));
 		}
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
-				sql.toString(), null, null,dialect);
+				sql.toString(), null, null, dialect);
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		return findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 				extend.rowCallbackHandler, decryptHandler, conn, null, dbType, dialect, fetchSize, maxRows);
@@ -265,9 +266,23 @@ public class SqlServerDialect implements Dialect {
 			final ReflectPropsHandler reflectPropsHandler, final String[] forceUpdateFields, Connection conn,
 			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
 			throws Exception {
-		// 为什么不共用oracle等merge方法,因为sqlserver不支持timestamp类型的数据进行插入和修改赋值
-		return SqlServerDialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, reflectPropsHandler,
-				forceUpdateFields, conn, dbType, autoCommit, tableName);
+		if (sqlToyContext.isSaveOrUpdateNative()) {
+			// 为什么不共用oracle等merge方法,因为sqlserver不支持timestamp类型的数据进行插入和修改赋值
+			return SqlServerDialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, reflectPropsHandler,
+					forceUpdateFields, conn, dbType, autoCommit, tableName);
+		} else {
+			Long updateCnt = DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields,
+					reflectPropsHandler, NVL_FUNCTION, conn, dbType, autoCommit, tableName, true);
+			// 如果修改的记录数量跟总记录数量一致,表示全部是修改
+			if (updateCnt >= entities.size()) {
+				SqlExecuteStat.debug("修改记录", "修改记录量:" + updateCnt + " 条,等于entities集合长度,不再做insert操作!");
+				return updateCnt;
+			}
+			Long saveCnt = saveAllIgnoreExist(sqlToyContext, entities, batchSize, reflectPropsHandler, conn, dbType,
+					dialect, autoCommit, tableName);
+			SqlExecuteStat.debug("新增记录", "新建记录数量:" + saveCnt + " 条!");
+			return updateCnt + saveCnt;
+		}
 	}
 
 	/*
@@ -388,9 +403,9 @@ public class SqlServerDialect implements Dialect {
 	 */
 	@Override
 	public Long updateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			final String[] uniqueFields,final String[] forceUpdateFields, ReflectPropsHandler reflectPropsHandler, Connection conn,
-			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
-			throws Exception {
+			final String[] uniqueFields, final String[] forceUpdateFields, ReflectPropsHandler reflectPropsHandler,
+			Connection conn, final Integer dbType, final String dialect, final Boolean autoCommit,
+			final String tableName) throws Exception {
 		return DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropsHandler,
 				NVL_FUNCTION, conn, dbType, autoCommit, tableName, false);
 	}
