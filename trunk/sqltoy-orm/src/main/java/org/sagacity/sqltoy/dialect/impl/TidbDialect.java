@@ -174,7 +174,7 @@ public class TidbDialect implements Dialect {
 				reflectPropsHandler, NVL_FUNCTION, conn, dbType, autoCommit, tableName, true);
 		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
 		if (updateCnt >= entities.size()) {
-			SqlExecuteStat.debug("修改记录", "修改记录量:" + updateCnt + " 条!");
+			SqlExecuteStat.debug("修改记录", "修改记录量:" + updateCnt + " 条,等于entities集合长度,不再做insert操作!");
 			return updateCnt;
 		}
 		Long saveCnt = saveAllIgnoreExist(sqlToyContext, entities, batchSize, reflectPropsHandler, conn, dbType,
