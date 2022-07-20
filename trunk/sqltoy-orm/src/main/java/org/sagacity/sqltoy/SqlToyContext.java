@@ -993,4 +993,5 @@ public class SqlToyContext {
 	public List<OverTimeSql> getSlowestSql(int size, boolean hasSqlId) {
 		return overTimeSqlHandler.getSlowest(size, hasSqlId);
 	}
+	
 }

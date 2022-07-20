@@ -637,83 +637,7 @@ public class DialectUtils {
 	}
 
 	/**
-	 * @todo 执行批量保存或修改操作
-	 * @param sqlToyContext
-	 * @param entities
-	 * @param batchSize
-	 * @param entityMeta
-	 * @param generateSqlHandler
-	 * @param reflectPropsHandler
-	 * @param conn
-	 * @param dbType
-	 * @param autoCommit
-	 * @return
-	 * @throws Exception
-	 */
-	public static Long saveAllIgnoreExist(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			EntityMeta entityMeta, GenerateSqlHandler generateSqlHandler, ReflectPropsHandler reflectPropsHandler,
-			Connection conn, final Integer dbType, Boolean autoCommit) throws Exception {
-		// 构造全新的新增记录参数赋值反射(覆盖之前的)
-		ReflectPropsHandler handler = getAddReflectHandler(reflectPropsHandler, sqlToyContext.getUnifyFieldsHandler());
-		handler = getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
-				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
-		List<Object[]> paramValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getFieldsArray(), null,
-				handler);
-		int pkIndex = entityMeta.getIdIndex();
-		// 是否存在业务ID
-		boolean hasBizId = (entityMeta.getBusinessIdGenerator() == null) ? false : true;
-		int bizIdColIndex = hasBizId ? entityMeta.getFieldIndex(entityMeta.getBusinessIdField()) : 0;
-		// 标识符
-		String signature = entityMeta.getBizIdSignature();
-		Integer[] relatedColumn = entityMeta.getBizIdRelatedColIndex();
-		String[] relatedColumnNames = entityMeta.getBizIdRelatedColumns();
-		int relatedColumnSize = (relatedColumn == null) ? 0 : relatedColumn.length;
-		// 无主键以及多主键以及assign或通过generator方式产生主键策略
-		if (null != entityMeta.getIdStrategy() && null != entityMeta.getIdGenerator()) {
-			int bizIdLength = entityMeta.getBizIdLength();
-			int idLength = entityMeta.getIdLength();
-			Object[] rowData;
-			Object[] relatedColValue = null;
-			String idJdbcType = entityMeta.getIdType();
-			String businessIdType = hasBizId ? entityMeta.getColumnJavaType(entityMeta.getBusinessIdField()) : "";
-			for (int i = 0; i < paramValues.size(); i++) {
-				rowData = (Object[]) paramValues.get(i);
-				// 关联字段赋值
-				if (relatedColumn != null) {
-					relatedColValue = new Object[relatedColumnSize];
-					for (int meter = 0; meter < relatedColumnSize; meter++) {
-						relatedColValue[meter] = rowData[relatedColumn[meter]];
-						if (relatedColValue[meter] == null) {
-							throw new IllegalArgumentException("对象:" + entityMeta.getEntityClass().getName()
-									+ " 生成业务主键依赖的关联字段:" + relatedColumnNames[meter] + " 值为null!");
-						}
-					}
-				}
-				if (StringUtil.isBlank(rowData[pkIndex])) {
-					rowData[pkIndex] = entityMeta.getIdGenerator().getId(entityMeta.getTableName(), signature,
-							entityMeta.getBizIdRelatedColumns(), relatedColValue, null, idJdbcType, idLength,
-							entityMeta.getBizIdSequenceSize());
-					// 回写主键值
-					BeanUtil.setProperty(entities.get(i), entityMeta.getIdArray()[0], rowData[pkIndex]);
-				}
-				if (hasBizId && StringUtil.isBlank(rowData[bizIdColIndex])) {
-					rowData[bizIdColIndex] = entityMeta.getBusinessIdGenerator().getId(entityMeta.getTableName(),
-							signature, entityMeta.getBizIdRelatedColumns(), relatedColValue, null, businessIdType,
-							bizIdLength, entityMeta.getBizIdSequenceSize());
-					// 回写业务主键值
-					BeanUtil.setProperty(entities.get(i), entityMeta.getBusinessIdField(), rowData[bizIdColIndex]);
-				}
-			}
-		}
-
-		String saveAllNotExistSql = generateSqlHandler.generateSql(entityMeta, null);
-		SqlExecuteStat.showSql("批量插入且忽视已存在记录", saveAllNotExistSql, null);
-		return SqlUtil.batchUpdateByJdbc(sqlToyContext.getTypeHandler(), saveAllNotExistSql, paramValues, batchSize,
-				null, entityMeta.getFieldsTypeArray(), autoCommit, conn, dbType);
-	}
-
-	/**
-	 * @todo 处理加工对象基于db2、oracle、sqlserver数据库的saveOrUpdateSql
+	 * @todo 处理加工对象基于db2、oracle数据库的saveOrUpdateSql
 	 * @param unifyFieldsHandler
 	 * @param dbType
 	 * @param entityMeta
@@ -926,11 +850,6 @@ public class DialectUtils {
 					if (convertBlob && "byte[]".equals(fieldMeta.getFieldType())) {
 						sql.append(nullFunction);
 						sql.append("(cast(? as bytea),").append(columnName).append(" )");
-						// sql.append(" cast(");
-						// sql.append(nullFunction);
-						// sql.append("(cast(? as
-						// varchar),").append("cast(").append(columnName).append(" as varchar))");
-						// sql.append(" as bytea)");
 					} else {
 						sql.append(nullFunction);
 						sql.append("(?,").append(columnName).append(")");
@@ -1331,9 +1250,10 @@ public class DialectUtils {
 		ReflectPropsHandler handler = getAddReflectHandler(null, sqlToyContext.getUnifyFieldsHandler());
 		handler = getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
-		Object[] fullParamValues = BeanUtil.reflectBeanToAry(entity, reflectColumns, null, handler);
+		// update 2022-7-16 增加默认值的代入
+		Object[] fullParamValues = BeanUtil.reflectBeanToAry(entity, reflectColumns,
+				SqlUtilsExt.getDefaultValues(entityMeta), handler);
 		boolean needUpdatePk = false;
-
 		int pkIndex = entityMeta.getIdIndex();
 		// 是否存在业务ID
 		boolean hasBizId = (entityMeta.getBusinessIdGenerator() == null) ? false : true;
@@ -1485,7 +1405,9 @@ public class DialectUtils {
 		ReflectPropsHandler handler = getAddReflectHandler(reflectPropsHandler, sqlToyContext.getUnifyFieldsHandler());
 		handler = getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
-		List paramValues = BeanUtil.reflectBeansToInnerAry(entities, reflectColumns, null, handler);
+		// update 2022-7-16 增加了默认值代入
+		List paramValues = BeanUtil.reflectBeansToInnerAry(entities, reflectColumns,
+				SqlUtilsExt.getDefaultValues(entityMeta), handler);
 		int pkIndex = entityMeta.getIdIndex();
 		// 是否存在业务ID
 		boolean hasBizId = (entityMeta.getBusinessIdGenerator() == null) ? false : true;
@@ -1541,13 +1463,85 @@ public class DialectUtils {
 		}
 
 		SqlExecuteStat.showSql("批量保存[" + paramValues.size() + "]条记录", insertSql, null);
-		// sqlserver需要特殊化处理(针对timestamp问题)
-		if (dbType == DBType.SQLSERVER) {
-			return SqlUtilsExt.batchUpdateBySqlServer(sqlToyContext.getTypeHandler(), insertSql, paramValues,
-					entityMeta.getFieldsTypeArray(), entityMeta.getFieldsDefaultValue(), entityMeta.getFieldsNullable(),
-					batchSize, autoCommit, conn, dbType);
+		return SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), insertSql, paramValues,
+				entityMeta.getFieldsTypeArray(), entityMeta.getFieldsDefaultValue(), entityMeta.getFieldsNullable(),
+				batchSize, autoCommit, conn, dbType);
+	}
+
+	/**
+	 * @todo 执行批量保存或修改操作
+	 * @param sqlToyContext
+	 * @param entities
+	 * @param batchSize
+	 * @param entityMeta
+	 * @param generateSqlHandler
+	 * @param reflectPropsHandler
+	 * @param conn
+	 * @param dbType
+	 * @param autoCommit
+	 * @return
+	 * @throws Exception
+	 */
+	public static Long saveAllIgnoreExist(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
+			EntityMeta entityMeta, GenerateSqlHandler generateSqlHandler, ReflectPropsHandler reflectPropsHandler,
+			Connection conn, final Integer dbType, Boolean autoCommit) throws Exception {
+		// 构造全新的新增记录参数赋值反射(覆盖之前的)
+		ReflectPropsHandler handler = getAddReflectHandler(reflectPropsHandler, sqlToyContext.getUnifyFieldsHandler());
+		handler = getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
+				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
+		// update 2022-7-16 增加默认值代入,insert sql上去除了nvl(?,default) 适应一些框架
+		List<Object[]> paramValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getFieldsArray(),
+				SqlUtilsExt.getDefaultValues(entityMeta), handler);
+		int pkIndex = entityMeta.getIdIndex();
+		// 是否存在业务ID
+		boolean hasBizId = (entityMeta.getBusinessIdGenerator() == null) ? false : true;
+		int bizIdColIndex = hasBizId ? entityMeta.getFieldIndex(entityMeta.getBusinessIdField()) : 0;
+		// 标识符
+		String signature = entityMeta.getBizIdSignature();
+		Integer[] relatedColumn = entityMeta.getBizIdRelatedColIndex();
+		String[] relatedColumnNames = entityMeta.getBizIdRelatedColumns();
+		int relatedColumnSize = (relatedColumn == null) ? 0 : relatedColumn.length;
+		// 无主键以及多主键以及assign或通过generator方式产生主键策略
+		if (null != entityMeta.getIdStrategy() && null != entityMeta.getIdGenerator()) {
+			int bizIdLength = entityMeta.getBizIdLength();
+			int idLength = entityMeta.getIdLength();
+			Object[] rowData;
+			Object[] relatedColValue = null;
+			String idJdbcType = entityMeta.getIdType();
+			String businessIdType = hasBizId ? entityMeta.getColumnJavaType(entityMeta.getBusinessIdField()) : "";
+			for (int i = 0; i < paramValues.size(); i++) {
+				rowData = (Object[]) paramValues.get(i);
+				// 关联字段赋值
+				if (relatedColumn != null) {
+					relatedColValue = new Object[relatedColumnSize];
+					for (int meter = 0; meter < relatedColumnSize; meter++) {
+						relatedColValue[meter] = rowData[relatedColumn[meter]];
+						if (relatedColValue[meter] == null) {
+							throw new IllegalArgumentException("对象:" + entityMeta.getEntityClass().getName()
+									+ " 生成业务主键依赖的关联字段:" + relatedColumnNames[meter] + " 值为null!");
+						}
+					}
+				}
+				if (StringUtil.isBlank(rowData[pkIndex])) {
+					rowData[pkIndex] = entityMeta.getIdGenerator().getId(entityMeta.getTableName(), signature,
+							entityMeta.getBizIdRelatedColumns(), relatedColValue, null, idJdbcType, idLength,
+							entityMeta.getBizIdSequenceSize());
+					// 回写主键值
+					BeanUtil.setProperty(entities.get(i), entityMeta.getIdArray()[0], rowData[pkIndex]);
+				}
+				if (hasBizId && StringUtil.isBlank(rowData[bizIdColIndex])) {
+					rowData[bizIdColIndex] = entityMeta.getBusinessIdGenerator().getId(entityMeta.getTableName(),
+							signature, entityMeta.getBizIdRelatedColumns(), relatedColValue, null, businessIdType,
+							bizIdLength, entityMeta.getBizIdSequenceSize());
+					// 回写业务主键值
+					BeanUtil.setProperty(entities.get(i), entityMeta.getBusinessIdField(), rowData[bizIdColIndex]);
+				}
+			}
 		}
-		return SqlUtilsExt.batchUpdateByJdbc(sqlToyContext.getTypeHandler(), insertSql, paramValues,
+
+		String saveAllNotExistSql = generateSqlHandler.generateSql(entityMeta, null);
+		SqlExecuteStat.showSql("批量插入且忽视已存在记录", saveAllNotExistSql, null);
+		return SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), saveAllNotExistSql, paramValues,
 				entityMeta.getFieldsTypeArray(), entityMeta.getFieldsDefaultValue(), entityMeta.getFieldsNullable(),
 				batchSize, autoCommit, conn, dbType);
 	}
@@ -1952,11 +1946,7 @@ public class DialectUtils {
 			index++;
 		}
 		if (skipCount > 0) {
-			if (logger.isDebugEnabled()) {
-				logger.debug("共有{}行记录因为主键值为空跳过修改操作!", skipCount);
-			} else {
-				System.out.println("共有:" + skipCount + " 行记录因为主键值为空跳过修改操作!");
-			}
+			logger.debug("共有:{}行记录因为主键值为空跳过修改操作!", skipCount);
 		}
 		// 构建update语句
 		String updateSql = generateUpdateSql(dbType, entityMeta, nullFunction, forceUpdateFields, realTable);
@@ -1964,11 +1954,7 @@ public class DialectUtils {
 			throw new IllegalArgumentException("updateAll sql is null,引起问题的原因是没有设置需要修改的字段!");
 		}
 		SqlExecuteStat.showSql("批量修改[" + paramsValues.size() + "]条记录", updateSql, null);
-		if (dbType == DBType.SQLSERVER) {
-			return SqlUtilsExt.batchUpdateBySqlServer(sqlToyContext.getTypeHandler(), updateSql, paramsValues,
-					entityMeta.getFieldsTypeArray(), null, null, batchSize, autoCommit, conn, dbType);
-		}
-		return SqlUtilsExt.batchUpdateByJdbc(sqlToyContext.getTypeHandler(), updateSql, paramsValues,
+		return SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), updateSql, paramsValues,
 				entityMeta.getFieldsTypeArray(), null, null, batchSize, autoCommit, conn, dbType);
 	}
 
@@ -2056,9 +2042,6 @@ public class DialectUtils {
 			return 0L;
 		}
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-		// 记录数量小于1000且无级联采用一次sql执行完成删除
-		// if (entities.size() < 1000 && entityMeta.getCascadeModels().isEmpty()) {
-		// }
 		String realTable = entityMeta.getSchemaTable(tableName, dbType);
 		if (null == entityMeta.getIdArray()) {
 			throw new IllegalArgumentException("delete/deleteAll 操作,表:" + realTable + " 没有主键,请检查表设计!");
@@ -2109,7 +2092,7 @@ public class DialectUtils {
 					}
 					delSubTableSql = ReservedWordsUtil.convertSql(cascadeModel.getDeleteSubTableSql(), dbType);
 					SqlExecuteStat.showSql("级联删除子表记录", delSubTableSql, null);
-					SqlUtilsExt.batchUpdateByJdbc(sqlToyContext.getTypeHandler(), delSubTableSql, mainFieldValues,
+					SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), delSubTableSql, mainFieldValues,
 							subTableFieldType, null, null, sqlToyContext.getBatchSize(), null, conn, dbType);
 				}
 			}
@@ -2117,7 +2100,7 @@ public class DialectUtils {
 		String deleteSql = ReservedWordsUtil
 				.convertSql("delete from ".concat(realTable).concat(" ").concat(entityMeta.getIdArgWhereSql()), dbType);
 		SqlExecuteStat.showSql("批量删除[" + idValues.size() + "]条记录", deleteSql, null);
-		return SqlUtilsExt.batchUpdateByJdbc(sqlToyContext.getTypeHandler(), deleteSql, idValues, parameterTypes, null,
+		return SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), deleteSql, idValues, parameterTypes, null,
 				null, batchSize, autoCommit, conn, dbType);
 	}
 
@@ -2360,10 +2343,6 @@ public class DialectUtils {
 				}
 				callStat.execute();
 				rs = callStat.getResultSet();
-				// 执行查询 解决存储过程返回多个结果集问题，取最后一个结果集
-				// while (callStat.getMoreResults()) {
-				// rs = callStat.getResultSet();
-				// }
 				StoreResult storeResult = new StoreResult();
 				if (rs != null) {
 					QueryResult tempResult = ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn, rs, null,
@@ -2654,7 +2633,5 @@ public class DialectUtils {
 			result = getUpdateReflectHandler(reflectPropsHandler, null, unifyFieldsHandler);
 		}
 		return result;
-		// return getDataAuthReflectHandler(result,
-		// unifyFieldsHandler.dataAuthFilters());
 	}
 }

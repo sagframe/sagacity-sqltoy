@@ -506,5 +506,4 @@ public class SqlToyContextProperties implements Serializable {
 	public void setOverTimeSqlHandler(String overTimeSqlHandler) {
 		this.overTimeSqlHandler = overTimeSqlHandler;
 	}
-
 }

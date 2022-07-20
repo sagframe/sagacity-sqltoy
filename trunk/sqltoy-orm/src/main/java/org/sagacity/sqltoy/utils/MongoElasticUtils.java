@@ -498,7 +498,6 @@ public class MongoElasticUtils {
 	 * @param sqlToyConfig
 	 * @param resultSet
 	 * @param fields
-	 * @throws Exception
 	 */
 	public static void processTranslate(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, List resultSet,
 			String[] fields) {
