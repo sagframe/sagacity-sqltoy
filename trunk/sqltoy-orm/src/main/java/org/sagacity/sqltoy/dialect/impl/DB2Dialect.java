@@ -10,7 +10,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DecryptHandler;
@@ -352,33 +351,19 @@ public class DB2Dialect implements Dialect {
 			final ReflectPropsHandler reflectPropsHandler, final String[] forceUpdateFields, Connection conn,
 			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
 			throws Exception {
-		if (sqlToyContext.isSaveOrUpdateNative()) {
-			EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-			return DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta, forceUpdateFields,
-					new GenerateSqlHandler() {
-						@Override
-						public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
-							// db2 为什么不跟oracle用同样的merge方法,因为db2 merge into 必须要增加cast(? as type) fieldName
-							// 将输入的数据进行类型转换
-							return DB2DialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
-									entityMeta, entityMeta.getIdStrategy(), forceUpdateFields, VIRTUAL_TABLE,
-									NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(),
-									isAssignPKValue(entityMeta.getIdStrategy()), tableName);
-						}
-					}, reflectPropsHandler, conn, dbType, autoCommit);
-		} else {
-			Long updateCnt = DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields,
-					reflectPropsHandler, NVL_FUNCTION, conn, dbType, autoCommit, tableName, true);
-			// 如果修改的记录数量跟总记录数量一致,表示全部是修改
-			if (updateCnt >= entities.size()) {
-				SqlExecuteStat.debug("修改记录", "修改记录量:" + updateCnt + " 条,等于entities集合长度,不再做insert操作!");
-				return updateCnt;
-			}
-			Long saveCnt = saveAllIgnoreExist(sqlToyContext, entities, batchSize, reflectPropsHandler, conn, dbType,
-					dialect, autoCommit, tableName);
-			SqlExecuteStat.debug("新增记录", "新建记录数量:" + saveCnt + " 条!");
-			return updateCnt + saveCnt;
-		}
+		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
+		return DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta, forceUpdateFields,
+				new GenerateSqlHandler() {
+					@Override
+					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
+						// db2 为什么不跟oracle用同样的merge方法,因为db2 merge into 必须要增加cast(? as type) fieldName
+						// 将输入的数据进行类型转换
+						return DB2DialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
+								entityMeta, entityMeta.getIdStrategy(), forceUpdateFields, VIRTUAL_TABLE, NVL_FUNCTION,
+								"NEXTVAL FOR " + entityMeta.getSequence(), isAssignPKValue(entityMeta.getIdStrategy()),
+								tableName);
+					}
+				}, reflectPropsHandler, conn, dbType, autoCommit);
 	}
 
 	/*

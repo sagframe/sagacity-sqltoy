@@ -1946,11 +1946,7 @@ public class DialectUtils {
 			index++;
 		}
 		if (skipCount > 0) {
-			if (logger.isDebugEnabled()) {
-				logger.debug("共有{}行记录因为主键值为空跳过修改操作!", skipCount);
-			} else {
-				System.out.println("共有:" + skipCount + " 行记录因为主键值为空跳过修改操作!");
-			}
+			logger.debug("共有:{}行记录因为主键值为空跳过修改操作!", skipCount);
 		}
 		// 构建update语句
 		String updateSql = generateUpdateSql(dbType, entityMeta, nullFunction, forceUpdateFields, realTable);

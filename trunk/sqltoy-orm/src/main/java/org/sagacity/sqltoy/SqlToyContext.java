@@ -164,11 +164,6 @@ public class SqlToyContext {
 	private String defaultDataSourceName;
 
 	/**
-	 * saveOrUpdate按照数据库原生sql模型
-	 */
-	private boolean saveOrUpdateNative = true;
-
-	/**
 	 * @return the translateManager
 	 */
 	public TranslateManager getTranslateManager() {
@@ -998,14 +993,5 @@ public class SqlToyContext {
 	public List<OverTimeSql> getSlowestSql(int size, boolean hasSqlId) {
 		return overTimeSqlHandler.getSlowest(size, hasSqlId);
 	}
-
-	public boolean isSaveOrUpdateNative() {
-		return saveOrUpdateNative;
-	}
-
-	public void setSaveOrUpdateNative(boolean saveOrUpdateNative) {
-		this.saveOrUpdateNative = saveOrUpdateNative;
-	}
-	
 	
 }

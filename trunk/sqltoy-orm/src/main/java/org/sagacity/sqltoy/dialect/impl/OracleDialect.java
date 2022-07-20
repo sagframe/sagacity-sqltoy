@@ -10,7 +10,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DecryptHandler;
 import org.sagacity.sqltoy.callback.GenerateSavePKStrategy;
@@ -178,36 +177,22 @@ public class OracleDialect implements Dialect {
 			ReflectPropsHandler reflectPropsHandler, final String[] forceUpdateFields, Connection conn,
 			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
 			throws Exception {
-		if (sqlToyContext.isSaveOrUpdateNative()) {
-			EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-			return DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta, forceUpdateFields,
-					new GenerateSqlHandler() {
-						@Override
-						public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
-							PKStrategy pkStrategy = entityMeta.getIdStrategy();
-							String sequence = entityMeta.getSequence() + ".nextval";
-							if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
-								pkStrategy = PKStrategy.SEQUENCE;
-								sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
-							}
-							return DialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
-									entityMeta, pkStrategy, forceUpdateFields, VIRTUAL_TABLE, NVL_FUNCTION, sequence,
-									OracleDialectUtils.isAssignPKValue(pkStrategy), tableName);
+		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
+		return DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta, forceUpdateFields,
+				new GenerateSqlHandler() {
+					@Override
+					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
+						PKStrategy pkStrategy = entityMeta.getIdStrategy();
+						String sequence = entityMeta.getSequence() + ".nextval";
+						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
+							pkStrategy = PKStrategy.SEQUENCE;
+							sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
 						}
-					}, reflectPropsHandler, conn, dbType, autoCommit);
-		} else {
-			Long updateCnt = DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields,
-					reflectPropsHandler, NVL_FUNCTION, conn, dbType, autoCommit, tableName, true);
-			// 如果修改的记录数量跟总记录数量一致,表示全部是修改
-			if (updateCnt >= entities.size()) {
-				SqlExecuteStat.debug("修改记录", "修改记录量:" + updateCnt + " 条,等于entities集合长度,不再做insert操作!");
-				return updateCnt;
-			}
-			Long saveCnt = saveAllIgnoreExist(sqlToyContext, entities, batchSize, reflectPropsHandler, conn, dbType,
-					dialect, autoCommit, tableName);
-			SqlExecuteStat.debug("新增记录", "新建记录数量:" + saveCnt + " 条!");
-			return updateCnt + saveCnt;
-		}
+						return DialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
+								entityMeta, pkStrategy, forceUpdateFields, VIRTUAL_TABLE, NVL_FUNCTION, sequence,
+								OracleDialectUtils.isAssignPKValue(pkStrategy), tableName);
+					}
+				}, reflectPropsHandler, conn, dbType, autoCommit);
 	}
 
 	/*

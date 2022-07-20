@@ -227,6 +227,12 @@ public class SqlConfigParseUtils {
 		} else {
 			// 将sql中的??符号替换成特殊字符,?? 符号在json场景下有特殊含义
 			String sql = queryStr.replaceAll(ARG_DBL_REGEX, DBL_QUESTMARK);
+			// update 2022-7-18
+			int paramCnt = StringUtil.matchCnt(sql, ARG_NAME_PATTERN);
+			// 只有单个? 参数、传递的参数长度大于1、且是 in (?),则将参数转成长度为1的二维数组new Object[]{Object[]} 模式
+			if (paramCnt == 1 && paramsValue.length > 1 && StringUtil.matches(sql, IN_PATTERN)) {
+				paramsValue = new Object[] { paramsValue };
+			}
 			sqlParam = processNamedParamsQuery(sql);
 		}
 		sqlToyResult.setSql(sqlParam.getSql());
