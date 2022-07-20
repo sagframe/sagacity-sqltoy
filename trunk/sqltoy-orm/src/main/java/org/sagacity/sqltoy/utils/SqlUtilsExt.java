@@ -220,8 +220,10 @@ public class SqlUtilsExt {
 				} else {
 					realValue = DateUtil.asLocalTime(DateUtil.convertDateObject(defaultValue));
 				}
-			} else if (jdbcType == java.sql.Types.INTEGER || jdbcType == java.sql.Types.BIGINT
-					|| jdbcType == java.sql.Types.TINYINT) {
+			} else if (jdbcType == java.sql.Types.BIGINT) {
+				realValue = new BigInteger(defaultValue);
+			} else if (jdbcType == java.sql.Types.INTEGER || jdbcType == java.sql.Types.TINYINT
+					|| jdbcType == java.sql.Types.SMALLINT) {
 				realValue = Integer.valueOf(defaultValue);
 			} else if (jdbcType == java.sql.Types.DECIMAL || jdbcType == java.sql.Types.NUMERIC) {
 				realValue = new BigDecimal(defaultValue);
@@ -231,8 +233,12 @@ public class SqlUtilsExt {
 				realValue = Boolean.parseBoolean(defaultValue);
 			} else if (jdbcType == java.sql.Types.FLOAT || jdbcType == java.sql.Types.REAL) {
 				realValue = Float.valueOf(defaultValue);
-			} else if (jdbcType == java.sql.Types.TIME) {
-				realValue = java.sql.Time.valueOf(LocalTime.now());
+			} else if (jdbcType == java.sql.Types.BIT) {
+				if (defaultValue.equalsIgnoreCase("true") || defaultValue.equalsIgnoreCase("false")) {
+					realValue = Boolean.parseBoolean(defaultValue.toLowerCase());
+				} else {
+					realValue = Integer.parseInt(defaultValue);
+				}
 			} else {
 				realValue = defaultValue;
 			}
