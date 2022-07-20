@@ -195,7 +195,7 @@ public class DialectExtUtils {
 	}
 
 	/**
-	 * @todo 处理加工对象基于db2、oracle、informix、sybase数据库的saveIgnoreExist
+	 * @todo 处理加工对象基于dm、oceanbase、oracle数据库的saveIgnoreExist
 	 * @param dbType
 	 * @param entityMeta
 	 * @param pkStrategy

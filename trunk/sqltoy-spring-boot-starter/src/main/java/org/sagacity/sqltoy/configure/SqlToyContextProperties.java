@@ -173,11 +173,6 @@ public class SqlToyContextProperties implements Serializable {
 	 * sql执行超时处理器
 	 */
 	private String overTimeSqlHandler;
-	
-	/**
-	 * saveOrUpdate按照数据库原生sql模型
-	 */
-	private boolean saveOrUpdateNative = true;
 
 	/**
 	 * @return the sqlResourcesDir
@@ -511,13 +506,4 @@ public class SqlToyContextProperties implements Serializable {
 	public void setOverTimeSqlHandler(String overTimeSqlHandler) {
 		this.overTimeSqlHandler = overTimeSqlHandler;
 	}
-
-	public boolean isSaveOrUpdateNative() {
-		return saveOrUpdateNative;
-	}
-
-	public void setSaveOrUpdateNative(boolean saveOrUpdateNative) {
-		this.saveOrUpdateNative = saveOrUpdateNative;
-	}
-
 }
