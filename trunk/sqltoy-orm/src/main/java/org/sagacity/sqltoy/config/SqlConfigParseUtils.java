@@ -135,7 +135,7 @@ public class SqlConfigParseUtils {
 	private static Map<String, AbstractMacro> macros = new HashMap<String, AbstractMacro>();
 
 	static {
-		//默认跳过blank loopValue[i]==null或为"" 时的忽略当前i行的循环内容
+		// 默认跳过blank loopValue[i]==null或为"" 时的忽略当前i行的循环内容
 		macros.put("@loop", new SqlLoop(true));
 		// 全量循环
 		macros.put("@loop-full", new SqlLoop(false));
@@ -227,6 +227,12 @@ public class SqlConfigParseUtils {
 		} else {
 			// 将sql中的??符号替换成特殊字符,?? 符号在json场景下有特殊含义
 			String sql = queryStr.replaceAll(ARG_DBL_REGEX, DBL_QUESTMARK);
+			// update 2022-7-18
+			int paramCnt = StringUtil.matchCnt(sql, ARG_NAME_PATTERN);
+			// 只有单个? 参数、传递的参数长度大于1、且是 in (?),则将参数转成长度为1的二维数组new Object[]{Object[]} 模式
+			if (paramCnt == 1 && paramsValue.length > 1 && StringUtil.matches(sql, IN_PATTERN)) {
+				paramsValue = new Object[] { paramsValue };
+			}
 			sqlParam = processNamedParamsQuery(sql);
 		}
 		sqlToyResult.setSql(sqlParam.getSql());
@@ -909,7 +915,7 @@ public class SqlConfigParseUtils {
 		// 前部分sql以where 结尾，后部分sql以and 或 or 开头的拼接,剔除or 和and
 		if (index >= 0) {
 			// where 后面拼接的条件语句是空白,剔除where
-			if (tmp.equals("")) {
+			if ("".equals(tmp)) {
 				return preSql.substring(0, index + 1).concat(" ");
 			}
 			// and 概率更高优先判断，剔除and 或 or
@@ -917,16 +923,20 @@ public class SqlConfigParseUtils {
 				return preSql.concat(" ").concat(subStr.trim().substring(3)).concat(" ");
 			} else if (StringUtil.matches(tmp, OR_START_PATTERN)) {
 				return preSql.concat(" ").concat(subStr.trim().substring(2)).concat(" ");
-			} else if (markContentSql.trim().equals("")) {
+			} else if ("".equals(markContentSql.trim())) {
 				// 排除部分场景直接剔除where 语句
 				// 以where拼接")" 开头字符串,剔除where
 				if (tailSql.trim().startsWith(")")) {
 					return preSql.substring(0, index + 1).concat(" ").concat(tailSql).concat(" ");
-				} // where 后面跟order by、group by、left join、right join、full join、having、union
+				} // where 后面跟order by、group by、left join、right join、full join、having、union、limit
 				else if (StringUtil.matches(tailSql.trim().toLowerCase(), WHERE_CLOSE_PATTERN)) {
+					// 删除掉where
 					return preSql.substring(0, index + 1).concat(" ").concat(tailSql).concat(" ");
-				} else {
-					//注意这里1=1 要保留，where #[被剔除内容] limit 10，就会出现where limit 
+				} // where 后面非关键词增加1=1
+				else {
+					// 注意这里1=1 要保留，where #[被剔除内容] limit 10，就会出现where limit
+					// 同时避免where #[id=:id] #[status=:status] 这种缺少连接词错误写法
+					// 正确写法:where #[id=:id] #[and status=:status] ,注意连接词 and 不能缺少
 					return preSql.concat(" 1=1 ").concat(tailSql).concat(" ");
 				}
 			}
@@ -945,7 +955,7 @@ public class SqlConfigParseUtils {
 				return preSql.substring(0, index + 1).concat(subStr).concat(" ");
 			} else if (StringUtil.matches(tmp.toLowerCase(), WHERE_CLOSE_PATTERN)) {
 				return preSql.substring(0, index + 1).concat(subStr).concat(" ");
-			} else if (!markContentSql.trim().equals("")) {
+			} else if (!"".equals(markContentSql.trim())) {
 				return preSql.substring(0, index + 1).concat(" where ").concat(subStr).concat(" ");
 			}
 		}
