@@ -1,10 +1,12 @@
+# WORD版详细文档(完整)
+## 请见:docs/睿智平台SqlToy5.2 使用手册.doc
+## xml中sql查询完整配置 
+https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
+
 # 在线文档
-## [https://github.com/sagframe/sqltoy-online-doc](https://sagframe.github.io/sqltoy-online-doc/#/)
+## [sqltoy-online-doc 网友海贝提供](https://www.kancloud.cn/hugoxue/sql_toy/2390352)
 
 # [gitee地址](https://gitee.com/sagacity/sagacity-sqltoy) 
-
-# WORD版详细文档(完整)
-## 请见:docs/睿智平台SqlToy4.18 使用手册.doc
 
 # 范例演示项目
 ## 快速集成演示项目
@@ -20,6 +22,10 @@
 
 ## sharding分库分表演示
 * https://github.com/sagframe/sqltoy-showcase/tree/master/trunk/sqltoy-sharding
+
+## dynamic-datasource多数据源范例
+* https://gitee.com/sagacity/sqltoy-showcase/tree/master/trunk/sqltoy-dynamic-datasource
+
 ## nosql演示(mongo和elasticsearch)
 * https://github.com/sagframe/sqltoy-showcase/tree/master/trunk/sqltoy-nosql
 
@@ -29,11 +35,33 @@
 # QQ 交流群:531812227
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
-# 最新版本号: 4.18.25 发版日期: 2021-06-10
+# 最新版本 
+* 5.2.4       发版日期: 2022-7-20
+* 5.2.4.jre11 发版日期: 2022-7-20
+* 5.2.4.jre17 发版日期: 2022-7-20
+
+# 历史版本
+* 5.1.50/5.1.50.jre11/5.1.50.jre17  发版日期: 2022-7-1
+* 4.19.50  发版日期: 2022-7-20
+
+# 升级到5.2.x指南
+* 常规springboot项目无任何影响
+* 存在自定义Dao并继承SqlToyDaoSupport的场景，需改成继承SpringDaoSupport(推荐直接使用sqlToyLazyDao公共dao即可)
+* 传统spring xml配置
+```xml
+<bean id="sqlToyContext" class="org.sagacity.sqltoy.SqlToyContext"
+		init-method="initialize" destroy-method="destroy">
+    <!-- 5.2.x 关键影响点:appContext -->
+    <property name="appContext">
+        <bean class="org.sagacity.sqltoy.integration.impl.SpringAppContext"/>
+    </property>
+    <!-- 其他配置保持一致 -->
+</bean>
+```
 
 # 1. 前言
 ## 1.1 sqltoy-orm是什么
-   sqltoy-orm是比hibernate+myBatis更加贴合项目的orm框架(依赖spring)，具有jpa式的对象CRUD的同时具有比myBatis(plus)更直观简洁性能强大的查询功能。
+   sqltoy-orm是比JPA+MyBatis更加贴合项目的orm框架(依赖spring)，具有jpa式的对象CRUD的同时具有比myBatis(plus)更直观简洁性能强大的查询功能。
    支持以下数据库:
    * oracle 11g+
    * db2 9.5+,建议从10.5 开始
@@ -44,20 +72,21 @@
    * DM达梦数据库
    * elasticsearch 只支持查询,版本支持5.7+版本，建议使用7.3以上版本 
    * clickhouse 
-   * dorisdb
+   * StarRocks(原dorisdb)
    * oceanBase
    * guassdb
    * tidb
+   * impala(kudu)
    * kingbase
    * mongodb (只支持查询)
-   * sybase_iq 支持15.4以上版本，建议使用16版本
+   * 其他数据库支持基于jdbc的sql执行(查询和自定义sql的执行)
 
 ## 1.2 jdk版本要求1.8+
    
 ## 1.3 sqltoy-orm 发展轨迹
 * 2007~2008年，做农行的一个管理类项目，因查询统计较多，且查询条件多而且经常要增加条件，就不停想如何快速适应这种变化，一个比较偶然的灵感发现了比mybatis强无数倍的动态sql写法，并作为hibernate jpa 查询方面的补充，收到了极为震撼的开发体验。可以看写于2009年的一篇博文: https://blog.csdn.net/iteye_2252/article/details/81683940
 * 2008~2012年，因一直做金融类企业项目，所面对的数据规模基本上是千万级别的，因此sqltoy一直围绕jpa进行sql查询增强，期间已经集成了缓存翻译、快速分页、行列旋转等比其他框架更具特色的查询特性。
-* 2013~2014年，因为了避免让开发者在项目中同时使用两种技术，因此在sqltoy中实现了hibernate 基于对象的crud功能(并优化了其不足)，形成了完整的sqltoy-orm框架。
+* 2013~2014年，因为了避免让开发者在项目中同时使用两种技术，因此在sqltoy中实现了基于对象的crud功能，形成了完整的sqltoy-orm框架。
 * 2014~2017年, 因需要面对拉卡拉十亿级别的数据规模，对sqltoy进行了大幅重构，实现了底层结构的合理化，并在拉卡拉CRM和日均千万级累计达几十亿级别的数据平台上得到了强化和检验。
 * 2018~至今,  在ERP复杂场景下得到了充分锤炼，sqltoy已经非常完善可靠，开始开源跟大家一起分享和共建！
 
@@ -104,10 +133,10 @@
 ```
 * 基于对象单表查询，并带缓存翻译
 ```java  
-public PaginationModel<StaffInfoVO> findStaff(PaginationModel<StaffInfoVO> pageModel, StaffInfoVO staffInfoVO) {
+public Page<StaffInfoVO> findStaff(Page<StaffInfoVO> pageModel, StaffInfoVO staffInfoVO) {
      // sql可以直接在代码中编写,复杂sql建议在xml中定义
      // 单表entity查询场景下sql字段可以写成java类的属性名称
-     return findEntity(StaffInfoVO.class, pageModel, EntityQuery.create()
+     return findPageEntity(pageModel,StaffInfoVO.class, EntityQuery.create()
 	.where("#[staffName like :staffName]#[and createTime>=:beginDate]#[and createTime<=:endDate]")
 	.values(staffInfoVO)
 	// 字典缓存必须要设置cacheType
@@ -204,8 +233,7 @@ where #[t.ORGAN_ID in (:authedOrganIds)]
 ```
 * java调用过程
 ```java
-sqlToyLazyDao.findBySql(sql, new String[] { "authedOrganIds","beginDate", "endDate"},
-				new Object[] { authedOrganIdAry,beginDate,null}, DeviceOrderInfoVO.class);
+sqlToyLazyDao.findBySql(sql, MapKit.keys("authedOrganIds","beginDate", "endDate").values(authedOrganIdAry,beginDate,null), DeviceOrderInfoVO.class);
 ```
 * 最终执行的sql是这样的:
 ```xml
@@ -261,13 +289,13 @@ where t.ORDER_ID=?
  *  基于对象传参数模式
  */
 public void findPageByEntity() {
-	PaginationModel pageModel = new PaginationModel();
+	Page pageModel = new Page();
 	StaffInfoVO staffVO = new StaffInfoVO();
 	// 作为查询条件传参数
 	staffVO.setStaffName("陈");
 	// 使用了分页优化器
 	// 第一次调用:执行count 和 取记录两次查询
-	PaginationModel result = sqlToyLazyDao.findPageBySql(pageModel, "sqltoy_fastPage", staffVO);
+	Page result = sqlToyLazyDao.findPageBySql(pageModel, "sqltoy_fastPage", staffVO);
 	System.err.println(JSON.toJSONString(result));
 	// 第二次调用:过滤条件一致，则不会再次执行count查询
 	//设置为第二页
@@ -281,7 +309,14 @@ public void findPageByEntity() {
 ## 2.5 最巧妙的缓存应用，将多表关联查询尽量变成单表(看下面的sql,如果不用缓存翻译需要关联多少张表?sql要有多长?多难以维护?)
 * 1、 通过缓存翻译:<translate> 将代码转化为名称，避免关联查询，极大简化sql并提升查询效率 
 * 2、 通过缓存名称模糊匹配:<cache-arg> 获取精准的编码作为条件，避免关联like 模糊查询
-	
+```java
+//支持对象属性注解模式进行缓存翻译
+@Translate(cacheName = "dictKeyName", cacheType = "DEVICE_TYPE", keyField = "deviceType")
+private String deviceTypeName;
+
+@Translate(cacheName = "staffIdName", keyField = "staffId")
+private String staffName;
+```		
 ```xml
 <sql id="sqltoy_order_search">
 	<!-- 缓存翻译设备类型
@@ -590,7 +625,7 @@ spring.sqltoy.sqlResourcesDir=classpath:com/sqltoy/quickstart
 spring.sqltoy.translateConfig=classpath:sqltoy-translate.xml
 spring.sqltoy.debug=true
 #spring.sqltoy.reservedWords=status,sex_type
-#obtainDataSource: org.sagacity.sqltoy.plugins.datasource.impl.DefaultObtainDataSourc
+#dataSourceSelector: org.sagacity.sqltoy.plugins.datasource.impl.DefaultDataSourceSelector
 #spring.sqltoy.defaultDataSource=dataSource
 spring.sqltoy.unifyFieldsHandler=com.sqltoy.plugins.SqlToyUnifyFieldsHandler
 #spring.sqltoy.printSqlTimeoutMillis=200000
@@ -672,19 +707,20 @@ public class CrudCaseServiceTest {
 
 ## 4.1 sqltoy-orm 主要分以下几个部分：
   - SqlToyDaoSupport:提供给开发者Dao继承的基本Dao,集成了所有对数据库操作的方法。
-  - SqlToyLazyDao:提供给开发者快捷使用的Dao,等同于开发者自己写的Dao，用于在简单场景下开发者可以不用写Dao，而直接写Service。
-  - SqltoyCRUDService:简单Service的封装，一些简单的对象增删改开发者写Service也是简单的调用Dao,针对这种场景提供一个简单功能的Service调用，开发者自己的Service用于封装相对复杂的业务逻辑。
+  - SqlToyLazyDao:提供给开发者快捷使用的Dao,让开发者只关注写Service业务逻辑代码，在service中直接调用lazyDao
+  - SqltoyCRUDService:简单Service的封装，面向controller层提供基于对象的快捷service调用，比如save(pojo)这种极为简单的就无需再写service代码
   - DialectFactory:数据库方言工厂类，sqltoy根据当前连接的方言调用不同数据库的实现封装。
   - SqlToyContext:sqltoy上下文配置,是整个框架的核心配置和交换区，spring配置主要是配置sqltoyContext。
   - EntityManager:封装于SqlToyContext，用于托管POJO对象，建立对象跟数据库表的关系。sqltoy通过SqlToyEntity注解扫描加载对象。
   - ScriptLoader:sql配置文件加载解析器,封装于SqlToyContext中。sql文件严格按照*.sql.xml规则命名。
-  - TranslateManager:缓存翻译管理器,用于加载缓存翻译的xml配置文件和缓存实现类，sqltoy提供了接口并提供了默认基于ehcache的实现，缓存翻译最好是使用ehcache本地缓存(或ehcache rmi模式的分布式缓存)，这样效率是最高的，而redis这种分布式缓存IO开销太大，缓存翻译是一个高频度的调用，一般会缓存注入员工、机构、数据字典、产品品类、地区等相对变化不频繁的稳定数据。
+  - TranslateManager:缓存翻译管理器,用于加载缓存翻译的xml配置文件和缓存实现类，sqltoy提供了接口并提供了默认基于ehcache的本地缓存实现，这样效率是最高的，而redis这种分布式缓存IO开销太大，缓存翻译是一个高频度的调用，一般会缓存注入员工、机构、数据字典、产品品类、地区等相对变化不频繁的稳定数据。
   - ShardingStragety:分库分表策略管理器，4.x版本之后策略管理器并不需要显式定义，只有通过spring定义，sqltoy会在使用时动态管理。
   
 
 ## 4.2 快速阅读理解sqltoy:
 
-  - 从BaseDaoSupport(或SqlToyDaoSupport)作为入口,你会看到sqltoy的所有提供的功能，通过LinkDaoSupport则可以按照不同分类视角看到sqltoy的功能组织形式。
+  - 从SqlToyLazyDao作为入口，了解sqltoy提供的所有功能
+  - SqlToyDaoSupport 是SqlToyLazyDao 具体功能实现。
   - 从DialectFactory会进入不同数据库方言的实现入口。可以跟踪看到具体数据库的实现逻辑。你会看到oracle、mysql等分页、取随机记录、快速分页的封装等。
   - EntityManager:你会找到如何扫描POJO并构造成模型，知道通过POJO操作数据库实质会变成相应的sql进行交互。
   - ParallelUtils:对象分库分表并行执行器，通过这个类你会看到分库分表批量操作时如何将集合分组到不同的库不同的表并进行并行调度的。
