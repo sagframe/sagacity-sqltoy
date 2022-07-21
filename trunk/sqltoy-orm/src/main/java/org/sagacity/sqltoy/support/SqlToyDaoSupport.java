@@ -1773,7 +1773,12 @@ public class SqlToyDaoSupport {
 			// 重新设置值数组的长度
 			valueSize = values.length;
 		} else {
-			if (DialectUtils.getParamsCount(where) != valueSize) {
+			int paramCnt = DialectUtils.getParamsCount(where);
+			if (paramCnt == 1 && StringUtil.matches(where, SqlConfigParseUtils.IN_PATTERN) && valueSize > 1) {
+				values = new Object[] { values };
+				valueSize = 1;
+			}
+			if (paramCnt != valueSize) {
 				throw new IllegalArgumentException("updateByQuery: where语句中的?数量跟对应values 数组长度不一致,请检查!");
 			}
 		}
@@ -1825,6 +1830,7 @@ public class SqlToyDaoSupport {
 		// 设置一个扩展标志，避免set field=field+? 场景构造成field=field+:fieldExtParam跟where
 		// field=:field名称冲突
 		final String extSign = "ExtParam";
+		String fieldName;
 		while (iter.hasNext()) {
 			entry = iter.next();
 			// 考虑 field=filed+? 模式，分割成2部分
@@ -1833,7 +1839,11 @@ public class SqlToyDaoSupport {
 			// entry.getKey() 直接是数据库字段名称
 			if (fieldMeta == null) {
 				// 先通过数据字段名称获得类的属性名称再获取fieldMeta
-				fieldMeta = entityMeta.getFieldMeta(entityMeta.getColumnFieldMap().get(fields[0].trim().toLowerCase()));
+				fieldName = entityMeta.getColumnFieldMap().get(fields[0].trim().toLowerCase());
+				if (fieldName == null) {
+					throw new IllegalArgumentException("updateByQuery: 字段: " + fields[0] + " 不存在,请检查代码!");
+				}
+				fieldMeta = entityMeta.getFieldMeta(fieldName);
 			}
 			columnName = fieldMeta.getColumnName();
 			// 保留字处理
@@ -1887,7 +1897,8 @@ public class SqlToyDaoSupport {
 	 */
 	protected <T extends Serializable> T convertType(Serializable source, Class<T> resultType) {
 		if (source == null || resultType == null) {
-			throw new IllegalArgumentException("source 和 resultType 不能为null!");
+			throw new IllegalArgumentException(
+					"调用convertType对单个对象进行POJO<-->DTO 转换过程中发现参数异常: source 和 resultType 不能为null!");
 		}
 		try {
 			return MapperUtils.map(sqlToyContext, source, resultType);
@@ -1908,7 +1919,8 @@ public class SqlToyDaoSupport {
 	 */
 	protected <T extends Serializable> List<T> convertType(List sourceList, Class<T> resultType) {
 		if (sourceList == null || resultType == null) {
-			throw new IllegalArgumentException("sourceList 和 resultType 不能为null!");
+			throw new IllegalArgumentException(
+					"调用convertType对集合进行POJO<-->DTO 转换过程中发现参数异常: sourceList 和 resultType 不能为null!");
 		}
 		try {
 			return MapperUtils.mapList(sqlToyContext, sourceList, resultType);

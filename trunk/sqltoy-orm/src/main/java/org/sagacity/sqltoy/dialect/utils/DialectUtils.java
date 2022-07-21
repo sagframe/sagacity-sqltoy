@@ -637,7 +637,7 @@ public class DialectUtils {
 	}
 
 	/**
-	 * @todo 处理加工对象基于db2、oracle、sqlserver数据库的saveOrUpdateSql
+	 * @todo 处理加工对象基于db2、oracle数据库的saveOrUpdateSql
 	 * @param unifyFieldsHandler
 	 * @param dbType
 	 * @param entityMeta
@@ -850,11 +850,6 @@ public class DialectUtils {
 					if (convertBlob && "byte[]".equals(fieldMeta.getFieldType())) {
 						sql.append(nullFunction);
 						sql.append("(cast(? as bytea),").append(columnName).append(" )");
-						// sql.append(" cast(");
-						// sql.append(nullFunction);
-						// sql.append("(cast(? as
-						// varchar),").append("cast(").append(columnName).append(" as varchar))");
-						// sql.append(" as bytea)");
 					} else {
 						sql.append(nullFunction);
 						sql.append("(?,").append(columnName).append(")");
@@ -1468,7 +1463,7 @@ public class DialectUtils {
 		}
 
 		SqlExecuteStat.showSql("批量保存[" + paramValues.size() + "]条记录", insertSql, null);
-		return SqlUtilsExt.batchUpdateByJdbc(sqlToyContext.getTypeHandler(), insertSql, paramValues,
+		return SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), insertSql, paramValues,
 				entityMeta.getFieldsTypeArray(), entityMeta.getFieldsDefaultValue(), entityMeta.getFieldsNullable(),
 				batchSize, autoCommit, conn, dbType);
 	}
@@ -1546,7 +1541,7 @@ public class DialectUtils {
 
 		String saveAllNotExistSql = generateSqlHandler.generateSql(entityMeta, null);
 		SqlExecuteStat.showSql("批量插入且忽视已存在记录", saveAllNotExistSql, null);
-		return SqlUtilsExt.batchUpdateByJdbc(sqlToyContext.getTypeHandler(), saveAllNotExistSql, paramValues,
+		return SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), saveAllNotExistSql, paramValues,
 				entityMeta.getFieldsTypeArray(), entityMeta.getFieldsDefaultValue(), entityMeta.getFieldsNullable(),
 				batchSize, autoCommit, conn, dbType);
 	}
@@ -1951,11 +1946,7 @@ public class DialectUtils {
 			index++;
 		}
 		if (skipCount > 0) {
-			if (logger.isDebugEnabled()) {
-				logger.debug("共有{}行记录因为主键值为空跳过修改操作!", skipCount);
-			} else {
-				System.out.println("共有:" + skipCount + " 行记录因为主键值为空跳过修改操作!");
-			}
+			logger.debug("共有:{}行记录因为主键值为空跳过修改操作!", skipCount);
 		}
 		// 构建update语句
 		String updateSql = generateUpdateSql(dbType, entityMeta, nullFunction, forceUpdateFields, realTable);
@@ -1963,7 +1954,7 @@ public class DialectUtils {
 			throw new IllegalArgumentException("updateAll sql is null,引起问题的原因是没有设置需要修改的字段!");
 		}
 		SqlExecuteStat.showSql("批量修改[" + paramsValues.size() + "]条记录", updateSql, null);
-		return SqlUtilsExt.batchUpdateByJdbc(sqlToyContext.getTypeHandler(), updateSql, paramsValues,
+		return SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), updateSql, paramsValues,
 				entityMeta.getFieldsTypeArray(), null, null, batchSize, autoCommit, conn, dbType);
 	}
 
@@ -2051,9 +2042,6 @@ public class DialectUtils {
 			return 0L;
 		}
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-		// 记录数量小于1000且无级联采用一次sql执行完成删除
-		// if (entities.size() < 1000 && entityMeta.getCascadeModels().isEmpty()) {
-		// }
 		String realTable = entityMeta.getSchemaTable(tableName, dbType);
 		if (null == entityMeta.getIdArray()) {
 			throw new IllegalArgumentException("delete/deleteAll 操作,表:" + realTable + " 没有主键,请检查表设计!");
@@ -2104,7 +2092,7 @@ public class DialectUtils {
 					}
 					delSubTableSql = ReservedWordsUtil.convertSql(cascadeModel.getDeleteSubTableSql(), dbType);
 					SqlExecuteStat.showSql("级联删除子表记录", delSubTableSql, null);
-					SqlUtilsExt.batchUpdateByJdbc(sqlToyContext.getTypeHandler(), delSubTableSql, mainFieldValues,
+					SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), delSubTableSql, mainFieldValues,
 							subTableFieldType, null, null, sqlToyContext.getBatchSize(), null, conn, dbType);
 				}
 			}
@@ -2112,7 +2100,7 @@ public class DialectUtils {
 		String deleteSql = ReservedWordsUtil
 				.convertSql("delete from ".concat(realTable).concat(" ").concat(entityMeta.getIdArgWhereSql()), dbType);
 		SqlExecuteStat.showSql("批量删除[" + idValues.size() + "]条记录", deleteSql, null);
-		return SqlUtilsExt.batchUpdateByJdbc(sqlToyContext.getTypeHandler(), deleteSql, idValues, parameterTypes, null,
+		return SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), deleteSql, idValues, parameterTypes, null,
 				null, batchSize, autoCommit, conn, dbType);
 	}
 
@@ -2355,10 +2343,6 @@ public class DialectUtils {
 				}
 				callStat.execute();
 				rs = callStat.getResultSet();
-				// 执行查询 解决存储过程返回多个结果集问题，取最后一个结果集
-				// while (callStat.getMoreResults()) {
-				// rs = callStat.getResultSet();
-				// }
 				StoreResult storeResult = new StoreResult();
 				if (rs != null) {
 					QueryResult tempResult = ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn, rs, null,
@@ -2649,7 +2633,5 @@ public class DialectUtils {
 			result = getUpdateReflectHandler(reflectPropsHandler, null, unifyFieldsHandler);
 		}
 		return result;
-		// return getDataAuthReflectHandler(result,
-		// unifyFieldsHandler.dataAuthFilters());
 	}
 }

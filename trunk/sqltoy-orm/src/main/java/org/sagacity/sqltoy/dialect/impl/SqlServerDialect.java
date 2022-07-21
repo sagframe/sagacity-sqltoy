@@ -125,7 +125,7 @@ public class SqlServerDialect implements Dialect {
 		// 避免条件用?模式,导致实际参数位置不匹配,因此只针对:name模式进行处理
 		if (isNamed) {
 			SqlToyResult tmpResult = SqlConfigParseUtils.processSql(judgeOrderSql, extend.getParamsName(sqlToyConfig),
-					extend.getParamsValue(sqlToyContext, sqlToyConfig),dialect);
+					extend.getParamsValue(sqlToyContext, sqlToyConfig), dialect);
 			judgeOrderSql = tmpResult.getSql();
 		}
 		// order by位置
@@ -152,7 +152,7 @@ public class SqlServerDialect implements Dialect {
 			sql.append(sqlToyConfig.getFastTailSql(dialect));
 		}
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
-				sql.toString(), (pageNo - 1) * pageSize, Long.valueOf(pageSize),dialect);
+				sql.toString(), (pageNo - 1) * pageSize, Long.valueOf(pageSize), dialect);
 		return findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 				extend.rowCallbackHandler, decryptHandler, conn, null, dbType, dialect, fetchSize, maxRows);
 	}
@@ -201,7 +201,7 @@ public class SqlServerDialect implements Dialect {
 			sql.append(sqlToyConfig.getFastTailSql(dialect));
 		}
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
-				sql.toString(), null, null,dialect);
+				sql.toString(), null, null, dialect);
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		return findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 				extend.rowCallbackHandler, decryptHandler, conn, null, dbType, dialect, fetchSize, maxRows);
@@ -388,9 +388,9 @@ public class SqlServerDialect implements Dialect {
 	 */
 	@Override
 	public Long updateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			final String[] uniqueFields,final String[] forceUpdateFields, ReflectPropsHandler reflectPropsHandler, Connection conn,
-			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
-			throws Exception {
+			final String[] uniqueFields, final String[] forceUpdateFields, ReflectPropsHandler reflectPropsHandler,
+			Connection conn, final Integer dbType, final String dialect, final Boolean autoCommit,
+			final String tableName) throws Exception {
 		return DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropsHandler,
 				NVL_FUNCTION, conn, dbType, autoCommit, tableName, false);
 	}
@@ -478,7 +478,7 @@ public class SqlServerDialect implements Dialect {
 	public List<TableMeta> getTables(String catalog, String schema, String tableName, Connection conn, Integer dbType,
 			String dialect) throws Exception {
 		return SqlServerDialectUtils.getTables(catalog, schema,
-				(tableName != null && tableName.equals("%")) ? null : tableName, conn, dbType, dialect);
+				(tableName != null && "%".equals(tableName)) ? null : tableName, conn, dbType, dialect);
 	}
 
 }

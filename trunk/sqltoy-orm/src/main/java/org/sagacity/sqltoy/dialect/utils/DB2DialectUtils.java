@@ -318,17 +318,7 @@ public class DB2DialectUtils {
 					insertRejIdColValues.append(",");
 				}
 				insertRejIdCols.append(columnName);
-				// 存在默认值
-				// if (null != fieldMeta.getDefaultValue()) {
-				// insertRejIdColValues.append(isNullFunction);
-				// insertRejIdColValues.append("(tv.").append(columnName).append(",");
-				// DialectExtUtils.processDefaultValue(insertRejIdColValues, dbType,
-				// fieldMeta.getType(),
-				// fieldMeta.getDefaultValue());
-				// insertRejIdColValues.append(")");
-				// } else {
 				insertRejIdColValues.append("tv.").append(columnName);
-				// }
 			}
 		}
 		// 主键未匹配上则进行插入操作

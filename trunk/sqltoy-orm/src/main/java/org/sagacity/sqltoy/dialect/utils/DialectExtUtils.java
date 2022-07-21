@@ -107,29 +107,16 @@ public class DialectExtUtils {
 					values.append(",");
 				}
 				sql.append(columnName);
-				// update 2022-7-16 插入操作默认值改为对象属性赋值模式
-				// 默认值处理
-				// if (isSupportNULL && null != fieldMeta.getDefaultValue()) {
-				// values.append(isNullFunction);
-				// values.append("(?,");
-				// processDefaultValue(values, dbType, fieldMeta.getType(),
-				// fieldMeta.getDefaultValue());
-				// values.append(")");
-				// } else {
 				// kudu 中文会产生乱码
 				if (dbType == DBType.IMPALA && isString) {
 					values.append("cast(? as string)");
 				} else {
 					values.append("?");
 				}
-				// }
 				isStart = false;
 			}
 		}
-		// OVERRIDING SYSTEM VALUE
 		sql.append(") ");
-		// if ((dbType == DBType.POSTGRESQL || dbType == DBType.GAUSSDB) && isAssignPK)
-		// { sql.append(" OVERRIDING SYSTEM VALUE "); }
 		sql.append(" values (");
 		sql.append(values);
 		sql.append(")");
@@ -197,7 +184,6 @@ public class DialectExtUtils {
 		queryStr.append(" from ");
 		queryStr.append(entityMeta.getSchemaTable(tableName, dbType));
 		queryStr.append(" where  ");
-
 		for (int i = 0; i < realParamNamed.length; i++) {
 			if (i > 0) {
 				queryStr.append(" and ");
@@ -209,7 +195,7 @@ public class DialectExtUtils {
 	}
 
 	/**
-	 * @todo 处理加工对象基于db2、oracle、informix、sybase数据库的saveIgnoreExist
+	 * @todo 处理加工对象基于dm、oceanbase、oracle数据库的saveIgnoreExist
 	 * @param dbType
 	 * @param entityMeta
 	 * @param pkStrategy
@@ -278,16 +264,7 @@ public class DialectExtUtils {
 					insertRejIdColValues.append(",");
 				}
 				insertRejIdCols.append(columnName);
-				// 存在默认值
-				// if (isSupportNUL && null != fieldMeta.getDefaultValue()) {
-				// insertRejIdColValues.append(isNullFunction);
-				// insertRejIdColValues.append("(tv.").append(columnName).append(",");
-				// processDefaultValue(insertRejIdColValues, dbType, fieldMeta.getType(),
-				// fieldMeta.getDefaultValue());
-				// insertRejIdColValues.append(")");
-				// } else {
 				insertRejIdColValues.append("tv.").append(columnName);
-				// }
 			}
 		}
 		// 主键未匹配上则进行插入操作
@@ -390,14 +367,7 @@ public class DialectExtUtils {
 				}
 			} else {
 				sql.append(columnName);
-				// if (null != fieldMeta.getDefaultValue()) {
-				// values.append(isNullFunction).append("(?,");
-				// processDefaultValue(values, dbType, fieldMeta.getType(),
-				// fieldMeta.getDefaultValue());
-				// values.append(")");
-				// } else {
 				values.append("?");
-				// }
 				isStart = false;
 			}
 		}

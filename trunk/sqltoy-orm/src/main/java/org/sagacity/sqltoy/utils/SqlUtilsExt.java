@@ -4,6 +4,7 @@
 package org.sagacity.sqltoy.utils;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -35,7 +36,7 @@ public class SqlUtilsExt {
 	}
 
 	/**
-	 * @todo 通过jdbc方式批量插入数据，一般提供给数据采集时或插入临时表使用
+	 * @todo 仅提供对象形式的批量保存、修改、删除相关的最终sql执行
 	 * @param typeHandler
 	 * @param updateSql
 	 * @param rowDatas
@@ -49,12 +50,12 @@ public class SqlUtilsExt {
 	 * @return
 	 * @throws Exception
 	 */
-	public static Long batchUpdateByJdbc(TypeHandler typeHandler, final String updateSql, final List<Object[]> rowDatas,
-			final Integer[] fieldsType, final String[] fieldsDefaultValue, final Boolean[] fieldsNullable,
-			final int batchSize, final Boolean autoCommit, final Connection conn, final Integer dbType)
-			throws Exception {
+	public static Long batchUpdateForPOJO(TypeHandler typeHandler, final String updateSql,
+			final List<Object[]> rowDatas, final Integer[] fieldsType, final String[] fieldsDefaultValue,
+			final Boolean[] fieldsNullable, final int batchSize, final Boolean autoCommit, final Connection conn,
+			final Integer dbType) throws Exception {
 		if (rowDatas == null || rowDatas.isEmpty()) {
-			logger.warn("batchUpdateByJdbc批量插入或修改数据库操作数据为空!");
+			logger.warn("batchUpdateForPOJO批量插入或修改数据操作数据为空!");
 			return 0L;
 		}
 		long updateCount = 0;
@@ -79,7 +80,7 @@ public class SqlUtilsExt {
 			Object cellValue;
 			int fieldType;
 			boolean hasFieldType = (fieldsType != null);
-			boolean notSqlServer = (dbType.intValue() != DBType.SQLSERVER);
+			boolean notSqlServer = (dbType == null || dbType.intValue() != DBType.SQLSERVER);
 			int[] updateRows;
 			int index = 0;
 			for (int i = 0; i < totalRows; i++) {
@@ -96,7 +97,6 @@ public class SqlUtilsExt {
 										fieldsNullable[j]);
 							} else {
 								cellValue = rowData[j];
-
 							}
 							SqlUtil.setParamValue(typeHandler, conn, dbType, pst, cellValue, fieldType, index + 1);
 							index++;
@@ -194,8 +194,10 @@ public class SqlUtilsExt {
 				} else {
 					realValue = DateUtil.asLocalTime(DateUtil.convertDateObject(defaultValue));
 				}
-			} else if (jdbcType == java.sql.Types.INTEGER || jdbcType == java.sql.Types.BIGINT
-					|| jdbcType == java.sql.Types.TINYINT) {
+			} else if (jdbcType == java.sql.Types.BIGINT) {
+				realValue = new BigInteger(defaultValue);
+			} else if (jdbcType == java.sql.Types.INTEGER || jdbcType == java.sql.Types.TINYINT
+					|| jdbcType == java.sql.Types.SMALLINT) {
 				realValue = Integer.valueOf(defaultValue);
 			} else if (jdbcType == java.sql.Types.DECIMAL || jdbcType == java.sql.Types.NUMERIC) {
 				realValue = new BigDecimal(defaultValue);
@@ -205,8 +207,12 @@ public class SqlUtilsExt {
 				realValue = Boolean.parseBoolean(defaultValue);
 			} else if (jdbcType == java.sql.Types.FLOAT || jdbcType == java.sql.Types.REAL) {
 				realValue = Float.valueOf(defaultValue);
-			} else if (jdbcType == java.sql.Types.TIME) {
-				realValue = java.sql.Time.valueOf(LocalTime.now());
+			} else if (jdbcType == java.sql.Types.BIT) {
+				if (defaultValue.equalsIgnoreCase("true") || defaultValue.equalsIgnoreCase("false")) {
+					realValue = Boolean.parseBoolean(defaultValue.toLowerCase());
+				} else {
+					realValue = Integer.parseInt(defaultValue);
+				}
 			} else {
 				realValue = defaultValue;
 			}

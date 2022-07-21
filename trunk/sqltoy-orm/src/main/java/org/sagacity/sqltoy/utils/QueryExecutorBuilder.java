@@ -364,7 +364,6 @@ public class QueryExecutorBuilder {
 		if (sqlToyConfig.isNamedParam() || (extend.paramsName != null && extend.paramsName.length > 0)) {
 			return false;
 		}
-
 		// ?参数个数
 		int argCount = StringUtil.matchCnt(SqlConfigParseUtils.clearDblQuestMark(sqlToyConfig.getSql()),
 				SqlConfigParseUtils.ARG_REGEX);
@@ -372,6 +371,12 @@ public class QueryExecutorBuilder {
 		if (argCount > 0) {
 			// 验证传参数量合法性
 			int valuesSize = (extend.paramsValue == null) ? 0 : extend.paramsValue.length;
+			// update 2022-7-18 增强单? 且为in (?) 模式传参兼容性处理
+			if (argCount == 1 && valuesSize > 1
+					&& StringUtil.matches(sqlToyConfig.getSql(), SqlConfigParseUtils.IN_PATTERN)) {
+				extend.paramsValue = new Object[] { extend.paramsValue };
+				valuesSize = 1;
+			}
 			if (argCount != valuesSize) {
 				throw new IllegalArgumentException("参数值数量:" + valuesSize + " 跟sql中的?条件数量" + argCount + "不匹配,请检查!");
 			}
