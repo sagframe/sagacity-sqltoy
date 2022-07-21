@@ -68,6 +68,7 @@ public class DefaultOverTimeHandler implements OverTimeSqlHandler {
 			}
 			// 按照执行时长从大到小排序
 			Collections.sort(result, new Comparator<OverTimeSql>() {
+				@Override
 				public int compare(OverTimeSql o1, OverTimeSql o2) {
 					return new Long(o2.getTakeTime() - o1.getTakeTime()).intValue();
 				}
