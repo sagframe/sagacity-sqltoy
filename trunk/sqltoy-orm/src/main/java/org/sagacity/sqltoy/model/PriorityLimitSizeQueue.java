@@ -120,6 +120,7 @@ public class PriorityLimitSizeQueue<T> implements Queue<T> {
 		return queue.offer(e);
 	}
 
+	@Override
 	public T remove() {
 		return queue.remove();
 	}
