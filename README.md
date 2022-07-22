@@ -41,8 +41,8 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 * 5.2.5.jre17 发版日期: 2022-7-22
 
 # 历史版本
-* 5.1.51/5.1.51.jre11/5.1.51.jre17  发版日期: 2022-7-20
-* 4.19.50  发版日期: 2022-7-20
+* 5.1.52/5.1.52.jre11/5.1.52.jre17  发版日期: 2022-7-22
+* 4.19.51  发版日期: 2022-7-22
 
 # 升级到5.2.x指南
 * 常规springboot项目无任何影响
