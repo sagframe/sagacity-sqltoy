@@ -42,7 +42,6 @@ public class SqlUtilsExt {
 	 * @param rowDatas
 	 * @param fieldsType
 	 * @param fieldsDefaultValue
-	 * @param fieldsNullable
 	 * @param batchSize
 	 * @param autoCommit
 	 * @param conn
@@ -52,8 +51,8 @@ public class SqlUtilsExt {
 	 */
 	public static Long batchUpdateForPOJO(TypeHandler typeHandler, final String updateSql,
 			final List<Object[]> rowDatas, final Integer[] fieldsType, final String[] fieldsDefaultValue,
-			final Boolean[] fieldsNullable, final int batchSize, final Boolean autoCommit, final Connection conn,
-			final Integer dbType) throws Exception {
+			final int batchSize, final Boolean autoCommit, final Connection conn, final Integer dbType)
+			throws Exception {
 		if (rowDatas == null || rowDatas.isEmpty()) {
 			logger.warn("batchUpdateForPOJO批量插入或修改数据操作数据为空!");
 			return 0L;
@@ -61,8 +60,7 @@ public class SqlUtilsExt {
 		long updateCount = 0;
 		PreparedStatement pst = null;
 		// 判断是否通过default转换方式插入
-		boolean hasDefaultValue = (fieldsDefaultValue != null && fieldsNullable != null && fieldsType != null) ? true
-				: false;
+		boolean hasDefaultValue = (fieldsDefaultValue != null && fieldsType != null) ? true : false;
 		try {
 			boolean hasSetAutoCommit = false;
 			// 是否自动提交
@@ -93,8 +91,7 @@ public class SqlUtilsExt {
 						// sqlserver timestamp 类型不支持赋值和更新
 						if (notSqlServer || fieldType != java.sql.Types.TIMESTAMP) {
 							if (hasDefaultValue) {
-								cellValue = getDefaultValue(rowData[j], fieldsDefaultValue[j], fieldType,
-										fieldsNullable[j]);
+								cellValue = getDefaultValue(rowData[j], fieldsDefaultValue[j], fieldType);
 							} else {
 								cellValue = rowData[j];
 							}
@@ -152,13 +149,11 @@ public class SqlUtilsExt {
 		Object[] result = new Object[size];
 		String defaultValue;
 		int fieldType;
-		boolean isNullable;
 		for (int i = 0; i < size; i++) {
 			defaultValue = entityMeta.getFieldsDefaultValue()[i];
 			if (null != defaultValue) {
 				fieldType = entityMeta.getFieldsTypeArray()[i];
-				isNullable = entityMeta.getFieldsNullable()[i];
-				result[i] = getDefaultValue(null, defaultValue, fieldType, isNullable);
+				result[i] = getDefaultValue(null, defaultValue, fieldType);
 			}
 		}
 		return result;
@@ -169,13 +164,12 @@ public class SqlUtilsExt {
 	 * @param paramValue
 	 * @param defaultValue
 	 * @param jdbcType
-	 * @param isNullable
 	 * @return
 	 */
-	public static Object getDefaultValue(Object paramValue, String defaultValue, int jdbcType, boolean isNullable) {
+	public static Object getDefaultValue(Object paramValue, String defaultValue, int jdbcType) {
 		Object realValue = paramValue;
 		// 当前值为null且默认值不为null、且字段不允许为null
-		if (realValue == null && defaultValue != null && !isNullable) {
+		if (realValue == null && defaultValue != null) {
 			if (jdbcType == java.sql.Types.DATE) {
 				if (isCurrentTime(defaultValue)) {
 					realValue = new Date();
