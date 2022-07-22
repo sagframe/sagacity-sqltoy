@@ -71,8 +71,8 @@ public class SapIQDialectUtils {
 		handler = DialectUtils.getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
 		Object[] fullParamValues = BeanUtil.reflectBeanToAry(entity,
-				(isIdentity || isSequence) ? entityMeta.getRejectIdFieldArray() : entityMeta.getFieldsArray(), null,
-				handler);
+				(isIdentity || isSequence) ? entityMeta.getRejectIdFieldArray() : entityMeta.getFieldsArray(),
+				SqlUtilsExt.getDefaultValues(entityMeta), handler);
 		boolean needUpdatePk = false;
 		// 是否存在业务ID
 		boolean hasBizId = (entityMeta.getBusinessIdGenerator() == null) ? false : true;
@@ -80,7 +80,6 @@ public class SapIQDialectUtils {
 		// 标识符
 		String signature = entityMeta.getBizIdSignature();
 		Integer[] relatedColumn = entityMeta.getBizIdRelatedColIndex();
-
 		// 主键采用assign方式赋予，则调用generator产生id并赋予其值
 		if (entityMeta.getIdStrategy() != null && null != entityMeta.getIdGenerator()) {
 			int idLength = entityMeta.getIdLength();
@@ -124,14 +123,7 @@ public class SapIQDialectUtils {
 		Object result = SqlUtil.preparedStatementProcess(null, pst, null, new PreparedStatementResultHandler() {
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
 				pst = conn.prepareStatement(realInsertSql);
-				// 存在默认值
-				if (null != entityMeta.getFieldsDefaultValue()) {
-					SqlUtilsExt.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, pst, paramValues,
-							entityMeta);
-				} else {
-					SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, pst, paramValues, paramsType,
-							0);
-				}
+				SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, pst, paramValues, paramsType, 0);
 				ResultSet keyResult = null;
 				if (isSequence || isIdentity) {
 					keyResult = pst.executeQuery();
@@ -303,7 +295,6 @@ public class SapIQDialectUtils {
 		}
 		SqlExecuteStat.showSql("IQ批量插入", insertSql, null);
 		return SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), insertSql, paramValues,
-				entityMeta.getFieldsTypeArray(), entityMeta.getFieldsDefaultValue(), entityMeta.getFieldsNullable(),
-				batchSize, null, conn, dbType);
+				entityMeta.getFieldsTypeArray(), entityMeta.getFieldsDefaultValue(), batchSize, null, conn, dbType);
 	}
 }
