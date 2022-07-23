@@ -349,8 +349,8 @@ public class ResultUtils {
 					}
 					streamResultHandler.consume(bean, index);
 				}
+				index++;
 			}
-			index++;
 		}
 		// 完成消费
 		streamResultHandler.end();
