@@ -22,6 +22,7 @@ import javax.sql.DataSource;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DataSourceCallbackHandler;
+import org.sagacity.sqltoy.callback.StreamResultHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.EntityMeta;
@@ -770,7 +771,19 @@ public class SqlToyDaoSupport {
 		// update 2020-10-20，将null转为queryExecutor.getInnerModel().lockMode
 		return dialectFactory.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig,
 				queryExecutor.getInnerModel().lockMode,
-				this.getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig));
+				getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig));
+	}
+
+	/**
+	 * @TODO 按照流模式活动查询结果数据
+	 * @param queryExecutor
+	 * @param streamResultHandler
+	 */
+	protected void fetchStream(final QueryExecutor queryExecutor, final StreamResultHandler streamResultHandler) {
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search,
+				getDialect(queryExecutor.getInnerModel().dataSource));
+		dialectFactory.fetchStream(sqlToyContext, queryExecutor, sqlToyConfig, streamResultHandler,
+				getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig));
 	}
 
 	/**

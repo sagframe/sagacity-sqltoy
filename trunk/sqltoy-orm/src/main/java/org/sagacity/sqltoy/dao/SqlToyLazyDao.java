@@ -10,6 +10,7 @@ import java.util.Set;
 import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.callback.StreamResultHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
@@ -119,6 +120,13 @@ public interface SqlToyLazyDao {
 	 */
 	public StoreResult executeStore(String storeSqlOrKey, Object[] inParamValues, Integer[] outParamsType,
 			Class resultType);
+
+	/**
+	 * @TODO 流式获取查询结果
+	 * @param queryExecutor
+	 * @param streamResultHandler
+	 */
+	public void fetchStream(final QueryExecutor queryExecutor, final StreamResultHandler streamResultHandler);
 
 	/**
 	 * @todo 保存对象,并返回主键值
@@ -250,7 +258,7 @@ public interface SqlToyLazyDao {
 	 * @return
 	 */
 	public Long deleteByIds(Class entityClass, Object... ids);
-	
+
 	/**
 	 * @TODO 基于单表查询进行删除操作,提供在代码中进行快捷操作
 	 * @param entityClass
@@ -335,7 +343,7 @@ public interface SqlToyLazyDao {
 	 * @param <T>
 	 * @param entityClass
 	 * @param entityQuery
-	 * @param resultType 指定返回结果类型
+	 * @param resultType  指定返回结果类型
 	 * @return
 	 */
 	public <T> List<T> findEntity(Class entityClass, EntityQuery entityQuery, Class<T> resultType);
@@ -343,10 +351,10 @@ public interface SqlToyLazyDao {
 	/**
 	 * @TODO 单表分页查询
 	 *       <p>
-	 *       1、对象传参: 
-	 *       findPageEntity(new Page(),StaffInfo.class,EntityQuery.create().where("status=:status").values(staffInfo))
-	 *       2、数组传参: 
-	 *       findPageEntity(new Page(),StaffInfo.class,EntityQuery.create().where("status=?").values(1))
+	 *       1、对象传参: findPageEntity(new
+	 *       Page(),StaffInfo.class,EntityQuery.create().where("status=:status").values(staffInfo))
+	 *       2、数组传参: findPageEntity(new
+	 *       Page(),StaffInfo.class,EntityQuery.create().where("status=?").values(1))
 	 *       <p>
 	 * @param <T>
 	 * @param page
@@ -410,7 +418,7 @@ public interface SqlToyLazyDao {
 	 * @param sqlOrNamedSql 直接代码中写的sql或者xml中定义的sql id
 	 * @param paramsNamed
 	 * @param paramsValue
-	 * @param voClass 可以是vo、dto、Map(默认驼峰命名)
+	 * @param voClass       可以是vo、dto、Map(默认驼峰命名)
 	 * @return
 	 */
 	public <T> T loadBySql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue,
@@ -421,7 +429,7 @@ public interface SqlToyLazyDao {
 	 * @param <T>
 	 * @param sqlOrNamedSql 可以直接传sql语句，也可以是xml中定义的sql id
 	 * @param paramsMap
-	 * @param voClass 可以是vo、dto、Map(默认驼峰命名)
+	 * @param voClass       可以是vo、dto、Map(默认驼峰命名)
 	 * @return
 	 */
 	public <T> T loadBySql(final String sqlOrNamedSql, final Map<String, Object> paramsMap, final Class<T> voClass);
@@ -457,7 +465,7 @@ public interface SqlToyLazyDao {
 	 * final Object[] paramsValue)
 	 */
 	public Object getSingleValue(final String sqlOrNamedSql, final Map<String, Object> paramsMap);
-	
+
 	/**
 	 * @TODO 获取查询结果的第一条、第一列的值，一般用select max(x) from 等
 	 * @param <T>
@@ -500,11 +508,12 @@ public interface SqlToyLazyDao {
 			final Class<T> voClass);
 
 	/**
-	 * @TODO 提供基于Map传参的查询5.1.34+ 开始支持 findBySql("select 单列 from table",map,Integer.class) 返回单列值的一维数组
+	 * @TODO 提供基于Map传参的查询5.1.34+ 开始支持 findBySql("select 单列 from
+	 *       table",map,Integer.class) 返回单列值的一维数组
 	 * @param <T>
 	 * @param sqlOrSqlId
 	 * @param paramsMap
-	 * @param voClass 可以是vo、dto、Map(默认驼峰命名)
+	 * @param voClass    可以是vo、dto、Map(默认驼峰命名)
 	 * @return
 	 */
 	public <T> List<T> findBySql(final String sqlOrSqlId, final Map<String, Object> paramsMap, final Class<T> voClass);
@@ -546,7 +555,7 @@ public interface SqlToyLazyDao {
 	 * @param page
 	 * @param sqlOrNamedSql
 	 * @param paramsMap
-	 * @param voClass 可以是vo、dto、Map(默认驼峰命名)
+	 * @param voClass       可以是vo、dto、Map(默认驼峰命名)
 	 * @return
 	 */
 	public <T> Page<T> findPageBySql(final Page page, final String sqlOrNamedSql, final Map<String, Object> paramsMap,
@@ -579,7 +588,8 @@ public interface SqlToyLazyDao {
 	 * @param paramsNamed   如果sql是select * from table where xxx=?
 	 *                      问号传参模式，paramNamed设置为null
 	 * @param paramValues
-	 * @param voClass       返回结果List中的对象类型(可以是VO、null:表示返回List<List>;HashMap.class (默认驼峰命名))
+	 * @param voClass       返回结果List中的对象类型(可以是VO、null:表示返回List<List>;HashMap.class
+	 *                      (默认驼峰命名))
 	 * @param topSize       (大于1则取固定数量的记录，小于1，则表示按比例提取)
 	 * @return
 	 */
@@ -591,7 +601,7 @@ public interface SqlToyLazyDao {
 	 * @param <T>
 	 * @param sqlOrNamedSql
 	 * @param paramsMap
-	 * @param voClass  可以是vo、dto、Map(默认驼峰命名)
+	 * @param voClass       可以是vo、dto、Map(默认驼峰命名)
 	 * @param topSize
 	 * @return
 	 */
@@ -637,7 +647,7 @@ public interface SqlToyLazyDao {
 	 * @param <T>
 	 * @param sqlOrNamedSql
 	 * @param paramsMap
-	 * @param voClass 可以是vo、dto、Map(默认驼峰命名)
+	 * @param voClass       可以是vo、dto、Map(默认驼峰命名)
 	 * @param randomCount
 	 * @return
 	 */
@@ -647,7 +657,8 @@ public interface SqlToyLazyDao {
 	/**
 	 * @TODO 批量集合通过sql进行修改操作,调用:batchUpdate(sqlId,List)
 	 * @param sqlOrNamedSql
-	 * @param dataSet 支持List<List>、List<Object[]>(sql中?传参) ;List<VO>、List<Map> 形式(sql中:paramName传参)
+	 * @param dataSet       支持List<List>、List<Object[]>(sql中?传参) ;List<VO>、List<Map>
+	 *                      形式(sql中:paramName传参)
 	 * @return
 	 */
 	public Long batchUpdate(final String sqlOrNamedSql, final List dataSet);
@@ -659,7 +670,8 @@ public interface SqlToyLazyDao {
 	 *       <li>2、List<List>模式，sql中直接用? 形式传参,弊端就是严格顺序</li>
 	 *       </p>
 	 * @param sqlOrNamedSql
-	 * @param dataSet 支持List<List>、List<Object[]>(sql中?传参) ;List<VO>、List<Map> 形式(sql中:paramName传参)
+	 * @param dataSet       支持List<List>、List<Object[]>(sql中?传参) ;List<VO>、List<Map>
+	 *                      形式(sql中:paramName传参)
 	 * @param autoCommit    (一般为null)
 	 */
 	public Long batchUpdate(final String sqlOrNamedSql, final List dataSet, final Boolean autoCommit);
@@ -756,17 +768,11 @@ public interface SqlToyLazyDao {
 	/**
 	 * @todo 对数据集合通过反调函数对具体属性进行翻译
 	 *       <p>
-	 *       sqlToyLazyDao.translate(staffVOs<StaffInfoVO>, "staffIdName",
-	 *       	new TranslateHandler() { 
-	 *       		//告知key值 
-	 *       		public Object getKey(Object row) { 
-	 *         			return ((StaffInfoVO)row).getStaffId(); 
-	 *       		} 
-	 *      		// 将翻译后的名称值设置到对应的属性上 
-	 *       		public void setName(Object row, String name) {
-	 *      			((StaffInfoVO)row).setStaffName(name);
-	 *        		} 
-	 *        });
+	 *       sqlToyLazyDao.translate(staffVOs<StaffInfoVO>, "staffIdName", new
+	 *       TranslateHandler() { //告知key值 public Object getKey(Object row) { return
+	 *       ((StaffInfoVO)row).getStaffId(); } // 将翻译后的名称值设置到对应的属性上 public void
+	 *       setName(Object row, String name) {
+	 *       ((StaffInfoVO)row).setStaffName(name); } });
 	 *       </p>
 	 * @param dataSet        数据集合
 	 * @param cacheName      缓存名称
