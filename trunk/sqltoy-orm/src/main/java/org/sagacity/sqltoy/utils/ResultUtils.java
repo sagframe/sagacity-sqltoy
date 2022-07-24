@@ -239,6 +239,7 @@ public class ResultUtils {
 		int[] indexs = null;
 		HashMap<String, HashMap<String, Object[]>> cacheDatas = null;
 		HashMap<String, Translate> translateConfig = null;
+		String[] mapLabelNames = labelNames;
 		if (resultType != null && resultType != ArrayList.class && resultType != Collection.class
 				&& resultType != List.class && !BeanUtil.isBaseDataType(resultType)) {
 			Class superClass = resultType.getSuperclass();
@@ -251,6 +252,10 @@ public class ResultUtils {
 				type = 3;
 				isMap = resultType.equals(Map.class);
 				isConMap = resultType.equals(ConcurrentMap.class);
+				// 驼峰处理
+				if (humpMapLabel) {
+					mapLabelNames = humpFieldNames(labelNames, null);
+				}
 			} else {
 				type = 4;
 				if (Modifier.isAbstract(resultType.getModifiers()) || Modifier.isInterface(resultType.getModifiers())) {
@@ -285,11 +290,7 @@ public class ResultUtils {
 				}
 			}
 		}
-		String[] realLabelNames = labelNames;
-		// 驼峰处理
-		if (humpMapLabel) {
-			realLabelNames = humpFieldNames(labelNames, null);
-		}
+
 		// 执行开始
 		streamResultHandler.start(labelNames, labelTypes);
 		index = 0;
@@ -336,7 +337,7 @@ public class ResultUtils {
 						rowMap = (Map) resultType.getDeclaredConstructor().newInstance();
 					}
 					for (int j = 0; j < columnSize; j++) {
-						rowMap.put(realLabelNames[j], rowTemp.get(j));
+						rowMap.put(mapLabelNames[j], rowTemp.get(j));
 					}
 					streamResultHandler.consume(rowMap, index);
 				} // 封装成VO对象形式
