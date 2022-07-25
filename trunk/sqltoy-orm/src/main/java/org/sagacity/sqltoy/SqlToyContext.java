@@ -191,6 +191,11 @@ public class SqlToyContext {
 	private int printSqlTimeoutMillis = 30000;
 
 	/**
+	 * 获取MetaData的列标题处理策略：default:不做处理;upper:转大写;lower
+	 */
+	private String columnLabelUpperOrLower = "default";
+
+	/**
 	 * 数据库类型
 	 */
 	private String dialect;
@@ -993,5 +998,13 @@ public class SqlToyContext {
 	public List<OverTimeSql> getSlowestSql(int size, boolean hasSqlId) {
 		return overTimeSqlHandler.getSlowest(size, hasSqlId);
 	}
-	
+
+	public String getColumnLabelUpperOrLower() {
+		return columnLabelUpperOrLower;
+	}
+
+	public void setColumnLabelUpperOrLower(String columnLabelUpperOrLower) {
+		this.columnLabelUpperOrLower = columnLabelUpperOrLower;
+	}
+
 }

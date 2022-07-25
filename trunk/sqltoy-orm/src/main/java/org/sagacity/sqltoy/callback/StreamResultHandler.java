@@ -25,5 +25,7 @@ public interface StreamResultHandler {
 	/**
 	 * @TODO 流数据提取完成
 	 */
-	public void end();
+	public default void end() {
+
+	}
 }
