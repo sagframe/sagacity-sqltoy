@@ -1301,6 +1301,42 @@ public class BeanUtil {
 		return resultList;
 	}
 
+	public static <T extends Serializable> T reflectRowToBean(TypeHandler typeHandler, Method[] realMethods,
+			String[] methodTypes, Class[] genericTypes, List rowList, int[] indexs, String[] properties,
+			Class<T> voClass) {
+		Object cellData = null;
+		String propertyName = null;
+		Object bean = null;
+		try {
+			bean = voClass.getDeclaredConstructor().newInstance();
+			int indexSize = indexs.length;
+			int size = rowList.size();
+			for (int i = 0; i < indexSize; i++) {
+				if (indexs[i] < size) {
+					cellData = rowList.get(indexs[i]);
+					if (realMethods[i] != null && cellData != null) {
+						propertyName = realMethods[i].getName();
+						if (cellData.getClass().getTypeName().equals(methodTypes[i])) {
+							realMethods[i].invoke(bean, cellData);
+						} else {
+							realMethods[i].invoke(bean,
+									convertType(typeHandler, cellData, methodTypes[i], genericTypes[i]));
+						}
+					}
+				}
+			}
+		} catch (Exception e) {
+			if (propertyName == null) {
+				logger.error("将集合数据映射到类:{} 异常,请检查类是否正确!{}", voClass.getName(), e.getMessage());
+			} else {
+				logger.error("将集合数据:{} 映射到类:{} 的属性:{}过程异常!{}", cellData, voClass.getName(), propertyName,
+						e.getMessage());
+			}
+			throw new RuntimeException(e);
+		}
+		return (T) bean;
+	}
+
 	public static void batchSetProperties(Collection voList, String[] properties, Object[] values,
 			boolean autoConvertType) {
 		batchSetProperties(voList, properties, values, autoConvertType, true);

@@ -388,6 +388,7 @@ public class TranslateConfigParse {
 						trans.setCacheType(translate.cacheType());
 					}
 					trans.setKeyColumn(translate.keyField());
+					// 内部转了小写
 					trans.setColumn(field.getName());
 					trans.setAlias(field.getName());
 					if (StringUtil.isNotBlank(translate.split())) {
