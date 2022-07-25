@@ -12,6 +12,7 @@ import javax.sql.DataSource;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.InsertRowCallbackHandler;
 import org.sagacity.sqltoy.callback.ReflectPropsHandler;
+import org.sagacity.sqltoy.callback.StreamResultHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
@@ -358,6 +359,11 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	public StoreResult executeStore(String storeNameOrKey, Object[] inParamValues, Integer[] outParamsType,
 			Class resultType) {
 		return super.executeStore(storeNameOrKey, inParamValues, outParamsType, resultType, null);
+	}
+
+	@Override
+	public void fetchStream(QueryExecutor queryExecutor, StreamResultHandler streamResultHandler) {
+		super.fetchStream(queryExecutor, streamResultHandler);
 	}
 
 	/*

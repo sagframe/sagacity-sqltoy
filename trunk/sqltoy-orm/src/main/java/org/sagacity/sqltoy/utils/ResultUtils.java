@@ -1,6 +1,10 @@
 package org.sagacity.sqltoy.utils;
 
 import java.lang.reflect.Array;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.util.ArrayList;
@@ -21,6 +25,7 @@ import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DecryptHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
+import org.sagacity.sqltoy.callback.StreamResultHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.ColsChainRelativeModel;
@@ -157,6 +162,202 @@ public class ResultUtils {
 	}
 
 	/**
+	 * @TODO 基于游标直接消费每行数据
+	 * @param sqlToyContext
+	 * @param extend
+	 * @param sqlToyConfig
+	 * @param conn
+	 * @param rs
+	 * @param streamResultHandler
+	 * @param resultType
+	 * @param humpMapLabel
+	 * @param fieldsMap
+	 * @throws Exception
+	 */
+	public static void consumeResult(final SqlToyContext sqlToyContext, final QueryExecutorExtend extend,
+			final SqlToyConfig sqlToyConfig, Connection conn, ResultSet rs,
+			final StreamResultHandler streamResultHandler, Class resultType, boolean humpMapLabel,
+			Map<Class, IgnoreKeyCaseMap<String, String>> fieldsMap) throws Exception {
+		// 重新组合解密字段(entityMeta中的和sql自定义的合并)
+		IgnoreCaseSet decryptColumns = sqlToyConfig.getDecryptColumns();
+		DecryptHandler realDecryptHandler = null;
+		if (decryptColumns != null && !decryptColumns.isEmpty()) {
+			realDecryptHandler = new DecryptHandler(sqlToyContext.getFieldsSecureProvider(), decryptColumns);
+		}
+		// 取得字段列数
+		int columnSize = rs.getMetaData().getColumnCount();
+		// 类型转成string的列
+		Set<String> strTypeCols = getStringColumns(sqlToyConfig);
+		boolean hasToStrCols = !strTypeCols.isEmpty();
+		String[] labelNames = new String[columnSize];
+		String[] labelTypes = new String[columnSize];
+		String labeNameLow;
+		int index = 0;
+		for (int i = 0; i < columnSize; i++) {
+			labelNames[index] = rs.getMetaData().getColumnLabel(i + 1);
+			labeNameLow = labelNames[index].toLowerCase();
+			labelTypes[index] = rs.getMetaData().getColumnTypeName(i + 1);
+			// 类型因缓存翻译、格式化转为string
+			if (hasToStrCols) {
+				if (strTypeCols.contains(labeNameLow)) {
+					labelTypes[index] = "VARCHAR";
+				}
+			}
+			index++;
+		}
+		// 判断是否有缓存翻译器定义
+		Boolean hasTranslate = (sqlToyConfig.getTranslateMap().isEmpty()) ? false : true;
+		HashMap<String, Translate> translateMap = sqlToyConfig.getTranslateMap();
+		HashMap<String, HashMap<String, Object[]>> translateCache = null;
+		if (hasTranslate) {
+			translateCache = sqlToyContext.getTranslateManager().getTranslates(translateMap);
+			if (translateCache == null || translateCache.isEmpty()) {
+				hasTranslate = false;
+				logger.debug("通过缓存配置未获取到缓存数据,请正确配置TranslateManager!");
+			}
+		}
+
+		LabelIndexModel labelIndexModel = wrapLabelIndexMap(labelNames);
+		// 是否判断全部为null的行记录
+		boolean ignoreAllEmpty = sqlToyConfig.isIgnoreEmpty();
+		List<SecureMask> secureMasks = sqlToyConfig.getSecureMasks();
+		List<FormatModel> formatModels = sqlToyConfig.getFormatModels();
+		boolean sqlSecure = !secureMasks.isEmpty();
+		boolean sqlFormat = !formatModels.isEmpty();
+		boolean extSecure = (extend != null && !extend.secureMask.isEmpty());
+		boolean extFormat = (extend != null && !extend.colsFormat.isEmpty());
+		DesensitizeProvider desensitizeProvider = sqlToyContext.getDesensitizeProvider();
+		// 1:List；2：array;3:map;4:voClass
+		int type = 1;
+		boolean isMap = false;
+		boolean isConMap = false;
+		HashMap<String, String> columnFieldMap = null;
+		Method[] realMethods = null;
+		String[] methodTypes = null;
+		Class[] genericTypes = null;
+		String[] realProps = null;
+		int[] indexs = null;
+		HashMap<String, HashMap<String, Object[]>> cacheDatas = null;
+		HashMap<String, Translate> translateConfig = null;
+		String[] mapLabelNames = labelNames;
+		if (resultType != null && resultType != ArrayList.class && resultType != Collection.class
+				&& resultType != List.class && !BeanUtil.isBaseDataType(resultType)) {
+			Class superClass = resultType.getSuperclass();
+			if (resultType == Array.class) {
+				type = 2;
+			} else if (resultType.equals(HashMap.class) || resultType.equals(ConcurrentHashMap.class)
+					|| resultType.equals(Map.class) || resultType.equals(ConcurrentMap.class)
+					|| HashMap.class.equals(superClass) || LinkedHashMap.class.equals(superClass)
+					|| ConcurrentHashMap.class.equals(superClass) || Map.class.equals(superClass)) {
+				type = 3;
+				isMap = resultType.equals(Map.class);
+				isConMap = resultType.equals(ConcurrentMap.class);
+				// 驼峰处理
+				if (humpMapLabel) {
+					mapLabelNames = humpFieldNames(labelNames, null);
+				}
+			} else {
+				type = 4;
+				if (Modifier.isAbstract(resultType.getModifiers()) || Modifier.isInterface(resultType.getModifiers())) {
+					throw new IllegalArgumentException("resultType:" + resultType.getName() + " 是抽象类或接口,非法参数!");
+				}
+				if (sqlToyContext.isEntity(resultType)) {
+					EntityMeta entityMeta = sqlToyContext.getEntityMeta(resultType);
+					columnFieldMap = entityMeta.getColumnFieldMap();
+				}
+				realProps = convertRealProps(wrapMapFields(labelNames, fieldsMap, resultType), columnFieldMap);
+				realMethods = BeanUtil.matchSetMethods(resultType, realProps);
+				methodTypes = new String[columnSize];
+				genericTypes = new Class[columnSize];
+				indexs = new int[columnSize];
+				Type[] types;
+				// 自动适配属性的数据类型
+				for (int i = 0; i < columnSize; i++) {
+					indexs[i] = i;
+					if (null != realMethods[i]) {
+						methodTypes[i] = realMethods[i].getParameterTypes()[0].getTypeName();
+						types = realMethods[i].getGenericParameterTypes();
+						if (types.length > 0) {
+							if (types[0] instanceof ParameterizedType) {
+								genericTypes[i] = (Class) ((ParameterizedType) types[0]).getActualTypeArguments()[0];
+							}
+						}
+					}
+				}
+				translateConfig = TranslateConfigParse.getClassTranslates(resultType);
+				if (translateConfig != null && !translateConfig.isEmpty()) {
+					cacheDatas = sqlToyContext.getTranslateManager().getTranslates(translateConfig);
+				}
+			}
+		}
+
+		// 执行开始
+		streamResultHandler.start(labelNames, labelTypes);
+		index = 0;
+		List rowTemp;
+		while (rs.next()) {
+			if (hasTranslate) {
+				rowTemp = processResultRowWithTranslate(translateMap, translateCache, labelNames, rs, columnSize,
+						realDecryptHandler, ignoreAllEmpty);
+			} else {
+				rowTemp = processResultRow(rs, labelNames, columnSize, realDecryptHandler, ignoreAllEmpty);
+			}
+			if (rowTemp != null) {
+				// 字段脱敏
+				if (sqlSecure) {
+					secureMaskRow(desensitizeProvider, rowTemp, secureMasks.iterator(), labelIndexModel);
+				}
+				// 自动格式化
+				if (sqlFormat) {
+					formatRowColumn(rowTemp, formatModels.iterator(), labelIndexModel);
+				}
+				// 扩展脱敏和格式化处理
+				if (extSecure) {
+					secureMaskRow(desensitizeProvider, rowTemp, extend.secureMask.values().iterator(), labelIndexModel);
+				}
+				if (extFormat) {
+					formatRowColumn(rowTemp, extend.colsFormat.values().iterator(), labelIndexModel);
+				}
+				// 消费每行数据
+				if (type == 1) {
+					streamResultHandler.consume(rowTemp, index);
+				} // 数组
+				else if (type == 2) {
+					Object[] rowAry = new Object[rowTemp.size()];
+					rowTemp.toArray(rowAry);
+					streamResultHandler.consume(rowAry, index);
+				} // map
+				else if (type == 3) {
+					Map rowMap;
+					if (isMap) {
+						rowMap = new HashMap();
+					} else if (isConMap) {
+						rowMap = new ConcurrentHashMap();
+					} else {
+						rowMap = (Map) resultType.getDeclaredConstructor().newInstance();
+					}
+					for (int j = 0; j < columnSize; j++) {
+						rowMap.put(mapLabelNames[j], rowTemp.get(j));
+					}
+					streamResultHandler.consume(rowMap, index);
+				} // 封装成VO对象形式
+				else {
+					Object bean = BeanUtil.reflectRowToBean(sqlToyContext.getTypeHandler(), realMethods, methodTypes,
+							genericTypes, rowTemp, indexs, realProps, resultType);
+					// 有基于注解@Translate的缓存翻译
+					if (cacheDatas != null) {
+						wrapBeanTranslate(sqlToyContext, cacheDatas, translateConfig, bean);
+					}
+					streamResultHandler.consume(bean, index);
+				}
+				index++;
+			}
+		}
+		// 完成消费
+		streamResultHandler.end();
+	}
+
+	/**
 	 * @todo 对字段进行安全脱敏
 	 * @param desensitizeProvider
 	 * @param rows
@@ -179,6 +380,25 @@ public class ResultUtils {
 					if (value != null) {
 						row.set(columnIndex, desensitizeProvider.desensitize(value.toString(), mask));
 					}
+				}
+			}
+		}
+	}
+
+	private static void secureMaskRow(DesensitizeProvider desensitizeProvider, List row, Iterator<SecureMask> masks,
+			LabelIndexModel labelIndexMap) {
+		Integer index;
+		Object value;
+		SecureMask mask;
+		int columnIndex;
+		while (masks.hasNext()) {
+			mask = masks.next();
+			index = labelIndexMap.get(mask.getColumn());
+			if (index != null) {
+				columnIndex = index.intValue();
+				value = row.get(columnIndex);
+				if (value != null) {
+					row.set(columnIndex, desensitizeProvider.desensitize(value.toString(), mask));
 				}
 			}
 		}
@@ -213,6 +433,33 @@ public class ResultUtils {
 							row.set(columnIndex, NumberUtil.format(value, fmt.getFormat(), fmt.getRoundingMode(),
 									(fmt.getLocale() == null) ? null : new Locale(fmt.getLocale())));
 						}
+					}
+				}
+			}
+		}
+	}
+
+	private static void formatRowColumn(List row, Iterator<FormatModel> formats, LabelIndexModel labelIndexMap) {
+		Integer index;
+		Object value;
+		FormatModel fmt;
+		int columnIndex;
+		while (formats.hasNext()) {
+			fmt = formats.next();
+			index = labelIndexMap.get(fmt.getColumn());
+			if (index != null) {
+				columnIndex = index.intValue();
+				value = row.get(columnIndex);
+				if (value != null) {
+					// 日期格式
+					if (fmt.getType() == 1) {
+						row.set(columnIndex, DateUtil.formatDate(value, fmt.getFormat(),
+								(fmt.getLocale() == null) ? null : new Locale(fmt.getLocale())));
+					}
+					// 数字格式化
+					else {
+						row.set(columnIndex, NumberUtil.format(value, fmt.getFormat(), fmt.getRoundingMode(),
+								(fmt.getLocale() == null) ? null : new Locale(fmt.getLocale())));
 					}
 				}
 			}
@@ -273,7 +520,7 @@ public class ResultUtils {
 			boolean hasDecorate = (linkModel.getDecorateAppendChar() == null) ? false : true;
 			boolean isLeft = true;
 			if (hasDecorate) {
-				isLeft = linkModel.getDecorateAlign().equals("left") ? true : false;
+				isLeft = "left".equals(linkModel.getDecorateAlign()) ? true : false;
 			}
 			Object preIdentity = null;
 			Object linkValue;
@@ -527,7 +774,7 @@ public class ResultUtils {
 		boolean hasDecorate = (linkModel.getDecorateAppendChar() == null) ? false : true;
 		boolean isLeft = true;
 		if (hasDecorate) {
-			isLeft = linkModel.getDecorateAlign().equals("left") ? true : false;
+			isLeft = "left".equals(linkModel.getDecorateAlign()) ? true : false;
 		}
 		Object preIdentity = null;
 		Object[] linkValues = new Object[linkCols];
@@ -953,13 +1200,13 @@ public class ResultUtils {
 		// 将字符串用分隔符切分开进行逐个翻译
 		String[] keys = null;
 		String splitReg = extend.splitRegex.trim();
-		if (splitReg.equals(",")) {
+		if (",".equals(splitReg)) {
 			keys = fieldStr.split("\\,");
-		} else if (splitReg.equals(";")) {
+		} else if (";".equals(splitReg)) {
 			keys = fieldStr.split("\\;");
-		} else if (splitReg.equals(":")) {
+		} else if (":".equals(splitReg)) {
 			keys = fieldStr.split("\\:");
-		} else if (splitReg.equals("")) {
+		} else if ("".equals(splitReg)) {
 			keys = fieldStr.split("\\s+");
 		} else {
 			keys = fieldStr.split(extend.splitRegex);
@@ -1053,6 +1300,7 @@ public class ResultUtils {
 		if (items == null || items.isEmpty()) {
 			return false;
 		}
+		// 是否会导致列名称和数据完全不对应,导致无法映射到pojo或map
 		boolean changedCols = false;
 		List<SecureMask> secureMasks = sqlToyConfig.getSecureMasks();
 		List<FormatModel> formatModels = sqlToyConfig.getFormatModels();
@@ -1276,16 +1524,17 @@ public class ResultUtils {
 	 * @return
 	 */
 	private static String[] convertRealProps(String[] labelNames, HashMap<String, String> colFieldMap) {
+		String[] result = labelNames.clone();
 		if (colFieldMap != null && !colFieldMap.isEmpty()) {
 			String key;
-			for (int i = 0; i < labelNames.length; i++) {
-				key = labelNames[i].toLowerCase();
+			for (int i = 0; i < result.length; i++) {
+				key = result[i].toLowerCase();
 				if (colFieldMap.containsKey(key)) {
-					labelNames[i] = colFieldMap.get(key);
+					result[i] = colFieldMap.get(key);
 				}
 			}
 		}
-		return labelNames;
+		return result;
 	}
 
 	/**
@@ -1465,11 +1714,11 @@ public class ResultUtils {
 	private static String[] wrapMapFields(String[] labelNames,
 			Map<Class, IgnoreKeyCaseMap<String, String>> resultTypeFieldsMap, Class resultType) {
 		if (resultTypeFieldsMap == null || resultTypeFieldsMap.isEmpty()) {
-			return labelNames;
+			return labelNames.clone();
 		}
 		IgnoreKeyCaseMap<String, String> fieldsMap = resultTypeFieldsMap.get(resultType);
 		if (fieldsMap == null || fieldsMap.isEmpty()) {
-			return labelNames;
+			return labelNames.clone();
 		}
 		String[] result = labelNames.clone();
 		String fieldName;
@@ -1568,7 +1817,6 @@ public class ResultUtils {
 				strSet.add(col.toLowerCase());
 			}
 		}
-
 		// column在解析时已经是小写
 		if (sqlToyConfig.getFormatModels() != null && !sqlToyConfig.getFormatModels().isEmpty()) {
 			for (FormatModel fmt : sqlToyConfig.getFormatModels()) {
@@ -1618,7 +1866,7 @@ public class ResultUtils {
 					cacheData = cacheDatas.get(trans.column);
 					srcFieldValue = BeanUtil.getProperty(item, trans.keyColumn);
 					fieldValue = BeanUtil.getProperty(item, field);
-					if (srcFieldValue != null && !srcFieldValue.toString().equals("") && fieldValue == null) {
+					if (srcFieldValue != null && !"".equals(srcFieldValue.toString()) && fieldValue == null) {
 						BeanUtil.setProperty(item, field, translateKey(trans, cacheData, srcFieldValue));
 					}
 				}
@@ -1626,6 +1874,32 @@ public class ResultUtils {
 		} catch (Exception e) {
 			e.printStackTrace();
 			logger.error("针对类:{} 的属性:{} 进行缓存翻译发生异常!{}", resultType.getName(), field, e.getMessage());
+		}
+	}
+
+	public static void wrapBeanTranslate(SqlToyContext sqlToyContext,
+			HashMap<String, HashMap<String, Object[]>> cacheDatas, HashMap<String, Translate> translateConfig,
+			Object item) {
+		String field = null;
+		TranslateExtend trans;
+		Object srcFieldValue;
+		Object fieldValue;
+		HashMap<String, Object[]> cacheData;
+		try {
+			for (Map.Entry<String, Translate> entry : translateConfig.entrySet()) {
+				field = entry.getKey();
+				trans = entry.getValue().getExtend();
+				// column是field小写后的值
+				cacheData = cacheDatas.get(trans.column);
+				srcFieldValue = BeanUtil.getProperty(item, trans.keyColumn);
+				fieldValue = BeanUtil.getProperty(item, field);
+				if (srcFieldValue != null && !"".equals(srcFieldValue.toString()) && fieldValue == null) {
+					BeanUtil.setProperty(item, field, translateKey(trans, cacheData, srcFieldValue));
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			logger.error("针对类:{} 的属性:{} 进行缓存翻译发生异常!{}", item.getClass().getName(), field, e.getMessage());
 		}
 	}
 }

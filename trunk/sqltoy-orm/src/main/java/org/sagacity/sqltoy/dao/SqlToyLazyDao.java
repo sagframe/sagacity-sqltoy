@@ -12,6 +12,7 @@ import javax.sql.DataSource;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.InsertRowCallbackHandler;
 import org.sagacity.sqltoy.callback.ReflectPropsHandler;
+import org.sagacity.sqltoy.callback.StreamResultHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
@@ -121,6 +122,13 @@ public interface SqlToyLazyDao {
 	 */
 	public StoreResult executeStore(String storeSqlOrKey, Object[] inParamValues, Integer[] outParamsType,
 			Class resultType);
+	
+	/**
+	 * @TODO 流式获取查询结果
+	 * @param queryExecutor
+	 * @param streamResultHandler
+	 */
+	public void fetchStream(final QueryExecutor queryExecutor, final StreamResultHandler streamResultHandler);
 
 	/**
 	 * @todo 保存对象,并返回主键值

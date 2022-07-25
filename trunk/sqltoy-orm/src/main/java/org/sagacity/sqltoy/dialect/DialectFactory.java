@@ -3,6 +3,8 @@ package org.sagacity.sqltoy.dialect;
 import java.io.Serializable;
 import java.lang.reflect.Type;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -20,7 +22,9 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DataSourceCallbackHandler;
 import org.sagacity.sqltoy.callback.DecryptHandler;
 import org.sagacity.sqltoy.callback.InsertRowCallbackHandler;
+import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
 import org.sagacity.sqltoy.callback.ReflectPropsHandler;
+import org.sagacity.sqltoy.callback.StreamResultHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.EntityMeta;
@@ -559,7 +563,7 @@ public class DialectFactory {
 						treeModel.setIdValue(idValue);
 					}
 				}
-				//update 2022-5-6
+				// update 2022-5-6
 				if (treeModel.isChar() == null) {
 					// id字段非主键
 					if (!treeModel.getIdField().equalsIgnoreCase(idMeta.getColumnName())) {
@@ -1203,6 +1207,78 @@ public class DialectFactory {
 				extend.getParamsValue(sqlToyContext, sqlToyConfig), dialect);
 		return getDialectSqlWrapper(dbType).getCountBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(),
 				queryParam.getParamsValue(), isLastSql, conn, dbType, dialect);
+	}
+
+	/**
+	 * @TODO 以流模式获取查询结果
+	 * @param sqlToyContext
+	 * @param queryExecutor
+	 * @param sqlToyConfig
+	 * @param streamResultHandler
+	 * @param dataSource
+	 */
+	public void fetchStream(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
+			final SqlToyConfig sqlToyConfig, final StreamResultHandler streamResultHandler,
+			final DataSource dataSource) {
+		final QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		// 合法校验
+		if (StringUtil.isBlank(extend.sql)) {
+			throw new IllegalArgumentException("fetchStream operate sql is null!");
+		}
+		try {
+			// 规整查询参数名称和参数名称对应的值
+			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
+			SqlExecuteStat.start(sqlToyConfig.getId(), "fetchStream", sqlToyConfig.isShowSql());
+			DataSourceUtils.processDataSource(sqlToyContext,
+					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
+					new DataSourceCallbackHandler() {
+						@Override
+						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+							// 处理sql中的?为统一的:named形式，并进行sharding table替换
+							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
+									sqlToyConfig, queryExecutor, dialect, false);
+							// 通过参数处理最终的sql和参数值
+							SqlToyResult queryParam = SqlConfigParseUtils.processSql(realSqlToyConfig.getSql(dialect),
+									extend.getParamsName(realSqlToyConfig),
+									extend.getParamsValue(sqlToyContext, realSqlToyConfig), dialect);
+							// 做sql签名
+							String lastSql = SqlUtilsExt.signSql(queryParam.getSql(), dbType, sqlToyConfig);
+							Object[] paramsValue = queryParam.getParamsValue();
+							// 打印sql
+							SqlExecuteStat.showSql("执行查询", lastSql, paramsValue);
+							PreparedStatement pst = conn.prepareStatement(lastSql, ResultSet.TYPE_FORWARD_ONLY,
+									ResultSet.CONCUR_READ_ONLY);
+							if (extend.fetchSize != -1) {
+								pst.setFetchSize(extend.fetchSize);
+							} // mysql 有点特殊必须要设置为MIN_VALUE
+							else if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57) {
+								pst.setFetchSize(Integer.MIN_VALUE);
+							} // 默认为1000
+							else {
+								pst.setFetchSize(1000);
+							}
+							pst.setFetchDirection(ResultSet.FETCH_FORWARD);
+							ResultSet rs = null;
+							SqlUtil.preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
+								@Override
+								public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws Exception {
+									SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, pst,
+											paramsValue, null, 0);
+									rs = pst.executeQuery();
+									ResultUtils.consumeResult(sqlToyContext, extend, sqlToyConfig, conn, rs,
+											streamResultHandler, (Class) extend.resultType, extend.humpMapLabel,
+											extend.fieldsMap);
+								}
+							});
+						}
+					});
+
+		} catch (Exception e) {
+			SqlExecuteStat.error(e);
+			throw new DataAccessException(e);
+		} finally {
+			SqlExecuteStat.destroy();
+		}
 	}
 
 	// mysql、postgresql、sqlite等类似的on duplicate key update

@@ -24,6 +24,7 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DataSourceCallbackHandler;
 import org.sagacity.sqltoy.callback.InsertRowCallbackHandler;
 import org.sagacity.sqltoy.callback.ReflectPropsHandler;
+import org.sagacity.sqltoy.callback.StreamResultHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.EntityMeta;
@@ -711,6 +712,18 @@ public class SqlToyDaoSupport {
 				this.getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig));
 	}
 
+	/**
+	 * @TODO 按照流模式活动查询结果数据
+	 * @param queryExecutor
+	 * @param streamResultHandler
+	 */
+	protected void fetchStream(final QueryExecutor queryExecutor, final StreamResultHandler streamResultHandler) {
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search,
+				getDialect(queryExecutor.getInnerModel().dataSource));
+		dialectFactory.fetchStream(sqlToyContext, queryExecutor, sqlToyConfig, streamResultHandler,
+				getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig));
+	}
+	
 	/**
 	 * @todo 以QueryExecutor 封装sql、参数等条件，实现分页查询
 	 * @param paginationModel
