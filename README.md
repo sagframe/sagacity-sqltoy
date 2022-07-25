@@ -41,7 +41,7 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 * 5.2.6.jre17 发版日期: 2022-7-25
 
 # 历史版本
-* 5.1.52/5.1.52.jre11/5.1.52.jre17  发版日期: 2022-7-22
+* 5.1.53/5.1.53.jre11/5.1.53.jre17  发版日期: 2022-7-25
 * 4.19.52  发版日期: 2022-7-25
 
 # 升级到5.2.x指南
