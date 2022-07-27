@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IllegalFormatFlagsException;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -460,6 +461,9 @@ public class SqlConfigParseUtils {
 			// update 2021-01-17 按照"["和"]" 找对称位置，兼容sql中存在[]场景
 			endMarkIndex = StringUtil.getSymMarkIndex(SQL_PSEUDO_SYM_START_MARK, SQL_PSEUDO_END_MARK, queryStr,
 					beginMarkIndex);
+			if (endMarkIndex == -1) {
+				throw new IllegalFormatFlagsException("sql语句中缺乏\"#[\" 相对称的\"]\"符号,请检查sql格式!");
+			}
 			// 最后一个#[前的sql
 			preSql = queryStr.substring(0, beginMarkIndex).concat(BLANK);
 			// 最后#[]中的查询语句,加空白减少substr(index+1)可能引起的错误
