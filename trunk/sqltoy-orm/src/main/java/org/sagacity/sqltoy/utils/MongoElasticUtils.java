@@ -6,6 +6,7 @@ import java.time.LocalTime;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.IllegalFormatFlagsException;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -173,6 +174,10 @@ public class MongoElasticUtils {
 			} else {
 				endMarkIndex = StringUtil.getSymMarkIndex(startMark, endMark, queryStr,
 						beginMarkIndex + startMarkLength);
+			}
+			if (endMarkIndex == -1) {
+				throw new IllegalFormatFlagsException(
+						"json查询语句中缺乏:\"" + startMark + "\" 相对称的:\"" + endMark + "\"符号,请检查json查询语句格式!");
 			}
 			// 最后一个#[前的sql
 			preSql = queryStr.substring(0, beginMarkIndex).concat(BLANK);
