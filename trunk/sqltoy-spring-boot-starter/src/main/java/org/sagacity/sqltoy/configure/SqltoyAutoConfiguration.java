@@ -133,6 +133,10 @@ public class SqltoyAutoConfiguration {
 		if (properties.getReservedWords() != null) {
 			sqlToyContext.setReservedWords(properties.getReservedWords());
 		}
+		// getMetaData().getColumnLabel(i) 结果做大小写处理策略
+		if (null != properties.getColumnLabelUpperOrLower()) {
+			sqlToyContext.setColumnLabelUpperOrLower(properties.getColumnLabelUpperOrLower().toLowerCase());
+		}
 		// 分页页号超出总页时转第一页，否则返回空集合
 		sqlToyContext.setPageOverToFirst(properties.isPageOverToFirst());
 		// 数据库方言

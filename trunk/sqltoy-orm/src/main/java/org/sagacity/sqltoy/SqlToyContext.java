@@ -162,7 +162,15 @@ public class SqlToyContext implements ApplicationContextAware {
 	 */
 	private String cacheType = "ehcache";
 
+	/**
+	 * 默认数据源名称
+	 */
 	private String defaultDataSourceName;
+	
+	/**
+	 * 获取MetaData的列标题处理策略：default:不做处理;upper:转大写;lower
+	 */
+	private String columnLabelUpperOrLower = "default";
 
 	/**
 	 * 获取数据源策略配置,供特殊场景下由开发者自定义获取数据(如多个数据源根据ThreadLocal中存放的信息来判断使用哪个)
@@ -991,5 +999,13 @@ public class SqlToyContext implements ApplicationContextAware {
 	 */
 	public List<OverTimeSql> getSlowestSql(int size, boolean hasSqlId) {
 		return overTimeSqlHandler.getSlowest(size, hasSqlId);
+	}
+
+	public String getColumnLabelUpperOrLower() {
+		return columnLabelUpperOrLower;
+	}
+
+	public void setColumnLabelUpperOrLower(String columnLabelUpperOrLower) {
+		this.columnLabelUpperOrLower = columnLabelUpperOrLower;
 	}
 }

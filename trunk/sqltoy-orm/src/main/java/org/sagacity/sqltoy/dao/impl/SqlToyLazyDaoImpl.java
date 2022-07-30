@@ -928,12 +928,6 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	}
 
 	@Override
-	@Deprecated
-	public <T> PaginationModel<T> findEntity(Class<T> entityClass, PaginationModel page, EntityQuery entityQuery) {
-		return super.findPageEntity(page, entityClass, entityQuery, entityClass);
-	}
-
-	@Override
 	public <T> PaginationModel<T> findPageEntity(PaginationModel page, Class<T> entityClass, EntityQuery entityQuery) {
 		return super.findPageEntity(page, entityClass, entityQuery, entityClass);
 	}

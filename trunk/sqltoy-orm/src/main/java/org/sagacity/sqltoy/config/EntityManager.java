@@ -220,7 +220,7 @@ public class EntityManager {
 	 * @param notEntityWarn 当不是entity实体bean时是否进行日志提示
 	 * @return
 	 */
-	public synchronized EntityMeta parseEntityMeta(SqlToyContext sqlToyContext, Class entityClass, boolean isWarn) {
+	public synchronized EntityMeta parseEntityMeta(SqlToyContext sqlToyContext, Class entityClass, boolean notEntityWarn) {
 		if (entityClass == null) {
 			return null;
 		}
@@ -340,7 +340,7 @@ public class EntityManager {
 		if (entityMeta != null) {
 			entitysMetaMap.put(className, entityMeta);
 		} else {
-			if (isWarn) {
+			if (notEntityWarn) {
 				logger.warn("SqlToy Entity:{}没有使用@Entity注解表明是一个实体类,请检查!", className);
 			}
 		}

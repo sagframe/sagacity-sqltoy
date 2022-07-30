@@ -382,18 +382,6 @@ public interface SqlToyLazyDao {
 	public <T> List<T> findEntity(Class entityClass, EntityQuery entityQuery, Class<T> resultType);
 
 	/**
-	 * @see findPageEntity
-	 * @param <T>
-	 * @param entityClass
-	 * @param paginationModel
-	 * @param entityQuery
-	 * @return
-	 */
-	@Deprecated
-	public <T> PaginationModel<T> findEntity(Class<T> entityClass, final PaginationModel paginationModel,
-			EntityQuery entityQuery);
-
-	/**
 	 * @TODO 单表分页查询
 	 * @param <T>
 	 * @param paginationModel

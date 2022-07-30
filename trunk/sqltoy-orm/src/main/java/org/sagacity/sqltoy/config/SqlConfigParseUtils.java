@@ -87,9 +87,6 @@ public class SqlConfigParseUtils {
 	 */
 	public final static Pattern FAST_PATTERN = Pattern.compile("(?i)\\@fast(Page)?\\([\\w\\W]+\\)");
 
-	// sql中 in (?)条件
-	// public final static Pattern IN_PATTERN =
-	// Pattern.compile("(?i)\\s+in\\s*\\(\\s*\\?\\s*\\)");
 	// update 2022-5-24 开始支持(id,type) in (:idValues,:typeValues) 或 (id,type) in
 	// ((:idValues,:typeValues)) 模式
 	public final static Pattern IN_PATTERN = Pattern.compile(

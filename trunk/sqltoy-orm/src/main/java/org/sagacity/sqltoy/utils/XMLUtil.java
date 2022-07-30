@@ -94,6 +94,7 @@ public class XMLUtil {
 	 * @param elt
 	 * @param entity
 	 * @param aliasProps 属性映射,长度必须是偶数,如:a对应到a1,{a,a1,b,b1}
+	 * @throws Exception
 	 */
 	public static void setAttributes(Element elt, Serializable entity, String... aliasProps) throws Exception {
 		if (elt == null) {

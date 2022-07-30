@@ -177,6 +177,11 @@ public class SqlToyContextProperties implements Serializable {
 	private String overTimeSqlHandler;
 	
 	/**
+	 * 获取MetaData的列标题处理策略：default:不做处理;upper:转大写;lower
+	 */
+	private String columnLabelUpperOrLower = "default";
+	
+	/**
 	 * @return the sqlResourcesDir
 	 */
 	public String getSqlResourcesDir() {
@@ -517,6 +522,14 @@ public class SqlToyContextProperties implements Serializable {
 
 	public void setOverTimeSqlHandler(String overTimeSqlHandler) {
 		this.overTimeSqlHandler = overTimeSqlHandler;
+	}
+
+	public String getColumnLabelUpperOrLower() {
+		return columnLabelUpperOrLower;
+	}
+
+	public void setColumnLabelUpperOrLower(String columnLabelUpperOrLower) {
+		this.columnLabelUpperOrLower = columnLabelUpperOrLower;
 	}
 
 }

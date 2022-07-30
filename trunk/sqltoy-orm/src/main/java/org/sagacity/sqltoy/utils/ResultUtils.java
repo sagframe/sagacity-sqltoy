@@ -129,9 +129,15 @@ public class ResultUtils {
 			String[] labelTypes = new String[rowCnt - startColIndex];
 			HashMap<String, Integer> labelIndexMap = new HashMap<String, Integer>();
 			String labeNameLow;
+			String colLabelUpperOrLower = sqlToyContext.getColumnLabelUpperOrLower();
 			for (int i = startColIndex; i < rowCnt; i++) {
 				labelNames[index] = rs.getMetaData().getColumnLabel(i + 1);
 				labeNameLow = labelNames[index].toLowerCase();
+				if (colLabelUpperOrLower.equals("lower")) {
+					labelNames[index] = labelNames[index].toLowerCase();
+				} else if (colLabelUpperOrLower.equals("upper")) {
+					labelNames[index] = labelNames[index].toUpperCase();
+				}
 				labelIndexMap.put(labeNameLow, index);
 				labelTypes[index] = rs.getMetaData().getColumnTypeName(i + 1);
 				// 类型因缓存翻译、格式化转为string
@@ -192,10 +198,16 @@ public class ResultUtils {
 		String[] labelNames = new String[columnSize];
 		String[] labelTypes = new String[columnSize];
 		String labeNameLow;
+		String colLabelUpperOrLower = sqlToyContext.getColumnLabelUpperOrLower();
 		int index = 0;
 		for (int i = 0; i < columnSize; i++) {
 			labelNames[index] = rs.getMetaData().getColumnLabel(i + 1);
 			labeNameLow = labelNames[index].toLowerCase();
+			if (colLabelUpperOrLower.equals("lower")) {
+				labelNames[index] = labelNames[index].toLowerCase();
+			} else if (colLabelUpperOrLower.equals("upper")) {
+				labelNames[index] = labelNames[index].toUpperCase();
+			}
 			labelTypes[index] = rs.getMetaData().getColumnTypeName(i + 1);
 			// 类型因缓存翻译、格式化转为string
 			if (hasToStrCols) {
