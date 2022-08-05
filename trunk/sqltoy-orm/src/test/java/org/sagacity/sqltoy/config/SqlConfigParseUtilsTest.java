@@ -259,4 +259,12 @@ public class SqlConfigParseUtilsTest {
 		}
 		System.err.println("[" + paramName + "]");
 	}
+	
+	@Test
+	public void testInsertSql() throws Exception {
+		String sql = "insert into table (id,name,status) values(:id,:name,:status)";
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "id", "name", "status" },
+				new Object[] { "1", null, "1" });
+		System.err.println(JSON.toJSONString(result));
+	}
 }

@@ -70,7 +70,6 @@ public class ClickHouseDialectUtils {
 		Object[] fullParamValues = BeanUtil.reflectBeanToAry(entity, reflectColumns,
 				SqlUtilsExt.getDefaultValues(entityMeta), handler);
 		boolean needUpdatePk = false;
-
 		int pkIndex = entityMeta.getIdIndex();
 		// 是否存在业务ID
 		boolean hasBizId = (entityMeta.getBusinessIdGenerator() == null) ? false : true;
@@ -278,7 +277,6 @@ public class ClickHouseDialectUtils {
 			throw new IllegalArgumentException(entityMeta.getSchemaTable(tableName, dbType)
 					+ "delete operate is illegal,table must has primary key and all primaryKey's value must has value!");
 		}
-
 		String deleteSql = "alter table ".concat(entityMeta.getSchemaTable(tableName, dbType)).concat(" delete ")
 				.concat(entityMeta.getIdArgWhereSql());
 		return SqlUtil.executeSql(sqlToyContext.getTypeHandler(), deleteSql, idValues, parameterTypes, conn, dbType,

@@ -25,7 +25,25 @@ public class ColumnMeta implements Serializable {
 	 */
 	private boolean isPK;
 
+	/**
+	 * 是否分区字段(mpp数据库)
+	 */
 	private boolean partitionKey;
+
+	/**
+	 * 是否唯一索引
+	 */
+	private boolean unique = false;
+
+	/**
+	 * 是否索引
+	 */
+	private boolean isIndex = false;
+
+	/**
+	 * 索引名称
+	 */
+	private String indexName;
 
 	/**
 	 * 字段类型
@@ -192,6 +210,30 @@ public class ColumnMeta implements Serializable {
 
 	public void setPartitionKey(boolean partitionKey) {
 		this.partitionKey = partitionKey;
+	}
+
+	public boolean isUnique() {
+		return unique;
+	}
+
+	public void setUnique(boolean unique) {
+		this.unique = unique;
+	}
+
+	public boolean isIndex() {
+		return isIndex;
+	}
+
+	public void setIndex(boolean isIndex) {
+		this.isIndex = isIndex;
+	}
+
+	public String getIndexName() {
+		return indexName;
+	}
+
+	public void setIndexName(String indexName) {
+		this.indexName = indexName;
 	}
 
 }

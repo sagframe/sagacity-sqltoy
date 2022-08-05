@@ -16,6 +16,7 @@ import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.dialect.DialectFactory;
 import org.sagacity.sqltoy.model.QueryExecutor;
+import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
 import org.sagacity.sqltoy.translate.model.CacheCheckResult;
 import org.sagacity.sqltoy.translate.model.CheckerConfigModel;
@@ -299,10 +300,12 @@ public class TranslateFactory {
 			dataSourceName = sqlToyConfig.getDataSource();
 		}
 		DataSourceSelector dataSourceSelector = sqlToyContext.getDataSourceSelector();
-		DataSource dataSource = dataSourceSelector.getDataSource(sqlToyContext.getAppContext(), null,
-				dataSourceName, null, sqlToyContext.getDefaultDataSource());
-		return DialectFactory.getInstance().findByQuery(sqlToyContext, queryExecutor, sqlToyConfig, null, dataSource)
-				.getRows();
+		DataSource dataSource = dataSourceSelector.getDataSource(sqlToyContext.getAppContext(), null, dataSourceName,
+				null, sqlToyContext.getDefaultDataSource());
+		QueryResult result = DialectFactory.getInstance().findByQuery(sqlToyContext, queryExecutor, sqlToyConfig, null,
+				dataSource);
+		cacheModel.setProperties(result.getLabelNames());
+		return result.getRows();
 	}
 
 	/**
