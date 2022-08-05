@@ -818,6 +818,11 @@ public class SqlToyLazyDaoImpl extends SpringDaoSupport implements SqlToyLazyDao
 	}
 
 	@Override
+	public <T> List<T> getTranslateCache(String cacheName, String cacheType, Class<T> reusltType) {
+		return super.getTranslateCache(cacheName, cacheType, reusltType);
+	}
+
+	@Override
 	public void translate(Collection dataSet, String cacheName, TranslateHandler handler) {
 		super.translate(dataSet, cacheName, null, 1, handler);
 	}

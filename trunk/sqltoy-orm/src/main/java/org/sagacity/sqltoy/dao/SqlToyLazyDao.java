@@ -756,6 +756,16 @@ public interface SqlToyLazyDao {
 	 * @return
 	 */
 	public HashMap<String, Object[]> getTranslateCache(String cacheName, String cacheType);
+	
+	/**
+	 * @TODO 将缓存数据以对象形式获取
+	 * @param <T>
+	 * @param cacheName
+	 * @param cacheType 如是数据字典,则传入字典类型否则为null即可
+	 * @param reusltType
+	 * @return
+	 */
+	public <T> List<T> getTranslateCache(String cacheName, String cacheType,Class<T> reusltType);
 
 	/**
 	 * @TODO 通过反调对集合数据进行翻译处理
