@@ -1145,7 +1145,8 @@ public class BeanUtil {
 		return resultList;
 	}
 
-	public static List reflectListToBean(TypeHandler typeHandler, List datas, String[] properties, Class voClass) {
+	public static List reflectListToBean(TypeHandler typeHandler, Collection datas, String[] properties,
+			Class voClass) {
 		int[] indexs = null;
 		if (properties != null && properties.length > 0) {
 			indexs = new int[properties.length];
@@ -1166,7 +1167,7 @@ public class BeanUtil {
 	 * @return
 	 * @throws RuntimeException
 	 */
-	public static List reflectListToBean(TypeHandler typeHandler, List datas, int[] indexs, String[] properties,
+	public static List reflectListToBean(TypeHandler typeHandler, Collection datas, int[] indexs, String[] properties,
 			Class voClass) throws RuntimeException {
 		return reflectListToBean(typeHandler, datas, indexs, properties, voClass, true);
 	}
@@ -1181,7 +1182,7 @@ public class BeanUtil {
 	 * @param autoConvertType
 	 * @return
 	 */
-	public static List reflectListToBean(TypeHandler typeHandler, List datas, int[] indexs, String[] properties,
+	public static List reflectListToBean(TypeHandler typeHandler, Collection datas, int[] indexs, String[] properties,
 			Class voClass, boolean autoConvertType) {
 		if (null == datas || datas.isEmpty()) {
 			return null;
