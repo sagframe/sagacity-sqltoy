@@ -279,6 +279,10 @@ public class TranslateManager {
 		return translateMap.containsKey(cacheName);
 	}
 
+	public TranslateConfigModel getCacheConfig(String cacheName) {
+		return translateMap.get(cacheName);
+	}
+
 	/**
 	 * @todo 获取所有缓存的名称
 	 * @return

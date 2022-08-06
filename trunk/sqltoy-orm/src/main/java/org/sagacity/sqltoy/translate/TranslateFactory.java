@@ -16,6 +16,7 @@ import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.dialect.DialectFactory;
 import org.sagacity.sqltoy.model.QueryExecutor;
+import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
 import org.sagacity.sqltoy.translate.model.CacheCheckResult;
 import org.sagacity.sqltoy.translate.model.CheckerConfigModel;
@@ -56,13 +57,13 @@ public class TranslateFactory {
 		List result = null;
 		try {
 			// 直接sql查询加载缓存模式
-			if (checkerConfig.getType().equals("sql")) {
+			if ("sql".equals(checkerConfig.getType())) {
 				result = doSqlCheck(sqlToyContext, checkerConfig, preCheckTime);
 			} // 调用springBean模式
-			else if (checkerConfig.getType().equals("service")) {
+			else if ("service".equals(checkerConfig.getType())) {
 				result = doServiceCheck(sqlToyContext, checkerConfig, preCheckTime);
 			} // 调用rest请求模式
-			else if (checkerConfig.getType().equals("rest")) {
+			else if ("rest".equals(checkerConfig.getType())) {
 				result = doRestCheck(sqlToyContext, checkerConfig, preCheckTime);
 			}
 			// local模式由应用自行管理
@@ -95,8 +96,8 @@ public class TranslateFactory {
 			dataSourceName = sqlToyConfig.getDataSource();
 		}
 		DataSourceSelector dataSourceSelector = sqlToyContext.getDataSourceSelector();
-		DataSource dataSource = dataSourceSelector.getDataSource(sqlToyContext.getApplicationContext(), null,
-				dataSourceName, null, sqlToyContext.getDefaultDataSource());
+		DataSource dataSource = dataSourceSelector.getDataSource(sqlToyContext.getApplicationContext(), null, dataSourceName,
+				null, sqlToyContext.getDefaultDataSource());
 		return DialectFactory.getInstance()
 				.findByQuery(sqlToyContext,
 						new QueryExecutor(checkerConfig.getSql(), sqlToyConfig.getParamsName(),
@@ -256,11 +257,11 @@ public class TranslateFactory {
 			TranslateConfigModel cacheModel, String cacheType) {
 		Object result = null;
 		try {
-			if (cacheModel.getType().equals("sql")) {
+			if ("sql".equals(cacheModel.getType())) {
 				result = getSqlCacheData(sqlToyContext, cacheModel, cacheType);
-			} else if (cacheModel.getType().equals("service")) {
+			} else if ("service".equals(cacheModel.getType())) {
 				result = getServiceCacheData(sqlToyContext, cacheModel, cacheType);
-			} else if (cacheModel.getType().equals("rest")) {
+			} else if ("rest".equals(cacheModel.getType())) {
 				result = getRestCacheData(sqlToyContext, cacheModel, cacheType);
 			}
 		} catch (Exception e) {
@@ -299,10 +300,12 @@ public class TranslateFactory {
 			dataSourceName = sqlToyConfig.getDataSource();
 		}
 		DataSourceSelector dataSourceSelector = sqlToyContext.getDataSourceSelector();
-		DataSource dataSource = dataSourceSelector.getDataSource(sqlToyContext.getApplicationContext(), null,
-				dataSourceName, null, sqlToyContext.getDefaultDataSource());
-		return DialectFactory.getInstance().findByQuery(sqlToyContext, queryExecutor, sqlToyConfig, null, dataSource)
-				.getRows();
+		DataSource dataSource = dataSourceSelector.getDataSource(sqlToyContext.getApplicationContext(), null, dataSourceName,
+				null, sqlToyContext.getDefaultDataSource());
+		QueryResult result = DialectFactory.getInstance().findByQuery(sqlToyContext, queryExecutor, sqlToyConfig, null,
+				dataSource);
+		cacheModel.setProperties(result.getLabelNames());
+		return result.getRows();
 	}
 
 	/**

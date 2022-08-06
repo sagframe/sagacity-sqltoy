@@ -1090,7 +1090,6 @@ public class SqlUtil {
 				nextNodeQueryStr.append(" and ").append(conditions);
 				updateLevelAndRoute.append(" and ").append(conditions);
 			}
-
 			// 模拟指定节点的信息
 			HashMap pidsMap = new HashMap();
 			pidsMap.put(treeTableModel.getRootId().toString(), nodeRoute);
@@ -1128,12 +1127,10 @@ public class SqlUtil {
 				updateLeafSql.append(" where ").append(conditions);
 			}
 			// 先将所有节点设置为叶子
-			executeSql(typeHandler, updateLeafSql.toString(), null, null, conn, dbType, true, true);
-
+			executeSql(typeHandler, updateLeafSql.toString(), null, null, conn, dbType, null, true);
 			// 再设置父节点的记录为非叶子节点(isLeaf=0)
 			StringBuilder updateTrunkLeafSql = new StringBuilder();
 			updateTrunkLeafSql.append("update ").append(tableName);
-			// int dbType = DataSourceUtils.getDbType(conn);
 			// 支持mysql8 update 2018-5-11
 			if (dbType == DataSourceUtils.DBType.MYSQL || dbType == DataSourceUtils.DBType.MYSQL57) {
 				// update sys_organ_info a inner join (select t.organ_pid from
@@ -1170,7 +1167,7 @@ public class SqlUtil {
 					updateTrunkLeafSql.append(" and ").append(conditions);
 				}
 			}
-			executeSql(typeHandler, updateTrunkLeafSql.toString(), null, null, conn, dbType, true, false);
+			executeSql(typeHandler, updateTrunkLeafSql.toString(), null, null, conn, dbType, null, false);
 		}
 		return true;
 	}
@@ -1226,20 +1223,18 @@ public class SqlUtil {
 				} else {
 					nodeRoute = nodeRoute.concat(StringUtil.addRightBlank2Len(id, size));
 				}
-
 				((List) rowData).set(1, nodeRoute);
 				// 节点等级
 				pst.setInt(1, nodeLevel);
 				// 节点路径(当节点路径长度不做补充统一长度操作,则末尾自动加上一个分割符)
 				pst.setString(2, nodeRoute + ((size < 2) ? treeTableModel.getSplitSign() : ""));
-
 				if (treeTableModel.isChar()) {
 					pst.setString(3, id);
 				} else {
 					pst.setLong(3, Long.parseLong(id));
 				}
 			}
-		}, null, false, conn, dbType);
+		}, null, null, conn, dbType);
 		// 处理节点的下一层次
 		int size = ids.size();
 		int fromIndex = 0;

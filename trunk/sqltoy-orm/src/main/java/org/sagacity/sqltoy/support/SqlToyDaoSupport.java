@@ -75,6 +75,7 @@ import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
 import org.sagacity.sqltoy.plugins.id.IdGenerator;
 import org.sagacity.sqltoy.plugins.id.impl.RedisIdGenerator;
 import org.sagacity.sqltoy.translate.TranslateHandler;
+import org.sagacity.sqltoy.translate.model.TranslateConfigModel;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.BeanWrapper;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
@@ -1352,6 +1353,29 @@ public class SqlToyDaoSupport {
 		return this.sqlToyContext.getTranslateManager().existCache(cacheName);
 	}
 
+	/**
+	 * @TODO 将缓存数据以对象形式获取
+	 * @param <T>
+	 * @param cacheName
+	 * @param cacheType 如是数据字典,则传入字典类型否则为null即可
+	 * @param reusltType
+	 * @return
+	 */
+	protected <T> List<T> getTranslateCache(String cacheName, String cacheType, Class<T> reusltType) {
+		TranslateConfigModel translateConfig = sqlToyContext.getTranslateManager().getCacheConfig(cacheName);
+		if (null == translateConfig) {
+			throw new DataAccessException("缓存翻译中对应的缓存:" + cacheName + " 没有定义,请正确检查配置!");
+		}
+		HashMap<String, Object[]> cacheData = sqlToyContext.getTranslateManager().getCacheData(cacheName, cacheType);
+		String[] props = translateConfig.getProperties();
+		// 注意直接sql定义的缓存，框架会自动获取label
+		if (props == null || props.length == 0) {
+			throw new DataAccessException("缓存翻译中的缓存:[" + cacheName + "]没有正确定义properties属性,无法映射到VO/POJO对象!");
+		}
+		return (List<T>) BeanUtil.reflectListToBean(sqlToyContext.getTypeHandler(), cacheData.values(), props,
+				reusltType);
+	}
+	
 	/**
 	 * @todo 获取缓存数据
 	 * @param cacheName

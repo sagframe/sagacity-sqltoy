@@ -54,7 +54,6 @@ import org.springframework.stereotype.Repository;
 @SuppressWarnings({ "rawtypes" })
 @Repository("sqlToyLazyDao")
 public class SqlToyLazyDaoImpl extends SqlToyDaoSupport implements SqlToyLazyDao {
-
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -77,6 +76,7 @@ public class SqlToyLazyDaoImpl extends SqlToyDaoSupport implements SqlToyLazyDao
 		return super.getCountBySql(sqlOrNamedQuery, paramsNamed, paramsValue);
 	}
 
+	@Override
 	public Long getCount(String sqlOrNamedQuery, Map<String, Object> paramsMap) {
 		return super.getCountBySql(sqlOrNamedQuery, paramsMap);
 	}
@@ -818,6 +818,11 @@ public class SqlToyLazyDaoImpl extends SqlToyDaoSupport implements SqlToyLazyDao
 	}
 
 	@Override
+	public <T> List<T> getTranslateCache(String cacheName, String cacheType, Class<T> reusltType) {
+		return super.getTranslateCache(cacheName, cacheType, reusltType);
+	}
+
+	@Override
 	public void translate(Collection dataSet, String cacheName, TranslateHandler handler) {
 		super.translate(dataSet, cacheName, null, 1, handler);
 	}
@@ -876,12 +881,7 @@ public class SqlToyLazyDaoImpl extends SqlToyDaoSupport implements SqlToyLazyDao
 		return (List<T>) super.findEntity(entityClass, entityQuery, resultType);
 	}
 
-	@Deprecated
 	@Override
-	public <T> Page<T> findEntity(Class<T> entityClass, Page page, EntityQuery entityQuery) {
-		return super.findPageEntity(page, entityClass, entityQuery, entityClass);
-	}
-
 	public <T> Page<T> findPageEntity(Page page, Class<T> entityClass, EntityQuery entityQuery) {
 		return super.findPageEntity(page, entityClass, entityQuery, entityClass);
 	}
@@ -923,6 +923,7 @@ public class SqlToyLazyDaoImpl extends SqlToyDaoSupport implements SqlToyLazyDao
 	 * @param resultType
 	 * @return
 	 */
+	@Override
 	public <T extends Serializable> Page<T> convertType(Page sourcePage, Class<T> resultType) {
 		return super.convertType(sourcePage, resultType);
 	}
