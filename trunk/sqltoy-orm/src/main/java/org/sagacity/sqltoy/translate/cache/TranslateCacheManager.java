@@ -34,6 +34,13 @@ public abstract class TranslateCacheManager {
 	}
 
 	/**
+	 * @todo 判断是否存在相关缓存
+	 * @param cacheName
+	 * @return
+	 */
+	public abstract boolean hasCache(String cacheName);
+
+	/**
 	 * @todo 从缓存中获取翻译的hashMap 集合数据
 	 * @param cacheName
 	 * @param cacheType (默认为null，针对诸如数据字典类型的，对应字典类型)

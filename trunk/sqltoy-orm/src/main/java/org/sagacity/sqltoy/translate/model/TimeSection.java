@@ -41,8 +41,7 @@ public class TimeSection implements Serializable {
 	}
 
 	/**
-	 * @param start
-	 *            the start to set
+	 * @param start the start to set
 	 */
 	public void setStart(int start) {
 		this.start = start;
@@ -56,8 +55,7 @@ public class TimeSection implements Serializable {
 	}
 
 	/**
-	 * @param end
-	 *            the end to set
+	 * @param end the end to set
 	 */
 	public void setEnd(int end) {
 		this.end = end;
@@ -71,8 +69,7 @@ public class TimeSection implements Serializable {
 	}
 
 	/**
-	 * @param intervalSeconds
-	 *            the intervalSeconds to set
+	 * @param intervalSeconds the intervalSeconds to set
 	 */
 	public void setIntervalSeconds(int intervalSeconds) {
 		this.intervalSeconds = intervalSeconds;

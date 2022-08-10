@@ -49,6 +49,15 @@ public class TranslateCaffeineManager extends TranslateCacheManager {
 	}
 
 	@Override
+	public boolean hasCache(String cacheName) {
+		Cache cache = cacheManager.getCache(cacheName);
+		if (null == cache) {
+			return false;
+		}
+		return true;
+	}
+
+	@Override
 	public void put(TranslateConfigModel cacheConfig, String cacheName, String cacheType,
 			HashMap<String, Object[]> cacheValue) {
 		if (cacheManager == null) {
