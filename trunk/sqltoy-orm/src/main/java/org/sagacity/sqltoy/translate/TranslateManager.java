@@ -1,12 +1,11 @@
 package org.sagacity.sqltoy.translate;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyContext;
@@ -56,7 +55,7 @@ public class TranslateManager {
 	/**
 	 * 更新检测器
 	 */
-	private List<CheckerConfigModel> updateCheckers = new ArrayList<CheckerConfigModel>();
+	private CopyOnWriteArrayList<CheckerConfigModel> updateCheckers = new CopyOnWriteArrayList<CheckerConfigModel>();
 
 	/**
 	 * 是否初始化过
@@ -109,7 +108,7 @@ public class TranslateManager {
 			DefaultConfig defaultConfig = TranslateConfigParse.parseTranslateConfig(sqlToyContext, translateMap,
 					updateCheckers, realTranslateConfig, (translateConfig == null), charset);
 			// 配置了缓存翻译
-			if (!translateMap.isEmpty()) {
+			if (defaultConfig.isUseCache()) {
 				// 可以自定义缓存管理器,默认为ehcache实现
 				if (cacheManager == null) {
 					translateCacheManager = new TranslateEhcacheManager();
@@ -127,9 +126,10 @@ public class TranslateManager {
 				boolean initSuccess = translateCacheManager.init();
 				// 每隔1秒执行一次检查(检查各个任务时间间隔是否到达设定的区间,并不意味着一秒执行数据库或调用接口) 正常情况下,
 				// 这种检查都是高效率的空转不影响性能
-				if (initSuccess && !updateCheckers.isEmpty()) {
+				if (initSuccess) {
 					cacheCheck = new CacheUpdateWatcher(sqlToyContext, translateCacheManager, updateCheckers,
 							delayCheckCacheSeconds, defaultConfig.getDeviationSeconds());
+					cacheCheck.setTranslateMap(translateMap);
 					cacheCheck.start();
 					logger.debug("sqltoy的translate共:{} 个缓存配置加载完成,并且启动:{} 个缓存更新检测!", translateMap.size(),
 							updateCheckers.size());
@@ -138,7 +138,7 @@ public class TranslateManager {
 				}
 			} else {
 				logger.warn(
-						"translateConfig={} 中未定义缓存,请正确定义[以.trans.xml|-translate.xml|-translates.xml结尾],如不使用缓存翻译可忽视此提示!",
+						"translateConfig={} 未找到实际定义文件,请正确定义[以.trans.xml|-translate.xml|-translates.xml结尾],如不使用缓存翻译可忽视此提示!",
 						realTranslateConfig);
 			}
 		} catch (Exception e) {
@@ -245,7 +245,7 @@ public class TranslateManager {
 	 * @param cacheType  (默认为null，针对诸如数据字典类型的，对应字典类型)
 	 * @param cacheValue
 	 */
-	public void put(String cacheName, String cacheType, HashMap<String, Object[]> cacheValue) {
+	public void putCacheData(String cacheName, String cacheType, HashMap<String, Object[]> cacheValue) {
 		if (translateCacheManager != null) {
 			TranslateConfigModel cacheModel = translateMap.get(cacheName);
 			if (cacheModel == null) {
@@ -253,6 +253,8 @@ public class TranslateManager {
 				return;
 			}
 			translateCacheManager.put(cacheModel, cacheModel.getCache(), cacheType, cacheValue);
+		} else {
+			logger.error("因没有定义缓存翻译的配置文件(可不定义具体缓存)，则没有启用缓存翻译,无法设置缓存数据!");
 		}
 	}
 
@@ -281,6 +283,113 @@ public class TranslateManager {
 
 	public TranslateConfigModel getCacheConfig(String cacheName) {
 		return translateMap.get(cacheName);
+	}
+
+	/**
+	 * @TODO 动态增加缓存配置(只允许增加和覆盖,不允许删除)
+	 * @param translateConfigModel
+	 */
+	public void putCache(TranslateConfigModel translateConfigModel) {
+		if (translateConfigModel == null) {
+			return;
+		}
+		translateMap.put(translateConfigModel.getCache(), translateConfigModel);
+		if (cacheCheck != null) {
+			cacheCheck.setTranslateMap(translateMap);
+		}
+		if (translateCacheManager != null) {
+			translateCacheManager.setTranslateMap(translateMap);
+		} else {
+			logger.error("因没有定义缓存翻译的配置文件(可不定义具体缓存)，则没有启用缓存翻译,无法动态增加缓存!");
+		}
+	}
+
+	/**
+	 * @TODO 移除某个缓存翻译配置
+	 * @param cacheName
+	 */
+	public void removeCache(String cacheName) {
+		TranslateConfigModel cacheModel = translateMap.get(cacheName);
+		if (cacheModel == null) {
+			logger.error("cacheName:{} 没有配置,请检查缓存配置文件!", cacheName);
+			return;
+		}
+		translateMap.remove(cacheName);
+		if (translateCacheManager != null) {
+			translateCacheManager.setTranslateMap(translateMap);
+			// 清除缓存数据
+			translateCacheManager.clear(cacheModel.getCache(), null);
+		}
+		// 移除对应缓存更新检测
+		CheckerConfigModel checker;
+		for (int i = 0; i < updateCheckers.size(); i++) {
+			checker = updateCheckers.get(i);
+			if (checker.getCache().equalsIgnoreCase(cacheName)) {
+				updateCheckers.remove(i);
+				break;
+			}
+		}
+		if (cacheCheck != null) {
+			cacheCheck.setUpdateCheckers(updateCheckers);
+			cacheCheck.setTranslateMap(translateMap);
+		}
+	}
+
+	/**
+	 * @TODO 移除某个缓存更新检测器
+	 * @param checkerConfigModel
+	 */
+	public void removeCacheUpdater(CheckerConfigModel checkerConfigModel) {
+		if (checkerConfigModel == null) {
+			return;
+		}
+		if (StringUtil.isNotBlank(checkerConfigModel.getCache())) {
+			if (!translateMap.containsKey(checkerConfigModel.getCache())) {
+				logger.error("cacheName:{} 没有配置,请检查缓存配置文件!", checkerConfigModel.getCache());
+				return;
+			}
+		}
+		CheckerConfigModel checker;
+		boolean delete = false;
+		for (int i = 0; i < updateCheckers.size(); i++) {
+			checker = updateCheckers.get(i);
+			if (checker.getId().equalsIgnoreCase(checkerConfigModel.getId())) {
+				updateCheckers.remove(i);
+				delete = true;
+				break;
+			}
+		}
+		if (delete && cacheCheck != null) {
+			cacheCheck.setUpdateCheckers(updateCheckers);
+		}
+	}
+
+	/**
+	 * @TODO 动态增加或者更新缓存变更检测器
+	 * @param checkerConfigModel
+	 */
+	public void putCacheUpdater(CheckerConfigModel checkerConfigModel) {
+		if (checkerConfigModel == null) {
+			return;
+		}
+		if (StringUtil.isNotBlank(checkerConfigModel.getCache())) {
+			if (!translateMap.containsKey(checkerConfigModel.getCache())) {
+				logger.error("cacheName:{} 没有配置,请检查缓存配置文件!", checkerConfigModel.getCache());
+				return;
+			}
+		}
+		CheckerConfigModel checker;
+		for (int i = 0; i < updateCheckers.size(); i++) {
+			checker = updateCheckers.get(i);
+			if (checker.getId().equalsIgnoreCase(checkerConfigModel.getId())) {
+				updateCheckers.remove(i);
+				break;
+			}
+		}
+		updateCheckers.add(checkerConfigModel);
+		if (cacheCheck != null) {
+			cacheCheck.setUpdateCheckers(updateCheckers);
+		}
 	}
 
 	/**
