@@ -69,20 +69,14 @@ public class CacheUpdateWatcher extends Thread {
 	private int deviationSeconds = 0;
 
 	public CacheUpdateWatcher(SqlToyContext sqlToyContext, TranslateCacheManager translateCacheManager,
+			IgnoreKeyCaseMap<String, TranslateConfigModel> translateMap,
 			CopyOnWriteArrayList<CheckerConfigModel> updateCheckers, int delaySeconds, int deviationSeconds) {
 		this.sqlToyContext = sqlToyContext;
 		this.translateCacheManager = translateCacheManager;
+		this.translateMap = translateMap;
 		this.updateCheckers = updateCheckers;
 		this.delaySeconds = delaySeconds;
 		this.deviationSeconds = deviationSeconds;
-	}
-
-	public void setUpdateCheckers(CopyOnWriteArrayList<CheckerConfigModel> updateCheckers) {
-		this.updateCheckers = updateCheckers;
-	}
-
-	public void setTranslateMap(IgnoreKeyCaseMap<String, TranslateConfigModel> translateMap) {
-		this.translateMap = translateMap;
 	}
 
 	/*

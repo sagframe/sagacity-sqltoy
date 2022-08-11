@@ -33,7 +33,7 @@ public class DefaultOverTimeHandler implements OverTimeSqlHandler {
 	@Override
 	public void log(OverTimeSql overTimeSql) {
 		String sqlId = overTimeSql.getId();
-		if (null != sqlId && !sqlId.trim().equals("")) {
+		if (null != sqlId && !"".equals(sqlId.trim())) {
 			OverTimeSql preSql = slowSqlMap.get(sqlId);
 			if (null == preSql) {
 				slowSqlMap.put(sqlId, overTimeSql);

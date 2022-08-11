@@ -202,7 +202,7 @@ public class SqlUtilsExt {
 			} else if (jdbcType == java.sql.Types.FLOAT || jdbcType == java.sql.Types.REAL) {
 				realValue = Float.valueOf(defaultValue);
 			} else if (jdbcType == java.sql.Types.BIT) {
-				if (defaultValue.equalsIgnoreCase("true") || defaultValue.equalsIgnoreCase("false")) {
+				if ("true".equalsIgnoreCase(defaultValue) || "false".equalsIgnoreCase(defaultValue)) {
 					realValue = Boolean.parseBoolean(defaultValue.toLowerCase());
 				} else {
 					realValue = Integer.parseInt(defaultValue);
