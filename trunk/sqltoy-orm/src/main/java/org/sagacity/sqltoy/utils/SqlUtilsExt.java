@@ -54,7 +54,7 @@ public class SqlUtilsExt {
 			final int batchSize, final Boolean autoCommit, final Connection conn, final Integer dbType)
 			throws Exception {
 		if (rowDatas == null || rowDatas.isEmpty()) {
-			logger.warn("batchUpdateForPOJO批量插入或修改数据库操作数据为空!");
+			logger.warn("batchUpdateForPOJO批量插入或修改数据操作数据为空!");
 			return 0L;
 		}
 		long updateCount = 0;
@@ -202,7 +202,7 @@ public class SqlUtilsExt {
 			} else if (jdbcType == java.sql.Types.FLOAT || jdbcType == java.sql.Types.REAL) {
 				realValue = Float.valueOf(defaultValue);
 			} else if (jdbcType == java.sql.Types.BIT) {
-				if (defaultValue.equalsIgnoreCase("true") || defaultValue.equalsIgnoreCase("false")) {
+				if ("true".equalsIgnoreCase(defaultValue) || "false".equalsIgnoreCase(defaultValue)) {
 					realValue = Boolean.parseBoolean(defaultValue.toLowerCase());
 				} else {
 					realValue = Integer.parseInt(defaultValue);

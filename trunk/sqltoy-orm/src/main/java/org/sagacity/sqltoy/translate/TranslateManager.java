@@ -75,7 +75,7 @@ public class TranslateManager {
 	/**
 	 * 缓存更新检测程序(后台线程)
 	 */
-	private CacheUpdateWatcher cacheCheck;
+	private CacheUpdateWatcher cacheUpdateWatcher;
 
 	private SqlToyContext sqlToyContext;
 
@@ -127,10 +127,9 @@ public class TranslateManager {
 				// 每隔1秒执行一次检查(检查各个任务时间间隔是否到达设定的区间,并不意味着一秒执行数据库或调用接口) 正常情况下,
 				// 这种检查都是高效率的空转不影响性能
 				if (initSuccess) {
-					cacheCheck = new CacheUpdateWatcher(sqlToyContext, translateCacheManager, updateCheckers,
-							delayCheckCacheSeconds, defaultConfig.getDeviationSeconds());
-					cacheCheck.setTranslateMap(translateMap);
-					cacheCheck.start();
+					cacheUpdateWatcher = new CacheUpdateWatcher(sqlToyContext, translateCacheManager, translateMap,
+							updateCheckers, delayCheckCacheSeconds, defaultConfig.getDeviationSeconds());
+					cacheUpdateWatcher.start();
 					logger.debug("sqltoy的translate共:{} 个缓存配置加载完成,并且启动:{} 个缓存更新检测!", translateMap.size(),
 							updateCheckers.size());
 				} else {
@@ -250,7 +249,7 @@ public class TranslateManager {
 	public void put(String cacheName, String cacheType, HashMap<String, Object[]> cacheValue) {
 		putCacheData(cacheName, cacheType, cacheValue);
 	}
-
+	
 	/**
 	 * @todo 更新单个缓存的整体数据
 	 * @param cacheName
@@ -305,14 +304,10 @@ public class TranslateManager {
 		if (translateConfigModel == null) {
 			return;
 		}
-		translateMap.put(translateConfigModel.getCache(), translateConfigModel);
-		if (cacheCheck != null) {
-			cacheCheck.setTranslateMap(translateMap);
-		}
-		if (translateCacheManager != null) {
-			translateCacheManager.setTranslateMap(translateMap);
-		} else {
+		if (translateCacheManager == null) {
 			logger.error("因没有定义缓存翻译的配置文件(可不定义具体缓存)，则没有启用缓存翻译,无法动态增加缓存!");
+		} else {
+			translateMap.put(translateConfigModel.getCache(), translateConfigModel);
 		}
 	}
 
@@ -328,7 +323,6 @@ public class TranslateManager {
 		}
 		translateMap.remove(cacheName);
 		if (translateCacheManager != null) {
-			translateCacheManager.setTranslateMap(translateMap);
 			// 清除缓存数据
 			translateCacheManager.clear(cacheModel.getCache(), null);
 		}
@@ -340,10 +334,6 @@ public class TranslateManager {
 				updateCheckers.remove(i);
 				break;
 			}
-		}
-		if (cacheCheck != null) {
-			cacheCheck.setUpdateCheckers(updateCheckers);
-			cacheCheck.setTranslateMap(translateMap);
 		}
 	}
 
@@ -362,17 +352,12 @@ public class TranslateManager {
 			}
 		}
 		CheckerConfigModel checker;
-		boolean delete = false;
 		for (int i = 0; i < updateCheckers.size(); i++) {
 			checker = updateCheckers.get(i);
 			if (checker.getId().equalsIgnoreCase(checkerConfigModel.getId())) {
 				updateCheckers.remove(i);
-				delete = true;
 				break;
 			}
-		}
-		if (delete && cacheCheck != null) {
-			cacheCheck.setUpdateCheckers(updateCheckers);
 		}
 	}
 
@@ -399,9 +384,6 @@ public class TranslateManager {
 			}
 		}
 		updateCheckers.add(checkerConfigModel);
-		if (cacheCheck != null) {
-			cacheCheck.setUpdateCheckers(updateCheckers);
-		}
 	}
 
 	/**
@@ -438,8 +420,8 @@ public class TranslateManager {
 			if (translateCacheManager != null) {
 				translateCacheManager.destroy();
 			}
-			if (cacheCheck != null && !cacheCheck.isInterrupted()) {
-				cacheCheck.interrupt();
+			if (cacheUpdateWatcher != null && !cacheUpdateWatcher.isInterrupted()) {
+				cacheUpdateWatcher.interrupt();
 			}
 		} catch (Exception e) {
 

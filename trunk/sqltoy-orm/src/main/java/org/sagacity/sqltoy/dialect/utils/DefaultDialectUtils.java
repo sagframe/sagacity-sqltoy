@@ -615,7 +615,7 @@ public class DefaultDialectUtils {
 								ColumnMeta colMeta = new ColumnMeta();
 								colMeta.setColName(rs.getString("COLUMN_NAME"));
 								colMeta.setIndex(true);
-								if (rs.getString("UNIQUENESS").equalsIgnoreCase("UNIQUE")) {
+								if ("UNIQUE".equalsIgnoreCase(rs.getString("UNIQUENESS"))) {
 									colMeta.setUnique(true);
 								}
 								colMeta.setIndexName(rs.getString("INDEX_NAME"));

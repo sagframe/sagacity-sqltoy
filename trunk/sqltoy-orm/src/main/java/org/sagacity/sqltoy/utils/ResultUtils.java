@@ -133,9 +133,9 @@ public class ResultUtils {
 			for (int i = startColIndex; i < rowCnt; i++) {
 				labelNames[index] = rs.getMetaData().getColumnLabel(i + 1);
 				labeNameLow = labelNames[index].toLowerCase();
-				if (colLabelUpperOrLower.equals("lower")) {
+				if ("lower".equals(colLabelUpperOrLower)) {
 					labelNames[index] = labelNames[index].toLowerCase();
-				} else if (colLabelUpperOrLower.equals("upper")) {
+				} else if ("upper".equals(colLabelUpperOrLower)) {
 					labelNames[index] = labelNames[index].toUpperCase();
 				}
 				labelIndexMap.put(labeNameLow, index);
@@ -203,9 +203,9 @@ public class ResultUtils {
 		for (int i = 0; i < columnSize; i++) {
 			labelNames[index] = rs.getMetaData().getColumnLabel(i + 1);
 			labeNameLow = labelNames[index].toLowerCase();
-			if (colLabelUpperOrLower.equals("lower")) {
+			if ("lower".equals(colLabelUpperOrLower)) {
 				labelNames[index] = labelNames[index].toLowerCase();
-			} else if (colLabelUpperOrLower.equals("upper")) {
+			} else if ("upper".equals(colLabelUpperOrLower)) {
 				labelNames[index] = labelNames[index].toUpperCase();
 			}
 			labelTypes[index] = rs.getMetaData().getColumnTypeName(i + 1);
@@ -502,7 +502,7 @@ public class ResultUtils {
 			}
 		}
 
-		// link 目前只支持单个字段运算
+		// 单个字段link运算
 		int columnSize = labelNames.length;
 		int index = 0;
 
@@ -742,7 +742,6 @@ public class ResultUtils {
 				logger.debug("通过缓存配置未获取到缓存数据,请正确配置TranslateManager!");
 			}
 		}
-		// link 目前只支持单个字段运算
 		int columnSize = labelNames.length;
 		int index = 0;
 		// 警告阀值

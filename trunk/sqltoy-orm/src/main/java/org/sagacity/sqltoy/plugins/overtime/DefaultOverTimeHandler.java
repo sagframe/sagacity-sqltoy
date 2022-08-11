@@ -14,7 +14,7 @@ import org.sagacity.sqltoy.plugins.OverTimeSqlHandler;
 /**
  * @TODO 提供默认的sql执行超时日志队列，便于应用获取
  * @author zhongxuchen
- *
+ * @version v1.0, Date:2022-06-29
  */
 public class DefaultOverTimeHandler implements OverTimeSqlHandler {
 	/**
@@ -33,7 +33,7 @@ public class DefaultOverTimeHandler implements OverTimeSqlHandler {
 	@Override
 	public void log(OverTimeSql overTimeSql) {
 		String sqlId = overTimeSql.getId();
-		if (null != sqlId && !sqlId.trim().equals("")) {
+		if (null != sqlId && !"".equals(sqlId.trim())) {
 			OverTimeSql preSql = slowSqlMap.get(sqlId);
 			if (null == preSql) {
 				slowSqlMap.put(sqlId, overTimeSql);
@@ -52,8 +52,12 @@ public class DefaultOverTimeHandler implements OverTimeSqlHandler {
 		}
 	}
 
+	/**
+	 * 获取最慢的sql
+	 */
 	@Override
 	public List<OverTimeSql> getSlowest(int size, boolean hasSqlId) {
+		// 非xml中定义的sql，没有具体的sqlId
 		if (!hasSqlId) {
 			return getSlowest(size);
 		} else {
@@ -62,7 +66,9 @@ public class DefaultOverTimeHandler implements OverTimeSqlHandler {
 			while (iter.hasNext()) {
 				result.add(iter.next());
 			}
+			// 按照执行时长从大到小排序
 			Collections.sort(result, new Comparator<OverTimeSql>() {
+				@Override
 				public int compare(OverTimeSql o1, OverTimeSql o2) {
 					return new Long(o2.getTakeTime() - o1.getTakeTime()).intValue();
 				}
@@ -74,6 +80,11 @@ public class DefaultOverTimeHandler implements OverTimeSqlHandler {
 		}
 	}
 
+	/**
+	 * @TODO 从队列中取出最慢的sql记录
+	 * @param size
+	 * @return
+	 */
 	private List<OverTimeSql> getSlowest(int size) {
 		List<OverTimeSql> result = new ArrayList<OverTimeSql>();
 		Iterator<OverTimeSql> iter = queues.iterator();
