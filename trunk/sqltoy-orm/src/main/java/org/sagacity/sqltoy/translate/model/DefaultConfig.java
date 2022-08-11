@@ -49,6 +49,11 @@ public class DefaultConfig implements Serializable {
 	private int defaultKeepAlive = 3600;
 
 	/**
+	 * 实际配置了translate.xml文件，表示启用了缓存翻译
+	 */
+	private boolean useCache = false;
+
+	/**
 	 * @return the diskStorePath
 	 */
 	public String getDiskStorePath() {
@@ -124,6 +129,14 @@ public class DefaultConfig implements Serializable {
 	 */
 	public void setDefaultKeepAlive(int defaultKeepAlive) {
 		this.defaultKeepAlive = defaultKeepAlive;
+	}
+
+	public boolean isUseCache() {
+		return useCache;
+	}
+
+	public void setUseCache(boolean useCache) {
+		this.useCache = useCache;
 	}
 
 }
