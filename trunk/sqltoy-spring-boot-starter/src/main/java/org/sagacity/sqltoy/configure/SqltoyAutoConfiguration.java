@@ -155,6 +155,10 @@ public class SqltoyAutoConfiguration {
 			sqlToyContext.setReservedWords(properties.getReservedWords());
 		}
 
+		// 指定需要进行产品化跨数据库查询验证的数据库
+		if (properties.getRedoDataSources() != null) {
+			sqlToyContext.setRedoDataSources(properties.getRedoDataSources());
+		}
 		// 数据库方言
 		sqlToyContext.setDialect(properties.getDialect());
 		// sqltoy内置参数默认值修改

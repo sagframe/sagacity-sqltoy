@@ -250,6 +250,7 @@ public class DialectFactory {
 					new DataSourceCallbackHandler() {
 						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+							SqlExecuteStat.setDialect(dialect);
 							String realSql = sqlToyConfig.getSql(dialect);
 							Integer[] fieldTypes = null;
 							List values = dataSet;
@@ -309,6 +310,7 @@ public class DialectFactory {
 					new DataSourceCallbackHandler() {
 						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+							SqlExecuteStat.setDialect(dialect);
 							// 进行sharding table替换
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
 									sqlToyConfig, queryExecutor, dialect, false);
@@ -359,6 +361,7 @@ public class DialectFactory {
 					new DataSourceCallbackHandler() {
 						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+							SqlExecuteStat.setDialect(dialect);
 							this.setResult(getDialectSqlWrapper(dbType).isUnique(sqlToyContext,
 									uniqueExecutor.getEntity(), uniqueExecutor.getUniqueFields(), conn, dbType,
 									shardingModel.getTableName()));
@@ -400,6 +403,7 @@ public class DialectFactory {
 					new DataSourceCallbackHandler() {
 						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+							SqlExecuteStat.setDialect(dialect);
 							// 处理sql中的?为统一的:named形式，并进行sharding table替换
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
 									sqlToyConfig, queryExecutor, dialect, (randomCount < 1) ? true : false);
@@ -578,6 +582,7 @@ public class DialectFactory {
 					new DataSourceCallbackHandler() {
 						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+							SqlExecuteStat.setDialect(dialect);
 							this.setResult(SqlUtil.wrapTreeTableRoute(sqlToyContext.getTypeHandler(), treeModel, conn,
 									dbType));
 						}
@@ -628,6 +633,7 @@ public class DialectFactory {
 					new DataSourceCallbackHandler() {
 						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+							SqlExecuteStat.setDialect(dialect);
 							// 处理sql中的?为统一的:named形式，并进行sharding table替换
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
 									sqlToyConfig, queryExecutor, dialect, false);
@@ -694,6 +700,7 @@ public class DialectFactory {
 					new DataSourceCallbackHandler() {
 						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+							SqlExecuteStat.setDialect(dialect);
 							// 处理sql中的?为统一的:named形式，并进行sharding table替换
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
 									sqlToyConfig, queryExecutor, dialect, true);
@@ -960,6 +967,7 @@ public class DialectFactory {
 					new DataSourceCallbackHandler() {
 						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+							SqlExecuteStat.setDialect(dialect);
 							// 处理sql中的?为统一的:named形式，并进行sharding table替换
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
 									sqlToyConfig, queryExecutor, dialect, (topSize < 1) ? true : false);
@@ -1040,6 +1048,7 @@ public class DialectFactory {
 					new DataSourceCallbackHandler() {
 						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+							SqlExecuteStat.setDialect(dialect);
 							// 处理sql中的?为统一的:named形式，并进行sharding table替换
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
 									sqlToyConfig, queryExecutor, dialect, false);
@@ -1104,6 +1113,7 @@ public class DialectFactory {
 					new DataSourceCallbackHandler() {
 						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+							SqlExecuteStat.setDialect(dialect);
 							// 处理sql中的?为统一的:named形式，并进行sharding table替换
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
 									sqlToyConfig, queryExecutor, dialect, false);
@@ -1222,6 +1232,7 @@ public class DialectFactory {
 					new DataSourceCallbackHandler() {
 						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+							SqlExecuteStat.setDialect(dialect);
 							this.setResult(getDialectSqlWrapper(dbType).saveOrUpdate(sqlToyContext, entity,
 									forceUpdateProps, conn, dbType, dialect, null, shardingModel.getTableName()));
 						}
@@ -1266,6 +1277,7 @@ public class DialectFactory {
 									@Override
 									public void doConnection(Connection conn, Integer dbType, String dialect)
 											throws Exception {
+										SqlExecuteStat.setDialect(dialect);
 										this.setResult(getDialectSqlWrapper(dbType).saveOrUpdateAll(context,
 												batchModel.getEntities(), batchSize, reflectPropsHandler,
 												forceUpdateProps, conn, dbType, dialect, autoCommit,
@@ -1320,6 +1332,7 @@ public class DialectFactory {
 									@Override
 									public void doConnection(Connection conn, Integer dbType, String dialect)
 											throws Exception {
+										SqlExecuteStat.setDialect(dialect);
 										this.setResult(getDialectSqlWrapper(dbType).saveAllIgnoreExist(context,
 												batchModel.getEntities(), batchSize, reflectPropsHandler, conn, dbType,
 												dialect, autoCommit, shardingModel.getTableName()));
@@ -1368,6 +1381,7 @@ public class DialectFactory {
 					new DataSourceCallbackHandler() {
 						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+							SqlExecuteStat.setDialect(dialect);
 							this.setResult(getDialectSqlWrapper(dbType).load(sqlToyContext, entity,
 									(cascadeTypes == null) ? null : CollectionUtil.arrayToList(cascadeTypes), lockMode,
 									conn, dbType, dialect, shardingModel.getTableName()));
@@ -1421,6 +1435,7 @@ public class DialectFactory {
 										@Override
 										public void doConnection(Connection conn, Integer dbType, String dialect)
 												throws Exception {
+											SqlExecuteStat.setDialect(dialect);
 											this.setResult(getDialectSqlWrapper(dbType).loadAll(context,
 													batchModel.getEntities(),
 													(cascadeTypes == null) ? null
@@ -1461,6 +1476,7 @@ public class DialectFactory {
 					shardingModel.getDataSource(), new DataSourceCallbackHandler() {
 						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+							SqlExecuteStat.setDialect(dialect);
 							this.setResult(getDialectSqlWrapper(dbType).save(sqlToyContext, entity, conn, dbType,
 									dialect, shardingModel.getTableName()));
 						}
@@ -1502,6 +1518,7 @@ public class DialectFactory {
 									@Override
 									public void doConnection(Connection conn, Integer dbType, String dialect)
 											throws Exception {
+										SqlExecuteStat.setDialect(dialect);
 										this.setResult(getDialectSqlWrapper(dbType).saveAll(context,
 												batchModel.getEntities(), batchSize, reflectPropsHandler, conn, dbType,
 												dialect, autoCommit, shardingModel.getTableName()));
@@ -1554,6 +1571,7 @@ public class DialectFactory {
 					new DataSourceCallbackHandler() {
 						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+							SqlExecuteStat.setDialect(dialect);
 							this.setResult(getDialectSqlWrapper(dbType).update(sqlToyContext, entity, forceUpdateFields,
 									cascade, forceCascadeClass, subTableForceUpdateProps, conn, dbType, dialect,
 									shardingModel.getTableName()));
@@ -1592,6 +1610,7 @@ public class DialectFactory {
 					shardingModel.getDataSource(), new DataSourceCallbackHandler() {
 						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+							SqlExecuteStat.setDialect(dialect);
 							this.setResult(getDialectSqlWrapper(dbType).updateSaveFetch(sqlToyContext, entity,
 									updateRowHandler, uniqueProps, conn, dbType, dialect,
 									shardingModel.getTableName()));
@@ -1637,6 +1656,7 @@ public class DialectFactory {
 									@Override
 									public void doConnection(Connection conn, Integer dbType, String dialect)
 											throws Exception {
+										SqlExecuteStat.setDialect(dialect);
 										this.setResult(getDialectSqlWrapper(dbType).updateAll(context,
 												batchModel.getEntities(), batchSize, uniqueFields, forceUpdateFields,
 												reflectPropsHandler, conn, dbType, dialect, autoCommit,
@@ -1684,6 +1704,7 @@ public class DialectFactory {
 					new DataSourceCallbackHandler() {
 						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+							SqlExecuteStat.setDialect(dialect);
 							this.setResult(getDialectSqlWrapper(dbType).delete(sqlToyContext, entity, conn, dbType,
 									dialect, shardingModel.getTableName()));
 						}
@@ -1726,6 +1747,7 @@ public class DialectFactory {
 									@Override
 									public void doConnection(Connection conn, Integer dbType, String dialect)
 											throws Exception {
+										SqlExecuteStat.setDialect(dialect);
 										this.setResult(getDialectSqlWrapper(dbType).deleteAll(context,
 												batchModel.getEntities(), batchSize, conn, dbType, dialect, autoCommit,
 												shardingModel.getTableName()));
@@ -1773,6 +1795,7 @@ public class DialectFactory {
 					new DataSourceCallbackHandler() {
 						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+							SqlExecuteStat.setDialect(dialect);
 							// 处理sql中的?为统一的:named形式
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
 									sqlToyConfig, queryExecutor, dialect, false);
@@ -1824,6 +1847,7 @@ public class DialectFactory {
 					new DataSourceCallbackHandler() {
 						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+							SqlExecuteStat.setDialect(dialect);
 							String dialectSql = sqlToyConfig.getSql(dialect);
 							int inCount = (inParamsValue == null) ? 0 : inParamsValue.length;
 							int outCount = (outParamsType == null) ? 0 : outParamsType.length;
@@ -1899,6 +1923,7 @@ public class DialectFactory {
 					new DataSourceCallbackHandler() {
 						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+							SqlExecuteStat.setDialect(dialect);
 							// 处理sql中的?为统一的:named形式，并进行sharding table替换
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
 									sqlToyConfig, queryExecutor, dialect, false);

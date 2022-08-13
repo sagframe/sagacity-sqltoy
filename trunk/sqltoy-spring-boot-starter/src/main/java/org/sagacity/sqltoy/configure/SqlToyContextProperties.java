@@ -53,6 +53,11 @@ public class SqlToyContextProperties implements Serializable {
 	private String[] sqlResources;
 
 	/**
+	 * 需要重复执行查询的数据库
+	 */
+	private String[] redoDataSources;
+
+	/**
 	 * es的配置
 	 */
 	private Elastic elastic;
@@ -173,7 +178,7 @@ public class SqlToyContextProperties implements Serializable {
 	 * sql执行超时处理器
 	 */
 	private String overTimeSqlHandler;
-	
+
 	/**
 	 * 获取MetaData的列标题处理策略：default:不做处理;upper:转大写;lower
 	 */
@@ -520,5 +525,12 @@ public class SqlToyContextProperties implements Serializable {
 		this.columnLabelUpperOrLower = columnLabelUpperOrLower;
 	}
 
-	
+	public String[] getRedoDataSources() {
+		return redoDataSources;
+	}
+
+	public void setRedoDataSources(String[] redoDataSources) {
+		this.redoDataSources = redoDataSources;
+	}
+
 }

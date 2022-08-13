@@ -90,6 +90,12 @@ public class SqlExecuteStat {
 		}
 	}
 
+	public static void setDialect(String dialect) {
+		if (threadLocal.get() != null) {
+			threadLocal.get().setDialect(dialect);
+		}
+	}
+
 	/**
 	 * @TODO 提供中间日志输出
 	 * @param topic
@@ -161,6 +167,7 @@ public class SqlExecuteStat {
 		result.append("\n/*|----------------------开始执行报告输出 --------------------------------------------------*/");
 		result.append("\n/*|任 务 ID: " + uid);
 		result.append("\n/*|执行结果: " + reportStatus);
+		result.append("\n/*|数据方言: " + sqlTrace.getDialect());
 		result.append("\n/*|执行类型: " + optType);
 		result.append("\n/*|代码定位: " + codeTrace);
 		if (sqlTrace.getId() != null) {
@@ -394,7 +401,7 @@ public class SqlExecuteStat {
 		threadLocal.set(sqlTrace);
 	}
 
-	//并行多线程场景
+	// 并行多线程场景
 	public static void mergeTrace(SqlExecuteTrace sqlTrace) {
 		if (sqlTrace != null) {
 			threadLocal.set(new SqlExecuteTrace(sqlTrace.getId(), sqlTrace.getType(), sqlTrace.isPrint()));
