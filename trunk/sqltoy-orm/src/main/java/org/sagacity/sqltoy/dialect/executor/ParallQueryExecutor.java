@@ -58,8 +58,14 @@ public class ParallQueryExecutor implements Callable<ParallQueryResult> {
 					.values(paramValues);
 			// 分页
 			if (extend.pageModel != null) {
-				result.setResult(dialectFactory.findPage(sqlToyContext, queryExecutor, sqlToyConfig,
-						extend.pageModel.getPageNo(), extend.pageModel.getPageSize(), dataSource));
+				// 不取总记录数分页模式
+				if (extend.pageModel.getSkipQueryCount() != null && extend.pageModel.getSkipQueryCount()) {
+					result.setResult(dialectFactory.findSkipTotalCountPage(sqlToyContext, queryExecutor, sqlToyConfig,
+							extend.pageModel.getPageNo(), extend.pageModel.getPageSize(), dataSource));
+				} else {
+					result.setResult(dialectFactory.findPage(sqlToyContext, queryExecutor, sqlToyConfig,
+							extend.pageModel.getPageNo(), extend.pageModel.getPageSize(), dataSource));
+				}
 			} else {
 				result.setResult(
 						dialectFactory.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig, null, dataSource));
