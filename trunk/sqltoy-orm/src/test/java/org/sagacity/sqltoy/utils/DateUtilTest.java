@@ -31,8 +31,15 @@ public class DateUtilTest {
 	public void testOracleTimestampAsLocalDate() throws SQLException {
 		TIMESTAMP timestamp = new TIMESTAMP(DateUtil.getTimestamp(null));
 		LocalTime date = DateUtil.asLocalTime(timestamp.timestampValue());
-
 		System.err.println(date);
+	}
+
+	@Test
+	public void testFormat() throws SQLException {
+		TIMESTAMP timestamp = new TIMESTAMP(DateUtil.getTimestamp(null));
+		LocalTime date = DateUtil.asLocalTime(timestamp.timestampValue());
+
+		System.err.println(DateUtil.formatDate(timestamp, "HH:mm:ss"));
 	}
 
 	@Test
@@ -41,11 +48,11 @@ public class DateUtilTest {
 		SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss Z yyyy", Locale.US);// MMM dd hh:mm:ss Z yyyy
 		System.out.println(sdf.parse(a));
 	}
-	
+
 	@Test
 	public void testDateAdd() throws ParseException {
 		System.err.println(DateUtil.addMonth("2021-12-11", 2));
 		System.err.println(DateUtil.addYear("2018-12-11", 2));
-		
+
 	}
 }

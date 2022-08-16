@@ -101,6 +101,12 @@ public class CrossDbAdapter {
 		});
 	}
 
+	/**
+	 * @TODO 在产品化所需适配的数据库下执行查询，检验sql的适配性
+	 * @param sqlToyContext
+	 * @param queryExecutor
+	 * @param dbAdapterHandler
+	 */
 	private static void doQuery(SqlToyContext sqlToyContext, QueryExecutor queryExecutor,
 			DbAdapterHandler dbAdapterHandler) {
 		// 适配验证的数据源为空
@@ -118,7 +124,7 @@ public class CrossDbAdapter {
 			dataSource = sqlToyContext.getDataSourceSelector().getDataSourceBean(sqlToyContext.getAppContext(),
 					dataSourceName);
 			if (null == dataSource) {
-				throw new IllegalArgumentException("跨库查询适配验证数据源:" + dataSourceName + " 不存在,请检查配置!");
+				throw new IllegalArgumentException("跨库查询适配验证,数据源:" + dataSourceName + " 不存在,请检查配置!");
 			}
 			dialect = DataSourceUtils.getDialect(sqlToyContext, dataSource);
 			// 获得相关方言的sql(函数自动替换等)

@@ -495,8 +495,11 @@ public class BeanUtil {
 			if (paramValue instanceof java.sql.Clob) {
 				java.sql.Clob clob = (java.sql.Clob) paramValue;
 				return clob.getSubString((long) 1, (int) clob.length());
-			}
-			if (paramValue instanceof java.util.Date) {
+			} else if (paramValue instanceof LocalDate) {
+				return DateUtil.formatDate(paramValue, "yyyy-MM-dd");
+			} else if (paramValue instanceof LocalTime) {
+				return DateUtil.formatDate(paramValue, "HH:mm:ss");
+			} else if (paramValue instanceof java.util.Date) {
 				return DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss");
 			}
 			return valueStr;

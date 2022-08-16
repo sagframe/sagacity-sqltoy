@@ -746,7 +746,7 @@ public class SqlToyDaoSupport {
 			final Class<T> voClass) {
 		return (List<T>) findByQuery(
 				new QueryExecutor(sqlOrNamedSql, (paramsMap == null) ? MapKit.map() : paramsMap).resultType(voClass))
-				.getRows();
+						.getRows();
 	}
 
 	/**
@@ -1609,7 +1609,6 @@ public class SqlToyDaoSupport {
 				translateFields = translateFields.concat(",").concat(keyColumn).concat(" as ").concat(extend.column);
 			}
 		}
-
 		// 将notSelect构造成select，形成统一处理机制
 		String[] selectFieldAry = null;
 		Set<String> notSelect = innerModel.notSelectFields;
@@ -1667,7 +1666,6 @@ public class SqlToyDaoSupport {
 		} else {
 			fields = entityMeta.getAllColumnNames();
 		}
-
 		String sql = "select ".concat((innerModel.distinct) ? " distinct " : "").concat(fields).concat(translateFields)
 				.concat(" from ").concat(entityMeta.getSchemaTable(null, null));
 		// where条件
@@ -1719,9 +1717,9 @@ public class SqlToyDaoSupport {
 		if (SqlConfigParseUtils.hasNamedParam(where) && StringUtil.isBlank(innerModel.names)) {
 			queryExecutor = new QueryExecutor(sql,
 					(innerModel.values == null || innerModel.values.length == 0) ? null
-							: (Serializable) innerModel.values[0])
-					.resultType(resultType).dataSource(getDataSource(innerModel.dataSource))
-					.fetchSize(innerModel.fetchSize).maxRows(innerModel.maxRows);
+							: (Serializable) innerModel.values[0]).resultType(resultType)
+									.dataSource(getDataSource(innerModel.dataSource)).fetchSize(innerModel.fetchSize)
+									.maxRows(innerModel.maxRows);
 		} else {
 			queryExecutor = new QueryExecutor(sql).names(innerModel.names).values(innerModel.values)
 					.resultType(resultType).dataSource(getDataSource(innerModel.dataSource))
@@ -1737,15 +1735,16 @@ public class SqlToyDaoSupport {
 		if (!innerModel.paramFilters.isEmpty()) {
 			queryExecutor.getInnerModel().paramFilters.addAll(innerModel.paramFilters);
 		}
-
 		// 设置安全脱敏
 		if (!innerModel.secureMask.isEmpty()) {
 			queryExecutor.getInnerModel().secureMask.putAll(innerModel.secureMask);
 		}
-
+		// 是否输出sql
+		if (innerModel.showSql != null) {
+			queryExecutor.showSql(innerModel.showSql);
+		}
 		// 设置分页优化
 		queryExecutor.getInnerModel().pageOptimize = innerModel.pageOptimize;
-
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search,
 				getDialect(queryExecutor.getInnerModel().dataSource));
 		// 加密字段，查询时解密
@@ -1766,34 +1765,50 @@ public class SqlToyDaoSupport {
 			queryExecutor.getInnerModel().tableShardings = tableShardings;
 		}
 		DataSource realDataSource = getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig);
+		Object result;
 		// 取count数量
 		if (isCount) {
-			return dialectFactory.getCountBySql(sqlToyContext, queryExecutor, sqlToyConfig, realDataSource);
+			result = dialectFactory.getCountBySql(sqlToyContext, queryExecutor, sqlToyConfig, realDataSource);
+			// 产品化场景，适配其他数据库验证查询(仅仅在设置了redoDataSources时生效)
+			CrossDbAdapter.redoCountQuery(sqlToyContext, dialectFactory, queryExecutor);
+			return result;
 		}
 		// 非分页
 		if (page == null) {
 			// 取top
 			if (innerModel.pickType == 0) {
-				return dialectFactory
+				result = dialectFactory
 						.findTop(sqlToyContext, queryExecutor, sqlToyConfig, innerModel.pickSize, realDataSource)
 						.getRows();
+				// 产品化场景，适配其他数据库验证查询(仅仅在设置了redoDataSources时生效)
+				CrossDbAdapter.redoTopQuery(sqlToyContext, dialectFactory, queryExecutor, innerModel.pickSize);
 			} // 取随机记录
 			else if (innerModel.pickType == 1) {
-				return dialectFactory.getRandomResult(sqlToyContext, queryExecutor, sqlToyConfig, innerModel.pickSize,
+				result = dialectFactory.getRandomResult(sqlToyContext, queryExecutor, sqlToyConfig, innerModel.pickSize,
 						realDataSource).getRows();
+				// 产品化场景，适配其他数据库验证查询(仅仅在设置了redoDataSources时生效)
+				CrossDbAdapter.redoRandomQuery(sqlToyContext, dialectFactory, queryExecutor, innerModel.pickSize);
 			} else {
-				return dialectFactory
+				result = dialectFactory
 						.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig, innerModel.lockMode, realDataSource)
 						.getRows();
+				// 产品化场景，适配其他数据库验证查询(仅仅在设置了redoDataSources时生效)
+				CrossDbAdapter.redoQuery(sqlToyContext, dialectFactory, queryExecutor);
 			}
+			return result;
+		} else {
+			// 跳过总记录数形式的分页
+			if (page.getSkipQueryCount()) {
+				result = dialectFactory.findSkipTotalCountPage(sqlToyContext, queryExecutor, sqlToyConfig,
+						page.getPageNo(), page.getPageSize(), realDataSource).getPageResult();
+			} else {
+				result = dialectFactory.findPage(sqlToyContext, queryExecutor, sqlToyConfig, page.getPageNo(),
+						page.getPageSize(), realDataSource).getPageResult();
+			}
+			// 产品化场景，适配其他数据库验证查询(仅仅在设置了redoDataSources时生效)
+			CrossDbAdapter.redoPageQuery(sqlToyContext, dialectFactory, queryExecutor, page);
+			return result;
 		}
-		// 跳过总记录数形式的分页
-		if (page.getSkipQueryCount()) {
-			return dialectFactory.findSkipTotalCountPage(sqlToyContext, queryExecutor, sqlToyConfig, page.getPageNo(),
-					page.getPageSize(), realDataSource).getPageResult();
-		}
-		return dialectFactory.findPage(sqlToyContext, queryExecutor, sqlToyConfig, page.getPageNo(), page.getPageSize(),
-				realDataSource).getPageResult();
 	}
 
 	/**

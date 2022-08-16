@@ -300,11 +300,12 @@ public class DialectFactory {
 			final QueryExecutor queryExecutor, final Integer[] paramsTypes, final Boolean autoCommit,
 			final DataSource dataSource) {
 		try {
-			SqlExecuteStat.start(sqlToyConfig.getId(), "executeSql", sqlToyConfig.isShowSql());
 			// 将修改语句当做特殊的查询，其处理过程在交jdbc执行前完全一致
 			final QueryExecutorExtend extend = queryExecutor.getInnerModel();
 			// 组织参数和参数校验，但忽视数据权限数据的传参和校验
 			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
+			SqlExecuteStat.start(sqlToyConfig.getId(), "executeSql",
+					(extend.showSql != null) ? extend.showSql : sqlToyConfig.isShowSql());
 			Long updateTotalCnt = (Long) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
@@ -397,7 +398,8 @@ public class DialectFactory {
 			// 规整查询参数名称和参数名称对应的值
 			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig,
 					(randomCount < 1) ? true : false);
-			SqlExecuteStat.start(sqlToyConfig.getId(), "getRandomResult", sqlToyConfig.isShowSql());
+			SqlExecuteStat.start(sqlToyConfig.getId(), "getRandomResult",
+					(extend.showSql != null) ? extend.showSql : sqlToyConfig.isShowSql());
 			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
@@ -529,7 +531,6 @@ public class DialectFactory {
 				if (!columnMap.containsKey(treeModel.getNodeLevelField().toUpperCase())) {
 					throw new IllegalArgumentException("树形表:节点等级字段名称:" + treeModel.getNodeLevelField() + "不正确,请检查!");
 				}
-
 				FieldMeta idMeta = (FieldMeta) entityMeta.getFieldMeta(entityMeta.getIdArray()[0]);
 				// 如未定义则使用主键(update 2020-10-16)
 				if (StringUtil.isBlank(treeModel.getIdField())) {
@@ -627,7 +628,8 @@ public class DialectFactory {
 			Long startTime = System.currentTimeMillis();
 			// 规整查询参数名称和参数名称对应的值
 			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
-			SqlExecuteStat.start(sqlToyConfig.getId(), "findSkipTotalCountPage", sqlToyConfig.isShowSql());
+			SqlExecuteStat.start(sqlToyConfig.getId(), "findSkipTotalCountPage",
+					(extend.showSql != null) ? extend.showSql : sqlToyConfig.isShowSql());
 			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
@@ -694,7 +696,8 @@ public class DialectFactory {
 			Long startTime = System.currentTimeMillis();
 			// 规整查询参数名称和参数名称对应的值
 			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, true);
-			SqlExecuteStat.start(sqlToyConfig.getId(), "findPage", sqlToyConfig.isShowSql());
+			SqlExecuteStat.start(sqlToyConfig.getId(), "findPage",
+					(extend.showSql != null) ? extend.showSql : sqlToyConfig.isShowSql());
 			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
@@ -961,7 +964,8 @@ public class DialectFactory {
 			Long startTime = System.currentTimeMillis();
 			// 规整查询参数名称和参数名称对应的值
 			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, (topSize < 1) ? true : false);
-			SqlExecuteStat.start(sqlToyConfig.getId(), "findTop", sqlToyConfig.isShowSql());
+			SqlExecuteStat.start(sqlToyConfig.getId(), "findTop",
+					(extend.showSql != null) ? extend.showSql : sqlToyConfig.isShowSql());
 			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
@@ -1042,7 +1046,8 @@ public class DialectFactory {
 			Long startTime = System.currentTimeMillis();
 			// 规整查询参数名称和参数名称对应的值
 			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
-			SqlExecuteStat.start(sqlToyConfig.getId(), "findByQuery", sqlToyConfig.isShowSql());
+			SqlExecuteStat.start(sqlToyConfig.getId(), "findByQuery",
+					(extend.showSql != null) ? extend.showSql : sqlToyConfig.isShowSql());
 			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
@@ -1107,7 +1112,8 @@ public class DialectFactory {
 		try {
 			// 规整查询参数名称和参数名称对应的值
 			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
-			SqlExecuteStat.start(sqlToyConfig.getId(), "getCountBySql", sqlToyConfig.isShowSql());
+			SqlExecuteStat.start(sqlToyConfig.getId(), "getCountBySql",
+					(extend.showSql != null) ? extend.showSql : sqlToyConfig.isShowSql());
 			Long count = (Long) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
@@ -1917,7 +1923,8 @@ public class DialectFactory {
 		try {
 			// 规整查询参数名称和参数名称对应的值
 			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
-			SqlExecuteStat.start(sqlToyConfig.getId(), "fetchStream", sqlToyConfig.isShowSql());
+			SqlExecuteStat.start(sqlToyConfig.getId(), "fetchStream",
+					(extend.showSql != null) ? extend.showSql : sqlToyConfig.isShowSql());
 			DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
