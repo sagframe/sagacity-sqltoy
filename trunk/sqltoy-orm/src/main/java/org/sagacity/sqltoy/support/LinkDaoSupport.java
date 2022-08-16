@@ -198,12 +198,7 @@ public class LinkDaoSupport {
 	public DataSource getDataSource(DataSource pointDataSource) {
 		// 提供一个扩展，便于在使用DynamicDataSource 等开源框架或其它特殊场景给开发者提供数据源获取的扩展
 		DataSourceSelector dataSourceSelector = sqlToyContext.getDataSourceSelector();
-		DataSource result = dataSourceSelector.getDataSource(sqlToyContext.getApplicationContext(), pointDataSource,
-				null, this.dataSource, sqlToyContext.getDefaultDataSource());
-		// 第四、sqltoyContext默认的数据源
-		if (null == result) {
-			result = sqlToyContext.obtainDataSource(null);
-		}
-		return result;
+		return dataSourceSelector.getDataSource(sqlToyContext.getApplicationContext(), pointDataSource, null,
+				this.dataSource, sqlToyContext.getDefaultDataSource());
 	}
 }

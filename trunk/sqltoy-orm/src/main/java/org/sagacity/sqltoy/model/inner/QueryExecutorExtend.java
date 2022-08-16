@@ -157,6 +157,11 @@ public class QueryExecutorExtend implements Serializable {
 	 * 是否构造过条件参数名称
 	 */
 	public boolean wrappedParamNames = false;
+	
+	/**
+	 * 执行时是否输出sql 日志
+	 */
+	public Boolean showSql;
 
 	/**
 	 * 自定义countSql

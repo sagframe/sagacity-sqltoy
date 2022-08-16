@@ -162,7 +162,7 @@ public class Mongo extends BaseLink {
 		}
 		try {
 			QueryExecutorExtend extend = queryExecutor.getInnerModel();
-			//update 2022-6-16 补全参数统一构造处理
+			// update 2022-6-16 补全参数统一构造处理
 			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
 			// 最后的执行语句
 			String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, extend.getParamsName(sqlToyConfig),
@@ -194,7 +194,7 @@ public class Mongo extends BaseLink {
 		}
 		try {
 			QueryExecutorExtend extend = queryExecutor.getInnerModel();
-			//update 2022-6-16 补全参数统一构造处理
+			// update 2022-6-16 补全参数统一构造处理
 			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
 			// 最后的执行语句
 			String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, extend.getParamsName(sqlToyConfig),
@@ -221,7 +221,7 @@ public class Mongo extends BaseLink {
 		}
 		try {
 			QueryExecutorExtend extend = queryExecutor.getInnerModel();
-			//update 2022-6-16 补全参数统一构造处理
+			// update 2022-6-16 补全参数统一构造处理
 			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
 			// 最后的执行语句
 			String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, extend.getParamsName(sqlToyConfig),
@@ -271,7 +271,7 @@ public class Mongo extends BaseLink {
 		BasicQuery query = new BasicQuery(mql);
 		result.setRecordCount(mongoTemplate.count(query, sqlToyConfig.getNoSqlConfigModel().getCollection()));
 		if (result.getRecordCount() == 0) {
-			if (sqlToyContext.isPageOverToFirst()) {
+			if (pageModel.isOverPageToFirst()) {
 				result.setPageNo(1L);
 			}
 			return result;
@@ -282,7 +282,7 @@ public class Mongo extends BaseLink {
 		} else {
 			boolean isOverPage = (pageModel.getPageNo()
 					* pageModel.getPageSize() >= (result.getRecordCount() + pageModel.getPageSize()));
-			if (isOverPage && !sqlToyContext.isPageOverToFirst()) {
+			if (isOverPage && !pageModel.isOverPageToFirst()) {
 				return result;
 			}
 			long realStartPage = isOverPage ? 1 : pageModel.getPageNo();

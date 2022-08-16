@@ -14,6 +14,7 @@ import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.ParallQuery;
 import org.sagacity.sqltoy.model.ParallQueryResult;
 import org.sagacity.sqltoy.model.inner.ParallQueryExtend;
+import org.sagacity.sqltoy.plugins.CrossDbAdapter;
 
 /**
  * @project sagacity-sqltoy
@@ -64,11 +65,16 @@ public class ParallQueryExecutor implements Callable<ParallQueryResult> {
 							extend.pageModel.getPageNo(), extend.pageModel.getPageSize(), dataSource));
 				} else {
 					result.setResult(dialectFactory.findPage(sqlToyContext, queryExecutor, sqlToyConfig,
-							extend.pageModel.getPageNo(), extend.pageModel.getPageSize(), dataSource));
+							extend.pageModel.getPageNo(), extend.pageModel.getPageSize(),
+							extend.pageModel.isOverPageToFirst(), dataSource));
 				}
+				// 产品化场景，适配其他数据库验证查询(仅仅在设置了redoDataSources时生效)
+				CrossDbAdapter.redoPageQuery(sqlToyContext, dialectFactory, queryExecutor, extend.pageModel);
 			} else {
 				result.setResult(
 						dialectFactory.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig, null, dataSource));
+				// 产品化场景，适配其他数据库验证查询(仅仅在设置了redoDataSources时生效)
+				CrossDbAdapter.redoQuery(sqlToyContext, dialectFactory, queryExecutor);
 			}
 		} catch (Exception e) {
 			result.setSuccess(false);

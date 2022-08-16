@@ -86,12 +86,6 @@ public class SqlToyContextProperties implements Serializable {
 	private String encoding;
 
 	/**
-	 * 分页页号超出总页时转第一页，否则返回空集合
-	 */
-	//update 2022-4-23 默认改为false
-	private boolean pageOverToFirst = false;
-
-	/**
 	 * 统一字段处理器
 	 */
 	private String unifyFieldsHandler;
@@ -110,11 +104,6 @@ public class SqlToyContextProperties implements Serializable {
 	 * 数据库保留字,用逗号分隔
 	 */
 	private String reservedWords;
-
-	/**
-	 * 自定义获取DataSource的策略类
-	 */
-	private String obtainDataSource;
 
 	/**
 	 * 缓存管理器
@@ -170,17 +159,17 @@ public class SqlToyContextProperties implements Serializable {
 	 * add 2022-4-26 自定义filter处理器
 	 */
 	private String customFilterHandler;
-	
+
 	/**
 	 * sql执行超时处理器
 	 */
 	private String overTimeSqlHandler;
-	
+
 	/**
 	 * 获取MetaData的列标题处理策略：default:不做处理;upper:转大写;lower
 	 */
 	private String columnLabelUpperOrLower = "default";
-	
+
 	/**
 	 * @return the sqlResourcesDir
 	 */
@@ -374,14 +363,6 @@ public class SqlToyContextProperties implements Serializable {
 		this.reservedWords = reservedWords;
 	}
 
-	public String getObtainDataSource() {
-		return obtainDataSource;
-	}
-
-	public void setObtainDataSource(String obtainDataSource) {
-		this.obtainDataSource = obtainDataSource;
-	}
-
 	/**
 	 * @return the translateCacheManager
 	 */
@@ -422,14 +403,6 @@ public class SqlToyContextProperties implements Serializable {
 	 */
 	public void setCacheType(String cacheType) {
 		this.cacheType = cacheType;
-	}
-
-	public boolean isPageOverToFirst() {
-		return pageOverToFirst;
-	}
-
-	public void setPageOverToFirst(boolean pageOverToFirst) {
-		this.pageOverToFirst = pageOverToFirst;
 	}
 
 	/**

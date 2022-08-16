@@ -24,9 +24,7 @@ import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.sagacity.sqltoy.plugins.connection.ConnectionFactory;
 import org.sagacity.sqltoy.plugins.connection.impl.DefaultConnectionFactory;
 import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
-import org.sagacity.sqltoy.plugins.datasource.ObtainDataSource;
 import org.sagacity.sqltoy.plugins.datasource.impl.DefaultDataSourceSelector;
-import org.sagacity.sqltoy.plugins.datasource.impl.DefaultObtainDataSource;
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
 import org.sagacity.sqltoy.plugins.overtime.DefaultOverTimeHandler;
 import org.sagacity.sqltoy.plugins.secure.DesensitizeProvider;
@@ -103,12 +101,6 @@ public class SqlToyContext implements ApplicationContextAware {
 	private int delayCheckSeconds = 30;
 
 	/**
-	 * 分页页号超出总页时转第一页，否则返回空集合
-	 */
-	//update 2022-4-23 默认改为false
-	private boolean pageOverToFirst = false;
-
-	/**
 	 * 默认查询数据库端提取记录量
 	 */
 	private int fetchSize = -1;
@@ -122,7 +114,7 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * 具体缓存实现(默认ehcache,可以根据自己喜好来自行扩展实现,sqltoy习惯将有争议的提供默认实现但用户可自行选择)
 	 */
 	private TranslateCacheManager translateCacheManager;
-	
+
 	/**
 	 * 执行超时sql自定义处理器
 	 */
@@ -166,16 +158,16 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * 默认数据源名称
 	 */
 	private String defaultDataSourceName;
-	
+
 	/**
 	 * 获取MetaData的列标题处理策略：default:不做处理;upper:转大写;lower
 	 */
 	private String columnLabelUpperOrLower = "default";
 
 	/**
-	 * 获取数据源策略配置,供特殊场景下由开发者自定义获取数据(如多个数据源根据ThreadLocal中存放的信息来判断使用哪个)
+	 * 重新执行查询的数据库
 	 */
-	private ObtainDataSource obtainDataSource = new DefaultObtainDataSource();
+	private String[] redoDataSources;
 
 	/**
 	 * @return the translateManager
@@ -305,7 +297,7 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * 脱敏处理器
 	 */
 	private DesensitizeProvider desensitizeProvider;
-	
+
 	/**
 	 * 自定义参数过滤处理器
 	 */
@@ -766,23 +758,6 @@ public class SqlToyContext implements ApplicationContextAware {
 		return defaultDataSource;
 	}
 
-	@Deprecated
-	public void setObtainDataSource(ObtainDataSource obtainDataSource) {
-		this.obtainDataSource = obtainDataSource;
-	}
-
-	/**
-	 * @TODO 提供给SqlToyDaoSupport等获取数据源
-	 * @return
-	 */
-	@Deprecated
-	public DataSource obtainDataSource(String sqlDataSource) {
-		if (obtainDataSource == null) {
-			return defaultDataSource;
-		}
-		return obtainDataSource.getDataSource(applicationContext, defaultDataSource, sqlDataSource);
-	}
-
 	/**
 	 * @param elasticConfigs the elasticConfigs to set
 	 */
@@ -882,14 +857,6 @@ public class SqlToyContext implements ApplicationContextAware {
 		this.cacheType = cacheType;
 	}
 
-	public boolean isPageOverToFirst() {
-		return pageOverToFirst;
-	}
-
-	public void setPageOverToFirst(boolean pageOverToFirst) {
-		this.pageOverToFirst = pageOverToFirst;
-	}
-
 	public void destroy() {
 		try {
 			scriptLoader.destroy();
@@ -982,7 +949,7 @@ public class SqlToyContext implements ApplicationContextAware {
 	public void setCustomFilterHandler(FilterHandler customFilterHandler) {
 		this.customFilterHandler = customFilterHandler;
 	}
-	
+
 	public OverTimeSqlHandler getOverTimeSqlHandler() {
 		return overTimeSqlHandler;
 	}
@@ -1007,5 +974,13 @@ public class SqlToyContext implements ApplicationContextAware {
 
 	public void setColumnLabelUpperOrLower(String columnLabelUpperOrLower) {
 		this.columnLabelUpperOrLower = columnLabelUpperOrLower;
+	}
+
+	public String[] getRedoDataSources() {
+		return redoDataSources;
+	}
+
+	public void setRedoDataSources(String[] redoDataSources) {
+		this.redoDataSources = redoDataSources;
 	}
 }

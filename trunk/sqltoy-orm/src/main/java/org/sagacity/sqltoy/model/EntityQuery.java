@@ -214,7 +214,7 @@ public class EntityQuery implements Serializable {
 		innerModel.having = having;
 		return this;
 	}
-	
+
 	/**
 	 * @TODO 对结果字段进行安全脱敏
 	 * @param maskType
@@ -355,6 +355,16 @@ public class EntityQuery implements Serializable {
 		sharding.setFields(paramNames);
 		sharding.setAliasNames(paramNames);
 		innerModel.tableSharding = sharding;
+		return this;
+	}
+
+	/**
+	 * @TODO 设置执行时是否输出sql日志
+	 * @param showSql
+	 * @return
+	 */
+	public EntityQuery showSql(Boolean showSql) {
+		innerModel.showSql = showSql;
 		return this;
 	}
 

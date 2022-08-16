@@ -204,7 +204,7 @@ public class QueryExecutor implements Serializable {
 		}
 		return this;
 	}
-	
+
 	/**
 	 * @TODO 设置返回结果的类型
 	 * @param resultType
@@ -422,6 +422,16 @@ public class QueryExecutor implements Serializable {
 		if (pivotModel != null) {
 			innerModel.calculators.add(pivotModel);
 		}
+		return this;
+	}
+
+	/**
+	 * @TODO 设置执行时是否输出sql日志
+	 * @param showSql
+	 * @return
+	 */
+	public QueryExecutor showSql(Boolean showSql) {
+		innerModel.showSql = showSql;
 		return this;
 	}
 

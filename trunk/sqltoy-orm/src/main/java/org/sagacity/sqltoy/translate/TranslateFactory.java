@@ -98,9 +98,6 @@ public class TranslateFactory {
 		DataSourceSelector dataSourceSelector = sqlToyContext.getDataSourceSelector();
 		DataSource dataSource = dataSourceSelector.getDataSource(sqlToyContext.getApplicationContext(), null,
 				dataSourceName, null, sqlToyContext.getDefaultDataSource());
-		if (null == dataSource) {
-			dataSource = sqlToyContext.obtainDataSource(dataSourceName);
-		}
 		return DialectFactory.getInstance()
 				.findByQuery(sqlToyContext,
 						new QueryExecutor(checkerConfig.getSql(), sqlToyConfig.getParamsName(),
@@ -305,9 +302,6 @@ public class TranslateFactory {
 		DataSourceSelector dataSourceSelector = sqlToyContext.getDataSourceSelector();
 		DataSource dataSource = dataSourceSelector.getDataSource(sqlToyContext.getApplicationContext(), null,
 				dataSourceName, null, sqlToyContext.getDefaultDataSource());
-		if (null == dataSource) {
-			dataSource = sqlToyContext.obtainDataSource(dataSourceName);
-		}
 		QueryResult result = DialectFactory.getInstance().findByQuery(sqlToyContext, queryExecutor, sqlToyConfig, null,
 				dataSource);
 		cacheModel.setProperties(result.getLabelNames());

@@ -15,7 +15,6 @@ import org.sagacity.sqltoy.plugins.OverTimeSqlHandler;
 import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.sagacity.sqltoy.plugins.connection.ConnectionFactory;
 import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
-import org.sagacity.sqltoy.plugins.datasource.ObtainDataSource;
 import org.sagacity.sqltoy.plugins.secure.DesensitizeProvider;
 import org.sagacity.sqltoy.plugins.secure.FieldsSecureProvider;
 import org.sagacity.sqltoy.service.SqlToyCRUDService;
@@ -137,8 +136,6 @@ public class SqltoyAutoConfiguration {
 		if (null != properties.getColumnLabelUpperOrLower()) {
 			sqlToyContext.setColumnLabelUpperOrLower(properties.getColumnLabelUpperOrLower().toLowerCase());
 		}
-		// 分页页号超出总页时转第一页，否则返回空集合
-		sqlToyContext.setPageOverToFirst(properties.isPageOverToFirst());
 		// 数据库方言
 		sqlToyContext.setDialect(properties.getDialect());
 		// sqltoy内置参数默认值修改
@@ -212,18 +209,6 @@ public class SqltoyAutoConfiguration {
 		// 设置默认数据库
 		if (properties.getDefaultDataSource() != null) {
 			sqlToyContext.setDefaultDataSourceName(properties.getDefaultDataSource());
-		}
-
-		// 自定义获取数据源的策略配置
-		String obtainDataSource = properties.getObtainDataSource();
-		if (StringUtil.isNotBlank(obtainDataSource)) {
-			if (applicationContext.containsBean(obtainDataSource)) {
-				sqlToyContext.setObtainDataSource((ObtainDataSource) applicationContext.getBean(obtainDataSource));
-			} // 包名和类名称
-			else if (obtainDataSource.contains(".")) {
-				sqlToyContext.setObtainDataSource(
-						(ObtainDataSource) Class.forName(obtainDataSource).getDeclaredConstructor().newInstance());
-			}
 		}
 
 		// 自定义缓存实现管理器
