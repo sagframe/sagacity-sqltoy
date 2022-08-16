@@ -234,9 +234,11 @@ public class Query extends BaseLink {
 	public Long count() {
 		QueryExecutor queryExecute = build();
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecute, SqlType.search, getDialect());
+		Long result = dialectFactory.getCountBySql(sqlToyContext, queryExecute, sqlToyConfig,
+				getDataSource(sqlToyConfig));
 		// 产品化场景，适配其他数据库验证查询(仅仅在设置了redoDataSources时生效)
 		CrossDbAdapter.redoCountQuery(sqlToyContext, dialectFactory, queryExecute);
-		return dialectFactory.getCountBySql(sqlToyContext, queryExecute, sqlToyConfig, getDataSource(sqlToyConfig));
+		return result;
 	}
 
 	/**
