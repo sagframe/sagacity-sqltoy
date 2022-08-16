@@ -17,6 +17,7 @@ import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.Page;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
+import org.sagacity.sqltoy.plugins.CrossDbAdapter;
 import org.sagacity.sqltoy.utils.BeanUtil;
 
 /**
@@ -193,6 +194,8 @@ public class Query extends BaseLink {
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecute, SqlType.search, getDialect());
 		QueryResult result = dialectFactory.findByQuery(sqlToyContext, queryExecute, sqlToyConfig, null,
 				getDataSource(sqlToyConfig));
+		// 产品化场景，适配其他数据库验证查询(仅仅在设置了redoDataSources时生效)
+		CrossDbAdapter.redoQuery(sqlToyContext, dialectFactory, queryExecute);
 		List rows = result.getRows();
 		if (rows == null || rows.isEmpty()) {
 			return null;
@@ -212,6 +215,8 @@ public class Query extends BaseLink {
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecute, SqlType.search, getDialect());
 		QueryResult result = dialectFactory.findByQuery(sqlToyContext, queryExecute, sqlToyConfig, lockMode,
 				getDataSource(sqlToyConfig));
+		// 产品化场景，适配其他数据库验证查询(仅仅在设置了redoDataSources时生效)
+		CrossDbAdapter.redoQuery(sqlToyContext, dialectFactory, queryExecute);
 		List rows = result.getRows();
 		if (rows == null || rows.isEmpty()) {
 			return null;
@@ -229,6 +234,8 @@ public class Query extends BaseLink {
 	public Long count() {
 		QueryExecutor queryExecute = build();
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecute, SqlType.search, getDialect());
+		// 产品化场景，适配其他数据库验证查询(仅仅在设置了redoDataSources时生效)
+		CrossDbAdapter.redoCountQuery(sqlToyContext, dialectFactory, queryExecute);
 		return dialectFactory.getCountBySql(sqlToyContext, queryExecute, sqlToyConfig, getDataSource(sqlToyConfig));
 	}
 
@@ -241,6 +248,8 @@ public class Query extends BaseLink {
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecute, SqlType.search, getDialect());
 		QueryResult result = dialectFactory.findByQuery(sqlToyContext, queryExecute, sqlToyConfig, lockMode,
 				getDataSource(sqlToyConfig));
+		// 产品化场景，适配其他数据库验证查询(仅仅在设置了redoDataSources时生效)
+		CrossDbAdapter.redoQuery(sqlToyContext, dialectFactory, queryExecute);
 		return result.getRows();
 	}
 
@@ -254,6 +263,8 @@ public class Query extends BaseLink {
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecute, SqlType.search, getDialect());
 		QueryResult result = dialectFactory.findTop(sqlToyContext, queryExecute, sqlToyConfig, topSize,
 				getDataSource(sqlToyConfig));
+		// 产品化场景，适配其他数据库验证查询(仅仅在设置了redoDataSources时生效)
+		CrossDbAdapter.redoTopQuery(sqlToyContext, dialectFactory, queryExecute, topSize);
 		return result.getRows();
 	}
 
@@ -267,6 +278,8 @@ public class Query extends BaseLink {
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecute, SqlType.search, getDialect());
 		QueryResult result = dialectFactory.getRandomResult(sqlToyContext, queryExecute, sqlToyConfig,
 				new Double(randomSize), getDataSource(sqlToyConfig));
+		// 产品化场景，适配其他数据库验证查询(仅仅在设置了redoDataSources时生效)
+		CrossDbAdapter.redoRandomQuery(sqlToyContext, dialectFactory, queryExecute, new Double(randomSize));
 		return result.getRows();
 	}
 
@@ -278,12 +291,17 @@ public class Query extends BaseLink {
 	public Page<?> findPage(final Page page) {
 		QueryExecutor queryExecute = build();
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecute, SqlType.search, getDialect());
+		Page<?> result;
 		if (page.getSkipQueryCount()) {
-			return (Page<?>) dialectFactory.findSkipTotalCountPage(sqlToyContext, queryExecute, sqlToyConfig,
+			result = (Page<?>) dialectFactory.findSkipTotalCountPage(sqlToyContext, queryExecute, sqlToyConfig,
 					page.getPageNo(), page.getPageSize(), getDataSource(sqlToyConfig)).getPageResult();
+		} else {
+			result = (Page<?>) dialectFactory.findPage(sqlToyContext, queryExecute, sqlToyConfig, page.getPageNo(),
+					page.getPageSize(), page.isOverPageToFirst(), getDataSource(sqlToyConfig)).getPageResult();
 		}
-		return (Page<?>) dialectFactory.findPage(sqlToyContext, queryExecute, sqlToyConfig, page.getPageNo(),
-				page.getPageSize(), page.isOverPageToFirst(), getDataSource(sqlToyConfig)).getPageResult();
+		// 产品化场景，适配其他数据库验证查询(仅仅在设置了redoDataSources时生效)
+		CrossDbAdapter.redoPageQuery(sqlToyContext, dialectFactory, queryExecute, page);
+		return result;
 	}
 
 	private QueryExecutor build() {

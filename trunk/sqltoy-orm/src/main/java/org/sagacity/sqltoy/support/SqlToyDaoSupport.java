@@ -809,10 +809,11 @@ public class SqlToyDaoSupport {
 		if (page.getSkipQueryCount() != null && page.getSkipQueryCount()) {
 			result = dialectFactory.findSkipTotalCountPage(sqlToyContext, queryExecutor, sqlToyConfig, page.getPageNo(),
 					page.getPageSize(), getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig));
+		} else {
+			result = dialectFactory.findPage(sqlToyContext, queryExecutor, sqlToyConfig, page.getPageNo(),
+					page.getPageSize(), page.isOverPageToFirst(),
+					getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig));
 		}
-		result = dialectFactory.findPage(sqlToyContext, queryExecutor, sqlToyConfig, page.getPageNo(),
-				page.getPageSize(), page.isOverPageToFirst(),
-				getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig));
 		// 产品化场景，适配其他数据库验证查询(仅仅在设置了redoDataSources时生效)
 		CrossDbAdapter.redoPageQuery(sqlToyContext, dialectFactory, queryExecutor, page);
 		return result;
