@@ -157,7 +157,7 @@ public class Mongo extends BaseLink {
 		}
 		try {
 			QueryExecutorExtend extend = queryExecutor.getInnerModel();
-			//update 2022-6-16 补全参数统一构造处理
+			// update 2022-6-16 补全参数统一构造处理
 			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
 			// 最后的执行语句
 			String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, extend.getParamsName(sqlToyConfig),
@@ -259,6 +259,9 @@ public class Mongo extends BaseLink {
 		// 查询总记录
 		result.setRecordCount(getMongoQuery().count(mql, sqlToyConfig.getNoSqlConfigModel().getCollection()));
 		if (result.getRecordCount() == 0) {
+			if (pageModel.isOverPageToFirst()) {
+				result.setPageNo(1L);
+			}
 			return result;
 		}
 		Long skip;
@@ -270,15 +273,14 @@ public class Mongo extends BaseLink {
 		} else {
 			boolean isOverPage = (pageModel.getPageNo()
 					* pageModel.getPageSize() >= (result.getRecordCount() + pageModel.getPageSize()));
-			if (isOverPage) {
+			if (isOverPage && !pageModel.isOverPageToFirst()) {
 				return result;
 			}
-			long realStartPage = pageModel.getPageNo();
+			long realStartPage = isOverPage ? 1 : pageModel.getPageNo();
 			result.setPageNo(realStartPage);
 			skip = (realStartPage - 1) * pageModel.getPageSize();
 			limit = pageModel.getPageSize();
 		}
-
 		List<Document> rs = getMongoQuery().find(mql, Document.class,
 				sqlToyConfig.getNoSqlConfigModel().getCollection(), skip, limit);
 		if (rs == null || rs.isEmpty()) {

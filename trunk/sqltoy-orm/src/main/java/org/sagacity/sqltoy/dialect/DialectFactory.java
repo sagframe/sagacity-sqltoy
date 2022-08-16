@@ -683,11 +683,13 @@ public class DialectFactory {
 	 * @param sqlToyConfig
 	 * @param pageNo
 	 * @param pageSize
+	 * @param overPageToFirst
 	 * @param dataSource
 	 * @return
 	 */
 	public QueryResult findPage(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
-			final SqlToyConfig sqlToyConfig, final long pageNo, final Integer pageSize, final DataSource dataSource) {
+			final SqlToyConfig sqlToyConfig, final long pageNo, final Integer pageSize, final boolean overPageToFirst,
+			final DataSource dataSource) {
 		final QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		if (StringUtil.isBlank(extend.sql)) {
 			throw new IllegalArgumentException("findPage operate sql is null!");
@@ -729,7 +731,7 @@ public class DialectFactory {
 							if (pageOptimize != null && pageOptimize.isParallel() && pageNo != -1
 									&& recordCnt == null) {
 								queryResult = parallelPage(sqlToyContext, queryExecutor, realSqlToyConfig, extend,
-										pageNo, pageSize, pageOptimize, conn, dbType, dialect);
+										pageNo, pageSize, overPageToFirst, pageOptimize, conn, dbType, dialect);
 								recordCnt = queryResult.getRecordCount();
 								// 将并行后得到的总记录数登记到缓存
 								if (null != pageQueryKey) {
@@ -753,7 +755,11 @@ public class DialectFactory {
 								boolean illegal = (pageNo == -1 && (limitSize != -1 && recordCnt > limitSize));
 								if (recordCnt == 0 || illegal) {
 									queryResult = new QueryResult();
-									queryResult.setPageNo(pageNo);
+									if (recordCnt == 0 && overPageToFirst) {
+										queryResult.setPageNo(1L);
+									} else {
+										queryResult.setPageNo(pageNo);
+									}
 									queryResult.setPageSize(pageSize);
 									queryResult.setRecordCount(0L);
 									if (illegal) {
@@ -785,11 +791,11 @@ public class DialectFactory {
 										// 实际开始页(页数据超出总记录,则从第一页重新开始,相反如继续按指定的页查询则记录为空,且实际页号也不存在)
 										boolean isOverPage = (pageNo * pageSize >= (recordCnt + pageSize));
 										// 允许页号超出总页数，结果返回空集合
-										if (isOverPage) {
+										if (isOverPage && !overPageToFirst) {
 											queryResult = new QueryResult();
 											queryResult.setPageNo(pageNo);
 										} else {
-											long realStartPage = pageNo;
+											long realStartPage = isOverPage ? 1 : pageNo;
 											queryResult = getDialectSqlWrapper(dbType).findPageBySql(sqlToyContext,
 													realSqlToyConfig, queryExecutor,
 													wrapDecryptHandler(sqlToyContext, extend.resultType), realStartPage,
@@ -843,6 +849,7 @@ public class DialectFactory {
 	 * @param extend
 	 * @param pageNo
 	 * @param pageSize
+	 * @param overPageToFirst
 	 * @param pageOptimize
 	 * @param conn
 	 * @param dbType
@@ -852,8 +859,8 @@ public class DialectFactory {
 	 */
 	private QueryResult parallelPage(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final SqlToyConfig sqlToyConfig, final QueryExecutorExtend extend, final long pageNo,
-			final Integer pageSize, PageOptimize pageOptimize, Connection conn, Integer dbType, String dialect)
-			throws Exception {
+			final Integer pageSize, final boolean overPageToFirst, PageOptimize pageOptimize, Connection conn,
+			Integer dbType, String dialect) throws Exception {
 		final QueryResult queryResult = new QueryResult();
 		queryResult.setPageNo(pageNo);
 		queryResult.setPageSize(pageSize);
@@ -932,6 +939,9 @@ public class DialectFactory {
 			// 总记录数量大于实际记录数量
 			if (rowSize < queryResult.getPageSize() && (queryResult.getRecordCount() > minCount) && minCount >= 0) {
 				queryResult.setRecordCount(minCount);
+			}
+			if (queryResult.getRecordCount() == 0 && overPageToFirst) {
+				queryResult.setPageNo(1L);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

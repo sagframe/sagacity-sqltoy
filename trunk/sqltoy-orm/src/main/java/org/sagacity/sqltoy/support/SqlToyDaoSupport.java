@@ -808,10 +808,11 @@ public class SqlToyDaoSupport {
 		// 跳过查询总记录数量
 		if (page.getSkipQueryCount() != null && page.getSkipQueryCount()) {
 			result = dialectFactory.findSkipTotalCountPage(sqlToyContext, queryExecutor, sqlToyConfig, page.getPageNo(),
-					page.getPageSize(), this.getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig));
+					page.getPageSize(), getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig));
 		}
 		result = dialectFactory.findPage(sqlToyContext, queryExecutor, sqlToyConfig, page.getPageNo(),
-				page.getPageSize(), this.getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig));
+				page.getPageSize(), page.isOverPageToFirst(),
+				getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig));
 		// 产品化场景，适配其他数据库验证查询(仅仅在设置了redoDataSources时生效)
 		CrossDbAdapter.redoPageQuery(sqlToyContext, dialectFactory, queryExecutor, page);
 		return result;
@@ -1803,7 +1804,7 @@ public class SqlToyDaoSupport {
 						page.getPageNo(), page.getPageSize(), realDataSource).getPageResult();
 			} else {
 				result = dialectFactory.findPage(sqlToyContext, queryExecutor, sqlToyConfig, page.getPageNo(),
-						page.getPageSize(), realDataSource).getPageResult();
+						page.getPageSize(), page.isOverPageToFirst(), realDataSource).getPageResult();
 			}
 			// 产品化场景，适配其他数据库验证查询(仅仅在设置了redoDataSources时生效)
 			CrossDbAdapter.redoPageQuery(sqlToyContext, dialectFactory, queryExecutor, page);

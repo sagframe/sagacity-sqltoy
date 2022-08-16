@@ -283,7 +283,7 @@ public class Query extends BaseLink {
 					page.getPageNo(), page.getPageSize(), getDataSource(sqlToyConfig)).getPageResult();
 		}
 		return (Page<?>) dialectFactory.findPage(sqlToyContext, queryExecute, sqlToyConfig, page.getPageNo(),
-				page.getPageSize(), getDataSource(sqlToyConfig)).getPageResult();
+				page.getPageSize(), page.isOverPageToFirst(), getDataSource(sqlToyConfig)).getPageResult();
 	}
 
 	private QueryExecutor build() {

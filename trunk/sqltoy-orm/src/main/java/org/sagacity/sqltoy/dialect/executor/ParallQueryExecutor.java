@@ -64,8 +64,9 @@ public class ParallQueryExecutor implements Callable<ParallQueryResult> {
 					result.setResult(dialectFactory.findSkipTotalCountPage(sqlToyContext, queryExecutor, sqlToyConfig,
 							extend.page.getPageNo(), extend.page.getPageSize(), dataSource));
 				} else {
-					result.setResult(dialectFactory.findPage(sqlToyContext, queryExecutor, sqlToyConfig,
-							extend.page.getPageNo(), extend.page.getPageSize(), dataSource));
+					result.setResult(
+							dialectFactory.findPage(sqlToyContext, queryExecutor, sqlToyConfig, extend.page.getPageNo(),
+									extend.page.getPageSize(), extend.page.isOverPageToFirst(), dataSource));
 				}
 				// 产品化场景，适配其他数据库验证查询(仅仅在设置了redoDataSources时生效)
 				CrossDbAdapter.redoPageQuery(sqlToyContext, dialectFactory, queryExecutor, extend.page);
