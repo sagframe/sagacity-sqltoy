@@ -265,6 +265,8 @@ public class TranslateConfigParse {
 											nodeType);
 									throw new IllegalArgumentException(nodeType + " must config with cache=\"xxx\"");
 								}
+							} else {
+								checherConfigModel.setIncrement(false);
 							}
 							// sql模式且非sqlId模式定义
 							if ("sql".equals(checherConfigModel.getType())) {

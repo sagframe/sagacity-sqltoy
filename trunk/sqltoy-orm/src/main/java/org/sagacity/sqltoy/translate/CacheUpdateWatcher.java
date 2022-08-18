@@ -14,6 +14,7 @@ import org.sagacity.sqltoy.translate.model.CheckerConfigModel;
 import org.sagacity.sqltoy.translate.model.TimeSection;
 import org.sagacity.sqltoy.translate.model.TranslateConfigModel;
 import org.sagacity.sqltoy.utils.DateUtil;
+import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -175,12 +176,18 @@ public class CacheUpdateWatcher extends Thread {
 			if (results == null || results.isEmpty()) {
 				return;
 			}
-			for (CacheCheckResult result : results) {
-				translateConfig = translateMap.get(result.getCacheName());
-				if (translateConfig != null) {
-					logger.debug("检测到缓存发生更新: cacheName:{} cacheType:{}!", translateConfig.getCache(),
-							(result.getCacheType() == null) ? "无" : result.getCacheType());
-					translateCacheManager.clear(translateConfig.getCache(), result.getCacheType());
+			// 指定了缓存名称
+			if (StringUtil.isNotBlank(checkerConfig.getCache())) {
+				logger.debug("检测到缓存:{} 发生更新,将清除缓存便于后续缓存全量更新!", checkerConfig.getCache());
+				translateCacheManager.clear(checkerConfig.getCache(), null);
+			} else {
+				for (CacheCheckResult result : results) {
+					translateConfig = translateMap.get(result.getCacheName());
+					if (translateConfig != null) {
+						logger.debug("检测到缓存发生更新: cacheName:{} cacheType:{}!", translateConfig.getCache(),
+								(result.getCacheType() == null) ? "无" : result.getCacheType());
+						translateCacheManager.clear(translateConfig.getCache(), result.getCacheType());
+					}
 				}
 			}
 		} // 增量直接更新缓存
