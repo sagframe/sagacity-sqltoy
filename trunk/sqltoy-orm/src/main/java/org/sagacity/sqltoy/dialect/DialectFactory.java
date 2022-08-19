@@ -418,13 +418,21 @@ public class DialectFactory {
 							}
 							// 按比例提取
 							else {
+								long countRunTime = 0;
 								// 提取总记录数
 								if (totalCount == null) {
+									long preTime = System.currentTimeMillis();
 									totalCount = getCountBySql(sqlToyContext, realSqlToyConfig, queryExecutor, conn,
 											dbType, dialect);
+									countRunTime = System.currentTimeMillis() - preTime;
 								}
 								randomCnt = Double.valueOf(totalCount * randomCount.doubleValue()).longValue();
-								SqlExecuteStat.debug("过程提示", "按比例提取总记录数:{}条,需取随机记录:{}条!", totalCount, randomCnt);
+								if (countRunTime == 0) {
+									SqlExecuteStat.debug("过程提示", "按比例提取总记录数:{}条,需取随机记录:{}条!", totalCount, randomCnt);
+								} else {
+									SqlExecuteStat.debug("过程提示", "按比例提取总记录数:{}条,需取随机记录:{}条,执行count查询耗时:{}毫秒!",
+											totalCount, randomCnt, countRunTime);
+								}
 								// 如果总记录数不为零，randomCnt最小为1
 								if (totalCount >= 1 && randomCnt < 1) {
 									randomCnt = 1L;
@@ -741,8 +749,10 @@ public class DialectFactory {
 							} else {
 								// 非并行且分页缓存未命中，执行count查询
 								if (recordCnt == null) {
+									long preTime = System.currentTimeMillis();
 									recordCnt = getCountBySql(sqlToyContext, realSqlToyConfig, queryExecutor, conn,
 											dbType, dialect);
+									SqlExecuteStat.debug("查询count执行耗时", (System.currentTimeMillis() - preTime) + "毫秒!");
 								}
 								// 将总记录数登记到缓存
 								if (null != pageQueryKey) {
@@ -770,6 +780,7 @@ public class DialectFactory {
 										SqlExecuteStat.debug("过程提示", "提取count数为:0,sql={}", sqlToyConfig.getIdOrSql());
 									}
 								} else {
+									long preTime = System.currentTimeMillis();
 									// 合法的全记录提取,设置页号为1按记录数
 									if (pageNo == -1) {
 										// 通过参数处理最终的sql和参数值
@@ -806,6 +817,7 @@ public class DialectFactory {
 										queryResult.setPageSize(pageSize);
 										queryResult.setRecordCount(recordCnt);
 									}
+									SqlExecuteStat.debug("查询分页记录耗时", (System.currentTimeMillis() - preTime) + "毫秒!");
 								}
 							}
 							if (queryResult.getRows() != null && !queryResult.getRows().isEmpty()) {
@@ -988,11 +1000,12 @@ public class DialectFactory {
 							Integer realTopSize;
 							// 小于1表示按比例提取
 							if (topSize < 1) {
+								long preTime = System.currentTimeMillis();
 								Long totalCount = getCountBySql(sqlToyContext, realSqlToyConfig, queryExecutor, conn,
 										dbType, dialect);
 								realTopSize = Double.valueOf(topSize * totalCount.longValue()).intValue();
-								SqlExecuteStat.debug("过程提示", "按比例提取,总记录数:{}条,按比例top记录要取:{} 条!", totalCount,
-										realTopSize);
+								SqlExecuteStat.debug("过程提示", "按比例提取,总记录数:{}条,按比例top记录要取:{} 条,执行count记录数耗时:{}毫秒!",
+										totalCount, realTopSize, System.currentTimeMillis() - preTime);
 							} else {
 								realTopSize = Double.valueOf(topSize).intValue();
 							}
