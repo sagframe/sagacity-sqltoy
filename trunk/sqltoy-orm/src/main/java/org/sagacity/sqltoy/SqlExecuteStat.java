@@ -128,7 +128,7 @@ public class SqlExecuteStat {
 				sqlTrace.setOverTime(true);
 				sqlTrace.addLog("slowSql执行超时", "耗时(毫秒):{} >={} (阀值)!", runTime, printSqlTimeoutMillis);
 			} else {
-				sqlTrace.addLog("执行时长", "耗时:{} 毫秒 !", runTime);
+				sqlTrace.addLog("执行总时长", "耗时:{} 毫秒 !", runTime);
 			}
 			// 日志输出
 			printLogs(sqlTrace);
