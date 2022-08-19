@@ -178,8 +178,9 @@ public class CacheUpdateWatcher extends Thread {
 			}
 			// 指定了缓存名称
 			if (StringUtil.isNotBlank(checkerConfig.getCache())) {
-				logger.debug("检测到缓存:{} 发生更新,将清除缓存便于后续缓存全量更新!", checkerConfig.getCache());
-				translateCacheManager.clear(checkerConfig.getCache(), null);
+				translateConfig = translateMap.get(checkerConfig.getCache());
+				logger.debug("检测到缓存:{} 发生更新,将清除缓存便于后续缓存全量更新!", translateConfig.getCache());
+				translateCacheManager.clear(translateConfig.getCache(), null);
 			} else {
 				for (CacheCheckResult result : results) {
 					translateConfig = translateMap.get(result.getCacheName());

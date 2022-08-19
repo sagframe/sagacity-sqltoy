@@ -251,7 +251,6 @@ public class EntityManager {
 				}
 				// 解析Entity包含的字段信息
 				Field[] allFields = parseAllFields(entityClass);
-
 				// 排除主键的字段信息
 				List<String> rejectIdFieldList = new ArrayList<String>();
 				// 表的所有字段
@@ -260,7 +259,6 @@ public class EntityManager {
 				List<String> idList = new ArrayList<String>();
 				// 解析主键
 				parseIdFileds(idList, allFields);
-
 				// 构造按照主键获取单条记录的sql,以:named形式
 				StringBuilder loadNamedWhereSql = new StringBuilder("");
 				// where 主键字段=? 形式，用于构建delete功能操作的sql
@@ -271,7 +269,6 @@ public class EntityManager {
 					parseFieldMeta(sqlToyContext, entityMeta, field, rejectIdFieldList, allColumnNames,
 							loadNamedWhereSql, loadArgWhereSql);
 				}
-
 				// 设置数据库表所有字段信息
 				StringBuilder allColNames = new StringBuilder();
 				for (int i = 0; i < allColumnNames.size(); i++) {
@@ -284,16 +281,13 @@ public class EntityManager {
 				// 表全量查询语句 update 2019-12-9 将原先select * 改成 select 具体字段
 				entityMeta.setLoadAllSql("select ".concat(entityMeta.getAllColumnNames()).concat(" from ")
 						.concat(entityMeta.getSchemaTable(null, null)));
-
 				entityMeta.setIdArgWhereSql(loadArgWhereSql.toString());
 				entityMeta.setIdNameWhereSql(loadNamedWhereSql.toString());
-
 				// 排除主键外的字段
 				if (rejectIdFieldList.size() > 0) {
 					entityMeta.setRejectIdFieldArray(rejectIdFieldList.toArray(new String[rejectIdFieldList.size()]));
 					fieldList.addAll(rejectIdFieldList);
 				}
-
 				// 存在主键，主键必须放在fieldList最后面，影响到insert，update等语句
 				if (idList.size() > 0) {
 					entityMeta.setIdArray(idList.toArray(new String[idList.size()]));
@@ -305,10 +299,8 @@ public class EntityManager {
 				}
 				// 内部存在逻辑设置allFields
 				entityMeta.setFieldsArray(fieldList.toArray(new String[rejectIdFieldList.size() + idList.size()]));
-
 				// 设置字段类型和默认值
 				parseFieldTypeAndDefault(entityMeta);
-
 				// 解析sharding策略
 				parseSharding(entityMeta, entityClass);
 				// 解析加解密配置
@@ -656,7 +648,6 @@ public class EntityManager {
 			update = oneToOne.update();
 			cascadeModel.setDelete(oneToOne.delete());
 		}
-
 		// 获取子表的信息(存在递归调用)
 		EntityMeta subTableMeta = getEntityMeta(sqlToyContext, cascadeModel.getMappedType());
 		if ((fields == null || fields.length == 0) && idList.size() == 1) {
@@ -728,7 +719,6 @@ public class EntityManager {
 				}
 			}
 		}
-
 		// update 2020-11-20 增加子表级联order by
 		if (StringUtil.isNotBlank(orderBy)) {
 			// 对属性名称进行替换，替换为实际表字段名称
@@ -736,7 +726,6 @@ public class EntityManager {
 			cascadeModel.setOrderBy(orderBy);
 			cascadeModel.setLoadSubTableSql(cascadeModel.getLoadSubTableSql().concat(" order by ").concat(orderBy));
 		}
-
 		// 深度级联修改
 		if (StringUtil.isNotBlank(update)) {
 			String updateLow = update;
