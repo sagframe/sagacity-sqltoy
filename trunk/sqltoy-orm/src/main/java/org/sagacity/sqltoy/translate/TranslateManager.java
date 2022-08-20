@@ -347,7 +347,7 @@ public class TranslateManager {
 		}
 		if (StringUtil.isNotBlank(checkerConfigModel.getCache())) {
 			if (!translateMap.containsKey(checkerConfigModel.getCache())) {
-				logger.error("cacheName:{} 没有配置,请检查缓存配置文件!", checkerConfigModel.getCache());
+				logger.error("cacheName:{} 不存在无需做移除,请检查缓存配置文件!", checkerConfigModel.getCache());
 				return;
 			}
 		}
@@ -369,12 +369,26 @@ public class TranslateManager {
 		if (checkerConfigModel == null) {
 			return;
 		}
+		// 具体缓存的更新，验证缓存是否存在
 		if (StringUtil.isNotBlank(checkerConfigModel.getCache())) {
 			if (!translateMap.containsKey(checkerConfigModel.getCache())) {
 				logger.error("cacheName:{} 没有配置,请检查缓存配置文件!", checkerConfigModel.getCache());
 				return;
 			}
+		} // 增量模式，必须针对具体的cacheName
+		else if (checkerConfigModel.isIncrement()) {
+			logger.error("缓存增量更新检测必须要指定具体的缓存名称:checkerConfigModel.setCache(cacheName)!");
+			return;
 		}
+		// 验证sql\service\rest三种形态必须有一种
+		if (StringUtil.isBlank(checkerConfigModel.getSql())
+				&& (StringUtil.isBlank(checkerConfigModel.getService())
+						|| StringUtil.isBlank(checkerConfigModel.getMethod()))
+				&& StringUtil.isBlank(checkerConfigModel.getUrl())) {
+			logger.error("缓存更新检测必须设定:sql、[service|method]、url(rest) 三种类型中的一种!");
+			return;
+		}
+		// 先移除之前同名的
 		CheckerConfigModel checker;
 		for (int i = 0; i < updateCheckers.size(); i++) {
 			checker = updateCheckers.get(i);
