@@ -878,7 +878,7 @@ public class DialectFactory {
 		queryResult.setPageSize(pageSize);
 		ExecutorService pool = null;
 		try {
-			SqlExecuteStat.debug("过程提示", "分页查询开始并行查询count总记录数和单页记录数据!");
+			SqlExecuteStat.debug("开始并行查询count总记录数和单页记录数据!",null);
 			final SqlExecuteTrace sqlTrace = SqlExecuteStat.get();
 			pool = Executors.newFixedThreadPool(2);
 			// 查询总记录数量
