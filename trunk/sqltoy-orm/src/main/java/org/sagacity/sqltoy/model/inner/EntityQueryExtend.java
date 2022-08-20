@@ -129,4 +129,9 @@ public class EntityQueryExtend implements Serializable {
 	 */
 	public double pickSize;
 
+	/**
+	 * 执行时是否输出sql 日志
+	 */
+	public Boolean showSql;
+
 }

@@ -183,6 +183,9 @@ public class Elastic extends BaseLink {
 			} else {
 				pageResult = ElasticSearchPlugin.findPage(sqlToyContext, sqlToyConfig, pageModel, queryExecutor);
 			}
+			if (pageResult.getRecordCount() == 0 && pageModel.isOverPageToFirst()) {
+				pageResult.setPageNo(1L);
+			}
 			return pageResult;
 		} catch (Exception e) {
 			e.printStackTrace();

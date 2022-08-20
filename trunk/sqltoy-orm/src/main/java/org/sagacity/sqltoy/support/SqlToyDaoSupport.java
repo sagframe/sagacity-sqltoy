@@ -71,6 +71,7 @@ import org.sagacity.sqltoy.model.inner.EntityQueryExtend;
 import org.sagacity.sqltoy.model.inner.EntityUpdateExtend;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.inner.TranslateExtend;
+import org.sagacity.sqltoy.plugins.CrossDbAdapter;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
 import org.sagacity.sqltoy.plugins.id.IdGenerator;
@@ -349,8 +350,11 @@ public class SqlToyDaoSupport {
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(extend.sql, SqlType.search,
 				getDialect(extend.dataSource));
-		return dialectFactory.getCountBySql(sqlToyContext, queryExecutor, sqlToyConfig,
+		Long result = dialectFactory.getCountBySql(sqlToyContext, queryExecutor, sqlToyConfig,
 				this.getDataSource(extend.dataSource, sqlToyConfig));
+		// 产品化场景，适配其他数据库验证查询(仅仅在设置了redoDataSources时生效)
+		CrossDbAdapter.redoCountQuery(sqlToyContext, dialectFactory, queryExecutor);
+		return result;
 	}
 
 	protected StoreResult executeStore(final String storeSqlOrKey, final Object[] inParamValues,
@@ -610,6 +614,8 @@ public class SqlToyDaoSupport {
 				getDialect(extend.dataSource));
 		QueryResult result = dialectFactory.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig, null,
 				this.getDataSource(extend.dataSource, sqlToyConfig));
+		// 产品化场景，适配其他数据库验证查询(仅仅在设置了redoDataSources时生效)
+		CrossDbAdapter.redoQuery(sqlToyContext, dialectFactory, queryExecutor);
 		List rows = result.getRows();
 		if (rows == null || rows.isEmpty()) {
 			return null;
@@ -769,10 +775,12 @@ public class SqlToyDaoSupport {
 	protected QueryResult findByQuery(final QueryExecutor queryExecutor) {
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search,
 				getDialect(queryExecutor.getInnerModel().dataSource));
-		// update 2020-10-20，将null转为queryExecutor.getInnerModel().lockMode
-		return dialectFactory.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig,
+		QueryResult result = dialectFactory.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig,
 				queryExecutor.getInnerModel().lockMode,
 				getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig));
+		// 产品化场景，适配其他数据库验证查询(仅仅在设置了redoDataSources时生效)
+		CrossDbAdapter.redoQuery(sqlToyContext, dialectFactory, queryExecutor);
+		return result;
 	}
 
 	/**
@@ -796,13 +804,19 @@ public class SqlToyDaoSupport {
 	protected QueryResult findPageByQuery(final Page page, final QueryExecutor queryExecutor) {
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search,
 				getDialect(queryExecutor.getInnerModel().dataSource));
+		QueryResult result;
 		// 跳过查询总记录数量
 		if (page.getSkipQueryCount() != null && page.getSkipQueryCount()) {
-			return dialectFactory.findSkipTotalCountPage(sqlToyContext, queryExecutor, sqlToyConfig, page.getPageNo(),
-					page.getPageSize(), this.getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig));
+			result = dialectFactory.findSkipTotalCountPage(sqlToyContext, queryExecutor, sqlToyConfig, page.getPageNo(),
+					page.getPageSize(), getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig));
+		} else {
+			result = dialectFactory.findPage(sqlToyContext, queryExecutor, sqlToyConfig, page.getPageNo(),
+					page.getPageSize(), page.isOverPageToFirst(),
+					getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig));
 		}
-		return dialectFactory.findPage(sqlToyContext, queryExecutor, sqlToyConfig, page.getPageNo(), page.getPageSize(),
-				this.getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig));
+		// 产品化场景，适配其他数据库验证查询(仅仅在设置了redoDataSources时生效)
+		CrossDbAdapter.redoPageQuery(sqlToyContext, dialectFactory, queryExecutor, page);
+		return result;
 	}
 
 	/**
@@ -873,8 +887,11 @@ public class SqlToyDaoSupport {
 	protected QueryResult findTopByQuery(final QueryExecutor queryExecutor, final double topSize) {
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search,
 				getDialect(queryExecutor.getInnerModel().dataSource));
-		return dialectFactory.findTop(sqlToyContext, queryExecutor, sqlToyConfig, topSize,
+		QueryResult result = dialectFactory.findTop(sqlToyContext, queryExecutor, sqlToyConfig, topSize,
 				this.getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig));
+		// 产品化场景，适配其他数据库验证查询(仅仅在设置了redoDataSources时生效)
+		CrossDbAdapter.redoTopQuery(sqlToyContext, dialectFactory, queryExecutor, topSize);
+		return result;
 	}
 
 	/**
@@ -887,8 +904,11 @@ public class SqlToyDaoSupport {
 	protected QueryResult getRandomResult(final QueryExecutor queryExecutor, final double randomCount) {
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search,
 				getDialect(queryExecutor.getInnerModel().dataSource));
-		return dialectFactory.getRandomResult(sqlToyContext, queryExecutor, sqlToyConfig, randomCount,
+		QueryResult result = dialectFactory.getRandomResult(sqlToyContext, queryExecutor, sqlToyConfig, randomCount,
 				this.getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig));
+		// 产品化场景，适配其他数据库验证查询(仅仅在设置了redoDataSources时生效)
+		CrossDbAdapter.redoRandomQuery(sqlToyContext, dialectFactory, queryExecutor, randomCount);
+		return result;
 	}
 
 	protected <T> List<T> getRandomResult(final String sqlOrNamedSql, final Map<String, Object> paramsMap,
@@ -1367,7 +1387,7 @@ public class SqlToyDaoSupport {
 	 * @TODO 将缓存数据以对象形式获取
 	 * @param <T>
 	 * @param cacheName
-	 * @param cacheType 如是数据字典,则传入字典类型否则为null即可
+	 * @param cacheType  如是数据字典,则传入字典类型否则为null即可
 	 * @param reusltType
 	 * @return
 	 */
@@ -1591,7 +1611,6 @@ public class SqlToyDaoSupport {
 				translateFields = translateFields.concat(",").concat(keyColumn).concat(" as ").concat(extend.column);
 			}
 		}
-
 		// 将notSelect构造成select，形成统一处理机制
 		String[] selectFieldAry = null;
 		Set<String> notSelect = innerModel.notSelectFields;
@@ -1649,7 +1668,6 @@ public class SqlToyDaoSupport {
 		} else {
 			fields = entityMeta.getAllColumnNames();
 		}
-
 		String sql = "select ".concat((innerModel.distinct) ? " distinct " : "").concat(fields).concat(translateFields)
 				.concat(" from ").concat(entityMeta.getSchemaTable(null, null));
 		// where条件
@@ -1719,15 +1737,16 @@ public class SqlToyDaoSupport {
 		if (!innerModel.paramFilters.isEmpty()) {
 			queryExecutor.getInnerModel().paramFilters.addAll(innerModel.paramFilters);
 		}
-
 		// 设置安全脱敏
 		if (!innerModel.secureMask.isEmpty()) {
 			queryExecutor.getInnerModel().secureMask.putAll(innerModel.secureMask);
 		}
-
+		// 是否输出sql
+		if (innerModel.showSql != null) {
+			queryExecutor.showSql(innerModel.showSql);
+		}
 		// 设置分页优化
 		queryExecutor.getInnerModel().pageOptimize = innerModel.pageOptimize;
-
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search,
 				getDialect(queryExecutor.getInnerModel().dataSource));
 		// 加密字段，查询时解密
@@ -1748,34 +1767,50 @@ public class SqlToyDaoSupport {
 			queryExecutor.getInnerModel().tableShardings = tableShardings;
 		}
 		DataSource realDataSource = getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig);
+		Object result;
 		// 取count数量
 		if (isCount) {
-			return dialectFactory.getCountBySql(sqlToyContext, queryExecutor, sqlToyConfig, realDataSource);
+			result = dialectFactory.getCountBySql(sqlToyContext, queryExecutor, sqlToyConfig, realDataSource);
+			// 产品化场景，适配其他数据库验证查询(仅仅在设置了redoDataSources时生效)
+			CrossDbAdapter.redoCountQuery(sqlToyContext, dialectFactory, queryExecutor);
+			return result;
 		}
 		// 非分页
 		if (page == null) {
 			// 取top
 			if (innerModel.pickType == 0) {
-				return dialectFactory
+				result = dialectFactory
 						.findTop(sqlToyContext, queryExecutor, sqlToyConfig, innerModel.pickSize, realDataSource)
 						.getRows();
+				// 产品化场景，适配其他数据库验证查询(仅仅在设置了redoDataSources时生效)
+				CrossDbAdapter.redoTopQuery(sqlToyContext, dialectFactory, queryExecutor, innerModel.pickSize);
 			} // 取随机记录
 			else if (innerModel.pickType == 1) {
-				return dialectFactory.getRandomResult(sqlToyContext, queryExecutor, sqlToyConfig, innerModel.pickSize,
+				result = dialectFactory.getRandomResult(sqlToyContext, queryExecutor, sqlToyConfig, innerModel.pickSize,
 						realDataSource).getRows();
+				// 产品化场景，适配其他数据库验证查询(仅仅在设置了redoDataSources时生效)
+				CrossDbAdapter.redoRandomQuery(sqlToyContext, dialectFactory, queryExecutor, innerModel.pickSize);
 			} else {
-				return dialectFactory
+				result = dialectFactory
 						.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig, innerModel.lockMode, realDataSource)
 						.getRows();
+				// 产品化场景，适配其他数据库验证查询(仅仅在设置了redoDataSources时生效)
+				CrossDbAdapter.redoQuery(sqlToyContext, dialectFactory, queryExecutor);
 			}
+			return result;
+		} else {
+			// 跳过总记录数形式的分页
+			if (page.getSkipQueryCount()) {
+				result = dialectFactory.findSkipTotalCountPage(sqlToyContext, queryExecutor, sqlToyConfig,
+						page.getPageNo(), page.getPageSize(), realDataSource).getPageResult();
+			} else {
+				result = dialectFactory.findPage(sqlToyContext, queryExecutor, sqlToyConfig, page.getPageNo(),
+						page.getPageSize(), page.isOverPageToFirst(), realDataSource).getPageResult();
+			}
+			// 产品化场景，适配其他数据库验证查询(仅仅在设置了redoDataSources时生效)
+			CrossDbAdapter.redoPageQuery(sqlToyContext, dialectFactory, queryExecutor, page);
+			return result;
 		}
-		// 跳过总记录数形式的分页
-		if (page.getSkipQueryCount()) {
-			return dialectFactory.findSkipTotalCountPage(sqlToyContext, queryExecutor, sqlToyConfig, page.getPageNo(),
-					page.getPageSize(), realDataSource).getPageResult();
-		}
-		return dialectFactory.findPage(sqlToyContext, queryExecutor, sqlToyConfig, page.getPageNo(), page.getPageSize(),
-				realDataSource).getPageResult();
 	}
 
 	/**

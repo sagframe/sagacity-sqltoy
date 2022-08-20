@@ -425,6 +425,16 @@ public class QueryExecutor implements Serializable {
 		return this;
 	}
 
+	/**
+	 * @TODO 设置执行时是否输出sql日志
+	 * @param showSql
+	 * @return
+	 */
+	public QueryExecutor showSql(Boolean showSql) {
+		innerModel.showSql = showSql;
+		return this;
+	}
+	
 	public QueryExecutorExtend getInnerModel() {
 		return innerModel;
 	}

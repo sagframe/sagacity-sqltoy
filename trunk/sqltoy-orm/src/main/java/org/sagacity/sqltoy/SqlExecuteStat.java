@@ -90,6 +90,12 @@ public class SqlExecuteStat {
 		}
 	}
 
+	public static void setDialect(String dialect) {
+		if (threadLocal.get() != null) {
+			threadLocal.get().setDialect(dialect);
+		}
+	}
+
 	/**
 	 * @TODO 提供中间日志输出
 	 * @param topic
@@ -122,7 +128,7 @@ public class SqlExecuteStat {
 				sqlTrace.setOverTime(true);
 				sqlTrace.addLog("slowSql执行超时", "耗时(毫秒):{} >={} (阀值)!", runTime, printSqlTimeoutMillis);
 			} else {
-				sqlTrace.addLog("执行时长", "耗时:{} 毫秒 !", runTime);
+				sqlTrace.addLog("执行总时长", "耗时:{} 毫秒 !", runTime);
 			}
 			// 日志输出
 			printLogs(sqlTrace);
@@ -146,14 +152,12 @@ public class SqlExecuteStat {
 			errorLog = true;
 			reportStatus = "发生异常错误!";
 		}
-
 		if (!errorLog) {
 			// sql中已经标记了#not_debug# 表示无需输出日志(一般针对缓存检测、缓存加载等,避免这些影响业务日志)
 			if (!sqlTrace.isPrint()) {
 				return;
 			}
 		}
-
 		String uid = sqlTrace.getUid();
 		StringBuilder result = new StringBuilder();
 		String optType = sqlTrace.getType();
@@ -161,6 +165,7 @@ public class SqlExecuteStat {
 		result.append("\n/*|----------------------开始执行报告输出 --------------------------------------------------*/");
 		result.append("\n/*|任 务 ID: " + uid);
 		result.append("\n/*|执行结果: " + reportStatus);
+		result.append("\n/*|数据方言: " + sqlTrace.getDialect());
 		result.append("\n/*|执行类型: " + optType);
 		result.append("\n/*|代码定位: " + codeTrace);
 		if (sqlTrace.getId() != null) {
@@ -204,8 +209,8 @@ public class SqlExecuteStat {
 					}
 				}
 			} else {
-				result.append("\n/*|---- 过程: " + step + "," + topic
-						+ (content == null ? "" : ":" + StringUtil.fillArgs(content, args)));
+				result.append("\n/*|---- 过程: " + step + "," + (null == topic ? "" : topic)
+						+ (null == content ? "" : ":" + StringUtil.fillArgs(content, args)));
 			}
 		}
 		result.append("\n/*|----------------------完成执行报告输出 --------------------------------------------------*/");
@@ -394,7 +399,7 @@ public class SqlExecuteStat {
 		threadLocal.set(sqlTrace);
 	}
 
-	//并行多线程场景
+	// 并行多线程场景
 	public static void mergeTrace(SqlExecuteTrace sqlTrace) {
 		if (sqlTrace != null) {
 			threadLocal.set(new SqlExecuteTrace(sqlTrace.getId(), sqlTrace.getType(), sqlTrace.isPrint()));

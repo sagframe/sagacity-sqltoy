@@ -302,6 +302,11 @@ public class SqlToyContext {
 	 * 脱敏处理器
 	 */
 	private DesensitizeProvider desensitizeProvider;
+	
+	/**
+	 * 重新执行查询的数据库
+	 */
+	private String[] redoDataSources;
 
 	/**
 	 * @todo 初始化
@@ -1005,6 +1010,14 @@ public class SqlToyContext {
 
 	public void setColumnLabelUpperOrLower(String columnLabelUpperOrLower) {
 		this.columnLabelUpperOrLower = columnLabelUpperOrLower;
+	}
+
+	public String[] getRedoDataSources() {
+		return redoDataSources;
+	}
+
+	public void setRedoDataSources(String[] redoDataSources) {
+		this.redoDataSources = redoDataSources;
 	}
 
 }

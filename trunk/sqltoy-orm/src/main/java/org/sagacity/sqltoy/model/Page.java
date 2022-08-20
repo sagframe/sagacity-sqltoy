@@ -43,6 +43,11 @@ public class Page<T> implements Serializable {
 	 */
 	private long startIndex = 0;
 
+	/**
+	 * 跳转超出数据页范围回到第一页
+	 */
+	private boolean overPageToFirst = false;
+
 	public Page() {
 
 	}
@@ -108,6 +113,11 @@ public class Page<T> implements Serializable {
 		return this;
 	}
 
+	public Page setOverPageToFirst(boolean overPageToFirst) {
+		this.overPageToFirst = overPageToFirst;
+		return this;
+	}
+
 	/**
 	 * Access method for the pageNo property.
 	 * 
@@ -127,8 +137,8 @@ public class Page<T> implements Serializable {
 	/**
 	 * Sets the value of the pageNo property.
 	 * 
-	 * @param pageNo the new value of the pageNo property where pageNo==-1 then
-	 *                show all page
+	 * @param pageNo the new value of the pageNo property where pageNo==-1 then show
+	 *               all page
 	 */
 	public Page setPageNo(long pageNo) {
 		this.pageNo = pageNo;
@@ -209,6 +219,10 @@ public class Page<T> implements Serializable {
 	public Page setSkipQueryCount(Boolean skipQueryCount) {
 		this.skipQueryCount = skipQueryCount;
 		return this;
+	}
+
+	public boolean isOverPageToFirst() {
+		return overPageToFirst;
 	}
 
 }

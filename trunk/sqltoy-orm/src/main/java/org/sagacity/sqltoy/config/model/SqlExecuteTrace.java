@@ -56,6 +56,11 @@ public class SqlExecuteTrace implements Serializable {
 	private boolean overTime = false;
 
 	/**
+	 * 数据库类型
+	 */
+	private String dialect;
+
+	/**
 	 * @return the isPrint
 	 */
 	public boolean isPrint() {
@@ -185,4 +190,13 @@ public class SqlExecuteTrace implements Serializable {
 			executeLogs.addAll(sqlExecuteLogs);
 		}
 	}
+
+	public String getDialect() {
+		return dialect;
+	}
+
+	public void setDialect(String dialect) {
+		this.dialect = dialect;
+	}
+
 }
