@@ -123,7 +123,6 @@ public class DialectUtils {
 
 	private static final HashMap<String, String> QuesFilters = new HashMap<String, String>() {
 		private static final long serialVersionUID = 7135705054559913831L;
-
 		{
 			put("'", "'");
 			put("\"", "\"");
@@ -399,7 +398,6 @@ public class DialectUtils {
 				countQueryStr.append("select ").append(countPart).append(" from (").append(query_tmp)
 						.append(") sag_count_tmpTable ");
 			}
-
 			paramCnt = getParamsCount(countQueryStr.toString());
 			withParamCnt = getParamsCount(withSql);
 			countQueryStr.insert(0, withSql + " ");
@@ -496,10 +494,8 @@ public class DialectUtils {
 				sqlParams = convertParamsToNamed(tailSql, index);
 				tailSql = SqlConfigParseUtils.recoverDblQuestMark(sqlParams.getSql());
 				result.setFastTailSql(tailSql);
-
 				// 完整sql
 				result.setSql(fastPreSql.concat(" (").concat(fastSql).concat(") ").concat(tailSql));
-
 				// 构造对应?参数个数的:named模式参数名数组
 				String[] paramsName = new String[index];
 				for (int i = 0; i < index; i++) {
@@ -511,7 +507,6 @@ public class DialectUtils {
 				result.setSql(SqlConfigParseUtils.recoverDblQuestMark(sqlParams.getSql()));
 				result.setParamsName(sqlParams.getParamsName());
 			}
-
 			// 自定义分页的count sql，一般无需定义
 			sqlParams = convertParamsToNamed(SqlConfigParseUtils.clearDblQuestMark(result.getCountSql(null)), 0);
 			result.setCountSql(SqlConfigParseUtils.recoverDblQuestMark(sqlParams.getSql()));
@@ -519,7 +514,6 @@ public class DialectUtils {
 			result.clearDialectSql();
 			SqlConfigParseUtils.processFastWith(result, dialect);
 		}
-
 		// sharding table 替换sql中的表名称
 		ShardingUtils.replaceShardingSqlToyConfig(sqlToyContext, result, tableShardings, dialect,
 				extend.getTableShardingParamsName(sqlToyConfig), extend.getTableShardingParamsValue(sqlToyConfig));

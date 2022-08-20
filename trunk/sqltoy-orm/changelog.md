@@ -1,5 +1,34 @@
-﻿# v5.2.0  2022-6-18
-1、实现跟spring强耦合剥离，单独出org.sagacity.sqltoy.integration包，供其他框架集成扩展
+﻿# v5.2.9  2022-8-21
+1、针对一下产品化的软件(适配多种数据库:mysql\oracle\postgres\db2\mssql),要求在一个数据库场景下可以测试相同的功能是否可以适配不同数据库
+
+# v5.2.8  2022-8-11
+1、支持动态增加缓存翻译配置和缓存更新检测
+
+# v5.2.7  2022-8-6
+1、增加将缓存数据以VO/DTO 对象类集合返回方法
+public <T> List<T> getTranslateCache(String cacheName, String cacheType,Class<T> reusltType);
+2、优化树型表结构封装wrapTreeTableRoute事务问题，将autoCommit=true改为了null不强制提交
+3、getTableColumns(String tableName)方法增加字段:是否是索引、是否unique、索引名称三个属性
+
+# v5.2.6  2022-7-24
+1、增加了spring.sqltoy.columnLabelUpperOrLower属性，设置getMetaData().getColumnLabel(index)是否转大小写，默认为default，表示不做处理
+2、支持以流模式获取查询结果
+
+# v5.2.5  2022-7-22
+1、改进save、saveAll等操作的默认值处理机制，通过对象填充默认值代替insert sql中nvl(?,'1') 模式
+
+# v5.2.3  2022-7-1
+1、增加OverTimeSqlHandler 提供超时执行sql的采集
+调用方法: lazyDao.getSqlToyContext().getSlowestSql(10,true)
+2、针对loadAll级联加载关联字段值为null报NPE问题修复
+
+# v5.2.2  2022-6-23
+1、优化nanotimeId主键生成策略，避免在一次取10万规模时存在偶发重复
+
+# v5.2.1  2022-6-18
+1、sqltoy抽离对spring的依赖，便于其他框架对sqltoy扩展【5.2.0】
+2、针对mongo、elasticsearch 查询，修复mongo().entity(entity)对象传参失效问题【5.2.1】
+3、MapKit增加了map(key,value)方法，便于构建单值map【5.2.1】
 
 # v5.1.46 2022-06-11
 1、缓存翻译配置支持多个配置文件,默认配置为:classpath:sqltoy-translate.xml;classpath:translates

@@ -128,7 +128,7 @@ public class SqlExecuteStat {
 				sqlTrace.setOverTime(true);
 				sqlTrace.addLog("slowSql执行超时", "耗时(毫秒):{} >={} (阀值)!", runTime, printSqlTimeoutMillis);
 			} else {
-				sqlTrace.addLog("执行时长", "耗时:{} 毫秒 !", runTime);
+				sqlTrace.addLog("执行总时长", "耗时:{} 毫秒 !", runTime);
 			}
 			// 日志输出
 			printLogs(sqlTrace);
@@ -152,14 +152,12 @@ public class SqlExecuteStat {
 			errorLog = true;
 			reportStatus = "发生异常错误!";
 		}
-
 		if (!errorLog) {
 			// sql中已经标记了#not_debug# 表示无需输出日志(一般针对缓存检测、缓存加载等,避免这些影响业务日志)
 			if (!sqlTrace.isPrint()) {
 				return;
 			}
 		}
-
 		String uid = sqlTrace.getUid();
 		StringBuilder result = new StringBuilder();
 		String optType = sqlTrace.getType();
@@ -211,8 +209,8 @@ public class SqlExecuteStat {
 					}
 				}
 			} else {
-				result.append("\n/*|---- 过程: " + step + "," + topic
-						+ (content == null ? "" : ":" + StringUtil.fillArgs(content, args)));
+				result.append("\n/*|---- 过程: " + step + "," + (null == topic ? "" : topic)
+						+ (null == content ? "" : ":" + StringUtil.fillArgs(content, args)));
 			}
 		}
 		result.append("\n/*|----------------------完成执行报告输出 --------------------------------------------------*/");
