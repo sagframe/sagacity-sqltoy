@@ -15,6 +15,7 @@ import org.sagacity.sqltoy.integration.impl.SpringConnectionFactory;
 import org.sagacity.sqltoy.plugins.FilterHandler;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.plugins.OverTimeSqlHandler;
+import org.sagacity.sqltoy.plugins.SqlInterceptor;
 import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
 import org.sagacity.sqltoy.plugins.secure.DesensitizeProvider;
@@ -62,21 +63,20 @@ public class SqltoyAutoConfiguration {
 		SqlToyContext sqlToyContext = new SqlToyContext();
 
 		// --------5.2 变化的地方----------------------------------
-		// 注意appContext注入非常关键
-		SpringAppContext appContext = new SpringAppContext();
-		appContext.setContext(applicationContext);
+		// 注意appContext注入非常关键(必须设置)
+		SpringAppContext appContext = new SpringAppContext(applicationContext);
 		sqlToyContext.setAppContext(appContext);
 
-		// 设置默认spring的connectFactory
+		// 设置默认spring的connectFactory(不设置也会自动默认)
 		sqlToyContext.setConnectionFactory(new SpringConnectionFactory());
 
-		// 分布式id产生器实现类
+		// 分布式id产生器实现类(不设置也会自动默认)
 		sqlToyContext.setDistributeIdGeneratorClass("org.sagacity.sqltoy.integration.impl.SpringRedisIdGenerator");
 
-		// 针对Caffeine缓存指定实现类型
+		// 针对Caffeine缓存指定实现类型(不设置也会自动默认)
 		sqlToyContext
 				.setTranslateCaffeineManagerClass("org.sagacity.sqltoy.translate.cache.impl.TranslateCaffeineManager");
-		// 注入spring的默认mongoQuery实现类
+		// 注入spring的默认mongoQuery实现类(不设置也会自动默认)
 		sqlToyContext.setMongoQueryClass("org.sagacity.sqltoy.integration.impl.SpringMongoQuery");
 		// --------end 5.2 -----------------------------------------
 
@@ -339,6 +339,22 @@ public class SqltoyAutoConfiguration {
 				sqlToyContext.setOverTimeSqlHandler(
 						(OverTimeSqlHandler) Class.forName(overTimeSqlHandler).getDeclaredConstructor().newInstance());
 			}
+		}
+
+		// 自定义sql拦截处理器
+		String[] sqlInterceptors = properties.getSqlInterceptors();
+		if (null != sqlInterceptors && sqlInterceptors.length > 0) {
+			List<SqlInterceptor> sqlInterceptorList = new ArrayList<SqlInterceptor>();
+			for (String interceptor : sqlInterceptors) {
+				if (applicationContext.containsBean(interceptor)) {
+					sqlInterceptorList.add((SqlInterceptor) applicationContext.getBean(interceptor));
+				} // 包名和类名称
+				else if (interceptor.contains(".")) {
+					sqlInterceptorList
+							.add(((SqlInterceptor) Class.forName(interceptor).getDeclaredConstructor().newInstance()));
+				}
+			}
+			sqlToyContext.setSqlInterceptors(sqlInterceptorList);
 		}
 		return sqlToyContext;
 	}

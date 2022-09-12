@@ -29,6 +29,7 @@ import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
+import org.sagacity.sqltoy.config.model.OperateType;
 import org.sagacity.sqltoy.config.model.PageOptimize;
 import org.sagacity.sqltoy.config.model.ShardingModel;
 import org.sagacity.sqltoy.config.model.SqlExecuteTrace;
@@ -41,6 +42,7 @@ import org.sagacity.sqltoy.dialect.impl.DB2Dialect;
 import org.sagacity.sqltoy.dialect.impl.DMDialect;
 import org.sagacity.sqltoy.dialect.impl.DefaultDialect;
 import org.sagacity.sqltoy.dialect.impl.GuassDBDialect;
+import org.sagacity.sqltoy.dialect.impl.H2Dialect;
 import org.sagacity.sqltoy.dialect.impl.ImpalaDialect;
 import org.sagacity.sqltoy.dialect.impl.KingbaseDialect;
 import org.sagacity.sqltoy.dialect.impl.MySqlDialect;
@@ -213,6 +215,11 @@ public class DialectFactory {
 			dialectSqlWrapper = new KingbaseDialect();
 			break;
 		}
+		// h2
+		case DBType.H2: {
+			dialectSqlWrapper = new H2Dialect();
+			break;
+		}
 		// 如果匹配不上使用默认dialect
 		default:
 			dialectSqlWrapper = new DefaultDialect();
@@ -318,6 +325,9 @@ public class DialectFactory {
 							SqlToyResult queryParam = SqlConfigParseUtils.processSql(realSqlToyConfig.getSql(dialect),
 									extend.getParamsName(sqlToyConfig),
 									extend.getParamsValue(sqlToyContext, realSqlToyConfig), dialect);
+							// 增加sql执行拦截器 update 2022-9-10
+							queryParam = DialectUtils.doInterceptors(sqlToyContext, realSqlToyConfig,
+									OperateType.execute, queryParam, dbType);
 							// 做sql签名
 							String executeSql = SqlUtilsExt.signSql(queryParam.getSql(), dbType, realSqlToyConfig);
 							// 2022-3-21 存在类似in (?) ?对应参数为数组，将参数和类型长度变得不一致则去除类型约束
@@ -788,6 +798,9 @@ public class DialectFactory {
 												realSqlToyConfig.getSql(dialect),
 												extend.getParamsName(realSqlToyConfig),
 												extend.getParamsValue(sqlToyContext, realSqlToyConfig), dialect);
+										// 增加sql执行拦截器 update 2022-9-10
+										queryParam = DialectUtils.doInterceptors(sqlToyContext, realSqlToyConfig,
+												OperateType.search, queryParam, dbType);
 										queryResult = getDialectSqlWrapper(dbType).findBySql(sqlToyContext,
 												realSqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 												extend.rowCallbackHandler,
@@ -878,7 +891,7 @@ public class DialectFactory {
 		queryResult.setPageSize(pageSize);
 		ExecutorService pool = null;
 		try {
-			SqlExecuteStat.debug("开始并行查询count总记录数和单页记录数据!",null);
+			SqlExecuteStat.debug("开始并行查询count总记录数和单页记录数据!", null);
 			final SqlExecuteTrace sqlTrace = SqlExecuteStat.get();
 			pool = Executors.newFixedThreadPool(2);
 			// 查询总记录数量
@@ -1084,6 +1097,9 @@ public class DialectFactory {
 							SqlToyResult queryParam = SqlConfigParseUtils.processSql(realSqlToyConfig.getSql(dialect),
 									extend.getParamsName(realSqlToyConfig),
 									extend.getParamsValue(sqlToyContext, realSqlToyConfig), dialect);
+							// 增加sql执行拦截器 update 2022-9-10
+							queryParam = DialectUtils.doInterceptors(sqlToyContext, realSqlToyConfig,
+									OperateType.search, queryParam, dbType);
 							QueryResult queryResult = getDialectSqlWrapper(dbType).findBySql(sqlToyContext,
 									realSqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 									extend.rowCallbackHandler, wrapDecryptHandler(sqlToyContext, extend.resultType),
@@ -1228,6 +1244,8 @@ public class DialectFactory {
 		// 通过参数处理最终的sql和参数值
 		SqlToyResult queryParam = SqlConfigParseUtils.processSql(sql, extend.getParamsName(sqlToyConfig),
 				extend.getParamsValue(sqlToyContext, sqlToyConfig), dialect);
+		// 增加sql执行拦截器 update 2022-9-10
+		queryParam = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig, OperateType.count, queryParam, dbType);
 		return getDialectSqlWrapper(dbType).getCountBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(),
 				queryParam.getParamsValue(), isLastSql, conn, dbType, dialect);
 	}
@@ -1831,6 +1849,9 @@ public class DialectFactory {
 							SqlToyResult queryParam = SqlConfigParseUtils.processSql(realSqlToyConfig.getSql(dialect),
 									extend.getParamsName(realSqlToyConfig),
 									extend.getParamsValue(sqlToyContext, realSqlToyConfig), dialect);
+							// 增加sql执行拦截器 update 2022-9-10
+							queryParam = DialectUtils.doInterceptors(sqlToyContext, realSqlToyConfig,
+									OperateType.fetchUpdate, queryParam, dbType);
 							QueryResult queryResult = getDialectSqlWrapper(dbType).updateFetch(sqlToyContext,
 									realSqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 									updateRowHandler, conn, dbType, dialect,
@@ -1961,8 +1982,11 @@ public class DialectFactory {
 							SqlToyResult queryParam = SqlConfigParseUtils.processSql(realSqlToyConfig.getSql(dialect),
 									extend.getParamsName(realSqlToyConfig),
 									extend.getParamsValue(sqlToyContext, realSqlToyConfig), dialect);
+							// 增加sql执行拦截器 update 2022-9-10
+							queryParam = DialectUtils.doInterceptors(sqlToyContext, realSqlToyConfig,
+									OperateType.search, queryParam, dbType);
 							// 做sql签名
-							String lastSql = SqlUtilsExt.signSql(queryParam.getSql(), dbType, sqlToyConfig);
+							String lastSql = SqlUtilsExt.signSql(queryParam.getSql(), dbType, realSqlToyConfig);
 							Object[] paramsValue = queryParam.getParamsValue();
 							// 打印sql
 							SqlExecuteStat.showSql("执行查询", lastSql, paramsValue);

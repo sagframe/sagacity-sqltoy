@@ -129,7 +129,6 @@ public class XMLUtil {
 		}
 		// 最后一个
 		values[index] = StringUtil.trim(elt.getTextContent());
-
 		Method[] realMethods = BeanUtil.matchSetMethods(entity.getClass(), properties);
 		Method method;
 		String[] args;

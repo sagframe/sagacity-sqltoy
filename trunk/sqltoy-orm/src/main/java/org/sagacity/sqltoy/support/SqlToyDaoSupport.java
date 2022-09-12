@@ -1,6 +1,7 @@
 package org.sagacity.sqltoy.support;
 
 import java.io.Serializable;
+import java.lang.reflect.Array;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -8,6 +9,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -52,6 +54,7 @@ import org.sagacity.sqltoy.model.CacheMatchFilter;
 import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.model.EntityQuery;
 import org.sagacity.sqltoy.model.EntityUpdate;
+import org.sagacity.sqltoy.model.IgnoreCaseLinkedMap;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.MapKit;
@@ -73,6 +76,7 @@ import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.inner.TranslateExtend;
 import org.sagacity.sqltoy.plugins.CrossDbAdapter;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
+import org.sagacity.sqltoy.plugins.UnifyUpdateFieldsController;
 import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
 import org.sagacity.sqltoy.plugins.id.IdGenerator;
 import org.sagacity.sqltoy.translate.TranslateHandler;
@@ -1397,10 +1401,49 @@ public class SqlToyDaoSupport {
 			throw new DataAccessException("缓存翻译中对应的缓存:" + cacheName + " 没有定义,请正确检查配置!");
 		}
 		HashMap<String, Object[]> cacheData = sqlToyContext.getTranslateManager().getCacheData(cacheName, cacheType);
+		if (cacheData.isEmpty()) {
+			return new ArrayList<T>();
+		}
+		if (null == reusltType || reusltType == Array.class) {
+			return new ArrayList(cacheData.values());
+		}
 		String[] props = translateConfig.getProperties();
 		// 注意直接sql定义的缓存，框架会自动获取label
 		if (props == null || props.length == 0) {
-			throw new DataAccessException("缓存翻译中的缓存:[" + cacheName + "]没有正确定义properties属性,无法映射到VO/POJO对象!");
+			throw new DataAccessException("缓存翻译中的缓存:[" + cacheName + "]没有正确定义properties属性,无法映射到VO/POJO/Map对象!");
+		}
+		// 转map类型
+		if (reusltType == Map.class || reusltType == HashMap.class || reusltType == LinkedHashMap.class
+				|| reusltType == IgnoreKeyCaseMap.class || reusltType == IgnoreCaseLinkedMap.class) {
+			List result = new ArrayList();
+			Iterator<Object[]> iter = cacheData.values().iterator();
+			Object[] row;
+			int mapType = 1;
+			if (reusltType == LinkedHashMap.class) {
+				mapType = 2;
+			} else if (reusltType == IgnoreKeyCaseMap.class) {
+				mapType = 3;
+			} else if (reusltType == IgnoreCaseLinkedMap.class) {
+				mapType = 4;
+			}
+			while (iter.hasNext()) {
+				Map map;
+				if (mapType == 2) {
+					map = new LinkedHashMap();
+				} else if (mapType == 3) {
+					map = new IgnoreKeyCaseMap();
+				} else if (mapType == 4) {
+					map = new IgnoreCaseLinkedMap();
+				} else {
+					map = new HashMap();
+				}
+				row = iter.next();
+				for (int i = 0; i < props.length; i++) {
+					map.put(props[i], row[i]);
+				}
+				result.add(map);
+			}
+			return result;
 		}
 		return (List<T>) BeanUtil.reflectListToBean(sqlToyContext.getTypeHandler(), cacheData.values(), props,
 				reusltType);
@@ -1860,7 +1903,9 @@ public class SqlToyDaoSupport {
 		// 对统一更新字段做处理
 		IUnifyFieldsHandler unifyHandler = getSqlToyContext().getUnifyFieldsHandler();
 		if (unifyHandler != null) {
-			Map<String, Object> updateFields = unifyHandler.updateUnifyFields();
+			Map<String, Object> updateFields = UnifyUpdateFieldsController.useUnifyFields()
+					? unifyHandler.updateUnifyFields()
+					: null;
 			if (updateFields != null && !updateFields.isEmpty()) {
 				Iterator<Entry<String, Object>> updateIter = updateFields.entrySet().iterator();
 				while (updateIter.hasNext()) {

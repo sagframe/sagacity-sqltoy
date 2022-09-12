@@ -119,6 +119,8 @@ public class EntityManager {
 	 */
 	private ConcurrentHashMap<String, EntityMeta> entitysMetaMap = new ConcurrentHashMap<String, EntityMeta>();
 
+	private ConcurrentHashMap<String, String> tableEntityNameMap = new ConcurrentHashMap<String, String>();
+
 	/**
 	 * 非sqltoy entity类,一般指仅用于查询作为返回结果的VO
 	 */
@@ -324,6 +326,7 @@ public class EntityManager {
 		}
 		if (entityMeta != null) {
 			entitysMetaMap.put(className, entityMeta);
+			tableEntityNameMap.put(entityMeta.getTableName().toLowerCase(), className);
 		} else {
 			if (isWarn) {
 				logger.warn("SqlToy Entity:{}没有使用@Entity注解表明是一个实体类,请检查!", className);
@@ -810,4 +813,11 @@ public class EntityManager {
 		this.recursive = recursive;
 	}
 
+	public EntityMeta getEntityMeta(String tableName) {
+		String className = tableEntityNameMap.get(tableName.toLowerCase());
+		if (className == null) {
+			return null;
+		}
+		return entitysMetaMap.get(className);
+	}
 }

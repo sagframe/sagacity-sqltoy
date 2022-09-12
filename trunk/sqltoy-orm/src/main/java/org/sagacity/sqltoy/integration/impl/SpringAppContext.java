@@ -6,7 +6,6 @@ import org.sagacity.sqltoy.integration.AppContext;
 import org.springframework.context.ApplicationContext;
 
 /**
- * 
  * @project sagacity-sqltoy
  * @description 基于spring的bean管理，主要用于获取Bean实例
  * @author zhongxuchen
@@ -15,6 +14,13 @@ import org.springframework.context.ApplicationContext;
  */
 public class SpringAppContext implements AppContext {
 	private ApplicationContext context;
+
+	public SpringAppContext() {
+	}
+
+	public SpringAppContext(ApplicationContext context) {
+		this.context = context;
+	}
 
 	@Override
 	public boolean containsBean(String beanName) {

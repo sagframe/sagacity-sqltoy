@@ -53,6 +53,11 @@ public class DBUtilsTest {
 	 */
 	public final static String DRIVER_POSTGRESQL = "org.postgresql.Driver";
 
+    /**
+     * url like:jdbc:h2:file:/database
+     */
+    public final static String DRIVER_H2 = "org.h2.Driver";
+
 	/**
 	 * 获取数据库连接
 	 * 

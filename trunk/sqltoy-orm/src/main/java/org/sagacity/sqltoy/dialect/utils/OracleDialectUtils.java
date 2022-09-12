@@ -19,6 +19,7 @@ import org.sagacity.sqltoy.callback.CallableStatementResultHandler;
 import org.sagacity.sqltoy.callback.DecryptHandler;
 import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
+import org.sagacity.sqltoy.config.model.OperateType;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
@@ -144,8 +145,10 @@ public class OracleDialectUtils {
 			sql.append(sqlToyConfig.getFastTailSql(dialect));
 		}
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
-				sql.toString(), (pageNo - 1) * pageSize, Long.valueOf(pageSize),dialect);
+				sql.toString(), (pageNo - 1) * pageSize, Long.valueOf(pageSize), dialect);
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		// 增加sql执行拦截器 update 2022-9-10
+		queryParam = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig, OperateType.page, queryParam, dbType);
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 				extend.rowCallbackHandler, decryptHandler, conn, dbType, 0, fetchSize, maxRows);
 	}
@@ -195,8 +198,10 @@ public class OracleDialectUtils {
 			sql.append(sqlToyConfig.getFastTailSql(dialect));
 		}
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
-				sql.toString(), null, null,dialect);
+				sql.toString(), null, null, dialect);
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		// 增加sql执行拦截器 update 2022-9-10
+		queryParam = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig, OperateType.top, queryParam, dbType);
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 				extend.rowCallbackHandler, decryptHandler, conn, dbType, 0, fetchSize, maxRows);
 	}
@@ -253,7 +258,9 @@ public class OracleDialectUtils {
 			sql.append(sqlToyConfig.getFastTailSql(dialect));
 		}
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
-				sql.toString(), null, null,dialect);
+				sql.toString(), null, null, dialect);
+		// 增加sql执行拦截器 update 2022-9-10
+		queryParam = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig, OperateType.random, queryParam, dbType);
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 				extend.rowCallbackHandler, decryptHandler, conn, dbType, 0, fetchSize, maxRows);

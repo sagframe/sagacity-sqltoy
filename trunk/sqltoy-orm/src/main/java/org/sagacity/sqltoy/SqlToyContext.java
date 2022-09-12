@@ -23,6 +23,7 @@ import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.plugins.FilterHandler;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.plugins.OverTimeSqlHandler;
+import org.sagacity.sqltoy.plugins.SqlInterceptor;
 import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
 import org.sagacity.sqltoy.plugins.datasource.impl.DefaultDataSourceSelector;
@@ -302,11 +303,16 @@ public class SqlToyContext {
 	 * 脱敏处理器
 	 */
 	private DesensitizeProvider desensitizeProvider;
-	
+
 	/**
 	 * 重新执行查询的数据库
 	 */
 	private String[] redoDataSources;
+
+	/**
+	 * sql执行拦截器，提供对最终执行前的sql进行干预处理
+	 */
+	private List<SqlInterceptor> sqlInterceptors;
 
 	/**
 	 * @todo 初始化
@@ -556,6 +562,10 @@ public class SqlToyContext {
 		return entityManager.getEntityMeta(this, entityClass);
 	}
 
+	public EntityMeta getEntityMeta(String tableName) {
+		return entityManager.getEntityMeta(tableName);
+	}
+	
 	/**
 	 * @TODO 判断是否是实体bean
 	 * @param entityClass
@@ -1020,4 +1030,11 @@ public class SqlToyContext {
 		this.redoDataSources = redoDataSources;
 	}
 
+	public List<SqlInterceptor> getSqlInterceptors() {
+		return sqlInterceptors;
+	}
+
+	public void setSqlInterceptors(List<SqlInterceptor> sqlInterceptors) {
+		this.sqlInterceptors = sqlInterceptors;
+	}
 }

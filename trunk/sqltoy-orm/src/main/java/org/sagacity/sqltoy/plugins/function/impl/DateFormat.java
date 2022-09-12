@@ -71,6 +71,14 @@ public class DateFormat extends IFunction {
 			format = format.replace("hh24", "%H").replace("hh", "%h").replace("mi", "%i").replace("ss", "%s");
 			return "date_format(" + args[0] + "," + format + ")";
 		}
+        case DBType.H2: {
+            // 日期
+            format = args[1].replace("%Y", "yyyy").replace("%y", "yyyy").replace("%m", "MM").replace("%d", "dd");
+            // 时间处理
+            format = format.replace("%T", "hh:mm:ss");
+            format = format.replace("%H", "hh").replace("%h", "hh").replace("%i", "mm").replace("%s", "ss");
+            return "parsedatetime(" + args[0] + "," + format + ")";
+        }
 		default:
 			return super.IGNORE;
 		}

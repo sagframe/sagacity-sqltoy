@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
  * @author zhongxuchen
  * @version v1.0,Date:2015年3月3日
  * @modify data:2020-06-10 剔除mssql2008,hana,增加tidb、guassdb、oceanbase、dm数据库方言的支持
+ * @modify data:2022-08-29 增加h2数据库的支持
  */
 public class DataSourceUtils {
 	/**
@@ -84,6 +85,9 @@ public class DataSourceUtils {
 		public final static String IMPALA = "impala";
 		public final static String TDENGINE = "tdengine";
 
+        //h2
+        public final static String H2 = "h2";
+
 		public final static String UNDEFINE = "UNDEFINE";
 	}
 
@@ -128,6 +132,8 @@ public class DataSourceUtils {
 		public final static int ES = 140;
 		public final static int TDENGINE = 150;
 		public final static int IMPALA = 160;
+        //h2
+        public final static int  H2 = 170;
 	}
 
 	public static HashMap<String, Integer> DBNameTypeMap = new HashMap<String, Integer>();
@@ -161,6 +167,8 @@ public class DataSourceUtils {
 		DBNameTypeMap.put(Dialect.TDENGINE, DBType.TDENGINE);
 		DBNameTypeMap.put(Dialect.IMPALA, DBType.IMPALA);
 		DBNameTypeMap.put(Dialect.UNDEFINE, DBType.UNDEFINE);
+        //20220829 增加对h2的支持
+        DBNameTypeMap.put(Dialect.H2, DBType.H2);
 	}
 
 	/**
@@ -224,6 +232,9 @@ public class DataSourceUtils {
 		case DBType.TDENGINE: {
 			return Dialect.TDENGINE;
 		}
+		case DBType.H2: {
+            return Dialect.H2;
+        }
 		default:
 			return Dialect.UNDEFINE;
 		}
@@ -320,6 +331,10 @@ public class DataSourceUtils {
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.ES) != -1) {
 				return Dialect.ES;
 			}
+            // 20220829 h2
+            if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.H2) != -1) {
+                return Dialect.H2;
+            }
 		}
 		return Dialect.UNDEFINE;
 	}
@@ -417,7 +432,10 @@ public class DataSourceUtils {
 				dbType = DBType.KINGBASE;
 			} else if (dbDialect.equals(Dialect.ES)) {
 				dbType = DBType.ES;
-			}
+			}//h2
+            else if (dbDialect.equals(Dialect.H2)) {
+                dbType = DBType.H2;
+            }
 			DBNameTypeMap.put(dbKey, dbType);
 		}
 		return DBNameTypeMap.get(dbKey);
@@ -571,6 +589,8 @@ public class DataSourceUtils {
 				return Dialect.KINGBASE;
 			case DBType.IMPALA:
 				return Dialect.IMPALA;
+			case DBType.H2:
+                return Dialect.H2;
 			default:
 				return "";
 			}

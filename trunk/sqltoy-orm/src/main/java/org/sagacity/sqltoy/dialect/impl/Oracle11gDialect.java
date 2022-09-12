@@ -19,6 +19,7 @@ import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
+import org.sagacity.sqltoy.config.model.OperateType;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
@@ -145,6 +146,8 @@ public class Oracle11gDialect implements Dialect {
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
 				sql.toString(), pageNo * pageSize, (pageNo - 1) * pageSize, dialect);
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		// 增加sql执行拦截器 update 2022-9-10
+		queryParam = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig, OperateType.page, queryParam, dbType);
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 				extend.rowCallbackHandler, decryptHandler, conn, dbType, startIndex, fetchSize, maxRows);
 	}
@@ -181,6 +184,8 @@ public class Oracle11gDialect implements Dialect {
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
 				sql.toString(), null, null, dialect);
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		// 增加sql执行拦截器 update 2022-9-10
+		queryParam = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig, OperateType.top, queryParam, dbType);
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 				extend.rowCallbackHandler, decryptHandler, conn, dbType, 0, fetchSize, maxRows);
 	}

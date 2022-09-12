@@ -33,6 +33,7 @@ import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FormatModel;
 import org.sagacity.sqltoy.config.model.LabelIndexModel;
 import org.sagacity.sqltoy.config.model.LinkModel;
+import org.sagacity.sqltoy.config.model.OperateType;
 import org.sagacity.sqltoy.config.model.PivotModel;
 import org.sagacity.sqltoy.config.model.ReverseModel;
 import org.sagacity.sqltoy.config.model.RowsChainRelativeModel;
@@ -1284,6 +1285,9 @@ public class ResultUtils {
 					SqlToyResult pivotSqlToyResult = SqlConfigParseUtils.processSql(pivotSqlConfig.getSql(dialect),
 							extend.getParamsName(pivotSqlConfig), extend.getParamsValue(sqlToyContext, pivotSqlConfig),
 							dialect);
+					// 增加sql执行拦截器 update 2022-9-10
+					pivotSqlToyResult = DialectUtils.doInterceptors(sqlToyContext, pivotSqlConfig, OperateType.search,
+							pivotSqlToyResult, dbType);
 					List pivotCategory = SqlUtil.findByJdbcQuery(sqlToyContext.getTypeHandler(),
 							pivotSqlToyResult.getSql(), pivotSqlToyResult.getParamsValue(), null, null, null, conn,
 							dbType, sqlToyConfig.isIgnoreEmpty(), null, SqlToyConstants.FETCH_SIZE, -1);
