@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package org.sagacity.sqltoy.dialect.utils;
 
@@ -55,6 +55,7 @@ import org.sagacity.sqltoy.model.SecureType;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
+import org.sagacity.sqltoy.plugins.UnifyUpdateFieldsController;
 import org.sagacity.sqltoy.plugins.secure.DesensitizeProvider;
 import org.sagacity.sqltoy.plugins.secure.FieldsSecureProvider;
 import org.sagacity.sqltoy.plugins.sharding.ShardingUtils;
@@ -123,7 +124,6 @@ public class DialectUtils {
 
 	private static final HashMap<String, String> QuesFilters = new HashMap<String, String>() {
 		private static final long serialVersionUID = 7135705054559913831L;
-
 		{
 			put("'", "'");
 			put("\"", "\"");
@@ -399,7 +399,6 @@ public class DialectUtils {
 				countQueryStr.append("select ").append(countPart).append(" from (").append(query_tmp)
 						.append(") sag_count_tmpTable ");
 			}
-
 			paramCnt = getParamsCount(countQueryStr.toString());
 			withParamCnt = getParamsCount(withSql);
 			countQueryStr.insert(0, withSql + " ");
@@ -496,10 +495,8 @@ public class DialectUtils {
 				sqlParams = convertParamsToNamed(tailSql, index);
 				tailSql = SqlConfigParseUtils.recoverDblQuestMark(sqlParams.getSql());
 				result.setFastTailSql(tailSql);
-
 				// 完整sql
 				result.setSql(fastPreSql.concat(" (").concat(fastSql).concat(") ").concat(tailSql));
-
 				// 构造对应?参数个数的:named模式参数名数组
 				String[] paramsName = new String[index];
 				for (int i = 0; i < index; i++) {
@@ -511,7 +508,6 @@ public class DialectUtils {
 				result.setSql(SqlConfigParseUtils.recoverDblQuestMark(sqlParams.getSql()));
 				result.setParamsName(sqlParams.getParamsName());
 			}
-
 			// 自定义分页的count sql，一般无需定义
 			sqlParams = convertParamsToNamed(SqlConfigParseUtils.clearDblQuestMark(result.getCountSql(null)), 0);
 			result.setCountSql(SqlConfigParseUtils.recoverDblQuestMark(sqlParams.getSql()));
@@ -519,7 +515,6 @@ public class DialectUtils {
 			result.clearDialectSql();
 			SqlConfigParseUtils.processFastWith(result, dialect);
 		}
-
 		// sharding table 替换sql中的表名称
 		ShardingUtils.replaceShardingSqlToyConfig(sqlToyContext, result, tableShardings, dialect,
 				extend.getTableShardingParamsName(sqlToyConfig), extend.getTableShardingParamsValue(sqlToyConfig));
@@ -528,7 +523,7 @@ public class DialectUtils {
 
 	/**
 	 * update 2020-08-15 增强对非条件参数?的判断处理
-	 * 
+	 *
 	 * @todo sql中替换?为:sagParamName+i形式,便于查询处理(主要针对分页和取随机记录的查询)
 	 * @param sql
 	 * @param startIndex
@@ -637,7 +632,7 @@ public class DialectUtils {
 	}
 
 	/**
-	 * @todo 处理加工对象基于db2、oracle、sqlserver数据库的saveOrUpdateSql
+	 * @todo 处理加工对象基于db2、oracle数据库的saveOrUpdateSql
 	 * @param unifyFieldsHandler
 	 * @param dbType
 	 * @param entityMeta
@@ -849,11 +844,6 @@ public class DialectUtils {
 					if (convertBlob && "byte[]".equals(fieldMeta.getFieldType())) {
 						sql.append(nullFunction);
 						sql.append("(cast(? as bytea),").append(columnName).append(" )");
-						// sql.append(" cast(");
-						// sql.append(nullFunction);
-						// sql.append("(cast(? as
-						// varchar),").append("cast(").append(columnName).append(" as varchar))");
-						// sql.append(" as bytea)");
 					} else {
 						sql.append(nullFunction);
 						sql.append("(?,").append(columnName).append(")");
@@ -1002,6 +992,7 @@ public class DialectUtils {
 		}
 		int idSize = entityMeta.getIdArray().length;
 		SqlToyResult sqlToyResult = null;
+		List<Object[]> sortIds = new ArrayList();
 		// 单主键
 		if (idSize == 1) {
 			// 切取id数组
@@ -1010,12 +1001,16 @@ public class DialectUtils {
 				throw new IllegalArgumentException(
 						tableName + " loadAll method must assign value for pk field:" + entityMeta.getIdArray()[0]);
 			}
+			for (int i = 0; i < idValues.length; i++) {
+				sortIds.add(new Object[] { idValues[i] });
+			}
 			// 组织loadAll sql语句
 			String sql = wrapLoadAll(entityMeta, idValues.length, tableName, lockSqlHandler, lockMode, dbType);
 			sqlToyResult = SqlConfigParseUtils.processSql(sql, null, new Object[] { idValues }, null);
 		} // 复合主键
 		else {
 			List<Object[]> idValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getIdArray(), null, null);
+			sortIds = idValues;
 			Object[] rowData;
 			Object cellValue;
 			// 将条件构造成一个数组
@@ -1038,7 +1033,6 @@ public class DialectUtils {
 			String sql = wrapLoadAll(entityMeta, idValues.size(), tableName, lockSqlHandler, lockMode, dbType);
 			sqlToyResult = SqlConfigParseUtils.processSql(sql, null, realValues, null);
 		}
-
 		SqlExecuteStat.showSql("执行依据主键批量查询", sqlToyResult.getSql(), sqlToyResult.getParamsValue());
 		List<?> entitySet = SqlUtil.findByJdbcQuery(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(),
 				sqlToyResult.getParamsValue(), entityClass, null, decryptHandler, conn, dbType, false,
@@ -1048,6 +1042,32 @@ public class DialectUtils {
 		if (entitySet == null || entitySet.isEmpty()) {
 			return entitySet;
 		}
+		// 按传入的集合顺序进行排序 update 2022-9-9 由网友夜孤城反馈
+		List<Object[]> resultIds = BeanUtil.reflectBeansToInnerAry(entitySet, entityMeta.getIdArray(), null, null);
+		Object[] ids;
+		Object[] idVars;
+		boolean isEqual;
+		List sortEntities = new ArrayList();
+		for (int i = 0; i < sortIds.size(); i++) {
+			ids = sortIds.get(i);
+			for (int j = 0; j < resultIds.size(); j++) {
+				idVars = resultIds.get(j);
+				isEqual = true;
+				// 主键值进行对比
+				for (int k = 0; k < idSize; k++) {
+					if (!ids[k].equals(idVars[k])) {
+						isEqual = false;
+					}
+				}
+				if (isEqual) {
+					// 把对比成功的数据移除出待比较队列
+					sortEntities.add(entitySet.remove(j));
+					resultIds.remove(j);
+					break;
+				}
+			}
+		}
+		entitySet = sortEntities;
 		// 存在主表对应子表
 		if (null != cascadeTypes && !cascadeTypes.isEmpty() && !entityMeta.getCascadeModels().isEmpty()) {
 			StringBuilder subTableSql = new StringBuilder();
@@ -1465,7 +1485,6 @@ public class DialectUtils {
 				BeanUtil.mappingSetProperties(entities, entityMeta.getIdArray(), idSet, new int[] { 0 }, true);
 			}
 		}
-
 		SqlExecuteStat.showSql("批量保存[" + paramValues.size() + "]条记录", insertSql, null);
 		return SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), insertSql, paramValues,
 				entityMeta.getFieldsTypeArray(), entityMeta.getFieldsDefaultValue(), batchSize, autoCommit, conn,
@@ -1542,7 +1561,6 @@ public class DialectUtils {
 				}
 			}
 		}
-
 		String saveAllNotExistSql = generateSqlHandler.generateSql(entityMeta, null);
 		SqlExecuteStat.showSql("批量插入且忽视已存在记录", saveAllNotExistSql, null);
 		return SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), saveAllNotExistSql, paramValues,
@@ -1950,11 +1968,7 @@ public class DialectUtils {
 			index++;
 		}
 		if (skipCount > 0) {
-			if (logger.isDebugEnabled()) {
-				logger.debug("共有{}行记录因为主键值为空跳过修改操作!", skipCount);
-			} else {
-				System.out.println("共有:" + skipCount + " 行记录因为主键值为空跳过修改操作!");
-			}
+			logger.debug("共有:{}行记录因为主键值为空跳过修改操作!", skipCount);
 		}
 		// 构建update语句
 		String updateSql = generateUpdateSql(dbType, entityMeta, nullFunction, forceUpdateFields, realTable);
@@ -2351,10 +2365,6 @@ public class DialectUtils {
 				}
 				callStat.execute();
 				rs = callStat.getResultSet();
-				// 执行查询 解决存储过程返回多个结果集问题，取最后一个结果集
-				// while (callStat.getMoreResults()) {
-				// rs = callStat.getResultSet();
-				// }
 				StoreResult storeResult = new StoreResult();
 				if (rs != null) {
 					QueryResult tempResult = ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn, rs, null,
@@ -2397,7 +2407,9 @@ public class DialectUtils {
 		}
 		// 强制修改字段赋值
 		IgnoreCaseSet tmpSet = unifyFieldsHandler.forceUpdateFields();
-		final IgnoreCaseSet forceUpdateFields = (tmpSet == null) ? new IgnoreCaseSet() : tmpSet;
+		final IgnoreCaseSet forceUpdateFields = (!UnifyUpdateFieldsController.useUnifyFields() || tmpSet == null)
+				? new IgnoreCaseSet()
+				: tmpSet;
 		ReflectPropsHandler handler = new ReflectPropsHandler() {
 			@Override
 			public void process() {
@@ -2427,7 +2439,7 @@ public class DialectUtils {
 	 */
 	public static ReflectPropsHandler getUpdateReflectHandler(final ReflectPropsHandler preHandler,
 			String[] forceUpdateProps, IUnifyFieldsHandler unifyFieldsHandler) {
-		if (unifyFieldsHandler == null) {
+		if (unifyFieldsHandler == null || !UnifyUpdateFieldsController.useUnifyFields()) {
 			return preHandler;
 		}
 		final Map<String, Object> keyValues = unifyFieldsHandler.updateUnifyFields();
@@ -2537,7 +2549,9 @@ public class DialectUtils {
 			return prepHandler;
 		}
 		final Map<String, Object> addKeyValues = unifyFieldsHandler.createUnifyFields();
-		final Map<String, Object> updateKeyValues = unifyFieldsHandler.updateUnifyFields();
+		final Map<String, Object> updateKeyValues = UnifyUpdateFieldsController.useUnifyFields()
+				? unifyFieldsHandler.updateUnifyFields()
+				: null;
 		if ((addKeyValues == null || addKeyValues.isEmpty())
 				&& (updateKeyValues == null || updateKeyValues.isEmpty())) {
 			return prepHandler;
@@ -2564,7 +2578,7 @@ public class DialectUtils {
 					prepHandler.process();
 				}
 				// 主键为空表示save操作
-				if (idLength > 0 && this.getValue(idFields[0]) == null) {
+				if (idLength > 0 && this.getValue(idFields[0]) == null && addKeyValues != null) {
 					for (Map.Entry<String, Object> entry : addKeyValues.entrySet()) {
 						if (StringUtil.isBlank(this.getValue(entry.getKey()))) {
 							this.setValue(entry.getKey(), entry.getValue());
@@ -2572,12 +2586,14 @@ public class DialectUtils {
 					}
 				}
 				// 修改属性值
-				for (Map.Entry<String, Object> entry : updateKeyValues.entrySet()) {
-					// 统一修改字段不在强制更新字段范围内
-					if (!forceSet.contains(entry.getKey().toLowerCase())) {
-						if (StringUtil.isBlank(this.getValue(entry.getKey()))
-								|| forceUpdateFields.contains(entry.getKey())) {
-							this.setValue(entry.getKey(), entry.getValue());
+				if (updateKeyValues != null) {
+					for (Map.Entry<String, Object> entry : updateKeyValues.entrySet()) {
+						// 统一修改字段不在强制更新字段范围内
+						if (!forceSet.contains(entry.getKey().toLowerCase())) {
+							if (StringUtil.isBlank(this.getValue(entry.getKey()))
+									|| forceUpdateFields.contains(entry.getKey())) {
+								this.setValue(entry.getKey(), entry.getValue());
+							}
 						}
 					}
 				}
@@ -2645,7 +2661,5 @@ public class DialectUtils {
 			result = getUpdateReflectHandler(reflectPropsHandler, null, unifyFieldsHandler);
 		}
 		return result;
-		// return getDataAuthReflectHandler(result,
-		// unifyFieldsHandler.dataAuthFilters());
 	}
 }

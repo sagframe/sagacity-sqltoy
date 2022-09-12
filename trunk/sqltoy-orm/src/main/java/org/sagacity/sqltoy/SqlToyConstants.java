@@ -217,35 +217,11 @@ public class SqlToyConstants {
 	}
 
 	/**
-	 * @todo 获取缓存翻译默认过期时长(秒)
-	 * @return
-	 */
-	public static int getCacheExpireSeconds() {
-		return Integer.parseInt(getKeyValue("sqltoy.translate.cache.expire.seconds", "3600"));
-	}
-
-	/**
 	 * @todo db2 是否为查询语句自动补充with ur进行脏读
 	 * @return
 	 */
 	public static boolean db2WithUR() {
 		return Boolean.parseBoolean(getKeyValue("sqltoy.db2.search.with.ur", "true"));
-	}
-
-	/**
-	 * @todo mysql 是否原生支持saveOrUpdate
-	 * @return
-	 */
-	public static boolean mysqlSupportSaveOrUpdate() {
-		return Boolean.parseBoolean(getKeyValue("sqltoy.mysql.support.saveOrUpdate", "false"));
-	}
-
-	/**
-	 * @todo mysql 是否原生支持saveOrUpdate
-	 * @return
-	 */
-	public static boolean postgresqlSupportSaveOrUpdate() {
-		return Boolean.parseBoolean(getKeyValue("sqltoy.postgresql.support.saveOrUpdate", "false"));
 	}
 
 	/**
