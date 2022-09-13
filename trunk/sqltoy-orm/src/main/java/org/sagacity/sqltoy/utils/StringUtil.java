@@ -76,7 +76,7 @@ public class StringUtil {
 		if (null == str) {
 			return true;
 		}
-		if ((str instanceof CharSequence) && str.toString().trim().equals("")) {
+		if ((str instanceof CharSequence) && "".equals(str.toString().trim())) {
 			return true;
 		}
 		// 下面做了一些冗余性校验
@@ -102,7 +102,7 @@ public class StringUtil {
 		if (source == null) {
 			return null;
 		}
-		return source.replaceAll("\r|\t|\n", target);
+		return source.replaceAll("\t|\r|\n", target);
 	}
 
 	/**
@@ -283,10 +283,10 @@ public class StringUtil {
 		Pattern pattern = null;
 		Pattern chkPattern = null;
 		// 单引号和双引号，排除\' 和 \"
-		if (beginMarkSign.equals("'")) {
+		if ("'".equals(beginMarkSign)) {
 			pattern = quotaPattern;
 			chkPattern = quotaChkPattern;
-		} else if (beginMarkSign.equals("\"")) {
+		} else if ("\"".equals(beginMarkSign)) {
 			pattern = twoQuotaPattern;
 			chkPattern = twoQuotaChkPattern;
 		}
@@ -428,14 +428,14 @@ public class StringUtil {
 	/**
 	 * @todo 通过正则表达式判断是否匹配
 	 * @param source
-	 * @param p
+	 * @param pattern
 	 * @return
 	 */
-	public static boolean matches(String source, Pattern p) {
+	public static boolean matches(String source, Pattern pattern) {
 		if (isBlank(source)) {
 			return false;
 		}
-		return p.matcher(source).find();
+		return pattern.matcher(source).find();
 	}
 
 	/**
@@ -452,19 +452,19 @@ public class StringUtil {
 		return matchIndex(source, Pattern.compile(regex), start);
 	}
 
-	public static int matchIndex(String source, Pattern p) {
-		Matcher m = p.matcher(source);
+	public static int matchIndex(String source, Pattern pattern) {
+		Matcher m = pattern.matcher(source);
 		if (m.find()) {
 			return m.start();
 		}
 		return -1;
 	}
 
-	public static int[] matchIndex(String source, Pattern p, int start) {
+	public static int[] matchIndex(String source, Pattern pattern, int start) {
 		if (source.length() <= start) {
 			return new int[] { -1, -1 };
 		}
-		Matcher m = p.matcher(source.substring(start));
+		Matcher m = pattern.matcher(source.substring(start));
 		if (m.find()) {
 			return new int[] { m.start() + start, m.end() + start };
 		}
@@ -475,11 +475,11 @@ public class StringUtil {
 		return matchLastIndex(source, Pattern.compile(regex));
 	}
 
-	public static int matchLastIndex(String source, Pattern p) {
+	public static int matchLastIndex(String source, Pattern pattern) {
 		if (source == null) {
 			return -1;
 		}
-		Matcher m = p.matcher(source);
+		Matcher m = pattern.matcher(source);
 		int matchIndex = -1;
 		while (m.find()) {
 			matchIndex = m.start();
@@ -500,16 +500,16 @@ public class StringUtil {
 	/**
 	 * @todo 获取匹配成功的个数
 	 * @param source
-	 * @param p
+	 * @param pattern
 	 * @return
 	 */
-	public static int matchCnt(String source, Pattern p) {
+	public static int matchCnt(String source, Pattern pattern) {
 		if (source == null) {
 			return 0;
 		}
-		Matcher m = p.matcher(source);
+		Matcher matcher = pattern.matcher(source);
 		int count = 0;
-		while (m.find()) {
+		while (matcher.find()) {
 			count++;
 		}
 		return count;
@@ -579,15 +579,15 @@ public class StringUtil {
 			return new String[] { source };
 		}
 		if (filterMap == null || filterMap.isEmpty()) {
-			if (splitSign.equals("?")) {
+			if ("?".equals(splitSign)) {
 				return source.split("\\?");
-			} else if (splitSign.equals(",")) {
+			} else if (",".equals(splitSign)) {
 				return source.split("\\,");
-			} else if (splitSign.equals(";")) {
+			} else if (";".equals(splitSign)) {
 				return source.split("\\;");
-			} else if (splitSign.equals(":")) {
+			} else if (":".equals(splitSign)) {
 				return source.split("\\:");
-			} else if (splitSign.trim().equals("")) {
+			} else if ("".equals(splitSign.trim())) {
 				return source.split("\\s+");
 			} else {
 				return source.split(splitSign);
@@ -595,15 +595,15 @@ public class StringUtil {
 		}
 		List<String[]> filters = matchFilters(source, filterMap);
 		if (filters.isEmpty()) {
-			if (splitSign.equals("?")) {
+			if ("?".equals(splitSign)) {
 				return source.split("\\?");
-			} else if (splitSign.equals(",")) {
+			} else if (",".equals(splitSign)) {
 				return source.split("\\,");
-			} else if (splitSign.equals(";")) {
+			} else if (";".equals(splitSign)) {
 				return source.split("\\;");
-			} else if (splitSign.equals(":")) {
+			} else if (":".equals(splitSign)) {
 				return source.split("\\:");
-			} else if (splitSign.trim().equals("")) {
+			} else if ("".equals(splitSign.trim())) {
 				return source.split("\\s+");
 			} else {
 				return source.split(splitSign);
@@ -662,9 +662,9 @@ public class StringUtil {
 	private static int[] getStartEndIndex(String source, String[] filter, int skipIndex, int splitIndex) {
 		int[] result = { -1, -1 };
 		Pattern pattern = null;
-		if (filter[0].equals("'")) {
+		if ("'".equals(filter[0])) {
 			pattern = quotaPattern;
-		} else if (filter[0].equals("\"")) {
+		} else if ("\"".equals(filter[0])) {
 			pattern = twoQuotaPattern;
 		}
 		String tmp;
@@ -677,7 +677,7 @@ public class StringUtil {
 			result[0] = matchIndex(source, pattern, skipIndex)[0];
 			if (result[0] >= 0) {
 				tmp = source.substring(result[0], result[0] + 1);
-				if (!tmp.equals("'") && !tmp.equals("\"")) {
+				if (!"'".equals(tmp) && !"\"".equals(tmp)) {
 					result[0] = result[0] + 1;
 				}
 				result[1] = getSymMarkIndex(filter[0], filter[1], source, result[0]);
@@ -694,7 +694,7 @@ public class StringUtil {
 				}
 			} else {
 				tmp = source.substring(result[1], result[1] + 1);
-				if (!tmp.equals("'") && !tmp.equals("\"")) {
+				if (!"'".equals(tmp) && !"\"".equals(tmp)) {
 					result[0] = matchIndex(source, pattern, result[1] + 2)[0];
 				} else {
 					result[0] = matchIndex(source, pattern, result[1] + 1)[0];
@@ -702,7 +702,7 @@ public class StringUtil {
 				// 正则表达式有一个转义符号占一位
 				if (result[0] > 0) {
 					tmp = source.substring(result[0], result[0] + 1);
-					if (!tmp.equals("'") && !tmp.equals("\"")) {
+					if (!"'".equals(tmp) && !"\"".equals(tmp)) {
 						result[0] = result[0] + 1;
 					}
 					result[1] = getSymMarkIndex(filter[0], filter[1], source, result[0]);
@@ -737,10 +737,10 @@ public class StringUtil {
 			endSign = (String) entry.getValue();
 			pattern = null;
 			chkPattern = null;
-			if (beginSign.equals("'")) {
+			if ("'".equals(beginSign)) {
 				pattern = quotaPattern;
 				chkPattern = quotaChkPattern;
-			} else if (beginSign.equals("\"")) {
+			} else if ("\"".equals(beginSign)) {
 				pattern = twoQuotaPattern;
 				chkPattern = twoQuotaChkPattern;
 			}
@@ -827,7 +827,7 @@ public class StringUtil {
 		if (tmp.length() <= preLength + tailLength) {
 			return tmp;
 		}
-		return tmp.substring(0, preLength).concat((maskStr == null || maskStr.equals("")) ? "***" : maskStr)
+		return tmp.substring(0, preLength).concat((maskStr == null || "".equals(maskStr)) ? "***" : maskStr)
 				.concat(tmp.substring(tmp.length() - tailLength));
 	}
 
