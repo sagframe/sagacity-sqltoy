@@ -17,7 +17,8 @@ public enum OperateType {
 
 	top(3),
 
-	random(4), count(5), load(6), unique(7), fetchUpdate(8), execute(9);
+	random(4), count(5), load(6), loadAll(7), unique(8), fetchUpdate(9), execute(10), update(11), updateAll(12),
+	delete(13), deleteAll(13), saveOrUpdate(14);
 
 	private final int optType;
 

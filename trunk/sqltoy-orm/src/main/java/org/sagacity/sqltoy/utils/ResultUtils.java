@@ -1287,7 +1287,7 @@ public class ResultUtils {
 							dialect);
 					// 增加sql执行拦截器 update 2022-9-10
 					pivotSqlToyResult = DialectUtils.doInterceptors(sqlToyContext, pivotSqlConfig, OperateType.search,
-							pivotSqlToyResult, dbType);
+							pivotSqlToyResult, null, dbType);
 					List pivotCategory = SqlUtil.findByJdbcQuery(sqlToyContext.getTypeHandler(),
 							pivotSqlToyResult.getSql(), pivotSqlToyResult.getParamsValue(), null, null, null, conn,
 							dbType, sqlToyConfig.isIgnoreEmpty(), null, SqlToyConstants.FETCH_SIZE, -1);

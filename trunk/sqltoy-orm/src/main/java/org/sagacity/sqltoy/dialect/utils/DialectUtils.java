@@ -626,11 +626,14 @@ public class DialectUtils {
 				}
 			}
 		}
-
 		String saveOrUpdateSql = generateSqlHandler.generateSql(entityMeta, forceUpdateFields);
 		SqlExecuteStat.showSql("执行saveOrUpdate语句", saveOrUpdateSql, null);
-		return SqlUtil.batchUpdateByJdbc(sqlToyContext.getTypeHandler(), saveOrUpdateSql, paramValues, batchSize, null,
-				entityMeta.getFieldsTypeArray(), autoCommit, conn, dbType);
+		SqlToyResult sqlToyResult = new SqlToyResult(saveOrUpdateSql, null);
+		// 增加sql执行拦截器 update 2022-9-10
+		sqlToyResult = doInterceptors(sqlToyContext, null, OperateType.saveOrUpdate, sqlToyResult,
+				entities.get(0).getClass(), dbType);
+		return SqlUtil.batchUpdateByJdbc(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(), paramValues, batchSize,
+				null, entityMeta.getFieldsTypeArray(), autoCommit, conn, dbType);
 	}
 
 	/**
@@ -898,6 +901,8 @@ public class DialectUtils {
 		if (entityMeta.getSecureColumns() != null) {
 			decryptHandler = new DecryptHandler(sqlToyContext.getFieldsSecureProvider(), entityMeta.getSecureColumns());
 		}
+		// 增加sql执行拦截器 update 2022-9-10
+		sqlToyResult = doInterceptors(sqlToyContext, null, OperateType.load, sqlToyResult, entity.getClass(), dbType);
 		QueryResult queryResult = findBySql(sqlToyContext, sqlToyConfig, sqlToyResult.getSql(),
 				sqlToyResult.getParamsValue(), null, decryptHandler, conn, dbType, 0, -1, -1);
 		List rows = queryResult.getRows();
@@ -1037,6 +1042,8 @@ public class DialectUtils {
 			sqlToyResult = SqlConfigParseUtils.processSql(sql, null, realValues, null);
 		}
 		SqlExecuteStat.showSql("执行依据主键批量查询", sqlToyResult.getSql(), sqlToyResult.getParamsValue());
+		// 增加sql执行拦截器 update 2022-9-10
+		sqlToyResult = doInterceptors(sqlToyContext, null, OperateType.loadAll, sqlToyResult, entityClass, dbType);
 		List<?> entitySet = SqlUtil.findByJdbcQuery(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(),
 				sqlToyResult.getParamsValue(), entityClass, null, decryptHandler, conn, dbType, false,
 				entityMeta.getColumnFieldMap(), fetchSize, maxRows);
@@ -1615,7 +1622,10 @@ public class DialectUtils {
 		if (updateSql == null) {
 			throw new IllegalArgumentException("update sql is null,引起问题的原因是没有设置需要修改的字段!");
 		}
-		return SqlUtil.executeSql(sqlToyContext.getTypeHandler(), updateSql, fieldsValues,
+		SqlToyResult sqlToyResult = new SqlToyResult(updateSql, fieldsValues);
+		// 增加sql执行拦截器 update 2022-9-10
+		sqlToyResult = doInterceptors(sqlToyContext, null, OperateType.update, sqlToyResult, entity.getClass(), dbType);
+		return SqlUtil.executeSql(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(), sqlToyResult.getParamsValue(),
 				entityMeta.getFieldsTypeArray(), conn, dbType, null, false);
 	}
 
@@ -1691,6 +1701,9 @@ public class DialectUtils {
 				// 根据quickvo配置文件针对cascade中update-cascade配置组织具体操作sql
 				SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(cascadeModel.getCascadeUpdateSql(),
 						mappedFields, mainFieldValues, null);
+				// 增加sql执行拦截器 update 2022-9-10
+				sqlToyResult = doInterceptors(sqlToyContext, null, OperateType.execute, sqlToyResult,
+						cascadeModel.getMappedType(), dbType);
 				SqlUtil.executeSql(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(), sqlToyResult.getParamsValue(),
 						null, conn, dbType, null, true);
 			}
@@ -1979,7 +1992,11 @@ public class DialectUtils {
 			throw new IllegalArgumentException("updateAll sql is null,引起问题的原因是没有设置需要修改的字段!");
 		}
 		SqlExecuteStat.showSql("批量修改[" + paramsValues.size() + "]条记录", updateSql, null);
-		return SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), updateSql, paramsValues,
+		SqlToyResult sqlToyResult = new SqlToyResult(updateSql, null);
+		// 增加sql执行拦截器 update 2022-9-10
+		sqlToyResult = doInterceptors(sqlToyContext, null, OperateType.updateAll, sqlToyResult,
+				entities.get(0).getClass(), dbType);
+		return SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(), paramsValues,
 				entityMeta.getFieldsTypeArray(), null, batchSize, autoCommit, conn, dbType);
 	}
 
@@ -2039,14 +2056,21 @@ public class DialectUtils {
 						subTableFieldType[i] = subMeta.getColumnJdbcType(cascadeModel.getMappedFields()[i]);
 					}
 					SqlExecuteStat.debug("执行级联删除操作", null);
-					SqlUtil.executeSql(sqlToyContext.getTypeHandler(), cascadeModel.getDeleteSubTableSql(),
-							mainFieldValues, subTableFieldType, conn, dbType, null, true);
+					SqlToyResult sqlToyResult = new SqlToyResult(cascadeModel.getDeleteSubTableSql(), mainFieldValues);
+					// 增加sql执行拦截器 update 2022-9-10
+					sqlToyResult = doInterceptors(sqlToyContext, null, OperateType.deleteAll, sqlToyResult,
+							cascadeModel.getMappedType(), dbType);
+					SqlUtil.executeSql(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(),
+							sqlToyResult.getParamsValue(), subTableFieldType, conn, dbType, null, true);
 				}
 			}
 		}
 		String deleteSql = "delete from ".concat(realTable).concat(" ").concat(entityMeta.getIdArgWhereSql());
-		return SqlUtil.executeSql(sqlToyContext.getTypeHandler(), deleteSql, idValues, parameterTypes, conn, dbType,
-				null, true);
+		SqlToyResult sqlToyResult = new SqlToyResult(deleteSql, idValues);
+		// 增加sql执行拦截器 update 2022-9-10
+		sqlToyResult = doInterceptors(sqlToyContext, null, OperateType.delete, sqlToyResult, entity.getClass(), dbType);
+		return SqlUtil.executeSql(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(), sqlToyResult.getParamsValue(),
+				parameterTypes, conn, dbType, null, true);
 	}
 
 	/**
@@ -2117,16 +2141,24 @@ public class DialectUtils {
 					}
 					delSubTableSql = ReservedWordsUtil.convertSql(cascadeModel.getDeleteSubTableSql(), dbType);
 					SqlExecuteStat.showSql("级联删除子表记录", delSubTableSql, null);
-					SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), delSubTableSql, mainFieldValues,
-							subTableFieldType, null, sqlToyContext.getBatchSize(), null, conn, dbType);
+					SqlToyResult sqlToyResult = new SqlToyResult(delSubTableSql, null);
+					// 增加sql执行拦截器 update 2022-9-10
+					sqlToyResult = doInterceptors(sqlToyContext, null, OperateType.deleteAll, sqlToyResult,
+							cascadeModel.getMappedType(), dbType);
+					SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(),
+							mainFieldValues, subTableFieldType, null, sqlToyContext.getBatchSize(), null, conn, dbType);
 				}
 			}
 		}
 		String deleteSql = ReservedWordsUtil
 				.convertSql("delete from ".concat(realTable).concat(" ").concat(entityMeta.getIdArgWhereSql()), dbType);
 		SqlExecuteStat.showSql("批量删除[" + idValues.size() + "]条记录", deleteSql, null);
-		return SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), deleteSql, idValues, parameterTypes, null,
-				batchSize, autoCommit, conn, dbType);
+		SqlToyResult sqlToyResult = new SqlToyResult(deleteSql, null);
+		// 增加sql执行拦截器 update 2022-9-10
+		sqlToyResult = doInterceptors(sqlToyContext, null, OperateType.deleteAll, sqlToyResult,
+				entities.get(0).getClass(), dbType);
+		return SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(), idValues,
+				parameterTypes, null, batchSize, autoCommit, conn, dbType);
 	}
 
 	/**
@@ -2178,8 +2210,12 @@ public class DialectUtils {
 			// 取出符合条件的2条记录
 			String queryStr = uniqueSqlHandler.process(entityMeta, realParamNamed, tableName, 2);
 			SqlExecuteStat.showSql("唯一性验证", queryStr, paramValues);
-			List result = SqlUtil.findByJdbcQuery(sqlToyContext.getTypeHandler(), queryStr, paramValues, null, null,
-					null, conn, dbType, false, null, -1, -1);
+			SqlToyResult sqlToyResult = new SqlToyResult(queryStr, paramValues);
+			// 增加sql执行拦截器 update 2022-9-10
+			sqlToyResult = doInterceptors(sqlToyContext, null, OperateType.unique, sqlToyResult, entity.getClass(),
+					dbType);
+			List result = SqlUtil.findByJdbcQuery(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(),
+					sqlToyResult.getParamsValue(), null, null, null, conn, dbType, false, null, -1, -1);
 			if (result.size() == 0) {
 				return true;
 			}
@@ -2672,17 +2708,18 @@ public class DialectUtils {
 	 * @param sqlToyConfig
 	 * @param operateType
 	 * @param sqlToyResult
+	 * @param entityClass
 	 * @param dbType
 	 * @return
 	 */
 	public static SqlToyResult doInterceptors(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			OperateType operateType, SqlToyResult sqlToyResult, Integer dbType) {
+			OperateType operateType, SqlToyResult sqlToyResult, Class entityClass, Integer dbType) {
 		if (sqlToyContext.getSqlInterceptors() == null || sqlToyContext.getSqlInterceptors().isEmpty()) {
 			return sqlToyResult;
 		}
 		SqlToyResult result = sqlToyResult;
 		for (SqlInterceptor interceptor : sqlToyContext.getSqlInterceptors()) {
-			result = interceptor.decorate(sqlToyContext, sqlToyConfig, operateType, result, dbType);
+			result = interceptor.decorate(sqlToyContext, sqlToyConfig, operateType, result, entityClass, dbType);
 		}
 		return result;
 	}

@@ -12,10 +12,12 @@ import org.sagacity.sqltoy.plugins.id.macro.MacroUtils;
  */
 public class MacroUtilsTest {
 	public static void main(String[] args) {
-		String macroStr = "@substr(${corpId},0,2)-SE@substr(@day(yyMMdd),0,4)";
+		String macroStr = "@substr(${corpId},0,2)-@case(${periodType},L,@case(${longType},2,K,C),)@case(${tradeType},I,N,O,W,Z)@case(${orderType},P,C,S,X,B)@day(yyMMdd)";
 		IgnoreKeyCaseMap keyValues = new IgnoreKeyCaseMap();
 		keyValues.put("corpId", "HX02");
-		keyValues.put("bizDate", DateUtil.parseString("2020-02-12"));
+		keyValues.put("periodType", "S");
+		keyValues.put("tradeType", "I");
+		keyValues.put("orderType", "P");
 		System.err.println(MacroUtils.replaceMacros(macroStr, keyValues));
 	}
 }
