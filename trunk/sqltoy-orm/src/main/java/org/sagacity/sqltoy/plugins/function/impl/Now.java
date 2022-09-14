@@ -46,11 +46,11 @@ public class Now extends IFunction {
 	@Override
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
 		if (dialect == DBType.MYSQL || dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL15
-				|| dialect == DBType.TIDB || dialect == DBType.GAUSSDB || dialect == DBType.MYSQL57) {
+				|| dialect == DBType.TIDB || dialect == DBType.GAUSSDB || dialect == DBType.MYSQL57|| dialect == DBType.H2) {
 			return wrapArgs("now", args);
 		}
 		if (dialect == DBType.ORACLE || dialect == DBType.OCEANBASE || dialect == DBType.DM
-				|| dialect == DBType.ORACLE11) {
+				|| dialect == DBType.ORACLE11 || dialect == DBType.H2) {
 			return "sysdate";
 		}
 		if (dialect == DBType.SQLSERVER) {

@@ -439,6 +439,7 @@ public class BeanUtil {
 	}
 
 	/**
+	 * @optimize 待后期进一步优化，减少部分不必要的判断
 	 * @todo 类型转换
 	 * @param typeHandler
 	 * @param value

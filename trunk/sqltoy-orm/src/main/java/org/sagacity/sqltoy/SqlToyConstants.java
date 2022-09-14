@@ -217,14 +217,6 @@ public class SqlToyConstants {
 	}
 
 	/**
-	 * @todo 获取缓存翻译默认过期时长(秒)
-	 * @return
-	 */
-	public static int getCacheExpireSeconds() {
-		return Integer.parseInt(getKeyValue("sqltoy.translate.cache.expire.seconds", "3600"));
-	}
-
-	/**
 	 * @todo db2 是否为查询语句自动补充with ur进行脏读
 	 * @return
 	 */

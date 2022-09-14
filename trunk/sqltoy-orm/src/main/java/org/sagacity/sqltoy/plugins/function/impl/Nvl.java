@@ -47,11 +47,12 @@ public class Nvl extends IFunction {
 	 */
 	@Override
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
+		String funLow = functionName.toLowerCase();
 		if (dialect == DBType.SQLSERVER) {
 			return wrapArgs("isnull", args);
 		}
 		if (dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL15 || dialect == DBType.DB2
-				|| dialect == DBType.GAUSSDB) {
+				|| dialect == DBType.GAUSSDB||dialect == DBType.H2) {
 			return wrapArgs("coalesce", args);
 		}
 		if (dialect == DBType.MYSQL || dialect == DBType.TIDB || dialect == DBType.MYSQL57) {
@@ -66,6 +67,12 @@ public class Nvl extends IFunction {
 		if (dialect == DBType.ORACLE || dialect == DBType.DM || dialect == DBType.OCEANBASE
 				|| dialect == DBType.ORACLE11) {
 			return wrapArgs("nvl", args);
+		}
+		if (dialect == DBType.H2) {
+			if ("coalesce".equals(funLow)) {
+				return wrapArgs("coalesce", args);
+			}
+			return wrapArgs("ifnull", args);
 		}
 		return super.IGNORE;
 	}
