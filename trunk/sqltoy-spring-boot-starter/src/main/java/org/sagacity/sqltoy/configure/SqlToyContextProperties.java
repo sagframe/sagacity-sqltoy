@@ -185,6 +185,11 @@ public class SqlToyContextProperties implements Serializable {
 	private String columnLabelUpperOrLower = "default";
 
 	/**
+	 * 自定义sql拦截加工处理器
+	 */
+	private String[] sqlInterceptors;
+
+	/**
 	 * @return the sqlResourcesDir
 	 */
 	public String getSqlResourcesDir() {
@@ -531,6 +536,14 @@ public class SqlToyContextProperties implements Serializable {
 
 	public void setRedoDataSources(String[] redoDataSources) {
 		this.redoDataSources = redoDataSources;
+	}
+
+	public String[] getSqlInterceptors() {
+		return sqlInterceptors;
+	}
+
+	public void setSqlInterceptors(String[] sqlInterceptors) {
+		this.sqlInterceptors = sqlInterceptors;
 	}
 
 }

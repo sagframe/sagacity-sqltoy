@@ -51,7 +51,7 @@ public class GroupConcat extends IFunction {
 				return " array_to_string(ARRAY_AGG(" + args[0] + ")," + sign + ") ";
 			}
 		}
-		if (dialect == DBType.MYSQL || dialect == DBType.TIDB || dialect == DBType.MYSQL57) {
+		if (dialect == DBType.MYSQL || dialect == DBType.TIDB || dialect == DBType.MYSQL57|| dialect == DBType.H2) {
 			if ("group_concat".equals(functionName.toLowerCase())) {
 				return super.IGNORE;
 			}

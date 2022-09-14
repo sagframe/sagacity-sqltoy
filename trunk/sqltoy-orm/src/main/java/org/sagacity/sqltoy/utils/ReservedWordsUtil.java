@@ -42,7 +42,7 @@ public class ReservedWordsUtil {
 				index++;
 			}
 		}
-		singlePattern = Pattern.compile("(?i)(\\W||\\s)(`|\"|\\[)(" + fullRegex + ")(`|\"|\\])(\\s||\\W)");
+		singlePattern = Pattern.compile("(?i)(\\W||\\s)(`|'|\"|\\[)(" + fullRegex + ")(`|'|\"|\\])(\\s||\\W)");
 	}
 
 	/**
@@ -62,6 +62,9 @@ public class ReservedWordsUtil {
 				|| dbType == DBType.DB2 || dbType == DBType.DM || dbType == DBType.GAUSSDB || dbType == DBType.OCEANBASE
 				|| dbType == DBType.ORACLE11) {
 			return sql.replaceAll("\\[", "\"").replaceAll("\\]", "\"");
+		}
+		if (dbType == DBType.H2) {
+			return sql.replaceAll("\\[", "'").replaceAll("\\]", "'");
 		}
 		if (dbType == null || dbType == DBType.SQLSERVER || dbType == DBType.SQLITE) {
 			return sql;
@@ -95,6 +98,9 @@ public class ReservedWordsUtil {
 		if (dbType == DBType.MYSQL || dbType == DBType.TIDB || dbType == DBType.MYSQL57 || dbType == DBType.TDENGINE) {
 			return "`".concat(column).concat("`");
 		}
+		if (dbType == DBType.H2) {
+			return "'".concat(column).concat("'");
+		}
 		if (dbType == DBType.ORACLE || dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15
 				|| dbType == DBType.KINGBASE || dbType == DBType.DB2 || dbType == DBType.GAUSSDB || dbType == DBType.DM
 				|| dbType == DBType.OCEANBASE || dbType == DBType.ORACLE11) {
@@ -127,12 +133,13 @@ public class ReservedWordsUtil {
 			subSize = 0;
 			end = matcher.start() + 1;
 			keyWord = matcher.group().substring(1);
-			if (keyWord.startsWith("`") || keyWord.startsWith("\"") || keyWord.startsWith("[")) {
+			if (keyWord.startsWith("`") || keyWord.startsWith("\"") || keyWord.startsWith("[")
+					|| keyWord.startsWith("'")) {
 				keyWord = keyWord.substring(1);
 			}
 			sqlBuff.append(sql.substring(start, end));
 			keyWord = keyWord.substring(0, keyWord.length() - 1);
-			if (keyWord.endsWith("`") || keyWord.endsWith("\"") || keyWord.endsWith("]")) {
+			if (keyWord.endsWith("`") || keyWord.endsWith("\"") || keyWord.endsWith("]") || keyWord.endsWith("'")) {
 				keyWord = keyWord.substring(0, keyWord.length() - 1);
 				subSize = 1;
 			}
@@ -143,8 +150,10 @@ public class ReservedWordsUtil {
 			} else if (dbType == DBType.SQLSERVER || dbType == DBType.SQLITE) {
 				sqlBuff.append("[").append(keyWord).append("]");
 			} else if (dbType == DBType.MYSQL || dbType == DBType.TIDB || dbType == DBType.MYSQL57
-					|| dbType == DBType.TDENGINE) {
+					|| dbType == DBType.TDENGINE || dbType == DBType.H2) {
 				sqlBuff.append("`").append(keyWord).append("`");
+			} else if (dbType == DBType.H2) {
+				sqlBuff.append("'").append(keyWord).append("'");
 			} else {
 				sqlBuff.append(keyWord);
 			}

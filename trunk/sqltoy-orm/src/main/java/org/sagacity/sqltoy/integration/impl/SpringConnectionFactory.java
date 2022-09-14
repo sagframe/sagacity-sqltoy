@@ -8,7 +8,6 @@ import org.sagacity.sqltoy.integration.ConnectionFactory;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 
 /**
- * 
  * @project sagacity-sqltoy
  * @description 提供基于spring的connection获取和释放实现
  * @author zhongxuchen

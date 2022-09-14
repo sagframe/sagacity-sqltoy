@@ -11,6 +11,7 @@ import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.plugins.id.macro.AbstractMacro;
 import org.sagacity.sqltoy.plugins.id.macro.MacroUtils;
+import org.sagacity.sqltoy.plugins.id.macro.impl.Case;
 import org.sagacity.sqltoy.plugins.id.macro.impl.SqlLoop;
 
 /**
@@ -66,8 +67,7 @@ public class MacroUtilsTest {
 		String sql = "select * from table where 1=1 @loop(:startDates,' (bizDate between str_to_date(':startDates[i]','%Y-%m-%d') and str_to_date(':endDates[i]','%Y-%m-%d'))',or)"
 				+ " (@loop-full(:startDates,' (bizDate between str_to_date(':startDates[i]','%Y-%m-%d') and str_to_date(':endDates[i]','%Y-%m-%d'))',or))";
 		String[] paramsNamed = { "startDates", "endDates" };
-		String[][] paramsValue = { { "2020-10-01", null },
-				{ "2020-10-30", null } };
+		String[][] paramsValue = { { "2020-10-01", null }, { "2020-10-30", null } };
 		IgnoreKeyCaseMap<String, Object> keyValues = new IgnoreKeyCaseMap<String, Object>();
 		for (int i = 0; i < paramsNamed.length; i++) {
 			keyValues.put(paramsNamed[i], paramsValue[i]);
@@ -76,7 +76,7 @@ public class MacroUtilsTest {
 		String result = MacroUtils.replaceMacros(sql, keyValues, false, macros);
 		System.err.println(result);
 	}
-	
+
 	@Test
 	public void testGetNames() {
 		String sql = "select * from table where 1=1 @loop(:startDates,'or (bizDate between :startDates[i] and :endDates[i])')";
@@ -84,6 +84,20 @@ public class MacroUtilsTest {
 		for (String str : args) {
 			System.err.println(str);
 		}
+	}
+
+	@Test
+	public void testCase() {
+		String sql = "@case(${longType},2,K,C)";
+		Map<String, AbstractMacro> macros = new HashMap<String, AbstractMacro>();
+
+		macros.put("@case", new Case());
+		IgnoreKeyCaseMap<String, Object> keyValues = new IgnoreKeyCaseMap<String, Object>();
+//		for (int i = 0; i < paramsNamed.length; i++) {
+//			keyValues.put(paramsNamed[i], paramsValue[i]);
+//		}
+		String result = MacroUtils.replaceMacros(sql, keyValues, false, macros);
+		System.err.println(result);
 	}
 
 }

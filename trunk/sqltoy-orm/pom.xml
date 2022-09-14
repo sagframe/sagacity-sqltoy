@@ -3,7 +3,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sagframe</groupId>
-	<version>5.2.9</version>
+	<version>5.2.10</version>
 	<name>sagacity-sqltoy</name>
 	<description>sagacity-sqltoy</description>
 	<artifactId>sagacity-sqltoy</artifactId>
@@ -13,17 +13,18 @@
 		<spring-framework.version>5.3.22</spring-framework.version>
 		<spring-data-redis.version>2.7.2</spring-data-redis.version>
 		<spring-data-mongo.version>3.4.2</spring-data-mongo.version>
-		<ojdbc.version>21.5.0.0</ojdbc.version>
-		<ehcache.version>3.10.0</ehcache.version>
+		<ojdbc.version>21.6.0.0</ojdbc.version>
+		<ehcache.version>3.10.1</ehcache.version>
 		<httpclient.version>4.5.13</httpclient.version>
 		<httpclient-core.version>4.4.15</httpclient-core.version>
-		<elastic-rest-client.version>8.3.3</elastic-rest-client.version>
-		<fastjson.version>2.0.11</fastjson.version>
+		<elastic-rest-client.version>8.4.1</elastic-rest-client.version>
+		<fastjson.version>2.0.13</fastjson.version>
 		<mongo.version>3.12.11</mongo.version>
 		<junit-jupiter.version>5.9.0</junit-jupiter.version>
 		<junit-platform.version>1.9.0</junit-platform.version>
-		<slf4j.version>1.7.36</slf4j.version>
+		<slf4j.version>2.0.0</slf4j.version>
 		<caffeine.version>2.9.3</caffeine.version>
+		<h2.version>2.1.214</h2.version>
 	</properties>
 	<licenses>
 		<license>
@@ -237,6 +238,14 @@
 			<artifactId>slf4j-api</artifactId>
 			<version>${slf4j.version}</version>
 		</dependency>
+        <!-- 20220829 增加对h2数据库的驱动 -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <version>${h2.version}</version>
+            <scope>test</scope>
+            <optional>true</optional>
+        </dependency>
 	</dependencies>
 	<build>
 		<resources>
