@@ -67,7 +67,7 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
    * mysql(mariadb/innosql) 支持5.6、5.7、8.0 版本
    * postgresql(greenplum) 支持9.5 以及以上版本
    * sqlserver 2012+
-   * sqlite
+   * sqlite、H2
    * DM达梦数据库
    * elasticsearch 只支持查询,版本支持5.7+版本，建议使用7.3以上版本 
    * clickhouse 
