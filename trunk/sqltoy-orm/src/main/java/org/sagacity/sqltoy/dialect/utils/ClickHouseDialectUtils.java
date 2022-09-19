@@ -66,7 +66,8 @@ public class ClickHouseDialectUtils {
 			reflectColumns = entityMeta.getFieldsArray();
 		}
 		// 构造全新的新增记录参数赋值反射(覆盖之前的)
-		ReflectPropsHandler handler = DialectUtils.getAddReflectHandler(null, sqlToyContext.getUnifyFieldsHandler());
+		ReflectPropsHandler handler = DialectUtils.getAddReflectHandler(entityMeta, null,
+				sqlToyContext.getUnifyFieldsHandler());
 		handler = DialectUtils.getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
 		Object[] fullParamValues = BeanUtil.reflectBeanToAry(entity, reflectColumns,
@@ -179,7 +180,7 @@ public class ClickHouseDialectUtils {
 			reflectColumns = entityMeta.getFieldsArray();
 		}
 		// 构造全新的新增记录参数赋值反射(覆盖之前的)
-		ReflectPropsHandler handler = DialectUtils.getAddReflectHandler(reflectPropsHandler,
+		ReflectPropsHandler handler = DialectUtils.getAddReflectHandler(entityMeta, reflectPropsHandler,
 				sqlToyContext.getUnifyFieldsHandler());
 		handler = DialectUtils.getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());

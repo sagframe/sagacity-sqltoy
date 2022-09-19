@@ -34,6 +34,7 @@ import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.callback.UniqueSqlHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
+import org.sagacity.sqltoy.config.model.DataVersionConfig;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.FieldSecureConfig;
@@ -64,6 +65,7 @@ import org.sagacity.sqltoy.plugins.sharding.ShardingUtils;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
+import org.sagacity.sqltoy.utils.DateUtil;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.ResultUtils;
 import org.sagacity.sqltoy.utils.SqlUtil;
@@ -1281,7 +1283,7 @@ public class DialectUtils {
 			reflectColumns = entityMeta.getFieldsArray();
 		}
 		// 构造全新的新增记录参数赋值反射(覆盖之前的)
-		ReflectPropsHandler handler = getAddReflectHandler(null, sqlToyContext.getUnifyFieldsHandler());
+		ReflectPropsHandler handler = getAddReflectHandler(entityMeta, null, sqlToyContext.getUnifyFieldsHandler());
 		handler = getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
 		// update 2022-7-16 增加默认值的代入
@@ -1436,7 +1438,8 @@ public class DialectUtils {
 			reflectColumns = entityMeta.getFieldsArray();
 		}
 		// 构造全新的新增记录参数赋值反射(覆盖之前的)
-		ReflectPropsHandler handler = getAddReflectHandler(reflectPropsHandler, sqlToyContext.getUnifyFieldsHandler());
+		ReflectPropsHandler handler = getAddReflectHandler(entityMeta, reflectPropsHandler,
+				sqlToyContext.getUnifyFieldsHandler());
 		handler = getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
 		// update 2022-7-16 增加了默认值代入
@@ -1519,7 +1522,8 @@ public class DialectUtils {
 			EntityMeta entityMeta, GenerateSqlHandler generateSqlHandler, ReflectPropsHandler reflectPropsHandler,
 			Connection conn, final Integer dbType, Boolean autoCommit) throws Exception {
 		// 构造全新的新增记录参数赋值反射(覆盖之前的)
-		ReflectPropsHandler handler = getAddReflectHandler(reflectPropsHandler, sqlToyContext.getUnifyFieldsHandler());
+		ReflectPropsHandler handler = getAddReflectHandler(entityMeta, reflectPropsHandler,
+				sqlToyContext.getUnifyFieldsHandler());
 		handler = getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
 		// update 2022-7-16 增加默认值代入,insert sql上去除了nvl(?,default) 适应一些框架
@@ -2435,20 +2439,28 @@ public class DialectUtils {
 	 * @param unifyFieldsHandler
 	 * @return
 	 */
-	public static ReflectPropsHandler getAddReflectHandler(final ReflectPropsHandler preHandler,
+	public static ReflectPropsHandler getAddReflectHandler(EntityMeta entityMeta, final ReflectPropsHandler preHandler,
 			IUnifyFieldsHandler unifyFieldsHandler) {
-		if (unifyFieldsHandler == null) {
+		// 数据版本，新增记录时初始化
+		final DataVersionConfig versionConfig = (entityMeta == null) ? null : entityMeta.getDataVersion();
+		if (unifyFieldsHandler == null && versionConfig == null) {
 			return preHandler;
 		}
 		final Map<String, Object> keyValues = unifyFieldsHandler.createUnifyFields();
-		if (keyValues == null || keyValues.isEmpty()) {
+		if ((keyValues == null || keyValues.isEmpty()) && versionConfig == null) {
 			return preHandler;
+		}
+		Integer dataVersion = 1;
+		//数据版本号以日期开头
+		if (versionConfig != null && versionConfig.isStartDate()) {
+			dataVersion = Integer.valueOf(DateUtil.formatDate(DateUtil.getNowTime(), "yyyyMMdd") + 1);
 		}
 		// 强制修改字段赋值
 		IgnoreCaseSet tmpSet = unifyFieldsHandler.forceUpdateFields();
 		final IgnoreCaseSet forceUpdateFields = (!UnifyUpdateFieldsController.useUnifyFields() || tmpSet == null)
 				? new IgnoreCaseSet()
 				: tmpSet;
+		final Integer realVersion = dataVersion;
 		ReflectPropsHandler handler = new ReflectPropsHandler() {
 			@Override
 			public void process() {
@@ -2458,11 +2470,16 @@ public class DialectUtils {
 					preHandler.setRowData(this.getRowData());
 					preHandler.process();
 				}
-				for (Map.Entry<String, Object> entry : keyValues.entrySet()) {
-					if (StringUtil.isBlank(this.getValue(entry.getKey()))
-							|| forceUpdateFields.contains(entry.getKey())) {
-						this.setValue(entry.getKey(), entry.getValue());
+				if (keyValues != null) {
+					for (Map.Entry<String, Object> entry : keyValues.entrySet()) {
+						if (StringUtil.isBlank(this.getValue(entry.getKey()))
+								|| forceUpdateFields.contains(entry.getKey())) {
+							this.setValue(entry.getKey(), entry.getValue());
+						}
 					}
+				}
+				if (versionConfig != null) {
+					this.setValue(versionConfig.getField(), realVersion);
 				}
 			}
 		};
@@ -2692,7 +2709,7 @@ public class DialectUtils {
 		ReflectPropsHandler result = null;
 		// insert 语句
 		if (StringUtil.matches(sql.trim(), "(?i)^insert\\s+into\\W")) {
-			result = getAddReflectHandler(reflectPropsHandler, unifyFieldsHandler);
+			result = getAddReflectHandler(null, reflectPropsHandler, unifyFieldsHandler);
 		} // update
 		else if (StringUtil.matches(sql.trim(), "(?i)^update\\s+")
 				|| StringUtil.matches(sql.trim(), "(?i)^merge\\s+into\\W")

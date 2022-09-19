@@ -27,6 +27,7 @@ import org.sagacity.sqltoy.callback.DataSourceCallbackHandler;
 import org.sagacity.sqltoy.callback.StreamResultHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
+import org.sagacity.sqltoy.config.model.DataVersionConfig;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
@@ -84,6 +85,7 @@ import org.sagacity.sqltoy.translate.model.TranslateConfigModel;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.BeanWrapper;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
+import org.sagacity.sqltoy.utils.DateUtil;
 import org.sagacity.sqltoy.utils.MapperUtils;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
@@ -1025,6 +1027,45 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected Long update(final Serializable entity, final String[] forceUpdateProps, final DataSource dataSource) {
+		if (entity == null) {
+			logger.warn("update entity is null,please check!");
+			return 0L;
+		}
+		EntityMeta entityMeta = getEntityMeta(entity.getClass());
+		DataVersionConfig dataVersion = entityMeta.getDataVersion();
+		if (dataVersion != null) {
+			Object version = BeanUtil.getProperty(entity, dataVersion.getField());
+			if (version == null) {
+				throw new IllegalArgumentException("表:" + entityMeta.getTableName() + " 存在版本@DataVersion配置，属性:"
+						+ dataVersion.getField() + " 值不能为空!");
+			}
+			String where = "";
+			for (String field : entityMeta.getIdArray()) {
+				where = where.concat(field).concat("=:").concat(field).concat(" and ");
+			}
+			where = where.concat(dataVersion.getField()).concat("=:").concat(dataVersion.getField());
+			// 锁住id+version条件符合的记录
+			Serializable versionEntity = loadEntity(entity.getClass(), EntityQuery.create()
+					.select(entityMeta.getIdArray()).where(where).values(entity).lock(LockMode.UPGRADE_NOWAIT));
+			String verStr = version.toString();
+			if (versionEntity == null) {
+				throw new DataAccessException(
+						"表:" + entityMeta.getTableName() + " 数据版本:" + verStr + " 正在被其他用户修改或已经被更新!");
+			}
+			// 以日期开头
+			if (dataVersion.isStartDate()) {
+				String nowDate = DateUtil.formatDate(DateUtil.getNowTime(), "yyyyMMdd");
+				if (verStr.startsWith(nowDate)) {
+					verStr = nowDate + (Integer.parseInt(verStr.substring(8)) + 1);
+				} else {
+					verStr = nowDate + 1;
+				}
+			} else {
+				verStr = "" + (Integer.parseInt(verStr) + 1);
+			}
+			// 更新版本号
+			BeanUtil.setProperty(entity, dataVersion.getField(), verStr);
+		}
 		return dialectFactory.update(sqlToyContext, entity, forceUpdateProps, false, null, null,
 				this.getDataSource(dataSource));
 	}
