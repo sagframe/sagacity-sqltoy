@@ -36,7 +36,7 @@ public class EntityMeta implements Serializable {
 	private String loadAllSql;
 
 	/**
-	 * schema表命名空间
+	 * schema表空间
 	 */
 	private String schema;
 
@@ -56,7 +56,7 @@ public class EntityMeta implements Serializable {
 	private String[] idArray;
 
 	/**
-	 * 所有字段信息
+	 * 所有字段信息(主键字段放于末尾)
 	 */
 	private String[] fieldsArray;
 
@@ -64,11 +64,6 @@ public class EntityMeta implements Serializable {
 	 * 所有字段的类别
 	 */
 	private Integer[] fieldsTypeArray;
-
-	/**
-	 * 加密字段
-	 */
-	private List<FieldSecureConfig> secureFields = new ArrayList<FieldSecureConfig>();
 
 	/**
 	 * 所有字段的默认值
@@ -156,6 +151,11 @@ public class EntityMeta implements Serializable {
 	private String businessIdField;
 
 	/**
+	 * 根据主键load查询的sql
+	 */
+	private String loadSql;
+
+	/**
 	 * 分页查询的sql
 	 */
 	private String pageSql;
@@ -164,11 +164,6 @@ public class EntityMeta implements Serializable {
 	 * 批量集合查询
 	 */
 	private String listSql;
-
-	/**
-	 * 根据主键load查询的sql
-	 */
-	private String loadSql;
 
 	/**
 	 * 主键名称参数条件语句(where 1=1 and id=:id)
@@ -207,7 +202,25 @@ public class EntityMeta implements Serializable {
 	 */
 	private String allColumnNames = "*";
 
+	/**
+	 * 加密字段
+	 */
+	private List<FieldSecureConfig> secureFields = new ArrayList<FieldSecureConfig>();
+
+	/**
+	 * 加解密字段
+	 */
 	private IgnoreCaseSet secureColumns;
+
+	/**
+	 * 数据版本配置
+	 */
+	private DataVersionConfig dataVersion;
+
+	/**
+	 * 租户字段名称
+	 */
+	private String tenantField;
 
 	/**
 	 * @return the loadAllSql
@@ -337,7 +350,7 @@ public class EntityMeta implements Serializable {
 	}
 
 	/**
-	 * @param fieldArray the fieldArray to set
+	 * @param fieldsArray the fieldArray to set
 	 */
 	public void setFieldsArray(String[] fieldsArray) {
 		this.fieldsArray = fieldsArray;
@@ -462,7 +475,7 @@ public class EntityMeta implements Serializable {
 		if (schema == null) {
 			return table;
 		}
-		// table已经包含了schema，则直接返回
+		// table已经包含了schema，则直接返回,避免重复拼接schema
 		if (table.startsWith(schema.concat("."))) {
 			return table;
 		}
@@ -497,6 +510,22 @@ public class EntityMeta implements Serializable {
 		return isRepeat;
 	}
 
+	public String getLoadSql(String shardingTable) {
+		if (shardingTable == null || shardingTable.equals(tableName)) {
+			return loadSql;
+		}
+		// 针对sharding 分表情况使用重新组织表名
+		return "select ".concat(allColumnNames).concat(" from ").concat(getSchemaTable(shardingTable, null)).concat(" ")
+				.concat(this.idNameWhereSql);
+	}
+
+	/**
+	 * @param loadSql the loadSql to set
+	 */
+	public void setLoadSql(String loadSql) {
+		this.loadSql = loadSql;
+	}
+
 	/**
 	 * @return the pageSql
 	 */
@@ -526,22 +555,6 @@ public class EntityMeta implements Serializable {
 	 */
 	public void setListSql(String listSql) {
 		this.listSql = listSql;
-	}
-
-	public String getLoadSql(String shardingTable) {
-		if (shardingTable == null || shardingTable.equals(tableName)) {
-			return loadSql;
-		}
-		// 针对sharding 分表情况使用重新组织表名
-		return "select ".concat(allColumnNames).concat(" from ").concat(getSchemaTable(shardingTable, null)).concat(" ")
-				.concat(this.idNameWhereSql);
-	}
-
-	/**
-	 * @param loadSql the loadSql to set
-	 */
-	public void setLoadSql(String loadSql) {
-		this.loadSql = loadSql;
 	}
 
 	public FieldMeta getFieldMeta(String field) {
@@ -633,7 +646,7 @@ public class EntityMeta implements Serializable {
 	}
 
 	/**
-	 * @param shardingModel the shardingModel to set
+	 * @param shardingConfig the shardingModel to set
 	 */
 	public void setShardingConfig(ShardingConfig shardingConfig) {
 		this.shardingConfig = shardingConfig;
@@ -827,6 +840,22 @@ public class EntityMeta implements Serializable {
 
 	public void setSecureColumns(IgnoreCaseSet secureColumns) {
 		this.secureColumns = secureColumns;
+	}
+
+	public DataVersionConfig getDataVersion() {
+		return dataVersion;
+	}
+
+	public void setDataVersion(DataVersionConfig dataVersion) {
+		this.dataVersion = dataVersion;
+	}
+
+	public String getTenantField() {
+		return tenantField;
+	}
+
+	public void setTenantField(String tenantField) {
+		this.tenantField = tenantField;
 	}
 
 }

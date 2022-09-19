@@ -18,7 +18,9 @@ import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
 import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
+import org.sagacity.sqltoy.config.model.OperateType;
 import org.sagacity.sqltoy.config.model.PKStrategy;
+import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
@@ -64,13 +66,13 @@ public class ClickHouseDialectUtils {
 			reflectColumns = entityMeta.getFieldsArray();
 		}
 		// 构造全新的新增记录参数赋值反射(覆盖之前的)
-		ReflectPropsHandler handler = DialectUtils.getAddReflectHandler(null, sqlToyContext.getUnifyFieldsHandler());
+		ReflectPropsHandler handler = DialectUtils.getAddReflectHandler(entityMeta, null,
+				sqlToyContext.getUnifyFieldsHandler());
 		handler = DialectUtils.getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
 		Object[] fullParamValues = BeanUtil.reflectBeanToAry(entity, reflectColumns,
 				SqlUtilsExt.getDefaultValues(entityMeta), handler);
 		boolean needUpdatePk = false;
-
 		int pkIndex = entityMeta.getIdIndex();
 		// 是否存在业务ID
 		boolean hasBizId = (entityMeta.getBusinessIdGenerator() == null) ? false : true;
@@ -178,7 +180,7 @@ public class ClickHouseDialectUtils {
 			reflectColumns = entityMeta.getFieldsArray();
 		}
 		// 构造全新的新增记录参数赋值反射(覆盖之前的)
-		ReflectPropsHandler handler = DialectUtils.getAddReflectHandler(reflectPropsHandler,
+		ReflectPropsHandler handler = DialectUtils.getAddReflectHandler(entityMeta, reflectPropsHandler,
 				sqlToyContext.getUnifyFieldsHandler());
 		handler = DialectUtils.getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
@@ -278,11 +280,14 @@ public class ClickHouseDialectUtils {
 			throw new IllegalArgumentException(entityMeta.getSchemaTable(tableName, dbType)
 					+ "delete operate is illegal,table must has primary key and all primaryKey's value must has value!");
 		}
-
 		String deleteSql = "alter table ".concat(entityMeta.getSchemaTable(tableName, dbType)).concat(" delete ")
 				.concat(entityMeta.getIdArgWhereSql());
-		return SqlUtil.executeSql(sqlToyContext.getTypeHandler(), deleteSql, idValues, parameterTypes, conn, dbType,
-				null, true);
+		SqlToyResult sqlToyResult = new SqlToyResult(deleteSql, idValues);
+		// 增加sql执行拦截器 update 2022-9-10
+		sqlToyResult = DialectUtils.doInterceptors(sqlToyContext, null, OperateType.delete, sqlToyResult,
+				entity.getClass(), dbType);
+		return SqlUtil.executeSql(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(), sqlToyResult.getParamsValue(),
+				parameterTypes, conn, dbType, null, true);
 	}
 
 	public static Long update(SqlToyContext sqlToyContext, Serializable entity, String nullFunction,
@@ -319,8 +324,12 @@ public class ClickHouseDialectUtils {
 		if (updateSql == null) {
 			throw new IllegalArgumentException("update sql is null,引起问题的原因是没有设置需要修改的字段!");
 		}
-		Long updateCnt = SqlUtil.executeSql(sqlToyContext.getTypeHandler(), updateSql, fieldsValues,
-				entityMeta.getFieldsTypeArray(), conn, dbType, null, false);
+		SqlToyResult sqlToyResult = new SqlToyResult(updateSql, fieldsValues);
+		// 增加sql执行拦截器 update 2022-9-10
+		sqlToyResult = DialectUtils.doInterceptors(sqlToyContext, null, OperateType.update, sqlToyResult,
+				entity.getClass(), dbType);
+		Long updateCnt = SqlUtil.executeSql(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(),
+				sqlToyResult.getParamsValue(), entityMeta.getFieldsTypeArray(), conn, dbType, null, false);
 		return updateCnt;
 	}
 

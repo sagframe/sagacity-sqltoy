@@ -20,6 +20,7 @@ import org.sagacity.sqltoy.model.OverTimeSql;
 import org.sagacity.sqltoy.plugins.FilterHandler;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.plugins.OverTimeSqlHandler;
+import org.sagacity.sqltoy.plugins.SqlInterceptor;
 import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.sagacity.sqltoy.plugins.connection.ConnectionFactory;
 import org.sagacity.sqltoy.plugins.connection.impl.DefaultConnectionFactory;
@@ -304,6 +305,11 @@ public class SqlToyContext implements ApplicationContextAware {
 	private FilterHandler customFilterHandler;
 
 	/**
+	 * sql执行拦截器，提供对最终执行前的sql进行干预处理
+	 */
+	private List<SqlInterceptor> sqlInterceptors;
+
+	/**
 	 * @todo 初始化
 	 * @throws Exception
 	 */
@@ -528,6 +534,10 @@ public class SqlToyContext implements ApplicationContextAware {
 
 	public EntityMeta getEntityMeta(Class<?> entityClass) {
 		return entityManager.getEntityMeta(this, entityClass);
+	}
+
+	public EntityMeta getEntityMeta(String tableName) {
+		return entityManager.getEntityMeta(tableName);
 	}
 
 	/**
@@ -982,5 +992,13 @@ public class SqlToyContext implements ApplicationContextAware {
 
 	public void setRedoDataSources(String[] redoDataSources) {
 		this.redoDataSources = redoDataSources;
+	}
+
+	public List<SqlInterceptor> getSqlInterceptors() {
+		return sqlInterceptors;
+	}
+
+	public void setSqlInterceptors(List<SqlInterceptor> sqlInterceptors) {
+		this.sqlInterceptors = sqlInterceptors;
 	}
 }

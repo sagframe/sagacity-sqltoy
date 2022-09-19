@@ -7,6 +7,7 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DecryptHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
+import org.sagacity.sqltoy.config.model.OperateType;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
@@ -75,6 +76,9 @@ public class DB2DialectUtils {
 		}
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
 				sql.toString(), null, null, dialect);
+		// 增加sql执行拦截器 update 2022-9-10
+		queryParam = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig, OperateType.random, queryParam, null,
+				dbType);
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 				extend.rowCallbackHandler, decryptHandler, conn, dbType, 0, fetchSize, maxRows);
@@ -318,17 +322,7 @@ public class DB2DialectUtils {
 					insertRejIdColValues.append(",");
 				}
 				insertRejIdCols.append(columnName);
-				// 存在默认值
-				// if (null != fieldMeta.getDefaultValue()) {
-				// insertRejIdColValues.append(isNullFunction);
-				// insertRejIdColValues.append("(tv.").append(columnName).append(",");
-				// DialectExtUtils.processDefaultValue(insertRejIdColValues, dbType,
-				// fieldMeta.getType(),
-				// fieldMeta.getDefaultValue());
-				// insertRejIdColValues.append(")");
-				// } else {
 				insertRejIdColValues.append("tv.").append(columnName);
-				// }
 			}
 		}
 		// 主键未匹配上则进行插入操作

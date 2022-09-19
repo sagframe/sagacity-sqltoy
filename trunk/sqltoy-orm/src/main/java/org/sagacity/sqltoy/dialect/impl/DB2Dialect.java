@@ -144,12 +144,14 @@ public class DB2Dialect implements Dialect {
 				NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName);
 		return DialectUtils.save(sqlToyContext, entityMeta, entityMeta.getIdStrategy(),
 				isAssignPKValue(entityMeta.getIdStrategy()), insertSql, entity, new GenerateSqlHandler() {
+					@Override
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateField) {
 						return DialectExtUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(),
 								NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(),
 								isAssignPKValue(entityMeta.getIdStrategy()), null);
 					}
 				}, new GenerateSavePKStrategy() {
+					@Override
 					public SavePKStrategy generate(EntityMeta entityMeta) {
 						return new SavePKStrategy(entityMeta.getIdStrategy(),
 								isAssignPKValue(entityMeta.getIdStrategy()));
@@ -192,6 +194,7 @@ public class DB2Dialect implements Dialect {
 			final String dialect, final String tableName) throws Exception {
 		return DialectUtils.update(sqlToyContext, entity, NVL_FUNCTION, forceUpdateFields, cascade,
 				(cascade == false) ? null : new GenerateSqlHandler() {
+					@Override
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						return DB2DialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
 								entityMeta, entityMeta.getIdStrategy(), forceUpdateFields, VIRTUAL_TABLE, NVL_FUNCTION,
@@ -231,7 +234,7 @@ public class DB2Dialect implements Dialect {
 	 * 
 	 * @see org.sagacity.sqltoy.dialect.Dialect#getRandomResult(org.sagacity.sqltoy.
 	 * SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
-	 * org.sagacity.sqltoy.executor.QueryExecutor, java.lang.Long, java.lang.Long,
+	 * org.sagacity.sqltoy.model.QueryExecutor, java.lang.Long, java.lang.Long,
 	 * java.sql.Connection, java.lang.Integer, java.lang.String)
 	 */
 	@Override
@@ -248,8 +251,8 @@ public class DB2Dialect implements Dialect {
 	 * 
 	 * @see org.sagacity.sqltoy.dialect.Dialect#findPageBySql(org.sagacity.sqltoy.
 	 * SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
-	 * org.sagacity.sqltoy.executor.QueryExecutor, java.lang.Long,
-	 * java.lang.Integer, java.sql.Connection, java.lang.Integer, java.lang.String)
+	 * org.sagacity.sqltoy.model.QueryExecutor, java.lang.Long, java.lang.Integer,
+	 * java.sql.Connection, java.lang.Integer, java.lang.String)
 	 */
 	@Override
 	public QueryResult findPageBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
@@ -265,7 +268,7 @@ public class DB2Dialect implements Dialect {
 	 * 
 	 * @see org.sagacity.sqltoy.dialect.Dialect#findTopBySql(org.sagacity.sqltoy.
 	 * SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
-	 * org.sagacity.sqltoy.executor.QueryExecutor, java.lang.Integer,
+	 * org.sagacity.sqltoy.model.QueryExecutor, java.lang.Integer,
 	 * java.sql.Connection, java.lang.Integer, java.lang.String)
 	 */
 	@Override
@@ -285,6 +288,7 @@ public class DB2Dialect implements Dialect {
 	 * org.sagacity.sqltoy.callback.RowCallbackHandler, java.sql.Connection,
 	 * java.lang.Integer, java.lang.String, int, int)
 	 */
+	@Override
 	public QueryResult findBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
 			final Object[] paramsValue, final RowCallbackHandler rowCallbackHandler,
 			final DecryptHandler decryptHandler, final Connection conn, final LockMode lockMode, final Integer dbType,
@@ -350,6 +354,7 @@ public class DB2Dialect implements Dialect {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		return DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta, forceUpdateFields,
 				new GenerateSqlHandler() {
+					@Override
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						// db2 为什么不跟oracle用同样的merge方法,因为db2 merge into 必须要增加cast(? as type) fieldName
 						// 将输入的数据进行类型转换
@@ -377,6 +382,7 @@ public class DB2Dialect implements Dialect {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		return DialectUtils.saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta,
 				new GenerateSqlHandler() {
+					@Override
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						// db2 为什么不跟oracle用同样的merge方法,因为db2 merge into 必须要增加cast(? as type) fieldName
 						// 将输入的数据进行类型转换
@@ -434,69 +440,12 @@ public class DB2Dialect implements Dialect {
 				dbType, 0, fetchSize, maxRows);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.dialect.Dialect#updateFetchTop(org.sagacity.sqltoy.
-	 * SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
-	 * java.lang.String, java.lang.Object[], java.lang.Integer,
-	 * org.sagacity.sqltoy.callback.UpdateRowHandler, java.sql.Connection,
-	 * java.lang.Integer, java.lang.String)
-	 */
-	@Override
-	public QueryResult updateFetchTop(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramsValue, Integer topSize, UpdateRowHandler updateRowHandler, Connection conn,
-			final Integer dbType, final String dialect) throws Exception {
-		String realSql = sql + " fetch first " + topSize + " rows only for update with rs";
-		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
-				dbType, 0, -1, -1);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.sagacity.sqltoy.dialect.Dialect#updateFetchRandom(org.sagacity.sqltoy.
-	 * SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
-	 * java.lang.String, java.lang.Object[], java.lang.Integer,
-	 * org.sagacity.sqltoy.callback.UpdateRowHandler, java.sql.Connection,
-	 * java.lang.Integer, java.lang.String)
-	 */
-	@Override
-	public QueryResult updateFetchRandom(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramsValue, Integer random, UpdateRowHandler updateRowHandler, Connection conn,
-			final Integer dbType, final String dialect) throws Exception {
-		String realSql = sql + " order by rand() fetch first " + random + " rows only for update with rs";
-		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
-				dbType, 0, -1, -1);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.dialect.Dialect#executeStore(org.sagacity.sqltoy.
-	 * SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
-	 * java.lang.String, java.lang.Object[], java.lang.Integer[],
-	 * java.sql.Connection, java.lang.Integer, java.lang.String)
-	 */
 	@Override
 	public StoreResult executeStore(SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
 			final Object[] inParamsValue, final Integer[] outParamsType, final Connection conn, final Integer dbType,
 			final String dialect, final int fetchSize) throws Exception {
 		return DialectUtils.executeStore(sqlToyConfig, sqlToyContext, sql, inParamsValue, outParamsType, conn, dbType,
 				fetchSize);
-	}
-
-	@Override
-	public List<ColumnMeta> getTableColumns(String catalog, String schema, String tableName, Connection conn,
-			Integer dbType, String dialect) throws Exception {
-		return DefaultDialectUtils.getTableColumns(catalog, schema, tableName, conn, dbType, dialect);
-	}
-
-	@Override
-	public List<TableMeta> getTables(String catalog, String schema, String tableName, Connection conn, Integer dbType,
-			String dialect) throws Exception {
-		return DefaultDialectUtils.getTables(catalog, schema, tableName, conn, dbType, dialect);
 	}
 
 	private boolean isAssignPKValue(PKStrategy pkStrategy) {
@@ -521,5 +470,17 @@ public class DB2Dialect implements Dialect {
 		// return " for update ";
 		// }
 		return " for update with rs ";
+	}
+
+	@Override
+	public List<ColumnMeta> getTableColumns(String catalog, String schema, String tableName, Connection conn,
+			Integer dbType, String dialect) throws Exception {
+		return DefaultDialectUtils.getTableColumns(catalog, schema, tableName, conn, dbType, dialect);
+	}
+
+	@Override
+	public List<TableMeta> getTables(String catalog, String schema, String tableName, Connection conn, Integer dbType,
+			String dialect) throws Exception {
+		return DefaultDialectUtils.getTables(catalog, schema, tableName, conn, dbType, dialect);
 	}
 }

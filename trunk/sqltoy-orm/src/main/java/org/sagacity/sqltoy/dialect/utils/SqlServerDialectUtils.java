@@ -24,6 +24,7 @@ import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
+import org.sagacity.sqltoy.config.model.OperateType;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
@@ -107,6 +108,9 @@ public class SqlServerDialectUtils {
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		SqlToyResult queryParam = SqlConfigParseUtils.processSql(sql.toString(), extend.getParamsName(sqlToyConfig),
 				extend.getParamsValue(sqlToyContext, sqlToyConfig), dialect);
+		// 增加sql执行拦截器 update 2022-9-10
+		queryParam = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig, OperateType.random, queryParam, null,
+				dbType);
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 				extend.rowCallbackHandler, decryptHandler, conn, dbType, 0, fetchSize, maxRows);
 	}
@@ -355,7 +359,6 @@ public class SqlServerDialectUtils {
 			sql.append("? as ");
 			sql.append(columnName);
 		}
-		// sql.append(" from ").append(realTable);
 		sql.append(") tv on (");
 		StringBuilder idColumns = new StringBuilder();
 		// 组织on部分的主键条件判断
@@ -391,18 +394,7 @@ public class SqlServerDialectUtils {
 					}
 					insertRejIdCols.append(columnName);
 					isStart = false;
-
-					// 存在默认值
-					// if (null != fieldMeta.getDefaultValue()) {
-					// insertRejIdColValues.append(isNullFunction);
-					// insertRejIdColValues.append("(tv.").append(columnName).append(",");
-					// DialectExtUtils.processDefaultValue(insertRejIdColValues, dbType,
-					// fieldMeta.getType(),
-					// fieldMeta.getDefaultValue());
-					// insertRejIdColValues.append(")");
-					// } else {
 					insertRejIdColValues.append("tv.").append(columnName);
-					// }
 				}
 			}
 		}
@@ -523,15 +515,7 @@ public class SqlServerDialectUtils {
 					values.append(",");
 				}
 				sql.append(fieldMeta.getColumnName());
-//				if (null != fieldMeta.getDefaultValue()) {
-//					values.append(isNullFunction);
-//					values.append("(?,");
-//					DialectExtUtils.processDefaultValue(values, dbType, fieldMeta.getType(),
-//							fieldMeta.getDefaultValue());
-//					values.append(")");
-//				} else {
 				values.append("?");
-				// }
 				isStart = false;
 			}
 		}
@@ -567,7 +551,8 @@ public class SqlServerDialectUtils {
 					+ entityMeta.getSequence() + " " + insertSql + " select @mySeqVariable ";
 		}
 		int pkIndex = entityMeta.getIdIndex();
-		ReflectPropsHandler handler = DialectUtils.getAddReflectHandler(null, sqlToyContext.getUnifyFieldsHandler());
+		ReflectPropsHandler handler = DialectUtils.getAddReflectHandler(entityMeta, null,
+				sqlToyContext.getUnifyFieldsHandler());
 		handler = DialectUtils.getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
 		Object[] fullParamValues = BeanUtil.reflectBeanToAry(entity,
@@ -756,7 +741,7 @@ public class SqlServerDialectUtils {
 		} else {
 			reflectColumns = entityMeta.getFieldsArray();
 		}
-		ReflectPropsHandler handler = DialectUtils.getAddReflectHandler(reflectPropsHandler,
+		ReflectPropsHandler handler = DialectUtils.getAddReflectHandler(entityMeta, reflectPropsHandler,
 				sqlToyContext.getUnifyFieldsHandler());
 		handler = DialectUtils.getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());

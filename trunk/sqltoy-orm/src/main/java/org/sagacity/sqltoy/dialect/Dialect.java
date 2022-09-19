@@ -26,8 +26,8 @@ import org.sagacity.sqltoy.model.TableMeta;
  * @description 针对不同数据库进行功能封装实现，使得整个结构更加清晰更易维护
  * @author zhongxuchen
  * @version v1.0,Date:2013-8-29
- * @Modification Date:2017-12-8 {修改接口定义:1、增加为开发者提供自行控制autoCommit机制; 2、增加分库分表的支持}
- * @Modification Date:2019-09-15 {统一扩展dbType和dialect传递到下层}
+ * @update Date:2017-12-8 {修改接口定义:1、增加为开发者提供自行控制autoCommit机制; 2、增加分库分表的支持}
+ * @update Date:2019-09-15 {统一扩展dbType和dialect传递到下层}
  */
 @SuppressWarnings({ "rawtypes" })
 public interface Dialect {
@@ -39,7 +39,7 @@ public interface Dialect {
 	 * @param paramsNamed   对象属性名称(不是数据库表字段名称)
 	 * @param conn
 	 * @param dbType
-	 * @param tableName
+	 * @param tableName     分表场景对应取得的表名(无分表则当前表名)
 	 * @return
 	 */
 	public boolean isUnique(final SqlToyContext sqlToyContext, final Serializable entity, final String[] paramsNamed,
@@ -55,6 +55,8 @@ public interface Dialect {
 	 * @param conn
 	 * @param dbType
 	 * @param dialect
+	 * @param fetchSize
+	 * @param maxRows
 	 * @return
 	 * @throws Exception
 	 */
@@ -73,6 +75,8 @@ public interface Dialect {
 	 * @param conn
 	 * @param dbType
 	 * @param dialect
+	 * @param fetchSize
+	 * @param maxRows
 	 * @return
 	 * @throws Exception
 	 */
@@ -90,6 +94,8 @@ public interface Dialect {
 	 * @param conn
 	 * @param dbType
 	 * @param dialect
+	 * @param fetchSize
+	 * @param maxRows
 	 * @return
 	 * @throws Exception
 	 */
@@ -105,11 +111,13 @@ public interface Dialect {
 	 * @param sql
 	 * @param paramsValue
 	 * @param rowCallbackHandler
+	 * @param decryptHandler
 	 * @param conn
+	 * @param lockMode
 	 * @param dbType
 	 * @param dialect
 	 * @param fetchSize
-	 * @param maxRows
+	 * @param maxRows            设置最大查询记录，一般无需设置
 	 * @return
 	 * @throws Exception
 	 */
@@ -144,7 +152,7 @@ public interface Dialect {
 	 * @param conn
 	 * @param dbType
 	 * @param dialect
-	 * @param tableName
+	 * @param tableName     分表场景对应取得的表名(无分表则当前表名)
 	 * @return
 	 * @throws Exception
 	 */
@@ -161,7 +169,9 @@ public interface Dialect {
 	 * @param conn
 	 * @param dbType
 	 * @param dialect
-	 * @param tableName
+	 * @param tableName     分表场景对应取得的表名(无分表则当前表名)
+	 * @param fetchSize
+	 * @param maxRows
 	 * @return
 	 * @throws Exception
 	 */
@@ -176,7 +186,7 @@ public interface Dialect {
 	 * @param conn
 	 * @param dbType
 	 * @param dialect
-	 * @param tableName
+	 * @param tableName     分表场景对应取得的表名(无分表则当前表名)
 	 * @return
 	 * @throws Exception
 	 */
@@ -188,12 +198,12 @@ public interface Dialect {
 	 * @param sqlToyContext
 	 * @param entities
 	 * @param batchSize
-	 * @param reflectPropsHandler
+	 * @param reflectPropsHandler 此参数已经无实际意义
 	 * @param conn
 	 * @param dbType
 	 * @param dialect
 	 * @param autoCommit
-	 * @param tableName
+	 * @param tableName           分表场景对应取得的表名(无分表则当前表名)
 	 * @return
 	 * @throws Exception
 	 */
@@ -212,7 +222,7 @@ public interface Dialect {
 	 * @param conn
 	 * @param dbType
 	 * @param dialect
-	 * @param tableName
+	 * @param tableName                分表场景对应取得的表名(无分表则当前表名)
 	 * @return
 	 * @throws Exception
 	 */
@@ -226,7 +236,7 @@ public interface Dialect {
 	 * @param sqlToyContext
 	 * @param entity
 	 * @param updateRowHandler
-	 * @param uniqueProps
+	 * @param uniqueProps      唯一性pojo属性，为空默认为主键字段
 	 * @param conn
 	 * @param dbType
 	 * @param dialect
@@ -242,13 +252,14 @@ public interface Dialect {
 	 * @param sqlToyContext
 	 * @param entities
 	 * @param batchSize
+	 * @param uniqueFields
 	 * @param forceUpdateFields
-	 * @param reflectPropsHandler
+	 * @param reflectPropsHandler 此参数已经无实际意义
 	 * @param conn
 	 * @param dbType
 	 * @param dialect
 	 * @param autoCommit
-	 * @param tableName
+	 * @param tableName           分表场景对应取得的表名(无分表则当前表名)
 	 * @return
 	 * @throws Exception
 	 */
@@ -266,7 +277,7 @@ public interface Dialect {
 	 * @param dbType
 	 * @param dialect
 	 * @param autoCommit
-	 * @param tableName
+	 * @param tableName         分表场景对应取得的表名(无分表则当前表名)
 	 * @return
 	 * @throws Exception
 	 */
@@ -279,13 +290,13 @@ public interface Dialect {
 	 * @param sqlToyContext
 	 * @param entities
 	 * @param batchSize
-	 * @param reflectPropsHandler
+	 * @param reflectPropsHandler 此参数已经无实际意义
 	 * @param forceUpdateFields
 	 * @param conn
 	 * @param dbType
 	 * @param dialect
 	 * @param autoCommit
-	 * @param tableName
+	 * @param tableName           分表场景对应取得的表名(无分表则当前表名)
 	 * @return
 	 * @throws Exception
 	 */
@@ -299,12 +310,12 @@ public interface Dialect {
 	 * @param sqlToyContext
 	 * @param entities
 	 * @param batchSize
-	 * @param reflectPropsHandler
+	 * @param reflectPropsHandler 此参数已经无实际意义
 	 * @param conn
 	 * @param dbType
 	 * @param dialect
 	 * @param autoCommit
-	 * @param tableName
+	 * @param tableName           分表场景对应取得的表名(无分表则当前表名)
 	 * @return
 	 * @throws Exception
 	 */
@@ -319,7 +330,7 @@ public interface Dialect {
 	 * @param conn
 	 * @param dbType
 	 * @param dialect
-	 * @param tableName
+	 * @param tableName     分表场景对应取得的表名(无分表则当前表名)
 	 * @return
 	 * @throws Exception
 	 */
@@ -335,7 +346,7 @@ public interface Dialect {
 	 * @param dbType
 	 * @param dialect
 	 * @param autoCommit
-	 * @param tableName
+	 * @param tableName     分表场景对应取得的表名(无分表则当前表名)
 	 * @return
 	 * @throws Exception
 	 */
@@ -354,6 +365,8 @@ public interface Dialect {
 	 * @param dbType
 	 * @param dialect
 	 * @param lockMode
+	 * @param fetchSize
+	 * @param maxRows
 	 * @return
 	 * @throws Exception
 	 */
@@ -361,16 +374,6 @@ public interface Dialect {
 			final Object[] paramValues, final UpdateRowHandler updateRowHandler, final Connection conn,
 			final Integer dbType, final String dialect, final LockMode lockMode, final int fetchSize, final int maxRows)
 			throws Exception;
-
-	@Deprecated
-	public QueryResult updateFetchTop(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramsValue, final Integer topSize, final UpdateRowHandler updateRowHandler, final Connection conn,
-			final Integer dbType, final String dialect) throws Exception;
-
-	@Deprecated
-	public QueryResult updateFetchRandom(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramsValue, final Integer random, final UpdateRowHandler updateRowHandler, final Connection conn,
-			final Integer dbType, final String dialect) throws Exception;
 
 	/**
 	 * @todo 执行存储过程
@@ -382,6 +385,7 @@ public interface Dialect {
 	 * @param conn
 	 * @param dbType
 	 * @param dialect
+	 * @param fetchSize
 	 * @return
 	 * @throws Exception
 	 */

@@ -12,6 +12,7 @@ import org.sagacity.sqltoy.dao.impl.SqlToyLazyDaoImpl;
 import org.sagacity.sqltoy.plugins.FilterHandler;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.plugins.OverTimeSqlHandler;
+import org.sagacity.sqltoy.plugins.SqlInterceptor;
 import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.sagacity.sqltoy.plugins.connection.ConnectionFactory;
 import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
@@ -311,6 +312,22 @@ public class SqltoyAutoConfiguration {
 				sqlToyContext.setOverTimeSqlHandler(
 						(OverTimeSqlHandler) Class.forName(overTimeSqlHandler).getDeclaredConstructor().newInstance());
 			}
+		}
+
+		// 自定义sql拦截处理器
+		String[] sqlInterceptors = properties.getSqlInterceptors();
+		if (null != sqlInterceptors && sqlInterceptors.length > 0) {
+			List<SqlInterceptor> sqlInterceptorList = new ArrayList<SqlInterceptor>();
+			for (String interceptor : sqlInterceptors) {
+				if (applicationContext.containsBean(interceptor)) {
+					sqlInterceptorList.add((SqlInterceptor) applicationContext.getBean(interceptor));
+				} // 包名和类名称
+				else if (interceptor.contains(".")) {
+					sqlInterceptorList
+							.add(((SqlInterceptor) Class.forName(interceptor).getDeclaredConstructor().newInstance()));
+				}
+			}
+			sqlToyContext.setSqlInterceptors(sqlInterceptorList);
 		}
 		return sqlToyContext;
 	}

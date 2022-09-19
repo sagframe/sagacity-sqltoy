@@ -67,7 +67,8 @@ public class SapIQDialectUtils {
 		// 无主键,或多主键且非identity、sequence模式
 		boolean noPK = (entityMeta.getIdArray() == null);
 		int pkIndex = entityMeta.getIdIndex();
-		ReflectPropsHandler handler = DialectUtils.getAddReflectHandler(null, sqlToyContext.getUnifyFieldsHandler());
+		ReflectPropsHandler handler = DialectUtils.getAddReflectHandler(entityMeta, null,
+				sqlToyContext.getUnifyFieldsHandler());
 		handler = DialectUtils.getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
 		Object[] fullParamValues = BeanUtil.reflectBeanToAry(entity,
@@ -238,7 +239,7 @@ public class SapIQDialectUtils {
 		} else {
 			reflectColumns = entityMeta.getFieldsArray();
 		}
-		ReflectPropsHandler handler = DialectUtils.getAddReflectHandler(reflectPropsHandler,
+		ReflectPropsHandler handler = DialectUtils.getAddReflectHandler(entityMeta, reflectPropsHandler,
 				sqlToyContext.getUnifyFieldsHandler());
 		handler = DialectUtils.getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());

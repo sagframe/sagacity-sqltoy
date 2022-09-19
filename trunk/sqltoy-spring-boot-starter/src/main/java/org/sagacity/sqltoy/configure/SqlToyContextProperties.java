@@ -169,6 +169,11 @@ public class SqlToyContextProperties implements Serializable {
 	 * 获取MetaData的列标题处理策略：default:不做处理;upper:转大写;lower
 	 */
 	private String columnLabelUpperOrLower = "default";
+	
+	/**
+	 * 自定义sql拦截加工处理器
+	 */
+	private String[] sqlInterceptors;
 
 	/**
 	 * @return the sqlResourcesDir
@@ -505,4 +510,11 @@ public class SqlToyContextProperties implements Serializable {
 		this.columnLabelUpperOrLower = columnLabelUpperOrLower;
 	}
 
+	public String[] getSqlInterceptors() {
+		return sqlInterceptors;
+	}
+
+	public void setSqlInterceptors(String[] sqlInterceptors) {
+		this.sqlInterceptors = sqlInterceptors;
+	}
 }
