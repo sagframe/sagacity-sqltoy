@@ -248,7 +248,6 @@ public class EntityManager {
 				}
 				if (tenant == null) {
 					tenant = (Tenant) realEntityClass.getAnnotation(Tenant.class);
-
 				}
 				if (entity != null) {
 					break;
