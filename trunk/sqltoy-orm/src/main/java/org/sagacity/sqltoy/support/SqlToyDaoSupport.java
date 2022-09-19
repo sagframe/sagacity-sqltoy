@@ -752,7 +752,7 @@ public class SqlToyDaoSupport {
 			final Class<T> voClass) {
 		return (List<T>) findByQuery(
 				new QueryExecutor(sqlOrNamedSql, (paramsMap == null) ? MapKit.map() : paramsMap).resultType(voClass))
-						.getRows();
+				.getRows();
 	}
 
 	/**
@@ -1199,7 +1199,8 @@ public class SqlToyDaoSupport {
 					break;
 				}
 			}
-			if (isUpdate) {
+			// 全部有值，且版本字段值不为0表示是更新操作
+			if (isUpdate && !values[props.length - 1].toString().equals("0")) {
 				return update(entity, forceUpdateProps, dataSource);
 			}
 		}
@@ -1825,9 +1826,9 @@ public class SqlToyDaoSupport {
 		if (SqlConfigParseUtils.hasNamedParam(where) && StringUtil.isBlank(innerModel.names)) {
 			queryExecutor = new QueryExecutor(sql,
 					(innerModel.values == null || innerModel.values.length == 0) ? null
-							: (Serializable) innerModel.values[0]).resultType(resultType)
-									.dataSource(getDataSource(innerModel.dataSource)).fetchSize(innerModel.fetchSize)
-									.maxRows(innerModel.maxRows);
+							: (Serializable) innerModel.values[0])
+					.resultType(resultType).dataSource(getDataSource(innerModel.dataSource))
+					.fetchSize(innerModel.fetchSize).maxRows(innerModel.maxRows);
 		} else {
 			queryExecutor = new QueryExecutor(sql).names(innerModel.names).values(innerModel.values)
 					.resultType(resultType).dataSource(getDataSource(innerModel.dataSource))
