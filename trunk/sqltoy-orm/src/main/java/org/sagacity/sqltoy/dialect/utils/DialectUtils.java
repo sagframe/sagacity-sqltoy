@@ -1366,6 +1366,12 @@ public class DialectUtils {
 		if (needUpdatePk || isIdentity || isSequence) {
 			BeanUtil.setProperty(entity, entityMeta.getIdArray()[0], result);
 		}
+		// 回写数据版本号
+		if (entityMeta.getDataVersion() != null) {
+			String dataVersionField = entityMeta.getDataVersion().getField();
+			int dataVersionIndex = entityMeta.getFieldIndex(dataVersionField);
+			BeanUtil.setProperty(entity, dataVersionField, fullParamValues[dataVersionIndex]);
+		}
 		// 判定是否有级联子表数据保存
 		if (!entityMeta.getCascadeModels().isEmpty()) {
 			List subTableData = null;
@@ -1454,6 +1460,8 @@ public class DialectUtils {
 		Integer[] relatedColumn = entityMeta.getBizIdRelatedColIndex();
 		String[] relatedColumnNames = entityMeta.getBizIdRelatedColumns();
 		int relatedColumnSize = (relatedColumn == null) ? 0 : relatedColumn.length;
+		boolean hasDataVersion = (entityMeta.getDataVersion() == null) ? false : true;
+		int dataVerIndex = hasDataVersion ? entityMeta.getFieldIndex(entityMeta.getDataVersion().getField()) : 0;
 		// 无主键值以及多主键以及assign或通过generator方式产生主键策略
 		if (pkStrategy != null && null != entityMeta.getIdGenerator()) {
 			int bizIdLength = entityMeta.getBizIdLength();
@@ -1464,6 +1472,7 @@ public class DialectUtils {
 			Object[] relatedColValue = null;
 			String businessIdType = hasBizId ? entityMeta.getColumnJavaType(entityMeta.getBusinessIdField()) : "";
 			List<Object[]> idSet = new ArrayList<Object[]>();
+			List<Object[]> dataVerSet = new ArrayList<Object[]>();
 			for (int i = 0, s = paramValues.size(); i < s; i++) {
 				rowData = (Object[]) paramValues.get(i);
 				// 判断主键策略关联的字段是否有值,合法性验证
@@ -1492,10 +1501,17 @@ public class DialectUtils {
 					BeanUtil.setProperty(entities.get(i), entityMeta.getBusinessIdField(), rowData[bizIdColIndex]);
 				}
 				idSet.add(new Object[] { rowData[pkIndex] });
+				if (hasDataVersion) {
+					dataVerSet.add(new Object[] { rowData[dataVerIndex] });
+				}
 			}
 			// 批量反向设置最终得到的主键值
 			if (!isAssigned) {
 				BeanUtil.mappingSetProperties(entities, entityMeta.getIdArray(), idSet, new int[] { 0 }, true);
+			}
+			if (hasDataVersion) {
+				BeanUtil.mappingSetProperties(entities, new String[] { entityMeta.getDataVersion().getField() },
+						dataVerSet, new int[] { 0 }, true);
 			}
 		}
 		SqlExecuteStat.showSql("批量保存[" + paramValues.size() + "]条记录", insertSql, null);
@@ -2451,7 +2467,7 @@ public class DialectUtils {
 			return preHandler;
 		}
 		Integer dataVersion = 1;
-		//数据版本号以日期开头
+		// 数据版本号以日期开头
 		if (versionConfig != null && versionConfig.isStartDate()) {
 			dataVersion = Integer.valueOf(DateUtil.formatDate(DateUtil.getNowTime(), "yyyyMMdd") + 1);
 		}

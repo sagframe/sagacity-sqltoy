@@ -752,7 +752,7 @@ public class SqlToyDaoSupport {
 			final Class<T> voClass) {
 		return (List<T>) findByQuery(
 				new QueryExecutor(sqlOrNamedSql, (paramsMap == null) ? MapKit.map() : paramsMap).resultType(voClass))
-				.getRows();
+						.getRows();
 	}
 
 	/**
@@ -1181,6 +1181,28 @@ public class SqlToyDaoSupport {
 	 */
 	protected Long saveOrUpdate(final Serializable entity, final String[] forceUpdateProps,
 			final DataSource dataSource) {
+		if (entity == null) {
+			logger.warn("saveOrUpdate: entity is null,please check!");
+			return 0L;
+		}
+		EntityMeta entityMeta = getEntityMeta(entity.getClass());
+		// 存在数据版本控制，如果主键和版本数据都有值，表示做更新操作
+		if (entityMeta.getDataVersion() != null) {
+			String[] props = new String[entityMeta.getIdArray().length + 1];
+			System.arraycopy(entityMeta.getIdArray(), 0, props, 0, entityMeta.getIdArray().length);
+			props[props.length - 1] = entityMeta.getDataVersion().getField();
+			Object[] values = BeanUtil.reflectBeanToAry(entity, props);
+			boolean isUpdate = true;
+			for (int i = 0; i < props.length; i++) {
+				if (values[i] == null) {
+					isUpdate = false;
+					break;
+				}
+			}
+			if (isUpdate) {
+				return update(entity, forceUpdateProps, dataSource);
+			}
+		}
 		return dialectFactory.saveOrUpdate(sqlToyContext, entity, forceUpdateProps, this.getDataSource(dataSource));
 	}
 
@@ -1803,9 +1825,9 @@ public class SqlToyDaoSupport {
 		if (SqlConfigParseUtils.hasNamedParam(where) && StringUtil.isBlank(innerModel.names)) {
 			queryExecutor = new QueryExecutor(sql,
 					(innerModel.values == null || innerModel.values.length == 0) ? null
-							: (Serializable) innerModel.values[0])
-					.resultType(resultType).dataSource(getDataSource(innerModel.dataSource))
-					.fetchSize(innerModel.fetchSize).maxRows(innerModel.maxRows);
+							: (Serializable) innerModel.values[0]).resultType(resultType)
+									.dataSource(getDataSource(innerModel.dataSource)).fetchSize(innerModel.fetchSize)
+									.maxRows(innerModel.maxRows);
 		} else {
 			queryExecutor = new QueryExecutor(sql).names(innerModel.names).values(innerModel.values)
 					.resultType(resultType).dataSource(getDataSource(innerModel.dataSource))
