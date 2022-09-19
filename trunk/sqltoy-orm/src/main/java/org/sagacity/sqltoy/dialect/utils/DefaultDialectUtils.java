@@ -460,7 +460,8 @@ public class DefaultDialectUtils {
 	private static Object[] processFieldValues(final SqlToyContext sqlToyContext, EntityMeta entityMeta,
 			Serializable entity) throws Exception {
 		// 构造全新的新增记录参数赋值反射(覆盖之前的)
-		ReflectPropsHandler handler = DialectUtils.getAddReflectHandler(null, sqlToyContext.getUnifyFieldsHandler());
+		ReflectPropsHandler handler = DialectUtils.getAddReflectHandler(entityMeta, null,
+				sqlToyContext.getUnifyFieldsHandler());
 		handler = DialectUtils.getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
 		// 这里不体现defaultValue 值，产生的insert sql语句中已经处理了default值问题

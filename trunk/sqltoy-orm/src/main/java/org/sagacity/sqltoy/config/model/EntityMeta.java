@@ -203,6 +203,16 @@ public class EntityMeta implements Serializable {
 	private IgnoreCaseSet secureColumns;
 
 	/**
+	 * 数据版本配置
+	 */
+	private DataVersionConfig dataVersion;
+
+	/**
+	 * 租户字段名称
+	 */
+	private String tenantField;
+
+	/**
 	 * @return the loadAllSql
 	 */
 	public String getLoadAllSql() {
@@ -790,4 +800,22 @@ public class EntityMeta implements Serializable {
 	public void setSecureColumns(IgnoreCaseSet secureColumns) {
 		this.secureColumns = secureColumns;
 	}
+
+	public DataVersionConfig getDataVersion() {
+		return dataVersion;
+	}
+
+	public void setDataVersion(DataVersionConfig dataVersion) {
+		this.dataVersion = dataVersion;
+	}
+
+	public String getTenantField() {
+		return tenantField;
+	}
+
+	public void setTenantField(String tenantField) {
+		this.tenantField = tenantField;
+	}
+	
+	
 }
