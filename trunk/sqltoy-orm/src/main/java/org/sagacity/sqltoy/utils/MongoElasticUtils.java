@@ -56,6 +56,13 @@ public class MongoElasticUtils {
 	private MongoElasticUtils() {
 	}
 
+	/**
+	 * @TODO 处理elastic sql
+	 * @param sqlToyConfig
+	 * @param paramNames
+	 * @param paramValues
+	 * @return
+	 */
 	private static SqlToyResult wrapNoSql(SqlToyConfig sqlToyConfig, String[] paramNames, Object[] paramValues) {
 		String mql = sqlToyConfig.getSql(null);
 		// 提取条件参数
@@ -154,7 +161,6 @@ public class MongoElasticUtils {
 		int startMarkLength = startMark.length();
 		int endMarkLength = endMark.length();
 		int pseudoMarkStart = queryStr.indexOf(startMark);
-
 		int beginIndex, endIndex, paramCnt, preParamCnt, beginMarkIndex, endMarkIndex;
 		String preSql, markContentSql, tailSql;
 		List paramValuesList = CollectionUtil.arrayToList(paramValues);
@@ -384,7 +390,7 @@ public class MongoElasticUtils {
 			start = m.end();
 			method = groupStr.substring(1, groupStr.indexOf("(")).toLowerCase().trim();
 			value = paramValues[index];
-			if (method.equals("") || method.equals("param") || method.equals("value")) {
+			if ("".equals(method) || "param".equals(method) || "value".equals(method)) {
 				isAry = true;
 				if (value.getClass().isArray()) {
 					ary = CollectionUtil.convertArray(value);
@@ -497,7 +503,6 @@ public class MongoElasticUtils {
 	 * @param sqlToyConfig
 	 * @param resultSet
 	 * @param fields
-	 * @throws Exception
 	 */
 	public static void processTranslate(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, List resultSet,
 			String[] fields) {
@@ -536,7 +541,6 @@ public class MongoElasticUtils {
 		String[] lables = new String[translateMap.size()];
 		String field;
 		int index = 0;
-		// Translate translateModel;
 		TranslateExtend extend;
 		HashMap<String, Integer> map = new HashMap<String, Integer>();
 		for (int i = 0; i < fields.length; i++) {

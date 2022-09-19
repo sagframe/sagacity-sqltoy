@@ -42,7 +42,7 @@ public class ReservedWordsUtil {
 				index++;
 			}
 		}
-		singlePattern = Pattern.compile("(?i)(\\W||\\s)(`|\"|\\[)(" + fullRegex + ")(`|\"|\\])(\\s||\\W)");
+		singlePattern = Pattern.compile("(?i)(\\W||\\s)(`|'|\"|\\[)(" + fullRegex + ")(`|'|\"|\\])(\\s||\\W)");
 	}
 
 	/**
@@ -126,12 +126,13 @@ public class ReservedWordsUtil {
 			subSize = 0;
 			end = matcher.start() + 1;
 			keyWord = matcher.group().substring(1);
-			if (keyWord.startsWith("`") || keyWord.startsWith("\"") || keyWord.startsWith("[")) {
+			if (keyWord.startsWith("`") || keyWord.startsWith("\"") || keyWord.startsWith("[")
+					|| keyWord.startsWith("'")) {
 				keyWord = keyWord.substring(1);
 			}
 			sqlBuff.append(sql.substring(start, end));
 			keyWord = keyWord.substring(0, keyWord.length() - 1);
-			if (keyWord.endsWith("`") || keyWord.endsWith("\"") || keyWord.endsWith("]")) {
+			if (keyWord.endsWith("`") || keyWord.endsWith("\"") || keyWord.endsWith("]") || keyWord.endsWith("'")) {
 				keyWord = keyWord.substring(0, keyWord.length() - 1);
 				subSize = 1;
 			}
@@ -158,7 +159,7 @@ public class ReservedWordsUtil {
 	}
 
 	/**
-	 * @TODO 判断列是否是关键词
+	 * @TODO 判断列名称是否是关键词
 	 * @param column
 	 * @return
 	 */

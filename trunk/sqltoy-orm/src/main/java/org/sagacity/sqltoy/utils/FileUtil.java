@@ -271,7 +271,6 @@ public class FileUtil {
 	 * @TODO 读取文件到二进制数组中
 	 * @param file
 	 * @return
-	 * @throws IOException
 	 */
 	public static byte[] readAsBytes(Object file) {
 		if (file == null) {
@@ -325,7 +324,7 @@ public class FileUtil {
 	 * @TODO 递归将指定文件夹下面的文件（直到最底层文件夹）放入数组中
 	 * @param parentFile
 	 * @param fileList
-	 * @param filter
+	 * @param filters
 	 */
 	public static void getPathFiles(File parentFile, List fileList, String[] filters) {
 		// 文件为空或不存在,跳出处理
@@ -597,7 +596,6 @@ public class FileUtil {
 	 * @todo 复制整个文件夹的内容
 	 * @param oldPath 准备拷贝的目录
 	 * @param newPath 指定绝对路径的新目录
-	 * @return
 	 */
 	public static void copyFolder(String oldPath, String newPath) {
 		FileInputStream input = null;
@@ -740,12 +738,12 @@ public class FileUtil {
 		if (StringUtil.isNotBlank(lowPath)) {
 			secondPath = lowPath;
 		}
-		if (firstPath.concat(secondPath).trim().equals("")) {
+		if ("".equals(firstPath.concat(secondPath).trim())) {
 			return "";
 		}
-		if (!firstPath.equals("")) {
-			if (firstPath.substring(firstPath.length() - 1).equals("/")
-					|| firstPath.substring(firstPath.length() - 1).equals("\\")) {
+		if (!"".equals(firstPath)) {
+			if ("/".equals(firstPath.substring(firstPath.length() - 1))
+					|| "\\".equals(firstPath.substring(firstPath.length() - 1))) {
 				firstPath = firstPath.substring(0, firstPath.length() - 1) + File.separator;
 			} else {
 				firstPath += File.separator;
@@ -753,8 +751,8 @@ public class FileUtil {
 		} else {
 			firstPath += File.separator;
 		}
-		if (!secondPath.equals("")
-				&& (secondPath.substring(0, 1).equals("/") || secondPath.substring(0, 1).equals("\\"))) {
+		if (!"".equals(secondPath)
+				&& ("/".equals(secondPath.substring(0, 1)) || "\\".equals(secondPath.substring(0, 1)))) {
 			secondPath = secondPath.substring(1);
 		}
 		return firstPath.concat(secondPath);
@@ -788,7 +786,7 @@ public class FileUtil {
 				realPath = realPath.substring(1);
 			}
 			URL url = Thread.currentThread().getContextClassLoader().getResource(realPath);
-			if (url != null && url.getProtocol().equals("file")) {
+			if (url != null && "file".equals(url.getProtocol())) {
 				try {
 					result = new File(url.toURI());
 				} catch (URISyntaxException e) {

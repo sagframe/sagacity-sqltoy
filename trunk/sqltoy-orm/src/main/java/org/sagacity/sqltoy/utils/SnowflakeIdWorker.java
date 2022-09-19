@@ -64,10 +64,8 @@ public class SnowflakeIdWorker {
 	/**
 	 * 构造函数
 	 * 
-	 * @param workerId
-	 *            工作ID (0~31)
-	 * @param datacenterId
-	 *            数据中心ID (0~31)
+	 * @param workerId     工作ID (0~31)
+	 * @param datacenterId 数据中心ID (0~31)
 	 */
 	public SnowflakeIdWorker(long workerId, long datacenterId) {
 		if (workerId > maxWorkerId || workerId < 0) {
@@ -124,8 +122,7 @@ public class SnowflakeIdWorker {
 	/**
 	 * 阻塞到下一个毫秒，直到获得新的时间戳
 	 * 
-	 * @param lastTimestamp
-	 *            上次生成ID的时间截
+	 * @param lastTimestamp 上次生成ID的时间截
 	 * @return 当前时间戳
 	 */
 	protected long tilNextMillis(long lastTimestamp) {

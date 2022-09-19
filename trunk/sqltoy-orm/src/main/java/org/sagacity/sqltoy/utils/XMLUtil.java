@@ -31,7 +31,6 @@ public class XMLUtil {
 	// xml 忽视验证的特性
 	private final static String NO_VALIDATOR_FEATURE = "http://apache.org/xml/features/nonvalidating/load-external-dtd";
 
-
 	private XMLUtil() {
 	}
 
@@ -80,7 +79,7 @@ public class XMLUtil {
 	 */
 	private static IgnoreKeyCaseMap<String, String> asMap(String... keyValues) {
 		IgnoreKeyCaseMap<String, String> result = new IgnoreKeyCaseMap<String, String>();
-		if (keyValues == null||keyValues.length==0) {
+		if (keyValues == null || keyValues.length == 0) {
 			return result;
 		}
 		for (int i = 0; i < keyValues.length - 1; i = i + 2) {
@@ -130,7 +129,6 @@ public class XMLUtil {
 		}
 		// 最后一个
 		values[index] = StringUtil.trim(elt.getTextContent());
-
 		Method[] realMethods = BeanUtil.matchSetMethods(entity.getClass(), properties);
 		Method method;
 		String[] args;
@@ -149,37 +147,37 @@ public class XMLUtil {
 							// 替换全角为半角
 							args = values[i].replaceAll("\\，", ",").split("\\,");
 							className = className.substring(0, className.indexOf("["));
-							if (className.equals("int")) {
+							if ("int".equals(className)) {
 								int[] arrayData = new int[args.length];
 								for (int j = 0; j < arrayData.length; j++) {
 									arrayData[j] = Integer.parseInt(args[j]);
 								}
 								method.invoke(entity, arrayData);
-							} else if (className.equals("long")) {
+							} else if ("long".equals(className)) {
 								long[] arrayData = new long[args.length];
 								for (int j = 0; j < arrayData.length; j++) {
 									arrayData[j] = Long.parseLong(args[j]);
 								}
 								method.invoke(entity, arrayData);
-							} else if (className.equals("float")) {
+							} else if ("float".equals(className)) {
 								float[] arrayData = new float[args.length];
 								for (int j = 0; j < arrayData.length; j++) {
 									arrayData[j] = Float.parseFloat(args[j]);
 								}
 								method.invoke(entity, arrayData);
-							} else if (className.equals("double")) {
+							} else if ("double".equals(className)) {
 								double[] arrayData = new double[args.length];
 								for (int j = 0; j < arrayData.length; j++) {
 									arrayData[j] = Double.parseDouble(args[j]);
 								}
 								method.invoke(entity, arrayData);
-							} else if (className.equals("short")) {
+							} else if ("short".equals(className)) {
 								short[] arrayData = new short[args.length];
 								for (int j = 0; j < arrayData.length; j++) {
 									arrayData[j] = Short.parseShort(args[j]);
 								}
 								method.invoke(entity, arrayData);
-							} else if (className.equals("boolean")) {
+							} else if ("boolean".equals(className)) {
 								boolean[] arrayData = new boolean[args.length];
 								for (int j = 0; j < arrayData.length; j++) {
 									arrayData[j] = Boolean.parseBoolean(args[j]);

@@ -394,7 +394,7 @@ public class SqlUtil {
 	 * @return
 	 * @throws Exception
 	 */
-	private static List reflectResultToValueObject(TypeHandler typeHandler, DecryptHandler decryptHandler, ResultSet rs,
+	private static List reflectResultToVO(TypeHandler typeHandler, DecryptHandler decryptHandler, ResultSet rs,
 			Class voClass, boolean ignoreAllEmptySet, HashMap<String, String> columnFieldMap) throws Exception {
 		List resultList = new ArrayList();
 		// 提取数据预警阈值
@@ -479,6 +479,7 @@ public class SqlUtil {
 	/**
 	 * @todo 提供数据查询结果集转java对象的反射处理，以java VO集合形式返回
 	 * @param typeHandler
+	 * @param decryptHandler    解密
 	 * @param rs
 	 * @param columnLabels
 	 * @param setMethods
@@ -645,7 +646,7 @@ public class SqlUtil {
 			for (String line : sqlAry) {
 				lineStr = line.trim();
 				// 排除掉-- 开头和空行
-				if (!lineStr.equals("") && !lineStr.startsWith("--")) {
+				if (!"".equals(lineStr) && !lineStr.startsWith("--")) {
 					// 不包含-- 直接拼接
 					lineMaskIndex = line.indexOf("--");
 					if (meter > 0) {
@@ -802,6 +803,7 @@ public class SqlUtil {
 			pst.setMaxRows(maxRows);
 		}
 		List result = (List) preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
+			@Override
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws Exception {
 				setParamsValue(typeHandler, conn, dbType, pst, params, null, 0);
 				rs = pst.executeQuery();
@@ -847,8 +849,7 @@ public class SqlUtil {
 		}
 		List result;
 		if (voClass != null) {
-			result = reflectResultToValueObject(typeHandler, decryptHandler, rs, voClass, ignoreAllEmptySet,
-					colFieldMap);
+			result = reflectResultToVO(typeHandler, decryptHandler, rs, voClass, ignoreAllEmptySet, colFieldMap);
 		} else if (rowCallbackHandler != null) {
 			while (rs.next()) {
 				rowCallbackHandler.processRow(rs, index);
@@ -1088,7 +1089,6 @@ public class SqlUtil {
 				nextNodeQueryStr.append(" and ").append(conditions);
 				updateLevelAndRoute.append(" and ").append(conditions);
 			}
-
 			// 模拟指定节点的信息
 			HashMap pidsMap = new HashMap();
 			pidsMap.put(treeTableModel.getRootId().toString(), nodeRoute);
@@ -1189,13 +1189,14 @@ public class SqlUtil {
 			final int nodeLevel, Connection conn, final int dbType) throws Exception {
 		// 修改节点level和节点路径
 		batchUpdateByJdbc(typeHandler, updateLevelAndRoute, ids, 500, new InsertRowCallbackHandler() {
+			@Override
 			public void process(PreparedStatement pst, int index, Object rowData) throws SQLException {
 				String id = ((List) rowData).get(0).toString();
 				// 获得父节点id和父节点路径
 				String pid = ((List) rowData).get(2).toString();
 				String nodeRoute = (String) pidsMap.get(pid);
 				int size = treeTableModel.getIdLength();
-				if (nodeRoute == null || nodeRoute.trim().equals("")) {
+				if (nodeRoute == null || "".equals(nodeRoute.trim())) {
 					nodeRoute = "";
 					if (!treeTableModel.isChar() || treeTableModel.isAppendZero()) {
 						// 负数
@@ -1221,13 +1222,11 @@ public class SqlUtil {
 				} else {
 					nodeRoute = nodeRoute.concat(StringUtil.addRightBlank2Len(id, size));
 				}
-
 				((List) rowData).set(1, nodeRoute);
 				// 节点等级
 				pst.setInt(1, nodeLevel);
 				// 节点路径(当节点路径长度不做补充统一长度操作,则末尾自动加上一个分割符)
 				pst.setString(2, nodeRoute + ((size < 2) ? treeTableModel.getSplitSign() : ""));
-
 				if (treeTableModel.isChar()) {
 					pst.setString(3, id);
 				} else {
@@ -1393,6 +1392,7 @@ public class SqlUtil {
 	 * @param conn
 	 * @param dbType
 	 * @param autoCommit
+	 * @param processWord
 	 * @return
 	 * @throws Exception
 	 */
@@ -1412,6 +1412,7 @@ public class SqlUtil {
 		}
 		PreparedStatement pst = conn.prepareStatement(realSql);
 		Object result = preparedStatementProcess(null, pst, null, new PreparedStatementResultHandler() {
+			@Override
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
 				// sqlserver 存在timestamp不能赋值问题,通过对象完成的修改、插入忽视掉timestamp列
 				if (dbType == DBType.SQLSERVER && paramsType != null) {
@@ -1436,7 +1437,7 @@ public class SqlUtil {
 	/**
 	 * @todo 转换主键数据类型(主键生成只支持数字和字符串类型)
 	 * @param idValue
-	 * @param jdbcType
+	 * @param idType
 	 * @return
 	 */
 	public static Object convertIdValueType(Object idValue, String idType) {
@@ -1447,31 +1448,31 @@ public class SqlUtil {
 			return idValue;
 		}
 		// 按照优先顺序对比
-		if (idType.equals("java.lang.string")) {
+		if ("java.lang.string".equals(idType)) {
 			return idValue.toString();
 		}
-		if (idType.equals("java.lang.integer")) {
+		if ("java.lang.integer".equals(idType)) {
 			return Integer.valueOf(idValue.toString());
 		}
-		if (idType.equals("java.lang.long")) {
+		if ("java.lang.long".equals(idType)) {
 			return Long.valueOf(idValue.toString());
 		}
-		if (idType.equals("java.math.biginteger")) {
+		if ("java.math.biginteger".equals(idType)) {
 			return new BigInteger(idValue.toString());
 		}
-		if (idType.equals("java.math.bigdecimal")) {
+		if ("java.math.bigdecimal".equals(idType)) {
 			return new BigDecimal(idValue.toString());
 		}
-		if (idType.equals("long")) {
+		if ("long".equals(idType)) {
 			return Long.valueOf(idValue.toString()).longValue();
 		}
-		if (idType.equals("int")) {
+		if ("int".equals(idType)) {
 			return Integer.valueOf(idValue.toString()).intValue();
 		}
-		if (idType.equals("java.lang.short")) {
+		if ("java.lang.short".equals(idType)) {
 			return Short.valueOf(idValue.toString());
 		}
-		if (idType.equals("short")) {
+		if ("short".equals(idType)) {
 			return Short.valueOf(idValue.toString()).shortValue();
 		}
 		return idValue;
@@ -1579,13 +1580,13 @@ public class SqlUtil {
 					}
 					varSql = preSql.trim();
 					// 首位字符不是数字(48~57)、(A-Z|a-z)字母(65~90,97~122)、下划线(95)、冒号(58)
-					if (!varSql.equals("")) {
+					if (!"".equals(varSql)) {
 						preChar = varSql.charAt(varSql.length() - 1);
 					} else {
 						preChar = ' ';
 					}
 					tailChar = realSql.charAt(index + field.length());
-					// 非条件参数(58为冒号)
+					// 非条件参数(58为冒号),结尾字符不能是数字、字母和(
 					if (((isBlank && preChar != 58) || (preChar > 58 && preChar < 65)
 							|| (preChar > 90 && preChar < 97 && preChar != 95) || preChar < 48 || preChar > 122)
 							&& ((tailChar > 58 && tailChar < 65) || (tailChar > 90 && tailChar < 97 && tailChar != 95)
@@ -1710,7 +1711,7 @@ public class SqlUtil {
 		if (defaultValue == null) {
 			return null;
 		}
-		if (defaultValue.trim().equals("")) {
+		if ("".equals(defaultValue.trim())) {
 			return defaultValue;
 		}
 		String result = defaultValue;
