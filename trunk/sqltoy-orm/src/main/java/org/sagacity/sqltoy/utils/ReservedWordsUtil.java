@@ -150,7 +150,7 @@ public class ReservedWordsUtil {
 			} else if (dbType == DBType.SQLSERVER || dbType == DBType.SQLITE) {
 				sqlBuff.append("[").append(keyWord).append("]");
 			} else if (dbType == DBType.MYSQL || dbType == DBType.TIDB || dbType == DBType.MYSQL57
-					|| dbType == DBType.TDENGINE || dbType == DBType.H2) {
+					|| dbType == DBType.TDENGINE) {
 				sqlBuff.append("`").append(keyWord).append("`");
 			} else if (dbType == DBType.H2) {
 				sqlBuff.append("'").append(keyWord).append("'");

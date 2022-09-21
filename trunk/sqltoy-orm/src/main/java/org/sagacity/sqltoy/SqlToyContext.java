@@ -315,6 +315,11 @@ public class SqlToyContext {
 	private List<SqlInterceptor> sqlInterceptors;
 
 	/**
+	 * 拆分merge into 为updateAll 和 saveAllIgnoreExist 两步操作(1、seata分布式事务不支持merge)
+	 */
+	private boolean splitMergeInto = false;
+
+	/**
 	 * @todo 初始化
 	 * @throws Exception
 	 */
@@ -565,7 +570,7 @@ public class SqlToyContext {
 	public EntityMeta getEntityMeta(String tableName) {
 		return entityManager.getEntityMeta(tableName);
 	}
-	
+
 	/**
 	 * @TODO 判断是否是实体bean
 	 * @param entityClass
@@ -1036,5 +1041,13 @@ public class SqlToyContext {
 
 	public void setSqlInterceptors(List<SqlInterceptor> sqlInterceptors) {
 		this.sqlInterceptors = sqlInterceptors;
+	}
+
+	public boolean isSplitMergeInto() {
+		return splitMergeInto;
+	}
+
+	public void setSplitMergeInto(boolean splitMergeInto) {
+		this.splitMergeInto = splitMergeInto;
 	}
 }

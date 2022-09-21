@@ -190,6 +190,11 @@ public class SqlToyContextProperties implements Serializable {
 	private String[] sqlInterceptors;
 
 	/**
+	 * 拆分merge into 为updateAll 和 saveAllIgnoreExist 两步操作(1、seata分布式事务不支持merge)
+	 */
+	private boolean splitMergeInto = false;
+
+	/**
 	 * @return the sqlResourcesDir
 	 */
 	public String getSqlResourcesDir() {
@@ -544,6 +549,14 @@ public class SqlToyContextProperties implements Serializable {
 
 	public void setSqlInterceptors(String[] sqlInterceptors) {
 		this.sqlInterceptors = sqlInterceptors;
+	}
+
+	public boolean isSplitMergeInto() {
+		return splitMergeInto;
+	}
+
+	public void setSplitMergeInto(boolean splitMergeInto) {
+		this.splitMergeInto = splitMergeInto;
 	}
 
 }

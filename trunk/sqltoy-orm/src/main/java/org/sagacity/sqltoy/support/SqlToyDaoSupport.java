@@ -1054,7 +1054,7 @@ public class SqlToyDaoSupport {
 			}
 			// 以日期开头
 			if (dataVersion.isStartDate()) {
-				String nowDate = DateUtil.formatDate(DateUtil.getNowTime(), "yyyyMMdd");
+				String nowDate = DateUtil.formatDate(DateUtil.getNowTime(), DateUtil.FORMAT.DATE_8CHAR);
 				if (verStr.startsWith(nowDate)) {
 					verStr = nowDate + (Integer.parseInt(verStr.substring(8)) + 1);
 				} else {

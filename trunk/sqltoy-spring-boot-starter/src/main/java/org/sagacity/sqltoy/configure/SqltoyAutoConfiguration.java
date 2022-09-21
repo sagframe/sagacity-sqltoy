@@ -167,6 +167,8 @@ public class SqltoyAutoConfiguration {
 		// update 2021-01-18 设置缓存类别,默认ehcache
 		sqlToyContext.setCacheType(properties.getCacheType());
 
+		// 是否拆分merge into 为updateAll 和 saveAllIgnoreExist 两步操作(1、seata分布式事务不支持merge)
+		sqlToyContext.setSplitMergeInto(properties.isSplitMergeInto());
 		// getMetaData().getColumnLabel(i) 结果做大小写处理策略
 		if (null != properties.getColumnLabelUpperOrLower()) {
 			sqlToyContext.setColumnLabelUpperOrLower(properties.getColumnLabelUpperOrLower().toLowerCase());
