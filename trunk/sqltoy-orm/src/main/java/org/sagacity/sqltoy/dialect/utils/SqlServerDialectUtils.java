@@ -109,8 +109,9 @@ public class SqlServerDialectUtils {
 		SqlToyResult queryParam = SqlConfigParseUtils.processSql(sql.toString(), extend.getParamsName(sqlToyConfig),
 				extend.getParamsValue(sqlToyContext, sqlToyConfig), dialect);
 		// 增加sql执行拦截器 update 2022-9-10
-		queryParam = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig, OperateType.random, queryParam, null,
-				dbType);
+		queryParam = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig,
+				(extend.entityClass == null) ? OperateType.random : OperateType.singleTable, queryParam,
+				extend.entityClass, dbType);
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 				extend.rowCallbackHandler, decryptHandler, conn, dbType, 0, fetchSize, maxRows);
 	}

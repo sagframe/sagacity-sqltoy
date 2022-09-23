@@ -752,7 +752,7 @@ public class SqlToyDaoSupport {
 			final Class<T> voClass) {
 		return (List<T>) findByQuery(
 				new QueryExecutor(sqlOrNamedSql, (paramsMap == null) ? MapKit.map() : paramsMap).resultType(voClass))
-				.getRows();
+						.getRows();
 	}
 
 	/**
@@ -1277,6 +1277,8 @@ public class SqlToyDaoSupport {
 		}
 		// 分库分表策略
 		setEntitySharding(queryExecutor, entityMeta);
+		// 为后续租户过滤提供判断依据(单表简单sql和对应的实体对象)
+		queryExecutor.getInnerModel().entityClass = entityClass;
 		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, queryExecutor, null, null,
 				getDataSource(innerModel.dataSource));
 	}
@@ -1826,9 +1828,9 @@ public class SqlToyDaoSupport {
 		if (SqlConfigParseUtils.hasNamedParam(where) && StringUtil.isBlank(innerModel.names)) {
 			queryExecutor = new QueryExecutor(sql,
 					(innerModel.values == null || innerModel.values.length == 0) ? null
-							: (Serializable) innerModel.values[0])
-					.resultType(resultType).dataSource(getDataSource(innerModel.dataSource))
-					.fetchSize(innerModel.fetchSize).maxRows(innerModel.maxRows);
+							: (Serializable) innerModel.values[0]).resultType(resultType)
+									.dataSource(getDataSource(innerModel.dataSource)).fetchSize(innerModel.fetchSize)
+									.maxRows(innerModel.maxRows);
 		} else {
 			queryExecutor = new QueryExecutor(sql).names(innerModel.names).values(innerModel.values)
 					.resultType(resultType).dataSource(getDataSource(innerModel.dataSource))
@@ -1836,6 +1838,8 @@ public class SqlToyDaoSupport {
 		}
 		// 设置是否空白转null
 		queryExecutor.getInnerModel().blankToNull = innerModel.blankToNull;
+		// 为后续租户过滤提供判断依据(单表简单sql和对应的实体对象)
+		queryExecutor.getInnerModel().entityClass = entityClass;
 		// 设置额外的缓存翻译
 		if (!innerModel.translates.isEmpty()) {
 			queryExecutor.getInnerModel().translates.putAll(innerModel.translates);
@@ -2061,6 +2065,8 @@ public class SqlToyDaoSupport {
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sqlStr, SqlType.update,
 				getDialect(innerModel.dataSource));
 		QueryExecutor queryExecutor = new QueryExecutor(sqlStr).names(realNames).values(realValues);
+		// 为后续租户过滤提供判断依据(单表简单sql和对应的实体对象)
+		queryExecutor.getInnerModel().entityClass = entityClass;
 		setEntitySharding(queryExecutor, entityMeta);
 		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, queryExecutor, null, null,
 				getDataSource(innerModel.dataSource, sqlToyConfig));
