@@ -166,11 +166,15 @@ public class QueryExecutorExtend implements Serializable {
 
 	// 分库策略配置
 	public ShardingStrategyConfig dbSharding;
-	
+
 	/**
 	 * 执行时是否输出sql 日志
 	 */
 	public Boolean showSql;
+	/**
+	 * 标记基于单表的简单操作
+	 */
+	public Class entityClass = null;
 
 	// 分表策略配置
 	public List<ShardingStrategyConfig> tableShardings = new ArrayList<ShardingStrategyConfig>();

@@ -140,9 +140,9 @@ public class StringUtilsTest {
 			packageName = packageName.substring(0, packageName.length() - 1);
 		}
 		packageName = packageName.replace("/", ".");
-		String sql = "where t.tenant_id in (?) and id=?";
-		String sql1 = "where t.tenant_id = ? and id=?";
-		String tenantColumn = "TENANT_ID";
+		String sql = "where t.\"tenant_id\" in (?) and id=?";
+		String sql1 = "where t.'tenant_id' = ? and id=?";
+		String tenantColumn = "\"TENANT_ID\"";
 		System.err.println(packageName);
 		// 已经有租户条件过滤，无需做处理
 		System.err.println(StringUtil.matches(sql, "(?i)\\W" + tenantColumn + "(\\s*\\=|\\s+in)"));
