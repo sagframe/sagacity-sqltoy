@@ -1562,14 +1562,14 @@ public class BeanUtil {
 	 * @param value
 	 * @throws Exception
 	 */
-	public static void setProperty(Object bean, String property, Object value) throws Exception {
+	public static void setProperty(Object bean, String property, Object value) throws RuntimeException {
 		String key = bean.getClass().getName().concat(":set").concat(property);
 		// 利用缓存提升方法匹配效率
 		Method method = setMethods.get(key);
 		if (method == null) {
 			method = matchSetMethods(bean.getClass(), new String[] { property })[0];
 			if (method == null) {
-				throw new Exception(bean.getClass().getName() + " 没有对应的:" + property);
+				throw new RuntimeException(bean.getClass().getName() + " 没有对应的:" + property);
 			}
 			setMethods.put(key, method);
 		}
@@ -1582,7 +1582,12 @@ public class BeanUtil {
 				genericType = (Class) ((ParameterizedType) types[0]).getActualTypeArguments()[0];
 			}
 		}
-		method.invoke(bean, convertType(null, value, type, genericType));
+		try {
+			method.invoke(bean, convertType(null, value, type, genericType));
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException(e.getMessage());
+		}
 	}
 
 	/**
@@ -1592,7 +1597,7 @@ public class BeanUtil {
 	 * @return
 	 * @throws Exception
 	 */
-	public static Object getProperty(Object bean, String property) throws Exception {
+	public static Object getProperty(Object bean, String property) throws RuntimeException {
 		String key = bean.getClass().getName().concat(":get").concat(property);
 		// 利用缓存提升方法匹配效率
 		Method method = getMethods.get(key);
@@ -1603,7 +1608,14 @@ public class BeanUtil {
 			}
 			getMethods.put(key, method);
 		}
-		return method.invoke(bean);
+		Object result = null;
+		try {
+			result = method.invoke(bean);
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException(e.getMessage());
+		}
+		return result;
 	}
 
 	/**

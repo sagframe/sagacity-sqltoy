@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DecryptHandler;
@@ -155,8 +156,9 @@ public class SqlServerDialect implements Dialect {
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
 				sql.toString(), (pageNo - 1) * pageSize, Long.valueOf(pageSize), dialect);
 		// 增加sql执行拦截器 update 2022-9-10
-		queryParam = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig, OperateType.page, queryParam, null,
-				dbType);
+		queryParam = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig,
+				(extend.entityClass == null) ? OperateType.page : OperateType.singleTable, queryParam,
+				extend.entityClass, dbType);
 		return findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 				extend.rowCallbackHandler, decryptHandler, conn, null, dbType, dialect, fetchSize, maxRows);
 	}
@@ -208,8 +210,9 @@ public class SqlServerDialect implements Dialect {
 				sql.toString(), null, null, dialect);
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		// 增加sql执行拦截器 update 2022-9-10
-		queryParam = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig, OperateType.top, queryParam, null,
-				dbType);
+		queryParam = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig,
+				(extend.entityClass == null) ? OperateType.top : OperateType.singleTable, queryParam,
+				extend.entityClass, dbType);
 		return findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 				extend.rowCallbackHandler, decryptHandler, conn, null, dbType, dialect, fetchSize, maxRows);
 	}
@@ -272,6 +275,24 @@ public class SqlServerDialect implements Dialect {
 			final ReflectPropsHandler reflectPropsHandler, final String[] forceUpdateFields, Connection conn,
 			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
 			throws Exception {
+		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
+		// 1、拆分merge into(兼容seata 分布式事务);2、多租户数据安全过滤(mrege 语句无法增加where
+		// tenant_id='S0001')
+		if (sqlToyContext.isSplitMergeInto() || (entityMeta.getTenantField() != null
+				&& sqlToyContext.getUnifyFieldsHandler() != null && sqlToyContext.getUnifyFieldsHandler()
+						.authTenants(entities.get(0).getClass(), OperateType.updateAll) != null)) {
+			Long updateCnt = DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields,
+					reflectPropsHandler, NVL_FUNCTION, conn, dbType, autoCommit, tableName, true);
+			// 如果修改的记录数量跟总记录数量一致,表示全部是修改
+			if (updateCnt >= entities.size()) {
+				SqlExecuteStat.debug("修改记录", "修改记录量:" + updateCnt + " 条,等于entities集合长度,不再做insert操作!");
+				return updateCnt;
+			}
+			Long saveCnt = saveAllIgnoreExist(sqlToyContext, entities, batchSize, reflectPropsHandler, conn, dbType,
+					dialect, autoCommit, tableName);
+			SqlExecuteStat.debug("新增记录", "新建记录数量:" + saveCnt + " 条!");
+			return updateCnt + saveCnt;
+		}
 		// 为什么不共用oracle等merge方法,因为sqlserver不支持timestamp类型的数据进行插入和修改赋值
 		return SqlServerDialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, reflectPropsHandler,
 				forceUpdateFields, conn, dbType, autoCommit, tableName);

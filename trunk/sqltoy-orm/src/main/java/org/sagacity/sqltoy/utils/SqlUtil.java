@@ -121,8 +121,7 @@ public class SqlUtil {
 	 * @throws Exception
 	 */
 	@Deprecated
-	public static String combineQueryInStr(Object conditions, Integer colIndex, String property, boolean isChar)
-			throws Exception {
+	public static String combineQueryInStr(Object conditions, Integer colIndex, String property, boolean isChar) {
 		StringBuilder conditons = new StringBuilder(64);
 		String flag = "";
 		// 是否是字符类型

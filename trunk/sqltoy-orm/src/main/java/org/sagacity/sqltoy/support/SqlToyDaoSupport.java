@@ -27,6 +27,7 @@ import org.sagacity.sqltoy.callback.DataSourceCallbackHandler;
 import org.sagacity.sqltoy.callback.StreamResultHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
+import org.sagacity.sqltoy.config.model.DataVersionConfig;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
@@ -84,6 +85,7 @@ import org.sagacity.sqltoy.translate.model.TranslateConfigModel;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.BeanWrapper;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
+import org.sagacity.sqltoy.utils.DateUtil;
 import org.sagacity.sqltoy.utils.MapperUtils;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
@@ -750,7 +752,7 @@ public class SqlToyDaoSupport {
 			final Class<T> voClass) {
 		return (List<T>) findByQuery(
 				new QueryExecutor(sqlOrNamedSql, (paramsMap == null) ? MapKit.map() : paramsMap).resultType(voClass))
-				.getRows();
+						.getRows();
 	}
 
 	/**
@@ -1025,6 +1027,45 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected Long update(final Serializable entity, final String[] forceUpdateProps, final DataSource dataSource) {
+		if (entity == null) {
+			logger.warn("update entity is null,please check!");
+			return 0L;
+		}
+		EntityMeta entityMeta = getEntityMeta(entity.getClass());
+		DataVersionConfig dataVersion = entityMeta.getDataVersion();
+		if (dataVersion != null) {
+			Object version = BeanUtil.getProperty(entity, dataVersion.getField());
+			if (version == null) {
+				throw new IllegalArgumentException("表:" + entityMeta.getTableName() + " 存在版本@DataVersion配置，属性:"
+						+ dataVersion.getField() + " 值不能为空!");
+			}
+			String where = "";
+			for (String field : entityMeta.getIdArray()) {
+				where = where.concat(field).concat("=:").concat(field).concat(" and ");
+			}
+			where = where.concat(dataVersion.getField()).concat("=:").concat(dataVersion.getField());
+			// 锁住id+version条件符合的记录
+			Serializable versionEntity = loadEntity(entity.getClass(), EntityQuery.create()
+					.select(entityMeta.getIdArray()).where(where).values(entity).lock(LockMode.UPGRADE_NOWAIT));
+			String verStr = version.toString();
+			if (versionEntity == null) {
+				throw new DataAccessException(
+						"表:" + entityMeta.getTableName() + " 数据版本:" + verStr + " 正在被其他用户修改或已经被更新!");
+			}
+			// 以日期开头
+			if (dataVersion.isStartDate()) {
+				String nowDate = DateUtil.formatDate(DateUtil.getNowTime(), DateUtil.FORMAT.DATE_8CHAR);
+				if (verStr.startsWith(nowDate)) {
+					verStr = nowDate + (Integer.parseInt(verStr.substring(8)) + 1);
+				} else {
+					verStr = nowDate + 1;
+				}
+			} else {
+				verStr = "" + (Integer.parseInt(verStr) + 1);
+			}
+			// 更新版本号
+			BeanUtil.setProperty(entity, dataVersion.getField(), verStr);
+		}
 		return dialectFactory.update(sqlToyContext, entity, forceUpdateProps, false, null, null,
 				this.getDataSource(dataSource));
 	}
@@ -1140,6 +1181,29 @@ public class SqlToyDaoSupport {
 	 */
 	protected Long saveOrUpdate(final Serializable entity, final String[] forceUpdateProps,
 			final DataSource dataSource) {
+		if (entity == null) {
+			logger.warn("saveOrUpdate: entity is null,please check!");
+			return 0L;
+		}
+		EntityMeta entityMeta = getEntityMeta(entity.getClass());
+		// 存在数据版本控制，如果主键和版本数据都有值，表示做更新操作
+		if (entityMeta.getDataVersion() != null) {
+			String[] props = new String[entityMeta.getIdArray().length + 1];
+			System.arraycopy(entityMeta.getIdArray(), 0, props, 0, entityMeta.getIdArray().length);
+			props[props.length - 1] = entityMeta.getDataVersion().getField();
+			Object[] values = BeanUtil.reflectBeanToAry(entity, props);
+			boolean isUpdate = true;
+			for (int i = 0; i < props.length; i++) {
+				if (values[i] == null) {
+					isUpdate = false;
+					break;
+				}
+			}
+			// 全部有值，且版本字段值不为0表示是更新操作
+			if (isUpdate && !values[props.length - 1].toString().equals("0")) {
+				return update(entity, forceUpdateProps, dataSource);
+			}
+		}
 		return dialectFactory.saveOrUpdate(sqlToyContext, entity, forceUpdateProps, this.getDataSource(dataSource));
 	}
 
@@ -1213,6 +1277,8 @@ public class SqlToyDaoSupport {
 		}
 		// 分库分表策略
 		setEntitySharding(queryExecutor, entityMeta);
+		// 为后续租户过滤提供判断依据(单表简单sql和对应的实体对象)
+		queryExecutor.getInnerModel().entityClass = entityClass;
 		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, queryExecutor, null, null,
 				getDataSource(innerModel.dataSource));
 	}
@@ -1762,9 +1828,9 @@ public class SqlToyDaoSupport {
 		if (SqlConfigParseUtils.hasNamedParam(where) && StringUtil.isBlank(innerModel.names)) {
 			queryExecutor = new QueryExecutor(sql,
 					(innerModel.values == null || innerModel.values.length == 0) ? null
-							: (Serializable) innerModel.values[0])
-					.resultType(resultType).dataSource(getDataSource(innerModel.dataSource))
-					.fetchSize(innerModel.fetchSize).maxRows(innerModel.maxRows);
+							: (Serializable) innerModel.values[0]).resultType(resultType)
+									.dataSource(getDataSource(innerModel.dataSource)).fetchSize(innerModel.fetchSize)
+									.maxRows(innerModel.maxRows);
 		} else {
 			queryExecutor = new QueryExecutor(sql).names(innerModel.names).values(innerModel.values)
 					.resultType(resultType).dataSource(getDataSource(innerModel.dataSource))
@@ -1772,6 +1838,8 @@ public class SqlToyDaoSupport {
 		}
 		// 设置是否空白转null
 		queryExecutor.getInnerModel().blankToNull = innerModel.blankToNull;
+		// 为后续租户过滤提供判断依据(单表简单sql和对应的实体对象)
+		queryExecutor.getInnerModel().entityClass = entityClass;
 		// 设置额外的缓存翻译
 		if (!innerModel.translates.isEmpty()) {
 			queryExecutor.getInnerModel().translates.putAll(innerModel.translates);
@@ -1997,6 +2065,8 @@ public class SqlToyDaoSupport {
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sqlStr, SqlType.update,
 				getDialect(innerModel.dataSource));
 		QueryExecutor queryExecutor = new QueryExecutor(sqlStr).names(realNames).values(realValues);
+		// 为后续租户过滤提供判断依据(单表简单sql和对应的实体对象)
+		queryExecutor.getInnerModel().entityClass = entityClass;
 		setEntitySharding(queryExecutor, entityMeta);
 		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, queryExecutor, null, null,
 				getDataSource(innerModel.dataSource, sqlToyConfig));

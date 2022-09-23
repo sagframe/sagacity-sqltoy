@@ -424,7 +424,7 @@ public class DialectExtUtils {
 				if ((unifyFieldValue instanceof Date) || (unifyFieldValue instanceof Timestamp)
 						|| (unifyFieldValue instanceof LocalDate) || (unifyFieldValue instanceof LocalDateTime)) {
 					if ("java.lang.integer".equals(fieldType) || "int".equals(fieldType)) {
-						return DateUtil.formatDate(unifyFieldValue, "yyyyMMdd");
+						return DateUtil.formatDate(unifyFieldValue, DateUtil.FORMAT.DATE_8CHAR);
 					} else if ("java.lang.long".equals(fieldType) || "java.math.biginteger".equals(fieldType)
 							|| "long".equals(fieldType)) {
 						return DateUtil.formatDate(unifyFieldValue, "yyyyMMddHHmmss");
@@ -436,7 +436,7 @@ public class DialectExtUtils {
 							return DateUtil.formatDate(unifyFieldValue, "yyyyMMddHHmmss");
 						}
 						if (fieldMeta.getLength() >= 8) {
-							return DateUtil.formatDate(unifyFieldValue, "yyyyMMdd");
+							return DateUtil.formatDate(unifyFieldValue, DateUtil.FORMAT.DATE_8CHAR);
 						}
 					}
 				}

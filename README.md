@@ -41,8 +41,7 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 * 5.2.10.jre17 发版日期: 2022-9-14
 
 # 历史版本
-* 5.1.54/5.1.54.jre11/5.1.54.jre17  发版日期: 2022-8-6
-* 4.19.58  发版日期: 2022-8-16
+* 4.19.60  发版日期: 2022-9-19
 
 # 升级到5.2.x指南
 * 常规springboot项目无任何影响
@@ -68,7 +67,7 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
    * mysql(mariadb/innosql) 支持5.6、5.7、8.0 版本
    * postgresql(greenplum) 支持9.5 以及以上版本
    * sqlserver 2012+
-   * sqlite
+   * sqlite、H2
    * DM达梦数据库
    * elasticsearch 只支持查询,版本支持5.7+版本，建议使用7.3以上版本 
    * clickhouse 

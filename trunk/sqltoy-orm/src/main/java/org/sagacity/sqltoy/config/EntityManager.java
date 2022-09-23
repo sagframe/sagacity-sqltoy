@@ -14,6 +14,7 @@ import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.annotation.BusinessId;
 import org.sagacity.sqltoy.config.annotation.Column;
+import org.sagacity.sqltoy.config.annotation.DataVersion;
 import org.sagacity.sqltoy.config.annotation.Entity;
 import org.sagacity.sqltoy.config.annotation.Id;
 import org.sagacity.sqltoy.config.annotation.OneToMany;
@@ -23,6 +24,8 @@ import org.sagacity.sqltoy.config.annotation.Secure;
 import org.sagacity.sqltoy.config.annotation.SecureConfig;
 import org.sagacity.sqltoy.config.annotation.Sharding;
 import org.sagacity.sqltoy.config.annotation.Strategy;
+import org.sagacity.sqltoy.config.annotation.Tenant;
+import org.sagacity.sqltoy.config.model.DataVersionConfig;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.FieldSecureConfig;
@@ -119,6 +122,9 @@ public class EntityManager {
 	 */
 	private ConcurrentHashMap<String, EntityMeta> entitysMetaMap = new ConcurrentHashMap<String, EntityMeta>();
 
+	/**
+	 * 存放表名称对应实体对象类名称，再结合entitysMetaMap获取对象的entityMeta
+	 */
 	private ConcurrentHashMap<String, String> tableEntityNameMap = new ConcurrentHashMap<String, String>();
 
 	/**
@@ -231,8 +237,18 @@ public class EntityManager {
 		try {
 			Class realEntityClass = entityClass;
 			Entity entity = null;
+			// 数据版本
+			DataVersion dataVersion = null;
+			// 租户
+			Tenant tenant = null;
 			while (realEntityClass != null && !realEntityClass.equals(Object.class)) {
 				entity = (Entity) realEntityClass.getAnnotation(Entity.class);
+				if (dataVersion == null) {
+					dataVersion = (DataVersion) realEntityClass.getAnnotation(DataVersion.class);
+				}
+				if (tenant == null) {
+					tenant = (Tenant) realEntityClass.getAnnotation(Tenant.class);
+				}
 				if (entity != null) {
 					break;
 				}
@@ -251,6 +267,9 @@ public class EntityManager {
 				if (StringUtil.isNotBlank(entity.pk_constraint())) {
 					entityMeta.setPkConstraint(entity.pk_constraint());
 				}
+				if (tenant != null && !tenant.field().equals("")) {
+					entityMeta.setTenantField(tenant.field());
+				}
 				// 解析Entity包含的字段信息
 				Field[] allFields = parseAllFields(entityClass);
 				// 排除主键的字段信息
@@ -266,10 +285,23 @@ public class EntityManager {
 				// where 主键字段=? 形式，用于构建delete功能操作的sql
 				StringBuilder loadArgWhereSql = new StringBuilder("");
 				List<String> allColumnNames = new ArrayList<String>();
+				String dataVersionField = null;
 				for (Field field : allFields) {
 					// 解析对象字段属性跟数据库表字段的对应关系
 					parseFieldMeta(sqlToyContext, entityMeta, field, rejectIdFieldList, allColumnNames,
 							loadNamedWhereSql, loadArgWhereSql);
+					if (dataVersion == null) {
+						dataVersion = (DataVersion) field.getAnnotation(DataVersion.class);
+						if (dataVersion != null) {
+							dataVersionField = field.getName();
+						}
+					}
+					if (tenant == null) {
+						tenant = (Tenant) field.getAnnotation(Tenant.class);
+						if (tenant != null) {
+							entityMeta.setTenantField(field.getName());
+						}
+					}
 				}
 				// 设置数据库表所有字段信息
 				StringBuilder allColNames = new StringBuilder();
@@ -319,10 +351,38 @@ public class EntityManager {
 					}
 					entityMeta.setCascadeTypes(cascadeTypes);
 				}
+
+				// 数据版本
+				if (dataVersion != null) {
+					if (dataVersionField == null) {
+						dataVersionField = dataVersion.field();
+					}
+					FieldMeta fieldMeta = entityMeta.getFieldMeta(dataVersionField);
+					if (fieldMeta != null) {
+						DataVersionConfig dataVersionConfig = new DataVersionConfig();
+						dataVersionConfig.setField(dataVersionField);
+						if (dataVersion.startDate()) {
+							// 202209181至少9位数字
+							if (fieldMeta.getLength() > 8) {
+								dataVersionConfig.setStartDate(true);
+							}
+						}
+						entityMeta.setDataVersion(dataVersionConfig);
+					} else {
+						throw new RuntimeException(
+								"@DataVersion(field=" + dataVersionField + ") 在POJO类:" + className + " 中没有对应的属性!");
+					}
+				}
+				// 校验@Tenant(field="fieldName") 配置的正确性
+				if (entityMeta.getTenantField() != null
+						&& entityMeta.getFieldMeta(entityMeta.getTenantField()) == null) {
+					throw new RuntimeException(
+							"@Tenant(field=" + entityMeta.getTenantField() + ") 在POJO类:" + className + " 中没有对应的属性!");
+				}
 			}
 		} catch (Exception e) {
-			logger.error("Sqltoy 解析Entity对象:[{}]发生错误,请检查对象注解是否正确!", className);
-			e.printStackTrace();
+			logger.error("Sqltoy 解析Entity对象:[{}]发生错误,请检查对象注解是否正确!" + e.getMessage(), className);
+			throw e;
 		}
 		if (entityMeta != null) {
 			entitysMetaMap.put(className, entityMeta);
@@ -507,7 +567,7 @@ public class EntityManager {
 	 */
 	private void parseFieldMeta(SqlToyContext sqlToyContext, EntityMeta entityMeta, Field field,
 			List<String> rejectIdFieldList, List<String> allFieldAry, StringBuilder loadNamedWhereSql,
-			StringBuilder loadArgWhereSql) throws Exception {
+			StringBuilder loadArgWhereSql) {
 		Column column = field.getAnnotation(Column.class);
 		if (column == null) {
 			return;
@@ -587,8 +647,7 @@ public class EntityManager {
 	 * @param idGenerator
 	 * @throws Exception
 	 */
-	private void processIdGenerator(SqlToyContext sqlToyContext, EntityMeta entityMeta, String idGenerator)
-			throws Exception {
+	private void processIdGenerator(SqlToyContext sqlToyContext, EntityMeta entityMeta, String idGenerator) {
 		// 已经存在跳过处理
 		if (idGenerators.containsKey(idGenerator)) {
 			return;
@@ -602,9 +661,14 @@ public class EntityManager {
 			String generator = IdGenerators.get(idGenerator.toLowerCase());
 			generator = (generator != null) ? IdGeneratorPackage.concat(generator) : idGenerator;
 			// 自定义(不依赖spring模式),用法在quickvo中配置例如:com.xxxx..CustomIdGenerator
-			IdGenerator idGeneratorBean = (IdGenerator) Class.forName(generator).getDeclaredConstructor().newInstance();
-			idGeneratorBean.initialize(sqlToyContext);
-			idGenerators.put(idGenerator, idGeneratorBean);
+			try {
+				IdGenerator idGeneratorBean = (IdGenerator) Class.forName(generator).getDeclaredConstructor()
+						.newInstance();
+				idGeneratorBean.initialize(sqlToyContext);
+				idGenerators.put(idGenerator, idGeneratorBean);
+			} catch (Exception e) {
+				throw new RuntimeException("实例化主键生成策略失败:className=" + generator + ",错误信息:" + e.getMessage());
+			}
 		}
 	}
 
