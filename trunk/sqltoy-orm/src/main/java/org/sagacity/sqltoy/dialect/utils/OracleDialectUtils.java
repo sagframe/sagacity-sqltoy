@@ -148,8 +148,9 @@ public class OracleDialectUtils {
 				sql.toString(), (pageNo - 1) * pageSize, Long.valueOf(pageSize), dialect);
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		// 增加sql执行拦截器 update 2022-9-10
-		queryParam = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig, OperateType.page, queryParam, null,
-				dbType);
+		queryParam = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig,
+				(extend.entityClass == null) ? OperateType.page : OperateType.singleTable, queryParam,
+				extend.entityClass, dbType);
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 				extend.rowCallbackHandler, decryptHandler, conn, dbType, 0, fetchSize, maxRows);
 	}
@@ -202,8 +203,9 @@ public class OracleDialectUtils {
 				sql.toString(), null, null, dialect);
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		// 增加sql执行拦截器 update 2022-9-10
-		queryParam = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig, OperateType.top, queryParam, null,
-				dbType);
+		queryParam = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig,
+				(extend.entityClass == null) ? OperateType.top : OperateType.singleTable, queryParam,
+				extend.entityClass, dbType);
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 				extend.rowCallbackHandler, decryptHandler, conn, dbType, 0, fetchSize, maxRows);
 	}
@@ -261,10 +263,11 @@ public class OracleDialectUtils {
 		}
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
 				sql.toString(), null, null, dialect);
-		// 增加sql执行拦截器 update 2022-9-10
-		queryParam = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig, OperateType.random, queryParam, null,
-				dbType);
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		// 增加sql执行拦截器 update 2022-9-10
+		queryParam = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig,
+				(extend.entityClass == null) ? OperateType.random : OperateType.singleTable, queryParam,
+				extend.entityClass, dbType);
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 				extend.rowCallbackHandler, decryptHandler, conn, dbType, 0, fetchSize, maxRows);
 	}
