@@ -358,6 +358,7 @@ public class EntityManager {
 					entityMeta.setCascadeTypes(cascadeTypes);
 				}
 
+				// 数据版本
 				if (dataVersion != null) {
 					if (dataVersionField == null) {
 						dataVersionField = dataVersion.field();
@@ -373,20 +374,27 @@ public class EntityManager {
 							}
 						}
 						entityMeta.setDataVersion(dataVersionConfig);
+					} else {
+						throw new RuntimeException(
+								"@DataVersion(field=" + dataVersionField + ") 在POJO类:" + className + " 中没有对应的属性!");
 					}
+				}
+				// 校验@Tenant(field="fieldName") 配置的正确性
+				if (entityMeta.getTenantField() != null
+						&& entityMeta.getFieldMeta(entityMeta.getTenantField()) == null) {
+					throw new RuntimeException(
+							"@Tenant(field=" + entityMeta.getTenantField() + ") 在POJO类:" + className + " 中没有对应的属性!");
 				}
 			}
 		} catch (Exception e) {
-			logger.error("Sqltoy 解析Entity对象:[{}]发生错误,请检查对象注解是否正确!", className);
-			e.printStackTrace();
+			logger.error("Sqltoy 解析Entity对象:[{}]发生错误,请检查对象注解是否正确!" + e.getMessage(), className);
+			throw e;
 		}
 		if (entityMeta != null) {
 			entitysMetaMap.put(className, entityMeta);
 			tableEntityNameMap.put(entityMeta.getTableName().toLowerCase(), className);
-		} else {
-			if (isWarn) {
-				logger.warn("SqlToy Entity:{}没有使用@Entity注解表明是一个实体类,请检查!", className);
-			}
+		} else if (isWarn) {
+			logger.warn("SqlToy Entity:{}没有使用@Entity注解表明是一个实体类,请检查!", className);
 		}
 		return entityMeta;
 	}
@@ -588,7 +596,7 @@ public class EntityManager {
 	 */
 	private void parseFieldMeta(SqlToyContext sqlToyContext, EntityMeta entityMeta, Field field,
 			List<String> rejectIdFieldList, List<String> allFieldAry, StringBuilder loadNamedWhereSql,
-			StringBuilder loadArgWhereSql) throws Exception {
+			StringBuilder loadArgWhereSql) {
 		Column column = field.getAnnotation(Column.class);
 		if (column == null) {
 			return;
@@ -668,8 +676,7 @@ public class EntityManager {
 	 * @param idGenerator
 	 * @throws Exception
 	 */
-	private void processIdGenerator(SqlToyContext sqlToyContext, EntityMeta entityMeta, String idGenerator)
-			throws Exception {
+	private void processIdGenerator(SqlToyContext sqlToyContext, EntityMeta entityMeta, String idGenerator) {
 		// 已经存在跳过处理
 		if (idGenerators.containsKey(idGenerator)) {
 			return;
@@ -686,18 +693,22 @@ public class EntityManager {
 			if (generator.startsWith("org.sagacity.sqltoy")) {
 				generator = IdGeneratorPackage.concat(generator.substring(generator.lastIndexOf(".") + 1));
 			}
-			// redis 情况特殊,依赖redisTemplate,小心修改
-			if (generator.endsWith("RedisIdGenerator")) {
-				RedisIdGenerator redis = (RedisIdGenerator) RedisIdGenerator.getInstance(sqlToyContext);
-				if (redis == null || !redis.hasRedisTemplate()) {
-					logger.error("POJO Class={} 的redisIdGenerator 未能被正确实例化,可能的原因是未定义RedisTemplate!",
-							entityMeta.getEntityClass().getName());
+			try {
+				// redis 情况特殊,依赖redisTemplate,小心修改
+				if (generator.endsWith("RedisIdGenerator")) {
+					RedisIdGenerator redis = (RedisIdGenerator) RedisIdGenerator.getInstance(sqlToyContext);
+					if (redis == null || !redis.hasRedisTemplate()) {
+						logger.error("POJO Class={} 的redisIdGenerator 未能被正确实例化,可能的原因是未定义RedisTemplate!",
+								entityMeta.getEntityClass().getName());
+					}
+					idGenerators.put(idGenerator, redis);
+				} else {
+					// 自定义(不依赖spring模式),用法在quickvo中配置例如:com.xxxx..CustomIdGenerator
+					idGenerators.put(idGenerator,
+							(IdGenerator) Class.forName(generator).getDeclaredConstructor().newInstance());
 				}
-				idGenerators.put(idGenerator, redis);
-			} else {
-				// 自定义(不依赖spring模式),用法在quickvo中配置例如:com.xxxx..CustomIdGenerator
-				idGenerators.put(idGenerator,
-						(IdGenerator) Class.forName(generator).getDeclaredConstructor().newInstance());
+			} catch (Exception e) {
+				throw new RuntimeException("实例化主键生成策略失败:className=" + generator + ",错误信息:" + e.getMessage());
 			}
 		}
 	}

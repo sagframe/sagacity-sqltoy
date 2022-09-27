@@ -325,7 +325,8 @@ public class DialectFactory {
 									extend.getParamsValue(sqlToyContext, realSqlToyConfig), dialect);
 							// 增加sql执行拦截器 update 2022-9-10
 							queryParam = DialectUtils.doInterceptors(sqlToyContext, realSqlToyConfig,
-									OperateType.execute, queryParam, null, dbType);
+									(extend.entityClass == null) ? OperateType.execute : OperateType.singleTable,
+									queryParam, extend.entityClass, dbType);
 							// 做sql签名
 							String executeSql = SqlUtilsExt.signSql(queryParam.getSql(), dbType, realSqlToyConfig);
 							// 2022-3-21 存在类似in (?) ?对应参数为数组，将参数和类型长度变得不一致则去除类型约束
@@ -793,6 +794,7 @@ public class DialectFactory {
 									long preTime = System.currentTimeMillis();
 									// 合法的全记录提取,设置页号为1按记录数
 									if (pageNo == -1) {
+										SqlExecuteStat.debug("过程提示", "pageNo=-1,页面可能在做下载操作!");
 										// 通过参数处理最终的sql和参数值
 										SqlToyResult queryParam = SqlConfigParseUtils.processSql(
 												realSqlToyConfig.getSql(dialect),
@@ -1245,8 +1247,9 @@ public class DialectFactory {
 		SqlToyResult queryParam = SqlConfigParseUtils.processSql(sql, extend.getParamsName(sqlToyConfig),
 				extend.getParamsValue(sqlToyContext, sqlToyConfig), dialect);
 		// 增加sql执行拦截器 update 2022-9-10
-		queryParam = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig, OperateType.count, queryParam, null,
-				dbType);
+		queryParam = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig,
+				(extend.entityClass == null) ? OperateType.count : OperateType.singleTable, queryParam,
+				extend.entityClass, dbType);
 		return getDialectSqlWrapper(dbType).getCountBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(),
 				queryParam.getParamsValue(), isLastSql, conn, dbType, dialect);
 	}

@@ -1238,6 +1238,8 @@ public class SqlToyDaoSupport {
 		}
 		// 分库分表策略
 		setEntitySharding(queryExecutor, entityMeta);
+		// 为后续租户过滤提供判断依据(单表简单sql和对应的实体对象)
+		queryExecutor.getInnerModel().entityClass = entityClass;
 		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, queryExecutor, null, null,
 				getDataSource(innerModel.dataSource));
 	}
@@ -1786,6 +1788,8 @@ public class SqlToyDaoSupport {
 					.resultType(resultType).dataSource(getDataSource(innerModel.dataSource))
 					.fetchSize(innerModel.fetchSize).maxRows(innerModel.maxRows);
 		}
+		// 为后续租户过滤提供判断依据(单表简单sql和对应的实体对象)
+		queryExecutor.getInnerModel().entityClass = entityClass;
 		// 设置是否空白转null
 		queryExecutor.getInnerModel().blankToNull = innerModel.blankToNull;
 		// 设置额外的缓存翻译
@@ -2013,6 +2017,8 @@ public class SqlToyDaoSupport {
 				getDialect(innerModel.dataSource));
 		QueryExecutor queryExecutor = new QueryExecutor(sqlStr).names(realNames).values(realValues);
 		setEntitySharding(queryExecutor, entityMeta);
+		// 为后续租户过滤提供判断依据(单表简单sql和对应的实体对象)
+		queryExecutor.getInnerModel().entityClass = entityClass;
 		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, queryExecutor, null, null,
 				getDataSource(innerModel.dataSource, sqlToyConfig));
 	}

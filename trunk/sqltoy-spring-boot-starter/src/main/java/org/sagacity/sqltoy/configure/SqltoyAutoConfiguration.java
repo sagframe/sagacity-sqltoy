@@ -137,6 +137,9 @@ public class SqltoyAutoConfiguration {
 		if (null != properties.getColumnLabelUpperOrLower()) {
 			sqlToyContext.setColumnLabelUpperOrLower(properties.getColumnLabelUpperOrLower().toLowerCase());
 		}
+
+		// 是否拆分merge into 为updateAll 和 saveAllIgnoreExist 两步操作(1、seata分布式事务不支持merge)
+		sqlToyContext.setSplitMergeInto(properties.isSplitMergeInto());
 		// 数据库方言
 		sqlToyContext.setDialect(properties.getDialect());
 		// sqltoy内置参数默认值修改

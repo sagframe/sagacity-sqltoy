@@ -50,7 +50,7 @@ public class ParallQuery implements Serializable {
 	 * @return
 	 */
 	public ParallQuery pageModel(PaginationModel pageModel) {
-		extend.pageModel = pageModel;
+		extend.page = pageModel;
 		return this;
 	}
 

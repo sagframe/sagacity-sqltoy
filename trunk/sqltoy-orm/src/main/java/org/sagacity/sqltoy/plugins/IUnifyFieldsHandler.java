@@ -2,6 +2,7 @@ package org.sagacity.sqltoy.plugins;
 
 import java.util.Map;
 
+import org.sagacity.sqltoy.config.model.OperateType;
 import org.sagacity.sqltoy.model.DataAuthFilterConfig;
 import org.sagacity.sqltoy.model.IgnoreCaseSet;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
@@ -16,7 +17,7 @@ import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
  */
 public interface IUnifyFieldsHandler {
 	/**
-	 * @TODO 设置创建记录时需要赋值的字段和对应的值
+	 * @TODO 设置创建记录时需要赋值的字段和对应的值(弹性模式:即优先以传递的值优先，为null再填充)
 	 * @return
 	 */
 	public default Map<String, Object> createUnifyFields() {
@@ -24,7 +25,7 @@ public interface IUnifyFieldsHandler {
 	}
 
 	/**
-	 * @TODO 设置修改记录时需要赋值的字段和对应的值
+	 * @TODO 设置修改记录时需要赋值的字段和对应的值(弹性)
 	 * @return
 	 */
 	public default Map<String, Object> updateUnifyFields() {
@@ -51,6 +52,16 @@ public interface IUnifyFieldsHandler {
 	 * @return
 	 */
 	public default IgnoreKeyCaseMap<String, DataAuthFilterConfig> dataAuthFilters() {
+		return null;
+	}
+
+	/**
+	 * @TODO 获取授权租户信息，传递表名和操作类型目的为程序可以控制返回:所在租户和授权租户 提供部分决策依据
+	 * @param entityClass
+	 * @param operType
+	 * @return
+	 */
+	public default String[] authTenants(Class entityClass, OperateType operType) {
 		return null;
 	}
 }

@@ -58,18 +58,18 @@ public class ParallQueryExecutor implements Callable<ParallQueryResult> {
 			QueryExecutor queryExecutor = new QueryExecutor(extend.sql).resultType(extend.resultType).names(paramNames)
 					.values(paramValues);
 			// 分页
-			if (extend.pageModel != null) {
+			if (extend.page != null) {
 				// 不取总记录数分页模式
-				if (extend.pageModel.getSkipQueryCount() != null && extend.pageModel.getSkipQueryCount()) {
+				if (extend.page.getSkipQueryCount() != null && extend.page.getSkipQueryCount()) {
 					result.setResult(dialectFactory.findSkipTotalCountPage(sqlToyContext, queryExecutor, sqlToyConfig,
-							extend.pageModel.getPageNo(), extend.pageModel.getPageSize(), dataSource));
+							extend.page.getPageNo(), extend.page.getPageSize(), dataSource));
 				} else {
-					result.setResult(dialectFactory.findPage(sqlToyContext, queryExecutor, sqlToyConfig,
-							extend.pageModel.getPageNo(), extend.pageModel.getPageSize(),
-							extend.pageModel.isOverPageToFirst(), dataSource));
+					result.setResult(
+							dialectFactory.findPage(sqlToyContext, queryExecutor, sqlToyConfig, extend.page.getPageNo(),
+									extend.page.getPageSize(), extend.page.isOverPageToFirst(), dataSource));
 				}
 				// 产品化场景，适配其他数据库验证查询(仅仅在设置了redoDataSources时生效)
-				CrossDbAdapter.redoPageQuery(sqlToyContext, dialectFactory, queryExecutor, extend.pageModel);
+				CrossDbAdapter.redoPageQuery(sqlToyContext, dialectFactory, queryExecutor, extend.page);
 			} else {
 				result.setResult(
 						dialectFactory.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig, null, dataSource));
