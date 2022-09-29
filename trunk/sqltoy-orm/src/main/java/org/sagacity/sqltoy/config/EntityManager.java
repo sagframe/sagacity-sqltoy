@@ -821,7 +821,9 @@ public class EntityManager {
 	private void parseFieldTypeAndDefault(EntityMeta entityMeta) {
 		// 组织对象对应表字段的类型和默认值以及是否可以为null
 		int fieldSize = entityMeta.getFieldsArray().length;
+		int pkSize = entityMeta.getIdArray().length;
 		Integer[] fieldsTypeArray = new Integer[fieldSize];
+		// 提供对象save\saveAll 构建默认值(主键无需设置)
 		String[] fieldsDefaultValue = new String[fieldSize];
 		Boolean[] fieldsNullable = new Boolean[fieldSize];
 		FieldMeta fieldMeta;
@@ -829,8 +831,8 @@ public class EntityManager {
 		for (int i = 0; i < fieldSize; i++) {
 			fieldMeta = entityMeta.getFieldMeta(entityMeta.getFieldsArray()[i]);
 			fieldsTypeArray[i] = fieldMeta.getType();
-			// 非主键字段支持默认值
-			if (!fieldMeta.isPK()) {
+			// 非主键或复合主键字段支持默认值
+			if (!fieldMeta.isPK() || pkSize > 1) {
 				fieldsDefaultValue[i] = fieldMeta.getDefaultValue();
 				if (null != fieldMeta.getDefaultValue()) {
 					hasDefault = true;
