@@ -873,9 +873,12 @@ public class EntityManager {
 		for (int i = 0; i < fieldSize; i++) {
 			fieldMeta = entityMeta.getFieldMeta(entityMeta.getFieldsArray()[i]);
 			fieldsTypeArray[i] = fieldMeta.getType();
-			fieldsDefaultValue[i] = fieldMeta.getDefaultValue();
-			if (null != fieldMeta.getDefaultValue()) {
-				hasDefault = true;
+			//非主键字段支持默认值
+			if (!fieldMeta.isPK()) {
+				fieldsDefaultValue[i] = fieldMeta.getDefaultValue();
+				if (null != fieldMeta.getDefaultValue()) {
+					hasDefault = true;
+				}
 			}
 			fieldsNullable[i] = fieldMeta.isNullable();
 		}
