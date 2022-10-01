@@ -66,7 +66,7 @@ public class EntityMeta implements Serializable {
 	private Integer[] fieldsTypeArray;
 
 	/**
-	 * 所有字段的默认值
+	 * 所有字段的默认值(排除主键，提供对象save\saveAll 场景构建默认值)
 	 */
 	private String[] fieldsDefaultValue;
 
@@ -156,7 +156,7 @@ public class EntityMeta implements Serializable {
 	private String loadSql;
 
 	/**
-	 * 主键名称参数条件语句(where 1=1 and id=:id)
+	 * 主键名称参数条件语句(where id=:id)
 	 */
 	private String idNameWhereSql;
 
@@ -816,6 +816,5 @@ public class EntityMeta implements Serializable {
 	public void setTenantField(String tenantField) {
 		this.tenantField = tenantField;
 	}
-	
-	
+
 }
