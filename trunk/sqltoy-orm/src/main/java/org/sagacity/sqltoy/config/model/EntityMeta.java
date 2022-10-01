@@ -156,7 +156,7 @@ public class EntityMeta implements Serializable {
 	private String loadSql;
 
 	/**
-	 * 主键名称参数条件语句(where 1=1 and id=:id)
+	 * 主键名称参数条件语句(where id=:id)
 	 */
 	private String idNameWhereSql;
 

@@ -372,7 +372,7 @@ public class EntityManager {
 				if (!forCascade) {
 					// oneToMany和oneToOne解析
 					for (Field field : allFields) {
-						parseCascade(sqlToyContext, entityMeta, entity, field, idList);
+						parseCascade(sqlToyContext, entityMeta, field, idList);
 					}
 					// 设置级联关联对象类型
 					if (!entityMeta.getCascadeModels().isEmpty()) {
@@ -681,12 +681,10 @@ public class EntityManager {
 	 * @todo 解析主键关联的子表信息配置(外键关联)
 	 * @param sqlToyContext
 	 * @param entityMeta
-	 * @param entity
 	 * @param field
 	 * @param idList
 	 */
-	private void parseCascade(SqlToyContext sqlToyContext, EntityMeta entityMeta, Entity entity, Field field,
-			List<String> idList) {
+	private void parseCascade(SqlToyContext sqlToyContext, EntityMeta entityMeta, Field field, List<String> idList) {
 		// 主表关联多子表记录
 		OneToMany oneToMany = field.getAnnotation(OneToMany.class);
 		OneToOne oneToOne = field.getAnnotation(OneToOne.class);
@@ -720,10 +718,9 @@ public class EntityManager {
 			update = oneToOne.update();
 			cascadeModel.setDelete(oneToOne.delete());
 		}
-		// 获取子表的信息
+		// update 2022-10-1
+		// 获取子表的信息(forCascade=true 避免循环解析，只解析一级)
 		EntityMeta subTableMeta = parseEntityMeta(sqlToyContext, cascadeModel.getMappedType(), false, true);
-		// EntityMeta subTableMeta= getEntityMeta(sqlToyContext,
-		// cascadeModel.getMappedType());
 		if ((fields == null || fields.length == 0) && idList.size() == 1) {
 			fields = entityMeta.getIdArray();
 		}
@@ -828,7 +825,7 @@ public class EntityManager {
 	private void parseFieldTypeAndDefault(EntityMeta entityMeta) {
 		// 组织对象对应表字段的类型和默认值以及是否可以为null
 		int fieldSize = entityMeta.getFieldsArray().length;
-		int pkSize = entityMeta.getIdArray().length;
+		int pkSize = (entityMeta.getIdArray() == null) ? 0 : entityMeta.getIdArray().length;
 		Integer[] fieldsTypeArray = new Integer[fieldSize];
 		// 提供对象save\saveAll 构建默认值(主键无需设置)
 		String[] fieldsDefaultValue = new String[fieldSize];

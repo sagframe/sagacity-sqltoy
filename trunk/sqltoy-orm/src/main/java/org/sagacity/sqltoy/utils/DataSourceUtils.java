@@ -538,7 +538,7 @@ public class DataSourceUtils {
 		if (datasource == null) {
 			return DBType.UNDEFINE;
 		}
-		String dsKey = datasource.toString();
+		String dsKey = "dataSource&" + datasource.hashCode();
 		Integer dbType = DBTypeMap.get(dsKey);
 		if (dbType != null) {
 			return dbType;
@@ -571,7 +571,7 @@ public class DataSourceUtils {
 			return "";
 		}
 		// update 2022-9-30 增加缓存避免通过connection获取数据库方言
-		String dsKey = datasource.toString();
+		String dsKey = "dataSource&" + datasource.hashCode();
 		String dialect = DBDialectMap.get(dsKey);
 		if (dialect != null) {
 			return dialect;
@@ -629,6 +629,8 @@ public class DataSourceUtils {
 			return Dialect.DM;
 		case DBType.KINGBASE:
 			return Dialect.KINGBASE;
+		case DBType.TDENGINE:
+			return Dialect.TDENGINE;
 		case DBType.IMPALA:
 			return Dialect.IMPALA;
 		case DBType.H2:
