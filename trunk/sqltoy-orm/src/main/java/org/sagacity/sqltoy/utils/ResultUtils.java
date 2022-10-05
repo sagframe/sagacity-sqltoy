@@ -54,6 +54,7 @@ import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.inner.DataSetResult;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.inner.TranslateExtend;
+import org.sagacity.sqltoy.plugins.I18nThreadHolder;
 import org.sagacity.sqltoy.plugins.calculator.ColsChainRelative;
 import org.sagacity.sqltoy.plugins.calculator.GroupSummary;
 import org.sagacity.sqltoy.plugins.calculator.ReverseList;
@@ -61,6 +62,8 @@ import org.sagacity.sqltoy.plugins.calculator.RowsChainRelative;
 import org.sagacity.sqltoy.plugins.calculator.UnpivotList;
 import org.sagacity.sqltoy.plugins.secure.DesensitizeProvider;
 import org.sagacity.sqltoy.translate.TranslateConfigParse;
+import org.sagacity.sqltoy.translate.TranslateManager;
+import org.sagacity.sqltoy.translate.model.TranslateConfigModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -228,6 +231,10 @@ public class ResultUtils {
 				hasTranslate = false;
 				logger.debug("通过缓存配置未获取到缓存数据,请正确配置TranslateManager!");
 			}
+			// i18n国际化处理
+			if (hasTranslate) {
+				translateMap = wrapI18nIndex(sqlToyContext.getTranslateManager(), translateMap);
+			}
 		}
 
 		LabelIndexModel labelIndexModel = wrapLabelIndexMap(labelNames);
@@ -359,6 +366,8 @@ public class ResultUtils {
 							genericTypes, rowTemp, indexs, realProps, resultType);
 					// 有基于注解@Translate的缓存翻译
 					if (cacheDatas != null) {
+						// i18n国际化处理
+						translateConfig = wrapI18nIndex(sqlToyContext.getTranslateManager(), translateConfig);
 						wrapBeanTranslate(sqlToyContext, cacheDatas, translateConfig, bean);
 					}
 					streamResultHandler.consume(bean, index);
@@ -500,6 +509,10 @@ public class ResultUtils {
 			if (translateCache == null || translateCache.isEmpty()) {
 				hasTranslate = false;
 				logger.debug("通过缓存配置未获取到缓存数据,请正确配置TranslateManager!");
+			}
+			// i18n国际化处理
+			if (hasTranslate) {
+				translateMap = wrapI18nIndex(sqlToyContext.getTranslateManager(), translateMap);
 			}
 		}
 
@@ -741,6 +754,10 @@ public class ResultUtils {
 			if (translateCache == null || translateCache.isEmpty()) {
 				hasTranslate = false;
 				logger.debug("通过缓存配置未获取到缓存数据,请正确配置TranslateManager!");
+			}
+			// i18n国际化处理
+			if (hasTranslate) {
+				translateMap = wrapI18nIndex(sqlToyContext.getTranslateManager(), translateMap);
 			}
 		}
 		int columnSize = labelNames.length;
@@ -1865,6 +1882,8 @@ public class ResultUtils {
 		if (voList.isEmpty()) {
 			return;
 		}
+		// i18n国际化处理
+		translateConfig = wrapI18nIndex(sqlToyContext.getTranslateManager(), translateConfig);
 		Object item;
 		String field = null;
 		TranslateExtend trans;
@@ -1892,7 +1911,54 @@ public class ResultUtils {
 		}
 	}
 
-	public static void wrapBeanTranslate(SqlToyContext sqlToyContext,
+	/**
+	 * @TODO 根据是否存在国际化，重新组织缓存对应实际翻译名称列
+	 * @param translateManager
+	 * @param translateConfig
+	 * @return
+	 */
+	public static HashMap<String, Translate> wrapI18nIndex(TranslateManager translateManager,
+			HashMap<String, Translate> translateConfig) {
+		// 获取当前线程中存放的locale，如:US、CN 等
+		String locale = I18nThreadHolder.getLocale();
+		if (locale == null || translateConfig == null || translateConfig.isEmpty()) {
+			return translateConfig;
+		}
+		HashMap<String, Translate> result = new HashMap<String, Translate>();
+		// 存在国际化配置
+		String key;
+		TranslateExtend transExt;
+		TranslateConfigModel translateConfigModel;
+		Integer realIndex;
+		for (Map.Entry<String, Translate> entry : translateConfig.entrySet()) {
+			key = entry.getKey();
+			transExt = entry.getValue().getExtend();
+			result.put(key, entry.getValue());
+			// 获取到缓存配置
+			translateConfigModel = translateManager.getCacheConfig(transExt.cache);
+			// 缓存列在定义的i18n列范围中，则进行国际化切换
+			if (translateConfigModel.hasI18n(transExt.index)) {
+				// zh:1,us:2 获取方言对应的列
+				realIndex = translateConfigModel.getI18nIndex(locale);
+				// 存在方言列，且跟当前默认配置列不同，重新clone复制一份
+				if (realIndex != null && realIndex.intValue() != transExt.index) {
+					Translate translate = entry.getValue().clone();
+					translate.setIndex(realIndex);
+					result.put(key, translate);
+				}
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * @TODO 处理基于pojo或dto上@Translate注解，进行实际缓存调用给属性赋值
+	 * @param sqlToyContext
+	 * @param cacheDatas
+	 * @param translateConfig
+	 * @param item
+	 */
+	private static void wrapBeanTranslate(SqlToyContext sqlToyContext,
 			HashMap<String, HashMap<String, Object[]>> cacheDatas, HashMap<String, Translate> translateConfig,
 			Object item) {
 		String field = null;

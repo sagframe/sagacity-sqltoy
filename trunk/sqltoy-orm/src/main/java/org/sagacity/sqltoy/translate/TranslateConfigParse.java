@@ -210,6 +210,16 @@ public class TranslateConfigParse {
 									index++;
 								}
 							}
+							// 解析i18n国际化配置
+							if (elt.hasAttribute("i18n")) {
+								String[] i18nAry = elt.getAttribute("i18n").replace(";", ",").split("\\,");
+								String[] localIndex;
+								for (String i18n : i18nAry) {
+									localIndex = i18n.split("\\:");
+									translateCacheModel.putI18n(localIndex[0].trim(),
+											Integer.parseInt(localIndex[1].trim()));
+								}
+							}
 							// local模式缓存 默认缓存不失效，表示缓存由开发者在应用程序中自行控制，sqltoy只做初始化构建(如ehcache创建一个缓存实例，但不加载数据)
 							// local模式是避免一些额外争议的产物，有部分开发者坚持缓存要应用自己管理
 							if ("local".equals(translateType) && !elt.hasAttribute("keep-alive")) {
