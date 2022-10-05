@@ -10,6 +10,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
+import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.demo.vo.DataRange;
 import org.sagacity.sqltoy.demo.vo.StaffInfoVO;
 import org.sagacity.sqltoy.demo.vo.TypeShowCase;
@@ -222,5 +223,17 @@ public class BeanUtilTest {
 			e.printStackTrace();
 		}
 
+	}
+
+	@Test
+	public void testClone() {
+		Translate translate=new Translate("dictKey");
+		translate.setColumn("id");
+		translate.setIndex(5);
+		
+		Translate cloneValue=translate.clone();
+		cloneValue.setIndex(3);
+		System.err.println(translate.getExtend().index);
+		System.err.println(cloneValue.getExtend().index);
 	}
 }

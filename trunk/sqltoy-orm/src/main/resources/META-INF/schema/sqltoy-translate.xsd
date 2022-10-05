@@ -40,6 +40,13 @@
 				</xsd:documentation>
 			</xsd:annotation>
 		</xsd:attribute>
+		<xsd:attribute name="i18n" type="xsd:string">
+			<xsd:annotation>
+				<xsd:documentation>
+				<![CDATA[example:zh_cn:1,en_us:2]]>
+				</xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
 	</xsd:attributeGroup>
 	<xsd:attributeGroup name="sqlToyTranslateUpdater">
 		<xsd:attribute name="cache" type="xsd:string"
