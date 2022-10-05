@@ -515,6 +515,7 @@ public class MongoElasticUtils {
 			if (translateCache == null || translateCache.isEmpty()) {
 				logger.warn("mongo or elastic cache:{} has no data!{}", translateMap.keySet(), sqlToyConfig.getSql());
 			} else {
+				translateMap = ResultUtils.wrapI18nIndex(sqlToyContext.getTranslateManager(), translateMap);
 				translate(translateCache, translateMap, resultSet, null, fields);
 			}
 		}
