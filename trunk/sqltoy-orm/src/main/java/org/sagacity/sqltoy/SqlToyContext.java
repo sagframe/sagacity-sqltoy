@@ -308,7 +308,7 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * sql执行拦截器，提供对最终执行前的sql进行干预处理
 	 */
 	private List<SqlInterceptor> sqlInterceptors;
-	
+
 	/**
 	 * 拆分merge into 为updateAll 和 saveAllIgnoreExist 两步操作(1、seata分布式事务不支持merge)
 	 */
@@ -636,6 +636,8 @@ public class SqlToyContext implements ApplicationContextAware {
 			this.dialect = Dialect.IMPALA;
 		} else if (tmp.startsWith(Dialect.TDENGINE)) {
 			this.dialect = Dialect.TDENGINE;
+		} else if (tmp.startsWith(Dialect.SYBASE_IQ)) {
+			this.dialect = Dialect.SYBASE_IQ;
 		} else if (tmp.startsWith(Dialect.ES)) {
 			this.dialect = Dialect.ES;
 		} else {
@@ -1006,7 +1008,7 @@ public class SqlToyContext implements ApplicationContextAware {
 	public void setSqlInterceptors(List<SqlInterceptor> sqlInterceptors) {
 		this.sqlInterceptors = sqlInterceptors;
 	}
-	
+
 	public boolean isSplitMergeInto() {
 		return splitMergeInto;
 	}

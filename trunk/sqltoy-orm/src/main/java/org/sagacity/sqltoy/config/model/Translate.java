@@ -22,7 +22,7 @@ public class Translate implements Serializable {
 	 */
 	private static final long serialVersionUID = 6616462798500953675L;
 
-	//构造一个内部类将属性全部定义到其中，避免Translate对象上暴露太多get方法
+	// 构造一个内部类将属性全部定义到其中，避免Translate对象上暴露太多get方法
 	private TranslateExtend extend = new TranslateExtend();
 
 	public Translate(String cacheName) {
@@ -37,7 +37,6 @@ public class Translate implements Serializable {
 		extend.column = column.toLowerCase();
 		return this;
 	}
-
 
 	/**
 	 * @param cacheType the cacheType to set
@@ -110,11 +109,18 @@ public class Translate implements Serializable {
 		}
 		return this;
 	}
-	
+
 	/**
 	 * @return the extend
 	 */
 	public TranslateExtend getExtend() {
 		return extend;
 	}
+
+	public Translate clone() {
+		Translate result = new Translate(getExtend().cache);
+		result.extend = getExtend().clone();
+		return result;
+	}
+
 }

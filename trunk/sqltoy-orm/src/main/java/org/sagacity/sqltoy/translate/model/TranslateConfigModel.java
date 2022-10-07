@@ -4,6 +4,10 @@
 package org.sagacity.sqltoy.translate.model;
 
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @project sqltoy-orm
@@ -89,6 +93,13 @@ public class TranslateConfigModel implements Serializable {
 	 * 存储磁盘的大小(MB)
 	 */
 	private int diskSize = 0;
+
+	/**
+	 * 国际化
+	 */
+	private Map<String, Integer> i18nMap = new HashMap<String, Integer>();
+
+	private Set<Integer> i18nIndexes = new HashSet<Integer>();
 
 	/**
 	 * @return the keepAlive
@@ -294,4 +305,19 @@ public class TranslateConfigModel implements Serializable {
 		this.properties = properties;
 	}
 
+	public Integer getI18nIndex(String local) {
+		return i18nMap.get(local.toLowerCase());
+	}
+
+	public void putI18n(String key, Integer index) {
+		i18nMap.put(key.toLowerCase(), index);
+		i18nIndexes.add(index);
+	}
+
+	public boolean hasI18n(Integer index) {
+		if (index == null) {
+			return false;
+		}
+		return i18nIndexes.contains(index);
+	}
 }

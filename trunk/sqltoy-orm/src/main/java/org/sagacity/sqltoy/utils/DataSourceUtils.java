@@ -29,6 +29,11 @@ public class DataSourceUtils {
 
 	}
 
+	// 存放数据库方言(dataSource.toString(),dialect)
+	public static HashMap<String, String> DBDialectMap = new HashMap<String, String>();
+	// 存放数据库方言类型(dataSource.toString(),dbType)
+	public static HashMap<String, Integer> DBTypeMap = new HashMap<String, Integer>();
+
 	/**
 	 * 数据库方言定义
 	 */
@@ -515,14 +520,24 @@ public class DataSourceUtils {
 
 	/**
 	 * @TODO 获取数据库的类型
+	 * @param sqltoyContext
 	 * @param datasource
 	 * @return
 	 */
 	public static int getDBType(SqlToyContext sqltoyContext, DataSource datasource) {
+		if (datasource == null) {
+			return DBType.UNDEFINE;
+		}
+		String dsKey = "dataSource$" + datasource.hashCode();
+		Integer dbType = DBTypeMap.get(dsKey);
+		if (dbType != null) {
+			return dbType;
+		}
 		Connection conn = sqltoyContext.getConnection(datasource);
-		Integer dbType = DBType.UNDEFINE;
+		dbType = DBType.UNDEFINE;
 		try {
 			dbType = getDBType(conn);
+			DBTypeMap.put(dsKey, dbType);
 		} catch (Exception e) {
 			e.printStackTrace();
 			sqltoyContext.releaseConnection(conn, datasource);
@@ -537,6 +552,7 @@ public class DataSourceUtils {
 
 	/**
 	 * @TDDO 获取数据库类型的名称
+	 * @param sqltoyContext
 	 * @param datasource
 	 * @return
 	 */
@@ -544,40 +560,16 @@ public class DataSourceUtils {
 		if (datasource == null) {
 			return "";
 		}
+		// update 2022-9-30 增加缓存避免通过connection获取数据库方言
+		String dsKey = "dataSource$" + datasource.hashCode();
+		String dialect = DBDialectMap.get(dsKey);
+		if (dialect != null) {
+			return dialect;
+		}
 		Connection conn = sqltoyContext.getConnection(datasource);
 		try {
-			if (conn == null) {
-				return "";
-			}
-			int dbType = getDBType(conn);
-			switch (dbType) {
-			case DBType.DB2:
-				return Dialect.DB2;
-			case DBType.ORACLE:
-			case DBType.ORACLE11:
-				return Dialect.ORACLE;
-			case DBType.POSTGRESQL:
-				return Dialect.POSTGRESQL;
-			case DBType.MYSQL:
-			case DBType.MYSQL57:
-				return Dialect.MYSQL;
-			case DBType.SQLSERVER:
-				return Dialect.SQLSERVER;
-			case DBType.SQLITE:
-				return Dialect.SQLITE;
-			case DBType.CLICKHOUSE:
-				return Dialect.CLICKHOUSE;
-			case DBType.TIDB:
-				return Dialect.TIDB;
-			case DBType.OCEANBASE:
-				return Dialect.OCEANBASE;
-			case DBType.DM:
-				return Dialect.DM;
-			case DBType.KINGBASE:
-				return Dialect.KINGBASE;
-			default:
-				return "";
-			}
+			dialect = getDialect(conn);
+			DBDialectMap.put(dsKey, dialect);
 		} catch (Exception e) {
 			e.printStackTrace();
 			sqltoyContext.releaseConnection(conn, datasource);
@@ -587,6 +579,51 @@ public class DataSourceUtils {
 			// 释放连接,连接池实际是归还连接，未必一定关闭
 			sqltoyContext.releaseConnection(conn, datasource);
 		}
+		return dialect;
+	}
 
+	/**
+	 * @TODO 根据连接获取数据库方言
+	 * @param conn
+	 * @return
+	 * @throws Exception
+	 */
+	private static String getDialect(Connection conn) throws Exception {
+		if (conn == null) {
+			return "";
+		}
+		int dbType = getDBType(conn);
+		switch (dbType) {
+		case DBType.DB2:
+			return Dialect.DB2;
+		case DBType.ORACLE:
+		case DBType.ORACLE11:
+			return Dialect.ORACLE;
+		case DBType.POSTGRESQL:
+			return Dialect.POSTGRESQL;
+		case DBType.MYSQL:
+		case DBType.MYSQL57:
+			return Dialect.MYSQL;
+		case DBType.SQLSERVER:
+			return Dialect.SQLSERVER;
+		case DBType.SQLITE:
+			return Dialect.SQLITE;
+		case DBType.CLICKHOUSE:
+			return Dialect.CLICKHOUSE;
+		case DBType.TIDB:
+			return Dialect.TIDB;
+		case DBType.OCEANBASE:
+			return Dialect.OCEANBASE;
+		case DBType.DM:
+			return Dialect.DM;
+		case DBType.KINGBASE:
+			return Dialect.KINGBASE;
+		case DBType.SYBASE_IQ:
+			return Dialect.SYBASE_IQ;
+		case DBType.IMPALA:
+			return Dialect.IMPALA;
+		default:
+			return "";
+		}
 	}
 }

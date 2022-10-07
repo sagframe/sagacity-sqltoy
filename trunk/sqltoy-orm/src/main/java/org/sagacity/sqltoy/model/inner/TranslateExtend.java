@@ -14,7 +14,7 @@ import org.sagacity.sqltoy.SqlToyConstants;
  * @version v1.0, Date:2020-8-7
  * @modify 2020-8-7,修改说明
  */
-public class TranslateExtend implements Serializable {
+public class TranslateExtend implements Serializable, java.lang.Cloneable {
 
 	/**
 	 * 
@@ -47,7 +47,7 @@ public class TranslateExtend implements Serializable {
 	public String keyColumn;
 
 	/**
-	 * 别名(预留使用)
+	 * 字段别名
 	 */
 	public String alias;
 
@@ -70,4 +70,14 @@ public class TranslateExtend implements Serializable {
 	 * 未被缓存的模板
 	 */
 	public String uncached = SqlToyConstants.UNCACHED_KEY_RESULT;
+
+	public TranslateExtend clone() {
+		try {
+			return (TranslateExtend) super.clone();
+		} catch (CloneNotSupportedException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
 }
