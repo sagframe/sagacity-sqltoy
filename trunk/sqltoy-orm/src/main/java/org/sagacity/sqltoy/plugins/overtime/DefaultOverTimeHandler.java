@@ -1,5 +1,7 @@
 package org.sagacity.sqltoy.plugins.overtime;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -36,14 +38,23 @@ public class DefaultOverTimeHandler implements OverTimeSqlHandler {
 		if (null != sqlId && !"".equals(sqlId.trim())) {
 			OverTimeSql preSql = slowSqlMap.get(sqlId);
 			if (null == preSql) {
+				overTimeSql.setAveTakeTime(new BigDecimal(overTimeSql.getTakeTime()));
 				slowSqlMap.put(sqlId, overTimeSql);
 			} else {
 				// 新的相同sqlId的超时执行时长大于之前的
 				if (overTimeSql.getTakeTime() > preSql.getTakeTime()) {
+					// 平均执行时长
+					overTimeSql
+							.setAveTakeTime(preSql.getAveTakeTime().multiply(new BigDecimal(preSql.getOverTimeCount()))
+									.add(new BigDecimal(overTimeSql.getTakeTime()))
+									.divide(new BigDecimal(preSql.getOverTimeCount() + 1), 3, RoundingMode.HALF_UP));
 					// 执行次数进行累加
-					overTimeSql.setOverTimeCount(1 + preSql.getOverTimeCount());
+					overTimeSql.setOverTimeCount(preSql.getOverTimeCount() + 1);
 					slowSqlMap.put(sqlId, overTimeSql);
 				} else {
+					preSql.setAveTakeTime(preSql.getAveTakeTime().multiply(new BigDecimal(preSql.getOverTimeCount()))
+							.add(new BigDecimal(overTimeSql.getTakeTime()))
+							.divide(new BigDecimal(preSql.getOverTimeCount() + 1), 3, RoundingMode.HALF_UP));
 					preSql.setOverTimeCount(preSql.getOverTimeCount() + 1);
 				}
 			}

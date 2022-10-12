@@ -1,6 +1,7 @@
 package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
@@ -46,13 +47,17 @@ public class OverTimeSql implements Serializable {
 	 */
 	private long overTimeCount = 1;
 
-	public OverTimeSql(String id, String sql,  long takeTime, String codeTrace) {
+	/**
+	 * 平均耗时
+	 */
+	private BigDecimal aveTakeTime = BigDecimal.ZERO;
+
+	public OverTimeSql(String id, String sql, long takeTime, String codeTrace) {
 		this.id = id;
 		this.sql = sql;
 		this.takeTime = takeTime;
 		this.codeTrace = codeTrace;
 		this.logTime = LocalDateTime.now();
-
 	}
 
 	public String getId() {
@@ -101,6 +106,14 @@ public class OverTimeSql implements Serializable {
 
 	public void setOverTimeCount(long overTimeCount) {
 		this.overTimeCount = overTimeCount;
+	}
+
+	public BigDecimal getAveTakeTime() {
+		return aveTakeTime;
+	}
+
+	public void setAveTakeTime(BigDecimal aveTakeTime) {
+		this.aveTakeTime = aveTakeTime;
 	}
 
 }
