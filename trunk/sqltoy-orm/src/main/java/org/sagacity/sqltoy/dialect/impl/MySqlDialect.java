@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package org.sagacity.sqltoy.dialect.impl;
 
@@ -32,17 +32,18 @@ import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TableMeta;
+import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * @author zhongxuchen
+ * @version v1.0, Date:2013-3-21
  * @project sqltoy-orm
  * @description mysql数据库方言的不同操作实现 (针对mysql 的with as 兼容问题因mysql
  *              临时表不能在一次查询中多次引用,报reopen table 错误,因此mysql 中没有很好的机制来兼容with as语法)
  *              mysql8.x版本开始已经支持with as语法。
- * @author zhongxuchen
- * @version v1.0,Date:2013-3-21
  * @modify {Date:2018-5-19,修改saveOrUpdate为先update后saveIgnore，因为mysql on
  *         duplicate key update 非空字段修改报错}
  */
@@ -70,7 +71,7 @@ public class MySqlDialect implements Dialect {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see org.sagacity.sqltoy.dialect.Dialect#getRandomResult(org. sagacity
 	 * .sqltoy.SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
 	 * org.sagacity.sqltoy.model.QueryExecutor, java.lang.Long, java.lang.Long,
@@ -87,7 +88,7 @@ public class MySqlDialect implements Dialect {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see org.sagacity.sqltoy.dialect.Dialect#findPageBySql(org.sagacity
 	 * .sqltoy.SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
 	 * org.sagacity.sqltoy.model.QueryExecutor,
@@ -105,7 +106,7 @@ public class MySqlDialect implements Dialect {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see org.sagacity.sqltoy.dialect.Dialect#findTopBySql(org.sagacity.sqltoy.
 	 * SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
 	 * org.sagacity.sqltoy.model.QueryExecutor, double, java.sql.Connection)
@@ -120,7 +121,7 @@ public class MySqlDialect implements Dialect {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see org.sagacity.sqltoy.dialect.Dialect#findBySql(org.sagacity.
 	 * sqltoy.config.model.SqlToyConfig, java.lang.String[], java.lang.Object[],
 	 * java.lang.reflect.Type, org.sagacity.sqltoy.callback.RowCallbackHandler,
@@ -138,7 +139,7 @@ public class MySqlDialect implements Dialect {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see org.sagacity.sqltoy.dialect.Dialect#getCountBySql(java.lang .String,
 	 * java.lang.String[], java.lang.Object[], java.sql.Connection)
 	 */
@@ -151,7 +152,7 @@ public class MySqlDialect implements Dialect {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see org.sagacity.sqltoy.dialect.Dialect#saveOrUpdate(org.sagacity.sqltoy.
 	 * SqlToyContext, java.io.Serializable, java.sql.Connection)
 	 */
@@ -169,7 +170,7 @@ public class MySqlDialect implements Dialect {
 	// xxx=ifnull(null,xxx)
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see org.sagacity.sqltoy.dialect.Dialect#saveOrUpdateAll(org.sagacity.sqltoy
 	 * .SqlToyContext, java.util.List, java.sql.Connection)
 	 */
@@ -193,7 +194,7 @@ public class MySqlDialect implements Dialect {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see org.sagacity.sqltoy.dialect.Dialect#saveAllNotExist(org.sagacity.sqltoy.
 	 * SqlToyContext, java.util.List,
 	 * org.sagacity.sqltoy.callback.ReflectPropsHandler, java.sql.Connection,
@@ -216,7 +217,7 @@ public class MySqlDialect implements Dialect {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see org.sagacity.sqltoy.dialect.Dialect#load(java.io.Serializable,
 	 * java.util.List, java.sql.Connection)
 	 */
@@ -236,7 +237,7 @@ public class MySqlDialect implements Dialect {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see org.sagacity.sqltoy.dialect.Dialect#loadAll(java.util.List,
 	 * java.util.List, java.sql.Connection)
 	 */
@@ -252,7 +253,7 @@ public class MySqlDialect implements Dialect {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see org.sagacity.sqltoy.dialect.Dialect#save(org.sagacity.sqltoy.
 	 * SqlToyContext , java.io.Serializable, java.util.List, java.sql.Connection)
 	 */
@@ -283,7 +284,7 @@ public class MySqlDialect implements Dialect {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see org.sagacity.sqltoy.dialect.Dialect#saveAll(org.sagacity.sqltoy.
 	 * SqlToyContext , java.util.List,
 	 * org.sagacity.sqltoy.callback.ReflectPropsHandler, java.sql.Connection)
@@ -303,7 +304,7 @@ public class MySqlDialect implements Dialect {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see org.sagacity.sqltoy.dialect.Dialect#update(org.sagacity.sqltoy.
 	 * SqlToyContext , java.io.Serializable, java.lang.String[],
 	 * java.sql.Connection)
@@ -324,7 +325,7 @@ public class MySqlDialect implements Dialect {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see org.sagacity.sqltoy.dialect.Dialect#updateAll(org.sagacity.sqltoy.
 	 * SqlToyContext, java.util.List,
 	 * org.sagacity.sqltoy.callback.ReflectPropsHandler, java.sql.Connection)
@@ -348,7 +349,7 @@ public class MySqlDialect implements Dialect {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see org.sagacity.sqltoy.dialect.Dialect#delete(org.sagacity.sqltoy.
 	 * SqlToyContext , java.io.Serializable, java.sql.Connection)
 	 */
@@ -360,7 +361,7 @@ public class MySqlDialect implements Dialect {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see org.sagacity.sqltoy.dialect.Dialect#deleteAll(org.sagacity.sqltoy.
 	 * SqlToyContext, java.util.List, java.sql.Connection)
 	 */
@@ -373,7 +374,7 @@ public class MySqlDialect implements Dialect {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see org.sagacity.sqltoy.dialect.Dialect#updateFatch(org.sagacity.sqltoy.
 	 * SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
 	 * org.sagacity.sqltoy.model.QueryExecutor,
@@ -412,6 +413,10 @@ public class MySqlDialect implements Dialect {
 		// 判断是否已经包含for update
 		if (lockMode == null || SqlUtil.hasLock(sql, dbType)) {
 			return "";
+		}
+		// 兼容低版本数据库
+		if (dbType == DBType.MYSQL57) {
+			return " for update ";
 		}
 		if (lockMode == LockMode.UPGRADE_NOWAIT) {
 			return " for update nowait ";

@@ -2,6 +2,7 @@ package org.sagacity.sqltoy;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.RoundingMode;
 import java.util.LinkedHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -31,6 +32,8 @@ public class SqlToyConstantsTest {
 
 	@Test
 	public void testBigIntger() {
+		double var = 1000 / 12;
+		System.err.println(var);
 		MapKit.startOf(null, "").get();
 		BigInteger a = new BigInteger("2993439899898779987777777777897777");
 		System.err.println(a.toString());
@@ -48,6 +51,8 @@ public class SqlToyConstantsTest {
 			System.err.println(classType.getName());
 			classType = classType.getSuperclass();
 		}
+		System.err.println(new BigDecimal(10).multiply(new BigDecimal(3)).add(new BigDecimal(42))
+				.divide(new BigDecimal(4), 3, RoundingMode.HALF_UP));
 
 	}
 }

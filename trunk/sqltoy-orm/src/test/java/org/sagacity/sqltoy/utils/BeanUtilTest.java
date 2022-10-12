@@ -11,6 +11,8 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.config.model.Translate;
+import org.sagacity.sqltoy.demo.domain.DeviceOrderVO;
+import org.sagacity.sqltoy.demo.domain.StaffInfo;
 import org.sagacity.sqltoy.demo.vo.DataRange;
 import org.sagacity.sqltoy.demo.vo.StaffInfoVO;
 import org.sagacity.sqltoy.demo.vo.TypeShowCase;
@@ -163,7 +165,27 @@ public class BeanUtilTest {
 
 	@Test
 	public void testBaseType() {
-		// System.err.println(BeanUtil.isBaseDataType(new HashMap()));
+		StaffInfo staff = new StaffInfo() {
+			{
+				country = "china";
+				createBy = "S0001";
+			}
+		};
+		System.err.println("{{}}实例化得到的class=" + staff.getClass().getName());
+		System.err.println("通过BeanUtil处理后得到的=" + BeanUtil.getEntityClass(staff.getClass()).getName());
+		DeviceOrderVO order = new DeviceOrderVO() {
+			{
+				setSaler("ssss");
+			}
+		};
+		System.err.println(BeanUtil.getEntityClass(order.getClass()).getName());
+		DataRange da = new DataRange() {
+			{
+				setBeginDate(LocalDate.now());
+			}
+		};
+		System.err.println("{{}}实例化得到的class=" + da.getClass().getName());
+		System.err.println(BeanUtil.getEntityClass(da.getClass()).getName());
 	}
 
 	@Test
@@ -227,11 +249,11 @@ public class BeanUtilTest {
 
 	@Test
 	public void testClone() {
-		Translate translate=new Translate("dictKey");
+		Translate translate = new Translate("dictKey");
 		translate.setColumn("id");
 		translate.setIndex(5);
-		
-		Translate cloneValue=translate.clone();
+
+		Translate cloneValue = translate.clone();
 		cloneValue.setIndex(3);
 		System.err.println(translate.getExtend().index);
 		System.err.println(cloneValue.getExtend().index);

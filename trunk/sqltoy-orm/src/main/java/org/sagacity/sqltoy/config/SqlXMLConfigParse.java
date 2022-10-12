@@ -41,6 +41,7 @@ import org.sagacity.sqltoy.model.TimeUnit;
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
+import org.sagacity.sqltoy.utils.NumberUtil;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -898,8 +899,9 @@ public class SqlXMLConfigParse {
 		if (filter.hasAttribute("param")) {
 			filterModel.setParam(filter.getAttribute("param").toLowerCase());
 		}
-		// <cache-arg cache-name="" cache-type="" param="" cache-mapping-indexes=""
-		// data-type="" alias-name=""/>
+		// <cache-arg param="" cache-name="" cache-type="" alias-name="">
+		// <filter compare-param="" cache-index=""/>
+		// </cache-arg>
 		if (filter.hasAttribute("cache-name")) {
 			sqlToyConfig.addCacheArgParam(filterModel.getParam());
 			filterModel.setCacheName(filter.getAttribute("cache-name"));
@@ -942,8 +944,14 @@ public class SqlXMLConfigParse {
 					CacheFilterModel cacheFilterModel = new CacheFilterModel();
 					// 对比列
 					cacheFilterModel.setCacheIndex(Integer.parseInt(cacheFilter.getAttribute("cache-index")));
-					// 对比条件参数
+					// 对比条件参数(有可能本身就是一个值)
 					cacheFilterModel.setCompareParam(cacheFilter.getAttribute("compare-param").toLowerCase());
+					// 非数字，如是参数名称，加入到arg中，便于统一提取参数属性对应的值
+					if (!NumberUtil.isNumber(cacheFilterModel.getCompareParam())
+							&& !cacheFilterModel.getCompareParam().equals("true")
+							&& !cacheFilterModel.getCompareParam().equals("false")) {
+						sqlToyConfig.addCacheArgParam(cacheFilterModel.getCompareParam());
+					}
 					if (cacheFilter.hasAttribute("compare-type")) {
 						cacheFilterModel.setCompareType(cacheFilter.getAttribute("compare-type").toLowerCase());
 					}
