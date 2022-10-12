@@ -31,6 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import org.sagacity.sqltoy.callback.ReflectPropsHandler;
+import org.sagacity.sqltoy.config.annotation.Entity;
 import org.sagacity.sqltoy.config.annotation.OneToMany;
 import org.sagacity.sqltoy.config.annotation.OneToOne;
 import org.sagacity.sqltoy.config.annotation.SqlToyEntity;
@@ -1660,29 +1661,38 @@ public class BeanUtil {
 	}
 
 	/**
-	 * @TODO 获取VO对应的实际的entityClass
+	 * @TODO 获取VO对应的实际的entityClass,主要是规避{{}}实例导致无法正确获取类型
 	 * @param entityClass
 	 * @return
 	 */
 	public static Class getEntityClass(Class entityClass) {
 		// update 2020-9-16
 		// 主要规避VO对象{{}}模式初始化，导致Class获取变成了内部类(双括号实例化modifiers会等于0)
+		// {{}}实例化得到的class是不正确的，所以这里将==0的进入后续判断
 		if (entityClass == null || entityClass.getModifiers() != 0) {
 			return entityClass;
 		}
 		Class realEntityClass = entityClass;
 		// 通过逐层递归来判断是否SqlToy annotation注解所规定的关联数据库的实体类
 		// 即@Entity 注解的抽象类
-		boolean isEntity = realEntityClass.isAnnotationPresent(SqlToyEntity.class);
+		boolean isEntity = realEntityClass.isAnnotationPresent(SqlToyEntity.class)
+				|| (realEntityClass.isAnnotationPresent(Entity.class)
+						&& !Modifier.isAbstract(realEntityClass.getModifiers()));
 		while (!isEntity) {
 			realEntityClass = realEntityClass.getSuperclass();
 			if (realEntityClass == null || realEntityClass.equals(Object.class)) {
 				break;
 			}
-			isEntity = realEntityClass.isAnnotationPresent(SqlToyEntity.class);
+			isEntity = realEntityClass.isAnnotationPresent(SqlToyEntity.class)
+					|| (realEntityClass.isAnnotationPresent(Entity.class)
+							&& !Modifier.isAbstract(realEntityClass.getModifiers()));
 		}
 		if (isEntity) {
 			return realEntityClass;
+		} // 再进一步规避一次普通VO/DTO 的{{}}实例化
+		else if (entityClass.getModifiers() == 0 && entityClass.getSuperclass() != null
+				&& !entityClass.getSuperclass().equals(Object.class)) {
+			return entityClass.getSuperclass();
 		}
 		return entityClass;
 	}

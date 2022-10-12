@@ -12,6 +12,8 @@ import java.util.List;
 import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DecryptHandler;
+import org.sagacity.sqltoy.callback.GenerateSavePKStrategy;
+import org.sagacity.sqltoy.callback.GenerateSqlHandler;
 import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
@@ -19,8 +21,6 @@ import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.dialect.Dialect;
-import org.sagacity.sqltoy.dialect.handler.GenerateSavePKStrategy;
-import org.sagacity.sqltoy.dialect.handler.GenerateSqlHandler;
 import org.sagacity.sqltoy.dialect.model.SavePKStrategy;
 import org.sagacity.sqltoy.dialect.utils.DefaultDialectUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectExtUtils;
@@ -32,6 +32,7 @@ import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TableMeta;
+import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -412,6 +413,10 @@ public class MySqlDialect implements Dialect {
 		// 判断是否已经包含for update
 		if (lockMode == null || SqlUtil.hasLock(sql, dbType)) {
 			return "";
+		}
+		// 兼容低版本数据库
+		if (dbType == DBType.MYSQL57) {
+			return " for update ";
 		}
 		if (lockMode == LockMode.UPGRADE_NOWAIT) {
 			return " for update nowait ";

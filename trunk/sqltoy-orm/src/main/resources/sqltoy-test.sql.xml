@@ -11,7 +11,9 @@
 			<to-date params="" format="yyyyMMdd" increment-days="1" />
 			<to-number params="" data-type="decimal" />
 			<!-- 通过缓存将名称用类似like模式匹配出对应的编码作为条件进行精准查询 -->
-			<cache-arg param="" cache-name="" cache-type="" alias-name="" />
+			<cache-arg param="" cache-name="" cache-type="" alias-name="">
+				<filter compare-param="" cache-index=""/>
+			</cache-arg>
 			<!-- 首要参数，比如页面上精准输入了订单编号，此时除特定条件外其他条件全部设置为null不参与查询 -->
 			<primary param="orderId" excludes="organIds" />
 			<!-- 将数组转化成in 的参数条件并增加单引号 -->

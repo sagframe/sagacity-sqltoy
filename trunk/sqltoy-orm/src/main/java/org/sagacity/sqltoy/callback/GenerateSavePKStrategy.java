@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.sagacity.sqltoy.dialect.handler;
+package org.sagacity.sqltoy.callback;
 
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.dialect.model.SavePKStrategy;
