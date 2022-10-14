@@ -62,7 +62,7 @@ public class Elastic extends BaseLink {
 	/**
 	 * 返回结果是Map类型，属性标签是否需要驼峰化命名处理
 	 */
-	private boolean humpMapLabel = true;
+	private Boolean humpMapLabel;
 
 	/**
 	 * @param sqlToyContext
@@ -97,7 +97,7 @@ public class Elastic extends BaseLink {
 		return this;
 	}
 
-	public Elastic humpMapLabel(boolean humpMapLabel) {
+	public Elastic humpMapLabel(Boolean humpMapLabel) {
 		this.humpMapLabel = humpMapLabel;
 		return this;
 	}

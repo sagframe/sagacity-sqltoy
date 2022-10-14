@@ -60,7 +60,7 @@ public class ElasticSearchPlugin {
 		String realMql = "";
 		JSONObject jsonQuery = null;
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
-		//update 2022-6-16 补全参数统一构造处理
+		// update 2022-6-16 补全参数统一构造处理
 		QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
 		try {
 			realMql = MongoElasticUtils.wrapES(sqlToyConfig, extend.getParamsName(sqlToyConfig),
@@ -135,7 +135,7 @@ public class ElasticSearchPlugin {
 	 * @throws Exception
 	 */
 	private static DataSetResult executeQuery(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			JSONObject jsonQuery, Class resultClass, boolean humpMapLabel) throws Exception {
+			JSONObject jsonQuery, Class resultClass, Boolean humpMapLabel) throws Exception {
 		NoSqlConfigModel noSqlModel = sqlToyConfig.getNoSqlConfigModel();
 		ElasticEndpoint esConfig = sqlToyContext.getElasticEndpoint(noSqlModel.getEndpoint());
 		String source = "_source";
