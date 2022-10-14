@@ -121,6 +121,11 @@ public class SqlToyContext {
 	private FilterHandler customFilterHandler;
 
 	/**
+	 * map类型的resultType标题转驼峰模式
+	 */
+	private boolean humpMapResultTypeLabel = true;
+
+	/**
 	 * 执行超时sql自定义处理器
 	 */
 	private OverTimeSqlHandler overTimeSqlHandler = new DefaultOverTimeHandler();
@@ -361,14 +366,13 @@ public class SqlToyContext {
 		// 字段加解密实现类初始化
 		if (null != fieldsSecureProvider) {
 			fieldsSecureProvider.initialize(this.encoding, securePrivateKey, securePublicKey);
-		} else {
-			if (StringUtil.isNotBlank(securePrivateKey) && StringUtil.isNotBlank(securePublicKey)) {
-				if (fieldsSecureProvider == null) {
-					fieldsSecureProvider = new FieldsRSASecureProvider();
-				}
-				fieldsSecureProvider.initialize(this.encoding, securePrivateKey, securePublicKey);
+		} else if (StringUtil.isNotBlank(securePrivateKey) && StringUtil.isNotBlank(securePublicKey)) {
+			if (fieldsSecureProvider == null) {
+				fieldsSecureProvider = new FieldsRSASecureProvider();
 			}
+			fieldsSecureProvider.initialize(this.encoding, securePrivateKey, securePublicKey);
 		}
+
 		// 默认的脱敏处理器
 		if (desensitizeProvider == null) {
 			desensitizeProvider = new DesensitizeDefaultProvider();
@@ -1050,4 +1054,13 @@ public class SqlToyContext {
 	public void setSplitMergeInto(boolean splitMergeInto) {
 		this.splitMergeInto = splitMergeInto;
 	}
+
+	public boolean isHumpMapResultTypeLabel() {
+		return humpMapResultTypeLabel;
+	}
+
+	public void setHumpMapResultTypeLabel(boolean humpMapResultTypeLabel) {
+		this.humpMapResultTypeLabel = humpMapResultTypeLabel;
+	}
+
 }

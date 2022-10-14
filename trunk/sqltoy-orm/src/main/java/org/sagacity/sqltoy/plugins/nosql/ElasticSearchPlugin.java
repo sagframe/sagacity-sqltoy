@@ -60,7 +60,7 @@ public class ElasticSearchPlugin {
 		String realMql = "";
 		JSONObject jsonQuery = null;
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
-		//update 2022-6-16 补全参数统一构造处理
+		// update 2022-6-16 补全参数统一构造处理
 		QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
 		try {
 			realMql = MongoElasticUtils.wrapES(sqlToyConfig, extend.getParamsName(sqlToyConfig),
@@ -135,7 +135,7 @@ public class ElasticSearchPlugin {
 	 * @throws Exception
 	 */
 	private static DataSetResult executeQuery(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			JSONObject jsonQuery, Class resultClass, boolean humpMapLabel) throws Exception {
+			JSONObject jsonQuery, Class resultClass, Boolean humpMapLabel) throws Exception {
 		NoSqlConfigModel noSqlModel = sqlToyConfig.getNoSqlConfigModel();
 		ElasticEndpoint esConfig = sqlToyContext.getElasticEndpoint(noSqlModel.getEndpoint());
 		String source = "_source";
@@ -170,16 +170,9 @@ public class ElasticSearchPlugin {
 			for (int i = 0; i < fields.length; i++) {
 				fields[i] = array[i].toString();
 			}
-		} else if (resultClass != null) {
-			Class superClass = resultClass.getSuperclass();
-			if (!resultClass.equals(ArrayList.class) && !resultClass.equals(List.class)
-					&& !resultClass.equals(Array.class) && !resultClass.equals(Collection.class)
-					&& !resultClass.equals(HashMap.class) && !resultClass.equals(Map.class)
-					&& !resultClass.equals(ConcurrentMap.class) && !resultClass.equals(ConcurrentHashMap.class)
-					&& !HashMap.class.equals(superClass) && !Map.class.equals(superClass)
-					&& !LinkedHashMap.class.equals(superClass) && !ConcurrentHashMap.class.equals(superClass)) {
-				fields = BeanUtil.matchSetMethodNames(resultClass);
-			}
+		} else if (resultClass != null && !Array.class.isAssignableFrom(resultClass)
+				&& !Collection.class.isAssignableFrom(resultClass) && !Map.class.isAssignableFrom(resultClass)) {
+			fields = BeanUtil.matchSetMethodNames(resultClass);
 		}
 		if (sqlToyContext.isDebug()) {
 			if (logger.isDebugEnabled()) {

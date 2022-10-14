@@ -1936,7 +1936,7 @@ public class DialectFactory {
 							// 映射成对象
 							if (resultType != null) {
 								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
-										queryResult.getLabelNames(), resultType, changedCols, true, false, null, null));
+										queryResult.getLabelNames(), resultType, changedCols, null, false, null, null));
 							}
 							SqlExecuteStat.debug("执行结果", "存储过程影响记录:{} 条!", queryResult.getRecordCount());
 							this.setResult(queryResult);

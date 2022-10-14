@@ -186,7 +186,7 @@ public class ResultUtils {
 	 */
 	public static void consumeResult(final SqlToyContext sqlToyContext, final QueryExecutorExtend extend,
 			final SqlToyConfig sqlToyConfig, Connection conn, ResultSet rs,
-			final StreamResultHandler streamResultHandler, Class resultType, boolean humpMapLabel,
+			final StreamResultHandler streamResultHandler, Class resultType, Boolean humpMapLabel,
 			Map<Class, IgnoreKeyCaseMap<String, String>> fieldsMap) throws Exception {
 		// 重新组合解密字段(entityMeta中的和sql自定义的合并)
 		IgnoreCaseSet decryptColumns = sqlToyConfig.getDecryptColumns();
@@ -262,18 +262,15 @@ public class ResultUtils {
 		String[] mapLabelNames = labelNames;
 		if (resultType != null && resultType != ArrayList.class && resultType != Collection.class
 				&& resultType != List.class && !BeanUtil.isBaseDataType(resultType)) {
-			Class superClass = resultType.getSuperclass();
 			if (resultType == Array.class) {
 				type = 2;
-			} else if (resultType.equals(HashMap.class) || resultType.equals(ConcurrentHashMap.class)
-					|| resultType.equals(Map.class) || resultType.equals(ConcurrentMap.class)
-					|| HashMap.class.equals(superClass) || LinkedHashMap.class.equals(superClass)
-					|| ConcurrentHashMap.class.equals(superClass) || Map.class.equals(superClass)) {
+			} else if (Map.class.isAssignableFrom(resultType)) {
 				type = 3;
 				isMap = resultType.equals(Map.class);
 				isConMap = resultType.equals(ConcurrentMap.class);
+				boolean isHumpLabel = (humpMapLabel == null ? sqlToyContext.isHumpMapResultTypeLabel() : humpMapLabel);
 				// 驼峰处理
-				if (humpMapLabel) {
+				if (isHumpLabel) {
 					mapLabelNames = humpFieldNames(labelNames, null);
 				}
 			} else {
@@ -1436,7 +1433,7 @@ public class ResultUtils {
 	 * @throws Exception
 	 */
 	public static List wrapQueryResult(SqlToyContext sqlToyContext, List queryResultRows, String[] labelNames,
-			Class resultType, boolean changedCols, boolean humpMapLabel, boolean hiberarchy, Class[] hiberarchyClasses,
+			Class resultType, boolean changedCols, Boolean humpMapLabel, boolean hiberarchy, Class[] hiberarchyClasses,
 			Map<Class, IgnoreKeyCaseMap<String, String>> fieldsMap) throws Exception {
 		// 类型为null就默认返回二维List
 		if (queryResultRows == null || queryResultRows.isEmpty() || resultType == null || resultType.equals(List.class)
@@ -1458,16 +1455,13 @@ public class ResultUtils {
 			logger.warn("查询中存在类似pivot、列同比环比计算导致结果'列'数不固定，因此不支持转map或VO对象!");
 			SqlExecuteStat.debug("映射结果类型错误", "查询中存在类似pivot、列同比环比计算导致结果'列'数不固定，因此不支持转map或VO对象!");
 		}
-		Class superClass = resultType.getSuperclass();
 		// 如果结果类型是hashMap
-		if (resultType.equals(HashMap.class) || resultType.equals(ConcurrentHashMap.class)
-				|| resultType.equals(Map.class) || resultType.equals(ConcurrentMap.class)
-				|| HashMap.class.equals(superClass) || LinkedHashMap.class.equals(superClass)
-				|| ConcurrentHashMap.class.equals(superClass) || Map.class.equals(superClass)) {
+		if (Map.class.isAssignableFrom(resultType)) {
 			int width = labelNames.length;
 			String[] realLabel = labelNames;
+			boolean isHumpLabel = (humpMapLabel == null ? sqlToyContext.isHumpMapResultTypeLabel() : humpMapLabel);
 			// 驼峰处理
-			if (humpMapLabel) {
+			if (isHumpLabel) {
 				realLabel = humpFieldNames(labelNames, null);
 			}
 			List result = new ArrayList();

@@ -12,7 +12,9 @@
 			<to-number params="" data-type="decimal" />
 			<!-- 通过缓存将名称用类似like模式匹配出对应的编码作为条件进行精准查询 -->
 			<cache-arg param="" cache-name="" cache-type="" alias-name="">
-				<filter compare-param="" cache-index=""/>
+				<!-- 对缓存进行过滤，比如个人授权的机构、状态为生效的缓存数据等 -->
+				<!-- compare-param: 可以是一个参数的属性名称也可以是具体的值，cache-index对应缓存数据的第几列 -->
+				<filter compare-param="1" cache-index="4"/>
 			</cache-arg>
 			<!-- 首要参数，比如页面上精准输入了订单编号，此时除特定条件外其他条件全部设置为null不参与查询 -->
 			<primary param="orderId" excludes="organIds" />

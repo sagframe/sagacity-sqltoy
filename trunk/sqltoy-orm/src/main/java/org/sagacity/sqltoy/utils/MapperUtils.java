@@ -183,9 +183,11 @@ public class MapperUtils {
 			pojoPropsMap.put(fieldName.toLowerCase(), fieldName);
 		}
 		// 父类
-		for (Field field : pojoClass.getSuperclass().getDeclaredFields()) {
-			fieldName = field.getName();
-			pojoPropsMap.put(fieldName.toLowerCase(), fieldName);
+		if (!pojoClass.getSuperclass().equals(Object.class)) {
+			for (Field field : pojoClass.getSuperclass().getDeclaredFields()) {
+				fieldName = field.getName();
+				pojoPropsMap.put(fieldName.toLowerCase(), fieldName);
+			}
 		}
 
 		// dto
@@ -199,11 +201,13 @@ public class MapperUtils {
 			}
 		}
 		// 父类
-		for (Field field : dtoClass.getSuperclass().getDeclaredFields()) {
-			fieldName = field.getName();
-			if (pojoPropsMap.containsKey(fieldName.toLowerCase())) {
-				dtoProps.add(fieldName);
-				pojoProps.add(pojoPropsMap.get(fieldName.toLowerCase()));
+		if (!dtoClass.getSuperclass().equals(Object.class)) {
+			for (Field field : dtoClass.getSuperclass().getDeclaredFields()) {
+				fieldName = field.getName();
+				if (pojoPropsMap.containsKey(fieldName.toLowerCase())) {
+					dtoProps.add(fieldName);
+					pojoProps.add(pojoPropsMap.get(fieldName.toLowerCase()));
+				}
 			}
 		}
 		// 模型赋值
@@ -236,9 +240,11 @@ public class MapperUtils {
 			pojoPropsMap.put(fieldName.toLowerCase(), fieldName);
 		}
 		// 父类
-		for (Field field : pojoClass.getSuperclass().getDeclaredFields()) {
-			fieldName = field.getName();
-			pojoPropsMap.put(fieldName.toLowerCase(), fieldName);
+		if (!pojoClass.getSuperclass().equals(Object.class)) {
+			for (Field field : pojoClass.getSuperclass().getDeclaredFields()) {
+				fieldName = field.getName();
+				pojoPropsMap.put(fieldName.toLowerCase(), fieldName);
+			}
 		}
 
 		// dto
@@ -256,6 +262,23 @@ public class MapperUtils {
 				pojoProps.add(pojoPropsMap.get(aliasName.toLowerCase()));
 			}
 		}
+
+		// dto 父类
+		if (!dtoClass.getSuperclass().equals(Object.class)) {
+			for (Field field : dtoClass.getSuperclass().getDeclaredFields()) {
+				fieldName = field.getName();
+				aliasName = fieldName;
+				alias = field.getAnnotation(SqlToyFieldAlias.class);
+				if (alias != null) {
+					aliasName = alias.value();
+				}
+				if (pojoPropsMap.containsKey(aliasName.toLowerCase())) {
+					dtoProps.add(fieldName);
+					pojoProps.add(pojoPropsMap.get(aliasName.toLowerCase()));
+				}
+			}
+		}
+
 		// 没有匹配的属性
 		if (dtoProps.isEmpty()) {
 			throw new IllegalArgumentException(

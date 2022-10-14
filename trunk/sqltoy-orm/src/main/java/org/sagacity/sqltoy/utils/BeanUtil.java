@@ -23,12 +23,10 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.config.annotation.Entity;
@@ -855,14 +853,8 @@ public class BeanUtil {
 			Object[] params = new Object[] {};
 			// 增加map类型支持
 			boolean isMap = false;
-			if (datas.get(0) != null) {
-				Class valueClass = datas.get(0).getClass();
-				if (valueClass.equals(HashMap.class) || valueClass.equals(ConcurrentHashMap.class)
-						|| valueClass.equals(Map.class) || valueClass.equals(ConcurrentMap.class)
-						|| HashMap.class.equals(valueClass) || LinkedHashMap.class.equals(valueClass)
-						|| ConcurrentHashMap.class.equals(valueClass) || Map.class.equals(valueClass)) {
-					isMap = true;
-				}
+			if (datas.get(0) != null && Map.class.isAssignableFrom(datas.get(0).getClass())) {
+				isMap = true;
 			}
 			Iterator iter;
 			String fieldLow;
@@ -1018,6 +1010,7 @@ public class BeanUtil {
 							} // update 2022-5-25 支持将集合的属性直接映射成数组
 							else if (fieldValue instanceof List) {
 								List tmp = (List) fieldValue;
+								// a.b.c 在最后一个属性c之前的属性取值
 								if (index < fieldLen - 1) {
 									fieldValue = sliceToArray(tmp, field.trim());
 								} else {
@@ -1599,6 +1592,9 @@ public class BeanUtil {
 	 * @throws RuntimeException
 	 */
 	public static Object getProperty(Object bean, String property) throws RuntimeException {
+		if (bean instanceof Map) {
+			return ((Map) bean).get(property);
+		}
 		String key = bean.getClass().getName().concat(":get").concat(property);
 		// 利用缓存提升方法匹配效率
 		Method method = getMethods.get(key);
