@@ -3,6 +3,7 @@
  */
 package org.sagacity.sqltoy.plugins.nosql;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -71,15 +72,9 @@ public class ElasticSearchUtils {
 					fields[index] = ((JSONObject) col).getString("name");
 					index++;
 				}
-			} else if (resultClass != null) {
-				Class superClass = resultClass.getSuperclass();
-				if (!resultClass.equals(ArrayList.class) && !resultClass.equals(List.class)
-						&& !resultClass.equals(Collection.class) && !resultClass.equals(HashMap.class)
-						&& !resultClass.equals(ConcurrentHashMap.class) && !resultClass.equals(Map.class)
-						&& !HashMap.class.equals(superClass) && !Map.class.equals(superClass)
-						&& !LinkedHashMap.class.equals(superClass) && !ConcurrentHashMap.class.equals(superClass)) {
-					fields = BeanUtil.matchSetMethodNames(resultClass);
-				}
+			} else if (resultClass != null && !Array.class.isAssignableFrom(resultClass)
+					&& !Collection.class.isAssignableFrom(resultClass) && !Map.class.isAssignableFrom(resultClass)) {
+				fields = BeanUtil.matchSetMethodNames(resultClass);
 			}
 		}
 		DataSetResult resultSet = null;
