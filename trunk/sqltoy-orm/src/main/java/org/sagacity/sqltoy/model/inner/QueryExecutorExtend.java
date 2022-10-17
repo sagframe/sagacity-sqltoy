@@ -84,7 +84,7 @@ public class QueryExecutorExtend implements Serializable {
 	/**
 	 * 结果为map时标题是否变成驼峰模式
 	 */
-	public boolean humpMapLabel = true;
+	public Boolean humpMapLabel;
 
 	/**
 	 * 特定数据库连接资源

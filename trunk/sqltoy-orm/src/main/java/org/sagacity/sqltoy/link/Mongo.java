@@ -89,7 +89,7 @@ public class Mongo extends BaseLink {
 	/**
 	 * 返回结果是Map类型，属性标签是否需要驼峰化命名处理
 	 */
-	private boolean humpMapLabel = true;
+	private Boolean humpMapLabel;
 
 	/**
 	 * @param sqlToyContext
@@ -124,7 +124,7 @@ public class Mongo extends BaseLink {
 		return this;
 	}
 
-	public Mongo humpMapLabel(boolean humpMapLabel) {
+	public Mongo humpMapLabel(Boolean humpMapLabel) {
 		this.humpMapLabel = humpMapLabel;
 		return this;
 	}
@@ -252,7 +252,7 @@ public class Mongo extends BaseLink {
 	 * @throws Exception
 	 */
 	private Page findPage(SqlToyConfig sqlToyConfig, Page pageModel, String mql, Class resultClass,
-			boolean humpMapLabel) throws Exception {
+			Boolean humpMapLabel) throws Exception {
 		Page result = new Page();
 		result.setPageNo(pageModel.getPageNo());
 		result.setPageSize(pageModel.getPageSize());
@@ -301,7 +301,7 @@ public class Mongo extends BaseLink {
 	 * @throws Exception
 	 */
 	private List<?> findTop(SqlToyConfig sqlToyConfig, Float topSize, String mql, Class resultClass,
-			boolean humpMapLabel) throws Exception {
+			Boolean humpMapLabel) throws Exception {
 		Integer limit = null;
 		if (topSize != null) {
 			if (topSize > 1) {
@@ -329,7 +329,7 @@ public class Mongo extends BaseLink {
 	 * @return
 	 * @throws Exception
 	 */
-	private List<?> aggregate(SqlToyConfig sqlToyConfig, String mql, Class resultClass, boolean humpMapLabel)
+	private List<?> aggregate(SqlToyConfig sqlToyConfig, String mql, Class resultClass, Boolean humpMapLabel)
 			throws Exception {
 		String realMql = mql.trim();
 		if (realMql.startsWith("{") && realMql.endsWith("}")) {
@@ -361,7 +361,7 @@ public class Mongo extends BaseLink {
 	}
 
 	private List extractFieldValues(SqlToyConfig sqlToyConfig, Iterator<Document> iter, Class resultClass,
-			boolean humpMapLabel) throws Exception {
+			Boolean humpMapLabel) throws Exception {
 		List resultSet = new ArrayList();
 		Document row;
 		HashMap<String, String[]> linkMap = new HashMap<String, String[]>();

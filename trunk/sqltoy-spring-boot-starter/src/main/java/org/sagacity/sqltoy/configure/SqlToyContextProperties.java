@@ -145,6 +145,11 @@ public class SqlToyContextProperties implements Serializable {
 	private boolean breakWhenSqlRepeat = true;
 
 	/**
+	 * map类型的resultType标题转驼峰模式(默认为true)
+	 */
+	private Boolean humpMapResultTypeLabel;
+
+	/**
 	 * 连接管理的实现扩展定义
 	 */
 	private String connectionFactory;
@@ -557,6 +562,14 @@ public class SqlToyContextProperties implements Serializable {
 
 	public void setSplitMergeInto(boolean splitMergeInto) {
 		this.splitMergeInto = splitMergeInto;
+	}
+
+	public Boolean getHumpMapResultTypeLabel() {
+		return humpMapResultTypeLabel;
+	}
+
+	public void setHumpMapResultTypeLabel(Boolean humpMapResultTypeLabel) {
+		this.humpMapResultTypeLabel = humpMapResultTypeLabel;
 	}
 
 }

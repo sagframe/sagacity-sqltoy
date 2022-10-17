@@ -23,7 +23,7 @@ public class UnpivotList {
 	/**
 	 * @TODO 对集合进行单组、多组列转行处理
 	 * @param unpivotModel
-	 * @param resultModel 提供label、labelType 进行重写
+	 * @param resultModel   提供label、labelType 进行重写
 	 * @param labelIndexMap sql查询出来的集合:标题 对应 列的map,通过label定义第几列
 	 * @param result
 	 * @return
@@ -215,12 +215,11 @@ public class UnpivotList {
 			for (int i = 0; i < groupSize; i++) {
 				newColsLabels[1 + i] = "indexValue" + ((i == 0) ? "" : i);
 			}
-		} else {
-			if (newColsLabels.length != groupSize + 1) {
-				throw new IllegalArgumentException("unpivot多组列转行new-columns-labels设置错误,1列指标名称+" + groupSize
-						+ "列旋转所得新列,应该设置:" + (1 + groupSize) + " 个列属性名称!格式如:\"季度,最小营业额,最大营业额\"");
-			}
+		} else if (newColsLabels.length != groupSize + 1) {
+			throw new IllegalArgumentException("unpivot多组列转行new-columns-labels设置错误,1列指标名称+" + groupSize
+					+ "列旋转所得新列,应该设置:" + (1 + groupSize) + " 个列属性名称!格式如:\"季度,最小营业额,最大营业额\"");
 		}
+		
 		labelList.add(addIndex, newColsLabels[0]);
 		labelTypeList.add(addIndex, "string");
 		for (int i = 0; i < groupSize; i++) {

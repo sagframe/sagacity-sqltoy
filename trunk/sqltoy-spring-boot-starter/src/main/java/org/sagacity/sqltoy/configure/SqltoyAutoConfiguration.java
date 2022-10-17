@@ -82,6 +82,11 @@ public class SqltoyAutoConfiguration {
 
 		// 当发现有重复sqlId时是否抛出异常，终止程序执行
 		sqlToyContext.setBreakWhenSqlRepeat(properties.isBreakWhenSqlRepeat());
+
+		// map 类型结果label是否自动转驼峰处理
+		if (properties.getHumpMapResultTypeLabel() != null) {
+			sqlToyContext.setHumpMapResultTypeLabel(properties.getHumpMapResultTypeLabel());
+		}
 		// sql 文件资源路径
 		sqlToyContext.setSqlResourcesDir(properties.getSqlResourcesDir());
 		if (properties.getSqlResources() != null && properties.getSqlResources().length > 0) {

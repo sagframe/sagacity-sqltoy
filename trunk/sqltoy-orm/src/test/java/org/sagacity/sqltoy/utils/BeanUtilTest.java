@@ -231,6 +231,7 @@ public class BeanUtilTest {
 		System.err.println(BeanUtil.isBaseDataType(int.class));
 		System.err.println(BeanUtil.isBaseDataType(Map.class));
 		System.err.println(BeanUtil.isBaseDataType(List.class));
+		System.err.println(DataRange.class.getSuperclass().getName());
 	}
 
 	@Test

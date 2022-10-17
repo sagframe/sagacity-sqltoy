@@ -3,13 +3,11 @@
  */
 package org.sagacity.sqltoy.plugins.nosql;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.ElasticEndpoint;
@@ -51,7 +49,7 @@ public class ElasticSearchUtils {
 	 * @throws Exception
 	 */
 	public static DataSetResult executeQuery(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Class resultClass, boolean humpMapLabel) throws Exception {
+			Class resultClass, Boolean humpMapLabel) throws Exception {
 		NoSqlConfigModel noSqlModel = sqlToyConfig.getNoSqlConfigModel();
 		ElasticEndpoint esConfig = sqlToyContext.getElasticEndpoint(noSqlModel.getEndpoint());
 		// 原生sql支持(7.5.1 还未支持分页)
@@ -71,15 +69,9 @@ public class ElasticSearchUtils {
 					fields[index] = ((JSONObject) col).getString("name");
 					index++;
 				}
-			} else if (resultClass != null) {
-				Class superClass = resultClass.getSuperclass();
-				if (!resultClass.equals(ArrayList.class) && !resultClass.equals(List.class)
-						&& !resultClass.equals(Collection.class) && !resultClass.equals(HashMap.class)
-						&& !resultClass.equals(ConcurrentHashMap.class) && !resultClass.equals(Map.class)
-						&& !HashMap.class.equals(superClass) && !Map.class.equals(superClass)
-						&& !LinkedHashMap.class.equals(superClass) && !ConcurrentHashMap.class.equals(superClass)) {
-					fields = BeanUtil.matchSetMethodNames(resultClass);
-				}
+			} else if (resultClass != null && !Array.class.isAssignableFrom(resultClass)
+					&& !Collection.class.isAssignableFrom(resultClass) && !Map.class.isAssignableFrom(resultClass)) {
+				fields = BeanUtil.matchSetMethodNames(resultClass);
 			}
 		}
 		DataSetResult resultSet = null;
@@ -94,8 +86,8 @@ public class ElasticSearchUtils {
 				null, null);
 		// 将结果数据映射到具体对象类型中
 		resultSet.setRows(ResultUtils.wrapQueryResult(sqlToyContext, resultSet.getRows(),
-				StringUtil.humpFieldNames(resultSet.getLabelNames()), resultClass, changedCols, true, false, null,
-				null));
+				StringUtil.humpFieldNames(resultSet.getLabelNames()), resultClass, changedCols, humpMapLabel, false,
+				null, null));
 		return resultSet;
 	}
 
