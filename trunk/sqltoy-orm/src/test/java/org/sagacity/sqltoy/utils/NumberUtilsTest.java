@@ -22,4 +22,13 @@ public class NumberUtilsTest {
 		BigDecimal value = new BigDecimal(-209.98);
 		System.err.println(NumberUtil.format(value,"##,###.00"));
 	}
+	
+	@Test
+	public void testNumFmtChina() {
+		BigDecimal value = new BigDecimal(209.98);
+		System.err.println(NumberUtil.toCapitalMoney(value));
+		
+		BigDecimal value1 = new BigDecimal(209);
+		System.err.println(NumberUtil.toCapitalMoney(value1));
+	}
 }
