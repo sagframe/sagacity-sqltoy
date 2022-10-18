@@ -39,7 +39,6 @@ import org.sagacity.sqltoy.dialect.utils.PageOptimizeUtils;
 import org.sagacity.sqltoy.model.IgnoreCaseSet;
 import org.sagacity.sqltoy.model.TimeUnit;
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
-import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.NumberUtil;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
@@ -285,7 +284,7 @@ public class SqlXMLConfigParse {
 			nodeName = nodeName.substring(prefixIndex + 1);
 		}
 		// 目前只支持传统sql、elastic、mongo三种类型的语法
-		if (!nodeName.equals("sql") && !nodeName.equals("eql") && !nodeName.equals("mql")) {
+		if (!"sql".equals(nodeName) && !"eql".equals(nodeName) && !"mql".equals(nodeName)) {
 			return null;
 		}
 		String id = sqlElt.getAttribute("id");
@@ -319,10 +318,10 @@ public class SqlXMLConfigParse {
 		SqlType type = sqlElt.hasAttribute("type") ? SqlType.getSqlType(sqlElt.getAttribute("type")) : SqlType.search;
 		// 是否nosql模式
 		boolean isNoSql = false;
-		if (nodeName.equals("mql") || nodeName.equals("eql")) {
-			if (nodeName.equals("mql")) {
+		if ("mql".equals(nodeName) || "eql".equals(nodeName)) {
+			if ("mql".equals(nodeName)) {
 				realDialect = DataSourceUtils.Dialect.MONGO;
-			} else if (nodeName.equals("eql")) {
+			} else if ("eql".equals(nodeName)) {
 				realDialect = DataSourceUtils.Dialect.ES;
 			}
 			isNoSql = true;
@@ -485,7 +484,7 @@ public class SqlXMLConfigParse {
 		}
 		String nodeName = sqlElt.getNodeName().toLowerCase();
 		// 是否有聚合查询
-		if (nodeName.equals("eql")) {
+		if ("eql".equals(nodeName)) {
 			if (sqlElt.hasAttribute("aggregate")) {
 				noSqlConfig.setHasAggs(Boolean.parseBoolean(sqlElt.getAttribute("aggregate")));
 			} else if (sqlElt.hasAttribute("is-aggregate")) {
@@ -502,7 +501,7 @@ public class SqlXMLConfigParse {
 					noSqlConfig.setHasAggs(true);
 				}
 			}
-		} else if (nodeName.equals("mql")) {
+		} else if ("mql".equals(nodeName)) {
 			if (sqlElt.hasAttribute("aggregate")) {
 				noSqlConfig.setHasAggs(Boolean.parseBoolean(sqlElt.getAttribute("aggregate")));
 			} else if (sqlElt.hasAttribute("is-aggregate")) {
@@ -579,10 +578,10 @@ public class SqlXMLConfigParse {
 				secureMask.setType(type);
 				secureMask.setMaskCode(maskCode);
 				if (secureMask.getMaskCode() == null) {
-					if (secureMask.getType().equals("id-card") || secureMask.getType().equals("bank-card")
-							|| secureMask.getType().equals("email") || secureMask.getType().equals("address")) {
+					if ("id-card".equals(secureMask.getType()) || "bank-card".equals(secureMask.getType())
+							|| "email".equals(secureMask.getType()) || "address".equals(secureMask.getType())) {
 						secureMask.setMaskCode("******");
-					} else if (secureMask.getType().equals("name")) {
+					} else if ("name".equals(secureMask.getType())) {
 						secureMask.setMaskCode("**");
 					} else {
 						secureMask.setMaskCode("****");
@@ -755,7 +754,7 @@ public class SqlXMLConfigParse {
 						filterType = filterType.substring(prefixIndex + 1);
 					}
 					// 当开发者配置了blank过滤器时，则表示关闭默认将全部空白当做null处理的逻辑
-					if (filterType.equals("blank")) {
+					if ("blank".equals(filterType)) {
 						hasBlank = true;
 						blank = true;
 					}
@@ -763,19 +762,19 @@ public class SqlXMLConfigParse {
 					if ((blank && blankToNull != 1) || !blank) {
 						ParamFilterModel filterModel = new ParamFilterModel();
 						// 统一过滤的类别,避免不同版本和命名差异
-						if (filterType.equals("equals") || filterType.equals("any") || filterType.equals("in")) {
+						if ("equals".equals(filterType) || "any".equals(filterType) || "in".equals(filterType)) {
 							filterType = "eq";
-						} else if (filterType.equals("moreThan") || filterType.equals("more")) {
+						} else if ("moreThan".equals(filterType) || "more".equals(filterType)) {
 							filterType = "gt";
-						} else if (filterType.equals("moreEquals") || filterType.equals("more-equals")) {
+						} else if ("moreEquals".equals(filterType) || "more-equals".equals(filterType)) {
 							filterType = "gte";
-						} else if (filterType.equals("lessThan") || filterType.equals("less")) {
+						} else if ("lessThan".equals(filterType) || "less".equals(filterType)) {
 							filterType = "lt";
-						} else if (filterType.equals("lessEquals") || filterType.equals("less-equals")) {
+						} else if ("lessEquals".equals(filterType) || "less-equals".equals(filterType)) {
 							filterType = "lte";
-						} else if (filterType.equals("not-any")) {
+						} else if ("not-any".equals(filterType)) {
 							filterType = "neq";
-						} else if (filterType.equals("dateFormat")) {
+						} else if ("dateFormat".equals(filterType)) {
 							filterType = "date-format";
 						}
 						filterModel.setFilterType(filterType);
@@ -828,19 +827,19 @@ public class SqlXMLConfigParse {
 		}
 		if (filter.hasAttribute("increment-unit")) {
 			String timeUnit = filter.getAttribute("increment-unit").toUpperCase();
-			if (timeUnit.equals("DAYS") || timeUnit.equals("DAY")) {
+			if ("DAYS".equals(timeUnit) || "DAY".equals(timeUnit)) {
 				filterModel.setTimeUnit(TimeUnit.DAYS);
-			} else if (timeUnit.equals("HOURS") || timeUnit.equals("HOUR")) {
+			} else if ("HOURS".equals(timeUnit) || "HOUR".equals(timeUnit)) {
 				filterModel.setTimeUnit(TimeUnit.HOURS);
-			} else if (timeUnit.equals("MINUTES") || timeUnit.equals("MINUTE")) {
+			} else if ("MINUTES".equals(timeUnit) || "MINUTE".equals(timeUnit)) {
 				filterModel.setTimeUnit(TimeUnit.MINUTES);
-			} else if (timeUnit.equals("SECONDS") || timeUnit.equals("SECOND")) {
+			} else if ("SECONDS".equals(timeUnit) || "SECOND".equals(timeUnit)) {
 				filterModel.setTimeUnit(TimeUnit.SECONDS);
-			} else if (timeUnit.equals("MILLISECONDS") || timeUnit.equals("MILLISECOND")) {
+			} else if ("MILLISECONDS".equals(timeUnit) || "MILLISECOND".equals(timeUnit)) {
 				filterModel.setTimeUnit(TimeUnit.MILLISECONDS);
-			} else if (timeUnit.equals("MONTHS") || timeUnit.equals("MONTH")) {
+			} else if ("MONTHS".equals(timeUnit) || "MONTH".equals(timeUnit)) {
 				filterModel.setTimeUnit(TimeUnit.MONTHS);
-			} else if (timeUnit.equals("YEARS") || timeUnit.equals("YEAR")) {
+			} else if ("YEARS".equals(timeUnit) || "YEAR".equals(timeUnit)) {
 				filterModel.setTimeUnit(TimeUnit.YEARS);
 			}
 		}
@@ -849,17 +848,17 @@ public class SqlXMLConfigParse {
 		if (filter.hasAttribute("format")) {
 			String fmt = filter.getAttribute("format");
 			// 规整toDate的格式
-			if (fmt.equalsIgnoreCase("first_day") || fmt.equalsIgnoreCase("first_month_day")) {
+			if ("first_day".equalsIgnoreCase(fmt) || "first_month_day".equalsIgnoreCase(fmt)) {
 				filterModel.setFormat("FIRST_OF_MONTH");
-			} else if (fmt.equalsIgnoreCase("last_day") || fmt.equalsIgnoreCase("last_month_day")) {
+			} else if ("last_day".equalsIgnoreCase(fmt) || "last_month_day".equalsIgnoreCase(fmt)) {
 				filterModel.setFormat("LAST_OF_MONTH");
-			} else if (fmt.equalsIgnoreCase("first_year_day")) {
+			} else if ("first_year_day".equalsIgnoreCase(fmt)) {
 				filterModel.setFormat("FIRST_OF_YEAR");
-			} else if (fmt.equalsIgnoreCase("last_year_day")) {
+			} else if ("last_year_day".equalsIgnoreCase(fmt)) {
 				filterModel.setFormat("LAST_OF_YEAR");
-			} else if (fmt.equalsIgnoreCase("first_week_day")) {
+			} else if ("first_week_day".equalsIgnoreCase(fmt)) {
 				filterModel.setFormat("FIRST_OF_WEEK");
-			} else if (fmt.equalsIgnoreCase("last_week_day")) {
+			} else if ("last_week_day".equalsIgnoreCase(fmt)) {
 				filterModel.setFormat("LAST_OF_WEEK");
 			} else {
 				filterModel.setFormat(fmt);
@@ -944,7 +943,7 @@ public class SqlXMLConfigParse {
 					CacheFilterModel cacheFilterModel = new CacheFilterModel();
 					// 对比列
 					cacheFilterModel.setCacheIndex(Integer.parseInt(cacheFilter.getAttribute("cache-index")));
-					// 对比条件参数
+					// 对比条件参数(有可能本身就是一个值)
 					cacheFilterModel.setCompareParam(cacheFilter.getAttribute("compare-param").toLowerCase());
 					// 非数字，如是参数名称，加入到arg中，便于统一提取参数属性对应的值
 					if (!NumberUtil.isNumber(cacheFilterModel.getCompareParam())
@@ -977,23 +976,23 @@ public class SqlXMLConfigParse {
 		// exclusive 排他性filter 条件成立的对比方式
 		if (filter.hasAttribute("compare-type")) {
 			String compareType = filter.getAttribute("compare-type");
-			if (compareType.equals("eq") || compareType.equals("==") || compareType.equals("equals")
-					|| compareType.equals("=")) {
+			if ("eq".equals(compareType) || "==".equals(compareType) || "equals".equals(compareType)
+					|| "=".equals(compareType)) {
 				filterModel.setCompareType("==");
-			} else if (compareType.equals("neq") || compareType.equals("<>") || compareType.equals("!=")
-					|| compareType.equals("ne")) {
+			} else if ("neq".equals(compareType) || "<>".equals(compareType) || "!=".equals(compareType)
+					|| "ne".equals(compareType)) {
 				filterModel.setCompareType("<>");
-			} else if (compareType.equals(">") || compareType.equals("gt") || compareType.equals("more")) {
+			} else if (">".equals(compareType) || "gt".equals(compareType) || "more".equals(compareType)) {
 				filterModel.setCompareType(">");
-			} else if (compareType.equals(">=") || compareType.equals("gte") || compareType.equals("ge")) {
+			} else if (">=".equals(compareType) || "gte".equals(compareType) || "ge".equals(compareType)) {
 				filterModel.setCompareType(">=");
-			} else if (compareType.equals("<") || compareType.equals("lt") || compareType.equals("less")) {
+			} else if ("<".equals(compareType) || "lt".equals(compareType) || "less".equals(compareType)) {
 				filterModel.setCompareType("<");
-			} else if (compareType.equals("<=") || compareType.equals("lte") || compareType.equals("le")) {
+			} else if ("<=".equals(compareType) || "lte".equals(compareType) || "le".equals(compareType)) {
 				filterModel.setCompareType("<=");
-			} else if (compareType.equals("between")) {
+			} else if ("between".equals(compareType)) {
 				filterModel.setCompareType("between");
-			} else if (compareType.equals("any") || compareType.equals("in")) {
+			} else if ("any".equals(compareType) || "in".equals(compareType)) {
 				filterModel.setCompareType("any");
 			}
 		}
@@ -1066,16 +1065,16 @@ public class SqlXMLConfigParse {
 					hasLink = true;
 				}
 				// 正则转化
-				if (splitRegex.equals(",") || splitRegex.equals("，")) {
+				if (",".equals(splitRegex) || "，".equals(splitRegex)) {
 					splitRegex = "\\,";
-				} else if (splitRegex.equals(";") || splitRegex.equals("；")) {
+				} else if (";".equals(splitRegex) || "；".equals(splitRegex)) {
 					splitRegex = "\\;";
 					if (!hasLink) {
 						linkSign = ";";
 					}
-				} else if (splitRegex.equals("、")) {
+				} else if ("、".equals(splitRegex)) {
 					splitRegex = "\\、";
-				} else if (splitRegex.equals("->")) {
+				} else if ("->".equals(splitRegex)) {
 					splitRegex = "\\-\\>";
 					if (!hasLink) {
 						linkSign = "->";
@@ -1215,13 +1214,13 @@ public class SqlXMLConfigParse {
 				String locale = nf.hasAttribute("locale") ? nf.getAttribute("locale") : null;
 				RoundingMode roundMode = null;
 				if (roundStr != null) {
-					if (roundStr.equals("HALF_UP")) {
+					if ("HALF_UP".equals(roundStr)) {
 						roundMode = RoundingMode.HALF_UP;
-					} else if (roundStr.equals("HALF_DOWN")) {
+					} else if ("HALF_DOWN".equals(roundStr)) {
 						roundMode = RoundingMode.HALF_DOWN;
-					} else if (roundStr.equals("ROUND_DOWN")) {
+					} else if ("ROUND_DOWN".equals(roundStr)) {
 						roundMode = RoundingMode.DOWN;
-					} else if (roundStr.equals("ROUND_UP")) {
+					} else if ("ROUND_UP".equals(roundStr)) {
 						roundMode = RoundingMode.UP;
 					}
 				}
@@ -1280,11 +1279,7 @@ public class SqlXMLConfigParse {
 						String defaultValue = elt.getAttribute("default-value");
 						if (elt.hasAttribute("default-type")) {
 							String defaultType = elt.getAttribute("default-type").toLowerCase();
-							try {
-								pivotModel.setDefaultValue(BeanUtil.convertType(defaultValue, defaultType));
-							} catch (Exception e) {
-								e.printStackTrace();
-							}
+							pivotModel.setDefaultValue(XMLUtil.convertType(defaultValue, defaultType));
 						} else {
 							pivotModel.setDefaultValue(defaultValue);
 						}
@@ -1343,13 +1338,13 @@ public class SqlXMLConfigParse {
 						RoundingMode roundMode = null;
 						for (int k = 0; k < roundingModeAry.length; k++) {
 							roundingMode = roundingModeAry[k];
-							if (roundingMode.equals("HALF_UP")) {
+							if ("HALF_UP".equals(roundingMode)) {
 								roundMode = RoundingMode.HALF_UP;
-							} else if (roundingMode.equals("HALF_DOWN")) {
+							} else if ("HALF_DOWN".equals(roundingMode)) {
 								roundMode = RoundingMode.HALF_DOWN;
-							} else if (roundingMode.equals("ROUND_DOWN")) {
+							} else if ("ROUND_DOWN".equals(roundingMode)) {
 								roundMode = RoundingMode.DOWN;
-							} else if (roundingMode.equals("ROUND_UP")) {
+							} else if ("ROUND_UP".equals(roundingMode)) {
 								roundMode = RoundingMode.UP;
 							} else {
 								roundMode = RoundingMode.HALF_UP;
@@ -1481,7 +1476,7 @@ public class SqlXMLConfigParse {
 		}
 		Integer[] realParamNames = new Integer[paramNames.length];
 		for (int i = 0; i < paramNames.length; i++) {
-			realParamNames[i] = (paramNames[i] == null || paramNames[i].trim().equals("")) ? null
+			realParamNames[i] = (paramNames[i] == null || "".equals(paramNames[i].trim())) ? null
 					: Integer.parseInt(paramNames[i].trim());
 		}
 		return realParamNames;

@@ -90,7 +90,7 @@ public class Mongo extends BaseLink {
 	/**
 	 * 返回结果是Map类型，属性标签是否需要驼峰化命名处理
 	 */
-	private boolean humpMapLabel = true;
+	private Boolean humpMapLabel;
 
 	/**
 	 * @param sqlToyContext
@@ -129,7 +129,7 @@ public class Mongo extends BaseLink {
 		return this;
 	}
 
-	public Mongo humpMapLabel(boolean humpMapLabel) {
+	public Mongo humpMapLabel(Boolean humpMapLabel) {
 		this.humpMapLabel = humpMapLabel;
 		return this;
 	}
@@ -264,7 +264,7 @@ public class Mongo extends BaseLink {
 	 * @throws Exception
 	 */
 	private PaginationModel findPage(MongoTemplate mongoTemplate, SqlToyConfig sqlToyConfig, PaginationModel pageModel,
-			String mql, Class resultClass, boolean humpMapLabel) throws Exception {
+			String mql, Class resultClass, Boolean humpMapLabel) throws Exception {
 		PaginationModel result = new PaginationModel();
 		result.setPageNo(pageModel.getPageNo());
 		result.setPageSize(pageModel.getPageSize());
@@ -317,7 +317,7 @@ public class Mongo extends BaseLink {
 	 * @throws Exception
 	 */
 	private List<?> findTop(MongoTemplate mongoTemplate, SqlToyConfig sqlToyConfig, Float topSize, String mql,
-			Class resultClass, boolean humpMapLabel) throws Exception {
+			Class resultClass, Boolean humpMapLabel) throws Exception {
 		BasicQuery query = new BasicQuery(mql);
 		if (topSize != null) {
 			if (topSize > 1) {
@@ -354,7 +354,7 @@ public class Mongo extends BaseLink {
 	 * @throws Exception
 	 */
 	private List<?> aggregate(MongoTemplate mongoTemplate, SqlToyConfig sqlToyConfig, String mql, Class resultClass,
-			boolean humpMapLabel) throws Exception {
+			Boolean humpMapLabel) throws Exception {
 		String realMql = mql.trim();
 		if (realMql.startsWith("{") && realMql.endsWith("}")) {
 			realMql = realMql.substring(1, realMql.length() - 1).trim();
@@ -385,7 +385,7 @@ public class Mongo extends BaseLink {
 	}
 
 	private List extractFieldValues(SqlToyConfig sqlToyConfig, Iterator<Document> iter, Class resultClass,
-			boolean humpMapLabel) throws Exception {
+			Boolean humpMapLabel) throws Exception {
 		List resultSet = new ArrayList();
 		Document row;
 		HashMap<String, String[]> linkMap = new HashMap<String, String[]>();

@@ -104,6 +104,11 @@ public class SqltoyAutoConfiguration {
 			sqlToyContext.setScriptCheckIntervalSeconds(properties.getScriptCheckIntervalSeconds());
 		}
 
+		// map 类型结果label是否自动转驼峰处理
+		if (properties.getHumpMapResultTypeLabel() != null) {
+			sqlToyContext.setHumpMapResultTypeLabel(properties.getHumpMapResultTypeLabel());
+		}
+		
 		// 缓存、sql文件在初始化后延时多少秒开始检测
 		if (properties.getDelayCheckSeconds() != null) {
 			sqlToyContext.setDelayCheckSeconds(properties.getDelayCheckSeconds());

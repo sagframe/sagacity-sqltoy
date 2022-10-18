@@ -77,7 +77,7 @@ public class Query extends BaseLink {
 	/**
 	 * 返回hashMap数据集合时key的格式是否变成驼峰模式
 	 */
-	private boolean humpMapLabel = true;
+	private Boolean humpMapLabel;
 
 	/**
 	 * 锁表
@@ -124,7 +124,7 @@ public class Query extends BaseLink {
 		return this;
 	}
 
-	public Query humpMapLabel(boolean isHump) {
+	public Query humpMapLabel(Boolean isHump) {
 		this.humpMapLabel = isHump;
 		return this;
 	}

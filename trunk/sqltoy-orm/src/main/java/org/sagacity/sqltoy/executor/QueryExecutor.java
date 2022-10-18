@@ -272,7 +272,7 @@ public class QueryExecutor implements Serializable {
 	 * @param humpMapLabel
 	 * @return
 	 */
-	public QueryExecutor humpMapLabel(boolean humpMapLabel) {
+	public QueryExecutor humpMapLabel(Boolean humpMapLabel) {
 		innerModel.humpMapLabel = humpMapLabel;
 		return this;
 	}

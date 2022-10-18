@@ -243,6 +243,11 @@ public class SqlToyContext implements ApplicationContextAware {
 	private ConnectionFactory connectionFactory = new DefaultConnectionFactory();
 
 	/**
+	 * map类型的resultType标题转驼峰模式
+	 */
+	private boolean humpMapResultTypeLabel = true;
+
+	/**
 	 * @param workerId the workerId to set
 	 */
 	public void setWorkerId(Integer workerId) {
@@ -351,14 +356,12 @@ public class SqlToyContext implements ApplicationContextAware {
 		// 字段加解密实现类初始化
 		if (null != fieldsSecureProvider) {
 			fieldsSecureProvider.initialize(this.encoding, securePrivateKey, securePublicKey);
-		} else {
-			// 同时定义了私钥和公钥表示使用sqltoy自带的RSA算法
-			if (StringUtil.isNotBlank(securePrivateKey) && StringUtil.isNotBlank(securePublicKey)) {
-				if (fieldsSecureProvider == null) {
-					fieldsSecureProvider = new FieldsRSASecureProvider();
-				}
-				fieldsSecureProvider.initialize(this.encoding, securePrivateKey, securePublicKey);
+		} // 同时定义了私钥和公钥表示使用sqltoy自带的RSA算法
+		else if (StringUtil.isNotBlank(securePrivateKey) && StringUtil.isNotBlank(securePublicKey)) {
+			if (fieldsSecureProvider == null) {
+				fieldsSecureProvider = new FieldsRSASecureProvider();
 			}
+			fieldsSecureProvider.initialize(this.encoding, securePrivateKey, securePublicKey);
 		}
 		// 默认的脱敏处理器
 		if (desensitizeProvider == null) {
@@ -1016,4 +1019,13 @@ public class SqlToyContext implements ApplicationContextAware {
 	public void setSplitMergeInto(boolean splitMergeInto) {
 		this.splitMergeInto = splitMergeInto;
 	}
+
+	public boolean isHumpMapResultTypeLabel() {
+		return humpMapResultTypeLabel;
+	}
+
+	public void setHumpMapResultTypeLabel(boolean humpMapResultTypeLabel) {
+		this.humpMapResultTypeLabel = humpMapResultTypeLabel;
+	}
+
 }

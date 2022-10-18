@@ -91,7 +91,7 @@ public class QueryExecutorExtend implements Serializable {
 	/**
 	 * 结果为map时标题是否变成驼峰模式
 	 */
-	public boolean humpMapLabel = true;
+	public Boolean humpMapLabel;
 
 	/**
 	 * 特定数据库连接资源
@@ -157,7 +157,7 @@ public class QueryExecutorExtend implements Serializable {
 	 * 是否构造过条件参数名称
 	 */
 	public boolean wrappedParamNames = false;
-	
+
 	/**
 	 * 执行时是否输出sql 日志
 	 */
@@ -178,7 +178,7 @@ public class QueryExecutorExtend implements Serializable {
 
 	// 分库策略配置
 	public ShardingStrategyConfig dbSharding;
-	
+
 	/**
 	 * 标记基于单表的简单操作
 	 */

@@ -179,6 +179,11 @@ public class SqlToyContextProperties implements Serializable {
 	 * 拆分merge into 为updateAll 和 saveAllIgnoreExist 两步操作(1、seata分布式事务不支持merge)
 	 */
 	private boolean splitMergeInto = false;
+	
+	/**
+	 * map类型的resultType标题转驼峰模式(默认为true)
+	 */
+	private Boolean humpMapResultTypeLabel;
 
 	/**
 	 * @return the sqlResourcesDir
@@ -529,6 +534,14 @@ public class SqlToyContextProperties implements Serializable {
 
 	public void setSplitMergeInto(boolean splitMergeInto) {
 		this.splitMergeInto = splitMergeInto;
+	}
+
+	public Boolean getHumpMapResultTypeLabel() {
+		return humpMapResultTypeLabel;
+	}
+
+	public void setHumpMapResultTypeLabel(Boolean humpMapResultTypeLabel) {
+		this.humpMapResultTypeLabel = humpMapResultTypeLabel;
 	}
 
 }

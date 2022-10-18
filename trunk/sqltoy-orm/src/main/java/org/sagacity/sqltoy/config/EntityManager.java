@@ -143,7 +143,7 @@ public class EntityManager {
 	 * @return
 	 */
 	public boolean isEntity(SqlToyContext sqlToyContext, Class voClass) {
-		if (voClass == null) {
+		if (voClass == null || voClass.equals(Object.class)) {
 			return false;
 		}
 		Class entityClass = BeanUtil.getEntityClass(voClass);
@@ -169,7 +169,7 @@ public class EntityManager {
 	 * @return
 	 */
 	public EntityMeta getEntityMeta(SqlToyContext sqlToyContext, Class voClass) {
-		if (voClass == null) {
+		if (voClass == null || voClass.equals(Object.class)) {
 			return null;
 		}
 		Class entityClass = BeanUtil.getEntityClass(voClass);
@@ -231,7 +231,7 @@ public class EntityManager {
 	 */
 	public synchronized EntityMeta parseEntityMeta(SqlToyContext sqlToyContext, Class entityClass, boolean isWarn,
 			boolean forCascade) {
-		if (entityClass == null) {
+		if (entityClass == null || entityClass.equals(Object.class)) {
 			return null;
 		}
 		String className = entityClass.getName();
@@ -247,7 +247,7 @@ public class EntityManager {
 			DataVersion dataVersion = null;
 			// 租户
 			Tenant tenant = null;
-			while (realEntityClass != null && !realEntityClass.equals(Object.class)) {
+			while (!realEntityClass.equals(Object.class)) {
 				entity = (Entity) realEntityClass.getAnnotation(Entity.class);
 				if (dataVersion == null) {
 					dataVersion = (DataVersion) realEntityClass.getAnnotation(DataVersion.class);

@@ -47,8 +47,8 @@ public class MapperUtils {
 	 */
 	public static <T extends Serializable> T map(SqlToyContext sqlToyContext, Serializable source, Class<T> resultType)
 			throws Exception {
-		if (source == null || resultType == null) {
-			throw new IllegalArgumentException("source 和 resultType 不能为null!");
+		if (source == null || (resultType == null || resultType.equals(Object.class))) {
+			throw new IllegalArgumentException("source 和 resultType 不能为null,且resultType不能为Object.class!");
 		}
 		// 转成List做统一处理
 		List<Serializable> sourceList = new ArrayList<Serializable>();
@@ -68,8 +68,8 @@ public class MapperUtils {
 	 */
 	public static <T extends Serializable> List<T> mapList(SqlToyContext sqlToyContext, List<Serializable> sourceList,
 			Class<T> resultType) throws Exception {
-		if (sourceList == null || resultType == null) {
-			throw new IllegalArgumentException("sourceList 和 resultType 不能为null!");
+		if (sourceList == null || (resultType == null || resultType.equals(Object.class))) {
+			throw new IllegalArgumentException("sourceList 和 resultType 不能为null,且resultType不能为Object.class!");
 		}
 		if (sourceList.isEmpty()) {
 			return new ArrayList<T>();
@@ -177,34 +177,30 @@ public class MapperUtils {
 		DTOEntityMapModel result = new DTOEntityMapModel();
 		String fieldName;
 		HashMap<String, String> pojoPropsMap = new HashMap<String, String>();
-		// pojo
-		for (Field field : pojoClass.getDeclaredFields()) {
-			fieldName = field.getName();
-			pojoPropsMap.put(fieldName.toLowerCase(), fieldName);
-		}
-		// 父类
-		for (Field field : pojoClass.getSuperclass().getDeclaredFields()) {
-			fieldName = field.getName();
-			pojoPropsMap.put(fieldName.toLowerCase(), fieldName);
+		// pojo 以及父类
+		Class parentClass = pojoClass;
+		while (!parentClass.equals(Object.class)) {
+			for (Field field : parentClass.getDeclaredFields()) {
+				fieldName = field.getName();
+				pojoPropsMap.put(fieldName.toLowerCase(), fieldName);
+			}
+			parentClass = parentClass.getSuperclass();
 		}
 
 		// dto
 		List<String> dtoProps = new ArrayList<String>();
 		List<String> pojoProps = new ArrayList<String>();
-		for (Field field : dtoClass.getDeclaredFields()) {
-			fieldName = field.getName();
-			if (pojoPropsMap.containsKey(fieldName.toLowerCase())) {
-				dtoProps.add(fieldName);
-				pojoProps.add(pojoPropsMap.get(fieldName.toLowerCase()));
+		// dto以及其所有父类
+		parentClass = dtoClass;
+		while (!parentClass.equals(Object.class)) {
+			for (Field field : parentClass.getDeclaredFields()) {
+				fieldName = field.getName();
+				if (pojoPropsMap.containsKey(fieldName.toLowerCase())) {
+					dtoProps.add(fieldName);
+					pojoProps.add(pojoPropsMap.get(fieldName.toLowerCase()));
+				}
 			}
-		}
-		// 父类
-		for (Field field : dtoClass.getSuperclass().getDeclaredFields()) {
-			fieldName = field.getName();
-			if (pojoPropsMap.containsKey(fieldName.toLowerCase())) {
-				dtoProps.add(fieldName);
-				pojoProps.add(pojoPropsMap.get(fieldName.toLowerCase()));
-			}
+			parentClass = parentClass.getSuperclass();
 		}
 		// 模型赋值
 		result.dtoClassName = dtoClass.getName();
@@ -230,32 +226,37 @@ public class MapperUtils {
 		String aliasName;
 		SqlToyFieldAlias alias;
 		HashMap<String, String> pojoPropsMap = new HashMap<String, String>();
-		// pojo
-		for (Field field : pojoClass.getDeclaredFields()) {
-			fieldName = field.getName();
-			pojoPropsMap.put(fieldName.toLowerCase(), fieldName);
-		}
-		// 父类
-		for (Field field : pojoClass.getSuperclass().getDeclaredFields()) {
-			fieldName = field.getName();
-			pojoPropsMap.put(fieldName.toLowerCase(), fieldName);
+		// pojo 以及父类
+		Class parentClass = pojoClass;
+		while (!parentClass.equals(Object.class)) {
+			for (Field field : parentClass.getDeclaredFields()) {
+				fieldName = field.getName();
+				pojoPropsMap.put(fieldName.toLowerCase(), fieldName);
+			}
+			parentClass = parentClass.getSuperclass();
 		}
 
 		// dto
 		List<String> dtoProps = new ArrayList<String>();
 		List<String> pojoProps = new ArrayList<String>();
-		for (Field field : dtoClass.getDeclaredFields()) {
-			fieldName = field.getName();
-			aliasName = fieldName;
-			alias = field.getAnnotation(SqlToyFieldAlias.class);
-			if (alias != null) {
-				aliasName = alias.value();
+		// dto 和dto父类
+		parentClass = dtoClass;
+		while (!parentClass.equals(Object.class)) {
+			for (Field field : parentClass.getDeclaredFields()) {
+				fieldName = field.getName();
+				aliasName = fieldName;
+				alias = field.getAnnotation(SqlToyFieldAlias.class);
+				if (alias != null) {
+					aliasName = alias.value();
+				}
+				if (pojoPropsMap.containsKey(aliasName.toLowerCase())) {
+					dtoProps.add(fieldName);
+					pojoProps.add(pojoPropsMap.get(aliasName.toLowerCase()));
+				}
 			}
-			if (pojoPropsMap.containsKey(aliasName.toLowerCase())) {
-				dtoProps.add(fieldName);
-				pojoProps.add(pojoPropsMap.get(aliasName.toLowerCase()));
-			}
+			parentClass = parentClass.getSuperclass();
 		}
+
 		// 没有匹配的属性
 		if (dtoProps.isEmpty()) {
 			throw new IllegalArgumentException(
