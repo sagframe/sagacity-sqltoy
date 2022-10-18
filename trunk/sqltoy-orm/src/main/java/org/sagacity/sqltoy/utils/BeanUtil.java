@@ -1549,7 +1549,6 @@ public class BeanUtil {
 	 * @todo 判断对象是否是基本数据类型对象
 	 * @param clazz
 	 * @return
-	 * @throws Exception
 	 */
 	public static boolean isBaseDataType(Class clazz) {
 		return (clazz.equals(String.class) || clazz.equals(Integer.class) || clazz.equals(Byte.class)
@@ -1565,7 +1564,7 @@ public class BeanUtil {
 	 * @param bean
 	 * @param property
 	 * @param value
-	 * @throws Exception
+	 * @throws RuntimeException
 	 */
 	public static void setProperty(Object bean, String property, Object value) throws RuntimeException {
 		String key = bean.getClass().getName().concat(":set").concat(property);
