@@ -47,8 +47,8 @@ public class MapperUtils {
 	 */
 	public static <T extends Serializable> T map(SqlToyContext sqlToyContext, Serializable source, Class<T> resultType)
 			throws Exception {
-		if (source == null || resultType == null) {
-			throw new IllegalArgumentException("source 和 resultType 不能为null!");
+		if (source == null || (resultType == null || resultType.equals(Object.class))) {
+			throw new IllegalArgumentException("source 和 resultType 不能为null,且resultType不能为Object.class!");
 		}
 		// 转成List做统一处理
 		List<Serializable> sourceList = new ArrayList<Serializable>();
@@ -68,8 +68,8 @@ public class MapperUtils {
 	 */
 	public static <T extends Serializable> List<T> mapList(SqlToyContext sqlToyContext, List<Serializable> sourceList,
 			Class<T> resultType) throws Exception {
-		if (sourceList == null || resultType == null) {
-			throw new IllegalArgumentException("sourceList 和 resultType 不能为null!");
+		if (sourceList == null || (resultType == null || resultType.equals(Object.class))) {
+			throw new IllegalArgumentException("sourceList 和 resultType 不能为null,且resultType不能为Object.class!");
 		}
 		if (sourceList.isEmpty()) {
 			return new ArrayList<T>();
@@ -179,7 +179,7 @@ public class MapperUtils {
 		HashMap<String, String> pojoPropsMap = new HashMap<String, String>();
 		// pojo 以及父类
 		Class parentClass = pojoClass;
-		while (parentClass != null && !parentClass.equals(Object.class)) {
+		while (!parentClass.equals(Object.class)) {
 			for (Field field : parentClass.getDeclaredFields()) {
 				fieldName = field.getName();
 				pojoPropsMap.put(fieldName.toLowerCase(), fieldName);
@@ -192,7 +192,7 @@ public class MapperUtils {
 		List<String> pojoProps = new ArrayList<String>();
 		// dto以及其所有父类
 		parentClass = dtoClass;
-		while (parentClass != null && !parentClass.equals(Object.class)) {
+		while (!parentClass.equals(Object.class)) {
 			for (Field field : parentClass.getDeclaredFields()) {
 				fieldName = field.getName();
 				if (pojoPropsMap.containsKey(fieldName.toLowerCase())) {
@@ -228,7 +228,7 @@ public class MapperUtils {
 		HashMap<String, String> pojoPropsMap = new HashMap<String, String>();
 		// pojo 以及父类
 		Class parentClass = pojoClass;
-		while (parentClass != null && !parentClass.equals(Object.class)) {
+		while (!parentClass.equals(Object.class)) {
 			for (Field field : parentClass.getDeclaredFields()) {
 				fieldName = field.getName();
 				pojoPropsMap.put(fieldName.toLowerCase(), fieldName);
@@ -241,7 +241,7 @@ public class MapperUtils {
 		List<String> pojoProps = new ArrayList<String>();
 		// dto 和dto父类
 		parentClass = dtoClass;
-		while (parentClass != null && !parentClass.equals(Object.class)) {
+		while (!parentClass.equals(Object.class)) {
 			for (Field field : parentClass.getDeclaredFields()) {
 				fieldName = field.getName();
 				aliasName = fieldName;

@@ -5,9 +5,11 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Blob;
 import java.sql.Clob;
+import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Date;
 
 public class TypeShowCase implements Serializable {
@@ -22,6 +24,10 @@ public class TypeShowCase implements Serializable {
 	private LocalDateTime createTime;
 
 	private LocalDate createDate;
+
+	private LocalTime localTimeType;
+
+	private Time timeType;
 
 	private Timestamp systemTime;
 
@@ -53,10 +59,20 @@ public class TypeShowCase implements Serializable {
 
 	private byte byteType;
 
+	private Byte bigType;
+
 	private long longType;
 
 	private Long bigLongType;
-	
+
+	private int[] intValues;
+
+	private char[] charValues;
+
+	private byte[] byteValues;
+
+	private Byte[] bigByteValues;
+
 	public String getName() {
 		return name;
 	}
@@ -216,6 +232,61 @@ public class TypeShowCase implements Serializable {
 	public void setBigLongType(Long bigLongType) {
 		this.bigLongType = bigLongType;
 	}
-	
-	
+
+	public int[] getIntValues() {
+		return intValues;
+	}
+
+	public void setIntValues(int[] intValues) {
+		this.intValues = intValues;
+	}
+
+	public char[] getCharValues() {
+		return charValues;
+	}
+
+	public void setCharValues(char[] charValues) {
+		this.charValues = charValues;
+	}
+
+	public byte[] getByteValues() {
+		return byteValues;
+	}
+
+	public void setByteValues(byte[] byteValues) {
+		this.byteValues = byteValues;
+	}
+
+	public Byte getBigType() {
+		return bigType;
+	}
+
+	public void setBigType(Byte bigType) {
+		this.bigType = bigType;
+	}
+
+	public Byte[] getBigByteValues() {
+		return bigByteValues;
+	}
+
+	public void setBigByteValues(Byte[] bigByteValues) {
+		this.bigByteValues = bigByteValues;
+	}
+
+	public LocalTime getLocalTimeType() {
+		return localTimeType;
+	}
+
+	public void setLocalTimeType(LocalTime localTimeType) {
+		this.localTimeType = localTimeType;
+	}
+
+	public Time getTimeType() {
+		return timeType;
+	}
+
+	public void setTimeType(Time timeType) {
+		this.timeType = timeType;
+	}
+
 }

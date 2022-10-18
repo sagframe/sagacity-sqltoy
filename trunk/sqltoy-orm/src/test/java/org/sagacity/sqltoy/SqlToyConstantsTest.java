@@ -50,10 +50,12 @@ public class SqlToyConstantsTest {
 	@Test
 	public void testBeanInfo() {
 		Class classType = StaffInfoVO.class;
+		System.err.println(StaffInfoVO.class.getName());
 		while (!classType.equals(Object.class)) {
 			System.err.println(classType.getName());
 			classType = classType.getSuperclass();
 		}
+		
 		System.err.println(new BigDecimal(10).multiply(new BigDecimal(3)).add(new BigDecimal(42))
 				.divide(new BigDecimal(4), 3, RoundingMode.HALF_UP));
 		Double divData=398d;
@@ -71,6 +73,6 @@ public class SqlToyConstantsTest {
 		boolean d=Map.class.isAssignableFrom(Map.class);
 		System.out.println("a---"+a+"-----b----"+b+"-------c-----"+c+"-------d-----"+d);
 
-
+		
 	}
 }

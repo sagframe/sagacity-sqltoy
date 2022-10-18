@@ -483,7 +483,7 @@ public class SqlUtil {
 	 * @param rs
 	 * @param columnLabels
 	 * @param setMethods
-	 * @param propTypes
+	 * @param propTypes 没有做大小写处理
 	 * @param genericTypes
 	 * @param voClass
 	 * @param ignoreAllEmptySet
