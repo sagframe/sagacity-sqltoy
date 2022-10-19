@@ -49,7 +49,11 @@ public class DataType {
 	public static final int aryByteType = 92;
 	public static final int aryOtherType = 93;
 
-	// 获取类型
+	/**
+	 * @TODO 获取类型
+	 * @param typeName
+	 * @return
+	 */
 	public static int getType(String typeName) {
 		// 原生类型
 		if (typeName.equals("int")) {
