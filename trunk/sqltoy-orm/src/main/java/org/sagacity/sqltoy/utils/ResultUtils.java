@@ -29,6 +29,7 @@ import org.sagacity.sqltoy.callback.StreamResultHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.ColsChainRelativeModel;
+import org.sagacity.sqltoy.config.model.DataType;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FormatModel;
 import org.sagacity.sqltoy.config.model.LabelIndexModel;
@@ -254,6 +255,7 @@ public class ResultUtils {
 		HashMap<String, String> columnFieldMap = null;
 		Method[] realMethods = null;
 		String[] methodTypes = null;
+		int[] methodTypeValues = null;
 		Class[] genericTypes = null;
 		String[] realProps = null;
 		int[] indexs = null;
@@ -285,6 +287,7 @@ public class ResultUtils {
 				realProps = convertRealProps(wrapMapFields(labelNames, fieldsMap, resultType), columnFieldMap);
 				realMethods = BeanUtil.matchSetMethods(resultType, realProps);
 				methodTypes = new String[columnSize];
+				methodTypeValues = new int[columnSize];
 				genericTypes = new Class[columnSize];
 				indexs = new int[columnSize];
 				Type[] types;
@@ -293,6 +296,7 @@ public class ResultUtils {
 					indexs[i] = i;
 					if (null != realMethods[i]) {
 						methodTypes[i] = realMethods[i].getParameterTypes()[0].getTypeName();
+						methodTypeValues[i] = DataType.getType(methodTypes[i]);
 						types = realMethods[i].getGenericParameterTypes();
 						if (types.length > 0) {
 							if (types[0] instanceof ParameterizedType) {
@@ -359,8 +363,8 @@ public class ResultUtils {
 					streamResultHandler.consume(rowMap, index);
 				} // 封装成VO对象形式
 				else {
-					Object bean = BeanUtil.reflectRowToBean(sqlToyContext.getTypeHandler(), realMethods, methodTypes,
-							genericTypes, rowTemp, indexs, realProps, resultType);
+					Object bean = BeanUtil.reflectRowToBean(sqlToyContext.getTypeHandler(), realMethods,
+							methodTypeValues, methodTypes, genericTypes, rowTemp, indexs, realProps, resultType);
 					// 有基于注解@Translate的缓存翻译
 					if (cacheDatas != null) {
 						// i18n国际化处理
@@ -1533,10 +1537,11 @@ public class ResultUtils {
 		}
 		Object cell;
 		String typeName = classType.getTypeName();
+		int typeValue = DataType.getType(typeName);
 		try {
 			for (Object row : rows) {
 				cell = ((List) row).get(0);
-				result.add((T) BeanUtil.convertType(cell, typeName));
+				result.add((T) BeanUtil.convertType(cell, typeValue, typeName));
 			}
 			return result;
 		} catch (Exception e) {

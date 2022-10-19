@@ -12,6 +12,7 @@ import java.util.Map;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.annotation.SqlToyFieldAlias;
 import org.sagacity.sqltoy.config.model.DTOEntityMapModel;
+import org.sagacity.sqltoy.config.model.DataType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -289,10 +290,12 @@ public class MapperUtils {
 		List result = new ArrayList();
 		int indexSize = realMethods.length;
 		String[] methodTypes = new String[indexSize];
+		int[] methodTypeValues = new int[indexSize];
 		// 自动适配属性的数据类型
 		for (int i = 0; i < indexSize; i++) {
 			if (null != realMethods[i]) {
 				methodTypes[i] = realMethods[i].getParameterTypes()[0].getTypeName();
+				methodTypeValues[i] = DataType.getType(methodTypes[i]);
 			}
 		}
 		int size;
@@ -310,7 +313,8 @@ public class MapperUtils {
 						if (cellData.getClass().getTypeName().equals(methodTypes[j])) {
 							realMethods[j].invoke(bean, cellData);
 						} else {
-							realMethods[j].invoke(bean, BeanUtil.convertType(cellData, methodTypes[j]));
+							realMethods[j].invoke(bean,
+									BeanUtil.convertType(cellData, methodTypeValues[j], methodTypes[j]));
 						}
 					}
 				}

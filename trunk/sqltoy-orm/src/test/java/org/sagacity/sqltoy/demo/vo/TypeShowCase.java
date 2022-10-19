@@ -21,6 +21,8 @@ public class TypeShowCase implements Serializable {
 
 	private String name;
 
+	private char charValue;
+
 	private LocalDateTime createTime;
 
 	private LocalDate createDate;
@@ -42,6 +44,7 @@ public class TypeShowCase implements Serializable {
 	private BigInteger sallary;
 
 	private BigDecimal price;
+	private BigDecimal[] priceAry;
 
 	private Double totalMoney;
 
@@ -287,6 +290,22 @@ public class TypeShowCase implements Serializable {
 
 	public void setTimeType(Time timeType) {
 		this.timeType = timeType;
+	}
+
+	public char getCharValue() {
+		return charValue;
+	}
+
+	public void setCharValue(char charValue) {
+		this.charValue = charValue;
+	}
+
+	public BigDecimal[] getPriceAry() {
+		return priceAry;
+	}
+
+	public void setPriceAry(BigDecimal[] priceAry) {
+		this.priceAry = priceAry;
 	}
 
 }

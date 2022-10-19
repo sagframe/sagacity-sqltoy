@@ -148,12 +148,16 @@ public class BeanUtilTest {
 	 */
 	@Test
 	public void testFullTypeName() {
+		TypeShowCase showCase=new TypeShowCase();
+		System.err.println("["+showCase.getCharValue()+"]["+" ".charAt(0)+"]");
+		System.err.println("["+showCase.getByteType()+"]["+Byte.valueOf("0").byteValue()+"]");
 		Method[] methods = TypeShowCase.class.getMethods();
 		for (Method method : methods) {
 			if (method.getParameterTypes().length > 0) {
 				System.err.println(method.getParameterTypes()[0].getTypeName());
 			}
 		}
+		
 	}
 
 	@Test
