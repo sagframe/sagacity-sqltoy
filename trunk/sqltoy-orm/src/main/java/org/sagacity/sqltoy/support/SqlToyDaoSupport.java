@@ -29,6 +29,7 @@ import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.callback.StreamResultHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
+import org.sagacity.sqltoy.config.model.DataType;
 import org.sagacity.sqltoy.config.model.DataVersionConfig;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
@@ -317,7 +318,8 @@ public class SqlToyDaoSupport {
 			return null;
 		}
 		try {
-			return (T) BeanUtil.convertType(value, resultType.getTypeName());
+			return (T) BeanUtil.convertType(value, DataType.getType(resultType.getTypeName()),
+					resultType.getTypeName());
 		} catch (Exception e) {
 			throw new DataAccessException("执行getSingleValue方法获取单个值失败:" + e.getMessage(), e);
 		}

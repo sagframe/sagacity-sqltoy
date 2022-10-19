@@ -196,6 +196,11 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * 超时打印sql(毫秒,默认30秒)
 	 */
 	private int printSqlTimeoutMillis = 30000;
+	
+	/**
+	 * 数据修改提示的记录数量阈值，默认2000条
+	 */
+	private int updateTipCount = 2000;
 
 	/**
 	 * 数据库类型
@@ -1026,6 +1031,14 @@ public class SqlToyContext implements ApplicationContextAware {
 
 	public void setHumpMapResultTypeLabel(boolean humpMapResultTypeLabel) {
 		this.humpMapResultTypeLabel = humpMapResultTypeLabel;
+	}
+
+	public int getUpdateTipCount() {
+		return updateTipCount;
+	}
+
+	public void setUpdateTipCount(int updateTipCount) {
+		this.updateTipCount = updateTipCount;
 	}
 
 }

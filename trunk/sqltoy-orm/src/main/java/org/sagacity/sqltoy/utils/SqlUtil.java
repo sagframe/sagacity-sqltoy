@@ -41,6 +41,7 @@ import org.sagacity.sqltoy.callback.InsertRowCallbackHandler;
 import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
+import org.sagacity.sqltoy.config.model.DataType;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.model.TreeTableModel;
 import org.sagacity.sqltoy.plugins.TypeHandler;
@@ -431,11 +432,13 @@ public class SqlUtil {
 		Method[] setMethods = BeanUtil.matchSetMethods(voClass, fields);
 		// set方法对应参数的类型,并全部转为小写
 		String[] propTypes = new String[setMethods.length];
+		int[] propTypeValues = new int[setMethods.length];
 		Class[] genericTypes = new Class[setMethods.length];
 		Type[] types;
 		for (int i = 0; i < propTypes.length; i++) {
 			if (setMethods[i] != null) {
 				propTypes[i] = setMethods[i].getParameterTypes()[0].getTypeName();
+				propTypeValues[i] = DataType.getType(propTypes[i]);
 				types = setMethods[i].getGenericParameterTypes();
 				if (types.length > 0) {
 					if (types[0] instanceof ParameterizedType) {
@@ -448,8 +451,8 @@ public class SqlUtil {
 		// 循环通过java reflection将rs中的值映射到VO中
 		Object rowData;
 		while (rs.next()) {
-			rowData = reflectResultRowToVOClass(typeHandler, decryptHandler, rs, columnNames, setMethods, propTypes,
-					genericTypes, voClass, ignoreAllEmptySet);
+			rowData = reflectResultRowToVOClass(typeHandler, decryptHandler, rs, columnNames, setMethods,
+					propTypeValues, propTypes, genericTypes, voClass, ignoreAllEmptySet);
 			if (rowData != null) {
 				resultList.add(rowData);
 			}
@@ -482,7 +485,8 @@ public class SqlUtil {
 	 * @param rs
 	 * @param columnLabels
 	 * @param setMethods
-	 * @param propTypes 没有做大小写处理
+	 * @param propTypeValues    对应类型int值
+	 * @param propTypes         没有做大小写处理
 	 * @param genericTypes
 	 * @param voClass
 	 * @param ignoreAllEmptySet
@@ -490,8 +494,8 @@ public class SqlUtil {
 	 * @throws Exception
 	 */
 	private static Object reflectResultRowToVOClass(TypeHandler typeHandler, DecryptHandler decryptHandler,
-			ResultSet rs, String[] columnLabels, Method[] setMethods, String[] propTypes, Class[] genericTypes,
-			Class voClass, boolean ignoreAllEmptySet) throws Exception {
+			ResultSet rs, String[] columnLabels, Method[] setMethods, int[] propTypeValues, String[] propTypes,
+			Class[] genericTypes, Class voClass, boolean ignoreAllEmptySet) throws Exception {
 		// 根据匹配的字段通过java reflection将rs中的值映射到VO中
 		Object bean = voClass.getDeclaredConstructor().newInstance();
 		Object fieldValue;
@@ -500,10 +504,12 @@ public class SqlUtil {
 		// 已经小写
 		String typeName;
 		String label;
+		int typeValue;
 		for (int i = 0, n = columnLabels.length; i < n; i++) {
 			label = columnLabels[i];
 			method = setMethods[i];
 			typeName = propTypes[i];
+			typeValue = propTypeValues[i];
 			if (method != null) {
 				fieldValue = rs.getObject(label);
 				if (null != fieldValue) {
@@ -511,7 +517,8 @@ public class SqlUtil {
 						fieldValue = decryptHandler.decrypt(label, fieldValue);
 					}
 					allNull = false;
-					method.invoke(bean, BeanUtil.convertType(typeHandler, fieldValue, typeName, genericTypes[i]));
+					method.invoke(bean,
+							BeanUtil.convertType(typeHandler, fieldValue, typeValue, typeName, genericTypes[i]));
 				}
 			}
 		}
@@ -543,6 +550,7 @@ public class SqlUtil {
 	 * @param rs
 	 * @param preparedStatementResultHandler
 	 * @return
+	 * @throws Exception
 	 */
 	public static Object preparedStatementProcess(Object userData, PreparedStatement pst, ResultSet rs,
 			PreparedStatementResultHandler preparedStatementResultHandler) throws Exception {
@@ -575,6 +583,7 @@ public class SqlUtil {
 	 * @param rs
 	 * @param callableStatementResultHandler
 	 * @return
+	 * @throws Exception
 	 */
 	public static Object callableStatementProcess(Object userData, CallableStatement pst, ResultSet rs,
 			CallableStatementResultHandler callableStatementResultHandler) throws Exception {

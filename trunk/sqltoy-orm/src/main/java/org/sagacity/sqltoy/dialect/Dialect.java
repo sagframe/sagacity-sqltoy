@@ -236,12 +236,13 @@ public interface Dialect {
 	 * @param sqlToyContext
 	 * @param entity
 	 * @param updateRowHandler
-	 * @param uniqueProps      唯一性pojo属性，为空默认为主键字段
+	 * @param uniqueProps 唯一性pojo属性，为空默认为主键字段
 	 * @param conn
 	 * @param dbType
 	 * @param dialect
 	 * @param tableName
 	 * @return
+	 * @throws Exception
 	 */
 	public Serializable updateSaveFetch(final SqlToyContext sqlToyContext, final Serializable entity,
 			final UpdateRowHandler updateRowHandler, final String[] uniqueProps, final Connection conn,

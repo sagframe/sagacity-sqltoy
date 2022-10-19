@@ -33,6 +33,7 @@ import org.sagacity.sqltoy.config.annotation.Entity;
 import org.sagacity.sqltoy.config.annotation.OneToMany;
 import org.sagacity.sqltoy.config.annotation.OneToOne;
 import org.sagacity.sqltoy.config.annotation.SqlToyEntity;
+import org.sagacity.sqltoy.config.model.DataType;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.TableCascadeModel;
 import org.sagacity.sqltoy.exception.DataAccessException;
@@ -436,53 +437,61 @@ public class BeanUtil {
 	/**
 	 * @TODO 提供对象get/set 类型转换
 	 * @param value
-	 * @param typeName getParameterTypes()[0].getTypeName() 没有转大小写
+	 * @param typeValue
+	 * @param typeName  getParameterTypes()[0].getTypeName() 没有转大小写
 	 * @return
 	 * @throws Exception
 	 */
-	public static Object convertType(Object value, String typeName) throws Exception {
-		return convertType(null, value, typeName, null);
+	public static Object convertType(Object value, int typeValue, String typeName) throws Exception {
+		return convertType(null, value, typeValue, typeName, null);
 	}
 
 	/**
 	 * @todo 类型转换 2022-10-18 已经完成了优化，减少了不必要的判断
 	 * @param typeHandler
 	 * @param value
+	 * @param typeValue
 	 * @param typeName    getTypeName()没有转大小写
 	 * @param genericType 泛型类型
 	 * @return
 	 * @throws Exception
 	 */
-	public static Object convertType(TypeHandler typeHandler, Object value, String typeName, Class genericType)
-			throws Exception {
+	public static Object convertType(TypeHandler typeHandler, Object value, int typeValue, String typeName,
+			Class genericType) throws Exception {
 		Object paramValue = value;
+		// 1
 		if (paramValue == null) {
-			if ("int".equals(typeName) || "long".equals(typeName) || "double".equals(typeName)
-					|| "float".equals(typeName) || "short".equals(typeName)) {
+			// 1~5 原生数字类型
+			if (typeValue >= DataType.primitiveIntType && typeValue <= DataType.primitiveDoubleType) {
 				return 0;
 			}
-			if ("boolean".equals(typeName)) {
+			if (DataType.primitiveBooleanType == typeValue) {
 				return false;
+			}
+			if (DataType.primitiveCharType == typeValue) {
+				return " ".charAt(0);
+			}
+			if (DataType.primitiveByteType == typeValue) {
+				return Byte.valueOf("0").byteValue();
 			}
 			return null;
 		}
-		// value值的类型跟目标类型一致，直接返回
+		// 2 value值的类型跟目标类型一致，直接返回
 		if (value.getClass().getTypeName().equals(typeName)) {
 			return value;
 		}
-		// 针对非常规类型转换，将jdbc获取的字段结果转为java对象属性对应的类型
+		// 3 针对非常规类型转换，将jdbc获取的字段结果转为java对象属性对应的类型
 		if (typeHandler != null) {
 			Object result = typeHandler.toJavaType(typeName, genericType, paramValue);
 			if (result != null) {
 				return result;
 			}
 		}
-		// 非数组类型,但传递的参数值是数组类型且长度为1提取出数组中的单一值
-		if (paramValue.getClass().isArray() && !typeName.endsWith("[]")) {
-			boolean isStr = ("java.lang.String".equals(typeName));
-			if (isStr && (paramValue instanceof byte[])) {
+		// 4 非数组类型,但传递的参数值是数组类型且长度为1提取出数组中的单一值
+		if (paramValue.getClass().isArray() && typeValue < DataType.aryCharType) {
+			if (typeValue == DataType.stringType && (paramValue instanceof byte[])) {
 				paramValue = new String((byte[]) paramValue);
-			} else if (isStr && (paramValue instanceof char[])) {
+			} else if (typeValue == DataType.stringType && (paramValue instanceof char[])) {
 				paramValue = new String((char[]) paramValue);
 			} else {
 				Object[] paramAry = CollectionUtil.convertArray(paramValue);
@@ -497,8 +506,8 @@ public class BeanUtil {
 			}
 		}
 		String valueStr = paramValue.toString();
-		// 字符串第一优先
-		if ("java.lang.String".equals(typeName)) {
+		// 5 字符串第一优先
+		if (DataType.stringType == typeValue) {
 			if (paramValue instanceof java.sql.Clob) {
 				java.sql.Clob clob = (java.sql.Clob) paramValue;
 				return clob.getSubString((long) 1, (int) clob.length());
@@ -512,22 +521,22 @@ public class BeanUtil {
 			return valueStr;
 		}
 		boolean isBlank = "".equals(valueStr.trim());
-		// 第二优先
-		if ("java.math.BigDecimal".equals(typeName)) {
+		// 6 bigDecimal第二优先
+		if (DataType.wrapBigDecimalType == typeValue) {
 			if (isBlank) {
 				return null;
 			}
 			return new BigDecimal(convertBoolean(valueStr));
 		}
-		// 第三
-		if ("java.lang.Integer".equals(typeName)) {
+		// 7 Integer第三
+		if (DataType.wrapIntegerType == typeValue) {
 			if (isBlank) {
 				return null;
 			}
 			return Integer.valueOf(convertBoolean(valueStr).split("\\.")[0]);
 		}
-		// 第四优先
-		if ("java.time.LocalDateTime".equals(typeName)) {
+		// 8 第四优先
+		if (DataType.localDateTimeType == typeValue) {
 			if (paramValue instanceof LocalDateTime) {
 				return (LocalDateTime) paramValue;
 			}
@@ -537,8 +546,8 @@ public class BeanUtil {
 			}
 			return DateUtil.asLocalDateTime(DateUtil.convertDateObject(paramValue));
 		}
-		// 第五
-		if ("java.time.LocalDate".equals(typeName)) {
+		// 9 第五
+		if (DataType.localDateType == typeValue) {
 			if (paramValue instanceof LocalDate) {
 				return (LocalDate) paramValue;
 			}
@@ -547,8 +556,8 @@ public class BeanUtil {
 			}
 			return DateUtil.asLocalDate(DateUtil.convertDateObject(paramValue));
 		}
-		// 第六
-		if ("java.sql.Timestamp".equals(typeName)) {
+		// 10 第六
+		if (DataType.timestampType == typeValue) {
 			if (paramValue instanceof java.sql.Timestamp) {
 				return (java.sql.Timestamp) paramValue;
 			}
@@ -563,30 +572,38 @@ public class BeanUtil {
 			}
 			return new Timestamp(DateUtil.parseString(valueStr).getTime());
 		}
-		// 第7
-		if ("java.lang.Long".equals(typeName)) {
+		// 11 第7
+		if (DataType.wrapLongType == typeValue) {
 			if (isBlank) {
 				return null;
 			}
-			// 考虑数据库中存在默认值为0.00 的问题，导致new Long() 报错
+			// 考虑数据库中存在默认值为0.00 的问题，导致new Long() 报错，因为精度而不用Double.parse(原生long则可以)
 			return Long.valueOf(convertBoolean(valueStr).split("\\.")[0]);
 		}
-		// 第8
-		if ("int".equals(typeName)) {
+		// 12 第8
+		if (DataType.primitiveIntType == typeValue) {
 			if (isBlank) {
 				return 0;
 			}
+			// 防止小数而不使用Integer.parseInt
 			return Double.valueOf(convertBoolean(valueStr)).intValue();
 		}
-		// 第9 字符串转 boolean 型
-		if ("java.lang.Boolean".equals(typeName)) {
+		// 13 第9 字符串转 boolean 型
+		if (DataType.wrapBooleanType == typeValue) {
 			if ("true".equals(valueStr.toLowerCase()) || "1".equals(valueStr)) {
 				return Boolean.TRUE;
 			}
 			return Boolean.FALSE;
 		}
-		// 第10
-		if ("java.util.Date".equals(typeName)) {
+		// 14 第10 字符串转 boolean 型
+		if (DataType.primitiveBooleanType == typeValue) {
+			if ("true".equals(valueStr.toLowerCase()) || "1".equals(valueStr)) {
+				return true;
+			}
+			return false;
+		}
+		// 15 第11
+		if (DataType.dateType == typeValue) {
 			if (paramValue instanceof java.util.Date) {
 				return (java.util.Date) paramValue;
 			}
@@ -598,22 +615,22 @@ public class BeanUtil {
 			}
 			return DateUtil.parseString(valueStr);
 		}
-		// 第11
-		if ("java.math.BigInteger".equals(typeName)) {
+		// 16 第12
+		if (DataType.wrapBigIntegerType == typeValue) {
 			if (isBlank) {
 				return null;
 			}
 			return new BigInteger(convertBoolean(valueStr).split("\\.")[0]);
 		}
-		// 第12
-		if ("java.lang.Double".equals(typeName)) {
+		// 17 第13
+		if (DataType.wrapDoubleType == typeValue) {
 			if (isBlank) {
 				return null;
 			}
 			return Double.valueOf(valueStr);
 		}
-		// 第13
-		if ("java.time.LocalTime".equals(typeName)) {
+		// 18 第13
+		if (DataType.localTimeType == typeValue) {
 			if (paramValue instanceof LocalTime) {
 				return (LocalTime) paramValue;
 			}
@@ -622,20 +639,23 @@ public class BeanUtil {
 			}
 			return DateUtil.asLocalTime(DateUtil.convertDateObject(paramValue));
 		}
-		if ("long".equals(typeName)) {
+		// 19
+		if (DataType.primitiveLongType == typeValue) {
 			if (isBlank) {
 				return 0;
 			}
+			// 防止小数而不使用Long.parseLong
 			return Double.valueOf(convertBoolean(valueStr)).longValue();
 		}
-		if ("double".equals(typeName)) {
+		// 20
+		if (DataType.primitiveDoubleType == typeValue) {
 			if (isBlank) {
 				return 0;
 			}
-			return Double.valueOf(valueStr).doubleValue();
+			return Double.parseDouble(valueStr);
 		}
-		// byte数组
-		if ("byte[]".equals(typeName)) {
+		// 21 byte数组
+		if (DataType.aryByteType == typeValue) {
 			if (paramValue instanceof byte[]) {
 				return (byte[]) paramValue;
 			}
@@ -646,31 +666,36 @@ public class BeanUtil {
 			}
 			return valueStr.getBytes();
 		}
-		if ("java.lang.Float".equals(typeName)) {
+		// 22
+		if (DataType.wrapFloatType == typeValue) {
 			if (isBlank) {
 				return null;
 			}
 			return Float.valueOf(valueStr);
 		}
-		if ("float".equals(typeName)) {
+		// 23
+		if (DataType.primitiveFloatType == typeValue) {
 			if (isBlank) {
 				return 0;
 			}
-			return Float.valueOf(valueStr).floatValue();
+			return Float.parseFloat(valueStr);
 		}
-		if ("java.lang.Short".equals(typeName)) {
+		// 24
+		if (DataType.wrapShortType == typeValue) {
 			if (isBlank) {
 				return null;
 			}
 			return Short.valueOf(Double.valueOf(convertBoolean(valueStr)).shortValue());
 		}
-		if ("short".equals(typeName)) {
+		// 25
+		if (DataType.primitiveShortType == typeValue) {
 			if (isBlank) {
 				return 0;
 			}
 			return Double.valueOf(convertBoolean(valueStr)).shortValue();
 		}
-		if ("java.sql.Date".equals(typeName)) {
+		// 26
+		if (DataType.sqlDateType == typeValue) {
 			if (paramValue instanceof java.sql.Date) {
 				return (java.sql.Date) paramValue;
 			}
@@ -685,8 +710,8 @@ public class BeanUtil {
 			}
 			return new java.sql.Date(DateUtil.parseString(valueStr).getTime());
 		}
-		// clob 类型比较特殊,对外转类型全部转为字符串
-		if ("java.sql.Clob".equals(typeName)) {
+		// 27 clob 类型比较特殊,对外转类型全部转为字符串
+		if (DataType.clobType == typeValue) {
 			// update 2020-6-23 增加兼容性判断
 			if (paramValue instanceof String) {
 				return valueStr;
@@ -700,7 +725,8 @@ public class BeanUtil {
 			}
 			return out.toString();
 		}
-		if ("java.sql.Time".equals(typeName)) {
+		// 28
+		if (DataType.sqlTimeType == typeValue) {
 			if (paramValue instanceof java.sql.Time) {
 				return (java.sql.Time) paramValue;
 			}
@@ -710,19 +736,21 @@ public class BeanUtil {
 			if ("oracle.sql.TIMESTAMP".equals(paramValue.getClass().getTypeName())) {
 				return new java.sql.Time(oracleDateConvert(paramValue).getTime());
 			}
-			return DateUtil.parseString(valueStr);
+			return new java.sql.Time(DateUtil.parseString(valueStr).getTime());
 		}
-		if ("byte".equals(typeName)) {
+		// 29
+		if (DataType.primitiveByteType == typeValue) {
 			return Byte.valueOf(valueStr).byteValue();
 		}
-		if ("char".equals(typeName)) {
+		// 30
+		if (DataType.primitiveCharType == typeValue) {
 			if (isBlank) {
 				return " ".charAt(0);
 			}
 			return valueStr.charAt(0);
 		}
-		// 字符数组
-		if ("char[]".equals(typeName)) {
+		// 31 字符数组
+		if (DataType.aryCharType == typeValue) {
 			if (paramValue instanceof char[]) {
 				return (char[]) paramValue;
 			}
@@ -738,12 +766,12 @@ public class BeanUtil {
 			}
 			return valueStr.toCharArray();
 		}
-		// update by 2020-4-13增加Byte类型的处理
-		if ("java.lang.Byte".equals(typeName)) {
+		// 32 update by 2020-4-13增加Byte类型的处理
+		if (DataType.wrapByteType == typeValue) {
 			return Byte.valueOf(valueStr);
 		}
-		// 数组类型
-		if (typeName.endsWith("[]") && (paramValue instanceof Array)) {
+		// 33 数组类型
+		if (typeValue == DataType.aryOtherType && (paramValue instanceof Array)) {
 			return convertArray(((Array) paramValue).getArray(), typeName);
 		}
 		return paramValue;
@@ -1216,6 +1244,7 @@ public class BeanUtil {
 			int indexSize = indexs.length;
 			Method[] realMethods = matchSetMethods(voClass, properties);
 			String[] methodTypes = new String[indexSize];
+			int[] methodTypeValues = new int[indexSize];
 			Class[] genericTypes = new Class[indexSize];
 			Type[] types;
 			// 自动适配属性的数据类型
@@ -1223,6 +1252,7 @@ public class BeanUtil {
 				for (int i = 0; i < indexSize; i++) {
 					if (null != realMethods[i]) {
 						methodTypes[i] = realMethods[i].getParameterTypes()[0].getTypeName();
+						methodTypeValues[i] = DataType.getType(methodTypes[i]);
 						types = realMethods[i].getGenericParameterTypes();
 						if (types.length > 0) {
 							if (types[0] instanceof ParameterizedType) {
@@ -1259,8 +1289,8 @@ public class BeanUtil {
 									} else {
 										realMethods[i].invoke(bean,
 												autoConvertType
-														? convertType(typeHandler, cellData, methodTypes[i],
-																genericTypes[i])
+														? convertType(typeHandler, cellData, methodTypeValues[i],
+																methodTypes[i], genericTypes[i])
 														: cellData);
 									}
 								}
@@ -1279,8 +1309,8 @@ public class BeanUtil {
 									} else {
 										realMethods[i].invoke(bean,
 												autoConvertType
-														? convertType(typeHandler, cellData, methodTypes[i],
-																genericTypes[i])
+														? convertType(typeHandler, cellData, methodTypeValues[i],
+																methodTypes[i], genericTypes[i])
 														: cellData);
 									}
 								}
@@ -1312,8 +1342,8 @@ public class BeanUtil {
 	}
 
 	public static <T extends Serializable> T reflectRowToBean(TypeHandler typeHandler, Method[] realMethods,
-			String[] methodTypes, Class[] genericTypes, List rowList, int[] indexs, String[] properties,
-			Class<T> voClass) {
+			int[] methodTypeValues, String[] methodTypes, Class[] genericTypes, List rowList, int[] indexs,
+			String[] properties, Class<T> voClass) {
 		Object cellData = null;
 		String propertyName = null;
 		Object bean = null;
@@ -1329,8 +1359,8 @@ public class BeanUtil {
 						if (cellData.getClass().getTypeName().equals(methodTypes[i])) {
 							realMethods[i].invoke(bean, cellData);
 						} else {
-							realMethods[i].invoke(bean,
-									convertType(typeHandler, cellData, methodTypes[i], genericTypes[i]));
+							realMethods[i].invoke(bean, convertType(typeHandler, cellData, methodTypeValues[i],
+									methodTypes[i], genericTypes[i]));
 						}
 					}
 				}
@@ -1373,6 +1403,7 @@ public class BeanUtil {
 			int indexSize = properties.length;
 			Method[] realMethods = null;
 			String[] methodTypes = new String[indexSize];
+			int[] methodTypeValues = new int[indexSize];
 			Class[] genericTypes = new Class[indexSize];
 			Type[] types;
 			Iterator iter = voList.iterator();
@@ -1387,6 +1418,7 @@ public class BeanUtil {
 							for (int i = 0; i < indexSize; i++) {
 								if (realMethods[i] != null) {
 									methodTypes[i] = realMethods[i].getParameterTypes()[0].getTypeName();
+									methodTypeValues[i] = DataType.getType(methodTypes[i]);
 									types = realMethods[i].getGenericParameterTypes();
 									if (types.length > 0) {
 										if (types[0] instanceof ParameterizedType) {
@@ -1402,7 +1434,9 @@ public class BeanUtil {
 					for (int i = 0; i < indexSize; i++) {
 						if (realMethods[i] != null && (forceUpdate || values[i] != null)) {
 							realMethods[i].invoke(bean,
-									autoConvertType ? convertType(null, values[i], methodTypes[i], genericTypes[i])
+									autoConvertType
+											? convertType(null, values[i], methodTypeValues[i], methodTypes[i],
+													genericTypes[i])
 											: values[i]);
 						}
 					}
@@ -1442,6 +1476,7 @@ public class BeanUtil {
 			int indexSize = properties.length;
 			Method[] realMethods = null;
 			String[] methodTypes = new String[indexSize];
+			int[] methodTypeValues = new int[indexSize];
 			Class[] genericTypes = new Class[indexSize];
 			Type[] types;
 			Iterator iter = voList.iterator();
@@ -1462,6 +1497,7 @@ public class BeanUtil {
 							for (int i = 0; i < indexSize; i++) {
 								if (realMethods[i] != null) {
 									methodTypes[i] = realMethods[i].getParameterTypes()[0].getTypeName();
+									methodTypeValues[i] = DataType.getType(methodTypes[i]);
 									types = realMethods[i].getGenericParameterTypes();
 									if (types.length > 0) {
 										if (types[0] instanceof ParameterizedType) {
@@ -1478,7 +1514,8 @@ public class BeanUtil {
 						if (realMethods[i] != null && (forceUpdate || rowData[index[i]] != null)) {
 							realMethods[i].invoke(bean,
 									autoConvertType
-											? convertType(null, rowData[index[i]], methodTypes[i], genericTypes[i])
+											? convertType(null, rowData[index[i]], methodTypeValues[i], methodTypes[i],
+													genericTypes[i])
 											: rowData[index[i]]);
 						}
 					}
@@ -1587,7 +1624,7 @@ public class BeanUtil {
 			}
 		}
 		try {
-			method.invoke(bean, convertType(null, value, typeName, genericType));
+			method.invoke(bean, convertType(null, value, DataType.getType(typeName), typeName, genericType));
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException(e.getMessage());
@@ -1642,6 +1679,7 @@ public class BeanUtil {
 			// 获取主键的set方法
 			Method method = BeanUtil.matchSetMethods(voClass, entityMeta.getIdArray())[0];
 			String typeName = method.getParameterTypes()[0].getTypeName();
+			int typeValue = DataType.getType(typeName);
 			Type[] types = method.getGenericParameterTypes();
 			Class genericType = null;
 			if (types.length > 0) {
@@ -1654,7 +1692,7 @@ public class BeanUtil {
 				// 去除重复
 				if (id != null && !repeat.contains(id)) {
 					bean = voClass.getDeclaredConstructor().newInstance();
-					method.invoke(bean, convertType(typeHandler, id, typeName, genericType));
+					method.invoke(bean, convertType(typeHandler, id, typeValue, typeName, genericType));
 					entities.add(bean);
 					repeat.add(id);
 				}
@@ -1699,40 +1737,37 @@ public class BeanUtil {
 	/**
 	 * @TODO 对常规类型进行转换，超出部分由自定义类型处理器完成(或配置类型完全一致)
 	 * @param values
-	 * @param type   (已经小写)
+	 * @param typeName
 	 * @return
 	 */
-	public static Object convertArray(Object values, String type) {
+	public static Object convertArray(Object values, String typeName) {
 		// 类型完全一致
-		if (type == null || type.equals(values.getClass().getTypeName().toLowerCase())) {
+		if (typeName.equals(values.getClass().getTypeName())) {
 			return values;
 		}
-		Object[] array;
+		Object[] array = (Object[]) values;
 		int index = 0;
-		if (type.contains("integer") && !(values instanceof Integer[])) {
-			array = (Object[]) values;
+		if (typeName.equals("java.lang.Integer[]") && !(values instanceof Integer[])) {
 			Integer[] result = new Integer[array.length];
 			for (Object obj : array) {
 				if (obj != null) {
-					result[index] = new BigDecimal(obj.toString()).intValue();
+					result[index] = Integer.valueOf(obj.toString());
 				}
 				index++;
 			}
 			return result;
 		}
-		if (type.contains("long") && !(values instanceof Long[])) {
-			array = (Object[]) values;
+		if (typeName.equals("java.lang.Long[]") && !(values instanceof Long[])) {
 			Long[] result = new Long[array.length];
 			for (Object obj : array) {
 				if (obj != null) {
-					result[index] = new BigDecimal(obj.toString()).longValue();
+					result[index] = Long.valueOf(obj.toString());
 				}
 				index++;
 			}
 			return result;
 		}
-		if (type.contains("bigdecimal") && !(values instanceof BigDecimal[])) {
-			array = (Object[]) values;
+		if (typeName.equals("java.math.BigDecimal[]") && !(values instanceof BigDecimal[])) {
 			BigDecimal[] result = new BigDecimal[array.length];
 			for (Object obj : array) {
 				if (obj != null) {
@@ -1742,36 +1777,61 @@ public class BeanUtil {
 			}
 			return result;
 		}
-		if (type.contains("double") && !(values instanceof Double[])) {
-			array = (Object[]) values;
-			Double[] result = new Double[array.length];
-			for (Object obj : array) {
-				if (obj != null) {
-					result[index] = new BigDecimal(obj.toString()).doubleValue();
-				}
-				index++;
-			}
-			return result;
-		}
-		if (type.contains("float") && !(values instanceof Float[])) {
-			array = (Object[]) values;
-			Float[] result = new Float[array.length];
-			for (Object obj : array) {
-				if (obj != null) {
-					result[index] = new BigDecimal(obj.toString()).floatValue();
-				}
-				index++;
-			}
-			return result;
-		}
-		// update 2021-01-29 修复integer中包含int导致类型匹配错误
-		// if (type.contains("int") && !(values instanceof int[]))
-		if ((type.contains("int") && !type.contains("integer")) && !(values instanceof int[])) {
-			array = (Object[]) values;
+		if (typeName.equals("int[]") && !(values instanceof int[])) {
 			int[] result = new int[array.length];
 			for (Object obj : array) {
 				if (obj != null) {
-					result[index] = new BigDecimal(obj.toString()).intValue();
+					result[index] = Integer.parseInt(obj.toString());
+				}
+				index++;
+			}
+			return result;
+		}
+		if (typeName.equals("long[]") && !(values instanceof long[])) {
+			long[] result = new long[array.length];
+			for (Object obj : array) {
+				if (obj != null) {
+					result[index] = Long.parseLong(obj.toString());
+				}
+				index++;
+			}
+			return result;
+		}
+		if (typeName.equals("java.lang.Double[]") && !(values instanceof Double[])) {
+			Double[] result = new Double[array.length];
+			for (Object obj : array) {
+				if (obj != null) {
+					result[index] = Double.valueOf(obj.toString());
+				}
+				index++;
+			}
+			return result;
+		}
+		if (typeName.equals("double[]") && !(values instanceof double[])) {
+			double[] result = new double[array.length];
+			for (Object obj : array) {
+				if (obj != null) {
+					result[index] = Double.parseDouble(obj.toString());
+				}
+				index++;
+			}
+			return result;
+		}
+		if (typeName.equals("java.lang.Float[]") && !(values instanceof Float[])) {
+			Float[] result = new Float[array.length];
+			for (Object obj : array) {
+				if (obj != null) {
+					result[index] = Float.valueOf(obj.toString());
+				}
+				index++;
+			}
+			return result;
+		}
+		if (typeName.equals("float[]") && !(values instanceof float[])) {
+			float[] result = new float[array.length];
+			for (Object obj : array) {
+				if (obj != null) {
+					result[index] = Float.parseFloat(obj.toString());
 				}
 				index++;
 			}

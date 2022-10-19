@@ -184,6 +184,11 @@ public class SqlToyContextProperties implements Serializable {
 	 * map类型的resultType标题转驼峰模式(默认为true)
 	 */
 	private Boolean humpMapResultTypeLabel;
+	
+	/**
+	 * 数据修改提示的记录数量阈值，默认2000条
+	 */
+	private int updateTipCount = 2000;
 
 	/**
 	 * @return the sqlResourcesDir
@@ -542,6 +547,14 @@ public class SqlToyContextProperties implements Serializable {
 
 	public void setHumpMapResultTypeLabel(Boolean humpMapResultTypeLabel) {
 		this.humpMapResultTypeLabel = humpMapResultTypeLabel;
+	}
+
+	public int getUpdateTipCount() {
+		return updateTipCount;
+	}
+
+	public void setUpdateTipCount(int updateTipCount) {
+		this.updateTipCount = updateTipCount;
 	}
 
 }
