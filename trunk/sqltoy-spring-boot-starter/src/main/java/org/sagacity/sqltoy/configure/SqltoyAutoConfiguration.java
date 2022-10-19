@@ -180,6 +180,8 @@ public class SqltoyAutoConfiguration {
 		}
 		sqlToyContext.setSecurePrivateKey(properties.getSecurePrivateKey());
 		sqlToyContext.setSecurePublicKey(properties.getSecurePublicKey());
+		// 修改多少条记录做特别提示
+		sqlToyContext.setUpdateTipCount(properties.getUpdateTipCount());
 		// 设置公共统一属性的处理器
 		String unfiyHandler = properties.getUnifyFieldsHandler();
 		if (StringUtil.isNotBlank(unfiyHandler)) {

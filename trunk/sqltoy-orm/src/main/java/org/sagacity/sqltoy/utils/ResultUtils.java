@@ -374,6 +374,7 @@ public class ResultUtils {
 		}
 		// 完成消费
 		streamResultHandler.end();
+		SqlExecuteStat.debug("操作提示", "流式查询累计获取:{} 条记录!", index);
 	}
 
 	/**
