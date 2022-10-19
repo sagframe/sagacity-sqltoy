@@ -283,10 +283,10 @@ public class DialectFactory {
 					});
 			// 输出执行结果更新记录量日志
 			if (updateTotalCnt > sqlToyContext.getUpdateTipCount()) {
-				SqlExecuteStat.debug("执行结果", "实际影响记录数量:{} 条,大于数据修改提示阈值:{}条!", updateTotalCnt,
+				SqlExecuteStat.debug("执行结果", "batchUpdate操作影响记录量:{} 条,大于数据修改提示阈值:{}条!", updateTotalCnt,
 						sqlToyContext.getUpdateTipCount());
 			} else {
-				SqlExecuteStat.debug("执行结果", "实际影响记录数量:{} 条!", updateTotalCnt);
+				SqlExecuteStat.debug("执行结果", "batchUpdate操作影响记录量:{} 条!", updateTotalCnt);
 			}
 			return updateTotalCnt;
 		} catch (Exception e) {
@@ -348,10 +348,10 @@ public class DialectFactory {
 						}
 					});
 			if (updateTotalCnt > sqlToyContext.getUpdateTipCount()) {
-				SqlExecuteStat.debug("执行结果", "实际影响记录数量:{} 条,大于数据修改提示阈值:{}条!", updateTotalCnt,
+				SqlExecuteStat.debug("执行结果", "executeSql操作影响记录量:{} 条,大于数据修改提示阈值:{}条!", updateTotalCnt,
 						sqlToyContext.getUpdateTipCount());
 			} else {
-				SqlExecuteStat.debug("执行结果", "实际影响记录数量:{} 条!", updateTotalCnt);
+				SqlExecuteStat.debug("执行结果", "executeSql操作影响记录量:{} 条!", updateTotalCnt);
 			}
 			return updateTotalCnt;
 		} catch (Exception e) {
@@ -1298,7 +1298,7 @@ public class DialectFactory {
 									forceUpdateProps, conn, dbType, dialect, null, shardingModel.getTableName()));
 						}
 					});
-			SqlExecuteStat.debug("执行结果", "实际影响记录数量:{} 条!", updateTotalCnt);
+			SqlExecuteStat.debug("执行结果", "saveOrUpdate操作影响记录量:{} 条!", updateTotalCnt);
 			return updateTotalCnt;
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
@@ -1357,10 +1357,10 @@ public class DialectFactory {
 			}
 			// 输出修改记录量日志
 			if (updateTotalCnt > sqlToyContext.getUpdateTipCount()) {
-				SqlExecuteStat.debug("执行结果", "实际影响记录数量:{} 条,大于数据修改提示阈值:{}条!", updateTotalCnt,
+				SqlExecuteStat.debug("执行结果", "saveOrUpdateAll操作影响记录量:{} 条,大于数据修改提示阈值:{}条!", updateTotalCnt,
 						sqlToyContext.getUpdateTipCount());
 			} else {
-				SqlExecuteStat.debug("执行结果", "实际影响记录数量:{} 条!", updateTotalCnt);
+				SqlExecuteStat.debug("执行结果", "saveOrUpdateAll操作影响记录量:{} 条!", updateTotalCnt);
 			}
 			return Long.valueOf(updateTotalCnt);
 		} catch (Exception e) {
@@ -1415,10 +1415,10 @@ public class DialectFactory {
 				}
 			}
 			if (updateTotalCnt > sqlToyContext.getUpdateTipCount()) {
-				SqlExecuteStat.debug("执行结果", "实际影响记录数量:{} 条,大于数据修改提示阈值:{}条!", updateTotalCnt,
+				SqlExecuteStat.debug("执行结果", "saveAllIgnoreExist操作影响记录量:{} 条,大于数据修改提示阈值:{}条!", updateTotalCnt,
 						sqlToyContext.getUpdateTipCount());
 			} else {
-				SqlExecuteStat.debug("执行结果", "实际影响记录数量:{} 条!", updateTotalCnt);
+				SqlExecuteStat.debug("执行结果", "saveAllIgnoreExist操作影响记录量:{} 条!", updateTotalCnt);
 			}
 			return Long.valueOf(updateTotalCnt);
 		} catch (Exception e) {
@@ -1607,10 +1607,10 @@ public class DialectFactory {
 			}
 			// 便于日志检索
 			if (updateTotalCnt > sqlToyContext.getUpdateTipCount()) {
-				SqlExecuteStat.debug("执行结果", "批量保存记录量:{}条,大于数据修改提示阈值:{}条!", updateTotalCnt,
+				SqlExecuteStat.debug("执行结果", "saveAll操作影响记录量:{}条,大于数据修改提示阈值:{}条!", updateTotalCnt,
 						sqlToyContext.getUpdateTipCount());
 			} else {
-				SqlExecuteStat.debug("执行结果", "批量保存记录量:{}条!", updateTotalCnt);
+				SqlExecuteStat.debug("执行结果", "saveAll操作影响记录量:{}条!", updateTotalCnt);
 			}
 			return Long.valueOf(updateTotalCnt);
 		} catch (Exception e) {
@@ -1751,10 +1751,10 @@ public class DialectFactory {
 				}
 			}
 			if (updateTotalCnt > sqlToyContext.getUpdateTipCount()) {
-				SqlExecuteStat.debug("执行结果", "实际修改记录数量:{} 条,大于数据修改提示阈值:{}条!", updateTotalCnt,
+				SqlExecuteStat.debug("执行结果", "updateAll操作影响记录量:{} 条,大于数据修改提示阈值:{}条!", updateTotalCnt,
 						sqlToyContext.getUpdateTipCount());
 			} else {
-				SqlExecuteStat.debug("执行结果", "实际修改记录数量:{} 条!", updateTotalCnt);
+				SqlExecuteStat.debug("执行结果", "updateAll操作影响记录量:{} 条!", updateTotalCnt);
 			}
 			return Long.valueOf(updateTotalCnt);
 		} catch (Exception e) {
@@ -1846,10 +1846,10 @@ public class DialectFactory {
 				}
 			}
 			if (updateTotalCnt > sqlToyContext.getUpdateTipCount()) {
-				SqlExecuteStat.debug("执行结果", "批量删除操作影响记录量:{} 条,大于数据修改提示阈值:{}条!", updateTotalCnt,
+				SqlExecuteStat.debug("执行结果", "deleteAll操作影响记录量:{} 条,大于数据修改提示阈值:{}条!", updateTotalCnt,
 						sqlToyContext.getUpdateTipCount());
 			} else {
-				SqlExecuteStat.debug("执行结果", "批量删除操作影响记录量:{} 条!", updateTotalCnt);
+				SqlExecuteStat.debug("执行结果", "deleteAll操作影响记录量:{} 条!", updateTotalCnt);
 			}
 			return Long.valueOf(updateTotalCnt);
 		} catch (Exception e) {
@@ -1904,10 +1904,10 @@ public class DialectFactory {
 										extend.fieldsMap));
 							}
 							if (queryResult.getRecordCount() > sqlToyContext.getUpdateTipCount()) {
-								SqlExecuteStat.debug("执行结果", "修改并返回记录操作影响记录:{} 条,大于数据修改提示阈值:{}条!",
+								SqlExecuteStat.debug("执行结果", "updateFetch操作影响记录量:{} 条,大于数据修改提示阈值:{}条!",
 										queryResult.getRecordCount(), sqlToyContext.getUpdateTipCount());
 							} else {
-								SqlExecuteStat.debug("执行结果", "修改并返回记录操作影响记录:{} 条!", queryResult.getRecordCount());
+								SqlExecuteStat.debug("执行结果", "updateFetch操作影响记录量:{} 条!", queryResult.getRecordCount());
 							}
 							this.setResult(queryResult);
 						}
@@ -1980,10 +1980,10 @@ public class DialectFactory {
 										queryResult.getLabelNames(), resultType, changedCols, null, false, null, null));
 							}
 							if (queryResult.getRecordCount() > sqlToyContext.getUpdateTipCount()) {
-								SqlExecuteStat.debug("执行结果", "存储过程影响记录:{} 条,大于数据修改提示阈值:{}条!",
+								SqlExecuteStat.debug("执行结果", "executeStore影响记录量:{} 条,大于数据修改提示阈值:{}条!",
 										queryResult.getRecordCount(), sqlToyContext.getUpdateTipCount());
 							} else {
-								SqlExecuteStat.debug("执行结果", "存储过程影响记录:{} 条!", queryResult.getRecordCount());
+								SqlExecuteStat.debug("执行结果", "executeStore影响记录量:{} 条!", queryResult.getRecordCount());
 							}
 							this.setResult(queryResult);
 						}
