@@ -282,8 +282,7 @@ public class PostgreSqlDialectUtils {
 				if (null != fieldMeta.getDefaultValue()) {
 					values.append(NVL_FUNCTION);
 					values.append("(?,");
-					DialectExtUtils.processDefaultValue(values, dbType, fieldMeta.getType(),
-							fieldMeta.getDefaultValue());
+					DialectExtUtils.processDefaultValue(values, dbType, fieldMeta, fieldMeta.getDefaultValue());
 					values.append(")");
 				} else {
 					values.append("?");
