@@ -7,7 +7,6 @@ import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Date;
-import java.util.regex.Pattern;
 
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.config.model.EntityMeta;
@@ -27,10 +26,8 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @modify 2020年7月30日,修改说明
  */
 public class DialectExtUtils {
-	/**
-	 * 判断日期格式
-	 */
-	public static final Pattern DATE_PATTERN = Pattern.compile("(\\:|\\-|\\.|\\/|\\s+)?\\d+");
+	//判断日期格式
+	//public static final Pattern DATE_PATTERN = Pattern.compile("(\\:|\\-|\\.|\\/|\\s+)?\\d+");
 
 	/**
 	 * @todo 产生对象对应的insert sql语句
@@ -124,17 +121,16 @@ public class DialectExtUtils {
 	}
 
 	/**
-	 * @todo 统一对表字段默认值进行处理
+	 * @todo 统一对表字段默认值进行处理,主要针对merge into 等sql语句
 	 * @param sql
 	 * @param dbType
-	 * @param fieldType
+	 * @param fieldMeta
 	 * @param defaultValue
 	 */
-	public static void processDefaultValue(StringBuilder sql, int dbType, int fieldType, String defaultValue) {
-		if (fieldType == java.sql.Types.CHAR || fieldType == java.sql.Types.CLOB || fieldType == java.sql.Types.VARCHAR
-				|| fieldType == java.sql.Types.NCHAR || fieldType == java.sql.Types.NVARCHAR
-				|| fieldType == java.sql.Types.LONGVARCHAR || fieldType == java.sql.Types.LONGNVARCHAR
-				|| fieldType == java.sql.Types.NCLOB) {
+	public static void processDefaultValue(StringBuilder sql, int dbType, FieldMeta fieldMeta, String defaultValue) {
+		// 已经小写
+		String fieldType = fieldMeta.getFieldType();
+		if ("java.lang.string".equals(fieldType)) {
 			if (!defaultValue.startsWith("'")) {
 				sql.append("'");
 			}
@@ -148,14 +144,22 @@ public class DialectExtUtils {
 				sql.append(tmpValue);
 			}
 			// 时间格式,避免默认日期没有单引号问题
-			else if (fieldType == java.sql.Types.TIME || fieldType == java.sql.Types.DATE
-					|| fieldType == java.sql.Types.TIME_WITH_TIMEZONE || fieldType == java.sql.Types.TIMESTAMP
-					|| fieldType == java.sql.Types.TIMESTAMP_WITH_TIMEZONE) {
-				if (StringUtil.matches(tmpValue, DATE_PATTERN)) {
-					sql.append("'").append(tmpValue).append("'");
-				} else {
-					sql.append(tmpValue);
+			else if ("java.time.localdate".equals(fieldType) || "java.time.localdatetime".equals(fieldType)
+					|| "java.time.localtime".equals(fieldType) || "java.util.date".equals(fieldType)
+					|| "java.sql.date".equals(fieldType) || "java.sql.time".equals(fieldType)
+					|| "java.sql.timestamp".equals(fieldType)) {
+				String dateStr = "'" + tmpValue + "'";
+				// oracle、db2支持merge into场景(sqlserver具有自行转换能力，无需进行格式转换)
+				if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DB2) {
+					String format = "yyyy-MM-dd HH24:mi:ss";
+					if ("java.time.localtime".equals(fieldType) || "java.sql.time".equals(fieldType)) {
+						format = "HH24:mi:ss";
+					} else if ("java.time.localdate".equals(fieldType)) {
+						format = "yyyy-MM-dd";
+					}
+					dateStr = "to_date(" + dateStr + ",'" + format + "')";
 				}
+				sql.append(dateStr);
 			} else {
 				sql.append(tmpValue);
 			}

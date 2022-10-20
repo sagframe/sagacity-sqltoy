@@ -39,7 +39,6 @@ import org.sagacity.sqltoy.dialect.utils.PageOptimizeUtils;
 import org.sagacity.sqltoy.model.IgnoreCaseSet;
 import org.sagacity.sqltoy.model.TimeUnit;
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
-import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.NumberUtil;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
@@ -1280,11 +1279,7 @@ public class SqlXMLConfigParse {
 						String defaultValue = elt.getAttribute("default-value");
 						if (elt.hasAttribute("default-type")) {
 							String defaultType = elt.getAttribute("default-type").toLowerCase();
-							try {
-								pivotModel.setDefaultValue(BeanUtil.convertType(defaultValue, defaultType));
-							} catch (Exception e) {
-								e.printStackTrace();
-							}
+							pivotModel.setDefaultValue(XMLUtil.convertType(defaultValue, defaultType));
 						} else {
 							pivotModel.setDefaultValue(defaultValue);
 						}

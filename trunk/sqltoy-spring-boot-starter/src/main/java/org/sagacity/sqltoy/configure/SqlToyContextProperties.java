@@ -198,6 +198,11 @@ public class SqlToyContextProperties implements Serializable {
 	 * 拆分merge into 为updateAll 和 saveAllIgnoreExist 两步操作(1、seata分布式事务不支持merge)
 	 */
 	private boolean splitMergeInto = false;
+	
+	/**
+	 * 数据修改提示的记录数量阈值，默认2000条
+	 */
+	private int updateTipCount = 2000;
 
 	/**
 	 * @return the sqlResourcesDir
@@ -570,6 +575,14 @@ public class SqlToyContextProperties implements Serializable {
 
 	public void setHumpMapResultTypeLabel(Boolean humpMapResultTypeLabel) {
 		this.humpMapResultTypeLabel = humpMapResultTypeLabel;
+	}
+
+	public int getUpdateTipCount() {
+		return updateTipCount;
+	}
+
+	public void setUpdateTipCount(int updateTipCount) {
+		this.updateTipCount = updateTipCount;
 	}
 
 }

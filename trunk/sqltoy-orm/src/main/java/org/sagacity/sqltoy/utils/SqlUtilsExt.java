@@ -170,7 +170,12 @@ public class SqlUtilsExt {
 		Object realValue = paramValue;
 		// 当前值为null且默认值不为null、且字段不允许为null
 		if (realValue == null && defaultValue != null) {
-			if (jdbcType == java.sql.Types.DATE) {
+			if (jdbcType == java.sql.Types.VARCHAR) {
+				realValue = defaultValue;
+			} else if (jdbcType == java.sql.Types.INTEGER || jdbcType == java.sql.Types.TINYINT
+					|| jdbcType == java.sql.Types.SMALLINT) {
+				realValue = Integer.valueOf(defaultValue);
+			} else if (jdbcType == java.sql.Types.DATE) {
 				if (isCurrentTime(defaultValue)) {
 					realValue = new Date();
 				} else {
@@ -182,19 +187,16 @@ public class SqlUtilsExt {
 				} else {
 					realValue = DateUtil.getTimestamp(defaultValue);
 				}
+			} else if (jdbcType == java.sql.Types.DECIMAL || jdbcType == java.sql.Types.NUMERIC) {
+				realValue = new BigDecimal(defaultValue);
+			} else if (jdbcType == java.sql.Types.BIGINT) {
+				realValue = new BigInteger(defaultValue);
 			} else if (jdbcType == java.sql.Types.TIME) {
 				if (isCurrentTime(defaultValue)) {
 					realValue = LocalTime.now();
 				} else {
 					realValue = DateUtil.asLocalTime(DateUtil.convertDateObject(defaultValue));
 				}
-			} else if (jdbcType == java.sql.Types.BIGINT) {
-				realValue = new BigInteger(defaultValue);
-			} else if (jdbcType == java.sql.Types.INTEGER || jdbcType == java.sql.Types.TINYINT
-					|| jdbcType == java.sql.Types.SMALLINT) {
-				realValue = Integer.valueOf(defaultValue);
-			} else if (jdbcType == java.sql.Types.DECIMAL || jdbcType == java.sql.Types.NUMERIC) {
-				realValue = new BigDecimal(defaultValue);
 			} else if (jdbcType == java.sql.Types.DOUBLE) {
 				realValue = Double.valueOf(defaultValue);
 			} else if (jdbcType == java.sql.Types.BOOLEAN) {

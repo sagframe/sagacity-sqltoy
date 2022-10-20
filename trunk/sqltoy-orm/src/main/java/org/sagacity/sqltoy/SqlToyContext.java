@@ -196,6 +196,11 @@ public class SqlToyContext {
 	private int printSqlTimeoutMillis = 30000;
 
 	/**
+	 * 数据修改提示的记录数量阈值，默认2000条
+	 */
+	private int updateTipCount = 2000;
+
+	/**
 	 * 获取MetaData的列标题处理策略：default:不做处理;upper:转大写;lower
 	 */
 	private String columnLabelUpperOrLower = "default";
@@ -625,6 +630,7 @@ public class SqlToyContext {
 	}
 
 	/**
+	 * @TODO 规整方言定义，避免设置的名称跟系统定义不一致(一般无需设置)
 	 * @param dialect the dialect to set
 	 */
 	public void setDialect(String dialect) {
@@ -1060,6 +1066,14 @@ public class SqlToyContext {
 
 	public void setHumpMapResultTypeLabel(boolean humpMapResultTypeLabel) {
 		this.humpMapResultTypeLabel = humpMapResultTypeLabel;
+	}
+
+	public int getUpdateTipCount() {
+		return updateTipCount;
+	}
+
+	public void setUpdateTipCount(int updateTipCount) {
+		this.updateTipCount = updateTipCount;
 	}
 
 }

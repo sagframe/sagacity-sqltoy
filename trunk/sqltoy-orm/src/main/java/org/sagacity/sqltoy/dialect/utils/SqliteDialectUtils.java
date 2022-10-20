@@ -74,7 +74,7 @@ public class SqliteDialectUtils {
 			// 默认值处理
 			if (null != fieldMeta.getDefaultValue()) {
 				values.append("ifnull(?,");
-				DialectExtUtils.processDefaultValue(values, dbType, fieldMeta.getType(), fieldMeta.getDefaultValue());
+				DialectExtUtils.processDefaultValue(values, dbType, fieldMeta, fieldMeta.getDefaultValue());
 				values.append(")");
 			} else {
 				values.append("?");

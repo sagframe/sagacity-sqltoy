@@ -27,6 +27,7 @@ import org.sagacity.sqltoy.callback.DataSourceCallbackHandler;
 import org.sagacity.sqltoy.callback.StreamResultHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
+import org.sagacity.sqltoy.config.model.DataType;
 import org.sagacity.sqltoy.config.model.DataVersionConfig;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
@@ -423,7 +424,8 @@ public class SqlToyDaoSupport {
 			return null;
 		}
 		try {
-			return (T) BeanUtil.convertType(value, resultType.getTypeName());
+			return (T) BeanUtil.convertType(value, DataType.getType(resultType.getTypeName()),
+					resultType.getTypeName());
 		} catch (Exception e) {
 			throw new DataAccessException("getSingleValue方法获取单个值失败:" + e.getMessage(), e);
 		}
@@ -752,7 +754,7 @@ public class SqlToyDaoSupport {
 			final Class<T> voClass) {
 		return (List<T>) findByQuery(
 				new QueryExecutor(sqlOrNamedSql, (paramsMap == null) ? MapKit.map() : paramsMap).resultType(voClass))
-						.getRows();
+				.getRows();
 	}
 
 	/**
@@ -1828,9 +1830,9 @@ public class SqlToyDaoSupport {
 		if (SqlConfigParseUtils.hasNamedParam(where) && StringUtil.isBlank(innerModel.names)) {
 			queryExecutor = new QueryExecutor(sql,
 					(innerModel.values == null || innerModel.values.length == 0) ? null
-							: (Serializable) innerModel.values[0]).resultType(resultType)
-									.dataSource(getDataSource(innerModel.dataSource)).fetchSize(innerModel.fetchSize)
-									.maxRows(innerModel.maxRows);
+							: (Serializable) innerModel.values[0])
+					.resultType(resultType).dataSource(getDataSource(innerModel.dataSource))
+					.fetchSize(innerModel.fetchSize).maxRows(innerModel.maxRows);
 		} else {
 			queryExecutor = new QueryExecutor(sql).names(innerModel.names).values(innerModel.values)
 					.resultType(resultType).dataSource(getDataSource(innerModel.dataSource))
