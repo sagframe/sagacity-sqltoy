@@ -505,7 +505,6 @@ public class BeanUtil {
 				}
 			}
 		}
-		String valueStr = paramValue.toString();
 		// 5 字符串第一优先
 		if (DataType.stringType == typeValue) {
 			if (paramValue instanceof java.sql.Clob) {
@@ -518,8 +517,9 @@ public class BeanUtil {
 			} else if (paramValue instanceof java.util.Date) {
 				return DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss");
 			}
-			return valueStr;
+			return paramValue.toString();
 		}
+		String valueStr = paramValue.toString();
 		boolean isBlank = "".equals(valueStr.trim());
 		// 6 bigDecimal第二优先
 		if (DataType.wrapBigDecimalType == typeValue) {
@@ -627,7 +627,7 @@ public class BeanUtil {
 			if (isBlank) {
 				return null;
 			}
-			return Double.valueOf(valueStr);
+			return Double.valueOf(convertBoolean(valueStr));
 		}
 		// 18 第13
 		if (DataType.localTimeType == typeValue) {
@@ -652,7 +652,7 @@ public class BeanUtil {
 			if (isBlank) {
 				return 0;
 			}
-			return Double.parseDouble(valueStr);
+			return Double.parseDouble(convertBoolean(valueStr));
 		}
 		// 21 byte数组
 		if (DataType.aryByteType == typeValue) {
@@ -671,14 +671,14 @@ public class BeanUtil {
 			if (isBlank) {
 				return null;
 			}
-			return Float.valueOf(valueStr);
+			return Float.valueOf(convertBoolean(valueStr));
 		}
 		// 23
 		if (DataType.primitiveFloatType == typeValue) {
 			if (isBlank) {
 				return 0;
 			}
-			return Float.parseFloat(valueStr);
+			return Float.parseFloat(convertBoolean(valueStr));
 		}
 		// 24
 		if (DataType.wrapShortType == typeValue) {
