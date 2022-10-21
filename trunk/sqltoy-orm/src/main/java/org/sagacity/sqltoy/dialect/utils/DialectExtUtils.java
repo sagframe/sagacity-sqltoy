@@ -26,8 +26,6 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @modify 2020年7月30日,修改说明
  */
 public class DialectExtUtils {
-	//判断日期格式
-	//public static final Pattern DATE_PATTERN = Pattern.compile("(\\:|\\-|\\.|\\/|\\s+)?\\d+");
 
 	/**
 	 * @todo 产生对象对应的insert sql语句
@@ -128,7 +126,7 @@ public class DialectExtUtils {
 	 * @param defaultValue
 	 */
 	public static void processDefaultValue(StringBuilder sql, int dbType, FieldMeta fieldMeta, String defaultValue) {
-		// 已经小写
+		// EntityManager解析时已经小写化处理
 		String fieldType = fieldMeta.getFieldType();
 		if ("java.lang.string".equals(fieldType)) {
 			if (!defaultValue.startsWith("'")) {
@@ -151,13 +149,18 @@ public class DialectExtUtils {
 				String dateStr = "'" + tmpValue + "'";
 				// oracle、db2支持merge into场景(sqlserver具有自行转换能力，无需进行格式转换)
 				if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DB2) {
-					String format = "yyyy-MM-dd HH24:mi:ss";
 					if ("java.time.localtime".equals(fieldType) || "java.sql.time".equals(fieldType)) {
-						format = "HH24:mi:ss";
+						if (dbType == DBType.DB2) {
+							dateStr = "time(" + dateStr + ")";
+						} else {
+							// oracle 没有time类型,因此本行的逻辑实际不会生效
+							dateStr = "to_date(" + dateStr + ",'HH24:mi:ss')";
+						}
 					} else if ("java.time.localdate".equals(fieldType)) {
-						format = "yyyy-MM-dd";
+						dateStr = "to_date(" + dateStr + ",'yyyy-MM-dd')";
+					} else {
+						dateStr = "to_date(" + dateStr + ",'yyyy-MM-dd HH24:mi:ss')";
 					}
-					dateStr = "to_date(" + dateStr + ",'" + format + "')";
 				}
 				sql.append(dateStr);
 			} else {
