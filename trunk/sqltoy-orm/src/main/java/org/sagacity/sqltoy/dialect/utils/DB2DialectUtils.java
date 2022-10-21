@@ -193,8 +193,7 @@ public class DB2DialectUtils {
 				if (null != defaultValue) {
 					insertRejIdColValues.append(isNullFunction);
 					insertRejIdColValues.append("(tv.").append(columnName).append(",");
-					DialectExtUtils.processDefaultValue(insertRejIdColValues, dbType, fieldMeta.getType(),
-							defaultValue);
+					DialectExtUtils.processDefaultValue(insertRejIdColValues, dbType, fieldMeta, defaultValue);
 					insertRejIdColValues.append(")");
 				} else {
 					insertRejIdColValues.append("tv.").append(columnName);
