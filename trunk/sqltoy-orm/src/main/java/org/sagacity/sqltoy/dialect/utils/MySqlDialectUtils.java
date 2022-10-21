@@ -26,6 +26,7 @@ public class MySqlDialectUtils {
 	 * @param tableName
 	 * @return
 	 */
+	@Deprecated
 	public static String getSaveOrUpdateSql(Integer dbType, EntityMeta entityMeta, String[] forceUpdateFields,
 			String tableName) {
 		String realTable = entityMeta.getSchemaTable(tableName, dbType);
