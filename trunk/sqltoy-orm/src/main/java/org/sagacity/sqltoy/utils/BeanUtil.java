@@ -437,7 +437,7 @@ public class BeanUtil {
 	/**
 	 * @TODO 提供对象get/set 类型转换
 	 * @param value
-	 * @param typeValue
+	 * @param typeValue DataType.getType(typeName) 注意typeName不用转小写
 	 * @param typeName  getParameterTypes()[0].getTypeName() 没有转大小写
 	 * @return
 	 * @throws Exception
