@@ -10,8 +10,6 @@ import javax.sql.DataSource;
 import org.sagacity.sqltoy.integration.AppContext;
 import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
 import org.sagacity.sqltoy.utils.StringUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * @project sagacity-sqltoy
@@ -21,11 +19,7 @@ import org.slf4j.LoggerFactory;
  * @modify 2021-4-15,修改说明
  */
 public class DefaultDataSourceSelector implements DataSourceSelector {
-	/**
-	 * 定义日志
-	 */
-	protected final Logger logger = LoggerFactory.getLogger(DefaultDataSourceSelector.class);
-
+	
 	@Override
 	public DataSource getDataSource(AppContext appContext, DataSource pointDataSouce, String sqlDataSourceName,
 			DataSource injectDataSource, DataSource defaultDataSource) {
@@ -52,8 +46,6 @@ public class DefaultDataSourceSelector implements DataSourceSelector {
 			// 只有一个dataSource,直接使用
 			if (dataSources.size() == 1) {
 				result = dataSources.values().iterator().next();
-			} else {
-				logger.warn("不能获取当前线程的数据源，友情提示:多数据源场景下可通过spring.sqltoy.defaultDataSource=xxx 配置默认数据源!");
 			}
 		}
 		return result;

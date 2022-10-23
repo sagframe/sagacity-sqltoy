@@ -496,6 +496,10 @@ public class DataSourceUtils {
 	 */
 	public static Object processDataSource(SqlToyContext sqltoyContext, DataSource datasource,
 			DataSourceCallbackHandler handler) {
+		if (datasource == null) {
+			throw new IllegalArgumentException(
+					"dataSource为null,异常原因参考:\n 1、多数据源场景未配置spring.sqltoy.defaultDataSoure=xxx 默认数据源;\n 2、dao中指定的dataSource名称不存在!");
+		}
 		Connection conn = sqltoyContext.getConnection(datasource);
 		Integer dbType;
 		String dialect;
