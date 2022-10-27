@@ -146,10 +146,8 @@ public class ResultUtils {
 				labelIndexMap.put(labeNameLow, index);
 				labelTypes[index] = rs.getMetaData().getColumnTypeName(i + 1);
 				// 类型因缓存翻译、格式化转为string
-				if (hasToStrCols) {
-					if (strTypeCols.contains(labeNameLow)) {
-						labelTypes[index] = "VARCHAR";
-					}
+				if (hasToStrCols && strTypeCols.contains(labeNameLow)) {
+					labelTypes[index] = "VARCHAR";
 				}
 				index++;
 			}
@@ -215,10 +213,8 @@ public class ResultUtils {
 			}
 			labelTypes[index] = rs.getMetaData().getColumnTypeName(i + 1);
 			// 类型因缓存翻译、格式化转为string
-			if (hasToStrCols) {
-				if (strTypeCols.contains(labeNameLow)) {
-					labelTypes[index] = "VARCHAR";
-				}
+			if (hasToStrCols && strTypeCols.contains(labeNameLow)) {
+				labelTypes[index] = "VARCHAR";
 			}
 			index++;
 		}
@@ -571,20 +567,18 @@ public class ResultUtils {
 				linkValue = rs.getObject(linkColumn);
 				if (linkValue == null) {
 					linkStr = "";
-				} else {
-					if (translateLink) {
-						cacheValues = linkTranslateMap.get(linkValue.toString());
-						if (cacheValues == null) {
-							linkStr = "[" + linkValue + "]未匹配";
-							logger.debug("translate cache:{},cacheType:{}, 对应的key:{} 没有设置相应的value!", extend.cache,
-									extend.cacheType, linkValue);
-						} else {
-							linkStr = (cacheValues[linkTranslateIndex] == null) ? ""
-									: cacheValues[linkTranslateIndex].toString();
-						}
+				} else if (translateLink) {
+					cacheValues = linkTranslateMap.get(linkValue.toString());
+					if (cacheValues == null) {
+						linkStr = "[" + linkValue + "]未匹配";
+						logger.debug("translate cache:{},cacheType:{}, 对应的key:{} 没有设置相应的value!", extend.cache,
+								extend.cacheType, linkValue);
 					} else {
-						linkStr = linkValue.toString();
+						linkStr = (cacheValues[linkTranslateIndex] == null) ? ""
+								: cacheValues[linkTranslateIndex].toString();
 					}
+				} else {
+					linkStr = linkValue.toString();
 				}
 				identity = (linkModel.getIdColumns() == null) ? "default"
 						: getLinkColumnsId(rs, linkModel.getIdColumns());
@@ -824,21 +818,18 @@ public class ResultUtils {
 				linkValues[i] = rs.getObject(linkColumns[i]);
 				if (linkValues[i] == null) {
 					linkStrs[i] = "";
-				} else {
-					if (translateLinks[i]) {
-						extend = transExtends[i];
-						cacheValues = translateCache.get(extend.column).get(linkValues[i].toString());
-						if (cacheValues == null) {
-							linkStrs[i] = "[" + linkValues[i] + "]未匹配";
-							logger.debug("translate cache:{},cacheType:{}, 对应的key:{} 没有设置相应的value!", extend.cache,
-									extend.cacheType, linkValues[i]);
-						} else {
-							linkStrs[i] = (cacheValues[extend.index] == null) ? ""
-									: cacheValues[extend.index].toString();
-						}
+				} else if (translateLinks[i]) {
+					extend = transExtends[i];
+					cacheValues = translateCache.get(extend.column).get(linkValues[i].toString());
+					if (cacheValues == null) {
+						linkStrs[i] = "[" + linkValues[i] + "]未匹配";
+						logger.debug("translate cache:{},cacheType:{}, 对应的key:{} 没有设置相应的value!", extend.cache,
+								extend.cacheType, linkValues[i]);
 					} else {
-						linkStrs[i] = linkValues[i].toString();
+						linkStrs[i] = (cacheValues[extend.index] == null) ? "" : cacheValues[extend.index].toString();
 					}
+				} else {
+					linkStrs[i] = linkValues[i].toString();
 				}
 			}
 			// 取分组列的值

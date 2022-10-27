@@ -46,6 +46,7 @@ import org.slf4j.LoggerFactory;
  *              mysql8.x版本开始已经支持with as语法。
  * @modify {Date:2018-5-19,修改saveOrUpdate为先update后saveIgnore，因为mysql on
  *         duplicate key update 非空字段修改报错}
+ * @modify {Date:2022-10-12,修复lock nowait等针对mysql5.x版本的支持}
  */
 @SuppressWarnings({ "rawtypes" })
 public class MySqlDialect implements Dialect {

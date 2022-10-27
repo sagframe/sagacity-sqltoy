@@ -23,7 +23,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @description 将原本DialectUtils中的部分功能抽离出来,从而避免DialectUtils跟一些类之间的互相调用
  * @author zhongxuchen
  * @version v1.0, Date:2020年7月30日
- * @modify 2020年7月30日,修改说明
+ * @modify 2022-10-19 修改processDefaultValue修复oracle、db2日期类型的支持
  */
 public class DialectExtUtils {
 
@@ -147,7 +147,7 @@ public class DialectExtUtils {
 					|| "java.sql.date".equals(fieldType) || "java.sql.time".equals(fieldType)
 					|| "java.sql.timestamp".equals(fieldType)) {
 				String dateStr = "'" + tmpValue + "'";
-				// oracle、db2支持merge into场景(sqlserver具有自行转换能力，无需进行格式转换)
+				//  oracle、db2支持merge into场景(sqlserver具有自行转换能力，无需进行格式转换)
 				if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DB2) {
 					if ("java.time.localtime".equals(fieldType) || "java.sql.time".equals(fieldType)) {
 						if (dbType == DBType.DB2) {

@@ -113,27 +113,23 @@ public class IdUtil {
 			if (null == currentValue) {
 				currentValue = new CurrentTimeMaxValue(currentTime, 1);
 				tablesCurrentTimeId.put(identityName, currentValue);
-			} else {
-				// 当前时间大于上次提取maxValue的时间，则从新计数
-				if (currentTime > currentValue.getCurrentTime()) {
-					currentValue.setCurrentTime(currentTime);
-					currentValue.setValue(1);
-				} // 当前时间等于上次计数时间
-				else {
-					// 超出阈值，则取历史已经取过的值，延迟时间，按最新时间重新计数
-					if (currentValue.getValue() >= maxValue) {
-						// 延时1毫秒
-						try {
-							Thread.sleep(1);
-						} catch (Exception e) {
+			} // 当前时间大于上次提取maxValue的时间，则从新计数
+			else if (currentTime > currentValue.getCurrentTime()) {
+				currentValue.setCurrentTime(currentTime);
+				currentValue.setValue(1);
+			} // currentTime == currentValue.getCurrentTime()
+				// 超出阀值，从下一个毫秒重新计数
+			else if (currentValue.getValue() >= maxValue) {
+				// 延时1毫秒
+				try {
+					Thread.sleep(1);
+				} catch (Exception e) {
 
-						}
-						currentValue.setCurrentTime(System.currentTimeMillis());
-						currentValue.setValue(1);
-					} else {
-						currentValue.setValue(currentValue.getValue() + 1);
-					}
 				}
+				currentValue.setCurrentTime(System.currentTimeMillis());
+				currentValue.setValue(1);
+			} else {
+				currentValue.setValue(currentValue.getValue() + 1);
 			}
 			return new long[] { currentValue.getCurrentTime(), currentValue.getValue() };
 		}

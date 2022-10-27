@@ -21,7 +21,8 @@ import org.slf4j.LoggerFactory;
  * @description 提供针对sqltoy的DTO到POJO、POJO到DTO的映射工具
  * @author zhongxuchen
  * @version v1.0,Date:2020-8-8
- * @modify data:2020-09-04 支持VO<->VO,DTO<->DTO,VO<->DTO 的互转
+ * @modify 2020-09-04 支持VO<->VO,DTO<->DTO,VO<->DTO 的互转
+ * @modify 2022-10-19 支持对象的多级父类属性的映射
  */
 public class MapperUtils {
 	/**

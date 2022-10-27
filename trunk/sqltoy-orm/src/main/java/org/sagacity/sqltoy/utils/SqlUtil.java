@@ -276,10 +276,8 @@ public class SqlUtil {
 		// jdbc部分数据库赋null值时必须要指定数据类型
 		if (null == paramValue) {
 			if (jdbcType != java.sql.Types.NULL) {
-				if (typeHandler != null) {
-					if (typeHandler.setNull(pst, paramIndex, jdbcType)) {
-						return;
-					}
+				if (typeHandler != null && typeHandler.setNull(pst, paramIndex, jdbcType)) {
+					return;
 				}
 				// postgresql bytea类型需要统一处理成BINARY
 				if (jdbcType == java.sql.Types.BLOB
@@ -294,10 +292,8 @@ public class SqlUtil {
 			return;
 		}
 		// 自定义类型处理器，完成setValue处理
-		if (typeHandler != null) {
-			if (typeHandler.setValue(pst, paramIndex, jdbcType, paramValue)) {
-				return;
-			}
+		if (typeHandler != null && typeHandler.setValue(pst, paramIndex, jdbcType, paramValue)) {
+			return;
 		}
 		String tmpStr;
 		if (paramValue instanceof java.lang.String) {
@@ -441,10 +437,8 @@ public class SqlUtil {
 				propTypes[i] = setMethods[i].getParameterTypes()[0].getTypeName();
 				propTypeValues[i] = DataType.getType(propTypes[i]);
 				types = setMethods[i].getGenericParameterTypes();
-				if (types.length > 0) {
-					if (types[0] instanceof ParameterizedType) {
-						genericTypes[i] = (Class) ((ParameterizedType) types[0]).getActualTypeArguments()[0];
-					}
+				if (types.length > 0 && types[0] instanceof ParameterizedType) {
+					genericTypes[i] = (Class) ((ParameterizedType) types[0]).getActualTypeArguments()[0];
 				}
 			}
 		}

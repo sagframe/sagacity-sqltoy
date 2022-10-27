@@ -44,6 +44,7 @@ import org.w3c.dom.NodeList;
  * @author zhongxuchen
  * @version v1.0,Date:2018年3月8日
  * @modify {Date:2022-06-11,支持多个缓存翻译定义文件}
+ * @modify {Date:2022-10-05,支持i18n多语言翻译，由fightForYou反馈}
  */
 public class TranslateConfigParse {
 	/**

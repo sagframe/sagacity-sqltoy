@@ -90,7 +90,7 @@ public class SqlConfigParseUtilsTest {
 				new Object[] { null, null });
 		System.err.println(JSON.toJSONString(result));
 	}
-	
+
 	@Test
 	public void testAllInnerNull() throws Exception {
 		String sql = "select * from (select * from table where 1=1 #[and id=:id and name like :name] #[and status=:status]) left join table2 on";
@@ -228,10 +228,11 @@ public class SqlConfigParseUtilsTest {
 	public void testOverSizeIn5() throws Exception {
 		String sql = "select * from table t where (t.order_id,t.type) in (?,?)";
 
-		SqlToyResult result = SqlConfigParseUtils.processSql(sql, null, new Object[] { "S0001","S0002" });
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, null, new Object[] { "S0001", "S0002" });
 		System.err.println(result.getSql());
 		System.err.println(result.getParamsValue().length);
 	}
+
 	@Test
 	public void testOverSizeIn2() throws Exception {
 		String sql = "select * from table t where 1=1 and (t.order_id||'\\('||'\\)') not in (:oderId))";
@@ -259,7 +260,7 @@ public class SqlConfigParseUtilsTest {
 		}
 		System.err.println("[" + paramName + "]");
 	}
-	
+
 	@Test
 	public void testInsertSql() throws Exception {
 		String sql = "insert into table (id,name,status) values(:id,:name,:status)";
@@ -267,4 +268,15 @@ public class SqlConfigParseUtilsTest {
 				new Object[] { "1", null, "1" });
 		System.err.println(JSON.toJSONString(result));
 	}
+
+	@Test
+	public void testIf1() throws Exception {
+		String sql = "where name=1 #[ @if(:flag==1) and #[status=:status]]";
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "flag", "status" },
+				new Object[] { "1", null });
+		System.err.println(JSON.toJSONString(result));
+		result = SqlConfigParseUtils.processSql(sql, new String[] { "flag", "status" }, new Object[] { "1", 1 });
+		System.err.println(JSON.toJSONString(result));
+	}
+
 }

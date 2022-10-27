@@ -1003,7 +1003,6 @@ public class CollectionUtil {
 		} else {
 			newResultRowCnt = colIndexs.length;
 		}
-
 		// 构造结果集
 		Object[][] resultAry = new Object[newResultRowCnt][data.size()];
 		Object[] rowAry = null;
