@@ -437,7 +437,7 @@ public class SqlUtil {
 				propTypes[i] = setMethods[i].getParameterTypes()[0].getTypeName();
 				propTypeValues[i] = DataType.getType(propTypes[i]);
 				types = setMethods[i].getGenericParameterTypes();
-				if (types.length > 0 && types[0] instanceof ParameterizedType) {
+				if (types.length > 0 && (types[0] instanceof ParameterizedType)) {
 					genericTypes[i] = (Class) ((ParameterizedType) types[0]).getActualTypeArguments()[0];
 				}
 			}
