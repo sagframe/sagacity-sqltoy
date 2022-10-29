@@ -503,7 +503,7 @@ public class SqlConfigParseUtils {
 						paramCnt = paramCnt - logicParamCnt;
 					}
 				}
-				// 逻辑成立,继续sql中参数是否为null的逻辑判断
+				// @if() 条件成立继续判断内部是否有:paramName 为null
 				if (logicValue) {
 					beginIndex = 0;
 					endIndex = 0;
@@ -519,7 +519,6 @@ public class SqlConfigParseUtils {
 						} else {
 							iMarkSql = markContentSql.substring(beginIndex + 1);
 						}
-
 						// 判断是否是is 条件
 						if (StringUtil.matches(iMarkSql.toLowerCase(), IS_PATTERN)) {
 							sqlhasIs = true;
@@ -781,43 +780,41 @@ public class SqlConfigParseUtils {
 					}
 					incrementIndex += inParamArray.length * paramCnt - paramCnt;
 				}
-			} else {
-				if (null != paramsValue[parameterMarkCnt - 1]) {
-					// 数组或集合数据类型
-					if (paramsValue[parameterMarkCnt - 1].getClass().isArray()
-							|| paramsValue[parameterMarkCnt - 1] instanceof Collection) {
-						// update 2012-12-5 增加了对Collection数据类型的处理
-						if (paramsValue[parameterMarkCnt - 1] instanceof Collection) {
-							inParamList = (Collection) paramsValue[parameterMarkCnt - 1];
-							inParamArray = inParamList.toArray();
-						} else {
-							inParamArray = CollectionUtil.convertArray(paramsValue[parameterMarkCnt - 1]);
-						}
-						// 超过1000长度，进行(name in (?,?) or name in (?,?)) 分割
-						if (inParamArray.length > 1000) {
-							overSize = true;
-							partSql = wrapOverSizeInSql(queryStr.substring(start, m.start()), ARG_NAME,
-									inParamArray.length);
-							lastSql.append(" ").append(partSql).append(" ");
-						} else {
-							// 循环组合成in(?,?*)
-							partSql = StringUtil.loopAppendWithSign(ARG_NAME, ",", inParamArray.length);
-						}
-						paramValueList.remove(parameterMarkCnt - 1 + incrementIndex);
-						paramValueList.addAll(parameterMarkCnt - 1 + incrementIndex,
-								CollectionUtil.arrayToList(inParamArray));
-						incrementIndex += inParamArray.length - 1;
+			} else if (null != paramsValue[parameterMarkCnt - 1]) {
+				// 数组或集合数据类型
+				if (paramsValue[parameterMarkCnt - 1].getClass().isArray()
+						|| paramsValue[parameterMarkCnt - 1] instanceof Collection) {
+					// update 2012-12-5 增加了对Collection数据类型的处理
+					if (paramsValue[parameterMarkCnt - 1] instanceof Collection) {
+						inParamList = (Collection) paramsValue[parameterMarkCnt - 1];
+						inParamArray = inParamList.toArray();
+					} else {
+						inParamArray = CollectionUtil.convertArray(paramsValue[parameterMarkCnt - 1]);
 					}
-					// 逗号分隔的条件参数
-					else if (paramsValue[parameterMarkCnt - 1] instanceof String) {
-						argValue = (String) paramsValue[parameterMarkCnt - 1];
-						// update 2012-11-15 将'xxx'(单引号) 形式的字符串纳入直接替换模式，解决因为使用combineInStr
-						// 数组长度为1,构造出来的in 条件存在''(空白)符合直接用?参数导致的问题
-						if (argValue.indexOf(",") != -1 || (argValue.startsWith("'") && argValue.endsWith("'"))) {
-							partSql = (String) paramsValue[parameterMarkCnt - 1];
-							paramValueList.remove(parameterMarkCnt - 1 + incrementIndex);
-							incrementIndex--;
-						}
+					// 超过1000长度，进行(name in (?,?) or name in (?,?)) 分割
+					if (inParamArray.length > 1000) {
+						overSize = true;
+						partSql = wrapOverSizeInSql(queryStr.substring(start, m.start()), ARG_NAME,
+								inParamArray.length);
+						lastSql.append(" ").append(partSql).append(" ");
+					} else {
+						// 循环组合成in(?,?*)
+						partSql = StringUtil.loopAppendWithSign(ARG_NAME, ",", inParamArray.length);
+					}
+					paramValueList.remove(parameterMarkCnt - 1 + incrementIndex);
+					paramValueList.addAll(parameterMarkCnt - 1 + incrementIndex,
+							CollectionUtil.arrayToList(inParamArray));
+					incrementIndex += inParamArray.length - 1;
+				}
+				// 逗号分隔的条件参数
+				else if (paramsValue[parameterMarkCnt - 1] instanceof String) {
+					argValue = (String) paramsValue[parameterMarkCnt - 1];
+					// update 2012-11-15 将'xxx'(单引号) 形式的字符串纳入直接替换模式，解决因为使用combineInStr
+					// 数组长度为1,构造出来的in 条件存在''(空白)符合直接用?参数导致的问题
+					if (argValue.indexOf(",") != -1 || (argValue.startsWith("'") && argValue.endsWith("'"))) {
+						partSql = (String) paramsValue[parameterMarkCnt - 1];
+						paramValueList.remove(parameterMarkCnt - 1 + incrementIndex);
+						incrementIndex--;
 					}
 				}
 			}

@@ -53,6 +53,9 @@ import org.slf4j.LoggerFactory;
  * @modify {Date:2018-9-6,优化增强业务主键配置策略}
  * @modify {Date:2019-8-10,优化字段的解析,避免在子类中定义属性覆盖了父类导致数据库字段失效现象,同时优化部分代码}
  * @modify {Date:2020-07-29,修复OneToMany解析时编写错误,由智客软件反馈 }
+ * @modify {Date:2022-09-23,增加@DataVersion数据版本功能 }
+ * @modify {Date:2022-10-12,修复cascade解析存在的两个对象相互级联死循环问题以及支持一个对象级联多次相同对象，由俊华反馈 }
+ * 
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class EntityManager {
@@ -178,6 +181,10 @@ public class EntityManager {
 			if (entityMeta == null) {
 				throw new IllegalArgumentException("您传入的对象:[".concat(className)
 						.concat(" ]不是一个@SqlToyEntity实体POJO对象,sqltoy实体对象必须使用 @SqlToyEntity/@Entity/@Id 等注解来标识!"));
+			} // update 2022-10-24 加强提示，避免一些手工编写pojo情景遇到问题不知所措(手工编写是因为根本不了解quickvo的特性)
+			else if (entityMeta.getFieldsArray() == null || entityMeta.getFieldsArray().length == 0) {
+				throw new RuntimeException(
+						"您传入的对象:[".concat(className).concat(" ] 没有@column等配置,无法获得POJO属性映射数据库字段的关系,请用quickvo自动生成POJO!"));
 			}
 		}
 		return entityMeta;
@@ -350,11 +357,9 @@ public class EntityManager {
 					if (fieldMeta != null) {
 						DataVersionConfig dataVersionConfig = new DataVersionConfig();
 						dataVersionConfig.setField(dataVersionField);
-						if (dataVersion.startDate()) {
-							// 202209181至少9位数字
-							if (fieldMeta.getLength() > 8) {
-								dataVersionConfig.setStartDate(true);
-							}
+						// 202209181至少9位数字
+						if (dataVersion.startDate() && fieldMeta.getLength() > 8) {
+							dataVersionConfig.setStartDate(true);
 						}
 						entityMeta.setDataVersion(dataVersionConfig);
 					} else {
@@ -394,7 +399,7 @@ public class EntityManager {
 				entitysMetaMap.put(className, entityMeta);
 				tableEntityNameMap.put(entityMeta.getTableName().toLowerCase(), className);
 			} else if (isWarn) {
-				logger.warn("SqlToy Entity:{}没有使用@Entity注解表明是一个实体类,请检查!", className);
+				logger.warn("SqlToy Entity:{}没有使用@Entity注解，表明不是一个实体类,请检查!", className);
 			}
 		}
 		return entityMeta;
@@ -835,7 +840,7 @@ public class EntityManager {
 		for (int i = 0; i < fieldSize; i++) {
 			fieldMeta = entityMeta.getFieldMeta(entityMeta.getFieldsArray()[i]);
 			fieldsTypeArray[i] = fieldMeta.getType();
-			// 非主键或复合主键字段支持默认值
+			// update 2022-09-29 非主键或复合主键字段支持默认值
 			if (!fieldMeta.isPK() || pkSize > 1) {
 				fieldsDefaultValue[i] = fieldMeta.getDefaultValue();
 				if (null != fieldMeta.getDefaultValue()) {

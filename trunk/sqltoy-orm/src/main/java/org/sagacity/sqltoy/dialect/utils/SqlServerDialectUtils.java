@@ -632,11 +632,9 @@ public class SqlServerDialectUtils {
 				if (isIdentity) {
 					keyResult = pst.getGeneratedKeys();
 				}
-				if (isSequence || isIdentity) {
-					if (keyResult != null) {
-						while (keyResult.next()) {
-							this.setResult(keyResult.getObject(1));
-						}
+				if ((isSequence || isIdentity) && keyResult != null) {
+					while (keyResult.next()) {
+						this.setResult(keyResult.getObject(1));
 					}
 				}
 			}

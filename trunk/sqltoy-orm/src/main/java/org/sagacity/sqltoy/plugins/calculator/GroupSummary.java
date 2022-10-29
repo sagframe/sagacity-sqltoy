@@ -125,15 +125,11 @@ public class GroupSummary {
 			// 存在求平均:2
 			if (aveColList.contains(summaryCols[i])) {
 				colMeta.setSummaryType(colMeta.getSummaryType() + 2);
-				if (roundingSize > 1 && aveIndex < roundingSize) {
-					if (roundingModes[aveIndex] != null) {
-						colMeta.setRoundingMode(roundingModes[aveIndex]);
-					}
+				if (roundingSize > 1 && aveIndex < roundingSize && roundingModes[aveIndex] != null) {
+					colMeta.setRoundingMode(roundingModes[aveIndex]);
 				}
-				if (radixSizeLen > 1 && aveIndex < radixSizeLen) {
-					if (radixSizes[aveIndex] != null) {
-						colMeta.setRadixSize(radixSizes[aveIndex]);
-					}
+				if (radixSizeLen > 1 && aveIndex < radixSizeLen && radixSizes[aveIndex] != null) {
+					colMeta.setRadixSize(radixSizes[aveIndex]);
 				}
 				aveIndex++;
 			}

@@ -179,7 +179,7 @@ public class ParamFilterUtils {
 					cacheFilter = cacheFilters[i];
 					cacheValueIndex = paramIndexMap.get(cacheFilter.getCompareParam().toLowerCase());
 					compareValue = cacheFilter.getCompareParam();
-					//是参数名称，提取对应值
+					// 是参数名称，提取对应值
 					if (cacheValueIndex != null) {
 						compareValue = paramValues[cacheValueIndex.intValue()];
 					}
@@ -346,18 +346,14 @@ public class ParamFilterUtils {
 				if (index != -1) {
 					if (null == updateValue) {
 						paramValues[index] = null;
+					} else if (null == paramValues[index]) {
+						paramValues[index] = updateValue;
+					} else if (paramValues[index] instanceof Date) {
+						paramValues[index] = DateUtil.convertDateObject(updateValue);
+					} else if (paramValues[index] instanceof Number) {
+						paramValues[index] = new BigDecimal(updateValue);
 					} else {
-						if (null == paramValues[index]) {
-							paramValues[index] = updateValue;
-						} else {
-							if (paramValues[index] instanceof Date) {
-								paramValues[index] = DateUtil.convertDateObject(updateValue);
-							} else if (paramValues[index] instanceof Number) {
-								paramValues[index] = new BigDecimal(updateValue);
-							} else {
-								paramValues[index] = updateValue;
-							}
-						}
+						paramValues[index] = updateValue;
 					}
 				}
 			}
@@ -735,20 +731,18 @@ public class ParamFilterUtils {
 		BigDecimal value = new BigDecimal(paramValue.toString().replaceAll(",", ""));
 		if (dataType == null) {
 			result = value;
+		} else if ("integer".equals(dataType) || "int".equals(dataType)) {
+			result = Integer.valueOf(value.intValue());
+		} else if ("long".equals(dataType)) {
+			result = Long.valueOf(value.longValue());
+		} else if ("float".equals(dataType)) {
+			result = Float.valueOf(value.floatValue());
+		} else if ("double".equals(dataType)) {
+			result = Double.valueOf(value.doubleValue());
+		} else if ("biginteger".equals(dataType)) {
+			result = value.toBigInteger();
 		} else {
-			if ("integer".equals(dataType) || "int".equals(dataType)) {
-				result = Integer.valueOf(value.intValue());
-			} else if ("long".equals(dataType)) {
-				result = Long.valueOf(value.longValue());
-			} else if ("float".equals(dataType)) {
-				result = Float.valueOf(value.floatValue());
-			} else if ("double".equals(dataType)) {
-				result = Double.valueOf(value.doubleValue());
-			} else if ("biginteger".equals(dataType)) {
-				result = value.toBigInteger();
-			} else {
-				result = value;
-			}
+			result = value;
 		}
 		return result;
 	}
