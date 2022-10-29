@@ -34,6 +34,7 @@ import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.config.model.SummaryGroupMeta;
 import org.sagacity.sqltoy.config.model.SummaryModel;
 import org.sagacity.sqltoy.config.model.Translate;
+import org.sagacity.sqltoy.config.model.TreeSortModel;
 import org.sagacity.sqltoy.config.model.UnpivotModel;
 import org.sagacity.sqltoy.dialect.utils.PageOptimizeUtils;
 import org.sagacity.sqltoy.model.IgnoreCaseSet;
@@ -429,7 +430,6 @@ public class SqlXMLConfigParse {
 		if (sqlElt.hasAttribute("collection")) {
 			noSqlConfig.setCollection(sqlElt.getAttribute("collection"));
 		}
-
 		// url应该是一个变量如:${es_url}
 		if (sqlElt.hasAttribute("url")) {
 			noSqlConfig.setEndpoint(SqlToyConstants.replaceParams(sqlElt.getAttribute("url")));
@@ -454,12 +454,10 @@ public class SqlXMLConfigParse {
 		if (sqlElt.hasAttribute("connection-timeout")) {
 			noSqlConfig.setConnectTimeout(Integer.parseInt(sqlElt.getAttribute("connection-timeout")));
 		}
-
 		// 整个请求超时时长(毫秒)
 		if (sqlElt.hasAttribute("socket-timeout")) {
 			noSqlConfig.setSocketTimeout(Integer.parseInt(sqlElt.getAttribute("socket-timeout")));
 		}
-
 		// url请求字符集类型
 		if (sqlElt.hasAttribute("charset")) {
 			noSqlConfig.setCharset(sqlElt.getAttribute("charset"));
@@ -475,7 +473,6 @@ public class SqlXMLConfigParse {
 				noSqlConfig.setFields(splitFields(nodeList.item(0).getTextContent()));
 			}
 		}
-
 		// valueRoot
 		if (sqlElt.hasAttribute("value-root")) {
 			noSqlConfig.setValueRoot(trimParams(sqlElt.getAttribute("value-root").split("\\,")));
@@ -510,7 +507,6 @@ public class SqlXMLConfigParse {
 				noSqlConfig.setHasAggs(StringUtil.matches(sqlToyConfig.getSql(null), MONGO_AGGS_PATTERN));
 			}
 		}
-
 		sqlToyConfig.setNoSqlConfigModel(noSqlConfig);
 		// nosql参数解析模式不同于sql
 		if (!noSqlConfig.isSqlMode()) {
@@ -817,7 +813,6 @@ public class SqlXMLConfigParse {
 			filterModel
 					.setValues(new String[] { filter.getAttribute("start-value"), filter.getAttribute("end-value") });
 		}
-
 		// 解析to-date 的加减操作
 		if (filter.hasAttribute("increment-time")) {
 			filterModel.setIncrementTime(Double.valueOf(filter.getAttribute("increment-time")));
@@ -843,7 +838,6 @@ public class SqlXMLConfigParse {
 				filterModel.setTimeUnit(TimeUnit.YEARS);
 			}
 		}
-
 		// to-date filter
 		if (filter.hasAttribute("format")) {
 			String fmt = filter.getAttribute("format");
@@ -872,7 +866,6 @@ public class SqlXMLConfigParse {
 		if (filter.hasAttribute("regex")) {
 			filterModel.setRegex(filter.getAttribute("regex"));
 		}
-
 		// 用于replace 转换器,设置是否是替换首个匹配的字符
 		if (filter.hasAttribute("is-first")) {
 			filterModel.setFirst(Boolean.parseBoolean(filter.getAttribute("is-first")));
@@ -885,7 +878,6 @@ public class SqlXMLConfigParse {
 		if (filter.hasAttribute("split-sign")) {
 			filterModel.setSplit(filter.getAttribute("split-sign"));
 		}
-
 		// 互斥型和决定性(primary)filter的参数
 		if (filter.hasAttribute("excludes")) {
 			String[] excludeParams = filter.getAttribute("excludes").toLowerCase().split("\\,");
@@ -893,7 +885,6 @@ public class SqlXMLConfigParse {
 				filterModel.addExclude(excludeParam.trim());
 			}
 		}
-
 		// exclusive 和primary filter、cache-arg 专用参数
 		if (filter.hasAttribute("param")) {
 			filterModel.setParam(filter.getAttribute("param").toLowerCase());
@@ -1005,7 +996,6 @@ public class SqlXMLConfigParse {
 				filterModel.setCompareValues(trimParams(compareValue.split("\\,")));
 			}
 		}
-
 		// 数据类型
 		if (filter.hasAttribute("data-type")) {
 			filterModel.setDataType(filter.getAttribute("data-type").toLowerCase());
@@ -1087,7 +1077,6 @@ public class SqlXMLConfigParse {
 			} else if (translate.hasAttribute("original-columns")) {
 				aliasNames = trimParams(translate.getAttribute("original-columns").toLowerCase().split("\\,"));
 			}
-
 			// 翻译key对应value的在缓存数组中对应的列
 			cacheIndexs = null;
 			if (translate.hasAttribute("cache-indexs")) {
@@ -1437,6 +1426,11 @@ public class SqlXMLConfigParse {
 					ReverseModel reverseModel = new ReverseModel();
 					XMLUtil.setAttributes(elt, reverseModel);
 					resultProcessor.add(reverseModel);
+				} // 树型结构编排
+				else if (eltName.equals(local.concat("tree-sort"))) {
+					TreeSortModel treeSortModel = new TreeSortModel();
+					XMLUtil.setAttributes(elt, treeSortModel);
+					resultProcessor.add(treeSortModel);
 				}
 			}
 		}

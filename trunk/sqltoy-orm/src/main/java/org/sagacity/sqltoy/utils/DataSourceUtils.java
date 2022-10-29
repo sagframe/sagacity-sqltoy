@@ -19,6 +19,8 @@ import org.slf4j.LoggerFactory;
  * @version v1.0,Date:2015年3月3日
  * @modify data:2020-06-10 剔除mssql2008,hana,增加tidb、guassdb、oceanbase、dm数据库方言的支持
  * @modify data:2022-08-29 增加h2数据库的支持
+ * @modify data:2022-09-29 getDialect(DataSource)和getDBType(DataSource)
+ *         增加缓存机制，避免获取connection来判断
  */
 public class DataSourceUtils {
 	/**

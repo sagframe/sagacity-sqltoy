@@ -175,6 +175,31 @@
 						default="false" />
 				</xsd:complexType>
 			</xsd:element>
+			<xsd:element name="tree-sort" minOccurs="0" maxOccurs="1">
+				<xsd:annotation>
+					<xsd:documentation>
+					<![CDATA[对树型结构查询结果进行排序]]>
+					</xsd:documentation>
+				</xsd:annotation>
+				<xsd:complexType>
+					<xsd:attribute name="id-column" type="xsd:string"
+						use="required">
+						<xsd:annotation>
+							<xsd:documentation>
+							<![CDATA[id列]]>
+							</xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+					<xsd:attribute name="pid-column" type="xsd:string"
+						use="required">
+						<xsd:annotation>
+							<xsd:documentation>
+							<![CDATA[pid列]]>
+							</xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+				</xsd:complexType>
+			</xsd:element>
 			<xsd:element name="sharding-datasource" minOccurs="0"
 				maxOccurs="unbounded">
 				<xsd:annotation>
@@ -1134,8 +1159,8 @@
 				<xsd:documentation><![CDATA[sum和average同一行展示时拼接字符]]></xsd:documentation>
 			</xsd:annotation>
 		</xsd:attribute>
-		<xsd:attribute name="skip-single-row"
-			type="xsd:boolean" default="false">
+		<xsd:attribute name="skip-single-row" type="xsd:boolean"
+			default="false">
 			<xsd:annotation>
 				<xsd:documentation><![CDATA[单行数据是否进行分组汇总和求平均,默认为false]]></xsd:documentation>
 			</xsd:annotation>

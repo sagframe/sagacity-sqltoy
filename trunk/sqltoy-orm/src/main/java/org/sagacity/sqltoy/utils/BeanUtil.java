@@ -51,6 +51,7 @@ import org.slf4j.LoggerFactory;
  * @modify data:2020-06-23 优化convertType(Object, String) 方法
  * @modify data:2020-07-08 修复convertType(Object, String) 转Long类型时精度丢失问题
  * @modify data:2021-03-12 支持property中含下划线跟对象方法进行匹配
+ * @modify data:2022-10-19 convertType类型匹配改成int类型的匹配,通过DataType将TypeName转化为int，批量时效率大幅提升
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class BeanUtil {
