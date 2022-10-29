@@ -279,10 +279,8 @@ public class ElasticSearchUtils {
 			if (matchCnt > 0) {
 				root = tmp;
 				break;
-			} else {
-				if (tmp.keySet().size() == 1) {
-					root = tmp.values().iterator().next();
-				}
+			} else if (tmp.keySet().size() == 1) {
+				root = tmp.values().iterator().next();
 			}
 		}
 		if (root == null) {

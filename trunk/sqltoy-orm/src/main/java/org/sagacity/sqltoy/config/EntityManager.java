@@ -182,6 +182,10 @@ public class EntityManager {
 			if (entityMeta == null) {
 				throw new IllegalArgumentException("您传入的对象:[".concat(className)
 						.concat(" ]不是一个@SqlToyEntity实体POJO对象,sqltoy实体对象必须使用 @SqlToyEntity/@Entity/@Id 等注解来标识!"));
+			} // update 2022-10-24 加强提示，避免一些手工编写pojo情景遇到问题不知所措(手工编写是因为根本不了解quickvo的特性)
+			else if (entityMeta.getFieldsArray() == null || entityMeta.getFieldsArray().length == 0) {
+				throw new RuntimeException(
+						"您传入的对象:[".concat(className).concat(" ] 没有@column等配置,无法获得POJO属性映射数据库字段的关系,请用quickvo自动生成POJO!"));
 			}
 		}
 		return entityMeta;
@@ -356,11 +360,9 @@ public class EntityManager {
 					if (fieldMeta != null) {
 						DataVersionConfig dataVersionConfig = new DataVersionConfig();
 						dataVersionConfig.setField(dataVersionField);
-						if (dataVersion.startDate()) {
-							// 202209181至少9位数字
-							if (fieldMeta.getLength() > 8) {
-								dataVersionConfig.setStartDate(true);
-							}
+						// 202209181至少9位数字
+						if (dataVersion.startDate() && fieldMeta.getLength() > 8) {
+							dataVersionConfig.setStartDate(true);
 						}
 						entityMeta.setDataVersion(dataVersionConfig);
 					} else {
@@ -400,7 +402,7 @@ public class EntityManager {
 				entitysMetaMap.put(className, entityMeta);
 				tableEntityNameMap.put(entityMeta.getTableName().toLowerCase(), className);
 			} else if (isWarn) {
-				logger.warn("SqlToy Entity:{}没有使用@Entity注解表明是一个实体类,请检查!", className);
+				logger.warn("SqlToy Entity:{}没有使用@Entity注解，表明不是一个实体类,请检查!", className);
 			}
 		}
 		return entityMeta;

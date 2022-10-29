@@ -620,10 +620,8 @@ public class StringUtil {
 			for (String[] filter : filters) {
 				startEnd = getStartEndIndex(source, filter, skipIndex, splitIndex);
 				// 分隔符号整合在对称符号的首尾中间,表示分隔符号属于内部字符串,在对称符号的终止位置后面重新获取分隔符号的位置
-				if (startEnd[0] >= 0 && startEnd[0] <= splitIndex && startEnd[1] >= splitIndex) {
-					if (startEnd[1] > max) {
-						max = startEnd[1];
-					}
+				if (startEnd[0] >= 0 && startEnd[0] <= splitIndex && startEnd[1] >= splitIndex && startEnd[1] > max) {
+					max = startEnd[1];
 				}
 			}
 			if (max > -1) {
