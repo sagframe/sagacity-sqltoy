@@ -45,6 +45,7 @@ import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.config.model.SummaryModel;
 import org.sagacity.sqltoy.config.model.TableCascadeModel;
 import org.sagacity.sqltoy.config.model.Translate;
+import org.sagacity.sqltoy.config.model.TreeSortModel;
 import org.sagacity.sqltoy.config.model.UnpivotModel;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.exception.DataAccessException;
@@ -60,6 +61,7 @@ import org.sagacity.sqltoy.plugins.calculator.ColsChainRelative;
 import org.sagacity.sqltoy.plugins.calculator.GroupSummary;
 import org.sagacity.sqltoy.plugins.calculator.ReverseList;
 import org.sagacity.sqltoy.plugins.calculator.RowsChainRelative;
+import org.sagacity.sqltoy.plugins.calculator.TreeDataSort;
 import org.sagacity.sqltoy.plugins.calculator.UnpivotList;
 import org.sagacity.sqltoy.plugins.secure.DesensitizeProvider;
 import org.sagacity.sqltoy.translate.TranslateConfigParse;
@@ -1386,6 +1388,9 @@ public class ResultUtils {
 				} else if (processor instanceof ReverseModel) {
 					// 数据反序
 					ReverseList.process((ReverseModel) processor, labelIndexMap, items);
+				} else if (processor instanceof TreeSortModel) {
+					// 树形结构排序组织
+					TreeDataSort.process((TreeSortModel) processor, labelIndexMap, items);
 				}
 			}
 			dataSetResult.setRows(items);

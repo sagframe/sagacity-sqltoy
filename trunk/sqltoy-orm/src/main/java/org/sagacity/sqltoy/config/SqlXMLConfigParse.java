@@ -34,6 +34,7 @@ import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.config.model.SummaryGroupMeta;
 import org.sagacity.sqltoy.config.model.SummaryModel;
 import org.sagacity.sqltoy.config.model.Translate;
+import org.sagacity.sqltoy.config.model.TreeSortModel;
 import org.sagacity.sqltoy.config.model.UnpivotModel;
 import org.sagacity.sqltoy.dialect.utils.PageOptimizeUtils;
 import org.sagacity.sqltoy.model.IgnoreCaseSet;
@@ -1425,6 +1426,11 @@ public class SqlXMLConfigParse {
 					ReverseModel reverseModel = new ReverseModel();
 					XMLUtil.setAttributes(elt, reverseModel);
 					resultProcessor.add(reverseModel);
+				} // 树型结构编排
+				else if (eltName.equals(local.concat("tree-sort"))) {
+					TreeSortModel treeSortModel = new TreeSortModel();
+					XMLUtil.setAttributes(elt, treeSortModel);
+					resultProcessor.add(treeSortModel);
 				}
 			}
 		}

@@ -257,12 +257,14 @@ public class CollectionUtil {
 		}
 		int beginIndex = 0;
 		int addCount = 0;
-		Object compareId;
+		Object idValue, pidValue;
 		while (treeList.size() != 0) {
 			addCount = 0;
-			compareId = treeIdAndPidGet.getIdAndPid(result.get(beginIndex))[0];
+			// id
+			idValue = treeIdAndPidGet.getIdAndPid(result.get(beginIndex))[0];
 			for (int i = 0; i < treeList.size(); i++) {
-				if (BeanUtil.equalsIgnoreType(treeIdAndPidGet.getIdAndPid(treeList.get(i))[1], compareId, false)) {
+				pidValue = treeIdAndPidGet.getIdAndPid(treeList.get(i))[1];
+				if (idValue.equals(pidValue)) {
 					result.add(beginIndex + addCount + 1, treeList.get(i));
 					treeList.remove(i);
 					addCount++;
@@ -796,7 +798,7 @@ public class CollectionUtil {
 					// 汇总计算
 					calculateTotal(row, groupMeta);
 				} else {
-					//参与计算的行>1 或 单行也计算
+					// 参与计算的行>1 或 单行也计算
 					if (groupMeta.getSummaryCols()[0].getRowCount() > 1 || !skipSingleRowSummary) {
 						sumRows = createSummaryRow(preRow, groupMeta, linkSign);
 						// 插入汇总行(可能存在sum、ave 两行数据)
