@@ -33,7 +33,12 @@ public class OverTimeSql implements Serializable {
 	private long takeTime;
 
 	/**
-	 * 执行时间
+	 * 首次执行时间
+	 */
+	private LocalDateTime firstLogTime;
+
+	/**
+	 * 执行时间(最后发生超时查询的执行时间)
 	 */
 	private LocalDateTime logTime;
 
@@ -43,22 +48,22 @@ public class OverTimeSql implements Serializable {
 	private String codeTrace;
 
 	/**
-	 * 平均耗时
-	 */
-	private BigDecimal aveTakeTime = BigDecimal.ZERO;
-
-	/**
 	 * 超时次数
 	 */
 	private long overTimeCount = 1;
+
+	/**
+	 * 平均耗时
+	 */
+	private BigDecimal aveTakeTime = BigDecimal.ZERO;
 
 	public OverTimeSql(String id, String sql, long takeTime, String codeTrace) {
 		this.id = id;
 		this.sql = sql;
 		this.takeTime = takeTime;
 		this.codeTrace = codeTrace;
+		this.firstLogTime = LocalDateTime.now();
 		this.logTime = LocalDateTime.now();
-
 	}
 
 	public String getId() {
@@ -99,6 +104,14 @@ public class OverTimeSql implements Serializable {
 
 	public void setLogTime(LocalDateTime logTime) {
 		this.logTime = logTime;
+	}
+
+	public LocalDateTime getFirstLogTime() {
+		return firstLogTime;
+	}
+
+	public void setFirstLogTime(LocalDateTime firstLogTime) {
+		this.firstLogTime = firstLogTime;
 	}
 
 	public long getOverTimeCount() {

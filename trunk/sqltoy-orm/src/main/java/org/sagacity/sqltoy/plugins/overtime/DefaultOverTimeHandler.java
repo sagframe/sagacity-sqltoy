@@ -50,11 +50,15 @@ public class DefaultOverTimeHandler implements OverTimeSqlHandler {
 									.divide(new BigDecimal(preSql.getOverTimeCount() + 1), 3, RoundingMode.HALF_UP));
 					// 执行次数进行累加
 					overTimeSql.setOverTimeCount(preSql.getOverTimeCount() + 1);
+					// 设置首次超时发生时间
+					overTimeSql.setFirstLogTime(preSql.getFirstLogTime());
 					slowSqlMap.put(sqlId, overTimeSql);
 				} else {
 					preSql.setAveTakeTime(preSql.getAveTakeTime().multiply(new BigDecimal(preSql.getOverTimeCount()))
 							.add(new BigDecimal(overTimeSql.getTakeTime()))
 							.divide(new BigDecimal(preSql.getOverTimeCount() + 1), 3, RoundingMode.HALF_UP));
+					// 更新最后超时发生时间
+					preSql.setLogTime(overTimeSql.getLogTime());
 					preSql.setOverTimeCount(preSql.getOverTimeCount() + 1);
 				}
 			}

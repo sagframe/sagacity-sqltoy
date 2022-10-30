@@ -20,7 +20,7 @@ import org.sagacity.sqltoy.config.model.TreeSortModel;
  */
 public class TreeDataSort {
 	public static void process(TreeSortModel treeTableSortModel, LabelIndexModel labelIndexMap, List treeList) {
-		if (treeList == null) {
+		if (treeList == null || treeList.isEmpty()) {
 			return;
 		}
 		Integer idColIndex = labelIndexMap.get(treeTableSortModel.getIdColumn());
@@ -34,7 +34,7 @@ public class TreeDataSort {
 		List row;
 		int pidSize = topPids.size();
 		int meter = 0;
-		//提取第一层树节点
+		// 提取第一层树节点
 		for (int i = 0; i < treeList.size(); i++) {
 			row = (List) treeList.get(i);
 			if (topPids.contains(row.get(pidColIndex))) {
@@ -93,7 +93,7 @@ public class TreeDataSort {
 		}
 		Set topPids = new HashSet();
 		for (Object pid : pidSet) {
-			//父节点不id列中找不到的，则表示为树的第一级节点
+			// 父节点不id列中找不到的，则表示为树的第一级节点
 			if (!idSet.contains(pid)) {
 				topPids.add(pid);
 			}
