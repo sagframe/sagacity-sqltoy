@@ -1295,7 +1295,7 @@ public class ResultUtils {
 							sqlToyContext.getSqlToyConfig(pivotModel.getCategorySql(), SqlType.search, ""),
 							queryExecutor, dialect, false);
 					SqlToyResult pivotSqlToyResult = SqlConfigParseUtils.processSql(pivotSqlConfig.getSql(dialect),
-							extend.getParamsName(pivotSqlConfig), extend.getParamsValue(sqlToyContext, pivotSqlConfig),
+							extend.getParamsName(), extend.getParamsValue(sqlToyContext, pivotSqlConfig),
 							dialect);
 					// 增加sql执行拦截器 update 2022-9-10
 					pivotSqlToyResult = DialectUtils.doInterceptors(sqlToyContext, pivotSqlConfig, OperateType.search,

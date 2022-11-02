@@ -180,26 +180,23 @@ public class QueryExecutorExtend implements Serializable {
 	public List<ShardingStrategyConfig> tableShardings = new ArrayList<ShardingStrategyConfig>();
 
 	/**
-	 * @param sqlToyConfig
 	 * @return
 	 */
-	public String[] getParamsName(SqlToyConfig sqlToyConfig) {
+	public String[] getParamsName() {
 		return paramsName;
 	}
 
 	/**
-	 * @param sqlToyConfig
 	 * @return
 	 */
-	public String[] getTableShardingParamsName(SqlToyConfig sqlToyConfig) {
+	public String[] getTableShardingParamsName() {
 		return tableShardingParams;
 	}
 
 	/**
-	 * @param sqlToyConfig
 	 * @return
 	 */
-	public String[] getDataSourceShardingParamsName(SqlToyConfig sqlToyConfig) {
+	public String[] getDataSourceShardingParamsName() {
 		return dbShardingParams;
 	}
 
@@ -210,9 +207,8 @@ public class QueryExecutorExtend implements Serializable {
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @return
-	 * @throws Exception
 	 */
-	public Object[] getParamsValue(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig) throws Exception {
+	public Object[] getParamsValue(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig) {
 		// 整合sql中定义的filters和代码中扩展的filters
 		List<ParamFilterModel> filters = ParamFilterUtils.combineFilters(sqlToyConfig.getFilters(), paramFilters);
 		// 调用sql配置的filter对最终参与查询的值进行处理，设置相应值为null实现部分条件sql不参与执行
@@ -221,21 +217,17 @@ public class QueryExecutorExtend implements Serializable {
 
 	/**
 	 * @todo 获取分表时传递给分表策略的参数值
-	 * @param sqlToyConfig
 	 * @return
-	 * @throws Exception
 	 */
-	public Object[] getTableShardingParamsValue(SqlToyConfig sqlToyConfig) throws Exception {
+	public Object[] getTableShardingParamsValue() {
 		return tableShardingValues;
 	}
 
 	/**
 	 * @todo 获取分库时传递给分库策略的参数值(策略会根据值通过逻辑返回具体的库)
-	 * @param sqlToyConfig
 	 * @return
-	 * @throws Exception
 	 */
-	public Object[] getDataSourceShardingParamsValue(SqlToyConfig sqlToyConfig) throws Exception {
+	public Object[] getDataSourceShardingParamsValue() {
 		return dbShardingValues;
 	}
 }

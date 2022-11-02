@@ -328,7 +328,7 @@ public class DialectFactory {
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
 									sqlToyConfig, queryExecutor, dialect, false);
 							SqlToyResult queryParam = SqlConfigParseUtils.processSql(realSqlToyConfig.getSql(dialect),
-									extend.getParamsName(sqlToyConfig),
+									extend.getParamsName(),
 									extend.getParamsValue(sqlToyContext, realSqlToyConfig), dialect);
 							// 增加sql执行拦截器 update 2022-9-10
 							queryParam = DialectUtils.doInterceptors(sqlToyContext, realSqlToyConfig,
@@ -794,11 +794,14 @@ public class DialectFactory {
 									queryResult.setPageSize(pageSize);
 									queryResult.setRecordCount(0L);
 									if (illegal) {
+										SqlExecuteStat.debug("过程提示",
+												"非法分页查询,提取记录总数为:{}>{}上限,可设置参数:spring.sqltoy.pageFetchSizeLimit进行调整(-1表示不限制)",
+												recordCnt, limitSize);
 										logger.warn(
-												"非法分页查询,提取记录总数为:{}>{}上限(可设置sqlToyContext中的pageFetchSizeLimit进行调整),sql={}",
+												"非法分页查询,提取记录总数为:{}>{}上限可设置参数:spring.sqltoy.pageFetchSizeLimit进行调整(-1表示不限制),sql={}",
 												recordCnt, limitSize, sqlToyConfig.getIdOrSql());
 									} else {
-										SqlExecuteStat.debug("过程提示", "提取count数为:0,sql={}", sqlToyConfig.getIdOrSql());
+										SqlExecuteStat.debug("过程提示", "分页查询提取count数为:0");
 									}
 								} else {
 									long preTime = System.currentTimeMillis();
@@ -808,7 +811,7 @@ public class DialectFactory {
 										// 通过参数处理最终的sql和参数值
 										SqlToyResult queryParam = SqlConfigParseUtils.processSql(
 												realSqlToyConfig.getSql(dialect),
-												extend.getParamsName(realSqlToyConfig),
+												extend.getParamsName(),
 												extend.getParamsValue(sqlToyContext, realSqlToyConfig), dialect);
 										// 增加sql执行拦截器 update 2022-9-10
 										queryParam = DialectUtils.doInterceptors(sqlToyContext, realSqlToyConfig,
@@ -1107,7 +1110,7 @@ public class DialectFactory {
 									sqlToyConfig, queryExecutor, dialect, false);
 							// 通过参数处理最终的sql和参数值
 							SqlToyResult queryParam = SqlConfigParseUtils.processSql(realSqlToyConfig.getSql(dialect),
-									extend.getParamsName(realSqlToyConfig),
+									extend.getParamsName(),
 									extend.getParamsValue(sqlToyContext, realSqlToyConfig), dialect);
 							// 增加sql执行拦截器 update 2022-9-10
 							queryParam = DialectUtils.doInterceptors(sqlToyContext, realSqlToyConfig,
@@ -1254,7 +1257,7 @@ public class DialectFactory {
 		}
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		// 通过参数处理最终的sql和参数值
-		SqlToyResult queryParam = SqlConfigParseUtils.processSql(sql, extend.getParamsName(sqlToyConfig),
+		SqlToyResult queryParam = SqlConfigParseUtils.processSql(sql, extend.getParamsName(),
 				extend.getParamsValue(sqlToyContext, sqlToyConfig), dialect);
 		// 增加sql执行拦截器 update 2022-9-10
 		queryParam = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig,
@@ -1887,7 +1890,7 @@ public class DialectFactory {
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
 									sqlToyConfig, queryExecutor, dialect, false);
 							SqlToyResult queryParam = SqlConfigParseUtils.processSql(realSqlToyConfig.getSql(dialect),
-									extend.getParamsName(realSqlToyConfig),
+									extend.getParamsName(),
 									extend.getParamsValue(sqlToyContext, realSqlToyConfig), dialect);
 							// 增加sql执行拦截器 update 2022-9-10
 							queryParam = DialectUtils.doInterceptors(sqlToyContext, realSqlToyConfig,
@@ -2030,7 +2033,7 @@ public class DialectFactory {
 									sqlToyConfig, queryExecutor, dialect, false);
 							// 通过参数处理最终的sql和参数值
 							SqlToyResult queryParam = SqlConfigParseUtils.processSql(realSqlToyConfig.getSql(dialect),
-									extend.getParamsName(realSqlToyConfig),
+									extend.getParamsName(),
 									extend.getParamsValue(sqlToyContext, realSqlToyConfig), dialect);
 							// 增加sql执行拦截器 update 2022-9-10
 							queryParam = DialectUtils.doInterceptors(sqlToyContext, realSqlToyConfig,

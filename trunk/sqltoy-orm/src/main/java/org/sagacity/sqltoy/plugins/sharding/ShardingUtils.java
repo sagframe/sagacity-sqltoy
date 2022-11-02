@@ -251,8 +251,8 @@ public class ShardingUtils {
 		if (null == shardingConfig) {
 			return shardingDataSource;
 		}
-		String[] paramNames = extend.getDataSourceShardingParamsName(sqlToyConfig);
-		Object[] paramValues = extend.getDataSourceShardingParamsValue(sqlToyConfig);
+		String[] paramNames = extend.getDataSourceShardingParamsName();
+		Object[] paramValues = extend.getDataSourceShardingParamsValue();
 		IgnoreCaseLinkedMap<String, Object> valueMap = hashParams(paramNames, paramValues);
 		DataSource result = getShardingDataSource(sqlToyContext, sqlToyConfig, shardingConfig, valueMap);
 		if (result != null) {
