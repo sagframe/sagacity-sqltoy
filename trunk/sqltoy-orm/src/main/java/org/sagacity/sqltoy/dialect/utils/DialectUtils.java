@@ -149,7 +149,7 @@ public class DialectUtils {
 			QueryExecutor queryExecutor, String pageSql, Object startIndex, Object endIndex, String dialect)
 			throws Exception {
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
-		String[] paramsNamed = extend.getParamsName(sqlToyConfig);
+		String[] paramsNamed = extend.getParamsName();
 		Object[] paramsValue = extend.getParamsValue(sqlToyContext, sqlToyConfig);
 		if (startIndex == null && endIndex == null) {
 			return SqlConfigParseUtils.processSql(pageSql, paramsNamed, paramsValue, dialect);
@@ -521,7 +521,7 @@ public class DialectUtils {
 		}
 		// sharding table 替换sql中的表名称
 		ShardingUtils.replaceShardingSqlToyConfig(sqlToyContext, result, tableShardings, dialect,
-				extend.getTableShardingParamsName(sqlToyConfig), extend.getTableShardingParamsValue(sqlToyConfig));
+				extend.getTableShardingParamsName(), extend.getTableShardingParamsValue());
 		return result;
 	}
 

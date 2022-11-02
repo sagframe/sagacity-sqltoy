@@ -126,7 +126,7 @@ public class SqlServerDialect implements Dialect {
 		String judgeOrderSql = sqlToyConfig.isHasFast() ? fastSql : realSql;
 		// 避免条件用?模式,导致实际参数位置不匹配,因此只针对:name模式进行处理
 		if (isNamed) {
-			SqlToyResult tmpResult = SqlConfigParseUtils.processSql(judgeOrderSql, extend.getParamsName(sqlToyConfig),
+			SqlToyResult tmpResult = SqlConfigParseUtils.processSql(judgeOrderSql, extend.getParamsName(),
 					extend.getParamsValue(sqlToyContext, sqlToyConfig), dialect);
 			judgeOrderSql = tmpResult.getSql();
 		}

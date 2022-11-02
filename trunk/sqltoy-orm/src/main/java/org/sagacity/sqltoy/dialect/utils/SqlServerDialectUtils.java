@@ -106,7 +106,7 @@ public class SqlServerDialectUtils {
 			sql.append(") ").append(sqlToyConfig.getFastTailSql(dialect));
 		}
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
-		SqlToyResult queryParam = SqlConfigParseUtils.processSql(sql.toString(), extend.getParamsName(sqlToyConfig),
+		SqlToyResult queryParam = SqlConfigParseUtils.processSql(sql.toString(), extend.getParamsName(),
 				extend.getParamsValue(sqlToyContext, sqlToyConfig), dialect);
 		// 增加sql执行拦截器 update 2022-9-10
 		queryParam = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig,

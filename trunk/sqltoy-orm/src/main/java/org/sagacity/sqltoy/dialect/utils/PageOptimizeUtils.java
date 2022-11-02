@@ -48,7 +48,7 @@ public class PageOptimizeUtils {
 			return null;
 		}
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
-		String[] paramNames = extend.getParamsName(sqlToyConfig);
+		String[] paramNames = extend.getParamsName();
 		Object[] paramValues = extend.getParamsValue(sqlToyContext, sqlToyConfig);
 		// sql中所有参数都为null,返回sqlId作为key
 		if (paramValues == null || paramValues.length == 0) {

@@ -58,7 +58,7 @@ public class FieldMeta implements Serializable {
 	private int type;
 
 	/**
-	 * 字段java类型
+	 * 字段java类型(小写)
 	 */
 	private String fieldType;
 
@@ -259,6 +259,7 @@ public class FieldMeta implements Serializable {
 		this.keyword = keyword;
 	}
 
+	//EntityManager已经小写化处理
 	public String getFieldType() {
 		return fieldType;
 	}

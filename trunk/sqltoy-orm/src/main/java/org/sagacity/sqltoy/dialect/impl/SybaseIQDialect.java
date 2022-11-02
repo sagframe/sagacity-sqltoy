@@ -125,7 +125,7 @@ public class SybaseIQDialect implements Dialect {
 		try {
 			// 通过参数处理最终的sql和参数值
 			SqlToyResult queryParam = SqlConfigParseUtils.processSql(insertTempSql.toString(),
-					extend.getParamsName(sqlToyConfig), extend.getParamsValue(sqlToyContext, sqlToyConfig), dialect);
+					extend.getParamsName(), extend.getParamsValue(sqlToyContext, sqlToyConfig), dialect);
 
 			// 执行sql将记录插入临时表
 			SqlUtil.executeSql(sqlToyContext.getTypeHandler(), queryParam.getSql(), queryParam.getParamsValue(), null,

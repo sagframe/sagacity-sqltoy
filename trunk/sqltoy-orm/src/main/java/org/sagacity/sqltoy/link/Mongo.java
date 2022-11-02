@@ -165,7 +165,7 @@ public class Mongo extends BaseLink {
 			// update 2022-6-16 补全参数统一构造处理
 			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
 			// 最后的执行语句
-			String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, extend.getParamsName(sqlToyConfig),
+			String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, extend.getParamsName(),
 					extend.getParamsValue(sqlToyContext, sqlToyConfig));
 			// 聚合查询
 			if (noSqlModel.isHasAggs()) {
@@ -197,7 +197,7 @@ public class Mongo extends BaseLink {
 			// update 2022-6-16 补全参数统一构造处理
 			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
 			// 最后的执行语句
-			String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, extend.getParamsName(sqlToyConfig),
+			String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, extend.getParamsName(),
 					extend.getParamsValue(sqlToyContext, sqlToyConfig));
 			return findTop(getMongoTemplate(), sqlToyConfig, topSize, realMql, (Class) extend.resultType,
 					extend.humpMapLabel);
@@ -224,7 +224,7 @@ public class Mongo extends BaseLink {
 			// update 2022-6-16 补全参数统一构造处理
 			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
 			// 最后的执行语句
-			String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, extend.getParamsName(sqlToyConfig),
+			String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, extend.getParamsName(),
 					extend.getParamsValue(sqlToyContext, sqlToyConfig));
 			return findPage(getMongoTemplate(), sqlToyConfig, pageModel, realMql, (Class) extend.resultType,
 					extend.humpMapLabel);
