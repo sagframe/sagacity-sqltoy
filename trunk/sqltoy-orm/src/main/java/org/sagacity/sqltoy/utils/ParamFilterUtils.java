@@ -2,6 +2,7 @@ package org.sagacity.sqltoy.utils;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -385,6 +386,8 @@ public class ParamFilterUtils {
 			Object cloneValue = null;
 			if (paramValue instanceof String) {
 				cloneValue = paramValue.toString();
+			} else if (paramValue instanceof Timestamp) {
+				cloneValue = ((Timestamp) paramValue).clone();
 			} else if (paramValue instanceof Date) {
 				cloneValue = ((Date) paramValue).clone();
 			} else if (paramValue instanceof LocalDate) {

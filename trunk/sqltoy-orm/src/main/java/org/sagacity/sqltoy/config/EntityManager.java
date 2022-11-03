@@ -573,7 +573,6 @@ public class EntityManager {
 	 * @param allFieldAry
 	 * @param loadNamedWhereSql
 	 * @param loadArgWhereSql
-	 * @throws Exception
 	 */
 	private void parseFieldMeta(SqlToyContext sqlToyContext, EntityMeta entityMeta, Field field,
 			List<String> rejectIdFieldList, List<String> allFieldAry, StringBuilder loadNamedWhereSql,
@@ -655,7 +654,6 @@ public class EntityManager {
 	 * @param sqlToyContext
 	 * @param entityMeta
 	 * @param idGenerator
-	 * @throws Exception
 	 */
 	private void processIdGenerator(SqlToyContext sqlToyContext, EntityMeta entityMeta, String idGenerator) {
 		// 已经存在跳过处理
