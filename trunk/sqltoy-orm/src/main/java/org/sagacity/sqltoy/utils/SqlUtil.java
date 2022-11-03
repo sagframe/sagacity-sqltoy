@@ -119,7 +119,6 @@ public class SqlUtil {
 	 * @param property   :POJO property
 	 * @param isChar     :in 是否要加单引号
 	 * @return:example:1,2,3或'1','2','3'
-	 * @throws Exception
 	 */
 	@Deprecated
 	public static String combineQueryInStr(Object conditions, Integer colIndex, String property, boolean isChar) {
@@ -316,6 +315,8 @@ public class SqlUtil {
 			pst.setBigDecimal(paramIndex, (BigDecimal) paramValue);
 		} else if (paramValue instanceof java.time.LocalDate) {
 			pst.setDate(paramIndex, java.sql.Date.valueOf((LocalDate) paramValue));
+		} else if (paramValue instanceof java.sql.Timestamp) {
+			pst.setTimestamp(paramIndex, (java.sql.Timestamp) paramValue);
 		} else if (paramValue instanceof java.util.Date) {
 			if (dbType == DBType.CLICKHOUSE) {
 				pst.setDate(paramIndex, new java.sql.Date(((java.util.Date) paramValue).getTime()));
@@ -324,8 +325,6 @@ public class SqlUtil {
 			}
 		} else if (paramValue instanceof java.math.BigInteger) {
 			pst.setBigDecimal(paramIndex, new BigDecimal(((BigInteger) paramValue)));
-		} else if (paramValue instanceof java.sql.Timestamp) {
-			pst.setTimestamp(paramIndex, (java.sql.Timestamp) paramValue);
 		} else if (paramValue instanceof java.lang.Double) {
 			pst.setDouble(paramIndex, ((Double) paramValue));
 		} else if (paramValue instanceof java.lang.Long) {
