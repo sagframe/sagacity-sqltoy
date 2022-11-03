@@ -3,7 +3,6 @@
  */
 package org.sagacity.sqltoy.dialect.utils;
 
-import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Date;
@@ -147,7 +146,7 @@ public class DialectExtUtils {
 					|| "java.sql.date".equals(fieldType) || "java.sql.time".equals(fieldType)
 					|| "java.sql.timestamp".equals(fieldType)) {
 				String dateStr = "'" + tmpValue + "'";
-				//  oracle、db2支持merge into场景(sqlserver具有自行转换能力，无需进行格式转换)
+				// oracle、db2支持merge into场景(sqlserver具有自行转换能力，无需进行格式转换)
 				if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DB2) {
 					if ("java.time.localtime".equals(fieldType) || "java.sql.time".equals(fieldType)) {
 						if (dbType == DBType.DB2) {
@@ -428,8 +427,8 @@ public class DialectExtUtils {
 					return DateUtil.formatDate(unifyFieldValue, DateUtil.FORMAT.DATETIME_HORIZONTAL);
 				}
 				// 统一传参数值为日期类型，但数据库中是数字或字符串类型
-				if ((unifyFieldValue instanceof Date) || (unifyFieldValue instanceof Timestamp)
-						|| (unifyFieldValue instanceof LocalDate) || (unifyFieldValue instanceof LocalDateTime)) {
+				if ((unifyFieldValue instanceof Date) || (unifyFieldValue instanceof LocalDate)
+						|| (unifyFieldValue instanceof LocalDateTime)) {
 					if ("java.lang.integer".equals(fieldType) || "int".equals(fieldType)) {
 						return DateUtil.formatDate(unifyFieldValue, DateUtil.FORMAT.DATE_8CHAR);
 					} else if ("java.lang.long".equals(fieldType) || "java.math.biginteger".equals(fieldType)

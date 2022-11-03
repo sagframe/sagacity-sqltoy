@@ -2,6 +2,7 @@ package org.sagacity.sqltoy;
 
 import static java.lang.System.out;
 
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -291,6 +292,9 @@ public class SqlExecuteStat {
 				// 字符
 				if (paramValue instanceof CharSequence) {
 					lastSql.append("'" + paramValue + "'");
+				} // update 2022-11-3 timestamp显示毫秒级别
+				else if (paramValue instanceof Timestamp) {
+					lastSql.append("'" + DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss.SSS") + "'");
 				} else if (paramValue instanceof Date || paramValue instanceof LocalDateTime) {
 					lastSql.append("'" + DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss") + "'");
 				} else if (paramValue instanceof LocalDate) {
@@ -334,6 +338,8 @@ public class SqlExecuteStat {
 			value = array[i];
 			if (value instanceof CharSequence) {
 				result.append("'" + value + "'");
+			} else if (value instanceof Timestamp) {
+				result.append("'" + DateUtil.formatDate(value, "yyyy-MM-dd HH:mm:ss.SSS") + "'");
 			} else if (value instanceof Date || value instanceof LocalDateTime) {
 				result.append("'" + DateUtil.formatDate(value, "yyyy-MM-dd HH:mm:ss") + "'");
 			} else if (value instanceof LocalDate) {
