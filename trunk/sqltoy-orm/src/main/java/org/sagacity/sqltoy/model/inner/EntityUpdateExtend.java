@@ -39,6 +39,11 @@ public class EntityUpdateExtend implements Serializable {
 	public DataSource dataSource;
 
 	/**
+	 * 空白字符转为null
+	 */
+	public Boolean blankToNull;
+
+	/**
 	 * update 的字段名称和对应的值
 	 */
 	public IgnoreCaseLinkedMap<String, Object> updateValues = new IgnoreCaseLinkedMap<String, Object>();

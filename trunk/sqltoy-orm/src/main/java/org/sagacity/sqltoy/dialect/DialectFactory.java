@@ -328,8 +328,8 @@ public class DialectFactory {
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
 									sqlToyConfig, queryExecutor, dialect, false);
 							SqlToyResult queryParam = SqlConfigParseUtils.processSql(realSqlToyConfig.getSql(dialect),
-									extend.getParamsName(),
-									extend.getParamsValue(sqlToyContext, realSqlToyConfig), dialect);
+									extend.getParamsName(), extend.getParamsValue(sqlToyContext, realSqlToyConfig),
+									dialect);
 							// 增加sql执行拦截器 update 2022-9-10
 							queryParam = DialectUtils.doInterceptors(sqlToyContext, realSqlToyConfig,
 									(extend.entityClass == null) ? OperateType.execute : OperateType.singleTable,
@@ -810,12 +810,13 @@ public class DialectFactory {
 										SqlExecuteStat.debug("过程提示", "pageNo=-1,页面可能在做下载操作!");
 										// 通过参数处理最终的sql和参数值
 										SqlToyResult queryParam = SqlConfigParseUtils.processSql(
-												realSqlToyConfig.getSql(dialect),
-												extend.getParamsName(),
+												realSqlToyConfig.getSql(dialect), extend.getParamsName(),
 												extend.getParamsValue(sqlToyContext, realSqlToyConfig), dialect);
 										// 增加sql执行拦截器 update 2022-9-10
 										queryParam = DialectUtils.doInterceptors(sqlToyContext, realSqlToyConfig,
-												OperateType.search, queryParam, null, dbType);
+												(extend.entityClass == null) ? OperateType.search
+														: OperateType.singleTable,
+												queryParam, extend.entityClass, dbType);
 										queryResult = getDialectSqlWrapper(dbType).findBySql(sqlToyContext,
 												realSqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 												extend.rowCallbackHandler,
@@ -1110,11 +1111,12 @@ public class DialectFactory {
 									sqlToyConfig, queryExecutor, dialect, false);
 							// 通过参数处理最终的sql和参数值
 							SqlToyResult queryParam = SqlConfigParseUtils.processSql(realSqlToyConfig.getSql(dialect),
-									extend.getParamsName(),
-									extend.getParamsValue(sqlToyContext, realSqlToyConfig), dialect);
+									extend.getParamsName(), extend.getParamsValue(sqlToyContext, realSqlToyConfig),
+									dialect);
 							// 增加sql执行拦截器 update 2022-9-10
 							queryParam = DialectUtils.doInterceptors(sqlToyContext, realSqlToyConfig,
-									OperateType.search, queryParam, null, dbType);
+									(extend.entityClass == null) ? OperateType.search : OperateType.singleTable,
+									queryParam, extend.entityClass, dbType);
 							QueryResult queryResult = getDialectSqlWrapper(dbType).findBySql(sqlToyContext,
 									realSqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 									extend.rowCallbackHandler, wrapDecryptHandler(sqlToyContext, extend.resultType),
@@ -1890,8 +1892,8 @@ public class DialectFactory {
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
 									sqlToyConfig, queryExecutor, dialect, false);
 							SqlToyResult queryParam = SqlConfigParseUtils.processSql(realSqlToyConfig.getSql(dialect),
-									extend.getParamsName(),
-									extend.getParamsValue(sqlToyContext, realSqlToyConfig), dialect);
+									extend.getParamsName(), extend.getParamsValue(sqlToyContext, realSqlToyConfig),
+									dialect);
 							// 增加sql执行拦截器 update 2022-9-10
 							queryParam = DialectUtils.doInterceptors(sqlToyContext, realSqlToyConfig,
 									OperateType.fetchUpdate, queryParam, null, dbType);
@@ -2033,8 +2035,8 @@ public class DialectFactory {
 									sqlToyConfig, queryExecutor, dialect, false);
 							// 通过参数处理最终的sql和参数值
 							SqlToyResult queryParam = SqlConfigParseUtils.processSql(realSqlToyConfig.getSql(dialect),
-									extend.getParamsName(),
-									extend.getParamsValue(sqlToyContext, realSqlToyConfig), dialect);
+									extend.getParamsName(), extend.getParamsValue(sqlToyContext, realSqlToyConfig),
+									dialect);
 							// 增加sql执行拦截器 update 2022-9-10
 							queryParam = DialectUtils.doInterceptors(sqlToyContext, realSqlToyConfig,
 									OperateType.search, queryParam, null, dbType);
