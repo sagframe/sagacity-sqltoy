@@ -323,6 +323,11 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * 拆分merge into 为updateAll 和 saveAllIgnoreExist 两步操作(1、seata分布式事务不支持merge)
 	 */
 	private boolean splitMergeInto = false;
+	
+	/**
+	 * 变更操作型sql空白默认转为null
+	 */
+	private boolean executeSqlBlankToNull = true;
 
 	/**
 	 * @todo 初始化
@@ -353,6 +358,7 @@ public class SqlToyContext implements ApplicationContextAware {
 		ReservedWordsUtil.put(reservedWords);
 		// 设置默认fetchSize
 		SqlToyConstants.FETCH_SIZE = this.fetchSize;
+		SqlToyConstants.executeSqlBlankToNull = this.executeSqlBlankToNull;
 		// 初始化sql执行统计的基本参数
 		SqlExecuteStat.setDebug(this.debug);
 		SqlExecuteStat.setOverTimeSqlHandler(overTimeSqlHandler);
@@ -462,7 +468,8 @@ public class SqlToyContext implements ApplicationContextAware {
 		if (StringUtil.isBlank(sqlKey)) {
 			throw new IllegalArgumentException("sql or sqlId is null!");
 		}
-		return scriptLoader.getSqlConfig(sqlKey, sqlType, dialect);
+		return scriptLoader.getSqlConfig(sqlKey, sqlType, dialect,
+				SqlType.search.equals(sqlType) ? true : SqlToyConstants.executeSqlBlankToNull);
 	}
 
 	public SqlToyConfig getSqlToyConfig(QueryExecutor queryExecutor, SqlType sqlType, String dialect) {
@@ -480,14 +487,7 @@ public class SqlToyContext implements ApplicationContextAware {
 				sqlKey = "select * ".concat(sqlKey);
 			}
 		}
-		SqlToyConfig result = scriptLoader.getSqlConfig(sqlKey, sqlType, dialect);
-		// 剔除空白转null的默认设置
-		if (!queryExecutor.getInnerModel().blankToNull && StringUtil.isBlank(result.getId())) {
-			if (result.getFilters().size() == 1) {
-				result.getFilters().remove(0);
-			}
-		}
-		return result;
+		return scriptLoader.getSqlConfig(sqlKey, sqlType, dialect, queryExecutor.getInnerModel().blankToNull);
 	}
 
 	/**
@@ -1041,4 +1041,11 @@ public class SqlToyContext implements ApplicationContextAware {
 		this.updateTipCount = updateTipCount;
 	}
 
+	public boolean isExecuteSqlBlankToNull() {
+		return executeSqlBlankToNull;
+	}
+
+	public void setExecuteSqlBlankToNull(boolean executeSqlBlankToNull) {
+		this.executeSqlBlankToNull = executeSqlBlankToNull;
+	}
 }

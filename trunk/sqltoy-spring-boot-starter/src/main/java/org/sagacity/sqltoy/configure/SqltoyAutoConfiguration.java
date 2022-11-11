@@ -156,6 +156,7 @@ public class SqltoyAutoConfiguration {
 		sqlToyContext.setCacheType(properties.getCacheType());
 		// 修改多少条记录做特别提示
 		sqlToyContext.setUpdateTipCount(properties.getUpdateTipCount());
+		sqlToyContext.setExecuteSqlBlankToNull(properties.isExecuteSqlBlankToNull());
 		// 设置公共统一属性的处理器
 		String unfiyHandler = properties.getUnifyFieldsHandler();
 		if (StringUtil.isNotBlank(unfiyHandler)) {

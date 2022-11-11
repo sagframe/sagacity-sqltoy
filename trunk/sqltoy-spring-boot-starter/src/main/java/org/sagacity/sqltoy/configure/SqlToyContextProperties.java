@@ -189,6 +189,11 @@ public class SqlToyContextProperties implements Serializable {
 	 * 数据修改提示的记录数量阈值，默认2000条
 	 */
 	private int updateTipCount = 2000;
+	
+	/**
+	 * executeSql变更操作型sql执行空白参数是否默认转为null
+	 */
+	private boolean executeSqlBlankToNull = true;
 
 	/**
 	 * @return the sqlResourcesDir
@@ -555,6 +560,14 @@ public class SqlToyContextProperties implements Serializable {
 
 	public void setUpdateTipCount(int updateTipCount) {
 		this.updateTipCount = updateTipCount;
+	}
+
+	public boolean isExecuteSqlBlankToNull() {
+		return executeSqlBlankToNull;
+	}
+
+	public void setExecuteSqlBlankToNull(boolean executeSqlBlankToNull) {
+		this.executeSqlBlankToNull = executeSqlBlankToNull;
 	}
 
 }

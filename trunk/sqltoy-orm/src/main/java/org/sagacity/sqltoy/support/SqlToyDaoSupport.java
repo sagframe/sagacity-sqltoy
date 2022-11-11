@@ -181,7 +181,7 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected SqlToyConfig getSqlToyConfig(final String sqlKey, final SqlType sqlType) {
-		return sqlToyContext.getSqlToyConfig(sqlKey, sqlType, getDialect(null));
+		return sqlToyContext.getSqlToyConfig(sqlKey, (sqlType == null) ? SqlType.search : sqlType, getDialect(null));
 	}
 
 	/**
@@ -430,14 +430,21 @@ public class SqlToyDaoSupport {
 	 */
 	protected <T extends Serializable> List<T> loadByIds(final Class<T> voClass, final LockMode lockMode,
 			Object... ids) {
-		if (voClass == null || ids == null || ids.length == 0) {
+		if (voClass == null || ids == null || ids.length == 0 || (ids.length == 1 && ids[0] == null)) {
 			throw new IllegalArgumentException("voClass、ids must not null!");
 		}
 		EntityMeta entityMeta = getEntityMeta(voClass);
 		if (entityMeta == null || entityMeta.getIdArray() == null || entityMeta.getIdArray().length != 1) {
 			throw new IllegalArgumentException("voClass must is entity with @SqlToyEntity and must has primary key!");
 		}
-		List<T> entities = BeanUtil.wrapEntities(sqlToyContext.getTypeHandler(), entityMeta, voClass, ids);
+		Object[] realIds;
+		// 单个Collection,将List转为Array数组
+		if (ids.length == 1 && ids[0] instanceof Collection) {
+			realIds = ((Collection) ids[0]).toArray();
+		} else {
+			realIds = ids;
+		}
+		List<T> entities = BeanUtil.wrapEntities(sqlToyContext.getTypeHandler(), entityMeta, voClass, realIds);
 		return dialectFactory.loadAll(sqlToyContext, entities, null, lockMode, this.getDataSource(null));
 	}
 
@@ -687,7 +694,7 @@ public class SqlToyDaoSupport {
 			final Class<T> voClass) {
 		return (List<T>) findByQuery(
 				new QueryExecutor(sqlOrNamedSql, (paramsMap == null) ? MapKit.map() : paramsMap).resultType(voClass))
-				.getRows();
+						.getRows();
 	}
 
 	/**
@@ -787,7 +794,7 @@ public class SqlToyDaoSupport {
 			final Map<String, Object> paramsMap, Class<T> voClass) {
 		return (PaginationModel<T>) findPageByQuery(page,
 				new QueryExecutor(sqlOrNamedSql, (paramsMap == null) ? MapKit.map() : paramsMap).resultType(voClass))
-				.getPageResult();
+						.getPageResult();
 	}
 
 	protected <T> List<T> findTopBySql(final String sqlOrNamedSql, final Map<String, Object> paramsMap,
@@ -1227,7 +1234,6 @@ public class SqlToyDaoSupport {
 		EntityMeta entityMeta = getEntityMeta(entityClass);
 		String where = SqlUtil.convertFieldsToColumns(entityMeta, innerModel.where);
 		String sql = "delete from ".concat(entityMeta.getSchemaTable(null, null)).concat(" where ").concat(where);
-		SqlToyConfig sqlToyConfig = getSqlToyConfig(sql, SqlType.update);
 		QueryExecutor queryExecutor = null;
 		// :named 模式
 		if (SqlConfigParseUtils.hasNamedParam(where) && StringUtil.isBlank(innerModel.names)) {
@@ -1238,10 +1244,13 @@ public class SqlToyDaoSupport {
 		if (innerModel.paramFilters != null && innerModel.paramFilters.size() > 0) {
 			queryExecutor.getInnerModel().paramFilters.addAll(innerModel.paramFilters);
 		}
+		queryExecutor.getInnerModel().blankToNull = innerModel.blankToNull;
 		// 分库分表策略
 		setEntitySharding(queryExecutor, entityMeta);
 		// 为后续租户过滤提供判断依据(单表简单sql和对应的实体对象)
 		queryExecutor.getInnerModel().entityClass = entityClass;
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.delete,
+				getDialect(innerModel.dataSource));
 		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, queryExecutor, null, null,
 				getDataSource(innerModel.dataSource));
 	}
@@ -1253,15 +1262,23 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected Long deleteByIds(Class entityClass, Object... ids) {
-		if (!sqlToyContext.isEntity(entityClass) || ids == null || ids.length == 0) {
+		if (!sqlToyContext.isEntity(entityClass) || ids == null || ids.length == 0
+				|| (ids.length == 1 && ids[0] == null)) {
 			throw new IllegalArgumentException("deleteByIds entityClass必须是实体bean、主键数据不能为空!");
 		}
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entityClass);
 		if (entityMeta.getIdArray() == null || entityMeta.getIdArray().length != 1) {
 			throw new IllegalArgumentException("deleteByIds实体bean对应表有且只能有一个主键!");
 		}
+		Object[] realIds;
+		// 单个List,将List转为Array数组
+		if (ids.length == 1 && ids[0] instanceof Collection) {
+			realIds = ((Collection) ids[0]).toArray();
+		} else {
+			realIds = ids;
+		}
 		// 为什么统一转成对象集合?便于后面存在分库分表场景、ids超过1000条等场景
-		List entities = BeanUtil.wrapEntities(sqlToyContext.getTypeHandler(), entityMeta, entityClass, ids);
+		List entities = BeanUtil.wrapEntities(sqlToyContext.getTypeHandler(), entityMeta, entityClass, realIds);
 		return this.deleteAll(entities, null);
 	}
 
@@ -1782,9 +1799,9 @@ public class SqlToyDaoSupport {
 		if (SqlConfigParseUtils.hasNamedParam(where) && StringUtil.isBlank(innerModel.names)) {
 			queryExecutor = new QueryExecutor(sql,
 					(innerModel.values == null || innerModel.values.length == 0) ? null
-							: (Serializable) innerModel.values[0])
-					.resultType(resultType).dataSource(getDataSource(innerModel.dataSource))
-					.fetchSize(innerModel.fetchSize).maxRows(innerModel.maxRows);
+							: (Serializable) innerModel.values[0]).resultType(resultType)
+									.dataSource(getDataSource(innerModel.dataSource)).fetchSize(innerModel.fetchSize)
+									.maxRows(innerModel.maxRows);
 		} else {
 			queryExecutor = new QueryExecutor(sql).names(innerModel.names).values(innerModel.values)
 					.resultType(resultType).dataSource(getDataSource(innerModel.dataSource))
@@ -2015,12 +2032,15 @@ public class SqlToyDaoSupport {
 		}
 		sql.append(" where ").append(where);
 		String sqlStr = sql.toString();
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sqlStr, SqlType.update,
-				getDialect(innerModel.dataSource));
 		QueryExecutor queryExecutor = new QueryExecutor(sqlStr).names(realNames).values(realValues);
+		queryExecutor.getInnerModel().blankToNull = (innerModel.blankToNull == null)
+				? SqlToyConstants.executeSqlBlankToNull
+				: innerModel.blankToNull;
 		setEntitySharding(queryExecutor, entityMeta);
 		// 为后续租户过滤提供判断依据(单表简单sql和对应的实体对象)
 		queryExecutor.getInnerModel().entityClass = entityClass;
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.update,
+				getDialect(innerModel.dataSource));
 		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, queryExecutor, null, null,
 				getDataSource(innerModel.dataSource, sqlToyConfig));
 	}

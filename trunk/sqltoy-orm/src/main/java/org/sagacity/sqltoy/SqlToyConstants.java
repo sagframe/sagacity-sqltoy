@@ -134,6 +134,11 @@ public class SqlToyConstants {
 	public static int PARALLEL_MAXWAIT_SECONDS = 1800;
 
 	public static int FETCH_SIZE = -1;
+	
+	/**
+	 * 变更操作型sql空白默认转为null
+	 */
+	public static boolean executeSqlBlankToNull = true;
 
 	/**
 	 * 字符串中内嵌参数的匹配模式(update 2021-10-13 支持中文)

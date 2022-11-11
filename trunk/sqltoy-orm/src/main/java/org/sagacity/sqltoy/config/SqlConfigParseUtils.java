@@ -91,7 +91,7 @@ public class SqlConfigParseUtils {
 	// ((:idValues,:typeValues)) 模式
 	public final static Pattern IN_PATTERN = Pattern.compile(
 			"(?i)\\s+in\\s*((\\(\\s*\\?(\\s*\\,\\s*\\?)*\\s*\\))|((\\(\\s*){2}\\?(\\s*\\,\\s*\\?)+(\\s*\\)){2}))");
-	public final static Pattern LIKE_PATTERN = Pattern.compile("(?i)\\s+like\\s+\\?");
+	public final static Pattern LIKE_PATTERN = Pattern.compile("(?i)\\s+i?like\\s+\\?");
 
 	// add 2016-5-27 by chenrenfei
 	public final static String BLANK_REGEX = "(?i)\\@blank\\s*\\(\\s*\\?\\s*\\)";

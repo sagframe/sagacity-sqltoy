@@ -316,7 +316,8 @@ public class SqlXMLConfigParse {
 		if (countSql != null) {
 			countSql = countSql.replaceAll("\u3000", " ");
 		}
-		SqlType type = sqlElt.hasAttribute("type") ? SqlType.getSqlType(sqlElt.getAttribute("type")) : SqlType.search;
+		SqlType sqlType = sqlElt.hasAttribute("type") ? SqlType.getSqlType(sqlElt.getAttribute("type"))
+				: SqlType.search;
 		// 是否nosql模式
 		boolean isNoSql = false;
 		if ("mql".equals(nodeName) || "eql".equals(nodeName)) {
@@ -327,13 +328,13 @@ public class SqlXMLConfigParse {
 			}
 			isNoSql = true;
 		}
-		SqlToyConfig sqlToyConfig = SqlConfigParseUtils.parseSqlToyConfig(sqlContent, realDialect, type);
+		SqlToyConfig sqlToyConfig = SqlConfigParseUtils.parseSqlToyConfig(sqlContent, realDialect, sqlType);
 		// debug 控制台输出sql执行日志
 		if (sqlElt.hasAttribute("debug")) {
 			sqlToyConfig.setShowSql(Boolean.valueOf(sqlElt.getAttribute("debug")));
 		}
 		sqlToyConfig.setId(id);
-		sqlToyConfig.setSqlType(type);
+		sqlToyConfig.setSqlType(sqlType);
 		// 为sql提供特定数据库的扩展
 		if (sqlElt.hasAttribute("dataSource")) {
 			sqlToyConfig.setDataSource(sqlElt.getAttribute("dataSource"));
@@ -370,7 +371,7 @@ public class SqlXMLConfigParse {
 		// 解析参数过滤器
 		if (nodeList.getLength() > 0) {
 			parseFilters(sqlToyConfig, nodeList.item(0).getChildNodes(), blankToNull, local);
-		} else {
+		} else if (SqlType.search.equals(sqlType) || SqlToyConstants.executeSqlBlankToNull) {
 			parseFilters(sqlToyConfig, null, blankToNull, local);
 		}
 

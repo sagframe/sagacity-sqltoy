@@ -815,7 +815,9 @@ public class DialectFactory {
 												extend.getParamsValue(sqlToyContext, realSqlToyConfig), dialect);
 										// 增加sql执行拦截器 update 2022-9-10
 										queryParam = DialectUtils.doInterceptors(sqlToyContext, realSqlToyConfig,
-												OperateType.search, queryParam, null, dbType);
+												(extend.entityClass == null) ? OperateType.search
+														: OperateType.singleTable,
+												queryParam, extend.entityClass, dbType);
 										queryResult = getDialectSqlWrapper(dbType).findBySql(sqlToyContext,
 												realSqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 												extend.rowCallbackHandler,
@@ -1114,7 +1116,8 @@ public class DialectFactory {
 									extend.getParamsValue(sqlToyContext, realSqlToyConfig), dialect);
 							// 增加sql执行拦截器 update 2022-9-10
 							queryParam = DialectUtils.doInterceptors(sqlToyContext, realSqlToyConfig,
-									OperateType.search, queryParam, null, dbType);
+									(extend.entityClass == null) ? OperateType.search : OperateType.singleTable,
+											queryParam, extend.entityClass, dbType);
 							QueryResult queryResult = getDialectSqlWrapper(dbType).findBySql(sqlToyContext,
 									realSqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 									extend.rowCallbackHandler, wrapDecryptHandler(sqlToyContext, extend.resultType),

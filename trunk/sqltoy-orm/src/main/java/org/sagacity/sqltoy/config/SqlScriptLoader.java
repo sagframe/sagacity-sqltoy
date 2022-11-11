@@ -196,9 +196,10 @@ public class SqlScriptLoader {
 	 * @param sqlKey
 	 * @param sqlType
 	 * @param dialect
+	 * @param blankToNull
 	 * @return
 	 */
-	public SqlToyConfig getSqlConfig(String sqlKey, SqlType sqlType, String dialect) {
+	public SqlToyConfig getSqlConfig(String sqlKey, SqlType sqlType, String dialect, boolean blankToNull) {
 		if (StringUtil.isBlank(sqlKey)) {
 			throw new IllegalArgumentException("sql or sqlId is null!");
 		}
@@ -206,7 +207,7 @@ public class SqlScriptLoader {
 		String realDialect = (dialect == null) ? "" : dialect.toLowerCase();
 		// sqlId形式
 		if (SqlConfigParseUtils.isNamedQuery(sqlKey)) {
-			if (!realDialect.equals("")) {
+			if (!"".equals(realDialect)) {
 				// sqlId_dialect
 				result = sqlCache.get(sqlKey.concat("_").concat(realDialect));
 				// dialect_sqlId
@@ -244,7 +245,9 @@ public class SqlScriptLoader {
 			if (result == null) {
 				result = SqlConfigParseUtils.parseSqlToyConfig(sqlKey, realDialect, sqlType);
 				// 设置默认空白查询条件过滤filter,便于直接传递sql语句情况下查询条件的处理
-				result.addFilter(new ParamFilterModel("blank", new String[] { "*" }));
+				if (blankToNull) {
+					result.addFilter(new ParamFilterModel("blank", new String[] { "*" }));
+				}
 				// 限制数量的原因是存在部分代码中的sql会拼接条件参数值，导致不同的sql无限增加
 				if (codeSqlCache.size() < SqlToyConstants.getMaxCodeSqlCount()) {
 					codeSqlCache.put(sqlKey, result);
@@ -293,14 +296,14 @@ public class SqlScriptLoader {
 	}
 
 	/**
-	 * @param resourcesDir the resourcesDir to set
+	 * @param sqlResourcesDir the resourcesDir to set
 	 */
 	public void setSqlResourcesDir(String sqlResourcesDir) {
 		this.sqlResourcesDir = sqlResourcesDir;
 	}
 
 	/**
-	 * @param mappingResources the mappingResources to set
+	 * @param sqlResources the mappingResources to set
 	 */
 	public void setSqlResources(List sqlResources) {
 		this.sqlResources = sqlResources;
