@@ -312,27 +312,25 @@ public class ParamFilterUtils {
 						isExclusive = true;
 					}
 				}
-			} else {
-				if (null != paramValue && null != compareValues) {
-					Object result = paramValue;
-					if (">=".equals(compareType)) {
-						result = filterMoreEquals(paramValue, compareValues[0]);
-					} else if (">".equals(compareType)) {
-						result = filterMore(paramValue, compareValues[0]);
-					} else if ("<=".equals(compareType)) {
-						result = filterLessEquals(paramValue, compareValues[0]);
-					} else if ("<".equals(compareType)) {
-						result = filterLess(paramValue, compareValues[0]);
-					} else if ("<>".equals(compareType)) {
-						result = filterNotEquals(paramValue, compareValues);
-					} else if ("between".equals(compareType)) {
-						result = filterBetween(paramValue, compareValues[0], compareValues[compareValues.length - 1]);
-					} else if ("in".equals(compareType)) {
-						result = filterEquals(paramValue, compareValues);
-					}
-					if (null == result) {
-						isExclusive = true;
-					}
+			} else if (null != paramValue && null != compareValues) {
+				Object result = paramValue;
+				if (">=".equals(compareType)) {
+					result = filterMoreEquals(paramValue, compareValues[0]);
+				} else if (">".equals(compareType)) {
+					result = filterMore(paramValue, compareValues[0]);
+				} else if ("<=".equals(compareType)) {
+					result = filterLessEquals(paramValue, compareValues[0]);
+				} else if ("<".equals(compareType)) {
+					result = filterLess(paramValue, compareValues[0]);
+				} else if ("<>".equals(compareType)) {
+					result = filterNotEquals(paramValue, compareValues);
+				} else if ("between".equals(compareType)) {
+					result = filterBetween(paramValue, compareValues[0], compareValues[compareValues.length - 1]);
+				} else if ("in".equals(compareType)) {
+					result = filterEquals(paramValue, compareValues);
+				}
+				if (null == result) {
+					isExclusive = true;
 				}
 			}
 		}
@@ -899,17 +897,21 @@ public class ParamFilterUtils {
 		String contrast;
 		for (Object tmp : contrasts) {
 			contrast = tmp.toString();
+			// 日期
 			if (type == 1) {
-				if (param instanceof LocalTime) {
-					if (((LocalTime) param).compareTo(LocalTime.parse(contrast)) == 0) {
-						return null;
-					}
-				} else {
-					Date compareDate = "sysdate".equals(contrast.toLowerCase())
-							? DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT)
-							: DateUtil.convertDateObject(contrast);
-					if (compareDate != null && DateUtil.convertDateObject(param).compareTo(compareDate) == 0) {
-						return null;
+				// 长度小于6不够成日期、时间类型格式
+				if (contrast.length() >= 6) {
+					if (param instanceof LocalTime) {
+						if (((LocalTime) param).compareTo(LocalTime.parse(contrast)) == 0) {
+							return null;
+						}
+					} else {
+						Date compareDate = "sysdate".equals(contrast.toLowerCase())
+								? DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT)
+								: DateUtil.convertDateObject(contrast);
+						if (compareDate != null && DateUtil.convertDateObject(param).compareTo(compareDate) == 0) {
+							return null;
+						}
 					}
 				}
 			} else if (type == 2) {
@@ -965,16 +967,19 @@ public class ParamFilterUtils {
 				return param;
 			}
 			if (type == 1) {
-				if (param instanceof LocalTime) {
-					if (((LocalTime) param).compareTo(LocalTime.parse(contrast)) == 0) {
-						return param;
-					}
-				} else {
-					Date compareDate = "sysdate".equalsIgnoreCase(contrast)
-							? DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT)
-							: DateUtil.convertDateObject(contrast);
-					if (DateUtil.convertDateObject(param).compareTo(compareDate) == 0) {
-						return param;
+				// 长度小于6不够成日期、时间类型格式
+				if (contrast.length() >= 6) {
+					if (param instanceof LocalTime) {
+						if (((LocalTime) param).compareTo(LocalTime.parse(contrast)) == 0) {
+							return param;
+						}
+					} else {
+						Date compareDate = "sysdate".equalsIgnoreCase(contrast)
+								? DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT)
+								: DateUtil.convertDateObject(contrast);
+						if (DateUtil.convertDateObject(param).compareTo(compareDate) == 0) {
+							return param;
+						}
 					}
 				}
 			} else if (type == 2) {

@@ -279,4 +279,25 @@ public class SqlConfigParseUtilsTest {
 		System.err.println(JSON.toJSONString(result));
 	}
 
+	@Test
+	public void testOverSizeIn6() throws Exception {
+		String sql = "select * from table t where t.biz_date >=:dates[0] and t.biz_date<=:dates[1]";
+
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "dates" },
+				new Object[] { new Object[] { "2022-10-1", "2022-10-30" } });
+		System.err.println(result.getSql());
+		System.err.println(result.getParamsValue().length);
+	}
+
+	@Test
+	public void testLike() throws Exception {
+		String sql = "select * from table t where t.name ilike :name and t.desc like :desc";
+
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "name", "desc" },
+				new Object[] { "张三", "验证" });
+		System.err.println(result.getSql());
+		for (Object obj : result.getParamsValue()) {
+			System.err.println(obj);
+		}
+	}
 }
