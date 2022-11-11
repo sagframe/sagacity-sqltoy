@@ -46,6 +46,15 @@ public class EntityUpdate implements Serializable {
 		return this;
 	}
 
+	/**
+	 * @TODO 设置参数值为空白是否转null
+	 * @return
+	 */
+	public EntityUpdate blankToNull(Boolean blankToNull) {
+		innerModel.blankToNull = blankToNull;
+		return this;
+	}
+
 	public EntityUpdate values(Object... values) {
 		if (values != null && values.length == 1 && values[0] != null && values[0] instanceof Map) {
 			innerModel.values = new Object[] { new IgnoreKeyCaseMap((Map) values[0]) };

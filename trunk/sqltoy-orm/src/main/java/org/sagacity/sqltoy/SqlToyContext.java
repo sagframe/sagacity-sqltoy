@@ -329,6 +329,11 @@ public class SqlToyContext {
 	private boolean splitMergeInto = false;
 
 	/**
+	 * 变更操作型sql空白默认转为null
+	 */
+	private boolean executeSqlBlankToNull = true;
+
+	/**
 	 * @todo 初始化
 	 * @throws Exception
 	 */
@@ -363,6 +368,7 @@ public class SqlToyContext {
 		ReservedWordsUtil.put(reservedWords);
 		// 设置默认fetchSize
 		SqlToyConstants.FETCH_SIZE = this.fetchSize;
+		SqlToyConstants.executeSqlBlankToNull = this.executeSqlBlankToNull;
 		// 初始化sql执行统计的基本参数
 		SqlExecuteStat.setDebug(this.debug);
 		SqlExecuteStat.setOverTimeSqlHandler(overTimeSqlHandler);
@@ -467,7 +473,8 @@ public class SqlToyContext {
 		if (StringUtil.isBlank(sqlKey)) {
 			throw new IllegalArgumentException("sql or sqlId is null!");
 		}
-		return scriptLoader.getSqlConfig(sqlKey, sqlType, dialect);
+		return scriptLoader.getSqlConfig(sqlKey, sqlType, dialect,
+				SqlType.search.equals(sqlType) ? true : SqlToyConstants.executeSqlBlankToNull);
 	}
 
 	public SqlToyConfig getSqlToyConfig(QueryExecutor queryExecutor, SqlType sqlType, String dialect) {
@@ -485,14 +492,7 @@ public class SqlToyContext {
 				sqlKey = "select * ".concat(sqlKey);
 			}
 		}
-		SqlToyConfig result = scriptLoader.getSqlConfig(sqlKey, sqlType, dialect);
-		// 剔除空白转null的默认设置
-		if (!queryExecutor.getInnerModel().blankToNull && StringUtil.isBlank(result.getId())) {
-			if (result.getFilters().size() == 1) {
-				result.getFilters().remove(0);
-			}
-		}
-		return result;
+		return scriptLoader.getSqlConfig(sqlKey, sqlType, dialect, queryExecutor.getInnerModel().blankToNull);
 	}
 
 	/**
@@ -1076,4 +1076,11 @@ public class SqlToyContext {
 		this.updateTipCount = updateTipCount;
 	}
 
+	public boolean isExecuteSqlBlankToNull() {
+		return executeSqlBlankToNull;
+	}
+
+	public void setExecuteSqlBlankToNull(boolean executeSqlBlankToNull) {
+		this.executeSqlBlankToNull = executeSqlBlankToNull;
+	}
 }

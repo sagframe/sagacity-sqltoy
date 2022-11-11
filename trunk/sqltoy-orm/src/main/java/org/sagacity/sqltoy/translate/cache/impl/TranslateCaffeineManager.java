@@ -103,7 +103,6 @@ public class TranslateCaffeineManager extends TranslateCacheManager {
 		}
 		synchronized (cacheName.intern()) {
 			Cache cache = cacheManager.getCache(cacheName);
-			// 缓存没有配置,自动创建缓存不建议使用
 			if (cache != null) {
 				if (StringUtil.isBlank(cacheType)) {
 					cache.clear();

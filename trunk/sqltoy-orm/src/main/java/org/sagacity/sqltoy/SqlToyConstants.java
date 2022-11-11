@@ -136,16 +136,22 @@ public class SqlToyConstants {
 	public static int FETCH_SIZE = -1;
 
 	/**
+	 * 变更操作型sql空白默认转为null
+	 */
+	public static boolean executeSqlBlankToNull = true;
+
+	/**
 	 * 字符串中内嵌参数的匹配模式
 	 */
-	public final static Pattern paramPattern = Pattern
-			.compile("\\$\\{\\s*[0-9a-zA-Z\u4e00-\u9fa5]+((\\.|\\_)[0-9a-zA-Z\u4e00-\u9fa5]+)*(\\[\\d*(\\,)?\\d*\\])?\\s*\\}");
+	public final static Pattern paramPattern = Pattern.compile(
+			"\\$\\{\\s*[0-9a-zA-Z\u4e00-\u9fa5]+((\\.|\\_)[0-9a-zA-Z\u4e00-\u9fa5]+)*(\\[\\d*(\\,)?\\d*\\])?\\s*\\}");
 
 	// update 2020-9-16 将\\W 替换为[^A-Za-z0-9_:] 增加排除: 适应::jsonb 这种模式场景
 	// update 2021-10-13 增加参数名称为中文场景(应对一些极为不规范的项目场景)
-	public final static Pattern SQL_NAMED_PATTERN = Pattern.compile("[^A-Za-z0-9_:\u4e00-\u9fa5]\\:\\s*[a-zA-Z\u4e00-\u9fa5][a-zA-Z0-9_\u4e00-\u9fa5]*(\\.[\\w\u4e00-\u9fa5]+)*\\s*");
-	public final static Pattern NOSQL_NAMED_PATTERN = Pattern
-			.compile("(?i)\\@(param|blank|value)?\\(\\s*\\:\\s*[a-zA-Z\u4e00-\u9fa5][a-zA-Z0-9_\u4e00-\u9fa5]*(\\.[\\w\u4e00-\u9fa5]+)*\\s*\\)");
+	public final static Pattern SQL_NAMED_PATTERN = Pattern.compile(
+			"[^A-Za-z0-9_:\u4e00-\u9fa5]\\:\\s*[a-zA-Z\u4e00-\u9fa5][a-zA-Z0-9_\u4e00-\u9fa5]*(\\.[\\w\u4e00-\u9fa5]+)*\\s*");
+	public final static Pattern NOSQL_NAMED_PATTERN = Pattern.compile(
+			"(?i)\\@(param|blank|value)?\\(\\s*\\:\\s*[a-zA-Z\u4e00-\u9fa5][a-zA-Z0-9_\u4e00-\u9fa5]*(\\.[\\w\u4e00-\u9fa5]+)*\\s*\\)");
 
 	// mysql8 支持 with recursive cte as
 	// postgresql12 支持materialized 物化
