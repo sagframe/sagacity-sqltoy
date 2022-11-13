@@ -11,6 +11,7 @@ import java.util.Set;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
+import org.sagacity.sqltoy.config.model.KeyAndIndex;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.exception.DataAccessException;
@@ -75,6 +76,8 @@ public class QueryExecutorBuilder {
 			}
 			fullParamValues = new Object[fullParamNames.length];
 			String[] paramNames = extend.paramsName;
+			KeyAndIndex keyAndIndex;
+			String paramLow;
 			// 将传递的paramValues填充到扩展后数组的对应位置
 			if (paramNames != null && paramNames.length > 0) {
 				Object[] paramValues = extend.paramsValue;
@@ -83,8 +86,15 @@ public class QueryExecutorBuilder {
 					paramIndexMap.put(paramNames[i].toLowerCase(), i);
 				}
 				for (int i = 0; i < fullParamNames.length; i++) {
-					if (paramIndexMap.containsKey(fullParamNames[i].toLowerCase())) {
-						fullParamValues[i] = paramValues[paramIndexMap.get(fullParamNames[i].toLowerCase())];
+					paramLow = fullParamNames[i].toLowerCase();
+					if (paramIndexMap.containsKey(paramLow)) {
+						fullParamValues[i] = paramValues[paramIndexMap.get(paramLow)];
+					} else {
+						keyAndIndex = BeanUtil.getKeyAndIndex(paramLow);
+						if (keyAndIndex != null && paramIndexMap.containsKey(keyAndIndex.getKey())) {
+							fullParamValues[i] = BeanUtil.getAryPropValue(
+									paramValues[paramIndexMap.get(keyAndIndex.getKey())], keyAndIndex.getIndex());
+						}
 					}
 				}
 			}
@@ -93,11 +103,9 @@ public class QueryExecutorBuilder {
 		if (filterAuthData) {
 			dataAuthFilter(sqlToyContext.getUnifyFieldsHandler(), sqlToyConfig, fullParamNames, fullParamValues);
 		}
-
 		// 回写QueryExecutor中的参数值
 		extend.paramsName = fullParamNames;
 		extend.paramsValue = fullParamValues;
-
 		IgnoreKeyCaseMap<String, Object> keyValueMap = new IgnoreKeyCaseMap<String, Object>();
 		for (int i = 0; i < fullParamNames.length; i++) {
 			if (fullParamNames[i] != null) {
@@ -107,7 +115,6 @@ public class QueryExecutorBuilder {
 		// 分表参数名称和对应值
 		extend.tableShardingParams = getTableShardingParams(extend, sqlToyConfig);
 		extend.tableShardingValues = wrapParamsValue(keyValueMap, extend.tableShardingParams);
-
 		// 分库参数名称和对应值
 		extend.dbShardingParams = getDbShardingParams(extend, sqlToyConfig);
 		extend.dbShardingValues = wrapParamsValue(keyValueMap, extend.dbShardingParams);
