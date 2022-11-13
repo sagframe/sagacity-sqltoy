@@ -11,6 +11,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.sagacity.sqltoy.SqlToyConstants;
+import org.sagacity.sqltoy.config.model.KeyAndIndex;
 import org.sagacity.sqltoy.config.model.SqlParamsModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
@@ -21,6 +22,7 @@ import org.sagacity.sqltoy.plugins.function.FunctionUtils;
 import org.sagacity.sqltoy.plugins.id.macro.AbstractMacro;
 import org.sagacity.sqltoy.plugins.id.macro.MacroUtils;
 import org.sagacity.sqltoy.plugins.id.macro.impl.SqlLoop;
+import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.MacroIfLogic;
@@ -91,8 +93,9 @@ public class SqlConfigParseUtils {
 	// ((:idValues,:typeValues)) 模式
 	public final static Pattern IN_PATTERN = Pattern.compile(
 			"(?i)\\s+in\\s*((\\(\\s*\\?(\\s*\\,\\s*\\?)*\\s*\\))|((\\(\\s*){2}\\?(\\s*\\,\\s*\\?)+(\\s*\\)){2}))");
-	//public final static Pattern LIKE_PATTERN = Pattern.compile("(?i)\\s+like\\s+\\?");
-	//update 2022-11-11 兼容ilike
+	// public final static Pattern LIKE_PATTERN =
+	// Pattern.compile("(?i)\\s+like\\s+\\?");
+	// update 2022-11-11 兼容ilike
 	public final static Pattern LIKE_PATTERN = Pattern.compile("(?i)\\s+i?like\\s+\\?");
 
 	// add 2016-5-27 by chenrenfei
@@ -323,8 +326,19 @@ public class SqlConfigParseUtils {
 			}
 			i = 0;
 			// 不区分大小写匹配
+			KeyAndIndex keyAndIndex;
+			String nameLow;
 			for (String name : sqlParamsName) {
-				result[i] = nameValueMap.get(name.toLowerCase());
+				nameLow = name.toLowerCase();
+				result[i] = nameValueMap.get(nameLow);
+				// 数组
+				if (result[i] == null) {
+					keyAndIndex = BeanUtil.getKeyAndIndex(nameLow);
+					if (keyAndIndex != null) {
+						result[i] = BeanUtil.getAryPropValue(nameValueMap.get(keyAndIndex.getKey()),
+								keyAndIndex.getIndex());
+					}
+				}
 				i++;
 			}
 		}

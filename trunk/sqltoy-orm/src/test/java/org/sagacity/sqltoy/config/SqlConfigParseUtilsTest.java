@@ -300,4 +300,15 @@ public class SqlConfigParseUtilsTest {
 			System.err.println(obj);
 		}
 	}
+
+	@Test
+	public void testMatchNamedParam() throws Exception {
+		String[] names = new String[] { "item[0]", "item[1]", "name", "status" };
+		Object[] values = SqlConfigParseUtils.matchNamedParam(names, new String[] { "item", "name", "status" },
+				new Object[] { new Object[] { "1", "2" }, "chen", 1 });
+
+		for (Object obj : values) {
+			System.err.println(obj);
+		}
+	}
 }

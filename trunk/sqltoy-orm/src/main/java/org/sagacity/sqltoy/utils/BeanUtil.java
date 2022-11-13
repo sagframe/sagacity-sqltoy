@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
 
 import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.config.annotation.Entity;
@@ -35,6 +36,7 @@ import org.sagacity.sqltoy.config.annotation.OneToOne;
 import org.sagacity.sqltoy.config.annotation.SqlToyEntity;
 import org.sagacity.sqltoy.config.model.DataType;
 import org.sagacity.sqltoy.config.model.EntityMeta;
+import org.sagacity.sqltoy.config.model.KeyAndIndex;
 import org.sagacity.sqltoy.config.model.TableCascadeModel;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
@@ -51,7 +53,8 @@ import org.slf4j.LoggerFactory;
  * @modify data:2020-06-23 优化convertType(Object, String) 方法
  * @modify data:2020-07-08 修复convertType(Object, String) 转Long类型时精度丢失问题
  * @modify data:2021-03-12 支持property中含下划线跟对象方法进行匹配
- * @modify data:2022-10-19 convertType类型匹配改成int类型的匹配,通过DataType将TypeName转化为int，批量时效率大幅提升
+ * @modify data:2022-10-19
+ *         convertType类型匹配改成int类型的匹配,通过DataType将TypeName转化为int，批量时效率大幅提升
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class BeanUtil {
@@ -59,6 +62,8 @@ public class BeanUtil {
 	 * 定义日志
 	 */
 	protected final static Logger logger = LoggerFactory.getLogger(BeanUtil.class);
+
+	public final static Pattern ARRAY_PATTERN = Pattern.compile("\\[\\d+\\]$");
 
 	/**
 	 * 保存set方法
@@ -999,10 +1004,12 @@ public class BeanUtil {
 		Iterator<?> iter;
 		Map.Entry<String, Object> entry;
 		boolean isMapped = false;
+		String fieldTrim;
 		String fieldLow;
 		Object fieldValue;
 		boolean hasKey = false;
 		try {
+			KeyAndIndex keyAndIndex;
 			// 通过反射提取属性getMethod返回的数据值
 			for (int i = 0; i < methodLength; i++) {
 				if (properties[i] != null) {
@@ -1027,20 +1034,40 @@ public class BeanUtil {
 						int index = 0;
 						int fieldLen = fields.length;
 						for (String field : fields) {
+							fieldTrim = field.trim();
 							// 支持map类型 update 2021-01-31
 							if (fieldValue instanceof Map) {
 								if (fieldValue instanceof IgnoreKeyCaseMap) {
-									fieldValue = ((IgnoreKeyCaseMap) fieldValue).get(field.trim());
+									if (!((IgnoreKeyCaseMap) fieldValue).containsKey(fieldTrim)) {
+										keyAndIndex = getKeyAndIndex(fieldTrim);
+										if (keyAndIndex != null) {
+											fieldValue = getAryPropValue(
+													((IgnoreKeyCaseMap) fieldValue).get(keyAndIndex.getKey()),
+													keyAndIndex.getIndex());
+										} else {
+											fieldValue = null;
+										}
+									} else {
+										fieldValue = ((IgnoreKeyCaseMap) fieldValue).get(fieldTrim);
+									}
 								} else {
 									iter = ((Map) fieldValue).entrySet().iterator();
 									isMapped = false;
-									fieldLow = field.trim().toLowerCase();
+									fieldLow = fieldTrim.toLowerCase();
 									while (iter.hasNext()) {
 										entry = (Map.Entry<String, Object>) iter.next();
 										if (entry.getKey().toLowerCase().equals(fieldLow)) {
 											fieldValue = entry.getValue();
 											isMapped = true;
 											break;
+										} else {
+											keyAndIndex = getKeyAndIndex(fieldLow);
+											if (keyAndIndex != null
+													&& entry.getKey().toLowerCase().equals(keyAndIndex.getKey())) {
+												fieldValue = getAryPropValue(entry.getValue(), keyAndIndex.getIndex());
+												isMapped = true;
+												break;
+											}
 										}
 									}
 									if (!isMapped) {
@@ -1052,11 +1079,11 @@ public class BeanUtil {
 								List tmp = (List) fieldValue;
 								// a.b.c 在最后一个属性c之前的属性取值
 								if (index < fieldLen - 1) {
-									fieldValue = sliceToArray(tmp, field.trim());
+									fieldValue = sliceToArray(tmp, fieldTrim);
 								} else {
 									Object[] fieldValueAry = new Object[tmp.size()];
 									for (int j = 0; j < tmp.size(); j++) {
-										fieldValueAry[j] = getProperty(tmp.get(j), field.trim());
+										fieldValueAry[j] = getComplexProperty(tmp.get(j), fieldTrim);
 									}
 									fieldValue = fieldValueAry;
 								}
@@ -1064,11 +1091,11 @@ public class BeanUtil {
 								Object[] tmp = (Object[]) fieldValue;
 								Object[] fieldValueAry = new Object[tmp.length];
 								for (int j = 0; j < tmp.length; j++) {
-									fieldValueAry[j] = getProperty(tmp[j], field.trim());
+									fieldValueAry[j] = getComplexProperty(tmp[j], fieldTrim);
 								}
 								fieldValue = fieldValueAry;
 							} else {
-								fieldValue = getProperty(fieldValue, field.trim());
+								fieldValue = getComplexProperty(fieldValue, fieldTrim);
 							}
 							if (fieldValue == null) {
 								break;
@@ -1664,6 +1691,46 @@ public class BeanUtil {
 	}
 
 	/**
+	 * @TODO 代替BeanUtils.getProperty 方法,增加item[1] 数组模式调用
+	 * @param bean
+	 * @param property
+	 * @return
+	 * @throws RuntimeException
+	 */
+	public static Object getComplexProperty(Object bean, String property) throws RuntimeException {
+		KeyAndIndex keyAndIndex = getKeyAndIndex(property);
+		String realProperty = (keyAndIndex == null) ? property : keyAndIndex.getKey();
+		Object result = null;
+		if (bean instanceof Map) {
+			result = ((Map) bean).get(property);
+			if (result == null && keyAndIndex != null) {
+				result = getAryPropValue(((Map) bean).get(realProperty), keyAndIndex.getIndex());
+			}
+			return result;
+		}
+		String key = bean.getClass().getName().concat(":get").concat(realProperty);
+		// 利用缓存提升方法匹配效率
+		Method method = getMethods.get(key);
+		if (method == null) {
+			method = matchGetMethods(bean.getClass(), new String[] { realProperty })[0];
+			if (method == null) {
+				return null;
+			}
+			getMethods.put(key, method);
+		}
+		try {
+			result = method.invoke(bean);
+			if (result != null && keyAndIndex != null) {
+				result = getAryPropValue(result, keyAndIndex.getIndex());
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException(e.getMessage());
+		}
+		return result;
+	}
+
+	/**
 	 * @TODO 为loadByIds提供Entity集合封装,便于将调用方式统一
 	 * @param <T>
 	 * @param typeHandler
@@ -1963,5 +2030,35 @@ public class BeanUtil {
 			cascadeModels.put(className, result);
 		}
 		return result;
+	}
+
+	public static KeyAndIndex getKeyAndIndex(String property) {
+		if (property == null) {
+			return null;
+		}
+		if (!StringUtil.matches(property, ARRAY_PATTERN)) {
+			return null;
+		}
+		KeyAndIndex result = new KeyAndIndex();
+		int lastIndex = property.lastIndexOf("[");
+		result.setKey(property.substring(0, lastIndex));
+		result.setIndex(Integer.parseInt(property.substring(lastIndex + 1, property.length() - 1)));
+		return result;
+	}
+
+	public static Object getAryPropValue(Object result, int index) {
+		if (result == null) {
+			return null;
+		}
+		Object[] ary = null;
+		if (result instanceof Object[]) {
+			ary = (Object[]) result;
+		} else if (result instanceof Collection) {
+			ary = ((Collection) result).toArray();
+		}
+		if (ary != null && ary.length > index) {
+			return ary[index];
+		}
+		return null;
 	}
 }
