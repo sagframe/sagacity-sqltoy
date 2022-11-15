@@ -310,5 +310,10 @@ public class SqlConfigParseUtilsTest {
 		for (Object obj : values) {
 			System.err.println(obj);
 		}
+		String property = "item[120]";
+		int lastIndex = property.lastIndexOf("[");
+		String key = property.substring(0, lastIndex);
+		int index = Integer.parseInt(property.substring(lastIndex + 1, property.length() - 1));
+		System.err.println("key=[" + key + "] index=[" + index + "]");
 	}
 }
