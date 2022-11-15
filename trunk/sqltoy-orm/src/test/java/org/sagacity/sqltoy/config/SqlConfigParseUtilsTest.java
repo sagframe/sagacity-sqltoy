@@ -300,4 +300,20 @@ public class SqlConfigParseUtilsTest {
 			System.err.println(obj);
 		}
 	}
+
+	@Test
+	public void testMatchNamedParam() throws Exception {
+		String[] names = new String[] { "item[0]", "item[1]", "name", "status" };
+		Object[] values = SqlConfigParseUtils.matchNamedParam(names, new String[] { "item", "name", "status" },
+				new Object[] { new Object[] { "1", "2" }, "chen", 1 });
+
+		for (Object obj : values) {
+			System.err.println(obj);
+		}
+		String property = "item[120]";
+		int lastIndex = property.lastIndexOf("[");
+		String key = property.substring(0, lastIndex);
+		int index = Integer.parseInt(property.substring(lastIndex + 1, property.length() - 1));
+		System.err.println("key=[" + key + "] index=[" + index + "]");
+	}
 }

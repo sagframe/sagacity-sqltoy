@@ -149,9 +149,9 @@ public class SqlToyConstants {
 	// update 2020-9-16 将\\W 替换为[^A-Za-z0-9_:] 增加排除: 适应::jsonb 这种模式场景
 	// update 2021-10-13 增加参数名称为中文场景(应对一些极为不规范的项目场景)
 	public final static Pattern SQL_NAMED_PATTERN = Pattern.compile(
-			"[^A-Za-z0-9_:\u4e00-\u9fa5]\\:\\s*[a-zA-Z\u4e00-\u9fa5][a-zA-Z0-9_\u4e00-\u9fa5]*(\\.[\\w\u4e00-\u9fa5]+)*\\s*");
+			"[^A-Za-z0-9_:\u4e00-\u9fa5]\\:\\s*[a-zA-Z\u4e00-\u9fa5][a-zA-Z0-9_\u4e00-\u9fa5]*(\\.[\\w\u4e00-\u9fa5]+)*(\\[\\d+\\])?\\s*");
 	public final static Pattern NOSQL_NAMED_PATTERN = Pattern.compile(
-			"(?i)\\@(param|blank|value)?\\(\\s*\\:\\s*[a-zA-Z\u4e00-\u9fa5][a-zA-Z0-9_\u4e00-\u9fa5]*(\\.[\\w\u4e00-\u9fa5]+)*\\s*\\)");
+			"(?i)\\@(param|blank|value)?\\(\\s*\\:\\s*[a-zA-Z\u4e00-\u9fa5][a-zA-Z0-9_\u4e00-\u9fa5]*(\\.[\\w\u4e00-\u9fa5]+)*(\\[\\d+\\])?\\s*\\)");
 
 	// mysql8 支持 with recursive cte as
 	// postgresql12 支持materialized 物化
