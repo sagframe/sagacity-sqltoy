@@ -275,13 +275,30 @@ public class SqlUtil {
 		// jdbc部分数据库赋null值时必须要指定数据类型
 		if (null == paramValue) {
 			if (jdbcType != java.sql.Types.NULL) {
-				if (typeHandler != null && typeHandler.setNull(pst, paramIndex, jdbcType)) {
+				if (typeHandler != null && typeHandler.setNull(dbType, pst, paramIndex, jdbcType)) {
 					return;
 				}
 				// postgresql bytea类型需要统一处理成BINARY
-				if (jdbcType == java.sql.Types.BLOB
-						&& (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB)) {
-					pst.setNull(paramIndex, java.sql.Types.BINARY);
+				if (jdbcType == java.sql.Types.BLOB) {
+					if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB) {
+						pst.setNull(paramIndex, java.sql.Types.BINARY);
+					} else {
+						pst.setNull(paramIndex, jdbcType);
+					}
+				} else if (jdbcType == java.sql.Types.CLOB) {
+					if (DBType.ORACLE == dbType || DBType.DB2 == dbType || DBType.OCEANBASE == dbType
+							|| DBType.ORACLE11 == dbType || DBType.DM == dbType) {
+						pst.setNull(paramIndex, jdbcType);
+					} else {
+						pst.setNull(paramIndex, java.sql.Types.VARCHAR);
+					}
+				} else if (jdbcType == java.sql.Types.NCLOB) {
+					if (DBType.ORACLE == dbType || DBType.DB2 == dbType || DBType.OCEANBASE == dbType
+							|| DBType.ORACLE11 == dbType || DBType.DM == dbType) {
+						pst.setNull(paramIndex, jdbcType);
+					} else {
+						pst.setNull(paramIndex, java.sql.Types.NVARCHAR);
+					}
 				} else {
 					pst.setNull(paramIndex, jdbcType);
 				}
@@ -291,20 +308,31 @@ public class SqlUtil {
 			return;
 		}
 		// 自定义类型处理器，完成setValue处理
-		if (typeHandler != null && typeHandler.setValue(pst, paramIndex, jdbcType, paramValue)) {
+		if (typeHandler != null && typeHandler.setValue(dbType, pst, paramIndex, jdbcType, paramValue)) {
 			return;
 		}
 		String tmpStr;
 		if (paramValue instanceof java.lang.String) {
 			tmpStr = (String) paramValue;
+			// clob 类型只有oracle、db2、dm、oceanBase等数据库支持
 			if (jdbcType == java.sql.Types.CLOB) {
-				Clob clob = conn.createClob();
-				clob.setString(1, tmpStr);
-				pst.setClob(paramIndex, clob);
+				if (DBType.ORACLE == dbType || DBType.DB2 == dbType || DBType.OCEANBASE == dbType
+						|| DBType.ORACLE11 == dbType || DBType.DM == dbType) {
+					Clob clob = conn.createClob();
+					clob.setString(1, tmpStr);
+					pst.setClob(paramIndex, clob);
+				} else {
+					pst.setString(paramIndex, tmpStr);
+				}
 			} else if (jdbcType == java.sql.Types.NCLOB) {
-				NClob nclob = conn.createNClob();
-				nclob.setString(1, tmpStr);
-				pst.setNClob(paramIndex, nclob);
+				if (DBType.ORACLE == dbType || DBType.DB2 == dbType || DBType.OCEANBASE == dbType
+						|| DBType.ORACLE11 == dbType || DBType.DM == dbType) {
+					NClob nclob = conn.createNClob();
+					nclob.setString(1, tmpStr);
+					pst.setNClob(paramIndex, nclob);
+				} else {
+					pst.setString(paramIndex, tmpStr);
+				}
 			} else {
 				pst.setString(paramIndex, tmpStr);
 			}
