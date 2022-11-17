@@ -65,7 +65,7 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
    * oracle 11g+
    * db2 9.5+,建议从10.5 开始
    * mysql(mariadb/innosql) 支持5.6、5.7、8.0 版本
-   * postgresql(greenplum) 支持9.5 以及以上版本
+   * postgresql(greenplum) 支持9.5 以及以上版本、polardb
    * sqlserver 2012+
    * sqlite、H2
    * DM达梦数据库
