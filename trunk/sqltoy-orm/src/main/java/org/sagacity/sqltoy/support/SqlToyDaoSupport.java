@@ -761,7 +761,7 @@ public class SqlToyDaoSupport {
 			final Class<T> voClass) {
 		return (List<T>) findByQuery(
 				new QueryExecutor(sqlOrNamedSql, (paramsMap == null) ? MapKit.map() : paramsMap).resultType(voClass))
-						.getRows();
+				.getRows();
 	}
 
 	/**
@@ -1847,9 +1847,9 @@ public class SqlToyDaoSupport {
 		if (SqlConfigParseUtils.hasNamedParam(where) && StringUtil.isBlank(innerModel.names)) {
 			queryExecutor = new QueryExecutor(sql,
 					(innerModel.values == null || innerModel.values.length == 0) ? null
-							: (Serializable) innerModel.values[0]).resultType(resultType)
-									.dataSource(getDataSource(innerModel.dataSource)).fetchSize(innerModel.fetchSize)
-									.maxRows(innerModel.maxRows);
+							: (Serializable) innerModel.values[0])
+					.resultType(resultType).dataSource(getDataSource(innerModel.dataSource))
+					.fetchSize(innerModel.fetchSize).maxRows(innerModel.maxRows);
 		} else {
 			queryExecutor = new QueryExecutor(sql).names(innerModel.names).values(innerModel.values)
 					.resultType(resultType).dataSource(getDataSource(innerModel.dataSource))
@@ -2099,15 +2099,17 @@ public class SqlToyDaoSupport {
 	 * @param <T>
 	 * @param source
 	 * @param resultType
+	 * @param ignoreProperties
 	 * @return
 	 */
-	protected <T extends Serializable> T convertType(Serializable source, Class<T> resultType) {
+	protected <T extends Serializable> T convertType(Serializable source, Class<T> resultType,
+			String... ignoreProperties) {
 		if (source == null || resultType == null) {
 			throw new IllegalArgumentException(
 					"调用convertType对单个对象进行POJO<-->DTO 转换过程中发现参数异常: source 和 resultType 不能为null!");
 		}
 		try {
-			return MapperUtils.map(sqlToyContext, source, resultType);
+			return MapperUtils.map(sqlToyContext, source, resultType, ignoreProperties);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException(
@@ -2121,15 +2123,17 @@ public class SqlToyDaoSupport {
 	 * @param <T>
 	 * @param sourceList
 	 * @param resultType
+	 * @param ignoreProperties
 	 * @return
 	 */
-	protected <T extends Serializable> List<T> convertType(List sourceList, Class<T> resultType) {
+	protected <T extends Serializable> List<T> convertType(List sourceList, Class<T> resultType,
+			String... ignoreProperties) {
 		if (sourceList == null || resultType == null) {
 			throw new IllegalArgumentException(
 					"调用convertType对集合进行POJO<-->DTO 转换过程中发现参数异常: sourceList 和 resultType 不能为null!");
 		}
 		try {
-			return MapperUtils.mapList(sqlToyContext, sourceList, resultType);
+			return MapperUtils.mapList(sqlToyContext, sourceList, resultType, ignoreProperties);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException("将对象:" + sourceList.get(0).getClass().getName() + " 属性数据复制到:"
@@ -2137,7 +2141,8 @@ public class SqlToyDaoSupport {
 		}
 	}
 
-	protected <T extends Serializable> Page<T> convertType(Page sourcePage, Class<T> resultType) {
+	protected <T extends Serializable> Page<T> convertType(Page sourcePage, Class<T> resultType,
+			String... ignoreProperties) {
 		if (sourcePage == null) {
 			return null;
 		}
@@ -2149,7 +2154,7 @@ public class SqlToyDaoSupport {
 		if (sourcePage.getRows().isEmpty()) {
 			return result;
 		}
-		result.setRows(convertType(sourcePage.getRows(), resultType));
+		result.setRows(convertType(sourcePage.getRows(), resultType, ignoreProperties));
 		return result;
 	}
 

@@ -38,6 +38,8 @@ public class TypeShowCase implements Serializable {
 	private Integer status;
 
 	private boolean isTrue;
+	
+	private boolean sexType;
 
 	private Boolean enabled;
 
@@ -130,6 +132,14 @@ public class TypeShowCase implements Serializable {
 
 	public void setTrue(boolean isTrue) {
 		this.isTrue = isTrue;
+	}
+
+	public boolean isSexType() {
+		return sexType;
+	}
+
+	public void setSexType(boolean sexType) {
+		this.sexType = sexType;
 	}
 
 	public Boolean getEnabled() {

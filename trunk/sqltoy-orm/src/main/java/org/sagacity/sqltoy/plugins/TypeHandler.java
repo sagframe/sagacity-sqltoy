@@ -8,14 +8,14 @@ import java.sql.SQLException;
  * @description 提供类型处理匹配，主要针对json、数组等类型
  * @author zhongxuchen
  * @version v1.0, Date:2020-11-25
- * @modify 2022-11-16 setNull、setValue增加参数dbType便于提供给开发者根据数据库类型做逻辑判断
+ * @modify {Date:2022-11-19,setNull和setValue增加了一个dbType参数，便于同样代码适用多个数据库，提供不同数据库逻辑判断}
  */
 public abstract class TypeHandler {
 	/**
 	 * @TODO 当数据为null时,pst.setNull(index,java.sql.Types.xxxx)
 	 *       <li>返回true表示完成了setNull操作，框架不再继续处理</li>
 	 *       <li>返回false表示类型未匹配，交由框架完成setNull</li>
-	 * @param dbType 2022-11-16 新增数据库类型便于逻辑判断
+	 * @param dbType
 	 * @param pst
 	 * @param paramIndex
 	 * @param jdbcType
@@ -28,7 +28,7 @@ public abstract class TypeHandler {
 
 	/**
 	 * @TODO 自行定义对特定类型的setValue操作
-	 * @param dbType 2022-11-16 新增数据库类型便于逻辑判断
+	 * @param dbType
 	 * @param pst
 	 * @param paramIndex
 	 * @param jdbcType

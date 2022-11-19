@@ -907,13 +907,15 @@ public class SqlToyLazyDaoImpl extends SpringDaoSupport implements SqlToyLazyDao
 	}
 
 	@Override
-	public <T extends Serializable> T convertType(Serializable source, Class<T> resultType) {
-		return super.convertType(source, resultType);
+	public <T extends Serializable> T convertType(Serializable source, Class<T> resultType,
+			String... ignoreProperties) {
+		return super.convertType(source, resultType, ignoreProperties);
 	}
 
 	@Override
-	public <T extends Serializable> List<T> convertType(List sourceList, Class<T> resultType) {
-		return super.convertType(sourceList, resultType);
+	public <T extends Serializable> List<T> convertType(List sourceList, Class<T> resultType,
+			String... ignoreProperties) {
+		return super.convertType(sourceList, resultType, ignoreProperties);
 	}
 
 	/**
@@ -921,11 +923,13 @@ public class SqlToyLazyDaoImpl extends SpringDaoSupport implements SqlToyLazyDao
 	 * @param <T>
 	 * @param sourcePage
 	 * @param resultType
+	 * @param ignoreProperties
 	 * @return
 	 */
 	@Override
-	public <T extends Serializable> Page<T> convertType(Page sourcePage, Class<T> resultType) {
-		return super.convertType(sourcePage, resultType);
+	public <T extends Serializable> Page<T> convertType(Page sourcePage, Class<T> resultType,
+			String... ignoreProperties) {
+		return super.convertType(sourcePage, resultType, ignoreProperties);
 	}
 
 	@Override

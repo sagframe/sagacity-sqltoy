@@ -33,7 +33,7 @@ public class IdUtilTest {
 		BigDecimal id;
 		long currentTime = System.currentTimeMillis();
 		for (int i = 0; i < 5000000; i++) {
-			id = IdUtil.getShortNanoTimeId("system_info", "001");
+			id = IdUtil.getNanoTimeId(null);
 			if (idset.contains(id)) {
 				System.err.println("id=" + id + "已经重复");
 				break;
@@ -62,7 +62,7 @@ public class IdUtilTest {
 		System.err.println(id);
 		System.err.println(id1);
 		System.err.println(id2);
-		for (int i = 0; i < 100; i++) {
+		for (int i = 0; i < 10000; i++) {
 			System.err.println(IdUtil.getShortNanoTimeId("001"));
 		}
 	}

@@ -28,7 +28,7 @@ public class GetId implements Runnable {
 	public void run() {
 		BigDecimal id;
 		for (int i = 0; i < loopSize; i++) {
-			id = IdUtil.getShortNanoTimeId("system_info", "001");
+			id = IdUtil.getNanoTimeId(null);
 			if (idset.contains(id)) {
 				System.err.println("id=" + id + "已经重复");
 				break;

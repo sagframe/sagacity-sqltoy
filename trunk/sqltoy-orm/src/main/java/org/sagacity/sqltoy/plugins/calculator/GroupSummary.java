@@ -1,8 +1,6 @@
 package org.sagacity.sqltoy.plugins.calculator;
 
-import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -11,8 +9,8 @@ import org.sagacity.sqltoy.config.model.LabelIndexModel;
 import org.sagacity.sqltoy.config.model.SummaryColMeta;
 import org.sagacity.sqltoy.config.model.SummaryGroupMeta;
 import org.sagacity.sqltoy.config.model.SummaryModel;
+import org.sagacity.sqltoy.plugins.utils.CalculateUtils;
 import org.sagacity.sqltoy.utils.CollectionUtil;
-import org.sagacity.sqltoy.utils.ExpressionUtil;
 import org.sagacity.sqltoy.utils.NumberUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 
@@ -32,8 +30,8 @@ public class GroupSummary {
 		}
 		// 计算的列，columns="1..result.width()-1"
 		int dataWidth = ((List) result.get(0)).size();
-		List<Integer> sumColList = parseColumns(labelIndexMap, summaryModel.getSummaryCols(), dataWidth);
-		List<Integer> aveColList = parseColumns(labelIndexMap, summaryModel.getAverageCols(), dataWidth);
+		List<Integer> sumColList = CalculateUtils.parseColumns(labelIndexMap, summaryModel.getSummaryCols(), dataWidth);
+		List<Integer> aveColList = CalculateUtils.parseColumns(labelIndexMap, summaryModel.getAverageCols(), dataWidth);
 		Set<Integer> summaryColsSet = new LinkedHashSet<Integer>();
 		for (Integer index : sumColList) {
 			summaryColsSet.add(index);
@@ -55,7 +53,8 @@ public class GroupSummary {
 		String sumSite;
 		for (SummaryGroupMeta groupMeta : summaryModel.getGroupMeta()) {
 			sumSite = (summaryModel.getSumSite() == null) ? "top" : summaryModel.getSumSite().toLowerCase();
-			List<Integer> groupColsList = parseColumns(labelIndexMap, groupMeta.getGroupColumn(), dataWidth);
+			List<Integer> groupColsList = CalculateUtils.parseColumns(labelIndexMap, groupMeta.getGroupColumn(),
+					dataWidth);
 			Integer[] groupCols = new Integer[groupColsList.size()];
 			groupColsList.toArray(groupCols);
 			// 分组列
@@ -136,84 +135,5 @@ public class GroupSummary {
 			colMetas[i] = colMeta;
 		}
 		return colMetas;
-	}
-
-	/**
-	 * @TODO 将columns字符串解析成具体列的数组
-	 * @param labelIndexMap
-	 * @param columns
-	 * @param dataWidth
-	 * @return
-	 */
-	private static List<Integer> parseColumns(LabelIndexModel labelIndexMap, String columns, int dataWidth) {
-		List<Integer> result = new ArrayList<Integer>();
-		if (StringUtil.isBlank(columns)) {
-			return result;
-		}
-		String cols = columns.replaceAll("result\\.width\\(\\)", Integer.toString(dataWidth))
-				.replaceAll("(?i)\\$\\{dataWidth\\}", Integer.toString(dataWidth));
-		String[] colsAry = cols.split("\\,");
-		String column;
-		String endColumnStr;
-		int step;
-		int stepIndex;
-		for (int i = 0; i < colsAry.length; i++) {
-			column = colsAry[i].toLowerCase();
-			// like {1..20?2} ?step 用于数据间隔性汇总
-			if (column.indexOf("..") != -1) {
-				step = 1;
-				String[] beginToEnd = column.split("\\.\\.");
-				int begin = 0;
-				int end = 0;
-				if (NumberUtil.isInteger(beginToEnd[0])) {
-					begin = Integer.parseInt(beginToEnd[0]);
-				} else if (labelIndexMap.containsKey(beginToEnd[0])) {
-					begin = labelIndexMap.get(beginToEnd[0]);
-				} else {
-					begin = (new BigDecimal(ExpressionUtil.calculate(beginToEnd[0]).toString())).intValue();
-				}
-				endColumnStr = beginToEnd[1];
-				if (NumberUtil.isInteger(endColumnStr)) {
-					end = Integer.parseInt(endColumnStr);
-					// 负数表示用列宽减去相应值
-					if (end < 0) {
-						end = dataWidth + end - 1;
-					}
-				} else {
-					stepIndex = endColumnStr.indexOf("?");
-					if (stepIndex != -1) {
-						step = Integer.parseInt(endColumnStr.substring(stepIndex + 1).trim());
-						endColumnStr = endColumnStr.substring(0, stepIndex);
-					}
-					if (NumberUtil.isInteger(endColumnStr)) {
-						end = Integer.parseInt(endColumnStr);
-					} else if (labelIndexMap.containsKey(endColumnStr)) {
-						end = labelIndexMap.get(endColumnStr);
-					} else {
-						end = (new BigDecimal(ExpressionUtil.calculate(endColumnStr).toString())).intValue();
-					}
-				}
-				for (int j = begin; j <= end; j += step) {
-					if (!result.contains(j)) {
-						result.add(j);
-					}
-				}
-			} else if (NumberUtil.isInteger(column)) {
-				if (!result.contains(Integer.parseInt(column))) {
-					result.add(Integer.parseInt(column));
-				}
-			} else {
-				Integer colIndex;
-				if (labelIndexMap.containsKey(column)) {
-					colIndex = labelIndexMap.get(column);
-				} else {
-					colIndex = (new BigDecimal(ExpressionUtil.calculate(column).toString())).intValue();
-				}
-				if (!result.contains(colIndex)) {
-					result.add(colIndex);
-				}
-			}
-		}
-		return result;
 	}
 }

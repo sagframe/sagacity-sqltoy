@@ -44,18 +44,19 @@ public class MapperUtils {
 	 * @param sqlToyContext
 	 * @param source
 	 * @param resultType
+	 * @param ignoreProperties
 	 * @return
 	 * @throws Exception
 	 */
-	public static <T extends Serializable> T map(SqlToyContext sqlToyContext, Serializable source, Class<T> resultType)
-			throws Exception {
+	public static <T extends Serializable> T map(SqlToyContext sqlToyContext, Serializable source, Class<T> resultType,
+			String... ignoreProperties) throws Exception {
 		if (source == null || (resultType == null || resultType.equals(Object.class))) {
 			throw new IllegalArgumentException("source 和 resultType 不能为null,且resultType不能为Object.class!");
 		}
 		// 转成List做统一处理
 		List<Serializable> sourceList = new ArrayList<Serializable>();
 		sourceList.add(source);
-		List<T> result = mapList(sqlToyContext, sourceList, resultType);
+		List<T> result = mapList(sqlToyContext, sourceList, resultType, ignoreProperties);
 		return result.get(0);
 	}
 
@@ -65,11 +66,12 @@ public class MapperUtils {
 	 * @param sqlToyContext
 	 * @param sourceList
 	 * @param resultType
+	 * @param ignoreProperties
 	 * @return
 	 * @throws Exception
 	 */
 	public static <T extends Serializable> List<T> mapList(SqlToyContext sqlToyContext, List<Serializable> sourceList,
-			Class<T> resultType) throws Exception {
+			Class<T> resultType, String... ignoreProperties) throws Exception {
 		if (sourceList == null || (resultType == null || resultType.equals(Object.class))) {
 			throw new IllegalArgumentException("sourceList 和 resultType 不能为null,且resultType不能为Object.class!");
 		}
@@ -92,6 +94,48 @@ public class MapperUtils {
 		else {
 			getMethods = mapModel.dtoGetMethods;
 			setMethods = mapModel.pojoSetMethods;
+		}
+		if (ignoreProperties != null && ignoreProperties.length > 0) {
+			List<Method> getRealMethods = new ArrayList<Method>();
+			List<Method> setRealMethods = new ArrayList<Method>();
+			String methodName;
+			String ignorePropLow;
+			Class paramType;
+			boolean skip;
+			List<String> props = new ArrayList<String>();
+			for (String ignoreProp : ignoreProperties) {
+				props.add(ignoreProp.toLowerCase());
+			}
+			// 以set方法为映射主体
+			for (int i = 0; i < setMethods.length; i++) {
+				if (setMethods[i] != null) {
+					methodName = setMethods[i].getName().toLowerCase();
+					paramType = setMethods[i].getParameterTypes()[0];
+					skip = false;
+					for (int j = 0; j < props.size(); j++) {
+						ignorePropLow = props.get(j);
+						if (methodName.equals("set".concat(ignorePropLow))
+								|| (ignorePropLow.startsWith("is") && paramType.equals(boolean.class)
+										&& methodName.equals("set".concat(ignorePropLow.substring(2))))) {
+							skip = true;
+							props.remove(j);
+							j--;
+							break;
+						}
+					}
+					if (!skip) {
+						getRealMethods.add(getMethods[i]);
+						setRealMethods.add(setMethods[i]);
+					}
+				}
+			}
+			if (setRealMethods.size() == 0) {
+				throw new IllegalArgumentException("最终映射对应的属性数量为零,请检查ignoreProperties是否正确,过滤了全部匹配属性!");
+			}
+			getMethods = new Method[setRealMethods.size()];
+			setMethods = new Method[setRealMethods.size()];
+			getRealMethods.toArray(getMethods);
+			setRealMethods.toArray(setMethods);
 		}
 		List dataSets = invokeGetValues(sourceList, getMethods);
 		return reflectListToBean(dataSets, resultType, setMethods);
