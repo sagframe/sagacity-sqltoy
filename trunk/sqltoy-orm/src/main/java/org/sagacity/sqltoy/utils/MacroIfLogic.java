@@ -1,5 +1,9 @@
 package org.sagacity.sqltoy.utils;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
@@ -142,7 +146,7 @@ public class MacroIfLogic {
 	 * @param compareValue
 	 * @return
 	 */
-	private static boolean compare(Object value, String compareType, String compareValue) {
+	public static boolean compare(Object value, String compareType, String compareValue) {
 		// 剔除首尾字符串标志符号
 		if (compareValue.startsWith("'") && compareValue.endsWith("'")) {
 			compareValue = compareValue.substring(1, compareValue.length() - 1);
@@ -223,6 +227,13 @@ public class MacroIfLogic {
 		// 在数组范围外
 		if ("out".equals(compareType)) {
 			return out(value, realValue, compareValue, type);
+		}
+		// between
+		if ("between".equals(compareType)) {
+			String[] compareValues = compareValue.split("\\,");
+			if (compareValues.length == 2) {
+				return between(value, realValue, compareValues[0], compareValues[1]);
+			}
 		}
 		return true;
 	}
@@ -392,5 +403,39 @@ public class MacroIfLogic {
 			}
 		}
 		return true;
+	}
+
+	/**
+	 * @todo 参数大于等于并小于等于给定的数据范围时表示条件无效，自动置参数值为null
+	 * @param param
+	 * @param valueStr
+	 * @param beginContrast
+	 * @param endContrast
+	 * @return
+	 */
+	private static boolean between(Object param, String valueStr, String beginContrast, String endContrast) {
+		if (null == param) {
+			return false;
+		}
+		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalDateTime) {
+			Date var = DateUtil.convertDateObject(param);
+			if (var.compareTo(DateUtil.convertDateObject(beginContrast)) >= 0
+					&& var.compareTo(DateUtil.convertDateObject(endContrast)) <= 0) {
+				return true;
+			}
+		} else if (param instanceof LocalTime) {
+			if (((LocalTime) param).compareTo(LocalTime.parse(beginContrast)) >= 0
+					&& ((LocalTime) param).compareTo(LocalTime.parse(endContrast)) <= 0) {
+				return true;
+			}
+		} else if (param instanceof Number) {
+			if ((new BigDecimal(param.toString()).compareTo(new BigDecimal(beginContrast)) >= 0)
+					&& (new BigDecimal(param.toString()).compareTo(new BigDecimal(endContrast)) <= 0)) {
+				return true;
+			}
+		} else if (valueStr.compareTo(beginContrast) >= 0 && valueStr.compareTo(endContrast) <= 0) {
+			return true;
+		}
+		return false;
 	}
 }

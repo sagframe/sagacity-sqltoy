@@ -34,6 +34,21 @@ public class TreeSortModel implements Serializable {
 	 */
 	private String sumColumns;
 
+	/**
+	 * filter过滤对比列
+	 */
+	private String filterColumn;
+
+	/**
+	 * 对比类型
+	 */
+	private String compareType;
+
+	/**
+	 * 对比数据
+	 */
+	private String compareValues;
+
 	public String getIdColumn() {
 		return idColumn;
 	}
@@ -57,4 +72,29 @@ public class TreeSortModel implements Serializable {
 	public void setSumColumns(String sumColumns) {
 		this.sumColumns = sumColumns;
 	}
+
+	public String getFilterColumn() {
+		return filterColumn;
+	}
+
+	public void setFilterColumn(String filterColumn) {
+		this.filterColumn = filterColumn;
+	}
+
+	public String getCompareType() {
+		return compareType;
+	}
+
+	public void setCompareType(String compareType) {
+		this.compareType = compareType;
+	}
+
+	public String getCompareValues() {
+		return compareValues;
+	}
+
+	public void setCompareValues(String compareValues) {
+		this.compareValues = compareValues;
+	}
+
 }
