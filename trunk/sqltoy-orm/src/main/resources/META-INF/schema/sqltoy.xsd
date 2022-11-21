@@ -182,6 +182,36 @@
 					</xsd:documentation>
 				</xsd:annotation>
 				<xsd:complexType>
+					<xsd:choice maxOccurs="1" minOccurs="0">
+						<xsd:element name="sum-filter">
+							<xsd:annotation>
+								<xsd:documentation>
+									<![CDATA[过滤哪些节点参与汇总]]>
+								</xsd:documentation>
+							</xsd:annotation>
+							<xsd:complexType>
+								<xsd:attribute name="column" type="xsd:string"
+									use="required" />
+								<xsd:attribute name="compare-type" use="required">
+									<xsd:simpleType>
+										<xsd:restriction base="xsd:string">
+											<xsd:enumeration value="eq" />
+											<xsd:enumeration value="neq" />
+											<xsd:enumeration value="gt" />
+											<xsd:enumeration value="gte" />
+											<xsd:enumeration value="lt" />
+											<xsd:enumeration value="lte" />
+											<xsd:enumeration value="between" />
+											<xsd:enumeration value="in" />
+											<xsd:enumeration value="out" />
+										</xsd:restriction>
+									</xsd:simpleType>
+								</xsd:attribute>
+								<xsd:attribute name="compare-values"
+									type="xsd:string" use="required" />
+							</xsd:complexType>
+						</xsd:element>
+					</xsd:choice>
 					<xsd:attribute name="id-column" type="xsd:string"
 						use="required">
 						<xsd:annotation>

@@ -1431,7 +1431,34 @@ public class SqlXMLConfigParse {
 				else if (eltName.equals(local.concat("tree-sort"))) {
 					TreeSortModel treeSortModel = new TreeSortModel();
 					XMLUtil.setAttributes(elt, treeSortModel);
-					resultProcessor.add(treeSortModel);
+					NodeList nodeList = elt.getElementsByTagName(local.concat("sum-filter"));
+					if (nodeList.getLength() > 0) {
+						Element sumFilter = (Element) nodeList.item(0);
+						if (sumFilter.hasAttribute("column")) {
+							treeSortModel.setFilterColumn(sumFilter.getAttribute("column"));
+						}
+						if (sumFilter.hasAttribute("compare-type")) {
+							treeSortModel.setCompareType(sumFilter.getAttribute("compare-type"));
+							//统一对比类型
+							if (treeSortModel.getCompareType().equals("eq")) {
+								treeSortModel.setCompareType("==");
+							} else if (treeSortModel.getCompareType().equals("neq")) {
+								treeSortModel.setCompareType("!=");
+							} else if (treeSortModel.getCompareType().equals("gt")) {
+								treeSortModel.setCompareType(">");
+							} else if (treeSortModel.getCompareType().equals("gte")) {
+								treeSortModel.setCompareType(">=");
+							} else if (treeSortModel.getCompareType().equals("lt")) {
+								treeSortModel.setCompareType("<");
+							} else if (treeSortModel.getCompareType().equals("lte")) {
+								treeSortModel.setCompareType("<=");
+							}
+						}
+						
+						if (sumFilter.hasAttribute("compare-values")) {
+							treeSortModel.setCompareValues(sumFilter.getAttribute("compare-valuse"));
+						}
+					}
 				}
 			}
 		}
