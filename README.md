@@ -179,8 +179,8 @@ sqlToyLazyDao.deleteByQuery(StaffInfoVO.class, EntityQuery.create().where("statu
 		  #[and t.ORDER_ID=:orderId]
 		  #[and t.ORGAN_ID in (:authedOrganIds)]
 		  #[and t.STAFF_ID in (:staffIds)]
-		  #[and t.TRANS_DATE>=:beginDate]
-		  #[and t.TRANS_DATE<:endDate]    
+		  #[and t.TRANS_DATE>=:beginAndEndDate[0]]
+		  #[and t.TRANS_DATE<:beginAndEndDate[1]]    
 	]]></value>
 </sql>
 ```
