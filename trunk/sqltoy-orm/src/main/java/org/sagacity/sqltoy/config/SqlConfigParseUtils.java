@@ -780,6 +780,8 @@ public class SqlConfigParseUtils {
 						partSql = wrapOverSizeInSql(queryStr.substring(start, m.start()), loopArgs,
 								inParamArray.length);
 						lastSql.append(" ").append(partSql).append(" ");
+					} else if (inParamArray.length == 0) {
+						partSql = "(".concat(StringUtil.loopAppendWithSign("null", ",", paramCnt)).concat(")");
 					} else {
 						// 循环组合成in(?,?*)
 						partSql = StringUtil.loopAppendWithSign(loopArgs, ",", inParamArray.length);
@@ -796,7 +798,8 @@ public class SqlConfigParseUtils {
 					}
 					incrementIndex += inParamArray.length * paramCnt - paramCnt;
 				}
-			} else if (null != paramsValue[parameterMarkCnt - 1]) {
+			} // 单个?，且值为null不在processIn中处理，最终replaceNull统一处理
+			else if (null != paramsValue[parameterMarkCnt - 1]) {
 				// 数组或集合数据类型
 				if (paramsValue[parameterMarkCnt - 1].getClass().isArray()
 						|| paramsValue[parameterMarkCnt - 1] instanceof Collection) {
@@ -813,6 +816,8 @@ public class SqlConfigParseUtils {
 						partSql = wrapOverSizeInSql(queryStr.substring(start, m.start()), ARG_NAME,
 								inParamArray.length);
 						lastSql.append(" ").append(partSql).append(" ");
+					} else if (inParamArray.length == 0) {
+						partSql = "null";
 					} else {
 						// 循环组合成in(?,?*)
 						partSql = StringUtil.loopAppendWithSign(ARG_NAME, ",", inParamArray.length);
