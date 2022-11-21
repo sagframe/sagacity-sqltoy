@@ -29,6 +29,11 @@ public class TreeSortModel implements Serializable {
 	 */
 	private String pidColumn;
 
+	/**
+	 * 汇总列
+	 */
+	private String sumColumns;
+
 	public String getIdColumn() {
 		return idColumn;
 	}
@@ -43,5 +48,13 @@ public class TreeSortModel implements Serializable {
 
 	public void setPidColumn(String pidColumn) {
 		this.pidColumn = pidColumn;
+	}
+
+	public String getSumColumns() {
+		return sumColumns;
+	}
+
+	public void setSumColumns(String sumColumns) {
+		this.sumColumns = sumColumns;
 	}
 }

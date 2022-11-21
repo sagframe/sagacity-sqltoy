@@ -198,6 +198,13 @@
 							</xsd:documentation>
 						</xsd:annotation>
 					</xsd:attribute>
+					<xsd:attribute name="sum-columns" type="xsd:string">
+						<xsd:annotation>
+							<xsd:documentation>
+							<![CDATA[对树结构逐层汇总计算,将子级的数据汇总归集到父级]]>
+							</xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
 				</xsd:complexType>
 			</xsd:element>
 			<xsd:element name="sharding-datasource" minOccurs="0"

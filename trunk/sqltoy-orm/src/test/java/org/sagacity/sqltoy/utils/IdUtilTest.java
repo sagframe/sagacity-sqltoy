@@ -32,8 +32,8 @@ public class IdUtilTest {
 		Set<BigDecimal> idset = new HashSet<BigDecimal>();
 		BigDecimal id;
 		long currentTime = System.currentTimeMillis();
-		for (int i = 0; i < 1000000; i++) {
-			id = IdUtil.getShortNanoTimeId("system_info", "001");
+		for (int i = 0; i < 5000000; i++) {
+			id = IdUtil.getNanoTimeId(null);
 			if (idset.contains(id)) {
 				System.err.println("id=" + id + "已经重复");
 				break;
@@ -45,6 +45,15 @@ public class IdUtilTest {
 	}
 
 	@Test
+	public void testMaxThread() {
+		Set<BigDecimal> idset = new HashSet<BigDecimal>();
+		for (int i = 0; i < 100; i++) {
+			GetId getId = new GetId(idset, 100000);
+			getId.run();
+		}
+	}
+
+	@Test
 	public void testShortNanoId() {
 		// System.err.println(IdUtil.getNanoTimeId("system_info", "001"));
 		String id = IdUtil.getShortNanoTimeId("system_info", "001").toPlainString();
@@ -53,7 +62,7 @@ public class IdUtilTest {
 		System.err.println(id);
 		System.err.println(id1);
 		System.err.println(id2);
-		for (int i = 0; i < 100; i++) {
+		for (int i = 0; i < 10000; i++) {
 			System.err.println(IdUtil.getShortNanoTimeId("001"));
 		}
 	}

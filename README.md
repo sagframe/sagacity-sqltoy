@@ -36,12 +36,12 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
 # 最新版本 
-* 5.2.20       发版日期: 2022-11-12
-* 5.2.20.jre11 发版日期: 2022-11-12
-* 5.2.20.jre17 发版日期: 2022-11-12
+* 5.2.21       发版日期: 2022-11-15
+* 5.2.21.jre11 发版日期: 2022-11-15
+* 5.2.21.jre17 发版日期: 2022-11-15
 
 # 历史版本
-* 4.20.15  发版日期: 2022-11-12
+* 4.20.16  发版日期: 2022-11-15
 
 # 升级到5.2.x指南
 * 常规springboot项目无任何影响
@@ -65,7 +65,7 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
    * oracle 11g+
    * db2 9.5+,建议从10.5 开始
    * mysql(mariadb/innosql) 支持5.6、5.7、8.0 版本
-   * postgresql(greenplum) 支持9.5 以及以上版本
+   * postgresql(greenplum) 支持9.5 以及以上版本、polardb
    * sqlserver 2012+
    * sqlite、H2
    * DM达梦数据库

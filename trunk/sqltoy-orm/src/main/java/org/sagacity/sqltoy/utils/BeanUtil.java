@@ -1358,13 +1358,16 @@ public class BeanUtil {
 				index++;
 			}
 		} catch (Exception e) {
+			String errorMsg = "";
 			if (propertyName == null) {
-				logger.error("将集合数据映射到类:{} 异常,请检查类是否正确!{}", voClass.getName(), e.getMessage());
+				errorMsg = "将集合数据映射到类:" + voClass.getName() + " 异常,请检查类是否正确!" + e.getMessage();
+				logger.error(errorMsg);
 			} else {
-				logger.error("将集合数据:{} 映射到类:{} 的属性:{}过程异常!{}", cellData, voClass.getName(), propertyName,
-						e.getMessage());
+				errorMsg = "将集合数据:[" + cellData + "] 映射到类:" + voClass.getName() + " 的属性:" + propertyName + ":过程异常!"
+						+ e.getMessage();
+				logger.error(errorMsg);
 			}
-			throw new RuntimeException(e);
+			throw new RuntimeException(errorMsg, e);
 		}
 		return resultList;
 	}
@@ -1394,13 +1397,16 @@ public class BeanUtil {
 				}
 			}
 		} catch (Exception e) {
+			String errorMsg = "";
 			if (propertyName == null) {
-				logger.error("将集合数据映射到类:{} 异常,请检查类是否正确!{}", voClass.getName(), e.getMessage());
+				errorMsg = "将集合数据映射到类:" + voClass.getName() + " 异常,请检查类是否正确!" + e.getMessage();
+				logger.error(errorMsg);
 			} else {
-				logger.error("将集合数据:{} 映射到类:{} 的属性:{}过程异常!{}", cellData, voClass.getName(), propertyName,
-						e.getMessage());
+				errorMsg = "将集合数据:[" + cellData + "] 映射到类:" + voClass.getName() + " 的属性:" + propertyName + ":过程异常!"
+						+ e.getMessage();
+				logger.error(errorMsg);
 			}
-			throw new RuntimeException(e);
+			throw new RuntimeException(errorMsg, e);
 		}
 		return (T) bean;
 	}

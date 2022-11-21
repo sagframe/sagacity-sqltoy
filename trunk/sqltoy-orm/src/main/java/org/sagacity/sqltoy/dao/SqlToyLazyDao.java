@@ -756,16 +756,16 @@ public interface SqlToyLazyDao {
 	 * @return
 	 */
 	public HashMap<String, Object[]> getTranslateCache(String cacheName, String cacheType);
-	
+
 	/**
 	 * @TODO 将缓存数据以对象形式获取
 	 * @param <T>
 	 * @param cacheName
-	 * @param cacheType 如是数据字典,则传入字典类型否则为null即可
+	 * @param cacheType  如是数据字典,则传入字典类型否则为null即可
 	 * @param reusltType
 	 * @return
 	 */
-	public <T> List<T> getTranslateCache(String cacheName, String cacheType,Class<T> reusltType);
+	public <T> List<T> getTranslateCache(String cacheName, String cacheType, Class<T> reusltType);
 
 	/**
 	 * @TODO 通过反调对集合数据进行翻译处理
@@ -820,27 +820,30 @@ public interface SqlToyLazyDao {
 	 * @param <T>
 	 * @param source
 	 * @param resultType
+	 * @param ignoreProperties 忽略映射匹配的属性
 	 * @return
 	 */
-	public <T extends Serializable> T convertType(Serializable source, Class<T> resultType);
+	public <T extends Serializable> T convertType(Serializable source, Class<T> resultType, String... ignoreProperties);
 
 	/**
 	 * @TODO 实现VO和POJO 集合之间属性值的复制
 	 * @param <T>
 	 * @param sourceList
 	 * @param resultType
+	 * @param ignoreProperties 忽略映射匹配的属性
 	 * @return
 	 */
-	public <T extends Serializable> List<T> convertType(List sourceList, Class<T> resultType);
+	public <T extends Serializable> List<T> convertType(List sourceList, Class<T> resultType,String... ignoreProperties);
 
 	/**
 	 * @TODO 实现分页对象的类型转换
 	 * @param <T>
 	 * @param sourcePage
 	 * @param resultType
+	 * @param ignoreProperties 忽略映射匹配的属性
 	 * @return
 	 */
-	public <T extends Serializable> Page<T> convertType(Page sourcePage, Class<T> resultType);
+	public <T extends Serializable> Page<T> convertType(Page sourcePage, Class<T> resultType,String... ignoreProperties);
 
 	/**
 	 * @TODO 并行查询并返回一维List，有几个查询List中就包含几个结果对象，paramNames和paramValues是全部sql的条件参数的合集
