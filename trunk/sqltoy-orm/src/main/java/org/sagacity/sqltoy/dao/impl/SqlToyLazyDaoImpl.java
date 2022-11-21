@@ -108,7 +108,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	public <T> T getSingleValue(String sqlOrNamedSql, Map<String, Object> paramsMap, Class<T> resultType) {
 		return super.getSingleValue(sqlOrNamedSql, paramsMap, resultType);
 	}
-	
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -884,7 +884,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	public <T> List<T> getTranslateCache(String cacheName, String cacheType, Class<T> reusltType) {
 		return super.getTranslateCache(cacheName, cacheType, reusltType);
 	}
-	
+
 	@Override
 	public void translate(Collection dataSet, String cacheName, TranslateHandler handler) {
 		super.translate(dataSet, cacheName, null, 1, handler);
@@ -959,13 +959,15 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	}
 
 	@Override
-	public <T extends Serializable> T convertType(Serializable source, Class<T> resultType) {
-		return super.convertType(source, resultType);
+	public <T extends Serializable> T convertType(Serializable source, Class<T> resultType,
+			String... ignoreProperties) {
+		return super.convertType(source, resultType, ignoreProperties);
 	}
 
 	@Override
-	public <T extends Serializable> List<T> convertType(List sourceList, Class<T> resultType) {
-		return super.convertType(sourceList, resultType);
+	public <T extends Serializable> List<T> convertType(List sourceList, Class<T> resultType,
+			String... ignoreProperties) {
+		return super.convertType(sourceList, resultType, ignoreProperties);
 	}
 
 	/**
@@ -975,8 +977,9 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * @param resultType
 	 * @return
 	 */
-	public <T extends Serializable> PaginationModel<T> convertType(PaginationModel sourcePage, Class<T> resultType) {
-		return super.convertType(sourcePage, resultType);
+	public <T extends Serializable> PaginationModel<T> convertType(PaginationModel sourcePage, Class<T> resultType,
+			String... ignoreProperties) {
+		return super.convertType(sourcePage, resultType, ignoreProperties);
 	}
 
 	@Override

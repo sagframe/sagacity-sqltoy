@@ -122,7 +122,7 @@ public interface SqlToyLazyDao {
 	 */
 	public StoreResult executeStore(String storeSqlOrKey, Object[] inParamValues, Integer[] outParamsType,
 			Class resultType);
-	
+
 	/**
 	 * @TODO 流式获取查询结果
 	 * @param queryExecutor
@@ -490,7 +490,8 @@ public interface SqlToyLazyDao {
 
 	/**
 	 * @TODO 获取查询结果的第一条、第一列的值，一般用select max(x) from 等
-	 * @see getSingleValue(final String sqlOrNamedSql, final Map<String, Object> paramsMap)
+	 * @see getSingleValue(final String sqlOrNamedSql, final Map<String, Object>
+	 *      paramsMap)
 	 * @param sqlOrNamedSql
 	 * @param paramsNamed
 	 * @param paramsValue
@@ -500,16 +501,17 @@ public interface SqlToyLazyDao {
 	public Object getSingleValue(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue);
 
 	public Object getSingleValue(final String sqlOrNamedSql, final Map<String, Object> paramsMap);
-	
+
 	/**
 	 * @TODO 执行类似select field from table 单个字段值
 	 * @param <T>
 	 * @param sqlOrNamedSql
 	 * @param paramsMap
-	 * @param resultType 只支持基本类型，如BigDecimal、Double、String、Date、LocalDate等而非Map、VO复杂类型
+	 * @param resultType    只支持基本类型，如BigDecimal、Double、String、Date、LocalDate等而非Map、VO复杂类型
 	 * @return
 	 */
-	public <T> T getSingleValue(final String sqlOrNamedSql, final Map<String, Object> paramsMap,final Class<T> resultType);
+	public <T> T getSingleValue(final String sqlOrNamedSql, final Map<String, Object> paramsMap,
+			final Class<T> resultType);
 
 	/**
 	 * @todo 通过Query构造查询条件进行数据查询
@@ -793,16 +795,16 @@ public interface SqlToyLazyDao {
 	 * @return
 	 */
 	public HashMap<String, Object[]> getTranslateCache(String cacheName, String elementId);
-	
+
 	/**
 	 * @TODO 将缓存数据以对象形式获取
 	 * @param <T>
 	 * @param cacheName
-	 * @param cacheType 如是数据字典,则传入字典类型否则为null即可
+	 * @param cacheType  如是数据字典,则传入字典类型否则为null即可
 	 * @param reusltType
 	 * @return
 	 */
-	public <T> List<T> getTranslateCache(String cacheName, String cacheType,Class<T> reusltType);
+	public <T> List<T> getTranslateCache(String cacheName, String cacheType, Class<T> reusltType);
 
 	/**
 	 * @TODO 通过反调对集合数据进行翻译处理
@@ -850,28 +852,33 @@ public interface SqlToyLazyDao {
 	 * @param <T>
 	 * @param source
 	 * @param resultType
+	 * @param ignoreProperties
 	 * @return
 	 * @throws Exception
 	 */
-	public <T extends Serializable> T convertType(Serializable source, Class<T> resultType);
+	public <T extends Serializable> T convertType(Serializable source, Class<T> resultType, String... ignoreProperties);
 
 	/**
 	 * @TODO 实现VO和POJO 集合之间属性值的复制
 	 * @param <T>
 	 * @param sourceList
 	 * @param resultType
+	 * @param ignoreProperties
 	 * @return
 	 */
-	public <T extends Serializable> List<T> convertType(List sourceList, Class<T> resultType);
+	public <T extends Serializable> List<T> convertType(List sourceList, Class<T> resultType,
+			String... ignoreProperties);
 
 	/**
 	 * @TODO 实现分页对象的类型转换
 	 * @param <T>
 	 * @param sourcePage
 	 * @param resultType
+	 * @param ignoreProperties
 	 * @return
 	 */
-	public <T extends Serializable> PaginationModel<T> convertType(PaginationModel sourcePage, Class<T> resultType);
+	public <T extends Serializable> PaginationModel<T> convertType(PaginationModel sourcePage, Class<T> resultType,
+			String... ignoreProperties);
 
 	// parallQuery 面向查询(不要用于事务操作过程中),sqltoy提供强大的方法，但是否恰当使用需要使用者做合理的判断
 	/**

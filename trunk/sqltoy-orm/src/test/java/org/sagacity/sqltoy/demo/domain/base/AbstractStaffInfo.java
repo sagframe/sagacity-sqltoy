@@ -30,7 +30,7 @@ public abstract class AbstractStaffInfo implements Serializable,
 	 * jdbcType:VARCHAR
 	 * 员工ID
 	 */
-	@Id(strategy="generator",generator="org.sagacity.sqltoy.plugins.id.DefaultIdGenerator")
+	@Id(strategy="generator",generator="org.sagacity.sqltoy.plugins.id.impl.DefaultIdGenerator")
 	@Column(name="STAFF_ID",length=22L,type=java.sql.Types.VARCHAR,nullable=false)
 	protected String staffId;
 	
