@@ -1454,11 +1454,12 @@ public class SqlXMLConfigParse {
 								treeSortModel.setCompareType("<=");
 							}
 						}
-						
+						//可以逗号分割
 						if (sumFilter.hasAttribute("compare-values")) {
-							treeSortModel.setCompareValues(sumFilter.getAttribute("compare-valuse"));
+							treeSortModel.setCompareValues(sumFilter.getAttribute("compare-values"));
 						}
 					}
+					resultProcessor.add(treeSortModel);
 				}
 			}
 		}
