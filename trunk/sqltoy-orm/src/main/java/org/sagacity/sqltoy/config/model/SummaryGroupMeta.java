@@ -11,7 +11,7 @@ import java.io.Serializable;
  * @author zhongxuchen
  * @version v1.0,Date:2015年3月3日
  */
-public class SummaryGroupMeta implements Serializable {
+public class SummaryGroupMeta implements Serializable, java.lang.Cloneable {
 	/**
 	 * 
 	 */
@@ -158,4 +158,13 @@ public class SummaryGroupMeta implements Serializable {
 		this.summaryType = summaryType;
 	}
 
+	@Override
+	public SummaryGroupMeta clone() {
+		try {
+			return (SummaryGroupMeta) super.clone();
+		} catch (CloneNotSupportedException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
 }
