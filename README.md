@@ -7,6 +7,7 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 ## [sqltoy-online-doc 网友海贝提供](https://www.kancloud.cn/hugoxue/sql_toy/2390352)
 
 # [gitee地址](https://gitee.com/sagacity/sagacity-sqltoy) 
+# [sqltoy Lambda](https://gitee.com/gzghde/sqltoy-plus) 
 
 # 范例演示项目
 ## 快速集成演示项目
