@@ -51,7 +51,11 @@ public class GroupSummary {
 		boolean bothSumAverage = !sumColList.isEmpty() && !aveColList.isEmpty();
 		// 组织分组配置
 		String sumSite;
-		for (SummaryGroupMeta groupMeta : summaryModel.getGroupMeta()) {
+		SummaryGroupMeta[] sumMetas = new SummaryGroupMeta[summaryModel.getGroupMeta().length];
+		int i = 0;
+		SummaryGroupMeta groupMeta;
+		for (SummaryGroupMeta meta : summaryModel.getGroupMeta()) {
+			groupMeta = meta.clone();
 			sumSite = (summaryModel.getSumSite() == null) ? "top" : summaryModel.getSumSite().toLowerCase();
 			List<Integer> groupColsList = CalculateUtils.parseColumns(labelIndexMap, groupMeta.getGroupColumn(),
 					dataWidth);
@@ -85,9 +89,11 @@ public class GroupSummary {
 				groupMeta.setRowSize(2);
 			}
 			groupMeta.setSummaryCols(createColMeta(summaryCols, summaryModel, sumColList, aveColList));
+			sumMetas[i] = groupMeta;
+			i++;
 		}
-		CollectionUtil.groupSummary(result, summaryModel.getGroupMeta(), summaryModel.isReverse(),
-				summaryModel.getLinkSign(), summaryModel.isSkipSingleRow());
+		CollectionUtil.groupSummary(result, sumMetas, summaryModel.isReverse(), summaryModel.getLinkSign(),
+				summaryModel.isSkipSingleRow());
 	}
 
 	/**
