@@ -26,11 +26,11 @@ import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 
 /**
  * @description sqltoy 自动配置类
@@ -38,7 +38,7 @@ import org.springframework.context.annotation.Configuration;
  * @version v1.0,Date:2018年12月26日
  * @modify {Date:2020-2-20,完善配置支持es等,实现完整功能}
  */
-@Configuration
+@AutoConfiguration 
 @EnableConfigurationProperties(SqlToyContextProperties.class)
 public class SqltoyAutoConfiguration {
 	@Autowired

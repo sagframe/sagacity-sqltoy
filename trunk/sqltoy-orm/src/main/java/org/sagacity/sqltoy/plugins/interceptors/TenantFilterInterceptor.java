@@ -34,10 +34,12 @@ public class TenantFilterInterceptor implements SqlInterceptor {
 		if (entityMeta.getTenantField() == null) {
 			return sqlToyResult;
 		}
-		// 你也可以用这种模式判断是否有租户字段，而非@Tenant注解模式
-		//if (entityMeta.getColumnName("tenantId") != null) {
-		//}
-
+		//你也可以用这种模式判断是否有租户字段，而非@Tenant注解模式
+		/*
+		 * if(entityMeta.getColumnName("tenantId")!=null) {
+		 * 
+		 * }
+		 */
 		// 授权租户信息为空不做过滤
 		String[] tenants = sqlToyContext.getUnifyFieldsHandler().authTenants(entityClass, operateType);
 		if (tenants == null || tenants.length == 0) {
