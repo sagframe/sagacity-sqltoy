@@ -21,6 +21,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @version v1.0,Date:2020-3-25
  * @modify 2022-3-3,完成算法重构，支持分别指定求和、求平均的列，不同分组可以根据averageLabel、sumLabel来判断是否只求和或求平均
  * @modify 2022-5-19,增加skipSingleRow特性，针对单行数据可配置不进行汇总、求平均
+ * @modify 2022-11-24,修复汇总计算结果存放于SummaryModel导致的并发场景下的线程安全问题
  */
 public class GroupSummary {
 	public static void process(SummaryModel summaryModel, LabelIndexModel labelIndexMap, List result) {
@@ -51,7 +52,12 @@ public class GroupSummary {
 		boolean bothSumAverage = !sumColList.isEmpty() && !aveColList.isEmpty();
 		// 组织分组配置
 		String sumSite;
-		for (SummaryGroupMeta groupMeta : summaryModel.getGroupMeta()) {
+		//定义分组汇总计算的模型(2022-11-24)
+		SummaryGroupMeta[] sumMetas = new SummaryGroupMeta[summaryModel.getGroupMeta().length];
+		int i = 0;
+		SummaryGroupMeta groupMeta;
+		for (SummaryGroupMeta meta : summaryModel.getGroupMeta()) {
+			groupMeta = meta.clone();
 			sumSite = (summaryModel.getSumSite() == null) ? "top" : summaryModel.getSumSite().toLowerCase();
 			List<Integer> groupColsList = CalculateUtils.parseColumns(labelIndexMap, groupMeta.getGroupColumn(),
 					dataWidth);
@@ -85,9 +91,11 @@ public class GroupSummary {
 				groupMeta.setRowSize(2);
 			}
 			groupMeta.setSummaryCols(createColMeta(summaryCols, summaryModel, sumColList, aveColList));
+			sumMetas[i] = groupMeta;
+			i++;
 		}
-		CollectionUtil.groupSummary(result, summaryModel.getGroupMeta(), summaryModel.isReverse(),
-				summaryModel.getLinkSign(), summaryModel.isSkipSingleRow());
+		CollectionUtil.groupSummary(result, sumMetas, summaryModel.isReverse(), summaryModel.getLinkSign(),
+				summaryModel.isSkipSingleRow());
 	}
 
 	/**
