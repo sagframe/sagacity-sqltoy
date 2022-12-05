@@ -7,15 +7,15 @@ import java.io.Serializable;
 import java.lang.reflect.Type;
 import java.math.RoundingMode;
 import java.util.Map;
-
 import javax.sql.DataSource;
-
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.config.model.FormatModel;
+import org.sagacity.sqltoy.config.model.LinkModel;
 import org.sagacity.sqltoy.config.model.PageOptimize;
 import org.sagacity.sqltoy.config.model.PivotModel;
 import org.sagacity.sqltoy.config.model.SecureMask;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
+import org.sagacity.sqltoy.config.model.SummaryModel;
 import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.config.model.UnpivotModel;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
@@ -421,6 +421,30 @@ public class QueryExecutor implements Serializable {
 	public QueryExecutor pivot(PivotModel pivotModel) {
 		if (pivotModel != null) {
 			innerModel.calculators.add(pivotModel);
+		}
+		return this;
+	}
+
+	/**
+	 * @TODO 定义sqltoy查询结果的处理模式,目前仅提供合计和求平均
+	 * @param summaryModel
+	 * @return
+	 */
+	public QueryExecutor summary(SummaryModel summaryModel) {
+		if (summaryModel != null) {
+			innerModel.calculators.add(summaryModel);
+		}
+		return this;
+	}
+
+	/**
+	 * @TODO 拼换某列,mysql中等同于Broup_concat\oracle 中的WMSWS,HN_CONCAT功能
+	 * @param linkModel
+	 * @return
+	 */
+	public QueryExecutor link(LinkModel linkModel) {
+		if (linkModel != null) {
+			innerModel.linkModel = linkModel;
 		}
 		return this;
 	}

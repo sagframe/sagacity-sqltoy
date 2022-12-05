@@ -30,7 +30,6 @@ import org.sagacity.sqltoy.callback.GenerateSqlHandler;
 import org.sagacity.sqltoy.callback.LockSqlHandler;
 import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
 import org.sagacity.sqltoy.callback.ReflectPropsHandler;
-import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.callback.UniqueSqlHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
@@ -238,7 +237,7 @@ public class DialectUtils {
 	 * @throws Exception
 	 */
 	public static QueryResult findBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
-			final String sql, final Object[] paramsValue, final RowCallbackHandler rowCallbackHandler,
+			final String sql, final Object[] paramsValue, final QueryExecutorExtend extend,
 			final DecryptHandler decryptHandler, final Connection conn, final Integer dbType, final int startIndex,
 			final int fetchSize, final int maxRows) throws Exception {
 		// 做sql签名
@@ -258,8 +257,8 @@ public class DialectUtils {
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws Exception {
 				SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, pst, paramsValue, null, 0);
 				rs = pst.executeQuery();
-				this.setResult(ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn, rs, rowCallbackHandler,
-						null, decryptHandler, startIndex));
+				this.setResult(ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn, rs, extend, null,
+						decryptHandler, startIndex));
 			}
 		});
 	}

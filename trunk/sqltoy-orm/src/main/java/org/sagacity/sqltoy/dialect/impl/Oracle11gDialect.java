@@ -17,7 +17,6 @@ import org.sagacity.sqltoy.callback.DecryptHandler;
 import org.sagacity.sqltoy.callback.GenerateSavePKStrategy;
 import org.sagacity.sqltoy.callback.GenerateSqlHandler;
 import org.sagacity.sqltoy.callback.ReflectPropsHandler;
-import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.OperateType;
@@ -152,7 +151,7 @@ public class Oracle11gDialect implements Dialect {
 				(extend.entityClass == null) ? OperateType.page : OperateType.singleTable, queryParam,
 				extend.entityClass, dbType);
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				extend.rowCallbackHandler, decryptHandler, conn, dbType, startIndex, fetchSize, maxRows);
+				extend, decryptHandler, conn, dbType, startIndex, fetchSize, maxRows);
 	}
 
 	/*
@@ -192,7 +191,7 @@ public class Oracle11gDialect implements Dialect {
 				(extend.entityClass == null) ? OperateType.top : OperateType.singleTable, queryParam,
 				extend.entityClass, dbType);
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				extend.rowCallbackHandler, decryptHandler, conn, dbType, 0, fetchSize, maxRows);
+				extend, decryptHandler, conn, dbType, 0, fetchSize, maxRows);
 	}
 
 	/*
@@ -205,11 +204,11 @@ public class Oracle11gDialect implements Dialect {
 	 */
 	@Override
 	public QueryResult findBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
-			final Object[] paramsValue, final RowCallbackHandler rowCallbackHandler,
+			final Object[] paramsValue, final QueryExecutorExtend queryExecutorExtend,
 			final DecryptHandler decryptHandler, final Connection conn, final LockMode lockMode, final Integer dbType,
 			final String dialect, final int fetchSize, final int maxRows) throws Exception {
 		String realSql = sql.concat(OracleDialectUtils.getLockSql(sql, dbType, lockMode));
-		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, rowCallbackHandler,
+		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, queryExecutorExtend,
 				decryptHandler, conn, dbType, 0, fetchSize, maxRows);
 	}
 
