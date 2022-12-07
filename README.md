@@ -44,40 +44,16 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 * 5.2.25.jre11 发版日期: 2022-12-07
 * 5.2.25.jre17 发版日期: 2022-12-07
 
-# 升级到5.2.x指南
-* 常规springboot项目无任何影响
-* 存在自定义Dao并继承SqlToyDaoSupport的场景，需改成继承SpringDaoSupport(推荐直接使用sqlToyLazyDao公共dao即可)
-* 传统spring xml配置
-```xml
-<bean id="sqlToyContext" class="org.sagacity.sqltoy.SqlToyContext"
-		init-method="initialize" destroy-method="destroy">
-    <!-- 5.2.x 关键影响点:appContext -->
-    <property name="appContext">
-        <bean class="org.sagacity.sqltoy.integration.impl.SpringAppContext"/>
-    </property>
-    <!-- 其他配置保持一致 -->
-</bean>
-```
-
 # 1. 前言
 ## 1.1 sqltoy-orm是什么
    sqltoy-orm是比JPA+MyBatis更加贴合项目的orm框架(依赖spring)，具有jpa式的对象CRUD的同时具有比myBatis(plus)更直观简洁性能强大的查询功能。
    支持以下数据库:
-   * oracle 11g+
-   * db2 9.5+,建议从10.5 开始
-   * mysql(mariadb/innosql) 支持5.6、5.7、8.0 版本
-   * postgresql(greenplum) 支持9.5 以及以上版本、polardb
-   * sqlserver 2012+
+   * oracle11g+、db2(9.5+)、sqlserver2012+、postgresql9.5+、mysql5.6+(mariadb/innosql)
    * sqlite、H2
-   * DM达梦数据库
-   * elasticsearch 只支持查询,版本支持5.7+版本，建议使用7.3以上版本 
-   * clickhouse 
-   * StarRocks(原dorisdb)
-   * oceanBase
-   * guassdb
-   * tidb
-   * impala(kudu)
-   * kingbase
+   * DM达梦数据库、kingbase
+   * elasticsearch5.7+(只支持查询,建议使用7.3+版本)
+   * clickhouse、StarRocks、greenplum、impala(kudu)
+   * oceanBase、polardb、guassdb、tidb
    * mongodb (只支持查询)
    * 其他数据库支持基于jdbc的sql执行(查询和自定义sql的执行)
 
