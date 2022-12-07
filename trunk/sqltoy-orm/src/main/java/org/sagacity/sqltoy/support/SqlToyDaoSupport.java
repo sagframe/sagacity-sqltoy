@@ -823,8 +823,6 @@ public class SqlToyDaoSupport {
 		// 自定义countsql
 		String countSql = queryExecutor.getInnerModel().countSql;
 		if (StringUtil.isNotBlank(countSql)) {
-			countSql = FunctionUtils.getDialectSql(countSql, dialect);
-			countSql = ReservedWordsUtil.convertSql(countSql, DataSourceUtils.getDBType(dialect));
 			sqlToyConfig.setCountSql(countSql);
 		}
 		QueryResult result;
