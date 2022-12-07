@@ -51,9 +51,6 @@ public class TreeDataSort {
 				treeList.remove(i);
 				i--;
 			}
-			if (pidSize == meter) {
-				break;
-			}
 		}
 		int beginIndex = 0;
 		int addCount = 0;

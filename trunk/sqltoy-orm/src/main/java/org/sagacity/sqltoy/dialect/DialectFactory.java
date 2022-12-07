@@ -326,8 +326,8 @@ public class DialectFactory {
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
 									sqlToyConfig, queryExecutor, dialect, false);
 							SqlToyResult queryParam = SqlConfigParseUtils.processSql(realSqlToyConfig.getSql(dialect),
-									extend.getParamsName(),
-									extend.getParamsValue(sqlToyContext, realSqlToyConfig), dialect);
+									extend.getParamsName(), extend.getParamsValue(sqlToyContext, realSqlToyConfig),
+									dialect);
 							// 增加sql执行拦截器 update 2022-9-10
 							queryParam = DialectUtils.doInterceptors(sqlToyContext, realSqlToyConfig,
 									(extend.entityClass == null) ? OperateType.execute : OperateType.singleTable,
@@ -598,11 +598,14 @@ public class DialectFactory {
 					// 类型,默认值为false
 					if (idMeta.getType() == java.sql.Types.INTEGER || idMeta.getType() == java.sql.Types.DECIMAL
 							|| idMeta.getType() == java.sql.Types.DOUBLE || idMeta.getType() == java.sql.Types.FLOAT
-							|| idMeta.getType() == java.sql.Types.NUMERIC) {
+							|| idMeta.getType() == java.sql.Types.NUMERIC
+							|| idMeta.getType() == java.sql.Types.BIGINT) {
 						treeModel.idTypeIsChar(false);
 						// update 2016-12-05 节点路径默认采取主键值直接拼接,更加直观科学
 						// treeModel.setAppendZero(true);
-					} else if (idMeta.getType() == java.sql.Types.VARCHAR || idMeta.getType() == java.sql.Types.CHAR) {
+					} else if (idMeta.getType() == java.sql.Types.VARCHAR || idMeta.getType() == java.sql.Types.NVARCHAR
+							|| idMeta.getType() == java.sql.Types.CHAR || idMeta.getType() == java.sql.Types.NCHAR
+							|| idMeta.getType() == java.sql.Types.LONGVARCHAR) {
 						treeModel.idTypeIsChar(true);
 					}
 				}
@@ -810,8 +813,7 @@ public class DialectFactory {
 										SqlExecuteStat.debug("过程提示", "pageNo=-1,页面可能在做下载操作!");
 										// 通过参数处理最终的sql和参数值
 										SqlToyResult queryParam = SqlConfigParseUtils.processSql(
-												realSqlToyConfig.getSql(dialect),
-												extend.getParamsName(),
+												realSqlToyConfig.getSql(dialect), extend.getParamsName(),
 												extend.getParamsValue(sqlToyContext, realSqlToyConfig), dialect);
 										// 增加sql执行拦截器 update 2022-9-10
 										queryParam = DialectUtils.doInterceptors(sqlToyContext, realSqlToyConfig,
@@ -1112,12 +1114,12 @@ public class DialectFactory {
 									sqlToyConfig, queryExecutor, dialect, false);
 							// 通过参数处理最终的sql和参数值
 							SqlToyResult queryParam = SqlConfigParseUtils.processSql(realSqlToyConfig.getSql(dialect),
-									extend.getParamsName(),
-									extend.getParamsValue(sqlToyContext, realSqlToyConfig), dialect);
+									extend.getParamsName(), extend.getParamsValue(sqlToyContext, realSqlToyConfig),
+									dialect);
 							// 增加sql执行拦截器 update 2022-9-10
 							queryParam = DialectUtils.doInterceptors(sqlToyContext, realSqlToyConfig,
 									(extend.entityClass == null) ? OperateType.search : OperateType.singleTable,
-											queryParam, extend.entityClass, dbType);
+									queryParam, extend.entityClass, dbType);
 							QueryResult queryResult = getDialectSqlWrapper(dbType).findBySql(sqlToyContext,
 									realSqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 									extend.rowCallbackHandler, wrapDecryptHandler(sqlToyContext, extend.resultType),
@@ -1893,8 +1895,8 @@ public class DialectFactory {
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
 									sqlToyConfig, queryExecutor, dialect, false);
 							SqlToyResult queryParam = SqlConfigParseUtils.processSql(realSqlToyConfig.getSql(dialect),
-									extend.getParamsName(),
-									extend.getParamsValue(sqlToyContext, realSqlToyConfig), dialect);
+									extend.getParamsName(), extend.getParamsValue(sqlToyContext, realSqlToyConfig),
+									dialect);
 							// 增加sql执行拦截器 update 2022-9-10
 							queryParam = DialectUtils.doInterceptors(sqlToyContext, realSqlToyConfig,
 									OperateType.fetchUpdate, queryParam, null, dbType);
@@ -2036,8 +2038,8 @@ public class DialectFactory {
 									sqlToyConfig, queryExecutor, dialect, false);
 							// 通过参数处理最终的sql和参数值
 							SqlToyResult queryParam = SqlConfigParseUtils.processSql(realSqlToyConfig.getSql(dialect),
-									extend.getParamsName(),
-									extend.getParamsValue(sqlToyContext, realSqlToyConfig), dialect);
+									extend.getParamsName(), extend.getParamsValue(sqlToyContext, realSqlToyConfig),
+									dialect);
 							// 增加sql执行拦截器 update 2022-9-10
 							queryParam = DialectUtils.doInterceptors(sqlToyContext, realSqlToyConfig,
 									OperateType.search, queryParam, null, dbType);
