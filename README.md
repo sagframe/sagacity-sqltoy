@@ -37,12 +37,12 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
 # 支持springboot3.x
-* 5.3.0  发版日期: 2022-11-30
+* 5.3.1 (注:jdk17+)  发版日期: 2022-12-07
 
 # 最新版本 
-* 5.2.24       发版日期: 2022-11-24
-* 5.2.24.jre11 发版日期: 2022-11-24
-* 5.2.24.jre17 发版日期: 2022-11-24
+* 5.2.25       发版日期: 2022-12-07
+* 5.2.25.jre11 发版日期: 2022-12-07
+* 5.2.25.jre17 发版日期: 2022-12-07
 
 # 升级到5.2.x指南
 * 常规springboot项目无任何影响

@@ -80,6 +80,7 @@ import org.sagacity.sqltoy.plugins.CrossDbAdapter;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.plugins.UnifyUpdateFieldsController;
 import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
+import org.sagacity.sqltoy.plugins.function.FunctionUtils;
 import org.sagacity.sqltoy.plugins.id.IdGenerator;
 import org.sagacity.sqltoy.translate.TranslateHandler;
 import org.sagacity.sqltoy.translate.model.TranslateConfigModel;
@@ -817,8 +818,15 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected QueryResult findPageByQuery(final Page page, final QueryExecutor queryExecutor) {
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search,
-				getDialect(queryExecutor.getInnerModel().dataSource));
+		String dialect = getDialect(queryExecutor.getInnerModel().dataSource);
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search, dialect);
+		// 自定义countsql
+		String countSql = queryExecutor.getInnerModel().countSql;
+		if (StringUtil.isNotBlank(countSql)) {
+			countSql = FunctionUtils.getDialectSql(countSql, dialect);
+			countSql = ReservedWordsUtil.convertSql(countSql, DataSourceUtils.getDBType(dialect));
+			sqlToyConfig.setCountSql(countSql);
+		}
 		QueryResult result;
 		// 跳过查询总记录数量
 		if (page.getSkipQueryCount() != null && page.getSkipQueryCount()) {

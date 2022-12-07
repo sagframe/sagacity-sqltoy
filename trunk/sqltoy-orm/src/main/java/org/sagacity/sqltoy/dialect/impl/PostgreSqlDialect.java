@@ -14,7 +14,6 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DecryptHandler;
 import org.sagacity.sqltoy.callback.GenerateSqlHandler;
 import org.sagacity.sqltoy.callback.ReflectPropsHandler;
-import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.PKStrategy;
@@ -31,6 +30,7 @@ import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TableMeta;
+import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -126,11 +126,11 @@ public class PostgreSqlDialect implements Dialect {
 	 */
 	@Override
 	public QueryResult findBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramsValue, RowCallbackHandler rowCallbackHandler, final DecryptHandler decryptHandler,
+			Object[] paramsValue, QueryExecutorExtend queryExecutorExtend, final DecryptHandler decryptHandler,
 			final Connection conn, final LockMode lockMode, final Integer dbType, final String dialect,
 			final int fetchSize, final int maxRows) throws Exception {
 		String realSql = sql.concat(getLockSql(sql, dbType, lockMode));
-		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, rowCallbackHandler,
+		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, queryExecutorExtend,
 				decryptHandler, conn, dbType, 0, fetchSize, maxRows);
 	}
 
@@ -296,11 +296,12 @@ public class PostgreSqlDialect implements Dialect {
 	public Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			ReflectPropsHandler reflectPropsHandler, String[] forceUpdateFields, Connection conn, final Integer dbType,
 			final String dialect, final Boolean autoCommit, final String tableName) throws Exception {
-		//postgresql15 支持merge into
-		//if (dbType.equals(DBType.POSTGRESQL15)) {
-		//	return PostgreSqlDialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, reflectPropsHandler,
-		//	forceUpdateFields, conn, dbType, dialect, autoCommit, tableName);
-		//}
+		// postgresql15 支持merge into
+		// if (dbType.equals(DBType.POSTGRESQL15)) {
+		// return PostgreSqlDialectUtils.saveOrUpdateAll(sqlToyContext, entities,
+		// batchSize, reflectPropsHandler,
+		// forceUpdateFields, conn, dbType, dialect, autoCommit, tableName);
+		// }
 		Long updateCnt = DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields,
 				reflectPropsHandler, NVL_FUNCTION, conn, dbType, autoCommit, tableName, true);
 		// 如果修改的记录数量跟总记录数量一致,表示全部是修改

@@ -12,13 +12,13 @@ import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DecryptHandler;
 import org.sagacity.sqltoy.callback.ReflectPropsHandler;
-import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
+import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,9 +69,10 @@ public class TDengineDialect extends DefaultDialect {
 
 	@Override
 	public QueryResult findBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramsValue, RowCallbackHandler rowCallbackHandler, DecryptHandler decryptHandler, Connection conn,
-			LockMode lockMode, Integer dbType, String dialect, int fetchSize, int maxRows) throws Exception {
-		return super.findBySql(sqlToyContext, sqlToyConfig, sql, paramsValue, rowCallbackHandler, decryptHandler, conn,
+			Object[] paramsValue, QueryExecutorExtend queryExecutorExtend, DecryptHandler decryptHandler,
+			Connection conn, LockMode lockMode, Integer dbType, String dialect, int fetchSize, int maxRows)
+			throws Exception {
+		return super.findBySql(sqlToyContext, sqlToyConfig, sql, paramsValue, queryExecutorExtend, decryptHandler, conn,
 				lockMode, dbType, dialect, fetchSize, maxRows);
 	}
 

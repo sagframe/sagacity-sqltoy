@@ -140,7 +140,7 @@ public class QueryExecutorBuilder {
 			paramName = fullParamNames[i];
 			if (authFilterMap.containsKey(paramName)) {
 				dataAuthFilter = authFilterMap.get(paramName);
-				// 实际传参值为空(或等于全新标记值)，权限过滤配置了限制范围，则将实际权限数据值填充到条件参数中
+				// 实际传参值为空(或等于全选标记值)，权限过滤配置了限制范围，则将实际权限数据值填充到条件参数中
 				if (StringUtil.isBlank(fullParamValues[i])
 						|| equalChoiceAllValue(fullParamValues[i], dataAuthFilter.getChoiceAllValue())) {
 					// 实现统一传参
