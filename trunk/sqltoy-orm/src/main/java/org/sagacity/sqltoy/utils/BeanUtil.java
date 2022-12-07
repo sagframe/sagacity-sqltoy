@@ -2018,18 +2018,19 @@ public class BeanUtil {
 			for (Field field : cascadeFields) {
 				TableCascadeModel cascadeModel = new TableCascadeModel();
 				cascadeModel.setProperty(field.getName());
-				cascadeModel.setMappedType(
-						(Class) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0]);
 				OneToMany oneToMany = field.getAnnotation(OneToMany.class);
 				OneToOne oneToOne = field.getAnnotation(OneToOne.class);
 				if (oneToMany != null) {
 					cascadeModel.setCascadeType(1);
 					cascadeModel.setFields(oneToMany.fields());
 					cascadeModel.setMappedFields(oneToMany.mappedFields());
+					cascadeModel.setMappedType(
+							(Class) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0]);
 				} else {
 					cascadeModel.setCascadeType(2);
 					cascadeModel.setFields(oneToOne.fields());
 					cascadeModel.setMappedFields(oneToOne.mappedFields());
+					cascadeModel.setMappedType(field.getType());
 				}
 				result.add(cascadeModel);
 			}

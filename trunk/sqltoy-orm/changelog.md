@@ -1,4 +1,25 @@
-﻿# v5.2.9  2022-8-21
+﻿# v5.2.24  2022-11-24
+1、修复SummaryList高并发场景下汇总计算线程安全问题
+
+# v5.2.23  2022-11-22
+1、树型数据支持对汇总计算进行过滤
+
+# v5.2.22  2022-11-21
+1、tree-sort功能增加sum-columns
+2、convertType增String...ignoreProperties
+3、TypeHandler自定义类型处理setNull和setValue增加dbType参数,便于用户跟进数据库类型做逻辑判断
+
+# v5.2.21  2022-11-14
+1、支持sql中平铺引用数组中的具体值
+
+# v5.2.20  2022-11-11
+1、优化多租户的支持，findByEntity之前遗漏了多租户的支持
+2、兼容postgresql ilike 场景
+3、loadByIds兼容loadByIds(entityClass,idList)场景
+4、提供spring.sqltoy.executeSqlBlankToNull参数，设置更新操作sql执行的参数是否默认空白转null
+在updateByQuery中EntityUpdate中提供了blankToNull(Boolean blankToNull) 方法动态改变默认设置
+
+# v5.2.9  2022-8-21
 1、针对一下产品化的软件(适配多种数据库:mysql\oracle\postgres\db2\mssql),要求在一个数据库场景下可以测试相同的功能是否可以适配不同数据库
 
 # v5.2.8  2022-8-11

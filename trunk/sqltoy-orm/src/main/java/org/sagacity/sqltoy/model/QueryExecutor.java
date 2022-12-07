@@ -7,15 +7,15 @@ import java.io.Serializable;
 import java.lang.reflect.Type;
 import java.math.RoundingMode;
 import java.util.Map;
+
 import javax.sql.DataSource;
+
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.config.model.FormatModel;
-import org.sagacity.sqltoy.config.model.LinkModel;
 import org.sagacity.sqltoy.config.model.PageOptimize;
 import org.sagacity.sqltoy.config.model.PivotModel;
 import org.sagacity.sqltoy.config.model.SecureMask;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
-import org.sagacity.sqltoy.config.model.SummaryModel;
 import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.config.model.UnpivotModel;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
@@ -426,28 +426,43 @@ public class QueryExecutor implements Serializable {
 	}
 
 	/**
-	 * @TODO 定义sqltoy查询结果的处理模式,目前仅提供合计和求平均
-	 * @param summaryModel
+	 * @TODO 设置分页查询countsql(用于极致性能优化，非必须)
+	 * @param countSql
 	 * @return
 	 */
-	public QueryExecutor summary(SummaryModel summaryModel) {
-		if (summaryModel != null) {
-			innerModel.calculators.add(summaryModel);
+	public QueryExecutor countSql(String countSql) {
+		if (countSql != null) {
+			innerModel.countSql = countSql;
 		}
 		return this;
 	}
 
-	/**
-	 * @TODO 拼换某列,mysql中等同于Broup_concat\oracle 中的WMSWS,HN_CONCAT功能
-	 * @param linkModel
-	 * @return
-	 */
-	public QueryExecutor link(LinkModel linkModel) {
-		if (linkModel != null) {
-			innerModel.linkModel = linkModel;
-		}
-		return this;
-	}
+// 暂时不开放，组织SummaryModel、LinkModel参数模型过于复杂
+//	// 建议在xml中定义使用,没有xml结构无法清晰的构造SummaryModel模型
+//	/**
+//	 * @TODO 定义sqltoy查询结果的处理模式,目前仅提供合计和求平均
+//	 * @param summaryModel
+//	 * @return
+//	 */
+//	public QueryExecutor summary(SummaryModel summaryModel) {
+//		if (summaryModel != null) {
+//			innerModel.calculators.add(summaryModel);
+//		}
+//		return this;
+//	}
+//
+//	// 建议在xml中定义使用,没有xml结构无法清晰的构造linkModel模型
+//	/**
+//	 * @TODO 拼换某列,mysql中等同于Broup_concat\oracle 中的WMSWS,HN_CONCAT功能
+//	 * @param linkModel
+//	 * @return
+//	 */
+//	public QueryExecutor link(LinkModel linkModel) {
+//		if (linkModel != null) {
+//			innerModel.linkModel = linkModel;
+//		}
+//		return this;
+//	}
 
 	/**
 	 * @TODO 设置执行时是否输出sql日志
