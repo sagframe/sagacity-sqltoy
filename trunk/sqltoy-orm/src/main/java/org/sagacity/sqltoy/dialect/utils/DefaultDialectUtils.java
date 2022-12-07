@@ -104,7 +104,7 @@ public class DefaultDialectUtils {
 				(extend.entityClass == null) ? OperateType.random : OperateType.singleTable, queryParam,
 				extend.entityClass, dbType);
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				extend.rowCallbackHandler, decryptHandler, conn, dbType, 0, fetchSize, maxRows);
+				extend, decryptHandler, conn, dbType, 0, fetchSize, maxRows);
 	}
 
 	/**
@@ -155,7 +155,7 @@ public class DefaultDialectUtils {
 				(extend.entityClass == null) ? OperateType.page : OperateType.singleTable, queryParam,
 				extend.entityClass, dbType);
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				extend.rowCallbackHandler, decryptHandler, conn, dbType, 0, fetchSize, maxRows);
+				extend, decryptHandler, conn, dbType, 0, fetchSize, maxRows);
 	}
 
 	/**
@@ -201,7 +201,7 @@ public class DefaultDialectUtils {
 				(extend.entityClass == null) ? OperateType.top : OperateType.singleTable, queryParam,
 				extend.entityClass, dbType);
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				extend.rowCallbackHandler, decryptHandler, conn, dbType, 0, fetchSize, maxRows);
+				extend, decryptHandler, conn, dbType, 0, fetchSize, maxRows);
 	}
 
 	/**

@@ -756,11 +756,14 @@ public class SqlToyContext {
 		}
 		if (functionConverts instanceof List) {
 			FunctionUtils.setFunctionConverts((List<String>) functionConverts);
+		} else if (functionConverts instanceof String[]) {
+			FunctionUtils.setFunctionConverts(Arrays.asList((String[]) functionConverts));
 		} else if (functionConverts instanceof String) {
 			String converts = (String) functionConverts;
 			if (StringUtil.isBlank(converts) || "default".equals(converts) || "defaults".equals(converts)) {
-				FunctionUtils.setFunctionConverts(null);
-			} else if (!"close".equalsIgnoreCase(converts)) {
+				FunctionUtils.setFunctionConverts(Arrays.asList("default"));
+			} // close 标记已经没有必要
+			else if (!"close".equalsIgnoreCase(converts)) {
 				FunctionUtils.setFunctionConverts(Arrays.asList(converts.split("\\,")));
 			}
 		}

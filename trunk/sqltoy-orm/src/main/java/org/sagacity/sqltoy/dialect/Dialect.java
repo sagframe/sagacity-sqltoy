@@ -11,7 +11,6 @@ import java.util.List;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DecryptHandler;
 import org.sagacity.sqltoy.callback.ReflectPropsHandler;
-import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.model.ColumnMeta;
@@ -20,6 +19,7 @@ import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TableMeta;
+import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 
 /**
  * @project sqltoy-orm
@@ -110,19 +110,19 @@ public interface Dialect {
 	 * @param sqlToyConfig
 	 * @param sql
 	 * @param paramsValue
-	 * @param rowCallbackHandler
+	 * @param queryExecutorExtend
 	 * @param decryptHandler
 	 * @param conn
 	 * @param lockMode
 	 * @param dbType
 	 * @param dialect
 	 * @param fetchSize
-	 * @param maxRows            设置最大查询记录，一般无需设置
+	 * @param maxRows        设置最大查询记录，一般无需设置
 	 * @return
 	 * @throws Exception
 	 */
 	public QueryResult findBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
-			final Object[] paramsValue, final RowCallbackHandler rowCallbackHandler,
+			final Object[] paramsValue, final QueryExecutorExtend queryExecutorExtend,
 			final DecryptHandler decryptHandler, final Connection conn, final LockMode lockMode, final Integer dbType,
 			final String dialect, final int fetchSize, final int maxRows) throws Exception;
 

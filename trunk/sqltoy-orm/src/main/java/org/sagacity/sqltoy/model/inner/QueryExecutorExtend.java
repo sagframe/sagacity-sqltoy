@@ -16,6 +16,7 @@ import javax.sql.DataSource;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.config.model.FormatModel;
+import org.sagacity.sqltoy.config.model.LinkModel;
 import org.sagacity.sqltoy.config.model.PageOptimize;
 import org.sagacity.sqltoy.config.model.ParamFilterModel;
 import org.sagacity.sqltoy.config.model.SecureMask;
@@ -230,4 +231,10 @@ public class QueryExecutorExtend implements Serializable {
 	public Object[] getDataSourceShardingParamsValue() {
 		return dbShardingValues;
 	}
+
+	/**
+	 * @todo 拼换某列,mysql中等同于Broup_concat\oracle 中的WMSWS,HN_CONCAT功能
+	 * @return
+	 */
+	public LinkModel linkModel;
 }

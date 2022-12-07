@@ -24,7 +24,6 @@ import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DecryptHandler;
-import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.callback.StreamResultHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
@@ -102,17 +101,17 @@ public class ResultUtils {
 	 * @throws Exception
 	 */
 	public static QueryResult processResultSet(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
-			Connection conn, ResultSet rs, RowCallbackHandler rowCallbackHandler, UpdateRowHandler updateRowHandler,
+			Connection conn, ResultSet rs, QueryExecutorExtend queryExecutorExtend, UpdateRowHandler updateRowHandler,
 			DecryptHandler decryptHandler, int startColIndex) throws Exception {
 		QueryResult result = new QueryResult();
 		// 记录行记数器
 		int index = 0;
-		if (rowCallbackHandler != null) {
+		if (queryExecutorExtend != null && queryExecutorExtend.rowCallbackHandler != null) {
 			while (rs.next()) {
-				rowCallbackHandler.processRow(rs, index);
+				queryExecutorExtend.rowCallbackHandler.processRow(rs, index);
 				index++;
 			}
-			result.setRows(rowCallbackHandler.getResult());
+			result.setRows(queryExecutorExtend.rowCallbackHandler.getResult());
 		} else {
 			// 重新组合解密字段(entityMeta中的和sql自定义的合并)
 			IgnoreCaseSet decryptColumns = (decryptHandler == null) ? null : decryptHandler.getColumns();
@@ -157,8 +156,8 @@ public class ResultUtils {
 			result.setLabelTypes(labelTypes);
 			// 返回结果为非VO class时才可以应用旋转和汇总合计功能
 			try {
-				result.setRows(getResultSet(sqlToyConfig, sqlToyContext, conn, rs, updateRowHandler, realDecryptHandler,
-						rowCnt, labelIndexMap, labelNames, startColIndex));
+				result.setRows(getResultSet(queryExecutorExtend, sqlToyConfig, sqlToyContext, conn, rs,
+						updateRowHandler, realDecryptHandler, rowCnt, labelIndexMap, labelNames, startColIndex));
 			} // update 2019-09-11 此处增加数组溢出异常是因为经常有开发设置缓存cache-indexs时写错误，为了增加错误提示信息的友好性增加此处理
 			catch (Exception oie) {
 				logger.error("sql={} 提取结果发生异常:{}!", sqlToyConfig.getId(), oie.getMessage());
@@ -488,11 +487,15 @@ public class ResultUtils {
 		}
 	}
 
-	private static List getResultSet(SqlToyConfig sqlToyConfig, SqlToyContext sqlToyContext, Connection conn,
-			ResultSet rs, UpdateRowHandler updateRowHandler, DecryptHandler decryptHandler, int rowCnt,
-			HashMap<String, Integer> labelIndexMap, String[] labelNames, int startColIndex) throws Exception {
+	private static List getResultSet(QueryExecutorExtend queryExtend, SqlToyConfig sqlToyConfig,
+			SqlToyContext sqlToyContext, Connection conn, ResultSet rs, UpdateRowHandler updateRowHandler,
+			DecryptHandler decryptHandler, int rowCnt, HashMap<String, Integer> labelIndexMap, String[] labelNames,
+			int startColIndex) throws Exception {
 		// 字段连接(多行数据拼接成一个数据,以一行显示)
 		LinkModel linkModel = sqlToyConfig.getLinkModel();
+		if (queryExtend != null && queryExtend.linkModel != null) {
+			linkModel = queryExtend.linkModel;
+		}
 		// update 2020-09-13 存在多列link(独立出去编写,避免对单列产生影响)
 		if (linkModel != null && linkModel.getColumns().length > 1) {
 			return getMoreLinkResultSet(sqlToyConfig, sqlToyContext, decryptHandler, conn, rs, rowCnt, labelIndexMap,
@@ -1295,8 +1298,7 @@ public class ResultUtils {
 							sqlToyContext.getSqlToyConfig(pivotModel.getCategorySql(), SqlType.search, ""),
 							queryExecutor, dialect, false);
 					SqlToyResult pivotSqlToyResult = SqlConfigParseUtils.processSql(pivotSqlConfig.getSql(dialect),
-							extend.getParamsName(), extend.getParamsValue(sqlToyContext, pivotSqlConfig),
-							dialect);
+							extend.getParamsName(), extend.getParamsValue(sqlToyContext, pivotSqlConfig), dialect);
 					// 增加sql执行拦截器 update 2022-9-10
 					pivotSqlToyResult = DialectUtils.doInterceptors(sqlToyContext, pivotSqlConfig, OperateType.search,
 							pivotSqlToyResult, null, dbType);

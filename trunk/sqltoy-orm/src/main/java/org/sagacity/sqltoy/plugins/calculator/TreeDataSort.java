@@ -51,9 +51,6 @@ public class TreeDataSort {
 				treeList.remove(i);
 				i--;
 			}
-			if (pidSize == meter) {
-				break;
-			}
 		}
 		int beginIndex = 0;
 		int addCount = 0;
@@ -96,7 +93,7 @@ public class TreeDataSort {
 	 * @param pidIndex
 	 * @return
 	 */
-	private static Set getTopPids(List treeList, int idIndex, int pidIndex) {
+	public static Set getTopPids(List treeList, int idIndex, int pidIndex) {
 		Set<Object> idSet = new HashSet<Object>();
 		Set<Object> pidSet = new HashSet<Object>();
 		List row;
