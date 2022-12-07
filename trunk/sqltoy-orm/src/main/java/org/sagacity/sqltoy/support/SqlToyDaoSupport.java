@@ -80,7 +80,6 @@ import org.sagacity.sqltoy.plugins.CrossDbAdapter;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.plugins.UnifyUpdateFieldsController;
 import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
-import org.sagacity.sqltoy.plugins.function.FunctionUtils;
 import org.sagacity.sqltoy.plugins.id.IdGenerator;
 import org.sagacity.sqltoy.translate.TranslateHandler;
 import org.sagacity.sqltoy.translate.model.TranslateConfigModel;
