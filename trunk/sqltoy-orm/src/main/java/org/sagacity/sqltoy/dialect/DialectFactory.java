@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -763,7 +765,7 @@ public class DialectFactory {
 							if (pageOptimize != null && pageOptimize.isParallel() && pageNo != -1
 									&& recordCnt == null) {
 								queryResult = parallelPage(sqlToyContext, queryExecutor, realSqlToyConfig, extend,
-										pageNo, pageSize, overPageToFirst, pageOptimize, conn, dbType, dialect);
+										pageNo, pageSize, overPageToFirst, pageOptimize, conn, dbType, dialect, dataSource);
 								recordCnt = queryResult.getRecordCount();
 								// 将并行后得到的总记录数登记到缓存
 								if (null != pageQueryKey) {
@@ -903,70 +905,70 @@ public class DialectFactory {
 	private QueryResult parallelPage(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final SqlToyConfig sqlToyConfig, final QueryExecutorExtend extend, final long pageNo,
 			final Integer pageSize, final boolean overPageToFirst, PageOptimize pageOptimize, Connection conn,
-			Integer dbType, String dialect) throws Exception {
+			Integer dbType, String dialect, final DataSource dataSource) throws Exception {
 		final QueryResult queryResult = new QueryResult();
 		queryResult.setPageNo(pageNo);
 		queryResult.setPageSize(pageSize);
-		ExecutorService pool = null;
+		Executor taskExecutor = sqlToyContext.getTaskExecutor();
 		try {
 			SqlExecuteStat.debug("开始并行查询count总记录数和单页记录数据!", null);
 			final SqlExecuteTrace sqlTrace = SqlExecuteStat.get();
-			pool = Executors.newFixedThreadPool(2);
 			// 查询总记录数量
-			pool.submit(new Runnable() {
-				@Override
-				public void run() {
-					try {
-						// 规避新的线程日志无法采集
-						SqlExecuteStat.mergeTrace(sqlTrace);
-						Long startTime = System.currentTimeMillis();
-						queryResult.setRecordCount(
-								getCountBySql(sqlToyContext, sqlToyConfig, queryExecutor, conn, dbType, dialect));
-						SqlExecuteStat.debug("查询count执行耗时", (System.currentTimeMillis() - startTime) + "毫秒!");
-						if (sqlTrace != null && SqlExecuteStat.get() != null) {
-							sqlTrace.addLogs(SqlExecuteStat.get().getExecuteLogs());
-						}
-					} catch (Exception e) {
-						e.printStackTrace();
-						queryResult.setSuccess(false);
-						queryResult.setMessage("查询总记录数异常:" + e.getMessage());
-					} finally {
-						SqlExecuteStat.destroyNotLog();
-					}
+			CompletableFuture countCompletableFuture = CompletableFuture.runAsync(()->{
+				try {
+					DataSourceUtils.processDataSource(
+						sqlToyContext,
+						ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
+						new DataSourceCallbackHandler() {
+							@Override
+							public void doConnection(Connection countConn, Integer dbType, String dialect) throws Exception {
+								// 规避新的线程日志无法采集
+								SqlExecuteStat.mergeTrace(sqlTrace);
+								Long startTime = System.currentTimeMillis();
+								queryResult.setRecordCount(
+									getCountBySql(sqlToyContext, sqlToyConfig, queryExecutor, countConn, dbType, dialect));
+								SqlExecuteStat.debug("查询count执行耗时", (System.currentTimeMillis() - startTime) + "毫秒!");
+								if (sqlTrace != null && SqlExecuteStat.get() != null) {
+									sqlTrace.addLogs(SqlExecuteStat.get().getExecuteLogs());
+								}
+							}
+						});
+				} catch (Exception e) {
+					e.printStackTrace();
+					queryResult.setSuccess(false);
+					queryResult.setMessage("查询总记录数异常:" + e.getMessage());
+				} finally {
+					SqlExecuteStat.destroyNotLog();
 				}
-			});
+			}, taskExecutor);
 			// 获取记录
-			pool.submit(new Runnable() {
-				@Override
-				public void run() {
-					try {
-						SqlExecuteStat.mergeTrace(sqlTrace);
-						Long startTime = System.currentTimeMillis();
-						QueryResult result = getDialectSqlWrapper(dbType).findPageBySql(sqlToyContext, sqlToyConfig,
-								queryExecutor, wrapDecryptHandler(sqlToyContext, extend.resultType), pageNo, pageSize,
-								conn, dbType, dialect, getFetchSize(extend.fetchSize), extend.maxRows);
-						queryResult.setRows(result.getRows());
-						queryResult.setLabelNames(result.getLabelNames());
-						queryResult.setLabelTypes(result.getLabelTypes());
-						SqlExecuteStat.debug("查询分页记录耗时", (System.currentTimeMillis() - startTime) + "毫秒!");
-						if (sqlTrace != null && SqlExecuteStat.get() != null) {
-							sqlTrace.addLogs(SqlExecuteStat.get().getExecuteLogs());
-						}
-					} catch (Exception e) {
-						e.printStackTrace();
-						queryResult.setSuccess(false);
-						queryResult.setMessage("查询单页记录数据异常:" + e.getMessage());
-					} finally {
-						SqlExecuteStat.destroyNotLog();
+			CompletableFuture dataCompletableFuture = CompletableFuture.runAsync(()->{
+				try {
+					SqlExecuteStat.mergeTrace(sqlTrace);
+					Long startTime = System.currentTimeMillis();
+					QueryResult result = getDialectSqlWrapper(dbType).findPageBySql(sqlToyContext, sqlToyConfig,
+						queryExecutor, wrapDecryptHandler(sqlToyContext, extend.resultType), pageNo, pageSize,
+						conn, dbType, dialect, getFetchSize(extend.fetchSize), extend.maxRows);
+					queryResult.setRows(result.getRows());
+					queryResult.setLabelNames(result.getLabelNames());
+					queryResult.setLabelTypes(result.getLabelTypes());
+					SqlExecuteStat.debug("查询分页记录耗时", (System.currentTimeMillis() - startTime) + "毫秒!");
+					if (sqlTrace != null && SqlExecuteStat.get() != null) {
+						sqlTrace.addLogs(SqlExecuteStat.get().getExecuteLogs());
 					}
+				} catch (Exception e) {
+					e.printStackTrace();
+					queryResult.setSuccess(false);
+					queryResult.setMessage("查询单页记录数据异常:" + e.getMessage());
+				} finally {
+					SqlExecuteStat.destroyNotLog();
 				}
-			});
-			pool.shutdown();
+			}, taskExecutor);
 			// 设置最大等待时长(秒)
 			if (pageOptimize.getParallelMaxWaitSeconds() > 0) {
-				pool.awaitTermination(pageOptimize.getParallelMaxWaitSeconds(), TimeUnit.SECONDS);
+				CompletableFuture.allOf(countCompletableFuture, dataCompletableFuture).get(pageOptimize.getParallelMaxWaitSeconds(), TimeUnit.SECONDS);
 			} else {
-				pool.awaitTermination(SqlToyConstants.PARALLEL_MAXWAIT_SECONDS, TimeUnit.SECONDS);
+				CompletableFuture.allOf(countCompletableFuture, dataCompletableFuture).get(SqlToyConstants.PARALLEL_MAXWAIT_SECONDS, TimeUnit.SECONDS);
 			}
 			// 发生异常
 			if (!queryResult.isSuccess()) {
@@ -990,9 +992,7 @@ public class DialectFactory {
 			e.printStackTrace();
 			throw new DataAccessException("并行查询执行错误:" + e.getMessage(), e);
 		} finally {
-			if (pool != null) {
-				pool.shutdownNow();
-			}
+
 		}
 		return queryResult;
 	}

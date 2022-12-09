@@ -210,6 +210,11 @@ public class SqlToyContextProperties implements Serializable {
 	private boolean executeSqlBlankToNull = true;
 
 	/**
+	 * 线程池配置参数
+	 */
+	private SqlToyContextTaskPoolProperties taskExecutor = new  SqlToyContextTaskPoolProperties();
+
+	/**
 	 * @return the sqlResourcesDir
 	 */
 	public String getSqlResourcesDir() {
@@ -596,5 +601,13 @@ public class SqlToyContextProperties implements Serializable {
 
 	public void setExecuteSqlBlankToNull(boolean executeSqlBlankToNull) {
 		this.executeSqlBlankToNull = executeSqlBlankToNull;
+	}
+
+	public SqlToyContextTaskPoolProperties getTaskExecutor() {
+		return taskExecutor;
+	}
+
+	public void setTaskExecutor(SqlToyContextTaskPoolProperties taskExecutor) {
+		this.taskExecutor = taskExecutor;
 	}
 }

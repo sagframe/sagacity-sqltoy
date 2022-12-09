@@ -5,9 +5,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
+import java.util.concurrent.Executor;
+import java.util.concurrent.ForkJoinPool;
 import javax.sql.DataSource;
-
 import org.sagacity.sqltoy.config.EntityManager;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.SqlScriptLoader;
@@ -332,6 +332,15 @@ public class SqlToyContext {
 	 * 变更操作型sql空白默认转为null
 	 */
 	private boolean executeSqlBlankToNull = true;
+
+	/**
+	 * sqltoy的线程池名称
+	 */
+	private String taskExecutorName;
+	/**
+	 * sqltoy的线程池
+	 */
+	private Executor taskExecutor = ForkJoinPool.commonPool();
 
 	/**
 	 * @todo 初始化
@@ -1085,5 +1094,21 @@ public class SqlToyContext {
 
 	public void setExecuteSqlBlankToNull(boolean executeSqlBlankToNull) {
 		this.executeSqlBlankToNull = executeSqlBlankToNull;
+	}
+
+	public void setTaskExecutorName(String taskExecutorName) {
+		this.taskExecutorName = taskExecutorName;
+	}
+
+	public Executor getTaskExecutor() {
+		if(StringUtil.isBlank(taskExecutorName) || !appContext.containsBean(taskExecutorName)){
+			return taskExecutor;
+		}else{
+			return (Executor) appContext.getBean(taskExecutorName);
+		}
+	}
+
+	public void setTaskExecutor(Executor taskExecutor) {
+		this.taskExecutor = taskExecutor;
 	}
 }

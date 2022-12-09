@@ -4,7 +4,7 @@ import static java.lang.System.err;
 
 import java.util.ArrayList;
 import java.util.List;
-
+import java.util.concurrent.Executor;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.dao.SqlToyLazyDao;
@@ -25,12 +25,17 @@ import org.sagacity.sqltoy.service.impl.SqlToyCRUDServiceImpl;
 import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 /**
  * @description sqltoy 自动配置类
@@ -51,14 +56,41 @@ public class SqltoyAutoConfiguration {
 	@Value("${sqltoy.sqlResourcesDir:}")
 	private String sqlResourcesDir;
 
+	/**
+	 * 当配置不存在或不为none的时候实例化
+	 * @return
+	 */
+	@ConditionalOnExpression("#{''.equals(environment.getProperty('spring.sqltoy.taskExecutor.targetPoolName', ''))}")
+	@Bean(name = "sqltoyOrmTaskExecutor", destroyMethod = "shutdown", initMethod = "initialize")
+	public ThreadPoolTaskExecutor sqltoyOrmTaskExecutor() {
+		SqlToyContextTaskPoolProperties taskPoolProperties = properties.getTaskExecutor();
+		ThreadPoolTaskExecutor pool = new ThreadPoolTaskExecutor();
+		pool.setThreadNamePrefix(taskPoolProperties.getThreadNamePrefix());
+		// 线程池维护线程的最少数量
+		pool.setCorePoolSize(taskPoolProperties.getCorePoolSize());
+		// 线程池维护线程的最大数量
+		pool.setMaxPoolSize(taskPoolProperties.getMaxPoolSize());
+		// 线程池所使用的缓冲队列
+		pool.setQueueCapacity(taskPoolProperties.getQueueCapacity());
+		// 线程池维护线程所允许的空闲时间
+		pool.setKeepAliveSeconds(taskPoolProperties.getKeepAliveSeconds());
+		// 决定使用ThreadPool的shutdown()还是shutdownNow()方法来关闭，默认为false
+		pool.setWaitForTasksToCompleteOnShutdown(taskPoolProperties.getWaitForTasksToCompleteOnShutdown());
+		// pool.setContinueScheduledExecutionAfterException();
+		pool.setAwaitTerminationSeconds(taskPoolProperties.getAwaitTerminationSeconds());
+		//如果添加到线程池失败，那么主线程会自己去执行该任务，不会等待线程池中的线程去执行。
+		pool.setRejectedExecutionHandler(taskPoolProperties.getRejectedExecutionHandler());
+		return pool;
+	}
+
 	// 构建sqltoy上下文,并指定初始化方法和销毁方法
 	@Bean(name = "sqlToyContext", initMethod = "initialize", destroyMethod = "destroy")
 	@ConditionalOnMissingBean
-	SqlToyContext sqlToyContext() throws Exception {
+	SqlToyContext sqlToyContext(@Value("${spring.sqltoy.taskExecutor.targetPoolName:sqltoyOrmTaskExecutor}") String taskExecutorName) throws Exception {
 		// 用辅助配置来校验是否配置错误
 		if (StringUtil.isBlank(properties.getSqlResourcesDir()) && StringUtil.isNotBlank(sqlResourcesDir)) {
 			throw new IllegalArgumentException(
-					"请检查sqltoy配置,是spring.sqltoy作为前缀,而不是sqltoy!\n正确范例: spring.sqltoy.sqlResourcesDir=classpath:com/sagframe/modules");
+				"请检查sqltoy配置,是spring.sqltoy作为前缀,而不是sqltoy!\n正确范例: spring.sqltoy.sqlResourcesDir=classpath:com/sagframe/modules");
 		}
 		SqlToyContext sqlToyContext = new SqlToyContext();
 
@@ -75,7 +107,7 @@ public class SqltoyAutoConfiguration {
 
 		// 针对Caffeine缓存指定实现类型(不设置也会自动默认)
 		sqlToyContext
-				.setTranslateCaffeineManagerClass("org.sagacity.sqltoy.translate.cache.impl.TranslateCaffeineManager");
+			.setTranslateCaffeineManagerClass("org.sagacity.sqltoy.translate.cache.impl.TranslateCaffeineManager");
 		// 注入spring的默认mongoQuery实现类(不设置也会自动默认)
 		sqlToyContext.setMongoQueryClass("org.sagacity.sqltoy.integration.impl.SpringMongoQuery");
 		// --------end 5.2 -----------------------------------------
@@ -254,11 +286,11 @@ public class SqltoyAutoConfiguration {
 			// 缓存管理器的bean名称
 			if (applicationContext.containsBean(translateCacheManager)) {
 				sqlToyContext.setTranslateCacheManager(
-						(TranslateCacheManager) applicationContext.getBean(translateCacheManager));
+					(TranslateCacheManager) applicationContext.getBean(translateCacheManager));
 			} // 包名和类名称
 			else if (translateCacheManager.contains(".")) {
 				sqlToyContext.setTranslateCacheManager((TranslateCacheManager) Class.forName(translateCacheManager)
-						.getDeclaredConstructor().newInstance());
+					.getDeclaredConstructor().newInstance());
 			}
 		}
 
@@ -270,7 +302,7 @@ public class SqltoyAutoConfiguration {
 			} // 包名和类名称
 			else if (typeHandler.contains(".")) {
 				sqlToyContext.setTypeHandler(
-						(TypeHandler) Class.forName(typeHandler).getDeclaredConstructor().newInstance());
+					(TypeHandler) Class.forName(typeHandler).getDeclaredConstructor().newInstance());
 			}
 		}
 
@@ -279,11 +311,11 @@ public class SqltoyAutoConfiguration {
 		if (StringUtil.isNotBlank(dataSourceSelector)) {
 			if (applicationContext.containsBean(dataSourceSelector)) {
 				sqlToyContext
-						.setDataSourceSelector((DataSourceSelector) applicationContext.getBean(dataSourceSelector));
+					.setDataSourceSelector((DataSourceSelector) applicationContext.getBean(dataSourceSelector));
 			} // 包名和类名称
 			else if (dataSourceSelector.contains(".")) {
 				sqlToyContext.setDataSourceSelector(
-						(DataSourceSelector) Class.forName(dataSourceSelector).getDeclaredConstructor().newInstance());
+					(DataSourceSelector) Class.forName(dataSourceSelector).getDeclaredConstructor().newInstance());
 			}
 		}
 
@@ -295,7 +327,7 @@ public class SqltoyAutoConfiguration {
 			} // 包名和类名称
 			else if (connectionFactory.contains(".")) {
 				sqlToyContext.setConnectionFactory(
-						(ConnectionFactory) Class.forName(connectionFactory).getDeclaredConstructor().newInstance());
+					(ConnectionFactory) Class.forName(connectionFactory).getDeclaredConstructor().newInstance());
 			}
 		}
 
@@ -304,11 +336,11 @@ public class SqltoyAutoConfiguration {
 		if (StringUtil.isNotBlank(fieldsSecureProvider)) {
 			if (applicationContext.containsBean(fieldsSecureProvider)) {
 				sqlToyContext.setFieldsSecureProvider(
-						(FieldsSecureProvider) applicationContext.getBean(fieldsSecureProvider));
+					(FieldsSecureProvider) applicationContext.getBean(fieldsSecureProvider));
 			} // 包名和类名称
 			else if (fieldsSecureProvider.contains(".")) {
 				sqlToyContext.setFieldsSecureProvider((FieldsSecureProvider) Class.forName(fieldsSecureProvider)
-						.getDeclaredConstructor().newInstance());
+					.getDeclaredConstructor().newInstance());
 			}
 		}
 
@@ -317,11 +349,11 @@ public class SqltoyAutoConfiguration {
 		if (StringUtil.isNotBlank(desensitizeProvider)) {
 			if (applicationContext.containsBean(desensitizeProvider)) {
 				sqlToyContext
-						.setDesensitizeProvider((DesensitizeProvider) applicationContext.getBean(desensitizeProvider));
+					.setDesensitizeProvider((DesensitizeProvider) applicationContext.getBean(desensitizeProvider));
 			} // 包名和类名称
 			else if (desensitizeProvider.contains(".")) {
 				sqlToyContext.setDesensitizeProvider((DesensitizeProvider) Class.forName(desensitizeProvider)
-						.getDeclaredConstructor().newInstance());
+					.getDeclaredConstructor().newInstance());
 			}
 		}
 
@@ -333,7 +365,7 @@ public class SqltoyAutoConfiguration {
 			} // 包名和类名称
 			else if (customFilterHandler.contains(".")) {
 				sqlToyContext.setCustomFilterHandler(
-						(FilterHandler) Class.forName(customFilterHandler).getDeclaredConstructor().newInstance());
+					(FilterHandler) Class.forName(customFilterHandler).getDeclaredConstructor().newInstance());
 			}
 		}
 
@@ -342,11 +374,11 @@ public class SqltoyAutoConfiguration {
 		if (StringUtil.isNotBlank(overTimeSqlHandler)) {
 			if (applicationContext.containsBean(overTimeSqlHandler)) {
 				sqlToyContext
-						.setOverTimeSqlHandler((OverTimeSqlHandler) applicationContext.getBean(overTimeSqlHandler));
+					.setOverTimeSqlHandler((OverTimeSqlHandler) applicationContext.getBean(overTimeSqlHandler));
 			} // 包名和类名称
 			else if (customFilterHandler.contains(".")) {
 				sqlToyContext.setOverTimeSqlHandler(
-						(OverTimeSqlHandler) Class.forName(overTimeSqlHandler).getDeclaredConstructor().newInstance());
+					(OverTimeSqlHandler) Class.forName(overTimeSqlHandler).getDeclaredConstructor().newInstance());
 			}
 		}
 
@@ -360,13 +392,18 @@ public class SqltoyAutoConfiguration {
 				} // 包名和类名称
 				else if (interceptor.contains(".")) {
 					sqlInterceptorList
-							.add(((SqlInterceptor) Class.forName(interceptor).getDeclaredConstructor().newInstance()));
+						.add(((SqlInterceptor) Class.forName(interceptor).getDeclaredConstructor().newInstance()));
 				}
 			}
 			sqlToyContext.setSqlInterceptors(sqlInterceptorList);
 		}
+		//自定义线程池
+		if(StringUtil.isNotBlank(taskExecutorName)){
+			sqlToyContext.setTaskExecutorName(taskExecutorName);
+		}
 		return sqlToyContext;
 	}
+
 
 	/**
 	 * 5.2 版本要注入sqlToyContext
