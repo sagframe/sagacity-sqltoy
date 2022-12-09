@@ -2,23 +2,33 @@ package org.sagacity.sqltoy.utils;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
+import java.sql.Connection;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
+import org.sagacity.sqltoy.SqlExecuteStat;
+import org.sagacity.sqltoy.SqlToyConstants;
+import org.sagacity.sqltoy.callback.DataSourceCallbackHandler;
 import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.demo.domain.DeviceOrderVO;
 import org.sagacity.sqltoy.demo.domain.StaffInfo;
 import org.sagacity.sqltoy.demo.vo.DataRange;
 import org.sagacity.sqltoy.demo.vo.StaffInfoVO;
 import org.sagacity.sqltoy.demo.vo.TypeShowCase;
+import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.model.IgnoreCaseLinkedMap;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.model.MaskType;
+import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.SaveMode;
 
 import com.alibaba.fastjson.JSON;
@@ -148,16 +158,16 @@ public class BeanUtilTest {
 	 */
 	@Test
 	public void testFullTypeName() {
-		TypeShowCase showCase=new TypeShowCase();
-		System.err.println("["+showCase.getCharValue()+"]["+" ".charAt(0)+"]");
-		System.err.println("["+showCase.getByteType()+"]["+Byte.valueOf("0").byteValue()+"]");
+		TypeShowCase showCase = new TypeShowCase();
+		System.err.println("[" + showCase.getCharValue() + "][" + " ".charAt(0) + "]");
+		System.err.println("[" + showCase.getByteType() + "][" + Byte.valueOf("0").byteValue() + "]");
 		Method[] methods = TypeShowCase.class.getMethods();
 		for (Method method : methods) {
 			if (method.getParameterTypes().length > 0) {
 				System.err.println(method.getParameterTypes()[0].getTypeName());
 			}
 		}
-		
+
 	}
 
 	@Test
@@ -262,5 +272,65 @@ public class BeanUtilTest {
 		cloneValue.setIndex(3);
 		System.err.println(translate.getExtend().index);
 		System.err.println(cloneValue.getExtend().index);
+	}
+
+	@Test
+	public void testParall() {
+		DebugUtil.beginTime("00001");
+		ExecutorService pool = null;
+		try {
+			pool = Executors.newFixedThreadPool(2);
+			// 查询总记录数量
+			pool.submit(new Runnable() {
+				@Override
+				public void run() {
+					// System.err.println("@@@@@@@@@@@@@@@@1");
+				}
+			});
+			// 获取记录
+			pool.submit(new Runnable() {
+				@Override
+				public void run() {
+					// System.err.println("---------------1");
+				}
+			});
+			pool.shutdown();
+			pool.awaitTermination(SqlToyConstants.PARALLEL_MAXWAIT_SECONDS, TimeUnit.SECONDS);
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new DataAccessException("并行查询执行错误:" + e.getMessage(), e);
+		} finally {
+			if (pool != null) {
+				pool.shutdownNow();
+			}
+		}
+		DebugUtil.endTime("00001");
+	}
+
+	@Test
+	public void testParall2() {
+		DebugUtil.beginTime("00001");
+		ExecutorService pool = null;
+		try {
+			pool = Executors.newFixedThreadPool(2);
+			// 查询总记录数量
+			CompletableFuture countCompletableFuture = CompletableFuture.runAsync(() -> {
+				System.err.println("@@@@@@@@@@@@@@@@1");
+			}, pool);
+			// 获取记录
+			CompletableFuture dataCompletableFuture = CompletableFuture.runAsync(() -> {
+				System.err.println("---------------1");
+			}, pool);
+			pool.shutdown();
+			pool.awaitTermination(SqlToyConstants.PARALLEL_MAXWAIT_SECONDS, TimeUnit.SECONDS);
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new DataAccessException("并行查询执行错误:" + e.getMessage(), e);
+		} finally {
+			if (pool != null) {
+				pool.shutdownNow();
+			}
+		}
+		DebugUtil.endTime("00001");
 	}
 }
