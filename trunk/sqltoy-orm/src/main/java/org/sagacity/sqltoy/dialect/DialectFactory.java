@@ -732,8 +732,9 @@ public class DialectFactory {
 			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, true);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "findPage",
 					(extend.showSql != null) ? extend.showSql : sqlToyConfig.isShowSql());
-			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
-					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
+			final DataSource realDataSource = ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig,
+					queryExecutor, dataSource);
+			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext, realDataSource,
 					new DataSourceCallbackHandler() {
 						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
@@ -763,7 +764,8 @@ public class DialectFactory {
 							if (pageOptimize != null && pageOptimize.isParallel() && pageNo != -1
 									&& recordCnt == null) {
 								queryResult = parallelPage(sqlToyContext, queryExecutor, realSqlToyConfig, extend,
-										pageNo, pageSize, overPageToFirst, pageOptimize, conn, dbType, dialect);
+										pageNo, pageSize, overPageToFirst, pageOptimize, conn, dbType, dialect,
+										realDataSource);
 								recordCnt = queryResult.getRecordCount();
 								// 将并行后得到的总记录数登记到缓存
 								if (null != pageQueryKey) {
@@ -885,6 +887,7 @@ public class DialectFactory {
 	}
 
 	/**
+	 * @update data:2022-12-09 增加传DataSource以两个conn进行并发，解决单个conn竞争问题
 	 * @update data:2021-01-25 分页支持并行查询
 	 * @TODO 并行分页查询，同时执行count和rows记录查询
 	 * @param sqlToyContext
@@ -898,13 +901,14 @@ public class DialectFactory {
 	 * @param conn
 	 * @param dbType
 	 * @param dialect
+	 * @param dataSource
 	 * @return
 	 * @throws Exception
 	 */
 	private QueryResult parallelPage(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final SqlToyConfig sqlToyConfig, final QueryExecutorExtend extend, final long pageNo,
 			final Integer pageSize, final boolean overPageToFirst, PageOptimize pageOptimize, Connection conn,
-			Integer dbType, String dialect) throws Exception {
+			Integer dbType, String dialect, final DataSource dataSource) throws Exception {
 		final QueryResult queryResult = new QueryResult();
 		queryResult.setPageNo(pageNo);
 		queryResult.setPageSize(pageSize);
@@ -921,8 +925,15 @@ public class DialectFactory {
 						// 规避新的线程日志无法采集
 						SqlExecuteStat.mergeTrace(sqlTrace);
 						Long startTime = System.currentTimeMillis();
-						queryResult.setRecordCount(
-								getCountBySql(sqlToyContext, sqlToyConfig, queryExecutor, conn, dbType, dialect));
+						// 重新通过dataSource获取conn，避免conn竞争
+						DataSourceUtils.processDataSource(sqlToyContext, dataSource, new DataSourceCallbackHandler() {
+							@Override
+							public void doConnection(Connection countConn, Integer countDbType, String countDialect)
+									throws Exception {
+								queryResult.setRecordCount(getCountBySql(sqlToyContext, sqlToyConfig, queryExecutor,
+										countConn, countDbType, countDialect));
+							}
+						});
 						SqlExecuteStat.debug("查询count执行耗时", (System.currentTimeMillis() - startTime) + "毫秒!");
 						if (sqlTrace != null && SqlExecuteStat.get() != null) {
 							sqlTrace.addLogs(SqlExecuteStat.get().getExecuteLogs());

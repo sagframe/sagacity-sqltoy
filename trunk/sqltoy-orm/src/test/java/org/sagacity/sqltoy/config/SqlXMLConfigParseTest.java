@@ -43,4 +43,19 @@ public class SqlXMLConfigParseTest {
 			e.printStackTrace();
 		}
 	}
+	
+	/**
+	 * 测试外部报表平台集成sqltoy传递xml字符串片段解析
+	 */
+	@Test
+	public void testParseFastWith() {
+		String sql = FileUtil.readFileAsStr("classpath:scripts/fast.xml", "UTF-8");
+		try {
+			SqlToyConfig result = SqlXMLConfigParse.parseSagment(sql, "utf-8", "mysql");
+			System.err.println(result.getFastWithSql(null));
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 }

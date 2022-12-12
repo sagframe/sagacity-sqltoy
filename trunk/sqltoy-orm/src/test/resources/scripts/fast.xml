@@ -1,0 +1,11 @@
+<sql id="fast_with_case">
+	
+	<value><![CDATA[
+			  with tmp as(select 1 from table),
+			  tmp1 as(select 2 from table2),
+			  tmp2 as(select 3 from table3)
+		      select *
+			  from @fast(select 1 from tmp left join tmp1 ) as f
+			  left join tmp2
+		]]></value>
+</sql>
