@@ -55,7 +55,7 @@ public class CrossDbAdapter {
 						page.getPageSize(), dataSource);
 			} else {
 				dialectFactory.findPage(sqlToyContext, queryExecutor, sqlToyConfig, page.getPageNo(),
-						page.getPageSize(), page.isOverPageToFirst(), dataSource);
+						page.getPageSize(), page.getOverPageToFirst(), dataSource);
 			}
 		});
 	}

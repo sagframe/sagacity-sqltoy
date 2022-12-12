@@ -301,7 +301,7 @@ public class Query extends BaseLink {
 					page.getPageNo(), page.getPageSize(), getDataSource(sqlToyConfig)).getPageResult();
 		} else {
 			result = (Page<?>) dialectFactory.findPage(sqlToyContext, queryExecute, sqlToyConfig, page.getPageNo(),
-					page.getPageSize(), page.isOverPageToFirst(), getDataSource(sqlToyConfig)).getPageResult();
+					page.getPageSize(), page.getOverPageToFirst(), getDataSource(sqlToyConfig)).getPageResult();
 		}
 		// 产品化场景，适配其他数据库验证查询(仅仅在设置了redoDataSources时生效)
 		CrossDbAdapter.redoPageQuery(sqlToyContext, dialectFactory, queryExecute, page);

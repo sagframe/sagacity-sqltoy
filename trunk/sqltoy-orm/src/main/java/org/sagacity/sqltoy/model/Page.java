@@ -46,7 +46,7 @@ public class Page<T> implements Serializable {
 	/**
 	 * 跳转超出数据页范围回到第一页
 	 */
-	private boolean overPageToFirst = false;
+	private Boolean overPageToFirst;
 
 	public Page() {
 
@@ -113,7 +113,7 @@ public class Page<T> implements Serializable {
 		return this;
 	}
 
-	public Page setOverPageToFirst(boolean overPageToFirst) {
+	public Page setOverPageToFirst(Boolean overPageToFirst) {
 		this.overPageToFirst = overPageToFirst;
 		return this;
 	}
@@ -221,7 +221,7 @@ public class Page<T> implements Serializable {
 		return this;
 	}
 
-	public boolean isOverPageToFirst() {
+	public Boolean getOverPageToFirst() {
 		return overPageToFirst;
 	}
 

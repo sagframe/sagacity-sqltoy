@@ -174,6 +174,15 @@ public class Elastic extends BaseLink {
 		}
 		Page pageResult = null;
 		try {
+			boolean isOverPageToFirst = false;
+			// 使用全局默认值
+			if (sqlToyContext.getOverPageToFirst() != null) {
+				isOverPageToFirst = sqlToyContext.getOverPageToFirst();
+			}
+			// 以pageModel中指定的为准
+			if (pageModel.getOverPageToFirst() != null) {
+				isOverPageToFirst = pageModel.getOverPageToFirst();
+			}
 			if (noSqlConfig.isSqlMode()) {
 				ElasticEndpoint esConfig = sqlToyContext.getElasticEndpoint(noSqlConfig.getEndpoint());
 				if (esConfig.isNativeSql()) {
@@ -183,7 +192,7 @@ public class Elastic extends BaseLink {
 			} else {
 				pageResult = ElasticSearchPlugin.findPage(sqlToyContext, sqlToyConfig, pageModel, queryExecutor);
 			}
-			if (pageResult.getRecordCount() == 0 && pageModel.isOverPageToFirst()) {
+			if (pageResult.getRecordCount() == 0 && isOverPageToFirst) {
 				pageResult.setPageNo(1L);
 			}
 			return pageResult;

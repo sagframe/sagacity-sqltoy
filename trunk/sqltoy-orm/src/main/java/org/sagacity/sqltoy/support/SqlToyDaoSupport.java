@@ -831,7 +831,7 @@ public class SqlToyDaoSupport {
 					page.getPageSize(), getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig));
 		} else {
 			result = dialectFactory.findPage(sqlToyContext, queryExecutor, sqlToyConfig, page.getPageNo(),
-					page.getPageSize(), page.isOverPageToFirst(),
+					page.getPageSize(), page.getOverPageToFirst(),
 					getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig));
 		}
 		// 产品化场景，适配其他数据库验证查询(仅仅在设置了redoDataSources时生效)
@@ -1940,7 +1940,7 @@ public class SqlToyDaoSupport {
 						page.getPageNo(), page.getPageSize(), realDataSource).getPageResult();
 			} else {
 				result = dialectFactory.findPage(sqlToyContext, queryExecutor, sqlToyConfig, page.getPageNo(),
-						page.getPageSize(), page.isOverPageToFirst(), realDataSource).getPageResult();
+						page.getPageSize(), page.getOverPageToFirst(), realDataSource).getPageResult();
 			}
 			// 产品化场景，适配其他数据库验证查询(仅仅在设置了redoDataSources时生效)
 			CrossDbAdapter.redoPageQuery(sqlToyContext, dialectFactory, queryExecutor, page);

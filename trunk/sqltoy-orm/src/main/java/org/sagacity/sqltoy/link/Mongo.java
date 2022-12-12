@@ -258,8 +258,17 @@ public class Mongo extends BaseLink {
 		result.setPageSize(pageModel.getPageSize());
 		// 查询总记录
 		result.setRecordCount(getMongoQuery().count(mql, sqlToyConfig.getNoSqlConfigModel().getCollection()));
+		boolean isOverPageToFirst = false;
+		// 使用全局默认值
+		if (sqlToyContext.getOverPageToFirst() != null) {
+			isOverPageToFirst = sqlToyContext.getOverPageToFirst();
+		}
+		// 以pageModel中指定的为准
+		if (pageModel.getOverPageToFirst() != null) {
+			isOverPageToFirst = pageModel.getOverPageToFirst();
+		}
 		if (result.getRecordCount() == 0) {
-			if (pageModel.isOverPageToFirst()) {
+			if (isOverPageToFirst) {
 				result.setPageNo(1L);
 			}
 			return result;
@@ -273,7 +282,7 @@ public class Mongo extends BaseLink {
 		} else {
 			boolean isOverPage = (pageModel.getPageNo()
 					* pageModel.getPageSize() >= (result.getRecordCount() + pageModel.getPageSize()));
-			if (isOverPage && !pageModel.isOverPageToFirst()) {
+			if (isOverPage && !isOverPageToFirst) {
 				return result;
 			}
 			long realStartPage = isOverPage ? 1 : pageModel.getPageNo();
