@@ -720,7 +720,7 @@ public class DialectFactory {
 	 * @return
 	 */
 	public QueryResult findPage(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
-			final SqlToyConfig sqlToyConfig, final long pageNo, final Integer pageSize, final boolean overPageToFirst,
+			final SqlToyConfig sqlToyConfig, final long pageNo, final Integer pageSize, final Boolean overPageToFirst,
 			final DataSource dataSource) {
 		final QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		if (StringUtil.isBlank(extend.sql)) {
@@ -738,6 +738,15 @@ public class DialectFactory {
 					new DataSourceCallbackHandler() {
 						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+							boolean isOverPageToFirst = false;
+							// 使用全局默认值
+							if (sqlToyContext.getOverPageToFirst() != null) {
+								isOverPageToFirst = sqlToyContext.getOverPageToFirst();
+							}
+							// 以pageModel中指定的为准
+							if (overPageToFirst != null) {
+								isOverPageToFirst = overPageToFirst;
+							}
 							SqlExecuteStat.setDialect(dialect);
 							// 处理sql中的?为统一的:named形式，并进行sharding table替换
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
@@ -764,7 +773,7 @@ public class DialectFactory {
 							if (pageOptimize != null && pageOptimize.isParallel() && pageNo != -1
 									&& recordCnt == null) {
 								queryResult = parallelPage(sqlToyContext, queryExecutor, realSqlToyConfig, extend,
-										pageNo, pageSize, overPageToFirst, pageOptimize, conn, dbType, dialect,
+										pageNo, pageSize, isOverPageToFirst, pageOptimize, conn, dbType, dialect,
 										realDataSource);
 								recordCnt = queryResult.getRecordCount();
 								// 将并行后得到的总记录数登记到缓存
@@ -791,7 +800,7 @@ public class DialectFactory {
 								boolean illegal = (pageNo == -1 && (limitSize != -1 && recordCnt > limitSize));
 								if (recordCnt == 0 || illegal) {
 									queryResult = new QueryResult();
-									if (recordCnt == 0 && overPageToFirst) {
+									if (recordCnt == 0 && isOverPageToFirst) {
 										queryResult.setPageNo(1L);
 									} else {
 										queryResult.setPageNo(pageNo);
@@ -836,7 +845,7 @@ public class DialectFactory {
 										// 实际开始页(页数据超出总记录,则从第一页重新开始,相反如继续按指定的页查询则记录为空,且实际页号也不存在)
 										boolean isOverPage = (pageNo * pageSize >= (recordCnt + pageSize));
 										// 允许页号超出总页数，结果返回空集合
-										if (isOverPage && !overPageToFirst) {
+										if (isOverPage && !isOverPageToFirst) {
 											queryResult = new QueryResult();
 											queryResult.setPageNo(pageNo);
 										} else {

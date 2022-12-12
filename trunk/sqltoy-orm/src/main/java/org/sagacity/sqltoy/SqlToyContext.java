@@ -196,7 +196,7 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * 超时打印sql(毫秒,默认30秒)
 	 */
 	private int printSqlTimeoutMillis = 30000;
-	
+
 	/**
 	 * 数据修改提示的记录数量阈值，默认2000条
 	 */
@@ -251,6 +251,11 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * map类型的resultType标题转驼峰模式
 	 */
 	private boolean humpMapResultTypeLabel = true;
+
+	/**
+	 * 超出页码范围是否跳转到第一页
+	 */
+	private Boolean overPageToFirst;
 
 	/**
 	 * @param workerId the workerId to set
@@ -323,7 +328,7 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * 拆分merge into 为updateAll 和 saveAllIgnoreExist 两步操作(1、seata分布式事务不支持merge)
 	 */
 	private boolean splitMergeInto = false;
-	
+
 	/**
 	 * 变更操作型sql空白默认转为null
 	 */
@@ -1048,4 +1053,13 @@ public class SqlToyContext implements ApplicationContextAware {
 	public void setExecuteSqlBlankToNull(boolean executeSqlBlankToNull) {
 		this.executeSqlBlankToNull = executeSqlBlankToNull;
 	}
+
+	public Boolean getOverPageToFirst() {
+		return overPageToFirst;
+	}
+
+	public void setOverPageToFirst(Boolean overPageToFirst) {
+		this.overPageToFirst = overPageToFirst;
+	}
+
 }

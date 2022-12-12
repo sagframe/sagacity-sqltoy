@@ -761,7 +761,7 @@ public class SqlToyDaoSupport {
 					this.getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig));
 		} else {
 			result = dialectFactory.findPage(sqlToyContext, queryExecutor, sqlToyConfig, paginationModel.getPageNo(),
-					paginationModel.getPageSize(), paginationModel.isOverPageToFirst(),
+					paginationModel.getPageSize(), paginationModel.getOverPageToFirst(),
 					this.getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig));
 		}
 		// 产品化场景，适配其他数据库验证查询(仅仅在设置了redoDataSources时生效)
@@ -1888,7 +1888,7 @@ public class SqlToyDaoSupport {
 			} else {
 				result = dialectFactory
 						.findPage(sqlToyContext, queryExecutor, sqlToyConfig, paginationModel.getPageNo(),
-								paginationModel.getPageSize(), paginationModel.isOverPageToFirst(), realDataSource)
+								paginationModel.getPageSize(), paginationModel.getOverPageToFirst(), realDataSource)
 						.getPageResult();
 			}
 			// 产品化场景，适配其他数据库验证查询(仅仅在设置了redoDataSources时生效)

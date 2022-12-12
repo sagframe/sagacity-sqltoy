@@ -169,31 +169,36 @@ public class SqlToyContextProperties implements Serializable {
 	 * 获取MetaData的列标题处理策略：default:不做处理;upper:转大写;lower
 	 */
 	private String columnLabelUpperOrLower = "default";
-	
+
 	/**
 	 * 自定义sql拦截加工处理器
 	 */
 	private String[] sqlInterceptors;
-	
+
 	/**
 	 * 拆分merge into 为updateAll 和 saveAllIgnoreExist 两步操作(1、seata分布式事务不支持merge)
 	 */
 	private boolean splitMergeInto = false;
-	
+
 	/**
 	 * map类型的resultType标题转驼峰模式(默认为true)
 	 */
 	private Boolean humpMapResultTypeLabel;
-	
+
 	/**
 	 * 数据修改提示的记录数量阈值，默认2000条
 	 */
 	private int updateTipCount = 2000;
-	
+
 	/**
 	 * executeSql变更操作型sql执行空白参数是否默认转为null
 	 */
 	private boolean executeSqlBlankToNull = true;
+
+	/**
+	 * 跳转超出数据页范围回到第一页
+	 */
+	private Boolean overPageToFirst;
 
 	/**
 	 * @return the sqlResourcesDir
@@ -568,6 +573,14 @@ public class SqlToyContextProperties implements Serializable {
 
 	public void setExecuteSqlBlankToNull(boolean executeSqlBlankToNull) {
 		this.executeSqlBlankToNull = executeSqlBlankToNull;
+	}
+
+	public Boolean getOverPageToFirst() {
+		return overPageToFirst;
+	}
+
+	public void setOverPageToFirst(Boolean overPageToFirst) {
+		this.overPageToFirst = overPageToFirst;
 	}
 
 }

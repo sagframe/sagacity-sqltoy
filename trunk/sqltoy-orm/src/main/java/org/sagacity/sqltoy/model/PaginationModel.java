@@ -46,7 +46,7 @@ public class PaginationModel<T> implements Serializable {
 	/**
 	 * 跳转超出数据页范围回到第一页
 	 */
-	private boolean overPageToFirst = false;
+	private Boolean overPageToFirst;
 
 	public PaginationModel() {
 
@@ -81,7 +81,7 @@ public class PaginationModel<T> implements Serializable {
 		setRows(rows);
 		this.startIndex = startIndex;
 	}
-	
+
 	public List<T> getRows() {
 		if (this.rows == null) {
 			return new ArrayList<T>();
@@ -223,11 +223,11 @@ public class PaginationModel<T> implements Serializable {
 		this.skipQueryCount = skipQueryCount;
 	}
 
-	public boolean isOverPageToFirst() {
+	public Boolean getOverPageToFirst() {
 		return overPageToFirst;
 	}
 
-	public void setOverPageToFirst(boolean overPageToFirst) {
+	public void setOverPageToFirst(Boolean overPageToFirst) {
 		this.overPageToFirst = overPageToFirst;
 	}
 
