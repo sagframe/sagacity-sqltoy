@@ -75,7 +75,7 @@ public <T> List<T> getTranslateCache(String cacheName, String cacheType,Class<T>
 * 4、@if()宏条件判断增强，支持无参数判断@if(1==1) 便于跟@loop等组合使用
 
 # v5.1.33 2022-04-24
-* 1、处理in条件查询语句参数数组长度超过1000场景的处理
+* 1、处理in条件查询语句参数数组长度超过1000条场景的处理
 ```
  t.order_id (not) in (:orderIds) 转变成
 ( t.order_id in (?,?..) or t.order_id in (?,?..)) 或 

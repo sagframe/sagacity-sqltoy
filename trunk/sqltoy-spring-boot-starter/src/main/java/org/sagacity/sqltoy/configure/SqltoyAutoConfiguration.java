@@ -182,6 +182,9 @@ public class SqltoyAutoConfiguration {
 		sqlToyContext.setSecurePublicKey(properties.getSecurePublicKey());
 		// 修改多少条记录做特别提示
 		sqlToyContext.setUpdateTipCount(properties.getUpdateTipCount());
+		if (properties.getOverPageToFirst() != null) {
+			sqlToyContext.setOverPageToFirst(properties.getOverPageToFirst());
+		}
 		// 设置公共统一属性的处理器
 		String unfiyHandler = properties.getUnifyFieldsHandler();
 		if (StringUtil.isNotBlank(unfiyHandler)) {

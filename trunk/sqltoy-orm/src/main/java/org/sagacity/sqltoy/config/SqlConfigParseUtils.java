@@ -1123,11 +1123,13 @@ public class SqlConfigParseUtils {
 							buffer.append(" with ").append(aliasTableAs[3]);
 						}
 						if (i > 0) {
-							buffer.append(",").append(aliasTableAs[3]);
+							// update 2022-12-09 前后增加空格，避免mysql新驱动的缺陷
+							buffer.append(" , ").append(aliasTableAs[3]);
 						}
+						buffer.append(" ");
 						// aliasTableAs 结构{aliasName,as和括号之间的字符串,as内容,with 和aliasTable之间的参数}
-						buffer.append(aliasTableAs[0]).append(" as ").append(aliasTableAs[1]).append(" (")
-								.append(aliasTableAs[2]).append(") ");
+						buffer.append(aliasTableAs[0]).append(" as ").append(aliasTableAs[1]).append(" ( ")
+								.append(aliasTableAs[2]).append(" ) ");
 					}
 					sqlToyConfig.setFastWithSql(buffer.toString());
 				}

@@ -208,6 +208,11 @@ public class SqlToyContextProperties implements Serializable {
 	 * executeSql变更操作型sql执行空白参数是否默认转为null
 	 */
 	private boolean executeSqlBlankToNull = true;
+	
+	/**
+	 * 跳转超出数据页范围回到第一页
+	 */
+	private Boolean overPageToFirst;
 
 	/**
 	 * @return the sqlResourcesDir
@@ -597,4 +602,13 @@ public class SqlToyContextProperties implements Serializable {
 	public void setExecuteSqlBlankToNull(boolean executeSqlBlankToNull) {
 		this.executeSqlBlankToNull = executeSqlBlankToNull;
 	}
+
+	public Boolean getOverPageToFirst() {
+		return overPageToFirst;
+	}
+
+	public void setOverPageToFirst(Boolean overPageToFirst) {
+		this.overPageToFirst = overPageToFirst;
+	}
+
 }

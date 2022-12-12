@@ -123,6 +123,11 @@ public class SqlToyContext {
 	 * map类型的resultType标题转驼峰模式
 	 */
 	private boolean humpMapResultTypeLabel = true;
+	
+	/**
+	 * 跳转超出数据页范围回到第一页
+	 */
+	private Boolean overPageToFirst;
 
 	/**
 	 * 执行超时sql自定义处理器
@@ -1085,5 +1090,13 @@ public class SqlToyContext {
 
 	public void setExecuteSqlBlankToNull(boolean executeSqlBlankToNull) {
 		this.executeSqlBlankToNull = executeSqlBlankToNull;
+	}
+
+	public Boolean getOverPageToFirst() {
+		return overPageToFirst;
+	}
+
+	public void setOverPageToFirst(Boolean overPageToFirst) {
+		this.overPageToFirst = overPageToFirst;
 	}
 }
