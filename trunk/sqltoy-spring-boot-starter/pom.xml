@@ -4,7 +4,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sagframe</groupId>
-	<version>5.2.26</version>
+	<version>5.2.27</version>
 	<name>sagacity-sqltoy-starter</name>
 	<artifactId>sagacity-sqltoy-starter</artifactId>
 	<description>sqltoy springboot starter</description>
@@ -12,7 +12,7 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<spring-boot.version>2.7.6</spring-boot.version>
-		<sqltoy.version>5.2.26</sqltoy.version>
+		<sqltoy.version>5.2.27</sqltoy.version>
 	</properties>
 	<licenses>
 		<license>
@@ -70,18 +70,9 @@
 			<artifactId>spring-boot-autoconfigure</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-configuration-processor</artifactId>
-			<optional>true</optional>
-		</dependency>
-		<dependency>
 			<groupId>com.sagframe</groupId>
 			<artifactId>sagacity-sqltoy</artifactId>
 			<version>${sqltoy.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework</groupId>
-			<artifactId>spring-core</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>
