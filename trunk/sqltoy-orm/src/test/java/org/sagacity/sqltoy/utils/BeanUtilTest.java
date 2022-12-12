@@ -2,7 +2,6 @@ package org.sagacity.sqltoy.utils;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
-import java.sql.Connection;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -15,9 +14,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
-import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyConstants;
-import org.sagacity.sqltoy.callback.DataSourceCallbackHandler;
 import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.demo.domain.DeviceOrderVO;
 import org.sagacity.sqltoy.demo.domain.StaffInfo;
@@ -28,7 +25,6 @@ import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.model.IgnoreCaseLinkedMap;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.model.MaskType;
-import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.SaveMode;
 
 import com.alibaba.fastjson.JSON;
@@ -284,6 +280,76 @@ public class BeanUtilTest {
 			pool.submit(new Runnable() {
 				@Override
 				public void run() {
+					for (int i = 0; i < 10; i++) {
+						System.err.println("--------" + i);
+						try {
+							Thread.currentThread().sleep(100);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+				}
+			});
+			for (int i = 0; i < 10; i++) {
+				System.err.println("#######" + i);
+				try {
+					Thread.currentThread().sleep(100);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+			pool.shutdown();
+			pool.awaitTermination(SqlToyConstants.PARALLEL_MAXWAIT_SECONDS, TimeUnit.SECONDS);
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new DataAccessException("并行查询执行错误:" + e.getMessage(), e);
+		} finally {
+			if (pool != null) {
+				pool.shutdownNow();
+			}
+		}
+		DebugUtil.endTime("00001");
+	}
+
+	@Test
+	public void testParall2() {
+		DebugUtil.beginTime("00002");
+		ExecutorService pool = null;
+		try {
+			pool = Executors.newFixedThreadPool(2);
+			// 查询总记录数量
+			CompletableFuture countCompletableFuture = CompletableFuture.runAsync(() -> {
+				System.err.println("@@@@@@@@@@@@@@@@2");
+			}, pool);
+			// 获取记录
+			CompletableFuture dataCompletableFuture = CompletableFuture.runAsync(() -> {
+				System.err.println("---------------2");
+			}, pool);
+			pool.shutdown();
+			pool.awaitTermination(SqlToyConstants.PARALLEL_MAXWAIT_SECONDS, TimeUnit.SECONDS);
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new DataAccessException("并行查询执行错误:" + e.getMessage(), e);
+		} finally {
+			if (pool != null) {
+				pool.shutdownNow();
+			}
+		}
+		DebugUtil.endTime("00002");
+	}
+
+	@Test
+	public void testParall3() {
+		ExecutorService pool = null;
+		DebugUtil.beginTime("00001");
+		try {
+			pool = Executors.newFixedThreadPool(2);
+			// 查询总记录数量
+			pool.submit(new Runnable() {
+				@Override
+				public void run() {
 					// System.err.println("@@@@@@@@@@@@@@@@1");
 				}
 			});
@@ -305,21 +371,17 @@ public class BeanUtilTest {
 			}
 		}
 		DebugUtil.endTime("00001");
-	}
 
-	@Test
-	public void testParall2() {
-		DebugUtil.beginTime("00001");
-		ExecutorService pool = null;
+		DebugUtil.beginTime("00002");
 		try {
 			pool = Executors.newFixedThreadPool(2);
 			// 查询总记录数量
 			CompletableFuture countCompletableFuture = CompletableFuture.runAsync(() -> {
-				System.err.println("@@@@@@@@@@@@@@@@1");
+				System.err.println("@@@@@@@@@@@@@@@@2");
 			}, pool);
 			// 获取记录
 			CompletableFuture dataCompletableFuture = CompletableFuture.runAsync(() -> {
-				System.err.println("---------------1");
+				System.err.println("---------------2");
 			}, pool);
 			pool.shutdown();
 			pool.awaitTermination(SqlToyConstants.PARALLEL_MAXWAIT_SECONDS, TimeUnit.SECONDS);
@@ -331,6 +393,6 @@ public class BeanUtilTest {
 				pool.shutdownNow();
 			}
 		}
-		DebugUtil.endTime("00001");
+		DebugUtil.endTime("00002");
 	}
 }

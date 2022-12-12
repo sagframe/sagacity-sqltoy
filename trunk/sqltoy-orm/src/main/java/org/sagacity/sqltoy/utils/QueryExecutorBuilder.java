@@ -385,7 +385,8 @@ public class QueryExecutorBuilder {
 				valuesSize = 1;
 			}
 			if (argCount != valuesSize) {
-				throw new IllegalArgumentException("参数值数量:" + valuesSize + " 跟sql中的?条件数量" + argCount + "不匹配,请检查!");
+				throw new IllegalArgumentException("参数值数量:" + valuesSize + " 跟sql中的?条件数量" + argCount
+						+ "不匹配,请检查,如是json且无条件参数场景可通过虚构一个条件参数如where 1=:flag 解决!");
 			}
 			// 分页需要将?转参数名称模式
 			if (wrapNamedArgs) {
