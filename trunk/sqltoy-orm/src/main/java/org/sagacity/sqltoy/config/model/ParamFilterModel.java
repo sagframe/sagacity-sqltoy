@@ -160,6 +160,11 @@ public class ParamFilterModel implements Serializable {
 	 * 缓存条件过滤配置
 	 */
 	private CacheFilterModel[] cacheFilters;
+	
+	/**
+	 * 反向缓存翻译，是否优先判断相等
+	 */
+	private boolean priorMatchEqual=false;
 
 	/**
 	 * to-date 的日期类型
@@ -535,6 +540,14 @@ public class ParamFilterModel implements Serializable {
 	 */
 	public void setCacheKeyIndex(int cacheKeyIndex) {
 		this.cacheKeyIndex = cacheKeyIndex;
+	}
+
+	public boolean isPriorMatchEqual() {
+		return priorMatchEqual;
+	}
+
+	public void setPriorMatchEqual(boolean priorMatchEqual) {
+		this.priorMatchEqual = priorMatchEqual;
 	}
 
 }

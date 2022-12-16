@@ -845,7 +845,17 @@ public interface SqlToyLazyDao {
 	 *                         CacheMatchFilter.create().cacheName("staffIdNameCache")
 	 * @return
 	 */
+	@Deprecated
 	public String[] cacheMatchKeys(String matchRegex, CacheMatchFilter cacheMatchFilter);
+
+	/**
+	 * update 2022-12-15 支持数组
+	 * @TODO 通过缓存将名称进行模糊匹配取得key的集合
+	 * @param cacheMatchFilter
+	 * @param matchRegexes 数组
+	 * @return
+	 */
+	public String[] cacheMatchKeys(CacheMatchFilter cacheMatchFilter, String... matchRegexes);
 
 	/**
 	 * @TODO 实现VO和POJO之间属性值的复制
