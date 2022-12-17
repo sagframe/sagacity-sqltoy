@@ -322,6 +322,7 @@ public class DataSourceUtils {
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.TIDB) != -1) {
 				return Dialect.TIDB;
 			}
+			//2022-12-14 验证
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.TDENGINE) != -1) {
 				return Dialect.TDENGINE;
 			}

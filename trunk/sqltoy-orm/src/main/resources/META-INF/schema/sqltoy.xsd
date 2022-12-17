@@ -912,6 +912,7 @@
 					</xsd:choice>
 					<xsd:attribute name="param" type="xsd:string"
 						use="required" />
+					<xsd:attribute name="prior-match-equal" type="xsd:boolean" default="false"/>
 					<xsd:attribute name="cache-name" type="xsd:string"
 						use="required" />
 					<xsd:attribute name="cache-key-index"

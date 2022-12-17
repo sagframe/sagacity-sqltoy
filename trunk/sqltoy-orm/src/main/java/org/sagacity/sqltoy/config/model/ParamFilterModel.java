@@ -170,6 +170,11 @@ public class ParamFilterModel implements Serializable {
 	 * to-in-arg 是否增加单引号
 	 */
 	private boolean singleQuote = true;
+	
+	/**
+	 * 反向缓存翻译，是否优先判断相等
+	 */
+	private boolean priorMatchEqual=false;
 
 	public String getFilterType() {
 		return filterType;
@@ -535,6 +540,14 @@ public class ParamFilterModel implements Serializable {
 	 */
 	public void setCacheKeyIndex(int cacheKeyIndex) {
 		this.cacheKeyIndex = cacheKeyIndex;
+	}
+
+	public boolean isPriorMatchEqual() {
+		return priorMatchEqual;
+	}
+
+	public void setPriorMatchEqual(boolean priorMatchEqual) {
+		this.priorMatchEqual = priorMatchEqual;
 	}
 
 }
