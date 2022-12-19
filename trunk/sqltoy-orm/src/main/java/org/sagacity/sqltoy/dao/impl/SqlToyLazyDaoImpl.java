@@ -903,9 +903,14 @@ public class SqlToyLazyDaoImpl extends SpringDaoSupport implements SqlToyLazyDao
 
 	@Override
 	public String[] cacheMatchKeys(String matchRegex, CacheMatchFilter cacheMatchFilter) {
-		return super.cacheMatchKeys(matchRegex, cacheMatchFilter);
+		return super.cacheMatchKeys(cacheMatchFilter, matchRegex);
 	}
 
+	@Override
+	public String[] cacheMatchKeys(CacheMatchFilter cacheMatchFilter, String... matchRegexes) {
+		return super.cacheMatchKeys(cacheMatchFilter, matchRegexes);
+	}
+	
 	@Override
 	public <T extends Serializable> T convertType(Serializable source, Class<T> resultType,
 			String... ignoreProperties) {

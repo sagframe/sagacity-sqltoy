@@ -52,6 +52,7 @@ import org.sagacity.sqltoy.dialect.impl.OracleDialect;
 import org.sagacity.sqltoy.dialect.impl.PostgreSqlDialect;
 import org.sagacity.sqltoy.dialect.impl.SqlServerDialect;
 import org.sagacity.sqltoy.dialect.impl.SqliteDialect;
+import org.sagacity.sqltoy.dialect.impl.TDengineDialect;
 import org.sagacity.sqltoy.dialect.impl.TidbDialect;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.dialect.utils.PageOptimizeUtils;
@@ -88,6 +89,8 @@ import org.slf4j.LoggerFactory;
  * @update data:2020-06-05 增加dm(达梦)数据库支持
  * @update data:2020-06-10 增加tidb、guassdb、oceanbase支持,规整sqlserver的版本(默认仅支持2012+)
  * @update data:2021-01-25 分页支持并行查询
+ * @update data:2022-12-12 并行分页改用分别获取connection
+ * @update data:2022-12-14 启动TDengine的支持
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class DialectFactory {
@@ -218,6 +221,11 @@ public class DialectFactory {
 		// h2
 		case DBType.H2: {
 			dialectSqlWrapper = new H2Dialect();
+			break;
+		}
+		// tdengine
+		case DBType.TDENGINE: {
+			dialectSqlWrapper = new TDengineDialect();
 			break;
 		}
 		// 如果匹配不上使用默认dialect

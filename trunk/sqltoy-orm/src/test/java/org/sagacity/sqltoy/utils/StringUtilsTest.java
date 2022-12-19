@@ -5,6 +5,7 @@ package org.sagacity.sqltoy.utils;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Test;
@@ -147,5 +148,14 @@ public class StringUtilsTest {
 		// 已经有租户条件过滤，无需做处理
 		System.err.println(StringUtil.matches(sql, "(?i)\\W" + tenantColumn + "(\\s*\\=|\\s+in)"));
 		System.err.println(StringUtil.matches(sql1, "(?i)\\W" + tenantColumn + "(\\s*\\=|\\s+in)"));
+	}
+
+	@Test
+	public void testReplace() {
+		String VALUE_REGEX = "(?i)\\@value\\s*\\(\\s*(\\?|null)\\s*\\)";
+		String sql = "where @value(?)";
+		String materValue = "$test";
+		String result = sql.replaceFirst(VALUE_REGEX, Matcher.quoteReplacement(materValue));
+		System.err.println(result);
 	}
 }

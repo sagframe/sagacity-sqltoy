@@ -899,6 +899,10 @@ public class SqlXMLConfigParse {
 			if (filter.hasAttribute("cache-type")) {
 				filterModel.setCacheType(filter.getAttribute("cache-type"));
 			}
+			// 是否优先判断相等
+			if (filter.hasAttribute("prior-match-equal")) {
+				filterModel.setPriorMatchEqual(Boolean.parseBoolean(filter.getAttribute("prior-match-equal")));
+			}
 			if (filter.hasAttribute("cache-key-index")) {
 				filterModel.setCacheKeyIndex(Integer.parseInt(filter.getAttribute("cache-key-index")));
 			}
@@ -1439,7 +1443,7 @@ public class SqlXMLConfigParse {
 						}
 						if (sumFilter.hasAttribute("compare-type")) {
 							treeSortModel.setCompareType(sumFilter.getAttribute("compare-type"));
-							//统一对比类型
+							// 统一对比类型
 							if (treeSortModel.getCompareType().equals("eq")) {
 								treeSortModel.setCompareType("==");
 							} else if (treeSortModel.getCompareType().equals("neq")) {
@@ -1454,7 +1458,7 @@ public class SqlXMLConfigParse {
 								treeSortModel.setCompareType("<=");
 							}
 						}
-						//可以逗号分割
+						// 可以逗号分割
 						if (sumFilter.hasAttribute("compare-values")) {
 							treeSortModel.setCompareValues(sumFilter.getAttribute("compare-values"));
 						}
