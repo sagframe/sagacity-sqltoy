@@ -212,7 +212,7 @@ public class ParamFilterUtils {
 			// 匹配的缓存key结果集合
 			List<Object> matchedKeys = new ArrayList<Object>();
 			int cacheKeyIndex = paramFilterModel.getCacheKeyIndex();
-			boolean skip = false;
+			boolean include = true;
 			// 是否优先判断相等
 			boolean priorMatchEqual = paramFilterModel.isPriorMatchEqual();
 			// 将条件参数值转小写进行统一比较
@@ -224,7 +224,7 @@ public class ParamFilterUtils {
 			Object compareValue;
 			for (Object[] cacheRow : cacheDataMap.values()) {
 				keyCode = cacheRow[cacheKeyIndex];
-				skip = false;
+				include = true;
 				// 对缓存进行过滤(比如过滤本人授权访问机构下面的员工或当期状态为生效的员工)
 				if (hasFilter) {
 					for (int i = 0; i < cacheFilters.length; i++) {
@@ -235,16 +235,16 @@ public class ParamFilterUtils {
 						} else {
 							isEqual = filterValues.get(i).containsKey(cacheRow[cacheFilter.getCacheIndex()].toString());
 						}
-						// 条件成立则过滤掉
-						if (("eq".equals(cacheFilter.getCompareType()) && isEqual)
-								|| ("neq".equals(cacheFilter.getCompareType()) && !isEqual)) {
-							skip = true;
+						// 条件不成立则过滤掉
+						if (("eq".equals(cacheFilter.getCompareType()) && !isEqual)
+								|| ("neq".equals(cacheFilter.getCompareType()) && isEqual)) {
+							include = false;
 							break;
 						}
 					}
 				}
-				// 过滤条件不成立，且当前key没有被匹配过，开始匹配
-				if (!skip) {
+				// 过滤条件成立，且当前key没有被匹配过，开始匹配
+				if (include) {
 					skipLoop: for (int i = 0; i < paramValueAry.size(); i++) {
 						matchStr = paramValueAry.get(i);
 						// 优先匹配相等
@@ -304,7 +304,7 @@ public class ParamFilterUtils {
 			logger.error("通过缓存匹配查询条件key失败:{}", e.getMessage());
 		}
 	}
-	
+
 	/**
 	 * @todo 互斥性参数filter
 	 * @param paramIndexMap

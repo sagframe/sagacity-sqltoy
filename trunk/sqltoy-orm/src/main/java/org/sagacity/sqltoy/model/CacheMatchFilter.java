@@ -5,6 +5,7 @@ package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
 
+import org.sagacity.sqltoy.callback.CacheFilter;
 import org.sagacity.sqltoy.model.inner.CacheMatchExtend;
 
 /**
@@ -90,6 +91,16 @@ public class CacheMatchFilter implements Serializable {
 	 */
 	public CacheMatchFilter priorMatchEqual(Boolean priorMatchEqual) {
 		cacheFilterArgs.priorMatchEqual = priorMatchEqual;
+		return this;
+	}
+
+	/**
+	 * @TODO 对缓存数据进行过滤，比如过滤status、tenant等
+	 * @param cacheFilter
+	 * @return
+	 */
+	public CacheMatchFilter filter(CacheFilter cacheFilter) {
+		cacheFilterArgs.cacheFilter = cacheFilter;
 		return this;
 	}
 
