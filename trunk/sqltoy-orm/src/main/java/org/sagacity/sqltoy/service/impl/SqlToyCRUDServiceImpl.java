@@ -531,7 +531,12 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 
 	@Override
 	public String[] cacheMatchKeys(String matchRegex, CacheMatchFilter cacheMatchFilter) {
-		return sqlToyLazyDao.cacheMatchKeys(matchRegex, cacheMatchFilter);
+		return sqlToyLazyDao.cacheMatchKeys(cacheMatchFilter, matchRegex);
+	}
+
+	@Override
+	public String[] cacheMatchKeys(CacheMatchFilter cacheMatchFilter, String... matchRegexes) {
+		return sqlToyLazyDao.cacheMatchKeys(cacheMatchFilter, matchRegexes);
 	}
 
 	@Override

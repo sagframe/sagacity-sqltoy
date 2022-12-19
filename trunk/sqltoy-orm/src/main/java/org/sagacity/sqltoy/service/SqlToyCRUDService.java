@@ -143,7 +143,7 @@ public interface SqlToyCRUDService {
 	 * @param entities
 	 */
 	public <T extends Serializable> Long deleteAll(List<T> entities);
-	
+
 	public Long deleteByIds(final Class entityClass, Object... ids);
 
 	/**
@@ -287,14 +287,16 @@ public interface SqlToyCRUDService {
 	 */
 	public Set<String> getCacheNames();
 
+	@Deprecated
+	public String[] cacheMatchKeys(String matchRegex, CacheMatchFilter cacheMatchFilter);
+
 	/**
 	 * @TODO 通过缓存将名称进行模糊匹配取得key的集合
-	 * @param matchRegex
-	 * @param cacheMatchFilter 例如:
-	 *                         CacheMatchFilter.create().cacheName("staffIdNameCache")
+	 * @param cacheMatchFilter
+	 * @param matchRegexes
 	 * @return
 	 */
-	public String[] cacheMatchKeys(String matchRegex, CacheMatchFilter cacheMatchFilter);
+	public String[] cacheMatchKeys(CacheMatchFilter cacheMatchFilter, String... matchRegexes);
 
 	/**
 	 * @TODO 实现VO和POJO之间属性值的复制,如名称不一致，在VO中字段上使用@SqlToyFieldAlias 注解来处理
