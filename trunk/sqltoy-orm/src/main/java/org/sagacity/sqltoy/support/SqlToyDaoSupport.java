@@ -1550,73 +1550,103 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @TODO 通过缓存匹配名称并返回key集合(类似数据库中的like)便于后续进行精准匹配
-	 * @param matchRegex       如: 页面传过来的员工名称、客户名称等，反查对应的员工id和客户id
-	 * @param cacheMatchFilter 例如:
-	 *                         CacheMatchFilter.create().cacheName("staffIdNameCache")
+	 * @see cacheMatchKeys(CacheMatchFilter cacheMatchFilter, String...
+	 *      matchRegexes)
+	 * @param matchRegex
+	 * @param cacheMatchFilter
 	 * @return
 	 */
+	@Deprecated
 	protected String[] cacheMatchKeys(String matchRegex, CacheMatchFilter cacheMatchFilter) {
+		return cacheMatchKeys(cacheMatchFilter, matchRegex);
+	}
+
+	/**
+	 * @TODO 通过缓存匹配名称并返回key集合(类似数据库中的like)便于后续进行精准匹配
+	 * @param cacheMatchFilter 例如:
+	 *                         CacheMatchFilter.create().cacheName("staffIdNameCache")
+	 * @param cacheMatchFilter 如: 页面传过来的员工名称、客户名称等，反查对应的员工id和客户id
+	 * @param matchRegexes
+	 * @return
+	 */
+	protected String[] cacheMatchKeys(CacheMatchFilter cacheMatchFilter, String... matchRegexes) {
 		if (cacheMatchFilter == null || StringUtil.isBlank(cacheMatchFilter.getCacheFilterArgs().cacheName)
-				|| StringUtil.isBlank(matchRegex)) {
-			throw new IllegalArgumentException("缓存反向名称匹配key必须要提供cacheName和matchName值!");
+				|| matchRegexes == null || matchRegexes.length == 0) {
+			throw new IllegalArgumentException("缓存反向名称匹配key必须要提供cacheName和matchRegex值!");
 		}
 		CacheMatchExtend extendArgs = cacheMatchFilter.getCacheFilterArgs();
 		int[] nameIndexes = extendArgs.matchIndexs;
 		HashMap<String, Object[]> cacheDatas = this.sqlToyContext.getTranslateManager()
 				.getCacheData(extendArgs.cacheName, extendArgs.cacheType);
-		Collection<Object[]> values = cacheDatas.values();
-		String matchLowStr = matchRegex.toLowerCase().trim();
-		int cacheKeyIndex = extendArgs.cacheKeyIndex;
-		List<String> keySet = new ArrayList<String>();
-		int rowIndex = 0;
-		// 优先匹配相等的
-		if (extendArgs.priorMatchEqual) {
-			boolean hasEqual = false;
-			for (Object[] row : values) {
-				for (int index : nameIndexes) {
-					if (row[index] != null && row[index].toString().toLowerCase().equals(matchLowStr)) {
-						keySet.add(row[cacheKeyIndex].toString());
-						hasEqual = true;
-						break;
-					}
-				}
-				if (hasEqual) {
-					break;
-				}
-				rowIndex++;
-			}
-			// 不存在相等设置rowIndex为-1,表示后续所有记录参与like检索匹配
-			if (!hasEqual) {
-				rowIndex = -1;
-			}
+		if (cacheDatas == null || cacheDatas.isEmpty()) {
+			logger.error("缓存cacheName={},cacheType={} 没有数据,cacheMatchKeys异常,请检查!", extendArgs.cacheName,
+					extendArgs.cacheType);
+			return new String[] {};
 		}
-		// 开始like 分词模式的匹配
-		String[] lowName = matchLowStr.split("\\s+");
-		int meter = keySet.size();
-		int i = 0;
-		for (Object[] row : values) {
-			// 相等的行排除,避免重复
-			if (i != rowIndex) {
-				for (int index : nameIndexes) {
-					if (row[index] != null && StringUtil.like(row[index].toString().toLowerCase(), lowName)) {
-						// 避免priorMatchEqual=true matchSize==1
-						if (meter < extendArgs.matchSize) {
-							keySet.add(row[cacheKeyIndex].toString());
+		List<String> matchLowAry = new ArrayList<String>();
+		for (String str : matchRegexes) {
+			matchLowAry.add(str.toLowerCase().trim());
+		}
+		int cacheKeyIndex = extendArgs.cacheKeyIndex;
+		List<String> matchedKeys = new ArrayList<String>();
+		String keyCode;
+		String matchStr;
+		int matchCnt = 0;
+		String[] matchWords;
+		Object compareValue;
+		// 是否优先判断相等
+		boolean priorMatchEqual = extendArgs.priorMatchEqual;
+		boolean hasFilter = (extendArgs.cacheFilter == null) ? false : true;
+		boolean include = true;
+		for (Object[] row : cacheDatas.values()) {
+			keyCode = row[cacheKeyIndex].toString();
+			include = true;
+			if (hasFilter) {
+				include = extendArgs.cacheFilter.doFilter(row);
+			}
+			if (include) {
+				skipLoop: for (int i = 0; i < matchLowAry.size(); i++) {
+					matchStr = matchLowAry.get(i);
+					// 优先匹配名称相同
+					if (priorMatchEqual) {
+						// key 相同
+						if (matchStr.equals(keyCode.toLowerCase())) {
+							matchedKeys.add(keyCode);
+							matchLowAry.remove(i);
+							matchCnt++;
+							break;
 						}
-						meter++;
-						break;
+						// 名称相同
+						for (int index : nameIndexes) {
+							compareValue = row[index];
+							if (compareValue != null && compareValue.toString().toLowerCase().equals(matchStr)) {
+								matchedKeys.add(keyCode);
+								matchLowAry.remove(i);
+								matchCnt++;
+								break skipLoop;
+							}
+						}
+					}
+					// like 匹配
+					matchWords = matchStr.split("\\s+");
+					for (int index : nameIndexes) {
+						compareValue = row[index];
+						if (compareValue != null
+								&& StringUtil.like(compareValue.toString().toLowerCase(), matchWords)) {
+							matchedKeys.add(keyCode);
+							matchCnt++;
+							break skipLoop;
+						}
 					}
 				}
 				// 不超过1000个(作为in条件值有限制)
-				if (meter == extendArgs.matchSize) {
+				if (matchLowAry.isEmpty() || matchCnt >= extendArgs.matchSize) {
 					break;
 				}
 			}
-			i++;
 		}
-		String[] result = new String[keySet.size()];
-		keySet.toArray(result);
+		String[] result = new String[matchedKeys.size()];
+		matchedKeys.toArray(result);
 		return result;
 	}
 

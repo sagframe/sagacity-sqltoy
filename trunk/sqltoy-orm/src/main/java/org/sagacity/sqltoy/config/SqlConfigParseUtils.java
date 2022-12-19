@@ -629,7 +629,8 @@ public class SqlConfigParseUtils {
 				if (dialect != null && valueStr.contains("(") && valueStr.contains(")")) {
 					valueStr = FunctionUtils.getDialectSql(valueStr, dialect);
 				}
-				sqlToyResult.setSql(sqlToyResult.getSql().replaceFirst(VALUE_REGEX, valueStr));
+				sqlToyResult
+						.setSql(sqlToyResult.getSql().replaceFirst(VALUE_REGEX, Matcher.quoteReplacement(valueStr)));
 				// 剔除参数@value(?) 对应的参数值
 				paramValueList.remove(paramCnt - valueCnt);
 				valueCnt++;

@@ -904,7 +904,8 @@ public class StringUtil {
 			return template;
 		}
 		for (Object arg : args) {
-			template = template.replaceFirst("\\$?\\{\\s*\\}", arg == null ? "null" : arg.toString());
+			template = template.replaceFirst("\\$?\\{\\s*\\}",
+					(arg == null) ? "null" : Matcher.quoteReplacement(arg.toString()));
 		}
 		return template;
 	}
