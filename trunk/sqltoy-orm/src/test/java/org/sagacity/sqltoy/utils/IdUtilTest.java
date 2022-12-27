@@ -3,9 +3,20 @@ package org.sagacity.sqltoy.utils;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
+import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.plugins.id.impl.SnowflakeIdGenerator;
+
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
 public class IdUtilTest {
 	@Test
@@ -65,5 +76,30 @@ public class IdUtilTest {
 		for (int i = 0; i < 10000; i++) {
 			System.err.println(IdUtil.getShortNanoTimeId("001"));
 		}
+	}
+
+	@Test
+	public void testSnowflakeId() throws Exception {
+		// 并发时存在重复
+		SnowflakeIdGenerator snowflakeIdGenerator = new SnowflakeIdGenerator();
+		snowflakeIdGenerator.initialize(null);
+		ExecutorService es = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS,
+				new SynchronousQueue<Runnable>());
+		List<CompletableFuture> list = Lists.newArrayList();
+		Set<String> strSet = Sets.newCopyOnWriteArraySet();
+		for (int i = 0; i < 10000; i++) {
+			int finalI = i;
+			list.add(CompletableFuture.runAsync(() -> {
+				String str = (String) snowflakeIdGenerator.getId(null, null, null, null, null, "java.lang.string", 1,
+						1);
+				// System.out.println("val: " + str + ", length: " + str.length() + ", =>" +
+				// finalI);
+				strSet.add(str);
+			}, es));
+		}
+		es.shutdownNow();
+		CompletableFuture.allOf(list.stream().toArray(CompletableFuture[]::new)).join();
+		System.out.println("end: " + strSet.size());
+
 	}
 }
