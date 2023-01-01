@@ -711,8 +711,10 @@ public class EntityManager {
 					idGenerators.put(idGenerator, redis);
 				} else {
 					// 自定义(不依赖spring模式),用法在quickvo中配置例如:com.xxxx..CustomIdGenerator
-					idGenerators.put(idGenerator,
-							(IdGenerator) Class.forName(generator).getDeclaredConstructor().newInstance());
+					IdGenerator idGeneratorInstance = (IdGenerator) Class.forName(generator).getDeclaredConstructor()
+							.newInstance();
+					idGeneratorInstance.initialize(sqlToyContext);
+					idGenerators.put(idGenerator, idGeneratorInstance);
 				}
 			} catch (Exception e) {
 				throw new RuntimeException("实例化主键生成策略失败:className=" + generator + ",错误信息:" + e.getMessage());

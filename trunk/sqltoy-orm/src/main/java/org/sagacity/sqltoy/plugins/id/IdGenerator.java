@@ -5,6 +5,8 @@ package org.sagacity.sqltoy.plugins.id;
 
 import java.util.Date;
 
+import org.sagacity.sqltoy.SqlToyContext;
+
 /**
  * @project sqltoy-orm
  * @description 定义主键产生器接口,自定义产生器必须实现getId()方法
@@ -25,4 +27,8 @@ public interface IdGenerator {
 	 */
 	public Object getId(String tableName, String signature, String[] relatedColumns, Object[] relatedColValue,
 			Date bizDate, String idJavaType, int length, int sequencSize);
+	
+	public default void initialize(SqlToyContext sqlToyContext) throws Exception {
+
+	};
 }

@@ -6,6 +6,7 @@ package org.sagacity.sqltoy.plugins.id.impl;
 import java.util.Date;
 
 import org.sagacity.sqltoy.SqlToyConstants;
+import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.plugins.id.IdGenerator;
 import org.sagacity.sqltoy.utils.SnowflakeIdWorker;
 import org.sagacity.sqltoy.utils.SqlUtil;
@@ -43,5 +44,13 @@ public class SnowflakeIdGenerator implements IdGenerator {
 			idWorker = new SnowflakeIdWorker(SqlToyConstants.WORKER_ID, SqlToyConstants.DATA_CENTER_ID);
 		}
 		return SqlUtil.convertIdValueType(idWorker.nextId(), idJavaType);
+	}
+
+	//update 2022-12-27 修复并发线程安全问题
+	@Override
+	public void initialize(SqlToyContext sqlToyContext) throws Exception {
+		if (idWorker == null) {
+			idWorker = new SnowflakeIdWorker(SqlToyConstants.WORKER_ID, SqlToyConstants.DATA_CENTER_ID);
+		}
 	}
 }
