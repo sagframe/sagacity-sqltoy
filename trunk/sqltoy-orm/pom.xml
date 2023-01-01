@@ -17,7 +17,7 @@
 		<httpclient-httpmime.version>4.5.14</httpclient-httpmime.version>
 		<httpclient-core.version>4.4.15</httpclient-core.version>
 		<elastic-rest-client.version>8.5.3</elastic-rest-client.version>
-		<fastjson.version>2.0.21</fastjson.version>
+		<fastjson.version>2.0.22</fastjson.version>
 		<mongo.version>3.12.11</mongo.version>
 		<junit-jupiter.version>5.9.1</junit-jupiter.version>
 		<junit-platform.version>1.9.1</junit-platform.version>

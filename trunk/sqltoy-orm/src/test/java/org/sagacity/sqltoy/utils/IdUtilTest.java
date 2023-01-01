@@ -12,7 +12,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
-import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.plugins.id.impl.SnowflakeIdGenerator;
 
 import com.google.common.collect.Lists;
