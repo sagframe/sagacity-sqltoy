@@ -439,6 +439,9 @@ public class ResultUtils {
 		while (formats.hasNext()) {
 			fmt = formats.next();
 			index = labelIndexMap.get(fmt.getColumn());
+			if (index == null && NumberUtil.isInteger(fmt.getColumn())) {
+				index = Integer.parseInt(fmt.getColumn());
+			}
 			if (index != null) {
 				columnIndex = index.intValue();
 				for (List row : rows) {
@@ -468,6 +471,9 @@ public class ResultUtils {
 		while (formats.hasNext()) {
 			fmt = formats.next();
 			index = labelIndexMap.get(fmt.getColumn());
+			if (index == null && NumberUtil.isInteger(fmt.getColumn())) {
+				index = Integer.parseInt(fmt.getColumn());
+			}
 			if (index != null) {
 				columnIndex = index.intValue();
 				value = row.get(columnIndex);
