@@ -5,6 +5,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ForkJoinPool;
 
 import javax.sql.DataSource;
 
@@ -37,6 +39,7 @@ import org.sagacity.sqltoy.plugins.sharding.ShardingStrategy;
 import org.sagacity.sqltoy.translate.TranslateManager;
 import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
 import org.sagacity.sqltoy.utils.BeanUtil;
+import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils.Dialect;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
@@ -123,7 +126,7 @@ public class SqlToyContext {
 	 * map类型的resultType标题转驼峰模式
 	 */
 	private boolean humpMapResultTypeLabel = true;
-	
+
 	/**
 	 * 跳转超出数据页范围回到第一页
 	 */
@@ -339,6 +342,15 @@ public class SqlToyContext {
 	private boolean executeSqlBlankToNull = true;
 
 	/**
+	 * sqltoy的线程池名称
+	 */
+	private String taskExecutorName;
+	/**
+	 * sqltoy的线程池
+	 */
+	private Executor taskExecutor = ForkJoinPool.commonPool();
+
+	/**
 	 * @todo 初始化
 	 * @throws Exception
 	 */
@@ -351,6 +363,8 @@ public class SqlToyContext {
 		if (connectionFactory == null) {
 			connectionFactory = new SpringConnectionFactory();
 		}
+		// 初始化方言对应的类别代码，避免线程安全
+		DataSourceUtils.initialize();
 		// 初始化默认dataSource
 		initDefaultDataSource();
 		// 设置workerId和dataCenterId,为使用snowflake主键ID产生算法服务
@@ -1098,5 +1112,21 @@ public class SqlToyContext {
 
 	public void setOverPageToFirst(Boolean overPageToFirst) {
 		this.overPageToFirst = overPageToFirst;
+	}
+
+	public void setTaskExecutorName(String taskExecutorName) {
+		this.taskExecutorName = taskExecutorName;
+	}
+
+	public Executor getTaskExecutor() {
+		if(StringUtil.isBlank(taskExecutorName) || !appContext.containsBean(taskExecutorName)){
+			return taskExecutor;
+		}else{
+			return (Executor) appContext.getBean(taskExecutorName);
+		}
+	}
+
+	public void setTaskExecutor(Executor taskExecutor) {
+		this.taskExecutor = taskExecutor;
 	}
 }
