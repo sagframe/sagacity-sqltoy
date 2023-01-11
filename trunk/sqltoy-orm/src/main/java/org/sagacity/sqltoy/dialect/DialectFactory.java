@@ -32,7 +32,6 @@ import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.OperateType;
 import org.sagacity.sqltoy.config.model.PageOptimize;
 import org.sagacity.sqltoy.config.model.ShardingModel;
-import org.sagacity.sqltoy.config.model.SqlExecuteTrace;
 import org.sagacity.sqltoy.config.model.SqlParamsModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
@@ -924,15 +923,12 @@ public class DialectFactory {
 		ExecutorService pool = null;
 		try {
 			SqlExecuteStat.debug("开始并行查询count总记录数和单页记录数据!", null);
-			final SqlExecuteTrace sqlTrace = SqlExecuteStat.get();
-			pool = Executors.newFixedThreadPool(2);
+			pool = Executors.newFixedThreadPool(1);
 			// 查询总记录数量
 			pool.submit(new Runnable() {
 				@Override
 				public void run() {
 					try {
-						// 规避新的线程日志无法采集
-						SqlExecuteStat.mergeTrace(sqlTrace);
 						Long startTime = System.currentTimeMillis();
 						// 重新通过dataSource获取conn，避免conn竞争
 						DataSourceUtils.processDataSource(sqlToyContext, dataSource, new DataSourceCallbackHandler() {
@@ -944,45 +940,28 @@ public class DialectFactory {
 							}
 						});
 						SqlExecuteStat.debug("查询count执行耗时", (System.currentTimeMillis() - startTime) + "毫秒!");
-						if (sqlTrace != null && SqlExecuteStat.get() != null) {
-							sqlTrace.addLogs(SqlExecuteStat.get().getExecuteLogs());
-						}
 					} catch (Exception e) {
 						e.printStackTrace();
 						queryResult.setSuccess(false);
 						queryResult.setMessage("查询总记录数异常:" + e.getMessage());
-					} finally {
-						SqlExecuteStat.destroyNotLog();
-					}
-				}
-			});
-			// 获取记录
-			pool.submit(new Runnable() {
-				@Override
-				public void run() {
-					try {
-						SqlExecuteStat.mergeTrace(sqlTrace);
-						Long startTime = System.currentTimeMillis();
-						QueryResult result = getDialectSqlWrapper(dbType).findPageBySql(sqlToyContext, sqlToyConfig,
-								queryExecutor, wrapDecryptHandler(sqlToyContext, extend.resultType), pageNo, pageSize,
-								conn, dbType, dialect, getFetchSize(extend.fetchSize), extend.maxRows);
-						queryResult.setRows(result.getRows());
-						queryResult.setLabelNames(result.getLabelNames());
-						queryResult.setLabelTypes(result.getLabelTypes());
-						SqlExecuteStat.debug("查询分页记录耗时", (System.currentTimeMillis() - startTime) + "毫秒!");
-						if (sqlTrace != null && SqlExecuteStat.get() != null) {
-							sqlTrace.addLogs(SqlExecuteStat.get().getExecuteLogs());
-						}
-					} catch (Exception e) {
-						e.printStackTrace();
-						queryResult.setSuccess(false);
-						queryResult.setMessage("查询单页记录数据异常:" + e.getMessage());
-					} finally {
-						SqlExecuteStat.destroyNotLog();
 					}
 				}
 			});
 			pool.shutdown();
+			try {
+				Long startTime = System.currentTimeMillis();
+				QueryResult result = getDialectSqlWrapper(dbType).findPageBySql(sqlToyContext, sqlToyConfig,
+						queryExecutor, wrapDecryptHandler(sqlToyContext, extend.resultType), pageNo, pageSize, conn,
+						dbType, dialect, getFetchSize(extend.fetchSize), extend.maxRows);
+				queryResult.setRows(result.getRows());
+				queryResult.setLabelNames(result.getLabelNames());
+				queryResult.setLabelTypes(result.getLabelTypes());
+				SqlExecuteStat.debug("查询分页记录耗时", (System.currentTimeMillis() - startTime) + "毫秒!");
+			} catch (Exception e) {
+				e.printStackTrace();
+				queryResult.setSuccess(false);
+				queryResult.setMessage("查询单页记录数据异常:" + e.getMessage());
+			}
 			// 设置最大等待时长(秒)
 			if (pageOptimize.getParallelMaxWaitSeconds() > 0) {
 				pool.awaitTermination(pageOptimize.getParallelMaxWaitSeconds(), TimeUnit.SECONDS);

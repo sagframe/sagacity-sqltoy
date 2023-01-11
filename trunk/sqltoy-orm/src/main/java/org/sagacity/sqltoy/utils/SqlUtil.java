@@ -1579,7 +1579,7 @@ public class SqlUtil {
 		}
 		String key = entityMeta.getTableName() + "_" + sql;
 		// 从缓存中直接获取,避免每次都处理提升效率
-		if (convertSqlMap.contains(key)) {
+		if (convertSqlMap.containsKey(key)) {
 			return convertSqlMap.get(key);
 		}
 		String[] fields = entityMeta.getFieldsArray();

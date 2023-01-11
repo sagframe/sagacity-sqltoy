@@ -4,8 +4,8 @@
 package org.sagacity.sqltoy.config.model;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.sagacity.sqltoy.utils.IdUtil;
 
@@ -80,7 +80,7 @@ public class SqlExecuteTrace implements Serializable {
 	/**
 	 * 执行的sql和参数
 	 */
-	private List<SqlExecuteLog> executeLogs = new ArrayList<SqlExecuteLog>();
+	private List<SqlExecuteLog> executeLogs = new CopyOnWriteArrayList<SqlExecuteLog>();
 
 	/**
 	 * @return the start
@@ -183,12 +183,6 @@ public class SqlExecuteTrace implements Serializable {
 	 */
 	public void setOverTime(boolean overTime) {
 		this.overTime = overTime;
-	}
-
-	public void addLogs(List<SqlExecuteLog> sqlExecuteLogs) {
-		if (sqlExecuteLogs != null && !sqlExecuteLogs.isEmpty()) {
-			executeLogs.addAll(sqlExecuteLogs);
-		}
 	}
 
 	public String getDialect() {

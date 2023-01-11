@@ -148,10 +148,10 @@ public class EntityManager {
 		}
 		Class entityClass = BeanUtil.getEntityClass(voClass);
 		String className = entityClass.getName();
-		if (unEntityMap.contains(className)) {
+		if (unEntityMap.containsKey(className)) {
 			return false;
 		}
-		if (entitysMetaMap.contains(className)) {
+		if (entitysMetaMap.containsKey(className)) {
 			return true;
 		}
 		EntityMeta entityMeta = parseEntityMeta(sqlToyContext, entityClass, false, false);

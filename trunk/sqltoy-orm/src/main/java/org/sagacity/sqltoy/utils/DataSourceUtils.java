@@ -2,7 +2,7 @@ package org.sagacity.sqltoy.utils;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.sql.DataSource;
 
@@ -30,9 +30,11 @@ public class DataSourceUtils {
 	}
 
 	// 存放数据库方言(dataSource.toString(),dialect)
-	public static HashMap<String, String> DBDialectMap = new HashMap<String, String>();
+	public static ConcurrentHashMap<String, String> DBDialectMap = new ConcurrentHashMap<String, String>();
 	// 存放数据库方言类型(dataSource.toString(),dbType)
-	public static HashMap<String, Integer> DBTypeMap = new HashMap<String, Integer>();
+	public static ConcurrentHashMap<String, Integer> DBTypeMap = new ConcurrentHashMap<String, Integer>();
+	// 定义dialect对应dbType的map
+	public static ConcurrentHashMap<String, Integer> DBNameTypeMap = new ConcurrentHashMap<String, Integer>();
 
 	/**
 	 * 数据库方言定义
@@ -137,8 +139,12 @@ public class DataSourceUtils {
 		public final static int SYBASE_IQ = 190;
 	}
 
-	public static HashMap<String, Integer> DBNameTypeMap = new HashMap<String, Integer>();
 	static {
+		initialize();
+	}
+
+	// 提供初始化方法供SqlToyContext初始化时调用，避免后续并发场景下取值为null
+	public static void initialize() {
 		DBNameTypeMap.put(Dialect.DB2, DBType.DB2);
 		DBNameTypeMap.put(Dialect.ORACLE, DBType.ORACLE);
 		DBNameTypeMap.put(Dialect.ORACLE11, DBType.ORACLE11);
@@ -446,7 +452,12 @@ public class DataSourceUtils {
 		if (StringUtil.isBlank(dialect)) {
 			return DBType.UNDEFINE;
 		}
-		return DBNameTypeMap.get(dialect.toLowerCase());
+		String dialectLow = dialect.toLowerCase();
+		if (!DBNameTypeMap.containsKey(dialectLow)) {
+			logger.warn("sqltoy初始化的方言map中未包含的数据库方言[" + dialectLow + "]");
+			return DBType.UNDEFINE;
+		}
+		return DBNameTypeMap.get(dialectLow);
 	}
 
 	/**
