@@ -26,11 +26,13 @@ import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 /**
  * @description sqltoy 自动配置类
@@ -51,10 +53,37 @@ public class SqltoyAutoConfiguration {
 	@Value("${sqltoy.sqlResourcesDir:}")
 	private String sqlResourcesDir;
 
+	/**
+	 * 当配置不存在或不为none的时候实例化
+	 * @return
+	 */
+	@ConditionalOnExpression("#{''.equals(environment.getProperty('spring.sqltoy.taskExecutor.targetPoolName', ''))}")
+	@Bean(name = "sqltoyOrmTaskExecutor", destroyMethod = "shutdown", initMethod = "initialize")
+	public ThreadPoolTaskExecutor sqltoyOrmTaskExecutor() {
+		SqlToyContextTaskPoolProperties taskPoolProperties = properties.getTaskExecutor();
+		ThreadPoolTaskExecutor pool = new ThreadPoolTaskExecutor();
+		pool.setThreadNamePrefix(taskPoolProperties.getThreadNamePrefix());
+		// 线程池维护线程的最少数量
+		pool.setCorePoolSize(taskPoolProperties.getCorePoolSize());
+		// 线程池维护线程的最大数量
+		pool.setMaxPoolSize(taskPoolProperties.getMaxPoolSize());
+		// 线程池所使用的缓冲队列
+		pool.setQueueCapacity(taskPoolProperties.getQueueCapacity());
+		// 线程池维护线程所允许的空闲时间
+		pool.setKeepAliveSeconds(taskPoolProperties.getKeepAliveSeconds());
+		// 决定使用ThreadPool的shutdown()还是shutdownNow()方法来关闭，默认为false
+		pool.setWaitForTasksToCompleteOnShutdown(taskPoolProperties.getWaitForTasksToCompleteOnShutdown());
+		// pool.setContinueScheduledExecutionAfterException();
+		pool.setAwaitTerminationSeconds(taskPoolProperties.getAwaitTerminationSeconds());
+		//如果添加到线程池失败，那么主线程会自己去执行该任务，不会等待线程池中的线程去执行。
+		pool.setRejectedExecutionHandler(taskPoolProperties.getRejectedExecutionHandler());
+		return pool;
+	}
+
 	// 构建sqltoy上下文,并指定初始化方法和销毁方法
 	@Bean(name = "sqlToyContext", initMethod = "initialize", destroyMethod = "destroy")
 	@ConditionalOnMissingBean
-	SqlToyContext sqlToyContext() throws Exception {
+	SqlToyContext sqlToyContext(@Value("${spring.sqltoy.taskExecutor.targetPoolName:sqltoyOrmTaskExecutor}") String taskExecutorName) throws Exception {
 		// 用辅助配置来校验是否配置错误
 		if (StringUtil.isBlank(properties.getSqlResourcesDir()) && StringUtil.isNotBlank(sqlResourcesDir)) {
 			throw new IllegalArgumentException(
@@ -367,6 +396,10 @@ public class SqltoyAutoConfiguration {
 				}
 			}
 			sqlToyContext.setSqlInterceptors(sqlInterceptorList);
+		}
+		//自定义线程池
+		if(StringUtil.isNotBlank(taskExecutorName)){
+			sqlToyContext.setTaskExecutorName(taskExecutorName);
 		}
 		return sqlToyContext;
 	}

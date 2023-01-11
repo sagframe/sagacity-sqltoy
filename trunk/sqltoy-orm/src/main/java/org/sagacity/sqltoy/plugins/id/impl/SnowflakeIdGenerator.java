@@ -40,13 +40,14 @@ public class SnowflakeIdGenerator implements IdGenerator {
 	@Override
 	public Object getId(String tableName, String signature, String[] relatedColumns, Object[] relatedColValue,
 			Date bizDate, String idJavaType, int length, int sequencSize) {
+		// 冗余判断
 		if (null == idWorker) {
 			idWorker = new SnowflakeIdWorker(SqlToyConstants.WORKER_ID, SqlToyConstants.DATA_CENTER_ID);
 		}
 		return SqlUtil.convertIdValueType(idWorker.nextId(), idJavaType);
 	}
 
-	// 避免多线程并发问题
+	// 实例化时增加初始化，避免多线程并发问题
 	@Override
 	public void initialize(SqlToyContext sqlToyContext) throws Exception {
 		if (null == idWorker) {

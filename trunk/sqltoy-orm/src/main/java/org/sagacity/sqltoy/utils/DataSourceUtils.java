@@ -2,7 +2,7 @@ package org.sagacity.sqltoy.utils;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.sql.DataSource;
 
@@ -33,9 +33,10 @@ public class DataSourceUtils {
 	}
 
 	// 存放数据库方言(dataSource.toString(),dialect)
-	public static HashMap<String, String> DBDialectMap = new HashMap<String, String>();
+	public static ConcurrentHashMap<String, String> DBDialectMap = new ConcurrentHashMap<String, String>();
 	// 存放数据库方言类型(dataSource.toString(),dbType)
-	public static HashMap<String, Integer> DBTypeMap = new HashMap<String, Integer>();
+	public static ConcurrentHashMap<String, Integer> DBTypeMap = new ConcurrentHashMap<String, Integer>();
+	public static ConcurrentHashMap<String, Integer> DBNameTypeMap = new ConcurrentHashMap<String, Integer>();
 
 	/**
 	 * 数据库方言定义
@@ -143,8 +144,11 @@ public class DataSourceUtils {
 		public final static int H2 = 170;
 	}
 
-	public static HashMap<String, Integer> DBNameTypeMap = new HashMap<String, Integer>();
 	static {
+		initialize();
+	}
+
+	public static void initialize() {
 		DBNameTypeMap.put(Dialect.DB2, DBType.DB2);
 		DBNameTypeMap.put(Dialect.ORACLE, DBType.ORACLE);
 		DBNameTypeMap.put(Dialect.ORACLE11, DBType.ORACLE11);
@@ -322,7 +326,7 @@ public class DataSourceUtils {
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.TIDB) != -1) {
 				return Dialect.TIDB;
 			}
-			//2022-12-14 验证
+			// 2022-12-14 验证
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.TDENGINE) != -1) {
 				return Dialect.TDENGINE;
 			}
@@ -458,7 +462,12 @@ public class DataSourceUtils {
 		if (StringUtil.isBlank(dialect)) {
 			return DBType.UNDEFINE;
 		}
-		return DBNameTypeMap.get(dialect.toLowerCase());
+		String dialectLow = dialect.toLowerCase();
+		if (!DBNameTypeMap.containsKey(dialectLow)) {
+			logger.warn("sqltoy初始化的方言map中未包含的数据库方言[" + dialectLow + "]");
+			return DBType.UNDEFINE;
+		}
+		return DBNameTypeMap.get(dialectLow);
 	}
 
 	/**

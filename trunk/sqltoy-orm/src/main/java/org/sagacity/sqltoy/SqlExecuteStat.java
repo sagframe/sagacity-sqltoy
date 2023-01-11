@@ -48,8 +48,8 @@ public class SqlExecuteStat {
 	// 用于拟合sql中的条件值表达式(前后都以非字符和数字为依据目的是最大幅度的避免参数值里面存在问号,实际执行过程中这个问题已经被规避,但调试打印参数带入无法规避)
 	private final static Pattern ARG_PATTERN = Pattern.compile("\\W\\?\\W");
 
-	// 通过ThreadLocal 来保存进程数据
-	private static ThreadLocal<SqlExecuteTrace> threadLocal = new ThreadLocal<SqlExecuteTrace>();
+	// 通过ThreadLocal 来保存线程数据
+	private static ThreadLocal<SqlExecuteTrace> threadLocal = new InheritableThreadLocal<SqlExecuteTrace>();
 
 	// sql执行超时处理器
 	public static OverTimeSqlHandler overTimeSqlHandler;
@@ -242,11 +242,6 @@ public class SqlExecuteStat {
 		threadLocal.set(null);
 	}
 
-	public static void destroyNotLog() {
-		threadLocal.remove();
-		threadLocal.set(null);
-	}
-
 	/**
 	 * @param debug the debug to set
 	 */
@@ -405,10 +400,4 @@ public class SqlExecuteStat {
 		threadLocal.set(sqlTrace);
 	}
 
-	// 并行多线程场景
-	public static void mergeTrace(SqlExecuteTrace sqlTrace) {
-		if (sqlTrace != null) {
-			threadLocal.set(new SqlExecuteTrace(sqlTrace.getId(), sqlTrace.getType(), sqlTrace.isPrint()));
-		}
-	}
 }

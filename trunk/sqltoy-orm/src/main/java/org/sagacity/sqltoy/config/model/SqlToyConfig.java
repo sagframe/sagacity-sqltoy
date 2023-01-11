@@ -627,7 +627,7 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 
 	/**
 	 * @TODO 根据方言生成不同的sql语句
-	 * @param type
+	 * @param type 如:sql、fastPage等
 	 * @param sqlContent
 	 * @param dialect
 	 * @return
@@ -640,7 +640,7 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 			return sqlContent;
 		}
 		String key = dialect.concat(".").concat(type);
-		if (!dialectSqlMap.contains(key)) {
+		if (!dialectSqlMap.containsKey(key)) {
 			String dialectSql = FunctionUtils.getDialectSql(sqlContent, dialect);
 			// 保留字处理
 			dialectSql = ReservedWordsUtil.convertSql(dialectSql, DataSourceUtils.getDBType(dialect));

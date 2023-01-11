@@ -215,6 +215,11 @@ public class SqlToyContextProperties implements Serializable {
 	private Boolean overPageToFirst;
 
 	/**
+	 * 线程池配置参数
+	 */
+	private SqlToyContextTaskPoolProperties taskExecutor = new  SqlToyContextTaskPoolProperties();
+
+	/**
 	 * @return the sqlResourcesDir
 	 */
 	public String getSqlResourcesDir() {
@@ -609,6 +614,14 @@ public class SqlToyContextProperties implements Serializable {
 
 	public void setOverPageToFirst(Boolean overPageToFirst) {
 		this.overPageToFirst = overPageToFirst;
+	}
+
+	public SqlToyContextTaskPoolProperties getTaskExecutor() {
+		return taskExecutor;
+	}
+
+	public void setTaskExecutor(SqlToyContextTaskPoolProperties taskExecutor) {
+		this.taskExecutor = taskExecutor;
 	}
 
 }
