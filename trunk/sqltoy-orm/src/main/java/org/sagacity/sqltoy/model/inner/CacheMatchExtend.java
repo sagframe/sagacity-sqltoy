@@ -55,4 +55,9 @@ public class CacheMatchExtend implements Serializable {
 	 * 缓存数据过滤
 	 */
 	public CacheFilter cacheFilter;
+
+	/**
+	 * 缓存通过名称关键词未匹配到key，返回关键词本身
+	 */
+	public boolean unMatchedReturnSelf = false;
 }

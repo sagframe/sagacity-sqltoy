@@ -1645,6 +1645,10 @@ public class SqlToyDaoSupport {
 				}
 			}
 		}
+		// 没有从缓存匹配到，返回自身
+		if (matchedKeys.isEmpty() && extendArgs.unMatchedReturnSelf) {
+			return matchRegexes;
+		}
 		String[] result = new String[matchedKeys.size()];
 		matchedKeys.toArray(result);
 		return result;
