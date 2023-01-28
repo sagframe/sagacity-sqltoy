@@ -929,6 +929,11 @@ public class SqlXMLConfigParse {
 			if (filter.hasAttribute("cache-not-matched-value")) {
 				filterModel.setCacheNotMatchedValue(filter.getAttribute("cache-not-matched-value"));
 			}
+			// 缓存过滤未匹配上赋予的默认值
+			if (filter.hasAttribute("unmatched-return-self")) {
+				filterModel.setCacheNotMatchedReturnSelf(
+						Boolean.parseBoolean(filter.getAttribute("unmatched-return-self")));
+			}
 			// 针对缓存的二级过滤,比如员工信息的缓存,过滤机构是当前人授权的
 			NodeList nodeList = filter.getElementsByTagName(local.concat("filter"));
 			if (nodeList.getLength() > 0) {
