@@ -929,7 +929,7 @@ public class SqlXMLConfigParse {
 			if (filter.hasAttribute("cache-not-matched-value")) {
 				filterModel.setCacheNotMatchedValue(filter.getAttribute("cache-not-matched-value"));
 			}
-			// 缓存过滤未匹配上赋予的默认值
+			// 缓存过滤未匹配上，返回检索词自身
 			if (filter.hasAttribute("unmatched-return-self")) {
 				filterModel.setCacheNotMatchedReturnSelf(
 						Boolean.parseBoolean(filter.getAttribute("unmatched-return-self")));
