@@ -1503,7 +1503,7 @@ public class SqlToyDaoSupport {
 	protected String[] cacheMatchKeys(String matchRegex, CacheMatchFilter cacheMatchFilter) {
 		return cacheMatchKeys(cacheMatchFilter, matchRegex);
 	}
-	
+
 	/**
 	 * @TODO 通过缓存匹配名称并返回key集合(类似数据库中的like)便于后续进行精准匹配
 	 * @param cacheMatchFilter 例如:
@@ -1587,6 +1587,10 @@ public class SqlToyDaoSupport {
 					break;
 				}
 			}
+		}
+		// 没有从缓存匹配到，返回自身
+		if (matchedKeys.isEmpty() && extendArgs.unMatchedReturnSelf) {
+			return matchRegexes;
 		}
 		String[] result = new String[matchedKeys.size()];
 		matchedKeys.toArray(result);

@@ -94,6 +94,11 @@ public class CacheMatchFilter implements Serializable {
 		return this;
 	}
 
+	public CacheMatchFilter unMatchedReturnSelf() {
+		cacheFilterArgs.unMatchedReturnSelf = true;
+		return this;
+	}
+
 	/**
 	 * @return the cacheFilterArgs
 	 */

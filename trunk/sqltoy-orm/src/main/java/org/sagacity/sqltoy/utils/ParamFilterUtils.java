@@ -290,8 +290,23 @@ public class ParamFilterUtils {
 					}
 				}
 			}
-			Object[] realMatched = new Object[matchedKeys.size()];
-			matchedKeys.toArray(realMatched);
+			Object[] realMatched = null;
+			// 没有通过缓存匹配到具体key，代入默认值
+			if (matchedKeys.isEmpty()) {
+				// 未匹配使用指定的默认值
+				if (paramFilterModel.getCacheNotMatchedValue() != null) {
+					realMatched = new Object[] { paramFilterModel.getCacheNotMatchedValue() };
+				} // 直接返回名称检索关键词
+				else if (paramFilterModel.isCacheNotMatchedReturnSelf()) {
+					realMatched = new String[paramValueAry.size()];
+					paramValueAry.toArray(realMatched);
+				} else {
+					realMatched = new Object[0];
+				}
+			} else {
+				realMatched = new Object[matchedKeys.size()];
+				matchedKeys.toArray(realMatched);
+			}
 			// 存在别名,设置别名对应的值
 			if (StringUtil.isNotBlank(paramFilterModel.getAliasName())) {
 				int aliasIndex = paramIndexMap.get(paramFilterModel.getAliasName().toLowerCase());
