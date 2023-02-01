@@ -174,6 +174,11 @@ public class SqlToyConstants {
 	 * 忽视空记录
 	 */
 	public final static Pattern IGNORE_EMPTY_REGEX = Pattern.compile("(?i)\\#ignore_all_null_set\\#");
+	
+	/**
+	 * 判断sql中是否存在@include(sqlId)的表达式
+	 */
+	public final static Pattern INCLUDE_PATTERN = Pattern.compile("(?i)\\@include\\([\\w\\W]*\\)");
 
 	/**
 	 * @todo 解析模板中的参数

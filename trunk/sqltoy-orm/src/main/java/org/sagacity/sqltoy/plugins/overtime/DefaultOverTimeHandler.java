@@ -72,6 +72,9 @@ public class DefaultOverTimeHandler implements OverTimeSqlHandler {
 	 */
 	@Override
 	public List<OverTimeSql> getSlowest(int size, boolean hasSqlId) {
+		if (size < 1) {
+			throw new IllegalArgumentException("取最慢查询:size 参数必须>=1,如果要获取全部，可使用:Integer.MAX_VALUE");
+		}
 		// 非xml中定义的sql，没有具体的sqlId
 		if (!hasSqlId) {
 			return getSlowest(size);

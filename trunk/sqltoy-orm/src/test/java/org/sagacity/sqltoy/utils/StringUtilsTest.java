@@ -5,12 +5,16 @@ package org.sagacity.sqltoy.utils;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
+
+import com.alibaba.fastjson.JSON;
 
 /**
  * @author zhongxuchen
@@ -157,5 +161,13 @@ public class StringUtilsTest {
 		String materValue = "$test";
 		String result = sql.replaceFirst(VALUE_REGEX, Matcher.quoteReplacement(materValue));
 		System.err.println(result);
+	}
+
+	@Test
+	public void testReplace1() {
+		ConcurrentHashMap<String, Object> sqlCache = new ConcurrentHashMap<String, Object>(256);
+		sqlCache.put("1", 1);
+		Map result = (Map) sqlCache;
+		System.err.println(JSON.toJSONString(result));
 	}
 }

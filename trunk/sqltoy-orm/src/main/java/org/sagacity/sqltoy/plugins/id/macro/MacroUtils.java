@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.plugins.id.macro.impl.Case;
 import org.sagacity.sqltoy.plugins.id.macro.impl.DateFormat;
 import org.sagacity.sqltoy.plugins.id.macro.impl.SubString;
@@ -31,8 +30,8 @@ public class MacroUtils {
 	/**
 	 * 字符串中内嵌参数的匹配模式 update by chenrenfei 2016-8-24 完善表达式
 	 */
-	private final static Pattern paramPattern = Pattern
-			.compile("(\\$|\\#)\\{\\s*\\_?[0-9a-zA-Z\u4e00-\u9fa5]+((\\.|\\_)[0-9a-zA-Z\u4e00-\u9fa5]+)*(\\[\\d*(\\,)?\\d*\\])?\\s*\\}");
+	private final static Pattern paramPattern = Pattern.compile(
+			"(\\$|\\#)\\{\\s*\\_?[0-9a-zA-Z\u4e00-\u9fa5]+((\\.|\\_)[0-9a-zA-Z\u4e00-\u9fa5]+)*(\\[\\d*(\\,)?\\d*\\])?\\s*\\}");
 
 	private static final HashMap<String, String> filters = new HashMap<String, String>() {
 		private static final long serialVersionUID = 2445408357544337801L;
@@ -63,7 +62,7 @@ public class MacroUtils {
 	 * @param keyValues
 	 * @return
 	 */
-	public static String replaceMacros(String hasMacroStr, IgnoreKeyCaseMap<String, Object> keyValues) {
+	public static String replaceMacros(String hasMacroStr, Map<String, Object> keyValues) {
 		return replaceMacros(hasMacroStr, keyValues, false, macros);
 	}
 
@@ -76,7 +75,7 @@ public class MacroUtils {
 	 * @param macros
 	 * @return
 	 */
-	public static String replaceMacros(String hasMacroStr, IgnoreKeyCaseMap<String, Object> keyValues, boolean isOuter,
+	public static String replaceMacros(String hasMacroStr, Map<String, Object> keyValues, boolean isOuter,
 			Map<String, AbstractMacro> macros) {
 		if (StringUtil.isBlank(hasMacroStr)) {
 			return hasMacroStr;
@@ -168,7 +167,7 @@ public class MacroUtils {
 	 * @param keyValues
 	 * @return
 	 */
-	public static String replaceParams(String template, IgnoreKeyCaseMap<String, Object> keyValues) {
+	public static String replaceParams(String template, Map<String, Object> keyValues) {
 		if (StringUtil.isBlank(template) || keyValues == null || keyValues.isEmpty()) {
 			return template;
 		}

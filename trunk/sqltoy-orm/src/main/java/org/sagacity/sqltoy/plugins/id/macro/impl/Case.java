@@ -3,7 +3,8 @@
  */
 package org.sagacity.sqltoy.plugins.id.macro.impl;
 
-import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
+import java.util.Map;
+
 import org.sagacity.sqltoy.plugins.id.macro.AbstractMacro;
 import org.sagacity.sqltoy.plugins.id.macro.MacroUtils;
 
@@ -22,7 +23,7 @@ public class Case extends AbstractMacro {
 	 * org.sagacity.sqltoy.plugins.id.macro.AbstractMacro#execute(java.lang.Object)
 	 */
 	@Override
-	public String execute(String[] params, IgnoreKeyCaseMap<String, Object> keyValues) {
+	public String execute(String[] params, Map<String, Object> keyValues) {
 		if (params == null) {
 			return "";
 		}
