@@ -329,6 +329,10 @@ public class SqlXMLConfigParse {
 			isNoSql = true;
 		}
 		SqlToyConfig sqlToyConfig = SqlConfigParseUtils.parseSqlToyConfig(sqlContent, realDialect, sqlType);
+		// 判断是否存在@include(sqlId)
+		if (StringUtil.matches(sqlContent, SqlToyConstants.INCLUDE_PATTERN)) {
+			sqlToyConfig.setHasIncludeSql(true);
+		}
 		// debug 控制台输出sql执行日志
 		if (sqlElt.hasAttribute("debug")) {
 			sqlToyConfig.setShowSql(Boolean.valueOf(sqlElt.getAttribute("debug")));
@@ -347,6 +351,9 @@ public class SqlXMLConfigParse {
 			countSql = FunctionUtils.getDialectSql(countSql, dialect);
 			countSql = ReservedWordsUtil.convertSql(countSql, DataSourceUtils.getDBType(dialect));
 			sqlToyConfig.setCountSql(countSql);
+			if (StringUtil.matches(countSql, SqlToyConstants.INCLUDE_PATTERN)) {
+				sqlToyConfig.setHasIncludeSql(true);
+			}
 		}
 		// 是否是单纯的union all分页(在取count记录数时,将union all 每部分的查询from前面的全部替换成
 		// select 1 from,减少不必要的执行运算，提升效率)

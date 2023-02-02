@@ -28,7 +28,7 @@ public class SqlToyConstants {
 	 * 定义日志
 	 */
 	protected final static Logger logger = LoggerFactory.getLogger(SqlToyConstants.class);
-	
+
 	/**
 	 * 符号对,用来提取字符串中对称字符的过滤,如:{ name(){} }，第一个{对称的符合}是最后一位
 	 */
@@ -45,7 +45,7 @@ public class SqlToyConstants {
 			put("{", "}");
 		}
 	};
-	
+
 	public static final String DEFAULT_NULL = "_SQLTOY_NULL_FLAG";
 
 	// 目前还不支持此功能的提醒
@@ -134,17 +134,22 @@ public class SqlToyConstants {
 	public static int PARALLEL_MAXWAIT_SECONDS = 1800;
 
 	public static int FETCH_SIZE = -1;
-	
+
 	/**
 	 * 变更操作型sql空白默认转为null
 	 */
 	public static boolean executeSqlBlankToNull = true;
 
 	/**
+	 * 判断sql中是否存在@include(sqlId)的表达式
+	 */
+	public final static Pattern INCLUDE_PATTERN = Pattern.compile("(?i)\\@include\\([\\w\\W]*\\)");
+
+	/**
 	 * 字符串中内嵌参数的匹配模式(update 2021-10-13 支持中文)
 	 */
-	public final static Pattern paramPattern = Pattern
-			.compile("\\$\\{\\s*[0-9a-zA-Z\u4e00-\u9fa5]+((\\.|\\_)[0-9a-zA-Z\u4e00-\u9fa5]+)*(\\[\\d*(\\,)?\\d*\\])?\\s*\\}");
+	public final static Pattern paramPattern = Pattern.compile(
+			"\\$\\{\\s*[0-9a-zA-Z\u4e00-\u9fa5]+((\\.|\\_)[0-9a-zA-Z\u4e00-\u9fa5]+)*(\\[\\d*(\\,)?\\d*\\])?\\s*\\}");
 
 	// update 2020-9-16 将\\W 替换为[^A-Za-z0-9_:] 增加排除: 适应::jsonb 这种模式场景
 	// update 2021-10-13 支持参数名称含中文场景(应对一些极为不规范的项目场景)
@@ -404,7 +409,7 @@ public class SqlToyConstants {
 	public static boolean openSqlSign() {
 		return Boolean.parseBoolean(getKeyValue("sqltoy.open.sqlsign", "true"));
 	}
-	
+
 	/**
 	 * @TODO 针对主键策略提前设置或计算雪花算法的worker_id,dataCenterId以及22位和26位主键对应的应用id
 	 * @param workerId

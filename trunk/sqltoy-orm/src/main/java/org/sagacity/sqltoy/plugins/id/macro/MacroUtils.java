@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.plugins.id.macro.impl.Case;
 import org.sagacity.sqltoy.plugins.id.macro.impl.DateFormat;
 import org.sagacity.sqltoy.plugins.id.macro.impl.SubString;
@@ -29,9 +28,7 @@ public class MacroUtils {
 	private static Pattern macroPattern = Pattern.compile("@[a-zA-Z]+[0-9]*[\\-]?[a-zA-Z]*\\([\\w\\W]*\\)");
 
 	/**
-	 * 字符串中内嵌参数的匹配模式 
-	 * update by 2016-8-24 完善表达式
-	 * update 2021-10-13 支持中文
+	 * 字符串中内嵌参数的匹配模式 update by chenrenfei 2016-8-24 完善表达式
 	 */
 	private final static Pattern paramPattern = Pattern.compile(
 			"(\\$|\\#)\\{\\s*\\_?[0-9a-zA-Z\u4e00-\u9fa5]+((\\.|\\_)[0-9a-zA-Z\u4e00-\u9fa5]+)*(\\[\\d*(\\,)?\\d*\\])?\\s*\\}");
@@ -65,20 +62,20 @@ public class MacroUtils {
 	 * @param keyValues
 	 * @return
 	 */
-	public static String replaceMacros(String hasMacroStr, IgnoreKeyCaseMap<String, Object> keyValues) {
+	public static String replaceMacros(String hasMacroStr, Map<String, Object> keyValues) {
 		return replaceMacros(hasMacroStr, keyValues, false, macros);
 	}
 
 	/**
 	 * @todo 递归调用解析字符串中的转换器
-	 * @param reportContext
-	 * @param reportId
-	 * @param hasMacroStr
+	 * @param hasMacroStr     含macro宏的字符串
+	 * @param keyValues
 	 * @param isOuter(isOuter 当@abc(@do(),xxx):为true表示从最外层的macro@abce,false则会先执行@do()
 	 *                        然后再执行@abc())
+	 * @param macros
 	 * @return
 	 */
-	public static String replaceMacros(String hasMacroStr, IgnoreKeyCaseMap<String, Object> keyValues, boolean isOuter,
+	public static String replaceMacros(String hasMacroStr, Map<String, Object> keyValues, boolean isOuter,
 			Map<String, AbstractMacro> macros) {
 		if (StringUtil.isBlank(hasMacroStr)) {
 			return hasMacroStr;
@@ -132,8 +129,7 @@ public class MacroUtils {
 
 	/**
 	 * @todo <b>判断匹配的字符串是否是转换器</b>
-	 * @author zhongxuchen
-	 * @date 2011-6-10 下午12:01:47
+	 * @param macros
 	 * @param matchedStr
 	 * @param isStart
 	 * @return
@@ -171,7 +167,7 @@ public class MacroUtils {
 	 * @param keyValues
 	 * @return
 	 */
-	public static String replaceParams(String template, IgnoreKeyCaseMap<String, Object> keyValues) {
+	public static String replaceParams(String template, Map<String, Object> keyValues) {
 		if (StringUtil.isBlank(template) || keyValues == null || keyValues.isEmpty()) {
 			return template;
 		}

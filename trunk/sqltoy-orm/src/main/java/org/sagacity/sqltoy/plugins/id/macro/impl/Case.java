@@ -3,7 +3,8 @@
  */
 package org.sagacity.sqltoy.plugins.id.macro.impl;
 
-import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
+import java.util.Map;
+
 import org.sagacity.sqltoy.plugins.id.macro.AbstractMacro;
 import org.sagacity.sqltoy.plugins.id.macro.MacroUtils;
 
@@ -19,16 +20,18 @@ public class Case extends AbstractMacro {
 	 * (non-Javadoc)
 	 * 
 	 * @see
-	 * org.sagacity.sqltoy.plugin.id.macro.AbstractMacro#execute(java.lang.Object)
+	 * org.sagacity.sqltoy.plugins.id.macro.AbstractMacro#execute(java.lang.Object)
 	 */
 	@Override
-	public String execute(String[] params, IgnoreKeyCaseMap<String, Object> keyValues) {
-		if (params == null)
+	public String execute(String[] params, Map<String, Object> keyValues) {
+		if (params == null) {
 			return "";
+		}
 		int paramSize = params.length;
 		// 小于3不符合decode运算模式
-		if (paramSize < 3)
+		if (paramSize < 3) {
 			return "";
+		}
 		String baseParam = params[0].trim();
 		String baseValue = null;
 		// ${paramName} 格式
@@ -38,7 +41,7 @@ public class Case extends AbstractMacro {
 			if (keyValues != null && keyValues.containsKey(baseParam)) {
 				baseValue = keyValues.get(baseParam).toString();
 			} else {
-				baseValue=baseParam;
+				baseValue = baseParam;
 			}
 		}
 		// 默认最后一个值为结果
