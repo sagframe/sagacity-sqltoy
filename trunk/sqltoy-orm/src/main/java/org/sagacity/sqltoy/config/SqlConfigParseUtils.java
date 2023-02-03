@@ -192,6 +192,24 @@ public class SqlConfigParseUtils {
 		return StringUtil.matches(queryStr.trim(), SQL_ID_PATTERN);
 	}
 
+	public static SqlToyResult processSql(String queryStr, Map<String, Object> argMap) {
+		return processSql(queryStr, argMap, null);
+	}
+
+	public static SqlToyResult processSql(String queryStr, Map<String, Object> argMap, String dialect) {
+		// 转成key大小写不敏感map
+		IgnoreKeyCaseMap ignoreCaseMap = new IgnoreKeyCaseMap((argMap == null) ? new HashMap() : argMap);
+		String[] paramsNamed = SqlConfigParseUtils.getSqlParamsName(queryStr, true);
+		Object[] paramsArg = null;
+		if (paramsNamed != null) {
+			paramsArg = new Object[paramsNamed.length];
+			for (int i = 0; i < paramsNamed.length; i++) {
+				paramsArg[i] = ignoreCaseMap.get(paramsNamed[i]);
+			}
+		}
+		return processSql(queryStr, paramsNamed, paramsArg, dialect);
+	}
+
 	public static SqlToyResult processSql(String queryStr, String[] paramsNamed, Object[] paramsArg) {
 		return processSql(queryStr, paramsNamed, paramsArg, null);
 	}

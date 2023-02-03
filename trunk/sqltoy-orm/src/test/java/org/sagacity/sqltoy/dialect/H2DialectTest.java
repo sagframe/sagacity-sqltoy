@@ -3,10 +3,10 @@
  */
 package org.sagacity.sqltoy.dialect;
 
-import org.junit.jupiter.api.Test;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+
+import org.junit.jupiter.api.Test;
 
 /**
  * @Author junhua

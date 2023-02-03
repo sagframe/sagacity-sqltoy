@@ -3,7 +3,9 @@ package org.sagacity.sqltoy.config;
 import static java.lang.System.out;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.sagacity.sqltoy.SqlToyConstants;
@@ -12,7 +14,13 @@ import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.dialect.utils.PageOptimizeUtils;
 import org.sagacity.sqltoy.exception.DataAccessException;
+import org.sagacity.sqltoy.plugins.function.FunctionUtils;
+import org.sagacity.sqltoy.plugins.id.macro.AbstractMacro;
+import org.sagacity.sqltoy.plugins.id.macro.MacroUtils;
+import org.sagacity.sqltoy.plugins.id.macro.impl.Include;
+import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils.Dialect;
+import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -85,6 +93,12 @@ public class SqlScriptLoader {
 	 * 文件最后修改时间
 	 */
 	private ConcurrentHashMap<String, Long> filesLastModifyMap = new ConcurrentHashMap<String, Long>();
+
+	private static Map<String, AbstractMacro> macros = new HashMap<String, AbstractMacro>();
+
+	static {
+		macros.put("@include", new Include());
+	}
 
 	/**
 	 * @TODO 初始化加载sql文件
@@ -239,6 +253,32 @@ public class SqlScriptLoader {
 							+ "/* 3、sqlId对应的文件内部错误!版本合并或书写错误会导致单个文件解析错误                          \n"
 							+ "/* ------------------------------------------------------------*/");
 				}
+			}
+			// 存在@include("sqlId") 重新组织sql
+			if (result != null && result.isHasIncludeSql()) {
+				// 替换include的实际sql
+				String sql = MacroUtils.replaceMacros(result.getSql(), (Map) sqlCache, false, macros);
+				// 重新解析sql内容
+				SqlToyConfig tmpConfig = SqlConfigParseUtils.parseSqlToyConfig(sql, realDialect, sqlType);
+				result.setHasUnion(tmpConfig.isHasUnion());
+				result.setHasWith(tmpConfig.isHasWith());
+				result.setHasFast(tmpConfig.isHasFast());
+				result.setFastSql(tmpConfig.getFastSql(null));
+				result.setFastPreSql(tmpConfig.getFastPreSql(null));
+				result.setFastTailSql(tmpConfig.getFastTailSql(null));
+				result.setFastWithSql(tmpConfig.getFastWithSql(null));
+				result.setSql(tmpConfig.getSql());
+				result.setParamsName(tmpConfig.getParamsName());
+
+				String countSql = result.getCountSql(null);
+				if (countSql != null && StringUtil.matches(countSql, SqlToyConstants.INCLUDE_PATTERN)) {
+					countSql = MacroUtils.replaceMacros(countSql, (Map) sqlCache, false, macros);
+					countSql = FunctionUtils.getDialectSql(countSql, realDialect);
+					countSql = ReservedWordsUtil.convertSql(countSql, DataSourceUtils.getDBType(realDialect));
+					result.setCountSql(countSql);
+				}
+				// 完成了include拼装，将include标志设置为false避免下次重复处理
+				result.setHasIncludeSql(false);
 			}
 		} else {
 			result = codeSqlCache.get(sqlKey);

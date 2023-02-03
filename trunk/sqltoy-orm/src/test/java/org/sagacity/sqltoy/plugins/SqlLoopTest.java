@@ -37,7 +37,7 @@ public class SqlLoopTest {
 		for (int i = 0; i < 5; i++) {
 			if (i == 3 || i == 4) {
 				staffInfos.add(null);
-			}else {
+			} else {
 				staffInfos.add("S000" + (i + 1));
 			}
 		}

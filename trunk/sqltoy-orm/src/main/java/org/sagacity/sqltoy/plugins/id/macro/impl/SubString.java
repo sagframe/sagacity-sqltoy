@@ -1,6 +1,7 @@
 package org.sagacity.sqltoy.plugins.id.macro.impl;
 
-import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
+import java.util.Map;
+
 import org.sagacity.sqltoy.plugins.id.macro.AbstractMacro;
 import org.sagacity.sqltoy.plugins.id.macro.MacroUtils;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -15,7 +16,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
 public class SubString extends AbstractMacro {
 
 	@Override
-	public String execute(String[] params, IgnoreKeyCaseMap<String, Object> keyValues) {
+	public String execute(String[] params, Map<String, Object> keyValues) {
 		if (params == null || params.length < 3) {
 			return "";
 		}
