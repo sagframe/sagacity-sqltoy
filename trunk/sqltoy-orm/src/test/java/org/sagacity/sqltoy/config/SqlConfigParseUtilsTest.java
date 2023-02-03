@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
+import org.sagacity.sqltoy.model.MapKit;
 import org.sagacity.sqltoy.utils.FileUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
@@ -39,6 +40,9 @@ public class SqlConfigParseUtilsTest {
 		SqlToyResult result1 = SqlConfigParseUtils.processSql(sql, new String[] { "id", "name", "status" },
 				new Object[] { "1", "chen", "1" });
 		System.err.println("id<>null:" + JSON.toJSONString(result1));
+
+		SqlToyResult result2 = SqlConfigParseUtils.processSql(sql, MapKit.keys("id", "name", "status").values("1", "chen", "1"));
+		System.err.println("id<>null:" + JSON.toJSONString(result2));
 	}
 
 	@Test

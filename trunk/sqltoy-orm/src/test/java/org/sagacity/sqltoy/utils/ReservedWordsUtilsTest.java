@@ -1,9 +1,9 @@
 package org.sagacity.sqltoy.utils;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class ReservedWordsUtilsTest {
 	@Test

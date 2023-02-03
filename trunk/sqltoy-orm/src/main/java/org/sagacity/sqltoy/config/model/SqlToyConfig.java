@@ -174,6 +174,11 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	private IgnoreCaseSet decryptColumns;
 
 	/**
+	 * sql中是否包含@include(sqlId) sql片段嵌入
+	 */
+	private boolean hasIncludeSql = false;
+
+	/**
 	 * @return the hasUnion
 	 */
 	public boolean isHasUnion() {
@@ -627,7 +632,7 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 
 	/**
 	 * @TODO 根据方言生成不同的sql语句
-	 * @param type 如:sql、fastPage等
+	 * @param type       如:sql、fastPage等
 	 * @param sqlContent
 	 * @param dialect
 	 * @return
@@ -734,6 +739,14 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 
 	public void setDecryptColumns(IgnoreCaseSet decryptColumns) {
 		this.decryptColumns = decryptColumns;
+	}
+
+	public boolean isHasIncludeSql() {
+		return hasIncludeSql;
+	}
+
+	public void setHasIncludeSql(boolean hasIncludeSql) {
+		this.hasIncludeSql = hasIncludeSql;
 	}
 
 }

@@ -4,8 +4,8 @@
 package org.sagacity.sqltoy.plugins.id.macro.impl;
 
 import java.util.Date;
+import java.util.Map;
 
-import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.plugins.id.macro.AbstractMacro;
 import org.sagacity.sqltoy.plugins.id.macro.MacroUtils;
 import org.sagacity.sqltoy.utils.DateUtil;
@@ -25,7 +25,7 @@ public class DateFormat extends AbstractMacro {
 	 * org.sagacity.sqltoy.plugins.id.macro.AbstractMacro#execute(java.lang.Object)
 	 */
 	@Override
-	public String execute(String[] params, IgnoreKeyCaseMap<String, Object> keyValues) {
+	public String execute(String[] params, Map<String, Object> keyValues) {
 		Object dateValue = null;
 		String fmt = "yyMMdd";
 		if (params != null) {

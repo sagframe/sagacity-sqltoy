@@ -29,6 +29,7 @@ import org.sagacity.sqltoy.plugins.SqlInterceptor;
 import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
 import org.sagacity.sqltoy.plugins.datasource.impl.DefaultDataSourceSelector;
+import org.sagacity.sqltoy.plugins.formater.SqlFormater;
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
 import org.sagacity.sqltoy.plugins.overtime.DefaultOverTimeHandler;
 import org.sagacity.sqltoy.plugins.secure.DesensitizeProvider;
@@ -337,6 +338,11 @@ public class SqlToyContext {
 	private boolean splitMergeInto = false;
 
 	/**
+	 * sql格式化输出器(用于debug sql输出)
+	 */
+	private SqlFormater sqlFormater;
+
+	/**
 	 * 变更操作型sql空白默认转为null
 	 */
 	private boolean executeSqlBlankToNull = true;
@@ -392,6 +398,8 @@ public class SqlToyContext {
 		SqlExecuteStat.setDebug(this.debug);
 		SqlExecuteStat.setOverTimeSqlHandler(overTimeSqlHandler);
 		SqlExecuteStat.setPrintSqlTimeoutMillis(this.printSqlTimeoutMillis);
+		// sql格式化
+		SqlExecuteStat.setSqlFormater(this.sqlFormater);
 		// 字段加解密实现类初始化
 		if (null != fieldsSecureProvider) {
 			fieldsSecureProvider.initialize(this.encoding, securePrivateKey, securePublicKey);
@@ -401,7 +409,6 @@ public class SqlToyContext {
 			}
 			fieldsSecureProvider.initialize(this.encoding, securePrivateKey, securePublicKey);
 		}
-
 		// 默认的脱敏处理器
 		if (desensitizeProvider == null) {
 			desensitizeProvider = new DesensitizeDefaultProvider();
@@ -1119,14 +1126,21 @@ public class SqlToyContext {
 	}
 
 	public Executor getTaskExecutor() {
-		if(StringUtil.isBlank(taskExecutorName) || !appContext.containsBean(taskExecutorName)){
+		if (StringUtil.isBlank(taskExecutorName) || !appContext.containsBean(taskExecutorName)) {
 			return taskExecutor;
-		}else{
+		} else {
 			return (Executor) appContext.getBean(taskExecutorName);
 		}
 	}
 
 	public void setTaskExecutor(Executor taskExecutor) {
 		this.taskExecutor = taskExecutor;
+	}
+
+	/**
+	 * @param sqlFormater the sqlFormater to set
+	 */
+	public void setSqlFormater(SqlFormater sqlFormater) {
+		this.sqlFormater = sqlFormater;
 	}
 }

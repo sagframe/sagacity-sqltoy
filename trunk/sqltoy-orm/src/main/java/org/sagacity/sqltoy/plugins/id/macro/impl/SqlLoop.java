@@ -8,14 +8,13 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.plugins.id.macro.AbstractMacro;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.CollectionUtil;
@@ -51,7 +50,7 @@ public class SqlLoop extends AbstractMacro {
 	}
 
 	@Override
-	public String execute(String[] params, IgnoreKeyCaseMap<String, Object> keyValues) {
+	public String execute(String[] params, Map<String, Object> keyValues) {
 		if (params == null || params.length < 2 || keyValues == null || keyValues.size() == 0) {
 			return " ";
 		}
@@ -102,10 +101,10 @@ public class SqlLoop extends AbstractMacro {
 		List<Object[]> regParamValues = new ArrayList<Object[]>();
 		String lowContent = loopContent.toLowerCase();
 		String key;
-		Enumeration<String> keyEnums = keyValues.keys();
+		Iterator<String> keyEnums = keyValues.keySet().iterator();
 		int index = 0;
-		while (keyEnums.hasMoreElements()) {
-			key = keyEnums.nextElement().toLowerCase();
+		while (keyEnums.hasNext()) {
+			key = keyEnums.next().toLowerCase();
 			// 统一标准为paramName[i]模式
 			if (lowContent.contains(":" + key + "[i]") || lowContent.contains(":" + key + "[index]")) {
 				keys.add(key);
@@ -126,9 +125,9 @@ public class SqlLoop extends AbstractMacro {
 		Map<String, String[]> loopParamNamesMap = parseParams(loopContent);
 		Object loopVar;
 		for (int i = start; i < end; i++) {
-			//当前循环的值
+			// 当前循环的值
 			loopVar = loopValues[i];
-			//循环值为null或空白默认被跳过
+			// 循环值为null或空白默认被跳过
 			if (!skipBlank || StringUtil.isNotBlank(loopVar)) {
 				loopStr = loopContent;
 				if (index > 0) {
