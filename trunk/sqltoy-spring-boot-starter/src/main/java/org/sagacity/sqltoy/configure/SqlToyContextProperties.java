@@ -208,16 +208,21 @@ public class SqlToyContextProperties implements Serializable {
 	 * executeSql变更操作型sql执行空白参数是否默认转为null
 	 */
 	private boolean executeSqlBlankToNull = true;
-	
+
 	/**
 	 * 跳转超出数据页范围回到第一页
 	 */
 	private Boolean overPageToFirst;
 
 	/**
+	 * sql格式化输出器(用于debug sql输出)
+	 */
+	private String sqlFormater;
+
+	/**
 	 * 线程池配置参数
 	 */
-	private SqlToyContextTaskPoolProperties taskExecutor = new  SqlToyContextTaskPoolProperties();
+	private SqlToyContextTaskPoolProperties taskExecutor = new SqlToyContextTaskPoolProperties();
 
 	/**
 	 * @return the sqlResourcesDir
@@ -622,6 +627,14 @@ public class SqlToyContextProperties implements Serializable {
 
 	public void setTaskExecutor(SqlToyContextTaskPoolProperties taskExecutor) {
 		this.taskExecutor = taskExecutor;
+	}
+
+	public String getSqlFormater() {
+		return sqlFormater;
+	}
+
+	public void setSqlFormater(String sqlFormater) {
+		this.sqlFormater = sqlFormater;
 	}
 
 }

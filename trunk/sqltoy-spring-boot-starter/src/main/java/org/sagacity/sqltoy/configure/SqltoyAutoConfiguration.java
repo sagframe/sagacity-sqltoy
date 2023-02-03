@@ -18,6 +18,7 @@ import org.sagacity.sqltoy.plugins.OverTimeSqlHandler;
 import org.sagacity.sqltoy.plugins.SqlInterceptor;
 import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
+import org.sagacity.sqltoy.plugins.formater.SqlFormater;
 import org.sagacity.sqltoy.plugins.secure.DesensitizeProvider;
 import org.sagacity.sqltoy.plugins.secure.FieldsSecureProvider;
 import org.sagacity.sqltoy.service.SqlToyCRUDService;
@@ -55,6 +56,7 @@ public class SqltoyAutoConfiguration {
 
 	/**
 	 * 当配置不存在或不为none的时候实例化
+	 * 
 	 * @return
 	 */
 	@ConditionalOnExpression("#{''.equals(environment.getProperty('spring.sqltoy.taskExecutor.targetPoolName', ''))}")
@@ -75,7 +77,7 @@ public class SqltoyAutoConfiguration {
 		pool.setWaitForTasksToCompleteOnShutdown(taskPoolProperties.getWaitForTasksToCompleteOnShutdown());
 		// pool.setContinueScheduledExecutionAfterException();
 		pool.setAwaitTerminationSeconds(taskPoolProperties.getAwaitTerminationSeconds());
-		//如果添加到线程池失败，那么主线程会自己去执行该任务，不会等待线程池中的线程去执行。
+		// 如果添加到线程池失败，那么主线程会自己去执行该任务，不会等待线程池中的线程去执行。
 		pool.setRejectedExecutionHandler(taskPoolProperties.getRejectedExecutionHandler());
 		return pool;
 	}
@@ -83,7 +85,9 @@ public class SqltoyAutoConfiguration {
 	// 构建sqltoy上下文,并指定初始化方法和销毁方法
 	@Bean(name = "sqlToyContext", initMethod = "initialize", destroyMethod = "destroy")
 	@ConditionalOnMissingBean
-	SqlToyContext sqlToyContext(@Value("${spring.sqltoy.taskExecutor.targetPoolName:sqltoyOrmTaskExecutor}") String taskExecutorName) throws Exception {
+	SqlToyContext sqlToyContext(
+			@Value("${spring.sqltoy.taskExecutor.targetPoolName:sqltoyOrmTaskExecutor}") String taskExecutorName)
+			throws Exception {
 		// 用辅助配置来校验是否配置错误
 		if (StringUtil.isBlank(properties.getSqlResourcesDir()) && StringUtil.isNotBlank(sqlResourcesDir)) {
 			throw new IllegalArgumentException(
@@ -397,8 +401,25 @@ public class SqltoyAutoConfiguration {
 			}
 			sqlToyContext.setSqlInterceptors(sqlInterceptorList);
 		}
-		//自定义线程池
-		if(StringUtil.isNotBlank(taskExecutorName)){
+
+		// 自定义sql格式化器
+		String sqlFormater = properties.getSqlFormater();
+		if (StringUtil.isNotBlank(sqlFormater)) {
+			// 提供简化配置
+			if (sqlFormater.equalsIgnoreCase("default") || sqlFormater.equalsIgnoreCase("defaultFormater")
+					|| sqlFormater.equalsIgnoreCase("defaultSqlFormater")) {
+				sqlFormater = "org.sagacity.sqltoy.plugins.formater.impl.DefaultSqlFormater";
+			}
+			if (applicationContext.containsBean(sqlFormater)) {
+				sqlToyContext.setSqlFormater((SqlFormater) applicationContext.getBean(sqlFormater));
+			} // 包名和类名称
+			else if (sqlFormater.contains(".")) {
+				sqlToyContext.setSqlFormater(
+						(SqlFormater) Class.forName(sqlFormater).getDeclaredConstructor().newInstance());
+			}
+		}
+		// 自定义线程池
+		if (StringUtil.isNotBlank(taskExecutorName)) {
 			sqlToyContext.setTaskExecutorName(taskExecutorName);
 		}
 		return sqlToyContext;
