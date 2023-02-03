@@ -26,6 +26,7 @@ import org.sagacity.sqltoy.plugins.connection.ConnectionFactory;
 import org.sagacity.sqltoy.plugins.connection.impl.DefaultConnectionFactory;
 import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
 import org.sagacity.sqltoy.plugins.datasource.impl.DefaultDataSourceSelector;
+import org.sagacity.sqltoy.plugins.formater.SqlFormater;
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
 import org.sagacity.sqltoy.plugins.overtime.DefaultOverTimeHandler;
 import org.sagacity.sqltoy.plugins.secure.DesensitizeProvider;
@@ -259,6 +260,11 @@ public class SqlToyContext implements ApplicationContextAware {
 	private Boolean overPageToFirst;
 
 	/**
+	 * sql格式化输出器
+	 */
+	private SqlFormater sqlFormater;
+
+	/**
 	 * @param workerId the workerId to set
 	 */
 	public void setWorkerId(Integer workerId) {
@@ -371,7 +377,8 @@ public class SqlToyContext implements ApplicationContextAware {
 		SqlExecuteStat.setDebug(this.debug);
 		SqlExecuteStat.setOverTimeSqlHandler(overTimeSqlHandler);
 		SqlExecuteStat.setPrintSqlTimeoutMillis(this.printSqlTimeoutMillis);
-
+		// sql格式化输出
+		SqlExecuteStat.setSqlFormater(this.sqlFormater);
 		// 字段加解密实现类初始化
 		if (null != fieldsSecureProvider) {
 			fieldsSecureProvider.initialize(this.encoding, securePrivateKey, securePublicKey);
@@ -1063,6 +1070,10 @@ public class SqlToyContext implements ApplicationContextAware {
 
 	public void setOverPageToFirst(Boolean overPageToFirst) {
 		this.overPageToFirst = overPageToFirst;
+	}
+
+	public void setSqlFormater(SqlFormater sqlFormater) {
+		this.sqlFormater = sqlFormater;
 	}
 
 }

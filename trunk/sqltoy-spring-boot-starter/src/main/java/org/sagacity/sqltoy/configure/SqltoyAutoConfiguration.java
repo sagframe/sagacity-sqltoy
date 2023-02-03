@@ -16,6 +16,7 @@ import org.sagacity.sqltoy.plugins.SqlInterceptor;
 import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.sagacity.sqltoy.plugins.connection.ConnectionFactory;
 import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
+import org.sagacity.sqltoy.plugins.formater.SqlFormater;
 import org.sagacity.sqltoy.plugins.secure.DesensitizeProvider;
 import org.sagacity.sqltoy.plugins.secure.FieldsSecureProvider;
 import org.sagacity.sqltoy.service.SqlToyCRUDService;
@@ -342,6 +343,23 @@ public class SqltoyAutoConfiguration {
 				}
 			}
 			sqlToyContext.setSqlInterceptors(sqlInterceptorList);
+		}
+
+		// 自定义sql格式化器
+		String sqlFormater = properties.getSqlFormater();
+		if (StringUtil.isNotBlank(sqlFormater)) {
+			// 提供简化配置
+			if (sqlFormater.equalsIgnoreCase("default") || sqlFormater.equalsIgnoreCase("defaultFormater")
+					|| sqlFormater.equalsIgnoreCase("defaultSqlFormater")) {
+				sqlFormater = "org.sagacity.sqltoy.plugins.formater.impl.DefaultSqlFormater";
+			}
+			if (applicationContext.containsBean(sqlFormater)) {
+				sqlToyContext.setSqlFormater((SqlFormater) applicationContext.getBean(sqlFormater));
+			} // 包名和类名称
+			else if (sqlFormater.contains(".")) {
+				sqlToyContext.setSqlFormater(
+						(SqlFormater) Class.forName(sqlFormater).getDeclaredConstructor().newInstance());
+			}
 		}
 		return sqlToyContext;
 	}

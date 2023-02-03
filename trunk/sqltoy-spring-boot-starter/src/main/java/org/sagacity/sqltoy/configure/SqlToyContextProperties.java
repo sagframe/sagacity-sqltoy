@@ -199,6 +199,11 @@ public class SqlToyContextProperties implements Serializable {
 	 * 跳转超出数据页范围回到第一页
 	 */
 	private Boolean overPageToFirst;
+	
+	/**
+	 * sql格式化
+	 */
+	private String sqlFormater;
 
 	/**
 	 * @return the sqlResourcesDir
@@ -583,4 +588,11 @@ public class SqlToyContextProperties implements Serializable {
 		this.overPageToFirst = overPageToFirst;
 	}
 
+	public String getSqlFormater() {
+		return sqlFormater;
+	}
+
+	public void setSqlFormater(String sqlFormater) {
+		this.sqlFormater = sqlFormater;
+	}
 }

@@ -16,6 +16,7 @@ import org.sagacity.sqltoy.config.model.SqlExecuteLog;
 import org.sagacity.sqltoy.config.model.SqlExecuteTrace;
 import org.sagacity.sqltoy.model.OverTimeSql;
 import org.sagacity.sqltoy.plugins.OverTimeSqlHandler;
+import org.sagacity.sqltoy.plugins.formater.SqlFormater;
 import org.sagacity.sqltoy.utils.DateUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
@@ -53,6 +54,11 @@ public class SqlExecuteStat {
 
 	// sql执行超时处理器
 	public static OverTimeSqlHandler overTimeSqlHandler;
+
+	/**
+	 * sql格式化输出器
+	 */
+	private static SqlFormater sqlFormater;
 
 	/**
 	 * @todo 登记开始执行
@@ -194,7 +200,13 @@ public class SqlExecuteStat {
 					result.append("\n/*|     save(All)|saveOrUpdate(All)|deleleAll|batchUpdate等不输出sql执行参数");
 				} else {
 					sql = fitSqlParams(content, args);
-					result.append("\n/*|     模拟入参后sql: ").append(sql);
+					// 对sql格式化输出
+					if (sqlFormater != null) {
+						sql = sqlFormater.format(sql, sqlTrace.getDialect());
+						result.append("\n/*|     模拟入参后sql:\n").append(sql);
+					} else {
+						result.append("\n/*|     模拟入参后sql:").append(sql);
+					}
 					result.append("\n/*|     sql参数: ");
 					if (args != null && args.length > 0) {
 						StringBuilder paramStr = new StringBuilder();
@@ -251,6 +263,10 @@ public class SqlExecuteStat {
 
 	public static void setOverTimeSqlHandler(OverTimeSqlHandler overTimeSqlHandler) {
 		SqlExecuteStat.overTimeSqlHandler = overTimeSqlHandler;
+	}
+
+	public static void setSqlFormater(SqlFormater sqlFormater) {
+		SqlExecuteStat.sqlFormater = sqlFormater;
 	}
 
 	/**
