@@ -1,7 +1,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sagframe</groupId>
-	<version>5.2.32</version>
+	<version>5.2.33.RC2</version>
 	<name>sagacity-sqltoy</name>
 	<description>sagacity-sqltoy</description>
 	<artifactId>sagacity-sqltoy</artifactId>
@@ -24,9 +24,10 @@
 		<slf4j.version>2.0.6</slf4j.version>
 		<caffeine.version>2.9.3</caffeine.version>
 		<h2.version>2.1.214</h2.version>
-		<lombok.version>1.18.24</lombok.version>
+		<lombok.version>1.18.26</lombok.version>
 		<taos-jdbcdriver.version>3.0.4</taos-jdbcdriver.version>
 		<druid.version>1.2.15</druid.version>
+		<transmittable-thread-local>2.14.2</transmittable-thread-local>
 	</properties>
 	<licenses>
 		<license>
@@ -274,6 +275,11 @@
 			<version>${druid.version}</version>
 			<scope>provided</scope>
 			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>com.alibaba</groupId>
+			<artifactId>transmittable-thread-local</artifactId>
+			<version>${transmittable-thread-local}</version>
 		</dependency>
 	</dependencies>
 	<build>

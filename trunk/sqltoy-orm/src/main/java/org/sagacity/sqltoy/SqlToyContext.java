@@ -1,5 +1,6 @@
 package org.sagacity.sqltoy;
 
+import com.alibaba.ttl.threadpool.TtlExecutors;
 import java.sql.Connection;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -354,7 +355,7 @@ public class SqlToyContext {
 	/**
 	 * sqltoy的线程池
 	 */
-	private Executor taskExecutor = ForkJoinPool.commonPool();
+	private Executor taskExecutor = TtlExecutors.getTtlExecutor(ForkJoinPool.commonPool());
 
 	/**
 	 * @todo 初始化
