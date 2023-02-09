@@ -929,7 +929,7 @@ public class DialectFactory {
 		queryResult.setPageSize(pageSize);
 		Executor taskExecutor = sqlToyContext.getTaskExecutor();
 		try {
-			SqlExecuteStat.debug("开始并行查询count总记录数和单页记录数据!", null);
+			//SqlExecuteStat.debug("开始并行查询count总记录数和单页记录数据!", null);
 			// 查询总记录数量
 			CompletableFuture countCompletableFuture = CompletableFuture.runAsync(() -> {
 				try {
@@ -944,7 +944,7 @@ public class DialectFactory {
 									countConn, countDbType, countDialect));
 						}
 					});
-					SqlExecuteStat.debug("查询count执行耗时", (System.currentTimeMillis() - startTime) + "毫秒!");
+					SqlExecuteStat.debug("并行查询count执行耗时", (System.currentTimeMillis() - startTime) + "毫秒!");
 				} catch (Exception e) {
 					e.printStackTrace();
 					queryResult.setSuccess(false);
@@ -960,7 +960,7 @@ public class DialectFactory {
 				queryResult.setRows(result.getRows());
 				queryResult.setLabelNames(result.getLabelNames());
 				queryResult.setLabelTypes(result.getLabelTypes());
-				SqlExecuteStat.debug("查询分页记录耗时", (System.currentTimeMillis() - startTime) + "毫秒!");
+				SqlExecuteStat.debug("并行查询分页记录耗时", (System.currentTimeMillis() - startTime) + "毫秒!");
 			} catch (Exception e) {
 				e.printStackTrace();
 				queryResult.setSuccess(false);

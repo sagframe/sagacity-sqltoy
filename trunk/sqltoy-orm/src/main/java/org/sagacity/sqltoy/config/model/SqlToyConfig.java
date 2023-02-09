@@ -204,7 +204,7 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	private PageOptimize pageOptimize;
 
 	/**
-	 * debug模式下是否打印，通过sql注释中增加#not_print#或 #not_debug#进行关闭
+	 * 是否打印输出sql，通过sql注释中增加#not_print#或 #not_debug#进行关闭
 	 */
 	private Boolean showSql;
 

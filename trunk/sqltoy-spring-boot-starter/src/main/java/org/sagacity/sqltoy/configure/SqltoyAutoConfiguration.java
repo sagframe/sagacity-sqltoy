@@ -2,9 +2,11 @@ package org.sagacity.sqltoy.configure;
 
 import static java.lang.System.err;
 
+import com.alibaba.ttl.threadpool.TtlExecutors;
 import java.util.ArrayList;
 import java.util.List;
 
+import java.util.concurrent.Executor;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.dao.SqlToyLazyDao;
@@ -26,6 +28,7 @@ import org.sagacity.sqltoy.service.impl.SqlToyCRUDServiceImpl;
 import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -82,11 +85,17 @@ public class SqltoyAutoConfiguration {
 		return pool;
 	}
 
+	@ConditionalOnExpression("#{''.equals(environment.getProperty('spring.sqltoy.taskExecutor.targetPoolName', ''))}")
+	@Bean(name = "ttlSqltoyOrmTaskExecutor")
+	public Executor ttlSqltoyOrmTaskExecutor(@Qualifier("sqltoyOrmTaskExecutor") ThreadPoolTaskExecutor taskExecutor) {
+		return TtlExecutors.getTtlExecutor(taskExecutor);
+	}
+
 	// 构建sqltoy上下文,并指定初始化方法和销毁方法
 	@Bean(name = "sqlToyContext", initMethod = "initialize", destroyMethod = "destroy")
 	@ConditionalOnMissingBean
 	SqlToyContext sqlToyContext(
-			@Value("${spring.sqltoy.taskExecutor.targetPoolName:sqltoyOrmTaskExecutor}") String taskExecutorName)
+			@Value("${spring.sqltoy.taskExecutor.targetPoolName:ttlSqltoyOrmTaskExecutor}") String taskExecutorName)
 			throws Exception {
 		// 用辅助配置来校验是否配置错误
 		if (StringUtil.isBlank(properties.getSqlResourcesDir()) && StringUtil.isNotBlank(sqlResourcesDir)) {
