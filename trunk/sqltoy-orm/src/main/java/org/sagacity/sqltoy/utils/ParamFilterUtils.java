@@ -617,6 +617,17 @@ public class ParamFilterUtils {
 				return paramValue.toString().replaceFirst(regex, value);
 			}
 			return paramValue.toString().replaceAll(regex, value);
+		} else if (paramValue instanceof String[]) {
+			String[] result = (String[]) paramValue;
+			value = Matcher.quoteReplacement(value);
+			for (int i = 0; i < result.length; i++) {
+				if (isFirst) {
+					result[i] = result[i].replaceFirst(regex, value);
+				} else {
+					result[i] = result[i].replaceAll(regex, value);
+				}
+			}
+			return result;
 		}
 		return paramValue;
 	}

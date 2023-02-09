@@ -92,4 +92,9 @@ public class ParallQuery implements Serializable {
 		extend.dataSource = dataSource;
 		return this;
 	}
+
+	public ParallQuery showSql(Boolean showSql) {
+		extend.showSql = showSql;
+		return this;
+	}
 }

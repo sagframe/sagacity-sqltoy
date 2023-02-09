@@ -58,8 +58,10 @@ public class QueryExecutorBuilder {
 		if (fullParamNames == null || fullParamNames.length == 0) {
 			return;
 		}
-		int paramsNameSize = (extend.paramsName == null) ? -1 : extend.paramsName.length;
-		int paramsValueSize = (extend.paramsValue == null) ? -1 : extend.paramsValue.length;
+		int paramsNameSize = (extend.paramsName == null || extend.paramsName.length == 0) ? -1
+				: extend.paramsName.length;
+		int paramsValueSize = (extend.paramsValue == null || extend.paramsValue.length == 0) ? -1
+				: extend.paramsValue.length;
 		Object[] fullParamValues;
 		// 对象传参统一将传参模式为:paramNames和paramValues
 		if (extend.entity != null) {

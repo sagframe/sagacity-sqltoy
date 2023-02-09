@@ -2,6 +2,7 @@ package org.sagacity.sqltoy;
 
 import static java.lang.System.out;
 
+import com.alibaba.ttl.TransmittableThreadLocal;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -11,7 +12,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import org.sagacity.sqltoy.config.model.SqlExecuteLog;
 import org.sagacity.sqltoy.config.model.SqlExecuteTrace;
 import org.sagacity.sqltoy.model.OverTimeSql;
@@ -50,7 +50,7 @@ public class SqlExecuteStat {
 	private final static Pattern ARG_PATTERN = Pattern.compile("\\W\\?\\W");
 
 	// 通过ThreadLocal 来保存线程数据
-	private static ThreadLocal<SqlExecuteTrace> threadLocal = new InheritableThreadLocal<SqlExecuteTrace>();
+	private static ThreadLocal<SqlExecuteTrace> threadLocal = new TransmittableThreadLocal<SqlExecuteTrace>();
 
 	// sql执行超时处理器
 	public static OverTimeSqlHandler overTimeSqlHandler;
