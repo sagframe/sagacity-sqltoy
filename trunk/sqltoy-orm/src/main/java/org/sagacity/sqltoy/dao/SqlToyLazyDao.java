@@ -317,7 +317,7 @@ public interface SqlToyLazyDao {
 	 * @TODO 通过EntityQuery模式加载单条记录
 	 * @param <T>
 	 * @param entityClass
-	 * @param entityQuery 例如:EntityQuery.create().where("tenantId=? and
+	 * @param entityQuery 例如:EntityQuery.create().select(a,b,c).where("tenantId=? and
 	 *                    staffId=?).values("1","S0001")
 	 * @return
 	 */
