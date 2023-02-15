@@ -394,7 +394,7 @@ public class DefaultDialectUtils {
 									fieldValue = fullFieldvalues[i];
 								} else {
 									fieldValue = SqlUtilsExt.getDefaultValue(fullFieldvalues[i],
-											fieldMeta.getDefaultValue(), fieldMeta.getType());
+											fieldMeta.getDefaultValue(), fieldMeta.getType(), fieldMeta.isNullable());
 								}
 								// 插入设置具体列的值
 								if (fieldValue != null) {

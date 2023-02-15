@@ -296,6 +296,7 @@ public class SapIQDialectUtils {
 		}
 		SqlExecuteStat.showSql("IQ批量插入", insertSql, null);
 		return SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), insertSql, paramValues,
-				entityMeta.getFieldsTypeArray(), entityMeta.getFieldsDefaultValue(), batchSize, null, conn, dbType);
+				entityMeta.getFieldsTypeArray(), entityMeta.getFieldsDefaultValue(), entityMeta.getFieldsNullable(),
+				batchSize, null, conn, dbType);
 	}
 }
