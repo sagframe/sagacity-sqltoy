@@ -424,8 +424,7 @@ public class DialectFactory {
 		try {
 			Long startTime = System.currentTimeMillis();
 			// 规整查询参数名称和参数名称对应的值
-			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig,
-					(randomCount < 1) ? true : false);
+			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "getRandomResult",
 					(extend.showSql != null) ? extend.showSql : sqlToyConfig.isShowSql());
 			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
@@ -436,7 +435,7 @@ public class DialectFactory {
 							SqlExecuteStat.setDialect(dialect);
 							// 处理sql中的?为统一的:named形式，并进行sharding table替换
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
-									sqlToyConfig, queryExecutor, dialect, (randomCount < 1) ? true : false);
+									sqlToyConfig, queryExecutor, dialect, false);
 							// 判断数据库是否支持取随机记录(只有informix和sybase不支持)
 							Long totalCount = null;
 							Long randomCnt;
@@ -666,7 +665,7 @@ public class DialectFactory {
 		try {
 			Long startTime = System.currentTimeMillis();
 			// 规整查询参数名称和参数名称对应的值
-			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
+			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, true);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "findSkipTotalCountPage",
 					(extend.showSql != null) ? extend.showSql : sqlToyConfig.isShowSql());
 			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
@@ -677,7 +676,7 @@ public class DialectFactory {
 							SqlExecuteStat.setDialect(dialect);
 							// 处理sql中的?为统一的:named形式，并进行sharding table替换
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
-									sqlToyConfig, queryExecutor, dialect, false);
+									sqlToyConfig, queryExecutor, dialect, true);
 							QueryResult queryResult = getDialectSqlWrapper(dbType).findPageBySql(sqlToyContext,
 									realSqlToyConfig, queryExecutor,
 									wrapDecryptHandler(sqlToyContext, extend.resultType), pageNo, pageSize, conn,
@@ -929,7 +928,7 @@ public class DialectFactory {
 		queryResult.setPageSize(pageSize);
 		Executor taskExecutor = sqlToyContext.getTaskExecutor();
 		try {
-			//SqlExecuteStat.debug("开始并行查询count总记录数和单页记录数据!", null);
+			// SqlExecuteStat.debug("开始并行查询count总记录数和单页记录数据!", null);
 			// 查询总记录数量
 			CompletableFuture countCompletableFuture = CompletableFuture.runAsync(() -> {
 				try {
@@ -1016,7 +1015,7 @@ public class DialectFactory {
 		try {
 			Long startTime = System.currentTimeMillis();
 			// 规整查询参数名称和参数名称对应的值
-			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, (topSize < 1) ? true : false);
+			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "findTop",
 					(extend.showSql != null) ? extend.showSql : sqlToyConfig.isShowSql());
 			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
@@ -1027,7 +1026,7 @@ public class DialectFactory {
 							SqlExecuteStat.setDialect(dialect);
 							// 处理sql中的?为统一的:named形式，并进行sharding table替换
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
-									sqlToyConfig, queryExecutor, dialect, (topSize < 1) ? true : false);
+									sqlToyConfig, queryExecutor, dialect, false);
 							Integer realTopSize;
 							// 小于1表示按比例提取
 							if (topSize < 1) {
