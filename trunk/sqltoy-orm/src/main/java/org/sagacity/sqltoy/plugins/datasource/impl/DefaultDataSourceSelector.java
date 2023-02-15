@@ -19,7 +19,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @modify 2021-4-15,修改说明
  */
 public class DefaultDataSourceSelector implements DataSourceSelector {
-	
+
 	@Override
 	public DataSource getDataSource(AppContext appContext, DataSource pointDataSouce, String sqlDataSourceName,
 			DataSource injectDataSource, DataSource defaultDataSource) {
@@ -46,6 +46,13 @@ public class DefaultDataSourceSelector implements DataSourceSelector {
 			// 只有一个dataSource,直接使用
 			if (dataSources.size() == 1) {
 				result = dataSources.values().iterator().next();
+			} else if (dataSources.size() > 1) {
+				try {
+					// 获取@Primary DataSource
+					result = appContext.getBean(DataSource.class);
+				} catch (Exception e) {
+
+				}
 			}
 		}
 		return result;
