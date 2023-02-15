@@ -22,6 +22,8 @@ import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.alibaba.ttl.TransmittableThreadLocal;
+
 /**
  * @project sagacity-sqltoy
  * @description 提供sql执行超时统计和基本的sql输出功能
@@ -50,7 +52,7 @@ public class SqlExecuteStat {
 	private final static Pattern ARG_PATTERN = Pattern.compile("\\W\\?\\W");
 
 	// 通过ThreadLocal 来保存线程数据
-	private static ThreadLocal<SqlExecuteTrace> threadLocal = new InheritableThreadLocal<SqlExecuteTrace>();
+	private static ThreadLocal<SqlExecuteTrace> threadLocal = new TransmittableThreadLocal<SqlExecuteTrace>();
 
 	// sql执行超时处理器
 	public static OverTimeSqlHandler overTimeSqlHandler;
