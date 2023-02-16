@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.sagacity.sqltoy.SqlToyConstants;
+
 /**
  * @project sagacity-sqltoy
  * @description 分页数据模型
@@ -16,7 +18,7 @@ public class Page<T> implements Serializable {
 	/**
 	 * 每页记录数(默认为10)
 	 */
-	private int pageSize = 10;
+	private int pageSize = SqlToyConstants.DEFAULT_PAGE_SIZE;
 
 	/**
 	 * 当前页数(默认从1开始,以页面给用户显示的为基准)

@@ -136,6 +136,11 @@ public class SqlToyConstants {
 	public static int FETCH_SIZE = -1;
 
 	/**
+	 * 默认一页数据条数
+	 */
+	public static int DEFAULT_PAGE_SIZE = 10;
+
+	/**
 	 * 变更操作型sql空白默认转为null
 	 */
 	public static boolean executeSqlBlankToNull = true;
@@ -174,7 +179,7 @@ public class SqlToyConstants {
 	 * 忽视空记录
 	 */
 	public final static Pattern IGNORE_EMPTY_REGEX = Pattern.compile("(?i)\\#ignore_all_null_set\\#");
-	
+
 	/**
 	 * 判断sql中是否存在@include(sqlId)的表达式
 	 */

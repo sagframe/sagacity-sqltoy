@@ -1,6 +1,5 @@
 package org.sagacity.sqltoy;
 
-import com.alibaba.ttl.threadpool.TtlExecutors;
 import java.sql.Connection;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -48,6 +47,8 @@ import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.alibaba.ttl.threadpool.TtlExecutors;
 
 //------------------了解 sqltoy的关键优势: -------------------------------------------------------------------------------------------*/
 //1、最简最直观的sql编写方式(不仅仅是查询语句)，采用条件参数前置处理规整法，让sql语句部分跟客户端保持高度一致
@@ -358,6 +359,11 @@ public class SqlToyContext {
 	private Executor taskExecutor = TtlExecutors.getTtlExecutor(ForkJoinPool.commonPool());
 
 	/**
+	 * 默认一页数据记录条数
+	 */
+	private int defaultPageSize = 10;
+
+	/**
 	 * @todo 初始化
 	 * @throws Exception
 	 */
@@ -395,6 +401,7 @@ public class SqlToyContext {
 		// 设置默认fetchSize
 		SqlToyConstants.FETCH_SIZE = this.fetchSize;
 		SqlToyConstants.executeSqlBlankToNull = this.executeSqlBlankToNull;
+		SqlToyConstants.DEFAULT_PAGE_SIZE = this.defaultPageSize;
 		// 初始化sql执行统计的基本参数
 		SqlExecuteStat.setDebug(this.debug);
 		SqlExecuteStat.setOverTimeSqlHandler(overTimeSqlHandler);
@@ -1144,4 +1151,9 @@ public class SqlToyContext {
 	public void setSqlFormater(SqlFormater sqlFormater) {
 		this.sqlFormater = sqlFormater;
 	}
+
+	public void setDefaultPageSize(int defaultPageSize) {
+		this.defaultPageSize = defaultPageSize;
+	}
+
 }
