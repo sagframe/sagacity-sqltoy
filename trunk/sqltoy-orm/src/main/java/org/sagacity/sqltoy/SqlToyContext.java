@@ -359,6 +359,11 @@ public class SqlToyContext {
 	private Executor taskExecutor = TtlExecutors.getTtlExecutor(ForkJoinPool.commonPool());
 
 	/**
+	 * 默认一页数据记录条数
+	 */
+	private int defaultPageSize = 10;
+
+	/**
 	 * @todo 初始化
 	 * @throws Exception
 	 */
@@ -396,6 +401,7 @@ public class SqlToyContext {
 		// 设置默认fetchSize
 		SqlToyConstants.FETCH_SIZE = this.fetchSize;
 		SqlToyConstants.executeSqlBlankToNull = this.executeSqlBlankToNull;
+		SqlToyConstants.DEFAULT_PAGE_SIZE = this.defaultPageSize;
 		// 初始化sql执行统计的基本参数
 		SqlExecuteStat.setDebug(this.debug);
 		SqlExecuteStat.setOverTimeSqlHandler(overTimeSqlHandler);
@@ -1145,4 +1151,9 @@ public class SqlToyContext {
 	public void setSqlFormater(SqlFormater sqlFormater) {
 		this.sqlFormater = sqlFormater;
 	}
+
+	public void setDefaultPageSize(int defaultPageSize) {
+		this.defaultPageSize = defaultPageSize;
+	}
+
 }
