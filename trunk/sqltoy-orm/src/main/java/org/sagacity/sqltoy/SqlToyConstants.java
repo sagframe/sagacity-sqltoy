@@ -141,6 +141,11 @@ public class SqlToyConstants {
 	public static boolean executeSqlBlankToNull = true;
 
 	/**
+	 * 默认一页记录数量
+	 */
+	public static int DEFAULT_PAGE_SIZE = 10;
+
+	/**
 	 * 判断sql中是否存在@include(sqlId)的表达式
 	 */
 	public final static Pattern INCLUDE_PATTERN = Pattern.compile("(?i)\\@include\\([\\w\\W]*\\)");

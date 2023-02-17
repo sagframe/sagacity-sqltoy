@@ -342,6 +342,11 @@ public class SqlToyContext implements ApplicationContextAware {
 	private boolean executeSqlBlankToNull = true;
 
 	/**
+	 * 默认分页一页数据记录量
+	 */
+	private int defaultPageSize = 10;
+
+	/**
 	 * @todo 初始化
 	 * @throws Exception
 	 */
@@ -373,6 +378,7 @@ public class SqlToyContext implements ApplicationContextAware {
 		// 设置默认fetchSize
 		SqlToyConstants.FETCH_SIZE = this.fetchSize;
 		SqlToyConstants.executeSqlBlankToNull = this.executeSqlBlankToNull;
+		SqlToyConstants.DEFAULT_PAGE_SIZE = this.defaultPageSize;
 		// 初始化sql执行统计的基本参数
 		SqlExecuteStat.setDebug(this.debug);
 		SqlExecuteStat.setOverTimeSqlHandler(overTimeSqlHandler);
@@ -1074,6 +1080,10 @@ public class SqlToyContext implements ApplicationContextAware {
 
 	public void setSqlFormater(SqlFormater sqlFormater) {
 		this.sqlFormater = sqlFormater;
+	}
+
+	public void setDefaultPageSize(int defaultPageSize) {
+		this.defaultPageSize = defaultPageSize;
 	}
 
 }

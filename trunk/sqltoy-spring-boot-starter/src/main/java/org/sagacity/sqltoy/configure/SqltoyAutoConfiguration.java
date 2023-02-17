@@ -158,6 +158,8 @@ public class SqltoyAutoConfiguration {
 		// 修改多少条记录做特别提示
 		sqlToyContext.setUpdateTipCount(properties.getUpdateTipCount());
 		sqlToyContext.setExecuteSqlBlankToNull(properties.isExecuteSqlBlankToNull());
+		// 设置单页默认记录量
+		sqlToyContext.setDefaultPageSize(properties.getDefaultPageSize());
 		if (properties.getOverPageToFirst() != null) {
 			sqlToyContext.setOverPageToFirst(properties.getOverPageToFirst());
 		}

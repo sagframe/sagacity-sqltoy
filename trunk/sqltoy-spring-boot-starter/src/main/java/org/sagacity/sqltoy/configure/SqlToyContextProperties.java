@@ -199,11 +199,16 @@ public class SqlToyContextProperties implements Serializable {
 	 * 跳转超出数据页范围回到第一页
 	 */
 	private Boolean overPageToFirst;
-	
+
 	/**
 	 * sql格式化
 	 */
 	private String sqlFormater;
+
+	/**
+	 * 开放设置默认单页数据记录量
+	 */
+	private int defaultPageSize = 10;
 
 	/**
 	 * @return the sqlResourcesDir
@@ -594,5 +599,13 @@ public class SqlToyContextProperties implements Serializable {
 
 	public void setSqlFormater(String sqlFormater) {
 		this.sqlFormater = sqlFormater;
+	}
+
+	public int getDefaultPageSize() {
+		return defaultPageSize;
+	}
+
+	public void setDefaultPageSize(int defaultPageSize) {
+		this.defaultPageSize = defaultPageSize;
 	}
 }
