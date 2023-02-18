@@ -42,7 +42,7 @@ public class SqlUtilsExt {
 	 * @param rowDatas
 	 * @param fieldsType
 	 * @param fieldsDefaultValue
-	 * @param fieldsNullAble
+	 * @param fieldsNullable
 	 * @param batchSize
 	 * @param autoCommit
 	 * @param conn
@@ -52,7 +52,7 @@ public class SqlUtilsExt {
 	 */
 	public static Long batchUpdateForPOJO(TypeHandler typeHandler, final String updateSql,
 			final List<Object[]> rowDatas, final Integer[] fieldsType, final String[] fieldsDefaultValue,
-			final Boolean[] fieldsNullAble, final int batchSize, final Boolean autoCommit, final Connection conn,
+			final Boolean[] fieldsNullable, final int batchSize, final Boolean autoCommit, final Connection conn,
 			final Integer dbType) throws Exception {
 		if (rowDatas == null || rowDatas.isEmpty()) {
 			logger.warn("batchUpdateForPOJO批量插入或修改数据操作数据为空!");
@@ -93,7 +93,7 @@ public class SqlUtilsExt {
 						if (notSqlServer || fieldType != java.sql.Types.TIMESTAMP) {
 							if (hasDefaultValue) {
 								cellValue = getDefaultValue(rowData[j], fieldsDefaultValue[j], fieldType,
-										fieldsNullAble[j]);
+										fieldsNullable[j]);
 							} else {
 								cellValue = rowData[j];
 							}
@@ -151,13 +151,13 @@ public class SqlUtilsExt {
 		Object[] result = new Object[size];
 		String defaultValue;
 		int fieldType;
-		Boolean nullAble;
+		Boolean nullable;
 		for (int i = 0; i < size; i++) {
 			defaultValue = entityMeta.getFieldsDefaultValue()[i];
-			nullAble = entityMeta.getFieldsNullable()[i];
+			nullable = entityMeta.getFieldsNullable()[i];
 			if (null != defaultValue) {
 				fieldType = entityMeta.getFieldsTypeArray()[i];
-				result[i] = getDefaultValue(null, defaultValue, fieldType, (nullAble == null) ? false : nullAble);
+				result[i] = getDefaultValue(null, defaultValue, fieldType, (nullable == null) ? false : nullable);
 			}
 		}
 		return result;
@@ -168,10 +168,10 @@ public class SqlUtilsExt {
 	 * @param paramValue
 	 * @param defaultValue
 	 * @param jdbcType
-	 * @param nullAble
+	 * @param nullable
 	 * @return
 	 */
-	public static Object getDefaultValue(Object paramValue, String defaultValue, int jdbcType, boolean nullAble) {
+	public static Object getDefaultValue(Object paramValue, String defaultValue, int jdbcType, boolean nullable) {
 		Object realValue = paramValue;
 		// 当前值为null且默认值不为null、且字段不允许为null
 		if (realValue == null && defaultValue != null) {
@@ -182,7 +182,8 @@ public class SqlUtilsExt {
 				return defaultValue;
 			}
 			boolean isBlank = defaultValue.trim().equals("");
-			if (isBlank && nullAble) {
+			// update 2023-2-15增加容错性处理 非字符类型且允许为null，默认值为空白返回null
+			if (isBlank && nullable) {
 				return null;
 			}
 			if (jdbcType == java.sql.Types.INTEGER || jdbcType == java.sql.Types.TINYINT
@@ -201,9 +202,9 @@ public class SqlUtilsExt {
 					realValue = DateUtil.getTimestamp(defaultValue);
 				}
 			} else if (jdbcType == java.sql.Types.DECIMAL || jdbcType == java.sql.Types.NUMERIC) {
-				realValue = new BigDecimal(isBlank ? "0" : defaultValue);
+				realValue = isBlank ? BigDecimal.ZERO : new BigDecimal(defaultValue);
 			} else if (jdbcType == java.sql.Types.BIGINT) {
-				realValue = new BigInteger(isBlank ? "0" : defaultValue);
+				realValue = isBlank ? BigInteger.ZERO : new BigInteger(defaultValue);
 			} else if (jdbcType == java.sql.Types.TIME) {
 				if (isBlank || isCurrentTime(defaultValue)) {
 					realValue = LocalTime.now();
