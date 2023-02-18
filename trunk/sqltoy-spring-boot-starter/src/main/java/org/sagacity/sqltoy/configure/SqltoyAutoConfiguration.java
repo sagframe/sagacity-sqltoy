@@ -125,6 +125,9 @@ public class SqltoyAutoConfiguration {
 		// 当发现有重复sqlId时是否抛出异常，终止程序执行
 		sqlToyContext.setBreakWhenSqlRepeat(properties.isBreakWhenSqlRepeat());
 
+		// 开放设置默认单页记录数量
+		sqlToyContext.setDefaultPageSize(properties.getDefaultPageSize());
+
 		// map 类型结果label是否自动转驼峰处理
 		if (properties.getHumpMapResultTypeLabel() != null) {
 			sqlToyContext.setHumpMapResultTypeLabel(properties.getHumpMapResultTypeLabel());

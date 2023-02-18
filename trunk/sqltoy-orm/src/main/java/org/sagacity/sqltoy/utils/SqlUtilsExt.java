@@ -42,6 +42,7 @@ public class SqlUtilsExt {
 	 * @param rowDatas
 	 * @param fieldsType
 	 * @param fieldsDefaultValue
+	 * @param fieldsNullable
 	 * @param batchSize
 	 * @param autoCommit
 	 * @param conn
@@ -51,8 +52,8 @@ public class SqlUtilsExt {
 	 */
 	public static Long batchUpdateForPOJO(TypeHandler typeHandler, final String updateSql,
 			final List<Object[]> rowDatas, final Integer[] fieldsType, final String[] fieldsDefaultValue,
-			final int batchSize, final Boolean autoCommit, final Connection conn, final Integer dbType)
-			throws Exception {
+			final Boolean[] fieldsNullable, final int batchSize, final Boolean autoCommit, final Connection conn,
+			final Integer dbType) throws Exception {
 		if (rowDatas == null || rowDatas.isEmpty()) {
 			logger.warn("batchUpdateForPOJO批量插入或修改数据操作数据为空!");
 			return 0L;
@@ -91,7 +92,8 @@ public class SqlUtilsExt {
 						// sqlserver timestamp 类型不支持赋值和更新
 						if (notSqlServer || fieldType != java.sql.Types.TIMESTAMP) {
 							if (hasDefaultValue) {
-								cellValue = getDefaultValue(rowData[j], fieldsDefaultValue[j], fieldType);
+								cellValue = getDefaultValue(rowData[j], fieldsDefaultValue[j], fieldType,
+										fieldsNullable[j]);
 							} else {
 								cellValue = rowData[j];
 							}
@@ -149,11 +151,13 @@ public class SqlUtilsExt {
 		Object[] result = new Object[size];
 		String defaultValue;
 		int fieldType;
+		Boolean nullable;
 		for (int i = 0; i < size; i++) {
 			defaultValue = entityMeta.getFieldsDefaultValue()[i];
+			nullable = entityMeta.getFieldsNullable()[i];
 			if (null != defaultValue) {
 				fieldType = entityMeta.getFieldsTypeArray()[i];
-				result[i] = getDefaultValue(null, defaultValue, fieldType);
+				result[i] = getDefaultValue(null, defaultValue, fieldType, (nullable == null) ? false : nullable);
 			}
 		}
 		return result;
@@ -164,50 +168,60 @@ public class SqlUtilsExt {
 	 * @param paramValue
 	 * @param defaultValue
 	 * @param jdbcType
+	 * @param nullable
 	 * @return
 	 */
-	public static Object getDefaultValue(Object paramValue, String defaultValue, int jdbcType) {
+	public static Object getDefaultValue(Object paramValue, String defaultValue, int jdbcType, boolean nullable) {
 		Object realValue = paramValue;
 		// 当前值为null且默认值不为null、且字段不允许为null
 		if (realValue == null && defaultValue != null) {
-			if (jdbcType == java.sql.Types.VARCHAR) {
-				realValue = defaultValue;
-			} else if (jdbcType == java.sql.Types.INTEGER || jdbcType == java.sql.Types.TINYINT
+			if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.CLOB
+					|| jdbcType == java.sql.Types.NCHAR || jdbcType == java.sql.Types.NVARCHAR
+					|| jdbcType == java.sql.Types.CHAR || jdbcType == java.sql.Types.LONGNVARCHAR
+					|| jdbcType == java.sql.Types.LONGVARCHAR || jdbcType == java.sql.Types.NCLOB) {
+				return defaultValue;
+			}
+			boolean isBlank = defaultValue.trim().equals("");
+			// update 2023-2-15增加容错性处理 非字符类型且允许为null，默认值为空白返回null
+			if (isBlank && nullable) {
+				return null;
+			}
+			if (jdbcType == java.sql.Types.INTEGER || jdbcType == java.sql.Types.TINYINT
 					|| jdbcType == java.sql.Types.SMALLINT) {
-				realValue = Integer.valueOf(defaultValue);
+				realValue = Integer.valueOf(isBlank ? "0" : defaultValue);
 			} else if (jdbcType == java.sql.Types.DATE) {
-				if (isCurrentTime(defaultValue)) {
+				if (isBlank || isCurrentTime(defaultValue)) {
 					realValue = new Date();
 				} else {
 					realValue = DateUtil.convertDateObject(defaultValue);
 				}
 			} else if (jdbcType == java.sql.Types.TIMESTAMP) {
-				if (isCurrentTime(defaultValue)) {
+				if (isBlank || isCurrentTime(defaultValue)) {
 					realValue = DateUtil.getTimestamp(null);
 				} else {
 					realValue = DateUtil.getTimestamp(defaultValue);
 				}
 			} else if (jdbcType == java.sql.Types.DECIMAL || jdbcType == java.sql.Types.NUMERIC) {
-				realValue = new BigDecimal(defaultValue);
+				realValue = isBlank ? BigDecimal.ZERO : new BigDecimal(defaultValue);
 			} else if (jdbcType == java.sql.Types.BIGINT) {
-				realValue = new BigInteger(defaultValue);
+				realValue = isBlank ? BigInteger.ZERO : new BigInteger(defaultValue);
 			} else if (jdbcType == java.sql.Types.TIME) {
-				if (isCurrentTime(defaultValue)) {
+				if (isBlank || isCurrentTime(defaultValue)) {
 					realValue = LocalTime.now();
 				} else {
 					realValue = DateUtil.asLocalTime(DateUtil.convertDateObject(defaultValue));
 				}
 			} else if (jdbcType == java.sql.Types.DOUBLE) {
-				realValue = Double.valueOf(defaultValue);
+				realValue = Double.valueOf(isBlank ? "0" : defaultValue);
 			} else if (jdbcType == java.sql.Types.BOOLEAN) {
-				realValue = Boolean.parseBoolean(defaultValue);
+				realValue = Boolean.parseBoolean(isBlank ? "false" : defaultValue);
 			} else if (jdbcType == java.sql.Types.FLOAT || jdbcType == java.sql.Types.REAL) {
-				realValue = Float.valueOf(defaultValue);
+				realValue = Float.valueOf(isBlank ? "0" : defaultValue);
 			} else if (jdbcType == java.sql.Types.BIT) {
 				if ("true".equalsIgnoreCase(defaultValue) || "false".equalsIgnoreCase(defaultValue)) {
 					realValue = Boolean.parseBoolean(defaultValue.toLowerCase());
 				} else {
-					realValue = Integer.parseInt(defaultValue);
+					realValue = Integer.parseInt(isBlank ? "0" : defaultValue);
 				}
 			} else {
 				realValue = defaultValue;

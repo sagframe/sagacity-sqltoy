@@ -2,7 +2,6 @@ package org.sagacity.sqltoy;
 
 import static java.lang.System.out;
 
-import com.alibaba.ttl.TransmittableThreadLocal;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -12,6 +11,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import org.sagacity.sqltoy.config.model.SqlExecuteLog;
 import org.sagacity.sqltoy.config.model.SqlExecuteTrace;
 import org.sagacity.sqltoy.model.OverTimeSql;
@@ -21,6 +21,8 @@ import org.sagacity.sqltoy.utils.DateUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.alibaba.ttl.TransmittableThreadLocal;
 
 /**
  * @project sagacity-sqltoy

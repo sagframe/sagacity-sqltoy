@@ -225,6 +225,11 @@ public class SqlToyContextProperties implements Serializable {
 	private SqlToyContextTaskPoolProperties taskExecutor = new SqlToyContextTaskPoolProperties();
 
 	/**
+	 * 默认一页数据记录数量
+	 */
+	private int defaultPageSize = 10;
+
+	/**
 	 * @return the sqlResourcesDir
 	 */
 	public String getSqlResourcesDir() {
@@ -635,6 +640,14 @@ public class SqlToyContextProperties implements Serializable {
 
 	public void setSqlFormater(String sqlFormater) {
 		this.sqlFormater = sqlFormater;
+	}
+
+	public int getDefaultPageSize() {
+		return defaultPageSize;
+	}
+
+	public void setDefaultPageSize(int defaultPageSize) {
+		this.defaultPageSize = defaultPageSize;
 	}
 
 }

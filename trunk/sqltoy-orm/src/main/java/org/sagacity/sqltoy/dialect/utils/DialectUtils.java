@@ -1514,8 +1514,8 @@ public class DialectUtils {
 		}
 		SqlExecuteStat.showSql("批量保存[" + paramValues.size() + "]条记录", insertSql, null);
 		return SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), insertSql, paramValues,
-				entityMeta.getFieldsTypeArray(), entityMeta.getFieldsDefaultValue(), batchSize, autoCommit, conn,
-				dbType);
+				entityMeta.getFieldsTypeArray(), entityMeta.getFieldsDefaultValue(), entityMeta.getFieldsNullable(),
+				batchSize, autoCommit, conn, dbType);
 	}
 
 	/**
@@ -1592,8 +1592,8 @@ public class DialectUtils {
 		String saveAllNotExistSql = generateSqlHandler.generateSql(entityMeta, null);
 		SqlExecuteStat.showSql("批量插入且忽视已存在记录", saveAllNotExistSql, null);
 		return SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), saveAllNotExistSql, paramValues,
-				entityMeta.getFieldsTypeArray(), entityMeta.getFieldsDefaultValue(), batchSize, autoCommit, conn,
-				dbType);
+				entityMeta.getFieldsTypeArray(), entityMeta.getFieldsDefaultValue(), entityMeta.getFieldsNullable(),
+				batchSize, autoCommit, conn, dbType);
 	}
 
 	/**
@@ -2016,7 +2016,7 @@ public class DialectUtils {
 				entities.get(0).getClass(), dbType);
 		SqlExecuteStat.showSql("批量修改[" + paramsValues.size() + "]条记录", sqlToyResult.getSql(), null);
 		return SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(), paramsValues,
-				entityMeta.getFieldsTypeArray(), null, batchSize, autoCommit, conn, dbType);
+				entityMeta.getFieldsTypeArray(), null, null, batchSize, autoCommit, conn, dbType);
 	}
 
 	/**
@@ -2165,7 +2165,8 @@ public class DialectUtils {
 					sqlToyResult = doInterceptors(sqlToyContext, null, OperateType.deleteAll, sqlToyResult,
 							cascadeModel.getMappedType(), dbType);
 					SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(),
-							mainFieldValues, subTableFieldType, null, sqlToyContext.getBatchSize(), null, conn, dbType);
+							mainFieldValues, subTableFieldType, null, null, sqlToyContext.getBatchSize(), null, conn,
+							dbType);
 				}
 			}
 		}
@@ -2177,7 +2178,7 @@ public class DialectUtils {
 				entities.get(0).getClass(), dbType);
 		SqlExecuteStat.showSql("批量删除[" + idValues.size() + "]条记录", sqlToyResult.getSql(), null);
 		return SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(), idValues,
-				parameterTypes, null, batchSize, autoCommit, conn, dbType);
+				parameterTypes, null, null, batchSize, autoCommit, conn, dbType);
 	}
 
 	/**
