@@ -21,8 +21,10 @@ import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.OperateType;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
+import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.utils.BeanUtil;
+import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.SqlUtilsExt;
@@ -434,5 +436,27 @@ public class ClickHouseDialectUtils {
 			return false;
 		}
 		return true;
+	}
+
+	/**
+	 * @TODO 构造clickhouse的删除或修改语句
+	 * @param entityMeta
+	 * @param sql
+	 * @param sqlType
+	 * @return
+	 */
+	public static String wrapDelOrUpdate(EntityMeta entityMeta, String sql, SqlType sqlType) {
+		String startSql = "alter table ".concat(entityMeta.getSchemaTable(null, DBType.CLICKHOUSE));
+		// 删除操作
+		if (sqlType == SqlType.delete) {
+			// 截取where开始部分构造成:alter table tableName delete where
+			// delete from table where
+			sql = startSql.concat(" delete ").concat(sql.substring(StringUtil.matchIndex(sql, "(?i)\\swhere\\s")));
+		} else if (sqlType == SqlType.update) {
+			// 截取set后面语句,构造成:alter table tableName update field1=:value1,field2=:value2
+			// update table set field1=:value1,field2=:value2
+			sql = startSql.concat(" update ").concat(sql.substring(StringUtil.matchIndex(sql, "(?i)\\sset\\s") + 4));
+		}
+		return sql;
 	}
 }

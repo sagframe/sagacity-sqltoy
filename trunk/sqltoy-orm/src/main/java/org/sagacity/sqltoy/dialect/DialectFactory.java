@@ -35,7 +35,6 @@ import org.sagacity.sqltoy.config.model.ShardingModel;
 import org.sagacity.sqltoy.config.model.SqlParamsModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
-import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
 import org.sagacity.sqltoy.dialect.impl.ClickHouseDialect;
 import org.sagacity.sqltoy.dialect.impl.DB2Dialect;
@@ -54,6 +53,7 @@ import org.sagacity.sqltoy.dialect.impl.SqlServerDialect;
 import org.sagacity.sqltoy.dialect.impl.SqliteDialect;
 import org.sagacity.sqltoy.dialect.impl.TDengineDialect;
 import org.sagacity.sqltoy.dialect.impl.TidbDialect;
+import org.sagacity.sqltoy.dialect.utils.ClickHouseDialectUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.dialect.utils.PageOptimizeUtils;
 import org.sagacity.sqltoy.exception.DataAccessException;
@@ -347,15 +347,8 @@ public class DialectFactory {
 							// clickhouse 删除和修改语法存在特殊性
 							if (dbType == DBType.CLICKHOUSE && extend.entityClass != null) {
 								EntityMeta entityMeta = sqlToyContext.getEntityMeta(extend.entityClass);
-								String startSql = "alter table ".concat(entityMeta.getSchemaTable(null, dbType));
-								// 删除操作
-								if (sqlToyConfig.getSqlType() == SqlType.delete) {
-									sql = startSql.concat(" delete ")
-											.concat(sql.substring(StringUtil.matchIndex(sql, "(?i)\\swhere\\s")));
-								} else if (sqlToyConfig.getSqlType() == SqlType.update) {
-									sql = startSql.concat(" update ")
-											.concat(sql.substring(StringUtil.matchIndex(sql, "(?i)\\sset\\s") + 4));
-								}
+								sql = ClickHouseDialectUtils.wrapDelOrUpdate(entityMeta, sql,
+										sqlToyConfig.getSqlType());
 							}
 							// 做sql签名
 							String executeSql = SqlUtilsExt.signSql(sql, dbType, realSqlToyConfig);
