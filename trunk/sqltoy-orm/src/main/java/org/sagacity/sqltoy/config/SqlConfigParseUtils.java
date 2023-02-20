@@ -1095,6 +1095,7 @@ public class SqlConfigParseUtils {
 		} else {
 			sqlToyConfig.setSql(originalSql);
 		}
+		sqlToyConfig.setSqlType(sqlType);
 		// 提取with fast查询语句
 		processFastWith(sqlToyConfig, dialect);
 		// 提取sql中的参数名称
