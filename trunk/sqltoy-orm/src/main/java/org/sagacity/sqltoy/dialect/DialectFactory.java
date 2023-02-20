@@ -35,6 +35,7 @@ import org.sagacity.sqltoy.config.model.ShardingModel;
 import org.sagacity.sqltoy.config.model.SqlParamsModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
+import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
 import org.sagacity.sqltoy.dialect.impl.ClickHouseDialect;
 import org.sagacity.sqltoy.dialect.impl.DB2Dialect;
@@ -331,8 +332,22 @@ public class DialectFactory {
 							queryParam = DialectUtils.doInterceptors(sqlToyContext, realSqlToyConfig,
 									(extend.entityClass == null) ? OperateType.execute : OperateType.singleTable,
 									queryParam, extend.entityClass, dbType);
+							String sql = queryParam.getSql();
+							// clickhouse 删除和修改语法存在特殊性
+							if (dbType == DBType.CLICKHOUSE && extend.entityClass != null) {
+								EntityMeta entityMeta = sqlToyContext.getEntityMeta(extend.entityClass);
+								String startSql = "alter table ".concat(entityMeta.getSchemaTable(null, dbType));
+								// 删除操作
+								if (sqlToyConfig.getSqlType() == SqlType.delete) {
+									sql = startSql.concat(" delete ")
+											.concat(sql.substring(StringUtil.matchIndex(sql, "(?i)\\swhere\\s")));
+								} else if (sqlToyConfig.getSqlType() == SqlType.update) {
+									sql = startSql.concat(" update ")
+											.concat(sql.substring(StringUtil.matchIndex(sql, "(?i)\\sset\\s") + 4));
+								}
+							}
 							// 做sql签名
-							String executeSql = SqlUtilsExt.signSql(queryParam.getSql(), dbType, realSqlToyConfig);
+							String executeSql = SqlUtilsExt.signSql(sql, dbType, realSqlToyConfig);
 							// 2022-3-21 存在类似in (?) ?对应参数为数组，将参数和类型长度变得不一致则去除类型约束
 							if (paramsTypes != null && queryParam.getParamsValue() != null
 									&& queryParam.getParamsValue().length != paramsTypes.length) {
