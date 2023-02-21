@@ -338,7 +338,6 @@ public class SqlXMLConfigParse {
 			sqlToyConfig.setShowSql(Boolean.valueOf(sqlElt.getAttribute("debug")));
 		}
 		sqlToyConfig.setId(id);
-		sqlToyConfig.setSqlType(sqlType);
 		// 为sql提供特定数据库的扩展
 		if (sqlElt.hasAttribute("dataSource")) {
 			sqlToyConfig.setDataSource(sqlElt.getAttribute("dataSource"));

@@ -53,6 +53,7 @@ import org.sagacity.sqltoy.dialect.impl.SqlServerDialect;
 import org.sagacity.sqltoy.dialect.impl.SqliteDialect;
 import org.sagacity.sqltoy.dialect.impl.TDengineDialect;
 import org.sagacity.sqltoy.dialect.impl.TidbDialect;
+import org.sagacity.sqltoy.dialect.utils.ClickHouseDialectUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.dialect.utils.PageOptimizeUtils;
 import org.sagacity.sqltoy.exception.DataAccessException;
@@ -341,8 +342,16 @@ public class DialectFactory {
 							queryParam = DialectUtils.doInterceptors(sqlToyContext, realSqlToyConfig,
 									(extend.entityClass == null) ? OperateType.execute : OperateType.singleTable,
 									queryParam, extend.entityClass, dbType);
+							String sql = queryParam.getSql();
+							// update 2023-2-19 兼容updateByQuery和deleteByQuery未对clickhouse场景的处理
+							// clickhouse 删除和修改语法存在特殊性
+							if (dbType == DBType.CLICKHOUSE && extend.entityClass != null) {
+								EntityMeta entityMeta = sqlToyContext.getEntityMeta(extend.entityClass);
+								sql = ClickHouseDialectUtils.wrapDelOrUpdate(entityMeta, sql,
+										sqlToyConfig.getSqlType());
+							}
 							// 做sql签名
-							String executeSql = SqlUtilsExt.signSql(queryParam.getSql(), dbType, realSqlToyConfig);
+							String executeSql = SqlUtilsExt.signSql(sql, dbType, realSqlToyConfig);
 							// 2022-3-21 存在类似in (?) ?对应参数为数组，将参数和类型长度变得不一致则去除类型约束
 							if (paramsTypes != null && queryParam.getParamsValue() != null
 									&& queryParam.getParamsValue().length != paramsTypes.length) {

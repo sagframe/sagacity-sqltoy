@@ -1295,6 +1295,7 @@ public class SqlToyDaoSupport {
 		queryExecutor.getInnerModel().entityClass = entityClass;
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.delete,
 				getDialect(innerModel.dataSource));
+		sqlToyConfig.setSqlType(SqlType.delete);
 		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, queryExecutor, null, null,
 				getDataSource(innerModel.dataSource));
 	}
@@ -2129,6 +2130,7 @@ public class SqlToyDaoSupport {
 		setEntitySharding(queryExecutor, entityMeta);
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.update,
 				getDialect(innerModel.dataSource));
+		sqlToyConfig.setSqlType(SqlType.update);
 		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, queryExecutor, null, null,
 				getDataSource(innerModel.dataSource, sqlToyConfig));
 	}
