@@ -28,6 +28,7 @@ public enum LockMode {
 		return this.level;
 	}
 
+	@Override
 	public String toString() {
 		return Integer.toString(level);
 	}

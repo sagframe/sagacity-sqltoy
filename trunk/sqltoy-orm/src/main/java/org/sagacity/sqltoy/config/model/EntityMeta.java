@@ -56,7 +56,7 @@ public class EntityMeta implements Serializable {
 	private String[] idArray;
 
 	/**
-	 * 所有字段信息
+	 * 所有字段信息(主键字段放于末尾)
 	 */
 	private String[] fieldsArray;
 
@@ -66,7 +66,7 @@ public class EntityMeta implements Serializable {
 	private Integer[] fieldsTypeArray;
 
 	/**
-	 * 所有字段的默认值
+	 * 所有字段的默认值(排除主键，提供对象save\saveAll 场景构建默认值)
 	 */
 	private String[] fieldsDefaultValue;
 
@@ -156,7 +156,7 @@ public class EntityMeta implements Serializable {
 	private String loadSql;
 
 	/**
-	 * 主键名称参数条件语句(where 1=1 and id=:id)
+	 * 主键名称参数条件语句(where id=:id)
 	 */
 	private String idNameWhereSql;
 
@@ -201,6 +201,16 @@ public class EntityMeta implements Serializable {
 	 * 加解密字段
 	 */
 	private IgnoreCaseSet secureColumns;
+
+	/**
+	 * 数据版本配置
+	 */
+	private DataVersionConfig dataVersion;
+
+	/**
+	 * 租户字段名称
+	 */
+	private String tenantField;
 
 	/**
 	 * @return the loadAllSql
@@ -330,7 +340,7 @@ public class EntityMeta implements Serializable {
 	}
 
 	/**
-	 * @param fieldArray the fieldArray to set
+	 * @param fieldsArray the fieldArray to set
 	 */
 	public void setFieldsArray(String[] fieldsArray) {
 		this.fieldsArray = fieldsArray;
@@ -480,7 +490,9 @@ public class EntityMeta implements Serializable {
 		// 删除已经存在的子表关联
 		while (iter.hasNext()) {
 			iterModel = iter.next();
-			if (iterModel.getMappedType().equals(cascadeModel.getMappedType())) {
+			// 存在一个对象中，不同属性对应一个子表，比如Student，主课、副课字段
+			// if (iterModel.getMappedType().equals(cascadeModel.getMappedType())) {
+			if (iterModel.getProperty().equals(cascadeModel.getProperty())) {
 				iter.remove();
 				isRepeat = true;
 				break;
@@ -595,7 +607,7 @@ public class EntityMeta implements Serializable {
 	}
 
 	/**
-	 * @param shardingModel the shardingModel to set
+	 * @param shardingConfig the shardingModel to set
 	 */
 	public void setShardingConfig(ShardingConfig shardingConfig) {
 		this.shardingConfig = shardingConfig;
@@ -790,4 +802,21 @@ public class EntityMeta implements Serializable {
 	public void setSecureColumns(IgnoreCaseSet secureColumns) {
 		this.secureColumns = secureColumns;
 	}
+
+	public DataVersionConfig getDataVersion() {
+		return dataVersion;
+	}
+
+	public void setDataVersion(DataVersionConfig dataVersion) {
+		this.dataVersion = dataVersion;
+	}
+
+	public String getTenantField() {
+		return tenantField;
+	}
+
+	public void setTenantField(String tenantField) {
+		this.tenantField = tenantField;
+	}
+
 }

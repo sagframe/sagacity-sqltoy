@@ -25,6 +25,7 @@ import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
+import org.sagacity.sqltoy.config.model.OperateType;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
@@ -105,10 +106,14 @@ public class SqlServerDialectUtils {
 			sql.append(") ").append(sqlToyConfig.getFastTailSql(dialect));
 		}
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
-		SqlToyResult queryParam = SqlConfigParseUtils.processSql(sql.toString(), extend.getParamsName(sqlToyConfig),
+		SqlToyResult queryParam = SqlConfigParseUtils.processSql(sql.toString(), extend.getParamsName(),
 				extend.getParamsValue(sqlToyContext, sqlToyConfig), dialect);
+		// 增加sql执行拦截器 update 2022-9-10
+		queryParam = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig,
+				(extend.entityClass == null) ? OperateType.random : OperateType.singleTable, queryParam,
+				extend.entityClass, dbType);
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				extend.rowCallbackHandler, decryptHandler, conn, dbType, 0, fetchSize, maxRows);
+				extend, decryptHandler, conn, dbType, 0, fetchSize, maxRows);
 	}
 
 	/**
@@ -261,8 +266,7 @@ public class SqlServerDialectUtils {
 					if (null != defaultValue) {
 						insertRejIdColValues.append(isNullFunction);
 						insertRejIdColValues.append("(tv.").append(columnName).append(",");
-						DialectExtUtils.processDefaultValue(insertRejIdColValues, dbType, fieldMeta.getType(),
-								defaultValue);
+						DialectExtUtils.processDefaultValue(insertRejIdColValues, dbType, fieldMeta, defaultValue);
 						insertRejIdColValues.append(")");
 					} else {
 						insertRejIdColValues.append("tv.").append(columnName);
@@ -547,7 +551,8 @@ public class SqlServerDialectUtils {
 					+ entityMeta.getSequence() + " " + insertSql + " select @mySeqVariable ";
 		}
 		int pkIndex = entityMeta.getIdIndex();
-		ReflectPropsHandler handler = DialectUtils.getAddReflectHandler(null, sqlToyContext.getUnifyFieldsHandler());
+		ReflectPropsHandler handler = DialectUtils.getAddReflectHandler(entityMeta, null,
+				sqlToyContext.getUnifyFieldsHandler());
 		handler = DialectUtils.getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
 		Object[] fullParamValues = BeanUtil.reflectBeanToAry(entity,
@@ -627,11 +632,9 @@ public class SqlServerDialectUtils {
 				if (isIdentity) {
 					keyResult = pst.getGeneratedKeys();
 				}
-				if (isSequence || isIdentity) {
-					if (keyResult != null) {
-						while (keyResult.next()) {
-							this.setResult(keyResult.getObject(1));
-						}
+				if ((isSequence || isIdentity) && keyResult != null) {
+					while (keyResult.next()) {
+						this.setResult(keyResult.getObject(1));
 					}
 				}
 			}
@@ -736,7 +739,7 @@ public class SqlServerDialectUtils {
 		} else {
 			reflectColumns = entityMeta.getFieldsArray();
 		}
-		ReflectPropsHandler handler = DialectUtils.getAddReflectHandler(reflectPropsHandler,
+		ReflectPropsHandler handler = DialectUtils.getAddReflectHandler(entityMeta, reflectPropsHandler,
 				sqlToyContext.getUnifyFieldsHandler());
 		handler = DialectUtils.getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
@@ -794,8 +797,8 @@ public class SqlServerDialectUtils {
 		}
 		SqlExecuteStat.showSql("mssql批量保存", insertSql, null);
 		return SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), insertSql, paramValues,
-				entityMeta.getFieldsTypeArray(), entityMeta.getFieldsDefaultValue(), sqlToyContext.getBatchSize(),
-				autoCommit, conn, dbType);
+				entityMeta.getFieldsTypeArray(), entityMeta.getFieldsDefaultValue(), entityMeta.getFieldsNullable(),
+				sqlToyContext.getBatchSize(), autoCommit, conn, dbType);
 	}
 
 	/**

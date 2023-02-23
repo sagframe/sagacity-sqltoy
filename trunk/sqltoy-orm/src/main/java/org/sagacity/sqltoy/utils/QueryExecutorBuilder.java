@@ -11,6 +11,7 @@ import java.util.Set;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
+import org.sagacity.sqltoy.config.model.KeyAndIndex;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.exception.DataAccessException;
@@ -57,8 +58,10 @@ public class QueryExecutorBuilder {
 		if (fullParamNames == null || fullParamNames.length == 0) {
 			return;
 		}
-		int paramsNameSize = (extend.paramsName == null) ? -1 : extend.paramsName.length;
-		int paramsValueSize = (extend.paramsValue == null) ? -1 : extend.paramsValue.length;
+		int paramsNameSize = (extend.paramsName == null || extend.paramsName.length == 0) ? -1
+				: extend.paramsName.length;
+		int paramsValueSize = (extend.paramsValue == null || extend.paramsValue.length == 0) ? -1
+				: extend.paramsValue.length;
 		Object[] fullParamValues;
 		// 对象传参统一将传参模式为:paramNames和paramValues
 		if (extend.entity != null) {
@@ -75,6 +78,8 @@ public class QueryExecutorBuilder {
 			}
 			fullParamValues = new Object[fullParamNames.length];
 			String[] paramNames = extend.paramsName;
+			KeyAndIndex keyAndIndex;
+			String paramLow;
 			// 将传递的paramValues填充到扩展后数组的对应位置
 			if (paramNames != null && paramNames.length > 0) {
 				Object[] paramValues = extend.paramsValue;
@@ -83,8 +88,15 @@ public class QueryExecutorBuilder {
 					paramIndexMap.put(paramNames[i].toLowerCase(), i);
 				}
 				for (int i = 0; i < fullParamNames.length; i++) {
-					if (paramIndexMap.containsKey(fullParamNames[i].toLowerCase())) {
-						fullParamValues[i] = paramValues[paramIndexMap.get(fullParamNames[i].toLowerCase())];
+					paramLow = fullParamNames[i].toLowerCase();
+					if (paramIndexMap.containsKey(paramLow)) {
+						fullParamValues[i] = paramValues[paramIndexMap.get(paramLow)];
+					} else {
+						keyAndIndex = BeanUtil.getKeyAndIndex(paramLow);
+						if (keyAndIndex != null && paramIndexMap.containsKey(keyAndIndex.getKey())) {
+							fullParamValues[i] = BeanUtil.getAryPropValue(
+									paramValues[paramIndexMap.get(keyAndIndex.getKey())], keyAndIndex.getIndex());
+						}
 					}
 				}
 			}
@@ -93,11 +105,9 @@ public class QueryExecutorBuilder {
 		if (filterAuthData) {
 			dataAuthFilter(sqlToyContext.getUnifyFieldsHandler(), sqlToyConfig, fullParamNames, fullParamValues);
 		}
-
 		// 回写QueryExecutor中的参数值
 		extend.paramsName = fullParamNames;
 		extend.paramsValue = fullParamValues;
-
 		IgnoreKeyCaseMap<String, Object> keyValueMap = new IgnoreKeyCaseMap<String, Object>();
 		for (int i = 0; i < fullParamNames.length; i++) {
 			if (fullParamNames[i] != null) {
@@ -107,7 +117,6 @@ public class QueryExecutorBuilder {
 		// 分表参数名称和对应值
 		extend.tableShardingParams = getTableShardingParams(extend, sqlToyConfig);
 		extend.tableShardingValues = wrapParamsValue(keyValueMap, extend.tableShardingParams);
-
 		// 分库参数名称和对应值
 		extend.dbShardingParams = getDbShardingParams(extend, sqlToyConfig);
 		extend.dbShardingValues = wrapParamsValue(keyValueMap, extend.dbShardingParams);
@@ -133,7 +142,7 @@ public class QueryExecutorBuilder {
 			paramName = fullParamNames[i];
 			if (authFilterMap.containsKey(paramName)) {
 				dataAuthFilter = authFilterMap.get(paramName);
-				// 实际传参值为空(或等于全新标记值)，权限过滤配置了限制范围，则将实际权限数据值填充到条件参数中
+				// 实际传参值为空(或等于全选标记值)，权限过滤配置了限制范围，则将实际权限数据值填充到条件参数中
 				if (StringUtil.isBlank(fullParamValues[i])
 						|| equalChoiceAllValue(fullParamValues[i], dataAuthFilter.getChoiceAllValue())) {
 					// 实现统一传参
@@ -377,11 +386,14 @@ public class QueryExecutorBuilder {
 				extend.paramsValue = new Object[] { extend.paramsValue };
 				valuesSize = 1;
 			}
-			if (argCount != valuesSize) {
-				throw new IllegalArgumentException("参数值数量:" + valuesSize + " 跟sql中的?条件数量" + argCount + "不匹配,请检查!");
-			}
+
 			// 分页需要将?转参数名称模式
 			if (wrapNamedArgs) {
+				//只在分页场景下校验
+				if (argCount != valuesSize) {
+					throw new IllegalArgumentException("参数值数量:" + valuesSize + " 跟sql中的?条件数量" + argCount
+							+ "不匹配,请检查,如是json或sql中存在?特殊字符但无实际条件参数场景，可通过虚构一个条件参数如where #[1=:flag]解决!");
+				}
 				String[] paramsName = new String[argCount];
 				for (int i = 0; i < argCount; i++) {
 					paramsName[i] = SqlToyConstants.DEFAULT_PARAM_NAME + (i + 1);

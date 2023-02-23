@@ -3,6 +3,7 @@ package org.sagacity.sqltoy.config;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
+import java.lang.reflect.Modifier;
 import java.net.JarURLConnection;
 import java.net.URL;
 import java.net.URLDecoder;
@@ -15,6 +16,7 @@ import java.util.Vector;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+import org.sagacity.sqltoy.config.annotation.Entity;
 import org.sagacity.sqltoy.config.annotation.SqlToyEntity;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
@@ -149,6 +151,7 @@ public class ScanEntityAndSqlResource {
 		// 如果存在 就获取包下的所有文件 包括目录
 		File[] dirfiles = dir.listFiles(new FileFilter() {
 			// 自定义过滤规则 如果可以循环(包含子目录) 或则是以.class结尾的文件(编译好的java类文件)
+			@Override
 			public boolean accept(File file) {
 				return (recursive && file.isDirectory()) || (file.getName().endsWith(".class"));
 			}
@@ -185,6 +188,9 @@ public class ScanEntityAndSqlResource {
 	 */
 	public static boolean isSqlToyEntity(Class entityClass) {
 		if (entityClass.isAnnotationPresent(SqlToyEntity.class)) {
+			return true;
+		}
+		if (entityClass.isAnnotationPresent(Entity.class) && !Modifier.isAbstract(entityClass.getModifiers())) {
 			return true;
 		}
 		return false;

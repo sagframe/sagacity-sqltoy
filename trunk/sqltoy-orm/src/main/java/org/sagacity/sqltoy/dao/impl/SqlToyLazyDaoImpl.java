@@ -903,17 +903,24 @@ public class SqlToyLazyDaoImpl extends SqlToyDaoSupport implements SqlToyLazyDao
 
 	@Override
 	public String[] cacheMatchKeys(String matchRegex, CacheMatchFilter cacheMatchFilter) {
-		return super.cacheMatchKeys(matchRegex, cacheMatchFilter);
+		return super.cacheMatchKeys(cacheMatchFilter, matchRegex);
 	}
 
 	@Override
-	public <T extends Serializable> T convertType(Serializable source, Class<T> resultType) {
-		return super.convertType(source, resultType);
+	public String[] cacheMatchKeys(CacheMatchFilter cacheMatchFilter, String... matchRegexes) {
+		return super.cacheMatchKeys(cacheMatchFilter, matchRegexes);
 	}
 
 	@Override
-	public <T extends Serializable> List<T> convertType(List sourceList, Class<T> resultType) {
-		return super.convertType(sourceList, resultType);
+	public <T extends Serializable> T convertType(Serializable source, Class<T> resultType,
+			String... ignoreProperties) {
+		return super.convertType(source, resultType, ignoreProperties);
+	}
+
+	@Override
+	public <T extends Serializable> List<T> convertType(List sourceList, Class<T> resultType,
+			String... ignoreProperties) {
+		return super.convertType(sourceList, resultType, ignoreProperties);
 	}
 
 	/**
@@ -921,11 +928,13 @@ public class SqlToyLazyDaoImpl extends SqlToyDaoSupport implements SqlToyLazyDao
 	 * @param <T>
 	 * @param sourcePage
 	 * @param resultType
+	 * @param ignoreProperties
 	 * @return
 	 */
 	@Override
-	public <T extends Serializable> Page<T> convertType(Page sourcePage, Class<T> resultType) {
-		return super.convertType(sourcePage, resultType);
+	public <T extends Serializable> Page<T> convertType(Page sourcePage, Class<T> resultType,
+			String... ignoreProperties) {
+		return super.convertType(sourcePage, resultType, ignoreProperties);
 	}
 
 	@Override

@@ -12,6 +12,7 @@ import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.ShardingDBModel;
+import org.sagacity.sqltoy.integration.impl.SpringConnectionFactory;
 import org.sagacity.sqltoy.model.IgnoreCaseLinkedMap;
 import org.sagacity.sqltoy.plugins.sharding.IdleConnectionMonitor;
 import org.sagacity.sqltoy.plugins.sharding.ShardingStrategy;
@@ -63,6 +64,7 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 	 */
 	private ApplicationContext applicationContext;
 
+	@Override
 	@Autowired
 	public void setApplicationContext(ApplicationContext applicationContext) {
 		this.applicationContext = applicationContext;
@@ -96,9 +98,8 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 		if (checkSeconds < 60) {
 			checkSeconds = 60;
 		}
-
-		IdleConnectionMonitor monitor = new IdleConnectionMonitor(applicationContext, dataSourceWeightConfig, weights,
-				60, checkSeconds);
+		IdleConnectionMonitor monitor = new IdleConnectionMonitor(applicationContext, new SpringConnectionFactory(),
+				dataSourceWeightConfig, weights, 60, checkSeconds);
 		monitor.start();
 	}
 
@@ -110,6 +111,7 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 	 * sagacity.sqltoy.SqlToyContext, java.lang.String, java.lang.String,
 	 * java.util.HashMap)
 	 */
+	@Override
 	public String getShardingTable(SqlToyContext sqlToyContext, Class entityClass, String baseTableName,
 			String decisionType, IgnoreCaseLinkedMap<String, Object> paramsMap) {
 		if (paramsMap == null || baseTableName == null || tableNamesMap == null) {
@@ -212,7 +214,7 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 	}
 
 	/**
-	 * @param tableNamesMap the tableNamesMap to set
+	 * @param tableMap the tableNamesMap to set
 	 */
 	public void setTableNamesMap(Map<String, String> tableMap) {
 		Iterator<Map.Entry<String, String>> iter = tableMap.entrySet().iterator();

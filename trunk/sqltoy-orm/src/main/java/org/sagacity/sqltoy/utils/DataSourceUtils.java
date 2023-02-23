@@ -2,7 +2,7 @@ package org.sagacity.sqltoy.utils;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.sql.DataSource;
 
@@ -18,6 +18,9 @@ import org.slf4j.LoggerFactory;
  * @author zhongxuchen
  * @version v1.0,Date:2015年3月3日
  * @modify data:2020-06-10 剔除mssql2008,hana,增加tidb、guassdb、oceanbase、dm数据库方言的支持
+ * @modify data:2022-08-29 增加h2数据库的支持
+ * @modify data:2022-09-29 getDialect(DataSource)和getDBType(DataSource)
+ *         增加缓存机制，避免获取connection来判断
  */
 public class DataSourceUtils {
 	/**
@@ -28,6 +31,12 @@ public class DataSourceUtils {
 	private DataSourceUtils() {
 
 	}
+
+	// 存放数据库方言(dataSource.toString(),dialect)
+	public static ConcurrentHashMap<String, String> DBDialectMap = new ConcurrentHashMap<String, String>();
+	// 存放数据库方言类型(dataSource.toString(),dbType)
+	public static ConcurrentHashMap<String, Integer> DBTypeMap = new ConcurrentHashMap<String, Integer>();
+	public static ConcurrentHashMap<String, Integer> DBNameTypeMap = new ConcurrentHashMap<String, Integer>();
 
 	/**
 	 * 数据库方言定义
@@ -84,6 +93,9 @@ public class DataSourceUtils {
 		public final static String IMPALA = "impala";
 		public final static String TDENGINE = "tdengine";
 
+		// h2
+		public final static String H2 = "h2";
+
 		public final static String UNDEFINE = "UNDEFINE";
 	}
 
@@ -128,10 +140,15 @@ public class DataSourceUtils {
 		public final static int ES = 140;
 		public final static int TDENGINE = 150;
 		public final static int IMPALA = 160;
+		// h2
+		public final static int H2 = 170;
 	}
 
-	public static HashMap<String, Integer> DBNameTypeMap = new HashMap<String, Integer>();
 	static {
+		initialize();
+	}
+
+	public static void initialize() {
 		DBNameTypeMap.put(Dialect.DB2, DBType.DB2);
 		DBNameTypeMap.put(Dialect.ORACLE, DBType.ORACLE);
 		DBNameTypeMap.put(Dialect.ORACLE11, DBType.ORACLE11);
@@ -161,6 +178,8 @@ public class DataSourceUtils {
 		DBNameTypeMap.put(Dialect.TDENGINE, DBType.TDENGINE);
 		DBNameTypeMap.put(Dialect.IMPALA, DBType.IMPALA);
 		DBNameTypeMap.put(Dialect.UNDEFINE, DBType.UNDEFINE);
+		// 20220829 增加对h2的支持
+		DBNameTypeMap.put(Dialect.H2, DBType.H2);
 	}
 
 	/**
@@ -223,6 +242,9 @@ public class DataSourceUtils {
 		}
 		case DBType.TDENGINE: {
 			return Dialect.TDENGINE;
+		}
+		case DBType.H2: {
+			return Dialect.H2;
 		}
 		default:
 			return Dialect.UNDEFINE;
@@ -304,6 +326,7 @@ public class DataSourceUtils {
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.TIDB) != -1) {
 				return Dialect.TIDB;
 			}
+			// 2022-12-14 验证
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.TDENGINE) != -1) {
 				return Dialect.TDENGINE;
 			}
@@ -319,6 +342,10 @@ public class DataSourceUtils {
 			// elasticsearch
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.ES) != -1) {
 				return Dialect.ES;
+			}
+			// 20220829 h2
+			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.H2) != -1) {
+				return Dialect.H2;
 			}
 		}
 		return Dialect.UNDEFINE;
@@ -417,6 +444,9 @@ public class DataSourceUtils {
 				dbType = DBType.KINGBASE;
 			} else if (dbDialect.equals(Dialect.ES)) {
 				dbType = DBType.ES;
+			} // h2
+			else if (dbDialect.equals(Dialect.H2)) {
+				dbType = DBType.H2;
 			}
 			DBNameTypeMap.put(dbKey, dbType);
 		}
@@ -432,7 +462,12 @@ public class DataSourceUtils {
 		if (StringUtil.isBlank(dialect)) {
 			return DBType.UNDEFINE;
 		}
-		return DBNameTypeMap.get(dialect.toLowerCase());
+		String dialectLow = dialect.toLowerCase();
+		if (!DBNameTypeMap.containsKey(dialectLow)) {
+			logger.warn("sqltoy初始化的方言map中未包含的数据库方言[" + dialectLow + "]");
+			return DBType.UNDEFINE;
+		}
+		return DBNameTypeMap.get(dialectLow);
 	}
 
 	/**
@@ -473,6 +508,10 @@ public class DataSourceUtils {
 	 */
 	public static Object processDataSource(SqlToyContext sqltoyContext, DataSource datasource,
 			DataSourceCallbackHandler handler) {
+		if (datasource == null) {
+			throw new IllegalArgumentException(
+					"dataSource为null,异常原因参考:\n 1、多数据源场景未配置spring.sqltoy.defaultDataSoure=xxx 默认数据源;\n 2、dao中指定的dataSource名称不存在!");
+		}
 		Connection conn = sqltoyContext.getConnection(datasource);
 		Integer dbType;
 		String dialect;
@@ -507,14 +546,24 @@ public class DataSourceUtils {
 
 	/**
 	 * @TODO 获取数据库的类型
+	 * @param sqltoyContext
 	 * @param datasource
 	 * @return
 	 */
 	public static int getDBType(SqlToyContext sqltoyContext, DataSource datasource) {
+		if (datasource == null) {
+			return DBType.UNDEFINE;
+		}
+		String dsKey = "dataSource&" + datasource.hashCode();
+		Integer dbType = DBTypeMap.get(dsKey);
+		if (dbType != null) {
+			return dbType;
+		}
 		Connection conn = sqltoyContext.getConnection(datasource);
-		Integer dbType = DBType.UNDEFINE;
+		dbType = DBType.UNDEFINE;
 		try {
 			dbType = getDBType(conn);
+			DBTypeMap.put(dsKey, dbType);
 		} catch (Exception e) {
 			e.printStackTrace();
 			sqltoyContext.releaseConnection(conn, datasource);
@@ -537,43 +586,16 @@ public class DataSourceUtils {
 		if (datasource == null) {
 			return "";
 		}
+		// update 2022-9-30 增加缓存避免通过connection获取数据库方言
+		String dsKey = "dataSource&" + datasource.hashCode();
+		String dialect = DBDialectMap.get(dsKey);
+		if (dialect != null) {
+			return dialect;
+		}
 		Connection conn = sqltoyContext.getConnection(datasource);
 		try {
-			if (conn == null) {
-				return "";
-			}
-			int dbType = getDBType(conn);
-			switch (dbType) {
-			case DBType.DB2:
-				return Dialect.DB2;
-			case DBType.ORACLE:
-			case DBType.ORACLE11:
-				return Dialect.ORACLE;
-			case DBType.POSTGRESQL:
-			case DBType.POSTGRESQL15:
-				return Dialect.POSTGRESQL;
-			case DBType.MYSQL:
-			case DBType.MYSQL57:
-				return Dialect.MYSQL;
-			case DBType.SQLSERVER:
-				return Dialect.SQLSERVER;
-			case DBType.SQLITE:
-				return Dialect.SQLITE;
-			case DBType.CLICKHOUSE:
-				return Dialect.CLICKHOUSE;
-			case DBType.TIDB:
-				return Dialect.TIDB;
-			case DBType.OCEANBASE:
-				return Dialect.OCEANBASE;
-			case DBType.DM:
-				return Dialect.DM;
-			case DBType.KINGBASE:
-				return Dialect.KINGBASE;
-			case DBType.IMPALA:
-				return Dialect.IMPALA;
-			default:
-				return "";
-			}
+			dialect = getDialect(conn);
+			DBDialectMap.put(dsKey, dialect);
 		} catch (Exception e) {
 			e.printStackTrace();
 			sqltoyContext.releaseConnection(conn, datasource);
@@ -583,6 +605,54 @@ public class DataSourceUtils {
 			// 释放连接,连接池实际是归还连接，未必一定关闭
 			sqltoyContext.releaseConnection(conn, datasource);
 		}
+		return dialect;
+	}
 
+	/**
+	 * @TODO 根据连接获取数据库方言
+	 * @param conn
+	 * @return
+	 * @throws Exception
+	 */
+	private static String getDialect(Connection conn) throws Exception {
+		if (conn == null) {
+			return "";
+		}
+		int dbType = getDBType(conn);
+		switch (dbType) {
+		case DBType.DB2:
+			return Dialect.DB2;
+		case DBType.ORACLE:
+		case DBType.ORACLE11:
+			return Dialect.ORACLE;
+		case DBType.POSTGRESQL:
+		case DBType.POSTGRESQL15:
+			return Dialect.POSTGRESQL;
+		case DBType.MYSQL:
+		case DBType.MYSQL57:
+			return Dialect.MYSQL;
+		case DBType.SQLSERVER:
+			return Dialect.SQLSERVER;
+		case DBType.SQLITE:
+			return Dialect.SQLITE;
+		case DBType.CLICKHOUSE:
+			return Dialect.CLICKHOUSE;
+		case DBType.TIDB:
+			return Dialect.TIDB;
+		case DBType.OCEANBASE:
+			return Dialect.OCEANBASE;
+		case DBType.DM:
+			return Dialect.DM;
+		case DBType.KINGBASE:
+			return Dialect.KINGBASE;
+		case DBType.TDENGINE:
+			return Dialect.TDENGINE;
+		case DBType.IMPALA:
+			return Dialect.IMPALA;
+		case DBType.H2:
+			return Dialect.H2;
+		default:
+			return "";
+		}
 	}
 }

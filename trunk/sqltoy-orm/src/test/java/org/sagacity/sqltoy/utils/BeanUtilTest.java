@@ -8,13 +8,23 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
+import org.sagacity.sqltoy.SqlToyConstants;
+import org.sagacity.sqltoy.config.model.Translate;
+import org.sagacity.sqltoy.demo.domain.DeviceOrderVO;
+import org.sagacity.sqltoy.demo.domain.StaffInfo;
 import org.sagacity.sqltoy.demo.vo.DataRange;
 import org.sagacity.sqltoy.demo.vo.StaffInfoVO;
 import org.sagacity.sqltoy.demo.vo.TypeShowCase;
+import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.model.IgnoreCaseLinkedMap;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
+import org.sagacity.sqltoy.model.MaskType;
 import org.sagacity.sqltoy.model.SaveMode;
 
 import com.alibaba.fastjson.JSON;
@@ -144,12 +154,16 @@ public class BeanUtilTest {
 	 */
 	@Test
 	public void testFullTypeName() {
+		TypeShowCase showCase = new TypeShowCase();
+		System.err.println("[" + showCase.getCharValue() + "][" + " ".charAt(0) + "]");
+		System.err.println("[" + showCase.getByteType() + "][" + Byte.valueOf("0").byteValue() + "]");
 		Method[] methods = TypeShowCase.class.getMethods();
 		for (Method method : methods) {
 			if (method.getParameterTypes().length > 0) {
 				System.err.println(method.getParameterTypes()[0].getTypeName());
 			}
 		}
+
 	}
 
 	@Test
@@ -161,7 +175,27 @@ public class BeanUtilTest {
 
 	@Test
 	public void testBaseType() {
-		// System.err.println(BeanUtil.isBaseDataType(new HashMap()));
+		StaffInfo staff = new StaffInfo() {
+			{
+				country = "china";
+				createBy = "S0001";
+			}
+		};
+		System.err.println("{{}}实例化得到的class=" + staff.getClass().getName());
+		System.err.println("通过BeanUtil处理后得到的=" + BeanUtil.getEntityClass(staff.getClass()).getName());
+		DeviceOrderVO order = new DeviceOrderVO() {
+			{
+				setSaler("ssss");
+			}
+		};
+		System.err.println(BeanUtil.getEntityClass(order.getClass()).getName());
+		DataRange da = new DataRange() {
+			{
+				setBeginDate(LocalDate.now());
+			}
+		};
+		System.err.println("{{}}实例化得到的class=" + da.getClass().getName());
+		System.err.println(BeanUtil.getEntityClass(da.getClass()).getName());
 	}
 
 	@Test
@@ -207,5 +241,158 @@ public class BeanUtilTest {
 		System.err.println(BeanUtil.isBaseDataType(int.class));
 		System.err.println(BeanUtil.isBaseDataType(Map.class));
 		System.err.println(BeanUtil.isBaseDataType(List.class));
+		System.err.println(DataRange.class.getSuperclass().getName());
+	}
+
+	@Test
+	public void testEnum() {
+		MaskType type = MaskType.ADDRESS;
+		try {
+			System.err.println(MaskType.values());
+			System.err.println(((Enum) type).name());
+			System.err.println(((Enum) type).ordinal());
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+	}
+
+	@Test
+	public void testClone() {
+		Translate translate = new Translate("dictKey");
+		translate.setColumn("id");
+		translate.setIndex(5);
+
+		Translate cloneValue = translate.clone();
+		cloneValue.setIndex(3);
+		System.err.println(translate.getExtend().index);
+		System.err.println(cloneValue.getExtend().index);
+	}
+
+	@Test
+	public void testParall() {
+		DebugUtil.beginTime("00001");
+		ExecutorService pool = null;
+		try {
+			pool = Executors.newFixedThreadPool(2);
+			// 查询总记录数量
+			pool.submit(new Runnable() {
+				@Override
+				public void run() {
+					for (int i = 0; i < 10; i++) {
+						System.err.println("--------" + i);
+						try {
+							Thread.currentThread().sleep(100);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+				}
+			});
+			for (int i = 0; i < 10; i++) {
+				System.err.println("#######" + i);
+				try {
+					Thread.currentThread().sleep(100);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+			pool.shutdown();
+			pool.awaitTermination(SqlToyConstants.PARALLEL_MAXWAIT_SECONDS, TimeUnit.SECONDS);
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new DataAccessException("并行查询执行错误:" + e.getMessage(), e);
+		} finally {
+			if (pool != null) {
+				pool.shutdownNow();
+			}
+		}
+		DebugUtil.endTime("00001");
+	}
+
+	@Test
+	public void testParall2() {
+		DebugUtil.beginTime("00002");
+		ExecutorService pool = null;
+		try {
+			pool = Executors.newFixedThreadPool(2);
+			// 查询总记录数量
+			CompletableFuture countCompletableFuture = CompletableFuture.runAsync(() -> {
+				System.err.println("@@@@@@@@@@@@@@@@2");
+			}, pool);
+			// 获取记录
+			CompletableFuture dataCompletableFuture = CompletableFuture.runAsync(() -> {
+				System.err.println("---------------2");
+			}, pool);
+			pool.shutdown();
+			pool.awaitTermination(SqlToyConstants.PARALLEL_MAXWAIT_SECONDS, TimeUnit.SECONDS);
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new DataAccessException("并行查询执行错误:" + e.getMessage(), e);
+		} finally {
+			if (pool != null) {
+				pool.shutdownNow();
+			}
+		}
+		DebugUtil.endTime("00002");
+	}
+
+	@Test
+	public void testParall3() {
+		ExecutorService pool = null;
+		DebugUtil.beginTime("00001");
+		try {
+			pool = Executors.newFixedThreadPool(2);
+			// 查询总记录数量
+			pool.submit(new Runnable() {
+				@Override
+				public void run() {
+					// System.err.println("@@@@@@@@@@@@@@@@1");
+				}
+			});
+			// 获取记录
+			pool.submit(new Runnable() {
+				@Override
+				public void run() {
+					// System.err.println("---------------1");
+				}
+			});
+			pool.shutdown();
+			pool.awaitTermination(SqlToyConstants.PARALLEL_MAXWAIT_SECONDS, TimeUnit.SECONDS);
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new DataAccessException("并行查询执行错误:" + e.getMessage(), e);
+		} finally {
+			if (pool != null) {
+				pool.shutdownNow();
+			}
+		}
+		DebugUtil.endTime("00001");
+
+		DebugUtil.beginTime("00002");
+		try {
+			pool = Executors.newFixedThreadPool(2);
+			// 查询总记录数量
+			CompletableFuture countCompletableFuture = CompletableFuture.runAsync(() -> {
+				System.err.println("@@@@@@@@@@@@@@@@2");
+			}, pool);
+			// 获取记录
+			CompletableFuture dataCompletableFuture = CompletableFuture.runAsync(() -> {
+				System.err.println("---------------2");
+			}, pool);
+			pool.shutdown();
+			pool.awaitTermination(SqlToyConstants.PARALLEL_MAXWAIT_SECONDS, TimeUnit.SECONDS);
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new DataAccessException("并行查询执行错误:" + e.getMessage(), e);
+		} finally {
+			if (pool != null) {
+				pool.shutdownNow();
+			}
+		}
+		DebugUtil.endTime("00002");
 	}
 }

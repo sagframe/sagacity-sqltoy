@@ -1,5 +1,7 @@
 package org.sagacity.sqltoy.plugins.overtime;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -33,17 +35,30 @@ public class DefaultOverTimeHandler implements OverTimeSqlHandler {
 	@Override
 	public void log(OverTimeSql overTimeSql) {
 		String sqlId = overTimeSql.getId();
-		if (null != sqlId && !sqlId.trim().equals("")) {
+		if (null != sqlId && !"".equals(sqlId.trim())) {
 			OverTimeSql preSql = slowSqlMap.get(sqlId);
 			if (null == preSql) {
+				overTimeSql.setAveTakeTime(new BigDecimal(overTimeSql.getTakeTime()));
 				slowSqlMap.put(sqlId, overTimeSql);
 			} else {
 				// 新的相同sqlId的超时执行时长大于之前的
 				if (overTimeSql.getTakeTime() > preSql.getTakeTime()) {
+					// 平均执行时长
+					overTimeSql
+							.setAveTakeTime(preSql.getAveTakeTime().multiply(new BigDecimal(preSql.getOverTimeCount()))
+									.add(new BigDecimal(overTimeSql.getTakeTime()))
+									.divide(new BigDecimal(preSql.getOverTimeCount() + 1), 3, RoundingMode.HALF_UP));
 					// 执行次数进行累加
-					overTimeSql.setOverTimeCount(1 + preSql.getOverTimeCount());
+					overTimeSql.setOverTimeCount(preSql.getOverTimeCount() + 1);
+					// 设置首次超时发生时间
+					overTimeSql.setFirstLogTime(preSql.getFirstLogTime());
 					slowSqlMap.put(sqlId, overTimeSql);
 				} else {
+					preSql.setAveTakeTime(preSql.getAveTakeTime().multiply(new BigDecimal(preSql.getOverTimeCount()))
+							.add(new BigDecimal(overTimeSql.getTakeTime()))
+							.divide(new BigDecimal(preSql.getOverTimeCount() + 1), 3, RoundingMode.HALF_UP));
+					// 更新最后超时发生时间
+					preSql.setLogTime(overTimeSql.getLogTime());
 					preSql.setOverTimeCount(preSql.getOverTimeCount() + 1);
 				}
 			}
@@ -52,8 +67,15 @@ public class DefaultOverTimeHandler implements OverTimeSqlHandler {
 		}
 	}
 
+	/**
+	 * 获取最慢的sql
+	 */
 	@Override
 	public List<OverTimeSql> getSlowest(int size, boolean hasSqlId) {
+		if (size < 1) {
+			throw new IllegalArgumentException("取最慢查询:size 参数必须>=1,如果要获取全部，可使用:Integer.MAX_VALUE");
+		}
+		// 非xml中定义的sql，没有具体的sqlId
 		if (!hasSqlId) {
 			return getSlowest(size);
 		} else {
@@ -62,7 +84,9 @@ public class DefaultOverTimeHandler implements OverTimeSqlHandler {
 			while (iter.hasNext()) {
 				result.add(iter.next());
 			}
+			// 按照执行时长从大到小排序
 			Collections.sort(result, new Comparator<OverTimeSql>() {
+				@Override
 				public int compare(OverTimeSql o1, OverTimeSql o2) {
 					return new Long(o2.getTakeTime() - o1.getTakeTime()).intValue();
 				}
@@ -74,6 +98,11 @@ public class DefaultOverTimeHandler implements OverTimeSqlHandler {
 		}
 	}
 
+	/**
+	 * @TODO 从队列中取出最慢的sql记录
+	 * @param size
+	 * @return
+	 */
 	private List<OverTimeSql> getSlowest(int size) {
 		List<OverTimeSql> result = new ArrayList<OverTimeSql>();
 		Iterator<OverTimeSql> iter = queues.iterator();

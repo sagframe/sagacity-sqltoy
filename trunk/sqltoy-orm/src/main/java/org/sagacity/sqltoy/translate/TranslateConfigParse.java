@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -25,11 +26,9 @@ import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.translate.model.CheckerConfigModel;
 import org.sagacity.sqltoy.translate.model.DefaultConfig;
-import org.sagacity.sqltoy.translate.model.TimeSection;
 import org.sagacity.sqltoy.translate.model.TranslateConfigModel;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.FileUtil;
-import org.sagacity.sqltoy.utils.NumberUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.sagacity.sqltoy.utils.XMLUtil;
@@ -45,6 +44,7 @@ import org.w3c.dom.NodeList;
  * @author zhongxuchen
  * @version v1.0,Date:2018年3月8日
  * @modify {Date:2022-06-11,支持多个缓存翻译定义文件}
+ * @modify {Date:2022-10-05,支持i18n多语言翻译，由fightForYou反馈}
  */
 public class TranslateConfigParse {
 	/**
@@ -79,8 +79,9 @@ public class TranslateConfigParse {
 	 * @throws Exception
 	 */
 	public static DefaultConfig parseTranslateConfig(final SqlToyContext sqlToyContext,
-			final IgnoreKeyCaseMap<String, TranslateConfigModel> translateMap, final List<CheckerConfigModel> checker,
-			String translateConfig, boolean isDefault, String charset) throws Exception {
+			IgnoreKeyCaseMap<String, TranslateConfigModel> translateMap,
+			CopyOnWriteArrayList<CheckerConfigModel> checker, String translateConfig, boolean isDefault, String charset)
+			throws Exception {
 		// 获取全部缓存翻译定义文件
 		List translateFiles = getTranslateFiles(translateConfig);
 		Object translateFile;
@@ -149,8 +150,9 @@ public class TranslateConfigParse {
 	 * @throws Exception
 	 */
 	private static DefaultConfig parseTranslate(final SqlToyContext sqlToyContext,
-			final IgnoreKeyCaseMap<String, TranslateConfigModel> translateMap, final List<CheckerConfigModel> checker,
-			final int fileIndex, Object translateConfig, String charset) throws Exception {
+			IgnoreKeyCaseMap<String, TranslateConfigModel> translateMap,
+			CopyOnWriteArrayList<CheckerConfigModel> checker, final int fileIndex, Object translateConfig,
+			String charset) throws Exception {
 		return (DefaultConfig) XMLUtil.readXML(translateConfig, charset, false, new XMLCallbackHandler() {
 			@Override
 			public Object process(Document doc, Element root) throws Exception {
@@ -158,6 +160,8 @@ public class TranslateConfigParse {
 				String translateFileStr = ((translateConfig instanceof File) ? ((File) translateConfig).getName()
 						: translateConfig.toString());
 				DefaultConfig defaultConfig = new DefaultConfig();
+				// 存在缓存翻译的配置文件，后续以此作为使用缓存的依据
+				defaultConfig.setUseCache(true);
 				NodeList nodeList = root.getElementsByTagName("cache-translates");
 				if (nodeList.getLength() == 0) {
 					return defaultConfig;
@@ -187,7 +191,7 @@ public class TranslateConfigParse {
 							XMLUtil.setAttributes(elt, translateCacheModel);
 							translateCacheModel.setType(translateType);
 							// 非sqlId模式定义
-							if (translateType.equals("sql")) {
+							if ("sql".equals(translateType)) {
 								if (StringUtil.isBlank(translateCacheModel.getSql())) {
 									sqlNode = elt.getElementsByTagName("sql");
 									if (sqlNode.getLength() > 0) {
@@ -207,9 +211,19 @@ public class TranslateConfigParse {
 									index++;
 								}
 							}
+							// 解析i18n国际化配置
+							if (elt.hasAttribute("i18n")) {
+								String[] i18nAry = elt.getAttribute("i18n").replace(";", ",").split("\\,");
+								String[] localIndex;
+								for (String i18n : i18nAry) {
+									localIndex = i18n.split("\\:");
+									translateCacheModel.putI18n(localIndex[0].trim(),
+											Integer.parseInt(localIndex[1].trim()));
+								}
+							}
 							// local模式缓存 默认缓存不失效，表示缓存由开发者在应用程序中自行控制，sqltoy只做初始化构建(如ehcache创建一个缓存实例，但不加载数据)
 							// local模式是避免一些额外争议的产物，有部分开发者坚持缓存要应用自己管理
-							if (translateType.equals("local") && !elt.hasAttribute("keep-alive")) {
+							if ("local".equals(translateType) && !elt.hasAttribute("keep-alive")) {
 								translateCacheModel.setKeepAlive(-1);
 							}
 							if (translateMap.containsKey(translateCacheModel.getCache())) {
@@ -262,9 +276,11 @@ public class TranslateConfigParse {
 											nodeType);
 									throw new IllegalArgumentException(nodeType + " must config with cache=\"xxx\"");
 								}
+							} else {
+								checherConfigModel.setIncrement(false);
 							}
 							// sql模式且非sqlId模式定义
-							if (checherConfigModel.getType().equals("sql")) {
+							if ("sql".equals(checherConfigModel.getType())) {
 								if (StringUtil.isBlank(checherConfigModel.getSql())) {
 									sqlId = (checherConfigModel.isIncrement() ? "s_trans_merge_chk_" : "s_trans_chk_")
 											+ fileIndex + "_0" + index;
@@ -293,38 +309,6 @@ public class TranslateConfigParse {
 									index++;
 								}
 							}
-							// 剔除tab\回车等特殊字符
-							String frequency = SqlUtil.clearMistyChars(checherConfigModel.getCheckFrequency(), "");
-							List<TimeSection> timeSections = new ArrayList<TimeSection>();
-							// frequency的格式 frequency="0..12?15,12..18:30?10,18:30..24?60"
-							if (StringUtil.isNotBlank(frequency)) {
-								// 统一格式,去除全角字符,去除空白
-								frequency = StringUtil.toDBC(frequency).replaceAll("\\;", ",").trim();
-								// 0~24点 统一的检测频率
-								// 可以是单个频率值,表示0到24小时采用统一的频率
-								if (NumberUtil.isInteger(frequency)) {
-									TimeSection section = new TimeSection();
-									section.setStart(0);
-									section.setEnd(2400);
-									section.setIntervalSeconds(Integer.parseInt(frequency));
-									timeSections.add(section);
-								} else {
-									// 归整分割符号统一为逗号,将时间格式由HH:mm 转为HHmm格式
-									String[] sectionsStr = frequency.split("\\,");
-									for (int j = 0; j < sectionsStr.length; j++) {
-										TimeSection section = new TimeSection();
-										// 问号切割获取时间区间和时间间隔
-										String[] sectionPhase = sectionsStr[j].split("\\?");
-										// 获取开始和结束时间点
-										String[] startEnd = sectionPhase[0].split("\\.{2}");
-										section.setIntervalSeconds(Integer.parseInt(sectionPhase[1].trim()));
-										section.setStart(getHourMinute(startEnd[0].trim()));
-										section.setEnd(getHourMinute(startEnd[1].trim()));
-										timeSections.add(section);
-									}
-								}
-							}
-							checherConfigModel.setTimeSections(timeSections);
 							checker.add(checherConfigModel);
 							if (StringUtil.isNotBlank(checherConfigModel.getCache())) {
 								if (cacheCheckers.contains(checherConfigModel.getCache())) {
@@ -341,21 +325,6 @@ public class TranslateConfigParse {
 				return defaultConfig;
 			}
 		});
-	}
-
-	/**
-	 * @todo 统一组成:1236[HHmm]格式
-	 * @param hourMinuteStr
-	 * @return
-	 */
-	private static int getHourMinute(String hourMinuteStr) {
-		// 320(3点20分)
-		if (NumberUtil.isInteger(hourMinuteStr) && hourMinuteStr.length() > 2) {
-			return Integer.parseInt(hourMinuteStr);
-		}
-		String tmp = hourMinuteStr.replaceAll("\\.", ":");
-		String[] hourMin = tmp.split("\\:");
-		return Integer.parseInt(hourMin[0]) * 100 + ((hourMin.length > 1) ? Integer.parseInt(hourMin[1]) : 0);
 	}
 
 	/**
@@ -398,7 +367,7 @@ public class TranslateConfigParse {
 					if (StringUtil.isNotBlank(translate.join())) {
 						trans.setLinkSign(translate.join());
 					}
-					if (translate.uncached() != null && !translate.uncached().equals("")) {
+					if (translate.uncached() != null && !"".equals(translate.uncached())) {
 						trans.setUncached(translate.uncached().trim());
 					}
 					translateConfig.put(field.getName(), trans);

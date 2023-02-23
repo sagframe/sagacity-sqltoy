@@ -159,7 +159,7 @@ public class DateUtil {
 			return null;
 		}
 		String dateStr = dateVar.trim();
-		if (dateStr.equals("")) {
+		if ("".equals(dateStr)) {
 			return null;
 		}
 		String realDF = null;
@@ -361,18 +361,18 @@ public class DateUtil {
 			throw new IllegalArgumentException("格式化日期指定的format 为null,请正确输入参数!");
 		}
 		String fmtUpper = fmt.toUpperCase();
-		if (fmtUpper.equals("YY")) {
+		if ("YY".equals(fmtUpper)) {
 			String year = Integer.toString(getYear(dt));
 			return year.substring(year.length() - 2);
 		}
-		if (fmtUpper.equals("YYYY")) {
+		if ("YYYY".equals(fmtUpper)) {
 			return Integer.toString(getYear(dt));
 		}
-		if (fmtUpper.equals("MM")) {
+		if ("MM".equals(fmtUpper)) {
 			int month = getMonth(dt);
 			return (month < 10 ? "0" : "").concat(Integer.toString(month));
 		}
-		if (fmtUpper.equals("DD")) {
+		if ("DD".equals(fmtUpper)) {
 			int day = getDay(dt);
 			return (day < 10 ? "0" : "").concat(Integer.toString(day));
 		}

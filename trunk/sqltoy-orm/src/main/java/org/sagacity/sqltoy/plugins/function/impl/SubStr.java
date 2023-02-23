@@ -20,6 +20,7 @@ public class SubStr extends IFunction {
 	/**
 	 * 本身就支持substr的数据库
 	 */
+	@Override
 	public String dialects() {
 		return ALL;
 	}
@@ -27,6 +28,7 @@ public class SubStr extends IFunction {
 	/**
 	 * 匹配substr(xx，xx)函数的正则表达式
 	 */
+	@Override
 	public Pattern regex() {
 		return regex;
 	}
@@ -34,9 +36,10 @@ public class SubStr extends IFunction {
 	/**
 	 * 针对不同数据库对如：substr(arg1,arg2,arg3)进行转换，框架自动将arg1和arg2等参数作为数组传进来
 	 */
+	@Override
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
 		if (dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL15 || dialect == DBType.GAUSSDB
-				|| dialect == DBType.SQLSERVER) {
+				|| dialect == DBType.SQLSERVER || dialect == DBType.H2) {
 			if (dialect == DBType.SQLSERVER && args != null && args.length == 2) {
 				return "substring(" + args[0] + "," + args[1] + ",len(" + args[0] + "))";
 			}

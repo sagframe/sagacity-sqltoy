@@ -4,7 +4,11 @@
 package org.sagacity.sqltoy.translate.model;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
+
+import org.sagacity.sqltoy.utils.NumberUtil;
+import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
  * @project sagacity-sqltoy
@@ -18,6 +22,8 @@ public class CheckerConfigModel implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = -8328516221738636079L;
+
+	private String id;
 
 	/**
 	 * (sql\service\rest)
@@ -42,7 +48,7 @@ public class CheckerConfigModel implements Serializable {
 	/**
 	 * 增量更新
 	 */
-	private boolean increment = false;
+	private boolean increment = true;
 
 	/**
 	 * 数据源
@@ -84,6 +90,25 @@ public class CheckerConfigModel implements Serializable {
 	 */
 	private String password;
 
+	public String getId() {
+		if (id != null) {
+			return id;
+		}
+		if (cache != null) {
+			return cache;
+		}
+		if (type.equals("sql")) {
+			return sql;
+		}
+		if (type.equals("service")) {
+			return service + "." + method;
+		}
+		if (type.equals("rest")) {
+			return url;
+		}
+		return null;
+	}
+
 	/**
 	 * 检测时间区间
 	 */
@@ -99,8 +124,11 @@ public class CheckerConfigModel implements Serializable {
 	/**
 	 * @param type the type to set
 	 */
-	public void setType(String type) {
-		this.type = type;
+	public CheckerConfigModel setType(String type) {
+		if (type != null) {
+			this.type = type.toLowerCase();
+		}
+		return this;
 	}
 
 	/**
@@ -113,8 +141,10 @@ public class CheckerConfigModel implements Serializable {
 	/**
 	 * @param sql the sql to set
 	 */
-	public void setSql(String sql) {
+	public CheckerConfigModel setSql(String sql) {
 		this.sql = sql;
+		this.type = "sql";
+		return this;
 	}
 
 	/**
@@ -127,8 +157,9 @@ public class CheckerConfigModel implements Serializable {
 	/**
 	 * @param dataSource the dataSource to set
 	 */
-	public void setDataSource(String dataSource) {
+	public CheckerConfigModel setDataSource(String dataSource) {
 		this.dataSource = dataSource;
+		return this;
 	}
 
 	/**
@@ -141,8 +172,49 @@ public class CheckerConfigModel implements Serializable {
 	/**
 	 * @param checkFrequency the checkFrequency to set
 	 */
-	public void setCheckFrequency(String checkFrequency) {
-		this.checkFrequency = checkFrequency;
+	public CheckerConfigModel setCheckFrequency(String frequency) {
+		// frequency的格式 frequency="0..12?15,12..18:30?10,18:30..24?60"
+		if (StringUtil.isNotBlank(frequency)) {
+			List<TimeSection> timeParts = new ArrayList<TimeSection>();
+			// 统一格式,去除全角字符,去除空白
+			frequency = StringUtil.toDBC(frequency).replaceAll("\\;", ",").trim();
+			this.checkFrequency = frequency;
+			// 0~24点 统一的检测频率
+			// 可以是单个频率值,表示0到24小时采用统一的频率
+			if (NumberUtil.isInteger(frequency)) {
+				TimeSection section = new TimeSection();
+				section.setStart(0);
+				section.setEnd(2400);
+				section.setIntervalSeconds(Integer.parseInt(frequency));
+				timeParts.add(section);
+			} else {
+				// 归整分割符号统一为逗号,将时间格式由HH:mm 转为HHmm格式
+				String[] sectionsStr = frequency.split("\\,");
+				for (int j = 0; j < sectionsStr.length; j++) {
+					TimeSection section = new TimeSection();
+					// 问号切割获取时间区间和时间间隔
+					String[] sectionPhase = sectionsStr[j].split("\\?");
+					// 获取开始和结束时间点
+					String[] startEnd = sectionPhase[0].split("\\.{2}");
+					section.setIntervalSeconds(Integer.parseInt(sectionPhase[1].trim()));
+					section.setStart(getHourMinute(startEnd[0].trim()));
+					section.setEnd(getHourMinute(startEnd[1].trim()));
+					timeParts.add(section);
+				}
+			}
+			this.timeSections = timeParts;
+		}
+		return this;
+	}
+
+	private int getHourMinute(String hourMinuteStr) {
+		// 320(3点20分)
+		if (NumberUtil.isInteger(hourMinuteStr) && hourMinuteStr.length() > 2) {
+			return Integer.parseInt(hourMinuteStr);
+		}
+		String tmp = hourMinuteStr.replaceAll("\\.", ":");
+		String[] hourMin = tmp.split("\\:");
+		return Integer.parseInt(hourMin[0]) * 100 + ((hourMin.length > 1) ? Integer.parseInt(hourMin[1]) : 0);
 	}
 
 	/**
@@ -155,8 +227,10 @@ public class CheckerConfigModel implements Serializable {
 	/**
 	 * @param service the service to set
 	 */
-	public void setService(String service) {
+	public CheckerConfigModel setService(String service) {
 		this.service = service;
+		this.type = "service";
+		return this;
 	}
 
 	/**
@@ -169,8 +243,9 @@ public class CheckerConfigModel implements Serializable {
 	/**
 	 * @param method the method to set
 	 */
-	public void setMethod(String method) {
+	public CheckerConfigModel setMethod(String method) {
 		this.method = method;
+		return this;
 	}
 
 	/**
@@ -183,8 +258,10 @@ public class CheckerConfigModel implements Serializable {
 	/**
 	 * @param url the url to set
 	 */
-	public void setUrl(String url) {
+	public CheckerConfigModel setUrl(String url) {
 		this.url = url;
+		this.type = "rest";
+		return this;
 	}
 
 	/**
@@ -197,8 +274,9 @@ public class CheckerConfigModel implements Serializable {
 	/**
 	 * @param username the username to set
 	 */
-	public void setUsername(String username) {
+	public CheckerConfigModel setUsername(String username) {
 		this.username = username;
+		return this;
 	}
 
 	/**
@@ -211,8 +289,9 @@ public class CheckerConfigModel implements Serializable {
 	/**
 	 * @param password the password to set
 	 */
-	public void setPassword(String password) {
+	public CheckerConfigModel setPassword(String password) {
 		this.password = password;
+		return this;
 	}
 
 	/**
@@ -222,43 +301,45 @@ public class CheckerConfigModel implements Serializable {
 		return timeSections;
 	}
 
-	/**
-	 * @param timeSections the timeSections to set
-	 */
-	public void setTimeSections(List<TimeSection> timeSections) {
-		this.timeSections = timeSections;
-	}
-
 	public String[] getProperties() {
 		return properties;
 	}
 
-	public void setProperties(String[] properties) {
+	public CheckerConfigModel setProperties(String[] properties) {
 		this.properties = properties;
+		return this;
 	}
 
 	public String getCache() {
 		return cache;
 	}
 
-	public void setCache(String cache) {
+	public CheckerConfigModel setCache(String cache) {
 		this.cache = cache;
+		return this;
 	}
 
 	public boolean isIncrement() {
 		return increment;
 	}
 
-	public void setIncrement(boolean increment) {
+	public CheckerConfigModel setIncrement(boolean increment) {
 		this.increment = increment;
+		return this;
 	}
 
 	public boolean isHasInsideGroup() {
 		return hasInsideGroup;
 	}
 
-	public void setHasInsideGroup(boolean hasInsideGroup) {
+	public CheckerConfigModel setHasInsideGroup(boolean hasInsideGroup) {
 		this.hasInsideGroup = hasInsideGroup;
+		return this;
+	}
+
+	public CheckerConfigModel setId(String id) {
+		this.id = id;
+		return this;
 	}
 
 }

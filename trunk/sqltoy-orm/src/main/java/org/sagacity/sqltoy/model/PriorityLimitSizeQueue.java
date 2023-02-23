@@ -7,17 +7,17 @@ import java.util.PriorityQueue;
 import java.util.Queue;
 
 /**
- * @description 固定长度优先队列
+ * 固定长度优先队列模型
  * @author zhongxuchen
+ *
  * @param <T>
- * @version v1.0, Date:2022-06-29
  */
 public class PriorityLimitSizeQueue<T> implements Queue<T> {
 
 	private Queue<T> queue;
 
 	/**
-	 * 默认长度
+	 * 默认最大长度
 	 */
 	private int limit = 1000;
 
@@ -120,6 +120,7 @@ public class PriorityLimitSizeQueue<T> implements Queue<T> {
 		return queue.offer(e);
 	}
 
+	@Override
 	public T remove() {
 		return queue.remove();
 	}

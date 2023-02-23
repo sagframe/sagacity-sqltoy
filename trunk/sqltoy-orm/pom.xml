@@ -1,29 +1,33 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sagframe</groupId>
-	<version>5.1.54</version>
+	<version>5.1.55</version>
 	<name>sagacity-sqltoy</name>
 	<description>sagacity-sqltoy</description>
 	<artifactId>sagacity-sqltoy</artifactId>
 	<url>https://github.com/sagframe/sagacity-sqltoy</url>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<spring-framework.version>5.3.22</spring-framework.version>
-		<spring-data-redis.version>2.7.2</spring-data-redis.version>
-		<spring-data-mongo.version>3.4.2</spring-data-mongo.version>
-		<ojdbc.version>21.5.0.0</ojdbc.version>
-		<ehcache.version>3.10.0</ehcache.version>
-		<httpclient.version>4.5.13</httpclient.version>
-		<httpclient-core.version>4.4.15</httpclient-core.version>
-		<elastic-rest-client.version>8.3.2</elastic-rest-client.version>
-		<fastjson.version>2.0.10</fastjson.version>
-		<mongo.version>3.12.11</mongo.version>
-		<junit-jupiter.version>5.9.0</junit-jupiter.version>
-		<junit-platform.version>1.9.0</junit-platform.version>
-		<slf4j.version>1.7.36</slf4j.version>
+		<spring-framework.version>5.3.25</spring-framework.version>
+		<spring-data-redis.version>2.7.8</spring-data-redis.version>
+		<spring-data-mongo.version>3.4.8</spring-data-mongo.version>
+		<ojdbc.version>21.8.0.0</ojdbc.version>
+		<ehcache.version>3.10.8</ehcache.version>
+		<httpclient.version>4.5.14</httpclient.version>
+		<httpclient-httpmime.version>4.5.14</httpclient-httpmime.version>
+		<httpclient-core.version>4.4.16</httpclient-core.version>
+		<elastic-rest-client.version>8.6.2</elastic-rest-client.version>
+		<fastjson.version>2.0.24</fastjson.version>
+		<mongo.version>3.12.12</mongo.version>
+		<junit-jupiter.version>5.9.2</junit-jupiter.version>
+		<junit-platform.version>1.9.2</junit-platform.version>
+		<slf4j.version>2.0.6</slf4j.version>
 		<caffeine.version>2.9.3</caffeine.version>
+		<h2.version>2.1.214</h2.version>
+		<lombok.version>1.18.26</lombok.version>
+		<taos-jdbcdriver.version>3.0.4</taos-jdbcdriver.version>
+		<druid.version>1.2.16</druid.version>
+		<transmittable-thread-local>2.14.2</transmittable-thread-local>
 	</properties>
 	<licenses>
 		<license>
@@ -67,7 +71,13 @@
 		</repository>
 	</distributionManagement>
 	<dependencies>
-		
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<version>${lombok.version}</version>
+			<scope>test</scope>
+			<optional>true</optional>
+		</dependency>
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-api</artifactId>
@@ -82,7 +92,6 @@
 			<scope>test</scope>
 			<optional>true</optional>
 		</dependency>
-
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-engine</artifactId>
@@ -90,7 +99,14 @@
 			<scope>test</scope>
 			<optional>true</optional>
 		</dependency>
-
+		<!-- https://mvnrepository.com/artifact/com.taosdata.jdbc/taos-jdbcdriver -->
+		<dependency>
+			<groupId>com.taosdata.jdbc</groupId>
+			<artifactId>taos-jdbcdriver</artifactId>
+			<version>${taos-jdbcdriver.version}</version>
+			<scope>test</scope>
+			<optional>true</optional>
+		</dependency>
 		<dependency>
 			<groupId>com.oracle.database.jdbc</groupId>
 			<artifactId>ojdbc8</artifactId>
@@ -104,7 +120,6 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
-
 		<dependency>
 			<groupId>org.ehcache</groupId>
 			<artifactId>ehcache</artifactId>
@@ -129,21 +144,29 @@
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-beans</artifactId>
 			<version>${spring-framework.version}</version>
+			<scope>provided</scope>
+			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-core</artifactId>
 			<version>${spring-framework.version}</version>
+			<scope>provided</scope>
+			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-context</artifactId>
 			<version>${spring-framework.version}</version>
+			<scope>provided</scope>
+			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-jdbc</artifactId>
 			<version>${spring-framework.version}</version>
+			<scope>provided</scope>
+			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>
@@ -201,7 +224,7 @@
 		<dependency>
 			<groupId>org.apache.httpcomponents</groupId>
 			<artifactId>httpmime</artifactId>
-			<version>${httpclient.version}</version>
+			<version>${httpclient-httpmime.version}</version>
 			<scope>provided</scope>
 			<optional>true</optional>
 		</dependency>
@@ -236,6 +259,27 @@
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
 			<version>${slf4j.version}</version>
+		</dependency>
+		<!-- 20220829 增加对h2数据库的驱动 -->
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<version>${h2.version}</version>
+			<scope>test</scope>
+			<optional>true</optional>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/com.alibaba/druid -->
+		<dependency>
+			<groupId>com.alibaba</groupId>
+			<artifactId>druid</artifactId>
+			<version>${druid.version}</version>
+			<scope>provided</scope>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>com.alibaba</groupId>
+			<artifactId>transmittable-thread-local</artifactId>
+			<version>${transmittable-thread-local}</version>
 		</dependency>
 	</dependencies>
 	<build>
@@ -318,7 +362,6 @@
 					</execution>
 				</executions>
 			</plugin>
-
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-gpg-plugin</artifactId>

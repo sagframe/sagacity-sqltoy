@@ -2,7 +2,11 @@ package org.sagacity.sqltoy;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.RoundingMode;
+import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -31,6 +35,8 @@ public class SqlToyConstantsTest {
 
 	@Test
 	public void testBigIntger() {
+		double var = 1000 / 12;
+		System.err.println(var);
 		MapKit.startOf(null, "").get();
 		BigInteger a = new BigInteger("2993439899898779987777777777897777");
 		System.err.println(a.toString());
@@ -44,10 +50,29 @@ public class SqlToyConstantsTest {
 	@Test
 	public void testBeanInfo() {
 		Class classType = StaffInfoVO.class;
+		System.err.println(StaffInfoVO.class.getName());
 		while (!classType.equals(Object.class)) {
 			System.err.println(classType.getName());
 			classType = classType.getSuperclass();
 		}
+		
+		System.err.println(new BigDecimal(10).multiply(new BigDecimal(3)).add(new BigDecimal(42))
+				.divide(new BigDecimal(4), 3, RoundingMode.HALF_UP));
+		Double divData=398d;
+		Double divedData=24.1d;
+		double multiply=1.2;
+		System.err.println(((divData -divedData)* multiply) / divedData);
+		BigDecimal value=new BigDecimal(((divData -divedData)* multiply) / divedData)
+				.setScale(3, RoundingMode.FLOOR);
+		
+		System.err.println(value);
+		
+		boolean a=Map.class.isAssignableFrom(HashMap.class);
+		boolean b=HashMap.class.isAssignableFrom(Map.class);
+		boolean c=HashMap.class.isAssignableFrom(Hashtable.class);
+		boolean d=Map.class.isAssignableFrom(Map.class);
+		System.out.println("a---"+a+"-----b----"+b+"-------c-----"+c+"-------d-----"+d);
 
+		
 	}
 }

@@ -15,8 +15,9 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
  * @version v1.0,Date:2013-1-2
  */
 public class ToChar extends IFunction {
-	private static Pattern regex = Pattern.compile("(?i)\\Wto_char\\(");
+	private static Pattern regex = Pattern.compile("(?i)\\W(to_char|FORMATDATETIME|date_format)\\(");
 
+	@Override
 	public String dialects() {
 		return ALL;
 	}
@@ -53,6 +54,14 @@ public class ToChar extends IFunction {
 			format = format.replace("%H", "hh24").replace("%h", "hh").replace("%i", "mi").replace("%s", "ss");
 			return "to_char(" + args[0] + "," + format + ")";
 		}
+        case DBType.H2: {
+            // 日期
+            format = args[1].replace("%Y", "yyyy").replace("%y", "yyyy").replace("%m", "MM").replace("%d", "dd");
+            // 时间处理
+            format = format.replace("%T", "hh:mm:ss");
+            format = format.replace("%H", "hh").replace("%h", "hh").replace("%i", "mm").replace("%s", "ss");
+            return "to_char(" + args[0] + "," + format + ")";
+        }
 		default:
 			return super.IGNORE;
 		}

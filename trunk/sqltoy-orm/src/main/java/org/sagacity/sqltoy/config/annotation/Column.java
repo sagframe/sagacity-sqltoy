@@ -20,7 +20,7 @@ import org.sagacity.sqltoy.SqlToyConstants;
 @Target(ElementType.FIELD)
 public @interface Column {
 	// 数据类型
-	int type();
+	int type() default java.sql.Types.OTHER;
 
 	// 字段名称
 	String name();

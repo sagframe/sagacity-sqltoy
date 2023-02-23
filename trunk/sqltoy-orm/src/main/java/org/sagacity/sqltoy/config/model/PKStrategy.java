@@ -33,6 +33,7 @@ public enum PKStrategy {
 		return this.strategy;
 	}
 
+	@Override
 	public String toString() {
 		return this.strategy;
 	}

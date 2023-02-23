@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
+import org.sagacity.sqltoy.model.MapKit;
 import org.sagacity.sqltoy.utils.FileUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
@@ -39,6 +40,9 @@ public class SqlConfigParseUtilsTest {
 		SqlToyResult result1 = SqlConfigParseUtils.processSql(sql, new String[] { "id", "name", "status" },
 				new Object[] { "1", "chen", "1" });
 		System.err.println("id<>null:" + JSON.toJSONString(result1));
+
+		SqlToyResult result2 = SqlConfigParseUtils.processSql(sql, MapKit.keys("id", "name", "status").values("1", "chen", "1"));
+		System.err.println("id<>null:" + JSON.toJSONString(result2));
 	}
 
 	@Test
@@ -90,7 +94,7 @@ public class SqlConfigParseUtilsTest {
 				new Object[] { null, null });
 		System.err.println(JSON.toJSONString(result));
 	}
-	
+
 	@Test
 	public void testAllInnerNull() throws Exception {
 		String sql = "select * from (select * from table where 1=1 #[and id=:id and name like :name] #[and status=:status]) left join table2 on";
@@ -174,7 +178,7 @@ public class SqlConfigParseUtilsTest {
 	public void testMultiFieldOverSizeIn() throws Exception {
 		String sql = "select * from table t where staff_name like :staffName and (id,type) in ((:ids,:types))  "
 				+ "and create_time>:beginDate and status in(:status)";
-		int size = 49;
+		int size = 0;
 		String[] orderIds = new String[size];
 		String[] types = new String[size];
 		for (int i = 1; i <= size; i++) {
@@ -210,16 +214,17 @@ public class SqlConfigParseUtilsTest {
 	public void testOverSizeIn3() throws Exception {
 		String sql = "select * from table t where concat(t.order_id,t.type) in (?,?,?)";
 
-		SqlToyResult result = SqlConfigParseUtils.processSql(sql, null, new Object[] { "S0001", "S0002", "S0003" });
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, null, new Object[] { null, null, "S0003" });
 		System.err.println(result.getSql());
 		System.err.println(result.getParamsValue().length);
 	}
 
 	@Test
 	public void testOverSizeIn4() throws Exception {
-		String sql = "select * from table t where concat(t.order_id,t.type) in (?)";
+		String sql = "select * from table t where concat(t.order_id,t.type) in (:ids)";
 
-		SqlToyResult result = SqlConfigParseUtils.processSql(sql, null, new Object[] { "S0001" });
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "ids" },
+				new Object[] { new Object[] {} });
 		System.err.println(result.getSql());
 		System.err.println(result.getParamsValue().length);
 	}
@@ -228,10 +233,11 @@ public class SqlConfigParseUtilsTest {
 	public void testOverSizeIn5() throws Exception {
 		String sql = "select * from table t where (t.order_id,t.type) in (?,?)";
 
-		SqlToyResult result = SqlConfigParseUtils.processSql(sql, null, new Object[] { "S0001","S0002" });
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, null, new Object[] { "S0001", "S0002" });
 		System.err.println(result.getSql());
 		System.err.println(result.getParamsValue().length);
 	}
+
 	@Test
 	public void testOverSizeIn2() throws Exception {
 		String sql = "select * from table t where 1=1 and (t.order_id||'\\('||'\\)') not in (:oderId))";
@@ -258,5 +264,61 @@ public class SqlConfigParseUtilsTest {
 			paramName = sql.substring(paramIndex);
 		}
 		System.err.println("[" + paramName + "]");
+	}
+
+	@Test
+	public void testInsertSql() throws Exception {
+		String sql = "insert into table (id,name,status) values(:id,:name,:status)";
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "id", "name", "status" },
+				new Object[] { "1", null, "1" });
+		System.err.println(JSON.toJSONString(result));
+	}
+
+	@Test
+	public void testIf1() throws Exception {
+		String sql = "where name=1 #[ @if(:flag==1) and #[status=:status]]";
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "flag", "status" },
+				new Object[] { "1", null });
+		System.err.println(JSON.toJSONString(result));
+		result = SqlConfigParseUtils.processSql(sql, new String[] { "flag", "status" }, new Object[] { "1", 1 });
+		System.err.println(JSON.toJSONString(result));
+	}
+
+	@Test
+	public void testOverSizeIn6() throws Exception {
+		String sql = "select * from table t where t.biz_date >=:dates[0] and t.biz_date<=:dates[1]";
+
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "dates" },
+				new Object[] { new Object[] { "2022-10-1", "2022-10-30" } });
+		System.err.println(result.getSql());
+		System.err.println(result.getParamsValue().length);
+	}
+
+	@Test
+	public void testLike() throws Exception {
+		String sql = "select * from table t where t.name ilike :name and t.desc like :desc";
+
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "name", "desc" },
+				new Object[] { "张三", "验证" });
+		System.err.println(result.getSql());
+		for (Object obj : result.getParamsValue()) {
+			System.err.println(obj);
+		}
+	}
+
+	@Test
+	public void testMatchNamedParam() throws Exception {
+		String[] names = new String[] { "item[0]", "item[1]", "name", "status" };
+		Object[] values = SqlConfigParseUtils.matchNamedParam(names, new String[] { "item", "name", "status" },
+				new Object[] { new Object[] { "1", "2" }, "chen", 1 });
+
+		for (Object obj : values) {
+			System.err.println(obj);
+		}
+		String property = "item[120]";
+		int lastIndex = property.lastIndexOf("[");
+		String key = property.substring(0, lastIndex);
+		int index = Integer.parseInt(property.substring(lastIndex + 1, property.length() - 1));
+		System.err.println("key=[" + key + "] index=[" + index + "]");
 	}
 }

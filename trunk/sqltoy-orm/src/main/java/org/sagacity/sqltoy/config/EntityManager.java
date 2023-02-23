@@ -2,7 +2,15 @@ package org.sagacity.sqltoy.config;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.sql.Time;
+import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -14,6 +22,7 @@ import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.annotation.BusinessId;
 import org.sagacity.sqltoy.config.annotation.Column;
+import org.sagacity.sqltoy.config.annotation.DataVersion;
 import org.sagacity.sqltoy.config.annotation.Entity;
 import org.sagacity.sqltoy.config.annotation.Id;
 import org.sagacity.sqltoy.config.annotation.OneToMany;
@@ -23,6 +32,8 @@ import org.sagacity.sqltoy.config.annotation.Secure;
 import org.sagacity.sqltoy.config.annotation.SecureConfig;
 import org.sagacity.sqltoy.config.annotation.Sharding;
 import org.sagacity.sqltoy.config.annotation.Strategy;
+import org.sagacity.sqltoy.config.annotation.Tenant;
+import org.sagacity.sqltoy.config.model.DataVersionConfig;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.FieldSecureConfig;
@@ -33,7 +44,6 @@ import org.sagacity.sqltoy.config.model.TableCascadeModel;
 import org.sagacity.sqltoy.model.IgnoreCaseSet;
 import org.sagacity.sqltoy.model.SecureType;
 import org.sagacity.sqltoy.plugins.id.IdGenerator;
-import org.sagacity.sqltoy.plugins.id.impl.RedisIdGenerator;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
@@ -51,6 +61,9 @@ import org.slf4j.LoggerFactory;
  * @modify {Date:2018-9-6,优化增强业务主键配置策略}
  * @modify {Date:2019-8-10,优化字段的解析,避免在子类中定义属性覆盖了父类导致数据库字段失效现象,同时优化部分代码}
  * @modify {Date:2020-07-29,修复OneToMany解析时编写错误,由智客软件反馈 }
+ * @modify {Date:2022-09-23,增加@DataVersion数据版本功能 }
+ * @modify {Date:2022-10-12,修复cascade解析存在的两个对象相互级联死循环问题以及支持一个对象级联多次相同对象，由俊华反馈 }
+ * 
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class EntityManager {
@@ -121,6 +134,11 @@ public class EntityManager {
 	private ConcurrentHashMap<String, EntityMeta> entitysMetaMap = new ConcurrentHashMap<String, EntityMeta>();
 
 	/**
+	 * 存放表名称对应实体对象类名称，再结合entitysMetaMap获取对象的entityMeta
+	 */
+	private ConcurrentHashMap<String, String> tableEntityNameMap = new ConcurrentHashMap<String, String>();
+
+	/**
 	 * 非sqltoy entity类,一般指仅用于查询作为返回结果的VO
 	 */
 	private ConcurrentHashMap<String, String> unEntityMap = new ConcurrentHashMap<String, String>();
@@ -132,18 +150,18 @@ public class EntityManager {
 	 * @return
 	 */
 	public boolean isEntity(SqlToyContext sqlToyContext, Class voClass) {
-		if (voClass == null) {
+		if (voClass == null || voClass.equals(Object.class)) {
 			return false;
 		}
 		Class entityClass = BeanUtil.getEntityClass(voClass);
 		String className = entityClass.getName();
-		if (unEntityMap.contains(className)) {
+		if (unEntityMap.containsKey(className)) {
 			return false;
 		}
-		if (entitysMetaMap.contains(className)) {
+		if (entitysMetaMap.containsKey(className)) {
 			return true;
 		}
-		EntityMeta entityMeta = parseEntityMeta(sqlToyContext, entityClass, false);
+		EntityMeta entityMeta = parseEntityMeta(sqlToyContext, entityClass, false, false);
 		if (entityMeta != null) {
 			return true;
 		}
@@ -158,7 +176,7 @@ public class EntityManager {
 	 * @return
 	 */
 	public EntityMeta getEntityMeta(SqlToyContext sqlToyContext, Class voClass) {
-		if (voClass == null) {
+		if (voClass == null || voClass.equals(Object.class)) {
 			return null;
 		}
 		Class entityClass = BeanUtil.getEntityClass(voClass);
@@ -167,10 +185,14 @@ public class EntityManager {
 		// update 2017-11-27
 		// 增加在使用对象时动态解析的功能,因此可以不用配置packagesToScan和annotatedClasses
 		if (entityMeta == null) {
-			entityMeta = parseEntityMeta(sqlToyContext, entityClass, true);
+			entityMeta = parseEntityMeta(sqlToyContext, entityClass, true, false);
 			if (entityMeta == null) {
 				throw new IllegalArgumentException("您传入的对象:[".concat(className)
 						.concat(" ]不是一个@SqlToyEntity实体POJO对象,sqltoy实体对象必须使用 @SqlToyEntity/@Entity/@Id 等注解来标识!"));
+			} // update 2022-10-24 加强提示，避免一些手工编写pojo情景遇到问题不知所措(手工编写是因为根本不了解quickvo的特性)
+			else if (entityMeta.getFieldsArray() == null || entityMeta.getFieldsArray().length == 0) {
+				throw new RuntimeException(
+						"您传入的对象:[".concat(className).concat(" ] 没有@column等配置,无法获得POJO属性映射数据库字段的关系,请用quickvo自动生成POJO!"));
 			}
 		}
 		return entityMeta;
@@ -206,7 +228,7 @@ public class EntityManager {
 		}
 		// 解析entity对象的注解并放入缓存
 		for (Class entityClass : entities) {
-			parseEntityMeta(sqlToyContext, entityClass, true);
+			parseEntityMeta(sqlToyContext, entityClass, true, false);
 		}
 	}
 
@@ -215,10 +237,12 @@ public class EntityManager {
 	 * @param sqlToyContext
 	 * @param entityClass
 	 * @param isWarn        当不是entity实体bean时是否进行日志提示
+	 * @param forCascade    针对级联内部解析
 	 * @return
 	 */
-	public synchronized EntityMeta parseEntityMeta(SqlToyContext sqlToyContext, Class entityClass, boolean isWarn) {
-		if (entityClass == null) {
+	public synchronized EntityMeta parseEntityMeta(SqlToyContext sqlToyContext, Class entityClass, boolean isWarn,
+			boolean forCascade) {
+		if (entityClass == null || entityClass.equals(Object.class)) {
 			return null;
 		}
 		String className = entityClass.getName();
@@ -230,8 +254,18 @@ public class EntityManager {
 		try {
 			Class realEntityClass = entityClass;
 			Entity entity = null;
-			while (realEntityClass != null && !realEntityClass.equals(Object.class)) {
+			// 数据版本
+			DataVersion dataVersion = null;
+			// 租户
+			Tenant tenant = null;
+			while (!realEntityClass.equals(Object.class)) {
 				entity = (Entity) realEntityClass.getAnnotation(Entity.class);
+				if (dataVersion == null) {
+					dataVersion = (DataVersion) realEntityClass.getAnnotation(DataVersion.class);
+				}
+				if (tenant == null) {
+					tenant = (Tenant) realEntityClass.getAnnotation(Tenant.class);
+				}
 				if (entity != null) {
 					break;
 				}
@@ -250,9 +284,11 @@ public class EntityManager {
 				if (StringUtil.isNotBlank(entity.pk_constraint())) {
 					entityMeta.setPkConstraint(entity.pk_constraint());
 				}
+				if (tenant != null && !tenant.field().equals("")) {
+					entityMeta.setTenantField(tenant.field());
+				}
 				// 解析Entity包含的字段信息
 				Field[] allFields = parseAllFields(entityClass);
-
 				// 排除主键的字段信息
 				List<String> rejectIdFieldList = new ArrayList<String>();
 				// 表的所有字段
@@ -261,18 +297,29 @@ public class EntityManager {
 				List<String> idList = new ArrayList<String>();
 				// 解析主键
 				parseIdFileds(idList, allFields);
-
 				// 构造按照主键获取单条记录的sql,以:named形式
 				StringBuilder loadNamedWhereSql = new StringBuilder("");
 				// where 主键字段=? 形式，用于构建delete功能操作的sql
 				StringBuilder loadArgWhereSql = new StringBuilder("");
 				List<String> allColumnNames = new ArrayList<String>();
+				String dataVersionField = null;
 				for (Field field : allFields) {
 					// 解析对象字段属性跟数据库表字段的对应关系
 					parseFieldMeta(sqlToyContext, entityMeta, field, rejectIdFieldList, allColumnNames,
 							loadNamedWhereSql, loadArgWhereSql);
+					if (dataVersion == null) {
+						dataVersion = (DataVersion) field.getAnnotation(DataVersion.class);
+						if (dataVersion != null) {
+							dataVersionField = field.getName();
+						}
+					}
+					if (tenant == null) {
+						tenant = (Tenant) field.getAnnotation(Tenant.class);
+						if (tenant != null) {
+							entityMeta.setTenantField(field.getName());
+						}
+					}
 				}
-
 				// 设置数据库表所有字段信息
 				StringBuilder allColNames = new StringBuilder();
 				for (int i = 0; i < allColumnNames.size(); i++) {
@@ -285,16 +332,13 @@ public class EntityManager {
 				// 表全量查询语句 update 2019-12-9 将原先select * 改成 select 具体字段
 				entityMeta.setLoadAllSql("select ".concat(entityMeta.getAllColumnNames()).concat(" from ")
 						.concat(entityMeta.getSchemaTable(null, null)));
-
 				entityMeta.setIdArgWhereSql(loadArgWhereSql.toString());
 				entityMeta.setIdNameWhereSql(loadNamedWhereSql.toString());
-
 				// 排除主键外的字段
 				if (rejectIdFieldList.size() > 0) {
 					entityMeta.setRejectIdFieldArray(rejectIdFieldList.toArray(new String[rejectIdFieldList.size()]));
 					fieldList.addAll(rejectIdFieldList);
 				}
-
 				// 存在主键，主键必须放在fieldList最后面，影响到insert，update等语句
 				if (idList.size() > 0) {
 					entityMeta.setIdArray(idList.toArray(new String[idList.size()]));
@@ -306,35 +350,65 @@ public class EntityManager {
 				}
 				// 内部存在逻辑设置allFields
 				entityMeta.setFieldsArray(fieldList.toArray(new String[rejectIdFieldList.size() + idList.size()]));
-
 				// 设置字段类型和默认值
 				parseFieldTypeAndDefault(entityMeta);
-
 				// 解析sharding策略
 				parseSharding(entityMeta, entityClass);
 				// 解析加解密配置
 				parseSecureConfig(entityMeta, entityClass);
-				// oneToMany和oneToOne解析
-				for (Field field : allFields) {
-					parseCascade(sqlToyContext, entityMeta, entity, field, idList);
-				}
-				// 设置级联关联对象类型
-				if (!entityMeta.getCascadeModels().isEmpty()) {
-					Class[] cascadeTypes = new Class[entityMeta.getCascadeModels().size()];
-					for (int i = 0; i < entityMeta.getCascadeModels().size(); i++) {
-						cascadeTypes[i] = entityMeta.getCascadeModels().get(i).getMappedType();
+				// 数据版本
+				if (dataVersion != null) {
+					if (dataVersionField == null) {
+						dataVersionField = dataVersion.field();
 					}
-					entityMeta.setCascadeTypes(cascadeTypes);
+					FieldMeta fieldMeta = entityMeta.getFieldMeta(dataVersionField);
+					if (fieldMeta != null) {
+						DataVersionConfig dataVersionConfig = new DataVersionConfig();
+						dataVersionConfig.setField(dataVersionField);
+						// 202209181至少9位数字
+						if (dataVersion.startDate() && fieldMeta.getLength() > 8) {
+							dataVersionConfig.setStartDate(true);
+						}
+						entityMeta.setDataVersion(dataVersionConfig);
+					} else {
+						throw new RuntimeException(
+								"@DataVersion(field=" + dataVersionField + ") 在POJO类:" + className + " 中没有对应的属性!");
+					}
+				}
+				// 校验@Tenant(field="fieldName") 配置的正确性
+				if (entityMeta.getTenantField() != null
+						&& entityMeta.getFieldMeta(entityMeta.getTenantField()) == null) {
+					throw new RuntimeException(
+							"@Tenant(field=" + entityMeta.getTenantField() + ") 在POJO类:" + className + " 中没有对应的属性!");
+				}
+				// 判断是否为级联解析,级联解析无需再进行下级级联解析
+				if (!forCascade) {
+					// oneToMany和oneToOne解析
+					for (Field field : allFields) {
+						parseCascade(sqlToyContext, entityMeta, field, idList);
+					}
+					// 设置级联关联对象类型
+					if (!entityMeta.getCascadeModels().isEmpty()) {
+						Class[] cascadeTypes = new Class[entityMeta.getCascadeModels().size()];
+						for (int i = 0; i < entityMeta.getCascadeModels().size(); i++) {
+							cascadeTypes[i] = entityMeta.getCascadeModels().get(i).getMappedType();
+						}
+						entityMeta.setCascadeTypes(cascadeTypes);
+					}
 				}
 			}
 		} catch (Exception e) {
-			logger.error("Sqltoy 解析Entity对象:[{}]发生错误,请检查对象注解是否正确!", className);
-			e.printStackTrace();
+			logger.error("Sqltoy 解析Entity对象:[{}]发生错误,请检查对象注解是否正确!" + e.getMessage(), className);
+			throw e;
 		}
-		if (entityMeta != null) {
-			entitysMetaMap.put(className, entityMeta);
-		} else if (isWarn) {
-			logger.warn("SqlToy Entity:{}没有使用@Entity注解表明是一个实体类,请检查!", className);
+		// 非内部级联解析，放入map缓存
+		if (!forCascade) {
+			if (entityMeta != null) {
+				entitysMetaMap.put(className, entityMeta);
+				tableEntityNameMap.put(entityMeta.getTableName().toLowerCase(), className);
+			} else if (isWarn) {
+				logger.warn("SqlToy Entity:{}没有使用@Entity注解，表明不是一个实体类,请检查!", className);
+			}
 		}
 		return entityMeta;
 	}
@@ -507,11 +581,10 @@ public class EntityManager {
 	 * @param allFieldAry
 	 * @param loadNamedWhereSql
 	 * @param loadArgWhereSql
-	 * @throws Exception
 	 */
 	private void parseFieldMeta(SqlToyContext sqlToyContext, EntityMeta entityMeta, Field field,
 			List<String> rejectIdFieldList, List<String> allFieldAry, StringBuilder loadNamedWhereSql,
-			StringBuilder loadArgWhereSql) throws Exception {
+			StringBuilder loadArgWhereSql) {
 		Column column = field.getAnnotation(Column.class);
 		if (column == null) {
 			return;
@@ -530,6 +603,35 @@ public class EntityManager {
 		// 设置是否分区字段
 		if (field.getAnnotation(PartitionKey.class) != null) {
 			fieldMeta.setPartitionKey(true);
+		}
+		// 兼容type不设置场景，根据字段类型自动补充,为时序数据库等手工简化写注解做准备
+		if (column.type() == java.sql.Types.OTHER) {
+			Class fieldType = field.getType();
+			if (fieldType.equals(String.class)) {
+				fieldMeta.setType(java.sql.Types.VARCHAR);
+			} else if (fieldType.equals(Date.class) || fieldType.equals(java.sql.Date.class)
+					|| fieldType.equals(LocalDate.class) || fieldType.equals(LocalDateTime.class)) {
+				fieldMeta.setType(java.sql.Types.DATE);
+			} else if (fieldType.equals(Timestamp.class)) {
+				fieldMeta.setType(java.sql.Types.TIMESTAMP);
+			} else if (fieldType.equals(LocalTime.class) || fieldType.equals(Time.class)) {
+				fieldMeta.setType(java.sql.Types.TIME);
+			} else if (fieldType.equals(Long.class) || fieldType.equals(BigInteger.class)) {
+				fieldMeta.setType(java.sql.Types.BIGINT);
+			} else if (fieldType.equals(Integer.class) || fieldType.equals(int.class) || fieldType.equals(long.class)
+					|| fieldType.equals(short.class)) {
+				fieldMeta.setType(java.sql.Types.INTEGER);
+			} else if (fieldType.equals(BigDecimal.class)) {
+				fieldMeta.setType(java.sql.Types.DECIMAL);
+			} else if (fieldType.equals(Boolean.class) || fieldType.equals(boolean.class)) {
+				fieldMeta.setType(java.sql.Types.BOOLEAN);
+			} else if (fieldType.equals(Double.class) || fieldType.equals(double.class)) {
+				fieldMeta.setType(java.sql.Types.DOUBLE);
+			} else if (fieldType.equals(Float.class) || fieldType.equals(float.class)) {
+				fieldMeta.setType(java.sql.Types.FLOAT);
+			} else if (fieldType.equals(Byte.class) && fieldType.isArray()) {
+				fieldMeta.setType(java.sql.Types.BINARY);
+			}
 		}
 		// 内部包含了构造表字段名称跟vo属性名称的对照
 		entityMeta.addFieldMeta(fieldMeta);
@@ -589,10 +691,8 @@ public class EntityManager {
 	 * @param sqlToyContext
 	 * @param entityMeta
 	 * @param idGenerator
-	 * @throws Exception
 	 */
-	private void processIdGenerator(SqlToyContext sqlToyContext, EntityMeta entityMeta, String idGenerator)
-			throws Exception {
+	private void processIdGenerator(SqlToyContext sqlToyContext, EntityMeta entityMeta, String idGenerator) {
 		// 已经存在跳过处理
 		if (idGenerators.containsKey(idGenerator)) {
 			return;
@@ -605,18 +705,14 @@ public class EntityManager {
 		} else {
 			String generator = IdGenerators.get(idGenerator.toLowerCase());
 			generator = (generator != null) ? IdGeneratorPackage.concat(generator) : idGenerator;
-			// redis 情况特殊,依赖redisTemplate,小心修改
-			if (generator.endsWith("RedisIdGenerator")) {
-				RedisIdGenerator redis = (RedisIdGenerator) RedisIdGenerator.getInstance(sqlToyContext);
-				if (redis == null || !redis.hasRedisTemplate()) {
-					logger.error("POJO Class={} 的redisIdGenerator 未能被正确实例化,可能的原因是未定义RedisTemplate!",
-							entityMeta.getEntityClass().getName());
-				}
-				idGenerators.put(idGenerator, redis);
-			} else {
-				// 自定义(不依赖spring模式),用法在quickvo中配置例如:com.xxxx..CustomIdGenerator
-				idGenerators.put(idGenerator,
-						(IdGenerator) Class.forName(generator).getDeclaredConstructor().newInstance());
+			// 自定义(不依赖spring模式),用法在quickvo中配置例如:com.xxxx..CustomIdGenerator
+			try {
+				IdGenerator idGeneratorBean = (IdGenerator) Class.forName(generator).getDeclaredConstructor()
+						.newInstance();
+				idGeneratorBean.initialize(sqlToyContext);
+				idGenerators.put(idGenerator, idGeneratorBean);
+			} catch (Exception e) {
+				throw new RuntimeException("实例化主键生成策略失败:className=" + generator + ",错误信息:" + e.getMessage());
 			}
 		}
 	}
@@ -625,12 +721,10 @@ public class EntityManager {
 	 * @todo 解析主键关联的子表信息配置(外键关联)
 	 * @param sqlToyContext
 	 * @param entityMeta
-	 * @param entity
 	 * @param field
 	 * @param idList
 	 */
-	private void parseCascade(SqlToyContext sqlToyContext, EntityMeta entityMeta, Entity entity, Field field,
-			List<String> idList) {
+	private void parseCascade(SqlToyContext sqlToyContext, EntityMeta entityMeta, Field field, List<String> idList) {
 		// 主表关联多子表记录
 		OneToMany oneToMany = field.getAnnotation(OneToMany.class);
 		OneToOne oneToOne = field.getAnnotation(OneToOne.class);
@@ -664,9 +758,9 @@ public class EntityManager {
 			update = oneToOne.update();
 			cascadeModel.setDelete(oneToOne.delete());
 		}
-
-		// 获取子表的信息(存在递归调用)
-		EntityMeta subTableMeta = getEntityMeta(sqlToyContext, cascadeModel.getMappedType());
+		// update 2022-10-1
+		// 获取子表的信息(forCascade=true 避免循环解析，只解析一级)
+		EntityMeta subTableMeta = parseEntityMeta(sqlToyContext, cascadeModel.getMappedType(), false, true);
 		if ((fields == null || fields.length == 0) && idList.size() == 1) {
 			fields = entityMeta.getIdArray();
 		}
@@ -721,7 +815,7 @@ public class EntityManager {
 			boolean isNamedSql = SqlConfigParseUtils.isNamedQuery(load);
 			if (isNamedSql && !StringUtil.matches(loadLow, "(\\>|\\<)|(\\=)|(\\<\\>)|(\\>\\=|\\<\\=)")) {
 				// 自定义加载完整sql
-				if (!loadLow.equals("default") && !loadLow.equals("true")) {
+				if (!"default".equals(loadLow) && !"true".equals(loadLow)) {
 					cascadeModel.setLoadSubTableSql(load);
 				}
 			} else {
@@ -736,7 +830,6 @@ public class EntityManager {
 				}
 			}
 		}
-
 		// update 2020-11-20 增加子表级联order by
 		if (StringUtil.isNotBlank(orderBy)) {
 			// 对属性名称进行替换，替换为实际表字段名称
@@ -744,12 +837,11 @@ public class EntityManager {
 			cascadeModel.setOrderBy(orderBy);
 			cascadeModel.setLoadSubTableSql(cascadeModel.getLoadSubTableSql().concat(" order by ").concat(orderBy));
 		}
-
 		// 深度级联修改
 		if (StringUtil.isNotBlank(update)) {
 			String updateLow = update;
 			// 表示先删除子表
-			if (updateLow.equals("delete")) {
+			if ("delete".equals(updateLow)) {
 				cascadeModel.setCascadeUpdateSql("delete from ".concat(subSchemaTable).concat(subWhereSql));
 			} else {
 				// 修改数据(如设置记录状态为失效)
@@ -773,7 +865,9 @@ public class EntityManager {
 	private void parseFieldTypeAndDefault(EntityMeta entityMeta) {
 		// 组织对象对应表字段的类型和默认值以及是否可以为null
 		int fieldSize = entityMeta.getFieldsArray().length;
+		int pkSize = (entityMeta.getIdArray() == null) ? 0 : entityMeta.getIdArray().length;
 		Integer[] fieldsTypeArray = new Integer[fieldSize];
+		// 提供对象save\saveAll 构建默认值(主键无需设置)
 		String[] fieldsDefaultValue = new String[fieldSize];
 		Boolean[] fieldsNullable = new Boolean[fieldSize];
 		FieldMeta fieldMeta;
@@ -781,9 +875,12 @@ public class EntityManager {
 		for (int i = 0; i < fieldSize; i++) {
 			fieldMeta = entityMeta.getFieldMeta(entityMeta.getFieldsArray()[i]);
 			fieldsTypeArray[i] = fieldMeta.getType();
-			fieldsDefaultValue[i] = fieldMeta.getDefaultValue();
-			if (null != fieldMeta.getDefaultValue()) {
-				hasDefault = true;
+			// update 2022-09-29 非主键或复合主键字段支持默认值
+			if (!fieldMeta.isPK() || pkSize > 1) {
+				fieldsDefaultValue[i] = fieldMeta.getDefaultValue();
+				if (null != fieldMeta.getDefaultValue()) {
+					hasDefault = true;
+				}
 			}
 			fieldsNullable[i] = fieldMeta.isNullable();
 		}
@@ -829,4 +926,11 @@ public class EntityManager {
 		this.recursive = recursive;
 	}
 
+	public EntityMeta getEntityMeta(String tableName) {
+		String className = tableEntityNameMap.get(tableName.toLowerCase());
+		if (className == null) {
+			return null;
+		}
+		return entitysMetaMap.get(className);
+	}
 }

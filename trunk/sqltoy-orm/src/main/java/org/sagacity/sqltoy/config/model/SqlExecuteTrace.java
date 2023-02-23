@@ -4,8 +4,8 @@
 package org.sagacity.sqltoy.config.model;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.sagacity.sqltoy.utils.IdUtil;
 
@@ -56,6 +56,11 @@ public class SqlExecuteTrace implements Serializable {
 	private boolean overTime = false;
 
 	/**
+	 * 数据库类型
+	 */
+	private String dialect;
+
+	/**
 	 * @return the isPrint
 	 */
 	public boolean isPrint() {
@@ -75,7 +80,7 @@ public class SqlExecuteTrace implements Serializable {
 	/**
 	 * 执行的sql和参数
 	 */
-	private List<SqlExecuteLog> executeLogs = new ArrayList<SqlExecuteLog>();
+	private List<SqlExecuteLog> executeLogs = new CopyOnWriteArrayList<>();
 
 	/**
 	 * @return the start
@@ -127,14 +132,18 @@ public class SqlExecuteTrace implements Serializable {
 	}
 
 	/**
-	 * @param sqlToyResults the sqlToyResults to set
+	 * @param topic
+	 * @param sql
+	 * @param paramsValue
 	 */
 	public void addSqlLog(String topic, String sql, Object... paramsValue) {
 		executeLogs.add(new SqlExecuteLog(0, topic, sql, paramsValue));
 	}
 
 	/**
-	 * @param sqlToyResults the sqlToyResults to set
+	 * @param topic
+	 * @param content
+	 * @param paramsValue
 	 */
 	public void addLog(String topic, String content, Object... paramsValue) {
 		executeLogs.add(new SqlExecuteLog(1, topic, content, paramsValue));
@@ -148,7 +157,7 @@ public class SqlExecuteTrace implements Serializable {
 	}
 
 	/**
-	 * @param error the error to set
+	 * @param errorMsg the error to set
 	 */
 	public void setError(String errorMsg) {
 		this.error = true;
@@ -176,9 +185,12 @@ public class SqlExecuteTrace implements Serializable {
 		this.overTime = overTime;
 	}
 
-	public void addLogs(List<SqlExecuteLog> sqlExecuteLogs) {
-		if (sqlExecuteLogs != null && !sqlExecuteLogs.isEmpty()) {
-			executeLogs.addAll(sqlExecuteLogs);
-		}
+	public String getDialect() {
+		return dialect;
 	}
+
+	public void setDialect(String dialect) {
+		this.dialect = dialect;
+	}
+
 }

@@ -23,6 +23,7 @@ import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
+import org.sagacity.sqltoy.config.model.OperateType;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.exception.DataAccessException;
@@ -98,8 +99,12 @@ public class DefaultDialectUtils {
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
 				sql.toString(), null, null, dialect);
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		// 增加sql执行拦截器 update 2022-9-10
+		queryParam = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig,
+				(extend.entityClass == null) ? OperateType.random : OperateType.singleTable, queryParam,
+				extend.entityClass, dbType);
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				extend.rowCallbackHandler, decryptHandler, conn, dbType, 0, fetchSize, maxRows);
+				extend, decryptHandler, conn, dbType, 0, fetchSize, maxRows);
 	}
 
 	/**
@@ -145,8 +150,12 @@ public class DefaultDialectUtils {
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
 				sql.toString(), Long.valueOf(pageSize), (pageNo - 1) * pageSize, dialect);
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		// 增加sql执行拦截器 update 2022-9-10
+		queryParam = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig,
+				(extend.entityClass == null) ? OperateType.page : OperateType.singleTable, queryParam,
+				extend.entityClass, dbType);
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				extend.rowCallbackHandler, decryptHandler, conn, dbType, 0, fetchSize, maxRows);
+				extend, decryptHandler, conn, dbType, 0, fetchSize, maxRows);
 	}
 
 	/**
@@ -187,8 +196,12 @@ public class DefaultDialectUtils {
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
 				sql.toString(), null, null, dialect);
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		// 增加sql执行拦截器 update 2022-9-10
+		queryParam = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig,
+				(extend.entityClass == null) ? OperateType.top : OperateType.singleTable, queryParam,
+				extend.entityClass, dbType);
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				extend.rowCallbackHandler, decryptHandler, conn, dbType, 0, fetchSize, maxRows);
+				extend, decryptHandler, conn, dbType, 0, fetchSize, maxRows);
 	}
 
 	/**
@@ -282,6 +295,9 @@ public class DefaultDialectUtils {
 			}
 			sqlToyResult = SqlConfigParseUtils.processSql(deleteSql.toString(), null, realValues, null);
 		}
+		// 增加sql执行拦截器 update 2022-9-10
+		sqlToyResult = DialectUtils.doInterceptors(sqlToyContext, null, OperateType.deleteAll, sqlToyResult,
+				entities.get(0).getClass(), dbType);
 		return SqlUtil.executeSql(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(), sqlToyResult.getParamsValue(),
 				null, conn, dbType, autoCommit, false);
 	}
@@ -327,10 +343,15 @@ public class DefaultDialectUtils {
 		final boolean hasUpdateRow = (updateRowHandler == null) ? false : true;
 		// 组织select * from table for update 语句
 		String sql = wrapFetchSql(entityMeta, dbType, whereFields, tableName);
-		SqlExecuteStat.showSql("执行锁记录查询", sql, whereParamValues);
+		SqlToyResult queryParam = new SqlToyResult(sql, whereParamValues);
+		// 增加sql执行拦截器 update 2022-9-10
+		queryParam = DialectUtils.doInterceptors(sqlToyContext, null, OperateType.singleTable, queryParam,
+				entity.getClass(), dbType);
+		SqlExecuteStat.showSql("执行锁记录查询", queryParam.getSql(), queryParam.getParamsValue());
 		// 可编辑结果集
-		PreparedStatement pst = conn.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
-		List updateResult = (List) SqlUtil.preparedStatementProcess(whereParamValues, pst, null,
+		PreparedStatement pst = conn.prepareStatement(queryParam.getSql(), ResultSet.TYPE_FORWARD_ONLY,
+				ResultSet.CONCUR_UPDATABLE);
+		List updateResult = (List) SqlUtil.preparedStatementProcess(queryParam.getParamsValue(), pst, null,
 				new PreparedStatementResultHandler() {
 					@Override
 					public void execute(Object rowData, PreparedStatement pst, ResultSet rs) throws Exception {
@@ -373,7 +394,7 @@ public class DefaultDialectUtils {
 									fieldValue = fullFieldvalues[i];
 								} else {
 									fieldValue = SqlUtilsExt.getDefaultValue(fullFieldvalues[i],
-											fieldMeta.getDefaultValue(), fieldMeta.getType());
+											fieldMeta.getDefaultValue(), fieldMeta.getType(), fieldMeta.isNullable());
 								}
 								// 插入设置具体列的值
 								if (fieldValue != null) {
@@ -389,11 +410,10 @@ public class DefaultDialectUtils {
 		// 记录不存在首次保存，返回entity自身
 		if (updateResult == null || updateResult.isEmpty()) {
 			return entity;
-		} else {
-			List entities = BeanUtil.reflectListToBean(sqlToyContext.getTypeHandler(), updateResult,
-					entityMeta.getFieldsArray(), entity.getClass());
-			return (Serializable) entities.get(0);
 		}
+		List entities = BeanUtil.reflectListToBean(sqlToyContext.getTypeHandler(), updateResult,
+				entityMeta.getFieldsArray(), entity.getClass());
+		return (Serializable) entities.get(0);
 	}
 
 	/**
@@ -447,7 +467,8 @@ public class DefaultDialectUtils {
 	private static Object[] processFieldValues(final SqlToyContext sqlToyContext, EntityMeta entityMeta,
 			Serializable entity) throws Exception {
 		// 构造全新的新增记录参数赋值反射(覆盖之前的)
-		ReflectPropsHandler handler = DialectUtils.getAddReflectHandler(null, sqlToyContext.getUnifyFieldsHandler());
+		ReflectPropsHandler handler = DialectUtils.getAddReflectHandler(entityMeta, null,
+				sqlToyContext.getUnifyFieldsHandler());
 		handler = DialectUtils.getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
 		// 这里不体现defaultValue 值，产生的insert sql语句中已经处理了default值问题
@@ -615,7 +636,7 @@ public class DefaultDialectUtils {
 								ColumnMeta colMeta = new ColumnMeta();
 								colMeta.setColName(rs.getString("COLUMN_NAME"));
 								colMeta.setIndex(true);
-								if (rs.getString("UNIQUENESS").equalsIgnoreCase("UNIQUE")) {
+								if ("UNIQUE".equalsIgnoreCase(rs.getString("UNIQUENESS"))) {
 									colMeta.setUnique(true);
 								}
 								colMeta.setIndexName(rs.getString("INDEX_NAME"));

@@ -5,11 +5,16 @@ package org.sagacity.sqltoy.utils;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
+
+import com.alibaba.fastjson.JSON;
 
 /**
  * @author zhongxuchen
@@ -140,6 +145,29 @@ public class StringUtilsTest {
 			packageName = packageName.substring(0, packageName.length() - 1);
 		}
 		packageName = packageName.replace("/", ".");
+		String sql = "where t.\"tenant_id\" in (?) and id=?";
+		String sql1 = "where t.'tenant_id' = ? and id=?";
+		String tenantColumn = "\"TENANT_ID\"";
 		System.err.println(packageName);
+		// 已经有租户条件过滤，无需做处理
+		System.err.println(StringUtil.matches(sql, "(?i)\\W" + tenantColumn + "(\\s*\\=|\\s+in)"));
+		System.err.println(StringUtil.matches(sql1, "(?i)\\W" + tenantColumn + "(\\s*\\=|\\s+in)"));
+	}
+
+	@Test
+	public void testReplace() {
+		String VALUE_REGEX = "(?i)\\@value\\s*\\(\\s*(\\?|null)\\s*\\)";
+		String sql = "where @value(?)";
+		String materValue = "$test";
+		String result = sql.replaceFirst(VALUE_REGEX, Matcher.quoteReplacement(materValue));
+		System.err.println(result);
+	}
+
+	@Test
+	public void testReplace1() {
+		ConcurrentHashMap<String, Object> sqlCache = new ConcurrentHashMap<String, Object>(256);
+		sqlCache.put("1", 1);
+		Map result = (Map) sqlCache;
+		System.err.println(JSON.toJSONString(result));
 	}
 }

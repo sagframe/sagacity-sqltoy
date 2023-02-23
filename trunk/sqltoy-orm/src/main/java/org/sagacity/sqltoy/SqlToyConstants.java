@@ -136,16 +136,27 @@ public class SqlToyConstants {
 	public static int FETCH_SIZE = -1;
 
 	/**
+	 * 默认一页数据条数
+	 */
+	public static int DEFAULT_PAGE_SIZE = 10;
+
+	/**
+	 * 变更操作型sql空白默认转为null
+	 */
+	public static boolean executeSqlBlankToNull = true;
+
+	/**
 	 * 字符串中内嵌参数的匹配模式
 	 */
-	public final static Pattern paramPattern = Pattern
-			.compile("\\$\\{\\s*[0-9a-zA-Z\u4e00-\u9fa5]+((\\.|\\_)[0-9a-zA-Z\u4e00-\u9fa5]+)*(\\[\\d*(\\,)?\\d*\\])?\\s*\\}");
+	public final static Pattern paramPattern = Pattern.compile(
+			"\\$\\{\\s*[0-9a-zA-Z\u4e00-\u9fa5]+((\\.|\\_)[0-9a-zA-Z\u4e00-\u9fa5]+)*(\\[\\d*(\\,)?\\d*\\])?\\s*\\}");
 
 	// update 2020-9-16 将\\W 替换为[^A-Za-z0-9_:] 增加排除: 适应::jsonb 这种模式场景
 	// update 2021-10-13 增加参数名称为中文场景(应对一些极为不规范的项目场景)
-	public final static Pattern SQL_NAMED_PATTERN = Pattern.compile("[^A-Za-z0-9_:\u4e00-\u9fa5]\\:\\s*[a-zA-Z\u4e00-\u9fa5][a-zA-Z0-9_\u4e00-\u9fa5]*(\\.[\\w\u4e00-\u9fa5]+)*\\s*");
-	public final static Pattern NOSQL_NAMED_PATTERN = Pattern
-			.compile("(?i)\\@(param|blank|value)?\\(\\s*\\:\\s*[a-zA-Z\u4e00-\u9fa5][a-zA-Z0-9_\u4e00-\u9fa5]*(\\.[\\w\u4e00-\u9fa5]+)*\\s*\\)");
+	public final static Pattern SQL_NAMED_PATTERN = Pattern.compile(
+			"[^A-Za-z0-9_:\u4e00-\u9fa5]\\:\\s*[a-zA-Z\u4e00-\u9fa5][a-zA-Z0-9_\u4e00-\u9fa5]*(\\.[\\w\u4e00-\u9fa5]+)*(\\[\\d+\\])?\\s*");
+	public final static Pattern NOSQL_NAMED_PATTERN = Pattern.compile(
+			"(?i)\\@(param|blank|value)?\\(\\s*\\:\\s*[a-zA-Z\u4e00-\u9fa5][a-zA-Z0-9_\u4e00-\u9fa5]*(\\.[\\w\u4e00-\u9fa5]+)*(\\[\\d+\\])?\\s*\\)");
 
 	// mysql8 支持 with recursive cte as
 	// postgresql12 支持materialized 物化
@@ -168,6 +179,11 @@ public class SqlToyConstants {
 	 * 忽视空记录
 	 */
 	public final static Pattern IGNORE_EMPTY_REGEX = Pattern.compile("(?i)\\#ignore_all_null_set\\#");
+
+	/**
+	 * 判断sql中是否存在@include(sqlId)的表达式
+	 */
+	public final static Pattern INCLUDE_PATTERN = Pattern.compile("(?i)\\@include\\([\\w\\W]*\\)");
 
 	/**
 	 * @todo 解析模板中的参数
@@ -214,14 +230,6 @@ public class SqlToyConstants {
 			return result;
 		}
 		return defaultValue;
-	}
-
-	/**
-	 * @todo 获取缓存翻译默认过期时长(秒)
-	 * @return
-	 */
-	public static int getCacheExpireSeconds() {
-		return Integer.parseInt(getKeyValue("sqltoy.translate.cache.expire.seconds", "3600"));
 	}
 
 	/**
@@ -328,7 +336,7 @@ public class SqlToyConstants {
 	public static String getDefaultValue(Integer dbType, String defaultValue) {
 		String realDefault = getKeyValue(defaultValue);
 		if (realDefault == null) {
-			if (defaultValue.toUpperCase().equals("CURRENT TIMESTAMP")) {
+			if ("CURRENT TIMESTAMP".equals(defaultValue.toUpperCase())) {
 				return "CURRENT_TIMESTAMP";
 			}
 			return defaultValue;

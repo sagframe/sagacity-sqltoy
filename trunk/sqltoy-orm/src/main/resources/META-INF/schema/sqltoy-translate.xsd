@@ -40,6 +40,13 @@
 				</xsd:documentation>
 			</xsd:annotation>
 		</xsd:attribute>
+		<xsd:attribute name="i18n" type="xsd:string">
+			<xsd:annotation>
+				<xsd:documentation>
+				<![CDATA[example:zh_cn:1,en_us:2]]>
+				</xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
 	</xsd:attributeGroup>
 	<xsd:attributeGroup name="sqlToyTranslateUpdater">
 		<xsd:attribute name="cache" type="xsd:string"
@@ -184,6 +191,7 @@
 									<xsd:sequence>
 										<xsd:element name="sql" type="xsd:string" />
 									</xsd:sequence>
+									<xsd:attribute name="id" type="xsd:string" />
 									<xsd:attribute name="sql" type="xsd:string" />
 									<xsd:attribute name="check-frequency"
 										type="xsd:string" />
@@ -194,6 +202,7 @@
 							<xsd:element name="service-checker" minOccurs="0"
 								maxOccurs="unbounded">
 								<xsd:complexType mixed="true">
+									<xsd:attribute name="id" type="xsd:string" />
 									<xsd:attribute name="service" type="xsd:string"
 										use="required" />
 									<xsd:attribute name="method" type="xsd:string"
@@ -205,6 +214,7 @@
 							<xsd:element name="rest-checker" minOccurs="0"
 								maxOccurs="unbounded">
 								<xsd:complexType mixed="true">
+									<xsd:attribute name="id" type="xsd:string" />
 									<xsd:attribute name="url" type="xsd:string"
 										use="required" />
 									<xsd:attribute name="check-frequency"

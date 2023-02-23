@@ -257,12 +257,14 @@ public class CollectionUtil {
 		}
 		int beginIndex = 0;
 		int addCount = 0;
-		Object compareId;
+		Object idValue, pidValue;
 		while (treeList.size() != 0) {
 			addCount = 0;
-			compareId = treeIdAndPidGet.getIdAndPid(result.get(beginIndex))[0];
+			// id
+			idValue = treeIdAndPidGet.getIdAndPid(result.get(beginIndex))[0];
 			for (int i = 0; i < treeList.size(); i++) {
-				if (BeanUtil.equalsIgnoreType(treeIdAndPidGet.getIdAndPid(treeList.get(i))[1], compareId, false)) {
+				pidValue = treeIdAndPidGet.getIdAndPid(treeList.get(i))[1];
+				if (idValue.equals(pidValue)) {
 					result.add(beginIndex + addCount + 1, treeList.get(i));
 					treeList.remove(i);
 					addCount++;
@@ -796,7 +798,7 @@ public class CollectionUtil {
 					// 汇总计算
 					calculateTotal(row, groupMeta);
 				} else {
-					//参与计算的行>1 或 单行也计算
+					// 参与计算的行>1 或 单行也计算
 					if (groupMeta.getSummaryCols()[0].getRowCount() > 1 || !skipSingleRowSummary) {
 						sumRows = createSummaryRow(preRow, groupMeta, linkSign);
 						// 插入汇总行(可能存在sum、ave 两行数据)
@@ -901,7 +903,7 @@ public class CollectionUtil {
 		List aveList = null;
 		// 平均和汇总分两行展示
 		if (rowSize == 2) {
-			if (groupMeta.getSumSite().equals("top")) {
+			if ("top".equals(groupMeta.getSumSite())) {
 				sumList = result.get(0);
 				aveList = result.get(1);
 			} else {
@@ -915,7 +917,7 @@ public class CollectionUtil {
 			// 单行，平均和汇总共一行数据
 			sumList = result.get(0);
 			if (groupMeta.getSummaryType() == 3) {
-				if (groupMeta.getSumSite().equals("left")) {
+				if ("left".equals(groupMeta.getSumSite())) {
 					sumList.set(labelIndex, groupMeta.getSumTitle() + linkSign + groupMeta.getAverageTitle());
 				} else {
 					sumList.set(labelIndex, groupMeta.getAverageTitle() + linkSign + groupMeta.getSumTitle());
@@ -968,7 +970,7 @@ public class CollectionUtil {
 						sumStr = sumValue.toPlainString();
 						aveStr = aveValue.toPlainString();
 					}
-					if (groupMeta.getSumSite().equals("left")) {
+					if ("left".equals(groupMeta.getSumSite())) {
 						// {总计 / 平均 } 或 { -- / 平均 } 风格
 						sumList.set(colMeta.getColIndex(), sumStr + linkSign + aveStr);
 					} else {
@@ -1003,7 +1005,6 @@ public class CollectionUtil {
 		} else {
 			newResultRowCnt = colIndexs.length;
 		}
-
 		// 构造结果集
 		Object[][] resultAry = new Object[newResultRowCnt][data.size()];
 		Object[] rowAry = null;
@@ -1062,44 +1063,44 @@ public class CollectionUtil {
 		}
 		String type = argType.toLowerCase();
 		Object[] result = null;
-		if (type.equals("string")) {
+		if ("string".equals(type)) {
 			result = new String[values.length];
-		} else if (type.equals("int") || type.equals("integer")) {
+		} else if ("int".equals(type) || "integer".equals(type)) {
 			result = new Integer[values.length];
-		} else if (type.equals("long")) {
+		} else if ("long".equals(type)) {
 			result = new Long[values.length];
-		} else if (type.equals("date")) {
+		} else if ("date".equals(type)) {
 			result = new Date[values.length];
-		} else if (type.equals("boolean")) {
+		} else if ("boolean".equals(type)) {
 			result = new Boolean[values.length];
-		} else if (type.equals("double")) {
+		} else if ("double".equals(type)) {
 			result = new Double[values.length];
-		} else if (type.equals("float")) {
+		} else if ("float".equals(type)) {
 			result = new Float[values.length];
-		} else if (type.equals("short")) {
+		} else if ("short".equals(type)) {
 			result = new Short[values.length];
-		} else if (type.equals("java.lang.class") || type.equals("class")) {
+		} else if ("java.lang.class".equals(type) || "class".equals(type)) {
 			result = new Class[values.length];
 		}
 		for (int i = 0; i < result.length; i++) {
 			if (values[i] != null) {
-				if (type.equals("string")) {
+				if ("string".equals(type)) {
 					result[i] = values[i];
-				} else if (type.equals("int") || type.equals("integer")) {
+				} else if ("int".equals(type) || "integer".equals(type)) {
 					result[i] = Integer.valueOf(values[i]);
-				} else if (type.equals("long")) {
+				} else if ("long".equals(type)) {
 					result[i] = Long.valueOf(values[i]);
-				} else if (type.equals("date")) {
+				} else if ("date".equals(type)) {
 					result[i] = DateUtil.parseString(values[i]);
-				} else if (type.equals("boolean")) {
+				} else if ("boolean".equals(type)) {
 					result[i] = Boolean.parseBoolean(values[i]);
-				} else if (type.equals("double")) {
+				} else if ("double".equals(type)) {
 					result[i] = Double.valueOf(values[i]);
-				} else if (type.equals("float")) {
+				} else if ("float".equals(type)) {
 					result[i] = Float.valueOf(values[i]);
-				} else if (type.equals("short")) {
+				} else if ("short".equals(type)) {
 					result[i] = Short.valueOf(values[i]);
-				} else if (type.equals("java.lang.class") || type.equals("class")) {
+				} else if ("java.lang.class".equals(type) || "class".equals(type)) {
 					try {
 						result[i] = Class.forName(values[i]);
 					} catch (ClassNotFoundException e) {

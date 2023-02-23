@@ -87,4 +87,23 @@ public class MacroIfLogicTest {
 			System.err.println("[" + str + "]");
 		}
 	}
+
+
+	@Test
+	public void testStartsWith() {
+		String sql = ":status startswith 'a10'";
+		List params = new ArrayList();
+		params.add("a1011");
+		boolean result = MacroIfLogic.evalLogic(sql, params, 0, params.size());
+		assertEquals(result, true);
+	}
+
+	@Test
+	public void testEndsWith() {
+		String sql = ":status endswith '011'";
+		List params = new ArrayList();
+		params.add("a1011");
+		boolean result = MacroIfLogic.evalLogic(sql, params, 0, params.size());
+		assertEquals(result, true);
+	}
 }

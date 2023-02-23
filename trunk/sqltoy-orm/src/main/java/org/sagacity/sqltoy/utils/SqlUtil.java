@@ -41,6 +41,7 @@ import org.sagacity.sqltoy.callback.InsertRowCallbackHandler;
 import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
+import org.sagacity.sqltoy.config.model.DataType;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.model.TreeTableModel;
 import org.sagacity.sqltoy.plugins.TypeHandler;
@@ -118,11 +119,9 @@ public class SqlUtil {
 	 * @param property   :POJO property
 	 * @param isChar     :in 是否要加单引号
 	 * @return:example:1,2,3或'1','2','3'
-	 * @throws Exception
 	 */
 	@Deprecated
-	public static String combineQueryInStr(Object conditions, Integer colIndex, String property, boolean isChar)
-			throws Exception {
+	public static String combineQueryInStr(Object conditions, Integer colIndex, String property, boolean isChar) {
 		StringBuilder conditons = new StringBuilder(64);
 		String flag = "";
 		// 是否是字符类型
@@ -276,15 +275,30 @@ public class SqlUtil {
 		// jdbc部分数据库赋null值时必须要指定数据类型
 		if (null == paramValue) {
 			if (jdbcType != java.sql.Types.NULL) {
-				if (typeHandler != null) {
-					if (typeHandler.setNull(pst, paramIndex, jdbcType)) {
-						return;
-					}
+				if (typeHandler != null && typeHandler.setNull(dbType, pst, paramIndex, jdbcType)) {
+					return;
 				}
 				// postgresql bytea类型需要统一处理成BINARY
-				if (jdbcType == java.sql.Types.BLOB
-						&& (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB)) {
-					pst.setNull(paramIndex, java.sql.Types.BINARY);
+				if (jdbcType == java.sql.Types.BLOB) {
+					if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB) {
+						pst.setNull(paramIndex, java.sql.Types.BINARY);
+					} else {
+						pst.setNull(paramIndex, jdbcType);
+					}
+				} else if (jdbcType == java.sql.Types.CLOB) {
+					if (DBType.ORACLE == dbType || DBType.DB2 == dbType || DBType.OCEANBASE == dbType
+							|| DBType.ORACLE11 == dbType || DBType.DM == dbType) {
+						pst.setNull(paramIndex, jdbcType);
+					} else {
+						pst.setNull(paramIndex, java.sql.Types.VARCHAR);
+					}
+				} else if (jdbcType == java.sql.Types.NCLOB) {
+					if (DBType.ORACLE == dbType || DBType.DB2 == dbType || DBType.OCEANBASE == dbType
+							|| DBType.ORACLE11 == dbType || DBType.DM == dbType) {
+						pst.setNull(paramIndex, jdbcType);
+					} else {
+						pst.setNull(paramIndex, java.sql.Types.NVARCHAR);
+					}
 				} else {
 					pst.setNull(paramIndex, jdbcType);
 				}
@@ -294,22 +308,31 @@ public class SqlUtil {
 			return;
 		}
 		// 自定义类型处理器，完成setValue处理
-		if (typeHandler != null) {
-			if (typeHandler.setValue(pst, paramIndex, jdbcType, paramValue)) {
-				return;
-			}
+		if (typeHandler != null && typeHandler.setValue(dbType, pst, paramIndex, jdbcType, paramValue)) {
+			return;
 		}
 		String tmpStr;
 		if (paramValue instanceof java.lang.String) {
 			tmpStr = (String) paramValue;
+			// clob 类型只有oracle、db2、dm、oceanBase等数据库支持
 			if (jdbcType == java.sql.Types.CLOB) {
-				Clob clob = conn.createClob();
-				clob.setString(1, tmpStr);
-				pst.setClob(paramIndex, clob);
+				if (DBType.ORACLE == dbType || DBType.DB2 == dbType || DBType.OCEANBASE == dbType
+						|| DBType.ORACLE11 == dbType || DBType.DM == dbType) {
+					Clob clob = conn.createClob();
+					clob.setString(1, tmpStr);
+					pst.setClob(paramIndex, clob);
+				} else {
+					pst.setString(paramIndex, tmpStr);
+				}
 			} else if (jdbcType == java.sql.Types.NCLOB) {
-				NClob nclob = conn.createNClob();
-				nclob.setString(1, tmpStr);
-				pst.setNClob(paramIndex, nclob);
+				if (DBType.ORACLE == dbType || DBType.DB2 == dbType || DBType.OCEANBASE == dbType
+						|| DBType.ORACLE11 == dbType || DBType.DM == dbType) {
+					NClob nclob = conn.createNClob();
+					nclob.setString(1, tmpStr);
+					pst.setNClob(paramIndex, nclob);
+				} else {
+					pst.setString(paramIndex, tmpStr);
+				}
 			} else {
 				pst.setString(paramIndex, tmpStr);
 			}
@@ -321,6 +344,8 @@ public class SqlUtil {
 			pst.setBigDecimal(paramIndex, (BigDecimal) paramValue);
 		} else if (paramValue instanceof java.time.LocalDate) {
 			pst.setDate(paramIndex, java.sql.Date.valueOf((LocalDate) paramValue));
+		} else if (paramValue instanceof java.sql.Timestamp) {
+			pst.setTimestamp(paramIndex, (java.sql.Timestamp) paramValue);
 		} else if (paramValue instanceof java.util.Date) {
 			if (dbType == DBType.CLICKHOUSE) {
 				pst.setDate(paramIndex, new java.sql.Date(((java.util.Date) paramValue).getTime()));
@@ -329,8 +354,6 @@ public class SqlUtil {
 			}
 		} else if (paramValue instanceof java.math.BigInteger) {
 			pst.setBigDecimal(paramIndex, new BigDecimal(((BigInteger) paramValue)));
-		} else if (paramValue instanceof java.sql.Timestamp) {
-			pst.setTimestamp(paramIndex, (java.sql.Timestamp) paramValue);
 		} else if (paramValue instanceof java.lang.Double) {
 			pst.setDouble(paramIndex, ((Double) paramValue));
 		} else if (paramValue instanceof java.lang.Long) {
@@ -433,16 +456,16 @@ public class SqlUtil {
 		Method[] setMethods = BeanUtil.matchSetMethods(voClass, fields);
 		// set方法对应参数的类型,并全部转为小写
 		String[] propTypes = new String[setMethods.length];
+		int[] propTypeValues = new int[setMethods.length];
 		Class[] genericTypes = new Class[setMethods.length];
 		Type[] types;
 		for (int i = 0; i < propTypes.length; i++) {
 			if (setMethods[i] != null) {
 				propTypes[i] = setMethods[i].getParameterTypes()[0].getTypeName();
+				propTypeValues[i] = DataType.getType(propTypes[i]);
 				types = setMethods[i].getGenericParameterTypes();
-				if (types.length > 0) {
-					if (types[0] instanceof ParameterizedType) {
-						genericTypes[i] = (Class) ((ParameterizedType) types[0]).getActualTypeArguments()[0];
-					}
+				if (types.length > 0 && (types[0] instanceof ParameterizedType)) {
+					genericTypes[i] = (Class) ((ParameterizedType) types[0]).getActualTypeArguments()[0];
 				}
 			}
 		}
@@ -450,8 +473,8 @@ public class SqlUtil {
 		// 循环通过java reflection将rs中的值映射到VO中
 		Object rowData;
 		while (rs.next()) {
-			rowData = reflectResultRowToVOClass(typeHandler, decryptHandler, rs, columnNames, setMethods, propTypes,
-					genericTypes, voClass, ignoreAllEmptySet);
+			rowData = reflectResultRowToVOClass(typeHandler, decryptHandler, rs, columnNames, setMethods,
+					propTypeValues, propTypes, genericTypes, voClass, ignoreAllEmptySet);
 			if (rowData != null) {
 				resultList.add(rowData);
 			}
@@ -484,7 +507,8 @@ public class SqlUtil {
 	 * @param rs
 	 * @param columnLabels
 	 * @param setMethods
-	 * @param propTypes
+	 * @param propTypeValues    对应类型int值
+	 * @param propTypes         没有做大小写处理
 	 * @param genericTypes
 	 * @param voClass
 	 * @param ignoreAllEmptySet
@@ -492,8 +516,8 @@ public class SqlUtil {
 	 * @throws Exception
 	 */
 	private static Object reflectResultRowToVOClass(TypeHandler typeHandler, DecryptHandler decryptHandler,
-			ResultSet rs, String[] columnLabels, Method[] setMethods, String[] propTypes, Class[] genericTypes,
-			Class voClass, boolean ignoreAllEmptySet) throws Exception {
+			ResultSet rs, String[] columnLabels, Method[] setMethods, int[] propTypeValues, String[] propTypes,
+			Class[] genericTypes, Class voClass, boolean ignoreAllEmptySet) throws Exception {
 		// 根据匹配的字段通过java reflection将rs中的值映射到VO中
 		Object bean = voClass.getDeclaredConstructor().newInstance();
 		Object fieldValue;
@@ -502,10 +526,12 @@ public class SqlUtil {
 		// 已经小写
 		String typeName;
 		String label;
+		int typeValue;
 		for (int i = 0, n = columnLabels.length; i < n; i++) {
 			label = columnLabels[i];
 			method = setMethods[i];
 			typeName = propTypes[i];
+			typeValue = propTypeValues[i];
 			if (method != null) {
 				fieldValue = rs.getObject(label);
 				if (null != fieldValue) {
@@ -513,7 +539,8 @@ public class SqlUtil {
 						fieldValue = decryptHandler.decrypt(label, fieldValue);
 					}
 					allNull = false;
-					method.invoke(bean, BeanUtil.convertType(typeHandler, fieldValue, typeName, genericTypes[i]));
+					method.invoke(bean,
+							BeanUtil.convertType(typeHandler, fieldValue, typeValue, typeName, genericTypes[i]));
 				}
 			}
 		}
@@ -545,6 +572,7 @@ public class SqlUtil {
 	 * @param rs
 	 * @param preparedStatementResultHandler
 	 * @return
+	 * @throws Exception
 	 */
 	public static Object preparedStatementProcess(Object userData, PreparedStatement pst, ResultSet rs,
 			PreparedStatementResultHandler preparedStatementResultHandler) throws Exception {
@@ -577,6 +605,7 @@ public class SqlUtil {
 	 * @param rs
 	 * @param callableStatementResultHandler
 	 * @return
+	 * @throws Exception
 	 */
 	public static Object callableStatementProcess(Object userData, CallableStatement pst, ResultSet rs,
 			CallableStatementResultHandler callableStatementResultHandler) throws Exception {
@@ -1550,7 +1579,7 @@ public class SqlUtil {
 		}
 		String key = entityMeta.getTableName() + "_" + sql;
 		// 从缓存中直接获取,避免每次都处理提升效率
-		if (convertSqlMap.contains(key)) {
+		if (convertSqlMap.containsKey(key)) {
 			return convertSqlMap.get(key);
 		}
 		String[] fields = entityMeta.getFieldsArray();

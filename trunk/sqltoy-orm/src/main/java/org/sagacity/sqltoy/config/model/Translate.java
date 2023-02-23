@@ -116,4 +116,11 @@ public class Translate implements Serializable {
 	public TranslateExtend getExtend() {
 		return extend;
 	}
+
+	public Translate clone() {
+		Translate result = new Translate(getExtend().cache);
+		result.extend = getExtend().clone();
+		return result;
+	}
+
 }

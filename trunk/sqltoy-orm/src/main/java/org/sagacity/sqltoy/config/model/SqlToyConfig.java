@@ -174,6 +174,11 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	private IgnoreCaseSet decryptColumns;
 
 	/**
+	 * sql中是否包含@include(sqlId) sql片段嵌入
+	 */
+	private boolean hasIncludeSql = false;
+
+	/**
 	 * @return the hasUnion
 	 */
 	public boolean isHasUnion() {
@@ -199,7 +204,7 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	private PageOptimize pageOptimize;
 
 	/**
-	 * debug模式下是否打印，通过sql注释中增加#not_print#或 #not_debug#进行关闭
+	 * 是否打印输出sql，通过sql注释中增加#not_print#或 #not_debug#进行关闭
 	 */
 	private Boolean showSql;
 
@@ -278,7 +283,7 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	}
 
 	/**
-	 * @param hasFastPage the hasFastPage to set
+	 * @param hasFast the hasFastPage to set
 	 */
 	public void setHasFast(boolean hasFast) {
 		this.hasFast = hasFast;
@@ -313,7 +318,7 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	}
 
 	/**
-	 * @param filterMap the filterMap to set
+	 * @param paramFilters the filterMap to set
 	 */
 	public void addFilters(List<ParamFilterModel> paramFilters) {
 		if (paramFilters != null && !paramFilters.isEmpty()) {
@@ -566,6 +571,7 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 		this.formatModels = formatModels;
 	}
 
+	@Override
 	public SqlToyConfig clone() {
 		try {
 			return (SqlToyConfig) super.clone();
@@ -626,7 +632,7 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 
 	/**
 	 * @TODO 根据方言生成不同的sql语句
-	 * @param type
+	 * @param type       如:sql、fastPage等
 	 * @param sqlContent
 	 * @param dialect
 	 * @return
@@ -639,7 +645,7 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 			return sqlContent;
 		}
 		String key = dialect.concat(".").concat(type);
-		if (!dialectSqlMap.contains(key)) {
+		if (!dialectSqlMap.containsKey(key)) {
 			String dialectSql = FunctionUtils.getDialectSql(sqlContent, dialect);
 			// 保留字处理
 			dialectSql = ReservedWordsUtil.convertSql(dialectSql, DataSourceUtils.getDBType(dialect));
@@ -733,6 +739,14 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 
 	public void setDecryptColumns(IgnoreCaseSet decryptColumns) {
 		this.decryptColumns = decryptColumns;
+	}
+
+	public boolean isHasIncludeSql() {
+		return hasIncludeSql;
+	}
+
+	public void setHasIncludeSql(boolean hasIncludeSql) {
+		this.hasIncludeSql = hasIncludeSql;
 	}
 
 }

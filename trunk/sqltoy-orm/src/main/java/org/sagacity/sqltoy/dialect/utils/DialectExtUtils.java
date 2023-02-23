@@ -3,11 +3,9 @@
  */
 package org.sagacity.sqltoy.dialect.utils;
 
-import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Date;
-import java.util.regex.Pattern;
 
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.config.model.EntityMeta;
@@ -24,13 +22,9 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @description 将原本DialectUtils中的部分功能抽离出来,从而避免DialectUtils跟一些类之间的互相调用
  * @author zhongxuchen
  * @version v1.0, Date:2020年7月30日
- * @modify 2020年7月30日,修改说明
+ * @modify 2022-10-19 修改processDefaultValue修复oracle、db2日期类型的支持
  */
 public class DialectExtUtils {
-	/**
-	 * 判断日期格式
-	 */
-	public static final Pattern DATE_PATTERN = Pattern.compile("(\\:|\\-|\\.|\\/|\\s+)?\\d+");
 
 	/**
 	 * @todo 产生对象对应的insert sql语句
@@ -124,17 +118,16 @@ public class DialectExtUtils {
 	}
 
 	/**
-	 * @todo 统一对表字段默认值进行处理
+	 * @todo 统一对表字段默认值进行处理,主要针对merge into 等sql语句
 	 * @param sql
 	 * @param dbType
-	 * @param fieldType
+	 * @param fieldMeta
 	 * @param defaultValue
 	 */
-	public static void processDefaultValue(StringBuilder sql, int dbType, int fieldType, String defaultValue) {
-		if (fieldType == java.sql.Types.CHAR || fieldType == java.sql.Types.CLOB || fieldType == java.sql.Types.VARCHAR
-				|| fieldType == java.sql.Types.NCHAR || fieldType == java.sql.Types.NVARCHAR
-				|| fieldType == java.sql.Types.LONGVARCHAR || fieldType == java.sql.Types.LONGNVARCHAR
-				|| fieldType == java.sql.Types.NCLOB) {
+	public static void processDefaultValue(StringBuilder sql, int dbType, FieldMeta fieldMeta, String defaultValue) {
+		// EntityManager解析时已经小写化处理
+		String fieldType = fieldMeta.getFieldType();
+		if ("java.lang.string".equals(fieldType)) {
 			if (!defaultValue.startsWith("'")) {
 				sql.append("'");
 			}
@@ -148,14 +141,27 @@ public class DialectExtUtils {
 				sql.append(tmpValue);
 			}
 			// 时间格式,避免默认日期没有单引号问题
-			else if (fieldType == java.sql.Types.TIME || fieldType == java.sql.Types.DATE
-					|| fieldType == java.sql.Types.TIME_WITH_TIMEZONE || fieldType == java.sql.Types.TIMESTAMP
-					|| fieldType == java.sql.Types.TIMESTAMP_WITH_TIMEZONE) {
-				if (StringUtil.matches(tmpValue, DATE_PATTERN)) {
-					sql.append("'").append(tmpValue).append("'");
-				} else {
-					sql.append(tmpValue);
+			else if ("java.time.localdate".equals(fieldType) || "java.time.localdatetime".equals(fieldType)
+					|| "java.time.localtime".equals(fieldType) || "java.util.date".equals(fieldType)
+					|| "java.sql.date".equals(fieldType) || "java.sql.time".equals(fieldType)
+					|| "java.sql.timestamp".equals(fieldType)) {
+				String dateStr = "'" + tmpValue + "'";
+				// oracle、db2支持merge into场景(sqlserver具有自行转换能力，无需进行格式转换)
+				if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DB2) {
+					if ("java.time.localtime".equals(fieldType) || "java.sql.time".equals(fieldType)) {
+						if (dbType == DBType.DB2) {
+							dateStr = "time(" + dateStr + ")";
+						} else {
+							// oracle 没有time类型,因此本行的逻辑实际不会生效
+							dateStr = "to_date(" + dateStr + ",'HH24:mi:ss')";
+						}
+					} else if ("java.time.localdate".equals(fieldType)) {
+						dateStr = "to_date(" + dateStr + ",'yyyy-MM-dd')";
+					} else {
+						dateStr = "to_date(" + dateStr + ",'yyyy-MM-dd HH24:mi:ss')";
+					}
 				}
+				sql.append(dateStr);
 			} else {
 				sql.append(tmpValue);
 			}
@@ -421,10 +427,10 @@ public class DialectExtUtils {
 					return DateUtil.formatDate(unifyFieldValue, DateUtil.FORMAT.DATETIME_HORIZONTAL);
 				}
 				// 统一传参数值为日期类型，但数据库中是数字或字符串类型
-				if ((unifyFieldValue instanceof Date) || (unifyFieldValue instanceof Timestamp)
-						|| (unifyFieldValue instanceof LocalDate) || (unifyFieldValue instanceof LocalDateTime)) {
+				if ((unifyFieldValue instanceof Date) || (unifyFieldValue instanceof LocalDate)
+						|| (unifyFieldValue instanceof LocalDateTime)) {
 					if ("java.lang.integer".equals(fieldType) || "int".equals(fieldType)) {
-						return DateUtil.formatDate(unifyFieldValue, "yyyyMMdd");
+						return DateUtil.formatDate(unifyFieldValue, DateUtil.FORMAT.DATE_8CHAR);
 					} else if ("java.lang.long".equals(fieldType) || "java.math.biginteger".equals(fieldType)
 							|| "long".equals(fieldType)) {
 						return DateUtil.formatDate(unifyFieldValue, "yyyyMMddHHmmss");
@@ -436,7 +442,7 @@ public class DialectExtUtils {
 							return DateUtil.formatDate(unifyFieldValue, "yyyyMMddHHmmss");
 						}
 						if (fieldMeta.getLength() >= 8) {
-							return DateUtil.formatDate(unifyFieldValue, "yyyyMMdd");
+							return DateUtil.formatDate(unifyFieldValue, DateUtil.FORMAT.DATE_8CHAR);
 						}
 					}
 				}

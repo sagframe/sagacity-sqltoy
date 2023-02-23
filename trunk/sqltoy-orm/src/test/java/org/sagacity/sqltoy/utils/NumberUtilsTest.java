@@ -6,16 +6,29 @@ import org.junit.jupiter.api.Test;
 
 public class NumberUtilsTest {
 	@Test
-	public void testToEnglish()
-	{
-		BigDecimal value=new BigDecimal(207.98);
+	public void testToEnglish() {
+		BigDecimal value = new BigDecimal(207.98);
 		System.err.println(NumberUtil.convertToEnglishMoney(value));
+	}
+
+	@Test
+	public void testToMinuseEnglish() {
+		BigDecimal value = new BigDecimal(-209.98);
+		System.err.println(NumberUtil.convertToEnglishMoney(value));
+	}
+
+	@Test
+	public void testNumFmt() {
+		BigDecimal value = new BigDecimal(-209.98);
+		System.err.println(NumberUtil.format(value,"##,###.00"));
 	}
 	
 	@Test
-	public void testToMinuseEnglish()
-	{
-		BigDecimal value=new BigDecimal(-209.98);
-		System.err.println(NumberUtil.convertToEnglishMoney(value));
+	public void testNumFmtChina() {
+		BigDecimal value = new BigDecimal(209.98);
+		System.err.println(NumberUtil.toCapitalMoney(value));
+		
+		BigDecimal value1 = new BigDecimal(209);
+		System.err.println(NumberUtil.toCapitalMoney(value1));
 	}
 }

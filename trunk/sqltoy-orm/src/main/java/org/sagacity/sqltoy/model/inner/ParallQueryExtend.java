@@ -55,4 +55,9 @@ public class ParallQueryExtend implements Serializable {
 	 */
 	public Object[] values;
 
+	/**
+	 * 是否显示sql
+	 */
+	public Boolean showSql;
+
 }

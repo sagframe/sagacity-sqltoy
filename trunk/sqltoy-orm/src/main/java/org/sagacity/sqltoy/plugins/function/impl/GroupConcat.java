@@ -35,10 +35,11 @@ public class GroupConcat extends IFunction {
 		String sign = "','";
 		int matchIndex = StringUtil.matchIndex(tmp.toLowerCase(), separtorPattern);
 		if (matchIndex > 0) {
+			// "\\Wseparator\\W" 表达式长度11
 			sign = tmp.substring(matchIndex + 11).trim();
 		}
 		if (dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL15 || dialect == DBType.GAUSSDB) {
-			if (functionName.toLowerCase().equals("string_agg")) {
+			if ("string_agg".equals(functionName.toLowerCase())) {
 				return super.IGNORE;
 			}
 			// 原则上可以通过string_agg 但如果类型不是字符串就会报错
@@ -51,8 +52,8 @@ public class GroupConcat extends IFunction {
 				return " array_to_string(ARRAY_AGG(" + args[0] + ")," + sign + ") ";
 			}
 		}
-		if (dialect == DBType.MYSQL || dialect == DBType.TIDB || dialect == DBType.MYSQL57) {
-			if (functionName.toLowerCase().equals("group_concat")) {
+		if (dialect == DBType.MYSQL || dialect == DBType.TIDB || dialect == DBType.MYSQL57 || dialect == DBType.H2) {
+			if ("group_concat".equals(functionName.toLowerCase())) {
 				return super.IGNORE;
 			}
 			return " group_concat(" + args[0] + " separator " + args[1] + ") ";

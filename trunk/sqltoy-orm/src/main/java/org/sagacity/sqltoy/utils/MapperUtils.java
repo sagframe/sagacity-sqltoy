@@ -12,6 +12,7 @@ import java.util.Map;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.annotation.SqlToyFieldAlias;
 import org.sagacity.sqltoy.config.model.DTOEntityMapModel;
+import org.sagacity.sqltoy.config.model.DataType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,7 +21,8 @@ import org.slf4j.LoggerFactory;
  * @description 提供针对sqltoy的DTO到POJO、POJO到DTO的映射工具
  * @author zhongxuchen
  * @version v1.0,Date:2020-8-8
- * @modify data:2020-09-04 支持VO<->VO,DTO<->DTO,VO<->DTO 的互转
+ * @modify 2020-09-04 支持VO<->VO,DTO<->DTO,VO<->DTO 的互转
+ * @modify 2022-10-19 支持对象的多级父类属性的映射
  */
 public class MapperUtils {
 	/**
@@ -42,18 +44,19 @@ public class MapperUtils {
 	 * @param sqlToyContext
 	 * @param source
 	 * @param resultType
+	 * @param ignoreProperties
 	 * @return
 	 * @throws Exception
 	 */
-	public static <T extends Serializable> T map(SqlToyContext sqlToyContext, Serializable source, Class<T> resultType)
-			throws Exception {
-		if (source == null || resultType == null) {
-			throw new IllegalArgumentException("source 和 resultType 不能为null!");
+	public static <T extends Serializable> T map(SqlToyContext sqlToyContext, Serializable source, Class<T> resultType,
+			String... ignoreProperties) throws Exception {
+		if (source == null || (resultType == null || resultType.equals(Object.class))) {
+			throw new IllegalArgumentException("source 和 resultType 不能为null,且resultType不能为Object.class!");
 		}
 		// 转成List做统一处理
 		List<Serializable> sourceList = new ArrayList<Serializable>();
 		sourceList.add(source);
-		List<T> result = mapList(sqlToyContext, sourceList, resultType);
+		List<T> result = mapList(sqlToyContext, sourceList, resultType, ignoreProperties);
 		return result.get(0);
 	}
 
@@ -63,13 +66,14 @@ public class MapperUtils {
 	 * @param sqlToyContext
 	 * @param sourceList
 	 * @param resultType
+	 * @param ignoreProperties
 	 * @return
 	 * @throws Exception
 	 */
 	public static <T extends Serializable> List<T> mapList(SqlToyContext sqlToyContext, List<Serializable> sourceList,
-			Class<T> resultType) throws Exception {
-		if (sourceList == null || resultType == null) {
-			throw new IllegalArgumentException("sourceList 和 resultType 不能为null!");
+			Class<T> resultType, String... ignoreProperties) throws Exception {
+		if (sourceList == null || (resultType == null || resultType.equals(Object.class))) {
+			throw new IllegalArgumentException("sourceList 和 resultType 不能为null,且resultType不能为Object.class!");
 		}
 		if (sourceList.isEmpty()) {
 			return new ArrayList<T>();
@@ -90,6 +94,48 @@ public class MapperUtils {
 		else {
 			getMethods = mapModel.dtoGetMethods;
 			setMethods = mapModel.pojoSetMethods;
+		}
+		if (ignoreProperties != null && ignoreProperties.length > 0) {
+			List<Method> getRealMethods = new ArrayList<Method>();
+			List<Method> setRealMethods = new ArrayList<Method>();
+			String methodName;
+			String ignorePropLow;
+			Class paramType;
+			boolean skip;
+			List<String> props = new ArrayList<String>();
+			for (String ignoreProp : ignoreProperties) {
+				props.add(ignoreProp.toLowerCase());
+			}
+			// 以set方法为映射主体
+			for (int i = 0; i < setMethods.length; i++) {
+				if (setMethods[i] != null) {
+					methodName = setMethods[i].getName().toLowerCase();
+					paramType = setMethods[i].getParameterTypes()[0];
+					skip = false;
+					for (int j = 0; j < props.size(); j++) {
+						ignorePropLow = props.get(j);
+						if (methodName.equals("set".concat(ignorePropLow))
+								|| (ignorePropLow.startsWith("is") && paramType.equals(boolean.class)
+										&& methodName.equals("set".concat(ignorePropLow.substring(2))))) {
+							skip = true;
+							props.remove(j);
+							j--;
+							break;
+						}
+					}
+					if (!skip) {
+						getRealMethods.add(getMethods[i]);
+						setRealMethods.add(setMethods[i]);
+					}
+				}
+			}
+			if (setRealMethods.size() == 0) {
+				throw new IllegalArgumentException("最终映射对应的属性数量为零,请检查ignoreProperties是否正确,过滤了全部匹配属性!");
+			}
+			getMethods = new Method[setRealMethods.size()];
+			setMethods = new Method[setRealMethods.size()];
+			getRealMethods.toArray(getMethods);
+			setRealMethods.toArray(setMethods);
 		}
 		List dataSets = invokeGetValues(sourceList, getMethods);
 		return reflectListToBean(dataSets, resultType, setMethods);
@@ -177,34 +223,30 @@ public class MapperUtils {
 		DTOEntityMapModel result = new DTOEntityMapModel();
 		String fieldName;
 		HashMap<String, String> pojoPropsMap = new HashMap<String, String>();
-		// pojo
-		for (Field field : pojoClass.getDeclaredFields()) {
-			fieldName = field.getName();
-			pojoPropsMap.put(fieldName.toLowerCase(), fieldName);
-		}
-		// 父类
-		for (Field field : pojoClass.getSuperclass().getDeclaredFields()) {
-			fieldName = field.getName();
-			pojoPropsMap.put(fieldName.toLowerCase(), fieldName);
+		// pojo 以及父类
+		Class parentClass = pojoClass;
+		while (!parentClass.equals(Object.class)) {
+			for (Field field : parentClass.getDeclaredFields()) {
+				fieldName = field.getName();
+				pojoPropsMap.put(fieldName.toLowerCase(), fieldName);
+			}
+			parentClass = parentClass.getSuperclass();
 		}
 
 		// dto
 		List<String> dtoProps = new ArrayList<String>();
 		List<String> pojoProps = new ArrayList<String>();
-		for (Field field : dtoClass.getDeclaredFields()) {
-			fieldName = field.getName();
-			if (pojoPropsMap.containsKey(fieldName.toLowerCase())) {
-				dtoProps.add(fieldName);
-				pojoProps.add(pojoPropsMap.get(fieldName.toLowerCase()));
+		// dto以及其所有父类
+		parentClass = dtoClass;
+		while (!parentClass.equals(Object.class)) {
+			for (Field field : parentClass.getDeclaredFields()) {
+				fieldName = field.getName();
+				if (pojoPropsMap.containsKey(fieldName.toLowerCase())) {
+					dtoProps.add(fieldName);
+					pojoProps.add(pojoPropsMap.get(fieldName.toLowerCase()));
+				}
 			}
-		}
-		// 父类
-		for (Field field : dtoClass.getSuperclass().getDeclaredFields()) {
-			fieldName = field.getName();
-			if (pojoPropsMap.containsKey(fieldName.toLowerCase())) {
-				dtoProps.add(fieldName);
-				pojoProps.add(pojoPropsMap.get(fieldName.toLowerCase()));
-			}
+			parentClass = parentClass.getSuperclass();
 		}
 		// 模型赋值
 		result.dtoClassName = dtoClass.getName();
@@ -230,32 +272,37 @@ public class MapperUtils {
 		String aliasName;
 		SqlToyFieldAlias alias;
 		HashMap<String, String> pojoPropsMap = new HashMap<String, String>();
-		// pojo
-		for (Field field : pojoClass.getDeclaredFields()) {
-			fieldName = field.getName();
-			pojoPropsMap.put(fieldName.toLowerCase(), fieldName);
-		}
-		// 父类
-		for (Field field : pojoClass.getSuperclass().getDeclaredFields()) {
-			fieldName = field.getName();
-			pojoPropsMap.put(fieldName.toLowerCase(), fieldName);
+		// pojo 以及父类
+		Class parentClass = pojoClass;
+		while (!parentClass.equals(Object.class)) {
+			for (Field field : parentClass.getDeclaredFields()) {
+				fieldName = field.getName();
+				pojoPropsMap.put(fieldName.toLowerCase(), fieldName);
+			}
+			parentClass = parentClass.getSuperclass();
 		}
 
 		// dto
 		List<String> dtoProps = new ArrayList<String>();
 		List<String> pojoProps = new ArrayList<String>();
-		for (Field field : dtoClass.getDeclaredFields()) {
-			fieldName = field.getName();
-			aliasName = fieldName;
-			alias = field.getAnnotation(SqlToyFieldAlias.class);
-			if (alias != null) {
-				aliasName = alias.value();
+		// dto 和dto父类
+		parentClass = dtoClass;
+		while (!parentClass.equals(Object.class)) {
+			for (Field field : parentClass.getDeclaredFields()) {
+				fieldName = field.getName();
+				aliasName = fieldName;
+				alias = field.getAnnotation(SqlToyFieldAlias.class);
+				if (alias != null) {
+					aliasName = alias.value();
+				}
+				if (pojoPropsMap.containsKey(aliasName.toLowerCase())) {
+					dtoProps.add(fieldName);
+					pojoProps.add(pojoPropsMap.get(aliasName.toLowerCase()));
+				}
 			}
-			if (pojoPropsMap.containsKey(aliasName.toLowerCase())) {
-				dtoProps.add(fieldName);
-				pojoProps.add(pojoPropsMap.get(aliasName.toLowerCase()));
-			}
+			parentClass = parentClass.getSuperclass();
 		}
+
 		// 没有匹配的属性
 		if (dtoProps.isEmpty()) {
 			throw new IllegalArgumentException(
@@ -288,10 +335,12 @@ public class MapperUtils {
 		List result = new ArrayList();
 		int indexSize = realMethods.length;
 		String[] methodTypes = new String[indexSize];
+		int[] methodTypeValues = new int[indexSize];
 		// 自动适配属性的数据类型
 		for (int i = 0; i < indexSize; i++) {
 			if (null != realMethods[i]) {
 				methodTypes[i] = realMethods[i].getParameterTypes()[0].getTypeName();
+				methodTypeValues[i] = DataType.getType(methodTypes[i]);
 			}
 		}
 		int size;
@@ -309,7 +358,8 @@ public class MapperUtils {
 						if (cellData.getClass().getTypeName().equals(methodTypes[j])) {
 							realMethods[j].invoke(bean, cellData);
 						} else {
-							realMethods[j].invoke(bean, BeanUtil.convertType(cellData, methodTypes[j]));
+							realMethods[j].invoke(bean,
+									BeanUtil.convertType(cellData, methodTypeValues[j], methodTypes[j]));
 						}
 					}
 				}

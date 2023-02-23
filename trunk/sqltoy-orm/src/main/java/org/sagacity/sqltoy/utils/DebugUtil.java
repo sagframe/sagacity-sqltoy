@@ -6,7 +6,6 @@ import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Set;
 
 /**
  * @project sagacity-sqltoy
@@ -61,24 +60,6 @@ public class DebugUtil {
 				}
 			} else if (obj instanceof Collection) {
 				Collection tmp = (Collection) obj;
-				int index = 0;
-				int size = tmp.size();
-				for (Iterator iter = tmp.iterator(); iter.hasNext();) {
-					index++;
-					rowData = iter.next();
-					if (rowData instanceof Collection || rowData instanceof Object[]) {
-						out.println();
-						printAry(rowData, appendStr, false);
-					} else {
-						if (newLine) {
-							out.println(rowData);
-						} else {
-							out.print(rowData + (index == size ? "" : appendStr));
-						}
-					}
-				}
-			} else if (obj instanceof Set) {
-				Set tmp = (Set) obj;
 				int index = 0;
 				int size = tmp.size();
 				for (Iterator iter = tmp.iterator(); iter.hasNext();) {

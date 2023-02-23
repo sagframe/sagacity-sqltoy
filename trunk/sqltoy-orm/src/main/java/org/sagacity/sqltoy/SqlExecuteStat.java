@@ -2,6 +2,7 @@ package org.sagacity.sqltoy;
 
 import static java.lang.System.out;
 
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -15,10 +16,13 @@ import org.sagacity.sqltoy.config.model.SqlExecuteLog;
 import org.sagacity.sqltoy.config.model.SqlExecuteTrace;
 import org.sagacity.sqltoy.model.OverTimeSql;
 import org.sagacity.sqltoy.plugins.OverTimeSqlHandler;
+import org.sagacity.sqltoy.plugins.formater.SqlFormater;
 import org.sagacity.sqltoy.utils.DateUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.alibaba.ttl.TransmittableThreadLocal;
 
 /**
  * @project sagacity-sqltoy
@@ -47,11 +51,16 @@ public class SqlExecuteStat {
 	// 用于拟合sql中的条件值表达式(前后都以非字符和数字为依据目的是最大幅度的避免参数值里面存在问号,实际执行过程中这个问题已经被规避,但调试打印参数带入无法规避)
 	private final static Pattern ARG_PATTERN = Pattern.compile("\\W\\?\\W");
 
-	// 通过ThreadLocal 来保存进程数据
-	private static ThreadLocal<SqlExecuteTrace> threadLocal = new ThreadLocal<SqlExecuteTrace>();
+	// 通过ThreadLocal 来保存线程数据
+	private static ThreadLocal<SqlExecuteTrace> threadLocal = new TransmittableThreadLocal<SqlExecuteTrace>();
 
 	// sql执行超时处理器
 	public static OverTimeSqlHandler overTimeSqlHandler;
+
+	/**
+	 * sql格式化输出器(用于debug sql输出)
+	 */
+	private static SqlFormater sqlFormater;
 
 	/**
 	 * @todo 登记开始执行
@@ -90,6 +99,12 @@ public class SqlExecuteStat {
 		}
 	}
 
+	public static void setDialect(String dialect) {
+		if (threadLocal.get() != null) {
+			threadLocal.get().setDialect(dialect);
+		}
+	}
+
 	/**
 	 * @TODO 提供中间日志输出
 	 * @param topic
@@ -122,7 +137,7 @@ public class SqlExecuteStat {
 				sqlTrace.setOverTime(true);
 				sqlTrace.addLog("slowSql执行超时", "耗时(毫秒):{} >={} (阀值)!", runTime, printSqlTimeoutMillis);
 			} else {
-				sqlTrace.addLog("执行时长", "耗时:{} 毫秒 !", runTime);
+				sqlTrace.addLog("执行总时长", "耗时:{} 毫秒 !", runTime);
 			}
 			// 日志输出
 			printLogs(sqlTrace);
@@ -146,14 +161,12 @@ public class SqlExecuteStat {
 			errorLog = true;
 			reportStatus = "发生异常错误!";
 		}
-
 		if (!errorLog) {
 			// sql中已经标记了#not_debug# 表示无需输出日志(一般针对缓存检测、缓存加载等,避免这些影响业务日志)
 			if (!sqlTrace.isPrint()) {
 				return;
 			}
 		}
-
 		String uid = sqlTrace.getUid();
 		StringBuilder result = new StringBuilder();
 		String optType = sqlTrace.getType();
@@ -161,6 +174,7 @@ public class SqlExecuteStat {
 		result.append("\n/*|----------------------开始执行报告输出 --------------------------------------------------*/");
 		result.append("\n/*|任 务 ID: " + uid);
 		result.append("\n/*|执行结果: " + reportStatus);
+		result.append("\n/*|数据方言: " + sqlTrace.getDialect());
 		result.append("\n/*|执行类型: " + optType);
 		result.append("\n/*|代码定位: " + codeTrace);
 		if (sqlTrace.getId() != null) {
@@ -188,7 +202,13 @@ public class SqlExecuteStat {
 					result.append("\n/*|     save(All)|saveOrUpdate(All)|deleleAll|batchUpdate等不输出sql执行参数");
 				} else {
 					sql = fitSqlParams(content, args);
-					result.append("\n/*|     模拟入参后sql: ").append(sql);
+					// 对sql格式化输出
+					if (sqlFormater != null) {
+						sql = sqlFormater.format(sql, sqlTrace.getDialect());
+						result.append("\n/*|     模拟入参后sql:\n").append(sql);
+					} else {
+						result.append("\n/*|     模拟入参后sql:").append(sql);
+					}
 					result.append("\n/*|     sql参数: ");
 					if (args != null && args.length > 0) {
 						StringBuilder paramStr = new StringBuilder();
@@ -204,8 +224,8 @@ public class SqlExecuteStat {
 					}
 				}
 			} else {
-				result.append("\n/*|---- 过程: " + step + "," + topic
-						+ (content == null ? "" : ":" + StringUtil.fillArgs(content, args)));
+				result.append("\n/*|---- 过程: " + step + "," + (null == topic ? "" : topic)
+						+ (null == content ? "" : ":" + StringUtil.fillArgs(content, args)));
 			}
 		}
 		result.append("\n/*|----------------------完成执行报告输出 --------------------------------------------------*/");
@@ -236,11 +256,6 @@ public class SqlExecuteStat {
 		threadLocal.set(null);
 	}
 
-	public static void destroyNotLog() {
-		threadLocal.remove();
-		threadLocal.set(null);
-	}
-
 	/**
 	 * @param debug the debug to set
 	 */
@@ -257,6 +272,10 @@ public class SqlExecuteStat {
 	 */
 	public static void setPrintSqlTimeoutMillis(int printSqlTimeoutMillis) {
 		SqlExecuteStat.printSqlTimeoutMillis = printSqlTimeoutMillis;
+	}
+
+	public static void setSqlFormater(SqlFormater sqlFormater) {
+		SqlExecuteStat.sqlFormater = sqlFormater;
 	}
 
 	/**
@@ -286,6 +305,9 @@ public class SqlExecuteStat {
 				// 字符
 				if (paramValue instanceof CharSequence) {
 					lastSql.append("'" + paramValue + "'");
+				} // update 2022-11-3 timestamp显示毫秒级别
+				else if (paramValue instanceof Timestamp) {
+					lastSql.append("'" + DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss.SSS") + "'");
 				} else if (paramValue instanceof Date || paramValue instanceof LocalDateTime) {
 					lastSql.append("'" + DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss") + "'");
 				} else if (paramValue instanceof LocalDate) {
@@ -329,6 +351,8 @@ public class SqlExecuteStat {
 			value = array[i];
 			if (value instanceof CharSequence) {
 				result.append("'" + value + "'");
+			} else if (value instanceof Timestamp) {
+				result.append("'" + DateUtil.formatDate(value, "yyyy-MM-dd HH:mm:ss.SSS") + "'");
 			} else if (value instanceof Date || value instanceof LocalDateTime) {
 				result.append("'" + DateUtil.formatDate(value, "yyyy-MM-dd HH:mm:ss") + "'");
 			} else if (value instanceof LocalDate) {
@@ -394,9 +418,4 @@ public class SqlExecuteStat {
 		threadLocal.set(sqlTrace);
 	}
 
-	public static void mergeTrace(SqlExecuteTrace sqlTrace) {
-		if (sqlTrace != null) {
-			threadLocal.set(new SqlExecuteTrace(sqlTrace.getId(), sqlTrace.getType(), sqlTrace.isPrint()));
-		}
-	}
 }

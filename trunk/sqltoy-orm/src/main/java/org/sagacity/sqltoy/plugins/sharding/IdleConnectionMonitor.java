@@ -10,6 +10,7 @@ import java.sql.SQLException;
 
 import javax.sql.DataSource;
 
+import org.sagacity.sqltoy.integration.ConnectionFactory;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +32,7 @@ public class IdleConnectionMonitor extends Thread {
 	/**
 	 * spring 上下文容器
 	 */
-	private ApplicationContext applicationContext;
+	private ApplicationContext appContext;
 
 	private int[] weights;
 
@@ -39,15 +40,19 @@ public class IdleConnectionMonitor extends Thread {
 
 	private Integer intervalSeconds;
 
-	public IdleConnectionMonitor(ApplicationContext applicationContext, Object[][] dataSourceWeightConfig,
-			int[] weights, Integer delaySeconds, Integer intervalSeconds) {
-		this.applicationContext = applicationContext;
+	private ConnectionFactory connectionFactory;
+
+	public IdleConnectionMonitor(ApplicationContext appContext, ConnectionFactory connectionFactory,
+			Object[][] dataSourceWeightConfig, int[] weights, Integer delaySeconds, Integer intervalSeconds) {
+		this.appContext = appContext;
+		this.connectionFactory = connectionFactory;
 		this.dataSourceWeightConfig = dataSourceWeightConfig;
 		this.weights = weights;
 		this.delaySeconds = delaySeconds;
 		this.intervalSeconds = intervalSeconds;
 	}
 
+	@Override
 	public void run() {
 		// 延时
 		try {
@@ -65,10 +70,10 @@ public class IdleConnectionMonitor extends Thread {
 			int i = 0;
 			for (Object[] dataBase : dataSourceWeightConfig) {
 				try {
-					dataSource = (DataSource) applicationContext.getBean(dataBase[0].toString());
+					dataSource = (DataSource) appContext.getBean(dataBase[0].toString());
 					// 权重大于零且数据源不为null
 					if (((Integer) dataBase[1]).intValue() > 0 && null != dataSource) {
-						conn = org.springframework.jdbc.datasource.DataSourceUtils.getConnection(dataSource);
+						conn = connectionFactory.getConnection(dataSource);
 						pst = conn.prepareStatement(DataSourceUtils.getValidateQuery(conn));
 						rs = pst.executeQuery();
 						weights[i] = (Integer) dataBase[1];
@@ -95,7 +100,7 @@ public class IdleConnectionMonitor extends Thread {
 						}
 					}
 					if (dataSource != null) {
-						org.springframework.jdbc.datasource.DataSourceUtils.releaseConnection(conn, dataSource);
+						connectionFactory.releaseConnection(conn, dataSource);
 					}
 				}
 				i++;

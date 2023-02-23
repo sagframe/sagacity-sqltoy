@@ -17,8 +17,9 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 public class ToDate extends IFunction {
 	private static Pattern regex = Pattern.compile("(?i)\\W(to_date|date)\\(");
 
+	@Override
 	public String dialects() {
-		return "oracle,dm,mysql,sqlserver";
+		return "oracle,dm,mysql,sqlserver,h2";
 	}
 
 	/*
@@ -47,18 +48,29 @@ public class ToDate extends IFunction {
 			}
 		}
 		if (dialect == DBType.ORACLE || dialect == DBType.ORACLE11) {
-			if (args != null) {
-				if (args.length > 1) {
-					return wrapArgs("to_date", args);
-				} else {
-					if (args[0].length() > 12) {
-						return "to_date(" + args[0] + ",'yyyy-MM-dd HH:mm:ss')";
-					}else {
-						return "to_date(" + args[0] + ",'yyyy-MM-dd')";
-					}
-				}
-			}
-		}
+            if (args != null) {
+                if (args.length > 1) {
+                    return wrapArgs("to_date", args);
+                } else {
+                    if (args[0].length() > 12) {
+                        return "to_date(" + args[0] + ",'yyyy-MM-dd HH:mm:ss')";
+                    }else {
+                        return "to_date(" + args[0] + ",'yyyy-MM-dd')";
+                    }
+                }
+            }
+        }
+        if (dialect == DBType.H2) {
+            if (args != null) {
+                if (args != null && args.length == 1) {
+                    if (args[0].length() > 12) {
+                        return "formatdatetime(" + args[0] + ",'yyyy-MM-dd HH:mm:ss')";
+                    }else {
+                        return "formatdatetime(" + args[0] + ",'yyyy-MM-dd')";
+                    }
+                }
+            }
+        }
 		// 表示不做修改
 		return super.IGNORE;
 	}

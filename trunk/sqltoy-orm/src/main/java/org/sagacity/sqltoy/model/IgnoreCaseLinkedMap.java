@@ -56,8 +56,9 @@ public class IgnoreCaseLinkedMap<K, V> extends LinkedHashMap<K, V> {
 	 */
 	@Override
 	public void putAll(Map<? extends K, ? extends V> map) {
-		if (map == null || map.isEmpty())
+		if (map == null || map.isEmpty()) {
 			return;
+		}
 		Iterator<?> iter = map.entrySet().iterator();
 		while (iter.hasNext()) {
 			Map.Entry<K, V> entry = (Map.Entry<K, V>) iter.next();

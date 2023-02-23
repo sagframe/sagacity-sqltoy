@@ -390,7 +390,7 @@ public class MongoElasticUtils {
 			start = m.end();
 			method = groupStr.substring(1, groupStr.indexOf("(")).toLowerCase().trim();
 			value = paramValues[index];
-			if (method.equals("") || method.equals("param") || method.equals("value")) {
+			if ("".equals(method) || "param".equals(method) || "value".equals(method)) {
 				isAry = true;
 				if (value.getClass().isArray()) {
 					ary = CollectionUtil.convertArray(value);
@@ -503,7 +503,6 @@ public class MongoElasticUtils {
 	 * @param sqlToyConfig
 	 * @param resultSet
 	 * @param fields
-	 * @throws Exception
 	 */
 	public static void processTranslate(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, List resultSet,
 			String[] fields) {
@@ -516,6 +515,8 @@ public class MongoElasticUtils {
 			if (translateCache == null || translateCache.isEmpty()) {
 				logger.warn("mongo or elastic cache:{} has no data!{}", translateMap.keySet(), sqlToyConfig.getSql());
 			} else {
+				// i18n国际化处理
+				translateMap = ResultUtils.wrapI18nIndex(sqlToyContext.getTranslateManager(), translateMap);
 				translate(translateCache, translateMap, resultSet, null, fields);
 			}
 		}

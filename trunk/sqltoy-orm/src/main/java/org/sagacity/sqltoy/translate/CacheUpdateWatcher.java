@@ -4,13 +4,17 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
 import org.sagacity.sqltoy.translate.model.CacheCheckResult;
 import org.sagacity.sqltoy.translate.model.CheckerConfigModel;
 import org.sagacity.sqltoy.translate.model.TimeSection;
+import org.sagacity.sqltoy.translate.model.TranslateConfigModel;
 import org.sagacity.sqltoy.utils.DateUtil;
+import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,11 +39,6 @@ public class CacheUpdateWatcher extends Thread {
 	private ConcurrentHashMap<String, Long> lastCheckTime = new ConcurrentHashMap<String, Long>();
 
 	/**
-	 * 更新检测任务前缀
-	 */
-	private final String prefix = "checker_";
-
-	/**
 	 * 时间格式到秒级别(避免存在时间精度的差异)
 	 */
 	private final String dateFmt = DateUtil.FORMAT.DATETIME_HORIZONTAL;
@@ -47,11 +46,13 @@ public class CacheUpdateWatcher extends Thread {
 	/**
 	 * 更新检测器
 	 */
-	private List<CheckerConfigModel> updateCheckers;
+	private CopyOnWriteArrayList<CheckerConfigModel> updateCheckers;
 
 	private SqlToyContext sqlToyContext;
 
 	private TranslateCacheManager translateCacheManager;
+
+	private IgnoreKeyCaseMap<String, TranslateConfigModel> translateMap = null;
 
 	/**
 	 * 默认缓存刷新检测间隔时间(秒)
@@ -69,20 +70,14 @@ public class CacheUpdateWatcher extends Thread {
 	private int deviationSeconds = 0;
 
 	public CacheUpdateWatcher(SqlToyContext sqlToyContext, TranslateCacheManager translateCacheManager,
-			List<CheckerConfigModel> updateCheckers, int delaySeconds, int deviationSeconds) {
+			IgnoreKeyCaseMap<String, TranslateConfigModel> translateMap,
+			CopyOnWriteArrayList<CheckerConfigModel> updateCheckers, int delaySeconds, int deviationSeconds) {
 		this.sqlToyContext = sqlToyContext;
 		this.translateCacheManager = translateCacheManager;
+		this.translateMap = translateMap;
 		this.updateCheckers = updateCheckers;
 		this.delaySeconds = delaySeconds;
 		this.deviationSeconds = deviationSeconds;
-		// 初始化检测时间
-		if (updateCheckers != null && !updateCheckers.isEmpty()) {
-			Long checkTime = DateUtil.parse(System.currentTimeMillis(), dateFmt).getTime();
-			for (int i = 0; i < updateCheckers.size(); i++) {
-				// 初始化时间错开2秒,避免检测频率一致导致都集中时间执行
-				lastCheckTime.put(prefix + i, checkTime + 2000);
-			}
-		}
 	}
 
 	/*
@@ -111,24 +106,29 @@ public class CacheUpdateWatcher extends Thread {
 		while (isRun) {
 			// 多个检测任务
 			for (int i = 0; i < updateCheckers.size(); i++) {
-				checker = prefix + i;
 				checkerConfig = updateCheckers.get(i);
+				checker = checkerConfig.getId();
 				// 上次检测时间
 				preCheck = lastCheckTime.get(checker);
-				// 当前检测时间
-				nowMillis = System.currentTimeMillis();
-				// 当前的时间间隔
-				nowInterval = (nowMillis - preCheck.longValue()) / 1000;
-				ldt = LocalDateTime.now();
-				// 当前时间区间格式HHmm
-				hourMinutes = ldt.getHour() * 100 + ldt.getMinute();
-				interval = getInterval(checkerConfig.getTimeSections(), hourMinutes);
-				// 间隔大于设定阈值,执行检测
-				if (nowInterval >= interval) {
-					// 更新最后检测时间
-					lastCheckTime.put(checker, Long.valueOf(DateUtil.parse(nowMillis, dateFmt).getTime()));
-					// 执行检测(检测时间扣减集群节点时间偏离)
-					doCheck(sqlToyContext, checkerConfig, DateUtil.addSecond(preCheck, deviationSeconds).getTime());
+				if (preCheck != null) {
+					// 当前检测时间
+					nowMillis = System.currentTimeMillis();
+					// 当前的时间间隔
+					nowInterval = (nowMillis - preCheck.longValue()) / 1000;
+					ldt = LocalDateTime.now();
+					// 当前时间区间格式HHmm
+					hourMinutes = ldt.getHour() * 100 + ldt.getMinute();
+					interval = getInterval(checkerConfig.getTimeSections(), hourMinutes);
+					// 间隔大于设定阈值,执行检测
+					if (nowInterval >= interval) {
+						// 更新最后检测时间
+						lastCheckTime.put(checker, Long.valueOf(DateUtil.parse(nowMillis, dateFmt).getTime()));
+						// 执行检测(检测时间扣减集群节点时间偏离)
+						doCheck(sqlToyContext, checkerConfig, DateUtil.addSecond(preCheck, deviationSeconds).getTime());
+					}
+				} // 首次检测
+				else {
+					lastCheckTime.put(checker, System.currentTimeMillis());
 				}
 			}
 			try {
@@ -168,37 +168,52 @@ public class CacheUpdateWatcher extends Thread {
 	 * @param lastCheckTime
 	 */
 	private void doCheck(SqlToyContext sqlToyContext, CheckerConfigModel checkerConfig, Long lastCheckTime) {
-		List<CacheCheckResult> results = TranslateFactory.doCheck(sqlToyContext, checkerConfig,
-				DateUtil.getTimestamp(lastCheckTime));
-		if (results == null || results.isEmpty()) {
-			return;
-		}
+		TranslateConfigModel translateConfig;
 		// 非增量更新检测(发生变更即清空缓存)
 		if (!checkerConfig.isIncrement()) {
-			try {
+			List<CacheCheckResult> results = TranslateFactory.doCheck(sqlToyContext, checkerConfig,
+					DateUtil.getTimestamp(lastCheckTime));
+			if (results == null || results.isEmpty()) {
+				return;
+			}
+			// 指定了缓存名称
+			if (StringUtil.isNotBlank(checkerConfig.getCache())) {
+				translateConfig = translateMap.get(checkerConfig.getCache());
+				logger.debug("检测到缓存:{} 发生更新,将清除缓存便于后续缓存全量更新!", translateConfig.getCache());
+				translateCacheManager.clear(translateConfig.getCache(), null);
+			} else {
 				for (CacheCheckResult result : results) {
-					logger.debug("检测到缓存发生更新: cacheName:{} cacheType:{}!", result.getCacheName(),
-							(result.getCacheType() == null) ? "无" : result.getCacheType());
-					translateCacheManager.clear(result.getCacheName(), result.getCacheType());
+					translateConfig = translateMap.get(result.getCacheName());
+					if (translateConfig != null) {
+						logger.debug("检测到缓存发生更新: cacheName:{} cacheType:{}!", translateConfig.getCache(),
+								(result.getCacheType() == null) ? "无" : result.getCacheType());
+						translateCacheManager.clear(translateConfig.getCache(), result.getCacheType());
+					}
 				}
-			} catch (Exception e) {
-				e.printStackTrace();
-				logger.error("缓存变更检测检测到更新后,清除缓存发生异常:{}", e.getMessage());
 			}
 		} // 增量直接更新缓存
 		else {
-			String cacheName = checkerConfig.getCache();
+			translateConfig = translateMap.get(checkerConfig.getCache());
+			if (translateConfig == null) {
+				return;
+			}
+			String cacheName = translateConfig.getCache();
+			// 缓存还未首次加载不做更新检测
+			if (!translateCacheManager.hasCache(cacheName)) {
+				return;
+			}
+			List<CacheCheckResult> results = TranslateFactory.doCheck(sqlToyContext, checkerConfig,
+					DateUtil.getTimestamp(lastCheckTime));
+			if (results == null || results.isEmpty()) {
+				return;
+			}
+			logger.debug("检测到缓存cacheName:{} 发生:{} 条记录更新!", cacheName, results.size());
+			HashMap<String, Object[]> cacheData;
+			int count = 0;
 			try {
-				logger.debug("检测到缓存cacheName:{} 发生:{} 条记录更新!", cacheName, results.size());
-				HashMap<String, Object[]> cacheData;
-				int count = 0;
 				// 内部不存在分组的缓存
 				if (!checkerConfig.isHasInsideGroup()) {
 					cacheData = translateCacheManager.getCache(cacheName, null);
-					// 缓存为null,等待首次调用进行加载
-					if (cacheData == null) {
-						return;
-					}
 					for (CacheCheckResult result : results) {
 						// key不能为null
 						if (result.getItem()[0] != null) {
@@ -215,18 +230,15 @@ public class CacheUpdateWatcher extends Thread {
 							if (cacheData != null) {
 								cacheData.put(result.getItem()[0].toString(), result.getItem());
 								count++;
-							} else {
-								logger.warn("增量缓存更新:cacheName={},cacheType={},未取到对应缓存数据,请检查数据结构是否正确(或缓存未必调用并初始化过)!",
-										cacheName, result.getCacheType());
 							}
 						}
 					}
 				}
-				logger.debug("缓存实际完成:{} 条记录更新!", count);
 			} catch (Exception e) {
 				e.printStackTrace();
 				logger.error("缓存增量更新检测,更新缓存:{} 发生异常:{}", cacheName, e.getMessage());
 			}
+			logger.debug("缓存实际完成:{} 条记录更新!", count);
 		}
 	}
 }

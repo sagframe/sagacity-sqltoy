@@ -87,7 +87,7 @@ public class IOUtil {
 
 	/**
 	 * @todo 字节数组转换成对象,一般用于对象序列化
-	 * @param inStream
+	 * @param is
 	 * @return
 	 */
 	public static Object streamToObject(InputStream is) {

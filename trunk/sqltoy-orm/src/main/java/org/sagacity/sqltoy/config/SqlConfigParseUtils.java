@@ -11,6 +11,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.sagacity.sqltoy.SqlToyConstants;
+import org.sagacity.sqltoy.config.model.KeyAndIndex;
 import org.sagacity.sqltoy.config.model.SqlParamsModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
@@ -21,6 +22,7 @@ import org.sagacity.sqltoy.plugins.function.FunctionUtils;
 import org.sagacity.sqltoy.plugins.id.macro.AbstractMacro;
 import org.sagacity.sqltoy.plugins.id.macro.MacroUtils;
 import org.sagacity.sqltoy.plugins.id.macro.impl.SqlLoop;
+import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.MacroIfLogic;
@@ -87,14 +89,14 @@ public class SqlConfigParseUtils {
 	 */
 	public final static Pattern FAST_PATTERN = Pattern.compile("(?i)\\@fast(Page)?\\([\\w\\W]+\\)");
 
-	// sql中 in (?)条件
-	// public final static Pattern IN_PATTERN =
-	// Pattern.compile("(?i)\\s+in\\s*\\(\\s*\\?\\s*\\)");
 	// update 2022-5-24 开始支持(id,type) in (:idValues,:typeValues) 或 (id,type) in
 	// ((:idValues,:typeValues)) 模式
 	public final static Pattern IN_PATTERN = Pattern.compile(
 			"(?i)\\s+in\\s*((\\(\\s*\\?(\\s*\\,\\s*\\?)*\\s*\\))|((\\(\\s*){2}\\?(\\s*\\,\\s*\\?)+(\\s*\\)){2}))");
-	public final static Pattern LIKE_PATTERN = Pattern.compile("(?i)\\s+like\\s+\\?");
+	// public final static Pattern LIKE_PATTERN =
+	// Pattern.compile("(?i)\\s+like\\s+\\?");
+	// update 2022-11-11 兼容ilike
+	public final static Pattern LIKE_PATTERN = Pattern.compile("(?i)\\s+i?like\\s+\\?");
 
 	// add 2016-5-27 by chenrenfei
 	public final static String BLANK_REGEX = "(?i)\\@blank\\s*\\(\\s*\\?\\s*\\)";
@@ -188,6 +190,24 @@ public class SqlConfigParseUtils {
 		}
 		// 强制约定sqlId key必须没有空格、回车、tab和换行符号
 		return StringUtil.matches(queryStr.trim(), SQL_ID_PATTERN);
+	}
+
+	public static SqlToyResult processSql(String queryStr, Map<String, Object> argMap) {
+		return processSql(queryStr, argMap, null);
+	}
+
+	public static SqlToyResult processSql(String queryStr, Map<String, Object> argMap, String dialect) {
+		// 转成key大小写不敏感map
+		IgnoreKeyCaseMap ignoreCaseMap = new IgnoreKeyCaseMap((argMap == null) ? new HashMap() : argMap);
+		String[] paramsNamed = SqlConfigParseUtils.getSqlParamsName(queryStr, true);
+		Object[] paramsArg = null;
+		if (paramsNamed != null) {
+			paramsArg = new Object[paramsNamed.length];
+			for (int i = 0; i < paramsNamed.length; i++) {
+				paramsArg[i] = ignoreCaseMap.get(paramsNamed[i]);
+			}
+		}
+		return processSql(queryStr, paramsNamed, paramsArg, dialect);
 	}
 
 	public static SqlToyResult processSql(String queryStr, String[] paramsNamed, Object[] paramsArg) {
@@ -324,8 +344,19 @@ public class SqlConfigParseUtils {
 			}
 			i = 0;
 			// 不区分大小写匹配
+			KeyAndIndex keyAndIndex;
+			String nameLow;
 			for (String name : sqlParamsName) {
-				result[i] = nameValueMap.get(name.toLowerCase());
+				nameLow = name.toLowerCase();
+				result[i] = nameValueMap.get(nameLow);
+				// 数组
+				if (result[i] == null) {
+					keyAndIndex = BeanUtil.getKeyAndIndex(nameLow);
+					if (keyAndIndex != null) {
+						result[i] = BeanUtil.getAryPropValue(nameValueMap.get(keyAndIndex.getKey()),
+								keyAndIndex.getIndex());
+					}
+				}
 				i++;
 			}
 		}
@@ -506,7 +537,7 @@ public class SqlConfigParseUtils {
 						paramCnt = paramCnt - logicParamCnt;
 					}
 				}
-				// 逻辑成立,继续sql中参数是否为null的逻辑判断
+				// @if() 条件成立继续判断内部是否有:paramName 为null
 				if (logicValue) {
 					beginIndex = 0;
 					endIndex = 0;
@@ -522,7 +553,6 @@ public class SqlConfigParseUtils {
 						} else {
 							iMarkSql = markContentSql.substring(beginIndex + 1);
 						}
-
 						// 判断是否是is 条件
 						if (StringUtil.matches(iMarkSql.toLowerCase(), IS_PATTERN)) {
 							sqlhasIs = true;
@@ -617,7 +647,8 @@ public class SqlConfigParseUtils {
 				if (dialect != null && valueStr.contains("(") && valueStr.contains(")")) {
 					valueStr = FunctionUtils.getDialectSql(valueStr, dialect);
 				}
-				sqlToyResult.setSql(sqlToyResult.getSql().replaceFirst(VALUE_REGEX, valueStr));
+				sqlToyResult
+						.setSql(sqlToyResult.getSql().replaceFirst(VALUE_REGEX, Matcher.quoteReplacement(valueStr)));
 				// 剔除参数@value(?) 对应的参数值
 				paramValueList.remove(paramCnt - valueCnt);
 				valueCnt++;
@@ -768,6 +799,8 @@ public class SqlConfigParseUtils {
 						partSql = wrapOverSizeInSql(queryStr.substring(start, m.start()), loopArgs,
 								inParamArray.length);
 						lastSql.append(" ").append(partSql).append(" ");
+					} else if (inParamArray.length == 0) {
+						partSql = "(".concat(StringUtil.loopAppendWithSign("null", ",", paramCnt)).concat(")");
 					} else {
 						// 循环组合成in(?,?*)
 						partSql = StringUtil.loopAppendWithSign(loopArgs, ",", inParamArray.length);
@@ -784,43 +817,44 @@ public class SqlConfigParseUtils {
 					}
 					incrementIndex += inParamArray.length * paramCnt - paramCnt;
 				}
-			} else {
-				if (null != paramsValue[parameterMarkCnt - 1]) {
-					// 数组或集合数据类型
-					if (paramsValue[parameterMarkCnt - 1].getClass().isArray()
-							|| paramsValue[parameterMarkCnt - 1] instanceof Collection) {
-						// update 2012-12-5 增加了对Collection数据类型的处理
-						if (paramsValue[parameterMarkCnt - 1] instanceof Collection) {
-							inParamList = (Collection) paramsValue[parameterMarkCnt - 1];
-							inParamArray = inParamList.toArray();
-						} else {
-							inParamArray = CollectionUtil.convertArray(paramsValue[parameterMarkCnt - 1]);
-						}
-						// 超过1000长度，进行(name in (?,?) or name in (?,?)) 分割
-						if (inParamArray.length > 1000) {
-							overSize = true;
-							partSql = wrapOverSizeInSql(queryStr.substring(start, m.start()), ARG_NAME,
-									inParamArray.length);
-							lastSql.append(" ").append(partSql).append(" ");
-						} else {
-							// 循环组合成in(?,?*)
-							partSql = StringUtil.loopAppendWithSign(ARG_NAME, ",", inParamArray.length);
-						}
-						paramValueList.remove(parameterMarkCnt - 1 + incrementIndex);
-						paramValueList.addAll(parameterMarkCnt - 1 + incrementIndex,
-								CollectionUtil.arrayToList(inParamArray));
-						incrementIndex += inParamArray.length - 1;
+			} // 单个?，且值为null不在processIn中处理，最终replaceNull统一处理
+			else if (null != paramsValue[parameterMarkCnt - 1]) {
+				// 数组或集合数据类型
+				if (paramsValue[parameterMarkCnt - 1].getClass().isArray()
+						|| paramsValue[parameterMarkCnt - 1] instanceof Collection) {
+					// update 2012-12-5 增加了对Collection数据类型的处理
+					if (paramsValue[parameterMarkCnt - 1] instanceof Collection) {
+						inParamList = (Collection) paramsValue[parameterMarkCnt - 1];
+						inParamArray = inParamList.toArray();
+					} else {
+						inParamArray = CollectionUtil.convertArray(paramsValue[parameterMarkCnt - 1]);
 					}
-					// 逗号分隔的条件参数
-					else if (paramsValue[parameterMarkCnt - 1] instanceof String) {
-						argValue = (String) paramsValue[parameterMarkCnt - 1];
-						// update 2012-11-15 将'xxx'(单引号) 形式的字符串纳入直接替换模式，解决因为使用combineInStr
-						// 数组长度为1,构造出来的in 条件存在''(空白)符合直接用?参数导致的问题
-						if (argValue.indexOf(",") != -1 || (argValue.startsWith("'") && argValue.endsWith("'"))) {
-							partSql = (String) paramsValue[parameterMarkCnt - 1];
-							paramValueList.remove(parameterMarkCnt - 1 + incrementIndex);
-							incrementIndex--;
-						}
+					// 超过1000长度，进行(name in (?,?) or name in (?,?)) 分割
+					if (inParamArray.length > 1000) {
+						overSize = true;
+						partSql = wrapOverSizeInSql(queryStr.substring(start, m.start()), ARG_NAME,
+								inParamArray.length);
+						lastSql.append(" ").append(partSql).append(" ");
+					} else if (inParamArray.length == 0) {
+						partSql = "null";
+					} else {
+						// 循环组合成in(?,?*)
+						partSql = StringUtil.loopAppendWithSign(ARG_NAME, ",", inParamArray.length);
+					}
+					paramValueList.remove(parameterMarkCnt - 1 + incrementIndex);
+					paramValueList.addAll(parameterMarkCnt - 1 + incrementIndex,
+							CollectionUtil.arrayToList(inParamArray));
+					incrementIndex += inParamArray.length - 1;
+				}
+				// 逗号分隔的条件参数
+				else if (paramsValue[parameterMarkCnt - 1] instanceof String) {
+					argValue = (String) paramsValue[parameterMarkCnt - 1];
+					// update 2012-11-15 将'xxx'(单引号) 形式的字符串纳入直接替换模式，解决因为使用combineInStr
+					// 数组长度为1,构造出来的in 条件存在''(空白)符合直接用?参数导致的问题
+					if (argValue.indexOf(",") != -1 || (argValue.startsWith("'") && argValue.endsWith("'"))) {
+						partSql = (String) paramsValue[parameterMarkCnt - 1];
+						paramValueList.remove(parameterMarkCnt - 1 + incrementIndex);
+						incrementIndex--;
 					}
 				}
 			}
@@ -1061,6 +1095,7 @@ public class SqlConfigParseUtils {
 		} else {
 			sqlToyConfig.setSql(originalSql);
 		}
+		sqlToyConfig.setSqlType(sqlType);
 		// 提取with fast查询语句
 		processFastWith(sqlToyConfig, dialect);
 		// 提取sql中的参数名称
@@ -1108,11 +1143,13 @@ public class SqlConfigParseUtils {
 							buffer.append(" with ").append(aliasTableAs[3]);
 						}
 						if (i > 0) {
-							buffer.append(",").append(aliasTableAs[3]);
+							// update 2022-12-09 前后增加空格，避免mysql新驱动的缺陷
+							buffer.append(" , ").append(aliasTableAs[3]);
 						}
+						buffer.append(" ");
 						// aliasTableAs 结构{aliasName,as和括号之间的字符串,as内容,with 和aliasTable之间的参数}
-						buffer.append(aliasTableAs[0]).append(" as ").append(aliasTableAs[1]).append(" (")
-								.append(aliasTableAs[2]).append(") ");
+						buffer.append(aliasTableAs[0]).append(" as ").append(aliasTableAs[1]).append(" ( ")
+								.append(aliasTableAs[2]).append(" ) ");
 					}
 					sqlToyConfig.setFastWithSql(buffer.toString());
 				}

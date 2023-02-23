@@ -251,8 +251,8 @@ public class ShardingUtils {
 		if (null == shardingConfig) {
 			return shardingDataSource;
 		}
-		String[] paramNames = extend.getDataSourceShardingParamsName(sqlToyConfig);
-		Object[] paramValues = extend.getDataSourceShardingParamsValue(sqlToyConfig);
+		String[] paramNames = extend.getDataSourceShardingParamsName();
+		Object[] paramValues = extend.getDataSourceShardingParamsValue();
 		IgnoreCaseLinkedMap<String, Object> valueMap = hashParams(paramNames, paramValues);
 		DataSource result = getShardingDataSource(sqlToyContext, sqlToyConfig, shardingConfig, valueMap);
 		if (result != null) {
@@ -325,7 +325,7 @@ public class ShardingUtils {
 			sqlTable = (String) entry.getKey();
 			targetTable = (String) entry.getValue();
 			// 替换成实际表名
-			if (targetTable != null && !targetTable.trim().equals("") && !sqlTable.equalsIgnoreCase(targetTable)) {
+			if (targetTable != null && !"".equals(targetTable.trim()) && !sqlTable.equalsIgnoreCase(targetTable)) {
 				sqlToyConfig.setCountSql(matchReplace(sqlToyConfig.getCountSql(dialect), sqlTable, targetTable));
 				sqlToyConfig.setSql(matchReplace(sqlToyConfig.getSql(dialect), sqlTable, targetTable));
 				sqlToyConfig.setFastSql(matchReplace(sqlToyConfig.getFastSql(dialect), sqlTable, targetTable));
@@ -433,7 +433,7 @@ public class ShardingUtils {
 	 * @return
 	 */
 	private static String matchReplace(String sql, String sourceTable, String targetTable) {
-		if (sql == null || sql.trim().equals("")) {
+		if (sql == null || "".equals(sql.trim())) {
 			return sql;
 		}
 		// 用正则表达式前后各加上非数字好字符的目的就是防止:sql中有字符串包含sourceTable
@@ -511,42 +511,39 @@ public class ShardingUtils {
 		if (idGenerator == null || pks == null || pks.length > 1) {
 			return;
 		}
-		if (idGenerator != null) {
-			String table = entityMeta.getTableName();
-			String idType = entityMeta.getIdType();
-			// 业务主键跟主键重叠，已经将主键长度设置为业务主键长度
-			int idLength = entityMeta.getIdLength();
-			int sequenceSize = entityMeta.getBizIdSequenceSize();
-			String[] reflectColumns = entityMeta.getFieldsArray();
-			// 标识符
-			String signature = entityMeta.getBizIdSignature();
-			Integer[] relatedColumnIndex = entityMeta.getBizIdRelatedColIndex();
-			List<Object[]> ids = BeanUtil.reflectBeansToInnerAry(entities, pks, null, null);
-			Object pkValue;
-			Object[] relatedColValue = null;
-			Object[] fullParamValues;
-			for (int i = 0; i < entities.size(); i++) {
-				pkValue = ids.get(i)[0];
-				// 主键值未赋予,则自动赋予
-				if (pkValue == null || pkValue.toString().trim().equals("")) {
-					if (entityMeta.isBizIdEqPK()) {
-						fullParamValues = BeanUtil.reflectBeanToAry(entities.get(i), reflectColumns);
-						if (relatedColumnIndex != null) {
-							relatedColValue = new Object[relatedColumnIndex.length];
-							for (int meter = 0; meter < relatedColumnIndex.length; meter++) {
-								relatedColValue[meter] = fullParamValues[relatedColumnIndex[meter]];
-								if (relatedColValue[meter] == null) {
-									throw new IllegalArgumentException("对象:" + entityMeta.getEntityClass().getName()
-											+ " 生成业务主键依赖的关联字段:" + relatedColumnIndex[meter] + " 值为null!");
-								}
+		String table = entityMeta.getTableName();
+		String idType = entityMeta.getIdType();
+		// 业务主键跟主键重叠，已经将主键长度设置为业务主键长度
+		int idLength = entityMeta.getIdLength();
+		int sequenceSize = entityMeta.getBizIdSequenceSize();
+		String[] reflectColumns = entityMeta.getFieldsArray();
+		// 标识符
+		String signature = entityMeta.getBizIdSignature();
+		Integer[] relatedColumnIndex = entityMeta.getBizIdRelatedColIndex();
+		List<Object[]> ids = BeanUtil.reflectBeansToInnerAry(entities, pks, null, null);
+		Object pkValue;
+		Object[] relatedColValue = null;
+		Object[] fullParamValues;
+		for (int i = 0; i < entities.size(); i++) {
+			pkValue = ids.get(i)[0];
+			// 主键值未赋予,则自动赋予
+			if (pkValue == null || "".equals(pkValue.toString().trim())) {
+				if (entityMeta.isBizIdEqPK()) {
+					fullParamValues = BeanUtil.reflectBeanToAry(entities.get(i), reflectColumns);
+					if (relatedColumnIndex != null) {
+						relatedColValue = new Object[relatedColumnIndex.length];
+						for (int meter = 0; meter < relatedColumnIndex.length; meter++) {
+							relatedColValue[meter] = fullParamValues[relatedColumnIndex[meter]];
+							if (relatedColValue[meter] == null) {
+								throw new IllegalArgumentException("对象:" + entityMeta.getEntityClass().getName()
+										+ " 生成业务主键依赖的关联字段:" + relatedColumnIndex[meter] + " 值为null!");
 							}
 						}
 					}
-					// 回写主键值
-					BeanUtil.setProperty(entities.get(i), pks[0],
-							idGenerator.getId(table, signature, entityMeta.getBizIdRelatedColumns(), relatedColValue,
-									null, idType, idLength, sequenceSize));
 				}
+				// 回写主键值
+				BeanUtil.setProperty(entities.get(i), pks[0], idGenerator.getId(table, signature,
+						entityMeta.getBizIdRelatedColumns(), relatedColValue, null, idType, idLength, sequenceSize));
 			}
 		}
 	}

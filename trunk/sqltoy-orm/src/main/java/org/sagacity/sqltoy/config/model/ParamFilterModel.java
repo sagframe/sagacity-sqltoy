@@ -171,6 +171,16 @@ public class ParamFilterModel implements Serializable {
 	 */
 	private boolean singleQuote = true;
 
+	/**
+	 * 反向缓存翻译，是否优先判断相等
+	 */
+	private boolean priorMatchEqual = false;
+
+	/**
+	 * 缓存未匹配到key，返回检索词自身
+	 */
+	private boolean cacheNotMatchedReturnSelf = true;
+
 	public String getFilterType() {
 		return filterType;
 	}
@@ -223,7 +233,7 @@ public class ParamFilterModel implements Serializable {
 	}
 
 	/**
-	 * @param excludesMap the excludesMap to set
+	 * @param excludeParam the excludesMap to set
 	 */
 	public void addExclude(String excludeParam) {
 		this.excludes.add(excludeParam.toLowerCase());
@@ -251,7 +261,7 @@ public class ParamFilterModel implements Serializable {
 	}
 
 	/**
-	 * @param incrementUnit the incrementUnit to set
+	 * @param timeUnit the incrementUnit to set
 	 */
 	public void setTimeUnit(TimeUnit timeUnit) {
 		this.timeUnit = timeUnit;
@@ -535,6 +545,22 @@ public class ParamFilterModel implements Serializable {
 	 */
 	public void setCacheKeyIndex(int cacheKeyIndex) {
 		this.cacheKeyIndex = cacheKeyIndex;
+	}
+
+	public boolean isPriorMatchEqual() {
+		return priorMatchEqual;
+	}
+
+	public void setPriorMatchEqual(boolean priorMatchEqual) {
+		this.priorMatchEqual = priorMatchEqual;
+	}
+
+	public boolean isCacheNotMatchedReturnSelf() {
+		return cacheNotMatchedReturnSelf;
+	}
+
+	public void setCacheNotMatchedReturnSelf(boolean cacheNotMatchedReturnSelf) {
+		this.cacheNotMatchedReturnSelf = cacheNotMatchedReturnSelf;
 	}
 
 }

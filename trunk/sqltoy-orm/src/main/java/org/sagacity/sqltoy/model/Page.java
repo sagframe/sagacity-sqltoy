@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.sagacity.sqltoy.SqlToyConstants;
+
 /**
  * @project sagacity-sqltoy
  * @description 分页数据模型
@@ -16,7 +18,7 @@ public class Page<T> implements Serializable {
 	/**
 	 * 每页记录数(默认为10)
 	 */
-	private int pageSize = 10;
+	private int pageSize = SqlToyConstants.DEFAULT_PAGE_SIZE;
 
 	/**
 	 * 当前页数(默认从1开始,以页面给用户显示的为基准)
@@ -42,6 +44,11 @@ public class Page<T> implements Serializable {
 	 * 起始记录
 	 */
 	private long startIndex = 0;
+
+	/**
+	 * 跳转超出数据页范围回到第一页
+	 */
+	private Boolean overPageToFirst;
 
 	public Page() {
 
@@ -108,6 +115,11 @@ public class Page<T> implements Serializable {
 		return this;
 	}
 
+	public Page setOverPageToFirst(Boolean overPageToFirst) {
+		this.overPageToFirst = overPageToFirst;
+		return this;
+	}
+
 	/**
 	 * Access method for the pageNo property.
 	 * 
@@ -127,8 +139,8 @@ public class Page<T> implements Serializable {
 	/**
 	 * Sets the value of the pageNo property.
 	 * 
-	 * @param aPageNo the new value of the pageNo property where pageNo==-1 then
-	 *                show all page
+	 * @param pageNo the new value of the pageNo property where pageNo==-1 then show
+	 *               all page
 	 */
 	public Page setPageNo(long pageNo) {
 		this.pageNo = pageNo;
@@ -209,6 +221,10 @@ public class Page<T> implements Serializable {
 	public Page setSkipQueryCount(Boolean skipQueryCount) {
 		this.skipQueryCount = skipQueryCount;
 		return this;
+	}
+
+	public Boolean getOverPageToFirst() {
+		return overPageToFirst;
 	}
 
 }

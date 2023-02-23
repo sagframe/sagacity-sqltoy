@@ -4,17 +4,21 @@ import static java.lang.System.err;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executor;
 
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.dao.SqlToyLazyDao;
 import org.sagacity.sqltoy.dao.impl.SqlToyLazyDaoImpl;
+import org.sagacity.sqltoy.integration.ConnectionFactory;
+import org.sagacity.sqltoy.integration.impl.SpringConnectionFactory;
 import org.sagacity.sqltoy.plugins.FilterHandler;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.plugins.OverTimeSqlHandler;
+import org.sagacity.sqltoy.plugins.SqlInterceptor;
 import org.sagacity.sqltoy.plugins.TypeHandler;
-import org.sagacity.sqltoy.plugins.datasource.ConnectionFactory;
 import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
+import org.sagacity.sqltoy.plugins.formater.SqlFormater;
 import org.sagacity.sqltoy.plugins.secure.DesensitizeProvider;
 import org.sagacity.sqltoy.plugins.secure.FieldsSecureProvider;
 import org.sagacity.sqltoy.service.SqlToyCRUDService;
@@ -22,12 +26,17 @@ import org.sagacity.sqltoy.service.impl.SqlToyCRUDServiceImpl;
 import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+
+import com.alibaba.ttl.threadpool.TtlExecutors;
 
 /**
  * @description sqltoy 自动配置类
@@ -48,18 +57,75 @@ public class SqltoyAutoConfiguration {
 	@Value("${sqltoy.sqlResourcesDir:}")
 	private String sqlResourcesDir;
 
+	/**
+	 * 当配置不存在或不为none的时候实例化
+	 * 
+	 * @return
+	 */
+	@ConditionalOnExpression("#{''.equals(environment.getProperty('spring.sqltoy.taskExecutor.targetPoolName', ''))}")
+	@Bean(name = "sqltoyOrmTaskExecutor", destroyMethod = "shutdown", initMethod = "initialize")
+	public ThreadPoolTaskExecutor sqltoyOrmTaskExecutor() {
+		SqlToyContextTaskPoolProperties taskPoolProperties = properties.getTaskExecutor();
+		ThreadPoolTaskExecutor pool = new ThreadPoolTaskExecutor();
+		pool.setThreadNamePrefix(taskPoolProperties.getThreadNamePrefix());
+		// 线程池维护线程的最少数量
+		pool.setCorePoolSize(taskPoolProperties.getCorePoolSize());
+		// 线程池维护线程的最大数量
+		pool.setMaxPoolSize(taskPoolProperties.getMaxPoolSize());
+		// 线程池所使用的缓冲队列
+		pool.setQueueCapacity(taskPoolProperties.getQueueCapacity());
+		// 线程池维护线程所允许的空闲时间
+		pool.setKeepAliveSeconds(taskPoolProperties.getKeepAliveSeconds());
+		// 决定使用ThreadPool的shutdown()还是shutdownNow()方法来关闭，默认为false
+		pool.setWaitForTasksToCompleteOnShutdown(taskPoolProperties.getWaitForTasksToCompleteOnShutdown());
+		// pool.setContinueScheduledExecutionAfterException();
+		pool.setAwaitTerminationSeconds(taskPoolProperties.getAwaitTerminationSeconds());
+		// 如果添加到线程池失败，那么主线程会自己去执行该任务，不会等待线程池中的线程去执行。
+		pool.setRejectedExecutionHandler(taskPoolProperties.getRejectedExecutionHandler());
+		return pool;
+	}
+
+	@ConditionalOnExpression("#{''.equals(environment.getProperty('spring.sqltoy.taskExecutor.targetPoolName', ''))}")
+	@Bean(name = "ttlSqltoyOrmTaskExecutor")
+	public Executor ttlSqltoyOrmTaskExecutor(@Qualifier("sqltoyOrmTaskExecutor") ThreadPoolTaskExecutor taskExecutor) {
+		return TtlExecutors.getTtlExecutor(taskExecutor);
+	}
+
 	// 构建sqltoy上下文,并指定初始化方法和销毁方法
 	@Bean(name = "sqlToyContext", initMethod = "initialize", destroyMethod = "destroy")
 	@ConditionalOnMissingBean
-	SqlToyContext sqlToyContext() throws Exception {
+	SqlToyContext sqlToyContext(
+			@Value("${spring.sqltoy.taskExecutor.targetPoolName:ttlSqltoyOrmTaskExecutor}") String taskExecutorName)
+			throws Exception {
 		// 用辅助配置来校验是否配置错误
 		if (StringUtil.isBlank(properties.getSqlResourcesDir()) && StringUtil.isNotBlank(sqlResourcesDir)) {
 			throw new IllegalArgumentException(
 					"请检查sqltoy配置,是spring.sqltoy作为前缀,而不是sqltoy!\n正确范例: spring.sqltoy.sqlResourcesDir=classpath:com/sagframe/modules");
 		}
 		SqlToyContext sqlToyContext = new SqlToyContext();
+		// 设置默认spring的connectFactory(不设置也会自动默认)
+		sqlToyContext.setConnectionFactory(new SpringConnectionFactory());
+
+		// 分布式id产生器实现类(不设置也会自动默认)
+		sqlToyContext.setDistributeIdGeneratorClass("org.sagacity.sqltoy.integration.impl.SpringRedisIdGenerator");
+
+		// 针对Caffeine缓存指定实现类型(不设置也会自动默认)
+		sqlToyContext
+				.setTranslateCaffeineManagerClass("org.sagacity.sqltoy.translate.cache.impl.TranslateCaffeineManager");
+		// 注入spring的默认mongoQuery实现类(不设置也会自动默认)
+		sqlToyContext.setMongoQueryClass("org.sagacity.sqltoy.integration.impl.SpringMongoQuery");
+		// --------end 5.2 -----------------------------------------
+
 		// 当发现有重复sqlId时是否抛出异常，终止程序执行
 		sqlToyContext.setBreakWhenSqlRepeat(properties.isBreakWhenSqlRepeat());
+
+		// 开放设置默认单页记录数量
+		sqlToyContext.setDefaultPageSize(properties.getDefaultPageSize());
+
+		// map 类型结果label是否自动转驼峰处理
+		if (properties.getHumpMapResultTypeLabel() != null) {
+			sqlToyContext.setHumpMapResultTypeLabel(properties.getHumpMapResultTypeLabel());
+		}
 		// sql 文件资源路径
 		sqlToyContext.setSqlResourcesDir(properties.getSqlResourcesDir());
 		if (properties.getSqlResources() != null && properties.getSqlResources().length > 0) {
@@ -132,8 +198,11 @@ public class SqltoyAutoConfiguration {
 		if (properties.getReservedWords() != null) {
 			sqlToyContext.setReservedWords(properties.getReservedWords());
 		}
-		// 分页页号超出总页时转第一页，否则返回空集合
-		sqlToyContext.setPageOverToFirst(properties.isPageOverToFirst());
+
+		// 指定需要进行产品化跨数据库查询验证的数据库
+		if (properties.getRedoDataSources() != null) {
+			sqlToyContext.setRedoDataSources(properties.getRedoDataSources());
+		}
 		// 数据库方言
 		sqlToyContext.setDialect(properties.getDialect());
 		// sqltoy内置参数默认值修改
@@ -141,13 +210,20 @@ public class SqltoyAutoConfiguration {
 
 		// update 2021-01-18 设置缓存类别,默认ehcache
 		sqlToyContext.setCacheType(properties.getCacheType());
-
+		sqlToyContext.setExecuteSqlBlankToNull(properties.isExecuteSqlBlankToNull());
+		// 是否拆分merge into 为updateAll 和 saveAllIgnoreExist 两步操作(1、seata分布式事务不支持merge)
+		sqlToyContext.setSplitMergeInto(properties.isSplitMergeInto());
 		// getMetaData().getColumnLabel(i) 结果做大小写处理策略
 		if (null != properties.getColumnLabelUpperOrLower()) {
 			sqlToyContext.setColumnLabelUpperOrLower(properties.getColumnLabelUpperOrLower().toLowerCase());
 		}
 		sqlToyContext.setSecurePrivateKey(properties.getSecurePrivateKey());
 		sqlToyContext.setSecurePublicKey(properties.getSecurePublicKey());
+		// 修改多少条记录做特别提示
+		sqlToyContext.setUpdateTipCount(properties.getUpdateTipCount());
+		if (properties.getOverPageToFirst() != null) {
+			sqlToyContext.setOverPageToFirst(properties.getOverPageToFirst());
+		}
 		// 设置公共统一属性的处理器
 		String unfiyHandler = properties.getUnifyFieldsHandler();
 		if (StringUtil.isNotBlank(unfiyHandler)) {
@@ -315,10 +391,48 @@ public class SqltoyAutoConfiguration {
 						(OverTimeSqlHandler) Class.forName(overTimeSqlHandler).getDeclaredConstructor().newInstance());
 			}
 		}
+
+		// 自定义sql拦截处理器
+		String[] sqlInterceptors = properties.getSqlInterceptors();
+		if (null != sqlInterceptors && sqlInterceptors.length > 0) {
+			List<SqlInterceptor> sqlInterceptorList = new ArrayList<SqlInterceptor>();
+			for (String interceptor : sqlInterceptors) {
+				if (applicationContext.containsBean(interceptor)) {
+					sqlInterceptorList.add((SqlInterceptor) applicationContext.getBean(interceptor));
+				} // 包名和类名称
+				else if (interceptor.contains(".")) {
+					sqlInterceptorList
+							.add(((SqlInterceptor) Class.forName(interceptor).getDeclaredConstructor().newInstance()));
+				}
+			}
+			sqlToyContext.setSqlInterceptors(sqlInterceptorList);
+		}
+
+		// 自定义sql格式化器
+		String sqlFormater = properties.getSqlFormater();
+		if (StringUtil.isNotBlank(sqlFormater)) {
+			// 提供简化配置
+			if (sqlFormater.equalsIgnoreCase("default") || sqlFormater.equalsIgnoreCase("defaultFormater")
+					|| sqlFormater.equalsIgnoreCase("defaultSqlFormater")) {
+				sqlFormater = "org.sagacity.sqltoy.plugins.formater.impl.DefaultSqlFormater";
+			}
+			if (applicationContext.containsBean(sqlFormater)) {
+				sqlToyContext.setSqlFormater((SqlFormater) applicationContext.getBean(sqlFormater));
+			} // 包名和类名称
+			else if (sqlFormater.contains(".")) {
+				sqlToyContext.setSqlFormater(
+						(SqlFormater) Class.forName(sqlFormater).getDeclaredConstructor().newInstance());
+			}
+		}
+		// 自定义线程池
+		if (StringUtil.isNotBlank(taskExecutorName)) {
+			sqlToyContext.setTaskExecutorName(taskExecutorName);
+		}
 		return sqlToyContext;
 	}
 
 	/**
+	 * 5.2 版本要注入sqlToyContext
 	 * 
 	 * @return 返回预定义的通用Dao实例
 	 */
@@ -329,6 +443,7 @@ public class SqltoyAutoConfiguration {
 	}
 
 	/**
+	 * 5.2 版本要注入sqlToyLazyDao
 	 * 
 	 * @return 返回预定义的通用CRUD service实例
 	 */
@@ -337,5 +452,4 @@ public class SqltoyAutoConfiguration {
 	SqlToyCRUDService sqlToyCRUDService() {
 		return new SqlToyCRUDServiceImpl();
 	}
-
 }

@@ -53,6 +53,11 @@ public class SqlToyContextProperties implements Serializable {
 	private String[] sqlResources;
 
 	/**
+	 * 需要重复执行查询的数据库
+	 */
+	private String[] redoDataSources;
+
+	/**
 	 * es的配置
 	 */
 	private Elastic elastic;
@@ -93,12 +98,6 @@ public class SqlToyContextProperties implements Serializable {
 	private Integer delayCheckSeconds;
 
 	private String encoding;
-
-	/**
-	 * 分页页号超出总页时转第一页，否则返回空集合
-	 */
-	// update 2022-4-23 默认改为false
-	private boolean pageOverToFirst = false;
 
 	/**
 	 * 统一字段处理器
@@ -146,6 +145,11 @@ public class SqlToyContextProperties implements Serializable {
 	private boolean breakWhenSqlRepeat = true;
 
 	/**
+	 * map类型的resultType标题转驼峰模式(默认为true)
+	 */
+	private Boolean humpMapResultTypeLabel;
+
+	/**
 	 * 连接管理的实现扩展定义
 	 */
 	private String connectionFactory;
@@ -174,16 +178,56 @@ public class SqlToyContextProperties implements Serializable {
 	 * add 2022-4-26 自定义filter处理器(预留备用)
 	 */
 	private String customFilterHandler;
-	
+
 	/**
 	 * sql执行超时处理器
 	 */
 	private String overTimeSqlHandler;
-	
+
 	/**
 	 * 获取MetaData的列标题处理策略：default:不做处理;upper:转大写;lower
 	 */
 	private String columnLabelUpperOrLower = "default";
+
+	/**
+	 * 自定义sql拦截加工处理器
+	 */
+	private String[] sqlInterceptors;
+
+	/**
+	 * 拆分merge into 为updateAll 和 saveAllIgnoreExist 两步操作(1、seata分布式事务不支持merge)
+	 */
+	private boolean splitMergeInto = false;
+
+	/**
+	 * 数据修改提示的记录数量阈值，默认2000条
+	 */
+	private int updateTipCount = 2000;
+
+	/**
+	 * executeSql变更操作型sql执行空白参数是否默认转为null
+	 */
+	private boolean executeSqlBlankToNull = true;
+
+	/**
+	 * 跳转超出数据页范围回到第一页
+	 */
+	private Boolean overPageToFirst;
+
+	/**
+	 * sql格式化输出器(用于debug sql输出)
+	 */
+	private String sqlFormater;
+
+	/**
+	 * 线程池配置参数
+	 */
+	private SqlToyContextTaskPoolProperties taskExecutor = new SqlToyContextTaskPoolProperties();
+
+	/**
+	 * 默认一页数据记录数量
+	 */
+	private int defaultPageSize = 10;
 
 	/**
 	 * @return the sqlResourcesDir
@@ -420,14 +464,6 @@ public class SqlToyContextProperties implements Serializable {
 		this.cacheType = cacheType;
 	}
 
-	public boolean isPageOverToFirst() {
-		return pageOverToFirst;
-	}
-
-	public void setPageOverToFirst(boolean pageOverToFirst) {
-		this.pageOverToFirst = pageOverToFirst;
-	}
-
 	/**
 	 * @return the dataSourceSelector
 	 */
@@ -532,6 +568,86 @@ public class SqlToyContextProperties implements Serializable {
 
 	public void setColumnLabelUpperOrLower(String columnLabelUpperOrLower) {
 		this.columnLabelUpperOrLower = columnLabelUpperOrLower;
+	}
+
+	public String[] getRedoDataSources() {
+		return redoDataSources;
+	}
+
+	public void setRedoDataSources(String[] redoDataSources) {
+		this.redoDataSources = redoDataSources;
+	}
+
+	public String[] getSqlInterceptors() {
+		return sqlInterceptors;
+	}
+
+	public void setSqlInterceptors(String[] sqlInterceptors) {
+		this.sqlInterceptors = sqlInterceptors;
+	}
+
+	public boolean isSplitMergeInto() {
+		return splitMergeInto;
+	}
+
+	public void setSplitMergeInto(boolean splitMergeInto) {
+		this.splitMergeInto = splitMergeInto;
+	}
+
+	public Boolean getHumpMapResultTypeLabel() {
+		return humpMapResultTypeLabel;
+	}
+
+	public void setHumpMapResultTypeLabel(Boolean humpMapResultTypeLabel) {
+		this.humpMapResultTypeLabel = humpMapResultTypeLabel;
+	}
+
+	public int getUpdateTipCount() {
+		return updateTipCount;
+	}
+
+	public void setUpdateTipCount(int updateTipCount) {
+		this.updateTipCount = updateTipCount;
+	}
+
+	public boolean isExecuteSqlBlankToNull() {
+		return executeSqlBlankToNull;
+	}
+
+	public void setExecuteSqlBlankToNull(boolean executeSqlBlankToNull) {
+		this.executeSqlBlankToNull = executeSqlBlankToNull;
+	}
+
+	public Boolean getOverPageToFirst() {
+		return overPageToFirst;
+	}
+
+	public void setOverPageToFirst(Boolean overPageToFirst) {
+		this.overPageToFirst = overPageToFirst;
+	}
+
+	public SqlToyContextTaskPoolProperties getTaskExecutor() {
+		return taskExecutor;
+	}
+
+	public void setTaskExecutor(SqlToyContextTaskPoolProperties taskExecutor) {
+		this.taskExecutor = taskExecutor;
+	}
+
+	public String getSqlFormater() {
+		return sqlFormater;
+	}
+
+	public void setSqlFormater(String sqlFormater) {
+		this.sqlFormater = sqlFormater;
+	}
+
+	public int getDefaultPageSize() {
+		return defaultPageSize;
+	}
+
+	public void setDefaultPageSize(int defaultPageSize) {
+		this.defaultPageSize = defaultPageSize;
 	}
 
 }

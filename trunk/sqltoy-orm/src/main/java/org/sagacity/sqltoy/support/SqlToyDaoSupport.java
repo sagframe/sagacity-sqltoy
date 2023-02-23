@@ -1,6 +1,7 @@
 package org.sagacity.sqltoy.support;
 
 import java.io.Serializable;
+import java.lang.reflect.Array;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -8,6 +9,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -25,6 +27,8 @@ import org.sagacity.sqltoy.callback.DataSourceCallbackHandler;
 import org.sagacity.sqltoy.callback.StreamResultHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
+import org.sagacity.sqltoy.config.model.DataType;
+import org.sagacity.sqltoy.config.model.DataVersionConfig;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
@@ -35,6 +39,7 @@ import org.sagacity.sqltoy.dialect.DialectFactory;
 import org.sagacity.sqltoy.dialect.executor.ParallQueryExecutor;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.exception.DataAccessException;
+import org.sagacity.sqltoy.integration.DistributeIdGenerator;
 import org.sagacity.sqltoy.link.Batch;
 import org.sagacity.sqltoy.link.Delete;
 import org.sagacity.sqltoy.link.Elastic;
@@ -51,6 +56,7 @@ import org.sagacity.sqltoy.model.CacheMatchFilter;
 import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.model.EntityQuery;
 import org.sagacity.sqltoy.model.EntityUpdate;
+import org.sagacity.sqltoy.model.IgnoreCaseLinkedMap;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.MapKit;
@@ -70,15 +76,17 @@ import org.sagacity.sqltoy.model.inner.EntityQueryExtend;
 import org.sagacity.sqltoy.model.inner.EntityUpdateExtend;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.inner.TranslateExtend;
+import org.sagacity.sqltoy.plugins.CrossDbAdapter;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
+import org.sagacity.sqltoy.plugins.UnifyUpdateFieldsController;
 import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
 import org.sagacity.sqltoy.plugins.id.IdGenerator;
-import org.sagacity.sqltoy.plugins.id.impl.RedisIdGenerator;
 import org.sagacity.sqltoy.translate.TranslateHandler;
 import org.sagacity.sqltoy.translate.model.TranslateConfigModel;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.BeanWrapper;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
+import org.sagacity.sqltoy.utils.DateUtil;
 import org.sagacity.sqltoy.utils.MapperUtils;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
@@ -133,6 +141,11 @@ public class SqlToyDaoSupport {
 	 * sqlToy上下文定义
 	 */
 	protected SqlToyContext sqlToyContext;
+
+	/**
+	 * 分布式id产生器
+	 */
+	private DistributeIdGenerator distributeIdGenerator = null;
 
 	/**
 	 * 各种数据库方言实现
@@ -286,7 +299,7 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected SqlToyConfig getSqlToyConfig(final String sqlKey, final SqlType sqlType) {
-		return sqlToyContext.getSqlToyConfig(sqlKey, sqlType, getDialect(null));
+		return sqlToyContext.getSqlToyConfig(sqlKey, (sqlType == null) ? SqlType.search : sqlType, getDialect(null));
 	}
 
 	/**
@@ -348,8 +361,11 @@ public class SqlToyDaoSupport {
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(extend.sql, SqlType.search,
 				getDialect(extend.dataSource));
-		return dialectFactory.getCountBySql(sqlToyContext, queryExecutor, sqlToyConfig,
+		Long result = dialectFactory.getCountBySql(sqlToyContext, queryExecutor, sqlToyConfig,
 				this.getDataSource(extend.dataSource, sqlToyConfig));
+		// 产品化场景，适配其他数据库验证查询(仅仅在设置了redoDataSources时生效)
+		CrossDbAdapter.redoCountQuery(sqlToyContext, dialectFactory, queryExecutor);
+		return result;
 	}
 
 	protected StoreResult executeStore(final String storeSqlOrKey, final Object[] inParamValues,
@@ -380,12 +396,11 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @see getSingleValue(final String sqlOrNamedSql, final Map<String, Object>
-	 *      paramsMap)
 	 * @param sqlOrNamedSql
 	 * @param paramsNamed
 	 * @param paramsValue
 	 * @return
+	 * @see #getSingleValue(String, Map)
 	 */
 	@Deprecated
 	protected Object getSingleValue(final String sqlOrNamedSql, final String[] paramsNamed,
@@ -413,7 +428,8 @@ public class SqlToyDaoSupport {
 			return null;
 		}
 		try {
-			return (T) BeanUtil.convertType(value, resultType.getTypeName());
+			return (T) BeanUtil.convertType(value, DataType.getType(resultType.getTypeName()),
+					resultType.getTypeName());
 		} catch (Exception e) {
 			throw new DataAccessException("getSingleValue方法获取单个值失败:" + e.getMessage(), e);
 		}
@@ -524,14 +540,21 @@ public class SqlToyDaoSupport {
 	 */
 	protected <T extends Serializable> List<T> loadByIds(final Class<T> voClass, final LockMode lockMode,
 			Object... ids) {
-		if (voClass == null || ids == null || ids.length == 0) {
+		if (voClass == null || ids == null || ids.length == 0 || (ids.length == 1 && ids[0] == null)) {
 			throw new IllegalArgumentException("voClass、ids must not null!");
 		}
 		EntityMeta entityMeta = getEntityMeta(voClass);
 		if (entityMeta == null || entityMeta.getIdArray() == null || entityMeta.getIdArray().length != 1) {
 			throw new IllegalArgumentException("voClass must is entity with @SqlToyEntity and must has primary key!");
 		}
-		List<T> entities = BeanUtil.wrapEntities(sqlToyContext.getTypeHandler(), entityMeta, voClass, ids);
+		Object[] realIds;
+		// 单个Collection,将List转为Array数组
+		if (ids.length == 1 && ids[0] instanceof Collection) {
+			realIds = ((Collection) ids[0]).toArray();
+		} else {
+			realIds = ids;
+		}
+		List<T> entities = BeanUtil.wrapEntities(sqlToyContext.getTypeHandler(), entityMeta, voClass, realIds);
 		return dialectFactory.loadAll(sqlToyContext, entities, null, lockMode, this.getDataSource(null));
 	}
 
@@ -591,7 +614,7 @@ public class SqlToyDaoSupport {
 		if (result.size() == 1) {
 			return result.get(0);
 		}
-		throw new IllegalArgumentException("loadEntity查询出:" + result.size() + " 条记录,不符合load查询单条预期!");
+		throw new IllegalArgumentException("loadEntity查询出:" + result.size() + " 条记录,不符合load查询预期!");
 	}
 
 	/**
@@ -610,6 +633,8 @@ public class SqlToyDaoSupport {
 				getDialect(extend.dataSource));
 		QueryResult result = dialectFactory.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig, null,
 				this.getDataSource(extend.dataSource, sqlToyConfig));
+		// 产品化场景，适配其他数据库验证查询(仅仅在设置了redoDataSources时生效)
+		CrossDbAdapter.redoQuery(sqlToyContext, dialectFactory, queryExecutor);
 		List rows = result.getRows();
 		if (rows == null || rows.isEmpty()) {
 			return null;
@@ -769,10 +794,12 @@ public class SqlToyDaoSupport {
 	protected QueryResult findByQuery(final QueryExecutor queryExecutor) {
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search,
 				getDialect(queryExecutor.getInnerModel().dataSource));
-		// update 2020-10-20，将null转为queryExecutor.getInnerModel().lockMode
-		return dialectFactory.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig,
+		QueryResult result = dialectFactory.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig,
 				queryExecutor.getInnerModel().lockMode,
-				this.getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig));
+				getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig));
+		// 产品化场景，适配其他数据库验证查询(仅仅在设置了redoDataSources时生效)
+		CrossDbAdapter.redoQuery(sqlToyContext, dialectFactory, queryExecutor);
+		return result;
 	}
 
 	/**
@@ -786,7 +813,7 @@ public class SqlToyDaoSupport {
 		dialectFactory.fetchStream(sqlToyContext, queryExecutor, sqlToyConfig, streamResultHandler,
 				getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig));
 	}
-	
+
 	/**
 	 * @todo 以QueryExecutor 封装sql、参数等条件，实现分页查询
 	 * @param page
@@ -794,15 +821,26 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected QueryResult findPageByQuery(final Page page, final QueryExecutor queryExecutor) {
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search,
-				getDialect(queryExecutor.getInnerModel().dataSource));
+		String dialect = getDialect(queryExecutor.getInnerModel().dataSource);
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search, dialect);
+		// 自定义countsql
+		String countSql = queryExecutor.getInnerModel().countSql;
+		if (StringUtil.isNotBlank(countSql)) {
+			sqlToyConfig.setCountSql(countSql);
+		}
+		QueryResult result;
 		// 跳过查询总记录数量
 		if (page.getSkipQueryCount() != null && page.getSkipQueryCount()) {
-			return dialectFactory.findSkipTotalCountPage(sqlToyContext, queryExecutor, sqlToyConfig, page.getPageNo(),
-					page.getPageSize(), this.getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig));
+			result = dialectFactory.findSkipTotalCountPage(sqlToyContext, queryExecutor, sqlToyConfig, page.getPageNo(),
+					page.getPageSize(), getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig));
+		} else {
+			result = dialectFactory.findPage(sqlToyContext, queryExecutor, sqlToyConfig, page.getPageNo(),
+					page.getPageSize(), page.getOverPageToFirst(),
+					getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig));
 		}
-		return dialectFactory.findPage(sqlToyContext, queryExecutor, sqlToyConfig, page.getPageNo(), page.getPageSize(),
-				this.getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig));
+		// 产品化场景，适配其他数据库验证查询(仅仅在设置了redoDataSources时生效)
+		CrossDbAdapter.redoPageQuery(sqlToyContext, dialectFactory, queryExecutor, page);
+		return result;
 	}
 
 	/**
@@ -873,8 +911,11 @@ public class SqlToyDaoSupport {
 	protected QueryResult findTopByQuery(final QueryExecutor queryExecutor, final double topSize) {
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search,
 				getDialect(queryExecutor.getInnerModel().dataSource));
-		return dialectFactory.findTop(sqlToyContext, queryExecutor, sqlToyConfig, topSize,
+		QueryResult result = dialectFactory.findTop(sqlToyContext, queryExecutor, sqlToyConfig, topSize,
 				this.getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig));
+		// 产品化场景，适配其他数据库验证查询(仅仅在设置了redoDataSources时生效)
+		CrossDbAdapter.redoTopQuery(sqlToyContext, dialectFactory, queryExecutor, topSize);
+		return result;
 	}
 
 	/**
@@ -887,8 +928,11 @@ public class SqlToyDaoSupport {
 	protected QueryResult getRandomResult(final QueryExecutor queryExecutor, final double randomCount) {
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search,
 				getDialect(queryExecutor.getInnerModel().dataSource));
-		return dialectFactory.getRandomResult(sqlToyContext, queryExecutor, sqlToyConfig, randomCount,
+		QueryResult result = dialectFactory.getRandomResult(sqlToyContext, queryExecutor, sqlToyConfig, randomCount,
 				this.getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig));
+		// 产品化场景，适配其他数据库验证查询(仅仅在设置了redoDataSources时生效)
+		CrossDbAdapter.redoRandomQuery(sqlToyContext, dialectFactory, queryExecutor, randomCount);
+		return result;
 	}
 
 	protected <T> List<T> getRandomResult(final String sqlOrNamedSql, final Map<String, Object> paramsMap,
@@ -965,7 +1009,7 @@ public class SqlToyDaoSupport {
 
 	/**
 	 * @todo 保存对象数据(返回插入的主键值),忽视已经存在的
-	 * @param entity
+	 * @param entities
 	 * @return
 	 */
 	protected <T extends Serializable> Long saveAllIgnoreExist(final List<T> entities) {
@@ -974,7 +1018,7 @@ public class SqlToyDaoSupport {
 
 	/**
 	 * @todo 保存对象数据(返回插入的主键值),忽视已经存在的
-	 * @param entity
+	 * @param entities
 	 * @param dataSource
 	 * @return
 	 */
@@ -1001,6 +1045,45 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected Long update(final Serializable entity, final String[] forceUpdateProps, final DataSource dataSource) {
+		if (entity == null) {
+			logger.warn("update entity is null,please check!");
+			return 0L;
+		}
+		EntityMeta entityMeta = getEntityMeta(entity.getClass());
+		DataVersionConfig dataVersion = entityMeta.getDataVersion();
+		if (dataVersion != null) {
+			Object version = BeanUtil.getProperty(entity, dataVersion.getField());
+			if (version == null) {
+				throw new IllegalArgumentException("表:" + entityMeta.getTableName() + " 存在版本@DataVersion配置，属性:"
+						+ dataVersion.getField() + " 值不能为空!");
+			}
+			String where = "";
+			for (String field : entityMeta.getIdArray()) {
+				where = where.concat(field).concat("=:").concat(field).concat(" and ");
+			}
+			where = where.concat(dataVersion.getField()).concat("=:").concat(dataVersion.getField());
+			// 锁住id+version条件符合的记录
+			Serializable versionEntity = loadEntity(entity.getClass(), EntityQuery.create()
+					.select(entityMeta.getIdArray()).where(where).values(entity).lock(LockMode.UPGRADE_NOWAIT));
+			String verStr = version.toString();
+			if (versionEntity == null) {
+				throw new DataAccessException(
+						"表:" + entityMeta.getTableName() + " 数据版本:" + verStr + " 正在被其他用户修改或已经被更新!");
+			}
+			// 以日期开头
+			if (dataVersion.isStartDate()) {
+				String nowDate = DateUtil.formatDate(DateUtil.getNowTime(), DateUtil.FORMAT.DATE_8CHAR);
+				if (verStr.startsWith(nowDate)) {
+					verStr = nowDate + (Integer.parseInt(verStr.substring(8)) + 1);
+				} else {
+					verStr = nowDate + 1;
+				}
+			} else {
+				verStr = "" + (Integer.parseInt(verStr) + 1);
+			}
+			// 更新版本号
+			BeanUtil.setProperty(entity, dataVersion.getField(), verStr);
+		}
 		return dialectFactory.update(sqlToyContext, entity, forceUpdateProps, false, null, null,
 				this.getDataSource(dataSource));
 	}
@@ -1116,6 +1199,29 @@ public class SqlToyDaoSupport {
 	 */
 	protected Long saveOrUpdate(final Serializable entity, final String[] forceUpdateProps,
 			final DataSource dataSource) {
+		if (entity == null) {
+			logger.warn("saveOrUpdate: entity is null,please check!");
+			return 0L;
+		}
+		EntityMeta entityMeta = getEntityMeta(entity.getClass());
+		// 存在数据版本控制，如果主键和版本数据都有值，表示做更新操作
+		if (entityMeta.getDataVersion() != null) {
+			String[] props = new String[entityMeta.getIdArray().length + 1];
+			System.arraycopy(entityMeta.getIdArray(), 0, props, 0, entityMeta.getIdArray().length);
+			props[props.length - 1] = entityMeta.getDataVersion().getField();
+			Object[] values = BeanUtil.reflectBeanToAry(entity, props);
+			boolean isUpdate = true;
+			for (int i = 0; i < props.length; i++) {
+				if (values[i] == null) {
+					isUpdate = false;
+					break;
+				}
+			}
+			// 全部有值，且版本字段值不为0表示是更新操作
+			if (isUpdate && !values[props.length - 1].toString().equals("0")) {
+				return update(entity, forceUpdateProps, dataSource);
+			}
+		}
 		return dialectFactory.saveOrUpdate(sqlToyContext, entity, forceUpdateProps, this.getDataSource(dataSource));
 	}
 
@@ -1176,7 +1282,6 @@ public class SqlToyDaoSupport {
 		EntityMeta entityMeta = getEntityMeta(entityClass);
 		String where = SqlUtil.convertFieldsToColumns(entityMeta, innerModel.where);
 		String sql = "delete from ".concat(entityMeta.getSchemaTable(null, null)).concat(" where ").concat(where);
-		SqlToyConfig sqlToyConfig = getSqlToyConfig(sql, SqlType.update);
 		QueryExecutor queryExecutor = null;
 		// :named 模式
 		if (SqlConfigParseUtils.hasNamedParam(where) && StringUtil.isBlank(innerModel.names)) {
@@ -1184,11 +1289,17 @@ public class SqlToyDaoSupport {
 		} else {
 			queryExecutor = new QueryExecutor(sql).names(innerModel.names).values(innerModel.values);
 		}
+		queryExecutor.getInnerModel().blankToNull = innerModel.blankToNull;
 		if (innerModel.paramFilters != null && innerModel.paramFilters.size() > 0) {
 			queryExecutor.getInnerModel().paramFilters.addAll(innerModel.paramFilters);
 		}
 		// 分库分表策略
 		setEntitySharding(queryExecutor, entityMeta);
+		// 为后续租户过滤提供判断依据(单表简单sql和对应的实体对象)
+		queryExecutor.getInnerModel().entityClass = entityClass;
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.delete,
+				getDialect(innerModel.dataSource));
+		sqlToyConfig.setSqlType(SqlType.delete);
 		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, queryExecutor, null, null,
 				getDataSource(innerModel.dataSource));
 	}
@@ -1216,15 +1327,23 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected Long deleteByIds(Class entityClass, Object... ids) {
-		if (!sqlToyContext.isEntity(entityClass) || ids == null || ids.length == 0) {
+		if (!sqlToyContext.isEntity(entityClass) || ids == null || ids.length == 0
+				|| (ids.length == 1 && ids[0] == null)) {
 			throw new IllegalArgumentException("deleteByIds entityClass必须是实体bean、主键数据不能为空!");
 		}
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entityClass);
 		if (entityMeta.getIdArray() == null || entityMeta.getIdArray().length != 1) {
 			throw new IllegalArgumentException("deleteByIds实体bean对应表有且只能有一个主键!");
 		}
+		Object[] realIds;
+		// 单个List,将List转为Array数组
+		if (ids.length == 1 && ids[0] instanceof Collection) {
+			realIds = ((Collection) ids[0]).toArray();
+		} else {
+			realIds = ids;
+		}
 		// 为什么统一转成对象集合?便于后面存在分库分表场景、ids超过1000条等场景
-		List entities = BeanUtil.wrapEntities(sqlToyContext.getTypeHandler(), entityMeta, entityClass, ids);
+		List entities = BeanUtil.wrapEntities(sqlToyContext.getTypeHandler(), entityMeta, entityClass, realIds);
 		return this.deleteAll(entities, null);
 	}
 
@@ -1300,7 +1419,17 @@ public class SqlToyDaoSupport {
 		if (StringUtil.isBlank(signature)) {
 			throw new IllegalArgumentException("signature 必须不能为空,请正确指定业务标志符号!");
 		}
-		return ((RedisIdGenerator) RedisIdGenerator.getInstance(sqlToyContext)).generateId(signature, increment);
+		if (distributeIdGenerator == null) {
+			try {
+				distributeIdGenerator = (DistributeIdGenerator) Class
+						.forName(sqlToyContext.getDistributeIdGeneratorClass()).newInstance();
+				distributeIdGenerator.initialize(sqlToyContext.getApplicationContext());
+			} catch (Exception e) {
+				e.printStackTrace();
+				throw new DataAccessException("实例化分布式id产生器失败:" + e.getMessage());
+			}
+		}
+		return distributeIdGenerator.generateId(signature, increment, null);
 	}
 
 	/**
@@ -1357,7 +1486,7 @@ public class SqlToyDaoSupport {
 	 * @TODO 将缓存数据以对象形式获取
 	 * @param <T>
 	 * @param cacheName
-	 * @param cacheType 如是数据字典,则传入字典类型否则为null即可
+	 * @param cacheType  如是数据字典,则传入字典类型否则为null即可
 	 * @param reusltType
 	 * @return
 	 */
@@ -1367,15 +1496,54 @@ public class SqlToyDaoSupport {
 			throw new DataAccessException("缓存翻译中对应的缓存:" + cacheName + " 没有定义,请正确检查配置!");
 		}
 		HashMap<String, Object[]> cacheData = sqlToyContext.getTranslateManager().getCacheData(cacheName, cacheType);
+		if (cacheData.isEmpty()) {
+			return new ArrayList<T>();
+		}
+		if (null == reusltType || reusltType == Array.class) {
+			return new ArrayList(cacheData.values());
+		}
 		String[] props = translateConfig.getProperties();
 		// 注意直接sql定义的缓存，框架会自动获取label
 		if (props == null || props.length == 0) {
-			throw new DataAccessException("缓存翻译中的缓存:[" + cacheName + "]没有正确定义properties属性,无法映射到VO/POJO对象!");
+			throw new DataAccessException("缓存翻译中的缓存:[" + cacheName + "]没有正确定义properties属性,无法映射到VO/POJO/Map对象!");
+		}
+		// 转map类型
+		if (reusltType == Map.class || reusltType == HashMap.class || reusltType == LinkedHashMap.class
+				|| reusltType == IgnoreKeyCaseMap.class || reusltType == IgnoreCaseLinkedMap.class) {
+			List result = new ArrayList();
+			Iterator<Object[]> iter = cacheData.values().iterator();
+			Object[] row;
+			int mapType = 1;
+			if (reusltType == LinkedHashMap.class) {
+				mapType = 2;
+			} else if (reusltType == IgnoreKeyCaseMap.class) {
+				mapType = 3;
+			} else if (reusltType == IgnoreCaseLinkedMap.class) {
+				mapType = 4;
+			}
+			while (iter.hasNext()) {
+				Map map;
+				if (mapType == 2) {
+					map = new LinkedHashMap();
+				} else if (mapType == 3) {
+					map = new IgnoreKeyCaseMap();
+				} else if (mapType == 4) {
+					map = new IgnoreCaseLinkedMap();
+				} else {
+					map = new HashMap();
+				}
+				row = iter.next();
+				for (int i = 0; i < props.length; i++) {
+					map.put(props[i], row[i]);
+				}
+				result.add(map);
+			}
+			return result;
 		}
 		return (List<T>) BeanUtil.reflectListToBean(sqlToyContext.getTypeHandler(), cacheData.values(), props,
 				reusltType);
 	}
-	
+
 	/**
 	 * @todo 获取缓存数据
 	 * @param cacheName
@@ -1387,73 +1555,107 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @TODO 通过缓存匹配名称并返回key集合(类似数据库中的like)便于后续进行精准匹配
-	 * @param matchRegex       如: 页面传过来的员工名称、客户名称等，反查对应的员工id和客户id
-	 * @param cacheMatchFilter 例如:
-	 *                         CacheMatchFilter.create().cacheName("staffIdNameCache")
+	 * @see cacheMatchKeys(CacheMatchFilter cacheMatchFilter, String...
+	 *      matchRegexes)
+	 * @param matchRegex
+	 * @param cacheMatchFilter
 	 * @return
 	 */
+	@Deprecated
 	protected String[] cacheMatchKeys(String matchRegex, CacheMatchFilter cacheMatchFilter) {
+		return cacheMatchKeys(cacheMatchFilter, matchRegex);
+	}
+
+	/**
+	 * @TODO 通过缓存匹配名称并返回key集合(类似数据库中的like)便于后续进行精准匹配
+	 * @param cacheMatchFilter 例如:
+	 *                         CacheMatchFilter.create().cacheName("staffIdNameCache")
+	 * @param cacheMatchFilter 如: 页面传过来的员工名称、客户名称等，反查对应的员工id和客户id
+	 * @param matchRegexes
+	 * @return
+	 */
+	protected String[] cacheMatchKeys(CacheMatchFilter cacheMatchFilter, String... matchRegexes) {
 		if (cacheMatchFilter == null || StringUtil.isBlank(cacheMatchFilter.getCacheFilterArgs().cacheName)
-				|| StringUtil.isBlank(matchRegex)) {
-			throw new IllegalArgumentException("缓存反向名称匹配key必须要提供cacheName和matchName值!");
+				|| matchRegexes == null || matchRegexes.length == 0) {
+			throw new IllegalArgumentException("缓存反向名称匹配key必须要提供cacheName和matchRegex值!");
 		}
 		CacheMatchExtend extendArgs = cacheMatchFilter.getCacheFilterArgs();
 		int[] nameIndexes = extendArgs.matchIndexs;
 		HashMap<String, Object[]> cacheDatas = this.sqlToyContext.getTranslateManager()
 				.getCacheData(extendArgs.cacheName, extendArgs.cacheType);
-		Collection<Object[]> values = cacheDatas.values();
-		String matchLowStr = matchRegex.toLowerCase().trim();
-		int cacheKeyIndex = extendArgs.cacheKeyIndex;
-		List<String> keySet = new ArrayList<String>();
-		int rowIndex = 0;
-		// 优先匹配相等的
-		if (extendArgs.priorMatchEqual) {
-			boolean hasEqual = false;
-			for (Object[] row : values) {
-				for (int index : nameIndexes) {
-					if (row[index] != null && row[index].toString().toLowerCase().equals(matchLowStr)) {
-						keySet.add(row[cacheKeyIndex].toString());
-						hasEqual = true;
-						break;
-					}
-				}
-				if (hasEqual) {
-					break;
-				}
-				rowIndex++;
-			}
-			// 不存在相等设置rowIndex为-1,表示后续所有记录参与like检索匹配
-			if (!hasEqual) {
-				rowIndex = -1;
-			}
+		if (cacheDatas == null || cacheDatas.isEmpty()) {
+			logger.error("缓存cacheName={},cacheType={} 没有数据,cacheMatchKeys异常,请检查!", extendArgs.cacheName,
+					extendArgs.cacheType);
+			return new String[] {};
 		}
-		// 开始like 分词模式的匹配
-		String[] lowName = matchLowStr.split("\\s+");
-		int meter = keySet.size();
-		int i = 0;
-		for (Object[] row : values) {
-			// 相等的行排除,避免重复
-			if (i != rowIndex) {
-				for (int index : nameIndexes) {
-					if (row[index] != null && StringUtil.like(row[index].toString().toLowerCase(), lowName)) {
-						// 避免priorMatchEqual=true matchSize==1
-						if (meter < extendArgs.matchSize) {
-							keySet.add(row[cacheKeyIndex].toString());
+		List<String> matchLowAry = new ArrayList<String>();
+		for (String str : matchRegexes) {
+			matchLowAry.add(str.toLowerCase().trim());
+		}
+		int cacheKeyIndex = extendArgs.cacheKeyIndex;
+		List<String> matchedKeys = new ArrayList<String>();
+		String keyCode;
+		String matchStr;
+		int matchCnt = 0;
+		String[] matchWords;
+		Object compareValue;
+		// 是否优先判断相等
+		boolean priorMatchEqual = extendArgs.priorMatchEqual;
+		boolean hasFilter = (extendArgs.cacheFilter == null) ? false : true;
+		boolean include = true;
+		for (Object[] row : cacheDatas.values()) {
+			keyCode = row[cacheKeyIndex].toString();
+			include = true;
+			if (hasFilter) {
+				include = extendArgs.cacheFilter.doFilter(row);
+			}
+			if (include) {
+				skipLoop: for (int i = 0; i < matchLowAry.size(); i++) {
+					matchStr = matchLowAry.get(i);
+					// 优先匹配名称相同
+					if (priorMatchEqual) {
+						// key 相同
+						if (matchStr.equals(keyCode.toLowerCase())) {
+							matchedKeys.add(keyCode);
+							matchLowAry.remove(i);
+							matchCnt++;
+							break;
 						}
-						meter++;
-						break;
+						// 名称相同
+						for (int index : nameIndexes) {
+							compareValue = row[index];
+							if (compareValue != null && compareValue.toString().toLowerCase().equals(matchStr)) {
+								matchedKeys.add(keyCode);
+								matchLowAry.remove(i);
+								matchCnt++;
+								break skipLoop;
+							}
+						}
+					}
+					// like 匹配
+					matchWords = matchStr.split("\\s+");
+					for (int index : nameIndexes) {
+						compareValue = row[index];
+						if (compareValue != null
+								&& StringUtil.like(compareValue.toString().toLowerCase(), matchWords)) {
+							matchedKeys.add(keyCode);
+							matchCnt++;
+							break skipLoop;
+						}
 					}
 				}
 				// 不超过1000个(作为in条件值有限制)
-				if (meter == extendArgs.matchSize) {
+				if (matchLowAry.isEmpty() || matchCnt >= extendArgs.matchSize) {
 					break;
 				}
 			}
-			i++;
 		}
-		String[] result = new String[keySet.size()];
-		keySet.toArray(result);
+		// 没有从缓存匹配到，返回自身
+		if (matchedKeys.isEmpty() && extendArgs.unMatchedReturnSelf) {
+			return matchRegexes;
+		}
+		String[] result = new String[matchedKeys.size()];
+		matchedKeys.toArray(result);
 		return result;
 	}
 
@@ -1529,19 +1731,6 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @see findPageEntity
-	 * @param <T>
-	 * @param entityClass
-	 * @param page
-	 * @param entityQuery
-	 * @return
-	 */
-	@Deprecated
-	protected <T> Page<T> findEntity(Class<T> entityClass, Page page, EntityQuery entityQuery) {
-		return (Page<T>) findPageEntity(page, entityClass, entityQuery, entityClass);
-	}
-
-	/**
 	 * @TODO 提供针对单表简易快捷分页查询 EntityQuery.where("#[name like ?]#[and status in
 	 *       (?)]").values(new Object[]{xxx,xxx})
 	 * @param <T>
@@ -1594,7 +1783,6 @@ public class SqlToyDaoSupport {
 				translateFields = translateFields.concat(",").concat(keyColumn).concat(" as ").concat(extend.column);
 			}
 		}
-
 		// 将notSelect构造成select，形成统一处理机制
 		String[] selectFieldAry = null;
 		Set<String> notSelect = innerModel.notSelectFields;
@@ -1652,7 +1840,6 @@ public class SqlToyDaoSupport {
 		} else {
 			fields = entityMeta.getAllColumnNames();
 		}
-
 		String sql = "select ".concat((innerModel.distinct) ? " distinct " : "").concat(fields).concat(translateFields)
 				.concat(" from ").concat(entityMeta.getSchemaTable(null, null));
 		// where条件
@@ -1714,6 +1901,8 @@ public class SqlToyDaoSupport {
 		}
 		// 设置是否空白转null
 		queryExecutor.getInnerModel().blankToNull = innerModel.blankToNull;
+		// 为后续租户过滤提供判断依据(单表简单sql和对应的实体对象)
+		queryExecutor.getInnerModel().entityClass = entityClass;
 		// 设置额外的缓存翻译
 		if (!innerModel.translates.isEmpty()) {
 			queryExecutor.getInnerModel().translates.putAll(innerModel.translates);
@@ -1722,15 +1911,16 @@ public class SqlToyDaoSupport {
 		if (!innerModel.paramFilters.isEmpty()) {
 			queryExecutor.getInnerModel().paramFilters.addAll(innerModel.paramFilters);
 		}
-
 		// 设置安全脱敏
 		if (!innerModel.secureMask.isEmpty()) {
 			queryExecutor.getInnerModel().secureMask.putAll(innerModel.secureMask);
 		}
-
+		// 是否输出sql
+		if (innerModel.showSql != null) {
+			queryExecutor.showSql(innerModel.showSql);
+		}
 		// 设置分页优化
 		queryExecutor.getInnerModel().pageOptimize = innerModel.pageOptimize;
-
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search,
 				getDialect(queryExecutor.getInnerModel().dataSource));
 		// 加密字段，查询时解密
@@ -1751,34 +1941,50 @@ public class SqlToyDaoSupport {
 			queryExecutor.getInnerModel().tableShardings = tableShardings;
 		}
 		DataSource realDataSource = getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig);
+		Object result;
 		// 取count数量
 		if (isCount) {
-			return dialectFactory.getCountBySql(sqlToyContext, queryExecutor, sqlToyConfig, realDataSource);
+			result = dialectFactory.getCountBySql(sqlToyContext, queryExecutor, sqlToyConfig, realDataSource);
+			// 产品化场景，适配其他数据库验证查询(仅仅在设置了redoDataSources时生效)
+			CrossDbAdapter.redoCountQuery(sqlToyContext, dialectFactory, queryExecutor);
+			return result;
 		}
 		// 非分页
 		if (page == null) {
 			// 取top
 			if (innerModel.pickType == 0) {
-				return dialectFactory
+				result = dialectFactory
 						.findTop(sqlToyContext, queryExecutor, sqlToyConfig, innerModel.pickSize, realDataSource)
 						.getRows();
+				// 产品化场景，适配其他数据库验证查询(仅仅在设置了redoDataSources时生效)
+				CrossDbAdapter.redoTopQuery(sqlToyContext, dialectFactory, queryExecutor, innerModel.pickSize);
 			} // 取随机记录
 			else if (innerModel.pickType == 1) {
-				return dialectFactory.getRandomResult(sqlToyContext, queryExecutor, sqlToyConfig, innerModel.pickSize,
+				result = dialectFactory.getRandomResult(sqlToyContext, queryExecutor, sqlToyConfig, innerModel.pickSize,
 						realDataSource).getRows();
+				// 产品化场景，适配其他数据库验证查询(仅仅在设置了redoDataSources时生效)
+				CrossDbAdapter.redoRandomQuery(sqlToyContext, dialectFactory, queryExecutor, innerModel.pickSize);
 			} else {
-				return dialectFactory
+				result = dialectFactory
 						.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig, innerModel.lockMode, realDataSource)
 						.getRows();
+				// 产品化场景，适配其他数据库验证查询(仅仅在设置了redoDataSources时生效)
+				CrossDbAdapter.redoQuery(sqlToyContext, dialectFactory, queryExecutor);
 			}
+			return result;
+		} else {
+			// 跳过总记录数形式的分页
+			if (page.getSkipQueryCount()) {
+				result = dialectFactory.findSkipTotalCountPage(sqlToyContext, queryExecutor, sqlToyConfig,
+						page.getPageNo(), page.getPageSize(), realDataSource).getPageResult();
+			} else {
+				result = dialectFactory.findPage(sqlToyContext, queryExecutor, sqlToyConfig, page.getPageNo(),
+						page.getPageSize(), page.getOverPageToFirst(), realDataSource).getPageResult();
+			}
+			// 产品化场景，适配其他数据库验证查询(仅仅在设置了redoDataSources时生效)
+			CrossDbAdapter.redoPageQuery(sqlToyContext, dialectFactory, queryExecutor, page);
+			return result;
 		}
-		// 跳过总记录数形式的分页
-		if (page.getSkipQueryCount()) {
-			return dialectFactory.findSkipTotalCountPage(sqlToyContext, queryExecutor, sqlToyConfig, page.getPageNo(),
-					page.getPageSize(), realDataSource).getPageResult();
-		}
-		return dialectFactory.findPage(sqlToyContext, queryExecutor, sqlToyConfig, page.getPageNo(), page.getPageSize(),
-				realDataSource).getPageResult();
 	}
 
 	/**
@@ -1828,7 +2034,9 @@ public class SqlToyDaoSupport {
 		// 对统一更新字段做处理
 		IUnifyFieldsHandler unifyHandler = getSqlToyContext().getUnifyFieldsHandler();
 		if (unifyHandler != null) {
-			Map<String, Object> updateFields = unifyHandler.updateUnifyFields();
+			Map<String, Object> updateFields = UnifyUpdateFieldsController.useUnifyFields()
+					? unifyHandler.updateUnifyFields()
+					: null;
 			if (updateFields != null && !updateFields.isEmpty()) {
 				Iterator<Entry<String, Object>> updateIter = updateFields.entrySet().iterator();
 				while (updateIter.hasNext()) {
@@ -1917,10 +2125,16 @@ public class SqlToyDaoSupport {
 		}
 		sql.append(" where ").append(where);
 		String sqlStr = sql.toString();
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sqlStr, SqlType.update,
-				getDialect(innerModel.dataSource));
 		QueryExecutor queryExecutor = new QueryExecutor(sqlStr).names(realNames).values(realValues);
+		queryExecutor.getInnerModel().blankToNull = (innerModel.blankToNull == null)
+				? SqlToyConstants.executeSqlBlankToNull
+				: innerModel.blankToNull;
+		// 为后续租户过滤提供判断依据(单表简单sql和对应的实体对象)
+		queryExecutor.getInnerModel().entityClass = entityClass;
 		setEntitySharding(queryExecutor, entityMeta);
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.update,
+				getDialect(innerModel.dataSource));
+		sqlToyConfig.setSqlType(SqlType.update);
 		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, queryExecutor, null, null,
 				getDataSource(innerModel.dataSource, sqlToyConfig));
 	}
@@ -1930,15 +2144,17 @@ public class SqlToyDaoSupport {
 	 * @param <T>
 	 * @param source
 	 * @param resultType
+	 * @param ignoreProperties
 	 * @return
 	 */
-	protected <T extends Serializable> T convertType(Serializable source, Class<T> resultType) {
+	protected <T extends Serializable> T convertType(Serializable source, Class<T> resultType,
+			String... ignoreProperties) {
 		if (source == null || resultType == null) {
 			throw new IllegalArgumentException(
 					"调用convertType对单个对象进行POJO<-->DTO 转换过程中发现参数异常: source 和 resultType 不能为null!");
 		}
 		try {
-			return MapperUtils.map(sqlToyContext, source, resultType);
+			return MapperUtils.map(sqlToyContext, source, resultType, ignoreProperties);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException(
@@ -1952,15 +2168,17 @@ public class SqlToyDaoSupport {
 	 * @param <T>
 	 * @param sourceList
 	 * @param resultType
+	 * @param ignoreProperties
 	 * @return
 	 */
-	protected <T extends Serializable> List<T> convertType(List sourceList, Class<T> resultType) {
+	protected <T extends Serializable> List<T> convertType(List sourceList, Class<T> resultType,
+			String... ignoreProperties) {
 		if (sourceList == null || resultType == null) {
 			throw new IllegalArgumentException(
 					"调用convertType对集合进行POJO<-->DTO 转换过程中发现参数异常: sourceList 和 resultType 不能为null!");
 		}
 		try {
-			return MapperUtils.mapList(sqlToyContext, sourceList, resultType);
+			return MapperUtils.mapList(sqlToyContext, sourceList, resultType, ignoreProperties);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException("将对象:" + sourceList.get(0).getClass().getName() + " 属性数据复制到:"
@@ -1968,7 +2186,8 @@ public class SqlToyDaoSupport {
 		}
 	}
 
-	protected <T extends Serializable> Page<T> convertType(Page sourcePage, Class<T> resultType) {
+	protected <T extends Serializable> Page<T> convertType(Page sourcePage, Class<T> resultType,
+			String... ignoreProperties) {
 		if (sourcePage == null) {
 			return null;
 		}
@@ -1980,7 +2199,7 @@ public class SqlToyDaoSupport {
 		if (sourcePage.getRows().isEmpty()) {
 			return result;
 		}
-		result.setRows(convertType(sourcePage.getRows(), resultType));
+		result.setRows(convertType(sourcePage.getRows(), resultType, ignoreProperties));
 		return result;
 	}
 

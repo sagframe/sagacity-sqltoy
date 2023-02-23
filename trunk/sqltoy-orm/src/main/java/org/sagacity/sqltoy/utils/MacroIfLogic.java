@@ -1,5 +1,9 @@
 package org.sagacity.sqltoy.utils;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
@@ -45,7 +49,7 @@ public class MacroIfLogic {
 		evalExpression = evalExpression.replaceAll("\\<\\>", "!=").replaceAll("\r|\t|\n", " ").trim();
 		// 先通过简单表达式进行计算,格式如:@if(:name>=xxx || :name<=xxx)
 		String simpleResult = evalSimpleExpress(evalExpression, (logicParamCnt == 0) ? null : paramValues, preCount);
-		if (!simpleResult.equals("undefine")) {
+		if (!"undefine".equals(simpleResult)) {
 			return Boolean.parseBoolean(simpleResult);
 		}
 		// 默认返回true，表示@if()模式不起作用
@@ -66,10 +70,11 @@ public class MacroIfLogic {
 		}
 		// 2020-08-25 增加include场景
 		// 比较符号(等于用==,最后用=进行容错处理),<>符号前面已经统一规范成!=
-		String[] compareStr = { "!=", "==", ">=", "<=", ">", "<", "=", " include ", " in ", " out " };
+		String[] compareStr = { "!=", "==", ">=", "<=", ">", "<", "=", " include ", " in ", " out ", " startswith ",
+				" endswith " };
 		// 增加对应compareStr的切割表达式(2020-10-21 修改为正则表达式，修复split错误)
 		String[] splitReg = { "\\!\\=", "\\=\\=", "\\>\\=", "\\<\\=", "\\>", "\\<", "\\=", "\\s+include\\s+",
-				"\\s+in\\s+", "\\s+out\\s+" };
+				"\\s+in\\s+", "\\s+out\\s+", "\\s+startswith\\s+", "\\s+endswith\\s+" };
 		String splitStr = "==";
 		String logicStr = "\\&\\&";
 		String[] expressions;
@@ -114,7 +119,7 @@ public class MacroIfLogic {
 
 			// 只支持&& 和||
 			// 与运算
-			if (logicStr.equals("\\&\\&") || logicStr.equals("&&")) {
+			if ("\\&\\&".equals(logicStr) || "&&".equals(logicStr)) {
 				for (int i = 0; i < expressions.length; i++) {
 					if (!expressResult[i]) {
 						return "false";
@@ -142,7 +147,7 @@ public class MacroIfLogic {
 	 * @param compareValue
 	 * @return
 	 */
-	private static boolean compare(Object value, String compareType, String compareValue) {
+	public static boolean compare(Object value, String compareType, String compareValue) {
 		// 剔除首尾字符串标志符号
 		if (compareValue.startsWith("'") && compareValue.endsWith("'")) {
 			compareValue = compareValue.substring(1, compareValue.length() - 1);
@@ -156,7 +161,7 @@ public class MacroIfLogic {
 		// 判断是否有加减运算
 		for (String calculate : calculateStr) {
 			if (compareValue.trim().indexOf(calculate) > 0) {
-				tmpAry = compareValue.split(calculate.equals("+") ? "\\+" : "\\-");
+				tmpAry = compareValue.split("+".equals(calculate) ? "\\+" : "\\-");
 				// 正负数字
 				append = calculate + tmpAry[1].trim();
 				compareValue = tmpAry[0].trim();
@@ -167,29 +172,29 @@ public class MacroIfLogic {
 		String dayTimeFmt = "yyyy-MM-dd HH:mm:ss";
 		String dayFmt = "yyyy-MM-dd";
 		String lowCompareValue = compareValue.toLowerCase();
-		if (lowCompareValue.equals("now()") || lowCompareValue.equals(".now") || lowCompareValue.equals("${.now}")
-				|| lowCompareValue.equals("nowtime()")) {
+		if ("now()".equals(lowCompareValue) || ".now".equals(lowCompareValue) || "${.now}".equals(lowCompareValue)
+				|| "nowtime()".equals(lowCompareValue)) {
 			compareValue = DateUtil.formatDate(DateUtil.addSecond(new Date(), Double.parseDouble(append)), dayTimeFmt);
 			type = "time";
-		} else if (lowCompareValue.equals("day()") || lowCompareValue.equals("sysdate()")
-				|| lowCompareValue.equals(".day") || lowCompareValue.equals(".day()")
-				|| lowCompareValue.equals("${.day}")) {
+		} else if ("day()".equals(lowCompareValue) || "sysdate()".equals(lowCompareValue)
+				|| ".day".equals(lowCompareValue) || ".day()".equals(lowCompareValue)
+				|| "${.day}".equals(lowCompareValue)) {
 			compareValue = DateUtil.formatDate(DateUtil.addSecond(new Date(), Double.parseDouble(append)), dayFmt);
 			type = "date";
 		}
 		compareValue = compareValue.replaceAll("\'", "").replaceAll("\"", "");
 		String realValue = (value == null) ? "null" : value.toString();
-		if (type.equals("time")) {
+		if ("time".equals(type)) {
 			realValue = DateUtil.formatDate(value, dayTimeFmt);
-		} else if (type.equals("date")) {
+		} else if ("date".equals(type)) {
 			realValue = DateUtil.formatDate(value, dayFmt);
 		}
 		// 等于(兼容等于号非法)
-		if (compareType.equals("==") || compareType.equals("=")) {
+		if ("==".equals(compareType) || "=".equals(compareType)) {
 			return realValue.equalsIgnoreCase(compareValue);
 		}
 		// 不等于
-		if (compareType.equals("!=")) {
+		if ("!=".equals(compareType)) {
 			return !realValue.equalsIgnoreCase(compareValue);
 		}
 		// 为null时只参与等于或不等于逻辑判断
@@ -197,32 +202,47 @@ public class MacroIfLogic {
 			return false;
 		}
 		// 大于等于
-		if (compareType.equals(">=")) {
+		if (">=".equals(compareType)) {
 			return moreEqual(value, realValue, compareValue, type);
 		}
 		// 小于等于
-		if (compareType.equals("<=")) {
+		if ("<=".equals(compareType)) {
 			return lessEqual(value, realValue, compareValue, type);
 		}
 		// 大于
-		if (compareType.equals(">")) {
+		if (">".equals(compareType)) {
 			return more(value, realValue, compareValue, type);
 		}
 		// 小于
-		if (compareType.equals("<")) {
+		if ("<".equals(compareType)) {
 			return less(value, realValue, compareValue, type);
 		}
 		// 包含
-		if (compareType.equals("include")) {
+		if ("include".equals(compareType)) {
 			return include(value, realValue, compareValue, type);
 		}
 		// 在数组范围内
-		if (compareType.equals("in")) {
+		if ("in".equals(compareType)) {
 			return in(value, realValue, compareValue, type);
 		}
 		// 在数组范围外
-		if (compareType.equals("out")) {
+		if ("out".equals(compareType)) {
 			return out(value, realValue, compareValue, type);
+		}
+		// 以xxx字符开始
+		if ("startswith".equals(compareType)) {
+			return realValue.startsWith(compareValue);
+		}
+		// 以xxx字符结束
+		if ("endswith".equals(compareType)) {
+			return realValue.endsWith(compareValue);
+		}
+		// between
+		if ("between".equals(compareType)) {
+			String[] compareValues = compareValue.split("\\,");
+			if (compareValues.length == 2) {
+				return between(value, realValue, compareValues[0], compareValues[1]);
+			}
 		}
 		return true;
 	}
@@ -236,7 +256,7 @@ public class MacroIfLogic {
 	 * @return
 	 */
 	private static boolean moreEqual(Object value, String valueStr, String compare, String type) {
-		if (type.equals("time") || type.equals("date")) {
+		if ("time".equals(type) || "date".equals(type)) {
 			return DateUtil.convertDateObject(valueStr).compareTo(DateUtil.convertDateObject(compare)) >= 0;
 		}
 		// 数字
@@ -255,7 +275,7 @@ public class MacroIfLogic {
 	 * @return
 	 */
 	private static boolean lessEqual(Object value, String valueStr, String compare, String type) {
-		if (type.equals("time") || type.equals("date")) {
+		if ("time".equals(type) || "date".equals(type)) {
 			return DateUtil.convertDateObject(valueStr).compareTo(DateUtil.convertDateObject(compare)) <= 0;
 		}
 		// 数字
@@ -274,7 +294,7 @@ public class MacroIfLogic {
 	 * @return
 	 */
 	private static boolean more(Object value, String valueStr, String compare, String type) {
-		if (type.equals("time") || type.equals("date")) {
+		if ("time".equals(type) || "date".equals(type)) {
 			return DateUtil.convertDateObject(valueStr).compareTo(DateUtil.convertDateObject(compare)) > 0;
 		}
 		// 数字
@@ -293,7 +313,7 @@ public class MacroIfLogic {
 	 * @return
 	 */
 	private static boolean less(Object value, String valueStr, String compare, String type) {
-		if (type.equals("time") || type.equals("date")) {
+		if ("time".equals(type) || "date".equals(type)) {
 			return DateUtil.convertDateObject(valueStr).compareTo(DateUtil.convertDateObject(compare)) < 0;
 		}
 		// 数字
@@ -392,5 +412,39 @@ public class MacroIfLogic {
 			}
 		}
 		return true;
+	}
+
+	/**
+	 * @todo 参数大于等于并小于等于给定的数据范围时表示条件无效，自动置参数值为null
+	 * @param param
+	 * @param valueStr
+	 * @param beginContrast
+	 * @param endContrast
+	 * @return
+	 */
+	private static boolean between(Object param, String valueStr, String beginContrast, String endContrast) {
+		if (null == param) {
+			return false;
+		}
+		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalDateTime) {
+			Date var = DateUtil.convertDateObject(param);
+			if (var.compareTo(DateUtil.convertDateObject(beginContrast)) >= 0
+					&& var.compareTo(DateUtil.convertDateObject(endContrast)) <= 0) {
+				return true;
+			}
+		} else if (param instanceof LocalTime) {
+			if (((LocalTime) param).compareTo(LocalTime.parse(beginContrast)) >= 0
+					&& ((LocalTime) param).compareTo(LocalTime.parse(endContrast)) <= 0) {
+				return true;
+			}
+		} else if (param instanceof Number) {
+			if ((new BigDecimal(param.toString()).compareTo(new BigDecimal(beginContrast)) >= 0)
+					&& (new BigDecimal(param.toString()).compareTo(new BigDecimal(endContrast)) <= 0)) {
+				return true;
+			}
+		} else if (valueStr.compareTo(beginContrast) >= 0 && valueStr.compareTo(endContrast) <= 0) {
+			return true;
+		}
+		return false;
 	}
 }

@@ -5,6 +5,8 @@ package org.sagacity.sqltoy.model.inner;
 
 import java.io.Serializable;
 
+import org.sagacity.sqltoy.callback.CacheFilter;
+
 /**
  * @project sagacity-sqltoy
  * @description cacheMatchFilter的参数容器，避免cacheMatchFilter暴露过多参数
@@ -48,4 +50,14 @@ public class CacheMatchExtend implements Serializable {
 	 * 缓存中用来跟名称匹配的列,默认为1
 	 */
 	public int[] matchIndexs = { 1 };
+
+	/**
+	 * 缓存数据过滤
+	 */
+	public CacheFilter cacheFilter;
+
+	/**
+	 * 缓存通过名称关键词未匹配到key，返回关键词本身
+	 */
+	public boolean unMatchedReturnSelf = false;
 }

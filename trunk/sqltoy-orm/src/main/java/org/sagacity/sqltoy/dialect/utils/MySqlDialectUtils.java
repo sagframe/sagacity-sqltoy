@@ -26,6 +26,7 @@ public class MySqlDialectUtils {
 	 * @param tableName
 	 * @return
 	 */
+	@Deprecated
 	public static String getSaveOrUpdateSql(Integer dbType, EntityMeta entityMeta, String[] forceUpdateFields,
 			String tableName) {
 		String realTable = entityMeta.getSchemaTable(tableName, dbType);
@@ -60,7 +61,7 @@ public class MySqlDialectUtils {
 			// 默认值处理
 			if (null != fieldMeta.getDefaultValue()) {
 				values.append("ifnull(?,");
-				DialectExtUtils.processDefaultValue(values, dbType, fieldMeta.getType(), fieldMeta.getDefaultValue());
+				DialectExtUtils.processDefaultValue(values, dbType, fieldMeta, fieldMeta.getDefaultValue());
 				values.append(")");
 			} else {
 				values.append("?");

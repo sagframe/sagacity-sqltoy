@@ -40,9 +40,8 @@ public class ElasticSqlPlugin {
 	public static Page findPage(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, Page pageModel,
 			QueryExecutor queryExecutor) throws Exception {
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
-		//update 2022-6-16 补全参数统一构造处理
 		QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
-		String realSql = MongoElasticUtils.wrapES(sqlToyConfig, extend.getParamsName(sqlToyConfig),
+		String realSql = MongoElasticUtils.wrapES(sqlToyConfig, extend.getParamsName(),
 				extend.getParamsValue(sqlToyContext, sqlToyConfig)).trim();
 		// sql模式
 		realSql = realSql + " limit " + (pageModel.getPageNo() - 1) * pageModel.getPageSize() + ","
@@ -76,9 +75,8 @@ public class ElasticSqlPlugin {
 	public static List<?> findTop(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, QueryExecutor queryExecutor,
 			Integer topSize) throws Exception {
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
-		//update 2022-6-16 补全参数统一构造处理
 		QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
-		String realSql = MongoElasticUtils.wrapES(sqlToyConfig, extend.getParamsName(sqlToyConfig),
+		String realSql = MongoElasticUtils.wrapES(sqlToyConfig, extend.getParamsName(),
 				extend.getParamsValue(sqlToyContext, sqlToyConfig)).trim();
 		// sql模式
 		if (topSize != null) {

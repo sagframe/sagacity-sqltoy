@@ -1,13 +1,14 @@
 package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
  * 提供超时执行的sql模型
  * 
  * @author zhongxuchen
- * @version v1.0, Date:2022-06-29
+ *
  */
 public class OverTimeSql implements Serializable {
 
@@ -32,7 +33,12 @@ public class OverTimeSql implements Serializable {
 	private long takeTime;
 
 	/**
-	 * 执行时间
+	 * 首次执行时间
+	 */
+	private LocalDateTime firstLogTime;
+
+	/**
+	 * 执行时间(最后发生超时查询的执行时间)
 	 */
 	private LocalDateTime logTime;
 
@@ -46,13 +52,18 @@ public class OverTimeSql implements Serializable {
 	 */
 	private long overTimeCount = 1;
 
-	public OverTimeSql(String id, String sql,  long takeTime, String codeTrace) {
+	/**
+	 * 平均耗时
+	 */
+	private BigDecimal aveTakeTime = BigDecimal.ZERO;
+
+	public OverTimeSql(String id, String sql, long takeTime, String codeTrace) {
 		this.id = id;
 		this.sql = sql;
 		this.takeTime = takeTime;
 		this.codeTrace = codeTrace;
+		this.firstLogTime = LocalDateTime.now();
 		this.logTime = LocalDateTime.now();
-
 	}
 
 	public String getId() {
@@ -95,12 +106,28 @@ public class OverTimeSql implements Serializable {
 		this.logTime = logTime;
 	}
 
+	public LocalDateTime getFirstLogTime() {
+		return firstLogTime;
+	}
+
+	public void setFirstLogTime(LocalDateTime firstLogTime) {
+		this.firstLogTime = firstLogTime;
+	}
+
 	public long getOverTimeCount() {
 		return overTimeCount;
 	}
 
 	public void setOverTimeCount(long overTimeCount) {
 		this.overTimeCount = overTimeCount;
+	}
+
+	public BigDecimal getAveTakeTime() {
+		return aveTakeTime;
+	}
+
+	public void setAveTakeTime(BigDecimal aveTakeTime) {
+		this.aveTakeTime = aveTakeTime;
 	}
 
 }

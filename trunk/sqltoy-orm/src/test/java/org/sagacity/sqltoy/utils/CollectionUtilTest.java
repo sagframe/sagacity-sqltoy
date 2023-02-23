@@ -4,9 +4,17 @@
 package org.sagacity.sqltoy.utils;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Queue;
 
 import org.junit.jupiter.api.Test;
+import org.sagacity.sqltoy.model.OverTimeSql;
+import org.sagacity.sqltoy.model.PriorityLimitSizeQueue;
 
 import com.alibaba.fastjson.JSON;
 
@@ -74,4 +82,74 @@ public class CollectionUtilTest {
 		}
 	}
 
+	@Test
+	public void testQueue() {
+		Queue<OverTimeSql> priorityQueue = new PriorityLimitSizeQueue(4, new Comparator<OverTimeSql>() {
+			@Override
+			public int compare(OverTimeSql o1, OverTimeSql o2) {
+				return new Long(o1.getTakeTime() - o2.getTakeTime()).intValue();
+			}
+		});
+		long[] time = new long[] { 10, 28, 7, 49, 8, 32, 82, 71, 90, 29 };
+		for (int i = 0; i < time.length; i++) {
+			priorityQueue.offer(new OverTimeSql("" + i, "sql" + i, time[i], ""));
+		}
+		OverTimeSql[] overSqls = new OverTimeSql[priorityQueue.size()];
+		priorityQueue.toArray(overSqls);
+		// System.err.println(priorityQueue.size());
+		for (int i = 0; i < overSqls.length; i++) {
+			System.err.println(overSqls[i].getTakeTime());
+		}
+		List<OverTimeSql> result = CollectionUtilTest.getSlowest(priorityQueue, 2);
+		for (OverTimeSql iter : result) {
+			System.err.println("耗时=" + iter.getTakeTime());
+		}
+	}
+
+	public static List<OverTimeSql> getSlowest(Queue<OverTimeSql> queues, int size) {
+		List<OverTimeSql> result = new ArrayList<OverTimeSql>();
+		Iterator<OverTimeSql> iter = queues.iterator();
+		int index = 0;
+		int start = queues.size() - size;
+		if (start < 0) {
+			start = 0;
+		}
+		OverTimeSql sql;
+		while (iter.hasNext()) {
+			sql = iter.next();
+			if (index >= start) {
+				result.add(0, sql);
+			}
+			index++;
+		}
+		return result;
+	}
+
+	@Test
+	public void testQueueTopSize() {
+		int size = 15;
+		Map<String, OverTimeSql> map = new HashMap<String, OverTimeSql>();
+		long[] time = new long[] { 10, 28, 7, 49, 8, 32, 82, 71, 90, 29 };
+		for (int i = 0; i < time.length; i++) {
+			map.put("sql_" + i, new OverTimeSql("sql_" + i, "sql" + i, time[i], ""));
+		}
+		List<OverTimeSql> result = new ArrayList<OverTimeSql>();
+		Iterator<OverTimeSql> iter = map.values().iterator();
+		while (iter.hasNext()) {
+			result.add(iter.next());
+		}
+		Collections.sort(result, new Comparator<OverTimeSql>() {
+			public int compare(OverTimeSql o1, OverTimeSql o2) {
+				return new Long(o2.getTakeTime() - o1.getTakeTime()).intValue();
+			}
+		});
+		if (size < result.size()) {
+			result = result.subList(0, size - 1);
+		}
+
+		for (OverTimeSql sql : result) {
+			System.err.println(sql.getTakeTime());
+		}
+
+	}
 }

@@ -62,6 +62,15 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 	}
 
 	@Override
+	public boolean hasCache(String cacheName) {
+		Cache<String, HashMap> cache = cacheManager.getCache(cacheName, String.class, HashMap.class);
+		if (null == cache) {
+			return false;
+		}
+		return true;
+	}
+
+	@Override
 	public void put(TranslateConfigModel cacheConfig, String cacheName, String cacheKey,
 			HashMap<String, Object[]> cacheValue) {
 		if (cacheManager == null) {
@@ -118,7 +127,6 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 		}
 		synchronized (cacheName.intern()) {
 			Cache<String, HashMap> cache = cacheManager.getCache(cacheName, String.class, HashMap.class);
-			// 缓存没有配置,自动创建缓存不建议使用
 			if (cache != null) {
 				if (StringUtil.isBlank(cacheType)) {
 					cache.clear();

@@ -5,6 +5,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ForkJoinPool;
 
 import javax.sql.DataSource;
 
@@ -15,16 +17,18 @@ import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
+import org.sagacity.sqltoy.integration.ConnectionFactory;
+import org.sagacity.sqltoy.integration.impl.SpringConnectionFactory;
 import org.sagacity.sqltoy.model.OverTimeSql;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.plugins.FilterHandler;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.plugins.OverTimeSqlHandler;
+import org.sagacity.sqltoy.plugins.SqlInterceptor;
 import org.sagacity.sqltoy.plugins.TypeHandler;
-import org.sagacity.sqltoy.plugins.datasource.ConnectionFactory;
 import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
-import org.sagacity.sqltoy.plugins.datasource.impl.DefaultConnectionFactory;
 import org.sagacity.sqltoy.plugins.datasource.impl.DefaultDataSourceSelector;
+import org.sagacity.sqltoy.plugins.formater.SqlFormater;
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
 import org.sagacity.sqltoy.plugins.overtime.DefaultOverTimeHandler;
 import org.sagacity.sqltoy.plugins.secure.DesensitizeProvider;
@@ -34,17 +38,18 @@ import org.sagacity.sqltoy.plugins.secure.impl.FieldsRSASecureProvider;
 import org.sagacity.sqltoy.plugins.sharding.ShardingStrategy;
 import org.sagacity.sqltoy.translate.TranslateManager;
 import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
-import org.sagacity.sqltoy.translate.cache.impl.TranslateCaffeineManager;
 import org.sagacity.sqltoy.utils.BeanUtil;
+import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils.Dialect;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+
+import com.alibaba.ttl.threadpool.TtlExecutors;
 
 //------------------了解 sqltoy的关键优势: -------------------------------------------------------------------------------------------*/
 //1、最简最直观的sql编写方式(不仅仅是查询语句)，采用条件参数前置处理规整法，让sql语句部分跟客户端保持高度一致
@@ -72,8 +77,8 @@ import org.springframework.context.ApplicationContextAware;
  * @modify {Date:2018-1-5,增加对redis缓存翻译的支持}
  * @modify {Date:2019-09-15,将跨数据库函数FunctionConverts统一提取到FunctionUtils中,实现不同数据库函数替换后的语句放入缓存,避免每次执行函数替换}
  * @modify {Date:2020-05-29,调整mongo的注入方式,剔除之前MongoDbFactory模式,直接使用MongoTemplate}
- * @modify {Date:2022-04-23,pageOverToFirst默认值改为false}
  * @modify {Date:2022-06-11,支持多个缓存翻译定义文件}
+ * @modify {Date:2022-10-14,增加humpMapResultTypeLabel设置结果为Map时是否驼峰化处理属性}
  */
 public class SqlToyContext implements ApplicationContextAware {
 	/**
@@ -102,12 +107,6 @@ public class SqlToyContext implements ApplicationContextAware {
 	private int delayCheckSeconds = 30;
 
 	/**
-	 * 分页页号超出总页时转第一页，否则返回空集合
-	 */
-	// update 2022-4-23 默认改为false
-	private boolean pageOverToFirst = false;
-
-	/**
 	 * 默认查询数据库端提取记录量
 	 */
 	private int fetchSize = -1;
@@ -126,7 +125,17 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * 自定义参数过滤处理器(防范性预留)
 	 */
 	private FilterHandler customFilterHandler;
-	
+
+	/**
+	 * map类型的resultType标题转驼峰模式
+	 */
+	private boolean humpMapResultTypeLabel = true;
+
+	/**
+	 * 跳转超出数据页范围回到第一页
+	 */
+	private Boolean overPageToFirst;
+
 	/**
 	 * 执行超时sql自定义处理器
 	 */
@@ -197,7 +206,12 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * 超时打印sql(毫秒,默认30秒)
 	 */
 	private int printSqlTimeoutMillis = 30000;
-	
+
+	/**
+	 * 数据修改提示的记录数量阈值，默认2000条
+	 */
+	private int updateTipCount = 2000;
+
 	/**
 	 * 获取MetaData的列标题处理策略：default:不做处理;upper:转大写;lower
 	 */
@@ -248,10 +262,25 @@ public class SqlToyContext implements ApplicationContextAware {
 	/**
 	 * 提供数据源获得connection的扩展(默认spring的实现)
 	 */
-	private ConnectionFactory connectionFactory = new DefaultConnectionFactory();
+	private ConnectionFactory connectionFactory;
 
 	/**
-	 * spring 上下文容器
+	 * 定义TranslateCacheManager 对应实现类
+	 */
+	private String translateCaffeineManagerClass = "org.sagacity.sqltoy.translate.cache.impl.TranslateCaffeineManager";
+
+	/**
+	 * 定义mongo查询的实现类,默认基于spring实现，其他框架修改成对应实现类
+	 */
+	private String mongoQueryClass = "org.sagacity.sqltoy.integration.impl.SpringMongoQuery";
+
+	/**
+	 * 分布式id产生器实现类
+	 */
+	private String distributeIdGeneratorClass = "org.sagacity.sqltoy.integration.impl.SpringRedisIdGenerator";
+
+	/**
+	 * 获取bean的上下文容器
 	 */
 	private ApplicationContext applicationContext;
 
@@ -297,6 +326,45 @@ public class SqlToyContext implements ApplicationContextAware {
 	private DesensitizeProvider desensitizeProvider;
 
 	/**
+	 * 重新执行查询的数据库
+	 */
+	private String[] redoDataSources;
+
+	/**
+	 * sql执行拦截器，提供对最终执行前的sql进行干预处理
+	 */
+	private List<SqlInterceptor> sqlInterceptors;
+
+	/**
+	 * 拆分merge into 为updateAll 和 saveAllIgnoreExist 两步操作(1、seata分布式事务不支持merge)
+	 */
+	private boolean splitMergeInto = false;
+
+	/**
+	 * sql格式化输出器(用于debug sql输出)
+	 */
+	private SqlFormater sqlFormater;
+
+	/**
+	 * 变更操作型sql空白默认转为null
+	 */
+	private boolean executeSqlBlankToNull = true;
+
+	/**
+	 * sqltoy的线程池名称
+	 */
+	private String taskExecutorName;
+	/**
+	 * sqltoy的线程池
+	 */
+	private Executor taskExecutor = TtlExecutors.getTtlExecutor(ForkJoinPool.commonPool());
+
+	/**
+	 * 默认一页数据记录条数
+	 */
+	private int defaultPageSize = 10;
+
+	/**
 	 * @todo 初始化
 	 * @throws Exception
 	 */
@@ -305,6 +373,12 @@ public class SqlToyContext implements ApplicationContextAware {
 		// 加载sqltoy的各类参数,如db2是否要增加with
 		// ur等,详见org/sagacity/sqltoy/sqltoy-default.properties
 		SqlToyConstants.loadProperties(dialectConfig);
+		// 默认使用基于spring的连接管理
+		if (connectionFactory == null) {
+			connectionFactory = new SpringConnectionFactory();
+		}
+		// 初始化方言对应的类别代码，避免线程安全
+		DataSourceUtils.initialize();
 		// 初始化默认dataSource
 		initDefaultDataSource();
 		// 设置workerId和dataCenterId,为使用snowflake主键ID产生算法服务
@@ -315,7 +389,9 @@ public class SqlToyContext implements ApplicationContextAware {
 
 		// 初始化翻译器,update 2021-1-23 增加caffeine缓存支持
 		if (translateCacheManager == null && "caffeine".equalsIgnoreCase(this.cacheType)) {
-			translateManager.initialize(this, new TranslateCaffeineManager(), delayCheckSeconds);
+			translateManager.initialize(this,
+					(TranslateCacheManager) Class.forName(translateCaffeineManagerClass).newInstance(),
+					delayCheckSeconds);
 		} else {
 			translateManager.initialize(this, translateCacheManager, delayCheckSeconds);
 		}
@@ -325,20 +401,22 @@ public class SqlToyContext implements ApplicationContextAware {
 		ReservedWordsUtil.put(reservedWords);
 		// 设置默认fetchSize
 		SqlToyConstants.FETCH_SIZE = this.fetchSize;
+		SqlToyConstants.executeSqlBlankToNull = this.executeSqlBlankToNull;
+		SqlToyConstants.DEFAULT_PAGE_SIZE = this.defaultPageSize;
 		// 初始化sql执行统计的基本参数
 		SqlExecuteStat.setDebug(this.debug);
 		SqlExecuteStat.setOverTimeSqlHandler(overTimeSqlHandler);
 		SqlExecuteStat.setPrintSqlTimeoutMillis(this.printSqlTimeoutMillis);
+		// sql格式化
+		SqlExecuteStat.setSqlFormater(this.sqlFormater);
 		// 字段加解密实现类初始化
 		if (null != fieldsSecureProvider) {
 			fieldsSecureProvider.initialize(this.encoding, securePrivateKey, securePublicKey);
-		} else {
-			if (StringUtil.isNotBlank(securePrivateKey) && StringUtil.isNotBlank(securePublicKey)) {
-				if (fieldsSecureProvider == null) {
-					fieldsSecureProvider = new FieldsRSASecureProvider();
-				}
-				fieldsSecureProvider.initialize(this.encoding, securePrivateKey, securePublicKey);
+		} else if (StringUtil.isNotBlank(securePrivateKey) && StringUtil.isNotBlank(securePublicKey)) {
+			if (fieldsSecureProvider == null) {
+				fieldsSecureProvider = new FieldsRSASecureProvider();
 			}
+			fieldsSecureProvider.initialize(this.encoding, securePrivateKey, securePublicKey);
 		}
 		// 默认的脱敏处理器
 		if (desensitizeProvider == null) {
@@ -368,10 +446,6 @@ public class SqlToyContext implements ApplicationContextAware {
 				return null;
 			}
 			return BeanUtil.invokeMethod(beanDefine, method, args);
-		} catch (BeansException be) {
-			be.printStackTrace();
-		} catch (IllegalStateException ie) {
-			ie.printStackTrace();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -389,7 +463,7 @@ public class SqlToyContext implements ApplicationContextAware {
 				return applicationContext.getBean(beanName.toString());
 			}
 			return applicationContext.getBean((Class) beanName);
-		} catch (BeansException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 			logger.error("从springContext中获取Bean:{} 错误!{}", e.getMessage());
 		}
@@ -434,7 +508,8 @@ public class SqlToyContext implements ApplicationContextAware {
 		if (StringUtil.isBlank(sqlKey)) {
 			throw new IllegalArgumentException("sql or sqlId is null!");
 		}
-		return scriptLoader.getSqlConfig(sqlKey, sqlType, dialect);
+		return scriptLoader.getSqlConfig(sqlKey, sqlType, dialect,
+				SqlType.search.equals(sqlType) ? true : SqlToyConstants.executeSqlBlankToNull);
 	}
 
 	public SqlToyConfig getSqlToyConfig(QueryExecutor queryExecutor, SqlType sqlType, String dialect) {
@@ -452,14 +527,7 @@ public class SqlToyContext implements ApplicationContextAware {
 				sqlKey = "select * ".concat(sqlKey);
 			}
 		}
-		SqlToyConfig result = scriptLoader.getSqlConfig(sqlKey, sqlType, dialect);
-		// 剔除空白转null的默认设置
-		if (!queryExecutor.getInnerModel().blankToNull && StringUtil.isBlank(result.getId())) {
-			if (result.getFilters().size() == 1) {
-				result.getFilters().remove(0);
-			}
-		}
-		return result;
+		return scriptLoader.getSqlConfig(sqlKey, sqlType, dialect, queryExecutor.getInnerModel().blankToNull);
 	}
 
 	/**
@@ -542,6 +610,10 @@ public class SqlToyContext implements ApplicationContextAware {
 		return entityManager.getEntityMeta(this, entityClass);
 	}
 
+	public EntityMeta getEntityMeta(String tableName) {
+		return entityManager.getEntityMeta(tableName);
+	}
+
 	/**
 	 * @TODO 判断是否是实体bean
 	 * @param entityClass
@@ -593,6 +665,7 @@ public class SqlToyContext implements ApplicationContextAware {
 	}
 
 	/**
+	 * @TODO 规整方言定义，避免设置的名称跟系统定义不一致(一般无需设置)
 	 * @param dialect the dialect to set
 	 */
 	public void setDialect(String dialect) {
@@ -718,11 +791,14 @@ public class SqlToyContext implements ApplicationContextAware {
 		}
 		if (functionConverts instanceof List) {
 			FunctionUtils.setFunctionConverts((List<String>) functionConverts);
+		} else if (functionConverts instanceof String[]) {
+			FunctionUtils.setFunctionConverts(Arrays.asList((String[]) functionConverts));
 		} else if (functionConverts instanceof String) {
 			String converts = (String) functionConverts;
-			if (StringUtil.isBlank(converts) || converts.equals("default") || converts.equals("defaults")) {
-				FunctionUtils.setFunctionConverts(null);
-			} else if (!converts.equalsIgnoreCase("close")) {
+			if (StringUtil.isBlank(converts) || "default".equals(converts) || "defaults".equals(converts)) {
+				FunctionUtils.setFunctionConverts(Arrays.asList("default"));
+			} // close 标记已经没有必要
+			else if (!"close".equalsIgnoreCase(converts)) {
 				FunctionUtils.setFunctionConverts(Arrays.asList(converts.split("\\,")));
 			}
 		}
@@ -736,23 +812,20 @@ public class SqlToyContext implements ApplicationContextAware {
 	}
 
 	/**
-	 * @param nocacheKeyResult the nocacheKeyResult to set
+	 * @param uncachedKeyResult the nocacheKeyResult to set
 	 */
 	public void setUncachedKeyResult(String uncachedKeyResult) {
 		SqlToyConstants.setUncachedKeyResult(uncachedKeyResult);
-	}
-
-	public void setApplicationContext(ApplicationContext applicationContext) {
-		this.applicationContext = applicationContext;
 	}
 
 	public ApplicationContext getApplicationContext() {
 		return applicationContext;
 	}
 
-	/**
-	 * @param defaultDataSource the defaultDataSource to set
-	 */
+	public void setApplicationContext(ApplicationContext applicationContext) {
+		this.applicationContext = applicationContext;
+	}
+
 	public void initDefaultDataSource() {
 		if (StringUtil.isNotBlank(defaultDataSourceName)) {
 			this.defaultDataSource = getDataSourceBean(defaultDataSourceName);
@@ -764,7 +837,7 @@ public class SqlToyContext implements ApplicationContextAware {
 	}
 
 	/**
-	 * @param elasticConfigs the elasticConfigs to set
+	 * @param elasticEndpointList the elasticConfigs to set
 	 */
 	public void setElasticEndpoints(List<ElasticEndpoint> elasticEndpointList) {
 		if (elasticEndpointList == null || elasticEndpointList.isEmpty()) {
@@ -862,14 +935,6 @@ public class SqlToyContext implements ApplicationContextAware {
 		this.cacheType = cacheType;
 	}
 
-	public boolean isPageOverToFirst() {
-		return pageOverToFirst;
-	}
-
-	public void setPageOverToFirst(boolean pageOverToFirst) {
-		this.pageOverToFirst = pageOverToFirst;
-	}
-
 	public void destroy() {
 		try {
 			scriptLoader.destroy();
@@ -963,6 +1028,26 @@ public class SqlToyContext implements ApplicationContextAware {
 		this.customFilterHandler = customFilterHandler;
 	}
 
+	public void setTranslateCaffeineManagerClass(String translateCaffeineManagerClass) {
+		this.translateCaffeineManagerClass = translateCaffeineManagerClass;
+	}
+
+	public String getDistributeIdGeneratorClass() {
+		return distributeIdGeneratorClass;
+	}
+
+	public void setDistributeIdGeneratorClass(String distributeIdGeneratorClass) {
+		this.distributeIdGeneratorClass = distributeIdGeneratorClass;
+	}
+
+	public String getMongoQueryClass() {
+		return mongoQueryClass;
+	}
+
+	public void setMongoQueryClass(String mongoQueryClass) {
+		this.mongoQueryClass = mongoQueryClass;
+	}
+
 	public OverTimeSqlHandler getOverTimeSqlHandler() {
 		return overTimeSqlHandler;
 	}
@@ -974,7 +1059,7 @@ public class SqlToyContext implements ApplicationContextAware {
 	/**
 	 * @TODO 获取执行最慢的sql
 	 * @param size     提取记录数量
-	 * @param hasSqlId 是否包含sqlId
+	 * @param hasSqlId 是否是xml中定义含id的sql(另外一种就是代码中直接写的sql)
 	 * @return
 	 */
 	public List<OverTimeSql> getSlowestSql(int size, boolean hasSqlId) {
@@ -988,4 +1073,88 @@ public class SqlToyContext implements ApplicationContextAware {
 	public void setColumnLabelUpperOrLower(String columnLabelUpperOrLower) {
 		this.columnLabelUpperOrLower = columnLabelUpperOrLower;
 	}
+
+	public String[] getRedoDataSources() {
+		return redoDataSources;
+	}
+
+	public void setRedoDataSources(String[] redoDataSources) {
+		this.redoDataSources = redoDataSources;
+	}
+
+	public List<SqlInterceptor> getSqlInterceptors() {
+		return sqlInterceptors;
+	}
+
+	public void setSqlInterceptors(List<SqlInterceptor> sqlInterceptors) {
+		this.sqlInterceptors = sqlInterceptors;
+	}
+
+	public boolean isSplitMergeInto() {
+		return splitMergeInto;
+	}
+
+	public void setSplitMergeInto(boolean splitMergeInto) {
+		this.splitMergeInto = splitMergeInto;
+	}
+
+	public boolean isHumpMapResultTypeLabel() {
+		return humpMapResultTypeLabel;
+	}
+
+	public void setHumpMapResultTypeLabel(boolean humpMapResultTypeLabel) {
+		this.humpMapResultTypeLabel = humpMapResultTypeLabel;
+	}
+
+	public int getUpdateTipCount() {
+		return updateTipCount;
+	}
+
+	public void setUpdateTipCount(int updateTipCount) {
+		this.updateTipCount = updateTipCount;
+	}
+
+	public boolean isExecuteSqlBlankToNull() {
+		return executeSqlBlankToNull;
+	}
+
+	public void setExecuteSqlBlankToNull(boolean executeSqlBlankToNull) {
+		this.executeSqlBlankToNull = executeSqlBlankToNull;
+	}
+
+	public Boolean getOverPageToFirst() {
+		return overPageToFirst;
+	}
+
+	public void setOverPageToFirst(Boolean overPageToFirst) {
+		this.overPageToFirst = overPageToFirst;
+	}
+
+	public void setTaskExecutorName(String taskExecutorName) {
+		this.taskExecutorName = taskExecutorName;
+	}
+
+	public Executor getTaskExecutor() {
+		if (StringUtil.isBlank(taskExecutorName) || !applicationContext.containsBean(taskExecutorName)) {
+			return taskExecutor;
+		} else {
+			return (Executor) applicationContext.getBean(taskExecutorName);
+		}
+	}
+
+	public void setTaskExecutor(Executor taskExecutor) {
+		this.taskExecutor = taskExecutor;
+	}
+
+	/**
+	 * @param sqlFormater the sqlFormater to set
+	 */
+	public void setSqlFormater(SqlFormater sqlFormater) {
+		this.sqlFormater = sqlFormater;
+	}
+
+	public void setDefaultPageSize(int defaultPageSize) {
+		this.defaultPageSize = defaultPageSize;
+	}
+
 }

@@ -28,6 +28,7 @@ public enum SqlType {
 		return this.sqlType;
 	}
 
+	@Override
 	public String toString() {
 		return this.sqlType;
 	}
@@ -38,14 +39,18 @@ public enum SqlType {
 	 * @return
 	 */
 	public static SqlType getSqlType(String sqlType) {
-		if (sqlType.equalsIgnoreCase(search.getValue()))
+		if (sqlType.equalsIgnoreCase(search.getValue())) {
 			return search;
-		if (sqlType.equalsIgnoreCase(insert.getValue()))
+		}
+		if (sqlType.equalsIgnoreCase(insert.getValue())) {
 			return insert;
-		if (sqlType.equalsIgnoreCase(update.getValue()))
+		}
+		if (sqlType.equalsIgnoreCase(update.getValue())) {
 			return update;
-		if (sqlType.equalsIgnoreCase(delete.getValue()))
+		}
+		if (sqlType.equalsIgnoreCase(delete.getValue())) {
 			return delete;
+		}
 		return search;
 	}
 }

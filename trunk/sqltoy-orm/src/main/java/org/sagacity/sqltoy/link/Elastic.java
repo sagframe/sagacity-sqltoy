@@ -62,7 +62,7 @@ public class Elastic extends BaseLink {
 	/**
 	 * 返回结果是Map类型，属性标签是否需要驼峰化命名处理
 	 */
-	private boolean humpMapLabel = true;
+	private Boolean humpMapLabel;
 
 	/**
 	 * @param sqlToyContext
@@ -97,7 +97,7 @@ public class Elastic extends BaseLink {
 		return this;
 	}
 
-	public Elastic humpMapLabel(boolean humpMapLabel) {
+	public Elastic humpMapLabel(Boolean humpMapLabel) {
 		this.humpMapLabel = humpMapLabel;
 		return this;
 	}
@@ -174,6 +174,15 @@ public class Elastic extends BaseLink {
 		}
 		Page pageResult = null;
 		try {
+			boolean isOverPageToFirst = false;
+			// 使用全局默认值
+			if (sqlToyContext.getOverPageToFirst() != null) {
+				isOverPageToFirst = sqlToyContext.getOverPageToFirst();
+			}
+			// 以pageModel中指定的为准
+			if (pageModel.getOverPageToFirst() != null) {
+				isOverPageToFirst = pageModel.getOverPageToFirst();
+			}
 			if (noSqlConfig.isSqlMode()) {
 				ElasticEndpoint esConfig = sqlToyContext.getElasticEndpoint(noSqlConfig.getEndpoint());
 				if (esConfig.isNativeSql()) {
@@ -182,6 +191,9 @@ public class Elastic extends BaseLink {
 				pageResult = ElasticSqlPlugin.findPage(sqlToyContext, sqlToyConfig, pageModel, queryExecutor);
 			} else {
 				pageResult = ElasticSearchPlugin.findPage(sqlToyContext, sqlToyConfig, pageModel, queryExecutor);
+			}
+			if (pageResult.getRecordCount() == 0 && isOverPageToFirst) {
+				pageResult.setPageNo(1L);
 			}
 			return pageResult;
 		} catch (Exception e) {

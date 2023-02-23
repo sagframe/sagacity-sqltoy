@@ -287,7 +287,7 @@ public class EntityQuery implements Serializable {
 					}
 				}
 				// 存在blank 过滤器自动将blank param="*" 关闭
-				if (filter.getType().equals("blank")) {
+				if ("blank".equals(filter.getType())) {
 					innerModel.blankToNull = false;
 				}
 				innerModel.paramFilters.add(filter);
@@ -390,6 +390,16 @@ public class EntityQuery implements Serializable {
 		sharding.setFields(paramNames);
 		sharding.setAliasNames(paramNames);
 		innerModel.tableSharding = sharding;
+		return this;
+	}
+
+	/**
+	 * @TODO 设置执行时是否输出sql日志
+	 * @param showSql
+	 * @return
+	 */
+	public EntityQuery showSql(Boolean showSql) {
+		innerModel.showSql = showSql;
 		return this;
 	}
 

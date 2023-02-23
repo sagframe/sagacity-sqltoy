@@ -3,7 +3,7 @@
  */
 package org.sagacity.sqltoy.plugins.id.macro;
 
-import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
+import java.util.Map;
 
 /**
  * @project sqltoy-orm
@@ -18,6 +18,6 @@ public abstract class AbstractMacro {
 	 * @param keyValues 宏涉及的参数名称和对应的值
 	 * @return
 	 */
-	public abstract String execute(String[] params, IgnoreKeyCaseMap<String, Object> keyValues);
+	public abstract String execute(String[] params, Map<String, Object> keyValues);
 
 }

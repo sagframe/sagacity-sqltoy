@@ -34,6 +34,7 @@ public enum TimeUnit {
 		return this.timeUnit;
 	}
 
+	@Override
 	public String toString() {
 		return this.timeUnit;
 	}

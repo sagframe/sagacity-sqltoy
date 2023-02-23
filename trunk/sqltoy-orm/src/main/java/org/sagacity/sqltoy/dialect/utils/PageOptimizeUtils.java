@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.config.model.OperateType;
 import org.sagacity.sqltoy.config.model.PageOptimize;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.model.QueryExecutor;
@@ -47,7 +48,7 @@ public class PageOptimizeUtils {
 			return null;
 		}
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
-		String[] paramNames = extend.getParamsName(sqlToyConfig);
+		String[] paramNames = extend.getParamsName();
 		Object[] paramValues = extend.getParamsValue(sqlToyContext, sqlToyConfig);
 		// sql中所有参数都为null,返回sqlId作为key
 		if (paramValues == null || paramValues.length == 0) {
@@ -83,6 +84,24 @@ public class PageOptimizeUtils {
 				cacheKey.append(value.toString());
 			}
 			i++;
+		}
+		// 存在租户隔离
+		if (sqlToyContext.getUnifyFieldsHandler() != null) {
+			String[] tenants = sqlToyContext.getUnifyFieldsHandler().authTenants(extend.entityClass, OperateType.page);
+			if (tenants != null && tenants.length > 0) {
+				if (i > 0) {
+					cacheKey.append(",");
+				}
+				cacheKey.append("tenantIds=[");
+				int meter = 0;
+				for (String tenant : tenants) {
+					if (meter > 0) {
+						cacheKey.append(",");
+					}
+					cacheKey.append(tenant);
+					meter++;
+				}
+			}
 		}
 		return cacheKey.toString();
 	}

@@ -47,21 +47,21 @@ public class Length extends IFunction {
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
 		String funLow = functionName.toLowerCase();
 		if (dialect == DBType.SQLSERVER) {
-			if (funLow.equals("datalength")) {
+			if ("datalength".equals(funLow)) {
 				return wrapArgs("datalength", args);
 			}
 			return wrapArgs("len", args);
 		}
-		if (dialect == DBType.ORACLE || dialect == DBType.POSTGRESQL|| dialect == DBType.POSTGRESQL15 || dialect == DBType.DB2
-				|| dialect == DBType.GAUSSDB || dialect == DBType.OCEANBASE || dialect == DBType.DM
-				|| dialect == DBType.ORACLE11) {
-			if (funLow.equals("datalength") || funLow.equals("char_length") || funLow.equals("len")) {
+		if (dialect == DBType.ORACLE || dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL15
+				|| dialect == DBType.DB2 || dialect == DBType.GAUSSDB || dialect == DBType.OCEANBASE
+				|| dialect == DBType.DM || dialect == DBType.ORACLE11) {
+			if ("datalength".equals(funLow) || "char_length".equals(funLow) || "len".equals(funLow)) {
 				return wrapArgs("length", args);
 			}
 			return wrapArgs(functionName, args);
 		}
-		if (dialect == DBType.MYSQL || dialect == DBType.TIDB || dialect == DBType.MYSQL57) {
-			if (funLow.equals("char_length")) {
+		if (dialect == DBType.MYSQL || dialect == DBType.TIDB || dialect == DBType.MYSQL57 || dialect == DBType.H2) {
+			if ("char_length".equals(funLow)) {
 				return wrapArgs(functionName, args);
 			}
 			return wrapArgs("length", args);

@@ -27,6 +27,7 @@ public class Decode extends IFunction {
 		return regex;
 	}
 
+	@Override
 	public String dialects() {
 		return super.ALL;
 	}
@@ -44,7 +45,7 @@ public class Decode extends IFunction {
 		 */
 		// oracle支持decode
 		if (dialect == DBType.ORACLE || dialect == DBType.DM || dialect == DBType.OCEANBASE
-				|| dialect == DBType.ORACLE11) {
+				|| dialect == DBType.ORACLE11||dialect == DBType.H2) {
 			return super.IGNORE;
 		}
 		// decode(param,a1,a11,a2,a21,other)

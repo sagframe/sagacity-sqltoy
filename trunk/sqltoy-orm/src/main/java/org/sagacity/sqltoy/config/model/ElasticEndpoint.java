@@ -358,9 +358,6 @@ public class ElasticEndpoint implements Serializable {
 		this.authCaching = authCaching;
 	}
 
-	/**
-	 * @param restClient the restClient to set
-	 */
 	public void initRestClient() {
 		if (StringUtil.isBlank(this.getUrl())) {
 			return;

@@ -91,7 +91,7 @@ public class QueryExecutor implements Serializable {
 					}
 				}
 				// 存在blank 过滤器自动将blank param="*" 关闭
-				if (filter.getType().equals("blank")) {
+				if ("blank".equals(filter.getType())) {
 					innerModel.blankToNull = false;
 				}
 				innerModel.paramFilters.add(filter);
@@ -279,7 +279,7 @@ public class QueryExecutor implements Serializable {
 	 * @param humpMapLabel
 	 * @return
 	 */
-	public QueryExecutor humpMapLabel(boolean humpMapLabel) {
+	public QueryExecutor humpMapLabel(Boolean humpMapLabel) {
 		innerModel.humpMapLabel = humpMapLabel;
 		return this;
 	}
@@ -322,7 +322,7 @@ public class QueryExecutor implements Serializable {
 	/**
 	 * @TODO 结果日期格式化
 	 * @param format
-	 * @param params
+	 * @param columns
 	 * @return
 	 */
 	public QueryExecutor dateFmt(String format, String... columns) {
@@ -342,7 +342,7 @@ public class QueryExecutor implements Serializable {
 	 * @TODO 对结果的数字进行格式化
 	 * @param format
 	 * @param roundingMode
-	 * @param params
+	 * @param columns
 	 * @return
 	 */
 	public QueryExecutor numFmt(String format, RoundingMode roundingMode, String... columns) {
@@ -362,7 +362,7 @@ public class QueryExecutor implements Serializable {
 	/**
 	 * @TODO 对结果字段进行安全脱敏
 	 * @param maskType
-	 * @param params
+	 * @param columns
 	 * @return
 	 */
 	public QueryExecutor secureMask(MaskType maskType, String... columns) {
@@ -422,6 +422,55 @@ public class QueryExecutor implements Serializable {
 		if (pivotModel != null) {
 			innerModel.calculators.add(pivotModel);
 		}
+		return this;
+	}
+
+	/**
+	 * @TODO 设置分页查询countsql(用于极致性能优化，非必须)
+	 * @param countSql
+	 * @return
+	 */
+	public QueryExecutor countSql(String countSql) {
+		if (countSql != null) {
+			innerModel.countSql = countSql;
+		}
+		return this;
+	}
+
+// 暂时不开放，组织SummaryModel、LinkModel参数模型过于复杂
+//	// 建议在xml中定义使用,没有xml结构无法清晰的构造SummaryModel模型
+//	/**
+//	 * @TODO 定义sqltoy查询结果的处理模式,目前仅提供合计和求平均
+//	 * @param summaryModel
+//	 * @return
+//	 */
+//	public QueryExecutor summary(SummaryModel summaryModel) {
+//		if (summaryModel != null) {
+//			innerModel.calculators.add(summaryModel);
+//		}
+//		return this;
+//	}
+//
+//	// 建议在xml中定义使用,没有xml结构无法清晰的构造linkModel模型
+//	/**
+//	 * @TODO 拼换某列,mysql中等同于Broup_concat\oracle 中的WMSWS,HN_CONCAT功能
+//	 * @param linkModel
+//	 * @return
+//	 */
+//	public QueryExecutor link(LinkModel linkModel) {
+//		if (linkModel != null) {
+//			innerModel.linkModel = linkModel;
+//		}
+//		return this;
+//	}
+
+	/**
+	 * @TODO 设置执行时是否输出sql日志
+	 * @param showSql
+	 * @return
+	 */
+	public QueryExecutor showSql(Boolean showSql) {
+		innerModel.showSql = showSql;
 		return this;
 	}
 

@@ -34,13 +34,14 @@ import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.config.model.SummaryGroupMeta;
 import org.sagacity.sqltoy.config.model.SummaryModel;
 import org.sagacity.sqltoy.config.model.Translate;
+import org.sagacity.sqltoy.config.model.TreeSortModel;
 import org.sagacity.sqltoy.config.model.UnpivotModel;
 import org.sagacity.sqltoy.dialect.utils.PageOptimizeUtils;
 import org.sagacity.sqltoy.model.IgnoreCaseSet;
 import org.sagacity.sqltoy.model.TimeUnit;
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
-import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
+import org.sagacity.sqltoy.utils.NumberUtil;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -284,7 +285,7 @@ public class SqlXMLConfigParse {
 			nodeName = nodeName.substring(prefixIndex + 1);
 		}
 		// 目前只支持传统sql、elastic、mongo三种类型的语法
-		if (!nodeName.equals("sql") && !nodeName.equals("eql") && !nodeName.equals("mql")) {
+		if (!"sql".equals(nodeName) && !"eql".equals(nodeName) && !"mql".equals(nodeName)) {
 			return null;
 		}
 		String id = sqlElt.getAttribute("id");
@@ -315,24 +316,28 @@ public class SqlXMLConfigParse {
 		if (countSql != null) {
 			countSql = countSql.replaceAll("\u3000", " ");
 		}
-		SqlType type = sqlElt.hasAttribute("type") ? SqlType.getSqlType(sqlElt.getAttribute("type")) : SqlType.search;
+		SqlType sqlType = sqlElt.hasAttribute("type") ? SqlType.getSqlType(sqlElt.getAttribute("type"))
+				: SqlType.search;
 		// 是否nosql模式
 		boolean isNoSql = false;
-		if (nodeName.equals("mql") || nodeName.equals("eql")) {
-			if (nodeName.equals("mql")) {
+		if ("mql".equals(nodeName) || "eql".equals(nodeName)) {
+			if ("mql".equals(nodeName)) {
 				realDialect = DataSourceUtils.Dialect.MONGO;
-			} else if (nodeName.equals("eql")) {
+			} else if ("eql".equals(nodeName)) {
 				realDialect = DataSourceUtils.Dialect.ES;
 			}
 			isNoSql = true;
 		}
-		SqlToyConfig sqlToyConfig = SqlConfigParseUtils.parseSqlToyConfig(sqlContent, realDialect, type);
+		SqlToyConfig sqlToyConfig = SqlConfigParseUtils.parseSqlToyConfig(sqlContent, realDialect, sqlType);
+		// 判断是否存在@include(sqlId)
+		if (StringUtil.matches(sqlContent, SqlToyConstants.INCLUDE_PATTERN)) {
+			sqlToyConfig.setHasIncludeSql(true);
+		}
 		// debug 控制台输出sql执行日志
 		if (sqlElt.hasAttribute("debug")) {
 			sqlToyConfig.setShowSql(Boolean.valueOf(sqlElt.getAttribute("debug")));
 		}
 		sqlToyConfig.setId(id);
-		sqlToyConfig.setSqlType(type);
 		// 为sql提供特定数据库的扩展
 		if (sqlElt.hasAttribute("dataSource")) {
 			sqlToyConfig.setDataSource(sqlElt.getAttribute("dataSource"));
@@ -345,6 +350,9 @@ public class SqlXMLConfigParse {
 			countSql = FunctionUtils.getDialectSql(countSql, dialect);
 			countSql = ReservedWordsUtil.convertSql(countSql, DataSourceUtils.getDBType(dialect));
 			sqlToyConfig.setCountSql(countSql);
+			if (StringUtil.matches(countSql, SqlToyConstants.INCLUDE_PATTERN)) {
+				sqlToyConfig.setHasIncludeSql(true);
+			}
 		}
 		// 是否是单纯的union all分页(在取count记录数时,将union all 每部分的查询from前面的全部替换成
 		// select 1 from,减少不必要的执行运算，提升效率)
@@ -369,7 +377,7 @@ public class SqlXMLConfigParse {
 		// 解析参数过滤器
 		if (nodeList.getLength() > 0) {
 			parseFilters(sqlToyConfig, nodeList.item(0).getChildNodes(), blankToNull, local);
-		} else {
+		} else if (SqlType.search.equals(sqlType) || SqlToyConstants.executeSqlBlankToNull) {
 			parseFilters(sqlToyConfig, null, blankToNull, local);
 		}
 
@@ -429,7 +437,6 @@ public class SqlXMLConfigParse {
 		if (sqlElt.hasAttribute("collection")) {
 			noSqlConfig.setCollection(sqlElt.getAttribute("collection"));
 		}
-
 		// url应该是一个变量如:${es_url}
 		if (sqlElt.hasAttribute("url")) {
 			noSqlConfig.setEndpoint(SqlToyConstants.replaceParams(sqlElt.getAttribute("url")));
@@ -454,12 +461,10 @@ public class SqlXMLConfigParse {
 		if (sqlElt.hasAttribute("connection-timeout")) {
 			noSqlConfig.setConnectTimeout(Integer.parseInt(sqlElt.getAttribute("connection-timeout")));
 		}
-
 		// 整个请求超时时长(毫秒)
 		if (sqlElt.hasAttribute("socket-timeout")) {
 			noSqlConfig.setSocketTimeout(Integer.parseInt(sqlElt.getAttribute("socket-timeout")));
 		}
-
 		// url请求字符集类型
 		if (sqlElt.hasAttribute("charset")) {
 			noSqlConfig.setCharset(sqlElt.getAttribute("charset"));
@@ -475,7 +480,6 @@ public class SqlXMLConfigParse {
 				noSqlConfig.setFields(splitFields(nodeList.item(0).getTextContent()));
 			}
 		}
-
 		// valueRoot
 		if (sqlElt.hasAttribute("value-root")) {
 			noSqlConfig.setValueRoot(trimParams(sqlElt.getAttribute("value-root").split("\\,")));
@@ -484,7 +488,7 @@ public class SqlXMLConfigParse {
 		}
 		String nodeName = sqlElt.getNodeName().toLowerCase();
 		// 是否有聚合查询
-		if (nodeName.equals("eql")) {
+		if ("eql".equals(nodeName)) {
 			if (sqlElt.hasAttribute("aggregate")) {
 				noSqlConfig.setHasAggs(Boolean.parseBoolean(sqlElt.getAttribute("aggregate")));
 			} else if (sqlElt.hasAttribute("is-aggregate")) {
@@ -501,7 +505,7 @@ public class SqlXMLConfigParse {
 					noSqlConfig.setHasAggs(true);
 				}
 			}
-		} else if (nodeName.equals("mql")) {
+		} else if ("mql".equals(nodeName)) {
 			if (sqlElt.hasAttribute("aggregate")) {
 				noSqlConfig.setHasAggs(Boolean.parseBoolean(sqlElt.getAttribute("aggregate")));
 			} else if (sqlElt.hasAttribute("is-aggregate")) {
@@ -510,7 +514,6 @@ public class SqlXMLConfigParse {
 				noSqlConfig.setHasAggs(StringUtil.matches(sqlToyConfig.getSql(null), MONGO_AGGS_PATTERN));
 			}
 		}
-
 		sqlToyConfig.setNoSqlConfigModel(noSqlConfig);
 		// nosql参数解析模式不同于sql
 		if (!noSqlConfig.isSqlMode()) {
@@ -578,10 +581,10 @@ public class SqlXMLConfigParse {
 				secureMask.setType(type);
 				secureMask.setMaskCode(maskCode);
 				if (secureMask.getMaskCode() == null) {
-					if (secureMask.getType().equals("id-card") || secureMask.getType().equals("bank-card")
-							|| secureMask.getType().equals("email") || secureMask.getType().equals("address")) {
+					if ("id-card".equals(secureMask.getType()) || "bank-card".equals(secureMask.getType())
+							|| "email".equals(secureMask.getType()) || "address".equals(secureMask.getType())) {
 						secureMask.setMaskCode("******");
-					} else if (secureMask.getType().equals("name")) {
+					} else if ("name".equals(secureMask.getType())) {
 						secureMask.setMaskCode("**");
 					} else {
 						secureMask.setMaskCode("****");
@@ -754,7 +757,7 @@ public class SqlXMLConfigParse {
 						filterType = filterType.substring(prefixIndex + 1);
 					}
 					// 当开发者配置了blank过滤器时，则表示关闭默认将全部空白当做null处理的逻辑
-					if (filterType.equals("blank")) {
+					if ("blank".equals(filterType)) {
 						hasBlank = true;
 						blank = true;
 					}
@@ -762,19 +765,19 @@ public class SqlXMLConfigParse {
 					if ((blank && blankToNull != 1) || !blank) {
 						ParamFilterModel filterModel = new ParamFilterModel();
 						// 统一过滤的类别,避免不同版本和命名差异
-						if (filterType.equals("equals") || filterType.equals("any") || filterType.equals("in")) {
+						if ("equals".equals(filterType) || "any".equals(filterType) || "in".equals(filterType)) {
 							filterType = "eq";
-						} else if (filterType.equals("moreThan") || filterType.equals("more")) {
+						} else if ("moreThan".equals(filterType) || "more".equals(filterType)) {
 							filterType = "gt";
-						} else if (filterType.equals("moreEquals") || filterType.equals("more-equals")) {
+						} else if ("moreEquals".equals(filterType) || "more-equals".equals(filterType)) {
 							filterType = "gte";
-						} else if (filterType.equals("lessThan") || filterType.equals("less")) {
+						} else if ("lessThan".equals(filterType) || "less".equals(filterType)) {
 							filterType = "lt";
-						} else if (filterType.equals("lessEquals") || filterType.equals("less-equals")) {
+						} else if ("lessEquals".equals(filterType) || "less-equals".equals(filterType)) {
 							filterType = "lte";
-						} else if (filterType.equals("not-any")) {
+						} else if ("not-any".equals(filterType)) {
 							filterType = "neq";
-						} else if (filterType.equals("dateFormat")) {
+						} else if ("dateFormat".equals(filterType)) {
 							filterType = "date-format";
 						}
 						filterModel.setFilterType(filterType);
@@ -817,7 +820,6 @@ public class SqlXMLConfigParse {
 			filterModel
 					.setValues(new String[] { filter.getAttribute("start-value"), filter.getAttribute("end-value") });
 		}
-
 		// 解析to-date 的加减操作
 		if (filter.hasAttribute("increment-time")) {
 			filterModel.setIncrementTime(Double.valueOf(filter.getAttribute("increment-time")));
@@ -827,38 +829,37 @@ public class SqlXMLConfigParse {
 		}
 		if (filter.hasAttribute("increment-unit")) {
 			String timeUnit = filter.getAttribute("increment-unit").toUpperCase();
-			if (timeUnit.equals("DAYS") || timeUnit.equals("DAY")) {
+			if ("DAYS".equals(timeUnit) || "DAY".equals(timeUnit)) {
 				filterModel.setTimeUnit(TimeUnit.DAYS);
-			} else if (timeUnit.equals("HOURS") || timeUnit.equals("HOUR")) {
+			} else if ("HOURS".equals(timeUnit) || "HOUR".equals(timeUnit)) {
 				filterModel.setTimeUnit(TimeUnit.HOURS);
-			} else if (timeUnit.equals("MINUTES") || timeUnit.equals("MINUTE")) {
+			} else if ("MINUTES".equals(timeUnit) || "MINUTE".equals(timeUnit)) {
 				filterModel.setTimeUnit(TimeUnit.MINUTES);
-			} else if (timeUnit.equals("SECONDS") || timeUnit.equals("SECOND")) {
+			} else if ("SECONDS".equals(timeUnit) || "SECOND".equals(timeUnit)) {
 				filterModel.setTimeUnit(TimeUnit.SECONDS);
-			} else if (timeUnit.equals("MILLISECONDS") || timeUnit.equals("MILLISECOND")) {
+			} else if ("MILLISECONDS".equals(timeUnit) || "MILLISECOND".equals(timeUnit)) {
 				filterModel.setTimeUnit(TimeUnit.MILLISECONDS);
-			} else if (timeUnit.equals("MONTHS") || timeUnit.equals("MONTH")) {
+			} else if ("MONTHS".equals(timeUnit) || "MONTH".equals(timeUnit)) {
 				filterModel.setTimeUnit(TimeUnit.MONTHS);
-			} else if (timeUnit.equals("YEARS") || timeUnit.equals("YEAR")) {
+			} else if ("YEARS".equals(timeUnit) || "YEAR".equals(timeUnit)) {
 				filterModel.setTimeUnit(TimeUnit.YEARS);
 			}
 		}
-
 		// to-date filter
 		if (filter.hasAttribute("format")) {
 			String fmt = filter.getAttribute("format");
 			// 规整toDate的格式
-			if (fmt.equalsIgnoreCase("first_day") || fmt.equalsIgnoreCase("first_month_day")) {
+			if ("first_day".equalsIgnoreCase(fmt) || "first_month_day".equalsIgnoreCase(fmt)) {
 				filterModel.setFormat("FIRST_OF_MONTH");
-			} else if (fmt.equalsIgnoreCase("last_day") || fmt.equalsIgnoreCase("last_month_day")) {
+			} else if ("last_day".equalsIgnoreCase(fmt) || "last_month_day".equalsIgnoreCase(fmt)) {
 				filterModel.setFormat("LAST_OF_MONTH");
-			} else if (fmt.equalsIgnoreCase("first_year_day")) {
+			} else if ("first_year_day".equalsIgnoreCase(fmt)) {
 				filterModel.setFormat("FIRST_OF_YEAR");
-			} else if (fmt.equalsIgnoreCase("last_year_day")) {
+			} else if ("last_year_day".equalsIgnoreCase(fmt)) {
 				filterModel.setFormat("LAST_OF_YEAR");
-			} else if (fmt.equalsIgnoreCase("first_week_day")) {
+			} else if ("first_week_day".equalsIgnoreCase(fmt)) {
 				filterModel.setFormat("FIRST_OF_WEEK");
-			} else if (fmt.equalsIgnoreCase("last_week_day")) {
+			} else if ("last_week_day".equalsIgnoreCase(fmt)) {
 				filterModel.setFormat("LAST_OF_WEEK");
 			} else {
 				filterModel.setFormat(fmt);
@@ -872,7 +873,6 @@ public class SqlXMLConfigParse {
 		if (filter.hasAttribute("regex")) {
 			filterModel.setRegex(filter.getAttribute("regex"));
 		}
-
 		// 用于replace 转换器,设置是否是替换首个匹配的字符
 		if (filter.hasAttribute("is-first")) {
 			filterModel.setFirst(Boolean.parseBoolean(filter.getAttribute("is-first")));
@@ -885,7 +885,6 @@ public class SqlXMLConfigParse {
 		if (filter.hasAttribute("split-sign")) {
 			filterModel.setSplit(filter.getAttribute("split-sign"));
 		}
-
 		// 互斥型和决定性(primary)filter的参数
 		if (filter.hasAttribute("excludes")) {
 			String[] excludeParams = filter.getAttribute("excludes").toLowerCase().split("\\,");
@@ -893,18 +892,22 @@ public class SqlXMLConfigParse {
 				filterModel.addExclude(excludeParam.trim());
 			}
 		}
-
 		// exclusive 和primary filter、cache-arg 专用参数
 		if (filter.hasAttribute("param")) {
 			filterModel.setParam(filter.getAttribute("param").toLowerCase());
 		}
-		// <cache-arg cache-name="" cache-type="" param="" cache-mapping-indexes=""
-		// data-type="" alias-name=""/>
+		// <cache-arg param="" cache-name="" cache-type="" alias-name="">
+		// <filter compare-param="" cache-index=""/>
+		// </cache-arg>
 		if (filter.hasAttribute("cache-name")) {
 			sqlToyConfig.addCacheArgParam(filterModel.getParam());
 			filterModel.setCacheName(filter.getAttribute("cache-name"));
 			if (filter.hasAttribute("cache-type")) {
 				filterModel.setCacheType(filter.getAttribute("cache-type"));
+			}
+			// 是否优先判断相等
+			if (filter.hasAttribute("prior-match-equal")) {
+				filterModel.setPriorMatchEqual(Boolean.parseBoolean(filter.getAttribute("prior-match-equal")));
 			}
 			if (filter.hasAttribute("cache-key-index")) {
 				filterModel.setCacheKeyIndex(Integer.parseInt(filter.getAttribute("cache-key-index")));
@@ -932,6 +935,11 @@ public class SqlXMLConfigParse {
 			if (filter.hasAttribute("cache-not-matched-value")) {
 				filterModel.setCacheNotMatchedValue(filter.getAttribute("cache-not-matched-value"));
 			}
+			// 缓存过滤未匹配上，返回检索词自身
+			if (filter.hasAttribute("unmatched-return-self")) {
+				filterModel.setCacheNotMatchedReturnSelf(
+						Boolean.parseBoolean(filter.getAttribute("unmatched-return-self")));
+			}
 			// 针对缓存的二级过滤,比如员工信息的缓存,过滤机构是当前人授权的
 			NodeList nodeList = filter.getElementsByTagName(local.concat("filter"));
 			if (nodeList.getLength() > 0) {
@@ -942,8 +950,14 @@ public class SqlXMLConfigParse {
 					CacheFilterModel cacheFilterModel = new CacheFilterModel();
 					// 对比列
 					cacheFilterModel.setCacheIndex(Integer.parseInt(cacheFilter.getAttribute("cache-index")));
-					// 对比条件参数
+					// 对比条件参数(有可能本身就是一个值)
 					cacheFilterModel.setCompareParam(cacheFilter.getAttribute("compare-param").toLowerCase());
+					// 非数字，如是参数名称，加入到arg中，便于统一提取参数属性对应的值
+					if (!NumberUtil.isNumber(cacheFilterModel.getCompareParam())
+							&& !cacheFilterModel.getCompareParam().equals("true")
+							&& !cacheFilterModel.getCompareParam().equals("false")) {
+						sqlToyConfig.addCacheArgParam(cacheFilterModel.getCompareParam());
+					}
 					if (cacheFilter.hasAttribute("compare-type")) {
 						cacheFilterModel.setCompareType(cacheFilter.getAttribute("compare-type").toLowerCase());
 					}
@@ -969,23 +983,23 @@ public class SqlXMLConfigParse {
 		// exclusive 排他性filter 条件成立的对比方式
 		if (filter.hasAttribute("compare-type")) {
 			String compareType = filter.getAttribute("compare-type");
-			if (compareType.equals("eq") || compareType.equals("==") || compareType.equals("equals")
-					|| compareType.equals("=")) {
+			if ("eq".equals(compareType) || "==".equals(compareType) || "equals".equals(compareType)
+					|| "=".equals(compareType)) {
 				filterModel.setCompareType("==");
-			} else if (compareType.equals("neq") || compareType.equals("<>") || compareType.equals("!=")
-					|| compareType.equals("ne")) {
+			} else if ("neq".equals(compareType) || "<>".equals(compareType) || "!=".equals(compareType)
+					|| "ne".equals(compareType)) {
 				filterModel.setCompareType("<>");
-			} else if (compareType.equals(">") || compareType.equals("gt") || compareType.equals("more")) {
+			} else if (">".equals(compareType) || "gt".equals(compareType) || "more".equals(compareType)) {
 				filterModel.setCompareType(">");
-			} else if (compareType.equals(">=") || compareType.equals("gte") || compareType.equals("ge")) {
+			} else if (">=".equals(compareType) || "gte".equals(compareType) || "ge".equals(compareType)) {
 				filterModel.setCompareType(">=");
-			} else if (compareType.equals("<") || compareType.equals("lt") || compareType.equals("less")) {
+			} else if ("<".equals(compareType) || "lt".equals(compareType) || "less".equals(compareType)) {
 				filterModel.setCompareType("<");
-			} else if (compareType.equals("<=") || compareType.equals("lte") || compareType.equals("le")) {
+			} else if ("<=".equals(compareType) || "lte".equals(compareType) || "le".equals(compareType)) {
 				filterModel.setCompareType("<=");
-			} else if (compareType.equals("between")) {
+			} else if ("between".equals(compareType)) {
 				filterModel.setCompareType("between");
-			} else if (compareType.equals("any") || compareType.equals("in")) {
+			} else if ("any".equals(compareType) || "in".equals(compareType)) {
 				filterModel.setCompareType("any");
 			}
 		}
@@ -998,7 +1012,6 @@ public class SqlXMLConfigParse {
 				filterModel.setCompareValues(trimParams(compareValue.split("\\,")));
 			}
 		}
-
 		// 数据类型
 		if (filter.hasAttribute("data-type")) {
 			filterModel.setDataType(filter.getAttribute("data-type").toLowerCase());
@@ -1058,16 +1071,16 @@ public class SqlXMLConfigParse {
 					hasLink = true;
 				}
 				// 正则转化
-				if (splitRegex.equals(",") || splitRegex.equals("，")) {
+				if (",".equals(splitRegex) || "，".equals(splitRegex)) {
 					splitRegex = "\\,";
-				} else if (splitRegex.equals(";") || splitRegex.equals("；")) {
+				} else if (";".equals(splitRegex) || "；".equals(splitRegex)) {
 					splitRegex = "\\;";
 					if (!hasLink) {
 						linkSign = ";";
 					}
-				} else if (splitRegex.equals("、")) {
+				} else if ("、".equals(splitRegex)) {
 					splitRegex = "\\、";
-				} else if (splitRegex.equals("->")) {
+				} else if ("->".equals(splitRegex)) {
 					splitRegex = "\\-\\>";
 					if (!hasLink) {
 						linkSign = "->";
@@ -1080,7 +1093,6 @@ public class SqlXMLConfigParse {
 			} else if (translate.hasAttribute("original-columns")) {
 				aliasNames = trimParams(translate.getAttribute("original-columns").toLowerCase().split("\\,"));
 			}
-
 			// 翻译key对应value的在缓存数组中对应的列
 			cacheIndexs = null;
 			if (translate.hasAttribute("cache-indexs")) {
@@ -1207,13 +1219,13 @@ public class SqlXMLConfigParse {
 				String locale = nf.hasAttribute("locale") ? nf.getAttribute("locale") : null;
 				RoundingMode roundMode = null;
 				if (roundStr != null) {
-					if (roundStr.equals("HALF_UP")) {
+					if ("HALF_UP".equals(roundStr)) {
 						roundMode = RoundingMode.HALF_UP;
-					} else if (roundStr.equals("HALF_DOWN")) {
+					} else if ("HALF_DOWN".equals(roundStr)) {
 						roundMode = RoundingMode.HALF_DOWN;
-					} else if (roundStr.equals("ROUND_DOWN")) {
+					} else if ("ROUND_DOWN".equals(roundStr)) {
 						roundMode = RoundingMode.DOWN;
-					} else if (roundStr.equals("ROUND_UP")) {
+					} else if ("ROUND_UP".equals(roundStr)) {
 						roundMode = RoundingMode.UP;
 					}
 				}
@@ -1272,11 +1284,7 @@ public class SqlXMLConfigParse {
 						String defaultValue = elt.getAttribute("default-value");
 						if (elt.hasAttribute("default-type")) {
 							String defaultType = elt.getAttribute("default-type").toLowerCase();
-							try {
-								pivotModel.setDefaultValue(BeanUtil.convertType(defaultValue, defaultType));
-							} catch (Exception e) {
-								e.printStackTrace();
-							}
+							pivotModel.setDefaultValue(XMLUtil.convertType(defaultValue, defaultType));
 						} else {
 							pivotModel.setDefaultValue(defaultValue);
 						}
@@ -1335,13 +1343,13 @@ public class SqlXMLConfigParse {
 						RoundingMode roundMode = null;
 						for (int k = 0; k < roundingModeAry.length; k++) {
 							roundingMode = roundingModeAry[k];
-							if (roundingMode.equals("HALF_UP")) {
+							if ("HALF_UP".equals(roundingMode)) {
 								roundMode = RoundingMode.HALF_UP;
-							} else if (roundingMode.equals("HALF_DOWN")) {
+							} else if ("HALF_DOWN".equals(roundingMode)) {
 								roundMode = RoundingMode.HALF_DOWN;
-							} else if (roundingMode.equals("ROUND_DOWN")) {
+							} else if ("ROUND_DOWN".equals(roundingMode)) {
 								roundMode = RoundingMode.DOWN;
-							} else if (roundingMode.equals("ROUND_UP")) {
+							} else if ("ROUND_UP".equals(roundingMode)) {
 								roundMode = RoundingMode.UP;
 							} else {
 								roundMode = RoundingMode.HALF_UP;
@@ -1434,6 +1442,39 @@ public class SqlXMLConfigParse {
 					ReverseModel reverseModel = new ReverseModel();
 					XMLUtil.setAttributes(elt, reverseModel);
 					resultProcessor.add(reverseModel);
+				} // 树型结构编排
+				else if (eltName.equals(local.concat("tree-sort"))) {
+					TreeSortModel treeSortModel = new TreeSortModel();
+					XMLUtil.setAttributes(elt, treeSortModel);
+					NodeList nodeList = elt.getElementsByTagName(local.concat("sum-filter"));
+					if (nodeList.getLength() > 0) {
+						Element sumFilter = (Element) nodeList.item(0);
+						if (sumFilter.hasAttribute("column")) {
+							treeSortModel.setFilterColumn(sumFilter.getAttribute("column"));
+						}
+						if (sumFilter.hasAttribute("compare-type")) {
+							treeSortModel.setCompareType(sumFilter.getAttribute("compare-type"));
+							// 统一对比类型
+							if (treeSortModel.getCompareType().equals("eq")) {
+								treeSortModel.setCompareType("==");
+							} else if (treeSortModel.getCompareType().equals("neq")) {
+								treeSortModel.setCompareType("!=");
+							} else if (treeSortModel.getCompareType().equals("gt")) {
+								treeSortModel.setCompareType(">");
+							} else if (treeSortModel.getCompareType().equals("gte")) {
+								treeSortModel.setCompareType(">=");
+							} else if (treeSortModel.getCompareType().equals("lt")) {
+								treeSortModel.setCompareType("<");
+							} else if (treeSortModel.getCompareType().equals("lte")) {
+								treeSortModel.setCompareType("<=");
+							}
+						}
+						// 可以逗号分割
+						if (sumFilter.hasAttribute("compare-values")) {
+							treeSortModel.setCompareValues(sumFilter.getAttribute("compare-values"));
+						}
+					}
+					resultProcessor.add(treeSortModel);
 				}
 			}
 		}
@@ -1473,7 +1514,7 @@ public class SqlXMLConfigParse {
 		}
 		Integer[] realParamNames = new Integer[paramNames.length];
 		for (int i = 0; i < paramNames.length; i++) {
-			realParamNames[i] = (paramNames[i] == null || paramNames[i].trim().equals("")) ? null
+			realParamNames[i] = (paramNames[i] == null || "".equals(paramNames[i].trim())) ? null
 					: Integer.parseInt(paramNames[i].trim());
 		}
 		return realParamNames;

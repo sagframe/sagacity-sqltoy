@@ -141,58 +141,54 @@ public class FunctionUtils {
 	}
 
 	/**
-	 * @param functionConverts the functionConverts to set
+	 * @param functionAry the functionConverts to set
 	 */
 	public static void setFunctionConverts(List<String> functionAry) {
+		if (functionAry == null || functionAry.isEmpty()) {
+			return;
+		}
 		List<IFunction> converts = new ArrayList<IFunction>();
 		try {
-			if (functionAry != null && !functionAry.isEmpty()) {
-				List<String> realConverts = new ArrayList<String>();
-				boolean hasDefault = false;
-				for (String convert : functionAry) {
-					String[] ary = convert.split("\\,|\\;");
-					for (String tmp : ary) {
-						if (StringUtil.isNotBlank(tmp)) {
-							if (tmp.equals("default") || tmp.equals("defaults")) {
-								hasDefault = true;
-							} else if (!realConverts.contains(tmp)) {
-								realConverts.add(tmp);
-							}
+			List<String> realConverts = new ArrayList<String>();
+			boolean hasDefault = false;
+			for (String convert : functionAry) {
+				String[] ary = convert.split("\\,|\\;");
+				for (String tmp : ary) {
+					if (StringUtil.isNotBlank(tmp)) {
+						if ("default".equals(tmp) || "defaults".equals(tmp)) {
+							hasDefault = true;
+						} else if (!realConverts.contains(tmp)) {
+							realConverts.add(tmp);
 						}
 					}
 				}
-				// 包含默认的函数,将默认的在后面加载
-				if (hasDefault) {
-					for (String convert : functions) {
-						if (!realConverts.contains(convert)) {
-							realConverts.add(convert);
-						}
-					}
-				}
-				String functionName = null;
-				// 排除重复,让自定义同名函数生效
-				Set<String> nameSet = new HashSet<String>();
-				String className;
-				for (int i = 0; i < realConverts.size(); i++) {
-					functionName = realConverts.get(i).trim();
-					// sql函数包名变更,修正调整后的包路径,保持兼容
-					if (functionName.startsWith("org.sagacity.sqltoy")) {
-						functionName = funPackage.concat(functionName.substring(functionName.lastIndexOf(".") + 1));
-					} // trim、nvl等简写模式
-					else if (!functionName.contains(".") && functionNames.containsKey(functionName.toLowerCase())) {
-						functionName = funPackage.concat(functionNames.get(functionName.toLowerCase()));
-					}
-					className = functionName.substring(functionName.lastIndexOf(".") + 1).toLowerCase();
-					// 名字已经存在的排除
-					if (!nameSet.contains(className)) {
-						converts.add((IFunction) (Class.forName(functionName).getDeclaredConstructor().newInstance()));
-						nameSet.add(className);
-					}
-				}
-			} // 为null时启用默认配置
-			else {
+			}
+			// 包含默认的函数,将默认的在后面加载
+			if (hasDefault) {
 				for (String convert : functions) {
-					converts.add((IFunction) (Class.forName(convert).getDeclaredConstructor().newInstance()));
+					if (!realConverts.contains(convert)) {
+						realConverts.add(convert);
+					}
+				}
+			}
+			String functionName = null;
+			// 排除重复,让自定义同名函数生效
+			Set<String> nameSet = new HashSet<String>();
+			String className;
+			for (int i = 0; i < realConverts.size(); i++) {
+				functionName = realConverts.get(i).trim();
+				// sql函数包名变更,修正调整后的包路径,保持兼容
+				if (functionName.startsWith("org.sagacity.sqltoy")) {
+					functionName = funPackage.concat(functionName.substring(functionName.lastIndexOf(".") + 1));
+				} // trim、nvl等简写模式
+				else if (!functionName.contains(".") && functionNames.containsKey(functionName.toLowerCase())) {
+					functionName = funPackage.concat(functionNames.get(functionName.toLowerCase()));
+				}
+				className = functionName.substring(functionName.lastIndexOf(".") + 1).toLowerCase();
+				// 名字已经存在的排除
+				if (!nameSet.contains(className)) {
+					converts.add((IFunction) (Class.forName(functionName).getDeclaredConstructor().newInstance()));
+					nameSet.add(className);
 				}
 			}
 		} catch (Exception e) {
