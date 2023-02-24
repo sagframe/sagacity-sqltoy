@@ -155,7 +155,8 @@ public class ClickHouseDialect implements Dialect {
 	public Long updateAll(SqlToyContext sqlToyContext, List<?> entities, int batchSize, final String[] uniqueFields,
 			String[] forceUpdateFields, ReflectPropsHandler reflectPropsHandler, Connection conn, Integer dbType,
 			String dialect, Boolean autoCommit, String tableName) throws Exception {
-		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
+		return ClickHouseDialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields,
+				reflectPropsHandler, NVL_FUNCTION, conn, dbType, autoCommit, tableName, false);
 	}
 
 	@Override
