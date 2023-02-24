@@ -155,7 +155,8 @@ public class ClickHouseDialect implements Dialect {
 	public Long updateAll(SqlToyContext sqlToyContext, List<?> entities, int batchSize, final String[] uniqueFields,
 			String[] forceUpdateFields, ReflectPropsHandler reflectPropsHandler, Connection conn, Integer dbType,
 			String dialect, Boolean autoCommit, String tableName) throws Exception {
-		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
+		return ClickHouseDialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields,
+				reflectPropsHandler, NVL_FUNCTION, conn, dbType, autoCommit, tableName, false);
 	}
 
 	@Override
@@ -166,17 +167,17 @@ public class ClickHouseDialect implements Dialect {
 	}
 
 	@Override
-	public Serializable updateSaveFetch(SqlToyContext sqlToyContext, Serializable entity,
-			UpdateRowHandler updateRowHandler, String[] uniqueProps, Connection conn, Integer dbType, String dialect,
-			String tableName) throws Exception {
+	public Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, int batchSize,
+			ReflectPropsHandler reflectPropsHandler, String[] forceUpdateFields, Connection conn, Integer dbType,
+			String dialect, Boolean autoCommit, String tableName) throws Exception {
 		// 不支持
 		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
 	}
 
 	@Override
-	public Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, int batchSize,
-			ReflectPropsHandler reflectPropsHandler, String[] forceUpdateFields, Connection conn, Integer dbType,
-			String dialect, Boolean autoCommit, String tableName) throws Exception {
+	public Serializable updateSaveFetch(SqlToyContext sqlToyContext, Serializable entity,
+			UpdateRowHandler updateRowHandler, String[] uniqueProps, Connection conn, Integer dbType, String dialect,
+			String tableName) throws Exception {
 		// 不支持
 		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
 	}
