@@ -598,10 +598,13 @@ public class SqlServerDialectUtils {
 			}
 		}
 
-		final Object[] paramValues = fullParamValues;
+		SqlToyResult sqlToyResult = new SqlToyResult(insertSql, fullParamValues);
+		sqlToyResult = DialectUtils.doInterceptors(sqlToyContext, null, OperateType.insert, sqlToyResult,
+				entity.getClass(), dbType);
+		final Object[] paramValues = sqlToyResult.getParamsValue();
 		final Integer[] paramsType = entityMeta.getFieldsTypeArray();
-		SqlExecuteStat.showSql("mssql单条记录插入", insertSql, null);
-		final String realInsertSql = insertSql;
+		final String realInsertSql = sqlToyResult.getSql();
+		SqlExecuteStat.showSql("mssql单条记录插入", realInsertSql, null);
 		PreparedStatement pst = null;
 		Object result = SqlUtil.preparedStatementProcess(null, pst, null, new PreparedStatementResultHandler() {
 			@Override
@@ -796,6 +799,8 @@ public class SqlServerDialectUtils {
 			}
 		}
 		SqlExecuteStat.showSql("mssql批量保存", insertSql, null);
+		DialectUtils.doInterceptors(sqlToyContext, null, OperateType.insertAll, new SqlToyResult(insertSql, null),
+				entities.get(0).getClass(), dbType);
 		return SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), insertSql, paramValues,
 				entityMeta.getFieldsTypeArray(), entityMeta.getFieldsDefaultValue(), entityMeta.getFieldsNullable(),
 				sqlToyContext.getBatchSize(), autoCommit, conn, dbType);

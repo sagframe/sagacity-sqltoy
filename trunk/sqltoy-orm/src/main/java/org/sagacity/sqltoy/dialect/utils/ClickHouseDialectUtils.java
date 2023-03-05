@@ -116,8 +116,12 @@ public class ClickHouseDialectUtils {
 				BeanUtil.setProperty(entity, entityMeta.getBusinessIdField(), fullParamValues[bizIdColIndex]);
 			}
 		}
-		SqlExecuteStat.showSql("执行单记录插入", insertSql, null);
-		final Object[] paramValues = fullParamValues;
+		SqlToyResult sqlToyResult = new SqlToyResult(insertSql, fullParamValues);
+		sqlToyResult = DialectUtils.doInterceptors(sqlToyContext, null, OperateType.insert, sqlToyResult,
+				entity.getClass(), dbType);
+		String realInsertSql = sqlToyResult.getSql();
+		SqlExecuteStat.showSql("执行单记录插入", realInsertSql, null);
+		final Object[] paramValues = sqlToyResult.getParamsValue();
 		final Integer[] paramsType = entityMeta.getFieldsTypeArray();
 		PreparedStatement pst = null;
 		Object result = SqlUtil.preparedStatementProcess(null, pst, null, new PreparedStatementResultHandler() {
@@ -172,6 +176,8 @@ public class ClickHouseDialectUtils {
 	public static Long saveAll(SqlToyContext sqlToyContext, EntityMeta entityMeta, String insertSql, List<?> entities,
 			final int batchSize, ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType,
 			final Boolean autoCommit) throws Exception {
+		DialectUtils.doInterceptors(sqlToyContext, null, OperateType.insertAll, new SqlToyResult(insertSql, null),
+				entities.get(0).getClass(), dbType);
 		PKStrategy pkStrategy = entityMeta.getIdStrategy();
 		boolean isIdentity = pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY);
 		boolean isSequence = pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE);
