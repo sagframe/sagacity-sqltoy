@@ -133,6 +133,8 @@ public class SqlConfigParseUtils {
 			.compile("^((order|group)\\s+by|(inner|left|right|full)\\s+join|having|union|limit)\\W");
 
 	public final static String DBL_QUESTMARK = "#sqltoy_dblqsmark_placeholder#";
+	public final static Pattern EQUAL_PATTERN = Pattern.compile("\\=\\s*$");
+	public final static Pattern NOT_EQUAL_PATTERN = Pattern.compile("(\\!\\=|\\<\\>)\\s*$");
 
 	// 利用宏模式来完成@loop循环处理
 	private static Map<String, AbstractMacro> macros = new HashMap<String, AbstractMacro>();
@@ -1021,10 +1023,27 @@ public class SqlConfigParseUtils {
 		if (index == -1) {
 			return;
 		}
+		String preSql;
+		String tailSql;
+		String sqlPart;
+		int compareIndex;
 		// 将条件值为null的替换到sql中，同时剔除该参数
 		for (int i = 0; i < paramList.size(); i++) {
 			if (null == paramList.get(i)) {
-				sql = sql.substring(0, index).concat(" null ").concat(sql.substring(index + 1));
+				preSql = sql.substring(0, index);
+				tailSql = sql.substring(index + 1);
+				//先判断不等于
+				compareIndex = StringUtil.matchIndex(preSql, NOT_EQUAL_PATTERN);
+				sqlPart = " is not ";
+				//判断等于
+				if (compareIndex < 0) {
+					compareIndex = StringUtil.matchIndex(preSql, EQUAL_PATTERN);
+					sqlPart = " is ";
+				}
+				if (compareIndex != -1) {
+					preSql = preSql.substring(0, compareIndex).concat(sqlPart);
+				}
+				sql = preSql.concat(" null ").concat(tailSql);
 				paramList.remove(i);
 				i--;
 				index = sql.indexOf(ARG_NAME, index);
@@ -1143,6 +1162,7 @@ public class SqlConfigParseUtils {
 							buffer.append(" with ").append(aliasTableAs[3]);
 						}
 						if (i > 0) {
+							// update 2022-12-09 前后增加空格，避免mysql新驱动的缺陷
 							buffer.append(" , ").append(aliasTableAs[3]);
 						}
 						buffer.append(" ");

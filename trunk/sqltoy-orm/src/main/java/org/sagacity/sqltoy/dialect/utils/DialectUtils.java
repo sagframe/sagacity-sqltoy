@@ -2228,7 +2228,7 @@ public class DialectUtils {
 			}
 			// 取出符合条件的2条记录
 			String queryStr = uniqueSqlHandler.process(entityMeta, realParamNamed, tableName, 2);
-			SqlToyResult sqlToyResult = new SqlToyResult(queryStr, paramValues);
+			SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(queryStr, realParamNamed, paramValues);
 			// 增加sql执行拦截器 update 2022-9-10
 			sqlToyResult = doInterceptors(sqlToyContext, null, OperateType.unique, sqlToyResult, entity.getClass(),
 					dbType);
