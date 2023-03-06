@@ -133,6 +133,8 @@ public class SqlConfigParseUtils {
 			.compile("^((order|group)\\s+by|(inner|left|right|full)\\s+join|having|union|limit)\\W");
 
 	public final static String DBL_QUESTMARK = "#sqltoy_dblqsmark_placeholder#";
+	public final static Pattern EQUAL_PATTERN = Pattern.compile("\\=\\s*$");
+	public final static Pattern NOT_EQUAL_PATTERN = Pattern.compile("(\\!\\=|\\<\\>)\\s*$");
 
 	// 利用宏模式来完成@loop循环处理
 	private static Map<String, AbstractMacro> macros = new HashMap<String, AbstractMacro>();
@@ -1007,7 +1009,7 @@ public class SqlConfigParseUtils {
 
 	/**
 	 * @todo 当sql语句中对应?号的值为null时，将该?号用字符串null替换 其意义在于jdbc 对null参数必须要指定NULL
-	 *       TYPE,为了保证通用性，将null部分数据参数 直接改为 t.field = null
+	 *       TYPE,为了保证通用性，将null部分数据参数 直接改为 t.field is (not) null
 	 * @param sqlToyResult
 	 * @param afterParamIndex
 	 */
@@ -1021,10 +1023,27 @@ public class SqlConfigParseUtils {
 		if (index == -1) {
 			return;
 		}
+		String preSql;
+		String tailSql;
+		String sqlPart;
+		int compareIndex;
 		// 将条件值为null的替换到sql中，同时剔除该参数
 		for (int i = 0; i < paramList.size(); i++) {
 			if (null == paramList.get(i)) {
-				sql = sql.substring(0, index).concat(" null ").concat(sql.substring(index + 1));
+				preSql = sql.substring(0, index);
+				tailSql = sql.substring(index + 1);
+				//先判断不等于
+				compareIndex = StringUtil.matchIndex(preSql, NOT_EQUAL_PATTERN);
+				sqlPart = " is not ";
+				//判断等于
+				if (compareIndex < 0) {
+					compareIndex = StringUtil.matchIndex(preSql, EQUAL_PATTERN);
+					sqlPart = " is ";
+				}
+				if (compareIndex != -1) {
+					preSql = preSql.substring(0, compareIndex).concat(sqlPart);
+				}
+				sql = preSql.concat(" null ").concat(tailSql);
 				paramList.remove(i);
 				i--;
 				index = sql.indexOf(ARG_NAME, index);

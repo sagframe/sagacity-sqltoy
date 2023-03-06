@@ -29,6 +29,7 @@ import org.sagacity.sqltoy.config.model.OperateType;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
+import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.config.model.TableCascadeModel;
 import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
@@ -39,7 +40,9 @@ import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.utils.BeanUtil;
+import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
+import org.sagacity.sqltoy.utils.DataSourceUtils.Dialect;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.SqlUtilsExt;
@@ -555,8 +558,8 @@ public class SqlServerDialectUtils {
 				sqlToyContext.getUnifyFieldsHandler());
 		handler = DialectUtils.getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
-		Object[] fullParamValues = BeanUtil.reflectBeanToAry(entity,
-				(isIdentity) ? entityMeta.getRejectIdFieldArray() : entityMeta.getFieldsArray(),
+		String[] reflectColumns = (isIdentity) ? entityMeta.getRejectIdFieldArray() : entityMeta.getFieldsArray();
+		Object[] fullParamValues = BeanUtil.reflectBeanToAry(entity, reflectColumns,
 				SqlUtilsExt.getDefaultValues(entityMeta), handler);
 		boolean needUpdatePk = false;
 		// 是否存在业务ID
@@ -598,8 +601,12 @@ public class SqlServerDialectUtils {
 			}
 		}
 
+		SqlToyConfig sqlToyConfig = new SqlToyConfig(Dialect.SQLSERVER);
+		sqlToyConfig.setSqlType(SqlType.insert);
+		sqlToyConfig.setSql(insertSql);
+		sqlToyConfig.setParamsName(reflectColumns);
 		SqlToyResult sqlToyResult = new SqlToyResult(insertSql, fullParamValues);
-		sqlToyResult = DialectUtils.doInterceptors(sqlToyContext, null, OperateType.insert, sqlToyResult,
+		sqlToyResult = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig, OperateType.insert, sqlToyResult,
 				entity.getClass(), dbType);
 		final Object[] paramValues = sqlToyResult.getParamsValue();
 		final Integer[] paramsType = entityMeta.getFieldsTypeArray();
@@ -798,10 +805,23 @@ public class SqlServerDialectUtils {
 				BeanUtil.mappingSetProperties(entities, entityMeta.getIdArray(), idSet, new int[] { 0 }, true);
 			}
 		}
-		SqlExecuteStat.showSql("mssql批量保存", insertSql, null);
-		DialectUtils.doInterceptors(sqlToyContext, null, OperateType.insertAll, new SqlToyResult(insertSql, null),
-				entities.get(0).getClass(), dbType);
-		return SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), insertSql, paramValues,
+
+		SqlToyConfig sqlToyConfig = null;
+		List<Object[]> realParams = paramValues;
+		String realSql = insertSql;
+		if (sqlToyContext.hasSqlInterceptors()) {
+			sqlToyConfig = new SqlToyConfig(Dialect.SQLSERVER);
+			sqlToyConfig.setSqlType(SqlType.insert);
+			sqlToyConfig.setSql(insertSql);
+			sqlToyConfig.setParamsName(reflectColumns);
+			SqlToyResult sqlToyResult = new SqlToyResult(insertSql, paramValues.toArray());
+			sqlToyResult = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig, OperateType.insertAll, sqlToyResult,
+					entities.get(0).getClass(), dbType);
+			realSql = sqlToyResult.getSql();
+			realParams = CollectionUtil.arrayToList(sqlToyResult.getParamsValue());
+		}
+		SqlExecuteStat.showSql("mssql批量保存", realSql, null);
+		return SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), realSql, realParams,
 				entityMeta.getFieldsTypeArray(), entityMeta.getFieldsDefaultValue(), entityMeta.getFieldsNullable(),
 				sqlToyContext.getBatchSize(), autoCommit, conn, dbType);
 	}

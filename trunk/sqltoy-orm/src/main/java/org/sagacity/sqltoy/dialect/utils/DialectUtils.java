@@ -43,6 +43,7 @@ import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.config.model.SqlParamsModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
+import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
 import org.sagacity.sqltoy.config.model.TableCascadeModel;
 import org.sagacity.sqltoy.dialect.model.SavePKStrategy;
@@ -63,6 +64,7 @@ import org.sagacity.sqltoy.plugins.secure.FieldsSecureProvider;
 import org.sagacity.sqltoy.plugins.sharding.ShardingUtils;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.CollectionUtil;
+import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.DateUtil;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
@@ -1328,8 +1330,13 @@ public class DialectUtils {
 				BeanUtil.setProperty(entity, entityMeta.getBusinessIdField(), fullParamValues[bizIdColIndex]);
 			}
 		}
+		SqlToyConfig sqlToyConfig = new SqlToyConfig(DataSourceUtils.getDialect(dbType));
+		sqlToyConfig.setSqlType(SqlType.insert);
+		sqlToyConfig.setSql(insertSql);
+		sqlToyConfig.setParamsName(reflectColumns);
 		SqlToyResult sqlToyResult = new SqlToyResult(insertSql, fullParamValues);
-		sqlToyResult = doInterceptors(sqlToyContext, null, OperateType.insert, sqlToyResult, entity.getClass(), dbType);
+		sqlToyResult = doInterceptors(sqlToyContext, sqlToyConfig, OperateType.insert, sqlToyResult, entity.getClass(),
+				dbType);
 		final String realInsertSql = sqlToyResult.getSql();
 		SqlExecuteStat.showSql("执行单记录插入", realInsertSql, null);
 		final Object[] paramValues = sqlToyResult.getParamsValue();
@@ -1436,8 +1443,6 @@ public class DialectUtils {
 			boolean isAssignPK, String insertSql, List<?> entities, final int batchSize,
 			ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType, final Boolean autoCommit)
 			throws Exception {
-		doInterceptors(sqlToyContext, null, OperateType.insertAll, new SqlToyResult(insertSql, null),
-				entities.get(0).getClass(), dbType);
 		boolean isIdentity = pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY);
 		boolean isSequence = pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE);
 		String[] reflectColumns;
@@ -1517,8 +1522,23 @@ public class DialectUtils {
 						dataVerSet, new int[] { 0 }, true);
 			}
 		}
-		SqlExecuteStat.showSql("批量保存[" + paramValues.size() + "]条记录", insertSql, null);
-		return SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), insertSql, paramValues,
+
+		SqlToyConfig sqlToyConfig = null;
+		List<Object[]> realParams = paramValues;
+		String realSql = insertSql;
+		if (sqlToyContext.hasSqlInterceptors()) {
+			sqlToyConfig = new SqlToyConfig(DataSourceUtils.getDialect(dbType));
+			sqlToyConfig.setSqlType(SqlType.insert);
+			sqlToyConfig.setSql(insertSql);
+			sqlToyConfig.setParamsName(reflectColumns);
+			SqlToyResult sqlToyResult = new SqlToyResult(insertSql, paramValues.toArray());
+			sqlToyResult = doInterceptors(sqlToyContext, sqlToyConfig, OperateType.insertAll, sqlToyResult,
+					entities.get(0).getClass(), dbType);
+			realSql = sqlToyResult.getSql();
+			realParams = CollectionUtil.arrayToList(sqlToyResult.getParamsValue());
+		}
+		SqlExecuteStat.showSql("批量保存[" + realParams.size() + "]条记录", realSql, null);
+		return SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), realSql, realParams,
 				entityMeta.getFieldsTypeArray(), entityMeta.getFieldsDefaultValue(), entityMeta.getFieldsNullable(),
 				batchSize, autoCommit, conn, dbType);
 	}
@@ -1595,10 +1615,22 @@ public class DialectUtils {
 			}
 		}
 		String saveAllNotExistSql = generateSqlHandler.generateSql(entityMeta, null);
-		doInterceptors(sqlToyContext, null, OperateType.insertAll, new SqlToyResult(saveAllNotExistSql, null),
-				entities.get(0).getClass(), dbType);
-		SqlExecuteStat.showSql("批量插入且忽视已存在记录", saveAllNotExistSql, null);
-		return SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), saveAllNotExistSql, paramValues,
+		SqlToyConfig sqlToyConfig = null;
+		List<Object[]> realParams = paramValues;
+		String realSql = saveAllNotExistSql;
+		if (sqlToyContext.hasSqlInterceptors()) {
+			sqlToyConfig = new SqlToyConfig(DataSourceUtils.getDialect(dbType));
+			sqlToyConfig.setSqlType(SqlType.insert);
+			sqlToyConfig.setSql(saveAllNotExistSql);
+			sqlToyConfig.setParamsName(entityMeta.getFieldsArray());
+			SqlToyResult sqlToyResult = new SqlToyResult(saveAllNotExistSql, paramValues.toArray());
+			sqlToyResult = doInterceptors(sqlToyContext, sqlToyConfig, OperateType.insertAll, sqlToyResult,
+					entities.get(0).getClass(), dbType);
+			realSql = sqlToyResult.getSql();
+			realParams = CollectionUtil.arrayToList(sqlToyResult.getParamsValue());
+		}
+		SqlExecuteStat.showSql("批量插入且忽视已存在记录", realSql, null);
+		return SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), realSql, realParams,
 				entityMeta.getFieldsTypeArray(), entityMeta.getFieldsDefaultValue(), entityMeta.getFieldsNullable(),
 				batchSize, autoCommit, conn, dbType);
 	}
@@ -2236,13 +2268,15 @@ public class DialectUtils {
 			}
 			// 取出符合条件的2条记录
 			String queryStr = uniqueSqlHandler.process(entityMeta, realParamNamed, tableName, 2);
-			SqlToyResult sqlToyResult = new SqlToyResult(queryStr, paramValues);
+			// update 2023-3-5 优化参数值为null场景，构造成paramName is null
+			SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(queryStr, realParamNamed, paramValues);
 			// 增加sql执行拦截器 update 2022-9-10
 			sqlToyResult = doInterceptors(sqlToyContext, null, OperateType.unique, sqlToyResult, entity.getClass(),
 					dbType);
 			SqlExecuteStat.showSql("唯一性验证", sqlToyResult.getSql(), sqlToyResult.getParamsValue());
 			List result = SqlUtil.findByJdbcQuery(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(),
 					sqlToyResult.getParamsValue(), null, null, null, conn, dbType, false, null, -1, -1);
+			SqlExecuteStat.debug("唯一性条件结果", "记录数量:{}", result.size());
 			if (result.size() == 0) {
 				return true;
 			}
@@ -2755,7 +2789,7 @@ public class DialectUtils {
 	 */
 	public static SqlToyResult doInterceptors(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			OperateType operateType, SqlToyResult sqlToyResult, Class entityClass, Integer dbType) {
-		if (sqlToyContext.getSqlInterceptors() == null || sqlToyContext.getSqlInterceptors().isEmpty()) {
+		if (!sqlToyContext.hasSqlInterceptors()) {
 			return sqlToyResult;
 		}
 		SqlToyResult result = sqlToyResult;
