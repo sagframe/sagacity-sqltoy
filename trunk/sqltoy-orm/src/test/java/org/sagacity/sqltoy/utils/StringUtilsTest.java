@@ -21,8 +21,8 @@ import com.alibaba.fastjson.JSON;
  *
  */
 public class StringUtilsTest {
-	public final static Pattern EQUAL = Pattern.compile("\\=\\s*$");
-	public final static Pattern NOT_EQUAL = Pattern.compile("(\\!\\=|\\<\\>)\\s*$");
+	public final static Pattern EQUAL = Pattern.compile("[^\\>\\<\\!\\:]\\=\\s*$");
+	public final static Pattern NOT_EQUAL = Pattern.compile("(\\!\\=|\\<\\>|\\^\\=)\\s*$");
 
 	@Test
 	public void testSplitExcludeSymMark1() {
@@ -129,11 +129,18 @@ public class StringUtilsTest {
 	@Test
 	public void testWhereMatch1() {
 		
-		System.err.println(StringUtil.matches("name= 1", EQUAL));
+		System.err.println(StringUtil.matches("name=", EQUAL));
+		System.err.println(StringUtil.matches("name:=", EQUAL));
+		System.err.println(StringUtil.matches("name!=", EQUAL));
+		System.err.println(StringUtil.matches("name<=", EQUAL));
+		System.err.println(StringUtil.matches("name>=", EQUAL));
 		System.err.println(StringUtil.matches("name=", NOT_EQUAL));
 		System.err.println(StringUtil.matches("name !=", NOT_EQUAL));
 		System.err.println(StringUtil.matches("name != ", NOT_EQUAL));
+		System.err.println(StringUtil.matches("name <> ", NOT_EQUAL));
 		System.err.println(StringUtil.matches("name <> 1", NOT_EQUAL));
+		System.err.println(StringUtil.matches("name>=",NOT_EQUAL));
+		System.err.println(StringUtil.matches("name^=",NOT_EQUAL));
 	}
 
 	@Test

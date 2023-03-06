@@ -93,8 +93,6 @@ public class SqlConfigParseUtils {
 	// ((:idValues,:typeValues)) 模式
 	public final static Pattern IN_PATTERN = Pattern.compile(
 			"(?i)\\s+in\\s*((\\(\\s*\\?(\\s*\\,\\s*\\?)*\\s*\\))|((\\(\\s*){2}\\?(\\s*\\,\\s*\\?)+(\\s*\\)){2}))");
-	// public final static Pattern LIKE_PATTERN =
-	// Pattern.compile("(?i)\\s+like\\s+\\?");
 	// update 2022-11-11 兼容ilike
 	public final static Pattern LIKE_PATTERN = Pattern.compile("(?i)\\s+i?like\\s+\\?");
 
@@ -106,7 +104,7 @@ public class SqlConfigParseUtils {
 	public final static Pattern IF_PATTERN = Pattern.compile("(?i)\\@if\\s*\\(");
 
 	public final static String BLANK = " ";
-	// 匹配时已经小写转换
+	// 匹配时已经转小写
 	public final static Pattern IS_PATTERN = Pattern.compile("\\s+is\\s+(not)?\\s+\\?");
 	public final static String ARG_NAME = "?";
 	public final static String ARG_REGEX = "\\?";
@@ -133,8 +131,10 @@ public class SqlConfigParseUtils {
 			.compile("^((order|group)\\s+by|(inner|left|right|full)\\s+join|having|union|limit)\\W");
 
 	public final static String DBL_QUESTMARK = "#sqltoy_dblqsmark_placeholder#";
-	public final static Pattern EQUAL_PATTERN = Pattern.compile("\\=\\s*$");
-	public final static Pattern NOT_EQUAL_PATTERN = Pattern.compile("(\\!\\=|\\<\\>)\\s*$");
+	// field=? 判断等于号
+	public final static Pattern EQUAL_PATTERN = Pattern.compile("[^\\>\\<\\!\\:]\\=\\s*$");
+	// sql不等于
+	public final static Pattern NOT_EQUAL_PATTERN = Pattern.compile("(\\!\\=|\\<\\>|\\^\\=)\\s*$");
 
 	// 利用宏模式来完成@loop循环处理
 	private static Map<String, AbstractMacro> macros = new HashMap<String, AbstractMacro>();
@@ -1032,12 +1032,16 @@ public class SqlConfigParseUtils {
 			if (null == paramList.get(i)) {
 				preSql = sql.substring(0, index);
 				tailSql = sql.substring(index + 1);
-				//先判断不等于
+				// 先判断不等于
 				compareIndex = StringUtil.matchIndex(preSql, NOT_EQUAL_PATTERN);
 				sqlPart = " is not ";
-				//判断等于
-				if (compareIndex < 0) {
+				// 判断等于
+				if (compareIndex == -1) {
 					compareIndex = StringUtil.matchIndex(preSql, EQUAL_PATTERN);
+					// [^><!]= 非某个字符开头，要往后移动一位
+					if (compareIndex != -1) {
+						compareIndex = compareIndex + 1;
+					}
 					sqlPart = " is ";
 				}
 				if (compareIndex != -1) {
