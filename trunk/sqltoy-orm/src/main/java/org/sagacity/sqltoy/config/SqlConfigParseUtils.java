@@ -133,6 +133,10 @@ public class SqlConfigParseUtils {
 	public final static String DBL_QUESTMARK = "#sqltoy_dblqsmark_placeholder#";
 	// field=? 判断等于号
 	public final static Pattern EQUAL_PATTERN = Pattern.compile("[^\\>\\<\\!\\:]\\=\\s*$");
+	// 常规数据库:update table set t.xxx=? ,t.xxx1=?
+	// clickhouse:alter table update t.xxx=?
+	public final static Pattern UPDATE_EQUAL_PATTERN = Pattern
+			.compile("(?i)\\s*(set\\s+|,\\s*|update\\s+)[a-zA-Z_.0-9\u4e00-\u9fa5]+\\s*=\\s*$");
 	// sql不等于
 	public final static Pattern NOT_EQUAL_PATTERN = Pattern.compile("(\\!\\=|\\<\\>|\\^\\=)\\s*$");
 
@@ -1038,16 +1042,23 @@ public class SqlConfigParseUtils {
 				// 判断等于
 				if (compareIndex == -1) {
 					compareIndex = StringUtil.matchIndex(preSql, EQUAL_PATTERN);
+					if (compareIndex != -1) {
+						// update field=? 非where条件
+						if (StringUtil.matches(preSql, UPDATE_EQUAL_PATTERN)) {
+							compareIndex = -1;
+						}
+					}
 					// [^><!]= 非某个字符开头，要往后移动一位
 					if (compareIndex != -1) {
 						compareIndex = compareIndex + 1;
 					}
 					sqlPart = " is ";
 				}
+				// 存在where条件参数为=或<> 改成is (not) null
 				if (compareIndex != -1) {
 					preSql = preSql.substring(0, compareIndex).concat(sqlPart);
 				}
-				sql = preSql.concat(" null ").concat(tailSql);
+				sql = preSql.concat("null").concat(tailSql);
 				paramList.remove(i);
 				i--;
 				index = sql.indexOf(ARG_NAME, index);

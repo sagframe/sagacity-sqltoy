@@ -881,6 +881,13 @@ public class SqlServerDialectUtils {
 					SqlExecuteStat.debug("执行子表级联更新前的存量数据更新", null);
 					SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(cascadeModel.getCascadeUpdateSql(),
 							mappedFields, mainFieldValues, null);
+					SqlToyConfig sqlToyConfig = new SqlToyConfig(Dialect.SQLSERVER);
+					sqlToyConfig.setSqlType(SqlType.update);
+					sqlToyConfig.setSql(cascadeModel.getCascadeUpdateSql());
+					sqlToyConfig.setParamsName(mappedFields);
+					// 增加sql执行拦截器 update 2022-9-10
+					sqlToyResult = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig, OperateType.execute,
+							sqlToyResult, cascadeModel.getMappedType(), dbType);
 					SqlUtil.executeSql(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(),
 							sqlToyResult.getParamsValue(), null, conn, dbType, null, true);
 				}

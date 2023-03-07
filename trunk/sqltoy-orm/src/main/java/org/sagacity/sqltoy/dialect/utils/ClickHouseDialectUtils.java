@@ -183,8 +183,6 @@ public class ClickHouseDialectUtils {
 	public static Long saveAll(SqlToyContext sqlToyContext, EntityMeta entityMeta, String insertSql, List<?> entities,
 			final int batchSize, ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType,
 			final Boolean autoCommit) throws Exception {
-		DialectUtils.doInterceptors(sqlToyContext, null, OperateType.insertAll, new SqlToyResult(insertSql, null),
-				entities.get(0).getClass(), dbType);
 		PKStrategy pkStrategy = entityMeta.getIdStrategy();
 		boolean isIdentity = pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY);
 		boolean isSequence = pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE);
@@ -312,9 +310,13 @@ public class ClickHouseDialectUtils {
 		}
 		String deleteSql = "alter table ".concat(entityMeta.getSchemaTable(tableName, dbType)).concat(" delete ")
 				.concat(entityMeta.getIdArgWhereSql());
+		SqlToyConfig sqlToyConfig = new SqlToyConfig(Dialect.CLICKHOUSE);
+		sqlToyConfig.setSqlType(SqlType.delete);
+		sqlToyConfig.setSql(deleteSql);
+		sqlToyConfig.setParamsName(entityMeta.getIdArray());
 		SqlToyResult sqlToyResult = new SqlToyResult(deleteSql, idValues);
 		// 增加sql执行拦截器 update 2022-9-10
-		sqlToyResult = DialectUtils.doInterceptors(sqlToyContext, null, OperateType.delete, sqlToyResult,
+		sqlToyResult = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig, OperateType.delete, sqlToyResult,
 				entity.getClass(), dbType);
 		return SqlUtil.executeSql(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(), sqlToyResult.getParamsValue(),
 				parameterTypes, conn, dbType, null, true);
@@ -354,9 +356,13 @@ public class ClickHouseDialectUtils {
 		if (updateSql == null) {
 			throw new IllegalArgumentException("update sql is null,引起问题的原因是没有设置需要修改的字段!");
 		}
+		SqlToyConfig sqlToyConfig = new SqlToyConfig(Dialect.CLICKHOUSE);
+		sqlToyConfig.setSqlType(SqlType.update);
+		sqlToyConfig.setSql(updateSql);
+		sqlToyConfig.setParamsName(fields);
 		SqlToyResult sqlToyResult = new SqlToyResult(updateSql, fieldsValues);
 		// 增加sql执行拦截器 update 2022-9-10
-		sqlToyResult = DialectUtils.doInterceptors(sqlToyContext, null, OperateType.update, sqlToyResult,
+		sqlToyResult = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig, OperateType.update, sqlToyResult,
 				entity.getClass(), dbType);
 		Long updateCnt = SqlUtil.executeSql(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(),
 				sqlToyResult.getParamsValue(), getIgnorePartionFieldsTypes(entityMeta), conn, dbType, null, false);
@@ -438,12 +444,22 @@ public class ClickHouseDialectUtils {
 		if (updateSql == null) {
 			throw new IllegalArgumentException("updateAll sql is null,引起问题的原因是没有设置需要修改的字段!");
 		}
-		SqlToyResult sqlToyResult = new SqlToyResult(updateSql, null);
-		// 增加sql执行拦截器 update 2022-9-10
-		sqlToyResult = DialectUtils.doInterceptors(sqlToyContext, null, OperateType.updateAll, sqlToyResult,
-				entities.get(0).getClass(), dbType);
-		SqlExecuteStat.showSql("批量修改[" + paramsValues.size() + "]条记录", sqlToyResult.getSql(), null);
-		return SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(), paramsValues,
+		SqlToyConfig sqlToyConfig = null;
+		List<Object[]> realParams = paramsValues;
+		String realSql = updateSql;
+		if (sqlToyContext.hasSqlInterceptors()) {
+			sqlToyConfig = new SqlToyConfig(Dialect.CLICKHOUSE);
+			sqlToyConfig.setSqlType(SqlType.update);
+			sqlToyConfig.setSql(updateSql);
+			sqlToyConfig.setParamsName(fields);
+			SqlToyResult sqlToyResult = new SqlToyResult(updateSql, paramsValues.toArray());
+			sqlToyResult = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig, OperateType.updateAll, sqlToyResult,
+					entities.get(0).getClass(), dbType);
+			realSql = sqlToyResult.getSql();
+			realParams = CollectionUtil.arrayToList(sqlToyResult.getParamsValue());
+		}
+		SqlExecuteStat.showSql("批量修改[" + realParams.size() + "]条记录", realSql, null);
+		return SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), realSql, realParams,
 				getIgnorePartionFieldsTypes(entityMeta), null, null, batchSize, autoCommit, conn, dbType);
 	}
 

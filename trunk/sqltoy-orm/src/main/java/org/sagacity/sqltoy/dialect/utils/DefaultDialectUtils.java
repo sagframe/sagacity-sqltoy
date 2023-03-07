@@ -26,6 +26,7 @@ import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.OperateType;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
+import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.model.LockMode;
@@ -34,6 +35,7 @@ import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.utils.BeanUtil;
+import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.ResultUtils;
@@ -296,7 +298,10 @@ public class DefaultDialectUtils {
 			sqlToyResult = SqlConfigParseUtils.processSql(deleteSql.toString(), null, realValues, null);
 		}
 		// 增加sql执行拦截器 update 2022-9-10
-		sqlToyResult = DialectUtils.doInterceptors(sqlToyContext, null, OperateType.deleteAll, sqlToyResult,
+		SqlToyConfig sqlToyConfig = new SqlToyConfig(DataSourceUtils.getDialect(dbType));
+		sqlToyConfig.setSqlType(SqlType.delete);
+		sqlToyConfig.setSql(sqlToyResult.getSql());
+		sqlToyResult = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig, OperateType.execute, sqlToyResult,
 				entities.get(0).getClass(), dbType);
 		return SqlUtil.executeSql(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(), sqlToyResult.getParamsValue(),
 				null, conn, dbType, autoCommit, false);
