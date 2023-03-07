@@ -21,11 +21,14 @@ import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.OperateType;
 import org.sagacity.sqltoy.config.model.PKStrategy;
+import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.utils.BeanUtil;
+import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
+import org.sagacity.sqltoy.utils.DataSourceUtils.Dialect;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.SqlUtilsExt;
@@ -116,8 +119,16 @@ public class ClickHouseDialectUtils {
 				BeanUtil.setProperty(entity, entityMeta.getBusinessIdField(), fullParamValues[bizIdColIndex]);
 			}
 		}
-		SqlExecuteStat.showSql("执行单记录插入", insertSql, null);
-		final Object[] paramValues = fullParamValues;
+		SqlToyConfig sqlToyConfig = new SqlToyConfig(Dialect.CLICKHOUSE);
+		sqlToyConfig.setSqlType(SqlType.insert);
+		sqlToyConfig.setSql(insertSql);
+		sqlToyConfig.setParamsName(reflectColumns);
+		SqlToyResult sqlToyResult = new SqlToyResult(insertSql, fullParamValues);
+		sqlToyResult = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig, OperateType.insert, sqlToyResult,
+				entity.getClass(), dbType);
+		String realInsertSql = sqlToyResult.getSql();
+		SqlExecuteStat.showSql("执行单记录插入", realInsertSql, null);
+		final Object[] paramValues = sqlToyResult.getParamsValue();
 		final Integer[] paramsType = entityMeta.getFieldsTypeArray();
 		PreparedStatement pst = null;
 		Object result = SqlUtil.preparedStatementProcess(null, pst, null, new PreparedStatementResultHandler() {
@@ -242,8 +253,22 @@ public class ClickHouseDialectUtils {
 				BeanUtil.mappingSetProperties(entities, entityMeta.getIdArray(), idSet, new int[] { 0 }, true);
 			}
 		}
-		SqlExecuteStat.showSql("批量保存[" + paramValues.size() + "]条记录", insertSql, null);
-		return SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), insertSql, paramValues,
+		SqlToyConfig sqlToyConfig = null;
+		List<Object[]> realParams = paramValues;
+		String realSql = insertSql;
+		if (sqlToyContext.hasSqlInterceptors()) {
+			sqlToyConfig = new SqlToyConfig(Dialect.CLICKHOUSE);
+			sqlToyConfig.setSqlType(SqlType.insert);
+			sqlToyConfig.setSql(insertSql);
+			sqlToyConfig.setParamsName(reflectColumns);
+			SqlToyResult sqlToyResult = new SqlToyResult(insertSql, paramValues.toArray());
+			sqlToyResult = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig, OperateType.insertAll, sqlToyResult,
+					entities.get(0).getClass(), dbType);
+			realSql = sqlToyResult.getSql();
+			realParams = CollectionUtil.arrayToList(sqlToyResult.getParamsValue());
+		}
+		SqlExecuteStat.showSql("批量保存[" + realParams.size() + "]条记录", realSql, null);
+		return SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), realSql, realParams,
 				entityMeta.getFieldsTypeArray(), entityMeta.getFieldsDefaultValue(), entityMeta.getFieldsNullable(),
 				batchSize, autoCommit, conn, dbType);
 	}
@@ -285,9 +310,13 @@ public class ClickHouseDialectUtils {
 		}
 		String deleteSql = "alter table ".concat(entityMeta.getSchemaTable(tableName, dbType)).concat(" delete ")
 				.concat(entityMeta.getIdArgWhereSql());
+		SqlToyConfig sqlToyConfig = new SqlToyConfig(Dialect.CLICKHOUSE);
+		sqlToyConfig.setSqlType(SqlType.delete);
+		sqlToyConfig.setSql(deleteSql);
+		sqlToyConfig.setParamsName(entityMeta.getIdArray());
 		SqlToyResult sqlToyResult = new SqlToyResult(deleteSql, idValues);
 		// 增加sql执行拦截器 update 2022-9-10
-		sqlToyResult = DialectUtils.doInterceptors(sqlToyContext, null, OperateType.delete, sqlToyResult,
+		sqlToyResult = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig, OperateType.delete, sqlToyResult,
 				entity.getClass(), dbType);
 		return SqlUtil.executeSql(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(), sqlToyResult.getParamsValue(),
 				parameterTypes, conn, dbType, null, true);
@@ -327,9 +356,13 @@ public class ClickHouseDialectUtils {
 		if (updateSql == null) {
 			throw new IllegalArgumentException("update sql is null,引起问题的原因是没有设置需要修改的字段!");
 		}
+		SqlToyConfig sqlToyConfig = new SqlToyConfig(Dialect.CLICKHOUSE);
+		sqlToyConfig.setSqlType(SqlType.update);
+		sqlToyConfig.setSql(updateSql);
+		sqlToyConfig.setParamsName(fields);
 		SqlToyResult sqlToyResult = new SqlToyResult(updateSql, fieldsValues);
 		// 增加sql执行拦截器 update 2022-9-10
-		sqlToyResult = DialectUtils.doInterceptors(sqlToyContext, null, OperateType.update, sqlToyResult,
+		sqlToyResult = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig, OperateType.update, sqlToyResult,
 				entity.getClass(), dbType);
 		Long updateCnt = SqlUtil.executeSql(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(),
 				sqlToyResult.getParamsValue(), getIgnorePartionFieldsTypes(entityMeta), conn, dbType, null, false);
@@ -411,12 +444,22 @@ public class ClickHouseDialectUtils {
 		if (updateSql == null) {
 			throw new IllegalArgumentException("updateAll sql is null,引起问题的原因是没有设置需要修改的字段!");
 		}
-		SqlToyResult sqlToyResult = new SqlToyResult(updateSql, null);
-		// 增加sql执行拦截器 update 2022-9-10
-		sqlToyResult = DialectUtils.doInterceptors(sqlToyContext, null, OperateType.updateAll, sqlToyResult,
-				entities.get(0).getClass(), dbType);
-		SqlExecuteStat.showSql("批量修改[" + paramsValues.size() + "]条记录", sqlToyResult.getSql(), null);
-		return SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(), paramsValues,
+		SqlToyConfig sqlToyConfig = null;
+		List<Object[]> realParams = paramsValues;
+		String realSql = updateSql;
+		if (sqlToyContext.hasSqlInterceptors()) {
+			sqlToyConfig = new SqlToyConfig(Dialect.CLICKHOUSE);
+			sqlToyConfig.setSqlType(SqlType.update);
+			sqlToyConfig.setSql(updateSql);
+			sqlToyConfig.setParamsName(fields);
+			SqlToyResult sqlToyResult = new SqlToyResult(updateSql, paramsValues.toArray());
+			sqlToyResult = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig, OperateType.updateAll, sqlToyResult,
+					entities.get(0).getClass(), dbType);
+			realSql = sqlToyResult.getSql();
+			realParams = CollectionUtil.arrayToList(sqlToyResult.getParamsValue());
+		}
+		SqlExecuteStat.showSql("批量修改[" + realParams.size() + "]条记录", realSql, null);
+		return SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), realSql, realParams,
 				getIgnorePartionFieldsTypes(entityMeta), null, null, batchSize, autoCommit, conn, dbType);
 	}
 
