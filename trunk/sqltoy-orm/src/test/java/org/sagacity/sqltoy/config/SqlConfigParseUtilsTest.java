@@ -41,7 +41,8 @@ public class SqlConfigParseUtilsTest {
 				new Object[] { "1", "chen", "1" });
 		System.err.println("id<>null:" + JSON.toJSONString(result1));
 
-		SqlToyResult result2 = SqlConfigParseUtils.processSql(sql, MapKit.keys("id", "name", "status").values("1", "chen", "1"));
+		SqlToyResult result2 = SqlConfigParseUtils.processSql(sql,
+				MapKit.keys("id", "name", "status").values("1", "chen", "1"));
 		System.err.println("id<>null:" + JSON.toJSONString(result2));
 	}
 
@@ -320,5 +321,24 @@ public class SqlConfigParseUtilsTest {
 		String key = property.substring(0, lastIndex);
 		int index = Integer.parseInt(property.substring(lastIndex + 1, property.length() - 1));
 		System.err.println("key=[" + key + "] index=[" + index + "]");
+	}
+
+	@Test
+	public void testNullValue1() throws Exception {
+		String sql = "select * from table where a=? and b=?";
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, null, new Object[] { "1", null });
+		System.err.println(result.getSql());
+
+		sql = "with tmp as (select * from table1 where id=? ) update table set a=? , b=? where c.name=?";
+		result = SqlConfigParseUtils.processSql(sql, null, new Object[] { null, 1, null, null });
+		System.err.println(result.getSql());
+
+		sql = "with tmp as (select * from table1 where id=? ) update table SET a=? , b=? where c.name = ?";
+		result = SqlConfigParseUtils.processSql(sql, null, new Object[] { null, null, 1, null });
+		System.err.println(result.getSql());
+
+		sql = "insert table a(f1,f2,f3,f4,f5) values(?,?,?,?,?)";
+		result = SqlConfigParseUtils.processSql(sql, null, new Object[] { null, 1, null, 1, null });
+		System.err.println(result.getSql());
 	}
 }

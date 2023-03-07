@@ -1085,6 +1085,13 @@ public class SqlToyContext {
 		return sqlInterceptors;
 	}
 
+	public boolean hasSqlInterceptors() {
+		if (sqlInterceptors == null || sqlInterceptors.isEmpty()) {
+			return false;
+		}
+		return true;
+	}
+
 	public void setSqlInterceptors(List<SqlInterceptor> sqlInterceptors) {
 		this.sqlInterceptors = sqlInterceptors;
 	}

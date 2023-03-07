@@ -44,7 +44,7 @@ public class SqlToyConstantsTest {
 		System.err.println(b.toString());
 		System.err.println(String.class.getTypeName());
 		System.err.println(int.class.getTypeName());
-		System.err.println(new Long("20211111102134").longValue());
+		System.err.println(Long.parseLong("20211111102134"));
 	}
 
 	@Test
@@ -55,24 +55,23 @@ public class SqlToyConstantsTest {
 			System.err.println(classType.getName());
 			classType = classType.getSuperclass();
 		}
-		
+
 		System.err.println(new BigDecimal(10).multiply(new BigDecimal(3)).add(new BigDecimal(42))
 				.divide(new BigDecimal(4), 3, RoundingMode.HALF_UP));
-		Double divData=398d;
-		Double divedData=24.1d;
-		double multiply=1.2;
-		System.err.println(((divData -divedData)* multiply) / divedData);
-		BigDecimal value=new BigDecimal(((divData -divedData)* multiply) / divedData)
+		Double divData = 398d;
+		Double divedData = 24.1d;
+		double multiply = 1.2;
+		System.err.println(((divData - divedData) * multiply) / divedData);
+		BigDecimal value = new BigDecimal(((divData - divedData) * multiply) / divedData)
 				.setScale(3, RoundingMode.FLOOR);
-		
-		System.err.println(value);
-		
-		boolean a=Map.class.isAssignableFrom(HashMap.class);
-		boolean b=HashMap.class.isAssignableFrom(Map.class);
-		boolean c=HashMap.class.isAssignableFrom(Hashtable.class);
-		boolean d=Map.class.isAssignableFrom(Map.class);
-		System.out.println("a---"+a+"-----b----"+b+"-------c-----"+c+"-------d-----"+d);
 
-		
+		System.err.println(value);
+
+		boolean a = Map.class.isAssignableFrom(HashMap.class);
+		boolean b = HashMap.class.isAssignableFrom(Map.class);
+		boolean c = HashMap.class.isAssignableFrom(Hashtable.class);
+		boolean d = Map.class.isAssignableFrom(Map.class);
+		System.out.println("a---" + a + "-----b----" + b + "-------c-----" + c + "-------d-----" + d);
+
 	}
 }
