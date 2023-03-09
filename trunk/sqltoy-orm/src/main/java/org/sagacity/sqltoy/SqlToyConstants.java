@@ -146,6 +146,12 @@ public class SqlToyConstants {
 	public static boolean executeSqlBlankToNull = true;
 
 	/**
+	 * 分页中间表名称
+	 */
+	public static String INTERMEDIATE_TABLE = "SAG_INTERMEDIATE_TABLE";
+	public static String INTERMEDIATE_TABLE1 = "SAG_INTERMEDIATE_TABLE1";
+
+	/**
 	 * 字符串中内嵌参数的匹配模式
 	 */
 	public final static Pattern paramPattern = Pattern.compile(
@@ -184,6 +190,10 @@ public class SqlToyConstants {
 	 * 判断sql中是否存在@include(sqlId)的表达式
 	 */
 	public final static Pattern INCLUDE_PATTERN = Pattern.compile("(?i)\\@include\\([\\w\\W]*\\)");
+
+	// 标记分页或取随机记录原始sql的标记，便于sql interceptor加工处理快速定位
+	public final static String MARK_ORIGINAL_START = " /*-- sqltoy_original_mark_start --*/ ";
+	public final static String MARK_ORIGINAL_END = " /*-- sqltoy_original_mark_end --*/ ";
 
 	/**
 	 * @todo 解析模板中的参数

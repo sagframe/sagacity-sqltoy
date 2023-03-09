@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.sagacity.sqltoy.SqlExecuteStat;
+import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DecryptHandler;
 import org.sagacity.sqltoy.callback.GenerateSqlHandler;
@@ -30,6 +31,7 @@ import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlType;
+import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
 import org.sagacity.sqltoy.config.model.TableCascadeModel;
 import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
@@ -83,30 +85,43 @@ public class SqlServerDialectUtils {
 			QueryExecutor queryExecutor, final DecryptHandler decryptHandler, Long totalCount, Long randomCount,
 			Connection conn, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
 			throws Exception {
+		StringBuilder sql = new StringBuilder();
 		// sqlserver 不支持内部order by
 		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
+		if (sqlToyConfig.isHasFast()) {
+			sql.append(sqlToyConfig.getFastPreSql(dialect));
+			if (!sqlToyConfig.isIgnoreBracket()) {
+				sql.append(" (");
+			}
+		}
+		String partSql = " select top " + randomCount + " ";
+		if (sqlToyConfig.isHasWith()) {
+			SqlWithAnalysis sqlWith = new SqlWithAnalysis(innerSql);
+			sql.append(sqlWith.getWithSql());
+			innerSql = sqlWith.getRejectWithSql();
+		}
 		// sql中是否存在排序或union
 		boolean hasOrderOrUnion = DialectUtils.hasOrderByOrUnion(innerSql);
-		StringBuilder sql = new StringBuilder();
-
-		if (sqlToyConfig.isHasFast()) {
-			sql.append(sqlToyConfig.getFastPreSql(dialect)).append(" (");
-		}
+		// 给原始sql标记上特殊的开始和结尾，便于sql拦截器快速定位到原始sql并进行条件补充
+		innerSql = SqlUtilsExt.markOriginalSql(innerSql);
 		// 存在order 或union 则在sql外包裹一层
 		if (hasOrderOrUnion) {
-			sql.append("select top " + randomCount);
-			sql.append(" sag_random_table.* from (");
+			sql.append(partSql);
+			sql.append(" " + SqlToyConstants.INTERMEDIATE_TABLE + ".* from (");
 			sql.append(innerSql);
+			sql.append(") ");
+			sql.append(SqlToyConstants.INTERMEDIATE_TABLE);
+			sql.append(" ");
 		} else {
-			sql.append(innerSql.replaceFirst("(?i)select ", "select top " + randomCount + " "));
-		}
-		if (hasOrderOrUnion) {
-			sql.append(") sag_random_table ");
+			sql.append(innerSql.replaceFirst("(?i)select ", partSql));
 		}
 		sql.append(" order by NEWID() ");
 
 		if (sqlToyConfig.isHasFast()) {
-			sql.append(") ").append(sqlToyConfig.getFastTailSql(dialect));
+			if (!sqlToyConfig.isIgnoreBracket()) {
+				sql.append(") ");
+			}
+			sql.append(sqlToyConfig.getFastTailSql(dialect));
 		}
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		SqlToyResult queryParam = SqlConfigParseUtils.processSql(sql.toString(), extend.getParamsName(),
@@ -806,11 +821,10 @@ public class SqlServerDialectUtils {
 			}
 		}
 
-		SqlToyConfig sqlToyConfig = null;
 		List<Object[]> realParams = paramValues;
 		String realSql = insertSql;
 		if (sqlToyContext.hasSqlInterceptors()) {
-			sqlToyConfig = new SqlToyConfig(Dialect.SQLSERVER);
+			SqlToyConfig sqlToyConfig = new SqlToyConfig(Dialect.SQLSERVER);
 			sqlToyConfig.setSqlType(SqlType.insert);
 			sqlToyConfig.setSql(insertSql);
 			sqlToyConfig.setParamsName(reflectColumns);

@@ -242,8 +242,10 @@ public class DialectUtils {
 			final String sql, final Object[] paramsValue, final QueryExecutorExtend extend,
 			final DecryptHandler decryptHandler, final Connection conn, final Integer dbType, final int startIndex,
 			final int fetchSize, final int maxRows) throws Exception {
+		// 清除分页、取随机记录、取top 封装的开始和截止特殊标记
+		String lastSql = SqlUtilsExt.clearOriginalSqlMark(sql);
 		// 做sql签名
-		String lastSql = SqlUtilsExt.signSql(sql, dbType, sqlToyConfig);
+		lastSql = SqlUtilsExt.signSql(lastSql, dbType, sqlToyConfig);
 		// 打印sql
 		SqlExecuteStat.showSql("执行查询", lastSql, paramsValue);
 		PreparedStatement pst = conn.prepareStatement(lastSql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
@@ -630,11 +632,10 @@ public class DialectUtils {
 			}
 		}
 		String saveOrUpdateSql = generateSqlHandler.generateSql(entityMeta, forceUpdateFields);
-		SqlToyConfig sqlToyConfig = null;
 		List<Object[]> realParams = paramValues;
 		String realSql = saveOrUpdateSql;
 		if (sqlToyContext.hasSqlInterceptors()) {
-			sqlToyConfig = new SqlToyConfig(DataSourceUtils.getDialect(dbType));
+			SqlToyConfig sqlToyConfig = new SqlToyConfig(DataSourceUtils.getDialect(dbType));
 			sqlToyConfig.setSqlType(SqlType.insert);
 			sqlToyConfig.setSql(saveOrUpdateSql);
 			sqlToyConfig.setParamsName(entityMeta.getFieldsArray());
@@ -1548,11 +1549,10 @@ public class DialectUtils {
 			}
 		}
 
-		SqlToyConfig sqlToyConfig = null;
 		List<Object[]> realParams = paramValues;
 		String realSql = insertSql;
 		if (sqlToyContext.hasSqlInterceptors()) {
-			sqlToyConfig = new SqlToyConfig(DataSourceUtils.getDialect(dbType));
+			SqlToyConfig sqlToyConfig = new SqlToyConfig(DataSourceUtils.getDialect(dbType));
 			sqlToyConfig.setSqlType(SqlType.insert);
 			sqlToyConfig.setSql(insertSql);
 			sqlToyConfig.setParamsName(reflectColumns);
@@ -1640,11 +1640,10 @@ public class DialectUtils {
 			}
 		}
 		String saveAllNotExistSql = generateSqlHandler.generateSql(entityMeta, null);
-		SqlToyConfig sqlToyConfig = null;
 		List<Object[]> realParams = paramValues;
 		String realSql = saveAllNotExistSql;
 		if (sqlToyContext.hasSqlInterceptors()) {
-			sqlToyConfig = new SqlToyConfig(DataSourceUtils.getDialect(dbType));
+			SqlToyConfig sqlToyConfig = new SqlToyConfig(DataSourceUtils.getDialect(dbType));
 			sqlToyConfig.setSqlType(SqlType.insert);
 			sqlToyConfig.setSql(saveAllNotExistSql);
 			sqlToyConfig.setParamsName(entityMeta.getFieldsArray());
@@ -2080,11 +2079,10 @@ public class DialectUtils {
 		if (updateSql == null) {
 			throw new IllegalArgumentException("updateAll sql is null,引起问题的原因是没有设置需要修改的字段!");
 		}
-		SqlToyConfig sqlToyConfig = null;
 		List<Object[]> realParams = paramsValues;
 		String realSql = updateSql;
 		if (sqlToyContext.hasSqlInterceptors()) {
-			sqlToyConfig = new SqlToyConfig(DataSourceUtils.getDialect(dbType));
+			SqlToyConfig sqlToyConfig = new SqlToyConfig(DataSourceUtils.getDialect(dbType));
 			sqlToyConfig.setSqlType(SqlType.update);
 			sqlToyConfig.setSql(updateSql);
 			sqlToyConfig.setParamsName(entityMeta.getFieldsArray());
@@ -2248,11 +2246,10 @@ public class DialectUtils {
 						subTableFieldType[i] = subTableMeta.getColumnJdbcType(cascadeModel.getMappedFields()[i]);
 					}
 					delSubTableSql = ReservedWordsUtil.convertSql(cascadeModel.getDeleteSubTableSql(), dbType);
-					SqlToyConfig sqlToyConfig = null;
 					List<Object[]> realParams = mainFieldValues;
 					String realSql = delSubTableSql;
 					if (sqlToyContext.hasSqlInterceptors()) {
-						sqlToyConfig = new SqlToyConfig(DataSourceUtils.getDialect(dbType));
+						SqlToyConfig sqlToyConfig = new SqlToyConfig(DataSourceUtils.getDialect(dbType));
 						sqlToyConfig.setSqlType(SqlType.delete);
 						sqlToyConfig.setSql(delSubTableSql);
 						sqlToyConfig.setParamsName(cascadeModel.getFields());
@@ -2270,11 +2267,10 @@ public class DialectUtils {
 		}
 		String deleteSql = ReservedWordsUtil
 				.convertSql("delete from ".concat(realTable).concat(" ").concat(entityMeta.getIdArgWhereSql()), dbType);
-		SqlToyConfig sqlToyConfig = null;
 		List<Object[]> realParams = idValues;
 		String realSql = deleteSql;
 		if (sqlToyContext.hasSqlInterceptors()) {
-			sqlToyConfig = new SqlToyConfig(DataSourceUtils.getDialect(dbType));
+			SqlToyConfig sqlToyConfig = new SqlToyConfig(DataSourceUtils.getDialect(dbType));
 			sqlToyConfig.setSqlType(SqlType.delete);
 			sqlToyConfig.setSql(deleteSql);
 			sqlToyConfig.setParamsName(entityMeta.getIdArray());

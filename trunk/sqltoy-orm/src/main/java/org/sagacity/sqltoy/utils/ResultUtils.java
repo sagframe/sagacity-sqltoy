@@ -701,8 +701,8 @@ public class ResultUtils {
 		}
 		// 超过最大提取数据阀值
 		if (maxLimit) {
-			logger.error("MaxLargeResult:执行sql提取数据超出最大阀值限制{},sqlId={},具体语句={}", index, sqlToyConfig.getId(),
-					sqlToyConfig.getSql(null));
+			logger.error("MaxLargeResult:执行sql提取数据超出最大阀值限制{}(可通过[spring.sqltoy.pageFetchSizeLimit]参数调整),sqlId={},具体语句={}",
+					index, sqlToyConfig.getId(), sqlToyConfig.getSql(null));
 		}
 		return items;
 	}
@@ -922,8 +922,9 @@ public class ResultUtils {
 		}
 		// 超过最大提取数据阀值
 		if (maxLimit) {
-			logger.error("MaxLargeResult:执行sql提取数据超出最大阀值限制{},sqlId={},具体语句={}", index, sqlToyConfig.getId(),
-					sqlToyConfig.getSql(null));
+			logger.error(
+					"MaxLargeResult:执行sql提取数据超出最大阀值限制{}(可通过[spring.sqltoy.pageFetchSizeLimit]参数调整),sqlId={},具体语句={}",
+					index, sqlToyConfig.getId(), sqlToyConfig.getSql(null));
 		}
 		return items;
 	}

@@ -128,7 +128,7 @@ public class StringUtilsTest {
 
 	@Test
 	public void testWhereMatch1() {
-		
+
 		System.err.println(StringUtil.matches("name=", EQUAL));
 		System.err.println(StringUtil.matches("name:=", EQUAL));
 		System.err.println(StringUtil.matches("name!=", EQUAL));
@@ -139,8 +139,8 @@ public class StringUtilsTest {
 		System.err.println(StringUtil.matches("name != ", NOT_EQUAL));
 		System.err.println(StringUtil.matches("name <> ", NOT_EQUAL));
 		System.err.println(StringUtil.matches("name <> 1", NOT_EQUAL));
-		System.err.println(StringUtil.matches("name>=",NOT_EQUAL));
-		System.err.println(StringUtil.matches("name^=",NOT_EQUAL));
+		System.err.println(StringUtil.matches("name>=", NOT_EQUAL));
+		System.err.println(StringUtil.matches("name^=", NOT_EQUAL));
 	}
 
 	@Test
@@ -177,5 +177,13 @@ public class StringUtilsTest {
 		sqlCache.put("1", 1);
 		Map result = (Map) sqlCache;
 		System.err.println(JSON.toJSONString(result));
+	}
+
+	@Test
+	public void testReplace2() {
+		String sql = "select * from table where 1=1 and 2=2";
+		sql = SqlUtilsExt.markOriginalSql(sql);
+		System.err.println("[" + sql + "]");
+		System.err.println("[" + SqlUtilsExt.clearOriginalSqlMark(sql) + "]");
 	}
 }
