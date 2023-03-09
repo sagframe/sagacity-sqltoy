@@ -26,7 +26,7 @@ public class DefaultOverTimeHandler implements OverTimeSqlHandler {
 			new Comparator<OverTimeSql>() {
 				@Override
 				public int compare(OverTimeSql o1, OverTimeSql o2) {
-					return new Long(o1.getTakeTime() - o2.getTakeTime()).intValue();
+					return Long.valueOf(o1.getTakeTime() - o2.getTakeTime()).intValue();
 				}
 			});
 	// 所有执行超时且含sqlId的sql语句
@@ -88,7 +88,7 @@ public class DefaultOverTimeHandler implements OverTimeSqlHandler {
 			Collections.sort(result, new Comparator<OverTimeSql>() {
 				@Override
 				public int compare(OverTimeSql o1, OverTimeSql o2) {
-					return new Long(o2.getTakeTime() - o1.getTakeTime()).intValue();
+					return Long.valueOf(o2.getTakeTime() - o1.getTakeTime()).intValue();
 				}
 			});
 			if (size >= result.size()) {

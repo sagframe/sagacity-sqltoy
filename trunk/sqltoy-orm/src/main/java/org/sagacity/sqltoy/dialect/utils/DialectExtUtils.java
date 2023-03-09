@@ -195,7 +195,7 @@ public class DialectExtUtils {
 				queryStr.append(" and ");
 			}
 			queryStr.append(ReservedWordsUtil.convertWord(entityMeta.getColumnName(realParamNamed[i]), dbType))
-					.append("=? ");
+					.append("=:" + realParamNamed[i]);
 		}
 		return queryStr.toString();
 	}

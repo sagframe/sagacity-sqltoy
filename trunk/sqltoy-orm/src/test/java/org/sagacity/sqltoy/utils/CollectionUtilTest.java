@@ -87,7 +87,7 @@ public class CollectionUtilTest {
 		Queue<OverTimeSql> priorityQueue = new PriorityLimitSizeQueue(4, new Comparator<OverTimeSql>() {
 			@Override
 			public int compare(OverTimeSql o1, OverTimeSql o2) {
-				return new Long(o1.getTakeTime() - o2.getTakeTime()).intValue();
+				return Long.valueOf(o1.getTakeTime() - o2.getTakeTime()).intValue();
 			}
 		});
 		long[] time = new long[] { 10, 28, 7, 49, 8, 32, 82, 71, 90, 29 };
@@ -140,7 +140,7 @@ public class CollectionUtilTest {
 		}
 		Collections.sort(result, new Comparator<OverTimeSql>() {
 			public int compare(OverTimeSql o1, OverTimeSql o2) {
-				return new Long(o2.getTakeTime() - o1.getTakeTime()).intValue();
+				return Long.valueOf(o2.getTakeTime() - o1.getTakeTime()).intValue();
 			}
 		});
 		if (size < result.size()) {
