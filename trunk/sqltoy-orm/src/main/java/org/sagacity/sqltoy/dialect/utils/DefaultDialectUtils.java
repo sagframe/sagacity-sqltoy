@@ -68,10 +68,10 @@ public class DefaultDialectUtils {
 			QueryExecutor queryExecutor, final DecryptHandler decryptHandler, Long totalCount, Long randomCount,
 			Connection conn, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
 			throws Exception {
-		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
 		// select * from table order by rand() limit :randomCount 性能比较差,通过产生rand()
 		// row_number 再排序方式性能稍好 同时也可以保证通用性
 		StringBuilder sql = new StringBuilder();
+		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect));
 			if (!sqlToyConfig.isIgnoreBracket()) {
@@ -128,15 +128,14 @@ public class DefaultDialectUtils {
 			throws Exception {
 		StringBuilder sql = new StringBuilder();
 		boolean isNamed = sqlToyConfig.isNamedParam();
+		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect));
 			if (!sqlToyConfig.isIgnoreBracket()) {
 				sql.append(" (");
 			}
-			sql.append(sqlToyConfig.getFastSql(dialect));
-		} else {
-			sql.append(sqlToyConfig.getSql(dialect));
 		}
+		sql.append(innerSql);
 		sql.append(" limit ");
 		sql.append(isNamed ? ":" + SqlToyConstants.PAGE_FIRST_PARAM_NAME : "?");
 		sql.append(" offset ");
@@ -176,15 +175,14 @@ public class DefaultDialectUtils {
 			QueryExecutor queryExecutor, final DecryptHandler decryptHandler, Integer topSize, Connection conn,
 			final Integer dbType, final String dialect, final int fetchSize, final int maxRows) throws Exception {
 		StringBuilder sql = new StringBuilder();
+		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect));
 			if (!sqlToyConfig.isIgnoreBracket()) {
 				sql.append(" (");
 			}
-			sql.append(sqlToyConfig.getFastSql(dialect));
-		} else {
-			sql.append(sqlToyConfig.getSql(dialect));
 		}
+		sql.append(innerSql);
 		sql.append(" limit ");
 		sql.append(topSize);
 		if (sqlToyConfig.isHasFast()) {

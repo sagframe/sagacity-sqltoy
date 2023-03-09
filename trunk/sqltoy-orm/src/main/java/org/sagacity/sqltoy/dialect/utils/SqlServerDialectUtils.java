@@ -29,6 +29,7 @@ import org.sagacity.sqltoy.config.model.OperateType;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
+import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
 import org.sagacity.sqltoy.config.model.TableCascadeModel;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.ColumnMeta;
@@ -81,24 +82,27 @@ public class SqlServerDialectUtils {
 			Connection conn, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
 			throws Exception {
 		// sqlserver 不支持内部order by
+		StringBuilder sql = new StringBuilder();
 		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
 		// sql中是否存在排序或union
 		boolean hasOrderOrUnion = DialectUtils.hasOrderByOrUnion(innerSql);
-		StringBuilder sql = new StringBuilder();
-
+		String sqlPart = "select top " + randomCount + " ";
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect)).append(" (");
 		}
+		if (sqlToyConfig.isHasWith()) {
+			SqlWithAnalysis sqlWith = new SqlWithAnalysis(innerSql);
+			sql.append(sqlWith.getWithSql());
+			innerSql = sqlWith.getRejectWithSql();
+		}
 		// 存在order 或union 则在sql外包裹一层
 		if (hasOrderOrUnion) {
-			sql.append("select top " + randomCount);
+			sql.append(sqlPart);
 			sql.append(" sag_random_table.* from (");
 			sql.append(innerSql);
-		} else {
-			sql.append(innerSql.replaceFirst("(?i)select ", "select top " + randomCount + " "));
-		}
-		if (hasOrderOrUnion) {
 			sql.append(") sag_random_table ");
+		} else {
+			sql.append(innerSql.replaceFirst("(?i)select ", sqlPart));
 		}
 		sql.append(" order by NEWID() ");
 

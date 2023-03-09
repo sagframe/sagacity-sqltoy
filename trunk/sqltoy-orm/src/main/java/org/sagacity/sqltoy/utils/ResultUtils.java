@@ -692,8 +692,9 @@ public class ResultUtils {
 		}
 		// 超过最大提取数据阀值
 		if (maxLimit) {
-			logger.error("MaxLargeResult:执行sql提取数据超出最大阀值限制{},sqlId={},具体语句={}", index, sqlToyConfig.getId(),
-					sqlToyConfig.getSql(null));
+			logger.error(
+					"MaxLargeResult:执行sql提取数据超出最大阀值限制{}(可通过[spring.sqltoy.pageFetchSizeLimit]参数调整),sqlId={},具体语句={}",
+					index, sqlToyConfig.getId(), sqlToyConfig.getSql(null));
 		}
 		return items;
 	}
@@ -913,8 +914,9 @@ public class ResultUtils {
 		}
 		// 超过最大提取数据阀值
 		if (maxLimit) {
-			logger.error("MaxLargeResult:执行sql提取数据超出最大阀值限制{},sqlId={},具体语句={}", index, sqlToyConfig.getId(),
-					sqlToyConfig.getSql(null));
+			logger.error(
+					"MaxLargeResult:执行sql提取数据超出最大阀值限制{}(可通过[spring.sqltoy.pageFetchSizeLimit]参数调整),sqlId={},具体语句={}",
+					index, sqlToyConfig.getId(), sqlToyConfig.getSql(null));
 		}
 		return items;
 	}
@@ -1295,8 +1297,7 @@ public class ResultUtils {
 							sqlToyContext.getSqlToyConfig(pivotModel.getCategorySql(), SqlType.search, ""),
 							queryExecutor, dialect, false);
 					SqlToyResult pivotSqlToyResult = SqlConfigParseUtils.processSql(pivotSqlConfig.getSql(dialect),
-							extend.getParamsName(), extend.getParamsValue(sqlToyContext, pivotSqlConfig),
-							dialect);
+							extend.getParamsName(), extend.getParamsValue(sqlToyContext, pivotSqlConfig), dialect);
 					// 增加sql执行拦截器 update 2022-9-10
 					pivotSqlToyResult = DialectUtils.doInterceptors(sqlToyContext, pivotSqlConfig, OperateType.search,
 							pivotSqlToyResult, null, dbType);

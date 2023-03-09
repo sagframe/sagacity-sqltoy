@@ -116,9 +116,9 @@ public class OracleDialectUtils {
 			throws Exception {
 		StringBuilder sql = new StringBuilder();
 		boolean isNamed = sqlToyConfig.isNamedParam();
+		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
 		// 是否有order by,update 2017-5-22
-		boolean hasOrderBy = SqlUtil.hasOrderBy(
-				sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect), true);
+		boolean hasOrderBy = SqlUtil.hasOrderBy(innerSql, true);
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect));
 			if (!sqlToyConfig.isIgnoreBracket()) {
@@ -129,7 +129,7 @@ public class OracleDialectUtils {
 		if (hasOrderBy) {
 			sql.append(" select SAG_Paginationtable.* from (");
 		}
-		sql.append(sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect));
+		sql.append(innerSql);
 		if (hasOrderBy) {
 			sql.append(") SAG_Paginationtable ");
 		}
@@ -173,9 +173,9 @@ public class OracleDialectUtils {
 			QueryExecutor queryExecutor, final DecryptHandler decryptHandler, Integer topSize, Connection conn,
 			final Integer dbType, final String dialect, final int fetchSize, final int maxRows) throws Exception {
 		StringBuilder sql = new StringBuilder();
+		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
 		// 是否有order by
-		boolean hasOrderBy = SqlUtil.hasOrderBy(
-				sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect), true);
+		boolean hasOrderBy = SqlUtil.hasOrderBy(innerSql, true);
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect));
 			if (!sqlToyConfig.isIgnoreBracket()) {
@@ -186,7 +186,7 @@ public class OracleDialectUtils {
 		if (hasOrderBy) {
 			sql.append("select SAG_Paginationtable.* from (");
 		}
-		sql.append(sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect));
+		sql.append(innerSql);
 		if (hasOrderBy) {
 			sql.append(") SAG_Paginationtable ");
 		}

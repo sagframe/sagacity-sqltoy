@@ -109,6 +109,7 @@ public class Oracle11gDialect implements Dialect {
 			Connection conn, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
 			throws Exception {
 		StringBuilder sql = new StringBuilder();
+		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
 		boolean isNamed = sqlToyConfig.isNamedParam();
 		int startIndex = 1;
 		if (sqlToyConfig.isHasFast()) {
@@ -119,13 +120,12 @@ public class Oracle11gDialect implements Dialect {
 			startIndex = 0;
 		}
 		sql.append("SELECT * FROM (SELECT ROWNUM page_row_id,SAG_Paginationtable.* FROM ( ");
-		sql.append(sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect));
+		sql.append(innerSql);
 		sql.append(") SAG_Paginationtable ");
 
 		// 判断sql中是否存在排序，因为oracle排序查询的机制通过ROWNUM<=?每次查出的结果可能不一样 ， 请参见ROWNUM机制以及oracle
 		// SORT ORDER BY STOPKEY
-		if (SqlToyConstants.oraclePageIgnoreOrder() || !SqlUtil.hasOrderBy(
-				sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect), true)) {
+		if (SqlToyConstants.oraclePageIgnoreOrder() || !SqlUtil.hasOrderBy(innerSql, true)) {
 			sql.append(" where ROWNUM <=");
 			sql.append(isNamed ? ":" + SqlToyConstants.PAGE_FIRST_PARAM_NAME : "?");
 			sql.append(" ) WHERE page_row_id>");
@@ -167,6 +167,7 @@ public class Oracle11gDialect implements Dialect {
 			final DecryptHandler decryptHandler, Integer topSize, Connection conn, final Integer dbType,
 			final String dialect, final int fetchSize, final int maxRows) throws Exception {
 		StringBuilder sql = new StringBuilder();
+		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect));
 			if (!sqlToyConfig.isIgnoreBracket()) {
@@ -174,7 +175,7 @@ public class Oracle11gDialect implements Dialect {
 			}
 		}
 		sql.append("SELECT SAG_Paginationtable.* FROM ( ");
-		sql.append(sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect));
+		sql.append(innerSql);
 		sql.append(") SAG_Paginationtable where ROWNUM <=");
 		sql.append(Double.valueOf(topSize).intValue());
 
