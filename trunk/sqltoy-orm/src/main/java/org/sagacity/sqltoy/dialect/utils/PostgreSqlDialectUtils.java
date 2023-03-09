@@ -8,6 +8,7 @@ import java.sql.Connection;
 import java.util.HashSet;
 import java.util.List;
 
+import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DecryptHandler;
 import org.sagacity.sqltoy.callback.GenerateSavePKStrategy;
@@ -24,6 +25,7 @@ import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
+import org.sagacity.sqltoy.utils.SqlUtilsExt;
 
 /**
  * @project sqltoy-orm
@@ -57,10 +59,12 @@ public class PostgreSqlDialectUtils {
 			QueryExecutor queryExecutor, final DecryptHandler decryptHandler, Long totalCount, Long randomCount,
 			Connection conn, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
 			throws Exception {
+		StringBuilder sql = new StringBuilder();
 		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
 		// sql中是否存在排序或union
 		boolean hasOrderOrUnion = DialectUtils.hasOrderByOrUnion(innerSql);
-		StringBuilder sql = new StringBuilder();
+		// 给原始sql标记上特殊的开始和结尾，便于sql拦截器快速定位到原始sql并进行条件补充
+		innerSql = SqlUtilsExt.markOriginalSql(innerSql);
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect));
 			if (!sqlToyConfig.isIgnoreBracket()) {
@@ -69,11 +73,13 @@ public class PostgreSqlDialectUtils {
 		}
 		// 存在order 或union 则在sql外包裹一层
 		if (hasOrderOrUnion) {
-			sql.append("select sag_random_table.* from (");
+			sql.append("select " + SqlToyConstants.INTERMEDIATE_TABLE + ".* from (");
 		}
 		sql.append(innerSql);
 		if (hasOrderOrUnion) {
-			sql.append(") sag_random_table ");
+			sql.append(") ");
+			sql.append(SqlToyConstants.INTERMEDIATE_TABLE);
+			sql.append(" ");
 		}
 		sql.append(" order by random() limit ");
 		sql.append(randomCount);

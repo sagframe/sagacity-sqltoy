@@ -39,6 +39,7 @@ import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.utils.SqlUtil;
+import org.sagacity.sqltoy.utils.SqlUtilsExt;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -108,21 +109,19 @@ public class SqlServerDialect implements Dialect {
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		StringBuilder sql = new StringBuilder();
 		boolean isNamed = sqlToyConfig.isNamedParam();
-		String realSql = sqlToyConfig.getSql(dialect);
-		String fastSql = "";
+		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
+		// update 2021-10-20 提前试算一下实际sql,便于判断最终sql中是否包含order by
+		String judgeOrderSql = innerSql;
+		// 给原始sql标记上特殊的开始和结尾，便于sql拦截器快速定位到原始sql并进行条件补充
+		innerSql = SqlUtilsExt.markOriginalSql(innerSql);
 		// 存在@fast() 快速分页
 		if (sqlToyConfig.isHasFast()) {
-			fastSql = sqlToyConfig.getFastSql(dialect);
 			sql.append(sqlToyConfig.getFastPreSql(dialect));
 			if (!sqlToyConfig.isIgnoreBracket()) {
 				sql.append(" (");
 			}
-			sql.append(fastSql);
-		} else {
-			sql.append(realSql);
 		}
-		// update 2021-10-20 提前试算一下实际sql,便于判断最终sql中是否包含order by
-		String judgeOrderSql = sqlToyConfig.isHasFast() ? fastSql : realSql;
+		sql.append(innerSql);
 		// 避免条件用?模式,导致实际参数位置不匹配,因此只针对:name模式进行处理
 		if (isNamed) {
 			SqlToyResult tmpResult = SqlConfigParseUtils.processSql(judgeOrderSql, extend.getParamsName(),
@@ -174,30 +173,32 @@ public class SqlServerDialect implements Dialect {
 			final DecryptHandler decryptHandler, Integer topSize, Connection conn, final Integer dbType,
 			final String dialect, final int fetchSize, final int maxRows) throws Exception {
 		StringBuilder sql = new StringBuilder();
+		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect));
 			if (!sqlToyConfig.isIgnoreBracket()) {
 				sql.append(" (");
 			}
 		}
-		String minSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
 		String partSql = " select top " + topSize + " ";
 		if (sqlToyConfig.isHasWith()) {
-			SqlWithAnalysis sqlWith = new SqlWithAnalysis(minSql);
+			SqlWithAnalysis sqlWith = new SqlWithAnalysis(innerSql);
 			sql.append(sqlWith.getWithSql());
-			minSql = sqlWith.getRejectWithSql();
+			innerSql = sqlWith.getRejectWithSql();
 		}
 		boolean hasUnion = false;
 		if (sqlToyConfig.isHasUnion()) {
-			hasUnion = SqlUtil.hasUnion(minSql, false);
+			hasUnion = SqlUtil.hasUnion(innerSql, false);
 		}
+		// 给原始sql标记上特殊的开始和结尾，便于sql拦截器快速定位到原始sql并进行条件补充
+		innerSql = SqlUtilsExt.markOriginalSql(innerSql);
 		if (hasUnion) {
 			sql.append(partSql);
-			sql.append(" SAG_Paginationtable.* from (");
-			sql.append(minSql);
-			sql.append(") as SAG_Paginationtable ");
+			sql.append(" " + SqlToyConstants.INTERMEDIATE_TABLE + ".* from (");
+			sql.append(innerSql);
+			sql.append(") as " + SqlToyConstants.INTERMEDIATE_TABLE + " ");
 		} else {
-			sql.append(minSql.replaceFirst("(?i)select ", partSql));
+			sql.append(innerSql.replaceFirst("(?i)select ", partSql));
 		}
 		if (sqlToyConfig.isHasFast()) {
 			if (!sqlToyConfig.isIgnoreBracket()) {
