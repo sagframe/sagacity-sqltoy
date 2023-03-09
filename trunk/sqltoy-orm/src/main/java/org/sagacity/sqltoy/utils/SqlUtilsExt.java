@@ -261,4 +261,22 @@ public class SqlUtilsExt {
 		}
 		return sql;
 	}
+
+	/**
+	 * @TODO 给分页、取随机记录sql打上特殊的开始和截止符号，便于后续统一的sql拦截器提取，并进行类似租户过滤条件的补充
+	 * @param originalSql
+	 * @return
+	 */
+	public static String markOriginalSql(String originalSql) {
+		return SqlToyConstants.MARK_ORIGINAL_START.concat(originalSql).concat(SqlToyConstants.MARK_ORIGINAL_END);
+	}
+
+	/**
+	 * @TODO 清除分页、取随机记录等sql中的原始sql位置标记符号
+	 * @param sql
+	 * @return
+	 */
+	public static String clearOriginalSqlMark(String sql) {
+		return sql.replace(SqlToyConstants.MARK_ORIGINAL_START, "").replace(SqlToyConstants.MARK_ORIGINAL_END, "");
+	}
 }

@@ -70,27 +70,31 @@ public class DefaultDialectUtils {
 			QueryExecutor queryExecutor, final DecryptHandler decryptHandler, Long totalCount, Long randomCount,
 			Connection conn, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
 			throws Exception {
-		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
 		// select * from table order by rand() limit :randomCount 性能比较差,通过产生rand()
 		// row_number 再排序方式性能稍好 同时也可以保证通用性
 		StringBuilder sql = new StringBuilder();
+		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
+		// 给原始sql标记上特殊的开始和结尾，便于sql拦截器快速定位到原始sql并进行条件补充
+		innerSql = SqlUtilsExt.markOriginalSql(innerSql);
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect));
 			if (!sqlToyConfig.isIgnoreBracket()) {
 				sql.append(" (");
 			}
 		}
-		sql.append("select sag_random_table1.* from (");
+		sql.append("select " + SqlToyConstants.INTERMEDIATE_TABLE1 + ".* from (");
 		// sql中是否存在排序或union,存在order 或union 则在sql外包裹一层
 		if (DialectUtils.hasOrderByOrUnion(innerSql)) {
-			sql.append("select rand() as sag_row_number,sag_random_table.* from (");
+			sql.append("select rand() as sag_row_number," + SqlToyConstants.INTERMEDIATE_TABLE + ".* from (");
 			sql.append(innerSql);
-			sql.append(") sag_random_table ");
+			sql.append(") ");
+			sql.append(SqlToyConstants.INTERMEDIATE_TABLE);
+			sql.append(" ");
 		} else {
 			sql.append(innerSql.replaceFirst("(?i)select", "select rand() as sag_row_number,"));
 		}
-		sql.append(" )  as sag_random_table1 ");
-		sql.append(" order by sag_random_table1.sag_row_number limit ");
+		sql.append(" )  as " + SqlToyConstants.INTERMEDIATE_TABLE1);
+		sql.append(" order by " + SqlToyConstants.INTERMEDIATE_TABLE1 + ".sag_row_number limit ");
 		sql.append(randomCount);
 		if (sqlToyConfig.isHasFast()) {
 			if (!sqlToyConfig.isIgnoreBracket()) {
@@ -129,16 +133,17 @@ public class DefaultDialectUtils {
 			Connection conn, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
 			throws Exception {
 		StringBuilder sql = new StringBuilder();
+		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
+		// 给原始sql标记上特殊的开始和结尾，便于sql拦截器快速定位到原始sql并进行条件补充
+		innerSql = SqlUtilsExt.markOriginalSql(innerSql);
 		boolean isNamed = sqlToyConfig.isNamedParam();
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect));
 			if (!sqlToyConfig.isIgnoreBracket()) {
 				sql.append(" (");
 			}
-			sql.append(sqlToyConfig.getFastSql(dialect));
-		} else {
-			sql.append(sqlToyConfig.getSql(dialect));
 		}
+		sql.append(innerSql);
 		sql.append(" limit ");
 		sql.append(isNamed ? ":" + SqlToyConstants.PAGE_FIRST_PARAM_NAME : "?");
 		sql.append(" offset ");
@@ -178,15 +183,16 @@ public class DefaultDialectUtils {
 			QueryExecutor queryExecutor, final DecryptHandler decryptHandler, Integer topSize, Connection conn,
 			final Integer dbType, final String dialect, final int fetchSize, final int maxRows) throws Exception {
 		StringBuilder sql = new StringBuilder();
+		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
+		// 给原始sql标记上特殊的开始和结尾，便于sql拦截器快速定位到原始sql并进行条件补充
+		innerSql = SqlUtilsExt.markOriginalSql(innerSql);
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect));
 			if (!sqlToyConfig.isIgnoreBracket()) {
 				sql.append(" (");
 			}
-			sql.append(sqlToyConfig.getFastSql(dialect));
-		} else {
-			sql.append(sqlToyConfig.getSql(dialect));
 		}
+		sql.append(innerSql);
 		sql.append(" limit ");
 		sql.append(topSize);
 		if (sqlToyConfig.isHasFast()) {

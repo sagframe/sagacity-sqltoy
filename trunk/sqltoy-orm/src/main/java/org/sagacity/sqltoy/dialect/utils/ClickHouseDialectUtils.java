@@ -253,11 +253,10 @@ public class ClickHouseDialectUtils {
 				BeanUtil.mappingSetProperties(entities, entityMeta.getIdArray(), idSet, new int[] { 0 }, true);
 			}
 		}
-		SqlToyConfig sqlToyConfig = null;
 		List<Object[]> realParams = paramValues;
 		String realSql = insertSql;
 		if (sqlToyContext.hasSqlInterceptors()) {
-			sqlToyConfig = new SqlToyConfig(Dialect.CLICKHOUSE);
+			SqlToyConfig sqlToyConfig = new SqlToyConfig(Dialect.CLICKHOUSE);
 			sqlToyConfig.setSqlType(SqlType.insert);
 			sqlToyConfig.setSql(insertSql);
 			sqlToyConfig.setParamsName(reflectColumns);
@@ -444,11 +443,10 @@ public class ClickHouseDialectUtils {
 		if (updateSql == null) {
 			throw new IllegalArgumentException("updateAll sql is null,引起问题的原因是没有设置需要修改的字段!");
 		}
-		SqlToyConfig sqlToyConfig = null;
 		List<Object[]> realParams = paramsValues;
 		String realSql = updateSql;
 		if (sqlToyContext.hasSqlInterceptors()) {
-			sqlToyConfig = new SqlToyConfig(Dialect.CLICKHOUSE);
+			SqlToyConfig sqlToyConfig = new SqlToyConfig(Dialect.CLICKHOUSE);
 			sqlToyConfig.setSqlType(SqlType.update);
 			sqlToyConfig.setSql(updateSql);
 			sqlToyConfig.setParamsName(fields);
