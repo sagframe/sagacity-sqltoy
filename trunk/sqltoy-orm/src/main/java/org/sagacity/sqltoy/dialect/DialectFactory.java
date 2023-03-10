@@ -1297,6 +1297,7 @@ public class DialectFactory {
 			logger.warn("saveOrUpdate entity is null,please check!");
 			return 0L;
 		}
+		validEntity(sqlToyContext, entity.getClass(), false);
 		// 主键值为空，直接调用save操作
 		if (DialectUtils.isEmptyPK(sqlToyContext, entity)) {
 			logger.debug("主键字段对应值存在null，因此saveOrUpdate转执行save操作!");
@@ -1345,9 +1346,11 @@ public class DialectFactory {
 			logger.warn("saveOrUpdateAll entities is null or empty,please check!");
 			return 0L;
 		}
+		Class entityClass = entities.get(0).getClass();
+		validEntity(sqlToyContext, entityClass, false);
 		try {
 			// 启动执行日志
-			SqlExecuteStat.start(BeanUtil.getEntityClass(entities.get(0).getClass()).getName(),
+			SqlExecuteStat.start(BeanUtil.getEntityClass(entityClass).getName(),
 					"saveOrUpdateAll:[" + entities.size() + "]条记录!", sqlToyContext.isDebug());
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, true, dataSource,
 					(context, batchModel) -> {
@@ -1408,8 +1411,10 @@ public class DialectFactory {
 			logger.warn("saveAllIgnoreExist entities is null or empty,please check!");
 			return 0L;
 		}
+		Class entityClass = entities.get(0).getClass();
+		validEntity(sqlToyContext, entityClass, false);
 		try {
-			SqlExecuteStat.start(BeanUtil.getEntityClass(entities.get(0).getClass()).getName(),
+			SqlExecuteStat.start(BeanUtil.getEntityClass(entityClass).getName(),
 					"saveAllNotExist:[" + entities.size() + "]条记录!", sqlToyContext.isDebug());
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, true, dataSource,
 					(context, batchModel) -> {
@@ -1465,11 +1470,7 @@ public class DialectFactory {
 			logger.warn("load entity is null,please check!");
 			return null;
 		}
-		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
-		if (entityMeta == null || entityMeta.getIdArray() == null) {
-			throw new DataAccessException("load操作:Class={},必须符合POJO的定义，需包含@Entity注解和@Id主键列!",
-					entity.getClass().getName());
-		}
+		validEntity(sqlToyContext, entity.getClass(), true);
 		try {
 			// 单记录操作返回对应的库和表配置
 			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, false, dataSource);
@@ -1510,10 +1511,7 @@ public class DialectFactory {
 			return entities;
 		}
 		Class entityClass = entities.get(0).getClass();
-		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entityClass);
-		if (entityMeta == null || entityMeta.getIdArray() == null) {
-			throw new DataAccessException("loadAll操作:Class={},必须符合POJO的定义，需包含@Entity注解和@Id主键列!", entityClass.getName());
-		}
+		validEntity(sqlToyContext, entityClass, true);
 		try {
 			SqlExecuteStat.start(BeanUtil.getEntityClass(entityClass).getName(),
 					"loadAll:[" + entities.size() + "]条记录!", sqlToyContext.isDebug());
@@ -1573,6 +1571,7 @@ public class DialectFactory {
 			logger.warn("save entity is null,please check!");
 			return null;
 		}
+		validEntity(sqlToyContext, entity.getClass(), false);
 		try {
 			SqlExecuteStat.start(BeanUtil.getEntityClass(entity.getClass()).getName(), "save", sqlToyContext.isDebug());
 			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, true, dataSource);
@@ -1612,8 +1611,10 @@ public class DialectFactory {
 			logger.warn("saveAll entities is null or empty,please check!");
 			return 0L;
 		}
+		Class entityClass = entities.get(0).getClass();
+		validEntity(sqlToyContext, entityClass, false);
 		try {
-			SqlExecuteStat.start(BeanUtil.getEntityClass(entities.get(0).getClass()).getName(),
+			SqlExecuteStat.start(BeanUtil.getEntityClass(entityClass).getName(),
 					"saveAll:[" + entities.size() + "]条记录!", sqlToyContext.isDebug());
 			// 分库分表并行执行
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, true, dataSource,
@@ -1675,6 +1676,7 @@ public class DialectFactory {
 			logger.warn("update entity is null,please check!");
 			return 0L;
 		}
+		validEntity(sqlToyContext, entity.getClass(), true);
 		try {
 			SqlExecuteStat.start(BeanUtil.getEntityClass(entity.getClass()).getName(), "update",
 					sqlToyContext.isDebug());
@@ -1714,6 +1716,7 @@ public class DialectFactory {
 			logger.warn("updateSaveFetch entity or updateRowHandler is null,please check!");
 			return null;
 		}
+		validEntity(sqlToyContext, entity.getClass(), false);
 		try {
 			SqlExecuteStat.start(BeanUtil.getEntityClass(entity.getClass()).getName(), "updateSaveFetch",
 					sqlToyContext.isDebug());
@@ -1758,8 +1761,10 @@ public class DialectFactory {
 			logger.warn("updateAll entities is null or empty,please check!");
 			return 0L;
 		}
+		Class entityClass = entities.get(0).getClass();
+		validEntity(sqlToyContext, entityClass, true);
 		try {
-			SqlExecuteStat.start(BeanUtil.getEntityClass(entities.get(0).getClass()).getName(),
+			SqlExecuteStat.start(BeanUtil.getEntityClass(entityClass).getName(),
 					"updateAll:[" + entities.size() + "]条记录!", sqlToyContext.isDebug());
 			// 分库分表并行执行
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, false, dataSource,
@@ -1814,6 +1819,7 @@ public class DialectFactory {
 			logger.warn("delete entity is null,please check!");
 			return 0L;
 		}
+		validEntity(sqlToyContext, entity.getClass(), true);
 		try {
 			SqlExecuteStat.start(BeanUtil.getEntityClass(entity.getClass()).getName(), "delete",
 					sqlToyContext.isDebug());
@@ -1856,8 +1862,10 @@ public class DialectFactory {
 			logger.warn("deleteAll entities is null or empty,please check!");
 			return 0L;
 		}
+		Class entityClass = entities.get(0).getClass();
+		validEntity(sqlToyContext, entityClass, true);
 		try {
-			SqlExecuteStat.start(BeanUtil.getEntityClass(entities.get(0).getClass()).getName(),
+			SqlExecuteStat.start(BeanUtil.getEntityClass(entityClass).getName(),
 					"deleteAll:[" + entities.size() + "]条记录!", sqlToyContext.isDebug());
 			// 分库分表并行执行
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, false, dataSource,
@@ -2189,5 +2197,24 @@ public class DialectFactory {
 			return null;
 		}
 		return new DecryptHandler(fieldsSecureProvider, entityMeta.getSecureColumns());
+	}
+
+	/**
+	 * @TODO 验证基于POJO对象合法性，如@Entity、@Column、@Id等注解表示是一个完整的POJO实体对象
+	 * @param sqlToyContext
+	 * @param entityClass
+	 * @param validatePK
+	 */
+	private void validEntity(SqlToyContext sqlToyContext, Class entityClass, boolean validatePK) {
+		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entityClass);
+		if (entityMeta == null) {
+			throw new IllegalArgumentException("Class=[" + entityClass.getName() + "]没有@Entity标记为POJO实体对象!");
+		}
+		if (entityMeta.getFieldsArray() == null || entityMeta.getFieldsArray().length == 0) {
+			throw new IllegalArgumentException("Class=[" + entityClass.getName() + "]没有@Column定义具体的字段信息!");
+		}
+		if (validatePK && (entityMeta.getIdArray() == null || entityMeta.getIdArray().length == 0)) {
+			throw new IllegalArgumentException("Class=[" + entityClass.getName() + "]没有@Id定义主键字段!");
+		}
 	}
 }
