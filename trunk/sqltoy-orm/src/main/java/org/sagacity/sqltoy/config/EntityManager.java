@@ -188,7 +188,7 @@ public class EntityManager {
 			entityMeta = parseEntityMeta(sqlToyContext, entityClass, true, false);
 			if (entityMeta == null) {
 				throw new IllegalArgumentException("您传入的对象:[".concat(className)
-						.concat(" ]不是一个@SqlToyEntity实体POJO对象,sqltoy实体对象必须使用 @SqlToyEntity/@Entity/@Id 等注解来标识!"));
+						.concat(" ]不是一个@Entity实体POJO对象,sqltoy实体对象必须使用 @Entity/@Id 等注解来标识!"));
 			} // update 2022-10-24 加强提示，避免一些手工编写pojo情景遇到问题不知所措(手工编写是因为根本不了解quickvo的特性)
 			else if (entityMeta.getFieldsArray() == null || entityMeta.getFieldsArray().length == 0) {
 				throw new RuntimeException(
