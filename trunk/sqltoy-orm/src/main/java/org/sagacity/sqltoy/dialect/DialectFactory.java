@@ -252,6 +252,8 @@ public class DialectFactory {
 	public Long batchUpdate(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final List dataSet,
 			final int batchSize, final ReflectPropsHandler reflectPropsHandler,
 			final InsertRowCallbackHandler insertCallhandler, final Boolean autoCommit, final DataSource dataSource) {
+		// 清除集合中的null值
+		CollectionUtil.removeNull(dataSet);
 		// 首先合法性校验
 		if (dataSet == null || dataSet.isEmpty()) {
 			logger.warn("batchUpdate dataSet is null or empty,please check!");
@@ -1295,6 +1297,7 @@ public class DialectFactory {
 			logger.warn("saveOrUpdate entity is null,please check!");
 			return 0L;
 		}
+		validEntity(sqlToyContext, entity.getClass(), false);
 		// 主键值为空，直接调用save操作
 		if (DialectUtils.isEmptyPK(sqlToyContext, entity)) {
 			logger.debug("主键字段对应值存在null，因此saveOrUpdate转执行save操作!");
@@ -1336,14 +1339,18 @@ public class DialectFactory {
 	public Long saveOrUpdateAll(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
 			final String[] forceUpdateProps, final ReflectPropsHandler reflectPropsHandler, final DataSource dataSource,
 			final Boolean autoCommit) {
+		// 清除集合中的null值
+		CollectionUtil.removeNull(entities);
 		// 前置输入合法校验
 		if (entities == null || entities.isEmpty()) {
 			logger.warn("saveOrUpdateAll entities is null or empty,please check!");
 			return 0L;
 		}
+		Class entityClass = entities.get(0).getClass();
+		validEntity(sqlToyContext, entityClass, false);
 		try {
 			// 启动执行日志
-			SqlExecuteStat.start(BeanUtil.getEntityClass(entities.get(0).getClass()).getName(),
+			SqlExecuteStat.start(BeanUtil.getEntityClass(entityClass).getName(),
 					"saveOrUpdateAll:[" + entities.size() + "]条记录!", sqlToyContext.isDebug());
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, true, dataSource,
 					(context, batchModel) -> {
@@ -1398,12 +1405,16 @@ public class DialectFactory {
 	 */
 	public Long saveAllIgnoreExist(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
 			final ReflectPropsHandler reflectPropsHandler, final DataSource dataSource, final Boolean autoCommit) {
+		// 清除集合中的null值
+		CollectionUtil.removeNull(entities);
 		if (entities == null || entities.isEmpty()) {
 			logger.warn("saveAllIgnoreExist entities is null or empty,please check!");
 			return 0L;
 		}
+		Class entityClass = entities.get(0).getClass();
+		validEntity(sqlToyContext, entityClass, false);
 		try {
-			SqlExecuteStat.start(BeanUtil.getEntityClass(entities.get(0).getClass()).getName(),
+			SqlExecuteStat.start(BeanUtil.getEntityClass(entityClass).getName(),
 					"saveAllNotExist:[" + entities.size() + "]条记录!", sqlToyContext.isDebug());
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, true, dataSource,
 					(context, batchModel) -> {
@@ -1459,6 +1470,7 @@ public class DialectFactory {
 			logger.warn("load entity is null,please check!");
 			return null;
 		}
+		validEntity(sqlToyContext, entity.getClass(), true);
 		try {
 			// 单记录操作返回对应的库和表配置
 			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, false, dataSource);
@@ -1492,12 +1504,16 @@ public class DialectFactory {
 	 */
 	public <T extends Serializable> List<T> loadAll(final SqlToyContext sqlToyContext, final List<T> entities,
 			final Class[] cascadeTypes, final LockMode lockMode, final DataSource dataSource) {
+		// 清除集合中的null值
+		CollectionUtil.removeNull(entities);
 		if (entities == null || entities.isEmpty()) {
 			logger.warn("loadAll entities is null or empty,please check!");
 			return entities;
 		}
+		Class entityClass = entities.get(0).getClass();
+		validEntity(sqlToyContext, entityClass, true);
 		try {
-			SqlExecuteStat.start(BeanUtil.getEntityClass(entities.get(0).getClass()).getName(),
+			SqlExecuteStat.start(BeanUtil.getEntityClass(entityClass).getName(),
 					"loadAll:[" + entities.size() + "]条记录!", sqlToyContext.isDebug());
 			// 一般in的最大数量是1000
 			int batchSize = SqlToyConstants.getLoadAllBatchSize();
@@ -1555,6 +1571,7 @@ public class DialectFactory {
 			logger.warn("save entity is null,please check!");
 			return null;
 		}
+		validEntity(sqlToyContext, entity.getClass(), false);
 		try {
 			SqlExecuteStat.start(BeanUtil.getEntityClass(entity.getClass()).getName(), "save", sqlToyContext.isDebug());
 			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, true, dataSource);
@@ -1588,12 +1605,16 @@ public class DialectFactory {
 	 */
 	public Long saveAll(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
 			final ReflectPropsHandler reflectPropsHandler, final DataSource dataSource, final Boolean autoCommit) {
+		// 清除集合中的null值
+		CollectionUtil.removeNull(entities);
 		if (entities == null || entities.isEmpty()) {
 			logger.warn("saveAll entities is null or empty,please check!");
 			return 0L;
 		}
+		Class entityClass = entities.get(0).getClass();
+		validEntity(sqlToyContext, entityClass, false);
 		try {
-			SqlExecuteStat.start(BeanUtil.getEntityClass(entities.get(0).getClass()).getName(),
+			SqlExecuteStat.start(BeanUtil.getEntityClass(entityClass).getName(),
 					"saveAll:[" + entities.size() + "]条记录!", sqlToyContext.isDebug());
 			// 分库分表并行执行
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, true, dataSource,
@@ -1655,6 +1676,7 @@ public class DialectFactory {
 			logger.warn("update entity is null,please check!");
 			return 0L;
 		}
+		validEntity(sqlToyContext, entity.getClass(), true);
 		try {
 			SqlExecuteStat.start(BeanUtil.getEntityClass(entity.getClass()).getName(), "update",
 					sqlToyContext.isDebug());
@@ -1694,6 +1716,7 @@ public class DialectFactory {
 			logger.warn("updateSaveFetch entity or updateRowHandler is null,please check!");
 			return null;
 		}
+		validEntity(sqlToyContext, entity.getClass(), false);
 		try {
 			SqlExecuteStat.start(BeanUtil.getEntityClass(entity.getClass()).getName(), "updateSaveFetch",
 					sqlToyContext.isDebug());
@@ -1732,12 +1755,16 @@ public class DialectFactory {
 	public Long updateAll(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
 			final String[] uniqueFields, final String[] forceUpdateFields,
 			final ReflectPropsHandler reflectPropsHandler, final DataSource dataSource, final Boolean autoCommit) {
+		// 清除集合中的null值
+		CollectionUtil.removeNull(entities);
 		if (entities == null || entities.isEmpty()) {
 			logger.warn("updateAll entities is null or empty,please check!");
 			return 0L;
 		}
+		Class entityClass = entities.get(0).getClass();
+		validEntity(sqlToyContext, entityClass, true);
 		try {
-			SqlExecuteStat.start(BeanUtil.getEntityClass(entities.get(0).getClass()).getName(),
+			SqlExecuteStat.start(BeanUtil.getEntityClass(entityClass).getName(),
 					"updateAll:[" + entities.size() + "]条记录!", sqlToyContext.isDebug());
 			// 分库分表并行执行
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, false, dataSource,
@@ -1792,6 +1819,7 @@ public class DialectFactory {
 			logger.warn("delete entity is null,please check!");
 			return 0L;
 		}
+		validEntity(sqlToyContext, entity.getClass(), true);
 		try {
 			SqlExecuteStat.start(BeanUtil.getEntityClass(entity.getClass()).getName(), "delete",
 					sqlToyContext.isDebug());
@@ -1828,12 +1856,16 @@ public class DialectFactory {
 	 */
 	public <T extends Serializable> Long deleteAll(final SqlToyContext sqlToyContext, final List<T> entities,
 			final int batchSize, final DataSource dataSource, final Boolean autoCommit) {
+		// 清除集合中的null值
+		CollectionUtil.removeNull(entities);
 		if (entities == null || entities.isEmpty()) {
 			logger.warn("deleteAll entities is null or empty,please check!");
 			return 0L;
 		}
+		Class entityClass = entities.get(0).getClass();
+		validEntity(sqlToyContext, entityClass, true);
 		try {
-			SqlExecuteStat.start(BeanUtil.getEntityClass(entities.get(0).getClass()).getName(),
+			SqlExecuteStat.start(BeanUtil.getEntityClass(entityClass).getName(),
 					"deleteAll:[" + entities.size() + "]条记录!", sqlToyContext.isDebug());
 			// 分库分表并行执行
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, false, dataSource,
@@ -2165,5 +2197,24 @@ public class DialectFactory {
 			return null;
 		}
 		return new DecryptHandler(fieldsSecureProvider, entityMeta.getSecureColumns());
+	}
+
+	/**
+	 * @TODO 验证基于POJO对象合法性，如@Entity、@Column、@Id等注解表示是一个完整的POJO实体对象
+	 * @param sqlToyContext
+	 * @param entityClass
+	 * @param validatePK
+	 */
+	private void validEntity(SqlToyContext sqlToyContext, Class entityClass, boolean validatePK) {
+		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entityClass);
+		if (entityMeta == null) {
+			throw new IllegalArgumentException("Class=[" + entityClass.getName() + "]没有@Entity标记为POJO实体对象!");
+		}
+		if (entityMeta.getFieldsArray() == null || entityMeta.getFieldsArray().length == 0) {
+			throw new IllegalArgumentException("Class=[" + entityClass.getName() + "]没有@Column定义具体的字段信息!");
+		}
+		if (validatePK && (entityMeta.getIdArray() == null || entityMeta.getIdArray().length == 0)) {
+			throw new IllegalArgumentException("Class=[" + entityClass.getName() + "]没有@Id定义主键字段!");
+		}
 	}
 }

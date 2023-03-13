@@ -1140,4 +1140,19 @@ public class CollectionUtil {
 		}
 		return false;
 	}
+
+	/**
+	 * @TODO 清除集合中的null值
+	 * @param dataSet
+	 */
+	public static void removeNull(List dataSet) {
+		if (dataSet != null && !dataSet.isEmpty()) {
+			Iterator iter = dataSet.iterator();
+			while (iter.hasNext()) {
+				if (null == iter.next()) {
+					iter.remove();
+				}
+			}
+		}
+	}
 }

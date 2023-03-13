@@ -152,4 +152,19 @@ public class CollectionUtilTest {
 		}
 
 	}
+
+	@Test
+	public void testRemove() {
+		List dataSet = new ArrayList();
+		dataSet.add(1);
+		dataSet.add(null);
+		dataSet.add(2);
+		dataSet.add(null);
+		dataSet.add(null);
+		dataSet.add(2);
+		dataSet.add(null);
+		dataSet.add(2);
+		CollectionUtil.removeNull(dataSet);
+		System.err.println(JSON.toJSONString(dataSet));
+	}
 }

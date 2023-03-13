@@ -2573,7 +2573,8 @@ public class DialectUtils {
 		if (unifyFieldsHandler == null && versionConfig == null) {
 			return preHandler;
 		}
-		final Map<String, Object> keyValues = unifyFieldsHandler.createUnifyFields();
+		final Map<String, Object> keyValues = (unifyFieldsHandler == null) ? null
+				: unifyFieldsHandler.createUnifyFields();
 		if ((keyValues == null || keyValues.isEmpty()) && versionConfig == null) {
 			return preHandler;
 		}
@@ -2583,7 +2584,7 @@ public class DialectUtils {
 			dataVersion = Integer.valueOf(DateUtil.formatDate(DateUtil.getNowTime(), DateUtil.FORMAT.DATE_8CHAR) + 1);
 		}
 		// 强制修改字段赋值
-		IgnoreCaseSet tmpSet = unifyFieldsHandler.forceUpdateFields();
+		IgnoreCaseSet tmpSet = (unifyFieldsHandler == null) ? null:unifyFieldsHandler.forceUpdateFields();
 		final IgnoreCaseSet forceUpdateFields = (!UnifyUpdateFieldsController.useUnifyFields() || tmpSet == null)
 				? new IgnoreCaseSet()
 				: tmpSet;
