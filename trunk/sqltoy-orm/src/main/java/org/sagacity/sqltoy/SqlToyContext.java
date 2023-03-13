@@ -675,6 +675,8 @@ public class SqlToyContext {
 		String tmp = dialect.toLowerCase();
 		if (tmp.startsWith(Dialect.MYSQL)) {
 			this.dialect = Dialect.MYSQL;
+		} else if (tmp.startsWith(Dialect.ORACLE11)) {
+			this.dialect = Dialect.ORACLE11;
 		} else if (tmp.startsWith(Dialect.ORACLE)) {
 			this.dialect = Dialect.ORACLE;
 		} else if (tmp.startsWith(Dialect.POSTGRESQL)) {
