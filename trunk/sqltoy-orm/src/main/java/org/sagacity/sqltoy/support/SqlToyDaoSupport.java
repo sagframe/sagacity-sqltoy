@@ -533,19 +533,20 @@ public class SqlToyDaoSupport {
 	/**
 	 * @TODO 通过id集合批量加载对象
 	 * @param <T>
-	 * @param voClass
+	 * @param entityClass
 	 * @param lockMode
 	 * @param ids
 	 * @return
 	 */
-	protected <T extends Serializable> List<T> loadByIds(final Class<T> voClass, final LockMode lockMode,
+	protected <T extends Serializable> List<T> loadByIds(final Class<T> entityClass, final LockMode lockMode,
 			Object... ids) {
-		if (voClass == null || ids == null || ids.length == 0 || (ids.length == 1 && ids[0] == null)) {
-			throw new IllegalArgumentException("voClass、ids must not null!");
+		if (entityClass == null || ids == null || ids.length == 0 || (ids.length == 1 && ids[0] == null)) {
+			throw new IllegalArgumentException("loadByIds操作:entityClass、主键值数据不能为空!");
 		}
-		EntityMeta entityMeta = getEntityMeta(voClass);
-		if (entityMeta == null || entityMeta.getIdArray() == null || entityMeta.getIdArray().length != 1) {
-			throw new IllegalArgumentException("voClass must is entity with @SqlToyEntity and must has primary key!");
+		EntityMeta entityMeta = getEntityMeta(entityClass);
+		validEntity(entityMeta, entityClass, true);
+		if (entityMeta.getIdArray().length != 1) {
+			throw new IllegalArgumentException("loadByIds操作只支持单主键POJO对象!");
 		}
 		Object[] realIds;
 		// 单个Collection,将List转为Array数组
@@ -554,7 +555,7 @@ public class SqlToyDaoSupport {
 		} else {
 			realIds = ids;
 		}
-		List<T> entities = BeanUtil.wrapEntities(sqlToyContext.getTypeHandler(), entityMeta, voClass, realIds);
+		List<T> entities = BeanUtil.wrapEntities(sqlToyContext.getTypeHandler(), entityMeta, entityClass, realIds);
 		return dialectFactory.loadAll(sqlToyContext, entities, null, lockMode, this.getDataSource(null));
 	}
 
@@ -951,9 +952,11 @@ public class SqlToyDaoSupport {
 
 	protected void truncate(final Class entityClass, final Boolean autoCommit) {
 		if (null == entityClass) {
-			throw new IllegalArgumentException("entityClass is null!Please enter the correct!");
+			throw new IllegalArgumentException("entityClass is null,please check!");
 		}
-		truncate(sqlToyContext.getEntityMeta(entityClass).getTableName(), autoCommit, null);
+		EntityMeta entityMeta = getEntityMeta(entityClass);
+		validEntity(entityMeta, entityClass, false);
+		truncate(entityMeta.getSchemaTable(null, null), autoCommit, null);
 	}
 
 	/**
@@ -963,6 +966,9 @@ public class SqlToyDaoSupport {
 	 * @param dataSource
 	 */
 	protected void truncate(final String tableName, final Boolean autoCommit, final DataSource dataSource) {
+		if (StringUtil.isBlank(tableName)) {
+			throw new IllegalArgumentException("truncate tableName is blank or null,please check!");
+		}
 		this.executeSql("truncate table ".concat(tableName), null, null, autoCommit, this.getDataSource(dataSource));
 	}
 
@@ -1049,7 +1055,9 @@ public class SqlToyDaoSupport {
 			logger.warn("update entity is null,please check!");
 			return 0L;
 		}
-		EntityMeta entityMeta = getEntityMeta(entity.getClass());
+		Class entityClass = entity.getClass();
+		EntityMeta entityMeta = getEntityMeta(entityClass);
+		validEntity(entityMeta, entityClass, true);
 		DataVersionConfig dataVersion = entityMeta.getDataVersion();
 		if (dataVersion != null) {
 			Object version = BeanUtil.getProperty(entity, dataVersion.getField());
@@ -1133,7 +1141,12 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected Long updateDeeply(final Serializable entity, final DataSource dataSource) {
-		return this.update(entity, sqlToyContext.getEntityMeta(entity.getClass()).getRejectIdFieldArray(),
+		if (entity == null) {
+			logger.warn("updateDeeply entity is null,please check!");
+			return 0L;
+		}
+		EntityMeta entityMeta = getEntityMeta(entity.getClass());
+		return this.update(entity, (entityMeta == null) ? null : entityMeta.getRejectIdFieldArray(),
 				this.getDataSource(dataSource));
 	}
 
@@ -1181,9 +1194,11 @@ public class SqlToyDaoSupport {
 	 */
 	protected <T extends Serializable> Long updateAllDeeply(final List<T> entities, final DataSource dataSource) {
 		if (entities == null || entities.isEmpty()) {
+			logger.warn("updateAllDeeply List<POJO> is null,please check!");
 			return 0L;
 		}
-		return updateAll(entities, this.getEntityMeta(entities.get(0).getClass()).getRejectIdFieldArray(), null);
+		EntityMeta entityMeta = getEntityMeta(entities.get(0).getClass());
+		return updateAll(entities, (entityMeta == null) ? null : entityMeta.getRejectIdFieldArray(), null);
 	}
 
 	protected Long saveOrUpdate(final Serializable entity, final String... forceUpdateProps) {
@@ -1203,9 +1218,11 @@ public class SqlToyDaoSupport {
 			logger.warn("saveOrUpdate: entity is null,please check!");
 			return 0L;
 		}
-		EntityMeta entityMeta = getEntityMeta(entity.getClass());
+		Class entityClass = entity.getClass();
+		EntityMeta entityMeta = getEntityMeta(entityClass);
+		validEntity(entityMeta, entityClass, false);
 		// 存在数据版本控制，如果主键和版本数据都有值，表示做更新操作
-		if (entityMeta.getDataVersion() != null) {
+		if (entityMeta.getDataVersion() != null && entityMeta.getIdArray() != null) {
 			String[] props = new String[entityMeta.getIdArray().length + 1];
 			System.arraycopy(entityMeta.getIdArray(), 0, props, 0, entityMeta.getIdArray().length);
 			props[props.length - 1] = entityMeta.getDataVersion().getField();
@@ -1275,11 +1292,12 @@ public class SqlToyDaoSupport {
 				|| StringUtil.isBlank(innerModel.values)) {
 			throw new IllegalArgumentException("deleteByQuery entityClass、where、value 值不能为空!");
 		}
+		EntityMeta entityMeta = getEntityMeta(entityClass);
+		validEntity(entityMeta, entityClass, false);
 		// 做一个必要提示
 		if (!innerModel.paramFilters.isEmpty()) {
 			logger.warn("删除操作设置动态条件过滤是无效的,数据删除查询条件必须是精准的!");
 		}
-		EntityMeta entityMeta = getEntityMeta(entityClass);
 		String where = SqlUtil.convertFieldsToColumns(entityMeta, innerModel.where);
 		String sql = "delete from ".concat(entityMeta.getSchemaTable(null, null)).concat(" where ").concat(where);
 		QueryExecutor queryExecutor = null;
@@ -1327,14 +1345,11 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected Long deleteByIds(Class entityClass, Object... ids) {
-		if (!sqlToyContext.isEntity(entityClass) || ids == null || ids.length == 0
-				|| (ids.length == 1 && ids[0] == null)) {
-			throw new IllegalArgumentException("deleteByIds entityClass必须是实体bean、主键数据不能为空!");
+		if (entityClass == null || ids == null || ids.length == 0 || (ids.length == 1 && ids[0] == null)) {
+			throw new IllegalArgumentException("deleteByIds操作:entityClass参数、主键数据不能为空!");
 		}
-		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entityClass);
-		if (entityMeta.getIdArray() == null || entityMeta.getIdArray().length != 1) {
-			throw new IllegalArgumentException("deleteByIds实体bean对应表有且只能有一个主键!");
-		}
+		EntityMeta entityMeta = getEntityMeta(entityClass);
+		validEntity(entityMeta, entityClass, true);
 		Object[] realIds;
 		// 单个List,将List转为Array数组
 		if (ids.length == 1 && ids[0] instanceof Collection) {
@@ -1764,6 +1779,7 @@ public class SqlToyDaoSupport {
 	private Object findEntityBase(Class entityClass, Page page, EntityQuery entityQuery, Class resultClass,
 			boolean isCount) {
 		EntityMeta entityMeta = getEntityMeta(entityClass);
+		validEntity(entityMeta, entityClass, false);
 		EntityQueryExtend innerModel = entityQuery.getInnerModel();
 		String translateFields = "";
 		// 将缓存翻译对应的查询补充到select column 上,形成select keyColumn as viewColumn 模式
@@ -2000,6 +2016,8 @@ public class SqlToyDaoSupport {
 				|| entityUpdate.getInnerModel().updateValues.isEmpty()) {
 			throw new IllegalArgumentException("updateByQuery: entityClass、where条件、条件值value、变更值setValues不能为空!");
 		}
+		EntityMeta entityMeta = getEntityMeta(entityClass);
+		validEntity(entityMeta, entityClass, false);
 		EntityUpdateExtend innerModel = entityUpdate.getInnerModel();
 		boolean isName = SqlConfigParseUtils.hasNamedParam(innerModel.where);
 		Object[] values = innerModel.values;
@@ -2025,7 +2043,6 @@ public class SqlToyDaoSupport {
 				throw new IllegalArgumentException("updateByQuery: where语句中的?数量跟对应values 数组长度不一致,请检查!");
 			}
 		}
-		EntityMeta entityMeta = getEntityMeta(entityClass);
 		// 处理where 中写的java 字段名称为数据库表字段名称
 		where = SqlUtil.convertFieldsToColumns(entityMeta, where);
 		StringBuilder sql = new StringBuilder();
@@ -2351,6 +2368,24 @@ public class SqlToyDaoSupport {
 				shardingConfig.add(entityMeta.getShardingConfig().getShardingTableStrategy());
 				queryExecutor.getInnerModel().tableShardings = shardingConfig;
 			}
+		}
+	}
+
+	/**
+	 * @TODO 验证实体类操作，对应实体对象是否合法
+	 * @param entityMeta
+	 * @param entityClass
+	 * @param validatePK
+	 */
+	private void validEntity(EntityMeta entityMeta, Class entityClass, boolean validatePK) {
+		if (entityMeta == null) {
+			throw new IllegalArgumentException("Class=[" + entityClass.getName() + "]没有@Entity标记为POJO实体对象!");
+		}
+		if (entityMeta.getFieldsArray() == null || entityMeta.getFieldsArray().length == 0) {
+			throw new IllegalArgumentException("Class=[" + entityClass.getName() + "]没有@Column定义具体的字段信息!");
+		}
+		if (validatePK && (entityMeta.getIdArray() == null || entityMeta.getIdArray().length == 0)) {
+			throw new IllegalArgumentException("Class=[" + entityClass.getName() + "]没有@Id定义主键字段!");
 		}
 	}
 }

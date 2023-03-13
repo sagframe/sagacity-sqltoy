@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.sagacity.sqltoy.SqlExecuteStat;
+import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DecryptHandler;
 import org.sagacity.sqltoy.callback.GenerateSqlHandler;
@@ -29,6 +30,8 @@ import org.sagacity.sqltoy.config.model.OperateType;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
+import org.sagacity.sqltoy.config.model.SqlType;
+import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
 import org.sagacity.sqltoy.config.model.TableCascadeModel;
 import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
@@ -39,7 +42,9 @@ import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.utils.BeanUtil;
+import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
+import org.sagacity.sqltoy.utils.DataSourceUtils.Dialect;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.SqlUtilsExt;
@@ -80,30 +85,43 @@ public class SqlServerDialectUtils {
 			QueryExecutor queryExecutor, final DecryptHandler decryptHandler, Long totalCount, Long randomCount,
 			Connection conn, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
 			throws Exception {
+		StringBuilder sql = new StringBuilder();
 		// sqlserver 不支持内部order by
 		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
+		if (sqlToyConfig.isHasFast()) {
+			sql.append(sqlToyConfig.getFastPreSql(dialect));
+			if (!sqlToyConfig.isIgnoreBracket()) {
+				sql.append(" (");
+			}
+		}
+		String partSql = " select top " + randomCount + " ";
+		if (sqlToyConfig.isHasWith()) {
+			SqlWithAnalysis sqlWith = new SqlWithAnalysis(innerSql);
+			sql.append(sqlWith.getWithSql());
+			innerSql = sqlWith.getRejectWithSql();
+		}
 		// sql中是否存在排序或union
 		boolean hasOrderOrUnion = DialectUtils.hasOrderByOrUnion(innerSql);
-		StringBuilder sql = new StringBuilder();
-
-		if (sqlToyConfig.isHasFast()) {
-			sql.append(sqlToyConfig.getFastPreSql(dialect)).append(" (");
-		}
+		// 给原始sql标记上特殊的开始和结尾，便于sql拦截器快速定位到原始sql并进行条件补充
+		innerSql = SqlUtilsExt.markOriginalSql(innerSql);
 		// 存在order 或union 则在sql外包裹一层
 		if (hasOrderOrUnion) {
-			sql.append("select top " + randomCount);
-			sql.append(" sag_random_table.* from (");
+			sql.append(partSql);
+			sql.append(" " + SqlToyConstants.INTERMEDIATE_TABLE + ".* from (");
 			sql.append(innerSql);
+			sql.append(") ");
+			sql.append(SqlToyConstants.INTERMEDIATE_TABLE);
+			sql.append(" ");
 		} else {
-			sql.append(innerSql.replaceFirst("(?i)select ", "select top " + randomCount + " "));
-		}
-		if (hasOrderOrUnion) {
-			sql.append(") sag_random_table ");
+			sql.append(innerSql.replaceFirst("(?i)select ", partSql));
 		}
 		sql.append(" order by NEWID() ");
 
 		if (sqlToyConfig.isHasFast()) {
-			sql.append(") ").append(sqlToyConfig.getFastTailSql(dialect));
+			if (!sqlToyConfig.isIgnoreBracket()) {
+				sql.append(") ");
+			}
+			sql.append(sqlToyConfig.getFastTailSql(dialect));
 		}
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		SqlToyResult queryParam = SqlConfigParseUtils.processSql(sql.toString(), extend.getParamsName(),
@@ -555,8 +573,8 @@ public class SqlServerDialectUtils {
 				sqlToyContext.getUnifyFieldsHandler());
 		handler = DialectUtils.getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
-		Object[] fullParamValues = BeanUtil.reflectBeanToAry(entity,
-				(isIdentity) ? entityMeta.getRejectIdFieldArray() : entityMeta.getFieldsArray(),
+		String[] reflectColumns = (isIdentity) ? entityMeta.getRejectIdFieldArray() : entityMeta.getFieldsArray();
+		Object[] fullParamValues = BeanUtil.reflectBeanToAry(entity, reflectColumns,
 				SqlUtilsExt.getDefaultValues(entityMeta), handler);
 		boolean needUpdatePk = false;
 		// 是否存在业务ID
@@ -598,10 +616,17 @@ public class SqlServerDialectUtils {
 			}
 		}
 
-		final Object[] paramValues = fullParamValues;
+		SqlToyConfig sqlToyConfig = new SqlToyConfig(Dialect.SQLSERVER);
+		sqlToyConfig.setSqlType(SqlType.insert);
+		sqlToyConfig.setSql(insertSql);
+		sqlToyConfig.setParamsName(reflectColumns);
+		SqlToyResult sqlToyResult = new SqlToyResult(insertSql, fullParamValues);
+		sqlToyResult = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig, OperateType.insert, sqlToyResult,
+				entity.getClass(), dbType);
+		final Object[] paramValues = sqlToyResult.getParamsValue();
 		final Integer[] paramsType = entityMeta.getFieldsTypeArray();
-		SqlExecuteStat.showSql("mssql单条记录插入", insertSql, null);
-		final String realInsertSql = insertSql;
+		final String realInsertSql = sqlToyResult.getSql();
+		SqlExecuteStat.showSql("mssql单条记录插入", realInsertSql, null);
 		PreparedStatement pst = null;
 		Object result = SqlUtil.preparedStatementProcess(null, pst, null, new PreparedStatementResultHandler() {
 			@Override
@@ -795,8 +820,22 @@ public class SqlServerDialectUtils {
 				BeanUtil.mappingSetProperties(entities, entityMeta.getIdArray(), idSet, new int[] { 0 }, true);
 			}
 		}
-		SqlExecuteStat.showSql("mssql批量保存", insertSql, null);
-		return SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), insertSql, paramValues,
+
+		List<Object[]> realParams = paramValues;
+		String realSql = insertSql;
+		if (sqlToyContext.hasSqlInterceptors()) {
+			SqlToyConfig sqlToyConfig = new SqlToyConfig(Dialect.SQLSERVER);
+			sqlToyConfig.setSqlType(SqlType.insert);
+			sqlToyConfig.setSql(insertSql);
+			sqlToyConfig.setParamsName(reflectColumns);
+			SqlToyResult sqlToyResult = new SqlToyResult(insertSql, paramValues.toArray());
+			sqlToyResult = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig, OperateType.insertAll, sqlToyResult,
+					entities.get(0).getClass(), dbType);
+			realSql = sqlToyResult.getSql();
+			realParams = CollectionUtil.arrayToList(sqlToyResult.getParamsValue());
+		}
+		SqlExecuteStat.showSql("mssql批量保存", realSql, null);
+		return SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), realSql, realParams,
 				entityMeta.getFieldsTypeArray(), entityMeta.getFieldsDefaultValue(), entityMeta.getFieldsNullable(),
 				sqlToyContext.getBatchSize(), autoCommit, conn, dbType);
 	}
@@ -856,6 +895,13 @@ public class SqlServerDialectUtils {
 					SqlExecuteStat.debug("执行子表级联更新前的存量数据更新", null);
 					SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(cascadeModel.getCascadeUpdateSql(),
 							mappedFields, mainFieldValues, null);
+					SqlToyConfig sqlToyConfig = new SqlToyConfig(Dialect.SQLSERVER);
+					sqlToyConfig.setSqlType(SqlType.update);
+					sqlToyConfig.setSql(cascadeModel.getCascadeUpdateSql());
+					sqlToyConfig.setParamsName(mappedFields);
+					// 增加sql执行拦截器 update 2022-9-10
+					sqlToyResult = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig, OperateType.execute,
+							sqlToyResult, cascadeModel.getMappedType(), dbType);
 					SqlUtil.executeSql(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(),
 							sqlToyResult.getParamsValue(), null, conn, dbType, null, true);
 				}

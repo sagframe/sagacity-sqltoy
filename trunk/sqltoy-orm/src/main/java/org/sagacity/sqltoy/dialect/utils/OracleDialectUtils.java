@@ -33,6 +33,7 @@ import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.utils.ResultUtils;
 import org.sagacity.sqltoy.utils.SqlUtil;
+import org.sagacity.sqltoy.utils.SqlUtilsExt;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 import oracle.jdbc.OracleTypes;
@@ -116,9 +117,11 @@ public class OracleDialectUtils {
 			throws Exception {
 		StringBuilder sql = new StringBuilder();
 		boolean isNamed = sqlToyConfig.isNamedParam();
+		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
 		// 是否有order by,update 2017-5-22
-		boolean hasOrderBy = SqlUtil.hasOrderBy(
-				sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect), true);
+		boolean hasOrderBy = SqlUtil.hasOrderBy(innerSql, true);
+		// 给原始sql标记上特殊的开始和结尾，便于sql拦截器快速定位到原始sql并进行条件补充
+		innerSql = SqlUtilsExt.markOriginalSql(innerSql);
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect));
 			if (!sqlToyConfig.isIgnoreBracket()) {
@@ -127,11 +130,13 @@ public class OracleDialectUtils {
 		}
 		// order by 外包裹一层,确保查询结果是按排序
 		if (hasOrderBy) {
-			sql.append(" select SAG_Paginationtable.* from (");
+			sql.append(" select " + SqlToyConstants.INTERMEDIATE_TABLE + ".* from (");
 		}
-		sql.append(sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect));
+		sql.append(innerSql);
 		if (hasOrderBy) {
-			sql.append(") SAG_Paginationtable ");
+			sql.append(") ");
+			sql.append(SqlToyConstants.INTERMEDIATE_TABLE);
+			sql.append(" ");
 		}
 		sql.append(" offset ");
 		sql.append(isNamed ? ":" + SqlToyConstants.PAGE_FIRST_PARAM_NAME : "?");
@@ -173,9 +178,11 @@ public class OracleDialectUtils {
 			QueryExecutor queryExecutor, final DecryptHandler decryptHandler, Integer topSize, Connection conn,
 			final Integer dbType, final String dialect, final int fetchSize, final int maxRows) throws Exception {
 		StringBuilder sql = new StringBuilder();
+		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
 		// 是否有order by
-		boolean hasOrderBy = SqlUtil.hasOrderBy(
-				sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect), true);
+		boolean hasOrderBy = SqlUtil.hasOrderBy(innerSql, true);
+		// 给原始sql标记上特殊的开始和结尾，便于sql拦截器快速定位到原始sql并进行条件补充
+		innerSql = SqlUtilsExt.markOriginalSql(innerSql);
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect));
 			if (!sqlToyConfig.isIgnoreBracket()) {
@@ -184,11 +191,13 @@ public class OracleDialectUtils {
 		}
 		// order by 外包裹一层,确保查询结果是按排序
 		if (hasOrderBy) {
-			sql.append("select SAG_Paginationtable.* from (");
+			sql.append("select " + SqlToyConstants.INTERMEDIATE_TABLE + ".* from (");
 		}
-		sql.append(sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect));
+		sql.append(innerSql);
 		if (hasOrderBy) {
-			sql.append(") SAG_Paginationtable ");
+			sql.append(") ");
+			sql.append(SqlToyConstants.INTERMEDIATE_TABLE);
+			sql.append(" ");
 		}
 		sql.append(" fetch first ");
 		sql.append(topSize);
@@ -230,10 +239,12 @@ public class OracleDialectUtils {
 			Connection conn, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
 			throws Exception {
 		// 注：dbms_random包需要手工安装，位于$ORACLE_HOME/rdbms/admin/dbmsrand.sql
+		StringBuilder sql = new StringBuilder();
 		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
 		// sql中是否存在排序或union
 		boolean hasOrderOrUnion = DialectUtils.hasOrderByOrUnion(innerSql);
-		StringBuilder sql = new StringBuilder();
+		// 给原始sql标记上特殊的开始和结尾，便于sql拦截器快速定位到原始sql并进行条件补充
+		innerSql = SqlUtilsExt.markOriginalSql(innerSql);
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect));
 			if (!sqlToyConfig.isIgnoreBracket()) {
@@ -243,14 +254,17 @@ public class OracleDialectUtils {
 		// 存在order 或union 则在sql外包裹一层
 		if (hasOrderOrUnion) {
 			sql.append("select * from (");
-			sql.append(" select sag_random_table.* from ( ");
+			sql.append("select " + SqlToyConstants.INTERMEDIATE_TABLE + ".* from ( ");
 			sql.append(innerSql);
-			sql.append(") sag_random_table ");
+			sql.append(") ");
+			sql.append(SqlToyConstants.INTERMEDIATE_TABLE);
 			sql.append(" order by dbms_random.random )");
 		} else {
-			sql.append("select sag_random_table.* from ( ");
+			sql.append("select " + SqlToyConstants.INTERMEDIATE_TABLE + ".* from ( ");
 			sql.append(innerSql);
-			sql.append(" order by dbms_random.random) sag_random_table ");
+			sql.append(" order by dbms_random.random) ");
+			sql.append(SqlToyConstants.INTERMEDIATE_TABLE);
+			sql.append(" ");
 		}
 		sql.append(" where rownum<=");
 		sql.append(randomCount);

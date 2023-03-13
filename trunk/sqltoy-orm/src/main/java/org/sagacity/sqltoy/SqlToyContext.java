@@ -676,6 +676,8 @@ public class SqlToyContext implements ApplicationContextAware {
 		String tmp = dialect.toLowerCase();
 		if (tmp.startsWith(Dialect.MYSQL)) {
 			this.dialect = Dialect.MYSQL;
+		} else if (tmp.startsWith(Dialect.ORACLE11)) {
+			this.dialect = Dialect.ORACLE11;
 		} else if (tmp.startsWith(Dialect.ORACLE)) {
 			this.dialect = Dialect.ORACLE;
 		} else if (tmp.startsWith(Dialect.POSTGRESQL)) {
@@ -1080,6 +1082,13 @@ public class SqlToyContext implements ApplicationContextAware {
 
 	public void setRedoDataSources(String[] redoDataSources) {
 		this.redoDataSources = redoDataSources;
+	}
+
+	public boolean hasSqlInterceptors() {
+		if (sqlInterceptors == null || sqlInterceptors.isEmpty()) {
+			return false;
+		}
+		return true;
 	}
 
 	public List<SqlInterceptor> getSqlInterceptors() {
