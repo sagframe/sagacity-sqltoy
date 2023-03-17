@@ -7,7 +7,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Date;
 
-import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.PKStrategy;
@@ -15,6 +14,7 @@ import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.DateUtil;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
+import org.sagacity.sqltoy.utils.SqlUtilsExt;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
@@ -22,7 +22,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @description 将原本DialectUtils中的部分功能抽离出来,从而避免DialectUtils跟一些类之间的互相调用
  * @author zhongxuchen
  * @version v1.0, Date:2020年7月30日
- * @modify 2020年7月30日,修改说明
+ * @modify 2022-10-19 修改processDefaultValue修复oracle、db2日期类型的支持
  */
 public class DialectExtUtils {
 
@@ -127,45 +127,81 @@ public class DialectExtUtils {
 	public static void processDefaultValue(StringBuilder sql, int dbType, FieldMeta fieldMeta, String defaultValue) {
 		// EntityManager解析时已经小写化处理
 		String fieldType = fieldMeta.getFieldType();
-		if ("java.lang.string".equals(fieldType)) {
-			if (!defaultValue.startsWith("'")) {
-				sql.append("'");
-			}
-			sql.append(defaultValue);
-			if (!defaultValue.endsWith("'")) {
-				sql.append("'");
+		// 是否是各种数据库的当前时间、日期的字符
+		String defaultLow = defaultValue.toLowerCase();
+		boolean isCurrentTime = SqlUtilsExt.isCurrentTime(defaultLow);
+		// 无法解决同一个POJO的默认值注解在不同数据库下的兼容
+		// if (isCurrentTime) {
+		// sql.append(defaultValue);
+		// return;
+		// }
+		int dateType = -1;
+		// 时间
+		if ("java.time.localtime".equals(fieldType) || "java.sql.time".equals(fieldType)) {
+			dateType = 1;
+		} else if ("java.time.localdate".equals(fieldType)) {
+			dateType = 2;
+		} else if ("java.time.localdatetime".equals(fieldType) || "java.util.date".equals(fieldType)
+				|| "java.sql.date".equals(fieldType)) {
+			dateType = 3;
+		} else if ("java.sql.timestamp".equals(fieldType) || "oracle.sql.timestamp".equals(fieldType)) {
+			dateType = 4;
+		}
+		String dateStr;
+		if (isCurrentTime) {
+			if (dateType == 1) {
+				dateStr = DateUtil.formatDate(DateUtil.getNowTime(), "HH:mm:ss");
+			} else if (dateType == 2) {
+				dateStr = DateUtil.formatDate(DateUtil.getNowTime(), "yyyy-MM-dd");
+			} else if (dateType == 3) {
+				dateStr = DateUtil.formatDate(DateUtil.getNowTime(), "yyyy-MM-dd HH:mm:ss");
+			} else {
+				dateStr = DateUtil.formatDate(DateUtil.getNowTime(), "yyyy-MM-dd HH:mm:ss.SSS");
 			}
 		} else {
-			String tmpValue = SqlToyConstants.getDefaultValue(dbType, defaultValue);
-			if (tmpValue.startsWith("'") && tmpValue.endsWith("'")) {
-				sql.append(tmpValue);
+			dateStr = defaultValue;
+		}
+
+		// 日期类型
+		if (dateType != -1) {
+			if (!dateStr.startsWith("'") && !dateStr.endsWith("'")) {
+				dateStr = "'".concat(dateStr).concat("'");
 			}
-			// 时间格式,避免默认日期没有单引号问题
-			else if ("java.time.localdate".equals(fieldType) || "java.time.localdatetime".equals(fieldType)
-					|| "java.time.localtime".equals(fieldType) || "java.util.date".equals(fieldType)
-					|| "java.sql.date".equals(fieldType) || "java.sql.time".equals(fieldType)
-					|| "java.sql.timestamp".equals(fieldType)) {
-				String dateStr = "'" + tmpValue + "'";
-				// oracle、db2支持merge into场景(sqlserver具有自行转换能力，无需进行格式转换)
-				if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DB2) {
-					if ("java.time.localtime".equals(fieldType) || "java.sql.time".equals(fieldType)) {
-						if (dbType == DBType.DB2) {
-							dateStr = "time(" + dateStr + ")";
-						} else {
-							// oracle 没有time类型,因此本行的逻辑实际不会生效
-							dateStr = "to_date(" + dateStr + ",'HH24:mi:ss')";
-						}
-					} else if ("java.time.localdate".equals(fieldType)) {
-						dateStr = "to_date(" + dateStr + ",'yyyy-MM-dd')";
-					} else {
-						dateStr = "to_date(" + dateStr + ",'yyyy-MM-dd HH24:mi:ss')";
-					}
+			// oracle、db2支持merge into场景(sqlserver具有自行转换能力，无需进行格式转换)
+			if (dateType == 1) {
+				if (dbType == DBType.DB2) {
+					dateStr = "time(" + dateStr + ")";
+				} else if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11) {
+					// oracle 没有time类型,因此本行的逻辑实际不会生效
+					dateStr = "to_date(" + dateStr + ",'HH24:mi:ss')";
 				}
-				sql.append(dateStr);
-			} else {
-				sql.append(tmpValue);
+			} else if (dateType == 2) {
+				if (dbType == DBType.DB2) {
+					dateStr = "date(" + dateStr + ")";
+				} else if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11) {
+					dateStr = "to_date(" + dateStr + ",'yyyy-MM-dd')";
+				}
+			} else if (dateType == 3) {
+				if (dbType == DBType.DB2) {
+					dateStr = "timestamp(" + dateStr + ")";
+				} else if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11) {
+					dateStr = "to_date(" + dateStr + ",'yyyy-MM-dd HH24:mi:ss')";
+				}
+			} // timestamp 类型进行特殊处理，避免批量插入时，所有记录时间一致导致精度损失
+			else if (dateType == 4) {
+				if (dbType == DBType.DB2) {
+					dateStr = "CURRENT TIMESTAMP";
+				} else if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.MYSQL
+						|| dbType == DBType.MYSQL57 || dbType == DBType.POSTGRESQL || dbType == DBType.DM
+						|| dbType == DBType.GAUSSDB || dbType == DBType.OCEANBASE || dbType == DBType.SQLITE
+						|| dbType == DBType.KINGBASE || dbType == DBType.TIDB) {
+					dateStr = "CURRENT_TIMESTAMP";
+				} else if (isCurrentTime) {
+					dateStr = defaultValue;
+				}
 			}
 		}
+		sql.append(dateStr);
 	}
 
 	/**

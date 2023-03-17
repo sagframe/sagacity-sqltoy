@@ -1,6 +1,5 @@
 package org.sagacity.sqltoy.utils;
 
-import java.sql.Connection;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Locale;
@@ -9,22 +8,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
-import javax.sql.DataSource;
-
 import org.junit.jupiter.api.Test;
-import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyConstants;
-import org.sagacity.sqltoy.SqlToyContext;
-import org.sagacity.sqltoy.callback.DataSourceCallbackHandler;
-import org.sagacity.sqltoy.config.model.PageOptimize;
-import org.sagacity.sqltoy.config.model.SqlExecuteTrace;
-import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.demo.vo.DataRange;
 import org.sagacity.sqltoy.demo.vo.StaffInfoVO;
 import org.sagacity.sqltoy.exception.DataAccessException;
-import org.sagacity.sqltoy.executor.QueryExecutor;
-import org.sagacity.sqltoy.model.QueryResult;
-import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 
 public class BeanUtilTest {
 

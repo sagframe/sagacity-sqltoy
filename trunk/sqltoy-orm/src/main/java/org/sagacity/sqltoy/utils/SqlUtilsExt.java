@@ -231,11 +231,12 @@ public class SqlUtilsExt {
 	}
 
 	// 判断默认值是否系统时间或日期
-	private static boolean isCurrentTime(String defaultValue) {
+	public static boolean isCurrentTime(String defaultValue) {
 		String defaultLow = defaultValue.toLowerCase();
 		if (defaultLow.contains("sysdate") || defaultLow.contains("now") || defaultLow.contains("current")
 				|| defaultLow.contains("sysdatetime") || defaultLow.contains("systime")
-				|| defaultLow.contains("timestamp")) {
+				|| defaultLow.contains("timestamp") || defaultLow.contains("curdate")
+				|| defaultLow.contains("curtime")) {
 			return true;
 		}
 		return false;
