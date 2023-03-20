@@ -127,6 +127,17 @@ public class DialectExtUtils {
 	public static void processDefaultValue(StringBuilder sql, int dbType, FieldMeta fieldMeta, String defaultValue) {
 		// EntityManager解析时已经小写化处理
 		String fieldType = fieldMeta.getFieldType();
+		// 字符串类型
+		if ("java.lang.string".equals(fieldType)) {
+			if (!defaultValue.startsWith("'")) {
+				sql.append("'");
+			}
+			sql.append(defaultValue);
+			if (!defaultValue.endsWith("'")) {
+				sql.append("'");
+			}
+			return;
+		}
 		// 是否是各种数据库的当前时间、日期的字符
 		String defaultLow = defaultValue.toLowerCase();
 		boolean isCurrentTime = SqlUtilsExt.isCurrentTime(defaultLow);
@@ -147,61 +158,70 @@ public class DialectExtUtils {
 		} else if ("java.sql.timestamp".equals(fieldType) || "oracle.sql.timestamp".equals(fieldType)) {
 			dateType = 4;
 		}
-		String dateStr;
-		if (isCurrentTime) {
+		// 1、固定值;2、类似CURRENT TIMESTAMP 关键词
+		String result = defaultValue;
+		if (isCurrentTime && dateType != -1) {
 			if (dateType == 1) {
-				dateStr = DateUtil.formatDate(DateUtil.getNowTime(), "HH:mm:ss");
+				result = DateUtil.formatDate(DateUtil.getNowTime(), "HH:mm:ss");
 			} else if (dateType == 2) {
-				dateStr = DateUtil.formatDate(DateUtil.getNowTime(), "yyyy-MM-dd");
+				result = DateUtil.formatDate(DateUtil.getNowTime(), "yyyy-MM-dd");
 			} else if (dateType == 3) {
-				dateStr = DateUtil.formatDate(DateUtil.getNowTime(), "yyyy-MM-dd HH:mm:ss");
-			} else {
-				dateStr = DateUtil.formatDate(DateUtil.getNowTime(), "yyyy-MM-dd HH:mm:ss.SSS");
+				result = DateUtil.formatDate(DateUtil.getNowTime(), "yyyy-MM-dd HH:mm:ss");
+			} else if (dateType == 4) {
+				result = DateUtil.formatDate(DateUtil.getNowTime(), "yyyy-MM-dd HH:mm:ss.SSS");
 			}
-		} else {
-			dateStr = defaultValue;
 		}
 
 		// 日期类型
 		if (dateType != -1) {
-			if (!dateStr.startsWith("'") && !dateStr.endsWith("'")) {
-				dateStr = "'".concat(dateStr).concat("'");
+			if (!result.startsWith("'") && !result.endsWith("'")) {
+				result = "'".concat(result).concat("'");
 			}
 			// oracle、db2支持merge into场景(sqlserver具有自行转换能力，无需进行格式转换)
 			if (dateType == 1) {
 				if (dbType == DBType.DB2) {
-					dateStr = "time(" + dateStr + ")";
+					result = "time(" + result + ")";
 				} else if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11) {
 					// oracle 没有time类型,因此本行的逻辑实际不会生效
-					dateStr = "to_date(" + dateStr + ",'HH24:mi:ss')";
+					result = "to_date(" + result + ",'HH24:mi:ss')";
 				}
 			} else if (dateType == 2) {
 				if (dbType == DBType.DB2) {
-					dateStr = "date(" + dateStr + ")";
+					result = "date(" + result + ")";
 				} else if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11) {
-					dateStr = "to_date(" + dateStr + ",'yyyy-MM-dd')";
+					result = "to_date(" + result + ",'yyyy-MM-dd')";
 				}
 			} else if (dateType == 3) {
 				if (dbType == DBType.DB2) {
-					dateStr = "timestamp(" + dateStr + ")";
+					result = "timestamp(" + result + ")";
 				} else if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11) {
-					dateStr = "to_date(" + dateStr + ",'yyyy-MM-dd HH24:mi:ss')";
+					result = "to_date(" + result + ",'yyyy-MM-dd HH24:mi:ss')";
 				}
 			} // timestamp 类型进行特殊处理，避免批量插入时，所有记录时间一致导致精度损失
 			else if (dateType == 4) {
 				if (dbType == DBType.DB2) {
-					dateStr = "CURRENT TIMESTAMP";
-				} else if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.MYSQL
-						|| dbType == DBType.MYSQL57 || dbType == DBType.POSTGRESQL || dbType == DBType.DM
-						|| dbType == DBType.GAUSSDB || dbType == DBType.OCEANBASE || dbType == DBType.SQLITE
-						|| dbType == DBType.KINGBASE || dbType == DBType.TIDB) {
-					dateStr = "CURRENT_TIMESTAMP";
-				} else if (isCurrentTime) {
-					dateStr = defaultValue;
+					if (isCurrentTime) {
+						result = "CURRENT TIMESTAMP";
+					} else {
+						result = "timestamp(" + result + ")";
+					}
+				} else if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11) {
+					if (isCurrentTime) {
+						result = "CURRENT_TIMESTAMP";
+					} else {
+						result = "TO_TIMESTAMP(" + result + ",'yyyy-MM-dd HH24:mi:ss.FF')";
+					}
+				} else if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.POSTGRESQL
+						|| dbType == DBType.DM || dbType == DBType.GAUSSDB || dbType == DBType.OCEANBASE
+						|| dbType == DBType.SQLITE || dbType == DBType.KINGBASE || dbType == DBType.TIDB
+						|| dbType == DBType.SQLSERVER) {
+					if (isCurrentTime) {
+						result = "CURRENT_TIMESTAMP";
+					}
 				}
 			}
 		}
-		sql.append(dateStr);
+		sql.append(result);
 	}
 
 	/**

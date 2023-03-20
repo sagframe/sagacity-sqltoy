@@ -235,8 +235,8 @@ public class SqlUtilsExt {
 		String defaultLow = defaultValue.toLowerCase();
 		if (defaultLow.contains("sysdate") || defaultLow.contains("now") || defaultLow.contains("current")
 				|| defaultLow.contains("sysdatetime") || defaultLow.contains("systime")
-				|| defaultLow.contains("timestamp") || defaultLow.contains("curdate")
-				|| defaultLow.contains("curtime")) {
+				|| defaultLow.contains("timestamp") || defaultLow.contains("curdate") || defaultLow.contains("curtime")
+				|| defaultLow.contains("getdate") || defaultLow.contains("getutcdate")) {
 			return true;
 		}
 		return false;
