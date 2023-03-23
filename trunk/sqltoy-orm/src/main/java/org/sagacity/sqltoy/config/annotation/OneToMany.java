@@ -35,4 +35,7 @@ public @interface OneToMany {
 	// 定制级联修改保存对子表的操作语句
 	String update() default "";
 
+	// 查询封装层次结构时，子表不为null的字段，用于辨别join子表是否存在数据(for hiberarchy)
+	String notNullField() default "";
+
 }
