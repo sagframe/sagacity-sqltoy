@@ -52,4 +52,7 @@ public @interface OneToOne {
 	 * @return
 	 */
 	String update() default "";
+
+	// 级联子表不为null的字段(for hiberarchy)
+	String notNullField() default "";
 }
