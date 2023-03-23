@@ -747,6 +747,9 @@ public class EntityManager {
 			load = oneToMany.load();
 			orderBy = oneToMany.orderBy();
 			update = oneToMany.update();
+			if (StringUtil.isNotBlank(oneToMany.notNullField())) {
+				cascadeModel.setNotNullField(oneToMany.notNullField());
+			}
 			// 是否交由sqltoy进行级联删除,数据库本身存在自动级联机制
 			cascadeModel.setDelete(oneToMany.delete());
 		} else {
@@ -757,6 +760,9 @@ public class EntityManager {
 			load = oneToOne.load();
 			update = oneToOne.update();
 			cascadeModel.setDelete(oneToOne.delete());
+			if (StringUtil.isNotBlank(oneToOne.notNullField())) {
+				cascadeModel.setNotNullField(oneToOne.notNullField());
+			}
 		}
 		// update 2022-10-1
 		// 获取子表的信息(forCascade=true 避免循环解析，只解析一级)
