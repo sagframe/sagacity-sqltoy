@@ -188,7 +188,7 @@ public class EntityManager {
 			entityMeta = parseEntityMeta(sqlToyContext, entityClass, true, false);
 			if (entityMeta == null) {
 				throw new IllegalArgumentException("您传入的对象:[".concat(className)
-						.concat(" ]不是一个@SqlToyEntity实体POJO对象,sqltoy实体对象必须使用 @SqlToyEntity/@Entity/@Id 等注解来标识!"));
+						.concat(" ]不是一个@Entity实体POJO对象,sqltoy实体对象必须使用 @Entity/@Id 等注解来标识!"));
 			} // update 2022-10-24 加强提示，避免一些手工编写pojo情景遇到问题不知所措(手工编写是因为根本不了解quickvo的特性)
 			else if (entityMeta.getFieldsArray() == null || entityMeta.getFieldsArray().length == 0) {
 				throw new RuntimeException(
@@ -747,6 +747,9 @@ public class EntityManager {
 			load = oneToMany.load();
 			orderBy = oneToMany.orderBy();
 			update = oneToMany.update();
+			if (StringUtil.isNotBlank(oneToMany.notNullField())) {
+				cascadeModel.setNotNullField(oneToMany.notNullField());
+			}
 			// 是否交由sqltoy进行级联删除,数据库本身存在自动级联机制
 			cascadeModel.setDelete(oneToMany.delete());
 		} else {
@@ -757,6 +760,9 @@ public class EntityManager {
 			load = oneToOne.load();
 			update = oneToOne.update();
 			cascadeModel.setDelete(oneToOne.delete());
+			if (StringUtil.isNotBlank(oneToOne.notNullField())) {
+				cascadeModel.setNotNullField(oneToOne.notNullField());
+			}
 		}
 		// update 2022-10-1
 		// 获取子表的信息(forCascade=true 避免循环解析，只解析一级)

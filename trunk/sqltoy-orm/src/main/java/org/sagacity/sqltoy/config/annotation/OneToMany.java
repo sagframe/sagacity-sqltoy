@@ -35,4 +35,7 @@ public @interface OneToMany {
 	// 定制级联修改保存对子表的操作语句
 	String update() default "";
 
+	// 级联子表不为null的字段(for hiberarchy)
+	String notNullField() default "";
+
 }

@@ -140,15 +140,15 @@ public class ParamFilterUtils {
 				if (paramValues[index] instanceof Collection) {
 					Object[] tmp = ((Collection) paramValues[index]).toArray();
 					for (Object obj : tmp) {
-						paramValueAry.add((obj == null) ? null : obj.toString().trim().toLowerCase());
+						paramValueAry.add((obj == null) ? null : obj.toString().trim());
 					}
 				} else if (paramValues[index] instanceof Object[]) {
 					Object[] tmp = (Object[]) paramValues[index];
 					for (Object obj : tmp) {
-						paramValueAry.add((obj == null) ? null : obj.toString().trim().toLowerCase());
+						paramValueAry.add((obj == null) ? null : obj.toString().trim());
 					}
 				} else {
-					paramValueAry.add(paramValues[index].toString().trim().toLowerCase());
+					paramValueAry.add(paramValues[index].toString().trim());
 				}
 			}
 			if (paramValueAry.isEmpty()) {
@@ -246,7 +246,7 @@ public class ParamFilterUtils {
 				// 过滤条件成立，且当前key没有被匹配过，开始匹配
 				if (include) {
 					skipLoop: for (int i = 0; i < paramValueAry.size(); i++) {
-						matchStr = paramValueAry.get(i);
+						matchStr = paramValueAry.get(i).toLowerCase();
 						// 优先匹配相等
 						if (priorMatchEqual) {
 							// 直接等于key
