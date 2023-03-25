@@ -701,7 +701,8 @@ public class ResultUtils {
 		}
 		// 超过最大提取数据阀值
 		if (maxLimit) {
-			logger.error("MaxLargeResult:执行sql提取数据超出最大阀值限制{}(可通过[spring.sqltoy.pageFetchSizeLimit]参数调整),sqlId={},具体语句={}",
+			logger.error(
+					"MaxLargeResult:执行sql提取数据超出最大阀值限制{}(可通过[spring.sqltoy.pageFetchSizeLimit]参数调整),sqlId={},具体语句={}",
 					index, sqlToyConfig.getId(), sqlToyConfig.getSql(null));
 		}
 		return items;
@@ -1638,12 +1639,15 @@ public class ResultUtils {
 				convertRealProps(wrapMapFields(labelNames, fieldsMap, resultType), columnFieldMap), resultType);
 		List<List> oneToOnes = new ArrayList();
 		List<String> oneToOneProps = new ArrayList<String>();
+		List<String> oneToOneNotNullField = new ArrayList<String>();
 		TableCascadeModel oneToMany = null;
 		int oneToManySize = 0;
+		boolean hasCascade;
 		for (TableCascadeModel cascade : cascadeModel) {
 			// oneToOne模式
 			if (cascade.getCascadeType() == 2) {
-				boolean hasCascade = false;
+				hasCascade = false;
+				//首先依据指定的层次级联对象
 				if (hiberarchyClasses != null) {
 					for (Class hiberarchyClass : hiberarchyClasses) {
 						if (hiberarchyClass.equals(cascade.getMappedType())) {
@@ -1673,6 +1677,7 @@ public class ResultUtils {
 					wrapResultTranslate(sqlToyContext, oneToOneList, cascade.getMappedType());
 					oneToOnes.add(oneToOneList);
 					oneToOneProps.add(cascade.getProperty());
+					oneToOneNotNullField.add(cascade.getNotNullField());
 				}
 			} // 只支持一个oneToMany
 			else {
@@ -1700,10 +1705,23 @@ public class ResultUtils {
 		// 循环将oneToOne 的一一通过反射赋值到主对象属性上
 		if (!oneToOneProps.isEmpty()) {
 			int oneToOneSize = oneToOneProps.size();
+			String notNullField;
+			Object oneToOneBean;
+			String property;
 			for (int i = 0, n = result.size(); i < n; i++) {
 				masterBean = result.get(i);
 				for (int j = 0; j < oneToOneSize; j++) {
-					BeanUtil.setProperty(masterBean, oneToOneProps.get(j), oneToOnes.get(j).get(i));
+					property = oneToOneProps.get(j);
+					notNullField = oneToOneNotNullField.get(j);
+					oneToOneBean = oneToOnes.get(j).get(i);
+					// 判断非空字段的值，值为null则表示级联查询数据为null，无需设置
+					if (notNullField != null) {
+						if (null != BeanUtil.getProperty(oneToOneBean, notNullField)) {
+							BeanUtil.setProperty(masterBean, property, oneToOneBean);
+						}
+					} else {
+						BeanUtil.setProperty(masterBean, property, oneToOneBean);
+					}
 				}
 			}
 		}
@@ -1723,6 +1741,7 @@ public class ResultUtils {
 			}
 			List item;
 			String property = oneToMany.getProperty();
+			String notNullField = oneToMany.getNotNullField();
 			// 循环分组Map
 			groupListIter = groupListMap.values().iterator();
 			index = 0;
@@ -1731,10 +1750,21 @@ public class ResultUtils {
 				item = BeanUtil.reflectListToBean(sqlToyContext.getTypeHandler(), groupListIter.next(),
 						convertRealProps(wrapMapFields(labelNames, fieldsMap, oneToManyClass), columnFieldMap),
 						oneToManyClass);
-				// 处理类上@Translate注解进行缓存翻译
-				wrapResultTranslate(sqlToyContext, item, oneToManyClass);
-				// 将子对象集合写到主对象属性上
-				BeanUtil.setProperty(masterBean, property, item);
+				// 移除属性值为null的空对象记录
+				if (notNullField != null) {
+					for (int k = 0; k < item.size(); k++) {
+						if (BeanUtil.getProperty(item.get(k), notNullField) == null) {
+							item.remove(k);
+							k--;
+						}
+					}
+				}
+				if (!item.isEmpty()) {
+					// 处理类上@Translate注解进行缓存翻译
+					wrapResultTranslate(sqlToyContext, item, oneToManyClass);
+					// 将子对象集合写到主对象属性上
+					BeanUtil.setProperty(masterBean, property, item);
+				}
 				index++;
 			}
 		}

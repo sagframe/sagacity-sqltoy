@@ -49,6 +49,11 @@ public class TableCascadeModel implements Serializable {
 	private String[] mappedFields;
 
 	/**
+	 * 非null字段
+	 */
+	private String notNullField;
+
+	/**
 	 * 是否级联删除
 	 */
 	private boolean delete = false;
@@ -263,6 +268,14 @@ public class TableCascadeModel implements Serializable {
 	 */
 	public void setLoadExtCondition(String loadExtCondition) {
 		this.loadExtCondition = loadExtCondition;
+	}
+
+	public String getNotNullField() {
+		return notNullField;
+	}
+
+	public void setNotNullField(String notNullField) {
+		this.notNullField = notNullField;
 	}
 
 }
