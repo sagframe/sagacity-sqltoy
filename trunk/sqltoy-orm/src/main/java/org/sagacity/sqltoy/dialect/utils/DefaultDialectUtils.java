@@ -551,13 +551,24 @@ public class DefaultDialectUtils {
 							colMeta.setDecimalDigits(rs.getInt("DECIMAL_DIGITS"));
 							colMeta.setNumPrecRadix(rs.getInt("NUM_PREC_RADIX"));
 							colMeta.setComments(rs.getString("REMARKS"));
-							isAutoIncrement = rs.getString("IS_AUTOINCREMENT");
-							if (isAutoIncrement != null && ("true".equalsIgnoreCase(isAutoIncrement)
-									|| "YES".equalsIgnoreCase(isAutoIncrement) || "Y".equalsIgnoreCase(isAutoIncrement)
-									|| "1".equals(isAutoIncrement))) {
-								colMeta.setAutoIncrement(true);
+							colMeta.setAutoIncrement(false);
+							// oracle autoincrement 取法不同
+							if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11) {
+								if (colMeta.getDefaultValue() != null
+										&& colMeta.getDefaultValue().toLowerCase().endsWith(".nextval")) {
+									colMeta.setAutoIncrement(true);
+									colMeta.setDefaultValue(colMeta.getDefaultValue().replaceAll("\"", "\\\\\""));
+								}
 							} else {
-								colMeta.setAutoIncrement(false);
+								try {
+									isAutoIncrement = rs.getString("IS_AUTOINCREMENT");
+									if (isAutoIncrement != null && ("true".equalsIgnoreCase(isAutoIncrement)
+											|| "YES".equalsIgnoreCase(isAutoIncrement)
+											|| "Y".equalsIgnoreCase(isAutoIncrement) || "1".equals(isAutoIncrement))) {
+										colMeta.setAutoIncrement(true);
+									}
+								} catch (Exception e) {
+								}
 							}
 							if (rs.getInt("NULLABLE") == 1) {
 								colMeta.setNullable(true);

@@ -48,9 +48,10 @@ public class TenantFilterInterceptor implements SqlInterceptor {
 		String tenantColumn = entityMeta.getColumnName(entityMeta.getTenantField());
 		// 保留字处理(实际不会出现保留字用作租户)
 		tenantColumn = ReservedWordsUtil.convertWord(tenantColumn, dbType);
+		int whereIndex = StringUtil.matchIndex(sql, "(?i)\\Wwhere\\W");
 		// sql 在where后面已经有租户条件过滤，无需做处理
-		if (StringUtil.matches(sql.substring(StringUtil.matchIndex(sql, "(?i)\\Wwhere\\W")),
-				"(?i)\\W" + tenantColumn + "(\\s*\\=|\\s+in)")) {
+		if (whereIndex > 0
+				&& StringUtil.matches(sql.substring(whereIndex), "(?i)\\W" + tenantColumn + "(\\s*\\=|\\s+in)")) {
 			return sqlToyResult;
 		}
 		String sqlPart = " where ";
