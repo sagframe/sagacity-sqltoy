@@ -34,6 +34,10 @@ public class TenantFilterInterceptor implements SqlInterceptor {
 		if (entityMeta.getTenantField() == null) {
 			return sqlToyResult;
 		}
+		// 你也可以判断表里面是否包含统一的租户字段，而非@Tenant注解模式
+		// if (entityMeta.getColumnName("tenantId") != null) {
+		// }
+
 		// 授权租户信息为空不做过滤
 		String[] tenants = sqlToyContext.getUnifyFieldsHandler().authTenants(entityClass, operateType);
 		if (tenants == null || tenants.length == 0) {
@@ -44,9 +48,10 @@ public class TenantFilterInterceptor implements SqlInterceptor {
 		String tenantColumn = entityMeta.getColumnName(entityMeta.getTenantField());
 		// 保留字处理(实际不会出现保留字用作租户)
 		tenantColumn = ReservedWordsUtil.convertWord(tenantColumn, dbType);
+		int whereIndex = StringUtil.matchIndex(sql, "(?i)\\Wwhere\\W");
 		// sql 在where后面已经有租户条件过滤，无需做处理
-		if (StringUtil.matches(sql.substring(StringUtil.matchIndex(sql, "(?i)\\Wwhere\\W")),
-				"(?i)\\W" + tenantColumn + "(\\s*\\=|\\s+in)")) {
+		if (whereIndex > 0
+				&& StringUtil.matches(sql.substring(whereIndex), "(?i)\\W" + tenantColumn + "(\\s*\\=|\\s+in)")) {
 			return sqlToyResult;
 		}
 		String sqlPart = " where ";
