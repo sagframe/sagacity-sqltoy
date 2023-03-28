@@ -1642,10 +1642,12 @@ public class ResultUtils {
 		List<String> oneToOneNotNullField = new ArrayList<String>();
 		TableCascadeModel oneToMany = null;
 		int oneToManySize = 0;
+		boolean hasCascade;
 		for (TableCascadeModel cascade : cascadeModel) {
 			// oneToOne模式
 			if (cascade.getCascadeType() == 2) {
-				boolean hasCascade = false;
+				hasCascade = false;
+				//首先依据指定的层次级联对象
 				if (hiberarchyClasses != null) {
 					for (Class hiberarchyClass : hiberarchyClasses) {
 						if (hiberarchyClass.equals(cascade.getMappedType())) {
