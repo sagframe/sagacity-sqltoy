@@ -286,7 +286,7 @@ public class CollectionUtil {
 
 	/**
 	 * @todo 剔除对象数组中的部分数据,简单采用List remove方式实现
-	 * @param targetAry
+	 * @param sourceAry
 	 * @param begin
 	 * @param length
 	 * @return

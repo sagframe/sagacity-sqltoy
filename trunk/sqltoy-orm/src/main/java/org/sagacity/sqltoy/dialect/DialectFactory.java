@@ -1661,7 +1661,6 @@ public class DialectFactory {
 	 * @todo 修改单个对象
 	 * @param sqlToyContext
 	 * @param entity
-	 * @param uniqueFields             唯一性索引字段
 	 * @param forceUpdateFields
 	 * @param cascade
 	 * @param forceCascadeClass
