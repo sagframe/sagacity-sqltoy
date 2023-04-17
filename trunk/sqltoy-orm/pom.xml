@@ -8,7 +8,7 @@
 	<url>https://github.com/sagframe/sagacity-sqltoy</url>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<spring-framework.version>5.3.26</spring-framework.version>
+		<spring-framework.version>5.3.27</spring-framework.version>
 		<spring-data-redis.version>2.7.10</spring-data-redis.version>
 		<spring-data-mongo.version>3.4.10</spring-data-mongo.version>
 		<ojdbc.version>21.9.0.0</ojdbc.version>
