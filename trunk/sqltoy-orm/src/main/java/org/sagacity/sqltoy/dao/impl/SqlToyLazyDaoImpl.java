@@ -72,13 +72,13 @@ public class SqlToyLazyDaoImpl extends SpringDaoSupport implements SqlToyLazyDao
 	 * java.lang.String[], java.lang.Object[])
 	 */
 	@Override
-	public Long getCount(String sqlOrNamedQuery, String[] paramsNamed, Object[] paramsValue) {
-		return super.getCountBySql(sqlOrNamedQuery, paramsNamed, paramsValue);
+	public Long getCount(String sqlOrSqlId, String[] paramsNamed, Object[] paramsValue) {
+		return super.getCountBySql(sqlOrSqlId, paramsNamed, paramsValue);
 	}
 
 	@Override
-	public Long getCount(String sqlOrNamedQuery, Map<String, Object> paramsMap) {
-		return super.getCountBySql(sqlOrNamedQuery, paramsMap);
+	public Long getCount(String sqlOrSqlId, Map<String, Object> paramsMap) {
+		return super.getCountBySql(sqlOrSqlId, paramsMap);
 	}
 
 	@Override
@@ -93,18 +93,18 @@ public class SqlToyLazyDaoImpl extends SpringDaoSupport implements SqlToyLazyDao
 	 * java.lang.String[], java.lang.Object[])
 	 */
 	@Override
-	public Object getSingleValue(String sqlOrNamedSql, String[] paramsNamed, Object[] paramsValue) {
-		return super.getSingleValue(sqlOrNamedSql, paramsNamed, paramsValue);
+	public Object getSingleValue(String sqlOrSqlId, String[] paramsNamed, Object[] paramsValue) {
+		return super.getSingleValue(sqlOrSqlId, paramsNamed, paramsValue);
 	}
 
 	@Override
-	public Object getSingleValue(String sqlOrNamedSql, Map<String, Object> paramsMap) {
-		return super.getSingleValue(sqlOrNamedSql, paramsMap);
+	public Object getSingleValue(String sqlOrSqlId, Map<String, Object> paramsMap) {
+		return super.getSingleValue(sqlOrSqlId, paramsMap);
 	}
 
 	@Override
-	public <T> T getSingleValue(String sqlOrNamedSql, Map<String, Object> paramsMap, Class<T> resultType) {
-		return super.getSingleValue(sqlOrNamedSql, paramsMap, resultType);
+	public <T> T getSingleValue(String sqlOrSqlId, Map<String, Object> paramsMap, Class<T> resultType) {
+		return super.getSingleValue(sqlOrSqlId, paramsMap, resultType);
 	}
 
 	/*
@@ -114,8 +114,8 @@ public class SqlToyLazyDaoImpl extends SpringDaoSupport implements SqlToyLazyDao
 	 * java.lang.String[], java.lang.Object[], java.lang.Class)
 	 */
 	@Override
-	public <T> T loadBySql(String sqlOrNamedSql, String[] paramsNamed, Object[] paramsValue, Class<T> resultType) {
-		return super.loadBySql(sqlOrNamedSql, paramsNamed, paramsValue, resultType);
+	public <T> T loadBySql(String sqlOrSqlId, String[] paramsNamed, Object[] paramsValue, Class<T> resultType) {
+		return super.loadBySql(sqlOrSqlId, paramsNamed, paramsValue, resultType);
 	}
 
 	/*
@@ -125,13 +125,13 @@ public class SqlToyLazyDaoImpl extends SpringDaoSupport implements SqlToyLazyDao
 	 * Serializable)
 	 */
 	@Override
-	public <T extends Serializable> T loadBySql(String sqlOrNamedSql, T entity) {
-		return super.loadBySql(sqlOrNamedSql, entity);
+	public <T extends Serializable> T loadBySql(String sqlOrSqlId, T entity) {
+		return super.loadBySql(sqlOrSqlId, entity);
 	}
 
 	@Override
-	public <T> T loadBySql(String sqlOrNamedSql, Map<String, Object> paramsMap, Class<T> resultType) {
-		return super.loadBySql(sqlOrNamedSql, paramsMap, resultType);
+	public <T> T loadBySql(String sqlOrSqlId, Map<String, Object> paramsMap, Class<T> resultType) {
+		return super.loadBySql(sqlOrSqlId, paramsMap, resultType);
 	}
 
 	/*
@@ -141,8 +141,8 @@ public class SqlToyLazyDaoImpl extends SpringDaoSupport implements SqlToyLazyDao
 	 * java.io.Serializable)
 	 */
 	@Override
-	public <T extends Serializable> List<T> findBySql(String sqlOrNamedSql, final T entity) {
-		return super.findBySql(sqlOrNamedSql, entity);
+	public <T extends Serializable> List<T> findBySql(String sqlOrSqlId, final T entity) {
+		return super.findBySql(sqlOrSqlId, entity);
 	}
 
 	/*
@@ -152,18 +152,18 @@ public class SqlToyLazyDaoImpl extends SpringDaoSupport implements SqlToyLazyDao
 	 * java.lang.String[], java.lang.Object[], java.lang.Class)
 	 */
 	@Override
-	public <T> List<T> findBySql(String sqlOrNamedSql, String[] paramsNamed, Object[] paramsValue, Class<T> voClass) {
-		return (List<T>) super.findBySql(sqlOrNamedSql, paramsNamed, paramsValue, voClass);
+	public <T> List<T> findBySql(String sqlOrSqlId, String[] paramsNamed, Object[] paramsValue, Class<T> resultType) {
+		return (List<T>) super.findBySql(sqlOrSqlId, paramsNamed, paramsValue, resultType);
 	}
 
 	@Override
-	public <T> List<T> findBySql(String sqlOrNamedSql, Map<String, Object> paramsMap, Class<T> voClass) {
-		return (List<T>) super.findBySql(sqlOrNamedSql, paramsMap, voClass);
+	public <T> List<T> findBySql(String sqlOrSqlId, Map<String, Object> paramsMap, Class<T> resultType) {
+		return (List<T>) super.findBySql(sqlOrSqlId, paramsMap, resultType);
 	}
 
 	@Override
-	public List findBySql(String sqlOrNamedSql, String[] paramsNamed, Object[] paramsValue) {
-		return super.findBySql(sqlOrNamedSql, paramsNamed, paramsValue, null);
+	public List findBySql(String sqlOrSqlId, String[] paramsNamed, Object[] paramsValue) {
+		return super.findBySql(sqlOrSqlId, paramsNamed, paramsValue, null);
 	}
 
 	/*
@@ -179,8 +179,8 @@ public class SqlToyLazyDaoImpl extends SpringDaoSupport implements SqlToyLazyDao
 	}
 
 	@Override
-	public <T extends Serializable> Page<T> findPageBySql(final Page page, final String sqlOrNamedSql, final T entity) {
-		return (Page<T>) super.findPageBySql(page, sqlOrNamedSql, entity);
+	public <T extends Serializable> Page<T> findPageBySql(final Page page, final String sqlOrSqlId, final T entity) {
+		return (Page<T>) super.findPageBySql(page, sqlOrSqlId, entity);
 	}
 
 	/*
@@ -192,20 +192,20 @@ public class SqlToyLazyDaoImpl extends SpringDaoSupport implements SqlToyLazyDao
 	 * java.lang.Class)
 	 */
 	@Override
-	public <T> Page<T> findPageBySql(Page page, String sqlOrNamedSql, String[] paramsNamed, Object[] paramValues,
-			Class<T> voClass) {
+	public <T> Page<T> findPageBySql(Page page, String sqlOrSqlId, String[] paramsNamed, Object[] paramValues,
+			Class<T> resultType) {
 		return (Page<T>) super.findPageByQuery(page,
-				new QueryExecutor(sqlOrNamedSql, paramsNamed, paramValues).resultType(voClass)).getPageResult();
+				new QueryExecutor(sqlOrSqlId, paramsNamed, paramValues).resultType(resultType)).getPageResult();
 	}
 
 	@Override
-	public Page findPageBySql(Page page, String sqlOrNamedSql, String[] paramsNamed, Object[] paramValues) {
-		return super.findPageByQuery(page, new QueryExecutor(sqlOrNamedSql, paramsNamed, paramValues)).getPageResult();
+	public Page findPageBySql(Page page, String sqlOrSqlId, String[] paramsNamed, Object[] paramValues) {
+		return super.findPageByQuery(page, new QueryExecutor(sqlOrSqlId, paramsNamed, paramValues)).getPageResult();
 	}
 
 	@Override
-	public <T> Page<T> findPageBySql(Page page, String sqlOrNamedSql, Map<String, Object> paramsMap, Class<T> voClass) {
-		return (Page<T>) super.findPageBySql(page, sqlOrNamedSql, paramsMap, voClass);
+	public <T> Page<T> findPageBySql(Page page, String sqlOrSqlId, Map<String, Object> paramsMap, Class<T> resultType) {
+		return (Page<T>) super.findPageBySql(page, sqlOrSqlId, paramsMap, resultType);
 	}
 
 	/*
@@ -215,15 +215,15 @@ public class SqlToyLazyDaoImpl extends SpringDaoSupport implements SqlToyLazyDao
 	 * java.lang.String[], java.lang.Object[], java.lang.Class, double)
 	 */
 	@Override
-	public <T> List<T> findTopBySql(String sqlOrNamedSql, String[] paramsNamed, Object[] paramValues, Class<T> voClass,
+	public <T> List<T> findTopBySql(String sqlOrSqlId, String[] paramsNamed, Object[] paramValues, Class<T> resultType,
 			double topSize) {
-		return super.findTopBySql(sqlOrNamedSql, paramsNamed, paramValues, voClass, topSize);
+		return super.findTopBySql(sqlOrSqlId, paramsNamed, paramValues, resultType, topSize);
 	}
 
 	@Override
-	public <T> List<T> findTopBySql(String sqlOrNamedSql, Map<String, Object> paramsMap, Class<T> voClass,
+	public <T> List<T> findTopBySql(String sqlOrSqlId, Map<String, Object> paramsMap, Class<T> resultType,
 			double topSize) {
-		return super.findTopBySql(sqlOrNamedSql, paramsMap, voClass, topSize);
+		return super.findTopBySql(sqlOrSqlId, paramsMap, resultType, topSize);
 	}
 
 	/*
@@ -233,9 +233,9 @@ public class SqlToyLazyDaoImpl extends SpringDaoSupport implements SqlToyLazyDao
 	 * java.io.Serializable, double)
 	 */
 	@Override
-	public <T extends Serializable> List<T> findTopBySql(final String sqlOrNamedSql, final T entity,
+	public <T extends Serializable> List<T> findTopBySql(final String sqlOrSqlId, final T entity,
 			final double topSize) {
-		return super.findTopBySql(sqlOrNamedSql, entity, topSize);
+		return super.findTopBySql(sqlOrSqlId, entity, topSize);
 	}
 
 	/*
@@ -257,14 +257,14 @@ public class SqlToyLazyDaoImpl extends SpringDaoSupport implements SqlToyLazyDao
 	 * String, java.io.Serializable, double)
 	 */
 	@Override
-	public <T extends Serializable> List<T> getRandomResult(String sqlOrNamedSql, T entity, double randomCount) {
-		return (List<T>) super.getRandomResult(new QueryExecutor(sqlOrNamedSql, entity), randomCount).getRows();
+	public <T extends Serializable> List<T> getRandomResult(String sqlOrSqlId, T entity, double randomCount) {
+		return (List<T>) super.getRandomResult(new QueryExecutor(sqlOrSqlId, entity), randomCount).getRows();
 	}
 
 	@Override
-	public <T> List<T> getRandomResult(String sqlOrNamedSql, Map<String, Object> paramsMap, Class<T> voClass,
+	public <T> List<T> getRandomResult(String sqlOrSqlId, Map<String, Object> paramsMap, Class<T> resultType,
 			double randomCount) {
-		return super.getRandomResult(sqlOrNamedSql, paramsMap, voClass, randomCount);
+		return super.getRandomResult(sqlOrSqlId, paramsMap, resultType, randomCount);
 	}
 
 	/*
@@ -274,19 +274,19 @@ public class SqlToyLazyDaoImpl extends SpringDaoSupport implements SqlToyLazyDao
 	 * String, java.lang.String[], java.lang.Object[], java.lang.Class, double)
 	 */
 	@Override
-	public <T> List<T> getRandomResult(String sqlOrNamedSql, String[] paramsNamed, Object[] paramsValue,
-			Class<T> voClass, double randomCount) {
-		return super.getRandomResult(sqlOrNamedSql, paramsNamed, paramsValue, voClass, randomCount);
+	public <T> List<T> getRandomResult(String sqlOrSqlId, String[] paramsNamed, Object[] paramsValue,
+			Class<T> resultType, double randomCount) {
+		return super.getRandomResult(sqlOrSqlId, paramsNamed, paramsValue, resultType, randomCount);
 	}
 
 	@Override
-	public Long batchUpdate(String sqlOrNamedSql, List dataSet) {
-		return super.batchUpdate(sqlOrNamedSql, dataSet, null);
+	public Long batchUpdate(String sqlOrSqlId, List dataSet) {
+		return super.batchUpdate(sqlOrSqlId, dataSet, null);
 	}
 
 	@Override
-	public Long batchUpdate(String sqlOrNamedSql, List dataSet, Boolean autoCommit) {
-		return super.batchUpdate(sqlOrNamedSql, dataSet, autoCommit);
+	public Long batchUpdate(String sqlOrSqlId, List dataSet, Boolean autoCommit) {
+		return super.batchUpdate(sqlOrSqlId, dataSet, autoCommit);
 	}
 
 	/*
@@ -543,13 +543,13 @@ public class SqlToyLazyDaoImpl extends SpringDaoSupport implements SqlToyLazyDao
 	}
 
 	@Override
-	public <T extends Serializable> List<T> loadByIds(Class<T> voClass, LockMode lockMode, Object... ids) {
-		return super.loadByIds(voClass, lockMode, ids);
+	public <T extends Serializable> List<T> loadByIds(Class<T> entityClass, LockMode lockMode, Object... ids) {
+		return super.loadByIds(entityClass, lockMode, ids);
 	}
 
 	@Override
-	public <T extends Serializable> List<T> loadByIds(Class<T> voClass, Object... ids) {
-		return super.loadByIds(voClass, null, ids);
+	public <T extends Serializable> List<T> loadByIds(Class<T> entityClass, Object... ids) {
+		return super.loadByIds(entityClass, null, ids);
 	}
 
 	/*
@@ -612,13 +612,13 @@ public class SqlToyLazyDaoImpl extends SpringDaoSupport implements SqlToyLazyDao
 	}
 
 	@Override
-	public Long executeSql(String sqlOrNamedSql, Serializable entity) {
-		return super.executeSql(sqlOrNamedSql, entity);
+	public Long executeSql(String sqlOrSqlId, Serializable entity) {
+		return super.executeSql(sqlOrSqlId, entity);
 	}
 
 	@Override
-	public Long executeSql(String sqlOrNamedSql, Map<String, Object> paramsMap) {
-		return super.executeSql(sqlOrNamedSql, paramsMap);
+	public Long executeSql(String sqlOrSqlId, Map<String, Object> paramsMap) {
+		return super.executeSql(sqlOrSqlId, paramsMap);
 	}
 
 	/*
@@ -628,8 +628,8 @@ public class SqlToyLazyDaoImpl extends SpringDaoSupport implements SqlToyLazyDao
 	 * java.lang.String[], java.lang.Object[])
 	 */
 	@Override
-	public Long executeSql(String sqlOrNamedSql, String[] paramsNamed, Object[] paramsValue) {
-		return super.executeSql(sqlOrNamedSql, paramsNamed, paramsValue);
+	public Long executeSql(String sqlOrSqlId, String[] paramsNamed, Object[] paramsValue) {
+		return super.executeSql(sqlOrSqlId, paramsNamed, paramsValue);
 	}
 
 	/*

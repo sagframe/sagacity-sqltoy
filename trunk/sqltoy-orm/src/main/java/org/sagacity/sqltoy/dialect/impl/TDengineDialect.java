@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
  * @version v1.0, Date:2022年9月13日
  * @modify 2022年9月13日,修改说明
  */
+@SuppressWarnings({ "rawtypes" })
 public class TDengineDialect extends DefaultDialect {
 
 	/**

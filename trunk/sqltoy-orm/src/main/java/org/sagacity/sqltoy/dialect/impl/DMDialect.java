@@ -42,6 +42,7 @@ import org.slf4j.LoggerFactory;
  * @version v1.0,Date:2020-06-05
  * @modify Date:2020-06-05 初始创建达梦数据库支持
  */
+@SuppressWarnings({ "rawtypes" })
 public class DMDialect implements Dialect {
 	/**
 	 * 定义日志

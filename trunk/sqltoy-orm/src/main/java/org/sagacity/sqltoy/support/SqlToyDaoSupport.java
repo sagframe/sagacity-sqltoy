@@ -117,7 +117,7 @@ import org.slf4j.LoggerFactory;
  *         {剔除linkDaoSupport、BaseDaoSupport,将link功能放入SqlToyDaoSupport}
  * @modify Date:2021-12-23 {优化updateByQuery支持set field=field+1依据字段值进行计算的模式}
  */
-@SuppressWarnings("rawtypes")
+@SuppressWarnings({"rawtypes","unchecked"})
 public class SqlToyDaoSupport {
 	/**
 	 * 定义日志
@@ -319,19 +319,19 @@ public class SqlToyDaoSupport {
 				this.getDataSource(uniqueExecutor.getDataSource()));
 	}
 
-	protected Long getCountBySql(final String sqlOrNamedSql, final Map<String, Object> paramsMap) {
-		return getCountByQuery(new QueryExecutor(sqlOrNamedSql, (paramsMap == null) ? MapKit.map() : paramsMap));
+	protected Long getCountBySql(final String sqlOrSqlId, final Map<String, Object> paramsMap) {
+		return getCountByQuery(new QueryExecutor(sqlOrSqlId, (paramsMap == null) ? MapKit.map() : paramsMap));
 	}
 
 	/**
 	 * @todo 获取数据库查询语句的总记录数
-	 * @param sqlOrNamedSql
+	 * @param sqlOrSqlId
 	 * @param paramsNamed
 	 * @param paramsValue
 	 * @return Long
 	 */
-	protected Long getCountBySql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue) {
-		return getCountByQuery(new QueryExecutor(sqlOrNamedSql, paramsNamed, paramsValue));
+	protected Long getCountBySql(final String sqlOrSqlId, final String[] paramsNamed, final Object[] paramsValue) {
+		return getCountByQuery(new QueryExecutor(sqlOrSqlId, paramsNamed, paramsValue));
 	}
 
 	/**
@@ -392,21 +392,21 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @param sqlOrNamedSql
+	 * @param sqlOrSqlId
 	 * @param paramsNamed
 	 * @param paramsValue
 	 * @return
 	 * @see #getSingleValue(String, Map)
 	 */
 	@Deprecated
-	protected Object getSingleValue(final String sqlOrNamedSql, final String[] paramsNamed,
+	protected Object getSingleValue(final String sqlOrSqlId, final String[] paramsNamed,
 			final Object[] paramsValue) {
-		return getSingleValue(sqlOrNamedSql, paramsNamed, paramsValue, null);
+		return getSingleValue(sqlOrSqlId, paramsNamed, paramsValue, null);
 	}
 
-	protected Object getSingleValue(final String sqlOrNamedSql, final Map<String, Object> paramsMap) {
+	protected Object getSingleValue(final String sqlOrSqlId, final Map<String, Object> paramsMap) {
 		Object queryResult = loadByQuery(
-				new QueryExecutor(sqlOrNamedSql, (paramsMap == null) ? MapKit.map() : paramsMap));
+				new QueryExecutor(sqlOrSqlId, (paramsMap == null) ? MapKit.map() : paramsMap));
 		if (null != queryResult) {
 			return ((List) queryResult).get(0);
 		}
@@ -414,12 +414,12 @@ public class SqlToyDaoSupport {
 	}
 
 	// add 2022-2-25
-	protected <T> T getSingleValue(final String sqlOrNamedSql, final Map<String, Object> paramsMap,
+	protected <T> T getSingleValue(final String sqlOrSqlId, final Map<String, Object> paramsMap,
 			final Class<T> resultType) {
 		if (resultType == null) {
 			throw new IllegalArgumentException("getSingleValue resultType 不能为null!");
 		}
-		Object value = getSingleValue(sqlOrNamedSql, paramsMap);
+		Object value = getSingleValue(sqlOrSqlId, paramsMap);
 		if (value == null) {
 			return null;
 		}
@@ -433,16 +433,16 @@ public class SqlToyDaoSupport {
 
 	/**
 	 * @todo 返回单行单列值，如果结果集存在多条数据则返回null
-	 * @param sqlOrNamedSql
+	 * @param sqlOrSqlId
 	 * @param paramsNamed
 	 * @param paramsValue
 	 * @param dataSource
 	 * @return
 	 */
-	protected Object getSingleValue(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue,
+	protected Object getSingleValue(final String sqlOrSqlId, final String[] paramsNamed, final Object[] paramsValue,
 			final DataSource dataSource) {
 		Object queryResult = loadByQuery(
-				new QueryExecutor(sqlOrNamedSql, paramsNamed, paramsValue).dataSource(dataSource));
+				new QueryExecutor(sqlOrSqlId, paramsNamed, paramsValue).dataSource(dataSource));
 		if (null != queryResult) {
 			return ((List) queryResult).get(0);
 		}
@@ -518,12 +518,12 @@ public class SqlToyDaoSupport {
 	/**
 	 * @TODO 根据id集合批量加载对象
 	 * @param <T>
-	 * @param voClass
+	 * @param entityClass
 	 * @param ids
 	 * @return
 	 */
-	protected <T extends Serializable> List<T> loadByIds(final Class<T> voClass, Object... ids) {
-		return loadByIds(voClass, null, ids);
+	protected <T extends Serializable> List<T> loadByIds(final Class<T> entityClass, Object... ids) {
+		return loadByIds(entityClass, null, ids);
 	}
 
 	/**
@@ -574,33 +574,33 @@ public class SqlToyDaoSupport {
 		return dialectFactory.loadAll(sqlToyContext, entities, cascades, lockMode, this.getDataSource(null));
 	}
 
-	protected <T> T loadBySql(final String sqlOrNamedSql, final Map<String, Object> paramsMap,
+	protected <T> T loadBySql(final String sqlOrSqlId, final Map<String, Object> paramsMap,
 			final Class<T> resultType) {
-		return (T) loadByQuery(new QueryExecutor(sqlOrNamedSql, (paramsMap == null) ? MapKit.map() : paramsMap)
+		return (T) loadByQuery(new QueryExecutor(sqlOrSqlId, (paramsMap == null) ? MapKit.map() : paramsMap)
 				.resultType(resultType));
 	}
 
 	/**
 	 * @todo 根据sql语句查询并返回单个VO对象(可指定自定义对象,sqltoy根据查询label跟对象的属性名称进行匹配映射)
-	 * @param sqlOrNamedSql
+	 * @param sqlOrSqlId
 	 * @param paramNames
 	 * @param paramValues
 	 * @param resultType
 	 * @return
 	 */
-	protected <T> T loadBySql(final String sqlOrNamedSql, final String[] paramNames, final Object[] paramValues,
+	protected <T> T loadBySql(final String sqlOrSqlId, final String[] paramNames, final Object[] paramValues,
 			final Class<T> resultType) {
-		return (T) loadByQuery(new QueryExecutor(sqlOrNamedSql, paramNames, paramValues).resultType(resultType));
+		return (T) loadByQuery(new QueryExecutor(sqlOrSqlId, paramNames, paramValues).resultType(resultType));
 	}
 
 	/**
 	 * @todo 解析sql中:named 属性到entity对象获取对应的属性值作为查询条件,并将查询结果以entity的class类型返回
-	 * @param sqlOrNamedSql
+	 * @param sqlOrSqlId
 	 * @param entity
 	 * @return
 	 */
-	protected <T extends Serializable> T loadBySql(final String sqlOrNamedSql, final T entity) {
-		return (T) loadByQuery(new QueryExecutor(sqlOrNamedSql, entity));
+	protected <T extends Serializable> T loadBySql(final String sqlOrSqlId, final T entity) {
+		return (T) loadByQuery(new QueryExecutor(sqlOrSqlId, entity));
 	}
 
 	protected <T extends Serializable> T loadEntity(Class<T> entityClass, EntityQuery entityQuery) {
@@ -644,81 +644,81 @@ public class SqlToyDaoSupport {
 
 	/**
 	 * @todo 执行无条件的sql语句,一般是一个修改、删除等操作，并返回修改的记录数量
-	 * @param sqlOrNamedSql
+	 * @param sqlOrSqlId
 	 * @return
 	 */
-	protected Long executeSql(final String sqlOrNamedSql) {
-		return executeSql(sqlOrNamedSql, null, null, null, null);
+	protected Long executeSql(final String sqlOrSqlId) {
+		return executeSql(sqlOrSqlId, null, null, null, null);
 	}
 
 	/**
 	 * @todo 解析sql中的参数名称，以此名称到entity中提取对应的值作为查询条件值执行sql
-	 * @param sqlOrNamedSql
+	 * @param sqlOrSqlId
 	 * @param entity
 	 * @return
 	 */
-	protected Long executeSql(final String sqlOrNamedSql, final Serializable entity) {
-		SqlToyConfig sqlToyConfig = getSqlToyConfig(sqlOrNamedSql, SqlType.update);
-		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, new QueryExecutor(sqlOrNamedSql, entity), null,
+	protected Long executeSql(final String sqlOrSqlId, final Serializable entity) {
+		SqlToyConfig sqlToyConfig = getSqlToyConfig(sqlOrSqlId, SqlType.update);
+		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, new QueryExecutor(sqlOrSqlId, entity), null,
 				null, getDataSource(null, sqlToyConfig));
 	}
 
-	protected Long executeSql(final String sqlOrNamedSql, final Map<String, Object> paramsMap) {
-		return executeSql(sqlOrNamedSql, (Serializable) new IgnoreKeyCaseMap(paramsMap));
+	protected Long executeSql(final String sqlOrSqlId, final Map<String, Object> paramsMap) {
+		return executeSql(sqlOrSqlId, (Serializable) new IgnoreKeyCaseMap(paramsMap));
 	}
 
 	/**
 	 * @todo 执行无返回结果的SQL(返回updateCount)
-	 * @param sqlOrNamedSql
+	 * @param sqlOrSqlId
 	 * @param paramsNamed
 	 * @param paramsValue
 	 * @return
 	 */
-	protected Long executeSql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue) {
-		return executeSql(sqlOrNamedSql, paramsNamed, paramsValue, null, null);
+	protected Long executeSql(final String sqlOrSqlId, final String[] paramsNamed, final Object[] paramsValue) {
+		return executeSql(sqlOrSqlId, paramsNamed, paramsValue, null, null);
 	}
 
 	/**
 	 * @todo 执行无返回结果的SQL(返回updateCount),根据autoCommit设置是否自动提交
-	 * @param sqlOrNamedSql
+	 * @param sqlOrSqlId
 	 * @param paramsNamed
 	 * @param paramsValue
 	 * @param autoCommit    自动提交，默认可以填null
 	 * @param dataSource
 	 * @return
 	 */
-	protected Long executeSql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue,
+	protected Long executeSql(final String sqlOrSqlId, final String[] paramsNamed, final Object[] paramsValue,
 			final Boolean autoCommit, final DataSource dataSource) {
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sqlOrNamedSql, SqlType.update,
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sqlOrSqlId, SqlType.update,
 				getDialect(dataSource));
 		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig,
-				new QueryExecutor(sqlOrNamedSql).names(paramsNamed).values(paramsValue), null, autoCommit,
+				new QueryExecutor(sqlOrSqlId).names(paramsNamed).values(paramsValue), null, autoCommit,
 				getDataSource(dataSource, sqlToyConfig));
 	}
 
-	protected Long batchUpdate(final String sqlOrNamedSql, final List dataSet, final Boolean autoCommit) {
+	protected Long batchUpdate(final String sqlOrSqlId, final List dataSet, final Boolean autoCommit) {
 		// 例如sql 为:merge into table update set xxx=:param
 		// dataSet可以是VO List,可以根据属性自动映射到:param
-		return batchUpdate(sqlOrNamedSql, dataSet, sqlToyContext.getBatchSize(), autoCommit, null);
+		return batchUpdate(sqlOrSqlId, dataSet, sqlToyContext.getBatchSize(), autoCommit, null);
 	}
 
 	/**
 	 * @todo 通过jdbc方式批量插入数据，一般提供给数据采集时或插入临时表使用
-	 * @param sqlOrNamedSql
+	 * @param sqlOrSqlId
 	 * @param dataSet       支持List<List>、List<Object[]>(sql中?传参) ;List<VO>、List<Map>
 	 *                      形式(sql中:paramName传参)
 	 * @param batchSize
 	 * @param autoCommit    自动提交，默认可以填null
 	 * @return
 	 */
-	protected Long batchUpdate(final String sqlOrNamedSql, final List dataSet, final int batchSize,
+	protected Long batchUpdate(final String sqlOrSqlId, final List dataSet, final int batchSize,
 			final Boolean autoCommit) {
-		return batchUpdate(sqlOrNamedSql, dataSet, batchSize, autoCommit, null);
+		return batchUpdate(sqlOrSqlId, dataSet, batchSize, autoCommit, null);
 	}
 
 	/**
 	 * @todo 批量执行sql修改或删除操作
-	 * @param sqlOrNamedSql
+	 * @param sqlOrSqlId
 	 * @param dataSet       支持List<List>、List<Object[]>(sql中?传参) ;List<VO>、List<Map>
 	 *                      形式(sql中:paramName传参)
 	 * @param batchSize
@@ -726,9 +726,9 @@ public class SqlToyDaoSupport {
 	 * @param dataSource
 	 * @return
 	 */
-	protected Long batchUpdate(final String sqlOrNamedSql, final List dataSet, final int batchSize,
+	protected Long batchUpdate(final String sqlOrSqlId, final List dataSet, final int batchSize,
 			final Boolean autoCommit, final DataSource dataSource) {
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sqlOrNamedSql, SqlType.update,
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sqlOrSqlId, SqlType.update,
 				getDialect(dataSource));
 		return dialectFactory.batchUpdate(sqlToyContext, sqlToyConfig, dataSet, batchSize, null, null, autoCommit,
 				getDataSource(dataSource, sqlToyConfig));
@@ -750,35 +750,35 @@ public class SqlToyDaoSupport {
 
 	/**
 	 * @todo 以entity对象的属性给sql中的:named 传参数，进行查询，并返回entityClass类型的集合
-	 * @param sqlOrNamedSql
+	 * @param sqlOrSqlId
 	 * @param entity
 	 * @return
 	 */
-	protected <T extends Serializable> List<T> findBySql(final String sqlOrNamedSql, final T entity) {
-		return (List<T>) findByQuery(new QueryExecutor(sqlOrNamedSql, entity)).getRows();
+	protected <T extends Serializable> List<T> findBySql(final String sqlOrSqlId, final T entity) {
+		return (List<T>) findByQuery(new QueryExecutor(sqlOrSqlId, entity)).getRows();
 	}
 
-	protected <T> List<T> findBySql(final String sqlOrNamedSql, final Map<String, Object> paramsMap,
-			final Class<T> voClass) {
+	protected <T> List<T> findBySql(final String sqlOrSqlId, final Map<String, Object> paramsMap,
+			final Class<T> resultType) {
 		return (List<T>) findByQuery(
-				new QueryExecutor(sqlOrNamedSql, (paramsMap == null) ? MapKit.map() : paramsMap).resultType(voClass))
+				new QueryExecutor(sqlOrSqlId, (paramsMap == null) ? MapKit.map() : paramsMap).resultType(resultType))
 				.getRows();
 	}
 
 	/**
 	 * @TODO 查询集合
 	 * @param <T>
-	 * @param sqlOrNamedSql
+	 * @param sqlOrSqlId
 	 * @param paramsNamed
 	 * @param paramsValue
-	 * @param voClass       分null(返回二维List)、voClass、HashMap.class、LinkedHashMap.class等
+	 * @param resultType       分null(返回二维List)、voClass、HashMap.class、LinkedHashMap.class等
 	 * @return
 	 */
-	protected <T> List<T> findBySql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue,
-			final Class<T> voClass) {
-		QueryExecutor query = new QueryExecutor(sqlOrNamedSql, paramsNamed, paramsValue);
-		if (voClass != null) {
-			query.resultType(voClass);
+	protected <T> List<T> findBySql(final String sqlOrSqlId, final String[] paramsNamed, final Object[] paramsValue,
+			final Class<T> resultType) {
+		QueryExecutor query = new QueryExecutor(sqlOrSqlId, paramsNamed, paramsValue);
+		if (resultType != null) {
+			query.resultType(resultType);
 		}
 		return (List<T>) findByQuery(query).getRows();
 	}
@@ -844,59 +844,59 @@ public class SqlToyDaoSupport {
 	 * @todo 指定sql和参数名称以及名称对应的值和返回结果的类型(类型可以是java.util.HashMap),进行分页查询
 	 *       sql可以是一个具体的语句也可以是xml中定义的sqlId
 	 * @param page
-	 * @param sqlOrNamedSql
+	 * @param sqlOrSqlId
 	 * @param paramsNamed
 	 * @param paramsValue
-	 * @param voClass(null则返回List<List>二维集合,HashMap.class:则返回List<HashMap<columnLabel,columnValue>>)
+	 * @param resultType(null则返回List<List>二维集合,HashMap.class:则返回List<HashMap<columnLabel,columnValue>>)
 	 * @return
 	 */
-	protected <T> Page<T> findPageBySql(final Page page, final String sqlOrNamedSql, final String[] paramsNamed,
-			final Object[] paramsValue, Class<T> voClass) {
-		QueryExecutor query = new QueryExecutor(sqlOrNamedSql, paramsNamed, paramsValue);
-		if (voClass != null) {
-			query.resultType(voClass);
+	protected <T> Page<T> findPageBySql(final Page page, final String sqlOrSqlId, final String[] paramsNamed,
+			final Object[] paramsValue, Class<T> resultType) {
+		QueryExecutor query = new QueryExecutor(sqlOrSqlId, paramsNamed, paramsValue);
+		if (resultType != null) {
+			query.resultType(resultType);
 		}
 		return (Page<T>) findPageByQuery(page, query).getPageResult();
 	}
 
-	protected <T extends Serializable> Page<T> findPageBySql(final Page page, final String sqlOrNamedSql,
+	protected <T extends Serializable> Page<T> findPageBySql(final Page page, final String sqlOrSqlId,
 			final T entity) {
-		return (Page<T>) findPageByQuery(page, new QueryExecutor(sqlOrNamedSql, entity)).getPageResult();
+		return (Page<T>) findPageByQuery(page, new QueryExecutor(sqlOrSqlId, entity)).getPageResult();
 	}
 
-	protected <T> Page<T> findPageBySql(final Page page, final String sqlOrNamedSql,
-			final Map<String, Object> paramsMap, Class<T> voClass) {
-		return (Page<T>) findPageByQuery(page, new QueryExecutor(sqlOrNamedSql, paramsMap).resultType(voClass))
+	protected <T> Page<T> findPageBySql(final Page page, final String sqlOrSqlId,
+			final Map<String, Object> paramsMap, Class<T> resultType) {
+		return (Page<T>) findPageByQuery(page, new QueryExecutor(sqlOrSqlId, paramsMap).resultType(resultType))
 				.getPageResult();
 	}
 
-	protected <T> List<T> findTopBySql(final String sqlOrNamedSql, final Map<String, Object> paramsMap,
-			final Class<T> voClass, final double topSize) {
+	protected <T> List<T> findTopBySql(final String sqlOrSqlId, final Map<String, Object> paramsMap,
+			final Class<T> resultType, final double topSize) {
 		return (List<T>) findTopByQuery(
-				new QueryExecutor(sqlOrNamedSql, (paramsMap == null) ? MapKit.map() : paramsMap).resultType(voClass),
+				new QueryExecutor(sqlOrSqlId, (paramsMap == null) ? MapKit.map() : paramsMap).resultType(resultType),
 				topSize).getRows();
 	}
 
 	/**
 	 * @todo 取符合条件的结果前多少数据,topSize>1 则取整数返回记录数量，topSize<1 则按比例返回结果记录(topSize必须是大于0)
-	 * @param sqlOrNamedSql
+	 * @param sqlOrSqlId
 	 * @param paramsNamed
 	 * @param paramsValue
-	 * @param voClass(null则返回List<List>二维集合,HashMap.class:则返回List<HashMap<columnLabel,columnValue>>)
+	 * @param resultType(null则返回List<List>二维集合,HashMap.class:则返回List<HashMap<columnLabel,columnValue>>)
 	 * @param topSize                                                                                >1
 	 *                                                                                               取整数部分，<1
 	 *                                                                                               则表示按比例获取
 	 * @return
 	 */
-	protected <T> List<T> findTopBySql(final String sqlOrNamedSql, final String[] paramsNamed,
-			final Object[] paramsValue, final Class<T> voClass, final double topSize) {
-		return (List<T>) findTopByQuery(new QueryExecutor(sqlOrNamedSql, paramsNamed, paramsValue).resultType(voClass),
+	protected <T> List<T> findTopBySql(final String sqlOrSqlId, final String[] paramsNamed,
+			final Object[] paramsValue, final Class<T> resultType, final double topSize) {
+		return (List<T>) findTopByQuery(new QueryExecutor(sqlOrSqlId, paramsNamed, paramsValue).resultType(resultType),
 				topSize).getRows();
 	}
 
-	protected <T extends Serializable> List<T> findTopBySql(final String sqlOrNamedSql, final T entity,
+	protected <T extends Serializable> List<T> findTopBySql(final String sqlOrSqlId, final T entity,
 			final double topSize) {
-		return (List<T>) findTopByQuery(new QueryExecutor(sqlOrNamedSql, entity), topSize).getRows();
+		return (List<T>) findTopByQuery(new QueryExecutor(sqlOrSqlId, entity), topSize).getRows();
 	}
 
 	/**
@@ -932,17 +932,17 @@ public class SqlToyDaoSupport {
 		return result;
 	}
 
-	protected <T> List<T> getRandomResult(final String sqlOrNamedSql, final Map<String, Object> paramsMap,
-			Class<T> voClass, final double randomCount) {
+	protected <T> List<T> getRandomResult(final String sqlOrSqlId, final Map<String, Object> paramsMap,
+			Class<T> resultType, final double randomCount) {
 		return (List<T>) getRandomResult(
-				new QueryExecutor(sqlOrNamedSql, (paramsMap == null) ? MapKit.map() : paramsMap).resultType(voClass),
+				new QueryExecutor(sqlOrSqlId, (paramsMap == null) ? MapKit.map() : paramsMap).resultType(resultType),
 				randomCount).getRows();
 	}
 
-	// voClass(null则返回List<List>二维集合,HashMap.class:则返回List<HashMap<columnLabel,columnValue>>)
-	protected <T> List<T> getRandomResult(final String sqlOrNamedSql, final String[] paramsNamed,
-			final Object[] paramsValue, Class<T> voClass, final double randomCount) {
-		return (List<T>) getRandomResult(new QueryExecutor(sqlOrNamedSql, paramsNamed, paramsValue).resultType(voClass),
+	// resultType(null则返回List<List>二维集合,HashMap.class:则返回List<HashMap<columnLabel,columnValue>>)
+	protected <T> List<T> getRandomResult(final String sqlOrSqlId, final String[] paramsNamed,
+			final Object[] paramsValue, Class<T> resultType, final double randomCount) {
+		return (List<T>) getRandomResult(new QueryExecutor(sqlOrSqlId, paramsNamed, paramsValue).resultType(resultType),
 				randomCount).getRows();
 	}
 
@@ -1732,7 +1732,6 @@ public class SqlToyDaoSupport {
 		return (List<T>) findEntity(entityClass, entityQuery, entityClass);
 	}
 
-	@SuppressWarnings("unchecked")
 	protected <T> List<T> findEntity(Class entityClass, EntityQuery entityQuery, Class<T> resultType) {
 		if (null == entityClass) {
 			throw new IllegalArgumentException("findEntityList entityClass值不能为空!");
@@ -1754,7 +1753,6 @@ public class SqlToyDaoSupport {
 		return (Page<T>) findPageEntity(page, entityClass, entityQuery, entityClass);
 	}
 
-	@SuppressWarnings("unchecked")
 	protected <T> Page<T> findPageEntity(Page page, Class entityClass, EntityQuery entityQuery, Class<T> resultType) {
 		if (null == entityClass || null == page) {
 			throw new IllegalArgumentException("findPageEntity entityClass、page值不能为空!");

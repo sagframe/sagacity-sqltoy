@@ -29,6 +29,8 @@ public class TenantFilterInterceptor implements SqlInterceptor {
 		if (sqlToyContext.getUnifyFieldsHandler() == null || entityClass == null) {
 			return sqlToyResult;
 		}
+		// 根据表名获取pojo的信息
+		// EntityMeta entityMeta = sqlToyContext.getEntityMeta(tableName);
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entityClass);
 		// 不存在租户过滤控制
 		if (entityMeta.getTenantField() == null) {

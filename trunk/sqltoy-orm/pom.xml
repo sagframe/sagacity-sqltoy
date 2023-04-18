@@ -1,14 +1,14 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sagframe</groupId>
-	<version>5.2.43</version>
+	<version>5.2.44</version>
 	<name>sagacity-sqltoy</name>
 	<description>sagacity-sqltoy</description>
 	<artifactId>sagacity-sqltoy</artifactId>
 	<url>https://github.com/sagframe/sagacity-sqltoy</url>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<spring-framework.version>5.3.26</spring-framework.version>
+		<spring-framework.version>5.3.27</spring-framework.version>
 		<spring-data-redis.version>2.7.10</spring-data-redis.version>
 		<spring-data-mongo.version>3.4.10</spring-data-mongo.version>
 		<ojdbc.version>21.9.0.0</ojdbc.version>
@@ -16,9 +16,9 @@
 		<httpclient.version>4.5.14</httpclient.version>
 		<httpclient-httpmime.version>4.5.14</httpclient-httpmime.version>
 		<httpclient-core.version>4.4.16</httpclient-core.version>
-		<elastic-rest-client.version>8.6.2</elastic-rest-client.version>
-		<fastjson.version>2.0.26</fastjson.version>
-		<mongo.version>3.12.12</mongo.version>
+		<elastic-rest-client.version>8.7.0</elastic-rest-client.version>
+		<fastjson.version>2.0.28</fastjson.version>
+		<mongo.version>3.12.13</mongo.version>
 		<junit-jupiter.version>5.9.2</junit-jupiter.version>
 		<junit-platform.version>1.9.2</junit-platform.version>
 		<slf4j.version>2.0.7</slf4j.version>
@@ -26,7 +26,7 @@
 		<h2.version>2.1.214</h2.version>
 		<lombok.version>1.18.26</lombok.version>
 		<taos-jdbcdriver.version>3.1.0</taos-jdbcdriver.version>
-		<druid.version>1.2.16</druid.version>
+		<druid.version>1.2.17</druid.version>
 		<transmittable-thread-local>2.14.2</transmittable-thread-local>
 	</properties>
 	<licenses>

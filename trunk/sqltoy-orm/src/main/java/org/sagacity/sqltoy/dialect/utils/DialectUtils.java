@@ -228,7 +228,7 @@ public class DialectUtils {
 	 * @param sqlToyConfig
 	 * @param sql
 	 * @param paramsValue
-	 * @param rowCallbackHandler
+	 * @param extend
 	 * @param decryptHandler     解密
 	 * @param conn
 	 * @param dbType
