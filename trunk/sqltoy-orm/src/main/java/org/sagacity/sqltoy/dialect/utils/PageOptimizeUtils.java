@@ -41,6 +41,7 @@ public class PageOptimizeUtils {
 	 * @return
 	 * @throws Exception
 	 */
+	@SuppressWarnings("rawtypes")
 	public static String generateOptimizeKey(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
 			final QueryExecutor queryExecutor, PageOptimize pageOptimize) throws Exception {
 		// 没有开放分页优化或sql id为null都不执行优化操作
@@ -72,7 +73,7 @@ public class PageOptimizeUtils {
 			}
 			if (value == null) {
 				cacheKey.append("null");
-			} else if ((value instanceof Object[]) || value.getClass().isArray() || (value instanceof List)) {
+			} else if ((value instanceof Object[]) || value.getClass().isArray() || (value instanceof List)) {		
 				Object[] arrayValue = (value instanceof List) ? ((List) value).toArray()
 						: CollectionUtil.convertArray(value);
 				cacheKey.append("[");

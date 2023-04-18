@@ -44,6 +44,7 @@ import org.slf4j.LoggerFactory;
  * @version v1.0, Date:2020-11-6
  * @modify 2020-11-6,修改说明
  */
+@SuppressWarnings({ "rawtypes" })
 public class KingbaseDialect implements Dialect {
 
 	/**

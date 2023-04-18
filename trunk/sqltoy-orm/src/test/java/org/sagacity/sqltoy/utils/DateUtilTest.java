@@ -53,10 +53,6 @@ public class DateUtilTest {
 	public void testDateAdd() throws ParseException {
 		System.err.println(DateUtil.addMonth("2021-12-11", 2));
 		System.err.println(DateUtil.addYear("2018-12-11", 2));
-		System.err.println( DateUtil.formatDate(DateUtil.getNowTime(), "HH:mm:ss"));
-		System.err.println( DateUtil.formatDate(DateUtil.getNowTime(), "yyyy-MM-dd"));
-		System.err.println( DateUtil.formatDate(DateUtil.getNowTime(), "yyyy-MM-dd HH:mm:ss"));
-		System.err.println( DateUtil.formatDate(DateUtil.getNowTime(), "yyyy-MM-dd HH:mm:ss.SSS"));
 
 	}
 }

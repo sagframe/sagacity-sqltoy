@@ -79,20 +79,20 @@ public interface SqlToyLazyDao {
 
 	/**
 	 * @todo 获取符合条件的查询对应的记录数量
-	 * @param sqlOrNamedQuery
+	 * @param sqlOrSqlId
 	 * @param paramsNamed
 	 * @param paramsValue
 	 * @return Long 查询符合条件的记录数量
 	 */
-	public Long getCount(String sqlOrNamedQuery, String[] paramsNamed, Object[] paramsValue);
+	public Long getCount(String sqlOrSqlId, String[] paramsNamed, Object[] paramsValue);
 
 	/**
 	 * @TODO 通过map传参获取记录数量
-	 * @param sqlOrNamedQuery
+	 * @param sqlOrSqlId
 	 * @param paramsMap
 	 * @return Long 查询符合条件的记录数量
 	 */
-	public Long getCount(String sqlOrNamedQuery, Map<String, Object> paramsMap);
+	public Long getCount(String sqlOrSqlId, Map<String, Object> paramsMap);
 
 	/**
 	 * @TODO 通过POJO产生count语句
@@ -317,8 +317,8 @@ public interface SqlToyLazyDao {
 	 * @TODO 通过EntityQuery模式加载单条记录
 	 * @param <T>
 	 * @param entityClass
-	 * @param entityQuery 例如:EntityQuery.create().select(a,b,c).where("tenantId=? and
-	 *                    staffId=?).values("1","S0001")
+	 * @param entityQuery 例如:EntityQuery.create().select(a,b,c).where("tenantId=?
+	 *                    and staffId=?).values("1","S0001")
 	 * @return
 	 */
 	public <T extends Serializable> T loadEntity(Class<T> entityClass, EntityQuery entityQuery);
@@ -397,50 +397,50 @@ public interface SqlToyLazyDao {
 	/**
 	 * @TODO 根据id集合批量加载对象
 	 * @param <T>
-	 * @param voClass
+	 * @param entityClass
 	 * @param ids
 	 * @return
 	 */
-	public <T extends Serializable> List<T> loadByIds(final Class<T> voClass, Object... ids);
+	public <T extends Serializable> List<T> loadByIds(final Class<T> entityClass, Object... ids);
 
 	/**
 	 * @TODO 根据id集合批量加载对象,并加锁
 	 * @param <T>
-	 * @param voClass
+	 * @param entityClass
 	 * @param lockMode
 	 * @param ids
 	 * @return
 	 */
-	public <T extends Serializable> List<T> loadByIds(final Class<T> voClass, final LockMode lockMode, Object... ids);
+	public <T extends Serializable> List<T> loadByIds(final Class<T> entityClass, final LockMode lockMode, Object... ids);
 
 	/**
 	 * @todo 通过sql获取单条记录
-	 * @param sqlOrNamedSql 直接代码中写的sql或者xml中定义的sql id
+	 * @param sqlOrSqlId  直接代码中写的sql或者xml中定义的sql id
 	 * @param paramsNamed
 	 * @param paramsValue
-	 * @param voClass       可以是vo、dto、Map(默认驼峰命名)
+	 * @param resultType     可以是vo、dto、Map(默认驼峰命名)
 	 * @return
 	 */
-	public <T> T loadBySql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue,
-			final Class<T> voClass);
+	public <T> T loadBySql(final String sqlOrSqlId, final String[] paramsNamed, final Object[] paramsValue,
+			final Class<T> resultType);
 
 	/**
 	 * @TODO 通过map传参模式获取单条对象记录
 	 * @param <T>
-	 * @param sqlOrNamedSql 可以直接传sql语句，也可以是xml中定义的sql id
+	 * @param sqlOrSqlId 可以直接传sql语句，也可以是xml中定义的sql id
 	 * @param paramsMap
-	 * @param voClass       可以是vo、dto、Map(默认驼峰命名)
+	 * @param resultType    可以是vo、dto、Map(默认驼峰命名)
 	 * @return
 	 */
-	public <T> T loadBySql(final String sqlOrNamedSql, final Map<String, Object> paramsMap, final Class<T> voClass);
+	public <T> T loadBySql(final String sqlOrSqlId, final Map<String, Object> paramsMap, final Class<T> resultType);
 
 	/**
 	 * @todo 通过对象实体传参数,框架结合sql中的参数名称来映射对象属性取值
-	 * @param sqlOrNamedSql
+	 * @param sqlOrSqlId
 	 * @param entity
 	 * @return
 	 */
-	public <T extends Serializable> T loadBySql(final String sqlOrNamedSql, final T entity);
+	public <T extends Serializable> T loadBySql(final String sqlOrSqlId, final T entity);
 
 	/**
 	 * @TODO 根据QueryExecutor来链式操作灵活定义查询sql、条件、数据源等
@@ -451,30 +451,30 @@ public interface SqlToyLazyDao {
 
 	/**
 	 * @TODO 获取查询结果的第一条、第一列的值，一般用select max(x) from 等
-	 * @param sqlOrNamedSql
+	 * @param sqlOrSqlId
 	 * @param paramsNamed
 	 * @param paramsValue
 	 * @return
 	 * @see #getSingleValue(String, Map)
 	 */
 	@Deprecated
-	public Object getSingleValue(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue);
+	public Object getSingleValue(final String sqlOrSqlId, final String[] paramsNamed, final Object[] paramsValue);
 
 	/*
-	 * @see getSingleValue(final String sqlOrNamedSql, final String[] paramsNamed,
+	 * @see getSingleValue(final String sqlOrSqlId, final String[] paramsNamed,
 	 * final Object[] paramsValue)
 	 */
-	public Object getSingleValue(final String sqlOrNamedSql, final Map<String, Object> paramsMap);
+	public Object getSingleValue(final String sqlOrSqlId, final Map<String, Object> paramsMap);
 
 	/**
 	 * @TODO 获取查询结果的第一条、第一列的值，一般用select max(x) from 等
 	 * @param <T>
-	 * @param sqlOrNamedSql
+	 * @param sqlOrSqlId
 	 * @param paramsMap
 	 * @param resultType
 	 * @return
 	 */
-	public <T> T getSingleValue(final String sqlOrNamedSql, final Map<String, Object> paramsMap,
+	public <T> T getSingleValue(final String sqlOrSqlId, final Map<String, Object> paramsMap,
 			final Class<T> resultType);
 
 	/**
@@ -488,11 +488,11 @@ public interface SqlToyLazyDao {
 	/**
 	 * @todo 通过对象传参数,简化paramName[],paramValue[] 模式传参
 	 * @param <T>
-	 * @param sqlOrNamedSql 可以是具体sql也可以是对应xml中的sqlId
-	 * @param entity        通过对象传参数,并按对象类型返回结果
+	 * @param sqlOrSqlId 可以是具体sql也可以是对应xml中的sqlId
+	 * @param entity     通过对象传参数,并按对象类型返回结果
 	 * @return
 	 */
-	public <T extends Serializable> List<T> findBySql(final String sqlOrNamedSql, final T entity);
+	public <T extends Serializable> List<T> findBySql(final String sqlOrSqlId, final T entity);
 
 	/**
 	 * @todo 通过给定sql、sql中的参数、参数的数值以及返回结果的对象类型进行条件查询
@@ -500,12 +500,12 @@ public interface SqlToyLazyDao {
 	 * @param paramsNamed 如果sql是select * from table where xxx=?
 	 *                    问号传参模式，paramNamed设置为null
 	 * @param paramsValue 对应Named参数的值
-	 * @param voClass     返回结果List中的对象类型(可以是VO、null:表示返回List<List>;HashMap.class(驼峰命名),Array.class
+	 * @param resultType     返回结果List中的对象类型(可以是VO、null:表示返回List<List>;HashMap.class(驼峰命名),Array.class
 	 *                    返回List<Object[])
 	 * @return
 	 */
 	public <T> List<T> findBySql(final String sqlOrSqlId, final String[] paramsNamed, final Object[] paramsValue,
-			final Class<T> voClass);
+			final Class<T> resultType);
 
 	/**
 	 * @TODO 提供基于Map传参的查询5.1.34+ 开始支持 findBySql("select 单列 from
@@ -513,10 +513,10 @@ public interface SqlToyLazyDao {
 	 * @param <T>
 	 * @param sqlOrSqlId
 	 * @param paramsMap
-	 * @param voClass    可以是vo、dto、Map(默认驼峰命名)
+	 * @param resultType    可以是vo、dto、Map(默认驼峰命名)
 	 * @return
 	 */
-	public <T> List<T> findBySql(final String sqlOrSqlId, final Map<String, Object> paramsMap, final Class<T> voClass);
+	public <T> List<T> findBySql(final String sqlOrSqlId, final Map<String, Object> paramsMap, final Class<T> resultType);
 
 	/**
 	 * @TODO 将查询结果直接按二维List返回
@@ -540,128 +540,127 @@ public interface SqlToyLazyDao {
 	/**
 	 * @todo 普通sql分页查询
 	 * @param page
-	 * @param sqlOrNamedSql
+	 * @param sqlOrSqlId
 	 * @param paramsNamed
 	 * @param paramValues
-	 * @param voClass       返回结果类型(VO.class,null表示返回二维List,Map.class(驼峰命名),LinkedHashMap.class,Array.class)
+	 * @param resultType     返回结果类型(VO.class,null表示返回二维List,Map.class(驼峰命名),LinkedHashMap.class,Array.class)
 	 * @return
 	 */
-	public <T> Page<T> findPageBySql(final Page page, final String sqlOrNamedSql, final String[] paramsNamed,
-			final Object[] paramValues, final Class<T> voClass);
+	public <T> Page<T> findPageBySql(final Page page, final String sqlOrSqlId, final String[] paramsNamed,
+			final Object[] paramValues, final Class<T> resultType);
 
 	/**
 	 * @TODO 提供基于Map传参的分页查询
 	 * @param <T>
 	 * @param page
-	 * @param sqlOrNamedSql
+	 * @param sqlOrSqlId
 	 * @param paramsMap
-	 * @param voClass       可以是vo、dto、Map(默认驼峰命名)
+	 * @param resultType    可以是vo、dto、Map(默认驼峰命名)
 	 * @return
 	 */
-	public <T> Page<T> findPageBySql(final Page page, final String sqlOrNamedSql, final Map<String, Object> paramsMap,
-			final Class<T> voClass);
+	public <T> Page<T> findPageBySql(final Page page, final String sqlOrSqlId, final Map<String, Object> paramsMap,
+			final Class<T> resultType);
 
 	/**
 	 * @TODO 通过VO对象传参模式的分页，返回结果是VO类型的集合
 	 * @param <T>
 	 * @param page
-	 * @param sqlOrNamedSql
+	 * @param sqlOrSqlId
 	 * @param entity
 	 * @return
 	 */
-	public <T extends Serializable> Page<T> findPageBySql(final Page page, final String sqlOrNamedSql, final T entity);
+	public <T extends Serializable> Page<T> findPageBySql(final Page page, final String sqlOrSqlId, final T entity);
 
 	/**
 	 * @TODO 通过条件参数名称和value值模式分页查询，将分页结果按二维List返回
 	 * @param page
-	 * @param sqlOrNamedSql
+	 * @param sqlOrSqlId
 	 * @param paramsNamed
 	 * @param paramValues
 	 * @return
 	 */
-	public Page findPageBySql(final Page page, final String sqlOrNamedSql, final String[] paramsNamed,
+	public Page findPageBySql(final Page page, final String sqlOrSqlId, final String[] paramsNamed,
 			final Object[] paramValues);
 
 	/**
 	 * @todo 取记录的前多少条记录
-	 * @param sqlOrNamedSql
-	 * @param paramsNamed   如果sql是select * from table where xxx=?
-	 *                      问号传参模式，paramNamed设置为null
+	 * @param sqlOrSqlId
+	 * @param paramsNamed 如果sql是select * from table where xxx=?
+	 *                    问号传参模式，paramNamed设置为null
 	 * @param paramValues
-	 * @param voClass       返回结果List中的对象类型(可以是VO、null:表示返回List<List>;HashMap.class
-	 *                      (默认驼峰命名))
-	 * @param topSize       (大于1则取固定数量的记录，小于1，则表示按比例提取)
+	 * @param resultType     返回结果List中的对象类型(可以是VO、null:表示返回List<List>;HashMap.class
+	 *                    (默认驼峰命名))
+	 * @param topSize     (大于1则取固定数量的记录，小于1，则表示按比例提取)
 	 * @return
 	 */
-	public <T> List<T> findTopBySql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramValues,
-			final Class<T> voClass, final double topSize);
+	public <T> List<T> findTopBySql(final String sqlOrSqlId, final String[] paramsNamed, final Object[] paramValues,
+			final Class<T> resultType, final double topSize);
 
 	/**
 	 * @TODO 提供基于Map传参的top查询
 	 * @param <T>
-	 * @param sqlOrNamedSql
+	 * @param sqlOrSqlId
 	 * @param paramsMap
-	 * @param voClass       可以是vo、dto、Map(默认驼峰命名)
+	 * @param resultType    可以是vo、dto、Map(默认驼峰命名)
 	 * @param topSize
 	 * @return
 	 */
-	public <T> List<T> findTopBySql(final String sqlOrNamedSql, final Map<String, Object> paramsMap,
-			final Class<T> voClass, final double topSize);
+	public <T> List<T> findTopBySql(final String sqlOrSqlId, final Map<String, Object> paramsMap,
+			final Class<T> resultType, final double topSize);
 
 	/**
 	 * @todo 基于对象传参数模式(内部会根据sql中的参数提取对象对应属性的值),并返回对象对应类型的List
 	 * @param <T>
-	 * @param sqlOrNamedSql
+	 * @param sqlOrSqlId
 	 * @param entity
-	 * @param topSize       (大于1则取固定数量的记录，小于1，则表示按比例提取)
+	 * @param topSize    (大于1则取固定数量的记录，小于1，则表示按比例提取)
 	 * @return
 	 */
-	public <T extends Serializable> List<T> findTopBySql(final String sqlOrNamedSql, final T entity,
-			final double topSize);
+	public <T extends Serializable> List<T> findTopBySql(final String sqlOrSqlId, final T entity, final double topSize);
 
 	/*
 	 * 用QueryExecutor组织查询逻辑
 	 * 
-	 * @see findTopBySql(String sqlOrNamedSql, T entity, double topSize)
+	 * @see findTopBySql(String sqlOrSqlId, T entity, double topSize)
 	 */
 	public QueryResult findTopByQuery(final QueryExecutor queryExecutor, final double topSize);
 
 	/**
 	 * @TODO 通过对象传参模式取随机记录
 	 * @param <T>
-	 * @param sqlOrNamedSql
+	 * @param sqlOrSqlId
 	 * @param entity
-	 * @param randomCount   小于1表示按比例提取，大于1则按整数部分提取记录数量
+	 * @param randomCount 小于1表示按比例提取，大于1则按整数部分提取记录数量
 	 * @return
 	 */
-	public <T extends Serializable> List<T> getRandomResult(final String sqlOrNamedSql, final T entity,
+	public <T extends Serializable> List<T> getRandomResult(final String sqlOrSqlId, final T entity,
 			final double randomCount);
 
 	public QueryResult getRandomResult(final QueryExecutor queryExecutor, final double randomCount);
 
-	public <T> List<T> getRandomResult(final String sqlOrNamedSql, final String[] paramsNamed,
-			final Object[] paramsValue, final Class<T> voClass, final double randomCount);
+	public <T> List<T> getRandomResult(final String sqlOrSqlId, final String[] paramsNamed, final Object[] paramsValue,
+			final Class<T> resultType, final double randomCount);
 
 	/**
 	 * @TODO 提供基于Map传参的随机记录查询
 	 * @param <T>
-	 * @param sqlOrNamedSql
+	 * @param sqlOrSqlId
 	 * @param paramsMap
-	 * @param voClass       可以是vo、dto、Map(默认驼峰命名)
+	 * @param resultType     可以是vo、dto、Map(默认驼峰命名)
 	 * @param randomCount
 	 * @return
 	 */
-	public <T> List<T> getRandomResult(final String sqlOrNamedSql, final Map<String, Object> paramsMap,
-			final Class<T> voClass, final double randomCount);
+	public <T> List<T> getRandomResult(final String sqlOrSqlId, final Map<String, Object> paramsMap,
+			final Class<T> resultType, final double randomCount);
 
 	/**
 	 * @TODO 批量集合通过sql进行修改操作,调用:batchUpdate(sqlId,List)
-	 * @param sqlOrNamedSql
-	 * @param dataSet       支持List<List>、List<Object[]>(sql中?传参) ;List<VO>、List<Map>
-	 *                      形式(sql中:paramName传参)
+	 * @param sqlOrSqlId
+	 * @param dataSet    支持List<List>、List<Object[]>(sql中?传参) ;List<VO>、List<Map>
+	 *                   形式(sql中:paramName传参)
 	 * @return
 	 */
-	public Long batchUpdate(final String sqlOrNamedSql, final List dataSet);
+	public Long batchUpdate(final String sqlOrSqlId, final List dataSet);
 
 	/**
 	 * @todo 批量集合通过sql进行修改操作,调用:batchUpdate(sqlId,List,null,null)
@@ -669,12 +668,12 @@ public interface SqlToyLazyDao {
 	 *       <li>1、VO传参模式，即:batchUpdate(sql,List<VO> dataSet),sql中用:paramName</li>
 	 *       <li>2、List<List>模式，sql中直接用? 形式传参,弊端就是严格顺序</li>
 	 *       </p>
-	 * @param sqlOrNamedSql
-	 * @param dataSet       支持List<List>、List<Object[]>(sql中?传参) ;List<VO>、List<Map>
-	 *                      形式(sql中:paramName传参)
-	 * @param autoCommit    (一般为null)
+	 * @param sqlOrSqlId
+	 * @param dataSet    支持List<List>、List<Object[]>(sql中?传参) ;List<VO>、List<Map>
+	 *                   形式(sql中:paramName传参)
+	 * @param autoCommit (一般为null)
 	 */
-	public Long batchUpdate(final String sqlOrNamedSql, final List dataSet, final Boolean autoCommit);
+	public Long batchUpdate(final String sqlOrSqlId, final List dataSet, final Boolean autoCommit);
 
 	// sqltoy的updateFetch是jpa没有的，可以深入了解其原理，一次交互完成查询、锁定、修改并返回修改后结果
 	/**
@@ -687,28 +686,28 @@ public interface SqlToyLazyDao {
 
 	/**
 	 * @todo 执行sql,并返回被修改的记录数量
-	 * @param sqlOrNamedSql
+	 * @param sqlOrSqlId
 	 * @param entity
 	 * @return Long 数据库发生变更的记录数
 	 */
-	public Long executeSql(final String sqlOrNamedSql, final Serializable entity);
+	public Long executeSql(final String sqlOrSqlId, final Serializable entity);
 
 	/**
 	 * @TODO 通过数组传参执行sql,并返回更新记录量
-	 * @param sqlOrNamedSql
+	 * @param sqlOrSqlId
 	 * @param paramsNamed
 	 * @param paramsValue
 	 * @return
 	 */
-	public Long executeSql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue);
+	public Long executeSql(final String sqlOrSqlId, final String[] paramsNamed, final Object[] paramsValue);
 
 	/**
 	 * @TODO 提供基于Map传参的sql执行
-	 * @param sqlOrNamedSql
+	 * @param sqlOrSqlId
 	 * @param paramsMap
 	 * @return
 	 */
-	public Long executeSql(final String sqlOrNamedSql, final Map<String, Object> paramsMap);
+	public Long executeSql(final String sqlOrSqlId, final Map<String, Object> paramsMap);
 
 	/**
 	 * @todo 构造树形表的节点路径、层次等级、是否叶子节点等必要信息
@@ -802,12 +801,13 @@ public interface SqlToyLazyDao {
 	 */
 	@Deprecated
 	public String[] cacheMatchKeys(String matchRegex, CacheMatchFilter cacheMatchFilter);
-	
+
 	/**
 	 * update 2022-12-15 支持数组
+	 * 
 	 * @TODO 通过缓存将名称进行模糊匹配取得key的集合
 	 * @param cacheMatchFilter
-	 * @param matchRegexes 数组
+	 * @param matchRegexes     数组
 	 * @return
 	 */
 	public String[] cacheMatchKeys(CacheMatchFilter cacheMatchFilter, String... matchRegexes);
@@ -843,7 +843,8 @@ public interface SqlToyLazyDao {
 	 * @param ignoreProperties 忽略映射匹配的属性
 	 * @return
 	 */
-	public <T extends Serializable> List<T> convertType(List sourceList, Class<T> resultType,String... ignoreProperties);
+	public <T extends Serializable> List<T> convertType(List sourceList, Class<T> resultType,
+			String... ignoreProperties);
 
 	/**
 	 * @TODO 实现分页对象的类型转换
@@ -853,7 +854,8 @@ public interface SqlToyLazyDao {
 	 * @param ignoreProperties 忽略映射匹配的属性
 	 * @return
 	 */
-	public <T extends Serializable> Page<T> convertType(Page sourcePage, Class<T> resultType,String... ignoreProperties);
+	public <T extends Serializable> Page<T> convertType(Page sourcePage, Class<T> resultType,
+			String... ignoreProperties);
 
 	/**
 	 * @TODO 并行查询并返回一维List，有几个查询List中就包含几个结果对象，paramNames和paramValues是全部sql的条件参数的合集

@@ -93,7 +93,7 @@ public class ResultUtils {
 	 * @param sqlToyConfig
 	 * @param conn
 	 * @param rs
-	 * @param rowCallbackHandler
+	 * @param queryExecutorExtend
 	 * @param updateRowHandler
 	 * @param decryptHandler
 	 * @param startColIndex
@@ -1051,7 +1051,8 @@ public class ResultUtils {
 	 * @todo 对二维数据进行排序
 	 * @param sortList
 	 * @param orderCol
-	 * @param dataType
+	 * @param start
+	 * @param end
 	 * @param ascend
 	 * @return
 	 */
@@ -1201,7 +1202,7 @@ public class ResultUtils {
 	/**
 	 * @date 2018-5-26 优化缓存翻译，提供keyCode1,keyCode2,keyCode3 形式的多代码翻译
 	 * @todo 统一对key进行缓存翻译
-	 * @param translateExtend
+	 * @param extend
 	 * @param translateKeyMap
 	 * @param fieldValue
 	 * @return

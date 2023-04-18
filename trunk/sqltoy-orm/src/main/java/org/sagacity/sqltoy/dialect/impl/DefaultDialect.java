@@ -41,6 +41,7 @@ import org.sagacity.sqltoy.utils.SqlUtil;
  * @version v1.0, Date:2020-9-2
  * @modify 2020-9-2,修改说明
  */
+@SuppressWarnings({ "rawtypes" })
 public class DefaultDialect implements Dialect {
 	/**
 	 * 判定为null的函数
