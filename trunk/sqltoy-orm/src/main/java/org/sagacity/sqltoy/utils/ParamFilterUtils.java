@@ -293,11 +293,9 @@ public class ParamFilterUtils {
 			Object[] realMatched = null;
 			// 没有通过缓存匹配到具体key，代入默认值
 			if (matchedKeys.isEmpty()) {
-				// 未匹配使用指定的默认值
 				if (paramFilterModel.getCacheNotMatchedValue() != null) {
 					realMatched = new Object[] { paramFilterModel.getCacheNotMatchedValue() };
-				} // 直接返回名称检索关键词
-				else if (paramFilterModel.isCacheNotMatchedReturnSelf()) {
+				} else if (paramFilterModel.isCacheNotMatchedReturnSelf()) {
 					realMatched = new String[paramValueAry.size()];
 					paramValueAry.toArray(realMatched);
 				} else {
@@ -433,6 +431,8 @@ public class ParamFilterUtils {
 				cloneValue = LocalTime.of(date.getHour(), date.getMinute(), date.getSecond());
 			} else if (paramValue.getClass().isArray()) {
 				cloneValue = ((Object[]) paramValue).clone();
+			} else if (paramValue instanceof ArrayList) {
+				cloneValue = ((ArrayList) paramValue).clone();
 			} else {
 				cloneValue = paramValue;
 			}
@@ -529,6 +529,8 @@ public class ParamFilterUtils {
 			} else {
 				result = toNumber(paramValue, paramFilterModel.getDataType());
 			}
+		} else if ("to-string".equals(filterType)) {
+			result = toString(paramValue, paramFilterModel.getAddQuote());
 		} else if ("to-array".equals(filterType)) {
 			result = toArray(paramValue, paramFilterModel.getDataType());
 		} else if ("l-like".equals(filterType)) {
@@ -724,6 +726,76 @@ public class ParamFilterUtils {
 					result[i] = new BigInteger(value);
 				}
 			}
+		}
+		return result;
+	}
+
+	/**
+	 * @todo 转换数据为字符串
+	 * @param paramValue
+	 * @param addQuote   增加引号的类型:none(不增加)、single(单引号)、double(双引号)
+	 * @return
+	 */
+	private static Object toString(Object paramValue, String addQuote) {
+		if (paramValue == null) {
+			return null;
+		}
+		// 数组
+		if (paramValue.getClass().isArray()) {
+			List<String> result = new ArrayList<String>();
+			Object[] arrays = CollectionUtil.convertArray(paramValue);
+			for (int i = 0, n = arrays.length; i < n; i++) {
+				result.add(dataToString(arrays[i], addQuote));
+			}
+			String[] resultAry = new String[result.size()];
+			result.toArray(resultAry);
+			return resultAry;
+		} // 集合
+		else if (paramValue instanceof Collection) {
+			List<String> result = new ArrayList<String>();
+			Iterator iter = ((Collection) paramValue).iterator();
+			while (iter.hasNext()) {
+				result.add(dataToString(iter.next(), addQuote));
+			}
+			return result;
+		} else {
+			return dataToString(paramValue, addQuote);
+		}
+	}
+
+	// for toString方法
+	private static String dataToString(Object paramValue, String addQuote) {
+		if (paramValue == null) {
+			return null;
+		}
+		String result;
+		if (paramValue instanceof BigDecimal) {
+			result = ((BigDecimal) paramValue).toPlainString();
+		} else if (paramValue instanceof LocalTime) {
+			result = DateUtil.formatDate(paramValue, "HH:mm:ss");
+		} else if (paramValue instanceof LocalDate) {
+			result = DateUtil.formatDate(paramValue, "yyyy-MM-dd");
+		} else if ((paramValue instanceof LocalDateTime) || (paramValue instanceof Date)) {
+			result = DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss");
+		} else {
+			result = paramValue.toString();
+		}
+		if (addQuote == null) {
+			return result;
+		}
+		if (addQuote.equals("single")) {
+			// 已经加了单引号不再重复增加
+			if (result.startsWith("'") && result.endsWith("'")) {
+				return result;
+			}
+			return "'".concat(result).concat("'");
+		}
+		if (addQuote.equals("double")) {
+			// 已经加了双引号不再重复增加
+			if (result.startsWith("\"") && result.endsWith("\"")) {
+				return result;
+			}
+			return "\"".concat(result).concat("\"");
 		}
 		return result;
 	}

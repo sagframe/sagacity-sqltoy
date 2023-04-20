@@ -162,14 +162,6 @@ public class ParamFilterModel implements Serializable {
 	private CacheFilterModel[] cacheFilters;
 
 	/**
-	 * 反向缓存翻译，是否优先判断相等
-	 */
-	private boolean priorMatchEqual = false;
-
-	
-	private boolean cacheNotMatchedReturnSelf = true;
-
-	/**
 	 * to-date 的日期类型
 	 */
 	private String type;
@@ -178,6 +170,21 @@ public class ParamFilterModel implements Serializable {
 	 * to-in-arg 是否增加单引号
 	 */
 	private boolean singleQuote = true;
+
+	/**
+	 * to-string 是否需要增加单引号
+	 */
+	private String addQuote = "none";
+
+	/**
+	 * 反向缓存翻译，是否优先判断相等
+	 */
+	private boolean priorMatchEqual = false;
+
+	/**
+	 * 缓存未匹配到key，返回检索词自身
+	 */
+	private boolean cacheNotMatchedReturnSelf = true;
 
 	public String getFilterType() {
 		return filterType;
@@ -231,7 +238,7 @@ public class ParamFilterModel implements Serializable {
 	}
 
 	/**
-	 * @param excludesMap the excludesMap to set
+	 * @param excludeParam the excludesMap to set
 	 */
 	public void addExclude(String excludeParam) {
 		this.excludes.add(excludeParam.toLowerCase());
@@ -259,7 +266,7 @@ public class ParamFilterModel implements Serializable {
 	}
 
 	/**
-	 * @param incrementUnit the incrementUnit to set
+	 * @param timeUnit the incrementUnit to set
 	 */
 	public void setTimeUnit(TimeUnit timeUnit) {
 		this.timeUnit = timeUnit;
@@ -559,6 +566,14 @@ public class ParamFilterModel implements Serializable {
 
 	public void setCacheNotMatchedReturnSelf(boolean cacheNotMatchedReturnSelf) {
 		this.cacheNotMatchedReturnSelf = cacheNotMatchedReturnSelf;
+	}
+
+	public String getAddQuote() {
+		return addQuote;
+	}
+
+	public void setAddQuote(String addQuote) {
+		this.addQuote = addQuote;
 	}
 
 }

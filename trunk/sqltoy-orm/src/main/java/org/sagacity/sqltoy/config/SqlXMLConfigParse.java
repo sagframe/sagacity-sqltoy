@@ -338,7 +338,6 @@ public class SqlXMLConfigParse {
 			sqlToyConfig.setShowSql(Boolean.valueOf(sqlElt.getAttribute("debug")));
 		}
 		sqlToyConfig.setId(id);
-		//sqlToyConfig.setSqlType(sqlType);
 		// 为sql提供特定数据库的扩展
 		if (sqlElt.hasAttribute("dataSource")) {
 			sqlToyConfig.setDataSource(sqlElt.getAttribute("dataSource"));
@@ -780,6 +779,8 @@ public class SqlXMLConfigParse {
 							filterType = "neq";
 						} else if ("dateFormat".equals(filterType)) {
 							filterType = "date-format";
+						} else if ("to-str".equals(filterType)) {
+							filterType = "to-string";
 						}
 						filterModel.setFilterType(filterType);
 						parseFilterElt(sqlToyConfig, filterModel, filter, local);
@@ -882,6 +883,10 @@ public class SqlXMLConfigParse {
 		if (filter.hasAttribute("single-quote")) {
 			filterModel.setSingleQuote(Boolean.parseBoolean(filter.getAttribute("single-quote")));
 		}
+		// 用于to-string
+		if (filter.hasAttribute("add-quote")) {
+			filterModel.setAddQuote(filter.getAttribute("add-quote").toLowerCase());
+		}
 		// 分割符号
 		if (filter.hasAttribute("split-sign")) {
 			filterModel.setSplit(filter.getAttribute("split-sign"));
@@ -936,7 +941,6 @@ public class SqlXMLConfigParse {
 			if (filter.hasAttribute("cache-not-matched-value")) {
 				filterModel.setCacheNotMatchedValue(filter.getAttribute("cache-not-matched-value"));
 			}
-
 			// 缓存过滤未匹配上，返回检索词自身
 			if (filter.hasAttribute("unmatched-return-self")) {
 				filterModel.setCacheNotMatchedReturnSelf(

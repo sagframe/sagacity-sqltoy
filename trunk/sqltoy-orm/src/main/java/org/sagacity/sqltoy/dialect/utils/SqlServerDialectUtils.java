@@ -238,6 +238,8 @@ public class SqlServerDialectUtils {
 			boolean isStart = true;
 			int meter = 0;
 			String defaultValue;
+			int decimalLength;
+			int decimalScale;
 			for (int i = 0; i < rejectIdColumnSize; i++) {
 				fieldMeta = entityMeta.getFieldMeta(entityMeta.getRejectIdFieldArray()[i]);
 				// sqlserver不支持timestamp类型的数据进行插入赋值和变更
@@ -253,7 +255,15 @@ public class SqlServerDialectUtils {
 						sql.append("tv.").append(columnName);
 					} else {
 						sql.append(isNullFunction);
-						sql.append("(tv.").append(columnName);
+						// 解决decimal 类型小数位丢失问题
+						if (fieldMeta.getType() == java.sql.Types.DECIMAL) {
+							decimalLength = (fieldMeta.getLength() > 35) ? fieldMeta.getLength() : 35;
+							decimalScale = (fieldMeta.getScale() > 5) ? fieldMeta.getScale() : 5;
+							sql.append("(cast(tv.").append(columnName)
+									.append(" as decimal(" + decimalLength + "," + decimalScale + "))");
+						} else {
+							sql.append("(tv.").append(columnName);
+						}
 						sql.append(",ta.").append(columnName);
 						sql.append(")");
 					}

@@ -41,7 +41,7 @@ import org.sagacity.sqltoy.dialect.impl.ClickHouseDialect;
 import org.sagacity.sqltoy.dialect.impl.DB2Dialect;
 import org.sagacity.sqltoy.dialect.impl.DMDialect;
 import org.sagacity.sqltoy.dialect.impl.DefaultDialect;
-import org.sagacity.sqltoy.dialect.impl.GuassDBDialect;
+import org.sagacity.sqltoy.dialect.impl.GaussDBDialect;
 import org.sagacity.sqltoy.dialect.impl.ImpalaDialect;
 import org.sagacity.sqltoy.dialect.impl.KingbaseDialect;
 import org.sagacity.sqltoy.dialect.impl.MySqlDialect;
@@ -188,7 +188,7 @@ public class DialectFactory {
 		}
 		// 华为guassdb(postgresql 为蓝本的)
 		case DBType.GAUSSDB: {
-			dialectSqlWrapper = new GuassDBDialect();
+			dialectSqlWrapper = new GaussDBDialect();
 			break;
 		}
 		case DBType.IMPALA: {

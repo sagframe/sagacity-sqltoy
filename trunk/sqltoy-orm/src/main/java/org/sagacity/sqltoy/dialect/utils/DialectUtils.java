@@ -833,6 +833,8 @@ public class DialectUtils {
 		boolean convertBlob = (dbType == DBType.POSTGRESQL || dbType == DBType.GAUSSDB || dbType == DBType.KINGBASE);
 		boolean isMSsql = (dbType == DBType.SQLSERVER);
 		int meter = 0;
+		int decimalLength;
+		int decimalScale;
 		for (int i = 0, n = entityMeta.getRejectIdFieldArray().length; i < n; i++) {
 			fieldMeta = entityMeta.getFieldMeta(entityMeta.getRejectIdFieldArray()[i]);
 			// 排除sqlserver timestamp类型
@@ -852,7 +854,15 @@ public class DialectUtils {
 						sql.append("(cast(? as bytea),").append(columnName).append(" )");
 					} else {
 						sql.append(nullFunction);
-						sql.append("(?,").append(columnName).append(")");
+						// 解决sqlserver decimal 类型小数位丢失问题
+						if (isMSsql && fieldMeta.getType() == java.sql.Types.DECIMAL) {
+							decimalLength = (fieldMeta.getLength() > 35) ? fieldMeta.getLength() : 35;
+							decimalScale = (fieldMeta.getScale() > 5) ? fieldMeta.getScale() : 5;
+							sql.append("(cast(? as decimal(" + decimalLength + "," + decimalScale + ")),")
+									.append(columnName).append(")");
+						} else {
+							sql.append("(?,").append(columnName).append(")");
+						}
 					}
 				}
 				meter++;
@@ -1357,7 +1367,7 @@ public class DialectUtils {
 		if (entityMeta.getIdArray() == null) {
 			return null;
 		}
-		if (result == null) {
+		if (result == null && pkIndex < fullParamValues.length) {
 			result = fullParamValues[pkIndex];
 		}
 		// 回置到entity 主键值

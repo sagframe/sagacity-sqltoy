@@ -39,12 +39,12 @@ import org.slf4j.LoggerFactory;
  * @version v1.0,Date:2020-6-9
  * @modify {Date:2020-6-9,初始创建}
  */
-public class GuassDBDialect implements Dialect {
+public class GaussDBDialect implements Dialect {
 
 	/**
 	 * 定义日志
 	 */
-	protected final Logger logger = LoggerFactory.getLogger(GuassDBDialect.class);
+	protected final Logger logger = LoggerFactory.getLogger(GaussDBDialect.class);
 
 	/**
 	 * 判定为null的函数
