@@ -24,6 +24,7 @@ import org.sagacity.sqltoy.dialect.model.SavePKStrategy;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
+import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtilsExt;
 
@@ -117,6 +118,9 @@ public class PostgreSqlDialectUtils {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		PKStrategy pkStrategy = entityMeta.getIdStrategy();
 		String sequence = "nextval('" + entityMeta.getSequence() + "')";
+		if (dbType == DBType.GAUSSDB) {
+			sequence = entityMeta.getSequence() + ".nextval";
+		}
 		// 从10版本开始支持identity
 		if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
 			// 伪造成sequence模式
@@ -133,6 +137,9 @@ public class PostgreSqlDialectUtils {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateField) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = "nextval('" + entityMeta.getSequence() + "')";
+						if (dbType == DBType.GAUSSDB) {
+							sequence = entityMeta.getSequence() + ".nextval";
+						}
 						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
 							// 伪造成sequence模式
 							pkStrategy = PKStrategy.SEQUENCE;
