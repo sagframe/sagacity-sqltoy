@@ -1,8 +1,10 @@
 package org.sagacity.sqltoy;
 
+import java.awt.List;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.LinkedHashMap;
@@ -45,6 +47,7 @@ public class SqlToyConstantsTest {
 		Map map = new HashMap<String, Object>();
 		map.put("1", null);
 		System.err.println("map="+map.containsKey("1"));
+		System.err.println(ArrayList.class.isAssignableFrom(List.class));
 	}
 
 	@Test

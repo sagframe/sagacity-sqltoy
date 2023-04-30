@@ -179,17 +179,19 @@ public class MapperUtils {
 	private static List invokeGetValues(List sourceList, Method[] getMethods) throws Exception {
 		List result = new ArrayList();
 		Object row;
-		for (int i = 0; i < sourceList.size(); i++) {
+		for (int i = 0, n = sourceList.size(); i < n; i++) {
 			row = sourceList.get(i);
-			List rowData = new ArrayList();
-			for (Method method : getMethods) {
-				if (method == null) {
-					rowData.add(null);
-				} else {
-					rowData.add(method.invoke(row));
+			if (row != null) {
+				List rowData = new ArrayList();
+				for (Method method : getMethods) {
+					if (method == null) {
+						rowData.add(null);
+					} else {
+						rowData.add(method.invoke(row));
+					}
 				}
+				result.add(rowData);
 			}
-			result.add(rowData);
 		}
 		return result;
 	}
@@ -383,9 +385,9 @@ public class MapperUtils {
 				if (realMethods[i].getGenericParameterTypes()[0] instanceof ParameterizedType) {
 					methodType = (Class) ((ParameterizedType) realMethods[i].getGenericParameterTypes()[0])
 							.getActualTypeArguments()[0];
-					// if(!methodType.isPrimitive())
 					methodGenTypes[i] = methodType;
-					if (realMethods[i].getParameterTypes()[0].equals(List.class)) {
+					if (realMethods[i].getParameterTypes()[0].equals(List.class)
+							|| realMethods[i].getParameterTypes()[0].equals(ArrayList.class)) {
 						isList[i] = Boolean.TRUE;
 					}
 				}
@@ -407,11 +409,11 @@ public class MapperUtils {
 					if (cellData != null && realMethods[j] != null) {
 						// 2023/4/22 待处理：需要考虑对象中嵌套子对象和List<DTO> 这种形式
 						// List<DTO>
-						if ((cellData instanceof List) && methodGenTypes[j] != null && isList[j]) {
+						if (methodGenTypes[j] != null && (cellData instanceof List) && isList[j]) {
 							cellList = (List) cellData;
 							if (!cellList.isEmpty()) {
 								// 类型一致直接赋值
-								if (cellList.get(0).getClass().equals(methodGenTypes[j])) {
+								if (cellList.get(0) != null && cellList.get(0).getClass().equals(methodGenTypes[j])) {
 									realMethods[j].invoke(bean, cellList);
 								} else if (deepIndex < 3) {
 									// 类型映射
