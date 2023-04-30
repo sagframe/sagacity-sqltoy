@@ -105,7 +105,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
  * @modify Date:2020-10-20 {findByQuery 增加lockMode,便于查询并锁定记录}
  */
 //新的模式不鼓励自己继承DaoSupport,一般情况下使用SqlToyLazyDao即可
-@SuppressWarnings("rawtypes")
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class SqlToyDaoSupport {
 	/**
 	 * 定义日志
@@ -1537,45 +1537,52 @@ public class SqlToyDaoSupport {
 			throw new IllegalArgumentException("缓存反向名称匹配key必须要提供cacheName和matchRegex值!");
 		}
 		CacheMatchExtend extendArgs = cacheMatchFilter.getCacheFilterArgs();
-		int[] nameIndexes = extendArgs.matchIndexs;
-		HashMap<String, Object[]> cacheDatas = this.sqlToyContext.getTranslateManager()
-				.getCacheData(extendArgs.cacheName, extendArgs.cacheType);
+		// 获取缓存数据
+		HashMap<String, Object[]> cacheDatas = getTranslateCache(extendArgs.cacheName, extendArgs.cacheType);
 		if (cacheDatas == null || cacheDatas.isEmpty()) {
 			logger.error("缓存cacheName={},cacheType={} 没有数据,cacheMatchKeys异常,请检查!", extendArgs.cacheName,
 					extendArgs.cacheType);
 			return new String[] {};
 		}
+		// 名称匹配在缓存的哪几列(正常1列，但部分场景要求:名称、别名 匹配等)
+		int[] nameIndexes = extendArgs.matchIndexs;
+		// 将传递匹配条件转小写
 		List<String> matchLowAry = new ArrayList<String>();
 		for (String str : matchRegexes) {
 			matchLowAry.add(str.toLowerCase().trim());
 		}
+		// 缓存key值列
 		int cacheKeyIndex = extendArgs.cacheKeyIndex;
-		List<String> matchedKeys = new ArrayList<String>();
+		// 最大允许匹配数量,缓存匹配一般用于in (?,?)形式的查询,in 参数有数量限制
+		int maxLimit = extendArgs.matchSize;
+		// 匹配到的key集合
+		Set<String> matchedKeys = new HashSet<String>();
 		String keyCode;
 		String matchStr;
-		int matchCnt = 0;
 		String[] matchWords;
 		Object compareValue;
 		// 是否优先判断相等
 		boolean priorMatchEqual = extendArgs.priorMatchEqual;
 		boolean hasFilter = (extendArgs.cacheFilter == null) ? false : true;
 		boolean include = true;
-		for (Object[] row : cacheDatas.values()) {
-			keyCode = row[cacheKeyIndex].toString();
-			include = true;
-			if (hasFilter) {
-				include = extendArgs.cacheFilter.doFilter(row);
-			}
-			if (include) {
-				skipLoop: for (int i = 0; i < matchLowAry.size(); i++) {
-					matchStr = matchLowAry.get(i);
-					// 优先匹配名称相同
-					if (priorMatchEqual) {
-						// key 相同
-						if (matchStr.equals(keyCode.toLowerCase())) {
+		// 优先匹配名称相同,名称相同直接剔除掉对比参数不再进行后续匹配
+		if (priorMatchEqual) {
+			String keyLow;
+			for (Object[] row : cacheDatas.values()) {
+				keyCode = row[cacheKeyIndex].toString();
+				include = true;
+				if (hasFilter) {
+					include = extendArgs.cacheFilter.doFilter(row);
+				}
+				if (include) {
+					keyLow = keyCode.toLowerCase();
+					skipLoop: for (int i = 0; i < matchLowAry.size(); i++) {
+						matchStr = matchLowAry.get(i);
+						// 模糊查询条件直接就跟key 相同
+						if (matchStr.equals(keyLow)) {
 							matchedKeys.add(keyCode);
+							// 剔除
 							matchLowAry.remove(i);
-							matchCnt++;
 							break;
 						}
 						// 名称相同
@@ -1583,27 +1590,55 @@ public class SqlToyDaoSupport {
 							compareValue = row[index];
 							if (compareValue != null && compareValue.toString().toLowerCase().equals(matchStr)) {
 								matchedKeys.add(keyCode);
+								// 剔除
 								matchLowAry.remove(i);
-								matchCnt++;
 								break skipLoop;
 							}
 						}
 					}
-					// like 匹配
-					matchWords = matchStr.split("\\s+");
-					for (int index : nameIndexes) {
-						compareValue = row[index];
-						if (compareValue != null
-								&& StringUtil.like(compareValue.toString().toLowerCase(), matchWords)) {
-							matchedKeys.add(keyCode);
-							matchCnt++;
-							break skipLoop;
-						}
+					// 完全匹配到相等、匹配量到最大量
+					if (matchLowAry.isEmpty() || matchedKeys.size() >= maxLimit) {
+						break;
 					}
 				}
-				// 不超过1000个(作为in条件值有限制)
-				if (matchLowAry.isEmpty() || matchCnt >= extendArgs.matchSize) {
-					break;
+			}
+		}
+		// 排除相等优先后，进行模糊like 匹配
+		if (!matchLowAry.isEmpty() && matchedKeys.size() < maxLimit) {
+			int likeArgSize = matchLowAry.size();
+			// 将匹配参数切割成分词数组
+			List<String[]> paramsMatchWords = new ArrayList<String[]>();
+			for (int i = 0; i < likeArgSize; i++) {
+				paramsMatchWords.add(matchLowAry.get(i).split("\\s+"));
+			}
+			for (Object[] row : cacheDatas.values()) {
+				keyCode = row[cacheKeyIndex].toString();
+				include = true;
+				// 已经存在无需再比较
+				if (matchedKeys.contains(keyCode)) {
+					include = false;
+				}
+				// 对缓存进行过滤(比如过滤本人授权访问机构下面的员工或当期状态为生效的员工)
+				if (hasFilter && include) {
+					include = extendArgs.cacheFilter.doFilter(row);
+				}
+				if (include) {
+					skipLoop: for (int i = 0; i < likeArgSize; i++) {
+						// like 匹配
+						matchWords = paramsMatchWords.get(i);
+						for (int index : nameIndexes) {
+							compareValue = row[index];
+							if (compareValue != null
+									&& StringUtil.like(compareValue.toString().toLowerCase(), matchWords)) {
+								matchedKeys.add(keyCode);
+								break skipLoop;
+							}
+						}
+					}
+					// 超出阈值跳出
+					if (matchedKeys.size() >= maxLimit) {
+						break;
+					}
 				}
 			}
 		}
@@ -2116,7 +2151,7 @@ public class SqlToyDaoSupport {
 					"调用convertType对单个对象进行POJO<-->DTO 转换过程中发现参数异常: source 和 resultType 不能为null!");
 		}
 		try {
-			return MapperUtils.map(sqlToyContext, source, resultType, ignoreProperties);
+			return MapperUtils.map(sqlToyContext, source, resultType, 0, ignoreProperties);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException(
@@ -2140,7 +2175,7 @@ public class SqlToyDaoSupport {
 					"调用convertType对集合进行POJO<-->DTO 转换过程中发现参数异常: sourceList 和 resultType 不能为null!");
 		}
 		try {
-			return MapperUtils.mapList(sqlToyContext, sourceList, resultType, ignoreProperties);
+			return MapperUtils.mapList(sqlToyContext, sourceList, resultType, 0, ignoreProperties);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException("将对象:" + sourceList.get(0).getClass().getName() + " 属性数据复制到:"

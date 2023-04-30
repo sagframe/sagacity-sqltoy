@@ -112,8 +112,10 @@ public class PostgreSqlDialectUtils {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		PKStrategy pkStrategy = entityMeta.getIdStrategy();
 		String sequence = "nextval('" + entityMeta.getSequence() + "')";
-		if (dbType == DBType.GAUSSDB) {
+		// 主表gaussdb情况下为了可以返回主键值，sequence模式下在gaussdb下执行了先查询并给主键做了赋值，所以此处修改主键策略为assign
+		if (dbType == DBType.GAUSSDB && pkStrategy.equals(PKStrategy.SEQUENCE)) {
 			sequence = entityMeta.getSequence() + ".nextval";
+			pkStrategy = PKStrategy.ASSIGN;
 		}
 		// 从10版本开始支持identity
 		if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {

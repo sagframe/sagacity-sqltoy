@@ -152,9 +152,9 @@ public class ParamFilterModel implements Serializable {
 	private TimeUnit timeUnit = TimeUnit.DAYS;
 
 	/**
-	 * 最大匹配数量为500
+	 * 最大匹配数量为1000
 	 */
-	private int cacheMappingMax = 500;
+	private int cacheMappingMax = 1000;
 
 	/**
 	 * 缓存条件过滤配置
