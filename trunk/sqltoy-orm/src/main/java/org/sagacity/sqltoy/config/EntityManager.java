@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -242,7 +243,7 @@ public class EntityManager {
 	 */
 	public synchronized EntityMeta parseEntityMeta(SqlToyContext sqlToyContext, Class entityClass, boolean isWarn,
 			boolean forCascade) {
-		if (entityClass == null || entityClass.equals(Object.class)) {
+		if (entityClass == null || entityClass.equals(Object.class) || entityClass.equals(Map.class)) {
 			return null;
 		}
 		String className = entityClass.getName();
@@ -398,8 +399,12 @@ public class EntityManager {
 				}
 			}
 		} catch (Exception e) {
-			logger.error("Sqltoy 解析Entity对象:[{}]发生错误,请检查对象注解是否正确!" + e.getMessage(), className);
-			throw e;
+			if (isWarn) {
+				logger.error("Sqltoy 解析Entity对象:[{}]发生错误,请检查对象注解是否正确!" + e.getMessage(), className);
+				throw e;
+			} else {
+				return null;
+			}
 		}
 		// 非内部级联解析，放入map缓存
 		if (!forCascade) {

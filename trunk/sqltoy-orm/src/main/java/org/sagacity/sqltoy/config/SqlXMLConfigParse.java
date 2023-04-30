@@ -779,6 +779,8 @@ public class SqlXMLConfigParse {
 							filterType = "neq";
 						} else if ("dateFormat".equals(filterType)) {
 							filterType = "date-format";
+						} else if ("to-str".equals(filterType)) {
+							filterType = "to-string";
 						}
 						filterModel.setFilterType(filterType);
 						parseFilterElt(sqlToyConfig, filterModel, filter, local);
@@ -880,6 +882,10 @@ public class SqlXMLConfigParse {
 		// 用于to-in-arg
 		if (filter.hasAttribute("single-quote")) {
 			filterModel.setSingleQuote(Boolean.parseBoolean(filter.getAttribute("single-quote")));
+		}
+		// 用于to-string
+		if (filter.hasAttribute("add-quote")) {
+			filterModel.setAddQuote(filter.getAttribute("add-quote").toLowerCase());
 		}
 		// 分割符号
 		if (filter.hasAttribute("split-sign")) {

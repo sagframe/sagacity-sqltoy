@@ -28,6 +28,7 @@ import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
+import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,12 +40,12 @@ import org.slf4j.LoggerFactory;
  * @version v1.0,Date:2020-6-9
  * @modify {Date:2020-6-9,初始创建}
  */
-public class GuassDBDialect implements Dialect {
+public class GaussDBDialect implements Dialect {
 
 	/**
 	 * 定义日志
 	 */
-	protected final Logger logger = LoggerFactory.getLogger(GuassDBDialect.class);
+	protected final Logger logger = LoggerFactory.getLogger(GaussDBDialect.class);
 
 	/**
 	 * 判定为null的函数
@@ -189,6 +190,16 @@ public class GuassDBDialect implements Dialect {
 	@Override
 	public Object save(SqlToyContext sqlToyContext, Serializable entity, Connection conn, final Integer dbType,
 			final String dialect, final String tableName) throws Exception {
+		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
+		PKStrategy pkStrategy = entityMeta.getIdStrategy();
+		// gaussdb 主键策略是sequence模式需要先获取主键值
+		if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
+			// 不允许手工赋值，重新取值覆盖
+			Object id = SqlUtil.getSequenceValue(conn, entityMeta.getSequence(), dbType);
+			if (id != null) {
+				BeanUtil.setProperty(entity, entityMeta.getIdArray()[0], id);
+			}
+		}
 		return PostgreSqlDialectUtils.save(sqlToyContext, entity, conn, dbType, tableName);
 	}
 
