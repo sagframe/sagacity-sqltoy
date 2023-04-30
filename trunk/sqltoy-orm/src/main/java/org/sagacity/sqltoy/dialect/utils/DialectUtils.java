@@ -1384,12 +1384,10 @@ public class DialectUtils {
 				if (isIdentity || isSequence) {
 					pst = conn.prepareStatement(realInsertSql,
 							new String[] { entityMeta.getColumnName(entityMeta.getIdArray()[0]) });
-					// pst = conn.prepareStatement(realInsertSql,Statement.RETURN_GENERATED_KEYS);
 				} else {
 					pst = conn.prepareStatement(realInsertSql);
 				}
 				SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, pst, paramValues, paramsType, 0);
-				// pst.executeUpdate();
 				pst.execute();
 				if (isIdentity || isSequence) {
 					ResultSet keyResult = pst.getGeneratedKeys();

@@ -13,6 +13,7 @@ import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.demo.vo.StaffInfoVO;
 import org.sagacity.sqltoy.model.MapKit;
+import org.sagacity.sqltoy.utils.StringUtil;
 
 import com.alibaba.fastjson.JSON;
 
@@ -31,6 +32,19 @@ public class SqlToyConstantsTest {
 			paramsMap.put(group, group.substring(2, group.length() - 1).trim());
 		}
 		System.err.println(JSON.toJSONString(paramsMap));
+	}
+
+	@Test
+	public void rtrim() {
+		Pattern COMPARE_PATTERN = Pattern.compile("(!=|<>|\\^=|=|>=|<=)");
+		System.err.println(StringUtil.matches("where id!=1", COMPARE_PATTERN));
+		System.err.println(StringUtil.matches("where id<>1", COMPARE_PATTERN));
+		System.err.println(StringUtil.matches("where id<=1", COMPARE_PATTERN));
+		System.err.println(StringUtil.matches("where id=1", COMPARE_PATTERN));
+
+		Map map = new HashMap<String, Object>();
+		map.put("1", null);
+		System.err.println("map="+map.containsKey("1"));
 	}
 
 	@Test
@@ -62,8 +76,8 @@ public class SqlToyConstantsTest {
 		Double divedData = 24.1d;
 		double multiply = 1.2;
 		System.err.println(((divData - divedData) * multiply) / divedData);
-		BigDecimal value = new BigDecimal(((divData - divedData) * multiply) / divedData)
-				.setScale(3, RoundingMode.FLOOR);
+		BigDecimal value = new BigDecimal(((divData - divedData) * multiply) / divedData).setScale(3,
+				RoundingMode.FLOOR);
 
 		System.err.println(value);
 

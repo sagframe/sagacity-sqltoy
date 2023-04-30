@@ -43,6 +43,7 @@ import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.DataType;
 import org.sagacity.sqltoy.config.model.EntityMeta;
+import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.model.TreeTableModel;
 import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
@@ -800,6 +801,61 @@ public class SqlUtil {
 			return result.get(0);
 		}
 		return null;
+	}
+
+	/**
+	 * @TODO 提供独立的获取sequence下一个值的方法
+	 * @param conn
+	 * @param sequence
+	 * @param dbType
+	 * @return
+	 * @throws DataAccessException
+	 */
+	public static Object getSequenceValue(Connection conn, String sequence, Integer dbType) throws DataAccessException {
+		String sql = "";
+		if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.H2) {
+			sql = "select nextval('" + sequence + "')";
+		} else if (dbType == DBType.SQLSERVER) {
+			sql = "select NEXT VALUE FOR " + sequence;
+		} else if (dbType == DBType.GAUSSDB || dbType == DBType.OCEANBASE || dbType == DBType.ORACLE
+				|| dbType == DBType.ORACLE11 || dbType == DBType.DM) {
+			sql = "select " + sequence + ".nextval";
+		} else {
+			sql = "select NEXTVAL FOR " + sequence;
+		}
+		PreparedStatement pst = null;
+		ResultSet rs = null;
+		Object id = null;
+		try {
+			SqlExecuteStat.showSql("获取sequence下一个值", sql, null);
+			pst = conn.prepareStatement(sql);
+			rs = pst.executeQuery();
+			while (rs.next()) {
+				id = rs.getObject(1);
+				break;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new DataAccessException("获取sequence={} 值失败!错误信息:{}", sequence, e.getMessage());
+		} finally {
+			if (rs != null) {
+				try {
+					rs.close();
+				} catch (Exception e) {
+
+				}
+				rs = null;
+			}
+			if (pst != null) {
+				try {
+					pst.close();
+				} catch (Exception e) {
+
+				}
+				pst = null;
+			}
+		}
+		return id;
 	}
 
 	/**
