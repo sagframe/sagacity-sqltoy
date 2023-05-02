@@ -32,6 +32,7 @@ import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
  * @author zhongxuchen
  * @version v1.0,Date:2020年1月20日
  */
+@SuppressWarnings({ "rawtypes" })
 public class ClickHouseDialect implements Dialect {
 	/**
 	 * 判定为null的函数

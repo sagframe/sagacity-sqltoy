@@ -40,6 +40,7 @@ import org.slf4j.LoggerFactory;
  * @author zhongxuchen
  * @version v1.0,Date:2021-8-1
  */
+@SuppressWarnings({ "rawtypes" })
 public class ImpalaDialect implements Dialect {
 	/**
 	 * 定义日志

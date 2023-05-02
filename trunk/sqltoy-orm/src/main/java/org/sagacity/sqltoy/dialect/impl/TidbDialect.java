@@ -40,6 +40,7 @@ import org.slf4j.LoggerFactory;
  * @version v1.0,Date:2020-6-9
  * @modify {Date:2020-6-9,初始创建}
  */
+@SuppressWarnings({ "rawtypes" })
 public class TidbDialect implements Dialect {
 
 	/**

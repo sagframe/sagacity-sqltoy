@@ -11,15 +11,19 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.CacheFilterModel;
 import org.sagacity.sqltoy.config.model.ParamFilterModel;
+import org.sagacity.sqltoy.model.DataAuthFilterConfig;
 import org.sagacity.sqltoy.model.ParamsFilter;
+import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,6 +33,8 @@ import org.slf4j.LoggerFactory;
  * @author zhongxuchen
  * @version v1.0,Date:2013-3-23
  * @modify Date:2020-7-15 {增加l-like,r-like为参数单边补充%从而不破坏索引,默认是两边}
+ * @modify Date:2023-4-18 {增加to-string}
+ * @modify Date:2023-05-01 {优化cache-arg,修复priorMatchEqual存在的bug}
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class ParamFilterUtils {
@@ -134,7 +140,7 @@ public class ParamFilterUtils {
 		try {
 			String paramName = paramFilterModel.getParam().toLowerCase();
 			int index = (paramIndexMap.get(paramName) == null) ? -1 : paramIndexMap.get(paramName);
-			// 需要转化的值
+			// 需要转化的值,将paramValue统一转化为数组
 			List<String> paramValueAry = new ArrayList<String>();
 			if (index >= 0 && paramValues[index] != null) {
 				if (paramValues[index] instanceof Collection) {
@@ -154,6 +160,11 @@ public class ParamFilterUtils {
 			if (paramValueAry.isEmpty()) {
 				return;
 			}
+			// 将传递匹配条件转小写
+			List<String> matchLowAry = new ArrayList<String>();
+			for (String str : paramValueAry) {
+				matchLowAry.add(str.toLowerCase());
+			}
 			// 是否将转化的值按新的条件参数存储
 			String aliasName = paramFilterModel.getAliasName();
 			if (StringUtil.isBlank(aliasName)) {
@@ -171,9 +182,10 @@ public class ParamFilterUtils {
 				logger.warn("缓存:{} 可能不存在,在通过缓存获取查询条件key值时异常,请检查!", paramFilterModel.getCacheName());
 				return;
 			}
+			IUnifyFieldsHandler unifyHandler = sqlToyContext.getUnifyFieldsHandler();
 			CacheFilterModel[] cacheFilters = paramFilterModel.getCacheFilters();
 			CacheFilterModel cacheFilter;
-			// 是否存在对缓存进行条件过滤
+			// 是否存在对缓存进行条件过滤，如过滤缓存中的状态，取状态为:1、2、3的缓存值
 			boolean hasFilter = (cacheFilters == null) ? false : true;
 			List<Map<String, String>> filterValues = new ArrayList<Map<String, String>>();
 			if (hasFilter) {
@@ -186,6 +198,13 @@ public class ParamFilterUtils {
 					// 是参数名称，提取对应值
 					if (cacheValueIndex != null) {
 						compareValue = paramValues[cacheValueIndex.intValue()];
+					} else if (unifyHandler != null && unifyHandler.dataAuthFilters() != null) {
+						// 通过统一传参，获取数据权限中的数据，如租户、授权机构等
+						DataAuthFilterConfig dataAuthConfig = unifyHandler.dataAuthFilters()
+								.get(cacheFilter.getCompareParam());
+						if (dataAuthConfig != null && dataAuthConfig.getValues() != null) {
+							compareValue = dataAuthConfig.getValues();
+						}
 					}
 					Map<String, String> tmp = new HashMap<String, String>();
 					if (compareValue.getClass().isArray()) {
@@ -203,14 +222,12 @@ public class ParamFilterUtils {
 					filterValues.add(tmp);
 				}
 			}
-			// 匹配数量最大为1000
-			int matchCnt = 0;
 			// 对比的缓存列(缓存数据以数组形式存储)
 			int[] matchIndexes = paramFilterModel.getCacheMappingIndexes();
 			// 最大允许匹配数量,缓存匹配一般用于in (?,?)形式的查询,in 参数有数量限制
 			int maxLimit = paramFilterModel.getCacheMappingMax();
 			// 匹配的缓存key结果集合
-			List<Object> matchedKeys = new ArrayList<Object>();
+			Set<Object> matchedKeys = new HashSet<Object>();
 			int cacheKeyIndex = paramFilterModel.getCacheKeyIndex();
 			boolean include = true;
 			// 是否优先判断相等
@@ -218,42 +235,30 @@ public class ParamFilterUtils {
 			// 将条件参数值转小写进行统一比较
 			String matchStr;
 			String[] matchWords;
-			boolean isEqual = false;
 			// key 值
 			Object keyCode;
 			Object compareValue;
-			for (Object[] cacheRow : cacheDataMap.values()) {
-				keyCode = cacheRow[cacheKeyIndex];
-				include = true;
-				// 对缓存进行过滤(比如过滤本人授权访问机构下面的员工或当期状态为生效的员工)
-				if (hasFilter) {
-					for (int i = 0; i < cacheFilters.length; i++) {
-						cacheFilter = cacheFilters[i];
-						// 过滤条件是否相等
-						if (cacheRow[cacheFilter.getCacheIndex()] == null) {
-							isEqual = false;
-						} else {
-							isEqual = filterValues.get(i).containsKey(cacheRow[cacheFilter.getCacheIndex()].toString());
-						}
-						// 条件不成立则过滤掉
-						if (("eq".equals(cacheFilter.getCompareType()) && !isEqual)
-								|| ("neq".equals(cacheFilter.getCompareType()) && isEqual)) {
-							include = false;
-							break;
-						}
+			// 优先匹配查询参数跟缓存名称等直接相等，精准匹配
+			if (priorMatchEqual) {
+				String keyLow;
+				for (Object[] cacheRow : cacheDataMap.values()) {
+					keyCode = cacheRow[cacheKeyIndex];
+					include = true;
+					// 对缓存进行过滤(比如过滤本人授权访问机构下面的员工或当期状态为生效的员工)
+					if (hasFilter) {
+						include = doCacheFilter(cacheFilters, cacheRow, filterValues);
 					}
-				}
-				// 过滤条件成立，且当前key没有被匹配过，开始匹配
-				if (include) {
-					skipLoop: for (int i = 0; i < paramValueAry.size(); i++) {
-						matchStr = paramValueAry.get(i).toLowerCase();
-						// 优先匹配相等
-						if (priorMatchEqual) {
+					// 过滤条件成立，且当前key没有被匹配过，开始匹配
+					if (include) {
+						keyLow = keyCode.toString().toLowerCase();
+						skipLoop: for (int i = 0; i < paramValueAry.size(); i++) {
+							// 从转小写集合中取值，避免每次toLowcase
+							matchStr = matchLowAry.get(i);
 							// 直接等于key
-							if (matchStr.equals(keyCode.toString().toLowerCase())) {
+							if (matchStr.equals(keyLow)) {
 								matchedKeys.add(keyCode);
-								matchCnt++;
 								// 相等的剔除不再参与后续like匹配
+								matchLowAry.remove(i);
 								paramValueAry.remove(i);
 								// 进入下一个key循环
 								break;
@@ -264,29 +269,58 @@ public class ParamFilterUtils {
 								// 名称相同
 								if (compareValue != null && matchStr.equals(compareValue.toString().toLowerCase())) {
 									matchedKeys.add(keyCode);
-									matchCnt++;
 									// 相等的剔除不再参与后续like匹配
+									matchLowAry.remove(i);
 									paramValueAry.remove(i);
 									// 进入下一个key循环
 									break skipLoop;
 								}
 							}
 						}
-						matchWords = matchStr.split("\\s+");
-						for (int matchIndex : matchIndexes) {
-							compareValue = cacheRow[matchIndex];
-							// 匹配检索,全部转成小写比较
-							if (compareValue != null
-									&& StringUtil.like(compareValue.toString().toLowerCase(), matchWords)) {
-								matchedKeys.add(keyCode);
-								matchCnt++;
-								break skipLoop;
-							}
+						// 超出阈值、或者全部匹配到相等后跳出
+						if (paramValueAry.isEmpty() || matchedKeys.size() >= maxLimit) {
+							break;
 						}
 					}
-					// 超出阈值跳出
-					if (paramValueAry.isEmpty() || matchCnt >= maxLimit) {
-						break;
+				}
+			}
+			// 存在未完全相等的条件参数且匹配数量小于最大匹配量，继续进行like匹配
+			if (!matchLowAry.isEmpty() && matchedKeys.size() < maxLimit) {
+				// 将匹配参数切割成分词数组
+				int likeArgSize = matchLowAry.size();
+				List<String[]> paramsMatchWords = new ArrayList<String[]>();
+				for (int i = 0; i < likeArgSize; i++) {
+					paramsMatchWords.add(matchLowAry.get(i).split("\\s+"));
+				}
+				for (Object[] cacheRow : cacheDataMap.values()) {
+					keyCode = cacheRow[cacheKeyIndex];
+					include = true;
+					// 已经存在无需再比较
+					if (matchedKeys.contains(keyCode)) {
+						include = false;
+					}
+					// 对缓存进行过滤(比如过滤本人授权访问机构下面的员工或当期状态为生效的员工)
+					if (hasFilter && include) {
+						include = doCacheFilter(cacheFilters, cacheRow, filterValues);
+					}
+					// 过滤条件成立，且当前key没有被匹配过，开始匹配
+					if (include) {
+						skipLoop: for (int i = 0; i < likeArgSize; i++) {
+							matchWords = paramsMatchWords.get(i);
+							for (int matchIndex : matchIndexes) {
+								compareValue = cacheRow[matchIndex];
+								// 匹配检索,全部转成小写比较
+								if (compareValue != null
+										&& StringUtil.like(compareValue.toString().toLowerCase(), matchWords)) {
+									matchedKeys.add(keyCode);
+									break skipLoop;
+								}
+							}
+						}
+						// 超出阈值跳出
+						if (matchedKeys.size() >= maxLimit) {
+							break;
+						}
 					}
 				}
 			}
@@ -316,6 +350,34 @@ public class ParamFilterUtils {
 			e.printStackTrace();
 			logger.error("通过缓存匹配查询条件key失败:{}", e.getMessage());
 		}
+	}
+
+	/**
+	 * @TODO 处理CacheArgs 的过滤逻辑,条件成立include=true
+	 * @param cacheFilters
+	 * @param cacheRow
+	 * @param filterValues
+	 * @return
+	 */
+	private static boolean doCacheFilter(CacheFilterModel[] cacheFilters, Object[] cacheRow,
+			List<Map<String, String>> filterValues) {
+		CacheFilterModel cacheFilter;
+		boolean isEqual;
+		for (int i = 0; i < cacheFilters.length; i++) {
+			cacheFilter = cacheFilters[i];
+			// 过滤条件是否相等
+			if (cacheRow[cacheFilter.getCacheIndex()] == null) {
+				isEqual = false;
+			} else {
+				isEqual = filterValues.get(i).containsKey(cacheRow[cacheFilter.getCacheIndex()].toString());
+			}
+			// 条件不成立则过滤掉
+			if (("eq".equals(cacheFilter.getCompareType()) && !isEqual)
+					|| ("neq".equals(cacheFilter.getCompareType()) && isEqual)) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/**
@@ -431,6 +493,8 @@ public class ParamFilterUtils {
 				cloneValue = LocalTime.of(date.getHour(), date.getMinute(), date.getSecond());
 			} else if (paramValue.getClass().isArray()) {
 				cloneValue = ((Object[]) paramValue).clone();
+			} else if (paramValue instanceof ArrayList) {
+				cloneValue = ((ArrayList) paramValue).clone();
 			} else {
 				cloneValue = paramValue;
 			}
@@ -527,6 +591,8 @@ public class ParamFilterUtils {
 			} else {
 				result = toNumber(paramValue, paramFilterModel.getDataType());
 			}
+		} else if ("to-string".equals(filterType)) {
+			result = toString(paramValue, paramFilterModel.getAddQuote());
 		} else if ("to-array".equals(filterType)) {
 			result = toArray(paramValue, paramFilterModel.getDataType());
 		} else if ("l-like".equals(filterType)) {
@@ -722,6 +788,76 @@ public class ParamFilterUtils {
 					result[i] = new BigInteger(value);
 				}
 			}
+		}
+		return result;
+	}
+
+	/**
+	 * @todo 转换数据为字符串
+	 * @param paramValue
+	 * @param addQuote   增加引号的类型:none(不增加)、single(单引号)、double(双引号)
+	 * @return
+	 */
+	private static Object toString(Object paramValue, String addQuote) {
+		if (paramValue == null) {
+			return null;
+		}
+		// 数组
+		if (paramValue.getClass().isArray()) {
+			List<String> result = new ArrayList<String>();
+			Object[] arrays = CollectionUtil.convertArray(paramValue);
+			for (int i = 0, n = arrays.length; i < n; i++) {
+				result.add(dataToString(arrays[i], addQuote));
+			}
+			String[] resultAry = new String[result.size()];
+			result.toArray(resultAry);
+			return resultAry;
+		} // 集合
+		else if (paramValue instanceof Collection) {
+			List<String> result = new ArrayList<String>();
+			Iterator iter = ((Collection) paramValue).iterator();
+			while (iter.hasNext()) {
+				result.add(dataToString(iter.next(), addQuote));
+			}
+			return result;
+		} else {
+			return dataToString(paramValue, addQuote);
+		}
+	}
+
+	// for toString方法
+	private static String dataToString(Object paramValue, String addQuote) {
+		if (paramValue == null) {
+			return null;
+		}
+		String result;
+		if (paramValue instanceof BigDecimal) {
+			result = ((BigDecimal) paramValue).toPlainString();
+		} else if (paramValue instanceof LocalTime) {
+			result = DateUtil.formatDate(paramValue, "HH:mm:ss");
+		} else if (paramValue instanceof LocalDate) {
+			result = DateUtil.formatDate(paramValue, "yyyy-MM-dd");
+		} else if ((paramValue instanceof LocalDateTime) || (paramValue instanceof Date)) {
+			result = DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss");
+		} else {
+			result = paramValue.toString();
+		}
+		if (addQuote == null) {
+			return result;
+		}
+		if (addQuote.equals("single")) {
+			// 已经加了单引号不再重复增加
+			if (result.startsWith("'") && result.endsWith("'")) {
+				return result;
+			}
+			return "'".concat(result).concat("'");
+		}
+		if (addQuote.equals("double")) {
+			// 已经加了双引号不再重复增加
+			if (result.startsWith("\"") && result.endsWith("\"")) {
+				return result;
+			}
+			return "\"".concat(result).concat("\"");
 		}
 		return result;
 	}

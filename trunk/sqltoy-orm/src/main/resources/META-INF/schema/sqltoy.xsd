@@ -721,6 +721,27 @@
 					</xsd:attribute>
 				</xsd:complexType>
 			</xsd:element>
+			<xsd:element name="to-string" minOccurs="0"
+				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[
+					将条件参数转化为字符串
+					]]></xsd:documentation>
+				</xsd:annotation>
+				<xsd:complexType>
+					<xsd:attribute name="params" type="xsd:string"
+						use="required" />
+					<xsd:attribute name="add-quote">
+						<xsd:simpleType>
+							<xsd:restriction base="xsd:string">
+								<xsd:enumeration value="none" />
+								<xsd:enumeration value="single" />
+								<xsd:enumeration value="double" />
+							</xsd:restriction>
+						</xsd:simpleType>
+					</xsd:attribute>
+				</xsd:complexType>
+			</xsd:element>
 			<xsd:element name="to-date" minOccurs="0"
 				maxOccurs="unbounded">
 				<xsd:annotation>
@@ -912,7 +933,8 @@
 					</xsd:choice>
 					<xsd:attribute name="param" type="xsd:string"
 						use="required" />
-					<xsd:attribute name="prior-match-equal" type="xsd:boolean" default="false"/>
+					<xsd:attribute name="prior-match-equal"
+						type="xsd:boolean" default="false" />
 					<xsd:attribute name="cache-name" type="xsd:string"
 						use="required" />
 					<xsd:attribute name="cache-key-index"
@@ -940,7 +962,8 @@
 							<xsd:documentation><![CDATA[缓存中不能匹配成功赋予一个值,sqltoy会将其转为数组]]></xsd:documentation>
 						</xsd:annotation>
 					</xsd:attribute>
-					<xsd:attribute name="unmatched-return-self" type="xsd:boolean" default="true">
+					<xsd:attribute name="unmatched-return-self"
+						type="xsd:boolean" default="true">
 						<xsd:annotation>
 							<xsd:documentation><![CDATA[缓存未匹配到具体key时，返回检索关键词]]></xsd:documentation>
 						</xsd:annotation>

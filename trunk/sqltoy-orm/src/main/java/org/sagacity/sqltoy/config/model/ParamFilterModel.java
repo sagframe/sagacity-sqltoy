@@ -172,6 +172,11 @@ public class ParamFilterModel implements Serializable {
 	private boolean singleQuote = true;
 
 	/**
+	 * to-string 是否需要增加单引号
+	 */
+	private String addQuote = "none";
+
+	/**
 	 * 反向缓存翻译，是否优先判断相等
 	 */
 	private boolean priorMatchEqual = false;
@@ -561,6 +566,14 @@ public class ParamFilterModel implements Serializable {
 
 	public void setCacheNotMatchedReturnSelf(boolean cacheNotMatchedReturnSelf) {
 		this.cacheNotMatchedReturnSelf = cacheNotMatchedReturnSelf;
+	}
+
+	public String getAddQuote() {
+		return addQuote;
+	}
+
+	public void setAddQuote(String addQuote) {
+		this.addQuote = addQuote;
 	}
 
 }

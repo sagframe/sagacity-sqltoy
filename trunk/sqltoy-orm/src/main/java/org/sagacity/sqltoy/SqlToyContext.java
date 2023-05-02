@@ -609,6 +609,12 @@ public class SqlToyContext {
 		return entityManager.getEntityMeta(this, entityClass);
 	}
 
+	/**
+	 * @TODO 根据表名获取实体对象的信息(需要配置:spring.sqltoy.packagesToScan 提前加载pojo,sqltoy
+	 *       默认是无需配置即用即载)
+	 * @param tableName
+	 * @return
+	 */
 	public EntityMeta getEntityMeta(String tableName) {
 		return entityManager.getEntityMeta(tableName);
 	}
