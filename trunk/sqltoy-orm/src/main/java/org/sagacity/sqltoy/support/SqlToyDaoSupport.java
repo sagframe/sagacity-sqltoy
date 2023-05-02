@@ -2194,7 +2194,7 @@ public class SqlToyDaoSupport {
 					"调用convertType对单个对象进行POJO<-->DTO 转换过程中发现参数异常: source 和 resultType 不能为null!");
 		}
 		try {
-			return MapperUtils.map(sqlToyContext, source, resultType, 0, ignoreProperties);
+			return MapperUtils.map(source, resultType, ignoreProperties);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException(
@@ -2218,7 +2218,7 @@ public class SqlToyDaoSupport {
 					"调用convertType对集合进行POJO<-->DTO 转换过程中发现参数异常: sourceList 和 resultType 不能为null!");
 		}
 		try {
-			return MapperUtils.mapList(sqlToyContext, sourceList, resultType, 0, ignoreProperties);
+			return MapperUtils.mapList(sourceList, resultType, ignoreProperties);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException("将对象:" + sourceList.get(0).getClass().getName() + " 属性数据复制到:"

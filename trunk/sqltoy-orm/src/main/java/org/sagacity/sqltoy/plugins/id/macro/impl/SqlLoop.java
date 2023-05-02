@@ -34,6 +34,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @version v1.0, Date:2020-9-23
  * @modify 2021-10-14 支持@loop(:args,and args[i].xxx,linkSign,start,end)
  *         args[i].xxx对象属性模式
+ * @modify 2023-05-01 支持loop中的内容体含#[and t.xxx=:xxx] 为null判断和 in (:args) 数组输出
  */
 public class SqlLoop extends AbstractMacro {
 	/**
@@ -322,6 +323,7 @@ public class SqlLoop extends AbstractMacro {
 	 * @param hasCompare 参数前面的字符串是否是等于、不等于、大于等于、小于等于比较符号
 	 * @return
 	 */
+	@SuppressWarnings("rawtypes")
 	private static String toString(Object paramValue, boolean hasCompare) {
 		if (paramValue == null) {
 			return "null";
