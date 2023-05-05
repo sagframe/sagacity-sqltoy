@@ -37,7 +37,7 @@ public class MapperUtilsTest {
 		SqlToyContext context = new SqlToyContext();
 		try {
 			context.initialize();
-			StaffInfo staffInfo = MapperUtils.map(context, staffInfoVO, StaffInfo.class,"sexType");
+			StaffInfo staffInfo = MapperUtils.map(staffInfoVO, StaffInfo.class, "sexType");
 			System.err.println(JSON.toJSONString(staffInfo));
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -63,9 +63,9 @@ public class MapperUtilsTest {
 		SqlToyContext context = new SqlToyContext();
 		try {
 			context.initialize();
-			StaffInfoVO staffInfoVO = MapperUtils.map(context, staffInfo, StaffInfoVO.class);
+			StaffInfoVO staffInfoVO = MapperUtils.map(staffInfo, StaffInfoVO.class);
 			System.err.println(JSON.toJSONString(staffInfoVO));
-			StaffInfo staffInfo1 = MapperUtils.map(context, staffInfoVO, StaffInfo.class);
+			StaffInfo staffInfo1 = MapperUtils.map(staffInfoVO, StaffInfo.class);
 			System.err.println(JSON.toJSONString(staffInfo1));
 		} catch (Exception e) {
 			// TODO Auto-generated catch block

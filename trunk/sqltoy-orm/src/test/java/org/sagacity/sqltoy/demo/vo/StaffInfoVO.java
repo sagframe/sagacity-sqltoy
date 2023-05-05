@@ -7,6 +7,7 @@ import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 
 import org.sagacity.sqltoy.config.annotation.SqlToyFieldAlias;
 
@@ -48,7 +49,7 @@ public class StaffInfoVO implements Serializable {
 	private String email;
 
 	private String telNo;
-	
+
 	private Integer resType;
 
 	@SqlToyFieldAlias("post")
@@ -65,10 +66,22 @@ public class StaffInfoVO implements Serializable {
 	private LocalDateTime updateTime;
 
 	private Integer status;
-	
+
 	private DataRange dataRange;
-	
+
+	private List<DataRange> dataRangeList;
+
+	private List items;
+
 	private HashMap params;
+
+	public List getItems() {
+		return items;
+	}
+
+	public void setItems(List items) {
+		this.items = items;
+	}
 
 	public StaffInfoVO() {
 	}
@@ -396,5 +409,12 @@ public class StaffInfoVO implements Serializable {
 		this.resType = resType;
 	}
 
-	
+	public List<DataRange> getDataRangeList() {
+		return dataRangeList;
+	}
+
+	public void setDataRangeList(List<DataRange> dataRangeList) {
+		this.dataRangeList = dataRangeList;
+	}
+
 }

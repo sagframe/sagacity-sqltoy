@@ -4,15 +4,16 @@ import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.annotation.SqlToyFieldAlias;
 import org.sagacity.sqltoy.config.model.DTOEntityMapModel;
 import org.sagacity.sqltoy.config.model.DataType;
+import org.sagacity.sqltoy.model.Page;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,7 +24,9 @@ import org.slf4j.LoggerFactory;
  * @version v1.0,Date:2020-8-8
  * @modify 2020-09-04 支持VO<->VO,DTO<->DTO,VO<->DTO 的互转
  * @modify 2022-10-19 支持对象的多级父类属性的映射
+ * @modify 2023-05-01 支持多级子对象映射，代码全面改造完全工具类化，无需再依赖SqlToyContext
  */
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class MapperUtils {
 	/**
 	 * 定义日志
@@ -33,30 +36,70 @@ public class MapperUtils {
 	/**
 	 * 利用缓存来提升匹配效率
 	 */
-	private static Map<String, DTOEntityMapModel> dtoEntityMappCache = new HashMap<String, DTOEntityMapModel>();
+	private static Map<String, DTOEntityMapModel> dtoEntityMapperCache = new HashMap<String, DTOEntityMapModel>();
 
 	private MapperUtils() {
+	}
+
+	public static <T extends Serializable> T map(Serializable source, Class<T> resultType, String... ignoreProperties)
+			throws RuntimeException {
+		if (source == null || (resultType == null || BeanUtil.isBaseDataType(resultType))) {
+			throw new IllegalArgumentException("source 和 resultType 不能为null,且resultType不能为基本类型!");
+		}
+		return map(source, resultType, 0, ignoreProperties);
+	}
+
+	public static <T extends Serializable> List<T> mapList(List<Serializable> sourceList, Class<T> resultType,
+			String... ignoreProperties) throws RuntimeException {
+		if (sourceList == null || (resultType == null || BeanUtil.isBaseDataType(resultType))) {
+			throw new IllegalArgumentException("sourceList 和 resultType 不能为null,且resultType不能为基本类型!");
+		}
+		// resultType不能是接口和抽象类
+		if (Modifier.isAbstract(resultType.getModifiers()) || Modifier.isInterface(resultType.getModifiers())) {
+			throw new IllegalArgumentException("resultType:" + resultType.getName() + " 是抽象类或接口,非法参数!");
+		}
+		if (sourceList.isEmpty()) {
+			return new ArrayList<T>();
+		}
+		return mapList(sourceList, resultType, 0, ignoreProperties);
+	}
+
+	public static <T extends Serializable> Page<T> map(Page sourcePage, Class<T> resultType,
+			String... ignoreProperties) {
+		if (sourcePage == null || resultType == null || BeanUtil.isBaseDataType(resultType)) {
+			throw new IllegalArgumentException("sourcePage 和 resultType 不能为null,且resultType不能为基本类型!");
+		}
+		Page result = new Page();
+		result.setPageNo(sourcePage.getPageNo());
+		result.setPageSize(sourcePage.getPageSize());
+		result.setRecordCount(sourcePage.getRecordCount());
+		result.setSkipQueryCount(sourcePage.getSkipQueryCount());
+		if (sourcePage.getRows().isEmpty()) {
+			return result;
+		}
+		result.setRows(mapList(sourcePage.getRows(), resultType, ignoreProperties));
+		return result;
 	}
 
 	/**
 	 * @TODO 实现POJO和VO单个对象之间的相互转换和赋值
 	 * @param <T>
-	 * @param sqlToyContext
 	 * @param source
 	 * @param resultType
+	 * @param recursionLevel   避免循环递归，默认不能超过3层
 	 * @param ignoreProperties
 	 * @return
-	 * @throws Exception
+	 * @throws RuntimeException
 	 */
-	public static <T extends Serializable> T map(SqlToyContext sqlToyContext, Serializable source, Class<T> resultType,
-			String... ignoreProperties) throws Exception {
-		if (source == null || (resultType == null || resultType.equals(Object.class))) {
-			throw new IllegalArgumentException("source 和 resultType 不能为null,且resultType不能为Object.class!");
-		}
+	private static <T extends Serializable> T map(Serializable source, Class<T> resultType, int recursionLevel,
+			String... ignoreProperties) throws RuntimeException {
 		// 转成List做统一处理
 		List<Serializable> sourceList = new ArrayList<Serializable>();
 		sourceList.add(source);
-		List<T> result = mapList(sqlToyContext, sourceList, resultType, ignoreProperties);
+		List<T> result = mapList(sourceList, resultType, recursionLevel, ignoreProperties);
+		if (result == null || result.isEmpty()) {
+			return null;
+		}
 		return result.get(0);
 	}
 
@@ -66,35 +109,36 @@ public class MapperUtils {
 	 * @param sqlToyContext
 	 * @param sourceList
 	 * @param resultType
+	 * @param recursionLevel   避免循环递归，默认不能超过3层
 	 * @param ignoreProperties
 	 * @return
-	 * @throws Exception
+	 * @throws RuntimeException
 	 */
-	public static <T extends Serializable> List<T> mapList(SqlToyContext sqlToyContext, List<Serializable> sourceList,
-			Class<T> resultType, String... ignoreProperties) throws Exception {
-		if (sourceList == null || (resultType == null || resultType.equals(Object.class))) {
-			throw new IllegalArgumentException("sourceList 和 resultType 不能为null,且resultType不能为Object.class!");
+	private static <T extends Serializable> List<T> mapList(List<Serializable> sourceList, Class<T> resultType,
+			int recursionLevel, String... ignoreProperties) throws RuntimeException {
+		Class sourceClass = sourceList.iterator().next().getClass();
+		DTOEntityMapModel mapModel = getDTOEntityMap(sourceClass, resultType);
+		if (mapModel == null || mapModel.fromGetMethods == null || mapModel.targetSetMethods == null) {
+			return null;
 		}
-		if (sourceList.isEmpty()) {
-			return new ArrayList<T>();
+		Method[] getMethods = mapModel.fromGetMethods;
+		Method[] setMethods = mapModel.targetSetMethods;
+		// 判断get方法和set方法是否都是null，都是null无需进行后续操作
+		boolean getAllNull = true;
+		boolean setAllNull = true;
+		for (int i = 0; i < getMethods.length; i++) {
+			if (getMethods[i] != null) {
+				getAllNull = false;
+			}
+			if (setMethods[i] != null) {
+				setAllNull = false;
+			}
 		}
-		// resultType不能是接口和抽象类
-		if (Modifier.isAbstract(resultType.getModifiers()) || Modifier.isInterface(resultType.getModifiers())) {
-			throw new IllegalArgumentException("resultType:" + resultType.getName() + " 是抽象类或接口,非法参数!");
+		// get方法或set方法都为null,表示是一些类似serialVersionUID类的公共属性，直接返回null
+		if (getAllNull || setAllNull) {
+			return null;
 		}
-		DTOEntityMapModel mapModel = getDTOEntityMap(sqlToyContext, sourceList.iterator().next().getClass(),
-				resultType);
-		Method[] getMethods;
-		Method[] setMethods;
-		// pojo-->dto
-		if (mapModel.dtoClassName.equals(resultType.getName())) {
-			getMethods = mapModel.pojoGetMethods;
-			setMethods = mapModel.dtoSetMethods;
-		} // dto ---> pojo
-		else {
-			getMethods = mapModel.dtoGetMethods;
-			setMethods = mapModel.pojoSetMethods;
-		}
+		// 不做映射处理的属性，针对targetClass
 		if (ignoreProperties != null && ignoreProperties.length > 0) {
 			List<Method> getRealMethods = new ArrayList<Method>();
 			List<Method> setRealMethods = new ArrayList<Method>();
@@ -102,9 +146,9 @@ public class MapperUtils {
 			String ignorePropLow;
 			Class paramType;
 			boolean skip;
-			List<String> props = new ArrayList<String>();
+			List<String> ignoreProps = new ArrayList<String>();
 			for (String ignoreProp : ignoreProperties) {
-				props.add(ignoreProp.toLowerCase());
+				ignoreProps.add(ignoreProp.toLowerCase());
 			}
 			// 以set方法为映射主体
 			for (int i = 0; i < setMethods.length; i++) {
@@ -112,13 +156,13 @@ public class MapperUtils {
 					methodName = setMethods[i].getName().toLowerCase();
 					paramType = setMethods[i].getParameterTypes()[0];
 					skip = false;
-					for (int j = 0; j < props.size(); j++) {
-						ignorePropLow = props.get(j);
+					for (int j = 0; j < ignoreProps.size(); j++) {
+						ignorePropLow = ignoreProps.get(j);
 						if (methodName.equals("set".concat(ignorePropLow))
 								|| (ignorePropLow.startsWith("is") && paramType.equals(boolean.class)
 										&& methodName.equals("set".concat(ignorePropLow.substring(2))))) {
 							skip = true;
-							props.remove(j);
+							ignoreProps.remove(j);
 							j--;
 							break;
 						}
@@ -130,19 +174,26 @@ public class MapperUtils {
 				}
 			}
 			if (setRealMethods.size() == 0) {
-				throw new IllegalArgumentException("最终映射对应的属性数量为零,请检查ignoreProperties是否正确,过滤了全部匹配属性!");
+				logger.warn("最终映射对应的属性数量为零,请检查ignoreProperties是否正确,过滤了全部匹配属性!");
+				return null;
 			}
 			getMethods = new Method[setRealMethods.size()];
 			setMethods = new Method[setRealMethods.size()];
 			getRealMethods.toArray(getMethods);
 			setRealMethods.toArray(setMethods);
 		}
-		List dataSets = invokeGetValues(sourceList, getMethods);
-		return reflectListToBean(dataSets, resultType, setMethods);
+		try {
+			List dataSets = invokeGetValues(sourceList, getMethods);
+			return reflectListToBean(dataSets, resultType, setMethods, recursionLevel);
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException("map/mapList,类型:[" + sourceClass.getName() + "-->" + resultType.getName()
+					+ "]映射操作失败:" + e.getMessage());
+		}
 	}
 
 	/**
-	 * @TODO 通过get方法回去对象的值放入List中
+	 * @TODO 通过get方法获取对象的值放入List中
 	 * @param sourceList
 	 * @param getMethods
 	 * @return
@@ -151,215 +202,191 @@ public class MapperUtils {
 	private static List invokeGetValues(List sourceList, Method[] getMethods) throws Exception {
 		List result = new ArrayList();
 		Object row;
-		for (int i = 0; i < sourceList.size(); i++) {
+		for (int i = 0, n = sourceList.size(); i < n; i++) {
 			row = sourceList.get(i);
-			List rowData = new ArrayList();
-			for (Method method : getMethods) {
-				if (method == null) {
-					rowData.add(null);
-				} else {
-					rowData.add(method.invoke(row));
+			if (row != null) {
+				List rowData = new ArrayList();
+				for (Method method : getMethods) {
+					if (method == null) {
+						rowData.add(null);
+					} else {
+						rowData.add(method.invoke(row));
+					}
 				}
+				result.add(rowData);
 			}
-			result.add(rowData);
 		}
 		return result;
 	}
 
 	/**
 	 * @TODO 组织构造dto和pojo的映射模型放入缓存，并通过get和set方法调用完成复制过程(比BeanUtils.copyProperties效率高)
-	 * @param sqlToyContext
 	 * @param sourceClass
 	 * @param resultType
 	 * @return
 	 */
-	private static DTOEntityMapModel getDTOEntityMap(SqlToyContext sqlToyContext, Class sourceClass, Class resultType) {
+	private static DTOEntityMapModel getDTOEntityMap(Class sourceClass, Class resultType) {
 		String sourceKey = sourceClass.getName();
 		String resultKey = resultType.getName();
-		String key = "POJO=".concat(sourceKey).concat(";DTO=").concat(resultKey);
+		String key = "fromClass=".concat(sourceKey).concat(";toClass=").concat(resultKey);
 		// 通过缓存获取
-		if (dtoEntityMappCache.containsKey(key)) {
-			return dtoEntityMappCache.get(key);
+		if (dtoEntityMapperCache.containsKey(key)) {
+			return dtoEntityMapperCache.get(key);
 		}
-		key = "POJO=".concat(resultKey).concat(";DTO=").concat(sourceKey);
-		if (dtoEntityMappCache.containsKey(key)) {
-			return dtoEntityMappCache.get(key);
-		}
-		int style = 0;
-		Class dtoClass = null;
-		Class pojoClass = null;
-		// 是否是POJO
-		if (sqlToyContext.isEntity(sourceClass)) {
-			dtoClass = resultType;
-			pojoClass = sourceClass;
-			key = "POJO=".concat(sourceKey).concat(";DTO=").concat(resultKey);
-			style++;
-		}
-		if (sqlToyContext.isEntity(resultType)) {
-			dtoClass = sourceClass;
-			pojoClass = resultType;
-			key = "POJO=".concat(resultKey).concat(";DTO=").concat(sourceKey);
-			style++;
-		}
-		DTOEntityMapModel result = null;
-		// 全是POJO或全是DTO
-		if (style == 2 || style == 0) {
-			key = "POJO=".concat(sourceKey).concat(";DTO=").concat(resultKey);
-			result = PO2PO(sourceClass, resultType);
-		} else {
-			result = PO2DTO(pojoClass, dtoClass);
-		}
-		dtoEntityMappCache.put(key, result);
+		DTOEntityMapModel result = sourceMapTarget(sourceClass, resultType);
+		dtoEntityMapperCache.put(key, result);
 		return result;
 	}
 
 	/**
-	 * @TODO POJO 跟POJO 或 DTO 到DTO 之间的映射复制
-	 * @param dtoClass
-	 * @param pojoClass
+	 * @TODO 解析2个类之间属性名称相同的方法，建立getXXX 和 setXXX 的映射关系
+	 * @param fromClass
+	 * @param targetClass
 	 * @return
 	 */
-	private static DTOEntityMapModel PO2PO(Class dtoClass, Class pojoClass) {
+	private static DTOEntityMapModel sourceMapTarget(Class fromClass, Class targetClass) {
+		// 不支持基本类型
+		if (BeanUtil.isBaseDataType(fromClass) || BeanUtil.isBaseDataType(targetClass)) {
+			return null;
+		}
 		DTOEntityMapModel result = new DTOEntityMapModel();
 		String fieldName;
-		HashMap<String, String> pojoPropsMap = new HashMap<String, String>();
-		// pojo 以及父类
-		Class parentClass = pojoClass;
+		HashMap<String, String> targetPropsMap = new HashMap<String, String>();
+		// targetClass类型属性
+		Class parentClass = targetClass;
 		while (!parentClass.equals(Object.class)) {
 			for (Field field : parentClass.getDeclaredFields()) {
 				fieldName = field.getName();
-				pojoPropsMap.put(fieldName.toLowerCase(), fieldName);
+				targetPropsMap.put(fieldName.toLowerCase(), fieldName);
 			}
 			parentClass = parentClass.getSuperclass();
 		}
-
-		// dto
-		List<String> dtoProps = new ArrayList<String>();
-		List<String> pojoProps = new ArrayList<String>();
+		boolean checkAlias = fromClass.equals(targetClass) ? false : true;
+		// fromClass
+		List<String> fromClassProps = new ArrayList<String>();
+		List<String> targetProps = new ArrayList<String>();
 		// dto以及其所有父类
-		parentClass = dtoClass;
-		while (!parentClass.equals(Object.class)) {
-			for (Field field : parentClass.getDeclaredFields()) {
-				fieldName = field.getName();
-				if (pojoPropsMap.containsKey(fieldName.toLowerCase())) {
-					dtoProps.add(fieldName);
-					pojoProps.add(pojoPropsMap.get(fieldName.toLowerCase()));
-				}
-			}
-			parentClass = parentClass.getSuperclass();
-		}
-		// 模型赋值
-		result.dtoClassName = dtoClass.getName();
-		result.dtoProps = (String[]) dtoProps.toArray(new String[dtoProps.size()]);
-		result.pojoClassName = pojoClass.getName();
-		result.pojoProps = (String[]) pojoProps.toArray(new String[pojoProps.size()]);
-
-		result.dtoGetMethods = BeanUtil.matchGetMethods(dtoClass, result.dtoProps);
-		result.dtoSetMethods = BeanUtil.matchSetMethods(dtoClass, result.dtoProps);
-		result.pojoGetMethods = BeanUtil.matchGetMethods(pojoClass, result.pojoProps);
-		result.pojoSetMethods = BeanUtil.matchSetMethods(pojoClass, result.pojoProps);
-		return result;
-	}
-
-	/**
-	 * @TODO POJO 跟DTO 之间的映射复制
-	 * @param pojoClass
-	 * @param dtoClass
-	 * @return
-	 */
-	private static DTOEntityMapModel PO2DTO(Class pojoClass, Class dtoClass) {
-		String fieldName;
-		String aliasName;
+		parentClass = fromClass;
 		SqlToyFieldAlias alias;
-		HashMap<String, String> pojoPropsMap = new HashMap<String, String>();
-		// pojo 以及父类
-		Class parentClass = pojoClass;
-		while (!parentClass.equals(Object.class)) {
-			for (Field field : parentClass.getDeclaredFields()) {
-				fieldName = field.getName();
-				pojoPropsMap.put(fieldName.toLowerCase(), fieldName);
-			}
-			parentClass = parentClass.getSuperclass();
-		}
-
-		// dto
-		List<String> dtoProps = new ArrayList<String>();
-		List<String> pojoProps = new ArrayList<String>();
-		// dto 和dto父类
-		parentClass = dtoClass;
+		String aliasName;
 		while (!parentClass.equals(Object.class)) {
 			for (Field field : parentClass.getDeclaredFields()) {
 				fieldName = field.getName();
 				aliasName = fieldName;
-				alias = field.getAnnotation(SqlToyFieldAlias.class);
-				if (alias != null) {
-					aliasName = alias.value();
+				if (checkAlias) {
+					alias = field.getAnnotation(SqlToyFieldAlias.class);
+					if (alias != null) {
+						aliasName = alias.value();
+					}
 				}
-				if (pojoPropsMap.containsKey(aliasName.toLowerCase())) {
-					dtoProps.add(fieldName);
-					pojoProps.add(pojoPropsMap.get(aliasName.toLowerCase()));
+				if (!fromClassProps.contains(fieldName)) {
+					if (targetPropsMap.containsKey(fieldName.toLowerCase())) {
+						fromClassProps.add(fieldName);
+						targetProps.add(targetPropsMap.get(fieldName.toLowerCase()));
+					} else if (targetPropsMap.containsKey(aliasName.toLowerCase())) {
+						fromClassProps.add(fieldName);
+						targetProps.add(targetPropsMap.get(fieldName.toLowerCase()));
+					}
 				}
 			}
 			parentClass = parentClass.getSuperclass();
 		}
-
-		// 没有匹配的属性
-		if (dtoProps.isEmpty()) {
-			throw new IllegalArgumentException(
-					"dto:" + dtoClass.getName() + " mapping pojo:" + pojoClass.getName() + " 没有属性名称是匹配的，请检查!");
-		}
-		DTOEntityMapModel result = new DTOEntityMapModel();
 		// 模型赋值
-		result.dtoClassName = dtoClass.getName();
-		result.dtoProps = (String[]) dtoProps.toArray(new String[dtoProps.size()]);
-		result.pojoClassName = pojoClass.getName();
-		result.pojoProps = (String[]) pojoProps.toArray(new String[pojoProps.size()]);
-
-		result.dtoGetMethods = BeanUtil.matchGetMethods(dtoClass, result.dtoProps);
-		result.dtoSetMethods = BeanUtil.matchSetMethods(dtoClass, result.dtoProps);
-		result.pojoGetMethods = BeanUtil.matchGetMethods(pojoClass, result.pojoProps);
-		result.pojoSetMethods = BeanUtil.matchSetMethods(pojoClass, result.pojoProps);
+		result.fromClassName = fromClass.getName();
+		result.fromProps = (String[]) fromClassProps.toArray(new String[fromClassProps.size()]);
+		result.targetClassName = targetClass.getName();
+		result.targetProps = (String[]) targetProps.toArray(new String[targetProps.size()]);
+		// 没有匹配的属性
+		if (fromClassProps.isEmpty()) {
+			return result;
+		}
+		result.fromGetMethods = BeanUtil.matchGetMethods(fromClass, result.fromProps);
+		result.targetSetMethods = BeanUtil.matchSetMethods(targetClass, result.targetProps);
 		return result;
 	}
 
 	// 提取映射对应的methods
 	/**
 	 * @todo 利用java.lang.reflect并结合页面的property， 从对象中取出对应方法的值，组成一个List
-	 * @param datas
+	 * @param dataSet
 	 * @param voClass
 	 * @param realMethods
+	 * @param recursionLevel 递归层级
 	 * @return
 	 * @throws Exception
 	 */
-	private static List reflectListToBean(List datas, Class voClass, Method[] realMethods) throws Exception {
+	private static List reflectListToBean(List dataSet, Class voClass, Method[] realMethods, int recursionLevel)
+			throws Exception {
 		List result = new ArrayList();
 		int indexSize = realMethods.length;
 		String[] methodTypes = new String[indexSize];
 		int[] methodTypeValues = new int[indexSize];
+		Class[] methodGenTypes = new Class[indexSize];
+		Boolean[] isList = new Boolean[indexSize];
+		Class methodType;
 		// 自动适配属性的数据类型
 		for (int i = 0; i < indexSize; i++) {
+			isList[i] = Boolean.FALSE;
 			if (null != realMethods[i]) {
 				methodTypes[i] = realMethods[i].getParameterTypes()[0].getTypeName();
 				methodTypeValues[i] = DataType.getType(methodTypes[i]);
+				// 泛型
+				if (realMethods[i].getGenericParameterTypes()[0] instanceof ParameterizedType) {
+					methodType = (Class) ((ParameterizedType) realMethods[i].getGenericParameterTypes()[0])
+							.getActualTypeArguments()[0];
+					methodGenTypes[i] = methodType;
+					if (realMethods[i].getParameterTypes()[0].equals(List.class)
+							|| realMethods[i].getParameterTypes()[0].equals(ArrayList.class)) {
+						isList[i] = Boolean.TRUE;
+					}
+				}
 			}
 		}
 		int size;
 		Object bean;
 		List row;
+		List cellList;
 		Object cellData = null;
-		for (int i = 0; i < datas.size(); i++) {
-			row = (List) datas.get(i);
+		Object convertData = null;
+		for (int i = 0, end = dataSet.size(); i < end; i++) {
+			row = (List) dataSet.get(i);
 			if (row != null) {
 				bean = voClass.getDeclaredConstructor().newInstance();
 				size = row.size();
 				for (int j = 0; j < size; j++) {
 					cellData = row.get(j);
 					if (cellData != null && realMethods[j] != null) {
-						if (cellData.getClass().getTypeName().equals(methodTypes[j])) {
+						// 2023/4/22 待处理：需要考虑对象中嵌套子对象和List<DTO> 这种形式
+						// List<DTO>
+						if (methodGenTypes[j] != null && (cellData instanceof List) && isList[j]) {
+							cellList = (List) cellData;
+							if (!cellList.isEmpty()) {
+								// 类型一致直接赋值
+								if (cellList.get(0) != null && cellList.get(0).getClass().equals(methodGenTypes[j])) {
+									realMethods[j].invoke(bean, cellList);
+								} else if (recursionLevel < 3) {
+									// 类型映射
+									List subItems = mapList((List) cellData, methodGenTypes[j], recursionLevel + 1);
+									if (subItems != null && !subItems.isEmpty()) {
+										realMethods[j].invoke(bean, subItems);
+									}
+								}
+							}
+						} else if (cellData.getClass().getTypeName().equals(methodTypes[j])) {
 							realMethods[j].invoke(bean, cellData);
 						} else {
-							realMethods[j].invoke(bean,
-									BeanUtil.convertType(cellData, methodTypeValues[j], methodTypes[j]));
+							convertData = BeanUtil.convertType(cellData, methodTypeValues[j], methodTypes[j]);
+							// 常规类型转换成功,直接赋值
+							if (convertData != cellData) {
+								realMethods[j].invoke(bean, convertData);
+							} // 属性都是自定义对象类型 DTO -->DTO
+							else if (recursionLevel < 3 && methodGenTypes[j] != null
+									&& cellData instanceof Serializable) {
+								convertData = map((Serializable) cellData, methodGenTypes[j], recursionLevel + 1);
+								if (convertData != null) {
+									realMethods[j].invoke(bean, convertData);
+								}
+							}
 						}
 					}
 				}

@@ -91,8 +91,15 @@ public class MacroIfLogic {
 			String[] params;
 			String compareParam;
 			String compareType = "==";
+			// 参数量计数器
+			int meter = 0;
 			for (int i = 0; i < expressions.length; i++) {
-				value = (paramValues == null) ? null : paramValues.get(preCount + i);
+				if (paramValues == null) {
+					value = null;
+				} else {
+					value = paramValues.get(preCount + meter);
+					meter++;
+				}
 				express = expressions[i].trim();
 				expressLow = express.toLowerCase();
 				for (int j = 0; j < compareStr.length; j++) {
@@ -107,6 +114,15 @@ public class MacroIfLogic {
 				compareParam = params[0].trim().toLowerCase();
 				// update 2018-3-29,去除空格增强容错性
 				compareValue = params[1].trim();
+				// 对比值也是动态参数(update 2023-05-05)
+				if (compareValue.equals("?") && paramValues != null) {
+					if (paramValues.get(preCount + meter) == null) {
+						compareValue = "null";
+					} else {
+						compareValue = paramValues.get(preCount + meter).toString();
+					}
+					meter++;
+				}
 				// 计算单个比较的结果(update 2020-09-24 增加数组长度的提取)
 				if (compareParam.startsWith("size(") || compareParam.startsWith("length(")) {
 					expressResult[i] = compare(value == null ? 0 : CollectionUtil.convertArray(value).length,

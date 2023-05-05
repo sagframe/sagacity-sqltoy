@@ -117,7 +117,7 @@ import org.slf4j.LoggerFactory;
  *         {剔除linkDaoSupport、BaseDaoSupport,将link功能放入SqlToyDaoSupport}
  * @modify Date:2021-12-23 {优化updateByQuery支持set field=field+1依据字段值进行计算的模式}
  */
-@SuppressWarnings({"rawtypes","unchecked"})
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class SqlToyDaoSupport {
 	/**
 	 * 定义日志
@@ -399,14 +399,12 @@ public class SqlToyDaoSupport {
 	 * @see #getSingleValue(String, Map)
 	 */
 	@Deprecated
-	protected Object getSingleValue(final String sqlOrSqlId, final String[] paramsNamed,
-			final Object[] paramsValue) {
+	protected Object getSingleValue(final String sqlOrSqlId, final String[] paramsNamed, final Object[] paramsValue) {
 		return getSingleValue(sqlOrSqlId, paramsNamed, paramsValue, null);
 	}
 
 	protected Object getSingleValue(final String sqlOrSqlId, final Map<String, Object> paramsMap) {
-		Object queryResult = loadByQuery(
-				new QueryExecutor(sqlOrSqlId, (paramsMap == null) ? MapKit.map() : paramsMap));
+		Object queryResult = loadByQuery(new QueryExecutor(sqlOrSqlId, (paramsMap == null) ? MapKit.map() : paramsMap));
 		if (null != queryResult) {
 			return ((List) queryResult).get(0);
 		}
@@ -574,10 +572,9 @@ public class SqlToyDaoSupport {
 		return dialectFactory.loadAll(sqlToyContext, entities, cascades, lockMode, this.getDataSource(null));
 	}
 
-	protected <T> T loadBySql(final String sqlOrSqlId, final Map<String, Object> paramsMap,
-			final Class<T> resultType) {
-		return (T) loadByQuery(new QueryExecutor(sqlOrSqlId, (paramsMap == null) ? MapKit.map() : paramsMap)
-				.resultType(resultType));
+	protected <T> T loadBySql(final String sqlOrSqlId, final Map<String, Object> paramsMap, final Class<T> resultType) {
+		return (T) loadByQuery(
+				new QueryExecutor(sqlOrSqlId, (paramsMap == null) ? MapKit.map() : paramsMap).resultType(resultType));
 	}
 
 	/**
@@ -659,8 +656,8 @@ public class SqlToyDaoSupport {
 	 */
 	protected Long executeSql(final String sqlOrSqlId, final Serializable entity) {
 		SqlToyConfig sqlToyConfig = getSqlToyConfig(sqlOrSqlId, SqlType.update);
-		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, new QueryExecutor(sqlOrSqlId, entity), null,
-				null, getDataSource(null, sqlToyConfig));
+		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, new QueryExecutor(sqlOrSqlId, entity), null, null,
+				getDataSource(null, sqlToyConfig));
 	}
 
 	protected Long executeSql(final String sqlOrSqlId, final Map<String, Object> paramsMap) {
@@ -683,14 +680,13 @@ public class SqlToyDaoSupport {
 	 * @param sqlOrSqlId
 	 * @param paramsNamed
 	 * @param paramsValue
-	 * @param autoCommit    自动提交，默认可以填null
+	 * @param autoCommit  自动提交，默认可以填null
 	 * @param dataSource
 	 * @return
 	 */
 	protected Long executeSql(final String sqlOrSqlId, final String[] paramsNamed, final Object[] paramsValue,
 			final Boolean autoCommit, final DataSource dataSource) {
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sqlOrSqlId, SqlType.update,
-				getDialect(dataSource));
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sqlOrSqlId, SqlType.update, getDialect(dataSource));
 		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig,
 				new QueryExecutor(sqlOrSqlId).names(paramsNamed).values(paramsValue), null, autoCommit,
 				getDataSource(dataSource, sqlToyConfig));
@@ -705,10 +701,10 @@ public class SqlToyDaoSupport {
 	/**
 	 * @todo 通过jdbc方式批量插入数据，一般提供给数据采集时或插入临时表使用
 	 * @param sqlOrSqlId
-	 * @param dataSet       支持List<List>、List<Object[]>(sql中?传参) ;List<VO>、List<Map>
-	 *                      形式(sql中:paramName传参)
+	 * @param dataSet    支持List<List>、List<Object[]>(sql中?传参) ;List<VO>、List<Map>
+	 *                   形式(sql中:paramName传参)
 	 * @param batchSize
-	 * @param autoCommit    自动提交，默认可以填null
+	 * @param autoCommit 自动提交，默认可以填null
 	 * @return
 	 */
 	protected Long batchUpdate(final String sqlOrSqlId, final List dataSet, final int batchSize,
@@ -719,8 +715,8 @@ public class SqlToyDaoSupport {
 	/**
 	 * @todo 批量执行sql修改或删除操作
 	 * @param sqlOrSqlId
-	 * @param dataSet       支持List<List>、List<Object[]>(sql中?传参) ;List<VO>、List<Map>
-	 *                      形式(sql中:paramName传参)
+	 * @param dataSet    支持List<List>、List<Object[]>(sql中?传参) ;List<VO>、List<Map>
+	 *                   形式(sql中:paramName传参)
 	 * @param batchSize
 	 * @param autoCommit
 	 * @param dataSource
@@ -728,8 +724,7 @@ public class SqlToyDaoSupport {
 	 */
 	protected Long batchUpdate(final String sqlOrSqlId, final List dataSet, final int batchSize,
 			final Boolean autoCommit, final DataSource dataSource) {
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sqlOrSqlId, SqlType.update,
-				getDialect(dataSource));
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sqlOrSqlId, SqlType.update, getDialect(dataSource));
 		return dialectFactory.batchUpdate(sqlToyContext, sqlToyConfig, dataSet, batchSize, null, null, autoCommit,
 				getDataSource(dataSource, sqlToyConfig));
 	}
@@ -771,7 +766,7 @@ public class SqlToyDaoSupport {
 	 * @param sqlOrSqlId
 	 * @param paramsNamed
 	 * @param paramsValue
-	 * @param resultType       分null(返回二维List)、voClass、HashMap.class、LinkedHashMap.class等
+	 * @param resultType  分null(返回二维List)、voClass、HashMap.class、LinkedHashMap.class等
 	 * @return
 	 */
 	protected <T> List<T> findBySql(final String sqlOrSqlId, final String[] paramsNamed, final Object[] paramsValue,
@@ -859,13 +854,12 @@ public class SqlToyDaoSupport {
 		return (Page<T>) findPageByQuery(page, query).getPageResult();
 	}
 
-	protected <T extends Serializable> Page<T> findPageBySql(final Page page, final String sqlOrSqlId,
-			final T entity) {
+	protected <T extends Serializable> Page<T> findPageBySql(final Page page, final String sqlOrSqlId, final T entity) {
 		return (Page<T>) findPageByQuery(page, new QueryExecutor(sqlOrSqlId, entity)).getPageResult();
 	}
 
-	protected <T> Page<T> findPageBySql(final Page page, final String sqlOrSqlId,
-			final Map<String, Object> paramsMap, Class<T> resultType) {
+	protected <T> Page<T> findPageBySql(final Page page, final String sqlOrSqlId, final Map<String, Object> paramsMap,
+			Class<T> resultType) {
 		return (Page<T>) findPageByQuery(page, new QueryExecutor(sqlOrSqlId, paramsMap).resultType(resultType))
 				.getPageResult();
 	}
@@ -883,13 +877,13 @@ public class SqlToyDaoSupport {
 	 * @param paramsNamed
 	 * @param paramsValue
 	 * @param resultType(null则返回List<List>二维集合,HashMap.class:则返回List<HashMap<columnLabel,columnValue>>)
-	 * @param topSize                                                                                >1
-	 *                                                                                               取整数部分，<1
-	 *                                                                                               则表示按比例获取
+	 * @param topSize                                                                                   >1
+	 *                                                                                                  取整数部分，<1
+	 *                                                                                                  则表示按比例获取
 	 * @return
 	 */
-	protected <T> List<T> findTopBySql(final String sqlOrSqlId, final String[] paramsNamed,
-			final Object[] paramsValue, final Class<T> resultType, final double topSize) {
+	protected <T> List<T> findTopBySql(final String sqlOrSqlId, final String[] paramsNamed, final Object[] paramsValue,
+			final Class<T> resultType, final double topSize) {
 		return (List<T>) findTopByQuery(new QueryExecutor(sqlOrSqlId, paramsNamed, paramsValue).resultType(resultType),
 				topSize).getRows();
 	}
@@ -1231,7 +1225,7 @@ public class SqlToyDaoSupport {
 				}
 			}
 			// 全部有值，且版本字段值不为0表示是更新操作
-			if (isUpdate && !values[props.length - 1].toString().equals("0")) {
+			if (isUpdate && !"0".equals(values[props.length - 1].toString())) {
 				return update(entity, forceUpdateProps, dataSource);
 			}
 		}
@@ -1562,7 +1556,7 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected HashMap<String, Object[]> getTranslateCache(String cacheName, String cacheType) {
-		return this.sqlToyContext.getTranslateManager().getCacheData(cacheName, cacheType);
+		return sqlToyContext.getTranslateManager().getCacheData(cacheName, cacheType);
 	}
 
 	/**
@@ -1591,45 +1585,52 @@ public class SqlToyDaoSupport {
 			throw new IllegalArgumentException("缓存反向名称匹配key必须要提供cacheName和matchRegex值!");
 		}
 		CacheMatchExtend extendArgs = cacheMatchFilter.getCacheFilterArgs();
-		int[] nameIndexes = extendArgs.matchIndexs;
-		HashMap<String, Object[]> cacheDatas = this.sqlToyContext.getTranslateManager()
-				.getCacheData(extendArgs.cacheName, extendArgs.cacheType);
+		// 获取缓存数据
+		HashMap<String, Object[]> cacheDatas = getTranslateCache(extendArgs.cacheName, extendArgs.cacheType);
 		if (cacheDatas == null || cacheDatas.isEmpty()) {
 			logger.error("缓存cacheName={},cacheType={} 没有数据,cacheMatchKeys异常,请检查!", extendArgs.cacheName,
 					extendArgs.cacheType);
 			return new String[] {};
 		}
+		// 名称匹配在缓存的哪几列(正常1列，但部分场景要求:名称、别名 匹配等)
+		int[] nameIndexes = extendArgs.matchIndexs;
+		// 将传递匹配条件转小写
 		List<String> matchLowAry = new ArrayList<String>();
 		for (String str : matchRegexes) {
 			matchLowAry.add(str.toLowerCase().trim());
 		}
+		// 缓存key值列
 		int cacheKeyIndex = extendArgs.cacheKeyIndex;
-		List<String> matchedKeys = new ArrayList<String>();
+		// 最大允许匹配数量,缓存匹配一般用于in (?,?)形式的查询,in 参数有数量限制
+		int maxLimit = extendArgs.matchSize;
+		// 匹配到的key集合
+		Set<String> matchedKeys = new HashSet<String>();
 		String keyCode;
 		String matchStr;
-		int matchCnt = 0;
 		String[] matchWords;
 		Object compareValue;
 		// 是否优先判断相等
 		boolean priorMatchEqual = extendArgs.priorMatchEqual;
 		boolean hasFilter = (extendArgs.cacheFilter == null) ? false : true;
 		boolean include = true;
-		for (Object[] row : cacheDatas.values()) {
-			keyCode = row[cacheKeyIndex].toString();
-			include = true;
-			if (hasFilter) {
-				include = extendArgs.cacheFilter.doFilter(row);
-			}
-			if (include) {
-				skipLoop: for (int i = 0; i < matchLowAry.size(); i++) {
-					matchStr = matchLowAry.get(i);
-					// 优先匹配名称相同
-					if (priorMatchEqual) {
-						// key 相同
-						if (matchStr.equals(keyCode.toLowerCase())) {
+		// 优先匹配名称相同,名称相同直接剔除掉对比参数不再进行后续匹配
+		if (priorMatchEqual) {
+			String keyLow;
+			for (Object[] row : cacheDatas.values()) {
+				keyCode = row[cacheKeyIndex].toString();
+				include = true;
+				if (hasFilter) {
+					include = extendArgs.cacheFilter.doFilter(row);
+				}
+				if (include) {
+					keyLow = keyCode.toLowerCase();
+					skipLoop: for (int i = 0; i < matchLowAry.size(); i++) {
+						matchStr = matchLowAry.get(i);
+						// 模糊查询条件直接就跟key 相同
+						if (matchStr.equals(keyLow)) {
 							matchedKeys.add(keyCode);
+							// 剔除
 							matchLowAry.remove(i);
-							matchCnt++;
 							break;
 						}
 						// 名称相同
@@ -1637,27 +1638,55 @@ public class SqlToyDaoSupport {
 							compareValue = row[index];
 							if (compareValue != null && compareValue.toString().toLowerCase().equals(matchStr)) {
 								matchedKeys.add(keyCode);
+								// 剔除
 								matchLowAry.remove(i);
-								matchCnt++;
 								break skipLoop;
 							}
 						}
 					}
-					// like 匹配
-					matchWords = matchStr.split("\\s+");
-					for (int index : nameIndexes) {
-						compareValue = row[index];
-						if (compareValue != null
-								&& StringUtil.like(compareValue.toString().toLowerCase(), matchWords)) {
-							matchedKeys.add(keyCode);
-							matchCnt++;
-							break skipLoop;
-						}
+					// 完全匹配到相等、匹配量到最大量
+					if (matchLowAry.isEmpty() || matchedKeys.size() >= maxLimit) {
+						break;
 					}
 				}
-				// 不超过1000个(作为in条件值有限制)
-				if (matchLowAry.isEmpty() || matchCnt >= extendArgs.matchSize) {
-					break;
+			}
+		}
+		// 排除相等优先后，进行模糊like 匹配
+		if (!matchLowAry.isEmpty() && matchedKeys.size() < maxLimit) {
+			int likeArgSize = matchLowAry.size();
+			// 将匹配参数切割成分词数组
+			List<String[]> paramsMatchWords = new ArrayList<String[]>();
+			for (int i = 0; i < likeArgSize; i++) {
+				paramsMatchWords.add(matchLowAry.get(i).split("\\s+"));
+			}
+			for (Object[] row : cacheDatas.values()) {
+				keyCode = row[cacheKeyIndex].toString();
+				include = true;
+				// 已经存在无需再比较
+				if (matchedKeys.contains(keyCode)) {
+					include = false;
+				}
+				// 对缓存进行过滤(比如过滤本人授权访问机构下面的员工或当期状态为生效的员工)
+				if (hasFilter && include) {
+					include = extendArgs.cacheFilter.doFilter(row);
+				}
+				if (include) {
+					skipLoop: for (int i = 0; i < likeArgSize; i++) {
+						// like 匹配
+						matchWords = paramsMatchWords.get(i);
+						for (int index : nameIndexes) {
+							compareValue = row[index];
+							if (compareValue != null
+									&& StringUtil.like(compareValue.toString().toLowerCase(), matchWords)) {
+								matchedKeys.add(keyCode);
+								break skipLoop;
+							}
+						}
+					}
+					// 超出阈值跳出
+					if (matchedKeys.size() >= maxLimit) {
+						break;
+					}
 				}
 			}
 		}
@@ -2160,18 +2189,7 @@ public class SqlToyDaoSupport {
 	 */
 	protected <T extends Serializable> T convertType(Serializable source, Class<T> resultType,
 			String... ignoreProperties) {
-		if (source == null || resultType == null) {
-			throw new IllegalArgumentException(
-					"调用convertType对单个对象进行POJO<-->DTO 转换过程中发现参数异常: source 和 resultType 不能为null!");
-		}
-		try {
-			return MapperUtils.map(sqlToyContext, source, resultType, ignoreProperties);
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new RuntimeException(
-					"将对象:" + source.getClass().getName() + "属性数据复制到:" + resultType.getName() + "发生异常!" + e.getMessage(),
-					e);
-		}
+		return MapperUtils.map(source, resultType, ignoreProperties);
 	}
 
 	/**
@@ -2184,34 +2202,12 @@ public class SqlToyDaoSupport {
 	 */
 	protected <T extends Serializable> List<T> convertType(List sourceList, Class<T> resultType,
 			String... ignoreProperties) {
-		if (sourceList == null || resultType == null) {
-			throw new IllegalArgumentException(
-					"调用convertType对集合进行POJO<-->DTO 转换过程中发现参数异常: sourceList 和 resultType 不能为null!");
-		}
-		try {
-			return MapperUtils.mapList(sqlToyContext, sourceList, resultType, ignoreProperties);
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new RuntimeException("将对象:" + sourceList.get(0).getClass().getName() + " 属性数据复制到:"
-					+ resultType.getName() + " 发生异常!" + e.getMessage(), e);
-		}
+		return MapperUtils.mapList(sourceList, resultType, ignoreProperties);
 	}
 
 	protected <T extends Serializable> Page<T> convertType(Page sourcePage, Class<T> resultType,
 			String... ignoreProperties) {
-		if (sourcePage == null) {
-			return null;
-		}
-		Page result = new Page();
-		result.setPageNo(sourcePage.getPageNo());
-		result.setPageSize(sourcePage.getPageSize());
-		result.setRecordCount(sourcePage.getRecordCount());
-		result.setSkipQueryCount(sourcePage.getSkipQueryCount());
-		if (sourcePage.getRows().isEmpty()) {
-			return result;
-		}
-		result.setRows(convertType(sourcePage.getRows(), resultType, ignoreProperties));
-		return result;
+		return MapperUtils.map(sourcePage, resultType, ignoreProperties);
 	}
 
 	// parallQuery 面向查询(不要用于事务操作过程中),sqltoy提供强大的方法，但是否恰当使用需要使用者做合理的判断

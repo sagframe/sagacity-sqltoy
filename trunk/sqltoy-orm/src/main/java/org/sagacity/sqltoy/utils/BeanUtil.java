@@ -1622,12 +1622,12 @@ public class BeanUtil {
 	 * @return
 	 */
 	public static boolean isBaseDataType(Class clazz) {
-		return (clazz.equals(String.class) || clazz.equals(Integer.class) || clazz.equals(Byte.class)
-				|| clazz.equals(Long.class) || clazz.equals(Double.class) || clazz.equals(Float.class)
-				|| clazz.equals(Character.class) || clazz.equals(Short.class) || clazz.equals(BigDecimal.class)
-				|| clazz.equals(BigInteger.class) || clazz.equals(Boolean.class) || clazz.equals(Date.class)
-				|| clazz.equals(LocalDate.class) || clazz.equals(LocalDateTime.class) || clazz.equals(LocalTime.class)
-				|| clazz.equals(Timestamp.class) || clazz.isPrimitive());
+		return (clazz.isPrimitive() || clazz.equals(String.class) || clazz.equals(Integer.class)
+				|| clazz.equals(Byte.class) || clazz.equals(Long.class) || clazz.equals(Double.class)
+				|| clazz.equals(Float.class) || clazz.equals(Character.class) || clazz.equals(Short.class)
+				|| clazz.equals(BigDecimal.class) || clazz.equals(BigInteger.class) || clazz.equals(Boolean.class)
+				|| clazz.equals(Date.class) || clazz.equals(LocalDate.class) || clazz.equals(LocalDateTime.class)
+				|| clazz.equals(LocalTime.class) || clazz.equals(Timestamp.class));
 	}
 
 	/**
@@ -1821,7 +1821,7 @@ public class BeanUtil {
 		}
 		Object[] array = (Object[]) values;
 		int index = 0;
-		if (typeName.equals("java.lang.Integer[]") && !(values instanceof Integer[])) {
+		if ("java.lang.Integer[]".equals(typeName) && !(values instanceof Integer[])) {
 			Integer[] result = new Integer[array.length];
 			for (Object obj : array) {
 				if (obj != null) {
@@ -1831,7 +1831,7 @@ public class BeanUtil {
 			}
 			return result;
 		}
-		if (typeName.equals("java.lang.Long[]") && !(values instanceof Long[])) {
+		if ("java.lang.Long[]".equals(typeName) && !(values instanceof Long[])) {
 			Long[] result = new Long[array.length];
 			for (Object obj : array) {
 				if (obj != null) {
@@ -1841,7 +1841,7 @@ public class BeanUtil {
 			}
 			return result;
 		}
-		if (typeName.equals("java.math.BigDecimal[]") && !(values instanceof BigDecimal[])) {
+		if ("java.math.BigDecimal[]".equals(typeName) && !(values instanceof BigDecimal[])) {
 			BigDecimal[] result = new BigDecimal[array.length];
 			for (Object obj : array) {
 				if (obj != null) {
@@ -1851,7 +1851,7 @@ public class BeanUtil {
 			}
 			return result;
 		}
-		if (typeName.equals("int[]") && !(values instanceof int[])) {
+		if ("int[]".equals(typeName) && !(values instanceof int[])) {
 			int[] result = new int[array.length];
 			for (Object obj : array) {
 				if (obj != null) {
@@ -1861,7 +1861,7 @@ public class BeanUtil {
 			}
 			return result;
 		}
-		if (typeName.equals("long[]") && !(values instanceof long[])) {
+		if ("long[]".equals(typeName) && !(values instanceof long[])) {
 			long[] result = new long[array.length];
 			for (Object obj : array) {
 				if (obj != null) {
@@ -1871,7 +1871,7 @@ public class BeanUtil {
 			}
 			return result;
 		}
-		if (typeName.equals("java.lang.Double[]") && !(values instanceof Double[])) {
+		if ("java.lang.Double[]".equals(typeName) && !(values instanceof Double[])) {
 			Double[] result = new Double[array.length];
 			for (Object obj : array) {
 				if (obj != null) {
@@ -1881,7 +1881,7 @@ public class BeanUtil {
 			}
 			return result;
 		}
-		if (typeName.equals("double[]") && !(values instanceof double[])) {
+		if ("double[]".equals(typeName) && !(values instanceof double[])) {
 			double[] result = new double[array.length];
 			for (Object obj : array) {
 				if (obj != null) {
@@ -1891,7 +1891,7 @@ public class BeanUtil {
 			}
 			return result;
 		}
-		if (typeName.equals("java.lang.Float[]") && !(values instanceof Float[])) {
+		if ("java.lang.Float[]".equals(typeName) && !(values instanceof Float[])) {
 			Float[] result = new Float[array.length];
 			for (Object obj : array) {
 				if (obj != null) {
@@ -1901,7 +1901,7 @@ public class BeanUtil {
 			}
 			return result;
 		}
-		if (typeName.equals("float[]") && !(values instanceof float[])) {
+		if ("float[]".equals(typeName) && !(values instanceof float[])) {
 			float[] result = new float[array.length];
 			for (Object obj : array) {
 				if (obj != null) {

@@ -313,7 +313,8 @@ public class DataSourceUtils {
 				return Dialect.OCEANBASE;
 			}
 			// GAUSSDB
-			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.GAUSSDB) != -1) {
+			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.GAUSSDB) != -1 || "zenith".equalsIgnoreCase(dbDialect)
+					|| "opengauss".equalsIgnoreCase(dbDialect)) {
 				return Dialect.GAUSSDB;
 			}
 			// sqlite

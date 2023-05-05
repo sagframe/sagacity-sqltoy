@@ -782,6 +782,11 @@ public class SqlToyLazyDaoImpl extends SpringDaoSupport implements SqlToyLazyDao
 		return super.mongo();
 	}
 
+//	@Override
+//	public TableApi tableApi() {
+//		return null;
+//	}
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -910,7 +915,7 @@ public class SqlToyLazyDaoImpl extends SpringDaoSupport implements SqlToyLazyDao
 	public String[] cacheMatchKeys(CacheMatchFilter cacheMatchFilter, String... matchRegexes) {
 		return super.cacheMatchKeys(cacheMatchFilter, matchRegexes);
 	}
-	
+
 	@Override
 	public <T extends Serializable> T convertType(Serializable source, Class<T> resultType,
 			String... ignoreProperties) {

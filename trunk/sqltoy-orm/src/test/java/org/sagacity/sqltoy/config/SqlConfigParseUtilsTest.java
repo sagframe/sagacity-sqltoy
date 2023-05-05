@@ -277,11 +277,13 @@ public class SqlConfigParseUtilsTest {
 
 	@Test
 	public void testIf1() throws Exception {
-		String sql = "where name=1 #[ @if(:flag==1) and #[status=:status]]";
-		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "flag", "status" },
-				new Object[] { "1", null });
-		System.err.println(JSON.toJSONString(result));
-		result = SqlConfigParseUtils.processSql(sql, new String[] { "flag", "status" }, new Object[] { "1", 1 });
+		String sql = "where name=1 #[ @if(:flag==:flagValue||:flag1==:flagValue1) and #[status=:status]]";
+//		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "flag", "status" },
+//				new Object[] { "1", null });
+//		System.err.println(JSON.toJSONString(result));
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql,
+				new String[] { "flag", "flag1", "status", "flagValue", "flagValue1" },
+				new Object[] { "1", "3", 1, "1", "2" });
 		System.err.println(JSON.toJSONString(result));
 	}
 
