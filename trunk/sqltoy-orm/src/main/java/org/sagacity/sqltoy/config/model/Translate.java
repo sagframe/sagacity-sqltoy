@@ -117,6 +117,7 @@ public class Translate implements Serializable {
 		return extend;
 	}
 
+	@Override
 	public Translate clone() {
 		Translate result = new Translate(getExtend().cache);
 		result.extend = getExtend().clone();
