@@ -285,7 +285,7 @@ public class EntityManager {
 				if (StringUtil.isNotBlank(entity.pk_constraint())) {
 					entityMeta.setPkConstraint(entity.pk_constraint());
 				}
-				if (tenant != null && !tenant.field().equals("")) {
+				if (tenant != null && !"".equals(tenant.field())) {
 					entityMeta.setTenantField(tenant.field());
 				}
 				// 解析Entity包含的字段信息

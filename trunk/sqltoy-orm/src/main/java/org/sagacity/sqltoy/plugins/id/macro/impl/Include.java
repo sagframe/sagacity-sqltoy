@@ -25,7 +25,7 @@ public class Include extends AbstractMacro {
 			return "";
 		}
 		String sqlId = params[0].replaceAll("\"|\'", "").trim();
-		if (sqlId.equals("")) {
+		if ("".equals(sqlId)) {
 			return "";
 		}
 		// id="xxx" 模式，切取xxxx

@@ -56,93 +56,93 @@ public class DataType {
 	 */
 	public static int getType(String typeName) {
 		// 原生类型
-		if (typeName.equals("int")) {
+		if ("int".equals(typeName)) {
 			return primitiveIntType;
 		}
-		if (typeName.equals("long")) {
+		if ("long".equals(typeName)) {
 			return primitiveLongType;
 		}
-		if (typeName.equals("double")) {
+		if ("double".equals(typeName)) {
 			return primitiveDoubleType;
 		}
-		if (typeName.equals("float")) {
+		if ("float".equals(typeName)) {
 			return primitiveFloatType;
 		}
-		if (typeName.equals("boolean")) {
+		if ("boolean".equals(typeName)) {
 			return primitiveBooleanType;
 		}
-		if (typeName.equals("char")) {
+		if ("char".equals(typeName)) {
 			return primitiveCharType;
 		}
-		if (typeName.equals("byte")) {
+		if ("byte".equals(typeName)) {
 			return primitiveByteType;
 		}
-		if (typeName.equals("short")) {
+		if ("short".equals(typeName)) {
 			return primitiveShortType;
 		}
 		// string
-		if (typeName.equals("java.lang.String")) {
+		if ("java.lang.String".equals(typeName)) {
 			return stringType;
 		}
 		// clob
-		if (typeName.equals("java.sql.Clob")) {
+		if ("java.sql.Clob".equals(typeName)) {
 			return clobType;
 		}
 		// 包装类型
-		if (typeName.equals("java.lang.Integer")) {
+		if ("java.lang.Integer".equals(typeName)) {
 			return wrapIntegerType;
 		}
-		if (typeName.equals("java.lang.Long")) {
+		if ("java.lang.Long".equals(typeName)) {
 			return wrapLongType;
 		}
-		if (typeName.equals("java.lang.Short")) {
+		if ("java.lang.Short".equals(typeName)) {
 			return wrapShortType;
 		}
-		if (typeName.equals("java.lang.Double")) {
+		if ("java.lang.Double".equals(typeName)) {
 			return wrapDoubleType;
 		}
-		if (typeName.equals("java.lang.Boolean")) {
+		if ("java.lang.Boolean".equals(typeName)) {
 			return wrapBooleanType;
 		}
-		if (typeName.equals("java.lang.Float")) {
+		if ("java.lang.Float".equals(typeName)) {
 			return wrapFloatType;
 		}
-		if (typeName.equals("java.lang.Byte")) {
+		if ("java.lang.Byte".equals(typeName)) {
 			return wrapByteType;
 		}
-		if (typeName.equals("java.math.BigDecimal")) {
+		if ("java.math.BigDecimal".equals(typeName)) {
 			return wrapBigDecimalType;
 		}
-		if (typeName.equals("java.math.BigInteger")) {
+		if ("java.math.BigInteger".equals(typeName)) {
 			return wrapBigIntegerType;
 		}
 		// 时间类型
-		if (typeName.equals("java.sql.Timestamp")) {
+		if ("java.sql.Timestamp".equals(typeName)) {
 			return timestampType;
 		}
-		if (typeName.equals("java.sql.Time")) {
+		if ("java.sql.Time".equals(typeName)) {
 			return sqlTimeType;
 		}
-		if (typeName.equals("java.sql.Date")) {
+		if ("java.sql.Date".equals(typeName)) {
 			return sqlDateType;
 		}
-		if (typeName.equals("java.util.Date")) {
+		if ("java.util.Date".equals(typeName)) {
 			return dateType;
 		}
-		if (typeName.equals("java.time.LocalDate")) {
+		if ("java.time.LocalDate".equals(typeName)) {
 			return localDateType;
 		}
-		if (typeName.equals("java.time.LocalDateTime")) {
+		if ("java.time.LocalDateTime".equals(typeName)) {
 			return localDateTimeType;
 		}
-		if (typeName.equals("java.time.LocalTime")) {
+		if ("java.time.LocalTime".equals(typeName)) {
 			return localTimeType;
 		}
 		// 数组类型
-		if (typeName.equals("char[]")) {
+		if ("char[]".equals(typeName)) {
 			return aryCharType;
 		}
-		if (typeName.equals("byte[]")) {
+		if ("byte[]".equals(typeName)) {
 			return aryByteType;
 		}
 		if (typeName.endsWith("[]")) {

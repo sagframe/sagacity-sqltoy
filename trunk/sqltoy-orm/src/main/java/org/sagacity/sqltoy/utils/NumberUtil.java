@@ -504,7 +504,7 @@ public class NumberUtil {
 		String lastStr = capitalMoneyStr.substring(capitalMoneyStr.length() - 1);
 		int lastAscii = StringUtil.str2ASCII(lastStr)[0];
 		String[] uoms = { "仟", "佰", "拾", "角", "分", "厘" };
-		double multiples[] = { 1000, 100, 10, 0.1, 0.01, 0.001 };
+		double[] multiples = { 1000, 100, 10, 0.1, 0.01, 0.001 };
 		BigDecimal moneyNum = BigDecimal.ZERO;
 		int index;
 		double splitMoneyNum;

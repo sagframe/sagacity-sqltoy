@@ -1225,7 +1225,7 @@ public class SqlToyDaoSupport {
 				}
 			}
 			// 全部有值，且版本字段值不为0表示是更新操作
-			if (isUpdate && !values[props.length - 1].toString().equals("0")) {
+			if (isUpdate && !"0".equals(values[props.length - 1].toString())) {
 				return update(entity, forceUpdateProps, dataSource);
 			}
 		}
@@ -2189,18 +2189,7 @@ public class SqlToyDaoSupport {
 	 */
 	protected <T extends Serializable> T convertType(Serializable source, Class<T> resultType,
 			String... ignoreProperties) {
-		if (source == null || resultType == null) {
-			throw new IllegalArgumentException(
-					"调用convertType对单个对象进行POJO<-->DTO 转换过程中发现参数异常: source 和 resultType 不能为null!");
-		}
-		try {
-			return MapperUtils.map(source, resultType, ignoreProperties);
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new RuntimeException(
-					"将对象:" + source.getClass().getName() + "属性数据复制到:" + resultType.getName() + "发生异常!" + e.getMessage(),
-					e);
-		}
+		return MapperUtils.map(source, resultType, ignoreProperties);
 	}
 
 	/**
@@ -2213,34 +2202,12 @@ public class SqlToyDaoSupport {
 	 */
 	protected <T extends Serializable> List<T> convertType(List sourceList, Class<T> resultType,
 			String... ignoreProperties) {
-		if (sourceList == null || resultType == null) {
-			throw new IllegalArgumentException(
-					"调用convertType对集合进行POJO<-->DTO 转换过程中发现参数异常: sourceList 和 resultType 不能为null!");
-		}
-		try {
-			return MapperUtils.mapList(sourceList, resultType, ignoreProperties);
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new RuntimeException("将对象:" + sourceList.get(0).getClass().getName() + " 属性数据复制到:"
-					+ resultType.getName() + " 发生异常!" + e.getMessage(), e);
-		}
+		return MapperUtils.mapList(sourceList, resultType, ignoreProperties);
 	}
 
 	protected <T extends Serializable> Page<T> convertType(Page sourcePage, Class<T> resultType,
 			String... ignoreProperties) {
-		if (sourcePage == null) {
-			return null;
-		}
-		Page result = new Page();
-		result.setPageNo(sourcePage.getPageNo());
-		result.setPageSize(sourcePage.getPageSize());
-		result.setRecordCount(sourcePage.getRecordCount());
-		result.setSkipQueryCount(sourcePage.getSkipQueryCount());
-		if (sourcePage.getRows().isEmpty()) {
-			return result;
-		}
-		result.setRows(convertType(sourcePage.getRows(), resultType, ignoreProperties));
-		return result;
+		return MapperUtils.map(sourcePage, resultType, ignoreProperties);
 	}
 
 	// parallQuery 面向查询(不要用于事务操作过程中),sqltoy提供强大的方法，但是否恰当使用需要使用者做合理的判断
