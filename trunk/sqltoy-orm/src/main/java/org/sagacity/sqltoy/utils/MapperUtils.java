@@ -13,6 +13,7 @@ import java.util.Map;
 import org.sagacity.sqltoy.config.annotation.SqlToyFieldAlias;
 import org.sagacity.sqltoy.config.model.DTOEntityMapModel;
 import org.sagacity.sqltoy.config.model.DataType;
+import org.sagacity.sqltoy.model.Page;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,6 +64,23 @@ public class MapperUtils {
 		return mapList(sourceList, resultType, 0, ignoreProperties);
 	}
 
+	public static <T extends Serializable> Page<T> map(Page sourcePage, Class<T> resultType,
+			String... ignoreProperties) {
+		if (sourcePage == null || resultType == null || BeanUtil.isBaseDataType(resultType)) {
+			throw new IllegalArgumentException("sourcePage 和 resultType 不能为null,且resultType不能为基本类型!");
+		}
+		Page result = new Page();
+		result.setPageNo(sourcePage.getPageNo());
+		result.setPageSize(sourcePage.getPageSize());
+		result.setRecordCount(sourcePage.getRecordCount());
+		result.setSkipQueryCount(sourcePage.getSkipQueryCount());
+		if (sourcePage.getRows().isEmpty()) {
+			return result;
+		}
+		result.setRows(mapList(sourcePage.getRows(), resultType, ignoreProperties));
+		return result;
+	}
+
 	/**
 	 * @TODO 实现POJO和VO单个对象之间的相互转换和赋值
 	 * @param <T>
@@ -98,7 +116,8 @@ public class MapperUtils {
 	 */
 	private static <T extends Serializable> List<T> mapList(List<Serializable> sourceList, Class<T> resultType,
 			int recursionLevel, String... ignoreProperties) throws RuntimeException {
-		DTOEntityMapModel mapModel = getDTOEntityMap(sourceList.iterator().next().getClass(), resultType);
+		Class sourceClass = sourceList.iterator().next().getClass();
+		DTOEntityMapModel mapModel = getDTOEntityMap(sourceClass, resultType);
 		if (mapModel == null || mapModel.fromGetMethods == null || mapModel.targetSetMethods == null) {
 			return null;
 		}
@@ -168,7 +187,8 @@ public class MapperUtils {
 			return reflectListToBean(dataSets, resultType, setMethods, recursionLevel);
 		} catch (Exception e) {
 			e.printStackTrace();
-			throw new RuntimeException("map/mapList操作失败:" + e.getMessage());
+			throw new RuntimeException("map/mapList,类型:[" + sourceClass.getName() + "-->" + resultType.getName()
+					+ "]映射操作失败:" + e.getMessage());
 		}
 	}
 

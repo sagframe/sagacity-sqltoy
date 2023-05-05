@@ -61,6 +61,7 @@ import org.slf4j.LoggerFactory;
  * @modify {Date:2021-04-29 调整@value(?)处理顺序到末尾，规避参数值中存在? }
  * @modify {Date:2022-04-23 兼容in (:values) 参数数组长度超过1000的场景 }
  * @modify {Date:2022-05-25 支持(id,type) in (:ids,:types) 多字段in模式,并强化参数超1000的处理 }
+ * @modify {Date:2023-03-09 改进t.field=? 参数为null时转化为t.field is (not) null }
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class SqlConfigParseUtils {
