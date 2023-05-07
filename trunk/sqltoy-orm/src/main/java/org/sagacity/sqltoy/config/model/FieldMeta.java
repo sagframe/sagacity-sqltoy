@@ -34,12 +34,13 @@ public class FieldMeta implements Serializable {
 	 * @param precision
 	 * @param scale
 	 */
-	public FieldMeta(String filedName, String columnName, String defaultValue, int type, boolean nullable,
-			boolean keyword, int length, int precision, int scale) {
+	public FieldMeta(String filedName, String columnName, String defaultValue, String nativeType, int type,
+			boolean nullable, boolean keyword, int length, int precision, int scale) {
 		super();
 		this.fieldName = filedName;
 		this.columnName = columnName;
 		this.defaultValue = defaultValue;
+		this.nativeType = nativeType;
 		this.type = type;
 		this.nullable = nullable;
 		this.keyword = keyword;
@@ -61,6 +62,11 @@ public class FieldMeta implements Serializable {
 	 * 字段java类型(已经转小写)
 	 */
 	private String fieldType;
+
+	/**
+	 * 数据库对应的字段类型
+	 */
+	private String nativeType;
 
 	// 是否为空
 	private boolean nullable;
@@ -259,7 +265,7 @@ public class FieldMeta implements Serializable {
 		this.keyword = keyword;
 	}
 
-	//EntityManager解析时已经转小写
+	// EntityManager解析时已经转小写
 	public String getFieldType() {
 		return fieldType;
 	}
@@ -280,6 +286,14 @@ public class FieldMeta implements Serializable {
 	 */
 	public void setPartitionKey(boolean partitionKey) {
 		this.partitionKey = partitionKey;
+	}
+
+	public String getNativeType() {
+		return nativeType;
+	}
+
+	public void setNativeType(String nativeType) {
+		this.nativeType = nativeType;
 	}
 
 }

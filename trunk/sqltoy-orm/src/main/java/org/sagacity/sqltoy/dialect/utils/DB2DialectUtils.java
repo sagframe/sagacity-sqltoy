@@ -210,9 +210,9 @@ public class DB2DialectUtils {
 		String idsColumnStr = idColumns.toString();
 		// 不考虑只有一个字段且还是主键的情况
 		if (allIds) {
-			sql.append(idsColumnStr.replaceAll("ta.", ""));
+			sql.append(idsColumnStr.replaceAll("ta\\.", ""));
 			sql.append(") values (");
-			sql.append(idsColumnStr.replaceAll("ta.", "tv."));
+			sql.append(idsColumnStr.replaceAll("ta\\.", "tv."));
 		} else {
 			sql.append(insertRejIdCols.toString());
 			// sequence方式主键
@@ -247,10 +247,10 @@ public class DB2DialectUtils {
 				}
 			} else {
 				sql.append(",");
-				sql.append(idsColumnStr.replaceAll("ta.", ""));
+				sql.append(idsColumnStr.replaceAll("ta\\.", ""));
 				sql.append(") values (");
 				sql.append(insertRejIdColValues).append(",");
-				sql.append(idsColumnStr.replaceAll("ta.", "tv."));
+				sql.append(idsColumnStr.replaceAll("ta\\.", "tv."));
 			}
 		}
 		sql.append(")");
@@ -335,9 +335,9 @@ public class DB2DialectUtils {
 		String idsColumnStr = idColumns.toString();
 		// 不考虑只有一个字段且还是主键的情况
 		if (allIds) {
-			sql.append(idsColumnStr.replaceAll("ta.", ""));
+			sql.append(idsColumnStr.replaceAll("ta\\.", ""));
 			sql.append(") values (");
-			sql.append(idsColumnStr.replaceAll("ta.", "tv."));
+			sql.append(idsColumnStr.replaceAll("ta\\.", "tv."));
 		} else {
 			sql.append(insertRejIdCols.toString());
 			// sequence方式主键
@@ -372,10 +372,10 @@ public class DB2DialectUtils {
 				}
 			} else {
 				sql.append(",");
-				sql.append(idsColumnStr.replaceAll("ta.", ""));
+				sql.append(idsColumnStr.replaceAll("ta\\.", ""));
 				sql.append(") values (");
 				sql.append(insertRejIdColValues).append(",");
-				sql.append(idsColumnStr.replaceAll("ta.", "tv."));
+				sql.append(idsColumnStr.replaceAll("ta\\.", "tv."));
 			}
 		}
 		sql.append(")");
@@ -404,8 +404,9 @@ public class DB2DialectUtils {
 			sql.append("cast(? as numeric)");
 		} else if (fieldType == java.sql.Types.DECIMAL) {
 			sql.append("cast(? as decimal)");
-		} else if (fieldType == java.sql.Types.INTEGER || fieldType == java.sql.Types.BIGINT
-				|| fieldType == java.sql.Types.TINYINT) {
+		} else if (fieldType == java.sql.Types.BIGINT) {
+			sql.append("cast(? as bigint)");
+		} else if (fieldType == java.sql.Types.INTEGER || fieldType == java.sql.Types.TINYINT) {
 			sql.append("cast(? as integer)");
 		} else if (fieldType == java.sql.Types.TIMESTAMP) {
 			sql.append("cast(? as timestamp)");

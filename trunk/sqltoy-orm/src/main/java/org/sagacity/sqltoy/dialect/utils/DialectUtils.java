@@ -686,16 +686,25 @@ public class DialectUtils {
 		String columnName;
 		sql.append("merge into ");
 		sql.append(realTable);
-		sql.append(" ta ");
+		// postgresql15+ 不支持别名
+		if (DBType.POSTGRESQL15 != dbType) {
+			sql.append(" ta ");
+		}
 		sql.append(" using (select ");
+		FieldMeta fieldMeta;
 		for (int i = 0; i < columnSize; i++) {
-			columnName = entityMeta.getColumnName(entityMeta.getFieldsArray()[i]);
-			columnName = ReservedWordsUtil.convertWord(columnName, dbType);
+			fieldMeta = entityMeta.getFieldMeta(entityMeta.getFieldsArray()[i]);
+			columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
 			if (i > 0) {
 				sql.append(",");
 			}
-			sql.append("? as ");
-			sql.append(columnName);
+			// postgresql15+ 需要case(? as type) as column
+			if (DBType.POSTGRESQL15 == dbType) {
+				PostgreSqlDialectUtils.wrapSelectFields(sql, columnName, fieldMeta.getType(), fieldMeta.getLength());
+			} else {
+				sql.append("? as ");
+				sql.append(columnName);
+			}
 		}
 		if (StringUtil.isNotBlank(fromTable)) {
 			sql.append(" from ").append(fromTable);
@@ -710,7 +719,13 @@ public class DialectUtils {
 				sql.append(" and ");
 				idColumns.append(",");
 			}
-			sql.append(" ta.").append(columnName).append("=tv.").append(columnName);
+			// 不支持别名
+			if (DBType.POSTGRESQL15 == dbType) {
+				sql.append(realTable + ".");
+			} else {
+				sql.append("ta.");
+			}
+			sql.append(columnName).append("=tv.").append(columnName);
 			idColumns.append("ta.").append(columnName);
 		}
 		sql.append(" ) ");
@@ -730,7 +745,6 @@ public class DialectUtils {
 					fupc.add(ReservedWordsUtil.convertWord(entityMeta.getColumnName(field), dbType));
 				}
 			}
-			FieldMeta fieldMeta;
 			String defaultValue;
 			// update 只针对非主键字段进行修改
 			for (int i = 0; i < rejectIdColumnSize; i++) {
@@ -741,14 +755,23 @@ public class DialectUtils {
 					insertRejIdCols.append(",");
 					insertRejIdColValues.append(",");
 				}
-				sql.append(" ta.").append(columnName).append("=");
+				if (DBType.POSTGRESQL15 != dbType) {
+					sql.append(" ta.");
+				}
+				sql.append(columnName).append("=");
 				// 强制修改
 				if (fupc.contains(columnName)) {
 					sql.append("tv.").append(columnName);
 				} else {
 					sql.append(isNullFunction);
 					sql.append("(tv.").append(columnName);
-					sql.append(",ta.").append(columnName);
+					sql.append(",");
+					if (DBType.POSTGRESQL15 == dbType) {
+						sql.append(realTable + ".");
+					} else {
+						sql.append("ta.");
+					}
+					sql.append(columnName);
 					sql.append(")");
 				}
 				insertRejIdCols.append(columnName);
@@ -770,9 +793,9 @@ public class DialectUtils {
 		String idsColumnStr = idColumns.toString();
 		// 不考虑只有一个字段且还是主键的情况
 		if (allIds) {
-			sql.append(idsColumnStr.replaceAll("ta.", ""));
+			sql.append(idsColumnStr.replaceAll("ta\\.", ""));
 			sql.append(") values (");
-			sql.append(idsColumnStr.replaceAll("ta.", "tv."));
+			sql.append(idsColumnStr.replaceAll("ta\\.", "tv."));
 		} else {
 			sql.append(insertRejIdCols.toString());
 			// sequence方式主键
@@ -805,10 +828,10 @@ public class DialectUtils {
 				}
 			} else {
 				sql.append(",");
-				sql.append(idsColumnStr.replaceAll("ta.", ""));
+				sql.append(idsColumnStr.replaceAll("ta\\.", ""));
 				sql.append(") values (");
 				sql.append(insertRejIdColValues).append(",");
-				sql.append(idsColumnStr.replaceAll("ta.", "tv."));
+				sql.append(idsColumnStr.replaceAll("ta\\.", "tv."));
 			}
 		}
 		sql.append(")");

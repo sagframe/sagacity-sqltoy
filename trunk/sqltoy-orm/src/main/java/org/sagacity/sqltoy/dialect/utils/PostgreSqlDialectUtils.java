@@ -350,6 +350,51 @@ public class PostgreSqlDialectUtils {
 	}
 
 	/**
+	 * @todo 统一组织select 字段信息
+	 * @param sql
+	 * @param columnName
+	 * @param fieldType
+	 * @param length
+	 */
+	public static void wrapSelectFields(StringBuilder sql, String columnName, int fieldType, int length) {
+		if (fieldType == java.sql.Types.VARCHAR) {
+			sql.append("cast(? as varchar(" + length + "))");
+		} else if (fieldType == java.sql.Types.CHAR) {
+			sql.append("cast(? as char(" + length + "))");
+		} else if (fieldType == java.sql.Types.DATE) {
+			sql.append("cast(? as date)");
+		} else if (fieldType == java.sql.Types.NUMERIC) {
+			sql.append("cast(? as numeric)");
+		} else if (fieldType == java.sql.Types.DECIMAL) {
+			sql.append("cast(? as decimal)");
+		} else if (fieldType == java.sql.Types.BIGINT) {
+			sql.append("cast(? as bigint)");
+		} else if (fieldType == java.sql.Types.INTEGER || fieldType == java.sql.Types.TINYINT) {
+			sql.append("cast(? as integer)");
+		} else if (fieldType == java.sql.Types.TIMESTAMP) {
+			sql.append("cast(? as timestamp)");
+		} else if (fieldType == java.sql.Types.DOUBLE) {
+			sql.append("cast(? as double)");
+		} else if (fieldType == java.sql.Types.FLOAT) {
+			sql.append("cast(? as float)");
+		} else if (fieldType == java.sql.Types.TIME) {
+			sql.append("cast(? as time)");
+		} else if (fieldType == java.sql.Types.CLOB) {
+			sql.append("cast(? as text)");
+		} else if (fieldType == java.sql.Types.BOOLEAN) {
+			sql.append("cast(? as boolean)");
+		} else if (fieldType == java.sql.Types.BINARY) {
+			sql.append("cast(? as bytea)");
+		} else if (fieldType == java.sql.Types.BLOB) {
+			sql.append("cast(? as bytea)");
+		} else {
+			sql.append("?");
+		}
+		sql.append(" as ");
+		sql.append(columnName);
+	}
+
+	/**
 	 * @TODO 定义当使用sequence或identity时,是否允许自定义值(即不通过sequence或identity产生，而是由外部直接赋值)
 	 * @param pkStrategy
 	 * @return
