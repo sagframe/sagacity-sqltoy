@@ -222,7 +222,7 @@ public class NumberUtil {
 	 * @return
 	 */
 	public static BigDecimal capitalMoneyToNum(String capitalMoney) {
-		capitalMoney = capitalMoney.replaceAll(" ", "").replaceAll("零", "").replaceAll("圆", "元");
+		capitalMoney = capitalMoney.replaceAll("\\s+", "").replaceAll("零", "").replaceAll("圆", "元");
 		// 默认小数位长度，默认到厘
 		int scale = 3;
 		if (capitalMoney.endsWith("整")) {

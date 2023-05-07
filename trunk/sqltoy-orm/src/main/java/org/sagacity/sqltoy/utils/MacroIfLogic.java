@@ -9,6 +9,8 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
+import org.sagacity.sqltoy.config.SqlConfigParseUtils;
+
 /**
  * @project sagacity-sqltoy
  * @description 提供针对sql中 @if(:paramName1>=value1 && :paramName2!=value2)
@@ -19,7 +21,10 @@ import java.util.List;
  * @modify {Date:2020-08-25 增加include场景,数组类型或字符串类型包含某个特定值 }
  * @modify {Date:2020-09-24 增加数组长度的提取 length(:paramName)>10 模式}
  * @modify {Date:2022-05-10 支持@if(1==1)无参数模式}
+ * @modify {Date:2023-05-6 支持@if(:param==:param || 1==:flage)
+ *         对比双方都是变量、变量可以在右边的场景}
  */
+@SuppressWarnings("rawtypes")
 public class MacroIfLogic {
 
 	private MacroIfLogic() {
@@ -85,23 +90,21 @@ public class MacroIfLogic {
 			expressions = evalExpression.split(logicStr);
 			boolean[] expressResult = new boolean[expressions.length];
 			String express;
-			Object value;
-			String compareValue;
 			String expressLow;
 			String[] params;
-			String compareParam;
+			Object leftValue;
+			String leftParamLow;
+			String rightValue;
 			String compareType = "==";
 			// 参数量计数器
 			int meter = 0;
+			// 表达式左边参数中是否包含？动态参数
+			boolean hasArg = true;
 			for (int i = 0; i < expressions.length; i++) {
-				if (paramValues == null) {
-					value = null;
-				} else {
-					value = paramValues.get(preCount + meter);
-					meter++;
-				}
+				hasArg = false;
 				express = expressions[i].trim();
 				expressLow = express.toLowerCase();
+				// 匹配对应的判断逻辑符号
 				for (int j = 0; j < compareStr.length; j++) {
 					if (expressLow.indexOf(compareStr[j]) != -1) {
 						compareType = compareStr[j].trim();
@@ -111,25 +114,35 @@ public class MacroIfLogic {
 				}
 				params = express.split(splitStr);
 				// 对比的参照参数名称
-				compareParam = params[0].trim().toLowerCase();
+				leftParamLow = params[0].trim().toLowerCase();
+				// 判断左边是否有?参数
+				if (paramValues != null) {
+					hasArg = StringUtil.matches(leftParamLow, SqlConfigParseUtils.ARG_NAME_PATTERN);
+				}
+				// 取出实际参数值
+				if (hasArg) {
+					leftValue = paramValues.get(preCount + meter);
+					meter++;
+				} else {
+					leftValue = params[0].trim();
+				}
 				// update 2018-3-29,去除空格增强容错性
-				compareValue = params[1].trim();
+				rightValue = params[1].trim();
 				// 对比值也是动态参数(update 2023-05-05)
-				if (compareValue.equals("?") && paramValues != null) {
+				if (paramValues != null && rightValue.equals("?")) {
 					if (paramValues.get(preCount + meter) == null) {
-						compareValue = "null";
+						rightValue = "null";
 					} else {
-						compareValue = paramValues.get(preCount + meter).toString();
+						rightValue = paramValues.get(preCount + meter).toString();
 					}
 					meter++;
 				}
 				// 计算单个比较的结果(update 2020-09-24 增加数组长度的提取)
-				if (compareParam.startsWith("size(") || compareParam.startsWith("length(")) {
-					expressResult[i] = compare(value == null ? 0 : CollectionUtil.convertArray(value).length,
-							compareType, compareValue);
+				if (hasArg && (leftParamLow.startsWith("size(") || leftParamLow.startsWith("length("))) {
+					expressResult[i] = compare((leftValue == null) ? 0 : CollectionUtil.convertArray(leftValue).length,
+							compareType, rightValue);
 				} else {
-					expressResult[i] = compare((paramValues == null) ? params[0].trim() : value, compareType,
-							compareValue);
+					expressResult[i] = compare(leftValue, compareType, rightValue);
 				}
 			}
 
@@ -165,11 +178,7 @@ public class MacroIfLogic {
 	 */
 	public static boolean compare(Object value, String compareType, String compareValue) {
 		// 剔除首尾字符串标志符号
-		if (compareValue.startsWith("'") && compareValue.endsWith("'")) {
-			compareValue = compareValue.substring(1, compareValue.length() - 1);
-		} else if (compareValue.startsWith("\"") && compareValue.endsWith("\"")) {
-			compareValue = compareValue.substring(1, compareValue.length() - 1);
-		}
+		compareValue = clearChar(compareValue);
 		// 只支持加减运算
 		String append = "0";
 		String[] calculateStr = { "+", "-" };
@@ -198,20 +207,19 @@ public class MacroIfLogic {
 			compareValue = DateUtil.formatDate(DateUtil.addSecond(new Date(), Double.parseDouble(append)), dayFmt);
 			type = "date";
 		}
-		compareValue = compareValue.replaceAll("\'", "").replaceAll("\"", "");
-		String realValue = (value == null) ? "null" : value.toString();
+		String valueStr = (value == null) ? "null" : clearChar(value.toString());
 		if ("time".equals(type)) {
-			realValue = DateUtil.formatDate(value, dayTimeFmt);
+			valueStr = DateUtil.formatDate(value, dayTimeFmt);
 		} else if ("date".equals(type)) {
-			realValue = DateUtil.formatDate(value, dayFmt);
+			valueStr = DateUtil.formatDate(value, dayFmt);
 		}
 		// 等于(兼容等于号非法)
 		if ("==".equals(compareType) || "=".equals(compareType)) {
-			return realValue.equalsIgnoreCase(compareValue);
+			return valueStr.equalsIgnoreCase(compareValue);
 		}
 		// 不等于
 		if ("!=".equals(compareType)) {
-			return !realValue.equalsIgnoreCase(compareValue);
+			return !valueStr.equalsIgnoreCase(compareValue);
 		}
 		// 为null时只参与等于或不等于逻辑判断
 		if (value == null) {
@@ -219,45 +227,45 @@ public class MacroIfLogic {
 		}
 		// 大于等于
 		if (">=".equals(compareType)) {
-			return moreEqual(value, realValue, compareValue, type);
+			return moreEqual(value, valueStr, compareValue, type);
 		}
 		// 小于等于
 		if ("<=".equals(compareType)) {
-			return lessEqual(value, realValue, compareValue, type);
+			return lessEqual(value, valueStr, compareValue, type);
 		}
 		// 大于
 		if (">".equals(compareType)) {
-			return more(value, realValue, compareValue, type);
+			return more(value, valueStr, compareValue, type);
 		}
 		// 小于
 		if ("<".equals(compareType)) {
-			return less(value, realValue, compareValue, type);
+			return less(value, valueStr, compareValue, type);
 		}
 		// 包含
 		if ("include".equals(compareType)) {
-			return include(value, realValue, compareValue, type);
+			return include(value, valueStr, compareValue, type);
 		}
 		// 在数组范围内
 		if ("in".equals(compareType)) {
-			return in(value, realValue, compareValue, type);
+			return in(value, valueStr, compareValue, type);
 		}
 		// 在数组范围外
 		if ("out".equals(compareType)) {
-			return out(value, realValue, compareValue, type);
+			return out(value, valueStr, compareValue, type);
 		}
 		// 以xxx字符开始
 		if ("startswith".equals(compareType)) {
-			return realValue.startsWith(compareValue);
+			return valueStr.startsWith(compareValue);
 		}
 		// 以xxx字符结束
 		if ("endswith".equals(compareType)) {
-			return realValue.endsWith(compareValue);
+			return valueStr.endsWith(compareValue);
 		}
 		// between
 		if ("between".equals(compareType)) {
 			String[] compareValues = compareValue.split("\\,");
 			if (compareValues.length == 2) {
-				return between(value, realValue, compareValues[0], compareValues[1]);
+				return between(value, valueStr, compareValues[0], compareValues[1]);
 			}
 		}
 		return true;
@@ -462,5 +470,18 @@ public class MacroIfLogic {
 			return true;
 		}
 		return false;
+	}
+
+	private static String clearChar(String source) {
+		if (source == null) {
+			return source;
+		}
+		// 剔除首尾字符串标志符号
+		if (source.startsWith("'") && source.endsWith("'")) {
+			return source.substring(1, source.length() - 1);
+		} else if (source.startsWith("\"") && source.endsWith("\"")) {
+			return source.substring(1, source.length() - 1);
+		}
+		return source;
 	}
 }
