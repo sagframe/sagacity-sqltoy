@@ -700,7 +700,7 @@ public class DialectUtils {
 			}
 			// postgresql15+ 需要case(? as type) as column
 			if (DBType.POSTGRESQL15 == dbType) {
-				PostgreSqlDialectUtils.wrapSelectFields(sql, columnName, fieldMeta.getType(), fieldMeta.getLength());
+				PostgreSqlDialectUtils.wrapSelectFields(sql, columnName, fieldMeta);
 			} else {
 				sql.append("? as ");
 				sql.append(columnName);

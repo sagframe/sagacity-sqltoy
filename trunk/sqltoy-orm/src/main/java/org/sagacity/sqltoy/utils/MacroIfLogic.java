@@ -90,11 +90,11 @@ public class MacroIfLogic {
 			expressions = evalExpression.split(logicStr);
 			boolean[] expressResult = new boolean[expressions.length];
 			String express;
-			Object value;
-			String compareValue;
 			String expressLow;
 			String[] params;
-			String compareParam;
+			Object leftValue;
+			String leftParamLow;
+			String rightValue;
 			String compareType = "==";
 			// 参数量计数器
 			int meter = 0;
@@ -104,6 +104,7 @@ public class MacroIfLogic {
 				hasArg = false;
 				express = expressions[i].trim();
 				expressLow = express.toLowerCase();
+				// 匹配对应的判断逻辑符号
 				for (int j = 0; j < compareStr.length; j++) {
 					if (expressLow.indexOf(compareStr[j]) != -1) {
 						compareType = compareStr[j].trim();
@@ -113,35 +114,35 @@ public class MacroIfLogic {
 				}
 				params = express.split(splitStr);
 				// 对比的参照参数名称
-				compareParam = params[0].trim().toLowerCase();
+				leftParamLow = params[0].trim().toLowerCase();
 				// 判断左边是否有?参数
 				if (paramValues != null) {
-					hasArg = StringUtil.matches(compareParam, SqlConfigParseUtils.ARG_NAME_PATTERN);
+					hasArg = StringUtil.matches(leftParamLow, SqlConfigParseUtils.ARG_NAME_PATTERN);
 				}
 				// 取出实际参数值
 				if (hasArg) {
-					value = paramValues.get(preCount + meter);
+					leftValue = paramValues.get(preCount + meter);
 					meter++;
 				} else {
-					value = params[0].trim();
+					leftValue = params[0].trim();
 				}
 				// update 2018-3-29,去除空格增强容错性
-				compareValue = params[1].trim();
+				rightValue = params[1].trim();
 				// 对比值也是动态参数(update 2023-05-05)
-				if (paramValues != null && compareValue.equals("?")) {
+				if (paramValues != null && rightValue.equals("?")) {
 					if (paramValues.get(preCount + meter) == null) {
-						compareValue = "null";
+						rightValue = "null";
 					} else {
-						compareValue = paramValues.get(preCount + meter).toString();
+						rightValue = paramValues.get(preCount + meter).toString();
 					}
 					meter++;
 				}
 				// 计算单个比较的结果(update 2020-09-24 增加数组长度的提取)
-				if (hasArg && (compareParam.startsWith("size(") || compareParam.startsWith("length("))) {
-					expressResult[i] = compare((value == null) ? 0 : CollectionUtil.convertArray(value).length,
-							compareType, compareValue);
+				if (hasArg && (leftParamLow.startsWith("size(") || leftParamLow.startsWith("length("))) {
+					expressResult[i] = compare((leftValue == null) ? 0 : CollectionUtil.convertArray(leftValue).length,
+							compareType, rightValue);
 				} else {
-					expressResult[i] = compare(value, compareType, compareValue);
+					expressResult[i] = compare(leftValue, compareType, rightValue);
 				}
 			}
 
