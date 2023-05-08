@@ -845,14 +845,14 @@ public class ParamFilterUtils {
 		if (addQuote == null) {
 			return result;
 		}
-		if (addQuote.equals("single")) {
+		if ("single".equals(addQuote)) {
 			// 已经加了单引号不再重复增加
 			if (result.startsWith("'") && result.endsWith("'")) {
 				return result;
 			}
 			return "'".concat(result).concat("'");
 		}
-		if (addQuote.equals("double")) {
+		if ("double".equals(addQuote)) {
 			// 已经加了双引号不再重复增加
 			if (result.startsWith("\"") && result.endsWith("\"")) {
 				return result;
@@ -908,7 +908,7 @@ public class ParamFilterUtils {
 	 */
 	private static Object toNumber(Object paramValue, String dataType) {
 		Object result;
-		BigDecimal value = new BigDecimal(paramValue.toString().replaceAll(",", ""));
+		BigDecimal value = new BigDecimal(paramValue.toString().replace(",", ""));
 		if (dataType == null) {
 			result = value;
 		} else if ("integer".equals(dataType) || "int".equals(dataType)) {

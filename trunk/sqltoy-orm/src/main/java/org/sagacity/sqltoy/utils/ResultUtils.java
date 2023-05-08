@@ -93,7 +93,7 @@ public class ResultUtils {
 	 * @param sqlToyConfig
 	 * @param conn
 	 * @param rs
-	 * @param rowCallbackHandler
+	 * @param queryExecutorExtend
 	 * @param updateRowHandler
 	 * @param decryptHandler
 	 * @param startColIndex
@@ -1051,7 +1051,8 @@ public class ResultUtils {
 	 * @todo 对二维数据进行排序
 	 * @param sortList
 	 * @param orderCol
-	 * @param dataType
+	 * @param start
+	 * @param end
 	 * @param ascend
 	 * @return
 	 */
@@ -1201,7 +1202,7 @@ public class ResultUtils {
 	/**
 	 * @date 2018-5-26 优化缓存翻译，提供keyCode1,keyCode2,keyCode3 形式的多代码翻译
 	 * @todo 统一对key进行缓存翻译
-	 * @param translateExtend
+	 * @param extend
 	 * @param translateKeyMap
 	 * @param fieldValue
 	 * @return
@@ -1642,10 +1643,12 @@ public class ResultUtils {
 		List<String> oneToOneNotNullField = new ArrayList<String>();
 		TableCascadeModel oneToMany = null;
 		int oneToManySize = 0;
+		boolean hasCascade;
 		for (TableCascadeModel cascade : cascadeModel) {
 			// oneToOne模式
 			if (cascade.getCascadeType() == 2) {
-				boolean hasCascade = false;
+				hasCascade = false;
+				//首先依据指定的层次级联对象
 				if (hiberarchyClasses != null) {
 					for (Class hiberarchyClass : hiberarchyClasses) {
 						if (hiberarchyClass.equals(cascade.getMappedType())) {

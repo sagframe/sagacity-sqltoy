@@ -770,9 +770,9 @@ public class DialectUtils {
 		String idsColumnStr = idColumns.toString();
 		// 不考虑只有一个字段且还是主键的情况
 		if (allIds) {
-			sql.append(idsColumnStr.replaceAll("ta.", ""));
+			sql.append(idsColumnStr.replace("ta.", ""));
 			sql.append(") values (");
-			sql.append(idsColumnStr.replaceAll("ta.", "tv."));
+			sql.append(idsColumnStr.replace("ta.", "tv."));
 		} else {
 			sql.append(insertRejIdCols.toString());
 			// sequence方式主键
@@ -805,10 +805,10 @@ public class DialectUtils {
 				}
 			} else {
 				sql.append(",");
-				sql.append(idsColumnStr.replaceAll("ta.", ""));
+				sql.append(idsColumnStr.replace("ta.", ""));
 				sql.append(") values (");
 				sql.append(insertRejIdColValues).append(",");
-				sql.append(idsColumnStr.replaceAll("ta.", "tv."));
+				sql.append(idsColumnStr.replace("ta.", "tv."));
 			}
 		}
 		sql.append(")");

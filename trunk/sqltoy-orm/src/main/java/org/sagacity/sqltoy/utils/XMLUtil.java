@@ -211,7 +211,7 @@ public class XMLUtil {
 	 */
 	public static Object convertType(String value, String lowCaseTypeName) {
 		// value值的类型跟目标类型一致，直接返回
-		if (lowCaseTypeName.equals("java.lang.string") || lowCaseTypeName.equals("string")) {
+		if ("java.lang.string".equals(lowCaseTypeName) || "string".equals(lowCaseTypeName)) {
 			return value;
 		}
 		boolean isBlank = (value != null) && "".equals(value.trim());

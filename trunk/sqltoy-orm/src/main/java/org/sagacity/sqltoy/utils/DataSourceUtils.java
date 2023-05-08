@@ -279,7 +279,7 @@ public class DataSourceUtils {
 		// 从hashMap中获取
 		if (null != conn) {
 			// 剔除空白
-			String dbDialect = conn.getMetaData().getDatabaseProductName().replaceAll("\\s*", "");
+			String dbDialect = conn.getMetaData().getDatabaseProductName().replaceAll("\\s+", "");
 			// oracle
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.ORACLE) != -1) {
 				return Dialect.ORACLE;
@@ -313,8 +313,8 @@ public class DataSourceUtils {
 				return Dialect.OCEANBASE;
 			}
 			// GAUSSDB
-			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.GAUSSDB) != -1 || dbDialect.equalsIgnoreCase("zenith")
-					|| dbDialect.equalsIgnoreCase("opengauss")) {
+			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.GAUSSDB) != -1 || "zenith".equalsIgnoreCase(dbDialect)
+					|| "opengauss".equalsIgnoreCase(dbDialect)) {
 				return Dialect.GAUSSDB;
 			}
 			// sqlite
