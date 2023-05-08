@@ -63,6 +63,10 @@ public class IdUtilTest {
 
 	@Test
 	public void testShortNanoId() {
+		String idsColumnStr="ta.id,ta.name,ta.staff_id";
+		System.err.println(idsColumnStr.replace("ta.", ""));
+		System.err.println(idsColumnStr.replace("ta.", "tv."));
+		System.err.println(IdUtil.getUUID());
 		System.err.println(IdUtil.getNanoTimeId("system_info", "001"));
 		String id = IdUtil.getShortNanoTimeId("system_info", "001").toPlainString();
 		String id1 = IdUtil.getShortNanoTimeId("001").toPlainString();
@@ -70,8 +74,8 @@ public class IdUtilTest {
 		System.err.println(id);
 		System.err.println(id1);
 		System.err.println(id2);
-		for (int i = 0; i < 100; i++) {
-			System.err.println(IdUtil.getShortNanoTimeId("001"));
-		}
+//		for (int i = 0; i < 100; i++) {
+//			System.err.println(IdUtil.getShortNanoTimeId("001"));
+//		}
 	}
 }

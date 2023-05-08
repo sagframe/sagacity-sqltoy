@@ -38,6 +38,9 @@ public class MapperUtils {
 	 */
 	private static Map<String, DTOEntityMapModel> dtoEntityMapperCache = new HashMap<String, DTOEntityMapModel>();
 
+	// 递归最大层级
+	private static int MAX_RECURSION = 3;
+
 	private MapperUtils() {
 	}
 
@@ -49,7 +52,7 @@ public class MapperUtils {
 		return map(source, resultType, 0, ignoreProperties);
 	}
 
-	public static <T extends Serializable> List<T> mapList(List<Serializable> sourceList, Class<T> resultType,
+	public static <T extends Serializable> List<T> mapList(List sourceList, Class<T> resultType,
 			String... ignoreProperties) throws RuntimeException {
 		if (sourceList == null || (resultType == null || BeanUtil.isBaseDataType(resultType))) {
 			throw new IllegalArgumentException("sourceList 和 resultType 不能为null,且resultType不能为基本类型!");
@@ -114,8 +117,8 @@ public class MapperUtils {
 	 * @return
 	 * @throws RuntimeException
 	 */
-	private static <T extends Serializable> List<T> mapList(List<Serializable> sourceList, Class<T> resultType,
-			int recursionLevel, String... ignoreProperties) throws RuntimeException {
+	private static <T extends Serializable> List<T> mapList(List sourceList, Class<T> resultType, int recursionLevel,
+			String... ignoreProperties) throws RuntimeException {
 		Class sourceClass = sourceList.iterator().next().getClass();
 		DTOEntityMapModel mapModel = getDTOEntityMap(sourceClass, resultType);
 		if (mapModel == null || mapModel.fromGetMethods == null || mapModel.targetSetMethods == null) {
@@ -323,18 +326,33 @@ public class MapperUtils {
 		int[] methodTypeValues = new int[indexSize];
 		Class[] methodGenTypes = new Class[indexSize];
 		Boolean[] isList = new Boolean[indexSize];
+		// 判断List<T> 场景泛型是否是基本类型
+		Boolean[] notListBaseType = new Boolean[indexSize];
 		Class methodType;
 		// 自动适配属性的数据类型
 		for (int i = 0; i < indexSize; i++) {
 			isList[i] = Boolean.FALSE;
+			notListBaseType[i] = Boolean.TRUE;
 			if (null != realMethods[i]) {
-				methodTypes[i] = realMethods[i].getParameterTypes()[0].getTypeName();
+				methodType = realMethods[i].getParameterTypes()[0];
+				methodTypes[i] = methodType.getTypeName();
 				methodTypeValues[i] = DataType.getType(methodTypes[i]);
+				// 非普通类型、非枚举、非Map(DTO)
+				if (methodTypeValues[i] == DataType.objectType && !methodType.isEnum()
+						&& !Map.class.isAssignableFrom(methodType)) {
+					methodGenTypes[i] = realMethods[i].getParameterTypes()[0];
+				}
 				// 泛型
 				if (realMethods[i].getGenericParameterTypes()[0] instanceof ParameterizedType) {
 					methodType = (Class) ((ParameterizedType) realMethods[i].getGenericParameterTypes()[0])
 							.getActualTypeArguments()[0];
 					methodGenTypes[i] = methodType;
+					// 非基本类型、非List、非Map、非枚举、非数组
+					if (!BeanUtil.isBaseDataType(methodType) && !List.class.equals(methodType)
+							&& !ArrayList.class.equals(methodType) && !methodType.isEnum()
+							&& !Map.class.isAssignableFrom(methodType) && !methodType.isArray()) {
+						notListBaseType[i] = Boolean.FALSE;
+					}
 					if (realMethods[i].getParameterTypes()[0].equals(List.class)
 							|| realMethods[i].getParameterTypes()[0].equals(ArrayList.class)) {
 						isList[i] = Boolean.TRUE;
@@ -356,37 +374,37 @@ public class MapperUtils {
 				for (int j = 0; j < size; j++) {
 					cellData = row.get(j);
 					if (cellData != null && realMethods[j] != null) {
-						// 2023/4/22 待处理：需要考虑对象中嵌套子对象和List<DTO> 这种形式
-						// List<DTO>
-						if (methodGenTypes[j] != null && (cellData instanceof List) && isList[j]) {
+						// 基本类型
+						if (methodTypeValues[j] != DataType.objectType) {
+							realMethods[j].invoke(bean,
+									BeanUtil.convertType(cellData, methodTypeValues[j], methodTypes[j]));
+						} // List<DTO>
+						else if (methodGenTypes[j] != null && (cellData instanceof List) && isList[j]) {
 							cellList = (List) cellData;
 							if (!cellList.isEmpty()) {
-								// 类型一致直接赋值
-								if (cellList.get(0) != null && cellList.get(0).getClass().equals(methodGenTypes[j])) {
-									realMethods[j].invoke(bean, cellList);
-								} else if (recursionLevel < 3) {
+								if (!notListBaseType[j] && recursionLevel < MAX_RECURSION) {
 									// 类型映射
 									List subItems = mapList((List) cellData, methodGenTypes[j], recursionLevel + 1);
 									if (subItems != null && !subItems.isEmpty()) {
 										realMethods[j].invoke(bean, subItems);
 									}
 								}
-							}
-						} else if (cellData.getClass().getTypeName().equals(methodTypes[j])) {
-							realMethods[j].invoke(bean, cellData);
-						} else {
-							convertData = BeanUtil.convertType(cellData, methodTypeValues[j], methodTypes[j]);
-							// 常规类型转换成功,直接赋值
-							if (convertData != cellData) {
-								realMethods[j].invoke(bean, convertData);
-							} // 属性都是自定义对象类型 DTO -->DTO
-							else if (recursionLevel < 3 && methodGenTypes[j] != null
-									&& cellData instanceof Serializable) {
-								convertData = map((Serializable) cellData, methodGenTypes[j], recursionLevel + 1);
-								if (convertData != null) {
-									realMethods[j].invoke(bean, convertData);
+								// 基本类型或特殊类型
+								else if (cellList.get(0) != null
+										&& cellList.get(0).getClass().equals(methodGenTypes[j])) {
+									realMethods[j].invoke(bean, cellList);
 								}
 							}
+						} // DTO->DTO 对象之间转换
+						else if (recursionLevel < MAX_RECURSION && methodGenTypes[j] != null
+								&& (cellData instanceof Serializable)) {
+							convertData = map((Serializable) cellData, methodGenTypes[j], recursionLevel + 1);
+							if (convertData != null) {
+								realMethods[j].invoke(bean, convertData);
+							}
+						} // 类型相同直接赋值
+						else if (cellData.getClass().getTypeName().equals(methodTypes[j])) {
+							realMethods[j].invoke(bean, cellData);
 						}
 					}
 				}

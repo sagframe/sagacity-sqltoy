@@ -20,10 +20,13 @@ import org.sagacity.sqltoy.SqlToyConstants;
 @Target(ElementType.FIELD)
 public @interface Column {
 	// 数据类型
-	int type();
+	int type() default java.sql.Types.OTHER;
 
 	// 字段名称
 	String name();
+
+	// 针对具体数据库的字段类型
+	String nativeType() default "";
 
 	// 是否为空
 	boolean nullable() default true;
@@ -40,7 +43,7 @@ public @interface Column {
 	// 是否是关键词(目前没有使用)
 	boolean keyword() default false;
 
-	//字段注释
+	// 字段注释
 	String comment() default "";
 
 	// 默认值

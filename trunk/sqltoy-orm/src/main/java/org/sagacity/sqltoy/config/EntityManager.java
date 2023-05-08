@@ -617,8 +617,8 @@ public class EntityManager {
 		// 字段的详细配置信息,字段名称，字段对应数据库表字段，字段默认值，字段类型
 		FieldMeta fieldMeta = new FieldMeta(field.getName(), column.name(),
 				(SqlToyConstants.DEFAULT_NULL.equals(column.defaultValue())) ? null : column.defaultValue(),
-				column.type(), column.nullable(), column.keyword(), Long.valueOf(column.length()).intValue(),
-				column.precision(), column.scale());
+				column.nativeType(), column.type(), column.nullable(), column.keyword(),
+				Long.valueOf(column.length()).intValue(), column.precision(), column.scale());
 		// 增加字段
 		allFieldAry.add(column.name());
 		// 字段是否自增

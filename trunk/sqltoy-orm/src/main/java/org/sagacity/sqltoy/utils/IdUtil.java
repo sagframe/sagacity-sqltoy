@@ -50,7 +50,7 @@ public class IdUtil {
 	 * 封装JDK自带的UUID, 通过Random数字生成,中间有-分割
 	 */
 	public static String getUUID() {
-		return UUID.randomUUID().toString().replaceAll("-", "");
+		return UUID.randomUUID().toString().replace("-", "");
 	}
 
 	/**
