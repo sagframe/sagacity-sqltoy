@@ -22,6 +22,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @version v1.0, Date:2022年10月28日
  * @modify 2022年10月28日,修改说明
  */
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class TreeDataSort {
 	public static void process(TreeSortModel treeTableSortModel, LabelIndexModel labelIndexMap, List treeList) {
 		if (treeList == null || treeList.isEmpty()) {
@@ -40,14 +41,11 @@ public class TreeDataSort {
 		Set topPids = getTopPids(treeList, idColIndex, pidColIndex);
 		List result = new ArrayList();
 		List row;
-		int pidSize = topPids.size();
-		int meter = 0;
 		// 提取第一层树节点
 		for (int i = 0; i < treeList.size(); i++) {
 			row = (List) treeList.get(i);
 			if (topPids.contains(row.get(pidColIndex))) {
 				result.add(row);
-				meter++;
 				treeList.remove(i);
 				i--;
 			}

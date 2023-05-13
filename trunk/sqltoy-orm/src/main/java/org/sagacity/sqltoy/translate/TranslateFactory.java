@@ -269,7 +269,7 @@ public class TranslateFactory {
 		HashMap<String, Object[]> cacheData = wrapCacheResult(result, cacheModel);
 		// 增加错误日志提醒
 		if (cacheData == null || cacheData.isEmpty()) {
-			logger.error("缓存cacheName={} 数据集为空,请检查对应的配置和查询逻辑是否正确!", cacheModel.getCache());
+			logger.warn("缓存cacheName={} 数据集为空,请检查对应的配置和查询逻辑是否正确!", cacheModel.getCache());
 		}
 		return cacheData;
 	}

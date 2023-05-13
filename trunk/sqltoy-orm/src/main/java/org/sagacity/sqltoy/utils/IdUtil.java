@@ -50,7 +50,7 @@ public class IdUtil {
 	 * 封装JDK自带的UUID, 通过Random数字生成,中间有-分割
 	 */
 	public static String getUUID() {
-		return UUID.randomUUID().toString().replaceAll("-", "");
+		return UUID.randomUUID().toString().replace("-", "");
 	}
 
 	/**
@@ -208,7 +208,7 @@ public class IdUtil {
 				ipLastNumStr = ipLastNumStr.substring(0, ipLastNumStr.indexOf("%"));
 			}
 			// 替换IP地址中的非数字字符
-			ipLastNumStr = ipLastNumStr.replaceAll("\\.", "").replaceAll("\\:", "");
+			ipLastNumStr = ipLastNumStr.replace(".", "").replace(":", "");
 			// 保留4位
 			if (ipLastNumStr.length() > size) {
 				ipLastNumStr = ipLastNumStr.substring(ipLastNumStr.length() - size);

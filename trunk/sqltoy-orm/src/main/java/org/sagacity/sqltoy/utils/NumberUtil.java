@@ -222,7 +222,7 @@ public class NumberUtil {
 	 * @return
 	 */
 	public static BigDecimal capitalMoneyToNum(String capitalMoney) {
-		capitalMoney = capitalMoney.replaceAll("\\s+", "").replaceAll("零", "").replaceAll("圆", "元");
+		capitalMoney = capitalMoney.replaceAll("\\s+", "").replace("零", "").replace("圆", "元");
 		// 默认小数位长度，默认到厘
 		int scale = 3;
 		if (capitalMoney.endsWith("整")) {
@@ -231,7 +231,7 @@ public class NumberUtil {
 		}
 		capitalMoney = capitalMoney.trim();
 		for (int i = 0; i < 9; i++) {
-			capitalMoney = capitalMoney.replaceAll(capitalMoneyNumber[i + 1], Integer.toString(i + 1));
+			capitalMoney = capitalMoney.replace(capitalMoneyNumber[i + 1], Integer.toString(i + 1));
 		}
 		int billionIndex = capitalMoney.lastIndexOf("亿");
 		// [0]亿元、[1]万元、[2]角币

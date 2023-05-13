@@ -43,7 +43,9 @@ import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.DataType;
 import org.sagacity.sqltoy.config.model.EntityMeta;
+import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.exception.DataAccessException;
+import org.sagacity.sqltoy.model.IgnoreCaseSet;
 import org.sagacity.sqltoy.model.TreeTableModel;
 import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
@@ -1836,6 +1838,52 @@ public class SqlUtil {
 		}
 		// 回车换行前后的空白也剔除
 		return source.replaceAll("\\s*(\r|\n)\\s*", target).replaceAll("\t", target);
+	}
+
+	/**
+	 * @TODO 获取数据库时间字符串
+	 * @param dbType
+	 * @param fieldMeta
+	 * @param createSqlTimeFields
+	 * @return
+	 */
+	public static String getDBTime(Integer dbType, FieldMeta fieldMeta, IgnoreCaseSet createSqlTimeFields) {
+		int fieldType = fieldMeta.getType();
+		// 统一需要处理的字段、且是日期、时间类型
+		if (createSqlTimeFields.contains(fieldMeta.getFieldName()) && (fieldType == java.sql.Types.DATE
+				|| fieldType == java.sql.Types.TIME || fieldType == java.sql.Types.TIME_WITH_TIMEZONE
+				|| fieldType == java.sql.Types.TIMESTAMP || fieldType == java.sql.Types.TIMESTAMP_WITH_TIMEZONE)) {
+			// 只支持now
+			if (dbType == DBType.CLICKHOUSE) {
+				return "now()";
+			}
+			// time
+			if (fieldType == java.sql.Types.TIME || fieldType == java.sql.Types.TIME_WITH_TIMEZONE
+					|| fieldMeta.getFieldType().equals("java.time.localtime")
+					|| fieldMeta.getFieldType().equals("java.sql.time")) {
+				if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.TIDB
+						|| dbType == DBType.SQLITE || dbType == DBType.H2 || dbType == DBType.POSTGRESQL
+						|| dbType == DBType.POSTGRESQL15 || dbType == DBType.KINGBASE || dbType == DBType.DB2
+						|| dbType == DBType.OCEANBASE) {
+					return "current_time";
+				} else if (dbType == DBType.GAUSSDB) {
+					return "now()";
+				} else if (dbType == DBType.SQLSERVER) {
+					return "getdate()";
+				} else {
+					return "current_timestamp";
+				}
+			} // timestamp
+			else if (fieldMeta.getFieldType().equals("java.time.localdate")) {
+				if (dbType == DBType.SQLSERVER) {
+					return "getdate()";
+				}
+				return "current_date";
+			} else {
+				return "current_timestamp";
+			}
+		}
+		return null;
 	}
 
 }

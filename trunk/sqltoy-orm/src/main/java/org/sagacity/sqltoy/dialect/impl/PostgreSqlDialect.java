@@ -31,7 +31,6 @@ import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
-import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -237,8 +236,8 @@ public class PostgreSqlDialect implements Dialect {
 							sequence = "DEFAULT";
 						}
 						boolean isAssignPK = PostgreSqlDialectUtils.isAssignPKValue(pkStrategy);
-						return PostgreSqlDialectUtils.getSaveOrUpdateSql(dbType, entityMeta, pkStrategy, isAssignPK,
-								sequence, forceUpdateFields, null);
+						return PostgreSqlDialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
+								entityMeta, pkStrategy, isAssignPK, sequence, forceUpdateFields, null);
 					}
 				}, emptyCascadeClasses, subTableForceUpdateProps, conn, dbType, tableName);
 	}
@@ -343,8 +342,8 @@ public class PostgreSqlDialect implements Dialect {
 							sequence = "DEFAULT";
 						}
 						boolean isAssignPK = PostgreSqlDialectUtils.isAssignPKValue(pkStrategy);
-						return DialectExtUtils.insertIgnore(dbType, entityMeta, pkStrategy, NVL_FUNCTION, sequence,
-								isAssignPK, tableName);
+						return DialectExtUtils.insertIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
+								pkStrategy, NVL_FUNCTION, sequence, isAssignPK, tableName);
 					}
 				}, reflectPropsHandler, conn, dbType, autoCommit);
 	}

@@ -19,6 +19,7 @@ import org.sagacity.sqltoy.utils.NumberUtil;
  * @version v1.0,Date:2020-3-25
  * @modify {Date:2022-05-11 支持多组列转行 }
  */
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class UnpivotList {
 	/**
 	 * @TODO 对集合进行单组、多组列转行处理

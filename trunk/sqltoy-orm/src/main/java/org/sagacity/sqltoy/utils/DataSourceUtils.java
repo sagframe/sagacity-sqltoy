@@ -2,6 +2,7 @@ package org.sagacity.sqltoy.utils;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.sql.DataSource;
@@ -37,6 +38,11 @@ public class DataSourceUtils {
 	// 存放数据库方言类型(dataSource.toString(),dbType)
 	public static ConcurrentHashMap<String, Integer> DBTypeMap = new ConcurrentHashMap<String, Integer>();
 	public static ConcurrentHashMap<String, Integer> DBNameTypeMap = new ConcurrentHashMap<String, Integer>();
+
+	private static HashMap<String, String> dateStrMap = new HashMap<String, String>();
+	static {
+
+	}
 
 	/**
 	 * 数据库方言定义
@@ -279,7 +285,7 @@ public class DataSourceUtils {
 		// 从hashMap中获取
 		if (null != conn) {
 			// 剔除空白
-			String dbDialect = conn.getMetaData().getDatabaseProductName().replaceAll("\\s*", "");
+			String dbDialect = conn.getMetaData().getDatabaseProductName().replaceAll("\\s+", "");
 			// oracle
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.ORACLE) != -1) {
 				return Dialect.ORACLE;

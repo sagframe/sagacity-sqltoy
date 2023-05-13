@@ -24,6 +24,7 @@ import org.sagacity.sqltoy.dialect.model.SavePKStrategy;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
+import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtilsExt;
@@ -131,8 +132,8 @@ public class PostgreSqlDialectUtils {
 			sequence = "DEFAULT";
 		}
 		boolean isAssignPK = isAssignPKValue(pkStrategy);
-		String insertSql = DialectExtUtils.generateInsertSql(dbType, entityMeta, pkStrategy, NVL_FUNCTION, sequence,
-				isAssignPK, tableName);
+		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
+				pkStrategy, NVL_FUNCTION, sequence, isAssignPK, tableName);
 		return DialectUtils.save(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entity,
 				new GenerateSqlHandler() {
 					@Override
@@ -147,8 +148,8 @@ public class PostgreSqlDialectUtils {
 							pkStrategy = PKStrategy.SEQUENCE;
 							sequence = "DEFAULT";
 						}
-						return DialectExtUtils.generateInsertSql(dbType, entityMeta, pkStrategy, NVL_FUNCTION, sequence,
-								isAssignPKValue(pkStrategy), null);
+						return DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
+								entityMeta, pkStrategy, NVL_FUNCTION, sequence, isAssignPKValue(pkStrategy), null);
 					}
 				}, new GenerateSavePKStrategy() {
 					@Override
@@ -185,8 +186,8 @@ public class PostgreSqlDialectUtils {
 			sequence = "DEFAULT";
 		}
 		boolean isAssignPK = isAssignPKValue(pkStrategy);
-		String insertSql = DialectExtUtils.generateInsertSql(dbType, entityMeta, pkStrategy, NVL_FUNCTION, sequence,
-				isAssignPK, tableName);
+		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
+				pkStrategy, NVL_FUNCTION, sequence, isAssignPK, tableName);
 		return DialectUtils.saveAll(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entities, batchSize,
 				reflectPropsHandler, conn, dbType, autoCommit);
 	}
@@ -240,12 +241,13 @@ public class PostgreSqlDialectUtils {
 	 * @return
 	 */
 	@Deprecated
-	public static String getSaveOrUpdateSql(Integer dbType, EntityMeta entityMeta, PKStrategy pkStrategy,
-			boolean isAssignPK, String sequence, String[] forceUpdateFields, String tableName) {
+	public static String getSaveOrUpdateSql(IUnifyFieldsHandler unifyFieldsHandler, Integer dbType,
+			EntityMeta entityMeta, PKStrategy pkStrategy, boolean isAssignPK, String sequence,
+			String[] forceUpdateFields, String tableName) {
 		String realTable = entityMeta.getSchemaTable(tableName, dbType);
 		if (entityMeta.getIdArray() == null) {
-			return DialectExtUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), NVL_FUNCTION, null,
-					false, realTable);
+			return DialectExtUtils.generateInsertSql(unifyFieldsHandler, dbType, entityMeta, entityMeta.getIdStrategy(),
+					NVL_FUNCTION, null, false, realTable);
 		}
 		// 是否全部是ID
 		boolean allIds = (entityMeta.getRejectIdFieldArray() == null);
