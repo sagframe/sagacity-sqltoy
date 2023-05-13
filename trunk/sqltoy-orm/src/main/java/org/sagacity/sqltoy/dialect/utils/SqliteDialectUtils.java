@@ -33,7 +33,7 @@ public class SqliteDialectUtils {
 	}
 
 	/**
-	 * @todo 利用sqlite3 的on conflict(id) DO UPDATE SET 语法,但只能用于关联子表更新(未实际使用)
+	 * @todo 利用sqlite3 的on conflict(id) DO UPDATE SET 语法(未实际使用)
 	 * @param dbType
 	 * @param entityMeta
 	 * @param forceUpdateFields
