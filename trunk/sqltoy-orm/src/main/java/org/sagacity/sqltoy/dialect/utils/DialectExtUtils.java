@@ -10,10 +10,13 @@ import java.util.Date;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.PKStrategy;
+import org.sagacity.sqltoy.model.IgnoreCaseSet;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
+import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.DateUtil;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
+import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.SqlUtilsExt;
 import org.sagacity.sqltoy.utils.StringUtil;
 
@@ -28,6 +31,7 @@ public class DialectExtUtils {
 
 	/**
 	 * @todo 产生对象对应的insert sql语句
+	 * @param unifyFieldsHandler
 	 * @param dbType
 	 * @param entityMeta
 	 * @param pkStrategy
@@ -37,8 +41,9 @@ public class DialectExtUtils {
 	 * @param tableName
 	 * @return
 	 */
-	public static String generateInsertSql(Integer dbType, EntityMeta entityMeta, PKStrategy pkStrategy,
-			String isNullFunction, String sequence, boolean isAssignPK, String tableName) {
+	public static String generateInsertSql(IUnifyFieldsHandler unifyFieldsHandler, Integer dbType,
+			EntityMeta entityMeta, PKStrategy pkStrategy, String isNullFunction, String sequence, boolean isAssignPK,
+			String tableName) {
 		int columnSize = entityMeta.getFieldsArray().length;
 		StringBuilder sql = new StringBuilder(columnSize * 20 + 30);
 		StringBuilder values = new StringBuilder(columnSize * 2 - 1);
@@ -50,6 +55,11 @@ public class DialectExtUtils {
 		boolean isStart = true;
 		boolean isSupportNULL = StringUtil.isBlank(isNullFunction) ? false : true;
 		String columnName;
+		// 创建记录时，创建时间、最后修改时间等取数据库时间
+		IgnoreCaseSet createSqlTimeFields = (unifyFieldsHandler == null
+				|| unifyFieldsHandler.createSqlTimeFields() == null) ? new IgnoreCaseSet()
+						: unifyFieldsHandler.createSqlTimeFields();
+		String currentTimeStr;
 		boolean isString = false;
 		for (int i = 0; i < columnSize; i++) {
 			field = entityMeta.getFieldsArray()[i];
@@ -105,7 +115,13 @@ public class DialectExtUtils {
 				if (dbType == DBType.IMPALA && isString) {
 					values.append("cast(? as string)");
 				} else {
-					values.append("?");
+					// 2023-5-11 新增操作待增加对default值的处理,nvl(?,current_timestamp)
+					currentTimeStr = SqlUtil.getDBTime(dbType, fieldMeta, createSqlTimeFields);
+					if (null != currentTimeStr) {
+						values.append(isNullFunction).append("(?,").append(currentTimeStr).append(")");
+					} else {
+						values.append("?");
+					}
 				}
 				isStart = false;
 			}
@@ -268,14 +284,21 @@ public class DialectExtUtils {
 	 * @param tableName
 	 * @return
 	 */
-	public static String mergeIgnore(Integer dbType, EntityMeta entityMeta, PKStrategy pkStrategy, String fromTable,
-			String isNullFunction, String sequence, boolean isAssignPK, String tableName) {
+	public static String mergeIgnore(IUnifyFieldsHandler unifyFieldsHandler, Integer dbType, EntityMeta entityMeta,
+			PKStrategy pkStrategy, String fromTable, String isNullFunction, String sequence, boolean isAssignPK,
+			String tableName) {
 		// 在无主键的情况下产生insert sql语句
 		String realTable = entityMeta.getSchemaTable(tableName, dbType);
 		if (entityMeta.getIdArray() == null) {
-			return generateInsertSql(dbType, entityMeta, pkStrategy, isNullFunction, sequence, isAssignPK, realTable);
+			return generateInsertSql(unifyFieldsHandler, dbType, entityMeta, pkStrategy, isNullFunction, sequence,
+					isAssignPK, realTable);
 		}
 		boolean isSupportNUL = StringUtil.isBlank(isNullFunction) ? false : true;
+		// 创建记录时，创建时间、最后修改时间等取数据库时间
+		IgnoreCaseSet createSqlTimeFields = (unifyFieldsHandler == null
+				|| unifyFieldsHandler.createSqlTimeFields() == null) ? new IgnoreCaseSet()
+						: unifyFieldsHandler.createSqlTimeFields();
+		String currentTimeStr;
 		int columnSize = entityMeta.getFieldsArray().length;
 		StringBuilder sql = new StringBuilder(columnSize * 30 + 100);
 		String columnName;
@@ -326,7 +349,16 @@ public class DialectExtUtils {
 					insertRejIdColValues.append(",");
 				}
 				insertRejIdCols.append(columnName);
-				insertRejIdColValues.append("tv.").append(columnName);
+				// 使用数据库时间nvl(tv.field,current_timestamp)
+				currentTimeStr = SqlUtil.getDBTime(dbType, fieldMeta, createSqlTimeFields);
+				if (null != currentTimeStr) {
+					insertRejIdColValues.append(isNullFunction);
+					insertRejIdColValues.append("(tv.").append(columnName);
+					insertRejIdColValues.append(",").append(currentTimeStr);
+					insertRejIdColValues.append(")");
+				} else {
+					insertRejIdColValues.append("tv.").append(columnName);
+				}
 			}
 		}
 		// 主键未匹配上则进行插入操作
@@ -334,9 +366,9 @@ public class DialectExtUtils {
 		String idsColumnStr = idColumns.toString();
 		// 不考虑只有一个字段且还是主键的情况
 		if (allIds) {
-			sql.append(idsColumnStr.replaceAll("ta\\.", ""));
+			sql.append(idsColumnStr.replace("ta.", ""));
 			sql.append(") values (");
-			sql.append(idsColumnStr.replaceAll("ta\\.", "tv."));
+			sql.append(idsColumnStr.replace("ta.", "tv."));
 		} else {
 			sql.append(insertRejIdCols.toString());
 			// sequence方式主键
@@ -369,10 +401,10 @@ public class DialectExtUtils {
 				}
 			} else {
 				sql.append(",");
-				sql.append(idsColumnStr.replaceAll("ta\\.", ""));
+				sql.append(idsColumnStr.replace("ta.", ""));
 				sql.append(") values (");
 				sql.append(insertRejIdColValues).append(",");
-				sql.append(idsColumnStr.replaceAll("ta\\.", "tv."));
+				sql.append(idsColumnStr.replace("ta.", "tv."));
 			}
 		}
 		sql.append(")");
@@ -381,6 +413,7 @@ public class DialectExtUtils {
 
 	/**
 	 * @TODO 针对postgresql\kingbase\guassdb等数据库
+	 * @param unifyFieldsHandler
 	 * @param dbType
 	 * @param entityMeta
 	 * @param pkStrategy
@@ -390,8 +423,8 @@ public class DialectExtUtils {
 	 * @param tableName
 	 * @return
 	 */
-	public static String insertIgnore(Integer dbType, EntityMeta entityMeta, PKStrategy pkStrategy,
-			String isNullFunction, String sequence, boolean isAssignPK, String tableName) {
+	public static String insertIgnore(IUnifyFieldsHandler unifyFieldsHandler, Integer dbType, EntityMeta entityMeta,
+			PKStrategy pkStrategy, String isNullFunction, String sequence, boolean isAssignPK, String tableName) {
 		int columnSize = entityMeta.getFieldsArray().length;
 		StringBuilder sql = new StringBuilder(columnSize * 20 + 30);
 		StringBuilder values = new StringBuilder(columnSize * 2 - 1);
@@ -402,6 +435,11 @@ public class DialectExtUtils {
 		String field;
 		String columnName;
 		boolean isStart = true;
+		// 创建记录时，创建时间、最后修改时间等取数据库时间
+		IgnoreCaseSet createSqlTimeFields = (unifyFieldsHandler == null
+				|| unifyFieldsHandler.createSqlTimeFields() == null) ? new IgnoreCaseSet()
+						: unifyFieldsHandler.createSqlTimeFields();
+		String currentTimeStr;
 		for (int i = 0; i < columnSize; i++) {
 			field = entityMeta.getFieldsArray()[i];
 			fieldMeta = entityMeta.getFieldMeta(field);
@@ -429,7 +467,15 @@ public class DialectExtUtils {
 				}
 			} else {
 				sql.append(columnName);
-				values.append("?");
+				currentTimeStr = SqlUtil.getDBTime(dbType, fieldMeta, createSqlTimeFields);
+				if (null != currentTimeStr) {
+					values.append(isNullFunction);
+					values.append("(?,");
+					values.append(currentTimeStr);
+					values.append(")");
+				} else {
+					values.append("?");
+				}
 				isStart = false;
 			}
 		}

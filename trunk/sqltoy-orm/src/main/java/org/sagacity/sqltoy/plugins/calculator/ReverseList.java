@@ -11,6 +11,7 @@ import org.sagacity.sqltoy.config.model.ReverseModel;
  * @author zhongxuchen
  * @version v1.0,Date:2020-3-25
  */
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class ReverseList {
 	/**
 	 * @TODO 集合首尾反转

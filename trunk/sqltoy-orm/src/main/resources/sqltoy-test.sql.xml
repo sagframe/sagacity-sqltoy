@@ -26,6 +26,8 @@
 			<between params="" start-value="0" end-value="9999"	excludes="" />
 			<!-- 将前端传过来的字符串切割成数组 -->
 			<split params="staffAuthOrgs" data-type="string" split-sign="," />
+			<!-- 将参数转为字符串类型，add-quote:none\double\single,默认为none -->
+			<to-string params="" add-quote="none"/>
 			<!-- 参数小于等于某个值时转为null -->
 			<lte params="" value="" />
 			<!-- 参数小于某个值时转为null -->

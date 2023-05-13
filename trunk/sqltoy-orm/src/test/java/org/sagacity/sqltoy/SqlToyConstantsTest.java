@@ -15,6 +15,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Test;
+import org.sagacity.sqltoy.config.model.DataType;
 import org.sagacity.sqltoy.demo.vo.A1;
 import org.sagacity.sqltoy.demo.vo.A2;
 import org.sagacity.sqltoy.demo.vo.B1;
@@ -26,7 +27,6 @@ import org.sagacity.sqltoy.utils.StringUtil;
 
 import com.alibaba.fastjson.JSON;
 import com.google.common.collect.Lists;
-import com.taosdata.jdbc.enums.DataType;
 
 public class SqlToyConstantsTest {
 	@Test

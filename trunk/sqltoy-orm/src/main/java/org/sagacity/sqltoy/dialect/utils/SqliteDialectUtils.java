@@ -8,6 +8,7 @@ import java.util.HashSet;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.PKStrategy;
+import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 
 /**
@@ -32,20 +33,21 @@ public class SqliteDialectUtils {
 	}
 
 	/**
-	 * @todo 利用sqlite3 的on conflict(id) DO UPDATE SET 语法,但只能用于关联子表更新
+	 * @todo 利用sqlite3 的on conflict(id) DO UPDATE SET 语法,但只能用于关联子表更新(未实际使用)
 	 * @param dbType
 	 * @param entityMeta
 	 * @param forceUpdateFields
 	 * @param tableName
 	 * @return
 	 */
-	public static String getSaveOrUpdateSql(Integer dbType, EntityMeta entityMeta, String[] forceUpdateFields,
-			String tableName) {
+	@Deprecated
+	public static String getSaveOrUpdateSql(IUnifyFieldsHandler unifyFieldsHandler, Integer dbType,
+			EntityMeta entityMeta, String[] forceUpdateFields, String tableName) {
 		String realTable = entityMeta.getSchemaTable(tableName, dbType);
 		// 无主键表全部采用insert机制
 		if (entityMeta.getIdArray() == null) {
-			return DialectExtUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), "ifnull", null,
-					false, realTable);
+			return DialectExtUtils.generateInsertSql(unifyFieldsHandler, dbType, entityMeta, entityMeta.getIdStrategy(),
+					"ifnull", null, false, realTable);
 		}
 		StringBuilder sql;
 		// 是否全部是ID

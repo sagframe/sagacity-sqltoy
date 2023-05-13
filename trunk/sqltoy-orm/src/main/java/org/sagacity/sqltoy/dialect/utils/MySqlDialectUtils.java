@@ -8,6 +8,7 @@ import java.util.HashSet;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.PKStrategy;
+import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 
 /**
@@ -19,7 +20,7 @@ import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 public class MySqlDialectUtils {
 
 	/**
-	 * @todo 产生mysql数据库的saveOrUpdate操作sql语句
+	 * @todo 产生mysql数据库的saveOrUpdate操作sql语句(未实际使用)
 	 * @param dbType
 	 * @param entityMeta
 	 * @param forceUpdateFields
@@ -27,12 +28,12 @@ public class MySqlDialectUtils {
 	 * @return
 	 */
 	@Deprecated
-	public static String getSaveOrUpdateSql(Integer dbType, EntityMeta entityMeta, String[] forceUpdateFields,
-			String tableName) {
+	public static String getSaveOrUpdateSql(IUnifyFieldsHandler unifyFieldsHandler, Integer dbType,
+			EntityMeta entityMeta, String[] forceUpdateFields, String tableName) {
 		String realTable = entityMeta.getSchemaTable(tableName, dbType);
 		if (entityMeta.getIdArray() == null) {
-			return DialectExtUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), "ifnull", null,
-					false, realTable);
+			return DialectExtUtils.generateInsertSql(unifyFieldsHandler, dbType, entityMeta, entityMeta.getIdStrategy(),
+					"ifnull", null, false, realTable);
 		}
 
 		StringBuilder sql;

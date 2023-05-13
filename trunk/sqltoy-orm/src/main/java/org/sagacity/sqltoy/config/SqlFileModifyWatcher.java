@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
  * @version v1.0, Date:2012年8月26日
  * @modify 2019年8月26日,将原本调用sql时检测sql文件更新改为一个独立的后台程序进行检测
  */
+@SuppressWarnings("rawtypes")
 public class SqlFileModifyWatcher extends Thread {
 	/**
 	 * 定义全局日志

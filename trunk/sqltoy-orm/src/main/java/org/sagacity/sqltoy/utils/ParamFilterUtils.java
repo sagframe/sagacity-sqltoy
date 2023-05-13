@@ -908,7 +908,7 @@ public class ParamFilterUtils {
 	 */
 	private static Object toNumber(Object paramValue, String dataType) {
 		Object result;
-		BigDecimal value = new BigDecimal(paramValue.toString().replaceAll(",", ""));
+		BigDecimal value = new BigDecimal(paramValue.toString().replace(",", ""));
 		if (dataType == null) {
 			result = value;
 		} else if ("integer".equals(dataType) || "int".equals(dataType)) {

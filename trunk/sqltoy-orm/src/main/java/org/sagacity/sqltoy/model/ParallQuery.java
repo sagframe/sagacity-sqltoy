@@ -55,6 +55,26 @@ public class ParallQuery implements Serializable {
 	}
 
 	/**
+	 * @TODO 取top记录
+	 * @param topSize
+	 * @return
+	 */
+	public ParallQuery topSize(double topSize) {
+		extend.topSize = topSize;
+		return this;
+	}
+
+	/**
+	 * @TODO 取随机记录
+	 * @param randomSize
+	 * @return
+	 */
+	public ParallQuery randomSize(double randomSize) {
+		extend.randomSize = randomSize;
+		return this;
+	}
+
+	/**
 	 * @TODO 设置独立的条件参数
 	 * @param names
 	 * @return

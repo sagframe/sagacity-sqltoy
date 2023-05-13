@@ -12,12 +12,14 @@ import org.sagacity.sqltoy.config.model.OperateType;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
+import org.sagacity.sqltoy.model.IgnoreCaseSet;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
+import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.SqlUtilsExt;
 import org.sagacity.sqltoy.utils.StringUtil;
 
@@ -110,8 +112,8 @@ public class DB2DialectUtils {
 		String realTable = entityMeta.getSchemaTable(tableName, dbType);
 		// 在无主键的情况下产生insert sql语句
 		if (entityMeta.getIdArray() == null) {
-			return DialectExtUtils.generateInsertSql(dbType, entityMeta, pkStrategy, isNullFunction, sequence,
-					isAssignPK, realTable);
+			return DialectExtUtils.generateInsertSql(unifyFieldsHandler, dbType, entityMeta, pkStrategy, isNullFunction,
+					sequence, isAssignPK, realTable);
 		}
 		// 将新增记录统一赋值属性模拟成默认值模式
 		IgnoreKeyCaseMap<String, Object> createUnifyFields = null;
@@ -120,6 +122,15 @@ public class DB2DialectUtils {
 			createUnifyFields = new IgnoreKeyCaseMap<String, Object>();
 			createUnifyFields.putAll(unifyFieldsHandler.createUnifyFields());
 		}
+		// 创建记录时，创建时间、最后修改时间等取数据库时间
+		IgnoreCaseSet createSqlTimeFields = (unifyFieldsHandler == null
+				|| unifyFieldsHandler.createSqlTimeFields() == null) ? new IgnoreCaseSet()
+						: unifyFieldsHandler.createSqlTimeFields();
+		// 修改记录时，最后修改时间等取数据库时间
+		IgnoreCaseSet updateSqlTimeFields = (unifyFieldsHandler == null
+				|| unifyFieldsHandler.updateSqlTimeFields() == null) ? new IgnoreCaseSet()
+						: unifyFieldsHandler.updateSqlTimeFields();
+		String currentTimeStr;
 		int columnSize = entityMeta.getFieldsArray().length;
 		FieldMeta fieldMeta;
 		StringBuilder sql = new StringBuilder(columnSize * 30 + 100);
@@ -188,7 +199,14 @@ public class DB2DialectUtils {
 				} else {
 					sql.append(isNullFunction);
 					sql.append("(tv.").append(columnName);
-					sql.append(",ta.").append(columnName);
+					sql.append(",");
+					// 修改时间设置数据库时间nvl(?,current_timestamp)
+					currentTimeStr = SqlUtil.getDBTime(dbType, fieldMeta, updateSqlTimeFields);
+					if (null != currentTimeStr) {
+						sql.append(currentTimeStr);
+					} else {
+						sql.append("ta.").append(columnName);
+					}
 					sql.append(")");
 				}
 				insertRejIdCols.append(columnName);
@@ -201,7 +219,15 @@ public class DB2DialectUtils {
 					DialectExtUtils.processDefaultValue(insertRejIdColValues, dbType, fieldMeta, defaultValue);
 					insertRejIdColValues.append(")");
 				} else {
-					insertRejIdColValues.append("tv.").append(columnName);
+					currentTimeStr = SqlUtil.getDBTime(dbType, fieldMeta, createSqlTimeFields);
+					if (null != currentTimeStr) {
+						insertRejIdColValues.append(isNullFunction);
+						insertRejIdColValues.append("(tv.").append(columnName).append(",");
+						insertRejIdColValues.append(currentTimeStr);
+						insertRejIdColValues.append(")");
+					} else {
+						insertRejIdColValues.append("tv.").append(columnName);
+					}
 				}
 			}
 		}
@@ -210,9 +236,9 @@ public class DB2DialectUtils {
 		String idsColumnStr = idColumns.toString();
 		// 不考虑只有一个字段且还是主键的情况
 		if (allIds) {
-			sql.append(idsColumnStr.replaceAll("ta\\.", ""));
+			sql.append(idsColumnStr.replace("ta.", ""));
 			sql.append(") values (");
-			sql.append(idsColumnStr.replaceAll("ta\\.", "tv."));
+			sql.append(idsColumnStr.replace("ta.", "tv."));
 		} else {
 			sql.append(insertRejIdCols.toString());
 			// sequence方式主键
@@ -247,10 +273,10 @@ public class DB2DialectUtils {
 				}
 			} else {
 				sql.append(",");
-				sql.append(idsColumnStr.replaceAll("ta\\.", ""));
+				sql.append(idsColumnStr.replace("ta.", ""));
 				sql.append(") values (");
 				sql.append(insertRejIdColValues).append(",");
-				sql.append(idsColumnStr.replaceAll("ta\\.", "tv."));
+				sql.append(idsColumnStr.replace("ta.", "tv."));
 			}
 		}
 		sql.append(")");
@@ -269,18 +295,24 @@ public class DB2DialectUtils {
 	 * @param tableName
 	 * @return
 	 */
-	public static String getSaveIgnoreExistSql(Integer dbType, EntityMeta entityMeta, PKStrategy pkStrategy,
-			String fromTable, String isNullFunction, String sequence, boolean isAssignPK, String tableName) {
+	public static String getSaveIgnoreExistSql(IUnifyFieldsHandler unifyFieldsHandler, Integer dbType,
+			EntityMeta entityMeta, PKStrategy pkStrategy, String fromTable, String isNullFunction, String sequence,
+			boolean isAssignPK, String tableName) {
 		String realTable = entityMeta.getSchemaTable(tableName, dbType);
 		// 在无主键的情况下产生insert sql语句
 		if (entityMeta.getIdArray() == null) {
-			return DialectExtUtils.generateInsertSql(dbType, entityMeta, pkStrategy, isNullFunction, sequence,
-					isAssignPK, realTable);
+			return DialectExtUtils.generateInsertSql(unifyFieldsHandler, dbType, entityMeta, pkStrategy, isNullFunction,
+					sequence, isAssignPK, realTable);
 		}
 		int columnSize = entityMeta.getFieldsArray().length;
 		FieldMeta fieldMeta;
 		StringBuilder sql = new StringBuilder(columnSize * 30 + 100);
 		String columnName;
+		// 创建记录时，创建时间、最后修改时间等取数据库时间
+		IgnoreCaseSet createSqlTimeFields = (unifyFieldsHandler == null
+				|| unifyFieldsHandler.createSqlTimeFields() == null) ? new IgnoreCaseSet()
+						: unifyFieldsHandler.createSqlTimeFields();
+		String currentTimeStr;
 		sql.append("merge into ");
 		sql.append(realTable);
 		sql.append(" ta ");
@@ -327,7 +359,16 @@ public class DB2DialectUtils {
 					insertRejIdColValues.append(",");
 				}
 				insertRejIdCols.append(columnName);
-				insertRejIdColValues.append("tv.").append(columnName);
+				// 2023-5-11 新增操作待增加对default值的处理,nvl(?,current_timestamp)
+				currentTimeStr = SqlUtil.getDBTime(dbType, fieldMeta, createSqlTimeFields);
+				if (null != currentTimeStr) {
+					insertRejIdColValues.append(isNullFunction);
+					insertRejIdColValues.append("(tv.").append(columnName);
+					insertRejIdColValues.append(",").append(currentTimeStr);
+					insertRejIdColValues.append(")");
+				} else {
+					insertRejIdColValues.append("tv.").append(columnName);
+				}
 			}
 		}
 		// 主键未匹配上则进行插入操作
@@ -335,9 +376,9 @@ public class DB2DialectUtils {
 		String idsColumnStr = idColumns.toString();
 		// 不考虑只有一个字段且还是主键的情况
 		if (allIds) {
-			sql.append(idsColumnStr.replaceAll("ta\\.", ""));
+			sql.append(idsColumnStr.replace("ta.", ""));
 			sql.append(") values (");
-			sql.append(idsColumnStr.replaceAll("ta\\.", "tv."));
+			sql.append(idsColumnStr.replace("ta.", "tv."));
 		} else {
 			sql.append(insertRejIdCols.toString());
 			// sequence方式主键
@@ -372,10 +413,10 @@ public class DB2DialectUtils {
 				}
 			} else {
 				sql.append(",");
-				sql.append(idsColumnStr.replaceAll("ta\\.", ""));
+				sql.append(idsColumnStr.replace("ta.", ""));
 				sql.append(") values (");
 				sql.append(insertRejIdColValues).append(",");
-				sql.append(idsColumnStr.replaceAll("ta\\.", "tv."));
+				sql.append(idsColumnStr.replace("ta.", "tv."));
 			}
 		}
 		sql.append(")");

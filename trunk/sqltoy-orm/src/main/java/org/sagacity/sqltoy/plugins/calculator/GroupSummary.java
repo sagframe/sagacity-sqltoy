@@ -23,6 +23,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @modify 2022-5-19,增加skipSingleRow特性，针对单行数据可配置不进行汇总、求平均
  * @modify 2022-11-24,修复汇总计算结果存放于SummaryModel导致的并发场景下的线程安全问题
  */
+@SuppressWarnings({ "rawtypes" })
 public class GroupSummary {
 	public static void process(SummaryModel summaryModel, LabelIndexModel labelIndexMap, List result) {
 		// 记录小于2条无需汇总计算
@@ -52,7 +53,7 @@ public class GroupSummary {
 		boolean bothSumAverage = !sumColList.isEmpty() && !aveColList.isEmpty();
 		// 组织分组配置
 		String sumSite;
-		//定义分组汇总计算的模型(2022-11-24)
+		// 定义分组汇总计算的模型(2022-11-24)
 		SummaryGroupMeta[] sumMetas = new SummaryGroupMeta[summaryModel.getGroupMeta().length];
 		int i = 0;
 		SummaryGroupMeta groupMeta;

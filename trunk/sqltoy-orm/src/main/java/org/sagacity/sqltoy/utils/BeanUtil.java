@@ -845,7 +845,7 @@ public class BeanUtil {
 	 * @param properties
 	 * @param reflectPropsHandler
 	 * @return
-	 * @throws Exception
+	 * @throws RuntimeException
 	 */
 	public static List reflectBeansToList(List datas, String[] properties, ReflectPropsHandler reflectPropsHandler)
 			throws RuntimeException {
@@ -1041,7 +1041,7 @@ public class BeanUtil {
 									if (!((IgnoreKeyCaseMap) fieldValue).containsKey(fieldTrim)) {
 										keyAndIndex = getKeyAndIndex(fieldTrim);
 										if (keyAndIndex != null) {
-											fieldValue = getAryPropValue(
+											fieldValue = getArrayIndexValue(
 													((IgnoreKeyCaseMap) fieldValue).get(keyAndIndex.getKey()),
 													keyAndIndex.getIndex());
 										} else {
@@ -1064,7 +1064,8 @@ public class BeanUtil {
 											keyAndIndex = getKeyAndIndex(fieldLow);
 											if (keyAndIndex != null
 													&& entry.getKey().toLowerCase().equals(keyAndIndex.getKey())) {
-												fieldValue = getAryPropValue(entry.getValue(), keyAndIndex.getIndex());
+												fieldValue = getArrayIndexValue(entry.getValue(),
+														keyAndIndex.getIndex());
 												isMapped = true;
 												break;
 											}
@@ -1710,7 +1711,7 @@ public class BeanUtil {
 		if (bean instanceof Map) {
 			result = ((Map) bean).get(property);
 			if (result == null && keyAndIndex != null) {
-				result = getAryPropValue(((Map) bean).get(realProperty), keyAndIndex.getIndex());
+				result = getArrayIndexValue(((Map) bean).get(realProperty), keyAndIndex.getIndex());
 			}
 			return result;
 		}
@@ -1727,7 +1728,7 @@ public class BeanUtil {
 		try {
 			result = method.invoke(bean);
 			if (result != null && keyAndIndex != null) {
-				result = getAryPropValue(result, keyAndIndex.getIndex());
+				result = getArrayIndexValue(result, keyAndIndex.getIndex());
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -2053,7 +2054,13 @@ public class BeanUtil {
 		return result;
 	}
 
-	public static Object getAryPropValue(Object result, int index) {
+	/**
+	 * @TODO 将对象转数组获取index列对应的值
+	 * @param result
+	 * @param index
+	 * @return
+	 */
+	public static Object getArrayIndexValue(Object result, int index) {
 		if (result == null) {
 			return null;
 		}
