@@ -40,14 +40,11 @@ public class TreeDataSort {
 		Set topPids = getTopPids(treeList, idColIndex, pidColIndex);
 		List result = new ArrayList();
 		List row;
-		int pidSize = topPids.size();
-		int meter = 0;
 		// 提取第一层树节点
 		for (int i = 0; i < treeList.size(); i++) {
 			row = (List) treeList.get(i);
 			if (topPids.contains(row.get(pidColIndex))) {
 				result.add(row);
-				meter++;
 				treeList.remove(i);
 				i--;
 			}
