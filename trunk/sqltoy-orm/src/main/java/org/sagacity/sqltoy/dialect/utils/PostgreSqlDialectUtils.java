@@ -24,6 +24,7 @@ import org.sagacity.sqltoy.dialect.model.SavePKStrategy;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
+import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtilsExt;
@@ -131,8 +132,8 @@ public class PostgreSqlDialectUtils {
 			sequence = "DEFAULT";
 		}
 		boolean isAssignPK = isAssignPKValue(pkStrategy);
-		String insertSql = DialectExtUtils.generateInsertSql(dbType, entityMeta, pkStrategy, NVL_FUNCTION, sequence,
-				isAssignPK, tableName);
+		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
+				pkStrategy, NVL_FUNCTION, sequence, isAssignPK, tableName);
 		return DialectUtils.save(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entity,
 				new GenerateSqlHandler() {
 					@Override
@@ -147,8 +148,8 @@ public class PostgreSqlDialectUtils {
 							pkStrategy = PKStrategy.SEQUENCE;
 							sequence = "DEFAULT";
 						}
-						return DialectExtUtils.generateInsertSql(dbType, entityMeta, pkStrategy, NVL_FUNCTION, sequence,
-								isAssignPKValue(pkStrategy), null);
+						return DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
+								entityMeta, pkStrategy, NVL_FUNCTION, sequence, isAssignPKValue(pkStrategy), null);
 					}
 				}, new GenerateSavePKStrategy() {
 					@Override
@@ -185,8 +186,8 @@ public class PostgreSqlDialectUtils {
 			sequence = "DEFAULT";
 		}
 		boolean isAssignPK = isAssignPKValue(pkStrategy);
-		String insertSql = DialectExtUtils.generateInsertSql(dbType, entityMeta, pkStrategy, NVL_FUNCTION, sequence,
-				isAssignPK, tableName);
+		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
+				pkStrategy, NVL_FUNCTION, sequence, isAssignPK, tableName);
 		return DialectUtils.saveAll(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entities, batchSize,
 				reflectPropsHandler, conn, dbType, autoCommit);
 	}
@@ -240,12 +241,13 @@ public class PostgreSqlDialectUtils {
 	 * @return
 	 */
 	@Deprecated
-	public static String getSaveOrUpdateSql(Integer dbType, EntityMeta entityMeta, PKStrategy pkStrategy,
-			boolean isAssignPK, String sequence, String[] forceUpdateFields, String tableName) {
+	public static String getSaveOrUpdateSql(IUnifyFieldsHandler unifyFieldsHandler, Integer dbType,
+			EntityMeta entityMeta, PKStrategy pkStrategy, boolean isAssignPK, String sequence,
+			String[] forceUpdateFields, String tableName) {
 		String realTable = entityMeta.getSchemaTable(tableName, dbType);
 		if (entityMeta.getIdArray() == null) {
-			return DialectExtUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), NVL_FUNCTION, null,
-					false, realTable);
+			return DialectExtUtils.generateInsertSql(unifyFieldsHandler, dbType, entityMeta, entityMeta.getIdStrategy(),
+					NVL_FUNCTION, null, false, realTable);
 		}
 		// 是否全部是ID
 		boolean allIds = (entityMeta.getRejectIdFieldArray() == null);
@@ -347,6 +349,52 @@ public class PostgreSqlDialectUtils {
 			}
 		}
 		return sql.toString();
+	}
+
+	/**
+	 * @todo 组织merge into 语句中select 的字段，进行类型转换
+	 * @param sql
+	 * @param columnName
+	 * @param fieldMeta
+	 */
+	public static void wrapSelectFields(StringBuilder sql, String columnName, FieldMeta fieldMeta) {
+		int jdbcType = fieldMeta.getType();
+		int length = fieldMeta.getLength();
+		if (jdbcType == java.sql.Types.VARCHAR) {
+			sql.append("cast(? as varchar(" + length + "))");
+		} else if (jdbcType == java.sql.Types.CHAR) {
+			sql.append("cast(? as char(" + length + "))");
+		} else if (jdbcType == java.sql.Types.DATE) {
+			sql.append("cast(? as date)");
+		} else if (jdbcType == java.sql.Types.NUMERIC) {
+			sql.append("cast(? as numeric)");
+		} else if (jdbcType == java.sql.Types.DECIMAL) {
+			sql.append("cast(? as decimal)");
+		} else if (jdbcType == java.sql.Types.BIGINT) {
+			sql.append("cast(? as bigint)");
+		} else if (jdbcType == java.sql.Types.INTEGER || jdbcType == java.sql.Types.TINYINT) {
+			sql.append("cast(? as integer)");
+		} else if (jdbcType == java.sql.Types.TIMESTAMP) {
+			sql.append("cast(? as timestamp)");
+		} else if (jdbcType == java.sql.Types.DOUBLE) {
+			sql.append("cast(? as double)");
+		} else if (jdbcType == java.sql.Types.FLOAT) {
+			sql.append("cast(? as float)");
+		} else if (jdbcType == java.sql.Types.TIME) {
+			sql.append("cast(? as time)");
+		} else if (jdbcType == java.sql.Types.CLOB) {
+			sql.append("cast(? as text)");
+		} else if (jdbcType == java.sql.Types.BOOLEAN) {
+			sql.append("cast(? as boolean)");
+		} else if (jdbcType == java.sql.Types.BINARY) {
+			sql.append("cast(? as bytea)");
+		} else if (jdbcType == java.sql.Types.BLOB) {
+			sql.append("cast(? as bytea)");
+		} else {
+			sql.append("?");
+		}
+		sql.append(" as ");
+		sql.append(columnName);
 	}
 
 	/**

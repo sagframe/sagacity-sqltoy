@@ -242,8 +242,8 @@ public class GaussDBDialect implements Dialect {
 							sequence = "DEFAULT";
 						}
 						boolean isAssignPK = PostgreSqlDialectUtils.isAssignPKValue(pkStrategy);
-						return PostgreSqlDialectUtils.getSaveOrUpdateSql(dbType, entityMeta, pkStrategy, isAssignPK,
-								sequence, forceUpdateFields, null);
+						return PostgreSqlDialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
+								entityMeta, pkStrategy, isAssignPK, sequence, forceUpdateFields, null);
 					}
 				}, emptyCascadeClasses, subTableForceUpdateProps, conn, dbType, tableName);
 	}
@@ -339,8 +339,8 @@ public class GaussDBDialect implements Dialect {
 							sequence = "DEFAULT";
 						}
 						boolean isAssignPK = PostgreSqlDialectUtils.isAssignPKValue(pkStrategy);
-						return DialectExtUtils.insertIgnore(dbType, entityMeta, pkStrategy, NVL_FUNCTION, sequence,
-								isAssignPK, tableName);
+						return DialectExtUtils.insertIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
+								pkStrategy, NVL_FUNCTION, sequence, isAssignPK, tableName);
 					}
 				}, reflectPropsHandler, conn, dbType, autoCommit);
 	}

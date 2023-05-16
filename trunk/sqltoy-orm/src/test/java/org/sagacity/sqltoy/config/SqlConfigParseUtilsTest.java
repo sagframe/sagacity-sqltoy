@@ -74,9 +74,9 @@ public class SqlConfigParseUtilsTest {
 
 	@Test
 	public void testNull() throws Exception {
-		String sql = "select * from table where 1=1 #[and id=:id and name like :name] #[and status=:status]";
+		String sql = "select * from table where 1=1 #[and id=:id and name like  :name] #[and status=:status]";
 		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "id", "name", "status" },
-				new Object[] { "1", null, "1" });
+				new Object[] { "1", "chen", "1" });
 		System.err.println(JSON.toJSONString(result));
 	}
 
@@ -277,13 +277,13 @@ public class SqlConfigParseUtilsTest {
 
 	@Test
 	public void testIf1() throws Exception {
-		String sql = "where name=1 #[ @if(:flag==:flagValue||:flag1==:flagValue1) and #[status=:status]]";
+		String sql = "where name=1 #[ @if(:flag==:flagValue||:flag1==:flagValue1||3==:flag1) and #[status=:status]]";
 //		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "flag", "status" },
 //				new Object[] { "1", null });
 //		System.err.println(JSON.toJSONString(result));
 		SqlToyResult result = SqlConfigParseUtils.processSql(sql,
 				new String[] { "flag", "flag1", "status", "flagValue", "flagValue1" },
-				new Object[] { "1", "3", 1, "1", "2" });
+				new Object[] { "1", "3", 1, "5", "2" });
 		System.err.println(JSON.toJSONString(result));
 	}
 

@@ -93,8 +93,9 @@ public class H2Dialect extends PostgreSqlDialect {
 							pkStrategy = PKStrategy.SEQUENCE;
 							sequence = "DEFAULT";
 						}
-						return DialectExtUtils.mergeIgnore(dbType, entityMeta, pkStrategy, VIRTUAL_TABLE, NVL_FUNCTION,
-								sequence, PostgreSqlDialectUtils.isAssignPKValue(pkStrategy), tableName);
+						return DialectExtUtils.mergeIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
+								pkStrategy, VIRTUAL_TABLE, NVL_FUNCTION, sequence,
+								PostgreSqlDialectUtils.isAssignPKValue(pkStrategy), tableName);
 					}
 				}, reflectPropsHandler, conn, dbType, autoCommit);
 	}

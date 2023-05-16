@@ -112,7 +112,7 @@ public class SqlConfigParseUtils {
 	public final static String ARG_DBL_NAME = "??";
 	public final static String ARG_DBL_REGEX = "\\?{2}";
 	public final static Pattern ARG_NAME_PATTERN = Pattern.compile(ARG_REGEX);
-	public final static String ARG_NAME_BLANK = "? ";
+	// public final static String ARG_NAME_BLANK = "? ";
 
 	// sql 拼接时判断前部分sql是否是where 结尾,update 2017-12-4 增加(?i)忽视大小写
 	public final static Pattern WHERE_END_PATTERN = Pattern.compile("(?i)\\Wwhere\\s*$");
@@ -360,7 +360,7 @@ public class SqlConfigParseUtils {
 				if (result[i] == null) {
 					keyAndIndex = BeanUtil.getKeyAndIndex(nameLow);
 					if (keyAndIndex != null) {
-						result[i] = BeanUtil.getAryPropValue(nameValueMap.get(keyAndIndex.getKey()),
+						result[i] = BeanUtil.getArrayIndexValue(nameValueMap.get(keyAndIndex.getKey()),
 								keyAndIndex.getIndex());
 					}
 				}
@@ -389,8 +389,11 @@ public class SqlConfigParseUtils {
 			group = m.group();
 			// 剔除\\W\\: 两位字符
 			paramsName.add(group.substring(2).trim());
-			lastSql.append(BLANK).append(queryStr.substring(start, m.start())).append(group.charAt(0))
-					.append(ARG_NAME_BLANK);
+			lastSql.append(queryStr.substring(start, m.start())).append(group.charAt(0)).append(ARG_NAME);
+			// 参数通过\\W\\:name\s?模式匹配，判断是否空白结尾
+			if (StringUtil.matches(group, SqlToyConstants.BLANK_END)) {
+				lastSql.append(BLANK);
+			}
 			start = m.end();
 		}
 		// 没有别名参数

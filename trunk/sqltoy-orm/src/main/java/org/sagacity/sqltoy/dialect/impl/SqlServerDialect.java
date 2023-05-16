@@ -317,8 +317,9 @@ public class SqlServerDialect implements Dialect {
 				new GenerateSqlHandler() {
 					@Override
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
-						String sql = SqlServerDialectUtils.getSaveIgnoreExistSql(dbType, entityMeta,
-								entityMeta.getIdStrategy(), tableName, "isnull", "@mySeqVariable", false);
+						String sql = SqlServerDialectUtils.getSaveIgnoreExistSql(sqlToyContext.getUnifyFieldsHandler(),
+								dbType, entityMeta, entityMeta.getIdStrategy(), tableName, "isnull", "@mySeqVariable",
+								false);
 						// 2012 版本
 						if (entityMeta.getIdStrategy() != null
 								&& entityMeta.getIdStrategy().equals(PKStrategy.SEQUENCE)) {

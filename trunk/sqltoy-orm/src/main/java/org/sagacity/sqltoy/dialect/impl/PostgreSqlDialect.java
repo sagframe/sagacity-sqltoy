@@ -236,8 +236,8 @@ public class PostgreSqlDialect implements Dialect {
 							sequence = "DEFAULT";
 						}
 						boolean isAssignPK = PostgreSqlDialectUtils.isAssignPKValue(pkStrategy);
-						return PostgreSqlDialectUtils.getSaveOrUpdateSql(dbType, entityMeta, pkStrategy, isAssignPK,
-								sequence, forceUpdateFields, null);
+						return PostgreSqlDialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
+								entityMeta, pkStrategy, isAssignPK, sequence, forceUpdateFields, null);
 					}
 				}, emptyCascadeClasses, subTableForceUpdateProps, conn, dbType, tableName);
 	}
@@ -296,6 +296,8 @@ public class PostgreSqlDialect implements Dialect {
 	public Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			ReflectPropsHandler reflectPropsHandler, String[] forceUpdateFields, Connection conn, final Integer dbType,
 			final String dialect, final Boolean autoCommit, final String tableName) throws Exception {
+		// 暂时不开放，postgresql类型太多,merge 语句中需要case(? as type) as columnName
+		// 目前type类型无法完整适配支持
 		// postgresql15 支持merge into
 		// if (dbType.equals(DBType.POSTGRESQL15)) {
 		// return PostgreSqlDialectUtils.saveOrUpdateAll(sqlToyContext, entities,
@@ -340,8 +342,8 @@ public class PostgreSqlDialect implements Dialect {
 							sequence = "DEFAULT";
 						}
 						boolean isAssignPK = PostgreSqlDialectUtils.isAssignPKValue(pkStrategy);
-						return DialectExtUtils.insertIgnore(dbType, entityMeta, pkStrategy, NVL_FUNCTION, sequence,
-								isAssignPK, tableName);
+						return DialectExtUtils.insertIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
+								pkStrategy, NVL_FUNCTION, sequence, isAssignPK, tableName);
 					}
 				}, reflectPropsHandler, conn, dbType, autoCommit);
 	}

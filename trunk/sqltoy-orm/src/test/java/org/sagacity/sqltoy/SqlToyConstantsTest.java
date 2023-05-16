@@ -5,6 +5,8 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.LinkedHashMap;
@@ -13,11 +15,18 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Test;
+import org.sagacity.sqltoy.config.model.DataType;
+import org.sagacity.sqltoy.demo.vo.A1;
+import org.sagacity.sqltoy.demo.vo.A2;
+import org.sagacity.sqltoy.demo.vo.B1;
+import org.sagacity.sqltoy.demo.vo.C1;
 import org.sagacity.sqltoy.demo.vo.StaffInfoVO;
 import org.sagacity.sqltoy.model.MapKit;
+import org.sagacity.sqltoy.utils.MapperUtils;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 import com.alibaba.fastjson.JSON;
+import com.google.common.collect.Lists;
 
 public class SqlToyConstantsTest {
 	@Test
@@ -46,8 +55,17 @@ public class SqlToyConstantsTest {
 
 		Map map = new HashMap<String, Object>();
 		map.put("1", null);
-		System.err.println("map="+map.containsKey("1"));
-		System.err.println(ArrayList.class.isAssignableFrom(List.class));
+		System.err.println("map=" + map.containsKey("1"));
+		System.err.println(List.class.isAssignableFrom(ArrayList.class));
+		System.err.println(Collection.class.isAssignableFrom(List.class));
+		System.err.println(Map.class.isAssignableFrom(HashMap.class));
+		String[] abc = new String[2];
+		System.err.println(abc.getClass().isArray());
+		System.err.println(DataType.class.isEnum());
+		String idColumns = "ta.staff_id";
+		System.err.println(idColumns.replaceAll("ta\\.", ""));
+		System.err.println(idColumns.replaceAll("ta\\.", "tv."));
+		System.err.println("["+"v  by bn 1 ".replaceAll("\\s+", "")+"]");
 	}
 
 	@Test
@@ -90,5 +108,64 @@ public class SqlToyConstantsTest {
 		boolean d = Map.class.isAssignableFrom(Map.class);
 		System.out.println("a---" + a + "-----b----" + b + "-------c-----" + c + "-------d-----" + d);
 
+	}
+
+	public static void main(String[] args) {
+		A1 aa = new A1() {
+			{
+				setIntNum(1001);
+				setIntegerNum(1002);
+				setStr("i am a string. 。。。。");
+				setDecimal(BigDecimal.TEN);
+				setShortNum(Short.valueOf("199"));
+				setShortTNum(Short.valueOf("198"));
+				setDate(new Date());
+				setB(new B1() {
+					{
+						setIntNum(2001);
+						setIntegerNum(2002);
+						setStr("i am b string. 。。。。");
+						setDecimal(BigDecimal.ZERO);
+						setShortNum(Short.valueOf("299"));
+						setShortTNum(Short.valueOf("298"));
+						setDate(new Date());
+					}
+				});
+				setC(Lists.newArrayList(new C1() {
+					{
+						setIntNum(3001);
+						setIntegerNum(3002);
+						setStr("i am c1 string. 。。。。");
+						setDecimal(BigDecimal.ONE);
+						setShortNum(Short.valueOf("399"));
+						setShortTNum(Short.valueOf("398"));
+						setDate(new Date());
+					}
+				}, new C1() {
+					{
+						setIntNum(3003);
+						setIntegerNum(3004);
+						setStr("i am c2 string. 。。。。");
+						setDecimal(BigDecimal.ONE);
+						setShortNum(Short.valueOf("389"));
+						setShortTNum(Short.valueOf("388"));
+						setDate(new Date());
+					}
+				}, new C1() {
+					{
+						setIntNum(3005);
+						setIntegerNum(3006);
+						setStr("i am c3 string. 。。。。");
+						setDecimal(BigDecimal.ONE);
+						setShortNum(Short.valueOf("379"));
+						setShortTNum(Short.valueOf("378"));
+						setDate(new Date());
+					}
+				}));
+			}
+		};
+
+		A2 a2 = MapperUtils.map(aa, A2.class);
+		System.out.println(JSON.toJSONString(a2));
 	}
 }

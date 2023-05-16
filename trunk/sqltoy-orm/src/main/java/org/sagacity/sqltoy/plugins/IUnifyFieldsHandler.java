@@ -32,6 +32,28 @@ public interface IUnifyFieldsHandler {
 		return null;
 	}
 
+	/**
+	 * 创建记录时，直接代入sql insert into table()values(nvl(?,current_timestamp))时间的字段
+	 * 只针对时间类型生效
+	 * 注意: createUnifyFields中去除相同字段，避免被覆盖
+	 * @return
+	 */
+	public default IgnoreCaseSet createSqlTimeFields() {
+		//如:new IgnoreCaseSet().add("createTime").add("updateTime")
+		return new IgnoreCaseSet();
+	}
+
+	/**
+	 * 只针对date、localDate、timestamp等时间类型生效 修改记录时，直接代入update table set
+	 * a=nvl(?,current_timestamp)时间的字段
+	 * 注意: updateUnifyFields中去除相同字段，避免被覆盖
+	 * @return
+	 */
+	public default IgnoreCaseSet updateSqlTimeFields() {
+		//如:new IgnoreCaseSet().add("updateTime")
+		return new IgnoreCaseSet();
+	}
+
 	// 在非强制情况下，create和update赋值都是先判断字段是否已经赋值，如已经赋值则忽视
 	// 强制赋值后，则忽视字段赋值，强制覆盖
 	/**

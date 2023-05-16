@@ -17,6 +17,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @author zhongxuchen
  * @version v1.0,Date:2020-3-25
  */
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class ColsChainRelative {
 	public static void process(ColsChainRelativeModel relativeModel, LabelIndexModel labelIndexMap, List result) {
 		if (result == null || result.isEmpty()) {

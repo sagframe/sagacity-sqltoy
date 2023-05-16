@@ -177,7 +177,7 @@ public class CheckerConfigModel implements Serializable {
 		if (StringUtil.isNotBlank(frequency)) {
 			List<TimeSection> timeParts = new ArrayList<TimeSection>();
 			// 统一格式,去除全角字符,去除空白
-			frequency = StringUtil.toDBC(frequency).replaceAll("\\;", ",").trim();
+			frequency = StringUtil.toDBC(frequency).replace(";", ",").trim();
 			this.checkFrequency = frequency;
 			// 0~24点 统一的检测频率
 			// 可以是单个频率值,表示0到24小时采用统一的频率
@@ -212,7 +212,7 @@ public class CheckerConfigModel implements Serializable {
 		if (NumberUtil.isInteger(hourMinuteStr) && hourMinuteStr.length() > 2) {
 			return Integer.parseInt(hourMinuteStr);
 		}
-		String tmp = hourMinuteStr.replaceAll("\\.", ":");
+		String tmp = hourMinuteStr.replace(".", ":");
 		String[] hourMin = tmp.split("\\:");
 		return Integer.parseInt(hourMin[0]) * 100 + ((hourMin.length > 1) ? Integer.parseInt(hourMin[1]) : 0);
 	}
