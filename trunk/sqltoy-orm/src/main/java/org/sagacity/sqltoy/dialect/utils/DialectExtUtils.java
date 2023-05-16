@@ -6,6 +6,7 @@ package org.sagacity.sqltoy.dialect.utils;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
@@ -25,6 +26,14 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @modify 2022-10-19 修改processDefaultValue修复oracle、db2日期类型的支持
  */
 public class DialectExtUtils {
+	// POJO 对应的insert sql语句缓存
+	private static ConcurrentHashMap<String, String> insertSqlCache = new ConcurrentHashMap<String, String>(256);
+
+	// POJO 对应的merge into not match insert语句缓存
+	private static ConcurrentHashMap<String, String> mergeIgnoreSqlCache = new ConcurrentHashMap<String, String>(256);
+
+	// POJO 对应的insert into ON CONFLICT语句缓存
+	private static ConcurrentHashMap<String, String> insertIgnoreSqlCache = new ConcurrentHashMap<String, String>(256);
 
 	/**
 	 * @todo 产生对象对应的insert sql语句
@@ -39,6 +48,12 @@ public class DialectExtUtils {
 	 */
 	public static String generateInsertSql(Integer dbType, EntityMeta entityMeta, PKStrategy pkStrategy,
 			String isNullFunction, String sequence, boolean isAssignPK, String tableName) {
+		// update 2023-5-13 增加缓存机制，避免每次动态组织insert语句
+		String sqlCacheKey = entityMeta.getEntityClass().getName() + "[" + tableName + "]dbType=" + dbType;
+		String insertSql = insertSqlCache.get(sqlCacheKey);
+		if (null != insertSql) {
+			return insertSql;
+		}
 		int columnSize = entityMeta.getFieldsArray().length;
 		StringBuilder sql = new StringBuilder(columnSize * 20 + 30);
 		StringBuilder values = new StringBuilder(columnSize * 2 - 1);
@@ -114,7 +129,9 @@ public class DialectExtUtils {
 		sql.append(" values (");
 		sql.append(values);
 		sql.append(")");
-		return sql.toString();
+		insertSql = sql.toString();
+		insertSqlCache.put(sqlCacheKey, insertSql);
+		return insertSql;
 	}
 
 	/**
@@ -275,6 +292,12 @@ public class DialectExtUtils {
 		if (entityMeta.getIdArray() == null) {
 			return generateInsertSql(dbType, entityMeta, pkStrategy, isNullFunction, sequence, isAssignPK, realTable);
 		}
+		// sql 缓存，避免每次重复产生
+		String sqlCacheKey = entityMeta.getEntityClass().getName() + "[" + tableName + "]dbType=" + dbType;
+		String mergeIgnoreSql = mergeIgnoreSqlCache.get(sqlCacheKey);
+		if (null != mergeIgnoreSql) {
+			return mergeIgnoreSql;
+		}
 		boolean isSupportNUL = StringUtil.isBlank(isNullFunction) ? false : true;
 		int columnSize = entityMeta.getFieldsArray().length;
 		StringBuilder sql = new StringBuilder(columnSize * 30 + 100);
@@ -376,7 +399,9 @@ public class DialectExtUtils {
 			}
 		}
 		sql.append(")");
-		return sql.toString();
+		mergeIgnoreSql = sql.toString();
+		mergeIgnoreSqlCache.put(sqlCacheKey, mergeIgnoreSql);
+		return mergeIgnoreSql;
 	}
 
 	/**
@@ -392,6 +417,12 @@ public class DialectExtUtils {
 	 */
 	public static String insertIgnore(Integer dbType, EntityMeta entityMeta, PKStrategy pkStrategy,
 			String isNullFunction, String sequence, boolean isAssignPK, String tableName) {
+		// update 2023-5-13 提供缓存方式快速获取sql
+		String sqlCacheKey = entityMeta.getEntityClass().getName() + "[" + tableName + "]dbType=" + dbType;
+		String insertIgnoreSql = insertIgnoreSqlCache.get(sqlCacheKey);
+		if (null != insertIgnoreSql) {
+			return insertIgnoreSql;
+		}
 		int columnSize = entityMeta.getFieldsArray().length;
 		StringBuilder sql = new StringBuilder(columnSize * 20 + 30);
 		StringBuilder values = new StringBuilder(columnSize * 2 - 1);
@@ -449,7 +480,9 @@ public class DialectExtUtils {
 			}
 			sql.append(" ) DO NOTHING ");
 		}
-		return sql.toString();
+		insertIgnoreSql = sql.toString();
+		insertIgnoreSqlCache.put(sqlCacheKey, insertIgnoreSql);
+		return insertIgnoreSql;
 	}
 
 	/**

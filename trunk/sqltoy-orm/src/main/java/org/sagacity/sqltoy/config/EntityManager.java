@@ -2,7 +2,15 @@ package org.sagacity.sqltoy.config;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.sql.Time;
+import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -628,6 +636,35 @@ public class EntityManager {
 		// 设置是否分区字段
 		if (field.getAnnotation(PartitionKey.class) != null) {
 			fieldMeta.setPartitionKey(true);
+		}
+		// 兼容type不设置场景，根据字段类型自动补充,为时序数据库等手工简化写注解做准备
+		if (column.type() == java.sql.Types.OTHER) {
+			Class fieldType = field.getType();
+			if (fieldType.equals(String.class)) {
+				fieldMeta.setType(java.sql.Types.VARCHAR);
+			} else if (fieldType.equals(Date.class) || fieldType.equals(java.sql.Date.class)
+					|| fieldType.equals(LocalDate.class) || fieldType.equals(LocalDateTime.class)) {
+				fieldMeta.setType(java.sql.Types.DATE);
+			} else if (fieldType.equals(Timestamp.class)) {
+				fieldMeta.setType(java.sql.Types.TIMESTAMP);
+			} else if (fieldType.equals(LocalTime.class) || fieldType.equals(Time.class)) {
+				fieldMeta.setType(java.sql.Types.TIME);
+			} else if (fieldType.equals(Long.class) || fieldType.equals(BigInteger.class)) {
+				fieldMeta.setType(java.sql.Types.BIGINT);
+			} else if (fieldType.equals(Integer.class) || fieldType.equals(int.class) || fieldType.equals(long.class)
+					|| fieldType.equals(short.class)) {
+				fieldMeta.setType(java.sql.Types.INTEGER);
+			} else if (fieldType.equals(BigDecimal.class)) {
+				fieldMeta.setType(java.sql.Types.DECIMAL);
+			} else if (fieldType.equals(Boolean.class) || fieldType.equals(boolean.class)) {
+				fieldMeta.setType(java.sql.Types.BOOLEAN);
+			} else if (fieldType.equals(Double.class) || fieldType.equals(double.class)) {
+				fieldMeta.setType(java.sql.Types.DOUBLE);
+			} else if (fieldType.equals(Float.class) || fieldType.equals(float.class)) {
+				fieldMeta.setType(java.sql.Types.FLOAT);
+			} else if (fieldType.equals(Byte.class) && fieldType.isArray()) {
+				fieldMeta.setType(java.sql.Types.BINARY);
+			}
 		}
 		// 内部包含了构造表字段名称跟vo属性名称的对照
 		entityMeta.addFieldMeta(fieldMeta);

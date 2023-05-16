@@ -70,6 +70,12 @@ public class ParallQueryExecutor implements Callable<ParallQueryResult> {
 				}
 				// 产品化场景，适配其他数据库验证查询(仅仅在设置了redoDataSources时生效)
 				CrossDbAdapter.redoPageQuery(sqlToyContext, dialectFactory, queryExecutor, extend.page);
+			} // 取top记录
+			else if (extend.topSize > 0) {
+				result.setResult(
+						dialectFactory.findTop(sqlToyContext, queryExecutor, sqlToyConfig, extend.topSize, dataSource));
+				// 产品化场景，适配其他数据库验证查询(仅仅在设置了redoDataSources时生效)
+				CrossDbAdapter.redoTopQuery(sqlToyContext, dialectFactory, queryExecutor, extend.topSize);
 			} else {
 				result.setResult(
 						dialectFactory.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig, null, dataSource));

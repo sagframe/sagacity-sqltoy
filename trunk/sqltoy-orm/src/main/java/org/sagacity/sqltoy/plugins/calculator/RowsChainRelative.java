@@ -17,6 +17,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @author zhongxuchen
  * @version v1.0,Date:2020-3-25
  */
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class RowsChainRelative {
 	// |月份 | 产品 |交易笔数 | 环比 | 金额 | 环比 | 收入 | 环比 |
 	// | 5月 | 香蕉 | 2000 | 环比 | 金额 | 环比 | 收入 | 环比 |

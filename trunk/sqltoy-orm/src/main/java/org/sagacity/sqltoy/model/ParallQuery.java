@@ -55,6 +55,16 @@ public class ParallQuery implements Serializable {
 	}
 
 	/**
+	 * @TODO 取top记录
+	 * @param topSize
+	 * @return
+	 */
+	public ParallQuery topSize(double topSize) {
+		extend.topSize = topSize;
+		return this;
+	}
+
+	/**
 	 * @TODO 设置独立的条件参数
 	 * @param names
 	 * @return
@@ -71,7 +81,7 @@ public class ParallQuery implements Serializable {
 		return this;
 	}
 
-	//map传参
+	// map传参
 	public ParallQuery paramsMap(Map<String, Object> paramsMap) {
 		extend.values = new Object[] { paramsMap };
 		extend.selfCondition = true;

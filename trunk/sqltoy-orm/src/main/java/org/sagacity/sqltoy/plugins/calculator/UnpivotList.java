@@ -18,6 +18,7 @@ import org.sagacity.sqltoy.utils.NumberUtil;
  * @author zhongxuchen
  * @version v1.0,Date:2020-3-25
  */
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class UnpivotList {
 	public static List process(UnpivotModel unpivotModel, DataSetResult resultModel, LabelIndexModel labelIndexMap,
 			List result) {
