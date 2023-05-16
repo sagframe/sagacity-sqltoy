@@ -74,9 +74,9 @@ public class SqlConfigParseUtilsTest {
 
 	@Test
 	public void testNull() throws Exception {
-		String sql = "select * from table where 1=1 #[and id=:id and name like :name] #[and status=:status]";
+		String sql = "select * from table where 1=1 #[and id=:id and name like  :name] #[and status=:status]";
 		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "id", "name", "status" },
-				new Object[] { "1", null, "1" });
+				new Object[] { "1", "chen", "1" });
 		System.err.println(JSON.toJSONString(result));
 	}
 

@@ -27,7 +27,7 @@ public class SqlLoopTest {
 		}
 		SqlLoop sqlLoop = new SqlLoop(false);
 		String[] params = { "staffInfos",
-				"(staffId=:staffInfos[i].staffId #[and birthDay!=:staffInfos[i].birthday] and status=:status)", "or" };
+				"(staffId=:staffInfos[i].staffId #[and birthDay!=':staffInfos[i].birthday'] and status=:status	)", "or" };
 		IgnoreKeyCaseMap<String, Object> keyValues = new IgnoreKeyCaseMap<String, Object>();
 		keyValues.put("staffInfos", staffInfos);
 		keyValues.put("status", 1);
