@@ -450,7 +450,9 @@ public class MongoElasticUtils {
 		Object value;
 		Object[] ary = null;
 		int i;
+		String group;
 		while (m.find()) {
+			group = m.group();
 			// m.start()+1 补偿\\W开始的字符,如 t.name=:name 保留下=号
 			realMql.append(sql.substring(start, m.start() + 1));
 			start = m.end();
@@ -481,7 +483,10 @@ public class MongoElasticUtils {
 				i++;
 			}
 			index++;
-			realMql.append(BLANK);
+			// 参数正则表达式:param\s? 末尾可能为空白
+			if (StringUtil.matches(group, SqlToyConstants.BLANK_END)) {
+				realMql.append(BLANK);
+			}
 		}
 		// 切去尾部sql
 		realMql.append(sql.substring(start));

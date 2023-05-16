@@ -260,11 +260,12 @@ public class SqlLoop extends AbstractMacro {
 		while (m.find()) {
 			group = m.group();
 			// 剔除\\W\\: 两位字符
-			paramName = group.substring(2);
+			paramName = group.substring(2).trim();
+			// 往后移1位(因为\\W表达式开头)
 			preSql = queryStr.substring(start, m.start() + 1);
 			// 是否是=:param 或!=:param等判断符号直接连接参数的情况，便于输出日期、字符参数时判断是否加单引号
 			hasCompare = StringUtil.matches(preSql, COMPARE_PATTERN);
-			key = ":".concat(paramName.trim());
+			key = ":".concat(paramName);
 			paramValue = loopParamNamesMap.get(key);
 			// 判断是否非循环参数，非循环参数在循环后继续处理
 			if (!loopParamNamesMap.containsKey(key)) {
@@ -274,7 +275,11 @@ public class SqlLoop extends AbstractMacro {
 			} else {
 				preSql = preSql.concat(toString(paramValue, hasCompare));
 			}
-			lastSql.append(BLANK).append(preSql);
+			// 参数名称以空白结尾，处理完参数后补全空白
+			if (StringUtil.matches(group, SqlToyConstants.BLANK_END)) {
+				preSql = preSql.concat(BLANK);
+			}
+			lastSql.append(preSql);
 			start = m.end();
 		}
 		// 没有别名参数
