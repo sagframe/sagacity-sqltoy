@@ -3,12 +3,16 @@
  */
 package org.sagacity.sqltoy.utils;
 
+import java.math.BigInteger;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.demo.domain.StaffInfo;
+import org.sagacity.sqltoy.demo.vo.LoginLogVO;
 import org.sagacity.sqltoy.demo.vo.StaffInfoVO;
+import org.sagacity.sqltoy.demo.vo.SysLoginLog;
 
 import com.alibaba.fastjson.JSON;
 
@@ -71,6 +75,16 @@ public class MapperUtilsTest {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+
+	}
+
+	@Test
+	public void testPOTOVO1() {
+		LoginLogVO loginLogVO = new LoginLogVO();
+		loginLogVO.setLogId(new BigInteger("1"));
+		loginLogVO.setLoginTime(LocalDateTime.now());
+		SysLoginLog sysLoginLog = MapperUtils.map(loginLogVO, SysLoginLog.class);
+		System.err.println(JSON.toJSONString(sysLoginLog));
 
 	}
 }

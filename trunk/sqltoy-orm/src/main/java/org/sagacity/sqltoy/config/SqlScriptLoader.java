@@ -114,11 +114,14 @@ public class SqlScriptLoader {
 		if (StringUtil.isNotBlank(sqlResourcesDir)
 				&& (sqlResourcesDir.toLowerCase().contains(".sql.xml") || sqlResourcesDir.contains("*"))) {
 			throw new IllegalArgumentException("\n您的配置:spring.sqltoy.sqlResourcesDir=" + sqlResourcesDir + " 不正确!\n"
-					+ "/*----正确格式只接受单个或逗号分隔的多个路径模式且不能有*通配符(会自动递归往下钻取!)----*/\n"
+					+ "/*----正确格式只接受单个或逗号分隔的多个路径模式且不能有*和**以及*.sql.xml等配符(会自动递归往下钻取!)----*/\n"
 					+ "/*- 1、单路径模式:spring.sqltoy.sqlResourcesDir=classpath:com/sagacity/crm\n"
 					+ "/*- 2、多路径模式:spring.sqltoy.sqlResourcesDir=classpath:com/sagacity/crm,classpath:com/sagacity/hr\n"
 					+ "/*- 3、绝对路径模式:spring.sqltoy.sqlResourcesDir=/home/web/project/sql\n"
-					+ "/*------------------------------------------------------------------------------*/");
+					+ "/*-----------错误范例(请看清、看清、再看清:不能有*、**和*.sql.xml)----------------------*/\n"
+					+ "/*-1、classpath:*/com/yourproject/yourpackage/**/*.sql.xml\n"
+					+ "/*-2、classpath*:/com/yourproject/yourpackage/**/**.sql.xml\n"
+					+ "/*-----------------------------------------------------------------------*/");
 		}
 		if (initialized) {
 			return;

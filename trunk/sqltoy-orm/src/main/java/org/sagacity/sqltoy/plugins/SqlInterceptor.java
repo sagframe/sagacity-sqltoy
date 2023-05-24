@@ -22,7 +22,7 @@ public interface SqlInterceptor {
 	 * @param sqlToyConfig  传递原本的sql配置,可以通过获取paramNames判断是否sql中已经有相关参数
 	 * @param operateType   search\page\top\random\count 等，
 	 * @param sqlToyResult  存放了最终的sql 和paramValues
-	 * @param entityClass   实体对象类型(只针对对象crud操作才有值)
+	 * @param entityClass   实体对象类型(只针对对象crud操作才有值、或者基于纯POJO的findEntity、findPageEntity、updateByQuery、deleteByQuery操作)
 	 * @param dbType        当前数据库类型,通过DBType.xxx 进行对比
 	 * @return
 	 */

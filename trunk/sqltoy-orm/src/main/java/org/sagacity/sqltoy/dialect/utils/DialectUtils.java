@@ -586,6 +586,7 @@ public class DialectUtils {
 		// 重新构造修改或保存的属性赋值反调
 		ReflectPropsHandler handler = getSaveOrUpdateReflectHandler(entityMeta.getIdArray(), reflectPropsHandler,
 				forceUpdateFields, sqlToyContext.getUnifyFieldsHandler());
+		// 字段加密处理
 		handler = getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
 		List<Object[]> paramValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getFieldsArray(), null,
@@ -1379,6 +1380,7 @@ public class DialectUtils {
 		}
 		// 构造全新的新增记录参数赋值反射(覆盖之前的)
 		ReflectPropsHandler handler = getAddReflectHandler(entityMeta, null, sqlToyContext.getUnifyFieldsHandler());
+		// 字段加密处理
 		handler = getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
 		// update 2022-7-16 增加默认值的代入
@@ -1549,6 +1551,7 @@ public class DialectUtils {
 		// 构造全新的新增记录参数赋值反射(覆盖之前的)
 		ReflectPropsHandler handler = getAddReflectHandler(entityMeta, reflectPropsHandler,
 				sqlToyContext.getUnifyFieldsHandler());
+		// 字段加密处理
 		handler = getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
 		// update 2022-7-16 增加了默认值代入
@@ -1657,6 +1660,7 @@ public class DialectUtils {
 		// 构造全新的新增记录参数赋值反射(覆盖之前的)
 		ReflectPropsHandler handler = getAddReflectHandler(entityMeta, reflectPropsHandler,
 				sqlToyContext.getUnifyFieldsHandler());
+		// 字段加密处理
 		handler = getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
 		// update 2022-7-16 增加默认值代入,insert sql上去除了nvl(?,default) 适应一些框架
@@ -1757,6 +1761,7 @@ public class DialectUtils {
 		// 构造全新的修改记录参数赋值反射(覆盖之前的)
 		ReflectPropsHandler handler = getUpdateReflectHandler(null, forceUpdateFields,
 				sqlToyContext.getUnifyFieldsHandler());
+		// 字段加密处理
 		handler = getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
 		Object[] fieldsValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getFieldsArray(), null, handler);
@@ -2110,6 +2115,7 @@ public class DialectUtils {
 		// 构造全新的修改记录参数赋值反射(覆盖之前的)
 		ReflectPropsHandler handler = getUpdateReflectHandler(reflectPropsHandler, forceUpdateFields,
 				sqlToyContext.getUnifyFieldsHandler());
+		// 字段加密处理
 		handler = getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
 		List<Object[]> paramsValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getFieldsArray(), null,

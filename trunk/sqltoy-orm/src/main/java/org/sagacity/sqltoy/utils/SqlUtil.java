@@ -1859,8 +1859,8 @@ public class SqlUtil {
 			}
 			// time
 			if (fieldType == java.sql.Types.TIME || fieldType == java.sql.Types.TIME_WITH_TIMEZONE
-					|| fieldMeta.getFieldType().equals("java.time.localtime")
-					|| fieldMeta.getFieldType().equals("java.sql.time")) {
+					|| "java.time.localtime".equals(fieldMeta.getFieldType())
+					|| "java.sql.time".equals(fieldMeta.getFieldType())) {
 				if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.TIDB
 						|| dbType == DBType.SQLITE || dbType == DBType.H2 || dbType == DBType.POSTGRESQL
 						|| dbType == DBType.POSTGRESQL15 || dbType == DBType.KINGBASE || dbType == DBType.DB2
@@ -1874,7 +1874,7 @@ public class SqlUtil {
 					return "current_timestamp";
 				}
 			} // timestamp
-			else if (fieldMeta.getFieldType().equals("java.time.localdate")) {
+			else if ("java.time.localdate".equals(fieldMeta.getFieldType())) {
 				if (dbType == DBType.SQLSERVER) {
 					return "getdate()";
 				}

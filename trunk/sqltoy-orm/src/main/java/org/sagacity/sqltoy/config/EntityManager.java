@@ -314,6 +314,7 @@ public class EntityManager {
 							dataVersionField = field.getName();
 						}
 					}
+					// 字段上判断租户
 					if (tenant == null) {
 						tenant = (Tenant) field.getAnnotation(Tenant.class);
 						if (tenant != null) {

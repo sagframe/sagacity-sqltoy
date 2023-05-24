@@ -22,6 +22,16 @@ import org.sagacity.sqltoy.utils.StringUtil;
  */
 public class TenantFilterInterceptor implements SqlInterceptor {
 
+	/**
+	 * @TODO 对最终执行sql和sql参数进行处理
+	 * @param sqlToyContext 支持getEntityMeta(tableName)获取表信息
+	 * @param sqlToyConfig  传递原本的sql配置,可以通过获取paramNames判断是否sql中已经有相关参数
+	 * @param operateType   search\page\top\random\count 等，
+	 * @param sqlToyResult  存放了最终的sql 和paramValues
+	 * @param entityClass   实体对象类型(只针对对象crud操作才有值、或者基于纯POJO的findEntity、findPageEntity、updateByQuery、deleteByQuery操作)
+	 * @param dbType        当前数据库类型,通过DBType.xxx 进行对比
+	 * @return
+	 */
 	@Override
 	public SqlToyResult decorate(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, OperateType operateType,
 			SqlToyResult sqlToyResult, Class entityClass, Integer dbType) {
@@ -73,6 +83,10 @@ public class TenantFilterInterceptor implements SqlInterceptor {
 			// 对象操作sql由框架生成，where前后是空白
 			sqlToyResult.setSql(sql.replaceFirst("(?i)\\swhere\\s", sqlPart));
 		}
+		// 通过表名获取entityMeta、并判断表里面是否有租户字段
+		// EntityMeta entityMeta = sqlToyContext.getEntityMeta(tableName);
+		// if (entityMeta.getColumnName("tenantId") != null)
+		// 针对sql查询，你可以解析sql获得表名称，判断这个表是否有租户字段
 		return sqlToyResult;
 	}
 
