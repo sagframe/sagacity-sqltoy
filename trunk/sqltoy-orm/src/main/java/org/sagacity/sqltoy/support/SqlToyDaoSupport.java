@@ -49,6 +49,7 @@ import org.sagacity.sqltoy.link.Mongo;
 import org.sagacity.sqltoy.link.Query;
 import org.sagacity.sqltoy.link.Save;
 import org.sagacity.sqltoy.link.Store;
+import org.sagacity.sqltoy.link.TableApi;
 import org.sagacity.sqltoy.link.TreeTable;
 import org.sagacity.sqltoy.link.Unique;
 import org.sagacity.sqltoy.link.Update;
@@ -256,6 +257,14 @@ public class SqlToyDaoSupport {
 	 */
 	protected Batch batch() {
 		return new Batch(sqlToyContext, getDataSource(dataSource));
+	}
+
+	/**
+	 * @todo 提供一个获取数据库表信息和操作表信息的TableApi集合
+	 * @return
+	 */
+	protected TableApi tableApi() {
+		return new TableApi(sqlToyContext, getDataSource(dataSource));
 	}
 
 	/**

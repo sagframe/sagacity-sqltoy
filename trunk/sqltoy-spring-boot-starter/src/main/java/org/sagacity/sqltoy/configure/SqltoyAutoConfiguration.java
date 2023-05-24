@@ -2,14 +2,15 @@ package org.sagacity.sqltoy.configure;
 
 import static java.lang.System.err;
 
-import com.alibaba.ttl.threadpool.TtlExecutors;
 import java.util.ArrayList;
 import java.util.List;
-
 import java.util.concurrent.Executor;
+
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.ElasticEndpoint;
+import org.sagacity.sqltoy.dao.LightDao;
 import org.sagacity.sqltoy.dao.SqlToyLazyDao;
+import org.sagacity.sqltoy.dao.impl.LightDaoImpl;
 import org.sagacity.sqltoy.dao.impl.SqlToyLazyDaoImpl;
 import org.sagacity.sqltoy.integration.ConnectionFactory;
 import org.sagacity.sqltoy.integration.impl.SpringAppContext;
@@ -37,6 +38,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+
+import com.alibaba.ttl.threadpool.TtlExecutors;
 
 /**
  * @description sqltoy 自动配置类
@@ -450,6 +453,14 @@ public class SqltoyAutoConfiguration {
 		return lazyDao;
 	}
 
+	@Bean(name = "lightDao")
+	@ConditionalOnMissingBean
+	LightDao lightDao(SqlToyContext sqlToyContext) {
+		LightDaoImpl lightDao = new LightDaoImpl();
+		lightDao.setSqlToyContext(sqlToyContext);
+		return lightDao;
+	}
+	
 	/**
 	 * 5.2 版本要注入sqlToyLazyDao
 	 * 
