@@ -25,11 +25,11 @@ import org.sagacity.sqltoy.link.Mongo;
 import org.sagacity.sqltoy.link.Query;
 import org.sagacity.sqltoy.link.Save;
 import org.sagacity.sqltoy.link.Store;
+import org.sagacity.sqltoy.link.TableApi;
 import org.sagacity.sqltoy.link.TreeTable;
 import org.sagacity.sqltoy.link.Unique;
 import org.sagacity.sqltoy.link.Update;
 import org.sagacity.sqltoy.model.CacheMatchFilter;
-import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.model.EntityQuery;
 import org.sagacity.sqltoy.model.EntityUpdate;
 import org.sagacity.sqltoy.model.LockMode;
@@ -40,7 +40,6 @@ import org.sagacity.sqltoy.model.ParallelConfig;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
-import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.model.TreeTableModel;
 import org.sagacity.sqltoy.support.SpringDaoSupport;
 import org.sagacity.sqltoy.translate.TranslateHandler;
@@ -134,6 +133,11 @@ public class LightDaoImpl extends SpringDaoSupport implements LightDao {
 	@Override
 	public TreeTable treeTable() {
 		return super.treeTable();
+	}
+
+	@Override
+	public TableApi tableApi() {
+		return super.tableApi();
 	}
 
 	/*
@@ -437,12 +441,12 @@ public class LightDaoImpl extends SpringDaoSupport implements LightDao {
 	}
 
 	@Override
-	public Page findPag(Page page, String sqlOrSqlId, Map<String, Object> paramsMap) {
+	public Page findPage(Page page, String sqlOrSqlId, Map<String, Object> paramsMap) {
 		return super.findPageBySql(page, sqlOrSqlId, paramsMap, null);
 	}
 
 	@Override
-	public <T> Page<T> findPag(Page page, String sqlOrSqlId, Map<String, Object> paramsMap, Class<T> resultType) {
+	public <T> Page<T> findPage(Page page, String sqlOrSqlId, Map<String, Object> paramsMap, Class<T> resultType) {
 		return super.findPageBySql(page, sqlOrSqlId, paramsMap, resultType);
 	}
 
@@ -611,15 +615,4 @@ public class LightDaoImpl extends SpringDaoSupport implements LightDao {
 			ParallelConfig parallelConfig) {
 		return super.parallQuery(parallQueryList, paramsMap, parallelConfig);
 	}
-
-	@Override
-	public List<ColumnMeta> getTableColumns(String catalog, String schema, String tableName) {
-		return super.getTableColumns(catalog, schema, tableName, dataSource);
-	}
-
-	@Override
-	public List<TableMeta> getTables(String catalog, String schema, String tableName) {
-		return super.getTables(catalog, schema, tableName, dataSource);
-	}
-
 }

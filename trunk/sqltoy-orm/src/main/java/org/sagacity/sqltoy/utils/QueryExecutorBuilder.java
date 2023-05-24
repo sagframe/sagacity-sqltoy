@@ -123,7 +123,7 @@ public class QueryExecutorBuilder {
 	}
 
 	/**
-	 * @TODO 统一数据权限条件参数:1、前端没有传则自动填充；2、前端传值，对所传值进行是否超出授权数据范围校验
+	 * @TODO 统一数据权限条件参数:1、前端没有传则自动填充；2、前端传值，对所传值进行是否超出授权数据范围校验,没有越权则以前端传值为准
 	 * @param unifyFieldsHandler
 	 * @param sqlToyConfig
 	 * @param fullParamNames

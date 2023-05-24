@@ -24,11 +24,11 @@ import org.sagacity.sqltoy.link.Mongo;
 import org.sagacity.sqltoy.link.Query;
 import org.sagacity.sqltoy.link.Save;
 import org.sagacity.sqltoy.link.Store;
+import org.sagacity.sqltoy.link.TableApi;
 import org.sagacity.sqltoy.link.TreeTable;
 import org.sagacity.sqltoy.link.Unique;
 import org.sagacity.sqltoy.link.Update;
 import org.sagacity.sqltoy.model.CacheMatchFilter;
-import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.model.EntityQuery;
 import org.sagacity.sqltoy.model.EntityUpdate;
 import org.sagacity.sqltoy.model.LockMode;
@@ -38,13 +38,12 @@ import org.sagacity.sqltoy.model.ParallelConfig;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
-import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.model.TreeTableModel;
 import org.sagacity.sqltoy.translate.TranslateHandler;
 
 /**
  * @project sqltoy-orm
- * @description 提供一个更加简洁直观的Dao实现，重构SqlToyLazyDao
+ * @description 提供一个更加简洁直观的Dao实现，保持原SqlToyLazyDao不动，提供更加实用的API
  * @author zhongxuchen
  * @version v1.0,Date:2023年3月15日
  */
@@ -126,6 +125,12 @@ public interface LightDao {
 	 * @return
 	 */
 	public Batch batch();
+
+	/**
+	 * @TODO 提供数据库表信息查询和更新操作的API集合
+	 * @return
+	 */
+	public TableApi tableApi();
 
 	/**
 	 * @TODO 获取sql对应的配置模型
@@ -566,7 +571,7 @@ public interface LightDao {
 	 */
 	public QueryResult findPageByQuery(final Page page, final QueryExecutor queryExecutor);
 
-	public Page findPag(final Page page, final String sqlOrSqlId, final Map<String, Object> paramsMap);
+	public Page findPage(final Page page, final String sqlOrSqlId, final Map<String, Object> paramsMap);
 
 	/**
 	 * @TODO 提供基于Map传参的分页查询
@@ -577,7 +582,7 @@ public interface LightDao {
 	 * @param resultType 可以是vo、dto、Map(默认驼峰命名)
 	 * @return
 	 */
-	public <T> Page<T> findPag(final Page page, final String sqlOrSqlId, final Map<String, Object> paramsMap,
+	public <T> Page<T> findPage(final Page page, final String sqlOrSqlId, final Map<String, Object> paramsMap,
 			final Class<T> resultType);
 
 	/**
@@ -853,22 +858,4 @@ public interface LightDao {
 	 */
 	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String, Object> paramsMap,
 			ParallelConfig parallelConfig);
-
-	/**
-	 * @TODO 获得表的字段信息
-	 * @param catalog
-	 * @param schema
-	 * @param tableName
-	 * @return
-	 */
-	public List<ColumnMeta> getTableColumns(final String catalog, final String schema, final String tableName);
-
-	/**
-	 * @TODO 获得数据库的表信息
-	 * @param catalog
-	 * @param schema
-	 * @param tableName
-	 * @return
-	 */
-	public List<TableMeta> getTables(final String catalog, final String schema, final String tableName);
 }
