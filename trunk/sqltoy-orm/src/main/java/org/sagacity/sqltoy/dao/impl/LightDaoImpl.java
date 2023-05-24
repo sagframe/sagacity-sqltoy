@@ -396,7 +396,7 @@ public class LightDaoImpl extends SpringDaoSupport implements LightDao {
 	}
 
 	@Override
-	public <T extends Serializable> T findOne(String sqlOrSqlId, Serializable entity, Class<T> resultType) {
+	public <T> T findOne(String sqlOrSqlId, Serializable entity, Class<T> resultType) {
 		return (T) super.loadByQuery(new QueryExecutor(sqlOrSqlId, entity).resultType(resultType));
 	}
 
@@ -431,7 +431,7 @@ public class LightDaoImpl extends SpringDaoSupport implements LightDao {
 	}
 
 	@Override
-	public <T extends Serializable> List<T> find(String sqlOrSqlId, Serializable entity, Class<T> resultType) {
+	public <T> List<T> find(String sqlOrSqlId, Serializable entity, Class<T> resultType) {
 		return (List<T>) super.findByQuery(new QueryExecutor(sqlOrSqlId, entity).resultType(resultType)).getRows();
 	}
 
@@ -451,8 +451,7 @@ public class LightDaoImpl extends SpringDaoSupport implements LightDao {
 	}
 
 	@Override
-	public <T extends Serializable> Page<T> findPage(Page page, String sqlOrSqlId, Serializable entity,
-			Class<T> resultType) {
+	public <T> Page<T> findPage(Page page, String sqlOrSqlId, Serializable entity, Class<T> resultType) {
 		return (Page<T>) super.findPageByQuery(page, new QueryExecutor(sqlOrSqlId, entity).resultType(resultType))
 				.getPageResult();
 	}
@@ -463,7 +462,7 @@ public class LightDaoImpl extends SpringDaoSupport implements LightDao {
 	}
 
 	@Override
-	public <T extends Serializable> List<T> findTop(String sqlOrSqlId, T entity, Class<T> resultType, double topSize) {
+	public <T> List<T> findTop(String sqlOrSqlId, Serializable entity, Class<T> resultType, double topSize) {
 		return (List<T>) super.findTopByQuery(new QueryExecutor(sqlOrSqlId, entity).resultType(resultType), topSize)
 				.getRows();
 	}
@@ -485,8 +484,7 @@ public class LightDaoImpl extends SpringDaoSupport implements LightDao {
 	}
 
 	@Override
-	public <T extends Serializable> List<T> findRandom(String sqlOrSqlId, Serializable entity, Class<T> resultType,
-			double randomCount) {
+	public <T> List<T> findRandom(String sqlOrSqlId, Serializable entity, Class<T> resultType, double randomCount) {
 		return (List<T>) super.getRandomResult(new QueryExecutor(sqlOrSqlId, entity).resultType(resultType),
 				randomCount).getRows();
 	}
