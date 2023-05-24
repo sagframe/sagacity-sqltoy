@@ -507,8 +507,7 @@ public interface LightDao {
 	 * @param resultType
 	 * @return
 	 */
-	public <T extends Serializable> T findOne(final String sqlOrSqlId, final Serializable entity,
-			final Class<T> resultType);
+	public <T> T findOne(final String sqlOrSqlId, final Serializable entity, final Class<T> resultType);
 
 	/**
 	 * @TODO 根据QueryExecutor来链式操作灵活定义查询sql、条件、数据源等
@@ -545,8 +544,7 @@ public interface LightDao {
 	 * @param resultType
 	 * @return
 	 */
-	public <T extends Serializable> List<T> find(final String sqlOrSqlId, final Serializable entity,
-			final Class<T> resultType);
+	public <T> List<T> find(final String sqlOrSqlId, final Serializable entity, final Class<T> resultType);
 
 	/**
 	 * @TODO 提供基于Map传参的查询5.1.34+ 开始支持 findBySql("select 单列 from
@@ -594,8 +592,8 @@ public interface LightDao {
 	 * @param resultType
 	 * @return
 	 */
-	public <T extends Serializable> Page<T> findPage(final Page page, final String sqlOrSqlId,
-			final Serializable entity, final Class<T> resultType);
+	public <T> Page<T> findPage(final Page page, final String sqlOrSqlId, final Serializable entity,
+			final Class<T> resultType);
 
 	/**
 	 * @TODO 提供基于Map传参的top查询
@@ -618,7 +616,7 @@ public interface LightDao {
 	 * @param topSize    (大于1则取固定数量的记录，小于1，则表示按比例提取)
 	 * @return
 	 */
-	public <T extends Serializable> List<T> findTop(final String sqlOrSqlId, final T entity, final Class<T> resultType,
+	public <T> List<T> findTop(final String sqlOrSqlId, final Serializable entity, final Class<T> resultType,
 			final double topSize);
 
 	/*
@@ -639,8 +637,8 @@ public interface LightDao {
 	 * @param randomCount 小于1表示按比例提取，大于1则按整数部分提取记录数量
 	 * @return
 	 */
-	public <T extends Serializable> List<T> findRandom(final String sqlOrSqlId, final Serializable entity,
-			final Class<T> resultType, final double randomCount);
+	public <T> List<T> findRandom(final String sqlOrSqlId, final Serializable entity, final Class<T> resultType,
+			final double randomCount);
 
 	/**
 	 * @TODO 提供基于Map传参的随机记录查询
