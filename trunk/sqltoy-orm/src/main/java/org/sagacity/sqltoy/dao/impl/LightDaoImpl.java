@@ -441,12 +441,12 @@ public class LightDaoImpl extends SpringDaoSupport implements LightDao {
 	}
 
 	@Override
-	public Page findPag(Page page, String sqlOrSqlId, Map<String, Object> paramsMap) {
+	public Page findPage(Page page, String sqlOrSqlId, Map<String, Object> paramsMap) {
 		return super.findPageBySql(page, sqlOrSqlId, paramsMap, null);
 	}
 
 	@Override
-	public <T> Page<T> findPag(Page page, String sqlOrSqlId, Map<String, Object> paramsMap, Class<T> resultType) {
+	public <T> Page<T> findPage(Page page, String sqlOrSqlId, Map<String, Object> paramsMap, Class<T> resultType) {
 		return super.findPageBySql(page, sqlOrSqlId, paramsMap, resultType);
 	}
 

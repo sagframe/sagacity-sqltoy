@@ -571,7 +571,7 @@ public interface LightDao {
 	 */
 	public QueryResult findPageByQuery(final Page page, final QueryExecutor queryExecutor);
 
-	public Page findPag(final Page page, final String sqlOrSqlId, final Map<String, Object> paramsMap);
+	public Page findPage(final Page page, final String sqlOrSqlId, final Map<String, Object> paramsMap);
 
 	/**
 	 * @TODO 提供基于Map传参的分页查询
@@ -582,7 +582,7 @@ public interface LightDao {
 	 * @param resultType 可以是vo、dto、Map(默认驼峰命名)
 	 * @return
 	 */
-	public <T> Page<T> findPag(final Page page, final String sqlOrSqlId, final Map<String, Object> paramsMap,
+	public <T> Page<T> findPage(final Page page, final String sqlOrSqlId, final Map<String, Object> paramsMap,
 			final Class<T> resultType);
 
 	/**
