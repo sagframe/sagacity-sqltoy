@@ -121,7 +121,7 @@ public class PostgreSqlDialectUtils {
 		String sequence = "nextval('" + entityMeta.getSequence() + "')";
 
 		// 主表gaussdb情况下为了可以返回主键值，sequence模式下在gaussdb下执行了先查询并给主键做了赋值，所以此处修改主键策略为assign
-		if (dbType == DBType.GAUSSDB && pkStrategy.equals(PKStrategy.SEQUENCE)) {
+		if (dbType == DBType.GAUSSDB && pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE)) {
 			sequence = entityMeta.getSequence() + ".nextval";
 			pkStrategy = PKStrategy.ASSIGN;
 		}
@@ -179,6 +179,10 @@ public class PostgreSqlDialectUtils {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		PKStrategy pkStrategy = entityMeta.getIdStrategy();
 		String sequence = "nextval('" + entityMeta.getSequence() + "')";
+		// 主表gaussdb情况下为了可以返回主键值，sequence模式下在gaussdb下执行了先查询并给主键做了赋值，所以此处修改主键策略为assign
+		if (dbType == DBType.GAUSSDB && pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE)) {
+			sequence = entityMeta.getSequence() + ".nextval";
+		}
 		// identity模式用关键词default 代替
 		if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
 			// 伪造成sequence模式

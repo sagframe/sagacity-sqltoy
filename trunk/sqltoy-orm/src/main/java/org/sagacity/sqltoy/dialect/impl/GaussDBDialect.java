@@ -194,7 +194,7 @@ public class GaussDBDialect implements Dialect {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		PKStrategy pkStrategy = entityMeta.getIdStrategy();
 		// gaussdb 主键策略是sequence模式需要先获取主键值
-		if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
+		if (pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE)) {
 			// 不允许手工赋值，重新取值覆盖
 			Object id = SqlUtil.getSequenceValue(conn, entityMeta.getSequence(), dbType);
 			if (id != null) {
@@ -236,6 +236,9 @@ public class GaussDBDialect implements Dialect {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = "nextval('" + entityMeta.getSequence() + "')";
+						if (pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE)) {
+							sequence = entityMeta.getSequence() + ".nextval";
+						}
 						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
 							// 伪造成sequence模式
 							pkStrategy = PKStrategy.SEQUENCE;
@@ -333,6 +336,9 @@ public class GaussDBDialect implements Dialect {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = "nextval('" + entityMeta.getSequence() + "')";
+						if (pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE)) {
+							sequence = entityMeta.getSequence() + ".nextval";
+						}
 						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
 							// 伪造成sequence模式
 							pkStrategy = PKStrategy.SEQUENCE;
