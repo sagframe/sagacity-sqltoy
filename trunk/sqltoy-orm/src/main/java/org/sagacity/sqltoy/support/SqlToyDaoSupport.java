@@ -2088,16 +2088,26 @@ public class SqlToyDaoSupport {
 					: null;
 			if (updateFields != null && !updateFields.isEmpty()) {
 				Iterator<Entry<String, Object>> updateIter = updateFields.entrySet().iterator();
+				String columnName;
 				while (updateIter.hasNext()) {
 					entry = updateIter.next();
+					columnName = entityMeta.getColumnName(entry.getKey());
 					// 是数据库表的字段
-					if (entityMeta.getColumnName(entry.getKey()) != null) {
+					if (columnName != null) {
 						// 是否已经主动update
-						if (innerModel.updateValues.containsKey(entry.getKey())) {
-							// 判断是否存在强制更新
+						if (innerModel.updateValues.containsKey(entry.getKey())
+								|| innerModel.updateValues.containsKey(columnName)) {
+							// 存在强制更新
 							if (unifyHandler.forceUpdateFields() != null
 									&& unifyHandler.forceUpdateFields().contains(entry.getKey())) {
-								innerModel.updateValues.put(entry.getKey(), entry.getValue());
+								// 覆盖主动设置的值
+								// 以表字段名称模式设置的值
+								if (innerModel.updateValues.containsKey(columnName)) {
+									innerModel.updateValues.put(columnName, entry.getValue());
+								} else {
+									// 属性名称设置的值
+									innerModel.updateValues.put(entry.getKey(), entry.getValue());
+								}
 							}
 						} else {
 							innerModel.updateValues.put(entry.getKey(), entry.getValue());
