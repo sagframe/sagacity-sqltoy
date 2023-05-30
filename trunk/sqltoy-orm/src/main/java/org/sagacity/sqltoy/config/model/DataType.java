@@ -49,6 +49,11 @@ public class DataType {
 	public static final int aryByteType = 92;
 	public static final int aryOtherType = 93;
 
+	// list集合类型
+	public static final int listType = 101;
+
+	public static final int setType = 102;
+
 	/**
 	 * @TODO 获取类型
 	 * @param typeName
@@ -147,6 +152,14 @@ public class DataType {
 		}
 		if (typeName.endsWith("[]")) {
 			return aryOtherType;
+		}
+		// list
+		if ("java.util.List".equals(typeName) || "java.util.ArrayList".equals(typeName)) {
+			return listType;
+		}
+		// set
+		if ("java.util.Set".equals(typeName) || "java.util.HashSet".equals(typeName)) {
+			return setType;
 		}
 		// 其他
 		return objectType;

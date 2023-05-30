@@ -20,6 +20,7 @@ import org.sagacity.sqltoy.dialect.Dialect;
 import org.sagacity.sqltoy.dialect.utils.DefaultDialectUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectExtUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
+import org.sagacity.sqltoy.dialect.utils.GaussDialectUtils;
 import org.sagacity.sqltoy.dialect.utils.PostgreSqlDialectUtils;
 import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.model.LockMode;
@@ -244,7 +245,7 @@ public class GaussDBDialect implements Dialect {
 							pkStrategy = PKStrategy.SEQUENCE;
 							sequence = "DEFAULT";
 						}
-						boolean isAssignPK = PostgreSqlDialectUtils.isAssignPKValue(pkStrategy);
+						boolean isAssignPK = GaussDialectUtils.isAssignPKValue(pkStrategy);
 						return PostgreSqlDialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
 								entityMeta, pkStrategy, isAssignPK, sequence, forceUpdateFields, null);
 					}
@@ -330,25 +331,12 @@ public class GaussDBDialect implements Dialect {
 			ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType, final String dialect,
 			final Boolean autoCommit, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-		return DialectUtils.saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta,
-				new GenerateSqlHandler() {
-					@Override
-					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
-						PKStrategy pkStrategy = entityMeta.getIdStrategy();
-						String sequence = "nextval('" + entityMeta.getSequence() + "')";
-						if (pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE)) {
-							sequence = entityMeta.getSequence() + ".nextval";
-						}
-						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
-							// 伪造成sequence模式
-							pkStrategy = PKStrategy.SEQUENCE;
-							sequence = "DEFAULT";
-						}
-						boolean isAssignPK = PostgreSqlDialectUtils.isAssignPKValue(pkStrategy);
-						return DialectExtUtils.insertIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
-								pkStrategy, NVL_FUNCTION, sequence, isAssignPK, tableName);
-					}
-				}, reflectPropsHandler, conn, dbType, autoCommit);
+		boolean isAssignPK = GaussDialectUtils.isAssignPKValue(entityMeta.getIdStrategy());
+		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
+				entityMeta.getIdStrategy(), NVL_FUNCTION, entityMeta.getSequence() + ".nextval", isAssignPK, tableName)
+				.replaceFirst("(?i)insert ", "insert ignore ");
+		return DialectUtils.saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql,
+				entities, batchSize, reflectPropsHandler, conn, dbType, autoCommit);
 	}
 
 	/*

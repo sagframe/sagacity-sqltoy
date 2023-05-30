@@ -459,7 +459,11 @@ public class DialectExtUtils {
 		int columnSize = entityMeta.getFieldsArray().length;
 		StringBuilder sql = new StringBuilder(columnSize * 20 + 30);
 		StringBuilder values = new StringBuilder(columnSize * 2 - 1);
-		sql.append("insert into ");
+		if (dbType == DBType.GAUSSDB) {
+			sql.append("insert ignore into ");
+		} else {
+			sql.append("insert into ");
+		}
 		sql.append(entityMeta.getSchemaTable(tableName, dbType));
 		sql.append(" (");
 		FieldMeta fieldMeta;
@@ -513,9 +517,8 @@ public class DialectExtUtils {
 		sql.append(") values ( ");
 		sql.append(values);
 		sql.append(")");
-
 		// 增加do noting
-		if (entityMeta.getIdArray() != null) {
+		if (dbType != DBType.GAUSSDB && entityMeta.getIdArray() != null) {
 			sql.append(" ON CONFLICT (");
 			for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
 				if (i > 0) {

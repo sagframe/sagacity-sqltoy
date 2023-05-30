@@ -402,6 +402,27 @@ public class SqlUtil {
 			pst.setByte(paramIndex, (Byte) paramValue);
 		} else if (paramValue instanceof Object[]) {
 			pst.setObject(paramIndex, paramValue, java.sql.Types.ARRAY);
+		} // update 2023-5-26 增加集合类型场景支持(对应数据库Array)
+		else if (paramValue instanceof Collection) {
+			Object[] values = ((Collection) paramValue).toArray();
+			// 集合为空，无法判断具体类型，设置为null
+			if (values.length == 0) {
+				pst.setNull(paramIndex, java.sql.Types.ARRAY);
+			} else {
+				String type = null;
+				for (Object val : values) {
+					if (val != null) {
+						type = val.getClass().getName().concat("[]");
+						break;
+					}
+				}
+				// 将Object[] 转为具体类型的数组(否则会抛异常)
+				if (type != null) {
+					pst.setObject(paramIndex, BeanUtil.convertArray(values, type), java.sql.Types.ARRAY);
+				} else {
+					pst.setNull(paramIndex, java.sql.Types.ARRAY);
+				}
+			}
 		} else {
 			if (jdbcType != java.sql.Types.NULL) {
 				pst.setObject(paramIndex, paramValue, jdbcType);

@@ -2003,6 +2003,9 @@ public class DialectUtils {
 					sequence = "DEFAULT";
 				}
 				boolean isAssignPK = PostgreSqlDialectUtils.isAssignPKValue(pkStrategy);
+				if (dbType == DBType.GAUSSDB) {
+					isAssignPK = GaussDialectUtils.isAssignPKValue(pkStrategy);
+				}
 				return DialectExtUtils.insertIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 						pkStrategy, "COALESCE", sequence, isAssignPK, tableName);
 			}

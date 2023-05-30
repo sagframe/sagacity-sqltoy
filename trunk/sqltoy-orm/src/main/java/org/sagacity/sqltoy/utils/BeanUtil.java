@@ -525,18 +525,18 @@ public class BeanUtil {
 			}
 			return paramValue.toString();
 		}
-		String valueStr = paramValue.toString();
-		boolean isBlank = "".equals(valueStr.trim());
 		// 6 bigDecimal第二优先
 		if (DataType.wrapBigDecimalType == typeValue) {
-			if (isBlank) {
+			String valueStr = paramValue.toString();
+			if ("".equals(valueStr.trim())) {
 				return null;
 			}
 			return new BigDecimal(convertBoolean(valueStr));
 		}
 		// 7 Integer第三
 		if (DataType.wrapIntegerType == typeValue) {
-			if (isBlank) {
+			String valueStr = paramValue.toString();
+			if ("".equals(valueStr.trim())) {
 				return null;
 			}
 			return Integer.valueOf(convertBoolean(valueStr).split("\\.")[0]);
@@ -573,14 +573,16 @@ public class BeanUtil {
 			if ("oracle.sql.TIMESTAMP".equals(paramValue.getClass().getTypeName())) {
 				return oracleTimeStampConvert(paramValue);
 			}
-			if (isBlank) {
+			String valueStr = paramValue.toString();
+			if ("".equals(valueStr.trim())) {
 				return null;
 			}
 			return new Timestamp(DateUtil.parseString(valueStr).getTime());
 		}
 		// 11 第7
 		if (DataType.wrapLongType == typeValue) {
-			if (isBlank) {
+			String valueStr = paramValue.toString();
+			if ("".equals(valueStr.trim())) {
 				return null;
 			}
 			// 考虑数据库中存在默认值为0.00 的问题，导致new Long() 报错，因为精度而不用Double.parse(原生long则可以)
@@ -588,7 +590,8 @@ public class BeanUtil {
 		}
 		// 12 第8
 		if (DataType.primitiveIntType == typeValue) {
-			if (isBlank) {
+			String valueStr = paramValue.toString();
+			if ("".equals(valueStr.trim())) {
 				return 0;
 			}
 			// 防止小数而不使用Integer.parseInt
@@ -596,6 +599,7 @@ public class BeanUtil {
 		}
 		// 13 第9 字符串转 boolean 型
 		if (DataType.wrapBooleanType == typeValue) {
+			String valueStr = paramValue.toString();
 			if ("true".equals(valueStr.toLowerCase()) || "1".equals(valueStr)) {
 				return Boolean.TRUE;
 			}
@@ -603,6 +607,7 @@ public class BeanUtil {
 		}
 		// 14 第10 字符串转 boolean 型
 		if (DataType.primitiveBooleanType == typeValue) {
+			String valueStr = paramValue.toString();
 			if ("true".equals(valueStr.toLowerCase()) || "1".equals(valueStr)) {
 				return true;
 			}
@@ -619,18 +624,20 @@ public class BeanUtil {
 			if ("oracle.sql.TIMESTAMP".equals(paramValue.getClass().getTypeName())) {
 				return oracleDateConvert(paramValue);
 			}
-			return DateUtil.parseString(valueStr);
+			return DateUtil.parseString(paramValue.toString());
 		}
 		// 16 第12
 		if (DataType.wrapBigIntegerType == typeValue) {
-			if (isBlank) {
+			String valueStr = paramValue.toString();
+			if ("".equals(valueStr.trim())) {
 				return null;
 			}
 			return new BigInteger(convertBoolean(valueStr).split("\\.")[0]);
 		}
 		// 17 第13
 		if (DataType.wrapDoubleType == typeValue) {
-			if (isBlank) {
+			String valueStr = paramValue.toString();
+			if ("".equals(valueStr.trim())) {
 				return null;
 			}
 			return Double.valueOf(convertBoolean(valueStr));
@@ -647,7 +654,8 @@ public class BeanUtil {
 		}
 		// 19
 		if (DataType.primitiveLongType == typeValue) {
-			if (isBlank) {
+			String valueStr = paramValue.toString();
+			if ("".equals(valueStr.trim())) {
 				return 0;
 			}
 			// 防止小数而不使用Long.parseLong
@@ -655,7 +663,8 @@ public class BeanUtil {
 		}
 		// 20
 		if (DataType.primitiveDoubleType == typeValue) {
-			if (isBlank) {
+			String valueStr = paramValue.toString();
+			if ("".equals(valueStr.trim())) {
 				return 0;
 			}
 			return Double.parseDouble(convertBoolean(valueStr));
@@ -670,32 +679,36 @@ public class BeanUtil {
 				java.sql.Blob blob = (java.sql.Blob) paramValue;
 				return blob.getBytes(1, (int) blob.length());
 			}
-			return valueStr.getBytes();
+			return paramValue.toString().getBytes();
 		}
 		// 22
 		if (DataType.wrapFloatType == typeValue) {
-			if (isBlank) {
+			String valueStr = paramValue.toString();
+			if ("".equals(valueStr.trim())) {
 				return null;
 			}
 			return Float.valueOf(convertBoolean(valueStr));
 		}
 		// 23
 		if (DataType.primitiveFloatType == typeValue) {
-			if (isBlank) {
+			String valueStr = paramValue.toString();
+			if ("".equals(valueStr.trim())) {
 				return 0;
 			}
 			return Float.parseFloat(convertBoolean(valueStr));
 		}
 		// 24
 		if (DataType.wrapShortType == typeValue) {
-			if (isBlank) {
+			String valueStr = paramValue.toString();
+			if ("".equals(valueStr.trim())) {
 				return null;
 			}
 			return Short.valueOf(Double.valueOf(convertBoolean(valueStr)).shortValue());
 		}
 		// 25
 		if (DataType.primitiveShortType == typeValue) {
-			if (isBlank) {
+			String valueStr = paramValue.toString();
+			if ("".equals(valueStr.trim())) {
 				return 0;
 			}
 			return Double.valueOf(convertBoolean(valueStr)).shortValue();
@@ -711,7 +724,8 @@ public class BeanUtil {
 			if ("oracle.sql.TIMESTAMP".equals(paramValue.getClass().getTypeName())) {
 				return new java.sql.Date(oracleDateConvert(paramValue).getTime());
 			}
-			if (isBlank) {
+			String valueStr = paramValue.toString();
+			if ("".equals(valueStr.trim())) {
 				return null;
 			}
 			return new java.sql.Date(DateUtil.parseString(valueStr).getTime());
@@ -720,7 +734,7 @@ public class BeanUtil {
 		if (DataType.clobType == typeValue) {
 			// update 2020-6-23 增加兼容性判断
 			if (paramValue instanceof String) {
-				return valueStr;
+				return paramValue.toString();
 			}
 			java.sql.Clob clob = (java.sql.Clob) paramValue;
 			BufferedReader in = new BufferedReader(clob.getCharacterStream());
@@ -742,15 +756,16 @@ public class BeanUtil {
 			if ("oracle.sql.TIMESTAMP".equals(paramValue.getClass().getTypeName())) {
 				return new java.sql.Time(oracleDateConvert(paramValue).getTime());
 			}
-			return new java.sql.Time(DateUtil.parseString(valueStr).getTime());
+			return new java.sql.Time(DateUtil.parseString(paramValue.toString()).getTime());
 		}
 		// 29
 		if (DataType.primitiveByteType == typeValue) {
-			return Byte.valueOf(valueStr).byteValue();
+			return Byte.valueOf(paramValue.toString()).byteValue();
 		}
 		// 30
 		if (DataType.primitiveCharType == typeValue) {
-			if (isBlank) {
+			String valueStr = paramValue.toString();
+			if ("".equals(valueStr.trim())) {
 				return " ".charAt(0);
 			}
 			return valueStr.charAt(0);
@@ -770,17 +785,78 @@ public class BeanUtil {
 				}
 				return out.toString().toCharArray();
 			}
-			return valueStr.toCharArray();
+			return paramValue.toString().toCharArray();
 		}
 		// 32 update by 2020-4-13增加Byte类型的处理
 		if (DataType.wrapByteType == typeValue) {
-			return Byte.valueOf(valueStr);
+			return Byte.valueOf(paramValue.toString());
 		}
+		// update 2023-5-26 支持List 和Object[] 数组之间互转
 		// 33 数组类型
-		if (typeValue == DataType.aryOtherType && (paramValue instanceof Array)) {
-			return convertArray(((Array) paramValue).getArray(), typeName);
+		if (DataType.aryOtherType == typeValue) {
+			if ((paramValue instanceof Array)) {
+				return convertArray(((Array) paramValue).getArray(), typeName);
+			} else if ((paramValue instanceof Collection)) {
+				return convertArray(((Collection) paramValue).toArray(), typeName);
+			}
+		}
+		// 34 List类型
+		if (DataType.listType == typeValue) {
+			if (paramValue instanceof Array) {
+				Object[] tmp = (Object[]) ((Array) paramValue).getArray();
+				// 存在泛型，转换数组类型
+				if (genericType != null) {
+					return CollectionUtil.arrayToList(convertArray(tmp, genericType.getName().concat("[]")));
+				}
+				return CollectionUtil.arrayToList(tmp);
+			} else if (paramValue instanceof Object[]) {
+				// 存在泛型，转换数组类型
+				if (genericType != null) {
+					return CollectionUtil.arrayToList(convertArray(paramValue, genericType.getName().concat("[]")));
+				}
+				return CollectionUtil.arrayToList((Object[]) paramValue);
+			} else if (paramValue instanceof Set) {
+				Object[] tmp = ((Set) paramValue).toArray();
+				if (genericType != null) {
+					return CollectionUtil.arrayToList(convertArray(tmp, genericType.getName().concat("[]")));
+				}
+				return CollectionUtil.arrayToList(tmp);
+			}
+		}
+		// 35 Set类型
+		if (DataType.setType == typeValue) {
+			if (paramValue instanceof Array) {
+				Object[] tmp = (Object[]) ((Array) paramValue).getArray();
+				// 存在泛型，转换数组类型
+				if (genericType != null) {
+					return arrayToSet((Object[]) convertArray(tmp, genericType.getName().concat("[]")));
+				}
+				return arrayToSet(tmp);
+			} else if (paramValue instanceof Object[]) {
+				if (genericType != null) {
+					return arrayToSet((Object[]) convertArray(paramValue, genericType.getName().concat("[]")));
+				}
+				return arrayToSet((Object[]) paramValue);
+			} else if (paramValue instanceof Collection) {
+				Object[] tmp = ((Collection) paramValue).toArray();
+				// 存在泛型，转换数组类型
+				if (genericType != null) {
+					return arrayToSet((Object[]) convertArray(tmp, genericType.getName().concat("[]")));
+				}
+				return arrayToSet(tmp);
+			}
 		}
 		return paramValue;
+	}
+
+	private static HashSet arrayToSet(Object[] values) {
+		HashSet result = new HashSet();
+		for (Object val : values) {
+			if (val != null) {
+				result.add(val);
+			}
+		}
+		return result;
 	}
 
 	public static String convertBoolean(String var) {
@@ -1822,6 +1898,16 @@ public class BeanUtil {
 		}
 		Object[] array = (Object[]) values;
 		int index = 0;
+		if ("java.lang.String[]".equals(typeName) && !(values instanceof String[])) {
+			String[] result = new String[array.length];
+			for (Object obj : array) {
+				if (obj != null) {
+					result[index] = obj.toString();
+				}
+				index++;
+			}
+			return result;
+		}
 		if ("java.lang.Integer[]".equals(typeName) && !(values instanceof Integer[])) {
 			Integer[] result = new Integer[array.length];
 			for (Object obj : array) {
