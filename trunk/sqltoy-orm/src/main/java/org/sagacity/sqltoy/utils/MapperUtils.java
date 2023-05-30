@@ -338,7 +338,8 @@ public class MapperUtils {
 				methodTypes[i] = methodType.getTypeName();
 				methodTypeValues[i] = DataType.getType(methodTypes[i]);
 				// 非普通类型、非枚举、非Map(DTO)
-				if (methodTypeValues[i] == DataType.objectType && !methodType.isEnum()
+				if ((methodTypeValues[i] == DataType.objectType || methodTypeValues[i] == DataType.listType
+						|| methodTypeValues[i] == DataType.setType) && !methodType.isEnum()
 						&& !Map.class.isAssignableFrom(methodType)) {
 					methodGenTypes[i] = realMethods[i].getParameterTypes()[0];
 				}
@@ -375,7 +376,8 @@ public class MapperUtils {
 					cellData = row.get(j);
 					if (cellData != null && realMethods[j] != null) {
 						// 基本类型
-						if (methodTypeValues[j] != DataType.objectType) {
+						if (methodTypeValues[j] != DataType.objectType && methodTypeValues[j] != DataType.listType
+								&& methodTypeValues[j] != DataType.setType) {
 							realMethods[j].invoke(bean,
 									BeanUtil.convertType(cellData, methodTypeValues[j], methodTypes[j]));
 						} // List<DTO>

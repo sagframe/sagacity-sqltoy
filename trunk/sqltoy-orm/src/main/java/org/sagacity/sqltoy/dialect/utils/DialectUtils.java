@@ -1994,12 +1994,18 @@ public class DialectUtils {
 			public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 				PKStrategy pkStrategy = entityMeta.getIdStrategy();
 				String sequence = "nextval('" + entityMeta.getSequence() + "')";
+				if (dbType == DBType.GAUSSDB && pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE)) {
+					sequence = entityMeta.getSequence() + ".nextval";
+				}
 				if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
 					// 伪造成sequence模式
 					pkStrategy = PKStrategy.SEQUENCE;
 					sequence = "DEFAULT";
 				}
 				boolean isAssignPK = PostgreSqlDialectUtils.isAssignPKValue(pkStrategy);
+				if (dbType == DBType.GAUSSDB) {
+					isAssignPK = GaussDialectUtils.isAssignPKValue(pkStrategy);
+				}
 				return DialectExtUtils.insertIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 						pkStrategy, "COALESCE", sequence, isAssignPK, tableName);
 			}
