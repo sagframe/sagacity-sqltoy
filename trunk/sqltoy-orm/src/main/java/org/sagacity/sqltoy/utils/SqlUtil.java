@@ -340,7 +340,17 @@ public class SqlUtil {
 				pst.setString(paramIndex, tmpStr);
 			}
 		} else if (paramValue instanceof java.lang.Integer) {
-			pst.setInt(paramIndex, ((Integer) paramValue));
+			// update 2023-6-2 兼容前端int对应数据库是boolean场景
+			Integer paramInt = (Integer) paramValue;
+			if (jdbcType == java.sql.Types.BOOLEAN) {
+				if (paramInt == 1) {
+					pst.setBoolean(paramIndex, true);
+				} else {
+					pst.setBoolean(paramIndex, false);
+				}
+			} else {
+				pst.setInt(paramIndex, paramInt);
+			}
 		} else if (paramValue instanceof java.time.LocalDateTime) {
 			pst.setTimestamp(paramIndex, Timestamp.valueOf((LocalDateTime) paramValue));
 		} else if (paramValue instanceof BigDecimal) {
@@ -836,7 +846,8 @@ public class SqlUtil {
 	 */
 	public static Object getSequenceValue(Connection conn, String sequence, Integer dbType) throws DataAccessException {
 		String sql = "";
-		if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.H2) {
+		if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.KINGBASE
+				|| dbType == DBType.H2) {
 			sql = "select nextval('" + sequence + "')";
 		} else if (dbType == DBType.SQLSERVER) {
 			sql = "select NEXT VALUE FOR " + sequence;

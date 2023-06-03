@@ -472,4 +472,17 @@ public class DB2DialectUtils {
 		sql.append(" as ");
 		sql.append(columnName);
 	}
+
+	public static boolean isAssignPKValue(PKStrategy pkStrategy) {
+		if (pkStrategy == null) {
+			return true;
+		}
+		if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
+			return true;
+		}
+		if (pkStrategy.equals(PKStrategy.IDENTITY)) {
+			return false;
+		}
+		return true;
+	}
 }
