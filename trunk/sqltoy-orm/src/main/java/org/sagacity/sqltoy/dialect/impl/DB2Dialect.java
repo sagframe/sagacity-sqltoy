@@ -20,7 +20,6 @@ import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.OperateType;
-import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.dialect.Dialect;
@@ -140,25 +139,26 @@ public class DB2Dialect implements Dialect {
 	public Object save(SqlToyContext sqlToyContext, Serializable entity, final Connection conn, final Integer dbType,
 			final String dialect, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
-		boolean isAssignPK = isAssignPKValue(entityMeta.getIdStrategy());
+		boolean isAssignPK = DB2DialectUtils.isAssignPKValue(entityMeta.getIdStrategy());
 		// db2 identity 和sequence 都支持手工赋值
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 				entityMeta.getIdStrategy(), NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK,
 				tableName);
 		return DialectUtils.save(sqlToyContext, entityMeta, entityMeta.getIdStrategy(),
-				isAssignPKValue(entityMeta.getIdStrategy()), insertSql, entity, new GenerateSqlHandler() {
+				DB2DialectUtils.isAssignPKValue(entityMeta.getIdStrategy()), insertSql, entity,
+				new GenerateSqlHandler() {
 					@Override
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateField) {
 						return DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
 								entityMeta, entityMeta.getIdStrategy(), NVL_FUNCTION,
-								"NEXTVAL FOR " + entityMeta.getSequence(), isAssignPKValue(entityMeta.getIdStrategy()),
-								null);
+								"NEXTVAL FOR " + entityMeta.getSequence(),
+								DB2DialectUtils.isAssignPKValue(entityMeta.getIdStrategy()), null);
 					}
 				}, new GenerateSavePKStrategy() {
 					@Override
 					public SavePKStrategy generate(EntityMeta entityMeta) {
 						return new SavePKStrategy(entityMeta.getIdStrategy(),
-								isAssignPKValue(entityMeta.getIdStrategy()));
+								DB2DialectUtils.isAssignPKValue(entityMeta.getIdStrategy()));
 					}
 				}, conn, dbType);
 	}
@@ -175,7 +175,7 @@ public class DB2Dialect implements Dialect {
 			ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType, final String dialect,
 			final Boolean autoCommit, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-		boolean isAssignPK = isAssignPKValue(entityMeta.getIdStrategy());
+		boolean isAssignPK = DB2DialectUtils.isAssignPKValue(entityMeta.getIdStrategy());
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 				entityMeta.getIdStrategy(), NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK,
 				tableName);
@@ -203,8 +203,8 @@ public class DB2Dialect implements Dialect {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						return DB2DialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
 								entityMeta, entityMeta.getIdStrategy(), forceUpdateFields, VIRTUAL_TABLE, NVL_FUNCTION,
-								"NEXTVAL FOR " + entityMeta.getSequence(), isAssignPKValue(entityMeta.getIdStrategy()),
-								null);
+								"NEXTVAL FOR " + entityMeta.getSequence(),
+								DB2DialectUtils.isAssignPKValue(entityMeta.getIdStrategy()), null);
 					}
 				}, emptyCascadeClasses, subTableForceUpdateProps, conn, dbType, tableName);
 	}
@@ -382,8 +382,8 @@ public class DB2Dialect implements Dialect {
 						// 将输入的数据进行类型转换
 						return DB2DialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
 								entityMeta, entityMeta.getIdStrategy(), forceUpdateFields, VIRTUAL_TABLE, NVL_FUNCTION,
-								"NEXTVAL FOR " + entityMeta.getSequence(), isAssignPKValue(entityMeta.getIdStrategy()),
-								tableName);
+								"NEXTVAL FOR " + entityMeta.getSequence(),
+								DB2DialectUtils.isAssignPKValue(entityMeta.getIdStrategy()), tableName);
 					}
 				}, reflectPropsHandler, conn, dbType, autoCommit);
 	}
@@ -410,11 +410,10 @@ public class DB2Dialect implements Dialect {
 						// 将输入的数据进行类型转换
 						return DB2DialectUtils.getSaveIgnoreExistSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
 								entityMeta, entityMeta.getIdStrategy(), VIRTUAL_TABLE, NVL_FUNCTION,
-								"NEXTVAL FOR " + entityMeta.getSequence(), isAssignPKValue(entityMeta.getIdStrategy()),
-								tableName);
+								"NEXTVAL FOR " + entityMeta.getSequence(),
+								DB2DialectUtils.isAssignPKValue(entityMeta.getIdStrategy()), tableName);
 					}
 				}, reflectPropsHandler, conn, dbType, autoCommit);
-
 	}
 
 	/*
@@ -469,19 +468,6 @@ public class DB2Dialect implements Dialect {
 			final String dialect, final int fetchSize) throws Exception {
 		return DialectUtils.executeStore(sqlToyConfig, sqlToyContext, sql, inParamsValue, outParamsType, conn, dbType,
 				fetchSize);
-	}
-
-	private boolean isAssignPKValue(PKStrategy pkStrategy) {
-		if (pkStrategy == null) {
-			return true;
-		}
-		if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
-			return true;
-		}
-		if (pkStrategy.equals(PKStrategy.IDENTITY)) {
-			return false;
-		}
-		return true;
 	}
 
 	private String getLockSql(String sql, Integer dbType, LockMode lockMode) {

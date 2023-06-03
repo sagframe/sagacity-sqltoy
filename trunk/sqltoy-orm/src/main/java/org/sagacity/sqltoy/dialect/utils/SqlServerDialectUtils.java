@@ -1134,6 +1134,7 @@ public class SqlServerDialectUtils {
 		return tableColumns;
 	}
 
+	// sqlserver identity主键是不允许写insert table (id,xxx) values (?,?)不能显式体现identity列
 	private static boolean isAssignPKValue(PKStrategy pkStrategy) {
 		if (pkStrategy == null) {
 			return true;

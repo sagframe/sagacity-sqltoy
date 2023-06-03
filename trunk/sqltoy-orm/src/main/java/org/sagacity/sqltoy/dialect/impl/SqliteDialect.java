@@ -206,7 +206,7 @@ public class SqliteDialect implements Dialect {
 		boolean isAssignPK = SqliteDialectUtils.isAssignPKValue(entityMeta.getIdStrategy());
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 				entityMeta.getIdStrategy(), NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK,
-				tableName).replaceFirst("(?i)insert ", "insert or ignore into ");
+				tableName).replaceFirst("(?i)insert ", "insert or ignore ");
 		return DialectUtils.saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql,
 				entities, batchSize, reflectPropsHandler, conn, dbType, autoCommit);
 

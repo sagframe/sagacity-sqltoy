@@ -204,10 +204,6 @@ public class DMDialect implements Dialect {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = entityMeta.getSequence() + ".nextval";
-						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
-							pkStrategy = PKStrategy.SEQUENCE;
-							sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
-						}
 						return DialectExtUtils.mergeIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 								pkStrategy, "dual", NVL_FUNCTION, sequence, DMDialectUtils.isAssignPKValue(pkStrategy),
 								tableName);
@@ -254,10 +250,6 @@ public class DMDialect implements Dialect {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		PKStrategy pkStrategy = entityMeta.getIdStrategy();
 		String sequence = entityMeta.getSequence().concat(".nextval");
-		if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
-			pkStrategy = PKStrategy.SEQUENCE;
-			sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
-		}
 		boolean isAssignPK = DMDialectUtils.isAssignPKValue(pkStrategy);
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 				pkStrategy, NVL_FUNCTION, sequence, isAssignPK, tableName);
@@ -267,10 +259,6 @@ public class DMDialect implements Dialect {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateField) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = entityMeta.getSequence().concat(".nextval");
-						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
-							pkStrategy = PKStrategy.SEQUENCE;
-							sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
-						}
 						return DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
 								entityMeta, pkStrategy, NVL_FUNCTION, sequence,
 								DMDialectUtils.isAssignPKValue(pkStrategy), null);
@@ -278,11 +266,8 @@ public class DMDialect implements Dialect {
 				}, new GenerateSavePKStrategy() {
 					@Override
 					public SavePKStrategy generate(EntityMeta entityMeta) {
-						PKStrategy pkStrategy = entityMeta.getIdStrategy();
-						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
-							pkStrategy = PKStrategy.SEQUENCE;
-						}
-						return new SavePKStrategy(pkStrategy, DMDialectUtils.isAssignPKValue(pkStrategy));
+						return new SavePKStrategy(entityMeta.getIdStrategy(),
+								DMDialectUtils.isAssignPKValue(pkStrategy));
 					}
 				}, conn, dbType);
 	}
@@ -302,10 +287,6 @@ public class DMDialect implements Dialect {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		PKStrategy pkStrategy = entityMeta.getIdStrategy();
 		String sequence = entityMeta.getSequence().concat(".nextval");
-		if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
-			pkStrategy = PKStrategy.SEQUENCE;
-			sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
-		}
 		boolean isAssignPK = DMDialectUtils.isAssignPKValue(pkStrategy);
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 				pkStrategy, NVL_FUNCTION, sequence, isAssignPK, tableName);
@@ -331,10 +312,6 @@ public class DMDialect implements Dialect {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = entityMeta.getSequence().concat(".nextval");
-						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
-							pkStrategy = PKStrategy.SEQUENCE;
-							sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
-						}
 						return DialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
 								entityMeta, pkStrategy, forceUpdateFields, "dual", NVL_FUNCTION, sequence,
 								DMDialectUtils.isAssignPKValue(pkStrategy), null);

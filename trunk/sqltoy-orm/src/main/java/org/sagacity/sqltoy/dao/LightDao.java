@@ -229,6 +229,22 @@ public interface LightDao {
 	public Long update(Serializable entity, String... forceUpdateProps);
 
 	/**
+	 * @todo 深度修改,不管是否为null全部字段强制修改
+	 * @param entity
+	 * @return Long 数据库发生变更的记录量
+	 */
+	public Long updateDeeply(Serializable entity);
+
+	// sqltoy的updateFetch是jpa没有的，可以深入了解其原理，一次交互完成查询、锁定、修改并返回修改后结果
+	/**
+	 * @todo 获取并锁定数据并进行修改(只支持针对单表查询，查询语句要简单)
+	 * @param queryExecutor
+	 * @param updateRowHandler
+	 * @return
+	 */
+	public List updateFetch(final QueryExecutor queryExecutor, final UpdateRowHandler updateRowHandler);
+
+	/**
 	 * @TODO 适用于库存台账、客户资金账等高并发强事务场景，一次数据库交互实现：
 	 *       <p>
 	 *       <li>1、锁查询；</li>
@@ -244,13 +260,6 @@ public interface LightDao {
 	 */
 	public <T extends Serializable> T updateSaveFetch(final T entity, final UpdateRowHandler updateRowHandler,
 			final String... uniqueProps);
-
-	/**
-	 * @todo 深度修改,不管是否为null全部字段强制修改
-	 * @param entity
-	 * @return Long 数据库发生变更的记录量
-	 */
-	public Long updateDeeply(Serializable entity);
 
 	/**
 	 * @TODO 基于对象单表对象查询进行数据更新
@@ -673,15 +682,6 @@ public interface LightDao {
 	 * @param autoCommit (一般为null)
 	 */
 	public Long batchUpdate(final String sqlOrSqlId, final List dataSet, final Boolean autoCommit);
-
-	// sqltoy的updateFetch是jpa没有的，可以深入了解其原理，一次交互完成查询、锁定、修改并返回修改后结果
-	/**
-	 * @todo 获取并锁定数据并进行修改(只支持针对单表查询，查询语句要简单)
-	 * @param queryExecutor
-	 * @param updateRowHandler
-	 * @return
-	 */
-	public List updateFetch(final QueryExecutor queryExecutor, final UpdateRowHandler updateRowHandler);
 
 	public Long executeSql(final String sqlOrSqlId);
 

@@ -17,6 +17,7 @@ import org.sagacity.sqltoy.callback.GenerateSqlHandler;
 import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
+import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.dialect.Dialect;
@@ -34,6 +35,7 @@ import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.utils.SqlUtil;
+import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -202,12 +204,21 @@ public class KingbaseDialect implements Dialect {
 			ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType, final String dialect,
 			final Boolean autoCommit, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-		boolean isAssignPK = KingbaseDialectUtils.isAssignPKValue(entityMeta.getIdStrategy());
+		PKStrategy pkStrategy = entityMeta.getIdStrategy();
+		String sequence = "NEXTVAL('" + entityMeta.getSequence() + "')";
+		// kingbase identity 是sequence的一种变化实现
+		if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
+			String defaultValue = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
+			if (StringUtil.isNotBlank(defaultValue)) {
+				pkStrategy = PKStrategy.SEQUENCE;
+				sequence = "NEXTVAL('" + defaultValue + "')";
+			}
+		}
+		boolean isAssignPK = KingbaseDialectUtils.isAssignPKValue(pkStrategy);
 		String insertSql = DialectExtUtils.insertIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
-				entityMeta.getIdStrategy(), NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK,
-				tableName);
-		return DialectUtils.saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql,
-				entities, batchSize, reflectPropsHandler, conn, dbType, autoCommit);
+				pkStrategy, NVL_FUNCTION, sequence, isAssignPK, tableName);
+		return DialectUtils.saveAll(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entities, batchSize,
+				reflectPropsHandler, conn, dbType, autoCommit);
 	}
 
 	/*
@@ -258,7 +269,7 @@ public class KingbaseDialect implements Dialect {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		boolean isAssignPK = KingbaseDialectUtils.isAssignPKValue(entityMeta.getIdStrategy());
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
-				entityMeta.getIdStrategy(), NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK,
+				entityMeta.getIdStrategy(), NVL_FUNCTION, "NEXTVAL('" + entityMeta.getSequence() + "')", isAssignPK,
 				tableName);
 		return DialectUtils.save(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql, entity,
 				new GenerateSqlHandler() {
@@ -266,7 +277,7 @@ public class KingbaseDialect implements Dialect {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateField) {
 						return DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
 								entityMeta, entityMeta.getIdStrategy(), NVL_FUNCTION,
-								"NEXTVAL FOR " + entityMeta.getSequence(),
+								"NEXTVAL('" + entityMeta.getSequence() + "')",
 								KingbaseDialectUtils.isAssignPKValue(entityMeta.getIdStrategy()), null);
 					}
 				}, new GenerateSavePKStrategy() {
@@ -292,7 +303,7 @@ public class KingbaseDialect implements Dialect {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		boolean isAssignPK = KingbaseDialectUtils.isAssignPKValue(entityMeta.getIdStrategy());
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
-				entityMeta.getIdStrategy(), NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK,
+				entityMeta.getIdStrategy(), NVL_FUNCTION, "NEXTVAL('" + entityMeta.getSequence() + "')", isAssignPK,
 				tableName);
 		return DialectUtils.saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql,
 				entities, batchSize, reflectPropsHandler, conn, dbType, autoCommit);

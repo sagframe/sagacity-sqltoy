@@ -24,10 +24,10 @@ public class SqliteDialectUtils {
 		}
 		// 目前不支持sequence模式
 		if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
-			return false;
+			return true;
 		}
 		if (pkStrategy.equals(PKStrategy.IDENTITY)) {
-			return false;
+			return true;
 		}
 		return true;
 	}

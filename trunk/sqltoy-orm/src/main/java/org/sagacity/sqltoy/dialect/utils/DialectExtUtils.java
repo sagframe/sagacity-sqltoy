@@ -46,7 +46,7 @@ public class DialectExtUtils {
 	 * @param pkStrategy
 	 * @param isNullFunction
 	 * @param sequence
-	 * @param isAssignPK
+	 * @param isAssignPK(此参数有待改进2023-5-30，应该全部为true)
 	 * @param tableName
 	 * @return
 	 */
@@ -479,28 +479,40 @@ public class DialectExtUtils {
 			field = entityMeta.getFieldsArray()[i];
 			fieldMeta = entityMeta.getFieldMeta(field);
 			columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
-			if (!isStart) {
-				sql.append(",");
-				values.append(",");
-			}
 			if (fieldMeta.isPK()) {
 				// identity主键策略，且支持主键手工赋值
 				if (pkStrategy.equals(PKStrategy.IDENTITY)) {
 					if (isAssignPK) {
+						if (!isStart) {
+							sql.append(",");
+							values.append(",");
+						}
 						sql.append(columnName);
 						values.append("?");
 						isStart = false;
 					}
 				} else if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
+					if (!isStart) {
+						sql.append(",");
+						values.append(",");
+					}
 					sql.append(columnName);
 					values.append(isNullFunction).append("(?,").append(sequence).append(")");
 					isStart = false;
 				} else {
+					if (!isStart) {
+						sql.append(",");
+						values.append(",");
+					}
 					sql.append(columnName);
 					values.append("?");
 					isStart = false;
 				}
 			} else {
+				if (!isStart) {
+					sql.append(",");
+					values.append(",");
+				}
 				sql.append(columnName);
 				currentTimeStr = SqlUtil.getDBTime(dbType, fieldMeta, createSqlTimeFields);
 				if (null != currentTimeStr) {

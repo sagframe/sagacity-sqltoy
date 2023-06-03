@@ -2030,7 +2030,7 @@ public class DialectUtils {
 		boolean isAssignPK = SqliteDialectUtils.isAssignPKValue(entityMeta.getIdStrategy());
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 				entityMeta.getIdStrategy(), "ifnull", "NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName)
-				.replaceFirst("(?i)insert ", "insert or ignore into ");
+				.replaceFirst("(?i)insert ", "insert or ignore ");
 		Long saveCnt = saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql, entities,
 				batchSize, reflectPropsHandler, conn, dbType, null);
 		logger.debug("级联子表:{} 变更记录数:{},新建记录数为:{}", tableName, updateCnt, saveCnt);
@@ -2074,13 +2074,21 @@ public class DialectUtils {
 			logger.debug("级联子表{}修改记录数为:{}", tableName, updateCnt);
 			return;
 		}
-		// mysql只支持identity,sequence 值忽略
-		boolean isAssignPK = KingbaseDialectUtils.isAssignPKValue(entityMeta.getIdStrategy());
+		PKStrategy pkStrategy = entityMeta.getIdStrategy();
+		String sequence = "NEXTVAL('" + entityMeta.getSequence() + "')";
+		// kingbase identity 是sequence的一种变化实现
+		if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
+			String defaultValue = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
+			if (StringUtil.isNotBlank(defaultValue)) {
+				pkStrategy = PKStrategy.SEQUENCE;
+				sequence = "NEXTVAL('" + defaultValue + "')";
+			}
+		}
+		boolean isAssignPK = KingbaseDialectUtils.isAssignPKValue(pkStrategy);
 		String insertSql = DialectExtUtils.insertIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
-				entityMeta.getIdStrategy(), "NVL", "nextval('" + entityMeta.getSequence() + "')", isAssignPK,
-				tableName);
-		Long saveCnt = saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql, entities,
-				batchSize, reflectPropsHandler, conn, dbType, null);
+				pkStrategy, "NVL", sequence, isAssignPK, tableName);
+		Long saveCnt = saveAll(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entities, batchSize,
+				reflectPropsHandler, conn, dbType, null);
 		logger.debug("级联子表:{} 变更记录数:{},新建记录数为:{}", tableName, updateCnt, saveCnt);
 	}
 

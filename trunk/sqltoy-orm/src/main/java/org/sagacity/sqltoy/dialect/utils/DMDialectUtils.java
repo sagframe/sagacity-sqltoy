@@ -14,6 +14,16 @@ import org.sagacity.sqltoy.config.model.PKStrategy;
  */
 public class DMDialectUtils {
 	public static boolean isAssignPKValue(PKStrategy pkStrategy) {
+		if (pkStrategy == null) {
+			return true;
+		}
+		if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
+			return true;
+		}
+		// identity字段不能手工赋值(2023-6-2 ,需:set IDENTITY_INSERT tableName on)
+		if (pkStrategy.equals(PKStrategy.IDENTITY)) {
+			return false;
+		}
 		return true;
 	}
 }
