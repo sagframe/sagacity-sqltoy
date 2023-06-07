@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DecryptHandler;
 import org.sagacity.sqltoy.callback.GenerateSavePKStrategy;
@@ -178,47 +177,54 @@ public class KingbaseDialect implements Dialect {
 			ReflectPropsHandler reflectPropsHandler, final String[] forceUpdateFields, Connection conn,
 			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
 			throws Exception {
-		Long updateCnt = DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields,
-				reflectPropsHandler, NVL_FUNCTION, conn, dbType, autoCommit, tableName, true);
-		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
-		if (updateCnt >= entities.size()) {
-			SqlExecuteStat.debug("修改记录", "修改记录量:" + updateCnt + " 条,等于entities集合长度,不再做insert操作!");
-			return updateCnt;
-		}
-		Long saveCnt = saveAllIgnoreExist(sqlToyContext, entities, batchSize, reflectPropsHandler, conn, dbType,
-				dialect, autoCommit, tableName);
-		SqlExecuteStat.debug("新增记录", "新建记录数量:" + saveCnt + " 条!");
-		return updateCnt + saveCnt;
+		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
+		return DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta, forceUpdateFields,
+				new GenerateSqlHandler() {
+					@Override
+					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
+						PKStrategy pkStrategy = entityMeta.getIdStrategy();
+						String sequence = "NEXTVAL('" + entityMeta.getSequence() + "')";
+						// kingbase identity 是sequence的一种变化实现
+						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
+							String defaultValue = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0])
+									.getDefaultValue();
+							if (StringUtil.isNotBlank(defaultValue)) {
+								pkStrategy = PKStrategy.SEQUENCE;
+								sequence = "NEXTVAL('" + defaultValue + "')";
+							}
+						}
+						boolean isAssignPK = KingbaseDialectUtils.isAssignPKValue(pkStrategy);
+						return DialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
+								entityMeta, pkStrategy, forceUpdateFields, null, NVL_FUNCTION, sequence, isAssignPK,
+								tableName);
+					}
+				}, reflectPropsHandler, conn, dbType, autoCommit);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.dialect.Dialect#saveAllNotExist(org.sagacity.sqltoy.
-	 * SqlToyContext, java.util.List,
-	 * org.sagacity.sqltoy.callback.ReflectPropsHandler, java.sql.Connection,
-	 * java.lang.Boolean)
-	 */
-	@Override
 	public Long saveAllIgnoreExist(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType, final String dialect,
 			final Boolean autoCommit, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-		PKStrategy pkStrategy = entityMeta.getIdStrategy();
-		String sequence = "NEXTVAL('" + entityMeta.getSequence() + "')";
-		// kingbase identity 是sequence的一种变化实现
-		if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
-			String defaultValue = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
-			if (StringUtil.isNotBlank(defaultValue)) {
-				pkStrategy = PKStrategy.SEQUENCE;
-				sequence = "NEXTVAL('" + defaultValue + "')";
-			}
-		}
-		boolean isAssignPK = KingbaseDialectUtils.isAssignPKValue(pkStrategy);
-		String insertSql = DialectExtUtils.insertIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
-				pkStrategy, NVL_FUNCTION, sequence, isAssignPK, tableName);
-		return DialectUtils.saveAll(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entities, batchSize,
-				reflectPropsHandler, conn, dbType, autoCommit);
+		return DialectUtils.saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta,
+				new GenerateSqlHandler() {
+					@Override
+					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
+						PKStrategy pkStrategy = entityMeta.getIdStrategy();
+						String sequence = "NEXTVAL('" + entityMeta.getSequence() + "')";
+						// kingbase identity 是sequence的一种变化实现
+						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
+							String defaultValue = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0])
+									.getDefaultValue();
+							if (StringUtil.isNotBlank(defaultValue)) {
+								pkStrategy = PKStrategy.SEQUENCE;
+								sequence = "NEXTVAL('" + defaultValue + "')";
+							}
+						}
+						boolean isAssignPK = KingbaseDialectUtils.isAssignPKValue(pkStrategy);
+						return DialectExtUtils.mergeIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
+								pkStrategy, null, NVL_FUNCTION, sequence, isAssignPK, tableName);
+					}
+				}, reflectPropsHandler, conn, dbType, autoCommit);
 	}
 
 	/*
@@ -321,8 +327,28 @@ public class KingbaseDialect implements Dialect {
 			final boolean cascade, final Class[] emptyCascadeClasses,
 			final HashMap<Class, String[]> subTableForceUpdateProps, Connection conn, final Integer dbType,
 			final String dialect, final String tableName) throws Exception {
-		return DialectUtils.update(sqlToyContext, entity, NVL_FUNCTION, forceUpdateFields, cascade, null,
-				emptyCascadeClasses, subTableForceUpdateProps, conn, dbType, tableName);
+		return DialectUtils.update(sqlToyContext, entity, NVL_FUNCTION, forceUpdateFields, cascade,
+				(cascade == false) ? null : new GenerateSqlHandler() {
+					@Override
+					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
+						PKStrategy pkStrategy = entityMeta.getIdStrategy();
+						String sequence = "NEXTVAL('" + entityMeta.getSequence() + "')";
+						// kingbase identity 是sequence的一种变化实现
+						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
+							String defaultValue = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0])
+									.getDefaultValue();
+							if (StringUtil.isNotBlank(defaultValue)) {
+								pkStrategy = PKStrategy.SEQUENCE;
+								sequence = "NEXTVAL('" + defaultValue + "')";
+							}
+						}
+						boolean isAssignPK = KingbaseDialectUtils.isAssignPKValue(pkStrategy);
+						// update 级联操作过程中会自动判断数据库类型
+						return DialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
+								entityMeta, pkStrategy, forceUpdateFields, null, NVL_FUNCTION, sequence, isAssignPK,
+								tableName);
+					}
+				}, emptyCascadeClasses, subTableForceUpdateProps, conn, dbType, tableName);
 	}
 
 	/*

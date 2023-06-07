@@ -719,7 +719,8 @@ public class DialectUtils {
 		if (StringUtil.isNotBlank(fromTable)) {
 			sql.append(" from ").append(fromTable);
 		}
-		sql.append(") tv on (");
+		// sql.append(") tv on (");
+		sql.append(SqlToyConstants.MERGE_ALIAS_ON);
 		StringBuilder idColumns = new StringBuilder();
 		// 组织on部分的主键条件判断
 		for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
@@ -746,7 +747,7 @@ public class DialectUtils {
 		boolean allIds = (entityMeta.getRejectIdFieldArray() == null);
 		if (!allIds) {
 			// update 操作
-			sql.append(" when matched then update set ");
+			sql.append(SqlToyConstants.MERGE_UPDATE);
 			int rejectIdColumnSize = entityMeta.getRejectIdFieldArray().length;
 			// 需要被强制修改的字段
 			HashSet<String> fupc = new HashSet<String>();
@@ -812,7 +813,8 @@ public class DialectUtils {
 			}
 		}
 		// 主键未匹配上则进行插入操作
-		sql.append(" when not matched then insert (");
+		sql.append(SqlToyConstants.MERGE_INSERT);
+		sql.append(" (");
 		String idsColumnStr = idColumns.toString();
 		// 不考虑只有一个字段且还是主键的情况
 		if (allIds) {
@@ -893,8 +895,7 @@ public class DialectUtils {
 		if (unifyFieldsHandler != null && unifyFieldsHandler.updateSqlTimeFields() != null) {
 			updateSqlTimeFields = unifyFieldsHandler.updateSqlTimeFields();
 		}
-		boolean convertBlob = (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB
-				|| dbType == DBType.KINGBASE);
+		boolean convertBlob = (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15);
 		boolean isMSsql = (dbType == DBType.SQLSERVER);
 		int meter = 0;
 		int decimalLength;
@@ -913,7 +914,7 @@ public class DialectUtils {
 				if (fupc.contains(columnName)) {
 					sql.append("?");
 				} else {
-					// 2020-6-13 修复postgresql\kingbase\guassdb bytea类型处理错误
+					// 2020-6-13 修复postgresql\kingbase bytea类型处理错误
 					if (convertBlob && "byte[]".equals(fieldMeta.getFieldType())) {
 						sql.append(nullFunction);
 						sql.append("(cast(? as bytea),").append(columnName).append(" )");
@@ -1889,8 +1890,7 @@ public class DialectUtils {
 				if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.TIDB) {
 					mysqlSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, reflectPropsHandler,
 							forceUpdateProps, conn, dbType);
-				} else if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB
-						|| dbType == DBType.H2) {
+				} else if (dbType == DBType.POSTGRESQL || dbType == DBType.H2) {
 					postgreSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, reflectPropsHandler,
 							forceUpdateProps, conn, dbType);
 				} else if (dbType == DBType.OCEANBASE) {
@@ -1899,16 +1899,8 @@ public class DialectUtils {
 				} else if (dbType == DBType.SQLITE) {
 					sqliteSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, reflectPropsHandler,
 							forceUpdateProps, conn, dbType);
-				} // 达梦数据库
-				else if (dbType == DBType.DM) {
-					dmSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, reflectPropsHandler,
-							forceUpdateProps, conn, dbType);
-				} // kingbase
-				else if (dbType == DBType.KINGBASE) {
-					kingbaseSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, reflectPropsHandler,
-							forceUpdateProps, conn, dbType);
 				}
-				// db2/oracle/mssql 通过merge 方式
+				// db2/oracle/mssql/postgresql15+/gaussdb/kingbase/dm 通过merge 方式
 				else {
 					saveOrUpdateAll(sqlToyContext, subTableData, sqlToyContext.getBatchSize(), subTableEntityMeta,
 							forceUpdateProps, generateSqlHandler,

@@ -22,7 +22,9 @@ import org.sagacity.sqltoy.demo.vo.B1;
 import org.sagacity.sqltoy.demo.vo.C1;
 import org.sagacity.sqltoy.demo.vo.StaffInfoVO;
 import org.sagacity.sqltoy.model.MapKit;
+import org.sagacity.sqltoy.utils.DateUtil;
 import org.sagacity.sqltoy.utils.MapperUtils;
+import org.sagacity.sqltoy.utils.ParamFilterUtils;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 import com.alibaba.fastjson.JSON;
@@ -112,19 +114,17 @@ public class SqlToyConstantsTest {
 
 	@Test
 	public void testBeanInfo1() {
-		String tmp = "sysdate()+1";
-		String[] tmpAry = tmp.split("\\+|\\-");
-		for (int i = 0; i < tmpAry.length; i++) {
-			System.err.println("[" + tmpAry[i] + "]");
-		}
+		String sql = SqlToyConstants.MERGE_ALIAS_ON + " ta.name=tv.name)";
+		int onTenantIndex = sql.indexOf(SqlToyConstants.MERGE_ALIAS_ON);
+		int end = onTenantIndex + SqlToyConstants.MERGE_ALIAS_ON.length();
+		String aliasName = sql.substring(end, sql.indexOf(".", end)).trim();
+		System.err.println("[" + aliasName + "]");
 	}
 
 	@Test
 	public void testBeanInfo2() {
-		String dateStr = "sysdate()-10";
-		if (!StringUtil.matches(dateStr, "^\\d{2,4}") && dateStr.contains("-")) {
-			System.err.println("$$$$$$$$");
-		}
+		// String dateStr = "first_of_year-10m";
+		// System.err.println(DateUtil.formatDate(ParamFilterUtils.parseDateStr(dateStr),"yyyy-MM-dd"));
 
 	}
 
