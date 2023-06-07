@@ -9,6 +9,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.sql.Array;
 import java.sql.Blob;
 import java.sql.CallableStatement;
 import java.sql.Clob;
@@ -283,7 +284,7 @@ public class SqlUtil {
 				}
 				// postgresql bytea类型需要统一处理成BINARY
 				if (jdbcType == java.sql.Types.BLOB) {
-					if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB) {
+					if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15) {
 						pst.setNull(paramIndex, java.sql.Types.BINARY);
 					} else {
 						pst.setNull(paramIndex, jdbcType);
@@ -320,7 +321,7 @@ public class SqlUtil {
 			// clob 类型只有oracle、db2、dm、oceanBase等数据库支持
 			if (jdbcType == java.sql.Types.CLOB) {
 				if (DBType.ORACLE == dbType || DBType.DB2 == dbType || DBType.OCEANBASE == dbType
-						|| DBType.ORACLE11 == dbType || DBType.DM == dbType) {
+						|| DBType.ORACLE11 == dbType || DBType.DM == dbType || DBType.KINGBASE == dbType) {
 					Clob clob = conn.createClob();
 					clob.setString(1, tmpStr);
 					pst.setClob(paramIndex, clob);
@@ -329,7 +330,7 @@ public class SqlUtil {
 				}
 			} else if (jdbcType == java.sql.Types.NCLOB) {
 				if (DBType.ORACLE == dbType || DBType.DB2 == dbType || DBType.OCEANBASE == dbType
-						|| DBType.ORACLE11 == dbType || DBType.DM == dbType) {
+						|| DBType.ORACLE11 == dbType || DBType.DM == dbType || DBType.KINGBASE == dbType) {
 					NClob nclob = conn.createNClob();
 					nclob.setString(1, tmpStr);
 					pst.setNClob(paramIndex, nclob);
@@ -411,7 +412,7 @@ public class SqlUtil {
 		} else if (paramValue instanceof java.lang.Byte) {
 			pst.setByte(paramIndex, (Byte) paramValue);
 		} else if (paramValue instanceof Object[]) {
-			pst.setObject(paramIndex, paramValue, java.sql.Types.ARRAY);
+			setArray(dbType, conn, pst, paramIndex, paramValue);
 		} // update 2023-5-26 增加集合类型场景支持(对应数据库Array)
 		else if (paramValue instanceof Collection) {
 			Object[] values = ((Collection) paramValue).toArray();
@@ -428,7 +429,7 @@ public class SqlUtil {
 				}
 				// 将Object[] 转为具体类型的数组(否则会抛异常)
 				if (type != null) {
-					pst.setObject(paramIndex, BeanUtil.convertArray(values, type), java.sql.Types.ARRAY);
+					setArray(dbType, conn, pst, paramIndex, BeanUtil.convertArray(values, type));
 				} else {
 					pst.setNull(paramIndex, java.sql.Types.ARRAY);
 				}
@@ -439,6 +440,45 @@ public class SqlUtil {
 			} else {
 				pst.setObject(paramIndex, paramValue);
 			}
+		}
+	}
+
+	/**
+	 * @TODO setArray gaussdb 必须要通过conn构造Array
+	 * @param dbType
+	 * @param conn
+	 * @param pst
+	 * @param paramIndex
+	 * @param paramValue
+	 * @throws SQLException
+	 */
+	private static void setArray(Integer dbType, Connection conn, PreparedStatement pst, int paramIndex,
+			Object paramValue) throws SQLException {
+		// 目前只支持Integer 和 String两种类型
+		if (dbType == DBType.GAUSSDB) {
+			if (paramValue instanceof Integer[]) {
+				Array array = conn.createArrayOf("INTEGER", (Integer[]) paramValue);
+				pst.setArray(paramIndex, array);
+			} else if (paramValue instanceof String[]) {
+				Array array = conn.createArrayOf("VARCHAR", (String[]) paramValue);
+				pst.setArray(paramIndex, array);
+			} else if (paramValue instanceof BigDecimal[]) {
+				Array array = conn.createArrayOf("NUMBER", (BigDecimal[]) paramValue);
+				pst.setArray(paramIndex, array);
+			} else if (paramValue instanceof BigInteger[]) {
+				Array array = conn.createArrayOf("BIGINT", (BigInteger[]) paramValue);
+				pst.setArray(paramIndex, array);
+			} else if (paramValue instanceof Float[]) {
+				Array array = conn.createArrayOf("FLOAT", (Float[]) paramValue);
+				pst.setArray(paramIndex, array);
+			} else if (paramValue instanceof Long[]) {
+				Array array = conn.createArrayOf("INTEGER", (Long[]) paramValue);
+				pst.setArray(paramIndex, array);
+			} else {
+				pst.setObject(paramIndex, paramValue, java.sql.Types.ARRAY);
+			}
+		} else {
+			pst.setObject(paramIndex, paramValue, java.sql.Types.ARRAY);
 		}
 	}
 

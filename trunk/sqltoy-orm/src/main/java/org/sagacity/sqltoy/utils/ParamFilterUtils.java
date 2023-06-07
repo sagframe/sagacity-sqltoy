@@ -841,6 +841,12 @@ public class ParamFilterUtils {
 		return result;
 	}
 
+	/**
+	 * @TODO 将字符串转成具体类型的值
+	 * @param value
+	 * @param dataType
+	 * @return
+	 */
 	private static Object convertType(String value, String dataType) {
 		if (value == null) {
 			return value;
@@ -873,6 +879,11 @@ public class ParamFilterUtils {
 		return value;
 	}
 
+	/**
+	 * @TODO 将特殊的日期字符转换为具体日期
+	 * @param dateStr
+	 * @return
+	 */
 	private static Date parseDateStr(String dateStr) {
 		if (dateStr.equals("sysdate()") || dateStr.equals("now()")) {
 			return DateUtil.getNowTime();
