@@ -186,6 +186,11 @@ public class ParamFilterModel implements Serializable {
 	 */
 	private boolean cacheNotMatchedReturnSelf = true;
 
+	/**
+	 * 是否数组
+	 */
+	private Boolean isArray = false;
+
 	public String getFilterType() {
 		return filterType;
 	}
@@ -576,4 +581,11 @@ public class ParamFilterModel implements Serializable {
 		this.addQuote = addQuote;
 	}
 
+	public Boolean getIsArray() {
+		return isArray;
+	}
+
+	public void setIsArray(Boolean isArray) {
+		this.isArray = isArray;
+	}
 }

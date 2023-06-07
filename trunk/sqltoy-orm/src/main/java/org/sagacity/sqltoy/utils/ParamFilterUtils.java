@@ -2,6 +2,7 @@ package org.sagacity.sqltoy.utils;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -119,7 +120,8 @@ public class ParamFilterUtils {
 					index = (paramIndexMap.get(filterParam) == null) ? -1 : paramIndexMap.get(filterParam);
 					if (index != -1 && paramValues[index] != null) {
 						if (!paramFilterModel.getExcludes().contains(filterParam)) {
-							paramValues[index] = filterSingleParam(sqlToyContext, paramValues[index], paramFilterModel);
+							paramValues[index] = filterSingleParam(sqlToyContext, paramValues, paramValues[index],
+									paramFilterModel, paramIndexMap);
 						}
 					}
 				}
@@ -397,7 +399,7 @@ public class ParamFilterUtils {
 			String compareType = paramFilterModel.getCompareType();
 			String[] compareValues = paramFilterModel.getCompareValues();
 			if ("==".equals(compareType)) {
-				if (null == paramValue && null == compareValues) {
+				if (null == paramValue && (null == compareValues || compareValues[0].equals("null"))) {
 					isExclusive = true;
 				} else if (null != paramValue && null != compareValues) {
 					// 返回null表示条件成立
@@ -431,21 +433,52 @@ public class ParamFilterUtils {
 		if (isExclusive) {
 			String updateParam;
 			String updateValue = paramFilterModel.getUpdateValue();
+			Object updateObj = null;
+			boolean quotOtherParam = false;
+			// update值引入其他参数的值
+			if (paramIndexMap.containsKey(updateValue.toLowerCase())) {
+				quotOtherParam = true;
+				updateObj = paramValues[paramIndexMap.get(updateValue.toLowerCase())];
+			}
 			for (int i = 0, n = paramFilterModel.getUpdateParams().length; i < n; i++) {
 				updateParam = paramFilterModel.getUpdateParams()[i].toLowerCase();
 				index = (paramIndexMap.get(updateParam) == null) ? -1 : paramIndexMap.get(updateParam);
 				// 排他性参数中有值为null则排他条件不成立
 				if (index != -1) {
-					if (null == updateValue) {
-						paramValues[index] = null;
-					} else if (null == paramValues[index]) {
-						paramValues[index] = updateValue;
-					} else if (paramValues[index] instanceof Date) {
-						paramValues[index] = DateUtil.convertDateObject(updateValue);
-					} else if (paramValues[index] instanceof Number) {
-						paramValues[index] = new BigDecimal(updateValue);
+					if (quotOtherParam) {
+						paramValues[index] = updateObj;
 					} else {
-						paramValues[index] = updateValue;
+						if (null == updateValue) {
+							paramValues[index] = null;
+						} else if (null == paramValues[index]) {
+							paramValues[index] = updateValue;
+						} else if (paramValues[index] instanceof LocalDate) {
+							paramValues[index] = DateUtil.asLocalDate(parseDateStr(updateValue));
+						} else if (paramValues[index] instanceof LocalDateTime) {
+							paramValues[index] = DateUtil.asLocalDateTime(parseDateStr(updateValue));
+						} else if (paramValues[index] instanceof LocalTime) {
+							paramValues[index] = DateUtil.asLocalTime(parseDateStr(updateValue));
+						} else if (paramValues[index] instanceof Timestamp) {
+							paramValues[index] = DateUtil.getTimestamp(parseDateStr(updateValue));
+						} else if (paramValues[index] instanceof Time) {
+							paramValues[index] = new Time(parseDateStr(updateValue).getTime());
+						} else if (paramValues[index] instanceof Date) {
+							paramValues[index] = parseDateStr(updateValue);
+						} else if (paramValues[index] instanceof BigDecimal) {
+							paramValues[index] = new BigDecimal(updateValue);
+						} else if (paramValues[index] instanceof Long) {
+							paramValues[index] = new Long(updateValue);
+						} else if (paramValues[index] instanceof Integer) {
+							paramValues[index] = new Integer(updateValue);
+						} else if (paramValues[index] instanceof Double) {
+							paramValues[index] = new Double(updateValue);
+						} else if (paramValues[index] instanceof Float) {
+							paramValues[index] = new Float(updateValue);
+						} else if (paramValues[index] instanceof BigInteger) {
+							paramValues[index] = new BigInteger(updateValue);
+						} else {
+							paramValues[index] = updateValue;
+						}
 					}
 				}
 			}
@@ -507,17 +540,20 @@ public class ParamFilterUtils {
 	/**
 	 * @todo 过滤加工单个参数的值
 	 * @param sqlToyContext
+	 * @param paramValues
 	 * @param paramValue
 	 * @param paramFilterModel
+	 * @param paramIndexMap
 	 * @return
 	 */
-	private static Object filterSingleParam(SqlToyContext sqlToyContext, Object paramValue,
-			ParamFilterModel paramFilterModel) {
-		if (null == paramValue) {
+	private static Object filterSingleParam(SqlToyContext sqlToyContext, Object[] paramValues, Object paramValue,
+			ParamFilterModel paramFilterModel, HashMap<String, Integer> paramIndexMap) {
+		String filterType = paramFilterModel.getFilterType();
+		// null或者非设置default默认值
+		if (null == paramValue && !"default".equals(filterType)) {
 			return null;
 		}
 		Object result = paramValue;
-		String filterType = paramFilterModel.getFilterType();
 		if ("blank".equals(filterType)) {
 			result = paramValue;
 			if (paramValue instanceof CharSequence) {
@@ -537,6 +573,8 @@ public class ParamFilterUtils {
 					result = null;
 				}
 			}
+		} else if ("default".equals(filterType)) {
+			result = filterDefault(paramValues, paramValue, paramFilterModel, paramIndexMap);
 		} else if ("eq".equals(filterType)) {
 			result = filterEquals(paramValue, paramFilterModel.getValues());
 		} else if ("gt".equals(filterType)) {
@@ -665,6 +703,33 @@ public class ParamFilterUtils {
 	}
 
 	/**
+	 * @TODO 处理默认值
+	 * @param paramValues
+	 * @param paramValue
+	 * @param paramFilterModel
+	 * @param paramIndexMap
+	 * @return
+	 */
+	private static Object filterDefault(Object[] paramValues, Object paramValue, ParamFilterModel paramFilterModel,
+			HashMap<String, Integer> paramIndexMap) {
+		Object[] values = paramFilterModel.getValues();
+		// 当前值为null，默认值不为null
+		if (null == paramValue && (values != null && values.length > 0 && null != values[0])) {
+			String valueString = values[0].toString();
+			// 默认值直接指定另外一个参数的值
+			if (paramIndexMap.containsKey(valueString.toLowerCase())) {
+				return paramValues[paramIndexMap.get(valueString.toLowerCase())];
+			}
+			if (paramFilterModel.getIsArray()) {
+				return splitToArray(valueString, paramFilterModel.getSplit(), paramFilterModel.getDataType());
+			}
+			return convertType(valueString, paramFilterModel.getDataType());
+		} else {
+			return paramValue;
+		}
+	}
+
+	/**
 	 * @todo 进行字符串替换
 	 * @param paramValue
 	 * @param regex
@@ -768,28 +833,138 @@ public class ParamFilterUtils {
 			result = new Object[arrays.length];
 			System.arraycopy(arrays, 0, result, 0, arrays.length);
 		}
-		String value;
 		for (int i = 0, n = result.length; i < n; i++) {
 			if (null != result[i]) {
-				value = result[i].toString();
-				if ("integer".equals(dataType) || "int".equals(dataType)) {
-					result[i] = Integer.valueOf(value);
-				} else if ("long".equals(dataType)) {
-					result[i] = Long.valueOf(value);
-				} else if ("float".equals(dataType)) {
-					result[i] = Float.valueOf(value);
-				} else if ("double".equals(dataType)) {
-					result[i] = Double.valueOf(value);
-				} else if ("decimal".equals(dataType) || "number".equals(dataType)) {
-					result[i] = new BigDecimal(value);
-				} else if ("date".equals(dataType)) {
-					result[i] = DateUtil.parseString(value);
-				} else if ("biginteger".equals(dataType)) {
-					result[i] = new BigInteger(value);
-				}
+				result[i] = convertType(result[i].toString(), dataType);
 			}
 		}
 		return result;
+	}
+
+	private static Object convertType(String value, String dataType) {
+		if (value == null) {
+			return value;
+		}
+		if ("integer".equals(dataType) || "int".equals(dataType)) {
+			return Integer.valueOf(value);
+		} else if ("long".equals(dataType)) {
+			return Long.valueOf(value);
+		} else if ("float".equals(dataType)) {
+			return Float.valueOf(value);
+		} else if ("double".equals(dataType)) {
+			return Double.valueOf(value);
+		} else if ("decimal".equals(dataType) || "number".equals(dataType)) {
+			return new BigDecimal(value);
+		} else if ("localdate".equals(dataType)) {
+			return DateUtil.asLocalDate(parseDateStr(value));
+		} else if ("localdatetime".equals(dataType)) {
+			return DateUtil.asLocalDateTime(parseDateStr(value));
+		} else if ("localtime".equals(dataType)) {
+			return DateUtil.asLocalTime(parseDateStr(value));
+		} else if ("time".equals(dataType)) {
+			return new Time(parseDateStr(value).getTime());
+		} else if ("timestamp".equals(dataType)) {
+			return DateUtil.getTimestamp(parseDateStr(value));
+		} else if ("date".equals(dataType)) {
+			return parseDateStr(value);
+		} else if ("biginteger".equals(dataType)) {
+			return new BigInteger(value);
+		}
+		return value;
+	}
+
+	private static Date parseDateStr(String dateStr) {
+		if (dateStr.equals("sysdate()") || dateStr.equals("now()")) {
+			return DateUtil.getNowTime();
+		}
+		String[] tmpAry = null;
+		boolean isAdd = false;
+		// 1:hour;2:day;3:week;4:month;5:year
+		int addType = 2;
+		if (dateStr.contains("+")) {
+			tmpAry = dateStr.split("\\+");
+			isAdd = true;
+		} // sysdate()-2d形式，排除2023-05-20 纯以数字开头的纯日期
+		else if (!StringUtil.matches(dateStr, "^\\d{2,4}") && dateStr.contains("-")) {
+			tmpAry = dateStr.split("\\-");
+			isAdd = false;
+		}
+		if (tmpAry != null && tmpAry.length == 2) {
+			String addStr = tmpAry[1].trim();
+			int addValue = 0;
+			// sysdate()-2d 字母结尾
+			if (StringUtil.matches(addStr, "[a-z|A-Z]$")) {
+				// 最后一位字母
+				String addTypeStr = addStr.substring(addStr.length() - 1).toLowerCase();
+				if (addTypeStr.equals("h")) {
+					addType = 1;
+				} else if (addTypeStr.equals("w")) {
+					addType = 3;
+				} else if (addTypeStr.equals("m")) {
+					addType = 4;
+				} else if (addTypeStr.equals("y")) {
+					addType = 5;
+				}
+				addValue = Integer.parseInt(addStr.substring(0, addStr.length() - 1));
+			} else {
+				addValue = Integer.parseInt(addStr);
+			}
+			if (!isAdd) {
+				addValue = 0 - addValue;
+			}
+			Date starDate;
+			String firstString = tmpAry[0].trim().toLowerCase();
+			// '2019-12-13' 形式
+			if (firstString.startsWith("'") && firstString.endsWith("'")) {
+				firstString = firstString.substring(1, firstString.length() - 1);
+			}
+			if (firstString.equals("sysdate()") || firstString.equals("now()")) {
+				starDate = DateUtil.getNowTime();
+			} else if (firstString.equals("first_of_month")) {
+				starDate = DateUtil.firstDayOfMonth(DateUtil.getNowTime());
+			} else if (firstString.equals("first_of_year")) {
+				starDate = DateUtil.parse((DateUtil.getYear(DateUtil.getNowTime()) + "-01-01"), "yyyy-MM-dd");
+			} else if (firstString.equals("last_of_month")) {
+				starDate = DateUtil.lastDayOfMonth(DateUtil.getNowTime());
+			} else if (firstString.equals("last_of_year")) {
+				starDate = DateUtil.parse((DateUtil.getYear(DateUtil.getNowTime()) + "-12-31"), "yyyy-MM-dd");
+			} else if (firstString.equals("first_of_month")) {
+				starDate = DateUtil.firstDayOfMonth(DateUtil.getNowTime());
+			} else if (firstString.equals("first_of_week")) {
+				Calendar ca = Calendar.getInstance();
+				ca.setTime(DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT));
+				ca.add(Calendar.DAY_OF_WEEK, -ca.get(Calendar.DAY_OF_WEEK) + 2);
+				starDate = ca.getTime();
+			} else if (firstString.equals("last_of_week")) {
+				Calendar ca = Calendar.getInstance();
+				ca.setTime(DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT));
+				ca.add(Calendar.DAY_OF_WEEK, -ca.get(Calendar.DAY_OF_WEEK) + 8);
+				starDate = ca.getTime();
+			} else {
+				starDate = DateUtil.parseString(firstString);
+			}
+			// 小时
+			if (addType == 1) {
+				return DateUtil.addSecond(starDate, addValue * 3600);
+			}
+			// 天
+			if (addType == 2) {
+				return DateUtil.addDay(starDate, addValue);
+			}
+			// 周
+			if (addType == 3) {
+				return DateUtil.addDay(starDate, addValue * 7);
+			}
+			// 月
+			if (addType == 4) {
+				return DateUtil.addMonth(starDate, addValue);
+			}
+			// 年
+			if (addType == 5) {
+				return DateUtil.addYear(starDate, addValue);
+			}
+		}
+		return DateUtil.parseString(dateStr);
 	}
 
 	/**

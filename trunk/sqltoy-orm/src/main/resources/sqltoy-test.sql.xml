@@ -40,6 +40,8 @@
 			<replace params="" regex="" value="" is-first="false" />
 			<!-- 排他性参数,当某个参数是xxx值时,将其他参数设置为特定值 -->
 			<exclusive param="" compare-type="eq" compare-values=""	set-params="" set-value="" />
+			<!--sysdate()-1d(d:天，h:小时,w:周;m:月,y:年);first_of_month-3d/first_of_year/first_of_week/last_of_month/last_of_week/last_of_year  -->
+			<default params="beginDate" data-type="localDate" value="sysdate()-1d" />
 		</filters>
 
 		<!-- 缓存翻译,可以对例如:A,B 这种拼连的进行翻译(要指定分隔符号后最后拼装符号 split-regex="," link-sign=",")

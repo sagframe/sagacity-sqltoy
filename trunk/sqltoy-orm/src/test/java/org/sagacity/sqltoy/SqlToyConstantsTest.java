@@ -65,7 +65,7 @@ public class SqlToyConstantsTest {
 		String idColumns = "ta.staff_id";
 		System.err.println(idColumns.replaceAll("ta\\.", ""));
 		System.err.println(idColumns.replaceAll("ta\\.", "tv."));
-		System.err.println("["+"v  by bn 1 ".replaceAll("\\s+", "")+"]");
+		System.err.println("[" + "v  by bn 1 ".replaceAll("\\s+", "") + "]");
 	}
 
 	@Test
@@ -107,6 +107,24 @@ public class SqlToyConstantsTest {
 		boolean c = HashMap.class.isAssignableFrom(Hashtable.class);
 		boolean d = Map.class.isAssignableFrom(Map.class);
 		System.out.println("a---" + a + "-----b----" + b + "-------c-----" + c + "-------d-----" + d);
+
+	}
+
+	@Test
+	public void testBeanInfo1() {
+		String tmp = "sysdate()+1";
+		String[] tmpAry = tmp.split("\\+|\\-");
+		for (int i = 0; i < tmpAry.length; i++) {
+			System.err.println("[" + tmpAry[i] + "]");
+		}
+	}
+
+	@Test
+	public void testBeanInfo2() {
+		String dateStr = "sysdate()-10";
+		if (!StringUtil.matches(dateStr, "^\\d{2,4}") && dateStr.contains("-")) {
+			System.err.println("$$$$$$$$");
+		}
 
 	}
 
