@@ -1022,6 +1022,10 @@ public class SqlXMLConfigParse {
 		if (filter.hasAttribute("data-type")) {
 			filterModel.setDataType(filter.getAttribute("data-type").toLowerCase());
 		}
+		// default 功能中设置数组
+		if (filter.hasAttribute("is-array")) {
+			filterModel.setIsArray(Boolean.parseBoolean(filter.getAttribute("is-array")));
+		}
 	}
 
 	/**
