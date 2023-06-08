@@ -231,11 +231,6 @@ public class PostgreSqlDialect implements Dialect {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = "nextval('" + entityMeta.getSequence() + "')";
-						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
-							// 伪造成sequence模式
-							pkStrategy = PKStrategy.SEQUENCE;
-							sequence = "DEFAULT";
-						}
 						boolean isAssignPK = PostgreSqlDialectUtils.isAssignPKValue(pkStrategy);
 						// update 级联操作过程中会自动判断postgresql15，而采用不同策略(这里统一按15的规则提供，14之前版本并不用到)
 						return DialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
@@ -338,11 +333,6 @@ public class PostgreSqlDialect implements Dialect {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = "nextval('" + entityMeta.getSequence() + "')";
-						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
-							// 伪造成sequence模式
-							pkStrategy = PKStrategy.SEQUENCE;
-							sequence = "DEFAULT";
-						}
 						boolean isAssignPK = PostgreSqlDialectUtils.isAssignPKValue(pkStrategy);
 						if (dbType == DBType.POSTGRESQL15) {
 							return DialectExtUtils.mergeIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType,

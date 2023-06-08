@@ -23,7 +23,6 @@ import org.sagacity.sqltoy.dialect.model.SavePKStrategy;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
-import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.SqlUtilsExt;
 import org.sagacity.sqltoy.utils.StringUtil;
 
@@ -117,12 +116,6 @@ public class PostgreSqlDialectUtils {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		PKStrategy pkStrategy = entityMeta.getIdStrategy();
 		String sequence = "nextval('" + entityMeta.getSequence() + "')";
-		// 从10版本开始支持identity
-		if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
-			// 伪造成sequence模式
-			pkStrategy = PKStrategy.SEQUENCE;
-			sequence = "DEFAULT";
-		}
 		boolean isAssignPK = isAssignPKValue(pkStrategy);
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 				pkStrategy, NVL_FUNCTION, sequence, isAssignPK, tableName);
@@ -132,14 +125,6 @@ public class PostgreSqlDialectUtils {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateField) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = "nextval('" + entityMeta.getSequence() + "')";
-						if (dbType == DBType.GAUSSDB) {
-							sequence = entityMeta.getSequence() + ".nextval";
-						}
-						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
-							// 伪造成sequence模式
-							pkStrategy = PKStrategy.SEQUENCE;
-							sequence = "DEFAULT";
-						}
 						return DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
 								entityMeta, pkStrategy, NVL_FUNCTION, sequence, isAssignPKValue(pkStrategy), null);
 					}
@@ -171,12 +156,6 @@ public class PostgreSqlDialectUtils {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		PKStrategy pkStrategy = entityMeta.getIdStrategy();
 		String sequence = "nextval('" + entityMeta.getSequence() + "')";
-		// identity模式用关键词default 代替
-		if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
-			// 伪造成sequence模式
-			pkStrategy = PKStrategy.SEQUENCE;
-			sequence = "DEFAULT";
-		}
 		boolean isAssignPK = isAssignPKValue(pkStrategy);
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 				pkStrategy, NVL_FUNCTION, sequence, isAssignPK, tableName);
@@ -209,11 +188,6 @@ public class PostgreSqlDialectUtils {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = "nextval('" + entityMeta.getSequence() + "')";
-						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
-							// 伪造成sequence模式
-							pkStrategy = PKStrategy.SEQUENCE;
-							sequence = "DEFAULT";
-						}
 						return DialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
 								entityMeta, pkStrategy, forceUpdateFields, null, NVL_FUNCTION, sequence,
 								isAssignPKValue(pkStrategy), tableName);
@@ -229,11 +203,10 @@ public class PostgreSqlDialectUtils {
 	 */
 	public static void wrapSelectFields(StringBuilder sql, String columnName, FieldMeta fieldMeta) {
 		int jdbcType = fieldMeta.getType();
-		int length = fieldMeta.getLength();
 		if (jdbcType == java.sql.Types.VARCHAR) {
-			sql.append("cast(? as varchar(" + length + "))");
+			sql.append("?");
 		} else if (jdbcType == java.sql.Types.CHAR) {
-			sql.append("cast(? as char(" + length + "))");
+			sql.append("?");
 		} else if (jdbcType == java.sql.Types.DATE) {
 			sql.append("cast(? as date)");
 		} else if (jdbcType == java.sql.Types.NUMERIC) {
@@ -278,14 +251,7 @@ public class PostgreSqlDialectUtils {
 	 * @return
 	 */
 	public static boolean isAssignPKValue(PKStrategy pkStrategy) {
-		if (pkStrategy == null) {
-			return true;
-		}
-		// sequence
-		if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
-			return false;
-		}
-		// postgresql10+ 支持identity
+		// postgresql10+ 支持identity，但不能直接赋值
 		if (pkStrategy.equals(PKStrategy.IDENTITY)) {
 			return false;
 		}

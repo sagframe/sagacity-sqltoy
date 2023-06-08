@@ -1890,7 +1890,7 @@ public class DialectUtils {
 				if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.TIDB) {
 					mysqlSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, reflectPropsHandler,
 							forceUpdateProps, conn, dbType);
-				} else if (dbType == DBType.POSTGRESQL || dbType == DBType.H2) {
+				} else if (dbType == DBType.POSTGRESQL) {
 					postgreSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, reflectPropsHandler,
 							forceUpdateProps, conn, dbType);
 				} else if (dbType == DBType.OCEANBASE) {
@@ -1900,7 +1900,7 @@ public class DialectUtils {
 					sqliteSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, reflectPropsHandler,
 							forceUpdateProps, conn, dbType);
 				}
-				// db2/oracle/mssql/postgresql15+/gaussdb/kingbase/dm 通过merge 方式
+				// db2/oracle/mssql/postgresql15+/gaussdb/kingbase/dm/h2 通过merge 方式
 				else {
 					saveOrUpdateAll(sqlToyContext, subTableData, sqlToyContext.getBatchSize(), subTableEntityMeta,
 							forceUpdateProps, generateSqlHandler,
