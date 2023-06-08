@@ -5,11 +5,14 @@ package org.sagacity.sqltoy.dialect.impl;
 
 import java.io.Serializable;
 import java.sql.Connection;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DecryptHandler;
+import org.sagacity.sqltoy.callback.GenerateSavePKStrategy;
 import org.sagacity.sqltoy.callback.GenerateSqlHandler;
 import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
@@ -17,9 +20,10 @@ import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
+import org.sagacity.sqltoy.dialect.model.SavePKStrategy;
 import org.sagacity.sqltoy.dialect.utils.DialectExtUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
-import org.sagacity.sqltoy.dialect.utils.PostgreSqlDialectUtils;
+import org.sagacity.sqltoy.dialect.utils.H2DialectUtils;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
@@ -78,6 +82,94 @@ public class H2Dialect extends PostgreSqlDialect {
 	}
 
 	@Override
+	public Long update(SqlToyContext sqlToyContext, Serializable entity, String[] forceUpdateFields, boolean cascade,
+			final Class[] emptyCascadeClasses, HashMap<Class, String[]> subTableForceUpdateProps, Connection conn,
+			Integer dbType, String dialect, String tableName) throws Exception {
+		return DialectUtils.update(sqlToyContext, entity, NVL_FUNCTION, forceUpdateFields, cascade,
+				(cascade == false) ? null : new GenerateSqlHandler() {
+					@Override
+					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
+						PKStrategy pkStrategy = entityMeta.getIdStrategy();
+						String sequence = "nextval('" + entityMeta.getSequence() + "')";
+						// virtual_table为dual
+						return DialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
+								entityMeta, pkStrategy, forceUpdateFields, VIRTUAL_TABLE, NVL_FUNCTION, sequence,
+								H2DialectUtils.isAssignPKValue(pkStrategy), null);
+					}
+				}, emptyCascadeClasses, subTableForceUpdateProps, conn, dbType, tableName);
+	}
+
+	@Override
+	public Object save(SqlToyContext sqlToyContext, Serializable entity, Connection conn, Integer dbType,
+			String dialect, String tableName) throws Exception {
+		// 只支持sequence模式
+		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
+		PKStrategy pkStrategy = entityMeta.getIdStrategy();
+		String sequence = "nextval('" + entityMeta.getSequence() + "')";
+		boolean isAssignPK = H2DialectUtils.isAssignPKValue(pkStrategy);
+		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
+				pkStrategy, NVL_FUNCTION, sequence, isAssignPK, tableName);
+		return DialectUtils.save(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entity,
+				new GenerateSqlHandler() {
+					@Override
+					public String generateSql(EntityMeta entityMeta, String[] forceUpdateField) {
+						PKStrategy pkStrategy = entityMeta.getIdStrategy();
+						String sequence = "nextval('" + entityMeta.getSequence() + "')";
+						return DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
+								entityMeta, pkStrategy, NVL_FUNCTION, sequence,
+								H2DialectUtils.isAssignPKValue(pkStrategy), null);
+					}
+				}, new GenerateSavePKStrategy() {
+					@Override
+					public SavePKStrategy generate(EntityMeta entityMeta) {
+						return new SavePKStrategy(entityMeta.getIdStrategy(),
+								H2DialectUtils.isAssignPKValue(entityMeta.getIdStrategy()));
+					}
+				}, conn, dbType);
+	}
+
+	@Override
+	public Long saveAll(SqlToyContext sqlToyContext, List<?> entities, int batchSize,
+			ReflectPropsHandler reflectPropsHandler, Connection conn, Integer dbType, String dialect,
+			Boolean autoCommit, String tableName) throws Exception {
+		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
+		PKStrategy pkStrategy = entityMeta.getIdStrategy();
+		String sequence = "nextval('" + entityMeta.getSequence() + "')";
+		boolean isAssignPK = H2DialectUtils.isAssignPKValue(pkStrategy);
+		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
+				pkStrategy, NVL_FUNCTION, sequence, isAssignPK, tableName);
+		return DialectUtils.saveAll(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entities, batchSize,
+				reflectPropsHandler, conn, dbType, autoCommit);
+	}
+
+	@Override
+	public Long saveOrUpdate(SqlToyContext sqlToyContext, Serializable entity, String[] forceUpdateFields,
+			Connection conn, Integer dbType, String dialect, Boolean autoCommit, String tableName) throws Exception {
+		List<Serializable> entities = new ArrayList<Serializable>();
+		entities.add(entity);
+		return saveOrUpdateAll(sqlToyContext, entities, sqlToyContext.getBatchSize(), null, forceUpdateFields, conn,
+				dbType, dialect, autoCommit, tableName);
+	}
+
+	@Override
+	public Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, int batchSize,
+			ReflectPropsHandler reflectPropsHandler, String[] forceUpdateFields, Connection conn, Integer dbType,
+			String dialect, Boolean autoCommit, String tableName) throws Exception {
+		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
+		return DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta, forceUpdateFields,
+				new GenerateSqlHandler() {
+					@Override
+					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
+						PKStrategy pkStrategy = entityMeta.getIdStrategy();
+						String sequence = "nextval('" + entityMeta.getSequence() + "')";
+						return DialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
+								entityMeta, pkStrategy, forceUpdateFields, VIRTUAL_TABLE, NVL_FUNCTION, sequence,
+								H2DialectUtils.isAssignPKValue(pkStrategy), tableName);
+					}
+				}, reflectPropsHandler, conn, dbType, autoCommit);
+	}
+
+	@Override
 	public Long saveAllIgnoreExist(SqlToyContext sqlToyContext, List<?> entities, int batchSize,
 			ReflectPropsHandler reflectPropsHandler, Connection conn, Integer dbType, String dialect,
 			Boolean autoCommit, String tableName) throws Exception {
@@ -88,14 +180,9 @@ public class H2Dialect extends PostgreSqlDialect {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = "nextval('" + entityMeta.getSequence() + "')";
-						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
-							// 伪造成sequence模式
-							pkStrategy = PKStrategy.SEQUENCE;
-							sequence = "DEFAULT";
-						}
 						return DialectExtUtils.mergeIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 								pkStrategy, VIRTUAL_TABLE, NVL_FUNCTION, sequence,
-								PostgreSqlDialectUtils.isAssignPKValue(pkStrategy), tableName);
+								H2DialectUtils.isAssignPKValue(pkStrategy), tableName);
 					}
 				}, reflectPropsHandler, conn, dbType, autoCommit);
 	}
