@@ -3,6 +3,7 @@
  */
 package org.sagacity.sqltoy.plugins.interceptors;
 
+import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.OperateType;
@@ -66,7 +67,8 @@ public class TenantFilterInterceptor implements SqlInterceptor {
 				&& StringUtil.matches(sql.substring(whereIndex), "(?i)\\W" + tenantColumn + "(\\s*\\=|\\s+in)")) {
 			return sqlToyResult;
 		}
-		String sqlPart = " where ";
+		String where = " where ";
+		String sqlPart = where;
 		if (tenants.length == 1) {
 			sqlPart = sqlPart.concat(tenantColumn).concat("='").concat(tenants[0]).concat("' and ");
 		} else {
@@ -81,7 +83,20 @@ public class TenantFilterInterceptor implements SqlInterceptor {
 				|| operateType.equals(OperateType.singleTable)) {
 			// 从where开始替换，避免select a,b from table where id=? for update 场景拼接在最后面是有错误的
 			// 对象操作sql由框架生成，where前后是空白
-			sqlToyResult.setSql(sql.replaceFirst("(?i)\\swhere\\s", sqlPart));
+			if (operateType.equals(OperateType.saveOrUpdate) && sql.indexOf(SqlToyConstants.MERGE_UPDATE) > 0) {
+				// 截取merge int xxxx (select ?,? from dual) as tv on (alias.field=tv.xxx)
+				// 中的具体alias
+				int onTenantIndex = sql.indexOf(SqlToyConstants.MERGE_ALIAS_ON);
+				int end = onTenantIndex + SqlToyConstants.MERGE_ALIAS_ON.length();
+				String aliasName = sql.substring(end, sql.indexOf(".", end)).trim();
+				// 去除where、租户字段加上表别名，末尾补充and跟后续条件衔接
+				sqlPart = sqlPart.replaceFirst(where, "").replaceFirst(tenantColumn, aliasName + "." + tenantColumn)
+						.concat(" and ");
+				sqlToyResult.setSql(sql.replaceFirst(SqlToyConstants.MERGE_ALIAS_ON,
+						SqlToyConstants.MERGE_ALIAS_ON.concat(sqlPart)));
+			} else {
+				sqlToyResult.setSql(sql.replaceFirst("(?i)\\swhere\\s", sqlPart));
+			}
 		}
 		// 通过表名获取entityMeta、并判断表里面是否有租户字段
 		// EntityMeta entityMeta = sqlToyContext.getEntityMeta(tableName);

@@ -989,12 +989,6 @@ public interface SqlToyLazyDao {
 	public Batch batch();
 
 	/**
-	 * @TODO 提供对数据库表相关得创建、修改、索引、添加注释等操作行为
-	 * @return
-	 */
-	//public TableApi tableApi();
-
-	/**
 	 * @TODO 获得表的字段信息
 	 * @param catalog
 	 * @param schema

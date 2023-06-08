@@ -22,7 +22,9 @@ import org.sagacity.sqltoy.demo.vo.B1;
 import org.sagacity.sqltoy.demo.vo.C1;
 import org.sagacity.sqltoy.demo.vo.StaffInfoVO;
 import org.sagacity.sqltoy.model.MapKit;
+import org.sagacity.sqltoy.utils.DateUtil;
 import org.sagacity.sqltoy.utils.MapperUtils;
+import org.sagacity.sqltoy.utils.ParamFilterUtils;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 import com.alibaba.fastjson.JSON;
@@ -65,7 +67,7 @@ public class SqlToyConstantsTest {
 		String idColumns = "ta.staff_id";
 		System.err.println(idColumns.replaceAll("ta\\.", ""));
 		System.err.println(idColumns.replaceAll("ta\\.", "tv."));
-		System.err.println("["+"v  by bn 1 ".replaceAll("\\s+", "")+"]");
+		System.err.println("[" + "v  by bn 1 ".replaceAll("\\s+", "") + "]");
 	}
 
 	@Test
@@ -107,6 +109,22 @@ public class SqlToyConstantsTest {
 		boolean c = HashMap.class.isAssignableFrom(Hashtable.class);
 		boolean d = Map.class.isAssignableFrom(Map.class);
 		System.out.println("a---" + a + "-----b----" + b + "-------c-----" + c + "-------d-----" + d);
+
+	}
+
+	@Test
+	public void testBeanInfo1() {
+		String sql = SqlToyConstants.MERGE_ALIAS_ON + " ta.name=tv.name)";
+		int onTenantIndex = sql.indexOf(SqlToyConstants.MERGE_ALIAS_ON);
+		int end = onTenantIndex + SqlToyConstants.MERGE_ALIAS_ON.length();
+		String aliasName = sql.substring(end, sql.indexOf(".", end)).trim();
+		System.err.println("[" + aliasName + "]");
+	}
+
+	@Test
+	public void testBeanInfo2() {
+		// String dateStr = "first_of_year-10m";
+		// System.err.println(DateUtil.formatDate(ParamFilterUtils.parseDateStr(dateStr),"yyyy-MM-dd"));
 
 	}
 

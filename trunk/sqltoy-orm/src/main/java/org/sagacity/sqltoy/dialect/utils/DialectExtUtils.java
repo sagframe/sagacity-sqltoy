@@ -46,7 +46,7 @@ public class DialectExtUtils {
 	 * @param pkStrategy
 	 * @param isNullFunction
 	 * @param sequence
-	 * @param isAssignPK
+	 * @param isAssignPK(此参数有待改进2023-5-30，应该全部为true)
 	 * @param tableName
 	 * @return
 	 */
@@ -174,11 +174,6 @@ public class DialectExtUtils {
 		// 是否是各种数据库的当前时间、日期的字符
 		String defaultLow = defaultValue.toLowerCase();
 		boolean isCurrentTime = SqlUtilsExt.isCurrentTime(defaultLow);
-		// 无法解决同一个POJO的默认值注解在不同数据库下的兼容
-		// if (isCurrentTime) {
-		// sql.append(defaultValue);
-		// return;
-		// }
 		int dateType = -1;
 		// 时间
 		if ("java.time.localtime".equals(fieldType) || "java.sql.time".equals(fieldType)) {
@@ -327,16 +322,25 @@ public class DialectExtUtils {
 		String columnName;
 		sql.append("merge into ");
 		sql.append(realTable);
-		sql.append(" ta ");
+		// postgresql15+ 不支持别名
+		if (DBType.POSTGRESQL15 != dbType) {
+			sql.append(" ta ");
+		}
 		sql.append(" using (select ");
+		FieldMeta fieldMeta;
 		for (int i = 0; i < columnSize; i++) {
-			columnName = entityMeta.getColumnName(entityMeta.getFieldsArray()[i]);
-			columnName = ReservedWordsUtil.convertWord(columnName, dbType);
+			fieldMeta = entityMeta.getFieldMeta(entityMeta.getFieldsArray()[i]);
+			columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
 			if (i > 0) {
 				sql.append(",");
 			}
-			sql.append("? as ");
-			sql.append(columnName);
+			// postgresql15+ 需要case(? as type) as column
+			if (DBType.POSTGRESQL15 == dbType) {
+				PostgreSqlDialectUtils.wrapSelectFields(sql, columnName, fieldMeta);
+			} else {
+				sql.append("? as ");
+				sql.append(columnName);
+			}
 		}
 		if (StringUtil.isNotBlank(fromTable)) {
 			sql.append(" from ").append(fromTable);
@@ -351,7 +355,13 @@ public class DialectExtUtils {
 				sql.append(" and ");
 				idColumns.append(",");
 			}
-			sql.append(" ta.").append(columnName).append("=tv.").append(columnName);
+			// 不支持别名
+			if (DBType.POSTGRESQL15 == dbType) {
+				sql.append(realTable + ".");
+			} else {
+				sql.append("ta.");
+			}
+			sql.append(columnName).append("=tv.").append(columnName);
 			idColumns.append("ta.").append(columnName);
 		}
 		sql.append(" ) ");
@@ -362,7 +372,6 @@ public class DialectExtUtils {
 		boolean allIds = (entityMeta.getRejectIdFieldArray() == null);
 		if (!allIds) {
 			int rejectIdColumnSize = entityMeta.getRejectIdFieldArray().length;
-			FieldMeta fieldMeta;
 			// update 只针对非主键字段进行修改
 			for (int i = 0; i < rejectIdColumnSize; i++) {
 				fieldMeta = entityMeta.getFieldMeta(entityMeta.getRejectIdFieldArray()[i]);
@@ -479,28 +488,40 @@ public class DialectExtUtils {
 			field = entityMeta.getFieldsArray()[i];
 			fieldMeta = entityMeta.getFieldMeta(field);
 			columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
-			if (!isStart) {
-				sql.append(",");
-				values.append(",");
-			}
 			if (fieldMeta.isPK()) {
 				// identity主键策略，且支持主键手工赋值
 				if (pkStrategy.equals(PKStrategy.IDENTITY)) {
 					if (isAssignPK) {
+						if (!isStart) {
+							sql.append(",");
+							values.append(",");
+						}
 						sql.append(columnName);
 						values.append("?");
 						isStart = false;
 					}
 				} else if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
+					if (!isStart) {
+						sql.append(",");
+						values.append(",");
+					}
 					sql.append(columnName);
 					values.append(isNullFunction).append("(?,").append(sequence).append(")");
 					isStart = false;
 				} else {
+					if (!isStart) {
+						sql.append(",");
+						values.append(",");
+					}
 					sql.append(columnName);
 					values.append("?");
 					isStart = false;
 				}
 			} else {
+				if (!isStart) {
+					sql.append(",");
+					values.append(",");
+				}
 				sql.append(columnName);
 				currentTimeStr = SqlUtil.getDBTime(dbType, fieldMeta, createSqlTimeFields);
 				if (null != currentTimeStr) {

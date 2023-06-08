@@ -5,7 +5,6 @@ package org.sagacity.sqltoy.dialect.utils;
 
 import java.io.Serializable;
 import java.sql.Connection;
-import java.util.HashSet;
 import java.util.List;
 
 import org.sagacity.sqltoy.SqlToyConstants;
@@ -24,10 +23,8 @@ import org.sagacity.sqltoy.dialect.model.SavePKStrategy;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
-import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
-import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
-import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtilsExt;
+import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
  * @project sqltoy-orm
@@ -119,18 +116,6 @@ public class PostgreSqlDialectUtils {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		PKStrategy pkStrategy = entityMeta.getIdStrategy();
 		String sequence = "nextval('" + entityMeta.getSequence() + "')";
-
-		// 主表gaussdb情况下为了可以返回主键值，sequence模式下在gaussdb下执行了先查询并给主键做了赋值，所以此处修改主键策略为assign
-		if (dbType == DBType.GAUSSDB && pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE)) {
-			sequence = entityMeta.getSequence() + ".nextval";
-			pkStrategy = PKStrategy.ASSIGN;
-		}
-		// 从10版本开始支持identity
-		if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
-			// 伪造成sequence模式
-			pkStrategy = PKStrategy.SEQUENCE;
-			sequence = "DEFAULT";
-		}
 		boolean isAssignPK = isAssignPKValue(pkStrategy);
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 				pkStrategy, NVL_FUNCTION, sequence, isAssignPK, tableName);
@@ -140,14 +125,6 @@ public class PostgreSqlDialectUtils {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateField) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = "nextval('" + entityMeta.getSequence() + "')";
-						if (dbType == DBType.GAUSSDB) {
-							sequence = entityMeta.getSequence() + ".nextval";
-						}
-						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
-							// 伪造成sequence模式
-							pkStrategy = PKStrategy.SEQUENCE;
-							sequence = "DEFAULT";
-						}
 						return DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
 								entityMeta, pkStrategy, NVL_FUNCTION, sequence, isAssignPKValue(pkStrategy), null);
 					}
@@ -179,16 +156,6 @@ public class PostgreSqlDialectUtils {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		PKStrategy pkStrategy = entityMeta.getIdStrategy();
 		String sequence = "nextval('" + entityMeta.getSequence() + "')";
-		// 主表gaussdb情况下为了可以返回主键值，sequence模式下在gaussdb下执行了先查询并给主键做了赋值，所以此处修改主键策略为assign
-		if (dbType == DBType.GAUSSDB && pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE)) {
-			sequence = entityMeta.getSequence() + ".nextval";
-		}
-		// identity模式用关键词default 代替
-		if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
-			// 伪造成sequence模式
-			pkStrategy = PKStrategy.SEQUENCE;
-			sequence = "DEFAULT";
-		}
 		boolean isAssignPK = isAssignPKValue(pkStrategy);
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 				pkStrategy, NVL_FUNCTION, sequence, isAssignPK, tableName);
@@ -221,138 +188,11 @@ public class PostgreSqlDialectUtils {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = "nextval('" + entityMeta.getSequence() + "')";
-						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
-							// 伪造成sequence模式
-							pkStrategy = PKStrategy.SEQUENCE;
-							sequence = "DEFAULT";
-						}
 						return DialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
 								entityMeta, pkStrategy, forceUpdateFields, null, NVL_FUNCTION, sequence,
 								isAssignPKValue(pkStrategy), tableName);
 					}
 				}, reflectPropsHandler, conn, dbType, autoCommit);
-	}
-
-	/**
-	 * @todo postgresql9.5以及以上版本的saveOrUpdate语句，实际不会使用(用update和saveIgnore组合替代)，因为postgresql
-	 *       此功能存在bug
-	 * @param dbType
-	 * @param entityMeta
-	 * @param pkStrategy
-	 * @param sequence
-	 * @param forceUpdateFields
-	 * @param tableName
-	 * @return
-	 */
-	@Deprecated
-	public static String getSaveOrUpdateSql(IUnifyFieldsHandler unifyFieldsHandler, Integer dbType,
-			EntityMeta entityMeta, PKStrategy pkStrategy, boolean isAssignPK, String sequence,
-			String[] forceUpdateFields, String tableName) {
-		String realTable = entityMeta.getSchemaTable(tableName, dbType);
-		if (entityMeta.getIdArray() == null) {
-			return DialectExtUtils.generateInsertSql(unifyFieldsHandler, dbType, entityMeta, entityMeta.getIdStrategy(),
-					NVL_FUNCTION, null, false, realTable);
-		}
-		// 是否全部是ID
-		boolean allIds = (entityMeta.getRejectIdFieldArray() == null);
-		// 全部是主键采用replace into 策略进行保存或修改,不考虑只有一个字段且是主键的表情况
-		StringBuilder sql = new StringBuilder("insert into ");
-		StringBuilder values = new StringBuilder();
-
-		sql.append(realTable);
-		sql.append(" AS t1 (");
-		FieldMeta fieldMeta;
-		String fieldName;
-		boolean isStart = true;
-		String columnName;
-		for (int i = 0, n = entityMeta.getFieldsArray().length; i < n; i++) {
-			fieldName = entityMeta.getFieldsArray()[i];
-			fieldMeta = entityMeta.getFieldMeta(fieldName);
-			columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
-			// sql中的关键字处理
-			if (!isStart) {
-				sql.append(",");
-				values.append(",");
-			}
-			if (fieldMeta.isPK()) {
-				// identity主键策略，且支持主键手工赋值
-				if (pkStrategy.equals(PKStrategy.IDENTITY)) {
-					// 目前只有mysql支持
-					if (isAssignPK) {
-						sql.append(columnName);
-						values.append("?");
-						isStart = false;
-					}
-				} // sequence 策略，oracle12c之后的identity机制统一转化为sequence模式
-				else if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
-					sql.append(columnName);
-					if (isAssignPK) {
-						values.append(NVL_FUNCTION);
-						values.append("(?,").append(sequence).append(")");
-					} else {
-						values.append(sequence);
-					}
-					isStart = false;
-				} else {
-					sql.append(columnName);
-					values.append("?");
-					isStart = false;
-				}
-			} else {
-				sql.append(columnName);
-				if (null != fieldMeta.getDefaultValue()) {
-					values.append(NVL_FUNCTION);
-					values.append("(?,");
-					DialectExtUtils.processDefaultValue(values, dbType, fieldMeta, fieldMeta.getDefaultValue());
-					values.append(")");
-				} else {
-					values.append("?");
-				}
-				isStart = false;
-			}
-		}
-		sql.append(") values (");
-		sql.append(values);
-		sql.append(") ");
-		// 非全部是主键
-		if (!allIds) {
-			// String columnName;
-			sql.append(" ON CONFLICT (");
-			for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
-				if (i > 0) {
-					sql.append(",");
-				}
-				columnName = entityMeta.getColumnName(entityMeta.getIdArray()[i]);
-				sql.append(ReservedWordsUtil.convertWord(columnName, dbType));
-			}
-			sql.append(" ) DO UPDATE SET ");
-
-			// 需要被强制修改的字段
-			HashSet<String> fupc = new HashSet<String>();
-			if (forceUpdateFields != null) {
-				for (String field : forceUpdateFields) {
-					fupc.add(ReservedWordsUtil.convertWord(entityMeta.getColumnName(field), dbType));
-				}
-			}
-
-			for (int i = 0, n = entityMeta.getRejectIdFieldArray().length; i < n; i++) {
-				columnName = entityMeta.getColumnName(entityMeta.getRejectIdFieldArray()[i]);
-				columnName = ReservedWordsUtil.convertWord(columnName, dbType);
-				if (i > 0) {
-					sql.append(",");
-				}
-				sql.append(columnName).append("=");
-				// 强制修改
-				if (fupc.contains(columnName)) {
-					sql.append("excluded.").append(columnName);
-				} else {
-					sql.append("COALESCE(excluded.");
-					sql.append(columnName).append(",t1.");
-					sql.append(columnName).append(")");
-				}
-			}
-		}
-		return sql.toString();
 	}
 
 	/**
@@ -363,11 +203,10 @@ public class PostgreSqlDialectUtils {
 	 */
 	public static void wrapSelectFields(StringBuilder sql, String columnName, FieldMeta fieldMeta) {
 		int jdbcType = fieldMeta.getType();
-		int length = fieldMeta.getLength();
 		if (jdbcType == java.sql.Types.VARCHAR) {
-			sql.append("cast(? as varchar(" + length + "))");
+			sql.append("?");
 		} else if (jdbcType == java.sql.Types.CHAR) {
-			sql.append("cast(? as char(" + length + "))");
+			sql.append("?");
 		} else if (jdbcType == java.sql.Types.DATE) {
 			sql.append("cast(? as date)");
 		} else if (jdbcType == java.sql.Types.NUMERIC) {
@@ -395,7 +234,12 @@ public class PostgreSqlDialectUtils {
 		} else if (jdbcType == java.sql.Types.BLOB) {
 			sql.append("cast(? as bytea)");
 		} else {
-			sql.append("?");
+			// 数组、json等特殊类型
+			if (StringUtil.isNotBlank(fieldMeta.getNativeType())) {
+				sql.append("cast(? as " + fieldMeta.getNativeType() + ")");
+			} else {
+				sql.append("?");
+			}
 		}
 		sql.append(" as ");
 		sql.append(columnName);
@@ -407,14 +251,7 @@ public class PostgreSqlDialectUtils {
 	 * @return
 	 */
 	public static boolean isAssignPKValue(PKStrategy pkStrategy) {
-		if (pkStrategy == null) {
-			return true;
-		}
-		// sequence
-		if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
-			return false;
-		}
-		// postgresql10+ 支持identity
+		// postgresql10+ 支持identity，但不能直接赋值
 		if (pkStrategy.equals(PKStrategy.IDENTITY)) {
 			return false;
 		}
