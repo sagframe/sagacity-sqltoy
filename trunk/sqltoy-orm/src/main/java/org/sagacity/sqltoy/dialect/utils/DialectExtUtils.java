@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.PKStrategy;
@@ -337,6 +338,10 @@ public class DialectExtUtils {
 			// postgresql15+ 需要case(? as type) as column
 			if (DBType.POSTGRESQL15 == dbType) {
 				PostgreSqlDialectUtils.wrapSelectFields(sql, columnName, fieldMeta);
+			} else if (DBType.H2 == dbType) {
+				H2DialectUtils.wrapSelectFields(sql, columnName, fieldMeta);
+			} else if (DBType.DB2 == dbType) {
+				DB2DialectUtils.wrapSelectFields(sql, columnName, fieldMeta);
 			} else {
 				sql.append("? as ");
 				sql.append(columnName);
@@ -345,7 +350,8 @@ public class DialectExtUtils {
 		if (StringUtil.isNotBlank(fromTable)) {
 			sql.append(" from ").append(fromTable);
 		}
-		sql.append(") tv on (");
+		// sql.append(") tv on (");
+		sql.append(SqlToyConstants.MERGE_ALIAS_ON);
 		StringBuilder idColumns = new StringBuilder();
 		// 组织on部分的主键条件判断
 		for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
@@ -394,7 +400,8 @@ public class DialectExtUtils {
 			}
 		}
 		// 主键未匹配上则进行插入操作
-		sql.append(" when not matched then insert (");
+		sql.append(SqlToyConstants.MERGE_INSERT);
+		sql.append(" (");
 		String idsColumnStr = idColumns.toString();
 		// 不考虑只有一个字段且还是主键的情况
 		if (allIds) {
