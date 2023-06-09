@@ -118,7 +118,8 @@ public class ParamFilterUtils {
 				for (int i = 0, n = filterParams.length; i < n; i++) {
 					filterParam = filterParams[i].toLowerCase();
 					index = (paramIndexMap.get(filterParam) == null) ? -1 : paramIndexMap.get(filterParam);
-					if (index != -1 && paramValues[index] != null) {
+					// 2023-6-10 当条件参数值为null时要排除设置default场景(其它参数为null就不做处理)
+					if (index != -1 && (paramValues[index] != null || "default".equals(filterType))) {
 						if (!paramFilterModel.getExcludes().contains(filterParam)) {
 							paramValues[index] = filterSingleParam(sqlToyContext, paramValues, paramValues[index],
 									paramFilterModel, paramIndexMap);
@@ -549,7 +550,7 @@ public class ParamFilterUtils {
 	private static Object filterSingleParam(SqlToyContext sqlToyContext, Object[] paramValues, Object paramValue,
 			ParamFilterModel paramFilterModel, HashMap<String, Integer> paramIndexMap) {
 		String filterType = paramFilterModel.getFilterType();
-		// null或者非设置default默认值
+		// null或者非设置default默认值(这里属于冗余校验，上面调用前已经校验是否为null或default)
 		if (null == paramValue && !"default".equals(filterType)) {
 			return null;
 		}
