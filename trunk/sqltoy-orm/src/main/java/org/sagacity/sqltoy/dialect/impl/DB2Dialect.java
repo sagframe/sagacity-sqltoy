@@ -18,6 +18,7 @@ import org.sagacity.sqltoy.callback.GenerateSqlHandler;
 import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
+import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.dialect.Dialect;
@@ -199,7 +200,7 @@ public class DB2Dialect implements Dialect {
 				(cascade == false) ? null : new GenerateSqlHandler() {
 					@Override
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
-						return DB2DialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
+						return DialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
 								entityMeta, entityMeta.getIdStrategy(), forceUpdateFields, VIRTUAL_TABLE, NVL_FUNCTION,
 								"NEXTVAL FOR " + entityMeta.getSequence(),
 								DB2DialectUtils.isAssignPKValue(entityMeta.getIdStrategy()), null);
@@ -359,9 +360,7 @@ public class DB2Dialect implements Dialect {
 				new GenerateSqlHandler() {
 					@Override
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
-						// db2 为什么不跟oracle用同样的merge方法,因为db2 merge into 必须要增加cast(? as type) fieldName
-						// 将输入的数据进行类型转换
-						return DB2DialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
+						return DialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
 								entityMeta, entityMeta.getIdStrategy(), forceUpdateFields, VIRTUAL_TABLE, NVL_FUNCTION,
 								"NEXTVAL FOR " + entityMeta.getSequence(),
 								DB2DialectUtils.isAssignPKValue(entityMeta.getIdStrategy()), tableName);
@@ -387,12 +386,10 @@ public class DB2Dialect implements Dialect {
 				new GenerateSqlHandler() {
 					@Override
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
-						// db2 为什么不跟oracle用同样的merge方法,因为db2 merge into 必须要增加cast(? as type) fieldName
-						// 将输入的数据进行类型转换
-						return DB2DialectUtils.getSaveIgnoreExistSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
-								entityMeta, entityMeta.getIdStrategy(), VIRTUAL_TABLE, NVL_FUNCTION,
-								"NEXTVAL FOR " + entityMeta.getSequence(),
-								DB2DialectUtils.isAssignPKValue(entityMeta.getIdStrategy()), tableName);
+						PKStrategy pkStrategy = entityMeta.getIdStrategy();
+						return DialectExtUtils.mergeIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
+								pkStrategy, VIRTUAL_TABLE, NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(),
+								DB2DialectUtils.isAssignPKValue(pkStrategy), tableName);
 					}
 				}, reflectPropsHandler, conn, dbType, autoCommit);
 	}

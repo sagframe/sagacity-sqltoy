@@ -222,7 +222,7 @@ public class PostgreSqlDialectUtils {
 		} else if (jdbcType == java.sql.Types.DOUBLE) {
 			sql.append("cast(? as double)");
 		} else if (jdbcType == java.sql.Types.FLOAT) {
-			sql.append("cast(? as float)");
+			sql.append("cast(? as double)");
 		} else if (jdbcType == java.sql.Types.TIME) {
 			sql.append("cast(? as time)");
 		} else if (jdbcType == java.sql.Types.CLOB) {
