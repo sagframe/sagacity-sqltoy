@@ -124,6 +124,15 @@ public class SqlConfigParseUtilsTest {
 	}
 
 	@Test
+	public void testLoop1() throws Exception {
+		String sql = "@loop(:cols,\":cols[i]\",\",\")";
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "cols" ,"name"},
+				new Object[] { new Object[] { "field1", "field2", "field3" } ,"chen"});
+		System.err.println(JSON.toJSONString(result));
+		
+	}
+
+	@Test
 	public void testSynSign() throws Exception {
 		String sql = "select * from table where #[id in [arraystringconcat(name)] and id=:id ]#[and name like :name] #[and status=:status]";
 		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "id", "name", "status" },
