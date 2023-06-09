@@ -226,9 +226,7 @@ public class SqlServerDialectUtils {
 			sql.append("? as ");
 			sql.append(columnName);
 		}
-		// sqlserver 不需要填具体表名,oracle 对应dual
-		// sql.append(" from ").append(realTable);
-		sql.append(") tv on (");
+		sql.append(SqlToyConstants.MERGE_ALIAS_ON);
 		StringBuilder idColumns = new StringBuilder();
 		// 组织on部分的主键条件判断
 		for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
@@ -249,7 +247,7 @@ public class SqlServerDialectUtils {
 		boolean allIds = (entityMeta.getRejectIdFieldArray() == null);
 		if (!allIds) {
 			// update 操作
-			sql.append(" when matched then update set ");
+			sql.append(SqlToyConstants.MERGE_UPDATE);
 			int rejectIdColumnSize = entityMeta.getRejectIdFieldArray().length;
 			// 需要被强制修改的字段
 			HashSet<String> fupc = new HashSet<String>();
@@ -299,7 +297,6 @@ public class SqlServerDialectUtils {
 						}
 						sql.append(")");
 					}
-
 					if (!isStart) {
 						insertRejIdCols.append(",");
 						insertRejIdColValues.append(",");
@@ -330,7 +327,8 @@ public class SqlServerDialectUtils {
 			}
 		}
 		// 主键未匹配上则进行插入操作
-		sql.append(" when not matched then insert (");
+		sql.append(SqlToyConstants.MERGE_INSERT);
+		sql.append(" (");
 		String idsColumnStr = idColumns.toString();
 		// 不考虑只有一个字段且还是主键的情况
 		if (allIds) {
@@ -420,7 +418,7 @@ public class SqlServerDialectUtils {
 			sql.append("? as ");
 			sql.append(columnName);
 		}
-		sql.append(") tv on (");
+		sql.append(SqlToyConstants.MERGE_ALIAS_ON);
 		StringBuilder idColumns = new StringBuilder();
 		// 组织on部分的主键条件判断
 		for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
@@ -469,7 +467,8 @@ public class SqlServerDialectUtils {
 			}
 		}
 		// 主键未匹配上则进行插入操作
-		sql.append(" when not matched then insert (");
+		sql.append(SqlToyConstants.MERGE_INSERT);
+		sql.append(" (");
 		String idsColumnStr = idColumns.toString();
 		// 不考虑只有一个字段且还是主键的情况
 		if (allIds) {
