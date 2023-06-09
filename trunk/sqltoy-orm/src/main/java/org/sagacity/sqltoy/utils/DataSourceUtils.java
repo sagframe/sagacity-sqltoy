@@ -486,6 +486,7 @@ public class DataSourceUtils {
 		case DBType.ORACLE:
 		case DBType.OCEANBASE:
 		case DBType.DM:
+		case DBType.H2:
 		case DBType.ORACLE11: {
 			return "select 1 from dual";
 		}
