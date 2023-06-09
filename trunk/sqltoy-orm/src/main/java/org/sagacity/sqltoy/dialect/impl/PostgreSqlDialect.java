@@ -235,7 +235,7 @@ public class PostgreSqlDialect implements Dialect {
 						// update 级联操作过程中会自动判断postgresql15，而采用不同策略(这里统一按15的规则提供，14之前版本并不用到)
 						return DialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
 								entityMeta, pkStrategy, forceUpdateFields, null, NVL_FUNCTION, sequence, isAssignPK,
-								tableName);
+								null);
 					}
 				}, emptyCascadeClasses, subTableForceUpdateProps, conn, dbType, tableName);
 	}

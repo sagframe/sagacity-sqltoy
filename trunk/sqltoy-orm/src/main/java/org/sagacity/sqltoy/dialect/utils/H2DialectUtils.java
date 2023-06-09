@@ -21,6 +21,9 @@ public class H2DialectUtils {
 	 * @return
 	 */
 	public static boolean isAssignPKValue(PKStrategy pkStrategy) {
+		if (pkStrategy == null) {
+			return true;
+		}
 		if (pkStrategy.equals(PKStrategy.IDENTITY)) {
 			return false;
 		}

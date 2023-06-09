@@ -251,6 +251,9 @@ public class PostgreSqlDialectUtils {
 	 * @return
 	 */
 	public static boolean isAssignPKValue(PKStrategy pkStrategy) {
+		if (pkStrategy == null) {
+			return true;
+		}
 		// postgresql10+ 支持identity，但不能直接赋值
 		if (pkStrategy.equals(PKStrategy.IDENTITY)) {
 			return false;
