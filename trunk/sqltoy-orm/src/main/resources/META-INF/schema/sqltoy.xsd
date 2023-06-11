@@ -863,6 +863,42 @@
 					</xsd:attribute>
 				</xsd:complexType>
 			</xsd:element>
+			<xsd:element name="default" minOccurs="0"
+				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[设置参数默认值]]></xsd:documentation>
+				</xsd:annotation>
+				<xsd:complexType>
+					<xsd:attribute name="params" type="xsd:string"
+						use="required" />
+					<xsd:attribute name="value" type="xsd:string"
+						use="required">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[example:sysdate()-2d(d:day,m:month,y:year;w:week;或者:first_of_month-2d/first_of_year-2d/last_of_month/last_of_year/first_of_week/last_of_week)]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+					<xsd:attribute name="data-type" use="required">
+						<xsd:simpleType>
+							<xsd:restriction base="xsd:string">
+								<xsd:enumeration value="string" />
+								<xsd:enumeration value="decimal" />
+								<xsd:enumeration value="integer" />
+								<xsd:enumeration value="double" />
+								<xsd:enumeration value="float" />
+								<xsd:enumeration value="long" />
+								<xsd:enumeration value="date" />
+								<xsd:enumeration value="localDate" />
+								<xsd:enumeration value="localDateTime" />
+								<xsd:enumeration value="localTime" />
+								<xsd:enumeration value="timestamp" />
+								<xsd:enumeration value="time" />
+							</xsd:restriction>
+						</xsd:simpleType>
+					</xsd:attribute>
+					<xsd:attribute name="split" type="xsd:string" />
+					<xsd:attribute name="is-array" type="xsd:boolean" />
+				</xsd:complexType>
+			</xsd:element>
 			<xsd:element name="replace" minOccurs="0"
 				maxOccurs="unbounded">
 				<xsd:annotation>

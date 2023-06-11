@@ -680,7 +680,6 @@ public class DialectUtils {
 			createUnifyFields = new IgnoreKeyCaseMap<String, Object>();
 			createUnifyFields.putAll(unifyFieldsHandler.createUnifyFields());
 		}
-		boolean isSupportNUL = StringUtil.isBlank(isNullFunction) ? false : true;
 		int columnSize = entityMeta.getFieldsArray().length;
 		StringBuilder sql = new StringBuilder(columnSize * 30 + 100);
 		String columnName;
@@ -755,7 +754,7 @@ public class DialectUtils {
 				// 将创建人、创建时间等模拟成默认值
 				defaultValue = DialectExtUtils.getInsertDefaultValue(createUnifyFields, dbType, fieldMeta);
 				// 存在默认值
-				if (isSupportNUL && null != defaultValue) {
+				if (null != defaultValue) {
 					insertRejIdColValues.append(isNullFunction);
 					insertRejIdColValues.append("(tv.").append(columnName).append(",");
 					DialectExtUtils.processDefaultValue(insertRejIdColValues, dbType, fieldMeta, defaultValue);
@@ -783,7 +782,7 @@ public class DialectUtils {
 				sql.append(columnName);
 				sql.append(") values (");
 				sql.append(insertRejIdColValues).append(",");
-				if (isAssignPK && isSupportNUL) {
+				if (isAssignPK) {
 					sql.append(isNullFunction);
 					sql.append("(tv.").append(columnName).append(",");
 					sql.append(sequence).append(") ");
@@ -1963,7 +1962,7 @@ public class DialectUtils {
 		String insertSql = DialectExtUtils
 				.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), "ifnull",
 						"NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName)
-				.replaceFirst("(?i)insert ", "insert or ignore into ");
+				.replaceFirst("(?i)insert ", "insert or ignore ");
 		Long saveCnt = saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql, entities,
 				batchSize, reflectPropsHandler, conn, dbType, null);
 		logger.debug("级联子表:{} 变更记录数:{},新建记录数为:{}", tableName, updateCnt, saveCnt);

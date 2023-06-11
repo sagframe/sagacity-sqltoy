@@ -960,8 +960,8 @@ public class SqlXMLConfigParse {
 					cacheFilterModel.setCompareParam(cacheFilter.getAttribute("compare-param").toLowerCase());
 					// 非数字，如是参数名称，加入到arg中，便于统一提取参数属性对应的值
 					if (!NumberUtil.isNumber(cacheFilterModel.getCompareParam())
-							&& !cacheFilterModel.getCompareParam().equals("true")
-							&& !cacheFilterModel.getCompareParam().equals("false")) {
+							&& !"true".equals(cacheFilterModel.getCompareParam())
+							&& !"false".equals(cacheFilterModel.getCompareParam())) {
 						sqlToyConfig.addCacheArgParam(cacheFilterModel.getCompareParam());
 					}
 					if (cacheFilter.hasAttribute("compare-type")) {
@@ -1021,6 +1021,10 @@ public class SqlXMLConfigParse {
 		// 数据类型
 		if (filter.hasAttribute("data-type")) {
 			filterModel.setDataType(filter.getAttribute("data-type").toLowerCase());
+		}
+		// default 功能中设置数组
+		if (filter.hasAttribute("is-array")) {
+			filterModel.setIsArray(Boolean.parseBoolean(filter.getAttribute("is-array")));
 		}
 	}
 
@@ -1461,17 +1465,17 @@ public class SqlXMLConfigParse {
 						if (sumFilter.hasAttribute("compare-type")) {
 							treeSortModel.setCompareType(sumFilter.getAttribute("compare-type"));
 							// 统一对比类型
-							if (treeSortModel.getCompareType().equals("eq")) {
+							if ("eq".equals(treeSortModel.getCompareType())) {
 								treeSortModel.setCompareType("==");
-							} else if (treeSortModel.getCompareType().equals("neq")) {
+							} else if ("neq".equals(treeSortModel.getCompareType())) {
 								treeSortModel.setCompareType("!=");
-							} else if (treeSortModel.getCompareType().equals("gt")) {
+							} else if ("gt".equals(treeSortModel.getCompareType())) {
 								treeSortModel.setCompareType(">");
-							} else if (treeSortModel.getCompareType().equals("gte")) {
+							} else if ("gte".equals(treeSortModel.getCompareType())) {
 								treeSortModel.setCompareType(">=");
-							} else if (treeSortModel.getCompareType().equals("lt")) {
+							} else if ("lt".equals(treeSortModel.getCompareType())) {
 								treeSortModel.setCompareType("<");
-							} else if (treeSortModel.getCompareType().equals("lte")) {
+							} else if ("lte".equals(treeSortModel.getCompareType())) {
 								treeSortModel.setCompareType("<=");
 							}
 						}

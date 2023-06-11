@@ -248,7 +248,9 @@ public class SqlLoop extends AbstractMacro {
 	 * @return
 	 */
 	private String replaceAllArgs(String queryStr, Map<String, Object> loopParamNamesMap) {
-		Matcher m = SqlToyConstants.SQL_NAMED_PATTERN.matcher(queryStr);
+		// 首位补充一个空白
+		String matchStr = BLANK.concat(queryStr);
+		Matcher m = SqlToyConstants.SQL_NAMED_PATTERN.matcher(matchStr);
 		StringBuilder lastSql = new StringBuilder();
 		int start = 0;
 		String group;
@@ -262,7 +264,7 @@ public class SqlLoop extends AbstractMacro {
 			// 剔除\\W\\: 两位字符
 			paramName = group.substring(2).trim();
 			// 往后移1位(因为\\W表达式开头)
-			preSql = queryStr.substring(start, m.start() + 1);
+			preSql = matchStr.substring(start, m.start() + 1);
 			// 是否是=:param 或!=:param等判断符号直接连接参数的情况，便于输出日期、字符参数时判断是否加单引号
 			hasCompare = StringUtil.matches(preSql, COMPARE_PATTERN);
 			key = ":".concat(paramName);
@@ -287,8 +289,9 @@ public class SqlLoop extends AbstractMacro {
 			return queryStr;
 		}
 		// 添加尾部sql
-		lastSql.append(queryStr.substring(start));
-		return lastSql.toString();
+		lastSql.append(matchStr.substring(start));
+		// 剔除开始补充的空白
+		return lastSql.toString().substring(1);
 	}
 
 	/**

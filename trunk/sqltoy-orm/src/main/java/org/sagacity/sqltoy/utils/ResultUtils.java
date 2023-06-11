@@ -1105,6 +1105,9 @@ public class ResultUtils {
 			if (null != fieldValue) {
 				if (fieldValue instanceof java.sql.Clob) {
 					fieldValue = SqlUtil.clobToString((java.sql.Clob) fieldValue);
+				} else if (fieldValue instanceof java.sql.Blob) {
+					java.sql.Blob blob = (java.sql.Blob) fieldValue;
+					fieldValue = blob.getBytes(1, (int) blob.length());
 				}
 				// 有一个非null
 				allNull = false;
@@ -1131,6 +1134,9 @@ public class ResultUtils {
 			if (null != fieldValue) {
 				if (fieldValue instanceof java.sql.Clob) {
 					fieldValue = SqlUtil.clobToString((java.sql.Clob) fieldValue);
+				} else if (fieldValue instanceof java.sql.Blob) {
+					java.sql.Blob blob = (java.sql.Blob) fieldValue;
+					fieldValue = blob.getBytes(1, (int) blob.length());
 				}
 				// 解密
 				if (decryptHandler != null) {
@@ -1178,6 +1184,9 @@ public class ResultUtils {
 				allNull = false;
 				if (fieldValue instanceof java.sql.Clob) {
 					fieldValue = SqlUtil.clobToString((java.sql.Clob) fieldValue);
+				} else if (fieldValue instanceof java.sql.Blob) {
+					java.sql.Blob blob = (java.sql.Blob) fieldValue;
+					fieldValue = blob.getBytes(1, (int) blob.length());
 				}
 				// 解密
 				if (decryptHandler != null) {
@@ -1648,7 +1657,7 @@ public class ResultUtils {
 			// oneToOne模式
 			if (cascade.getCascadeType() == 2) {
 				hasCascade = false;
-				//首先依据指定的层次级联对象
+				// 首先依据指定的层次级联对象
 				if (hiberarchyClasses != null) {
 					for (Class hiberarchyClass : hiberarchyClasses) {
 						if (hiberarchyClass.equals(cascade.getMappedType())) {

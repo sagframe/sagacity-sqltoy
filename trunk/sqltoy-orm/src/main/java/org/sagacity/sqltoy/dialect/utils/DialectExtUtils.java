@@ -298,7 +298,6 @@ public class DialectExtUtils {
 		if (null != mergeIgnoreSql) {
 			return mergeIgnoreSql;
 		}
-		boolean isSupportNUL = StringUtil.isBlank(isNullFunction) ? false : true;
 		int columnSize = entityMeta.getFieldsArray().length;
 		StringBuilder sql = new StringBuilder(columnSize * 30 + 100);
 		String columnName;
@@ -370,7 +369,7 @@ public class DialectExtUtils {
 				sql.append(columnName);
 				sql.append(") values (");
 				sql.append(insertRejIdColValues).append(",");
-				if (isAssignPK && isSupportNUL) {
+				if (isAssignPK) {
 					sql.append(isNullFunction);
 					sql.append("(tv.").append(columnName).append(",");
 					sql.append(sequence).append(") ");
@@ -437,28 +436,40 @@ public class DialectExtUtils {
 			field = entityMeta.getFieldsArray()[i];
 			fieldMeta = entityMeta.getFieldMeta(field);
 			columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
-			if (!isStart) {
-				sql.append(",");
-				values.append(",");
-			}
 			if (fieldMeta.isPK()) {
 				// identity主键策略，且支持主键手工赋值
 				if (pkStrategy.equals(PKStrategy.IDENTITY)) {
 					if (isAssignPK) {
+						if (!isStart) {
+							sql.append(",");
+							values.append(",");
+						}
 						sql.append(columnName);
 						values.append("?");
 						isStart = false;
 					}
 				} else if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
+					if (!isStart) {
+						sql.append(",");
+						values.append(",");
+					}
 					sql.append(columnName);
 					values.append(isNullFunction).append("(?,").append(sequence).append(")");
 					isStart = false;
 				} else {
+					if (!isStart) {
+						sql.append(",");
+						values.append(",");
+					}
 					sql.append(columnName);
 					values.append("?");
 					isStart = false;
 				}
 			} else {
+				if (!isStart) {
+					sql.append(",");
+					values.append(",");
+				}
 				sql.append(columnName);
 				values.append("?");
 				isStart = false;

@@ -27,6 +27,8 @@ import org.slf4j.LoggerFactory;
  * @description 对QueryExecutor参数进行初始化，避免之前在其内部包含过多逻辑，导致维护和理解困难
  * @author zhongxuchen
  * @version v1.0,Date:2021年10月11日
+ * @modify 2023-06-11 {兼容查询:names("xxx").values(new
+ *         Object[]{}),单个参数名，传递的值是数组特殊场景}
  */
 public class QueryExecutorBuilder {
 	/**
@@ -71,8 +73,9 @@ public class QueryExecutorBuilder {
 				&& !BeanUtil.isBaseDataType(extend.paramsValue[0].getClass())) {
 			fullParamValues = BeanUtil.reflectBeanToAry(extend.paramsValue[0], fullParamNames);
 		} else {
-			// 校验条件参数合法性
-			if (paramsNameSize != paramsValueSize) {
+			// update 2023-06-11,兼容查询:names("xxx").values(new Object[]{}),单个参数名，传递的值是数组特殊场景
+			// 校验条件参数合法性(排除参数名称长度为1，数据长度>1)
+			if (paramsNameSize != paramsValueSize && !(paramsNameSize == 1 && paramsValueSize > 1)) {
 				throw new IllegalArgumentException(
 						"参数名称数组长度:" + paramsNameSize + " 和参数值数组长度:" + paramsValueSize + "不一致,请检查!");
 			}
@@ -82,7 +85,13 @@ public class QueryExecutorBuilder {
 			String paramLow;
 			// 将传递的paramValues填充到扩展后数组的对应位置
 			if (paramNames != null && paramNames.length > 0) {
-				Object[] paramValues = extend.paramsValue;
+				Object[] paramValues;
+				// 参数数量为1，数据长度大于1，将数据归并成一个单一数组值
+				if (paramsNameSize == 1 && paramsValueSize > 1) {
+					paramValues = new Object[] { extend.paramsValue };
+				} else {
+					paramValues = extend.paramsValue;
+				}
 				Map<String, Integer> paramIndexMap = new HashMap<String, Integer>();
 				for (int i = 0; i < paramNames.length; i++) {
 					paramIndexMap.put(paramNames[i].toLowerCase(), i);
@@ -123,7 +132,7 @@ public class QueryExecutorBuilder {
 	}
 
 	/**
-	 * @TODO 统一数据权限条件参数:1、前端没有传则自动填充；2、前端传值，对所传值进行是否超出授权数据范围校验
+	 * @TODO 统一数据权限条件参数:1、前端没有传则自动填充；2、前端传值，对所传值进行是否超出授权数据范围校验,没有越权则以前端传值为准
 	 * @param unifyFieldsHandler
 	 * @param sqlToyConfig
 	 * @param fullParamNames
@@ -389,7 +398,7 @@ public class QueryExecutorBuilder {
 
 			// 分页需要将?转参数名称模式
 			if (wrapNamedArgs) {
-				//只在分页场景下校验
+				// 只在分页场景下校验
 				if (argCount != valuesSize) {
 					throw new IllegalArgumentException("参数值数量:" + valuesSize + " 跟sql中的?条件数量" + argCount
 							+ "不匹配,请检查,如是json或sql中存在?特殊字符但无实际条件参数场景，可通过虚构一个条件参数如where #[1=:flag]解决!");
