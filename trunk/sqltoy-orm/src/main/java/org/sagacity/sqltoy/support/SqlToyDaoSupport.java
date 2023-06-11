@@ -66,6 +66,7 @@ import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.inner.TranslateExtend;
 import org.sagacity.sqltoy.plugins.CrossDbAdapter;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
+import org.sagacity.sqltoy.plugins.UnifyUpdateFieldsController;
 import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
 import org.sagacity.sqltoy.plugins.id.IdGenerator;
 import org.sagacity.sqltoy.plugins.id.impl.RedisIdGenerator;
@@ -1990,6 +1991,7 @@ public class SqlToyDaoSupport {
 	 * @TODO 针对单表对象查询进行更新操作(update和delete 操作filters过滤是无效的，必须是精准的条件参数)
 	 * @param entityClass
 	 * @param entityUpdate
+	 * @update 2021-12-23 支持update table set field=field+1等计算模式
 	 * @return
 	 */
 	protected Long updateByQuery(Class entityClass, EntityUpdate entityUpdate) {
@@ -2033,19 +2035,31 @@ public class SqlToyDaoSupport {
 		// 对统一更新字段做处理
 		IUnifyFieldsHandler unifyHandler = getSqlToyContext().getUnifyFieldsHandler();
 		if (unifyHandler != null) {
-			Map<String, Object> updateFields = unifyHandler.updateUnifyFields();
+			Map<String, Object> updateFields = UnifyUpdateFieldsController.useUnifyFields()
+					? unifyHandler.updateUnifyFields()
+					: null;
 			if (updateFields != null && !updateFields.isEmpty()) {
 				Iterator<Entry<String, Object>> updateIter = updateFields.entrySet().iterator();
+				String columnName;
 				while (updateIter.hasNext()) {
 					entry = updateIter.next();
+					columnName = entityMeta.getColumnName(entry.getKey());
 					// 是数据库表的字段
-					if (entityMeta.getColumnName(entry.getKey()) != null) {
+					if (columnName != null) {
 						// 是否已经主动update
-						if (innerModel.updateValues.containsKey(entry.getKey())) {
-							// 判断是否存在强制更新
+						if (innerModel.updateValues.containsKey(entry.getKey())
+								|| innerModel.updateValues.containsKey(columnName)) {
+							// 存在强制更新
 							if (unifyHandler.forceUpdateFields() != null
 									&& unifyHandler.forceUpdateFields().contains(entry.getKey())) {
-								innerModel.updateValues.put(entry.getKey(), entry.getValue());
+								// 覆盖主动设置的值
+								// 以表字段名称模式设置的值
+								if (innerModel.updateValues.containsKey(columnName)) {
+									innerModel.updateValues.put(columnName, entry.getValue());
+								} else {
+									// 属性名称设置的值
+									innerModel.updateValues.put(entry.getKey(), entry.getValue());
+								}
 							}
 						} else {
 							innerModel.updateValues.put(entry.getKey(), entry.getValue());
@@ -2126,9 +2140,9 @@ public class SqlToyDaoSupport {
 		queryExecutor.getInnerModel().blankToNull = (innerModel.blankToNull == null)
 				? SqlToyConstants.executeSqlBlankToNull
 				: innerModel.blankToNull;
-		setEntitySharding(queryExecutor, entityMeta);
 		// 为后续租户过滤提供判断依据(单表简单sql和对应的实体对象)
 		queryExecutor.getInnerModel().entityClass = entityClass;
+		setEntitySharding(queryExecutor, entityMeta);
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.update,
 				getDialect(innerModel.dataSource));
 		sqlToyConfig.setSqlType(SqlType.update);

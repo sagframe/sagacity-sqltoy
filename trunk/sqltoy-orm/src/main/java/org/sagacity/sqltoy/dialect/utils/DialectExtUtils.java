@@ -63,7 +63,6 @@ public class DialectExtUtils {
 		FieldMeta fieldMeta;
 		String field;
 		boolean isStart = true;
-		boolean isSupportNULL = StringUtil.isBlank(isNullFunction) ? false : true;
 		String columnName;
 		boolean isString = false;
 		for (int i = 0; i < columnSize; i++) {
@@ -94,7 +93,7 @@ public class DialectExtUtils {
 						values.append(",");
 					}
 					sql.append(columnName);
-					if (isAssignPK && isSupportNULL) {
+					if (isAssignPK) {
 						values.append(isNullFunction);
 						values.append("(?,").append(sequence).append(")");
 					} else {
@@ -158,11 +157,6 @@ public class DialectExtUtils {
 		// 是否是各种数据库的当前时间、日期的字符
 		String defaultLow = defaultValue.toLowerCase();
 		boolean isCurrentTime = SqlUtilsExt.isCurrentTime(defaultLow);
-		// 无法解决同一个POJO的默认值注解在不同数据库下的兼容
-		// if (isCurrentTime) {
-		// sql.append(defaultValue);
-		// return;
-		// }
 		int dateType = -1;
 		// 时间
 		if ("java.time.localtime".equals(fieldType) || "java.sql.time".equals(fieldType)) {
@@ -437,28 +431,40 @@ public class DialectExtUtils {
 			field = entityMeta.getFieldsArray()[i];
 			fieldMeta = entityMeta.getFieldMeta(field);
 			columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
-			if (!isStart) {
-				sql.append(",");
-				values.append(",");
-			}
 			if (fieldMeta.isPK()) {
 				// identity主键策略，且支持主键手工赋值
 				if (pkStrategy.equals(PKStrategy.IDENTITY)) {
 					if (isAssignPK) {
+						if (!isStart) {
+							sql.append(",");
+							values.append(",");
+						}
 						sql.append(columnName);
 						values.append("?");
 						isStart = false;
 					}
 				} else if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
+					if (!isStart) {
+						sql.append(",");
+						values.append(",");
+					}
 					sql.append(columnName);
 					values.append(isNullFunction).append("(?,").append(sequence).append(")");
 					isStart = false;
 				} else {
+					if (!isStart) {
+						sql.append(",");
+						values.append(",");
+					}
 					sql.append(columnName);
 					values.append("?");
 					isStart = false;
 				}
 			} else {
+				if (!isStart) {
+					sql.append(",");
+					values.append(",");
+				}
 				sql.append(columnName);
 				values.append("?");
 				isStart = false;

@@ -152,9 +152,9 @@ public class ParamFilterModel implements Serializable {
 	private TimeUnit timeUnit = TimeUnit.DAYS;
 
 	/**
-	 * 最大匹配数量为1000
+	 * 最大匹配数量为500
 	 */
-	private int cacheMappingMax = 1000;
+	private int cacheMappingMax = 500;
 
 	/**
 	 * 缓存条件过滤配置
@@ -185,6 +185,11 @@ public class ParamFilterModel implements Serializable {
 	 * 缓存未匹配到key，返回检索词自身
 	 */
 	private boolean cacheNotMatchedReturnSelf = true;
+
+	/**
+	 * 是否数组
+	 */
+	private Boolean isArray = false;
 
 	public String getFilterType() {
 		return filterType;
@@ -576,4 +581,11 @@ public class ParamFilterModel implements Serializable {
 		this.addQuote = addQuote;
 	}
 
+	public Boolean getIsArray() {
+		return isArray;
+	}
+
+	public void setIsArray(Boolean isArray) {
+		this.isArray = isArray;
+	}
 }

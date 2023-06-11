@@ -1095,6 +1095,9 @@ public class ResultUtils {
 			if (null != fieldValue) {
 				if (fieldValue instanceof java.sql.Clob) {
 					fieldValue = SqlUtil.clobToString((java.sql.Clob) fieldValue);
+				} else if (fieldValue instanceof java.sql.Blob) {
+					java.sql.Blob blob = (java.sql.Blob) fieldValue;
+					fieldValue = blob.getBytes(1, (int) blob.length());
 				}
 				// 有一个非null
 				allNull = false;
@@ -1121,6 +1124,9 @@ public class ResultUtils {
 			if (null != fieldValue) {
 				if (fieldValue instanceof java.sql.Clob) {
 					fieldValue = SqlUtil.clobToString((java.sql.Clob) fieldValue);
+				} else if (fieldValue instanceof java.sql.Blob) {
+					java.sql.Blob blob = (java.sql.Blob) fieldValue;
+					fieldValue = blob.getBytes(1, (int) blob.length());
 				}
 				// 解密
 				if (decryptHandler != null) {
@@ -1168,6 +1174,9 @@ public class ResultUtils {
 				allNull = false;
 				if (fieldValue instanceof java.sql.Clob) {
 					fieldValue = SqlUtil.clobToString((java.sql.Clob) fieldValue);
+				} else if (fieldValue instanceof java.sql.Blob) {
+					java.sql.Blob blob = (java.sql.Blob) fieldValue;
+					fieldValue = blob.getBytes(1, (int) blob.length());
 				}
 				// 解密
 				if (decryptHandler != null) {
