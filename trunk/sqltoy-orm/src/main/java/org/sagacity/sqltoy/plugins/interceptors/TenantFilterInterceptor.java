@@ -43,10 +43,8 @@ public class TenantFilterInterceptor implements SqlInterceptor {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entityClass);
 		String tenantColumn = null;
 		// @Tenant 注解模式标注某个字段是否为租户字段
-		if (entityMeta.getTenantField() == null) {
-			return sqlToyResult;
-		} else {
-			tenantColumn = entityMeta.getTenantField();
+		if (entityMeta.getTenantField() != null) {
+			tenantColumn = entityMeta.getColumnName(entityMeta.getTenantField());
 		}
 		// 注意:如果租户字段是统一的，也可以通过下面方式判断表中是否有租户字段
 		// tenantColumn = entityMeta.getColumnName("tenantId");
