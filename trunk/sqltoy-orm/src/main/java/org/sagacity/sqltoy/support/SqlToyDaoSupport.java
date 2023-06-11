@@ -2058,6 +2058,7 @@ public class SqlToyDaoSupport {
 		int valueSize = (values == null) ? 0 : values.length;
 		// 重新通过对象反射获取参数条件的值
 		if (isName) {
+			// 校验必须是dto、map形式传参数
 			if (values.length > 1) {
 				throw new IllegalArgumentException("updateByQuery: where条件采用:paramName形式传参,values只能传递单个VO或Map对象!");
 			}

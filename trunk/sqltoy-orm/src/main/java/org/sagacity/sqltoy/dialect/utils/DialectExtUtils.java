@@ -312,7 +312,6 @@ public class DialectExtUtils {
 		if (null != mergeIgnoreSql) {
 			return mergeIgnoreSql;
 		}
-		boolean isSupportNUL = StringUtil.isBlank(isNullFunction) ? false : true;
 		// 创建记录时，创建时间、最后修改时间等取数据库时间
 		IgnoreCaseSet createSqlTimeFields = (unifyFieldsHandler == null
 				|| unifyFieldsHandler.createSqlTimeFields() == null) ? new IgnoreCaseSet()
@@ -418,7 +417,7 @@ public class DialectExtUtils {
 				sql.append(columnName);
 				sql.append(") values (");
 				sql.append(insertRejIdColValues).append(",");
-				if (isAssignPK && isSupportNUL) {
+				if (isAssignPK) {
 					sql.append(isNullFunction);
 					sql.append("(tv.").append(columnName).append(",");
 					sql.append(sequence).append(") ");

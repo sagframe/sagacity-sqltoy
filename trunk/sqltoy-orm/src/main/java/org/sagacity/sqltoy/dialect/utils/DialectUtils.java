@@ -690,7 +690,6 @@ public class DialectUtils {
 				|| unifyFieldsHandler.updateSqlTimeFields() == null) ? new IgnoreCaseSet()
 						: unifyFieldsHandler.updateSqlTimeFields();
 		String currentTimeStr;
-		boolean isSupportNUL = StringUtil.isBlank(isNullFunction) ? false : true;
 		int columnSize = entityMeta.getFieldsArray().length;
 		StringBuilder sql = new StringBuilder(columnSize * 30 + 100);
 		String columnName;
@@ -798,7 +797,7 @@ public class DialectUtils {
 				// 将创建人、创建时间等模拟成默认值
 				defaultValue = DialectExtUtils.getInsertDefaultValue(createUnifyFields, dbType, fieldMeta);
 				// 存在默认值
-				if (isSupportNUL && null != defaultValue) {
+				if (null != defaultValue) {
 					insertRejIdColValues.append(isNullFunction);
 					insertRejIdColValues.append("(tv.").append(columnName).append(",");
 					DialectExtUtils.processDefaultValue(insertRejIdColValues, dbType, fieldMeta, defaultValue);
@@ -835,7 +834,7 @@ public class DialectUtils {
 				sql.append(columnName);
 				sql.append(") values (");
 				sql.append(insertRejIdColValues).append(",");
-				if (isAssignPK && isSupportNUL) {
+				if (isAssignPK) {
 					sql.append(isNullFunction);
 					sql.append("(tv.").append(columnName).append(",");
 					sql.append(sequence).append(") ");

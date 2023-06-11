@@ -400,7 +400,7 @@ public class ParamFilterUtils {
 			String compareType = paramFilterModel.getCompareType();
 			String[] compareValues = paramFilterModel.getCompareValues();
 			if ("==".equals(compareType)) {
-				if (null == paramValue && (null == compareValues || compareValues[0].equals("null"))) {
+				if (null == paramValue && (null == compareValues || "null".equals(compareValues[0]))) {
 					isExclusive = true;
 				} else if (null != paramValue && null != compareValues) {
 					// 返回null表示条件成立
@@ -1012,7 +1012,7 @@ public class ParamFilterUtils {
 	 * @return
 	 */
 	private static Date parseDateStr(String dateStr) {
-		if (dateStr.equals("sysdate()") || dateStr.equals("now()")) {
+		if ("sysdate()".equals(dateStr) || "now()".equals(dateStr)) {
 			return DateUtil.getNowTime();
 		}
 		String[] tmpAry = null;
@@ -1034,13 +1034,13 @@ public class ParamFilterUtils {
 			if (StringUtil.matches(addStr, "[a-z|A-Z]$")) {
 				// 最后一位字母
 				String addTypeStr = addStr.substring(addStr.length() - 1).toLowerCase();
-				if (addTypeStr.equals("h")) {
+				if ("h".equals(addTypeStr)) {
 					addType = 1;
-				} else if (addTypeStr.equals("w")) {
+				} else if ("w".equals(addTypeStr)) {
 					addType = 3;
-				} else if (addTypeStr.equals("m")) {
+				} else if ("m".equals(addTypeStr)) {
 					addType = 4;
-				} else if (addTypeStr.equals("y")) {
+				} else if ("y".equals(addTypeStr)) {
 					addType = 5;
 				}
 				addValue = Integer.parseInt(addStr.substring(0, addStr.length() - 1));
@@ -1056,24 +1056,24 @@ public class ParamFilterUtils {
 			if (firstString.startsWith("'") && firstString.endsWith("'")) {
 				firstString = firstString.substring(1, firstString.length() - 1);
 			}
-			if (firstString.equals("sysdate()") || firstString.equals("now()")) {
+			if ("sysdate()".equals(firstString) || "now()".equals(firstString)) {
 				starDate = DateUtil.getNowTime();
-			} else if (firstString.equals("first_of_month")) {
+			} else if ("first_of_month".equals(firstString)) {
 				starDate = DateUtil.firstDayOfMonth(DateUtil.getNowTime());
-			} else if (firstString.equals("first_of_year")) {
+			} else if ("first_of_year".equals(firstString)) {
 				starDate = DateUtil.parse((DateUtil.getYear(DateUtil.getNowTime()) + "-01-01"), "yyyy-MM-dd");
-			} else if (firstString.equals("last_of_month")) {
+			} else if ("last_of_month".equals(firstString)) {
 				starDate = DateUtil.lastDayOfMonth(DateUtil.getNowTime());
-			} else if (firstString.equals("last_of_year")) {
+			} else if ("last_of_year".equals(firstString)) {
 				starDate = DateUtil.parse((DateUtil.getYear(DateUtil.getNowTime()) + "-12-31"), "yyyy-MM-dd");
-			} else if (firstString.equals("first_of_month")) {
+			} else if ("first_of_month".equals(firstString)) {
 				starDate = DateUtil.firstDayOfMonth(DateUtil.getNowTime());
-			} else if (firstString.equals("first_of_week")) {
+			} else if ("first_of_week".equals(firstString)) {
 				Calendar ca = Calendar.getInstance();
 				ca.setTime(DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT));
 				ca.add(Calendar.DAY_OF_WEEK, -ca.get(Calendar.DAY_OF_WEEK) + 2);
 				starDate = ca.getTime();
-			} else if (firstString.equals("last_of_week")) {
+			} else if ("last_of_week".equals(firstString)) {
 				Calendar ca = Calendar.getInstance();
 				ca.setTime(DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT));
 				ca.add(Calendar.DAY_OF_WEEK, -ca.get(Calendar.DAY_OF_WEEK) + 8);

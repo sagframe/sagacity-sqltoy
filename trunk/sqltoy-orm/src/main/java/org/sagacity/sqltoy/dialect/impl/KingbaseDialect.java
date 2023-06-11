@@ -201,9 +201,10 @@ public class KingbaseDialect implements Dialect {
 				}, reflectPropsHandler, conn, dbType, autoCommit);
 	}
 
+	@Override
 	public Long saveAllIgnoreExist(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType, final String dialect,
-			final Boolean autoCommit, final String tableName) throws Exception {
+								   ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType, final String dialect,
+								   final Boolean autoCommit, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		return DialectUtils.saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta,
 				new GenerateSqlHandler() {
@@ -346,7 +347,7 @@ public class KingbaseDialect implements Dialect {
 						// update 级联操作过程中会自动判断数据库类型
 						return DialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
 								entityMeta, pkStrategy, forceUpdateFields, null, NVL_FUNCTION, sequence, isAssignPK,
-								tableName);
+								null);
 					}
 				}, emptyCascadeClasses, subTableForceUpdateProps, conn, dbType, tableName);
 	}

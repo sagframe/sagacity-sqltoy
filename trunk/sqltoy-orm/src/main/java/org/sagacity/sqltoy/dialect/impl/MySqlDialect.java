@@ -317,14 +317,8 @@ public class MySqlDialect implements Dialect {
 			final boolean cascade, final Class[] emptyCascadeClasses,
 			final HashMap<Class, String[]> subTableForceUpdateProps, Connection conn, final Integer dbType,
 			final String dialect, final String tableName) throws Exception {
-		return DialectUtils.update(sqlToyContext, entity, NVL_FUNCTION, forceUpdateFields, cascade,
-				(cascade == false) ? null : new GenerateSqlHandler() {
-					@Override
-					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
-						return MySqlDialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
-								entityMeta, forceUpdateFields, null);
-					}
-				}, emptyCascadeClasses, subTableForceUpdateProps, conn, dbType, tableName);
+		return DialectUtils.update(sqlToyContext, entity, NVL_FUNCTION, forceUpdateFields, cascade, null,
+				emptyCascadeClasses, subTableForceUpdateProps, conn, dbType, tableName);
 	}
 
 	/*
