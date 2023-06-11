@@ -199,6 +199,7 @@ public class SqlToyConstants {
 	public final static String MARK_ORIGINAL_END = " /*-- sqltoy_original_mark_end --*/ ";
 
 	public final static String MERGE_ALIAS_ON = ") tv on (";
+	public final static String MERGE_ALIAS_ON_REGEX = "\\) tv on \\(";
 	public final static String MERGE_UPDATE = " when matched then update set ";
 	public final static String MERGE_INSERT = " when not matched then insert ";
 

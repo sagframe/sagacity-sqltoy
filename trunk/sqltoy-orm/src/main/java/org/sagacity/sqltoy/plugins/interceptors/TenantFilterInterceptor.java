@@ -40,25 +40,25 @@ public class TenantFilterInterceptor implements SqlInterceptor {
 		if (sqlToyContext.getUnifyFieldsHandler() == null || entityClass == null) {
 			return sqlToyResult;
 		}
-		// 根据表名获取pojo的信息
-		// EntityMeta entityMeta = sqlToyContext.getEntityMeta(tableName);
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entityClass);
-		// 不存在租户过滤控制
+		String tenantColumn = null;
+		// @Tenant 注解模式标注某个字段是否为租户字段
 		if (entityMeta.getTenantField() == null) {
 			return sqlToyResult;
+		} else {
+			tenantColumn = entityMeta.getTenantField();
 		}
-		// 你也可以判断表里面是否包含统一的租户字段，而非@Tenant注解模式
-		// if (entityMeta.getColumnName("tenantId") != null) {
-		// }
-
+		// 注意:如果租户字段是统一的，也可以通过下面方式判断表中是否有租户字段
+		// tenantColumn = entityMeta.getColumnName("tenantId");
+		if (tenantColumn == null) {
+			return sqlToyResult;
+		}
 		// 授权租户信息为空不做过滤
 		String[] tenants = sqlToyContext.getUnifyFieldsHandler().authTenants(entityClass, operateType);
 		if (tenants == null || tenants.length == 0) {
 			return sqlToyResult;
 		}
 		String sql = sqlToyResult.getSql();
-		// 租户字段
-		String tenantColumn = entityMeta.getColumnName(entityMeta.getTenantField());
 		// 保留字处理(实际不会出现保留字用作租户)
 		tenantColumn = ReservedWordsUtil.convertWord(tenantColumn, dbType);
 		int whereIndex = StringUtil.matchIndex(sql, "(?i)\\Wwhere\\W");
@@ -90,12 +90,13 @@ public class TenantFilterInterceptor implements SqlInterceptor {
 				int end = onTenantIndex + SqlToyConstants.MERGE_ALIAS_ON.length();
 				String aliasName = sql.substring(end, sql.indexOf(".", end)).trim();
 				// 去除where、租户字段加上表别名，末尾补充and跟后续条件衔接
-				sqlPart = sqlPart.replaceFirst(where, "").replaceFirst(tenantColumn, aliasName + "." + tenantColumn)
-						.concat(" and ");
-				sqlToyResult.setSql(sql.replaceFirst(SqlToyConstants.MERGE_ALIAS_ON,
-						SqlToyConstants.MERGE_ALIAS_ON.concat(sqlPart)));
+				sqlPart = sqlPart.replaceFirst(where, "").replaceFirst(tenantColumn, aliasName + "." + tenantColumn);
+				sql = sql.replaceFirst(SqlToyConstants.MERGE_ALIAS_ON_REGEX,
+						SqlToyConstants.MERGE_ALIAS_ON.concat(sqlPart));
+				sqlToyResult.setSql(sql);
 			} else {
-				sqlToyResult.setSql(sql.replaceFirst("(?i)\\swhere\\s", sqlPart));
+				sql = sql.replaceFirst("(?i)\\swhere\\s", sqlPart);
+				sqlToyResult.setSql(sql);
 			}
 		}
 		// 通过表名获取entityMeta、并判断表里面是否有租户字段
