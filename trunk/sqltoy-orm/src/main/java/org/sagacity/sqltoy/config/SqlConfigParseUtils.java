@@ -359,7 +359,7 @@ public class SqlConfigParseUtils {
 				if (result[i] == null) {
 					keyAndIndex = BeanUtil.getKeyAndIndex(nameLow);
 					if (keyAndIndex != null) {
-						result[i] = BeanUtil.getAryPropValue(nameValueMap.get(keyAndIndex.getKey()),
+						result[i] = BeanUtil.getArrayIndexValue(nameValueMap.get(keyAndIndex.getKey()),
 								keyAndIndex.getIndex());
 					}
 				}
