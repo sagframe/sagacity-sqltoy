@@ -842,6 +842,132 @@ public class ParamFilterUtils {
 		return result;
 	}
 
+	private static Object convertType(String value, String dataType) {
+		if (value == null) {
+			return value;
+		}
+		if ("integer".equals(dataType) || "int".equals(dataType)) {
+			return Integer.valueOf(value);
+		} else if ("long".equals(dataType)) {
+			return Long.valueOf(value);
+		} else if ("float".equals(dataType)) {
+			return Float.valueOf(value);
+		} else if ("double".equals(dataType)) {
+			return Double.valueOf(value);
+		} else if ("decimal".equals(dataType) || "number".equals(dataType)) {
+			return new BigDecimal(value);
+		} else if ("localdate".equals(dataType)) {
+			return DateUtil.asLocalDate(parseDateStr(value));
+		} else if ("localdatetime".equals(dataType)) {
+			return DateUtil.asLocalDateTime(parseDateStr(value));
+		} else if ("localtime".equals(dataType)) {
+			return DateUtil.asLocalTime(parseDateStr(value));
+		} else if ("time".equals(dataType)) {
+			return new Time(parseDateStr(value).getTime());
+		} else if ("timestamp".equals(dataType)) {
+			return DateUtil.getTimestamp(parseDateStr(value));
+		} else if ("date".equals(dataType)) {
+			return parseDateStr(value);
+		} else if ("biginteger".equals(dataType)) {
+			return new BigInteger(value);
+		}
+		return value;
+	}
+
+	private static Date parseDateStr(String dateStr) {
+		if (dateStr.equals("sysdate()") || dateStr.equals("now()")) {
+			return DateUtil.getNowTime();
+		}
+		String[] tmpAry = null;
+		boolean isAdd = false;
+		// 1:hour;2:day;3:week;4:month;5:year
+		int addType = 2;
+		if (dateStr.contains("+")) {
+			tmpAry = dateStr.split("\\+");
+			isAdd = true;
+		} // sysdate()-2d形式，排除2023-05-20 纯以数字开头的纯日期
+		else if (!StringUtil.matches(dateStr, "^\\d{2,4}") && dateStr.contains("-")) {
+			tmpAry = dateStr.split("\\-");
+			isAdd = false;
+		}
+		if (tmpAry != null && tmpAry.length == 2) {
+			String addStr = tmpAry[1].trim();
+			int addValue = 0;
+			// sysdate()-2d 字母结尾
+			if (StringUtil.matches(addStr, "[a-z|A-Z]$")) {
+				// 最后一位字母
+				String addTypeStr = addStr.substring(addStr.length() - 1).toLowerCase();
+				if (addTypeStr.equals("h")) {
+					addType = 1;
+				} else if (addTypeStr.equals("w")) {
+					addType = 3;
+				} else if (addTypeStr.equals("m")) {
+					addType = 4;
+				} else if (addTypeStr.equals("y")) {
+					addType = 5;
+				}
+				addValue = Integer.parseInt(addStr.substring(0, addStr.length() - 1));
+			} else {
+				addValue = Integer.parseInt(addStr);
+			}
+			if (!isAdd) {
+				addValue = 0 - addValue;
+			}
+			Date starDate;
+			String firstString = tmpAry[0].trim().toLowerCase();
+			// '2019-12-13' 形式
+			if (firstString.startsWith("'") && firstString.endsWith("'")) {
+				firstString = firstString.substring(1, firstString.length() - 1);
+			}
+			if (firstString.equals("sysdate()") || firstString.equals("now()")) {
+				starDate = DateUtil.getNowTime();
+			} else if (firstString.equals("first_of_month")) {
+				starDate = DateUtil.firstDayOfMonth(DateUtil.getNowTime());
+			} else if (firstString.equals("first_of_year")) {
+				starDate = DateUtil.parse((DateUtil.getYear(DateUtil.getNowTime()) + "-01-01"), "yyyy-MM-dd");
+			} else if (firstString.equals("last_of_month")) {
+				starDate = DateUtil.lastDayOfMonth(DateUtil.getNowTime());
+			} else if (firstString.equals("last_of_year")) {
+				starDate = DateUtil.parse((DateUtil.getYear(DateUtil.getNowTime()) + "-12-31"), "yyyy-MM-dd");
+			} else if (firstString.equals("first_of_month")) {
+				starDate = DateUtil.firstDayOfMonth(DateUtil.getNowTime());
+			} else if (firstString.equals("first_of_week")) {
+				Calendar ca = Calendar.getInstance();
+				ca.setTime(DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT));
+				ca.add(Calendar.DAY_OF_WEEK, -ca.get(Calendar.DAY_OF_WEEK) + 2);
+				starDate = ca.getTime();
+			} else if (firstString.equals("last_of_week")) {
+				Calendar ca = Calendar.getInstance();
+				ca.setTime(DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT));
+				ca.add(Calendar.DAY_OF_WEEK, -ca.get(Calendar.DAY_OF_WEEK) + 8);
+				starDate = ca.getTime();
+			} else {
+				starDate = DateUtil.parseString(firstString);
+			}
+			// 小时
+			if (addType == 1) {
+				return DateUtil.addSecond(starDate, addValue * 3600);
+			}
+			// 天
+			if (addType == 2) {
+				return DateUtil.addDay(starDate, addValue);
+			}
+			// 周
+			if (addType == 3) {
+				return DateUtil.addDay(starDate, addValue * 7);
+			}
+			// 月
+			if (addType == 4) {
+				return DateUtil.addMonth(starDate, addValue);
+			}
+			// 年
+			if (addType == 5) {
+				return DateUtil.addYear(starDate, addValue);
+			}
+		}
+		return DateUtil.parseString(dateStr);
+	}
+
 	/**
 	 * @TODO 将字符串转成具体类型的值
 	 * @param value
