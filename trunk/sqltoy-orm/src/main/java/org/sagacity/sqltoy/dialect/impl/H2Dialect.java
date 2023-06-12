@@ -26,6 +26,7 @@ import org.sagacity.sqltoy.dialect.utils.H2DialectUtils;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
+import org.sagacity.sqltoy.utils.SqlUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -190,13 +191,12 @@ public class H2Dialect extends PostgreSqlDialect {
 
 	private String getLockSql(String sql, Integer dbType, LockMode lockMode) {
 		// 判断是否已经包含for update
-		// if (lockMode == null || SqlUtil.hasLock(sql, dbType)) {
-		// return "";
-		// }
-		// if (lockMode == LockMode.UPGRADE_NOWAIT) {
-		// return " for update nowait ";
-		// }
-		// return " for update ";
-		return "";
+		if (lockMode == null || SqlUtil.hasLock(sql, dbType)) {
+			return "";
+		}
+		if (lockMode == LockMode.UPGRADE_NOWAIT) {
+			return " for update nowait ";
+		}
+		return " for update ";
 	}
 }
