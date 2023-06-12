@@ -103,7 +103,7 @@ public class QueryExecutorBuilder {
 					} else {
 						keyAndIndex = BeanUtil.getKeyAndIndex(paramLow);
 						if (keyAndIndex != null && paramIndexMap.containsKey(keyAndIndex.getKey())) {
-							fullParamValues[i] = BeanUtil.getAryPropValue(
+							fullParamValues[i] = BeanUtil.getArrayIndexValue(
 									paramValues[paramIndexMap.get(keyAndIndex.getKey())], keyAndIndex.getIndex());
 						}
 					}
