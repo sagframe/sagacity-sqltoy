@@ -37,7 +37,7 @@ public enum OperateType {
 	singleTable(16),
 	// 单POJO保存
 	insert(17),
-	// 批量POOJO保存
+	// 批量POOJO保存（包含saveAllIgnoreExist）
 	insertAll(18);
 
 	private final int optType;
