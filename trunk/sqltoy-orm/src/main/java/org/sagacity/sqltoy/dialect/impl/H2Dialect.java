@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DecryptHandler;
 import org.sagacity.sqltoy.callback.GenerateSavePKStrategy;
@@ -27,7 +26,6 @@ import org.sagacity.sqltoy.dialect.utils.H2DialectUtils;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
-import org.sagacity.sqltoy.utils.SqlUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,9 +54,6 @@ public class H2Dialect extends PostgreSqlDialect {
 			Object[] paramsValue, QueryExecutorExtend queryExecutorExtend, final DecryptHandler decryptHandler,
 			final Connection conn, final LockMode lockMode, final Integer dbType, final String dialect,
 			final int fetchSize, final int maxRows) throws Exception {
-		if (LockMode.UPGRADE_SKIPLOCK == lockMode) {
-			throw new UnsupportedOperationException("h2 lock search," + SqlToyConstants.UN_SUPPORT_MESSAGE);
-		}
 		String realSql = sql.concat(getLockSql(sql, dbType, lockMode));
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, queryExecutorExtend,
 				decryptHandler, conn, dbType, 0, fetchSize, maxRows);
@@ -68,9 +63,6 @@ public class H2Dialect extends PostgreSqlDialect {
 	public Serializable load(SqlToyContext sqlToyContext, Serializable entity, List<Class> cascadeTypes,
 			LockMode lockMode, Connection conn, final Integer dbType, final String dialect, final String tableName)
 			throws Exception {
-		if (LockMode.UPGRADE_SKIPLOCK == lockMode) {
-			throw new UnsupportedOperationException("h2 lock search," + SqlToyConstants.UN_SUPPORT_MESSAGE);
-		}
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		// 获取loadsql(loadsql 可以通过@loadSql进行改变，所以需要sqltoyContext重新获取)
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(entityMeta.getLoadSql(tableName), SqlType.search,
@@ -191,21 +183,20 @@ public class H2Dialect extends PostgreSqlDialect {
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, UpdateRowHandler updateRowHandler, Connection conn, final Integer dbType,
 			final String dialect, final LockMode lockMode, final int fetchSize, final int maxRows) throws Exception {
-		if (LockMode.UPGRADE_SKIPLOCK == lockMode) {
-			throw new UnsupportedOperationException("h2 lock search," + SqlToyConstants.UN_SUPPORT_MESSAGE);
-		}
-		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, sql, paramsValue, updateRowHandler, conn,
+		String realSql = sql.concat(getLockSql(sql, dbType, (lockMode == null) ? LockMode.UPGRADE : lockMode));
+		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
 				dbType, 0, fetchSize, maxRows);
 	}
 
 	private String getLockSql(String sql, Integer dbType, LockMode lockMode) {
 		// 判断是否已经包含for update
-		if (lockMode == null || SqlUtil.hasLock(sql, dbType)) {
-			return "";
-		}
-		if (lockMode == LockMode.UPGRADE_NOWAIT) {
-			return " for update nowait ";
-		}
-		return " for update ";
+		// if (lockMode == null || SqlUtil.hasLock(sql, dbType)) {
+		// return "";
+		// }
+		// if (lockMode == LockMode.UPGRADE_NOWAIT) {
+		// return " for update nowait ";
+		// }
+		// return " for update ";
+		return "";
 	}
 }
