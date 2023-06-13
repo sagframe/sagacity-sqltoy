@@ -84,6 +84,7 @@ public class TenantFilterInterceptor implements SqlInterceptor {
 			if (operateType.equals(OperateType.saveOrUpdate) && sql.indexOf(SqlToyConstants.MERGE_UPDATE) > 0) {
 				// 截取merge int xxxx (select ?,? from dual) as tv on (alias.field=tv.xxx)
 				// 中的具体alias
+				//构造成:merge int xxxx (select ?,? from dual) as tv on (alias.tenant_id=xxx and alias.field=tv.xxx)
 				int onTenantIndex = sql.indexOf(SqlToyConstants.MERGE_ALIAS_ON);
 				int end = onTenantIndex + SqlToyConstants.MERGE_ALIAS_ON.length();
 				String aliasName = sql.substring(end, sql.indexOf(".", end)).trim();
