@@ -904,8 +904,6 @@ public class ParamFilterUtils {
 			tmpAry = dateStr.split("\\-");
 			isAdd = false;
 			firstString = tmpAry[0].trim().toLowerCase();
-		} else {
-			firstString = dateStr.toLowerCase();
 		}
 		if (tmpAry != null && tmpAry.length == 2) {
 			String addStr = tmpAry[1].trim();
