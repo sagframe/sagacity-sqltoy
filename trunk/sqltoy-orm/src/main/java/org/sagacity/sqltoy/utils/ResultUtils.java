@@ -591,8 +591,8 @@ public class ResultUtils {
 				} else {
 					linkStr = linkValue.toString();
 				}
-				identity = (linkModel.getIdColumns() == null) ? "default"
-						: getLinkColumnsId(rs, linkModel.getIdColumns());
+				identity = (linkModel.getGroupColumns() == null) ? "default"
+						: getLinkColumnsId(rs, linkModel.getGroupColumns());
 				// 不相等
 				if (!identity.equals(preIdentity)) {
 					if (index != 0) {
@@ -845,7 +845,8 @@ public class ResultUtils {
 				}
 			}
 			// 取分组列的值
-			identity = (linkModel.getIdColumns() == null) ? "default" : getLinkColumnsId(rs, linkModel.getIdColumns());
+			identity = (linkModel.getGroupColumns() == null) ? "default"
+					: getLinkColumnsId(rs, linkModel.getGroupColumns());
 			// 不相等
 			if (!identity.equals(preIdentity)) {
 				// 不相等时先对最后一条记录修改，写入拼接后的字符串

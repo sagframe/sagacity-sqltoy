@@ -11,12 +11,16 @@ import java.util.Map;
 import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
+import org.sagacity.sqltoy.config.model.ColsChainRelativeModel;
 import org.sagacity.sqltoy.config.model.FormatModel;
+import org.sagacity.sqltoy.config.model.LinkModel;
 import org.sagacity.sqltoy.config.model.PageOptimize;
 import org.sagacity.sqltoy.config.model.PivotModel;
+import org.sagacity.sqltoy.config.model.RowsChainRelativeModel;
 import org.sagacity.sqltoy.config.model.SecureMask;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.config.model.Translate;
+import org.sagacity.sqltoy.config.model.TreeSortModel;
 import org.sagacity.sqltoy.config.model.UnpivotModel;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.inner.TranslateExtend;
@@ -437,32 +441,107 @@ public class QueryExecutor implements Serializable {
 		return this;
 	}
 
-// 暂时不开放，组织SummaryModel、LinkModel参数模型过于复杂
+// 暂时不开放，组织SummaryModel参数模型过于复杂
 //	// 建议在xml中定义使用,没有xml结构无法清晰的构造SummaryModel模型
 //	/**
 //	 * @TODO 定义sqltoy查询结果的处理模式,目前仅提供合计和求平均
 //	 * @param summaryModel
 //	 * @return
 //	 */
-//	public QueryExecutor summary(SummaryModel summaryModel) {
-//		if (summaryModel != null) {
+//	public QueryExecutor summary(Summary... summarys) {
+//		if (summarys != null) {
+//			SummaryModel summaryModel = new SummaryModel();
 //			innerModel.calculators.add(summaryModel);
 //		}
 //		return this;
 //	}
-//
-//	// 建议在xml中定义使用,没有xml结构无法清晰的构造linkModel模型
-//	/**
-//	 * @TODO 拼换某列,mysql中等同于Broup_concat\oracle 中的WMSWS,HN_CONCAT功能
-//	 * @param linkModel
-//	 * @return
-//	 */
-//	public QueryExecutor link(LinkModel linkModel) {
-//		if (linkModel != null) {
-//			innerModel.linkModel = linkModel;
-//		}
-//		return this;
-//	}
+
+	/**
+	 * @TODO 提供代码层面设置分组拼接字段(排序由sql自身完成)
+	 * @param groupConcat
+	 * @return
+	 */
+	public QueryExecutor groupConcat(GroupConcat groupConcat) {
+		if (groupConcat != null && StringUtil.isNotBlank(groupConcat.getConcat())
+				&& StringUtil.isNotBlank(groupConcat.getGroup())) {
+			LinkModel linkModel = new LinkModel();
+			linkModel.setColumns(groupConcat.getConcat());
+			linkModel.setGroupColumns(groupConcat.getGroup());
+			linkModel.setDistinct(groupConcat.isDistinct());
+			if (groupConcat.getSeparator() != null) {
+				linkModel.setSign(groupConcat.getSeparator());
+			}
+			innerModel.linkModel = linkModel;
+		}
+		return this;
+	}
+
+	/**
+	 * @TODO 提供代码层面对树形结果进行排序、汇总等
+	 * @param treeSort
+	 * @return
+	 */
+	public QueryExecutor treeSort(TreeSort treeSort) {
+		if (treeSort != null && treeSort.getIdColumn() != null && treeSort.getPidColumn() != null) {
+			TreeSortModel treeSortModel = new TreeSortModel();
+			treeSortModel.setIdColumn(treeSort.getIdColumn()).setPidColumn(treeSort.getPidColumn())
+					.setSumColumns(treeSort.getSumColumns()).setFilterColumn(treeSort.getFilterColumn())
+					.setCompareType(treeSort.getCompareType()).setCompareValues(treeSort.getCompareValues());
+			innerModel.calculators.add(treeSortModel);
+		}
+		return this;
+	}
+
+	/**
+	 * @TODO 行与行之间的环比(推荐基于xml来配置)
+	 * 
+	 * @param rowsChainRatio
+	 * @return
+	 */
+	public QueryExecutor rowsChainRatio(RowsChainRatio rowsChainRatio) {
+		if (rowsChainRatio != null) {
+			RowsChainRelativeModel rowsRelative = new RowsChainRelativeModel();
+			rowsRelative.setDefaultValue(rowsChainRatio.getDefaultValue());
+			rowsRelative.setRelativeColumns(rowsChainRatio.getRelativeColumns());
+			rowsRelative.setGroupColumn(rowsChainRatio.getGroupColumn());
+			rowsRelative.setRelativeIndexs(rowsChainRatio.getRelativeIndexs());
+			rowsRelative.setStartRow(rowsChainRatio.getStartRow());
+			rowsRelative.setEndRow(rowsChainRatio.getEndRow());
+			rowsRelative.setFormat(rowsChainRatio.getFormat());
+			rowsRelative.setInsert(rowsChainRatio.getIsInsert());
+			rowsRelative.setRadixSize(rowsChainRatio.getRadixSize());
+			rowsRelative.setMultiply(rowsChainRatio.getMultiply());
+			rowsRelative.setReduceOne(rowsChainRatio.isReduceOne());
+			innerModel.calculators.add(rowsRelative);
+		}
+		return this;
+	}
+
+	/**
+	 * @TODO 列与列之间的环比(推荐基于xml来配置)
+	 * 
+	 * @param colsChainRatio
+	 * @return
+	 */
+	public QueryExecutor colsChainRatio(ColsChainRatio colsChainRatio) {
+		if (colsChainRatio != null) {
+			ColsChainRelativeModel colsRelative = new ColsChainRelativeModel();
+			colsRelative.setDefaultValue(colsChainRatio.getDefaultValue());
+			colsRelative.setGroupSize(colsChainRatio.getGroupSize());
+			colsRelative.setRelativeIndexs(colsChainRatio.getRelativeIndexs());
+			colsRelative.setStartColumn(colsChainRatio.getStartColumn());
+			colsRelative.setEndColumn(colsChainRatio.getEndColumn());
+			colsRelative.setFormat(colsChainRatio.getFormat());
+			colsRelative.setInsert(colsChainRatio.getIsInsert());
+			// 默认3位
+			colsRelative.setRadixSize(colsChainRatio.getRadixSize());
+			colsRelative.setMultiply(colsChainRatio.getMultiply());
+			colsRelative.setReduceOne(colsChainRatio.isReduceOne());
+			colsRelative.setSkipSize(colsChainRatio.getSkipSize());
+			innerModel.calculators.add(colsRelative);
+		}
+		return this;
+	}
 
 	/**
 	 * @TODO 设置执行时是否输出sql日志
