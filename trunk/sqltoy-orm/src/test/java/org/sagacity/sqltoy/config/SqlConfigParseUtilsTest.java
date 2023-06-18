@@ -9,6 +9,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.SqlToyConstants;
+import org.sagacity.sqltoy.config.model.LinkModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.model.MapKit;
@@ -73,6 +74,47 @@ public class SqlConfigParseUtilsTest {
 	}
 
 	@Test
+	public void testParseShowCaseSql() throws Exception {
+		String sqlFile = "classpath:scripts/showcase.sql.xml";
+		List<SqlToyConfig> result = new ArrayList<SqlToyConfig>();
+		InputStream fileIS = FileUtil.getFileInputStream(sqlFile);
+		domFactory.setFeature(SqlToyConstants.XML_FETURE, false);
+		DocumentBuilder domBuilder = domFactory.newDocumentBuilder();
+		Document doc = domBuilder.parse(fileIS);
+		NodeList sqlElts = doc.getDocumentElement().getChildNodes();
+		if (sqlElts == null || sqlElts.getLength() == 0)
+			return;
+		// 解析单个sql
+		Element sqlElt;
+		Node obj;
+		for (int i = 0; i < sqlElts.getLength(); i++) {
+			obj = sqlElts.item(i);
+			if (obj.getNodeType() == Node.ELEMENT_NODE) {
+				sqlElt = (Element) obj;
+				result.add(SqlXMLConfigParse.parseSingleSql(sqlElt, "mysql"));
+			}
+		}
+		for (SqlToyConfig config : result) {
+			System.err.println(JSON.toJSONString(config));
+		}
+	}
+
+	@Test
+	public void testSqlToyConfigClone() throws Exception {
+		SqlToyConfig sqltoyConfig = new SqlToyConfig("1000", "select * from table");
+		LinkModel linkModel=new LinkModel();
+		linkModel.setColumns(new String[] { "id", "name" });
+		sqltoyConfig.setLinkModel(linkModel);
+		
+		SqlToyConfig sqltoy1=sqltoyConfig.clone();
+		LinkModel linkModel1=new LinkModel();
+		linkModel1.setColumns(new String[] { "sexType", "name" });
+		sqltoy1.setLinkModel(linkModel1);
+		System.err.println(JSON.toJSONString(sqltoyConfig.getLinkModel()));
+		System.err.println(JSON.toJSONString(sqltoy1.getLinkModel()));
+	}
+
+	@Test
 	public void testNull() throws Exception {
 		String sql = "select * from table where 1=1 #[and id=:id and name like  :name] #[and status=:status]";
 		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "id", "name", "status" },
@@ -126,10 +168,10 @@ public class SqlConfigParseUtilsTest {
 	@Test
 	public void testLoop1() throws Exception {
 		String sql = "@loop(:cols,\":cols[i]\",\",\")";
-		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "cols" ,"name"},
-				new Object[] { new Object[] { "field1", "field2", "field3" } ,"chen"});
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "cols", "name" },
+				new Object[] { new Object[] { "field1", "field2", "field3" }, "chen" });
 		System.err.println(JSON.toJSONString(result));
-		
+
 	}
 
 	@Test

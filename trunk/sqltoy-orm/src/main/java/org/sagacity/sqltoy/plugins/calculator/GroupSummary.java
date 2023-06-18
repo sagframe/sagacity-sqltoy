@@ -32,8 +32,8 @@ public class GroupSummary {
 		}
 		// 计算的列，columns="1..result.width()-1"
 		int dataWidth = ((List) result.get(0)).size();
-		List<Integer> sumColList = CalculateUtils.parseColumns(labelIndexMap, summaryModel.getSummaryCols(), dataWidth);
-		List<Integer> aveColList = CalculateUtils.parseColumns(labelIndexMap, summaryModel.getAverageCols(), dataWidth);
+		List<Integer> sumColList = CalculateUtils.parseColumns(labelIndexMap, summaryModel.getSumColumns(), dataWidth);
+		List<Integer> aveColList = CalculateUtils.parseColumns(labelIndexMap, summaryModel.getAveColumns(), dataWidth);
 		Set<Integer> summaryColsSet = new LinkedHashSet<Integer>();
 		for (Integer index : sumColList) {
 			summaryColsSet.add(index);
@@ -117,7 +117,7 @@ public class GroupSummary {
 		int radixSizeLen = (radixSizes == null) ? 0 : radixSizes.length;
 		for (int i = 0; i < summaryCols.length; i++) {
 			SummaryColMeta colMeta = new SummaryColMeta();
-			colMeta.setAveSkipNull(summaryModel.isAverageSkipNull());
+			colMeta.setAveSkipNull(summaryModel.isAveSkipNull());
 			colMeta.setSummaryType(0);
 			colMeta.setColIndex(summaryCols[i]);
 			if (radixSizeLen == 1) {

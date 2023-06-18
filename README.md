@@ -38,13 +38,12 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
 # 最新版本 
-* 5.3.28 (jdk17+、springboot3.x)  发版日期: 2023-06-13
-* 5.2.54 (jdk1.8)                 发版日期: 2023-06-13
-* 5.2.47.jre11/5.2.47.jre17       发版日期: 2023-05-08
+* 5.3.29 (jdk17+、springboot3.x)  发版日期: 2023-06-18
+* 5.2.55 (jdk1.8)                 发版日期: 2023-06-18
 
 # 历史版本(EOF)
-* 5.1.72                             发版日期: 2023-06-10
-* 4.20.65                            发版日期: 2023-06-13
+* 5.1.73                             发版日期: 2023-06-16
+* 4.20.67                            发版日期: 2023-06-16
 
 # 1. 前言
 ## 1.1 sqltoy-orm是什么
@@ -138,7 +137,7 @@ sqlToyLazyDao.deleteByQuery(StaffInfoVO.class, EntityQuery.create().where("statu
 ```
 ## 2.2 极致朴素的sql编写方式(本质规律的发现和抽象)
 
-* sqltoy 的写法(一眼就看明白sql的本意,后面变更调整也非常便捷,copy到数据库客户端里稍做出来即可执行)
+* sqltoy 的写法(一眼就看明白sql的本意,后面变更调整也非常便捷,copy到数据库客户端里稍作调整即可执行)
 * sqltoy条件组织原理很简单: 如 #[order_id=:orderId] 等于if(:orderId<>null) sql.append(order_id=:orderId);#[]内只要有一个参数为null即剔除
 * 支持多层嵌套:如 #[and t.order_id=:orderId #[and t.order_type=:orderType]] 
 * 条件判断保留#[@if(:param>=xx ||:param<=xx1) sql语句] 这种@if()高度灵活模式,为特殊复杂场景下提供万能钥匙

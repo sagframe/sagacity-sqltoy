@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sqltoy xmlns="http://www.sagframe.com/schema/sqltoy"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.sagframe.com/schema/sqltoy http://www.sagframe.com/schema/sqltoy/sqltoy.xsd">
+	<sql id="sqltoy_showcase">
+		<tree-sort id-column="id" pid-column="pid" sum-columns="amt,quantity">
+			<sum-filter column="status" compare-values="1" compare-type="eq"/>
+		</tree-sort>
+		<value>
+   <![CDATA[
+   			select * from sqltoy_showcase
+			]]>
+    </value>
+	</sql>
+</sqltoy>

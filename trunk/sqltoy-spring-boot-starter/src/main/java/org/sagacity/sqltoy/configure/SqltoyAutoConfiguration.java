@@ -130,7 +130,7 @@ public class SqltoyAutoConfiguration {
 
 		// 开放设置默认单页记录数量
 		sqlToyContext.setDefaultPageSize(properties.getDefaultPageSize());
-
+		sqlToyContext.setDefaultPageOffset(properties.isDefaultPageOffset());
 		// map 类型结果label是否自动转驼峰处理
 		if (properties.getHumpMapResultTypeLabel() != null) {
 			sqlToyContext.setHumpMapResultTypeLabel(properties.getHumpMapResultTypeLabel());
@@ -460,7 +460,7 @@ public class SqltoyAutoConfiguration {
 		lightDao.setSqlToyContext(sqlToyContext);
 		return lightDao;
 	}
-	
+
 	/**
 	 * 5.2 版本要注入sqlToyLazyDao
 	 * 

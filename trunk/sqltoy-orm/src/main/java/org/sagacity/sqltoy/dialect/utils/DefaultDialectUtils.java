@@ -146,7 +146,11 @@ public class DefaultDialectUtils {
 		sql.append(innerSql);
 		sql.append(" limit ");
 		sql.append(isNamed ? ":" + SqlToyConstants.PAGE_FIRST_PARAM_NAME : "?");
-		sql.append(" offset ");
+		if (sqlToyContext.isDefaultPageOffset()) {
+			sql.append(" offset ");
+		} else {
+			sql.append(" , ");
+		}
 		sql.append(isNamed ? ":" + SqlToyConstants.PAGE_LAST_PARAM_NAME : "?");
 		if (sqlToyConfig.isHasFast()) {
 			if (!sqlToyConfig.isIgnoreBracket()) {
@@ -154,8 +158,14 @@ public class DefaultDialectUtils {
 			}
 			sql.append(sqlToyConfig.getFastTailSql(dialect));
 		}
-		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
-				sql.toString(), Long.valueOf(pageSize), (pageNo - 1) * pageSize, dialect);
+		SqlToyResult queryParam;
+		if (sqlToyContext.isDefaultPageOffset()) {
+			queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor, sql.toString(),
+					Long.valueOf(pageSize), (pageNo - 1) * pageSize, dialect);
+		} else {
+			queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor, sql.toString(),
+					(pageNo - 1) * pageSize, Long.valueOf(pageSize), dialect);
+		}
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		// 增加sql执行拦截器 update 2022-9-10
 		queryParam = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig,
