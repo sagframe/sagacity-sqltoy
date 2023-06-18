@@ -1171,9 +1171,11 @@ public class SqlXMLConfigParse {
 		}
 		// update 2021-10-15 支持多列
 		if (link.hasAttribute("id-columns")) {
-			linkModel.setIdColumns(trimParams(link.getAttribute("id-columns").split("\\,")));
+			linkModel.setGroupColumns(trimParams(link.getAttribute("id-columns").split("\\,")));
+		} else if (link.hasAttribute("group-columns")) {
+			linkModel.setGroupColumns(trimParams(link.getAttribute("group-columns").split("\\,")));
 		} else if (link.hasAttribute("id-column")) {
-			linkModel.setIdColumns(trimParams(link.getAttribute("id-column").split("\\,")));
+			linkModel.setGroupColumns(trimParams(link.getAttribute("id-column").split("\\,")));
 		}
 		if (link.hasAttribute("sign")) {
 			linkModel.setSign(link.getAttribute("sign"));
@@ -1330,13 +1332,13 @@ public class SqlXMLConfigParse {
 					}
 					// 汇总合计涉及的列
 					if (elt.hasAttribute("sum-columns")) {
-						summaryModel.setSummaryCols(elt.getAttribute("sum-columns").toLowerCase());
+						summaryModel.setSumColumns(elt.getAttribute("sum-columns").toLowerCase());
 					} else if (elt.hasAttribute("columns")) {
-						summaryModel.setSummaryCols(elt.getAttribute("columns").toLowerCase());
+						summaryModel.setSumColumns(elt.getAttribute("columns").toLowerCase());
 					}
 					// 计算平均值的列
 					if (elt.hasAttribute("average-columns")) {
-						summaryModel.setAverageCols(elt.getAttribute("average-columns").toLowerCase());
+						summaryModel.setAveColumns(elt.getAttribute("average-columns").toLowerCase());
 					}
 					// 保留小数点位数(2022-2-23 扩展成数组，便于给不同平均值列设置不同的小数位)
 					if (elt.hasAttribute("average-radix-sizes")) {
@@ -1378,7 +1380,7 @@ public class SqlXMLConfigParse {
 					}
 					// 求平均时是否过滤掉null的记录
 					if (elt.hasAttribute("average-skip-null")) {
-						summaryModel.setAverageSkipNull(Boolean.parseBoolean(elt.getAttribute("average-skip-null")));
+						summaryModel.setAveSkipNull(Boolean.parseBoolean(elt.getAttribute("average-skip-null")));
 					}
 					// 单行数据是否需要进行分组汇总计算
 					if (elt.hasAttribute("skip-single-row")) {

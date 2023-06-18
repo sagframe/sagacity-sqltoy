@@ -220,6 +220,11 @@ public class SqlToyContextProperties implements Serializable {
 	private String sqlFormater;
 
 	/**
+	 * 未匹配的数据库类型分页是否是limit ? offset ? 模式还是 limit ?,? 模式
+	 */
+	private boolean defaultPageOffset = true;
+
+	/**
 	 * 线程池配置参数
 	 */
 	private SqlToyContextTaskPoolProperties taskExecutor = new SqlToyContextTaskPoolProperties();
@@ -648,6 +653,14 @@ public class SqlToyContextProperties implements Serializable {
 
 	public void setDefaultPageSize(int defaultPageSize) {
 		this.defaultPageSize = defaultPageSize;
+	}
+
+	public boolean isDefaultPageOffset() {
+		return defaultPageOffset;
+	}
+
+	public void setDefaultPageOffset(boolean defaultPageOffset) {
+		this.defaultPageOffset = defaultPageOffset;
 	}
 
 }

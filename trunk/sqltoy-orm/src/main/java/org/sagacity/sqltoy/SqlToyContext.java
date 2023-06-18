@@ -136,6 +136,11 @@ public class SqlToyContext {
 	private Boolean overPageToFirst;
 
 	/**
+	 * 未匹配的数据库类型分页是否是limit ? offset ? 模式还是 limit ?,? 模式
+	 */
+	private boolean defaultPageOffset = true;
+
+	/**
 	 * 执行超时sql自定义处理器
 	 */
 	private OverTimeSqlHandler overTimeSqlHandler = new DefaultOverTimeHandler();
@@ -1171,4 +1176,12 @@ public class SqlToyContext {
 		this.defaultPageSize = defaultPageSize;
 	}
 
+	public boolean isDefaultPageOffset() {
+		return defaultPageOffset;
+	}
+
+	public void setDefaultPageOffset(boolean defaultPageOffset) {
+		this.defaultPageOffset = defaultPageOffset;
+	}
+	
 }

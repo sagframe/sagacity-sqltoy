@@ -470,7 +470,8 @@ public class DialectUtils {
 			tableShardings = extend.tableShardings;
 		}
 		// sql条件以:named形式、无分表、无扩展缓存翻译则不存在对SqlToyConfig 内容的修改，直接返回
-		if ((isNamed || !wrapNamed) && tableShardings.isEmpty() && extend.translates.isEmpty()) {
+		if ((isNamed || !wrapNamed) && tableShardings.isEmpty() && extend.translates.isEmpty()
+				&& extend.linkModel == null) {
 			return sqlToyConfig;
 		}
 		// clone sqltoyConfig避免直接修改原始的sql配置对后续执行产生影响
@@ -478,6 +479,10 @@ public class DialectUtils {
 		// 存在扩展的缓存翻译
 		if (!extend.translates.isEmpty()) {
 			result.getTranslateMap().putAll(extend.translates);
+		}
+		// 扩展的link计算
+		if (extend.linkModel != null) {
+			result.setLinkModel(extend.linkModel);
 		}
 		// ?传参且分页模式,原因是分页存在取count场景，在@fast()情况下无法断定paramValues的值跟?的参数对应关系
 		if (!isNamed && wrapNamed) {
