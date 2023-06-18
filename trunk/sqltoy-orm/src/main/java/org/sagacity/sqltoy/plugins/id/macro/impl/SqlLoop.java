@@ -20,6 +20,7 @@ import java.util.regex.Pattern;
 
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
+import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.plugins.id.macro.AbstractMacro;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.CollectionUtil;
@@ -139,7 +140,7 @@ public class SqlLoop extends AbstractMacro {
 		// 循环的参数和对应值
 		Map<String, Object> loopKeyValueMap = new HashMap<String, Object>();
 		// 全部参数和对应值
-		Map<String, Object> allKeyValueMap = new HashMap<String, Object>();
+		IgnoreKeyCaseMap<String, Object> allKeyValueMap = new IgnoreKeyCaseMap<String, Object>();
 		for (int i = start; i < end; i++) {
 			// 当前循环的值
 			loopVar = loopValues[i];
@@ -190,7 +191,7 @@ public class SqlLoop extends AbstractMacro {
 	 * @param loopParamNamesMap
 	 * @return
 	 */
-	private String processNullConditions(String queryStr, Map<String, Object> loopParamNamesMap) {
+	private String processNullConditions(String queryStr, IgnoreKeyCaseMap<String, Object> loopParamNamesMap) {
 		int pseudoMarkStart = queryStr.indexOf(SqlConfigParseUtils.SQL_PSEUDO_START_MARK);
 		if (pseudoMarkStart == -1) {
 			return queryStr;
@@ -222,8 +223,13 @@ public class SqlLoop extends AbstractMacro {
 			} else {
 				// 判断#[] 中的参数是否有为null的
 				hasNull = false;
+				Object tmp;
 				for (String key : fullParamNames) {
-					if (StringUtil.isBlank(loopParamNamesMap.get(":".concat(key)))) {
+					tmp = loopParamNamesMap.get(":".concat(key));
+					if (tmp == null) {
+						tmp = loopParamNamesMap.get(key);
+					}
+					if (StringUtil.isBlank(tmp)) {
 						hasNull = true;
 						break;
 					}
