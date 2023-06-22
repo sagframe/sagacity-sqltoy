@@ -146,7 +146,12 @@ public class DefaultDialectUtils {
 		sql.append(innerSql);
 		sql.append(" limit ");
 		sql.append(isNamed ? ":" + SqlToyConstants.PAGE_FIRST_PARAM_NAME : "?");
-		if (sqlToyContext.isDefaultPageOffset()) {
+		boolean useDefault = true;
+		// 未匹配数据库类型
+		if (dbType == DBType.UNDEFINE && !sqlToyContext.isDefaultPageOffset()) {
+			useDefault = false;
+		}
+		if (useDefault) {
 			sql.append(" offset ");
 		} else {
 			sql.append(" , ");
@@ -159,7 +164,8 @@ public class DefaultDialectUtils {
 			sql.append(sqlToyConfig.getFastTailSql(dialect));
 		}
 		SqlToyResult queryParam;
-		if (sqlToyContext.isDefaultPageOffset()) {
+		// limit ? offset ?模式
+		if (useDefault) {
 			queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor, sql.toString(),
 					Long.valueOf(pageSize), (pageNo - 1) * pageSize, dialect);
 		} else {

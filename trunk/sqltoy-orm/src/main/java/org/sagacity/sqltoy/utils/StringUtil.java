@@ -1027,4 +1027,37 @@ public class StringUtil {
 			params[i] = params[i].trim();
 		}
 	}
+
+	/**
+	 * @TODO 将字符串进行正则表达式切割
+	 * @param source
+	 * @param regex
+	 * @param doTrim
+	 * @return
+	 */
+	public static String[] splitRegex(String source, String regex, boolean doTrim) {
+		if (source == null) {
+			return null;
+		}
+		String[] result;
+		if ("?".equals(regex)) {
+			result = source.split("\\?");
+		} else if (",".equals(regex)) {
+			result = source.split("\\,");
+		} else if (";".equals(regex)) {
+			result = source.split("\\;");
+		} else if (":".equals(regex)) {
+			result = source.split("\\:");
+		} else if ("".equals(regex.trim())) {
+			result = source.split("\\s+");
+		} else {
+			result = source.split(regex);
+		}
+		if (doTrim) {
+			for (int i = 0; i < result.length; i++) {
+				result[i] = result[i].trim();
+			}
+		}
+		return result;
+	}
 }
