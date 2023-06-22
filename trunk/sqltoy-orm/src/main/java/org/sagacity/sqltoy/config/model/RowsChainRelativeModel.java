@@ -28,7 +28,7 @@ public class RowsChainRelativeModel implements Serializable {
 	private int multiply = 1;
 
 	/**
-	 * 分组长度
+	 * 分组列
 	 */
 	private String groupColumn;
 

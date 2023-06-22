@@ -17,6 +17,7 @@ import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.model.DataAuthFilterConfig;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
+import org.sagacity.sqltoy.model.ParamsFilter;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.slf4j.Logger;
@@ -27,7 +28,8 @@ import org.slf4j.LoggerFactory;
  * @description 对QueryExecutor参数进行初始化，避免之前在其内部包含过多逻辑，导致维护和理解困难
  * @author zhongxuchen
  * @version v1.0,Date:2021年10月11日
- * @modify 2023-06-11 {兼容查询:names("xxx").values(new Object[]{}),单个参数名，传递的值是数组特殊场景}
+ * @modify 2023-06-11 {兼容查询:names("xxx").values(new
+ *         Object[]{}),单个参数名，传递的值是数组特殊场景}
  */
 public class QueryExecutorBuilder {
 	/**
@@ -253,6 +255,25 @@ public class QueryExecutorBuilder {
 				if (!keys.contains(key)) {
 					keys.add(key);
 					params.add(item);
+				}
+			}
+		}
+		// 兼容参数属性只出现在cache-arg 中
+		if (extend.paramFilters != null && !extend.paramFilters.isEmpty()) {
+			for (ParamsFilter filter : extend.paramFilters) {
+				if (filter.getType().equals("cache-arg")) {
+					key = filter.getParams()[0].toLowerCase();
+					if (!keys.contains(key)) {
+						keys.add(key);
+						params.add(key);
+					}
+					if (filter.getAsName() != null) {
+						key = filter.getAsName().toLowerCase();
+						if (!keys.contains(key)) {
+							keys.add(key);
+							params.add(key);
+						}
+					}
 				}
 			}
 		}

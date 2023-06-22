@@ -3,9 +3,11 @@ package org.sagacity.sqltoy.model;
 import java.io.Serializable;
 
 /**
- * 
+ * @project sagacity-sqltoy
+ * @description 行与行环比计算参数模型
  * @author zhong
- *
+ * @version v1.0, Date:2023年6月22日
+ * @modify 2023年6月22日,修改说明
  */
 public class RowsChainRatio implements Serializable {
 
@@ -30,7 +32,7 @@ public class RowsChainRatio implements Serializable {
 	private String groupColumn;
 
 	/**
-	 * 环比值是否将insert为新列
+	 * 环比值是否insert为新列
 	 */
 	private Boolean isInsert = true;
 
@@ -116,7 +118,7 @@ public class RowsChainRatio implements Serializable {
 		return relativeColumns;
 	}
 
-	public RowsChainRatio relativeColumns(String[] relativeColumns) {
+	public RowsChainRatio relativeColumns(String... relativeColumns) {
 		this.relativeColumns = relativeColumns;
 		return this;
 	}
@@ -125,7 +127,7 @@ public class RowsChainRatio implements Serializable {
 		return relativeIndexs;
 	}
 
-	public RowsChainRatio relativeIndexs(Integer[] relativeIndexs) {
+	public RowsChainRatio relativeIndexs(Integer... relativeIndexs) {
 		this.relativeIndexs = relativeIndexs;
 		return this;
 	}

@@ -11,12 +11,16 @@ import java.util.Map;
 import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
+import org.sagacity.sqltoy.config.model.ColsChainRelativeModel;
 import org.sagacity.sqltoy.config.model.FormatModel;
 import org.sagacity.sqltoy.config.model.LinkModel;
 import org.sagacity.sqltoy.config.model.PageOptimize;
 import org.sagacity.sqltoy.config.model.PivotModel;
+import org.sagacity.sqltoy.config.model.RowsChainRelativeModel;
 import org.sagacity.sqltoy.config.model.SecureMask;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
+import org.sagacity.sqltoy.config.model.SummaryGroupMeta;
+import org.sagacity.sqltoy.config.model.SummaryModel;
 import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.config.model.TreeSortModel;
 import org.sagacity.sqltoy.config.model.UnpivotModel;
@@ -475,72 +479,115 @@ public class QueryExecutor implements Serializable {
 		return this;
 	}
 
-//	/**
-//	 * @TODO 行与行之间的环比(推荐基于xml来配置)
-//	 * 
-//	 * @param rowsChainRatio
-//	 * @return
-//	 */
-//	public QueryExecutor rowsChainRatio(RowsChainRatio rowsChainRatio) {
-//		if (rowsChainRatio != null) {
-//			RowsChainRelativeModel rowsRelative = new RowsChainRelativeModel();
-//			rowsRelative.setDefaultValue(rowsChainRatio.getDefaultValue());
-//			rowsRelative.setRelativeColumns(rowsChainRatio.getRelativeColumns());
-//			rowsRelative.setGroupColumn(rowsChainRatio.getGroupColumn());
-//			rowsRelative.setRelativeIndexs(rowsChainRatio.getRelativeIndexs());
-//			rowsRelative.setStartRow(rowsChainRatio.getStartRow());
-//			rowsRelative.setEndRow(rowsChainRatio.getEndRow());
-//			rowsRelative.setFormat(rowsChainRatio.getFormat());
-//			rowsRelative.setInsert(rowsChainRatio.getIsInsert());
-//			rowsRelative.setRadixSize(rowsChainRatio.getRadixSize());
-//			rowsRelative.setMultiply(rowsChainRatio.getMultiply());
-//			rowsRelative.setReduceOne(rowsChainRatio.isReduceOne());
-//			innerModel.calculators.add(rowsRelative);
-//		}
-//		return this;
-//	}
+	/**
+	 * @TODO 行与行之间的环比(推荐基于xml来配置)
+	 * 
+	 * @param rowsChainRatio
+	 * @return
+	 */
+	public QueryExecutor rowsChainRatio(RowsChainRatio rowsChainRatio) {
+		if (rowsChainRatio != null
+				&& (rowsChainRatio.getRelativeColumns() != null && rowsChainRatio.getRelativeColumns().length > 0)) {
+			// |月份 | 产品 |交易笔数 | 环比 | 金额 | 环比 | 收入 | 环比 |
+			// | 5月 | 香蕉 | 2000 | 环比 | 金额 | 环比 | 收入 | 环比 |
+			// | 5月 | 苹果 | 2000 | 环比 | 金额 | 环比 | 收入 | 环比 |
+			// | 4月 | 香蕉 | 2000 | 环比 | 金额 | 环比 | 收入 | 环比 |0
+			// | 4月 | 苹果 | 2000 | 环比 | 金额 | 环比 | 收入 | 环比 |1
+			// | 3月 | 香蕉 | 2000 | 环比 | 金额 | 环比 | 收入 | 环比 |
+			// | 3月 | 苹果 | 2000 | 环比 | 金额 | 环比 | 收入 | 环比 |
+			// <rows-chain-relative group-column="月份" relative-columns="交易笔数,金额,收入"
+			// relative-index="0,1"/>
+			RowsChainRelativeModel rowsRelative = new RowsChainRelativeModel();
+			// --
+			rowsRelative.setDefaultValue(rowsChainRatio.getDefaultValue());
+			rowsRelative.setRelativeColumns(rowsChainRatio.getRelativeColumns());
+			rowsRelative.setGroupColumn(rowsChainRatio.getGroupColumn());
+			rowsRelative.setRelativeIndexs(rowsChainRatio.getRelativeIndexs());
+			// 0
+			rowsRelative.setStartRow(rowsChainRatio.getStartRow());
+			// 默认结束行，可以填-1表示倒数第二行
+			rowsRelative.setEndRow(rowsChainRatio.getEndRow());
+			// #.00% 或 #.00‰
+			rowsRelative.setFormat(rowsChainRatio.getFormat());
+			// 是否在比较列右边自动增加一列(否则写sql时自动构造好环比列)
+			rowsRelative.setInsert(rowsChainRatio.getIsInsert());
+			rowsRelative.setRadixSize(rowsChainRatio.getRadixSize());
+			rowsRelative.setMultiply(rowsChainRatio.getMultiply());
+			rowsRelative.setReduceOne(rowsChainRatio.isReduceOne());
+			// 从末尾往开始倒序比较
+			rowsRelative.setReverse(rowsChainRatio.isReverse());
+			innerModel.calculators.add(rowsRelative);
+		}
+		return this;
+	}
 
-//	/**
-//	 * @TODO 列与列之间的环比(推荐基于xml来配置)
-//	 * 
-//	 * @param colsChainRatio
-//	 * @return
-//	 */
-//	public QueryExecutor colsChainRatio(ColsChainRatio colsChainRatio) {
-//		if (colsChainRatio != null) {
-//			ColsChainRelativeModel colsRelative = new ColsChainRelativeModel();
-//			colsRelative.setDefaultValue(colsChainRatio.getDefaultValue());
-//			colsRelative.setGroupSize(colsChainRatio.getGroupSize());
-//			colsRelative.setRelativeIndexs(colsChainRatio.getRelativeIndexs());
-//			colsRelative.setStartColumn(colsChainRatio.getStartColumn());
-//			colsRelative.setEndColumn(colsChainRatio.getEndColumn());
-//			colsRelative.setFormat(colsChainRatio.getFormat());
-//			colsRelative.setInsert(colsChainRatio.getIsInsert());
-//			// 默认3位
-//			colsRelative.setRadixSize(colsChainRatio.getRadixSize());
-//			colsRelative.setMultiply(colsChainRatio.getMultiply());
-//			colsRelative.setReduceOne(colsChainRatio.isReduceOne());
-//			colsRelative.setSkipSize(colsChainRatio.getSkipSize());
-//			innerModel.calculators.add(colsRelative);
-//		}
-//		return this;
-//	}
+	/**
+	 * @TODO 列与列之间的环比(推荐基于xml来配置)
+	 * 
+	 * @param colsChainRatio
+	 * @return
+	 */
+	public QueryExecutor colsChainRatio(ColsChainRatio colsChainRatio) {
+		if (colsChainRatio != null) {
+			ColsChainRelativeModel colsRelative = new ColsChainRelativeModel();
+			colsRelative.setDefaultValue(colsChainRatio.getDefaultValue());
+			colsRelative.setGroupSize(colsChainRatio.getGroupSize());
+			colsRelative.setRelativeIndexs(colsChainRatio.getRelativeIndexs());
+			colsRelative.setStartColumn(colsChainRatio.getStartColumn());
+			colsRelative.setEndColumn(colsChainRatio.getEndColumn());
+			colsRelative.setFormat(colsChainRatio.getFormat());
+			colsRelative.setInsert(colsChainRatio.getIsInsert());
+			// 默认3位
+			colsRelative.setRadixSize(colsChainRatio.getRadixSize());
+			colsRelative.setMultiply(colsChainRatio.getMultiply());
+			colsRelative.setReduceOne(colsChainRatio.isReduceOne());
+			colsRelative.setSkipSize(colsChainRatio.getSkipSize());
+			innerModel.calculators.add(colsRelative);
+		}
+		return this;
+	}
 
-	// 暂时不开放，组织SummaryModel参数模型过于复杂
-//	// 建议在xml中定义使用,没有xml结构无法清晰的构造SummaryModel模型
-//	/**
-//	 * @TODO 定义sqltoy查询结果的处理模式,目前仅提供合计和求平均
-//	 * @param summaryModel
-//	 * @return
-//	 */
-//	public QueryExecutor summary(Summary... summarys) {
-//		if (summarys != null) {
-//			SummaryModel summaryModel = new SummaryModel();
-//			innerModel.calculators.add(summaryModel);
-//		}
-//		return this;
-//	}
-	
+	/**
+	 * @TODO 定义sqltoy查询结果的处理模式,目前仅提供合计和求平均(推荐基于xml来配置)
+	 * @param summary
+	 * @return
+	 */
+	public QueryExecutor summary(Summary summary) {
+		if (summary != null && summary.getSummaryGroups() != null && summary.getSummaryGroups().length > 0) {
+			SummaryModel summaryModel = new SummaryModel();
+			summaryModel.setReverse(summary.isReverse());
+			summaryModel.setAveColumns(summary.getAveColumns());
+			summaryModel.setSumColumns(summary.getSumColumns());
+			summaryModel.setAveSkipNull(summary.isAveSkipNull());
+			summaryModel.setRadixSize(summary.getRadixSize());
+			summaryModel.setRoundingModes(summary.getRoundingModes());
+			// 单条记录分组是否不做汇总和求平均
+			summaryModel.setSkipSingleRow(summary.isSkipSingleRow());
+			summaryModel.setLinkSign(summary.getLinkSign());
+			summaryModel.setSumSite(summary.getSumSite());
+			SummaryGroupMeta[] groupMetas = new SummaryGroupMeta[summary.getSummaryGroups().length];
+			SummaryGroup summaryGroup;
+			for (int i = 0; i < summary.getSummaryGroups().length; i++) {
+				summaryGroup = summary.getSummaryGroups()[i];
+				SummaryGroupMeta groupMeta = new SummaryGroupMeta();
+				// 用逗号拼接起来
+				if (summaryGroup.getGroupColumns() != null && summaryGroup.getGroupColumns().length > 0) {
+					groupMeta.setGroupColumn(StringUtil.linkAry(",", true, summaryGroup.getGroupColumns()));
+				} else if (i == 0) {
+					groupMeta.setGlobalReverse(summary.isGlobalReverse());
+				}
+				groupMeta.setAverageTitle(summaryGroup.getAveTitle());
+				groupMeta.setSumTitle(summaryGroup.getSumTitle());
+				// 标题列
+				groupMeta.setLabelColumn(summaryGroup.getLabelColumn());
+				groupMetas[i] = groupMeta;
+			}
+			summaryModel.setGroupMeta(groupMetas);
+			innerModel.calculators.add(summaryModel);
+		}
+		return this;
+	}
+
 	/**
 	 * @TODO 设置执行时是否输出sql日志
 	 * @param showSql

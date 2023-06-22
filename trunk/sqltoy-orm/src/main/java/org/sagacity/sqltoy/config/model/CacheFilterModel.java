@@ -32,6 +32,8 @@ public class CacheFilterModel implements Serializable {
 	 * 对比类型
 	 */
 	private String compareType = "eq";
+	
+	private Object[] compareValues;
 
 	/**
 	 * @return the cacheIndex
@@ -75,4 +77,13 @@ public class CacheFilterModel implements Serializable {
 		this.compareType = compareType;
 	}
 
+	public Object[] getCompareValues() {
+		return compareValues;
+	}
+
+	public void setCompareValues(Object[] compareValues) {
+		this.compareValues = compareValues;
+	}
+
+	
 }

@@ -83,10 +83,14 @@ public class GroupSummary {
 			}
 
 			groupMeta.setSumSite(sumSite);
-			// 分组的标题列
-			groupMeta.setLabelIndex(
-					NumberUtil.isInteger(groupMeta.getLabelColumn()) ? Integer.parseInt(groupMeta.getLabelColumn())
-							: labelIndexMap.get(groupMeta.getLabelColumn().toLowerCase()));
+			// 分组的标题列(默认第一列)
+			if (groupMeta.getLabelColumn() == null) {
+				groupMeta.setLabelIndex(0);
+			} else {
+				groupMeta.setLabelIndex(
+						NumberUtil.isInteger(groupMeta.getLabelColumn()) ? Integer.parseInt(groupMeta.getLabelColumn())
+								: labelIndexMap.get(groupMeta.getLabelColumn().toLowerCase()));
+			}
 			// 汇总和求平均分两行组装,update 2022-2-28 增加每个分组是否同时有汇总标题和求平均标题，允许不同分组只有汇总或求平均
 			if (groupMeta.getSummaryType() == 3 && ("top".equals(sumSite) || "bottom".equals(sumSite))) {
 				groupMeta.setRowSize(2);

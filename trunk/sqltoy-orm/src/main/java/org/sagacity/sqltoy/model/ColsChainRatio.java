@@ -3,9 +3,11 @@ package org.sagacity.sqltoy.model;
 import java.io.Serializable;
 
 /**
- * 
+ * @project sagacity-sqltoy
+ * @description 列与列环比计算参数模型，供QueryExecutor传参使用
  * @author zhong
- *
+ * @version v1.0, Date:2023年6月22日
+ * @modify 2023年6月22日,修改说明
  */
 public class ColsChainRatio implements Serializable {
 
@@ -82,8 +84,10 @@ public class ColsChainRatio implements Serializable {
 		return multiply;
 	}
 
-	public ColsChainRatio reduceOne(int multiply) {
-		this.multiply = multiply;
+	public ColsChainRatio multiply(int multiply) {
+		if (multiply == 1 || multiply == 100 || multiply == 1000) {
+			this.multiply = multiply;
+		}
 		return this;
 	}
 
@@ -109,7 +113,7 @@ public class ColsChainRatio implements Serializable {
 		return relativeIndexs;
 	}
 
-	public ColsChainRatio relativeIndexs(Integer[] relativeIndexs) {
+	public ColsChainRatio relativeIndexs(Integer... relativeIndexs) {
 		this.relativeIndexs = relativeIndexs;
 		return this;
 	}
