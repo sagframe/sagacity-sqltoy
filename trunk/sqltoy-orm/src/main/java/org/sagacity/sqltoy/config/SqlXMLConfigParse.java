@@ -951,18 +951,25 @@ public class SqlXMLConfigParse {
 			if (nodeList.getLength() > 0) {
 				CacheFilterModel[] cacheFilterModels = new CacheFilterModel[nodeList.getLength()];
 				Element cacheFilter;
+				String compareParam;
+				String split;
 				for (int i = 0; i < nodeList.getLength(); i++) {
 					cacheFilter = (Element) nodeList.item(i);
 					CacheFilterModel cacheFilterModel = new CacheFilterModel();
 					// 对比列
 					cacheFilterModel.setCacheIndex(Integer.parseInt(cacheFilter.getAttribute("cache-index")));
 					// 对比条件参数(有可能本身就是一个值)
-					cacheFilterModel.setCompareParam(cacheFilter.getAttribute("compare-param").toLowerCase());
-					// 非数字，如是参数名称，加入到arg中，便于统一提取参数属性对应的值
-					if (!NumberUtil.isNumber(cacheFilterModel.getCompareParam())
-							&& !"true".equals(cacheFilterModel.getCompareParam())
-							&& !"false".equals(cacheFilterModel.getCompareParam())) {
-						sqlToyConfig.addCacheArgParam(cacheFilterModel.getCompareParam());
+					compareParam = cacheFilter.getAttribute("compare-param").toLowerCase();
+					if (cacheFilter.hasAttribute("split")) {
+						split = cacheFilter.getAttribute("split");
+						cacheFilterModel.setCompareValues(StringUtil.splitRegex(compareParam, split, true));
+					} else {
+						cacheFilterModel.setCompareParam(compareParam);
+						// 非数字，如是参数名称，加入到arg中，便于统一提取参数属性对应的值
+						if (!NumberUtil.isNumber(compareParam) && !"true".equals(compareParam)
+								&& !"false".equals(compareParam)) {
+							sqlToyConfig.addCacheArgParam(compareParam);
+						}
 					}
 					if (cacheFilter.hasAttribute("compare-type")) {
 						cacheFilterModel.setCompareType(cacheFilter.getAttribute("compare-type").toLowerCase());

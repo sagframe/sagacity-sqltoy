@@ -3,9 +3,11 @@ package org.sagacity.sqltoy.model;
 import java.io.Serializable;
 
 /**
- * 
+ * @project sagacity-sqltoy
+ * @description 提供基于QueryExecutor进行汇总计算的api对象模型
  * @author zhong
- *
+ * @version v1.0, Date:2023年6月21日
+ * @modify 2023年6月21日,修改说明
  */
 public class SummaryGroup implements Serializable {
 
@@ -14,17 +16,10 @@ public class SummaryGroup implements Serializable {
 	 */
 	private static final long serialVersionUID = 7367450544020667310L;
 
+	/**
+	 * 分组列，可以多列
+	 */
 	private String[] groupColumns;
-
-	/**
-	 * 汇总列
-	 */
-	private String[] sumColumns;
-
-	/**
-	 * 求评均列
-	 */
-	private String[] aveColumns;
 
 	/**
 	 * 标题所在列
@@ -41,84 +36,45 @@ public class SummaryGroup implements Serializable {
 	 */
 	private String aveTitle;
 
-	private int labelIndex;
-
-	private boolean reverse;
-
-	//top\bottom\left\right
-	private String sumSite = "top";
+	public SummaryGroup(String... groupColumns) {
+		if (groupColumns != null && groupColumns.length > 0) {
+			this.groupColumns = groupColumns;
+		}
+	}
 
 	public String[] getGroupColumns() {
 		return groupColumns;
 	}
 
-	public void setGroupColumns(String[] groupColumns) {
+	public SummaryGroup groupColumns(String... groupColumns) {
 		this.groupColumns = groupColumns;
-	}
-
-	public String[] getSumColumns() {
-		return sumColumns;
-	}
-
-	public void setSumColumns(String[] sumColumns) {
-		this.sumColumns = sumColumns;
-	}
-
-	public String[] getAveColumns() {
-		return aveColumns;
-	}
-
-	public void setAveColumns(String[] aveColumns) {
-		this.aveColumns = aveColumns;
+		return this;
 	}
 
 	public String getLabelColumn() {
 		return labelColumn;
 	}
 
-	public void setLabelColumn(String labelColumn) {
+	public SummaryGroup labelColumn(String labelColumn) {
 		this.labelColumn = labelColumn;
+		return this;
 	}
 
 	public String getSumTitle() {
 		return sumTitle;
 	}
 
-	public void setSumTitle(String sumTitle) {
+	public SummaryGroup sumTitle(String sumTitle) {
 		this.sumTitle = sumTitle;
+		return this;
 	}
 
 	public String getAveTitle() {
 		return aveTitle;
 	}
 
-	public void setAveTitle(String aveTitle) {
+	public SummaryGroup aveTitle(String aveTitle) {
 		this.aveTitle = aveTitle;
+		return this;
 	}
-
-	public int getLabelIndex() {
-		return labelIndex;
-	}
-
-	public void setLabelIndex(int labelIndex) {
-		this.labelIndex = labelIndex;
-	}
-
-	public boolean isReverse() {
-		return reverse;
-	}
-
-	public void setReverse(boolean reverse) {
-		this.reverse = reverse;
-	}
-
-	public String getSumSite() {
-		return sumSite;
-	}
-
-	public void setSumSite(String sumSite) {
-		this.sumSite = sumSite;
-	}
-	
-	
 }

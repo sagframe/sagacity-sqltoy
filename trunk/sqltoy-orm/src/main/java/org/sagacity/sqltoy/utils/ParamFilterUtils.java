@@ -22,6 +22,7 @@ import java.util.regex.Matcher;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.CacheFilterModel;
 import org.sagacity.sqltoy.config.model.ParamFilterModel;
+import org.sagacity.sqltoy.model.CacheArg;
 import org.sagacity.sqltoy.model.DataAuthFilterConfig;
 import org.sagacity.sqltoy.model.ParamsFilter;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
@@ -196,18 +197,22 @@ public class ParamFilterUtils {
 				Object compareValue;
 				for (int i = 0; i < cacheFilters.length; i++) {
 					cacheFilter = cacheFilters[i];
-					cacheValueIndex = paramIndexMap.get(cacheFilter.getCompareParam().toLowerCase());
-					compareValue = cacheFilter.getCompareParam();
-					// 是参数名称，提取对应值
-					if (cacheValueIndex != null) {
-						compareValue = paramValues[cacheValueIndex.intValue()];
-					} else if (unifyHandler != null && unifyHandler.dataAuthFilters() != null) {
-						// 通过统一传参，获取数据权限中的数据，如租户、授权机构等
-						DataAuthFilterConfig dataAuthConfig = unifyHandler.dataAuthFilters()
-								.get(cacheFilter.getCompareParam());
-						if (dataAuthConfig != null && dataAuthConfig.getValues() != null) {
-							compareValue = dataAuthConfig.getValues();
+					if (cacheFilter.getCompareValues() != null) {
+						cacheValueIndex = paramIndexMap.get(cacheFilter.getCompareParam().toLowerCase());
+						compareValue = cacheFilter.getCompareParam();
+						// 是参数名称，提取对应值
+						if (cacheValueIndex != null) {
+							compareValue = paramValues[cacheValueIndex.intValue()];
+						} else if (unifyHandler != null && unifyHandler.dataAuthFilters() != null) {
+							// 通过统一传参，获取数据权限中的数据，如租户、授权机构等
+							DataAuthFilterConfig dataAuthConfig = unifyHandler.dataAuthFilters()
+									.get(cacheFilter.getCompareParam());
+							if (dataAuthConfig != null && dataAuthConfig.getValues() != null) {
+								compareValue = dataAuthConfig.getValues();
+							}
 						}
+					} else {
+						compareValue = cacheFilter.getCompareValues();
 					}
 					Map<String, String> tmp = new HashMap<String, String>();
 					if (compareValue.getClass().isArray()) {
@@ -437,7 +442,7 @@ public class ParamFilterUtils {
 			Object updateObj = null;
 			boolean quotOtherParam = false;
 			// update值引入其他参数的值
-			if (paramIndexMap.containsKey(updateValue.toLowerCase())) {
+			if (updateValue != null && paramIndexMap.containsKey(updateValue.toLowerCase())) {
 				quotOtherParam = true;
 				updateObj = paramValues[paramIndexMap.get(updateValue.toLowerCase())];
 			}
@@ -1100,6 +1105,7 @@ public class ParamFilterUtils {
 	 */
 	private static Object toNumber(Object paramValue, String dataType) {
 		Object result;
+		// 默认转decimal
 		BigDecimal value = new BigDecimal(paramValue.toString().replace(",", ""));
 		if (dataType == null) {
 			result = value;
@@ -1557,6 +1563,7 @@ public class ParamFilterUtils {
 		}
 		for (ParamsFilter filter : extFilters) {
 			ParamFilterModel paramFilter = new ParamFilterModel();
+			// 公共属性
 			paramFilter.setFilterType(filter.getType());
 			paramFilter.setParams(filter.getParams());
 			if (filter.getParams().length == 1) {
@@ -1567,11 +1574,50 @@ public class ParamFilterUtils {
 					paramFilter.addExclude(s);
 				}
 			}
+			// to-date
 			paramFilter.setFormat(filter.getDateType());
+
 			paramFilter.setValues(filter.getValue());
+			// for clone
+			paramFilter.setAliasName(filter.getAsName());
+			// to-number、default
+			paramFilter.setDataType(filter.getDataType());
+			// exclusive
+			paramFilter.setCompareType(filter.getCompareType());
+			paramFilter.setCompareValues(filter.getCompareValues());
+			paramFilter.setUpdateParams(filter.getAssignParams());
+			paramFilter.setUpdateValue(filter.getAssignValue());
+			// for to-string
+			paramFilter.setAddQuote(filter.getAddQueto());
 			// 加减天数
 			paramFilter.setIncrementTime(Double.valueOf(filter.getIncrease()));
 			paramFilter.setTimeUnit(filter.getTimeUnit());
+			// 反向缓存
+			if (filter.getCacheArg() != null && filter.getCacheArg().getCacheName() != null) {
+				CacheArg cacheArg = filter.getCacheArg();
+				paramFilter.setCacheName(cacheArg.getCacheName());
+				paramFilter.setCacheType(cacheArg.getCacheType());
+				paramFilter.setAliasName(cacheArg.getAliasName());
+				paramFilter.setPriorMatchEqual(cacheArg.isPriorMatchEqual());
+				paramFilter.setCacheKeyIndex(cacheArg.getCacheKeyIndex());
+				if (cacheArg.getMatchMax() != null) {
+					paramFilter.setCacheMappingMax(cacheArg.getMatchMax());
+				}
+				// 匹配名称列
+				paramFilter.setCacheMappingIndexes(
+						(cacheArg.getMatchIndexs() == null) ? new int[] { 1 } : cacheArg.getMatchIndexs());
+				// 缓存过滤字段(-1 默认值)
+				if (cacheArg.getFilterIndex() != -1 && cacheArg.getFilterValues() != null) {
+					CacheFilterModel cacheFilter = new CacheFilterModel();
+					cacheFilter.setCacheIndex(cacheArg.getFilterIndex());
+					cacheFilter.setCompareValues(cacheArg.getFilterValues());
+					cacheFilter.setCompareType(cacheArg.getFilterType());
+					paramFilter.setCacheFilters(new CacheFilterModel[] { cacheFilter });
+				}
+				if (cacheArg.getNotMatchReturnSelf() != null) {
+					paramFilter.setCacheNotMatchedReturnSelf(cacheArg.getNotMatchReturnSelf());
+				}
+			}
 			result.add(paramFilter);
 		}
 		return result;
