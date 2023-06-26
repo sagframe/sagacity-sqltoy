@@ -212,6 +212,7 @@ public class QueryExecutor implements Serializable {
 	 */
 	public QueryExecutor hiberarchyClasses(Class... hiberarchyClasses) {
 		if (hiberarchyClasses != null && hiberarchyClasses.length > 0) {
+			innerModel.hiberarchy = true;
 			innerModel.hiberarchyClasses = hiberarchyClasses;
 		}
 		return this;

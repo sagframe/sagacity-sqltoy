@@ -653,6 +653,7 @@ public class SqlUtil {
 		try {
 			preparedStatementResultHandler.execute(userData, pst, rs);
 		} catch (Exception se) {
+			se.printStackTrace();
 			logger.error(se.getMessage(), se);
 			throw se;
 		} finally {
