@@ -123,6 +123,7 @@ public class SqlUtilsExt {
 				conn.setAutoCommit(!autoCommit);
 			}
 		} catch (Exception e) {
+			e.printStackTrace();
 			logger.error(e.getMessage(), e);
 			throw e;
 		} finally {
@@ -149,16 +150,24 @@ public class SqlUtilsExt {
 		}
 		int size = entityMeta.getFieldsDefaultValue().length;
 		Object[] result = new Object[size];
-		String defaultValue;
+		String defaultValue = null;
 		int fieldType;
+		String fieldName = null;
 		Boolean nullable;
-		for (int i = 0; i < size; i++) {
-			defaultValue = entityMeta.getFieldsDefaultValue()[i];
-			nullable = entityMeta.getFieldsNullable()[i];
-			if (null != defaultValue) {
-				fieldType = entityMeta.getFieldsTypeArray()[i];
-				result[i] = getDefaultValue(null, defaultValue, fieldType, (nullable == null) ? false : nullable);
+		try {
+			for (int i = 0; i < size; i++) {
+				fieldName = entityMeta.getFieldsArray()[i];
+				defaultValue = entityMeta.getFieldsDefaultValue()[i];
+				nullable = entityMeta.getFieldsNullable()[i];
+				if (null != defaultValue) {
+					fieldType = entityMeta.getFieldsTypeArray()[i];
+					result[i] = getDefaultValue(null, defaultValue, fieldType, (nullable == null) ? false : nullable);
+				}
 			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			logger.error("处理字段:[" + fieldName + "]默认值[" + defaultValue + "]发生异常,请检查默认值设置,errorMsg=" + e.getMessage());
+			throw e;
 		}
 		return result;
 	}

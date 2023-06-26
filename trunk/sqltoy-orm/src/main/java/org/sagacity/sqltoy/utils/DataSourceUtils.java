@@ -535,6 +535,7 @@ public class DataSourceUtils {
 			// 调用反调，传入conn和数据库类型进行实际业务处理(数据库类型主要便于DialectFactory获取对应方言处理类)
 			handler.doConnection(conn, dbType, dialect);
 		} catch (Exception e) {
+			e.printStackTrace();
 			sqltoyContext.releaseConnection(conn, datasource);
 			conn = null;
 			throw new RuntimeException(e);
