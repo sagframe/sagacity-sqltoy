@@ -960,6 +960,7 @@ public class SqlXMLConfigParse {
 					cacheFilterModel.setCacheIndex(Integer.parseInt(cacheFilter.getAttribute("cache-index")));
 					// 对比条件参数(有可能本身就是一个值)
 					compareParam = cacheFilter.getAttribute("compare-param").toLowerCase();
+					// 纯粹的一个数值集合
 					if (cacheFilter.hasAttribute("split")) {
 						split = cacheFilter.getAttribute("split");
 						cacheFilterModel.setCompareValues(StringUtil.splitRegex(compareParam, split, true));

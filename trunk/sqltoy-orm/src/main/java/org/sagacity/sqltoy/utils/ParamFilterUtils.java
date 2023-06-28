@@ -197,7 +197,7 @@ public class ParamFilterUtils {
 				Object compareValue;
 				for (int i = 0; i < cacheFilters.length; i++) {
 					cacheFilter = cacheFilters[i];
-					if (cacheFilter.getCompareValues() != null) {
+					if (cacheFilter.getCompareValues() == null) {
 						cacheValueIndex = paramIndexMap.get(cacheFilter.getCompareParam().toLowerCase());
 						compareValue = cacheFilter.getCompareParam();
 						// 是参数名称，提取对应值

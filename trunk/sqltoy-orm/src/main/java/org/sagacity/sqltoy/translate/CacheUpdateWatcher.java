@@ -216,7 +216,7 @@ public class CacheUpdateWatcher extends Thread {
 					cacheData = translateCacheManager.getCache(cacheName, null);
 					for (CacheCheckResult result : results) {
 						// key不能为null
-						if (result.getItem()[0] != null) {
+						if (result.getItem() != null && result.getItem()[0] != null) {
 							cacheData.put(result.getItem()[0].toString(), result.getItem());
 							count++;
 						}
@@ -224,7 +224,7 @@ public class CacheUpdateWatcher extends Thread {
 				} // 内部存在分组的缓存(如数据字典)
 				else {
 					for (CacheCheckResult result : results) {
-						if (result.getItem()[0] != null) {
+						if (result.getItem() != null && result.getItem()[0] != null) {
 							cacheData = translateCacheManager.getCache(cacheName, result.getCacheType());
 							// 为null则等待首次调用加载
 							if (cacheData != null) {
