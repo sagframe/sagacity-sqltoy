@@ -261,7 +261,7 @@ public class QueryExecutorBuilder {
 		// 兼容参数属性只出现在cache-arg 中
 		if (extend.paramFilters != null && !extend.paramFilters.isEmpty()) {
 			for (ParamsFilter filter : extend.paramFilters) {
-				if (filter.getType().equals("cache-arg")) {
+				if ("cache-arg".equals(filter.getType())) {
 					key = filter.getParams()[0].toLowerCase();
 					if (!keys.contains(key)) {
 						keys.add(key);
