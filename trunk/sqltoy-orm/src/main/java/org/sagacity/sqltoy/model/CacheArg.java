@@ -101,7 +101,7 @@ public class CacheArg implements Serializable {
 		return this;
 	}
 
-	public CacheArg matchIndexs(int[] matchIndexs) {
+	public CacheArg matchIndexs(int... matchIndexs) {
 		this.matchIndexs = matchIndexs;
 		return this;
 	}
@@ -121,7 +121,7 @@ public class CacheArg implements Serializable {
 		return this;
 	}
 
-	public CacheArg filterValues(String[] filterValues) {
+	public CacheArg filterValues(String... filterValues) {
 		this.filterValues = filterValues;
 		return this;
 	}
