@@ -687,6 +687,7 @@ public class SqlUtil {
 		try {
 			callableStatementResultHandler.execute(userData, pst, rs);
 		} catch (Exception se) {
+			se.printStackTrace();
 			logger.error(se.getMessage(), se);
 			throw se;
 		} finally {
@@ -1177,6 +1178,7 @@ public class SqlUtil {
 				conn.setAutoCommit(!autoCommit);
 			}
 		} catch (Exception e) {
+			e.printStackTrace();
 			logger.error(e.getMessage(), e);
 			throw e;
 		} finally {
