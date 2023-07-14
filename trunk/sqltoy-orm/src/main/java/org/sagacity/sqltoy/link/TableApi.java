@@ -8,6 +8,8 @@ import java.util.List;
 import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.config.model.SqlToyConfig;
+import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.model.TableMeta;
 
@@ -61,4 +63,50 @@ public class TableApi extends BaseLink {
 		return dialectFactory.getTables(sqlToyContext, catalog, schema, tableName, getDataSource(null));
 	}
 
+	/**
+	 * 
+	 * @param entityClass
+	 */
+	public void truncate(Class entityClass) {
+		String tableName = sqlToyContext.getEntityMeta(entityClass).getSchemaTable(null, null);
+		String sql = "truncate table ".concat(tableName);
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql, SqlType.delete, super.getDialect());
+		dialectFactory.executeSql(sqlToyContext, sqlToyConfig, null, null, null, dataSource);
+	}
+
+	/**
+	 * @TODO 清空表数据
+	 * @param tableName
+	 */
+	public void truncate(String tableName) {
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig("truncate table ".concat(tableName), SqlType.delete,
+				super.getDialect());
+		dialectFactory.executeSql(sqlToyContext, sqlToyConfig, null, null, null, dataSource);
+	}
+
+	/**
+	 * @TODO 删除表结构
+	 * @param entityClass
+	 */
+	public void drop(Class entityClass) {
+		String tableName = sqlToyContext.getEntityMeta(entityClass).getSchemaTable(null, null);
+		String sql = "drop table ".concat(tableName);
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql, SqlType.delete, super.getDialect());
+		dialectFactory.executeSql(sqlToyContext, sqlToyConfig, null, null, null, dataSource);
+	}
+
+	public void drop(String tableName) {
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig("drop table ".concat(tableName), SqlType.delete,
+				super.getDialect());
+		dialectFactory.executeSql(sqlToyContext, sqlToyConfig, null, null, null, dataSource);
+	}
+
+	/**
+	 * @TODO 创建表
+	 * @param tableMeta
+	 * @param createOrReplace
+	 */
+	public void create(TableMeta tableMeta, boolean createOrReplace) {
+
+	}
 }

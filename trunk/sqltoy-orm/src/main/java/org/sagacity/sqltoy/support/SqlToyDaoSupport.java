@@ -58,6 +58,7 @@ import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.model.EntityQuery;
 import org.sagacity.sqltoy.model.EntityUpdate;
 import org.sagacity.sqltoy.model.IgnoreCaseLinkedMap;
+import org.sagacity.sqltoy.model.IgnoreCaseSet;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.MapKit;
@@ -2126,6 +2127,16 @@ public class SqlToyDaoSupport {
 			realNames = new String[realValues.length];
 			System.arraycopy(paramNames, 0, realNames, innerModel.updateValues.size(), valueSize);
 		}
+		// 强制修改的
+		IgnoreCaseSet forceUpdateSqlFields = new IgnoreCaseSet();
+		if (UnifyUpdateFieldsController.useUnifyFields() && unifyHandler.forceUpdateFields() != null
+				&& unifyHandler.updateSqlTimeFields() != null) {
+			unifyHandler.forceUpdateFields().forEach((sqlUpdateField) -> {
+				if (unifyHandler.updateSqlTimeFields().contains(sqlUpdateField)) {
+					forceUpdateSqlFields.add(sqlUpdateField);
+				}
+			});
+		}
 		int index = 0;
 		String columnName;
 		FieldMeta fieldMeta;
@@ -2136,6 +2147,10 @@ public class SqlToyDaoSupport {
 		// field=:field名称冲突
 		final String extSign = "ExtParam";
 		String fieldName;
+		DataSource dsDataSource = getDataSource(innerModel.dataSource, null);
+		Integer dbType = DataSourceUtils.getDBType(sqlToyContext, dsDataSource);
+		String nvlFun = DataSourceUtils.getNvlFunction(dbType);
+		String currentTime;
 		while (iter.hasNext()) {
 			entry = iter.next();
 			// 考虑 field=filed+? 模式，分割成2部分
@@ -2150,9 +2165,8 @@ public class SqlToyDaoSupport {
 				}
 				fieldMeta = entityMeta.getFieldMeta(fieldName);
 			}
-			columnName = fieldMeta.getColumnName();
 			// 保留字处理
-			columnName = ReservedWordsUtil.convertWord(columnName, null);
+			columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
 			if (isName) {
 				if (fields.length > 1) {
 					if (fields[1].contains("?")) {
@@ -2165,24 +2179,46 @@ public class SqlToyDaoSupport {
 					realNames[index] = fieldMeta.getFieldName();
 				}
 			}
-			realValues[index] = entry.getValue();
 			if (index > 0) {
 				sql.append(",");
 			}
-			if (fields.length == 1) {
-				sql.append(columnName).append("=").append(isName ? (":" + fieldMeta.getFieldName()) : "?");
+			currentTime = SqlUtil.getDBTime(dbType, fieldMeta, forceUpdateSqlFields);
+			// 将参数值设置为null，update语句构造成update table set field=nvl(?,current_timestamp) 形式
+			if (currentTime != null) {
+				// 原设定的参数设置为null，nvl(?,current_timestamp)
+				realValues[index] = null;
+				// 剔除掉已经处理的字段
+				forceUpdateSqlFields.remove(fieldMeta.getFieldName());
+				sql.append(columnName).append("=").append(nvlFun).append("(")
+						.append(isName ? (":" + fieldMeta.getFieldName()) : "?").append(",").append(currentTime)
+						.append(")");
 			} else {
-				// field=filed+? 类似模式
-				fieldSetValue = fields[1];
-				sql.append(columnName).append("=");
-				if (isName && fieldSetValue.contains("?")) {
-					fieldSetValue = fieldSetValue.replace("?", ":" + fieldMeta.getFieldName().concat(extSign));
+				realValues[index] = entry.getValue();
+				if (fields.length == 1) {
+					sql.append(columnName).append("=").append(isName ? (":" + fieldMeta.getFieldName()) : "?");
+				} else {
+					// field=filed+? 类似模式
+					fieldSetValue = fields[1];
+					sql.append(columnName).append("=");
+					if (isName && fieldSetValue.contains("?")) {
+						fieldSetValue = fieldSetValue.replace("?", ":" + fieldMeta.getFieldName().concat(extSign));
+					}
+					fieldSetValue = SqlUtil.convertFieldsToColumns(entityMeta, fieldSetValue);
+					sql.append(fieldSetValue);
 				}
-				fieldSetValue = SqlUtil.convertFieldsToColumns(entityMeta, fieldSetValue);
-				sql.append(fieldSetValue);
 			}
 			index++;
 		}
+		// 针对独立的sql字段进行赋值更新，update table set field=current_timestamp
+		forceUpdateSqlFields.forEach((sqlField) -> {
+			FieldMeta sqlFieldMeta = entityMeta.getFieldMeta(sqlField);
+			String dateStr = SqlUtil.getDBTime(dbType, sqlFieldMeta, forceUpdateSqlFields);
+			if (dateStr != null) {
+				sql.append(",");
+				sql.append(ReservedWordsUtil.convertWord(sqlFieldMeta.getColumnName(), null)).append("=")
+						.append(dateStr);
+			}
+		});
 		sql.append(" where ").append(where);
 		String sqlStr = sql.toString();
 		QueryExecutor queryExecutor = new QueryExecutor(sqlStr).names(realNames).values(realValues);
@@ -2193,10 +2229,9 @@ public class SqlToyDaoSupport {
 		queryExecutor.getInnerModel().entityClass = entityClass;
 		setEntitySharding(queryExecutor, entityMeta);
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.update,
-				getDialect(innerModel.dataSource));
+				getDialect(dsDataSource));
 		sqlToyConfig.setSqlType(SqlType.update);
-		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, queryExecutor, null, null,
-				getDataSource(innerModel.dataSource, sqlToyConfig));
+		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, queryExecutor, null, null, dsDataSource);
 	}
 
 	/**

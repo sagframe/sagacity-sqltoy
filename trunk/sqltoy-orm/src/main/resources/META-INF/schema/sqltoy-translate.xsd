@@ -47,6 +47,13 @@
 				</xsd:documentation>
 			</xsd:annotation>
 		</xsd:attribute>
+		<xsd:attribute name="desc" type="xsd:string">
+			<xsd:annotation>
+				<xsd:documentation>
+				<![CDATA[缓存说明]]>
+				</xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
 	</xsd:attributeGroup>
 	<xsd:attributeGroup name="sqlToyTranslateUpdater">
 		<xsd:attribute name="cache" type="xsd:string"
