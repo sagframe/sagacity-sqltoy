@@ -1611,6 +1611,7 @@ public class ResultUtils {
 		int[] colIndexs = new int[groupSize];
 		IgnoreKeyCaseMap<String, Integer> labelIndexs = new IgnoreKeyCaseMap<String, Integer>();
 		int index = 0;
+		// 去除下划线，便于跟对象属性匹配
 		for (String label : labelNames) {
 			labelIndexs.put(label.replace("_", ""), index);
 			index++;
@@ -1619,7 +1620,8 @@ public class ResultUtils {
 			if (labelIndexs.containsKey(groupFields[i])) {
 				colIndexs[i] = labelIndexs.get(groupFields[i]);
 			} else {
-				throw new DataAccessException("查询结果中未包含属性:" + groupFields[i] + " 对应的值!");
+				throw new DataAccessException(
+						"层次结构封装操作,查询结果中未包含OneToOne或OneToMany的分组属性(对象属性名称,正常不包含下划线):" + groupFields[i] + " 对应的值!");
 			}
 		}
 		// 判断是否存在oneToMany

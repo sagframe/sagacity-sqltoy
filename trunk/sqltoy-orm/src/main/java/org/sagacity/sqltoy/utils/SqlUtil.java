@@ -1923,6 +1923,9 @@ public class SqlUtil {
 	 * @return
 	 */
 	public static String getDBTime(Integer dbType, FieldMeta fieldMeta, IgnoreCaseSet createSqlTimeFields) {
+		if (fieldMeta == null || createSqlTimeFields == null || createSqlTimeFields.isEmpty()) {
+			return null;
+		}
 		int fieldType = fieldMeta.getType();
 		// 统一需要处理的字段、且是日期、时间类型
 		if (createSqlTimeFields.contains(fieldMeta.getFieldName()) && (fieldType == java.sql.Types.DATE

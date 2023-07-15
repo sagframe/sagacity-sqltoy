@@ -1,6 +1,7 @@
 package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * @project sagacity-sqltoy
@@ -34,6 +35,11 @@ public class TableMeta implements Serializable {
 	 */
 	private String remarks;
 
+	/**
+	 * 表字段信息
+	 */
+	private List<ColumnMeta> columns;
+
 	public String getTableName() {
 		return tableName;
 	}
@@ -64,5 +70,13 @@ public class TableMeta implements Serializable {
 
 	public void setRemarks(String remarks) {
 		this.remarks = remarks;
+	}
+
+	public List<ColumnMeta> getColumns() {
+		return columns;
+	}
+
+	public void setColumns(List<ColumnMeta> columns) {
+		this.columns = columns;
 	}
 }

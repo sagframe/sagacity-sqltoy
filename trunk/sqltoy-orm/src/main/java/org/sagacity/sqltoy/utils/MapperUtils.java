@@ -46,16 +46,22 @@ public class MapperUtils {
 
 	public static <T extends Serializable> T map(Serializable source, Class<T> resultType, String... ignoreProperties)
 			throws RuntimeException {
-		if (source == null || (resultType == null || BeanUtil.isBaseDataType(resultType))) {
-			throw new IllegalArgumentException("source 和 resultType 不能为null,且resultType不能为基本类型!");
+		if (source == null) {
+			return null;
+		}
+		if (resultType == null || BeanUtil.isBaseDataType(resultType)) {
+			throw new IllegalArgumentException("resultType 不能为null,且resultType不能为基本类型!");
 		}
 		return map(source, resultType, 0, ignoreProperties);
 	}
 
 	public static <T extends Serializable> List<T> mapList(List sourceList, Class<T> resultType,
 			String... ignoreProperties) throws RuntimeException {
-		if (sourceList == null || (resultType == null || BeanUtil.isBaseDataType(resultType))) {
-			throw new IllegalArgumentException("sourceList 和 resultType 不能为null,且resultType不能为基本类型!");
+		if (sourceList == null) {
+			return null;
+		}
+		if (resultType == null || BeanUtil.isBaseDataType(resultType)) {
+			throw new IllegalArgumentException("resultType 不能为null,且resultType不能为基本类型!");
 		}
 		// resultType不能是接口和抽象类
 		if (Modifier.isAbstract(resultType.getModifiers()) || Modifier.isInterface(resultType.getModifiers())) {
@@ -69,15 +75,18 @@ public class MapperUtils {
 
 	public static <T extends Serializable> Page<T> map(Page sourcePage, Class<T> resultType,
 			String... ignoreProperties) {
-		if (sourcePage == null || resultType == null || BeanUtil.isBaseDataType(resultType)) {
-			throw new IllegalArgumentException("sourcePage 和 resultType 不能为null,且resultType不能为基本类型!");
+		if (sourcePage == null) {
+			return null;
+		}
+		if (resultType == null || BeanUtil.isBaseDataType(resultType)) {
+			throw new IllegalArgumentException("resultType 不能为null,且resultType不能为基本类型!");
 		}
 		Page result = new Page();
 		result.setPageNo(sourcePage.getPageNo());
 		result.setPageSize(sourcePage.getPageSize());
 		result.setRecordCount(sourcePage.getRecordCount());
 		result.setSkipQueryCount(sourcePage.getSkipQueryCount());
-		if (sourcePage.getRows().isEmpty()) {
+		if (sourcePage.getRows() == null || sourcePage.getRows().isEmpty()) {
 			return result;
 		}
 		result.setRows(mapList(sourcePage.getRows(), resultType, ignoreProperties));
