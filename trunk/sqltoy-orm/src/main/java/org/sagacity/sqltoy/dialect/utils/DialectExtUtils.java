@@ -316,6 +316,10 @@ public class DialectExtUtils {
 		IgnoreCaseSet createSqlTimeFields = (unifyFieldsHandler == null
 				|| unifyFieldsHandler.createSqlTimeFields() == null) ? new IgnoreCaseSet()
 						: unifyFieldsHandler.createSqlTimeFields();
+		IgnoreCaseSet forceUpdateSqlTimeFields = new IgnoreCaseSet();
+		if (unifyFieldsHandler != null && unifyFieldsHandler.forceUpdateFields() != null) {
+			forceUpdateSqlTimeFields = unifyFieldsHandler.forceUpdateFields();
+		}
 		String currentTimeStr;
 		int columnSize = entityMeta.getFieldsArray().length;
 		StringBuilder sql = new StringBuilder(columnSize * 30 + 100);
@@ -389,10 +393,14 @@ public class DialectExtUtils {
 				// 使用数据库时间nvl(tv.field,current_timestamp)
 				currentTimeStr = SqlUtil.getDBTime(dbType, fieldMeta, createSqlTimeFields);
 				if (null != currentTimeStr) {
-					insertRejIdColValues.append(isNullFunction);
-					insertRejIdColValues.append("(tv.").append(columnName);
-					insertRejIdColValues.append(",").append(currentTimeStr);
-					insertRejIdColValues.append(")");
+					if (forceUpdateSqlTimeFields.contains(fieldMeta.getFieldName())) {
+						insertRejIdColValues.append(currentTimeStr);
+					} else {
+						insertRejIdColValues.append(isNullFunction);
+						insertRejIdColValues.append("(tv.").append(columnName);
+						insertRejIdColValues.append(",").append(currentTimeStr);
+						insertRejIdColValues.append(")");
+					}
 				} else {
 					insertRejIdColValues.append("tv.").append(columnName);
 				}

@@ -164,13 +164,19 @@ public class DefaultDialectUtils {
 			sql.append(sqlToyConfig.getFastTailSql(dialect));
 		}
 		SqlToyResult queryParam;
+		// 将Long类型尽量转Integer，避免部分数据库setLong不支持(hive)
+		Long startIndex = (pageNo - 1) * pageSize;
+		Object start = startIndex.intValue();
+		if (startIndex > Integer.MAX_VALUE) {
+			start = startIndex;
+		}
 		// limit ? offset ?模式
 		if (useDefault) {
 			queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor, sql.toString(),
-					Long.valueOf(pageSize), (pageNo - 1) * pageSize, dialect);
+					pageSize, start, dialect);
 		} else {
 			queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor, sql.toString(),
-					(pageNo - 1) * pageSize, Long.valueOf(pageSize), dialect);
+					start, pageSize, dialect);
 		}
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		// 增加sql执行拦截器 update 2022-9-10
