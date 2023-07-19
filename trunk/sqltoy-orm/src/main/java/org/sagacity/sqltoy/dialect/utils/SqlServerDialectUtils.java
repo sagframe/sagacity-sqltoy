@@ -208,6 +208,10 @@ public class SqlServerDialectUtils {
 		IgnoreCaseSet updateSqlTimeFields = (unifyFieldsHandler == null
 				|| unifyFieldsHandler.updateSqlTimeFields() == null) ? new IgnoreCaseSet()
 						: unifyFieldsHandler.updateSqlTimeFields();
+		IgnoreCaseSet forceUpdateSqlTimeFields = new IgnoreCaseSet();
+		if (unifyFieldsHandler != null && unifyFieldsHandler.forceUpdateFields() != null) {
+			forceUpdateSqlTimeFields = unifyFieldsHandler.forceUpdateFields();
+		}
 		String currentTimeStr;
 		String realTable = entityMeta.getSchemaTable(tableName, dbType);
 		int columnSize = entityMeta.getFieldsArray().length;
@@ -269,12 +273,15 @@ public class SqlServerDialectUtils {
 				if (fieldMeta.getType() != java.sql.Types.TIMESTAMP) {
 					columnName = fieldMeta.getColumnName();
 					columnName = ReservedWordsUtil.convertWord(columnName, dbType);
+					// 修改时间设置数据库时间nvl(?,current_timestamp)
+					currentTimeStr = SqlUtil.getDBTime(dbType, fieldMeta, updateSqlTimeFields);
 					if (meter > 0) {
 						sql.append(",");
 					}
 					sql.append(" ta.").append(columnName).append("=");
-					// 强制修改
-					if (fupc.contains(columnName)) {
+					if (null != currentTimeStr && forceUpdateSqlTimeFields.contains(fieldMeta.getFieldName())) {
+						sql.append(currentTimeStr);
+					} else if (fupc.contains(columnName)) {
 						sql.append("tv.").append(columnName);
 					} else {
 						sql.append(isNullFunction);
@@ -288,8 +295,6 @@ public class SqlServerDialectUtils {
 							sql.append("(tv.").append(columnName);
 						}
 						sql.append(",");
-						// 修改时间设置数据库时间nvl(?,current_timestamp)
-						currentTimeStr = SqlUtil.getDBTime(dbType, fieldMeta, updateSqlTimeFields);
 						if (null != currentTimeStr) {
 							sql.append(currentTimeStr);
 						} else {
@@ -303,23 +308,27 @@ public class SqlServerDialectUtils {
 					}
 					insertRejIdCols.append(columnName);
 					isStart = false;
-					// 将创建人、创建时间等模拟成默认值
-					defaultValue = DialectExtUtils.getInsertDefaultValue(createUnifyFields, dbType, fieldMeta);
-					// 存在默认值
-					if (null != defaultValue) {
-						insertRejIdColValues.append(isNullFunction);
-						insertRejIdColValues.append("(tv.").append(columnName).append(",");
-						DialectExtUtils.processDefaultValue(insertRejIdColValues, dbType, fieldMeta, defaultValue);
-						insertRejIdColValues.append(")");
+					currentTimeStr = SqlUtil.getDBTime(dbType, fieldMeta, createSqlTimeFields);
+					if (null != currentTimeStr && forceUpdateSqlTimeFields.contains(fieldMeta.getFieldName())) {
+						insertRejIdColValues.append(currentTimeStr);
 					} else {
-						currentTimeStr = SqlUtil.getDBTime(dbType, fieldMeta, createSqlTimeFields);
-						if (null != currentTimeStr) {
+						// 将创建人、创建时间等模拟成默认值
+						defaultValue = DialectExtUtils.getInsertDefaultValue(createUnifyFields, dbType, fieldMeta);
+						// 存在默认值
+						if (null != defaultValue) {
 							insertRejIdColValues.append(isNullFunction);
 							insertRejIdColValues.append("(tv.").append(columnName).append(",");
-							insertRejIdColValues.append(currentTimeStr);
+							DialectExtUtils.processDefaultValue(insertRejIdColValues, dbType, fieldMeta, defaultValue);
 							insertRejIdColValues.append(")");
 						} else {
-							insertRejIdColValues.append("tv.").append(columnName);
+							if (null != currentTimeStr) {
+								insertRejIdColValues.append(isNullFunction);
+								insertRejIdColValues.append("(tv.").append(columnName).append(",");
+								insertRejIdColValues.append(currentTimeStr);
+								insertRejIdColValues.append(")");
+							} else {
+								insertRejIdColValues.append("tv.").append(columnName);
+							}
 						}
 					}
 					meter++;
@@ -404,6 +413,10 @@ public class SqlServerDialectUtils {
 		IgnoreCaseSet createSqlTimeFields = (unifyFieldsHandler == null
 				|| unifyFieldsHandler.createSqlTimeFields() == null) ? new IgnoreCaseSet()
 						: unifyFieldsHandler.createSqlTimeFields();
+		IgnoreCaseSet forceUpdateSqlTimeFields = new IgnoreCaseSet();
+		if (unifyFieldsHandler != null && unifyFieldsHandler.forceUpdateFields() != null) {
+			forceUpdateSqlTimeFields = unifyFieldsHandler.forceUpdateFields();
+		}
 		String currentTimeStr;
 		sql.append("merge into ");
 		sql.append(realTable);
@@ -441,29 +454,33 @@ public class SqlServerDialectUtils {
 			int rejectIdColumnSize = entityMeta.getRejectIdFieldArray().length;
 			FieldMeta fieldMeta;
 			// update 只针对非主键字段进行修改
-			boolean isStart = true;
+			int meter = 0;
 			for (int i = 0; i < rejectIdColumnSize; i++) {
 				fieldMeta = entityMeta.getFieldMeta(entityMeta.getRejectIdFieldArray()[i]);
 				columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
 				// sqlserver不支持timestamp类型的数据进行插入赋值
 				if (fieldMeta.getType() != java.sql.Types.TIMESTAMP) {
-					if (!isStart) {
+					if (meter > 0) {
 						insertRejIdCols.append(",");
 						insertRejIdColValues.append(",");
 					}
 					insertRejIdCols.append(columnName);
-					isStart = false;
 					// 2023-5-11 新增操作待增加对default值的处理,nvl(?,current_timestamp)
 					currentTimeStr = SqlUtil.getDBTime(dbType, fieldMeta, createSqlTimeFields);
 					if (null != currentTimeStr) {
-						insertRejIdColValues.append(isNullFunction);
-						insertRejIdColValues.append("(tv.").append(columnName);
-						insertRejIdColValues.append(",").append(currentTimeStr);
-						insertRejIdColValues.append(")");
+						if (forceUpdateSqlTimeFields.contains(fieldMeta.getFieldName())) {
+							insertRejIdColValues.append(currentTimeStr);
+						} else {
+							insertRejIdColValues.append(isNullFunction);
+							insertRejIdColValues.append("(tv.").append(columnName);
+							insertRejIdColValues.append(",").append(currentTimeStr);
+							insertRejIdColValues.append(")");
+						}
 					} else {
 						insertRejIdColValues.append("tv.").append(columnName);
 					}
 				}
+				meter++;
 			}
 		}
 		// 主键未匹配上则进行插入操作
