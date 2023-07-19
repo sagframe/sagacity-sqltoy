@@ -1,5 +1,6 @@
 package org.sagacity.sqltoy.translate;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -401,6 +402,14 @@ public class TranslateManager {
 			}
 		}
 		return cacheNames;
+	}
+
+	/**
+	 * @TODO 获取全部的缓存翻译配置信息
+	 * @return
+	 */
+	public Collection<TranslateConfigModel> getAllTranslates() {
+		return translateMap.values();
 	}
 
 	/**

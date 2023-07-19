@@ -29,6 +29,7 @@ import org.sagacity.sqltoy.plugins.SqlInterceptor;
 import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
 import org.sagacity.sqltoy.plugins.datasource.impl.DefaultDataSourceSelector;
+import org.sagacity.sqltoy.plugins.ddl.DDLGenerator;
 import org.sagacity.sqltoy.plugins.formater.SqlFormater;
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
 import org.sagacity.sqltoy.plugins.overtime.DefaultOverTimeHandler;
@@ -67,7 +68,7 @@ import com.alibaba.ttl.threadpool.TtlExecutors;
 //14、sqltoy的update、save、saveAll、load 等crud操作规避了jpa的缺陷,参见update(entity,String...forceUpdateProps)和updateFetch、updateSaveFetch
 //15、提供了极为人性化的条件处理:排它性条件、日期条件加减和提取月末月初处理等
 //16、提供了查询结果日期、数字格式化、安全脱敏处理，让复杂的事情变得简单，大幅简化sql和结果的二次处理工作
-//------------------------------------------------------------------------------------------------------------------------------------*/
+//--------------------------------------------------------------------------------------------------------------------------------*/
 /**
  * @project sagacity-sqltoy
  * @description sqltoy 工具的上下文容器，提供对应的sql获取以及相关参数设置
@@ -369,6 +370,11 @@ public class SqlToyContext {
 	private int defaultPageSize = 10;
 
 	/**
+	 * 自动创建表
+	 */
+	private Boolean autoDDL = false;
+
+	/**
 	 * @todo 初始化
 	 * @throws Exception
 	 */
@@ -425,6 +431,16 @@ public class SqlToyContext {
 		// 默认的脱敏处理器
 		if (desensitizeProvider == null) {
 			desensitizeProvider = new DesensitizeDefaultProvider();
+		}
+		// 向数据库创建表结构、或更新表结构
+		if (this.autoDDL != null && this.autoDDL == true) {
+			DataSource createDDLDB = getDefaultDataSource();
+			if (createDDLDB == null && dataSourceSelector != null) {
+				createDDLDB = dataSourceSelector.getDataSource(appContext, null, null, null, null);
+			}
+			if (createDDLDB != null) {
+				DDLGenerator.createDDL(this, entityManager.getAllEntities(), createDDLDB);
+			}
 		}
 		logger.debug("sqltoy init complete!");
 	}
@@ -1183,5 +1199,13 @@ public class SqlToyContext {
 	public void setDefaultPageOffset(boolean defaultPageOffset) {
 		this.defaultPageOffset = defaultPageOffset;
 	}
-	
+
+	public Boolean getAutoDDL() {
+		return autoDDL;
+	}
+
+	public void setAutoDDL(Boolean autoDDL) {
+		this.autoDDL = autoDDL;
+	}
+
 }

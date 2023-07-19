@@ -608,12 +608,9 @@ public class NumberUtil {
 			return "";
 		}
 		String str = value.toString();
-		String[] arrs = str.split(",");
-		if (arrs.length == 1) {
-			str += ".00";
-		}
-		if (arrs.length == 2 && (arrs[1].length() == 1)) {
-			str += "0";
+		int dotIndex = str.indexOf(".");
+		if (dotIndex != -1 && str.length() > dotIndex + 3) {
+			str = str.substring(0, dotIndex + 3);
 		}
 		return convertToEnglishMoney(str);
 	}
@@ -624,10 +621,20 @@ public class NumberUtil {
 	 * @return
 	 */
 	public static String convertToEnglishMoney(String value) {
+		if (value == null) {
+			return null;
+		}
+		// 是否负数
 		boolean isMinus = false;
 		if (value.startsWith("-")) {
 			isMinus = true;
 			value = value.substring(1);
+		}
+		// 是否有千分位
+		boolean hasPermil = value.contains(",");
+		// 剔除千分位
+		if (hasPermil) {
+			value = value.replace(",", "");
 		}
 		int z = value.indexOf("."); // 取小数点位置
 		String lstr, rstr = "";
@@ -652,12 +659,17 @@ public class NumberUtil {
 			;
 		}
 		StringBuilder lm = new StringBuilder(); // 用来存放转换後的整数部分
-		for (int i = 0; i < lstrrev.length() / 3; i++) {
+		int loopEnd = lstrrev.length() / 3;
+		for (int i = 0; i < loopEnd; i++) {
 			a[i] = reverse(lstrrev.substring(3 * i, 3 * i + 3)); // 截取第一个叁位
 			if (!"000".equals(a[i])) { // 用来避免这种情况：1000000 = one million thousand only
 				if (i != 0) {
-					lm.insert(0, transThree(a[i]) + " " + parseMore(String.valueOf(i)) + " "); // 加:
-																								// thousand、million、billion
+					// thousand、million、billion
+					if (hasPermil && lm.length() > 0) {
+						lm.insert(0, transThree(a[i]) + " " + parseMore(String.valueOf(i)) + ",");
+					} else {
+						lm.insert(0, transThree(a[i]) + " " + parseMore(String.valueOf(i)) + " ");
+					}
 				} else {
 					lm = new StringBuilder(transThree(a[i])); // 防止i=0时， 在多加两个空格.
 				}
@@ -668,11 +680,11 @@ public class NumberUtil {
 
 		String xs = ""; // 用来存放转换後小数部分
 		if ((z > -1) && (BigDecimal.ZERO.compareTo(new BigDecimal(rstr)) == -1)) {
-			xs = "AND " + transTwo(rstr) + " CENTS"; // 小数部分存在时转换小数 xs = "AND CENTS " + transTwo(rstr) + " ";
+			xs = " AND CENTS " + transTwo(rstr); // 小数部分存在时转换小数 xs = "AND CENTS " + transTwo(rstr) + " ";
+		} else {
+			xs = " AND CENTS";
 		}
-		// return "U.S.DOLLARS " + lm.toString().trim() + " DOLLARS " + xs; // lm.trim()
-		// + " " + xs + "ONLY";
-		return (isMinus ? "MINUS " : "") + lm.toString().trim() + " DOLLARS " + xs; // lm.trim() + " " + xs + "ONLY";
+		return (isMinus ? "MINUS " : "") + lm.toString().trim() + xs + " ONLY";
 	}
 
 	private static String parseFirst(String s) {
@@ -712,7 +724,7 @@ public class NumberUtil {
 		{
 			value = parseTen(s);
 		} else {
-			value = parseTen(s) + " " + parseFirst(s);
+			value = parseTen(s) + "-" + parseFirst(s);
 		}
 		return value;
 	}
@@ -746,5 +758,6 @@ public class NumberUtil {
 		}
 		return tmp.toString();
 	}
+
 	/****************** 数字金额转换为英文格式 End ********************************/
 }

@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.sagacity.sqltoy.model.IgnoreCaseSet;
 import org.sagacity.sqltoy.model.SecureType;
@@ -171,6 +172,11 @@ public class EntityMeta implements Serializable {
 	private List<TableCascadeModel> cascadeModels = new ArrayList<TableCascadeModel>();
 
 	/**
+	 * 外键字段{field,{tableName,field}}
+	 */
+	private Map<String, String[]> foreignFields;
+
+	/**
 	 * 级联对象
 	 */
 	private Class[] cascadeTypes;
@@ -211,6 +217,11 @@ public class EntityMeta implements Serializable {
 	 * 租户字段名称
 	 */
 	private String tenantField;
+
+	/**
+	 * 数据库表索引信息
+	 */
+	private IndexModel[] indexModels;
 
 	/**
 	 * @return the loadAllSql
@@ -819,4 +830,19 @@ public class EntityMeta implements Serializable {
 		this.tenantField = tenantField;
 	}
 
+	public IndexModel[] getIndexModels() {
+		return indexModels;
+	}
+
+	public void setIndexModels(IndexModel[] indexModels) {
+		this.indexModels = indexModels;
+	}
+
+	public Map<String, String[]> getForeignFields() {
+		return foreignFields;
+	}
+
+	public void setForeignFields(Map<String, String[]> foreignFields) {
+		this.foreignFields = foreignFields;
+	}
 }

@@ -523,10 +523,10 @@ public class ClickHouseDialectUtils {
 				if (fupc.contains(columnName)) {
 					sql.append("?");
 				} else {
-					sql.append(nullFunction);
-					sql.append("(?,");
 					// 修改时间设置数据库时间nvl(?,current_timestamp)
 					currentTimeStr = SqlUtil.getDBTime(dbType, fieldMeta, updateSqlTimeFields);
+					sql.append(nullFunction);
+					sql.append("(?,");
 					if (null != currentTimeStr) {
 						sql.append(currentTimeStr);
 					} else {

@@ -3,33 +3,33 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sagframe</groupId>
-	<version>5.2.58</version>
+	<version>5.2.59</version>
 	<name>sagacity-sqltoy</name>
 	<description>sagacity-sqltoy</description>
 	<artifactId>sagacity-sqltoy</artifactId>
 	<url>https://github.com/sagframe/sagacity-sqltoy</url>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<spring-framework.version>5.3.28</spring-framework.version>
-		<spring-data-redis.version>2.7.13</spring-data-redis.version>
-		<spring-data-mongo.version>3.4.13</spring-data-mongo.version>
+		<spring-framework.version>5.3.29</spring-framework.version>
+		<spring-data-redis.version>2.7.14</spring-data-redis.version>
+		<spring-data-mongo.version>3.4.14</spring-data-mongo.version>
 		<ojdbc.version>21.10.0.0</ojdbc.version>
 		<ehcache.version>3.10.8</ehcache.version>
 		<httpclient.version>4.5.14</httpclient.version>
 		<httpclient-httpmime.version>4.5.14</httpclient-httpmime.version>
 		<httpclient-core.version>4.4.16</httpclient-core.version>
 		<elastic-rest-client.version>8.8.2</elastic-rest-client.version>
-		<fastjson.version>2.0.34</fastjson.version>
+		<fastjson.version>2.0.36</fastjson.version>
 		<mongo.version>3.12.14</mongo.version>
 		<junit-jupiter.version>5.9.3</junit-jupiter.version>
 		<junit-platform.version>1.9.3</junit-platform.version>
 		<slf4j.version>2.0.7</slf4j.version>
 		<caffeine.version>2.9.3</caffeine.version>
-		<h2.version>2.1.214</h2.version>
+		<h2.version>2.2.220</h2.version>
 		<lombok.version>1.18.28</lombok.version>
-		<taos-jdbcdriver.version>3.2.3</taos-jdbcdriver.version>
+		<taos-jdbcdriver.version>3.2.4</taos-jdbcdriver.version>
 		<druid.version>1.2.18</druid.version>
-		<transmittable-thread-local>2.14.2</transmittable-thread-local>
+		<transmittable-thread-local>2.14.3</transmittable-thread-local>
 	</properties>
 	<licenses>
 		<license>
@@ -352,7 +352,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>3.3.2</version>
+				<version>3.5.0</version>
 				<executions>
 					<execution>
 						<phase>package</phase>
@@ -368,7 +368,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-gpg-plugin</artifactId>
-				<version>3.0.1</version>
+				<version>3.1.0</version>
 				<executions>
 					<execution>
 						<phase>verify</phase>
@@ -381,7 +381,7 @@
 			<plugin>
 				<groupId>org.sonatype.plugins</groupId>
 				<artifactId>nexus-staging-maven-plugin</artifactId>
-				<version>1.6.12</version>
+				<version>1.6.13</version>
 				<extensions>true</extensions>
 				<configuration>
 					<serverId>sonatype-nexus-staging</serverId>

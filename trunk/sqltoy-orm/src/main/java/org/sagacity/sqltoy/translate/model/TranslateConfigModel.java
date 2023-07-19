@@ -100,6 +100,11 @@ public class TranslateConfigModel implements Serializable {
 	private Map<String, Integer> i18nMap = new HashMap<String, Integer>();
 
 	private Set<Integer> i18nIndexes = new HashSet<Integer>();
+	
+	/**
+	 * 缓存说明
+	 */
+	private String desc;
 
 	/**
 	 * @return the keepAlive
@@ -312,6 +317,14 @@ public class TranslateConfigModel implements Serializable {
 	public void putI18n(String key, Integer index) {
 		i18nMap.put(key.toLowerCase(), index);
 		i18nIndexes.add(index);
+	}
+
+	public String getDesc() {
+		return desc;
+	}
+
+	public void setDesc(String desc) {
+		this.desc = desc;
 	}
 
 	public boolean hasI18n(Integer index) {

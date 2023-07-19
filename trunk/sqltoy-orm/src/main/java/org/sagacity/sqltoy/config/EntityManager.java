@@ -25,7 +25,10 @@ import org.sagacity.sqltoy.config.annotation.BusinessId;
 import org.sagacity.sqltoy.config.annotation.Column;
 import org.sagacity.sqltoy.config.annotation.DataVersion;
 import org.sagacity.sqltoy.config.annotation.Entity;
+import org.sagacity.sqltoy.config.annotation.Foreign;
 import org.sagacity.sqltoy.config.annotation.Id;
+import org.sagacity.sqltoy.config.annotation.Index;
+import org.sagacity.sqltoy.config.annotation.Indexes;
 import org.sagacity.sqltoy.config.annotation.OneToMany;
 import org.sagacity.sqltoy.config.annotation.OneToOne;
 import org.sagacity.sqltoy.config.annotation.PartitionKey;
@@ -38,6 +41,7 @@ import org.sagacity.sqltoy.config.model.DataVersionConfig;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.FieldSecureConfig;
+import org.sagacity.sqltoy.config.model.IndexModel;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.ShardingConfig;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
@@ -358,6 +362,8 @@ public class EntityManager {
 				parseSharding(entityMeta, entityClass);
 				// 解析加解密配置
 				parseSecureConfig(entityMeta, entityClass);
+				// 解析索引
+				parseIndexes(entityMeta, entityClass);
 				// 数据版本
 				if (dataVersion != null) {
 					if (dataVersionField == null) {
@@ -538,6 +544,34 @@ public class EntityManager {
 	}
 
 	/**
+	 * @todo 解析表索引信息
+	 * @param entityMeta
+	 * @param entityClass
+	 */
+	private void parseIndexes(EntityMeta entityMeta, Class entityClass) {
+		Class classType = entityClass;
+		Indexes indexes = null;
+		// 增加递归对父类检测
+		while (classType != null && !classType.equals(Object.class)) {
+			indexes = (Indexes) classType.getAnnotation(Indexes.class);
+			if (indexes != null) {
+				break;
+			}
+			classType = classType.getSuperclass();
+		}
+		// 不存在索引信息
+		if (indexes == null || indexes.indexes() == null || indexes.indexes().length == 0) {
+			return;
+		}
+		Index[] indexs = indexes.indexes();
+		IndexModel[] indexModels = new IndexModel[indexs.length];
+		for (int i = 0; i < indexs.length; i++) {
+			indexModels[i] = new IndexModel(indexs[i].name(), indexs[i].isUnique(), indexs[i].columns());
+		}
+		entityMeta.setIndexModels(indexModels);
+	}
+
+	/**
 	 * @todo 解析主键字段
 	 * @param idList
 	 * @param allFields
@@ -609,6 +643,16 @@ public class EntityManager {
 		// 设置是否分区字段
 		if (field.getAnnotation(PartitionKey.class) != null) {
 			fieldMeta.setPartitionKey(true);
+		}
+		// 解析外键信息
+		if (field.getAnnotation(Foreign.class) != null) {
+			Foreign foregin = field.getAnnotation(Foreign.class);
+			Map<String, String[]> foreignFieldMap = entityMeta.getForeignFields();
+			if (foreignFieldMap == null) {
+				foreignFieldMap = new HashMap<String, String[]>();
+			}
+			foreignFieldMap.put(field.getName(), new String[] { foregin.table(), foregin.field() });
+			entityMeta.setForeignFields(foreignFieldMap);
 		}
 		// 兼容type不设置场景，根据字段类型自动补充,为时序数据库等手工简化写注解做准备
 		if (column.type() == java.sql.Types.OTHER) {
@@ -700,7 +744,7 @@ public class EntityManager {
 	 */
 	private void processIdGenerator(SqlToyContext sqlToyContext, EntityMeta entityMeta, String idGenerator) {
 		// 已经存在跳过处理
-		if (idGenerators.containsKey(idGenerator)) {
+		if (sqlToyContext == null || idGenerators.containsKey(idGenerator)) {
 			return;
 		}
 		// 自定义springbean 模式，用法在quickvo中配置@bean(beanName)
@@ -944,5 +988,9 @@ public class EntityManager {
 			return null;
 		}
 		return entitysMetaMap.get(className);
+	}
+
+	public ConcurrentHashMap<String, EntityMeta> getAllEntities() {
+		return entitysMetaMap;
 	}
 }
