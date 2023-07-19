@@ -123,9 +123,14 @@ public class SqlToyConstantsTest {
 
 	@Test
 	public void testBeanInfo2() {
-		// String dateStr = "first_of_year-10m";
-		// System.err.println(DateUtil.formatDate(ParamFilterUtils.parseDateStr(dateStr),"yyyy-MM-dd"));
-
+		Long pageNo = 1L;
+		Integer pageSize = 10;
+		Long startIndex = (pageNo - 1) * pageSize;
+		Object start = startIndex.intValue();
+		if (startIndex > Integer.MAX_VALUE) {
+			start = startIndex;
+		}
+		System.err.println(start.getClass().getName());
 	}
 
 	public static void main(String[] args) {

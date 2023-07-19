@@ -2127,7 +2127,7 @@ public class SqlToyDaoSupport {
 			realNames = new String[realValues.length];
 			System.arraycopy(paramNames, 0, realNames, innerModel.updateValues.size(), valueSize);
 		}
-		// 强制修改的
+		// 强制修改的日期时间字段，且以数据库时间为准
 		IgnoreCaseSet forceUpdateSqlFields = new IgnoreCaseSet();
 		if (UnifyUpdateFieldsController.useUnifyFields() && unifyHandler.forceUpdateFields() != null
 				&& unifyHandler.updateSqlTimeFields() != null) {
@@ -2185,10 +2185,11 @@ public class SqlToyDaoSupport {
 			currentTime = SqlUtil.getDBTime(dbType, fieldMeta, forceUpdateSqlFields);
 			// 将参数值设置为null，update语句构造成update table set field=nvl(?,current_timestamp) 形式
 			if (currentTime != null) {
-				// 原设定的参数设置为null，nvl(?,current_timestamp)
+				// 原设定的参数设置为null，
 				realValues[index] = null;
 				// 剔除掉已经处理的字段
 				forceUpdateSqlFields.remove(fieldMeta.getFieldName());
+				// field=nvl(?,current_timestamp)
 				sql.append(columnName).append("=").append(nvlFun).append("(")
 						.append(isName ? (":" + fieldMeta.getFieldName()) : "?").append(",").append(currentTime)
 						.append(")");
@@ -2209,7 +2210,7 @@ public class SqlToyDaoSupport {
 			}
 			index++;
 		}
-		// 针对独立的sql字段进行赋值更新，update table set field=current_timestamp
+		// 针对独立的sql 时间字段进行赋值更新，update table set field=current_timestamp
 		forceUpdateSqlFields.forEach((sqlField) -> {
 			FieldMeta sqlFieldMeta = entityMeta.getFieldMeta(sqlField);
 			String dateStr = SqlUtil.getDBTime(dbType, sqlFieldMeta, forceUpdateSqlFields);

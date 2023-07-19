@@ -172,9 +172,9 @@ public class EntityMeta implements Serializable {
 	private List<TableCascadeModel> cascadeModels = new ArrayList<TableCascadeModel>();
 
 	/**
-	 * 外键字段
+	 * 外键字段{field,{tableName,field}}
 	 */
-	private Map<String,String[]> foreignFields;
+	private Map<String, String[]> foreignFields;
 
 	/**
 	 * 级联对象

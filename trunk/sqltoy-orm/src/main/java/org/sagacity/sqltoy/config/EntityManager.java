@@ -650,14 +650,8 @@ public class EntityManager {
 			Map<String, String[]> foreignFieldMap = entityMeta.getForeignFields();
 			if (foreignFieldMap == null) {
 				foreignFieldMap = new HashMap<String, String[]>();
-				foreignFieldMap.put(foregin.name(), new String[] { field.getName() });
-			} else {
-				String[] fields = foreignFieldMap.get(foregin.name());
-				String[] lastFields = new String[fields.length + 1];
-				System.arraycopy(fields, 0, lastFields, 0, fields.length);
-				lastFields[fields.length] = field.getName();
-				foreignFieldMap.put(foregin.name(), lastFields);
 			}
+			foreignFieldMap.put(field.getName(), new String[] { foregin.table(), foregin.field() });
 			entityMeta.setForeignFields(foreignFieldMap);
 		}
 		// 兼容type不设置场景，根据字段类型自动补充,为时序数据库等手工简化写注解做准备

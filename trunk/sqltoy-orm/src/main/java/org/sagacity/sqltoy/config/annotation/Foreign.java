@@ -18,6 +18,9 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface Foreign {
-	// 外键名称
-	String name();
+	// 外键表名称
+	String table();
+
+	// 外键表的字段
+	String field();
 }

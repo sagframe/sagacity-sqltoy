@@ -101,12 +101,12 @@ public class TableApi extends BaseLink {
 		dialectFactory.executeSql(sqlToyContext, sqlToyConfig, null, null, null, dataSource);
 	}
 
-	/**
-	 * @TODO 创建表
-	 * @param tableMeta
-	 * @param createOrReplace
-	 */
-	public void create(TableMeta tableMeta, boolean createOrReplace) {
-
-	}
+//	/**
+//	 * @TODO 创建表
+//	 * @param tableMeta
+//	 * @param createOrReplace
+//	 */
+//	public void create(TableMeta tableMeta, boolean createOrReplace) {
+//
+//	}
 }
