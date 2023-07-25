@@ -1,6 +1,7 @@
 package org.sagacity.sqltoy.plugins.calculator;
 
 import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -56,7 +57,17 @@ public class GroupSummary {
 		// 定义分组汇总计算的模型(2022-11-24)
 		SummaryGroupMeta[] sumMetas = new SummaryGroupMeta[summaryModel.getGroupMeta().length];
 		int i = 0;
+		int dataSize = result.size();
 		SummaryGroupMeta groupMeta;
+		List<Integer> preAllGroups = new ArrayList<Integer>();
+		// 判断第几个分组为最后的分组
+		int lastGroupOrderIndex = 0;
+		for (SummaryGroupMeta meta : summaryModel.getGroupMeta()) {
+			if (meta.getOrderColumn() != null) {
+				lastGroupOrderIndex++;
+			}
+		}
+		int meter = 0;
 		for (SummaryGroupMeta meta : summaryModel.getGroupMeta()) {
 			groupMeta = meta.clone();
 			sumSite = (summaryModel.getSumSite() == null) ? "top" : summaryModel.getSumSite().toLowerCase();
@@ -66,6 +77,56 @@ public class GroupSummary {
 			groupColsList.toArray(groupCols);
 			// 分组列
 			groupMeta.setGroupCols(groupCols);
+			preAllGroups.addAll(groupColsList);
+			// 需要对数据先分组计算排序
+			if (groupMeta.getOrderColumn() != null) {
+				meter++;
+				Integer sortIndex = labelIndexMap.get(groupMeta.getOrderColumn());
+				boolean isSum = true;
+				if (groupMeta.getOrderWithSum() != null) {
+					isSum = groupMeta.getOrderWithSum();
+				} else {
+					if (sumColList.contains(sortIndex)) {
+						isSum = true;
+					} else if (aveColList.contains(sortIndex)) {
+						isSum = false;
+					}
+				}
+				// 排序方式
+				boolean desc = groupMeta.getOrderWay().equalsIgnoreCase("desc") ? true : false;
+				Integer[] groupIndexes = new Integer[preAllGroups.size()];
+				preAllGroups.toArray(groupIndexes);
+				// 以新增加的末尾列排序
+				if (groupIndexes.length == 1) {
+					// 先用分组列排序，再通过分组的计算值排序，避免存在不同分组之间计算列的值一样，产生顺序混乱
+					if (!summaryModel.isHasGrouped()) {
+						int dataType = CollectionUtil.getSortDataType(result, groupIndexes[0]);
+						CollectionUtil.sortList(result, groupIndexes[0], dataType, 0, dataSize - 1, !desc);
+					}
+					// 在每行增加一列计算值，用于排序
+					CollectionUtil.groupCalculate(result, groupIndexes, sortIndex, isSum);
+					CollectionUtil.sortList(result, dataWidth, 2, 0, dataSize - 1, !desc);
+				} else {
+					// 先根据上级分组做下级数据的分组，便于下一步的分组计算
+					Integer[] sortGroupIndexes = new Integer[groupIndexes.length - 1];
+					System.arraycopy(groupIndexes, 0, sortGroupIndexes, 0, groupIndexes.length - 1);
+					if (!summaryModel.isHasGrouped()) {
+						CollectionUtil.groupSort(result, sortGroupIndexes, groupIndexes[groupIndexes.length - 1], desc);
+					}
+					// 做分组计算
+					CollectionUtil.groupCalculate(result, groupIndexes, sortIndex, isSum);
+					// 对分组计算的结果进行排序
+					CollectionUtil.groupSort(result, sortGroupIndexes, dataWidth, desc);
+					// 最后一个分组调整明细项顺序
+					if (meter == lastGroupOrderIndex && !summaryModel.isHasGrouped()) {
+						CollectionUtil.groupSort(result, groupIndexes, sortIndex, desc);
+					}
+				}
+				// 剔除新增计算排序列
+				for (int k = 0; k < dataSize; k++) {
+					((List) result.get(k)).remove(dataWidth);
+				}
+			}
 			if (bothSumAverage) {
 				if (StringUtil.isNotBlank(groupMeta.getSumTitle())
 						&& StringUtil.isNotBlank(groupMeta.getAverageTitle())) {

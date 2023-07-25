@@ -618,7 +618,7 @@ public class SqlToyDaoSupport {
 		if (result.size() == 1) {
 			return result.get(0);
 		}
-		throw new IllegalArgumentException("loadEntity查询出:" + result.size() + " 条记录,不符合load查询预期!");
+		throw new IllegalArgumentException("loadEntity查询出:" + result.size() + " 条记录,不符合load查询单条记录的预期!");
 	}
 
 	/**
@@ -646,7 +646,7 @@ public class SqlToyDaoSupport {
 		if (rows.size() == 1) {
 			return rows.get(0);
 		}
-		throw new IllegalArgumentException("loadByQuery查询出:" + rows.size() + " 条记录,不符合load查询预期!");
+		throw new IllegalArgumentException("loadByQuery查询出:" + rows.size() + " 条记录,不符合load查询单条记录的预期!");
 	}
 
 	/**

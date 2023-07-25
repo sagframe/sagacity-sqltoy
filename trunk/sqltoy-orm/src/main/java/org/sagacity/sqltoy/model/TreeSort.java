@@ -46,6 +46,40 @@ public class TreeSort implements Serializable {
 	 */
 	private String[] compareValues;
 
+	/**
+	 * 层级排序列
+	 */
+	private String levelOrderColumn;
+
+	/**
+	 * 降序
+	 */
+	private String orderWay = "desc";
+
+	/**
+	 * @return the orderWay
+	 */
+	public String getOrderWay() {
+		return orderWay;
+	}
+
+	public TreeSort orderWay(String orderWay) {
+		this.orderWay = orderWay;
+		return this;
+	}
+
+	/**
+	 * @return the levelOrderColumn
+	 */
+	public String getLevelOrderColumn() {
+		return levelOrderColumn;
+	}
+
+	public TreeSort levelOrderColumn(String levelOrderColumn) {
+		this.levelOrderColumn = levelOrderColumn;
+		return this;
+	}
+
 	public String getIdColumn() {
 		return idColumn;
 	}

@@ -1338,6 +1338,10 @@ public class SqlXMLConfigParse {
 					if (elt.hasAttribute("reverse")) {
 						summaryModel.setReverse(Boolean.parseBoolean(elt.getAttribute("reverse")));
 					}
+					// 是否已经完成数据分组组织(默认为true)
+					if (elt.hasAttribute("has-grouped")) {
+						summaryModel.setHasGrouped(Boolean.parseBoolean(elt.getAttribute("has-grouped")));
+					}
 					// 汇总合计涉及的列
 					if (elt.hasAttribute("sum-columns")) {
 						summaryModel.setSumColumns(elt.getAttribute("sum-columns").toLowerCase());
@@ -1437,6 +1441,18 @@ public class SqlXMLConfigParse {
 							}
 							if (groupElt.hasAttribute("label-column")) {
 								groupMeta.setLabelColumn(groupElt.getAttribute("label-column"));
+							}
+							// 分组排序
+							// order-column="" order-way="desc|asc" order-with-sum="true"
+							if (groupElt.hasAttribute("order-column")) {
+								groupMeta.setOrderColumn(groupElt.getAttribute("order-column"));
+								if (groupElt.hasAttribute("order-way")) {
+									groupMeta.setOrderWay(groupElt.getAttribute("order-way"));
+								}
+								if (groupElt.hasAttribute("order-with-sum")) {
+									groupMeta.setOrderWithSum(
+											Boolean.parseBoolean(groupElt.getAttribute("order-with-sum")));
+								}
 							}
 							groupMetaList.add(groupMeta);
 						}

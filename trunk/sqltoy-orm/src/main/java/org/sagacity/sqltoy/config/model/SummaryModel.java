@@ -64,6 +64,11 @@ public class SummaryModel implements Serializable {
 	private boolean skipSingleRow = false;
 
 	private RoundingMode[] roundingModes;
+	
+	/**
+	 * 数据是否已经完成分组
+	 */
+	private boolean hasGrouped=true;
 
 	/**
 	 * @return the reverse
@@ -168,4 +173,13 @@ public class SummaryModel implements Serializable {
 	public void setSkipSingleRow(boolean skipSingleRow) {
 		this.skipSingleRow = skipSingleRow;
 	}
+
+	public boolean isHasGrouped() {
+		return hasGrouped;
+	}
+
+	public void setHasGrouped(boolean hasGrouped) {
+		this.hasGrouped = hasGrouped;
+	}
+	
 }

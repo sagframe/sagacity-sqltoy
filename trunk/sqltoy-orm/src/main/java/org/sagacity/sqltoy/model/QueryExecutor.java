@@ -474,7 +474,8 @@ public class QueryExecutor implements Serializable {
 			TreeSortModel treeSortModel = new TreeSortModel();
 			treeSortModel.setIdColumn(treeSort.getIdColumn()).setPidColumn(treeSort.getPidColumn())
 					.setSumColumns(treeSort.getSumColumns()).setFilterColumn(treeSort.getFilterColumn())
-					.setCompareType(treeSort.getCompareType()).setCompareValues(treeSort.getCompareValues());
+					.setCompareType(treeSort.getCompareType()).setCompareValues(treeSort.getCompareValues())
+					.setLevelOrderColumn(treeSort.getLevelOrderColumn()).setOrderWay(treeSort.getOrderWay());
 			innerModel.calculators.add(treeSortModel);
 		}
 		return this;
@@ -581,6 +582,9 @@ public class QueryExecutor implements Serializable {
 				groupMeta.setSumTitle(summaryGroup.getSumTitle());
 				// 标题列
 				groupMeta.setLabelColumn(summaryGroup.getLabelColumn());
+				groupMeta.setOrderColumn(summaryGroup.getOrderColumn());
+				groupMeta.setOrderWay(summaryGroup.getOrderWay());
+				groupMeta.setOrderWithSum(summaryGroup.getOrderWithSum());
 				groupMetas[i] = groupMeta;
 			}
 			summaryModel.setGroupMeta(groupMetas);
