@@ -1,9 +1,14 @@
 package org.sagacity.sqltoy.utils;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -32,6 +37,8 @@ public class CollectionUtil {
 	 * 定义日志
 	 */
 	private final static Logger logger = LoggerFactory.getLogger(CollectionUtil.class);
+
+	public static final String ILLEGAL_NUM_REGEX = "%|‰|\\$|¥";
 
 	// 静态方法避免实例化和继承
 	private CollectionUtil() {
@@ -205,6 +212,7 @@ public class CollectionUtil {
 			} else if (aryData[0] instanceof java.lang.Number) {
 				dataType = 2;
 			}
+			String str1, str2;
 			boolean lessThen = false;
 			for (int i = 0; i < length - 1; i++) {
 				for (int j = i + 1; j < length; j++) {
@@ -215,7 +223,15 @@ public class CollectionUtil {
 					} else if (dataType == 3) {
 						lessThen = ((Date) iData).before((Date) jData);
 					} else {
-						lessThen = (iData.toString()).compareTo(jData.toString()) < 0;
+						str1 = iData.toString();
+						str2 = jData.toString();
+						if (str1.length() < str2.length()) {
+							lessThen = true;
+						} else if (str1.length() > str2.length()) {
+							lessThen = false;
+						} else {
+							lessThen = str1.compareTo(str2) < 0;
+						}
 					}
 					// 小于
 					if ((descend && lessThen) || (!descend && !lessThen)) {
@@ -1153,6 +1169,239 @@ public class CollectionUtil {
 					iter.remove();
 				}
 			}
+		}
+	}
+
+	/**
+	 * @TODO 分组排序
+	 * @param dataSet
+	 * @param groupIndexes
+	 * @param sortIndex
+	 * @param desc
+	 */
+	public static void groupSort(List<List> dataSet, Integer[] groupIndexes, int sortIndex, boolean desc) {
+		if (dataSet == null || dataSet.size() < 2) {
+			return;
+		}
+		int length = dataSet.size();
+		int dataType = getSortDataType(dataSet, sortIndex);
+		// 1:string,2:数字;3:日期
+		int start = 0;
+		int end;
+		int groupSize = groupIndexes.length;
+		Object[] compareValue = new Object[groupSize];
+		Object[] tempObj = new Object[groupSize];
+		List row;
+		boolean isEqual = false;
+		for (int i = 0; i < length; i++) {
+			row = dataSet.get(i);
+			isEqual = true;
+			for (int j = 0; j < groupSize; j++) {
+				tempObj[j] = row.get(groupIndexes[j]);
+				if (i == 0) {
+					compareValue[j] = tempObj[j];
+				}
+				isEqual = isEqual && (tempObj[j].equals(compareValue[j]));
+			}
+			if (!isEqual) {
+				end = i - 1;
+				sortList(dataSet, sortIndex, dataType, start, end, !desc);
+				start = i;
+				for (int j = 0; j < groupSize; j++) {
+					compareValue[j] = tempObj[j];
+				}
+			}
+			if (i == length - 1) {
+				sortList(dataSet, sortIndex, dataType, start, i, !desc);
+			}
+		}
+	}
+
+	/**
+	 * @TODO 提取排序列的具体数据类型
+	 * @param dataSet
+	 * @param sortIndex
+	 * @return
+	 */
+	public static int getSortDataType(List<List> dataSet, int sortIndex) {
+		int dataType = 1;
+		Object dataValue;
+		for (List item : dataSet) {
+			dataValue = item.get(sortIndex);
+			if (dataValue != null) {
+				if (dataValue instanceof String) {
+					dataType = 1;
+				} else if (dataValue instanceof Number) {
+					dataType = 2;
+				} else if (dataValue instanceof Date) {
+					dataType = 3;
+				} else if (dataValue instanceof LocalDate) {
+					dataType = 4;
+				} else if (dataValue instanceof LocalDateTime) {
+					dataType = 5;
+				} else if (dataValue instanceof LocalTime) {
+					dataType = 6;
+				}
+				break;
+			}
+		}
+		return dataType;
+	}
+
+	/**
+	 * @TODO List集合排序
+	 * @param sortList
+	 * @param orderCol
+	 * @param dataType
+	 * @param start
+	 * @param end
+	 * @param ascend
+	 * @return
+	 */
+	public static List sortList(List<List> sortList, int orderCol, int dataType, int start, int end, boolean ascend) {
+		if (start == end) {
+			return sortList;
+		}
+		List subList = sortList.subList(start, end + 1);
+		Collections.sort(subList, new Comparator<List>() {
+			@Override
+			public int compare(List o1, List o2) {
+				return compareValue(o1.get(orderCol), o2.get(orderCol), dataType, ascend);
+			}
+		});
+		return sortList;
+	}
+
+	/**
+	 * @TODO 数据大小比较，用于排序
+	 * @param iData
+	 * @param jData
+	 * @param dataType
+	 * @param ascend
+	 * @return
+	 */
+	private static int compareValue(Object iData, Object jData, int dataType, boolean ascend) {
+		// 1:string,2:数字;3:日期
+		boolean lessThen = false;
+		boolean isEqual = false;
+		String str1, str2;
+		if (iData == null && jData == null) {
+			isEqual = true;
+		}
+		if (iData != null && jData == null) {
+			lessThen = false;
+		} else if (iData == null && jData != null) {
+			lessThen = true;
+		} else {
+			if (iData.equals(jData)) {
+				isEqual = true;
+			} else {
+				if (dataType == 2) {
+					lessThen = ((Number) iData).doubleValue() < ((Number) jData).doubleValue();
+				} else if (dataType == 3) {
+					lessThen = ((Date) iData).before((Date) jData);
+				} else if (dataType == 4) {
+					lessThen = ((LocalDate) iData).compareTo((LocalDate) jData) < 0;
+				} else if (dataType == 5) {
+					lessThen = ((LocalDateTime) iData).compareTo((LocalDateTime) jData) < 0;
+				} else if (dataType == 6) {
+					lessThen = ((LocalTime) iData).compareTo((LocalTime) jData) < 0;
+				} else {
+					str1 = iData.toString();
+					str2 = jData.toString();
+					if (str1.length() < str2.length()) {
+						lessThen = true;
+					} else if (str1.length() > str2.length()) {
+						lessThen = false;
+					} else {
+						lessThen = str1.compareTo(str2) < 0;
+					}
+				}
+			}
+		}
+		if (isEqual) {
+			return 0;
+		}
+		if (ascend) {
+			return lessThen ? -1 : 1;
+		} else {
+			return lessThen ? 1 : -1;
+		}
+	}
+
+	/**
+	 * @TODO 分组计算
+	 * @param dataSet
+	 * @param groupIndexes
+	 * @param calcuateIndex
+	 * @param isSum
+	 */
+	public static void groupCalculate(List<List> dataSet, Integer[] groupIndexes, int calcuateIndex, boolean isSum) {
+		int groupSize = groupIndexes.length;
+		int length = dataSet.size();
+		Object[] compareValue = new Object[groupSize];
+		Object[] tempObj = new Object[groupSize];
+		List row;
+		boolean isEqual = false;
+		int start = 0;
+		int end = 0;
+		BigDecimal calculateValue = new BigDecimal(0);
+		Object tmpCellValue;
+		BigDecimal cellValue;
+		for (int i = 0; i < length; i++) {
+			row = dataSet.get(i);
+			tmpCellValue = row.get(calcuateIndex);
+			cellValue = toDecimal(tmpCellValue);
+			isEqual = true;
+			// 判断分组值是否相同，不相同表示下一个分组
+			for (int j = 0; j < groupSize; j++) {
+				tempObj[j] = row.get(groupIndexes[j]);
+				if (i == 0) {
+					compareValue[j] = row.get(groupIndexes[j]);
+				}
+				isEqual = isEqual && (tempObj[j].equals(compareValue[j]));
+			}
+			if (isEqual) {
+				calculateValue = calculateValue.add(cellValue);
+			} else {
+				end = i - 1;
+				// 求平均值
+				if (!isSum && end > start) {
+					calculateValue = calculateValue.divide(BigDecimal.valueOf(end - start), 4, RoundingMode.HALF_DOWN);
+				}
+				// 将平均值插入到分组记录的最后一列，用于排序
+				for (int k = start; k <= end; k++) {
+					dataSet.get(k).add(calculateValue);
+				}
+				for (int j = 0; j < groupSize; j++) {
+					compareValue[j] = tempObj[j];
+				}
+				calculateValue = new BigDecimal(0).add(cellValue);
+				start = i;
+			}
+			// 最后一行
+			if (i == length - 1) {
+				end = i;
+				// 求平均值
+				if (!isSum && end > start) {
+					calculateValue = calculateValue.divide(BigDecimal.valueOf(end - start), 4, RoundingMode.HALF_DOWN);
+				}
+				for (int k = start; k <= end; k++) {
+					dataSet.get(k).add(calculateValue);
+				}
+			}
+		}
+	}
+
+	private static BigDecimal toDecimal(Object tmpCellValue) {
+		if (tmpCellValue == null) {
+			return BigDecimal.ZERO;
+		} else if (tmpCellValue instanceof BigDecimal) {
+			return (BigDecimal) tmpCellValue;
+		} else if (tmpCellValue instanceof Number) {
+			return new BigDecimal(tmpCellValue.toString());
+		} else {
+			return new BigDecimal(tmpCellValue.toString().replaceAll(",", "").replaceFirst(ILLEGAL_NUM_REGEX, ""));
 		}
 	}
 }

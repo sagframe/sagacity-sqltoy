@@ -401,6 +401,8 @@ public interface LightDao {
 	 */
 	public <T extends Serializable> T loadEntity(Class<T> entityClass, EntityQuery entityQuery);
 
+	public <T extends Serializable> T loadEntity(Class entityClass, EntityQuery entityQuery, Class<T> resultType);
+
 	/**
 	 * @TODO 通过EntityQuery 组织查询条件对POJO进行单表查询,为代码中进行逻辑处理提供便捷
 	 *       <li>如果要查询整个表记录:findEntity(entityClass,null) 即可</li>

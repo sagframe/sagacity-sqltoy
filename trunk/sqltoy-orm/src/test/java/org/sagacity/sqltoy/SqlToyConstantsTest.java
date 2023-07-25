@@ -123,14 +123,9 @@ public class SqlToyConstantsTest {
 
 	@Test
 	public void testBeanInfo2() {
-		Long pageNo = 1L;
-		Integer pageSize = 10;
-		Long startIndex = (pageNo - 1) * pageSize;
-		Object start = startIndex.intValue();
-		if (startIndex > Integer.MAX_VALUE) {
-			start = startIndex;
+		for (int i = 3; i <= 3; i++) {
+			System.err.println("XXXXXXXXXXXXXXX");
 		}
-		System.err.println(start.getClass().getName());
 	}
 
 	public static void main(String[] args) {

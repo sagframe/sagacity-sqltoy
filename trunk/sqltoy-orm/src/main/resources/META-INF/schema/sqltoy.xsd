@@ -235,6 +235,22 @@
 							</xsd:documentation>
 						</xsd:annotation>
 					</xsd:attribute>
+					<xsd:attribute name="level-order-column"
+						type="xsd:string">
+						<xsd:annotation>
+							<xsd:documentation>
+							<![CDATA[每个层级内部排序依据的值列]]>
+							</xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+					<xsd:attribute name="order-way" default="desc">
+						<xsd:simpleType>
+							<xsd:restriction base="xsd:string">
+								<xsd:enumeration value="desc" />
+								<xsd:enumeration value="asc" />
+							</xsd:restriction>
+						</xsd:simpleType>
+					</xsd:attribute>
 				</xsd:complexType>
 			</xsd:element>
 			<xsd:element name="sharding-datasource" minOccurs="0"
@@ -964,7 +980,7 @@
 										</xsd:restriction>
 									</xsd:simpleType>
 								</xsd:attribute>
-								<xsd:attribute name="split" type="xsd:string"/>
+								<xsd:attribute name="split" type="xsd:string" />
 							</xsd:complexType>
 						</xsd:element>
 					</xsd:choice>
@@ -1222,6 +1238,17 @@
 					<xsd:attribute name="sum-label" type="xsd:string"
 						use="required" />
 					<xsd:attribute name="average-label" type="xsd:string" />
+					<xsd:attribute name="order-column" type="xsd:string" />
+					<xsd:attribute name="order-with-sum"
+						type="xsd:boolean" default="true"/>
+					<xsd:attribute name="order-way" default="desc">
+						<xsd:simpleType>
+							<xsd:restriction base="xsd:string">
+								<xsd:enumeration value="desc" />
+								<xsd:enumeration value="asc" />
+							</xsd:restriction>
+						</xsd:simpleType>
+					</xsd:attribute>
 				</xsd:complexType>
 			</xsd:element>
 		</xsd:sequence>
@@ -1266,6 +1293,12 @@
 			default="false">
 			<xsd:annotation>
 				<xsd:documentation><![CDATA[单行数据是否进行分组汇总和求平均,默认为false]]></xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+		<xsd:attribute name="has-grouped" type="xsd:boolean"
+			default="true">
+			<xsd:annotation>
+				<xsd:documentation><![CDATA[数据是否已经完成了分组组织]]></xsd:documentation>
 			</xsd:annotation>
 		</xsd:attribute>
 	</xsd:complexType>

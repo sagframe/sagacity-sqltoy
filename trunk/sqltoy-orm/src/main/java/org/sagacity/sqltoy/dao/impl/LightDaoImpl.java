@@ -339,6 +339,18 @@ public class LightDaoImpl extends SpringDaoSupport implements LightDao {
 	}
 
 	@Override
+	public <T extends Serializable> T loadEntity(Class entityClass, EntityQuery entityQuery, Class<T> resultType) {
+		List<T> result = findEntity(entityClass, entityQuery,resultType);
+		if (result == null || result.isEmpty()) {
+			return null;
+		}
+		if (result.size() == 1) {
+			return result.get(0);
+		}
+		throw new IllegalArgumentException("loadEntity查询出:" + result.size() + " 条记录,不符合load查询单条记录的预期!");
+	}
+
+	@Override
 	public <T> List<T> findEntity(Class<T> entityClass, EntityQuery entityQuery) {
 		return super.findEntity(entityClass, entityQuery);
 	}

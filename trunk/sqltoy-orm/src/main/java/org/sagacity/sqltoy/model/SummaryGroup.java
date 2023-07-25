@@ -36,6 +36,57 @@ public class SummaryGroup implements Serializable {
 	 */
 	private String aveTitle;
 
+	/**
+	 * 排序列
+	 */
+	private String orderColumn;
+
+	/**
+	 * 排序方式
+	 */
+	private String orderWay = "desc";
+
+	/**
+	 * 排序是否以求和的值为依据
+	 */
+	private Boolean orderWithSum;
+
+	/**
+	 * @return the orderColumn
+	 */
+	public String getOrderColumn() {
+		return orderColumn;
+	}
+
+	public SummaryGroup orderColumn(String orderColumn) {
+		this.orderColumn = orderColumn;
+		return this;
+	}
+
+	/**
+	 * @return the orderWay
+	 */
+	public String getOrderWay() {
+		return orderWay;
+	}
+
+	public SummaryGroup orderWay(String orderWay) {
+		this.orderWay = orderWay;
+		return this;
+	}
+
+	/**
+	 * @return the orderWithSum
+	 */
+	public Boolean getOrderWithSum() {
+		return orderWithSum;
+	}
+
+	public SummaryGroup orderWithSum(Boolean orderWithSum) {
+		this.orderWithSum = orderWithSum;
+		return this;
+	}
+
 	public SummaryGroup(String... groupColumns) {
 		if (groupColumns != null && groupColumns.length > 0) {
 			this.groupColumns = groupColumns;

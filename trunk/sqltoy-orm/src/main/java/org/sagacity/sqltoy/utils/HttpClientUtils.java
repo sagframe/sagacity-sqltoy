@@ -244,6 +244,7 @@ public class HttpClientUtils {
 			if (StringUtil.isNotBlank(nosqlConfig.getIndex())) {
 				url = url.concat(url.endsWith("/") ? "" : "/").concat(nosqlConfig.getIndex());
 			}
+			// es6.x 支持，7开始废弃
 			if (StringUtil.isNotBlank(nosqlConfig.getType())) {
 				url = url.concat(url.endsWith("/") ? "" : "/").concat(nosqlConfig.getType());
 			}

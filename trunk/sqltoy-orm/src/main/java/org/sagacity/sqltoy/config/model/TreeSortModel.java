@@ -51,6 +51,16 @@ public class TreeSortModel implements Serializable {
 	 */
 	private String compareValues;
 
+	/**
+	 * 层级排序依旧的列
+	 */
+	private String levelOrderColumn;
+
+	/**
+	 * 排序机制
+	 */
+	private String orderWay = "desc";
+
 	public String getIdColumn() {
 		return idColumn;
 	}
@@ -124,4 +134,21 @@ public class TreeSortModel implements Serializable {
 		return this;
 	}
 
+	public String getLevelOrderColumn() {
+		return levelOrderColumn;
+	}
+
+	public TreeSortModel setLevelOrderColumn(String levelOrderColumn) {
+		this.levelOrderColumn = levelOrderColumn;
+		return this;
+	}
+
+	public String getOrderWay() {
+		return orderWay;
+	}
+
+	public TreeSortModel setOrderWay(String orderWay) {
+		this.orderWay = orderWay;
+		return this;
+	}
 }
