@@ -2606,8 +2606,9 @@ public class DialectUtils {
 	 * @throws Exception
 	 */
 	public static StoreResult executeStore(final SqlToyConfig sqlToyConfig, final SqlToyContext sqlToyContext,
-			final String storeSql, final Object[] inParamValues, final Integer[] outParamTypes, final Connection conn,
-			final Integer dbType, final int fetchSize) throws Exception {
+			final String storeSql, final Object[] inParamValues, final Integer[] outParamTypes,
+			final boolean moreResult, final Connection conn, final Integer dbType, final int fetchSize)
+			throws Exception {
 		CallableStatement callStat = null;
 		ResultSet rs = null;
 		return (StoreResult) SqlUtil.callableStatementProcess(null, callStat, rs, new CallableStatementResultHandler() {
@@ -2633,15 +2634,49 @@ public class DialectUtils {
 						callStat.registerOutParameter(i + inCount + 1, outParamTypes[i]);
 					}
 				}
-				callStat.execute();
-				rs = callStat.getResultSet();
+
 				StoreResult storeResult = new StoreResult();
-				if (rs != null) {
-					QueryResult tempResult = ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn, rs, null,
-							null, null, 0);
-					storeResult.setLabelNames(tempResult.getLabelNames());
-					storeResult.setLabelTypes(tempResult.getLabelTypes());
-					storeResult.setRows(tempResult.getRows());
+				// 存在多个返回集合
+				if (moreResult) {
+					boolean hasNext = callStat.execute();
+					List<String[]> labelsList = new ArrayList<String[]>();
+					List<String[]> labelTypesList = new ArrayList<String[]>();
+					List<List> dataSets = new ArrayList<List>();
+					int meter = 0;
+					SqlToyConfig notFirstConfig = new SqlToyConfig(sqlToyConfig.getId(), sqlToyConfig.getSql());
+					while (hasNext) {
+						rs = callStat.getResultSet();
+						if (rs != null) {
+							QueryResult tempResult = ResultUtils.processResultSet(sqlToyContext,
+									(meter == 0) ? sqlToyConfig : notFirstConfig, conn, rs, null, null, null, 0);
+							labelsList.add(tempResult.getLabelNames());
+							labelTypesList.add(tempResult.getLabelTypes());
+							dataSets.add(tempResult.getRows());
+							meter++;
+						}
+						hasNext = callStat.getMoreResults();
+					}
+					storeResult.setLabelsList(labelsList);
+					storeResult.setLabelTypesList(labelTypesList);
+					List[] moreResults = new List[dataSets.size()];
+					dataSets.toArray(moreResults);
+					storeResult.setMoreResults(moreResults);
+					// 默认第一个集合作为后续sql 配置处理的对象(如缓存翻译、格式化等)
+					if (dataSets.size() > 0) {
+						storeResult.setLabelNames(labelsList.get(0));
+						storeResult.setLabelTypes(labelTypesList.get(0));
+						storeResult.setRows(dataSets.get(0));
+					}
+				} else {
+					callStat.execute();
+					rs = callStat.getResultSet();
+					if (rs != null) {
+						QueryResult tempResult = ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn, rs,
+								null, null, null, 0);
+						storeResult.setLabelNames(tempResult.getLabelNames());
+						storeResult.setLabelTypes(tempResult.getLabelTypes());
+						storeResult.setRows(tempResult.getRows());
+					}
 				}
 
 				// 有返回参数如:(?=call (? in,? out) )

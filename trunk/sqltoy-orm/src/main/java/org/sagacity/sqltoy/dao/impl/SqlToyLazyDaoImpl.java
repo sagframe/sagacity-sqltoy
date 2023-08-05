@@ -341,6 +341,11 @@ public class SqlToyLazyDaoImpl extends SpringDaoSupport implements SqlToyLazyDao
 		return super.executeStore(storeNameOrKey, inParamValues, outParamsType, resultType, null);
 	}
 
+	public StoreResult executeMoreResultStore(String storeSqlOrKey, Object[] inParamsValue, Integer[] outParamsType,
+			Class... resultTypes) {
+		return super.executeMoreResultStore(storeSqlOrKey, inParamsValue, outParamsType, resultTypes);
+	}
+
 	@Override
 	public void fetchStream(QueryExecutor queryExecutor, StreamResultHandler streamResultHandler) {
 		super.fetchStream(queryExecutor, streamResultHandler);

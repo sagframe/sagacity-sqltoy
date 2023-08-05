@@ -122,6 +122,17 @@ public interface SqlToyLazyDao {
 			Class resultType);
 
 	/**
+	 * @TODO 存储过程调用，outParams可以为null
+	 * @param storeSqlOrKey 可以是xml中的sqlId 或者直接{call storeName (?,?)}
+	 * @param inParamValues
+	 * @param outParamsType 可以为null
+	 * @param resultTypes   可以是VO、Map.class、LinkedHashMap.class、Array.class,null(二维List)
+	 * @return StoreResult
+	 */
+	public StoreResult executeMoreResultStore(String storeSqlOrKey, Object[] inParamValues, Integer[] outParamsType,
+			Class... resultTypes);
+
+	/**
 	 * @TODO 流式获取查询结果
 	 * @param queryExecutor
 	 * @param streamResultHandler
@@ -697,7 +708,7 @@ public interface SqlToyLazyDao {
 	/**
 	 * @TODO 通过数组传参执行sql,并返回更新记录量
 	 * @param sqlOrSqlId
-	 * @param paramsNamed
+	 * @param paramsNamed (非别名模式可以为null,sql例如:insert table (id,name) values(?,?))
 	 * @param paramsValue
 	 * @return
 	 */

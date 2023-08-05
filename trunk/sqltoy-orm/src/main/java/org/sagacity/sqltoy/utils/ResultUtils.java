@@ -288,12 +288,14 @@ public class ResultUtils {
 				genericTypes = new Class[columnSize];
 				indexs = new int[columnSize];
 				Type[] types;
+				Class methodType;
 				// 自动适配属性的数据类型
 				for (int i = 0; i < columnSize; i++) {
 					indexs[i] = i;
 					if (null != realMethods[i]) {
-						methodTypes[i] = realMethods[i].getParameterTypes()[0].getTypeName();
-						methodTypeValues[i] = DataType.getType(methodTypes[i]);
+						methodType = realMethods[i].getParameterTypes()[0];
+						methodTypes[i] = methodType.getTypeName();
+						methodTypeValues[i] = DataType.getType(methodType);
 						types = realMethods[i].getGenericParameterTypes();
 						if (types.length > 0) {
 							if (types[0] instanceof ParameterizedType) {
@@ -1555,7 +1557,7 @@ public class ResultUtils {
 		}
 		Object cell;
 		String typeName = classType.getTypeName();
-		int typeValue = DataType.getType(typeName);
+		int typeValue = DataType.getType(classType);
 		try {
 			for (Object row : rows) {
 				cell = ((List) row).get(0);
