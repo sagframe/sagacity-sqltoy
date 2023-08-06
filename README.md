@@ -127,7 +127,7 @@ public Page<StaffInfoVO> findStaff(Page<StaffInfoVO> pageModel, StaffInfoVO staf
 ```java
 //演示代码中非直接sql模式设置条件模式进行记录修改
 public Long updateByQuery() {
-     return sqlToyLazyDao.updateByQuery(StaffInfoVO.class,
+     return lightDao.updateByQuery(StaffInfoVO.class,
 		EntityUpdate.create().set("createBy", "S0001")
                      .where("staffName like ?").values("张"));
 }
@@ -273,12 +273,12 @@ public void findPageByEntity() {
 	staffVO.setStaffName("陈");
 	// 使用了分页优化器
 	// 第一次调用:执行count 和 取记录两次查询
-	Page result = sqlToyLazyDao.findPageBySql(pageModel, "sqltoy_fastPage", staffVO);
+	Page result = lightDao.findPage(pageModel, "sqltoy_fastPage", staffVO);
 	System.err.println(JSON.toJSONString(result));
 	// 第二次调用:过滤条件一致，则不会再次执行count查询
 	//设置为第二页
 	pageModel.setPageNo(2);
-	result = sqlToyLazyDao.findPageBySql(pageModel, "sqltoy_fastPage", staffVO);
+	result = lightDao.findPage(pageModel, "sqltoy_fastPage", staffVO);
 	System.err.println(JSON.toJSONString(result));
 }
 	
