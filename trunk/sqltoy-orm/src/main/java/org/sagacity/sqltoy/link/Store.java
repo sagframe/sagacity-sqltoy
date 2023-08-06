@@ -36,7 +36,9 @@ public class Store extends BaseLink {
 	/**
 	 * 返回结果类型
 	 */
-	private Class<?> resultType;
+	private Class[] resultTypes;
+
+	private boolean moreResult = false;
 
 	/**
 	 * 存储过程语句({?=call xxxStore(? in,? in,? out)})
@@ -62,8 +64,19 @@ public class Store extends BaseLink {
 		return this;
 	}
 
-	public Store resultType(Class<?> resultType) {
-		this.resultType = resultType;
+	@Deprecated
+	public Store resultType(Class resultType) {
+		this.resultTypes = new Class[] { resultType };
+		return this;
+	}
+
+	public Store resultTypes(Class... resultTypes) {
+		this.resultTypes = resultTypes;
+		return this;
+	}
+
+	public Store moreResult(boolean moreResult) {
+		this.moreResult = moreResult;
 		return this;
 	}
 
@@ -90,7 +103,7 @@ public class Store extends BaseLink {
 			throw new IllegalArgumentException("call proceduce sql is null!");
 		}
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql, SqlType.search, "");
-		return dialectFactory.executeStore(sqlToyContext, sqlToyConfig, inParamsValue, outParamsType, resultType,
-				getDataSource(sqlToyConfig));
+		return dialectFactory.executeStore(sqlToyContext, sqlToyConfig, inParamsValue, outParamsType, resultTypes,
+				moreResult, getDataSource(sqlToyConfig));
 	}
 }

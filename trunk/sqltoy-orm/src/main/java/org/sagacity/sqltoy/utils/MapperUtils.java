@@ -345,7 +345,7 @@ public class MapperUtils {
 			if (null != realMethods[i]) {
 				methodType = realMethods[i].getParameterTypes()[0];
 				methodTypes[i] = methodType.getTypeName();
-				methodTypeValues[i] = DataType.getType(methodTypes[i]);
+				methodTypeValues[i] = DataType.getType(methodType);
 				// 非普通类型、非枚举、非Map(DTO)
 				if ((methodTypeValues[i] == DataType.objectType || methodTypeValues[i] == DataType.listType
 						|| methodTypeValues[i] == DataType.setType) && !methodType.isEnum()

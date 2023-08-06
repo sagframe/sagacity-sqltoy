@@ -301,8 +301,9 @@ public class OracleDialectUtils {
 	 * @throws Exception
 	 */
 	public static StoreResult executeStore(final SqlToyConfig sqlToyConfig, final SqlToyContext sqlToyContext,
-			final String storeSql, final Object[] inParamValues, final Integer[] outParamTypes, final Connection conn,
-			final Integer dbType, final int fetchSize) throws Exception {
+			final String storeSql, final Object[] inParamValues, final Integer[] outParamTypes,
+			final boolean moreResult, final Connection conn, final Integer dbType, final int fetchSize)
+			throws Exception {
 		CallableStatement callStat = null;
 		ResultSet rs = null;
 		return (StoreResult) SqlUtil.callableStatementProcess(null, callStat, rs, new CallableStatementResultHandler() {
@@ -317,6 +318,8 @@ public class OracleDialectUtils {
 				int cursorCnt = 0;
 				int inCount = (inParamValues == null) ? 0 : inParamValues.length;
 				int outCount = (outParamTypes == null) ? 0 : outParamTypes.length;
+				// 记录输出集合的index
+				List<Integer> cursorIndexes = new ArrayList<Integer>();
 				// 注册输出参数
 				if (outCount != 0) {
 					for (int i = 0; i < outCount; i++) {
@@ -324,6 +327,7 @@ public class OracleDialectUtils {
 						if (OracleTypes.CURSOR == outParamTypes[i].intValue()) {
 							cursorCnt++;
 							cursorIndex = i;
+							cursorIndexes.add(i);
 						}
 					}
 				}
@@ -331,12 +335,44 @@ public class OracleDialectUtils {
 				StoreResult storeResult = new StoreResult();
 				// 只返回最后一个CURSOR 类型的数据集
 				if (cursorIndex != -1) {
-					rs = (ResultSet) callStat.getObject(inCount + cursorIndex + 1);
-					QueryResult tempResult = ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn, rs, null,
-							null, null, 0);
-					storeResult.setLabelNames(tempResult.getLabelNames());
-					storeResult.setLabelTypes(tempResult.getLabelTypes());
-					storeResult.setRows(tempResult.getRows());
+					if (moreResult) {
+						List<String[]> labelsList = new ArrayList<String[]>();
+						List<String[]> labelTypesList = new ArrayList<String[]>();
+						List<List> dataSets = new ArrayList<List>();
+						int meter = 0;
+						SqlToyConfig notFirstConfig = new SqlToyConfig(sqlToyConfig.getId(), sqlToyConfig.getSql());
+						for (int outIndex : cursorIndexes) {
+							rs = (ResultSet) callStat.getObject(inCount + outIndex + 1);
+							if (rs != null) {
+								QueryResult tempResult = ResultUtils.processResultSet(sqlToyContext,
+										(meter == 0) ? sqlToyConfig : notFirstConfig, conn, rs, null, null, null, 0);
+								labelsList.add(tempResult.getLabelNames());
+								labelTypesList.add(tempResult.getLabelTypes());
+								dataSets.add(tempResult.getRows());
+								meter++;
+							}
+						}
+						storeResult.setLabelsList(labelsList);
+						storeResult.setLabelTypesList(labelTypesList);
+						List[] moreResults = new List[dataSets.size()];
+						dataSets.toArray(moreResults);
+						storeResult.setMoreResults(moreResults);
+						// 默认第一个集合作为后续sql 配置处理的对象(如缓存翻译、格式化等)
+						if (dataSets.size() > 0) {
+							storeResult.setLabelNames(labelsList.get(0));
+							storeResult.setLabelTypes(labelTypesList.get(0));
+							storeResult.setRows(dataSets.get(0));
+						}
+					} else {
+						rs = (ResultSet) callStat.getObject(inCount + cursorIndex + 1);
+						if (rs != null) {
+							QueryResult tempResult = ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn, rs,
+									null, null, null, 0);
+							storeResult.setLabelNames(tempResult.getLabelNames());
+							storeResult.setLabelTypes(tempResult.getLabelTypes());
+							storeResult.setRows(tempResult.getRows());
+						}
+					}
 				}
 
 				// 有返回参数(CURSOR 的类型不包含在内)

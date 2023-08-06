@@ -397,8 +397,15 @@ public class SqlToyDaoSupport {
 	protected StoreResult executeStore(final String storeSqlOrKey, final Object[] inParamsValue,
 			final Integer[] outParamsType, final Class resultType, final DataSource dataSource) {
 		SqlToyConfig sqlToyConfig = getSqlToyConfig(storeSqlOrKey, SqlType.search);
-		return dialectFactory.executeStore(sqlToyContext, sqlToyConfig, inParamsValue, outParamsType, resultType,
-				this.getDataSource(dataSource, sqlToyConfig));
+		return dialectFactory.executeStore(sqlToyContext, sqlToyConfig, inParamsValue, outParamsType,
+				new Class[] { resultType }, false, getDataSource(dataSource, sqlToyConfig));
+	}
+
+	protected StoreResult executeMoreResultStore(final String storeSqlOrKey, final Object[] inParamsValue,
+			final Integer[] outParamsType, final Class[] resultTypes) {
+		SqlToyConfig sqlToyConfig = getSqlToyConfig(storeSqlOrKey, SqlType.search);
+		return dialectFactory.executeStore(sqlToyContext, sqlToyConfig, inParamsValue, outParamsType, resultTypes, true,
+				getDataSource(null, sqlToyConfig));
 	}
 
 	/**
@@ -432,8 +439,7 @@ public class SqlToyDaoSupport {
 			return null;
 		}
 		try {
-			return (T) BeanUtil.convertType(value, DataType.getType(resultType.getTypeName()),
-					resultType.getTypeName());
+			return (T) BeanUtil.convertType(value, DataType.getType(resultType), resultType.getTypeName());
 		} catch (Exception e) {
 			throw new DataAccessException("getSingleValue方法获取单个值失败:" + e.getMessage(), e);
 		}

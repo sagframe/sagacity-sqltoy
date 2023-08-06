@@ -217,6 +217,12 @@ public class LightDaoImpl extends SpringDaoSupport implements LightDao {
 	}
 
 	@Override
+	public StoreResult executeMoreResultStore(String storeSqlOrKey, Object[] inParamValues, Integer[] outParamsType,
+			Class... resultTypes) {
+		return super.executeMoreResultStore(storeSqlOrKey, inParamValues, outParamsType, resultTypes);
+	}
+
+	@Override
 	public void fetchStream(QueryExecutor queryExecutor, StreamResultHandler streamResultHandler) {
 		super.fetchStream(queryExecutor, streamResultHandler);
 	}
@@ -340,7 +346,7 @@ public class LightDaoImpl extends SpringDaoSupport implements LightDao {
 
 	@Override
 	public <T extends Serializable> T loadEntity(Class entityClass, EntityQuery entityQuery, Class<T> resultType) {
-		List<T> result = findEntity(entityClass, entityQuery,resultType);
+		List<T> result = findEntity(entityClass, entityQuery, resultType);
 		if (result == null || result.isEmpty()) {
 			return null;
 		}
@@ -529,6 +535,11 @@ public class LightDaoImpl extends SpringDaoSupport implements LightDao {
 	@Override
 	public Long executeSql(String sqlOrSqlId, Map<String, Object> paramsMap) {
 		return super.executeSql(sqlOrSqlId, paramsMap);
+	}
+
+	@Override
+	public Long executeSql(String sqlOrSqlId, Object... paramsValue) {
+		return super.executeSql(sqlOrSqlId, null, paramsValue);
 	}
 
 	@Override

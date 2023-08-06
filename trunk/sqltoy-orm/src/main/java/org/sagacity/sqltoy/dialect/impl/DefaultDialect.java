@@ -259,10 +259,10 @@ public class DefaultDialect implements Dialect {
 
 	@Override
 	public StoreResult executeStore(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] inParamsValue, Integer[] outParamsType, Connection conn, Integer dbType, String dialect,
-			final int fetchSize) throws Exception {
-		return DialectUtils.executeStore(sqlToyConfig, sqlToyContext, sql, inParamsValue, outParamsType, conn, dbType,
-				fetchSize);
+			Object[] inParamsValue, Integer[] outParamsType, final boolean moreResult, Connection conn, Integer dbType,
+			String dialect, final int fetchSize) throws Exception {
+		return DialectUtils.executeStore(sqlToyConfig, sqlToyContext, sql, inParamsValue, outParamsType, moreResult,
+				conn, dbType, fetchSize);
 	}
 
 	private String getLockSql(String sql, Integer dbType, LockMode lockMode) {
