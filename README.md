@@ -162,6 +162,7 @@ sqlToyLazyDao.deleteByQuery(StaffInfoVO.class, EntityQuery.create().where("statu
 	]]></value>
 </sql>
 ```
+![image](https://github.com/sagframe/sagacity-sqltoy/blob/5.2/docs/images/sqltoy-sql.png)
 * mybatis同样的功能的写法
 
 ```xml
