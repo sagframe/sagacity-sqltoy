@@ -72,16 +72,16 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 ```java
    StaffInfoVO staffInfo = new StaffInfoVO(); 
    //保存
-   sqlToyLazyDao.save(staffInfo);
+   lightDao.save(staffInfo);
    //删除
-   sqlToyLazyDao.delete(new StaffInfoVO("S2007"));
+   lightDao.delete(new StaffInfoVO("S2007"));
 
    //public Long update(Serializable entity, String... forceUpdateProps);
    // 这里对photo 属性进行强制修改，其他为null自动会跳过
-   sqlToyLazyDao.update(staffInfo, "photo");
+   lightDao.update(staffInfo, "photo");
 
    //深度修改,不管是否null全部字段修改
-   sqlToyLazyDao.updateDeeply(staffInfo);
+   lightDao.updateDeeply(staffInfo);
 
    List<StaffInfoVO> staffList = new ArrayList<StaffInfoVO>();
    StaffInfoVO staffInfo = new StaffInfoVO();
@@ -89,13 +89,13 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
    staffList.add(staffInfo);
    staffList.add(staffInfo1);
    //批量保存或修改
-   sqlToyLazyDao.saveOrUpdateAll(staffList);
+   lightDao.saveOrUpdateAll(staffList);
    //批量保存
-   sqlToyLazyDao.saveAll(staffList);
+   lightDao.saveAll(staffList);
    ...............
-   sqlToyLazyDao.loadByIds(StaffInfoVO.class,"S2007")
+   lightDao.loadByIds(StaffInfoVO.class,"S2007")
    //唯一性验证
-   sqlToyLazyDao.isUnique(staffInfo, "staffCode");
+   lightDao.isUnique(staffInfo, "staffCode");
 ```
 ## 2.2 支持代码中对象查询
 * sqltoy 中统一的规则是代码中可以直接传sql也可以是对应xml文件中的sqlId
