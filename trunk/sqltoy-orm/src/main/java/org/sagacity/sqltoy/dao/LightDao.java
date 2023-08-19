@@ -569,11 +569,10 @@ public interface LightDao {
 	public <T> List<T> find(final String sqlOrSqlId, final Serializable entity, final Class<T> resultType);
 
 	/**
-	 * @TODO 提供基于Map传参的查询5.1.34+ 开始支持 findBySql("select 单列 from
-	 *       table",map,Integer.class) 返回单列值的一维数组
+	 * @TODO 提供基于Map传参查询
 	 * @param <T>
 	 * @param sqlOrSqlId
-	 * @param paramsMap
+	 * @param paramsMap  可以使用MapKit.keys().values()等进行构造
 	 * @param resultType 可以是vo、dto、Map(默认驼峰命名)
 	 * @return
 	 */

@@ -940,7 +940,6 @@ public class ResultUtils {
 	 * @param result
 	 * @param pivotCategorySet
 	 * @return
-	 * @throws Exception
 	 */
 	private static List pivotResult(PivotModel pivotModel, LabelIndexModel labelIndexMap, List result,
 			List pivotCategorySet) {
@@ -1317,7 +1316,7 @@ public class ResultUtils {
 				PivotModel pivotModel = (PivotModel) processor;
 				if (pivotModel.getCategorySql() != null) {
 					SqlToyConfig pivotSqlConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
-							sqlToyContext.getSqlToyConfig(pivotModel.getCategorySql(), SqlType.search, ""),
+							sqlToyContext.getSqlToyConfig(pivotModel.getCategorySql(), SqlType.search, "", null),
 							queryExecutor, dialect, false);
 					SqlToyResult pivotSqlToyResult = SqlConfigParseUtils.processSql(pivotSqlConfig.getSql(dialect),
 							extend.getParamsName(), extend.getParamsValue(sqlToyContext, pivotSqlConfig), dialect);
@@ -1815,6 +1814,7 @@ public class ResultUtils {
 						result[j] = result[j] + "SqlToyIgnoreField";
 					}
 				}
+				// 设置匹配的属性
 				result[i] = fieldName;
 			}
 		}

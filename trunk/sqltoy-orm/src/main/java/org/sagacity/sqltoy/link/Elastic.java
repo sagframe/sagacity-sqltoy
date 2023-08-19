@@ -123,7 +123,7 @@ public class Elastic extends BaseLink {
 	 */
 	public List<?> find() {
 		QueryExecutor queryExecutor = build();
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql, SqlType.search, "");
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql, SqlType.search, "", null);
 		if (sqlToyConfig.getNoSqlConfigModel() == null) {
 			throw new IllegalArgumentException(ERROR_MESSAGE);
 		}
@@ -145,7 +145,7 @@ public class Elastic extends BaseLink {
 	 */
 	public List<?> findTop(final int topSize) {
 		QueryExecutor queryExecutor = build();
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql, SqlType.search, "");
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql, SqlType.search, "", null);
 		if (sqlToyConfig.getNoSqlConfigModel() == null) {
 			throw new IllegalArgumentException(ERROR_MESSAGE);
 		}
@@ -167,7 +167,7 @@ public class Elastic extends BaseLink {
 	 */
 	public Page findPage(Page pageModel) {
 		QueryExecutor queryExecutor = build();
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql, SqlType.search, "");
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql, SqlType.search, "", null);
 		NoSqlConfigModel noSqlConfig = sqlToyConfig.getNoSqlConfigModel();
 		if (noSqlConfig == null) {
 			throw new IllegalArgumentException(ERROR_MESSAGE);

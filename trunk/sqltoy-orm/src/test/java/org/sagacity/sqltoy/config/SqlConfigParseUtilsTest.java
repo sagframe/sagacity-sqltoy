@@ -102,12 +102,12 @@ public class SqlConfigParseUtilsTest {
 	@Test
 	public void testSqlToyConfigClone() throws Exception {
 		SqlToyConfig sqltoyConfig = new SqlToyConfig("1000", "select * from table");
-		LinkModel linkModel=new LinkModel();
+		LinkModel linkModel = new LinkModel();
 		linkModel.setColumns(new String[] { "id", "name" });
 		sqltoyConfig.setLinkModel(linkModel);
-		
-		SqlToyConfig sqltoy1=sqltoyConfig.clone();
-		LinkModel linkModel1=new LinkModel();
+
+		SqlToyConfig sqltoy1 = sqltoyConfig.clone();
+		LinkModel linkModel1 = new LinkModel();
 		linkModel1.setColumns(new String[] { "sexType", "name" });
 		sqltoy1.setLinkModel(linkModel1);
 		System.err.println(JSON.toJSONString(sqltoyConfig.getLinkModel()));
@@ -209,6 +209,13 @@ public class SqlConfigParseUtilsTest {
 	@Test
 	public void testGetParamNames() throws Exception {
 		String sql = "select * from table where a=:a1_a and status=:staff.工号_id #[and id=:单据_编号_id] and name like @value(:name.id[i]) #[and status=:status]@loop(:group.staffIds,:group.staffIds[i].id)";
+		String[] result = SqlConfigParseUtils.getSqlParamsName(sql, true);
+		System.err.println(JSON.toJSONString(result));
+	}
+
+	@Test
+	public void testGetParamNames1() throws Exception {
+		String sql = "select * from sqltoy_fruit_order where fruit_name = :limitList[0].fruitName or fruit_name = :limitList[1].fruit_name or fruit_name = :limitList[2]";
 		String[] result = SqlConfigParseUtils.getSqlParamsName(sql, true);
 		System.err.println(JSON.toJSONString(result));
 	}

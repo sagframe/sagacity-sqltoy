@@ -102,7 +102,7 @@ public class Store extends BaseLink {
 		if (sql == null) {
 			throw new IllegalArgumentException("call proceduce sql is null!");
 		}
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql, SqlType.search, "");
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql, SqlType.search, "", null);
 		return dialectFactory.executeStore(sqlToyContext, sqlToyConfig, inParamsValue, outParamsType, resultTypes,
 				moreResult, getDataSource(sqlToyConfig));
 	}

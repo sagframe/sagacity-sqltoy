@@ -2,6 +2,13 @@ package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
 
+/**
+ * @project sagacity-sqltoy
+ * @description 提供QueryExecutor中构造实现行字段分组连接的模型
+ * @author zhong 
+ * @version v1.0, Date:2023年8月9日
+ * @modify 2023年8月9日,修改说明
+ */
 public class GroupConcat implements Serializable {
 	/**
 	 * 

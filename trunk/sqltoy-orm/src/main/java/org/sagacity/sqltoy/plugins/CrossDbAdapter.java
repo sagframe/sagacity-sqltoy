@@ -128,7 +128,7 @@ public class CrossDbAdapter {
 			}
 			dialect = DataSourceUtils.getDialect(sqlToyContext, dataSource);
 			// 获得相关方言的sql(函数自动替换等)
-			sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getInnerModel().sql, SqlType.search, dialect);
+			sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search, dialect);
 			try {
 				dbAdapterHandler.query(sqlToyConfig, dataSource);
 			} catch (Exception e) {

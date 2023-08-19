@@ -305,7 +305,8 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected SqlToyConfig getSqlToyConfig(final String sqlKey, final SqlType sqlType) {
-		return sqlToyContext.getSqlToyConfig(sqlKey, (sqlType == null) ? SqlType.search : sqlType, getDialect(null));
+		return sqlToyContext.getSqlToyConfig(sqlKey, (sqlType == null) ? SqlType.search : sqlType, getDialect(null),
+				null);
 	}
 
 	/**
@@ -365,7 +366,7 @@ public class SqlToyDaoSupport {
 	 */
 	protected Long getCountByQuery(final QueryExecutor queryExecutor) {
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(extend.sql, SqlType.search,
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search,
 				getDialect(extend.dataSource));
 		Long result = dialectFactory.getCountBySql(sqlToyContext, queryExecutor, sqlToyConfig,
 				this.getDataSource(extend.dataSource, sqlToyConfig));
@@ -671,7 +672,8 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected Long executeSql(final String sqlOrSqlId, final Serializable entity) {
-		SqlToyConfig sqlToyConfig = getSqlToyConfig(sqlOrSqlId, SqlType.update);
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sqlOrSqlId, SqlType.update, getDialect(dataSource),
+				entity);
 		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, new QueryExecutor(sqlOrSqlId, entity), null, null,
 				getDataSource(null, sqlToyConfig));
 	}
@@ -702,9 +704,9 @@ public class SqlToyDaoSupport {
 	 */
 	protected Long executeSql(final String sqlOrSqlId, final String[] paramsNamed, final Object[] paramsValue,
 			final Boolean autoCommit, final DataSource dataSource) {
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sqlOrSqlId, SqlType.update, getDialect(dataSource));
-		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig,
-				new QueryExecutor(sqlOrSqlId).names(paramsNamed).values(paramsValue), null, autoCommit,
+		QueryExecutor query = new QueryExecutor(sqlOrSqlId).names(paramsNamed).values(paramsValue);
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(query, SqlType.update, getDialect(dataSource));
+		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, query, null, autoCommit,
 				getDataSource(dataSource, sqlToyConfig));
 	}
 
@@ -740,7 +742,8 @@ public class SqlToyDaoSupport {
 	 */
 	protected Long batchUpdate(final String sqlOrSqlId, final List dataSet, final int batchSize,
 			final Boolean autoCommit, final DataSource dataSource) {
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sqlOrSqlId, SqlType.update, getDialect(dataSource));
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sqlOrSqlId, SqlType.update, getDialect(dataSource),
+				null);
 		return dialectFactory.batchUpdate(sqlToyContext, sqlToyConfig, dataSet, batchSize, null, null, autoCommit,
 				getDataSource(dataSource, sqlToyConfig));
 	}
@@ -1375,7 +1378,7 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected List updateFetch(final QueryExecutor queryExecutor, final UpdateRowHandler updateRowHandler) {
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getInnerModel().sql, SqlType.search,
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search,
 				getDialect(queryExecutor.getInnerModel().dataSource));
 		return dialectFactory.updateFetch(sqlToyContext, queryExecutor, sqlToyConfig, updateRowHandler,
 				this.getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig)).getRows();
