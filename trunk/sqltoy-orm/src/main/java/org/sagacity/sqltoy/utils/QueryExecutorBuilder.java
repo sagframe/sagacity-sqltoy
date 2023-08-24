@@ -452,7 +452,7 @@ public class QueryExecutorBuilder {
 				Object[] paramsValue = extend.paramsValue;
 				if (paramsName != null && paramsValue != null && paramsName.length > 0
 						&& paramsName.length == paramsValue.length) {
-					IgnoreKeyCaseMap map = new IgnoreKeyCaseMap<>();
+					IgnoreKeyCaseMap map = new IgnoreKeyCaseMap();
 					for (int i = 0; i < paramsName.length; i++) {
 						map.put(paramsName[i], paramsValue[i]);
 					}

@@ -90,6 +90,7 @@ import org.sagacity.sqltoy.utils.BeanWrapper;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.DateUtil;
 import org.sagacity.sqltoy.utils.MapperUtils;
+import org.sagacity.sqltoy.utils.QueryExecutorBuilder;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -837,7 +838,14 @@ public class SqlToyDaoSupport {
 		// 自定义countsql
 		String countSql = queryExecutor.getInnerModel().countSql;
 		if (StringUtil.isNotBlank(countSql)) {
-			sqlToyConfig.setCountSql(countSql);
+			// 存在@include(sqlId) 或 @include(:sqlScript)
+			if (StringUtil.matches(countSql, SqlToyConstants.INCLUDE_PATTERN)) {
+				SqlToyConfig countSqlConfig = sqlToyContext.getSqlToyConfig(countSql, SqlType.search, dialect,
+						QueryExecutorBuilder.getParamValues(queryExecutor));
+				sqlToyConfig.setCountSql(countSqlConfig.getSql());
+			} else {
+				sqlToyConfig.setCountSql(countSql);
+			}
 		}
 		QueryResult result;
 		// 跳过查询总记录数量
