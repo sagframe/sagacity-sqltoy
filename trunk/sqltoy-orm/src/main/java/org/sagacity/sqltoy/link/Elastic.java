@@ -19,6 +19,7 @@ import org.sagacity.sqltoy.model.Page;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.plugins.nosql.ElasticSearchPlugin;
 import org.sagacity.sqltoy.plugins.nosql.ElasticSqlPlugin;
+import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
  * @project sagacity-sqltoy
@@ -33,6 +34,8 @@ public class Elastic extends BaseLink {
 	private static final long serialVersionUID = -3963816230256439625L;
 
 	private final String ERROR_MESSAGE = "ES查询请使用<eql></eql>配置!";
+
+	private String endPoint;
 
 	/**
 	 * 查询语句
@@ -92,6 +95,11 @@ public class Elastic extends BaseLink {
 		return this;
 	}
 
+	public Elastic endPoint(String endPoint) {
+		this.endPoint = endPoint;
+		return this;
+	}
+
 	public Elastic resultType(Type resultType) {
 		this.resultType = resultType;
 		return this;
@@ -127,11 +135,18 @@ public class Elastic extends BaseLink {
 		if (sqlToyConfig.getNoSqlConfigModel() == null) {
 			throw new IllegalArgumentException(ERROR_MESSAGE);
 		}
+		SqlToyConfig realSqlConfig = null;
+		if (StringUtil.isNotBlank(endPoint)) {
+			realSqlConfig = sqlToyConfig.clone();
+			realSqlConfig.getNoSqlConfigModel().setEndpoint(endPoint);
+		} else {
+			realSqlConfig = sqlToyConfig;
+		}
 		try {
-			if (sqlToyConfig.getNoSqlConfigModel().isSqlMode()) {
-				return ElasticSqlPlugin.findTop(sqlToyContext, sqlToyConfig, queryExecutor, null);
+			if (realSqlConfig.getNoSqlConfigModel().isSqlMode()) {
+				return ElasticSqlPlugin.findTop(sqlToyContext, realSqlConfig, queryExecutor, null);
 			}
-			return ElasticSearchPlugin.findTop(sqlToyContext, sqlToyConfig, queryExecutor, null);
+			return ElasticSearchPlugin.findTop(sqlToyContext, realSqlConfig, queryExecutor, null);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new DataAccessException(e);
@@ -149,11 +164,18 @@ public class Elastic extends BaseLink {
 		if (sqlToyConfig.getNoSqlConfigModel() == null) {
 			throw new IllegalArgumentException(ERROR_MESSAGE);
 		}
+		SqlToyConfig realSqlConfig = null;
+		if (StringUtil.isNotBlank(endPoint)) {
+			realSqlConfig = sqlToyConfig.clone();
+			realSqlConfig.getNoSqlConfigModel().setEndpoint(endPoint);
+		} else {
+			realSqlConfig = sqlToyConfig;
+		}
 		try {
-			if (sqlToyConfig.getNoSqlConfigModel().isSqlMode()) {
-				return ElasticSqlPlugin.findTop(sqlToyContext, sqlToyConfig, queryExecutor, topSize);
+			if (realSqlConfig.getNoSqlConfigModel().isSqlMode()) {
+				return ElasticSqlPlugin.findTop(sqlToyContext, realSqlConfig, queryExecutor, topSize);
 			}
-			return ElasticSearchPlugin.findTop(sqlToyContext, sqlToyConfig, queryExecutor, topSize);
+			return ElasticSearchPlugin.findTop(sqlToyContext, realSqlConfig, queryExecutor, topSize);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new DataAccessException(e);
@@ -168,10 +190,17 @@ public class Elastic extends BaseLink {
 	public Page findPage(Page pageModel) {
 		QueryExecutor queryExecutor = build();
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql, SqlType.search, "", null);
-		NoSqlConfigModel noSqlConfig = sqlToyConfig.getNoSqlConfigModel();
-		if (noSqlConfig == null) {
+		if (sqlToyConfig.getNoSqlConfigModel() == null) {
 			throw new IllegalArgumentException(ERROR_MESSAGE);
 		}
+		SqlToyConfig realSqlConfig = null;
+		if (StringUtil.isNotBlank(endPoint)) {
+			realSqlConfig = sqlToyConfig.clone();
+			realSqlConfig.getNoSqlConfigModel().setEndpoint(endPoint);
+		} else {
+			realSqlConfig = sqlToyConfig;
+		}
+		NoSqlConfigModel noSqlConfig = realSqlConfig.getNoSqlConfigModel();
 		Page pageResult = null;
 		try {
 			boolean isOverPageToFirst = false;
@@ -188,9 +217,9 @@ public class Elastic extends BaseLink {
 				if (esConfig.isNativeSql()) {
 					throw new UnsupportedOperationException("elastic native sql pagination is not support!");
 				}
-				pageResult = ElasticSqlPlugin.findPage(sqlToyContext, sqlToyConfig, pageModel, queryExecutor);
+				pageResult = ElasticSqlPlugin.findPage(sqlToyContext, realSqlConfig, pageModel, queryExecutor);
 			} else {
-				pageResult = ElasticSearchPlugin.findPage(sqlToyContext, sqlToyConfig, pageModel, queryExecutor);
+				pageResult = ElasticSearchPlugin.findPage(sqlToyContext, realSqlConfig, pageModel, queryExecutor);
 			}
 			if (pageResult.getRecordCount() == 0 && isOverPageToFirst) {
 				pageResult.setPageNo(1L);
@@ -219,4 +248,5 @@ public class Elastic extends BaseLink {
 		queryExecutor.humpMapLabel(humpMapLabel);
 		return queryExecutor;
 	}
+
 }
