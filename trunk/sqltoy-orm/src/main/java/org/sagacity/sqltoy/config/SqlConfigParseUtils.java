@@ -112,7 +112,6 @@ public class SqlConfigParseUtils {
 	public final static String ARG_DBL_NAME = "??";
 	public final static String ARG_DBL_REGEX = "\\?{2}";
 	public final static Pattern ARG_NAME_PATTERN = Pattern.compile(ARG_REGEX);
-	// public final static String ARG_NAME_BLANK = "? ";
 
 	// sql 拼接时判断前部分sql是否是where 结尾,update 2017-12-4 增加(?i)忽视大小写
 	public final static Pattern WHERE_END_PATTERN = Pattern.compile("(?i)\\Wwhere\\s*$");
@@ -693,7 +692,7 @@ public class SqlConfigParseUtils {
 			keyValues.put(paramsNamed[i], paramsValue[i]);
 		}
 		// 这里是借用业务主键生成里面的宏处理模式来解决
-		return MacroUtils.replaceMacros(queryStr, keyValues, false, macros);
+		return MacroUtils.replaceMacros(queryStr, keyValues, null, false, macros);
 	}
 
 	/**

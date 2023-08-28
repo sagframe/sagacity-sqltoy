@@ -62,7 +62,7 @@ public class SqlLoop extends AbstractMacro {
 	}
 
 	@Override
-	public String execute(String[] params, Map<String, Object> keyValues) {
+	public String execute(String[] params, Map<String, Object> keyValues, Object paramValues) {
 		if (params == null || params.length < 2 || keyValues == null || keyValues.size() == 0) {
 			return " ";
 		}

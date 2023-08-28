@@ -14,10 +14,11 @@ import java.util.Map;
 public abstract class AbstractMacro {
 	/**
 	 * @todo 转换器处理逻辑接口方法定义
-	 * @param params    宏里面的参数名称
-	 * @param keyValues 宏涉及的参数名称和对应的值
+	 * @param params      宏里面的参数名称
+	 * @param keyValues   宏涉及的参数名称和对应的值
+	 * @param paramValues sql语句中的参数属性名称和值对象(2023-08-18 新增)
 	 * @return
 	 */
-	public abstract String execute(String[] params, Map<String, Object> keyValues);
+	public abstract String execute(String[] params, Map<String, Object> keyValues, Object paramValues);
 
 }

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<sqltoy xmlns="https://www.sagframe.com/schema/sqltoy"
-	xmlns:xsi="https://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="https://www.sagframe.com/schema/sqltoy https://www.sagframe.com/schema/sqltoy/sqltoy.xsd">
+<sqltoy xmlns="http://www.sagframe.com/schema/sqltoy"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.sagframe.com/schema/sqltoy http://www.sagframe.com/schema/sqltoy/sqltoy.xsd">
 	<sql id="show_case">
 		<!-- filters 用来对参与查询或执行的参数值进行转化处理 -->
 		<filters>

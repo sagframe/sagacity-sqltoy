@@ -68,7 +68,6 @@ import org.slf4j.LoggerFactory;
  * @modify {Date:2020-07-29,修复OneToMany解析时编写错误,由智客软件反馈 }
  * @modify {Date:2022-09-23,增加@DataVersion数据版本功能 }
  * @modify {Date:2022-10-12,修复cascade解析存在的两个对象相互级联死循环问题以及支持一个对象级联多次相同对象，由俊华反馈 }
- * 
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class EntityManager {

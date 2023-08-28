@@ -107,8 +107,8 @@ public class Execute extends BaseLink {
 		if (StringUtil.isBlank(sql)) {
 			throw new IllegalArgumentException("execute operate sql is null!");
 		}
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql, SqlType.update, super.getDialect());
 		QueryExecutor queryExecute = build();
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecute, SqlType.update, super.getDialect());
 		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, queryExecute, null, autoCommit,
 				getDataSource(sqlToyConfig));
 	}

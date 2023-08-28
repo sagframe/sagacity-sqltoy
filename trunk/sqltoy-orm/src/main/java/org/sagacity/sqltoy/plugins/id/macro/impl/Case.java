@@ -23,7 +23,7 @@ public class Case extends AbstractMacro {
 	 * org.sagacity.sqltoy.plugins.id.macro.AbstractMacro#execute(java.lang.Object)
 	 */
 	@Override
-	public String execute(String[] params, Map<String, Object> keyValues) {
+	public String execute(String[] params, Map<String, Object> keyValues, Object paramValues) {
 		if (params == null) {
 			return "";
 		}
