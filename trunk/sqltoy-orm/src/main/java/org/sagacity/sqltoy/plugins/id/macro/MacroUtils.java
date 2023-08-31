@@ -110,6 +110,8 @@ public class MacroUtils {
 				return hasMacroStr;
 			}
 			int sysMarkIndex = StringUtil.getSymMarkIndex("(", ")", matchedMacro, 0);
+			// 截取宏前面部分的sql，用于宏中做一些特定关联判断(2023-8-30)
+			String preSql = (index > 0) ? hasMacroStr.substring(0, index) : "";
 			// 得到最后一个转换器中的参数
 			String macroParam = matchedMacro.substring(matchedMacro.indexOf("(") + 1, sysMarkIndex);
 			String macroName = matchedMacro.substring(0, matchedMacro.indexOf("("));
@@ -117,7 +119,7 @@ public class MacroUtils {
 			// 调用转换器进行计算
 			AbstractMacro macro = macros.get(macroName);
 			String result = macro.execute(StringUtil.splitExcludeSymMark(macroParam, ",", filters), keyValues,
-					paramsValues);
+					paramsValues, preSql);
 			// 最外层是转换器，则将转结果直接以对象方式返回
 			if (hasMacroStr.trim().equals(macroStr.trim())) {
 				return result;

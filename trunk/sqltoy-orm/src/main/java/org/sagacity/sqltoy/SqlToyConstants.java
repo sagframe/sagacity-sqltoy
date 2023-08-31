@@ -194,8 +194,9 @@ public class SqlToyConstants {
 	 * 判断sql中是否存在@include(sqlId)的表达式
 	 */
 	public final static Pattern INCLUDE_PATTERN = Pattern.compile("(?i)\\@include\\([\\w\\W]*\\)");
-	//@include(:sqlScriptParamName) 模式(2023-08-19)
-	public final static Pattern INCLUDE_PARAM_PATTERN = Pattern.compile("(?i)\\@include\\(\\s*\\:\\s*[a-zA-Z\u4e00-\u9fa5][a-zA-Z0-9_\u4e00-\u9fa5]*[\\w\\W]*\\)");
+	// @include(:sqlScriptParamName) 模式(2023-08-19)
+	public final static Pattern INCLUDE_PARAM_PATTERN = Pattern
+			.compile("(?i)\\@include\\(\\s*\\:\\s*[a-zA-Z\u4e00-\u9fa5][a-zA-Z0-9_\u4e00-\u9fa5]*[\\w\\W]*\\)");
 	// 标记分页或取随机记录原始sql的标记，便于sql interceptor加工处理快速定位
 	public final static String MARK_ORIGINAL_START = " /*-- sqltoy_original_mark_start --*/ ";
 	public final static String MARK_ORIGINAL_END = " /*-- sqltoy_original_mark_end --*/ ";

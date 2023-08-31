@@ -62,7 +62,7 @@ public class SqlLoop extends AbstractMacro {
 	}
 
 	@Override
-	public String execute(String[] params, Map<String, Object> keyValues, Object paramValues) {
+	public String execute(String[] params, Map<String, Object> keyValues, Object paramValues, String preSql) {
 		if (params == null || params.length < 2 || keyValues == null || keyValues.size() == 0) {
 			return " ";
 		}
@@ -176,7 +176,7 @@ public class SqlLoop extends AbstractMacro {
 					loopStr = processNullConditions(loopStr, allKeyValueMap);
 				}
 				// 只替换循环变量参数值
-				loopStr = replaceAllArgs(loopStr, loopKeyValueMap);
+				loopStr = replaceAllArgs(loopStr, loopKeyValueMap, preSql);
 				result.append(loopStr);
 				index++;
 			}
@@ -251,9 +251,10 @@ public class SqlLoop extends AbstractMacro {
 	 * @TODO 替换循环语句中的参数
 	 * @param queryStr
 	 * @param loopParamNamesMap
+	 * @param fullPreSql
 	 * @return
 	 */
-	private String replaceAllArgs(String queryStr, Map<String, Object> loopParamNamesMap) {
+	private String replaceAllArgs(String queryStr, Map<String, Object> loopParamNamesMap, String fullPreSql) {
 		// 首位补充一个空白
 		String matchStr = BLANK.concat(queryStr);
 		Matcher m = SqlToyConstants.SQL_NAMED_PATTERN.matcher(matchStr);
@@ -265,12 +266,19 @@ public class SqlLoop extends AbstractMacro {
 		Object paramValue;
 		boolean hasCompare = false;
 		String key;
+		int meter = 0;
+		boolean updateSet = false;
 		while (m.find()) {
 			group = m.group();
 			// 剔除\\W\\: 两位字符
 			paramName = group.substring(2).trim();
 			// 往后移1位(因为\\W表达式开头)
 			preSql = matchStr.substring(start, m.start() + 1);
+			// 以第一次为判断依据,判断是否是update table set field=? 模式
+			if (meter == 0) {
+				updateSet = StringUtil.matches(fullPreSql.concat(" ").concat(preSql),
+						SqlConfigParseUtils.UPDATE_EQUAL_PATTERN);
+			}
 			// 是否是=:param 或!=:param等判断符号直接连接参数的情况，便于输出日期、字符参数时判断是否加单引号
 			hasCompare = StringUtil.matches(preSql, COMPARE_PATTERN);
 			key = ":".concat(paramName);
@@ -279,7 +287,7 @@ public class SqlLoop extends AbstractMacro {
 			if (!loopParamNamesMap.containsKey(key)) {
 				preSql = preSql.concat(":").concat(paramName);
 			} else if (paramValue == null) {
-				preSql = compareNull(preSql);
+				preSql = compareNull(preSql, updateSet);
 			} else {
 				preSql = preSql.concat(toString(paramValue, hasCompare));
 			}
@@ -289,6 +297,7 @@ public class SqlLoop extends AbstractMacro {
 			}
 			lastSql.append(preSql);
 			start = m.end();
+			meter++;
 		}
 		// 没有别名参数
 		if (start == 0) {
@@ -303,9 +312,10 @@ public class SqlLoop extends AbstractMacro {
 	/**
 	 * @TODO 将=null 和!=null 转化为 is null 和 is not null
 	 * @param preSql
+	 * @param updateSet
 	 * @return
 	 */
-	private String compareNull(String preSql) {
+	private String compareNull(String preSql, boolean updateSet) {
 		String sqlPart = " is not ";
 		// 判断不等于
 		int compareIndex = StringUtil.matchIndex(preSql, SqlConfigParseUtils.NOT_EQUAL_PATTERN);
@@ -313,8 +323,8 @@ public class SqlLoop extends AbstractMacro {
 		if (compareIndex == -1) {
 			compareIndex = StringUtil.matchIndex(preSql, SqlConfigParseUtils.EQUAL_PATTERN);
 			if (compareIndex != -1) {
-				// update field=? 非where条件
-				if (StringUtil.matches(preSql, SqlConfigParseUtils.UPDATE_EQUAL_PATTERN)) {
+				// 不在where语句后面，即类似update table set field=? 形式
+				if (updateSet) {
 					compareIndex = -1;
 				}
 			}
