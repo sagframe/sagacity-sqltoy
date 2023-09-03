@@ -32,7 +32,7 @@ public class SqlLoopTest {
 		IgnoreKeyCaseMap<String, Object> keyValues = new IgnoreKeyCaseMap<String, Object>();
 		keyValues.put("staffInfos", staffInfos);
 		keyValues.put("status", 1);
-		String result = sqlLoop.execute(params, keyValues, null);
+		String result = sqlLoop.execute(params, keyValues, null, null);
 		System.err.print(result);
 	}
 
@@ -50,7 +50,7 @@ public class SqlLoopTest {
 		String[] params = { "staffInfos", " and staffId=':staffInfos[i]'" };
 		IgnoreKeyCaseMap<String, Object> keyValues = new IgnoreKeyCaseMap<String, Object>();
 		keyValues.put("staffInfos", staffInfos);
-		String result = sqlLoop.execute(params, keyValues, null);
+		String result = sqlLoop.execute(params, keyValues, null, null);
 		System.err.print(result);
 	}
 
@@ -64,7 +64,7 @@ public class SqlLoopTest {
 		String[] params = { "staffInfos", " and staffId like '%:staffInfos[i]%'" };
 		IgnoreKeyCaseMap<String, Object> keyValues = new IgnoreKeyCaseMap<String, Object>();
 		keyValues.put("staffInfos", staffInfos);
-		String result = sqlLoop.execute(params, keyValues, null);
+		String result = sqlLoop.execute(params, keyValues, null, null);
 		System.err.print(result);
 	}
 
