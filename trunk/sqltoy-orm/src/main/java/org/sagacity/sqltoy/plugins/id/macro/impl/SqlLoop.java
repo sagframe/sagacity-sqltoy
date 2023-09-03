@@ -148,10 +148,10 @@ public class SqlLoop extends AbstractMacro {
 			if (!skipBlank || StringUtil.isNotBlank(loopVar)) {
 				loopStr = loopContent;
 				if (index > 0) {
-					result.append(" ");
+					result.append(BLANK);
 					result.append(linkSign);
 				}
-				result.append(" ");
+				result.append(BLANK);
 				loopKeyValueMap.clear();
 				for (int j = 0; j < keys.size(); j++) {
 					key = ":sqlToyLoopAsKey_" + j + "A";
@@ -276,8 +276,13 @@ public class SqlLoop extends AbstractMacro {
 			preSql = matchStr.substring(start, m.start() + 1);
 			// 以第一次为判断依据,判断是否是update table set field=? 模式
 			if (meter == 0) {
-				updateSet = StringUtil.matches(fullPreSql.concat(" ").concat(preSql),
-						SqlConfigParseUtils.UPDATE_EQUAL_PATTERN);
+				// update table set xxx=? 模式，或前面的sql中没有where关键词(补充了where判断)
+				if (StringUtil.matches(fullPreSql.concat(BLANK).concat(preSql),
+						SqlConfigParseUtils.UPDATE_EQUAL_PATTERN)
+						|| !StringUtil.matches(fullPreSql.concat(BLANK).concat(preSql).concat(BLANK),
+								SqlConfigParseUtils.WHERE_PATTERN)) {
+					updateSet = true;
+				}
 			}
 			// 是否是=:param 或!=:param等判断符号直接连接参数的情况，便于输出日期、字符参数时判断是否加单引号
 			hasCompare = StringUtil.matches(preSql, COMPARE_PATTERN);

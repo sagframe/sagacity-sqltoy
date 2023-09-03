@@ -167,9 +167,9 @@ public class SqlConfigParseUtilsTest {
 
 	@Test
 	public void testLoopNull() throws Exception {
-		String sql = "update table set @loop-full(:status,{ status=:status[i]},{,})";
-		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] {  "status" },
-				new Object[] { new Object[] { "1", null, "3" } });
+		String sql = "update table set name=:name #[,@loop-full(:status,{ t2.\"status\"=:status[i]},{,})]";
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "name", "status" },
+				new Object[] {"chenfenfei", new Object[] { "1", null, "3" } });
 		System.err.println(JSON.toJSONString(result));
 		
 	}
@@ -413,7 +413,7 @@ public class SqlConfigParseUtilsTest {
 
 	@Test
 	public void testUpdateNull() throws Exception {
-		String sql = "update table set field=? where name=? and sex=?";
+		String sql = "update table set t1.'field'=? where name=? and sex=?";
 		SqlToyResult result = SqlConfigParseUtils.processSql(sql, null, new Object[] { null ,null,null});
 		System.err.println(result.getSql());
 	}

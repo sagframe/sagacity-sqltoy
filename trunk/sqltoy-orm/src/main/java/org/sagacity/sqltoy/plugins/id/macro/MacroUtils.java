@@ -87,8 +87,9 @@ public class MacroUtils {
 			String matchedMacro = null;
 			String tmpMatchedMacro = null;
 			int count = 0;
-			int subIndexCount = 0;
+			int macroIndex = 0;
 			int index = 0;
+			int startIndex = 0;
 			while (matcher.find()) {
 				index = matcher.start();
 				tmpMatchedMacro = matcher.group();
@@ -96,12 +97,12 @@ public class MacroUtils {
 				if (isMacro(macros, tmpMatchedMacro, true)) {
 					count++;
 					matchedMacro = tmpMatchedMacro;
-					// index后移1
-					subIndexCount += index + 1;
+					macroIndex = startIndex + index;
 					if (isOuter) {
 						break;
 					}
 				}
+				startIndex = startIndex + index + 1;
 				source = source.substring(index + 1);
 				matcher = macroPattern.matcher(source);
 			}
@@ -111,7 +112,7 @@ public class MacroUtils {
 			}
 			int sysMarkIndex = StringUtil.getSymMarkIndex("(", ")", matchedMacro, 0);
 			// 截取宏前面部分的sql，用于宏中做一些特定关联判断(2023-8-30)
-			String preSql = (index > 0) ? hasMacroStr.substring(0, index) : "";
+			String preSql = (macroIndex > 0) ? hasMacroStr.substring(0, macroIndex) : "";
 			// 得到最后一个转换器中的参数
 			String macroParam = matchedMacro.substring(matchedMacro.indexOf("(") + 1, sysMarkIndex);
 			String macroName = matchedMacro.substring(0, matchedMacro.indexOf("("));
@@ -125,7 +126,7 @@ public class MacroUtils {
 				return result;
 			}
 			String macroResult = (result == null) ? "" : result;
-			hasMacroStr = replaceStr(hasMacroStr, macroStr, macroResult, subIndexCount - 1);
+			hasMacroStr = replaceStr(hasMacroStr, macroStr, macroResult, macroIndex);
 			return replaceMacros(hasMacroStr, keyValues, paramsValues, isOuter, macros);
 		}
 		return hasMacroStr;
