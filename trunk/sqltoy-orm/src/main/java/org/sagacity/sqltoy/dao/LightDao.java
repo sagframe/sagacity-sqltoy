@@ -191,6 +191,17 @@ public interface LightDao {
 			Class resultType);
 
 	/**
+	 * @TODO 存储过程调用，outParams可以为null
+	 * @param storeSqlOrKey 可以是xml中的sqlId 或者直接{call storeName (?,?)}
+	 * @param inParamValues
+	 * @param outParamsType 可以为null
+	 * @param resultTypes   可以是VO、Map.class、LinkedHashMap.class、Array.class,null(二维List)
+	 * @return StoreResult
+	 */
+	public StoreResult executeMoreResultStore(String storeSqlOrKey, Object[] inParamValues, Integer[] outParamsType,
+			Class... resultTypes);
+
+	/**
 	 * @TODO 流式获取查询结果
 	 * @param queryExecutor
 	 * @param streamResultHandler
@@ -558,11 +569,10 @@ public interface LightDao {
 	public <T> List<T> find(final String sqlOrSqlId, final Serializable entity, final Class<T> resultType);
 
 	/**
-	 * @TODO 提供基于Map传参的查询5.1.34+ 开始支持 findBySql("select 单列 from
-	 *       table",map,Integer.class) 返回单列值的一维数组
+	 * @TODO 提供基于Map传参查询
 	 * @param <T>
 	 * @param sqlOrSqlId
-	 * @param paramsMap
+	 * @param paramsMap  可以使用MapKit.keys().values()等进行构造
 	 * @param resultType 可以是vo、dto、Map(默认驼峰命名)
 	 * @return
 	 */
@@ -586,9 +596,9 @@ public interface LightDao {
 	 * @TODO 提供基于Map传参的分页查询
 	 * @param <T>
 	 * @param page
-	 * @param sqlOrSqlId
-	 * @param paramsMap
-	 * @param resultType 可以是vo、dto、Map(默认驼峰命名)
+	 * @param sqlOrSqlId sqlToy统一的逻辑:可以是xml中的sqlId 也可以直接是具体sql
+	 * @param paramsMap  以Map形式传参
+	 * @param resultType 返回结果类型:可以是vo、dto、Map(默认驼峰命名)、List.class、Array.class 等
 	 * @return
 	 */
 	public <T> Page<T> findPage(final Page page, final String sqlOrSqlId, final Map<String, Object> paramsMap,
@@ -694,6 +704,14 @@ public interface LightDao {
 	 * @return Long 数据库发生变更的记录数
 	 */
 	public Long executeSql(final String sqlOrSqlId, final Serializable entity);
+
+	/**
+	 * @TODO 通过数组传参执行sql,并返回更新记录量
+	 * @param sqlOrSqlId
+	 * @param paramsValue
+	 * @return
+	 */
+	public Long executeSql(final String sqlOrSqlId, final Object... paramsValue);
 
 	/**
 	 * @TODO 提供基于Map传参的sql执行

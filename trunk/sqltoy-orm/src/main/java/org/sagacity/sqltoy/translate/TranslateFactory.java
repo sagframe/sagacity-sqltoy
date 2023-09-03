@@ -90,7 +90,8 @@ public class TranslateFactory {
 	 */
 	private static List doSqlCheck(final SqlToyContext sqlToyContext, final CheckerConfigModel checkerConfig,
 			Timestamp preCheckTime) throws Exception {
-		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(checkerConfig.getSql(), SqlType.search, "");
+		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(checkerConfig.getSql(), SqlType.search, "",
+				null);
 		String dataSourceName = checkerConfig.getDataSource();
 		if (dataSourceName == null) {
 			dataSourceName = sqlToyConfig.getDataSource();
@@ -284,7 +285,7 @@ public class TranslateFactory {
 	 */
 	private static List getSqlCacheData(final SqlToyContext sqlToyContext, TranslateConfigModel cacheModel,
 			String cacheType) throws Exception {
-		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(cacheModel.getSql(), SqlType.search, "");
+		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(cacheModel.getSql(), SqlType.search, "", null);
 		QueryExecutor queryExecutor = null;
 		if (StringUtil.isBlank(cacheType)) {
 			queryExecutor = new QueryExecutor(cacheModel.getSql());

@@ -156,7 +156,6 @@ public class SqlXMLConfigParse {
 		InputStream fileIS = null;
 		List<String> repeatSql = new ArrayList<String>();
 		try {
-			boolean isDebug = logger.isDebugEnabled();
 			String sqlFile;
 			if (xmlFile instanceof File) {
 				File file = (File) xmlFile;
@@ -167,12 +166,7 @@ public class SqlXMLConfigParse {
 				sqlFile = (String) xmlFile;
 				fileIS = getResourceAsStream(sqlFile);
 			}
-			String logStr = "正在解析".concat((index != -1) ? "第:[" + index + "]个" : "").concat("sql文件:").concat(sqlFile);
-			if (isDebug) {
-				logger.debug(logStr);
-			} else {
-				out.println(logStr);
-			}
+			logger.debug("正在解析".concat((index != -1) ? "第:[" + index + "]个" : "").concat("sql文件:").concat(sqlFile));
 			if (fileIS != null) {
 				domFactory.setFeature(SqlToyConstants.XML_FETURE, false);
 				DocumentBuilder domBuilder = domFactory.newDocumentBuilder();

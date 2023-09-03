@@ -63,20 +63,21 @@ public class MacroUtils {
 	 * @return
 	 */
 	public static String replaceMacros(String hasMacroStr, Map<String, Object> keyValues) {
-		return replaceMacros(hasMacroStr, keyValues, false, macros);
+		return replaceMacros(hasMacroStr, keyValues, null, false, macros);
 	}
 
 	/**
 	 * @todo 递归调用解析字符串中的转换器
 	 * @param hasMacroStr     含macro宏的字符串
 	 * @param keyValues
+	 * @param paramsValues
 	 * @param isOuter(isOuter 当@abc(@do(),xxx):为true表示从最外层的macro@abce,false则会先执行@do()
 	 *                        然后再执行@abc())
 	 * @param macros
 	 * @return
 	 */
-	public static String replaceMacros(String hasMacroStr, Map<String, Object> keyValues, boolean isOuter,
-			Map<String, AbstractMacro> macros) {
+	public static String replaceMacros(String hasMacroStr, Map<String, Object> keyValues, Object paramsValues,
+			boolean isOuter, Map<String, AbstractMacro> macros) {
 		if (StringUtil.isBlank(hasMacroStr)) {
 			return hasMacroStr;
 		}
@@ -86,8 +87,9 @@ public class MacroUtils {
 			String matchedMacro = null;
 			String tmpMatchedMacro = null;
 			int count = 0;
-			int subIndexCount = 0;
+			int macroIndex = 0;
 			int index = 0;
+			int startIndex = 0;
 			while (matcher.find()) {
 				index = matcher.start();
 				tmpMatchedMacro = matcher.group();
@@ -95,12 +97,12 @@ public class MacroUtils {
 				if (isMacro(macros, tmpMatchedMacro, true)) {
 					count++;
 					matchedMacro = tmpMatchedMacro;
-					// index后移1
-					subIndexCount += index + 1;
+					macroIndex = startIndex + index;
 					if (isOuter) {
 						break;
 					}
 				}
+				startIndex = startIndex + index + 1;
 				source = source.substring(index + 1);
 				matcher = macroPattern.matcher(source);
 			}
@@ -109,20 +111,23 @@ public class MacroUtils {
 				return hasMacroStr;
 			}
 			int sysMarkIndex = StringUtil.getSymMarkIndex("(", ")", matchedMacro, 0);
+			// 截取宏前面部分的sql，用于宏中做一些特定关联判断(2023-8-30)
+			String preSql = (macroIndex > 0) ? hasMacroStr.substring(0, macroIndex) : "";
 			// 得到最后一个转换器中的参数
 			String macroParam = matchedMacro.substring(matchedMacro.indexOf("(") + 1, sysMarkIndex);
 			String macroName = matchedMacro.substring(0, matchedMacro.indexOf("("));
 			String macroStr = matchedMacro.substring(0, sysMarkIndex + 1);
 			// 调用转换器进行计算
 			AbstractMacro macro = macros.get(macroName);
-			String result = macro.execute(StringUtil.splitExcludeSymMark(macroParam, ",", filters), keyValues);
+			String result = macro.execute(StringUtil.splitExcludeSymMark(macroParam, ",", filters), keyValues,
+					paramsValues, preSql);
 			// 最外层是转换器，则将转结果直接以对象方式返回
 			if (hasMacroStr.trim().equals(macroStr.trim())) {
 				return result;
 			}
 			String macroResult = (result == null) ? "" : result;
-			hasMacroStr = replaceStr(hasMacroStr, macroStr, macroResult, subIndexCount - 1);
-			return replaceMacros(hasMacroStr, keyValues, isOuter, macros);
+			hasMacroStr = replaceStr(hasMacroStr, macroStr, macroResult, macroIndex);
+			return replaceMacros(hasMacroStr, keyValues, paramsValues, isOuter, macros);
 		}
 		return hasMacroStr;
 	}

@@ -180,8 +180,7 @@ public class Query extends BaseLink {
 	public <T> T getValue(final Class<T> resultType) {
 		Object result = getValue();
 		try {
-			return (T) BeanUtil.convertType(result, DataType.getType(resultType.getTypeName()),
-					resultType.getTypeName());
+			return (T) BeanUtil.convertType(result, DataType.getType(resultType), resultType.getTypeName());
 		} catch (Exception e) {
 			throw new DataAccessException("getValue方法获取单个值失败:" + e.getMessage(), e);
 		}

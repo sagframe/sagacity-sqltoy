@@ -117,7 +117,7 @@ public interface Dialect {
 	 * @param dbType
 	 * @param dialect
 	 * @param fetchSize
-	 * @param maxRows        设置最大查询记录，一般无需设置
+	 * @param maxRows             设置最大查询记录，一般无需设置
 	 * @return
 	 * @throws Exception
 	 */
@@ -383,6 +383,7 @@ public interface Dialect {
 	 * @param sql
 	 * @param inParamsValue
 	 * @param outParamsType
+	 * @param moreResult
 	 * @param conn
 	 * @param dbType
 	 * @param dialect
@@ -391,8 +392,8 @@ public interface Dialect {
 	 * @throws Exception
 	 */
 	public StoreResult executeStore(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
-			final String sql, final Object[] inParamsValue, final Integer[] outParamsType, final Connection conn,
-			final Integer dbType, final String dialect, final int fetchSize) throws Exception;
+			final String sql, final Object[] inParamsValue, final Integer[] outParamsType, final boolean moreResult,
+			final Connection conn, final Integer dbType, final String dialect, final int fetchSize) throws Exception;
 
 	/**
 	 * @TODO 获得表的字段信息

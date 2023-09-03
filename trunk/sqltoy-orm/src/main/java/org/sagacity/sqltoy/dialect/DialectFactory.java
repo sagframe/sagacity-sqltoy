@@ -1974,13 +1974,14 @@ public class DialectFactory {
 	 * @param sqlToyConfig
 	 * @param inParamsValue
 	 * @param outParamsType
-	 * @param resultType
+	 * @param resultTypes
+	 * @param moreResult    返回多集合
 	 * @param dataSource
 	 * @return
 	 */
 	public StoreResult executeStore(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
-			final Object[] inParamsValue, final Integer[] outParamsType, final Class resultType,
-			final DataSource dataSource) {
+			final Object[] inParamsValue, final Integer[] outParamsType, final Class[] resultTypes,
+			final boolean moreResult, final DataSource dataSource) {
 		try {
 			Long startTime = System.currentTimeMillis();
 			SqlExecuteStat.start(sqlToyConfig.getId(), "executeStore", sqlToyConfig.isShowSql());
@@ -1998,7 +1999,6 @@ public class DialectFactory {
 							if (paramCnt != inCount + outCount) {
 								throw new IllegalArgumentException("存储过程语句中的输入和输出参数跟实际调用传递的数量不等!");
 							}
-
 							SqlToyResult sqlToyResult = new SqlToyResult(dialectSql, inParamsValue);
 							// 判断是否是{?=call xxStore()} 模式(oracle 不支持此模式)
 							boolean isFirstResult = StringUtil.matches(dialectSql, STORE_PATTERN);
@@ -2010,7 +2010,7 @@ public class DialectFactory {
 							SqlExecuteStat.showSql("存储过程执行", sqlToyResult.getSql(), sqlToyResult.getParamsValue());
 							StoreResult queryResult = getDialectSqlWrapper(dbType).executeStore(sqlToyContext,
 									sqlToyConfig, sqlToyResult.getSql(), sqlToyResult.getParamsValue(), outParamsType,
-									conn, dbType, dialect, -1);
+									moreResult, conn, dbType, dialect, -1);
 							// 进行数据必要的数据处理(一般存储过程不会结合旋转sql进行数据旋转操作)
 							// {此区域代码正常情况下不会使用
 							QueryExecutor queryExecutor = new QueryExecutor(null, sqlToyConfig.getParamsName(),
@@ -2021,9 +2021,33 @@ public class DialectFactory {
 									sqlToyConfig, queryResult, pivotCategorySet, null);
 							// }
 							// 映射成对象
-							if (resultType != null) {
-								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
-										queryResult.getLabelNames(), resultType, changedCols, null, false, null, null));
+							if (resultTypes != null && resultTypes.length > 0) {
+								// 存储过程返回多个集合
+								if (moreResult) {
+									int rowsSize = queryResult.getMoreResults().length;
+									// 回写被计算后的集合(getRows()以第一个为基准)
+									queryResult.getMoreResults()[0] = queryResult.getRows();
+									int endSize = rowsSize;
+									if (resultTypes.length < endSize) {
+										endSize = resultTypes.length;
+									}
+									Class resultType;
+									List row;
+									List<String[]> labelNamesList = queryResult.getLabelsList();
+									for (int i = 0; i < endSize; i++) {
+										resultType = resultTypes[i];
+										if (resultType != null) {
+											row = queryResult.getMoreResults()[i];
+											queryResult.getMoreResults()[i] = ResultUtils.wrapQueryResult(sqlToyContext,
+													row, labelNamesList.get(i), resultType,
+													(i == 0) ? changedCols : false, null, false, null, null);
+										}
+									}
+								} else if (null != resultTypes[0]) {
+									queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext,
+											queryResult.getRows(), queryResult.getLabelNames(), resultTypes[0],
+											changedCols, null, false, null, null));
+								}
 							}
 							if (queryResult.getRecordCount() > sqlToyContext.getUpdateTipCount()) {
 								SqlExecuteStat.debug("执行结果", "executeStore影响记录量:{} 条,大于数据修改提示阈值:{}条!",

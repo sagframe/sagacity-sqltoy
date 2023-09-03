@@ -38,10 +38,10 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
 # 最新版本 
-* 5.3.33 (jdk17+、springboot3.x)  发版日期: 2023-07-20
-* 5.2.59 (jdk1.8)                 发版日期: 2023-07-20
+* 5.3.38 (jdk17+、springboot3.x)  发版日期: 2023-09-03
+* 5.2.64 (jdk1.8)                 发版日期: 2023-09-03
 
-# 历史版本(EOF)
+# 历史版本(EOF)8
 * 5.1.73                             发版日期: 2023-06-16
 * 4.20.69                            发版日期: 2023-07-05
 
@@ -72,16 +72,16 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 ```java
    StaffInfoVO staffInfo = new StaffInfoVO(); 
    //保存
-   sqlToyLazyDao.save(staffInfo);
+   lightDao.save(staffInfo);
    //删除
-   sqlToyLazyDao.delete(new StaffInfoVO("S2007"));
+   lightDao.delete(new StaffInfoVO("S2007"));
 
    //public Long update(Serializable entity, String... forceUpdateProps);
    // 这里对photo 属性进行强制修改，其他为null自动会跳过
-   sqlToyLazyDao.update(staffInfo, "photo");
+   lightDao.update(staffInfo, "photo");
 
    //深度修改,不管是否null全部字段修改
-   sqlToyLazyDao.updateDeeply(staffInfo);
+   lightDao.updateDeeply(staffInfo);
 
    List<StaffInfoVO> staffList = new ArrayList<StaffInfoVO>();
    StaffInfoVO staffInfo = new StaffInfoVO();
@@ -89,13 +89,13 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
    staffList.add(staffInfo);
    staffList.add(staffInfo1);
    //批量保存或修改
-   sqlToyLazyDao.saveOrUpdateAll(staffList);
+   lightDao.saveOrUpdateAll(staffList);
    //批量保存
-   sqlToyLazyDao.saveAll(staffList);
+   lightDao.saveAll(staffList);
    ...............
-   sqlToyLazyDao.loadByIds(StaffInfoVO.class,"S2007")
+   lightDao.loadByIds(StaffInfoVO.class,"S2007")
    //唯一性验证
-   sqlToyLazyDao.isUnique(staffInfo, "staffCode");
+   lightDao.isUnique(staffInfo, "staffCode");
 ```
 ## 2.2 支持代码中对象查询
 * sqltoy 中统一的规则是代码中可以直接传sql也可以是对应xml文件中的sqlId
@@ -127,7 +127,7 @@ public Page<StaffInfoVO> findStaff(Page<StaffInfoVO> pageModel, StaffInfoVO staf
 ```java
 //演示代码中非直接sql模式设置条件模式进行记录修改
 public Long updateByQuery() {
-     return sqlToyLazyDao.updateByQuery(StaffInfoVO.class,
+     return lightDao.updateByQuery(StaffInfoVO.class,
 		EntityUpdate.create().set("createBy", "S0001")
                      .where("staffName like ?").values("张"));
 }
@@ -162,6 +162,7 @@ sqlToyLazyDao.deleteByQuery(StaffInfoVO.class, EntityQuery.create().where("statu
 	]]></value>
 </sql>
 ```
+
 * mybatis同样的功能的写法
 
 ```xml
@@ -272,12 +273,12 @@ public void findPageByEntity() {
 	staffVO.setStaffName("陈");
 	// 使用了分页优化器
 	// 第一次调用:执行count 和 取记录两次查询
-	Page result = sqlToyLazyDao.findPageBySql(pageModel, "sqltoy_fastPage", staffVO);
+	Page result = lightDao.findPage(pageModel, "sqltoy_fastPage", staffVO);
 	System.err.println(JSON.toJSONString(result));
 	// 第二次调用:过滤条件一致，则不会再次执行count查询
 	//设置为第二页
 	pageModel.setPageNo(2);
-	result = sqlToyLazyDao.findPageBySql(pageModel, "sqltoy_fastPage", staffVO);
+	result = lightDao.findPage(pageModel, "sqltoy_fastPage", staffVO);
 	System.err.println(JSON.toJSONString(result));
 }
 	

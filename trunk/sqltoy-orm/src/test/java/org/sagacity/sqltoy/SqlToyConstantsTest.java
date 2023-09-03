@@ -1,6 +1,7 @@
 package org.sagacity.sqltoy;
 
 import java.awt.List;
+import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
@@ -21,10 +22,10 @@ import org.sagacity.sqltoy.demo.vo.A2;
 import org.sagacity.sqltoy.demo.vo.B1;
 import org.sagacity.sqltoy.demo.vo.C1;
 import org.sagacity.sqltoy.demo.vo.StaffInfoVO;
+import org.sagacity.sqltoy.model.DateType;
 import org.sagacity.sqltoy.model.MapKit;
-import org.sagacity.sqltoy.utils.DateUtil;
+import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.MapperUtils;
-import org.sagacity.sqltoy.utils.ParamFilterUtils;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 import com.alibaba.fastjson.JSON;
@@ -122,10 +123,13 @@ public class SqlToyConstantsTest {
 	}
 
 	@Test
-	public void testBeanInfo2() {
-		for (int i = 3; i <= 3; i++) {
-			System.err.println("XXXXXXXXXXXXXXX");
-		}
+	public void testBeanInfo2() throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+		DateType dat = DateType.FIRST_OF_MONTH;
+
+		System.err.println(BeanUtil.getEnumValue(dat));
+		String key = "FIRST_OF_WEEK";
+		DateType dat1 = (DateType) BeanUtil.newEnumInstance(key, DateType.class);
+		System.err.println(JSON.toJSONString(dat1));
 	}
 
 	public static void main(String[] args) {

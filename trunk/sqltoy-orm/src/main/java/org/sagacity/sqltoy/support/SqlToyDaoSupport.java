@@ -90,6 +90,7 @@ import org.sagacity.sqltoy.utils.BeanWrapper;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.DateUtil;
 import org.sagacity.sqltoy.utils.MapperUtils;
+import org.sagacity.sqltoy.utils.QueryExecutorBuilder;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -305,7 +306,8 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected SqlToyConfig getSqlToyConfig(final String sqlKey, final SqlType sqlType) {
-		return sqlToyContext.getSqlToyConfig(sqlKey, (sqlType == null) ? SqlType.search : sqlType, getDialect(null));
+		return sqlToyContext.getSqlToyConfig(sqlKey, (sqlType == null) ? SqlType.search : sqlType, getDialect(null),
+				null);
 	}
 
 	/**
@@ -365,7 +367,7 @@ public class SqlToyDaoSupport {
 	 */
 	protected Long getCountByQuery(final QueryExecutor queryExecutor) {
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(extend.sql, SqlType.search,
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search,
 				getDialect(extend.dataSource));
 		Long result = dialectFactory.getCountBySql(sqlToyContext, queryExecutor, sqlToyConfig,
 				this.getDataSource(extend.dataSource, sqlToyConfig));
@@ -397,8 +399,15 @@ public class SqlToyDaoSupport {
 	protected StoreResult executeStore(final String storeSqlOrKey, final Object[] inParamsValue,
 			final Integer[] outParamsType, final Class resultType, final DataSource dataSource) {
 		SqlToyConfig sqlToyConfig = getSqlToyConfig(storeSqlOrKey, SqlType.search);
-		return dialectFactory.executeStore(sqlToyContext, sqlToyConfig, inParamsValue, outParamsType, resultType,
-				this.getDataSource(dataSource, sqlToyConfig));
+		return dialectFactory.executeStore(sqlToyContext, sqlToyConfig, inParamsValue, outParamsType,
+				new Class[] { resultType }, false, getDataSource(dataSource, sqlToyConfig));
+	}
+
+	protected StoreResult executeMoreResultStore(final String storeSqlOrKey, final Object[] inParamsValue,
+			final Integer[] outParamsType, final Class[] resultTypes) {
+		SqlToyConfig sqlToyConfig = getSqlToyConfig(storeSqlOrKey, SqlType.search);
+		return dialectFactory.executeStore(sqlToyContext, sqlToyConfig, inParamsValue, outParamsType, resultTypes, true,
+				getDataSource(null, sqlToyConfig));
 	}
 
 	/**
@@ -432,8 +441,7 @@ public class SqlToyDaoSupport {
 			return null;
 		}
 		try {
-			return (T) BeanUtil.convertType(value, DataType.getType(resultType.getTypeName()),
-					resultType.getTypeName());
+			return (T) BeanUtil.convertType(value, DataType.getType(resultType), resultType.getTypeName());
 		} catch (Exception e) {
 			throw new DataAccessException("getSingleValue方法获取单个值失败:" + e.getMessage(), e);
 		}
@@ -665,7 +673,8 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected Long executeSql(final String sqlOrSqlId, final Serializable entity) {
-		SqlToyConfig sqlToyConfig = getSqlToyConfig(sqlOrSqlId, SqlType.update);
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sqlOrSqlId, SqlType.update, getDialect(dataSource),
+				entity);
 		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, new QueryExecutor(sqlOrSqlId, entity), null, null,
 				getDataSource(null, sqlToyConfig));
 	}
@@ -696,9 +705,9 @@ public class SqlToyDaoSupport {
 	 */
 	protected Long executeSql(final String sqlOrSqlId, final String[] paramsNamed, final Object[] paramsValue,
 			final Boolean autoCommit, final DataSource dataSource) {
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sqlOrSqlId, SqlType.update, getDialect(dataSource));
-		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig,
-				new QueryExecutor(sqlOrSqlId).names(paramsNamed).values(paramsValue), null, autoCommit,
+		QueryExecutor query = new QueryExecutor(sqlOrSqlId).names(paramsNamed).values(paramsValue);
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(query, SqlType.update, getDialect(dataSource));
+		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, query, null, autoCommit,
 				getDataSource(dataSource, sqlToyConfig));
 	}
 
@@ -734,7 +743,8 @@ public class SqlToyDaoSupport {
 	 */
 	protected Long batchUpdate(final String sqlOrSqlId, final List dataSet, final int batchSize,
 			final Boolean autoCommit, final DataSource dataSource) {
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sqlOrSqlId, SqlType.update, getDialect(dataSource));
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sqlOrSqlId, SqlType.update, getDialect(dataSource),
+				null);
 		return dialectFactory.batchUpdate(sqlToyContext, sqlToyConfig, dataSet, batchSize, null, null, autoCommit,
 				getDataSource(dataSource, sqlToyConfig));
 	}
@@ -828,7 +838,14 @@ public class SqlToyDaoSupport {
 		// 自定义countsql
 		String countSql = queryExecutor.getInnerModel().countSql;
 		if (StringUtil.isNotBlank(countSql)) {
-			sqlToyConfig.setCountSql(countSql);
+			// 存在@include(sqlId) 或 @include(:sqlScript)
+			if (StringUtil.matches(countSql, SqlToyConstants.INCLUDE_PATTERN)) {
+				SqlToyConfig countSqlConfig = sqlToyContext.getSqlToyConfig(countSql, SqlType.search, dialect,
+						QueryExecutorBuilder.getParamValues(queryExecutor));
+				sqlToyConfig.setCountSql(countSqlConfig.getSql());
+			} else {
+				sqlToyConfig.setCountSql(countSql);
+			}
 		}
 		QueryResult result;
 		// 跳过查询总记录数量
@@ -1369,7 +1386,7 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected List updateFetch(final QueryExecutor queryExecutor, final UpdateRowHandler updateRowHandler) {
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getInnerModel().sql, SqlType.search,
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search,
 				getDialect(queryExecutor.getInnerModel().dataSource));
 		return dialectFactory.updateFetch(sqlToyContext, queryExecutor, sqlToyConfig, updateRowHandler,
 				this.getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig)).getRows();

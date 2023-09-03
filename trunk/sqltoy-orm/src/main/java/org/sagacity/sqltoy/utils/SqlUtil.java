@@ -413,7 +413,11 @@ public class SqlUtil {
 			pst.setByte(paramIndex, (Byte) paramValue);
 		} else if (paramValue instanceof Object[]) {
 			setArray(dbType, conn, pst, paramIndex, paramValue);
-		} // update 2023-5-26 增加集合类型场景支持(对应数据库Array)
+		} // update 2023-08-02 增加默认的枚举类型处理
+		else if (paramValue instanceof Enum) {
+			pst.setObject(paramIndex, BeanUtil.getEnumValue(paramValue));
+		}
+		// update 2023-5-26 增加集合类型场景支持(对应数据库Array)
 		else if (paramValue instanceof Collection) {
 			Object[] values = ((Collection) paramValue).toArray();
 			// 集合为空，无法判断具体类型，设置为null
@@ -533,10 +537,12 @@ public class SqlUtil {
 		int[] propTypeValues = new int[setMethods.length];
 		Class[] genericTypes = new Class[setMethods.length];
 		Type[] types;
+		Class methodType;
 		for (int i = 0; i < propTypes.length; i++) {
 			if (setMethods[i] != null) {
-				propTypes[i] = setMethods[i].getParameterTypes()[0].getTypeName();
-				propTypeValues[i] = DataType.getType(propTypes[i]);
+				methodType = setMethods[i].getParameterTypes()[0];
+				propTypes[i] = methodType.getTypeName();
+				propTypeValues[i] = DataType.getType(methodType);
 				types = setMethods[i].getGenericParameterTypes();
 				if (types.length > 0 && (types[0] instanceof ParameterizedType)) {
 					genericTypes[i] = (Class) ((ParameterizedType) types[0]).getActualTypeArguments()[0];

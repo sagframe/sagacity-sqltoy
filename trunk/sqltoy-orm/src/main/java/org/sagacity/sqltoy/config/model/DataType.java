@@ -54,12 +54,24 @@ public class DataType {
 
 	public static final int setType = 102;
 
+	//枚举类型
+	public static final int enumType = 110;
+
+	public static int getType(String typeName) {
+		return getType(null, typeName);
+	}
+
+	public static int getType(Class typeClass) {
+		return getType(typeClass, typeClass.getTypeName());
+	}
+
 	/**
 	 * @TODO 获取类型
+	 * @param typeClass
 	 * @param typeName
 	 * @return
 	 */
-	public static int getType(String typeName) {
+	private static int getType(Class typeClass, String typeName) {
 		// 原生类型
 		if ("int".equals(typeName)) {
 			return primitiveIntType;
@@ -160,6 +172,9 @@ public class DataType {
 		// set
 		if ("java.util.Set".equals(typeName) || "java.util.HashSet".equals(typeName)) {
 			return setType;
+		}
+		if (typeClass != null && typeClass.isEnum()) {
+			return enumType;
 		}
 		// 其他
 		return objectType;

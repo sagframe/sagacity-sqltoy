@@ -325,7 +325,7 @@ public class SqlServerDialect implements Dialect {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		// 获取loadsql(loadsql 可以通过@loadSql进行改变，所以需要sqltoyContext重新获取)
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(entityMeta.getLoadSql(tableName), SqlType.search,
-				dialect);
+				dialect, null);
 		String loadSql = sqlToyConfig.getSql(dialect);
 		loadSql = SqlServerDialectUtils.lockSql(loadSql, entityMeta.getSchemaTable(tableName, dbType), lockMode);
 		return (Serializable) DialectUtils.load(sqlToyContext, sqlToyConfig, loadSql, entityMeta, entity, cascadeTypes,
@@ -457,10 +457,10 @@ public class SqlServerDialect implements Dialect {
 
 	@Override
 	public StoreResult executeStore(SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
-			final Object[] inParamsValue, final Integer[] outParamsType, final Connection conn, final Integer dbType,
-			final String dialect, final int fetchSize) throws Exception {
-		return DialectUtils.executeStore(sqlToyConfig, sqlToyContext, sql, inParamsValue, outParamsType, conn, dbType,
-				fetchSize);
+			final Object[] inParamsValue, final Integer[] outParamsType, final boolean moreResult,
+			final Connection conn, final Integer dbType, final String dialect, final int fetchSize) throws Exception {
+		return DialectUtils.executeStore(sqlToyConfig, sqlToyContext, sql, inParamsValue, outParamsType, moreResult,
+				conn, dbType, fetchSize);
 	}
 
 	@Override

@@ -288,12 +288,14 @@ public class ResultUtils {
 				genericTypes = new Class[columnSize];
 				indexs = new int[columnSize];
 				Type[] types;
+				Class methodType;
 				// 自动适配属性的数据类型
 				for (int i = 0; i < columnSize; i++) {
 					indexs[i] = i;
 					if (null != realMethods[i]) {
-						methodTypes[i] = realMethods[i].getParameterTypes()[0].getTypeName();
-						methodTypeValues[i] = DataType.getType(methodTypes[i]);
+						methodType = realMethods[i].getParameterTypes()[0];
+						methodTypes[i] = methodType.getTypeName();
+						methodTypeValues[i] = DataType.getType(methodType);
 						types = realMethods[i].getGenericParameterTypes();
 						if (types.length > 0) {
 							if (types[0] instanceof ParameterizedType) {
@@ -938,7 +940,6 @@ public class ResultUtils {
 	 * @param result
 	 * @param pivotCategorySet
 	 * @return
-	 * @throws Exception
 	 */
 	private static List pivotResult(PivotModel pivotModel, LabelIndexModel labelIndexMap, List result,
 			List pivotCategorySet) {
@@ -1315,7 +1316,7 @@ public class ResultUtils {
 				PivotModel pivotModel = (PivotModel) processor;
 				if (pivotModel.getCategorySql() != null) {
 					SqlToyConfig pivotSqlConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
-							sqlToyContext.getSqlToyConfig(pivotModel.getCategorySql(), SqlType.search, ""),
+							sqlToyContext.getSqlToyConfig(pivotModel.getCategorySql(), SqlType.search, "", null),
 							queryExecutor, dialect, false);
 					SqlToyResult pivotSqlToyResult = SqlConfigParseUtils.processSql(pivotSqlConfig.getSql(dialect),
 							extend.getParamsName(), extend.getParamsValue(sqlToyContext, pivotSqlConfig), dialect);
@@ -1555,7 +1556,7 @@ public class ResultUtils {
 		}
 		Object cell;
 		String typeName = classType.getTypeName();
-		int typeValue = DataType.getType(typeName);
+		int typeValue = DataType.getType(classType);
 		try {
 			for (Object row : rows) {
 				cell = ((List) row).get(0);
@@ -1813,6 +1814,7 @@ public class ResultUtils {
 						result[j] = result[j] + "SqlToyIgnoreField";
 					}
 				}
+				// 设置匹配的属性
 				result[i] = fieldName;
 			}
 		}

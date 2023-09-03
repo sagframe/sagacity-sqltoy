@@ -2,6 +2,7 @@ package org.sagacity.sqltoy.plugins;
 
 import javax.sql.DataSource;
 
+import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DbAdapterHandler;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
@@ -11,6 +12,8 @@ import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.model.Page;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
+import org.sagacity.sqltoy.utils.QueryExecutorBuilder;
+import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -128,7 +131,19 @@ public class CrossDbAdapter {
 			}
 			dialect = DataSourceUtils.getDialect(sqlToyContext, dataSource);
 			// 获得相关方言的sql(函数自动替换等)
-			sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getInnerModel().sql, SqlType.search, dialect);
+			sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search, dialect);
+			// 自定义countsql
+			String countSql = queryExecutor.getInnerModel().countSql;
+			if (StringUtil.isNotBlank(countSql)) {
+				// 存在@include(sqlId) 或 @include(:sqlScript)
+				if (StringUtil.matches(countSql, SqlToyConstants.INCLUDE_PATTERN)) {
+					SqlToyConfig countSqlConfig = sqlToyContext.getSqlToyConfig(countSql, SqlType.search, dialect,
+							QueryExecutorBuilder.getParamValues(queryExecutor));
+					sqlToyConfig.setCountSql(countSqlConfig.getSql());
+				} else {
+					sqlToyConfig.setCountSql(countSql);
+				}
+			}
 			try {
 				dbAdapterHandler.query(sqlToyConfig, dataSource);
 			} catch (Exception e) {

@@ -186,4 +186,14 @@ public class StringUtilsTest {
 		System.err.println("[" + sql + "]");
 		System.err.println("[" + SqlUtilsExt.clearOriginalSqlMark(sql) + "]");
 	}
+	
+	@Test
+	public void testMatchInclude() {
+		String sql = "select * from table @include(id=\"adb\")";
+		System.err.println(StringUtil.matches(sql, SqlToyConstants.INCLUDE_PATTERN));
+		sql = "select * from table @include( :itemList[0].id )";
+		System.err.println(StringUtil.matches(sql, SqlToyConstants.INCLUDE_PARAM_PATTERN));
+		sql = "select * from table @include( :itemList )";
+		System.err.println(StringUtil.matches(sql, SqlToyConstants.INCLUDE_PARAM_PATTERN));
+	}
 }
