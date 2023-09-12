@@ -209,6 +209,11 @@ public class SqlToyContextProperties implements Serializable {
 	 * 开放设置默认单页数据记录量
 	 */
 	private int defaultPageSize = 10;
+	
+	/**
+	 * 未匹配的数据库类型分页是否是limit ? offset ? 模式还是 limit ?,? 模式
+	 */
+	private boolean defaultPageOffset = true;
 
 	/**
 	 * @return the sqlResourcesDir
@@ -607,5 +612,13 @@ public class SqlToyContextProperties implements Serializable {
 
 	public void setDefaultPageSize(int defaultPageSize) {
 		this.defaultPageSize = defaultPageSize;
+	}
+
+	public boolean isDefaultPageOffset() {
+		return defaultPageOffset;
+	}
+
+	public void setDefaultPageOffset(boolean defaultPageOffset) {
+		this.defaultPageOffset = defaultPageOffset;
 	}
 }

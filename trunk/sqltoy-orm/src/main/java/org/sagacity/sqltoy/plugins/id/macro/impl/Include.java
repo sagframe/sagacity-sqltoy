@@ -20,7 +20,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
 public class Include extends AbstractMacro {
 
 	@Override
-	public String execute(String[] params, Map<String, Object> keyValues) {
+	public String execute(String[] params, Map<String, Object> keyValues, String preSql) {
 		if (params.length == 0) {
 			return "";
 		}

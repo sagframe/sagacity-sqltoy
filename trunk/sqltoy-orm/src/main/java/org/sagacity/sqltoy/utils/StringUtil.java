@@ -589,6 +589,10 @@ public class StringUtil {
 				return source.split("\\:");
 			} else if ("".equals(splitSign.trim())) {
 				return source.split("\\s+");
+			} else if ("||".equals(splitSign.trim())) {
+				return source.split("\\|{2}");
+			} else if ("&&".equals(splitSign.trim())) {
+				return source.split("\\&{2}");
 			} else {
 				return source.split(splitSign);
 			}
@@ -605,10 +609,15 @@ public class StringUtil {
 				return source.split("\\:");
 			} else if ("".equals(splitSign.trim())) {
 				return source.split("\\s+");
+			} else if ("||".equals(splitSign.trim())) {
+				return source.split("\\|{2}");
+			} else if ("&&".equals(splitSign.trim())) {
+				return source.split("\\&{2}");
 			} else {
 				return source.split(splitSign);
 			}
 		}
+		int splitSignLen = splitSign.length();
 		int start = 0;
 		int skipIndex = 0;
 		int preSplitIndex = splitIndex;
@@ -619,12 +628,13 @@ public class StringUtil {
 			max = -1;
 			for (String[] filter : filters) {
 				startEnd = getStartEndIndex(source, filter, skipIndex, splitIndex);
-				// 分隔符号整合在对称符号的首尾中间,表示分隔符号属于内部字符串,在对称符号的终止位置后面重新获取分隔符号的位置
+				// 分隔符号在对称符号的首尾中间,表示分隔符号属于内部字符串,在对称符号的终止位置后面重新获取分隔符号的位置
 				if (startEnd[0] >= 0 && startEnd[0] <= splitIndex && startEnd[1] >= splitIndex && startEnd[1] > max) {
 					max = startEnd[1];
 				}
 			}
 			if (max > -1) {
+				// 对称符号后移动1位
 				skipIndex = max + 1;
 				splitIndex = source.indexOf(splitSign, skipIndex);
 			}
@@ -633,7 +643,7 @@ public class StringUtil {
 				// 切割分隔符前部分
 				splitResults.add(source.substring(start, preSplitIndex));
 				// 重新记录下一次开始切割位置
-				start = preSplitIndex + 1;
+				start = preSplitIndex + splitSignLen;
 				skipIndex = start;
 				splitIndex = source.indexOf(splitSign, skipIndex);
 				preSplitIndex = splitIndex;
@@ -718,7 +728,7 @@ public class StringUtil {
 	 * @param filterMap
 	 * @return
 	 */
-	private static List<String[]> matchFilters(String source, HashMap filterMap) {
+	public static List<String[]> matchFilters(String source, HashMap filterMap) {
 		List<String[]> result = new ArrayList<String[]>();
 		Iterator iter = filterMap.entrySet().iterator();
 		String beginSign;
@@ -905,7 +915,7 @@ public class StringUtil {
 		}
 		for (Object arg : args) {
 			template = template.replaceFirst("\\$?\\{\\s*\\}",
-					arg == null ? "null" : Matcher.quoteReplacement(arg.toString()));
+					(arg == null) ? "null" : Matcher.quoteReplacement(arg.toString()));
 		}
 		return template;
 	}
@@ -1026,5 +1036,38 @@ public class StringUtil {
 		for (int i = 0; i < params.length; i++) {
 			params[i] = params[i].trim();
 		}
+	}
+
+	/**
+	 * @TODO 将字符串进行正则表达式切割
+	 * @param source
+	 * @param regex
+	 * @param doTrim
+	 * @return
+	 */
+	public static String[] splitRegex(String source, String regex, boolean doTrim) {
+		if (source == null) {
+			return null;
+		}
+		String[] result;
+		if ("?".equals(regex)) {
+			result = source.split("\\?");
+		} else if (",".equals(regex)) {
+			result = source.split("\\,");
+		} else if (";".equals(regex)) {
+			result = source.split("\\;");
+		} else if (":".equals(regex)) {
+			result = source.split("\\:");
+		} else if ("".equals(regex.trim())) {
+			result = source.split("\\s+");
+		} else {
+			result = source.split(regex);
+		}
+		if (doTrim) {
+			for (int i = 0; i < result.length; i++) {
+				result[i] = result[i].trim();
+			}
+		}
+		return result;
 	}
 }

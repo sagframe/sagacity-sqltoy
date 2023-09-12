@@ -263,6 +263,11 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * sql格式化输出器
 	 */
 	private SqlFormater sqlFormater;
+	
+	/**
+	 * 未匹配的数据库类型分页是否是limit ? offset ? 模式还是 limit ?,? 模式
+	 */
+	private boolean defaultPageOffset = true;
 
 	/**
 	 * @param workerId the workerId to set
@@ -1084,6 +1089,14 @@ public class SqlToyContext implements ApplicationContextAware {
 
 	public void setDefaultPageSize(int defaultPageSize) {
 		this.defaultPageSize = defaultPageSize;
+	}
+
+	public boolean isDefaultPageOffset() {
+		return defaultPageOffset;
+	}
+
+	public void setDefaultPageOffset(boolean defaultPageOffset) {
+		this.defaultPageOffset = defaultPageOffset;
 	}
 
 }

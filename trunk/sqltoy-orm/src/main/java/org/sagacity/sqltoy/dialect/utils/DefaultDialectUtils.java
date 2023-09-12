@@ -128,6 +128,11 @@ public class DefaultDialectUtils {
 			throws Exception {
 		StringBuilder sql = new StringBuilder();
 		boolean isNamed = sqlToyConfig.isNamedParam();
+		// 是否使用limit ? offset ? 模式，常规情况都是支持的，但特殊情况下部分未匹配的数据库采用limit ?,? 模式
+		boolean useDefault = true;
+		if (dbType == DBType.UNDEFINE && !sqlToyContext.isDefaultPageOffset()) {
+			useDefault = false;
+		}
 		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect));
@@ -138,7 +143,11 @@ public class DefaultDialectUtils {
 		sql.append(innerSql);
 		sql.append(" limit ");
 		sql.append(isNamed ? ":" + SqlToyConstants.PAGE_FIRST_PARAM_NAME : "?");
-		sql.append(" offset ");
+		if (useDefault) {
+			sql.append(" offset ");
+		} else {
+			sql.append(" , ");
+		}
 		sql.append(isNamed ? ":" + SqlToyConstants.PAGE_LAST_PARAM_NAME : "?");
 		if (sqlToyConfig.isHasFast()) {
 			if (!sqlToyConfig.isIgnoreBracket()) {
@@ -146,8 +155,16 @@ public class DefaultDialectUtils {
 			}
 			sql.append(sqlToyConfig.getFastTailSql(dialect));
 		}
-		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
-				sql.toString(), Long.valueOf(pageSize), (pageNo - 1) * pageSize, dialect);
+		SqlToyResult queryParam;
+		Long startIndex = (pageNo - 1) * pageSize;
+		// limit ? offset ?模式
+		if (useDefault) {
+			queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor, sql.toString(),
+					pageSize, (startIndex > Integer.MAX_VALUE) ? startIndex : startIndex.intValue(), dialect);
+		} else {
+			queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor, sql.toString(),
+					(startIndex > Integer.MAX_VALUE) ? startIndex : startIndex.intValue(), pageSize, dialect);
+		}
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		// 增加sql执行拦截器 update 2022-9-10
 		queryParam = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig,

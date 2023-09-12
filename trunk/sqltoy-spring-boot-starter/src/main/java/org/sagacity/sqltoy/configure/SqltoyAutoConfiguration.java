@@ -163,6 +163,7 @@ public class SqltoyAutoConfiguration {
 		if (properties.getOverPageToFirst() != null) {
 			sqlToyContext.setOverPageToFirst(properties.getOverPageToFirst());
 		}
+		sqlToyContext.setDefaultPageOffset(properties.isDefaultPageOffset());
 		// 设置公共统一属性的处理器
 		String unfiyHandler = properties.getUnifyFieldsHandler();
 		if (StringUtil.isNotBlank(unfiyHandler)) {
