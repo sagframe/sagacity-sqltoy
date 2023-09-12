@@ -787,11 +787,6 @@ public class SqlToyLazyDaoImpl extends SpringDaoSupport implements SqlToyLazyDao
 		return super.mongo();
 	}
 
-//	@Override
-//	public TableApi tableApi() {
-//		return null;
-//	}
-
 	/*
 	 * (non-Javadoc)
 	 * 
