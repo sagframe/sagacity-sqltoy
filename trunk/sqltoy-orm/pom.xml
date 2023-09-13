@@ -3,7 +3,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sagframe</groupId>
-	<version>5.2.64</version>
+	<version>5.2.66</version>
 	<name>sagacity-sqltoy</name>
 	<description>sagacity-sqltoy</description>
 	<artifactId>sagacity-sqltoy</artifactId>
@@ -18,17 +18,17 @@
 		<httpclient.version>4.5.14</httpclient.version>
 		<httpclient-httpmime.version>4.5.14</httpclient-httpmime.version>
 		<httpclient-core.version>4.4.16</httpclient-core.version>
-		<elastic-rest-client.version>8.9.1</elastic-rest-client.version>
-		<fastjson.version>2.0.39</fastjson.version>
+		<elastic-rest-client.version>8.9.2</elastic-rest-client.version>
+		<fastjson.version>2.0.40</fastjson.version>
 		<mongo.version>3.12.14</mongo.version>
 		<junit-jupiter.version>5.10.0</junit-jupiter.version>
 		<junit-platform.version>1.10.0</junit-platform.version>
-		<slf4j.version>2.0.7</slf4j.version>
+		<slf4j.version>2.0.9</slf4j.version>
 		<caffeine.version>2.9.3</caffeine.version>
 		<h2.version>2.2.222</h2.version>
 		<lombok.version>1.18.28</lombok.version>
 		<taos-jdbcdriver.version>3.2.5</taos-jdbcdriver.version>
-		<druid.version>1.2.18</druid.version>
+		<druid.version>1.2.19</druid.version>
 		<transmittable-thread-local>2.14.3</transmittable-thread-local>
 	</properties>
 	<licenses>

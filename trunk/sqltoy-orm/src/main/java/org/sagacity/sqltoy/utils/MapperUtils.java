@@ -297,7 +297,7 @@ public class MapperUtils {
 						targetProps.add(targetPropsMap.get(fieldName.toLowerCase()));
 					} else if (targetPropsMap.containsKey(aliasName.toLowerCase())) {
 						fromClassProps.add(fieldName);
-						targetProps.add(targetPropsMap.get(fieldName.toLowerCase()));
+						targetProps.add(targetPropsMap.get(aliasName.toLowerCase()));
 					}
 				}
 			}
