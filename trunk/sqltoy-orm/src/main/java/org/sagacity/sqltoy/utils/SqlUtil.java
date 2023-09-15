@@ -1235,7 +1235,7 @@ public class SqlUtil {
 					.append(" where ").append(pidField).append(" in (${inStr})");
 			String idInfoSql = "select ".concat(nodeLevelField).concat(",").concat(nodeRouteField).concat(" from ")
 					.concat(tableName).concat(" where ").concat(idField).concat("=").concat(flag)
-					.concat(treeTableModel.getRootId().toString()).concat(flag);
+					.concat(treeTableModel.getPidValue().toString()).concat(flag);
 			// 附加条件(如一张表里面分账套,将多家企业的部门信息放于一张表中,附加条件就可以是账套)
 			if (StringUtil.isNotBlank(conditions)) {
 				idInfoSql = idInfoSql.concat(" and ").concat(conditions);
@@ -1260,7 +1260,7 @@ public class SqlUtil {
 			}
 			// 模拟指定节点的信息
 			HashMap pidsMap = new HashMap();
-			pidsMap.put(treeTableModel.getRootId().toString(), nodeRoute);
+			pidsMap.put(treeTableModel.getPidValue().toString(), nodeRoute);
 			// 下级节点
 			List ids;
 			if (treeTableModel.getIdValue() != null) {
@@ -1276,7 +1276,7 @@ public class SqlUtil {
 			} else {
 				ids = findByJdbcQuery(typeHandler,
 						nextNodeQueryStr.toString().replaceFirst("\\$\\{inStr\\}",
-								flag + treeTableModel.getRootId() + flag),
+								flag + treeTableModel.getPidValue() + flag),
 						null, null, null, null, conn, dbType, false, null, SqlToyConstants.FETCH_SIZE, -1);
 			}
 			if (ids != null && !ids.isEmpty()) {

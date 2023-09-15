@@ -260,7 +260,7 @@ public class SqlUtilsExt {
 	 */
 	public static String signSql(String sql, Integer dbType, SqlToyConfig sqlToyConfig) {
 		// 判断是否打开sql签名,提供开发者通过SqlToyContext
-		// dialectProperties设置:sqltoy.open.sqlsign=false 来关闭
+		// dialectConfig设置:sqltoy.open.sqlsign=false 来关闭
 		// elasticsearch类型 不支持
 		if (!SqlToyConstants.openSqlSign() || dbType.equals(DBType.ES)) {
 			return sql;
