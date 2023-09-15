@@ -80,20 +80,20 @@
 		<!-- count-sql(只针对分页查询有效,sqltoy分页针对计算count的sql进行了智能处理, 一般不需要额外定义countsql,除极为苛刻的性能优化，sqltoy提供了极度优化的口子) -->
 		<count-sql><![CDATA[]]></count-sql>
 		<!-- 汇总和求平均 -->
-		<summary columns="" radix-size="2" reverse="false" sum-site="left">
+		<summary sum-columns="" average-radix-sizes="2" reverse="false" sum-site="left">
 			<global sum-label="" label-column="" />
 			<!-- order-with-sum:一般无需填,如果order-column只有ave就以平均值排序，如果既有平均和求和，默认求和，order-with-sum为false则依据ave
 			     order-way: 默认desc从大到小排序
 			     内部逻辑：1、先计算排序汇总值，插入最后一列；2、进行分组排序；3、调用之前的分组计算逻辑；4、剔除掉额外增加的排序列
 			 -->
-			<group sum-label="" label-column="" group-column="" order-column="" order-way="desc|asc" order-with-sum="true"/>
+			<group sum-label="" label-column="" group-column="" order-column="" order-way="desc" order-with-sum="true"/>
 		</summary>
 		<!-- 拼接某列,mysql中等同于group_concat\oracle 中的WMSYS.WM_CONCAT功能 -->
-		<link sign="," column="" />
+		<link sign="," columns="" />
 		<!-- 行转列 (跟unpivot互斥) -->
 		<pivot category-columns="" group-columns="" start-column=""	end-column="" default-value="0" />
 		<!-- 列转行 -->
 		<unpivot columns-to-rows="1:xxx,2:xxxx" new-columns-labels="" />
-		<tree-sort id-column="" pid-column="" sum-columns="" level-order-column="" order-way="desc|asc"></tree-sort>
+		<tree-sort id-column="" pid-column="" sum-columns="" level-order-column="" order-way="asc"></tree-sort>
 	</sql>
 </sqltoy>

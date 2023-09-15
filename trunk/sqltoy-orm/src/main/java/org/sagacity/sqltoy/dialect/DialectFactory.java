@@ -594,16 +594,23 @@ public class DialectFactory {
 				// 通过实体对象取值给rootId和idValue赋值
 				if (!(treeModel.getEntity() instanceof Type)) {
 					// update 2020-10-19 从手工设定的字段中取值(原本从主键中取值)
-					if (null == treeModel.getRootId()) {
+					if (null == treeModel.getPidValue()) {
 						Object pidValue = BeanUtil.getProperty(treeModel.getEntity(),
 								StringUtil.toHumpStr(treeModel.getPidField(), false));
-						treeModel.rootId(pidValue);
+						if (pidValue == null) {
+							throw new IllegalArgumentException(
+									"树形表:父节点字段:" + treeModel.getPidField() + " 没有被赋值，即父节点属性值为null,请检查!");
+						}
+						treeModel.pidValue(pidValue);
 					}
 					if (null == treeModel.getIdValue()) {
 						Object idValue = BeanUtil.getProperty(treeModel.getEntity(),
 								StringUtil.toHumpStr(treeModel.getIdField(), false));
 						treeModel.setIdValue(idValue);
 					}
+				} else if (null == treeModel.getPidValue()) {
+					throw new IllegalArgumentException(
+							"树形表:父节点字段:" + treeModel.getPidField() + " 没有被赋值，即父节点属性值为null,请检查!");
 				}
 				// update 2022-5-6，boolean类型转出Boolean,在未赋值情况下通过主键类型进行自动补全设置
 				if (treeModel.isChar() == null) {
