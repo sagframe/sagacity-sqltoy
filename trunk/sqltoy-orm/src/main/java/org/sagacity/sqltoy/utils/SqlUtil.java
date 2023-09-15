@@ -1263,7 +1263,7 @@ public class SqlUtil {
 			pidsMap.put(treeTableModel.getPidValue().toString(), nodeRoute);
 			// 下级节点
 			List ids;
-			if (treeTableModel.getIdValue() != null) {
+			if (StringUtil.isNotBlank(treeTableModel.getIdValue())) {
 				StringBuilder firstNextNodeQuery = new StringBuilder("select ").append(idField).append(",")
 						.append(nodeRouteField).append(",").append(pidField).append(" from ").append(tableName)
 						.append(" where ").append(idField).append("=?");

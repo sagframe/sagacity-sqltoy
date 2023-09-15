@@ -122,7 +122,7 @@ public class MapperUtils {
 	 * @param sourceList
 	 * @param resultType
 	 * @param recursionLevel   避免循环递归，默认不能超过3层
-	 * @param ignoreProperties
+	 * @param ignoreProperties 跳过不参与映射的属性
 	 * @return
 	 * @throws RuntimeException
 	 */
@@ -170,10 +170,12 @@ public class MapperUtils {
 					skip = false;
 					for (int j = 0; j < ignoreProps.size(); j++) {
 						ignorePropLow = ignoreProps.get(j);
+						// boolean 类型去除is
 						if (methodName.equals("set".concat(ignorePropLow))
 								|| (ignorePropLow.startsWith("is") && paramType.equals(boolean.class)
 										&& methodName.equals("set".concat(ignorePropLow.substring(2))))) {
 							skip = true;
+							// 移除匹配上的属性，避免下次继续匹配
 							ignoreProps.remove(j);
 							j--;
 							break;
@@ -273,6 +275,7 @@ public class MapperUtils {
 			}
 			parentClass = parentClass.getSuperclass();
 		}
+		// 是否要匹配别名(两个不同对象之间，属性名称不一致，通过注解提供别名模式进行映射)
 		boolean checkAlias = fromClass.equals(targetClass) ? false : true;
 		// fromClass
 		List<String> fromClassProps = new ArrayList<String>();
@@ -285,6 +288,7 @@ public class MapperUtils {
 			for (Field field : parentClass.getDeclaredFields()) {
 				fieldName = field.getName();
 				aliasName = fieldName;
+				// 不同对象，检查是否有别名
 				if (checkAlias) {
 					alias = field.getAnnotation(SqlToyFieldAlias.class);
 					if (alias != null) {
