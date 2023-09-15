@@ -538,6 +538,7 @@ public class DialectFactory {
 		try {
 			if (null != treeModel.getEntity()) {
 				EntityMeta entityMeta = null;
+				// 指定了一个类型，还是一个实体对象实例
 				if (treeModel.getEntity() instanceof Type) {
 					entityMeta = sqlToyContext.getEntityMeta((Class) treeModel.getEntity());
 				} else {
@@ -594,21 +595,21 @@ public class DialectFactory {
 				// 通过实体对象取值给rootId和idValue赋值
 				if (!(treeModel.getEntity() instanceof Type)) {
 					// update 2020-10-19 从手工设定的字段中取值(原本从主键中取值)
-					if (null == treeModel.getPidValue()) {
+					if (StringUtil.isBlank(treeModel.getPidValue())) {
 						Object pidValue = BeanUtil.getProperty(treeModel.getEntity(),
 								StringUtil.toHumpStr(treeModel.getPidField(), false));
-						if (pidValue == null) {
+						if (StringUtil.isBlank(pidValue)) {
 							throw new IllegalArgumentException(
 									"树形表:父节点字段:" + treeModel.getPidField() + " 没有被赋值，即父节点属性值为null,请检查!");
 						}
 						treeModel.pidValue(pidValue);
 					}
-					if (null == treeModel.getIdValue()) {
+					if (StringUtil.isBlank(treeModel.getIdValue())) {
 						Object idValue = BeanUtil.getProperty(treeModel.getEntity(),
 								StringUtil.toHumpStr(treeModel.getIdField(), false));
 						treeModel.setIdValue(idValue);
 					}
-				} else if (null == treeModel.getPidValue()) {
+				} else if (StringUtil.isBlank(treeModel.getPidValue())) {
 					throw new IllegalArgumentException(
 							"树形表:父节点字段:" + treeModel.getPidField() + " 没有被赋值，即父节点属性值为null,请检查!");
 				}
