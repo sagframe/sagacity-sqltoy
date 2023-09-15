@@ -33,9 +33,9 @@ public class TreeTableModel implements Serializable {
 	private Object idValue;
 
 	/**
-	 * 根节点id值(一般为-1)
+	 * 父节点id值
 	 */
-	private Object rootId;
+	private Object pidValue;
 
 	/**
 	 * id对应字段
@@ -93,7 +93,7 @@ public class TreeTableModel implements Serializable {
 
 	/**
 	 * @param tableName
-	 * @param rootId
+	 * @param pidValue
 	 * @param idField
 	 * @param pidField
 	 * @param nodeRouteField
@@ -102,10 +102,10 @@ public class TreeTableModel implements Serializable {
 	 * @param isChar
 	 * @param idLength
 	 */
-	public TreeTableModel(String tableName, Object rootId, String idField, String pidField, String nodeRouteField,
+	public TreeTableModel(String tableName, Object pidValue, String idField, String pidField, String nodeRouteField,
 			String nodeLevelField, String leafField, Boolean isChar, int idLength) {
 		this.tableName = tableName;
-		this.rootId = rootId;
+		this.pidValue = pidValue;
 		this.idField = idField;
 		this.pidField = pidField;
 		this.nodeRouteField = nodeRouteField;
@@ -159,8 +159,19 @@ public class TreeTableModel implements Serializable {
 		return this;
 	}
 
-	public TreeTableModel rootId(Object rootId) {
-		this.rootId = rootId;
+	/**
+	 * @see pidValue(Object pidValue)
+	 * @param pidValue
+	 * @return
+	 */
+	@Deprecated
+	public TreeTableModel rootId(Object pidValue) {
+		this.pidValue = pidValue;
+		return this;
+	}
+
+	public TreeTableModel pidValue(Object pidValue) {
+		this.pidValue = pidValue;
 		return this;
 	}
 
@@ -213,11 +224,8 @@ public class TreeTableModel implements Serializable {
 		return idLength;
 	}
 
-	/**
-	 * @return the rootId
-	 */
-	public Object getRootId() {
-		return rootId;
+	public Object getPidValue() {
+		return pidValue;
 	}
 
 	/**
