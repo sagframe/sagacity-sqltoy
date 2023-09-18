@@ -64,7 +64,7 @@ public class TableApi extends BaseLink {
 	}
 
 	/**
-	 * 
+	 * @TODO 清空表数据(根据pojo来获取实际表名称)
 	 * @param entityClass
 	 */
 	public void truncate(Class entityClass) {

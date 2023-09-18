@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
  * @modify Date:2019-09-15 增加代码中编写的sql缓存机制,避免每次动态解析从而提升性能
  * @modify Date:2020-04-22 增加System.out
  *         对sql文件加载的打印输出,避免有些开发在开发阶段不知道设置日志级别为debug从而看不到输出
+ * @modify Date:2023-8-19 增加了@include(:scriptName) 模式
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class SqlScriptLoader {

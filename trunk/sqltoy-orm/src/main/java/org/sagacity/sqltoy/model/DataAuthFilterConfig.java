@@ -5,7 +5,7 @@ import java.io.Serializable;
 /**
  * @project sagacity-sqltoy
  * @description 统一数据权限过滤配置模型
- * @author chenrenfei
+ * @author zhongxuchen
  * @version v1.0, Date:2021-10-11
  */
 public class DataAuthFilterConfig implements Serializable {

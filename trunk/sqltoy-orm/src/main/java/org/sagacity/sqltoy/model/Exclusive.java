@@ -8,7 +8,7 @@ import java.io.Serializable;
 /**
  * @project sagacity-sqltoy
  * @description 条件排斥参数模型，即当某个参数值是xx时，设置其他几个参数值为xxx
- * @author zhong
+ * @author zhongxuchen
  * @version v1.0, Date:2023年6月22日
  * @modify 2023年6月22日,修改说明
  */

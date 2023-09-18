@@ -16,6 +16,7 @@ import java.util.regex.Pattern;
  * @version v1.0,Date:Oct 19, 2007 10:09:42 AM
  * @modify {Date:2020-01-14,优化splitExcludeSymMark 方法,增加对\' 和 \" 符号的排除}
  * @modify {Date:2020-05-18,完整修复splitExcludeSymMark bug}
+ * @modify {Date:2023-09-12,修复splitExcludeSymMark，以多字符切割的bug}
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class StringUtil {

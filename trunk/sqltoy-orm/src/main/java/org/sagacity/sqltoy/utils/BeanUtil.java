@@ -55,6 +55,7 @@ import org.slf4j.LoggerFactory;
  * @modify data:2021-03-12 支持property中含下划线跟对象方法进行匹配
  * @modify data:2022-10-19
  *         convertType类型匹配改成int类型的匹配,通过DataType将TypeName转化为int，批量时效率大幅提升
+ * @modify data:2023-08-06 增加对枚举类型的处理
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class BeanUtil {

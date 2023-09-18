@@ -45,7 +45,7 @@ public class Update extends BaseLink {
 	private int batchSize = 0;
 
 	/**
-	 * 实现基于唯一性索引字段进行数据修改(非主键)
+	 * 实现基于唯一性索引字段进行数据修改(非主键)，暂时不支持
 	 */
 	private String[] uniqueFields;
 

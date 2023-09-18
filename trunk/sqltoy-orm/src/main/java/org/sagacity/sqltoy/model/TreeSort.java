@@ -5,7 +5,7 @@ import java.io.Serializable;
 /**
  * @project sagacity-sqltoy
  * @description 提供基于QueryExecutor的树排序api模型
- * @author zhong
+ * @author zhongxuchen
  * @version v1.0, Date:2023年6月21日
  * @modify 2023年6月21日,修改说明
  */

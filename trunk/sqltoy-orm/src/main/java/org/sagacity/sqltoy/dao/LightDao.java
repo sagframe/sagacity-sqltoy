@@ -43,7 +43,7 @@ import org.sagacity.sqltoy.translate.TranslateHandler;
 
 /**
  * @project sqltoy-orm
- * @description 提供一个更加简洁直观的Dao实现，保持原SqlToyLazyDao不动，提供更加实用的API
+ * @description 提供一个更加简洁直观的Dao实现，保持原SqlToyLazyDao不动，提供更加规范统一的API
  * @author zhongxuchen
  * @version v1.0,Date:2023年3月15日
  */
@@ -641,9 +641,7 @@ public interface LightDao {
 			final double topSize);
 
 	/*
-	 * 用QueryExecutor组织查询逻辑
-	 * 
-	 * @see findTopBySql(String sqlOrSqlId, T entity, double topSize)
+	 * 用QueryExecutor组织查询逻辑,findTopByQuery(new QueryExecutor(sqlOrSqlId,MapKit.keys(...).values(...)).resultType(resultDTO),10)
 	 */
 	public QueryResult findTopByQuery(final QueryExecutor queryExecutor, final double topSize);
 
@@ -790,11 +788,17 @@ public interface LightDao {
 	 * @todo 对数据集合通过反调函数对具体属性进行翻译
 	 *       <p>
 	 *       sqlToyLazyDao.translate(staffVOs<StaffInfoVO>, "staffIdName", new
-	 *       TranslateHandler() { //告知key值 public Object getKey(Object row) { return
-	 *       ((StaffInfoVO)row).getStaffId(); } // 将翻译后的名称值设置到对应的属性上 public void
-	 *       setName(Object row, String name) {
-	 *       ((StaffInfoVO)row).setStaffName(name); } });
-	 *       </p>
+	 *       TranslateHandler() { 
+	 *      	//告知key值 
+	 *       	public Object getKey(Object row) {
+	 *       		return ((StaffInfoVO)row).getStaffId(); 
+	 *       	} 
+	 *       	// 将翻译后的名称值设置到对应的属性上 
+	 *       	public void setName(Object row, String name) {
+	 *      		((StaffInfoVO)row).setStaffName(name); 
+	 *      	} 
+	 *      });
+	 *      </p>
 	 * @param dataSet        数据集合
 	 * @param cacheName      缓存名称
 	 * @param cacheType      例如数据字典存在分类的缓存填写字典分类，其它的如员工、机构等填null
