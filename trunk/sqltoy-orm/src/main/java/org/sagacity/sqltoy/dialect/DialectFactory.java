@@ -91,6 +91,8 @@ import org.slf4j.LoggerFactory;
  * @update data:2021-01-25 分页支持并行查询
  * @update data:2022-12-12 并行分页改用分别获取connection
  * @update data:2022-12-14 启动TDengine的支持
+ * @update data:2023-09-16
+ *         优化wrapTreeTableRoute，纠正rootId为pidValue，同时增加pidValue为null的校验
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class DialectFactory {
@@ -947,7 +949,6 @@ public class DialectFactory {
 		queryResult.setPageSize(pageSize);
 		Executor taskExecutor = sqlToyContext.getTaskExecutor();
 		try {
-			// SqlExecuteStat.debug("开始并行查询count总记录数和单页记录数据!", null);
 			// 查询总记录数量
 			CompletableFuture countCompletableFuture = CompletableFuture.runAsync(() -> {
 				try {

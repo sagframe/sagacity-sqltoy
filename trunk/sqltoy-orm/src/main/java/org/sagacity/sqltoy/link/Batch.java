@@ -85,6 +85,13 @@ public class Batch extends BaseLink {
 		return this;
 	}
 
+	/**
+	 * 提供插入记录的反调处理，目前意义不大，极少使用
+	 * 
+	 * @param insertCallhandler
+	 * @return
+	 */
+	@Deprecated
 	public Batch insertHandler(InsertRowCallbackHandler insertCallhandler) {
 		this.insertCallhandler = insertCallhandler;
 		return this;
