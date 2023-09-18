@@ -31,12 +31,17 @@ public class MapKit implements Serializable {
 
 	public Map<String, Object> values(Object... values) {
 		if (keys != null && values != null) {
-			if (keys.length != values.length) {
-				throw new IllegalArgumentException("构造Map对应的keys长度:" + keys.length + "不等于values长度:" + values.length);
-			}
-			for (int i = 0; i < keys.length; i++) {
-				if (keys[i] != null && values[i] != null) {
-					map.put(keys[i], values[i]);
+			if (keys.length == 1 && values.length > 1) {
+				map.put(keys[0], values);
+			} else {
+				if (keys.length != values.length) {
+					throw new IllegalArgumentException(
+							"构造Map对应的keys长度:" + keys.length + "不等于values长度:" + values.length);
+				}
+				for (int i = 0; i < keys.length; i++) {
+					if (keys[i] != null && values[i] != null) {
+						map.put(keys[i], values[i]);
+					}
 				}
 			}
 		}
