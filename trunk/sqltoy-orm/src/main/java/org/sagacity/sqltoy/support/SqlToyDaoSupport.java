@@ -99,7 +99,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * @project sagacity-sqltoy
- * @description sqltoy的对外服务层,基础Dao支持工具类，用于被继承扩展自己的Dao
+ * @description sqltoy的对外服务层,基础Dao支持工具类，用于被继承扩展自己的Dao，一般情况下推荐直接使用LightDao(旧项目SqlToyLazyDao)
  * @author zhongxuchen
  * @version v4.0,Date:2012-6-1
  * @modify Date:2012-8-8 {增强对象级联查询、删除、保存操作机制,不支持2层以上级联}
@@ -119,6 +119,7 @@ import org.slf4j.LoggerFactory;
  * @modify Date:2021-06-25
  *         {剔除linkDaoSupport、BaseDaoSupport,将link功能放入SqlToyDaoSupport}
  * @modify Date:2021-12-23 {优化updateByQuery支持set field=field+1依据字段值进行计算的模式}
+ * @modify Date:2023-08-06 {增加executeMoreResultStore存储过程支持多结果返回}
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class SqlToyDaoSupport {

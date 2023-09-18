@@ -25,12 +25,23 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * @project sqltoy-orm
- * @description 提供默认的增删改查业务逻辑封装
+ * @description 提供一些非常简单业务场景，比如传统不区分dto、pojo的项目，因一些简单的增加、修改、加载操作，在自定义的service中也只是存粹的中转一下dao.xxx形式的操作
+ *  如下的service中毫无附加逻辑，存粹一个结构性中转调用，因此创建了一个通用性的Service
+ *  <p>
+ *  public class StaffInfoService {
+ *  	private LightDao ligtDao;
+ *  	public String addStaff(StaffInfo staffInfo)
+ *      {
+ *      	return ligtDao.save(staffInfo);
+ *      }
+ *  }
+ *  </p>
  * @author zhongxuchen
  * @version v1.0,Date:2012-7-16
  */
 @SuppressWarnings({ "rawtypes" })
 @Service("sqlToyCRUDService")
+@Deprecated
 public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	/**
 	 * 定义全局日志

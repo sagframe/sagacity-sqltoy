@@ -19,9 +19,11 @@ import org.sagacity.sqltoy.translate.TranslateHandler;
  *              简单的操作自行编写service实现，减少了代码开发量
  * @author zhongxuchen
  * @version v1.0,Date:2012-7-16
+ * @see 推荐自定义service中引入sqltoy自带的lightDao，而非直接使用sqltoy提供的SqlToyCRUDService
  * @modify Date:2020-4-23 {对分页查询增加泛型支持}
  */
 @SuppressWarnings("rawtypes")
+@Deprecated
 public interface SqlToyCRUDService {
 	/**
 	 * @todo 保存单条记录对象

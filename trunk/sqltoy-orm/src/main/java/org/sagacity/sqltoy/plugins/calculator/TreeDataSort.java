@@ -22,6 +22,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @author zhongxuchen
  * @version v1.0, Date:2022年10月28日
  * @modify 2022年10月28日,修改说明
+ * @modify 2023年7月23日 增加level-order-column属性，支持同层级内数据排序
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class TreeDataSort {

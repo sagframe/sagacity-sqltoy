@@ -75,6 +75,12 @@ public class Store extends BaseLink {
 		return this;
 	}
 
+	/**
+	 * 设置返回多个结果集合
+	 * 
+	 * @param moreResult
+	 * @return
+	 */
 	public Store moreResult(boolean moreResult) {
 		this.moreResult = moreResult;
 		return this;

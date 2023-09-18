@@ -36,6 +36,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @modify 2021-10-14 支持@loop(:args,and args[i].xxx,linkSign,start,end)
  *         args[i].xxx对象属性模式
  * @modify 2023-05-01 支持loop中的内容体含#[and t.xxx=:xxx] 为null判断和 in (:args) 数组输出
+ * @modify 2023-08-31 优化@loop在update语句参数为null的场景,之前缺陷是值为null时被转为field is null，正确模式field=null
  */
 public class SqlLoop extends AbstractMacro {
 	/**
