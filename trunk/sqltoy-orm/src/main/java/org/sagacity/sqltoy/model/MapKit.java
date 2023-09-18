@@ -31,8 +31,11 @@ public class MapKit implements Serializable {
 
 	public Map<String, Object> values(Object... values) {
 		if (keys != null && values != null) {
+			// key的长度是1，但values是数组
 			if (keys.length == 1 && values.length > 1) {
-				map.put(keys[0], values);
+				if (keys[0] != null) {
+					map.put(keys[0], values);
+				}
 			} else {
 				if (keys.length != values.length) {
 					throw new IllegalArgumentException(
@@ -83,7 +86,7 @@ public class MapKit implements Serializable {
 	}
 
 	/**
-	 * @see map(String key, Object value)
+	 * @see #map(String key, Object value)
 	 * @return
 	 */
 	@Deprecated
