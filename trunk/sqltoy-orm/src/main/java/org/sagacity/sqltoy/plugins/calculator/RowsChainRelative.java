@@ -17,6 +17,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @author zhongxuchen
  * @version v1.0,Date:2020-3-25
  */
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class RowsChainRelative {
 	// |月份 | 产品 |交易笔数 | 环比 | 金额 | 环比 | 收入 | 环比 |
 	// | 5月 | 香蕉 | 2000 | 环比 | 金额 | 环比 | 收入 | 环比 |
@@ -26,11 +27,14 @@ public class RowsChainRelative {
 	// | 3月 | 香蕉 | 2000 | 环比 | 金额 | 环比 | 收入 | 环比 |
 	// | 3月 | 苹果 | 2000 | 环比 | 金额 | 环比 | 收入 | 环比 |
 	/**
-	 * <rows-chain-relative group-size="3" relative-index="0,1,2"
+	 * <rows-chain-relative group-column="产品" relative-index="0,1"
 	 */
 	public static void process(RowsChainRelativeModel rowsRelative, LabelIndexModel labelIndexMap, List result) {
 		if (result == null || result.size() < 2) {
 			return;
+		}
+		if (rowsRelative.getRelativeColumns() == null || rowsRelative.getRelativeColumns().length == 0) {
+			throw new IllegalArgumentException("行与行的环比计算[rows-chain-relative]没有设置relative-columns具体的环比列!");
 		}
 		int dataSize = result.size();
 		// 5,3-2+0+1

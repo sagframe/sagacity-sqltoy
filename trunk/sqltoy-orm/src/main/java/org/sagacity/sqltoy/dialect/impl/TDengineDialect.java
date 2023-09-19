@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
  * @version v1.0, Date:2022年9月13日
  * @modify 2022年9月13日,修改说明
  */
+@SuppressWarnings({ "rawtypes" })
 public class TDengineDialect extends DefaultDialect {
 
 	/**
@@ -181,8 +182,8 @@ public class TDengineDialect extends DefaultDialect {
 
 	@Override
 	public StoreResult executeStore(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] inParamsValue, Integer[] outParamsType, Connection conn, Integer dbType, String dialect,
-			int fetchSize) throws Exception {
+			Object[] inParamsValue, Integer[] outParamsType, final boolean moreResult, Connection conn, Integer dbType,
+			String dialect, int fetchSize) throws Exception {
 		// 不支持
 		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
 	}

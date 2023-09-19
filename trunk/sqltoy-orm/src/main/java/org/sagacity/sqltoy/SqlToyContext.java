@@ -41,6 +41,7 @@ import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils.Dialect;
+import org.sagacity.sqltoy.utils.QueryExecutorBuilder;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -494,7 +495,15 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * @return
 	 */
 	public SqlToyConfig getSqlToyConfig(String sqlKey) {
-		return getSqlToyConfig(sqlKey, SqlType.search, (getDialect() == null) ? "" : getDialect());
+		return getSqlToyConfig(sqlKey, SqlType.search, (getDialect() == null) ? "" : getDialect(), null);
+	}
+
+	public SqlToyConfig getSqlToyConfig(String sqlKey, SqlType sqlType, String dialect) {
+		if (StringUtil.isBlank(sqlKey)) {
+			throw new IllegalArgumentException("sql or sqlId is null!");
+		}
+		return scriptLoader.getSqlConfig(sqlKey, sqlType, dialect, null,
+				SqlType.search.equals(sqlType) ? true : SqlToyConstants.executeSqlBlankToNull);
 	}
 
 	/**
@@ -502,13 +511,14 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * @param sqlKey
 	 * @param sqlType
 	 * @param dialect
+	 * @param paramValues
 	 * @return
 	 */
-	public SqlToyConfig getSqlToyConfig(String sqlKey, SqlType sqlType, String dialect) {
+	public SqlToyConfig getSqlToyConfig(String sqlKey, SqlType sqlType, String dialect, Object paramValues) {
 		if (StringUtil.isBlank(sqlKey)) {
 			throw new IllegalArgumentException("sql or sqlId is null!");
 		}
-		return scriptLoader.getSqlConfig(sqlKey, sqlType, dialect,
+		return scriptLoader.getSqlConfig(sqlKey, sqlType, dialect, paramValues,
 				SqlType.search.equals(sqlType) ? true : SqlToyConstants.executeSqlBlankToNull);
 	}
 
@@ -527,7 +537,8 @@ public class SqlToyContext implements ApplicationContextAware {
 				sqlKey = "select * ".concat(sqlKey);
 			}
 		}
-		return scriptLoader.getSqlConfig(sqlKey, sqlType, dialect, queryExecutor.getInnerModel().blankToNull);
+		return scriptLoader.getSqlConfig(sqlKey, sqlType, dialect, QueryExecutorBuilder.getParamValues(queryExecutor),
+				queryExecutor.getInnerModel().blankToNull);
 	}
 
 	/**

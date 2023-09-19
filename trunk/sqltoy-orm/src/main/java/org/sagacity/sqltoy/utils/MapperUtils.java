@@ -46,16 +46,22 @@ public class MapperUtils {
 
 	public static <T extends Serializable> T map(Serializable source, Class<T> resultType, String... ignoreProperties)
 			throws RuntimeException {
-		if (source == null || (resultType == null || BeanUtil.isBaseDataType(resultType))) {
-			throw new IllegalArgumentException("source 和 resultType 不能为null,且resultType不能为基本类型!");
+		if (source == null) {
+			return null;
+		}
+		if (resultType == null || BeanUtil.isBaseDataType(resultType)) {
+			throw new IllegalArgumentException("resultType 不能为null,且resultType不能为基本类型!");
 		}
 		return map(source, resultType, 0, ignoreProperties);
 	}
 
 	public static <T extends Serializable> List<T> mapList(List sourceList, Class<T> resultType,
 			String... ignoreProperties) throws RuntimeException {
-		if (sourceList == null || (resultType == null || BeanUtil.isBaseDataType(resultType))) {
-			throw new IllegalArgumentException("sourceList 和 resultType 不能为null,且resultType不能为基本类型!");
+		if (sourceList == null) {
+			return null;
+		}
+		if (resultType == null || BeanUtil.isBaseDataType(resultType)) {
+			throw new IllegalArgumentException("resultType 不能为null,且resultType不能为基本类型!");
 		}
 		// resultType不能是接口和抽象类
 		if (Modifier.isAbstract(resultType.getModifiers()) || Modifier.isInterface(resultType.getModifiers())) {
@@ -69,15 +75,18 @@ public class MapperUtils {
 
 	public static <T extends Serializable> Page<T> map(Page sourcePage, Class<T> resultType,
 			String... ignoreProperties) {
-		if (sourcePage == null || resultType == null || BeanUtil.isBaseDataType(resultType)) {
-			throw new IllegalArgumentException("sourcePage 和 resultType 不能为null,且resultType不能为基本类型!");
+		if (sourcePage == null) {
+			return null;
+		}
+		if (resultType == null || BeanUtil.isBaseDataType(resultType)) {
+			throw new IllegalArgumentException("resultType 不能为null,且resultType不能为基本类型!");
 		}
 		Page result = new Page();
 		result.setPageNo(sourcePage.getPageNo());
 		result.setPageSize(sourcePage.getPageSize());
 		result.setRecordCount(sourcePage.getRecordCount());
 		result.setSkipQueryCount(sourcePage.getSkipQueryCount());
-		if (sourcePage.getRows().isEmpty()) {
+		if (sourcePage.getRows() == null || sourcePage.getRows().isEmpty()) {
 			return result;
 		}
 		result.setRows(mapList(sourcePage.getRows(), resultType, ignoreProperties));
@@ -288,7 +297,7 @@ public class MapperUtils {
 						targetProps.add(targetPropsMap.get(fieldName.toLowerCase()));
 					} else if (targetPropsMap.containsKey(aliasName.toLowerCase())) {
 						fromClassProps.add(fieldName);
-						targetProps.add(targetPropsMap.get(fieldName.toLowerCase()));
+						targetProps.add(targetPropsMap.get(aliasName.toLowerCase()));
 					}
 				}
 			}
@@ -336,9 +345,10 @@ public class MapperUtils {
 			if (null != realMethods[i]) {
 				methodType = realMethods[i].getParameterTypes()[0];
 				methodTypes[i] = methodType.getTypeName();
-				methodTypeValues[i] = DataType.getType(methodTypes[i]);
+				methodTypeValues[i] = DataType.getType(methodType);
 				// 非普通类型、非枚举、非Map(DTO)
-				if (methodTypeValues[i] == DataType.objectType && !methodType.isEnum()
+				if ((methodTypeValues[i] == DataType.objectType || methodTypeValues[i] == DataType.listType
+						|| methodTypeValues[i] == DataType.setType) && !methodType.isEnum()
 						&& !Map.class.isAssignableFrom(methodType)) {
 					methodGenTypes[i] = realMethods[i].getParameterTypes()[0];
 				}
@@ -375,7 +385,8 @@ public class MapperUtils {
 					cellData = row.get(j);
 					if (cellData != null && realMethods[j] != null) {
 						// 基本类型
-						if (methodTypeValues[j] != DataType.objectType) {
+						if (methodTypeValues[j] != DataType.objectType && methodTypeValues[j] != DataType.listType
+								&& methodTypeValues[j] != DataType.setType) {
 							realMethods[j].invoke(bean,
 									BeanUtil.convertType(cellData, methodTypeValues[j], methodTypes[j]));
 						} // List<DTO>

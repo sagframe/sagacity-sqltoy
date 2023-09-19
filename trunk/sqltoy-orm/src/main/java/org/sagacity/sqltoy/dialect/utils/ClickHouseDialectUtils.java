@@ -25,6 +25,8 @@ import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.model.ColumnMeta;
+import org.sagacity.sqltoy.model.IgnoreCaseSet;
+import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
@@ -351,7 +353,8 @@ public class ClickHouseDialectUtils {
 			}
 		}
 		// 构建update语句
-		String updateSql = generateUpdateSql(dbType, entityMeta, nullFunction, forceUpdateFields, realTable);
+		String updateSql = generateUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta, nullFunction,
+				forceUpdateFields, realTable);
 		if (updateSql == null) {
 			throw new IllegalArgumentException("update sql is null,引起问题的原因是没有设置需要修改的字段!");
 		}
@@ -439,7 +442,8 @@ public class ClickHouseDialectUtils {
 			logger.debug("共有:{}行记录因为主键值为空跳过修改操作!", skipCount);
 		}
 		// 构建update语句
-		String updateSql = generateUpdateSql(dbType, entityMeta, nullFunction, forceUpdateFields, realTable);
+		String updateSql = generateUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta, nullFunction,
+				forceUpdateFields, realTable);
 		if (updateSql == null) {
 			throw new IllegalArgumentException("updateAll sql is null,引起问题的原因是没有设置需要修改的字段!");
 		}
@@ -482,11 +486,16 @@ public class ClickHouseDialectUtils {
 		return result;
 	}
 
-	private static String generateUpdateSql(Integer dbType, EntityMeta entityMeta, String nullFunction,
-			String[] forceUpdateFields, String tableName) {
+	private static String generateUpdateSql(IUnifyFieldsHandler unifyFieldsHandler, Integer dbType,
+			EntityMeta entityMeta, String nullFunction, String[] forceUpdateFields, String tableName) {
 		if (entityMeta.getIdArray() == null) {
 			return null;
 		}
+		// 修改记录时，最后修改时间等取数据库时间
+		IgnoreCaseSet updateSqlTimeFields = (unifyFieldsHandler == null
+				|| unifyFieldsHandler.updateSqlTimeFields() == null) ? new IgnoreCaseSet()
+						: unifyFieldsHandler.updateSqlTimeFields();
+		String currentTimeStr;
 		StringBuilder sql = new StringBuilder(entityMeta.getFieldsArray().length * 30 + 30);
 		sql.append(" alter table  ");
 		sql.append(tableName);
@@ -514,8 +523,16 @@ public class ClickHouseDialectUtils {
 				if (fupc.contains(columnName)) {
 					sql.append("?");
 				} else {
+					// 修改时间设置数据库时间nvl(?,current_timestamp)
+					currentTimeStr = SqlUtil.getDBTime(dbType, fieldMeta, updateSqlTimeFields);
 					sql.append(nullFunction);
-					sql.append("(?,").append(columnName).append(")");
+					sql.append("(?,");
+					if (null != currentTimeStr) {
+						sql.append(currentTimeStr);
+					} else {
+						sql.append(columnName);
+					}
+					sql.append(")");
 				}
 				meter++;
 			}

@@ -34,6 +34,7 @@ import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
 import org.sagacity.sqltoy.config.model.TableCascadeModel;
 import org.sagacity.sqltoy.model.ColumnMeta;
+import org.sagacity.sqltoy.model.IgnoreCaseSet;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryExecutor;
@@ -189,7 +190,8 @@ public class SqlServerDialectUtils {
 			String isNullFunction, String sequence, boolean isAssignPK) {
 		// 在无主键的情况下产生insert sql语句
 		if (entityMeta.getIdArray() == null) {
-			return generateInsertSql(dbType, entityMeta, tableName, pkStrategy, isNullFunction, sequence, isAssignPK);
+			return generateInsertSql(unifyFieldsHandler, dbType, entityMeta, tableName, pkStrategy, isNullFunction,
+					sequence, isAssignPK);
 		}
 		// 将新增记录统一赋值属性模拟成默认值模式
 		IgnoreKeyCaseMap<String, Object> createUnifyFields = null;
@@ -198,6 +200,19 @@ public class SqlServerDialectUtils {
 			createUnifyFields = new IgnoreKeyCaseMap<String, Object>();
 			createUnifyFields.putAll(unifyFieldsHandler.createUnifyFields());
 		}
+		// 创建记录时，创建时间、最后修改时间等取数据库时间
+		IgnoreCaseSet createSqlTimeFields = (unifyFieldsHandler == null
+				|| unifyFieldsHandler.createSqlTimeFields() == null) ? new IgnoreCaseSet()
+						: unifyFieldsHandler.createSqlTimeFields();
+		// 修改记录时，最后修改时间等取数据库时间
+		IgnoreCaseSet updateSqlTimeFields = (unifyFieldsHandler == null
+				|| unifyFieldsHandler.updateSqlTimeFields() == null) ? new IgnoreCaseSet()
+						: unifyFieldsHandler.updateSqlTimeFields();
+		IgnoreCaseSet forceUpdateSqlTimeFields = new IgnoreCaseSet();
+		if (unifyFieldsHandler != null && unifyFieldsHandler.forceUpdateFields() != null) {
+			forceUpdateSqlTimeFields = unifyFieldsHandler.forceUpdateFields();
+		}
+		String currentTimeStr;
 		String realTable = entityMeta.getSchemaTable(tableName, dbType);
 		int columnSize = entityMeta.getFieldsArray().length;
 		StringBuilder sql = new StringBuilder(columnSize * 30 + 100);
@@ -215,9 +230,7 @@ public class SqlServerDialectUtils {
 			sql.append("? as ");
 			sql.append(columnName);
 		}
-		// sqlserver 不需要填具体表名,oracle 对应dual
-		// sql.append(" from ").append(realTable);
-		sql.append(") tv on (");
+		sql.append(SqlToyConstants.MERGE_ALIAS_ON);
 		StringBuilder idColumns = new StringBuilder();
 		// 组织on部分的主键条件判断
 		for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
@@ -238,7 +251,7 @@ public class SqlServerDialectUtils {
 		boolean allIds = (entityMeta.getRejectIdFieldArray() == null);
 		if (!allIds) {
 			// update 操作
-			sql.append(" when matched then update set ");
+			sql.append(SqlToyConstants.MERGE_UPDATE);
 			int rejectIdColumnSize = entityMeta.getRejectIdFieldArray().length;
 			// 需要被强制修改的字段
 			HashSet<String> fupc = new HashSet<String>();
@@ -260,12 +273,15 @@ public class SqlServerDialectUtils {
 				if (fieldMeta.getType() != java.sql.Types.TIMESTAMP) {
 					columnName = fieldMeta.getColumnName();
 					columnName = ReservedWordsUtil.convertWord(columnName, dbType);
+					// 修改时间设置数据库时间nvl(?,current_timestamp)
+					currentTimeStr = SqlUtil.getDBTime(dbType, fieldMeta, updateSqlTimeFields);
 					if (meter > 0) {
 						sql.append(",");
 					}
 					sql.append(" ta.").append(columnName).append("=");
-					// 强制修改
-					if (fupc.contains(columnName)) {
+					if (null != currentTimeStr && forceUpdateSqlTimeFields.contains(fieldMeta.getFieldName())) {
+						sql.append(currentTimeStr);
+					} else if (fupc.contains(columnName)) {
 						sql.append("tv.").append(columnName);
 					} else {
 						sql.append(isNullFunction);
@@ -278,33 +294,50 @@ public class SqlServerDialectUtils {
 						} else {
 							sql.append("(tv.").append(columnName);
 						}
-						sql.append(",ta.").append(columnName);
+						sql.append(",");
+						if (null != currentTimeStr) {
+							sql.append(currentTimeStr);
+						} else {
+							sql.append("ta.").append(columnName);
+						}
 						sql.append(")");
 					}
-
 					if (!isStart) {
 						insertRejIdCols.append(",");
 						insertRejIdColValues.append(",");
 					}
 					insertRejIdCols.append(columnName);
 					isStart = false;
-					// 将创建人、创建时间等模拟成默认值
-					defaultValue = DialectExtUtils.getInsertDefaultValue(createUnifyFields, dbType, fieldMeta);
-					// 存在默认值
-					if (null != defaultValue) {
-						insertRejIdColValues.append(isNullFunction);
-						insertRejIdColValues.append("(tv.").append(columnName).append(",");
-						DialectExtUtils.processDefaultValue(insertRejIdColValues, dbType, fieldMeta, defaultValue);
-						insertRejIdColValues.append(")");
+					currentTimeStr = SqlUtil.getDBTime(dbType, fieldMeta, createSqlTimeFields);
+					if (null != currentTimeStr && forceUpdateSqlTimeFields.contains(fieldMeta.getFieldName())) {
+						insertRejIdColValues.append(currentTimeStr);
 					} else {
-						insertRejIdColValues.append("tv.").append(columnName);
+						// 将创建人、创建时间等模拟成默认值
+						defaultValue = DialectExtUtils.getInsertDefaultValue(createUnifyFields, dbType, fieldMeta);
+						// 存在默认值
+						if (null != defaultValue) {
+							insertRejIdColValues.append(isNullFunction);
+							insertRejIdColValues.append("(tv.").append(columnName).append(",");
+							DialectExtUtils.processDefaultValue(insertRejIdColValues, dbType, fieldMeta, defaultValue);
+							insertRejIdColValues.append(")");
+						} else {
+							if (null != currentTimeStr) {
+								insertRejIdColValues.append(isNullFunction);
+								insertRejIdColValues.append("(tv.").append(columnName).append(",");
+								insertRejIdColValues.append(currentTimeStr);
+								insertRejIdColValues.append(")");
+							} else {
+								insertRejIdColValues.append("tv.").append(columnName);
+							}
+						}
 					}
 					meter++;
 				}
 			}
 		}
 		// 主键未匹配上则进行插入操作
-		sql.append(" when not matched then insert (");
+		sql.append(SqlToyConstants.MERGE_INSERT);
+		sql.append(" (");
 		String idsColumnStr = idColumns.toString();
 		// 不考虑只有一个字段且还是主键的情况
 		if (allIds) {
@@ -364,16 +397,27 @@ public class SqlServerDialectUtils {
 	 * @param isAssignPK
 	 * @return
 	 */
-	public static String getSaveIgnoreExistSql(Integer dbType, EntityMeta entityMeta, PKStrategy pkStrategy,
-			String tableName, String isNullFunction, String sequence, boolean isAssignPK) {
+	public static String getSaveIgnoreExistSql(IUnifyFieldsHandler unifyFieldsHandler, Integer dbType,
+			EntityMeta entityMeta, PKStrategy pkStrategy, String tableName, String isNullFunction, String sequence,
+			boolean isAssignPK) {
 		// 在无主键的情况下产生insert sql语句
 		if (entityMeta.getIdArray() == null) {
-			return generateInsertSql(dbType, entityMeta, tableName, pkStrategy, isNullFunction, sequence, isAssignPK);
+			return generateInsertSql(unifyFieldsHandler, dbType, entityMeta, tableName, pkStrategy, isNullFunction,
+					sequence, isAssignPK);
 		}
 		int columnSize = entityMeta.getFieldsArray().length;
 		StringBuilder sql = new StringBuilder(columnSize * 30 + 100);
 		String realTable = entityMeta.getSchemaTable(tableName, dbType);
 		String columnName;
+		// 创建记录时，创建时间、最后修改时间等取数据库时间
+		IgnoreCaseSet createSqlTimeFields = (unifyFieldsHandler == null
+				|| unifyFieldsHandler.createSqlTimeFields() == null) ? new IgnoreCaseSet()
+						: unifyFieldsHandler.createSqlTimeFields();
+		IgnoreCaseSet forceUpdateSqlTimeFields = new IgnoreCaseSet();
+		if (unifyFieldsHandler != null && unifyFieldsHandler.forceUpdateFields() != null) {
+			forceUpdateSqlTimeFields = unifyFieldsHandler.forceUpdateFields();
+		}
+		String currentTimeStr;
 		sql.append("merge into ");
 		sql.append(realTable);
 		sql.append(" ta ");
@@ -387,7 +431,7 @@ public class SqlServerDialectUtils {
 			sql.append("? as ");
 			sql.append(columnName);
 		}
-		sql.append(") tv on (");
+		sql.append(SqlToyConstants.MERGE_ALIAS_ON);
 		StringBuilder idColumns = new StringBuilder();
 		// 组织on部分的主键条件判断
 		for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
@@ -410,24 +454,38 @@ public class SqlServerDialectUtils {
 			int rejectIdColumnSize = entityMeta.getRejectIdFieldArray().length;
 			FieldMeta fieldMeta;
 			// update 只针对非主键字段进行修改
-			boolean isStart = true;
+			int meter = 0;
 			for (int i = 0; i < rejectIdColumnSize; i++) {
 				fieldMeta = entityMeta.getFieldMeta(entityMeta.getRejectIdFieldArray()[i]);
 				columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
 				// sqlserver不支持timestamp类型的数据进行插入赋值
 				if (fieldMeta.getType() != java.sql.Types.TIMESTAMP) {
-					if (!isStart) {
+					if (meter > 0) {
 						insertRejIdCols.append(",");
 						insertRejIdColValues.append(",");
 					}
 					insertRejIdCols.append(columnName);
-					isStart = false;
-					insertRejIdColValues.append("tv.").append(columnName);
+					// 2023-5-11 新增操作待增加对default值的处理,nvl(?,current_timestamp)
+					currentTimeStr = SqlUtil.getDBTime(dbType, fieldMeta, createSqlTimeFields);
+					if (null != currentTimeStr) {
+						if (forceUpdateSqlTimeFields.contains(fieldMeta.getFieldName())) {
+							insertRejIdColValues.append(currentTimeStr);
+						} else {
+							insertRejIdColValues.append(isNullFunction);
+							insertRejIdColValues.append("(tv.").append(columnName);
+							insertRejIdColValues.append(",").append(currentTimeStr);
+							insertRejIdColValues.append(")");
+						}
+					} else {
+						insertRejIdColValues.append("tv.").append(columnName);
+					}
 				}
+				meter++;
 			}
 		}
 		// 主键未匹配上则进行插入操作
-		sql.append(" when not matched then insert (");
+		sql.append(SqlToyConstants.MERGE_INSERT);
+		sql.append(" (");
 		String idsColumnStr = idColumns.toString();
 		// 不考虑只有一个字段且还是主键的情况
 		if (allIds) {
@@ -487,8 +545,9 @@ public class SqlServerDialectUtils {
 	 * @param isAssignPK
 	 * @return
 	 */
-	public static String generateInsertSql(Integer dbType, EntityMeta entityMeta, String tableName,
-			PKStrategy pkStrategy, String isNullFunction, String sequence, boolean isAssignPK) {
+	public static String generateInsertSql(IUnifyFieldsHandler unifyFieldsHandler, Integer dbType,
+			EntityMeta entityMeta, String tableName, PKStrategy pkStrategy, String isNullFunction, String sequence,
+			boolean isAssignPK) {
 		int columnSize = entityMeta.getFieldsArray().length;
 		StringBuilder sql = new StringBuilder(columnSize * 20 + 30);
 		StringBuilder values = new StringBuilder(columnSize * 2 - 1);
@@ -499,6 +558,11 @@ public class SqlServerDialectUtils {
 		String field;
 		boolean isStart = true;
 		String columnName;
+		// 创建记录时，创建时间、最后修改时间等取数据库时间
+		IgnoreCaseSet createSqlTimeFields = (unifyFieldsHandler == null
+				|| unifyFieldsHandler.createSqlTimeFields() == null) ? new IgnoreCaseSet()
+						: unifyFieldsHandler.createSqlTimeFields();
+		String currentTimeStr;
 		for (int i = 0; i < columnSize; i++) {
 			field = entityMeta.getFieldsArray()[i];
 			fieldMeta = entityMeta.getFieldMeta(field);
@@ -543,7 +607,13 @@ public class SqlServerDialectUtils {
 					values.append(",");
 				}
 				sql.append(fieldMeta.getColumnName());
-				values.append("?");
+				// 2023-5-11 新增操作待增加对default值的处理,nvl(?,current_timestamp)
+				currentTimeStr = SqlUtil.getDBTime(dbType, fieldMeta, createSqlTimeFields);
+				if (null != currentTimeStr) {
+					values.append(isNullFunction).append("(?,").append(currentTimeStr).append(")");
+				} else {
+					values.append("?");
+				}
 				isStart = false;
 			}
 		}
@@ -572,8 +642,8 @@ public class SqlServerDialectUtils {
 		final boolean isSequence = entityMeta.getIdStrategy() != null
 				&& entityMeta.getIdStrategy().equals(PKStrategy.SEQUENCE);
 
-		String insertSql = generateInsertSql(dbType, entityMeta, tableName, entityMeta.getIdStrategy(), "isnull",
-				"@mySeqVariable", isIdentity ? false : true);
+		String insertSql = generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta, tableName,
+				entityMeta.getIdStrategy(), "isnull", "@mySeqVariable", isIdentity ? false : true);
 		if (isSequence) {
 			insertSql = "set nocount on DECLARE @mySeqVariable as numeric(20)=NEXT VALUE FOR "
 					+ entityMeta.getSequence() + " " + insertSql + " select @mySeqVariable ";
@@ -737,8 +807,8 @@ public class SqlServerDialectUtils {
 			Connection conn, final Integer dbType, final Boolean autoCommit, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		boolean isAssignPK = isAssignPKValue(entityMeta.getIdStrategy());
-		String insertSql = generateInsertSql(dbType, entityMeta, tableName, entityMeta.getIdStrategy(), "isnull",
-				"@mySeqVariable", isAssignPK);
+		String insertSql = generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta, tableName,
+				entityMeta.getIdStrategy(), "isnull", "@mySeqVariable", isAssignPK);
 		if (entityMeta.getIdStrategy() != null && entityMeta.getIdStrategy().equals(PKStrategy.SEQUENCE)) {
 			insertSql = "DECLARE @mySeqVariable as numeric(20)=NEXT VALUE FOR " + entityMeta.getSequence() + " "
 					+ insertSql;
@@ -1080,6 +1150,7 @@ public class SqlServerDialectUtils {
 		return tableColumns;
 	}
 
+	// sqlserver identity主键是不允许写insert table (id,xxx) values (?,?)不能显式体现identity列
 	private static boolean isAssignPKValue(PKStrategy pkStrategy) {
 		if (pkStrategy == null) {
 			return true;

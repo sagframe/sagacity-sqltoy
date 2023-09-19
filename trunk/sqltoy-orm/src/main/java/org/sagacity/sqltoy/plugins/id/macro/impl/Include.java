@@ -5,6 +5,7 @@ import java.util.Map;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.plugins.id.macro.AbstractMacro;
+import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
@@ -20,17 +21,31 @@ import org.sagacity.sqltoy.utils.StringUtil;
 public class Include extends AbstractMacro {
 
 	@Override
-	public String execute(String[] params, Map<String, Object> keyValues) {
+	public String execute(String[] params, Map<String, Object> keyValues, Object paramValues, String preSql) {
 		if (params.length == 0) {
 			return "";
 		}
 		String sqlId = params[0].replaceAll("\"|\'", "").trim();
-		if (sqlId.equals("")) {
+		if ("".equals(sqlId)) {
 			return "";
 		}
 		// id="xxx" 模式，切取xxxx
 		if (sqlId.contains("=")) {
 			sqlId = sqlId.substring(sqlId.indexOf("=") + 1).trim();
+		}
+		// @include(:paramName) 特殊模式
+		if (sqlId.startsWith(":")) {
+			// 取出参数名称
+			String paramName = sqlId.substring(1).trim();
+			if (paramValues == null) {
+				return "@blank(:".concat(paramName).concat(")");
+			}
+			Object paramValue = BeanUtil.reflectBeanToAry(paramValues, new String[] { paramName })[0];
+			if (StringUtil.isBlank(paramValue)) {
+				return "@blank(:".concat(paramName).concat(")");
+			}
+			// 输出sql
+			return paramValue.toString();
 		}
 		SqlToyConfig sqlToyConfig = (SqlToyConfig) keyValues.get(sqlId);
 		if (sqlToyConfig == null) {

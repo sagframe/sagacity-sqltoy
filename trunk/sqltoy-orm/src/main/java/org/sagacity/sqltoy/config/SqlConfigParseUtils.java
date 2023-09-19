@@ -61,6 +61,7 @@ import org.slf4j.LoggerFactory;
  * @modify {Date:2021-04-29 调整@value(?)处理顺序到末尾，规避参数值中存在? }
  * @modify {Date:2022-04-23 兼容in (:values) 参数数组长度超过1000的场景 }
  * @modify {Date:2022-05-25 支持(id,type) in (:ids,:types) 多字段in模式,并强化参数超1000的处理 }
+ * @modify {Date:2023-03-09 改进t.field=? 参数为null时转化为t.field is (not) null }
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class SqlConfigParseUtils {
@@ -111,7 +112,6 @@ public class SqlConfigParseUtils {
 	public final static String ARG_DBL_NAME = "??";
 	public final static String ARG_DBL_REGEX = "\\?{2}";
 	public final static Pattern ARG_NAME_PATTERN = Pattern.compile(ARG_REGEX);
-	//public final static String ARG_NAME_BLANK = "? ";
 
 	// sql 拼接时判断前部分sql是否是where 结尾,update 2017-12-4 增加(?i)忽视大小写
 	public final static Pattern WHERE_END_PATTERN = Pattern.compile("(?i)\\Wwhere\\s*$");
@@ -135,10 +135,11 @@ public class SqlConfigParseUtils {
 	public final static Pattern EQUAL_PATTERN = Pattern.compile("[^\\>\\<\\!\\:]\\=\\s*$");
 	// 常规数据库:update table set t.xxx=? ,t.xxx1=?
 	// clickhouse:alter table update t.xxx=?
-	public final static Pattern UPDATE_EQUAL_PATTERN = Pattern
-			.compile("(?i)\\s*(set\\s+|,\\s*|update\\s+)[a-zA-Z_.0-9\u4e00-\u9fa5]+\\s*=\\s*$");
+	public final static Pattern UPDATE_EQUAL_PATTERN = Pattern.compile(
+			"(?i)\\s*(set\\s+|,\\s*|update\\s+)([a-zA-Z_0-9\u4e00-\u9fa5]+\\.)?('|\"|\\`|\\[)?[a-zA-Z_0-9\u4e00-\u9fa5]+('|\"|\\`|\\])?\\s*=\\s*$");
 	// sql不等于
 	public final static Pattern NOT_EQUAL_PATTERN = Pattern.compile("(\\!\\=|\\<\\>|\\^\\=)\\s*$");
+	public final static Pattern WHERE_PATTERN = Pattern.compile("(?i)\\Wwhere\\W");
 
 	// 利用宏模式来完成@loop循环处理
 	private static Map<String, AbstractMacro> macros = new HashMap<String, AbstractMacro>();
@@ -692,7 +693,7 @@ public class SqlConfigParseUtils {
 			keyValues.put(paramsNamed[i], paramsValue[i]);
 		}
 		// 这里是借用业务主键生成里面的宏处理模式来解决
-		return MacroUtils.replaceMacros(queryStr, keyValues, false, macros);
+		return MacroUtils.replaceMacros(queryStr, keyValues, null, false, macros);
 	}
 
 	/**
@@ -1047,7 +1048,8 @@ public class SqlConfigParseUtils {
 					compareIndex = StringUtil.matchIndex(preSql, EQUAL_PATTERN);
 					if (compareIndex != -1) {
 						// update field=? 非where条件
-						if (StringUtil.matches(preSql, UPDATE_EQUAL_PATTERN)) {
+						if (StringUtil.matches(preSql, UPDATE_EQUAL_PATTERN)
+								|| !StringUtil.matches(preSql.concat(BLANK), WHERE_PATTERN)) {
 							compareIndex = -1;
 						}
 					}

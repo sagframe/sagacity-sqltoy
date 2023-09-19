@@ -70,6 +70,21 @@ public class SummaryGroupMeta implements Serializable, java.lang.Cloneable {
 	 */
 	private int summaryType = 1;
 
+	/**
+	 * 排序列
+	 */
+	private String orderColumn;
+
+	/**
+	 * 排序方式
+	 */
+	private String orderWay = "desc";
+
+	/**
+	 * 排序是否以求和的值为依据
+	 */
+	private Boolean orderWithSum;
+
 	public String getGroupColumn() {
 		return groupColumn;
 	}
@@ -156,6 +171,30 @@ public class SummaryGroupMeta implements Serializable, java.lang.Cloneable {
 
 	public void setSummaryType(int summaryType) {
 		this.summaryType = summaryType;
+	}
+
+	public String getOrderColumn() {
+		return orderColumn;
+	}
+
+	public void setOrderColumn(String orderColumn) {
+		this.orderColumn = orderColumn;
+	}
+
+	public String getOrderWay() {
+		return orderWay;
+	}
+
+	public void setOrderWay(String orderWay) {
+		this.orderWay = orderWay;
+	}
+
+	public Boolean getOrderWithSum() {
+		return orderWithSum;
+	}
+
+	public void setOrderWithSum(Boolean orderWithSum) {
+		this.orderWithSum = orderWithSum;
 	}
 
 	@Override

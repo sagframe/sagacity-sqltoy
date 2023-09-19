@@ -9,6 +9,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.sql.Array;
 import java.sql.Blob;
 import java.sql.CallableStatement;
 import java.sql.Clob;
@@ -43,7 +44,9 @@ import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.DataType;
 import org.sagacity.sqltoy.config.model.EntityMeta;
+import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.exception.DataAccessException;
+import org.sagacity.sqltoy.model.IgnoreCaseSet;
 import org.sagacity.sqltoy.model.TreeTableModel;
 import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
@@ -281,7 +284,7 @@ public class SqlUtil {
 				}
 				// postgresql bytea类型需要统一处理成BINARY
 				if (jdbcType == java.sql.Types.BLOB) {
-					if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB) {
+					if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15) {
 						pst.setNull(paramIndex, java.sql.Types.BINARY);
 					} else {
 						pst.setNull(paramIndex, jdbcType);
@@ -318,7 +321,7 @@ public class SqlUtil {
 			// clob 类型只有oracle、db2、dm、oceanBase等数据库支持
 			if (jdbcType == java.sql.Types.CLOB) {
 				if (DBType.ORACLE == dbType || DBType.DB2 == dbType || DBType.OCEANBASE == dbType
-						|| DBType.ORACLE11 == dbType || DBType.DM == dbType) {
+						|| DBType.ORACLE11 == dbType || DBType.DM == dbType || DBType.KINGBASE == dbType) {
 					Clob clob = conn.createClob();
 					clob.setString(1, tmpStr);
 					pst.setClob(paramIndex, clob);
@@ -327,7 +330,7 @@ public class SqlUtil {
 				}
 			} else if (jdbcType == java.sql.Types.NCLOB) {
 				if (DBType.ORACLE == dbType || DBType.DB2 == dbType || DBType.OCEANBASE == dbType
-						|| DBType.ORACLE11 == dbType || DBType.DM == dbType) {
+						|| DBType.ORACLE11 == dbType || DBType.DM == dbType || DBType.KINGBASE == dbType) {
 					NClob nclob = conn.createNClob();
 					nclob.setString(1, tmpStr);
 					pst.setNClob(paramIndex, nclob);
@@ -338,7 +341,17 @@ public class SqlUtil {
 				pst.setString(paramIndex, tmpStr);
 			}
 		} else if (paramValue instanceof java.lang.Integer) {
-			pst.setInt(paramIndex, ((Integer) paramValue));
+			// update 2023-6-2 兼容前端int对应数据库是boolean场景
+			Integer paramInt = (Integer) paramValue;
+			if (jdbcType == java.sql.Types.BOOLEAN) {
+				if (paramInt == 1) {
+					pst.setBoolean(paramIndex, true);
+				} else {
+					pst.setBoolean(paramIndex, false);
+				}
+			} else {
+				pst.setInt(paramIndex, paramInt);
+			}
 		} else if (paramValue instanceof java.time.LocalDateTime) {
 			pst.setTimestamp(paramIndex, Timestamp.valueOf((LocalDateTime) paramValue));
 		} else if (paramValue instanceof BigDecimal) {
@@ -399,13 +412,77 @@ public class SqlUtil {
 		} else if (paramValue instanceof java.lang.Byte) {
 			pst.setByte(paramIndex, (Byte) paramValue);
 		} else if (paramValue instanceof Object[]) {
-			pst.setObject(paramIndex, paramValue, java.sql.Types.ARRAY);
+			setArray(dbType, conn, pst, paramIndex, paramValue);
+		} // update 2023-08-02 增加默认的枚举类型处理
+		else if (paramValue instanceof Enum) {
+			pst.setObject(paramIndex, BeanUtil.getEnumValue(paramValue));
+		}
+		// update 2023-5-26 增加集合类型场景支持(对应数据库Array)
+		else if (paramValue instanceof Collection) {
+			Object[] values = ((Collection) paramValue).toArray();
+			// 集合为空，无法判断具体类型，设置为null
+			if (values.length == 0) {
+				pst.setNull(paramIndex, java.sql.Types.ARRAY);
+			} else {
+				String type = null;
+				for (Object val : values) {
+					if (val != null) {
+						type = val.getClass().getName().concat("[]");
+						break;
+					}
+				}
+				// 将Object[] 转为具体类型的数组(否则会抛异常)
+				if (type != null) {
+					setArray(dbType, conn, pst, paramIndex, BeanUtil.convertArray(values, type));
+				} else {
+					pst.setNull(paramIndex, java.sql.Types.ARRAY);
+				}
+			}
 		} else {
 			if (jdbcType != java.sql.Types.NULL) {
 				pst.setObject(paramIndex, paramValue, jdbcType);
 			} else {
 				pst.setObject(paramIndex, paramValue);
 			}
+		}
+	}
+
+	/**
+	 * @TODO setArray gaussdb 必须要通过conn构造Array
+	 * @param dbType
+	 * @param conn
+	 * @param pst
+	 * @param paramIndex
+	 * @param paramValue
+	 * @throws SQLException
+	 */
+	private static void setArray(Integer dbType, Connection conn, PreparedStatement pst, int paramIndex,
+			Object paramValue) throws SQLException {
+		// 目前只支持Integer 和 String两种类型
+		if (dbType == DBType.GAUSSDB) {
+			if (paramValue instanceof Integer[]) {
+				Array array = conn.createArrayOf("INTEGER", (Integer[]) paramValue);
+				pst.setArray(paramIndex, array);
+			} else if (paramValue instanceof String[]) {
+				Array array = conn.createArrayOf("VARCHAR", (String[]) paramValue);
+				pst.setArray(paramIndex, array);
+			} else if (paramValue instanceof BigDecimal[]) {
+				Array array = conn.createArrayOf("NUMBER", (BigDecimal[]) paramValue);
+				pst.setArray(paramIndex, array);
+			} else if (paramValue instanceof BigInteger[]) {
+				Array array = conn.createArrayOf("BIGINT", (BigInteger[]) paramValue);
+				pst.setArray(paramIndex, array);
+			} else if (paramValue instanceof Float[]) {
+				Array array = conn.createArrayOf("FLOAT", (Float[]) paramValue);
+				pst.setArray(paramIndex, array);
+			} else if (paramValue instanceof Long[]) {
+				Array array = conn.createArrayOf("INTEGER", (Long[]) paramValue);
+				pst.setArray(paramIndex, array);
+			} else {
+				pst.setObject(paramIndex, paramValue, java.sql.Types.ARRAY);
+			}
+		} else {
+			pst.setObject(paramIndex, paramValue, java.sql.Types.ARRAY);
 		}
 	}
 
@@ -460,10 +537,12 @@ public class SqlUtil {
 		int[] propTypeValues = new int[setMethods.length];
 		Class[] genericTypes = new Class[setMethods.length];
 		Type[] types;
+		Class methodType;
 		for (int i = 0; i < propTypes.length; i++) {
 			if (setMethods[i] != null) {
-				propTypes[i] = setMethods[i].getParameterTypes()[0].getTypeName();
-				propTypeValues[i] = DataType.getType(propTypes[i]);
+				methodType = setMethods[i].getParameterTypes()[0];
+				propTypes[i] = methodType.getTypeName();
+				propTypeValues[i] = DataType.getType(methodType);
 				types = setMethods[i].getGenericParameterTypes();
 				if (types.length > 0 && (types[0] instanceof ParameterizedType)) {
 					genericTypes[i] = (Class) ((ParameterizedType) types[0]).getActualTypeArguments()[0];
@@ -580,6 +659,7 @@ public class SqlUtil {
 		try {
 			preparedStatementResultHandler.execute(userData, pst, rs);
 		} catch (Exception se) {
+			se.printStackTrace();
 			logger.error(se.getMessage(), se);
 			throw se;
 		} finally {
@@ -613,6 +693,7 @@ public class SqlUtil {
 		try {
 			callableStatementResultHandler.execute(userData, pst, rs);
 		} catch (Exception se) {
+			se.printStackTrace();
 			logger.error(se.getMessage(), se);
 			throw se;
 		} finally {
@@ -813,7 +894,8 @@ public class SqlUtil {
 	 */
 	public static Object getSequenceValue(Connection conn, String sequence, Integer dbType) throws DataAccessException {
 		String sql = "";
-		if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.H2) {
+		if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.KINGBASE
+				|| dbType == DBType.H2) {
 			sql = "select nextval('" + sequence + "')";
 		} else if (dbType == DBType.SQLSERVER) {
 			sql = "select NEXT VALUE FOR " + sequence;
@@ -1102,6 +1184,7 @@ public class SqlUtil {
 				conn.setAutoCommit(!autoCommit);
 			}
 		} catch (Exception e) {
+			e.printStackTrace();
 			logger.error(e.getMessage(), e);
 			throw e;
 		} finally {
@@ -1152,7 +1235,7 @@ public class SqlUtil {
 					.append(" where ").append(pidField).append(" in (${inStr})");
 			String idInfoSql = "select ".concat(nodeLevelField).concat(",").concat(nodeRouteField).concat(" from ")
 					.concat(tableName).concat(" where ").concat(idField).concat("=").concat(flag)
-					.concat(treeTableModel.getRootId().toString()).concat(flag);
+					.concat(treeTableModel.getPidValue().toString()).concat(flag);
 			// 附加条件(如一张表里面分账套,将多家企业的部门信息放于一张表中,附加条件就可以是账套)
 			if (StringUtil.isNotBlank(conditions)) {
 				idInfoSql = idInfoSql.concat(" and ").concat(conditions);
@@ -1177,10 +1260,10 @@ public class SqlUtil {
 			}
 			// 模拟指定节点的信息
 			HashMap pidsMap = new HashMap();
-			pidsMap.put(treeTableModel.getRootId().toString(), nodeRoute);
+			pidsMap.put(treeTableModel.getPidValue().toString(), nodeRoute);
 			// 下级节点
 			List ids;
-			if (treeTableModel.getIdValue() != null) {
+			if (StringUtil.isNotBlank(treeTableModel.getIdValue())) {
 				StringBuilder firstNextNodeQuery = new StringBuilder("select ").append(idField).append(",")
 						.append(nodeRouteField).append(",").append(pidField).append(" from ").append(tableName)
 						.append(" where ").append(idField).append("=?");
@@ -1193,7 +1276,7 @@ public class SqlUtil {
 			} else {
 				ids = findByJdbcQuery(typeHandler,
 						nextNodeQueryStr.toString().replaceFirst("\\$\\{inStr\\}",
-								flag + treeTableModel.getRootId() + flag),
+								flag + treeTableModel.getPidValue() + flag),
 						null, null, null, null, conn, dbType, false, null, SqlToyConstants.FETCH_SIZE, -1);
 			}
 			if (ids != null && !ids.isEmpty()) {
@@ -1836,6 +1919,55 @@ public class SqlUtil {
 		}
 		// 回车换行前后的空白也剔除
 		return source.replaceAll("\\s*(\r|\n)\\s*", target).replaceAll("\t", target);
+	}
+
+	/**
+	 * @TODO 获取数据库时间字符串
+	 * @param dbType
+	 * @param fieldMeta
+	 * @param createSqlTimeFields
+	 * @return
+	 */
+	public static String getDBTime(Integer dbType, FieldMeta fieldMeta, IgnoreCaseSet createSqlTimeFields) {
+		if (fieldMeta == null || createSqlTimeFields == null || createSqlTimeFields.isEmpty()) {
+			return null;
+		}
+		int fieldType = fieldMeta.getType();
+		// 统一需要处理的字段、且是日期、时间类型
+		if (createSqlTimeFields.contains(fieldMeta.getFieldName()) && (fieldType == java.sql.Types.DATE
+				|| fieldType == java.sql.Types.TIME || fieldType == java.sql.Types.TIME_WITH_TIMEZONE
+				|| fieldType == java.sql.Types.TIMESTAMP || fieldType == java.sql.Types.TIMESTAMP_WITH_TIMEZONE)) {
+			// 只支持now
+			if (dbType == DBType.CLICKHOUSE) {
+				return "now()";
+			}
+			// time
+			if (fieldType == java.sql.Types.TIME || fieldType == java.sql.Types.TIME_WITH_TIMEZONE
+					|| "java.time.localtime".equals(fieldMeta.getFieldType())
+					|| "java.sql.time".equals(fieldMeta.getFieldType())) {
+				if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.TIDB
+						|| dbType == DBType.SQLITE || dbType == DBType.H2 || dbType == DBType.POSTGRESQL
+						|| dbType == DBType.POSTGRESQL15 || dbType == DBType.KINGBASE || dbType == DBType.DB2
+						|| dbType == DBType.OCEANBASE) {
+					return "current_time";
+				} else if (dbType == DBType.GAUSSDB) {
+					return "now()";
+				} else if (dbType == DBType.SQLSERVER) {
+					return "getdate()";
+				} else {
+					return "current_timestamp";
+				}
+			} // timestamp
+			else if ("java.time.localdate".equals(fieldMeta.getFieldType())) {
+				if (dbType == DBType.SQLSERVER) {
+					return "getdate()";
+				}
+				return "current_date";
+			} else {
+				return "current_timestamp";
+			}
+		}
+		return null;
 	}
 
 }

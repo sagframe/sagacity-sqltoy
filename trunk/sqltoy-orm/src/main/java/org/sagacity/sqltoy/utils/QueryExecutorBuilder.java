@@ -17,6 +17,8 @@ import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.model.DataAuthFilterConfig;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
+import org.sagacity.sqltoy.model.ParamsFilter;
+import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.slf4j.Logger;
@@ -257,6 +259,25 @@ public class QueryExecutorBuilder {
 				}
 			}
 		}
+		// 兼容参数属性只出现在cache-arg 中
+		if (extend.paramFilters != null && !extend.paramFilters.isEmpty()) {
+			for (ParamsFilter filter : extend.paramFilters) {
+				if ("cache-arg".equals(filter.getType())) {
+					key = filter.getParams()[0].toLowerCase();
+					if (!keys.contains(key)) {
+						keys.add(key);
+						params.add(key);
+					}
+					if (filter.getAsName() != null) {
+						key = filter.getAsName().toLowerCase();
+						if (!keys.contains(key)) {
+							keys.add(key);
+							params.add(key);
+						}
+					}
+				}
+			}
+		}
 		if (params.isEmpty()) {
 			return null;
 		}
@@ -413,5 +434,41 @@ public class QueryExecutorBuilder {
 			return true;
 		}
 		return false;
+	}
+
+	/**
+	 * @TODO 將QueryExecutor中的条件参数构造成单一对象返回(map或entity)
+	 * @param queryExecutor
+	 * @return
+	 */
+	public static Object getParamValues(QueryExecutor queryExecutor) {
+		Object result = null;
+		if (queryExecutor != null) {
+			QueryExecutorExtend extend = queryExecutor.getInnerModel();
+			if (extend.entity != null) {
+				result = extend.entity;
+			} else {
+				String[] paramsName = extend.paramsName;
+				Object[] paramsValue = extend.paramsValue;
+				if (paramsName != null && paramsValue != null && paramsName.length > 0
+						&& paramsName.length == paramsValue.length) {
+					IgnoreKeyCaseMap map = new IgnoreKeyCaseMap();
+					for (int i = 0; i < paramsName.length; i++) {
+						map.put(paramsName[i], paramsValue[i]);
+					}
+					result = map;
+				} else if ((paramsName == null || paramsName.length == 0) && paramsValue != null
+						&& paramsValue.length == 1 && paramsValue[0] != null) {
+					if (paramsValue[0] instanceof IgnoreKeyCaseMap) {
+						result = paramsValue[0];
+					} else if (paramsValue[0] instanceof Map) {
+						result = new IgnoreKeyCaseMap((Map) paramsValue[0]);
+					} else {
+						result = paramsValue[0];
+					}
+				}
+			}
+		}
+		return result;
 	}
 }

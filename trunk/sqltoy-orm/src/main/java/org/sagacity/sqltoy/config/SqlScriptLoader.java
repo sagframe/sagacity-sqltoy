@@ -114,11 +114,14 @@ public class SqlScriptLoader {
 		if (StringUtil.isNotBlank(sqlResourcesDir)
 				&& (sqlResourcesDir.toLowerCase().contains(".sql.xml") || sqlResourcesDir.contains("*"))) {
 			throw new IllegalArgumentException("\n您的配置:spring.sqltoy.sqlResourcesDir=" + sqlResourcesDir + " 不正确!\n"
-					+ "/*----正确格式只接受单个或逗号分隔的多个路径模式且不能有*通配符(会自动递归往下钻取!)----*/\n"
+					+ "/*----正确格式只接受单个或逗号分隔的多个路径模式且不能有*和**以及*.sql.xml等配符(会自动递归往下钻取!)----*/\n"
 					+ "/*- 1、单路径模式:spring.sqltoy.sqlResourcesDir=classpath:com/sagacity/crm\n"
 					+ "/*- 2、多路径模式:spring.sqltoy.sqlResourcesDir=classpath:com/sagacity/crm,classpath:com/sagacity/hr\n"
 					+ "/*- 3、绝对路径模式:spring.sqltoy.sqlResourcesDir=/home/web/project/sql\n"
-					+ "/*------------------------------------------------------------------------------*/");
+					+ "/*-----------错误范例(请看清、看清、再看清:不能有*、**和*.sql.xml)----------------------*/\n"
+					+ "/*-1、classpath:*/com/yourproject/yourpackage/**/*.sql.xml\n"
+					+ "/*-2、classpath*:/com/yourproject/yourpackage/**/**.sql.xml\n"
+					+ "/*-----------------------------------------------------------------------*/");
 		}
 		if (initialized) {
 			return;
@@ -213,10 +216,12 @@ public class SqlScriptLoader {
 	 * @param blankToNull
 	 * @return
 	 */
-	public SqlToyConfig getSqlConfig(String sqlKey, SqlType sqlType, String dialect, boolean blankToNull) {
+	public SqlToyConfig getSqlConfig(String sqlKey, SqlType sqlType, String dialect, Object paramValues,
+			boolean blankToNull) {
 		if (StringUtil.isBlank(sqlKey)) {
 			throw new IllegalArgumentException("sql or sqlId is null!");
 		}
+
 		SqlToyConfig result = null;
 		String realDialect = (dialect == null) ? "" : dialect.toLowerCase();
 		// sqlId形式
@@ -256,8 +261,13 @@ public class SqlScriptLoader {
 			}
 			// 存在@include("sqlId") 重新组织sql
 			if (result != null && result.isHasIncludeSql()) {
+				boolean isParamInclude = StringUtil.matches(result.getSql(), SqlToyConstants.INCLUDE_PARAM_PATTERN);
+				// 复制一份，避免直接修改sql缓存中的模型
+				if (isParamInclude) {
+					result = result.clone();
+				}
 				// 替换include的实际sql
-				String sql = MacroUtils.replaceMacros(result.getSql(), (Map) sqlCache, false, macros);
+				String sql = MacroUtils.replaceMacros(result.getSql(), (Map) sqlCache, paramValues, false, macros);
 				// 重新解析sql内容
 				SqlToyConfig tmpConfig = SqlConfigParseUtils.parseSqlToyConfig(sql, realDialect, sqlType);
 				result.setHasUnion(tmpConfig.isHasUnion());
@@ -272,24 +282,37 @@ public class SqlScriptLoader {
 
 				String countSql = result.getCountSql(null);
 				if (countSql != null && StringUtil.matches(countSql, SqlToyConstants.INCLUDE_PATTERN)) {
-					countSql = MacroUtils.replaceMacros(countSql, (Map) sqlCache, false, macros);
+					countSql = MacroUtils.replaceMacros(countSql, (Map) sqlCache, paramValues, false, macros);
 					countSql = FunctionUtils.getDialectSql(countSql, realDialect);
 					countSql = ReservedWordsUtil.convertSql(countSql, DataSourceUtils.getDBType(realDialect));
 					result.setCountSql(countSql);
 				}
-				// 完成了include拼装，将include标志设置为false避免下次重复处理
-				result.setHasIncludeSql(false);
+				// 2023-8-19 增加了@include(:scriptName) 模式，每次都是动态的
+				// 完全是@include(sqlId)模式，下次无需再进行sql拼装，提升性能
+				if(!isParamInclude) {
+					result.setHasIncludeSql(false);
+				}
 			}
 		} else {
 			result = codeSqlCache.get(sqlKey);
 			if (result == null) {
-				result = SqlConfigParseUtils.parseSqlToyConfig(sqlKey, realDialect, sqlType);
+				boolean hasInclude = StringUtil.matches(sqlKey, SqlToyConstants.INCLUDE_PATTERN);
+				boolean isParamInclude=false;
+				// 替换include的实际sql
+				if (hasInclude) {
+					isParamInclude = StringUtil.matches(sqlKey, SqlToyConstants.INCLUDE_PARAM_PATTERN);
+					String sql = MacroUtils.replaceMacros(sqlKey, (Map) sqlCache, paramValues, false, macros);
+					result = SqlConfigParseUtils.parseSqlToyConfig(sql, realDialect, sqlType);
+				} else {
+					result = SqlConfigParseUtils.parseSqlToyConfig(sqlKey, realDialect, sqlType);
+				}
 				// 设置默认空白查询条件过滤filter,便于直接传递sql语句情况下查询条件的处理
 				if (blankToNull) {
 					result.addFilter(new ParamFilterModel("blank", new String[] { "*" }));
 				}
 				// 限制数量的原因是存在部分代码中的sql会拼接条件参数值，导致不同的sql无限增加
-				if (codeSqlCache.size() < SqlToyConstants.getMaxCodeSqlCount()) {
+				//非@include(:paramName)模式才可以缓存
+				if (!isParamInclude && codeSqlCache.size() < SqlToyConstants.getMaxCodeSqlCount()) {
 					codeSqlCache.put(sqlKey, result);
 				}
 			}

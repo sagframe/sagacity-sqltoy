@@ -12,6 +12,7 @@ import java.util.Set;
 import org.sagacity.sqltoy.config.model.LabelIndexModel;
 import org.sagacity.sqltoy.config.model.TreeSortModel;
 import org.sagacity.sqltoy.plugins.utils.CalculateUtils;
+import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.MacroIfLogic;
 import org.sagacity.sqltoy.utils.StringUtil;
 
@@ -22,6 +23,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @version v1.0, Date:2022年10月28日
  * @modify 2022年10月28日,修改说明
  */
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class TreeDataSort {
 	public static void process(TreeSortModel treeTableSortModel, LabelIndexModel labelIndexMap, List treeList) {
 		if (treeList == null || treeList.isEmpty()) {
@@ -36,6 +38,37 @@ public class TreeDataSort {
 		// 汇总列
 		List<Integer> sumColList = CalculateUtils.parseColumns(labelIndexMap, treeTableSortModel.getSumColumns(),
 				dataWidth);
+		// 组织树形结构
+		sortTree(treeList, idColIndex, pidColIndex);
+		// 树结构从底层往上级汇总
+		if (!sumColList.isEmpty()) {
+			Integer[] sumIndexes = new Integer[sumColList.size()];
+			sumColList.toArray(sumIndexes);
+			summaryTreeList(treeTableSortModel, labelIndexMap, treeList, sumIndexes, idColIndex, pidColIndex);
+		}
+		// 对每层的数据进行排序
+		if (StringUtil.isNotBlank(treeTableSortModel.getLevelOrderColumn())) {
+			Integer sortColIndex = labelIndexMap.get(treeTableSortModel.getLevelOrderColumn());
+			if (sortColIndex == null) {
+				throw new RuntimeException("对树形结构每层级内部进行排序，未正确指定层级排序依据的列:levelOrderColumn="
+						+ treeTableSortModel.getLevelOrderColumn() + "!");
+			}
+			int dataType = CollectionUtil.getSortDataType(treeList, sortColIndex);
+			boolean desc = treeTableSortModel.getOrderWay().equalsIgnoreCase("desc") ? true : false;
+			// 整个集合按某列的值进行排序
+			CollectionUtil.sortList(treeList, sortColIndex, dataType, 0, treeList.size() - 1, !desc);
+			// 再重新进行树节点组织
+			sortTree(treeList, idColIndex, pidColIndex);
+		}
+	}
+
+	/**
+	 * @TODO 按照树的父子关系组织顺序
+	 * @param treeList
+	 * @param idColIndex
+	 * @param pidColIndex
+	 */
+	private static void sortTree(List treeList, Integer idColIndex, Integer pidColIndex) {
 		// 获取根节点值
 		Set topPids = getTopPids(treeList, idColIndex, pidColIndex);
 		List result = new ArrayList();
@@ -75,12 +108,6 @@ public class TreeDataSort {
 		}
 		treeList.clear();
 		treeList.addAll(result);
-		// 树结构从底层往上级汇总
-		if (!sumColList.isEmpty()) {
-			Integer[] sumIndexes = new Integer[sumColList.size()];
-			sumColList.toArray(sumIndexes);
-			summaryTreeList(treeTableSortModel, labelIndexMap, treeList, sumIndexes, idColIndex, pidColIndex);
-		}
 	}
 
 	/**

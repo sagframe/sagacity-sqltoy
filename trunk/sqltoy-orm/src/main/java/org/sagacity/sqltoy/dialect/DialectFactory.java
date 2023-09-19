@@ -91,6 +91,8 @@ import org.slf4j.LoggerFactory;
  * @update data:2021-01-25 分页支持并行查询
  * @update data:2022-12-12 并行分页改用分别获取connection
  * @update data:2022-12-14 启动TDengine的支持
+ * @update data:2023-09-16
+ *         优化wrapTreeTableRoute，纠正rootId为pidValue，同时增加pidValue为null的校验
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class DialectFactory {
@@ -538,6 +540,7 @@ public class DialectFactory {
 		try {
 			if (null != treeModel.getEntity()) {
 				EntityMeta entityMeta = null;
+				// 指定了一个类型，还是一个实体对象实例
 				if (treeModel.getEntity() instanceof Type) {
 					entityMeta = sqlToyContext.getEntityMeta((Class) treeModel.getEntity());
 				} else {
@@ -594,16 +597,23 @@ public class DialectFactory {
 				// 通过实体对象取值给rootId和idValue赋值
 				if (!(treeModel.getEntity() instanceof Type)) {
 					// update 2020-10-19 从手工设定的字段中取值(原本从主键中取值)
-					if (null == treeModel.getRootId()) {
+					if (StringUtil.isBlank(treeModel.getPidValue())) {
 						Object pidValue = BeanUtil.getProperty(treeModel.getEntity(),
 								StringUtil.toHumpStr(treeModel.getPidField(), false));
-						treeModel.rootId(pidValue);
+						if (StringUtil.isBlank(pidValue)) {
+							throw new IllegalArgumentException(
+									"树形表:父节点字段:" + treeModel.getPidField() + " 没有被赋值，即父节点属性值为null,请检查!");
+						}
+						treeModel.pidValue(pidValue);
 					}
-					if (null == treeModel.getIdValue()) {
+					if (StringUtil.isBlank(treeModel.getIdValue())) {
 						Object idValue = BeanUtil.getProperty(treeModel.getEntity(),
 								StringUtil.toHumpStr(treeModel.getIdField(), false));
 						treeModel.setIdValue(idValue);
 					}
+				} else if (StringUtil.isBlank(treeModel.getPidValue())) {
+					throw new IllegalArgumentException(
+							"树形表:父节点字段:" + treeModel.getPidField() + " 没有被赋值，即父节点属性值为null,请检查!");
 				}
 				// update 2022-5-6，boolean类型转出Boolean,在未赋值情况下通过主键类型进行自动补全设置
 				if (treeModel.isChar() == null) {
@@ -939,7 +949,6 @@ public class DialectFactory {
 		queryResult.setPageSize(pageSize);
 		Executor taskExecutor = sqlToyContext.getTaskExecutor();
 		try {
-			// SqlExecuteStat.debug("开始并行查询count总记录数和单页记录数据!", null);
 			// 查询总记录数量
 			CompletableFuture countCompletableFuture = CompletableFuture.runAsync(() -> {
 				try {
@@ -1661,7 +1670,6 @@ public class DialectFactory {
 	 * @todo 修改单个对象
 	 * @param sqlToyContext
 	 * @param entity
-	 * @param uniqueFields             唯一性索引字段
 	 * @param forceUpdateFields
 	 * @param cascade
 	 * @param forceCascadeClass
@@ -1975,13 +1983,14 @@ public class DialectFactory {
 	 * @param sqlToyConfig
 	 * @param inParamsValue
 	 * @param outParamsType
-	 * @param resultType
+	 * @param resultTypes
+	 * @param moreResult    返回多集合
 	 * @param dataSource
 	 * @return
 	 */
 	public StoreResult executeStore(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
-			final Object[] inParamsValue, final Integer[] outParamsType, final Class resultType,
-			final DataSource dataSource) {
+			final Object[] inParamsValue, final Integer[] outParamsType, final Class[] resultTypes,
+			final boolean moreResult, final DataSource dataSource) {
 		try {
 			Long startTime = System.currentTimeMillis();
 			SqlExecuteStat.start(sqlToyConfig.getId(), "executeStore", sqlToyConfig.isShowSql());
@@ -1999,7 +2008,6 @@ public class DialectFactory {
 							if (paramCnt != inCount + outCount) {
 								throw new IllegalArgumentException("存储过程语句中的输入和输出参数跟实际调用传递的数量不等!");
 							}
-
 							SqlToyResult sqlToyResult = new SqlToyResult(dialectSql, inParamsValue);
 							// 判断是否是{?=call xxStore()} 模式(oracle 不支持此模式)
 							boolean isFirstResult = StringUtil.matches(dialectSql, STORE_PATTERN);
@@ -2011,7 +2019,7 @@ public class DialectFactory {
 							SqlExecuteStat.showSql("存储过程执行", sqlToyResult.getSql(), sqlToyResult.getParamsValue());
 							StoreResult queryResult = getDialectSqlWrapper(dbType).executeStore(sqlToyContext,
 									sqlToyConfig, sqlToyResult.getSql(), sqlToyResult.getParamsValue(), outParamsType,
-									conn, dbType, dialect, -1);
+									moreResult, conn, dbType, dialect, -1);
 							// 进行数据必要的数据处理(一般存储过程不会结合旋转sql进行数据旋转操作)
 							// {此区域代码正常情况下不会使用
 							QueryExecutor queryExecutor = new QueryExecutor(null, sqlToyConfig.getParamsName(),
@@ -2022,9 +2030,33 @@ public class DialectFactory {
 									sqlToyConfig, queryResult, pivotCategorySet, null);
 							// }
 							// 映射成对象
-							if (resultType != null) {
-								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
-										queryResult.getLabelNames(), resultType, changedCols, null, false, null, null));
+							if (resultTypes != null && resultTypes.length > 0) {
+								// 存储过程返回多个集合
+								if (moreResult) {
+									int rowsSize = queryResult.getMoreResults().length;
+									// 回写被计算后的集合(getRows()以第一个为基准)
+									queryResult.getMoreResults()[0] = queryResult.getRows();
+									int endSize = rowsSize;
+									if (resultTypes.length < endSize) {
+										endSize = resultTypes.length;
+									}
+									Class resultType;
+									List row;
+									List<String[]> labelNamesList = queryResult.getLabelsList();
+									for (int i = 0; i < endSize; i++) {
+										resultType = resultTypes[i];
+										if (resultType != null) {
+											row = queryResult.getMoreResults()[i];
+											queryResult.getMoreResults()[i] = ResultUtils.wrapQueryResult(sqlToyContext,
+													row, labelNamesList.get(i), resultType,
+													(i == 0) ? changedCols : false, null, false, null, null);
+										}
+									}
+								} else if (null != resultTypes[0]) {
+									queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext,
+											queryResult.getRows(), queryResult.getLabelNames(), resultTypes[0],
+											changedCols, null, false, null, null));
+								}
 							}
 							if (queryResult.getRecordCount() > sqlToyContext.getUpdateTipCount()) {
 								SqlExecuteStat.debug("执行结果", "executeStore影响记录量:{} 条,大于数据修改提示阈值:{}条!",

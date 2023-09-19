@@ -470,7 +470,8 @@ public class DialectUtils {
 			tableShardings = extend.tableShardings;
 		}
 		// sql条件以:named形式、无分表、无扩展缓存翻译则不存在对SqlToyConfig 内容的修改，直接返回
-		if ((isNamed || !wrapNamed) && tableShardings.isEmpty() && extend.translates.isEmpty()) {
+		if ((isNamed || !wrapNamed) && tableShardings.isEmpty() && extend.translates.isEmpty()
+				&& extend.linkModel == null) {
 			return sqlToyConfig;
 		}
 		// clone sqltoyConfig避免直接修改原始的sql配置对后续执行产生影响
@@ -478,6 +479,10 @@ public class DialectUtils {
 		// 存在扩展的缓存翻译
 		if (!extend.translates.isEmpty()) {
 			result.getTranslateMap().putAll(extend.translates);
+		}
+		// 扩展的link计算
+		if (extend.linkModel != null) {
+			result.setLinkModel(extend.linkModel);
 		}
 		// ?传参且分页模式,原因是分页存在取count场景，在@fast()情况下无法断定paramValues的值跟?的参数对应关系
 		if (!isNamed && wrapNamed) {
@@ -586,6 +591,7 @@ public class DialectUtils {
 		// 重新构造修改或保存的属性赋值反调
 		ReflectPropsHandler handler = getSaveOrUpdateReflectHandler(entityMeta.getIdArray(), reflectPropsHandler,
 				forceUpdateFields, sqlToyContext.getUnifyFieldsHandler());
+		// 字段加密处理
 		handler = getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
 		List<Object[]> paramValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getFieldsArray(), null,
@@ -670,8 +676,8 @@ public class DialectUtils {
 		String realTable = entityMeta.getSchemaTable(tableName, dbType);
 		// 在无主键的情况下产生insert sql语句
 		if (entityMeta.getIdArray() == null) {
-			return DialectExtUtils.generateInsertSql(dbType, entityMeta, pkStrategy, isNullFunction, sequence,
-					isAssignPK, realTable);
+			return DialectExtUtils.generateInsertSql(unifyFieldsHandler, dbType, entityMeta, pkStrategy, isNullFunction,
+					sequence, isAssignPK, realTable);
 		}
 		// 将新增记录统一赋值属性模拟成默认值模式
 		IgnoreKeyCaseMap<String, Object> createUnifyFields = null;
@@ -680,26 +686,52 @@ public class DialectUtils {
 			createUnifyFields = new IgnoreKeyCaseMap<String, Object>();
 			createUnifyFields.putAll(unifyFieldsHandler.createUnifyFields());
 		}
+		// 创建记录时，创建时间、最后修改时间等取数据库时间
+		IgnoreCaseSet createSqlTimeFields = (unifyFieldsHandler == null
+				|| unifyFieldsHandler.createSqlTimeFields() == null) ? new IgnoreCaseSet()
+						: unifyFieldsHandler.createSqlTimeFields();
+		// 修改记录时，最后修改时间等取数据库时间
+		IgnoreCaseSet updateSqlTimeFields = (unifyFieldsHandler == null
+				|| unifyFieldsHandler.updateSqlTimeFields() == null) ? new IgnoreCaseSet()
+						: unifyFieldsHandler.updateSqlTimeFields();
+		IgnoreCaseSet forceUpdateSqlTimeFields = (unifyFieldsHandler == null
+				|| unifyFieldsHandler.forceUpdateFields() == null) ? new IgnoreCaseSet()
+						: unifyFieldsHandler.forceUpdateFields();
+		String currentTimeStr;
 		int columnSize = entityMeta.getFieldsArray().length;
 		StringBuilder sql = new StringBuilder(columnSize * 30 + 100);
 		String columnName;
 		sql.append("merge into ");
 		sql.append(realTable);
-		sql.append(" ta ");
+		// postgresql15+ 不支持别名
+		if (DBType.POSTGRESQL15 != dbType) {
+			sql.append(" ta ");
+		}
 		sql.append(" using (select ");
+		FieldMeta fieldMeta;
 		for (int i = 0; i < columnSize; i++) {
-			columnName = entityMeta.getColumnName(entityMeta.getFieldsArray()[i]);
-			columnName = ReservedWordsUtil.convertWord(columnName, dbType);
+			fieldMeta = entityMeta.getFieldMeta(entityMeta.getFieldsArray()[i]);
+			columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
 			if (i > 0) {
 				sql.append(",");
 			}
-			sql.append("? as ");
-			sql.append(columnName);
+			// postgresql15+ 需要case(? as type) as column
+			if (DBType.POSTGRESQL15 == dbType) {
+				PostgreSqlDialectUtils.wrapSelectFields(sql, columnName, fieldMeta);
+			} else if (DBType.H2 == dbType) {
+				H2DialectUtils.wrapSelectFields(sql, columnName, fieldMeta);
+			} else if (DBType.DB2 == dbType) {
+				DB2DialectUtils.wrapSelectFields(sql, columnName, fieldMeta);
+			} else {
+				sql.append("? as ");
+				sql.append(columnName);
+			}
 		}
 		if (StringUtil.isNotBlank(fromTable)) {
 			sql.append(" from ").append(fromTable);
 		}
-		sql.append(") tv on (");
+		// sql.append(") tv on (");
+		sql.append(SqlToyConstants.MERGE_ALIAS_ON);
 		StringBuilder idColumns = new StringBuilder();
 		// 组织on部分的主键条件判断
 		for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
@@ -709,7 +741,13 @@ public class DialectUtils {
 				sql.append(" and ");
 				idColumns.append(",");
 			}
-			sql.append(" ta.").append(columnName).append("=tv.").append(columnName);
+			// 不支持别名
+			if (DBType.POSTGRESQL15 == dbType) {
+				sql.append(realTable + ".");
+			} else {
+				sql.append("ta.");
+			}
+			sql.append(columnName).append("=tv.").append(columnName);
 			idColumns.append("ta.").append(columnName);
 		}
 		sql.append(" ) ");
@@ -720,7 +758,7 @@ public class DialectUtils {
 		boolean allIds = (entityMeta.getRejectIdFieldArray() == null);
 		if (!allIds) {
 			// update 操作
-			sql.append(" when matched then update set ");
+			sql.append(SqlToyConstants.MERGE_UPDATE);
 			int rejectIdColumnSize = entityMeta.getRejectIdFieldArray().length;
 			// 需要被强制修改的字段
 			HashSet<String> fupc = new HashSet<String>();
@@ -729,43 +767,72 @@ public class DialectUtils {
 					fupc.add(ReservedWordsUtil.convertWord(entityMeta.getColumnName(field), dbType));
 				}
 			}
-			FieldMeta fieldMeta;
 			String defaultValue;
 			// update 只针对非主键字段进行修改
 			for (int i = 0; i < rejectIdColumnSize; i++) {
 				fieldMeta = entityMeta.getFieldMeta(entityMeta.getRejectIdFieldArray()[i]);
 				columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
+				// 修改字段
+				currentTimeStr = SqlUtil.getDBTime(dbType, fieldMeta, updateSqlTimeFields);
 				if (i > 0) {
 					sql.append(",");
 					insertRejIdCols.append(",");
 					insertRejIdColValues.append(",");
 				}
-				sql.append(" ta.").append(columnName).append("=");
-				// 强制修改
-				if (fupc.contains(columnName)) {
+				if (DBType.POSTGRESQL15 != dbType) {
+					sql.append(" ta.");
+				}
+				sql.append(columnName).append("=");
+				if (null != currentTimeStr && forceUpdateSqlTimeFields.contains(fieldMeta.getFieldName())) {
+					sql.append(currentTimeStr);
+				} else if (fupc.contains(columnName)) {
 					sql.append("tv.").append(columnName);
 				} else {
 					sql.append(isNullFunction);
 					sql.append("(tv.").append(columnName);
-					sql.append(",ta.").append(columnName);
+					sql.append(",");
+					if (null != currentTimeStr) {
+						sql.append(currentTimeStr);
+					} else {
+						if (DBType.POSTGRESQL15 == dbType) {
+							sql.append(realTable + ".");
+						} else {
+							sql.append("ta.");
+						}
+						sql.append(columnName);
+					}
 					sql.append(")");
 				}
 				insertRejIdCols.append(columnName);
-				// 将创建人、创建时间等模拟成默认值
-				defaultValue = DialectExtUtils.getInsertDefaultValue(createUnifyFields, dbType, fieldMeta);
-				// 存在默认值
-				if (null != defaultValue) {
-					insertRejIdColValues.append(isNullFunction);
-					insertRejIdColValues.append("(tv.").append(columnName).append(",");
-					DialectExtUtils.processDefaultValue(insertRejIdColValues, dbType, fieldMeta, defaultValue);
-					insertRejIdColValues.append(")");
+				// 新增
+				currentTimeStr = SqlUtil.getDBTime(dbType, fieldMeta, createSqlTimeFields);
+				if (null != currentTimeStr && forceUpdateSqlTimeFields.contains(fieldMeta.getFieldName())) {
+					insertRejIdColValues.append(currentTimeStr);
 				} else {
-					insertRejIdColValues.append("tv.").append(columnName);
+					// 将创建人、创建时间等模拟成默认值
+					defaultValue = DialectExtUtils.getInsertDefaultValue(createUnifyFields, dbType, fieldMeta);
+					// 存在默认值
+					if (null != defaultValue) {
+						insertRejIdColValues.append(isNullFunction);
+						insertRejIdColValues.append("(tv.").append(columnName).append(",");
+						DialectExtUtils.processDefaultValue(insertRejIdColValues, dbType, fieldMeta, defaultValue);
+						insertRejIdColValues.append(")");
+					} else {
+						if (null != currentTimeStr) {
+							insertRejIdColValues.append(isNullFunction);
+							insertRejIdColValues.append("(tv.").append(columnName).append(",");
+							insertRejIdColValues.append(currentTimeStr);
+							insertRejIdColValues.append(")");
+						} else {
+							insertRejIdColValues.append("tv.").append(columnName);
+						}
+					}
 				}
 			}
 		}
 		// 主键未匹配上则进行插入操作
-		sql.append(" when not matched then insert (");
+		sql.append(SqlToyConstants.MERGE_INSERT);
+		sql.append(" (");
 		String idsColumnStr = idColumns.toString();
 		// 不考虑只有一个字段且还是主键的情况
 		if (allIds) {
@@ -816,6 +883,7 @@ public class DialectUtils {
 
 	/**
 	 * @todo 产生对象update的语句
+	 * @param unifyFieldsHandler
 	 * @param dbType
 	 * @param entityMeta
 	 * @param nullFunction
@@ -823,8 +891,8 @@ public class DialectUtils {
 	 * @param tableName
 	 * @return
 	 */
-	private static String generateUpdateSql(Integer dbType, EntityMeta entityMeta, String nullFunction,
-			String[] forceUpdateFields, String tableName) {
+	private static String generateUpdateSql(IUnifyFieldsHandler unifyFieldsHandler, Integer dbType,
+			EntityMeta entityMeta, String nullFunction, String[] forceUpdateFields, String tableName) {
 		if (entityMeta.getIdArray() == null) {
 			return null;
 		}
@@ -841,12 +909,16 @@ public class DialectUtils {
 			}
 		}
 		FieldMeta fieldMeta;
-		boolean convertBlob = (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB
-				|| dbType == DBType.KINGBASE);
+		IgnoreCaseSet updateSqlTimeFields = new IgnoreCaseSet();
+		if (unifyFieldsHandler != null && unifyFieldsHandler.updateSqlTimeFields() != null) {
+			updateSqlTimeFields = unifyFieldsHandler.updateSqlTimeFields();
+		}
+		boolean convertBlob = (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15);
 		boolean isMSsql = (dbType == DBType.SQLSERVER);
 		int meter = 0;
 		int decimalLength;
 		int decimalScale;
+		String currentTimeStr;
 		for (int i = 0, n = entityMeta.getRejectIdFieldArray().length; i < n; i++) {
 			fieldMeta = entityMeta.getFieldMeta(entityMeta.getRejectIdFieldArray()[i]);
 			// 排除sqlserver timestamp类型
@@ -857,10 +929,11 @@ public class DialectUtils {
 				}
 				sql.append(columnName);
 				sql.append("=");
+				// 判断强制修改
 				if (fupc.contains(columnName)) {
 					sql.append("?");
 				} else {
-					// 2020-6-13 修复postgresql\kingbase\guassdb bytea类型处理错误
+					// 2020-6-13 修复postgresql\kingbase bytea类型处理错误
 					if (convertBlob && "byte[]".equals(fieldMeta.getFieldType())) {
 						sql.append(nullFunction);
 						sql.append("(cast(? as bytea),").append(columnName).append(" )");
@@ -873,7 +946,15 @@ public class DialectUtils {
 							sql.append("(cast(? as decimal(" + decimalLength + "," + decimalScale + ")),")
 									.append(columnName).append(")");
 						} else {
-							sql.append("(?,").append(columnName).append(")");
+							sql.append("(?,");
+							// 2023-5-11 这里待完善修改时间取数据库时间问题nvl(?,current_timestamp)
+							currentTimeStr = SqlUtil.getDBTime(dbType, fieldMeta, updateSqlTimeFields);
+							if (null != currentTimeStr) {
+								sql.append(currentTimeStr);
+							} else {
+								sql.append(columnName);
+							}
+							sql.append(")");
 						}
 					}
 				}
@@ -1319,6 +1400,7 @@ public class DialectUtils {
 		}
 		// 构造全新的新增记录参数赋值反射(覆盖之前的)
 		ReflectPropsHandler handler = getAddReflectHandler(entityMeta, null, sqlToyContext.getUnifyFieldsHandler());
+		// 字段加密处理
 		handler = getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
 		// update 2022-7-16 增加默认值的代入
@@ -1383,12 +1465,10 @@ public class DialectUtils {
 				if (isIdentity || isSequence) {
 					pst = conn.prepareStatement(realInsertSql,
 							new String[] { entityMeta.getColumnName(entityMeta.getIdArray()[0]) });
-					// pst = conn.prepareStatement(realInsertSql,Statement.RETURN_GENERATED_KEYS);
 				} else {
 					pst = conn.prepareStatement(realInsertSql);
 				}
 				SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, pst, paramValues, paramsType, 0);
-				// pst.executeUpdate();
 				pst.execute();
 				if (isIdentity || isSequence) {
 					ResultSet keyResult = pst.getGeneratedKeys();
@@ -1491,6 +1571,7 @@ public class DialectUtils {
 		// 构造全新的新增记录参数赋值反射(覆盖之前的)
 		ReflectPropsHandler handler = getAddReflectHandler(entityMeta, reflectPropsHandler,
 				sqlToyContext.getUnifyFieldsHandler());
+		// 字段加密处理
 		handler = getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
 		// update 2022-7-16 增加了默认值代入
@@ -1599,6 +1680,7 @@ public class DialectUtils {
 		// 构造全新的新增记录参数赋值反射(覆盖之前的)
 		ReflectPropsHandler handler = getAddReflectHandler(entityMeta, reflectPropsHandler,
 				sqlToyContext.getUnifyFieldsHandler());
+		// 字段加密处理
 		handler = getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
 		// update 2022-7-16 增加默认值代入,insert sql上去除了nvl(?,default) 适应一些框架
@@ -1699,6 +1781,7 @@ public class DialectUtils {
 		// 构造全新的修改记录参数赋值反射(覆盖之前的)
 		ReflectPropsHandler handler = getUpdateReflectHandler(null, forceUpdateFields,
 				sqlToyContext.getUnifyFieldsHandler());
+		// 字段加密处理
 		handler = getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
 		Object[] fieldsValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getFieldsArray(), null, handler);
@@ -1710,7 +1793,8 @@ public class DialectUtils {
 			}
 		}
 		// 构建update语句
-		String updateSql = generateUpdateSql(dbType, entityMeta, nullFunction, forceUpdateFields, realTable);
+		String updateSql = generateUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta, nullFunction,
+				forceUpdateFields, realTable);
 		if (updateSql == null) {
 			throw new IllegalArgumentException("update sql is null,引起问题的原因是没有设置需要修改的字段!");
 		}
@@ -1825,8 +1909,7 @@ public class DialectUtils {
 				if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.TIDB) {
 					mysqlSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, reflectPropsHandler,
 							forceUpdateProps, conn, dbType);
-				} else if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB
-						|| dbType == DBType.H2) {
+				} else if (dbType == DBType.POSTGRESQL) {
 					postgreSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, reflectPropsHandler,
 							forceUpdateProps, conn, dbType);
 				} else if (dbType == DBType.OCEANBASE) {
@@ -1835,16 +1918,8 @@ public class DialectUtils {
 				} else if (dbType == DBType.SQLITE) {
 					sqliteSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, reflectPropsHandler,
 							forceUpdateProps, conn, dbType);
-				} // 达梦数据库
-				else if (dbType == DBType.DM) {
-					dmSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, reflectPropsHandler,
-							forceUpdateProps, conn, dbType);
-				} // kingbase
-				else if (dbType == DBType.KINGBASE) {
-					kingbaseSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, reflectPropsHandler,
-							forceUpdateProps, conn, dbType);
 				}
-				// db2/oracle/mssql 通过merge 方式
+				// db2/oracle/mssql/postgresql15+/gaussdb/kingbase/dm/h2 通过merge 方式
 				else {
 					saveOrUpdateAll(sqlToyContext, subTableData, sqlToyContext.getBatchSize(), subTableEntityMeta,
 							forceUpdateProps, generateSqlHandler,
@@ -1875,9 +1950,8 @@ public class DialectUtils {
 		}
 		// mysql只支持identity,sequence 值忽略
 		boolean isAssignPK = MySqlDialectUtils.isAssignPKValue(entityMeta.getIdStrategy());
-		String insertSql = DialectExtUtils
-				.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), "ifnull",
-						"NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName)
+		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
+				entityMeta.getIdStrategy(), "ifnull", "NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName)
 				.replaceFirst("(?i)insert ", "insert ignore ");
 		Long saveCnt = saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql, entities,
 				batchSize, reflectPropsHandler, conn, dbType, null);
@@ -1906,8 +1980,8 @@ public class DialectUtils {
 					pkStrategy = PKStrategy.SEQUENCE;
 					sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
 				}
-				return DialectExtUtils.mergeIgnore(dbType, entityMeta, pkStrategy, "dual", "nvl", sequence,
-						OracleDialectUtils.isAssignPKValue(pkStrategy), tableName);
+				return DialectExtUtils.mergeIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
+						pkStrategy, "dual", "nvl", sequence, OracleDialectUtils.isAssignPKValue(pkStrategy), tableName);
 			}
 		}, reflectPropsHandler, conn, dbType, null);
 		logger.debug("级联子表:{} 变更记录数:{},新建记录数为:{}", tableName, updateCnt, saveCnt);
@@ -1931,14 +2005,20 @@ public class DialectUtils {
 			public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 				PKStrategy pkStrategy = entityMeta.getIdStrategy();
 				String sequence = "nextval('" + entityMeta.getSequence() + "')";
+				if (dbType == DBType.GAUSSDB && pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE)) {
+					sequence = entityMeta.getSequence() + ".nextval";
+				}
 				if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
 					// 伪造成sequence模式
 					pkStrategy = PKStrategy.SEQUENCE;
 					sequence = "DEFAULT";
 				}
 				boolean isAssignPK = PostgreSqlDialectUtils.isAssignPKValue(pkStrategy);
-				return DialectExtUtils.insertIgnore(dbType, entityMeta, pkStrategy, "COALESCE", sequence, isAssignPK,
-						tableName);
+				if (dbType == DBType.GAUSSDB) {
+					isAssignPK = GaussDialectUtils.isAssignPKValue(pkStrategy);
+				}
+				return DialectExtUtils.insertIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
+						pkStrategy, "COALESCE", sequence, isAssignPK, tableName);
 			}
 		}, reflectPropsHandler, conn, dbType, null);
 		logger.debug("级联子表:{} 变更记录数:{},新建记录数为:{}", tableName, updateCnt, saveCnt);
@@ -1959,9 +2039,8 @@ public class DialectUtils {
 		}
 		// sqlite只支持identity,sequence 值忽略
 		boolean isAssignPK = SqliteDialectUtils.isAssignPKValue(entityMeta.getIdStrategy());
-		String insertSql = DialectExtUtils
-				.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), "ifnull",
-						"NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName)
+		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
+				entityMeta.getIdStrategy(), "ifnull", "NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName)
 				.replaceFirst("(?i)insert ", "insert or ignore ");
 		Long saveCnt = saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql, entities,
 				batchSize, reflectPropsHandler, conn, dbType, null);
@@ -1986,8 +2065,8 @@ public class DialectUtils {
 			public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 				PKStrategy pkStrategy = entityMeta.getIdStrategy();
 				String sequence = entityMeta.getSequence() + ".nextval";
-				return DialectExtUtils.mergeIgnore(dbType, entityMeta, pkStrategy, "dual", "nvl", sequence,
-						DMDialectUtils.isAssignPKValue(pkStrategy), tableName);
+				return DialectExtUtils.mergeIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
+						pkStrategy, "dual", "nvl", sequence, DMDialectUtils.isAssignPKValue(pkStrategy), tableName);
 			}
 		}, reflectPropsHandler, conn, dbType, null);
 		logger.debug("级联子表:{} 变更记录数:{},新建记录数为:{}", tableName, updateCnt, saveCnt);
@@ -2006,12 +2085,21 @@ public class DialectUtils {
 			logger.debug("级联子表{}修改记录数为:{}", tableName, updateCnt);
 			return;
 		}
-		// mysql只支持identity,sequence 值忽略
-		boolean isAssignPK = KingbaseDialectUtils.isAssignPKValue(entityMeta.getIdStrategy());
-		String insertSql = DialectExtUtils.insertIgnore(dbType, entityMeta, entityMeta.getIdStrategy(), "NVL",
-				"nextval('" + entityMeta.getSequence() + "')", isAssignPK, tableName);
-		Long saveCnt = saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql, entities,
-				batchSize, reflectPropsHandler, conn, dbType, null);
+		PKStrategy pkStrategy = entityMeta.getIdStrategy();
+		String sequence = "NEXTVAL('" + entityMeta.getSequence() + "')";
+		// kingbase identity 是sequence的一种变化实现
+		if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
+			String defaultValue = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
+			if (StringUtil.isNotBlank(defaultValue)) {
+				pkStrategy = PKStrategy.SEQUENCE;
+				sequence = "NEXTVAL('" + defaultValue + "')";
+			}
+		}
+		boolean isAssignPK = KingbaseDialectUtils.isAssignPKValue(pkStrategy);
+		String insertSql = DialectExtUtils.insertIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
+				pkStrategy, "NVL", sequence, isAssignPK, tableName);
+		Long saveCnt = saveAll(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entities, batchSize,
+				reflectPropsHandler, conn, dbType, null);
 		logger.debug("级联子表:{} 变更记录数:{},新建记录数为:{}", tableName, updateCnt, saveCnt);
 	}
 
@@ -2052,6 +2140,7 @@ public class DialectUtils {
 		// 构造全新的修改记录参数赋值反射(覆盖之前的)
 		ReflectPropsHandler handler = getUpdateReflectHandler(reflectPropsHandler, forceUpdateFields,
 				sqlToyContext.getUnifyFieldsHandler());
+		// 字段加密处理
 		handler = getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
 		List<Object[]> paramsValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getFieldsArray(), null,
@@ -2086,7 +2175,8 @@ public class DialectUtils {
 			logger.debug("共有:{}行记录因为主键值为空跳过修改操作!", skipCount);
 		}
 		// 构建update语句
-		String updateSql = generateUpdateSql(dbType, entityMeta, nullFunction, forceUpdateFields, realTable);
+		String updateSql = generateUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta, nullFunction,
+				forceUpdateFields, realTable);
 		if (updateSql == null) {
 			throw new IllegalArgumentException("updateAll sql is null,引起问题的原因是没有设置需要修改的字段!");
 		}
@@ -2516,8 +2606,9 @@ public class DialectUtils {
 	 * @throws Exception
 	 */
 	public static StoreResult executeStore(final SqlToyConfig sqlToyConfig, final SqlToyContext sqlToyContext,
-			final String storeSql, final Object[] inParamValues, final Integer[] outParamTypes, final Connection conn,
-			final Integer dbType, final int fetchSize) throws Exception {
+			final String storeSql, final Object[] inParamValues, final Integer[] outParamTypes,
+			final boolean moreResult, final Connection conn, final Integer dbType, final int fetchSize)
+			throws Exception {
 		CallableStatement callStat = null;
 		ResultSet rs = null;
 		return (StoreResult) SqlUtil.callableStatementProcess(null, callStat, rs, new CallableStatementResultHandler() {
@@ -2543,15 +2634,49 @@ public class DialectUtils {
 						callStat.registerOutParameter(i + inCount + 1, outParamTypes[i]);
 					}
 				}
-				callStat.execute();
-				rs = callStat.getResultSet();
+
 				StoreResult storeResult = new StoreResult();
-				if (rs != null) {
-					QueryResult tempResult = ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn, rs, null,
-							null, null, 0);
-					storeResult.setLabelNames(tempResult.getLabelNames());
-					storeResult.setLabelTypes(tempResult.getLabelTypes());
-					storeResult.setRows(tempResult.getRows());
+				// 存在多个返回集合
+				if (moreResult) {
+					boolean hasNext = callStat.execute();
+					List<String[]> labelsList = new ArrayList<String[]>();
+					List<String[]> labelTypesList = new ArrayList<String[]>();
+					List<List> dataSets = new ArrayList<List>();
+					int meter = 0;
+					SqlToyConfig notFirstConfig = new SqlToyConfig(sqlToyConfig.getId(), sqlToyConfig.getSql());
+					while (hasNext) {
+						rs = callStat.getResultSet();
+						if (rs != null) {
+							QueryResult tempResult = ResultUtils.processResultSet(sqlToyContext,
+									(meter == 0) ? sqlToyConfig : notFirstConfig, conn, rs, null, null, null, 0);
+							labelsList.add(tempResult.getLabelNames());
+							labelTypesList.add(tempResult.getLabelTypes());
+							dataSets.add(tempResult.getRows());
+							meter++;
+						}
+						hasNext = callStat.getMoreResults();
+					}
+					storeResult.setLabelsList(labelsList);
+					storeResult.setLabelTypesList(labelTypesList);
+					List[] moreResults = new List[dataSets.size()];
+					dataSets.toArray(moreResults);
+					storeResult.setMoreResults(moreResults);
+					// 默认第一个集合作为后续sql 配置处理的对象(如缓存翻译、格式化等)
+					if (dataSets.size() > 0) {
+						storeResult.setLabelNames(labelsList.get(0));
+						storeResult.setLabelTypes(labelTypesList.get(0));
+						storeResult.setRows(dataSets.get(0));
+					}
+				} else {
+					callStat.execute();
+					rs = callStat.getResultSet();
+					if (rs != null) {
+						QueryResult tempResult = ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn, rs,
+								null, null, null, 0);
+						storeResult.setLabelNames(tempResult.getLabelNames());
+						storeResult.setLabelTypes(tempResult.getLabelTypes());
+						storeResult.setRows(tempResult.getRows());
+					}
 				}
 
 				// 有返回参数如:(?=call (? in,? out) )

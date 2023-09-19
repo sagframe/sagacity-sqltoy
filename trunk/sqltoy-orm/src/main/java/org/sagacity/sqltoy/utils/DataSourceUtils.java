@@ -486,6 +486,7 @@ public class DataSourceUtils {
 		case DBType.ORACLE:
 		case DBType.OCEANBASE:
 		case DBType.DM:
+		case DBType.H2:
 		case DBType.ORACLE11: {
 			return "select 1 from dual";
 		}
@@ -534,6 +535,7 @@ public class DataSourceUtils {
 			// 调用反调，传入conn和数据库类型进行实际业务处理(数据库类型主要便于DialectFactory获取对应方言处理类)
 			handler.doConnection(conn, dbType, dialect);
 		} catch (Exception e) {
+			e.printStackTrace();
 			sqltoyContext.releaseConnection(conn, datasource);
 			conn = null;
 			throw new RuntimeException(e);
@@ -648,12 +650,57 @@ public class DataSourceUtils {
 			return Dialect.KINGBASE;
 		case DBType.TDENGINE:
 			return Dialect.TDENGINE;
+		case DBType.GAUSSDB:
+			return Dialect.GAUSSDB;
 		case DBType.IMPALA:
 			return Dialect.IMPALA;
 		case DBType.H2:
 			return Dialect.H2;
 		default:
 			return "";
+		}
+	}
+
+	/**
+	 * @TODO 获取数据库对应的nvl函数
+	 * @param dbType
+	 * @return
+	 */
+	public static String getNvlFunction(Integer dbType) {
+		switch (dbType) {
+		case DBType.DB2:
+			return "nvl";
+		case DBType.ORACLE:
+		case DBType.ORACLE11:
+			return "nvl";
+		case DBType.POSTGRESQL:
+		case DBType.POSTGRESQL15:
+			return "COALESCE";
+		case DBType.MYSQL:
+		case DBType.MYSQL57:
+			return "ifnull";
+		case DBType.SQLSERVER:
+			return "isnull";
+		case DBType.SQLITE:
+			return "ifnull";
+		case DBType.CLICKHOUSE:
+			return "ifnull";
+		case DBType.TIDB:
+			return "ifnull";
+		case DBType.OCEANBASE:
+			return "nvl";
+		case DBType.DM:
+			return "nvl";
+		case DBType.GAUSSDB:
+			return "nvl";
+		case DBType.KINGBASE:
+			return "nvl";
+		case DBType.IMPALA:
+			return "ifnull";
+		case DBType.H2:
+			return "COALESCE";
+		default:
+			return "nvl";
 		}
 	}
 }

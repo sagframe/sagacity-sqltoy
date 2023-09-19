@@ -22,7 +22,7 @@ public class KingbaseDialectUtils {
 		if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
 			return true;
 		}
-		// 目前不支持identity模式
+		// kingbase identity不允许手工赋值(2023-6-1 验证)
 		if (pkStrategy.equals(PKStrategy.IDENTITY)) {
 			return false;
 		}

@@ -20,14 +20,19 @@ public class SqlLoopTest {
 			StaffInfoVO staff = new StaffInfoVO();
 			staff.setStaffId("S000" + (i + 1));
 			staff.setBirthday(LocalDate.now());
+			if (i == 4) {
+				staff.setBirthday(null);
+			}
 			staffInfos.add(staff);
 		}
 		SqlLoop sqlLoop = new SqlLoop(false);
-		String[] params = { "staffInfos", "(staffId=':staffInfos[i].staffId' and birthDay=':staffInfos[i].birthday')",
+		String[] params = { "staffInfos",
+				"(staffId=:staffInfos[i].staffId #[and birthDay!=':staffInfos[i].birthday'] and status=:status	)",
 				"or" };
 		IgnoreKeyCaseMap<String, Object> keyValues = new IgnoreKeyCaseMap<String, Object>();
 		keyValues.put("staffInfos", staffInfos);
-		String result = sqlLoop.execute(params, keyValues);
+		keyValues.put("status", 1);
+		String result = sqlLoop.execute(params, keyValues, null, null);
 		System.err.print(result);
 	}
 
@@ -45,7 +50,7 @@ public class SqlLoopTest {
 		String[] params = { "staffInfos", " and staffId=':staffInfos[i]'" };
 		IgnoreKeyCaseMap<String, Object> keyValues = new IgnoreKeyCaseMap<String, Object>();
 		keyValues.put("staffInfos", staffInfos);
-		String result = sqlLoop.execute(params, keyValues);
+		String result = sqlLoop.execute(params, keyValues, null, null);
 		System.err.print(result);
 	}
 
@@ -59,7 +64,7 @@ public class SqlLoopTest {
 		String[] params = { "staffInfos", " and staffId like '%:staffInfos[i]%'" };
 		IgnoreKeyCaseMap<String, Object> keyValues = new IgnoreKeyCaseMap<String, Object>();
 		keyValues.put("staffInfos", staffInfos);
-		String result = sqlLoop.execute(params, keyValues);
+		String result = sqlLoop.execute(params, keyValues, null, null);
 		System.err.print(result);
 	}
 

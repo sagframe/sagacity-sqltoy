@@ -31,6 +31,7 @@ import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
+import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -162,7 +163,7 @@ public class PostgreSqlDialect implements Dialect {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		// 获取loadsql(loadsql 可以通过@loadSql进行改变，所以需要sqltoyContext重新获取)
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(entityMeta.getLoadSql(tableName), SqlType.search,
-				dialect);
+				dialect, null);
 		String loadSql = sqlToyConfig.getSql(dialect);
 		loadSql = loadSql.concat(getLockSql(loadSql, dbType, lockMode));
 		return (Serializable) DialectUtils.load(sqlToyContext, sqlToyConfig, loadSql, entityMeta, entity, cascadeTypes,
@@ -230,14 +231,11 @@ public class PostgreSqlDialect implements Dialect {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = "nextval('" + entityMeta.getSequence() + "')";
-						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
-							// 伪造成sequence模式
-							pkStrategy = PKStrategy.SEQUENCE;
-							sequence = "DEFAULT";
-						}
 						boolean isAssignPK = PostgreSqlDialectUtils.isAssignPKValue(pkStrategy);
-						return PostgreSqlDialectUtils.getSaveOrUpdateSql(dbType, entityMeta, pkStrategy, isAssignPK,
-								sequence, forceUpdateFields, null);
+						// update 级联操作过程中会自动判断postgresql15，而采用不同策略(这里统一按15的规则提供，14之前版本并不用到)
+						return DialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
+								entityMeta, pkStrategy, forceUpdateFields, null, NVL_FUNCTION, sequence, isAssignPK,
+								null);
 					}
 				}, emptyCascadeClasses, subTableForceUpdateProps, conn, dbType, tableName);
 	}
@@ -296,12 +294,13 @@ public class PostgreSqlDialect implements Dialect {
 	public Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			ReflectPropsHandler reflectPropsHandler, String[] forceUpdateFields, Connection conn, final Integer dbType,
 			final String dialect, final Boolean autoCommit, final String tableName) throws Exception {
+		// 暂时不开放，postgresql类型太多,merge 语句中需要case(? as type) as columnName
+		// 目前type类型无法完整适配支持
 		// postgresql15 支持merge into
-		// if (dbType.equals(DBType.POSTGRESQL15)) {
-		// return PostgreSqlDialectUtils.saveOrUpdateAll(sqlToyContext, entities,
-		// batchSize, reflectPropsHandler,
-		// forceUpdateFields, conn, dbType, dialect, autoCommit, tableName);
-		// }
+		if (dbType.equals(DBType.POSTGRESQL15)) {
+			return PostgreSqlDialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, reflectPropsHandler,
+					forceUpdateFields, conn, dbType, dialect, autoCommit, tableName);
+		}
 		Long updateCnt = DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields,
 				reflectPropsHandler, NVL_FUNCTION, conn, dbType, autoCommit, tableName, true);
 		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
@@ -334,14 +333,13 @@ public class PostgreSqlDialect implements Dialect {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = "nextval('" + entityMeta.getSequence() + "')";
-						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
-							// 伪造成sequence模式
-							pkStrategy = PKStrategy.SEQUENCE;
-							sequence = "DEFAULT";
-						}
 						boolean isAssignPK = PostgreSqlDialectUtils.isAssignPKValue(pkStrategy);
-						return DialectExtUtils.insertIgnore(dbType, entityMeta, pkStrategy, NVL_FUNCTION, sequence,
-								isAssignPK, tableName);
+						if (dbType == DBType.POSTGRESQL15) {
+							return DialectExtUtils.mergeIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType,
+									entityMeta, pkStrategy, null, NVL_FUNCTION, sequence, isAssignPK, tableName);
+						}
+						return DialectExtUtils.insertIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
+								pkStrategy, NVL_FUNCTION, sequence, isAssignPK, tableName);
 					}
 				}, reflectPropsHandler, conn, dbType, autoCommit);
 	}
@@ -390,10 +388,10 @@ public class PostgreSqlDialect implements Dialect {
 
 	@Override
 	public StoreResult executeStore(SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
-			final Object[] inParamsValue, final Integer[] outParamsType, final Connection conn, final Integer dbType,
-			final String dialect, final int fetchSize) throws Exception {
-		return DialectUtils.executeStore(sqlToyConfig, sqlToyContext, sql, inParamsValue, outParamsType, conn, dbType,
-				fetchSize);
+			final Object[] inParamsValue, final Integer[] outParamsType, final boolean moreResult,
+			final Connection conn, final Integer dbType, final String dialect, final int fetchSize) throws Exception {
+		return DialectUtils.executeStore(sqlToyConfig, sqlToyContext, sql, inParamsValue, outParamsType, moreResult,
+				conn, dbType, fetchSize);
 	}
 
 	@Override

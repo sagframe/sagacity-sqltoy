@@ -9,6 +9,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.SqlToyConstants;
+import org.sagacity.sqltoy.config.model.LinkModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.model.MapKit;
@@ -41,7 +42,8 @@ public class SqlConfigParseUtilsTest {
 				new Object[] { "1", "chen", "1" });
 		System.err.println("id<>null:" + JSON.toJSONString(result1));
 
-		SqlToyResult result2 = SqlConfigParseUtils.processSql(sql, MapKit.keys("id", "name", "status").values("1", "chen", "1"));
+		SqlToyResult result2 = SqlConfigParseUtils.processSql(sql,
+				MapKit.keys("id", "name", "status").values("1", "chen", "1"));
 		System.err.println("id<>null:" + JSON.toJSONString(result2));
 	}
 
@@ -72,10 +74,51 @@ public class SqlConfigParseUtilsTest {
 	}
 
 	@Test
+	public void testParseShowCaseSql() throws Exception {
+		String sqlFile = "classpath:scripts/showcase.sql.xml";
+		List<SqlToyConfig> result = new ArrayList<SqlToyConfig>();
+		InputStream fileIS = FileUtil.getFileInputStream(sqlFile);
+		domFactory.setFeature(SqlToyConstants.XML_FETURE, false);
+		DocumentBuilder domBuilder = domFactory.newDocumentBuilder();
+		Document doc = domBuilder.parse(fileIS);
+		NodeList sqlElts = doc.getDocumentElement().getChildNodes();
+		if (sqlElts == null || sqlElts.getLength() == 0)
+			return;
+		// 解析单个sql
+		Element sqlElt;
+		Node obj;
+		for (int i = 0; i < sqlElts.getLength(); i++) {
+			obj = sqlElts.item(i);
+			if (obj.getNodeType() == Node.ELEMENT_NODE) {
+				sqlElt = (Element) obj;
+				result.add(SqlXMLConfigParse.parseSingleSql(sqlElt, "mysql"));
+			}
+		}
+		for (SqlToyConfig config : result) {
+			System.err.println(JSON.toJSONString(config));
+		}
+	}
+
+	@Test
+	public void testSqlToyConfigClone() throws Exception {
+		SqlToyConfig sqltoyConfig = new SqlToyConfig("1000", "select * from table");
+		LinkModel linkModel = new LinkModel();
+		linkModel.setColumns(new String[] { "id", "name" });
+		sqltoyConfig.setLinkModel(linkModel);
+
+		SqlToyConfig sqltoy1 = sqltoyConfig.clone();
+		LinkModel linkModel1 = new LinkModel();
+		linkModel1.setColumns(new String[] { "sexType", "name" });
+		sqltoy1.setLinkModel(linkModel1);
+		System.err.println(JSON.toJSONString(sqltoyConfig.getLinkModel()));
+		System.err.println(JSON.toJSONString(sqltoy1.getLinkModel()));
+	}
+
+	@Test
 	public void testNull() throws Exception {
-		String sql = "select * from table where 1=1 #[and id=:id and name like :name] #[and status=:status]";
+		String sql = "select * from table where 1=1 #[and id=:id and name like  :name] #[and status=:status]";
 		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "id", "name", "status" },
-				new Object[] { "1", null, "1" });
+				new Object[] { "1", "chen", "1" });
 		System.err.println(JSON.toJSONString(result));
 	}
 
@@ -123,6 +166,24 @@ public class SqlConfigParseUtilsTest {
 	}
 
 	@Test
+	public void testLoopNull() throws Exception {
+		String sql = "update table set name=:name #[,@loop-full(:status,{ t2.\"status\"=:status[i]},{,})]";
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "name", "status" },
+				new Object[] {"chenfenfei", new Object[] { "1", null, "3" } });
+		System.err.println(JSON.toJSONString(result));
+		
+	}
+	
+	@Test
+	public void testLoop1() throws Exception {
+		String sql = "@loop(:cols,\":cols[i]\",\",\")";
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "cols", "name" },
+				new Object[] { new Object[] { "field1", "field2", "field3" }, "chen" });
+		System.err.println(JSON.toJSONString(result));
+
+	}
+
+	@Test
 	public void testSynSign() throws Exception {
 		String sql = "select * from table where #[id in [arraystringconcat(name)] and id=:id ]#[and name like :name] #[and status=:status]";
 		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "id", "name", "status" },
@@ -157,6 +218,13 @@ public class SqlConfigParseUtilsTest {
 	@Test
 	public void testGetParamNames() throws Exception {
 		String sql = "select * from table where a=:a1_a and status=:staff.工号_id #[and id=:单据_编号_id] and name like @value(:name.id[i]) #[and status=:status]@loop(:group.staffIds,:group.staffIds[i].id)";
+		String[] result = SqlConfigParseUtils.getSqlParamsName(sql, true);
+		System.err.println(JSON.toJSONString(result));
+	}
+
+	@Test
+	public void testGetParamNames1() throws Exception {
+		String sql = "select * from sqltoy_fruit_order where fruit_name = :limitList[0].fruitName or fruit_name = :limitList[1].fruit_name or fruit_name = :limitList[2]";
 		String[] result = SqlConfigParseUtils.getSqlParamsName(sql, true);
 		System.err.println(JSON.toJSONString(result));
 	}
@@ -276,11 +344,13 @@ public class SqlConfigParseUtilsTest {
 
 	@Test
 	public void testIf1() throws Exception {
-		String sql = "where name=1 #[ @if(:flag==1) and #[status=:status]]";
-		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "flag", "status" },
-				new Object[] { "1", null });
-		System.err.println(JSON.toJSONString(result));
-		result = SqlConfigParseUtils.processSql(sql, new String[] { "flag", "status" }, new Object[] { "1", 1 });
+		String sql = "where name=1 #[ @if(:flag==:flagValue||:flag1==:flagValue1||3==:flag1) and #[status=:status]]";
+//		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "flag", "status" },
+//				new Object[] { "1", null });
+//		System.err.println(JSON.toJSONString(result));
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql,
+				new String[] { "flag", "flag1", "status", "flagValue", "flagValue1" },
+				new Object[] { "1", "3", 1, "5", "2" });
 		System.err.println(JSON.toJSONString(result));
 	}
 
@@ -320,5 +390,31 @@ public class SqlConfigParseUtilsTest {
 		String key = property.substring(0, lastIndex);
 		int index = Integer.parseInt(property.substring(lastIndex + 1, property.length() - 1));
 		System.err.println("key=[" + key + "] index=[" + index + "]");
+	}
+
+	@Test
+	public void testNullValue1() throws Exception {
+		String sql = "select * from table where a=? and b=?";
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, null, new Object[] { "1", null });
+		System.err.println(result.getSql());
+
+		sql = "with tmp as (select * from table1 where id=? ) update table set a=? , b=? where c.name=?";
+		result = SqlConfigParseUtils.processSql(sql, null, new Object[] { null, 1, null, null });
+		System.err.println(result.getSql());
+
+		sql = "with tmp as (select * from table1 where id=? ) update table SET a=? , b=? where c.name = ?";
+		result = SqlConfigParseUtils.processSql(sql, null, new Object[] { null, null, 1, null });
+		System.err.println(result.getSql());
+
+		sql = "insert table a(f1,f2,f3,f4,f5) values(?,?,?,?,?)";
+		result = SqlConfigParseUtils.processSql(sql, null, new Object[] { null, 1, null, 1, null });
+		System.err.println(result.getSql());
+	}
+
+	@Test
+	public void testUpdateNull() throws Exception {
+		String sql = "update table set t1.'field'=? where name=? and sex=?";
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, null, new Object[] { null ,null,null});
+		System.err.println(result.getSql());
 	}
 }

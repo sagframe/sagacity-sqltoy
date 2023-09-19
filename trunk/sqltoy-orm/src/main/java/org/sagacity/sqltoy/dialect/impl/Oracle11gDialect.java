@@ -10,7 +10,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DecryptHandler;
@@ -262,23 +261,6 @@ public class Oracle11gDialect implements Dialect {
 			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
 			throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-		// 1、拆分merge into(兼容seata 分布式事务);2、多租户数据安全过滤(mrege 语句无法增加where
-		// tenant_id='S0001')
-		if (sqlToyContext.isSplitMergeInto() || (entityMeta.getTenantField() != null
-				&& sqlToyContext.getUnifyFieldsHandler() != null && sqlToyContext.getUnifyFieldsHandler()
-						.authTenants(entities.get(0).getClass(), OperateType.updateAll) != null)) {
-			Long updateCnt = DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields,
-					reflectPropsHandler, NVL_FUNCTION, conn, dbType, autoCommit, tableName, true);
-			// 如果修改的记录数量跟总记录数量一致,表示全部是修改
-			if (updateCnt >= entities.size()) {
-				SqlExecuteStat.debug("修改记录", "修改记录量:" + updateCnt + " 条,等于entities集合长度,不再做insert操作!");
-				return updateCnt;
-			}
-			Long saveCnt = saveAllIgnoreExist(sqlToyContext, entities, batchSize, reflectPropsHandler, conn, dbType,
-					dialect, autoCommit, tableName);
-			SqlExecuteStat.debug("新增记录", "新建记录数量:" + saveCnt + " 条!");
-			return updateCnt + saveCnt;
-		}
 		return DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta, forceUpdateFields,
 				new GenerateSqlHandler() {
 					@Override
@@ -319,8 +301,9 @@ public class Oracle11gDialect implements Dialect {
 							pkStrategy = PKStrategy.SEQUENCE;
 							sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
 						}
-						return DialectExtUtils.mergeIgnore(dbType, entityMeta, pkStrategy, VIRTUAL_TABLE, NVL_FUNCTION,
-								sequence, isAssignPKValue(pkStrategy), tableName);
+						return DialectExtUtils.mergeIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
+								pkStrategy, VIRTUAL_TABLE, NVL_FUNCTION, sequence, isAssignPKValue(pkStrategy),
+								tableName);
 					}
 				}, reflectPropsHandler, conn, dbType, autoCommit);
 	}
@@ -368,8 +351,8 @@ public class Oracle11gDialect implements Dialect {
 			pkStrategy = PKStrategy.SEQUENCE;
 			sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
 		}
-		String insertSql = DialectExtUtils.generateInsertSql(dbType, entityMeta, pkStrategy, NVL_FUNCTION, sequence,
-				isAssignPKValue(pkStrategy), tableName);
+		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
+				pkStrategy, NVL_FUNCTION, sequence, isAssignPKValue(pkStrategy), tableName);
 		return DialectUtils.save(sqlToyContext, entityMeta, pkStrategy, isAssignPKValue(pkStrategy), insertSql, entity,
 				new GenerateSqlHandler() {
 					// 通过反调方式提供oracle insert语句
@@ -382,8 +365,8 @@ public class Oracle11gDialect implements Dialect {
 							pkStrategy = PKStrategy.SEQUENCE;
 							sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
 						}
-						return DialectExtUtils.generateInsertSql(dbType, entityMeta, pkStrategy, NVL_FUNCTION, sequence,
-								isAssignPKValue(pkStrategy), null);
+						return DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
+								entityMeta, pkStrategy, NVL_FUNCTION, sequence, isAssignPKValue(pkStrategy), null);
 					}
 				}, new GenerateSavePKStrategy() {
 					@Override
@@ -417,8 +400,8 @@ public class Oracle11gDialect implements Dialect {
 			pkStrategy = PKStrategy.SEQUENCE;
 			sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
 		}
-		String insertSql = DialectExtUtils.generateInsertSql(dbType, entityMeta, pkStrategy, NVL_FUNCTION, sequence,
-				isAssignPK, tableName);
+		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
+				pkStrategy, NVL_FUNCTION, sequence, isAssignPK, tableName);
 		return DialectUtils.saveAll(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entities, batchSize,
 				reflectPropsHandler, conn, dbType, autoCommit);
 	}
@@ -521,10 +504,10 @@ public class Oracle11gDialect implements Dialect {
 
 	@Override
 	public StoreResult executeStore(SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
-			final Object[] inParamsValue, final Integer[] outParamsType, final Connection conn, final Integer dbType,
-			final String dialect, final int fetchSize) throws Exception {
-		return OracleDialectUtils.executeStore(sqlToyConfig, sqlToyContext, sql, inParamsValue, outParamsType, conn,
-				dbType, fetchSize);
+			final Object[] inParamsValue, final Integer[] outParamsType, final boolean moreResult,
+			final Connection conn, final Integer dbType, final String dialect, final int fetchSize) throws Exception {
+		return OracleDialectUtils.executeStore(sqlToyConfig, sqlToyContext, sql, inParamsValue, outParamsType,
+				moreResult, conn, dbType, fetchSize);
 	}
 
 	@Override

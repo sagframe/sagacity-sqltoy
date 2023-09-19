@@ -2,6 +2,7 @@ package org.sagacity.sqltoy.utils;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -394,5 +395,32 @@ public class BeanUtilTest {
 			}
 		}
 		DebugUtil.endTime("00002");
+	}
+
+	@Test
+	public void testMethodType() {
+		StaffInfoVO staff = new StaffInfoVO();
+		Method method = BeanUtil.matchSetMethods(StaffInfoVO.class, "dataRangeList")[0];
+		System.err.println(method.getParameterTypes()[0]);
+		System.err.println(method.getParameterTypes()[0].equals(List.class));
+		System.err.println(((ParameterizedType)method.getGenericParameterTypes()[0]).getRawType());
+		System.err.println(((ParameterizedType)method.getGenericParameterTypes()[0]).getActualTypeArguments()[0]);
+		System.err.println(method.getGenericParameterTypes()[0] instanceof ParameterizedType);
+		System.err.println(method.getGenericParameterTypes()[0].equals(List.class));
+	}
+
+	@Test
+	public void testMethodType2() {
+		StaffInfoVO staff = new StaffInfoVO();
+		List<DataRange> list=new ArrayList<DataRange>();
+		DataRange range=new DataRange();
+		list.add(range);
+		staff.setDataRangeList(list);
+		Method method = BeanUtil.matchSetMethods(StaffInfoVO.class, "items")[0];
+		System.err.println(method.getParameterTypes()[0]);
+		System.err.println(method.getParameterTypes()[0].equals(List.class));
+		System.err.println(method.getGenericParameterTypes()[0] instanceof ParameterizedType);
+		System.err.println(method.getGenericParameterTypes()[0]==null);
+		Object value=staff.getDataRangeList();
 	}
 }

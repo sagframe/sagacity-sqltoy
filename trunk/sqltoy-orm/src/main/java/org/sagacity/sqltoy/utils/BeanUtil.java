@@ -78,9 +78,120 @@ public class BeanUtil {
 	// 保存pojo的级联关系
 	private static ConcurrentHashMap<String, List> cascadeModels = new ConcurrentHashMap<String, List>();
 
+	private static ConcurrentHashMap<Class, Method> enumGetKeyMethods = new ConcurrentHashMap<Class, Method>();
+	private static ConcurrentHashMap<Class, Integer> enumGetKeyExists = new ConcurrentHashMap<Class, Integer>();
+	private static ConcurrentHashMap<String, Class> enumClassMap = new ConcurrentHashMap<String, Class>();
+
+	// 枚举类型取key值的常用方法名称
+	private static String[] enumKeys = { "value", "key", "code", "id", "status", "level" };
+
 	// 静态方法避免实例化和继承
 	private BeanUtil() {
 
+	}
+
+	/**
+	 * @TODO 通过value\key\code\id 常规逐个排查方式得到获取key的方法
+	 * @param enumValue
+	 * @return
+	 */
+	public static Object getEnumValue(Object enumValue) {
+		if (enumValue == null) {
+			return null;
+		}
+		Object result = null;
+		Class enumClass = enumValue.getClass();
+		Method getKeyMethod;
+		if (enumGetKeyExists.containsKey(enumClass)) {
+			getKeyMethod = enumGetKeyMethods.get(enumClass);
+			if (getKeyMethod != null) {
+				try {
+					result = getKeyMethod.invoke(enumValue);
+				} catch (Exception e) {
+
+				}
+			}
+		} else {
+			getKeyMethod = matchEnumKeyMethod(enumClass, enumKeys);
+			if (getKeyMethod != null) {
+				try {
+					result = getKeyMethod.invoke(enumValue);
+				} catch (Exception e) {
+
+				}
+				enumGetKeyMethods.put(enumClass, getKeyMethod);
+			}
+			enumGetKeyExists.put(enumClass, 1);
+		}
+		if (result == null) {
+			return enumValue.toString();
+		}
+		return result;
+	}
+
+	/**
+	 * @TODO 实例化枚举类型
+	 * @param key
+	 * @param enumClass
+	 * @return
+	 */
+	public static Object newEnumInstance(Object key, Class enumClass) {
+		if (key == null) {
+			return null;
+		}
+		Method getKeyMethod = null;
+		if (enumGetKeyExists.containsKey(enumClass)) {
+			getKeyMethod = enumGetKeyMethods.get(enumClass);
+		} else {
+			getKeyMethod = matchEnumKeyMethod(enumClass, enumKeys);
+			if (getKeyMethod != null) {
+				enumGetKeyMethods.put(enumClass, getKeyMethod);
+			}
+			enumGetKeyExists.put(enumClass, 1);
+		}
+		if (getKeyMethod == null) {
+			return null;
+		}
+		Object[] enums = enumClass.getEnumConstants();
+		try {
+			for (Object enumVal : enums) {
+				if (key.equals(getKeyMethod.invoke(enumVal))) {
+					return enumVal;
+				}
+			}
+		} catch (Exception e) {
+
+		}
+		return null;
+	}
+
+	/**
+	 * @TODO 找到枚举类型中获取key的方法
+	 * @param enumClass
+	 * @param props
+	 * @return
+	 */
+	private static Method matchEnumKeyMethod(Class enumClass, String[] props) {
+		Method[] methods = enumClass.getMethods();
+		List<Method> realMeth = new ArrayList<Method>();
+		// 有返回值且无参数方法
+		for (Method mt : methods) {
+			if (!void.class.equals(mt.getReturnType()) && mt.getParameterTypes().length == 0) {
+				realMeth.add(mt);
+			}
+		}
+		String prop;
+		String name;
+		for (int i = 0; i < props.length; i++) {
+			prop = props[i].toLowerCase();
+			for (Method getKeyMethod : realMeth) {
+				name = getKeyMethod.getName().toLowerCase();
+				if ("get".concat(prop).equals(name) || prop.equals(name)) {
+					return getKeyMethod;
+				}
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -522,21 +633,23 @@ public class BeanUtil {
 				return DateUtil.formatDate(paramValue, "HH:mm:ss");
 			} else if (paramValue instanceof java.util.Date) {
 				return DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss");
+			} else if (paramValue instanceof Enum) {
+				return getEnumValue(paramValue).toString();
 			}
 			return paramValue.toString();
 		}
-		String valueStr = paramValue.toString();
-		boolean isBlank = "".equals(valueStr.trim());
 		// 6 bigDecimal第二优先
 		if (DataType.wrapBigDecimalType == typeValue) {
-			if (isBlank) {
+			String valueStr = enumToString(paramValue);
+			if ("".equals(valueStr.trim())) {
 				return null;
 			}
 			return new BigDecimal(convertBoolean(valueStr));
 		}
 		// 7 Integer第三
 		if (DataType.wrapIntegerType == typeValue) {
-			if (isBlank) {
+			String valueStr = enumToString(paramValue);
+			if ("".equals(valueStr.trim())) {
 				return null;
 			}
 			return Integer.valueOf(convertBoolean(valueStr).split("\\.")[0]);
@@ -573,14 +686,16 @@ public class BeanUtil {
 			if ("oracle.sql.TIMESTAMP".equals(paramValue.getClass().getTypeName())) {
 				return oracleTimeStampConvert(paramValue);
 			}
-			if (isBlank) {
+			String valueStr = paramValue.toString();
+			if ("".equals(valueStr.trim())) {
 				return null;
 			}
 			return new Timestamp(DateUtil.parseString(valueStr).getTime());
 		}
 		// 11 第7
 		if (DataType.wrapLongType == typeValue) {
-			if (isBlank) {
+			String valueStr = enumToString(paramValue);
+			if ("".equals(valueStr.trim())) {
 				return null;
 			}
 			// 考虑数据库中存在默认值为0.00 的问题，导致new Long() 报错，因为精度而不用Double.parse(原生long则可以)
@@ -588,7 +703,8 @@ public class BeanUtil {
 		}
 		// 12 第8
 		if (DataType.primitiveIntType == typeValue) {
-			if (isBlank) {
+			String valueStr = enumToString(paramValue);
+			if ("".equals(valueStr.trim())) {
 				return 0;
 			}
 			// 防止小数而不使用Integer.parseInt
@@ -596,6 +712,7 @@ public class BeanUtil {
 		}
 		// 13 第9 字符串转 boolean 型
 		if (DataType.wrapBooleanType == typeValue) {
+			String valueStr = paramValue.toString();
 			if ("true".equals(valueStr.toLowerCase()) || "1".equals(valueStr)) {
 				return Boolean.TRUE;
 			}
@@ -603,6 +720,7 @@ public class BeanUtil {
 		}
 		// 14 第10 字符串转 boolean 型
 		if (DataType.primitiveBooleanType == typeValue) {
+			String valueStr = paramValue.toString();
 			if ("true".equals(valueStr.toLowerCase()) || "1".equals(valueStr)) {
 				return true;
 			}
@@ -619,18 +737,20 @@ public class BeanUtil {
 			if ("oracle.sql.TIMESTAMP".equals(paramValue.getClass().getTypeName())) {
 				return oracleDateConvert(paramValue);
 			}
-			return DateUtil.parseString(valueStr);
+			return DateUtil.parseString(paramValue.toString());
 		}
 		// 16 第12
 		if (DataType.wrapBigIntegerType == typeValue) {
-			if (isBlank) {
+			String valueStr = enumToString(paramValue);
+			if ("".equals(valueStr.trim())) {
 				return null;
 			}
 			return new BigInteger(convertBoolean(valueStr).split("\\.")[0]);
 		}
 		// 17 第13
 		if (DataType.wrapDoubleType == typeValue) {
-			if (isBlank) {
+			String valueStr = enumToString(paramValue);
+			if ("".equals(valueStr.trim())) {
 				return null;
 			}
 			return Double.valueOf(convertBoolean(valueStr));
@@ -647,7 +767,8 @@ public class BeanUtil {
 		}
 		// 19
 		if (DataType.primitiveLongType == typeValue) {
-			if (isBlank) {
+			String valueStr = enumToString(paramValue);
+			if ("".equals(valueStr.trim())) {
 				return 0;
 			}
 			// 防止小数而不使用Long.parseLong
@@ -655,7 +776,8 @@ public class BeanUtil {
 		}
 		// 20
 		if (DataType.primitiveDoubleType == typeValue) {
-			if (isBlank) {
+			String valueStr = enumToString(paramValue);
+			if ("".equals(valueStr.trim())) {
 				return 0;
 			}
 			return Double.parseDouble(convertBoolean(valueStr));
@@ -670,32 +792,36 @@ public class BeanUtil {
 				java.sql.Blob blob = (java.sql.Blob) paramValue;
 				return blob.getBytes(1, (int) blob.length());
 			}
-			return valueStr.getBytes();
+			return paramValue.toString().getBytes();
 		}
 		// 22
 		if (DataType.wrapFloatType == typeValue) {
-			if (isBlank) {
+			String valueStr = enumToString(paramValue);
+			if ("".equals(valueStr.trim())) {
 				return null;
 			}
 			return Float.valueOf(convertBoolean(valueStr));
 		}
 		// 23
 		if (DataType.primitiveFloatType == typeValue) {
-			if (isBlank) {
+			String valueStr = enumToString(paramValue);
+			if ("".equals(valueStr.trim())) {
 				return 0;
 			}
 			return Float.parseFloat(convertBoolean(valueStr));
 		}
 		// 24
 		if (DataType.wrapShortType == typeValue) {
-			if (isBlank) {
+			String valueStr = enumToString(paramValue);
+			if ("".equals(valueStr.trim())) {
 				return null;
 			}
 			return Short.valueOf(Double.valueOf(convertBoolean(valueStr)).shortValue());
 		}
 		// 25
 		if (DataType.primitiveShortType == typeValue) {
-			if (isBlank) {
+			String valueStr = enumToString(paramValue);
+			if ("".equals(valueStr.trim())) {
 				return 0;
 			}
 			return Double.valueOf(convertBoolean(valueStr)).shortValue();
@@ -711,7 +837,8 @@ public class BeanUtil {
 			if ("oracle.sql.TIMESTAMP".equals(paramValue.getClass().getTypeName())) {
 				return new java.sql.Date(oracleDateConvert(paramValue).getTime());
 			}
-			if (isBlank) {
+			String valueStr = paramValue.toString();
+			if ("".equals(valueStr.trim())) {
 				return null;
 			}
 			return new java.sql.Date(DateUtil.parseString(valueStr).getTime());
@@ -720,7 +847,7 @@ public class BeanUtil {
 		if (DataType.clobType == typeValue) {
 			// update 2020-6-23 增加兼容性判断
 			if (paramValue instanceof String) {
-				return valueStr;
+				return paramValue.toString();
 			}
 			java.sql.Clob clob = (java.sql.Clob) paramValue;
 			BufferedReader in = new BufferedReader(clob.getCharacterStream());
@@ -742,15 +869,16 @@ public class BeanUtil {
 			if ("oracle.sql.TIMESTAMP".equals(paramValue.getClass().getTypeName())) {
 				return new java.sql.Time(oracleDateConvert(paramValue).getTime());
 			}
-			return new java.sql.Time(DateUtil.parseString(valueStr).getTime());
+			return new java.sql.Time(DateUtil.parseString(paramValue.toString()).getTime());
 		}
 		// 29
 		if (DataType.primitiveByteType == typeValue) {
-			return Byte.valueOf(valueStr).byteValue();
+			return Byte.valueOf(paramValue.toString()).byteValue();
 		}
 		// 30
 		if (DataType.primitiveCharType == typeValue) {
-			if (isBlank) {
+			String valueStr = paramValue.toString();
+			if ("".equals(valueStr.trim())) {
 				return " ".charAt(0);
 			}
 			return valueStr.charAt(0);
@@ -770,17 +898,101 @@ public class BeanUtil {
 				}
 				return out.toString().toCharArray();
 			}
-			return valueStr.toCharArray();
+			return paramValue.toString().toCharArray();
 		}
 		// 32 update by 2020-4-13增加Byte类型的处理
 		if (DataType.wrapByteType == typeValue) {
-			return Byte.valueOf(valueStr);
+			return Byte.valueOf(paramValue.toString());
 		}
+		// update 2023-5-26 支持List 和Object[] 数组之间互转
 		// 33 数组类型
-		if (typeValue == DataType.aryOtherType && (paramValue instanceof Array)) {
-			return convertArray(((Array) paramValue).getArray(), typeName);
+		if (DataType.aryOtherType == typeValue) {
+			if ((paramValue instanceof Array)) {
+				return convertArray(((Array) paramValue).getArray(), typeName);
+			} else if ((paramValue instanceof Collection)) {
+				return convertArray(((Collection) paramValue).toArray(), typeName);
+			}
+		}
+		// 34 List类型
+		if (DataType.listType == typeValue) {
+			if (paramValue instanceof Array) {
+				Object[] tmp = (Object[]) ((Array) paramValue).getArray();
+				// 存在泛型，转换数组类型
+				if (genericType != null) {
+					return CollectionUtil.arrayToList(convertArray(tmp, genericType.getName().concat("[]")));
+				}
+				return CollectionUtil.arrayToList(tmp);
+			} else if (paramValue instanceof Object[]) {
+				// 存在泛型，转换数组类型
+				if (genericType != null) {
+					return CollectionUtil.arrayToList(convertArray(paramValue, genericType.getName().concat("[]")));
+				}
+				return CollectionUtil.arrayToList((Object[]) paramValue);
+			} else if (paramValue instanceof Set) {
+				Object[] tmp = ((Set) paramValue).toArray();
+				if (genericType != null) {
+					return CollectionUtil.arrayToList(convertArray(tmp, genericType.getName().concat("[]")));
+				}
+				return CollectionUtil.arrayToList(tmp);
+			}
+		}
+		// 35 Set类型
+		if (DataType.setType == typeValue) {
+			if (paramValue instanceof Array) {
+				Object[] tmp = (Object[]) ((Array) paramValue).getArray();
+				// 存在泛型，转换数组类型
+				if (genericType != null) {
+					return arrayToSet((Object[]) convertArray(tmp, genericType.getName().concat("[]")));
+				}
+				return arrayToSet(tmp);
+			} else if (paramValue instanceof Object[]) {
+				if (genericType != null) {
+					return arrayToSet((Object[]) convertArray(paramValue, genericType.getName().concat("[]")));
+				}
+				return arrayToSet((Object[]) paramValue);
+			} else if (paramValue instanceof Collection) {
+				Object[] tmp = ((Collection) paramValue).toArray();
+				// 存在泛型，转换数组类型
+				if (genericType != null) {
+					return arrayToSet((Object[]) convertArray(tmp, genericType.getName().concat("[]")));
+				}
+				return arrayToSet(tmp);
+			}
+		}
+		// 36 枚举类型
+		if (DataType.enumType == typeValue) {
+			Class enumClass = enumClassMap.get(typeName);
+			if (enumClass == null) {
+				enumClass = Class.forName(typeName);
+				enumClassMap.put(typeName, enumClass);
+			}
+			return newEnumInstance(paramValue, enumClass);
 		}
 		return paramValue;
+	}
+
+	/**
+	 * 只处理非null值
+	 * 
+	 * @param paramValue
+	 * @return
+	 */
+	private static String enumToString(Object paramValue) {
+		if (paramValue instanceof Enum) {
+			// getEnumValue 逻辑也不会返回null
+			return getEnumValue(paramValue).toString();
+		}
+		return paramValue.toString();
+	}
+
+	private static HashSet arrayToSet(Object[] values) {
+		HashSet result = new HashSet();
+		for (Object val : values) {
+			if (val != null) {
+				result.add(val);
+			}
+		}
+		return result;
 	}
 
 	public static String convertBoolean(String var) {
@@ -845,7 +1057,7 @@ public class BeanUtil {
 	 * @param properties
 	 * @param reflectPropsHandler
 	 * @return
-	 * @throws Exception
+	 * @throws RuntimeException
 	 */
 	public static List reflectBeansToList(List datas, String[] properties, ReflectPropsHandler reflectPropsHandler)
 			throws RuntimeException {
@@ -1064,7 +1276,8 @@ public class BeanUtil {
 											keyAndIndex = getKeyAndIndex(fieldLow);
 											if (keyAndIndex != null
 													&& entry.getKey().toLowerCase().equals(keyAndIndex.getKey())) {
-												fieldValue = getArrayIndexValue(entry.getValue(), keyAndIndex.getIndex());
+												fieldValue = getArrayIndexValue(entry.getValue(),
+														keyAndIndex.getIndex());
 												isMapped = true;
 												break;
 											}
@@ -1275,12 +1488,14 @@ public class BeanUtil {
 			int[] methodTypeValues = new int[indexSize];
 			Class[] genericTypes = new Class[indexSize];
 			Type[] types;
+			Class methodType;
 			// 自动适配属性的数据类型
 			if (autoConvertType) {
 				for (int i = 0; i < indexSize; i++) {
 					if (null != realMethods[i]) {
-						methodTypes[i] = realMethods[i].getParameterTypes()[0].getTypeName();
-						methodTypeValues[i] = DataType.getType(methodTypes[i]);
+						methodType = realMethods[i].getParameterTypes()[0];
+						methodTypes[i] = methodType.getTypeName();
+						methodTypeValues[i] = DataType.getType(methodType);
 						types = realMethods[i].getGenericParameterTypes();
 						if (types.length > 0) {
 							if (types[0] instanceof ParameterizedType) {
@@ -1443,6 +1658,7 @@ public class BeanUtil {
 			Iterator iter = voList.iterator();
 			Object bean;
 			boolean inited = false;
+			Class methodType;
 			while (iter.hasNext()) {
 				bean = iter.next();
 				if (null != bean) {
@@ -1451,8 +1667,9 @@ public class BeanUtil {
 						if (autoConvertType) {
 							for (int i = 0; i < indexSize; i++) {
 								if (realMethods[i] != null) {
-									methodTypes[i] = realMethods[i].getParameterTypes()[0].getTypeName();
-									methodTypeValues[i] = DataType.getType(methodTypes[i]);
+									methodType = realMethods[i].getParameterTypes()[0];
+									methodTypes[i] = methodType.getTypeName();
+									methodTypeValues[i] = DataType.getType(methodType);
 									types = realMethods[i].getGenericParameterTypes();
 									if (types.length > 0) {
 										if (types[0] instanceof ParameterizedType) {
@@ -1518,6 +1735,7 @@ public class BeanUtil {
 			boolean inited = false;
 			int rowIndex = 0;
 			Object[] rowData;
+			Class methodType;
 			while (iter.hasNext()) {
 				if (rowIndex > values.size() - 1) {
 					break;
@@ -1530,8 +1748,9 @@ public class BeanUtil {
 						if (autoConvertType) {
 							for (int i = 0; i < indexSize; i++) {
 								if (realMethods[i] != null) {
-									methodTypes[i] = realMethods[i].getParameterTypes()[0].getTypeName();
-									methodTypeValues[i] = DataType.getType(methodTypes[i]);
+									methodType = realMethods[i].getParameterTypes()[0];
+									methodTypes[i] = methodType.getTypeName();
+									methodTypeValues[i] = DataType.getType(methodType);
 									types = realMethods[i].getGenericParameterTypes();
 									if (types.length > 0) {
 										if (types[0] instanceof ParameterizedType) {
@@ -1658,7 +1877,8 @@ public class BeanUtil {
 			}
 		}
 		try {
-			method.invoke(bean, convertType(null, value, DataType.getType(typeName), typeName, genericType));
+			method.invoke(bean,
+					convertType(null, value, DataType.getType(method.getParameterTypes()[0]), typeName, genericType));
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException(e.getMessage());
@@ -1753,7 +1973,7 @@ public class BeanUtil {
 			// 获取主键的set方法
 			Method method = BeanUtil.matchSetMethods(voClass, entityMeta.getIdArray())[0];
 			String typeName = method.getParameterTypes()[0].getTypeName();
-			int typeValue = DataType.getType(typeName);
+			int typeValue = DataType.getType(method.getParameterTypes()[0]);
 			Type[] types = method.getGenericParameterTypes();
 			Class genericType = null;
 			if (types.length > 0) {
@@ -1821,6 +2041,16 @@ public class BeanUtil {
 		}
 		Object[] array = (Object[]) values;
 		int index = 0;
+		if ("java.lang.String[]".equals(typeName) && !(values instanceof String[])) {
+			String[] result = new String[array.length];
+			for (Object obj : array) {
+				if (obj != null) {
+					result[index] = obj.toString();
+				}
+				index++;
+			}
+			return result;
+		}
 		if ("java.lang.Integer[]".equals(typeName) && !(values instanceof Integer[])) {
 			Integer[] result = new Integer[array.length];
 			for (Object obj : array) {
@@ -2053,6 +2283,12 @@ public class BeanUtil {
 		return result;
 	}
 
+	/**
+	 * @TODO 将对象转数组获取index列对应的值
+	 * @param result
+	 * @param index
+	 * @return
+	 */
 	public static Object getArrayIndexValue(Object result, int index) {
 		if (result == null) {
 			return null;

@@ -288,12 +288,14 @@ public class ResultUtils {
 				genericTypes = new Class[columnSize];
 				indexs = new int[columnSize];
 				Type[] types;
+				Class methodType;
 				// 自动适配属性的数据类型
 				for (int i = 0; i < columnSize; i++) {
 					indexs[i] = i;
 					if (null != realMethods[i]) {
-						methodTypes[i] = realMethods[i].getParameterTypes()[0].getTypeName();
-						methodTypeValues[i] = DataType.getType(methodTypes[i]);
+						methodType = realMethods[i].getParameterTypes()[0];
+						methodTypes[i] = methodType.getTypeName();
+						methodTypeValues[i] = DataType.getType(methodType);
 						types = realMethods[i].getGenericParameterTypes();
 						if (types.length > 0) {
 							if (types[0] instanceof ParameterizedType) {
@@ -591,8 +593,8 @@ public class ResultUtils {
 				} else {
 					linkStr = linkValue.toString();
 				}
-				identity = (linkModel.getIdColumns() == null) ? "default"
-						: getLinkColumnsId(rs, linkModel.getIdColumns());
+				identity = (linkModel.getGroupColumns() == null) ? "default"
+						: getLinkColumnsId(rs, linkModel.getGroupColumns());
 				// 不相等
 				if (!identity.equals(preIdentity)) {
 					if (index != 0) {
@@ -845,7 +847,8 @@ public class ResultUtils {
 				}
 			}
 			// 取分组列的值
-			identity = (linkModel.getIdColumns() == null) ? "default" : getLinkColumnsId(rs, linkModel.getIdColumns());
+			identity = (linkModel.getGroupColumns() == null) ? "default"
+					: getLinkColumnsId(rs, linkModel.getGroupColumns());
 			// 不相等
 			if (!identity.equals(preIdentity)) {
 				// 不相等时先对最后一条记录修改，写入拼接后的字符串
@@ -937,7 +940,6 @@ public class ResultUtils {
 	 * @param result
 	 * @param pivotCategorySet
 	 * @return
-	 * @throws Exception
 	 */
 	private static List pivotResult(PivotModel pivotModel, LabelIndexModel labelIndexMap, List result,
 			List pivotCategorySet) {
@@ -1109,6 +1111,7 @@ public class ResultUtils {
 					java.sql.Blob blob = (java.sql.Blob) fieldValue;
 					fieldValue = blob.getBytes(1, (int) blob.length());
 				}
+
 				// 有一个非null
 				allNull = false;
 			}
@@ -1313,7 +1316,7 @@ public class ResultUtils {
 				PivotModel pivotModel = (PivotModel) processor;
 				if (pivotModel.getCategorySql() != null) {
 					SqlToyConfig pivotSqlConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
-							sqlToyContext.getSqlToyConfig(pivotModel.getCategorySql(), SqlType.search, ""),
+							sqlToyContext.getSqlToyConfig(pivotModel.getCategorySql(), SqlType.search, "", null),
 							queryExecutor, dialect, false);
 					SqlToyResult pivotSqlToyResult = SqlConfigParseUtils.processSql(pivotSqlConfig.getSql(dialect),
 							extend.getParamsName(), extend.getParamsValue(sqlToyContext, pivotSqlConfig), dialect);
@@ -1553,7 +1556,7 @@ public class ResultUtils {
 		}
 		Object cell;
 		String typeName = classType.getTypeName();
-		int typeValue = DataType.getType(typeName);
+		int typeValue = DataType.getType(classType);
 		try {
 			for (Object row : rows) {
 				cell = ((List) row).get(0);
@@ -1609,6 +1612,7 @@ public class ResultUtils {
 		int[] colIndexs = new int[groupSize];
 		IgnoreKeyCaseMap<String, Integer> labelIndexs = new IgnoreKeyCaseMap<String, Integer>();
 		int index = 0;
+		// 去除下划线，便于跟对象属性匹配
 		for (String label : labelNames) {
 			labelIndexs.put(label.replace("_", ""), index);
 			index++;
@@ -1617,7 +1621,8 @@ public class ResultUtils {
 			if (labelIndexs.containsKey(groupFields[i])) {
 				colIndexs[i] = labelIndexs.get(groupFields[i]);
 			} else {
-				throw new DataAccessException("查询结果中未包含属性:" + groupFields[i] + " 对应的值!");
+				throw new DataAccessException(
+						"层次结构封装操作,查询结果中未包含OneToOne或OneToMany的分组属性(对象属性名称,正常不包含下划线):" + groupFields[i] + " 对应的值!");
 			}
 		}
 		// 判断是否存在oneToMany
@@ -1809,6 +1814,7 @@ public class ResultUtils {
 						result[j] = result[j] + "SqlToyIgnoreField";
 					}
 				}
+				// 设置匹配的属性
 				result[i] = fieldName;
 			}
 		}
