@@ -368,20 +368,15 @@ List<QueryResult<TreeModel>> list = super.parallQuery(
     <property name="functionConverts" value="default" /> 
     default:SubStr\Trim\Instr\Concat\Nvl 函数；可以参见org.sagacity.sqltoy.plugins.function.Nvl 代码实现
     
- ```xml
-        <!-- 跨数据库函数自动替换(非必须项),适用于跨数据库软件产品,如mysql开发，oracle部署 -->
-	<property name="functionConverts" value="default">
-	<!-- 也可以这样自行根据需要进行定义和扩展
-	<property name="functionConverts">
-		<list>
-			<value>org.sagacity.sqltoy.plugins.function.Nvl</value>
-			<value>org.sagacity.sqltoy.plugins.function.SubStr</value>
-			<value>org.sagacity.sqltoy.plugins.function.Now</value>
-			<value>org.sagacity.sqltoy.plugins.function.Length</value>
-		</list>
-	</property> -->
-</bean>
-
+ ```properties
+# 开启sqltoy默认的函数自适配转换函数
+spring.sqltoy.functionConverts=default
+# 也可以自定义函数来实现替换Nvl
+# spring.sqltoy.functionConverts=default,com.yourpackage.Nvl
+# 启用框架自带Nvl、Instr
+# spring.sqltoy.functionConverts=Nvl,Instr
+# 启用自定义Nvl、Instr
+# spring.sqltoy.functionConverts=com.yourpackage.Nvl,com.yourpackage.Instr
 ```
 * 6、通过sqlId+dialect模式，可针对特定数据库写sql,sqltoy根据数据库类型获取实际执行sql,顺序为:
     dialect_sqlId->sqlId_dialect->sqlId，
