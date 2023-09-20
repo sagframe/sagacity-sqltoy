@@ -680,8 +680,7 @@ public class CrudCaseServiceTest {
 
 ## 4.1 sqltoy-orm 主要分以下几个部分：
   - SqlToyDaoSupport:提供给开发者Dao继承的基本Dao,集成了所有对数据库操作的方法。
-  - SqlToyLazyDao:提供给开发者快捷使用的Dao,让开发者只关注写Service业务逻辑代码，在service中直接调用lazyDao
-  - SqltoyCRUDService:简单Service的封装，面向controller层提供基于对象的快捷service调用，比如save(pojo)这种极为简单的就无需再写service代码
+  - LightDao:提供给开发者快捷使用的Dao,让开发者只关注写Service业务逻辑代码，在service中直接调用lightDao
   - DialectFactory:数据库方言工厂类，sqltoy根据当前连接的方言调用不同数据库的实现封装。
   - SqlToyContext:sqltoy上下文配置,是整个框架的核心配置和交换区，spring配置主要是配置sqltoyContext。
   - EntityManager:封装于SqlToyContext，用于托管POJO对象，建立对象跟数据库表的关系。sqltoy通过SqlToyEntity注解扫描加载对象。
@@ -692,8 +691,8 @@ public class CrudCaseServiceTest {
 
 ## 4.2 快速阅读理解sqltoy:
 
-  - 从SqlToyLazyDao作为入口，了解sqltoy提供的所有功能
-  - SqlToyDaoSupport 是SqlToyLazyDao 具体功能实现。
+  - 从LightDao作为入口，了解sqltoy提供的所有功能
+  - SqlToyDaoSupport 是LightDao 具体功能实现。
   - 从DialectFactory会进入不同数据库方言的实现入口。可以跟踪看到具体数据库的实现逻辑。你会看到oracle、mysql等分页、取随机记录、快速分页的封装等。
   - EntityManager:你会找到如何扫描POJO并构造成模型，知道通过POJO操作数据库实质会变成相应的sql进行交互。
   - ParallelUtils:对象分库分表并行执行器，通过这个类你会看到分库分表批量操作时如何将集合分组到不同的库不同的表并进行并行调度的。
