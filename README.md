@@ -38,12 +38,12 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
 # 最新版本 
-* 5.3.41 (jdk17+、springboot3.x)  发版日期: 2023-09-18
+* 5.3.41 (jdk17+/jdk21、springboot3.x)  发版日期: 2023-09-18
 * 5.2.67 (jdk1.8)                 发版日期: 2023-09-18
 
 # 历史版本(EOF)
-* 5.1.74                             发版日期: 2023-09-13
-* 4.20.72(兼容所有之前版本)                            发版日期: 2023-09-18
+* 5.1.75                             发版日期: 2023-09-19
+* 4.20.73(兼容所有之前版本)                            发版日期: 2023-09-18
 
 # 1. 前言
 ## 1.1 sqltoy-orm是什么
@@ -368,20 +368,15 @@ List<QueryResult<TreeModel>> list = super.parallQuery(
     <property name="functionConverts" value="default" /> 
     default:SubStr\Trim\Instr\Concat\Nvl 函数；可以参见org.sagacity.sqltoy.plugins.function.Nvl 代码实现
     
- ```xml
-        <!-- 跨数据库函数自动替换(非必须项),适用于跨数据库软件产品,如mysql开发，oracle部署 -->
-	<property name="functionConverts" value="default">
-	<!-- 也可以这样自行根据需要进行定义和扩展
-	<property name="functionConverts">
-		<list>
-			<value>org.sagacity.sqltoy.plugins.function.Nvl</value>
-			<value>org.sagacity.sqltoy.plugins.function.SubStr</value>
-			<value>org.sagacity.sqltoy.plugins.function.Now</value>
-			<value>org.sagacity.sqltoy.plugins.function.Length</value>
-		</list>
-	</property> -->
-</bean>
-
+ ```properties
+# 开启sqltoy默认的函数自适配转换函数
+spring.sqltoy.functionConverts=default
+# 也可以自定义函数来实现替换Nvl
+# spring.sqltoy.functionConverts=default,com.yourpackage.Nvl
+# 启用框架自带Nvl、Instr
+# spring.sqltoy.functionConverts=Nvl,Instr
+# 启用自定义Nvl、Instr
+# spring.sqltoy.functionConverts=com.yourpackage.Nvl,com.yourpackage.Instr
 ```
 * 6、通过sqlId+dialect模式，可针对特定数据库写sql,sqltoy根据数据库类型获取实际执行sql,顺序为:
     dialect_sqlId->sqlId_dialect->sqlId，
@@ -685,8 +680,7 @@ public class CrudCaseServiceTest {
 
 ## 4.1 sqltoy-orm 主要分以下几个部分：
   - SqlToyDaoSupport:提供给开发者Dao继承的基本Dao,集成了所有对数据库操作的方法。
-  - SqlToyLazyDao:提供给开发者快捷使用的Dao,让开发者只关注写Service业务逻辑代码，在service中直接调用lazyDao
-  - SqltoyCRUDService:简单Service的封装，面向controller层提供基于对象的快捷service调用，比如save(pojo)这种极为简单的就无需再写service代码
+  - LightDao:提供给开发者快捷使用的Dao,让开发者只关注写Service业务逻辑代码，在service中直接调用lightDao
   - DialectFactory:数据库方言工厂类，sqltoy根据当前连接的方言调用不同数据库的实现封装。
   - SqlToyContext:sqltoy上下文配置,是整个框架的核心配置和交换区，spring配置主要是配置sqltoyContext。
   - EntityManager:封装于SqlToyContext，用于托管POJO对象，建立对象跟数据库表的关系。sqltoy通过SqlToyEntity注解扫描加载对象。
@@ -697,8 +691,8 @@ public class CrudCaseServiceTest {
 
 ## 4.2 快速阅读理解sqltoy:
 
-  - 从SqlToyLazyDao作为入口，了解sqltoy提供的所有功能
-  - SqlToyDaoSupport 是SqlToyLazyDao 具体功能实现。
+  - 从LightDao作为入口，了解sqltoy提供的所有功能
+  - SqlToyDaoSupport 是LightDao 具体功能实现。
   - 从DialectFactory会进入不同数据库方言的实现入口。可以跟踪看到具体数据库的实现逻辑。你会看到oracle、mysql等分页、取随机记录、快速分页的封装等。
   - EntityManager:你会找到如何扫描POJO并构造成模型，知道通过POJO操作数据库实质会变成相应的sql进行交互。
   - ParallelUtils:对象分库分表并行执行器，通过这个类你会看到分库分表批量操作时如何将集合分组到不同的库不同的表并进行并行调度的。
