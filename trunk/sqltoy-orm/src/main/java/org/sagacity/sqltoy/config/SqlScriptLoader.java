@@ -119,7 +119,7 @@ public class SqlScriptLoader {
 					+ "/*- 1、单路径模式:spring.sqltoy.sqlResourcesDir=classpath:com/sagacity/crm\n"
 					+ "/*- 2、多路径模式:spring.sqltoy.sqlResourcesDir=classpath:com/sagacity/crm,classpath:com/sagacity/hr\n"
 					+ "/*- 3、绝对路径模式:spring.sqltoy.sqlResourcesDir=/home/web/project/sql\n"
-					+ "/*-----------错误范例(请看清、看清、再看清:不能有*、**和*.sql.xml)----------------------*/\n"
+					+ "/*-----------错误范例(请看仔细:不能有*、**和*.sql.xml)----------------------*/\n"
 					+ "/*-1、classpath:*/com/yourproject/yourpackage/**/*.sql.xml\n"
 					+ "/*-2、classpath*:/com/yourproject/yourpackage/**/**.sql.xml\n"
 					+ "/*-----------------------------------------------------------------------*/");
