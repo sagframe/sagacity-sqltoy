@@ -69,6 +69,7 @@ import com.alibaba.ttl.threadpool.TtlExecutors;
 //14、sqltoy的update、save、saveAll、load 等crud操作规避了jpa的缺陷,参见update(entity,String...forceUpdateProps)和updateFetch、updateSaveFetch
 //15、提供了极为人性化的条件处理:排它性条件、日期条件加减和提取月末月初处理等
 //16、提供了查询结果日期、数字格式化、安全脱敏处理，让复杂的事情变得简单，大幅简化sql和结果的二次处理工作
+//17、提供了SqlInterceptor，可自行定义sql拦截器，用于类似租户过滤、sql注入的校验等
 //--------------------------------------------------------------------------------------------------------------------------------*/
 /**
  * @project sagacity-sqltoy

@@ -23,7 +23,6 @@ import org.sagacity.sqltoy.translate.TranslateHandler;
  * @modify Date:2020-4-23 {对分页查询增加泛型支持}
  */
 @SuppressWarnings("rawtypes")
-@Deprecated
 public interface SqlToyCRUDService {
 	/**
 	 * @todo 保存单条记录对象

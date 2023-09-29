@@ -402,11 +402,13 @@ public class SqltoyAutoConfiguration {
 			}
 		}
 
+		//---- sqltoy默认的规则，即:先判断是否包含beanName，然后判断是否是包路径再new 构造
 		// 自定义sql拦截处理器
 		String[] sqlInterceptors = properties.getSqlInterceptors();
 		if (null != sqlInterceptors && sqlInterceptors.length > 0) {
 			List<SqlInterceptor> sqlInterceptorList = new ArrayList<SqlInterceptor>();
 			for (String interceptor : sqlInterceptors) {
+				// 优先检查beanName
 				if (applicationContext.containsBean(interceptor)) {
 					sqlInterceptorList.add((SqlInterceptor) applicationContext.getBean(interceptor));
 				} // 包名和类名称
