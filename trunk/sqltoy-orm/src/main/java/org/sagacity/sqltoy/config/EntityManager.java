@@ -686,7 +686,6 @@ public class EntityManager {
 		entityMeta.addFieldMeta(fieldMeta);
 		// 判断字段是否为主键
 		Id id = field.getAnnotation(Id.class);
-		String idColName;
 		if (id != null) {
 			fieldMeta.setPK(true);
 			// 主键生成策略
@@ -704,7 +703,7 @@ public class EntityManager {
 				loadNamedWhereSql.append(" where ");
 				loadArgWhereSql.append(" where ");
 			}
-			idColName = ReservedWordsUtil.convertWord(column.name(), null);
+			String idColName = ReservedWordsUtil.convertWord(column.name(), null);
 			loadNamedWhereSql.append(idColName).append("=:").append(field.getName());
 			loadArgWhereSql.append(idColName).append("=?");
 		} else {

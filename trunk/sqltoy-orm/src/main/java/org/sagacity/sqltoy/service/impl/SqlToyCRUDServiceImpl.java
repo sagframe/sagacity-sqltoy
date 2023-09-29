@@ -41,7 +41,6 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @SuppressWarnings({ "rawtypes" })
 @Service("sqlToyCRUDService")
-@Deprecated
 public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	/**
 	 * 定义全局日志
