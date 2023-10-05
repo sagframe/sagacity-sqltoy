@@ -63,7 +63,7 @@ public class FileUtil {
 		if (outFile.exists()) {
 			try {
 				fileIn = new FileInputStream(outFile);
-				byte[] buffer = new byte[fileIn.available()];
+				byte[] buffer = new byte[1024];
 				int length;
 				while ((length = fileIn.read(buffer)) != -1) {
 					out.write(buffer, 0, length);
@@ -92,14 +92,10 @@ public class FileUtil {
 			File writeFile = new File(fileName);
 			createFolder(writeFile.getParent());
 			fos = new FileOutputStream(writeFile);
-			byte[] buffer = new byte[is.available()];
+			byte[] buffer = new byte[1024];
 			int length;
 			while ((length = is.read(buffer)) != -1) {
 				fos.write(buffer, 0, length);
-				// 避免死循环
-				if (length == 0) {
-					break;
-				}
 			}
 			fos.flush();
 		} catch (Exception e) {
