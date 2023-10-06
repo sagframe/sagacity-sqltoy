@@ -264,9 +264,9 @@ public class LightDaoImpl extends SpringDaoSupport implements LightDao {
 	}
 
 	@Override
-	public Long updateCascade(Serializable entity, String[] forceUpdateProps, Class[] emptyUpdateClass,
+	public Long updateCascade(Serializable entity, String[] forceUpdateProps, Class[] forceCascadeClasses,
 			HashMap<Class, String[]> subTableForceUpdateProps) {
-		return super.updateCascade(entity, forceUpdateProps, emptyUpdateClass, subTableForceUpdateProps);
+		return super.updateCascade(entity, forceUpdateProps, forceCascadeClasses, subTableForceUpdateProps);
 	}
 
 	@Override

@@ -1503,7 +1503,7 @@ public class DialectUtils {
 			SavePKStrategy savePkStrategy;
 			for (TableCascadeModel cascadeModel : entityMeta.getCascadeModels()) {
 				final String[] mappedFields = cascadeModel.getMappedFields();
-				final Object[] mainValues = BeanUtil.reflectBeanToAry(entity, cascadeModel.getFields());
+				final Object[] mappedFieldValues = BeanUtil.reflectBeanToAry(entity, cascadeModel.getFields());
 				subTableEntityMeta = sqlToyContext.getEntityMeta(cascadeModel.getMappedType());
 				// oneToMany
 				if (cascadeModel.getCascadeType() == 1) {
@@ -1518,18 +1518,13 @@ public class DialectUtils {
 				if (subTableData != null && !subTableData.isEmpty()) {
 					logger.info("执行save操作的级联子表{}批量保存!", subTableEntityMeta.getTableName());
 					SqlExecuteStat.debug("执行子表级联保存", null);
+					// 回写关联字段赋值
+					BeanUtil.batchSetProperties(subTableData, mappedFields, mappedFieldValues, true);
 					insertSubTableSql = generateSqlHandler.generateSql(subTableEntityMeta, null);
 					savePkStrategy = generateSavePKStrategy.generate(subTableEntityMeta);
 					saveAll(sqlToyContext, subTableEntityMeta, savePkStrategy.getPkStrategy(),
 							savePkStrategy.isAssginValue(), insertSubTableSql, subTableData,
-							sqlToyContext.getBatchSize(), new ReflectPropsHandler() {
-								@Override
-								public void process() {
-									for (int i = 0; i < mappedFields.length; i++) {
-										this.setValue(mappedFields[i], mainValues[i]);
-									}
-								}
-							}, conn, dbType, null);
+							sqlToyContext.getBatchSize(), null, conn, dbType, null);
 				} else {
 					logger.info("未执行save操作的级联子表{}批量保存,子表数据为空!", subTableEntityMeta.getTableName());
 				}
@@ -1843,7 +1838,8 @@ public class DialectUtils {
 		EntityMeta subTableEntityMeta;
 		// 对子表进行级联处理
 		for (TableCascadeModel cascadeModel : entityMeta.getCascadeModels()) {
-			final Object[] mainFieldValues = BeanUtil.reflectBeanToAry(entity, cascadeModel.getFields());
+			final String[] mappedFields = cascadeModel.getMappedFields();
+			final Object[] mappedFieldValues = BeanUtil.reflectBeanToAry(entity, cascadeModel.getFields());
 			subTableEntityMeta = sqlToyContext.getEntityMeta(cascadeModel.getMappedType());
 			forceUpdateProps = (subTableForceUpdateProps == null) ? null
 					: subTableForceUpdateProps.get(cascadeModel.getMappedType());
@@ -1857,14 +1853,13 @@ public class DialectUtils {
 					subTableData.add(item);
 				}
 			}
-			final String[] mappedFields = cascadeModel.getMappedFields();
 			// 针对子表存量数据,调用级联修改的语句，分delete 和update两种操作 1、删除存量数据;2、设置存量数据状态为停用
 			if (cascadeModel.getCascadeUpdateSql() != null && ((subTableData != null && !subTableData.isEmpty())
 					|| typeMap.containsKey(cascadeModel.getMappedType()))) {
 				SqlExecuteStat.debug("执行子表级联更新前的存量数据更新", null);
 				// 根据quickvo配置文件针对cascade中update-cascade配置组织具体操作sql
 				SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(cascadeModel.getCascadeUpdateSql(),
-						mappedFields, mainFieldValues, null);
+						mappedFields, mappedFieldValues, null);
 				SqlToyConfig sqlToyConfig = new SqlToyConfig(DataSourceUtils.getDialect(dbType));
 				sqlToyConfig.setSqlType(SqlType.update);
 				sqlToyConfig.setSql(cascadeModel.getCascadeUpdateSql());
@@ -1879,36 +1874,29 @@ public class DialectUtils {
 			if (subTableData != null && !subTableData.isEmpty()) {
 				logger.info("执行update主表:{} 对应级联子表: {} 更新操作!", realTable, subTableEntityMeta.getTableName());
 				SqlExecuteStat.debug("执行子表级联更新操作", null);
-				// 将外键值通过反调赋到相关属性上
-				ReflectPropsHandler reflectPropsHandler = new ReflectPropsHandler() {
-					@Override
-					public void process() {
-						for (int i = 0; i < mappedFields.length; i++) {
-							this.setValue(mappedFields[i], mainFieldValues[i]);
-						}
-					}
-				};
+				// 回写关联字段赋值
+				BeanUtil.batchSetProperties(subTableData, mappedFields, mappedFieldValues, true);
 				// update 2020-07-30,针对mysql和postgresql、sqlite常用数据库做针对性处理
 				// 这里需要进行修改,mysql\postgresql\sqlite 等存在缺陷(字段值不为null时会报错)
 				if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.TIDB) {
-					mysqlSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, reflectPropsHandler,
-							forceUpdateProps, conn, dbType);
+					mysqlSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, null, forceUpdateProps, conn,
+							dbType);
 				} else if (dbType == DBType.POSTGRESQL) {
-					postgreSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, reflectPropsHandler,
-							forceUpdateProps, conn, dbType);
+					postgreSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, null, forceUpdateProps,
+							conn, dbType);
 				} else if (dbType == DBType.OCEANBASE) {
-					oceanBaseSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, reflectPropsHandler,
-							forceUpdateProps, conn, dbType);
+					oceanBaseSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, null, forceUpdateProps,
+							conn, dbType);
 				} else if (dbType == DBType.SQLITE) {
-					sqliteSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, reflectPropsHandler,
-							forceUpdateProps, conn, dbType);
+					sqliteSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, null, forceUpdateProps, conn,
+							dbType);
 				}
 				// db2/oracle/mssql/postgresql15+/gaussdb/kingbase/dm/h2 通过merge 方式
 				else {
 					saveOrUpdateAll(sqlToyContext, subTableData, sqlToyContext.getBatchSize(), subTableEntityMeta,
 							forceUpdateProps, generateSqlHandler,
 							// 设置关联外键字段的属性值(来自主表的主键)
-							reflectPropsHandler, conn, dbType, null);
+							null, conn, dbType, null);
 				}
 			} else {
 				logger.info("未执行update主表:{} 对应级联子表: {} 更新操作,子表数据为空!", realTable, subTableEntityMeta.getTableName());
