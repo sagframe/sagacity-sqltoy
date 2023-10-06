@@ -762,8 +762,8 @@ public class SqlServerDialectUtils {
 			List subTableData = null;
 			EntityMeta subTableEntityMeta;
 			for (TableCascadeModel cascadeModel : entityMeta.getCascadeModels()) {
-				final Object[] mainFieldValues = BeanUtil.reflectBeanToAry(entity, cascadeModel.getFields());
 				final String[] mappedFields = cascadeModel.getMappedFields();
+				final Object[] mappedFieldValues = BeanUtil.reflectBeanToAry(entity, cascadeModel.getFields());
 				subTableEntityMeta = sqlToyContext.getEntityMeta(cascadeModel.getMappedType());
 				if (cascadeModel.getCascadeType() == 1) {
 					subTableData = (List) BeanUtil.getProperty(entity, cascadeModel.getProperty());
@@ -777,14 +777,9 @@ public class SqlServerDialectUtils {
 				if (subTableData != null && !subTableData.isEmpty()) {
 					logger.info("执行save操作的级联子表{}批量保存!", subTableEntityMeta.getTableName());
 					SqlExecuteStat.debug("执行子表级联保存操作", null);
-					saveAll(sqlToyContext, subTableData, new ReflectPropsHandler() {
-						@Override
-						public void process() {
-							for (int i = 0; i < mappedFields.length; i++) {
-								this.setValue(mappedFields[i], mainFieldValues[i]);
-							}
-						}
-					}, conn, dbType, null, null);
+					// 回写关联字段赋值
+					BeanUtil.batchSetProperties(subTableData, mappedFields, mappedFieldValues, true);
+					saveAll(sqlToyContext, subTableData, null, conn, dbType, null, null);
 				} else {
 					logger.info("未执行save操作的级联子表{}批量保存,子表数据为空!", subTableEntityMeta.getTableName());
 				}
@@ -956,7 +951,7 @@ public class SqlServerDialectUtils {
 			String[] forceUpdateProps = null;
 			EntityMeta subTableEntityMeta;
 			for (TableCascadeModel cascadeModel : entityMeta.getCascadeModels()) {
-				final Object[] mainFieldValues = BeanUtil.reflectBeanToAry(entity, cascadeModel.getFields());
+				final Object[] mappedFieldValues = BeanUtil.reflectBeanToAry(entity, cascadeModel.getFields());
 				subTableEntityMeta = sqlToyContext.getEntityMeta(cascadeModel.getMappedType());
 				forceUpdateProps = (subTableForceUpdateProps == null) ? null
 						: subTableForceUpdateProps.get(cascadeModel.getMappedType());
@@ -975,7 +970,7 @@ public class SqlServerDialectUtils {
 						|| typeMap.containsKey(cascadeModel.getMappedType()))) {
 					SqlExecuteStat.debug("执行子表级联更新前的存量数据更新", null);
 					SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(cascadeModel.getCascadeUpdateSql(),
-							mappedFields, mainFieldValues, null);
+							mappedFields, mappedFieldValues, null);
 					SqlToyConfig sqlToyConfig = new SqlToyConfig(Dialect.SQLSERVER);
 					sqlToyConfig.setSqlType(SqlType.update);
 					sqlToyConfig.setSql(cascadeModel.getCascadeUpdateSql());
@@ -990,16 +985,10 @@ public class SqlServerDialectUtils {
 				if (subTableData != null && !subTableData.isEmpty()) {
 					logger.info("执行update主表:{} 对应级联子表: {} 更新操作!", tableName, subTableEntityMeta.getTableName());
 					SqlExecuteStat.debug("执行子表级联更新操作", null);
-					saveOrUpdateAll(sqlToyContext, subTableData, sqlToyContext.getBatchSize(),
-							// 设置关联外键字段的属性值(来自主表的主键)
-							new ReflectPropsHandler() {
-								@Override
-								public void process() {
-									for (int i = 0; i < mappedFields.length; i++) {
-										this.setValue(mappedFields[i], mainFieldValues[i]);
-									}
-								}
-							}, forceUpdateProps, conn, dbType, null, null);
+					// 回写关联字段赋值
+					BeanUtil.batchSetProperties(subTableData, mappedFields, mappedFieldValues, true);
+					saveOrUpdateAll(sqlToyContext, subTableData, sqlToyContext.getBatchSize(), null, forceUpdateProps,
+							conn, dbType, null, null);
 				} else {
 					logger.info("未执行update主表:{} 对应级联子表: {} 更新操作,子表数据为空!", tableName, subTableEntityMeta.getTableName());
 				}

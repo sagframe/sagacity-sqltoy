@@ -285,11 +285,11 @@ public interface LightDao {
 	 * @todo 级联修改数据并返回数据库记录变更数量
 	 * @param entity
 	 * @param forceUpdateProps
-	 * @param emptyUpdateClass
+	 * @param forceCascadeClasses
 	 * @param subTableForceUpdateProps
 	 * @return Long 数据库发生变更的记录量
 	 */
-	public Long updateCascade(Serializable entity, String[] forceUpdateProps, Class[] emptyUpdateClass,
+	public Long updateCascade(Serializable entity, String[] forceUpdateProps, Class[] forceCascadeClasses,
 			HashMap<Class, String[]> subTableForceUpdateProps);
 
 	/**

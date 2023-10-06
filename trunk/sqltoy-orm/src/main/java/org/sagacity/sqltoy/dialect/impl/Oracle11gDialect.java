@@ -415,7 +415,7 @@ public class Oracle11gDialect implements Dialect {
 	 */
 	@Override
 	public Long update(SqlToyContext sqlToyContext, Serializable entity, String[] forceUpdateFields,
-			final boolean cascade, final Class[] emptyCascadeClasses,
+			final boolean cascade, final Class[] forceCascadeClasses,
 			final HashMap<Class, String[]> subTableForceUpdateProps, Connection conn, final Integer dbType,
 			final String dialect, final String tableName) throws Exception {
 		return DialectUtils.update(sqlToyContext, entity, NVL_FUNCTION, forceUpdateFields, cascade,
@@ -432,7 +432,7 @@ public class Oracle11gDialect implements Dialect {
 								entityMeta, pkStrategy, forceUpdateFields, VIRTUAL_TABLE, NVL_FUNCTION, sequence,
 								isAssignPKValue(pkStrategy), null);
 					}
-				}, emptyCascadeClasses, subTableForceUpdateProps, conn, dbType, tableName);
+				}, forceCascadeClasses, subTableForceUpdateProps, conn, dbType, tableName);
 	}
 
 	/*

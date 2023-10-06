@@ -76,7 +76,7 @@ public class H2Dialect extends PostgreSqlDialect {
 
 	@Override
 	public Long update(SqlToyContext sqlToyContext, Serializable entity, String[] forceUpdateFields, boolean cascade,
-			final Class[] emptyCascadeClasses, HashMap<Class, String[]> subTableForceUpdateProps, Connection conn,
+			final Class[] forceCascadeClasses, HashMap<Class, String[]> subTableForceUpdateProps, Connection conn,
 			Integer dbType, String dialect, String tableName) throws Exception {
 		return DialectUtils.update(sqlToyContext, entity, NVL_FUNCTION, forceUpdateFields, cascade,
 				(cascade == false) ? null : new GenerateSqlHandler() {
@@ -89,7 +89,7 @@ public class H2Dialect extends PostgreSqlDialect {
 								entityMeta, pkStrategy, forceUpdateFields, VIRTUAL_TABLE, NVL_FUNCTION, sequence,
 								H2DialectUtils.isAssignPKValue(pkStrategy), null);
 					}
-				}, emptyCascadeClasses, subTableForceUpdateProps, conn, dbType, tableName);
+				}, forceCascadeClasses, subTableForceUpdateProps, conn, dbType, tableName);
 	}
 
 	@Override

@@ -305,12 +305,12 @@ public class SqliteDialect implements Dialect {
 	 */
 	@Override
 	public Long update(SqlToyContext sqlToyContext, Serializable entity, String[] forceUpdateFields,
-			final boolean cascade, final Class[] emptyCascadeClasses,
+			final boolean cascade, final Class[] forceCascadeClasses,
 			final HashMap<Class, String[]> subTableForceUpdateProps, Connection conn, final Integer dbType,
 			final String dialect, final String tableName) throws Exception {
 		// sqlite update内部级联采用update 、insert or ignore 两步模式，所以无需指定产生saveOrUpdate的sql
 		return DialectUtils.update(sqlToyContext, entity, NVL_FUNCTION, forceUpdateFields, cascade, null,
-				emptyCascadeClasses, subTableForceUpdateProps, conn, dbType, tableName);
+				forceCascadeClasses, subTableForceUpdateProps, conn, dbType, tableName);
 	}
 
 	/*
