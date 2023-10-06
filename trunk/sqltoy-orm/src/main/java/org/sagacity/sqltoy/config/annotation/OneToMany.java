@@ -33,6 +33,8 @@ public @interface OneToMany {
 	String orderBy() default "";
 
 	// 定制级联修改保存对子表的操作语句
+	// 如果update="delete" 表示先依据主表关联字段执行删除操作
+	// 如果update="status=0" 表示先执行状态设置为停用(逻辑删除)
 	String update() default "";
 
 	// 查询封装层次结构时，子表不为null的字段，用于辨别join子表是否存在数据(for hiberarchy)
