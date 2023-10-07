@@ -67,10 +67,6 @@ public class FileUtil {
 				int length;
 				while ((length = fileIn.read(buffer)) != -1) {
 					out.write(buffer, 0, length);
-					// 避免死循环
-					if (length == 0) {
-						break;
-					}
 				}
 				out.flush();
 			} catch (Exception e) {
@@ -614,10 +610,6 @@ public class FileUtil {
 					int len;
 					while ((len = input.read(b)) != -1) {
 						output.write(b, 0, len);
-						// 避免死循环(空文件)
-						if (len == 0) {
-							break;
-						}
 					}
 					output.flush();
 				}
