@@ -846,7 +846,9 @@ public class EntityManager {
 		// 子表的schema.table
 		String subSchemaTable = subTableMeta.getSchemaTable(null, null);
 		cascadeModel.setMappedTable(subSchemaTable);
+		cascadeModel.setField(field);
 		cascadeModel.setProperty(field.getName());
+		cascadeModel.setAnnotations(field.getAnnotations());
 		// 子表外键查询条件
 		String subWhereSql = " where ";
 		// 级联删除，自动组装sql不允许外部修改，所以用?作为条件，顺序在对象加载时约定

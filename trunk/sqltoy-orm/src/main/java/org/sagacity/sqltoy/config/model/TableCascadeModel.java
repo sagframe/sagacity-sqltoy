@@ -4,6 +4,8 @@
 package org.sagacity.sqltoy.config.model;
 
 import java.io.Serializable;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 
 /**
  * @project sqltoy-orm
@@ -24,9 +26,19 @@ public class TableCascadeModel implements Serializable {
 	private int cascadeType = 1;
 
 	/**
+	 * 对应vo中的属性
+	 */
+	private Field field;
+
+	/**
 	 * 对应vo中的List集合属性
 	 */
 	private String property;
+
+	/**
+	 * 对应vo属性中的对应的注解
+	 */
+	private Annotation[] annotations;
 
 	/**
 	 * 主键关联的表
@@ -88,6 +100,14 @@ public class TableCascadeModel implements Serializable {
 	 */
 	private String loadExtCondition;
 
+	public Field getField() {
+		return field;
+	}
+
+	public void setField(Field field) {
+		this.field = field;
+	}
+
 	/**
 	 * @return the property
 	 */
@@ -100,6 +120,14 @@ public class TableCascadeModel implements Serializable {
 	 */
 	public void setProperty(String property) {
 		this.property = property;
+	}
+
+	public Annotation[] getAnnotations() {
+		return annotations;
+	}
+
+	public void setAnnotations(Annotation[] annotations) {
+		this.annotations = annotations;
 	}
 
 	/**
