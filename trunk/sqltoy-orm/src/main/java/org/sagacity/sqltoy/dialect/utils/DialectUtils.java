@@ -1590,7 +1590,7 @@ public class DialectUtils {
 		Object[] rowData;
 		for (int i = 0, end = paramValues.size(); i < end; i++) {
 			rowData = (Object[]) paramValues.get(i);
-			// 判断主键策略关联的字段是否有值,合法性验证
+			// 业务主键关联字段值校验
 			if (relatedColumn != null) {
 				relatedColValue = new Object[relatedColumnSize];
 				for (int meter = 0; meter < relatedColumnSize; meter++) {
@@ -1683,7 +1683,7 @@ public class DialectUtils {
 			String businessIdType = hasBizId ? entityMeta.getColumnJavaType(entityMeta.getBusinessIdField()) : "";
 			for (int i = 0, end = paramValues.size(); i < end; i++) {
 				rowData = (Object[]) paramValues.get(i);
-				// 关联字段赋值
+				// 业务主键关联字段值校验
 				if (relatedColumn != null) {
 					relatedColValue = new Object[relatedColumnSize];
 					for (int meter = 0; meter < relatedColumnSize; meter++) {
