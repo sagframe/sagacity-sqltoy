@@ -454,8 +454,6 @@ public class FileUtil {
 			if (myDelFile.exists()) {
 				myDelFile.delete();
 				bea = true;
-			} else {
-				bea = false;
 			}
 		} catch (Exception e) {
 			logger.error("删除文件:{},操作出错{}", filePathAndName, e.getMessage());

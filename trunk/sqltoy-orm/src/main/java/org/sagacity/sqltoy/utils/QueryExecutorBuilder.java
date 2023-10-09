@@ -434,6 +434,7 @@ public class QueryExecutorBuilder {
 			return true;
 		} // 无:name且无?，且参数是空Map，将参数值设置为null(2023-10-07)
 		else if (argCount == 0) {
+			// null instanceof Map 是false
 			if (extend.paramsValue != null && extend.paramsValue.length == 1
 					&& ((extend.paramsValue[0] instanceof Map) && ((Map) extend.paramsValue[0]).isEmpty())) {
 				extend.paramsValue = null;

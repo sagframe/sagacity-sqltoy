@@ -665,6 +665,7 @@ public class SqlServerDialectUtils {
 		if (hasId || hasBizId) {
 			Integer[] relatedColumn = entityMeta.getBizIdRelatedColIndex();
 			Object[] relatedColValue = null;
+			// 业务主键关联字段值提取、校验
 			if (relatedColumn != null) {
 				relatedColValue = new Object[relatedColumn.length];
 				for (int meter = 0; meter < relatedColumn.length; meter++) {
@@ -675,6 +676,7 @@ public class SqlServerDialectUtils {
 					}
 				}
 			}
+			// 主键
 			if (hasId && StringUtil.isBlank(fullParamValues[pkIndex])) {
 				// id通过generator机制产生，设置generator产生的值
 				fullParamValues[pkIndex] = entityMeta.getIdGenerator().getId(entityMeta.getTableName(),
@@ -682,6 +684,7 @@ public class SqlServerDialectUtils {
 						entityMeta.getIdType(), entityMeta.getIdLength(), entityMeta.getBizIdSequenceSize());
 				needUpdatePk = true;
 			}
+			// 业务主键
 			if (hasBizId && StringUtil.isBlank(fullParamValues[bizIdColIndex])) {
 				fullParamValues[bizIdColIndex] = entityMeta.getBusinessIdGenerator().getId(entityMeta.getTableName(),
 						entityMeta.getBizIdSignature(), entityMeta.getBizIdRelatedColumns(), relatedColValue, null,
@@ -863,6 +866,7 @@ public class SqlServerDialectUtils {
 		String businessIdType = hasBizId ? entityMeta.getColumnJavaType(entityMeta.getBusinessIdField()) : "";
 		for (int i = 0, s = paramValues.size(); i < s; i++) {
 			rowData = (Object[]) paramValues.get(i);
+			// 业务主键关联字段值提取、校验
 			if (relatedColumn != null) {
 				relatedColValue = new Object[relatedColumn.length];
 				for (int meter = 0; meter < relatedColumn.length; meter++) {
