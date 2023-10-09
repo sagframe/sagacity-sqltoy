@@ -661,7 +661,7 @@ public class SqlServerDialectUtils {
 		boolean hasBizId = (entityMeta.getBusinessIdGenerator() == null) ? false : true;
 		int bizIdColIndex = hasBizId ? entityMeta.getFieldIndex(entityMeta.getBusinessIdField()) : 0;
 		boolean hasId = (entityMeta.getIdStrategy() != null && null != entityMeta.getIdGenerator()) ? true : false;
-		// 主键采用assign方式赋予，则调用generator产生id并赋予其值
+		// 主键、业务主键生成并回写对象
 		if (hasId || hasBizId) {
 			Integer[] relatedColumn = entityMeta.getBizIdRelatedColIndex();
 			Object[] relatedColValue = null;
@@ -858,42 +858,40 @@ public class SqlServerDialectUtils {
 		boolean hasDataVersion = (entityMeta.getDataVersion() == null) ? false : true;
 		int dataVerIndex = hasDataVersion ? entityMeta.getFieldIndex(entityMeta.getDataVersion().getField()) : 0;
 		boolean hasId = (pkStrategy != null && null != entityMeta.getIdGenerator()) ? true : false;
-		// 无主键值以及多主键以及assign或通过generator方式产生主键策略
-		if (hasId || hasBizId) {
-			Object[] rowData;
-			Object[] relatedColValue = null;
-			String businessIdType = hasBizId ? entityMeta.getColumnJavaType(entityMeta.getBusinessIdField()) : "";
-			for (int i = 0, s = paramValues.size(); i < s; i++) {
-				rowData = (Object[]) paramValues.get(i);
-				if (relatedColumn != null) {
-					relatedColValue = new Object[relatedColumn.length];
-					for (int meter = 0; meter < relatedColumn.length; meter++) {
-						relatedColValue[meter] = rowData[relatedColumn[meter]];
-						if (relatedColValue[meter] == null) {
-							throw new IllegalArgumentException("对象:" + entityMeta.getEntityClass().getName()
-									+ " 生成业务主键依赖的关联字段:" + relatedColumnNames[meter] + " 值为null!");
-						}
+		Object[] rowData;
+		Object[] relatedColValue = null;
+		String businessIdType = hasBizId ? entityMeta.getColumnJavaType(entityMeta.getBusinessIdField()) : "";
+		for (int i = 0, s = paramValues.size(); i < s; i++) {
+			rowData = (Object[]) paramValues.get(i);
+			if (relatedColumn != null) {
+				relatedColValue = new Object[relatedColumn.length];
+				for (int meter = 0; meter < relatedColumn.length; meter++) {
+					relatedColValue[meter] = rowData[relatedColumn[meter]];
+					if (relatedColValue[meter] == null) {
+						throw new IllegalArgumentException("对象:" + entityMeta.getEntityClass().getName()
+								+ " 生成业务主键依赖的关联字段:" + relatedColumnNames[meter] + " 值为null!");
 					}
 				}
-				if (hasId && StringUtil.isBlank(rowData[pkIndex])) {
-					rowData[pkIndex] = entityMeta.getIdGenerator().getId(entityMeta.getTableName(), signature,
-							entityMeta.getBizIdRelatedColumns(), relatedColValue, null, entityMeta.getIdType(),
-							entityMeta.getIdLength(), entityMeta.getBizIdSequenceSize());
-					// 回写主键值
-					BeanUtil.setProperty(entities.get(i), entityMeta.getIdArray()[0], rowData[pkIndex]);
-				}
-				if (hasBizId && StringUtil.isBlank(rowData[bizIdColIndex])) {
-					rowData[bizIdColIndex] = entityMeta.getBusinessIdGenerator().getId(entityMeta.getTableName(),
-							signature, entityMeta.getBizIdRelatedColumns(), relatedColValue, null, businessIdType,
-							entityMeta.getBizIdLength(), entityMeta.getBizIdSequenceSize());
-					// 回写业务主键值
-					BeanUtil.setProperty(entities.get(i), entityMeta.getBusinessIdField(), rowData[bizIdColIndex]);
-				}
-				// 回写数据版本
-				if (hasDataVersion) {
-					BeanUtil.setProperty(entities.get(i), entityMeta.getDataVersion().getField(),
-							rowData[dataVerIndex]);
-				}
+			}
+			// 主键
+			if (hasId && StringUtil.isBlank(rowData[pkIndex])) {
+				rowData[pkIndex] = entityMeta.getIdGenerator().getId(entityMeta.getTableName(), signature,
+						entityMeta.getBizIdRelatedColumns(), relatedColValue, null, entityMeta.getIdType(),
+						entityMeta.getIdLength(), entityMeta.getBizIdSequenceSize());
+				// 回写主键值
+				BeanUtil.setProperty(entities.get(i), entityMeta.getIdArray()[0], rowData[pkIndex]);
+			}
+			// 业务主键
+			if (hasBizId && StringUtil.isBlank(rowData[bizIdColIndex])) {
+				rowData[bizIdColIndex] = entityMeta.getBusinessIdGenerator().getId(entityMeta.getTableName(), signature,
+						entityMeta.getBizIdRelatedColumns(), relatedColValue, null, businessIdType,
+						entityMeta.getBizIdLength(), entityMeta.getBizIdSequenceSize());
+				// 回写业务主键值
+				BeanUtil.setProperty(entities.get(i), entityMeta.getBusinessIdField(), rowData[bizIdColIndex]);
+			}
+			// 回写数据版本
+			if (hasDataVersion) {
+				BeanUtil.setProperty(entities.get(i), entityMeta.getDataVersion().getField(), rowData[dataVerIndex]);
 			}
 		}
 
