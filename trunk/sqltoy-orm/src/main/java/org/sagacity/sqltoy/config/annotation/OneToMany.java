@@ -29,7 +29,7 @@ public @interface OneToMany {
 	// 是否级联删除
 	boolean delete() default false;
 
-	// 排序
+	// 排序,级联加载后的数据排序，比如:createTime desc
 	String orderBy() default "";
 
 	// 定制级联修改保存对子表的操作语句

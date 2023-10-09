@@ -73,7 +73,7 @@ public class ClickHouseDialectUtils {
 		} else {
 			reflectColumns = entityMeta.getFieldsArray();
 		}
-		// 构造全新的新增记录参数赋值反射(覆盖之前的)
+		// 构造全新的新增记录参数赋值反射(覆盖之前的)，涉及数据版本、创建人、创建时间、租户等
 		ReflectPropsHandler handler = DialectUtils.getAddReflectHandler(entityMeta, null,
 				sqlToyContext.getUnifyFieldsHandler());
 		handler = DialectUtils.getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
@@ -86,7 +86,7 @@ public class ClickHouseDialectUtils {
 		boolean hasBizId = (entityMeta.getBusinessIdGenerator() == null) ? false : true;
 		int bizIdColIndex = hasBizId ? entityMeta.getFieldIndex(entityMeta.getBusinessIdField()) : 0;
 		boolean hasId = (pkStrategy != null && null != entityMeta.getIdGenerator()) ? true : false;
-		// 主键采用assign方式赋予，则调用generator产生id并赋予其值
+		// 主键、业务主键生成并回写对象
 		if (hasId || hasBizId) {
 			Object[] relatedColValue = null;
 			Integer[] relatedColumn = entityMeta.getBizIdRelatedColIndex();
@@ -197,7 +197,7 @@ public class ClickHouseDialectUtils {
 		} else {
 			reflectColumns = entityMeta.getFieldsArray();
 		}
-		// 构造全新的新增记录参数赋值反射(覆盖之前的)
+		// 构造全新的新增记录参数赋值反射(覆盖之前的)，涉及数据版本、创建人、创建时间、租户等
 		ReflectPropsHandler handler = DialectUtils.getAddReflectHandler(entityMeta, reflectPropsHandler,
 				sqlToyContext.getUnifyFieldsHandler());
 		handler = DialectUtils.getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
@@ -214,44 +214,41 @@ public class ClickHouseDialectUtils {
 		int dataVerIndex = hasDataVersion ? entityMeta.getFieldIndex(entityMeta.getDataVersion().getField()) : 0;
 		int relatedColumnSize = (relatedColumn == null) ? 0 : relatedColumn.length;
 		boolean hasId = (pkStrategy != null && null != entityMeta.getIdGenerator()) ? true : false;
-		// 无主键值以及多主键以及assign或通过generator方式产生主键策略
-		if (hasId || hasBizId) {
-			Object[] rowData;
-			Object[] relatedColValue = null;
-			String businessIdType = hasBizId ? entityMeta.getColumnJavaType(entityMeta.getBusinessIdField()) : "";
-			for (int i = 0, s = paramValues.size(); i < s; i++) {
-				rowData = (Object[]) paramValues.get(i);
-				// 判断主键策略关联的字段是否有值,合法性验证
-				if (relatedColumn != null) {
-					relatedColValue = new Object[relatedColumnSize];
-					for (int meter = 0; meter < relatedColumnSize; meter++) {
-						relatedColValue[meter] = rowData[relatedColumn[meter]];
-						if (StringUtil.isBlank(relatedColValue[meter])) {
-							throw new IllegalArgumentException("对象:" + entityMeta.getEntityClass().getName()
-									+ " 生成业务主键依赖的关联字段:" + relatedColumnNames[meter] + " 值为null!");
-						}
+		Object[] rowData;
+		Object[] relatedColValue = null;
+		String businessIdType = hasBizId ? entityMeta.getColumnJavaType(entityMeta.getBusinessIdField()) : "";
+		for (int i = 0, s = paramValues.size(); i < s; i++) {
+			rowData = (Object[]) paramValues.get(i);
+			// 判断主键策略关联的字段是否有值,合法性验证
+			if (relatedColumn != null) {
+				relatedColValue = new Object[relatedColumnSize];
+				for (int meter = 0; meter < relatedColumnSize; meter++) {
+					relatedColValue[meter] = rowData[relatedColumn[meter]];
+					if (StringUtil.isBlank(relatedColValue[meter])) {
+						throw new IllegalArgumentException("对象:" + entityMeta.getEntityClass().getName()
+								+ " 生成业务主键依赖的关联字段:" + relatedColumnNames[meter] + " 值为null!");
 					}
 				}
-				// 主键值为null,调用主键生成策略并赋值
-				if (hasId && StringUtil.isBlank(rowData[pkIndex])) {
-					rowData[pkIndex] = entityMeta.getIdGenerator().getId(entityMeta.getTableName(),
-							entityMeta.getBizIdSignature(), entityMeta.getBizIdRelatedColumns(), relatedColValue, null,
-							entityMeta.getIdType(), entityMeta.getIdLength(), entityMeta.getBizIdSequenceSize());
-					// 回写主键值
-					BeanUtil.setProperty(entities.get(i), entityMeta.getIdArray()[0], rowData[pkIndex]);
-				}
-				if (hasBizId && StringUtil.isBlank(rowData[bizIdColIndex])) {
-					rowData[bizIdColIndex] = entityMeta.getBusinessIdGenerator().getId(entityMeta.getTableName(),
-							entityMeta.getBizIdSignature(), entityMeta.getBizIdRelatedColumns(), relatedColValue, null,
-							businessIdType, entityMeta.getBizIdLength(), entityMeta.getBizIdSequenceSize());
-					// 回写业务主键值
-					BeanUtil.setProperty(entities.get(i), entityMeta.getBusinessIdField(), rowData[bizIdColIndex]);
-				}
-				// 回写数据版本
-				if (hasDataVersion) {
-					BeanUtil.setProperty(entities.get(i), entityMeta.getDataVersion().getField(),
-							rowData[dataVerIndex]);
-				}
+			}
+			// 主键
+			if (hasId && StringUtil.isBlank(rowData[pkIndex])) {
+				rowData[pkIndex] = entityMeta.getIdGenerator().getId(entityMeta.getTableName(),
+						entityMeta.getBizIdSignature(), entityMeta.getBizIdRelatedColumns(), relatedColValue, null,
+						entityMeta.getIdType(), entityMeta.getIdLength(), entityMeta.getBizIdSequenceSize());
+				// 回写主键值
+				BeanUtil.setProperty(entities.get(i), entityMeta.getIdArray()[0], rowData[pkIndex]);
+			}
+			// 业务主键
+			if (hasBizId && StringUtil.isBlank(rowData[bizIdColIndex])) {
+				rowData[bizIdColIndex] = entityMeta.getBusinessIdGenerator().getId(entityMeta.getTableName(),
+						entityMeta.getBizIdSignature(), entityMeta.getBizIdRelatedColumns(), relatedColValue, null,
+						businessIdType, entityMeta.getBizIdLength(), entityMeta.getBizIdSequenceSize());
+				// 回写业务主键值
+				BeanUtil.setProperty(entities.get(i), entityMeta.getBusinessIdField(), rowData[bizIdColIndex]);
+			}
+			// 回写数据版本
+			if (hasDataVersion) {
+				BeanUtil.setProperty(entities.get(i), entityMeta.getDataVersion().getField(), rowData[dataVerIndex]);
 			}
 		}
 		List<Object[]> realParams = paramValues;
