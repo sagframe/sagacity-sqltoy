@@ -858,18 +858,19 @@ public class SqlServerDialectUtils {
 		String signature = entityMeta.getBizIdSignature();
 		Integer[] relatedColumn = entityMeta.getBizIdRelatedColIndex();
 		String[] relatedColumnNames = entityMeta.getBizIdRelatedColumns();
+		int relatedColumnSize = (relatedColumn == null) ? 0 : relatedColumn.length;
 		boolean hasDataVersion = (entityMeta.getDataVersion() == null) ? false : true;
 		int dataVerIndex = hasDataVersion ? entityMeta.getFieldIndex(entityMeta.getDataVersion().getField()) : 0;
 		boolean hasId = (pkStrategy != null && null != entityMeta.getIdGenerator()) ? true : false;
 		Object[] rowData;
 		Object[] relatedColValue = null;
 		String businessIdType = hasBizId ? entityMeta.getColumnJavaType(entityMeta.getBusinessIdField()) : "";
-		for (int i = 0, s = paramValues.size(); i < s; i++) {
+		for (int i = 0, end = paramValues.size(); i < end; i++) {
 			rowData = (Object[]) paramValues.get(i);
 			// 业务主键关联字段值提取、校验
 			if (relatedColumn != null) {
-				relatedColValue = new Object[relatedColumn.length];
-				for (int meter = 0; meter < relatedColumn.length; meter++) {
+				relatedColValue = new Object[relatedColumnSize];
+				for (int meter = 0; meter < relatedColumnSize; meter++) {
 					relatedColValue[meter] = rowData[relatedColumn[meter]];
 					if (relatedColValue[meter] == null) {
 						throw new IllegalArgumentException("对象:" + entityMeta.getEntityClass().getName()
@@ -880,16 +881,16 @@ public class SqlServerDialectUtils {
 			// 主键
 			if (hasId && StringUtil.isBlank(rowData[pkIndex])) {
 				rowData[pkIndex] = entityMeta.getIdGenerator().getId(entityMeta.getTableName(), signature,
-						entityMeta.getBizIdRelatedColumns(), relatedColValue, null, entityMeta.getIdType(),
-						entityMeta.getIdLength(), entityMeta.getBizIdSequenceSize());
+						relatedColumnNames, relatedColValue, null, entityMeta.getIdType(), entityMeta.getIdLength(),
+						entityMeta.getBizIdSequenceSize());
 				// 回写主键值
 				BeanUtil.setProperty(entities.get(i), entityMeta.getIdArray()[0], rowData[pkIndex]);
 			}
 			// 业务主键
 			if (hasBizId && StringUtil.isBlank(rowData[bizIdColIndex])) {
 				rowData[bizIdColIndex] = entityMeta.getBusinessIdGenerator().getId(entityMeta.getTableName(), signature,
-						entityMeta.getBizIdRelatedColumns(), relatedColValue, null, businessIdType,
-						entityMeta.getBizIdLength(), entityMeta.getBizIdSequenceSize());
+						relatedColumnNames, relatedColValue, null, businessIdType, entityMeta.getBizIdLength(),
+						entityMeta.getBizIdSequenceSize());
 				// 回写业务主键值
 				BeanUtil.setProperty(entities.get(i), entityMeta.getBusinessIdField(), rowData[bizIdColIndex]);
 			}

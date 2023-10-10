@@ -217,7 +217,7 @@ public class ClickHouseDialectUtils {
 		Object[] rowData;
 		Object[] relatedColValue = null;
 		String businessIdType = hasBizId ? entityMeta.getColumnJavaType(entityMeta.getBusinessIdField()) : "";
-		for (int i = 0, s = paramValues.size(); i < s; i++) {
+		for (int i = 0, end = paramValues.size(); i < end; i++) {
 			rowData = (Object[]) paramValues.get(i);
 			// 判断主键策略关联的字段是否有值,合法性验证
 			if (relatedColumn != null) {
@@ -233,7 +233,7 @@ public class ClickHouseDialectUtils {
 			// 主键
 			if (hasId && StringUtil.isBlank(rowData[pkIndex])) {
 				rowData[pkIndex] = entityMeta.getIdGenerator().getId(entityMeta.getTableName(),
-						entityMeta.getBizIdSignature(), entityMeta.getBizIdRelatedColumns(), relatedColValue, null,
+						entityMeta.getBizIdSignature(), relatedColumnNames, relatedColValue, null,
 						entityMeta.getIdType(), entityMeta.getIdLength(), entityMeta.getBizIdSequenceSize());
 				// 回写主键值
 				BeanUtil.setProperty(entities.get(i), entityMeta.getIdArray()[0], rowData[pkIndex]);
@@ -241,8 +241,8 @@ public class ClickHouseDialectUtils {
 			// 业务主键
 			if (hasBizId && StringUtil.isBlank(rowData[bizIdColIndex])) {
 				rowData[bizIdColIndex] = entityMeta.getBusinessIdGenerator().getId(entityMeta.getTableName(),
-						entityMeta.getBizIdSignature(), entityMeta.getBizIdRelatedColumns(), relatedColValue, null,
-						businessIdType, entityMeta.getBizIdLength(), entityMeta.getBizIdSequenceSize());
+						entityMeta.getBizIdSignature(), relatedColumnNames, relatedColValue, null, businessIdType,
+						entityMeta.getBizIdLength(), entityMeta.getBizIdSequenceSize());
 				// 回写业务主键值
 				BeanUtil.setProperty(entities.get(i), entityMeta.getBusinessIdField(), rowData[bizIdColIndex]);
 			}

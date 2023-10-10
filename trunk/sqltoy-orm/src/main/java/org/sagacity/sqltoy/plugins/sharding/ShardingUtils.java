@@ -520,6 +520,7 @@ public class ShardingUtils {
 		// 标识符
 		String signature = entityMeta.getBizIdSignature();
 		Integer[] relatedColumnIndex = entityMeta.getBizIdRelatedColIndex();
+		String[] relatedColumnNames = entityMeta.getBizIdRelatedColumns();
 		List<Object[]> ids = BeanUtil.reflectBeansToInnerAry(entities, pks, null, null);
 		Object pkValue;
 		Object[] relatedColValue = null;
@@ -536,14 +537,14 @@ public class ShardingUtils {
 							relatedColValue[meter] = fullParamValues[relatedColumnIndex[meter]];
 							if (relatedColValue[meter] == null) {
 								throw new IllegalArgumentException("对象:" + entityMeta.getEntityClass().getName()
-										+ " 生成业务主键依赖的关联字段:" + relatedColumnIndex[meter] + " 值为null!");
+										+ " 生成业务主键依赖的关联字段:" + relatedColumnNames[meter] + " 值为null!");
 							}
 						}
 					}
 				}
 				// 回写主键值
-				BeanUtil.setProperty(entities.get(i), pks[0], idGenerator.getId(table, signature,
-						entityMeta.getBizIdRelatedColumns(), relatedColValue, null, idType, idLength, sequenceSize));
+				BeanUtil.setProperty(entities.get(i), pks[0], idGenerator.getId(table, signature, relatedColumnNames,
+						relatedColValue, null, idType, idLength, sequenceSize));
 			}
 		}
 	}
