@@ -56,6 +56,10 @@ public class RedisIdGenerator implements IdGenerator {
 		IgnoreKeyCaseMap<String, Object> keyValueMap = new IgnoreKeyCaseMap<String, Object>();
 		if (relatedColumns != null && relatedColumns.length > 0) {
 			for (int i = 0; i < relatedColumns.length; i++) {
+				if (null == relatedColValue[i]) {
+					throw new RuntimeException(
+							"table=" + tableName + " 生成业务主键失败,关联字段:" + relatedColumns[i] + " 对应的值为null!");
+				}
 				keyValueMap.put(relatedColumns[i], relatedColValue[i]);
 			}
 		}

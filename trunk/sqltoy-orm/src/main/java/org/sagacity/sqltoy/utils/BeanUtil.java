@@ -84,7 +84,7 @@ public class BeanUtil {
 	private static ConcurrentHashMap<String, Class> enumClassMap = new ConcurrentHashMap<String, Class>();
 
 	// 枚举类型取key值的常用方法名称
-	private static String[] enumKeys = { "value", "key", "code", "id", "status", "level" };
+	private static String[] enumKeys = { "value", "key", "code", "id", "status", "level", "type" };
 
 	// 静态方法避免实例化和继承
 	private BeanUtil() {
