@@ -40,9 +40,17 @@ public class H2DialectUtils {
 		int jdbcType = fieldMeta.getType();
 		int length = fieldMeta.getLength();
 		if (jdbcType == java.sql.Types.VARCHAR) {
-			sql.append("cast(? as varchar(" + length + "))");
+			if (length > 0) {
+				sql.append("cast(? as varchar(" + length + "))");
+			} else {
+				sql.append("cast(? as varchar)");
+			}
 		} else if (jdbcType == java.sql.Types.CHAR) {
-			sql.append("cast(? as char(" + length + "))");
+			if (length > 0) {
+				sql.append("cast(? as char(" + length + "))");
+			} else {
+				sql.append("cast(? as char)");
+			}
 		} else if (jdbcType == java.sql.Types.DATE) {
 			sql.append("cast(? as date)");
 		} else if (jdbcType == java.sql.Types.NUMERIC) {
