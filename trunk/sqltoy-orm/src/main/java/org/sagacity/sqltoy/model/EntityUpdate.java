@@ -55,6 +55,16 @@ public class EntityUpdate implements Serializable {
 		return this;
 	}
 
+	public EntityUpdate skipNotExistColumn() {
+		innerModel.skipNotExistColumn = true;
+		return this;
+	}
+
+	public EntityUpdate showSql(Boolean showSql) {
+		innerModel.showSql = showSql;
+		return this;
+	}
+
 	public EntityUpdate values(Object... values) {
 		if (values != null && values.length == 1 && values[0] != null && values[0] instanceof Map) {
 			innerModel.values = new Object[] { new IgnoreKeyCaseMap((Map) values[0]) };
