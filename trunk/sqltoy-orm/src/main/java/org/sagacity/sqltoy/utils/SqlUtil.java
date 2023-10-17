@@ -399,7 +399,15 @@ public class SqlUtil {
 		} else if (paramValue instanceof java.sql.Date) {
 			pst.setDate(paramIndex, (java.sql.Date) paramValue);
 		} else if (paramValue instanceof java.lang.Boolean) {
-			pst.setBoolean(paramIndex, (Boolean) paramValue);
+			// update 2023-10-16 增强特殊情况下的兼容
+			if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.CHAR) {
+				pst.setString(paramIndex, ((Boolean) paramValue) ? "1" : "0");
+			} else if (jdbcType == java.sql.Types.INTEGER || jdbcType == java.sql.Types.SMALLINT
+					|| jdbcType == java.sql.Types.TINYINT) {
+				pst.setInt(paramIndex, ((Boolean) paramValue) ? 1 : 0);
+			} else {
+				pst.setBoolean(paramIndex, (Boolean) paramValue);
+			}
 		} else if (paramValue instanceof java.time.LocalTime) {
 			pst.setTime(paramIndex, java.sql.Time.valueOf((LocalTime) paramValue));
 		} else if (paramValue instanceof java.sql.Time) {

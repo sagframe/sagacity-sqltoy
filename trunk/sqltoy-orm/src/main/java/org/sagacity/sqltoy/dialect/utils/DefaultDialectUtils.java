@@ -444,9 +444,12 @@ public class DefaultDialectUtils {
 		if (updateResult == null || updateResult.isEmpty()) {
 			return entity;
 		}
-		List entities = BeanUtil.reflectListToBean(sqlToyContext.getTypeHandler(), updateResult,
-				entityMeta.getFieldsArray(), entity.getClass());
-		return (Serializable) entities.get(0);
+		List rowList = (List) updateResult.get(0);
+		// 覆盖返回值
+		for (int i = 0; i < entityMeta.getFieldsArray().length; i++) {
+			BeanUtil.setProperty(entity, entityMeta.getFieldsArray()[i], rowList.get(i));
+		}
+		return entity;
 	}
 
 	/**
