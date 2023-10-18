@@ -2301,7 +2301,7 @@ public class SqlToyDaoSupport {
 		}
 		if (realUpdateValues.isEmpty()) {
 			throw new IllegalArgumentException("updateByQuery: 实体对象:" + entityClass.getName()
-					+ ",set(property,value)过程中property名:" + skipFields + "不是数据库表字段(@Column注解的为数据库字段),请检查代码!");
+					+ ",set(property,value)过程中，排除无效数据库字段属性:" + skipFields + "后，无有效更新属性(@Column注解的为数据库字段),请检查代码!");
 		}
 		return realUpdateValues;
 	}
