@@ -399,23 +399,23 @@ spring.sqltoy.functionConverts=default
     dialect_sqlId->sqlId_dialect->sqlId，
 	如数据库为mysql,调用sqlId:sqltoy_showcase,则实际执行:sqltoy_showcase_mysql
 ```xml
-	<sql id="sqltoy_showcase">
-		<value>
-			<![CDATA[
-			select * from sqltoy_user_log t 
-			where t.user_id=:userId 
-				]]>
-		</value>
-	</sql>
-        <!-- sqlId_数据库方言(小写) -->
-	<sql id="sqltoy_showcase_mysql">
-		<value>
-			<![CDATA[
-			select * from sqltoy_user_log t 
-			where t.user_id=:userId 
-				]]>
-		</value>
-	</sql>
+<sql id="sqltoy_showcase">
+	<value>
+	<![CDATA[
+	select * from sqltoy_user_log t 
+	where t.user_id=:userId 
+	]]>
+	</value>
+</sql>
+<!-- sqlId_数据库方言(小写) -->
+<sql id="sqltoy_showcase_mysql">
+	<value>
+	<![CDATA[
+	select * from sqltoy_user_log t 
+	where t.user_id=:userId 
+	]]>
+	</value>
+</sql>
 ```
   
 ## 2.8 提供行列转换、分组汇总、同比环比等
