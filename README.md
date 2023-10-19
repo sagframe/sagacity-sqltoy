@@ -176,7 +176,8 @@ lightDao.deleteByQuery(StaffInfoVO.class, EntityQuery.create().where("status=?")
 	#[and t.STAFF_ID in (:staffIds)]
 	#[and t.TRANS_DATE>=:beginAndEndDate[0]]
 	#[and t.TRANS_DATE<:beginAndEndDate[1]]    
-	]]></value>
+	]]>
+</value>
 </sql>
 ```
 
