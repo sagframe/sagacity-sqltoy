@@ -171,11 +171,11 @@ lightDao.deleteByQuery(StaffInfoVO.class, EntityQuery.create().where("status=?")
 	select 	*
 	from sqltoy_device_order_info t 
 	where #[t.status in (:statusAry)]
-		  #[and t.ORDER_ID=:orderId]
-		  #[and t.ORGAN_ID in (:authedOrganIds)]
-		  #[and t.STAFF_ID in (:staffIds)]
-		  #[and t.TRANS_DATE>=:beginAndEndDate[0]]
-		  #[and t.TRANS_DATE<:beginAndEndDate[1]]    
+	#[and t.ORDER_ID=:orderId]
+	#[and t.ORGAN_ID in (:authedOrganIds)]
+	#[and t.STAFF_ID in (:staffIds)]
+	#[and t.TRANS_DATE>=:beginAndEndDate[0]]
+	#[and t.TRANS_DATE<:beginAndEndDate[1]]    
 	]]></value>
 </sql>
 ```
