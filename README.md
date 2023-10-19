@@ -401,64 +401,188 @@ spring.sqltoy.functionConverts=default
 	</sql>
 ```
   
-## 2.8 提供行列转换(数据旋转)，避免写复杂的sql或存储过程，用算法来化解对sql的高要求，同时实现数据库无关(不管是mysql还是sqlserver)
+## 2.8 提供行列转换、分组汇总、同比环比等
+
+* 水果销售记录表
+
+品类|销售月份|销售笔数|销售数量(吨)|销售金额(万元)
+----|-------|-------|----------|------------
+苹果|2019年5月|12 | 2000|2400
+苹果|2019年4月|11 | 1900|2600
+苹果|2019年3月|13 | 2000|2500
+香蕉|2019年5月|10 | 2000|2000
+香蕉|2019年4月|12 | 2400|2700
+香蕉|2019年3月|13 | 2300|2700
+
+### 2.8.1 行转列(列转行也支持)
 
 ```xml
-        <!-- 列转行测试 -->
-	<sql id="sys_unpvoitSearch">
-		<value>
-		<![CDATA[
-		SELECT TRANS_DATE, 
-		       sum(TOTAL_AMOUNT) TOTAL_AMOUNT,
-		       sum(PERSON_AMOUNT) PERSON_AMOUNT,
-		       sum(COMPANY_AMOUNT) COMPANY_AMOUNT
-		FROM sys_unpivot_data
-		group by TRANS_DATE
-		]]>
-		</value>
-		<!-- 将指定的列变成行(这里3列变成了3行) -->
-		<unpivot columns="TOTAL_AMOUNT:总金额,PERSON_AMOUNT:个人金额,COMPANY_AMOUNT:企业金额"
-			values-as-column="TRANS_AMOUNT" labels-as-column="AMOUNT_TYPE" />
-	</sql>
-
-	<!-- 行转列测试 -->
-	<sql id="sys_pvoitSearch">
-		<value>
-		<![CDATA[
-		select t.TRANS_DATE,t.TRANS_CHANNEL,TRANS_CODE,sum(t.TRANS_AMT) TRANS_AMT from sys_summary_case t
-		group by t.TRANS_DATE,t.TRANS_CHANNEL,TRANS_CODE
-		order by t.TRANS_DATE,t.TRANS_CHANNEL,TRANS_CODE
-		]]>
-		</value>
-		<pivot category-columns="TRANS_CHANNEL,TRANS_CODE" start-column="TRANS_AMT"
-			default-value="0" default-type="decimal" end-column="TRANS_AMT"
-			group-columns="TRANS_DATE" />
-	</sql>
+<!-- 行转列 -->
+<sql id="pivot_case">
+	<value>
+	<![CDATA[
+	select t.fruit_name,t.order_month,t.sale_count,t.sale_quantity,t.total_amt 
+	from sqltoy_fruit_order t
+	order by t.fruit_name ,t.order_month
+	]]>
+	</value>
+	<!-- 行转列,将order_month作为分类横向标题，从sale_count列到total_amt 三个指标旋转成行 -->
+	<pivot start-column="sale_count" end-column="total_amt"	group-columns="fruit_name" category-columns="order_month" />
+</sql>
 ```
+* 效果
 
-## 2.9 提供分组汇总求平均算法(用算法代替sql避免跨数据库语法不一致)
+<table>
+<thead>
+	<tr>
+	<th rowspan="2">品类</th>
+	<th colspan="3">2019年3月</th>
+	<th colspan="3">2019年4月</th>
+	<th colspan="3">2019年5月</th>
+	</tr>
+	<tr>
+	    <th>笔数</th><th>数量</th><th>总金额</th>
+	    <th>笔数</th><th>数量</th><th>总金额</th>
+	    <th>笔数</th><th>数量</th><th>总金额</th>
+	</tr>
+	</thead>
+	<tbody>
+	<tr>
+		<td>香蕉</td>
+		<td>13</td>
+		<td>2300</td>
+		<td>2700</td>
+		<td>12</td>
+		<td>2400</td>
+		<td>2700</td>
+		<td>10</td>
+		<td>2000</td>
+		<td>2000</td>
+	</tr>
+		<tr>
+		<td>苹果</td>
+		<td>13</td>
+		<td>2000</td>
+		<td>2500</td>
+		<td>11</td>
+		<td>1900</td>
+		<td>2600</td>
+		<td>12</td>
+		<td>2000</td>
+		<td>2400</td>
+	</tr>
+	</tbody>
+</table>
+
+
+### 2.8.2 分组汇总、求平均(可任意层级)
 ```xml
-	<!-- 汇总计算 (场景是sql先汇总，页面上还需要对已有汇总再汇总的情况,如果用sql实现在跨数据库的时候就存在问题)-->
-	<sql id="sys_summarySearch">
-		<!-- 数据源sharding，多库将请求压力分摊到多个数据库节点上，支撑更多并发请求 -->	
-		<sharding-datasource strategy="multiDataSource" />
-		<value>
+<sql id="group_summary_case">
+	<value>
 		<![CDATA[
-		select	t.TRANS_CHANNEL,t.TRANS_CODE,sum( t.TRANS_AMT )
-		from sys_summary_case t
-		group by t.TRANS_CHANNEL,t.TRANS_CODE
+		select t.fruit_name,t.order_month,t.sale_count,t.sale_quantity,t.total_amt 
+		from sqltoy_fruit_order t
+		order by t.fruit_name ,t.order_month
 		]]>
-		</value>
-		<!-- reverse 表示将汇总信息在上面显示(如第1行是汇总值，第2、3、4行为明细，反之，1、2、3行未明细，第4行为汇总)  -->
-		<summary columns="2" reverse="true" sum-site="left" radix-size="2">
-			<global sum-label="总计" label-column="0" />
-                        <!-- 可以无限层级的分组下去-->
-			<group sum-label="小计/平均" label-column="0" group-column="0" average-label="平均" />
-		</summary>
-	</sql>
+	</value>
+	<!-- reverse 是否反向 -->	
+	<summary columns="sale_count,sale_quantity,total_amt" reverse="true">
+		<!-- 层级顺序保持从高到低 -->
+		<global sum-label="总计" label-column="fruit_name" />
+		<group group-column="fruit_name" sum-label="小计" label-column="fruit_name" />
+	</summary>
+</sql>
 ```
-## 2.10 分库分表
-### 2.10.1 查询分库分表（分库和分表策略可以同时使用）
+* 效果
+
+品类|销售月份|销售笔数|销售数量(吨)|销售金额(万元)
+----|-------|-------|----------|------------
+总计|       |   71  |    12600 |14900
+小计|       |  36  | 5900   | 7500
+苹果|2019年5月|12 | 2000|2400
+苹果|2019年4月|11 | 1900|2600
+苹果|2019年3月|13 | 2000|2500
+小计|       | 35  | 6700|7400
+香蕉|2019年5月|10 | 2000|2000
+香蕉|2019年4月|12 | 2400|2700
+香蕉|2019年3月|13 | 2300|2700
+
+### 2.8.3 先行转列再环比计算
+
+```xml
+<!-- 列与列环比演示 -->
+<sql id="cols_relative_case">
+	<value>
+	<![CDATA[
+		select t.fruit_name,t.order_month,t.sale_count,t.sale_amt,t.total_amt 
+		from sqltoy_fruit_order t
+		order by t.fruit_name ,t.order_month
+	]]>
+	</value>
+	<!-- 数据旋转,行转列,将order_month 按列显示，每个月份下面有三个指标 -->
+	<pivot start-column="sale_count" end-column="total_amt"	group-columns="fruit_name" category-columns="order_month" />
+	<!-- 列与列之间进行环比计算 -->
+	<cols-chain-relative group-size="3" relative-indexs="1,2" start-column="1" format="#.00%" />
+</sql>
+```
+* 效果
+
+<table>
+<thead>
+	<tr>
+	<th rowspan="2" nowrap="nowrap">品类</th>
+	<th colspan="5">2019年3月</th>
+	<th colspan="5">2019年4月</th>
+	<th colspan="5">2019年5月</th>
+	</tr>
+	<tr>
+	    <th nowrap="nowrap">笔数</th><th nowrap="nowrap">数量</th><th nowrap="nowrap">比上月</th><th nowrap="nowrap">总金额</th><th nowrap="nowrap">比上月</th>
+	    <th nowrap="nowrap">笔数</th><th nowrap="nowrap">数量</th><th nowrap="nowrap">比上月</th><th nowrap="nowrap">总金额</th><th nowrap="nowrap">比上月</th>
+	    <th nowrap="nowrap">笔数</th><th nowrap="nowrap">数量</th><th nowrap="nowrap">比上月</th><th nowrap="nowrap">总金额</th><th nowrap="nowrap">比上月</th>
+	</tr>
+	</thead>
+	<tbody>
+	<tr>
+		<td>香蕉</td>
+		<td>13</td>
+		<td>2300</td>
+		<td></td>
+		<td>2700</td>
+		<td></td>
+		<td>12</td>
+		<td>2400</td>
+		<td>4.30%</td>
+		<td>2700</td>
+		<td>0.00%</td>
+		<td>10</td>
+		<td>2000</td>
+		<td>-16.70%</td>
+		<td>2000</td>
+		<td>-26.00%</td>
+	</tr>
+		<tr>
+		<td>苹果</td>
+		<td>13</td>
+		<td>2000</td>
+		<td></td>
+		<td>2500</td>
+		<td></td>
+		<td>11</td>
+		<td>1900</td>
+		<td>-5.10%</td>
+		<td>2600</td>
+		<td>4.00%</td>
+		<td>12</td>
+		<td>2000</td>
+		<td>5.20%</td>
+		<td>2400</td>
+		<td>-7.70%</td>
+	</tr>
+	</tbody>
+</table>
+
+## 2.9 分库分表
+### 2.9.1 查询分库分表（分库和分表策略可以同时使用）
 ```xml
    sql参见quickstart项目:com/sqltoy/quickstart/sqltoy-quickstart.sql.xml 文件
    <!-- 演示分库 -->
@@ -491,7 +615,7 @@ spring.sqltoy.functionConverts=default
         
 ```
    
-### 2.10.2 操作分库分表(vo对象由quickvo工具自动根据数据库生成，且自定义的注解不会被覆盖)
+### 2.9.2 操作分库分表(vo对象由quickvo工具自动根据数据库生成，且自定义的注解不会被覆盖)
 
 @Sharding 在对象上通过注解来实现分库分表的策略配置
 
@@ -537,24 +661,6 @@ public class UserLogVO extends AbstractUserLogVO {
 
 
 ```
-## 2.11 五种非数据库相关主键生成策略(可自扩展)
-* 主键策略除了数据库自带的 sequence\identity 外包含以下数据库无关的主键策略。通过quickvo配置，自动生成在VO对象中。
-### 2.11.1 shortNanoTime 22位有序安全ID，格式: 13位当前毫秒+6位纳秒+3位主机ID
-### 2.11.2 nanoTimeId 26位有序安全ID,格式:15位:yyMMddHHmmssSSS+6位纳秒+2位(线程Id+随机数)+3位主机ID
-### 2.11.3 uuid:32 位uuid
-### 2.11.4 SnowflakeId 雪花算法ID
-### 2.11.5 redisId  基于redis 来产生规则的ID主键
-   根据对象属性值,产生规则有序的ID,比如:订单类型为采购:P  销售:S，贸易类型：I内贸;O 外贸;
-   订单号生成规则为:1位订单类型+1位贸易类型+yyMMdd+3位流水(超过3位自动扩展)
-   最终会生成单号为:SI191120001 
-   
-
-## 2.12 elastic原生查询支持
-## 2.13 elasticsearch-sql 插件模式sql模式支持
-## 2.14 sql文件变更自动重载，方便开发和调试
-## 2.15 公共字段统一赋值,针对创建人、创建时间、修改人、修改时间等
-## 2.16 提供了查询结果日期、数字格式化、安全脱敏处理，让复杂的事情变得简单
-
 
 # 3.集成说明
 
