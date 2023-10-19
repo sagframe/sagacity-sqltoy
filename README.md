@@ -259,18 +259,17 @@ where t.ORDER_ID=?
 	<!-- parallel:是否并行查询总记录数和单页数据，当alive-max=1 时关闭缓存优化 -->
 	<!-- alive-max:最大存放多少个不同查询条件的总记录量; alive-seconds:查询条件记录量存活时长(比如120秒,超过阀值则重新查询) -->
 	<page-optimize parallel="true" alive-max="100" alive-seconds="120" />
-	<value>
-		<![CDATA[
-		select t1.*,t2.ORGAN_NAME 
-		-- @fast() 实现先分页取10条(具体数量由pageSize确定),然后再关联
-		from @fast(select t.*
-			   from sqltoy_staff_info t
-			   where t.STATUS=1 
-			     #[and t.STAFF_NAME like :staffName] 
-			   order by t.ENTRY_DATE desc
-			) t1 
-		left join sqltoy_organ_info t2 on  t1.organ_id=t2.ORGAN_ID
-		]]>
+	<value><![CDATA[
+	select t1.*,t2.ORGAN_NAME 
+	-- @fast() 实现先分页取10条(具体数量由pageSize确定),然后再关联
+	from @fast(select t.*
+		   from sqltoy_staff_info t
+		   where t.STATUS=1 
+		   #[and t.STAFF_NAME like :staffName] 
+		   order by t.ENTRY_DATE desc
+		) t1 
+	left join sqltoy_organ_info t2 on  t1.organ_id=t2.ORGAN_ID
+	]]>
 	</value>
 	<!-- 这里为极特殊情况下提供了自定义count-sql来实现极致性能优化 -->
 	<!-- <count-sql></count-sql> -->
@@ -495,11 +494,11 @@ spring.sqltoy.functionConverts=default
 ```xml
 <sql id="group_summary_case">
 	<value>
-		<![CDATA[
-		select t.fruit_name,t.order_month,t.sale_count,t.sale_quantity,t.total_amt 
-		from sqltoy_fruit_order t
-		order by t.fruit_name ,t.order_month
-		]]>
+	<![CDATA[
+	select t.fruit_name,t.order_month,t.sale_count,t.sale_quantity,t.total_amt 
+	from sqltoy_fruit_order t
+	order by t.fruit_name ,t.order_month
+	]]>
 	</value>
 	<!-- reverse 是否反向 -->	
 	<summary columns="sale_count,sale_quantity,total_amt" reverse="true">
@@ -530,9 +529,9 @@ spring.sqltoy.functionConverts=default
 <sql id="cols_relative_case">
 	<value>
 	<![CDATA[
-		select t.fruit_name,t.order_month,t.sale_count,t.sale_amt,t.total_amt 
-		from sqltoy_fruit_order t
-		order by t.fruit_name ,t.order_month
+	select t.fruit_name,t.order_month,t.sale_count,t.sale_amt,t.total_amt 
+	from sqltoy_fruit_order t
+	order by t.fruit_name ,t.order_month
 	]]>
 	</value>
 	<!-- 数据旋转,行转列,将order_month 按列显示，每个月份下面有三个指标 -->
@@ -600,34 +599,31 @@ spring.sqltoy.functionConverts=default
 ## 2.9 分库分表
 ### 2.9.1 查询分库分表（分库和分表策略可以同时使用）
 ```xml
-   sql参见quickstart项目:com/sqltoy/quickstart/sqltoy-quickstart.sql.xml 文件
-   <!-- 演示分库 -->
-	<sql id="qstart_db_sharding_case">
-		<sharding-datasource strategy="hashDataSource"
-			params="userId" />
-		<value>
-			<![CDATA[
-			select * from sqltoy_user_log t 
-			-- userId 作为分库关键字段属于必备条件
-			where t.user_id=:userId 
-			#[and t.log_date>=:beginDate]
-			#[and t.log_date<=:endDate]
-				]]>
-		</value>
-	</sql>
+sql参见quickstart项目:com/sqltoy/quickstart/sqltoy-quickstart.sql.xml 文件
+<!-- 演示分库 -->
+<sql id="qstart_db_sharding_case">
+	<sharding-datasource strategy="hashDataSource" params="userId" />
+	<value>
+	<![CDATA[
+	select * from sqltoy_user_log t 
+	-- userId 作为分库关键字段属于必备条件
+	where t.user_id=:userId 
+	#[and t.log_date>=:beginDate]
+	#[and t.log_date<=:endDate]
+	]]>
+	</value>
+</sql>
 
-	<!-- 演示分表 -->
-	<sql id="qstart_sharding_table_case">
-		<sharding-table tables="sqltoy_trans_info_15d"
-			strategy="realHisTable" params="beginDate" />
-		<value>
-			<![CDATA[
-			select * from sqltoy_trans_info_15d t 
-			where t.trans_date>=:beginDate
-			#[and t.trans_date<=:endDate]
-				]]>
-		</value>
-	</sql>
+<!-- 演示分表 -->
+<sql id="qstart_sharding_table_case">
+	<sharding-table tables="sqltoy_trans_info_15d"	strategy="realHisTable" params="beginDate" />
+	<value><![CDATA[
+	select * from sqltoy_trans_info_15d t 
+	where t.trans_date>=:beginDate
+	#[and t.trans_date<=:endDate]
+	]]>
+	</value>
+</sql>
         
 ```
    
@@ -742,8 +738,8 @@ spring.sqltoy.unifyFieldsHandler=com.sqltoy.plugins.SqlToyUnifyFieldsHandler
 			datasource="dataSource">
 			<sql>
 			<![CDATA[
-				select t.DICT_KEY,t.DICT_NAME,t.STATUS
-				from SQLTOY_DICT_DETAIL t
+			select t.DICT_KEY,t.DICT_NAME,t.STATUS
+			from SQLTOY_DICT_DETAIL t
 		        where t.DICT_TYPE=:dictType
 		        order by t.SHOW_INDEX
 			]]>
@@ -760,7 +756,7 @@ spring.sqltoy.unifyFieldsHandler=com.sqltoy.plugins.SqlToyUnifyFieldsHandler
 			--#not_debug#--
 			select t.DICT_TYPE,t.DICT_KEY,t.DICT_NAME,t.STATUS
 			from SQLTOY_DICT_DETAIL t
-	        where t.UPDATE_TIME >=:lastUpdateTime
+	      		where t.UPDATE_TIME >=:lastUpdateTime
 			]]></sql>
 		</sql-increment-checker>
 	</cache-update-checkers>
