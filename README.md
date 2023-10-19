@@ -150,7 +150,7 @@ public Long updateByQuery() {
 }
 
 //代码中非直接sql模式设置条件模式进行记录删除
-sqlToyLazyDao.deleteByQuery(StaffInfoVO.class, EntityQuery.create().where("status=?").values(0));
+lightDao.deleteByQuery(StaffInfoVO.class, EntityQuery.create().where("status=?").values(0));
 ```
 ## 2.2 极致朴素的sql编写方式(本质规律的发现和抽象)
 
