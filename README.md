@@ -221,26 +221,24 @@ lightDao.deleteByQuery(StaffInfoVO.class, EntityQuery.create().where("status=?")
 ## 2.3 天然防止sql注入,执行过程:
 
 ```xml
-* 假设sql语句如下
-
+假设sql语句如下
 select 	*
 from sqltoy_device_order_info t 
 where #[t.ORGAN_ID in (:authedOrganIds)]
       #[and t.TRANS_DATE>=:beginDate]
       #[and t.TRANS_DATE<:endDate]
 
-* java调用过程
+java调用过程：
 lightDao.find(sql, MapKit.keys("authedOrganIds","beginDate", "endDate").values(authedOrganIdAry,beginDate,null), DeviceOrderInfoVO.class);
 
-* 最终执行的sql是这样的:
-```xml
+最终执行的sql是这样的:
 select 	*
 from sqltoy_device_order_info t 
 where t.ORDER_ID=?
       and t.ORGAN_ID in (?,?,?)
       and t.TRANS_DATE>=?
 
-* 然后通过: pst.set(index,value) 设置条件值，不存在将条件直接作为字符串拼接为sql的一部分
+然后通过: pst.set(index,value) 设置条件值，不存在将条件直接作为字符串拼接为sql的一部分
 ```
  
 ## 2.4 最强大的分页查询
