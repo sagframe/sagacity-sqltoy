@@ -38,25 +38,42 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
 # 最新版本 
-* 5.3.43 (jdk17+/jdk21、springboot3.x)  发版日期: 2023-10-08
-* 5.2.69 (jdk1.8)                 发版日期: 2023-10-08
+* 5.3.46 (jdk17+/jdk21、springboot3.x)  发版日期: 2023-10-20
+* 5.2.73 (jdk1.8)                 发版日期: 2023-10-20
 
 # 历史版本(EOF)
-* 5.1.78                             发版日期: 2023-10-08
-* 4.20.76(兼容所有之前版本)                            发版日期: 2023-10-08
+* 5.1.79                             发版日期: 2023-10-21
+* 4.20.77(兼容所有之前版本)                            发版日期: 2023-10-20
 
 # 1. 前言
 ## 1.1 sqltoy-orm是什么
-   sqltoy-orm是比JPA+MyBatis更加贴合项目的orm框架(依赖spring)，具有jpa式的对象CRUD的同时具有比myBatis(plus)更直观简洁性能强大的查询功能。
-   支持以下数据库:
-   * oracle11g+、db2(9.5+)、sqlserver2012+、postgresql9.5+、mysql5.6+(mariadb/innosql)
-   * sqlite、H2
-   * DM达梦数据库、kingbase
-   * elasticsearch5.7+(只支持查询,建议使用7.3+版本)
-   * clickhouse、StarRocks、greenplum、impala(kudu)
-   * oceanBase、polardb、guassdb、tidb
-   * mongodb (只支持查询)
-   * 其他数据库支持基于jdbc的sql执行(查询和自定义sql的执行)
+   sqltoy-orm是比JPA+MyBatis更加贴合项目的orm框架，具有jpa式的对象CRUD的同时具有比myBatis(plus)更直观简洁性能强大的查询功能。
+ ### JPA部分
+* 类似JPA的对象化CRUD、对象级联加载和新增、更新
+* 强化update操作，提供弹性字段修改能力，不同于hibernate先load后修改，而是一次数据库交互完成修改，确保了高并发场景下数据的准确性
+* 改进了级联修改，提供了先删除或者先置无效，再覆盖的操作选项
+* 增加了updateFetch、updateSaveFetch功能，强化针对强事务高并发场景的处理，类似库存台账、资金台账，实现一次数据库交互，完成锁查询、不存在则插入、存在则修改，并返回修改后的结果
+* 增加了树结构封装，便于统一不同数据库树型结构数据的递归查询
+* 支持分库分表、支持多种主键策略(额外支持基于redis的产生特定规则的业务主键)、加密存储、数据版本校验
+* 提供了公共属性赋值(创建人、修改人、创建时间、修改时间、租户)、扩展类型处理等
+* 提供了多租户统一过滤和赋值、提供了数据权限参数带入和越权校验
+
+### 查询部分
+* 极为直观的sql编写方式，便于从客户端<-->代码 双向快速迁移，便于后期变更维护
+* 支持缓存翻译、反向缓存匹配key代替like模糊查询
+* 提供了跨数据库支持能力：不同数据库的函数自动转换适配，多方言sql根据实际环境自动匹配、多数据库同步测试，大幅提升了产品化能力
+* 提供了取top记录、随机记录等特殊场景的查询功能
+* 提供了最强大的分页查询机制:1)自动优化count语句;2)提供基于缓存的分页优化，避免每次都执行count查询;3)提供了独具特色的快速分页；4)提供了并行分页
+* 提供了分库分表能力
+* 提供了在管理类项目中极为价值的：分组汇总计算、行列转换(行转列、列转行)、同比环比、树形排序、树形汇总 相关算法自然集成
+* 提供了基于查询的层次化数据结构封装
+* 提供了大量辅助功能:数据脱敏、格式化、条件参数预处理等
+
+### 支持多种数据库
+* 常规的mysql、oracle、db2、postgresql、 sqlserver、dm、kingbase、sqlite、h2、 oceanBase、polardb、guassdb、tidb
+* 支持分布式olap数据库: clickhouse、StarRocks、greenplum、impala(kudu)
+* 支持elasticsearch、mongodb
+* 所有基于sql和jdbc 各类数据库查询
 
 ## 1.2 jdk版本要求1.8+
    
@@ -65,7 +82,7 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 * 2008~2012年，因一直做金融类企业项目，所面对的数据规模基本上是千万级别的，因此sqltoy一直围绕jpa进行sql查询增强，期间已经集成了缓存翻译、快速分页、行列旋转等比其他框架更具特色的查询特性。
 * 2013~2014年，因为了避免让开发者在项目中同时使用两种技术，因此在sqltoy中实现了基于对象的crud功能，形成了完整的sqltoy-orm框架。
 * 2014~2017年, 因需要面对拉卡拉十亿级别的数据规模，对sqltoy进行了大幅重构，实现了底层结构的合理化，并在拉卡拉CRM和日均千万级累计达几十亿级别的数据平台上得到了强化和检验。
-* 2018~至今,  在ERP复杂场景下得到了充分锤炼，sqltoy已经非常完善可靠，开始开源跟大家一起分享和共建！
+* 2018~至今,  在SaaS化多租户的ERP复杂场景下得到了充分锤炼，sqltoy已经非常完善可靠，开始开源跟大家一起分享和共建！
 
 # 2. 快速特点说明
 ## 2.1 对象操作跟jpa类似并有针对性加强(包括级联)
@@ -133,7 +150,7 @@ public Long updateByQuery() {
 }
 
 //代码中非直接sql模式设置条件模式进行记录删除
-sqlToyLazyDao.deleteByQuery(StaffInfoVO.class, EntityQuery.create().where("status=?").values(0));
+lightDao.deleteByQuery(StaffInfoVO.class, EntityQuery.create().where("status=?").values(0));
 ```
 ## 2.2 极致朴素的sql编写方式(本质规律的发现和抽象)
 
@@ -154,12 +171,13 @@ sqlToyLazyDao.deleteByQuery(StaffInfoVO.class, EntityQuery.create().where("statu
 	select 	*
 	from sqltoy_device_order_info t 
 	where #[t.status in (:statusAry)]
-		  #[and t.ORDER_ID=:orderId]
-		  #[and t.ORGAN_ID in (:authedOrganIds)]
-		  #[and t.STAFF_ID in (:staffIds)]
-		  #[and t.TRANS_DATE>=:beginAndEndDate[0]]
-		  #[and t.TRANS_DATE<:beginAndEndDate[1]]    
-	]]></value>
+	#[and t.ORDER_ID=:orderId]
+	#[and t.ORGAN_ID in (:authedOrganIds)]
+	#[and t.STAFF_ID in (:staffIds)]
+	#[and t.TRANS_DATE>=:beginAndEndDate[0]]
+	#[and t.TRANS_DATE<:beginAndEndDate[1]]    
+	]]>
+</value>
 </sql>
 ```
 
@@ -201,27 +219,27 @@ sqlToyLazyDao.deleteByQuery(StaffInfoVO.class, EntityQuery.create().where("statu
 </select>
 ```
 ## 2.3 天然防止sql注入,执行过程:
-* 假设sql语句如下
+
 ```xml
+假设sql语句如下
 select 	*
 from sqltoy_device_order_info t 
 where #[t.ORGAN_ID in (:authedOrganIds)]
       #[and t.TRANS_DATE>=:beginDate]
-      #[and t.TRANS_DATE<:endDate] 
-```
-* java调用过程
-```java
-sqlToyLazyDao.findBySql(sql, MapKit.keys("authedOrganIds","beginDate", "endDate").values(authedOrganIdAry,beginDate,null), DeviceOrderInfoVO.class);
-```
-* 最终执行的sql是这样的:
-```xml
+      #[and t.TRANS_DATE<:endDate]
+
+java调用过程：
+lightDao.find(sql, MapKit.keys("authedOrganIds","beginDate", "endDate").values(authedOrganIdAry,beginDate,null), DeviceOrderInfoVO.class);
+
+最终执行的sql是这样的:
 select 	*
 from sqltoy_device_order_info t 
 where t.ORDER_ID=?
       and t.ORGAN_ID in (?,?,?)
-      and t.TRANS_DATE>=?	
+      and t.TRANS_DATE>=?
+
+然后通过: pst.set(index,value) 设置条件值，不存在将条件直接作为字符串拼接为sql的一部分
 ```
-* 然后通过: pst.set(index,value) 设置条件值，不存在将条件直接作为字符串拼接为sql的一部分
  
 ## 2.4 最强大的分页查询
 ### 2.4.1 分页特点说明
@@ -242,20 +260,18 @@ where t.ORDER_ID=?
 	<!-- parallel:是否并行查询总记录数和单页数据，当alive-max=1 时关闭缓存优化 -->
 	<!-- alive-max:最大存放多少个不同查询条件的总记录量; alive-seconds:查询条件记录量存活时长(比如120秒,超过阀值则重新查询) -->
 	<page-optimize parallel="true" alive-max="100" alive-seconds="120" />
-	<value>
-		<![CDATA[
-		select t1.*,t2.ORGAN_NAME 
-		-- @fast() 实现先分页取10条(具体数量由pageSize确定),然后再关联
-		from @fast(select t.*
-			   from sqltoy_staff_info t
-			   where t.STATUS=1 
-			     #[and t.STAFF_NAME like :staffName] 
-			   order by t.ENTRY_DATE desc
-			    ) t1 
-		left join sqltoy_organ_info t2 on  t1.organ_id=t2.ORGAN_ID
-			]]>
+	<value><![CDATA[
+	select t1.*,t2.ORGAN_NAME 
+	-- @fast() 实现先分页取10条(具体数量由pageSize确定),然后再关联
+	from @fast(select t.*
+		   from sqltoy_staff_info t
+		   where t.STATUS=1 
+		   #[and t.STAFF_NAME like :staffName] 
+		   order by t.ENTRY_DATE desc
+		) t1 
+	left join sqltoy_organ_info t2 on  t1.organ_id=t2.ORGAN_ID
+	]]>
 	</value>
-	
 	<!-- 这里为极特殊情况下提供了自定义count-sql来实现极致性能优化 -->
 	<!-- <count-sql></count-sql> -->
 </sql>
@@ -324,7 +340,7 @@ private String staffName;
 	from sqltoy_device_order_info t 
 	where #[t.ORDER_ID=:orderId]
 	      #[and t.STAFF_ID in (:staffIds)]
-		]]>
+	]]>
 	</value>
 </sql>
 ```
@@ -382,116 +398,237 @@ spring.sqltoy.functionConverts=default
     dialect_sqlId->sqlId_dialect->sqlId，
 	如数据库为mysql,调用sqlId:sqltoy_showcase,则实际执行:sqltoy_showcase_mysql
 ```xml
-	<sql id="sqltoy_showcase">
-		<value>
-			<![CDATA[
-			select * from sqltoy_user_log t 
-			where t.user_id=:userId 
-				]]>
-		</value>
-	</sql>
-        <!-- sqlId_数据库方言(小写) -->
-	<sql id="sqltoy_showcase_mysql">
-		<value>
-			<![CDATA[
-			select * from sqltoy_user_log t 
-			where t.user_id=:userId 
-				]]>
-		</value>
-	</sql>
+<sql id="sqltoy_showcase">
+	<value>
+	<![CDATA[
+	select * from sqltoy_user_log t 
+	where t.user_id=:userId 
+	]]>
+	</value>
+</sql>
+<!-- sqlId_数据库方言(小写) -->
+<sql id="sqltoy_showcase_mysql">
+	<value>
+	<![CDATA[
+	select * from sqltoy_user_log t 
+	where t.user_id=:userId 
+	]]>
+	</value>
+</sql>
 ```
   
-## 2.8 提供行列转换(数据旋转)，避免写复杂的sql或存储过程，用算法来化解对sql的高要求，同时实现数据库无关(不管是mysql还是sqlserver)
+## 2.8 提供行列转换、分组汇总、同比环比等
+
+* 水果销售记录表
+
+品类|销售月份|销售笔数|销售数量(吨)|销售金额(万元)
+----|-------|-------|----------|------------
+苹果|2019年5月|12 | 2000|2400
+苹果|2019年4月|11 | 1900|2600
+苹果|2019年3月|13 | 2000|2500
+香蕉|2019年5月|10 | 2000|2000
+香蕉|2019年4月|12 | 2400|2700
+香蕉|2019年3月|13 | 2300|2700
+
+### 2.8.1 行转列(列转行也支持)
 
 ```xml
-        <!-- 列转行测试 -->
-	<sql id="sys_unpvoitSearch">
-		<value>
-		<![CDATA[
-		SELECT TRANS_DATE, 
-		       sum(TOTAL_AMOUNT) TOTAL_AMOUNT,
-		       sum(PERSON_AMOUNT) PERSON_AMOUNT,
-		       sum(COMPANY_AMOUNT) COMPANY_AMOUNT
-		FROM sys_unpivot_data
-		group by TRANS_DATE
-		]]>
-		</value>
-		<!-- 将指定的列变成行(这里3列变成了3行) -->
-		<unpivot columns="TOTAL_AMOUNT:总金额,PERSON_AMOUNT:个人金额,COMPANY_AMOUNT:企业金额"
-			values-as-column="TRANS_AMOUNT" labels-as-column="AMOUNT_TYPE" />
-	</sql>
-
-	<!-- 行转列测试 -->
-	<sql id="sys_pvoitSearch">
-		<value>
-		<![CDATA[
-		select t.TRANS_DATE,t.TRANS_CHANNEL,TRANS_CODE,sum(t.TRANS_AMT) TRANS_AMT from sys_summary_case t
-		group by t.TRANS_DATE,t.TRANS_CHANNEL,TRANS_CODE
-		order by t.TRANS_DATE,t.TRANS_CHANNEL,TRANS_CODE
-		]]>
-		</value>
-		<pivot category-columns="TRANS_CHANNEL,TRANS_CODE" start-column="TRANS_AMT"
-			default-value="0" default-type="decimal" end-column="TRANS_AMT"
-			group-columns="TRANS_DATE" />
-	</sql>
+<!-- 行转列 -->
+<sql id="pivot_case">
+	<value>
+	<![CDATA[
+	select t.fruit_name,t.order_month,t.sale_count,t.sale_quantity,t.total_amt 
+	from sqltoy_fruit_order t
+	order by t.fruit_name ,t.order_month
+	]]>
+	</value>
+	<!-- 行转列,将order_month作为分类横向标题，从sale_count列到total_amt 三个指标旋转成行 -->
+	<pivot start-column="sale_count" end-column="total_amt"	group-columns="fruit_name" category-columns="order_month" />
+</sql>
 ```
+* 效果
 
-## 2.9 提供分组汇总求平均算法(用算法代替sql避免跨数据库语法不一致)
+<table>
+<thead>
+	<tr>
+	<th rowspan="2">品类</th>
+	<th colspan="3">2019年3月</th>
+	<th colspan="3">2019年4月</th>
+	<th colspan="3">2019年5月</th>
+	</tr>
+	<tr>
+	    <th>笔数</th><th>数量</th><th>总金额</th>
+	    <th>笔数</th><th>数量</th><th>总金额</th>
+	    <th>笔数</th><th>数量</th><th>总金额</th>
+	</tr>
+	</thead>
+	<tbody>
+	<tr>
+		<td>香蕉</td>
+		<td>13</td>
+		<td>2300</td>
+		<td>2700</td>
+		<td>12</td>
+		<td>2400</td>
+		<td>2700</td>
+		<td>10</td>
+		<td>2000</td>
+		<td>2000</td>
+	</tr>
+		<tr>
+		<td>苹果</td>
+		<td>13</td>
+		<td>2000</td>
+		<td>2500</td>
+		<td>11</td>
+		<td>1900</td>
+		<td>2600</td>
+		<td>12</td>
+		<td>2000</td>
+		<td>2400</td>
+	</tr>
+	</tbody>
+</table>
+
+
+### 2.8.2 分组汇总、求平均(可任意层级)
 ```xml
-	<!-- 汇总计算 (场景是sql先汇总，页面上还需要对已有汇总再汇总的情况,如果用sql实现在跨数据库的时候就存在问题)-->
-	<sql id="sys_summarySearch">
-		<!-- 数据源sharding，多库将请求压力分摊到多个数据库节点上，支撑更多并发请求 -->	
-		<sharding-datasource strategy="multiDataSource" />
-		<value>
-		<![CDATA[
-		select	t.TRANS_CHANNEL,t.TRANS_CODE,sum( t.TRANS_AMT )
-		from sys_summary_case t
-		group by t.TRANS_CHANNEL,t.TRANS_CODE
-		]]>
-		</value>
-		<!-- reverse 表示将汇总信息在上面显示(如第1行是汇总值，第2、3、4行为明细，反之，1、2、3行未明细，第4行为汇总)  -->
-		<summary columns="2" reverse="true" sum-site="left" radix-size="2">
-			<global sum-label="总计" label-column="0" />
-                        <!-- 可以无限层级的分组下去-->
-			<group sum-label="小计/平均" label-column="0" group-column="0" average-label="平均" />
-		</summary>
-	</sql>
+<sql id="group_summary_case">
+	<value>
+	<![CDATA[
+	select t.fruit_name,t.order_month,t.sale_count,t.sale_quantity,t.total_amt 
+	from sqltoy_fruit_order t
+	order by t.fruit_name ,t.order_month
+	]]>
+	</value>
+	<!-- reverse 是否反向 -->	
+	<summary columns="sale_count,sale_quantity,total_amt" reverse="true">
+		<!-- 层级顺序保持从高到低 -->
+		<global sum-label="总计" label-column="fruit_name" />
+		<group group-column="fruit_name" sum-label="小计" label-column="fruit_name" />
+	</summary>
+</sql>
 ```
-## 2.10 分库分表
-### 2.10.1 查询分库分表（分库和分表策略可以同时使用）
-```xml
-   sql参见quickstart项目:com/sqltoy/quickstart/sqltoy-quickstart.sql.xml 文件
-   <!-- 演示分库 -->
-	<sql id="qstart_db_sharding_case">
-		<sharding-datasource strategy="hashDataSource"
-			params="userId" />
-		<value>
-			<![CDATA[
-			select * from sqltoy_user_log t 
-			-- userId 作为分库关键字段属于必备条件
-			where t.user_id=:userId 
-			#[and t.log_date>=:beginDate]
-			#[and t.log_date<=:endDate]
-				]]>
-		</value>
-	</sql>
+* 效果
 
-	<!-- 演示分表 -->
-	<sql id="qstart_sharding_table_case">
-		<sharding-table tables="sqltoy_trans_info_15d"
-			strategy="realHisTable" params="beginDate" />
-		<value>
-			<![CDATA[
-			select * from sqltoy_trans_info_15d t 
-			where t.trans_date>=:beginDate
-			#[and t.trans_date<=:endDate]
-				]]>
-		</value>
-	</sql>
+品类|销售月份|销售笔数|销售数量(吨)|销售金额(万元)
+----|-------|-------|----------|------------
+总计|       |   71  |    12600 |14900
+小计|       |  36  | 5900   | 7500
+苹果|2019年5月|12 | 2000|2400
+苹果|2019年4月|11 | 1900|2600
+苹果|2019年3月|13 | 2000|2500
+小计|       | 35  | 6700|7400
+香蕉|2019年5月|10 | 2000|2000
+香蕉|2019年4月|12 | 2400|2700
+香蕉|2019年3月|13 | 2300|2700
+
+### 2.8.3 先行转列再环比计算
+
+```xml
+<!-- 列与列环比演示 -->
+<sql id="cols_relative_case">
+	<value>
+	<![CDATA[
+	select t.fruit_name,t.order_month,t.sale_count,t.sale_amt,t.total_amt 
+	from sqltoy_fruit_order t
+	order by t.fruit_name ,t.order_month
+	]]>
+	</value>
+	<!-- 数据旋转,行转列,将order_month 按列显示，每个月份下面有三个指标 -->
+	<pivot start-column="sale_count" end-column="total_amt"	group-columns="fruit_name" category-columns="order_month" />
+	<!-- 列与列之间进行环比计算 -->
+	<cols-chain-relative group-size="3" relative-indexs="1,2" start-column="1" format="#.00%" />
+</sql>
+```
+* 效果
+
+<table>
+<thead>
+	<tr>
+	<th rowspan="2" nowrap="nowrap">品类</th>
+	<th colspan="5">2019年3月</th>
+	<th colspan="5">2019年4月</th>
+	<th colspan="5">2019年5月</th>
+	</tr>
+	<tr>
+	    <th nowrap="nowrap">笔数</th><th nowrap="nowrap">数量</th><th nowrap="nowrap">比上月</th><th nowrap="nowrap">总金额</th><th nowrap="nowrap">比上月</th>
+	    <th nowrap="nowrap">笔数</th><th nowrap="nowrap">数量</th><th nowrap="nowrap">比上月</th><th nowrap="nowrap">总金额</th><th nowrap="nowrap">比上月</th>
+	    <th nowrap="nowrap">笔数</th><th nowrap="nowrap">数量</th><th nowrap="nowrap">比上月</th><th nowrap="nowrap">总金额</th><th nowrap="nowrap">比上月</th>
+	</tr>
+	</thead>
+	<tbody>
+	<tr>
+		<td>香蕉</td>
+		<td>13</td>
+		<td>2300</td>
+		<td></td>
+		<td>2700</td>
+		<td></td>
+		<td>12</td>
+		<td>2400</td>
+		<td>4.30%</td>
+		<td>2700</td>
+		<td>0.00%</td>
+		<td>10</td>
+		<td>2000</td>
+		<td>-16.70%</td>
+		<td>2000</td>
+		<td>-26.00%</td>
+	</tr>
+		<tr>
+		<td>苹果</td>
+		<td>13</td>
+		<td>2000</td>
+		<td></td>
+		<td>2500</td>
+		<td></td>
+		<td>11</td>
+		<td>1900</td>
+		<td>-5.10%</td>
+		<td>2600</td>
+		<td>4.00%</td>
+		<td>12</td>
+		<td>2000</td>
+		<td>5.20%</td>
+		<td>2400</td>
+		<td>-7.70%</td>
+	</tr>
+	</tbody>
+</table>
+
+## 2.9 分库分表
+### 2.9.1 查询分库分表（分库和分表策略可以同时使用）
+```xml
+sql参见quickstart项目:com/sqltoy/quickstart/sqltoy-quickstart.sql.xml 文件
+<!-- 演示分库 -->
+<sql id="qstart_db_sharding_case">
+	<sharding-datasource strategy="hashDataSource" params="userId" />
+	<value>
+	<![CDATA[
+	select * from sqltoy_user_log t 
+	-- userId 作为分库关键字段属于必备条件
+	where t.user_id=:userId 
+	#[and t.log_date>=:beginDate]
+	#[and t.log_date<=:endDate]
+	]]>
+	</value>
+</sql>
+
+<!-- 演示分表 -->
+<sql id="qstart_sharding_table_case">
+	<sharding-table tables="sqltoy_trans_info_15d"	strategy="realHisTable" params="beginDate" />
+	<value><![CDATA[
+	select * from sqltoy_trans_info_15d t 
+	where t.trans_date>=:beginDate
+	#[and t.trans_date<=:endDate]
+	]]>
+	</value>
+</sql>
         
 ```
    
-### 2.10.2 操作分库分表(vo对象由quickvo工具自动根据数据库生成，且自定义的注解不会被覆盖)
+### 2.9.2 操作分库分表(vo对象由quickvo工具自动根据数据库生成，且自定义的注解不会被覆盖)
 
 @Sharding 在对象上通过注解来实现分库分表的策略配置
 
@@ -537,24 +674,6 @@ public class UserLogVO extends AbstractUserLogVO {
 
 
 ```
-## 2.11 五种非数据库相关主键生成策略(可自扩展)
-* 主键策略除了数据库自带的 sequence\identity 外包含以下数据库无关的主键策略。通过quickvo配置，自动生成在VO对象中。
-### 2.11.1 shortNanoTime 22位有序安全ID，格式: 13位当前毫秒+6位纳秒+3位主机ID
-### 2.11.2 nanoTimeId 26位有序安全ID,格式:15位:yyMMddHHmmssSSS+6位纳秒+2位(线程Id+随机数)+3位主机ID
-### 2.11.3 uuid:32 位uuid
-### 2.11.4 SnowflakeId 雪花算法ID
-### 2.11.5 redisId  基于redis 来产生规则的ID主键
-   根据对象属性值,产生规则有序的ID,比如:订单类型为采购:P  销售:S，贸易类型：I内贸;O 外贸;
-   订单号生成规则为:1位订单类型+1位贸易类型+yyMMdd+3位流水(超过3位自动扩展)
-   最终会生成单号为:SI191120001 
-   
-
-## 2.12 elastic原生查询支持
-## 2.13 elasticsearch-sql 插件模式sql模式支持
-## 2.14 sql文件变更自动重载，方便开发和调试
-## 2.15 公共字段统一赋值,针对创建人、创建时间、修改人、修改时间等
-## 2.16 提供了查询结果日期、数字格式化、安全脱敏处理，让复杂的事情变得简单
-
 
 # 3.集成说明
 
@@ -620,8 +739,8 @@ spring.sqltoy.unifyFieldsHandler=com.sqltoy.plugins.SqlToyUnifyFieldsHandler
 			datasource="dataSource">
 			<sql>
 			<![CDATA[
-				select t.DICT_KEY,t.DICT_NAME,t.STATUS
-				from SQLTOY_DICT_DETAIL t
+			select t.DICT_KEY,t.DICT_NAME,t.STATUS
+			from SQLTOY_DICT_DETAIL t
 		        where t.DICT_TYPE=:dictType
 		        order by t.SHOW_INDEX
 			]]>
@@ -638,7 +757,7 @@ spring.sqltoy.unifyFieldsHandler=com.sqltoy.plugins.SqlToyUnifyFieldsHandler
 			--#not_debug#--
 			select t.DICT_TYPE,t.DICT_KEY,t.DICT_NAME,t.STATUS
 			from SQLTOY_DICT_DETAIL t
-	        where t.UPDATE_TIME >=:lastUpdateTime
+	      		where t.UPDATE_TIME >=:lastUpdateTime
 			]]></sql>
 		</sql-increment-checker>
 	</cache-update-checkers>
