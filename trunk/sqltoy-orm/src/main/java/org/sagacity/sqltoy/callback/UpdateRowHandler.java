@@ -4,6 +4,7 @@
 package org.sagacity.sqltoy.callback;
 
 import java.sql.ResultSet;
+import java.util.function.BiConsumer;
 
 /**
  * @project sagacity-sqltoy
@@ -11,7 +12,6 @@ import java.sql.ResultSet;
  * @author zhongxuchen
  * @version v1.0,Date:2015年4月4日
  */
-@FunctionalInterface
 public interface UpdateRowHandler {
 	/**
 	 * @todo 行处理抽象方法接口定义，用于updateFetch
@@ -19,5 +19,11 @@ public interface UpdateRowHandler {
 	 * @param index
 	 * @throws Exception
 	 */
-	public void updateRow(ResultSet rs, int index) throws Exception;
+	default void updateRow(ResultSet rs, int index) throws Exception {
+
+	}
+
+	default void updateRow(ResultSet rs, int index, BiConsumer<String, Object> setValConsumer) throws Exception {
+
+	}
 }
