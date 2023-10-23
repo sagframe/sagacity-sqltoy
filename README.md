@@ -47,7 +47,7 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 
 # 1. 前言
 ## 1.1 sqltoy-orm是什么
-   sqltoy-orm是比JPA+MyBatis更加贴合项目的orm框架，具有jpa式的对象CRUD的同时具有比myBatis(plus)更直观简洁性能强大的查询功能。
+   sqltoy-orm是JPA和超强查询的融合体，是从简单业务、大型SaaS化多租户ERP、大数据分析多种类型项目实践经验总结和分享。
  ### JPA部分
 * 类似JPA的对象化CRUD、对象级联加载和新增、更新
 * 强化update操作，提供弹性字段修改能力，不同于hibernate先load后修改，而是一次数据库交互完成修改，确保了高并发场景下数据的准确性
