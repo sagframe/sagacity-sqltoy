@@ -395,7 +395,6 @@ public class SqlToyContext {
 		initDefaultDataSource();
 		// 设置workerId和dataCenterId,为使用snowflake主键ID产生算法服务
 		SqlToyConstants.setWorkerAndDataCenterId(workerId, dataCenterId, serverId);
-
 		// 初始化脚本加载器
 		scriptLoader.initialize(this.debug, delayCheckSeconds, scriptCheckIntervalSeconds, breakWhenSqlRepeat);
 

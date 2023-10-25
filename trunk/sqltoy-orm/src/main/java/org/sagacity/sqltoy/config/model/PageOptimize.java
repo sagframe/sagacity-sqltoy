@@ -40,6 +40,11 @@ public class PageOptimize implements Serializable {
 	private long parallelMaxWaitSeconds = 1800;
 
 	/**
+	 * 是否跳过count为0的缓存
+	 */
+	private boolean skipZeroCount = false;
+
+	/**
 	 * @return the aliveMax
 	 */
 	public int getAliveMax() {
@@ -78,6 +83,18 @@ public class PageOptimize implements Serializable {
 	public PageOptimize parallel(boolean parallel) {
 		this.parallel = parallel;
 		return this;
+	}
+
+	public PageOptimize skipZeroCount(boolean skipZeroCount) {
+		this.skipZeroCount = skipZeroCount;
+		return this;
+	}
+
+	/**
+	 * @return the skipZeroCount
+	 */
+	public boolean isSkipZeroCount() {
+		return skipZeroCount;
 	}
 
 	/**
