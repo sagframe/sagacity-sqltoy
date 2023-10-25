@@ -794,8 +794,9 @@ public class SqlUtil {
 		if (sql.endsWith(";") || sql.endsWith(",")) {
 			sql = sql.substring(0, sql.length() - 1);
 		}
-		// 剔除全角
-		sql = sql.replaceAll("\\：", ":").replaceAll("\\＝", "=").replaceAll("\\．", ".");
+		// 剔除全角(update 2023-10-24 框架不做干涉)
+		// sql = sql.replaceAll("\\：", ":").replaceAll("\\＝", "=").replaceAll("\\．",
+		// ".");
 		return sql;
 	}
 
