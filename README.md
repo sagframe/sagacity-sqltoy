@@ -605,8 +605,8 @@ spring.sqltoy.functionConverts=default
 	select t.area_code,t.pid_area,sale_cnt from sqltoy_area_sales t
 	]]>
 	</value>
-	<!-- 进行树结构层级排序，同时将底层节点值逐层汇总到父节点上  -->
-	<tree-sort id-column="area_code" pid-column="pid_area"	sum-columns="sale_cnt" level-order-column="sale_cnt"/>
+	<!-- 组织树形上下归属结构，同时将底层节点值逐层汇总到父节点上，并且对同层级按照降序排列  -->
+	<tree-sort id-column="area_code" pid-column="pid_area"	sum-columns="sale_cnt" level-order-column="sale_cnt" order-way="desc"/>
 </sql>
 ```
 * 效果
