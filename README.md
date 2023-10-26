@@ -504,6 +504,7 @@ spring.sqltoy.functionConverts=default
 	<summary columns="sale_count,sale_quantity,total_amt" reverse="true">
 		<!-- 层级顺序保持从高到低 -->
 		<global sum-label="总计" label-column="fruit_name" />
+		 <!-- order-column: 分组排序列(对同分组进行排序)，order-with-sum:默认为true，order-way:desc/asc -->
 		<group group-column="fruit_name" sum-label="小计" label-column="fruit_name" />
 	</summary>
 </sql>
