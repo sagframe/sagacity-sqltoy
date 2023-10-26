@@ -416,7 +416,7 @@ spring.sqltoy.functionConverts=default
 </sql>
 ```
   
-## 2.8 提供行列转换、分组汇总、同比环比等
+## 2.8 提供行列转换、分组汇总、同比环比、树排序汇总等
 
 * 水果销售记录表
 
@@ -594,6 +594,73 @@ spring.sqltoy.functionConverts=default
 		<td>-7.70%</td>
 	</tr>
 	</tbody>
+</table>
+
+### 2.8.4 树排序汇总
+```xml
+<!-- 树排序、汇总 -->
+<sql id="treeTable_sort_sum">
+	<value>
+	<![CDATA[
+	select t.area_code,t.pid_area,sale_cnt from sqltoy_area_sales t
+	]]>
+	</value>
+	<!-- 进行树结构层级排序，同时将底层节点值逐层汇总到父节点上  -->
+	<tree-sort id-column="area_code" pid-column="pid_area"	sum-columns="sale_cnt" level-order-column="sale_cnt"/>
+</sql>
+```
+* 效果
+
+<table>
+<thead>
+	<tr>
+	<th>地区</th>
+	<th>归属地区</th>
+	<th>销售量</th>
+	</tr>
+</thead>
+<tbody>
+	<tr>
+	<td>上海</td>
+	<td>中国</td>
+	<td>300</td>
+	</tr>
+	<tr>
+	<td>松江</td>
+	<td>上海</td>
+	<td>120</td>
+	</tr>
+ 	<tr>
+	<td>杨浦</td>
+	<td>上海</td>
+	<td>116</td>
+	</tr>
+ 	<tr>
+	<td>浦东</td>
+	<td>上海</td>
+	<td>64</td>
+	</tr>
+	<tr>
+	<td>江苏</td>
+	<td>中国</td>
+	<td>270</td>
+	</tr>
+	<tr>
+	<td>南京</td>
+	<td>江苏</td>
+	<td>110</td>
+	</tr>
+ 	<tr>
+	<td>苏州</td>
+	<td>江苏</td>
+	<td>90</td>
+	</tr>
+ 	<tr>
+	<td>无锡</td>
+	<td>江苏</td>
+	<td>70</td>
+	</tr>
+</tbody>
 </table>
 
 ## 2.9 分库分表
