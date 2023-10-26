@@ -626,19 +626,19 @@ spring.sqltoy.functionConverts=default
 	<td>300</td>
 	</tr>
 	<tr>
-	<td>  松江</td>
+	<td>&nbsp;&nbsp;&nbsp;&nbsp;松江</td>
 	<td>上海</td>
-	<td>  120</td>
+	<td>&nbsp;&nbsp;&nbsp;&nbsp;120</td>
 	</tr>
  	<tr>
-	<td>  杨浦</td>
+	<td>&nbsp;&nbsp;&nbsp;&nbsp;杨浦</td>
 	<td>上海</td>
-	<td>  116</td>
+	<td>&nbsp;&nbsp;&nbsp;&nbsp;116</td>
 	</tr>
  	<tr>
-	<td>  浦东</td>
+	<td>&nbsp;&nbsp;&nbsp;&nbsp;浦东</td>
 	<td>上海</td>
-	<td>64</td>
+	<td>&nbsp;&nbsp;&nbsp;&nbsp;64</td>
 	</tr>
 	<tr>
 	<td>江苏</td>
@@ -646,19 +646,19 @@ spring.sqltoy.functionConverts=default
 	<td>270</td>
 	</tr>
 	<tr>
-	<td>  南京</td>
+	<td>&nbsp;&nbsp;&nbsp;&nbsp;南京</td>
 	<td>江苏</td>
-	<td>  110</td>
+	<td>&nbsp;&nbsp;&nbsp;&nbsp;110</td>
 	</tr>
  	<tr>
-	<td>  苏州</td>
+	<td>&nbsp;&nbsp;&nbsp;&nbsp;苏州</td>
 	<td>江苏</td>
-	<td>  90</td>
+	<td>&nbsp;&nbsp;&nbsp;&nbsp;90</td>
 	</tr>
  	<tr>
-	<td>  无锡</td>
+	<td>&nbsp;&nbsp;&nbsp;&nbsp;无锡</td>
 	<td>江苏</td>
-	<td>  70</td>
+	<td>&nbsp;&nbsp;&nbsp;&nbsp;70</td>
 	</tr>
 </tbody>
 </table>
