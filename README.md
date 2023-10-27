@@ -84,7 +84,9 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 * 2018~至今,  在建设SaaS化多租户ERP复杂场景下和flink-cdc结合MPP数据库的实时数仓过程中得到了充分锤炼，sqltoy已经非常完善可靠，开始开源跟大家一起分享和共建！
 
 # 2. 快速特点说明
-## 2.1 对象操作跟jpa类似并有针对性加强(包括级联)，注:lightDao是框架自带
+## 2.1 对象操作跟jpa类似并有针对性加强(包括级联)
+* 通过quickvo工具从数据库生成对应的POJO，引入sqlltoy自带的lightDao即可完成全部操作
+
 ```java
    StaffInfoVO staffInfo = new StaffInfoVO(); 
    //保存
