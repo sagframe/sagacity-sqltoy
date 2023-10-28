@@ -891,7 +891,18 @@ public class DialectFactory {
 											queryResult.setPageNo(realStartPage);
 										}
 										queryResult.setPageSize(pageSize);
-										queryResult.setRecordCount(recordCnt);
+										int rowSize = (queryResult.getRows() != null) ? queryResult.getRows().size()
+												: 0;
+										long minCount = (queryResult.getPageNo() - 1) * pageSize + rowSize;
+										// 实际记录量> 总记录数(可能从缓存获取),rowSize<=pageSize 防止关联查询导致单页记录数量扩大
+										if (minCount > recordCnt && rowSize <= pageSize) {
+											queryResult.setRecordCount(minCount);
+										} // 第2页，7条不足一页，total>17,说明total过大不正确
+										else if (rowSize < pageSize && recordCnt > minCount && minCount >= 0) {
+											queryResult.setRecordCount(minCount);
+										} else {
+											queryResult.setRecordCount(recordCnt);
+										}
 									}
 									SqlExecuteStat.debug("查询分页记录耗时", (System.currentTimeMillis() - preTime) + "毫秒!");
 								}
@@ -1006,11 +1017,11 @@ public class DialectFactory {
 			// 修正实际结果跟count的差异,比如:pageNo=3,rows=9,count=27,则需要将count调整为29
 			long minCount = (queryResult.getPageNo() - 1) * queryResult.getPageSize() + rowSize;
 			// 总记录数小于实际查询记录数量(rowSize <= queryResult.getPageSize() 防止单页数据关联扩大了记录量的场景)
-			if (queryResult.getRecordCount() < minCount && minCount >= 0 && rowSize <= queryResult.getPageSize()) {
+			if (queryResult.getRecordCount() < minCount && rowSize <= queryResult.getPageSize()) {
 				queryResult.setRecordCount(minCount);
-			}
-			// 总记录数量大于实际记录数量
-			if (rowSize < queryResult.getPageSize() && (queryResult.getRecordCount() > minCount) && minCount >= 0) {
+			} // 总记录数量大于实际记录数量
+			else if (rowSize < queryResult.getPageSize() && (queryResult.getRecordCount() > minCount)
+					&& minCount >= 0) {
 				queryResult.setRecordCount(minCount);
 			}
 			if (queryResult.getRecordCount() == 0 && overPageToFirst) {

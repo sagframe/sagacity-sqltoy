@@ -252,7 +252,7 @@ public class BeanUtil {
 					isBool = false;
 					method = realMeth.get(j);
 					name = method.getName().toLowerCase();
-					// setXXX完全匹配(优先匹配无下划线)
+					// setXXX完全匹配(优先匹配不做下划线替换的场景)
 					if (prop.equals(name)) {
 						matched = true;
 					} else {
@@ -263,7 +263,7 @@ public class BeanUtil {
 							matched = true;
 						}
 					}
-					// 匹配属性含下划线场景
+					// 匹配去除下划线的场景
 					if (!matched && minProp != null) {
 						if (minProp.equals(name) || (isBool && minProp.replaceFirst("setis", "set").equals(name))) {
 							meter++;
