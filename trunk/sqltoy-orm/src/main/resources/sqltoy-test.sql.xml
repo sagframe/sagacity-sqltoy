@@ -58,8 +58,12 @@
 		<!-- 分表策略 -->
 		<sharding-table tables="" strategy="hisRealTable"
 			params="" />
-		<!-- 分页优化,缓存相同查询条件的分页总记录数量, alive-max:表示相同的一个sql保留100个不同条件查询 alive-seconds:相同的查询条件分页总记录数保留时长(单位秒) -->
-		<page-optimize alive-max="100" alive-seconds="600" />
+		<!-- 分页优化,缓存相同查询条件的分页总记录数量, 
+		alive-max:表示相同的一个sql保留100个不同条件查询 
+		alive-seconds:相同的查询条件分页总记录数保留时长(单位秒)
+		skip-zero-count:当缓存中获取的count为0,则重新查询count
+		 -->
+		<page-optimize alive-max="100" alive-seconds="600" skip-zero-count="true"/>
 		<!-- 日期格式化 -->
 		<date-format columns="" format="yyyy-MM-dd HH:mm:ss" />
 		<!-- 数字格式 -->

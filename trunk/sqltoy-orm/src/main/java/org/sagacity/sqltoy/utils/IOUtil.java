@@ -109,7 +109,7 @@ public class IOUtil {
 	 * @return
 	 * @throws Exception
 	 */
-	public static byte[] getBytes(InputStream is) throws Exception {
+	public static byte[] getBytes(InputStream is) throws IOException {
 		if (is == null) {
 			return null;
 		}

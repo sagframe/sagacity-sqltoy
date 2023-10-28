@@ -23,7 +23,7 @@ public class TranslateConfigModel implements Serializable {
 	private static final long serialVersionUID = 4392516051742079330L;
 
 	/**
-	 * sql\service\rest
+	 * sql\service\rest\local
 	 */
 	private String type;
 

@@ -38,16 +38,16 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
 # 最新版本 
-* 5.3.46 (jdk17+/jdk21、springboot3.x)  发版日期: 2023-10-20
-* 5.2.73 (jdk1.8)                 发版日期: 2023-10-20
+* 5.3.47 (jdk17+/jdk21、springboot3.x)  发版日期: 2023-10-25
+* 5.2.74 (jdk1.8)                 发版日期: 2023-10-25
 
 # 历史版本(EOF)
-* 5.1.78                             发版日期: 2023-10-08
-* 4.20.77(兼容所有之前版本)                            发版日期: 2023-10-20
+* 5.1.80                             发版日期: 2023-10-28
+* 4.20.78(兼容所有之前版本)                            发版日期: 2023-10-27
 
 # 1. 前言
 ## 1.1 sqltoy-orm是什么
-   sqltoy-orm是比JPA+MyBatis更加贴合项目的orm框架，具有jpa式的对象CRUD的同时具有比myBatis(plus)更直观简洁性能强大的查询功能。
+   sqltoy-orm是JPA和超强查询的融合体，是简单业务、大型SaaS化多租户ERP、大数据分析多种类型项目实践过程的总结和分享。
  ### JPA部分
 * 类似JPA的对象化CRUD、对象级联加载和新增、更新
 * 强化update操作，提供弹性字段修改能力，不同于hibernate先load后修改，而是一次数据库交互完成修改，确保了高并发场景下数据的准确性
@@ -75,17 +75,18 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 * 支持elasticsearch、mongodb
 * 所有基于sql和jdbc 各类数据库查询
 
-## 1.2 jdk版本要求1.8+
    
-## 1.3 sqltoy-orm 发展轨迹
+## 1.2 sqltoy-orm 发展轨迹
 * 2007~2008年，做农行的一个管理类项目，因查询统计较多，且查询条件多而且经常要增加条件，就不停想如何快速适应这种变化，一个比较偶然的灵感发现了比mybatis强无数倍的动态sql写法，并作为hibernate jpa 查询方面的补充，收到了极为震撼的开发体验。可以看写于2009年的一篇博文: https://blog.csdn.net/iteye_2252/article/details/81683940
 * 2008~2012年，因一直做金融类企业项目，所面对的数据规模基本上是千万级别的，因此sqltoy一直围绕jpa进行sql查询增强，期间已经集成了缓存翻译、快速分页、行列旋转等比其他框架更具特色的查询特性。
 * 2013~2014年，因为了避免让开发者在项目中同时使用两种技术，因此在sqltoy中实现了基于对象的crud功能，形成了完整的sqltoy-orm框架。
-* 2014~2017年, 因需要面对拉卡拉十亿级别的数据规模，对sqltoy进行了大幅重构，实现了底层结构的合理化，并在拉卡拉CRM和日均千万级累计达几十亿级别的数据平台上得到了强化和检验。
-* 2018~至今,  在SaaS化多租户的ERP复杂场景下得到了充分锤炼，sqltoy已经非常完善可靠，开始开源跟大家一起分享和共建！
+* 2014~2017年, 在负责拉卡拉大数据平台过程中，对sqltoy进行了大幅重构，实现了底层结构的合理化，在拉卡拉CRM和日均千万累计达百亿级别的大数据平台上得到了强化和检验。
+* 2018~至今,  在建设SaaS化多租户ERP复杂场景下和flink-cdc结合MPP数据库的实时数仓过程中得到了充分锤炼，sqltoy已经非常完善可靠，开始开源跟大家一起分享和共建！
 
 # 2. 快速特点说明
 ## 2.1 对象操作跟jpa类似并有针对性加强(包括级联)
+* 通过quickvo工具从数据库生成对应的POJO，注入sqlltoy自带的LightDao完成全部操作
+
 ```java
    StaffInfoVO staffInfo = new StaffInfoVO(); 
    //保存
@@ -300,7 +301,7 @@ public void findPageByEntity() {
 	
 ```
 
-## 2.5 最巧妙的缓存应用，将多表关联查询尽量变成单表(看下面的sql,如果不用缓存翻译需要关联多少张表?sql要有多长?多难以维护?)
+## 2.5 最巧妙的缓存应用，减少表关联查询
 * 1、 通过缓存翻译:<translate> 将代码转化为名称，避免关联查询，极大简化sql并提升查询效率 
 * 2、 通过缓存名称模糊匹配:<cache-arg> 获取精准的编码作为条件，避免关联like 模糊查询
 ```java
@@ -417,7 +418,7 @@ spring.sqltoy.functionConverts=default
 </sql>
 ```
   
-## 2.8 提供行列转换、分组汇总、同比环比等
+## 2.8 提供行列转换、分组汇总、同比环比、树排序汇总等
 
 * 水果销售记录表
 
@@ -505,6 +506,7 @@ spring.sqltoy.functionConverts=default
 	<summary columns="sale_count,sale_quantity,total_amt" reverse="true">
 		<!-- 层级顺序保持从高到低 -->
 		<global sum-label="总计" label-column="fruit_name" />
+		 <!-- order-column: 分组排序列(对同分组进行排序)，order-with-sum:默认为true，order-way:desc/asc -->
 		<group group-column="fruit_name" sum-label="小计" label-column="fruit_name" />
 	</summary>
 </sql>
@@ -595,6 +597,73 @@ spring.sqltoy.functionConverts=default
 		<td>-7.70%</td>
 	</tr>
 	</tbody>
+</table>
+
+### 2.8.4 树排序汇总
+```xml
+<!-- 树排序、汇总 -->
+<sql id="treeTable_sort_sum">
+	<value>
+	<![CDATA[
+	select t.area_code,t.pid_area,sale_cnt from sqltoy_area_sales t
+	]]>
+	</value>
+	<!-- 组织树形上下归属结构，同时将底层节点值逐层汇总到父节点上，并且对同层级按照降序排列  -->
+	<tree-sort id-column="area_code" pid-column="pid_area"	sum-columns="sale_cnt" level-order-column="sale_cnt" order-way="desc"/>
+</sql>
+```
+* 效果
+
+<table>
+<thead>
+	<tr>
+	<th>地区</th>
+	<th>归属地区</th>
+	<th>销售量</th>
+	</tr>
+</thead>
+<tbody>
+	<tr>
+	<td>上海</td>
+	<td>中国</td>
+	<td>300</td>
+	</tr>
+	<tr>
+	<td>&nbsp;&nbsp;&nbsp;&nbsp;松江</td>
+	<td>上海</td>
+	<td>&nbsp;&nbsp;&nbsp;&nbsp;120</td>
+	</tr>
+ 	<tr>
+	<td>&nbsp;&nbsp;&nbsp;&nbsp;杨浦</td>
+	<td>上海</td>
+	<td>&nbsp;&nbsp;&nbsp;&nbsp;116</td>
+	</tr>
+ 	<tr>
+	<td>&nbsp;&nbsp;&nbsp;&nbsp;浦东</td>
+	<td>上海</td>
+	<td>&nbsp;&nbsp;&nbsp;&nbsp;64</td>
+	</tr>
+	<tr>
+	<td>江苏</td>
+	<td>中国</td>
+	<td>270</td>
+	</tr>
+	<tr>
+	<td>&nbsp;&nbsp;&nbsp;&nbsp;南京</td>
+	<td>江苏</td>
+	<td>&nbsp;&nbsp;&nbsp;&nbsp;110</td>
+	</tr>
+ 	<tr>
+	<td>&nbsp;&nbsp;&nbsp;&nbsp;苏州</td>
+	<td>江苏</td>
+	<td>&nbsp;&nbsp;&nbsp;&nbsp;90</td>
+	</tr>
+ 	<tr>
+	<td>&nbsp;&nbsp;&nbsp;&nbsp;无锡</td>
+	<td>江苏</td>
+	<td>&nbsp;&nbsp;&nbsp;&nbsp;70</td>
+	</tr>
+</tbody>
 </table>
 
 ## 2.9 分库分表

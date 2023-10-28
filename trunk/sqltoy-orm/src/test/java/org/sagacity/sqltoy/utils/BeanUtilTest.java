@@ -21,6 +21,7 @@ import org.sagacity.sqltoy.demo.domain.DeviceOrderVO;
 import org.sagacity.sqltoy.demo.domain.StaffInfo;
 import org.sagacity.sqltoy.demo.vo.DataRange;
 import org.sagacity.sqltoy.demo.vo.StaffInfoVO;
+import org.sagacity.sqltoy.demo.vo.TreeModel;
 import org.sagacity.sqltoy.demo.vo.TypeShowCase;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.model.IgnoreCaseLinkedMap;
@@ -403,8 +404,8 @@ public class BeanUtilTest {
 		Method method = BeanUtil.matchSetMethods(StaffInfoVO.class, "dataRangeList")[0];
 		System.err.println(method.getParameterTypes()[0]);
 		System.err.println(method.getParameterTypes()[0].equals(List.class));
-		System.err.println(((ParameterizedType)method.getGenericParameterTypes()[0]).getRawType());
-		System.err.println(((ParameterizedType)method.getGenericParameterTypes()[0]).getActualTypeArguments()[0]);
+		System.err.println(((ParameterizedType) method.getGenericParameterTypes()[0]).getRawType());
+		System.err.println(((ParameterizedType) method.getGenericParameterTypes()[0]).getActualTypeArguments()[0]);
 		System.err.println(method.getGenericParameterTypes()[0] instanceof ParameterizedType);
 		System.err.println(method.getGenericParameterTypes()[0].equals(List.class));
 	}
@@ -412,15 +413,32 @@ public class BeanUtilTest {
 	@Test
 	public void testMethodType2() {
 		StaffInfoVO staff = new StaffInfoVO();
-		List<DataRange> list=new ArrayList<DataRange>();
-		DataRange range=new DataRange();
+		List<DataRange> list = new ArrayList<DataRange>();
+		DataRange range = new DataRange();
 		list.add(range);
 		staff.setDataRangeList(list);
 		Method method = BeanUtil.matchSetMethods(StaffInfoVO.class, "items")[0];
 		System.err.println(method.getParameterTypes()[0]);
 		System.err.println(method.getParameterTypes()[0].equals(List.class));
 		System.err.println(method.getGenericParameterTypes()[0] instanceof ParameterizedType);
-		System.err.println(method.getGenericParameterTypes()[0]==null);
-		Object value=staff.getDataRangeList();
+		System.err.println(method.getGenericParameterTypes()[0] == null);
+		Object value = staff.getDataRangeList();
+	}
+
+	@Test
+	public void testSetValue() {
+		String[] properties = { "IS_LEAF" };
+		List rows = new ArrayList();
+		for (int i = 1; i < 2; i++) {
+			List row = new ArrayList();
+			row.add("" + i);
+			row.add("name" + i);
+			row.add(i % 2 == 1 ? true : false);
+			rows.add(row);
+		}
+		List<TreeModel> entities = BeanUtil.reflectListToBean(null, rows, new int[] { 2 }, properties, TreeModel.class);
+		for (TreeModel treeModel : entities) {
+			System.err.println(JSON.toJSONString(treeModel));
+		}
 	}
 }

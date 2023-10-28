@@ -1164,6 +1164,12 @@
 				<xsd:documentation><![CDATA[每个查询条件以及对应count记录在内存中存放的有效时长(秒),默认90秒,确保及时进行刷新查询]]></xsd:documentation>
 			</xsd:annotation>
 		</xsd:attribute>
+		<xsd:attribute name="skip-zero-count"
+			type="xsd:boolean" default="false">
+			<xsd:annotation>
+				<xsd:documentation><![CDATA[当count为0时是否自动重新获取]]></xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
 	</xsd:complexType>
 
 	<xsd:complexType name="sqltoyPivotType">

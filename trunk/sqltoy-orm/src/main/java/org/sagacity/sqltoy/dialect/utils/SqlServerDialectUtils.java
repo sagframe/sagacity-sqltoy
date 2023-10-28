@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyConstants;
@@ -66,6 +67,12 @@ public class SqlServerDialectUtils {
 	 * 定义日志
 	 */
 	protected final static Logger logger = LoggerFactory.getLogger(SqlServerDialectUtils.class);
+
+	// POJO 对应的insert sql语句缓存
+	private static ConcurrentHashMap<String, String> insertSqlCache = new ConcurrentHashMap<String, String>(256);
+
+	// POJO 对应的merge into语句缓存
+	private static ConcurrentHashMap<String, String> insertIgnoreSqlCache = new ConcurrentHashMap<String, String>(256);
 
 	/**
 	 * @todo 取随机记录
@@ -405,6 +412,11 @@ public class SqlServerDialectUtils {
 			return generateInsertSql(unifyFieldsHandler, dbType, entityMeta, tableName, pkStrategy, isNullFunction,
 					sequence, isAssignPK);
 		}
+		String sqlCacheKey = getCacheKey(entityMeta, tableName, dbType, pkStrategy);
+		String insertIgnoreSql = insertIgnoreSqlCache.get(sqlCacheKey);
+		if (null != insertIgnoreSql) {
+			return insertIgnoreSql;
+		}
 		int columnSize = entityMeta.getFieldsArray().length;
 		StringBuilder sql = new StringBuilder(columnSize * 30 + 100);
 		String realTable = entityMeta.getSchemaTable(tableName, dbType);
@@ -531,7 +543,9 @@ public class SqlServerDialectUtils {
 			}
 		}
 		sql.append(")");
-		return sql.toString();
+		insertIgnoreSql = sql.toString();
+		insertIgnoreSqlCache.put(sqlCacheKey, insertIgnoreSql);
+		return insertIgnoreSql;
 	}
 
 	/**
@@ -548,6 +562,11 @@ public class SqlServerDialectUtils {
 	public static String generateInsertSql(IUnifyFieldsHandler unifyFieldsHandler, Integer dbType,
 			EntityMeta entityMeta, String tableName, PKStrategy pkStrategy, String isNullFunction, String sequence,
 			boolean isAssignPK) {
+		String sqlCacheKey = getCacheKey(entityMeta, tableName, dbType, pkStrategy);
+		String insertSql = insertSqlCache.get(sqlCacheKey);
+		if (null != insertSql) {
+			return insertSql;
+		}
 		int columnSize = entityMeta.getFieldsArray().length;
 		StringBuilder sql = new StringBuilder(columnSize * 20 + 30);
 		StringBuilder values = new StringBuilder(columnSize * 2 - 1);
@@ -621,7 +640,9 @@ public class SqlServerDialectUtils {
 		sql.append(") values (");
 		sql.append(values);
 		sql.append(")");
-		return sql.toString();
+		insertSql = sql.toString();
+		insertSqlCache.put(sqlCacheKey, insertSql);
+		return insertSql;
 	}
 
 	/**
@@ -1155,5 +1176,18 @@ public class SqlServerDialectUtils {
 			return false;
 		}
 		return true;
+	}
+
+	/**
+	 * @TODO 组织对象操作sql的key
+	 * @param entityMeta
+	 * @param tableName
+	 * @param dbType
+	 * @param pkStrategy
+	 * @return
+	 */
+	private static String getCacheKey(EntityMeta entityMeta, String tableName, int dbType, PKStrategy pkStrategy) {
+		return entityMeta.getEntityClass().getName() + "[" + tableName + "]dbType=" + dbType
+				+ ((pkStrategy == null) ? "" : pkStrategy.getValue());
 	}
 }
