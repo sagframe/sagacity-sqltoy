@@ -217,7 +217,7 @@ public interface Dialect {
 	 * @param entity
 	 * @param forceUpdateFields
 	 * @param cascade
-	 * @param forceCascadeClass
+	 * @param forceCascadeClasses
 	 * @param subTableForceUpdateProps
 	 * @param conn
 	 * @param dbType
@@ -227,7 +227,7 @@ public interface Dialect {
 	 * @throws Exception
 	 */
 	public Long update(final SqlToyContext sqlToyContext, final Serializable entity, final String[] forceUpdateFields,
-			final boolean cascade, final Class[] forceCascadeClass,
+			final boolean cascade, final Class[] forceCascadeClasses,
 			final HashMap<Class, String[]> subTableForceUpdateProps, final Connection conn, final Integer dbType,
 			final String dialect, final String tableName) throws Exception;
 

@@ -3,12 +3,24 @@
  */
 package org.sagacity.sqltoy.dialect.utils;
 
+import java.io.OutputStream;
 import java.io.Serializable;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.sql.Array;
+import java.sql.Blob;
+import java.sql.Clob;
 import java.sql.Connection;
+import java.sql.NClob;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -413,7 +425,7 @@ public class DefaultDialectUtils {
 								}
 								// 插入设置具体列的值
 								if (fieldValue != null) {
-									rs.updateObject(fieldMeta.getColumnName(), fieldValue);
+									resultUpdate(conn, rs, fieldMeta, fieldValue, dbType);
 								}
 							}
 							// 执行插入
@@ -426,9 +438,192 @@ public class DefaultDialectUtils {
 		if (updateResult == null || updateResult.isEmpty()) {
 			return entity;
 		}
-		List entities = BeanUtil.reflectListToBean(sqlToyContext.getTypeHandler(), updateResult,
-				entityMeta.getFieldsArray(), entity.getClass());
-		return (Serializable) entities.get(0);
+		List rowList = (List) updateResult.get(0);
+		// 覆盖返回值
+		for (int i = 0; i < entityMeta.getFieldsArray().length; i++) {
+			BeanUtil.setProperty(entity, entityMeta.getFieldsArray()[i], rowList.get(i));
+		}
+		return entity;
+	}
+
+	/**
+	 * @TODO 插入对象
+	 * @param conn
+	 * @param rs
+	 * @param fieldMeta
+	 * @param paramValue
+	 * @param dbType
+	 * @throws Exception
+	 */
+	private static void resultUpdate(Connection conn, ResultSet rs, FieldMeta fieldMeta, Object paramValue,
+			Integer dbType) throws Exception {
+		if (!fieldMeta.isPK()) {
+			paramValue = SqlUtilsExt.getDefaultValue(paramValue, fieldMeta.getDefaultValue(), fieldMeta.getType(),
+					fieldMeta.isNullable());
+		}
+		// 插入设置具体列的值
+		if (paramValue == null) {
+			return;
+		}
+		String tmpStr;
+		int jdbcType = fieldMeta.getType();
+		String columnName = fieldMeta.getColumnName();
+		if (paramValue instanceof java.lang.String) {
+			tmpStr = (String) paramValue;
+			// clob 类型只有oracle、db2、dm、oceanBase等数据库支持
+			if (jdbcType == java.sql.Types.CLOB) {
+				if (DBType.ORACLE == dbType || DBType.DB2 == dbType || DBType.OCEANBASE == dbType
+						|| DBType.ORACLE11 == dbType || DBType.DM == dbType || DBType.KINGBASE == dbType) {
+					Clob clob = conn.createClob();
+					clob.setString(1, tmpStr);
+					rs.updateClob(columnName, clob);
+				} else {
+					rs.updateString(columnName, tmpStr);
+				}
+			} else if (jdbcType == java.sql.Types.NCLOB) {
+				if (DBType.ORACLE == dbType || DBType.DB2 == dbType || DBType.OCEANBASE == dbType
+						|| DBType.ORACLE11 == dbType || DBType.DM == dbType || DBType.KINGBASE == dbType) {
+					NClob nclob = conn.createNClob();
+					nclob.setString(1, tmpStr);
+					rs.updateNClob(columnName, nclob);
+				} else {
+					rs.updateString(columnName, tmpStr);
+				}
+			} else {
+				rs.updateString(columnName, tmpStr);
+			}
+		} else if (paramValue instanceof java.lang.Integer) {
+			Integer paramInt = (Integer) paramValue;
+			if (jdbcType == java.sql.Types.BOOLEAN) {
+				if (paramInt == 1) {
+					rs.updateBoolean(columnName, true);
+				} else {
+					rs.updateBoolean(columnName, false);
+				}
+			} else {
+				rs.updateInt(columnName, paramInt);
+			}
+		} else if (paramValue instanceof java.time.LocalDateTime) {
+			rs.updateTimestamp(columnName, Timestamp.valueOf((LocalDateTime) paramValue));
+		} else if (paramValue instanceof BigDecimal) {
+			rs.updateBigDecimal(columnName, (BigDecimal) paramValue);
+		} else if (paramValue instanceof java.time.LocalDate) {
+			rs.updateDate(columnName, java.sql.Date.valueOf((LocalDate) paramValue));
+		} else if (paramValue instanceof java.sql.Timestamp) {
+			rs.updateTimestamp(columnName, (java.sql.Timestamp) paramValue);
+		} else if (paramValue instanceof java.util.Date) {
+			if (dbType == DBType.CLICKHOUSE) {
+				rs.updateDate(columnName, new java.sql.Date(((java.util.Date) paramValue).getTime()));
+			} else {
+				rs.updateTimestamp(columnName, new Timestamp(((java.util.Date) paramValue).getTime()));
+			}
+		} else if (paramValue instanceof java.math.BigInteger) {
+			rs.updateBigDecimal(columnName, new BigDecimal(((BigInteger) paramValue)));
+		} else if (paramValue instanceof java.lang.Double) {
+			rs.updateDouble(columnName, ((Double) paramValue));
+		} else if (paramValue instanceof java.lang.Long) {
+			rs.updateLong(columnName, ((Long) paramValue));
+		} else if (paramValue instanceof java.sql.Clob) {
+			tmpStr = SqlUtil.clobToString((java.sql.Clob) paramValue);
+			rs.updateString(columnName, tmpStr);
+		} else if (paramValue instanceof byte[]) {
+			if (jdbcType == java.sql.Types.BLOB) {
+				Blob blob = null;
+				try {
+					blob = conn.createBlob();
+					OutputStream out = blob.setBinaryStream(1);
+					out.write((byte[]) paramValue);
+					out.flush();
+					out.close();
+					rs.updateBlob(columnName, blob);
+				} catch (Exception e) {
+					rs.updateBytes(columnName, (byte[]) paramValue);
+				}
+			} else {
+				rs.updateBytes(columnName, (byte[]) paramValue);
+			}
+		} else if (paramValue instanceof java.lang.Float) {
+			rs.updateFloat(columnName, ((Float) paramValue));
+		} else if (paramValue instanceof java.sql.Blob) {
+			Blob tmp = (java.sql.Blob) paramValue;
+			rs.updateBytes(columnName, tmp.getBytes(0, Long.valueOf(tmp.length()).intValue()));
+		} else if (paramValue instanceof java.sql.Date) {
+			rs.updateDate(columnName, (java.sql.Date) paramValue);
+		} else if (paramValue instanceof java.lang.Boolean) {
+			if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.CHAR) {
+				rs.updateString(columnName, ((Boolean) paramValue) ? "1" : "0");
+			} else if (jdbcType == java.sql.Types.INTEGER || jdbcType == java.sql.Types.SMALLINT
+					|| jdbcType == java.sql.Types.TINYINT) {
+				rs.updateInt(columnName, ((Boolean) paramValue) ? 1 : 0);
+			} else {
+				rs.updateBoolean(columnName, (Boolean) paramValue);
+			}
+		} else if (paramValue instanceof java.time.LocalTime) {
+			rs.updateTime(columnName, java.sql.Time.valueOf((LocalTime) paramValue));
+		} else if (paramValue instanceof java.sql.Time) {
+			rs.updateTime(columnName, (java.sql.Time) paramValue);
+		} else if (paramValue instanceof java.lang.Character) {
+			tmpStr = ((Character) paramValue).toString();
+			rs.updateString(columnName, tmpStr);
+		} else if (paramValue instanceof java.lang.Short) {
+			rs.updateShort(columnName, (java.lang.Short) paramValue);
+		} else if (paramValue instanceof java.lang.Byte) {
+			rs.updateByte(columnName, (Byte) paramValue);
+		} else if (paramValue instanceof Object[]) {
+			setArray(dbType, conn, rs, columnName, paramValue);
+		} else if (paramValue instanceof Collection) {
+			Object[] values = ((Collection) paramValue).toArray();
+			// 集合为空，无法判断具体类型，设置为null
+			if (values.length > 0) {
+				String type = null;
+				for (Object val : values) {
+					if (val != null) {
+						type = val.getClass().getName().concat("[]");
+						break;
+					}
+				}
+				// 将Object[] 转为具体类型的数组(否则会抛异常)
+				if (type != null) {
+					setArray(dbType, conn, rs, columnName, BeanUtil.convertArray(values, type));
+				}
+			}
+		} else {
+			if (jdbcType != java.sql.Types.NULL) {
+				rs.updateObject(columnName, paramValue, jdbcType);
+			} else {
+				rs.updateObject(columnName, paramValue);
+			}
+		}
+	}
+
+	private static void setArray(Integer dbType, Connection conn, ResultSet rs, String columnName, Object paramValue)
+			throws SQLException {
+		// 目前只支持Integer 和 String两种类型
+		if (dbType == DBType.GAUSSDB) {
+			if (paramValue instanceof Integer[]) {
+				Array array = conn.createArrayOf("INTEGER", (Integer[]) paramValue);
+				rs.updateArray(columnName, array);
+			} else if (paramValue instanceof String[]) {
+				Array array = conn.createArrayOf("VARCHAR", (String[]) paramValue);
+				rs.updateArray(columnName, array);
+			} else if (paramValue instanceof BigDecimal[]) {
+				Array array = conn.createArrayOf("NUMBER", (BigDecimal[]) paramValue);
+				rs.updateArray(columnName, array);
+			} else if (paramValue instanceof BigInteger[]) {
+				Array array = conn.createArrayOf("BIGINT", (BigInteger[]) paramValue);
+				rs.updateArray(columnName, array);
+			} else if (paramValue instanceof Float[]) {
+				Array array = conn.createArrayOf("FLOAT", (Float[]) paramValue);
+				rs.updateArray(columnName, array);
+			} else if (paramValue instanceof Long[]) {
+				Array array = conn.createArrayOf("INTEGER", (Long[]) paramValue);
+				rs.updateArray(columnName, array);
+			} else {
+				rs.updateObject(columnName, paramValue, java.sql.Types.ARRAY);
+			}
+		} else {
+			rs.updateObject(columnName, paramValue, java.sql.Types.ARRAY);
+		}
 	}
 
 	/**

@@ -42,7 +42,7 @@ public class MacroIfLogic {
 		Object value;
 		for (int i = 0; i < logicParamCnt; i++) {
 			value = paramValues.get(preCount + i);
-			// 参数为null会参与后面等于和不等于逻辑判断,数组不参与判断
+			// 空数组、空集合不参与判断
 			if (value != null) {
 				if ((value.getClass().isArray() && CollectionUtil.convertArray(value).length == 0)
 						|| ((value instanceof Collection) && ((Collection) value).isEmpty())) {
@@ -129,7 +129,7 @@ public class MacroIfLogic {
 				// update 2018-3-29,去除空格增强容错性
 				rightValue = params[1].trim();
 				// 对比值也是动态参数(update 2023-05-05)
-				if (paramValues != null && rightValue.equals("?")) {
+				if (paramValues != null && "?".equals(rightValue)) {
 					if (paramValues.get(preCount + meter) == null) {
 						rightValue = "null";
 					} else {

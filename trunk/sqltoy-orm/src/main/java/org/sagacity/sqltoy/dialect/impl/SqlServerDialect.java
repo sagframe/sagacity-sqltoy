@@ -396,10 +396,10 @@ public class SqlServerDialect implements Dialect {
 	 */
 	@Override
 	public Long update(SqlToyContext sqlToyContext, Serializable entity, String[] forceUpdateFields,
-			final boolean cascade, final Class[] emptyCascadeClasses,
+			final boolean cascade, final Class[] forceCascadeClasses,
 			final HashMap<Class, String[]> subTableForceUpdateProps, Connection conn, final Integer dbType,
 			final String dialect, final String tableName) throws Exception {
-		return SqlServerDialectUtils.update(sqlToyContext, entity, forceUpdateFields, cascade, emptyCascadeClasses,
+		return SqlServerDialectUtils.update(sqlToyContext, entity, forceUpdateFields, cascade, forceCascadeClasses,
 				subTableForceUpdateProps, conn, dbType, tableName);
 	}
 

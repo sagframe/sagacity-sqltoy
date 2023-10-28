@@ -110,7 +110,7 @@ public class TDengineDialect implements Dialect {
 
 	@Override
 	public Long update(SqlToyContext sqlToyContext, Serializable entity, String[] forceUpdateFields, boolean cascade,
-			Class[] forceCascadeClass, HashMap<Class, String[]> subTableForceUpdateProps, Connection conn,
+			Class[] forceCascadeClasses, HashMap<Class, String[]> subTableForceUpdateProps, Connection conn,
 			Integer dbType, String dialect, String tableName) throws Exception {
 		// TODO Auto-generated method stub
 		return null;

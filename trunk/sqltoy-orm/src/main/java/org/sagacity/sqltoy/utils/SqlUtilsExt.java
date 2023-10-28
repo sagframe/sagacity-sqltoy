@@ -190,7 +190,7 @@ public class SqlUtilsExt {
 					|| jdbcType == java.sql.Types.LONGVARCHAR || jdbcType == java.sql.Types.NCLOB) {
 				return defaultValue;
 			}
-			boolean isBlank = defaultValue.trim().equals("");
+			boolean isBlank = "".equals(defaultValue.trim());
 			// update 2023-2-15增加容错性处理 非字符类型且允许为null，默认值为空白返回null
 			if (isBlank && nullable) {
 				return null;
@@ -260,7 +260,7 @@ public class SqlUtilsExt {
 	 */
 	public static String signSql(String sql, Integer dbType, SqlToyConfig sqlToyConfig) {
 		// 判断是否打开sql签名,提供开发者通过SqlToyContext
-		// dialectProperties设置:sqltoy.open.sqlsign=false 来关闭
+		// dialectConfig设置:sqltoy.open.sqlsign=false 来关闭
 		// elasticsearch类型 不支持
 		if (!SqlToyConstants.openSqlSign() || dbType.equals(DBType.ES)) {
 			return sql;
@@ -271,4 +271,5 @@ public class SqlUtilsExt {
 		}
 		return sql;
 	}
+
 }

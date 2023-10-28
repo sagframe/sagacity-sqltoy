@@ -124,8 +124,8 @@ public class SybaseIQDialect implements Dialect {
 		boolean hasCreateTmp = false;
 		try {
 			// 通过参数处理最终的sql和参数值
-			SqlToyResult queryParam = SqlConfigParseUtils.processSql(insertTempSql.toString(),
-					extend.getParamsName(), extend.getParamsValue(sqlToyContext, sqlToyConfig), dialect);
+			SqlToyResult queryParam = SqlConfigParseUtils.processSql(insertTempSql.toString(), extend.getParamsName(),
+					extend.getParamsValue(sqlToyContext, sqlToyConfig), dialect);
 
 			// 执行sql将记录插入临时表
 			SqlUtil.executeSql(sqlToyContext.getTypeHandler(), queryParam.getSql(), queryParam.getParamsValue(), null,
@@ -465,7 +465,7 @@ public class SybaseIQDialect implements Dialect {
 	 */
 	@Override
 	public Long update(SqlToyContext sqlToyContext, Serializable entity, String[] forceUpdateFields,
-			final boolean cascade, final Class[] emptyCascadeClasses,
+			final boolean cascade, final Class[] forceCascadeClasses,
 			final HashMap<Class, String[]> subTableForceUpdateProps, Connection conn, final Integer dbType,
 			final String dialect, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
@@ -475,8 +475,8 @@ public class SybaseIQDialect implements Dialect {
 		// 级联保存
 		if (cascade && !entityMeta.getCascadeModels().isEmpty()) {
 			HashMap<Type, String> typeMap = new HashMap<Type, String>();
-			if (emptyCascadeClasses != null)
-				for (Type type : emptyCascadeClasses) {
+			if (forceCascadeClasses != null)
+				for (Type type : forceCascadeClasses) {
 					typeMap.put(type, "");
 				}
 			// 级联子表数据
@@ -486,7 +486,7 @@ public class SybaseIQDialect implements Dialect {
 			for (TableCascadeModel cascadeModel : entityMeta.getCascadeModels()) {
 				subEntityMeta = sqlToyContext.getEntityMeta(cascadeModel.getMappedType());
 				final String[] mappedFields = cascadeModel.getMappedFields();
-				final Object[] mainFieldValues = BeanUtil.reflectBeanToAry(entity, cascadeModel.getFields());
+				final Object[] mappedFieldValues = BeanUtil.reflectBeanToAry(entity, cascadeModel.getFields());
 				forceUpdateProps = (subTableForceUpdateProps == null) ? null
 						: subTableForceUpdateProps.get(cascadeModel.getMappedType());
 				if (cascadeModel.getCascadeType() == 1) {
@@ -503,7 +503,7 @@ public class SybaseIQDialect implements Dialect {
 				if (cascadeModel.getCascadeUpdateSql() != null && ((subTableData != null && !subTableData.isEmpty())
 						|| typeMap.containsKey(cascadeModel.getMappedType()))) {
 					SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(cascadeModel.getCascadeUpdateSql(),
-							mappedFields, mainFieldValues, dialect);
+							mappedFields, mappedFieldValues, dialect);
 					SqlExecuteStat.debug("对存量数据进行级联修改", null);
 					SqlUtil.executeSql(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(),
 							sqlToyResult.getParamsValue(), null, conn, dbType, null, true);
@@ -512,15 +512,10 @@ public class SybaseIQDialect implements Dialect {
 				if (subTableData != null && !subTableData.isEmpty()) {
 					SqlExecuteStat.debug("执行子表级联更新操作", null);
 					logger.info("执行update主表:{} 对应级联子表: {} 更新操作!", tableName, subEntityMeta.getTableName());
-					saveOrUpdateAll(sqlToyContext, subTableData, sqlToyContext.getBatchSize(),
-							// 设置关联外键字段的属性值(来自主表的主键)
-							new ReflectPropsHandler() {
-								public void process() {
-									for (int i = 0; i < mappedFields.length; i++) {
-										this.setValue(mappedFields[i], mainFieldValues[i]);
-									}
-								}
-							}, forceUpdateProps, conn, dbType, dialect, null, null);
+					// 回写关联字段赋值
+					BeanUtil.batchSetProperties(subTableData, mappedFields, mappedFieldValues, true);
+					saveOrUpdateAll(sqlToyContext, subTableData, sqlToyContext.getBatchSize(), null, forceUpdateProps,
+							conn, dbType, dialect, null, null);
 				} else {
 					logger.info("未执行update主表:{} 对应级联子表: {} 更新操作,子表数据为空!", tableName, subEntityMeta.getTableName());
 				}

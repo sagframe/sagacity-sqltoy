@@ -170,11 +170,11 @@ public class DefaultDialect implements Dialect {
 
 	@Override
 	public Long update(SqlToyContext sqlToyContext, Serializable entity, String[] forceUpdateFields, boolean cascade,
-			Class[] emptyCascadeClasses, HashMap<Class, String[]> subTableForceUpdateProps, Connection conn,
+			Class[] forceCascadeClasses, HashMap<Class, String[]> subTableForceUpdateProps, Connection conn,
 			Integer dbType, String dialect, String tableName) throws Exception {
 		// 不支持级联
 		return DialectUtils.update(sqlToyContext, entity, NVL_FUNCTION, forceUpdateFields, false, null,
-				emptyCascadeClasses, subTableForceUpdateProps, conn, dbType, tableName);
+				forceCascadeClasses, subTableForceUpdateProps, conn, dbType, tableName);
 	}
 
 	@Override

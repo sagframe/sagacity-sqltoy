@@ -200,11 +200,11 @@ public interface SqlToyLazyDao {
 	 * @todo 修改数据并返回数据库记录变更数量
 	 * @param serializableVO
 	 * @param forceUpdateProps
-	 * @param emptyUpdateClass
+	 * @param forceCascadeClasses
 	 * @param subTableForceUpdateProps
 	 * @return
 	 */
-	public Long updateCascade(Serializable serializableVO, String[] forceUpdateProps, Class[] emptyUpdateClass,
+	public Long updateCascade(Serializable serializableVO, String[] forceUpdateProps, Class[] forceCascadeClasses,
 			HashMap<Class, String[]> subTableForceUpdateProps);
 
 	/**

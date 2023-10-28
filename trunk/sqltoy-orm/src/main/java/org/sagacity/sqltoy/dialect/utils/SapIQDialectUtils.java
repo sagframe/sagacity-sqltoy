@@ -78,15 +78,11 @@ public class SapIQDialectUtils {
 		// 是否存在业务ID
 		boolean hasBizId = (entityMeta.getBusinessIdGenerator() == null) ? false : true;
 		int bizIdColIndex = hasBizId ? entityMeta.getFieldIndex(entityMeta.getBusinessIdField()) : 0;
-		// 标识符
-		String signature = entityMeta.getBizIdSignature();
 		Integer[] relatedColumn = entityMeta.getBizIdRelatedColIndex();
+		boolean hasId = (entityMeta.getIdStrategy() != null && null != entityMeta.getIdGenerator()) ? true : false;
 		// 主键采用assign方式赋予，则调用generator产生id并赋予其值
-		if (entityMeta.getIdStrategy() != null && null != entityMeta.getIdGenerator()) {
-			int idLength = entityMeta.getIdLength();
-			int bizIdLength = entityMeta.getBizIdLength();
+		if (hasId || hasBizId) {
 			Object[] relatedColValue = null;
-			String businessIdType = hasBizId ? entityMeta.getColumnJavaType(entityMeta.getBusinessIdField()) : "";
 			if (relatedColumn != null) {
 				relatedColValue = new Object[relatedColumn.length];
 				for (int meter = 0; meter < relatedColumn.length; meter++) {
@@ -97,17 +93,18 @@ public class SapIQDialectUtils {
 					}
 				}
 			}
-			if (StringUtil.isBlank(fullParamValues[pkIndex])) {
+			if (hasId && StringUtil.isBlank(fullParamValues[pkIndex])) {
 				// id通过generator机制产生，设置generator产生的值
-				fullParamValues[pkIndex] = entityMeta.getIdGenerator().getId(entityMeta.getTableName(), signature,
-						entityMeta.getBizIdRelatedColumns(), relatedColValue, null, entityMeta.getIdType(), idLength,
-						entityMeta.getBizIdSequenceSize());
+				fullParamValues[pkIndex] = entityMeta.getIdGenerator().getId(entityMeta.getTableName(),
+						entityMeta.getBizIdSignature(), entityMeta.getBizIdRelatedColumns(), relatedColValue, null,
+						entityMeta.getIdType(), entityMeta.getIdLength(), entityMeta.getBizIdSequenceSize());
 				needUpdatePk = true;
 			}
 			if (hasBizId && StringUtil.isBlank(fullParamValues[bizIdColIndex])) {
 				fullParamValues[bizIdColIndex] = entityMeta.getBusinessIdGenerator().getId(entityMeta.getTableName(),
-						signature, entityMeta.getBizIdRelatedColumns(), relatedColValue, null, businessIdType,
-						bizIdLength, entityMeta.getBizIdSequenceSize());
+						entityMeta.getBizIdSignature(), entityMeta.getBizIdRelatedColumns(), relatedColValue, null,
+						entityMeta.getColumnJavaType(entityMeta.getBusinessIdField()), entityMeta.getBizIdLength(),
+						entityMeta.getBizIdSequenceSize());
 				// 回写业务主键值
 				BeanUtil.setProperty(entity, entityMeta.getBusinessIdField(), fullParamValues[bizIdColIndex]);
 			}
@@ -154,7 +151,7 @@ public class SapIQDialectUtils {
 			List subTableData = null;
 			EntityMeta subTableEntityMeta;
 			for (TableCascadeModel cascadeModel : entityMeta.getCascadeModels()) {
-				final Object[] mainFieldValues = BeanUtil.reflectBeanToAry(entity, cascadeModel.getFields());
+				final Object[] mappedFieldValues = BeanUtil.reflectBeanToAry(entity, cascadeModel.getFields());
 				final String[] mappedFields = cascadeModel.getMappedFields();
 				subTableEntityMeta = sqlToyContext.getEntityMeta(cascadeModel.getMappedType());
 				// oneToMany
@@ -170,13 +167,10 @@ public class SapIQDialectUtils {
 				if (subTableData != null && !subTableData.isEmpty()) {
 					logger.info("执行save操作的级联子表{}批量保存!", subTableEntityMeta.getTableName());
 					SqlExecuteStat.debug("执行子表级联保存操作", null);
-					saveAll(sqlToyContext, subTableData, sqlToyContext.getBatchSize(), new ReflectPropsHandler() {
-						public void process() {
-							for (int i = 0; i < mappedFields.length; i++) {
-								this.setValue(mappedFields[i], mainFieldValues[i]);
-							}
-						}
-					}, openIdentity, conn, dbType, null);
+					// 回写关联字段赋值
+					BeanUtil.batchSetProperties(subTableData, mappedFields, mappedFieldValues, true);
+					saveAll(sqlToyContext, subTableData, sqlToyContext.getBatchSize(), null, openIdentity, conn, dbType,
+							null);
 				} else {
 					logger.info("未执行save操作的级联子表{}批量保存,子表数据为空!", subTableEntityMeta.getTableName());
 				}
@@ -251,14 +245,12 @@ public class SapIQDialectUtils {
 		// 标识符
 		String signature = entityMeta.getBizIdSignature();
 		Integer[] relatedColumn = entityMeta.getBizIdRelatedColIndex();
+		boolean hasDataVersion = (entityMeta.getDataVersion() == null) ? false : true;
+		int dataVerIndex = hasDataVersion ? entityMeta.getFieldIndex(entityMeta.getDataVersion().getField()) : 0;
+		boolean hasId = (pkStrategy != null && null != entityMeta.getIdGenerator()) ? true : false;
 		// 无主键值以及多主键以及assign或通过generator方式产生主键策略
-		if (pkStrategy != null && null != entityMeta.getIdGenerator()) {
-			int idLength = entityMeta.getIdLength();
-			int bizIdLength = entityMeta.getBizIdLength();
+		if (hasId || hasBizId) {
 			Object[] rowData;
-			boolean isAssigned = true;
-			List<Object[]> idSet = new ArrayList<Object[]>();
-			String idJdbcType = entityMeta.getIdType();
 			Object[] relatedColValue = null;
 			String businessIdType = hasBizId ? entityMeta.getColumnJavaType(entityMeta.getBusinessIdField()) : "";
 			for (int i = 0, s = paramValues.size(); i < s; i++) {
@@ -273,25 +265,26 @@ public class SapIQDialectUtils {
 						}
 					}
 				}
-				if (StringUtil.isBlank(rowData[pkIndex])) {
-					isAssigned = false;
+				if (hasId && StringUtil.isBlank(rowData[pkIndex])) {
 					rowData[pkIndex] = entityMeta.getIdGenerator().getId(entityMeta.getTableName(), signature,
-							entityMeta.getBizIdRelatedColumns(), relatedColValue, null, idJdbcType, idLength,
-							entityMeta.getBizIdSequenceSize());
+							entityMeta.getBizIdRelatedColumns(), relatedColValue, null, entityMeta.getIdType(),
+							entityMeta.getIdLength(), entityMeta.getBizIdSequenceSize());
+					// 回写主键值
+					BeanUtil.setProperty(entities.get(i), entityMeta.getIdArray()[0], rowData[pkIndex]);
 				}
 
 				if (hasBizId && StringUtil.isBlank(rowData[bizIdColIndex])) {
 					rowData[bizIdColIndex] = entityMeta.getBusinessIdGenerator().getId(entityMeta.getTableName(),
 							signature, entityMeta.getBizIdRelatedColumns(), relatedColValue, null, businessIdType,
-							bizIdLength, entityMeta.getBizIdSequenceSize());
+							entityMeta.getBizIdLength(), entityMeta.getBizIdSequenceSize());
 					// 回写业务主键值
 					BeanUtil.setProperty(entities.get(i), entityMeta.getBusinessIdField(), rowData[bizIdColIndex]);
 				}
-				idSet.add(new Object[] { rowData[pkIndex] });
-			}
-			// 批量反向设置最终得到的主键值
-			if (!isAssigned) {
-				BeanUtil.mappingSetProperties(entities, entityMeta.getIdArray(), idSet, new int[] { 0 }, true);
+				// 回写数据版本
+				if (hasDataVersion) {
+					BeanUtil.setProperty(entities.get(i), entityMeta.getDataVersion().getField(),
+							rowData[dataVerIndex]);
+				}
 			}
 		}
 		SqlExecuteStat.showSql("IQ批量插入", insertSql, null);

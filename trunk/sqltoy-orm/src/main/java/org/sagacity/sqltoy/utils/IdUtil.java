@@ -117,9 +117,8 @@ public class IdUtil {
 			else if (currentTime > currentValue.getCurrentTime()) {
 				currentValue.setCurrentTime(currentTime);
 				currentValue.setValue(1);
-			}
-			// currentTime == currentValue.getCurrentTime()
-			// 超出阈值，则取历史已经取过的值，延迟时间，按最新时间重新计数
+			} // currentTime == currentValue.getCurrentTime()
+				// 超出阀值，从下一个毫秒重新计数
 			else if (currentValue.getValue() >= maxValue) {
 				// 延时1毫秒
 				try {
@@ -209,7 +208,7 @@ public class IdUtil {
 				ipLastNumStr = ipLastNumStr.substring(0, ipLastNumStr.indexOf("%"));
 			}
 			// 替换IP地址中的非数字字符
-			ipLastNumStr = ipLastNumStr.replaceAll("\\.", "").replaceAll("\\:", "");
+			ipLastNumStr = ipLastNumStr.replace(".", "").replace(":", "");
 			// 保留4位
 			if (ipLastNumStr.length() > size) {
 				ipLastNumStr = ipLastNumStr.substring(ipLastNumStr.length() - size);

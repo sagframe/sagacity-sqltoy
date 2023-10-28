@@ -49,7 +49,7 @@ public class DialectExtUtils {
 	public static String generateInsertSql(Integer dbType, EntityMeta entityMeta, PKStrategy pkStrategy,
 			String isNullFunction, String sequence, boolean isAssignPK, String tableName) {
 		// update 2023-5-13 增加缓存机制，避免每次动态组织insert语句
-		String sqlCacheKey = entityMeta.getEntityClass().getName() + "[" + tableName + "]dbType=" + dbType;
+		String sqlCacheKey = getCacheKey(entityMeta, tableName, dbType, pkStrategy);
 		String insertSql = insertSqlCache.get(sqlCacheKey);
 		if (null != insertSql) {
 			return insertSql;
@@ -287,7 +287,7 @@ public class DialectExtUtils {
 			return generateInsertSql(dbType, entityMeta, pkStrategy, isNullFunction, sequence, isAssignPK, realTable);
 		}
 		// sql 缓存，避免每次重复产生
-		String sqlCacheKey = entityMeta.getEntityClass().getName() + "[" + tableName + "]dbType=" + dbType;
+		String sqlCacheKey = getCacheKey(entityMeta, tableName, dbType, pkStrategy);
 		String mergeIgnoreSql = mergeIgnoreSqlCache.get(sqlCacheKey);
 		if (null != mergeIgnoreSql) {
 			return mergeIgnoreSql;
@@ -412,7 +412,7 @@ public class DialectExtUtils {
 	public static String insertIgnore(Integer dbType, EntityMeta entityMeta, PKStrategy pkStrategy,
 			String isNullFunction, String sequence, boolean isAssignPK, String tableName) {
 		// update 2023-5-13 提供缓存方式快速获取sql
-		String sqlCacheKey = entityMeta.getEntityClass().getName() + "[" + tableName + "]dbType=" + dbType;
+		String sqlCacheKey = getCacheKey(entityMeta, tableName, dbType, pkStrategy);
 		String insertIgnoreSql = insertIgnoreSqlCache.get(sqlCacheKey);
 		if (null != insertIgnoreSql) {
 			return insertIgnoreSql;
@@ -544,5 +544,18 @@ public class DialectExtUtils {
 			}
 		}
 		return fieldMeta.getDefaultValue();
+	}
+	
+	/**
+	 * @TODO 组织对象操作sql的key
+	 * @param entityMeta
+	 * @param tableName
+	 * @param dbType
+	 * @param pkStrategy
+	 * @return
+	 */
+	private static String getCacheKey(EntityMeta entityMeta, String tableName, int dbType, PKStrategy pkStrategy) {
+		return entityMeta.getEntityClass().getName() + "[" + tableName + "]dbType=" + dbType
+				+ ((pkStrategy == null) ? "" : pkStrategy.getValue());
 	}
 }
