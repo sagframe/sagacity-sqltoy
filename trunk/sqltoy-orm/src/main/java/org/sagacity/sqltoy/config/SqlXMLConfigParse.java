@@ -398,6 +398,10 @@ public class SqlXMLConfigParse {
 			if (pageOptimize.hasAttribute("parallel-maxwait-seconds")) {
 				optimize.parallelMaxWaitSeconds(Long.parseLong(pageOptimize.getAttribute("parallel-maxwait-seconds")));
 			}
+			// 是否跳过0条总记录的缓存
+			if (pageOptimize.hasAttribute("skip-zero-count")) {
+				optimize.skipZeroCount(Boolean.parseBoolean(pageOptimize.getAttribute("skip-zero-count")));
+			}
 			sqlToyConfig.setPageOptimize(optimize);
 		}
 

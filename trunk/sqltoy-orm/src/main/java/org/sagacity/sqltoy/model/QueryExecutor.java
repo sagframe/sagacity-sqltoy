@@ -134,11 +134,9 @@ public class QueryExecutor implements Serializable {
 
 	/**
 	 * @TODO 设置查询参数的值,包含三种场景
-	 *       <p>
-	 *       1、new QueryExecutor(sql).names("status").values(1) 2、new
-	 *       QueryExecutor(sql).values(1),sql中以?模式传参 3、new
-	 *       QueryExecutor(sql).values(map.put("status",1)),兼容map传参
-	 *       </p>
+	 *       <li>1、new QueryExecutor(sql).names("status").values(1)</li>
+	 *       <li>2、new QueryExecutor(sql).values(1),sql中以?模式传参</li>
+	 *       <li>3、new QueryExecutor(sql).values(map.put("status",1)),兼容map传参</li>
 	 * @param paramsValue
 	 * @return
 	 */

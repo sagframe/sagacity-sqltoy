@@ -49,6 +49,7 @@ import org.sagacity.sqltoy.link.Mongo;
 import org.sagacity.sqltoy.link.Query;
 import org.sagacity.sqltoy.link.Save;
 import org.sagacity.sqltoy.link.Store;
+import org.sagacity.sqltoy.link.TableApi;
 import org.sagacity.sqltoy.link.TreeTable;
 import org.sagacity.sqltoy.link.Unique;
 import org.sagacity.sqltoy.link.Update;
@@ -57,6 +58,7 @@ import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.model.EntityQuery;
 import org.sagacity.sqltoy.model.EntityUpdate;
 import org.sagacity.sqltoy.model.IgnoreCaseLinkedMap;
+import org.sagacity.sqltoy.model.IgnoreCaseSet;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.MapKit;
@@ -88,6 +90,7 @@ import org.sagacity.sqltoy.utils.BeanWrapper;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.DateUtil;
 import org.sagacity.sqltoy.utils.MapperUtils;
+import org.sagacity.sqltoy.utils.QueryExecutorBuilder;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -98,7 +101,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 
 /**
  * @project sagacity-sqltoy
- * @description sqltoy的对外服务层,基础Dao支持工具类，用于被继承扩展自己的Dao
+ * @description sqltoy的对外服务层,基础Dao支持工具类，用于被继承扩展自己的Dao，一般情况下推荐直接使用LightDao(旧项目SqlToyLazyDao)
  * @author zhongxuchen
  * @version v4.0,Date:2012-6-1
  * @modify Date:2012-8-8 {增强对象级联查询、删除、保存操作机制,不支持2层以上级联}
@@ -118,6 +121,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
  * @modify Date:2021-06-25
  *         {剔除linkDaoSupport、BaseDaoSupport,将link功能放入SqlToyDaoSupport}
  * @modify Date:2021-12-23 {优化updateByQuery支持set field=field+1依据字段值进行计算的模式}
+ * @modify Date:2023-08-06 {增加executeMoreResultStore存储过程支持多结果返回}
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class SqlToyDaoSupport {
@@ -261,6 +265,14 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
+	 * @todo 提供一个获取数据库表信息和操作表信息的TableApi集合
+	 * @return
+	 */
+	protected TableApi tableApi() {
+		return new TableApi(sqlToyContext, getDataSource(dataSource));
+	}
+
+	/**
 	 * @todo 提供基于ES的查询(仅针对查询部分)
 	 * @return
 	 */
@@ -299,7 +311,8 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected SqlToyConfig getSqlToyConfig(final String sqlKey, final SqlType sqlType) {
-		return sqlToyContext.getSqlToyConfig(sqlKey, (sqlType == null) ? SqlType.search : sqlType, getDialect(null));
+		return sqlToyContext.getSqlToyConfig(sqlKey, (sqlType == null) ? SqlType.search : sqlType, getDialect(null),
+				null);
 	}
 
 	/**
@@ -323,19 +336,19 @@ public class SqlToyDaoSupport {
 				this.getDataSource(uniqueExecutor.getDataSource()));
 	}
 
-	protected Long getCountBySql(final String sqlOrNamedSql, final Map<String, Object> paramsMap) {
-		return getCountByQuery(new QueryExecutor(sqlOrNamedSql, (paramsMap == null) ? MapKit.map() : paramsMap));
+	protected Long getCountBySql(final String sqlOrSqlId, final Map<String, Object> paramsMap) {
+		return getCountByQuery(new QueryExecutor(sqlOrSqlId, (paramsMap == null) ? MapKit.map() : paramsMap));
 	}
 
 	/**
 	 * @todo 获取数据库查询语句的总记录数
-	 * @param sqlOrNamedSql
+	 * @param sqlOrSqlId
 	 * @param paramsNamed
 	 * @param paramsValue
 	 * @return Long
 	 */
-	protected Long getCountBySql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue) {
-		return getCountByQuery(new QueryExecutor(sqlOrNamedSql, paramsNamed, paramsValue));
+	protected Long getCountBySql(final String sqlOrSqlId, final String[] paramsNamed, final Object[] paramsValue) {
+		return getCountByQuery(new QueryExecutor(sqlOrSqlId, paramsNamed, paramsValue));
 	}
 
 	/**
@@ -359,7 +372,7 @@ public class SqlToyDaoSupport {
 	 */
 	protected Long getCountByQuery(final QueryExecutor queryExecutor) {
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(extend.sql, SqlType.search,
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search,
 				getDialect(extend.dataSource));
 		Long result = dialectFactory.getCountBySql(sqlToyContext, queryExecutor, sqlToyConfig,
 				this.getDataSource(extend.dataSource, sqlToyConfig));
@@ -403,21 +416,19 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @param sqlOrNamedSql
+	 * @param sqlOrSqlId
 	 * @param paramsNamed
 	 * @param paramsValue
 	 * @return
 	 * @see #getSingleValue(String, Map)
 	 */
 	@Deprecated
-	protected Object getSingleValue(final String sqlOrNamedSql, final String[] paramsNamed,
-			final Object[] paramsValue) {
-		return getSingleValue(sqlOrNamedSql, paramsNamed, paramsValue, null);
+	protected Object getSingleValue(final String sqlOrSqlId, final String[] paramsNamed, final Object[] paramsValue) {
+		return getSingleValue(sqlOrSqlId, paramsNamed, paramsValue, null);
 	}
 
-	protected Object getSingleValue(final String sqlOrNamedSql, final Map<String, Object> paramsMap) {
-		Object queryResult = loadByQuery(
-				new QueryExecutor(sqlOrNamedSql, (paramsMap == null) ? MapKit.map() : paramsMap));
+	protected Object getSingleValue(final String sqlOrSqlId, final Map<String, Object> paramsMap) {
+		Object queryResult = loadByQuery(new QueryExecutor(sqlOrSqlId, (paramsMap == null) ? MapKit.map() : paramsMap));
 		if (null != queryResult) {
 			return ((List) queryResult).get(0);
 		}
@@ -425,18 +436,17 @@ public class SqlToyDaoSupport {
 	}
 
 	// add 2022-2-25
-	protected <T> T getSingleValue(final String sqlOrNamedSql, final Map<String, Object> paramsMap,
+	protected <T> T getSingleValue(final String sqlOrSqlId, final Map<String, Object> paramsMap,
 			final Class<T> resultType) {
 		if (resultType == null) {
 			throw new IllegalArgumentException("getSingleValue resultType 不能为null!");
 		}
-		Object value = getSingleValue(sqlOrNamedSql, paramsMap);
+		Object value = getSingleValue(sqlOrSqlId, paramsMap);
 		if (value == null) {
 			return null;
 		}
 		try {
-			return (T) BeanUtil.convertType(value, DataType.getType(resultType.getTypeName()),
-					resultType.getTypeName());
+			return (T) BeanUtil.convertType(value, DataType.getType(resultType), resultType.getTypeName());
 		} catch (Exception e) {
 			throw new DataAccessException("getSingleValue方法获取单个值失败:" + e.getMessage(), e);
 		}
@@ -444,16 +454,16 @@ public class SqlToyDaoSupport {
 
 	/**
 	 * @todo 返回单行单列值，如果结果集存在多条数据则返回null
-	 * @param sqlOrNamedSql
+	 * @param sqlOrSqlId
 	 * @param paramsNamed
 	 * @param paramsValue
 	 * @param dataSource
 	 * @return
 	 */
-	protected Object getSingleValue(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue,
+	protected Object getSingleValue(final String sqlOrSqlId, final String[] paramsNamed, final Object[] paramsValue,
 			final DataSource dataSource) {
 		Object queryResult = loadByQuery(
-				new QueryExecutor(sqlOrNamedSql, paramsNamed, paramsValue).dataSource(dataSource));
+				new QueryExecutor(sqlOrSqlId, paramsNamed, paramsValue).dataSource(dataSource));
 		if (null != queryResult) {
 			return ((List) queryResult).get(0);
 		}
@@ -529,12 +539,12 @@ public class SqlToyDaoSupport {
 	/**
 	 * @TODO 根据id集合批量加载对象
 	 * @param <T>
-	 * @param voClass
+	 * @param entityClass
 	 * @param ids
 	 * @return
 	 */
-	protected <T extends Serializable> List<T> loadByIds(final Class<T> voClass, Object... ids) {
-		return loadByIds(voClass, null, ids);
+	protected <T extends Serializable> List<T> loadByIds(final Class<T> entityClass, Object... ids) {
+		return loadByIds(entityClass, null, ids);
 	}
 
 	/**
@@ -585,33 +595,32 @@ public class SqlToyDaoSupport {
 		return dialectFactory.loadAll(sqlToyContext, entities, cascades, lockMode, this.getDataSource(null));
 	}
 
-	protected <T> T loadBySql(final String sqlOrNamedSql, final Map<String, Object> paramsMap,
-			final Class<T> resultType) {
-		return (T) loadByQuery(new QueryExecutor(sqlOrNamedSql, (paramsMap == null) ? MapKit.map() : paramsMap)
-				.resultType(resultType));
+	protected <T> T loadBySql(final String sqlOrSqlId, final Map<String, Object> paramsMap, final Class<T> resultType) {
+		return (T) loadByQuery(
+				new QueryExecutor(sqlOrSqlId, (paramsMap == null) ? MapKit.map() : paramsMap).resultType(resultType));
 	}
 
 	/**
 	 * @todo 根据sql语句查询并返回单个VO对象(可指定自定义对象,sqltoy根据查询label跟对象的属性名称进行匹配映射)
-	 * @param sqlOrNamedSql
+	 * @param sqlOrSqlId
 	 * @param paramNames
 	 * @param paramValues
 	 * @param resultType
 	 * @return
 	 */
-	protected <T> T loadBySql(final String sqlOrNamedSql, final String[] paramNames, final Object[] paramValues,
+	protected <T> T loadBySql(final String sqlOrSqlId, final String[] paramNames, final Object[] paramValues,
 			final Class<T> resultType) {
-		return (T) loadByQuery(new QueryExecutor(sqlOrNamedSql, paramNames, paramValues).resultType(resultType));
+		return (T) loadByQuery(new QueryExecutor(sqlOrSqlId, paramNames, paramValues).resultType(resultType));
 	}
 
 	/**
 	 * @todo 解析sql中:named 属性到entity对象获取对应的属性值作为查询条件,并将查询结果以entity的class类型返回
-	 * @param sqlOrNamedSql
+	 * @param sqlOrSqlId
 	 * @param entity
 	 * @return
 	 */
-	protected <T extends Serializable> T loadBySql(final String sqlOrNamedSql, final T entity) {
-		return (T) loadByQuery(new QueryExecutor(sqlOrNamedSql, entity));
+	protected <T extends Serializable> T loadBySql(final String sqlOrSqlId, final T entity) {
+		return (T) loadByQuery(new QueryExecutor(sqlOrSqlId, entity));
 	}
 
 	protected <T extends Serializable> T loadEntity(Class<T> entityClass, EntityQuery entityQuery) {
@@ -622,7 +631,7 @@ public class SqlToyDaoSupport {
 		if (result.size() == 1) {
 			return result.get(0);
 		}
-		throw new IllegalArgumentException("loadEntity查询出:" + result.size() + " 条记录,不符合load查询预期!");
+		throw new IllegalArgumentException("loadEntity查询出:" + result.size() + " 条记录,不符合load查询单条记录的预期!");
 	}
 
 	/**
@@ -650,97 +659,97 @@ public class SqlToyDaoSupport {
 		if (rows.size() == 1) {
 			return rows.get(0);
 		}
-		throw new IllegalArgumentException("loadByQuery查询出:" + rows.size() + " 条记录,不符合load查询预期!");
+		throw new IllegalArgumentException("loadByQuery查询出:" + rows.size() + " 条记录,不符合load查询单条记录的预期!");
 	}
 
 	/**
 	 * @todo 执行无条件的sql语句,一般是一个修改、删除等操作，并返回修改的记录数量
-	 * @param sqlOrNamedSql
+	 * @param sqlOrSqlId
 	 * @return
 	 */
-	protected Long executeSql(final String sqlOrNamedSql) {
-		return executeSql(sqlOrNamedSql, null, null, null, null);
+	protected Long executeSql(final String sqlOrSqlId) {
+		return executeSql(sqlOrSqlId, null, null, null, null);
 	}
 
 	/**
 	 * @todo 解析sql中的参数名称，以此名称到entity中提取对应的值作为查询条件值执行sql
-	 * @param sqlOrNamedSql
+	 * @param sqlOrSqlId
 	 * @param entity
 	 * @return
 	 */
-	protected Long executeSql(final String sqlOrNamedSql, final Serializable entity) {
-		SqlToyConfig sqlToyConfig = getSqlToyConfig(sqlOrNamedSql, SqlType.update);
-		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, new QueryExecutor(sqlOrNamedSql, entity), null,
-				null, getDataSource(null, sqlToyConfig));
+	protected Long executeSql(final String sqlOrSqlId, final Serializable entity) {
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sqlOrSqlId, SqlType.update, getDialect(dataSource),
+				entity);
+		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, new QueryExecutor(sqlOrSqlId, entity), null, null,
+				getDataSource(null, sqlToyConfig));
 	}
 
-	protected Long executeSql(final String sqlOrNamedSql, final Map<String, Object> paramsMap) {
-		return executeSql(sqlOrNamedSql, (Serializable) new IgnoreKeyCaseMap(paramsMap));
+	protected Long executeSql(final String sqlOrSqlId, final Map<String, Object> paramsMap) {
+		return executeSql(sqlOrSqlId, (Serializable) new IgnoreKeyCaseMap(paramsMap));
 	}
 
 	/**
 	 * @todo 执行无返回结果的SQL(返回updateCount)
-	 * @param sqlOrNamedSql
+	 * @param sqlOrSqlId
 	 * @param paramsNamed
 	 * @param paramsValue
 	 * @return
 	 */
-	protected Long executeSql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue) {
-		return executeSql(sqlOrNamedSql, paramsNamed, paramsValue, null, null);
+	protected Long executeSql(final String sqlOrSqlId, final String[] paramsNamed, final Object[] paramsValue) {
+		return executeSql(sqlOrSqlId, paramsNamed, paramsValue, null, null);
 	}
 
 	/**
 	 * @todo 执行无返回结果的SQL(返回updateCount),根据autoCommit设置是否自动提交
-	 * @param sqlOrNamedSql
+	 * @param sqlOrSqlId
 	 * @param paramsNamed
 	 * @param paramsValue
-	 * @param autoCommit    自动提交，默认可以填null
+	 * @param autoCommit  自动提交，默认可以填null
 	 * @param dataSource
 	 * @return
 	 */
-	protected Long executeSql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue,
+	protected Long executeSql(final String sqlOrSqlId, final String[] paramsNamed, final Object[] paramsValue,
 			final Boolean autoCommit, final DataSource dataSource) {
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sqlOrNamedSql, SqlType.update,
-				getDialect(dataSource));
-		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig,
-				new QueryExecutor(sqlOrNamedSql).names(paramsNamed).values(paramsValue), null, autoCommit,
+		QueryExecutor query = new QueryExecutor(sqlOrSqlId).names(paramsNamed).values(paramsValue);
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(query, SqlType.update, getDialect(dataSource));
+		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, query, null, autoCommit,
 				getDataSource(dataSource, sqlToyConfig));
 	}
 
-	protected Long batchUpdate(final String sqlOrNamedSql, final List dataSet, final Boolean autoCommit) {
+	protected Long batchUpdate(final String sqlOrSqlId, final List dataSet, final Boolean autoCommit) {
 		// 例如sql 为:merge into table update set xxx=:param
 		// dataSet可以是VO List,可以根据属性自动映射到:param
-		return batchUpdate(sqlOrNamedSql, dataSet, sqlToyContext.getBatchSize(), autoCommit, null);
+		return batchUpdate(sqlOrSqlId, dataSet, sqlToyContext.getBatchSize(), autoCommit, null);
 	}
 
 	/**
 	 * @todo 通过jdbc方式批量插入数据，一般提供给数据采集时或插入临时表使用
-	 * @param sqlOrNamedSql
-	 * @param dataSet       支持List<List>、List<Object[]>(sql中?传参) ;List<VO>、List<Map>
-	 *                      形式(sql中:paramName传参)
+	 * @param sqlOrSqlId
+	 * @param dataSet    支持List<List>、List<Object[]>(sql中?传参) ;List<VO>、List<Map>
+	 *                   形式(sql中:paramName传参)
 	 * @param batchSize
-	 * @param autoCommit    自动提交，默认可以填null
+	 * @param autoCommit 自动提交，默认可以填null
 	 * @return
 	 */
-	protected Long batchUpdate(final String sqlOrNamedSql, final List dataSet, final int batchSize,
+	protected Long batchUpdate(final String sqlOrSqlId, final List dataSet, final int batchSize,
 			final Boolean autoCommit) {
-		return batchUpdate(sqlOrNamedSql, dataSet, batchSize, autoCommit, null);
+		return batchUpdate(sqlOrSqlId, dataSet, batchSize, autoCommit, null);
 	}
 
 	/**
 	 * @todo 批量执行sql修改或删除操作
-	 * @param sqlOrNamedSql
-	 * @param dataSet       支持List<List>、List<Object[]>(sql中?传参) ;List<VO>、List<Map>
-	 *                      形式(sql中:paramName传参)
+	 * @param sqlOrSqlId
+	 * @param dataSet    支持List<List>、List<Object[]>(sql中?传参) ;List<VO>、List<Map>
+	 *                   形式(sql中:paramName传参)
 	 * @param batchSize
 	 * @param autoCommit
 	 * @param dataSource
 	 * @return
 	 */
-	protected Long batchUpdate(final String sqlOrNamedSql, final List dataSet, final int batchSize,
+	protected Long batchUpdate(final String sqlOrSqlId, final List dataSet, final int batchSize,
 			final Boolean autoCommit, final DataSource dataSource) {
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sqlOrNamedSql, SqlType.update,
-				getDialect(dataSource));
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sqlOrSqlId, SqlType.update, getDialect(dataSource),
+				null);
 		return dialectFactory.batchUpdate(sqlToyContext, sqlToyConfig, dataSet, batchSize, null, null, autoCommit,
 				getDataSource(dataSource, sqlToyConfig));
 	}
@@ -761,35 +770,35 @@ public class SqlToyDaoSupport {
 
 	/**
 	 * @todo 以entity对象的属性给sql中的:named 传参数，进行查询，并返回entityClass类型的集合
-	 * @param sqlOrNamedSql
+	 * @param sqlOrSqlId
 	 * @param entity
 	 * @return
 	 */
-	protected <T extends Serializable> List<T> findBySql(final String sqlOrNamedSql, final T entity) {
-		return (List<T>) findByQuery(new QueryExecutor(sqlOrNamedSql, entity)).getRows();
+	protected <T extends Serializable> List<T> findBySql(final String sqlOrSqlId, final T entity) {
+		return (List<T>) findByQuery(new QueryExecutor(sqlOrSqlId, entity)).getRows();
 	}
 
-	protected <T> List<T> findBySql(final String sqlOrNamedSql, final Map<String, Object> paramsMap,
-			final Class<T> voClass) {
+	protected <T> List<T> findBySql(final String sqlOrSqlId, final Map<String, Object> paramsMap,
+			final Class<T> resultType) {
 		return (List<T>) findByQuery(
-				new QueryExecutor(sqlOrNamedSql, (paramsMap == null) ? MapKit.map() : paramsMap).resultType(voClass))
+				new QueryExecutor(sqlOrSqlId, (paramsMap == null) ? MapKit.map() : paramsMap).resultType(resultType))
 				.getRows();
 	}
 
 	/**
 	 * @TODO 查询集合
 	 * @param <T>
-	 * @param sqlOrNamedSql
+	 * @param sqlOrSqlId
 	 * @param paramsNamed
 	 * @param paramsValue
-	 * @param voClass       分null(返回二维List)、voClass、HashMap.class、LinkedHashMap.class等
+	 * @param resultType  分null(返回二维List)、voClass、HashMap.class、LinkedHashMap.class等
 	 * @return
 	 */
-	protected <T> List<T> findBySql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue,
-			final Class<T> voClass) {
-		QueryExecutor query = new QueryExecutor(sqlOrNamedSql, paramsNamed, paramsValue);
-		if (voClass != null) {
-			query.resultType(voClass);
+	protected <T> List<T> findBySql(final String sqlOrSqlId, final String[] paramsNamed, final Object[] paramsValue,
+			final Class<T> resultType) {
+		QueryExecutor query = new QueryExecutor(sqlOrSqlId, paramsNamed, paramsValue);
+		if (resultType != null) {
+			query.resultType(resultType);
 		}
 		return (List<T>) findByQuery(query).getRows();
 	}
@@ -834,7 +843,14 @@ public class SqlToyDaoSupport {
 		// 自定义countsql
 		String countSql = queryExecutor.getInnerModel().countSql;
 		if (StringUtil.isNotBlank(countSql)) {
-			sqlToyConfig.setCountSql(countSql);
+			// 存在@include(sqlId) 或 @include(:sqlScript)
+			if (StringUtil.matches(countSql, SqlToyConstants.INCLUDE_PATTERN)) {
+				SqlToyConfig countSqlConfig = sqlToyContext.getSqlToyConfig(countSql, SqlType.search, dialect,
+						QueryExecutorBuilder.getParamValues(queryExecutor));
+				sqlToyConfig.setCountSql(countSqlConfig.getSql());
+			} else {
+				sqlToyConfig.setCountSql(countSql);
+			}
 		}
 		QueryResult result;
 		// 跳过查询总记录数量
@@ -855,59 +871,58 @@ public class SqlToyDaoSupport {
 	 * @todo 指定sql和参数名称以及名称对应的值和返回结果的类型(类型可以是java.util.HashMap),进行分页查询
 	 *       sql可以是一个具体的语句也可以是xml中定义的sqlId
 	 * @param page
-	 * @param sqlOrNamedSql
+	 * @param sqlOrSqlId
 	 * @param paramsNamed
 	 * @param paramsValue
-	 * @param voClass(null则返回List<List>二维集合,HashMap.class:则返回List<HashMap<columnLabel,columnValue>>)
+	 * @param resultType(null则返回List<List>二维集合,HashMap.class:则返回List<HashMap<columnLabel,columnValue>>)
 	 * @return
 	 */
-	protected <T> Page<T> findPageBySql(final Page page, final String sqlOrNamedSql, final String[] paramsNamed,
-			final Object[] paramsValue, Class<T> voClass) {
-		QueryExecutor query = new QueryExecutor(sqlOrNamedSql, paramsNamed, paramsValue);
-		if (voClass != null) {
-			query.resultType(voClass);
+	protected <T> Page<T> findPageBySql(final Page page, final String sqlOrSqlId, final String[] paramsNamed,
+			final Object[] paramsValue, Class<T> resultType) {
+		QueryExecutor query = new QueryExecutor(sqlOrSqlId, paramsNamed, paramsValue);
+		if (resultType != null) {
+			query.resultType(resultType);
 		}
 		return (Page<T>) findPageByQuery(page, query).getPageResult();
 	}
 
-	protected <T extends Serializable> Page<T> findPageBySql(final Page page, final String sqlOrNamedSql,
-			final T entity) {
-		return (Page<T>) findPageByQuery(page, new QueryExecutor(sqlOrNamedSql, entity)).getPageResult();
+	protected <T extends Serializable> Page<T> findPageBySql(final Page page, final String sqlOrSqlId, final T entity) {
+		return (Page<T>) findPageByQuery(page, new QueryExecutor(sqlOrSqlId, entity)).getPageResult();
 	}
 
-	protected <T> Page<T> findPageBySql(final Page page, final String sqlOrNamedSql,
-			final Map<String, Object> paramsMap, Class<T> voClass) {
-		return (Page<T>) findPageByQuery(page, new QueryExecutor(sqlOrNamedSql, paramsMap).resultType(voClass))
+	protected <T> Page<T> findPageBySql(final Page page, final String sqlOrSqlId, final Map<String, Object> paramsMap,
+			Class<T> resultType) {
+		return (Page<T>) findPageByQuery(page, new QueryExecutor(sqlOrSqlId, paramsMap).resultType(resultType))
 				.getPageResult();
 	}
 
-	protected <T> List<T> findTopBySql(final String sqlOrNamedSql, final Map<String, Object> paramsMap,
-			final Class<T> voClass, final double topSize) {
+	protected <T> List<T> findTopBySql(final String sqlOrSqlId, final Map<String, Object> paramsMap,
+			final Class<T> resultType, final double topSize) {
 		return (List<T>) findTopByQuery(
-				new QueryExecutor(sqlOrNamedSql, (paramsMap == null) ? MapKit.map() : paramsMap).resultType(voClass),
+				new QueryExecutor(sqlOrSqlId, (paramsMap == null) ? MapKit.map() : paramsMap).resultType(resultType),
 				topSize).getRows();
 	}
 
 	/**
 	 * @todo 取符合条件的结果前多少数据,topSize>1 则取整数返回记录数量，topSize<1 则按比例返回结果记录(topSize必须是大于0)
-	 * @param sqlOrNamedSql
+	 * @param sqlOrSqlId
 	 * @param paramsNamed
 	 * @param paramsValue
-	 * @param voClass(null则返回List<List>二维集合,HashMap.class:则返回List<HashMap<columnLabel,columnValue>>)
-	 * @param topSize                                                                                >1
-	 *                                                                                               取整数部分，<1
-	 *                                                                                               则表示按比例获取
+	 * @param resultType(null则返回List<List>二维集合,HashMap.class:则返回List<HashMap<columnLabel,columnValue>>)
+	 * @param topSize                                                                                   >1
+	 *                                                                                                  取整数部分，<1
+	 *                                                                                                  则表示按比例获取
 	 * @return
 	 */
-	protected <T> List<T> findTopBySql(final String sqlOrNamedSql, final String[] paramsNamed,
-			final Object[] paramsValue, final Class<T> voClass, final double topSize) {
-		return (List<T>) findTopByQuery(new QueryExecutor(sqlOrNamedSql, paramsNamed, paramsValue).resultType(voClass),
+	protected <T> List<T> findTopBySql(final String sqlOrSqlId, final String[] paramsNamed, final Object[] paramsValue,
+			final Class<T> resultType, final double topSize) {
+		return (List<T>) findTopByQuery(new QueryExecutor(sqlOrSqlId, paramsNamed, paramsValue).resultType(resultType),
 				topSize).getRows();
 	}
 
-	protected <T extends Serializable> List<T> findTopBySql(final String sqlOrNamedSql, final T entity,
+	protected <T extends Serializable> List<T> findTopBySql(final String sqlOrSqlId, final T entity,
 			final double topSize) {
-		return (List<T>) findTopByQuery(new QueryExecutor(sqlOrNamedSql, entity), topSize).getRows();
+		return (List<T>) findTopByQuery(new QueryExecutor(sqlOrSqlId, entity), topSize).getRows();
 	}
 
 	/**
@@ -943,17 +958,17 @@ public class SqlToyDaoSupport {
 		return result;
 	}
 
-	protected <T> List<T> getRandomResult(final String sqlOrNamedSql, final Map<String, Object> paramsMap,
-			Class<T> voClass, final double randomCount) {
+	protected <T> List<T> getRandomResult(final String sqlOrSqlId, final Map<String, Object> paramsMap,
+			Class<T> resultType, final double randomCount) {
 		return (List<T>) getRandomResult(
-				new QueryExecutor(sqlOrNamedSql, (paramsMap == null) ? MapKit.map() : paramsMap).resultType(voClass),
+				new QueryExecutor(sqlOrSqlId, (paramsMap == null) ? MapKit.map() : paramsMap).resultType(resultType),
 				randomCount).getRows();
 	}
 
-	// voClass(null则返回List<List>二维集合,HashMap.class:则返回List<HashMap<columnLabel,columnValue>>)
-	protected <T> List<T> getRandomResult(final String sqlOrNamedSql, final String[] paramsNamed,
-			final Object[] paramsValue, Class<T> voClass, final double randomCount) {
-		return (List<T>) getRandomResult(new QueryExecutor(sqlOrNamedSql, paramsNamed, paramsValue).resultType(voClass),
+	// resultType(null则返回List<List>二维集合,HashMap.class:则返回List<HashMap<columnLabel,columnValue>>)
+	protected <T> List<T> getRandomResult(final String sqlOrSqlId, final String[] paramsNamed,
+			final Object[] paramsValue, Class<T> resultType, final double randomCount) {
+		return (List<T>) getRandomResult(new QueryExecutor(sqlOrSqlId, paramsNamed, paramsValue).resultType(resultType),
 				randomCount).getRows();
 	}
 
@@ -1242,7 +1257,7 @@ public class SqlToyDaoSupport {
 				}
 			}
 			// 全部有值，且版本字段值不为0表示是更新操作
-			if (isUpdate && !values[props.length - 1].toString().equals("0")) {
+			if (isUpdate && !"0".equals(values[props.length - 1].toString())) {
 				return update(entity, forceUpdateProps, dataSource);
 			}
 		}
@@ -1376,7 +1391,7 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected List updateFetch(final QueryExecutor queryExecutor, final UpdateRowHandler updateRowHandler) {
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getInnerModel().sql, SqlType.search,
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search,
 				getDialect(queryExecutor.getInnerModel().dataSource));
 		return dialectFactory.updateFetch(sqlToyContext, queryExecutor, sqlToyConfig, updateRowHandler,
 				this.getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig)).getRows();
@@ -1573,7 +1588,7 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected HashMap<String, Object[]> getTranslateCache(String cacheName, String cacheType) {
-		return this.sqlToyContext.getTranslateManager().getCacheData(cacheName, cacheType);
+		return sqlToyContext.getTranslateManager().getCacheData(cacheName, cacheType);
 	}
 
 	/**
@@ -1778,7 +1793,6 @@ public class SqlToyDaoSupport {
 		return (List<T>) findEntity(entityClass, entityQuery, entityClass);
 	}
 
-	@SuppressWarnings("unchecked")
 	protected <T> List<T> findEntity(Class entityClass, EntityQuery entityQuery, Class<T> resultType) {
 		if (null == entityClass) {
 			throw new IllegalArgumentException("findEntityList entityClass值不能为空!");
@@ -1800,7 +1814,6 @@ public class SqlToyDaoSupport {
 		return (Page<T>) findPageEntity(page, entityClass, entityQuery, entityClass);
 	}
 
-	@SuppressWarnings("unchecked")
 	protected <T> Page<T> findPageEntity(Page page, Class entityClass, EntityQuery entityQuery, Class<T> resultType) {
 		if (null == entityClass || null == page) {
 			throw new IllegalArgumentException("findPageEntity entityClass、page值不能为空!");
@@ -2061,6 +2074,9 @@ public class SqlToyDaoSupport {
 		EntityMeta entityMeta = getEntityMeta(entityClass);
 		validEntity(entityMeta, entityClass, false);
 		EntityUpdateExtend innerModel = entityUpdate.getInnerModel();
+		// 过滤无效set(field),即校验field不是数据库实际字段(@Column对应的属性)
+		IgnoreCaseLinkedMap<String, Object> realUpdateValues = wrapRealUpdateValues(innerModel.updateValues, entityMeta,
+				entityClass, innerModel.skipNotExistColumn);
 		boolean isName = SqlConfigParseUtils.hasNamedParam(innerModel.where);
 		Object[] values = innerModel.values;
 		String[] paramNames = null;
@@ -2090,7 +2106,6 @@ public class SqlToyDaoSupport {
 		where = SqlUtil.convertFieldsToColumns(entityMeta, where);
 		StringBuilder sql = new StringBuilder();
 		sql.append("update ").append(entityMeta.getSchemaTable(null, null)).append(" set ");
-		Entry<String, Object> entry;
 		// 对统一更新字段做处理
 		IUnifyFieldsHandler unifyHandler = getSqlToyContext().getUnifyFieldsHandler();
 		if (unifyHandler != null) {
@@ -2100,52 +2115,68 @@ public class SqlToyDaoSupport {
 			if (updateFields != null && !updateFields.isEmpty()) {
 				Iterator<Entry<String, Object>> updateIter = updateFields.entrySet().iterator();
 				String columnName;
+				Entry<String, Object> entry;
 				while (updateIter.hasNext()) {
 					entry = updateIter.next();
 					columnName = entityMeta.getColumnName(entry.getKey());
 					// 是数据库表的字段
 					if (columnName != null) {
 						// 是否已经主动update
-						if (innerModel.updateValues.containsKey(entry.getKey())
-								|| innerModel.updateValues.containsKey(columnName)) {
+						if (realUpdateValues.containsKey(entry.getKey()) || realUpdateValues.containsKey(columnName)) {
 							// 存在强制更新
 							if (unifyHandler.forceUpdateFields() != null
 									&& unifyHandler.forceUpdateFields().contains(entry.getKey())) {
 								// 覆盖主动设置的值
 								// 以表字段名称模式设置的值
-								if (innerModel.updateValues.containsKey(columnName)) {
-									innerModel.updateValues.put(columnName, entry.getValue());
+								if (realUpdateValues.containsKey(columnName)) {
+									realUpdateValues.put(columnName, entry.getValue());
 								} else {
 									// 属性名称设置的值
-									innerModel.updateValues.put(entry.getKey(), entry.getValue());
+									realUpdateValues.put(entry.getKey(), entry.getValue());
 								}
 							}
 						} else {
-							innerModel.updateValues.put(entry.getKey(), entry.getValue());
+							realUpdateValues.put(entry.getKey(), entry.getValue());
 						}
 					}
 				}
 			}
 		}
-		Object[] realValues = new Object[innerModel.updateValues.size() + valueSize];
+
+		Object[] realValues = new Object[realUpdateValues.size() + valueSize];
 		if (valueSize > 0) {
-			System.arraycopy(values, 0, realValues, innerModel.updateValues.size(), valueSize);
+			System.arraycopy(values, 0, realValues, realUpdateValues.size(), valueSize);
 		}
 		String[] realNames = null;
 		if (isName) {
 			realNames = new String[realValues.length];
-			System.arraycopy(paramNames, 0, realNames, innerModel.updateValues.size(), valueSize);
+			System.arraycopy(paramNames, 0, realNames, realUpdateValues.size(), valueSize);
+		}
+		// 强制修改的日期时间字段，且以数据库时间为准
+		IgnoreCaseSet forceUpdateSqlFields = new IgnoreCaseSet();
+		if (UnifyUpdateFieldsController.useUnifyFields() && unifyHandler.forceUpdateFields() != null
+				&& unifyHandler.updateSqlTimeFields() != null) {
+			unifyHandler.forceUpdateFields().forEach((sqlUpdateField) -> {
+				if (unifyHandler.updateSqlTimeFields().contains(sqlUpdateField)) {
+					forceUpdateSqlFields.add(sqlUpdateField);
+				}
+			});
 		}
 		int index = 0;
 		String columnName;
-		FieldMeta fieldMeta;
-		Iterator<Entry<String, Object>> iter = innerModel.updateValues.entrySet().iterator();
-		String[] fields;
+		Iterator<Entry<String, Object>> iter = realUpdateValues.entrySet().iterator();
 		String fieldSetValue;
 		// 设置一个扩展标志，避免set field=field+? 场景构造成field=field+:fieldExtParam跟where
 		// field=:field名称冲突
 		final String extSign = "ExtParam";
+		DataSource dsDataSource = getDataSource(innerModel.dataSource, null);
+		Integer dbType = DataSourceUtils.getDBType(sqlToyContext, dsDataSource);
+		String nvlFun = DataSourceUtils.getNvlFunction(dbType);
+		String currentTime;
+		String[] fields;
+		FieldMeta fieldMeta;
 		String fieldName;
+		Entry<String, Object> entry;
 		while (iter.hasNext()) {
 			entry = iter.next();
 			// 考虑 field=filed+? 模式，分割成2部分
@@ -2155,14 +2186,10 @@ public class SqlToyDaoSupport {
 			if (fieldMeta == null) {
 				// 先通过数据字段名称获得类的属性名称再获取fieldMeta
 				fieldName = entityMeta.getColumnFieldMap().get(fields[0].trim().toLowerCase());
-				if (fieldName == null) {
-					throw new IllegalArgumentException("updateByQuery: 字段: " + fields[0] + " 不存在,请检查代码!");
-				}
 				fieldMeta = entityMeta.getFieldMeta(fieldName);
 			}
-			columnName = fieldMeta.getColumnName();
 			// 保留字处理
-			columnName = ReservedWordsUtil.convertWord(columnName, null);
+			columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
 			if (isName) {
 				if (fields.length > 1) {
 					if (fields[1].contains("?")) {
@@ -2175,38 +2202,112 @@ public class SqlToyDaoSupport {
 					realNames[index] = fieldMeta.getFieldName();
 				}
 			}
-			realValues[index] = entry.getValue();
 			if (index > 0) {
 				sql.append(",");
 			}
-			if (fields.length == 1) {
-				sql.append(columnName).append("=").append(isName ? (":" + fieldMeta.getFieldName()) : "?");
+			currentTime = SqlUtil.getDBTime(dbType, fieldMeta, forceUpdateSqlFields);
+			// 将参数值设置为null，update语句构造成update table set field=nvl(?,current_timestamp) 形式
+			if (currentTime != null) {
+				// 原设定的参数设置为null，
+				realValues[index] = null;
+				// 剔除掉已经处理的字段
+				forceUpdateSqlFields.remove(fieldMeta.getFieldName());
+				// field=nvl(?,current_timestamp)
+				sql.append(columnName).append("=").append(nvlFun).append("(")
+						.append(isName ? (":" + fieldMeta.getFieldName()) : "?").append(",").append(currentTime)
+						.append(")");
 			} else {
-				// field=filed+? 类似模式
-				fieldSetValue = fields[1];
-				sql.append(columnName).append("=");
-				if (isName && fieldSetValue.contains("?")) {
-					fieldSetValue = fieldSetValue.replace("?", ":" + fieldMeta.getFieldName().concat(extSign));
+				realValues[index] = entry.getValue();
+				if (fields.length == 1) {
+					sql.append(columnName).append("=").append(isName ? (":" + fieldMeta.getFieldName()) : "?");
+				} else {
+					// field=filed+? 类似模式
+					fieldSetValue = fields[1];
+					sql.append(columnName).append("=");
+					if (isName && fieldSetValue.contains("?")) {
+						fieldSetValue = fieldSetValue.replace("?", ":" + fieldMeta.getFieldName().concat(extSign));
+					}
+					fieldSetValue = SqlUtil.convertFieldsToColumns(entityMeta, fieldSetValue);
+					sql.append(fieldSetValue);
 				}
-				fieldSetValue = SqlUtil.convertFieldsToColumns(entityMeta, fieldSetValue);
-				sql.append(fieldSetValue);
 			}
 			index++;
 		}
+		// 针对独立的sql 时间字段进行赋值更新，update table set field=current_timestamp
+		forceUpdateSqlFields.forEach((sqlField) -> {
+			FieldMeta sqlFieldMeta = entityMeta.getFieldMeta(sqlField);
+			String dateStr = SqlUtil.getDBTime(dbType, sqlFieldMeta, forceUpdateSqlFields);
+			if (dateStr != null) {
+				sql.append(",");
+				sql.append(ReservedWordsUtil.convertWord(sqlFieldMeta.getColumnName(), null)).append("=")
+						.append(dateStr);
+			}
+		});
 		sql.append(" where ").append(where);
 		String sqlStr = sql.toString();
 		QueryExecutor queryExecutor = new QueryExecutor(sqlStr).names(realNames).values(realValues);
 		queryExecutor.getInnerModel().blankToNull = (innerModel.blankToNull == null)
 				? SqlToyConstants.executeSqlBlankToNull
 				: innerModel.blankToNull;
+		queryExecutor.getInnerModel().showSql = innerModel.showSql;
 		// 为后续租户过滤提供判断依据(单表简单sql和对应的实体对象)
 		queryExecutor.getInnerModel().entityClass = entityClass;
 		setEntitySharding(queryExecutor, entityMeta);
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.update,
-				getDialect(innerModel.dataSource));
+				getDialect(dsDataSource));
 		sqlToyConfig.setSqlType(SqlType.update);
-		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, queryExecutor, null, null,
-				getDataSource(innerModel.dataSource, sqlToyConfig));
+		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, queryExecutor, null, null, dsDataSource);
+	}
+
+	/**
+	 * @TODO 过滤掉无效set的属性
+	 * @param updateValues
+	 * @param entityMeta
+	 * @param entityClass
+	 * @param skipNotExistColumn
+	 * @return
+	 */
+	private IgnoreCaseLinkedMap wrapRealUpdateValues(IgnoreCaseLinkedMap updateValues, EntityMeta entityMeta,
+			Class entityClass, boolean skipNotExistColumn) {
+		IgnoreCaseLinkedMap<String, Object> realUpdateValues = new IgnoreCaseLinkedMap<String, Object>();
+		// 先过滤不合法数据
+		Iterator<Entry<String, Object>> iter = updateValues.entrySet().iterator();
+		String[] fields;
+		FieldMeta fieldMeta;
+		String fieldName;
+		Entry<String, Object> entry;
+		String skipFields = new String();
+		while (iter.hasNext()) {
+			entry = iter.next();
+			fields = entry.getKey().split("=");
+			fieldMeta = entityMeta.getFieldMeta(fields[0].trim());
+			if (fieldMeta == null) {
+				// 先通过数据字段名称获得类的属性名称再获取fieldMeta
+				fieldName = entityMeta.getColumnFieldMap().get(fields[0].trim().toLowerCase());
+				if (fieldName != null) {
+					fieldMeta = entityMeta.getFieldMeta(fieldName);
+				}
+			}
+			if (fieldMeta == null) {
+				if (!skipNotExistColumn) {
+					throw new IllegalArgumentException("updateByQuery: 实体对象:" + entityClass.getName() + "属性:"
+							+ fields[0] + " 不是数据库表字段(@Column注解的表示数据库字段),请检查代码!");
+				} else {
+					if (skipFields.length() > 0) {
+						skipFields = skipFields.concat(",").concat(fields[0]);
+					} else {
+						skipFields = fields[0];
+					}
+				}
+			} else {
+				realUpdateValues.put(entry.getKey(), entry.getValue());
+			}
+		}
+		if (realUpdateValues.isEmpty()) {
+			throw new IllegalArgumentException("updateByQuery: 实体对象:" + entityClass.getName()
+					+ ",set(property,value)过程中，排除无效数据库字段属性:" + skipFields + "后，无有效更新属性(@Column注解的为数据库字段),请检查代码!");
+		}
+		return realUpdateValues;
 	}
 
 	/**

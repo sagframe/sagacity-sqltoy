@@ -119,9 +119,12 @@ public class SqltoyAutoConfiguration {
 		// 当发现有重复sqlId时是否抛出异常，终止程序执行
 		sqlToyContext.setBreakWhenSqlRepeat(properties.isBreakWhenSqlRepeat());
 
+		// 是否自动创建或更新表
+		sqlToyContext.setAutoDDL(properties.getAutoDDL());
 		// 开放设置默认单页记录数量
 		sqlToyContext.setDefaultPageSize(properties.getDefaultPageSize());
 
+		sqlToyContext.setDefaultPageOffset(properties.isDefaultPageOffset());
 		// map 类型结果label是否自动转驼峰处理
 		if (properties.getHumpMapResultTypeLabel() != null) {
 			sqlToyContext.setHumpMapResultTypeLabel(properties.getHumpMapResultTypeLabel());

@@ -28,6 +28,8 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @author zhongxuchen
  * @version v1.0, Date:2020年7月30日
  * @modify 2022-10-19 修改processDefaultValue修复oracle、db2日期类型的支持
+ * @modify 2023-10-24 修改了sqlCacheKey，增加pkStrategy作为key的组成,因为gaussdb
+ *         save情况下sequence策略会变成assign，saveAll则保持sequence
  */
 public class DialectExtUtils {
 	// POJO 对应的insert sql语句缓存
@@ -55,7 +57,7 @@ public class DialectExtUtils {
 			EntityMeta entityMeta, PKStrategy pkStrategy, String isNullFunction, String sequence, boolean isAssignPK,
 			String tableName) {
 		// update 2023-5-13 增加缓存机制，避免每次动态组织insert语句
-		String sqlCacheKey = entityMeta.getEntityClass().getName() + "[" + tableName + "]dbType=" + dbType;
+		String sqlCacheKey = getCacheKey(entityMeta, tableName, dbType, pkStrategy);
 		String insertSql = insertSqlCache.get(sqlCacheKey);
 		if (null != insertSql) {
 			return insertSql;
@@ -307,7 +309,7 @@ public class DialectExtUtils {
 					isAssignPK, realTable);
 		}
 		// sql 缓存，避免每次重复产生
-		String sqlCacheKey = entityMeta.getEntityClass().getName() + "[" + tableName + "]dbType=" + dbType;
+		String sqlCacheKey = getCacheKey(entityMeta, tableName, dbType, pkStrategy);
 		String mergeIgnoreSql = mergeIgnoreSqlCache.get(sqlCacheKey);
 		if (null != mergeIgnoreSql) {
 			return mergeIgnoreSql;
@@ -474,7 +476,7 @@ public class DialectExtUtils {
 	public static String insertIgnore(IUnifyFieldsHandler unifyFieldsHandler, Integer dbType, EntityMeta entityMeta,
 			PKStrategy pkStrategy, String isNullFunction, String sequence, boolean isAssignPK, String tableName) {
 		// update 2023-5-13 提供缓存方式快速获取sql
-		String sqlCacheKey = entityMeta.getEntityClass().getName() + "[" + tableName + "]dbType=" + dbType;
+		String sqlCacheKey = getCacheKey(entityMeta, tableName, dbType, pkStrategy);
 		String insertIgnoreSql = insertIgnoreSqlCache.get(sqlCacheKey);
 		if (null != insertIgnoreSql) {
 			return insertIgnoreSql;
@@ -622,5 +624,20 @@ public class DialectExtUtils {
 			}
 		}
 		return fieldMeta.getDefaultValue();
+	}
+
+	/**
+	 * @TODO 组织对象操作sql的key
+	 * @param entityMeta
+	 * @param tableName
+	 * @param dbType
+	 * @param pkStrategy
+	 * @return
+	 */
+	private static String getCacheKey(EntityMeta entityMeta, String tableName, int dbType, PKStrategy pkStrategy) {
+		// update 2023-10-24 增加主键策略作为缓存key的组成，因为gaussdb
+		// save单条保存和saveAll批量机制存在差异，save时sequence策略会提前获取sequence值，然后变成了assign策略
+		return entityMeta.getEntityClass().getName() + "[" + tableName + "]dbType=" + dbType
+				+ ((pkStrategy == null) ? "" : pkStrategy.getValue());
 	}
 }

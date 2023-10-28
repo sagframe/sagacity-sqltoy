@@ -137,7 +137,9 @@ public class Save extends BaseLink {
 
 	/**
 	 * @todo 批量保存
+	 * @param <T>
 	 * @param entities
+	 * @return
 	 */
 	public <T extends Serializable> Long many(final List<T> entities) {
 		if (entities == null || entities.isEmpty()) {

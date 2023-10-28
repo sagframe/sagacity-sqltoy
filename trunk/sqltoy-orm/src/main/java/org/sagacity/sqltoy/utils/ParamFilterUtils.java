@@ -678,7 +678,7 @@ public class ParamFilterUtils {
 				try {
 					result = SqlUtil.combineQueryInStr(paramValue, null, null, paramFilterModel.isSingleQuote());
 				} catch (Exception e) {
-					logger.error("sql 参数过滤转换过程:将数组转成in (:params) 形式的条件值过程错误:{}", e.getMessage());
+					throw new RuntimeException("sql 参数过滤转换过程将数组转成in (:params) 形式的条件值过程错误:" + e.getMessage());
 				}
 			}
 		} else if ("custom-handler".equals(filterType)) {

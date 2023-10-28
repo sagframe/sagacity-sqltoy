@@ -78,6 +78,11 @@ public class SqlToyContextProperties implements Serializable {
 	private int fetchSize = -1;
 
 	/**
+	 * 自动根据POJO创建或更新表
+	 */
+	private Boolean autoDDL = false;
+
+	/**
 	 * 分页最大单页数据量(默认是5万)
 	 */
 	private Integer pageFetchSizeLimit;
@@ -218,6 +223,11 @@ public class SqlToyContextProperties implements Serializable {
 	 * sql格式化输出器(用于debug sql输出)
 	 */
 	private String sqlFormater;
+
+	/**
+	 * 未匹配的数据库类型分页是否是limit ? offset ? 模式还是 limit ?,? 模式
+	 */
+	private boolean defaultPageOffset = true;
 
 	/**
 	 * 线程池配置参数
@@ -648,6 +658,22 @@ public class SqlToyContextProperties implements Serializable {
 
 	public void setDefaultPageSize(int defaultPageSize) {
 		this.defaultPageSize = defaultPageSize;
+	}
+
+	public boolean isDefaultPageOffset() {
+		return defaultPageOffset;
+	}
+
+	public void setDefaultPageOffset(boolean defaultPageOffset) {
+		this.defaultPageOffset = defaultPageOffset;
+	}
+
+	public Boolean getAutoDDL() {
+		return autoDDL;
+	}
+
+	public void setAutoDDL(Boolean autoDDL) {
+		this.autoDDL = autoDDL;
 	}
 
 }

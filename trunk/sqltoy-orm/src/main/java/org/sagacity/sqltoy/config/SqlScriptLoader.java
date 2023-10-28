@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
  * @modify Date:2019-09-15 增加代码中编写的sql缓存机制,避免每次动态解析从而提升性能
  * @modify Date:2020-04-22 增加System.out
  *         对sql文件加载的打印输出,避免有些开发在开发阶段不知道设置日志级别为debug从而看不到输出
+ * @modify Date:2023-8-19 增加了@include(:scriptName) 模式
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class SqlScriptLoader {
@@ -118,7 +119,7 @@ public class SqlScriptLoader {
 					+ "/*- 1、单路径模式:spring.sqltoy.sqlResourcesDir=classpath:com/sagacity/crm\n"
 					+ "/*- 2、多路径模式:spring.sqltoy.sqlResourcesDir=classpath:com/sagacity/crm,classpath:com/sagacity/hr\n"
 					+ "/*- 3、绝对路径模式:spring.sqltoy.sqlResourcesDir=/home/web/project/sql\n"
-					+ "/*-----------错误范例(请看清、看清、再看清:不能有*、**和*.sql.xml)----------------------*/\n"
+					+ "/*-----------错误范例(请看仔细:不能有*、**和*.sql.xml)----------------------*/\n"
 					+ "/*-1、classpath:*/com/yourproject/yourpackage/**/*.sql.xml\n"
 					+ "/*-2、classpath*:/com/yourproject/yourpackage/**/**.sql.xml\n"
 					+ "/*-----------------------------------------------------------------------*/");

@@ -180,8 +180,7 @@ public class Query extends BaseLink {
 	public <T> T getValue(final Class<T> resultType) {
 		Object result = getValue();
 		try {
-			return (T) BeanUtil.convertType(result, DataType.getType(resultType.getTypeName()),
-					resultType.getTypeName());
+			return (T) BeanUtil.convertType(result, DataType.getType(resultType), resultType.getTypeName());
 		} catch (Exception e) {
 			throw new DataAccessException("getValue方法获取单个值失败:" + e.getMessage(), e);
 		}
@@ -205,7 +204,7 @@ public class Query extends BaseLink {
 		if (rows.size() == 1) {
 			return ((List) rows.get(0)).get(0);
 		}
-		throw new IllegalArgumentException("getValue查询出:" + rows.size() + " 条记录,不符合getValue 单条单值预期!");
+		throw new IllegalArgumentException("getValue查询出:" + rows.size() + " 条记录,不符合getValue 单行记录且单值预期!");
 	}
 
 	/**

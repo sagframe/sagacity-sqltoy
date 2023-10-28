@@ -193,7 +193,7 @@ public class DB2Dialect implements Dialect {
 	 */
 	@Override
 	public Long update(final SqlToyContext sqlToyContext, Serializable entity, String[] forceUpdateFields,
-			final boolean cascade, final Class[] emptyCascadeClasses,
+			final boolean cascade, final Class[] forceCascadeClasses,
 			final HashMap<Class, String[]> subTableForceUpdateProps, Connection conn, final Integer dbType,
 			final String dialect, final String tableName) throws Exception {
 		return DialectUtils.update(sqlToyContext, entity, NVL_FUNCTION, forceUpdateFields, cascade,
@@ -205,7 +205,7 @@ public class DB2Dialect implements Dialect {
 								"NEXTVAL FOR " + entityMeta.getSequence(),
 								DB2DialectUtils.isAssignPKValue(entityMeta.getIdStrategy()), null);
 					}
-				}, emptyCascadeClasses, subTableForceUpdateProps, conn, dbType, tableName);
+				}, forceCascadeClasses, subTableForceUpdateProps, conn, dbType, tableName);
 	}
 
 	/*

@@ -16,7 +16,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
  * @project sagacity-sqltoy
- * @description 基础操作类
+ * @description 链式基础操作类，提供SqlToyContext、dataSource等必要属性的注入
  * @author zhongxuchen
  * @version v1.0,Date:2017年10月9日
  */
@@ -56,9 +56,8 @@ public abstract class BaseLink implements Serializable {
 		String sqlDataSource = (null == sqltoyConfig) ? null : sqltoyConfig.getDataSource();
 		// 数据源选择扩展
 		DataSourceSelector dataSourceSelector = sqlToyContext.getDataSourceSelector();
-		return dataSourceSelector.getDataSource(sqlToyContext.getApplicationContext(),
-				defaultDataSource ? null : dataSource, sqlDataSource, (defaultDataSource == false) ? null : dataSource,
-				sqlToyContext.getDefaultDataSource());
+		return dataSourceSelector.getDataSource(sqlToyContext.getApplicationContext(), defaultDataSource ? null : dataSource,
+				sqlDataSource, (defaultDataSource == false) ? null : dataSource, sqlToyContext.getDefaultDataSource());
 	}
 
 	/**

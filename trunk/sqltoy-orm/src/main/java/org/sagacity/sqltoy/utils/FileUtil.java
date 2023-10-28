@@ -63,14 +63,10 @@ public class FileUtil {
 		if (outFile.exists()) {
 			try {
 				fileIn = new FileInputStream(outFile);
-				byte[] buffer = new byte[fileIn.available()];
+				byte[] buffer = new byte[1024];
 				int length;
 				while ((length = fileIn.read(buffer)) != -1) {
 					out.write(buffer, 0, length);
-					// 避免死循环
-					if (length == 0) {
-						break;
-					}
 				}
 				out.flush();
 			} catch (Exception e) {
@@ -92,14 +88,10 @@ public class FileUtil {
 			File writeFile = new File(fileName);
 			createFolder(writeFile.getParent());
 			fos = new FileOutputStream(writeFile);
-			byte[] buffer = new byte[is.available()];
+			byte[] buffer = new byte[1024];
 			int length;
 			while ((length = is.read(buffer)) != -1) {
 				fos.write(buffer, 0, length);
-				// 避免死循环
-				if (length == 0) {
-					break;
-				}
 			}
 			fos.flush();
 		} catch (Exception e) {
@@ -462,8 +454,6 @@ public class FileUtil {
 			if (myDelFile.exists()) {
 				myDelFile.delete();
 				bea = true;
-			} else {
-				bea = false;
 			}
 		} catch (Exception e) {
 			logger.error("删除文件:{},操作出错{}", filePathAndName, e.getMessage());
@@ -618,10 +608,6 @@ public class FileUtil {
 					int len;
 					while ((len = input.read(b)) != -1) {
 						output.write(b, 0, len);
-						// 避免死循环(空文件)
-						if (len == 0) {
-							break;
-						}
 					}
 					output.flush();
 				}

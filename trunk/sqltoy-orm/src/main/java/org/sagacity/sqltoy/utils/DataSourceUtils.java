@@ -472,6 +472,35 @@ public class DataSourceUtils {
 	}
 
 	/**
+	 * 获取不同数据库validator语句
+	 * @param dbType
+	 * @return
+	 * @throws Exception
+	 */
+	public static String getValidateQuery(final int dbType) throws Exception {
+		switch (dbType) {
+			case DBType.DB2: {
+				return "select 1 from sysibm.sysdummy1";
+			}
+			case DBType.ORACLE:
+			case DBType.OCEANBASE:
+			case DBType.DM:
+			case DBType.H2:
+			case DBType.ORACLE11: {
+				return "select 1 from dual";
+			}
+			case DBType.POSTGRESQL:
+			case DBType.POSTGRESQL15:
+			case DBType.GAUSSDB: {
+				return "select version()";
+			}
+			// mysql、tidb、sqlserver、sqlite等
+			default:
+				return "select 1";
+		}
+	}
+
+	/**
 	 * @todo 获取不同数据库validator语句
 	 * @param conn
 	 * @return
@@ -479,26 +508,7 @@ public class DataSourceUtils {
 	 */
 	public static String getValidateQuery(final Connection conn) throws Exception {
 		int dbType = getDBType(conn);
-		switch (dbType) {
-		case DBType.DB2: {
-			return "select 1 from sysibm.sysdummy1";
-		}
-		case DBType.ORACLE:
-		case DBType.OCEANBASE:
-		case DBType.DM:
-		case DBType.H2:
-		case DBType.ORACLE11: {
-			return "select 1 from dual";
-		}
-		case DBType.POSTGRESQL:
-		case DBType.POSTGRESQL15:
-		case DBType.GAUSSDB: {
-			return "select version()";
-		}
-		// mysql、tidb、sqlserver、sqlite等
-		default:
-			return "select 1";
-		}
+		return getValidateQuery(dbType);
 	}
 
 	/**

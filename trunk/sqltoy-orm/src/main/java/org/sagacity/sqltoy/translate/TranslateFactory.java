@@ -90,7 +90,8 @@ public class TranslateFactory {
 	 */
 	private static List doSqlCheck(final SqlToyContext sqlToyContext, final CheckerConfigModel checkerConfig,
 			Timestamp preCheckTime) throws Exception {
-		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(checkerConfig.getSql(), SqlType.search, "");
+		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(checkerConfig.getSql(), SqlType.search, "",
+				null);
 		String dataSourceName = checkerConfig.getDataSource();
 		if (dataSourceName == null) {
 			dataSourceName = sqlToyConfig.getDataSource();
@@ -98,8 +99,8 @@ public class TranslateFactory {
 		QueryExecutor query = new QueryExecutor(checkerConfig.getSql(), sqlToyConfig.getParamsName(),
 				new Object[] { new Date(preCheckTime.getTime()) });
 		DataSourceSelector dataSourceSelector = sqlToyContext.getDataSourceSelector();
-		DataSource dataSource = dataSourceSelector.getDataSource(sqlToyContext.getApplicationContext(), null,
-				dataSourceName, null, sqlToyContext.getDefaultDataSource());
+		DataSource dataSource = dataSourceSelector.getDataSource(sqlToyContext.getApplicationContext(), null, dataSourceName,
+				null, sqlToyContext.getDefaultDataSource());
 		return DialectFactory.getInstance().findByQuery(sqlToyContext, query, sqlToyConfig, null, dataSource).getRows();
 	}
 
@@ -269,7 +270,7 @@ public class TranslateFactory {
 		HashMap<String, Object[]> cacheData = wrapCacheResult(result, cacheModel);
 		// 增加错误日志提醒
 		if (cacheData == null || cacheData.isEmpty()) {
-			logger.error("缓存cacheName={} 数据集为空,请检查对应的配置和查询逻辑是否正确!", cacheModel.getCache());
+			logger.warn("缓存cacheName={} 数据集为空,请检查对应的配置和查询逻辑是否正确!", cacheModel.getCache());
 		}
 		return cacheData;
 	}
@@ -284,7 +285,7 @@ public class TranslateFactory {
 	 */
 	private static List getSqlCacheData(final SqlToyContext sqlToyContext, TranslateConfigModel cacheModel,
 			String cacheType) throws Exception {
-		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(cacheModel.getSql(), SqlType.search, "");
+		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(cacheModel.getSql(), SqlType.search, "", null);
 		QueryExecutor queryExecutor = null;
 		if (StringUtil.isBlank(cacheType)) {
 			queryExecutor = new QueryExecutor(cacheModel.getSql());
@@ -297,8 +298,8 @@ public class TranslateFactory {
 			dataSourceName = sqlToyConfig.getDataSource();
 		}
 		DataSourceSelector dataSourceSelector = sqlToyContext.getDataSourceSelector();
-		DataSource dataSource = dataSourceSelector.getDataSource(sqlToyContext.getApplicationContext(), null,
-				dataSourceName, null, sqlToyContext.getDefaultDataSource());
+		DataSource dataSource = dataSourceSelector.getDataSource(sqlToyContext.getApplicationContext(), null, dataSourceName,
+				null, sqlToyContext.getDefaultDataSource());
 		QueryResult result = DialectFactory.getInstance().findByQuery(sqlToyContext, queryExecutor, sqlToyConfig, null,
 				dataSource);
 		cacheModel.setProperties(result.getLabelNames());

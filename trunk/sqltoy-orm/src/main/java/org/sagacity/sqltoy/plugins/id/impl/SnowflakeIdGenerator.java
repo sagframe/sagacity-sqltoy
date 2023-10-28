@@ -40,6 +40,10 @@ public class SnowflakeIdGenerator implements IdGenerator {
 	@Override
 	public Object getId(String tableName, String signature, String[] relatedColumns, Object[] relatedColValue,
 			Date bizDate, String idJavaType, int length, int sequencSize) {
+		// 如果是多个应用，在一个节点服务器上(相同IP)，主键容易产生重复，要通过下面形式设置不同服务id
+		// <32
+		// java -Dsqltoy.snowflake.workerId=11
+		// java -Dsqltoy.snowflake.dataCenterId=20
 		// 冗余判断
 		if (null == idWorker) {
 			idWorker = new SnowflakeIdWorker(SqlToyConstants.WORKER_ID, SqlToyConstants.DATA_CENTER_ID);

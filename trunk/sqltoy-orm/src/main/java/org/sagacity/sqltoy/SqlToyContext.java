@@ -28,6 +28,7 @@ import org.sagacity.sqltoy.plugins.SqlInterceptor;
 import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
 import org.sagacity.sqltoy.plugins.datasource.impl.DefaultDataSourceSelector;
+import org.sagacity.sqltoy.plugins.ddl.DDLGenerator;
 import org.sagacity.sqltoy.plugins.formater.SqlFormater;
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
 import org.sagacity.sqltoy.plugins.overtime.DefaultOverTimeHandler;
@@ -52,7 +53,7 @@ import org.springframework.context.ApplicationContextAware;
 
 import com.alibaba.ttl.threadpool.TtlExecutors;
 
-//------------------了解 sqltoy的关键优势: -------------------------------------------------------------------------------------------*/
+//------------------了解 sqltoy的关键优势: ----------------------------------------------------------------------------------------*/
 //1、最简最直观的sql编写方式(不仅仅是查询语句)，采用条件参数前置处理规整法，让sql语句部分跟客户端保持高度一致
 //2、sql中支持注释(规避了对hint特性的影响,知道hint吗?搜oracle hint)，和动态更新加载，便于开发和后期维护整个过程的管理
 //3、支持缓存翻译和反向缓存条件检索(通过缓存将名称匹配成精确的key)，实现sql简化和性能大幅提升
@@ -69,7 +70,8 @@ import com.alibaba.ttl.threadpool.TtlExecutors;
 //14、sqltoy的update、save、saveAll、load 等crud操作规避了jpa的缺陷,参见update(entity,String...forceUpdateProps)和updateFetch、updateSaveFetch
 //15、提供了极为人性化的条件处理:排它性条件、日期条件加减和提取月末月初处理等
 //16、提供了查询结果日期、数字格式化、安全脱敏处理，让复杂的事情变得简单，大幅简化sql和结果的二次处理工作
-//------------------------------------------------------------------------------------------------------------------------------------*/
+//17、提供了SqlInterceptor，可自行定义sql拦截器，用于类似租户过滤、sql注入的校验等
+//--------------------------------------------------------------------------------------------------------------------------------*/
 /**
  * @project sagacity-sqltoy
  * @description sqltoy 工具的上下文容器，提供对应的sql获取以及相关参数设置
@@ -81,7 +83,7 @@ import com.alibaba.ttl.threadpool.TtlExecutors;
  * @modify {Date:2022-06-11,支持多个缓存翻译定义文件}
  * @modify {Date:2022-10-14,增加humpMapResultTypeLabel设置结果为Map时是否驼峰化处理属性}
  */
-public class SqlToyContext implements ApplicationContextAware {
+public class SqlToyContext implements ApplicationContextAware{
 	/**
 	 * 定义日志
 	 */
@@ -136,6 +138,11 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * 跳转超出数据页范围回到第一页
 	 */
 	private Boolean overPageToFirst;
+
+	/**
+	 * 未匹配的数据库类型分页是否是limit ? offset ? 模式还是 limit ?,? 模式
+	 */
+	private boolean defaultPageOffset = true;
 
 	/**
 	 * 执行超时sql自定义处理器
@@ -366,6 +373,11 @@ public class SqlToyContext implements ApplicationContextAware {
 	private int defaultPageSize = 10;
 
 	/**
+	 * 自动创建表
+	 */
+	private Boolean autoDDL = false;
+
+	/**
 	 * @todo 初始化
 	 * @throws Exception
 	 */
@@ -384,7 +396,6 @@ public class SqlToyContext implements ApplicationContextAware {
 		initDefaultDataSource();
 		// 设置workerId和dataCenterId,为使用snowflake主键ID产生算法服务
 		SqlToyConstants.setWorkerAndDataCenterId(workerId, dataCenterId, serverId);
-
 		// 初始化脚本加载器
 		scriptLoader.initialize(this.debug, delayCheckSeconds, scriptCheckIntervalSeconds, breakWhenSqlRepeat);
 
@@ -422,6 +433,16 @@ public class SqlToyContext implements ApplicationContextAware {
 		// 默认的脱敏处理器
 		if (desensitizeProvider == null) {
 			desensitizeProvider = new DesensitizeDefaultProvider();
+		}
+		// 向数据库创建表结构、或更新表结构
+		if (this.autoDDL != null && this.autoDDL == true) {
+			DataSource createDDLDB = getDefaultDataSource();
+			if (createDDLDB == null && dataSourceSelector != null) {
+				createDDLDB = dataSourceSelector.getDataSource(applicationContext, null, null, null, null);
+			}
+			if (createDDLDB != null) {
+				DDLGenerator.createDDL(this, entityManager.getAllEntities(), createDDLDB);
+			}
 		}
 		logger.debug("sqltoy init complete!");
 	}
@@ -621,6 +642,12 @@ public class SqlToyContext implements ApplicationContextAware {
 		return entityManager.getEntityMeta(this, entityClass);
 	}
 
+	/**
+	 * @TODO 根据表名获取实体对象的信息(需要配置:spring.sqltoy.packagesToScan 提前加载pojo,sqltoy
+	 *       默认是无需配置即用即载)
+	 * @param tableName
+	 * @return
+	 */
 	public EntityMeta getEntityMeta(String tableName) {
 		return entityManager.getEntityMeta(tableName);
 	}
@@ -1095,15 +1122,15 @@ public class SqlToyContext implements ApplicationContextAware {
 		this.redoDataSources = redoDataSources;
 	}
 
+	public List<SqlInterceptor> getSqlInterceptors() {
+		return sqlInterceptors;
+	}
+
 	public boolean hasSqlInterceptors() {
 		if (sqlInterceptors == null || sqlInterceptors.isEmpty()) {
 			return false;
 		}
 		return true;
-	}
-
-	public List<SqlInterceptor> getSqlInterceptors() {
-		return sqlInterceptors;
 	}
 
 	public void setSqlInterceptors(List<SqlInterceptor> sqlInterceptors) {
@@ -1175,6 +1202,22 @@ public class SqlToyContext implements ApplicationContextAware {
 
 	public void setDefaultPageSize(int defaultPageSize) {
 		this.defaultPageSize = defaultPageSize;
+	}
+
+	public boolean isDefaultPageOffset() {
+		return defaultPageOffset;
+	}
+
+	public void setDefaultPageOffset(boolean defaultPageOffset) {
+		this.defaultPageOffset = defaultPageOffset;
+	}
+
+	public Boolean getAutoDDL() {
+		return autoDDL;
+	}
+
+	public void setAutoDDL(Boolean autoDDL) {
+		this.autoDDL = autoDDL;
 	}
 
 }

@@ -55,6 +55,7 @@ import org.slf4j.LoggerFactory;
  * @modify data:2021-03-12 支持property中含下划线跟对象方法进行匹配
  * @modify data:2022-10-19
  *         convertType类型匹配改成int类型的匹配,通过DataType将TypeName转化为int，批量时效率大幅提升
+ * @modify data:2023-08-06 增加对枚举类型的处理
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class BeanUtil {
@@ -83,7 +84,7 @@ public class BeanUtil {
 	private static ConcurrentHashMap<String, Class> enumClassMap = new ConcurrentHashMap<String, Class>();
 
 	// 枚举类型取key值的常用方法名称
-	private static String[] enumKeys = { "value", "key", "code", "id", "status", "level" };
+	private static String[] enumKeys = { "value", "key", "code", "id", "status", "level", "type" };
 
 	// 静态方法避免实例化和继承
 	private BeanUtil() {
@@ -251,7 +252,7 @@ public class BeanUtil {
 					isBool = false;
 					method = realMeth.get(j);
 					name = method.getName().toLowerCase();
-					// setXXX完全匹配(优先匹配无下划线)
+					// setXXX完全匹配(优先匹配不做下划线替换的场景)
 					if (prop.equals(name)) {
 						matched = true;
 					} else {
@@ -262,7 +263,7 @@ public class BeanUtil {
 							matched = true;
 						}
 					}
-					// 匹配属性含下划线场景
+					// 匹配去除下划线的场景
 					if (!matched && minProp != null) {
 						if (minProp.equals(name) || (isBool && minProp.replaceFirst("setis", "set").equals(name))) {
 							meter++;

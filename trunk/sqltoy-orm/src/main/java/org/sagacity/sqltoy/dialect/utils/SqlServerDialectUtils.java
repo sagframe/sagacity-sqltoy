@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyConstants;
@@ -66,6 +67,12 @@ public class SqlServerDialectUtils {
 	 * 定义日志
 	 */
 	protected final static Logger logger = LoggerFactory.getLogger(SqlServerDialectUtils.class);
+
+	// POJO 对应的insert sql语句缓存
+	private static ConcurrentHashMap<String, String> insertSqlCache = new ConcurrentHashMap<String, String>(256);
+
+	// POJO 对应的merge into语句缓存
+	private static ConcurrentHashMap<String, String> insertIgnoreSqlCache = new ConcurrentHashMap<String, String>(256);
 
 	/**
 	 * @todo 取随机记录
@@ -405,6 +412,11 @@ public class SqlServerDialectUtils {
 			return generateInsertSql(unifyFieldsHandler, dbType, entityMeta, tableName, pkStrategy, isNullFunction,
 					sequence, isAssignPK);
 		}
+		String sqlCacheKey = getCacheKey(entityMeta, tableName, dbType, pkStrategy);
+		String insertIgnoreSql = insertIgnoreSqlCache.get(sqlCacheKey);
+		if (null != insertIgnoreSql) {
+			return insertIgnoreSql;
+		}
 		int columnSize = entityMeta.getFieldsArray().length;
 		StringBuilder sql = new StringBuilder(columnSize * 30 + 100);
 		String realTable = entityMeta.getSchemaTable(tableName, dbType);
@@ -531,7 +543,9 @@ public class SqlServerDialectUtils {
 			}
 		}
 		sql.append(")");
-		return sql.toString();
+		insertIgnoreSql = sql.toString();
+		insertIgnoreSqlCache.put(sqlCacheKey, insertIgnoreSql);
+		return insertIgnoreSql;
 	}
 
 	/**
@@ -548,6 +562,11 @@ public class SqlServerDialectUtils {
 	public static String generateInsertSql(IUnifyFieldsHandler unifyFieldsHandler, Integer dbType,
 			EntityMeta entityMeta, String tableName, PKStrategy pkStrategy, String isNullFunction, String sequence,
 			boolean isAssignPK) {
+		String sqlCacheKey = getCacheKey(entityMeta, tableName, dbType, pkStrategy);
+		String insertSql = insertSqlCache.get(sqlCacheKey);
+		if (null != insertSql) {
+			return insertSql;
+		}
 		int columnSize = entityMeta.getFieldsArray().length;
 		StringBuilder sql = new StringBuilder(columnSize * 20 + 30);
 		StringBuilder values = new StringBuilder(columnSize * 2 - 1);
@@ -621,7 +640,9 @@ public class SqlServerDialectUtils {
 		sql.append(") values (");
 		sql.append(values);
 		sql.append(")");
-		return sql.toString();
+		insertSql = sql.toString();
+		insertSqlCache.put(sqlCacheKey, insertSql);
+		return insertSql;
 	}
 
 	/**
@@ -660,37 +681,36 @@ public class SqlServerDialectUtils {
 		// 是否存在业务ID
 		boolean hasBizId = (entityMeta.getBusinessIdGenerator() == null) ? false : true;
 		int bizIdColIndex = hasBizId ? entityMeta.getFieldIndex(entityMeta.getBusinessIdField()) : 0;
-
-		// 标识符
-		String signature = entityMeta.getBizIdSignature();
-		Integer[] relatedColumn = entityMeta.getBizIdRelatedColIndex();
-		// 主键采用assign方式赋予，则调用generator产生id并赋予其值
-		if (entityMeta.getIdStrategy() != null && null != entityMeta.getIdGenerator()) {
-			int idLength = entityMeta.getIdLength();
-			int bizIdLength = entityMeta.getBizIdLength();
+		boolean hasId = (entityMeta.getIdStrategy() != null && null != entityMeta.getIdGenerator()) ? true : false;
+		// 主键、业务主键生成并回写对象
+		if (hasId || hasBizId) {
+			Integer[] relatedColumn = entityMeta.getBizIdRelatedColIndex();
 			Object[] relatedColValue = null;
-			String businessIdType = hasBizId ? entityMeta.getColumnJavaType(entityMeta.getBusinessIdField()) : "";
+			// 业务主键关联字段值提取、校验
 			if (relatedColumn != null) {
 				relatedColValue = new Object[relatedColumn.length];
 				for (int meter = 0; meter < relatedColumn.length; meter++) {
 					relatedColValue[meter] = fullParamValues[relatedColumn[meter]];
 					if (relatedColValue[meter] == null) {
 						throw new IllegalArgumentException("对象:" + entityMeta.getEntityClass().getName()
-								+ " 生成业务主键依赖的关联字段:" + relatedColumn[meter] + " 值为null!");
+								+ " 生成业务主键依赖的关联字段:" + entityMeta.getBizIdRelatedColumns()[meter] + " 值为null!");
 					}
 				}
 			}
-			if (StringUtil.isBlank(fullParamValues[pkIndex])) {
+			// 主键
+			if (hasId && StringUtil.isBlank(fullParamValues[pkIndex])) {
 				// id通过generator机制产生，设置generator产生的值
-				fullParamValues[pkIndex] = entityMeta.getIdGenerator().getId(entityMeta.getTableName(), signature,
-						entityMeta.getBizIdRelatedColumns(), relatedColValue, null, entityMeta.getIdType(), idLength,
-						entityMeta.getBizIdSequenceSize());
+				fullParamValues[pkIndex] = entityMeta.getIdGenerator().getId(entityMeta.getTableName(),
+						entityMeta.getBizIdSignature(), entityMeta.getBizIdRelatedColumns(), relatedColValue, null,
+						entityMeta.getIdType(), entityMeta.getIdLength(), entityMeta.getBizIdSequenceSize());
 				needUpdatePk = true;
 			}
+			// 业务主键
 			if (hasBizId && StringUtil.isBlank(fullParamValues[bizIdColIndex])) {
 				fullParamValues[bizIdColIndex] = entityMeta.getBusinessIdGenerator().getId(entityMeta.getTableName(),
-						signature, entityMeta.getBizIdRelatedColumns(), relatedColValue, null, businessIdType,
-						bizIdLength, entityMeta.getBizIdSequenceSize());
+						entityMeta.getBizIdSignature(), entityMeta.getBizIdRelatedColumns(), relatedColValue, null,
+						entityMeta.getColumnJavaType(entityMeta.getBusinessIdField()), entityMeta.getBizIdLength(),
+						entityMeta.getBizIdSequenceSize());
 				// 回写业务主键值
 				BeanUtil.setProperty(entity, entityMeta.getBusinessIdField(), fullParamValues[bizIdColIndex]);
 			}
@@ -744,6 +764,12 @@ public class SqlServerDialectUtils {
 				}
 			}
 		});
+		// 回写数据版本号
+		if (entityMeta.getDataVersion() != null) {
+			String dataVersionField = entityMeta.getDataVersion().getField();
+			int dataVersionIndex = entityMeta.getFieldIndex(dataVersionField);
+			BeanUtil.setProperty(entity, dataVersionField, fullParamValues[dataVersionIndex]);
+		}
 		// 无主键直接返回null
 		if (entityMeta.getIdArray() == null) {
 			return null;
@@ -760,8 +786,8 @@ public class SqlServerDialectUtils {
 			List subTableData = null;
 			EntityMeta subTableEntityMeta;
 			for (TableCascadeModel cascadeModel : entityMeta.getCascadeModels()) {
-				final Object[] mainFieldValues = BeanUtil.reflectBeanToAry(entity, cascadeModel.getFields());
 				final String[] mappedFields = cascadeModel.getMappedFields();
+				final Object[] mappedFieldValues = BeanUtil.reflectBeanToAry(entity, cascadeModel.getFields());
 				subTableEntityMeta = sqlToyContext.getEntityMeta(cascadeModel.getMappedType());
 				if (cascadeModel.getCascadeType() == 1) {
 					subTableData = (List) BeanUtil.getProperty(entity, cascadeModel.getProperty());
@@ -775,14 +801,9 @@ public class SqlServerDialectUtils {
 				if (subTableData != null && !subTableData.isEmpty()) {
 					logger.info("执行save操作的级联子表{}批量保存!", subTableEntityMeta.getTableName());
 					SqlExecuteStat.debug("执行子表级联保存操作", null);
-					saveAll(sqlToyContext, subTableData, new ReflectPropsHandler() {
-						@Override
-						public void process() {
-							for (int i = 0; i < mappedFields.length; i++) {
-								this.setValue(mappedFields[i], mainFieldValues[i]);
-							}
-						}
-					}, conn, dbType, null, null);
+					// 回写关联字段赋值
+					BeanUtil.batchSetProperties(subTableData, mappedFields, mappedFieldValues, true);
+					saveAll(sqlToyContext, subTableData, null, conn, dbType, null, null);
 				} else {
 					logger.info("未执行save操作的级联子表{}批量保存,子表数据为空!", subTableEntityMeta.getTableName());
 				}
@@ -857,47 +878,46 @@ public class SqlServerDialectUtils {
 		// 标识符
 		String signature = entityMeta.getBizIdSignature();
 		Integer[] relatedColumn = entityMeta.getBizIdRelatedColIndex();
-
-		// 无主键值以及多主键以及assign或通过generator方式产生主键策略
-		if (pkStrategy != null && null != entityMeta.getIdGenerator()) {
-			int idLength = entityMeta.getIdLength();
-			int bizIdLength = entityMeta.getBizIdLength();
-			Object[] rowData;
-			boolean isAssigned = true;
-			List<Object[]> idSet = new ArrayList<Object[]>();
-			String idJdbcType = entityMeta.getIdType();
-			Object[] relatedColValue = null;
-			String businessIdType = hasBizId ? entityMeta.getColumnJavaType(entityMeta.getBusinessIdField()) : "";
-			for (int i = 0, s = paramValues.size(); i < s; i++) {
-				rowData = (Object[]) paramValues.get(i);
-				if (relatedColumn != null) {
-					relatedColValue = new Object[relatedColumn.length];
-					for (int meter = 0; meter < relatedColumn.length; meter++) {
-						relatedColValue[meter] = rowData[relatedColumn[meter]];
-						if (relatedColValue[meter] == null) {
-							throw new IllegalArgumentException("对象:" + entityMeta.getEntityClass().getName()
-									+ " 生成业务主键依赖的关联字段:" + relatedColumn[meter] + " 值为null!");
-						}
+		String[] relatedColumnNames = entityMeta.getBizIdRelatedColumns();
+		int relatedColumnSize = (relatedColumn == null) ? 0 : relatedColumn.length;
+		boolean hasDataVersion = (entityMeta.getDataVersion() == null) ? false : true;
+		int dataVerIndex = hasDataVersion ? entityMeta.getFieldIndex(entityMeta.getDataVersion().getField()) : 0;
+		boolean hasId = (pkStrategy != null && null != entityMeta.getIdGenerator()) ? true : false;
+		Object[] rowData;
+		Object[] relatedColValue = null;
+		String businessIdType = hasBizId ? entityMeta.getColumnJavaType(entityMeta.getBusinessIdField()) : "";
+		for (int i = 0, end = paramValues.size(); i < end; i++) {
+			rowData = (Object[]) paramValues.get(i);
+			// 业务主键关联字段值提取、校验
+			if (relatedColumn != null) {
+				relatedColValue = new Object[relatedColumnSize];
+				for (int meter = 0; meter < relatedColumnSize; meter++) {
+					relatedColValue[meter] = rowData[relatedColumn[meter]];
+					if (relatedColValue[meter] == null) {
+						throw new IllegalArgumentException("对象:" + entityMeta.getEntityClass().getName()
+								+ " 生成业务主键依赖的关联字段:" + relatedColumnNames[meter] + " 值为null!");
 					}
 				}
-				if (StringUtil.isBlank(rowData[pkIndex])) {
-					isAssigned = false;
-					rowData[pkIndex] = entityMeta.getIdGenerator().getId(entityMeta.getTableName(), signature,
-							entityMeta.getBizIdRelatedColumns(), relatedColValue, null, idJdbcType, idLength,
-							entityMeta.getBizIdSequenceSize());
-				}
-				if (hasBizId && StringUtil.isBlank(rowData[bizIdColIndex])) {
-					rowData[bizIdColIndex] = entityMeta.getBusinessIdGenerator().getId(entityMeta.getTableName(),
-							signature, entityMeta.getBizIdRelatedColumns(), relatedColValue, null, businessIdType,
-							bizIdLength, entityMeta.getBizIdSequenceSize());
-					// 回写业务主键值
-					BeanUtil.setProperty(entities.get(i), entityMeta.getBusinessIdField(), rowData[bizIdColIndex]);
-				}
-				idSet.add(new Object[] { rowData[pkIndex] });
 			}
-			// 批量反向设置最终得到的主键值
-			if (!isAssigned) {
-				BeanUtil.mappingSetProperties(entities, entityMeta.getIdArray(), idSet, new int[] { 0 }, true);
+			// 主键
+			if (hasId && StringUtil.isBlank(rowData[pkIndex])) {
+				rowData[pkIndex] = entityMeta.getIdGenerator().getId(entityMeta.getTableName(), signature,
+						relatedColumnNames, relatedColValue, null, entityMeta.getIdType(), entityMeta.getIdLength(),
+						entityMeta.getBizIdSequenceSize());
+				// 回写主键值
+				BeanUtil.setProperty(entities.get(i), entityMeta.getIdArray()[0], rowData[pkIndex]);
+			}
+			// 业务主键
+			if (hasBizId && StringUtil.isBlank(rowData[bizIdColIndex])) {
+				rowData[bizIdColIndex] = entityMeta.getBusinessIdGenerator().getId(entityMeta.getTableName(), signature,
+						relatedColumnNames, relatedColValue, null, businessIdType, entityMeta.getBizIdLength(),
+						entityMeta.getBizIdSequenceSize());
+				// 回写业务主键值
+				BeanUtil.setProperty(entities.get(i), entityMeta.getBusinessIdField(), rowData[bizIdColIndex]);
+			}
+			// 回写数据版本
+			if (hasDataVersion) {
+				BeanUtil.setProperty(entities.get(i), entityMeta.getDataVersion().getField(), rowData[dataVerIndex]);
 			}
 		}
 
@@ -955,7 +975,7 @@ public class SqlServerDialectUtils {
 			String[] forceUpdateProps = null;
 			EntityMeta subTableEntityMeta;
 			for (TableCascadeModel cascadeModel : entityMeta.getCascadeModels()) {
-				final Object[] mainFieldValues = BeanUtil.reflectBeanToAry(entity, cascadeModel.getFields());
+				final Object[] mappedFieldValues = BeanUtil.reflectBeanToAry(entity, cascadeModel.getFields());
 				subTableEntityMeta = sqlToyContext.getEntityMeta(cascadeModel.getMappedType());
 				forceUpdateProps = (subTableForceUpdateProps == null) ? null
 						: subTableForceUpdateProps.get(cascadeModel.getMappedType());
@@ -974,7 +994,7 @@ public class SqlServerDialectUtils {
 						|| typeMap.containsKey(cascadeModel.getMappedType()))) {
 					SqlExecuteStat.debug("执行子表级联更新前的存量数据更新", null);
 					SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(cascadeModel.getCascadeUpdateSql(),
-							mappedFields, mainFieldValues, null);
+							mappedFields, mappedFieldValues, null);
 					SqlToyConfig sqlToyConfig = new SqlToyConfig(Dialect.SQLSERVER);
 					sqlToyConfig.setSqlType(SqlType.update);
 					sqlToyConfig.setSql(cascadeModel.getCascadeUpdateSql());
@@ -989,16 +1009,10 @@ public class SqlServerDialectUtils {
 				if (subTableData != null && !subTableData.isEmpty()) {
 					logger.info("执行update主表:{} 对应级联子表: {} 更新操作!", tableName, subTableEntityMeta.getTableName());
 					SqlExecuteStat.debug("执行子表级联更新操作", null);
-					saveOrUpdateAll(sqlToyContext, subTableData, sqlToyContext.getBatchSize(),
-							// 设置关联外键字段的属性值(来自主表的主键)
-							new ReflectPropsHandler() {
-								@Override
-								public void process() {
-									for (int i = 0; i < mappedFields.length; i++) {
-										this.setValue(mappedFields[i], mainFieldValues[i]);
-									}
-								}
-							}, forceUpdateProps, conn, dbType, null, null);
+					// 回写关联字段赋值
+					BeanUtil.batchSetProperties(subTableData, mappedFields, mappedFieldValues, true);
+					saveOrUpdateAll(sqlToyContext, subTableData, sqlToyContext.getBatchSize(), null, forceUpdateProps,
+							conn, dbType, null, null);
 				} else {
 					logger.info("未执行update主表:{} 对应级联子表: {} 更新操作,子表数据为空!", tableName, subTableEntityMeta.getTableName());
 				}
@@ -1162,5 +1176,18 @@ public class SqlServerDialectUtils {
 			return false;
 		}
 		return true;
+	}
+
+	/**
+	 * @TODO 组织对象操作sql的key
+	 * @param entityMeta
+	 * @param tableName
+	 * @param dbType
+	 * @param pkStrategy
+	 * @return
+	 */
+	private static String getCacheKey(EntityMeta entityMeta, String tableName, int dbType, PKStrategy pkStrategy) {
+		return entityMeta.getEntityClass().getName() + "[" + tableName + "]dbType=" + dbType
+				+ ((pkStrategy == null) ? "" : pkStrategy.getValue());
 	}
 }

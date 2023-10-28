@@ -36,6 +36,9 @@ public class DefaultIdGenerator implements IdGenerator {
 	@Override
 	public Object getId(String tableName, String signature, String[] relatedColumns, Object[] relatedColsValue,
 			Date bizDate, String idJavaType, int length, int sequencSize) {
+		// 如果是多个应用，在一个节点服务器上(相同IP)，主键容易产生重复，要通过下面形式设置不同服务id
+		// 三位数字
+		// java -Dsqltoy.server.id=121
 		return SqlUtil.convertIdValueType(IdUtil.getShortNanoTimeId(tableName, SqlToyConstants.SERVER_ID), idJavaType);
 	}
 }

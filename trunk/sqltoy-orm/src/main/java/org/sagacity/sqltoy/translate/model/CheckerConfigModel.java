@@ -97,13 +97,13 @@ public class CheckerConfigModel implements Serializable {
 		if (cache != null) {
 			return cache;
 		}
-		if (type.equals("sql")) {
+		if ("sql".equals(type)) {
 			return sql;
 		}
-		if (type.equals("service")) {
+		if ("service".equals(type)) {
 			return service + "." + method;
 		}
-		if (type.equals("rest")) {
+		if ("rest".equals(type)) {
 			return url;
 		}
 		return null;

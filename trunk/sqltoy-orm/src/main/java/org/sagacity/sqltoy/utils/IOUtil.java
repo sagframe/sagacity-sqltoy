@@ -8,9 +8,6 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
 
 /**
  * @project sagacity-sqltoy
@@ -18,7 +15,6 @@ import java.util.Iterator;
  * @author zhongxuchen
  * @version v1.0,Date:2008-12-14
  */
-@SuppressWarnings("rawtypes")
 public class IOUtil {
 
 	private IOUtil() {
@@ -113,42 +109,18 @@ public class IOUtil {
 	 * @return
 	 * @throws Exception
 	 */
-	@SuppressWarnings("unchecked")
-	public static byte[] getBytes(InputStream is) throws Exception {
+	public static byte[] getBytes(InputStream is) throws IOException {
 		if (is == null) {
 			return null;
 		}
-		// 避免空流
-		if (is.available() == 0) {
-			return new byte[] {};
+		// 无需关闭
+		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+		byte[] buffer = new byte[1024];
+		int len;
+		while ((len = is.read(buffer)) != -1) {
+			outputStream.write(buffer, 0, len);
 		}
-		byte[] data = null;
-		Collection chunks = new ArrayList();
-		byte[] buffer = new byte[1024 * 1000];
-		int read = -1;
-		int size = 0;
-		while ((read = is.read(buffer)) != -1) {
-			if (read > 0) {
-				byte[] chunk = new byte[read];
-				System.arraycopy(buffer, 0, chunk, 0, read);
-				chunks.add(chunk);
-				size += chunk.length;
-			}
-		}
-		if (size > 0) {
-			ByteArrayOutputStream bos = null;
-			try {
-				bos = new ByteArrayOutputStream(size);
-				for (Iterator itr = chunks.iterator(); itr.hasNext();) {
-					byte[] chunk = (byte[]) itr.next();
-					bos.write(chunk);
-				}
-				data = bos.toByteArray();
-			} finally {
-				closeQuietly(bos);
-			}
-		}
-		return data;
+		return outputStream.toByteArray();
 	}
 
 	public static ByteBuffer getByteBuffer(Object obj) throws IOException {

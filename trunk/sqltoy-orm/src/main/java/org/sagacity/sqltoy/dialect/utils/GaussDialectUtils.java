@@ -5,7 +5,7 @@ import org.sagacity.sqltoy.config.model.PKStrategy;
 /**
  * @project sagacity-sqltoy
  * @description 提供gaussdb数据库相关的特殊逻辑处理封装
- * @author zhong
+ * @author zhongxuchen
  * @version v1.0, Date:2023年6月8日
  * @modify 2023年6月8日,修改说明
  */
