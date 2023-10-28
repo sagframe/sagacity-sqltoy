@@ -427,17 +427,16 @@ public class BeanUtilTest {
 
 	@Test
 	public void testSetValue() {
-		String[] properties = { "id", "name", "isLeaf" };
+		String[] properties = { "IS_LEAF" };
 		List rows = new ArrayList();
-		for (int i = 1; i < 5; i++) {
+		for (int i = 1; i < 2; i++) {
 			List row = new ArrayList();
 			row.add("" + i);
 			row.add("name" + i);
 			row.add(i % 2 == 1 ? true : false);
 			rows.add(row);
 		}
-		List<TreeModel> entities = BeanUtil.reflectListToBean(null, rows, new int[] { 0, 1, 2 }, properties,
-				TreeModel.class);
+		List<TreeModel> entities = BeanUtil.reflectListToBean(null, rows, new int[] { 2 }, properties, TreeModel.class);
 		for (TreeModel treeModel : entities) {
 			System.err.println(JSON.toJSONString(treeModel));
 		}
