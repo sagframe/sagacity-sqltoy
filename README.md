@@ -42,7 +42,7 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 * 5.2.74 (jdk1.8)                 发版日期: 2023-10-25
 
 # 历史版本(EOF)
-* 5.1.79                             发版日期: 2023-10-21
+* 5.1.80                             发版日期: 2023-10-28
 * 4.20.78(兼容所有之前版本)                            发版日期: 2023-10-27
 
 # 1. 前言
@@ -85,7 +85,7 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 
 # 2. 快速特点说明
 ## 2.1 对象操作跟jpa类似并有针对性加强(包括级联)
-* 通过quickvo工具从数据库生成对应的POJO，引入sqlltoy自带的lightDao即可完成全部操作
+* 通过quickvo工具从数据库生成对应的POJO，注入sqlltoy自带的LightDao完成全部操作
 
 ```java
    StaffInfoVO staffInfo = new StaffInfoVO(); 
