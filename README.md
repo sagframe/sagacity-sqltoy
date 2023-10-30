@@ -388,6 +388,8 @@ List<QueryResult<TreeModel>> list = super.parallQuery(
  ```properties
 # 开启sqltoy默认的函数自适配转换函数
 spring.sqltoy.functionConverts=default
+# 在mysql场景下同时测试其他类型数据库，验证sql适配不同数据库，主要用于产品化软件
+spring.sqltoy.redoDataSources[0]=pgdb
 # 也可以自定义函数来实现替换Nvl
 # spring.sqltoy.functionConverts=default,com.yourpackage.Nvl
 # 启用框架自带Nvl、Instr
