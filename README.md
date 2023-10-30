@@ -88,7 +88,7 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 * 通过quickvo工具从数据库生成对应的POJO，注入sqlltoy自带的LightDao完成全部操作
 
 ```java
-   //service中直接注入框架自带的dao，完成全部操作
+   //三步曲：1、quickvo生成pojo，2、完成yml配置；3、service中注入dao(无需自定义各种dao)
    @Autowired
    LightDao lightDao;
 
