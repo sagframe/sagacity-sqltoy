@@ -249,8 +249,8 @@ public class DialectUtils {
 		// 打印sql
 		SqlExecuteStat.showSql("执行查询", lastSql, paramsValue);
 		PreparedStatement pst = null;
-		// 常规单查询语句
-		if (!extend.sqlSegment) {
+		// 常规单查询语句(load 查询extend为null)
+		if (extend == null || !extend.sqlSegment) {
 			pst = conn.prepareStatement(lastSql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
 			if (fetchSize > 0) {
 				pst.setFetchSize(fetchSize);
