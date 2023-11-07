@@ -168,7 +168,7 @@ public class RowsChainRelative {
 							divedData = Double.parseDouble(divedRowList.get(colIndex).toString());
 						}
 						if (divedData == 0) {
-							divRowList.set(colIndex + 1, (divData == 0) ? 0 : "");
+							divRowList.set(colIndex + 1, (divData == 0) ? 0 : defaultValue);
 						} else {
 							value = new BigDecimal(((divData - ((isIncrement) ? divedData : 0)) * multiply) / divedData)
 									.setScale(radixSize, RoundingMode.FLOOR);

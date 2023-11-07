@@ -248,12 +248,19 @@ public class DialectUtils {
 		lastSql = SqlUtilsExt.signSql(lastSql, dbType, sqlToyConfig);
 		// 打印sql
 		SqlExecuteStat.showSql("执行查询", lastSql, paramsValue);
-		PreparedStatement pst = conn.prepareStatement(lastSql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
-		if (fetchSize > 0) {
-			pst.setFetchSize(fetchSize);
-		}
-		if (maxRows > 0) {
-			pst.setMaxRows(maxRows);
+		PreparedStatement pst = null;
+		// 常规单查询语句
+		if (!extend.sqlSegment) {
+			pst = conn.prepareStatement(lastSql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+			if (fetchSize > 0) {
+				pst.setFetchSize(fetchSize);
+			}
+			if (maxRows > 0) {
+				pst.setMaxRows(maxRows);
+			}
+		} else {
+			// sql段落，含多句sql(正常不使用)
+			pst = conn.prepareStatement(lastSql);
 		}
 		ResultSet rs = null;
 		return (QueryResult) SqlUtil.preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
@@ -621,7 +628,7 @@ public class DialectUtils {
 					for (int meter = 0; meter < relatedColumnSize; meter++) {
 						relatedColValue[meter] = rowData[relatedColumn[meter]];
 					}
-					//这里不做是否为null的校验，因为不明确是新增还是修改
+					// 这里不做是否为null的校验，因为不明确是新增还是修改
 				}
 				// 主键
 				if (hasId && StringUtil.isBlank(rowData[pkIndex])) {

@@ -601,6 +601,16 @@ public class QueryExecutor implements Serializable {
 		return this;
 	}
 
+	/**
+	 * @TODO 是否是sql片段，即不是单独的一句查询(正常无需使用)
+	 * @param sqlSegment
+	 * @return
+	 */
+	public QueryExecutor sqlSegment(boolean sqlSegment) {
+		innerModel.sqlSegment = sqlSegment;
+		return this;
+	}
+
 	public QueryExecutorExtend getInnerModel() {
 		return innerModel;
 	}
