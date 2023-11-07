@@ -85,7 +85,7 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 
 # 2. 快速特点说明
 ## 2.1 对象操作跟jpa类似并有针对性加强(包括级联)
-* 通过quickvo工具从数据库生成对应的POJO，注入sqlltoy自带的LightDao完成全部操作
+* 通过quickvo工具从数据库生成对应的POJO，注入sqltoy自带的LightDao完成全部操作
 
 ```java
    //三步曲：1、quickvo生成pojo，2、完成yml配置；3、service中注入dao(无需自定义各种dao)
