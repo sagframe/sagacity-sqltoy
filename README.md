@@ -38,8 +38,8 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
 # 最新版本 
-* 5.3.49 (jdk17+/jdk21、springboot3.x)  发版日期: 2023-11-07
-* 5.2.76 (jdk1.8+)                 发版日期: 2023-11-07
+* 5.3.50 (jdk17+/jdk21、springboot3.x)  发版日期: 2023-11-07
+* 5.2.77 (jdk1.8+)                 发版日期: 2023-11-07
   
 # 历史版本(EOF)
 * 5.1.80                             发版日期: 2023-10-28
