@@ -177,6 +177,11 @@ public class QueryExecutorExtend implements Serializable {
 	 */
 	public Class entityClass = null;
 
+	/**
+	 * 是否是sql片段(正常无需使用)
+	 */
+	public boolean sqlSegment = false;
+
 	// 分表策略配置
 	public List<ShardingStrategyConfig> tableShardings = new ArrayList<ShardingStrategyConfig>();
 
