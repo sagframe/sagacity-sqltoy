@@ -840,7 +840,7 @@ spring.sqltoy.unifyFieldsHandler=com.sqltoy.plugins.SqlToyUnifyFieldsHandler
 
 ```
 * 实际业务开发使用，直接利用SqlToyCRUDService 就可以进行常规的操作，避免简单的对象操作自己写service，
-另外针对复杂逻辑则自己写service直接通过调用sqltoy提供的：SqlToyLazyDao 完成数据库交互操作！
+另外针对复杂逻辑则自己写service直接通过调用sqltoy提供的：LightDao 完成数据库交互操作！
 
 ```java
 @RunWith(SpringRunner.class)
