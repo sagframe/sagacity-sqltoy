@@ -44,6 +44,15 @@ public class MapperUtils {
 	private MapperUtils() {
 	}
 
+	/**
+	 * @TODO DTO<-->POJO 双向映射
+	 * @param <T>
+	 * @param source
+	 * @param resultType
+	 * @param ignoreProperties 忽略的字段
+	 * @return
+	 * @throws RuntimeException
+	 */
 	public static <T extends Serializable> T map(Serializable source, Class<T> resultType, String... ignoreProperties)
 			throws RuntimeException {
 		if (source == null) {
@@ -55,6 +64,15 @@ public class MapperUtils {
 		return map(source, resultType, 0, ignoreProperties);
 	}
 
+	/**
+	 * @TODO List<DTO> <--> List<POJO> 互相映射
+	 * @param <T>
+	 * @param sourceList
+	 * @param resultType
+	 * @param ignoreProperties
+	 * @return
+	 * @throws RuntimeException
+	 */
 	public static <T extends Serializable> List<T> mapList(List sourceList, Class<T> resultType,
 			String... ignoreProperties) throws RuntimeException {
 		if (sourceList == null) {
@@ -73,6 +91,14 @@ public class MapperUtils {
 		return mapList(sourceList, resultType, 0, ignoreProperties);
 	}
 
+	/**
+	 * @TODO 分页映射
+	 * @param <T>
+	 * @param sourcePage
+	 * @param resultType
+	 * @param ignoreProperties
+	 * @return
+	 */
 	public static <T extends Serializable> Page<T> map(Page sourcePage, Class<T> resultType,
 			String... ignoreProperties) {
 		if (sourcePage == null) {

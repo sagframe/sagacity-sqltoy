@@ -38,12 +38,12 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
 # 最新版本 
-* 5.3.48 (jdk17+/jdk21、springboot3.x)  发版日期: 2023-10-30
-* 5.2.75 (jdk1.8)                 发版日期: 2023-10-30
-
+* 5.3.51 (jdk17+/jdk21、springboot3.x)  发版日期: 2023-11-09
+* 5.2.78 (jdk1.8+)                 发版日期: 2023-11-09
+  
 # 历史版本(EOF)
 * 5.1.80                             发版日期: 2023-10-28
-* 4.20.78(兼容所有之前版本)                            发版日期: 2023-10-27
+* 4.20.79(兼容所有之前版本)                            发版日期: 2023-11-09
 
 # 1. 前言
 ## 1.1 sqltoy-orm是什么
@@ -70,7 +70,7 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 * 提供了大量辅助功能:数据脱敏、格式化、条件参数预处理等
 
 ### 支持多种数据库
-* 常规的mysql、oracle、db2、postgresql、 sqlserver、dm、kingbase、sqlite、h2、 oceanBase、polardb、guassdb、tidb
+* 常规的mysql、oracle、db2、postgresql、 sqlserver、dm、kingbase、sqlite、h2、 oceanBase、polardb、gaussdb、tidb
 * 支持分布式olap数据库: clickhouse、StarRocks、greenplum、impala(kudu)
 * 支持elasticsearch、mongodb
 * 所有基于sql和jdbc 各类数据库查询
@@ -85,9 +85,13 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 
 # 2. 快速特点说明
 ## 2.1 对象操作跟jpa类似并有针对性加强(包括级联)
-* 通过quickvo工具从数据库生成对应的POJO，注入sqlltoy自带的LightDao完成全部操作
+* 通过quickvo工具从数据库生成对应的POJO，注入sqltoy自带的LightDao完成全部操作
 
 ```java
+   //三步曲：1、quickvo生成pojo，2、完成yml配置；3、service中注入dao(无需自定义各种dao)
+   @Autowired
+   LightDao lightDao;
+
    StaffInfoVO staffInfo = new StaffInfoVO(); 
    //保存
    lightDao.save(staffInfo);
@@ -388,6 +392,8 @@ List<QueryResult<TreeModel>> list = super.parallQuery(
  ```properties
 # 开启sqltoy默认的函数自适配转换函数
 spring.sqltoy.functionConverts=default
+# 如在mysql场景下同时测试其他类型数据库，验证sql适配不同数据库，主要用于产品化软件
+spring.sqltoy.redoDataSources[0]=pgdb
 # 也可以自定义函数来实现替换Nvl
 # spring.sqltoy.functionConverts=default,com.yourpackage.Nvl
 # 启用框架自带Nvl、Instr
@@ -834,7 +840,7 @@ spring.sqltoy.unifyFieldsHandler=com.sqltoy.plugins.SqlToyUnifyFieldsHandler
 
 ```
 * 实际业务开发使用，直接利用SqlToyCRUDService 就可以进行常规的操作，避免简单的对象操作自己写service，
-另外针对复杂逻辑则自己写service直接通过调用sqltoy提供的：SqlToyLazyDao 完成数据库交互操作！
+另外针对复杂逻辑则自己写service直接通过调用sqltoy提供的：LightDao 完成数据库交互操作！
 
 ```java
 @RunWith(SpringRunner.class)

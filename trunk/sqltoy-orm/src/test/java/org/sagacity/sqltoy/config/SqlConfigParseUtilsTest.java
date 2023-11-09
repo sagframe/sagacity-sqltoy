@@ -169,11 +169,11 @@ public class SqlConfigParseUtilsTest {
 	public void testLoopNull() throws Exception {
 		String sql = "update table set name=:name #[,@loop-full(:status,{ t2.\"status\"=:status[i]},{,})]";
 		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "name", "status" },
-				new Object[] {"chenfenfei", new Object[] { "1", null, "3" } });
+				new Object[] { "chenfenfei", new Object[] { "1", null, "3" } });
 		System.err.println(JSON.toJSONString(result));
-		
+
 	}
-	
+
 	@Test
 	public void testLoop1() throws Exception {
 		String sql = "@loop(:cols,\":cols[i]\",\",\")";
@@ -414,7 +414,16 @@ public class SqlConfigParseUtilsTest {
 	@Test
 	public void testUpdateNull() throws Exception {
 		String sql = "update table set t1.'field'=? where name=? and sex=?";
-		SqlToyResult result = SqlConfigParseUtils.processSql(sql, null, new Object[] { null ,null,null});
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, null, new Object[] { null, null, null });
+		System.err.println(result.getSql());
+	}
+
+	@Test
+	public void testMultBlank() throws Exception {
+		String sql = "select * from view_lowcode_postion where 1=1 #[@blank(:roleId) and role_id=:roleId]"
+				+ "#[@blank(:id) and id=:id]";
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "roleId", "id" },
+				new Object[] { "a", null });
 		System.err.println(result.getSql());
 	}
 }
