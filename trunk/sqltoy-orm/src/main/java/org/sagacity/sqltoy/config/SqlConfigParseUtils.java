@@ -100,7 +100,9 @@ public class SqlConfigParseUtils {
 
 	// add 2016-5-27 by chenrenfei
 	public final static String BLANK_REGEX = "(?i)\\@blank\\s*\\(\\s*\\?\\s*\\)";
+	public final static String BLANK_START_REGEX = "(?i)^\\@blank\\s*\\(\\s*\\?\\s*\\)";
 	public final static Pattern BLANK_PATTERN = Pattern.compile(BLANK_REGEX);
+	public final static Pattern BLANK_START_PATTERN = Pattern.compile(BLANK_START_REGEX);
 	public final static String VALUE_REGEX = "(?i)\\@value\\s*\\(\\s*(\\?|null)\\s*\\)";
 	public final static Pattern VALUE_PATTERN = Pattern.compile(VALUE_REGEX);
 	public final static Pattern IF_PATTERN = Pattern.compile("(?i)\\@if\\s*\\(");
@@ -1005,7 +1007,12 @@ public class SqlConfigParseUtils {
 			} else if (StringUtil.matches(tmp.toLowerCase(), WHERE_CLOSE_PATTERN)) {
 				return preSql.substring(0, index + 1).concat(subStr).concat(" ");
 			} else if (!"".equals(markContentSql.trim())) {
-				return preSql.substring(0, index + 1).concat(" where ").concat(subStr).concat(" ");
+				// @blank开头，保持1=1
+				if (StringUtil.matches(tmp, BLANK_START_PATTERN)) {
+					return preSql.concat(" ").concat(subStr).concat(" ");
+				} else {
+					return preSql.substring(0, index + 1).concat(" where ").concat(subStr).concat(" ");
+				}
 			}
 		}
 		// update 语句 set 后面连接逗号"," 情况下去除逗号
