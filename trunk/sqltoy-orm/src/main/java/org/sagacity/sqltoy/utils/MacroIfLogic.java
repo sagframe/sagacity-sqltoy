@@ -127,7 +127,11 @@ public class MacroIfLogic {
 					leftValue = params[0].trim();
 				}
 				// update 2018-3-29,去除空格增强容错性
-				rightValue = params[1].trim();
+				if (params.length > 1) {
+					rightValue = params[1].trim();
+				} else {
+					rightValue = "true";
+				}
 				// 对比值也是动态参数(update 2023-05-05)
 				if (paramValues != null && "?".equals(rightValue)) {
 					if (paramValues.get(preCount + meter) == null) {

@@ -48,6 +48,7 @@ import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
+import org.sagacity.sqltoy.plugins.UnifyUpdateFieldsController;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
@@ -387,7 +388,9 @@ public class DefaultDialectUtils {
 			}
 		}
 		// 统一字段赋值处理
-		IUnifyFieldsHandler unifyFieldsHandler = sqlToyContext.getUnifyFieldsHandler();
+		IUnifyFieldsHandler unifyFieldsHandler = UnifyUpdateFieldsController.useUnifyFields()
+				? sqlToyContext.getUnifyFieldsHandler()
+				: null;
 		final Object[] fieldValues = tempFieldValues;
 		final boolean hasUpdateRow = (updateRowHandler == null) ? false : true;
 		// 组织select * from table for update 语句
