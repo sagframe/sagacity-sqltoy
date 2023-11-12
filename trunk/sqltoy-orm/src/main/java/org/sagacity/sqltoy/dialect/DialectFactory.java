@@ -831,7 +831,7 @@ public class DialectFactory {
 								// pageNo=-1时的提取数据量限制
 								int limitSize = sqlToyContext.getPageFetchSizeLimit();
 								// pageNo=-1时,总记录数超出限制则返回空集合
-								boolean illegal = (pageNo == -1 && (limitSize != -1 && recordCnt > limitSize));
+								boolean illegal = (pageNo == -1 && (limitSize > 0 && recordCnt > limitSize));
 								if (recordCnt == 0 || illegal) {
 									queryResult = new QueryResult();
 									if (recordCnt == 0 && isOverPageToFirst) {
