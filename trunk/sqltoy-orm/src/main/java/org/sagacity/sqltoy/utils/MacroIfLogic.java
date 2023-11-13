@@ -95,11 +95,13 @@ public class MacroIfLogic {
 			Object leftValue;
 			String leftParamLow;
 			String rightValue;
+			Object rightObj;
 			String compareType = "==";
 			// 参数量计数器
 			int meter = 0;
 			// 表达式左边参数中是否包含？动态参数
 			boolean hasArg = true;
+			boolean isNegate = false;
 			for (int i = 0; i < expressions.length; i++) {
 				hasArg = false;
 				express = expressions[i].trim();
@@ -120,8 +122,17 @@ public class MacroIfLogic {
 					hasArg = StringUtil.matches(leftParamLow, SqlConfigParseUtils.ARG_NAME_PATTERN);
 				}
 				// 取出实际参数值
+				isNegate = false;
 				if (hasArg) {
 					leftValue = paramValues.get(preCount + meter);
+					// 支持枚举类型
+					if (leftValue != null && leftValue instanceof Enum) {
+						leftValue = BeanUtil.getEnumValue(leftValue);
+					}
+					// !:paramName 取反
+					if (leftParamLow.startsWith("!")) {
+						isNegate = true;
+					}
 					meter++;
 				} else {
 					leftValue = params[0].trim();
@@ -130,14 +141,24 @@ public class MacroIfLogic {
 				if (params.length > 1) {
 					rightValue = params[1].trim();
 				} else {
-					rightValue = "true";
+					if (isNegate) {
+						rightValue = "false";
+					} else {
+						rightValue = "true";
+					}
 				}
 				// 对比值也是动态参数(update 2023-05-05)
 				if (paramValues != null && "?".equals(rightValue)) {
-					if (paramValues.get(preCount + meter) == null) {
+					rightObj = paramValues.get(preCount + meter);
+					if (rightObj == null) {
 						rightValue = "null";
 					} else {
-						rightValue = paramValues.get(preCount + meter).toString();
+						// 支持枚举类型
+						if (rightObj instanceof Enum) {
+							rightValue = BeanUtil.getEnumValue(rightObj).toString();
+						} else {
+							rightValue = rightObj.toString();
+						}
 					}
 					meter++;
 				}

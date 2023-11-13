@@ -188,6 +188,16 @@ public class Elastic extends BaseLink {
 	 * @return
 	 */
 	public Page findPage(Page pageModel) {
+		Page pageResult = null;
+		if (pageModel.getPageNo() == -1) {
+			pageResult = new Page();
+			List rows = find();
+			int rowSize = (rows == null) ? 0 : rows.size();
+			pageResult.setRows(rows);
+			pageResult.setPageSize(rowSize);
+			pageResult.setRecordCount(rowSize);
+			return pageResult;
+		}
 		QueryExecutor queryExecutor = build();
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql, SqlType.search, "", null);
 		if (sqlToyConfig.getNoSqlConfigModel() == null) {
@@ -201,7 +211,6 @@ public class Elastic extends BaseLink {
 			realSqlConfig = sqlToyConfig;
 		}
 		NoSqlConfigModel noSqlConfig = realSqlConfig.getNoSqlConfigModel();
-		Page pageResult = null;
 		try {
 			boolean isOverPageToFirst = false;
 			// 使用全局默认值

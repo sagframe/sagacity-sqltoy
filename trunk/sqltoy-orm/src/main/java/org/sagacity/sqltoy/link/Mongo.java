@@ -290,12 +290,33 @@ public class Mongo extends BaseLink {
 			skip = (realStartPage - 1) * pageModel.getPageSize();
 			limit = pageModel.getPageSize();
 		}
-		List<Document> rs = getMongoQuery().find(mql, Document.class,
-				sqlToyConfig.getNoSqlConfigModel().getCollection(), skip, limit);
-		if (rs == null || rs.isEmpty()) {
+		int maxPageSize = sqlToyContext.getPageFetchSizeLimit();
+		if (maxPageSize > 0 && limit > maxPageSize) {
+			logger.warn("非法分页查询,提取记录总数为:{}>{}上限可设置参数:spring.sqltoy.pageFetchSizeLimit进行调整(-1表示不限制),mql={}", limit,
+					maxPageSize, sqlToyConfig.getIdOrSql());
+			result.setRecordCount(0L);
 			return result;
 		}
-		result.setRows(extractFieldValues(sqlToyConfig, rs.iterator(), resultClass, humpMapLabel));
+		List<Document> rs = getMongoQuery().find(mql, Document.class,
+				sqlToyConfig.getNoSqlConfigModel().getCollection(), skip, limit);
+		if (rs != null && rs.size() > 0) {
+			int rowSize = rs.size();
+			if (result.getPageNo() == -1) {
+				result.setRecordCount(rowSize);
+				result.setPageSize(rowSize);
+			} else {
+				long recordCnt = result.getRecordCount();
+				long minCount = (result.getPageNo() - 1) * result.getPageSize() + rowSize;
+				// 实际记录量> 总记录数(可能从缓存获取),rowSize<=pageSize 防止关联查询导致单页记录数量扩大
+				if (minCount > recordCnt && rowSize <= result.getPageSize()) {
+					result.setRecordCount(minCount);
+				} // 第2页，7条不足一页，total>17,说明total过大不正确
+				else if (rowSize < result.getPageSize() && recordCnt > minCount && minCount >= 0) {
+					result.setRecordCount(minCount);
+				}
+			}
+			result.setRows(extractFieldValues(sqlToyConfig, rs.iterator(), resultClass, humpMapLabel));
+		}
 		return result;
 	}
 
@@ -412,7 +433,7 @@ public class Mongo extends BaseLink {
 		DataSetResult dataSetResult = new DataSetResult();
 		dataSetResult.setRows(resultSet);
 		dataSetResult.setLabelNames(translateFields);
-		// 不支持指定查询集合的行列转换,对集合进行汇总、行列转换等
+		// 查询集合的行列转换,对集合进行汇总、行列转换等
 		boolean changedCols = ResultUtils.calculate(sqlToyContext.getDesensitizeProvider(), sqlToyConfig, dataSetResult,
 				null, null);
 		return ResultUtils.wrapQueryResult(sqlToyContext, resultSet, StringUtil.humpFieldNames(translateFields),
