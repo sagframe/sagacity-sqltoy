@@ -95,6 +95,7 @@ public class MacroIfLogic {
 			Object leftValue;
 			String leftParamLow;
 			String rightValue;
+			Object rightObj;
 			String compareType = "==";
 			// 参数量计数器
 			int meter = 0;
@@ -124,7 +125,11 @@ public class MacroIfLogic {
 				isNegate = false;
 				if (hasArg) {
 					leftValue = paramValues.get(preCount + meter);
-					//!:paramName 取反
+					// 支持枚举类型
+					if (leftValue != null && leftValue instanceof Enum) {
+						leftValue = BeanUtil.getEnumValue(leftValue);
+					}
+					// !:paramName 取反
 					if (leftParamLow.startsWith("!")) {
 						isNegate = true;
 					}
@@ -144,10 +149,16 @@ public class MacroIfLogic {
 				}
 				// 对比值也是动态参数(update 2023-05-05)
 				if (paramValues != null && "?".equals(rightValue)) {
-					if (paramValues.get(preCount + meter) == null) {
+					rightObj = paramValues.get(preCount + meter);
+					if (rightObj == null) {
 						rightValue = "null";
 					} else {
-						rightValue = paramValues.get(preCount + meter).toString();
+						// 支持枚举类型
+						if (rightObj instanceof Enum) {
+							rightValue = BeanUtil.getEnumValue(rightObj).toString();
+						} else {
+							rightValue = rightObj.toString();
+						}
 					}
 					meter++;
 				}
