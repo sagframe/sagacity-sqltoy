@@ -36,7 +36,8 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @modify 2021-10-14 支持@loop(:args,and args[i].xxx,linkSign,start,end)
  *         args[i].xxx对象属性模式
  * @modify 2023-05-01 支持loop中的内容体含#[and t.xxx=:xxx] 为null判断和 in (:args) 数组输出
- * @modify 2023-08-31 优化@loop在update语句参数为null的场景,之前缺陷是值为null时被转为field is null，正确模式field=null
+ * @modify 2023-08-31 优化@loop在update语句参数为null的场景,之前缺陷是值为null时被转为field is
+ *         null，正确模式field=null
  */
 public class SqlLoop extends AbstractMacro {
 	/**
@@ -375,6 +376,8 @@ public class SqlLoop extends AbstractMacro {
 			valueStr = combineArray((Object[]) paramValue);
 		} else if (paramValue instanceof Collection) {
 			valueStr = combineArray(((Collection) paramValue).toArray());
+		} else if (paramValue instanceof Enum) {
+			valueStr = BeanUtil.getEnumValue(paramValue).toString();
 		} else {
 			valueStr = "" + paramValue;
 		}
@@ -397,18 +400,26 @@ public class SqlLoop extends AbstractMacro {
 				result.append(",");
 			}
 			value = array[i];
-			if (value instanceof CharSequence) {
-				result.append("'" + value + "'");
-			} else if (value instanceof Timestamp) {
-				result.append("'" + DateUtil.formatDate(value, "yyyy-MM-dd HH:mm:ss.SSS") + "'");
-			} else if (value instanceof Date || value instanceof LocalDateTime) {
-				result.append("'" + DateUtil.formatDate(value, "yyyy-MM-dd HH:mm:ss") + "'");
-			} else if (value instanceof LocalDate) {
-				result.append("'" + DateUtil.formatDate(value, "yyyy-MM-dd") + "'");
-			} else if (value instanceof LocalTime) {
-				result.append("'" + DateUtil.formatDate(value, "HH:mm:ss") + "'");
+			if (value == null) {
+				result.append("null");
 			} else {
-				result.append("" + value);
+				// 支持枚举类型
+				if (value instanceof Enum) {
+					value = BeanUtil.getEnumValue(value);
+				}
+				if (value instanceof CharSequence) {
+					result.append("'" + value + "'");
+				} else if (value instanceof Timestamp) {
+					result.append("'" + DateUtil.formatDate(value, "yyyy-MM-dd HH:mm:ss.SSS") + "'");
+				} else if (value instanceof Date || value instanceof LocalDateTime) {
+					result.append("'" + DateUtil.formatDate(value, "yyyy-MM-dd HH:mm:ss") + "'");
+				} else if (value instanceof LocalDate) {
+					result.append("'" + DateUtil.formatDate(value, "yyyy-MM-dd") + "'");
+				} else if (value instanceof LocalTime) {
+					result.append("'" + DateUtil.formatDate(value, "HH:mm:ss") + "'");
+				} else {
+					result.append("" + value);
+				}
 			}
 		}
 		return result.toString();

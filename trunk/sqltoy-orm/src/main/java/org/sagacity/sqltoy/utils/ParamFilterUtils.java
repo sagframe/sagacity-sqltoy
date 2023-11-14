@@ -1036,9 +1036,12 @@ public class ParamFilterUtils {
 			result = DateUtil.formatDate(paramValue, "yyyy-MM-dd");
 		} else if ((paramValue instanceof LocalDateTime) || (paramValue instanceof Date)) {
 			result = DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss");
+		} else if (paramValue instanceof Enum) {
+			result = BeanUtil.getEnumValue(paramValue).toString();
 		} else {
 			result = paramValue.toString();
 		}
+
 		if (addQuote == null) {
 			return result;
 		}
@@ -1076,7 +1079,11 @@ public class ParamFilterUtils {
 		String value;
 		for (int i = 0, n = result.length; i < n; i++) {
 			if (result[i] != null) {
-				value = result[i].toString();
+				if (result[i] instanceof Enum) {
+					value = BeanUtil.getEnumValue(result[i]).toString();
+				} else {
+					value = result[i].toString();
+				}
 				if ("integer".equals(dataType) || "int".equals(dataType)) {
 					result[i] = Integer.valueOf(value);
 				} else if ("long".equals(dataType)) {
@@ -1105,8 +1112,12 @@ public class ParamFilterUtils {
 	 */
 	private static Object toNumber(Object paramValue, String dataType) {
 		Object result;
+		Object tmpVar = paramValue;
+		if (tmpVar instanceof Enum) {
+			tmpVar = BeanUtil.getEnumValue(tmpVar);
+		}
 		// 默认转decimal
-		BigDecimal value = new BigDecimal(paramValue.toString().replace(",", ""));
+		BigDecimal value = new BigDecimal(tmpVar.toString().replace(",", ""));
 		if (dataType == null) {
 			result = value;
 		} else if ("integer".equals(dataType) || "int".equals(dataType)) {
@@ -1254,50 +1265,65 @@ public class ParamFilterUtils {
 		// 这个属于极端少量的场景
 		if (param.getClass().isArray() && contrasts.length == 1) {
 			Object[] ary = CollectionUtil.convertArray(param);
-			String contrast = contrasts[0].toString();
-			for (Object var : ary) {
-				if (var != null && var.toString().equals(contrast)) {
+			String contrast = (contrasts[0] == null) ? null : contrasts[0].toString();
+			for (Object item : ary) {
+				if (item != null) {
+					if (item instanceof Enum) {
+						item = BeanUtil.getEnumValue(item);
+					}
+					if (item.toString().equals(contrast)) {
+						return null;
+					}
+				} // 即param==contrast,返回null
+				else if (contrast == null) {
 					return null;
 				}
 			}
 			return param;
 		}
+		Object tmpVar = param;
+		if (tmpVar instanceof Enum) {
+			tmpVar = BeanUtil.getEnumValue(tmpVar);
+		}
 		int type = 0;
-		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalTime
-				|| param instanceof LocalDateTime) {
+		if (tmpVar instanceof Date || tmpVar instanceof LocalDate || tmpVar instanceof LocalTime
+				|| tmpVar instanceof LocalDateTime) {
 			type = 1;
-		} else if (param instanceof Number) {
+		} else if (tmpVar instanceof Number) {
 			type = 2;
 		}
 
 		// 只要有一个对比值相等表示成立，返回null
 		String contrast;
 		for (Object tmp : contrasts) {
-			contrast = tmp.toString();
-			// 日期
-			if (type == 1) {
-				// 长度小于6不够成日期、时间类型格式
-				if (contrast.length() >= 6) {
-					if (param instanceof LocalTime) {
-						if (((LocalTime) param).compareTo(LocalTime.parse(contrast)) == 0) {
-							return null;
-						}
-					} else {
-						Date compareDate = "sysdate".equals(contrast.toLowerCase())
-								? DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT)
-								: DateUtil.convertDateObject(contrast);
-						if (compareDate != null && DateUtil.convertDateObject(param).compareTo(compareDate) == 0) {
-							return null;
+			// tmp==null,则tmp！=param
+			if (tmp != null) {
+				contrast = tmp.toString();
+				// 日期
+				if (type == 1) {
+					// 长度小于6不够成日期、时间类型格式
+					if (contrast.length() >= 6) {
+						if (tmpVar instanceof LocalTime) {
+							if (((LocalTime) tmpVar).compareTo(LocalTime.parse(contrast)) == 0) {
+								return null;
+							}
+						} else {
+							Date compareDate = "sysdate".equals(contrast.toLowerCase())
+									? DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT)
+									: DateUtil.convertDateObject(contrast);
+							if (compareDate != null && DateUtil.convertDateObject(tmpVar).compareTo(compareDate) == 0) {
+								return null;
+							}
 						}
 					}
-				}
-			} else if (type == 2) {
-				if (NumberUtil.isNumber(contrast)
-						&& (new BigDecimal(param.toString()).compareTo(new BigDecimal(contrast)) == 0)) {
+				} else if (type == 2) {
+					if (NumberUtil.isNumber(contrast)
+							&& (new BigDecimal(tmpVar.toString()).compareTo(new BigDecimal(contrast)) == 0)) {
+						return null;
+					}
+				} else if (tmpVar.toString().compareTo(contrast) == 0) {
 					return null;
 				}
-			} else if (param.toString().compareTo(contrast) == 0) {
-				return null;
 			}
 		}
 		return param;
@@ -1321,52 +1347,63 @@ public class ParamFilterUtils {
 		if (param.getClass().isArray() && contrasts.length == 1) {
 			Object[] ary = CollectionUtil.convertArray(param);
 			String contrast = (contrasts[0] == null) ? null : contrasts[0].toString();
-			for (Object var : ary) {
-				// 相等则表示存在，not equals则不成立
-				if (var != null && var.toString().equals(contrast)) {
+			for (Object item : ary) {
+				if (item != null) {
+					if (item instanceof Enum) {
+						item = BeanUtil.getEnumValue(item);
+					}
+					// 相等则表示存在，not equals则不成立
+					if (item.toString().equals(contrast)) {
+						return param;
+					}
+				} // contrast==param,条件不成立，返回自身
+				else if (contrast == null) {
 					return param;
 				}
 			}
 			return null;
 		}
+		Object tmpVar = param;
+		if (tmpVar instanceof Enum) {
+			tmpVar = BeanUtil.getEnumValue(tmpVar);
+		}
 		int type = 0;
-		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalTime
-				|| param instanceof LocalDateTime) {
+		if (tmpVar instanceof Date || tmpVar instanceof LocalDate || tmpVar instanceof LocalTime
+				|| tmpVar instanceof LocalDateTime) {
 			type = 1;
-		} else if (param instanceof Number) {
+		} else if (tmpVar instanceof Number) {
 			type = 2;
 		}
 		// 只要有一个对比值相等表示不成立，返回参数本身的值
 		String contrast;
 		for (Object tmp : contrasts) {
-			contrast = (tmp == null) ? null : tmp.toString();
-			if (StringUtil.isBlank(contrast)) {
-				return param;
-			}
-			if (type == 1) {
-				// 长度小于6不够成日期、时间类型格式
-				if (contrast.length() >= 6) {
-					if (param instanceof LocalTime) {
-						if (((LocalTime) param).compareTo(LocalTime.parse(contrast)) == 0) {
-							return param;
-						}
-					} else {
-						Date compareDate = "sysdate".equalsIgnoreCase(contrast)
-								? DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT)
-								: DateUtil.convertDateObject(contrast);
-						if (DateUtil.convertDateObject(param).compareTo(compareDate) == 0) {
-							return param;
+			// 为null，则不等于
+			if (tmp != null) {
+				contrast = tmp.toString();
+				if (type == 1) {
+					// 长度小于6不够成日期、时间类型格式
+					if (contrast.length() >= 6) {
+						if (tmpVar instanceof LocalTime) {
+							if (((LocalTime) tmpVar).compareTo(LocalTime.parse(contrast)) == 0) {
+								return param;
+							}
+						} else {
+							Date compareDate = "sysdate".equalsIgnoreCase(contrast)
+									? DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT)
+									: DateUtil.convertDateObject(contrast);
+							if (DateUtil.convertDateObject(tmpVar).compareTo(compareDate) == 0) {
+								return param;
+							}
 						}
 					}
-				}
-			} else if (type == 2) {
-				// 非数字或相等
-				if (!NumberUtil.isNumber(contrast)
-						|| (new BigDecimal(param.toString()).compareTo(new BigDecimal(contrast)) == 0)) {
+				} else if (type == 2) {
+					if (NumberUtil.isNumber(contrast)
+							&& (new BigDecimal(tmpVar.toString()).compareTo(new BigDecimal(contrast)) == 0)) {
+						return param;
+					}
+				} else if (tmpVar.toString().compareTo(contrast) == 0) {
 					return param;
 				}
-			} else if (param.toString().compareTo(contrast) == 0) {
-				return param;
 			}
 		}
 		return null;
@@ -1383,25 +1420,29 @@ public class ParamFilterUtils {
 			return null;
 		}
 		String contrast = contrastParam.toString();
-		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalDateTime) {
+		Object tmpVar = param;
+		if (tmpVar instanceof Enum) {
+			tmpVar = BeanUtil.getEnumValue(tmpVar);
+		}
+		if (tmpVar instanceof Date || tmpVar instanceof LocalDate || tmpVar instanceof LocalDateTime) {
 			Date compareDate;
 			if ("sysdate".equals(contrast.toLowerCase())) {
 				compareDate = DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT);
 			} else {
 				compareDate = DateUtil.convertDateObject(contrast);
 			}
-			if (DateUtil.convertDateObject(param).before(compareDate)) {
+			if (DateUtil.convertDateObject(tmpVar).before(compareDate)) {
 				return null;
 			}
-		} else if (param instanceof LocalTime) {
-			if (((LocalTime) param).isBefore(LocalTime.parse(contrast))) {
+		} else if (tmpVar instanceof LocalTime) {
+			if (((LocalTime) tmpVar).isBefore(LocalTime.parse(contrast))) {
 				return null;
 			}
-		} else if (param instanceof Number) {
-			if (new BigDecimal(param.toString()).compareTo(new BigDecimal(contrast)) < 0) {
+		} else if (tmpVar instanceof Number) {
+			if (new BigDecimal(tmpVar.toString()).compareTo(new BigDecimal(contrast)) < 0) {
 				return null;
 			}
-		} else if (param.toString().compareTo(contrast) < 0) {
+		} else if (tmpVar.toString().compareTo(contrast) < 0) {
 			return null;
 		}
 		return param;
@@ -1417,26 +1458,30 @@ public class ParamFilterUtils {
 		if (null == param) {
 			return null;
 		}
+		Object tmpVar = param;
+		if (tmpVar instanceof Enum) {
+			tmpVar = BeanUtil.getEnumValue(tmpVar);
+		}
 		String contrast = contrastParam.toString();
-		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalDateTime) {
+		if (tmpVar instanceof Date || tmpVar instanceof LocalDate || tmpVar instanceof LocalDateTime) {
 			Date compareDate;
 			if ("sysdate".equals(contrast.toLowerCase())) {
 				compareDate = DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT);
 			} else {
 				compareDate = DateUtil.convertDateObject(contrast);
 			}
-			if (DateUtil.convertDateObject(param).compareTo(compareDate) <= 0) {
+			if (DateUtil.convertDateObject(tmpVar).compareTo(compareDate) <= 0) {
 				return null;
 			}
-		} else if (param instanceof LocalTime) {
-			if (((LocalTime) param).compareTo(LocalTime.parse(contrast)) <= 0) {
+		} else if (tmpVar instanceof LocalTime) {
+			if (((LocalTime) tmpVar).compareTo(LocalTime.parse(contrast)) <= 0) {
 				return null;
 			}
-		} else if (param instanceof Number) {
-			if (new BigDecimal(param.toString()).compareTo(new BigDecimal(contrast)) <= 0) {
+		} else if (tmpVar instanceof Number) {
+			if (new BigDecimal(tmpVar.toString()).compareTo(new BigDecimal(contrast)) <= 0) {
 				return null;
 			}
-		} else if (param.toString().compareTo(contrast) <= 0) {
+		} else if (tmpVar.toString().compareTo(contrast) <= 0) {
 			return null;
 		}
 		return param;
@@ -1452,26 +1497,30 @@ public class ParamFilterUtils {
 		if (null == param) {
 			return null;
 		}
+		Object tmpVar = param;
+		if (tmpVar instanceof Enum) {
+			tmpVar = BeanUtil.getEnumValue(tmpVar);
+		}
 		String contrast = contrastParam.toString();
-		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalDateTime) {
+		if (tmpVar instanceof Date || tmpVar instanceof LocalDate || tmpVar instanceof LocalDateTime) {
 			Date compareDate;
 			if ("sysdate".equals(contrast.toLowerCase())) {
 				compareDate = DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT);
 			} else {
 				compareDate = DateUtil.convertDateObject(contrast);
 			}
-			if (DateUtil.convertDateObject(param).compareTo(compareDate) > 0) {
+			if (DateUtil.convertDateObject(tmpVar).compareTo(compareDate) > 0) {
 				return null;
 			}
-		} else if (param instanceof LocalTime) {
-			if (((LocalTime) param).compareTo(LocalTime.parse(contrast)) > 0) {
+		} else if (tmpVar instanceof LocalTime) {
+			if (((LocalTime) tmpVar).compareTo(LocalTime.parse(contrast)) > 0) {
 				return null;
 			}
-		} else if (param instanceof Number) {
-			if (new BigDecimal(param.toString()).compareTo(new BigDecimal(contrast)) > 0) {
+		} else if (tmpVar instanceof Number) {
+			if (new BigDecimal(tmpVar.toString()).compareTo(new BigDecimal(contrast)) > 0) {
 				return null;
 			}
-		} else if (param.toString().compareTo(contrast) > 0) {
+		} else if (tmpVar.toString().compareTo(contrast) > 0) {
 			return null;
 		}
 		return param;
@@ -1487,26 +1536,30 @@ public class ParamFilterUtils {
 		if (null == param) {
 			return null;
 		}
+		Object tmpVar = param;
+		if (tmpVar instanceof Enum) {
+			tmpVar = BeanUtil.getEnumValue(tmpVar);
+		}
 		String contrast = contrastParam.toString();
-		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalDateTime) {
+		if (tmpVar instanceof Date || tmpVar instanceof LocalDate || tmpVar instanceof LocalDateTime) {
 			Date compareDate;
 			if ("sysdate".equals(contrast.toLowerCase())) {
 				compareDate = DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT);
 			} else {
 				compareDate = DateUtil.convertDateObject(contrast);
 			}
-			if (DateUtil.convertDateObject(param).compareTo(compareDate) >= 0) {
+			if (DateUtil.convertDateObject(tmpVar).compareTo(compareDate) >= 0) {
 				return null;
 			}
-		} else if (param instanceof LocalTime) {
-			if (((LocalTime) param).compareTo(LocalTime.parse(contrast)) >= 0) {
+		} else if (tmpVar instanceof LocalTime) {
+			if (((LocalTime) tmpVar).compareTo(LocalTime.parse(contrast)) >= 0) {
 				return null;
 			}
-		} else if (param instanceof Number) {
-			if (new BigDecimal(param.toString()).compareTo(new BigDecimal(contrast)) >= 0) {
+		} else if (tmpVar instanceof Number) {
+			if (new BigDecimal(tmpVar.toString()).compareTo(new BigDecimal(contrast)) >= 0) {
 				return null;
 			}
-		} else if (param.toString().compareTo(contrast) >= 0) {
+		} else if (tmpVar.toString().compareTo(contrast) >= 0) {
 			return null;
 		}
 		return param;
@@ -1523,25 +1576,29 @@ public class ParamFilterUtils {
 		if (null == param) {
 			return null;
 		}
+		Object tmpVar = param;
+		if (tmpVar instanceof Enum) {
+			tmpVar = BeanUtil.getEnumValue(tmpVar);
+		}
 		String beginContrast = beginValue.toString();
 		String endContrast = endValue.toString();
-		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalDateTime) {
-			Date var = DateUtil.convertDateObject(param);
-			if (var.compareTo(DateUtil.convertDateObject(beginContrast)) >= 0
-					&& var.compareTo(DateUtil.convertDateObject(endContrast)) <= 0) {
+		if (tmpVar instanceof Date || tmpVar instanceof LocalDate || tmpVar instanceof LocalDateTime) {
+			Date dateVar = DateUtil.convertDateObject(tmpVar);
+			if (dateVar.compareTo(DateUtil.convertDateObject(beginContrast)) >= 0
+					&& dateVar.compareTo(DateUtil.convertDateObject(endContrast)) <= 0) {
 				return null;
 			}
-		} else if (param instanceof LocalTime) {
-			if (((LocalTime) param).compareTo(LocalTime.parse(beginContrast)) >= 0
-					&& ((LocalTime) param).compareTo(LocalTime.parse(endContrast)) <= 0) {
+		} else if (tmpVar instanceof LocalTime) {
+			if (((LocalTime) tmpVar).compareTo(LocalTime.parse(beginContrast)) >= 0
+					&& ((LocalTime) tmpVar).compareTo(LocalTime.parse(endContrast)) <= 0) {
 				return null;
 			}
-		} else if (param instanceof Number) {
-			if ((new BigDecimal(param.toString()).compareTo(new BigDecimal(beginContrast)) >= 0)
-					&& (new BigDecimal(param.toString()).compareTo(new BigDecimal(endContrast)) <= 0)) {
+		} else if (tmpVar instanceof Number) {
+			if ((new BigDecimal(tmpVar.toString()).compareTo(new BigDecimal(beginContrast)) >= 0)
+					&& (new BigDecimal(tmpVar.toString()).compareTo(new BigDecimal(endContrast)) <= 0)) {
 				return null;
 			}
-		} else if (param.toString().compareTo(beginContrast) >= 0 && param.toString().compareTo(endContrast) <= 0) {
+		} else if (tmpVar.toString().compareTo(beginContrast) >= 0 && tmpVar.toString().compareTo(endContrast) <= 0) {
 			return null;
 		}
 		return param;

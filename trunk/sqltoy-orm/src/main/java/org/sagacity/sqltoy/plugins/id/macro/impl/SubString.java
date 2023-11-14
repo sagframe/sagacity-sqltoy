@@ -4,6 +4,7 @@ import java.util.Map;
 
 import org.sagacity.sqltoy.plugins.id.macro.AbstractMacro;
 import org.sagacity.sqltoy.plugins.id.macro.MacroUtils;
+import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
@@ -27,7 +28,14 @@ public class SubString extends AbstractMacro {
 			paramValue = MacroUtils.replaceParams(baseParam, keyValues);
 		} else {
 			if (keyValues != null && keyValues.containsKey(baseParam)) {
-				paramValue = keyValues.get(baseParam).toString();
+				Object keyVar = keyValues.get(baseParam);
+				if (keyVar != null) {
+					if (keyVar instanceof Enum) {
+						paramValue = BeanUtil.getEnumValue(keyVar).toString();
+					} else {
+						paramValue = keyVar.toString();
+					}
+				}
 			} else {
 				paramValue = baseParam;
 			}
