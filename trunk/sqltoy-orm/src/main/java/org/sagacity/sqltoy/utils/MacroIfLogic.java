@@ -392,8 +392,8 @@ public class MacroIfLogic {
 		// 数组集合包含
 		if (value.getClass().isArray()) {
 			Object[] values = CollectionUtil.convertArray(value);
-			for (Object var : values) {
-				if (compareLow.equals((var == null) ? null : var.toString().toLowerCase())) {
+			for (Object item : values) {
+				if (compareLow.equals((item == null) ? null : item.toString().toLowerCase())) {
 					return true;
 				}
 			}
@@ -402,10 +402,10 @@ public class MacroIfLogic {
 		// List集合包含
 		if (value instanceof Collection) {
 			Iterator iter = ((Collection) value).iterator();
-			Object var;
+			Object item;
 			while (iter.hasNext()) {
-				var = iter.next();
-				if (compareLow.equals((var == null) ? null : var.toString().toLowerCase())) {
+				item = iter.next();
+				if (compareLow.equals((item == null) ? null : item.toString().toLowerCase())) {
 					return true;
 				}
 			}
@@ -476,9 +476,9 @@ public class MacroIfLogic {
 			return false;
 		}
 		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalDateTime) {
-			Date var = DateUtil.convertDateObject(param);
-			if (var.compareTo(DateUtil.convertDateObject(beginContrast)) >= 0
-					&& var.compareTo(DateUtil.convertDateObject(endContrast)) <= 0) {
+			Date dateVar = DateUtil.convertDateObject(param);
+			if (dateVar.compareTo(DateUtil.convertDateObject(beginContrast)) >= 0
+					&& dateVar.compareTo(DateUtil.convertDateObject(endContrast)) <= 0) {
 				return true;
 			}
 		} else if (param instanceof LocalTime) {

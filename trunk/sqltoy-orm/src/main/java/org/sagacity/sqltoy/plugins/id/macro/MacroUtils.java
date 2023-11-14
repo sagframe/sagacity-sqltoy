@@ -13,6 +13,7 @@ import java.util.regex.Pattern;
 import org.sagacity.sqltoy.plugins.id.macro.impl.Case;
 import org.sagacity.sqltoy.plugins.id.macro.impl.DateFormat;
 import org.sagacity.sqltoy.plugins.id.macro.impl.SubString;
+import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
@@ -185,6 +186,10 @@ public class MacroUtils {
 				entry = iter.next();
 				value = keyValues.get(entry.getValue());
 				if (value != null) {
+					// 支持枚举类型
+					if (value instanceof Enum) {
+						value = BeanUtil.getEnumValue(value);
+					}
 					result = replaceAllStr(result, entry.getKey().toString(), value.toString());
 				}
 			}

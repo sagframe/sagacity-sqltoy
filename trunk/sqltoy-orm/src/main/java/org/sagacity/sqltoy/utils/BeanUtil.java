@@ -996,14 +996,14 @@ public class BeanUtil {
 		return result;
 	}
 
-	public static String convertBoolean(String var) {
-		if ("true".equals(var)) {
+	public static String convertBoolean(String boolVar) {
+		if ("true".equals(boolVar)) {
 			return "1";
 		}
-		if ("false".equals(var)) {
+		if ("false".equals(boolVar)) {
 			return "0";
 		}
-		return var;
+		return boolVar;
 	}
 
 	private static Timestamp oracleTimeStampConvert(Object obj) throws Exception {
