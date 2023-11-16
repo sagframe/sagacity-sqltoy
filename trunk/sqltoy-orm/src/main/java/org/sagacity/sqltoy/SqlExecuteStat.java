@@ -17,6 +17,7 @@ import org.sagacity.sqltoy.config.model.SqlExecuteTrace;
 import org.sagacity.sqltoy.model.OverTimeSql;
 import org.sagacity.sqltoy.plugins.OverTimeSqlHandler;
 import org.sagacity.sqltoy.plugins.formater.SqlFormater;
+import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.DateUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
@@ -302,6 +303,9 @@ public class SqlExecuteStat {
 			lastSql.append(sql.substring(start, end));
 			if (index < paramSize) {
 				paramValue = params[index];
+				if (paramValue instanceof Enum) {
+					paramValue = BeanUtil.getEnumValue(paramValue);
+				}
 				// 字符
 				if (paramValue instanceof CharSequence) {
 					lastSql.append("'" + paramValue + "'");
@@ -349,6 +353,9 @@ public class SqlExecuteStat {
 				result.append(",");
 			}
 			value = array[i];
+			if (value instanceof Enum) {
+				value = BeanUtil.getEnumValue(value);
+			}
 			if (value instanceof CharSequence) {
 				result.append("'" + value + "'");
 			} else if (value instanceof Timestamp) {
