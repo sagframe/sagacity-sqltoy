@@ -1979,4 +1979,23 @@ public class SqlUtil {
 		return null;
 	}
 
+	/**
+	 * @TODO 验证sql in的参数,要么是''形式的字符，要么是数字
+	 * @param argTrim 剔除空白
+	 * @return
+	 */
+	public static boolean validateInArg(String argTrim) {
+		String[] args = argTrim.split("\\,");
+		boolean isStr = args[0].startsWith("'") && args[0].endsWith("'");
+		for (String item : args) {
+			if (isStr) {
+				if (!item.startsWith("'") || !item.endsWith("'")) {
+					return false;
+				}
+			} else if (!NumberUtil.isNumber(item)) {
+				return false;
+			}
+		}
+		return true;
+	}
 }

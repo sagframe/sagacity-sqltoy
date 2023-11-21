@@ -26,6 +26,7 @@ import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.MacroIfLogic;
+import org.sagacity.sqltoy.utils.NumberUtil;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -862,10 +863,15 @@ public class SqlConfigParseUtils {
 				// 逗号分隔的条件参数
 				else if (paramsValue[parameterMarkCnt - 1] instanceof String) {
 					argValue = (String) paramsValue[parameterMarkCnt - 1];
-					// update 2012-11-15 将'xxx'(单引号) 形式的字符串纳入直接替换模式，解决因为使用combineInStr
-					// 数组长度为1,构造出来的in 条件存在''(空白)符合直接用?参数导致的问题
-					if (argValue.indexOf(",") != -1 || (argValue.startsWith("'") && argValue.endsWith("'"))) {
-						partSql = (String) paramsValue[parameterMarkCnt - 1];
+					// 剔除空白
+					String argTrim = argValue.replaceAll("\\s+", "");
+					// update 2023-11-21 增强单个字符串的处理
+					// 1、用逗号进行切割，校验是'xxx','xxxx1'形式或122,233数字形式
+					// 2、'abc'
+					// 3、1111
+					if ((argTrim.indexOf(",") > 0 && !argTrim.endsWith(",") && SqlUtil.validateInArg(argTrim))
+							|| (argTrim.startsWith("'") && argTrim.endsWith("'")) || NumberUtil.isNumber(argTrim)) {
+						partSql = argValue;
 						paramValueList.remove(parameterMarkCnt - 1 + incrementIndex);
 						incrementIndex--;
 					}
