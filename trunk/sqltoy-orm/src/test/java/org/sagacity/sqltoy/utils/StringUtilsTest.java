@@ -12,6 +12,7 @@ import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.SqlToyConstants;
+import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 
 import com.alibaba.fastjson.JSON;
@@ -181,12 +182,15 @@ public class StringUtilsTest {
 
 	@Test
 	public void testReplace2() {
-		String sql = "select * from table where 1=1 and 2=2";
-		sql = SqlUtilsExt.markOriginalSql(sql);
-		System.err.println("[" + sql + "]");
-		System.err.println("[" + SqlUtilsExt.clearOriginalSqlMark(sql) + "]");
+		String argValue = "111,2222";
+		String argTrim = argValue.replaceAll("\\s+", "");
+		if ((argTrim.indexOf(",") > 0 && !argTrim.endsWith(",") && SqlUtil.validateInArg(argTrim))
+				|| (argTrim.equals("''"))) {
+			System.err.println("[" + argValue + "]");
+		}
+
 	}
-	
+
 	@Test
 	public void testMatchInclude() {
 		String sql = "select * from table @include(id=\"adb\")";

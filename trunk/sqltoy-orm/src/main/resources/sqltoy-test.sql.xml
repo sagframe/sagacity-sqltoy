@@ -98,6 +98,6 @@
 		<pivot category-columns="" group-columns="" start-column=""	end-column="" default-value="0" />
 		<!-- 列转行 -->
 		<unpivot columns-to-rows="1:xxx,2:xxxx" new-columns-labels="" />
-		<tree-sort id-column="" pid-column="" sum-columns="" level-order-column="" order-way="asc"></tree-sort>
+		<tree-sort id-column="" pid-column="" sum-columns="" level-order-column="" order-way="asc"/>
 	</sql>
 </sqltoy>

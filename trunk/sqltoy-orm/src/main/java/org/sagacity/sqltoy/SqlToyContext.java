@@ -20,6 +20,7 @@ import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.integration.AppContext;
 import org.sagacity.sqltoy.integration.ConnectionFactory;
 import org.sagacity.sqltoy.integration.impl.SpringConnectionFactory;
+import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.model.OverTimeSql;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.plugins.FilterHandler;
@@ -343,6 +344,11 @@ public class SqlToyContext {
 	private List<SqlInterceptor> sqlInterceptors;
 
 	/**
+	 * 方言映射
+	 */
+	private IgnoreKeyCaseMap<String, String> dialectMap;
+
+	/**
 	 * 拆分merge into 为updateAll 和 saveAllIgnoreExist 两步操作(1、seata分布式事务不支持merge)
 	 */
 	private boolean splitMergeInto = false;
@@ -391,6 +397,10 @@ public class SqlToyContext {
 		}
 		// 初始化方言对应的类别代码，避免线程安全
 		DataSourceUtils.initialize();
+		// 设置方言映射(默认OSCAR==>gaussdb)
+		if (dialectMap != null && !dialectMap.isEmpty()) {
+			DataSourceUtils.dialectMap = dialectMap;
+		}
 		// 初始化默认dataSource
 		initDefaultDataSource();
 		// 设置workerId和dataCenterId,为使用snowflake主键ID产生算法服务
@@ -747,6 +757,10 @@ public class SqlToyContext {
 			this.dialect = Dialect.TDENGINE;
 		} else if (tmp.startsWith(Dialect.ES)) {
 			this.dialect = Dialect.ES;
+		} else if (tmp.startsWith(Dialect.H2)) {
+			this.dialect = Dialect.H2;
+		} else if (tmp.startsWith(Dialect.OSCAR)) {
+			this.dialect = Dialect.OSCAR;
 		} else {
 			this.dialect = dialect;
 		}
@@ -1219,4 +1233,12 @@ public class SqlToyContext {
 		this.autoDDL = autoDDL;
 	}
 
+	/**
+	 * @param dialectMap the dialectMap to set
+	 */
+	public void setDialectMap(Map<String, String> dialectMap) {
+		if (dialectMap != null && !dialectMap.isEmpty()) {
+			this.dialectMap = new IgnoreKeyCaseMap<String, String>(dialectMap);
+		}
+	}
 }

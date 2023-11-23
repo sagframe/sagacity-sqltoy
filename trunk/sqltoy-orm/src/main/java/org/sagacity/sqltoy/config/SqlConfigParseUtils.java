@@ -862,10 +862,11 @@ public class SqlConfigParseUtils {
 				// 逗号分隔的条件参数
 				else if (paramsValue[parameterMarkCnt - 1] instanceof String) {
 					argValue = (String) paramsValue[parameterMarkCnt - 1];
-					// update 2012-11-15 将'xxx'(单引号) 形式的字符串纳入直接替换模式，解决因为使用combineInStr
-					// 数组长度为1,构造出来的in 条件存在''(空白)符合直接用?参数导致的问题
-					if (argValue.indexOf(",") != -1 || (argValue.startsWith("'") && argValue.endsWith("'"))) {
-						partSql = (String) paramsValue[parameterMarkCnt - 1];
+					// update 2023-11-21 增强field in (?) 参数值是单个字符串的处理(针对组装参数拼接场景)，避免sql注入
+					// 1、用逗号进行切割，校验是'xxx','xxxx1'或"a","b" 或 122,233 三种形式
+					// 2、无逗号分割：'abc'或"abc"或123 三种形式
+					if (SqlUtil.validateInArg(argValue)) {
+						partSql = argValue;
 						paramValueList.remove(parameterMarkCnt - 1 + incrementIndex);
 						incrementIndex--;
 					}

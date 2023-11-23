@@ -132,6 +132,8 @@ public class SqltoyAutoConfiguration {
 		// 开放设置默认单页记录数量
 		sqlToyContext.setDefaultPageSize(properties.getDefaultPageSize());
 		sqlToyContext.setDefaultPageOffset(properties.isDefaultPageOffset());
+		// 设置方言映射，如OSCAR==>oracle
+		sqlToyContext.setDialectMap(properties.getDialectMap());
 		// map 类型结果label是否自动转驼峰处理
 		if (properties.getHumpMapResultTypeLabel() != null) {
 			sqlToyContext.setHumpMapResultTypeLabel(properties.getHumpMapResultTypeLabel());

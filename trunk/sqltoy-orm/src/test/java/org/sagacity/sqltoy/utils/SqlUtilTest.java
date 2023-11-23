@@ -90,4 +90,11 @@ public class SqlUtilTest {
 		System.err.println(sql);
 	}
 
+	@Test
+	public void testValidateSqlInArg() {
+		String argValue = "'alter1 table'";
+		boolean hasSqlKeyWord = StringUtil.matches(" " + argValue, SqlUtil.SQLINJECT_PATTERN);
+		System.err.println(hasSqlKeyWord);
+		System.err.println(SqlUtil.validateInArg(argValue));
+	}
 }
