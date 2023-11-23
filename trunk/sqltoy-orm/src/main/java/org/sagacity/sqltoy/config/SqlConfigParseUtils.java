@@ -26,7 +26,6 @@ import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.MacroIfLogic;
-import org.sagacity.sqltoy.utils.NumberUtil;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -863,14 +862,10 @@ public class SqlConfigParseUtils {
 				// 逗号分隔的条件参数
 				else if (paramsValue[parameterMarkCnt - 1] instanceof String) {
 					argValue = (String) paramsValue[parameterMarkCnt - 1];
-					// 剔除空白
-					String argTrim = argValue.replaceAll("\\s+", "");
-					// update 2023-11-21 增强单个字符串的处理
-					// 1、用逗号进行切割，校验是'xxx','xxxx1'形式或122,233数字形式
-					// 2、'abc'
-					// 3、1111
-					if ((argTrim.indexOf(",") > 0 && !argTrim.endsWith(",") && SqlUtil.validateInArg(argTrim))
-							|| (argTrim.startsWith("'") && argTrim.endsWith("'")) || NumberUtil.isNumber(argTrim)) {
+					// update 2023-11-21 增强field in (?) 参数值是单个字符串的处理(针对组装参数拼接场景)，避免sql注入
+					// 1、用逗号进行切割，校验是'xxx','xxxx1'或"a","b" 或 122,233 三种形式
+					// 2、无逗号分割：'abc'或"abc"或123 三种形式
+					if (SqlUtil.validateInArg(argValue)) {
 						partSql = argValue;
 						paramValueList.remove(parameterMarkCnt - 1 + incrementIndex);
 						incrementIndex--;

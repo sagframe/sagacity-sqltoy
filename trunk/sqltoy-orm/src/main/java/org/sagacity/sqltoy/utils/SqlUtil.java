@@ -85,6 +85,12 @@ public class SqlUtil {
 
 	public static final Pattern UPCASE_ORDER_PATTERN = Pattern.compile("\\WORder\\s+");
 
+	public static final Pattern ONE_QUOTA = Pattern.compile("\'");
+	public static final Pattern DOUBLE_QUOTA = Pattern.compile("\"");
+
+	public static final Pattern SQLINJECT_PATTERN = Pattern.compile(
+			"(?i)\\W((delete\\s+from)|update|(truncate\\s+table)|(alter\\s+table)|modify|(insert\\s+into)|select|set|create|drop|(merge\\s+into))\\s+");
+
 	/**
 	 * 查询select 匹配
 	 */
@@ -1981,15 +1987,48 @@ public class SqlUtil {
 
 	/**
 	 * @TODO 验证sql in的参数,要么是''形式的字符，要么是数字
-	 * @param argTrim 剔除空白
+	 * @param argValue
 	 * @return
 	 */
-	public static boolean validateInArg(String argTrim) {
-		String[] args = argTrim.split("\\,");
-		boolean isStr = args[0].startsWith("'") && args[0].endsWith("'");
+	public static boolean validateInArg(String argValue) {
+		// 判断是否有关键词
+		boolean hasSqlKeyWord = StringUtil.matches(" " + argValue, SQLINJECT_PATTERN);
+		String argTrim = argValue.replaceAll("\\s+", "");
+		String[] args = null;
+		// 判断是否有逗号分割
+		if (argTrim.indexOf(",") != -1) {
+			// 以逗号开始或结束不符合in的写法
+			if (argTrim.startsWith(",") || argTrim.endsWith(",")) {
+				return false;
+			}
+			// 分割成数组进行检查
+			args = argTrim.split("\\,");
+		} else {
+			// 单个字符串组成单一数组，形成统一的检查格式
+			args = new String[] { argTrim };
+		}
+		// 1：char;2:string;3:数字
+		int argType = 3;
+		if (args[0].startsWith("'") && args[0].endsWith("'")) {
+			argType = 1;
+		} else if (args[0].startsWith("\"") && args[0].endsWith("\"")) {
+			argType = 2;
+		}
 		for (String item : args) {
-			if (isStr) {
+			if (argType == 1) {
 				if (!item.startsWith("'") || !item.endsWith("'")) {
+					return false;
+				}
+				// 有关键词时，校验是否多个单引号，避免:''+(select field from table)+''模式
+				if (hasSqlKeyWord && StringUtil.matchCnt(item, ONE_QUOTA) > 2) {
+					return false;
+				}
+			} else if (argType == 2) {
+				if (!item.startsWith("\"") || !item.endsWith("\"")) {
+					return false;
+				}
+				// 有关键词时，校验是否多个双引号，避免:""+(select field from table)+""模式
+				if (hasSqlKeyWord && StringUtil.matchCnt(item, DOUBLE_QUOTA) > 2) {
 					return false;
 				}
 			} else if (!NumberUtil.isNumber(item)) {

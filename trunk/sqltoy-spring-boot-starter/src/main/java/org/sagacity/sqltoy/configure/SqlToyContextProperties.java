@@ -115,6 +115,11 @@ public class SqlToyContextProperties implements Serializable {
 	private Map<String, String> dialectConfig;
 
 	/**
+	 * 不同数据库方言的映射(OSCAR-->oracle)
+	 */
+	private Map<String, String> dialectMap;
+
+	/**
 	 * sqltoy默认数据库
 	 */
 	private String defaultDataSource;
@@ -676,4 +681,11 @@ public class SqlToyContextProperties implements Serializable {
 		this.autoDDL = autoDDL;
 	}
 
+	public void setDialectMap(Map<String, String> dialectMap) {
+		this.dialectMap = dialectMap;
+	}
+
+	public Map<String, String> getDialectMap() {
+		return dialectMap;
+	}
 }
