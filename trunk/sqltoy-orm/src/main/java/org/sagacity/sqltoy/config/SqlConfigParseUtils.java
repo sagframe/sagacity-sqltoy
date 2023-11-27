@@ -61,6 +61,8 @@ import org.slf4j.LoggerFactory;
  * @modify {Date:2021-04-29 调整@value(?)处理顺序到末尾，规避参数值中存在? }
  * @modify {Date:2022-04-23 兼容in (:values) 参数数组长度超过1000的场景 }
  * @modify {Date:2022-05-25 支持(id,type) in (:ids,:types) 多字段in模式,并强化参数超1000的处理 }
+ * @modify {Date:2023-03-09 改进t.field=? 参数为null时转化为t.field is (not) null }
+ * @modify {Date:2023-08-25 支持itemList[0].fieldName或itemList[0].item.name 形式传参 }
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class SqlConfigParseUtils {
@@ -98,7 +100,9 @@ public class SqlConfigParseUtils {
 
 	// add 2016-5-27 by chenrenfei
 	public final static String BLANK_REGEX = "(?i)\\@blank\\s*\\(\\s*\\?\\s*\\)";
+	public final static String BLANK_START_REGEX = "(?i)^\\@blank\\s*\\(\\s*\\?\\s*\\)";
 	public final static Pattern BLANK_PATTERN = Pattern.compile(BLANK_REGEX);
+	public final static Pattern BLANK_START_PATTERN = Pattern.compile(BLANK_START_REGEX);
 	public final static String VALUE_REGEX = "(?i)\\@value\\s*\\(\\s*(\\?|null)\\s*\\)";
 	public final static Pattern VALUE_PATTERN = Pattern.compile(VALUE_REGEX);
 	public final static Pattern IF_PATTERN = Pattern.compile("(?i)\\@if\\s*\\(");
@@ -111,7 +115,6 @@ public class SqlConfigParseUtils {
 	public final static String ARG_DBL_NAME = "??";
 	public final static String ARG_DBL_REGEX = "\\?{2}";
 	public final static Pattern ARG_NAME_PATTERN = Pattern.compile(ARG_REGEX);
-	// public final static String ARG_NAME_BLANK = "? ";
 
 	// sql 拼接时判断前部分sql是否是where 结尾,update 2017-12-4 增加(?i)忽视大小写
 	public final static Pattern WHERE_END_PATTERN = Pattern.compile("(?i)\\Wwhere\\s*$");
@@ -859,10 +862,12 @@ public class SqlConfigParseUtils {
 				// 逗号分隔的条件参数
 				else if (paramsValue[parameterMarkCnt - 1] instanceof String) {
 					argValue = (String) paramsValue[parameterMarkCnt - 1];
-					// update 2012-11-15 将'xxx'(单引号) 形式的字符串纳入直接替换模式，解决因为使用combineInStr
-					// 数组长度为1,构造出来的in 条件存在''(空白)符合直接用?参数导致的问题
-					if (argValue.indexOf(",") != -1 || (argValue.startsWith("'") && argValue.endsWith("'"))) {
-						partSql = (String) paramsValue[parameterMarkCnt - 1];
+					// update 2023-11-21 增强单个字符串的处理
+					// 1、用逗号进行切割，校验是'xxx','xxxx1'形式或122,233数字形式
+					// 2、'abc'
+					// 3、1111
+					if (SqlUtil.validateInArg(argValue)) {
+						partSql = argValue;
 						paramValueList.remove(parameterMarkCnt - 1 + incrementIndex);
 						incrementIndex--;
 					}
@@ -1004,7 +1009,12 @@ public class SqlConfigParseUtils {
 			} else if (StringUtil.matches(tmp.toLowerCase(), WHERE_CLOSE_PATTERN)) {
 				return preSql.substring(0, index + 1).concat(subStr).concat(" ");
 			} else if (!"".equals(markContentSql.trim())) {
-				return preSql.substring(0, index + 1).concat(" where ").concat(subStr).concat(" ");
+				// @blank开头，保持1=1
+				if (StringUtil.matches(tmp, BLANK_START_PATTERN)) {
+					return preSql.concat(" ").concat(subStr).concat(" ");
+				} else {
+					return preSql.substring(0, index + 1).concat(" where ").concat(subStr).concat(" ");
+				}
 			}
 		}
 		// update 语句 set 后面连接逗号"," 情况下去除逗号

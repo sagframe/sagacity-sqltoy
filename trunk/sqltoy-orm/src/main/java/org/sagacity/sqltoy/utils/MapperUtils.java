@@ -44,18 +44,65 @@ public class MapperUtils {
 	private MapperUtils() {
 	}
 
+	/**
+	 * @TODO DTO<-->POJO 双向映射
+	 * @param <T>
+	 * @param source
+	 * @param resultType
+	 * @param ignoreProperties 忽略的字段
+	 * @return
+	 * @throws RuntimeException
+	 */
 	public static <T extends Serializable> T map(Serializable source, Class<T> resultType, String... ignoreProperties)
 			throws RuntimeException {
-		if (source == null || (resultType == null || BeanUtil.isBaseDataType(resultType))) {
-			throw new IllegalArgumentException("source 和 resultType 不能为null,且resultType不能为基本类型!");
+		if (source == null) {
+			return null;
+		}
+		if (resultType == null || BeanUtil.isBaseDataType(resultType)) {
+			throw new IllegalArgumentException("resultType 不能为null,且resultType不能为基本类型!");
 		}
 		return map(source, resultType, 0, ignoreProperties);
 	}
 
+	/**
+	 * @TODO 属性映射
+	 * @param source
+	 * @param target
+	 * @param ignoreProperties
+	 * @throws RuntimeException
+	 */
+	public static void copyProperties(Serializable source, Serializable target, String... ignoreProperties)
+			throws RuntimeException {
+		if (source == null || target == null) {
+			return;
+		}
+		if (BeanUtil.isBaseDataType(source.getClass()) || BeanUtil.isBaseDataType(target.getClass())) {
+			throw new IllegalArgumentException("copyProperties<DTO>不支持基本类型对象的属性值映射!");
+		}
+		// 转成List做统一处理
+		List<Serializable> sourceList = new ArrayList<Serializable>();
+		sourceList.add(source);
+		List<Serializable> targetList = new ArrayList<Serializable>();
+		targetList.add(target);
+		copyProperties(sourceList, targetList, ignoreProperties);
+	}
+
+	/**
+	 * @TODO List<DTO> <--> List<POJO> 互相映射
+	 * @param <T>
+	 * @param sourceList
+	 * @param resultType
+	 * @param ignoreProperties
+	 * @return
+	 * @throws RuntimeException
+	 */
 	public static <T extends Serializable> List<T> mapList(List sourceList, Class<T> resultType,
 			String... ignoreProperties) throws RuntimeException {
-		if (sourceList == null || (resultType == null || BeanUtil.isBaseDataType(resultType))) {
-			throw new IllegalArgumentException("sourceList 和 resultType 不能为null,且resultType不能为基本类型!");
+		if (sourceList == null) {
+			return null;
+		}
+		if (resultType == null || BeanUtil.isBaseDataType(resultType)) {
+			throw new IllegalArgumentException("resultType 不能为null,且resultType不能为基本类型!");
 		}
 		// resultType不能是接口和抽象类
 		if (Modifier.isAbstract(resultType.getModifiers()) || Modifier.isInterface(resultType.getModifiers())) {
@@ -67,17 +114,68 @@ public class MapperUtils {
 		return mapList(sourceList, resultType, 0, ignoreProperties);
 	}
 
+	/**
+	 * @TODO List集合属性映射
+	 * @param sourceList
+	 * @param targetList
+	 * @param ignoreProperties
+	 * @throws RuntimeException
+	 */
+	public static void copyProperties(List sourceList, List targetList, String... ignoreProperties)
+			throws RuntimeException {
+		if (sourceList == null || sourceList.isEmpty()) {
+			throw new RuntimeException("copyProperties<List>操作sourceList为空对象");
+		}
+		if (targetList == null || targetList.isEmpty()) {
+			throw new RuntimeException("copyProperties<List>操作targetList为空对象");
+		}
+		if (sourceList.size() != targetList.size()) {
+			throw new RuntimeException("copyProperties<List>操作sourceList和targetList集合数据记录:" + sourceList.size() + "!="
+					+ targetList.size() + "不相同!");
+		}
+		Class sourceClass = sourceList.get(0).getClass();
+		Class targetClass = targetList.get(0).getClass();
+		if (BeanUtil.isBaseDataType(sourceClass) || BeanUtil.isBaseDataType(targetClass)) {
+			throw new IllegalArgumentException("copyProperties<List>不支持基本类型对象的属性值映射!");
+		}
+		Object[] getSetMethods = matchGetSetMethods(sourceClass, targetClass, ignoreProperties);
+		if (getSetMethods == null) {
+			return;
+		}
+		try {
+			Method[] getMethods = (Method[]) getSetMethods[0];
+			Method[] setMethods = (Method[]) getSetMethods[1];
+			List dataSets = invokeGetValues(sourceList, getMethods);
+			listToList(dataSets, targetList, setMethods);
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException("copyProperties<List>类型:[" + sourceClass.getName() + "-->"
+					+ targetClass.getName() + "]映射操作失败:" + e.getMessage());
+		}
+	}
+
+	/**
+	 * @TODO 分页映射
+	 * @param <T>
+	 * @param sourcePage
+	 * @param resultType
+	 * @param ignoreProperties
+	 * @return
+	 */
 	public static <T extends Serializable> PaginationModel<T> map(PaginationModel sourcePage, Class<T> resultType,
 			String... ignoreProperties) {
-		if (sourcePage == null || resultType == null || BeanUtil.isBaseDataType(resultType)) {
-			throw new IllegalArgumentException("sourcePage 和 resultType 不能为null,且resultType不能为基本类型!");
+		if (sourcePage == null) {
+			return null;
+		}
+		if (resultType == null || BeanUtil.isBaseDataType(resultType)) {
+			throw new IllegalArgumentException("resultType 不能为null,且resultType不能为基本类型!");
 		}
 		PaginationModel result = new PaginationModel();
 		result.setPageNo(sourcePage.getPageNo());
 		result.setPageSize(sourcePage.getPageSize());
 		result.setRecordCount(sourcePage.getRecordCount());
 		result.setSkipQueryCount(sourcePage.getSkipQueryCount());
-		if (sourcePage.getRows().isEmpty()) {
+		if (sourcePage.getRows() == null || sourcePage.getRows().isEmpty()) {
 			return result;
 		}
 		result.setRows(mapList(sourcePage.getRows(), resultType, ignoreProperties));
@@ -111,86 +209,27 @@ public class MapperUtils {
 	 * @param <T>
 	 * @param sqlToyContext
 	 * @param sourceList
-	 * @param resultType
+	 * @param targetClass
 	 * @param recursionLevel   避免循环递归，默认不能超过3层
-	 * @param ignoreProperties
+	 * @param ignoreProperties 跳过不参与映射的属性
 	 * @return
 	 * @throws RuntimeException
 	 */
-	private static <T extends Serializable> List<T> mapList(List sourceList, Class<T> resultType, int recursionLevel,
+	private static <T extends Serializable> List<T> mapList(List sourceList, Class<T> targetClass, int recursionLevel,
 			String... ignoreProperties) throws RuntimeException {
 		Class sourceClass = sourceList.iterator().next().getClass();
-		DTOEntityMapModel mapModel = getDTOEntityMap(sourceClass, resultType);
-		if (mapModel == null || mapModel.fromGetMethods == null || mapModel.targetSetMethods == null) {
+		Object[] getSetMethods = matchGetSetMethods(sourceClass, targetClass, ignoreProperties);
+		if (getSetMethods == null) {
 			return null;
-		}
-		Method[] getMethods = mapModel.fromGetMethods;
-		Method[] setMethods = mapModel.targetSetMethods;
-		// 判断get方法和set方法是否都是null，都是null无需进行后续操作
-		boolean getAllNull = true;
-		boolean setAllNull = true;
-		for (int i = 0; i < getMethods.length; i++) {
-			if (getMethods[i] != null) {
-				getAllNull = false;
-			}
-			if (setMethods[i] != null) {
-				setAllNull = false;
-			}
-		}
-		// get方法或set方法都为null,表示是一些类似serialVersionUID类的公共属性，直接返回null
-		if (getAllNull || setAllNull) {
-			return null;
-		}
-		// 不做映射处理的属性，针对targetClass
-		if (ignoreProperties != null && ignoreProperties.length > 0) {
-			List<Method> getRealMethods = new ArrayList<Method>();
-			List<Method> setRealMethods = new ArrayList<Method>();
-			String methodName;
-			String ignorePropLow;
-			Class paramType;
-			boolean skip;
-			List<String> ignoreProps = new ArrayList<String>();
-			for (String ignoreProp : ignoreProperties) {
-				ignoreProps.add(ignoreProp.toLowerCase());
-			}
-			// 以set方法为映射主体
-			for (int i = 0; i < setMethods.length; i++) {
-				if (setMethods[i] != null) {
-					methodName = setMethods[i].getName().toLowerCase();
-					paramType = setMethods[i].getParameterTypes()[0];
-					skip = false;
-					for (int j = 0; j < ignoreProps.size(); j++) {
-						ignorePropLow = ignoreProps.get(j);
-						if (methodName.equals("set".concat(ignorePropLow))
-								|| (ignorePropLow.startsWith("is") && paramType.equals(boolean.class)
-										&& methodName.equals("set".concat(ignorePropLow.substring(2))))) {
-							skip = true;
-							ignoreProps.remove(j);
-							j--;
-							break;
-						}
-					}
-					if (!skip) {
-						getRealMethods.add(getMethods[i]);
-						setRealMethods.add(setMethods[i]);
-					}
-				}
-			}
-			if (setRealMethods.size() == 0) {
-				logger.warn("最终映射对应的属性数量为零,请检查ignoreProperties是否正确,过滤了全部匹配属性!");
-				return null;
-			}
-			getMethods = new Method[setRealMethods.size()];
-			setMethods = new Method[setRealMethods.size()];
-			getRealMethods.toArray(getMethods);
-			setRealMethods.toArray(setMethods);
 		}
 		try {
+			Method[] getMethods = (Method[]) getSetMethods[0];
+			Method[] setMethods = (Method[]) getSetMethods[1];
 			List dataSets = invokeGetValues(sourceList, getMethods);
-			return reflectListToBean(dataSets, resultType, setMethods, recursionLevel);
+			return reflectListToBean(dataSets, targetClass, setMethods, recursionLevel);
 		} catch (Exception e) {
 			e.printStackTrace();
-			throw new RuntimeException("map/mapList,类型:[" + sourceClass.getName() + "-->" + resultType.getName()
+			throw new RuntimeException("map/mapList,类型:[" + sourceClass.getName() + "-->" + targetClass.getName()
 					+ "]映射操作失败:" + e.getMessage());
 		}
 	}
@@ -264,6 +303,7 @@ public class MapperUtils {
 			}
 			parentClass = parentClass.getSuperclass();
 		}
+		// 是否要匹配别名(两个不同对象之间，属性名称不一致，通过注解提供别名模式进行映射)
 		boolean checkAlias = fromClass.equals(targetClass) ? false : true;
 		// fromClass
 		List<String> fromClassProps = new ArrayList<String>();
@@ -276,6 +316,7 @@ public class MapperUtils {
 			for (Field field : parentClass.getDeclaredFields()) {
 				fieldName = field.getName();
 				aliasName = fieldName;
+				// 不同对象，检查是否有别名
 				if (checkAlias) {
 					alias = field.getAnnotation(SqlToyFieldAlias.class);
 					if (alias != null) {
@@ -336,9 +377,10 @@ public class MapperUtils {
 			if (null != realMethods[i]) {
 				methodType = realMethods[i].getParameterTypes()[0];
 				methodTypes[i] = methodType.getTypeName();
-				methodTypeValues[i] = DataType.getType(methodTypes[i]);
+				methodTypeValues[i] = DataType.getType(methodType);
 				// 非普通类型、非枚举、非Map(DTO)
-				if (methodTypeValues[i] == DataType.objectType && !methodType.isEnum()
+				if ((methodTypeValues[i] == DataType.objectType || methodTypeValues[i] == DataType.listType
+						|| methodTypeValues[i] == DataType.setType) && !methodType.isEnum()
 						&& !Map.class.isAssignableFrom(methodType)) {
 					methodGenTypes[i] = realMethods[i].getParameterTypes()[0];
 				}
@@ -375,7 +417,8 @@ public class MapperUtils {
 					cellData = row.get(j);
 					if (cellData != null && realMethods[j] != null) {
 						// 基本类型
-						if (methodTypeValues[j] != DataType.objectType) {
+						if (methodTypeValues[j] != DataType.objectType && methodTypeValues[j] != DataType.listType
+								&& methodTypeValues[j] != DataType.setType) {
 							realMethods[j].invoke(bean,
 									BeanUtil.convertType(cellData, methodTypeValues[j], methodTypes[j]));
 						} // List<DTO>
@@ -414,4 +457,136 @@ public class MapperUtils {
 		return result;
 	}
 
+	/**
+	 * @TODO List和List属性映射，只支持基本类型和类型相同的属性映射
+	 * @param dataSet
+	 * @param targetList
+	 * @param realMethods
+	 * @throws Exception
+	 */
+	private static void listToList(List dataSet, List targetList, Method[] realMethods) throws Exception {
+		int indexSize = realMethods.length;
+		String[] methodTypes = new String[indexSize];
+		int[] methodTypeValues = new int[indexSize];
+		Class methodType;
+		// 自动适配属性的数据类型
+		for (int i = 0; i < indexSize; i++) {
+			if (null != realMethods[i]) {
+				methodType = realMethods[i].getParameterTypes()[0];
+				methodTypes[i] = methodType.getTypeName();
+				methodTypeValues[i] = DataType.getType(methodType);
+			}
+		}
+		int size;
+		Object bean;
+		List row;
+		Object cellData = null;
+		for (int i = 0, end = dataSet.size(); i < end; i++) {
+			row = (List) dataSet.get(i);
+			if (row != null) {
+				bean = targetList.get(i);
+				size = row.size();
+				for (int j = 0; j < size; j++) {
+					cellData = row.get(j);
+					if (realMethods[j] != null) {
+						if (cellData != null) {
+							// 基本类型
+							if (methodTypeValues[j] != DataType.objectType && methodTypeValues[j] != DataType.listType
+									&& methodTypeValues[j] != DataType.setType) {
+								realMethods[j].invoke(bean,
+										BeanUtil.convertType(cellData, methodTypeValues[j], methodTypes[j]));
+							} // 类型相同直接赋值
+							else if (cellData.getClass().getTypeName().equals(methodTypes[j])) {
+								realMethods[j].invoke(bean, cellData);
+							}
+						} else {
+							realMethods[j].invoke(bean,
+									BeanUtil.convertType(cellData, methodTypeValues[j], methodTypes[j]));
+						}
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * @TODO 两个类属性匹配，获取对应的getMehtod和setMethod
+	 * @param sourceClass
+	 * @param targetClass
+	 * @param ignoreProperties
+	 * @return
+	 */
+	private static Object[] matchGetSetMethods(Class sourceClass, Class targetClass, String... ignoreProperties) {
+		DTOEntityMapModel mapModel = getDTOEntityMap(sourceClass, targetClass);
+		if (mapModel == null || mapModel.fromGetMethods == null || mapModel.targetSetMethods == null) {
+			return null;
+		}
+		Method[] getMethods = mapModel.fromGetMethods;
+		Method[] setMethods = mapModel.targetSetMethods;
+		// 判断get方法和set方法是否都是null，都是null无需进行后续操作
+		boolean getAllNull = true;
+		boolean setAllNull = true;
+		for (int i = 0; i < getMethods.length; i++) {
+			if (getMethods[i] != null) {
+				getAllNull = false;
+			}
+			if (setMethods[i] != null) {
+				setAllNull = false;
+			}
+		}
+		// get方法或set方法都为null,表示是一些类似serialVersionUID类的公共属性，直接返回null
+		if (getAllNull || setAllNull) {
+			return null;
+		}
+		// 不做映射处理的属性，针对targetClass
+		if (ignoreProperties != null && ignoreProperties.length > 0) {
+			List<Method> getRealMethods = new ArrayList<Method>();
+			List<Method> setRealMethods = new ArrayList<Method>();
+			String methodName;
+			String ignorePropLow;
+			Class paramType;
+			boolean skip;
+			List<String> ignoreProps = new ArrayList<String>();
+			for (String ignoreProp : ignoreProperties) {
+				ignoreProps.add(ignoreProp.toLowerCase());
+			}
+			// 以set方法为映射主体
+			for (int i = 0; i < setMethods.length; i++) {
+				if (setMethods[i] != null) {
+					methodName = setMethods[i].getName().toLowerCase();
+					paramType = setMethods[i].getParameterTypes()[0];
+					skip = false;
+					for (int j = 0; j < ignoreProps.size(); j++) {
+						ignorePropLow = ignoreProps.get(j);
+						// boolean 类型去除is
+						if (methodName.equals("set".concat(ignorePropLow))
+								|| (ignorePropLow.startsWith("is") && paramType.equals(boolean.class)
+										&& methodName.equals("set".concat(ignorePropLow.substring(2))))) {
+							skip = true;
+							// 移除匹配上的属性，避免下次继续匹配
+							ignoreProps.remove(j);
+							j--;
+							break;
+						}
+					}
+					if (!skip) {
+						getRealMethods.add(getMethods[i]);
+						setRealMethods.add(setMethods[i]);
+					}
+				}
+			}
+			if (setRealMethods.size() == 0) {
+				logger.warn("最终映射对应的属性数量为零,请检查ignoreProperties是否正确,过滤了全部匹配属性!");
+				return null;
+			}
+			getMethods = new Method[setRealMethods.size()];
+			setMethods = new Method[setRealMethods.size()];
+			getRealMethods.toArray(getMethods);
+			setRealMethods.toArray(setMethods);
+		}
+		Object[] result = new Object[2];
+		result[0] = getMethods;
+		result[1] = setMethods;
+		return result;
+	}
 }

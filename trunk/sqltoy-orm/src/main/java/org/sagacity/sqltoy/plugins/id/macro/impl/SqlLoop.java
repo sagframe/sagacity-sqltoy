@@ -374,6 +374,8 @@ public class SqlLoop extends AbstractMacro {
 			valueStr = combineArray((Object[]) paramValue);
 		} else if (paramValue instanceof Collection) {
 			valueStr = combineArray(((Collection) paramValue).toArray());
+		} else if (paramValue instanceof Enum) {
+			valueStr = BeanUtil.getEnumValue(paramValue).toString();
 		} else {
 			valueStr = "" + paramValue;
 		}
@@ -396,18 +398,26 @@ public class SqlLoop extends AbstractMacro {
 				result.append(",");
 			}
 			value = array[i];
-			if (value instanceof CharSequence) {
-				result.append("'" + value + "'");
-			} else if (value instanceof Timestamp) {
-				result.append("'" + DateUtil.formatDate(value, "yyyy-MM-dd HH:mm:ss.SSS") + "'");
-			} else if (value instanceof Date || value instanceof LocalDateTime) {
-				result.append("'" + DateUtil.formatDate(value, "yyyy-MM-dd HH:mm:ss") + "'");
-			} else if (value instanceof LocalDate) {
-				result.append("'" + DateUtil.formatDate(value, "yyyy-MM-dd") + "'");
-			} else if (value instanceof LocalTime) {
-				result.append("'" + DateUtil.formatDate(value, "HH:mm:ss") + "'");
+			if (value == null) {
+				result.append("null");
 			} else {
-				result.append("" + value);
+				// 支持枚举类型
+				if (value instanceof Enum) {
+					value = BeanUtil.getEnumValue(value);
+				}
+				if (value instanceof CharSequence) {
+					result.append("'" + value + "'");
+				} else if (value instanceof Timestamp) {
+					result.append("'" + DateUtil.formatDate(value, "yyyy-MM-dd HH:mm:ss.SSS") + "'");
+				} else if (value instanceof Date || value instanceof LocalDateTime) {
+					result.append("'" + DateUtil.formatDate(value, "yyyy-MM-dd HH:mm:ss") + "'");
+				} else if (value instanceof LocalDate) {
+					result.append("'" + DateUtil.formatDate(value, "yyyy-MM-dd") + "'");
+				} else if (value instanceof LocalTime) {
+					result.append("'" + DateUtil.formatDate(value, "HH:mm:ss") + "'");
+				} else {
+					result.append("" + value);
+				}
 			}
 		}
 		return result.toString();

@@ -7,6 +7,7 @@ import java.util.Map;
 
 import org.sagacity.sqltoy.plugins.id.macro.AbstractMacro;
 import org.sagacity.sqltoy.plugins.id.macro.MacroUtils;
+import org.sagacity.sqltoy.utils.BeanUtil;
 
 /**
  * @project sagacity-sqltoy
@@ -39,7 +40,14 @@ public class Case extends AbstractMacro {
 			baseValue = MacroUtils.replaceParams(baseParam, keyValues);
 		} else {
 			if (keyValues != null && keyValues.containsKey(baseParam)) {
-				baseValue = keyValues.get(baseParam).toString();
+				Object tmpVar = keyValues.get(baseParam);
+				if (tmpVar == null) {
+					baseValue = "null";
+				} else if (tmpVar instanceof Enum) {
+					baseValue = BeanUtil.getEnumValue(tmpVar).toString();
+				} else {
+					baseValue = tmpVar.toString();
+				}
 			} else {
 				baseValue = baseParam;
 			}

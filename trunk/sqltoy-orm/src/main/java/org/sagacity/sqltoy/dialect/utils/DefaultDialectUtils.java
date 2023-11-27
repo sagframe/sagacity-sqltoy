@@ -45,6 +45,8 @@ import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
+import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
+import org.sagacity.sqltoy.plugins.UnifyUpdateFieldsController;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
@@ -366,6 +368,11 @@ public class DefaultDialectUtils {
 				break;
 			}
 		}
+
+		// 统一字段赋值处理
+		IUnifyFieldsHandler unifyFieldsHandler = UnifyUpdateFieldsController.useUnifyFields()
+				? sqlToyContext.getUnifyFieldsHandler()
+				: null;
 		final Object[] fieldValues = tempFieldValues;
 		final boolean hasUpdateRow = (updateRowHandler == null) ? false : true;
 		// 组织select * from table for update 语句
@@ -398,6 +405,34 @@ public class DefaultDialectUtils {
 								SqlExecuteStat.debug("执行updateRow", "记录存在调用updateRowHandler.updateRow!");
 								// 执行update反调，实现锁定行记录值的修改
 								updateRowHandler.updateRow(rs, index);
+								// 考虑公共字段修改
+								if (unifyFieldsHandler != null && unifyFieldsHandler.updateUnifyFields() != null) {
+									Map<String, Object> updateProps = unifyFieldsHandler.updateUnifyFields();
+									String field;
+									FieldMeta fieldMeta;
+									Object fieldValue;
+									for (Map.Entry<String, Object> entry : updateProps.entrySet()) {
+										field = entry.getKey();
+										fieldValue = entry.getValue();
+										fieldMeta = entityMeta.getFieldMeta(field);
+										// 存在公共的修改属性
+										if (fieldMeta != null) {
+											// 强制修改
+											if (unifyFieldsHandler.forceUpdateFields() != null
+													&& unifyFieldsHandler.forceUpdateFields().contains(field)) {
+												resultUpdate(conn, rs, fieldMeta, fieldValue, dbType, false);
+											} else {
+												// 反射对象属性取值
+												Object pojoFieldValue = BeanUtil.getProperty(entity, field);
+												// 不为null，则以对象传递的值为准
+												if (pojoFieldValue != null) {
+													fieldValue = pojoFieldValue;
+												}
+												resultUpdate(conn, rs, fieldMeta, fieldValue, dbType, false);
+											}
+										}
+									}
+								}
 								// 执行update
 								rs.updateRow();
 							}
@@ -425,7 +460,7 @@ public class DefaultDialectUtils {
 								}
 								// 插入设置具体列的值
 								if (fieldValue != null) {
-									resultUpdate(conn, rs, fieldMeta, fieldValue, dbType);
+									resultUpdate(conn, rs, fieldMeta, fieldValue, dbType, true);
 								}
 							}
 							// 执行插入
@@ -453,11 +488,12 @@ public class DefaultDialectUtils {
 	 * @param fieldMeta
 	 * @param paramValue
 	 * @param dbType
+	 * @param isInsert
 	 * @throws Exception
 	 */
 	private static void resultUpdate(Connection conn, ResultSet rs, FieldMeta fieldMeta, Object paramValue,
-			Integer dbType) throws Exception {
-		if (!fieldMeta.isPK()) {
+			Integer dbType, boolean isInsert) throws Exception {
+		if (!fieldMeta.isPK() && isInsert) {
 			paramValue = SqlUtilsExt.getDefaultValue(paramValue, fieldMeta.getDefaultValue(), fieldMeta.getType(),
 					fieldMeta.isNullable());
 		}
@@ -571,6 +607,8 @@ public class DefaultDialectUtils {
 			rs.updateByte(columnName, (Byte) paramValue);
 		} else if (paramValue instanceof Object[]) {
 			setArray(dbType, conn, rs, columnName, paramValue);
+		} else if (paramValue instanceof Enum) {
+			rs.updateObject(columnName, BeanUtil.getEnumValue(paramValue));
 		} else if (paramValue instanceof Collection) {
 			Object[] values = ((Collection) paramValue).toArray();
 			// 集合为空，无法判断具体类型，设置为null
