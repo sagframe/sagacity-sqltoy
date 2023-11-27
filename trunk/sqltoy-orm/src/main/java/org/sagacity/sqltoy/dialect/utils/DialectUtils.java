@@ -899,7 +899,7 @@ public class DialectUtils {
 	 * @param entityMeta
 	 * @param nullFunction
 	 * @param forceUpdateFields
-	 * @param tableName
+	 * @param tableName          已经增加了schema
 	 * @return
 	 */
 	private static String generateUpdateSql(IUnifyFieldsHandler unifyFieldsHandler, Integer dbType,
@@ -909,6 +909,7 @@ public class DialectUtils {
 		}
 		StringBuilder sql = new StringBuilder(entityMeta.getFieldsArray().length * 30 + 30);
 		sql.append(" update  ");
+		// 已经增加了schema
 		sql.append(tableName);
 		sql.append(" set ");
 		String columnName;

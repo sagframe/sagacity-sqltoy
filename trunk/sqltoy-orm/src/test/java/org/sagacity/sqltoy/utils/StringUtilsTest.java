@@ -199,5 +199,9 @@ public class StringUtilsTest {
 		System.err.println(StringUtil.matches(sql, SqlToyConstants.INCLUDE_PARAM_PATTERN));
 		sql = "select * from table @include( :itemList )";
 		System.err.println(StringUtil.matches(sql, SqlToyConstants.INCLUDE_PARAM_PATTERN));
+		String tmp="select from ";
+		if (StringUtil.matches(" " + tmp, "(?i)\\Wselect\\W") && StringUtil.matches(tmp, "(?i)\\Wfrom\\W")) {
+			System.err.println("ddd"+true);
+		}
 	}
 }

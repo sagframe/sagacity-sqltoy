@@ -280,9 +280,9 @@ public class Query extends BaseLink {
 		QueryExecutor queryExecute = build();
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecute, SqlType.search, getDialect());
 		QueryResult result = dialectFactory.getRandomResult(sqlToyContext, queryExecute, sqlToyConfig,
-				new Double(randomSize), getDataSource(sqlToyConfig));
+				Double.valueOf(randomSize), getDataSource(sqlToyConfig));
 		// 产品化场景，适配其他数据库验证查询(仅仅在设置了redoDataSources时生效)
-		CrossDbAdapter.redoRandomQuery(sqlToyContext, dialectFactory, queryExecute, new Double(randomSize));
+		CrossDbAdapter.redoRandomQuery(sqlToyContext, dialectFactory, queryExecute, Double.valueOf(randomSize));
 		return result.getRows();
 	}
 

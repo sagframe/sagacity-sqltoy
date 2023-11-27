@@ -39,6 +39,7 @@ import com.alibaba.fastjson.JSONObject;
  * @author zhongxuchen
  * @version v1.0,Date:2018年3月8日
  */
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class TranslateFactory {
 	/**
 	 * 定义全局日志
