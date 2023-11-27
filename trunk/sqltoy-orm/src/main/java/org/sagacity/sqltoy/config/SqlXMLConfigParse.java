@@ -55,7 +55,7 @@ import org.w3c.dom.NodeList;
 
 /**
  * @project sagacity-sqltoy
- * @description 解析sql配置文件，不要纠结于xml解析的方式,后期已经部分使用xmlutil,但显式的解析更加清晰
+ * @description 解析sql配置文件
  * @author zhongxuchen
  * @version v1.0,Date:2009-12-14
  * @modify Date:2011-8-30 {增加sql文件设置数据库类别功能，优化解决跨数据库sql文件的配置方式}
@@ -487,19 +487,19 @@ public class SqlXMLConfigParse {
 		String nodeName = sqlElt.getNodeName().toLowerCase();
 		// 是否有聚合查询
 		if ("eql".equals(nodeName)) {
+			String sql = sqlToyConfig.getSql(null);
 			if (sqlElt.hasAttribute("aggregate")) {
 				noSqlConfig.setHasAggs(Boolean.parseBoolean(sqlElt.getAttribute("aggregate")));
 			} else if (sqlElt.hasAttribute("is-aggregate")) {
 				noSqlConfig.setHasAggs(Boolean.parseBoolean(sqlElt.getAttribute("is-aggregate")));
 			} else {
-				noSqlConfig.setHasAggs(StringUtil.matches(sqlToyConfig.getSql(null), ES_AGGS_PATTERN));
+				noSqlConfig.setHasAggs(StringUtil.matches(sql, ES_AGGS_PATTERN));
 			}
-			// 判断查询语句的模式是否sql模式
-			if (StringUtil.matches(sqlToyConfig.getSql(null), "(?i)\\s*select\\s*")
-					&& sqlToyConfig.getSql(null).toLowerCase().indexOf("from") > 0) {
+			// 判断查询语句的模式是否sql模式:select 开头
+			if (StringUtil.matches(sql.trim(), "(?i)^select\\W")) {
 				noSqlConfig.setSqlMode(true);
 				// sql模式下存在group by 则判定为聚合查询
-				if (StringUtil.matches(sqlToyConfig.getSql(null), GROUP_BY_PATTERN)) {
+				if (StringUtil.matches(sql, "(?i)\\Wfrom\\W") && StringUtil.matches(sql, GROUP_BY_PATTERN)) {
 					noSqlConfig.setHasAggs(true);
 				}
 			}

@@ -473,13 +473,13 @@ public class ParamFilterUtils {
 						} else if (paramValues[index] instanceof BigDecimal) {
 							paramValues[index] = new BigDecimal(updateValue);
 						} else if (paramValues[index] instanceof Long) {
-							paramValues[index] = new Long(updateValue);
+							paramValues[index] = Long.valueOf(updateValue);
 						} else if (paramValues[index] instanceof Integer) {
-							paramValues[index] = new Integer(updateValue);
+							paramValues[index] = Integer.valueOf(updateValue);
 						} else if (paramValues[index] instanceof Double) {
-							paramValues[index] = new Double(updateValue);
+							paramValues[index] = Double.valueOf(updateValue);
 						} else if (paramValues[index] instanceof Float) {
-							paramValues[index] = new Float(updateValue);
+							paramValues[index] = Float.valueOf(updateValue);
 						} else if (paramValues[index] instanceof BigInteger) {
 							paramValues[index] = new BigInteger(updateValue);
 						} else {

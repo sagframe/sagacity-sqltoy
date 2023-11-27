@@ -41,7 +41,7 @@ public class SpringMongoQuery implements MongoQuery {
 			query.skip(skip);
 		}
 		if (limit != null && limit > 0) {
-			query.limit(limit);
+			query.limit(limit.intValue());
 		}
 		logger.debug("findByMongo script=" + query.getQueryObject());
 		return mongoTemplate.find(query, entityClass, collectionName);
