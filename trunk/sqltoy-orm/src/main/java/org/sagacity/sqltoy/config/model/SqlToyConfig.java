@@ -641,7 +641,7 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 		if (StringUtil.isBlank(sqlContent)) {
 			return sqlContent;
 		}
-		if (dialect == null || dialect.equals(Dialect.UNDEFINE) || dialect.equals(this.dialect)) {
+		if (dialect == null || dialect.equals("") || dialect.equals(Dialect.UNDEFINE) || dialect.equals(this.dialect)) {
 			return sqlContent;
 		}
 		String key = dialect.concat(".").concat(type);

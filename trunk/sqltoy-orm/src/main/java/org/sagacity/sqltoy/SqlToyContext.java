@@ -364,6 +364,16 @@ public class SqlToyContext {
 	private boolean executeSqlBlankToNull = true;
 
 	/**
+	 * sql 日志输出时LocalDateTime类型的输出格式
+	 */
+	private String localDateTimeFormat = "yyyy-MM-dd HH:mm:ss";
+
+	/**
+	 * sql 日志输出时LocalTime类型的输出格式
+	 */
+	private String localTimeFormat = "HH:mm:ss";
+
+	/**
 	 * sqltoy的线程池名称
 	 */
 	private String taskExecutorName;
@@ -424,6 +434,8 @@ public class SqlToyContext {
 		SqlToyConstants.FETCH_SIZE = this.fetchSize;
 		SqlToyConstants.executeSqlBlankToNull = this.executeSqlBlankToNull;
 		SqlToyConstants.DEFAULT_PAGE_SIZE = this.defaultPageSize;
+		SqlToyConstants.localDateTimeFormat = this.localDateTimeFormat;
+		SqlToyConstants.localTimeFormat = this.localTimeFormat;
 		// 初始化sql执行统计的基本参数
 		SqlExecuteStat.setDebug(this.debug);
 		SqlExecuteStat.setOverTimeSqlHandler(overTimeSqlHandler);
@@ -1241,4 +1253,19 @@ public class SqlToyContext {
 			this.dialectMap = new IgnoreKeyCaseMap<String, String>(dialectMap);
 		}
 	}
+
+	/**
+	 * @param localDateTimeFormat the localDateTimeFormat to set
+	 */
+	public void setLocalDateTimeFormat(String localDateTimeFormat) {
+		this.localDateTimeFormat = localDateTimeFormat;
+	}
+
+	/**
+	 * @param localTimeFormat the localTimeFormat to set
+	 */
+	public void setLocalTimeFormat(String localTimeFormat) {
+		this.localTimeFormat = localTimeFormat;
+	}
+
 }
