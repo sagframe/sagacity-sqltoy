@@ -39,6 +39,16 @@ public class SqlWithAnalysis implements Serializable {
 	private String rejectWithSql;
 
 	/**
+	 * with sql前部分
+	 */
+	private String preSql;
+
+	/**
+	 * with sql尾部sql
+	 */
+	private String footSql;
+
+	/**
 	 * 是否有with as
 	 */
 	private boolean hasWith = false;
@@ -82,12 +92,26 @@ public class SqlWithAnalysis implements Serializable {
 	}
 
 	/**
+	 * @return the preSql
+	 */
+	public String getPreSql() {
+		return preSql;
+	}
+
+	/**
+	 * @return the lastSql
+	 */
+	public String getFootSql() {
+		return footSql;
+	}
+
+	/**
 	 * 将带with 的sql解析成2部分:with as table () 和 select 部分
 	 */
 	private void parse() {
 		rejectWithSql = this.sql;
 		String headSql = "";
-		String tailSql = this.sql;
+		String tailSql = " ".concat(this.sql);
 		String aliasTable;
 		int endWith;
 		int asIndex;
@@ -99,16 +123,31 @@ public class SqlWithAnalysis implements Serializable {
 		String groupLow;
 		String withAfter;
 		String[] params;
+		String withAsMiddle;
+		String aliasParams;
+		int bracketIndex;
+		//WITH RECURSIVE search_graph(id, link, data, depth) AS 
 		if (withAsMatcher.find()) {
 			withAfter = "";
-			headSql = tailSql.substring(0, withAsMatcher.start());
+			aliasParams = "";
+			headSql = tailSql.substring(0, withAsMatcher.start() + 1);
 			hasWith = true;
 			withSqlBuffer = new StringBuilder();
 			withSqlSet = new ArrayList<String[]>();
 			groupStr = withAsMatcher.group();
 			groupLow = groupStr.toLowerCase();
 			asIndex = StringUtil.matchIndex(groupLow, asPattern) + 1;
-			params = groupStr.substring(groupLow.indexOf("with") + 4, asIndex).trim().split("\\s+");
+			withAsMiddle = groupStr.substring(groupLow.indexOf("with") + 4, asIndex).trim();
+			bracketIndex = withAsMiddle.indexOf("(");
+			if (bracketIndex > 0 && withAsMiddle.endsWith(")")) {
+				aliasParams = withAsMiddle.substring(bracketIndex);
+				withAsMiddle = withAsMiddle.substring(0, bracketIndex);
+				if (withAsMiddle.endsWith(" ")) {
+					aliasParams = " ".concat(aliasParams);
+					withAsMiddle = withAsMiddle.trim();
+				}
+			}
+			params = withAsMiddle.split("\\s+");
 			// 剔除with
 			aliasTable = params[params.length - 1];
 			if (params.length > 1) {
@@ -116,9 +155,9 @@ public class SqlWithAnalysis implements Serializable {
 			}
 			ext = groupStr.substring(asIndex + 2, groupStr.indexOf("(", asIndex));
 			endWith = StringUtil.getSymMarkIndex("(", ")", tailSql, withAsMatcher.start() + asIndex);
-			withSqlBuffer.append(tailSql.substring(withAsMatcher.start(), endWith + 1));
-			withSqlSet
-					.add(new String[] { aliasTable, ext, tailSql.substring(withAsMatcher.end(), endWith), withAfter });
+			withSqlBuffer.append(tailSql.substring(withAsMatcher.start()+1, endWith + 1));
+			withSqlSet.add(new String[] { aliasTable, ext, tailSql.substring(withAsMatcher.end(), endWith), withAfter,
+					aliasParams });
 			tailSql = tailSql.substring(endWith + 1);
 		} else {
 			return;
@@ -130,10 +169,21 @@ public class SqlWithAnalysis implements Serializable {
 				break;
 			}
 			withAfter = "";
+			aliasParams = "";
 			groupStr = otherMatcher.group();
 			groupLow = groupStr.toLowerCase();
 			asIndex = StringUtil.matchIndex(groupLow, asPattern) + 1;
-			params = groupStr.substring(groupStr.indexOf(",") + 1, asIndex).trim().split("\\s+");
+			withAsMiddle = groupStr.substring(groupStr.indexOf(",") + 1, asIndex).trim();
+			bracketIndex = withAsMiddle.indexOf("(");
+			if (bracketIndex > 0 && withAsMiddle.endsWith(")")) {
+				aliasParams = withAsMiddle.substring(bracketIndex);
+				withAsMiddle = withAsMiddle.substring(0, bracketIndex);
+				if (withAsMiddle.endsWith(" ")) {
+					aliasParams = " ".concat(aliasParams);
+					withAsMiddle = withAsMiddle.trim();
+				}
+			}
+			params = withAsMiddle.split("\\s+");
 			aliasTable = params[params.length - 1];
 			if (params.length > 1) {
 				withAfter = params[0];
@@ -141,11 +191,14 @@ public class SqlWithAnalysis implements Serializable {
 			ext = groupStr.substring(asIndex + 2, groupStr.indexOf("(", asIndex));
 			endWith = StringUtil.getSymMarkIndex("(", ")", tailSql, otherMatcher.start() + asIndex);
 			withSqlBuffer.append(tailSql.substring(0, endWith + 1));
-			withSqlSet.add(new String[] { aliasTable, ext, tailSql.substring(otherMatcher.end(), endWith), withAfter });
+			withSqlSet.add(new String[] { aliasTable, ext, tailSql.substring(otherMatcher.end(), endWith), withAfter,
+					aliasParams });
 			tailSql = tailSql.substring(endWith + 1);
 			otherMatcher.reset(tailSql);
 		}
-		rejectWithSql = headSql.concat(" ").concat(tailSql);
+		this.preSql = headSql.trim();
+		this.footSql = tailSql.trim();
+		this.rejectWithSql = headSql.concat(" ").concat(tailSql);
 		this.withSql = withSqlBuffer.append(" ").toString();
 	}
 

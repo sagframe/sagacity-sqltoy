@@ -134,6 +134,8 @@ public class SqltoyAutoConfiguration {
 		sqlToyContext.setDefaultPageOffset(properties.isDefaultPageOffset());
 		// 设置方言映射，如OSCAR==>oracle
 		sqlToyContext.setDialectMap(properties.getDialectMap());
+		sqlToyContext.setLocalDateTimeFormat(properties.getLocalDateTimeFormat());
+		sqlToyContext.setLocalTimeFormat(properties.getLocalTimeFormat());
 		// map 类型结果label是否自动转驼峰处理
 		if (properties.getHumpMapResultTypeLabel() != null) {
 			sqlToyContext.setHumpMapResultTypeLabel(properties.getHumpMapResultTypeLabel());
