@@ -51,4 +51,15 @@ public class SqlXMLConfigParseTest {
 		SqlToyConfig sqlToyConfig = SqlConfigParseUtils.parseSqlToyConfig(sql, "mysql", SqlType.search);
 		System.err.println(JSON.toJSONString(sqlToyConfig));
 	}
+	
+	@Test
+	public void testWith() throws Exception {
+		String sql = "with t1 (a, b) as not  materialized (select * from table),t2(c,d) as materialized(select name from ta) "
+				+ ""
+				+ ""
+				+ "@fast(select * from t1)";
+		SqlToyConfig sqlToyConfig = SqlConfigParseUtils.parseSqlToyConfig(sql, "mysql", SqlType.search);
+		System.err.println(sqlToyConfig.getFastSql(null));
+		System.err.println(sqlToyConfig.getFastWithSql(null));
+	}
 }

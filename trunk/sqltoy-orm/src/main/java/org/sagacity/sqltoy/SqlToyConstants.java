@@ -170,7 +170,7 @@ public class SqlToyConstants {
 	// with aliasTable as materialized ()
 	// with aliasTable as not materialized ()
 	public final static Pattern withPattern = Pattern.compile(
-			"(?i)\\s*with\\s+([a-z]+\\s+)?[a-z|0-9|\\_]+\\s*(\\([a-z|0-9|\\_|\\s|\\,]+\\))?\\s+as\\s*(\\s+[a-z|\\_]+){0,2}\\s*\\(");
+			"(?i)\\Wwith\\s+([a-z]+\\s+)?[a-z|0-9|\\_]+\\s*(\\([a-z|0-9|\\_|\\s|\\,]+\\))?\\s+as\\s*(\\s+[a-z|\\_]+){0,2}\\s*\\(");
 
 	// with 下面多个as
 	public final static Pattern otherWithPattern = Pattern.compile(
@@ -205,6 +205,10 @@ public class SqlToyConstants {
 	public final static String MERGE_ALIAS_ON_REGEX = "\\)\\s+tv\\s+on\\s+\\(";
 	public final static String MERGE_UPDATE = " when matched then update set ";
 	public final static String MERGE_INSERT = " when not matched then insert ";
+
+	public static String localDateTimeFormat;
+
+	public static String localTimeFormat;
 
 	/**
 	 * @todo 解析模板中的参数

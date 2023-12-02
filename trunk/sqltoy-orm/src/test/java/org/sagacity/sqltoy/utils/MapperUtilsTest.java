@@ -13,6 +13,7 @@ import org.sagacity.sqltoy.demo.domain.StaffInfo;
 import org.sagacity.sqltoy.demo.vo.LoginLogVO;
 import org.sagacity.sqltoy.demo.vo.StaffInfoVO;
 import org.sagacity.sqltoy.demo.vo.SysLoginLog;
+import org.sagacity.sqltoy.model.PropsMapperConfig;
 
 import com.alibaba.fastjson.JSON;
 
@@ -42,6 +43,33 @@ public class MapperUtilsTest {
 		try {
 			context.initialize();
 			StaffInfo staffInfo = MapperUtils.map(staffInfoVO, StaffInfo.class, "sexType");
+			System.err.println(JSON.toJSONString(staffInfo));
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+	}
+
+	@Test
+	public void testVOToPOProps() {
+		StaffInfoVO staffInfoVO = new StaffInfoVO();
+		staffInfoVO.setStaffId("S2007");
+		staffInfoVO.setStaffCode("S2007");
+		staffInfoVO.setPostType("MASTER");
+		staffInfoVO.setStaffName("测试员工9");
+		staffInfoVO.setSexType("M");
+		staffInfoVO.setEmail("test3@aliyun.com");
+		staffInfoVO.setEntryDate(LocalDate.now());
+		staffInfoVO.setStatus(1);
+		staffInfoVO.setOrganId("100007");
+		// staffInfoVO.setPhoto(FileUtil.readAsBytes("classpath:/mock/staff_photo.jpg"));
+		staffInfoVO.setCountry("86");
+		SqlToyContext context = new SqlToyContext();
+		try {
+			context.initialize();
+			StaffInfo staffInfo = MapperUtils.map(staffInfoVO, StaffInfo.class,
+					new PropsMapperConfig("sexType", "staffId", "staffName"));
 			System.err.println(JSON.toJSONString(staffInfo));
 		} catch (Exception e) {
 			// TODO Auto-generated catch block

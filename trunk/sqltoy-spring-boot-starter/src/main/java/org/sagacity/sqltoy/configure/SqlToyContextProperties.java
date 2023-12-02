@@ -244,6 +244,24 @@ public class SqlToyContextProperties implements Serializable {
 	 */
 	private int defaultPageSize = 10;
 
+	// spring.sqltoy.localDateTimeFormat
+	/**
+	 * sql输出时默认日期格式,可以是:
+	 * <p>
+	 * <li>1、auto</li>
+	 * <li>2、"yyyy-MM-dd HH:mm:ss.SSS"</li>
+	 * <li>3、"yyyy-MM-dd HH:mm:ss.SSSSSS"</li>
+	 * <li>4、"yyyy-MM-dd HH:mm:ss.SSSSSSSSS"</li>
+	 * </p>
+	 */
+	private String localDateTimeFormat = "yyyy-MM-dd HH:mm:ss";
+
+	// spring.sqltoy.localTimeFormat
+	/**
+	 * 1、auto 2、"HH:mm:ss.SSS" 3、"HH:mm:ss.SSSSSS" 4、"HH:mm:ss.SSSSSSSSS"
+	 */
+	private String localTimeFormat = "HH:mm:ss";
+
 	/**
 	 * @return the sqlResourcesDir
 	 */
@@ -688,4 +706,33 @@ public class SqlToyContextProperties implements Serializable {
 	public Map<String, String> getDialectMap() {
 		return dialectMap;
 	}
+
+	/**
+	 * @return the localDateTimeFormat
+	 */
+	public String getLocalDateTimeFormat() {
+		return localDateTimeFormat;
+	}
+
+	/**
+	 * @param localDateTimeFormat the localDateTimeFormat to set
+	 */
+	public void setLocalDateTimeFormat(String localDateTimeFormat) {
+		this.localDateTimeFormat = localDateTimeFormat;
+	}
+
+	/**
+	 * @return the localTimeFormat
+	 */
+	public String getLocalTimeFormat() {
+		return localTimeFormat;
+	}
+
+	/**
+	 * @param localTimeFormat the localTimeFormat to set
+	 */
+	public void setLocalTimeFormat(String localTimeFormat) {
+		this.localTimeFormat = localTimeFormat;
+	}
+
 }
