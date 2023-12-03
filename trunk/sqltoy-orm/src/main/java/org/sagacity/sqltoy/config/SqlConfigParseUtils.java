@@ -1111,9 +1111,7 @@ public class SqlConfigParseUtils {
 		// 判定是否有with查询模式
 		sqlToyConfig.setHasWith(hasWith(originalSql));
 		// 判定是否有union语句(先验证有union 然后再精确判断union 是否有效,在括号内的局部union 不起作用)
-		if (StringUtil.matches(originalSql, SqlUtil.UNION_PATTERN)) {
-			sqlToyConfig.setHasUnion(SqlUtil.hasUnion(originalSql, false));
-		}
+		sqlToyConfig.setHasUnion(SqlUtil.hasUnion(originalSql, false));
 		// 只有在查询模式前提下才支持fastPage机制
 		if (SqlType.search.equals(sqlType)) {
 			// 判断是否有快速分页@fast 宏
@@ -1197,8 +1195,8 @@ public class SqlConfigParseUtils {
 						}
 						buffer.append(" ");
 						// aliasTableAs 结构{aliasName,as和括号之间的字符串,as内容,with 和aliasTable之间的参数}
-						buffer.append(aliasTableAs[0]).append(" as ").append(aliasTableAs[1]).append(" ( ")
-								.append(aliasTableAs[2]).append(" ) ");
+						buffer.append(aliasTableAs[0]).append(aliasTableAs[4]).append(" as ").append(aliasTableAs[1])
+								.append(" ( ").append(aliasTableAs[2]).append(" ) ");
 					}
 					sqlToyConfig.setFastWithSql(buffer.toString());
 				}

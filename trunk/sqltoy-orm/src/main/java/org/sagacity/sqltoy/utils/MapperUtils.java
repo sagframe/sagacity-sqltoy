@@ -14,6 +14,7 @@ import org.sagacity.sqltoy.config.annotation.SqlToyFieldAlias;
 import org.sagacity.sqltoy.config.model.DTOEntityMapModel;
 import org.sagacity.sqltoy.config.model.DataType;
 import org.sagacity.sqltoy.model.PaginationModel;
+import org.sagacity.sqltoy.model.PropsMapperConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,42 +50,40 @@ public class MapperUtils {
 	 * @param <T>
 	 * @param source
 	 * @param resultType
-	 * @param ignoreProperties 忽略的字段
+	 * @param ignoreProperties 忽略的属性
 	 * @return
 	 * @throws RuntimeException
 	 */
+	@Deprecated
 	public static <T extends Serializable> T map(Serializable source, Class<T> resultType, String... ignoreProperties)
 			throws RuntimeException {
+		return map(source, resultType, new PropsMapperConfig(ignoreProperties).isIgnore(true));
+	}
+
+	/**
+	 * @TODO DTO<-->POJO 双向映射
+	 * @param <T>
+	 * @param source
+	 * @param resultType
+	 * @param propsMapperConfig 映射属性配置
+	 * @return
+	 * @throws RuntimeException
+	 */
+	public static <T extends Serializable> T map(Serializable source, Class<T> resultType,
+			PropsMapperConfig propsMapperConfig) throws RuntimeException {
 		if (source == null) {
 			return null;
 		}
 		if (resultType == null || BeanUtil.isBaseDataType(resultType)) {
 			throw new IllegalArgumentException("resultType 不能为null,且resultType不能为基本类型!");
 		}
-		return map(source, resultType, 0, ignoreProperties);
+		return map(source, resultType, 0, propsMapperConfig);
 	}
 
-	/**
-	 * @TODO 属性映射
-	 * @param source
-	 * @param target
-	 * @param ignoreProperties
-	 * @throws RuntimeException
-	 */
-	public static void copyProperties(Serializable source, Serializable target, String... ignoreProperties)
-			throws RuntimeException {
-		if (source == null || target == null) {
-			return;
-		}
-		if (BeanUtil.isBaseDataType(source.getClass()) || BeanUtil.isBaseDataType(target.getClass())) {
-			throw new IllegalArgumentException("copyProperties<DTO>不支持基本类型对象的属性值映射!");
-		}
-		// 转成List做统一处理
-		List<Serializable> sourceList = new ArrayList<Serializable>();
-		sourceList.add(source);
-		List<Serializable> targetList = new ArrayList<Serializable>();
-		targetList.add(target);
-		copyProperties(sourceList, targetList, ignoreProperties);
+	@Deprecated
+	public static <T extends Serializable> List<T> mapList(List sourceList, Class<T> resultType,
+			String... ignoreProperties) throws RuntimeException {
+		return mapList(sourceList, resultType, new PropsMapperConfig(ignoreProperties).isIgnore(true));
 	}
 
 	/**
@@ -92,12 +91,12 @@ public class MapperUtils {
 	 * @param <T>
 	 * @param sourceList
 	 * @param resultType
-	 * @param ignoreProperties
+	 * @param propsMapperConfig
 	 * @return
 	 * @throws RuntimeException
 	 */
 	public static <T extends Serializable> List<T> mapList(List sourceList, Class<T> resultType,
-			String... ignoreProperties) throws RuntimeException {
+			PropsMapperConfig propsMapperConfig) throws RuntimeException {
 		if (sourceList == null) {
 			return null;
 		}
@@ -111,17 +110,94 @@ public class MapperUtils {
 		if (sourceList.isEmpty()) {
 			return new ArrayList<T>();
 		}
-		return mapList(sourceList, resultType, 0, ignoreProperties);
+		return mapList(sourceList, resultType, 0, propsMapperConfig);
+	}
+
+	/**
+	 * @TODO 分页映射
+	 * @param <T>
+	 * @param sourcePage
+	 * @param resultType
+	 * @param ignoreProperties 忽略的属性
+	 * @return
+	 */
+	@Deprecated
+	public static <T extends Serializable> PaginationModel<T> map(PaginationModel sourcePage, Class<T> resultType,
+			String... ignoreProperties) {
+		return map(sourcePage, resultType, new PropsMapperConfig(ignoreProperties).isIgnore(true));
+	}
+
+	/**
+	 * @TODO 分页映射
+	 * @param <T>
+	 * @param sourcePage
+	 * @param resultType
+	 * @param propsMapperConfig
+	 * @return
+	 */
+	public static <T extends Serializable> PaginationModel<T> map(PaginationModel sourcePage, Class<T> resultType,
+			PropsMapperConfig propsMapperConfig) {
+		if (sourcePage == null) {
+			return null;
+		}
+		if (resultType == null || BeanUtil.isBaseDataType(resultType)) {
+			throw new IllegalArgumentException("resultType 不能为null,且resultType不能为基本类型!");
+		}
+		PaginationModel result = new PaginationModel();
+		result.setPageNo(sourcePage.getPageNo());
+		result.setPageSize(sourcePage.getPageSize());
+		result.setRecordCount(sourcePage.getRecordCount());
+		result.setSkipQueryCount(sourcePage.getSkipQueryCount());
+		if (sourcePage.getRows() == null || sourcePage.getRows().isEmpty()) {
+			return result;
+		}
+		result.setRows(mapList(sourcePage.getRows(), resultType, propsMapperConfig));
+		return result;
+	}
+
+	/**
+	 * @TODO 两个实体对象属性值复制
+	 * @param source
+	 * @param target
+	 * @param ignoreProperties 忽略的不参与复制的属性
+	 * @throws RuntimeException
+	 */
+	@Deprecated
+	public static void copyProperties(Serializable source, Serializable target, String... ignoreProperties)
+			throws RuntimeException {
+		copyProperties(source, target, new PropsMapperConfig(ignoreProperties).isIgnore(true));
+	}
+
+	/**
+	 * @TODO 两个实体对象属性值复制
+	 * @param source
+	 * @param target
+	 * @param propsMapperConfig  new PropsMapperConfig(String...properties).isIgnore(true|false) 默认为false
+	 * @throws RuntimeException
+	 */
+	public static void copyProperties(Serializable source, Serializable target, PropsMapperConfig propsMapperConfig)
+			throws RuntimeException {
+		if (source == null || target == null) {
+			return;
+		}
+		if (BeanUtil.isBaseDataType(source.getClass()) || BeanUtil.isBaseDataType(target.getClass())) {
+			throw new IllegalArgumentException("copyProperties<DTO>不支持基本类型对象的属性值映射!");
+		}
+		List<Serializable> sourceList = new ArrayList<Serializable>();
+		sourceList.add(source);
+		List<Serializable> targetList = new ArrayList<Serializable>();
+		targetList.add(target);
+		copyProperties(sourceList, targetList, propsMapperConfig);
 	}
 
 	/**
 	 * @TODO List集合属性映射
 	 * @param sourceList
 	 * @param targetList
-	 * @param ignoreProperties
+	 * @param copyPropsConfig
 	 * @throws RuntimeException
 	 */
-	public static void copyProperties(List sourceList, List targetList, String... ignoreProperties)
+	public static void copyProperties(List sourceList, List targetList, PropsMapperConfig propsMapperConfig)
 			throws RuntimeException {
 		if (sourceList == null || sourceList.isEmpty()) {
 			throw new RuntimeException("copyProperties<List>操作sourceList为空对象");
@@ -138,13 +214,26 @@ public class MapperUtils {
 		if (BeanUtil.isBaseDataType(sourceClass) || BeanUtil.isBaseDataType(targetClass)) {
 			throw new IllegalArgumentException("copyProperties<List>不支持基本类型对象的属性值映射!");
 		}
-		Object[] getSetMethods = matchGetSetMethods(sourceClass, targetClass, ignoreProperties);
-		if (getSetMethods == null) {
+		PropsMapperConfig propConfig = (propsMapperConfig == null) ? new PropsMapperConfig() : propsMapperConfig;
+		Method[] getMethods;
+		Method[] setMethods;
+		// 属性参数未定义即表示全部属性匹配
+		if (propConfig.isIgnore() || propConfig.getProperties() == null) {
+			Object[] getSetMethods = matchGetSetMethods(sourceClass, targetClass, propConfig.getProperties());
+			if (getSetMethods == null) {
+				return;
+			}
+			getMethods = (Method[]) getSetMethods[0];
+			setMethods = (Method[]) getSetMethods[1];
+		} else {
+			// 指定属性映射
+			getMethods = BeanUtil.matchGetMethods(sourceClass, propConfig.getProperties());
+			setMethods = BeanUtil.matchSetMethods(targetClass, propConfig.getProperties());
+		}
+		if (getMethods.length < 1 || setMethods.length < 1) {
 			return;
 		}
 		try {
-			Method[] getMethods = (Method[]) getSetMethods[0];
-			Method[] setMethods = (Method[]) getSetMethods[1];
 			List dataSets = invokeGetValues(sourceList, getMethods);
 			listToList(dataSets, targetList, setMethods);
 		} catch (Exception e) {
@@ -154,32 +243,10 @@ public class MapperUtils {
 		}
 	}
 
-	/**
-	 * @TODO 分页映射
-	 * @param <T>
-	 * @param sourcePage
-	 * @param resultType
-	 * @param ignoreProperties
-	 * @return
-	 */
-	public static <T extends Serializable> PaginationModel<T> map(PaginationModel sourcePage, Class<T> resultType,
-			String... ignoreProperties) {
-		if (sourcePage == null) {
-			return null;
-		}
-		if (resultType == null || BeanUtil.isBaseDataType(resultType)) {
-			throw new IllegalArgumentException("resultType 不能为null,且resultType不能为基本类型!");
-		}
-		PaginationModel result = new PaginationModel();
-		result.setPageNo(sourcePage.getPageNo());
-		result.setPageSize(sourcePage.getPageSize());
-		result.setRecordCount(sourcePage.getRecordCount());
-		result.setSkipQueryCount(sourcePage.getSkipQueryCount());
-		if (sourcePage.getRows() == null || sourcePage.getRows().isEmpty()) {
-			return result;
-		}
-		result.setRows(mapList(sourcePage.getRows(), resultType, ignoreProperties));
-		return result;
+	@Deprecated
+	public static void copyProperties(List sourceList, List targetList, String... ignoreProperties)
+			throws RuntimeException {
+		copyProperties(sourceList, targetList, new PropsMapperConfig(ignoreProperties).isIgnore(true));
 	}
 
 	/**
@@ -193,11 +260,11 @@ public class MapperUtils {
 	 * @throws RuntimeException
 	 */
 	private static <T extends Serializable> T map(Serializable source, Class<T> resultType, int recursionLevel,
-			String... ignoreProperties) throws RuntimeException {
+			PropsMapperConfig propsMapperConfig) throws RuntimeException {
 		// 转成List做统一处理
 		List<Serializable> sourceList = new ArrayList<Serializable>();
 		sourceList.add(source);
-		List<T> result = mapList(sourceList, resultType, recursionLevel, ignoreProperties);
+		List<T> result = mapList(sourceList, resultType, recursionLevel, propsMapperConfig);
 		if (result == null || result.isEmpty()) {
 			return null;
 		}
@@ -210,21 +277,34 @@ public class MapperUtils {
 	 * @param sqlToyContext
 	 * @param sourceList
 	 * @param targetClass
-	 * @param recursionLevel   避免循环递归，默认不能超过3层
-	 * @param ignoreProperties 跳过不参与映射的属性
+	 * @param recursionLevel    避免循环递归，默认不能超过3层
+	 * @param propsMapperConfig 设置映射属性的模型
 	 * @return
 	 * @throws RuntimeException
 	 */
 	private static <T extends Serializable> List<T> mapList(List sourceList, Class<T> targetClass, int recursionLevel,
-			String... ignoreProperties) throws RuntimeException {
+			PropsMapperConfig propsMapperConfig) throws RuntimeException {
 		Class sourceClass = sourceList.iterator().next().getClass();
-		Object[] getSetMethods = matchGetSetMethods(sourceClass, targetClass, ignoreProperties);
-		if (getSetMethods == null) {
+		Method[] getMethods;
+		Method[] setMethods;
+		PropsMapperConfig propConfig = (propsMapperConfig == null) ? new PropsMapperConfig() : propsMapperConfig;
+		// 属性参数未定义即表示全部属性匹配
+		if (propConfig.isIgnore() || propConfig.getProperties() == null) {
+			Object[] getSetMethods = matchGetSetMethods(sourceClass, targetClass, propConfig.getProperties());
+			if (getSetMethods == null) {
+				return null;
+			}
+			getMethods = (Method[]) getSetMethods[0];
+			setMethods = (Method[]) getSetMethods[1];
+		} else {
+			// 指定属性映射
+			getMethods = BeanUtil.matchGetMethods(sourceClass, propConfig.getProperties());
+			setMethods = BeanUtil.matchSetMethods(targetClass, propConfig.getProperties());
+		}
+		if (getMethods.length < 1 || setMethods.length < 1) {
 			return null;
 		}
 		try {
-			Method[] getMethods = (Method[]) getSetMethods[0];
-			Method[] setMethods = (Method[]) getSetMethods[1];
 			List dataSets = invokeGetValues(sourceList, getMethods);
 			return reflectListToBean(dataSets, targetClass, setMethods, recursionLevel);
 		} catch (Exception e) {
@@ -408,6 +488,7 @@ public class MapperUtils {
 		List cellList;
 		Object cellData = null;
 		Object convertData = null;
+		PropsMapperConfig emptyConfig = new PropsMapperConfig();
 		for (int i = 0, end = dataSet.size(); i < end; i++) {
 			row = (List) dataSet.get(i);
 			if (row != null) {
@@ -427,7 +508,8 @@ public class MapperUtils {
 							if (!cellList.isEmpty()) {
 								if (!notListBaseType[j] && recursionLevel < MAX_RECURSION) {
 									// 类型映射
-									List subItems = mapList((List) cellData, methodGenTypes[j], recursionLevel + 1);
+									List subItems = mapList((List) cellData, methodGenTypes[j], recursionLevel + 1,
+											emptyConfig);
 									if (subItems != null && !subItems.isEmpty()) {
 										realMethods[j].invoke(bean, subItems);
 									}
@@ -441,7 +523,8 @@ public class MapperUtils {
 						} // DTO->DTO 对象之间转换
 						else if (recursionLevel < MAX_RECURSION && methodGenTypes[j] != null
 								&& (cellData instanceof Serializable)) {
-							convertData = map((Serializable) cellData, methodGenTypes[j], recursionLevel + 1);
+							convertData = map((Serializable) cellData, methodGenTypes[j], recursionLevel + 1,
+									emptyConfig);
 							if (convertData != null) {
 								realMethods[j].invoke(bean, convertData);
 							}

@@ -344,8 +344,11 @@ public class DialectUtils {
 			// with as分析器(避免每次做with 检测,提升效率)
 			if (sqlToyConfig != null && sqlToyConfig.isHasWith()) {
 				SqlWithAnalysis sqlWith = new SqlWithAnalysis(sql);
-				query_tmp = sqlWith.getRejectWithSql();
-				withSql = sqlWith.getWithSql();
+				// 判断with as是否在开始位置，如果在内部不做优化处理
+				if (StringUtil.isBlank(sqlWith.getPreSql())) {
+					query_tmp = sqlWith.getRejectWithSql();
+					withSql = sqlWith.getWithSql();
+				}
 			}
 			int lastBracketIndex = query_tmp.lastIndexOf(")");
 			int sql_from_index = 0;
@@ -378,7 +381,15 @@ public class DialectUtils {
 			}
 			final StringBuilder countQueryStr = new StringBuilder();
 			// 是否包含union,update 2012-11-21
-			boolean hasUnion = StringUtil.matches(query_tmp, UNION_PATTERN);
+			boolean hasUnion = false;
+			if (sqlToyConfig != null) {
+				// 如果存在union，则重新判断一次(#[] 做了剔除，有可能将union部分剔除了)
+				if (sqlToyConfig.isHasUnion()) {
+					hasUnion = SqlUtil.hasUnion(query_tmp, false);
+				}
+			} else {
+				hasUnion = SqlUtil.hasUnion(query_tmp, false);
+			}
 			// 不包含distinct和group by 等,则剔除[select * ] from 变成select count(1) from
 			// 性能最优
 			if (!StringUtil.matches(query_tmp.trim(), DISTINCT_PATTERN) && !hasUnion

@@ -45,6 +45,7 @@ import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.DataType;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
+import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.model.IgnoreCaseSet;
 import org.sagacity.sqltoy.model.TreeTableModel;
@@ -85,10 +86,16 @@ public class SqlUtil {
 
 	public static final Pattern UPCASE_ORDER_PATTERN = Pattern.compile("\\WORder\\s+");
 
+	public static final Pattern ONE_QUOTA = Pattern.compile("\'");
+	public static final Pattern DOUBLE_QUOTA = Pattern.compile("\"");
+
+	public static final Pattern SQLINJECT_PATTERN = Pattern.compile(
+			"(?i)\\W((delete\\s+from)|update|(truncate\\s+table)|(alter\\s+table)|modify|(insert\\s+into)|select|set|create|drop|(merge\\s+into))\\s+");
+
 	/**
 	 * 查询select 匹配
 	 */
-	public static final String SELECT_REGEX = "select\\s+";
+	public static final String SELECT_REGEX = "\\Wselect\\s+";
 
 	/**
 	 * 查询from 匹配
@@ -97,6 +104,7 @@ public class SqlUtil {
 
 	// union 匹配模式
 	public static final Pattern UNION_PATTERN = Pattern.compile("(?i)\\W+union\\W+");
+	public final static String BLANK = " ";
 
 	/**
 	 * 存放转换后的sql
@@ -284,7 +292,7 @@ public class SqlUtil {
 				}
 				// postgresql bytea类型需要统一处理成BINARY
 				if (jdbcType == java.sql.Types.BLOB) {
-					if (dbType == DBType.POSTGRESQL || dbType == DBType.GAUSSDB) {
+					if (dbType == DBType.POSTGRESQL) {
 						pst.setNull(paramIndex, java.sql.Types.BINARY);
 					} else {
 						pst.setNull(paramIndex, jdbcType);
@@ -739,7 +747,7 @@ public class SqlUtil {
 				sql = sql.substring(0, markIndex);
 				break;
 			} else {
-				sql = sql.substring(0, markIndex).concat(" ").concat(sql.substring(endMarkIndex + 3));
+				sql = sql.substring(0, markIndex).concat(BLANK).concat(sql.substring(endMarkIndex + 3));
 			}
 			markIndex = sql.indexOf("<!--");
 		}
@@ -751,7 +759,7 @@ public class SqlUtil {
 				sql = sql.substring(0, markIndex);
 				break;
 			} else {
-				sql = sql.substring(0, markIndex).concat(" ").concat(sql.substring(endMarkIndex + 2));
+				sql = sql.substring(0, markIndex).concat(BLANK).concat(sql.substring(endMarkIndex + 2));
 			}
 			markIndex = StringUtil.matchIndex(sql, maskPattern);
 		}
@@ -773,7 +781,7 @@ public class SqlUtil {
 						sqlBuffer.append("\n");
 					}
 					// 增加一个空白
-					sqlBuffer.append(" ");
+					sqlBuffer.append(BLANK);
 					if (lineMaskIndex == -1) {
 						sqlBuffer.append(line);
 					} else {
@@ -859,7 +867,7 @@ public class SqlUtil {
 		}
 		StringBuilder result = new StringBuilder();
 		for (int i = 0; i < size; i++) {
-			result.append(" ");
+			result.append(BLANK);
 		}
 		return result.toString();
 	}
@@ -1462,7 +1470,7 @@ public class SqlUtil {
 		// 剔除sql中的注释
 		sqlContent = SqlUtil.clearMark(sqlContent);
 		if (splitSign.indexOf("go") != -1) {
-			sqlContent = clearMistyChars(sqlContent, " ");
+			sqlContent = clearMistyChars(sqlContent, BLANK);
 		}
 		// 分割成多个子语句
 		String[] statments = StringUtil.splitExcludeSymMark(sqlContent, splitSign, sqlCommentfilters);
@@ -1690,9 +1698,18 @@ public class SqlUtil {
 	 * @return
 	 */
 	public static boolean hasUnion(String sql, boolean clearMistyChar) {
-		StringBuilder lastSql = new StringBuilder(clearMistyChar ? clearMistyChars(sql, " ") : sql);
+		if (!StringUtil.matches(sql, UNION_PATTERN)) {
+			return false;
+		}
+		// 存在with as ，先剔除
+		if (StringUtil.matches(BLANK + sql, SqlToyConstants.withPattern)) {
+			SqlWithAnalysis sqlWith = new SqlWithAnalysis(sql);
+			sql = sqlWith.getRejectWithSql();
+		}
+		String tmpSql = BLANK + (clearMistyChar ? clearMistyChars(sql, BLANK) : sql);
+		StringBuilder lastSql = new StringBuilder(tmpSql);
 		// 找到第一个select 所对称的from位置，排查掉子查询中的内容
-		int fromIndex = StringUtil.getSymMarkMatchIndex(SELECT_REGEX, FROM_REGEX, sql.toLowerCase(), 0);
+		int fromIndex = StringUtil.getSymMarkMatchIndex(SELECT_REGEX, FROM_REGEX, tmpSql.toLowerCase(), 0);
 		if (fromIndex != -1) {
 			lastSql.delete(0, fromIndex);
 		}
@@ -1732,7 +1749,7 @@ public class SqlUtil {
 		String[] fields = entityMeta.getFieldsArray();
 		StringBuilder sqlBuff = new StringBuilder();
 		// 末尾补齐一位空白,便于后续取index时避免越界
-		String realSql = sql.concat(" ");
+		String realSql = sql.concat(BLANK);
 		int start = 0;
 		int index;
 		String preSql;
@@ -1837,10 +1854,10 @@ public class SqlUtil {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entityClass);
 		// from 开头补齐select col1,col2,...
 		if (StringUtil.matches(sqlLow, "^from\\W")) {
-			return "select ".concat(entityMeta.getAllColumnNames()).concat(" ").concat(sql);
+			return "select ".concat(entityMeta.getAllColumnNames()).concat(BLANK).concat(sql);
 		}
 		// 没有where和from(排除 select * from table),补齐select * from table where
-		if (!StringUtil.matches(" ".concat(sqlLow), "\\W(from|where)\\W")) {
+		if (!StringUtil.matches(BLANK.concat(sqlLow), "\\W(from|where)\\W")) {
 			if (StringUtil.matches(sqlLow, "^(and|or)\\W")) {
 				return "select ".concat(entityMeta.getAllColumnNames()).concat(" from ")
 						.concat(entityMeta.getSchemaTable(null, null)).concat(" where 1=1 ").concat(sql);
@@ -1851,7 +1868,7 @@ public class SqlUtil {
 		// where开头 补齐select * from
 		if (StringUtil.matches(sqlLow, "^where\\W")) {
 			return "select ".concat(entityMeta.getAllColumnNames()).concat(" from ")
-					.concat(entityMeta.getSchemaTable(null, null)).concat(" ").concat(sql);
+					.concat(entityMeta.getSchemaTable(null, null)).concat(BLANK).concat(sql);
 		}
 		return sql;
 	}
@@ -1954,9 +1971,8 @@ public class SqlUtil {
 					|| "java.time.localtime".equals(fieldMeta.getFieldType())
 					|| "java.sql.time".equals(fieldMeta.getFieldType())) {
 				if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.TIDB
-						|| dbType == DBType.SQLITE || dbType == DBType.POSTGRESQL
-						|| dbType == DBType.KINGBASE || dbType == DBType.DB2
-						|| dbType == DBType.OCEANBASE) {
+						|| dbType == DBType.SQLITE || dbType == DBType.POSTGRESQL || dbType == DBType.KINGBASE
+						|| dbType == DBType.DB2 || dbType == DBType.OCEANBASE) {
 					return "current_time";
 				} else if (dbType == DBType.GAUSSDB) {
 					return "now()";
@@ -1984,6 +2000,8 @@ public class SqlUtil {
 	 * @return
 	 */
 	public static boolean validateInArg(String argValue) {
+		// 判断是否有关键词
+		boolean hasSqlKeyWord = StringUtil.matches(BLANK + argValue, SQLINJECT_PATTERN);
 		String argTrim = argValue.replaceAll("\\s+", "");
 		String[] args = null;
 		// 判断是否有逗号分割
@@ -2005,13 +2023,25 @@ public class SqlUtil {
 		} else if (args[0].startsWith("\"") && args[0].endsWith("\"")) {
 			argType = 2;
 		}
+		// 无逗号分隔符，且是数子 不能直接in (123) 输出，返回false，依旧以pst.setString(index,"123")设置条件值
+		if (argType == 3 && args.length == 1) {
+			return false;
+		}
 		for (String item : args) {
 			if (argType == 1) {
 				if (!item.startsWith("'") || !item.endsWith("'")) {
 					return false;
 				}
+				// 有关键词时，校验是否多个单引号，避免:''+(select field from table)+''模式
+				if (hasSqlKeyWord && StringUtil.matchCnt(item, ONE_QUOTA) > 2) {
+					return false;
+				}
 			} else if (argType == 2) {
 				if (!item.startsWith("\"") || !item.endsWith("\"")) {
+					return false;
+				}
+				// 有关键词时，校验是否多个双引号，避免:""+(select field from table)+""模式
+				if (hasSqlKeyWord && StringUtil.matchCnt(item, DOUBLE_QUOTA) > 2) {
 					return false;
 				}
 			} else if (!NumberUtil.isNumber(item)) {

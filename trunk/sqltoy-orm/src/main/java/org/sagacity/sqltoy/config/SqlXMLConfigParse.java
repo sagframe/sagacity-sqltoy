@@ -489,19 +489,19 @@ public class SqlXMLConfigParse {
 		String nodeName = sqlElt.getNodeName().toLowerCase();
 		// 是否有聚合查询
 		if ("eql".equals(nodeName)) {
+			String sql = sqlToyConfig.getSql(null);
 			if (sqlElt.hasAttribute("aggregate")) {
 				noSqlConfig.setHasAggs(Boolean.parseBoolean(sqlElt.getAttribute("aggregate")));
 			} else if (sqlElt.hasAttribute("is-aggregate")) {
 				noSqlConfig.setHasAggs(Boolean.parseBoolean(sqlElt.getAttribute("is-aggregate")));
 			} else {
-				noSqlConfig.setHasAggs(StringUtil.matches(sqlToyConfig.getSql(null), ES_AGGS_PATTERN));
+				noSqlConfig.setHasAggs(StringUtil.matches(sql, ES_AGGS_PATTERN));
 			}
-			// 判断查询语句的模式是否sql模式
-			if (StringUtil.matches(sqlToyConfig.getSql(null), "(?i)\\s*select\\s*")
-					&& sqlToyConfig.getSql(null).toLowerCase().indexOf("from") > 0) {
+			// 判断查询语句的模式是否sql模式:select 开头
+			if (StringUtil.matches(sql.trim(), "(?i)^select\\W")) {
 				noSqlConfig.setSqlMode(true);
 				// sql模式下存在group by 则判定为聚合查询
-				if (StringUtil.matches(sqlToyConfig.getSql(null), GROUP_BY_PATTERN)) {
+				if (StringUtil.matches(sql, "(?i)\\Wfrom\\W") && StringUtil.matches(sql, GROUP_BY_PATTERN)) {
 					noSqlConfig.setHasAggs(true);
 				}
 			}

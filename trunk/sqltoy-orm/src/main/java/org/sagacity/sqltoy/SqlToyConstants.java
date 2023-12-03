@@ -169,7 +169,7 @@ public class SqlToyConstants {
 	// with aliasTable as materialized ()
 	// with aliasTable as not materialized ()
 	public final static Pattern withPattern = Pattern.compile(
-			"(?i)\\s*with\\s+([a-z]+\\s+)?[a-z|0-9|\\_]+\\s*(\\([a-z|0-9|\\_|\\s|\\,]+\\))?\\s+as\\s*(\\s+[a-z|\\_]+){0,2}\\s*\\(");
+			"(?i)\\Wwith\\s+([a-z]+\\s+)?[a-z|0-9|\\_]+\\s*(\\([a-z|0-9|\\_|\\s|\\,]+\\))?\\s+as\\s*(\\s+[a-z|\\_]+){0,2}\\s*\\(");
 
 	// with 下面多个as
 	public final static Pattern otherWithPattern = Pattern.compile(
