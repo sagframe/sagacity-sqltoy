@@ -2025,6 +2025,10 @@ public class SqlUtil {
 		} else if (args[0].startsWith("\"") && args[0].endsWith("\"")) {
 			argType = 2;
 		}
+		// 无逗号分隔符，且是数子 不能直接in (123) 输出，返回false，依旧以pst.setString(index,"123")设置条件值
+		if (argType == 3 && args.length == 1) {
+			return false;
+		}
 		for (String item : args) {
 			if (argType == 1) {
 				if (!item.startsWith("'") || !item.endsWith("'")) {
