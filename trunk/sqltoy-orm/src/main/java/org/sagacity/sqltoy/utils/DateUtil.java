@@ -316,8 +316,10 @@ public class DateUtil {
 		String realDF = null;
 		boolean isTime = false;
 		boolean isDate = false;
+		boolean isAssignFmt = false;
 		if (StringUtil.isNotBlank(dateFormat)) {
 			realDF = dateFormat;
+			isAssignFmt = true;
 		} // 英文日期格式(2个以上字母)
 		else if (StringUtil.matches(dateStr, "[a-zA-Z]{2}")) {
 			SimpleDateFormat dateParser = null;
@@ -474,7 +476,14 @@ public class DateUtil {
 				return LocalDateTime.of(localDate.getYear(), localDate.getMonthValue(), localDate.getDayOfMonth(), 0, 0,
 						0);
 			} else {
-				return LocalDateTime.parse(dateStr, DateTimeFormatter.ofPattern(realDF));
+				// 手工指定了格式
+				if (isAssignFmt) {
+					//先自行解析成LocalDateTime
+					LocalDateTime result = parseLocalDateTime(dateStr, null);
+					return parseLocalDateTime(formatDate(result, realDF));
+				} else {
+					return LocalDateTime.parse(dateStr, DateTimeFormatter.ofPattern(realDF));
+				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
