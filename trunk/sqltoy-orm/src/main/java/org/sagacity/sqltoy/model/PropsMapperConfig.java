@@ -17,6 +17,11 @@ public class PropsMapperConfig {
 	// 针对properties，设定是否为忽略的属性，默认为false
 	private boolean ignore = false;
 
+	/**
+	 * 是否跳过null
+	 */
+	private boolean skipNull = false;
+
 	public PropsMapperConfig(String... properties) {
 		if (properties != null && properties.length > 0) {
 			this.properties = properties;
@@ -28,12 +33,24 @@ public class PropsMapperConfig {
 		return this;
 	}
 
+	public PropsMapperConfig skipNull(boolean skipNull) {
+		this.skipNull = skipNull;
+		return this;
+	}
+
 	public String[] getProperties() {
 		return properties;
 	}
 
 	public boolean isIgnore() {
 		return ignore;
+	}
+
+	/**
+	 * 
+	 */
+	public boolean getSkipNull() {
+		return skipNull;
 	}
 
 }
