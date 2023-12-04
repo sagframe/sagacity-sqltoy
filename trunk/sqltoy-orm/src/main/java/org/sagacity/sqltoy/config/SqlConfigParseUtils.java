@@ -186,7 +186,7 @@ public class SqlConfigParseUtils {
 	 * @return
 	 */
 	public static boolean hasWith(String sql) {
-		return StringUtil.matches(sql, SqlToyConstants.withPattern);
+		return StringUtil.matches(BLANK + sql, SqlToyConstants.withPattern);
 	}
 
 	/**
@@ -1172,7 +1172,7 @@ public class SqlConfigParseUtils {
 			// 判定fast查询引用到第几个位置的with
 			for (int i = withSqlSize - 1; i >= 0; i--) {
 				aliasTableAs = sqlWith.getWithSqlSet().get(i);
-				if (StringUtil.matches(sqlToyConfig.getFastSql(dialect), "\\W".concat(aliasTableAs[0]).concat("\\W"))) {
+				if (StringUtil.matches(sqlToyConfig.getFastSql(dialect).concat(BLANK), "\\W".concat(aliasTableAs[0]).concat("\\W"))) {
 					endIndex = i;
 					sqlToyConfig.setFastWithIndex(endIndex);
 					break;
