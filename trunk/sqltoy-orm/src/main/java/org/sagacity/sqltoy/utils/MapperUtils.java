@@ -172,7 +172,9 @@ public class MapperUtils {
 	 * @TODO 两个实体对象属性值复制
 	 * @param source
 	 * @param target
-	 * @param propsMapperConfig  new PropsMapperConfig(String...properties).isIgnore(true|false) 默认为false
+	 * @param propsMapperConfig new
+	 *                          PropsMapperConfig(String...properties).isIgnore(true|false)
+	 *                          默认为false
 	 * @throws RuntimeException
 	 */
 	public static void copyProperties(Serializable source, Serializable target, PropsMapperConfig propsMapperConfig)
@@ -235,7 +237,7 @@ public class MapperUtils {
 		}
 		try {
 			List dataSets = invokeGetValues(sourceList, getMethods);
-			listToList(dataSets, targetList, setMethods);
+			listToList(dataSets, targetList, setMethods, propsMapperConfig.getSkipNull());
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException("copyProperties<List>类型:[" + sourceClass.getName() + "-->"
@@ -545,9 +547,11 @@ public class MapperUtils {
 	 * @param dataSet
 	 * @param targetList
 	 * @param realMethods
+	 * @param skipNull
 	 * @throws Exception
 	 */
-	private static void listToList(List dataSet, List targetList, Method[] realMethods) throws Exception {
+	private static void listToList(List dataSet, List targetList, Method[] realMethods, boolean skipNull)
+			throws Exception {
 		int indexSize = realMethods.length;
 		String[] methodTypes = new String[indexSize];
 		int[] methodTypeValues = new int[indexSize];
@@ -582,7 +586,7 @@ public class MapperUtils {
 							else if (cellData.getClass().getTypeName().equals(methodTypes[j])) {
 								realMethods[j].invoke(bean, cellData);
 							}
-						} else {
+						} else if (!skipNull) {
 							realMethods[j].invoke(bean,
 									BeanUtil.convertType(cellData, methodTypeValues[j], methodTypes[j]));
 						}
