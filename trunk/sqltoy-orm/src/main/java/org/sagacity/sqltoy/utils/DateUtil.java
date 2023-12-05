@@ -141,8 +141,7 @@ public class DateUtil {
 	}
 
 	public static Date parseString(String dateStr) {
-		LocalDateTime result = parseLocalDateTime(dateStr);
-		return asDate(result);
+		return parseString(dateStr, null, null);
 	}
 
 	/**
@@ -153,10 +152,6 @@ public class DateUtil {
 	 * @return
 	 */
 	public static Date parseString(String dateVar, String dateFormat, Locale locale) {
-		if (locale == null) {
-			LocalDateTime result = parseLocalDateTime(dateVar, dateFormat);
-			return asDate(result);
-		}
 		if (dateVar == null) {
 			return null;
 		}
@@ -165,8 +160,15 @@ public class DateUtil {
 			return null;
 		}
 		String realDF = null;
+		boolean isLocalDateTime = false;
+		boolean isLocalTime = false;
+		boolean isAssignFmt = false;
 		if (StringUtil.isNotBlank(dateFormat)) {
 			realDF = dateFormat;
+			// 非英文
+			if (!StringUtil.matches(dateStr, "[a-zA-Z]{2}")) {
+				isAssignFmt = true;
+			}
 		} // 英文日期格式(2个以上字母)
 		else if (StringUtil.matches(dateStr, "[a-zA-Z]{2}")) {
 			SimpleDateFormat dateParser = null;
@@ -209,7 +211,13 @@ public class DateUtil {
 						.replace(":", "").replace("/", "");
 				int preSize = dateStr.indexOf(" ");
 				size = dateStr.length();
-				if (size >= 18) {
+				if (size >= 24) {
+					realDF = "yyyyMMdd HHmmssSSSSSSSSS";
+					isLocalDateTime = true;
+				} else if (size >= 21) {
+					realDF = "yyyyMMdd HHmmssSSSSSS";
+					isLocalDateTime = true;
+				} else if (size >= 18) {
 					realDF = "yyyyMMdd HHmmssSSS";
 				} else if (size == 16) {
 					if (preSize == 8) {
@@ -240,7 +248,17 @@ public class DateUtil {
 				size = dateStr.length();
 				if (dateStr.indexOf(":") != -1) {
 					if (dateStr.indexOf(".") != -1) {
-						realDF = "HH:mm:ss.SSS";
+						if (size >= 18) {
+							realDF = "HH:mm:ss.SSSSSSSSS";
+							isLocalTime = true;
+						} else if (size >= 15) {
+							realDF = "HH:mm:ss.SSSSSS";
+							isLocalTime = true;
+						} else if (size >= 12) {
+							realDF = "HH:mm:ss.SSS";
+						} else {
+							realDF = "HH:mm:ss.S";
+						}
 					} else {
 						if (size == 5) {
 							realDF = "HH:mm";
@@ -265,7 +283,13 @@ public class DateUtil {
 							realDF = "yy/MM";
 						}
 					} else {
-						if (size >= 17) {
+						if (size >= 23) {
+							realDF = "yyyyMMddHHmmssSSSSSSSSS";
+							isLocalDateTime = true;
+						} else if (size >= 20) {
+							realDF = "yyyyMMddHHmmssSSSSSS";
+							isLocalDateTime = true;
+						} else if (size >= 17) {
 							realDF = "yyyyMMddHHmmssSSS";
 						} else if (size >= 15) {
 							realDF = "yyyyMMddHHmmssS";
@@ -292,8 +316,21 @@ public class DateUtil {
 				realDF = hasBlank ? "yyyy-MM-dd HH:mm:ss" : "yyyy-MM-dd";
 			}
 		}
-		DateFormat df = (locale == null) ? new SimpleDateFormat(realDF) : new SimpleDateFormat(realDF, locale);
+
 		try {
+			// 针对高精度进行特殊处理
+			if (isLocalTime) {
+				LocalTime time = LocalTime.parse(dateStr, DateTimeFormatter.ofPattern(realDF));
+				return asDate(time);
+			} else if (isLocalDateTime) {
+				LocalDateTime localDateTime = LocalDateTime.parse(dateStr, DateTimeFormatter.ofPattern(realDF));
+				return asDate(localDateTime);
+			}
+			if (isAssignFmt) {
+				Date result = parseString(dateVar, null, locale);
+				return parseString(formatDate(result, realDF));
+			}
+			DateFormat df = (locale == null) ? new SimpleDateFormat(realDF) : new SimpleDateFormat(realDF, locale);
 			return df.parse(dateStr);
 		} catch (ParseException e) {
 			e.printStackTrace();
@@ -319,6 +356,10 @@ public class DateUtil {
 		boolean isAssignFmt = false;
 		if (StringUtil.isNotBlank(dateFormat)) {
 			realDF = dateFormat;
+			if (StringUtil.matches(dateStr, "[a-zA-Z]{2}")) {
+				Date result = parseString(dateVar, dateFormat, null);
+				return asLocalDateTime(result);
+			}
 			isAssignFmt = true;
 		} // 英文日期格式(2个以上字母)
 		else if (StringUtil.matches(dateStr, "[a-zA-Z]{2}")) {
@@ -361,11 +402,11 @@ public class DateUtil {
 						.replace(":", "").replace("/", "");
 				int preSize = dateStr.indexOf(" ");
 				size = dateStr.length();
-				if (size > 22) {
+				if (size >= 24) {
 					realDF = "yyyyMMdd HHmmssSSSSSSSSS";
-				} else if (size > 19) {
+				} else if (size >= 21) {
 					realDF = "yyyyMMdd HHmmssSSSSSS";
-				} else if (size > 16) {
+				} else if (size >= 18) {
 					realDF = "yyyyMMdd HHmmssSSS";
 				} else if (size == 16) {
 					if (preSize == 8) {
@@ -400,8 +441,10 @@ public class DateUtil {
 							realDF = "HH:mm:ss.SSSSSSSSS";
 						} else if (size >= 15) {
 							realDF = "HH:mm:ss.SSSSSS";
-						} else {
+						} else if (size >= 12) {
 							realDF = "HH:mm:ss.SSS";
+						} else {
+							realDF = "HH:mm:ss.S";
 						}
 					} else {
 						if (size == 5) {
@@ -430,12 +473,14 @@ public class DateUtil {
 						}
 						isDate = true;
 					} else {
-						if (size >= 21) {
+						if (size >= 23) {
 							realDF = "yyyyMMddHHmmssSSSSSSSSS";
-						} else if (size >= 18) {
+						} else if (size >= 20) {
 							realDF = "yyyyMMddHHmmssSSSSSS";
-						} else if (size >= 15) {
+						} else if (size >= 17) {
 							realDF = "yyyyMMddHHmmssSSS";
+						} else if (size >= 15) {
+							realDF = "yyyyMMddHHmmssS";
 						} else if (size == 14) {
 							realDF = "yyyyMMddHHmmss";
 						} // 无空白纯数字13位是System.currentTimeMillis()对应的值
@@ -472,13 +517,12 @@ public class DateUtil {
 				LocalTime time = LocalTime.parse(dateStr, DateTimeFormatter.ofPattern(realDF));
 				return LocalDateTime.of(LocalDate.now(), time);
 			} else if (isDate) {
-				LocalDate localDate = LocalDate.parse(dateStr, DateTimeFormatter.ofPattern(realDF));
-				return LocalDateTime.of(localDate.getYear(), localDate.getMonthValue(), localDate.getDayOfMonth(), 0, 0,
-						0);
+				Date result = new SimpleDateFormat(realDF).parse(dateStr);
+				return asLocalDateTime(result);
 			} else {
 				// 手工指定了格式
 				if (isAssignFmt) {
-					//先自行解析成LocalDateTime
+					// 先自行解析成LocalDateTime
 					LocalDateTime result = parseLocalDateTime(dateStr, null);
 					return parseLocalDateTime(formatDate(result, realDF));
 				} else {
@@ -534,10 +578,6 @@ public class DateUtil {
 		if (dt == null) {
 			logger.warn("日期不能为空,请正确输入!");
 			return null;
-		}
-		if (locale == null && format == null) {
-			LocalDateTime result = convertLocalDateTime(dt);
-			return asDate(result);
 		}
 		Date result = null;
 		String dtStr = dt.toString().trim();
@@ -628,6 +668,7 @@ public class DateUtil {
 		return (null == tmp) ? null : df.format(tmp);
 	}
 
+	@Deprecated
 	public static String formatDate(Object dt, String fmt, String targetFmt, Locale locale) {
 		Date result = parse(dt, fmt, locale);
 		return formatDate(result, targetFmt);
@@ -889,7 +930,7 @@ public class DateUtil {
 		if (localTime == null) {
 			return null;
 		}
-		return DateUtil.parseString(localTime.toString());
+		return new Date(java.sql.Time.valueOf(localTime).getTime());
 	}
 
 	public static Time asTime(LocalTime localTime) {
