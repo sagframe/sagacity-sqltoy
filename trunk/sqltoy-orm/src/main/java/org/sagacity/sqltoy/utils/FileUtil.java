@@ -175,9 +175,13 @@ public class FileUtil {
 				in = new BufferedReader(new InputStreamReader(is));
 			}
 			String line = "";
+			int meter = 0;
 			while ((line = in.readLine()) != null) {
+				if (meter > 0) {
+					buffer.append("\n");
+				}
 				buffer.append(line);
-				buffer.append("\r\n");
+				meter++;
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -198,8 +202,13 @@ public class FileUtil {
 				reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), charset));
 			}
 			String line;
+			int meter = 0;
 			while ((line = reader.readLine()) != null) {
-				result.append(line + "\n");
+				if (meter > 0) {
+					result.append("\n");
+				}
+				result.append(line);
+				meter++;
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
