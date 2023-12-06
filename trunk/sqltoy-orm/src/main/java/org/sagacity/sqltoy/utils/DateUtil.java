@@ -191,13 +191,8 @@ public class DateUtil {
 		String realDF = null;
 		boolean isLocalDateTime = false;
 		boolean isLocalTime = false;
-		boolean isAssignFmt = false;
 		if (StringUtil.isNotBlank(dateFormat)) {
 			realDF = dateFormat;
-			// 非英文
-			if (!StringUtil.matches(dateStr, "[a-zA-Z]{2}")) {
-				isAssignFmt = true;
-			}
 		} // 英文日期格式(2个以上字母)
 		else if (StringUtil.matches(dateStr, "[a-zA-Z]{2}")) {
 			return parseEnglishDate(dateStr, locale);
