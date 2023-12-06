@@ -94,7 +94,7 @@ public class StringUtil {
 	}
 
 	/**
-	 * @todo 替换换行、回车、tab符号;\r 换行、\t tab符合、\n 回车
+	 * @todo 替换换行、回车、tab符号;\r回车 、\t tab符合、\n 换行
 	 * @param source
 	 * @param target
 	 * @return
