@@ -50,6 +50,7 @@ public class DateUtilTest {
 		System.err.println(DateUtil.parseChinaDate("二零二三年十二月五日"));
 		System.err.println(DateUtil.parseChinaDate("二零二三年十二月五日十五时五十五分十秒"));
 		System.err.println(DateUtil.parseChinaDate("二零二三年十二月五日一十五时五十五分十秒"));
+		System.err.println(DateUtil.parseChinaDate("二零二三年十二月五日一十五时五十五分五十五秒"));
 	}
 
 	@Test
