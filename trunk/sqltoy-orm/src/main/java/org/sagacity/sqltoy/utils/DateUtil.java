@@ -888,9 +888,8 @@ public class DateUtil {
 				map.put(groupStr, groupStr.replace("十", "1"));
 			}
 		}
-
 		for (Map.Entry<String, String> entry : map.entrySet()) {
-			tmp = tmp.replaceFirst(entry.getKey(), entry.getValue());
+			tmp = tmp.replaceAll(entry.getKey(), entry.getValue());
 		}
 
 		for (int i = 0; i < CHINA_DATE_KEYS.length; i++) {
