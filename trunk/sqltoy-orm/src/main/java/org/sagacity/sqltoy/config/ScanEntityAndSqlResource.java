@@ -53,7 +53,6 @@ public class ScanEntityAndSqlResource {
 	 * @param charset
 	 * @return
 	 */
-	@Deprecated
 	public static Set<Class<?>> getPackageEntities(String pack, boolean recursive, String charset) {
 		// class类的集合
 		Set<Class<?>> entities = new LinkedHashSet<Class<?>>();
@@ -139,7 +138,6 @@ public class ScanEntityAndSqlResource {
 	 * @param recursive
 	 * @param entities
 	 */
-	@Deprecated
 	public static void addEntitiesInPackage(String packageName, String packagePath, final boolean recursive,
 			Set<Class<?>> entities) {
 		// 获取此包的目录 建立一个File

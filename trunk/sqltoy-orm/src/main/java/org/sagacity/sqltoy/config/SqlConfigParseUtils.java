@@ -604,7 +604,7 @@ public class SqlConfigParseUtils {
 		if (null == sqlToyResult.getParamsValue() || sqlToyResult.getParamsValue().length == 0) {
 			return;
 		}
-		String queryStr = sqlToyResult.getSql().toLowerCase();
+		String queryStr = sqlToyResult.getSql();
 		Matcher m = BLANK_PATTERN.matcher(queryStr);
 		int index = 0;
 		int paramCnt = 0;
@@ -636,7 +636,7 @@ public class SqlConfigParseUtils {
 		if (null == sqlToyResult.getParamsValue() || sqlToyResult.getParamsValue().length == 0) {
 			return;
 		}
-		String queryStr = sqlToyResult.getSql().toLowerCase();
+		String queryStr = sqlToyResult.getSql();
 		// @value(?) 或@value(null)
 		Matcher m = VALUE_PATTERN.matcher(queryStr);
 		int index = 0;
@@ -707,19 +707,19 @@ public class SqlConfigParseUtils {
 		if (null == sqlToyResult.getParamsValue() || sqlToyResult.getParamsValue().length == 0) {
 			return;
 		}
-		String queryStr = sqlToyResult.getSql().toLowerCase();
+		String queryStr = sqlToyResult.getSql();
 		Matcher m = LIKE_PATTERN.matcher(queryStr);
 		int index = 0;
-		String likeParamValue;
 		int paramCnt = 0;
+		String likeValStr;
 		while (m.find()) {
 			index = m.start();
 			paramCnt = StringUtil.matchCnt(queryStr.substring(0, index), ARG_NAME_PATTERN);
-			likeParamValue = (String) sqlToyResult.getParamsValue()[paramCnt];
+			likeValStr = (sqlToyResult.getParamsValue()[paramCnt] == null) ? null
+					: sqlToyResult.getParamsValue()[paramCnt].toString();
 			// 不存在%符号时，前后增加%
-			if (null != likeParamValue && likeParamValue.indexOf("%") == -1) {
-				likeParamValue = "%".concat(likeParamValue).concat("%");
-				sqlToyResult.getParamsValue()[paramCnt] = likeParamValue;
+			if (null != likeValStr && likeValStr.indexOf("%") == -1) {
+				sqlToyResult.getParamsValue()[paramCnt] = "%".concat(likeValStr).concat("%");
 			}
 		}
 	}

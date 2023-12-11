@@ -776,27 +776,46 @@ public class DateUtil {
 	}
 
 	public static int getYear(Object dateValue) {
-		GregorianCalendar currentDate = new GregorianCalendar();
-		if (dateValue != null) {
-			currentDate.setTime(convertDateObject(dateValue));
+		if (dateValue == null) {
+			return LocalDate.now().getYear();
 		}
-		return currentDate.get(Calendar.YEAR);
+		return convertLocalDateTime(dateValue).getYear();
 	}
 
 	public static int getMonth(Object dateValue) {
-		GregorianCalendar currentDate = new GregorianCalendar();
-		if (dateValue != null) {
-			currentDate.setTime(convertDateObject(dateValue));
+		if (dateValue == null) {
+			return LocalDate.now().getMonthValue();
 		}
-		return currentDate.get(Calendar.MONTH) + 1;
+		return convertLocalDateTime(dateValue).getMonthValue();
 	}
 
 	public static int getDay(Object dateValue) {
-		GregorianCalendar currentDate = new GregorianCalendar();
-		if (null != dateValue) {
-			currentDate.setTime(convertDateObject(dateValue));
+		if (dateValue == null) {
+			return LocalDate.now().getDayOfMonth();
 		}
-		return currentDate.get(Calendar.DAY_OF_MONTH);
+		return convertLocalDateTime(dateValue).getDayOfMonth();
+	}
+
+	/**
+	 * @todo <b>获取两时间间隔的月数</b>
+	 * @param floorDate
+	 * @param goalDate
+	 * @return
+	 */
+	public static int getIntervalMonths(Object floorDate, Object goalDate) {
+		LocalDateTime date1 = convertLocalDateTime(goalDate);
+		LocalDateTime date2 = convertLocalDateTime(floorDate);
+		return date1.getYear() * 12 + date1.getMonthValue() - date2.getYear() * 12 - date2.getMonthValue();
+	}
+
+	/**
+	 * @todo <b>获取两时间间隔的整数年数</b>
+	 * @param floorDate
+	 * @param goalDate
+	 * @return
+	 */
+	public static int getIntervalYears(Object floorDate, Object goalDate) {
+		return convertLocalDateTime(goalDate).getYear() - convertLocalDateTime(floorDate).getYear();
 	}
 
 	/**
@@ -810,6 +829,28 @@ public class DateUtil {
 				Double.valueOf(getIntervalMillSeconds(DateUtil.formatDate(floorDate, FORMAT.DATE_HORIZONTAL),
 						DateUtil.formatDate(goalDate, FORMAT.DATE_HORIZONTAL))) / (3600 * 1000 * 24));
 		return result.setScale(1, RoundingMode.HALF_UP).intValue();
+	}
+
+	/**
+	 * @todo 获取两个时间间隔的小时
+	 * @param floorDate
+	 * @param goalDate
+	 * @return
+	 */
+	public static double getIntervalHours(Object floorDate, Object goalDate) {
+		BigDecimal result = new BigDecimal(Double.valueOf(getIntervalMillSeconds(floorDate, goalDate)) / (3600 * 1000));
+		return result.setScale(1, RoundingMode.HALF_UP).doubleValue();
+	}
+
+	/**
+	 * @todo 获取两时间的间隔分钟
+	 * @param floorDate
+	 * @param goalDate
+	 * @return
+	 */
+	public static double getIntervalMinutes(Object floorDate, Object goalDate) {
+		BigDecimal result = new BigDecimal(Double.valueOf(getIntervalMillSeconds(floorDate, goalDate)) / (60 * 1000));
+		return result.setScale(1, RoundingMode.HALF_UP).doubleValue();
 	}
 
 	/**

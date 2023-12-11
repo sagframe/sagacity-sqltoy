@@ -6,7 +6,6 @@ import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.Locale;
 
@@ -42,6 +41,13 @@ public class DateUtilTest {
 		LocalTime date = DateUtil.asLocalTime(timestamp.timestampValue());
 
 		System.err.println(DateUtil.formatDate(date, "HH:mm:ss", Locale.US));
+	}
+
+	@Test
+	public void testOther() throws SQLException {
+		System.err.println(DateUtil.getDay("2023-12-9"));
+		System.err.println(DateUtil.getMonth("2023-12-9"));
+		System.err.println(DateUtil.getYear("2023-12-9"));
 	}
 
 	@Test
@@ -93,11 +99,9 @@ public class DateUtilTest {
 
 		System.err.println(
 				DateUtil.formatDate(DateUtil.parseString("20231130112031033456789"), "yyyy-MM-dd HH:mm:ss.SSSSSS"));
-		System.err.println(
-				DateUtil.formatDate(DateUtil.parseString("202311301120311"), "yyyy-MM-dd HH:mm:ss.SSSSSS"));
+		System.err.println(DateUtil.formatDate(DateUtil.parseString("202311301120311"), "yyyy-MM-dd HH:mm:ss.SSSSSS"));
 		System.err.println(DateUtil.formatDate(DateUtil.parseString("2023-10-22 12:45:20.6"), "yyyy-MM-dd HH:mm:ss.S"));
 		System.err.println(DateUtil.formatDate(DateUtil.parseString("12:45:20.666"), "HH:mm:ss.SSS"));
-		
 
 		LocalTime localTime = DateUtil.parseLocalDateTime("12:22:30").toLocalTime();
 //		LocalDateTime result = LocalDateTime.of(LocalDate.now(), localTime);

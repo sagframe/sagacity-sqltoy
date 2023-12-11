@@ -132,7 +132,6 @@ public class SqlUtil {
 	 * @param isChar     :in 是否要加单引号
 	 * @return:example:1,2,3或'1','2','3'
 	 */
-	@Deprecated
 	public static String combineQueryInStr(Object conditions, Integer colIndex, String property, boolean isChar) {
 		StringBuilder conditons = new StringBuilder(64);
 		String flag = "";

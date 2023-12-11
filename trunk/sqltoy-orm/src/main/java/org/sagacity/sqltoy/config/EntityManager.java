@@ -118,7 +118,6 @@ public class EntityManager {
 	/**
 	 * 扫描的包(意义不大,sqltoy已经改为在使用时自动加载)
 	 */
-	@Deprecated
 	private String[] packagesToScan;
 
 	/**
@@ -129,7 +128,6 @@ public class EntityManager {
 	/**
 	 * 指定的entity class(意义不大,sqltoy已经改为用时自动加载)
 	 */
-	@Deprecated
 	private String[] annotatedClasses;
 
 	/**
