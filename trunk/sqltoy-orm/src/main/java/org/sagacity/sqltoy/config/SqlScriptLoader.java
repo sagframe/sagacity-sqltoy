@@ -266,6 +266,7 @@ public class SqlScriptLoader {
 				// 复制一份，避免直接修改sql缓存中的模型
 				if (isParamInclude) {
 					result = result.clone();
+					result.clearDialectSql();
 				}
 				// 替换include的实际sql
 				String sql = MacroUtils.replaceMacros(result.getSql(), (Map) sqlCache, paramValues, false, macros);
