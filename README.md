@@ -43,7 +43,6 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 * 4.20.87(兼容所有之前版本)                            发版日期: 2023-12-05
 
 # 1. 前言
-### (为更好更快的发展，愿转赠给想做开源或信创的规模型企业，可通过QQ交流)
 ## 1.1 sqltoy-orm是什么
    sqltoy-orm是JPA和超强查询的融合体，是简单业务、大型SaaS化多租户ERP、大数据分析多种类型项目实践过程的总结和分享。
  ### JPA部分
