@@ -163,13 +163,25 @@
 							</xsd:documentation>
 						</xsd:annotation>
 					</xsd:attribute>
-					<xsd:attribute name="sign" type="xsd:string"
-						use="required">
+					<xsd:attribute name="sign" type="xsd:string">
 						<xsd:annotation>
 							<xsd:documentation>
 							<![CDATA[拼接的连接符号,默认逗号分隔]]>
 							</xsd:documentation>
 						</xsd:annotation>
+					</xsd:attribute>
+					<xsd:attribute name="result-type">
+						<xsd:annotation>
+							<xsd:documentation>
+							<![CDATA[只适用于单个字段,将结果以数组形式呈现而非用特定符号拼接成单个字符]]>
+							</xsd:documentation>
+						</xsd:annotation>
+						<xsd:simpleType>
+							<xsd:restriction base="xsd:string">
+								<xsd:enumeration value="ARRAY" />
+								<xsd:enumeration value="LIST" />
+							</xsd:restriction>
+						</xsd:simpleType>
 					</xsd:attribute>
 					<xsd:attribute name="distinct" type="xsd:boolean"
 						default="false" />
@@ -1164,8 +1176,8 @@
 				<xsd:documentation><![CDATA[每个查询条件以及对应count记录在内存中存放的有效时长(秒),默认90秒,确保及时进行刷新查询]]></xsd:documentation>
 			</xsd:annotation>
 		</xsd:attribute>
-		<xsd:attribute name="skip-zero-count"
-			type="xsd:boolean" default="false">
+		<xsd:attribute name="skip-zero-count" type="xsd:boolean"
+			default="false">
 			<xsd:annotation>
 				<xsd:documentation><![CDATA[当count为0时是否自动重新获取]]></xsd:documentation>
 			</xsd:annotation>
@@ -1246,7 +1258,7 @@
 					<xsd:attribute name="average-label" type="xsd:string" />
 					<xsd:attribute name="order-column" type="xsd:string" />
 					<xsd:attribute name="order-with-sum"
-						type="xsd:boolean" default="true"/>
+						type="xsd:boolean" default="true" />
 					<xsd:attribute name="order-way" default="desc">
 						<xsd:simpleType>
 							<xsd:restriction base="xsd:string">

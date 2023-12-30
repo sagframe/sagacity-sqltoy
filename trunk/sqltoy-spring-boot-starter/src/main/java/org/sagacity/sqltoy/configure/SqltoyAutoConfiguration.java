@@ -21,6 +21,7 @@ import org.sagacity.sqltoy.plugins.OverTimeSqlHandler;
 import org.sagacity.sqltoy.plugins.SqlInterceptor;
 import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
+import org.sagacity.sqltoy.plugins.ddl.DialectDDLGenerator;
 import org.sagacity.sqltoy.plugins.formater.SqlFormater;
 import org.sagacity.sqltoy.plugins.secure.DesensitizeProvider;
 import org.sagacity.sqltoy.plugins.secure.FieldsSecureProvider;
@@ -403,6 +404,19 @@ public class SqltoyAutoConfiguration {
 			else if (customFilterHandler.contains(".")) {
 				sqlToyContext.setOverTimeSqlHandler(
 						(OverTimeSqlHandler) Class.forName(overTimeSqlHandler).getDeclaredConstructor().newInstance());
+			}
+		}
+
+		// 自定义pojo创建表结构产生器
+		String dialectDDLGenerator = properties.getDialectDDLGenerator();
+		if (StringUtil.isNotBlank(dialectDDLGenerator)) {
+			if (applicationContext.containsBean(dialectDDLGenerator)) {
+				sqlToyContext
+						.setDialectDDLGenerator((DialectDDLGenerator) applicationContext.getBean(dialectDDLGenerator));
+			} // 包名和类名称
+			else if (dialectDDLGenerator.contains(".")) {
+				sqlToyContext.setDialectDDLGenerator((DialectDDLGenerator) Class.forName(dialectDDLGenerator)
+						.getDeclaredConstructor().newInstance());
 			}
 		}
 

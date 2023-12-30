@@ -3,6 +3,9 @@ package org.sagacity.sqltoy.model;
 import java.io.Serializable;
 import java.util.List;
 
+import org.sagacity.sqltoy.config.model.ForeignModel;
+import org.sagacity.sqltoy.config.model.IndexModel;
+
 /**
  * @project sagacity-sqltoy
  * @description 数据库表元信息
@@ -39,6 +42,21 @@ public class TableMeta implements Serializable {
 	 * 表字段信息
 	 */
 	private List<ColumnMeta> columns;
+
+	/**
+	 * 索引信息
+	 */
+	private List<IndexModel> indexes;
+
+	/**
+	 * 外键信息
+	 */
+	private List<ForeignModel> foreigns;
+	
+	/**
+	 * 主键约束名称
+	 */
+	private String pkConstraint;
 
 	public String getTableName() {
 		return tableName;
@@ -79,4 +97,36 @@ public class TableMeta implements Serializable {
 	public void setColumns(List<ColumnMeta> columns) {
 		this.columns = columns;
 	}
+
+	/**
+	 * @return the indexes
+	 */
+	public List<IndexModel> getIndexes() {
+		return indexes;
+	}
+
+	/**
+	 * @param indexes the indexes to set
+	 */
+	public void setIndexes(List<IndexModel> indexes) {
+		this.indexes = indexes;
+	}
+
+	public List<ForeignModel> getForeigns() {
+		return foreigns;
+	}
+
+	public void setForeigns(List<ForeignModel> foreigns) {
+		this.foreigns = foreigns;
+	}
+
+	public String getPkConstraint() {
+		return pkConstraint;
+	}
+
+	public void setPkConstraint(String pkConstraint) {
+		this.pkConstraint = pkConstraint;
+	}
+	
+	
 }

@@ -101,6 +101,11 @@ public class FieldMeta implements Serializable {
 	private boolean partitionKey = false;
 
 	/**
+	 * 备注
+	 */
+	private String comments;
+
+	/**
 	 * @return the autoIncrement
 	 */
 	public boolean isAutoIncrement() {
@@ -296,4 +301,11 @@ public class FieldMeta implements Serializable {
 		this.nativeType = nativeType;
 	}
 
+	public String getComments() {
+		return comments;
+	}
+
+	public void setComments(String comments) {
+		this.comments = comments;
+	}
 }

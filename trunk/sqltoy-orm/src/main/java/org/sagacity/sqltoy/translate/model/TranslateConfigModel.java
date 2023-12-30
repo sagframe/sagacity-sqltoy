@@ -95,16 +95,26 @@ public class TranslateConfigModel implements Serializable {
 	private int diskSize = 0;
 
 	/**
+	 * 是否动态缓存
+	 */
+	private boolean dynamicCache = false;
+
+	/**
 	 * 国际化
 	 */
 	private Map<String, Integer> i18nMap = new HashMap<String, Integer>();
 
 	private Set<Integer> i18nIndexes = new HashSet<Integer>();
-	
+
 	/**
 	 * 缓存说明
 	 */
 	private String desc;
+
+	/**
+	 * 动态缓存的标识符号，用于类似redis等查询
+	 */
+	private String sid;
 
 	/**
 	 * @return the keepAlive
@@ -325,6 +335,28 @@ public class TranslateConfigModel implements Serializable {
 
 	public void setDesc(String desc) {
 		this.desc = desc;
+	}
+
+	public boolean isDynamicCache() {
+		return dynamicCache;
+	}
+
+	public void setDynamicCache(boolean dynamicCache) {
+		this.dynamicCache = dynamicCache;
+	}
+
+	/**
+	 * @return the sid
+	 */
+	public String getSid() {
+		return sid;
+	}
+
+	/**
+	 * @param sid the sid to set
+	 */
+	public void setSid(String sid) {
+		this.sid = sid;
 	}
 
 	public boolean hasI18n(Integer index) {

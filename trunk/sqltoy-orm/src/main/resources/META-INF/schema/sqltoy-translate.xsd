@@ -139,6 +139,21 @@
 								<xsd:complexType mixed="true">
 									<xsd:attributeGroup
 										ref="sqlToyTranslateAttrs" />
+									<xsd:attribute name="properties" type="xsd:string"/>
+									<xsd:attribute name="dynamic-cache" type="xsd:boolean">
+										<xsd:annotation>
+											<xsd:documentation>
+											<![CDATA[一般指通过本地缓存和分布式缓存综合运用，解决超大数据集合，每次检查本地缓存，没有则调用redis获取]]>
+											</xsd:documentation>
+										</xsd:annotation>
+									</xsd:attribute>
+									<xsd:attribute name="sid" type="xsd:string">
+										<xsd:annotation>
+											<xsd:documentation>
+											<![CDATA[配套dynamic-cache提供标识符号]]>
+											</xsd:documentation>
+										</xsd:annotation>
+									</xsd:attribute>
 								</xsd:complexType>
 							</xsd:element>
 						</xsd:choice>

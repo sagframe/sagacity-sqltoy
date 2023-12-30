@@ -271,12 +271,17 @@ public class DataSourceUtils {
 	public static String getDatabaseSqlSplitSign(Connection conn) {
 		try {
 			int dbType = getDBType(conn);
-			// sqlserver
-			if (dbType == DBType.SQLSERVER) {
-				return " go ";
-			}
+			return getDatabaseSqlSplitSign(dbType);
 		} catch (Exception e) {
 			e.printStackTrace();
+		}
+		return ";";
+	}
+
+	public static String getDatabaseSqlSplitSign(int dbType) {
+		// sqlserver
+		if (dbType == DBType.SQLSERVER) {
+			return " go ";
 		}
 		return ";";
 	}
