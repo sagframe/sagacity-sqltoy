@@ -1185,6 +1185,14 @@ public class SqlXMLConfigParse {
 		}
 		if (link.hasAttribute("sign")) {
 			linkModel.setSign(link.getAttribute("sign"));
+		} else if (link.hasAttribute("result-type")
+				&& (linkModel.getColumns() != null && linkModel.getColumns().length == 1)) {
+			String resultType = link.getAttribute("result-type");
+			if (resultType.equalsIgnoreCase("LIST")) {
+				linkModel.setResultType(1);
+			} else if (resultType.equalsIgnoreCase("ARRAY")) {
+				linkModel.setResultType(2);
+			}
 		}
 		if (link.hasAttribute("distinct")) {
 			linkModel.setDistinct(Boolean.parseBoolean(link.getAttribute("distinct")));

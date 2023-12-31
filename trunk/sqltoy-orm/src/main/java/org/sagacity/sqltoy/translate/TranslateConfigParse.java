@@ -226,6 +226,15 @@ public class TranslateConfigParse {
 							if ("local".equals(translateType) && !elt.hasAttribute("keep-alive")) {
 								translateCacheModel.setKeepAlive(-1);
 							}
+							if ("local".equals(translateType)) {
+								if (elt.hasAttribute("dynamic-cache")) {
+									translateCacheModel
+											.setDynamicCache(Boolean.parseBoolean(elt.getAttribute("dynamic-cache")));
+									if (elt.hasAttribute("sid")) {
+										translateCacheModel.setSid(elt.getAttribute("sid"));
+									}
+								}
+							}
 							if (translateMap.containsKey(translateCacheModel.getCache())) {
 								throw new RuntimeException("缓存翻译配置中缓存:[" + translateCacheModel.getCache()
 										+ "] 的定义已经存在!请检查配置文件:" + translateFileStr);

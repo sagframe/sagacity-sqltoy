@@ -30,7 +30,8 @@ import org.sagacity.sqltoy.plugins.SqlInterceptor;
 import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
 import org.sagacity.sqltoy.plugins.datasource.impl.DefaultDataSourceSelector;
-import org.sagacity.sqltoy.plugins.ddl.DDLGenerator;
+import org.sagacity.sqltoy.plugins.ddl.DDLFactory;
+import org.sagacity.sqltoy.plugins.ddl.DialectDDLGenerator;
 import org.sagacity.sqltoy.plugins.formater.SqlFormater;
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
 import org.sagacity.sqltoy.plugins.overtime.DefaultOverTimeHandler;
@@ -393,6 +394,11 @@ public class SqlToyContext {
 	private Boolean autoDDL = false;
 
 	/**
+	 * 自定义通过pojo生成ddl实现类
+	 */
+	private DialectDDLGenerator dialectDDLGenerator;
+
+	/**
 	 * @todo 初始化
 	 * @throws Exception
 	 */
@@ -462,7 +468,7 @@ public class SqlToyContext {
 				createDDLDB = dataSourceSelector.getDataSource(appContext, null, null, null, null);
 			}
 			if (createDDLDB != null) {
-				DDLGenerator.createDDL(this, entityManager.getAllEntities(), createDDLDB);
+				DDLFactory.createDDL(this, entityManager.getAllEntities(), createDDLDB);
 			}
 		}
 		logger.debug("sqltoy init complete!");
@@ -1266,6 +1272,20 @@ public class SqlToyContext {
 	 */
 	public void setLocalTimeFormat(String localTimeFormat) {
 		this.localTimeFormat = localTimeFormat;
+	}
+
+	/**
+	 * @return the dialectDDLGenerator
+	 */
+	public DialectDDLGenerator getDialectDDLGenerator() {
+		return dialectDDLGenerator;
+	}
+
+	/**
+	 * @param dialectDDLGenerator the dialectDDLGenerator to set
+	 */
+	public void setDialectDDLGenerator(DialectDDLGenerator dialectDDLGenerator) {
+		this.dialectDDLGenerator = dialectDDLGenerator;
 	}
 
 }

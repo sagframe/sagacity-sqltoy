@@ -55,6 +55,8 @@ public class ColumnMeta implements Serializable {
 	 */
 	private String typeName;
 
+	private String nativeType;
+
 	/**
 	 * 默认值
 	 */
@@ -234,6 +236,14 @@ public class ColumnMeta implements Serializable {
 
 	public void setIndexName(String indexName) {
 		this.indexName = indexName;
+	}
+
+	public String getNativeType() {
+		return nativeType;
+	}
+
+	public void setNativeType(String nativeType) {
+		this.nativeType = nativeType;
 	}
 
 }

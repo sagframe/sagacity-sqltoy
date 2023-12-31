@@ -417,14 +417,14 @@ public class SqlConfigParseUtils {
 	 * @return
 	 */
 	public static String[] getSqlParamsName(String queryStr, boolean distinct) {
-		Matcher m = SqlToyConstants.SQL_NAMED_PATTERN.matcher(queryStr);
+		Matcher matcher = SqlToyConstants.SQL_NAMED_PATTERN.matcher(queryStr);
 		// 用来替换:paramName
 		List<String> paramsNameList = new ArrayList<String>();
 		HashSet<String> distinctSet = new HashSet<String>();
 		String paramName;
-		while (m.find()) {
+		while (matcher.find()) {
 			// 剔除\\W\\:两位字符
-			paramName = m.group().substring(2).trim();
+			paramName = matcher.group().substring(2).trim();
 			// 去除重复
 			if (distinct) {
 				if (!distinctSet.contains(paramName.toLowerCase())) {

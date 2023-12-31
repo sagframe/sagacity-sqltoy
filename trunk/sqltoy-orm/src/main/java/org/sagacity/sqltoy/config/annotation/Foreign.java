@@ -18,9 +18,19 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface Foreign {
+
+	// 约束名称
+	String constraintName() default "";
+
 	// 外键表名称
 	String table();
 
 	// 外键表的字段
 	String field();
+
+	// 删除级联
+	int deleteRestict() default 1;
+
+	// 修改级联约束
+	int updateRestict() default 1;
 }

@@ -554,6 +554,7 @@ public class ResultUtils {
 			Set<String> linkSet = new HashSet<String>();
 			int linkIndex = labelIndexMap.get(linkColumnLow);
 			StringBuilder linkBuffer = new StringBuilder();
+			List linkList = new ArrayList();
 			boolean hasDecorate = (linkModel.getDecorateAppendChar() == null) ? false : true;
 			boolean isLeft = true;
 			if (hasDecorate) {
@@ -575,6 +576,8 @@ public class ResultUtils {
 			// 判断link拼接是否重新开始
 			boolean isLastProcess = false;
 			boolean doLink = true;
+			// -1:正常link，1:List;2:Array
+			int linkResultType = linkModel.getResultType();
 			while (rs.next()) {
 				isLastProcess = false;
 				linkValue = rs.getObject(linkColumn);
@@ -598,11 +601,30 @@ public class ResultUtils {
 				// 不相等
 				if (!identity.equals(preIdentity)) {
 					if (index != 0) {
-						items.get(items.size() - 1).set(linkIndex, linkBuffer.toString());
-						linkBuffer.delete(0, linkBuffer.length());
+						// List
+						if (linkResultType == 1) {
+							items.get(items.size() - 1).set(linkIndex, linkList);
+							linkList = new ArrayList();
+						} // Array
+						else if (linkResultType == 2) {
+							items.get(items.size() - 1).set(linkIndex, linkList.toArray());
+							linkList = new ArrayList();
+						} else {
+							items.get(items.size() - 1).set(linkIndex, linkBuffer.toString());
+							linkBuffer.delete(0, linkBuffer.length());
+						}
 						linkSet.clear();
 					}
-					linkBuffer.append(linkStr);
+					// 非字符拼接模式
+					if (linkResultType > 0) {
+						if (translateLink) {
+							linkList.add(linkStr);
+						} else {
+							linkList.add(linkValue);
+						}
+					} else {
+						linkBuffer.append(linkStr);
+					}
 					linkSet.add(linkStr);
 					if (hasTranslate) {
 						rowTemp = processResultRowWithTranslate(translateMap, translateCache, labelNames, rs,
@@ -622,11 +644,19 @@ public class ResultUtils {
 					}
 					linkSet.add(linkStr);
 					if (doLink) {
-						if (linkBuffer.length() > 0) {
-							linkBuffer.append(linkModel.getSign());
+						if (linkResultType > 0) {
+							if (translateLink) {
+								linkList.add(linkStr);
+							} else {
+								linkList.add(linkValue);
+							}
+						} else {
+							if (linkBuffer.length() > 0) {
+								linkBuffer.append(linkModel.getSign());
+							}
+							linkBuffer.append(hasDecorate ? StringUtil.appendStr(linkStr,
+									linkModel.getDecorateAppendChar(), linkModel.getDecorateSize(), isLeft) : linkStr);
 						}
-						linkBuffer.append(hasDecorate ? StringUtil.appendStr(linkStr, linkModel.getDecorateAppendChar(),
-								linkModel.getDecorateSize(), isLeft) : linkStr);
 					}
 				}
 				index++;
@@ -642,7 +672,13 @@ public class ResultUtils {
 			}
 			// 对最后一条写入循环值
 			if (isLastProcess) {
-				items.get(items.size() - 1).set(linkIndex, linkBuffer.toString());
+				if (linkResultType == 1) {
+					items.get(items.size() - 1).set(linkIndex, linkList);
+				} else if (linkResultType == 2) {
+					items.get(items.size() - 1).set(linkIndex, linkList.toArray());
+				} else {
+					items.get(items.size() - 1).set(linkIndex, linkBuffer.toString());
+				}
 			}
 		} else {
 			// 修改操作不支持link操作

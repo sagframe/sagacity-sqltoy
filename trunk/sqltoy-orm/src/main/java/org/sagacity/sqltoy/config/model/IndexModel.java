@@ -34,10 +34,16 @@ public class IndexModel implements Serializable {
 	 */
 	private String[] columns;
 
-	public IndexModel(String name, boolean isUnique, String[] columns) {
+	/**
+	 * 排序类型
+	 */
+	private String[] sortTypes;
+
+	public IndexModel(String name, boolean isUnique, String[] columns, String[] sortTypes) {
 		this.name = name;
 		this.isUnique = isUnique;
 		this.columns = columns;
+		this.sortTypes = sortTypes;
 	}
 
 	public String getName() {
@@ -62,6 +68,14 @@ public class IndexModel implements Serializable {
 
 	public void setColumns(String[] columns) {
 		this.columns = columns;
+	}
+
+	public String[] getSortTypes() {
+		return sortTypes;
+	}
+
+	public void setSortTypes(String[] sortTypes) {
+		this.sortTypes = sortTypes;
 	}
 
 }

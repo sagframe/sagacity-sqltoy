@@ -243,6 +243,11 @@ public class SqlToyContextProperties implements Serializable {
 	 * 默认一页数据记录数量
 	 */
 	private int defaultPageSize = 10;
+	
+	/**
+	 * 自定义数据库DDL产生器
+	 */
+	private String dialectDDLGenerator;
 
 	// spring.sqltoy.localDateTimeFormat
 	/**
@@ -733,6 +738,20 @@ public class SqlToyContextProperties implements Serializable {
 	 */
 	public void setLocalTimeFormat(String localTimeFormat) {
 		this.localTimeFormat = localTimeFormat;
+	}
+
+	/**
+	 * @return the dialectDDLGenerator
+	 */
+	public String getDialectDDLGenerator() {
+		return dialectDDLGenerator;
+	}
+
+	/**
+	 * @param dialectDDLGenerator the dialectDDLGenerator to set
+	 */
+	public void setDialectDDLGenerator(String dialectDDLGenerator) {
+		this.dialectDDLGenerator = dialectDDLGenerator;
 	}
 
 }

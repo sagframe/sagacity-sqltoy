@@ -55,6 +55,11 @@ public class LinkModel implements Serializable {
 	private boolean distinct = false;
 
 	/**
+	 * 结果类型(-1 表示用特定符号拼接成一个完整字符串) 1:List集合 2:Array数组
+	 */
+	private int resultType = -1;
+
+	/**
 	 * @return the columns
 	 */
 	public String[] getColumns() {
@@ -138,6 +143,20 @@ public class LinkModel implements Serializable {
 
 	public void setDistinct(boolean distinct) {
 		this.distinct = distinct;
+	}
+
+	/**
+	 * @return the resultType
+	 */
+	public int getResultType() {
+		return resultType;
+	}
+
+	/**
+	 * @param resultType the resultType to set
+	 */
+	public void setResultType(int resultType) {
+		this.resultType = resultType;
 	}
 
 }
