@@ -26,4 +26,7 @@ public @interface Index {
 
 	// 索引列
 	String[] columns();
+
+	// 排序类型：asc 或desc
+	String[] sortTypes() default {};
 }

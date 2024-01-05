@@ -7,6 +7,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -47,6 +48,11 @@ public class EntityMeta implements Serializable {
 	private String tableName;
 
 	/**
+	 * 表的备注说明
+	 */
+	private String tableComment;
+
+	/**
 	 * 主键的约束名称
 	 */
 	private String pkConstraint;
@@ -84,7 +90,7 @@ public class EntityMeta implements Serializable {
 	/**
 	 * 字段名称对应字段信息的hashMap, 便于通过名称获取字段信息(长度、类型、默认值等等)
 	 */
-	private HashMap<String, FieldMeta> fieldsMeta = new HashMap<String, FieldMeta>();
+	private HashMap<String, FieldMeta> fieldsMeta = new LinkedHashMap<String, FieldMeta>();
 
 	/**
 	 * 记录columName对应fieldName
@@ -174,7 +180,7 @@ public class EntityMeta implements Serializable {
 	/**
 	 * 外键字段{field,{tableName,field}}
 	 */
-	private Map<String, String[]> foreignFields;
+	private Map<String, ForeignModel> foreignFields;
 
 	/**
 	 * 级联对象
@@ -249,6 +255,14 @@ public class EntityMeta implements Serializable {
 	 */
 	public void setTableName(String tableName) {
 		this.tableName = tableName;
+	}
+
+	public String getTableComment() {
+		return tableComment;
+	}
+
+	public void setTableComment(String tableComment) {
+		this.tableComment = tableComment;
 	}
 
 	/**
@@ -838,11 +852,11 @@ public class EntityMeta implements Serializable {
 		this.indexModels = indexModels;
 	}
 
-	public Map<String, String[]> getForeignFields() {
+	public Map<String, ForeignModel> getForeignFields() {
 		return foreignFields;
 	}
 
-	public void setForeignFields(Map<String, String[]> foreignFields) {
+	public void setForeignFields(Map<String, ForeignModel> foreignFields) {
 		this.foreignFields = foreignFields;
 	}
 }

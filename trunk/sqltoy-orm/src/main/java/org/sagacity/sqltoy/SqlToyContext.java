@@ -30,7 +30,8 @@ import org.sagacity.sqltoy.plugins.SqlInterceptor;
 import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
 import org.sagacity.sqltoy.plugins.datasource.impl.DefaultDataSourceSelector;
-import org.sagacity.sqltoy.plugins.ddl.DDLGenerator;
+import org.sagacity.sqltoy.plugins.ddl.DDLFactory;
+import org.sagacity.sqltoy.plugins.ddl.DialectDDLGenerator;
 import org.sagacity.sqltoy.plugins.formater.SqlFormater;
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
 import org.sagacity.sqltoy.plugins.overtime.DefaultOverTimeHandler;
@@ -393,6 +394,11 @@ public class SqlToyContext {
 	private Boolean autoDDL = false;
 
 	/**
+	 * 自定义通过pojo生成ddl实现类
+	 */
+	private DialectDDLGenerator dialectDDLGenerator;
+
+	/**
 	 * @todo 初始化
 	 * @throws Exception
 	 */
@@ -401,6 +407,8 @@ public class SqlToyContext {
 		// 加载sqltoy的各类参数,如db2是否要增加with
 		// ur等,详见org/sagacity/sqltoy/sqltoy-default.properties
 		SqlToyConstants.loadProperties(dialectConfig);
+		// 设置保留字
+		ReservedWordsUtil.put(reservedWords);
 		// 默认使用基于spring的连接管理
 		if (connectionFactory == null) {
 			connectionFactory = new SpringConnectionFactory();
@@ -417,7 +425,6 @@ public class SqlToyContext {
 		SqlToyConstants.setWorkerAndDataCenterId(workerId, dataCenterId, serverId);
 		// 初始化脚本加载器
 		scriptLoader.initialize(this.debug, delayCheckSeconds, scriptCheckIntervalSeconds, breakWhenSqlRepeat);
-
 		// 初始化翻译器,update 2021-1-23 增加caffeine缓存支持
 		if (translateCacheManager == null && "caffeine".equalsIgnoreCase(this.cacheType)) {
 			translateManager.initialize(this,
@@ -428,8 +435,6 @@ public class SqlToyContext {
 		}
 		// 初始化实体对象管理器(此功能已经无实际意义,已经改为即用即加载而非提前加载)
 		entityManager.initialize(this);
-		// 设置保留字
-		ReservedWordsUtil.put(reservedWords);
 		// 设置默认fetchSize
 		SqlToyConstants.FETCH_SIZE = this.fetchSize;
 		SqlToyConstants.executeSqlBlankToNull = this.executeSqlBlankToNull;
@@ -462,7 +467,7 @@ public class SqlToyContext {
 				createDDLDB = dataSourceSelector.getDataSource(appContext, null, null, null, null);
 			}
 			if (createDDLDB != null) {
-				DDLGenerator.createDDL(this, entityManager.getAllEntities(), createDDLDB);
+				DDLFactory.createDDL(this, entityManager.getAllEntities(), createDDLDB);
 			}
 		}
 		logger.debug("sqltoy init complete!");
@@ -1266,6 +1271,20 @@ public class SqlToyContext {
 	 */
 	public void setLocalTimeFormat(String localTimeFormat) {
 		this.localTimeFormat = localTimeFormat;
+	}
+
+	/**
+	 * @return the dialectDDLGenerator
+	 */
+	public DialectDDLGenerator getDialectDDLGenerator() {
+		return dialectDDLGenerator;
+	}
+
+	/**
+	 * @param dialectDDLGenerator the dialectDDLGenerator to set
+	 */
+	public void setDialectDDLGenerator(DialectDDLGenerator dialectDDLGenerator) {
+		this.dialectDDLGenerator = dialectDDLGenerator;
 	}
 
 }

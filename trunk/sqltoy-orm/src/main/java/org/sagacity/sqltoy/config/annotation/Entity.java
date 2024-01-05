@@ -27,6 +27,5 @@ public @interface Entity {
 	String comment() default "";
 
 	// 主键约束名称
-	@Deprecated
 	String pk_constraint() default "";
 }

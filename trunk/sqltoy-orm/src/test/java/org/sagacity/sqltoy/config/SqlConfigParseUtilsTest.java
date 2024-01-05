@@ -184,6 +184,25 @@ public class SqlConfigParseUtilsTest {
 	}
 
 	@Test
+	public void testLoopTsName() throws Exception {
+		String sql = "select t.value \"field_2\",\r\n" + "                u.dname \"field_3\",\r\n"
+				+ "                @loop(:fields,\"\r\n"
+				+ "                    sum(case when field_16 = :year then :fields[i] else 0 end) \"this_:fields[i]\",\r\n"
+				+ "                    sum(case when field_16 = :lastYear then :fields[i] else 0 end) \"last_:fields[i]\",\r\n"
+				+ "                    sum(case when field_16 = :year then :fields[i] else 0 end) - sum(case when field_16 = :lastYear then :fields[i] else 0 end) \"sub_:fields[i]\",\r\n"
+				+ "                \")\r\n" + "                field_16 \"field_16\"\r\n"
+				+ "        from dm_dtab_0153\r\n" + "        left join org_unit u on u.id = field_3\r\n"
+				+ "        left join tip_enum t on t.id = field_2\r\n"
+				+ "        where field_16 in (:lastYear, :year)\r\n" + "            and field_17 = :period\r\n"
+				+ "            group by field_16,u.dname,t.value";
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql,
+				new String[] { "fields", "year", "period", "lastYear" },
+				new Object[] { new String[] { "name", "sex_type", "id", "birthday" }, "2022", "Q4", "2023" });
+		System.err.println(result.getSql());
+
+	}
+
+	@Test
 	public void testSynSign() throws Exception {
 		String sql = "select * from table where #[id in [arraystringconcat(name)] and id=:id ]#[and name like :name] #[and status=:status]";
 		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "id", "name", "status" },

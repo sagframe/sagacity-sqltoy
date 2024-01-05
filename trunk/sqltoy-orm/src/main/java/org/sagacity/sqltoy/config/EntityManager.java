@@ -41,6 +41,7 @@ import org.sagacity.sqltoy.config.model.DataVersionConfig;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.FieldSecureConfig;
+import org.sagacity.sqltoy.config.model.ForeignModel;
 import org.sagacity.sqltoy.config.model.IndexModel;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.ShardingConfig;
@@ -118,7 +119,6 @@ public class EntityManager {
 	/**
 	 * 扫描的包(意义不大,sqltoy已经改为在使用时自动加载)
 	 */
-	@Deprecated
 	private String[] packagesToScan;
 
 	/**
@@ -129,7 +129,6 @@ public class EntityManager {
 	/**
 	 * 指定的entity class(意义不大,sqltoy已经改为用时自动加载)
 	 */
-	@Deprecated
 	private String[] annotatedClasses;
 
 	/**
@@ -284,6 +283,7 @@ public class EntityManager {
 				if (StringUtil.isNotBlank(entity.schema())) {
 					entityMeta.setSchema(entity.schema());
 				}
+				entityMeta.setTableComment(entity.comment());
 				// 主键约束(已经废弃)
 				if (StringUtil.isNotBlank(entity.pk_constraint())) {
 					entityMeta.setPkConstraint(entity.pk_constraint());
@@ -565,7 +565,9 @@ public class EntityManager {
 		Index[] indexs = indexes.indexes();
 		IndexModel[] indexModels = new IndexModel[indexs.length];
 		for (int i = 0; i < indexs.length; i++) {
-			indexModels[i] = new IndexModel(indexs[i].name(), indexs[i].isUnique(), indexs[i].columns());
+			indexModels[i] = new IndexModel(indexs[i].name(), indexs[i].isUnique(), indexs[i].columns(),
+					(indexs[i].sortTypes().length == 0) ? new String[indexs[i].columns().length]
+							: indexs[i].sortTypes());
 		}
 		entityMeta.setIndexModels(indexModels);
 	}
@@ -639,6 +641,7 @@ public class EntityManager {
 		fieldMeta.setAutoIncrement(column.autoIncrement());
 		// 设置type类型，并转小写便于后续对比的统一
 		fieldMeta.setFieldType(field.getType().getTypeName().toLowerCase());
+		fieldMeta.setComments(column.comment());
 		// 设置是否分区字段
 		if (field.getAnnotation(PartitionKey.class) != null) {
 			fieldMeta.setPartitionKey(true);
@@ -646,11 +649,35 @@ public class EntityManager {
 		// 解析外键信息
 		if (field.getAnnotation(Foreign.class) != null) {
 			Foreign foregin = field.getAnnotation(Foreign.class);
-			Map<String, String[]> foreignFieldMap = entityMeta.getForeignFields();
+			Map<String, ForeignModel> foreignFieldMap = entityMeta.getForeignFields();
 			if (foreignFieldMap == null) {
-				foreignFieldMap = new HashMap<String, String[]>();
+				foreignFieldMap = new HashMap<String, ForeignModel>();
 			}
-			foreignFieldMap.put(field.getName(), new String[] { foregin.table(), foregin.field() });
+			ForeignModel foreignModel = foreignFieldMap.get(foregin.table());
+			if (foreignModel == null) {
+				foreignModel = new ForeignModel();
+				if (foregin.constraintName().equals("")) {
+					foreignModel.setConstraintName("FK_" + entityMeta.getTableName());
+				} else {
+					foreignModel.setConstraintName(foregin.constraintName());
+				}
+				foreignModel.setForeignTable(foregin.table());
+				foreignModel.setDeleteRestict(foregin.deleteRestict());
+				foreignModel.setUpdateRestict(foregin.updateRestict());
+				foreignModel.setColumns(new String[] { column.name() });
+				foreignModel.setForeignColumns(new String[] { foregin.field() });
+			} else {
+				int len = foreignModel.getColumns().length;
+				String[] columns = new String[len + 1];
+				String[] foreignColumns = new String[len + 1];
+				System.arraycopy(foreignModel.getColumns(), 0, columns, 0, len);
+				System.arraycopy(foreignModel.getForeignColumns(), 0, foreignColumns, 0, len);
+				columns[len] = column.name();
+				foreignColumns[len] = foregin.field();
+				foreignModel.setColumns(columns);
+				foreignModel.setForeignColumns(foreignColumns);
+			}
+			foreignFieldMap.put(foregin.table(), foreignModel);
 			entityMeta.setForeignFields(foreignFieldMap);
 		}
 		// 兼容type不设置场景，根据字段类型自动补充,为时序数据库等手工简化写注解做准备

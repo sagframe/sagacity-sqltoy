@@ -35,8 +35,8 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
 # 最新版本 
-* 5.3.58 (jdk17+/jdk21、springboot3.x)  发版日期: 2023-12-05
-* 5.2.85 LTS (jdk1.8+)                 发版日期: 2023-12-05
+* 5.3.61 (jdk17+/jdk21、springboot3.x)  发版日期: 2023-12-31
+* 5.2.88 LTS (jdk1.8+)                 发版日期: 2023-12-31
   
 # 历史版本(EOL)
 * 5.1.81                             发版日期: 2023-12-06
@@ -67,7 +67,7 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 * 提供了大量辅助功能:数据脱敏、格式化、条件参数预处理等
 
 ### 支持多种数据库
-* 常规的mysql、oracle、db2、postgresql、 sqlserver、dm、kingbase、sqlite、h2、 oceanBase、polardb、gaussdb、tidb
+* 常规的mysql、oracle、db2、postgresql、 sqlserver、dm、kingbase、sqlite、h2、 oceanBase、polardb、gaussdb、tidb、oscar(神通)
 * 支持分布式olap数据库: clickhouse、StarRocks、greenplum、impala(kudu)
 * 支持elasticsearch、mongodb
 * 所有基于sql和jdbc 各类数据库查询
