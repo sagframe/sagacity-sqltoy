@@ -35,8 +35,8 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
 # 最新版本 
-* 5.3.61 (jdk17+/jdk21、springboot3.x)  发版日期: 2023-12-31
-* 5.2.88 LTS (jdk1.8+)                 发版日期: 2023-12-31
+* 5.3.63 (jdk17+/jdk21、springboot3.x)  发版日期: 2024-1-17
+* 5.2.90 LTS (jdk1.8+)                 发版日期: 2024-1-17
   
 # 历史版本(EOL)
 * 5.1.81                             发版日期: 2023-12-06
@@ -47,6 +47,7 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
    sqltoy-orm是JPA和超强查询的融合体，是简单业务、大型SaaS化多租户ERP、大数据分析多种类型项目实践过程的总结和分享。
  ### JPA部分
 * 类似JPA的对象化CRUD、对象级联加载和新增、更新
+* 支持通过POJO生成DDL以及直接向数据库创建表
 * 强化update操作，提供弹性字段修改能力，不同于hibernate先load后修改，而是一次数据库交互完成修改，确保了高并发场景下数据的准确性
 * 改进了级联修改，提供了先删除或者先置无效，再覆盖的操作选项
 * 增加了updateFetch、updateSaveFetch功能，强化针对强事务高并发场景的处理，类似库存台账、资金台账，实现一次数据库交互，完成锁查询、不存在则插入、存在则修改，并返回修改后的结果

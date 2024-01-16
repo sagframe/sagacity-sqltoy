@@ -322,7 +322,8 @@ public class SqlExecuteStat {
 								&& !SqlToyConstants.localDateTimeFormat.equals("auto")) {
 							timeStr = DateUtil.formatDate(paramValue, SqlToyConstants.localDateTimeFormat);
 						} else {
-							timeStr = DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss") + processNano(nanoValue);
+							timeStr = DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss")
+									+ DateUtil.processNano(nanoValue);
 						}
 					} else {
 						timeStr = DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss");
@@ -337,7 +338,7 @@ public class SqlExecuteStat {
 								&& !SqlToyConstants.localTimeFormat.equals("auto")) {
 							timeStr = DateUtil.formatDate(paramValue, SqlToyConstants.localTimeFormat);
 						} else {
-							timeStr = DateUtil.formatDate(paramValue, "HH:mm:ss") + processNano(nanoValue);
+							timeStr = DateUtil.formatDate(paramValue, "HH:mm:ss") + DateUtil.processNano(nanoValue);
 						}
 					} else {
 						timeStr = DateUtil.formatDate(paramValue, "HH:mm:ss");
@@ -364,33 +365,6 @@ public class SqlExecuteStat {
 		}
 		lastSql.append(sql.substring(start));
 		return lastSql.toString();
-	}
-
-	/**
-	 * @TODO 判断是否有纳秒，并处理优化实际精度
-	 * @param nanoTime
-	 * @return
-	 */
-	private static String processNano(int nanoTime) {
-		// 纳秒为零，则到秒级
-		if (nanoTime == 0) {
-			return "";
-		}
-		String nanoStr = "" + nanoTime;
-		//不同操作系统纳秒长度不一样，有9位，有6位
-		if (nanoStr.length() == 9) {
-			// 后6位全为零，则为毫秒
-			if (nanoStr.endsWith("000000")) {
-				nanoStr = nanoStr.substring(0, 3);
-			} // 后3位全为零,则为微秒
-			else if (nanoStr.endsWith("000")) {
-				nanoStr = nanoStr.substring(0, 6);
-			}
-		} // 毫秒
-		else if (nanoStr.length() == 6 && nanoStr.endsWith("000")) {
-			nanoStr = nanoStr.substring(0, 3);
-		}
-		return "." + nanoStr;
 	}
 
 	/**
@@ -425,7 +399,8 @@ public class SqlExecuteStat {
 							&& !SqlToyConstants.localDateTimeFormat.equals("auto")) {
 						timeStr = DateUtil.formatDate(paramValue, SqlToyConstants.localDateTimeFormat);
 					} else {
-						timeStr = DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss") + processNano(nanoValue);
+						timeStr = DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss")
+								+ DateUtil.processNano(nanoValue);
 					}
 				} else {
 					timeStr = DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss");
@@ -439,7 +414,7 @@ public class SqlExecuteStat {
 					if (SqlToyConstants.localTimeFormat != null && !SqlToyConstants.localTimeFormat.equals("auto")) {
 						timeStr = DateUtil.formatDate(paramValue, SqlToyConstants.localTimeFormat);
 					} else {
-						timeStr = DateUtil.formatDate(paramValue, "HH:mm:ss") + processNano(nanoValue);
+						timeStr = DateUtil.formatDate(paramValue, "HH:mm:ss") + DateUtil.processNano(nanoValue);
 					}
 				} else {
 					timeStr = DateUtil.formatDate(paramValue, "HH:mm:ss");
