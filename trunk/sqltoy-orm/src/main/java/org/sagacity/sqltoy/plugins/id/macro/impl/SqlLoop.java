@@ -362,16 +362,41 @@ public class SqlLoop extends AbstractMacro {
 		// 参数前面是否是条件比较符号，如果是比较符号针对日期、字符串加单引号
 		String sign = hasCompare ? "'" : "";
 		String valueStr;
+		int nanoValue;
+		String timeStr;
 		if (paramValue instanceof CharSequence) {
 			valueStr = sign + paramValue + sign;
 		} else if (paramValue instanceof Timestamp) {
 			valueStr = sign + DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss.SSS") + sign;
-		} else if (paramValue instanceof Date || paramValue instanceof LocalDateTime) {
+		} else if (paramValue instanceof Date) {
 			valueStr = sign + DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss") + sign;
+		} else if (paramValue instanceof LocalDateTime) {
+			nanoValue = ((LocalDateTime) paramValue).getNano();
+			if (nanoValue > 0) {
+				if (SqlToyConstants.localDateTimeFormat != null
+						&& !SqlToyConstants.localDateTimeFormat.equals("auto")) {
+					timeStr = DateUtil.formatDate(paramValue, SqlToyConstants.localDateTimeFormat);
+				} else {
+					timeStr = DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss") + DateUtil.processNano(nanoValue);
+				}
+			} else {
+				timeStr = DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss");
+			}
+			valueStr = sign + timeStr + sign;
 		} else if (paramValue instanceof LocalDate) {
 			valueStr = sign + DateUtil.formatDate(paramValue, "yyyy-MM-dd") + sign;
 		} else if (paramValue instanceof LocalTime) {
-			valueStr = sign + DateUtil.formatDate(paramValue, "HH:mm:ss") + sign;
+			nanoValue = ((LocalTime) paramValue).getNano();
+			if (nanoValue > 0) {
+				if (SqlToyConstants.localTimeFormat != null && !SqlToyConstants.localTimeFormat.equals("auto")) {
+					timeStr = DateUtil.formatDate(paramValue, SqlToyConstants.localTimeFormat);
+				} else {
+					timeStr = DateUtil.formatDate(paramValue, "HH:mm:ss") + DateUtil.processNano(nanoValue);
+				}
+			} else {
+				timeStr = DateUtil.formatDate(paramValue, "HH:mm:ss");
+			}
+			valueStr = sign + timeStr + sign;
 		} else if (paramValue instanceof Object[]) {
 			valueStr = combineArray((Object[]) paramValue);
 		} else if (paramValue instanceof Collection) {
@@ -395,6 +420,8 @@ public class SqlLoop extends AbstractMacro {
 		}
 		StringBuilder result = new StringBuilder();
 		Object value;
+		int nanoValue;
+		String timeStr;
 		for (int i = 0; i < array.length; i++) {
 			if (i > 0) {
 				result.append(",");
@@ -411,12 +438,37 @@ public class SqlLoop extends AbstractMacro {
 					result.append("'" + value + "'");
 				} else if (value instanceof Timestamp) {
 					result.append("'" + DateUtil.formatDate(value, "yyyy-MM-dd HH:mm:ss.SSS") + "'");
-				} else if (value instanceof Date || value instanceof LocalDateTime) {
+				} else if (value instanceof Date) {
 					result.append("'" + DateUtil.formatDate(value, "yyyy-MM-dd HH:mm:ss") + "'");
+				} else if (value instanceof LocalDateTime) {
+					nanoValue = ((LocalDateTime) value).getNano();
+					if (nanoValue > 0) {
+						if (SqlToyConstants.localDateTimeFormat != null
+								&& !SqlToyConstants.localDateTimeFormat.equals("auto")) {
+							timeStr = DateUtil.formatDate(value, SqlToyConstants.localDateTimeFormat);
+						} else {
+							timeStr = DateUtil.formatDate(value, "yyyy-MM-dd HH:mm:ss")
+									+ DateUtil.processNano(nanoValue);
+						}
+					} else {
+						timeStr = DateUtil.formatDate(value, "yyyy-MM-dd HH:mm:ss");
+					}
+					result.append("'" + timeStr + "'");
 				} else if (value instanceof LocalDate) {
 					result.append("'" + DateUtil.formatDate(value, "yyyy-MM-dd") + "'");
 				} else if (value instanceof LocalTime) {
-					result.append("'" + DateUtil.formatDate(value, "HH:mm:ss") + "'");
+					nanoValue = ((LocalTime) value).getNano();
+					if (nanoValue > 0) {
+						if (SqlToyConstants.localTimeFormat != null
+								&& !SqlToyConstants.localTimeFormat.equals("auto")) {
+							timeStr = DateUtil.formatDate(value, SqlToyConstants.localTimeFormat);
+						} else {
+							timeStr = DateUtil.formatDate(value, "HH:mm:ss") + DateUtil.processNano(nanoValue);
+						}
+					} else {
+						timeStr = DateUtil.formatDate(value, "HH:mm:ss");
+					}
+					result.append("'" + timeStr + "'");
 				} else {
 					result.append("" + value);
 				}
