@@ -2150,8 +2150,8 @@ public class SqlToyDaoSupport {
 		}
 		// 强制修改的日期时间字段，且以数据库时间为准
 		IgnoreCaseSet forceUpdateSqlFields = new IgnoreCaseSet();
-		if (UnifyUpdateFieldsController.useUnifyFields() && unifyHandler.forceUpdateFields() != null
-				&& unifyHandler.updateSqlTimeFields() != null) {
+		if (unifyHandler != null && UnifyUpdateFieldsController.useUnifyFields()
+				&& unifyHandler.forceUpdateFields() != null && unifyHandler.updateSqlTimeFields() != null) {
 			unifyHandler.forceUpdateFields().forEach((sqlUpdateField) -> {
 				if (unifyHandler.updateSqlTimeFields().contains(sqlUpdateField)) {
 					forceUpdateSqlFields.add(sqlUpdateField);
