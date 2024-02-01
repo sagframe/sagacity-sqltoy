@@ -390,16 +390,8 @@ public class DialectUtils {
 				isInnerGroup = clearDisturbSql(query_tmp.substring(groupIndex + 1)).lastIndexOf(")") != -1;
 			}
 			final StringBuilder countQueryStr = new StringBuilder();
-			// 是否包含union,update 2012-11-21
-			boolean hasUnion = false;
-			if (sqlToyConfig != null) {
-				// 如果存在union，则重新判断一次(#[] 做了剔除，有可能将union部分剔除了)
-				if (sqlToyConfig.isHasUnion()) {
-					hasUnion = SqlUtil.hasUnion(query_tmp, false);
-				}
-			} else {
-				hasUnion = SqlUtil.hasUnion(query_tmp, false);
-			}
+			// 是否包含union,update 2024-2-1(改为每次都判断，避免极端情况)
+			boolean hasUnion = SqlUtil.hasUnion(query_tmp, false);
 			// 不包含distinct和group by 等,则剔除[select * ] from 变成select count(1) from
 			// 性能最优
 			if (!StringUtil.matches(query_tmp.trim(), DISTINCT_PATTERN) && !hasUnion
