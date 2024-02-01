@@ -1265,7 +1265,7 @@ public class DialectFactory {
 			boolean hasUnion = false;
 			// update 2019-07-23 进行先判定然后再通过逻辑解析with as 相关语法,提升效率
 			// 存在可以简化的 union all 模式(sql xml 文件通过union-all-count 属性由开发者指定)
-			if (sqlToyConfig.isHasUnion() && sqlToyConfig.isUnionAllCount()) {
+			if (sqlToyConfig.isUnionAllCount()) {
 				if (sqlToyConfig.isHasWith()) {
 					SqlWithAnalysis sqlWith = new SqlWithAnalysis(sql);
 					rejectWithSql = sqlWith.getRejectWithSql();
