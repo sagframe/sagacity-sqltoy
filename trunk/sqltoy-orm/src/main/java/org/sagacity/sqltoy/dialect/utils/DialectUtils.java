@@ -390,16 +390,8 @@ public class DialectUtils {
 				isInnerGroup = clearDisturbSql(query_tmp.substring(groupIndex + 1)).lastIndexOf(")") != -1;
 			}
 			final StringBuilder countQueryStr = new StringBuilder();
-			// 是否包含union,update 2012-11-21
-			boolean hasUnion = false;
-			if (sqlToyConfig != null) {
-				// 如果存在union，则重新判断一次(#[] 做了剔除，有可能将union部分剔除了)
-				if (sqlToyConfig.isHasUnion()) {
-					hasUnion = SqlUtil.hasUnion(query_tmp, false);
-				}
-			} else {
-				hasUnion = SqlUtil.hasUnion(query_tmp, false);
-			}
+			// 是否包含union,update 2024-2-2
+			boolean hasUnion = SqlUtil.hasUnion(query_tmp, false);
 			// 不包含distinct和group by 等,则剔除[select * ] from 变成select count(1) from
 			// 性能最优
 			if (!StringUtil.matches(query_tmp.trim(), DISTINCT_PATTERN) && !hasUnion
@@ -2039,62 +2031,6 @@ public class DialectUtils {
 				.replaceFirst("(?i)insert ", "insert or ignore ");
 		Long saveCnt = saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql, entities,
 				batchSize, reflectPropsHandler, conn, dbType, null);
-		logger.debug("级联子表:{} 变更记录数:{},新建记录数为:{}", tableName, updateCnt, saveCnt);
-	}
-
-	// 针对达梦数据库
-	private static void dmSaveOrUpdateAll(SqlToyContext sqlToyContext, final EntityMeta entityMeta, List<?> entities,
-			ReflectPropsHandler reflectPropsHandler, final String[] forceUpdateFields, Connection conn,
-			final Integer dbType) throws Exception {
-		int batchSize = sqlToyContext.getBatchSize();
-		final String tableName = entityMeta.getSchemaTable(null, dbType);
-		Long updateCnt = updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropsHandler, "nvl",
-				conn, dbType, null, tableName, true);
-		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
-		if (updateCnt >= entities.size()) {
-			logger.debug("级联子表{}修改记录数为:{}", tableName, updateCnt);
-			return;
-		}
-		Long saveCnt = saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta, new GenerateSqlHandler() {
-			@Override
-			public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
-				PKStrategy pkStrategy = entityMeta.getIdStrategy();
-				String sequence = entityMeta.getSequence() + ".nextval";
-				return DialectExtUtils.mergeIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
-						pkStrategy, "dual", "nvl", sequence, DMDialectUtils.isAssignPKValue(pkStrategy), tableName);
-			}
-		}, reflectPropsHandler, conn, dbType, null);
-		logger.debug("级联子表:{} 变更记录数:{},新建记录数为:{}", tableName, updateCnt, saveCnt);
-	}
-
-	// 针对人大金仓kingbase数据库
-	private static void kingbaseSaveOrUpdateAll(SqlToyContext sqlToyContext, final EntityMeta entityMeta,
-			List<?> entities, ReflectPropsHandler reflectPropsHandler, final String[] forceUpdateFields,
-			Connection conn, final Integer dbType) throws Exception {
-		int batchSize = sqlToyContext.getBatchSize();
-		final String tableName = entityMeta.getSchemaTable(null, dbType);
-		Long updateCnt = updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropsHandler, "NVL",
-				conn, dbType, null, tableName, true);
-		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
-		if (updateCnt >= entities.size()) {
-			logger.debug("级联子表{}修改记录数为:{}", tableName, updateCnt);
-			return;
-		}
-		PKStrategy pkStrategy = entityMeta.getIdStrategy();
-		String sequence = "NEXTVAL('" + entityMeta.getSequence() + "')";
-		// kingbase identity 是sequence的一种变化实现
-		if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
-			String defaultValue = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
-			if (StringUtil.isNotBlank(defaultValue)) {
-				pkStrategy = PKStrategy.SEQUENCE;
-				sequence = "NEXTVAL('" + defaultValue + "')";
-			}
-		}
-		boolean isAssignPK = KingbaseDialectUtils.isAssignPKValue(pkStrategy);
-		String insertSql = DialectExtUtils.insertIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
-				pkStrategy, "NVL", sequence, isAssignPK, tableName);
-		Long saveCnt = saveAll(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entities, batchSize,
-				reflectPropsHandler, conn, dbType, null);
 		logger.debug("级联子表:{} 变更记录数:{},新建记录数为:{}", tableName, updateCnt, saveCnt);
 	}
 
