@@ -1152,19 +1152,13 @@ public class DateUtil {
 		if (nanoTime == 0) {
 			return "";
 		}
-		String nanoStr = "" + nanoTime;
-		// 不同操作系统纳秒长度不一样，有9位，有6位
-		if (nanoStr.length() == 9) {
-			// 后6位全为零，则为毫秒
-			if (nanoStr.endsWith("000000")) {
-				nanoStr = nanoStr.substring(0, 3);
-			} // 后3位全为零,则为微秒
-			else if (nanoStr.endsWith("000")) {
-				nanoStr = nanoStr.substring(0, 6);
-			}
-		} // 毫秒
-		else if (nanoStr.length() == 6 && nanoStr.endsWith("000")) {
+		String nanoStr = StringUtil.addLeftZero2Len("" + nanoTime, 9);
+		// 后6位全为零，则为毫秒
+		if (nanoStr.endsWith("000000")) {
 			nanoStr = nanoStr.substring(0, 3);
+		} // 后3位全为零,则为微秒
+		else if (nanoStr.endsWith("000")) {
+			nanoStr = nanoStr.substring(0, 6);
 		}
 		return "." + nanoStr;
 	}
