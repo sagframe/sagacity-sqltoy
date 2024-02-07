@@ -375,6 +375,11 @@
 							<xsd:documentation><![CDATA[百分比:#.00%,千分比:#.00‰]]></xsd:documentation>
 						</xsd:annotation>
 					</xsd:attribute>
+					<xsd:attribute name="insert" type="xsd:boolean" default="true">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[环比值是否自动插入新的列,否则自己写sql时提前构造出相应的列]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
 				</xsd:complexType>
 			</xsd:element>
 			<!-- 列数据环比 -->

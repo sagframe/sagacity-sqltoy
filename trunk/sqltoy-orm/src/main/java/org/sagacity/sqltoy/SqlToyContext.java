@@ -40,7 +40,6 @@ import org.sagacity.sqltoy.plugins.secure.FieldsSecureProvider;
 import org.sagacity.sqltoy.plugins.secure.impl.DesensitizeDefaultProvider;
 import org.sagacity.sqltoy.plugins.secure.impl.FieldsRSASecureProvider;
 import org.sagacity.sqltoy.plugins.sharding.ShardingStrategy;
-import org.sagacity.sqltoy.translate.DynamicCacheFetch;
 import org.sagacity.sqltoy.translate.TranslateManager;
 import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
 import org.sagacity.sqltoy.utils.BeanUtil;
@@ -150,12 +149,6 @@ public class SqlToyContext {
 	 * 执行超时sql自定义处理器
 	 */
 	private OverTimeSqlHandler overTimeSqlHandler = new DefaultOverTimeHandler();
-
-	/**
-	 * 动态缓存数据查询，提供给开发者针对动态缓存编写具体实现
-	 * <li>逻辑:判断缓存中是否存在-->不存在则动态获取key对于的数据-->完成翻译-->放入缓存</li>
-	 */
-	private DynamicCacheFetch dynamicCacheFetch;
 
 	/**
 	 * @param unifyFieldsHandler the unifyFieldsHandler to set
@@ -1293,19 +1286,4 @@ public class SqlToyContext {
 	public void setDialectDDLGenerator(DialectDDLGenerator dialectDDLGenerator) {
 		this.dialectDDLGenerator = dialectDDLGenerator;
 	}
-
-	/**
-	 * @return the dynamicCacheFetch
-	 */
-	public DynamicCacheFetch getDynamicCacheFetch() {
-		return dynamicCacheFetch;
-	}
-
-	/**
-	 * @param dynamicCacheFetch the dynamicCacheFetch to set
-	 */
-	public void setDynamicCacheFetch(DynamicCacheFetch dynamicCacheFetch) {
-		this.dynamicCacheFetch = dynamicCacheFetch;
-	}
-
 }
