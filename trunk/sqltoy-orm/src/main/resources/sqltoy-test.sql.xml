@@ -93,7 +93,8 @@
 			<group sum-label="" label-column="" group-column="" order-column="" order-way="desc" order-with-sum="true"/>
 		</summary>
 		<!-- 拼接某列,mysql中等同于group_concat\oracle 中的WMSYS.WM_CONCAT功能 -->
-		<link sign="," columns="" />
+		<link id-columns="" columns="" result-type="ARRAY"/>
+		<link id-columns="" columns="" sign=","/>
 		<!-- 行转列 (跟unpivot互斥) -->
 		<pivot category-columns="" group-columns="" start-column=""	end-column="" default-value="0" />
 		<!-- 列转行 -->

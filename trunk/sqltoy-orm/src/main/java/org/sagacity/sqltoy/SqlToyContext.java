@@ -1286,5 +1286,4 @@ public class SqlToyContext {
 	public void setDialectDDLGenerator(DialectDDLGenerator dialectDDLGenerator) {
 		this.dialectDDLGenerator = dialectDDLGenerator;
 	}
-
 }

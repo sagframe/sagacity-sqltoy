@@ -1442,8 +1442,13 @@ public class ResultUtils {
 					ColsChainRelative.process((ColsChainRelativeModel) processor, labelIndexMap, items);
 					changedCols = true;
 				} else if (processor instanceof RowsChainRelativeModel) {
+					RowsChainRelativeModel rowChainModel = (RowsChainRelativeModel) processor;
 					// 行数据环比
-					RowsChainRelative.process((RowsChainRelativeModel) processor, labelIndexMap, items);
+					RowsChainRelative.process(rowChainModel, labelIndexMap, items);
+					// 环比值作为新的列插入，则改变了列
+					if (rowChainModel.isInsert()) {
+						changedCols = true;
+					}
 				} else if (processor instanceof ReverseModel) {
 					// 数据反序
 					ReverseList.process((ReverseModel) processor, labelIndexMap, items);
