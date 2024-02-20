@@ -3,14 +3,14 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sagframe</groupId>
-	<version>5.2.94</version>
+	<version>5.2.95</version>
 	<name>sagacity-sqltoy</name>
 	<description>sagacity-sqltoy</description>
 	<artifactId>sagacity-sqltoy</artifactId>
 	<url>https://github.com/sagframe/sagacity-sqltoy</url>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<spring-framework.version>5.3.31</spring-framework.version>
+		<spring-framework.version>5.3.32</spring-framework.version>
 		<spring-data-redis.version>2.7.18</spring-data-redis.version>
 		<spring-data-mongo.version>3.4.18</spring-data-mongo.version>
 		<ojdbc.version>21.11.0.0</ojdbc.version>
@@ -18,12 +18,12 @@
 		<httpclient.version>4.5.14</httpclient.version>
 		<httpclient-httpmime.version>4.5.14</httpclient-httpmime.version>
 		<httpclient-core.version>4.4.16</httpclient-core.version>
-		<elastic-rest-client.version>8.12.0</elastic-rest-client.version>
+		<elastic-rest-client.version>8.12.1</elastic-rest-client.version>
 		<fastjson.version>2.0.46</fastjson.version>
 		<mongo.version>3.12.14</mongo.version>
 		<junit-jupiter.version>5.10.2</junit-jupiter.version>
 		<junit-platform.version>1.10.2</junit-platform.version>
-		<slf4j.version>2.0.11</slf4j.version>
+		<slf4j.version>2.0.12</slf4j.version>
 		<caffeine.version>2.9.3</caffeine.version>
 		<h2.version>2.2.224</h2.version>
 		<lombok.version>1.18.30</lombok.version>
