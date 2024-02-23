@@ -62,6 +62,10 @@ public class DateUtilTest {
 	@Test
 	public void testParseUsDate() throws ParseException {
 		System.out.println(DateUtil.parseString("Fri 15 Dec 2023 10:20:43 CEST"));
+		System.out.println(DateUtil.parseString("Thu 14 Dec 2023 10:20:43 CEST"));
+		System.out.println(DateUtil.parseString("Thur 14 Dec 2023 10:20:43 CEST"));
+		System.out.println(DateUtil.parseString("Tue 12 Dec 2023 10:20:43 CEST"));
+		System.out.println(DateUtil.parseString("Tues 12 Dec 2023 10:20:43 CEST"));
 //		System.err.println(new SimpleDateFormat("EEE MMM dd yyyy HH:mm:ss z", Locale.ENGLISH)
 //				.parse("Fri Dec 15 2023 10:20:43 CEST"));
 
@@ -79,6 +83,12 @@ public class DateUtilTest {
 //		System.err.println(new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH)
 //				.parse("Fri Dec 15 10:20:43 CEST 2023"));
 	}
+	
+	@Test
+	public void testParseUsDate1() throws ParseException {
+		System.out.println(DateUtil.parseString("Thur 14 Dec 2023 10:20:43 CEST"));
+	}
+
 
 	@Test
 	public void testDateAdd() throws ParseException {
