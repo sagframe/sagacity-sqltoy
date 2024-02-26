@@ -100,7 +100,7 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 			checkSeconds = 60;
 		}
 		SpringAppContext appContext = new SpringAppContext();
-		appContext.setContext(applicationContext);
+		appContext.setApplicationContext(applicationContext);
 		IdleConnectionMonitor monitor = new IdleConnectionMonitor(appContext, new SpringConnectionFactory(),
 				dataSourceWeightConfig, weights, 60, checkSeconds);
 		monitor.start();

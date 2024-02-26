@@ -67,8 +67,8 @@ public class DateUtil {
 	private static final String[] WEEK_CHINA_NAME = { "星期一", "星期二", "星期三", "星期四", "星期五", "星期六", "星期日" };
 	private static final String[] WEEK_ENGLISH_NAME = { "Monday", "Tuesday", "Wednesday", "Thurday", "Friday",
 			"Saturday", "Sunday" };
-	private static final String[] WEEK_ENGLISH_NAKE = { "Mon", "Tues", "Wed", "Thur", "Fri", "Sat", "Sun" };
-	private final static Pattern WEEK_PATTERN = Pattern.compile("(?i)(Mon|Tues|Wed|Thur|Fri|Sat|Sun)\\s");
+	private static final String[] WEEK_ENGLISH_NAKE = { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
+	private final static Pattern WEEK_PATTERN = Pattern.compile("(?i)(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\\s");
 	private final static Pattern DAY_PATTERN = Pattern.compile("(?i)\\s\\d{1,2}(st|th|rd)?\\s");
 
 	// 超过十的中文
@@ -1072,6 +1072,8 @@ public class DateUtil {
 		}
 		// 统一九月的英文
 		dateStr = dateStr.replaceFirst("(?i)Sept\\s", "Sep ");
+		// 统一星期2、星期4的英文
+		dateStr = dateStr.replaceFirst("(?i)Thur\\s", "Thu ").replaceFirst("(?i)Tues\\s", "Tue ");
 		for (int i = 0; i < 7; i++) {
 			dateStr = dateStr.replaceFirst("(?i)" + WEEK_ENGLISH_NAME[i], WEEK_ENGLISH_NAKE[i]);
 		}

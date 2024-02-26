@@ -2164,7 +2164,7 @@ public class SqlToyDaoSupport {
 		String fieldSetValue;
 		// 设置一个扩展标志，避免set field=field+? 场景构造成field=field+:fieldExtParam跟where
 		// field=:field名称冲突
-		final String extSign = "ExtParam";
+		final String extSign = "SqlToyExtParam";
 		DataSource dsDataSource = getDataSource(innerModel.dataSource, null);
 		Integer dbType = DataSourceUtils.getDBType(sqlToyContext, dsDataSource);
 		String nvlFun = DataSourceUtils.getNvlFunction(dbType);
@@ -2195,7 +2195,8 @@ public class SqlToyDaoSupport {
 						realNames[index] = SqlConfigParseUtils.getSqlParamsName(fields[1], true)[0];
 					}
 				} else {
-					realNames[index] = fieldMeta.getFieldName();
+					// 2024-02-20拼接扩展字符，避免where后面有同样的参数名称
+					realNames[index] = fieldMeta.getFieldName().concat(extSign);
 				}
 			}
 			if (index > 0) {
@@ -2208,19 +2209,22 @@ public class SqlToyDaoSupport {
 				realValues[index] = null;
 				// 剔除掉已经处理的字段
 				forceUpdateSqlFields.remove(fieldMeta.getFieldName());
-				// field=nvl(?,current_timestamp)
+				// field=nvl(?,current_timestamp) 2024-02-20 add .concat(extSign)
 				sql.append(columnName).append("=").append(nvlFun).append("(")
-						.append(isName ? (":" + fieldMeta.getFieldName()) : "?").append(",").append(currentTime)
-						.append(")");
+						.append(isName ? (":" + fieldMeta.getFieldName().concat(extSign)) : "?").append(",")
+						.append(currentTime).append(")");
 			} else {
 				realValues[index] = entry.getValue();
 				if (fields.length == 1) {
-					sql.append(columnName).append("=").append(isName ? (":" + fieldMeta.getFieldName()) : "?");
+					//2024-02-20 add .concat(extSign)
+					sql.append(columnName).append("=")
+							.append(isName ? (":" + fieldMeta.getFieldName().concat(extSign)) : "?");
 				} else {
 					// field=filed+? 类似模式
 					fieldSetValue = fields[1];
 					sql.append(columnName).append("=");
 					if (isName && fieldSetValue.contains("?")) {
+						//2024-02-20 add .concat(extSign)
 						fieldSetValue = fieldSetValue.replace("?", ":" + fieldMeta.getFieldName().concat(extSign));
 					}
 					fieldSetValue = SqlUtil.convertFieldsToColumns(entityMeta, fieldSetValue);
