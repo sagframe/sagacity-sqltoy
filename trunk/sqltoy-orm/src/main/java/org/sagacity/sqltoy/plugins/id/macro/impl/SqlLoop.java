@@ -3,13 +3,7 @@
  */
 package org.sagacity.sqltoy.plugins.id.macro.impl;
 
-import java.sql.Timestamp;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.IllegalFormatFlagsException;
 import java.util.Iterator;
@@ -24,7 +18,7 @@ import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.plugins.id.macro.AbstractMacro;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.CollectionUtil;
-import org.sagacity.sqltoy.utils.DateUtil;
+import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
@@ -266,7 +260,7 @@ public class SqlLoop extends AbstractMacro {
 		String paramName;
 		String preSql;
 		Object paramValue;
-		boolean hasCompare = false;
+		boolean addSingleQuotation = false;
 		String key;
 		int meter = 0;
 		boolean updateSet = false;
@@ -287,7 +281,7 @@ public class SqlLoop extends AbstractMacro {
 				}
 			}
 			// 是否是=:param 或!=:param等判断符号直接连接参数的情况，便于输出日期、字符参数时判断是否加单引号
-			hasCompare = StringUtil.matches(preSql, COMPARE_PATTERN);
+			addSingleQuotation = StringUtil.matches(preSql, COMPARE_PATTERN);
 			key = ":".concat(paramName);
 			paramValue = loopParamNamesMap.get(key);
 			// 判断是否非循环参数，非循环参数在循环后继续处理
@@ -296,7 +290,7 @@ public class SqlLoop extends AbstractMacro {
 			} else if (paramValue == null) {
 				preSql = compareNull(preSql, updateSet);
 			} else {
-				preSql = preSql.concat(toString(paramValue, hasCompare));
+				preSql = preSql.concat(SqlUtil.toSqlString(paramValue, addSingleQuotation));
 			}
 			// 参数名称以空白结尾，处理完参数后补全空白
 			if (StringUtil.matches(group, SqlToyConstants.BLANK_END)) {
@@ -346,135 +340,6 @@ public class SqlLoop extends AbstractMacro {
 			return preSql.substring(0, compareIndex).concat(sqlPart).concat("null");
 		}
 		return preSql.concat("null");
-	}
-
-	/**
-	 * @TODO 将参数值转成字符传
-	 * @param paramValue
-	 * @param hasCompare 参数前面的字符串是否是等于、不等于、大于等于、小于等于比较符号
-	 * @return
-	 */
-	@SuppressWarnings("rawtypes")
-	private static String toString(Object paramValue, boolean hasCompare) {
-		if (paramValue == null) {
-			return "null";
-		}
-		// 参数前面是否是条件比较符号，如果是比较符号针对日期、字符串加单引号
-		String sign = hasCompare ? "'" : "";
-		String valueStr;
-		int nanoValue;
-		String timeStr;
-		if (paramValue instanceof CharSequence) {
-			valueStr = sign + paramValue + sign;
-		} else if (paramValue instanceof Timestamp) {
-			valueStr = sign + DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss.SSS") + sign;
-		} else if (paramValue instanceof Date) {
-			valueStr = sign + DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss") + sign;
-		} else if (paramValue instanceof LocalDateTime) {
-			nanoValue = ((LocalDateTime) paramValue).getNano();
-			if (nanoValue > 0) {
-				if (SqlToyConstants.localDateTimeFormat != null
-						&& !SqlToyConstants.localDateTimeFormat.equals("auto")) {
-					timeStr = DateUtil.formatDate(paramValue, SqlToyConstants.localDateTimeFormat);
-				} else {
-					timeStr = DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss") + DateUtil.processNano(nanoValue);
-				}
-			} else {
-				timeStr = DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss");
-			}
-			valueStr = sign + timeStr + sign;
-		} else if (paramValue instanceof LocalDate) {
-			valueStr = sign + DateUtil.formatDate(paramValue, "yyyy-MM-dd") + sign;
-		} else if (paramValue instanceof LocalTime) {
-			nanoValue = ((LocalTime) paramValue).getNano();
-			if (nanoValue > 0) {
-				if (SqlToyConstants.localTimeFormat != null && !SqlToyConstants.localTimeFormat.equals("auto")) {
-					timeStr = DateUtil.formatDate(paramValue, SqlToyConstants.localTimeFormat);
-				} else {
-					timeStr = DateUtil.formatDate(paramValue, "HH:mm:ss") + DateUtil.processNano(nanoValue);
-				}
-			} else {
-				timeStr = DateUtil.formatDate(paramValue, "HH:mm:ss");
-			}
-			valueStr = sign + timeStr + sign;
-		} else if (paramValue instanceof Object[]) {
-			valueStr = combineArray((Object[]) paramValue);
-		} else if (paramValue instanceof Collection) {
-			valueStr = combineArray(((Collection) paramValue).toArray());
-		} else if (paramValue instanceof Enum) {
-			valueStr = BeanUtil.getEnumValue(paramValue).toString();
-		} else {
-			valueStr = "" + paramValue;
-		}
-		return valueStr;
-	}
-
-	/**
-	 * @TODO 组合in参数
-	 * @param array
-	 * @return
-	 */
-	private static String combineArray(Object[] array) {
-		if (array == null || array.length == 0) {
-			return " null ";
-		}
-		StringBuilder result = new StringBuilder();
-		Object value;
-		int nanoValue;
-		String timeStr;
-		for (int i = 0; i < array.length; i++) {
-			if (i > 0) {
-				result.append(",");
-			}
-			value = array[i];
-			if (value == null) {
-				result.append("null");
-			} else {
-				// 支持枚举类型
-				if (value instanceof Enum) {
-					value = BeanUtil.getEnumValue(value);
-				}
-				if (value instanceof CharSequence) {
-					result.append("'" + value + "'");
-				} else if (value instanceof Timestamp) {
-					result.append("'" + DateUtil.formatDate(value, "yyyy-MM-dd HH:mm:ss.SSS") + "'");
-				} else if (value instanceof Date) {
-					result.append("'" + DateUtil.formatDate(value, "yyyy-MM-dd HH:mm:ss") + "'");
-				} else if (value instanceof LocalDateTime) {
-					nanoValue = ((LocalDateTime) value).getNano();
-					if (nanoValue > 0) {
-						if (SqlToyConstants.localDateTimeFormat != null
-								&& !SqlToyConstants.localDateTimeFormat.equals("auto")) {
-							timeStr = DateUtil.formatDate(value, SqlToyConstants.localDateTimeFormat);
-						} else {
-							timeStr = DateUtil.formatDate(value, "yyyy-MM-dd HH:mm:ss")
-									+ DateUtil.processNano(nanoValue);
-						}
-					} else {
-						timeStr = DateUtil.formatDate(value, "yyyy-MM-dd HH:mm:ss");
-					}
-					result.append("'" + timeStr + "'");
-				} else if (value instanceof LocalDate) {
-					result.append("'" + DateUtil.formatDate(value, "yyyy-MM-dd") + "'");
-				} else if (value instanceof LocalTime) {
-					nanoValue = ((LocalTime) value).getNano();
-					if (nanoValue > 0) {
-						if (SqlToyConstants.localTimeFormat != null
-								&& !SqlToyConstants.localTimeFormat.equals("auto")) {
-							timeStr = DateUtil.formatDate(value, SqlToyConstants.localTimeFormat);
-						} else {
-							timeStr = DateUtil.formatDate(value, "HH:mm:ss") + DateUtil.processNano(nanoValue);
-						}
-					} else {
-						timeStr = DateUtil.formatDate(value, "HH:mm:ss");
-					}
-					result.append("'" + timeStr + "'");
-				} else {
-					result.append("" + value);
-				}
-			}
-		}
-		return result.toString();
 	}
 
 	/**
