@@ -20,6 +20,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -2078,8 +2079,6 @@ public class SqlUtil {
 			valueStr = sign + paramValue + sign;
 		} else if (paramValue instanceof Timestamp) {
 			valueStr = sign + DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss.SSS") + sign;
-		} else if (paramValue instanceof Date) {
-			valueStr = sign + DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss") + sign;
 		} else if (paramValue instanceof LocalDateTime) {
 			nanoValue = ((LocalDateTime) paramValue).getNano();
 			if (nanoValue > 0) {
@@ -2107,6 +2106,10 @@ public class SqlUtil {
 				timeStr = DateUtil.formatDate(paramValue, "HH:mm:ss");
 			}
 			valueStr = sign + timeStr + sign;
+		} else if (paramValue instanceof Time) {
+			valueStr = sign + DateUtil.formatDate(paramValue, "HH:mm:ss") + sign;
+		} else if (paramValue instanceof Date) {
+			valueStr = sign + DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss") + sign;
 		} else if (paramValue instanceof Object[]) {
 			valueStr = combineArray((Object[]) paramValue);
 		} else if (paramValue instanceof Collection) {
@@ -2124,7 +2127,7 @@ public class SqlUtil {
 	 */
 	public static String combineArray(Object[] array) {
 		if (array == null || array.length == 0) {
-			return " null ";
+			return "null";
 		}
 		StringBuilder result = new StringBuilder();
 		Object value;
@@ -2146,8 +2149,6 @@ public class SqlUtil {
 					result.append("'" + value + "'");
 				} else if (value instanceof Timestamp) {
 					result.append("'" + DateUtil.formatDate(value, "yyyy-MM-dd HH:mm:ss.SSS") + "'");
-				} else if (value instanceof Date) {
-					result.append("'" + DateUtil.formatDate(value, "yyyy-MM-dd HH:mm:ss") + "'");
 				} else if (value instanceof LocalDateTime) {
 					nanoValue = ((LocalDateTime) value).getNano();
 					if (nanoValue > 0) {
@@ -2177,6 +2178,10 @@ public class SqlUtil {
 						timeStr = DateUtil.formatDate(value, "HH:mm:ss");
 					}
 					result.append("'" + timeStr + "'");
+				} else if (value instanceof Time) {
+					result.append("'" + DateUtil.formatDate(value, "HH:mm:ss") + "'");
+				} else if (value instanceof Date) {
+					result.append("'" + DateUtil.formatDate(value, "yyyy-MM-dd HH:mm:ss") + "'");
 				} else {
 					result.append("" + value);
 				}
