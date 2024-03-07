@@ -2,13 +2,6 @@ package org.sagacity.sqltoy;
 
 import static java.lang.System.out;
 
-import java.sql.Time;
-import java.sql.Timestamp;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -18,8 +11,7 @@ import org.sagacity.sqltoy.config.model.SqlExecuteTrace;
 import org.sagacity.sqltoy.model.OverTimeSql;
 import org.sagacity.sqltoy.plugins.OverTimeSqlHandler;
 import org.sagacity.sqltoy.plugins.formater.SqlFormater;
-import org.sagacity.sqltoy.utils.BeanUtil;
-import org.sagacity.sqltoy.utils.DateUtil;
+import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -297,64 +289,12 @@ public class SqlExecuteStat {
 		int end;
 		int index = 0;
 		int paramSize = params.length;
-		Object paramValue;
-		String timeStr;
-		int nanoValue;
 		// 逐个查找?用实际参数值进行替换
 		while (matcher.find(start)) {
 			end = matcher.start() + 1;
 			lastSql.append(sql.substring(start, end));
 			if (index < paramSize) {
-				paramValue = params[index];
-				if (paramValue instanceof Enum) {
-					paramValue = BeanUtil.getEnumValue(paramValue);
-				}
-				// 字符
-				if (paramValue instanceof CharSequence) {
-					lastSql.append("'" + paramValue + "'");
-				} // update 2022-11-3 timestamp显示毫秒级别
-				else if (paramValue instanceof Timestamp) {
-					lastSql.append("'" + DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss.SSS") + "'");
-				} else if (paramValue instanceof LocalDateTime) {
-					nanoValue = ((LocalDateTime) paramValue).getNano();
-					if (nanoValue > 0) {
-						if (SqlToyConstants.localDateTimeFormat != null
-								&& !SqlToyConstants.localDateTimeFormat.equals("auto")) {
-							timeStr = DateUtil.formatDate(paramValue, SqlToyConstants.localDateTimeFormat);
-						} else {
-							timeStr = DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss")
-									+ DateUtil.processNano(nanoValue);
-						}
-					} else {
-						timeStr = DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss");
-					}
-					lastSql.append("'" + timeStr + "'");
-				} else if (paramValue instanceof LocalDate) {
-					lastSql.append("'" + DateUtil.formatDate(paramValue, "yyyy-MM-dd") + "'");
-				} else if (paramValue instanceof LocalTime) {
-					nanoValue = ((LocalTime) paramValue).getNano();
-					if (nanoValue > 0) {
-						if (SqlToyConstants.localTimeFormat != null
-								&& !SqlToyConstants.localTimeFormat.equals("auto")) {
-							timeStr = DateUtil.formatDate(paramValue, SqlToyConstants.localTimeFormat);
-						} else {
-							timeStr = DateUtil.formatDate(paramValue, "HH:mm:ss") + DateUtil.processNano(nanoValue);
-						}
-					} else {
-						timeStr = DateUtil.formatDate(paramValue, "HH:mm:ss");
-					}
-					lastSql.append("'" + timeStr + "'");
-				} else if (paramValue instanceof Time) {
-					lastSql.append("'" + DateUtil.formatDate(paramValue, "HH:mm:ss") + "'");
-				} else if (paramValue instanceof Date) {
-					lastSql.append("'" + DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss") + "'");
-				} else if (paramValue instanceof Object[]) {
-					lastSql.append(combineArray((Object[]) paramValue));
-				} else if (paramValue instanceof Collection) {
-					lastSql.append(combineArray(((Collection) paramValue).toArray()));
-				} else {
-					lastSql.append("" + paramValue);
-				}
+				lastSql.append(SqlUtil.toSqlString(params[index], true));
 			} else {
 				// 问号数量大于参数值数量,说明sql中存在写死的条件值里面存在问号,因此不再进行条件值拟合
 				return sql;
@@ -365,70 +305,6 @@ public class SqlExecuteStat {
 		}
 		lastSql.append(sql.substring(start));
 		return lastSql.toString();
-	}
-
-	/**
-	 * @TODO 组合in参数
-	 * @param array
-	 * @return
-	 */
-	private static String combineArray(Object[] array) {
-		if (array == null || array.length == 0) {
-			return " null ";
-		}
-		StringBuilder result = new StringBuilder();
-		Object paramValue;
-		String timeStr;
-		int nanoValue;
-		for (int i = 0; i < array.length; i++) {
-			if (i > 0) {
-				result.append(",");
-			}
-			paramValue = array[i];
-			if (paramValue instanceof Enum) {
-				paramValue = BeanUtil.getEnumValue(paramValue);
-			}
-			if (paramValue instanceof CharSequence) {
-				result.append("'" + paramValue + "'");
-			} else if (paramValue instanceof Timestamp) {
-				result.append("'" + DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss.SSS") + "'");
-			} else if (paramValue instanceof LocalDateTime) {
-				nanoValue = ((LocalDateTime) paramValue).getNano();
-				if (nanoValue > 0) {
-					if (SqlToyConstants.localDateTimeFormat != null
-							&& !SqlToyConstants.localDateTimeFormat.equals("auto")) {
-						timeStr = DateUtil.formatDate(paramValue, SqlToyConstants.localDateTimeFormat);
-					} else {
-						timeStr = DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss")
-								+ DateUtil.processNano(nanoValue);
-					}
-				} else {
-					timeStr = DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss");
-				}
-				result.append("'" + timeStr + "'");
-			} else if (paramValue instanceof LocalDate) {
-				result.append("'" + DateUtil.formatDate(paramValue, "yyyy-MM-dd") + "'");
-			} else if (paramValue instanceof LocalTime) {
-				nanoValue = ((LocalTime) paramValue).getNano();
-				if (nanoValue > 0) {
-					if (SqlToyConstants.localTimeFormat != null && !SqlToyConstants.localTimeFormat.equals("auto")) {
-						timeStr = DateUtil.formatDate(paramValue, SqlToyConstants.localTimeFormat);
-					} else {
-						timeStr = DateUtil.formatDate(paramValue, "HH:mm:ss") + DateUtil.processNano(nanoValue);
-					}
-				} else {
-					timeStr = DateUtil.formatDate(paramValue, "HH:mm:ss");
-				}
-				result.append("'" + timeStr + "'");
-			} else if (paramValue instanceof Time) {
-				result.append("'" + DateUtil.formatDate(paramValue, "HH:mm:ss") + "'");
-			} else if (paramValue instanceof Date) {
-				result.append("'" + DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss") + "'");
-			} else {
-				result.append("" + paramValue);
-			}
-		}
-		return result.toString();
 	}
 
 	/**

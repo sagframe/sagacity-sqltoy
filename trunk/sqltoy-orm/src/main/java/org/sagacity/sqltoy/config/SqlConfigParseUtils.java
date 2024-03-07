@@ -655,8 +655,10 @@ public class SqlConfigParseUtils {
 				paramCnt = StringUtil.matchCnt(queryStr.substring(0, index), ARG_NAME_PATTERN);
 				// 用参数的值直接覆盖@value(:name)
 				paramValue = paramValueList.get(paramCnt - valueCnt);
+				// update 2024-03-03 强化对数组、枚举、日期等类型的输出
+				// valueStr = (paramValue == null) ? "null" : paramValue.toString();
+				valueStr = SqlUtil.toSqlString(paramValue, false);
 				// update 2021-11-13 加强@value对应值中存在函数，进行跨数据库适配
-				valueStr = (paramValue == null) ? "null" : paramValue.toString();
 				if (dialect != null && valueStr.contains("(") && valueStr.contains(")")) {
 					valueStr = FunctionUtils.getDialectSql(valueStr, dialect);
 				}
