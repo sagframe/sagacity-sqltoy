@@ -1,5 +1,5 @@
 # WORD版详细文档(完整)
-## 请见:docs/睿智平台SqlToy5.2 使用手册.doc
+## 请见:docs/睿智平台SqlToy5.6 使用手册.doc
 ## xml中sql查询完整配置 
 https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 
