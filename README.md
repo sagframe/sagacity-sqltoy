@@ -192,7 +192,7 @@ lightDao.deleteByQuery(StaffInfoVO.class, EntityQuery.create().where("status=?")
 </sql>
 ```
 
-![](docs/images/sqltoy-sql.png)
+![](blob/5.6/docs/images/sqltoy-sql.png)
 
 * mybatis同样的功能的写法
 
