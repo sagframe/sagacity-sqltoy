@@ -40,8 +40,8 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 <dependency>
 	<groupId>com.sagframe</groupId>
 	<artifactId>sagacity-sqltoy-spring-starter</artifactId>
-        <!-- jdk8 对应的版本号为：5.6.0.jre8 -->
-	<version>5.6.0</version>
+        <!-- jdk8 对应的版本号为：5.6.1.jre8 -->
+	<version>5.6.1</version>
 </dependency>
 ```
 * 5.2.100 LTS (jdk1.8+)                 发版日期: 2024-3-7
