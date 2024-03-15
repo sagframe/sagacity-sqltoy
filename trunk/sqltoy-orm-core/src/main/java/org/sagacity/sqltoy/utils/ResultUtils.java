@@ -1494,6 +1494,7 @@ public class ResultUtils {
 	 * @param humpMapLabel
 	 * @param hiberarchy        返回结果是否按层次化对象封装
 	 * @param hiberarchyClasses
+	 * @param fieldsMap
 	 * @return
 	 * @throws Exception
 	 */
@@ -1870,6 +1871,7 @@ public class ResultUtils {
 		if (resultTypeFieldsMap == null || resultTypeFieldsMap.isEmpty()) {
 			return labelNames.clone();
 		}
+		// 指定sql查询出的label对应dto对象属性名称的映射关系
 		IgnoreKeyCaseMap<String, String> fieldsMap = resultTypeFieldsMap.get(resultType);
 		if (fieldsMap == null || fieldsMap.isEmpty()) {
 			return labelNames.clone();
@@ -1879,14 +1881,16 @@ public class ResultUtils {
 		int size = result.length;
 		for (int i = 0; i < size; i++) {
 			fieldName = fieldsMap.get(result[i]);
+			// 存在映射
 			if (fieldName != null) {
-				// 将其它label名称跟映射结果一致的全部改名，避免将映射到其他对象的属性当做当前对象
+				// 将其它位置label名称跟映射结果一致的全部改名(确保不被映射)
 				for (int j = 0; j < size; j++) {
-					if (result[j].replace("_", "").equalsIgnoreCase(fieldName)) {
+					if (result[j].equalsIgnoreCase(fieldName)
+							|| result[j].replace("_", "").equalsIgnoreCase(fieldName)) {
 						result[j] = result[j] + "SqlToyIgnoreField";
 					}
 				}
-				// 设置匹配的属性
+				// 设置当前位置属性名为映射属性
 				result[i] = fieldName;
 			}
 		}
