@@ -373,26 +373,35 @@ public class MapperUtils {
 		if (BeanUtil.isBaseDataType(fromClass) || BeanUtil.isBaseDataType(targetClass)) {
 			return null;
 		}
+		// 是否要匹配别名(两个不同对象之间，属性名称不一致，通过注解提供别名模式进行映射)
+		boolean checkAlias = fromClass.equals(targetClass) ? false : true;
 		DTOEntityMapModel result = new DTOEntityMapModel();
 		String fieldName;
+		SqlToyFieldAlias alias;
 		HashMap<String, String> targetPropsMap = new HashMap<String, String>();
 		// targetClass类型属性
 		Class parentClass = targetClass;
+		HashMap<String, String> aliasMap = new HashMap<String, String>();
 		while (!parentClass.equals(Object.class)) {
 			for (Field field : parentClass.getDeclaredFields()) {
 				fieldName = field.getName();
+				// 不同对象，检查是否有别名
+				if (checkAlias) {
+					alias = field.getAnnotation(SqlToyFieldAlias.class);
+					if (alias != null) {
+						aliasMap.put(alias.value().toLowerCase(), fieldName);
+					}
+				}
 				targetPropsMap.put(fieldName.toLowerCase(), fieldName);
 			}
 			parentClass = parentClass.getSuperclass();
 		}
-		// 是否要匹配别名(两个不同对象之间，属性名称不一致，通过注解提供别名模式进行映射)
-		boolean checkAlias = fromClass.equals(targetClass) ? false : true;
+
 		// fromClass
 		List<String> fromClassProps = new ArrayList<String>();
 		List<String> targetProps = new ArrayList<String>();
 		// dto以及其所有父类
 		parentClass = fromClass;
-		SqlToyFieldAlias alias;
 		String aliasName;
 		while (!parentClass.equals(Object.class)) {
 			for (Field field : parentClass.getDeclaredFields()) {
@@ -412,6 +421,9 @@ public class MapperUtils {
 					} else if (targetPropsMap.containsKey(aliasName.toLowerCase())) {
 						fromClassProps.add(fieldName);
 						targetProps.add(targetPropsMap.get(aliasName.toLowerCase()));
+					} else if (aliasMap.containsKey(fieldName.toLowerCase())) {
+						fromClassProps.add(fieldName);
+						targetProps.add(aliasMap.get(fieldName.toLowerCase()));
 					}
 				}
 			}
