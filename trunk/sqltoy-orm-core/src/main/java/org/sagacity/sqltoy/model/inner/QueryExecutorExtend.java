@@ -117,6 +117,9 @@ public class QueryExecutorExtend implements Serializable {
 	 */
 	public List<ParamsFilter> paramFilters = new ArrayList<ParamsFilter>();
 
+	/**
+	 * 用于对象层次结构封装指定sql中label对应类的属性
+	 */
 	public Map<Class, IgnoreKeyCaseMap<String, String>> fieldsMap = new HashMap<Class, IgnoreKeyCaseMap<String, String>>();
 
 	/**

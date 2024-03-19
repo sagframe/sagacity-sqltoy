@@ -270,6 +270,10 @@ public class DialectUtils {
 				rs = pst.executeQuery();
 				this.setResult(ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn, rs, extend, null,
 						decryptHandler, startIndex));
+				if (rs != null) {
+					rs.close();
+					rs = null;
+				}
 			}
 		});
 	}
@@ -317,6 +321,10 @@ public class DialectUtils {
 				rs = pst.executeQuery();
 				this.setResult(ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn, rs, null,
 						updateRowHandler, null, startIndex));
+				if (rs != null) {
+					rs.close();
+					rs = null;
+				}
 			}
 		});
 	}
@@ -449,6 +457,10 @@ public class DialectUtils {
 					resultCount = rs.getLong(1);
 				}
 				this.setResult(resultCount);
+				if (rs != null) {
+					rs.close();
+					rs = null;
+				}
 			}
 		});
 	}
@@ -1469,20 +1481,20 @@ public class DialectUtils {
 		SqlToyResult sqlToyResult = new SqlToyResult(insertSql, fullParamValues);
 		sqlToyResult = doInterceptors(sqlToyContext, sqlToyConfig, OperateType.insert, sqlToyResult, entity.getClass(),
 				dbType);
-		final String realInsertSql = sqlToyResult.getSql();
+		String realInsertSql = sqlToyResult.getSql();
 		SqlExecuteStat.showSql("执行单记录插入", realInsertSql, null);
 		final Object[] paramValues = sqlToyResult.getParamsValue();
 		final Integer[] paramsType = entityMeta.getFieldsTypeArray();
 		PreparedStatement pst = null;
+		if (isIdentity || isSequence) {
+			pst = conn.prepareStatement(realInsertSql,
+					new String[] { entityMeta.getColumnName(entityMeta.getIdArray()[0]) });
+		} else {
+			pst = conn.prepareStatement(realInsertSql);
+		}
 		Object result = SqlUtil.preparedStatementProcess(null, pst, null, new PreparedStatementResultHandler() {
 			@Override
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
-				if (isIdentity || isSequence) {
-					pst = conn.prepareStatement(realInsertSql,
-							new String[] { entityMeta.getColumnName(entityMeta.getIdArray()[0]) });
-				} else {
-					pst = conn.prepareStatement(realInsertSql);
-				}
 				SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, pst, paramValues, paramsType, 0);
 				pst.execute();
 				if (isIdentity || isSequence) {
@@ -1491,6 +1503,7 @@ public class DialectUtils {
 						while (keyResult.next()) {
 							this.setResult(keyResult.getObject(1));
 						}
+						keyResult.close();
 					}
 				}
 			}
@@ -2622,6 +2635,14 @@ public class DialectUtils {
 					storeResult.setOutResult(outParams);
 				}
 				this.setResult(storeResult);
+				if (rs != null) {
+					rs.close();
+					rs = null;
+				}
+				if (callStat != null) {
+					callStat.close();
+					callStat = null;
+				}
 			}
 		});
 	}

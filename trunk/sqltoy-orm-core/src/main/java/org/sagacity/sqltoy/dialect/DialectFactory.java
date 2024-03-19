@@ -2159,6 +2159,10 @@ public class DialectFactory {
 									ResultUtils.consumeResult(sqlToyContext, extend, sqlToyConfig, conn, rs,
 											streamResultHandler, (Class) extend.resultType, extend.humpMapLabel,
 											extend.fieldsMap);
+									if (rs != null) {
+										rs.close();
+										rs = null;
+									}
 								}
 							});
 						}

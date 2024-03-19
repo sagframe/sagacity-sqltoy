@@ -1071,4 +1071,17 @@ public class StringUtil {
 		}
 		return result;
 	}
+
+	/**
+	 * @TODO 处理空白和null，给与默认值
+	 * @param value
+	 * @param defaultValue
+	 * @return
+	 */
+	public static String ifBlank(String value, String defaultValue) {
+		if (isBlank(value)) {
+			return defaultValue;
+		}
+		return value;
+	}
 }

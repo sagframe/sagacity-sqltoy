@@ -484,6 +484,9 @@ public class DefaultDialectUtils {
 							finalRs.insertRow();
 						}
 						this.setResult(result);
+						if (finalRs != null) {
+							finalRs.close();
+						}
 					}
 				});
 		// 记录不存在首次保存，返回entity自身
@@ -970,7 +973,6 @@ public class DefaultDialectUtils {
 			rs = conn.createStatement().executeQuery("desc " + tableName);
 			return (Map<String, ColumnMeta>) SqlUtil.preparedStatementProcess(null, null, rs,
 					new PreparedStatementResultHandler() {
-
 						@Override
 						public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException {
 							Map<String, ColumnMeta> pkMeta = new HashMap<String, ColumnMeta>();
@@ -984,7 +986,6 @@ public class DefaultDialectUtils {
 							}
 							this.setResult(pkMeta);
 						}
-
 					});
 		}
 		return null;

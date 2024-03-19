@@ -995,6 +995,10 @@ public class SqlUtil {
 				rs = pst.executeQuery();
 				this.setResult(processResultSet(typeHandler, rs, voClass, rowCallbackHandler, decryptHandler, 0,
 						ignoreAllEmptySet, colFieldMap));
+				if (rs != null) {
+					rs.close();
+					rs = null;
+				}
 			}
 		});
 		// 为null返回一个空集合
