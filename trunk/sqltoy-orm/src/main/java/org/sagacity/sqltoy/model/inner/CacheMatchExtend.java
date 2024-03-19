@@ -42,11 +42,6 @@ public class CacheMatchExtend implements Serializable {
 	public boolean priorMatchEqual = false;
 
 	/**
-	 * 没有匹配到缓存key则返回自身
-	 */
-	public boolean unMatchedReturnSelf = false;
-
-	/**
 	 * 缓存中key所在的列,一般为0
 	 */
 	public int cacheKeyIndex = 0;
@@ -60,4 +55,9 @@ public class CacheMatchExtend implements Serializable {
 	 * 缓存数据过滤
 	 */
 	public CacheFilter cacheFilter;
+
+	/**
+	 * 缓存通过名称关键词未匹配到key，返回关键词本身
+	 */
+	public boolean unMatchedReturnSelf = false;
 }

@@ -788,8 +788,12 @@ public class DialectFactory {
 								// 从缓存中提取总记录数
 								recordCnt = PageOptimizeUtils.getPageTotalCount(realSqlToyConfig, pageOptimize,
 										pageQueryKey);
-								if (recordCnt != null) {
-									SqlExecuteStat.debug("过程提示", "分页优化条件命中,从缓存中获得总记录数:{}!!", recordCnt);
+								if (pageOptimize.isSkipZeroCount() && recordCnt == 0) {
+									SqlExecuteStat.debug("过程提示",
+											"分页优化条件命中,从缓存中获得总记录数:{},但设置了skipZeroCount=true,将重新获取count记录!", recordCnt);
+									recordCnt = null;
+								} else {
+									SqlExecuteStat.debug("过程提示", "分页优化条件命中,从缓存中获得总记录数:{}!", recordCnt);
 								}
 							}
 							// 并行且缓存中无总记录数量，执行并行处理
@@ -2133,6 +2137,10 @@ public class DialectFactory {
 									ResultUtils.consumeResult(sqlToyContext, extend, sqlToyConfig, conn, rs,
 											streamResultHandler, (Class) extend.resultType, extend.humpMapLabel,
 											extend.fieldsMap);
+									if (rs != null) {
+										rs.close();
+										rs = null;
+									}
 								}
 							});
 						}

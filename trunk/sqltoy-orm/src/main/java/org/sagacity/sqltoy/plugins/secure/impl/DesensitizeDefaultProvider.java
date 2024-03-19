@@ -70,9 +70,10 @@ public class DesensitizeDefaultProvider implements DesensitizeProvider {
 				return StringUtil.secureMask(realStr, 4, 0, maskCode);
 			}
 		}
-		// 邮件
+		// 邮件(首字符@gmail.com 形式)
 		if ("email".equals(type)) {
-			return realStr.substring(0, 1).concat(maskCode).concat(realStr.substring(realStr.indexOf("@")));
+			String maskStr = (maskCode == null || "".equals(maskCode)) ? "***" : maskCode;
+			return realStr.substring(0, 1).concat(maskStr).concat(realStr.substring(realStr.indexOf("@")));
 		}
 		// 身份证
 		if ("id-card".equals(type)) {

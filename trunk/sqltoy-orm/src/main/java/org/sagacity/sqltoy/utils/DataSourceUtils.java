@@ -643,4 +643,44 @@ public class DataSourceUtils {
 			return "";
 		}
 	}
+	
+	/**
+	 * @TODO 获取数据库对应的nvl函数
+	 * @param dbType
+	 * @return
+	 */
+	public static String getNvlFunction(Integer dbType) {
+		switch (dbType) {
+		case DBType.DB2:
+			return "nvl";
+		case DBType.ORACLE:
+		case DBType.ORACLE11:
+			return "nvl";
+		case DBType.POSTGRESQL:
+			return "COALESCE";
+		case DBType.MYSQL:
+		case DBType.MYSQL57:
+			return "ifnull";
+		case DBType.SQLSERVER:
+			return "isnull";
+		case DBType.SQLITE:
+			return "ifnull";
+		case DBType.CLICKHOUSE:
+			return "ifnull";
+		case DBType.TIDB:
+			return "ifnull";
+		case DBType.OCEANBASE:
+			return "nvl";
+		case DBType.DM:
+			return "nvl";
+		case DBType.GAUSSDB:
+			return "nvl";
+		case DBType.KINGBASE:
+			return "nvl";
+		case DBType.IMPALA:
+			return "ifnull";
+		default:
+			return "nvl";
+		}
+	}
 }

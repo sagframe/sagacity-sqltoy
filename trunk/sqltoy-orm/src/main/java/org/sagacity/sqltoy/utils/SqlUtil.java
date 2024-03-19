@@ -20,12 +20,14 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -132,7 +134,6 @@ public class SqlUtil {
 	 * @param isChar     :in 是否要加单引号
 	 * @return:example:1,2,3或'1','2','3'
 	 */
-	@Deprecated
 	public static String combineQueryInStr(Object conditions, Integer colIndex, String property, boolean isChar) {
 		StringBuilder conditons = new StringBuilder(64);
 		String flag = "";
@@ -292,7 +293,7 @@ public class SqlUtil {
 				}
 				// postgresql bytea类型需要统一处理成BINARY
 				if (jdbcType == java.sql.Types.BLOB) {
-					if (dbType == DBType.POSTGRESQL) {
+					if (dbType == DBType.POSTGRESQL || dbType == DBType.GAUSSDB) {
 						pst.setNull(paramIndex, java.sql.Types.BINARY);
 					} else {
 						pst.setNull(paramIndex, jdbcType);
@@ -993,6 +994,10 @@ public class SqlUtil {
 				rs = pst.executeQuery();
 				this.setResult(processResultSet(typeHandler, rs, voClass, rowCallbackHandler, decryptHandler, 0,
 						ignoreAllEmptySet, colFieldMap));
+				if (rs != null) {
+					rs.close();
+					rs = null;
+				}
 			}
 		});
 		// 为null返回一个空集合
@@ -2049,5 +2054,141 @@ public class SqlUtil {
 			}
 		}
 		return true;
+	}
+
+	/**
+	 * @TODO 将参数值转成字符传
+	 * @param sqlArgValue
+	 * @param addSingleQuotation 是否加单引号
+	 * @return
+	 */
+	public static String toSqlString(Object sqlArgValue, boolean addSingleQuotation) {
+		if (sqlArgValue == null) {
+			return "null";
+		}
+		// 参数前面是否是条件比较符号，如果是比较符号针对日期、字符串加单引号
+		String sign = addSingleQuotation ? "'" : "";
+		String valueStr;
+		int nanoValue;
+		String timeStr;
+		Object paramValue;
+		if (sqlArgValue instanceof Enum) {
+			paramValue = BeanUtil.getEnumValue(sqlArgValue);
+		} else {
+			paramValue = sqlArgValue;
+		}
+		if (paramValue instanceof CharSequence) {
+			valueStr = sign + paramValue + sign;
+		} else if (paramValue instanceof Timestamp) {
+			valueStr = sign + DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss.SSS") + sign;
+		} else if (paramValue instanceof LocalDateTime) {
+			nanoValue = ((LocalDateTime) paramValue).getNano();
+			if (nanoValue > 0) {
+				if (SqlToyConstants.localDateTimeFormat != null
+						&& !SqlToyConstants.localDateTimeFormat.equals("auto")) {
+					timeStr = DateUtil.formatDate(paramValue, SqlToyConstants.localDateTimeFormat);
+				} else {
+					timeStr = DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss") + DateUtil.processNano(nanoValue);
+				}
+			} else {
+				timeStr = DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss");
+			}
+			valueStr = sign + timeStr + sign;
+		} else if (paramValue instanceof LocalDate) {
+			valueStr = sign + DateUtil.formatDate(paramValue, "yyyy-MM-dd") + sign;
+		} else if (paramValue instanceof LocalTime) {
+			nanoValue = ((LocalTime) paramValue).getNano();
+			if (nanoValue > 0) {
+				if (SqlToyConstants.localTimeFormat != null && !SqlToyConstants.localTimeFormat.equals("auto")) {
+					timeStr = DateUtil.formatDate(paramValue, SqlToyConstants.localTimeFormat);
+				} else {
+					timeStr = DateUtil.formatDate(paramValue, "HH:mm:ss") + DateUtil.processNano(nanoValue);
+				}
+			} else {
+				timeStr = DateUtil.formatDate(paramValue, "HH:mm:ss");
+			}
+			valueStr = sign + timeStr + sign;
+		} else if (paramValue instanceof Time) {
+			valueStr = sign + DateUtil.formatDate(paramValue, "HH:mm:ss") + sign;
+		} else if (paramValue instanceof Date) {
+			valueStr = sign + DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss") + sign;
+		} else if (paramValue instanceof Object[]) {
+			valueStr = combineArray((Object[]) paramValue);
+		} else if (paramValue instanceof Collection) {
+			valueStr = combineArray(((Collection) paramValue).toArray());
+		} else {
+			valueStr = "" + paramValue;
+		}
+		return valueStr;
+	}
+
+	/**
+	 * @TODO 组合in参数
+	 * @param array
+	 * @return
+	 */
+	public static String combineArray(Object[] array) {
+		if (array == null || array.length == 0) {
+			return "null";
+		}
+		StringBuilder result = new StringBuilder();
+		Object value;
+		int nanoValue;
+		String timeStr;
+		for (int i = 0; i < array.length; i++) {
+			if (i > 0) {
+				result.append(",");
+			}
+			value = array[i];
+			if (value == null) {
+				result.append("null");
+			} else {
+				// 支持枚举类型
+				if (value instanceof Enum) {
+					value = BeanUtil.getEnumValue(value);
+				}
+				if (value instanceof CharSequence) {
+					result.append("'" + value + "'");
+				} else if (value instanceof Timestamp) {
+					result.append("'" + DateUtil.formatDate(value, "yyyy-MM-dd HH:mm:ss.SSS") + "'");
+				} else if (value instanceof LocalDateTime) {
+					nanoValue = ((LocalDateTime) value).getNano();
+					if (nanoValue > 0) {
+						if (SqlToyConstants.localDateTimeFormat != null
+								&& !SqlToyConstants.localDateTimeFormat.equals("auto")) {
+							timeStr = DateUtil.formatDate(value, SqlToyConstants.localDateTimeFormat);
+						} else {
+							timeStr = DateUtil.formatDate(value, "yyyy-MM-dd HH:mm:ss")
+									+ DateUtil.processNano(nanoValue);
+						}
+					} else {
+						timeStr = DateUtil.formatDate(value, "yyyy-MM-dd HH:mm:ss");
+					}
+					result.append("'" + timeStr + "'");
+				} else if (value instanceof LocalDate) {
+					result.append("'" + DateUtil.formatDate(value, "yyyy-MM-dd") + "'");
+				} else if (value instanceof LocalTime) {
+					nanoValue = ((LocalTime) value).getNano();
+					if (nanoValue > 0) {
+						if (SqlToyConstants.localTimeFormat != null
+								&& !SqlToyConstants.localTimeFormat.equals("auto")) {
+							timeStr = DateUtil.formatDate(value, SqlToyConstants.localTimeFormat);
+						} else {
+							timeStr = DateUtil.formatDate(value, "HH:mm:ss") + DateUtil.processNano(nanoValue);
+						}
+					} else {
+						timeStr = DateUtil.formatDate(value, "HH:mm:ss");
+					}
+					result.append("'" + timeStr + "'");
+				} else if (value instanceof Time) {
+					result.append("'" + DateUtil.formatDate(value, "HH:mm:ss") + "'");
+				} else if (value instanceof Date) {
+					result.append("'" + DateUtil.formatDate(value, "yyyy-MM-dd HH:mm:ss") + "'");
+				} else {
+					result.append("" + value);
+				}
+			}
+		}
+		return result.toString();
 	}
 }

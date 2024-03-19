@@ -67,8 +67,8 @@ public class DateUtil {
 	private static final String[] WEEK_CHINA_NAME = { "星期一", "星期二", "星期三", "星期四", "星期五", "星期六", "星期日" };
 	private static final String[] WEEK_ENGLISH_NAME = { "Monday", "Tuesday", "Wednesday", "Thurday", "Friday",
 			"Saturday", "Sunday" };
-	private static final String[] WEEK_ENGLISH_NAKE = { "Mon", "Tues", "Wed", "Thur", "Fri", "Sat", "Sun" };
-	private final static Pattern WEEK_PATTERN = Pattern.compile("(?i)(Mon|Tues|Wed|Thur|Fri|Sat|Sun)\\s");
+	private static final String[] WEEK_ENGLISH_NAKE = { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
+	private final static Pattern WEEK_PATTERN = Pattern.compile("(?i)(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\\s");
 	private final static Pattern DAY_PATTERN = Pattern.compile("(?i)\\s\\d{1,2}(st|th|rd)?\\s");
 
 	// 超过十的中文
@@ -191,13 +191,8 @@ public class DateUtil {
 		String realDF = null;
 		boolean isLocalDateTime = false;
 		boolean isLocalTime = false;
-		boolean isAssignFmt = false;
 		if (StringUtil.isNotBlank(dateFormat)) {
 			realDF = dateFormat;
-			// 非英文
-			if (!StringUtil.matches(dateStr, "[a-zA-Z]{2}")) {
-				isAssignFmt = true;
-			}
 		} // 英文日期格式(2个以上字母)
 		else if (StringUtil.matches(dateStr, "[a-zA-Z]{2}")) {
 			return parseEnglishDate(dateStr, locale);
@@ -617,21 +612,21 @@ public class DateUtil {
 	/**
 	 * @todo 格式化日期
 	 * @param dt
-	 * @param fmt
+	 * @param format
 	 * @return
 	 */
-	public static String formatDate(Object dt, String fmt) {
-		return formatDate(dt, fmt, null);
+	public static String formatDate(Object dt, String format) {
+		return formatDate(dt, format, null);
 	}
 
-	public static String formatDate(Object dt, String fmt, Locale locale) {
+	public static String formatDate(Object dt, String format, Locale locale) {
 		if (dt == null) {
 			return null;
 		}
-		if (fmt == null) {
+		if (format == null) {
 			throw new IllegalArgumentException("格式化日期指定的format 为null,请正确输入参数!");
 		}
-		String fmtUpper = fmt.toUpperCase();
+		String fmtUpper = format.toUpperCase();
 		if ("YY".equals(fmtUpper)) {
 			String year = Integer.toString(getYear(dt));
 			return year.substring(year.length() - 2);
@@ -648,11 +643,11 @@ public class DateUtil {
 			return (day < 10 ? "0" : "").concat(Integer.toString(day));
 		}
 		if (dt instanceof LocalDateTime) {
-			return DateTimeFormatter.ofPattern(fmt).format((LocalDateTime) dt);
+			return DateTimeFormatter.ofPattern(format).format((LocalDateTime) dt);
 		} else if (dt instanceof LocalTime) {
-			return DateTimeFormatter.ofPattern(fmt).format((LocalTime) dt);
+			return DateTimeFormatter.ofPattern(format).format((LocalTime) dt);
 		} else if (dt instanceof LocalDate) {
-			return DateTimeFormatter.ofPattern(fmt).format((LocalDate) dt);
+			return DateTimeFormatter.ofPattern(format).format((LocalDate) dt);
 		}
 		// 高精度时间用localDateTime、localTime
 		if (locale == null && (fmtUpper.endsWith("SSS") || fmtUpper.endsWith(".S"))) {
@@ -662,13 +657,13 @@ public class DateUtil {
 			}
 			// yyyy-MM-dd HH:mm:ss.SSS
 			if (fmtUpper.startsWith("YY")) {
-				return DateTimeFormatter.ofPattern(fmt).format(result);
+				return DateTimeFormatter.ofPattern(format).format(result);
 			} else if (fmtUpper.startsWith("HH")) {
-				return DateTimeFormatter.ofPattern(fmt).format(result.toLocalTime());
+				return DateTimeFormatter.ofPattern(format).format(result.toLocalTime());
 			}
 		}
 		// 低精度用SimpleDateFormat，兼容性强
-		DateFormat df = (locale == null) ? new SimpleDateFormat(fmt) : new SimpleDateFormat(fmt, locale);
+		DateFormat df = (locale == null) ? new SimpleDateFormat(format) : new SimpleDateFormat(format, locale);
 		Date tmp = convertDateObject(dt, null, locale);
 		return (null == tmp) ? null : df.format(tmp);
 	}
@@ -676,15 +671,15 @@ public class DateUtil {
 	/**
 	 * @TODO 通过一个格式解析，再转化为另外一个格式
 	 * @param dt
-	 * @param fmt
-	 * @param targetFmt
+	 * @param format
+	 * @param targetFormat
 	 * @param locale
 	 * @return
 	 */
 	@Deprecated
-	public static String formatDate(Object dt, String fmt, String targetFmt, Locale locale) {
-		Date result = parse(dt, fmt, locale);
-		return formatDate(result, targetFmt);
+	public static String formatDate(Object dt, String format, String targetFormat, Locale locale) {
+		Date result = parse(dt, format, locale);
+		return formatDate(result, targetFormat);
 	}
 
 	/**
@@ -781,27 +776,73 @@ public class DateUtil {
 	}
 
 	public static int getYear(Object dateValue) {
-		GregorianCalendar currentDate = new GregorianCalendar();
-		if (dateValue != null) {
-			currentDate.setTime(convertDateObject(dateValue));
+		if (dateValue == null) {
+			return LocalDate.now().getYear();
 		}
-		return currentDate.get(Calendar.YEAR);
+		return convertLocalDateTime(dateValue).getYear();
 	}
 
 	public static int getMonth(Object dateValue) {
-		GregorianCalendar currentDate = new GregorianCalendar();
-		if (dateValue != null) {
-			currentDate.setTime(convertDateObject(dateValue));
+		if (dateValue == null) {
+			return LocalDate.now().getMonthValue();
 		}
-		return currentDate.get(Calendar.MONTH) + 1;
+		return convertLocalDateTime(dateValue).getMonthValue();
 	}
 
+	/**
+	 * @see getDayOfMonth(Object dateValue)
+	 * @param dateValue
+	 * @return
+	 */
+	@Deprecated
 	public static int getDay(Object dateValue) {
-		GregorianCalendar currentDate = new GregorianCalendar();
-		if (null != dateValue) {
-			currentDate.setTime(convertDateObject(dateValue));
+		return getDayOfMonth(dateValue);
+	}
+
+	/**
+	 * @TODO 获取当月中的第几天(1~31)
+	 * @param dateValue
+	 * @return
+	 */
+	public static int getDayOfMonth(Object dateValue) {
+		if (dateValue == null) {
+			return LocalDate.now().getDayOfMonth();
 		}
-		return currentDate.get(Calendar.DAY_OF_MONTH);
+		return convertLocalDateTime(dateValue).getDayOfMonth();
+	}
+
+	/**
+	 * @todo 获取指定日期是星期几(from 1 (Monday) to 7 (Sunday))
+	 * @param dateValue
+	 * @return
+	 */
+	public static int getDayOfWeek(Object dateValue) {
+		if (dateValue == null) {
+			return LocalDate.now().getDayOfWeek().getValue();
+		}
+		return convertLocalDateTime(dateValue).getDayOfWeek().getValue();
+	}
+
+	/**
+	 * @todo <b>获取两时间间隔的月数</b>
+	 * @param floorDate
+	 * @param goalDate
+	 * @return
+	 */
+	public static int getIntervalMonths(Object floorDate, Object goalDate) {
+		LocalDateTime date1 = convertLocalDateTime(goalDate);
+		LocalDateTime date2 = convertLocalDateTime(floorDate);
+		return date1.getYear() * 12 + date1.getMonthValue() - date2.getYear() * 12 - date2.getMonthValue();
+	}
+
+	/**
+	 * @todo <b>获取两时间间隔的整数年数</b>
+	 * @param floorDate
+	 * @param goalDate
+	 * @return
+	 */
+	public static int getIntervalYears(Object floorDate, Object goalDate) {
+		return convertLocalDateTime(goalDate).getYear() - convertLocalDateTime(floorDate).getYear();
 	}
 
 	/**
@@ -815,6 +856,38 @@ public class DateUtil {
 				Double.valueOf(getIntervalMillSeconds(DateUtil.formatDate(floorDate, FORMAT.DATE_HORIZONTAL),
 						DateUtil.formatDate(goalDate, FORMAT.DATE_HORIZONTAL))) / (3600 * 1000 * 24));
 		return result.setScale(1, RoundingMode.HALF_UP).intValue();
+	}
+
+	/**
+	 * @todo 获取两个时间间隔的小时
+	 * @param floorDate
+	 * @param goalDate
+	 * @return
+	 */
+	public static double getIntervalHours(Object floorDate, Object goalDate) {
+		BigDecimal result = new BigDecimal(Double.valueOf(getIntervalMillSeconds(floorDate, goalDate)) / (3600 * 1000));
+		return result.setScale(1, RoundingMode.HALF_UP).doubleValue();
+	}
+
+	/**
+	 * @todo 获取两时间的间隔分钟
+	 * @param floorDate
+	 * @param goalDate
+	 * @return
+	 */
+	public static double getIntervalMinutes(Object floorDate, Object goalDate) {
+		BigDecimal result = new BigDecimal(Double.valueOf(getIntervalMillSeconds(floorDate, goalDate)) / (60 * 1000));
+		return result.setScale(1, RoundingMode.HALF_UP).doubleValue();
+	}
+
+	/**
+	 * @todo 获取两时间间隔的秒数
+	 * @param floorDate
+	 * @param goalDate
+	 * @return
+	 */
+	public static double getIntervalSeconds(Object floorDate, Object goalDate) {
+		return Double.valueOf(getIntervalMillSeconds(floorDate, goalDate)) / (1000);
 	}
 
 	/**
@@ -871,10 +944,10 @@ public class DateUtil {
 	/**
 	 * @todo 转换中文日期为指定格式的英文日期形式
 	 * @param chinaDate
-	 * @param fmt
+	 * @param format
 	 * @return
 	 */
-	public static String parseChinaDate(String chinaDate, String fmt) {
+	public static String parseChinaDate(String chinaDate, String format) {
 		if (StringUtil.isBlank(chinaDate)) {
 			return null;
 		}
@@ -893,9 +966,8 @@ public class DateUtil {
 				map.put(groupStr, groupStr.replace("十", "1"));
 			}
 		}
-
 		for (Map.Entry<String, String> entry : map.entrySet()) {
-			tmp = tmp.replaceFirst(entry.getKey(), entry.getValue());
+			tmp = tmp.replaceAll(entry.getKey(), entry.getValue());
 		}
 
 		for (int i = 0; i < CHINA_DATE_KEYS.length; i++) {
@@ -905,10 +977,10 @@ public class DateUtil {
 		if (tmp.endsWith("-") || tmp.endsWith(":")) {
 			tmp = tmp.substring(0, tmp.length() - 1);
 		}
-		if (StringUtil.isBlank(fmt)) {
+		if (StringUtil.isBlank(format)) {
 			return tmp.toString();
 		}
-		return formatDate(tmp, fmt);
+		return formatDate(tmp, format);
 	}
 
 	/**
@@ -1037,6 +1109,8 @@ public class DateUtil {
 		}
 		// 统一九月的英文
 		dateStr = dateStr.replaceFirst("(?i)Sept\\s", "Sep ");
+		// 统一星期2、星期4的英文
+		dateStr = dateStr.replaceFirst("(?i)Thur\\s", "Thu ").replaceFirst("(?i)Tues\\s", "Tue ");
 		for (int i = 0; i < 7; i++) {
 			dateStr = dateStr.replaceFirst("(?i)" + WEEK_ENGLISH_NAME[i], WEEK_ENGLISH_NAKE[i]);
 		}
@@ -1105,5 +1179,26 @@ public class DateUtil {
 			}
 		}
 		return result;
+	}
+
+	/**
+	 * @TODO 判断是否有纳秒，并处理优化实际精度
+	 * @param nanoTime
+	 * @return
+	 */
+	public static String processNano(int nanoTime) {
+		// 纳秒为零，则到秒级
+		if (nanoTime == 0) {
+			return "";
+		}
+		String nanoStr = StringUtil.addLeftZero2Len("" + nanoTime, 9);
+		// 后6位全为零，则为毫秒
+		if (nanoStr.endsWith("000000")) {
+			nanoStr = nanoStr.substring(0, 3);
+		} // 后3位全为零,则为微秒
+		else if (nanoStr.endsWith("000")) {
+			nanoStr = nanoStr.substring(0, 6);
+		}
+		return "." + nanoStr;
 	}
 }

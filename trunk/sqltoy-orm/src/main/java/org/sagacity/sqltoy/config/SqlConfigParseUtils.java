@@ -417,14 +417,14 @@ public class SqlConfigParseUtils {
 	 * @return
 	 */
 	public static String[] getSqlParamsName(String queryStr, boolean distinct) {
-		Matcher m = SqlToyConstants.SQL_NAMED_PATTERN.matcher(queryStr);
+		Matcher matcher = SqlToyConstants.SQL_NAMED_PATTERN.matcher(queryStr);
 		// 用来替换:paramName
 		List<String> paramsNameList = new ArrayList<String>();
 		HashSet<String> distinctSet = new HashSet<String>();
 		String paramName;
-		while (m.find()) {
+		while (matcher.find()) {
 			// 剔除\\W\\:两位字符
-			paramName = m.group().substring(2).trim();
+			paramName = matcher.group().substring(2).trim();
 			// 去除重复
 			if (distinct) {
 				if (!distinctSet.contains(paramName.toLowerCase())) {
@@ -604,7 +604,7 @@ public class SqlConfigParseUtils {
 		if (null == sqlToyResult.getParamsValue() || sqlToyResult.getParamsValue().length == 0) {
 			return;
 		}
-		String queryStr = sqlToyResult.getSql().toLowerCase();
+		String queryStr = sqlToyResult.getSql();
 		Matcher m = BLANK_PATTERN.matcher(queryStr);
 		int index = 0;
 		int paramCnt = 0;
@@ -636,7 +636,7 @@ public class SqlConfigParseUtils {
 		if (null == sqlToyResult.getParamsValue() || sqlToyResult.getParamsValue().length == 0) {
 			return;
 		}
-		String queryStr = sqlToyResult.getSql().toLowerCase();
+		String queryStr = sqlToyResult.getSql();
 		// @value(?) 或@value(null)
 		Matcher m = VALUE_PATTERN.matcher(queryStr);
 		int index = 0;
@@ -655,8 +655,9 @@ public class SqlConfigParseUtils {
 				paramCnt = StringUtil.matchCnt(queryStr.substring(0, index), ARG_NAME_PATTERN);
 				// 用参数的值直接覆盖@value(:name)
 				paramValue = paramValueList.get(paramCnt - valueCnt);
+				// update 2024-03-03 强化对数组、枚举、日期等类型的输出
+				valueStr = SqlUtil.toSqlString(paramValue, false);
 				// update 2021-11-13 加强@value对应值中存在函数，进行跨数据库适配
-				valueStr = (paramValue == null) ? "null" : paramValue.toString();
 				if (dialect != null && valueStr.contains("(") && valueStr.contains(")")) {
 					valueStr = FunctionUtils.getDialectSql(valueStr, dialect);
 				}
@@ -707,19 +708,19 @@ public class SqlConfigParseUtils {
 		if (null == sqlToyResult.getParamsValue() || sqlToyResult.getParamsValue().length == 0) {
 			return;
 		}
-		String queryStr = sqlToyResult.getSql().toLowerCase();
+		String queryStr = sqlToyResult.getSql();
 		Matcher m = LIKE_PATTERN.matcher(queryStr);
 		int index = 0;
-		String likeParamValue;
 		int paramCnt = 0;
+		String likeValStr;
 		while (m.find()) {
 			index = m.start();
 			paramCnt = StringUtil.matchCnt(queryStr.substring(0, index), ARG_NAME_PATTERN);
-			likeParamValue = (String) sqlToyResult.getParamsValue()[paramCnt];
+			likeValStr = (sqlToyResult.getParamsValue()[paramCnt] == null) ? null
+					: sqlToyResult.getParamsValue()[paramCnt].toString();
 			// 不存在%符号时，前后增加%
-			if (null != likeParamValue && likeParamValue.indexOf("%") == -1) {
-				likeParamValue = "%".concat(likeParamValue).concat("%");
-				sqlToyResult.getParamsValue()[paramCnt] = likeParamValue;
+			if (null != likeValStr && likeValStr.indexOf("%") == -1) {
+				sqlToyResult.getParamsValue()[paramCnt] = "%".concat(likeValStr).concat("%");
 			}
 		}
 	}
@@ -847,7 +848,7 @@ public class SqlConfigParseUtils {
 						overSize = true;
 						partSql = wrapOverSizeInSql(queryStr.substring(start, m.start()), ARG_NAME,
 								inParamArray.length);
-						lastSql.append(" ").append(partSql).append(" ");
+						lastSql.append(BLANK).append(partSql).append(BLANK);
 					} else if (inParamArray.length == 0) {
 						partSql = "null";
 					} else {
@@ -862,10 +863,9 @@ public class SqlConfigParseUtils {
 				// 逗号分隔的条件参数
 				else if (paramsValue[parameterMarkCnt - 1] instanceof String) {
 					argValue = (String) paramsValue[parameterMarkCnt - 1];
-					// update 2023-11-21 增强单个字符串的处理
-					// 1、用逗号进行切割，校验是'xxx','xxxx1'形式或122,233数字形式
-					// 2、'abc'
-					// 3、1111
+					// update 2023-11-21 增强field in (?) 参数值是单个字符串的处理(针对组装参数拼接场景)，避免sql注入
+					// 1、用逗号进行切割，校验是'xxx','xxxx1'或"a","b" 或 122,233 三种形式
+					// 2、无逗号分割：'abc'或"abc"或123 三种形式
 					if (SqlUtil.validateInArg(argValue)) {
 						partSql = argValue;
 						paramValueList.remove(parameterMarkCnt - 1 + incrementIndex);
@@ -930,7 +930,7 @@ public class SqlConfigParseUtils {
 		// 组织条件，not in 为 t.field not in () and t.field not in ()
 		// in 为t.field in () or t.field in ()
 		while (paramsSize > 0) {
-			result.append(" ");
+			result.append(BLANK);
 			if (index > 0) {
 				if (isNotIn) {
 					result.append(" and ");
@@ -1172,7 +1172,8 @@ public class SqlConfigParseUtils {
 			// 判定fast查询引用到第几个位置的with
 			for (int i = withSqlSize - 1; i >= 0; i--) {
 				aliasTableAs = sqlWith.getWithSqlSet().get(i);
-				if (StringUtil.matches(sqlToyConfig.getFastSql(dialect).concat(BLANK), "\\W".concat(aliasTableAs[0]).concat("\\W"))) {
+				if (StringUtil.matches(sqlToyConfig.getFastSql(dialect).concat(BLANK),
+						"\\W".concat(aliasTableAs[0]).concat("\\W"))) {
 					endIndex = i;
 					sqlToyConfig.setFastWithIndex(endIndex);
 					break;

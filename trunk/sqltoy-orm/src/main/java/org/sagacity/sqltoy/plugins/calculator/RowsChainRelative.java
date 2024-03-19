@@ -27,11 +27,14 @@ public class RowsChainRelative {
 	// | 3月 | 香蕉 | 2000 | 环比 | 金额 | 环比 | 收入 | 环比 |
 	// | 3月 | 苹果 | 2000 | 环比 | 金额 | 环比 | 收入 | 环比 |
 	/**
-	 * <rows-chain-relative group-size="3" relative-index="0,1,2"
+	 * <rows-chain-relative group-column="产品" relative-index="0,1"
 	 */
 	public static void process(RowsChainRelativeModel rowsRelative, LabelIndexModel labelIndexMap, List result) {
 		if (result == null || result.size() < 2) {
 			return;
+		}
+		if (rowsRelative.getRelativeColumns() == null || rowsRelative.getRelativeColumns().length == 0) {
+			throw new IllegalArgumentException("行与行的环比计算[rows-chain-relative]没有设置relative-columns具体的环比列!");
 		}
 		int dataSize = result.size();
 		// 5,3-2+0+1
@@ -101,11 +104,11 @@ public class RowsChainRelative {
 			}
 		}
 
-		double divData = 0;
-		double divedData = 0;
+		BigDecimal divData = BigDecimal.ZERO;
+		BigDecimal divedData = BigDecimal.ZERO;
 		int radixSize = rowsRelative.getRadixSize();
 		boolean isIncrement = rowsRelative.isReduceOne();
-		double multiply = rowsRelative.getMultiply();
+		BigDecimal multiply = BigDecimal.valueOf(rowsRelative.getMultiply());
 		// 由下往上排序(第一组数据无需计算)
 		int index;
 		int colIndex;
@@ -115,6 +118,7 @@ public class RowsChainRelative {
 		int divedIndex;
 		List divRowList;
 		List divedRowList;
+		boolean divIsZero;
 		// 逆序(从下到上)
 		if (rowsRelative.isReverse()) {
 			for (int i = end - groupSize; i > start; i = i - groupSize) {
@@ -127,17 +131,29 @@ public class RowsChainRelative {
 					// 对环比列进行数据运算(环比结果列必须是在比较值列的后面第一列)
 					for (int k = 0; k < realRelativeCols.length; k++) {
 						colIndex = realRelativeCols[k];
+						divData = BigDecimal.ZERO;
+						divedData = BigDecimal.ZERO;
 						if (divRowList.get(colIndex) != null) {
-							divData = Double.parseDouble(divRowList.get(colIndex).toString());
+							divData = new BigDecimal(divRowList.get(colIndex).toString());
 						}
 						if (divedRowList.get(colIndex) != null) {
-							divedData = Double.parseDouble(divedRowList.get(colIndex).toString());
+							divedData = new BigDecimal(divedRowList.get(colIndex).toString());
 						}
-						if (divedData == 0) {
-							divRowList.set(colIndex + 1, (divData == 0) ? 0 : defaultValue);
+						if (divedData.equals(BigDecimal.ZERO)) {
+							divIsZero = divData.equals(BigDecimal.ZERO);
+							if (format == null) {
+								divRowList.set(colIndex + 1, divIsZero ? BigDecimal.ZERO : defaultValue);
+							} else {
+								divRowList.set(colIndex + 1,
+										divIsZero ? NumberUtil.format(BigDecimal.ZERO, format) : defaultValue);
+							}
 						} else {
-							value = new BigDecimal(((divData - ((isIncrement) ? divedData : 0)) * multiply) / divedData)
-									.setScale(radixSize, RoundingMode.FLOOR);
+							if (isIncrement) {
+								value = divData.subtract(divedData).multiply(multiply).divide(divedData, radixSize,
+										RoundingMode.FLOOR);
+							} else {
+								value = divData.multiply(multiply).divide(divedData, radixSize, RoundingMode.FLOOR);
+							}
 							if (format == null) {
 								divRowList.set(colIndex + 1, value);
 							} else {
@@ -158,17 +174,29 @@ public class RowsChainRelative {
 					// 对环比列进行数据运算(环比结果列必须是在比较值列的后面第一列)
 					for (int k = 0; k < realRelativeCols.length; k++) {
 						colIndex = realRelativeCols[k];
+						divData = BigDecimal.ZERO;
+						divedData = BigDecimal.ZERO;
 						if (divRowList.get(colIndex) != null) {
-							divData = Double.parseDouble(divRowList.get(colIndex).toString());
+							divData = new BigDecimal(divRowList.get(colIndex).toString());
 						}
 						if (divedRowList.get(colIndex) != null) {
-							divedData = Double.parseDouble(divedRowList.get(colIndex).toString());
+							divedData = new BigDecimal(divedRowList.get(colIndex).toString());
 						}
-						if (divedData == 0) {
-							divRowList.set(colIndex + 1, (divData == 0) ? 0 : defaultValue);
+						if (divedData.equals(BigDecimal.ZERO)) {
+							divIsZero = divData.equals(BigDecimal.ZERO);
+							if (format == null) {
+								divRowList.set(colIndex + 1, divIsZero ? BigDecimal.ZERO : defaultValue);
+							} else {
+								divRowList.set(colIndex + 1,
+										divIsZero ? NumberUtil.format(BigDecimal.ZERO, format) : defaultValue);
+							}
 						} else {
-							value = new BigDecimal(((divData - ((isIncrement) ? divedData : 0)) * multiply) / divedData)
-									.setScale(radixSize, RoundingMode.FLOOR);
+							if (isIncrement) {
+								value = divData.subtract(divedData).multiply(multiply).divide(divedData, radixSize,
+										RoundingMode.FLOOR);
+							} else {
+								value = divData.multiply(multiply).divide(divedData, radixSize, RoundingMode.FLOOR);
+							}
 							if (format == null) {
 								divRowList.set(colIndex + 1, value);
 							} else {

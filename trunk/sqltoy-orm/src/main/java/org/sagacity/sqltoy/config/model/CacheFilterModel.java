@@ -6,13 +6,13 @@ package org.sagacity.sqltoy.config.model;
 import java.io.Serializable;
 
 /**
- * @project sagacity-sqltoy4.2
+ * @project sagacity-sqltoy
  * @description 基于缓存条件筛选的配置模型
  * @author zhongxuchen
  * @version v1.0,Date:2019年1月13日
  */
 public class CacheFilterModel implements Serializable {
-	
+
 	/**
 	 * 
 	 */
@@ -33,7 +33,8 @@ public class CacheFilterModel implements Serializable {
 	 */
 	private String compareType = "eq";
 	
-	
+	private Object[] compareValues;
+
 	/**
 	 * @return the cacheIndex
 	 */
@@ -42,8 +43,7 @@ public class CacheFilterModel implements Serializable {
 	}
 
 	/**
-	 * @param cacheIndex
-	 *            the cacheIndex to set
+	 * @param cacheIndex the cacheIndex to set
 	 */
 	public void setCacheIndex(int cacheIndex) {
 		this.cacheIndex = cacheIndex;
@@ -57,8 +57,7 @@ public class CacheFilterModel implements Serializable {
 	}
 
 	/**
-	 * @param compareParam
-	 *            the compareParam to set
+	 * @param compareParam the compareParam to set
 	 */
 	public void setCompareParam(String compareParam) {
 		this.compareParam = compareParam;
@@ -72,11 +71,19 @@ public class CacheFilterModel implements Serializable {
 	}
 
 	/**
-	 * @param compareType
-	 *            the compareType to set
+	 * @param compareType the compareType to set
 	 */
 	public void setCompareType(String compareType) {
 		this.compareType = compareType;
 	}
 
+	public Object[] getCompareValues() {
+		return compareValues;
+	}
+
+	public void setCompareValues(Object[] compareValues) {
+		this.compareValues = compareValues;
+	}
+
+	
 }

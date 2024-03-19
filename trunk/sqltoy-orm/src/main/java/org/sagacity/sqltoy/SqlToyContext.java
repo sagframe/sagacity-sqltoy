@@ -263,7 +263,7 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * sql格式化输出器
 	 */
 	private SqlFormater sqlFormater;
-	
+
 	/**
 	 * 未匹配的数据库类型分页是否是limit ? offset ? 模式还是 limit ?,? 模式
 	 */
@@ -350,6 +350,16 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * 默认分页一页数据记录量
 	 */
 	private int defaultPageSize = 10;
+	
+	/**
+	 * sql 日志输出时LocalDateTime类型的输出格式
+	 */
+	private String localDateTimeFormat = "yyyy-MM-dd HH:mm:ss";
+
+	/**
+	 * sql 日志输出时LocalTime类型的输出格式
+	 */
+	private String localTimeFormat = "HH:mm:ss";
 
 	/**
 	 * @todo 初始化
@@ -360,13 +370,14 @@ public class SqlToyContext implements ApplicationContextAware {
 		// 加载sqltoy的各类参数,如db2是否要增加with
 		// ur等,详见org/sagacity/sqltoy/sqltoy-default.properties
 		SqlToyConstants.loadProperties(dialectConfig);
+		// 设置保留字
+		ReservedWordsUtil.put(reservedWords);
 		// 初始化dialect对应dbType避免后续并发线程安全
 		DataSourceUtils.initialize();
 		// 初始化默认dataSource
 		initDefaultDataSource();
 		// 设置workerId和dataCenterId,为使用snowflake主键ID产生算法服务
 		SqlToyConstants.setWorkerAndDataCenterId(workerId, dataCenterId, serverId);
-
 		// 初始化脚本加载器
 		scriptLoader.initialize(this.debug, delayCheckSeconds, scriptCheckIntervalSeconds, breakWhenSqlRepeat);
 
@@ -378,12 +389,12 @@ public class SqlToyContext implements ApplicationContextAware {
 		}
 		// 初始化实体对象管理器(此功能已经无实际意义,已经改为即用即加载而非提前加载)
 		entityManager.initialize(this);
-		// 设置保留字
-		ReservedWordsUtil.put(reservedWords);
 		// 设置默认fetchSize
 		SqlToyConstants.FETCH_SIZE = this.fetchSize;
 		SqlToyConstants.executeSqlBlankToNull = this.executeSqlBlankToNull;
 		SqlToyConstants.DEFAULT_PAGE_SIZE = this.defaultPageSize;
+		SqlToyConstants.localDateTimeFormat = this.localDateTimeFormat;
+		SqlToyConstants.localTimeFormat = this.localTimeFormat;
 		// 初始化sql执行统计的基本参数
 		SqlExecuteStat.setDebug(this.debug);
 		SqlExecuteStat.setOverTimeSqlHandler(overTimeSqlHandler);
@@ -1099,4 +1110,17 @@ public class SqlToyContext implements ApplicationContextAware {
 		this.defaultPageOffset = defaultPageOffset;
 	}
 
+	/**
+	 * @param localDateTimeFormat the localDateTimeFormat to set
+	 */
+	public void setLocalDateTimeFormat(String localDateTimeFormat) {
+		this.localDateTimeFormat = localDateTimeFormat;
+	}
+
+	/**
+	 * @param localTimeFormat the localTimeFormat to set
+	 */
+	public void setLocalTimeFormat(String localTimeFormat) {
+		this.localTimeFormat = localTimeFormat;
+	}
 }

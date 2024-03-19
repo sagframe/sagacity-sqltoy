@@ -54,10 +54,20 @@ public class ParallQueryExtend implements Serializable {
 	 * 参数值
 	 */
 	public Object[] values;
-	
+
+	/**
+	 * 是否显示sql
+	 */
+	public Boolean showSql;
+
 	/**
 	 * 取最上面的记录量
 	 */
 	public double topSize = -1;
+
+	/**
+	 * 取随机记录数量
+	 */
+	public double randomSize = -1;
 
 }

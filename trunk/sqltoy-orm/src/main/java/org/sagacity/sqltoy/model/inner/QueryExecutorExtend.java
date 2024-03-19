@@ -17,6 +17,7 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.config.model.FormatModel;
+import org.sagacity.sqltoy.config.model.LinkModel;
 import org.sagacity.sqltoy.config.model.PageOptimize;
 import org.sagacity.sqltoy.config.model.ParamFilterModel;
 import org.sagacity.sqltoy.config.model.SecureMask;
@@ -76,7 +77,7 @@ public class QueryExecutorExtend implements Serializable {
 	 */
 	@Deprecated
 	public RowCallbackHandler rowCallbackHandler;
-
+	
 	/**
 	 * 查询属性值反射处理
 	 */
@@ -113,8 +114,6 @@ public class QueryExecutorExtend implements Serializable {
 	 */
 	public Class[] hiberarchyClasses;
 
-	public Map<Class, IgnoreKeyCaseMap<String, String>> fieldsMap = new HashMap<Class, IgnoreKeyCaseMap<String, String>>();
-
 	/**
 	 * 动态增加缓存翻译配置
 	 */
@@ -124,6 +123,11 @@ public class QueryExecutorExtend implements Serializable {
 	 * 动态设置filters
 	 */
 	public List<ParamsFilter> paramFilters = new ArrayList<ParamsFilter>();
+
+	/**
+	 * 用于对象层次结构封装指定sql中label对应类的属性
+	 */
+	public Map<Class, IgnoreKeyCaseMap<String, String>> fieldsMap = new HashMap<Class, IgnoreKeyCaseMap<String, String>>();
 
 	/**
 	 * 对字段进行安全脱敏
@@ -159,11 +163,6 @@ public class QueryExecutorExtend implements Serializable {
 	public boolean wrappedParamNames = false;
 
 	/**
-	 * 执行时是否输出sql 日志
-	 */
-	public Boolean showSql;
-
-	/**
 	 * 自定义countSql
 	 */
 	public String countSql;
@@ -180,9 +179,18 @@ public class QueryExecutorExtend implements Serializable {
 	public ShardingStrategyConfig dbSharding;
 
 	/**
+	 * 执行时是否输出sql 日志
+	 */
+	public Boolean showSql;
+	/**
 	 * 标记基于单表的简单操作
 	 */
 	public Class entityClass = null;
+
+	/**
+	 * 是否是sql片段(正常无需使用)
+	 */
+	public boolean sqlSegment = false;
 
 	// 分表策略配置
 	public List<ShardingStrategyConfig> tableShardings = new ArrayList<ShardingStrategyConfig>();
@@ -238,4 +246,10 @@ public class QueryExecutorExtend implements Serializable {
 	public Object[] getDataSourceShardingParamsValue() {
 		return dbShardingValues;
 	}
+
+	/**
+	 * @todo 拼换某列,mysql中等同于Broup_concat\oracle 中的WMSWS,HN_CONCAT功能
+	 * @return
+	 */
+	public LinkModel linkModel;
 }

@@ -15,7 +15,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
  * @project sagacity-sqltoy
- * @description sqltoy 字段加解密接口基于RSA的默认实现
+ * @description sqltoy 字段加解密接口RSA默认实现
  * @author zhongxuchen
  * @version v1.0,Date:2021-11-05
  */
@@ -79,7 +79,8 @@ public class FieldsRSASecureProvider implements FieldsSecureProvider {
 			if (StringUtil.isBlank(contents)) {
 				throw new Exception("publicKey文件内容读取失败,请检查配置文件是否编译到classes目录下!");
 			}
-			keyBytes = Base64.getDecoder().decode(contents.trim().replaceAll("\r\n", ""));
+			// FileUtil读取时增加了\r\n,这里去除
+			keyBytes = Base64.getDecoder().decode(contents.trim().replaceAll("\r|\n", ""));
 		} else {
 			keyBytes = Base64.getDecoder().decode(keyStr.trim());
 		}
@@ -99,7 +100,8 @@ public class FieldsRSASecureProvider implements FieldsSecureProvider {
 			if (StringUtil.isBlank(contents)) {
 				throw new Exception("privateKey文件内容读取失败,请检查配置文件是否编译到classes目录下!");
 			}
-			keyBytes = Base64.getDecoder().decode(contents.trim().replaceAll("\r\n", ""));
+			// FileUtil读取时增加了\r\n,这里去除
+			keyBytes = Base64.getDecoder().decode(contents.trim().replaceAll("\r|\n", ""));
 		} else {
 			keyBytes = Base64.getDecoder().decode(keyStr.trim());
 		}

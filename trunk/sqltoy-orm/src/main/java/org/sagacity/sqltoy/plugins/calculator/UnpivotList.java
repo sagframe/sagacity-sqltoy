@@ -17,9 +17,18 @@ import org.sagacity.sqltoy.utils.NumberUtil;
  * @description 对集合进行列转行处理
  * @author zhongxuchen
  * @version v1.0,Date:2020-3-25
+ * @modify {Date:2022-05-11 支持多组列转行 }
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class UnpivotList {
+	/**
+	 * @TODO 对集合进行单组、多组列转行处理
+	 * @param unpivotModel
+	 * @param resultModel   提供label、labelType 进行重写
+	 * @param labelIndexMap sql查询出来的集合:标题 对应 列的map,通过label定义第几列
+	 * @param result
+	 * @return
+	 */
 	public static List process(UnpivotModel unpivotModel, DataSetResult resultModel, LabelIndexModel labelIndexMap,
 			List result) {
 		if (result == null || result.isEmpty()) {
@@ -210,6 +219,7 @@ public class UnpivotList {
 			throw new IllegalArgumentException("unpivot多组列转行new-columns-labels设置错误,1列指标名称+" + groupSize
 					+ "列旋转所得新列,应该设置:" + (1 + groupSize) + " 个列属性名称!格式如:\"季度,最小营业额,最大营业额\"");
 		}
+
 		labelList.add(addIndex, newColsLabels[0]);
 		labelTypeList.add(addIndex, "string");
 		for (int i = 0; i < groupSize; i++) {

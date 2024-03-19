@@ -467,6 +467,10 @@ public class DefaultDialectUtils {
 							rs.insertRow();
 						}
 						this.setResult(result);
+						if (rs != null) {
+							rs.close();
+							rs = null;
+						}
 					}
 				});
 		// 记录不存在首次保存，返回entity自身

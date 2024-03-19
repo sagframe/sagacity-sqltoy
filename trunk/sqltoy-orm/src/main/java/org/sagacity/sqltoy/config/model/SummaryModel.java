@@ -27,17 +27,17 @@ public class SummaryModel implements Serializable {
 	/**
 	 * 求平均是否忽视掉null，举例:{1,3,5,null,9} 结果(1+3+5+9)/4
 	 */
-	private boolean averageSkipNull = false;
+	private boolean aveSkipNull = false;
 
 	/**
 	 * 定义所有需要计算的列
 	 */
-	private String summaryCols;
+	private String sumColumns;
 
 	/**
 	 * 计算平均值的列
 	 */
-	private String averageCols;
+	private String aveColumns;
 
 	/**
 	 * 汇总和平均两个值拼接输出时拼接的字符
@@ -54,11 +54,6 @@ public class SummaryModel implements Serializable {
 	private SummaryGroupMeta[] groupMeta;
 
 	/**
-	 * 全局统计的分组列
-	 */
-	private String groupColumn;
-
-	/**
 	 * 平均值所在位置:top/buttom/left/right 四种模式
 	 */
 	private String sumSite = "top";
@@ -69,6 +64,11 @@ public class SummaryModel implements Serializable {
 	private boolean skipSingleRow = false;
 
 	private RoundingMode[] roundingModes;
+	
+	/**
+	 * 数据是否已经完成分组
+	 */
+	private boolean hasGrouped=true;
 
 	/**
 	 * @return the reverse
@@ -82,20 +82,6 @@ public class SummaryModel implements Serializable {
 	 */
 	public void setReverse(boolean reverse) {
 		this.reverse = reverse;
-	}
-
-	/**
-	 * @return the summaryCols
-	 */
-	public String getSummaryCols() {
-		return summaryCols;
-	}
-
-	/**
-	 * @param summaryCols the summaryCols to set
-	 */
-	public void setSummaryCols(String summaryCols) {
-		this.summaryCols = summaryCols;
 	}
 
 	public Integer[] getRadixSize() {
@@ -147,35 +133,29 @@ public class SummaryModel implements Serializable {
 	public void setLinkSign(String linkSign) {
 		this.linkSign = linkSign;
 	}
-
-	/**
-	 * @return the groupColumn
-	 */
-	public String getGroupColumn() {
-		return groupColumn;
+	
+	public boolean isAveSkipNull() {
+		return aveSkipNull;
 	}
 
-	/**
-	 * @param groupColumn the groupColumn to set
-	 */
-	public void setGroupColumn(String groupColumn) {
-		this.groupColumn = groupColumn;
+	public void setAveSkipNull(boolean aveSkipNull) {
+		this.aveSkipNull = aveSkipNull;
 	}
 
-	public boolean isAverageSkipNull() {
-		return averageSkipNull;
+	public String getSumColumns() {
+		return sumColumns;
 	}
 
-	public void setAverageSkipNull(boolean averageSkipNull) {
-		this.averageSkipNull = averageSkipNull;
+	public void setSumColumns(String sumColumns) {
+		this.sumColumns = sumColumns;
 	}
 
-	public String getAverageCols() {
-		return averageCols;
+	public String getAveColumns() {
+		return aveColumns;
 	}
 
-	public void setAverageCols(String averageCols) {
-		this.averageCols = averageCols;
+	public void setAveColumns(String aveColumns) {
+		this.aveColumns = aveColumns;
 	}
 
 	public RoundingMode[] getRoundingModes() {
@@ -193,4 +173,13 @@ public class SummaryModel implements Serializable {
 	public void setSkipSingleRow(boolean skipSingleRow) {
 		this.skipSingleRow = skipSingleRow;
 	}
+
+	public boolean isHasGrouped() {
+		return hasGrouped;
+	}
+
+	public void setHasGrouped(boolean hasGrouped) {
+		this.hasGrouped = hasGrouped;
+	}
+	
 }

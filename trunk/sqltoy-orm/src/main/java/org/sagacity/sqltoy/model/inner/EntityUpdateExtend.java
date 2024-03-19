@@ -44,6 +44,16 @@ public class EntityUpdateExtend implements Serializable {
 	public Boolean blankToNull;
 
 	/**
+	 * 跳过不存在的字段设置
+	 */
+	public Boolean skipNotExistColumn = false;
+
+	/**
+	 * 是否输出sql日志
+	 */
+	public Boolean showSql;
+
+	/**
 	 * update 的字段名称和对应的值
 	 */
 	public IgnoreCaseLinkedMap<String, Object> updateValues = new IgnoreCaseLinkedMap<String, Object>();

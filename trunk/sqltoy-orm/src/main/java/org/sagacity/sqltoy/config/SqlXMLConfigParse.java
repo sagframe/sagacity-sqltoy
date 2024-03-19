@@ -55,7 +55,7 @@ import org.w3c.dom.NodeList;
 
 /**
  * @project sagacity-sqltoy
- * @description 解析sql配置文件，不要纠结于xml解析的方式,后期已经部分使用xmlutil,但显式的解析更加清晰
+ * @description 解析sql配置文件
  * @author zhongxuchen
  * @version v1.0,Date:2009-12-14
  * @modify Date:2011-8-30 {增加sql文件设置数据库类别功能，优化解决跨数据库sql文件的配置方式}
@@ -156,7 +156,6 @@ public class SqlXMLConfigParse {
 		InputStream fileIS = null;
 		List<String> repeatSql = new ArrayList<String>();
 		try {
-			boolean isDebug = logger.isDebugEnabled();
 			String sqlFile;
 			if (xmlFile instanceof File) {
 				File file = (File) xmlFile;
@@ -167,12 +166,7 @@ public class SqlXMLConfigParse {
 				sqlFile = (String) xmlFile;
 				fileIS = getResourceAsStream(sqlFile);
 			}
-			String logStr = "正在解析".concat((index != -1) ? "第:[" + index + "]个" : "").concat("sql文件:").concat(sqlFile);
-			if (isDebug) {
-				logger.debug(logStr);
-			} else {
-				out.println(logStr);
-			}
+			logger.debug("正在解析".concat((index != -1) ? "第:[" + index + "]个" : "").concat("sql文件:").concat(sqlFile));
 			if (fileIS != null) {
 				domFactory.setFeature(SqlToyConstants.XML_FETURE, false);
 				DocumentBuilder domBuilder = domFactory.newDocumentBuilder();
@@ -403,6 +397,10 @@ public class SqlXMLConfigParse {
 			// 最大并行等待时长(秒)
 			if (pageOptimize.hasAttribute("parallel-maxwait-seconds")) {
 				optimize.parallelMaxWaitSeconds(Long.parseLong(pageOptimize.getAttribute("parallel-maxwait-seconds")));
+			}
+			// 是否跳过0条总记录的缓存
+			if (pageOptimize.hasAttribute("skip-zero-count")) {
+				optimize.skipZeroCount(Boolean.parseBoolean(pageOptimize.getAttribute("skip-zero-count")));
 			}
 			sqlToyConfig.setPageOptimize(optimize);
 		}
@@ -951,18 +949,26 @@ public class SqlXMLConfigParse {
 			if (nodeList.getLength() > 0) {
 				CacheFilterModel[] cacheFilterModels = new CacheFilterModel[nodeList.getLength()];
 				Element cacheFilter;
+				String compareParam;
+				String split;
 				for (int i = 0; i < nodeList.getLength(); i++) {
 					cacheFilter = (Element) nodeList.item(i);
 					CacheFilterModel cacheFilterModel = new CacheFilterModel();
 					// 对比列
 					cacheFilterModel.setCacheIndex(Integer.parseInt(cacheFilter.getAttribute("cache-index")));
 					// 对比条件参数(有可能本身就是一个值)
-					cacheFilterModel.setCompareParam(cacheFilter.getAttribute("compare-param").toLowerCase());
-					// 非数字，如是参数名称，加入到arg中，便于统一提取参数属性对应的值
-					if (!NumberUtil.isNumber(cacheFilterModel.getCompareParam())
-							&& !"true".equals(cacheFilterModel.getCompareParam())
-							&& !"false".equals(cacheFilterModel.getCompareParam())) {
-						sqlToyConfig.addCacheArgParam(cacheFilterModel.getCompareParam());
+					compareParam = cacheFilter.getAttribute("compare-param").toLowerCase();
+					// 纯粹的一个数值集合
+					if (cacheFilter.hasAttribute("split")) {
+						split = cacheFilter.getAttribute("split");
+						cacheFilterModel.setCompareValues(StringUtil.splitRegex(compareParam, split, true));
+					} else {
+						cacheFilterModel.setCompareParam(compareParam);
+						// 非数字，如是参数名称，加入到arg中，便于统一提取参数属性对应的值
+						if (!NumberUtil.isNumber(compareParam) && !"true".equals(compareParam)
+								&& !"false".equals(compareParam)) {
+							sqlToyConfig.addCacheArgParam(compareParam);
+						}
 					}
 					if (cacheFilter.hasAttribute("compare-type")) {
 						cacheFilterModel.setCompareType(cacheFilter.getAttribute("compare-type").toLowerCase());
@@ -1171,9 +1177,11 @@ public class SqlXMLConfigParse {
 		}
 		// update 2021-10-15 支持多列
 		if (link.hasAttribute("id-columns")) {
-			linkModel.setIdColumns(trimParams(link.getAttribute("id-columns").split("\\,")));
+			linkModel.setGroupColumns(trimParams(link.getAttribute("id-columns").split("\\,")));
+		} else if (link.hasAttribute("group-columns")) {
+			linkModel.setGroupColumns(trimParams(link.getAttribute("group-columns").split("\\,")));
 		} else if (link.hasAttribute("id-column")) {
-			linkModel.setIdColumns(trimParams(link.getAttribute("id-column").split("\\,")));
+			linkModel.setGroupColumns(trimParams(link.getAttribute("id-column").split("\\,")));
 		}
 		if (link.hasAttribute("sign")) {
 			linkModel.setSign(link.getAttribute("sign"));
@@ -1328,15 +1336,19 @@ public class SqlXMLConfigParse {
 					if (elt.hasAttribute("reverse")) {
 						summaryModel.setReverse(Boolean.parseBoolean(elt.getAttribute("reverse")));
 					}
+					// 是否已经完成数据分组组织(默认为true)
+					if (elt.hasAttribute("has-grouped")) {
+						summaryModel.setHasGrouped(Boolean.parseBoolean(elt.getAttribute("has-grouped")));
+					}
 					// 汇总合计涉及的列
 					if (elt.hasAttribute("sum-columns")) {
-						summaryModel.setSummaryCols(elt.getAttribute("sum-columns").toLowerCase());
+						summaryModel.setSumColumns(elt.getAttribute("sum-columns").toLowerCase());
 					} else if (elt.hasAttribute("columns")) {
-						summaryModel.setSummaryCols(elt.getAttribute("columns").toLowerCase());
+						summaryModel.setSumColumns(elt.getAttribute("columns").toLowerCase());
 					}
 					// 计算平均值的列
 					if (elt.hasAttribute("average-columns")) {
-						summaryModel.setAverageCols(elt.getAttribute("average-columns").toLowerCase());
+						summaryModel.setAveColumns(elt.getAttribute("average-columns").toLowerCase());
 					}
 					// 保留小数点位数(2022-2-23 扩展成数组，便于给不同平均值列设置不同的小数位)
 					if (elt.hasAttribute("average-radix-sizes")) {
@@ -1378,7 +1390,7 @@ public class SqlXMLConfigParse {
 					}
 					// 求平均时是否过滤掉null的记录
 					if (elt.hasAttribute("average-skip-null")) {
-						summaryModel.setAverageSkipNull(Boolean.parseBoolean(elt.getAttribute("average-skip-null")));
+						summaryModel.setAveSkipNull(Boolean.parseBoolean(elt.getAttribute("average-skip-null")));
 					}
 					// 单行数据是否需要进行分组汇总计算
 					if (elt.hasAttribute("skip-single-row")) {
@@ -1427,6 +1439,18 @@ public class SqlXMLConfigParse {
 							}
 							if (groupElt.hasAttribute("label-column")) {
 								groupMeta.setLabelColumn(groupElt.getAttribute("label-column"));
+							}
+							// 分组排序
+							// order-column="" order-way="desc|asc" order-with-sum="true"
+							if (groupElt.hasAttribute("order-column")) {
+								groupMeta.setOrderColumn(groupElt.getAttribute("order-column"));
+								if (groupElt.hasAttribute("order-way")) {
+									groupMeta.setOrderWay(groupElt.getAttribute("order-way"));
+								}
+								if (groupElt.hasAttribute("order-with-sum")) {
+									groupMeta.setOrderWithSum(
+											Boolean.parseBoolean(groupElt.getAttribute("order-with-sum")));
+								}
 							}
 							groupMetaList.add(groupMeta);
 						}

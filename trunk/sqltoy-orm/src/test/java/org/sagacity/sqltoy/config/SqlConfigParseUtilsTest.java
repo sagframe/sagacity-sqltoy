@@ -118,6 +118,20 @@ public class SqlConfigParseUtilsTest {
 	}
 
 	@Test
+	public void testIn() throws Exception {
+		ArrayList ids = new ArrayList();
+		ids.add("'1001','1002'");
+		//ids.add("'1002'");
+		ArrayList teamIds = new ArrayList();
+		teamIds.add("T001");
+		String sql = "select * from table where id in (:organIds) and status=:status";
+		//''1001','1002''
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "organIds", "status"},
+				new Object[] { ids, "1" });
+		System.err.println(result.getSql());
+	}
+
+	@Test
 	public void testOptSign() throws Exception {
 		String sql = "select * from table where #[id=id+:id ]#[and name like :name] #[and status=:status]";
 		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "id", "name", "status" },

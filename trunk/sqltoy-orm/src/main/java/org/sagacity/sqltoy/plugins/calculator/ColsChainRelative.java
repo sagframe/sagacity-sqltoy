@@ -43,13 +43,13 @@ public class ColsChainRelative {
 		CollectionUtil.sortArray(relativeIndexs, true);
 
 		int relativeSize = relativeIndexs.length;
-		double divData;
-		double divedData;
+		BigDecimal divData;
+		BigDecimal divedData;
 		int radixSize = relativeModel.getRadixSize();
 		boolean isIncrement = relativeModel.isReduceOne();
 		int divIndex;
 		int divedIndex;
-		double multiply = relativeModel.getMultiply();
+		BigDecimal multiply = BigDecimal.valueOf(relativeModel.getMultiply());
 		// 输出格式
 		String format = relativeModel.getFormat();
 		List rowList;
@@ -90,6 +90,7 @@ public class ColsChainRelative {
 		}
 		BigDecimal value;
 		String defaultValue = relativeModel.getDefaultValue();
+		boolean divIsZero;
 		for (int i = end; i > start; i = i - groupSize) {
 			for (int j = 0; j < dataSize; j++) {
 				rowList = (List) result.get(j);
@@ -104,25 +105,40 @@ public class ColsChainRelative {
 							rowList.set(divIndex + 1, defaultValue);
 						}
 					} else {
-						divData = 0;
-						divedData = 0;
+						divData = BigDecimal.ZERO;
+						divedData = BigDecimal.ZERO;
 						if (rowList.get(divIndex) != null) {
-							divData = Double.valueOf(rowList.get(divIndex).toString());
+							divData = new BigDecimal(rowList.get(divIndex).toString());
 						}
 						if (rowList.get(divedIndex) != null) {
-							divedData = Double.valueOf(rowList.get(divedIndex).toString());
+							divedData = new BigDecimal(rowList.get(divedIndex).toString());
 						}
-						if (divedData == 0) {
+						if (divedData.equals(BigDecimal.ZERO)) {
+							divIsZero = divData.equals(BigDecimal.ZERO);
 							// 插入(8-3+2+2)
 							if (isAppend) {
-								rowList.add(divIndex + 1, (divData == 0) ? 0 : defaultValue);
+								if (format == null) {
+									rowList.add(divIndex + 1, divIsZero ? BigDecimal.ZERO : defaultValue);
+								} else {
+									rowList.add(divIndex + 1,
+											divIsZero ? NumberUtil.format(BigDecimal.ZERO, format) : defaultValue);
+								}
 							} else// (11-4+3+1)
 							{
-								rowList.set(divIndex + 1, (divData == 0) ? 0 : defaultValue);
+								if (format == null) {
+									rowList.set(divIndex + 1, divIsZero ? BigDecimal.ZERO : defaultValue);
+								} else {
+									rowList.set(divIndex + 1,
+											divIsZero ? NumberUtil.format(BigDecimal.ZERO, format) : defaultValue);
+								}
 							}
 						} else {
-							value = new BigDecimal(((divData - ((isIncrement) ? divedData : 0)) * multiply) / divedData)
-									.setScale(radixSize, RoundingMode.FLOOR);
+							if (isIncrement) {
+								value = divData.subtract(divedData).multiply(multiply).divide(divedData, radixSize,
+										RoundingMode.FLOOR);
+							} else {
+								value = divData.multiply(multiply).divide(divedData, radixSize, RoundingMode.FLOOR);
+							}
 							if (isAppend) {
 								rowList.add(divIndex + 1, format == null ? value : NumberUtil.format(value, format));
 							} else {

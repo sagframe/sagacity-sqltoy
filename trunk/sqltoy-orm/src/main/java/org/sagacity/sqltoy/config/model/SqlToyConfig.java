@@ -172,7 +172,7 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	 * 解密字段
 	 */
 	private IgnoreCaseSet decryptColumns;
-	
+
 	/**
 	 * sql中是否包含@include(sqlId) sql片段嵌入
 	 */
@@ -204,7 +204,7 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	private PageOptimize pageOptimize;
 
 	/**
-	 * debug模式下是否打印，通过sql注释中增加#not_print#或 #not_debug#进行关闭
+	 * 是否打印输出sql，通过sql注释中增加#not_print#或 #not_debug#进行关闭
 	 */
 	private Boolean showSql;
 
@@ -283,7 +283,7 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	}
 
 	/**
-	 * @param hasFastPage the hasFastPage to set
+	 * @param hasFast the hasFastPage to set
 	 */
 	public void setHasFast(boolean hasFast) {
 		this.hasFast = hasFast;
@@ -318,7 +318,7 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	}
 
 	/**
-	 * @param filterMap the filterMap to set
+	 * @param paramFilters the filterMap to set
 	 */
 	public void addFilters(List<ParamFilterModel> paramFilters) {
 		if (paramFilters != null && !paramFilters.isEmpty()) {
@@ -571,6 +571,7 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 		this.formatModels = formatModels;
 	}
 
+	@Override
 	public SqlToyConfig clone() {
 		try {
 			return (SqlToyConfig) super.clone();
@@ -631,7 +632,7 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 
 	/**
 	 * @TODO 根据方言生成不同的sql语句
-	 * @param type 如:sql、fastPage等
+	 * @param type       如:sql、fastPage等
 	 * @param sqlContent
 	 * @param dialect
 	 * @return

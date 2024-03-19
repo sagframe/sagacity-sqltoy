@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
  * @version v1.0,Date:2014年12月26日
  */
 public class SqlToyConstants {
+
 	/**
 	 * 定义日志
 	 */
@@ -46,10 +47,10 @@ public class SqlToyConstants {
 		}
 	};
 
-	public static final String DEFAULT_NULL = "_SQLTOY_NULL_FLAG";
-
 	// 目前还不支持此功能的提醒
 	public static String UN_SUPPORT_MESSAGE = "This feature is currently not supported!";
+
+	public static final String DEFAULT_NULL = "_SQLTOY_NULL_FLAG";
 
 	public static String UN_MATCH_DIALECT_MESSAGE = "Failed to correctly match the corresponding database dialect!";
 
@@ -136,22 +137,23 @@ public class SqlToyConstants {
 	public static int FETCH_SIZE = -1;
 
 	/**
+	 * 默认一页数据条数
+	 */
+	public static int DEFAULT_PAGE_SIZE = 10;
+
+	/**
 	 * 变更操作型sql空白默认转为null
 	 */
 	public static boolean executeSqlBlankToNull = true;
 
 	/**
-	 * 默认一页记录数量
+	 * 分页中间表名称
 	 */
-	public static int DEFAULT_PAGE_SIZE = 10;
+	public static String INTERMEDIATE_TABLE = "SAG_INTERMEDIATE_TABLE";
+	public static String INTERMEDIATE_TABLE1 = "SAG_INTERMEDIATE_TABLE1";
 
 	/**
-	 * 判断sql中是否存在@include(sqlId)的表达式
-	 */
-	public final static Pattern INCLUDE_PATTERN = Pattern.compile("(?i)\\@include\\([\\w\\W]*\\)");
-
-	/**
-	 * 字符串中内嵌参数的匹配模式(update 2021-10-13 支持中文)
+	 * 字符串中内嵌参数的匹配模式
 	 */
 	public final static Pattern paramPattern = Pattern.compile(
 			"\\$\\{\\s*[0-9a-zA-Z\u4e00-\u9fa5]+((\\.|\\_)[0-9a-zA-Z\u4e00-\u9fa5]+)*(\\[\\d*(\\,)?\\d*\\])?\\s*\\}");
@@ -159,8 +161,9 @@ public class SqlToyConstants {
 	// update 2020-9-16 将\\W 替换为[^A-Za-z0-9_:] 增加排除: 适应::jsonb 这种模式场景
 	// update 2021-10-13 增加参数名称为中文场景(应对一些极为不规范的项目场景)
 	// update 2023-8-17 增加支持:itemSet[0].paramName 模式(之前只支持:itemSet[0])
+	// update 2023-12-19 替换为 [^A-Za-z0-9:],将下划线放开
 	public final static Pattern SQL_NAMED_PATTERN = Pattern.compile(
-			"[^A-Za-z0-9_:\u4e00-\u9fa5]\\:\\s*[a-zA-Z\u4e00-\u9fa5][a-zA-Z0-9_\u4e00-\u9fa5]*(\\.[\\w\u4e00-\u9fa5]+)*(\\[\\d+\\](\\.[a-zA-Z0-9_\u4e00-\u9fa5]+)*)?\\s?");
+			"[^A-Za-z0-9:\u4e00-\u9fa5]\\:\\s*[a-zA-Z\u4e00-\u9fa5][a-zA-Z0-9_\u4e00-\u9fa5]*(\\.[\\w\u4e00-\u9fa5]+)*(\\[\\d+\\](\\.[a-zA-Z0-9_\u4e00-\u9fa5]+)*)?\\s?");
 	public final static Pattern NOSQL_NAMED_PATTERN = Pattern.compile(
 			"(?i)\\@(param|blank|value)?\\(\\s*\\:\\s*[a-zA-Z\u4e00-\u9fa5][a-zA-Z0-9_\u4e00-\u9fa5]*(\\.[\\w\u4e00-\u9fa5]+)*(\\[\\d+\\](\\.[a-zA-Z0-9_\u4e00-\u9fa5]+)*)?\\s*\\)");
 
@@ -175,6 +178,9 @@ public class SqlToyConstants {
 	public final static Pattern otherWithPattern = Pattern.compile(
 			"(?i)\\s*\\,\\s*([a-z]+\\s+)?[a-z|0-9|\\_]+\\s*(\\([a-z|0-9|\\_|\\s|\\,]+\\))?\\s+as\\s*(\\s+[a-z|\\_]+){0,2}\\s*\\(");
 
+	// 以空白结尾
+	public final static Pattern BLANK_END = Pattern.compile("\\s$");
+
 	/**
 	 * 不输出sql的表达式
 	 */
@@ -186,8 +192,25 @@ public class SqlToyConstants {
 	 */
 	public final static Pattern IGNORE_EMPTY_REGEX = Pattern.compile("(?i)\\#ignore_all_null_set\\#");
 
-	// 以空白结尾
-	public final static Pattern BLANK_END = Pattern.compile("\\s$");
+	/**
+	 * 判断sql中是否存在@include(sqlId)的表达式
+	 */
+	public final static Pattern INCLUDE_PATTERN = Pattern.compile("(?i)\\@include\\([\\w\\W]*\\)");
+	// @include(:sqlScriptParamName) 模式(2023-08-19)
+	public final static Pattern INCLUDE_PARAM_PATTERN = Pattern
+			.compile("(?i)\\@include\\(\\s*\\:\\s*[a-zA-Z\u4e00-\u9fa5][a-zA-Z0-9_\u4e00-\u9fa5]*[\\w\\W]*\\)");
+	// 标记分页或取随机记录原始sql的标记，便于sql interceptor加工处理快速定位
+	public final static String MARK_ORIGINAL_START = " /*-- sqltoy_original_mark_start --*/ ";
+	public final static String MARK_ORIGINAL_END = " /*-- sqltoy_original_mark_end --*/ ";
+
+	public final static String MERGE_ALIAS_ON = ") tv on (";
+	public final static String MERGE_ALIAS_ON_REGEX = "\\)\\s+tv\\s+on\\s+\\(";
+	public final static String MERGE_UPDATE = " when matched then update set ";
+	public final static String MERGE_INSERT = " when not matched then insert ";
+
+	public static String localDateTimeFormat;
+
+	public static String localTimeFormat;
 
 	/**
 	 * @todo 解析模板中的参数
@@ -288,7 +311,7 @@ public class SqlToyConstants {
 	public static boolean oraclePageIgnoreOrder() {
 		return Boolean.parseBoolean(getKeyValue("sqltoy.oracle.page.ignore.order", "false"));
 	}
-
+	
 	/**
 	 * @todo 取随机记录是否采用数据库自带的方言机制
 	 * @return
@@ -362,7 +385,7 @@ public class SqlToyConstants {
 	public static String getDefaultValue(Integer dbType, String defaultValue) {
 		String realDefault = getKeyValue(defaultValue);
 		if (realDefault == null) {
-			if (defaultValue.toUpperCase().equals("CURRENT TIMESTAMP")) {
+			if ("CURRENT TIMESTAMP".equals(defaultValue.toUpperCase())) {
 				return "CURRENT_TIMESTAMP";
 			}
 			return defaultValue;
@@ -378,7 +401,7 @@ public class SqlToyConstants {
 	}
 
 	/**
-	 * @todo 替换变量参数
+	 * @todo 替换模板中${paramName}变量参数,目前仅用于nosql部分的解析
 	 * @param template
 	 * @return
 	 */
