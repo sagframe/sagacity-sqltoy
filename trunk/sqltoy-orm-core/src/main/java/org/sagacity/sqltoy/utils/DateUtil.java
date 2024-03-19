@@ -799,6 +799,11 @@ public class DateUtil {
 		return getDayOfMonth(dateValue);
 	}
 
+	/**
+	 * @TODO 获取当月中的第几天(1~31)
+	 * @param dateValue
+	 * @return
+	 */
 	public static int getDayOfMonth(Object dateValue) {
 		if (dateValue == null) {
 			return LocalDate.now().getDayOfMonth();
