@@ -35,7 +35,7 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
 # 最新版本 
-* 5.6.1 LTS (jdk17+/springboot3.x)/5.6.1.jre8 (解耦跟spring的强绑定关系，兼容5.2.x/5.3.x版本)      发版日期: 2024-3-15
+* 5.6.2 LTS (jdk17+/springboot3.x)/5.6.1.jre8 (解耦跟spring的强绑定关系，兼容5.2.x/5.3.x版本)      发版日期: 2024-3-20
 ```xml
 <dependency>
 	<groupId>com.sagframe</groupId>
