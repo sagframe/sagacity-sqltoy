@@ -286,13 +286,11 @@ public class SqlExecuteStat {
 		// 补空的目的在于迎合匹配规则
 		Matcher matcher = ARG_PATTERN.matcher(sql.concat(" "));
 		int start = 0;
-		int end;
 		int index = 0;
 		int paramSize = params.length;
 		// 逐个查找?用实际参数值进行替换
 		while (matcher.find(start)) {
-			end = matcher.start() + 1;
-			lastSql.append(sql.substring(start, end));
+			lastSql.append(sql.substring(start, matcher.start() + 1));
 			if (index < paramSize) {
 				lastSql.append(SqlUtil.toSqlString(params[index], true));
 			} else {
