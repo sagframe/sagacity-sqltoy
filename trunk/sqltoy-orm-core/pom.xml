@@ -21,9 +21,9 @@
 		<junit-platform.version>1.10.2</junit-platform.version>
 		<slf4j.version>2.0.12</slf4j.version>
 		<h2.version>2.2.224</h2.version>
-		<lombok.version>1.18.30</lombok.version>
+		<lombok.version>1.18.32</lombok.version>
 		<taos-jdbcdriver.version>3.2.8</taos-jdbcdriver.version>
-		<druid.version>1.2.21</druid.version>
+		<druid.version>1.2.22</druid.version>
 		<transmittable-thread-local>2.14.5</transmittable-thread-local>
 	</properties>
 	<licenses>
