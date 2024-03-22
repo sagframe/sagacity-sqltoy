@@ -2021,7 +2021,7 @@ public class DialectFactory {
 							int inCount = (inParamsValue == null) ? 0 : inParamsValue.length;
 							int outCount = (outParamsType == null) ? 0 : outParamsType.length;
 							// sql中问号数量
-							int paramCnt = StringUtil.matchCnt(dialectSql, ARG_PATTERN);
+							int paramCnt = StringUtil.matchCnt(dialectSql, ARG_PATTERN,0);
 							// 处理参数注入
 							if (paramCnt != inCount + outCount) {
 								throw new IllegalArgumentException("存储过程语句中的输入和输出参数跟实际调用传递的数量不等!");
