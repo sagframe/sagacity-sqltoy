@@ -348,6 +348,7 @@ public class DialectUtils {
 		String lastCountSql;
 		int paramCnt = 0;
 		int withParamCnt = 0;
+		int orderByParamsCnt = 0;
 		// 通过配置直接给定的最优化count 语句
 		if (isLastSql) {
 			lastCountSql = sql;
@@ -375,22 +376,28 @@ public class DialectUtils {
 				sql_from_index = StringUtil.getSymMarkMatchIndex(SELECT_REGEX, FROM_REGEX, query_tmp.toLowerCase(), 0);
 			}
 			// 剔除order提高运行效率
-			int orderByIndex = StringUtil.matchLastIndex(query_tmp, ORDER_BY_PATTERN);
+			int orderByIndex = StringUtil.matchLastIndex(query_tmp, ORDER_BY_PATTERN, 1);
 			// order by 在from 之后
 			if (orderByIndex > sql_from_index) {
+				String orderBySql = null;
 				// 剔除order by 语句
 				if (orderByIndex > lastBracketIndex) {
+					orderBySql = query_tmp.substring(orderByIndex + 1);
 					query_tmp = query_tmp.substring(0, orderByIndex + 1);
 				} else {
 					// 剔除掉order by 后面语句对称的() 内容
 					String orderJudgeSql = clearDisturbSql(query_tmp.substring(orderByIndex + 1));
 					// 在order by 不在子查询内,说明可以整体切除掉order by
 					if (orderJudgeSql.indexOf(")") == -1) {
+						orderBySql = query_tmp.substring(orderByIndex + 1);
 						query_tmp = query_tmp.substring(0, orderByIndex + 1);
 					}
 				}
+				if (null != orderBySql) {
+					orderByParamsCnt = getParamsCount(orderBySql);
+				}
 			}
-			int groupIndex = StringUtil.matchLastIndex(query_tmp, GROUP_BY_PATTERN);
+			int groupIndex = StringUtil.matchLastIndex(query_tmp, GROUP_BY_PATTERN, 1);
 			// 判断group by 是否是内层，如select * from (select * from table group by)
 			// 外层group by 必须要进行包裹(update by chenrenfei 2016-4-21)
 			boolean isInnerGroup = false;
@@ -429,14 +436,16 @@ public class DialectUtils {
 			countQueryStr.insert(0, withSql + " ");
 			lastCountSql = countQueryStr.toString();
 		}
-		final int paramCntFin = paramCnt;
-		final int withParamCntFin = withParamCnt;
-		Object[] realParamsTemp = null;
-		if (paramsValue != null) {
-			// 将from前的参数剔除
-			realParamsTemp = isLastSql ? paramsValue
-					: CollectionUtil.subtractArray(paramsValue, withParamCntFin,
-							paramsValue.length - paramCntFin - withParamCntFin);
+		Object[] realParamsTemp = paramsValue;
+		if (realParamsTemp != null && !isLastSql) {
+			// 剔除order by 语句中的参数对应的值
+			if (orderByParamsCnt > 0) {
+				realParamsTemp = CollectionUtil.subtractArray(realParamsTemp, realParamsTemp.length - orderByParamsCnt,
+						orderByParamsCnt);
+			}
+			// 将select from之间语句中的参数剔除
+			realParamsTemp = CollectionUtil.subtractArray(realParamsTemp, withParamCnt,
+					realParamsTemp.length - withParamCnt - paramCnt);
 		}
 		final Object[] realParams = realParamsTemp;
 		// 做sql签名
@@ -2886,7 +2895,7 @@ public class DialectUtils {
 		String sql = SqlConfigParseUtils.clearDblQuestMark(queryStr);
 		// 判断sql中参数模式，?或:named 模式，两种模式不可以混合使用
 		if (sql.indexOf(SqlConfigParseUtils.ARG_NAME) == -1) {
-			return StringUtil.matchCnt(sql, SqlToyConstants.SQL_NAMED_PATTERN);
+			return StringUtil.matchCnt(sql, SqlToyConstants.SQL_NAMED_PATTERN, 1);
 		}
 		return StringUtil.matchCnt(sql, SqlConfigParseUtils.ARG_REGEX);
 	}

@@ -1,5 +1,7 @@
 package org.sagacity.sqltoy.utils;
 
+import java.sql.Time;
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -192,20 +194,20 @@ public class MongoElasticUtils {
 					.concat(BLANK);
 			tailSql = queryStr.substring(endMarkIndex + endMarkLength);
 			// 获取#[]中的参数数量
-			paramCnt = StringUtil.matchCnt(markContentSql, namedPattern);
+			paramCnt = StringUtil.matchCnt(markContentSql, namedPattern, sqlMode ? 1 : 0);
 			// #[]中无参数，拼接preSql+markContentSql+tailSql
 			if (paramCnt == 0) {
 				queryStr = preSql.concat(BLANK).concat(tailSql);
 			} else {
 				// 在#[前的参数个数
-				preParamCnt = StringUtil.matchCnt(preSql, namedPattern);
+				preParamCnt = StringUtil.matchCnt(preSql, namedPattern, sqlMode ? 1 : 0);
 				logicValue = true;
 				start = markContentSql.toLowerCase().indexOf("@if(");
 				// sql中存在逻辑判断
 				if (start > -1) {
 					end = StringUtil.getSymMarkIndex("(", ")", markContentSql, start);
 					evalStr = BLANK.concat(markContentSql.substring(markContentSql.indexOf("(", start) + 1, end));
-					logicParamCnt = StringUtil.matchCnt(evalStr, namedPattern);
+					logicParamCnt = StringUtil.matchCnt(evalStr, namedPattern, sqlMode ? 1 : 0);
 					// update 2017-4-14 增加@if()简单逻辑判断
 					logicValue = MacroIfLogic.evalLogic(evalStr, paramValuesList, preParamCnt, logicParamCnt);
 					// 逻辑不成立,剔除sql和对应参数
@@ -288,7 +290,7 @@ public class MongoElasticUtils {
 				paramValueList = CollectionUtil.arrayToList(sqlToyResult.getParamsValue());
 			}
 			index = m.start();
-			paramCnt = StringUtil.matchCnt(queryStr.substring(0, index), SqlToyConstants.SQL_NAMED_PATTERN);
+			paramCnt = StringUtil.matchCnt(queryStr.substring(0, index), SqlToyConstants.SQL_NAMED_PATTERN, 1);
 			// 剔除参数@blank(?) 对应的参数值
 			paramValueList.remove(paramCnt - blankCnt);
 			blankCnt++;
@@ -320,7 +322,7 @@ public class MongoElasticUtils {
 				paramValueList = CollectionUtil.arrayToList(sqlToyResult.getParamsValue());
 			}
 			index = m.start();
-			paramCnt = StringUtil.matchCnt(queryStr.substring(0, index), SqlToyConstants.SQL_NAMED_PATTERN);
+			paramCnt = StringUtil.matchCnt(queryStr.substring(0, index), SqlToyConstants.SQL_NAMED_PATTERN, 1);
 			// 用参数的值直接覆盖@value(:name)
 			paramValue = paramValueList.get(paramCnt - valueCnt);
 			sqlToyResult.setSql(sqlToyResult.getSql().replaceFirst(VALUE_REGEX,
@@ -384,6 +386,9 @@ public class MongoElasticUtils {
 		boolean isAry = false;
 		Object[] ary = null;
 		int i;
+		String timeStr;
+		int nanoValue;
+		Object itemVar;
 		while (m.find()) {
 			groupStr = m.group();
 			realMql.append(sql.substring(start, m.start()));
@@ -404,21 +409,43 @@ public class MongoElasticUtils {
 					realMql.append("[");
 				}
 				i = 0;
-				for (Object var : ary) {
+				for (Object item : ary) {
 					if (i > 0) {
 						realMql.append(",");
 					}
-					if (var instanceof Number) {
-						realMql.append(var.toString());
-					} else if ((var instanceof Date) || (var instanceof LocalDateTime)) {
-						realMql.append(charSign).append(DateUtil.formatDate(var, "yyyy-MM-dd HH:mm:ss"))
-								.append(charSign);
-					} else if ((var instanceof LocalDate)) {
-						realMql.append(charSign).append(DateUtil.formatDate(var, "yyyy-MM-dd")).append(charSign);
-					} else if ((var instanceof LocalTime)) {
-						realMql.append(charSign).append(DateUtil.formatDate(var, "HH:mm:ss")).append(charSign);
+					if (item instanceof Enum) {
+						itemVar = BeanUtil.getEnumValue(item);
 					} else {
-						realMql.append(charSign).append(removeDangerWords(var.toString())).append(charSign);
+						itemVar = item;
+					}
+					if (itemVar instanceof Number) {
+						realMql.append(itemVar.toString());
+					} else if (itemVar instanceof Timestamp) {
+						realMql.append(charSign).append(DateUtil.formatDate(itemVar, "yyyy-MM-dd HH:mm:ss.SSS"))
+								.append(charSign);
+					} else if (itemVar instanceof LocalDateTime) {
+						nanoValue = ((LocalDateTime) itemVar).getNano();
+						if (nanoValue > 0) {
+							if (SqlToyConstants.localDateTimeFormat != null
+									&& !SqlToyConstants.localDateTimeFormat.equals("auto")) {
+								timeStr = DateUtil.formatDate(itemVar, SqlToyConstants.localDateTimeFormat);
+							} else {
+								timeStr = DateUtil.formatDate(itemVar, "yyyy-MM-dd HH:mm:ss")
+										+ DateUtil.processNano(nanoValue);
+							}
+						} else {
+							timeStr = DateUtil.formatDate(itemVar, "yyyy-MM-dd HH:mm:ss");
+						}
+						realMql.append(charSign).append(timeStr).append(charSign);
+					} else if (itemVar instanceof LocalDate) {
+						realMql.append(charSign).append(DateUtil.formatDate(itemVar, "yyyy-MM-dd")).append(charSign);
+					} else if (itemVar instanceof LocalTime || itemVar instanceof Time) {
+						realMql.append(charSign).append(DateUtil.formatDate(itemVar, "HH:mm:ss")).append(charSign);
+					} else if ((itemVar instanceof Date)) {
+						realMql.append(charSign).append(DateUtil.formatDate(itemVar, "yyyy-MM-dd HH:mm:ss"))
+								.append(charSign);
+					} else {
+						realMql.append(charSign).append(removeDangerWords(itemVar.toString())).append(charSign);
 					}
 					i++;
 				}
@@ -450,12 +477,12 @@ public class MongoElasticUtils {
 		Object value;
 		Object[] ary = null;
 		int i;
-		String group;
-		while (m.find()) {
-			group = m.group();
+		String timeStr;
+		int nanoValue;
+		Object itemVar;
+		while (m.find(start)) {
 			// m.start()+1 补偿\\W开始的字符,如 t.name=:name 保留下=号
 			realMql.append(sql.substring(start, m.start() + 1));
-			start = m.end();
 			value = paramValues[index];
 			if (value.getClass().isArray()) {
 				ary = CollectionUtil.convertArray(value);
@@ -465,27 +492,52 @@ public class MongoElasticUtils {
 				ary = new Object[] { value };
 			}
 			i = 0;
-			for (Object var : ary) {
+			for (Object item : ary) {
 				if (i > 0) {
 					realMql.append(",");
 				}
-				if (var instanceof Number) {
-					realMql.append(var.toString());
-				} else if ((var instanceof Date) || (var instanceof LocalDateTime)) {
-					realMql.append(charSign).append(DateUtil.formatDate(var, "yyyy-MM-dd HH:mm:ss")).append(charSign);
-				} else if (var instanceof LocalDate) {
-					realMql.append(charSign).append(DateUtil.formatDate(var, "yyyy-MM-dd")).append(charSign);
-				} else if (var instanceof LocalTime) {
-					realMql.append(charSign).append(DateUtil.formatDate(var, "HH:mm:ss")).append(charSign);
+				if (item instanceof Enum) {
+					itemVar = BeanUtil.getEnumValue(item);
 				} else {
-					realMql.append(charSign).append(removeDangerWords(var.toString())).append(charSign);
+					itemVar = item;
+				}
+				if (itemVar instanceof Number) {
+					realMql.append(itemVar.toString());
+				} else if (itemVar instanceof Timestamp) {
+					realMql.append(charSign).append(DateUtil.formatDate(itemVar, "yyyy-MM-dd HH:mm:ss.SSS"))
+							.append(charSign);
+				} else if (itemVar instanceof LocalDateTime) {
+					nanoValue = ((LocalDateTime) itemVar).getNano();
+					if (nanoValue > 0) {
+						if (SqlToyConstants.localDateTimeFormat != null
+								&& !SqlToyConstants.localDateTimeFormat.equals("auto")) {
+							timeStr = DateUtil.formatDate(itemVar, SqlToyConstants.localDateTimeFormat);
+						} else {
+							timeStr = DateUtil.formatDate(itemVar, "yyyy-MM-dd HH:mm:ss")
+									+ DateUtil.processNano(nanoValue);
+						}
+					} else {
+						timeStr = DateUtil.formatDate(itemVar, "yyyy-MM-dd HH:mm:ss");
+					}
+					realMql.append(charSign).append(timeStr).append(charSign);
+				} else if (itemVar instanceof LocalDate) {
+					realMql.append(charSign).append(DateUtil.formatDate(itemVar, "yyyy-MM-dd")).append(charSign);
+				} else if (itemVar instanceof LocalTime || itemVar instanceof Time) {
+					realMql.append(charSign).append(DateUtil.formatDate(itemVar, "HH:mm:ss")).append(charSign);
+				} else if ((itemVar instanceof Date)) {
+					realMql.append(charSign).append(DateUtil.formatDate(itemVar, "yyyy-MM-dd HH:mm:ss"))
+							.append(charSign);
+				} else {
+					realMql.append(charSign).append(removeDangerWords(itemVar.toString())).append(charSign);
 				}
 				i++;
 			}
 			index++;
 			// 参数正则表达式:param\s? 末尾可能为空白
-			if (StringUtil.matches(group, SqlToyConstants.BLANK_END)) {
-				realMql.append(BLANK);
+			if (StringUtil.matches(m.group(), SqlToyConstants.BLANK_END)) {
+				start = m.end() - 1;
+			} else {
+				start = m.end();
 			}
 		}
 		// 切去尾部sql

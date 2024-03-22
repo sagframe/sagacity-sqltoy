@@ -259,7 +259,7 @@ public class SqlConfigParseUtils {
 			// 将sql中的??符号替换成特殊字符,?? 符号在json场景下有特殊含义
 			String sql = queryStr.replaceAll(ARG_DBL_REGEX, DBL_QUESTMARK);
 			// update 2022-7-18
-			int paramCnt = StringUtil.matchCnt(sql, ARG_NAME_PATTERN);
+			int paramCnt = StringUtil.matchCnt(sql, ARG_NAME_PATTERN,0);
 			// 只有单个? 参数、传递的参数长度大于1、且是 in (?),则将参数转成长度为1的二维数组new Object[]{Object[]} 模式
 			if (paramCnt == 1 && paramsValue.length > 1 && StringUtil.matches(sql, IN_PATTERN)) {
 				paramsValue = new Object[] { paramsValue };
@@ -388,16 +388,17 @@ public class SqlConfigParseUtils {
 		StringBuilder lastSql = new StringBuilder();
 		int start = 0;
 		String group;
-		while (m.find()) {
+		while (m.find(start)) {
 			group = m.group();
 			// 剔除\\W\\: 两位字符
 			paramsName.add(group.substring(2).trim());
-			lastSql.append(queryStr.substring(start, m.start())).append(group.charAt(0)).append(ARG_NAME);
+			lastSql.append(queryStr.substring(start, m.start() + 1)).append(ARG_NAME);
 			// 参数通过\\W\\:name\s?模式匹配，判断是否空白结尾
 			if (StringUtil.matches(group, SqlToyConstants.BLANK_END)) {
-				lastSql.append(BLANK);
+				start = m.end() - 1;
+			} else {
+				start = m.end();
 			}
-			start = m.end();
 		}
 		// 没有别名参数
 		if (start == 0) {
@@ -422,7 +423,8 @@ public class SqlConfigParseUtils {
 		List<String> paramsNameList = new ArrayList<String>();
 		HashSet<String> distinctSet = new HashSet<String>();
 		String paramName;
-		while (matcher.find()) {
+		int start = 0;
+		while (matcher.find(start)) {
 			// 剔除\\W\\:两位字符
 			paramName = matcher.group().substring(2).trim();
 			// 去除重复
@@ -434,6 +436,7 @@ public class SqlConfigParseUtils {
 			} else {
 				paramsNameList.add(paramName);
 			}
+			start = matcher.end() - 1;
 		}
 		// 没有别名参数
 		if (paramsNameList.isEmpty()) {
@@ -516,13 +519,13 @@ public class SqlConfigParseUtils {
 					.concat(BLANK);
 			tailSql = queryStr.substring(endMarkIndex + SQL_PSEUDO_END_MARK_LENGTH);
 			// 获取#[]中的参数数量
-			paramCnt = StringUtil.matchCnt(markContentSql, ARG_NAME_PATTERN);
+			paramCnt = StringUtil.matchCnt(markContentSql, ARG_NAME_PATTERN,0);
 			// #[]中无参数，拼接preSql+markContentSql+tailSql
 			if (paramCnt == 0) {
 				queryStr = processWhereLinkAnd(preSql, BLANK, tailSql);
 			} else {
 				// 在#[前的参数个数
-				preParamCnt = StringUtil.matchCnt(preSql, ARG_NAME_PATTERN);
+				preParamCnt = StringUtil.matchCnt(preSql, ARG_NAME_PATTERN,0);
 				// 判断是否有@if(xx==value1||xx>=value2) 形式的逻辑判断
 				logicValue = true;
 				ifStart = StringUtil.matchIndex(markContentSql, IF_PATTERN);
@@ -530,7 +533,7 @@ public class SqlConfigParseUtils {
 				if (ifStart > -1) {
 					ifEnd = StringUtil.getSymMarkIndex("(", ")", markContentSql, ifStart);
 					evalStr = markContentSql.substring(markContentSql.indexOf("(", ifStart) + 1, ifEnd);
-					logicParamCnt = StringUtil.matchCnt(evalStr, ARG_NAME_PATTERN);
+					logicParamCnt = StringUtil.matchCnt(evalStr, ARG_NAME_PATTERN,0);
 					// update 2019-10-11 修复@if(:name==null) 不参与逻辑判断bug
 					// update 2022-5-10 支持@if(1==1) 无参数场景
 					logicValue = MacroIfLogic.evalLogic(evalStr, paramValuesList, preParamCnt, logicParamCnt);
@@ -615,7 +618,7 @@ public class SqlConfigParseUtils {
 				paramValueList = CollectionUtil.arrayToList(sqlToyResult.getParamsValue());
 			}
 			index = m.start();
-			paramCnt = StringUtil.matchCnt(queryStr.substring(0, index), ARG_NAME_PATTERN);
+			paramCnt = StringUtil.matchCnt(queryStr.substring(0, index), ARG_NAME_PATTERN,0);
 			// 剔除参数@blank(?) 对应的参数值
 			paramValueList.remove(paramCnt - blankCnt);
 			blankCnt++;
@@ -652,7 +655,7 @@ public class SqlConfigParseUtils {
 			index = m.start();
 			// @value(?)
 			if (m.group().contains(ARG_NAME)) {
-				paramCnt = StringUtil.matchCnt(queryStr.substring(0, index), ARG_NAME_PATTERN);
+				paramCnt = StringUtil.matchCnt(queryStr.substring(0, index), ARG_NAME_PATTERN,0);
 				// 用参数的值直接覆盖@value(:name)
 				paramValue = paramValueList.get(paramCnt - valueCnt);
 				// update 2024-03-03 强化对数组、枚举、日期等类型的输出
@@ -715,7 +718,7 @@ public class SqlConfigParseUtils {
 		String likeValStr;
 		while (m.find()) {
 			index = m.start();
-			paramCnt = StringUtil.matchCnt(queryStr.substring(0, index), ARG_NAME_PATTERN);
+			paramCnt = StringUtil.matchCnt(queryStr.substring(0, index), ARG_NAME_PATTERN,0);
 			likeValStr = (sqlToyResult.getParamsValue()[paramCnt] == null) ? null
 					: sqlToyResult.getParamsValue()[paramCnt].toString();
 			// 不存在%符号时，前后增加%
