@@ -397,7 +397,7 @@ public class MongoElasticUtils {
 			value = paramValues[index];
 			if ("".equals(method) || "param".equals(method) || "value".equals(method)) {
 				isAry = true;
-				if (value.getClass().isArray()) {
+				if (value != null && value.getClass().isArray()) {
 					ary = CollectionUtil.convertArray(value);
 				} else if (value instanceof Collection) {
 					ary = ((Collection) value).toArray();
@@ -413,39 +413,58 @@ public class MongoElasticUtils {
 					if (i > 0) {
 						realMql.append(",");
 					}
-					if (item instanceof Enum) {
-						itemVar = BeanUtil.getEnumValue(item);
+					if (item == null) {
+						realMql.append("null");
 					} else {
-						itemVar = item;
-					}
-					if (itemVar instanceof Number) {
-						realMql.append(itemVar.toString());
-					} else if (itemVar instanceof Timestamp) {
-						realMql.append(charSign).append(DateUtil.formatDate(itemVar, "yyyy-MM-dd HH:mm:ss.SSS"))
-								.append(charSign);
-					} else if (itemVar instanceof LocalDateTime) {
-						nanoValue = ((LocalDateTime) itemVar).getNano();
-						if (nanoValue > 0) {
-							if (SqlToyConstants.localDateTimeFormat != null
-									&& !SqlToyConstants.localDateTimeFormat.equals("auto")) {
-								timeStr = DateUtil.formatDate(itemVar, SqlToyConstants.localDateTimeFormat);
-							} else {
-								timeStr = DateUtil.formatDate(itemVar, "yyyy-MM-dd HH:mm:ss")
-										+ DateUtil.processNano(nanoValue);
-							}
+						if (item instanceof Enum) {
+							itemVar = BeanUtil.getEnumValue(item);
 						} else {
-							timeStr = DateUtil.formatDate(itemVar, "yyyy-MM-dd HH:mm:ss");
+							itemVar = item;
 						}
-						realMql.append(charSign).append(timeStr).append(charSign);
-					} else if (itemVar instanceof LocalDate) {
-						realMql.append(charSign).append(DateUtil.formatDate(itemVar, "yyyy-MM-dd")).append(charSign);
-					} else if (itemVar instanceof LocalTime || itemVar instanceof Time) {
-						realMql.append(charSign).append(DateUtil.formatDate(itemVar, "HH:mm:ss")).append(charSign);
-					} else if ((itemVar instanceof Date)) {
-						realMql.append(charSign).append(DateUtil.formatDate(itemVar, "yyyy-MM-dd HH:mm:ss"))
-								.append(charSign);
-					} else {
-						realMql.append(charSign).append(removeDangerWords(itemVar.toString())).append(charSign);
+						if (itemVar instanceof CharSequence) {
+							realMql.append(charSign).append(removeDangerWords(itemVar.toString())).append(charSign);
+						} else if (itemVar instanceof Timestamp) {
+							realMql.append(charSign).append(DateUtil.formatDate(itemVar, "yyyy-MM-dd HH:mm:ss.SSS"))
+									.append(charSign);
+						} else if (itemVar instanceof LocalDateTime) {
+							nanoValue = ((LocalDateTime) itemVar).getNano();
+							if (nanoValue > 0) {
+								if (SqlToyConstants.localDateTimeFormat != null
+										&& !SqlToyConstants.localDateTimeFormat.equals("auto")) {
+									timeStr = DateUtil.formatDate(itemVar, SqlToyConstants.localDateTimeFormat);
+								} else {
+									timeStr = DateUtil.formatDate(itemVar, "yyyy-MM-dd HH:mm:ss")
+											+ DateUtil.processNano(nanoValue);
+								}
+							} else {
+								timeStr = DateUtil.formatDate(itemVar, "yyyy-MM-dd HH:mm:ss");
+							}
+							realMql.append(charSign).append(timeStr).append(charSign);
+						} else if (itemVar instanceof LocalDate) {
+							realMql.append(charSign).append(DateUtil.formatDate(itemVar, "yyyy-MM-dd"))
+									.append(charSign);
+						} else if (itemVar instanceof LocalTime) {
+							nanoValue = ((LocalTime) itemVar).getNano();
+							if (nanoValue > 0) {
+								if (SqlToyConstants.localTimeFormat != null
+										&& !SqlToyConstants.localTimeFormat.equals("auto")) {
+									timeStr = DateUtil.formatDate(itemVar, SqlToyConstants.localTimeFormat);
+								} else {
+									timeStr = DateUtil.formatDate(itemVar, "HH:mm:ss")
+											+ DateUtil.processNano(nanoValue);
+								}
+							} else {
+								timeStr = DateUtil.formatDate(itemVar, "HH:mm:ss");
+							}
+							realMql.append(charSign).append(timeStr).append(charSign);
+						} else if (itemVar instanceof Time) {
+							realMql.append(charSign).append(DateUtil.formatDate(itemVar, "HH:mm:ss")).append(charSign);
+						} else if ((itemVar instanceof Date)) {
+							realMql.append(charSign).append(DateUtil.formatDate(itemVar, "yyyy-MM-dd HH:mm:ss"))
+									.append(charSign);
+						} else {
+							realMql.append("" + itemVar);
+						}
 					}
 					i++;
 				}
@@ -484,7 +503,7 @@ public class MongoElasticUtils {
 			// m.start()+1 补偿\\W开始的字符,如 t.name=:name 保留下=号
 			realMql.append(sql.substring(start, m.start() + 1));
 			value = paramValues[index];
-			if (value.getClass().isArray()) {
+			if (value != null && value.getClass().isArray()) {
 				ary = CollectionUtil.convertArray(value);
 			} else if (value instanceof Collection) {
 				ary = ((Collection) value).toArray();
@@ -496,39 +515,56 @@ public class MongoElasticUtils {
 				if (i > 0) {
 					realMql.append(",");
 				}
-				if (item instanceof Enum) {
-					itemVar = BeanUtil.getEnumValue(item);
+				if (item == null) {
+					realMql.append("null");
 				} else {
-					itemVar = item;
-				}
-				if (itemVar instanceof Number) {
-					realMql.append(itemVar.toString());
-				} else if (itemVar instanceof Timestamp) {
-					realMql.append(charSign).append(DateUtil.formatDate(itemVar, "yyyy-MM-dd HH:mm:ss.SSS"))
-							.append(charSign);
-				} else if (itemVar instanceof LocalDateTime) {
-					nanoValue = ((LocalDateTime) itemVar).getNano();
-					if (nanoValue > 0) {
-						if (SqlToyConstants.localDateTimeFormat != null
-								&& !SqlToyConstants.localDateTimeFormat.equals("auto")) {
-							timeStr = DateUtil.formatDate(itemVar, SqlToyConstants.localDateTimeFormat);
-						} else {
-							timeStr = DateUtil.formatDate(itemVar, "yyyy-MM-dd HH:mm:ss")
-									+ DateUtil.processNano(nanoValue);
-						}
+					if (item instanceof Enum) {
+						itemVar = BeanUtil.getEnumValue(item);
 					} else {
-						timeStr = DateUtil.formatDate(itemVar, "yyyy-MM-dd HH:mm:ss");
+						itemVar = item;
 					}
-					realMql.append(charSign).append(timeStr).append(charSign);
-				} else if (itemVar instanceof LocalDate) {
-					realMql.append(charSign).append(DateUtil.formatDate(itemVar, "yyyy-MM-dd")).append(charSign);
-				} else if (itemVar instanceof LocalTime || itemVar instanceof Time) {
-					realMql.append(charSign).append(DateUtil.formatDate(itemVar, "HH:mm:ss")).append(charSign);
-				} else if ((itemVar instanceof Date)) {
-					realMql.append(charSign).append(DateUtil.formatDate(itemVar, "yyyy-MM-dd HH:mm:ss"))
-							.append(charSign);
-				} else {
-					realMql.append(charSign).append(removeDangerWords(itemVar.toString())).append(charSign);
+					if (itemVar instanceof CharSequence) {
+						realMql.append(charSign).append(removeDangerWords(itemVar.toString())).append(charSign);
+					} else if (itemVar instanceof Timestamp) {
+						realMql.append(charSign).append(DateUtil.formatDate(itemVar, "yyyy-MM-dd HH:mm:ss.SSS"))
+								.append(charSign);
+					} else if (itemVar instanceof LocalDateTime) {
+						nanoValue = ((LocalDateTime) itemVar).getNano();
+						if (nanoValue > 0) {
+							if (SqlToyConstants.localDateTimeFormat != null
+									&& !SqlToyConstants.localDateTimeFormat.equals("auto")) {
+								timeStr = DateUtil.formatDate(itemVar, SqlToyConstants.localDateTimeFormat);
+							} else {
+								timeStr = DateUtil.formatDate(itemVar, "yyyy-MM-dd HH:mm:ss")
+										+ DateUtil.processNano(nanoValue);
+							}
+						} else {
+							timeStr = DateUtil.formatDate(itemVar, "yyyy-MM-dd HH:mm:ss");
+						}
+						realMql.append(charSign).append(timeStr).append(charSign);
+					} else if (itemVar instanceof LocalDate) {
+						realMql.append(charSign).append(DateUtil.formatDate(itemVar, "yyyy-MM-dd")).append(charSign);
+					} else if (itemVar instanceof LocalTime) {
+						nanoValue = ((LocalTime) itemVar).getNano();
+						if (nanoValue > 0) {
+							if (SqlToyConstants.localTimeFormat != null
+									&& !SqlToyConstants.localTimeFormat.equals("auto")) {
+								timeStr = DateUtil.formatDate(itemVar, SqlToyConstants.localTimeFormat);
+							} else {
+								timeStr = DateUtil.formatDate(itemVar, "HH:mm:ss") + DateUtil.processNano(nanoValue);
+							}
+						} else {
+							timeStr = DateUtil.formatDate(itemVar, "HH:mm:ss");
+						}
+						realMql.append(charSign).append(timeStr).append(charSign);
+					} else if (itemVar instanceof Time) {
+						realMql.append(charSign).append(DateUtil.formatDate(itemVar, "HH:mm:ss")).append(charSign);
+					} else if ((itemVar instanceof Date)) {
+						realMql.append(charSign).append(DateUtil.formatDate(itemVar, "yyyy-MM-dd HH:mm:ss"))
+								.append(charSign);
+					} else {
+						realMql.append("" + itemVar);
+					}
 				}
 				i++;
 			}
