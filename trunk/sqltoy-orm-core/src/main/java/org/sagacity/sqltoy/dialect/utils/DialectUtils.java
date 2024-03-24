@@ -86,6 +86,7 @@ import org.slf4j.LoggerFactory;
  * @modify {Date:2018-5-3,修复getCountBySql关于剔除order by部分的逻辑错误}
  * @modify {Date:2018-9-25,修复select和from对称判断问题,影响分页查询时剔除from之前语句构建select
  *         count(1) from错误}
+ * @modify {Date:2024-3-22,修复分页取count记录剔除order by片段未剔除对应参数的缺陷}
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class DialectUtils {
@@ -348,6 +349,7 @@ public class DialectUtils {
 		String lastCountSql;
 		int paramCnt = 0;
 		int withParamCnt = 0;
+		// order by 语句片段中存在的参数数量
 		int orderByParamsCnt = 0;
 		// 通过配置直接给定的最优化count 语句
 		if (isLastSql) {
@@ -379,6 +381,7 @@ public class DialectUtils {
 			int orderByIndex = StringUtil.matchLastIndex(query_tmp, ORDER_BY_PATTERN, 1);
 			// order by 在from 之后
 			if (orderByIndex > sql_from_index) {
+				// orderBy片段
 				String orderBySql = null;
 				// 剔除order by 语句
 				if (orderByIndex > lastBracketIndex) {
@@ -393,6 +396,7 @@ public class DialectUtils {
 						query_tmp = query_tmp.substring(0, orderByIndex + 1);
 					}
 				}
+				// 存在order by被剔除，获取其参数数量，从全部参数数组中剔除
 				if (null != orderBySql) {
 					orderByParamsCnt = getParamsCount(orderBySql);
 				}

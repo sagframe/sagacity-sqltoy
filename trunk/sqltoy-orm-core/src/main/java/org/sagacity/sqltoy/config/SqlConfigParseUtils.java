@@ -63,6 +63,8 @@ import org.slf4j.LoggerFactory;
  * @modify {Date:2022-05-25 支持(id,type) in (:ids,:types) 多字段in模式,并强化参数超1000的处理 }
  * @modify {Date:2023-03-09 改进t.field=? 参数为null时转化为t.field is (not) null }
  * @modify {Date:2023-08-25 支持itemList[0].fieldName或itemList[0].item.name 形式传参 }
+ * @modify {Date:2024-03-22
+ *         优化getSqlParamsName、processNamedParamsQuery方法，优化了参数名称匹配，设置了匹配偏移量 }
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class SqlConfigParseUtils {
@@ -209,7 +211,7 @@ public class SqlConfigParseUtils {
 	public static SqlToyResult processSql(String queryStr, Map<String, Object> argMap, String dialect) {
 		// 转成key大小写不敏感map
 		IgnoreKeyCaseMap ignoreCaseMap = new IgnoreKeyCaseMap((argMap == null) ? new HashMap() : argMap);
-		String[] paramsNamed = SqlConfigParseUtils.getSqlParamsName(queryStr, true);
+		String[] paramsNamed = getSqlParamsName(queryStr, true);
 		Object[] paramsArg = null;
 		if (paramsNamed != null) {
 			paramsArg = new Object[paramsNamed.length];
@@ -386,6 +388,7 @@ public class SqlConfigParseUtils {
 		// 用来替换:paramName
 		List<String> paramsName = new ArrayList<String>();
 		StringBuilder lastSql = new StringBuilder();
+		// update 2024-03-22 增加了偏移量
 		int start = 0;
 		String group;
 		while (m.find(start)) {
@@ -423,6 +426,7 @@ public class SqlConfigParseUtils {
 		List<String> paramsNameList = new ArrayList<String>();
 		HashSet<String> distinctSet = new HashSet<String>();
 		String paramName;
+		// update 2024-03-22 增加了偏移量
 		int start = 0;
 		while (matcher.find(start)) {
 			// 剔除\\W\\:两位字符
@@ -436,6 +440,7 @@ public class SqlConfigParseUtils {
 			} else {
 				paramsNameList.add(paramName);
 			}
+			// 设置偏移量1
 			start = matcher.end() - 1;
 		}
 		// 没有别名参数
