@@ -2581,7 +2581,6 @@ public class DialectUtils {
 						addIndex);
 				int inCount = (inParamValues == null) ? 0 : inParamValues.length;
 				int outCount = (outParamTypes == null) ? 0 : outParamTypes.length;
-
 				// 注册输出参数
 				if (outCount != 0) {
 					if (isFirstResult) {
@@ -2591,17 +2590,16 @@ public class DialectUtils {
 						callStat.registerOutParameter(i + inCount + 1, outParamTypes[i]);
 					}
 				}
-
 				StoreResult storeResult = new StoreResult();
 				// 存在多个返回集合
 				if (moreResult) {
-					boolean hasNext = callStat.execute();
+					boolean hasResult = callStat.execute();
 					List<String[]> labelsList = new ArrayList<String[]>();
 					List<String[]> labelTypesList = new ArrayList<String[]>();
 					List<List> dataSets = new ArrayList<List>();
 					int meter = 0;
 					SqlToyConfig notFirstConfig = new SqlToyConfig(sqlToyConfig.getId(), sqlToyConfig.getSql());
-					while (hasNext) {
+					while (hasResult) {
 						rs = callStat.getResultSet();
 						if (rs != null) {
 							QueryResult tempResult = ResultUtils.processResultSet(sqlToyContext,
@@ -2611,7 +2609,7 @@ public class DialectUtils {
 							dataSets.add(tempResult.getRows());
 							meter++;
 						}
-						hasNext = callStat.getMoreResults();
+						hasResult = callStat.getMoreResults();
 					}
 					storeResult.setLabelsList(labelsList);
 					storeResult.setLabelTypesList(labelTypesList);
@@ -2625,14 +2623,16 @@ public class DialectUtils {
 						storeResult.setRows(dataSets.get(0));
 					}
 				} else {
-					callStat.execute();
-					rs = callStat.getResultSet();
-					if (rs != null) {
-						QueryResult tempResult = ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn, rs,
-								null, null, null, 0);
-						storeResult.setLabelNames(tempResult.getLabelNames());
-						storeResult.setLabelTypes(tempResult.getLabelTypes());
-						storeResult.setRows(tempResult.getRows());
+					boolean hasResult = callStat.execute();
+					if (hasResult) {
+						rs = callStat.getResultSet();
+						if (rs != null) {
+							QueryResult tempResult = ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn, rs,
+									null, null, null, 0);
+							storeResult.setLabelNames(tempResult.getLabelNames());
+							storeResult.setLabelTypes(tempResult.getLabelTypes());
+							storeResult.setRows(tempResult.getRows());
+						}
 					}
 				}
 
@@ -2647,6 +2647,7 @@ public class DialectUtils {
 					}
 					storeResult.setOutResult(outParams);
 				}
+				storeResult.setUpdateCount(Long.valueOf(callStat.getUpdateCount()));
 				this.setResult(storeResult);
 				if (rs != null) {
 					rs.close();

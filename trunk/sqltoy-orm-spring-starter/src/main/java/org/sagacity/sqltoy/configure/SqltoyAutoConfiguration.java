@@ -48,6 +48,8 @@ import com.alibaba.ttl.threadpool.TtlExecutors;
  * @version v1.0,Date:2018年12月26日
  * @modify {Date:2020-2-20,完善配置支持es等,实现完整功能}
  */
+//@Configuration springboot2.x
+//@AutoConfiguration springboot3.x
 @AutoConfiguration
 @EnableConfigurationProperties(SqlToyContextProperties.class)
 public class SqltoyAutoConfiguration {

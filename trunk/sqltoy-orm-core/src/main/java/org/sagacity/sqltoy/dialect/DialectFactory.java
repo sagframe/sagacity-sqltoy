@@ -2021,7 +2021,7 @@ public class DialectFactory {
 							int inCount = (inParamsValue == null) ? 0 : inParamsValue.length;
 							int outCount = (outParamsType == null) ? 0 : outParamsType.length;
 							// sql中问号数量
-							int paramCnt = StringUtil.matchCnt(dialectSql, ARG_PATTERN,0);
+							int paramCnt = StringUtil.matchCnt(dialectSql, ARG_PATTERN, 0);
 							// 处理参数注入
 							if (paramCnt != inCount + outCount) {
 								throw new IllegalArgumentException("存储过程语句中的输入和输出参数跟实际调用传递的数量不等!");
@@ -2029,7 +2029,6 @@ public class DialectFactory {
 							SqlToyResult sqlToyResult = new SqlToyResult(dialectSql, inParamsValue);
 							// 判断是否是{?=call xxStore()} 模式(oracle 不支持此模式)
 							boolean isFirstResult = StringUtil.matches(dialectSql, STORE_PATTERN);
-
 							// 将call xxxStore(?,?) 后的条件参数判断是否为null，如果是null则改为call xxxStore(null,?,null)
 							// 避免设置类型错误
 							SqlConfigParseUtils.replaceNull(sqlToyResult, isFirstResult ? 1 : 0);
@@ -2061,26 +2060,33 @@ public class DialectFactory {
 									Class resultType;
 									List row;
 									List<String[]> labelNamesList = queryResult.getLabelsList();
+									String totalCount = "";
 									for (int i = 0; i < endSize; i++) {
+										row = queryResult.getMoreResults()[i];
+										if (i > 0) {
+											totalCount = totalCount.concat(",");
+										}
+										totalCount = totalCount.concat("" + (row == null ? 0 : row.size()));
 										resultType = resultTypes[i];
 										if (resultType != null) {
-											row = queryResult.getMoreResults()[i];
 											queryResult.getMoreResults()[i] = ResultUtils.wrapQueryResult(sqlToyContext,
 													row, labelNamesList.get(i), resultType,
 													(i == 0) ? changedCols : false, null, false, null, null);
+
 										}
 									}
+									SqlExecuteStat.debug("执行结果", "executeStore返回多集合数据，记录量分别为:{} 条,更新影响记录量:{}条!",
+											totalCount, queryResult.getUpdateCount());
 								} else if (null != resultTypes[0]) {
 									queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext,
 											queryResult.getRows(), queryResult.getLabelNames(), resultTypes[0],
 											changedCols, null, false, null, null));
+									SqlExecuteStat.debug("执行结果", "executeStore返回单集合记录量:{} 条,更新影响记录量:{}条!",
+											queryResult.getRecordCount(), queryResult.getUpdateCount());
 								}
-							}
-							if (queryResult.getRecordCount() > sqlToyContext.getUpdateTipCount()) {
-								SqlExecuteStat.debug("执行结果", "executeStore影响记录量:{} 条,大于数据修改提示阈值:{}条!",
-										queryResult.getRecordCount(), sqlToyContext.getUpdateTipCount());
 							} else {
-								SqlExecuteStat.debug("执行结果", "executeStore影响记录量:{} 条!", queryResult.getRecordCount());
+								SqlExecuteStat.debug("执行结果", "executeStore返回集合记录量:{} 条,更新影响记录量:{}条!",
+										queryResult.getRecordCount(), queryResult.getUpdateCount());
 							}
 							this.setResult(queryResult);
 						}

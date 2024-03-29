@@ -1502,13 +1502,15 @@ public class ResultUtils {
 	public static List wrapQueryResult(SqlToyContext sqlToyContext, List queryResultRows, String[] labelNames,
 			Class resultType, boolean changedCols, Boolean humpMapLabel, boolean hiberarchy, Class[] hiberarchyClasses,
 			Map<Class, IgnoreKeyCaseMap<String, String>> fieldsMap) throws Exception {
+		if (queryResultRows == null || queryResultRows.isEmpty() || resultType == null) {
+			return queryResultRows;
+		}
 		// 类型为null就默认返回二维List
-		if (queryResultRows == null || queryResultRows.isEmpty() || resultType == null || resultType.equals(List.class)
-				|| resultType.equals(ArrayList.class) || resultType.equals(Collection.class)
+		if (resultType.equals(List.class) || resultType.equals(ArrayList.class) || resultType.equals(Collection.class)
 				|| BeanUtil.isBaseDataType(resultType)) {
 			// update 2022-4-22
 			// 如果查询单列数据，且返回结果类型为原始类型，则切取单列数据
-			if (resultType != null && labelNames.length == 1 && BeanUtil.isBaseDataType(resultType)) {
+			if (BeanUtil.isBaseDataType(resultType) && labelNames != null && labelNames.length == 1) {
 				return getFirstColumn(queryResultRows, resultType);
 			}
 			return queryResultRows;
@@ -1521,6 +1523,10 @@ public class ResultUtils {
 		if (changedCols) {
 			logger.warn("查询中存在类似pivot、列同比环比计算导致结果'列'数不固定，因此不支持转map或VO对象!");
 			SqlExecuteStat.debug("映射结果类型错误", "查询中存在类似pivot、列同比环比计算导致结果'列'数不固定，因此不支持转map或VO对象!");
+		}
+		if (null == labelNames) {
+			throw new DataAccessException(
+					"wrapQueryResult封装数据到[" + resultType.getTypeName() + "]时数据labelNames为null,无法提供属性名称映射!");
 		}
 		// 如果结果类型是hashMap
 		if (Map.class.isAssignableFrom(resultType)) {
