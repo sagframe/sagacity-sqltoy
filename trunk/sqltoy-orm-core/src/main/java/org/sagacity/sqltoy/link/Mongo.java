@@ -309,7 +309,9 @@ public class Mongo extends BaseLink {
 				long minCount = (result.getPageNo() - 1) * result.getPageSize() + rowSize;
 				// 实际记录量> 总记录数(可能从缓存获取),rowSize<=pageSize 防止关联查询导致单页记录数量扩大
 				if (minCount > recordCnt && rowSize <= result.getPageSize()) {
-					result.setRecordCount(minCount);
+					if (rowSize > 0) {
+						result.setRecordCount(minCount);
+					}
 				} // 第2页，7条不足一页，total>17,说明total过大不正确
 				else if (rowSize < result.getPageSize() && recordCnt > minCount && minCount >= 0) {
 					result.setRecordCount(minCount);
