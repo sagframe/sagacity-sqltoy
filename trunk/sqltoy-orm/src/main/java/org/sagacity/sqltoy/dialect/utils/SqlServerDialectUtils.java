@@ -725,18 +725,18 @@ public class SqlServerDialectUtils {
 				entity.getClass(), dbType);
 		final Object[] paramValues = sqlToyResult.getParamsValue();
 		final Integer[] paramsType = entityMeta.getFieldsTypeArray();
-		final String realInsertSql = sqlToyResult.getSql();
+		String realInsertSql = sqlToyResult.getSql();
 		SqlExecuteStat.showSql("mssql单条记录插入", realInsertSql, null);
 		PreparedStatement pst = null;
+		if (isIdentity) {
+			pst = conn.prepareStatement(realInsertSql,
+					new String[] { entityMeta.getColumnName(entityMeta.getIdArray()[0]) });
+		} else {
+			pst = conn.prepareStatement(realInsertSql);
+		}
 		Object result = SqlUtil.preparedStatementProcess(null, pst, null, new PreparedStatementResultHandler() {
 			@Override
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
-				if (isIdentity) {
-					pst = conn.prepareStatement(realInsertSql,
-							new String[] { entityMeta.getColumnName(entityMeta.getIdArray()[0]) });
-				} else {
-					pst = conn.prepareStatement(realInsertSql);
-				}
 				if (null != paramValues && paramValues.length > 0) {
 					int index = 0;
 					for (int i = 0, n = paramValues.length; i < n; i++) {
@@ -761,6 +761,7 @@ public class SqlServerDialectUtils {
 					while (keyResult.next()) {
 						this.setResult(keyResult.getObject(1));
 					}
+					keyResult.close();
 				}
 			}
 		});
@@ -1121,6 +1122,10 @@ public class SqlServerDialectUtils {
 					tables.add(tableMeta);
 				}
 				this.setResult(tables);
+				if (rs != null) {
+					rs.close();
+					rs = null;
+				}
 			}
 		});
 	}
@@ -1156,6 +1161,10 @@ public class SqlServerDialectUtils {
 							}
 						}
 						this.setResult(colComments);
+						if (rs != null) {
+							rs.close();
+							rs = null;
+						}
 					}
 				});
 		for (ColumnMeta col : tableColumns) {

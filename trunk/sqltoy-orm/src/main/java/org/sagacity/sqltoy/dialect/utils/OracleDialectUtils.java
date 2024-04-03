@@ -389,6 +389,14 @@ public class OracleDialectUtils {
 					storeResult.setOutResult(outParams);
 				}
 				this.setResult(storeResult);
+				if (rs != null) {
+					rs.close();
+					rs = null;
+				}
+				if (callStat != null) {
+					callStat.close();
+					callStat = null;
+				}
 			}
 		});
 	}
@@ -431,6 +439,10 @@ public class OracleDialectUtils {
 							}
 						}
 						this.setResult(colComments);
+						if (rs != null) {
+							rs.close();
+							rs = null;
+						}
 					}
 				});
 		for (ColumnMeta col : tableColumns) {
@@ -469,6 +481,10 @@ public class OracleDialectUtils {
 					tables.add(tableMeta);
 				}
 				this.setResult(tables);
+				if (rs != null) {
+					rs.close();
+					rs = null;
+				}
 			}
 		});
 	}

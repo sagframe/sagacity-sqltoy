@@ -264,7 +264,7 @@ public class SqlLoop extends AbstractMacro {
 		String key;
 		int meter = 0;
 		boolean updateSet = false;
-		while (m.find()) {
+		while (m.find(start)) {
 			group = m.group();
 			// 剔除\\W\\: 两位字符
 			paramName = group.substring(2).trim();
@@ -294,10 +294,11 @@ public class SqlLoop extends AbstractMacro {
 			}
 			// 参数名称以空白结尾，处理完参数后补全空白
 			if (StringUtil.matches(group, SqlToyConstants.BLANK_END)) {
-				preSql = preSql.concat(BLANK);
+				start = m.end() - 1;
+			} else {
+				start = m.end();
 			}
 			lastSql.append(preSql);
-			start = m.end();
 			meter++;
 		}
 		// 没有别名参数
@@ -353,7 +354,8 @@ public class SqlLoop extends AbstractMacro {
 		String group;
 		String key;
 		int dotIndex;
-		while (m.find()) {
+		int start = 0;
+		while (m.find(start)) {
 			group = m.group();
 			group = group.substring(0, group.length() - 1);
 			dotIndex = group.indexOf(".");
@@ -371,6 +373,7 @@ public class SqlLoop extends AbstractMacro {
 			} else {
 				paramsMap.put(group, new String[] {});
 			}
+			start = m.end() - 1;
 		}
 		return paramsMap;
 	}

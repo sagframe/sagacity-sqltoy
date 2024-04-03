@@ -92,18 +92,8 @@ public class MapperUtilsTest {
 		staffInfo.setOrganId("100007");
 		// staffInfoVO.setPhoto(FileUtil.readAsBytes("classpath:/mock/staff_photo.jpg"));
 		staffInfo.setCountry("86");
-		SqlToyContext context = new SqlToyContext();
-		try {
-			context.initialize();
-			StaffInfoVO staffInfoVO = MapperUtils.map(staffInfo, StaffInfoVO.class);
-			System.err.println(JSON.toJSONString(staffInfoVO));
-			StaffInfo staffInfo1 = MapperUtils.map(staffInfoVO, StaffInfo.class);
-			System.err.println(JSON.toJSONString(staffInfo1));
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
+		StaffInfoVO staffInfoVO = MapperUtils.map(staffInfo, StaffInfoVO.class);
+		System.err.println(JSON.toJSONString(staffInfoVO));
 	}
 
 	@Test

@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
  * @modify 2020-09-04 支持VO<->VO,DTO<->DTO,VO<->DTO 的互转
  * @modify 2022-10-19 支持对象的多级父类属性的映射
  * @modify 2023-05-01 支持多级子对象映射，代码全面改造完全工具类化，无需再依赖SqlToyContext
+ * @modify 2024-03-15 支持DTO<-->POJO 双向映射中@SqlToyFieldAlias，由gleam反馈
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class MapperUtils {
@@ -373,26 +374,35 @@ public class MapperUtils {
 		if (BeanUtil.isBaseDataType(fromClass) || BeanUtil.isBaseDataType(targetClass)) {
 			return null;
 		}
+		// 是否要匹配别名(两个不同对象之间，属性名称不一致，通过注解提供别名模式进行映射)
+		boolean checkAlias = fromClass.equals(targetClass) ? false : true;
 		DTOEntityMapModel result = new DTOEntityMapModel();
 		String fieldName;
+		SqlToyFieldAlias alias;
 		HashMap<String, String> targetPropsMap = new HashMap<String, String>();
 		// targetClass类型属性
 		Class parentClass = targetClass;
+		HashMap<String, String> aliasMap = new HashMap<String, String>();
 		while (!parentClass.equals(Object.class)) {
 			for (Field field : parentClass.getDeclaredFields()) {
 				fieldName = field.getName();
+				// 不同对象，检查是否有别名
+				if (checkAlias) {
+					alias = field.getAnnotation(SqlToyFieldAlias.class);
+					if (alias != null) {
+						aliasMap.put(alias.value().toLowerCase(), fieldName);
+					}
+				}
 				targetPropsMap.put(fieldName.toLowerCase(), fieldName);
 			}
 			parentClass = parentClass.getSuperclass();
 		}
-		// 是否要匹配别名(两个不同对象之间，属性名称不一致，通过注解提供别名模式进行映射)
-		boolean checkAlias = fromClass.equals(targetClass) ? false : true;
+
 		// fromClass
 		List<String> fromClassProps = new ArrayList<String>();
 		List<String> targetProps = new ArrayList<String>();
 		// dto以及其所有父类
 		parentClass = fromClass;
-		SqlToyFieldAlias alias;
 		String aliasName;
 		while (!parentClass.equals(Object.class)) {
 			for (Field field : parentClass.getDeclaredFields()) {
@@ -412,6 +422,9 @@ public class MapperUtils {
 					} else if (targetPropsMap.containsKey(aliasName.toLowerCase())) {
 						fromClassProps.add(fieldName);
 						targetProps.add(targetPropsMap.get(aliasName.toLowerCase()));
+					} else if (aliasMap.containsKey(fieldName.toLowerCase())) {
+						fromClassProps.add(fieldName);
+						targetProps.add(aliasMap.get(fieldName.toLowerCase()));
 					}
 				}
 			}

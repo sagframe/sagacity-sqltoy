@@ -473,17 +473,23 @@ public class StringUtil {
 	}
 
 	public static int matchLastIndex(String source, String regex) {
-		return matchLastIndex(source, Pattern.compile(regex));
+		return matchLastIndex(source, Pattern.compile(regex), 0);
 	}
 
 	public static int matchLastIndex(String source, Pattern pattern) {
+		return matchLastIndex(source, pattern, 0);
+	}
+
+	public static int matchLastIndex(String source, Pattern pattern, int offset) {
 		if (source == null) {
 			return -1;
 		}
 		Matcher m = pattern.matcher(source);
 		int matchIndex = -1;
-		while (m.find()) {
+		int start = 0;
+		while (m.find(start)) {
 			matchIndex = m.start();
+			start = m.end() - offset;
 		}
 		return matchIndex;
 	}
@@ -495,7 +501,7 @@ public class StringUtil {
 	 * @return
 	 */
 	public static int matchCnt(String source, String regex) {
-		return matchCnt(source, Pattern.compile(regex));
+		return matchCnt(source, Pattern.compile(regex), 0);
 	}
 
 	/**
@@ -505,13 +511,26 @@ public class StringUtil {
 	 * @return
 	 */
 	public static int matchCnt(String source, Pattern pattern) {
+		return matchCnt(source, pattern, 0);
+	}
+
+	/**
+	 * @todo 获取匹配成功的个数
+	 * @param source
+	 * @param pattern
+	 * @param offset
+	 * @return
+	 */
+	public static int matchCnt(String source, Pattern pattern, int offset) {
 		if (source == null) {
 			return 0;
 		}
 		Matcher matcher = pattern.matcher(source);
 		int count = 0;
-		while (matcher.find()) {
+		int start = 0;
+		while (matcher.find(start)) {
 			count++;
+			start = matcher.end() - offset;
 		}
 		return count;
 	}
@@ -525,7 +544,11 @@ public class StringUtil {
 	 * @return
 	 */
 	public static int matchCnt(String source, String regex, int beginIndex, int endIndex) {
-		return matchCnt(source.substring(beginIndex, endIndex), Pattern.compile(regex));
+		return matchCnt(source.substring(beginIndex, endIndex), Pattern.compile(regex), 0);
+	}
+
+	public static int matchCnt(String source, String regex, int beginIndex, int endIndex, int offset) {
+		return matchCnt(source.substring(beginIndex, endIndex), Pattern.compile(regex), offset);
 	}
 
 	/**
@@ -1070,5 +1093,18 @@ public class StringUtil {
 			}
 		}
 		return result;
+	}
+
+	/**
+	 * @TODO 处理空白和null，给与默认值
+	 * @param value
+	 * @param defaultValue
+	 * @return
+	 */
+	public static String ifBlank(String value, String defaultValue) {
+		if (isBlank(value)) {
+			return defaultValue;
+		}
+		return value;
 	}
 }

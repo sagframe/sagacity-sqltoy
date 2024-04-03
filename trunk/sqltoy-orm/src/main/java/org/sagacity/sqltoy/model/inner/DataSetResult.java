@@ -38,7 +38,7 @@ public class DataSetResult<T> implements Serializable {
 	/**
 	 * 总记录数量
 	 */
-	private Long recordCount = 0L;
+	private Long recordCount;
 
 	/**
 	 * 执行总时长,毫秒
@@ -107,7 +107,9 @@ public class DataSetResult<T> implements Serializable {
 	@SuppressWarnings("unchecked")
 	public List getLabelRows() {
 		List result = new ArrayList();
-		result.add(CollectionUtil.arrayToList(labelNames));
+		if (labelNames != null) {
+			result.add(CollectionUtil.arrayToList(labelNames));
+		}
 		if (this.getRows() != null) {
 			result.addAll(this.getRows());
 		}
@@ -124,7 +126,7 @@ public class DataSetResult<T> implements Serializable {
 		if (this.rows == null || this.rows.isEmpty()) {
 			return result;
 		}
-		//一维(findByQuery中查询单列值，且resultType为原生类型，rows变成了一维)
+		// 一维(findByQuery中查询单列值，且resultType为原生类型，rows变成了一维)
 		int dimen = CollectionUtil.judgeObjectDimen(this.rows);
 		if (dimen == 1) {
 			for (Object cell : this.rows) {
@@ -173,7 +175,7 @@ public class DataSetResult<T> implements Serializable {
 	 */
 	public Long getRecordCount() {
 		if (recordCount == null) {
-			return Long.valueOf(getRows().size());
+			recordCount = Long.valueOf(getRows().size());
 		}
 		return recordCount;
 	}

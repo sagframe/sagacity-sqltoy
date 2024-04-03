@@ -242,6 +242,13 @@ public class SqlConfigParseUtilsTest {
 	}
 
 	@Test
+	public void testGetParamNamesOrder() throws Exception {
+		String sql = "select * from sqltoy_staff_info where STAFF_NAME  like :staffName order by :staffCode :orderWay";
+		String[] result = SqlConfigParseUtils.getSqlParamsName(sql, true);
+		System.err.println(JSON.toJSONString(result));
+	}
+	
+	@Test
 	public void testGetParamNames1() throws Exception {
 		String sql = "select * from sqltoy_fruit_order where fruit_name = :limitList[0].fruitName or fruit_name = :limitList[1].fruit_name or fruit_name = :limitList[2]";
 		String[] result = SqlConfigParseUtils.getSqlParamsName(sql, true);

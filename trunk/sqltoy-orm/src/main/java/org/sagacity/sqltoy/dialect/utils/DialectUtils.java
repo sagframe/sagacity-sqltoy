@@ -86,6 +86,7 @@ import org.slf4j.LoggerFactory;
  * @modify {Date:2018-5-3,修复getCountBySql关于剔除order by部分的逻辑错误}
  * @modify {Date:2018-9-25,修复select和from对称判断问题,影响分页查询时剔除from之前语句构建select
  *         count(1) from错误}
+ * @modify {Date:2024-3-22,修复分页取count记录剔除order by片段未剔除对应参数的缺陷}
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class DialectUtils {
@@ -270,6 +271,10 @@ public class DialectUtils {
 				rs = pst.executeQuery();
 				this.setResult(ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn, rs, extend, null,
 						decryptHandler, startIndex));
+				if (rs != null) {
+					rs.close();
+					rs = null;
+				}
 			}
 		});
 	}
@@ -317,6 +322,10 @@ public class DialectUtils {
 				rs = pst.executeQuery();
 				this.setResult(ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn, rs, null,
 						updateRowHandler, null, startIndex));
+				if (rs != null) {
+					rs.close();
+					rs = null;
+				}
 			}
 		});
 	}
@@ -340,6 +349,8 @@ public class DialectUtils {
 		String lastCountSql;
 		int paramCnt = 0;
 		int withParamCnt = 0;
+		// order by 语句片段中存在的参数数量
+		int orderByParamsCnt = 0;
 		// 通过配置直接给定的最优化count 语句
 		if (isLastSql) {
 			lastCountSql = sql;
@@ -367,22 +378,30 @@ public class DialectUtils {
 				sql_from_index = StringUtil.getSymMarkMatchIndex(SELECT_REGEX, FROM_REGEX, query_tmp.toLowerCase(), 0);
 			}
 			// 剔除order提高运行效率
-			int orderByIndex = StringUtil.matchLastIndex(query_tmp, ORDER_BY_PATTERN);
+			int orderByIndex = StringUtil.matchLastIndex(query_tmp, ORDER_BY_PATTERN, 1);
 			// order by 在from 之后
 			if (orderByIndex > sql_from_index) {
+				// orderBy片段
+				String orderBySql = null;
 				// 剔除order by 语句
 				if (orderByIndex > lastBracketIndex) {
+					orderBySql = query_tmp.substring(orderByIndex + 1);
 					query_tmp = query_tmp.substring(0, orderByIndex + 1);
 				} else {
 					// 剔除掉order by 后面语句对称的() 内容
 					String orderJudgeSql = clearDisturbSql(query_tmp.substring(orderByIndex + 1));
 					// 在order by 不在子查询内,说明可以整体切除掉order by
 					if (orderJudgeSql.indexOf(")") == -1) {
+						orderBySql = query_tmp.substring(orderByIndex + 1);
 						query_tmp = query_tmp.substring(0, orderByIndex + 1);
 					}
 				}
+				// 存在order by被剔除，获取其参数数量，从全部参数数组中剔除
+				if (null != orderBySql) {
+					orderByParamsCnt = getParamsCount(orderBySql);
+				}
 			}
-			int groupIndex = StringUtil.matchLastIndex(query_tmp, GROUP_BY_PATTERN);
+			int groupIndex = StringUtil.matchLastIndex(query_tmp, GROUP_BY_PATTERN, 1);
 			// 判断group by 是否是内层，如select * from (select * from table group by)
 			// 外层group by 必须要进行包裹(update by chenrenfei 2016-4-21)
 			boolean isInnerGroup = false;
@@ -421,14 +440,16 @@ public class DialectUtils {
 			countQueryStr.insert(0, withSql + " ");
 			lastCountSql = countQueryStr.toString();
 		}
-		final int paramCntFin = paramCnt;
-		final int withParamCntFin = withParamCnt;
-		Object[] realParamsTemp = null;
-		if (paramsValue != null) {
-			// 将from前的参数剔除
-			realParamsTemp = isLastSql ? paramsValue
-					: CollectionUtil.subtractArray(paramsValue, withParamCntFin,
-							paramsValue.length - paramCntFin - withParamCntFin);
+		Object[] realParamsTemp = paramsValue;
+		if (realParamsTemp != null && !isLastSql) {
+			// 剔除order by 语句中的参数对应的值
+			if (orderByParamsCnt > 0) {
+				realParamsTemp = CollectionUtil.subtractArray(realParamsTemp, realParamsTemp.length - orderByParamsCnt,
+						orderByParamsCnt);
+			}
+			// 将select from之间语句中的参数剔除
+			realParamsTemp = CollectionUtil.subtractArray(realParamsTemp, withParamCnt,
+					realParamsTemp.length - withParamCnt - paramCnt);
 		}
 		final Object[] realParams = realParamsTemp;
 		// 做sql签名
@@ -449,6 +470,10 @@ public class DialectUtils {
 					resultCount = rs.getLong(1);
 				}
 				this.setResult(resultCount);
+				if (rs != null) {
+					rs.close();
+					rs = null;
+				}
 			}
 		});
 	}
@@ -1469,20 +1494,20 @@ public class DialectUtils {
 		SqlToyResult sqlToyResult = new SqlToyResult(insertSql, fullParamValues);
 		sqlToyResult = doInterceptors(sqlToyContext, sqlToyConfig, OperateType.insert, sqlToyResult, entity.getClass(),
 				dbType);
-		final String realInsertSql = sqlToyResult.getSql();
+		String realInsertSql = sqlToyResult.getSql();
 		SqlExecuteStat.showSql("执行单记录插入", realInsertSql, null);
 		final Object[] paramValues = sqlToyResult.getParamsValue();
 		final Integer[] paramsType = entityMeta.getFieldsTypeArray();
 		PreparedStatement pst = null;
+		if (isIdentity || isSequence) {
+			pst = conn.prepareStatement(realInsertSql,
+					new String[] { entityMeta.getColumnName(entityMeta.getIdArray()[0]) });
+		} else {
+			pst = conn.prepareStatement(realInsertSql);
+		}
 		Object result = SqlUtil.preparedStatementProcess(null, pst, null, new PreparedStatementResultHandler() {
 			@Override
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
-				if (isIdentity || isSequence) {
-					pst = conn.prepareStatement(realInsertSql,
-							new String[] { entityMeta.getColumnName(entityMeta.getIdArray()[0]) });
-				} else {
-					pst = conn.prepareStatement(realInsertSql);
-				}
 				SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, pst, paramValues, paramsType, 0);
 				pst.execute();
 				if (isIdentity || isSequence) {
@@ -1491,6 +1516,7 @@ public class DialectUtils {
 						while (keyResult.next()) {
 							this.setResult(keyResult.getObject(1));
 						}
+						keyResult.close();
 					}
 				}
 			}
@@ -2565,17 +2591,16 @@ public class DialectUtils {
 						callStat.registerOutParameter(i + inCount + 1, outParamTypes[i]);
 					}
 				}
-
 				StoreResult storeResult = new StoreResult();
 				// 存在多个返回集合
 				if (moreResult) {
-					boolean hasNext = callStat.execute();
+					boolean hasResult = callStat.execute();
 					List<String[]> labelsList = new ArrayList<String[]>();
 					List<String[]> labelTypesList = new ArrayList<String[]>();
 					List<List> dataSets = new ArrayList<List>();
 					int meter = 0;
 					SqlToyConfig notFirstConfig = new SqlToyConfig(sqlToyConfig.getId(), sqlToyConfig.getSql());
-					while (hasNext) {
+					while (hasResult) {
 						rs = callStat.getResultSet();
 						if (rs != null) {
 							QueryResult tempResult = ResultUtils.processResultSet(sqlToyContext,
@@ -2585,7 +2610,7 @@ public class DialectUtils {
 							dataSets.add(tempResult.getRows());
 							meter++;
 						}
-						hasNext = callStat.getMoreResults();
+						hasResult = callStat.getMoreResults();
 					}
 					storeResult.setLabelsList(labelsList);
 					storeResult.setLabelTypesList(labelTypesList);
@@ -2599,14 +2624,16 @@ public class DialectUtils {
 						storeResult.setRows(dataSets.get(0));
 					}
 				} else {
-					callStat.execute();
-					rs = callStat.getResultSet();
-					if (rs != null) {
-						QueryResult tempResult = ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn, rs,
-								null, null, null, 0);
-						storeResult.setLabelNames(tempResult.getLabelNames());
-						storeResult.setLabelTypes(tempResult.getLabelTypes());
-						storeResult.setRows(tempResult.getRows());
+					boolean hasResult = callStat.execute();
+					if (hasResult) {
+						rs = callStat.getResultSet();
+						if (rs != null) {
+							QueryResult tempResult = ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn, rs,
+									null, null, null, 0);
+							storeResult.setLabelNames(tempResult.getLabelNames());
+							storeResult.setLabelTypes(tempResult.getLabelTypes());
+							storeResult.setRows(tempResult.getRows());
+						}
 					}
 				}
 
@@ -2621,7 +2648,17 @@ public class DialectUtils {
 					}
 					storeResult.setOutResult(outParams);
 				}
+				// 影响记录数
+				storeResult.setUpdateCount(new Long(callStat.getUpdateCount()));
 				this.setResult(storeResult);
+				if (rs != null) {
+					rs.close();
+					rs = null;
+				}
+				if (callStat != null) {
+					callStat.close();
+					callStat = null;
+				}
 			}
 		});
 	}
@@ -2865,7 +2902,7 @@ public class DialectUtils {
 		String sql = SqlConfigParseUtils.clearDblQuestMark(queryStr);
 		// 判断sql中参数模式，?或:named 模式，两种模式不可以混合使用
 		if (sql.indexOf(SqlConfigParseUtils.ARG_NAME) == -1) {
-			return StringUtil.matchCnt(sql, SqlToyConstants.SQL_NAMED_PATTERN);
+			return StringUtil.matchCnt(sql, SqlToyConstants.SQL_NAMED_PATTERN, 1);
 		}
 		return StringUtil.matchCnt(sql, SqlConfigParseUtils.ARG_REGEX);
 	}

@@ -459,6 +459,7 @@ public class SqlServerDialect implements Dialect {
 	public StoreResult executeStore(SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
 			final Object[] inParamsValue, final Integer[] outParamsType, final boolean moreResult,
 			final Connection conn, final Integer dbType, final String dialect, final int fetchSize) throws Exception {
+		// 2012版本存储过程查询需要增加set nocount on 否则不返回结果集
 		return DialectUtils.executeStore(sqlToyConfig, sqlToyContext, sql, inParamsValue, outParamsType, moreResult,
 				conn, dbType, fetchSize);
 	}

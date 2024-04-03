@@ -995,6 +995,10 @@ public class SqlUtil {
 				rs = pst.executeQuery();
 				this.setResult(processResultSet(typeHandler, rs, voClass, rowCallbackHandler, decryptHandler, 0,
 						ignoreAllEmptySet, colFieldMap));
+				if (rs != null) {
+					rs.close();
+					rs = null;
+				}
 			}
 		});
 		// 为null返回一个空集合
@@ -1526,14 +1530,14 @@ public class SqlUtil {
 		// 最后的收括号位置
 		int lastBracketIndex = sql.lastIndexOf(")");
 		boolean result = false;
-		int orderByIndex = StringUtil.matchLastIndex(sql, ORDER_BY_PATTERN);
+		int orderByIndex = StringUtil.matchLastIndex(sql, ORDER_BY_PATTERN, 1);
 		// 存在order by
 		if (orderByIndex > lastBracketIndex) {
 			result = true;
 		}
 		// 特殊处理 order by，通过ORder这种非常规写法代表分页时是否进行外层包裹(建议废弃使用)
 		if (judgeUpcase) {
-			int upcaseOrderBy = StringUtil.matchLastIndex(sql, UPCASE_ORDER_PATTERN);
+			int upcaseOrderBy = StringUtil.matchLastIndex(sql, UPCASE_ORDER_PATTERN, 1);
 			if (upcaseOrderBy > lastBracketIndex) {
 				result = false;
 			}
@@ -2036,7 +2040,7 @@ public class SqlUtil {
 					return false;
 				}
 				// 有关键词时，校验是否多个单引号，避免:''+(select field from table)+''模式
-				if (hasSqlKeyWord && StringUtil.matchCnt(item, ONE_QUOTA) > 2) {
+				if (hasSqlKeyWord && StringUtil.matchCnt(item, ONE_QUOTA, 0) > 2) {
 					return false;
 				}
 			} else if (argType == 2) {
@@ -2044,7 +2048,7 @@ public class SqlUtil {
 					return false;
 				}
 				// 有关键词时，校验是否多个双引号，避免:""+(select field from table)+""模式
-				if (hasSqlKeyWord && StringUtil.matchCnt(item, DOUBLE_QUOTA) > 2) {
+				if (hasSqlKeyWord && StringUtil.matchCnt(item, DOUBLE_QUOTA, 0) > 2) {
 					return false;
 				}
 			} else if (!NumberUtil.isNumber(item)) {
