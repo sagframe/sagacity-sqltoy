@@ -7,9 +7,9 @@
     <groupId>com.sagframe</groupId>
     <version>5.6.4</version>
 
-    <artifactId>sqltoy-orm-solon-plugin</artifactId>
-    <name>sqltoy-orm-solon-plugin</name>
-    <description>sqltoy-orm-solon-plugin</description>
+    <artifactId>sagacity-sqltoy-solon-plugin</artifactId>
+    <name>sagacity-sqltoy-solon-plugin</name>
+    <description>sagacity-sqltoy-solon-plugin</description>
 
     <url>https://github.com/sagframe/sagacity-sqltoy</url>
     <packaging>jar</packaging>

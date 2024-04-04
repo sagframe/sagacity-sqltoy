@@ -1,7 +1,7 @@
 ```xml
 <dependency>
     <groupId>com.sagframe</groupId>
-    <artifactId>sqltoy-orm-solon-plugin</artifactId>
+    <artifactId>sagacity-sqltoy-solon-plugin</artifactId>
 </dependency>
 ```
 
