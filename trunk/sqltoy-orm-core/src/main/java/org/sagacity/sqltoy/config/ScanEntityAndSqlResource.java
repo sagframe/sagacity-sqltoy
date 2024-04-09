@@ -58,7 +58,7 @@ public class ScanEntityAndSqlResource {
 		Set<Class<?>> entities = new LinkedHashSet<Class<?>>();
 		// 获取包的名字 并进行替换
 		String packageName = pack.trim();
-		// 剔除第一个字符为目录的符合,并统一packName为xxx.xxx 格式
+		// 剔除第一个字符为目录的符号,并统一packName为xxx.xxx 格式
 		if (packageName.length() > 0 && packageName.charAt(0) == '/') {
 			packageName = packageName.substring(1);
 		}
