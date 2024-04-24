@@ -1,13 +1,5 @@
 package org.sagacity.sqltoy.config;
 
-import static java.lang.System.out;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.config.model.ParamFilterModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
@@ -24,6 +16,14 @@ import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+import static java.lang.System.out;
 
 /**
  * @project sagacity-sqltoy
@@ -102,16 +102,10 @@ public class SqlScriptLoader {
 	}
 
 	/**
-	 * @TODO 初始化加载sql文件
-	 * @param debug
-	 * @param delayCheckSeconds
-	 * @param scriptCheckIntervalSeconds
-	 * @param breakWhenSqlRepeat
-	 * @throws Exception
+	 * 增加路径验证提示,最易配错导致无法加载sql文件
+	 * @param sqlResourcesDir
 	 */
-	public void initialize(boolean debug, int delayCheckSeconds, Integer scriptCheckIntervalSeconds,
-			boolean breakWhenSqlRepeat) throws Exception {
-		// 增加路径验证提示,最易配错导致无法加载sql文件
+	public static void checkSqlResourcesDir(String sqlResourcesDir){
 		if (StringUtil.isNotBlank(sqlResourcesDir)
 				&& (sqlResourcesDir.toLowerCase().contains(".sql.xml") || sqlResourcesDir.contains("*"))) {
 			throw new IllegalArgumentException("\n您的配置:spring.sqltoy.sqlResourcesDir=" + sqlResourcesDir + " 不正确!\n"
@@ -124,6 +118,21 @@ public class SqlScriptLoader {
 					+ "/*-2、classpath*:/com/yourproject/yourpackage/**/**.sql.xml\n"
 					+ "/*-----------------------------------------------------------------------*/");
 		}
+	}
+
+	/**
+	 * @TODO 初始化加载sql文件
+	 * @param debug
+	 * @param delayCheckSeconds
+	 * @param scriptCheckIntervalSeconds 属性:spring.sqltoy.scriptCheckIntervalSeconds
+	 *                                   sql文件更新检测时间间隔
+	 * @param breakWhenSqlRepeat
+	 * @throws Exception
+	 */
+	public void initialize(boolean debug, int delayCheckSeconds, Integer scriptCheckIntervalSeconds,
+			boolean breakWhenSqlRepeat) throws Exception {
+		// 增加路径验证提示,最易配错导致无法加载sql文件
+		checkSqlResourcesDir(sqlResourcesDir);
 		if (initialized) {
 			return;
 		}
@@ -292,7 +301,7 @@ public class SqlScriptLoader {
 				}
 				// 2023-8-19 增加了@include(:scriptName) 模式，每次都是动态的
 				// 完全是@include(sqlId)模式，下次无需再进行sql拼装，提升性能
-				if(!isParamInclude) {
+				if (!isParamInclude) {
 					result.setHasIncludeSql(false);
 				}
 			}
@@ -300,7 +309,7 @@ public class SqlScriptLoader {
 			result = codeSqlCache.get(sqlKey);
 			if (result == null) {
 				boolean hasInclude = StringUtil.matches(sqlKey, SqlToyConstants.INCLUDE_PATTERN);
-				boolean isParamInclude=false;
+				boolean isParamInclude = false;
 				// 替换include的实际sql
 				if (hasInclude) {
 					isParamInclude = StringUtil.matches(sqlKey, SqlToyConstants.INCLUDE_PARAM_PATTERN);
@@ -314,7 +323,7 @@ public class SqlScriptLoader {
 					result.addFilter(new ParamFilterModel("blank", new String[] { "*" }));
 				}
 				// 限制数量的原因是存在部分代码中的sql会拼接条件参数值，导致不同的sql无限增加
-				//非@include(:paramName)模式才可以缓存
+				// 非@include(:paramName)模式才可以缓存
 				if (!isParamInclude && codeSqlCache.size() < SqlToyConstants.getMaxCodeSqlCount()) {
 					codeSqlCache.put(sqlKey, result);
 				}

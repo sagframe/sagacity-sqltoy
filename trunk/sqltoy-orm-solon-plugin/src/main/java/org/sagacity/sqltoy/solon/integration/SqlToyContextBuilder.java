@@ -1,15 +1,13 @@
 package org.sagacity.sqltoy.solon.integration;
 
 import org.noear.solon.core.util.ClassUtil;
+import org.noear.solon.core.util.ResourceUtil;
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.config.SqlScriptLoader;
 import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.integration.AppContext;
 import org.sagacity.sqltoy.integration.ConnectionFactory;
-import org.sagacity.sqltoy.plugins.FilterHandler;
-import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
-import org.sagacity.sqltoy.plugins.OverTimeSqlHandler;
-import org.sagacity.sqltoy.plugins.SqlInterceptor;
-import org.sagacity.sqltoy.plugins.TypeHandler;
+import org.sagacity.sqltoy.plugins.*;
 import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
 import org.sagacity.sqltoy.plugins.ddl.DialectDDLGenerator;
 import org.sagacity.sqltoy.plugins.formater.SqlFormater;
@@ -19,11 +17,13 @@ import org.sagacity.sqltoy.solon.configure.Elastic;
 import org.sagacity.sqltoy.solon.configure.ElasticConfig;
 import org.sagacity.sqltoy.solon.configure.SqlToyContextProperties;
 import org.sagacity.sqltoy.solon.configure.SqlToyContextTaskPoolProperties;
+import org.sagacity.sqltoy.translate.TranslateManager;
 import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
 import org.sagacity.sqltoy.utils.StringUtil;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
 
 import static java.lang.System.err;
 
@@ -43,6 +43,21 @@ public class SqlToyContextBuilder {
 		this.appContext = appContext;
 	}
 
+	/**
+	 * 路径切分且去空格去重
+	 * @param str
+	 * @return
+	 */
+	private Set<String> strSplitTrim(String str){
+		String[] strs = str.replaceAll("\\；", ",").replaceAll("\\，", ",").replaceAll("\\;", ",")
+				.split("\\,");
+		Set<String> set = new TreeSet<>();
+		for (String subStr : strs) {
+			set.add(subStr.trim());
+		}
+		return set;
+	}
+
 	public SqlToyContext build() throws Exception {
 		if (StringUtil.isBlank(properties.getSqlResourcesDir())) {
 			properties.setSqlResourcesDir("classpath:sqltoy");
@@ -50,7 +65,56 @@ public class SqlToyContextBuilder {
 			// "请检查sqltoy配置,是sqltoy作为前缀,而不是spring.sqltoy!\n正确范例:
 			// sqltoy.sqlResourcesDir=classpath:com/sagframe/modules");
 		}
-
+		//当aot模式下需要调整配置文件到具体的每个文件
+		if (System.getProperty("org.graalvm.nativeimage.imagecode") != null) {
+			//1、sql文件配置重置
+			String sqlResourcesDir = properties.getSqlResourcesDir();
+			//1.1、置空目录设置
+			properties.setSqlResourcesDir(null);
+			//1.2、遍历其具体的文件
+			Set<String> sqlDirSet = this.strSplitTrim(sqlResourcesDir);
+			List<String> sqlResourceList = new CopyOnWriteArrayList<>();
+			for (String dir : sqlDirSet) {
+				SqlScriptLoader.checkSqlResourcesDir(dir);
+				dir += dir.endsWith("/") ? "" : "/" + "**\\.sql\\.xml";
+				Collection<String> subSqlResourceList = ResourceUtil.scanResources(dir);
+				for (String subSqlResource : subSqlResourceList) {
+					sqlResourceList.add(subSqlResource.replaceFirst("resource:/", ""));
+				}
+			}
+			//1.3、合并SqlResources
+			if(properties.getSqlResources() != null){
+				for (String sqlResource : properties.getSqlResources()) {
+					sqlResourceList.add(sqlResource);
+				}
+			}
+			//1.4、重设置到sqlResources属性
+			properties.setSqlResources(sqlResourceList.toArray(String[]::new));
+			//2、重置翻译文件
+			String translateConfig = properties.getTranslateConfig();
+			if(translateConfig == null){
+				translateConfig = TranslateManager.defaultTranslateConfig;
+			}
+			//2.1、遍历其具体的文件
+			Set<String> translateConfigDirSet = this.strSplitTrim(sqlResourcesDir);
+			List<String> translateConfigResourceList = new CopyOnWriteArrayList<>();
+			for (String dir : translateConfigDirSet) {
+				if(dir.endsWith(".xml")){
+					translateConfigResourceList.add(dir);
+				}else{
+					dir += dir.endsWith("/") ? "" : "/" + "**\\.xml";
+					Collection<String> subSqlResourceList = ResourceUtil.scanResources(dir);
+					for (String resource : subSqlResourceList) {
+						translateConfigResourceList.add(resource.replaceFirst("resource:/", ""));
+					}
+				}
+			}
+			//2.2、重新设置值
+			properties.setTranslateConfig(translateConfigResourceList.stream().collect(Collectors.joining(",")));
+			//输出日志
+			//System.out.println("a: " + Arrays.stream(properties.getSqlResources()).collect(Collectors.joining(",")));
+			//System.out.println("b: " + properties.getTranslateConfig());
+		}
 		SqlToyContext sqlToyContext = new SqlToyContext();
 
 		// --------5.2 变化的地方----------------------------------

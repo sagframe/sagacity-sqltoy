@@ -1234,9 +1234,10 @@ public class SqlUtil {
 	public static boolean wrapTreeTableRoute(TypeHandler typeHandler, final TreeTableModel treeTableModel,
 			Connection conn, final Integer dbType) throws Exception {
 		if (StringUtil.isBlank(treeTableModel.getTableName()) || StringUtil.isBlank(treeTableModel.getIdField())
-				|| StringUtil.isBlank(treeTableModel.getPidField())) {
-			logger.error("请设置树形表的table名称、id字段名称、pid字段名称!");
-			throw new IllegalArgumentException("没有对应的table名称、id字段名称、pid字段名称");
+				|| StringUtil.isBlank(treeTableModel.getPidField())
+				|| StringUtil.isBlank(treeTableModel.getPidValue())) {
+			logger.error("请设置树形表的table名称、id字段名称、pid字段名称、pidValue值!");
+			throw new IllegalArgumentException("没有对应的table名称、id字段名称、pid字段名称、pidValue值");
 		}
 		String flag = "";
 		// 判断是否字符串类型
@@ -1269,6 +1270,14 @@ public class SqlUtil {
 			int nodeLevel = 0;
 			String nodeRoute = "";
 			if (idInfo != null && !idInfo.isEmpty()) {
+				if (((List) idInfo.get(0)).get(0) == null) {
+					throw new DataAccessException("表中id=" + treeTableModel.getPidValue() + "对应的节点等级字段:" + nodeLevelField
+							+ "值为null,不要越层调用wrapTreeTableRoute!");
+				}
+				if (((List) idInfo.get(0)).get(1) == null) {
+					throw new DataAccessException("表中id=" + treeTableModel.getPidValue() + "对应的节点路径字段:" + nodeRouteField
+							+ "值为null,不要越层调用wrapTreeTableRoute!");
+				}
 				nodeLevel = Integer.parseInt(((List) idInfo.get(0)).get(0).toString());
 				nodeRoute = ((List) idInfo.get(0)).get(1).toString();
 			}

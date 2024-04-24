@@ -19,6 +19,7 @@ import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.integration.AppContext;
 import org.sagacity.sqltoy.integration.ConnectionFactory;
+import org.sagacity.sqltoy.integration.impl.SimpleConnectionFactory;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.model.OverTimeSql;
 import org.sagacity.sqltoy.model.QueryExecutor;
@@ -413,6 +414,10 @@ public class SqlToyContext {
 		// 设置方言映射(默认OSCAR==>gaussdb)
 		if (dialectMap != null && !dialectMap.isEmpty()) {
 			DataSourceUtils.dialectMap = dialectMap;
+		}
+		// 设置默认非spring等框架下的连接获取处理
+		if (appContext == null && connectionFactory == null) {
+			connectionFactory = new SimpleConnectionFactory();
 		}
 		// 初始化默认dataSource
 		initDefaultDataSource();

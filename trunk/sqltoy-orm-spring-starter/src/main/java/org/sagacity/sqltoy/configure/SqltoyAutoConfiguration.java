@@ -470,7 +470,7 @@ public class SqltoyAutoConfiguration {
 		lazyDao.setSqlToyContext(sqlToyContext);
 		return lazyDao;
 	}
-	
+
 	@Bean(name = "lightDao")
 	@ConditionalOnMissingBean
 	LightDao lightDao(SqlToyContext sqlToyContext) {

@@ -45,6 +45,7 @@ public class ScanEntityAndSqlResource {
 
 	private static final String CLASSPATH = "classpath:";
 	private static final String JAR = "jar";
+	private static final String RESOURCE = "resource";
 
 	/**
 	 * @todo 从指定包package中获取所有的sqltoy实体对象(意义已经不大,entity类目前已经改为在使用时加载的解析模式)
@@ -208,7 +209,8 @@ public class ScanEntityAndSqlResource {
 		URL url;
 		File file;
 		boolean startClasspath = false;
-		if (StringUtil.isNotBlank(resourceDir)) {
+		if (StringUtil.isNotBlank(resourceDir) && !resourceDir.equalsIgnoreCase("none") && !resourceDir.equals("\'\'")
+				&& !resourceDir.equals("\"\"")) {
 			// 统一全角半角，用逗号分隔
 			String[] dirSet = resourceDir.replaceAll("\\；", ",").replaceAll("\\，", ",").replaceAll("\\;", ",")
 					.split("\\,");
@@ -245,6 +247,10 @@ public class ScanEntityAndSqlResource {
 									result.add(0, sqlFile);
 								}
 							}
+						} else if (url.getProtocol().equals(RESOURCE)) {
+							if(!result.contains(realRes) && realRes.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)){
+								result.add(realRes);
+							}
 						} else {
 							getPathFiles(new File(url.toURI()), result);
 						}
@@ -269,15 +275,19 @@ public class ScanEntityAndSqlResource {
 							if (realRes.length() > 0 && realRes.charAt(0) == '/') {
 								realRes = realRes.substring(1);
 							}
-
 							if (url.getProtocol().equals(JAR)) {
 								if (!result.contains(realRes)) {
 									// jar中的sql优先加载,从而确保直接放于classes目录下面的sql可以实现对之前的覆盖,便于项目增量发版管理
 									result.add(0, realRes);
 								}
+							} else if (url.getProtocol().equals(RESOURCE)) {
+								if(!result.contains(realRes) && realRes.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)){
+									result.add(realRes);
+								}
 							} else {
 								file = new File(url.toURI());
-								if (!result.contains(file)) {
+								if (file.getName().toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)
+										&& !result.contains(file)) {
 									result.add(file);
 								}
 							}

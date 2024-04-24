@@ -54,6 +54,7 @@ public class TranslateConfigParse {
 
 	private static final String CLASSPATH = "classpath:";
 	private static final String JAR = "jar";
+	private static final String RESOURCE = "resource";
 
 	private final static String TRANSLATE_SUFFIX = "-translate";
 	private final static String CHECKER_SUFFIX = "-checker";
@@ -89,7 +90,7 @@ public class TranslateConfigParse {
 		DefaultConfig defaultConfig = null;
 		String translateFlieStr;
 		boolean fileExist;
-		Set<String> fileSet = new HashSet<String>();
+		Set<String> fileSet = new HashSet<>();
 		int index = 0;
 		for (int i = 0; i < translateFiles.size(); i++) {
 			translateFile = translateFiles.get(i);
@@ -101,7 +102,7 @@ public class TranslateConfigParse {
 			// 避免重复解析
 			if (!fileSet.contains(translateFlieStr)) {
 				fileExist = true;
-				if (FileUtil.getFileInputStream(translateFile) == null) {
+				if (!FileUtil.existFile(translateFile)) {
 					fileExist = false;
 				}
 				// 判断缓存翻译的配置文件是否存在
@@ -437,6 +438,10 @@ public class TranslateConfigParse {
 									&& !entry.isDirectory()) {
 								result.add(transConfigFile);
 							}
+						}
+					} else if (url.getProtocol().equals(RESOURCE)) {
+						if (isTranslateConfig(realRes)) {
+							result.add(realRes);
 						}
 					} else {
 						transFile = new File(url.toURI());

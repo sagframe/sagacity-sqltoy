@@ -636,6 +636,11 @@ public class DialectFactory {
 						treeModel.idTypeIsChar(true);
 					}
 				}
+			} else {
+				if (StringUtil.isBlank(treeModel.getPidValue())) {
+					throw new IllegalArgumentException(
+							"树形表:父节点字段:" + treeModel.getPidField() + " 没有被赋值，即父节点属性值为null,请用setPidValue(xx)赋值!");
+				}
 			}
 			SqlExecuteStat.start(treeModel.getTableName(), "wrapTreeTableRoute", sqlToyContext.isDebug());
 			return (Boolean) DataSourceUtils.processDataSource(sqlToyContext, dataSource,
