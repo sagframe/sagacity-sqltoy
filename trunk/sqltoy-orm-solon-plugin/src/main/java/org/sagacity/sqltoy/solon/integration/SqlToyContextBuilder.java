@@ -1,5 +1,16 @@
 package org.sagacity.sqltoy.solon.integration;
 
+import static java.lang.System.err;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
+
 import org.noear.solon.core.util.ClassUtil;
 import org.noear.solon.core.util.ResourceUtil;
 import org.sagacity.sqltoy.SqlToyContext;
@@ -7,7 +18,11 @@ import org.sagacity.sqltoy.config.SqlScriptLoader;
 import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.integration.AppContext;
 import org.sagacity.sqltoy.integration.ConnectionFactory;
-import org.sagacity.sqltoy.plugins.*;
+import org.sagacity.sqltoy.plugins.FilterHandler;
+import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
+import org.sagacity.sqltoy.plugins.OverTimeSqlHandler;
+import org.sagacity.sqltoy.plugins.SqlInterceptor;
+import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
 import org.sagacity.sqltoy.plugins.ddl.DialectDDLGenerator;
 import org.sagacity.sqltoy.plugins.formater.SqlFormater;
@@ -20,12 +35,6 @@ import org.sagacity.sqltoy.solon.configure.SqlToyContextTaskPoolProperties;
 import org.sagacity.sqltoy.translate.TranslateManager;
 import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
 import org.sagacity.sqltoy.utils.StringUtil;
-
-import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.stream.Collectors;
-
-import static java.lang.System.err;
 
 /**
  * SqlToyContext 构建器（用于拆分 XPluginImp 类）
@@ -58,6 +67,21 @@ public class SqlToyContextBuilder {
 		return set;
 	}
 
+	/**
+	 * 扫描静态文件
+	 * @param resList
+	 * @param dir
+	 * @param suffix
+	 * @throws IOException
+	 */
+	private void scanResources(List<String> resList, String dir, String suffix) throws IOException {
+		dir += (dir.endsWith("/") ? "" : "/") + suffix;
+		Collection<String> subSqlResourceList = ResourceUtil.scanResources(dir);
+		for (String subSqlResource : subSqlResourceList) {
+			resList.add(subSqlResource.replaceFirst("resource:/", ""));
+		}
+	}
+
 	public SqlToyContext build() throws Exception {
 		if (StringUtil.isBlank(properties.getSqlResourcesDir())) {
 			properties.setSqlResourcesDir("classpath:sqltoy");
@@ -76,11 +100,7 @@ public class SqlToyContextBuilder {
 			List<String> sqlResourceList = new CopyOnWriteArrayList<>();
 			for (String dir : sqlDirSet) {
 				SqlScriptLoader.checkSqlResourcesDir(dir);
-				dir += dir.endsWith("/") ? "" : "/" + "**\\.sql\\.xml";
-				Collection<String> subSqlResourceList = ResourceUtil.scanResources(dir);
-				for (String subSqlResource : subSqlResourceList) {
-					sqlResourceList.add(subSqlResource.replaceFirst("resource:/", ""));
-				}
+				this.scanResources(sqlResourceList, dir, "**\\.sql\\.xml");
 			}
 			//1.3、合并SqlResources
 			if(properties.getSqlResources() != null){
@@ -96,17 +116,13 @@ public class SqlToyContextBuilder {
 				translateConfig = TranslateManager.defaultTranslateConfig;
 			}
 			//2.1、遍历其具体的文件
-			Set<String> translateConfigDirSet = this.strSplitTrim(sqlResourcesDir);
+			Set<String> translateConfigDirSet = this.strSplitTrim(translateConfig);
 			List<String> translateConfigResourceList = new CopyOnWriteArrayList<>();
 			for (String dir : translateConfigDirSet) {
 				if(dir.endsWith(".xml")){
 					translateConfigResourceList.add(dir);
 				}else{
-					dir += dir.endsWith("/") ? "" : "/" + "**\\.xml";
-					Collection<String> subSqlResourceList = ResourceUtil.scanResources(dir);
-					for (String resource : subSqlResourceList) {
-						translateConfigResourceList.add(resource.replaceFirst("resource:/", ""));
-					}
+					this.scanResources(translateConfigResourceList, dir, "**\\.xml");
 				}
 			}
 			//2.2、重新设置值

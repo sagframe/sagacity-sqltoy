@@ -1,14 +1,19 @@
 package org.sagacity.sqltoy.solon.integration.aot;
 
+import java.util.stream.Stream;
+
 import org.noear.solon.aot.RuntimeNativeMetadata;
 import org.noear.solon.aot.RuntimeNativeRegistrar;
 import org.noear.solon.aot.hint.MemberCategory;
 import org.noear.solon.core.AppContext;
 import org.sagacity.sqltoy.SqlToyContext;
-import org.sagacity.sqltoy.plugins.id.impl.*;
+import org.sagacity.sqltoy.plugins.id.impl.DefaultIdGenerator;
+import org.sagacity.sqltoy.plugins.id.impl.NanoTimeIdGenerator;
+import org.sagacity.sqltoy.plugins.id.impl.RedisIdGenerator;
+import org.sagacity.sqltoy.plugins.id.impl.SnowflakeIdGenerator;
+import org.sagacity.sqltoy.plugins.id.impl.UUIDGenerator;
 import org.sagacity.sqltoy.solon.configure.SqlToyContextProperties;
-
-import java.util.stream.Stream;
+import org.sagacity.sqltoy.solon.configure.SqlToyContextTaskPoolProperties;
 
 /**
  * native注册类
@@ -26,6 +31,7 @@ public class SqltoyRuntimeNativeRegistrar implements RuntimeNativeRegistrar {
         //通用逻辑
         Stream.of(
                 SqlToyContextProperties.class,
+                SqlToyContextTaskPoolProperties.class,
                 DefaultIdGenerator.class,
                 NanoTimeIdGenerator.class,
                 RedisIdGenerator.class,

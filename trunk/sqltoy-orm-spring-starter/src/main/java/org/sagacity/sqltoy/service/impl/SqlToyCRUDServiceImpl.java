@@ -19,7 +19,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,7 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @version v1.0,Date:2012-7-16
  */
 @SuppressWarnings({ "rawtypes" })
-@Service("sqlToyCRUDService")
+//@Service("sqlToyCRUDService")
 public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	/**
 	 * 定义全局日志
@@ -49,7 +48,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	protected LightDao lightDao;
 
 	/**
-	 * @param sqlToyLazyDao the sqlToyLazyDao to set
+	 * @param lightDao the sqlToyLazyDao to set
 	 */
 	@Autowired(required = false)
 	@Qualifier(value = "lightDao")

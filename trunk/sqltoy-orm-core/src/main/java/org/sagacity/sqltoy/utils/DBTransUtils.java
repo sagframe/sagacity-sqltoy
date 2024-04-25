@@ -37,7 +37,10 @@ public class DBTransUtils {
 			// 将连接放入当前线程，供后续业务通过现场获取连接，参见SimpleConnectFactory里面逻辑
 			threadLocal.set(conn);
 			// 通过反调具体执行开发者的业务逻辑，里面是一个代码块，可以是多次lightDao的操作行为
-			return transactionHandler.doTrans();
+			Object result = transactionHandler.doTrans();
+			// 提交
+			conn.commit();
+			return result;
 		} catch (Exception e) {
 			// 发生异常，事务回滚
 			try {
@@ -62,6 +65,11 @@ public class DBTransUtils {
 		}
 	}
 
+	/**
+	 * 获取当前线程下的连接
+	 * 
+	 * @return
+	 */
 	public static Connection getCurrentConnection() {
 		return threadLocal.get();
 	}

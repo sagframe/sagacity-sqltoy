@@ -7,12 +7,12 @@ import org.noear.solon.core.Plugin;
 import org.noear.solon.core.runtime.NativeDetector;
 import org.noear.solon.core.util.ClassUtil;
 import org.noear.solon.data.cache.CacheService;
+import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.solon.DbManager;
 import org.sagacity.sqltoy.solon.annotation.Db;
-import org.sagacity.sqltoy.solon.integration.aot.SqltoyRuntimeNativeRegistrar;
 import org.sagacity.sqltoy.solon.configure.SqlToyContextProperties;
+import org.sagacity.sqltoy.solon.integration.aot.SqltoyRuntimeNativeRegistrar;
 import org.sagacity.sqltoy.solon.translate.cache.impl.SolonTranslateCacheManager;
-import org.sagacity.sqltoy.SqlToyContext;
 
 /**
  * 去除spring依赖，适配到Solon的Tran、Aop。TranslateCache默认设置为Solon CacheService

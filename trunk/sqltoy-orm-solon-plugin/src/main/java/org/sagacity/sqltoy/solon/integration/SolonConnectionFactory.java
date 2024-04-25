@@ -1,11 +1,12 @@
 package org.sagacity.sqltoy.solon.integration;
 
-import org.noear.solon.data.tran.TranUtils;
-import org.sagacity.sqltoy.integration.ConnectionFactory;
-
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
+
+import javax.sql.DataSource;
+
+import org.noear.solon.data.tran.TranUtils;
+import org.sagacity.sqltoy.integration.ConnectionFactory;
 
 public class SolonConnectionFactory implements ConnectionFactory {
     @Override

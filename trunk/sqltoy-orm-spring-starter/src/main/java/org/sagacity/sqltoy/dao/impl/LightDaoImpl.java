@@ -43,7 +43,6 @@ import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TreeTableModel;
 import org.sagacity.sqltoy.support.SpringDaoSupport;
 import org.sagacity.sqltoy.translate.TranslateHandler;
-import org.springframework.stereotype.Repository;
 
 /**
  * @project sqltoy-orm
@@ -52,7 +51,7 @@ import org.springframework.stereotype.Repository;
  * @version v1.0,Date:2023-3-15
  */
 @SuppressWarnings({ "rawtypes" })
-@Repository("lightDao")
+//@Repository("lightDao")
 public class LightDaoImpl extends SpringDaoSupport implements LightDao {
 
 	/*
