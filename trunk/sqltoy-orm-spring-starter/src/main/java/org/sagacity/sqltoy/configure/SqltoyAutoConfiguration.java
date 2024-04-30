@@ -291,7 +291,7 @@ public class SqltoyAutoConfiguration {
                 err.println("spring.sqltoy.unifyFieldsHandler=" + unfiyHandler + " 对应类不存在,错误原因:");
                 err.println("--1.您可能直接copy了参照项目的配置文件,但没有将具体的类也同步copy过来!");
                 err.println("--2.如您并不需要此功能，请将配置文件中注释掉spring.sqltoy.unifyFieldsHandler");
-                err.println("------------------------------------------------");
+                err.println("-------------------------------------------------------------------------");
                 cne.printStackTrace();
                 throw cne;
             }

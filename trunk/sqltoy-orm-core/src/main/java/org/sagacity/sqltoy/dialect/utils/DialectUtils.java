@@ -2793,6 +2793,13 @@ public class DialectUtils {
 				String contents;
 				String field;
 				String sourceField;
+				// 提取加密的字段，加密跟脱敏不能同时存在
+				Set<String> secureColumns = new HashSet<>();
+				for (FieldSecureConfig config : secureFields) {
+					if (config.getSecureType().equals(SecureType.ENCRYPT)) {
+						secureColumns.add(config.getField());
+					}
+				}
 				// 加密操作
 				for (FieldSecureConfig config : secureFields) {
 					field = config.getField();
@@ -2811,7 +2818,9 @@ public class DialectUtils {
 								this.setValue(field, fieldsSecureProvider.encrypt(contents));
 							} // 脱敏
 							else {
-								this.setValue(field, desensitizeProvider.desensitize(contents, config.getMask()));
+								if (!secureColumns.contains(field)) {
+									this.setValue(field, desensitizeProvider.desensitize(contents, config.getMask()));
+								}
 							}
 						}
 					}

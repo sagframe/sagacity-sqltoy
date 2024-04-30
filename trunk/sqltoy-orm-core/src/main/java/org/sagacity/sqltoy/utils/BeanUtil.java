@@ -471,7 +471,7 @@ public class BeanUtil {
 	 * @return
 	 * @throws Exception
 	 */
-	public static Object invokeMethod(Object bean, String methodName, Object[] args) throws Exception {
+	public static Object invokeMethod(Object bean, String methodName, Object... args) throws Exception {
 		try {
 			Method method = getMethod(bean.getClass(), methodName, args == null ? 0 : args.length);
 			if (method == null) {

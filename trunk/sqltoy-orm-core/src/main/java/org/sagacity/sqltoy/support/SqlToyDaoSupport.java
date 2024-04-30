@@ -1317,7 +1317,11 @@ public class SqlToyDaoSupport {
 			logger.warn("删除操作设置动态条件过滤是无效的,数据删除查询条件必须是精准的!");
 		}
 		String where = SqlUtil.convertFieldsToColumns(entityMeta, innerModel.where);
-		String sql = "delete from ".concat(entityMeta.getSchemaTable(null, null)).concat(" where ").concat(where);
+		String sql = "delete from ".concat(entityMeta.getSchemaTable(null, null));
+		// 避开1=1
+		if (!where.replaceAll("\\s", "").equals("1=1")) {
+			sql = sql.concat(" where ").concat(where);
+		}
 		QueryExecutor queryExecutor = null;
 		// :named 模式
 		if (SqlConfigParseUtils.hasNamedParam(where) && StringUtil.isBlank(innerModel.names)) {
@@ -2216,7 +2220,7 @@ public class SqlToyDaoSupport {
 			} else {
 				realValues[index] = entry.getValue();
 				if (fields.length == 1) {
-					//2024-02-20 add .concat(extSign)
+					// 2024-02-20 add .concat(extSign)
 					sql.append(columnName).append("=")
 							.append(isName ? (":" + fieldMeta.getFieldName().concat(extSign)) : "?");
 				} else {
@@ -2224,7 +2228,7 @@ public class SqlToyDaoSupport {
 					fieldSetValue = fields[1];
 					sql.append(columnName).append("=");
 					if (isName && fieldSetValue.contains("?")) {
-						//2024-02-20 add .concat(extSign)
+						// 2024-02-20 add .concat(extSign)
 						fieldSetValue = fieldSetValue.replace("?", ":" + fieldMeta.getFieldName().concat(extSign));
 					}
 					fieldSetValue = SqlUtil.convertFieldsToColumns(entityMeta, fieldSetValue);
@@ -2243,7 +2247,10 @@ public class SqlToyDaoSupport {
 						.append(dateStr);
 			}
 		});
-		sql.append(" where ").append(where);
+		// where条件是1=1,则跳过条件
+		if (!where.replaceAll("\\s", "").equals("1=1")) {
+			sql.append(" where ").append(where);
+		}
 		String sqlStr = sql.toString();
 		QueryExecutor queryExecutor = new QueryExecutor(sqlStr).names(realNames).values(realValues);
 		queryExecutor.getInnerModel().blankToNull = (innerModel.blankToNull == null)
