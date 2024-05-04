@@ -813,7 +813,7 @@ public class EntityMeta implements Serializable {
 
 	public void addSecureField(FieldSecureConfig fieldSecureConfig) {
 		// 非加密的脱敏处理优先确保基于未加密的明文脱敏
-		if (!fieldSecureConfig.getSecureType().equals(SecureType.ENCRYPT)) {
+		if (!SecureType.ENCRYPT.equals(fieldSecureConfig.getSecureType())) {
 			this.secureFields.add(0, fieldSecureConfig);
 		} else {
 			this.secureFields.add(fieldSecureConfig);

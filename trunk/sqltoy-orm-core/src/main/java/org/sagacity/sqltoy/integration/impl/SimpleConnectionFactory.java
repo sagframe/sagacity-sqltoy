@@ -1,6 +1,7 @@
 package org.sagacity.sqltoy.integration.impl;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 
 import javax.sql.DataSource;
 
@@ -23,7 +24,8 @@ public class SimpleConnectionFactory implements ConnectionFactory {
 		if (conn == null && dataSource != null) {
 			try {
 				conn = dataSource.getConnection();
-			} catch (Exception e) {
+			} catch (SQLException e) {
+				e.printStackTrace();
 			}
 		}
 		return conn;
@@ -39,7 +41,8 @@ public class SimpleConnectionFactory implements ConnectionFactory {
 			if (conn != null) {
 				conn.close();
 			}
-		} catch (Exception e) {
+		} catch (SQLException e) {
+			e.printStackTrace();
 		}
 	}
 

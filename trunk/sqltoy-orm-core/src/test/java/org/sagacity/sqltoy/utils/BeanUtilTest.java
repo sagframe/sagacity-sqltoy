@@ -16,18 +16,19 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.SqlToyConstants;
+import org.sagacity.sqltoy.config.model.FieldSecureConfig;
 import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.demo.domain.DeviceOrderVO;
 import org.sagacity.sqltoy.demo.domain.StaffInfo;
 import org.sagacity.sqltoy.demo.vo.DataRange;
 import org.sagacity.sqltoy.demo.vo.StaffInfoVO;
-import org.sagacity.sqltoy.demo.vo.TreeModel;
 import org.sagacity.sqltoy.demo.vo.TypeShowCase;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.model.IgnoreCaseLinkedMap;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.model.MaskType;
 import org.sagacity.sqltoy.model.SaveMode;
+import org.sagacity.sqltoy.model.SecureType;
 
 import com.alibaba.fastjson.JSON;
 
@@ -427,18 +428,12 @@ public class BeanUtilTest {
 
 	@Test
 	public void testSetValue() {
-		String[] properties = { "IS_LEAF" };
-		List rows = new ArrayList();
-		for (int i = 1; i < 2; i++) {
-			List row = new ArrayList();
-			row.add("" + i);
-			row.add("name" + i);
-			row.add(i % 2 == 1 ? true : false);
-			rows.add(row);
+		FieldSecureConfig config = new FieldSecureConfig("", null, null, null, 4, 10, 5);
+		if (!SecureType.ENCRYPT.equals(config.getSecureType())) {
+			System.err.println("[" + config.getSecureType() + "]");
 		}
-		List<TreeModel> entities = BeanUtil.reflectListToBean(null, rows, new int[] { 2 }, properties, TreeModel.class);
-		for (TreeModel treeModel : entities) {
-			System.err.println(JSON.toJSONString(treeModel));
+		if (!config.getSecureType().equals(SecureType.ENCRYPT)) {
+			System.err.println("[" + config.getSecureType() + "]");
 		}
 	}
 }

@@ -2796,7 +2796,7 @@ public class DialectUtils {
 				// 提取加密的字段，加密跟脱敏不能同时存在
 				Set<String> secureColumns = new HashSet<>();
 				for (FieldSecureConfig config : secureFields) {
-					if (config.getSecureType().equals(SecureType.ENCRYPT)) {
+					if (SecureType.ENCRYPT.equals(config.getSecureType())) {
 						secureColumns.add(config.getField());
 					}
 				}
@@ -2814,7 +2814,7 @@ public class DialectUtils {
 						contents = value.toString();
 						if (!"".equals(contents)) {
 							// 加密
-							if (config.getSecureType().equals(SecureType.ENCRYPT)) {
+							if (SecureType.ENCRYPT.equals(config.getSecureType())) {
 								this.setValue(field, fieldsSecureProvider.encrypt(contents));
 							} // 脱敏
 							else {

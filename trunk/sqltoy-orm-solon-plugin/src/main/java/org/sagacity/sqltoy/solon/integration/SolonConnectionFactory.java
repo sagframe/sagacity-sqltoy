@@ -12,7 +12,7 @@ public class SolonConnectionFactory implements ConnectionFactory {
     @Override
     public Connection getConnection(DataSource dataSource) {
         try {
-            return TranUtils.getConnection(dataSource);
+            return TranUtils.getConnectionProxy(dataSource);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -20,14 +20,12 @@ public class SolonConnectionFactory implements ConnectionFactory {
 
     @Override
     public void releaseConnection(Connection connection, DataSource dataSource) {
-        if (!TranUtils.inTrans()) {
-            try {
-                if (connection != null) {
-                    connection.close();
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
+        try {
+            if (connection != null) {
+                connection.close();
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 }
