@@ -107,6 +107,7 @@ public class DesensitizeDefaultProvider implements DesensitizeProvider {
 		if ("public-account".equals(type)) {
 			return StringUtil.secureMask(realStr, 2, 0, maskCode);
 		}
+		// other
 		return StringUtil.secureMask(realStr, headSize, tailSize, maskCode);
 	}
 }
