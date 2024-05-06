@@ -3,7 +3,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sagframe</groupId>
-	<version>5.6.5.RC7</version>
+	<version>5.6.5</version>
 	<name>sagacity-sqltoy</name>
 	<description>sqltoy core code</description>
 	<artifactId>sagacity-sqltoy</artifactId>
@@ -14,7 +14,7 @@
 		<ehcache.version>3.10.8</ehcache.version>
 		<httpclient.version>4.5.14</httpclient.version>
 		<httpclient-core.version>4.4.16</httpclient-core.version>
-		<elastic-rest-client.version>8.13.2</elastic-rest-client.version>
+		<elastic-rest-client.version>8.13.3</elastic-rest-client.version>
 		<fastjson.version>2.0.49</fastjson.version>
 		<mongo.version>3.12.14</mongo.version>
 		<junit-jupiter.version>5.10.2</junit-jupiter.version>
@@ -22,7 +22,7 @@
 		<slf4j.version>2.0.13</slf4j.version>
 		<h2.version>2.2.224</h2.version>
 		<lombok.version>1.18.32</lombok.version>
-		<taos-jdbcdriver.version>3.2.9</taos-jdbcdriver.version>
+		<taos-jdbcdriver.version>3.2.11</taos-jdbcdriver.version>
 		<druid.version>1.2.22</druid.version>
 		<transmittable-thread-local>2.14.5</transmittable-thread-local>
 	</properties>
