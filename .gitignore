@@ -12,11 +12,11 @@ trunk/sagacity-quickvo/.classpath
 trunk/sqltoy-orm/.settings/org.eclipse.core.resources.prefs
 trunk/sqltoy-orm/.settings/org.eclipse.wst.common.component
 trunk/sqltoy-orm/.settings/org.eclipse.wst.common.project.facet.core.xml
-trunk/sqltoy-orm/.settings/org.eclipse.core.resources.prefs
 trunk/sqltoy-showcase/.settings/org.eclipse.jdt.core.prefs
-trunk/sqltoy-orm/.settings/org.eclipse.core.resources.prefs
 bin
 trunk/sqltoy-orm/.classpath
 trunk/sqltoy-quickvo/dependency-reduced-pom.xml
 *.iml
+.idea/
+.fastRequest/
 

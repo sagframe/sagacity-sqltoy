@@ -13,6 +13,7 @@ import java.util.Map;
 import org.sagacity.sqltoy.config.annotation.SqlToyFieldAlias;
 import org.sagacity.sqltoy.config.model.DTOEntityMapModel;
 import org.sagacity.sqltoy.config.model.DataType;
+import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.model.Page;
 import org.sagacity.sqltoy.model.PropsMapperConfig;
 import org.slf4j.Logger;
@@ -222,7 +223,8 @@ public class MapperUtils {
 		Method[] setMethods;
 		// 属性参数未定义即表示全部属性匹配
 		if (propConfig.isIgnore() || propConfig.getProperties() == null) {
-			Object[] getSetMethods = matchGetSetMethods(sourceClass, targetClass, propConfig.getProperties());
+			Object[] getSetMethods = matchGetSetMethods(sourceClass, targetClass, propConfig.getFieldsMap(),
+					propConfig.getProperties());
 			if (getSetMethods == null) {
 				return;
 			}
@@ -293,7 +295,8 @@ public class MapperUtils {
 		PropsMapperConfig propConfig = (propsMapperConfig == null) ? new PropsMapperConfig() : propsMapperConfig;
 		// 属性参数未定义即表示全部属性匹配
 		if (propConfig.isIgnore() || propConfig.getProperties() == null) {
-			Object[] getSetMethods = matchGetSetMethods(sourceClass, targetClass, propConfig.getProperties());
+			Object[] getSetMethods = matchGetSetMethods(sourceClass, targetClass, propConfig.getFieldsMap(),
+					propConfig.getProperties());
 			if (getSetMethods == null) {
 				return null;
 			}
@@ -302,7 +305,8 @@ public class MapperUtils {
 		} else {
 			// 指定属性映射
 			getMethods = BeanUtil.matchGetMethods(sourceClass, propConfig.getProperties());
-			setMethods = BeanUtil.matchSetMethods(targetClass, propConfig.getProperties());
+			setMethods = BeanUtil.matchSetMethods(targetClass,
+					getMappedProps(propConfig.getProperties(), propConfig.getFieldsMap()));
 		}
 		if (getMethods.length < 1 || setMethods.length < 1) {
 			return null;
@@ -315,6 +319,30 @@ public class MapperUtils {
 			throw new RuntimeException("map/mapList,类型:[" + sourceClass.getName() + "-->" + targetClass.getName()
 					+ "]映射操作失败:" + e.getMessage());
 		}
+	}
+
+	/**
+	 * @TODO 通过映射关系，提取最终的映射属性名称
+	 * @param sourceProps
+	 * @param sourceTargetMap
+	 * @return
+	 */
+	private static String[] getMappedProps(String[] sourceProps, Map<String, String> sourceTargetMap) {
+		if (sourceTargetMap == null || sourceTargetMap.isEmpty()) {
+			return sourceProps;
+		}
+		IgnoreKeyCaseMap<String, String> ignoreKeyCaseMap = new IgnoreKeyCaseMap<>(sourceTargetMap);
+		String[] resultProps = new String[sourceProps.length];
+		String key;
+		for (int i = 0; i < resultProps.length; i++) {
+			key = sourceProps[i];
+			if (ignoreKeyCaseMap.containsKey(key)) {
+				resultProps[i] = ignoreKeyCaseMap.get(key);
+			} else {
+				resultProps[i] = key;
+			}
+		}
+		return resultProps;
 	}
 
 	/**
@@ -348,17 +376,21 @@ public class MapperUtils {
 	 * @TODO 组织构造dto和pojo的映射模型放入缓存，并通过get和set方法调用完成复制过程(比BeanUtils.copyProperties效率高)
 	 * @param sourceClass
 	 * @param resultType
+	 * @param fieldsNameMap
 	 * @return
 	 */
-	private static DTOEntityMapModel getDTOEntityMap(Class sourceClass, Class resultType) {
+	private static DTOEntityMapModel getDTOEntityMap(Class sourceClass, Class resultType,
+			Map<String, String> fieldsNameMap) {
 		String sourceKey = sourceClass.getName();
 		String resultKey = resultType.getName();
-		String key = "fromClass=".concat(sourceKey).concat(";toClass=").concat(resultKey);
+		String mapKey = (fieldsNameMap == null || fieldsNameMap.isEmpty()) ? "" : fieldsNameMap.toString();
+		String key = "fromClass=".concat(sourceKey).concat(";toClass=").concat(resultKey).concat(";mapKey=")
+				.concat(mapKey);
 		// 通过缓存获取
 		if (dtoEntityMapperCache.containsKey(key)) {
 			return dtoEntityMapperCache.get(key);
 		}
-		DTOEntityMapModel result = sourceMapTarget(sourceClass, resultType);
+		DTOEntityMapModel result = sourceMapTarget(sourceClass, resultType, fieldsNameMap);
 		dtoEntityMapperCache.put(key, result);
 		return result;
 	}
@@ -369,7 +401,8 @@ public class MapperUtils {
 	 * @param targetClass
 	 * @return
 	 */
-	private static DTOEntityMapModel sourceMapTarget(Class fromClass, Class targetClass) {
+	private static DTOEntityMapModel sourceMapTarget(Class fromClass, Class targetClass,
+			Map<String, String> fieldsNameMap) {
 		// 不支持基本类型
 		if (BeanUtil.isBaseDataType(fromClass) || BeanUtil.isBaseDataType(targetClass)) {
 			return null;
@@ -379,10 +412,10 @@ public class MapperUtils {
 		DTOEntityMapModel result = new DTOEntityMapModel();
 		String fieldName;
 		SqlToyFieldAlias alias;
-		HashMap<String, String> targetPropsMap = new HashMap<String, String>();
+		IgnoreKeyCaseMap<String, String> targetPropsMap = new IgnoreKeyCaseMap<String, String>();
 		// targetClass类型属性
 		Class parentClass = targetClass;
-		HashMap<String, String> aliasMap = new HashMap<String, String>();
+		IgnoreKeyCaseMap<String, String> aliasMap = new IgnoreKeyCaseMap<String, String>();
 		while (!parentClass.equals(Object.class)) {
 			for (Field field : parentClass.getDeclaredFields()) {
 				fieldName = field.getName();
@@ -390,14 +423,17 @@ public class MapperUtils {
 				if (checkAlias) {
 					alias = field.getAnnotation(SqlToyFieldAlias.class);
 					if (alias != null) {
-						aliasMap.put(alias.value().toLowerCase(), fieldName);
+						aliasMap.put(alias.value(), fieldName);
 					}
 				}
-				targetPropsMap.put(fieldName.toLowerCase(), fieldName);
+				targetPropsMap.put(fieldName, fieldName);
 			}
 			parentClass = parentClass.getSuperclass();
 		}
-
+		// 将指定的属性名称映射最后放入其中
+		if (fieldsNameMap != null && !fieldsNameMap.isEmpty()) {
+			aliasMap.putAll(fieldsNameMap);
+		}
 		// fromClass
 		List<String> fromClassProps = new ArrayList<String>();
 		List<String> targetProps = new ArrayList<String>();
@@ -416,15 +452,15 @@ public class MapperUtils {
 					}
 				}
 				if (!fromClassProps.contains(fieldName)) {
-					if (targetPropsMap.containsKey(fieldName.toLowerCase())) {
+					if (targetPropsMap.containsKey(fieldName)) {
 						fromClassProps.add(fieldName);
-						targetProps.add(targetPropsMap.get(fieldName.toLowerCase()));
-					} else if (targetPropsMap.containsKey(aliasName.toLowerCase())) {
+						targetProps.add(targetPropsMap.get(fieldName));
+					} else if (targetPropsMap.containsKey(aliasName)) {
 						fromClassProps.add(fieldName);
-						targetProps.add(targetPropsMap.get(aliasName.toLowerCase()));
-					} else if (aliasMap.containsKey(fieldName.toLowerCase())) {
+						targetProps.add(targetPropsMap.get(aliasName));
+					} else if (aliasMap.containsKey(fieldName)) {
 						fromClassProps.add(fieldName);
-						targetProps.add(aliasMap.get(fieldName.toLowerCase()));
+						targetProps.add(aliasMap.get(fieldName));
 					}
 				}
 			}
@@ -613,11 +649,13 @@ public class MapperUtils {
 	 * @TODO 两个类属性匹配，获取对应的getMehtod和setMethod
 	 * @param sourceClass
 	 * @param targetClass
+	 * @param fieldsNameMap
 	 * @param ignoreProperties
 	 * @return
 	 */
-	private static Object[] matchGetSetMethods(Class sourceClass, Class targetClass, String... ignoreProperties) {
-		DTOEntityMapModel mapModel = getDTOEntityMap(sourceClass, targetClass);
+	private static Object[] matchGetSetMethods(Class sourceClass, Class targetClass, Map<String, String> fieldsNameMap,
+			String... ignoreProperties) {
+		DTOEntityMapModel mapModel = getDTOEntityMap(sourceClass, targetClass, fieldsNameMap);
 		if (mapModel == null || mapModel.fromGetMethods == null || mapModel.targetSetMethods == null) {
 			return null;
 		}

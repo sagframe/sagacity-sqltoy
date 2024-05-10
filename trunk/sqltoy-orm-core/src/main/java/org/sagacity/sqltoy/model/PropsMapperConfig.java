@@ -3,6 +3,9 @@
  */
 package org.sagacity.sqltoy.model;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * @project sagacity-sqltoy
  * @description 复制对象属性的配置
@@ -22,6 +25,9 @@ public class PropsMapperConfig {
 	 */
 	private boolean skipNull = false;
 
+	// add 2024-5-9 增加手工指定两个对象属性映射关系，比如:birthday-->staffBorthday
+	private Map<String, String> fieldsMap = new HashMap<>();
+
 	public PropsMapperConfig(String... properties) {
 		if (properties != null && properties.length > 0) {
 			this.properties = properties;
@@ -30,6 +36,11 @@ public class PropsMapperConfig {
 
 	public PropsMapperConfig isIgnore(boolean ignore) {
 		this.ignore = ignore;
+		return this;
+	}
+
+	public PropsMapperConfig fieldsMap(Map<String, String> fieldsMap) {
+		this.fieldsMap = fieldsMap;
 		return this;
 	}
 
@@ -51,6 +62,10 @@ public class PropsMapperConfig {
 	 */
 	public boolean getSkipNull() {
 		return skipNull;
+	}
+
+	public Map<String, String> getFieldsMap() {
+		return fieldsMap;
 	}
 
 }
