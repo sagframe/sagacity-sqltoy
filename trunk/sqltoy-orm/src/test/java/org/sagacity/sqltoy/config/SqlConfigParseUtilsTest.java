@@ -243,7 +243,7 @@ public class SqlConfigParseUtilsTest {
 
 	@Test
 	public void testGetParamNamesOrder() throws Exception {
-		String sql = "select * from sqltoy_staff_info where STAFF_NAME  like :staffName order by :staffCode :orderWay";
+		String sql = "select * from sqltoy_staff_info where STAFF_NAME=to-date('2024-03-02 21:12:32','yyyy-MM-dd HH:mm:ss') order by :staffCode :orderWay";
 		String[] result = SqlConfigParseUtils.getSqlParamsName(sql, true);
 		System.err.println(JSON.toJSONString(result));
 	}

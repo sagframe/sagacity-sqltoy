@@ -330,7 +330,7 @@ public interface SqlToyLazyDao {
 	 * @param <T>
 	 * @param entityClass
 	 * @param entityQuery 例如:EntityQuery.create().select(a,b,c).where("tenantId=?
-	 *                    and staffId=?).values("1","S0001")
+	 *                    and staffId=?").values("1","S0001")
 	 * @return
 	 */
 	public <T extends Serializable> T loadEntity(Class<T> entityClass, EntityQuery entityQuery);

@@ -17,6 +17,7 @@ import org.sagacity.sqltoy.config.EntityManager;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.plugins.ddl.impl.DefaultDDLGenerator;
+import org.sagacity.sqltoy.plugins.ddl.impl.H2DDLGenerator;
 import org.sagacity.sqltoy.plugins.ddl.impl.MySqlDDLGenerator;
 import org.sagacity.sqltoy.plugins.ddl.impl.OracleDDLGenerator;
 import org.sagacity.sqltoy.plugins.ddl.impl.PostgreSqlDDLGenerator;
@@ -65,6 +66,10 @@ public class DDLFactory {
 		}
 		case DBType.SQLSERVER: {
 			generator = new SqlServerDDLGenerator();
+			break;
+		}
+		case DBType.H2: {
+			generator = new H2DDLGenerator();
 			break;
 		}
 		default:

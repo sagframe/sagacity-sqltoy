@@ -7,7 +7,6 @@ import java.util.Set;
 
 import javax.sql.DataSource;
 
-import org.sagacity.sqltoy.callback.SelectFields;
 import org.sagacity.sqltoy.config.model.PageOptimize;
 import org.sagacity.sqltoy.config.model.SecureMask;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
@@ -84,19 +83,6 @@ public class EntityQuery implements Serializable {
 	 */
 	public EntityQuery distinct() {
 		innerModel.distinct = true;
-		return this;
-	}
-
-	/**
-	 * @TODO 用链式模式实现字段选择
-	 * @param selectFields
-	 * @return
-	 */
-	public EntityQuery select(SelectFields selectFields) {
-		if (selectFields != null) {
-			innerModel.fields = selectFields.getSelectFields();
-			innerModel.notSelectFields = null;
-		}
 		return this;
 	}
 

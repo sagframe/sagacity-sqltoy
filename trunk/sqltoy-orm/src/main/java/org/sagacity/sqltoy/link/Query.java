@@ -9,7 +9,6 @@ import java.util.List;
 import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyContext;
-import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.config.model.DataType;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
@@ -60,12 +59,6 @@ public class Query extends BaseLink {
 	private Class<?> resultType;
 
 	/**
-	 * 结果自定义处理器,一般不使用(作为特殊情况下的备用策略)
-	 */
-	@Deprecated
-	private RowCallbackHandler handler;
-
-	/**
 	 * jdbc 查询时默认加载到内存中的记录数量 -1表示不设置，采用数据库默认的值
 	 */
 	private int fetchSize = -1;
@@ -106,12 +99,6 @@ public class Query extends BaseLink {
 
 	public Query lock(LockMode lockMode) {
 		this.lockMode = lockMode;
-		return this;
-	}
-
-	@Deprecated
-	public Query rowhandler(RowCallbackHandler handler) {
-		this.handler = handler;
 		return this;
 	}
 
@@ -316,9 +303,6 @@ public class Query extends BaseLink {
 		}
 		if (resultType != null) {
 			queryExecutor.resultType(resultType);
-		}
-		if (handler != null) {
-			queryExecutor.rowCallbackHandler(handler);
 		}
 		queryExecutor.humpMapLabel(humpMapLabel);
 		queryExecutor.maxRows(maxRows);

@@ -14,11 +14,11 @@ import org.sagacity.sqltoy.utils.StringUtil;
 public interface DataSourceSelector {
 	/**
 	 * @TODO 选择dataSource
-	 * @param appContext spring上下文
-	 * @param pointDataSouce     方法调用时直接传递的数据源
-	 * @param sqlDataSourceName  sql中指定的数据源名称
-	 * @param injectDataSource   dao中自动注入的数据源
-	 * @param defaultDataSource  sqltoy 默认的数据源
+	 * @param appContext        spring上下文
+	 * @param pointDataSouce    方法调用时直接传递的数据源
+	 * @param sqlDataSourceName sql中指定的数据源名称
+	 * @param injectDataSource  dao中自动注入的数据源
+	 * @param defaultDataSource sqltoy 默认的数据源
 	 * @return
 	 */
 	public DataSource getDataSource(AppContext appContext, DataSource pointDataSouce, String sqlDataSourceName,
@@ -34,7 +34,7 @@ public interface DataSourceSelector {
 		if (StringUtil.isBlank(dataSourceName)) {
 			return null;
 		}
-		if (appContext.containsBean(dataSourceName)) {
+		if (appContext != null && appContext.containsBean(dataSourceName)) {
 			return (DataSource) appContext.getBean(dataSourceName);
 		}
 		return null;

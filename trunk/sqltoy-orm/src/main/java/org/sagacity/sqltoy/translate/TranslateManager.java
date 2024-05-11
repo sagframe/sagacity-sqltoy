@@ -70,7 +70,7 @@ public class TranslateManager {
 	/**
 	 * 默认配置支持单个文件和具体路径下的多个文件
 	 */
-	private String defaultTranslateConfig = "classpath:sqltoy-translate.xml;classpath:translates";
+	public final static String defaultTranslateConfig = "classpath:sqltoy-translate.xml;classpath:translates";
 
 	/**
 	 * 缓存更新检测程序(后台线程)

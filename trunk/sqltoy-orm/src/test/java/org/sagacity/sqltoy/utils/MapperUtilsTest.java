@@ -6,6 +6,7 @@ package org.sagacity.sqltoy.utils;
 import java.math.BigInteger;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 
 import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.SqlToyContext;
@@ -13,9 +14,11 @@ import org.sagacity.sqltoy.demo.domain.StaffInfo;
 import org.sagacity.sqltoy.demo.vo.LoginLogVO;
 import org.sagacity.sqltoy.demo.vo.StaffInfoVO;
 import org.sagacity.sqltoy.demo.vo.SysLoginLog;
+import org.sagacity.sqltoy.model.MapKit;
 import org.sagacity.sqltoy.model.PropsMapperConfig;
 
 import com.alibaba.fastjson.JSON;
+import com.google.common.collect.Maps;
 
 /**
  * @project sagacity-sqltoy
@@ -65,12 +68,14 @@ public class MapperUtilsTest {
 		staffInfoVO.setOrganId("100007");
 		// staffInfoVO.setPhoto(FileUtil.readAsBytes("classpath:/mock/staff_photo.jpg"));
 		staffInfoVO.setCountry("86");
-		SqlToyContext context = new SqlToyContext();
 		try {
-			context.initialize();
+			System.err.println("typeName="+StaffInfo.class.getTypeName());
 			StaffInfo staffInfo = MapperUtils.map(staffInfoVO, StaffInfo.class,
-					new PropsMapperConfig("sexType", "staffId", "staffName"));
+					new PropsMapperConfig("sexType", "staffId", "staffName", "postType"));
 			System.err.println(JSON.toJSONString(staffInfo));
+//			staffInfo = MapperUtils.map(staffInfoVO, StaffInfo.class,
+//					new PropsMapperConfig("sexType", "staffId", "staffName", "postType").fieldsMap("postType:post"));
+//			System.err.println(JSON.toJSONString(staffInfo));
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

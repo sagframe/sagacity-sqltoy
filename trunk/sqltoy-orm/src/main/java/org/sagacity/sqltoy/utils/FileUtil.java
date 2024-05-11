@@ -269,6 +269,59 @@ public class FileUtil {
 	}
 
 	/**
+	 * @TODO 判断文件是否存在
+	 * @param file
+	 * @return
+	 * @throws IOException
+	 */
+	public static boolean existFile(Object file) throws IOException {
+		if (file == null) {
+			return false;
+		}
+		if (file instanceof InputStream) {
+			return true;
+		} else if (file instanceof File) {
+			return ((File) file).exists();
+		}
+		String realFile = (String) file;
+		// 文件路径
+		if (new File(realFile).exists()) {
+			return true;
+		}
+		InputStream result = null;
+		try {
+			if (StringUtil.indexOfIgnoreCase(realFile.trim(), "classpath:") == 0) {
+				realFile = realFile.trim().substring(10).trim();
+			}
+			if (realFile.length() > 0 && realFile.charAt(0) == '/') {
+				realFile = realFile.substring(1);
+			}
+			result = Thread.currentThread().getContextClassLoader().getResourceAsStream(realFile);
+			if (result == null) {
+				Enumeration<URL> urls = Thread.currentThread().getContextClassLoader().getResources(realFile);
+				URL url;
+				while (urls.hasMoreElements()) {
+					url = urls.nextElement();
+					result = new FileInputStream(url.getFile());
+					if (result != null) {
+						break;
+					}
+				}
+			}
+			if (result != null) {
+				return true;
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			if (result != null) {
+				result.close();
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * @TODO 读取文件到二进制数组中
 	 * @param file
 	 * @return

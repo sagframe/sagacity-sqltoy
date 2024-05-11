@@ -41,7 +41,7 @@ public class DefaultDataSourceSelector implements DataSourceSelector {
 			result = defaultDataSource;
 		}
 		// 如果项目中只定义了唯一的数据源，则直接使用
-		if (result == null) {
+		if (appContext != null && result == null) {
 			Map<String, DataSource> dataSources = appContext.getBeansOfType(DataSource.class);
 			// 只有一个dataSource,直接使用
 			if (dataSources.size() == 1) {

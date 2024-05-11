@@ -2581,7 +2581,6 @@ public class DialectUtils {
 						addIndex);
 				int inCount = (inParamValues == null) ? 0 : inParamValues.length;
 				int outCount = (outParamTypes == null) ? 0 : outParamTypes.length;
-
 				// 注册输出参数
 				if (outCount != 0) {
 					if (isFirstResult) {
@@ -2648,8 +2647,7 @@ public class DialectUtils {
 					}
 					storeResult.setOutResult(outParams);
 				}
-				// 影响记录数
-				storeResult.setUpdateCount(new Long(callStat.getUpdateCount()));
+				storeResult.setUpdateCount(Long.valueOf(callStat.getUpdateCount()));
 				this.setResult(storeResult);
 				if (rs != null) {
 					rs.close();
@@ -2795,6 +2793,13 @@ public class DialectUtils {
 				String contents;
 				String field;
 				String sourceField;
+				// 提取加密的字段，加密跟脱敏不能同时存在
+				Set<String> secureColumns = new HashSet<>();
+				for (FieldSecureConfig config : secureFields) {
+					if (SecureType.ENCRYPT.equals(config.getSecureType())) {
+						secureColumns.add(config.getField());
+					}
+				}
 				// 加密操作
 				for (FieldSecureConfig config : secureFields) {
 					field = config.getField();
@@ -2809,11 +2814,13 @@ public class DialectUtils {
 						contents = value.toString();
 						if (!"".equals(contents)) {
 							// 加密
-							if (config.getSecureType().equals(SecureType.ENCRYPT)) {
+							if (SecureType.ENCRYPT.equals(config.getSecureType())) {
 								this.setValue(field, fieldsSecureProvider.encrypt(contents));
 							} // 脱敏
 							else {
-								this.setValue(field, desensitizeProvider.desensitize(contents, config.getMask()));
+								if (!secureColumns.contains(field)) {
+									this.setValue(field, desensitizeProvider.desensitize(contents, config.getMask()));
+								}
 							}
 						}
 					}

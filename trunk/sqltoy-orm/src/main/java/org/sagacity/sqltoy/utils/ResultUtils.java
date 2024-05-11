@@ -1510,7 +1510,7 @@ public class ResultUtils {
 				|| BeanUtil.isBaseDataType(resultType)) {
 			// update 2022-4-22
 			// 如果查询单列数据，且返回结果类型为原始类型，则切取单列数据
-			if (null != labelNames && labelNames.length == 1 && BeanUtil.isBaseDataType(resultType)) {
+			if (BeanUtil.isBaseDataType(resultType) && labelNames != null && labelNames.length == 1) {
 				return getFirstColumn(queryResultRows, resultType);
 			}
 			return queryResultRows;
