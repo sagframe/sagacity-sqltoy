@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.sagacity.sqltoy.config.annotation.SqlToyFieldAlias;
 import org.sagacity.sqltoy.config.model.DTOEntityMapModel;
@@ -40,6 +41,8 @@ public class MapperUtils {
 	 * 利用缓存来提升匹配效率
 	 */
 	private static Map<String, DTOEntityMapModel> dtoEntityMapperCache = new HashMap<String, DTOEntityMapModel>();
+
+	private static ConcurrentHashMap<String, HashMap<String, String>> classHasAliasMap = new ConcurrentHashMap<>();
 
 	// 递归最大层级
 	private static int MAX_RECURSION = 3;
@@ -233,7 +236,11 @@ public class MapperUtils {
 		} else {
 			// 指定属性映射
 			getMethods = BeanUtil.matchGetMethods(sourceClass, propConfig.getProperties());
-			setMethods = BeanUtil.matchSetMethods(targetClass, propConfig.getProperties());
+			HashMap<String, String> aliasMap = new HashMap<>();
+			aliasMap.putAll(getClassAliasMap(sourceClass, true));
+			aliasMap.putAll(getClassAliasMap(targetClass, false));
+			aliasMap.putAll(propConfig.getFieldsMap());
+			setMethods = BeanUtil.matchSetMethods(targetClass, getMappedProps(propConfig.getProperties(), aliasMap));
 		}
 		if (getMethods.length < 1 || setMethods.length < 1) {
 			return;
@@ -305,8 +312,11 @@ public class MapperUtils {
 		} else {
 			// 指定属性映射
 			getMethods = BeanUtil.matchGetMethods(sourceClass, propConfig.getProperties());
-			setMethods = BeanUtil.matchSetMethods(targetClass,
-					getMappedProps(propConfig.getProperties(), propConfig.getFieldsMap()));
+			HashMap<String, String> aliasMap = new HashMap<>();
+			aliasMap.putAll(getClassAliasMap(sourceClass, true));
+			aliasMap.putAll(getClassAliasMap(targetClass, false));
+			aliasMap.putAll(propConfig.getFieldsMap());
+			setMethods = BeanUtil.matchSetMethods(targetClass, getMappedProps(propConfig.getProperties(), aliasMap));
 		}
 		if (getMethods.length < 1 || setMethods.length < 1) {
 			return null;
@@ -726,5 +736,39 @@ public class MapperUtils {
 		result[0] = getMethods;
 		result[1] = setMethods;
 		return result;
+	}
+
+	/**
+	 * @TODO 提取对象中@SqlToyFieldAlias 属性跟其他对象映射关系
+	 * @param targetClass
+	 * @param doFrom
+	 * @return
+	 */
+	public static HashMap<String, String> getClassAliasMap(Class targetClass, boolean doFrom) {
+		String typeName = targetClass.getTypeName();
+		String direction = doFrom ? "from" : "target";
+		String mapKey = "class=" + typeName + ";direct=" + direction;
+		HashMap<String, String> aliasMap = classHasAliasMap.get(mapKey);
+		if (aliasMap == null) {
+			aliasMap = new HashMap<String, String>();
+			Class parentClass = targetClass;
+			SqlToyFieldAlias alias;
+			while (!parentClass.equals(Object.class)) {
+				for (Field field : parentClass.getDeclaredFields()) {
+					// 不同对象，检查是否有别名
+					alias = field.getAnnotation(SqlToyFieldAlias.class);
+					if (alias != null) {
+						if (doFrom) {
+							aliasMap.put(field.getName(), alias.value());
+						} else {
+							aliasMap.put(alias.value(), field.getName());
+						}
+					}
+				}
+				parentClass = parentClass.getSuperclass();
+			}
+			classHasAliasMap.put(mapKey, aliasMap);
+		}
+		return aliasMap;
 	}
 }

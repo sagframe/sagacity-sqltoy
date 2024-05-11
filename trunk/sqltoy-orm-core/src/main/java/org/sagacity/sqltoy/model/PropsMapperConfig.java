@@ -40,7 +40,37 @@ public class PropsMapperConfig {
 	}
 
 	public PropsMapperConfig fieldsMap(Map<String, String> fieldsMap) {
-		this.fieldsMap = fieldsMap;
+		if (fieldsMap != null && !fieldsMap.isEmpty()) {
+			this.fieldsMap = fieldsMap;
+		}
+		return this;
+	}
+
+	/**
+	 * 简易格式{a:b,a1:b1}
+	 * 
+	 * @param fromTargets
+	 * @return
+	 */
+	public PropsMapperConfig fieldsMap(String... fromTargets) {
+		if (fromTargets != null && fromTargets.length > 0) {
+			if (fieldsMap == null) {
+				fieldsMap = new HashMap<>();
+			}
+			String[] realMapAry;
+			// 单个字符"a:b,a1:b1"
+			if ((fromTargets.length == 1) && (fromTargets[0].contains(":") && fromTargets[0].contains(","))) {
+				realMapAry = fromTargets[0].split("\\,");
+			} else {
+				realMapAry = fromTargets;
+			}
+			for (String str : realMapAry) {
+				String[] fromTargetAry = str.split("\\:");
+				if (fromTargetAry.length == 2) {
+					fieldsMap.put(fromTargetAry[0].trim(), fromTargetAry[1].trim());
+				}
+			}
+		}
 		return this;
 	}
 
