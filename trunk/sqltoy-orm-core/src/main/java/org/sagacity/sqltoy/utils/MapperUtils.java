@@ -744,7 +744,7 @@ public class MapperUtils {
 	 * @param doFrom
 	 * @return
 	 */
-	public static HashMap<String, String> getClassAliasMap(Class targetClass, boolean doFrom) {
+	private static HashMap<String, String> getClassAliasMap(Class targetClass, boolean doFrom) {
 		String typeName = targetClass.getTypeName();
 		String direction = doFrom ? "from" : "target";
 		String mapKey = "class=" + typeName + ";direct=" + direction;
