@@ -14,8 +14,8 @@
 		<ehcache.version>3.10.8</ehcache.version>
 		<httpclient.version>4.5.14</httpclient.version>
 		<httpclient-core.version>4.4.16</httpclient-core.version>
-		<elastic-rest-client.version>8.13.3</elastic-rest-client.version>
-		<fastjson.version>2.0.49</fastjson.version>
+		<elastic-rest-client.version>8.13.4</elastic-rest-client.version>
+		<fastjson.version>2.0.50</fastjson.version>
 		<mongo.version>3.12.14</mongo.version>
 		<junit-jupiter.version>5.10.2</junit-jupiter.version>
 		<junit-platform.version>1.10.2</junit-platform.version>

@@ -25,7 +25,8 @@ public class DateFormat extends AbstractMacro {
 	 * org.sagacity.sqltoy.plugins.id.macro.AbstractMacro#execute(java.lang.Object)
 	 */
 	@Override
-	public String execute(String[] params, Map<String, Object> keyValues, Object paramValues, String preSql) {
+	public String execute(String[] params, Map<String, Object> keyValues, Object paramValues, String preSql,
+			String extSign) {
 		Object dateValue = null;
 		String fmt = "yyMMdd";
 		if (params != null) {
