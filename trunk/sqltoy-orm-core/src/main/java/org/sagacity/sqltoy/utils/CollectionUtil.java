@@ -360,7 +360,7 @@ public class CollectionUtil {
 		if (obj == null) {
 			return -1;
 		}
-
+		Object firstCellValue;
 		if (obj instanceof Collection || obj.getClass().isArray() || obj instanceof Map) {
 			result = 1;
 			if (obj instanceof Collection) {
@@ -368,7 +368,9 @@ public class CollectionUtil {
 				if (tmp.isEmpty()) {
 					return result;
 				}
-				if (((List) obj).get(0) != null && ((List) obj).get(0) instanceof List) {
+				firstCellValue = ((List) obj).get(0);
+				if (firstCellValue != null && (firstCellValue instanceof Collection
+						|| firstCellValue.getClass().isArray() || firstCellValue instanceof Map)) {
 					result = 2;
 				}
 			} else if (obj.getClass().isArray()) {
@@ -376,7 +378,9 @@ public class CollectionUtil {
 				if (tmp.length == 0) {
 					return result;
 				}
-				if (tmp[0] != null && tmp[0].getClass().isArray()) {
+				firstCellValue = tmp[0];
+				if (firstCellValue != null && (firstCellValue instanceof Collection
+						|| firstCellValue.getClass().isArray() || firstCellValue instanceof Map)) {
 					result = 2;
 				}
 			} else if (obj instanceof Map) {
@@ -384,8 +388,9 @@ public class CollectionUtil {
 				if (tmp.isEmpty()) {
 					return result;
 				}
-				Object setItem = tmp.values().iterator().next();
-				if (setItem.getClass().isArray() || setItem instanceof Collection || setItem instanceof Map) {
+				firstCellValue = tmp.values().iterator().next();
+				if (firstCellValue != null && (firstCellValue instanceof Collection
+						|| firstCellValue.getClass().isArray() || firstCellValue instanceof Map)) {
 					result = 2;
 				}
 			}

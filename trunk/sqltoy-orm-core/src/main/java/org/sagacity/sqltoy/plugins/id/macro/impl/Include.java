@@ -6,6 +6,7 @@ import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.plugins.id.macro.AbstractMacro;
 import org.sagacity.sqltoy.utils.BeanUtil;
+import org.sagacity.sqltoy.utils.DataSourceUtils.Dialect;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
@@ -21,7 +22,8 @@ import org.sagacity.sqltoy.utils.StringUtil;
 public class Include extends AbstractMacro {
 
 	@Override
-	public String execute(String[] params, Map<String, Object> keyValues, Object paramValues, String preSql) {
+	public String execute(String[] params, Map<String, Object> keyValues, Object paramValues, String preSql,
+			String dialect) {
 		if (params.length == 0) {
 			return "";
 		}
@@ -47,7 +49,7 @@ public class Include extends AbstractMacro {
 			// 输出sql
 			return paramValue.toString();
 		}
-		SqlToyConfig sqlToyConfig = (SqlToyConfig) keyValues.get(sqlId);
+		SqlToyConfig sqlToyConfig = getSqlToyConfig(keyValues, sqlId, dialect);
 		if (sqlToyConfig == null) {
 			return "(sqlId='" + sqlId + "' not exists!)";
 		}
@@ -59,4 +61,39 @@ public class Include extends AbstractMacro {
 		return sqlToyConfig.getSql();
 	}
 
+	/**
+	 * @TODO 增加对数据库方言的适配
+	 * @param sqlCache
+	 * @param sqlId
+	 * @param dialect
+	 * @return
+	 */
+	private SqlToyConfig getSqlToyConfig(Map<String, Object> sqlCache, String sqlId, String dialect) {
+		SqlToyConfig result = null;
+		if (StringUtil.isNotBlank(dialect)) {
+			// sqlId_dialect
+			result = (SqlToyConfig) sqlCache.get(sqlId.concat("_").concat(dialect));
+			// dialect_sqlId
+			if (result == null) {
+				result = (SqlToyConfig) sqlCache.get(dialect.concat("_").concat(sqlId));
+			}
+			// 兼容一下sqlserver的命名
+			if (result == null && dialect.equals(Dialect.SQLSERVER)) {
+				result = (SqlToyConfig) sqlCache.get(sqlId.concat("_mssql"));
+				if (result == null) {
+					result = (SqlToyConfig) sqlCache.get("mssql_".concat(sqlId));
+				}
+			} // 兼容一下postgres的命名
+			if (result == null && dialect.equals(Dialect.POSTGRESQL)) {
+				result = (SqlToyConfig) sqlCache.get(sqlId.concat("_postgres"));
+				if (result == null) {
+					result = (SqlToyConfig) sqlCache.get("postgres_".concat(sqlId));
+				}
+			}
+		}
+		if (result == null) {
+			result = (SqlToyConfig) sqlCache.get(sqlId);
+		}
+		return result;
+	}
 }

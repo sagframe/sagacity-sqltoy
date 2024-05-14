@@ -705,7 +705,7 @@ public class SqlConfigParseUtils {
 			keyValues.put(paramsNamed[i], paramsValue[i]);
 		}
 		// 这里是借用业务主键生成里面的宏处理模式来解决
-		return MacroUtils.replaceMacros(queryStr, keyValues, null, false, macros);
+		return MacroUtils.replaceMacros(queryStr, keyValues, null, false, macros, null);
 	}
 
 	/**

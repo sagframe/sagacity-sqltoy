@@ -1019,6 +1019,7 @@ public class BeanUtil {
 	 * @param datas
 	 * @param props
 	 * @return
+	 * @throws RuntimeException
 	 */
 	public static List reflectBeansToList(List datas, String[] props) throws RuntimeException {
 		return reflectBeansToList(datas, props, null);
@@ -1029,7 +1030,7 @@ public class BeanUtil {
 	 * @param datas
 	 * @param propertyName
 	 * @return
-	 * @throws Exception
+	 * @throws RuntimeException
 	 */
 	public static Object[] sliceToArray(List datas, String propertyName) throws RuntimeException {
 		List sliceList = reflectBeansToList(datas, new String[] { propertyName }, null);

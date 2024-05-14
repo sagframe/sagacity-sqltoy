@@ -36,6 +36,8 @@ import org.slf4j.LoggerFactory;
  * @modify Date:2020-04-22 增加System.out
  *         对sql文件加载的打印输出,避免有些开发在开发阶段不知道设置日志级别为debug从而看不到输出
  * @modify Date:2023-8-19 增加了@include(:scriptName) 模式
+ * @modify Date:2024-5-13 @include(id="sqlId")
+ *         增强兼容sqlId根据dialect方言找sqlId_dialect模式
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class SqlScriptLoader {
@@ -103,9 +105,10 @@ public class SqlScriptLoader {
 
 	/**
 	 * 增加路径验证提示,最易配错导致无法加载sql文件
+	 * 
 	 * @param sqlResourcesDir
 	 */
-	public static void checkSqlResourcesDir(String sqlResourcesDir){
+	public static void checkSqlResourcesDir(String sqlResourcesDir) {
 		if (StringUtil.isNotBlank(sqlResourcesDir)
 				&& (sqlResourcesDir.toLowerCase().contains(".sql.xml") || sqlResourcesDir.contains("*"))) {
 			throw new IllegalArgumentException("\n您的配置:spring.sqltoy.sqlResourcesDir=" + sqlResourcesDir + " 不正确!\n"
@@ -279,7 +282,8 @@ public class SqlScriptLoader {
 					result.clearDialectSql();
 				}
 				// 替换include的实际sql
-				String sql = MacroUtils.replaceMacros(result.getSql(), (Map) sqlCache, paramValues, false, macros);
+				String sql = MacroUtils.replaceMacros(result.getSql(), (Map) sqlCache, paramValues, false, macros,
+						dialect);
 				// 重新解析sql内容
 				SqlToyConfig tmpConfig = SqlConfigParseUtils.parseSqlToyConfig(sql, realDialect, sqlType);
 				result.setHasUnion(tmpConfig.isHasUnion());
@@ -294,7 +298,7 @@ public class SqlScriptLoader {
 
 				String countSql = result.getCountSql(null);
 				if (countSql != null && StringUtil.matches(countSql, SqlToyConstants.INCLUDE_PATTERN)) {
-					countSql = MacroUtils.replaceMacros(countSql, (Map) sqlCache, paramValues, false, macros);
+					countSql = MacroUtils.replaceMacros(countSql, (Map) sqlCache, paramValues, false, macros, dialect);
 					countSql = FunctionUtils.getDialectSql(countSql, realDialect);
 					countSql = ReservedWordsUtil.convertSql(countSql, DataSourceUtils.getDBType(realDialect));
 					result.setCountSql(countSql);
@@ -313,7 +317,7 @@ public class SqlScriptLoader {
 				// 替换include的实际sql
 				if (hasInclude) {
 					isParamInclude = StringUtil.matches(sqlKey, SqlToyConstants.INCLUDE_PARAM_PATTERN);
-					String sql = MacroUtils.replaceMacros(sqlKey, (Map) sqlCache, paramValues, false, macros);
+					String sql = MacroUtils.replaceMacros(sqlKey, (Map) sqlCache, paramValues, false, macros, dialect);
 					result = SqlConfigParseUtils.parseSqlToyConfig(sql, realDialect, sqlType);
 				} else {
 					result = SqlConfigParseUtils.parseSqlToyConfig(sqlKey, realDialect, sqlType);

@@ -5,6 +5,7 @@ package org.sagacity.sqltoy.utils;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
@@ -12,7 +13,7 @@ import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.SqlToyConstants;
-import org.sagacity.sqltoy.config.SqlConfigParseUtils;
+import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 
 import com.alibaba.fastjson.JSON;
@@ -193,6 +194,8 @@ public class StringUtilsTest {
 
 	@Test
 	public void testMatchInclude() {
+		Map<String, Object> sqlCache =new HashMap<>();
+		System.err.println((SqlToyConfig) sqlCache.get("test_id"));
 		String sql = "select * from table @include(id=\"adb\")";
 		System.err.println(StringUtil.matches(sql, SqlToyConstants.INCLUDE_PATTERN));
 		sql = "select * from table @include( :itemList[0].id )";

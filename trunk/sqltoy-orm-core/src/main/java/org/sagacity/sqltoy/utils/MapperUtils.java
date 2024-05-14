@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
  * @modify 2022-10-19 支持对象的多级父类属性的映射
  * @modify 2023-05-01 支持多级子对象映射，代码全面改造完全工具类化，无需再依赖SqlToyContext
  * @modify 2024-03-15 支持DTO<-->POJO 双向映射中@SqlToyFieldAlias，由gleam反馈
+ * @modify 2024-05-10 进一步强化对象间映射，增加指定属性映射fieldsMap参数
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class MapperUtils {

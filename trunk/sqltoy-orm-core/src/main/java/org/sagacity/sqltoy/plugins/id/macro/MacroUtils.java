@@ -64,7 +64,7 @@ public class MacroUtils {
 	 * @return
 	 */
 	public static String replaceMacros(String hasMacroStr, Map<String, Object> keyValues) {
-		return replaceMacros(hasMacroStr, keyValues, null, false, macros);
+		return replaceMacros(hasMacroStr, keyValues, null, false, macros, null);
 	}
 
 	/**
@@ -75,10 +75,11 @@ public class MacroUtils {
 	 * @param isOuter(isOuter 当@abc(@do(),xxx):为true表示从最外层的macro@abce,false则会先执行@do()
 	 *                        然后再执行@abc())
 	 * @param macros
+	 * @param extSign         扩展标记，目前主要给@include使用，传递dialect
 	 * @return
 	 */
 	public static String replaceMacros(String hasMacroStr, Map<String, Object> keyValues, Object paramsValues,
-			boolean isOuter, Map<String, AbstractMacro> macros) {
+			boolean isOuter, Map<String, AbstractMacro> macros, String extSign) {
 		if (StringUtil.isBlank(hasMacroStr)) {
 			return hasMacroStr;
 		}
@@ -121,14 +122,14 @@ public class MacroUtils {
 			// 调用转换器进行计算
 			AbstractMacro macro = macros.get(macroName);
 			String result = macro.execute(StringUtil.splitExcludeSymMark(macroParam, ",", filters), keyValues,
-					paramsValues, preSql);
+					paramsValues, preSql, extSign);
 			// 最外层是转换器，则将转结果直接以对象方式返回
 			if (hasMacroStr.trim().equals(macroStr.trim())) {
 				return result;
 			}
 			String macroResult = (result == null) ? "" : result;
 			hasMacroStr = replaceStr(hasMacroStr, macroStr, macroResult, macroIndex);
-			return replaceMacros(hasMacroStr, keyValues, paramsValues, isOuter, macros);
+			return replaceMacros(hasMacroStr, keyValues, paramsValues, isOuter, macros, extSign);
 		}
 		return hasMacroStr;
 	}
