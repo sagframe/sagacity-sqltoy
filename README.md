@@ -46,14 +46,14 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
 # 最新版本 
-* 5.6.5 LTS (jdk17+/springboot3.x)/5.6.5.jre8 (兼容5.2.x/5.3.x版本)      发版日期: 2024-5-5
+* 5.6.6 LTS (jdk17+/springboot3.x)/5.6.6.jre8 (兼容5.2.x/5.3.x版本)      发版日期: 2024-5-14
 ```xml
 <dependency>
 	<groupId>com.sagframe</groupId>
 	<artifactId>sagacity-sqltoy-spring-starter</artifactId>
 	<!-- solon 适配版本 <artifactId>sagacity-sqltoy-solon-plugin</artifactId> -->
-        <!-- jdk8 对应的版本号为：5.6.5.jre8 -->
-	<version>5.6.5</version>
+        <!-- jdk8 对应的版本号为：5.6.6.jre8 -->
+	<version>5.6.6</version>
 </dependency>
 ```
 * 5.2.104 LTS (jdk1.8+)                 发版日期: 2024-5-11
