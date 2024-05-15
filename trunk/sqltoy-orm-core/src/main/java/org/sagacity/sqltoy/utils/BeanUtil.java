@@ -172,7 +172,7 @@ public class BeanUtil {
 	 * @param props
 	 * @return
 	 */
-	private static Method matchEnumKeyMethod(Class enumClass, String[] props) {
+	private static Method matchEnumKeyMethod(Class enumClass, String... props) {
 		Method[] methods = enumClass.getMethods();
 		List<Method> realMeth = new ArrayList<Method>();
 		// 有返回值且无参数方法
@@ -986,7 +986,7 @@ public class BeanUtil {
 		return paramValue.toString();
 	}
 
-	private static HashSet arrayToSet(Object[] values) {
+	private static HashSet arrayToSet(Object... values) {
 		HashSet result = new HashSet();
 		for (Object val : values) {
 			if (val != null) {
@@ -1021,7 +1021,7 @@ public class BeanUtil {
 	 * @return
 	 * @throws RuntimeException
 	 */
-	public static List reflectBeansToList(List datas, String[] props) throws RuntimeException {
+	public static List reflectBeansToList(List datas, String... props) throws RuntimeException {
 		return reflectBeansToList(datas, props, null);
 	}
 
@@ -1185,7 +1185,7 @@ public class BeanUtil {
 		return resultList;
 	}
 
-	public static Object[] reflectBeanToAry(Object serializable, String[] properties) {
+	public static Object[] reflectBeanToAry(Object serializable, String... properties) {
 		return reflectBeanToAry(serializable, properties, null, null);
 	}
 
@@ -1203,6 +1203,10 @@ public class BeanUtil {
 			return null;
 		}
 		int methodLength = properties.length;
+		String[] realProps = new String[methodLength];
+		for (int i = 0; i < methodLength; i++) {
+			realProps[i] = properties[i].trim();
+		}
 		Object[] result = new Object[methodLength];
 		// 判断是否存在属性值处理反调
 		boolean hasHandler = (reflectPropsHandler != null) ? true : false;
@@ -1210,7 +1214,7 @@ public class BeanUtil {
 		if (hasHandler && !reflectPropsHandler.initPropsIndexMap()) {
 			HashMap<String, Integer> propertyIndexMap = new HashMap<String, Integer>();
 			for (int i = 0; i < methodLength; i++) {
-				propertyIndexMap.put(properties[i].toLowerCase(), i);
+				propertyIndexMap.put(realProps[i].toLowerCase(), i);
 			}
 			reflectPropsHandler.setPropertyIndexMap(propertyIndexMap);
 		}
@@ -1218,23 +1222,25 @@ public class BeanUtil {
 		Iterator<?> iter;
 		Map.Entry<String, Object> entry;
 		boolean isMapped = false;
-		String fieldTrim;
 		String fieldLow;
+		String realFieldLow;
 		Object fieldValue;
+		Object tmpValue;
+		String keyLowString;
 		boolean hasKey = false;
 		try {
 			KeyAndIndex keyAndIndex;
 			// 通过反射提取属性getMethod返回的数据值
 			for (int i = 0; i < methodLength; i++) {
-				if (properties[i] != null) {
+				if (realProps[i] != null) {
 					// 支持xxxx.xxx 子对象属性提取
-					fields = properties[i].split("\\.");
+					fields = realProps[i].split("\\.");
 					fieldValue = serializable;
 					hasKey = false;
 					// map 类型且key本身就是xxxx.xxxx格式
 					if (fieldValue instanceof Map) {
 						iter = ((Map) fieldValue).entrySet().iterator();
-						fieldLow = properties[i].trim().toLowerCase();
+						fieldLow = realProps[i].toLowerCase();
 						while (iter.hasNext()) {
 							entry = (Map.Entry<String, Object>) iter.next();
 							if (entry.getKey().toLowerCase().equals(fieldLow)) {
@@ -1248,12 +1254,11 @@ public class BeanUtil {
 						int index = 0;
 						int fieldLen = fields.length;
 						for (String field : fields) {
-							fieldTrim = field.trim();
 							// 支持map类型 update 2021-01-31
 							if (fieldValue instanceof Map) {
 								if (fieldValue instanceof IgnoreKeyCaseMap) {
-									if (!((IgnoreKeyCaseMap) fieldValue).containsKey(fieldTrim)) {
-										keyAndIndex = getKeyAndIndex(fieldTrim);
+									if (!((IgnoreKeyCaseMap) fieldValue).containsKey(field)) {
+										keyAndIndex = getKeyAndIndex(field);
 										if (keyAndIndex != null) {
 											fieldValue = getArrayIndexValue(
 													((IgnoreKeyCaseMap) fieldValue).get(keyAndIndex.getKey()),
@@ -1262,31 +1267,44 @@ public class BeanUtil {
 											fieldValue = null;
 										}
 									} else {
-										fieldValue = ((IgnoreKeyCaseMap) fieldValue).get(fieldTrim);
+										tmpValue = ((IgnoreKeyCaseMap) fieldValue).get(field);
+										if (tmpValue == null) {
+											fieldValue = ((IgnoreKeyCaseMap) fieldValue).get(wrapMapKey(fields, index));
+											if (fieldValue != null) {
+												break;
+											}
+										} else {
+											fieldValue = tmpValue;
+										}
 									}
 								} else {
 									iter = ((Map) fieldValue).entrySet().iterator();
 									isMapped = false;
-									fieldLow = fieldTrim.toLowerCase();
+									fieldLow = field.toLowerCase();
+									keyAndIndex = getKeyAndIndex(fieldLow);
+									realFieldLow = (keyAndIndex == null) ? fieldLow : keyAndIndex.getKey();
 									while (iter.hasNext()) {
 										entry = (Map.Entry<String, Object>) iter.next();
-										if (entry.getKey().toLowerCase().equals(fieldLow)) {
-											fieldValue = entry.getValue();
-											isMapped = true;
-											break;
-										} else {
-											keyAndIndex = getKeyAndIndex(fieldLow);
-											if (keyAndIndex != null
-													&& entry.getKey().toLowerCase().equals(keyAndIndex.getKey())) {
+										keyLowString = entry.getKey().toLowerCase();
+										if (keyLowString.equals(realFieldLow)) {
+											if (keyAndIndex != null) {
 												fieldValue = getArrayIndexValue(entry.getValue(),
 														keyAndIndex.getIndex());
-												isMapped = true;
-												break;
+											} else {
+												fieldValue = entry.getValue();
 											}
+											isMapped = true;
+											break;
 										}
 									}
 									if (!isMapped) {
-										fieldValue = null;
+										tmpValue = ((Map) fieldValue).get(wrapMapKey(fields, index));
+										if (tmpValue != null) {
+											fieldValue = tmpValue;
+											break;
+										} else {
+											fieldValue = null;
+										}
 									}
 								}
 							} // update 2022-5-25 支持将集合的属性直接映射成数组
@@ -1294,11 +1312,11 @@ public class BeanUtil {
 								List tmp = (List) fieldValue;
 								// a.b.c 在最后一个属性c之前的属性取值
 								if (index < fieldLen - 1) {
-									fieldValue = sliceToArray(tmp, fieldTrim);
+									fieldValue = sliceToArray(tmp, field);
 								} else {
 									Object[] fieldValueAry = new Object[tmp.size()];
 									for (int j = 0; j < tmp.size(); j++) {
-										fieldValueAry[j] = getComplexProperty(tmp.get(j), fieldTrim);
+										fieldValueAry[j] = getComplexProperty(tmp.get(j), field);
 									}
 									fieldValue = fieldValueAry;
 								}
@@ -1306,11 +1324,11 @@ public class BeanUtil {
 								Object[] tmp = (Object[]) fieldValue;
 								Object[] fieldValueAry = new Object[tmp.length];
 								for (int j = 0; j < tmp.length; j++) {
-									fieldValueAry[j] = getComplexProperty(tmp[j], fieldTrim);
+									fieldValueAry[j] = getComplexProperty(tmp[j], field);
 								}
 								fieldValue = fieldValueAry;
 							} else {
-								fieldValue = getComplexProperty(fieldValue, fieldTrim);
+								fieldValue = getComplexProperty(fieldValue, field);
 							}
 							if (fieldValue == null) {
 								break;
@@ -1341,6 +1359,17 @@ public class BeanUtil {
 			return reflectPropsHandler.getRowData();
 		}
 		return result;
+	}
+
+	private static String wrapMapKey(String[] names, int start) {
+		StringBuilder resultNameBuilder = new StringBuilder();
+		for (int i = start; i < names.length; i++) {
+			if (i > start) {
+				resultNameBuilder.append(".");
+			}
+			resultNameBuilder.append(names[i]);
+		}
+		return resultNameBuilder.toString();
 	}
 
 	/**
