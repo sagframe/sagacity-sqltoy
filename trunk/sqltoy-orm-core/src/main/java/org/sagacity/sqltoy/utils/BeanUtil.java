@@ -1959,9 +1959,10 @@ public class BeanUtil {
 		String realProperty = (keyAndIndex == null) ? property : keyAndIndex.getKey();
 		Object result = null;
 		if (bean instanceof Map) {
-			result = ((Map) bean).get(property);
-			if (result == null && keyAndIndex != null) {
+			if (keyAndIndex != null) {
 				result = getArrayIndexValue(((Map) bean).get(realProperty), keyAndIndex.getIndex());
+			} else {
+				result = ((Map) bean).get(realProperty);
 			}
 			return result;
 		}
