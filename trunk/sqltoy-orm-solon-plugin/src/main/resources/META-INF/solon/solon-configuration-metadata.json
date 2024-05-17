@@ -1,0 +1,317 @@
+{
+  "groups": [
+    {
+      "name": "solon.sqltoy",
+      "type": "org.sagacity.sqltoy.configure.SqlToyContextProperties",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties"
+    },
+    {
+      "name": "solon.sqltoy.function-converts",
+      "type": "java.lang.Object",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties",
+      "sourceMethod": "getFunctionConverts()"
+    }
+  ],
+  "properties": [
+    {
+      "name": "solon.sqltoy.annotated-classes",
+      "type": "java.lang.String[]",
+      "description": "额外注解class类，已经没有必要",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties"
+    },
+    {
+      "name": "solon.sqltoy.auto-d-d-l",
+      "type": "java.lang.Boolean",
+      "description": "自动根据POJO创建或更新表",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties",
+      "defaultValue": false
+    },
+    {
+      "name": "solon.sqltoy.batch-size",
+      "type": "java.lang.Integer",
+      "description": "批量操作，每批次数量,默认200",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties"
+    },
+    {
+      "name": "solon.sqltoy.break-when-sql-repeat",
+      "type": "java.lang.Boolean",
+      "description": "当发现有重复sqlId时是否抛出异常，终止程序执行",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties",
+      "defaultValue": true
+    },
+    {
+      "name": "solon.sqltoy.cache-type",
+      "type": "java.lang.String",
+      "description": "缓存类型，默认ehcache，可选caffeine",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties",
+      "defaultValue": "ehcache"
+    },
+    {
+      "name": "solon.sqltoy.column-label-upper-or-lower",
+      "type": "java.lang.String",
+      "description": "获取MetaData的列标题处理策略：default:不做处理;upper:转大写;lower",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties",
+      "defaultValue": "default"
+    },
+    {
+      "name": "solon.sqltoy.connection-factory",
+      "type": "java.lang.String",
+      "description": "连接管理的实现扩展定义",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties"
+    },
+    {
+      "name": "solon.sqltoy.custom-filter-handler",
+      "type": "java.lang.String",
+      "description": "add 2022-4-26 自定义filter处理器(预留备用)",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties"
+    },
+    {
+      "name": "solon.sqltoy.data-source-selector",
+      "type": "java.lang.String",
+      "description": "自定义数据源选择器",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties"
+    },
+    {
+      "name": "solon.sqltoy.debug",
+      "type": "java.lang.Boolean",
+      "description": "是否开启debug模式(默认为false)",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties"
+    },
+    {
+      "name": "solon.sqltoy.default-data-source",
+      "type": "java.lang.String",
+      "description": "sqltoy默认数据库",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties"
+    },
+    {
+      "name": "solon.sqltoy.default-page-offset",
+      "type": "java.lang.Boolean",
+      "description": "未匹配的数据库类型分页是否是limit ? offset ? 模式还是 limit ?,? 模式",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties",
+      "defaultValue": true
+    },
+    {
+      "name": "solon.sqltoy.default-page-size",
+      "type": "java.lang.Integer",
+      "description": "默认一页数据记录数量",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties",
+      "defaultValue": 10
+    },
+    {
+      "name": "solon.sqltoy.delay-check-seconds",
+      "type": "java.lang.Integer",
+      "description": "缓存更新、sql脚本更新 延迟多少秒开始检测",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties"
+    },
+    {
+      "name": "solon.sqltoy.desensitize-provider",
+      "type": "java.lang.String",
+      "description": "字段展示安全脱敏处理器(sqltoy默认提供了实现，此处提供不满足的情况下的自行扩展)",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties"
+    },
+    {
+      "name": "solon.sqltoy.dialect",
+      "type": "java.lang.String",
+      "description": "数据库方言，一般无需设置",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties"
+    },
+    {
+      "name": "solon.sqltoy.dialect-config",
+      "type": "java.util.Map<java.lang.String,java.lang.String>",
+      "description": "数据库方言参数配置",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties"
+    },
+    {
+      "name": "solon.sqltoy.dialect-d-d-l-generator",
+      "type": "java.lang.String",
+      "description": "自定义数据库DDL产生器",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties"
+    },
+    {
+      "name": "solon.sqltoy.dialect-map",
+      "type": "java.util.Map<java.lang.String,java.lang.String>",
+      "description": "不同数据库方言的映射(OSCAR-->oracle)",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties"
+    },
+    {
+      "name": "solon.sqltoy.elastic",
+      "type": "org.sagacity.sqltoy.configure.Elastic",
+      "description": "es的配置",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties"
+    },
+    {
+      "name": "solon.sqltoy.encoding",
+      "type": "java.lang.String",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties"
+    },
+    {
+      "name": "solon.sqltoy.execute-sql-blank-to-null",
+      "type": "java.lang.Boolean",
+      "description": "executeSql变更操作型sql执行空白参数是否默认转为null",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties",
+      "defaultValue": true
+    },
+    {
+      "name": "solon.sqltoy.fetch-size",
+      "type": "java.lang.Integer",
+      "description": "默认查询数据库端提取记录量,一般无需设置",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties",
+      "defaultValue": -1
+    },
+    {
+      "name": "solon.sqltoy.fields-secure-provider",
+      "type": "java.lang.String",
+      "description": "字段安全加密处理器定义(开发者可以自行扩展，sqltoy默认提供了RSA的实现)",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties"
+    },
+    {
+      "name": "solon.sqltoy.hump-map-result-type-label",
+      "type": "java.lang.Boolean",
+      "description": "map类型的resultType标题转驼峰模式(默认为true)",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties"
+    },
+    {
+      "name": "solon.sqltoy.local-date-time-format",
+      "type": "java.lang.String",
+      "description": "sql输出时默认日期格式,可以是: <p> <li>1、auto<\/li> <li>2、\"yyyy-MM-dd HH:mm:ss.SSS\"<\/li> <li>3、\"yyyy-MM-dd HH:mm:ss.SSSSSS\"<\/li> <li>4、\"yyyy-MM-dd HH:mm:ss.SSSSSSSSS\"<\/li> <\/p>",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties",
+      "defaultValue": "yyyy-MM-dd HH:mm:ss"
+    },
+    {
+      "name": "solon.sqltoy.local-time-format",
+      "type": "java.lang.String",
+      "description": "1、auto 2、\"HH:mm:ss.SSS\" 3、\"HH:mm:ss.SSSSSS\" 4、\"HH:mm:ss.SSSSSSSSS\"",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties",
+      "defaultValue": "HH:mm:ss"
+    },
+    {
+      "name": "solon.sqltoy.over-page-to-first",
+      "type": "java.lang.Boolean",
+      "description": "跳转超出数据页范围回到第一页",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties"
+    },
+    {
+      "name": "solon.sqltoy.over-time-sql-handler",
+      "type": "java.lang.String",
+      "description": "sql执行超时处理器",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties"
+    },
+    {
+      "name": "solon.sqltoy.packages-to-scan",
+      "type": "java.lang.String[]",
+      "description": "Sqltoy实体Entity包路径,非必须属性",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties"
+    },
+    {
+      "name": "solon.sqltoy.page-fetch-size-limit",
+      "type": "java.lang.Integer",
+      "description": "分页最大单页数据量(默认是5万)",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties"
+    },
+    {
+      "name": "solon.sqltoy.print-sql-timeout-millis",
+      "type": "java.lang.Integer",
+      "description": "超时打印sql(毫秒,默认30秒)",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties"
+    },
+    {
+      "name": "solon.sqltoy.redo-data-sources",
+      "type": "java.lang.String[]",
+      "description": "需要重复执行查询的数据库",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties"
+    },
+    {
+      "name": "solon.sqltoy.reserved-words",
+      "type": "java.lang.String",
+      "description": "数据库保留字,用逗号分隔",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties"
+    },
+    {
+      "name": "solon.sqltoy.script-check-interval-seconds",
+      "type": "java.lang.Integer",
+      "description": "sql文件脚本变更检测间隔时长(秒)",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties"
+    },
+    {
+      "name": "solon.sqltoy.secure-private-key",
+      "type": "java.lang.String",
+      "description": "安全私钥",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties"
+    },
+    {
+      "name": "solon.sqltoy.secure-public-key",
+      "type": "java.lang.String",
+      "description": "安全公钥",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties"
+    },
+    {
+      "name": "solon.sqltoy.split-merge-into",
+      "type": "java.lang.Boolean",
+      "description": "拆分merge into 为updateAll 和 saveAllIgnoreExist 两步操作(1、seata分布式事务不支持merge)",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties",
+      "defaultValue": false
+    },
+    {
+      "name": "solon.sqltoy.sql-formater",
+      "type": "java.lang.String",
+      "description": "sql格式化输出器(用于debug sql输出)",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties"
+    },
+    {
+      "name": "solon.sqltoy.sql-interceptors",
+      "type": "java.lang.String[]",
+      "description": "自定义sql拦截加工处理器",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties"
+    },
+    {
+      "name": "solon.sqltoy.sql-resources",
+      "type": "java.lang.String[]",
+      "description": "具体的sql.xml 文件资源",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties"
+    },
+    {
+      "name": "solon.sqltoy.sql-resources-dir",
+      "type": "java.lang.String",
+      "description": "指定sql.xml 文件路径,多个路径用逗号分隔",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties"
+    },
+    {
+      "name": "solon.sqltoy.task-executor",
+      "type": "org.sagacity.sqltoy.configure.SqlToyContextTaskPoolProperties",
+      "description": "线程池配置参数",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties"
+    },
+    {
+      "name": "solon.sqltoy.translate-cache-manager",
+      "type": "java.lang.String",
+      "description": "缓存管理器",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties"
+    },
+    {
+      "name": "solon.sqltoy.translate-config",
+      "type": "java.lang.String",
+      "description": "缓存翻译的配置文件",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties"
+    },
+    {
+      "name": "solon.sqltoy.type-handler",
+      "type": "java.lang.String",
+      "description": "字段类型转换器",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties"
+    },
+    {
+      "name": "solon.sqltoy.unify-fields-handler",
+      "type": "java.lang.String",
+      "description": "统一字段处理器",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties"
+    },
+    {
+      "name": "solon.sqltoy.update-tip-count",
+      "type": "java.lang.Integer",
+      "description": "数据修改提示的记录数量阈值，默认2000条",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties",
+      "defaultValue": 2000
+    }
+  ],
+  "hints": []
+}
