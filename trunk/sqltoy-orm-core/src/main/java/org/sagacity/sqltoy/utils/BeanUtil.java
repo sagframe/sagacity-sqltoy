@@ -662,7 +662,7 @@ public class BeanUtil {
 			}
 			// 修复oracle.sql.timestamp 转localdatetime的缺陷
 			if ("oracle.sql.TIMESTAMP".equals(paramValue.getClass().getTypeName())) {
-				return DateUtil.asLocalDateTime(oracleTimeStampConvert(paramValue));
+				return oracleTimeStampConvert(paramValue).toLocalDateTime();
 			}
 			return DateUtil.asLocalDateTime(DateUtil.convertDateObject(paramValue));
 		}
@@ -1253,29 +1253,31 @@ public class BeanUtil {
 					if (!hasKey) {
 						int index = 0;
 						int fieldLen = fields.length;
+						// a.b.c[index] 切割后逐级向下取值
 						for (String field : fields) {
 							// 支持map类型 update 2021-01-31
 							if (fieldValue instanceof Map) {
 								if (fieldValue instanceof IgnoreKeyCaseMap) {
-									if (!((IgnoreKeyCaseMap) fieldValue).containsKey(field)) {
-										keyAndIndex = getKeyAndIndex(field);
+									keyAndIndex = getKeyAndIndex(field);
+									realFieldLow = (keyAndIndex == null) ? field : keyAndIndex.getKey();
+									tmpValue = ((IgnoreKeyCaseMap) fieldValue).get(realFieldLow);
+									// 当前层级取到值，则继续向下
+									if (tmpValue != null) {
 										if (keyAndIndex != null) {
-											fieldValue = getArrayIndexValue(
-													((IgnoreKeyCaseMap) fieldValue).get(keyAndIndex.getKey()),
-													keyAndIndex.getIndex());
-										} else {
-											fieldValue = null;
-										}
-									} else {
-										tmpValue = ((IgnoreKeyCaseMap) fieldValue).get(field);
-										if (tmpValue == null) {
-											fieldValue = ((IgnoreKeyCaseMap) fieldValue).get(wrapMapKey(fields, index));
-											if (fieldValue != null) {
-												break;
-											}
+											fieldValue = getArrayIndexValue(tmpValue, keyAndIndex.getIndex());
 										} else {
 											fieldValue = tmpValue;
 										}
+									} else {
+										// 没有取到值终止继续逐级取值，则以当前层级到结尾，a.b.c[index]则以b.c[index]
+										// a.b.c[index] a.b.c直接是key模式进行尝试
+										if (keyAndIndex == null) {
+											fieldValue = getMaybeArrayValue((IgnoreKeyCaseMap) fieldValue,
+													wrapMapKey(fields, index));
+										} else {
+											fieldValue = null;
+										}
+										break;
 									}
 								} else {
 									iter = ((Map) fieldValue).entrySet().iterator();
@@ -1297,14 +1299,15 @@ public class BeanUtil {
 											break;
 										}
 									}
+									// 未匹配到，做a.b.c[index]，key直接是a.b.c尝试
 									if (!isMapped) {
-										tmpValue = ((Map) fieldValue).get(wrapMapKey(fields, index));
-										if (tmpValue != null) {
-											fieldValue = tmpValue;
-											break;
+										if (keyAndIndex == null) {
+											fieldValue = getMaybeArrayValue((Map) fieldValue,
+													wrapMapKey(fields, index));
 										} else {
 											fieldValue = null;
 										}
+										break;
 									}
 								}
 							} // update 2022-5-25 支持将集合的属性直接映射成数组
@@ -2299,6 +2302,15 @@ public class BeanUtil {
 			cascadeModels.put(className, result);
 		}
 		return result;
+	}
+
+	public static Object getMaybeArrayValue(Map value, String property) {
+		KeyAndIndex keyAndIndex = getKeyAndIndex(property);
+		if (keyAndIndex == null) {
+			return value.get(property);
+		} else {
+			return getArrayIndexValue(value.get(keyAndIndex.getKey()), keyAndIndex.getIndex());
+		}
 	}
 
 	public static KeyAndIndex getKeyAndIndex(String property) {
