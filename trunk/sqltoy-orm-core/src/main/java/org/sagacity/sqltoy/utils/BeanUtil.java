@@ -1253,6 +1253,7 @@ public class BeanUtil {
 					if (!hasKey) {
 						int index = 0;
 						int fieldLen = fields.length;
+						// a.b.c[index] 切割后逐级向下取值
 						for (String field : fields) {
 							// 支持map类型 update 2021-01-31
 							if (fieldValue instanceof Map) {
@@ -1260,6 +1261,7 @@ public class BeanUtil {
 									keyAndIndex = getKeyAndIndex(field);
 									realFieldLow = (keyAndIndex == null) ? field : keyAndIndex.getKey();
 									tmpValue = ((IgnoreKeyCaseMap) fieldValue).get(realFieldLow);
+									// 当前层级取到值，则继续向下
 									if (tmpValue != null) {
 										if (keyAndIndex != null) {
 											fieldValue = getArrayIndexValue(tmpValue, keyAndIndex.getIndex());
@@ -1267,6 +1269,7 @@ public class BeanUtil {
 											fieldValue = tmpValue;
 										}
 									} else {
+										// 没有取到值终止继续逐级取值，则以当前层级到结尾，a.b.c[index]则以b.c[index]
 										// a.b.c[index] a.b.c直接是key模式进行尝试
 										if (keyAndIndex == null) {
 											fieldValue = getMaybeArrayValue((IgnoreKeyCaseMap) fieldValue,
