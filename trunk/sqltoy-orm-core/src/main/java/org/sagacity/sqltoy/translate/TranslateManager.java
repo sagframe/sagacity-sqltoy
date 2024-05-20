@@ -103,7 +103,11 @@ public class TranslateManager {
 			this.sqlToyContext = sqlToyContext;
 			initialized = true;
 			String realTranslateConfig = (translateConfig == null) ? defaultTranslateConfig : translateConfig;
-			logger.debug("开始加载sqltoy的translate缓存翻译配置文件:{}", realTranslateConfig);
+			if (logger.isDebugEnabled()) {
+				logger.debug("开始加载sqltoy的translate缓存翻译配置文件:{}", realTranslateConfig);
+			} else {
+				System.out.println("开始加载sqltoy的translate缓存翻译配置文件:" + realTranslateConfig);
+			}
 			// 加载和解析缓存翻译的配置
 			DefaultConfig defaultConfig = TranslateConfigParse.parseTranslateConfig(sqlToyContext, translateMap,
 					updateCheckers, realTranslateConfig, (translateConfig == null), charset);

@@ -54,12 +54,12 @@ public class SqlToyContextBuilder {
 
 	/**
 	 * 路径切分且去空格去重
+	 * 
 	 * @param str
 	 * @return
 	 */
-	private Set<String> strSplitTrim(String str){
-		String[] strs = str.replaceAll("\\；", ",").replaceAll("\\，", ",").replaceAll("\\;", ",")
-				.split("\\,");
+	private Set<String> strSplitTrim(String str) {
+		String[] strs = str.replaceAll("\\；", ",").replaceAll("\\，", ",").replaceAll("\\;", ",").split("\\,");
 		Set<String> set = new TreeSet<>();
 		for (String subStr : strs) {
 			set.add(subStr.trim());
@@ -69,6 +69,7 @@ public class SqlToyContextBuilder {
 
 	/**
 	 * 扫描静态文件
+	 * 
 	 * @param resList
 	 * @param dir
 	 * @param suffix
@@ -89,47 +90,50 @@ public class SqlToyContextBuilder {
 			// "请检查sqltoy配置,是sqltoy作为前缀,而不是spring.sqltoy!\n正确范例:
 			// sqltoy.sqlResourcesDir=classpath:com/sagframe/modules");
 		}
-		//当aot模式下需要调整配置文件到具体的每个文件
+		// 当aot模式下需要调整配置文件到具体的每个文件
 		if (System.getProperty("org.graalvm.nativeimage.imagecode") != null) {
-			//1、sql文件配置重置
+			// 1、sql文件配置重置
 			String sqlResourcesDir = properties.getSqlResourcesDir();
-			//1.1、置空目录设置
-			properties.setSqlResourcesDir(null);
-			//1.2、遍历其具体的文件
+			// 1.1、置空目录设置
+			// properties.setSqlResourcesDir(null);
+			// 1.2、遍历其具体的文件
 			Set<String> sqlDirSet = this.strSplitTrim(sqlResourcesDir);
 			List<String> sqlResourceList = new CopyOnWriteArrayList<>();
 			for (String dir : sqlDirSet) {
 				SqlScriptLoader.checkSqlResourcesDir(dir);
 				this.scanResources(sqlResourceList, dir, "**\\.sql\\.xml");
 			}
-			//1.3、合并SqlResources
-			if(properties.getSqlResources() != null){
+			// 设置resourcesDir转换为了resourceList,不再做路径加载
+			SqlScriptLoader.setResourcesDirToList(true);
+			// 1.3、合并SqlResources
+			if (properties.getSqlResources() != null) {
 				for (String sqlResource : properties.getSqlResources()) {
 					sqlResourceList.add(sqlResource);
 				}
 			}
-			//1.4、重设置到sqlResources属性
+			// 1.4、重设置到sqlResources属性
 			properties.setSqlResources(sqlResourceList.toArray(String[]::new));
-			//2、重置翻译文件
+			// 2、重置翻译文件
 			String translateConfig = properties.getTranslateConfig();
-			if(translateConfig == null){
+			if (translateConfig == null) {
 				translateConfig = TranslateManager.defaultTranslateConfig;
 			}
-			//2.1、遍历其具体的文件
+			// 2.1、遍历其具体的文件
 			Set<String> translateConfigDirSet = this.strSplitTrim(translateConfig);
 			List<String> translateConfigResourceList = new CopyOnWriteArrayList<>();
 			for (String dir : translateConfigDirSet) {
-				if(dir.endsWith(".xml")){
+				if (dir.endsWith(".xml")) {
 					translateConfigResourceList.add(dir);
-				}else{
+				} else {
 					this.scanResources(translateConfigResourceList, dir, "**\\.xml");
 				}
 			}
-			//2.2、重新设置值
+			// 2.2、重新设置值
 			properties.setTranslateConfig(translateConfigResourceList.stream().collect(Collectors.joining(",")));
-			//输出日志
-			//System.out.println("a: " + Arrays.stream(properties.getSqlResources()).collect(Collectors.joining(",")));
-			//System.out.println("b: " + properties.getTranslateConfig());
+			// 输出日志
+			// System.out.println("a: " +
+			// Arrays.stream(properties.getSqlResources()).collect(Collectors.joining(",")));
+			// System.out.println("b: " + properties.getTranslateConfig());
 		}
 		SqlToyContext sqlToyContext = new SqlToyContext();
 

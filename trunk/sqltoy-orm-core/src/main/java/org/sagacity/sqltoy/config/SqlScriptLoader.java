@@ -93,6 +93,11 @@ public class SqlScriptLoader {
 	private int maxWait = 3600 * 24;
 
 	/**
+	 * 是否将sqlResourcesDir下的sql文件解析成具体的文件resourceList
+	 */
+	private static boolean SQLRESOURCESDIRTOLIST = false;
+
+	/**
 	 * 文件最后修改时间
 	 */
 	private ConcurrentHashMap<String, Long> filesLastModifyMap = new ConcurrentHashMap<String, Long>();
@@ -109,6 +114,9 @@ public class SqlScriptLoader {
 	 * @param sqlResourcesDir
 	 */
 	public static void checkSqlResourcesDir(String sqlResourcesDir) {
+		if (SQLRESOURCESDIRTOLIST) {
+			return;
+		}
 		if (StringUtil.isNotBlank(sqlResourcesDir)
 				&& (sqlResourcesDir.toLowerCase().contains(".sql.xml") || sqlResourcesDir.contains("*"))) {
 			throw new IllegalArgumentException("\n您的配置:spring.sqltoy.sqlResourcesDir=" + sqlResourcesDir + " 不正确!\n"
@@ -121,6 +129,10 @@ public class SqlScriptLoader {
 					+ "/*-2、classpath*:/com/yourproject/yourpackage/**/**.sql.xml\n"
 					+ "/*-----------------------------------------------------------------------*/");
 		}
+	}
+
+	public static void setResourcesDirToList(boolean sqlResourcesDirToList) {
+		SQLRESOURCESDIRTOLIST = sqlResourcesDirToList;
 	}
 
 	/**
@@ -143,7 +155,8 @@ public class SqlScriptLoader {
 		boolean enabledDebug = logger.isDebugEnabled();
 		try {
 			// 检索所有匹配的sql.xml文件
-			realSqlList = ScanEntityAndSqlResource.getSqlResources(sqlResourcesDir, sqlResources);
+			realSqlList = ScanEntityAndSqlResource.getSqlResources(SQLRESOURCESDIRTOLIST ? null : sqlResourcesDir,
+					sqlResources);
 			if (realSqlList != null && !realSqlList.isEmpty()) {
 				// 此处提供大量提示信息,避免开发者配置错误或未将资源文件编译到bin或classes下
 				if (enabledDebug) {
