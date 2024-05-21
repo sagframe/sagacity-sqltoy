@@ -3,6 +3,7 @@ package org.sagacity.sqltoy.configure;
 import static java.lang.System.err;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -507,7 +508,12 @@ public class SqltoyAutoConfiguration {
 				.getResources(dir.replaceFirst("classpath:", ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX));
 		// 遍历资源目录树
 		for (Resource resource : resources) {
-			resList.add(resource.getURL().getPath());
+			URL url = resource.getURL();
+			if("jar".equals(url.getProtocol())){
+				resList.add(url.getPath().split("!/")[1]);
+			}else{
+				resList.add(url.getPath());
+			}
 		}
 	}
 
