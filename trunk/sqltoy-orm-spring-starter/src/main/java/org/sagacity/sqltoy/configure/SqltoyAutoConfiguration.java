@@ -1,17 +1,6 @@
 package org.sagacity.sqltoy.configure;
 
-import static java.lang.System.err;
-
-import java.io.IOException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.Executor;
-import java.util.stream.Collectors;
-
+import com.alibaba.ttl.threadpool.TtlExecutors;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.SqlScriptLoader;
 import org.sagacity.sqltoy.config.model.ElasticEndpoint;
@@ -22,11 +11,7 @@ import org.sagacity.sqltoy.dao.impl.SqlToyLazyDaoImpl;
 import org.sagacity.sqltoy.integration.ConnectionFactory;
 import org.sagacity.sqltoy.integration.impl.SpringAppContext;
 import org.sagacity.sqltoy.integration.impl.SpringConnectionFactory;
-import org.sagacity.sqltoy.plugins.FilterHandler;
-import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
-import org.sagacity.sqltoy.plugins.OverTimeSqlHandler;
-import org.sagacity.sqltoy.plugins.SqlInterceptor;
-import org.sagacity.sqltoy.plugins.TypeHandler;
+import org.sagacity.sqltoy.plugins.*;
 import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
 import org.sagacity.sqltoy.plugins.ddl.DialectDDLGenerator;
 import org.sagacity.sqltoy.plugins.formater.SqlFormater;
@@ -49,7 +34,17 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
-import com.alibaba.ttl.threadpool.TtlExecutors;
+import java.io.IOException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executor;
+import java.util.stream.Collectors;
+
+import static java.lang.System.err;
 
 /**
  * @author wolf
@@ -507,11 +502,14 @@ public class SqltoyAutoConfiguration {
 		Resource[] resources = resourcePatternResolver
 				.getResources(dir.replaceFirst("classpath:", ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX));
 		// 遍历资源目录树
+		URL url;
+		String[] strs;
 		for (Resource resource : resources) {
-			URL url = resource.getURL();
-			if("jar".equals(url.getProtocol())){
-				resList.add(url.getPath().split("!/")[1]);
-			}else{
+			url = resource.getURL();
+			if ("jar".equals(url.getProtocol())) {
+				strs = url.getPath().split("!/");
+				resList.add(strs[strs.length - 1]);
+			} else {
 				resList.add(url.getPath());
 			}
 		}

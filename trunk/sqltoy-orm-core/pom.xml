@@ -3,7 +3,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sagframe</groupId>
-	<version>5.6.9</version>
+	<version>5.6.10</version>
 	<name>sagacity-sqltoy</name>
 	<description>sqltoy core code</description>
 	<artifactId>sagacity-sqltoy</artifactId>
@@ -23,7 +23,7 @@
 		<h2.version>2.2.224</h2.version>
 		<lombok.version>1.18.32</lombok.version>
 		<taos-jdbcdriver.version>3.2.11</taos-jdbcdriver.version>
-		<druid.version>1.2.22</druid.version>
+		<druid.version>1.2.23</druid.version>
 		<transmittable-thread-local>2.14.5</transmittable-thread-local>
 	</properties>
 	<licenses>
