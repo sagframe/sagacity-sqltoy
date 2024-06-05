@@ -48,7 +48,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	protected LightDao lightDao;
 
 	/**
-	 * @param lightDao the sqlToyLazyDao to set
+	 * @param sqlToyLazyDao the sqlToyLazyDao to set
 	 */
 	@Autowired(required = false)
 	@Qualifier(value = "lightDao")

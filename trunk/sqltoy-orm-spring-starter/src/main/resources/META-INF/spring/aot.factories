@@ -1,5 +1,0 @@
-org.springframework.aot.hint.RuntimeHintsRegistrar= \
-org.sagacity.sqltoy.integration.aot.SqltoyRuntimeHintsRegistrar
-
-org.springframework.beans.factory.aot.BeanFactoryInitializationAotProcessor= \
-org.sagacity.sqltoy.integration.aot.SqltoyBeanFactoryInitializationAotProcessor

@@ -1,11 +1,11 @@
 package org.sagacity.sqltoy.solon.integration;
 
-import java.util.Date;
-
 import org.noear.redisx.RedisClient;
 import org.noear.redisx.plus.RedisAtomic;
 import org.sagacity.sqltoy.integration.AppContext;
 import org.sagacity.sqltoy.integration.DistributeIdGenerator;
+
+import java.util.Date;
 
 /**
  * 基于redisx的redis模式的分布式id生成器

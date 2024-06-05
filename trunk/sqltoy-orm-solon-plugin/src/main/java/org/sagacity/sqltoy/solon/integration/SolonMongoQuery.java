@@ -1,18 +1,13 @@
 package org.sagacity.sqltoy.solon.integration;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import com.mongodb.client.*;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.integration.MongoQuery;
 
-import com.mongodb.client.AggregateIterable;
-import com.mongodb.client.FindIterable;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoCursor;
-import com.mongodb.client.MongoDatabase;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SolonMongoQuery implements MongoQuery {
     private MongoDatabase db;

@@ -1,10 +1,10 @@
 package org.sagacity.sqltoy.solon.translate.cache.impl;
 
-import java.util.HashMap;
-
 import org.noear.solon.data.cache.CacheService;
 import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
 import org.sagacity.sqltoy.translate.model.TranslateConfigModel;
+
+import java.util.HashMap;
 
 /**
  *  基于Solon CacheServices做的TranslateCache

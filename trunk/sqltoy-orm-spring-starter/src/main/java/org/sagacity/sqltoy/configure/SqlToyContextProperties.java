@@ -9,7 +9,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * @author zhongxuchen
  * @version v1.0,Date:2020年2月20日
  */
-
 @ConfigurationProperties(prefix = "spring.sqltoy")
 public class SqlToyContextProperties implements Serializable {
 
