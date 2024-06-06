@@ -161,9 +161,8 @@ public class SqlToyConstants {
 	// update 2021-10-13 增加参数名称为中文场景(应对一些极为不规范的项目场景)
 	// update 2023-8-17 增加支持:itemSet[0].paramName 模式(之前只支持:itemSet[0])
 	// update 2023-12-19 替换为 [^A-Za-z0-9:],将下划线放开
-	// update 2024-06-05 兼容name=N:name模式
 	public final static Pattern SQL_NAMED_PATTERN = Pattern.compile(
-			"[^A-MO-Za-z0-9:\u4e00-\u9fa5]\\:\\s*[a-zA-Z\u4e00-\u9fa5][a-zA-Z0-9_\u4e00-\u9fa5]*(\\.[\\w\u4e00-\u9fa5]+)*(\\[\\d+\\](\\.[a-zA-Z0-9_\u4e00-\u9fa5]+)*)?\\s?");
+			"[^A-Za-z0-9:\u4e00-\u9fa5]\\:\\s*[a-zA-Z\u4e00-\u9fa5][a-zA-Z0-9_\u4e00-\u9fa5]*(\\.[\\w\u4e00-\u9fa5]+)*(\\[\\d+\\](\\.[a-zA-Z0-9_\u4e00-\u9fa5]+)*)?\\s?");
 	public final static Pattern NOSQL_NAMED_PATTERN = Pattern.compile(
 			"(?i)\\@(param|blank|value)?\\(\\s*\\:\\s*[a-zA-Z\u4e00-\u9fa5][a-zA-Z0-9_\u4e00-\u9fa5]*(\\.[\\w\u4e00-\u9fa5]+)*(\\[\\d+\\](\\.[a-zA-Z0-9_\u4e00-\u9fa5]+)*)?\\s*\\)");
 
