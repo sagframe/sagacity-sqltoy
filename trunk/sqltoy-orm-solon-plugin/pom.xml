@@ -16,7 +16,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <solon.version>2.8.0</solon.version>
+        <solon.version>2.8.3</solon.version>
         <redisx.version>1.6.3</redisx.version>
         <mongo.version>3.12.14</mongo.version>
         <slf4j.version>2.0.13</slf4j.version>
