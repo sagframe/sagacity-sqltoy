@@ -203,7 +203,7 @@ public class MacroIfLogic {
 	 */
 	public static boolean compare(Object value, String compareType, String compareValue) {
 		// 剔除首尾字符串标志符号
-		compareValue = clearChar(compareValue);
+		compareValue = removeStartEndQuote(compareValue);
 		// 只支持加减运算
 		String append = "0";
 		String[] calculateStr = { "+", "-" };
@@ -232,7 +232,7 @@ public class MacroIfLogic {
 			compareValue = DateUtil.formatDate(DateUtil.addSecond(new Date(), Double.parseDouble(append)), dayFmt);
 			type = "date";
 		}
-		String valueStr = (value == null) ? "null" : clearChar(value.toString());
+		String valueStr = (value == null) ? "null" : removeStartEndQuote(value.toString());
 		if ("time".equals(type)) {
 			valueStr = DateUtil.formatDate(value, dayTimeFmt);
 		} else if ("date".equals(type)) {
@@ -497,7 +497,12 @@ public class MacroIfLogic {
 		return false;
 	}
 
-	private static String clearChar(String source) {
+	/**
+	 * @TODO 去除字符串首尾的单引号或双引号
+	 * @param source
+	 * @return
+	 */
+	private static String removeStartEndQuote(String source) {
 		if (source == null) {
 			return source;
 		}

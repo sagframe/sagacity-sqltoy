@@ -29,6 +29,9 @@ public class ToChar extends IFunction {
 	 */
 	@Override
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
+		if (args.length == 1) {
+			return super.IGNORE;
+		}
 		String format;
 		switch (dialect) {
 		case DBType.MYSQL:
@@ -54,14 +57,14 @@ public class ToChar extends IFunction {
 			format = format.replace("%H", "hh24").replace("%h", "hh").replace("%i", "mi").replace("%s", "ss");
 			return "to_char(" + args[0] + "," + format + ")";
 		}
-        case DBType.H2: {
-            // 日期
-            format = args[1].replace("%Y", "yyyy").replace("%y", "yyyy").replace("%m", "MM").replace("%d", "dd");
-            // 时间处理
-            format = format.replace("%T", "hh:mm:ss");
-            format = format.replace("%H", "hh").replace("%h", "hh").replace("%i", "mm").replace("%s", "ss");
-            return "to_char(" + args[0] + "," + format + ")";
-        }
+		case DBType.H2: {
+			// 日期
+			format = args[1].replace("%Y", "yyyy").replace("%y", "yyyy").replace("%m", "MM").replace("%d", "dd");
+			// 时间处理
+			format = format.replace("%T", "hh:mm:ss");
+			format = format.replace("%H", "hh").replace("%h", "hh").replace("%i", "mm").replace("%s", "ss");
+			return "to_char(" + args[0] + "," + format + ")";
+		}
 		default:
 			return super.IGNORE;
 		}

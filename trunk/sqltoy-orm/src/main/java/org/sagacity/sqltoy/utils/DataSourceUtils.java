@@ -376,7 +376,7 @@ public class DataSourceUtils {
 	 * @return
 	 * @throws SQLException
 	 */
-	public static int getDBVersion(final Connection conn) throws SQLException {
+	private static int getDBVersion(final Connection conn) throws SQLException {
 		// -1表示版本不确定
 		int result = -1;
 		// 部分数据库驱动还不支持此方法

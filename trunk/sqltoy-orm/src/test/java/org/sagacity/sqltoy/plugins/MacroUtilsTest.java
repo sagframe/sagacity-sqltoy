@@ -36,7 +36,7 @@ public class MacroUtilsTest {
 			keyValues.put(paramsNamed[i], paramsValue[i]);
 		}
 
-		String result = MacroUtils.replaceMacros(sql, keyValues, null, false, macros);
+		String result = MacroUtils.replaceMacros(sql, keyValues, null, false, macros,null);
 		System.err.println(result);
 	}
 
@@ -54,7 +54,7 @@ public class MacroUtilsTest {
 			keyValues.put(paramsNamed[i], paramsValue[i]);
 		}
 
-		String result = MacroUtils.replaceMacros(sql, keyValues, null, false, macros);
+		String result = MacroUtils.replaceMacros(sql, keyValues, null, false, macros,null);
 		System.err.println(result);
 	}
 
@@ -73,7 +73,7 @@ public class MacroUtilsTest {
 			keyValues.put(paramsNamed[i], paramsValue[i]);
 		}
 
-		String result = MacroUtils.replaceMacros(sql, keyValues, null, false, macros);
+		String result = MacroUtils.replaceMacros(sql, keyValues, null, false, macros,null);
 		System.err.println(result);
 	}
 
@@ -96,7 +96,7 @@ public class MacroUtilsTest {
 //		for (int i = 0; i < paramsNamed.length; i++) {
 //			keyValues.put(paramsNamed[i], paramsValue[i]);
 //		}
-		String result = MacroUtils.replaceMacros(sql, keyValues, null, false, macros);
+		String result = MacroUtils.replaceMacros(sql, keyValues, null, false, macros,null);
 		System.err.println(result);
 	}
 

@@ -7,7 +7,7 @@ import java.util.List;
 
 /**
  * @project sagacity-sqltoy
- * @description 针对localCache提供动态从redis或数据库获取值并放入缓存的机制
+ * @description 针对localCache提供动态从redis或数据库获取值并放入缓存的机制(目前还未实现)
  * @author zhongxuchen
  * @version v1.0, Date:2024年1月18日
  * @modify 2024年1月18日,修改说明
