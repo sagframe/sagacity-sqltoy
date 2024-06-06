@@ -10,10 +10,10 @@
 	<url>https://github.com/sagframe/sagacity-sqltoy</url>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<spring-framework.version>6.1.6</spring-framework.version>
-		<spring-data-commons.version>3.2.5</spring-data-commons.version>
-		<spring-data-redis.version>3.2.5</spring-data-redis.version>
-		<spring-data-mongo.version>4.2.5</spring-data-mongo.version>
+		<spring-framework.version>6.1.8</spring-framework.version>
+		<spring-data-commons.version>3.2.6</spring-data-commons.version>
+		<spring-data-redis.version>3.2.6</spring-data-redis.version>
+		<spring-data-mongo.version>4.2.6</spring-data-mongo.version>
 		<mongo.version>3.12.14</mongo.version>
 		<slf4j.version>2.0.13</slf4j.version>
 		<caffeine.version>3.1.8</caffeine.version>
