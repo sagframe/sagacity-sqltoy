@@ -98,7 +98,7 @@ public class SqlConfigParseUtils {
 	public final static Pattern IN_PATTERN = Pattern.compile(
 			"(?i)\\s+in\\s*((\\(\\s*\\?(\\s*\\,\\s*\\?)*\\s*\\))|((\\(\\s*){2}\\?(\\s*\\,\\s*\\?)+(\\s*\\)){2}))");
 	// update 2022-11-11 兼容ilike、兼容like N:name模式
-	public final static Pattern LIKE_PATTERN = Pattern.compile("(?i)\\s+i?like\\s+N?\\?");
+	public final static Pattern LIKE_PATTERN = Pattern.compile("(?i)\\s+i?like\\s+\\?");
 
 	// add 2016-5-27 by chenrenfei
 	public final static String BLANK_REGEX = "(?i)\\@blank\\s*\\(\\s*\\?\\s*\\)";
