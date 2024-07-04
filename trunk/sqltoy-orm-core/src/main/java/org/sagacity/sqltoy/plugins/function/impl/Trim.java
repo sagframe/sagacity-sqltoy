@@ -48,9 +48,9 @@ public class Trim extends IFunction {
 		if (dialect == DBType.SQLSERVER) {
 			return "rtrim(ltrim(" + args[0] + "))";
 		}
-        if (dialect == DBType.H2) {
-            return "trim(both ' ' from " + args[0] + ")";
-        }
+		if (dialect == DBType.H2) {
+			return "trim(both ' ' from " + args[0] + ")";
+		}
 		return super.IGNORE;
 	}
 }

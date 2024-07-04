@@ -8,6 +8,7 @@ import java.util.Queue;
 
 /**
  * 固定长度优先队列模型
+ * 
  * @author zhongxuchen
  *
  * @param <T>

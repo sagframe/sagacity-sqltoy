@@ -54,7 +54,7 @@ public class DataType {
 
 	public static final int setType = 102;
 
-	//枚举类型
+	// 枚举类型
 	public static final int enumType = 110;
 
 	public static int getType(String typeName) {

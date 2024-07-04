@@ -41,8 +41,9 @@ public class ElasticSqlPlugin {
 			QueryExecutor queryExecutor) throws Exception {
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
-		String realSql = MongoElasticUtils.wrapES(sqlToyConfig, extend.getParamsName(),
-				extend.getParamsValue(sqlToyContext, sqlToyConfig)).trim();
+		String realSql = MongoElasticUtils
+				.wrapES(sqlToyConfig, extend.getParamsName(), extend.getParamsValue(sqlToyContext, sqlToyConfig))
+				.trim();
 		// sql模式
 		realSql = realSql + " limit " + (pageModel.getPageNo() - 1) * pageModel.getPageSize() + ","
 				+ pageModel.getPageSize();
@@ -76,8 +77,9 @@ public class ElasticSqlPlugin {
 			Integer topSize) throws Exception {
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
-		String realSql = MongoElasticUtils.wrapES(sqlToyConfig, extend.getParamsName(),
-				extend.getParamsValue(sqlToyContext, sqlToyConfig)).trim();
+		String realSql = MongoElasticUtils
+				.wrapES(sqlToyConfig, extend.getParamsName(), extend.getParamsValue(sqlToyContext, sqlToyConfig))
+				.trim();
 		// sql模式
 		if (topSize != null) {
 			realSql = realSql + " limit " + topSize;

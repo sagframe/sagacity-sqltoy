@@ -73,7 +73,7 @@ public class PageOptimizeUtils {
 			}
 			if (value == null) {
 				cacheKey.append("null");
-			} else if ((value instanceof Object[]) || value.getClass().isArray() || (value instanceof List)) {		
+			} else if ((value instanceof Object[]) || value.getClass().isArray() || (value instanceof List)) {
 				Object[] arrayValue = (value instanceof List) ? ((List) value).toArray()
 						: CollectionUtil.convertArray(value);
 				cacheKey.append("[");
