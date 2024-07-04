@@ -1,5 +1,6 @@
 package org.sagacity.sqltoy.utils;
 
+import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -57,10 +58,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * @author zhongxuchen
+ * @version v1.3, Date:Apr 14, 2009 11:52:31 PM
  * @project sagacity-sqltoy
  * @description 数据库sql相关的处理工具
- * @author zhongxuchen
- * @version v1.3,Date:Apr 14, 2009 11:52:31 PM
  * @modify Date:2011-8-18
  *         {移植BaseDaoSupport中分页移植到SqlUtil中，将数据库表、外键、主键等库和表信息移植到DBUtil中 }
  * @modify Date:2011-8-22 {修复getJdbcRecordCount中因group分组查询导致的错误， 如select
@@ -127,11 +128,11 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @todo 合成数据库in 查询的条件(不建议使用)
 	 * @param conditions :数据库in条件的数据集合，可以是POJO List或Object[]
 	 * @param colIndex   :二维数组对应列编号
 	 * @param property   :POJO property
 	 * @param isChar     :in 是否要加单引号
+	 * @todo 合成数据库in 查询的条件(不建议使用)
 	 * @return:example:1,2,3或'1','2','3'
 	 */
 	public static String combineQueryInStr(Object conditions, Integer colIndex, String property, boolean isChar) {
@@ -202,7 +203,6 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @todo 自动进行类型转换,设置sql中的参数条件的值
 	 * @param typeHandler
 	 * @param conn
 	 * @param dbType
@@ -212,6 +212,7 @@ public class SqlUtil {
 	 * @param fromIndex
 	 * @throws SQLException
 	 * @throws IOException
+	 * @todo 自动进行类型转换, 设置sql中的参数条件的值
 	 */
 	public static void setParamsValue(TypeHandler typeHandler, Connection conn, final Integer dbType,
 			PreparedStatement pst, Object[] params, Integer[] paramsType, int fromIndex)
@@ -235,7 +236,6 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @TODO 针对sqlserver提供特殊处理(避免干扰其他代码)
 	 * @param typeHandler
 	 * @param conn
 	 * @param dbType
@@ -245,6 +245,7 @@ public class SqlUtil {
 	 * @param fromIndex
 	 * @throws SQLException
 	 * @throws IOException
+	 * @TODO 针对sqlserver提供特殊处理(避免干扰其他代码)
 	 */
 	private static void setSqlServerParamsValue(TypeHandler typeHandler, Connection conn, final Integer dbType,
 			PreparedStatement pst, Object[] params, Integer[] paramsType, int fromIndex)
@@ -272,7 +273,6 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @todo 设置sql中的参数条件的值
 	 * @param typeHandler
 	 * @param conn
 	 * @param dbType
@@ -282,6 +282,7 @@ public class SqlUtil {
 	 * @param paramIndex
 	 * @throws SQLException
 	 * @throws IOException
+	 * @todo 设置sql中的参数条件的值
 	 */
 	public static void setParamValue(TypeHandler typeHandler, Connection conn, final Integer dbType,
 			PreparedStatement pst, Object paramValue, int jdbcType, int paramIndex) throws SQLException, IOException {
@@ -386,16 +387,20 @@ public class SqlUtil {
 			pst.setString(paramIndex, tmpStr);
 		} else if (paramValue instanceof byte[]) {
 			if (jdbcType == java.sql.Types.BLOB) {
-				Blob blob = null;
-				try {
-					blob = conn.createBlob();
-					OutputStream out = blob.setBinaryStream(1);
-					out.write((byte[]) paramValue);
-					out.flush();
-					out.close();
-					pst.setBlob(paramIndex, blob);
-				} catch (Exception e) {
-					pst.setBytes(paramIndex, (byte[]) paramValue);
+				if (dbType == DBType.MOGDB) {
+					pst.setBlob(paramIndex, new ByteArrayInputStream((byte[]) paramValue));
+				} else {
+					Blob blob = null;
+					try {
+						blob = conn.createBlob();
+						OutputStream out = blob.setBinaryStream(1);
+						out.write((byte[]) paramValue);
+						out.flush();
+						out.close();
+						pst.setBlob(paramIndex, blob);
+					} catch (Exception e) {
+						pst.setBytes(paramIndex, (byte[]) paramValue);
+					}
 				}
 			} else {
 				pst.setBytes(paramIndex, (byte[]) paramValue);
@@ -465,18 +470,18 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @TODO setArray gaussdb 必须要通过conn构造Array
 	 * @param dbType
 	 * @param conn
 	 * @param pst
 	 * @param paramIndex
 	 * @param paramValue
 	 * @throws SQLException
+	 * @TODO setArray gaussdb 必须要通过conn构造Array
 	 */
 	private static void setArray(Integer dbType, Connection conn, PreparedStatement pst, int paramIndex,
 			Object paramValue) throws SQLException {
 		// 目前只支持Integer 和 String两种类型
-		if (dbType == DBType.GAUSSDB) {
+		if (dbType == DBType.GAUSSDB || dbType == DBType.MOGDB) {
 			if (paramValue instanceof Integer[]) {
 				Array array = conn.createArrayOf("INTEGER", (Integer[]) paramValue);
 				pst.setArray(paramIndex, array);
@@ -504,7 +509,6 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @todo <b>提供数据查询结果集转java对象的反射处理，以java VO集合形式返回</b>
 	 * @param typeHandler
 	 * @param rs
 	 * @param voClass
@@ -512,6 +516,7 @@ public class SqlUtil {
 	 * @param columnFieldMap
 	 * @return
 	 * @throws Exception
+	 * @todo <b>提供数据查询结果集转java对象的反射处理，以java VO集合形式返回</b>
 	 */
 	private static List reflectResultToVO(TypeHandler typeHandler, DecryptHandler decryptHandler, ResultSet rs,
 			Class voClass, boolean ignoreAllEmptySet, HashMap<String, String> columnFieldMap) throws Exception {
@@ -598,7 +603,6 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @todo 提供数据查询结果集转java对象的反射处理，以java VO集合形式返回
 	 * @param typeHandler
 	 * @param decryptHandler    解密
 	 * @param rs
@@ -611,6 +615,7 @@ public class SqlUtil {
 	 * @param ignoreAllEmptySet
 	 * @return
 	 * @throws Exception
+	 * @todo 提供数据查询结果集转java对象的反射处理，以java VO集合形式返回
 	 */
 	private static Object reflectResultRowToVOClass(TypeHandler typeHandler, DecryptHandler decryptHandler,
 			ResultSet rs, String[] columnLabels, Method[] setMethods, int[] propTypeValues, String[] propTypes,
@@ -648,10 +653,10 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @TODO 获取ResultSet 里面的列名称
 	 * @param rsmd
 	 * @return
 	 * @throws SQLException
+	 * @TODO 获取ResultSet 里面的列名称
 	 */
 	private static String[] getColumnLabels(ResultSetMetaData rsmd) throws SQLException {
 		int fieldCnt = rsmd.getColumnCount();
@@ -663,13 +668,13 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @todo 提供统一的ResultSet,PreparedStatemenet 关闭功能
 	 * @param userData
 	 * @param pst
 	 * @param rs
 	 * @param preparedStatementResultHandler
 	 * @return
 	 * @throws Exception
+	 * @todo 提供统一的ResultSet, PreparedStatemenet 关闭功能
 	 */
 	public static Object preparedStatementProcess(Object userData, PreparedStatement pst, ResultSet rs,
 			PreparedStatementResultHandler preparedStatementResultHandler) throws Exception {
@@ -697,13 +702,13 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @todo 提供统一的ResultSet,callableStatement 关闭功能
 	 * @param userData
 	 * @param pst
 	 * @param rs
 	 * @param callableStatementResultHandler
 	 * @return
 	 * @throws Exception
+	 * @todo 提供统一的ResultSet, callableStatement 关闭功能
 	 */
 	public static Object callableStatementProcess(Object userData, CallableStatement pst, ResultSet rs,
 			CallableStatementResultHandler callableStatementResultHandler) throws Exception {
@@ -731,9 +736,9 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @todo 剔除sql中的注释(提供三种形态的注释剔除)
 	 * @param sql
 	 * @return
+	 * @todo 剔除sql中的注释(提供三种形态的注释剔除)
 	 */
 	public static String clearMark(String sql) {
 		if (StringUtil.isBlank(sql)) {
@@ -810,10 +815,10 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @TODO 找到行注释的开始位置
 	 * @param sql
 	 * @param lineMaskIndex
 	 * @return
+	 * @TODO 找到行注释的开始位置
 	 */
 	private static int findStartLineMask(String sql, int lineMaskIndex) {
 		// 单引号、双引号、hint注释结尾 的最后位置
@@ -874,7 +879,6 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @todo <b>获取单条记录</b>
 	 * @param typeHandler
 	 * @param queryStr
 	 * @param params
@@ -886,6 +890,7 @@ public class SqlUtil {
 	 * @param colFieldMap
 	 * @return
 	 * @throws Exception
+	 * @todo <b>获取单条记录</b>
 	 */
 	public static Object loadByJdbcQuery(TypeHandler typeHandler, final String queryStr, final Object[] params,
 			final Class voClass, final RowCallbackHandler rowCallbackHandler, final Connection conn,
@@ -903,12 +908,12 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @TODO 提供独立的获取sequence下一个值的方法
 	 * @param conn
 	 * @param sequence
 	 * @param dbType
 	 * @return
 	 * @throws DataAccessException
+	 * @TODO 提供独立的获取sequence下一个值的方法
 	 */
 	public static Object getSequenceValue(Connection conn, String sequence, Integer dbType) throws DataAccessException {
 		String sql = "";
@@ -917,8 +922,8 @@ public class SqlUtil {
 			sql = "select nextval('" + sequence + "')";
 		} else if (dbType == DBType.SQLSERVER) {
 			sql = "select NEXT VALUE FOR " + sequence;
-		} else if (dbType == DBType.GAUSSDB || dbType == DBType.OCEANBASE || dbType == DBType.ORACLE
-				|| dbType == DBType.ORACLE11 || dbType == DBType.DM) {
+		} else if (dbType == DBType.GAUSSDB || dbType == DBType.MOGDB || dbType == DBType.OCEANBASE
+				|| dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
 			sql = "select " + sequence + ".nextval";
 		} else {
 			sql = "select NEXTVAL FOR " + sequence;
@@ -959,7 +964,6 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @todo <b>sql 查询并返回List集合结果</b>
 	 * @param typeHandler
 	 * @param queryStr
 	 * @param params
@@ -974,6 +978,7 @@ public class SqlUtil {
 	 * @param maxRows
 	 * @return
 	 * @throws Exception
+	 * @todo <b>sql 查询并返回List集合结果</b>
 	 */
 	public static List findByJdbcQuery(TypeHandler typeHandler, final String queryStr, final Object[] params,
 			final Class voClass, final RowCallbackHandler rowCallbackHandler, final DecryptHandler decryptHandler,
@@ -1009,7 +1014,6 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @todo 处理sql查询时的结果集,当没有反调或voClass反射处理时以数组方式返回resultSet的数据
 	 * @param typeHandler
 	 * @param rs
 	 * @param voClass
@@ -1020,6 +1024,7 @@ public class SqlUtil {
 	 * @param colFieldMap
 	 * @return
 	 * @throws Exception
+	 * @todo 处理sql查询时的结果集, 当没有反调或voClass反射处理时以数组方式返回resultSet的数据
 	 */
 	public static List processResultSet(TypeHandler typeHandler, ResultSet rs, Class voClass,
 			RowCallbackHandler rowCallbackHandler, final DecryptHandler decryptHandler, int startColIndex,
@@ -1103,7 +1108,6 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @todo 通过jdbc方式批量插入数据，一般提供给数据采集时或插入临时表使用，一般采用hibernate 方式插入
 	 * @param typeHandler
 	 * @param updateSql
 	 * @param rowDatas
@@ -1115,6 +1119,7 @@ public class SqlUtil {
 	 * @param dbType
 	 * @return
 	 * @throws Exception
+	 * @todo 通过jdbc方式批量插入数据，一般提供给数据采集时或插入临时表使用，一般采用hibernate 方式插入
 	 */
 	public static Long batchUpdateByJdbc(TypeHandler typeHandler, final String updateSql, final Collection rowDatas,
 			final int batchSize, final InsertRowCallbackHandler insertCallhandler, final Integer[] updateTypes,
@@ -1223,13 +1228,13 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @todo 计算树形结构表中的:节点层级、节点对应所有上级节点的路径、是否叶子节点
 	 * @param typeHandler
 	 * @param treeTableModel
 	 * @param conn
 	 * @param dbType
 	 * @return
 	 * @throws Exception
+	 * @todo 计算树形结构表中的:节点层级、节点对应所有上级节点的路径、是否叶子节点
 	 */
 	public static boolean wrapTreeTableRoute(TypeHandler typeHandler, final TreeTableModel treeTableModel,
 			Connection conn, final Integer dbType) throws Exception {
@@ -1372,7 +1377,6 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @todo TreeTableRoute中处理下一层级的递归方法，逐层计算下一级节点的节点层次和路径
 	 * @param typeHandler
 	 * @param updateLevelAndRoute
 	 * @param nextNodeQueryStr
@@ -1383,6 +1387,7 @@ public class SqlUtil {
 	 * @param conn
 	 * @param dbType
 	 * @throws Exception
+	 * @todo TreeTableRoute中处理下一层级的递归方法，逐层计算下一级节点的节点层次和路径
 	 */
 	private static void processNextLevel(TypeHandler typeHandler, final String updateLevelAndRoute,
 			final String nextNodeQueryStr, final TreeTableModel treeTableModel, final HashMap pidsMap, List ids,
@@ -1472,12 +1477,12 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @todo <b>sql文件自动创建到数据库</b>
 	 * @param conn
 	 * @param sqlContent
 	 * @param batchSize
 	 * @param autoCommit
 	 * @throws Exception
+	 * @todo <b>sql文件自动创建到数据库</b>
 	 */
 	public static void executeBatchSql(Connection conn, String sqlContent, Integer batchSize, Boolean autoCommit)
 			throws Exception {
@@ -1530,10 +1535,10 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @todo <b>判断sql语句中是否有order by排序</b>
 	 * @param sql
 	 * @param judgeUpcase
 	 * @return
+	 * @todo <b>判断sql语句中是否有order by排序</b>
 	 */
 	public static boolean hasOrderBy(String sql, boolean judgeUpcase) {
 		// 最后的收括号位置
@@ -1555,9 +1560,9 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @todo clob转换成字符串
 	 * @param clob
 	 * @return
+	 * @todo clob转换成字符串
 	 */
 	public static String clobToString(Clob clob) {
 		if (clob == null) {
@@ -1584,7 +1589,6 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @todo 执行Sql语句完成修改操作
 	 * @param typeHandler
 	 * @param executeSql
 	 * @param params
@@ -1595,6 +1599,7 @@ public class SqlUtil {
 	 * @param processWord
 	 * @return
 	 * @throws Exception
+	 * @todo 执行Sql语句完成修改操作
 	 */
 	public static Long executeSql(TypeHandler typeHandler, final String executeSql, final Object[] params,
 			final Integer[] paramsType, final Connection conn, final Integer dbType, final Boolean autoCommit,
@@ -1635,10 +1640,10 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @todo 转换主键数据类型(主键生成只支持数字和字符串类型)
 	 * @param idValue
 	 * @param idType
 	 * @return
+	 * @todo 转换主键数据类型(主键生成只支持数字和字符串类型)
 	 */
 	public static Object convertIdValueType(Object idValue, String idType) {
 		if (idValue == null) {
@@ -1679,9 +1684,9 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @todo 关闭一个或多个流对象
 	 * @param closeables 可关闭的流对象列表
 	 * @throws IOException
+	 * @todo 关闭一个或多个流对象
 	 */
 	public static void close(Closeable... closeables) throws IOException {
 		if (closeables != null) {
@@ -1694,8 +1699,8 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @todo 关闭一个或多个流对象
 	 * @param closeables 可关闭的流对象列表
+	 * @todo 关闭一个或多个流对象
 	 */
 	public static void closeQuietly(Closeable... closeables) {
 		try {
@@ -1706,11 +1711,11 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @todo 判断是否内包含union 查询,即是否是select * from (select * from t union select * from
-	 *       t2 ) 形式的查询,将所有()剔除后判定是否有union 存在
 	 * @param sql
 	 * @param clearMistyChar
 	 * @return
+	 * @todo 判断是否内包含union 查询,即是否是select * from (select * from t union select * from
+	 *       t2 ) 形式的查询,将所有()剔除后判定是否有union 存在
 	 */
 	public static boolean hasUnion(String sql, boolean clearMistyChar) {
 		if (!StringUtil.matches(sql, UNION_PATTERN)) {
@@ -1747,10 +1752,10 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @TODO 转化对象字段名称为数据库字段名称
 	 * @param entityMeta
 	 * @param sql
 	 * @return
+	 * @TODO 转化对象字段名称为数据库字段名称
 	 */
 	public static String convertFieldsToColumns(EntityMeta entityMeta, String sql) {
 		if (StringUtil.isBlank(sql)) {
@@ -1823,9 +1828,9 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @TODO 组合动态条件
 	 * @param entityMeta
 	 * @return
+	 * @TODO 组合动态条件
 	 */
 	public static String wrapWhere(EntityMeta entityMeta) {
 		String[] fields = entityMeta.getFieldsArray();
@@ -1839,11 +1844,11 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @TODO 针对对象查询补全sql中的select * from table 部分,适度让代码中的sql简短一些(并不推荐)
 	 * @param sqlToyContext
 	 * @param entityClass
 	 * @param sql
 	 * @return
+	 * @TODO 针对对象查询补全sql中的select * from table 部分,适度让代码中的sql简短一些(并不推荐)
 	 */
 	public static String completionSql(SqlToyContext sqlToyContext, Class entityClass, String sql) {
 		if (null == entityClass || SqlConfigParseUtils.isNamedQuery(sql)) {
@@ -1889,10 +1894,10 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @todo 判断sql中是否存在lock锁
 	 * @param sql
 	 * @param dbType
 	 * @return
+	 * @todo 判断sql中是否存在lock锁
 	 */
 	public static boolean hasLock(String sql, Integer dbType) {
 		if (sql == null) {
@@ -1912,9 +1917,9 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @todo 处理sqlserver default值为((value))问题
 	 * @param defaultValue
 	 * @return
+	 * @todo 处理sqlserver default值为((value))问题
 	 */
 	public static String clearDefaultValue(String defaultValue) {
 		if (defaultValue == null) {
@@ -1948,10 +1953,10 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @todo 替换换行、回车、tab符号;\r 换行、\t tab符合、\n 回车
 	 * @param source
 	 * @param target
 	 * @return
+	 * @todo 替换换行、回车、tab符号;\r 换行、\t tab符合、\n 回车
 	 */
 	public static String clearMistyChars(String source, String target) {
 		if (source == null) {
@@ -1962,11 +1967,11 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @TODO 获取数据库时间字符串
 	 * @param dbType
 	 * @param fieldMeta
 	 * @param createSqlTimeFields
 	 * @return
+	 * @TODO 获取数据库时间字符串
 	 */
 	public static String getDBTime(Integer dbType, FieldMeta fieldMeta, IgnoreCaseSet createSqlTimeFields) {
 		if (fieldMeta == null || createSqlTimeFields == null || createSqlTimeFields.isEmpty()) {
@@ -1990,7 +1995,7 @@ public class SqlUtil {
 						|| dbType == DBType.POSTGRESQL15 || dbType == DBType.KINGBASE || dbType == DBType.DB2
 						|| dbType == DBType.OCEANBASE) {
 					return "current_time";
-				} else if (dbType == DBType.GAUSSDB) {
+				} else if (dbType == DBType.GAUSSDB || dbType == DBType.MOGDB) {
 					return "now()";
 				} else if (dbType == DBType.SQLSERVER) {
 					return "getdate()";
@@ -2011,9 +2016,9 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @TODO 验证sql in的参数,要么是''形式的字符，要么是数字
 	 * @param argValue
 	 * @return
+	 * @TODO 验证sql in的参数,要么是''形式的字符，要么是数字
 	 */
 	public static boolean validateInArg(String argValue) {
 		// 判断是否有关键词
@@ -2068,10 +2073,10 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @TODO 将参数值转成字符传
 	 * @param sqlArgValue
 	 * @param addSingleQuotation 是否加单引号
 	 * @return
+	 * @TODO 将参数值转成字符传
 	 */
 	public static String toSqlString(Object sqlArgValue, boolean addSingleQuotation) {
 		if (sqlArgValue == null) {
@@ -2134,9 +2139,9 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @TODO 组合in参数
 	 * @param array
 	 * @return
+	 * @TODO 组合in参数
 	 */
 	public static String combineArray(Object[] array) {
 		if (array == null || array.length == 0) {

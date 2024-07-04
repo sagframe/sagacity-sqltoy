@@ -44,6 +44,7 @@ import org.sagacity.sqltoy.dialect.impl.GaussDBDialect;
 import org.sagacity.sqltoy.dialect.impl.H2Dialect;
 import org.sagacity.sqltoy.dialect.impl.ImpalaDialect;
 import org.sagacity.sqltoy.dialect.impl.KingbaseDialect;
+import org.sagacity.sqltoy.dialect.impl.MogDBDialect;
 import org.sagacity.sqltoy.dialect.impl.MySqlDialect;
 import org.sagacity.sqltoy.dialect.impl.OceanBaseDialect;
 import org.sagacity.sqltoy.dialect.impl.Oracle11gDialect;
@@ -82,10 +83,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @project sqltoy-orm
- * @description 为不同类型数据库提供不同方言实现类的factory,避免各个数据库发展变更形成相互影响
  * @author zhongxuchen
- * @version v1.0,Date:2014年12月11日
+ * @version v1.0, Date:2014年12月11日
+ * @project sqltoy-orm
+ * @description 为不同类型数据库提供不同方言实现类的factory, 避免各个数据库发展变更形成相互影响
  * @update data:2020-06-05 增加dm(达梦)数据库支持
  * @update data:2020-06-10 增加tidb、guassdb、oceanbase支持,规整sqlserver的版本(默认仅支持2012+)
  * @update data:2021-01-25 分页支持并行查询
@@ -126,7 +127,7 @@ public class DialectFactory {
 
 	/**
 	 * 获取对象单例
-	 * 
+	 *
 	 * @return
 	 */
 	public static DialectFactory getInstance() {
@@ -134,10 +135,10 @@ public class DialectFactory {
 	}
 
 	/**
-	 * @todo 根据数据库类型获取处理sql的handler
 	 * @param dbType
 	 * @return
 	 * @throws Exception
+	 * @todo 根据数据库类型获取处理sql的handler
 	 */
 	private Dialect getDialectSqlWrapper(Integer dbType) throws Exception {
 		// 从map中直接获取实例，避免重复创建和判断
@@ -197,6 +198,11 @@ public class DialectFactory {
 			dialectSqlWrapper = new GaussDBDialect();
 			break;
 		}
+		// mogdb
+		case DBType.MOGDB: {
+			dialectSqlWrapper = new MogDBDialect();
+			break;
+		}
 		case DBType.IMPALA: {
 			dialectSqlWrapper = new ImpalaDialect();
 			break;
@@ -225,6 +231,7 @@ public class DialectFactory {
 			dialectSqlWrapper = new H2Dialect();
 			break;
 		}
+
 		// tdengine
 		case DBType.TDENGINE: {
 			dialectSqlWrapper = new TDengineDialect();
@@ -239,7 +246,6 @@ public class DialectFactory {
 	}
 
 	/**
-	 * @todo 批量执行sql修改或删除操作
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param dataSet             支持List<List>、List<Object[]>(sql中?传参)
@@ -250,6 +256,7 @@ public class DialectFactory {
 	 * @param autoCommit
 	 * @param dataSource
 	 * @return
+	 * @todo 批量执行sql修改或删除操作
 	 */
 	public Long batchUpdate(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final List dataSet,
 			final int batchSize, final ReflectPropsHandler reflectPropsHandler,
@@ -311,7 +318,6 @@ public class DialectFactory {
 	}
 
 	/**
-	 * @todo 执行sql修改性质的操作语句
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param queryExecutor
@@ -319,6 +325,7 @@ public class DialectFactory {
 	 * @param autoCommit
 	 * @param dataSource
 	 * @return
+	 * @todo 执行sql修改性质的操作语句
 	 */
 	public Long executeSql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
 			final QueryExecutor queryExecutor, final Integer[] paramsTypes, final Boolean autoCommit,
@@ -383,11 +390,11 @@ public class DialectFactory {
 	}
 
 	/**
-	 * @todo 判定数据是否重复 true 表示唯一不重复；false 表示不唯一，即数据库中已经存在
 	 * @param sqlToyContext
 	 * @param uniqueExecutor
 	 * @param dataSource
 	 * @return
+	 * @todo 判定数据是否重复 true 表示唯一不重复；false 表示不唯一，即数据库中已经存在
 	 */
 	public boolean isUnique(final SqlToyContext sqlToyContext, final UniqueExecutor uniqueExecutor,
 			final DataSource dataSource) {
@@ -420,13 +427,13 @@ public class DialectFactory {
 	}
 
 	/**
-	 * @todo 取随机记录
 	 * @param sqlToyContext
 	 * @param queryExecutor
 	 * @param sqlToyConfig
 	 * @param randomCount
 	 * @param dataSource
 	 * @return
+	 * @todo 取随机记录
 	 */
 	public QueryResult getRandomResult(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final SqlToyConfig sqlToyConfig, final Double randomCount, final DataSource dataSource) {
@@ -522,11 +529,11 @@ public class DialectFactory {
 	}
 
 	/**
-	 * @todo 构造树形表的节点路径、节点层级、节点类别(是否叶子节点)
 	 * @param sqlToyContext
 	 * @param treeModel
 	 * @param dataSource
 	 * @return
+	 * @todo 构造树形表的节点路径、节点层级、节点类别(是否叶子节点)
 	 */
 	public boolean wrapTreeTableRoute(final SqlToyContext sqlToyContext, final TreeTableModel treeModel,
 			final DataSource dataSource) {
@@ -662,7 +669,6 @@ public class DialectFactory {
 	}
 
 	/**
-	 * @TODO 跳过查询总记录的分页查询,提供给特殊的场景，尤其是移动端滚屏模式
 	 * @param sqlToyContext
 	 * @param queryExecutor
 	 * @param sqlToyConfig
@@ -670,6 +676,7 @@ public class DialectFactory {
 	 * @param pageSize
 	 * @param dataSource
 	 * @return
+	 * @TODO 跳过查询总记录的分页查询, 提供给特殊的场景，尤其是移动端滚屏模式
 	 */
 	public QueryResult findSkipTotalCountPage(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final SqlToyConfig sqlToyConfig, final long pageNo, final Integer pageSize, final DataSource dataSource) {
@@ -741,7 +748,6 @@ public class DialectFactory {
 	}
 
 	/**
-	 * @todo 分页查询, pageNo为负一表示取全部记录
 	 * @param sqlToyContext
 	 * @param queryExecutor
 	 * @param sqlToyConfig
@@ -750,6 +756,7 @@ public class DialectFactory {
 	 * @param overPageToFirst
 	 * @param dataSource
 	 * @return
+	 * @todo 分页查询, pageNo为负一表示取全部记录
 	 */
 	public QueryResult findPage(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final SqlToyConfig sqlToyConfig, final long pageNo, final Integer pageSize, final Boolean overPageToFirst,
@@ -952,9 +959,6 @@ public class DialectFactory {
 	}
 
 	/**
-	 * @update data:2022-12-09 增加传DataSource以两个conn进行并发，解决单个conn竞争问题
-	 * @update data:2021-01-25 分页支持并行查询
-	 * @TODO 并行分页查询，同时执行count和rows记录查询
 	 * @param sqlToyContext
 	 * @param queryExecutor
 	 * @param sqlToyConfig
@@ -969,6 +973,9 @@ public class DialectFactory {
 	 * @param dataSource
 	 * @return
 	 * @throws Exception
+	 * @update data:2022-12-09 增加传DataSource以两个conn进行并发，解决单个conn竞争问题
+	 * @update data:2021-01-25 分页支持并行查询
+	 * @TODO 并行分页查询，同时执行count和rows记录查询
 	 */
 	private QueryResult parallelPage(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final SqlToyConfig sqlToyConfig, final QueryExecutorExtend extend, final long pageNo,
@@ -1049,13 +1056,13 @@ public class DialectFactory {
 	}
 
 	/**
-	 * @todo 取符合条件的前多少条记录
 	 * @param sqlToyContext
 	 * @param queryExecutor
 	 * @param sqlToyConfig
 	 * @param topSize
 	 * @param dataSource
 	 * @return
+	 * @todo 取符合条件的前多少条记录
 	 */
 	public QueryResult findTop(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final SqlToyConfig sqlToyConfig, final double topSize, final DataSource dataSource) {
@@ -1132,13 +1139,13 @@ public class DialectFactory {
 	}
 
 	/**
-	 * @todo 查询符合条件的数据集合
 	 * @param sqlToyContext
 	 * @param queryExecutor
 	 * @param sqlToyConfig
 	 * @param lockMode
 	 * @param dataSource
 	 * @return
+	 * @todo 查询符合条件的数据集合
 	 */
 	public QueryResult findByQuery(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final SqlToyConfig sqlToyConfig, final LockMode lockMode, final DataSource dataSource) {
@@ -1205,12 +1212,12 @@ public class DialectFactory {
 	}
 
 	/**
-	 * @todo 查询符合条件的记录数量
 	 * @param sqlToyContext
 	 * @param queryExecutor
 	 * @param sqlToyConfig
 	 * @param dataSource
 	 * @return
+	 * @todo 查询符合条件的记录数量
 	 */
 	public Long getCountBySql(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final SqlToyConfig sqlToyConfig, final DataSource dataSource) {
@@ -1247,7 +1254,6 @@ public class DialectFactory {
 	}
 
 	/**
-	 * @todo 获取记录总数
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param queryExecutor
@@ -1256,6 +1262,7 @@ public class DialectFactory {
 	 * @param dialect
 	 * @return
 	 * @throws Exception
+	 * @todo 获取记录总数
 	 */
 	private Long getCountBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
 			final QueryExecutor queryExecutor, final Connection conn, Integer dbType, String dialect) throws Exception {
@@ -1324,13 +1331,14 @@ public class DialectFactory {
 
 	// mysql、postgresql、sqlite等类似的on duplicate key update
 	// 存在缺陷,所以改为先update后save;但oracle、mssql、db2等可以用merge实现一次交互完成新增和修改
+
 	/**
-	 * @todo 保存或修改单个对象(数据库单条记录)
 	 * @param sqlToyContext
 	 * @param entity
 	 * @param forceUpdateProps
 	 * @param dataSource
 	 * @return
+	 * @todo 保存或修改单个对象(数据库单条记录)
 	 */
 	public Long saveOrUpdate(final SqlToyContext sqlToyContext, final Serializable entity,
 			final String[] forceUpdateProps, final DataSource dataSource) {
@@ -1368,7 +1376,6 @@ public class DialectFactory {
 	}
 
 	/**
-	 * @todo 批量保存或修改数据
 	 * @param sqlToyContext
 	 * @param entities
 	 * @param batchSize
@@ -1376,6 +1383,7 @@ public class DialectFactory {
 	 * @param reflectPropsHandler
 	 * @param dataSource
 	 * @param autoCommit
+	 * @todo 批量保存或修改数据
 	 */
 	public Long saveOrUpdateAll(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
 			final String[] forceUpdateProps, final ReflectPropsHandler reflectPropsHandler, final DataSource dataSource,
@@ -1436,13 +1444,13 @@ public class DialectFactory {
 	}
 
 	/**
-	 * @todo 批量保存数据，当已经存在的时候忽视掉
 	 * @param sqlToyContext
 	 * @param entities
 	 * @param batchSize
 	 * @param reflectPropsHandler
 	 * @param dataSource
 	 * @param autoCommit
+	 * @todo 批量保存数据，当已经存在的时候忽视掉
 	 */
 	public Long saveAllIgnoreExist(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
 			final ReflectPropsHandler reflectPropsHandler, final DataSource dataSource, final Boolean autoCommit) {
@@ -1497,13 +1505,13 @@ public class DialectFactory {
 	}
 
 	/**
-	 * @todo 加载单个对象
 	 * @param sqlToyContext
 	 * @param entity
 	 * @param cascadeTypes
 	 * @param lockMode
 	 * @param dataSource
 	 * @return
+	 * @todo 加载单个对象
 	 */
 	public <T extends Serializable> T load(final SqlToyContext sqlToyContext, final T entity,
 			final Class[] cascadeTypes, final LockMode lockMode, final DataSource dataSource) {
@@ -1535,13 +1543,13 @@ public class DialectFactory {
 	}
 
 	/**
-	 * @todo 批量加载集合(自4.13.1 版本已经自动将超大规模集合拆分执行)，规避了jpa等框架的缺陷
 	 * @param sqlToyContext
 	 * @param entities
 	 * @param cascadeTypes
 	 * @param lockMode
 	 * @param dataSource
 	 * @return
+	 * @todo 批量加载集合(自4.13.1 版本已经自动将超大规模集合拆分执行)，规避了jpa等框架的缺陷
 	 */
 	public <T extends Serializable> List<T> loadAll(final SqlToyContext sqlToyContext, final List<T> entities,
 			final Class[] cascadeTypes, final LockMode lockMode, final DataSource dataSource) {
@@ -1600,11 +1608,11 @@ public class DialectFactory {
 	}
 
 	/**
-	 * @todo 保存单个对象记录
 	 * @param sqlToyContext
 	 * @param entity
 	 * @param dataSource
 	 * @return
+	 * @todo 保存单个对象记录
 	 */
 	public Serializable save(final SqlToyContext sqlToyContext, final Serializable entity,
 			final DataSource dataSource) {
@@ -1636,13 +1644,13 @@ public class DialectFactory {
 	}
 
 	/**
-	 * @todo 批量保存
 	 * @param sqlToyContext
 	 * @param entities
 	 * @param batchSize
 	 * @param reflectPropsHandler
 	 * @param dataSource
 	 * @param autoCommit
+	 * @todo 批量保存
 	 */
 	public Long saveAll(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
 			final ReflectPropsHandler reflectPropsHandler, final DataSource dataSource, final Boolean autoCommit) {
@@ -1699,7 +1707,6 @@ public class DialectFactory {
 	}
 
 	/**
-	 * @todo 修改单个对象
 	 * @param sqlToyContext
 	 * @param entity
 	 * @param forceUpdateFields
@@ -1708,6 +1715,7 @@ public class DialectFactory {
 	 * @param subTableForceUpdateProps
 	 * @param dataSource
 	 * @return
+	 * @todo 修改单个对象
 	 */
 	public Long update(final SqlToyContext sqlToyContext, final Serializable entity, final String[] forceUpdateFields,
 			final boolean cascade, final Class[] forceCascadeClass,
@@ -1742,13 +1750,13 @@ public class DialectFactory {
 	}
 
 	/**
-	 * @TODO 适用于库存台账、客户资金账强事务高并发场景，一次数据库交互实现：1、锁查询；2、记录存在则修改；3、记录不存在则执行insert；4、返回修改或插入的记录信息
 	 * @param sqlToyContext
 	 * @param entity
 	 * @param updateRowHandler
 	 * @param uniqueProps      空则表示根据主键查询
 	 * @param dataSource
 	 * @return
+	 * @TODO 适用于库存台账、客户资金账强事务高并发场景，一次数据库交互实现：1、锁查询；2、记录存在则修改；3、记录不存在则执行insert；4、返回修改或插入的记录信息
 	 */
 	public Serializable updateSaveFetch(final SqlToyContext sqlToyContext, final Serializable entity,
 			final UpdateRowHandler updateRowHandler, final String[] uniqueProps, final DataSource dataSource) {
@@ -1781,7 +1789,6 @@ public class DialectFactory {
 	}
 
 	/**
-	 * @todo 批量修改对象
 	 * @param sqlToyContext
 	 * @param entities
 	 * @param batchSize
@@ -1791,6 +1798,7 @@ public class DialectFactory {
 	 * @param dataSource
 	 * @param autoCommit
 	 * @return
+	 * @todo 批量修改对象
 	 */
 	public Long updateAll(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
 			final String[] uniqueFields, final String[] forceUpdateFields,
@@ -1848,11 +1856,11 @@ public class DialectFactory {
 	}
 
 	/**
-	 * @todo 删除单个对象
 	 * @param sqlToyContext
 	 * @param entity
 	 * @param dataSource
 	 * @return
+	 * @todo 删除单个对象
 	 */
 	public Long delete(final SqlToyContext sqlToyContext, final Serializable entity, final DataSource dataSource) {
 		if (entity == null) {
@@ -1885,7 +1893,6 @@ public class DialectFactory {
 	}
 
 	/**
-	 * @todo 批量删除对象
 	 * @param <T>
 	 * @param sqlToyContext
 	 * @param entities
@@ -1893,6 +1900,7 @@ public class DialectFactory {
 	 * @param dataSource
 	 * @param autoCommit
 	 * @return
+	 * @todo 批量删除对象
 	 */
 	public <T extends Serializable> Long deleteAll(final SqlToyContext sqlToyContext, final List<T> entities,
 			final int batchSize, final DataSource dataSource, final Boolean autoCommit) {
@@ -1948,13 +1956,13 @@ public class DialectFactory {
 	}
 
 	/**
-	 * @todo 查询锁定记录,并进行修改
 	 * @param sqlToyContext
 	 * @param queryExecutor
 	 * @param sqlToyConfig
 	 * @param updateRowHandler
 	 * @param dataSource
 	 * @return
+	 * @todo 查询锁定记录, 并进行修改
 	 */
 	public QueryResult updateFetch(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final SqlToyConfig sqlToyConfig, final UpdateRowHandler updateRowHandler, final DataSource dataSource) {
@@ -2010,7 +2018,6 @@ public class DialectFactory {
 	}
 
 	/**
-	 * @todo 存储过程调用
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param inParamsValue
@@ -2019,6 +2026,7 @@ public class DialectFactory {
 	 * @param moreResult    返回多集合
 	 * @param dataSource
 	 * @return
+	 * @todo 存储过程调用
 	 */
 	public StoreResult executeStore(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
 			final Object[] inParamsValue, final Integer[] outParamsType, final Class[] resultTypes,
@@ -2116,12 +2124,12 @@ public class DialectFactory {
 	}
 
 	/**
-	 * @TODO 以流模式获取查询结果
 	 * @param sqlToyContext
 	 * @param queryExecutor
 	 * @param sqlToyConfig
 	 * @param streamResultHandler
 	 * @param dataSource
+	 * @TODO 以流模式获取查询结果
 	 */
 	public void fetchStream(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final SqlToyConfig sqlToyConfig, final StreamResultHandler streamResultHandler,
@@ -2196,13 +2204,13 @@ public class DialectFactory {
 	}
 
 	/**
-	 * @TODO 获取数据库的表字段信息
 	 * @param sqlToyContext
 	 * @param catalog
 	 * @param schema
 	 * @param tableName
 	 * @param dataSource
 	 * @return
+	 * @TODO 获取数据库的表字段信息
 	 */
 	public List<ColumnMeta> getTableColumns(final SqlToyContext sqlToyContext, final String catalog,
 			final String schema, String tableName, DataSource dataSource) {
@@ -2220,13 +2228,13 @@ public class DialectFactory {
 	}
 
 	/**
-	 * @TODO 获取数据库的表信息
 	 * @param sqlToyContext
 	 * @param catalog
 	 * @param schema
 	 * @param tableName
 	 * @param dataSource
 	 * @return
+	 * @TODO 获取数据库的表信息
 	 */
 	public List<TableMeta> getTables(final SqlToyContext sqlToyContext, final String catalog, final String schema,
 			String tableName, DataSource dataSource) {
@@ -2248,10 +2256,10 @@ public class DialectFactory {
 	}
 
 	/**
-	 * @TODO 构造加解密处理器
 	 * @param sqlToyContext
 	 * @param resultType
 	 * @return
+	 * @TODO 构造加解密处理器
 	 */
 	private DecryptHandler wrapDecryptHandler(final SqlToyContext sqlToyContext, Type resultType) {
 		// 只针对POJO 实体类
@@ -2274,10 +2282,10 @@ public class DialectFactory {
 	}
 
 	/**
-	 * @TODO 验证基于POJO对象合法性，如@Entity、@Column、@Id等注解表示是一个完整的POJO实体对象
 	 * @param sqlToyContext
 	 * @param entityClass
 	 * @param validatePK
+	 * @TODO 验证基于POJO对象合法性，如@Entity、@Column、@Id等注解表示是一个完整的POJO实体对象
 	 */
 	private void validEntity(SqlToyContext sqlToyContext, Class entityClass, boolean validatePK) {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entityClass);

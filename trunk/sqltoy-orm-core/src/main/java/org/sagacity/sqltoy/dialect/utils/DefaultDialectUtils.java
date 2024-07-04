@@ -689,7 +689,7 @@ public class DefaultDialectUtils {
 	private static void setArray(Integer dbType, Connection conn, ResultSet rs, String columnName, Object paramValue)
 			throws SQLException {
 		// 目前只支持Integer 和 String两种类型
-		if (dbType == DBType.GAUSSDB) {
+		if (dbType == DBType.GAUSSDB || dbType == DBType.MOGDB) {
 			if (paramValue instanceof Integer[]) {
 				Array array = conn.createArrayOf("INTEGER", (Integer[]) paramValue);
 				rs.updateArray(columnName, array);
@@ -910,7 +910,7 @@ public class DefaultDialectUtils {
 	 * @throws Exception
 	 */
 	@SuppressWarnings("unchecked")
-	private static Map<String, ColumnMeta> getTableIndexes(String catalog, String schema, String tableName,
+	public static Map<String, ColumnMeta> getTableIndexes(String catalog, String schema, String tableName,
 			Connection conn, final Integer dbType, String dialect) throws Exception {
 		ResultSet rs = null;
 		try {

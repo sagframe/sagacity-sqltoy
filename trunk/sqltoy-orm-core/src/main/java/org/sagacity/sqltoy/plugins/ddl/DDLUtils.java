@@ -175,7 +175,8 @@ public class DDLUtils {
 			if (colMeta.getNativeType().equalsIgnoreCase("JSON")) {
 				return "JSON";
 			} else if (colMeta.getNativeType().equalsIgnoreCase("BSON")) {
-				if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB) {
+				if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB
+						|| dbType == DBType.MOGDB) {
 					return "BSON";
 				} else {
 					return "JSON";
@@ -225,7 +226,8 @@ public class DDLUtils {
 			}
 			break;
 		case java.sql.Types.BLOB:
-			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB) {
+			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB
+					|| dbType == DBType.MOGDB) {
 				typeName = "bytea";
 			} else if (dbType == DBType.SQLSERVER) {
 				typeName = "IMAGE";
@@ -235,7 +237,8 @@ public class DDLUtils {
 			isBytes = true;
 			break;
 		case java.sql.Types.BINARY:
-			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB) {
+			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB
+					|| dbType == DBType.MOGDB) {
 				typeName = "bytea";
 			} else if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
 				typeName = "BLOB";
@@ -249,7 +252,8 @@ public class DDLUtils {
 			break;
 		case java.sql.Types.VARBINARY:
 		case java.sql.Types.LONGVARBINARY:
-			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB) {
+			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB
+					|| dbType == DBType.MOGDB) {
 				typeName = "bytea";
 			} else if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
 				typeName = "BLOB";
@@ -323,8 +327,9 @@ public class DDLUtils {
 		}
 		}
 		// 数组类型
-		if ((dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB)
-				&& colMeta.getTypeName().endsWith("[]") && !isBytes && !typeName.startsWith("_")) {
+		if ((dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB
+				|| dbType == DBType.MOGDB) && colMeta.getTypeName().endsWith("[]") && !isBytes
+				&& !typeName.startsWith("_")) {
 			return "_".concat(typeName);
 		}
 		return typeName;

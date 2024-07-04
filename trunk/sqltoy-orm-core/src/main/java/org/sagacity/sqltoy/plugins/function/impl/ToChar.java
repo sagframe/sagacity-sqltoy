@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package org.sagacity.sqltoy.plugins.function.impl;
 
@@ -12,7 +12,7 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
  * @project sqltoy-orm
  * @description 将其它类型数据转换成字符串
  * @author zhongxuchen
- * @version v1.0,Date:2013-1-2
+ * @version v1.0, Date:2013-1-2
  */
 public class ToChar extends IFunction {
 	private static Pattern regex = Pattern.compile("(?i)\\W(to_char|FORMATDATETIME|date_format)\\(");
@@ -24,7 +24,7 @@ public class ToChar extends IFunction {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see org.sagacity.sqltoy.config.function.IFunction#wrap(java.lang.String [])
 	 */
 	@Override
@@ -47,6 +47,7 @@ public class ToChar extends IFunction {
 		case DBType.POSTGRESQL15:
 		case DBType.ORACLE:
 		case DBType.GAUSSDB:
+		case DBType.MOGDB:
 		case DBType.OCEANBASE:
 		case DBType.DM:
 		case DBType.ORACLE11: {
@@ -72,7 +73,7 @@ public class ToChar extends IFunction {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see org.sagacity.sqltoy.config.function.IFunction#regex()
 	 */
 	@Override
