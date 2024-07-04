@@ -16,7 +16,7 @@ import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 
-import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson2.JSON;
 
 /**
  * @author zhongxuchen

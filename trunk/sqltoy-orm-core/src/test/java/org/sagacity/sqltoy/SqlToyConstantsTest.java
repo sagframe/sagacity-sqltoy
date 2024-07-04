@@ -1,6 +1,5 @@
 package org.sagacity.sqltoy;
 
-import java.awt.List;
 import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -11,6 +10,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -28,8 +28,7 @@ import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.MapperUtils;
 import org.sagacity.sqltoy.utils.StringUtil;
 
-import com.alibaba.fastjson.JSON;
-import com.google.common.collect.Lists;
+import com.alibaba.fastjson2.JSON;
 
 public class SqlToyConstantsTest {
 	@Test
@@ -133,6 +132,42 @@ public class SqlToyConstantsTest {
 	}
 
 	public static void main(String[] args) {
+		List<C1> c1List = new ArrayList();
+		c1List.add(new C1() {
+			{
+				setIntNum(3001);
+				setIntegerNum(3002);
+				setStr("i am c1 string. 。。。。");
+				setDecimal(BigDecimal.ONE);
+				setShortNum(Short.valueOf("399"));
+				setShortTNum(Short.valueOf("398"));
+				setDate(new Date());
+			}
+		});
+		c1List.add(new C1() {
+			{
+				setIntNum(3003);
+				setIntegerNum(3004);
+				setStr("i am c2 string. 。。。。");
+				setDecimal(BigDecimal.ONE);
+				setShortNum(Short.valueOf("389"));
+				setShortTNum(Short.valueOf("388"));
+				setDate(new Date());
+			}
+		});
+
+		c1List.add(new C1() {
+			{
+				setIntNum(3005);
+				setIntegerNum(3006);
+				setStr("i am c3 string. 。。。。");
+				setDecimal(BigDecimal.ONE);
+				setShortNum(Short.valueOf("379"));
+				setShortTNum(Short.valueOf("378"));
+				setDate(new Date());
+			}
+		});
+
 		A1 aa = new A1() {
 			{
 				setIntNum(1001);
@@ -153,37 +188,7 @@ public class SqlToyConstantsTest {
 						setDate(new Date());
 					}
 				});
-				setC(Lists.newArrayList(new C1() {
-					{
-						setIntNum(3001);
-						setIntegerNum(3002);
-						setStr("i am c1 string. 。。。。");
-						setDecimal(BigDecimal.ONE);
-						setShortNum(Short.valueOf("399"));
-						setShortTNum(Short.valueOf("398"));
-						setDate(new Date());
-					}
-				}, new C1() {
-					{
-						setIntNum(3003);
-						setIntegerNum(3004);
-						setStr("i am c2 string. 。。。。");
-						setDecimal(BigDecimal.ONE);
-						setShortNum(Short.valueOf("389"));
-						setShortTNum(Short.valueOf("388"));
-						setDate(new Date());
-					}
-				}, new C1() {
-					{
-						setIntNum(3005);
-						setIntegerNum(3006);
-						setStr("i am c3 string. 。。。。");
-						setDecimal(BigDecimal.ONE);
-						setShortNum(Short.valueOf("379"));
-						setShortTNum(Short.valueOf("378"));
-						setDate(new Date());
-					}
-				}));
+				setC(c1List);
 			}
 		};
 
