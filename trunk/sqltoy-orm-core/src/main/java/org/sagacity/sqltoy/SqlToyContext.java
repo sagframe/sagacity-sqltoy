@@ -756,7 +756,9 @@ public class SqlToyContext {
 			this.dialect = Dialect.SQLITE;
 		} else if (tmp.startsWith(Dialect.GAUSSDB)) {
 			this.dialect = Dialect.GAUSSDB;
-		} else if (tmp.startsWith(Dialect.MARIADB)) {
+		} else if (tmp.startsWith(Dialect.MOGDB)) {
+			this.dialect = Dialect.MOGDB;
+		}else if (tmp.startsWith(Dialect.MARIADB)) {
 			this.dialect = Dialect.MARIADB;
 		} else if (tmp.startsWith(Dialect.CLICKHOUSE)) {
 			this.dialect = Dialect.CLICKHOUSE;
