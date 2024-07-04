@@ -58,8 +58,9 @@ public class ElasticSearchPlugin {
 		// update 2022-6-16 补全参数统一构造处理
 		QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
 		try {
-			realMql = MongoElasticUtils.wrapES(sqlToyConfig, extend.getParamsName(),
-					extend.getParamsValue(sqlToyContext, sqlToyConfig)).trim();
+			realMql = MongoElasticUtils
+					.wrapES(sqlToyConfig, extend.getParamsName(), extend.getParamsValue(sqlToyContext, sqlToyConfig))
+					.trim();
 			jsonQuery = JSON.parseObject(realMql);
 			jsonQuery.remove("from");
 			jsonQuery.remove("FROM");
@@ -99,8 +100,9 @@ public class ElasticSearchPlugin {
 		// update 2022-6-16 补全参数统一构造处理
 		QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
 		try {
-			realMql = MongoElasticUtils.wrapES(sqlToyConfig, extend.getParamsName(),
-					extend.getParamsValue(sqlToyContext, sqlToyConfig)).trim();
+			realMql = MongoElasticUtils
+					.wrapES(sqlToyConfig, extend.getParamsName(), extend.getParamsValue(sqlToyContext, sqlToyConfig))
+					.trim();
 			jsonQuery = JSON.parseObject(realMql);
 			if (topSize != null) {
 				jsonQuery.remove("from");

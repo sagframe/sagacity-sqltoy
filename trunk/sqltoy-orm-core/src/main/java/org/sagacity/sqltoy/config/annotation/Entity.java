@@ -22,8 +22,8 @@ public @interface Entity {
 
 	// 表对应schema
 	String schema() default "";
-	
-	//表注释
+
+	// 表注释
 	String comment() default "";
 
 	// 主键约束名称

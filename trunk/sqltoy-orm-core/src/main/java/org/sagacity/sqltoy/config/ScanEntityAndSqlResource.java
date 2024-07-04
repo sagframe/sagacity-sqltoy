@@ -248,7 +248,7 @@ public class ScanEntityAndSqlResource {
 								}
 							}
 						} else if (url.getProtocol().equals(RESOURCE)) {
-							if(!result.contains(realRes) && realRes.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)){
+							if (!result.contains(realRes) && realRes.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)) {
 								result.add(realRes);
 							}
 						} else {
@@ -281,7 +281,8 @@ public class ScanEntityAndSqlResource {
 									result.add(0, realRes);
 								}
 							} else if (url.getProtocol().equals(RESOURCE)) {
-								if(!result.contains(realRes) && realRes.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)){
+								if (!result.contains(realRes)
+										&& realRes.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)) {
 									result.add(realRes);
 								}
 							} else {
