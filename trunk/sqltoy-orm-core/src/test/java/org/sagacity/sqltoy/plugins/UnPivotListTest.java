@@ -12,7 +12,7 @@ import org.sagacity.sqltoy.model.inner.DataSetResult;
 import org.sagacity.sqltoy.plugins.calculator.UnpivotList;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 
-import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson2.JSON;
 
 /**
  * @author zhongxuchen

@@ -6,7 +6,6 @@ package org.sagacity.sqltoy.utils;
 import java.math.BigInteger;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.HashMap;
 
 import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.SqlToyContext;
@@ -14,11 +13,9 @@ import org.sagacity.sqltoy.demo.domain.StaffInfo;
 import org.sagacity.sqltoy.demo.vo.LoginLogVO;
 import org.sagacity.sqltoy.demo.vo.StaffInfoVO;
 import org.sagacity.sqltoy.demo.vo.SysLoginLog;
-import org.sagacity.sqltoy.model.MapKit;
 import org.sagacity.sqltoy.model.PropsMapperConfig;
 
-import com.alibaba.fastjson.JSON;
-import com.google.common.collect.Maps;
+import com.alibaba.fastjson2.JSON;
 
 /**
  * @project sagacity-sqltoy
