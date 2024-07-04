@@ -1,0 +1,1336 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns="http://www.sagframe.com/schema/sqltoy"
+	xmlns:tns="http://www.sagframe.com/schema/sqltoy"
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+	targetNamespace="http://www.sagframe.com/schema/sqltoy"
+	elementFormDefault="qualified">
+	<xsd:element name="sqltoy">
+		<xsd:annotation>
+			<xsd:documentation><![CDATA[全局类型，便于将来给报表schema公用]]></xsd:documentation>
+		</xsd:annotation>
+		<xsd:complexType>
+			<xsd:choice minOccurs="0" maxOccurs="unbounded">
+				<!-- 全局类型sql type -->
+				<xsd:element name="sql" type="sqlToySqlType">
+					<xsd:unique name="sqlToySqlIdUnique">
+						<xsd:selector xpath="tns:sql" />
+						<xsd:field xpath="@id" />
+					</xsd:unique>
+				</xsd:element>
+				<xsd:element name="mql" type="sqlToyMqlType">
+					<xsd:unique name="sqlToyMqlIdUnique">
+						<xsd:selector xpath="tns:mql" />
+						<xsd:field xpath="@id" />
+					</xsd:unique>
+				</xsd:element>
+				<!-- elasticsearch type -->
+				<xsd:element name="eql" type="sqlToyEqlType">
+					<xsd:unique name="sqlToyEqlIdUnique">
+						<xsd:selector xpath="tns:eql" />
+						<xsd:field xpath="@id" />
+					</xsd:unique>
+				</xsd:element>
+			</xsd:choice>
+		</xsd:complexType>
+	</xsd:element>
+
+	<xsd:complexType name="sqlToySqlType" mixed="true">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="filters" minOccurs="0" maxOccurs="1"
+				type="sqltoyFiltersType" />
+			<xsd:element name="translate" minOccurs="0"
+				maxOccurs="unbounded" type="sqltoyTranslateType" />
+			<xsd:element name="secure-decrypt" minOccurs="0"
+				maxOccurs="1">
+				<xsd:complexType>
+					<xsd:attribute name="columns" type="xsd:string"
+						use="required" />
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="secure-mask" minOccurs="0"
+				maxOccurs="unbounded" type="sqltoySecureMaskType" />
+			<xsd:element name="value" type="xsd:string" minOccurs="1"
+				maxOccurs="1" />
+			<xsd:element name="count-sql" type="xsd:string"
+				minOccurs="0" maxOccurs="1">
+				<xsd:annotation>
+					<xsd:documentation>
+					<![CDATA[用于分页在极端优化场景下自定义统计count的sql,绝大多数情况下无需定义]]>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="pivot" minOccurs="0" maxOccurs="1"
+				type="sqltoyPivotType" />
+			<xsd:element name="unpivot" minOccurs="0" maxOccurs="1"
+				type="sqltoyUnpivotType" />
+			<xsd:element name="summary" minOccurs="0" maxOccurs="1"
+				type="sqltoySummaryType">
+				<xsd:annotation>
+					<xsd:documentation>
+					<![CDATA[用算法来完成sql分组汇总、求平均计算]]>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="date-format" minOccurs="0"
+				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation>
+					<![CDATA[对查询结果集合的列进行日期格式化]]>
+					</xsd:documentation>
+				</xsd:annotation>
+				<xsd:complexType>
+					<xsd:attribute name="columns" type="xsd:string"
+						use="required" />
+					<xsd:attribute name="format" use="required">
+						<xsd:simpleType>
+							<xsd:restriction base="xsd:string">
+								<xsd:enumeration value="yyyy-MM-dd" />
+								<xsd:enumeration value="yyyy-MM-dd HH:mm:ss" />
+								<xsd:enumeration value="yyyyMMdd" />
+								<xsd:enumeration value="yyyy-MM" />
+								<xsd:enumeration value="MM-dd" />
+							</xsd:restriction>
+						</xsd:simpleType>
+					</xsd:attribute>
+					<xsd:attribute name="locale">
+						<xsd:simpleType>
+							<xsd:restriction base="xsd:string">
+								<xsd:enumeration value="US" />
+								<xsd:enumeration value="UK" />
+								<xsd:enumeration value="CHINA" />
+								<xsd:enumeration value="JAPAN" />
+							</xsd:restriction>
+						</xsd:simpleType>
+					</xsd:attribute>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="number-format" minOccurs="0"
+				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation>
+					<![CDATA[对查询结果集合的列进行数字格式化]]>
+					</xsd:documentation>
+				</xsd:annotation>
+				<xsd:complexType>
+					<xsd:attribute name="columns" type="xsd:string"
+						use="required" />
+					<xsd:attribute name="format" use="required">
+						<xsd:simpleType>
+							<xsd:union memberTypes="numberFormatType xsd:string" />
+						</xsd:simpleType>
+					</xsd:attribute>
+					<xsd:attribute name="roundingMode">
+						<xsd:simpleType>
+							<xsd:restriction base="xsd:string">
+								<xsd:enumeration value="HALF_UP" />
+								<xsd:enumeration value="HALF_DOWN" />
+								<xsd:enumeration value="ROUND_DOWN" />
+								<xsd:enumeration value="ROUND_UP" />
+							</xsd:restriction>
+						</xsd:simpleType>
+					</xsd:attribute>
+					<xsd:attribute name="locale">
+						<xsd:simpleType>
+							<xsd:restriction base="xsd:string">
+								<xsd:enumeration value="US" />
+								<xsd:enumeration value="UK" />
+								<xsd:enumeration value="CHINA" />
+								<xsd:enumeration value="JAPAN" />
+							</xsd:restriction>
+						</xsd:simpleType>
+					</xsd:attribute>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="link" minOccurs="0" maxOccurs="1">
+				<xsd:annotation>
+					<xsd:documentation>
+					<![CDATA[分组拼接组内的字段,代替group_concat实现跨数据库]]>
+					</xsd:documentation>
+				</xsd:annotation>
+				<xsd:complexType>
+					<xsd:attribute name="id-columns" type="xsd:string">
+						<xsd:annotation>
+							<xsd:documentation>
+							<![CDATA[分组列,可以多列sql编写时需要注意做好排序]]>
+							</xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+					<xsd:attribute name="columns" type="xsd:string"
+						use="required">
+						<xsd:annotation>
+							<xsd:documentation>
+							<![CDATA[可以对多列拼接,如:staff_id,staff_name]]>
+							</xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+					<xsd:attribute name="sign" type="xsd:string">
+						<xsd:annotation>
+							<xsd:documentation>
+							<![CDATA[拼接的连接符号,默认逗号分隔]]>
+							</xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+					<xsd:attribute name="result-type">
+						<xsd:annotation>
+							<xsd:documentation>
+							<![CDATA[只适用于单个字段,将结果以数组形式呈现而非用特定符号拼接成单个字符]]>
+							</xsd:documentation>
+						</xsd:annotation>
+						<xsd:simpleType>
+							<xsd:restriction base="xsd:string">
+								<xsd:enumeration value="ARRAY" />
+								<xsd:enumeration value="LIST" />
+							</xsd:restriction>
+						</xsd:simpleType>
+					</xsd:attribute>
+					<xsd:attribute name="distinct" type="xsd:boolean"
+						default="false" />
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="tree-sort" minOccurs="0" maxOccurs="1">
+				<xsd:annotation>
+					<xsd:documentation>
+					<![CDATA[对树型结构查询结果进行排序]]>
+					</xsd:documentation>
+				</xsd:annotation>
+				<xsd:complexType>
+					<xsd:choice maxOccurs="1" minOccurs="0">
+						<xsd:element name="sum-filter">
+							<xsd:annotation>
+								<xsd:documentation>
+									<![CDATA[过滤哪些节点参与汇总]]>
+								</xsd:documentation>
+							</xsd:annotation>
+							<xsd:complexType>
+								<xsd:attribute name="column" type="xsd:string"
+									use="required" />
+								<xsd:attribute name="compare-type" use="required">
+									<xsd:simpleType>
+										<xsd:restriction base="xsd:string">
+											<xsd:enumeration value="eq" />
+											<xsd:enumeration value="neq" />
+											<xsd:enumeration value="gt" />
+											<xsd:enumeration value="gte" />
+											<xsd:enumeration value="lt" />
+											<xsd:enumeration value="lte" />
+											<xsd:enumeration value="between" />
+											<xsd:enumeration value="in" />
+											<xsd:enumeration value="out" />
+										</xsd:restriction>
+									</xsd:simpleType>
+								</xsd:attribute>
+								<xsd:attribute name="compare-values"
+									type="xsd:string" use="required" />
+							</xsd:complexType>
+						</xsd:element>
+					</xsd:choice>
+					<xsd:attribute name="id-column" type="xsd:string"
+						use="required">
+						<xsd:annotation>
+							<xsd:documentation>
+							<![CDATA[id列]]>
+							</xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+					<xsd:attribute name="pid-column" type="xsd:string"
+						use="required">
+						<xsd:annotation>
+							<xsd:documentation>
+							<![CDATA[pid列]]>
+							</xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+					<xsd:attribute name="sum-columns" type="xsd:string">
+						<xsd:annotation>
+							<xsd:documentation>
+							<![CDATA[对树结构逐层汇总计算,将子级的数据汇总归集到父级]]>
+							</xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+					<xsd:attribute name="level-order-column"
+						type="xsd:string">
+						<xsd:annotation>
+							<xsd:documentation>
+							<![CDATA[每个层级内部排序依据的值列]]>
+							</xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+					<xsd:attribute name="order-way" default="desc">
+						<xsd:simpleType>
+							<xsd:restriction base="xsd:string">
+								<xsd:enumeration value="desc" />
+								<xsd:enumeration value="asc" />
+							</xsd:restriction>
+						</xsd:simpleType>
+					</xsd:attribute>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="sharding-datasource" minOccurs="0"
+				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation>
+					<![CDATA[设置分库策略,根据查询条件自动定向到不同的数据库进行查询,减轻单一数据库压力]]>
+					</xsd:documentation>
+				</xsd:annotation>
+				<xsd:complexType>
+					<xsd:attribute name="strategy" type="xsd:string"
+						use="required" />
+					<xsd:attribute name="strategy-value"
+						type="xsd:string" />
+					<xsd:attribute name="params" type="xsd:string" />
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="sharding-table" minOccurs="0"
+				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation>
+					<![CDATA[设置分表策略,根据查询条件自动将sql中的表替换成实际目标表,从而将查询分散到不同的表中,实现了单一表数据规模的降低]]>
+					</xsd:documentation>
+				</xsd:annotation>
+				<xsd:complexType>
+					<xsd:attribute name="tables" type="xsd:string"
+						use="required">
+						<xsd:annotation>
+							<xsd:documentation>
+								<![CDATA[定义针对哪几张表进行sharding策略替换]]>
+							</xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+					<xsd:attribute name="strategy" type="xsd:string"
+						use="required" />
+					<xsd:attribute name="strategy-value"
+						type="xsd:string" />
+					<xsd:attribute name="params" type="xsd:string"
+						use="required" />
+				</xsd:complexType>
+			</xsd:element>
+			<!-- 分页优化 -->
+			<xsd:element name="page-optimize" minOccurs="0"
+				maxOccurs="1" type="sqltoyPageOptimizeType">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[分页优化,通过缓存来保留查询条件一样的分页查询对应count语句查询结果,当下次查询时可以直接获得count记录数]]></xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<!-- 行数据环比 -->
+			<xsd:element name="rows-chain-relative" maxOccurs="1">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[垂直环比,行数据之间比较]]></xsd:documentation>
+				</xsd:annotation>
+				<xsd:complexType>
+					<xsd:attribute name="reduce-one" type="xsd:boolean"
+						default="false" />
+					<xsd:attribute name="reverse" type="xsd:boolean"
+						default="true" />
+					<xsd:attribute name="multiply" default="1">
+						<xsd:simpleType>
+							<xsd:restriction base="xsd:integer">
+								<xsd:enumeration value="1" />
+								<xsd:enumeration value="100" />
+								<xsd:enumeration value="1000" />
+							</xsd:restriction>
+						</xsd:simpleType>
+					</xsd:attribute>
+					<xsd:attribute name="start-row" type="xsd:integer">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[从第几行开始比较,默认是0]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+					<xsd:attribute name="end-row" type="xsd:integer">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[结束行,写成负数-1 表示倒数第二行,缺省表示到最后一行]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+					<xsd:attribute name="relative-columns"
+						type="xsd:string" use="required">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[针对哪几列进行比较计算]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+					<xsd:attribute name="radix-size" type="xsd:integer"
+						default="3">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[保留小数位,默认保留3位]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+					<xsd:attribute name="group-column" type="xsd:string"
+						use="required">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[可以写列的名称或数字索引,如单一类型比较没有对应group-column则可以写-1]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+					<xsd:attribute name="defaultValue" type="xsd:string">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[第一组数据没有对比数据的环比默认值]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+					<xsd:attribute name="relative-indexs"
+						type="xsd:string">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[relative-indexs相对于group而言的,如月份之间对比(1月~4月),
+							比较交易笔数、商品数量、交易金额中的交易金额一项,relative-indexs则为2,如比较交易笔数、商品数量、交易金额三项，则,relative-indexs="0,1,2"]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+					<xsd:attribute name="format" type="xsd:string">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[百分比:#.00%,千分比:#.00‰]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+					<xsd:attribute name="insert" type="xsd:boolean" default="true">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[环比值是否自动插入新的列,否则自己写sql时提前构造出相应的列]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+				</xsd:complexType>
+			</xsd:element>
+			<!-- 列数据环比 -->
+			<xsd:element name="cols-chain-relative" maxOccurs="1">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[水平同类列数据之间比较]]></xsd:documentation>
+				</xsd:annotation>
+				<xsd:complexType>
+					<xsd:attribute name="reduce-one" type="xsd:boolean"
+						default="false">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[是否减1,(B-A)/A,否则为B/A]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+					<xsd:attribute name="multiply" default="1">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[乘数,1表示按小数显示，100则表示百分比,1000则表示千分比]]></xsd:documentation>
+						</xsd:annotation>
+						<xsd:simpleType>
+							<xsd:restriction base="xsd:integer">
+								<xsd:enumeration value="1" />
+								<xsd:enumeration value="100" />
+								<xsd:enumeration value="1000" />
+							</xsd:restriction>
+						</xsd:simpleType>
+					</xsd:attribute>
+					<xsd:attribute name="defaultValue" type="xsd:string">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[第一组数据没有对比数据的环比默认值]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+					<xsd:attribute name="group-size" type="xsd:integer"
+						use="required">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[如月份之间对比(1月~4月),比较交易笔数、商品数量、交易金额，group-size则为3]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+					<xsd:attribute name="relative-indexs"
+						type="xsd:string" use="required">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[relative-indexs相对于group而言的,如月份之间对比(1月~4月),
+							比较交易笔数、商品数量、交易金额中的交易金额一项,relative-indexs则为2,如比较交易笔数、商品数量、交易金额三项，则,relative-indexs="0,1,2"]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+					<xsd:attribute name="start-column" type="xsd:integer"
+						use="required">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[标记开始比较列]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+					<xsd:attribute name="end-column" type="xsd:integer">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[截止列,负数表示倒数第几列,如-1表示倒数第二列]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+					<xsd:attribute name="radix-size" type="xsd:integer"
+						default="3">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[保留小数位,默认保留3位]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+					<xsd:attribute name="format" type="xsd:string">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[百分比:#.00%,千分比:#.00‰]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+				</xsd:complexType>
+			</xsd:element>
+			<!-- 数据反转 -->
+			<xsd:element name="reverse" maxOccurs="2">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[数据逆序排列]]></xsd:documentation>
+				</xsd:annotation>
+				<xsd:complexType>
+					<xsd:attribute name="start-row" type="xsd:integer">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[从第几行开始比较,默认是0]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+					<xsd:attribute name="end-row" type="xsd:integer">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[结束行,写成负数-1 表示倒数第二行,缺省表示到最后一行]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+				</xsd:complexType>
+			</xsd:element>
+		</xsd:choice>
+		<xsd:attribute name="id" type="xsd:string"
+			use="required" />
+		<xsd:attribute name="blank-to-null" default="true"
+			type="xsd:boolean" />
+		<xsd:attribute name="type">
+			<xsd:simpleType>
+				<xsd:restriction base="xsd:string">
+					<xsd:enumeration value="select" />
+					<xsd:enumeration value="insert" />
+					<xsd:enumeration value="update" />
+				</xsd:restriction>
+			</xsd:simpleType>
+		</xsd:attribute>
+		<xsd:attribute name="debug" type="xsd:boolean" />
+	</xsd:complexType>
+	<xsd:complexType name="sqlToyMqlType" mixed="true">
+		<xsd:annotation>
+			<xsd:documentation><![CDATA[全局类型 mongodb查询使用]]></xsd:documentation>
+		</xsd:annotation>
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="filters" minOccurs="0" maxOccurs="1"
+				type="sqltoyFiltersType" />
+			<xsd:element name="translate" minOccurs="0"
+				maxOccurs="unbounded" type="sqltoyTranslateType" />
+			<xsd:element name="secure-mask" minOccurs="0"
+				maxOccurs="unbounded" type="sqltoySecureMaskType" />
+			<xsd:element name="value" type="xsd:string" minOccurs="1"
+				maxOccurs="1" />
+			<xsd:element name="count-sql" type="xsd:string"
+				minOccurs="0" maxOccurs="1" />
+			<xsd:element name="pivot" minOccurs="0" maxOccurs="1"
+				type="sqltoyPivotType" />
+			<xsd:element name="unpivot" minOccurs="0" maxOccurs="1"
+				type="sqltoyUnpivotType" />
+			<xsd:element name="summary" minOccurs="0" maxOccurs="1"
+				type="sqltoySummaryType" />
+			<!-- 分页优化 -->
+			<xsd:element name="page-optimize" minOccurs="0"
+				maxOccurs="1" type="sqltoyPageOptimizeType" />
+		</xsd:choice>
+		<xsd:attribute name="id" type="xsd:string"
+			use="required" />
+		<xsd:attribute name="blank-to-null" type="xsd:boolean" />
+		<xsd:attribute name="collection" type="xsd:string"
+			use="required" />
+		<xsd:attribute name="aggregate" type="xsd:boolean"
+			default="false" />
+		<xsd:attribute name="fields" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="sqlToyEqlType" mixed="true">
+		<xsd:annotation>
+			<xsd:documentation><![CDATA[全局类型 elasticsearch使用]]></xsd:documentation>
+		</xsd:annotation>
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="filters" minOccurs="0" maxOccurs="1"
+				type="sqltoyFiltersType" />
+			<xsd:element name="translate" minOccurs="0"
+				maxOccurs="unbounded" type="sqltoyTranslateType" />
+			<xsd:element name="secure-mask" minOccurs="0"
+				maxOccurs="unbounded" type="sqltoySecureMaskType" />
+			<xsd:element name="value" type="xsd:string" minOccurs="1"
+				maxOccurs="1" />
+			<xsd:element name="count-sql" type="xsd:string"
+				minOccurs="0" maxOccurs="1" />
+			<xsd:element name="pivot" minOccurs="0" maxOccurs="1"
+				type="sqltoyPivotType" />
+			<xsd:element name="unpivot" minOccurs="0" maxOccurs="1"
+				type="sqltoyUnpivotType" />
+			<xsd:element name="summary" minOccurs="0" maxOccurs="1"
+				type="sqltoySummaryType" />
+		</xsd:choice>
+		<xsd:attribute name="id" type="xsd:string"
+			use="required" />
+		<xsd:attribute name="blank-to-null" default="true"
+			type="xsd:boolean" />
+		<xsd:attribute name="end-point" type="xsd:string" />
+		<xsd:attribute name="value-root" type="xsd:string" />
+		<xsd:attribute name="index" />
+		<xsd:attribute name="type" />
+		<xsd:attribute name="aggregate" type="xsd:boolean"
+			default="false" />
+		<xsd:attribute name="fields" use="required" />
+		<!-- es语法模式 -->
+		<xsd:attribute name="mode">
+			<xsd:simpleType>
+				<xsd:restriction base="xsd:string">
+					<xsd:enumeration value="sql" />
+					<xsd:enumeration value="original" />
+				</xsd:restriction>
+			</xsd:simpleType>
+		</xsd:attribute>
+	</xsd:complexType>
+
+	<!-- 全局filter type -->
+	<xsd:complexType name="sqltoyFiltersType">
+		<xsd:annotation>
+			<xsd:documentation><![CDATA[通用filter定义,用于对条件参数进行转null处理或者进行格式化或类型转换、或加减处理,便于后续条件判断]]></xsd:documentation>
+		</xsd:annotation>
+		<xsd:choice maxOccurs="unbounded">
+			<xsd:element name="blank" minOccurs="0"
+				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[条件值为空白的将条件值转为null]]></xsd:documentation>
+				</xsd:annotation>
+				<xsd:complexType>
+					<xsd:attribute name="params" type="xsd:string"
+						default="*" />
+					<xsd:attribute name="excludes" type="xsd:string" />
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="eq" minOccurs="0"
+				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[条件值为等于给定值，将条件值转为null,如果条件值是数组，给定值等于数组中的任意一个值则将条件值转为null!
+					例如:params="status" value="-1", 如果status==-1 则转为null; status={"-1","1"} 也会将status转为null
+					]]></xsd:documentation>
+				</xsd:annotation>
+				<xsd:complexType>
+					<xsd:attribute name="params" type="xsd:string"
+						use="required" />
+					<xsd:attribute name="value" type="xsd:string"
+						use="required" />
+					<xsd:attribute name="excludes" type="xsd:string" />
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="gt" minOccurs="0"
+				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[条件值大于给定值，则转为null]]></xsd:documentation>
+				</xsd:annotation>
+				<xsd:complexType>
+					<xsd:attribute name="params" type="xsd:string"
+						use="required" />
+					<xsd:attribute name="value" type="xsd:string"
+						use="required" />
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="gte" minOccurs="0"
+				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[条件值大于等于给定值，则转为null]]></xsd:documentation>
+				</xsd:annotation>
+				<xsd:complexType>
+					<xsd:attribute name="params" type="xsd:string"
+						use="required" />
+					<xsd:attribute name="value" type="xsd:string"
+						use="required" />
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="date-format" minOccurs="0"
+				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[对日期进行格式化,一般较少使用]]></xsd:documentation>
+				</xsd:annotation>
+				<xsd:complexType>
+					<xsd:attribute name="params" type="xsd:string"
+						use="required" />
+					<xsd:attribute name="format" type="xsd:string"
+						use="required" />
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="l-like" minOccurs="0"
+				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[like查询时,当参数不为null或空白的情况下给参数右边补%]]></xsd:documentation>
+				</xsd:annotation>
+				<xsd:complexType>
+					<xsd:attribute name="params" type="xsd:string"
+						use="required" />
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="r-like" minOccurs="0"
+				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[like查询时,当参数不为null或空白的情况下给参数左边补%]]></xsd:documentation>
+				</xsd:annotation>
+				<xsd:complexType>
+					<xsd:attribute name="params" type="xsd:string"
+						use="required" />
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="lt" minOccurs="0"
+				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[条件值小于给定值，则转为null]]></xsd:documentation>
+				</xsd:annotation>
+				<xsd:complexType>
+					<xsd:attribute name="params" type="xsd:string"
+						use="required" />
+					<xsd:attribute name="value" type="xsd:string"
+						use="required" />
+				</xsd:complexType>
+			</xsd:element>
+
+			<xsd:element name="lte" minOccurs="0"
+				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[条件值小于等于给定值，则转为null]]></xsd:documentation>
+				</xsd:annotation>
+				<xsd:complexType>
+					<xsd:attribute name="params" type="xsd:string"
+						use="required" />
+					<xsd:attribute name="value" type="xsd:string"
+						use="required" />
+				</xsd:complexType>
+			</xsd:element>
+
+			<xsd:element name="between" minOccurs="0"
+				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[条件值在给定的区间范围内，则转为null]]></xsd:documentation>
+				</xsd:annotation>
+				<xsd:complexType>
+					<xsd:attribute name="params" type="xsd:string"
+						use="required" />
+					<xsd:attribute name="start-value" type="xsd:decimal"
+						use="required" />
+					<xsd:attribute name="end-value" type="xsd:decimal"
+						use="required" />
+					<xsd:attribute name="excludes" type="xsd:string" />
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="primary" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[
+					设定首要参数，比如页面查询条件：订单编号，当订单编号有值时表示进行精准查询，除了部分数据权限过滤条件外其他条件不再参与过滤!
+					(excludes设置排除的参数，比如账套或归属企业id等权限过滤条件)
+					]]></xsd:documentation>
+				</xsd:annotation>
+				<xsd:complexType>
+					<xsd:attribute name="param" type="xsd:string"
+						use="required" />
+					<xsd:attribute name="excludes" type="xsd:string">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[排除哪些参数不被设置为null]]>
+							</xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="to-number" minOccurs="0"
+				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[
+					将条件参数类型转为数字类型
+					]]></xsd:documentation>
+				</xsd:annotation>
+				<xsd:complexType>
+					<xsd:attribute name="params" type="xsd:string"
+						use="required" />
+					<xsd:attribute name="data-type" use="required">
+						<xsd:simpleType>
+							<xsd:restriction base="xsd:string">
+								<xsd:enumeration value="decimal" />
+								<xsd:enumeration value="integer" />
+								<xsd:enumeration value="double" />
+								<xsd:enumeration value="float" />
+								<xsd:enumeration value="long" />
+							</xsd:restriction>
+						</xsd:simpleType>
+					</xsd:attribute>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="to-array" minOccurs="0"
+				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[
+					将条件参数转化为数组,如单值也转化为长度为1的数组
+					]]></xsd:documentation>
+				</xsd:annotation>
+				<xsd:complexType>
+					<xsd:attribute name="params" type="xsd:string"
+						use="required" />
+					<xsd:attribute name="data-type" use="required">
+						<xsd:simpleType>
+							<xsd:restriction base="xsd:string">
+								<xsd:enumeration value="string" />
+								<xsd:enumeration value="decimal" />
+								<xsd:enumeration value="integer" />
+								<xsd:enumeration value="double" />
+								<xsd:enumeration value="float" />
+								<xsd:enumeration value="long" />
+							</xsd:restriction>
+						</xsd:simpleType>
+					</xsd:attribute>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="to-string" minOccurs="0"
+				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[
+					将条件参数转化为字符串
+					]]></xsd:documentation>
+				</xsd:annotation>
+				<xsd:complexType>
+					<xsd:attribute name="params" type="xsd:string"
+						use="required" />
+					<xsd:attribute name="add-quote">
+						<xsd:simpleType>
+							<xsd:restriction base="xsd:string">
+								<xsd:enumeration value="none" />
+								<xsd:enumeration value="single" />
+								<xsd:enumeration value="double" />
+							</xsd:restriction>
+						</xsd:simpleType>
+					</xsd:attribute>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="to-date" minOccurs="0"
+				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[
+					将条件参数值类型转化为date类型,并可以设定对应的格式
+					]]></xsd:documentation>
+				</xsd:annotation>
+				<xsd:complexType>
+					<xsd:attribute name="params" type="xsd:string"
+						use="required" />
+					<xsd:attribute name="format" default="yyyy-MM-dd">
+						<xsd:simpleType>
+							<xsd:restriction base="xsd:string">
+								<xsd:enumeration value="FIRST_OF_MONTH">
+									<xsd:annotation>
+										<xsd:documentation><![CDATA[当前日期月份的第一天,如日期值为2020-06-17,处理后的值为:2020-06-01]]></xsd:documentation>
+									</xsd:annotation>
+								</xsd:enumeration>
+								<xsd:enumeration value="LAST_OF_MONTH">
+									<xsd:annotation>
+										<xsd:documentation><![CDATA[当前日期月份的最后一天,如日期值为2020-06-17,处理后的值为:2020-06-30]]></xsd:documentation>
+									</xsd:annotation>
+								</xsd:enumeration>
+								<xsd:enumeration value="yyyy-MM-dd" />
+								<xsd:enumeration value="yyyyMMdd" />
+								<xsd:enumeration value="yyyyMMddHHmmss" />
+								<xsd:enumeration value="yyyy-MM-dd HH:mm:ss" />
+								<xsd:enumeration value="FIRST_OF_YEAR">
+									<xsd:annotation>
+										<xsd:documentation><![CDATA[当前日期年份的第一天,如日期值为2020-06-17,处理后的值为:2020-01-01]]></xsd:documentation>
+									</xsd:annotation>
+								</xsd:enumeration>
+								<xsd:enumeration value="LAST_OF_YEAR">
+									<xsd:annotation>
+										<xsd:documentation><![CDATA[当前日期年份的最后一天,如日期值为2020-06-17,处理后的值为:2020-12-31]]></xsd:documentation>
+									</xsd:annotation>
+								</xsd:enumeration>
+								<xsd:enumeration value="FIRST_OF_WEEK">
+									<xsd:annotation>
+										<xsd:documentation><![CDATA[当前日期所在周的第一天即周一,如日期值为2020-06-17,处理后的值为:2020-06-15]]></xsd:documentation>
+									</xsd:annotation>
+								</xsd:enumeration>
+								<xsd:enumeration value="LAST_OF_WEEK">
+									<xsd:annotation>
+										<xsd:documentation><![CDATA[当前日期所在周的最后一天即周日,如日期值为2020-06-17,处理后的值为:2020-06-21]]></xsd:documentation>
+									</xsd:annotation>
+								</xsd:enumeration>
+							</xsd:restriction>
+						</xsd:simpleType>
+					</xsd:attribute>
+					<xsd:attribute name="type">
+						<xsd:simpleType>
+							<xsd:restriction base="xsd:string">
+								<xsd:enumeration value="date" />
+								<xsd:enumeration value="timestamp" />
+								<xsd:enumeration value="localDate" />
+								<xsd:enumeration value="localDateTime" />
+								<xsd:enumeration value="localTime" />
+								<xsd:enumeration value="time" />
+							</xsd:restriction>
+						</xsd:simpleType>
+					</xsd:attribute>
+					<xsd:attribute name="increment-time"
+						type="xsd:integer">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[增减时间,默认单位是天]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+					<xsd:attribute name="increment-unit" default="days">
+						<xsd:simpleType>
+							<xsd:restriction base="xsd:string">
+								<xsd:enumeration value="days" />
+								<xsd:enumeration value="hours" />
+								<xsd:enumeration value="minutes" />
+								<xsd:enumeration value="seconds" />
+								<xsd:enumeration value="milliseconds" />
+								<xsd:enumeration value="months" />
+								<xsd:enumeration value="years" />
+							</xsd:restriction>
+						</xsd:simpleType>
+					</xsd:attribute>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="neq" minOccurs="0"
+				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[条件值为不等于给定值，将条件值转为null,如果条件值是数组，给定值不在数组范围内则将条件值转为null!
+					例如:params="status" value="-1",如果status=1 则转为null; status={"1","2"} 也会将status转为null
+					]]></xsd:documentation>
+				</xsd:annotation>
+				<xsd:complexType>
+					<xsd:attribute name="params" type="xsd:string"
+						use="required" />
+					<xsd:attribute name="value" type="xsd:string"
+						use="required" />
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="split" minOccurs="0"
+				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[一般针对in条件查询，查询条件值是字符串多个值拼接的,用相关符号切割成数组再作为条件值
+					]]></xsd:documentation>
+				</xsd:annotation>
+				<xsd:complexType>
+					<xsd:attribute name="params" type="xsd:string"
+						use="required" />
+					<xsd:attribute name="split-sign" default="," />
+					<xsd:attribute name="data-type" use="required">
+						<xsd:simpleType>
+							<xsd:restriction base="xsd:string">
+								<xsd:enumeration value="string" />
+								<xsd:enumeration value="decimal" />
+								<xsd:enumeration value="integer" />
+								<xsd:enumeration value="double" />
+								<xsd:enumeration value="float" />
+								<xsd:enumeration value="long" />
+							</xsd:restriction>
+						</xsd:simpleType>
+					</xsd:attribute>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="default" minOccurs="0"
+				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[设置参数默认值]]></xsd:documentation>
+				</xsd:annotation>
+				<xsd:complexType>
+					<xsd:attribute name="params" type="xsd:string"
+						use="required" />
+					<xsd:attribute name="value" type="xsd:string"
+						use="required">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[example:sysdate()-2d(d:day,m:month,y:year;w:week;或者:first_of_month-2d/first_of_year-2d/last_of_month/last_of_year/first_of_week/last_of_week)]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+					<xsd:attribute name="data-type" use="required">
+						<xsd:simpleType>
+							<xsd:restriction base="xsd:string">
+								<xsd:enumeration value="string" />
+								<xsd:enumeration value="decimal" />
+								<xsd:enumeration value="integer" />
+								<xsd:enumeration value="double" />
+								<xsd:enumeration value="float" />
+								<xsd:enumeration value="long" />
+								<xsd:enumeration value="date" />
+								<xsd:enumeration value="localDate" />
+								<xsd:enumeration value="localDateTime" />
+								<xsd:enumeration value="localTime" />
+								<xsd:enumeration value="timestamp" />
+								<xsd:enumeration value="time" />
+							</xsd:restriction>
+						</xsd:simpleType>
+					</xsd:attribute>
+					<xsd:attribute name="split" type="xsd:string" />
+					<xsd:attribute name="is-array" type="xsd:boolean" />
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="replace" minOccurs="0"
+				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[帮助对条件参数进行特定符号替换处理]]></xsd:documentation>
+				</xsd:annotation>
+				<xsd:complexType>
+					<xsd:attribute name="params" type="xsd:string"
+						use="required" />
+					<xsd:attribute name="regex" type="xsd:string"
+						use="required" />
+					<xsd:attribute name="value" type="xsd:string"
+						use="required" />
+					<xsd:attribute name="is-first" type="xsd:boolean"
+						default="false" />
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="to-in-arg" minOccurs="0"
+				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[将数组拼接成单个字符串作为in (:args)的条件值]]></xsd:documentation>
+				</xsd:annotation>
+				<xsd:complexType>
+					<xsd:attribute name="params" type="xsd:string"
+						use="required" />
+					<xsd:attribute name="single-quote" type="xsd:boolean"
+						default="true" />
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="custom-handler" minOccurs="0"
+				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[自定义数据处理器]]></xsd:documentation>
+				</xsd:annotation>
+				<xsd:complexType>
+					<xsd:attribute name="params" type="xsd:string"
+						use="required" />
+					<xsd:attribute name="type" type="xsd:string">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[自定义处理逻辑辨识符号]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="cache-arg" minOccurs="0"
+				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[利用缓存将名称匹配成对应的代码，比如员工姓名页面输入了"张明"，利用员工和工号缓存匹配出姓名中包含"张明" 的工号数组,然后再参与sql查询]]></xsd:documentation>
+				</xsd:annotation>
+				<xsd:complexType>
+					<xsd:choice minOccurs="0" maxOccurs="unbounded">
+						<xsd:element name="filter" minOccurs="0"
+							maxOccurs="unbounded">
+							<xsd:complexType>
+								<xsd:attribute name="cache-index"
+									type="xsd:integer" use="required" />
+								<xsd:attribute name="compare-param"
+									type="xsd:string" use="required" />
+								<xsd:attribute name="compare-type">
+									<xsd:simpleType>
+										<xsd:restriction base="xsd:string">
+											<xsd:enumeration value="eq" />
+											<xsd:enumeration value="neq" />
+										</xsd:restriction>
+									</xsd:simpleType>
+								</xsd:attribute>
+								<xsd:attribute name="split" type="xsd:string" />
+							</xsd:complexType>
+						</xsd:element>
+					</xsd:choice>
+					<xsd:attribute name="param" type="xsd:string"
+						use="required" />
+					<xsd:attribute name="prior-match-equal"
+						type="xsd:boolean" default="false" />
+					<xsd:attribute name="cache-name" type="xsd:string"
+						use="required" />
+					<xsd:attribute name="cache-key-index"
+						type="xsd:integer" default="0">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[取缓存中第几列作为key,默认为0]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+					<xsd:attribute name="cache-type" type="xsd:string" />
+					<xsd:attribute name="cache-mapping-indexes"
+						type="xsd:string" default="1">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[缓存数组中哪几列参与名称检索匹配,默认第2列(值为1)作为名称]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+					<xsd:attribute name="cache-mapping-max"
+						type="xsd:integer" default="500">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[设置最大批量量,默认500,比如姓名输入:陈,员工姓陈的可能有1000个,但这里只匹配出部分]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+					<xsd:attribute name="cache-not-matched-value"
+						type="xsd:string">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[缓存中不能匹配成功赋予一个值,sqltoy会将其转为数组]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+					<xsd:attribute name="unmatched-return-self"
+						type="xsd:boolean" default="true">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[缓存未匹配到具体key时，返回检索关键词]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+					<xsd:attribute name="alias-name" type="xsd:string">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[为从缓存中匹配出的编码数组定义一个变量名称,便于在sql中引用]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+				</xsd:complexType>
+			</xsd:element>
+
+			<xsd:element name="exclusive" minOccurs="0"
+				maxOccurs="unbounded">
+				<xsd:complexType>
+					<xsd:attribute name="param" type="xsd:string"
+						use="required" />
+					<xsd:attribute name="set-params" type="xsd:string"
+						use="required" />
+					<xsd:attribute name="compare-type" default="eq">
+						<xsd:simpleType>
+							<xsd:restriction base="xsd:string">
+								<xsd:enumeration value="eq" />
+								<xsd:enumeration value="neq" />
+								<xsd:enumeration value="gt" />
+								<xsd:enumeration value="gte" />
+								<xsd:enumeration value="lt" />
+								<xsd:enumeration value="lte" />
+								<xsd:enumeration value="between" />
+								<xsd:enumeration value="in" />
+							</xsd:restriction>
+						</xsd:simpleType>
+					</xsd:attribute>
+					<xsd:attribute name="compare-values"
+						type="xsd:string" />
+					<xsd:attribute name="set-value" type="xsd:string" />
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="clone" minOccurs="0"
+				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[复制一个参数的值保存为另外一个参数]]></xsd:documentation>
+				</xsd:annotation>
+				<xsd:complexType>
+					<xsd:attribute name="param" type="xsd:string"
+						use="required" />
+					<xsd:attribute name="as-param" type="xsd:string"
+						use="required" />
+				</xsd:complexType>
+			</xsd:element>
+		</xsd:choice>
+	</xsd:complexType>
+
+	<xsd:complexType name="sqltoyTranslateType">
+		<xsd:annotation>
+			<xsd:documentation><![CDATA[缓存翻译,uncached-template默认为:[${value}]未定义]]></xsd:documentation>
+		</xsd:annotation>
+		<xsd:attribute name="cache" use="required">
+			<xsd:simpleType>
+				<xsd:restriction base="xsd:string">
+					<xsd:minLength value="1" />
+				</xsd:restriction>
+			</xsd:simpleType>
+		</xsd:attribute>
+		<xsd:attribute name="columns" type="xsd:string"
+			use="required" />
+		<xsd:attribute name="cache-type" type="xsd:string" />
+		<xsd:attribute name="split-regex" type="xsd:string">
+			<xsd:annotation>
+				<xsd:documentation><![CDATA[F,M这种多代码翻译的分隔符号]]></xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+		<xsd:attribute name="link-sign" type="xsd:string">
+			<xsd:annotation>
+				<xsd:documentation><![CDATA[对应split-regex进行重新拼接的字符]]></xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+		<xsd:attribute name="cache-indexs" type="xsd:string" />
+		<xsd:attribute name="uncached-template"
+			type="xsd:string" />
+		<xsd:attribute name="original-columns" type="xsd:string">
+			<xsd:annotation>
+				<xsd:documentation><![CDATA[服务于elastic、mongo在不使用sql模式,无法select staff_id as staffName,这里alias-name 对应staff_id]]></xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+	</xsd:complexType>
+
+	<xsd:complexType name="sqltoySecureMaskType">
+		<xsd:annotation>
+			<xsd:documentation><![CDATA[安全掩码,对字段值进行脱敏]]></xsd:documentation>
+		</xsd:annotation>
+		<xsd:attribute name="columns" type="xsd:string"
+			use="required">
+			<xsd:annotation>
+				<xsd:documentation><![CDATA[逗号分隔表示对对个字段进行脱敏]]></xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+		<xsd:attribute name="type" use="required">
+			<xsd:simpleType>
+				<xsd:restriction base="xsd:string">
+					<xsd:enumeration value="tel" />
+					<xsd:enumeration value="name" />
+					<xsd:enumeration value="id-card" />
+					<xsd:enumeration value="bank-card" />
+					<xsd:enumeration value="address" />
+					<xsd:enumeration value="email" />
+					<xsd:enumeration value="public-account" />
+					<xsd:enumeration value="other" />
+				</xsd:restriction>
+			</xsd:simpleType>
+		</xsd:attribute>
+		<xsd:attribute name="head-size" type="xsd:integer" />
+		<xsd:attribute name="tail-size" type="xsd:integer" />
+		<xsd:attribute name="mask-code" type="xsd:string" />
+		<xsd:attribute name="mask-rate" type="xsd:integer" />
+	</xsd:complexType>
+
+	<!-- 分页优化 -->
+	<xsd:complexType name="sqltoyPageOptimizeType">
+		<!-- 并行查询 -->
+		<xsd:attribute name="parallel" type="xsd:boolean"
+			default="false">
+			<xsd:annotation>
+				<xsd:documentation><![CDATA[是否并行执行count和结果查询,达到效率提升]]></xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+		<!-- 并行查询最大等待时长(秒) -->
+		<xsd:attribute name="parallel-maxwait-seconds"
+			type="xsd:long">
+			<xsd:annotation>
+				<xsd:documentation><![CDATA[并行查询最大等待时长(秒),避免执行时间过长]]></xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+		<!-- 保留多少个不同查询 -->
+		<xsd:attribute name="alive-max"
+			type="xsd:nonNegativeInteger" default="100">
+			<xsd:annotation>
+				<xsd:documentation><![CDATA[最大允许保存多少条不同查询条件组合对应的count记录,默认100]]></xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+		<!-- 相同查询间隔多久刷新 -->
+		<xsd:attribute name="alive-seconds"
+			type="xsd:nonNegativeInteger" default="90">
+			<xsd:annotation>
+				<xsd:documentation><![CDATA[每个查询条件以及对应count记录在内存中存放的有效时长(秒),默认90秒,确保及时进行刷新查询]]></xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+		<xsd:attribute name="skip-zero-count" type="xsd:boolean"
+			default="false">
+			<xsd:annotation>
+				<xsd:documentation><![CDATA[当count为0时是否自动重新获取]]></xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+	</xsd:complexType>
+
+	<xsd:complexType name="sqltoyPivotType">
+		<xsd:annotation>
+			<xsd:documentation><![CDATA[对查询结果做行转列操作]]></xsd:documentation>
+		</xsd:annotation>
+		<xsd:attribute name="group-columns" type="xsd:string"
+			use="required" />
+		<xsd:attribute name="category-columns" type="xsd:string"
+			use="required" />
+		<xsd:attribute name="category-sql" type="xsd:string" />
+		<xsd:attribute name="start-column" type="xsd:string"
+			use="required" />
+		<xsd:attribute name="end-column" type="xsd:string"
+			use="required" />
+		<xsd:attribute name="default-value"
+			type="xsd:anySimpleType" />
+		<xsd:attribute name="default-type">
+			<xsd:simpleType>
+				<xsd:restriction base="xsd:string">
+					<xsd:enumeration value="date" />
+					<xsd:enumeration value="decimal" />
+					<xsd:enumeration value="Integer" />
+					<xsd:enumeration value="double" />
+					<xsd:enumeration value="float" />
+					<xsd:enumeration value="long" />
+					<xsd:enumeration value="string" />
+					<xsd:enumeration value="timestamp" />
+				</xsd:restriction>
+			</xsd:simpleType>
+		</xsd:attribute>
+	</xsd:complexType>
+
+	<xsd:complexType name="sqltoyUnpivotType">
+		<xsd:annotation>
+			<xsd:documentation><![CDATA[将几个固定列指标转为多行来显示]]></xsd:documentation>
+		</xsd:annotation>
+		<xsd:attribute name="columns-to-rows" type="xsd:string"
+			use="required">
+			<xsd:annotation>
+				<xsd:documentation><![CDATA[格式如下"col1:指标名称1,col2:指标名称2"]]></xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+		<xsd:attribute name="new-columns-labels"
+			type="xsd:string" use="required">
+			<xsd:annotation>
+				<xsd:documentation><![CDATA[为新产生的2个列设定标题便于映射到VO对象属性,如:"indexName,indexValue"]]></xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+	</xsd:complexType>
+
+	<xsd:complexType name="sqltoySummaryType">
+		<xsd:sequence>
+			<xsd:element name="global" minOccurs="0" maxOccurs="1">
+				<xsd:complexType>
+					<xsd:attribute name="label-column" type="xsd:string"
+						use="required" />
+					<xsd:attribute name="sum-label" type="xsd:string"
+						use="required" />
+					<xsd:attribute name="average-label" type="xsd:string" />
+					<xsd:attribute name="reverse" type="xsd:boolean"
+						default="false" />
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="group" minOccurs="0"
+				maxOccurs="unbounded">
+				<xsd:complexType>
+					<xsd:attribute name="group-column" type="xsd:string"
+						use="required" />
+					<xsd:attribute name="label-column" type="xsd:string"
+						use="required" />
+					<xsd:attribute name="sum-label" type="xsd:string"
+						use="required" />
+					<xsd:attribute name="average-label" type="xsd:string" />
+					<xsd:attribute name="order-column" type="xsd:string" />
+					<xsd:attribute name="order-with-sum"
+						type="xsd:boolean" default="true" />
+					<xsd:attribute name="order-way" default="desc">
+						<xsd:simpleType>
+							<xsd:restriction base="xsd:string">
+								<xsd:enumeration value="desc" />
+								<xsd:enumeration value="asc" />
+							</xsd:restriction>
+						</xsd:simpleType>
+					</xsd:attribute>
+				</xsd:complexType>
+			</xsd:element>
+		</xsd:sequence>
+		<xsd:attribute name="reverse" type="xsd:boolean"
+			default="false" />
+		<xsd:attribute name="sum-columns" type="xsd:string" />
+		<xsd:attribute name="average-columns" type="xsd:string" />
+		<xsd:attribute name="average-radix-sizes"
+			type="xsd:string">
+			<xsd:annotation>
+				<xsd:documentation><![CDATA[1,3,2 用逗号分割为每个平均计算设置保留小数位，如果单个值表示为全部平均计算设置]]></xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+		<xsd:attribute name="average-rounding-modes"
+			type="xsd:string">
+			<xsd:annotation>
+				<xsd:documentation><![CDATA[HALF_UP,HALF_DOWN,ROUND_DOWN,ROUND_UP]]></xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+		<xsd:attribute name="average-skip-null"
+			type="xsd:boolean" default="false">
+			<xsd:annotation>
+				<xsd:documentation><![CDATA[计算平均值时是否排除掉值为null的数字]]></xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+		<xsd:attribute name="sum-site" default="top">
+			<xsd:simpleType>
+				<xsd:restriction base="xsd:string">
+					<xsd:enumeration value="top" />
+					<xsd:enumeration value="bottom" />
+					<xsd:enumeration value="left" />
+					<xsd:enumeration value="right" />
+				</xsd:restriction>
+			</xsd:simpleType>
+		</xsd:attribute>
+		<xsd:attribute name="link-sign" default=" / ">
+			<xsd:annotation>
+				<xsd:documentation><![CDATA[sum和average同一行展示时拼接字符]]></xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+		<xsd:attribute name="skip-single-row" type="xsd:boolean"
+			default="false">
+			<xsd:annotation>
+				<xsd:documentation><![CDATA[单行数据是否进行分组汇总和求平均,默认为false]]></xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+		<xsd:attribute name="has-grouped" type="xsd:boolean"
+			default="true">
+			<xsd:annotation>
+				<xsd:documentation><![CDATA[数据是否已经完成了分组组织]]></xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+	</xsd:complexType>
+	<xsd:simpleType name="numberFormatType">
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="#,###.00" />
+			<xsd:enumeration value="capital" />
+			<xsd:enumeration value="capital-rmb" />
+			<xsd:enumeration value="capital-en" />
+		</xsd:restriction>
+	</xsd:simpleType>
+</xsd:schema>

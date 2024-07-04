@@ -1,0 +1,1 @@
+select t.`max_value`,t.name from table

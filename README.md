@@ -1,11 +1,22 @@
+<p align="center">
+    <a target="_blank" href="LICENSE"><img src="https://img.shields.io/:license-Apache%202.0-blue.svg"></a>
+    <a target="_blank" href="https://github.com/sagframe/sagacity-sqltoy"><img src="https://img.shields.io/github/stars/sagframe/sagacity-sqltoy.svg?style=social"/></a>
+    <a target="_blank" href="https://gitee.com/sagacity/sagacity-sqltoy"><img src="https://gitee.com/sagacity/sagacity-sqltoy/badge/star.svg?theme=white" /></a>
+    <a target="_blank" href="https://github.com/sagframe/sagacity-sqltoy/releases"><img src="https://img.shields.io/github/v/release/sagframe/sagacity-sqltoy?logo=github"></a>
+    <a href="https://mvnrepository.com/artifact/com.sagframe/sagacity-sqltoy">
+        <img alt="maven" src="https://img.shields.io/maven-central/v/com.sagframe/sagacity-sqltoy?style=flat-square">
+    </a>
+</p>
+
 # WORD版详细文档(完整)
-## 请见:docs/睿智平台SqlToy5.2 使用手册.doc
+## 请见:docs/睿智平台SqlToy5.6 使用手册.doc
 ## xml中sql查询完整配置 
 https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 
 # [gitee地址](https://gitee.com/sagacity/sagacity-sqltoy) 
 # [sqltoy Lambda](https://gitee.com/gzghde/sqltoy-plus) 
 # [sqltoy管理系统脚手架](https://gitee.com/momoljw/sss-rbac-admin) 
+# [sqltoy idea 插件](https://github.com/imyuyu/sqltoy-idea-plugin) 
 
 # 范例演示项目
 ## 快速集成演示项目
@@ -35,12 +46,17 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
 # 最新版本 
-* 5.3.71 (jdk17+/jdk21、springboot3.x)  发版日期: 2024-3-7
-* 5.2.100 LTS (jdk1.8+)                 发版日期: 2024-3-7
-  
-# 历史版本(EOL)
-* 5.1.81                             发版日期: 2023-12-06
-* 4.20.87(兼容所有之前版本)                            发版日期: 2023-12-05
+* 5.6.10 LTS (jdk17+/springboot3.x)/5.6.10.jre8 (兼容5.2.x/5.3.x版本)      发版日期: 2024-5-27
+```xml
+<dependency>
+	<groupId>com.sagframe</groupId>
+	<artifactId>sagacity-sqltoy-spring-starter</artifactId>
+	<!-- solon 适配版本 <artifactId>sagacity-sqltoy-solon-plugin</artifactId> -->
+        <!-- jdk8 对应的版本号为：5.6.10.jre8 -->
+	<version>5.6.10</version>
+</dependency>
+```
+* 5.2.105 LTS (jdk1.8+)                 发版日期: 2024-6-6
 
 # 1. 前言
 ## 1.1 sqltoy-orm是什么
@@ -68,7 +84,7 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 * 提供了大量辅助功能:数据脱敏、格式化、条件参数预处理等
 
 ### 支持多种数据库
-* 常规的mysql、oracle、db2、postgresql、 sqlserver、dm、kingbase、sqlite、h2、 oceanBase、polardb、gaussdb、tidb、oscar(神通)
+* 常规的mysql、oracle、db2、postgresql、 sqlserver、dm、kingbase、sqlite、h2、 oceanBase、polardb、gaussdb、tidb、oscar(神通)、瀚高
 * 支持分布式olap数据库: clickhouse、StarRocks、greenplum、impala(kudu)
 * 支持elasticsearch、mongodb
 * 所有基于sql和jdbc 各类数据库查询
@@ -183,9 +199,7 @@ lightDao.deleteByQuery(StaffInfoVO.class, EntityQuery.create().where("status=?")
 </value>
 </sql>
 ```
-
 * mybatis同样的功能的写法
-
 ```xml
 <select id="show_case" resultMap="BaseResultMap">
  select *

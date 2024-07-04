@@ -1,0 +1,299 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema
+	xmlns="http://www.sagframe.com/schema/sqltoy-translate"
+	xmlns:tns="http://www.sagframe.com/schema/sqltoy-translate"
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+	targetNamespace="http://www.sagframe.com/schema/sqltoy-translate"
+	elementFormDefault="qualified">
+	<xsd:attributeGroup name="sqlToyTranslateAttrs">
+		<xsd:attribute name="cache" type="xsd:string"
+			use="required" />
+		<xsd:attribute name="keep-alive" type="xsd:integer"
+			default="3600">
+			<xsd:annotation>
+				<xsd:documentation>
+				<![CDATA[unit is second]]>
+				</xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+		<xsd:attribute name="heap" type="xsd:integer"
+			default="10000">
+			<xsd:annotation>
+				<xsd:documentation>
+				<![CDATA[unit is EntryUnit.ENTRIES]]>
+				</xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+		<xsd:attribute name="off-heap" type="xsd:integer"
+			default="0">
+			<xsd:annotation>
+				<xsd:documentation>
+				<![CDATA[unit is MemoryUnit.MB]]>
+				</xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+		<xsd:attribute name="disk-size" type="xsd:integer"
+			default="0">
+			<xsd:annotation>
+				<xsd:documentation>
+				<![CDATA[unit is MemoryUnit.MB]]>
+				</xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+		<xsd:attribute name="i18n" type="xsd:string">
+			<xsd:annotation>
+				<xsd:documentation>
+				<![CDATA[example:zh_cn:1,en_us:2]]>
+				</xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+		<xsd:attribute name="desc" type="xsd:string">
+			<xsd:annotation>
+				<xsd:documentation>
+				<![CDATA[缓存说明]]>
+				</xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+	</xsd:attributeGroup>
+	<xsd:attributeGroup name="sqlToyTranslateUpdater">
+		<xsd:attribute name="cache" type="xsd:string"
+			use="required" />
+		<xsd:attribute name="has-inside-group"
+			type="xsd:boolean" default="false">
+			<xsd:annotation>
+				<xsd:documentation>
+				<![CDATA[缓存内部是否存在分组,比如数据字典缓存中有字典分类]]>
+				</xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+		<xsd:attribute name="check-frequency" type="xsd:string" />
+	</xsd:attributeGroup>
+	<!-- root -->
+	<xsd:element name="sagacity">
+		<xsd:complexType>
+			<xsd:choice maxOccurs="unbounded">
+				<xsd:element name="cache-translates">
+					<xsd:complexType>
+						<xsd:choice maxOccurs="unbounded">
+							<xsd:element name="sql-translate" minOccurs="0"
+								maxOccurs="unbounded">
+								<xsd:annotation>
+									<xsd:documentation>
+										<![CDATA[基于sql直接查询,将结果放入缓存,一般格式:key、name、segment1、segment2、status
+										第一列放编码,第二列放名称、后续作为扩展列自行定义,一般将状态放于最后一列
+										]]>
+									</xsd:documentation>
+								</xsd:annotation>
+								<xsd:complexType mixed="true">
+									<xsd:sequence minOccurs="0">
+										<xsd:element name="sql" type="xsd:string" />
+									</xsd:sequence>
+									<xsd:attribute name="sql" type="xsd:string" />
+									<xsd:attribute name="datasource"
+										type="xsd:string" />
+									<xsd:attributeGroup
+										ref="sqlToyTranslateAttrs" />
+								</xsd:complexType>
+							</xsd:element>
+							<xsd:element name="service-translate" minOccurs="0"
+								maxOccurs="unbounded">
+								<xsd:annotation>
+									<xsd:documentation>
+										<![CDATA[通过spring service调用获取缓存,返回结果为List<List>或List<Object[]>类型]]>
+									</xsd:documentation>
+								</xsd:annotation>
+								<xsd:complexType>
+									<xsd:attribute name="service" type="xsd:string"
+										use="required">
+										<xsd:annotation>
+											<xsd:documentation>
+										<![CDATA[对应serviceName或者对应java类型,如:com.xxx.TranslateService]]>
+											</xsd:documentation>
+										</xsd:annotation>
+									</xsd:attribute>
+									<xsd:attribute name="method" type="xsd:string"
+										use="required">
+										<xsd:annotation>
+											<xsd:documentation>
+										<![CDATA[服务对应的method必须有一个字符型参数,例如:getDictCache(String cacheType)]]>
+											</xsd:documentation>
+										</xsd:annotation>
+									</xsd:attribute>
+									<xsd:attributeGroup
+										ref="sqlToyTranslateAttrs" />
+								</xsd:complexType>
+							</xsd:element>
+							<xsd:element name="rest-translate" minOccurs="0"
+								maxOccurs="unbounded">
+								<xsd:complexType>
+									<xsd:attribute name="url" type="xsd:string"
+										use="required" />
+									<xsd:attribute name="username" type="xsd:string" />
+									<xsd:attribute name="password" type="xsd:string" />
+									<xsd:attributeGroup
+										ref="sqlToyTranslateAttrs" />
+								</xsd:complexType>
+							</xsd:element>
+							<xsd:element name="local-translate" minOccurs="0"
+								maxOccurs="unbounded">
+								<xsd:complexType mixed="true">
+									<xsd:attributeGroup
+										ref="sqlToyTranslateAttrs" />
+									<xsd:attribute name="properties" type="xsd:string"/>
+									<xsd:attribute name="dynamic-cache" type="xsd:boolean">
+										<xsd:annotation>
+											<xsd:documentation>
+											<![CDATA[一般指通过本地缓存和分布式缓存综合运用，解决超大数据集合，每次检查本地缓存，没有则调用redis获取]]>
+											</xsd:documentation>
+										</xsd:annotation>
+									</xsd:attribute>
+									<xsd:attribute name="sid" type="xsd:string">
+										<xsd:annotation>
+											<xsd:documentation>
+											<![CDATA[配套dynamic-cache提供标识符号]]>
+											</xsd:documentation>
+										</xsd:annotation>
+									</xsd:attribute>
+								</xsd:complexType>
+							</xsd:element>
+						</xsd:choice>
+						<xsd:attribute name="disk-store-path"
+							default="./translateCaches" />
+						<xsd:attribute name="default-keep-alive"
+							type="xsd:integer" default="3600">
+							<xsd:annotation>
+								<xsd:documentation>
+								<![CDATA[unit is second]]>
+								</xsd:documentation>
+							</xsd:annotation>
+						</xsd:attribute>
+						<xsd:attribute name="default-heap"
+							type="xsd:integer" default="10000">
+							<xsd:annotation>
+								<xsd:documentation>
+								<![CDATA[unit is EntryUnit.ENTRIES]]>
+								</xsd:documentation>
+							</xsd:annotation>
+						</xsd:attribute>
+						<xsd:attribute name="default-off-heap"
+							type="xsd:integer" default="0">
+							<xsd:annotation>
+								<xsd:documentation>
+								<![CDATA[unit is MemoryUnit.MB]]>
+								</xsd:documentation>
+							</xsd:annotation>
+						</xsd:attribute>
+						<xsd:attribute name="default-disk-size"
+							type="xsd:integer" default="0">
+							<xsd:annotation>
+								<xsd:documentation>
+								<![CDATA[unit is MemoryUnit.MB]]>
+								</xsd:documentation>
+							</xsd:annotation>
+						</xsd:attribute>
+					</xsd:complexType>
+
+				</xsd:element>
+				<!-- 缓存变更检测 -->
+				<xsd:element name="cache-update-checkers" minOccurs="0"
+					maxOccurs="1">
+					<xsd:annotation>
+						<xsd:documentation>
+							<![CDATA[
+							1、返回结果必须是:cacheName,cacheType(可为null) 两列值,请求参数:lastUpdateTime;
+							2、check-frequency:可以是一个数字如5(每个5秒检测一次),也可以分段模式0..10:20?300,10:20..20?15,20..24?150
+							]]>
+						</xsd:documentation>
+					</xsd:annotation>
+					<xsd:complexType>
+						<xsd:choice maxOccurs="unbounded">
+							<xsd:element name="sql-checker" minOccurs="0"
+								maxOccurs="unbounded">
+								<xsd:complexType mixed="true">
+									<xsd:sequence>
+										<xsd:element name="sql" type="xsd:string" />
+									</xsd:sequence>
+									<xsd:attribute name="id" type="xsd:string" />
+									<xsd:attribute name="sql" type="xsd:string" />
+									<xsd:attribute name="check-frequency"
+										type="xsd:string" />
+									<xsd:attribute name="datasource"
+										type="xsd:string" />
+								</xsd:complexType>
+							</xsd:element>
+							<xsd:element name="service-checker" minOccurs="0"
+								maxOccurs="unbounded">
+								<xsd:complexType mixed="true">
+									<xsd:attribute name="id" type="xsd:string" />
+									<xsd:attribute name="service" type="xsd:string"
+										use="required" />
+									<xsd:attribute name="method" type="xsd:string"
+										use="required" />
+									<xsd:attribute name="check-frequency"
+										type="xsd:string" />
+								</xsd:complexType>
+							</xsd:element>
+							<xsd:element name="rest-checker" minOccurs="0"
+								maxOccurs="unbounded">
+								<xsd:complexType mixed="true">
+									<xsd:attribute name="id" type="xsd:string" />
+									<xsd:attribute name="url" type="xsd:string"
+										use="required" />
+									<xsd:attribute name="check-frequency"
+										type="xsd:string" />
+									<xsd:attribute name="username" type="xsd:string" />
+									<xsd:attribute name="password" type="xsd:string" />
+								</xsd:complexType>
+							</xsd:element>
+							<xsd:element name="sql-increment-checker"
+								minOccurs="0" maxOccurs="unbounded">
+								<xsd:complexType mixed="true">
+									<xsd:sequence>
+										<xsd:element name="sql" type="xsd:string" />
+									</xsd:sequence>
+									<xsd:attribute name="sql" type="xsd:string" />
+									<xsd:attributeGroup
+										ref="sqlToyTranslateUpdater" />
+									<xsd:attribute name="datasource"
+										type="xsd:string" />
+								</xsd:complexType>
+							</xsd:element>
+							<xsd:element name="service-increment-checker"
+								minOccurs="0" maxOccurs="unbounded">
+								<xsd:complexType mixed="true">
+									<xsd:attribute name="service" type="xsd:string"
+										use="required" />
+									<xsd:attribute name="method" type="xsd:string"
+										use="required" />
+									<xsd:attributeGroup
+										ref="sqlToyTranslateUpdater" />
+								</xsd:complexType>
+							</xsd:element>
+							<xsd:element name="rest-increment-checker"
+								minOccurs="0" maxOccurs="unbounded">
+								<xsd:complexType mixed="true">
+									<xsd:attribute name="url" type="xsd:string"
+										use="required" />
+									<xsd:attributeGroup
+										ref="sqlToyTranslateUpdater" />
+									<xsd:attribute name="username" type="xsd:string" />
+									<xsd:attribute name="password" type="xsd:string" />
+								</xsd:complexType>
+							</xsd:element>
+						</xsd:choice>
+						<xsd:attribute name="cluster-time-deviation"
+							type="xsd:integer" default="1">
+							<xsd:annotation>
+								<xsd:documentation>
+								<![CDATA[
+									集群各个节点时间差异(单位秒),缓存更新检测时将基准检测时间扣减差集群时差。
+								]]>
+								</xsd:documentation>
+							</xsd:annotation>
+						</xsd:attribute>
+					</xsd:complexType>
+				</xsd:element>
+			</xsd:choice>
+		</xsd:complexType>
+	</xsd:element>
+</xsd:schema>

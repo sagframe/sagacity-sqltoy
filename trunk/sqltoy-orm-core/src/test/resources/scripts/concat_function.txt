@@ -1,0 +1,1 @@
+select concat('\'', t.`ORGAN_ID`, '\'') from sys_organ_info t 

@@ -1,0 +1,28 @@
+<sql id="rpt_datasql1">
+	<s:sharding-datasource strategy="skylineStrategy" />
+	<s:translate cache="staffIdName" columns="CREATE_BY"
+		uncached-template=""/>
+	<s:filters>
+		<s:eq params="*" value="-1"/>
+	</s:filters>
+	<s:value>
+          <![CDATA[
+          with d as (
+            select
+                d.DICT_TYPE_CODE,
+                d.DICT_KEY,
+                d.DICT_NAME,
+                d.SHOW_INDEX,
+                DATE_FORMAT(d.CREATE_TIME,'%Y-%m-%d %H:%i:%s') CREATE_TIME,
+                d.CREATE_BY
+            from ubmpdb.sag_dict_detail d
+            where d.`STATUS`=1 
+              #[and d.DICT_TYPE_CODE=:dictTypeCode]
+          )
+          select *
+          from d
+          where 1=1 
+              #[and d.DICT_TYPE_CODE=:dictTypeCode]
+      	]]>
+	</s:value>
+</sql>

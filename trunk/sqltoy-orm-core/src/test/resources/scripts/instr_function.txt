@@ -1,0 +1,1 @@
+select position('c' in 'abcdefgc'),date_format(t.begin_date,'YYYY-MM-HH') from sys_organ_info t 

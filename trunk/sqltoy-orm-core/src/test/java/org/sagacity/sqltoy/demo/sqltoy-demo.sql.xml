@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sqltoy xmlns="http://www.sagframe.com/schema/sqltoy"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.sagframe.com/schema/sqltoy http://www.sagframe.com/schema/sqltoy/sqltoy.xsd">
+	<!-- 获取数据字典key和名称的对照，用于缓存 -->
+	<sql id="sag_dictKeyNameCache">
+		<value>
+		<![CDATA[
+		select t.DICT_KEY,t.DICT_NAME
+		from SAG_DICT_DETAIL t
+        where t.DICT_TYPE_CODE=:dictTypeCode
+        order by t.SHOW_INDEX
+		]]>
+		</value>
+	</sql>
+
+	<sql id="test_page_list">
+		<filters>
+			<primary param="" excludes="" />
+			<exclusive param="" compare-type="eq" set-params=""
+				compare-values="" set-value="" />
+
+		</filters>
+		<value>
+		<![CDATA[
+		select t.DICT_KEY,
+	    #[@blank(:dictName) t.DICT_NAME,]
+		t.SEGMENT,
+		t.COMMENTS
+		from SAG_DICT_DETAIL t
+        where t.DICT_TYPE_CODE=:dictTypeCode
+        order by t.SHOW_INDEX
+        #[ and 1=:type1 and ]
+        #[ and 1=:type2 and ]
+		]]>
+		</value>
+		<!-- 可选项,一般为极端复杂的分页语句，count部分存在优化空间,这里做一个示意 -->
+		<count-sql>
+			<![CDATA[
+				select count(1)
+				from SAG_DICT_DETAIL t
+        		where t.DICT_TYPE_CODE=:dictTypeCode
+			]]>
+		</count-sql>
+		<unpivot columns-to-rows="colName1:总量,colName2:个人"
+			new-columns-labels="transCount,bizType" />
+	</sql>
+</sqltoy>

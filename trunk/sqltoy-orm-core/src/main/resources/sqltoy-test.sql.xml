@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sqltoy xmlns="http://www.sagframe.com/schema/sqltoy"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.sagframe.com/schema/sqltoy http://www.sagframe.com/schema/sqltoy/sqltoy.xsd">
+	<sql id="show_case">
+		<!-- filters 用来对参与查询或执行的参数值进行转化处理 -->
+		<filters>
+			<!-- 参数等于某个值则将参数值设置为null -->
+			<eq params="organType" value="-1" />
+			<!-- 将参数条件值转换为日期格式,format可以是yyyy-MM-dd这种自定义格式也可以是: first_day:月的第一天;last_day:月的最后一天,first_year_day:年的第一天,last_year_day年的最后一天 -->
+			<to-date params="" format="yyyyMMdd"  increment-unit="days" increment-time="1"/>
+			<to-number params="" data-type="decimal" />
+			<!-- 通过缓存将名称用类似like模式匹配出对应的编码作为条件进行精准查询 -->
+			<cache-arg param="" cache-name="" cache-type="" alias-name="">
+				<!-- 对缓存进行过滤，比如个人授权的机构、状态为生效的缓存数据等 -->
+				<!-- compare-param: 可以是一个参数的属性名称也可以是具体的值，cache-index对应缓存数据的第几列 -->
+				<filter compare-param="1" cache-index="4"/>
+			</cache-arg>
+			<!-- 首要参数，比如页面上精准输入了订单编号，此时除特定条件外其他条件全部设置为null不参与查询 -->
+			<primary param="orderId" excludes="organIds" />
+			<!-- 将数组转化成in 的参数条件并增加单引号 -->
+			<to-in-arg params="" />
+			<!-- 空白转为null -->
+			<blank params="*" excludes="staffName" />
+			<!-- 参数值在某个区间则转为null -->
+			<between params="" start-value="0" end-value="9999"	excludes="" />
+			<!-- 将前端传过来的字符串切割成数组 -->
+			<split params="staffAuthOrgs" data-type="string" split-sign="," />
+			<!-- 将参数转为字符串类型，add-quote:none\double\single,默认为none -->
+			<to-string params="" add-quote="none"/>
+			<!-- 参数小于等于某个值时转为null -->
+			<lte params="" value="" />
+			<!-- 参数小于某个值时转为null -->
+			<lt params="" value="" />
+			<!-- 参数大于等于某个值时转为null -->
+			<gte params="" value="" />
+			<!-- 参数大于某个值时转为null -->
+			<gt params="" value="" />
+			<!-- 字符替换,默认根据正则表达进行全部替换，is-first为true时只替换首个 -->
+			<replace params="" regex="" value="" is-first="false" />
+			<!-- 排他性参数,当某个参数是xxx值时,将其他参数设置为特定值 -->
+			<exclusive param="" compare-type="eq" compare-values=""	set-params="" set-value="" />
+			<!--sysdate()-1d(d:天，h:小时,w:周;m:月,y:年);first_of_month-3d/first_of_year/first_of_week/last_of_month/last_of_week/last_of_year  -->
+			<default params="beginDate" data-type="localDate" value="sysdate()-1d" />
+		</filters>
+
+		<!-- 缓存翻译,可以对例如:A,B 这种拼连的进行翻译(要指定分隔符号后最后拼装符号 split-regex="," link-sign=",")
+		    uncached-template 是针对未能匹配时显示的补充,${value} 表示显示key值,可以key=[${value}未定义 
+			这种写法 -->
+		<translate cache="dictCache" cache-type="POST_TYPE" 
+			columns="POST_TYPE" cache-indexs="1" uncached-template="" />
+		<!-- 安全掩码:tel\姓名\地址\卡号 -->
+		<!--最简单用法: <secure-mask columns="" type="tel"/> -->
+		<secure-mask columns="" type="name" head-size="3"
+			tail-size="4" mask-code="*****" mask-rate="50" />
+		<!-- 分库策略 -->
+		<sharding-datasource strategy="multiDataBase" />
+		<!-- 分表策略 -->
+		<sharding-table tables="" strategy="hisRealTable"
+			params="" />
+		<!-- 分页优化,缓存相同查询条件的分页总记录数量, 
+		alive-max:表示相同的一个sql保留100个不同条件查询 
+		alive-seconds:相同的查询条件分页总记录数保留时长(单位秒)
+		skip-zero-count:当缓存中获取的count为0,则重新查询count
+		 -->
+		<page-optimize alive-max="100" alive-seconds="600" skip-zero-count="true"/>
+		<!-- 日期格式化 -->
+		<date-format columns="" format="yyyy-MM-dd HH:mm:ss" />
+		<!-- 数字格式 -->
+		<number-format columns="" format="capital-rmb" />
+		<value>
+		<![CDATA[
+		select t1.*,t2.ORGAN_NAME from 
+		@fast(select * from sys_staff_info t
+			  where #[t.sexType=:sexType]
+			        #[and t.JOIN_DATE>:beginDate]
+			        #[and t.STAFF_NAME like :staffName]
+			        -- 是否虚拟员工@if()做逻辑判断
+			        #[@if(:isVirtual==true||:isVirtual==0) and t.IS_VIRTUAL=1]
+			        ) t1,sys_organ_info t2
+	    where t1.ORGAN_ID=t2.ORGAN_ID
+		]]>	
+		</value>
+		<!-- count-sql(只针对分页查询有效,sqltoy分页针对计算count的sql进行了智能处理, 一般不需要额外定义countsql,除极为苛刻的性能优化，sqltoy提供了极度优化的口子) -->
+		<count-sql><![CDATA[]]></count-sql>
+		<!-- 汇总和求平均 -->
+		<summary sum-columns="" average-radix-sizes="2" reverse="false" sum-site="left">
+			<global sum-label="" label-column="" />
+			<!-- order-with-sum:一般无需填,如果order-column只有ave就以平均值排序，如果既有平均和求和，默认求和，order-with-sum为false则依据ave
+			     order-way: 默认desc从大到小排序
+			     内部逻辑：1、先计算排序汇总值，插入最后一列；2、进行分组排序；3、调用之前的分组计算逻辑；4、剔除掉额外增加的排序列
+			 -->
+			<group sum-label="" label-column="" group-column="" order-column="" order-way="desc" order-with-sum="true"/>
+		</summary>
+		<!-- 拼接某列,mysql中等同于group_concat\oracle 中的WMSYS.WM_CONCAT功能 -->
+		<link id-columns="" columns="" result-type="ARRAY"/>
+		<link id-columns="" columns="" sign=","/>
+		<!-- 行转列 (跟unpivot互斥) -->
+		<pivot category-columns="" group-columns="" start-column=""	end-column="" default-value="0" />
+		<!-- 列转行 -->
+		<unpivot columns-to-rows="1:xxx,2:xxxx" new-columns-labels="" />
+		<tree-sort id-column="" pid-column="" sum-columns="" level-order-column="" order-way="asc"/>
+	</sql>
+</sqltoy>

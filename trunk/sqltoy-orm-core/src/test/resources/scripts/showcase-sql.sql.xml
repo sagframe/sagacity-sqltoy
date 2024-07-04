@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sqltoy xmlns="http://www.sagframe.com/schema/sqltoy"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.sagframe.com/schema/sqltoy http://www.sagframe.com/schema/sqltoy/sqltoy.xsd">
+    <sql id="teset">
+    <value>
+   <![CDATA[
+   			--#not_debug#--
+			select '' , distinct 'organIdName', /**/,cacheName,'--' as t, null cache_type --测试--
+			from sys_organ_info t
+			<!-- 
+			from sys_organ_info t
+			-->
+			where t.UPDATE_TIME >=:lastUpdateTime
+			-- 员工工号姓名缓存检测
+			union all
+			select distinct 'staffIdName' cacheName,"--" ache_type 
+			from /*+--all*/ sys_staff_info t1
+			/*
+			  table
+			*/
+			where t1.UPDATE_TIME >=:lastUpdateTime
+			]]>
+    </value>
+    </sql>
+</sqltoy>
