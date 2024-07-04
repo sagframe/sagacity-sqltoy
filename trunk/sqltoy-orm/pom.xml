@@ -10,25 +10,24 @@
 	<url>https://github.com/sagframe/sagacity-sqltoy</url>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<spring-framework.version>5.3.32</spring-framework.version>
+		<spring-framework.version>5.3.37</spring-framework.version>
 		<spring-data-redis.version>2.7.18</spring-data-redis.version>
 		<spring-data-mongo.version>3.4.18</spring-data-mongo.version>
-		<ojdbc.version>21.11.0.0</ojdbc.version>
+		<ojdbc.version>21.14.0.0</ojdbc.version>
 		<ehcache.version>3.10.8</ehcache.version>
 		<httpclient.version>4.5.14</httpclient.version>
 		<httpclient-httpmime.version>4.5.14</httpclient-httpmime.version>
 		<httpclient-core.version>4.4.16</httpclient-core.version>
-		<elastic-rest-client.version>8.13.4</elastic-rest-client.version>
+		<elastic-rest-client.version>8.14.2</elastic-rest-client.version>
 		<fastjson.version>2.0.51</fastjson.version>
 		<mongo.version>3.12.14</mongo.version>
-		<junit-jupiter.version>5.10.2</junit-jupiter.version>
-		<junit-platform.version>1.10.2</junit-platform.version>
+		<junit-jupiter.version>5.10.3</junit-jupiter.version>
+		<junit-platform.version>1.10.3</junit-platform.version>
 		<slf4j.version>2.0.13</slf4j.version>
 		<caffeine.version>2.9.3</caffeine.version>
 		<h2.version>2.2.224</h2.version>
-		<lombok.version>1.18.32</lombok.version>
-		<taos-jdbcdriver.version>3.2.9</taos-jdbcdriver.version>
-		<druid.version>1.2.22</druid.version>
+		<lombok.version>1.18.34</lombok.version>
+		<druid.version>1.2.23</druid.version>
 		<transmittable-thread-local>2.14.5</transmittable-thread-local>
 	</properties>
 	<licenses>
@@ -101,15 +100,7 @@
 			<scope>test</scope>
 			<optional>true</optional>
 		</dependency>
-		<!--
-		https://mvnrepository.com/artifact/com.taosdata.jdbc/taos-jdbcdriver -->
-		<dependency>
-			<groupId>com.taosdata.jdbc</groupId>
-			<artifactId>taos-jdbcdriver</artifactId>
-			<version>${taos-jdbcdriver.version}</version>
-			<scope>test</scope>
-			<optional>true</optional>
-		</dependency>
+	
 		<dependency>
 			<groupId>com.oracle.database.jdbc</groupId>
 			<artifactId>ojdbc8</artifactId>

@@ -34,6 +34,7 @@ import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
 import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
+import org.sagacity.sqltoy.config.model.DataVersionConfig;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.OperateType;
@@ -52,6 +53,7 @@ import org.sagacity.sqltoy.plugins.UnifyUpdateFieldsController;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
+import org.sagacity.sqltoy.utils.DateUtil;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.ResultUtils;
 import org.sagacity.sqltoy.utils.SqlUtil;
@@ -414,6 +416,8 @@ public class DefaultDialectUtils {
 						int rowCnt = finalRs.getMetaData().getColumnCount();
 						int index = 0;
 						List result = new ArrayList();
+						DataVersionConfig dataVersion = entityMeta.getDataVersion();
+						final String dataVersionField = (dataVersion == null) ? null : dataVersion.getField();
 						while (finalRs.next()) {
 							if (index > 0) {
 								throw new DataAccessException("updateSaveFetch操作只能针对单条记录进行操作,请检查uniqueProps参数设置!");
@@ -421,16 +425,44 @@ public class DefaultDialectUtils {
 							// 存在修改记录
 							if (hasUpdateRow) {
 								SqlExecuteStat.debug("执行updateRow", "记录存在调用updateRowHandler.updateRow!");
+								// 存在数据版本:1、校验当前的版本是否为null(目前跳过)；2、对比传递过来的版本值跟数据库中的值是否一致；3、修改数据库中数据版本+1
+								if (dataVersion != null) {
+									Object version = BeanUtil.getProperty(entity, dataVersionField);
+									String nowVersion = finalRs.getString(entityMeta.getColumnName(dataVersionField));
+									if (version != null && !version.toString().equals(nowVersion)) {
+										throw new IllegalArgumentException("表:" + entityMeta.getTableName()
+												+ " 存在版本@DataVersion配置，在updateSaveFetch做更新时，属性:" + dataVersionField
+												+ " 值不等于当前数据库中的值:" + version + "<>" + nowVersion + ",说明数据已经被修改过!");
+									}
+									// 以日期开头
+									if (dataVersion.isStartDate()) {
+										String nowDate = DateUtil.formatDate(DateUtil.getNowTime(),
+												DateUtil.FORMAT.DATE_8CHAR);
+										if (nowVersion.startsWith(nowDate)) {
+											nowVersion = nowDate + (Integer.parseInt(nowVersion.substring(8)) + 1);
+										} else {
+											nowVersion = nowDate + 1;
+										}
+									} else {
+										nowVersion = "" + (Integer.parseInt(nowVersion) + 1);
+									}
+									// 修改数据版本
+									resultUpdate(conn, finalRs, entityMeta.getFieldMeta(dataVersionField), nowVersion,
+											dbType, false);
+								}
 								// 执行update反调，实现锁定行记录值的修改
 								updateRowHandler.updateRow(finalRs, index);
 								updateRowHandler.updateRow(finalRs, index, (fieldName, fieldValue) -> {
-									Optional.ofNullable(entityMeta.getFieldMeta(fieldName)).ifPresent(fieldMeta -> {
-										try {
-											resultUpdate(conn, finalRs, fieldMeta, fieldValue, dbType, false);
-										} catch (Exception e) {
-											throw new RuntimeException(e);
-										}
-									});
+									// 排除dataVersionField字段避免被重复处理
+									if (dataVersionField == null || !fieldName.equals(dataVersionField)) {
+										Optional.ofNullable(entityMeta.getFieldMeta(fieldName)).ifPresent(fieldMeta -> {
+											try {
+												resultUpdate(conn, finalRs, fieldMeta, fieldValue, dbType, false);
+											} catch (Exception e) {
+												throw new RuntimeException(e);
+											}
+										});
+									}
 								});
 								// 考虑公共字段修改
 								if (unifyFieldsHandler != null && unifyFieldsHandler.updateUnifyFields() != null) {

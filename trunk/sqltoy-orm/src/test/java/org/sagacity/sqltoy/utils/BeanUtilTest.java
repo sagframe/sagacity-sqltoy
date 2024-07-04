@@ -30,7 +30,7 @@ import org.sagacity.sqltoy.model.MaskType;
 import org.sagacity.sqltoy.model.SaveMode;
 import org.sagacity.sqltoy.model.SecureType;
 
-import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson2.JSON;
 
 public class BeanUtilTest {
 
