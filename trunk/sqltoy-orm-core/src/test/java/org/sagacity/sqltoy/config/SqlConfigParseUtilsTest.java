@@ -394,7 +394,7 @@ public class SqlConfigParseUtilsTest {
 
 	@Test
 	public void testLike() throws Exception {
-		String sql = "select * from table t where t.name ilike :name and t.desc like :desc";
+		String sql = "select * from table t where t.name ilike N:name and t.desc like :desc";
 
 		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "name", "desc" },
 				new Object[] { "张三", "验证" });
