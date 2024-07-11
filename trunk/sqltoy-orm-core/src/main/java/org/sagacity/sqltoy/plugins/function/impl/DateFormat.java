@@ -46,6 +46,9 @@ public class DateFormat extends IFunction {
 	 */
 	@Override
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
+		if (args == null || args.length < 2) {
+			return super.IGNORE;
+		}
 		String format;
 		switch (dialect) {
 		case DBType.POSTGRESQL:

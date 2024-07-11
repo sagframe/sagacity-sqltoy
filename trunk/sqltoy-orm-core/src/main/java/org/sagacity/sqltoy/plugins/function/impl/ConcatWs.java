@@ -45,6 +45,9 @@ public class ConcatWs extends IFunction {
 	 */
 	@Override
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
+		if (args == null || args.length < 2) {
+			return super.IGNORE;
+		}
 		// oracle 不支持concat_ws
 		if (dialect == DBType.ORACLE || dialect == DBType.ORACLE11) {
 			StringBuilder result = new StringBuilder();

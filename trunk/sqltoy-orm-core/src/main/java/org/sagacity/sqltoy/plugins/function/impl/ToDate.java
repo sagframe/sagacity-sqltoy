@@ -39,8 +39,11 @@ public class ToDate extends IFunction {
 	 */
 	@Override
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
+		if (args == null || args.length == 0) {
+			return super.IGNORE;
+		}
 		if (dialect == DBType.SQLSERVER) {
-			if (args != null && args.length == 1) {
+			if (args.length == 1) {
 				if (args[0].length() > 12) {
 					return "convert(datetime," + args[0] + ")";
 				}
@@ -48,26 +51,22 @@ public class ToDate extends IFunction {
 			}
 		}
 		if (dialect == DBType.ORACLE || dialect == DBType.ORACLE11) {
-			if (args != null) {
-				if (args.length > 1) {
-					return wrapArgs("to_date", args);
+			if (args.length > 1) {
+				return wrapArgs("to_date", args);
+			} else {
+				if (args[0].length() > 12) {
+					return "to_date(" + args[0] + ",'yyyy-MM-dd HH:mm:ss')";
 				} else {
-					if (args[0].length() > 12) {
-						return "to_date(" + args[0] + ",'yyyy-MM-dd HH:mm:ss')";
-					} else {
-						return "to_date(" + args[0] + ",'yyyy-MM-dd')";
-					}
+					return "to_date(" + args[0] + ",'yyyy-MM-dd')";
 				}
 			}
 		}
 		if (dialect == DBType.H2) {
-			if (args != null) {
-				if (args != null && args.length == 1) {
-					if (args[0].length() > 12) {
-						return "formatdatetime(" + args[0] + ",'yyyy-MM-dd HH:mm:ss')";
-					} else {
-						return "formatdatetime(" + args[0] + ",'yyyy-MM-dd')";
-					}
+			if (args.length == 1) {
+				if (args[0].length() > 12) {
+					return "formatdatetime(" + args[0] + ",'yyyy-MM-dd HH:mm:ss')";
+				} else {
+					return "formatdatetime(" + args[0] + ",'yyyy-MM-dd')";
 				}
 			}
 		}
