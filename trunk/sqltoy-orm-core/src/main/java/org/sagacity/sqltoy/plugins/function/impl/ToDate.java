@@ -19,7 +19,7 @@ public class ToDate extends IFunction {
 
 	@Override
 	public String dialects() {
-		return "oracle,dm,mysql,sqlserver,h2";
+		return ALL;
 	}
 
 	/*

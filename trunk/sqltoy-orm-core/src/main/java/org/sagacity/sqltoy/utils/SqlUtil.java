@@ -749,7 +749,10 @@ public class SqlUtil {
 		int markIndex = sql.indexOf("<!--");
 		while (markIndex != -1) {
 			endMarkIndex = sql.indexOf("-->", markIndex);
-			if (endMarkIndex == -1 || endMarkIndex == sql.length() - 3) {
+			// update 2024-7-8 兼容sql中存在<!-- 但没有-->收尾的情况
+			if (endMarkIndex == -1) {
+				break;
+			} else if (endMarkIndex == sql.length() - 3) {
 				sql = sql.substring(0, markIndex);
 				break;
 			} else {
@@ -761,7 +764,10 @@ public class SqlUtil {
 		markIndex = StringUtil.matchIndex(sql, maskPattern);
 		while (markIndex != -1) {
 			endMarkIndex = sql.indexOf("*/", markIndex);
-			if (endMarkIndex == -1 || endMarkIndex == sql.length() - 2) {
+			// update 2024-7-8 兼容sql中存在/* 但没有*/收尾的情况
+			if (endMarkIndex == -1) {
+				break;
+			} else if (endMarkIndex == sql.length() - 2) {
 				sql = sql.substring(0, markIndex);
 				break;
 			} else {

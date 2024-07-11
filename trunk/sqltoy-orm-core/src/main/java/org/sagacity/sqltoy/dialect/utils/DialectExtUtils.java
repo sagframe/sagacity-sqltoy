@@ -463,7 +463,7 @@ public class DialectExtUtils {
 	}
 
 	/**
-	 * @TODO 针对postgresql\kingbase\guassdb等数据库
+	 * @TODO 针对postgresql\kingbase\guassdb\mogdb等数据库
 	 * @param unifyFieldsHandler
 	 * @param dbType
 	 * @param entityMeta
@@ -487,7 +487,8 @@ public class DialectExtUtils {
 		StringBuilder values = new StringBuilder(columnSize * 2 - 1);
 		if (dbType == DBType.GAUSSDB) {
 			sql.append("insert ignore into ");
-		} else {
+		} // mogdb支持insert into do nothing
+		else {
 			sql.append("insert into ");
 		}
 		sql.append(entityMeta.getSchemaTable(tableName, dbType));
