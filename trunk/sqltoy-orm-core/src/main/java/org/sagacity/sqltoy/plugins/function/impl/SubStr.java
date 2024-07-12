@@ -38,9 +38,12 @@ public class SubStr extends IFunction {
 	 */
 	@Override
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
+		if (args == null || args.length == 0) {
+			return super.IGNORE;
+		}
 		if (dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL15 || dialect == DBType.GAUSSDB
 				|| dialect == DBType.MOGDB || dialect == DBType.SQLSERVER || dialect == DBType.H2) {
-			if (dialect == DBType.SQLSERVER && args != null && args.length == 2) {
+			if (dialect == DBType.SQLSERVER && args.length == 2) {
 				return "substring(" + args[0] + "," + args[1] + ",len(" + args[0] + "))";
 			}
 			return wrapArgs("substring", args);

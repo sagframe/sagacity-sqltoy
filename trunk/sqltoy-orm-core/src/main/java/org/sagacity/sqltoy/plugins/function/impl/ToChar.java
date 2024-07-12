@@ -29,7 +29,7 @@ public class ToChar extends IFunction {
 	 */
 	@Override
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
-		if (args.length == 1) {
+		if (args == null || args.length < 2) {
 			return super.IGNORE;
 		}
 		String format;

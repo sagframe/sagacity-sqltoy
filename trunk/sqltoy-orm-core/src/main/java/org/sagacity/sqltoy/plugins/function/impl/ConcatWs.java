@@ -24,7 +24,7 @@ public class ConcatWs extends IFunction {
 	 */
 	@Override
 	public String dialects() {
-		return "oracle";
+		return super.ALL;
 	}
 
 	/*
@@ -45,12 +45,11 @@ public class ConcatWs extends IFunction {
 	 */
 	@Override
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
-		if (args.length < 2) {
+		if (args == null || args.length < 2) {
 			return super.IGNORE;
 		}
-		// 只针对oracle数据库,其他数据库原样返回
-		if (dialect == DBType.ORACLE || dialect == DBType.OCEANBASE || dialect == DBType.DM
-				|| dialect == DBType.ORACLE11) {
+		// oracle 不支持concat_ws
+		if (dialect == DBType.ORACLE || dialect == DBType.ORACLE11) {
 			StringBuilder result = new StringBuilder();
 			String split = args[0].replace("\\'", "''");
 			for (int i = 1; i < args.length; i++) {
@@ -60,6 +59,13 @@ public class ConcatWs extends IFunction {
 				result.append(args[i].replace("\\'", "''"));
 			}
 			return result.toString();
+		} else if (dialect == DBType.DM) {
+			String splitStr = args[0].trim();
+			// dm concat_ws不支持双引号包装分割符号
+			if (splitStr.startsWith("\"") && splitStr.endsWith("\"")) {
+				args[0] = "'" + splitStr.substring(1, splitStr.length() - 1) + "'";
+				return wrapArgs("concat_ws", args);
+			}
 		}
 		return super.IGNORE;
 	}

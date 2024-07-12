@@ -47,6 +47,9 @@ public class Nvl extends IFunction {
 	 */
 	@Override
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
+		if (args == null || args.length == 0) {
+			return super.IGNORE;
+		}
 		String funLow = functionName.toLowerCase();
 		if (dialect == DBType.SQLSERVER) {
 			return wrapArgs("isnull", args);
