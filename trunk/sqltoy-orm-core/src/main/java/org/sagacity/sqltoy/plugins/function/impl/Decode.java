@@ -39,6 +39,9 @@ public class Decode extends IFunction {
 	 */
 	@Override
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
+		if (args == null || args.length < 2) {
+			return super.IGNORE;
+		}
 		/*
 		 * if (dialect == DBType.MYSQL || dialect == DBType.MYSQL8) { return
 		 * wrapArgs("ELT", args); } else

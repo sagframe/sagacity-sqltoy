@@ -45,6 +45,9 @@ public class Instr extends IFunction {
 	 */
 	@Override
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
+		if (args == null || args.length == 0) {
+			return super.IGNORE;
+		}
 		String[] realArgs;
 		String funLow = functionName.toLowerCase();
 		if ("position".equals(funLow)) {
