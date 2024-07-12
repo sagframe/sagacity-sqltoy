@@ -117,7 +117,7 @@ public class FunctionUtils {
 				if (StringUtil.matches(functionParams, function.regex())) {
 					functionParams = replaceFunction(functionParams, dbType, function);
 				}
-				if (functionParams.trim().equals("")) {
+				if (functionParams == null || functionParams.trim().equals("")) {
 					args = null;
 				} else {
 					args = StringUtil.splitExcludeSymMark(functionParams, ",", SqlToyConstants.filters);
