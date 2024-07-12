@@ -2,6 +2,7 @@ package org.sagacity.sqltoy;
 
 import static java.lang.System.out;
 
+import java.lang.reflect.Proxy;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -327,6 +328,10 @@ public class SqlExecuteStat {
 				// 避免异常发生
 				if (i + 1 < length) {
 					traceElement = stackTraceElements[i + 1];
+					//判断是否代理类，是代理类继续向上推一层
+					if ((i + 2) < length && Proxy.isProxyClass(traceElement.getClass())) {
+						traceElement = stackTraceElements[i + 2];
+					}
 					className = traceElement.getClassName();
 					method = traceElement.getMethodName();
 					lineNumber = traceElement.getLineNumber();

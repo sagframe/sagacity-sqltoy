@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package org.sagacity.sqltoy.plugins.function.impl;
 
@@ -12,7 +12,7 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
  * @project sqltoy-orm
  * @description 不同数据库substr函数的转化
  * @author zhongxuchen
- * @version v1.0,Date:2013-3-21
+ * @version v1.0, Date:2013-3-21
  */
 public class SubStr extends IFunction {
 	private static Pattern regex = Pattern.compile("(?i)\\W(substr|substring)\\(");
@@ -38,9 +38,12 @@ public class SubStr extends IFunction {
 	 */
 	@Override
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
+		if (args == null || args.length == 0) {
+			return super.IGNORE;
+		}
 		if (dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL15 || dialect == DBType.GAUSSDB
 				|| dialect == DBType.SQLSERVER || dialect == DBType.H2) {
-			if (dialect == DBType.SQLSERVER && args != null && args.length == 2) {
+			if (dialect == DBType.SQLSERVER && args.length == 2) {
 				return "substring(" + args[0] + "," + args[1] + ",len(" + args[0] + "))";
 			}
 			return wrapArgs("substring", args);

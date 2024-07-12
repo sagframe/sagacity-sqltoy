@@ -910,7 +910,7 @@ public class DefaultDialectUtils {
 	 * @throws Exception
 	 */
 	@SuppressWarnings("unchecked")
-	private static Map<String, ColumnMeta> getTableIndexes(String catalog, String schema, String tableName,
+	public static Map<String, ColumnMeta> getTableIndexes(String catalog, String schema, String tableName,
 			Connection conn, final Integer dbType, String dialect) throws Exception {
 		ResultSet rs = null;
 		try {
