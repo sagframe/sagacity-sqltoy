@@ -206,6 +206,11 @@ public class SqlToyConstants {
 	public final static String MERGE_ALIAS_ON_REGEX = "\\)\\s+tv\\s+on\\s+\\(";
 	public final static String MERGE_UPDATE = " when matched then update set ";
 	public final static String MERGE_INSERT = " when not matched then insert ";
+	
+	/**
+	 * sqltoy的框架包路径
+	 */
+	public final static String SQLTOY_PACKAGE="org.sagacity.sqltoy";
 
 	public static String localDateTimeFormat;
 

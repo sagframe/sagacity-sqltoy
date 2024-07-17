@@ -24,6 +24,7 @@ import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.model.OverTimeSql;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.plugins.FilterHandler;
+import org.sagacity.sqltoy.plugins.FirstBizCodeTrace;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.plugins.OverTimeSqlHandler;
 import org.sagacity.sqltoy.plugins.SqlInterceptor;
@@ -399,6 +400,11 @@ public class SqlToyContext {
 	private DialectDDLGenerator dialectDDLGenerator;
 
 	/**
+	 * 自定义获取业务代码调用点
+	 */
+	private FirstBizCodeTrace firstBizCodeTrace;
+
+	/**
 	 * @todo 初始化
 	 * @throws Exception
 	 */
@@ -411,6 +417,9 @@ public class SqlToyContext {
 		ReservedWordsUtil.put(reservedWords);
 		// 初始化方言对应的类别代码，避免线程安全
 		DataSourceUtils.initialize();
+		if (firstBizCodeTrace != null) {
+			SqlExecuteStat.firstBizCodeTrace = firstBizCodeTrace;
+		}
 		// 设置方言映射(默认OSCAR==>gaussdb)
 		if (dialectMap != null && !dialectMap.isEmpty()) {
 			DataSourceUtils.dialectMap = dialectMap;
@@ -1287,5 +1296,9 @@ public class SqlToyContext {
 	 */
 	public void setDialectDDLGenerator(DialectDDLGenerator dialectDDLGenerator) {
 		this.dialectDDLGenerator = dialectDDLGenerator;
+	}
+
+	public void setFirstBizCodeTrace(FirstBizCodeTrace firstBizCodeTrace) {
+		this.firstBizCodeTrace = firstBizCodeTrace;
 	}
 }

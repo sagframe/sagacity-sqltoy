@@ -115,6 +115,8 @@ public class EntityManager {
 	 * id产生器的包路径(针对类名补充包路径，直接包含了包路径的除外)
 	 */
 	private static final String IdGeneratorPackage = "org.sagacity.sqltoy.plugins.id.impl.";
+	// 历史id主键策略的包路径，5.x版本开始剔除了兼容处理，2024-7-16日增加了兼容处理
+	private static final String IdGeneratorOldPackage = "org.sagacity.sqltoy.plugin.id.";
 
 	/**
 	 * 扫描的包(意义不大,sqltoy已经改为在使用时自动加载)
@@ -780,6 +782,10 @@ public class EntityManager {
 		} else {
 			String generator = IdGenerators.get(idGenerator.toLowerCase());
 			generator = (generator != null) ? IdGeneratorPackage.concat(generator) : idGenerator;
+			// 针对历史id策略包路径提供兼容处理:update 2024-07-16
+			if (generator.startsWith(IdGeneratorOldPackage)) {
+				generator = IdGeneratorPackage.concat(generator.substring(generator.lastIndexOf(".") + 1));
+			}
 			// 自定义(不依赖spring模式),用法在quickvo中配置例如:com.xxxx..CustomIdGenerator
 			try {
 				IdGenerator idGeneratorBean = (IdGenerator) Class.forName(generator).getDeclaredConstructor()

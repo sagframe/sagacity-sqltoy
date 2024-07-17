@@ -23,6 +23,7 @@ import org.sagacity.sqltoy.integration.ConnectionFactory;
 import org.sagacity.sqltoy.integration.impl.SpringAppContext;
 import org.sagacity.sqltoy.integration.impl.SpringConnectionFactory;
 import org.sagacity.sqltoy.plugins.FilterHandler;
+import org.sagacity.sqltoy.plugins.FirstBizCodeTrace;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.plugins.OverTimeSqlHandler;
 import org.sagacity.sqltoy.plugins.SqlInterceptor;
@@ -352,6 +353,17 @@ public class SqltoyAutoConfiguration {
 			}
 		}
 
+		// 自定义业务代码调用点
+		String firstBizCodeTrace = properties.getFirstBizCodeTrace();
+		if (StringUtil.isNotBlank(firstBizCodeTrace)) {
+			if (applicationContext.containsBean(firstBizCodeTrace)) {
+				sqlToyContext.setFirstBizCodeTrace((FirstBizCodeTrace) applicationContext.getBean(firstBizCodeTrace));
+			} // 包名和类名称
+			else if (firstBizCodeTrace.contains(".")) {
+				sqlToyContext.setFirstBizCodeTrace(
+						(FirstBizCodeTrace) Class.forName(firstBizCodeTrace).getDeclaredConstructor().newInstance());
+			}
+		}
 		// 自定义typeHandler
 		String typeHandler = properties.getTypeHandler();
 		if (StringUtil.isNotBlank(typeHandler)) {
