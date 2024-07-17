@@ -9,7 +9,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * @author zhongxuchen
  * @version v1.0,Date:2020年2月20日
  */
-
 @ConfigurationProperties(prefix = "spring.sqltoy")
 public class SqlToyContextProperties implements Serializable {
 
@@ -244,7 +243,7 @@ public class SqlToyContextProperties implements Serializable {
 	 * 默认一页数据记录数量
 	 */
 	private int defaultPageSize = 10;
-	
+
 	/**
 	 * 自定义数据库DDL产生器
 	 */
@@ -267,6 +266,11 @@ public class SqlToyContextProperties implements Serializable {
 	 * 1、auto 2、"HH:mm:ss.SSS" 3、"HH:mm:ss.SSSSSS" 4、"HH:mm:ss.SSSSSSSSS"
 	 */
 	private String localTimeFormat = "HH:mm:ss";
+
+	/**
+	 * 业务代码调用点获取
+	 */
+	private String firstBizCodeTrace;
 
 	/**
 	 * @return the sqlResourcesDir
@@ -753,6 +757,14 @@ public class SqlToyContextProperties implements Serializable {
 	 */
 	public void setDialectDDLGenerator(String dialectDDLGenerator) {
 		this.dialectDDLGenerator = dialectDDLGenerator;
+	}
+
+	public String getFirstBizCodeTrace() {
+		return firstBizCodeTrace;
+	}
+
+	public void setFirstBizCodeTrace(String firstBizCodeTrace) {
+		this.firstBizCodeTrace = firstBizCodeTrace;
 	}
 
 }

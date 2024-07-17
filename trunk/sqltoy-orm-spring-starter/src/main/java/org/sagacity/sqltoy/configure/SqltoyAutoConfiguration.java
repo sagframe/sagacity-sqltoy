@@ -1,6 +1,17 @@
 package org.sagacity.sqltoy.configure;
 
-import com.alibaba.ttl.threadpool.TtlExecutors;
+import static java.lang.System.err;
+
+import java.io.IOException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executor;
+import java.util.stream.Collectors;
+
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.SqlScriptLoader;
 import org.sagacity.sqltoy.config.model.ElasticEndpoint;
@@ -11,7 +22,12 @@ import org.sagacity.sqltoy.dao.impl.SqlToyLazyDaoImpl;
 import org.sagacity.sqltoy.integration.ConnectionFactory;
 import org.sagacity.sqltoy.integration.impl.SpringAppContext;
 import org.sagacity.sqltoy.integration.impl.SpringConnectionFactory;
-import org.sagacity.sqltoy.plugins.*;
+import org.sagacity.sqltoy.plugins.FilterHandler;
+import org.sagacity.sqltoy.plugins.FirstBizCodeTrace;
+import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
+import org.sagacity.sqltoy.plugins.OverTimeSqlHandler;
+import org.sagacity.sqltoy.plugins.SqlInterceptor;
+import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
 import org.sagacity.sqltoy.plugins.ddl.DialectDDLGenerator;
 import org.sagacity.sqltoy.plugins.formater.SqlFormater;
@@ -34,17 +50,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
-import java.io.IOException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.Executor;
-import java.util.stream.Collectors;
-
-import static java.lang.System.err;
+import com.alibaba.ttl.threadpool.TtlExecutors;
 
 /**
  * @author wolf
@@ -344,6 +350,18 @@ public class SqltoyAutoConfiguration {
 			else if (translateCacheManager.contains(".")) {
 				sqlToyContext.setTranslateCacheManager((TranslateCacheManager) Class.forName(translateCacheManager)
 						.getDeclaredConstructor().newInstance());
+			}
+		}
+
+		// 自定义业务代码调用点
+		String firstBizCodeTrace = properties.getFirstBizCodeTrace();
+		if (StringUtil.isNotBlank(firstBizCodeTrace)) {
+			if (applicationContext.containsBean(firstBizCodeTrace)) {
+				sqlToyContext.setFirstBizCodeTrace((FirstBizCodeTrace) applicationContext.getBean(firstBizCodeTrace));
+			} // 包名和类名称
+			else if (firstBizCodeTrace.contains(".")) {
+				sqlToyContext.setFirstBizCodeTrace(
+						(FirstBizCodeTrace) Class.forName(firstBizCodeTrace).getDeclaredConstructor().newInstance());
 			}
 		}
 
