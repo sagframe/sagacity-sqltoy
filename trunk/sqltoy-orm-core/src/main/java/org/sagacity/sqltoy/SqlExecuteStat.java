@@ -344,6 +344,7 @@ public class SqlExecuteStat {
 								|| className.startsWith("com.sun.") || className.startsWith("org.springframework.")
 								|| className.startsWith("org.noear.solon."))) {
 							traceElement = stackTraceElements[i + nextIndex];
+							className = traceElement.getClassName();
 							nextIndex++;
 						}
 					}
