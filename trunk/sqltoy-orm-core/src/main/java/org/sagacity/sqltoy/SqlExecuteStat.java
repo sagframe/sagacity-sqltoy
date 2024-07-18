@@ -10,6 +10,7 @@ import java.util.regex.Pattern;
 import org.sagacity.sqltoy.config.model.SqlExecuteLog;
 import org.sagacity.sqltoy.config.model.SqlExecuteTrace;
 import org.sagacity.sqltoy.model.OverTimeSql;
+import org.sagacity.sqltoy.plugins.FirstBizCodeTrace;
 import org.sagacity.sqltoy.plugins.OverTimeSqlHandler;
 import org.sagacity.sqltoy.plugins.formater.SqlFormater;
 import org.sagacity.sqltoy.utils.SqlUtil;
@@ -51,6 +52,11 @@ public class SqlExecuteStat {
 
 	// sql执行超时处理器
 	public static OverTimeSqlHandler overTimeSqlHandler;
+
+	/**
+	 * 获取业务代码调用位置的实现类
+	 */
+	public static FirstBizCodeTrace firstBizCodeTrace;
 
 	/**
 	 * sql格式化输出器(用于debug sql输出)
@@ -312,34 +318,42 @@ public class SqlExecuteStat {
 	 */
 	public static String getFirstTrace() {
 		StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
+		if (stackTraceElements == null || stackTraceElements.length == 0) {
+			return "未知类.未知方法[代码第:null行]";
+		}
+		StackTraceElement traceElement = null;
 		String className = null;
-		int lineNumber = 0;
-		String method = null;
-		StackTraceElement traceElement;
-		int length = stackTraceElements.length;
-		// 逆序
-		for (int i = length - 1; i > 0; i--) {
-			traceElement = stackTraceElements[i];
-			className = traceElement.getClassName();
-			// 进入调用sqltoy的代码，此时取上一个
-			if (className.startsWith("org.sagacity.sqltoy")) {
-				method = traceElement.getMethodName();
-				lineNumber = traceElement.getLineNumber();
-				// 避免异常发生
-				if (i + 1 < length) {
-					traceElement = stackTraceElements[i + 1];
-					//判断是否代理类，是代理类继续向上推一层
-					if ((i + 2) < length && Proxy.isProxyClass(traceElement.getClass())) {
-						traceElement = stackTraceElements[i + 2];
+		if (firstBizCodeTrace != null) {
+			traceElement = firstBizCodeTrace.getFirstTrace(stackTraceElements);
+		} else {
+			int length = stackTraceElements.length;
+			// 逆序
+			for (int i = length - 1; i > 0; i--) {
+				traceElement = stackTraceElements[i];
+				className = traceElement.getClassName();
+				// 进入调用sqltoy的代码，此时取上一个
+				if (className.startsWith(SqlToyConstants.SQLTOY_PACKAGE)) {
+					// 避免异常发生
+					if (i + 1 < length) {
+						traceElement = stackTraceElements[i + 1];
+						className = traceElement.getClassName();
+						// 判断是否代理类，找到非代理类、非主流框架类
+						int nextIndex = 2;
+						while ((i + nextIndex) < length && (Proxy.isProxyClass(traceElement.getClass())
+								|| className.startsWith("java.") || className.startsWith("sun.")
+								|| className.startsWith("com.sun.") || className.startsWith("org.springframework.")
+								|| className.startsWith("org.noear.solon."))) {
+							traceElement = stackTraceElements[i + nextIndex];
+							className = traceElement.getClassName();
+							nextIndex++;
+						}
 					}
-					className = traceElement.getClassName();
-					method = traceElement.getMethodName();
-					lineNumber = traceElement.getLineNumber();
+					break;
 				}
-				break;
 			}
 		}
-		return "" + className + "." + method + "[代码第:" + lineNumber + " 行]";
+		return traceElement.getClassName() + "." + traceElement.getMethodName() + "[代码第:" + traceElement.getLineNumber()
+				+ " 行]";
 	}
 
 	/**

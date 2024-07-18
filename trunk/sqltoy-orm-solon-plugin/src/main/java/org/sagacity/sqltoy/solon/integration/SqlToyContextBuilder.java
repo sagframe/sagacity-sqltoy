@@ -19,6 +19,7 @@ import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.integration.AppContext;
 import org.sagacity.sqltoy.integration.ConnectionFactory;
 import org.sagacity.sqltoy.plugins.FilterHandler;
+import org.sagacity.sqltoy.plugins.FirstBizCodeTrace;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.plugins.OverTimeSqlHandler;
 import org.sagacity.sqltoy.plugins.SqlInterceptor;
@@ -350,6 +351,18 @@ public class SqlToyContextBuilder {
 			} // 包名和类名称
 			else if (translateCacheManager.contains(".")) {
 				sqlToyContext.setTranslateCacheManager(ClassUtil.tryInstance(translateCacheManager));
+			}
+		}
+
+		// 自定义业务代码调用点
+		String firstBizCodeTrace = properties.getFirstBizCodeTrace();
+		if (StringUtil.isNotBlank(firstBizCodeTrace)) {
+			if (appContext.containsBean(firstBizCodeTrace)) {
+				sqlToyContext.setFirstBizCodeTrace((FirstBizCodeTrace) appContext.getBean(firstBizCodeTrace));
+			} // 包名和类名称
+			else if (firstBizCodeTrace.contains(".")) {
+				sqlToyContext.setFirstBizCodeTrace(
+						(FirstBizCodeTrace) Class.forName(firstBizCodeTrace).getDeclaredConstructor().newInstance());
 			}
 		}
 

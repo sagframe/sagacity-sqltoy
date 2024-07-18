@@ -254,6 +254,11 @@ public class SqlToyContextProperties implements Serializable {
 	 * 是否基于实体注解动态生成表结构
 	 */
 	private Boolean autoDDL;
+	
+	/**
+	 * 业务代码调用点获取
+	 */
+	private String firstBizCodeTrace;
 
 	/**
 	 * @return the sqlResourcesDir
@@ -746,6 +751,14 @@ public class SqlToyContextProperties implements Serializable {
 	 */
 	public void setDialectMap(Map<String, String> dialectMap) {
 		this.dialectMap = dialectMap;
+	}
+
+	public String getFirstBizCodeTrace() {
+		return firstBizCodeTrace;
+	}
+
+	public void setFirstBizCodeTrace(String firstBizCodeTrace) {
+		this.firstBizCodeTrace = firstBizCodeTrace;
 	}
 
 }
