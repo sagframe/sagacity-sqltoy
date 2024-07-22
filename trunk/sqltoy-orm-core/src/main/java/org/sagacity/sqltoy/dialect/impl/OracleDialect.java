@@ -188,9 +188,9 @@ public class OracleDialect implements Dialect {
 							pkStrategy = PKStrategy.SEQUENCE;
 							sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
 						}
-						return DialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
-								entityMeta, pkStrategy, forceUpdateFields, VIRTUAL_TABLE, NVL_FUNCTION, sequence,
-								OracleDialectUtils.isAssignPKValue(pkStrategy), tableName);
+						return DialectUtils.getSaveOrUpdateSql(sqlToyContext, sqlToyContext.getUnifyFieldsHandler(),
+								dbType, entityMeta, pkStrategy, forceUpdateFields, VIRTUAL_TABLE, NVL_FUNCTION,
+								sequence, OracleDialectUtils.isAssignPKValue(pkStrategy), tableName);
 					}
 				}, reflectPropsHandler, conn, dbType, autoCommit);
 	}
@@ -347,9 +347,9 @@ public class OracleDialect implements Dialect {
 							sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
 						}
 						// virtual_table为dual
-						return DialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
-								entityMeta, pkStrategy, forceUpdateFields, VIRTUAL_TABLE, NVL_FUNCTION, sequence,
-								OracleDialectUtils.isAssignPKValue(pkStrategy), null);
+						return DialectUtils.getSaveOrUpdateSql(sqlToyContext, sqlToyContext.getUnifyFieldsHandler(),
+								dbType, entityMeta, pkStrategy, forceUpdateFields, VIRTUAL_TABLE, NVL_FUNCTION,
+								sequence, OracleDialectUtils.isAssignPKValue(pkStrategy), null);
 					}
 				}, forceCascadeClass, subTableForceUpdateProps, conn, dbType, tableName);
 	}
