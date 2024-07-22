@@ -179,7 +179,7 @@ public class DMDialect implements Dialect {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = entityMeta.getSequence() + ".nextval";
 						boolean isAssignPK = DMDialectUtils.isAssignPKValue(pkStrategy);
-						return DialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
+						return DialectUtils.getSaveOrUpdateSql(sqlToyContext,sqlToyContext.getUnifyFieldsHandler(), dbType,
 								entityMeta, pkStrategy, forceUpdateFields, "dual", NVL_FUNCTION, sequence, isAssignPK,
 								tableName);
 					}
@@ -314,7 +314,7 @@ public class DMDialect implements Dialect {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = entityMeta.getSequence().concat(".nextval");
 						boolean isAssignPK = DMDialectUtils.isAssignPKValue(pkStrategy);
-						return DialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
+						return DialectUtils.getSaveOrUpdateSql(sqlToyContext,sqlToyContext.getUnifyFieldsHandler(), dbType,
 								entityMeta, pkStrategy, forceUpdateFields, "dual", NVL_FUNCTION, sequence, isAssignPK,
 								null);
 					}

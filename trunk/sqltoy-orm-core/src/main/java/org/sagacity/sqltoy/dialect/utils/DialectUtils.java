@@ -697,6 +697,7 @@ public class DialectUtils {
 	}
 
 	/**
+	 * @param sqlToyContext
 	 * @param unifyFieldsHandler
 	 * @param dbType
 	 * @param entityMeta
@@ -710,8 +711,8 @@ public class DialectUtils {
 	 * @return
 	 * @todo 处理加工对象基于db2、oracle数据库的saveOrUpdateSql
 	 */
-	public static String getSaveOrUpdateSql(IUnifyFieldsHandler unifyFieldsHandler, Integer dbType,
-			EntityMeta entityMeta, PKStrategy pkStrategy, String[] forceUpdateFields, String fromTable,
+	public static String getSaveOrUpdateSql(SqlToyContext sqlToyContext, IUnifyFieldsHandler unifyFieldsHandler,
+			Integer dbType, EntityMeta entityMeta, PKStrategy pkStrategy, String[] forceUpdateFields, String fromTable,
 			String isNullFunction, String sequence, boolean isAssignPK, String tableName) {
 		String realTable = entityMeta.getSchemaTable(tableName, dbType);
 		// 在无主键的情况下产生insert sql语句
@@ -796,6 +797,9 @@ public class DialectUtils {
 		StringBuilder insertRejIdColValues = new StringBuilder();
 		// 是否全部是ID,匹配上则无需进行更新，只需将未匹配上的插入即可
 		boolean allIds = (entityMeta.getRejectIdFieldArray() == null);
+		// update 2024-7-21 增加sqlInterceptor场景下，merge into on (条件) update 需要跳过on 中存在的字段
+		IgnoreCaseSet tenantFields = getTenantFields(sqlToyContext.getSqlInterceptors(), entityMeta,
+				OperateType.saveOrUpdate);
 		if (!allIds) {
 			// update 操作
 			sql.append(SqlToyConstants.MERGE_UPDATE);
@@ -808,40 +812,49 @@ public class DialectUtils {
 				}
 			}
 			String defaultValue;
+			boolean ignoreUpdate = false;
+			boolean notFirst = false;
 			// update 只针对非主键字段进行修改
 			for (int i = 0; i < rejectIdColumnSize; i++) {
 				fieldMeta = entityMeta.getFieldMeta(entityMeta.getRejectIdFieldArray()[i]);
 				columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
+				ignoreUpdate = tenantFields.contains(fieldMeta.getFieldName());
 				// 修改字段
 				currentTimeStr = SqlUtil.getDBTime(dbType, fieldMeta, updateSqlTimeFields);
+				// 被统一sqlInterceptor中on 中增加了条件，update不能修改
+				if (!ignoreUpdate) {
+					if (notFirst) {
+						sql.append(",");
+					}
+					if (DBType.POSTGRESQL15 != dbType) {
+						sql.append(" ta.");
+					}
+					sql.append(columnName).append("=");
+					if (null != currentTimeStr && forceUpdateSqlTimeFields.contains(fieldMeta.getFieldName())) {
+						sql.append(currentTimeStr);
+					} else if (fupc.contains(columnName)) {
+						sql.append("tv.").append(columnName);
+					} else {
+						sql.append(isNullFunction);
+						sql.append("(tv.").append(columnName);
+						sql.append(",");
+						if (null != currentTimeStr) {
+							sql.append(currentTimeStr);
+						} else {
+							if (DBType.POSTGRESQL15 == dbType) {
+								sql.append(realTable + ".");
+							} else {
+								sql.append("ta.");
+							}
+							sql.append(columnName);
+						}
+						sql.append(")");
+					}
+					notFirst = true;
+				}
 				if (i > 0) {
-					sql.append(",");
 					insertRejIdCols.append(",");
 					insertRejIdColValues.append(",");
-				}
-				if (DBType.POSTGRESQL15 != dbType) {
-					sql.append(" ta.");
-				}
-				sql.append(columnName).append("=");
-				if (null != currentTimeStr && forceUpdateSqlTimeFields.contains(fieldMeta.getFieldName())) {
-					sql.append(currentTimeStr);
-				} else if (fupc.contains(columnName)) {
-					sql.append("tv.").append(columnName);
-				} else {
-					sql.append(isNullFunction);
-					sql.append("(tv.").append(columnName);
-					sql.append(",");
-					if (null != currentTimeStr) {
-						sql.append(currentTimeStr);
-					} else {
-						if (DBType.POSTGRESQL15 == dbType) {
-							sql.append(realTable + ".");
-						} else {
-							sql.append("ta.");
-						}
-						sql.append(columnName);
-					}
-					sql.append(")");
 				}
 				insertRejIdCols.append(columnName);
 				// 新增
@@ -919,6 +932,33 @@ public class DialectUtils {
 		}
 		sql.append(")");
 		return sql.toString();
+	}
+
+	/**
+	 * @TODO 获取参与条件过滤的租户字段
+	 * @param sqlInterceptors
+	 * @param entityMeta
+	 * @param operateType
+	 * @return
+	 */
+	private static IgnoreCaseSet getTenantFields(List<SqlInterceptor> sqlInterceptors, EntityMeta entityMeta,
+			OperateType operateType) {
+		IgnoreCaseSet result = new IgnoreCaseSet();
+		if (sqlInterceptors == null || sqlInterceptors.isEmpty()) {
+			return result;
+		}
+		String[] fields;
+		for (SqlInterceptor sqlInterceptor : sqlInterceptors) {
+			fields = sqlInterceptor.tenantFieldNames(entityMeta, operateType);
+			if (fields != null) {
+				for (String str : fields) {
+					if (null != str) {
+						result.add(str);
+					}
+				}
+			}
+		}
+		return result;
 	}
 
 	/**

@@ -267,7 +267,7 @@ public class MogDBDialect implements Dialect {
 						String sequence = entityMeta.getSequence() + ".nextval";
 						boolean isAssignPK = MogDBDialectUtils.isAssignPKValue(pkStrategy);
 						// update 级联操作过程中会自动判断数据库类型
-						return DialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
+						return DialectUtils.getSaveOrUpdateSql(sqlToyContext,sqlToyContext.getUnifyFieldsHandler(), dbType,
 								entityMeta, pkStrategy, forceUpdateFields, null, NVL_FUNCTION, sequence, isAssignPK,
 								null);
 					}
@@ -335,7 +335,7 @@ public class MogDBDialect implements Dialect {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = entityMeta.getSequence() + ".nextval";
 						boolean isAssignPK = MogDBDialectUtils.isAssignPKValue(pkStrategy);
-						return DialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
+						return DialectUtils.getSaveOrUpdateSql(sqlToyContext,sqlToyContext.getUnifyFieldsHandler(), dbType,
 								entityMeta, pkStrategy, forceUpdateFields, null, NVL_FUNCTION, sequence, isAssignPK,
 								tableName);
 					}
