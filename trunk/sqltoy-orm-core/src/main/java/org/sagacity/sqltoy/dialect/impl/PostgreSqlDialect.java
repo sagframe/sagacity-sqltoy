@@ -233,7 +233,7 @@ public class PostgreSqlDialect implements Dialect {
 						String sequence = "nextval('" + entityMeta.getSequence() + "')";
 						boolean isAssignPK = PostgreSqlDialectUtils.isAssignPKValue(pkStrategy);
 						// update 级联操作过程中会自动判断postgresql15，而采用不同策略(这里统一按15的规则提供，14之前版本并不用到)
-						return DialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
+						return DialectUtils.getSaveOrUpdateSql(sqlToyContext,sqlToyContext.getUnifyFieldsHandler(), dbType,
 								entityMeta, pkStrategy, forceUpdateFields, null, NVL_FUNCTION, sequence, isAssignPK,
 								null);
 					}
