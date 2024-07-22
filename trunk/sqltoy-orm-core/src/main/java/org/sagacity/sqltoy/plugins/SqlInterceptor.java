@@ -4,6 +4,7 @@
 package org.sagacity.sqltoy.plugins;
 
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.OperateType;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
@@ -33,5 +34,22 @@ public interface SqlInterceptor {
 		 * spring.sqltoy.packagesToScan 数组属性(pojo的路径)，让sqltoy启动时主动加载pojo
 		 */
 		return sqlToyResult;
+	}
+
+	/**
+	 * 如果是租户隔离场景，涉及saveOrUpdate，尤其是oracle等数据库merge into 中的on 条件则不能进行update操作
+	 * 
+	 * @param entityMeta
+	 * @param operateType
+	 * @return
+	 */
+	public default String[] tenantFieldNames(EntityMeta entityMeta, OperateType operateType) {
+		// 要获取具体class可以通过 entityMeta.getEntityClass() 获取
+		// 也可以无需判断operateType
+		if (operateType.equals(OperateType.saveOrUpdate) && entityMeta.getTenantField() != null) {
+			// 也可以直接return new String[]{"tenantId"};
+			return new String[] { entityMeta.getTenantField() };
+		}
+		return null;
 	}
 }

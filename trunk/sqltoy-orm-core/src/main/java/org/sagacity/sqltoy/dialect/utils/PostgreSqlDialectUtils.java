@@ -188,7 +188,7 @@ public class PostgreSqlDialectUtils {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = "nextval('" + entityMeta.getSequence() + "')";
-						return DialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
+						return DialectUtils.getSaveOrUpdateSql(sqlToyContext,sqlToyContext.getUnifyFieldsHandler(), dbType,
 								entityMeta, pkStrategy, forceUpdateFields, null, NVL_FUNCTION, sequence,
 								isAssignPKValue(pkStrategy), tableName);
 					}

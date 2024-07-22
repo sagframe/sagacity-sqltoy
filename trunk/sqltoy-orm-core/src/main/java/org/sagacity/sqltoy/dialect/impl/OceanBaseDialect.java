@@ -332,7 +332,7 @@ public class OceanBaseDialect implements Dialect {
 							pkStrategy = PKStrategy.SEQUENCE;
 							sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
 						}
-						return DialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
+						return DialectUtils.getSaveOrUpdateSql(sqlToyContext,sqlToyContext.getUnifyFieldsHandler(), dbType,
 								entityMeta, pkStrategy, forceUpdateFields, "dual", NVL_FUNCTION, sequence,
 								OracleDialectUtils.isAssignPKValue(pkStrategy), null);
 					}

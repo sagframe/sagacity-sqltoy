@@ -200,7 +200,7 @@ public class DB2Dialect implements Dialect {
 				(cascade == false) ? null : new GenerateSqlHandler() {
 					@Override
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
-						return DialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
+						return DialectUtils.getSaveOrUpdateSql(sqlToyContext,sqlToyContext.getUnifyFieldsHandler(), dbType,
 								entityMeta, entityMeta.getIdStrategy(), forceUpdateFields, VIRTUAL_TABLE, NVL_FUNCTION,
 								"NEXTVAL FOR " + entityMeta.getSequence(),
 								DB2DialectUtils.isAssignPKValue(entityMeta.getIdStrategy()), null);
@@ -360,7 +360,7 @@ public class DB2Dialect implements Dialect {
 				new GenerateSqlHandler() {
 					@Override
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
-						return DialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
+						return DialectUtils.getSaveOrUpdateSql(sqlToyContext,sqlToyContext.getUnifyFieldsHandler(), dbType,
 								entityMeta, entityMeta.getIdStrategy(), forceUpdateFields, VIRTUAL_TABLE, NVL_FUNCTION,
 								"NEXTVAL FOR " + entityMeta.getSequence(),
 								DB2DialectUtils.isAssignPKValue(entityMeta.getIdStrategy()), tableName);
