@@ -3,6 +3,7 @@ package org.sagacity.sqltoy.support;
 import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.sql.Connection;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -89,6 +90,7 @@ import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.BeanWrapper;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.DateUtil;
+import org.sagacity.sqltoy.utils.IdUtil;
 import org.sagacity.sqltoy.utils.MapperUtils;
 import org.sagacity.sqltoy.utils.QueryExecutorBuilder;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
@@ -1459,7 +1461,7 @@ public class SqlToyDaoSupport {
 		if (distributeIdGenerator == null) {
 			try {
 				distributeIdGenerator = (DistributeIdGenerator) Class
-						.forName(sqlToyContext.getDistributeIdGeneratorClass()).newInstance();
+						.forName(sqlToyContext.getDistributeIdGeneratorClass()).getDeclaredConstructor().newInstance();
 				distributeIdGenerator.initialize(sqlToyContext.getAppContext());
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -1500,6 +1502,33 @@ public class SqlToyDaoSupport {
 		return idGenerator.getId(entityMeta.getTableName(), entityMeta.getBizIdSignature(),
 				entityMeta.getBizIdRelatedColumns(), relatedColValue, new Date(), businessIdType,
 				entityMeta.getBizIdLength(), entityMeta.getBizIdSequenceSize()).toString();
+	}
+
+	/**
+	 * @TODO 根据指定的表名、业务码，业务码的属性和值map，动态获取业务主键值
+	 * 例如:generateBizId("sag_test", "HW@case(orderType,SALE,SC,BUY,PO)@day(yyMMdd)",
+				MapKit.map("orderType", "SALE"), null, 12, 2);
+	 * @param tableName
+	 * @param signature 一个表达式字符串，支持@case(name,value1,then1,val2,then2) 和 @day(yyMMdd)或@day(yyyyMMdd)、@substr(name,start,length) 等
+	 * @param keyValues
+	 * @param bizDate 在signature为空时生效
+	 * @param length
+	 * @param sequenceSize
+	 * @return
+	 */
+	protected String generateBizId(String tableName, String signature, Map<String, Object> keyValues, LocalDate bizDate,
+			int length, int sequenceSize) {
+		if (distributeIdGenerator == null) {
+			try {
+				distributeIdGenerator = (DistributeIdGenerator) Class
+						.forName(sqlToyContext.getDistributeIdGeneratorClass()).getDeclaredConstructor().newInstance();
+				distributeIdGenerator.initialize(sqlToyContext.getAppContext());
+			} catch (Exception e) {
+				e.printStackTrace();
+				throw new DataAccessException("实例化分布式id产生器失败:" + e.getMessage());
+			}
+		}
+		return IdUtil.getId(distributeIdGenerator, tableName, signature, keyValues, bizDate, length, sequenceSize);
 	}
 
 	/**
