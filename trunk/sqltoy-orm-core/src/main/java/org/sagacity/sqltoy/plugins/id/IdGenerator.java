@@ -22,11 +22,11 @@ public interface IdGenerator {
 	 * @param bizDate         当前日期
 	 * @param idJavaType      主键数据类型
 	 * @param length          主键长度
-	 * @param sequencSize     流水号长度,如:20210709[001] 后三位为流水
+	 * @param sequenceSize     流水号长度,如:20210709[001] 后三位为流水
 	 * @return
 	 */
 	public Object getId(String tableName, String signature, String[] relatedColumns, Object[] relatedColValue,
-			Date bizDate, String idJavaType, int length, int sequencSize);
+			Date bizDate, String idJavaType, int length, int sequenceSize);
 
 	public default void initialize(SqlToyContext sqlToyContext) throws Exception {
 

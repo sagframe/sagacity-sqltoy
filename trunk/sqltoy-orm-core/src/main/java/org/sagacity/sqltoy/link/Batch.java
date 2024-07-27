@@ -91,7 +91,6 @@ public class Batch extends BaseLink {
 	 * @param insertCallhandler
 	 * @return
 	 */
-	@Deprecated
 	public Batch insertHandler(InsertRowCallbackHandler insertCallhandler) {
 		this.insertCallhandler = insertCallhandler;
 		return this;
