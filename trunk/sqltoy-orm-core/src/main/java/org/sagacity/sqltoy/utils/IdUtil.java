@@ -5,14 +5,19 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.sagacity.sqltoy.config.model.CurrentTimeMaxValue;
+import org.sagacity.sqltoy.integration.DistributeIdGenerator;
+import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
+import org.sagacity.sqltoy.plugins.id.macro.MacroUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -231,5 +236,56 @@ public class IdUtil {
 			return StringUtil.addLeftZero2Len("1", size);
 		}
 		return serverIdentity;
+	}
+	
+	/**
+	 * @todo 产生分布式主键
+	 * @param distributeIdGenerator
+	 * @param tableName
+	 * @param signature
+	 * @param keyValues
+	 * @param bizDate
+	 * @param length
+	 * @param sequenceSize
+	 * @return
+	 */
+	public static String getId(DistributeIdGenerator distributeIdGenerator, String tableName, String signature,
+			Map<String, Object> keyValues, LocalDate bizDate, int length, int sequenceSize) {
+		String key = (signature == null ? "" : signature);
+		// 主键生成依赖业务的相关字段值
+		IgnoreKeyCaseMap<String, Object> keyValueMap = new IgnoreKeyCaseMap<String, Object>();
+		if (keyValues != null && !keyValues.isEmpty()) {
+			keyValues.forEach((keyStr, value) -> {
+				if (null == value) {
+					throw new RuntimeException("table=" + tableName + " 生成业务主键失败,关联字段:" + keyStr + " 对应的值为null!");
+				}
+			});
+			keyValueMap.putAll(keyValues);
+		}
+		// 替换signature中的@df() 和@case()等宏表达式
+		String realKey = MacroUtils.replaceMacros(key, keyValueMap);
+		// 没有宏
+		if (realKey.equals(key)) {
+			// 长度够放下6位日期 或没有设置长度且流水长度小于6,则默认增加一个6位日期作为前置
+			if ((length <= 0 && sequenceSize < 6) || (length - realKey.length() > 6)) {
+				LocalDate realBizDate = (bizDate == null ? LocalDate.now() : bizDate);
+				realKey = realKey.concat(DateUtil.formatDate(realBizDate, "yyMMdd"));
+			}
+		}
+		// 参数替换
+		if (!keyValueMap.isEmpty()) {
+			realKey = MacroUtils.replaceParams(realKey, keyValueMap);
+		}
+		// 结合redis计数取末尾几位顺序数
+		Long result;
+		// update 2019-1-24 key命名策略改为SQLTOY_GL_ID:tableName:xxx 便于redis检索
+		if (tableName != null) {
+			result = distributeIdGenerator
+					.generateId("".equals(realKey) ? tableName : tableName.concat(":").concat(realKey), 1, null);
+		} else {
+			result = distributeIdGenerator.generateId(realKey, 1, null);
+		}
+		return realKey.concat(
+				StringUtil.addLeftZero2Len("" + result, (sequenceSize > 0) ? sequenceSize : length - realKey.length()));
 	}
 }
