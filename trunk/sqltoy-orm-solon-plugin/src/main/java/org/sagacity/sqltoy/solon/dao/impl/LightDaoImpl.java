@@ -1,6 +1,15 @@
 package org.sagacity.sqltoy.solon.dao.impl;
 
-import org.sagacity.sqltoy.solon.support.SolonDaoSupport;
+import java.io.Serializable;
+import java.time.LocalDate;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.sql.DataSource;
+
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.StreamResultHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
@@ -33,15 +42,8 @@ import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TreeTableModel;
+import org.sagacity.sqltoy.solon.support.SolonDaoSupport;
 import org.sagacity.sqltoy.translate.TranslateHandler;
-
-import javax.sql.DataSource;
-import java.io.Serializable;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * @project sqltoy-orm
@@ -569,6 +571,12 @@ public class LightDaoImpl extends SolonDaoSupport implements LightDao {
 		return super.generateBizId(entity);
 	}
 
+	@Override
+	public String generateBizId(String tableName, String signature, Map<String, Object> keyValues, LocalDate bizDate,
+			int length, int sequenceSize) {
+		return super.generateBizId(tableName, signature, keyValues, bizDate, length, sequenceSize);
+	}
+	
 	@Override
 	public HashMap<String, Object[]> getTranslateCache(String cacheName, String cacheType) {
 		return super.getTranslateCache(cacheName, cacheType);
