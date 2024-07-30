@@ -436,9 +436,8 @@ public class SqlToyContext {
 		scriptLoader.initialize(this.debug, delayCheckSeconds, scriptCheckIntervalSeconds, breakWhenSqlRepeat);
 		// 初始化翻译器,update 2021-1-23 增加caffeine缓存支持
 		if (translateCacheManager == null && "caffeine".equalsIgnoreCase(this.cacheType)) {
-			translateManager.initialize(this,
-					(TranslateCacheManager) Class.forName(translateCaffeineManagerClass).getDeclaredConstructor().newInstance(),
-					delayCheckSeconds);
+			translateManager.initialize(this, (TranslateCacheManager) Class.forName(translateCaffeineManagerClass)
+					.getDeclaredConstructor().newInstance(), delayCheckSeconds);
 		} else {
 			translateManager.initialize(this, translateCacheManager, delayCheckSeconds);
 		}

@@ -448,7 +448,8 @@ public class Mongo extends BaseLink {
 	 */
 	private MongoQuery getMongoQuery() throws Exception {
 		if (this.mongoQuery == null) {
-			mongoQuery = (MongoQuery) Class.forName(sqlToyContext.getMongoQueryClass()).getDeclaredConstructor().newInstance();
+			mongoQuery = (MongoQuery) Class.forName(sqlToyContext.getMongoQueryClass()).getDeclaredConstructor()
+					.newInstance();
 			mongoQuery.initialize(sqlToyContext);
 		}
 		return mongoQuery;
