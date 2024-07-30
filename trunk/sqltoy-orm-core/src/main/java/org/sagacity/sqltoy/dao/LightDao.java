@@ -762,15 +762,17 @@ public interface LightDao {
 	 * @return
 	 */
 	public String generateBizId(Serializable entity);
-	
+
 	/**
-	 * @TODO 根据指定的表名、业务码，业务码的属性和值map，动态获取业务主键值
-	 * 例如:generateBizId("sag_test", "HW@case(orderType,SALE,SC,BUY,PO)@day(yyMMdd)",
-				MapKit.map("orderType", "SALE"), null, 12, 2);
+	 * @TODO 根据指定的表名、业务码，业务码的属性和值map，动态获取业务主键值 例如:generateBizId("sag_test",
+	 *       "HW@case(orderType,SALE,SC,BUY,PO)@day(yyMMdd)",
+	 *       MapKit.map("orderType", "SALE"), null, 12, 2);
 	 * @param tableName
-	 * @param signature 一个表达式字符串，支持@case(name,value1,then1,val2,then2) 和 @day(yyMMdd)或@day(yyyyMMdd)、@substr(name,start,length) 等
+	 * @param signature    一个表达式字符串，支持@case(name,value1,then1,val2,then2)
+	 *                     和 @day(yyMMdd)或@day(yyyyMMdd)、@substr(name,start,length)
+	 *                     等
 	 * @param keyValues
-	 * @param bizDate 在signature为空时生效
+	 * @param bizDate      在signature为空时生效
 	 * @param length
 	 * @param sequenceSize
 	 * @return

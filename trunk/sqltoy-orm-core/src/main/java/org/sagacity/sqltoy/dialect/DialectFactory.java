@@ -1507,6 +1507,7 @@ public class DialectFactory {
 	/**
 	 * @param sqlToyContext
 	 * @param entity
+	 * @param onlySubTables
 	 * @param cascadeTypes
 	 * @param lockMode
 	 * @param dataSource
@@ -1514,7 +1515,8 @@ public class DialectFactory {
 	 * @todo 加载单个对象
 	 */
 	public <T extends Serializable> T load(final SqlToyContext sqlToyContext, final T entity,
-			final Class[] cascadeTypes, final LockMode lockMode, final DataSource dataSource) {
+			final Boolean onlySubTables, final Class[] cascadeTypes, final LockMode lockMode,
+			final DataSource dataSource) {
 		if (entity == null) {
 			logger.warn("load entity is null,please check!");
 			return null;
@@ -1530,6 +1532,7 @@ public class DialectFactory {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							SqlExecuteStat.setDialect(dialect);
 							this.setResult(getDialectSqlWrapper(dbType).load(sqlToyContext, entity,
+									(onlySubTables == null) ? false : onlySubTables.booleanValue(),
 									(cascadeTypes == null) ? null : CollectionUtil.arrayToList(cascadeTypes), lockMode,
 									conn, dbType, dialect, shardingModel.getTableName()));
 						}
@@ -1545,6 +1548,7 @@ public class DialectFactory {
 	/**
 	 * @param sqlToyContext
 	 * @param entities
+	 * @param onlySubTable
 	 * @param cascadeTypes
 	 * @param lockMode
 	 * @param dataSource
@@ -1552,7 +1556,8 @@ public class DialectFactory {
 	 * @todo 批量加载集合(自4.13.1 版本已经自动将超大规模集合拆分执行)，规避了jpa等框架的缺陷
 	 */
 	public <T extends Serializable> List<T> loadAll(final SqlToyContext sqlToyContext, final List<T> entities,
-			final Class[] cascadeTypes, final LockMode lockMode, final DataSource dataSource) {
+			final Boolean onlySubTable, final Class[] cascadeTypes, final LockMode lockMode,
+			final DataSource dataSource) {
 		// 清除集合中的null值
 		CollectionUtil.removeNull(entities);
 		if (entities == null || entities.isEmpty()) {
@@ -1589,6 +1594,7 @@ public class DialectFactory {
 											SqlExecuteStat.setDialect(dialect);
 											this.setResult(getDialectSqlWrapper(dbType).loadAll(context,
 													batchModel.getEntities(),
+													(onlySubTable == null) ? false : onlySubTable.booleanValue(),
 													(cascadeTypes == null) ? null
 															: CollectionUtil.arrayToList(cascadeTypes),
 													lockMode, conn, dbType, dialect, shardingModel.getTableName(),

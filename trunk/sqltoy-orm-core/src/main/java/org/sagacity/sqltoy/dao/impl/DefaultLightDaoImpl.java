@@ -577,7 +577,7 @@ public class DefaultLightDaoImpl extends SqlToyDaoSupport implements LightDao {
 	public String generateBizId(Serializable entity) {
 		return super.generateBizId(entity);
 	}
-	
+
 	@Override
 	public String generateBizId(String tableName, String signature, Map<String, Object> keyValues, LocalDate bizDate,
 			int length, int sequenceSize) {

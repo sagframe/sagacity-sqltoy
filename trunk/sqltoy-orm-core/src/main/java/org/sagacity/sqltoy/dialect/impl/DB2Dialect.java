@@ -95,17 +95,17 @@ public class DB2Dialect implements Dialect {
 	 * java.sql.Connection, java.lang.Integer, java.lang.String, java.lang.String)
 	 */
 	@Override
-	public Serializable load(final SqlToyContext sqlToyContext, Serializable entity, List<Class> cascadeTypes,
-			LockMode lockMode, Connection conn, final Integer dbType, final String dialect, final String tableName)
-			throws Exception {
+	public Serializable load(final SqlToyContext sqlToyContext, Serializable entity, boolean onlySubTables,
+			List<Class> cascadeTypes, LockMode lockMode, Connection conn, final Integer dbType, final String dialect,
+			final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		// 获取loadsql(loadsql 可以通过@loadSql进行改变，所以需要sqltoyContext重新获取)
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(entityMeta.getLoadSql(tableName), SqlType.search,
 				dialect, null);
 		String loadSql = sqlToyConfig.getSql(dialect);
 		loadSql = loadSql.concat(getLockSql(loadSql, dbType, lockMode));
-		return (Serializable) DialectUtils.load(sqlToyContext, sqlToyConfig, loadSql, entityMeta, entity, cascadeTypes,
-				conn, dbType);
+		return (Serializable) DialectUtils.load(sqlToyContext, sqlToyConfig, loadSql, entityMeta, entity, onlySubTables,
+				cascadeTypes, conn, dbType);
 	}
 
 	/*
@@ -117,11 +117,11 @@ public class DB2Dialect implements Dialect {
 	 * java.lang.String, java.lang.String)
 	 */
 	@Override
-	public List<?> loadAll(final SqlToyContext sqlToyContext, List<?> entities, List<Class> cascadeTypes,
-			final LockMode lockMode, Connection conn, final Integer dbType, final String dialect,
-			final String tableName, final int fetchSize, final int maxRows) throws Exception {
-		return DialectUtils.loadAll(sqlToyContext, entities, cascadeTypes, lockMode, conn, dbType, tableName,
-				(sql, dbTypeValue, lockedMode) -> {
+	public List<?> loadAll(final SqlToyContext sqlToyContext, List<?> entities, boolean onlySubTables,
+			List<Class> cascadeTypes, final LockMode lockMode, Connection conn, final Integer dbType,
+			final String dialect, final String tableName, final int fetchSize, final int maxRows) throws Exception {
+		return DialectUtils.loadAll(sqlToyContext, entities, onlySubTables, cascadeTypes, lockMode, conn, dbType,
+				tableName, (sql, dbTypeValue, lockedMode) -> {
 					return getLockSql(sql, dbTypeValue, lockedMode);
 				}, fetchSize, maxRows);
 	}
@@ -200,9 +200,9 @@ public class DB2Dialect implements Dialect {
 				(cascade == false) ? null : new GenerateSqlHandler() {
 					@Override
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
-						return DialectUtils.getSaveOrUpdateSql(sqlToyContext,sqlToyContext.getUnifyFieldsHandler(), dbType,
-								entityMeta, entityMeta.getIdStrategy(), forceUpdateFields, VIRTUAL_TABLE, NVL_FUNCTION,
-								"NEXTVAL FOR " + entityMeta.getSequence(),
+						return DialectUtils.getSaveOrUpdateSql(sqlToyContext, sqlToyContext.getUnifyFieldsHandler(),
+								dbType, entityMeta, entityMeta.getIdStrategy(), forceUpdateFields, VIRTUAL_TABLE,
+								NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(),
 								DB2DialectUtils.isAssignPKValue(entityMeta.getIdStrategy()), null);
 					}
 				}, forceCascadeClasses, subTableForceUpdateProps, conn, dbType, tableName);
@@ -360,9 +360,9 @@ public class DB2Dialect implements Dialect {
 				new GenerateSqlHandler() {
 					@Override
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
-						return DialectUtils.getSaveOrUpdateSql(sqlToyContext,sqlToyContext.getUnifyFieldsHandler(), dbType,
-								entityMeta, entityMeta.getIdStrategy(), forceUpdateFields, VIRTUAL_TABLE, NVL_FUNCTION,
-								"NEXTVAL FOR " + entityMeta.getSequence(),
+						return DialectUtils.getSaveOrUpdateSql(sqlToyContext, sqlToyContext.getUnifyFieldsHandler(),
+								dbType, entityMeta, entityMeta.getIdStrategy(), forceUpdateFields, VIRTUAL_TABLE,
+								NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(),
 								DB2DialectUtils.isAssignPKValue(entityMeta.getIdStrategy()), tableName);
 					}
 				}, reflectPropsHandler, conn, dbType, autoCommit);
