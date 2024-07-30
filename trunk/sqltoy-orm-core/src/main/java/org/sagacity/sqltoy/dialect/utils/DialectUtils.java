@@ -1069,8 +1069,8 @@ public class DialectUtils {
 	 * @todo 加载获取单笔数据库记录
 	 */
 	public static Serializable load(final SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			EntityMeta entityMeta, Serializable entity, List<Class> cascadeTypes, Connection conn, final Integer dbType)
-			throws Exception {
+			EntityMeta entityMeta, Serializable entity, boolean onlySubTables, List<Class> cascadeTypes,
+			Connection conn, final Integer dbType) throws Exception {
 		Object[] pkValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getIdArray());
 		// 检查主键值是否合法
 		for (int i = 0; i < pkValues.length; i++) {
@@ -1079,31 +1079,38 @@ public class DialectUtils {
 						+ " load method must assign value for pk,null pk field is:" + entityMeta.getIdArray()[i]);
 			}
 		}
-		SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(sql, entityMeta.getIdArray(), pkValues, null);
-		// 加密字段解密
-		DecryptHandler decryptHandler = null;
-		if (entityMeta.getSecureColumns() != null) {
-			decryptHandler = new DecryptHandler(sqlToyContext.getFieldsSecureProvider(), entityMeta.getSecureColumns());
-		}
-		// 增加sql执行拦截器 update 2022-9-10
-		sqlToyResult = doInterceptors(sqlToyContext, sqlToyConfig, OperateType.load, sqlToyResult, entity.getClass(),
-				dbType);
-		QueryResult queryResult = findBySql(sqlToyContext, sqlToyConfig, sqlToyResult.getSql(),
-				sqlToyResult.getParamsValue(), null, decryptHandler, conn, dbType, 0, -1, -1);
-		List rows = queryResult.getRows();
+		SqlToyResult sqlToyResult = null;
 		Serializable result = null;
-		Class entityClass;
-		if (rows != null && rows.size() > 0) {
-			entityClass = BeanUtil.getEntityClass(entity.getClass());
-			rows = BeanUtil.reflectListToBean(sqlToyContext.getTypeHandler(), rows,
-					ResultUtils.humpFieldNames(queryResult.getLabelNames(), entityMeta.getColumnFieldMap()),
-					entityClass);
-			result = (Serializable) rows.get(0);
-			// 处理类中的@Translate注解，进行缓存翻译
-			ResultUtils.wrapResultTranslate(sqlToyContext, result, entityClass);
-		}
-		if (result == null) {
-			return null;
+		// 加载主表
+		if (!onlySubTables) {
+			SqlConfigParseUtils.processSql(sql, entityMeta.getIdArray(), pkValues, null);
+			// 加密字段解密
+			DecryptHandler decryptHandler = null;
+			if (entityMeta.getSecureColumns() != null) {
+				decryptHandler = new DecryptHandler(sqlToyContext.getFieldsSecureProvider(),
+						entityMeta.getSecureColumns());
+			}
+			// 增加sql执行拦截器 update 2022-9-10
+			sqlToyResult = doInterceptors(sqlToyContext, sqlToyConfig, OperateType.load, sqlToyResult,
+					entity.getClass(), dbType);
+			QueryResult queryResult = findBySql(sqlToyContext, sqlToyConfig, sqlToyResult.getSql(),
+					sqlToyResult.getParamsValue(), null, decryptHandler, conn, dbType, 0, -1, -1);
+			List rows = queryResult.getRows();
+			Class entityClass;
+			if (rows != null && rows.size() > 0) {
+				entityClass = BeanUtil.getEntityClass(entity.getClass());
+				rows = BeanUtil.reflectListToBean(sqlToyContext.getTypeHandler(), rows,
+						ResultUtils.humpFieldNames(queryResult.getLabelNames(), entityMeta.getColumnFieldMap()),
+						entityClass);
+				result = (Serializable) rows.get(0);
+				// 处理类中的@Translate注解，进行缓存翻译
+				ResultUtils.wrapResultTranslate(sqlToyContext, result, entityClass);
+			}
+			if (result == null) {
+				return null;
+			}
+		} else {
+			result = entity;
 		}
 		// 存在主表对应子表
 		if (null != cascadeTypes && !cascadeTypes.isEmpty() && !entityMeta.getCascadeModels().isEmpty()) {
@@ -1158,6 +1165,7 @@ public class DialectUtils {
 	/**
 	 * @param sqlToyContext
 	 * @param entities
+	 * @param onlySubTables
 	 * @param cascadeTypes
 	 * @param lockMode
 	 * @param conn
@@ -1170,9 +1178,9 @@ public class DialectUtils {
 	 * @throws Exception
 	 * @todo 提供统一的loadAll处理机制
 	 */
-	public static List<?> loadAll(final SqlToyContext sqlToyContext, List<?> entities, List<Class> cascadeTypes,
-			LockMode lockMode, Connection conn, final Integer dbType, String tableName, LockSqlHandler lockSqlHandler,
-			final int fetchSize, final int maxRows) throws Exception {
+	public static List<?> loadAll(final SqlToyContext sqlToyContext, List<?> entities, boolean onlySubTables,
+			List<Class> cascadeTypes, LockMode lockMode, Connection conn, final Integer dbType, String tableName,
+			LockSqlHandler lockSqlHandler, final int fetchSize, final int maxRows) throws Exception {
 		if (entities == null || entities.isEmpty()) {
 			return entities;
 		}
@@ -1183,95 +1191,103 @@ public class DialectUtils {
 			throw new IllegalArgumentException(
 					entityClass.getName() + " Entity Object hasn't primary key,cann't use loadAll method!");
 		}
-		DecryptHandler decryptHandler = null;
-		if (entityMeta.getSecureColumns() != null) {
-			decryptHandler = new DecryptHandler(sqlToyContext.getFieldsSecureProvider(), entityMeta.getSecureColumns());
-		}
-		int idSize = entityMeta.getIdArray().length;
-		SqlToyResult sqlToyResult = null;
-		List<Object[]> sortIds = new ArrayList();
-		// 单主键
-		if (idSize == 1) {
-			// 切取id数组
-			Object[] idValues = BeanUtil.sliceToArray(entities, entityMeta.getIdArray()[0]);
-			if (idValues == null || idValues.length == 0) {
-				throw new IllegalArgumentException(
-						tableName + " loadAll method must assign value for pk field:" + entityMeta.getIdArray()[0]);
+		List<?> entitySet = null;
+		if (!onlySubTables) {
+			SqlToyResult sqlToyResult = null;
+			DecryptHandler decryptHandler = null;
+			if (entityMeta.getSecureColumns() != null) {
+				decryptHandler = new DecryptHandler(sqlToyContext.getFieldsSecureProvider(),
+						entityMeta.getSecureColumns());
 			}
-			for (int i = 0; i < idValues.length; i++) {
-				sortIds.add(new Object[] { idValues[i] });
-			}
-			// 组织loadAll sql语句
-			String sql = wrapLoadAll(entityMeta, idValues.length, tableName, lockSqlHandler, lockMode, dbType);
-			sqlToyResult = SqlConfigParseUtils.processSql(sql, null, new Object[] { idValues }, null);
-		} // 复合主键
-		else {
-			List<Object[]> idValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getIdArray(), null, null);
-			sortIds = idValues;
-			Object[] rowData;
-			Object cellValue;
-			// 将条件构造成一个数组
-			Object[] realValues = new Object[idValues.size() * idSize];
-			int index = 0;
-			for (int i = 0, n = idValues.size(); i < n; i++) {
-				rowData = idValues.get(i);
-				for (int j = 0; j < idSize; j++) {
-					cellValue = rowData[j];
-					// 验证主键值是否合法
-					if (StringUtil.isBlank(cellValue)) {
-						throw new IllegalArgumentException(tableName + " loadAll method must assign value for pk,row:"
-								+ i + " pk field:" + entityMeta.getIdArray()[j]);
-					}
-					realValues[index] = cellValue;
-					index++;
+			int idSize = entityMeta.getIdArray().length;
+			List<Object[]> sortIds = new ArrayList();
+			// 单主键
+			if (idSize == 1) {
+				// 切取id数组
+				Object[] idValues = BeanUtil.sliceToArray(entities, entityMeta.getIdArray()[0]);
+				if (idValues == null || idValues.length == 0) {
+					throw new IllegalArgumentException(
+							tableName + " loadAll method must assign value for pk field:" + entityMeta.getIdArray()[0]);
 				}
-			}
-			// 组织loadAll sql语句
-			String sql = wrapLoadAll(entityMeta, idValues.size(), tableName, lockSqlHandler, lockMode, dbType);
-			sqlToyResult = SqlConfigParseUtils.processSql(sql, null, realValues, null);
-		}
-		// 增加sql执行拦截器 update 2022-9-10
-		SqlToyConfig sqlToyConfig = new SqlToyConfig(DataSourceUtils.getDialect(dbType));
-		sqlToyConfig.setSqlType(SqlType.search);
-		sqlToyConfig.setSql(sqlToyResult.getSql());
-		sqlToyConfig.setParamsName(entityMeta.getIdArray());
-		sqlToyResult = doInterceptors(sqlToyContext, sqlToyConfig, OperateType.loadAll, sqlToyResult, entityClass,
-				dbType);
-		SqlExecuteStat.showSql("执行依据主键批量查询", sqlToyResult.getSql(), sqlToyResult.getParamsValue());
-		List<?> entitySet = SqlUtil.findByJdbcQuery(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(),
-				sqlToyResult.getParamsValue(), entityClass, null, decryptHandler, conn, dbType, false,
-				entityMeta.getColumnFieldMap(), fetchSize, maxRows);
-		// 处理类中的@Translate注解，进行缓存翻译
-		ResultUtils.wrapResultTranslate(sqlToyContext, entitySet, entityClass);
-		if (entitySet == null || entitySet.isEmpty()) {
-			return entitySet;
-		}
-		// 按传入的集合顺序进行排序 update 2022-9-9 由网友夜孤城反馈
-		List<Object[]> resultIds = BeanUtil.reflectBeansToInnerAry(entitySet, entityMeta.getIdArray(), null, null);
-		Object[] ids;
-		Object[] idVars;
-		boolean isEqual;
-		List sortEntities = new ArrayList();
-		for (int i = 0; i < sortIds.size(); i++) {
-			ids = sortIds.get(i);
-			for (int j = 0; j < resultIds.size(); j++) {
-				idVars = resultIds.get(j);
-				isEqual = true;
-				// 主键值进行对比
-				for (int k = 0; k < idSize; k++) {
-					if (!ids[k].equals(idVars[k])) {
-						isEqual = false;
+				for (int i = 0; i < idValues.length; i++) {
+					sortIds.add(new Object[] { idValues[i] });
+				}
+				// 组织loadAll sql语句
+				String sql = wrapLoadAll(entityMeta, idValues.length, tableName, lockSqlHandler, lockMode, dbType);
+				sqlToyResult = SqlConfigParseUtils.processSql(sql, null, new Object[] { idValues }, null);
+			} // 复合主键
+			else {
+				List<Object[]> idValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getIdArray(), null,
+						null);
+				sortIds = idValues;
+				Object[] rowData;
+				Object cellValue;
+				// 将条件构造成一个数组
+				Object[] realValues = new Object[idValues.size() * idSize];
+				int index = 0;
+				for (int i = 0, n = idValues.size(); i < n; i++) {
+					rowData = idValues.get(i);
+					for (int j = 0; j < idSize; j++) {
+						cellValue = rowData[j];
+						// 验证主键值是否合法
+						if (StringUtil.isBlank(cellValue)) {
+							throw new IllegalArgumentException(
+									tableName + " loadAll method must assign value for pk,row:" + i + " pk field:"
+											+ entityMeta.getIdArray()[j]);
+						}
+						realValues[index] = cellValue;
+						index++;
 					}
 				}
-				if (isEqual) {
-					// 把对比成功的数据移除出待比较队列
-					sortEntities.add(entitySet.remove(j));
-					resultIds.remove(j);
-					break;
+				// 组织loadAll sql语句
+				String sql = wrapLoadAll(entityMeta, idValues.size(), tableName, lockSqlHandler, lockMode, dbType);
+				sqlToyResult = SqlConfigParseUtils.processSql(sql, null, realValues, null);
+			}
+			// 增加sql执行拦截器 update 2022-9-10
+			SqlToyConfig sqlToyConfig = new SqlToyConfig(DataSourceUtils.getDialect(dbType));
+			sqlToyConfig.setSqlType(SqlType.search);
+			sqlToyConfig.setSql(sqlToyResult.getSql());
+			sqlToyConfig.setParamsName(entityMeta.getIdArray());
+			sqlToyResult = doInterceptors(sqlToyContext, sqlToyConfig, OperateType.loadAll, sqlToyResult, entityClass,
+					dbType);
+			SqlExecuteStat.showSql("执行依据主键批量查询", sqlToyResult.getSql(), sqlToyResult.getParamsValue());
+			entitySet = SqlUtil.findByJdbcQuery(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(),
+					sqlToyResult.getParamsValue(), entityClass, null, decryptHandler, conn, dbType, false,
+					entityMeta.getColumnFieldMap(), fetchSize, maxRows);
+			// 处理类中的@Translate注解，进行缓存翻译
+			ResultUtils.wrapResultTranslate(sqlToyContext, entitySet, entityClass);
+			if (entitySet == null || entitySet.isEmpty()) {
+				return entitySet;
+			}
+			// 按传入的集合顺序进行排序 update 2022-9-9 由网友夜孤城反馈
+			List<Object[]> resultIds = BeanUtil.reflectBeansToInnerAry(entitySet, entityMeta.getIdArray(), null, null);
+			Object[] ids;
+			Object[] idVars;
+			boolean isEqual;
+			List sortEntities = new ArrayList();
+			for (int i = 0; i < sortIds.size(); i++) {
+				ids = sortIds.get(i);
+				for (int j = 0; j < resultIds.size(); j++) {
+					idVars = resultIds.get(j);
+					isEqual = true;
+					// 主键值进行对比
+					for (int k = 0; k < idSize; k++) {
+						if (!ids[k].equals(idVars[k])) {
+							isEqual = false;
+						}
+					}
+					if (isEqual) {
+						// 把对比成功的数据移除出待比较队列
+						sortEntities.add(entitySet.remove(j));
+						resultIds.remove(j);
+						break;
+					}
 				}
 			}
+			entitySet = sortEntities;
+		} else {
+			entitySet = entities;
 		}
-		entitySet = sortEntities;
 		// 存在主表对应子表
 		if (null != cascadeTypes && !cascadeTypes.isEmpty() && !entityMeta.getCascadeModels().isEmpty()) {
 			StringBuilder subTableSql = new StringBuilder();

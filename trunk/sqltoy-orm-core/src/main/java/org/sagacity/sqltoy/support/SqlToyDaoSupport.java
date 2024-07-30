@@ -502,7 +502,7 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected <T extends Serializable> T load(final T entity, final LockMode lockMode, final DataSource dataSource) {
-		return dialectFactory.load(sqlToyContext, entity, null, lockMode, this.getDataSource(dataSource));
+		return dialectFactory.load(sqlToyContext, entity, false, null, lockMode, this.getDataSource(dataSource));
 	}
 
 	/**
@@ -521,7 +521,7 @@ public class SqlToyDaoSupport {
 		if (cascades == null || cascades.length == 0) {
 			cascades = getEntityMeta(entity.getClass()).getCascadeTypes();
 		}
-		return dialectFactory.load(sqlToyContext, entity, cascades, lockMode, this.getDataSource(null));
+		return dialectFactory.load(sqlToyContext, entity, false, cascades, lockMode, this.getDataSource(null));
 	}
 
 	/**
@@ -531,7 +531,7 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected <T extends Serializable> List<T> loadAll(final List<T> entities, final LockMode lockMode) {
-		return dialectFactory.loadAll(sqlToyContext, entities, null, lockMode, this.getDataSource(null));
+		return dialectFactory.loadAll(sqlToyContext, entities, null, null, lockMode, this.getDataSource(null));
 	}
 
 	/**
@@ -571,18 +571,25 @@ public class SqlToyDaoSupport {
 			realIds = ids;
 		}
 		List<T> entities = BeanUtil.wrapEntities(sqlToyContext.getTypeHandler(), entityMeta, entityClass, realIds);
-		return dialectFactory.loadAll(sqlToyContext, entities, null, lockMode, this.getDataSource(null));
+		return dialectFactory.loadAll(sqlToyContext, entities, null, null, lockMode, this.getDataSource(null));
+	}
+
+	protected <T extends Serializable> List<T> loadAllCascade(final List<T> entities, final LockMode lockMode,
+			final Class... cascadeTypes) {
+		return loadAllCascade(entities, null, lockMode, cascadeTypes);
 	}
 
 	/**
 	 * @todo 批量对象级联加载,指定级联加载的子表
+	 * @param <T>
 	 * @param entities
+	 * @param onlySubTable
 	 * @param lockMode
 	 * @param cascadeTypes
 	 * @return
 	 */
-	protected <T extends Serializable> List<T> loadAllCascade(final List<T> entities, final LockMode lockMode,
-			final Class... cascadeTypes) {
+	protected <T extends Serializable> List<T> loadAllCascade(final List<T> entities, final Boolean onlySubTable,
+			final LockMode lockMode, final Class... cascadeTypes) {
 		if (entities == null || entities.isEmpty()) {
 			return entities;
 		}
@@ -590,7 +597,8 @@ public class SqlToyDaoSupport {
 		if (cascades == null || cascades.length == 0) {
 			cascades = getEntityMeta(entities.get(0).getClass()).getCascadeTypes();
 		}
-		return dialectFactory.loadAll(sqlToyContext, entities, cascades, lockMode, this.getDataSource(null));
+		return dialectFactory.loadAll(sqlToyContext, entities, onlySubTable, cascades, lockMode,
+				this.getDataSource(null));
 	}
 
 	protected <T> T loadBySql(final String sqlOrSqlId, final Map<String, Object> paramsMap, final Class<T> resultType) {
@@ -1505,13 +1513,15 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @TODO 根据指定的表名、业务码，业务码的属性和值map，动态获取业务主键值
-	 * 例如:generateBizId("sag_test", "HW@case(orderType,SALE,SC,BUY,PO)@day(yyMMdd)",
-				MapKit.map("orderType", "SALE"), null, 12, 2);
+	 * @TODO 根据指定的表名、业务码，业务码的属性和值map，动态获取业务主键值 例如:generateBizId("sag_test",
+	 *       "HW@case(orderType,SALE,SC,BUY,PO)@day(yyMMdd)",
+	 *       MapKit.map("orderType", "SALE"), null, 12, 2);
 	 * @param tableName
-	 * @param signature 一个表达式字符串，支持@case(name,value1,then1,val2,then2) 和 @day(yyMMdd)或@day(yyyyMMdd)、@substr(name,start,length) 等
+	 * @param signature    一个表达式字符串，支持@case(name,value1,then1,val2,then2)
+	 *                     和 @day(yyMMdd)或@day(yyyyMMdd)、@substr(name,start,length)
+	 *                     等
 	 * @param keyValues
-	 * @param bizDate 在signature为空时生效
+	 * @param bizDate      在signature为空时生效
 	 * @param length
 	 * @param sequenceSize
 	 * @return

@@ -84,17 +84,19 @@ public class TDengineDialect extends DefaultDialect {
 	}
 
 	@Override
-	public Serializable load(SqlToyContext sqlToyContext, Serializable entity, List<Class> cascadeTypes,
-			LockMode lockMode, Connection conn, Integer dbType, String dialect, String tableName) throws Exception {
-		return super.load(sqlToyContext, entity, cascadeTypes, lockMode, conn, dbType, dialect, tableName);
+	public Serializable load(SqlToyContext sqlToyContext, Serializable entity, boolean onlySubTables,
+			List<Class> cascadeTypes, LockMode lockMode, Connection conn, Integer dbType, String dialect,
+			String tableName) throws Exception {
+		return super.load(sqlToyContext, entity, onlySubTables, cascadeTypes, lockMode, conn, dbType, dialect,
+				tableName);
 	}
 
 	@Override
-	public List<?> loadAll(SqlToyContext sqlToyContext, List<?> entities, List<Class> cascadeTypes, LockMode lockMode,
-			Connection conn, Integer dbType, String dialect, String tableName, int fetchSize, int maxRows)
-			throws Exception {
-		return super.loadAll(sqlToyContext, entities, cascadeTypes, lockMode, conn, dbType, dialect, tableName,
-				fetchSize, maxRows);
+	public List<?> loadAll(SqlToyContext sqlToyContext, List<?> entities, boolean onlySubTables,
+			List<Class> cascadeTypes, LockMode lockMode, Connection conn, Integer dbType, String dialect,
+			String tableName, int fetchSize, int maxRows) throws Exception {
+		return super.loadAll(sqlToyContext, entities, onlySubTables, cascadeTypes, lockMode, conn, dbType, dialect,
+				tableName, fetchSize, maxRows);
 	}
 
 	@Override
