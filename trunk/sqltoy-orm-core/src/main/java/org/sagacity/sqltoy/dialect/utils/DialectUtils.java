@@ -1083,7 +1083,7 @@ public class DialectUtils {
 		Serializable result = null;
 		// 加载主表
 		if (!onlySubTables) {
-			SqlConfigParseUtils.processSql(sql, entityMeta.getIdArray(), pkValues, null);
+			sqlToyResult = SqlConfigParseUtils.processSql(sql, entityMeta.getIdArray(), pkValues, null);
 			// 加密字段解密
 			DecryptHandler decryptHandler = null;
 			if (entityMeta.getSecureColumns() != null) {
