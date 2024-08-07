@@ -381,10 +381,17 @@ public class DefaultDialectUtils {
 		Object[] tempFieldValues = null;
 		// 条件字段值
 		Object[] whereParamValues = BeanUtil.reflectBeanToAry(entity, whereFields);
+		Object entityVersionValue = null;
+		// 提取数据版本字段的值
+		if (entityMeta.getDataVersion() != null) {
+			entityVersionValue = BeanUtil.getProperty(entity, entityMeta.getDataVersion().getField());
+		}
 		for (int i = 0; i < whereParamValues.length; i++) {
 			// 唯一性属性值存在空，则表示首次插入
 			if (StringUtil.isBlank(whereParamValues[i])) {
+				// 调用默认值、主键策略等
 				tempFieldValues = processFieldValues(sqlToyContext, entityMeta, entity);
+				// 重新反射获取主键等字段值
 				whereParamValues = BeanUtil.reflectBeanToAry(entity, whereFields);
 				break;
 			}
@@ -394,10 +401,10 @@ public class DefaultDialectUtils {
 				? sqlToyContext.getUnifyFieldsHandler()
 				: null;
 		final Object[] fieldValues = tempFieldValues;
+		final Object version = entityVersionValue;
 		final boolean hasUpdateRow = (updateRowHandler == null) ? false : true;
 		// 组织select * from table for update 语句
-		String sql = wrapFetchSql(entityMeta, dbType, whereFields, tableName);
-		SqlToyResult queryParam = new SqlToyResult(sql, whereParamValues);
+		SqlToyResult queryParam = wrapFetchSql(entityMeta, dbType, whereFields, whereParamValues, tableName);
 		// 增加sql执行拦截器 update 2022-9-10
 		queryParam = DialectUtils.doInterceptors(sqlToyContext, null, OperateType.singleTable, queryParam,
 				entity.getClass(), dbType);
@@ -427,7 +434,6 @@ public class DefaultDialectUtils {
 								SqlExecuteStat.debug("执行updateRow", "记录存在调用updateRowHandler.updateRow!");
 								// 存在数据版本:1、校验当前的版本是否为null(目前跳过)；2、对比传递过来的版本值跟数据库中的值是否一致；3、修改数据库中数据版本+1
 								if (dataVersion != null) {
-									Object version = BeanUtil.getProperty(entity, dataVersionField);
 									String nowVersion = finalRs.getString(entityMeta.getColumnName(dataVersionField));
 									if (version != null && !version.toString().equals(nowVersion)) {
 										throw new IllegalArgumentException("表:" + entityMeta.getTableName()
@@ -721,10 +727,12 @@ public class DefaultDialectUtils {
 	 * @param entityMeta
 	 * @param dbType
 	 * @param uniqueProps
+	 * @param whereParamValues
 	 * @param tableName
 	 * @return
 	 */
-	private static String wrapFetchSql(EntityMeta entityMeta, Integer dbType, String[] uniqueProps, String tableName) {
+	private static SqlToyResult wrapFetchSql(EntityMeta entityMeta, Integer dbType, String[] uniqueProps,
+			Object[] whereParamValues, String tableName) {
 		String realTable = entityMeta.getSchemaTable(tableName, dbType);
 		StringBuilder sql = new StringBuilder("select ");
 		String columnName;
@@ -738,22 +746,32 @@ public class DefaultDialectUtils {
 		}
 		sql.append(" from ").append(realTable).append(" where ");
 		int index = 0;
+		List<Object> realParamValues = new ArrayList<>();
 		for (String field : uniqueProps) {
 			if (index > 0) {
 				sql.append(" and ");
 			}
 			columnName = entityMeta.getColumnName(field);
-			sql.append(ReservedWordsUtil.convertWord(columnName, dbType)).append("=?");
+			sql.append(ReservedWordsUtil.convertWord(columnName, dbType));
+			// update 2024-8-7 rabbit 反馈,条件值为null的场景
+			if (whereParamValues[index] == null) {
+				sql.append(" is null ");
+			} else {
+				sql.append("=?");
+				realParamValues.add(whereParamValues[index]);
+			}
 			index++;
 		}
+		String lastSql;
 		// 设置锁
 		if (dbType == DBType.SQLSERVER) {
-			return SqlServerDialectUtils.lockSql(sql.toString(), realTable, LockMode.UPGRADE);
+			lastSql = SqlServerDialectUtils.lockSql(sql.toString(), realTable, LockMode.UPGRADE);
 		} else if (dbType == DBType.DB2) {
-			return sql.append(" for update with rs").toString();
+			lastSql = sql.append(" for update with rs").toString();
 		} else {
-			return sql.append(" for update").toString();
+			lastSql = sql.append(" for update").toString();
 		}
+		return new SqlToyResult(lastSql, realParamValues.toArray());
 	}
 
 	/**
