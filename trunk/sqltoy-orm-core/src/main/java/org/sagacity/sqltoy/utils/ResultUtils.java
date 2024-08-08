@@ -1585,6 +1585,7 @@ public class ResultUtils {
 			// update 2021-11-16 支持VO或POJO 属性上@Translate注解,进行缓存翻译
 			wrapResultTranslate(sqlToyContext, result, resultType);
 		} else {
+			// 内部完成了wrapResultTranslate行为
 			result = hiberarchySet(sqlToyContext, entityMeta, columnFieldMap, queryResultRows, labelNames, resultType,
 					cascadeModel, hiberarchyClasses, fieldsMap);
 		}

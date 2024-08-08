@@ -381,10 +381,10 @@ public class DefaultDialectUtils {
 		Object[] tempFieldValues = null;
 		// 条件字段值
 		Object[] whereParamValues = BeanUtil.reflectBeanToAry(entity, whereFields);
-		Object entityVersionValue = null;
+		Object tmpVersionValue = null;
 		// 提取数据版本字段的值
 		if (entityMeta.getDataVersion() != null) {
-			entityVersionValue = BeanUtil.getProperty(entity, entityMeta.getDataVersion().getField());
+			tmpVersionValue = BeanUtil.getProperty(entity, entityMeta.getDataVersion().getField());
 		}
 		for (int i = 0; i < whereParamValues.length; i++) {
 			// 唯一性属性值存在空，则表示首次插入
@@ -401,7 +401,7 @@ public class DefaultDialectUtils {
 				? sqlToyContext.getUnifyFieldsHandler()
 				: null;
 		final Object[] fieldValues = tempFieldValues;
-		final Object version = entityVersionValue;
+		final Object entityVersion = tmpVersionValue;
 		final boolean hasUpdateRow = (updateRowHandler == null) ? false : true;
 		// 组织select * from table for update 语句
 		SqlToyResult queryParam = wrapFetchSql(entityMeta, dbType, whereFields, whereParamValues, tableName);
@@ -435,10 +435,11 @@ public class DefaultDialectUtils {
 								// 存在数据版本:1、校验当前的版本是否为null(目前跳过)；2、对比传递过来的版本值跟数据库中的值是否一致；3、修改数据库中数据版本+1
 								if (dataVersion != null) {
 									String nowVersion = finalRs.getString(entityMeta.getColumnName(dataVersionField));
-									if (version != null && !version.toString().equals(nowVersion)) {
+									if (entityVersion != null && !entityVersion.toString().equals(nowVersion)) {
 										throw new IllegalArgumentException("表:" + entityMeta.getTableName()
 												+ " 存在版本@DataVersion配置，在updateSaveFetch做更新时，属性:" + dataVersionField
-												+ " 值不等于当前数据库中的值:" + version + "<>" + nowVersion + ",说明数据已经被修改过!");
+												+ " 值不等于当前数据库中的值:" + entityVersion + "<>" + nowVersion
+												+ ",说明数据已经被修改过!");
 									}
 									// 以日期开头
 									if (dataVersion.isStartDate()) {
