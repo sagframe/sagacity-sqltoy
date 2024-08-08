@@ -1585,6 +1585,7 @@ public class ResultUtils {
 			// update 2021-11-16 支持VO或POJO 属性上@Translate注解,进行缓存翻译
 			wrapResultTranslate(sqlToyContext, result, resultType);
 		} else {
+			// 内部完成了wrapResultTranslate行为
 			result = hiberarchySet(sqlToyContext, entityMeta, columnFieldMap, queryResultRows, labelNames, resultType,
 					cascadeModel, hiberarchyClasses, fieldsMap);
 		}
@@ -1686,6 +1687,8 @@ public class ResultUtils {
 		// 构造主对象集合
 		List result = BeanUtil.reflectListToBean(sqlToyContext.getTypeHandler(), masterData,
 				convertRealProps(wrapMapFields(labelNames, fieldsMap, resultType), columnFieldMap), resultType);
+		// add 2024-8-7 (用户:一颗开心果反馈)在一个查询封装成对象级联平铺模式，主对象上未处理类上@Translate缓存翻译注解
+		wrapResultTranslate(sqlToyContext, result, resultType);
 		List<List> oneToOnes = new ArrayList();
 		List<String> oneToOneProps = new ArrayList<String>();
 		List<String> oneToOneNotNullField = new ArrayList<String>();
@@ -1725,6 +1728,7 @@ public class ResultUtils {
 							convertRealProps(wrapMapFields(realLabelNames, fieldsMap, cascade.getMappedType()),
 									columnFieldMap),
 							cascade.getMappedType());
+					// 处理OneToOne子类上@Translate注解进行缓存翻译
 					wrapResultTranslate(sqlToyContext, oneToOneList, cascade.getMappedType());
 					oneToOnes.add(oneToOneList);
 					oneToOneProps.add(cascade.getProperty());

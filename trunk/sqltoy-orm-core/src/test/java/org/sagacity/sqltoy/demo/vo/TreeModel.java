@@ -4,7 +4,6 @@
 package org.sagacity.sqltoy.demo.vo;
 
 import java.io.Serializable;
-import java.util.Collection;
 
 /**
  * @project sagacity-service
