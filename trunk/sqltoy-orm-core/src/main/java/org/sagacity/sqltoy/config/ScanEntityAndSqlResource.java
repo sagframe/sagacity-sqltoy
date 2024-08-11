@@ -47,6 +47,10 @@ public class ScanEntityAndSqlResource {
 	private static final String JAR = "jar";
 	private static final String RESOURCE = "resource";
 
+	// 常见路径中的特殊字符
+	private static final String[][] SPECIALCHARACTERS = new String[][] { { "%20", " " }, { "%25", "%" }, { "%23", "#" },
+			{ "%5B", "[" }, { "%5D", "]" } };
+
 	/**
 	 * @todo 从指定包package中获取所有的sqltoy实体对象(意义已经不大,entity类目前已经改为在使用时加载的解析模式)
 	 * @param pack
@@ -314,6 +318,21 @@ public class ScanEntityAndSqlResource {
 		}
 		if (!startClasspath) {
 			File file = new File(resource);
+			// 文件不存在,但存在%20 空格、%25 百分号的转义符号(适度兼容，路径中不要搞极端特殊的符号)
+			if (!file.exists()) {
+				String fileResource = resource;
+				boolean hasSpecChar = false;
+				for (String[] item : SPECIALCHARACTERS) {
+					if (fileResource.contains(item[0])) {
+						hasSpecChar = true;
+						fileResource = fileResource.replace(item[0], item[1]);
+					}
+				}
+				// 存在特殊字符，重新实例化文件
+				if (hasSpecChar) {
+					file = new File(fileResource);
+				}
+			}
 			if (file.exists()) {
 				Vector<URL> v = new Vector<URL>();
 				v.add(file.toURI().toURL());
