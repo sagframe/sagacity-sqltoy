@@ -159,11 +159,12 @@ public class SqltoyAutoConfiguration {
 		// sql 文件资源路径
 		List<String> resList = new ArrayList<String>();
 		String sqlResourcesDir = properties.getSqlResourcesDir();
+		String charset = StringUtil.ifBlank(properties.getEncoding(), "UTF-8");
 		if (sqlResourcesDir != null && sqlResourcesDir.length() > 0) {
 			Set<String> sqlDirSet = this.strSplitTrim(sqlResourcesDir);
 			for (String dir : sqlDirSet) {
 				SqlScriptLoader.checkSqlResourcesDir(dir);
-				this.scanResources(resList, dir, "*.sql.xml");
+				this.scanResources(resList, dir, "*.sql.xml", charset);
 			}
 			// 设置dir已经转为resourceList标记
 			SqlScriptLoader.setResourcesDirToList(true);
@@ -237,7 +238,7 @@ public class SqltoyAutoConfiguration {
 				if (dir.endsWith(".xml")) {
 					translateConfigResourceList.add(dir);
 				} else {
-					this.scanResources(translateConfigResourceList, dir, "*.xml");
+					this.scanResources(translateConfigResourceList, dir, "*.xml", charset);
 				}
 			}
 			sqlToyContext.setTranslateConfig(translateConfigResourceList.stream().collect(Collectors.joining(",")));
@@ -512,23 +513,26 @@ public class SqltoyAutoConfiguration {
 	 * @param resList
 	 * @param dir
 	 * @param suffix
+	 * @param charset
 	 * @throws IOException
 	 */
-	private void scanResources(List<String> resList, String dir, String suffix) throws IOException {
+	private void scanResources(List<String> resList, String dir, String suffix, String charset) throws IOException {
 		dir += (dir.endsWith("/") ? "" : "/") + "**/" + suffix;
 		Resource[] resources = resourcePatternResolver
 				.getResources(dir.replaceFirst("classpath:", ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX));
 		// 遍历资源目录树
 		URL url;
 		String[] strs;
+		String path;
 		for (Resource resource : resources) {
 			url = resource.getURL();
+			path = url.getPath();
 			if ("jar".equals(url.getProtocol())) {
-				strs = url.getPath().split("!/");
-				resList.add(strs[strs.length - 1]);
-			} else {
-				resList.add(url.getPath());
+				strs = path.split("!/");
+				path = strs[strs.length - 1];
 			}
+			resList.add(path.replaceAll("%23", "#").replaceAll("%25", "%").replaceAll("%26", "&").replaceAll("%2B", "+")
+					.replaceAll("%3D", "=").replaceAll("%20", " ").replaceAll("%2E", ".").replaceAll("%3A", ":"));
 		}
 	}
 
