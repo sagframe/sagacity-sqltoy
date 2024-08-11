@@ -49,7 +49,7 @@ public class ScanEntityAndSqlResource {
 
 	// 常见路径中的特殊字符
 	private static final String[][] SPECIALCHARACTERS = new String[][] { { "%20", " " }, { "%25", "%" }, { "%23", "#" },
-			{ "%5B", "[" }, { "%5D", "]" } };
+			{ "%5B", "[" }, { "%5D", "]" }, { "%2E", "." } };
 
 	/**
 	 * @todo 从指定包package中获取所有的sqltoy实体对象(意义已经不大,entity类目前已经改为在使用时加载的解析模式)

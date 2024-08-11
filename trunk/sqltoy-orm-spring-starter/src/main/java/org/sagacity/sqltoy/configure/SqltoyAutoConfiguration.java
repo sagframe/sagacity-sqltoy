@@ -514,6 +514,7 @@ public class SqltoyAutoConfiguration {
 	 * @param resList
 	 * @param dir
 	 * @param suffix
+	 * @param charset
 	 * @throws IOException
 	 */
 	private void scanResources(List<String> resList, String dir, String suffix, String charset) throws IOException {
