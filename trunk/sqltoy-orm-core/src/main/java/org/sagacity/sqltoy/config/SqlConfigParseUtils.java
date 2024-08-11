@@ -145,7 +145,8 @@ public class SqlConfigParseUtils {
 	// sql不等于
 	public final static Pattern NOT_EQUAL_PATTERN = Pattern.compile("(\\!\\=|\\<\\>|\\^\\=)\\s*$");
 	public final static Pattern WHERE_PATTERN = Pattern.compile("(?i)\\Wwhere\\W");
-
+	public final static String MORE_IN_FIELDS_REGEX = "[\\s\\(\\)\\}\\{\\]\\[]";
+	public final static String NOT_IN_REGEX = "\\s*not$";
 	// 利用宏模式来完成@loop循环处理
 	private static Map<String, AbstractMacro> macros = new HashMap<String, AbstractMacro>();
 
@@ -791,7 +792,10 @@ public class SqlConfigParseUtils {
 				// 直接组织好的(?,?,?) 语句
 				if (commTypeCnt == paramCnt) {
 					partSql = StringUtil.loopAppendWithSign(ARG_NAME, ",", paramCnt);
-					if (StringUtil.matches(m.group().trim(), "(\\s*\\)){2}$")) {
+					// 参数非数组(全部为null也是一种特例场景) in 后面是(()) 形式，要额外增加()，后面in ("+partSql+") 重新构成双括号
+					// 是(t1.a,t1.b) in (?,?) 形式,也需要补充一层括号()
+					if (StringUtil.matches(m.group().trim(), "(\\(\\s*){2}")
+							|| isMoreFieldIn(queryStr.substring(start, m.start()))) {
 						partSql = "(".concat(partSql).concat(")");
 					}
 				} else {
@@ -907,7 +911,7 @@ public class SqlConfigParseUtils {
 	private static String wrapOverSizeInSql(String sqlPart, String loopArgs, int paramsSize) {
 		String sql = sqlPart.trim();
 		// 判断是否 t.field not in (?) 模式
-		int notIndex = StringUtil.matchIndex(sql.toLowerCase(), "\\s*not$");
+		int notIndex = StringUtil.matchIndex(sql.toLowerCase(), NOT_IN_REGEX);
 		boolean isNotIn = false;
 		if (notIndex > 0) {
 			isNotIn = true;
@@ -917,18 +921,18 @@ public class SqlConfigParseUtils {
 		sql = " ".concat(sql);
 		int paramIndex;
 		String paramName;
-		String regex = "[\\s\\(\\)\\}\\{\\]\\[]";
+		// MORE_IN_FIELDS_REGEX = "[\\s\\(\\)\\}\\{\\]\\[]";
 		// in 前面的参数可能是(t.field||'') 或concat(t.field1,t.field2),确保精准的切取到参数
 		if (sql.trim().endsWith(")")) {
 			String reverseSql = new StringBuilder(sql).reverse().toString();
 			// "concat(a,b)" 反转后 ")b,a(tacnoc" 找到对称的(符号位置
 			int symIndex = StringUtil.getSymMarkIndex(")", "(", reverseSql, 0);
 			int start = sql.length() - symIndex - 1;
-			paramIndex = StringUtil.matchLastIndex(sql.substring(0, start), regex) + 1;
+			paramIndex = StringUtil.matchLastIndex(sql.substring(0, start), MORE_IN_FIELDS_REGEX) + 1;
 			paramName = sql.substring(paramIndex);
 		} else {
 			// 提取出sql in 前面的实际字段名称(空白、括号等),如: and t.order_id 结果:t.order_id
-			paramIndex = StringUtil.matchLastIndex(sql, regex) + 1;
+			paramIndex = StringUtil.matchLastIndex(sql, MORE_IN_FIELDS_REGEX) + 1;
 			paramName = sql.substring(paramIndex);
 		}
 		sql = sql.substring(0, paramIndex);
@@ -959,6 +963,42 @@ public class SqlConfigParseUtils {
 		}
 		result.append(") ");
 		return result.toString();
+	}
+
+	/**
+	 * @TODO 判断sql是否是 (t.id,t.name) in (?,?) 多字段in场景
+	 * @param sqlPart
+	 * @return
+	 */
+	private static boolean isMoreFieldIn(String sqlPart) {
+		String sql = sqlPart.trim();
+		// 判断是否 t.field not in (?) 模式
+		int notIndex = StringUtil.matchIndex(sql.toLowerCase(), NOT_IN_REGEX);
+		if (notIndex > 0) {
+			// 剔除掉not和not前面的空白
+			sql = sql.substring(0, notIndex);
+		}
+		sql = " ".concat(sql);
+		int paramIndex;
+		String paramName;
+		// MORE_IN_FIELDS_REGEX = "[\\s\\(\\)\\}\\{\\]\\[]";
+		// in 前面的参数可能是(t.field||'') 或concat(t.field1,t.field2),确保精准的切取到参数
+		if (sql.trim().endsWith(")")) {
+			String reverseSql = new StringBuilder(sql).reverse().toString();
+			// "concat(a,b)" 反转后 ")b,a(tacnoc" 找到对称的(符号位置
+			int symIndex = StringUtil.getSymMarkIndex(")", "(", reverseSql, 0);
+			int start = sql.length() - symIndex - 1;
+			paramIndex = StringUtil.matchLastIndex(sql.substring(0, start), MORE_IN_FIELDS_REGEX) + 1;
+			paramName = sql.substring(paramIndex);
+		} else {
+			// 提取出sql in 前面的实际字段名称(空白、括号等),如: and t.order_id 结果:t.order_id
+			paramIndex = StringUtil.matchLastIndex(sql, MORE_IN_FIELDS_REGEX) + 1;
+			paramName = sql.substring(paramIndex);
+		}
+		if (paramName.contains(",")) {
+			return true;
+		}
+		return false;
 	}
 
 	/**
