@@ -379,8 +379,11 @@ public class EntityMeta implements Serializable {
 				colName = bizIdRelatedColumns[i].toLowerCase();
 				if (fieldIndexs.containsKey(colName)) {
 					this.bizIdRelatedColIndex[i] = fieldIndexs.get(colName);
-				} else {
+				} else if (fieldIndexs.containsKey(colName.replace("_", ""))) {
 					this.bizIdRelatedColIndex[i] = fieldIndexs.get(colName.replace("_", ""));
+				} else {
+					throw new IllegalArgumentException(entityClass.getName() + "业务主键relatedColumns定义的:["
+							+ bizIdRelatedColumns[i] + "]属性不存在,请检查!");
 				}
 			}
 		}
