@@ -27,6 +27,7 @@ import com.alibaba.ttl.TransmittableThreadLocal;
  * @version v1.0,Date:2015年6月12日
  * @modify {Date:2020-06-15,改进sql日志输出,将条件参数带入到sql中输出，便于开发调试}
  * @modify {Date:2020-08-12,为日志输出增加统一uid,便于辨别同一组执行语句}
+ * @modify {Date:2024-07-18,强化对首个业务代码位置的定位,支持aop场景}
  */
 public class SqlExecuteStat {
 	/**

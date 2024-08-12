@@ -72,6 +72,7 @@ import org.slf4j.LoggerFactory;
  * @modify Date:2017-6-14 {修复针对阿里的druid数据库datasource针对clob类型处理的错误}
  * @modify Date:2019-7-5 剔除对druid clob bug的支持(druid 1.1.10 已经修复)
  * @modify Date:2020-06-18 用BeanUtil代替BeanInfo中getWriteMethod,完成对象属性赋值
+ * @modify Date:2024-07-12 优化sql注释剔除的处理,兼容sql中存在/* 但没有对应收尾--*\/符号的场景
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class SqlUtil {

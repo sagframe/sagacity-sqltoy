@@ -65,6 +65,8 @@ import org.slf4j.LoggerFactory;
  * @modify {Date:2023-08-25 支持itemList[0].fieldName或itemList[0].item.name 形式传参 }
  * @modify {Date:2024-03-22
  *         优化getSqlParamsName、processNamedParamsQuery方法，优化了参数名称匹配，设置了匹配偏移量 }
+ * @modify {Date:2024-08-10 修复(t.id,t.type) in (:list.id,:list.type)
+ *         参数都为null时自动补全双括号(t.id,t.type) in ((null,null))}
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class SqlConfigParseUtils {
@@ -145,7 +147,9 @@ public class SqlConfigParseUtils {
 	// sql不等于
 	public final static Pattern NOT_EQUAL_PATTERN = Pattern.compile("(\\!\\=|\\<\\>|\\^\\=)\\s*$");
 	public final static Pattern WHERE_PATTERN = Pattern.compile("(?i)\\Wwhere\\W");
+	// (t.id,t.type) in (:list.id,:list.type) 提取 t.id,t.type 用途
 	public final static String MORE_IN_FIELDS_REGEX = "[\\s\\(\\)\\}\\{\\]\\[]";
+	// (t.id,t.type) in (:list.id,:list.type) 语句判断是否是not in
 	public final static String NOT_IN_REGEX = "\\s*not$";
 	// 利用宏模式来完成@loop循环处理
 	private static Map<String, AbstractMacro> macros = new HashMap<String, AbstractMacro>();
@@ -966,6 +970,8 @@ public class SqlConfigParseUtils {
 	}
 
 	/**
+	 * add 2024-08-10
+	 * 
 	 * @TODO 判断sql是否是 (t.id,t.name) in (?,?) 多字段in场景
 	 * @param sqlPart
 	 * @return

@@ -77,6 +77,7 @@ import org.slf4j.LoggerFactory;
  * @modify Date:2016-12-13 {对行转列分类参照集合进行了排序}
  * @modify Date:2020-05-29 {将脱敏和格式化转到calculate中,便于elastic和mongo查询提供同样的功能}
  * @modify Date:2024-03-15 {由俊华反馈，优化hiberarchySet支持逻辑业务主子关系，如单据中的创建人，审批人分别映射员工表}
+ * @modify Date:2024-08-08 {修复hiberarchySet方法中遗漏对主对象集合进行缓存翻译的缺陷}
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class ResultUtils {
