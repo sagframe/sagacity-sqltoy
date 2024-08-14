@@ -1,0 +1,5 @@
+ SELECT
+       CONCAT(CONCAT('mobile/report_mobile/*.do\?(*&){0,1}rptDeployVO.rptId=', RPT_ID), '*') URL,
+       ROLE_CODE
+ FROM A
+                        

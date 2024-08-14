@@ -87,6 +87,7 @@ import org.slf4j.LoggerFactory;
  * @modify {Date:2018-9-25,修复select和from对称判断问题,影响分页查询时剔除from之前语句构建select
  *         count(1) from错误}
  * @modify {Date:2024-3-22,修复分页取count记录剔除order by片段未剔除对应参数的缺陷}
+ * @modify {Date:2024-7-21 增加sqlInterceptor场景下，merge into on (条件) update set需要跳过on ()中存在的字段}
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class DialectUtils {
@@ -2048,7 +2049,7 @@ public class DialectUtils {
 				String sequence = entityMeta.getSequence() + ".nextval";
 				if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
 					pkStrategy = PKStrategy.SEQUENCE;
-					sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
+					sequence = entityMeta.getFieldMeta(entityMeta.getIdArray()[0]).getDefaultValue();
 				}
 				return DialectExtUtils.mergeIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 						pkStrategy, "dual", "nvl", sequence, OracleDialectUtils.isAssignPKValue(pkStrategy), tableName);
