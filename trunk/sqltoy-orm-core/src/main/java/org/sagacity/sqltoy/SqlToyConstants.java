@@ -281,11 +281,11 @@ public class SqlToyConstants {
 	}
 
 	/**
-	 * @todo 获取项目中在代码中编写的sql数量
+	 * @todo 获取项目中在代码中编写的sql数量，超过此阈值不纳入缓存
 	 * @return
 	 */
 	public static int getMaxCodeSqlCount() {
-		// 默认值为2000
+		// 默认值为2500
 		return Integer.parseInt(getKeyValue("sqltoy.max.code.sql.count", "2500"));
 	}
 
@@ -412,7 +412,7 @@ public class SqlToyConstants {
 	 * @return
 	 */
 	public static int getLoadAllBatchSize() {
-		// 默认值为100
+		// 默认值为1000
 		return Integer.parseInt(getKeyValue("sqltoy.loadAll.batchsize", "1000"));
 	}
 

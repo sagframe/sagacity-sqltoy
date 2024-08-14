@@ -186,8 +186,7 @@ public class KingbaseDialect implements Dialect {
 						String sequence = "NEXTVAL('" + entityMeta.getSequence() + "')";
 						// kingbase identity 是sequence的一种变化实现
 						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
-							String defaultValue = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0])
-									.getDefaultValue();
+							String defaultValue = entityMeta.getFieldMeta(entityMeta.getIdArray()[0]).getDefaultValue();
 							if (StringUtil.isNotBlank(defaultValue)) {
 								pkStrategy = PKStrategy.SEQUENCE;
 								sequence = "NEXTVAL('" + defaultValue + "')";
@@ -214,7 +213,7 @@ public class KingbaseDialect implements Dialect {
 						String sequence = "NEXTVAL('" + entityMeta.getSequence() + "')";
 						// kingbase identity 是sequence的一种变化实现
 						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
-							String defaultValue = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0])
+							String defaultValue = entityMeta.getFieldMeta(entityMeta.getIdArray()[0])
 									.getDefaultValue();
 							if (StringUtil.isNotBlank(defaultValue)) {
 								pkStrategy = PKStrategy.SEQUENCE;
@@ -336,7 +335,7 @@ public class KingbaseDialect implements Dialect {
 						String sequence = "NEXTVAL('" + entityMeta.getSequence() + "')";
 						// kingbase identity 是sequence的一种变化实现
 						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
-							String defaultValue = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0])
+							String defaultValue = entityMeta.getFieldMeta(entityMeta.getIdArray()[0])
 									.getDefaultValue();
 							if (StringUtil.isNotBlank(defaultValue)) {
 								pkStrategy = PKStrategy.SEQUENCE;

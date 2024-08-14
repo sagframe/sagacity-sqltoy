@@ -2049,7 +2049,7 @@ public class DialectUtils {
 				String sequence = entityMeta.getSequence() + ".nextval";
 				if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
 					pkStrategy = PKStrategy.SEQUENCE;
-					sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
+					sequence = entityMeta.getFieldMeta(entityMeta.getIdArray()[0]).getDefaultValue();
 				}
 				return DialectExtUtils.mergeIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 						pkStrategy, "dual", "nvl", sequence, OracleDialectUtils.isAssignPKValue(pkStrategy), tableName);

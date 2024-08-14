@@ -301,7 +301,7 @@ public class SqlConfigParseUtils {
 	}
 
 	/**
-	 * @TODO 剔除掉sql中的??特殊转义符号，避免对?传参的干扰
+	 * @TODO 用特殊字符替换掉sql中的??特殊转义符号，避免对?传参的干扰(最后再替换回来)
 	 * @param sql
 	 * @return
 	 */
@@ -422,7 +422,7 @@ public class SqlConfigParseUtils {
 	/**
 	 * @todo 提取sql中参数(:paramName)名称组成数组返回(去除重复)
 	 * @param queryStr
-	 * @param distinct
+	 * @param distinct 是否去除重复
 	 * @return
 	 */
 	public static String[] getSqlParamsName(String queryStr, boolean distinct) {

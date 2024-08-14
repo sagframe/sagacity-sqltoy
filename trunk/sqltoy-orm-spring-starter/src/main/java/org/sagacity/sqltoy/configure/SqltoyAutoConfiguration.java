@@ -57,6 +57,7 @@ import com.alibaba.ttl.threadpool.TtlExecutors;
  * @version v1.0, Date:2018年12月26日
  * @description sqltoy 自动配置类
  * @modify {Date:2020-2-20,完善配置支持es等,实现完整功能}
+ * @modify {Date:2024-8-10,修复项目文件路径存在空格等特殊符号场景下无法加载sql.xml文件的问题}
  */
 //@Configuration springboot2.x
 //@AutoConfiguration springboot3.x
@@ -65,9 +66,6 @@ import com.alibaba.ttl.threadpool.TtlExecutors;
 public class SqltoyAutoConfiguration {
 	@Autowired
 	private ApplicationContext applicationContext;
-
-	// @Autowired
-	// private SqlToyContextProperties properties;
 
 	@Autowired
 	private ResourcePatternResolver resourcePatternResolver;
