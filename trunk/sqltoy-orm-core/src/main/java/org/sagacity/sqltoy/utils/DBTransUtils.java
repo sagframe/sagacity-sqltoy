@@ -11,7 +11,7 @@ import org.sagacity.sqltoy.exception.DataAccessException;
 import com.alibaba.ttl.TransmittableThreadLocal;
 
 /**
- * 提供一个简易的事务控制器，供非spring等框架下进行快速测试
+ * 提供一个简易的事务控制器，供非spring等框架下使用或测试
  * 
  * @author zhongxuchen
  *
