@@ -2291,11 +2291,17 @@ public class BeanUtil {
 					cascadeModel.setMappedFields(oneToMany.mappedFields());
 					cascadeModel.setMappedType(
 							(Class) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0]);
+					if (StringUtil.isNotBlank(oneToMany.notNullField())) {
+						cascadeModel.setNotNullField(oneToMany.notNullField());
+					}
 				} else {
 					cascadeModel.setCascadeType(2);
 					cascadeModel.setFields(oneToOne.fields());
 					cascadeModel.setMappedFields(oneToOne.mappedFields());
 					cascadeModel.setMappedType(field.getType());
+					if (StringUtil.isNotBlank(oneToOne.notNullField())) {
+						cascadeModel.setNotNullField(oneToOne.notNullField());
+					}
 				}
 				result.add(cascadeModel);
 			}
