@@ -10,6 +10,7 @@ import javax.sql.DataSource;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DataSourceCallbackHandler;
+import org.sagacity.sqltoy.config.model.CaseType;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -754,5 +755,41 @@ public class DataSourceUtils {
 		default:
 			return "nvl";
 		}
+	}
+
+	/**
+	 * 
+	 * @param dbType
+	 * @return
+	 */
+	public static CaseType getReturnPrimaryKeyColumnCase(Integer dbType) {
+		String dialect = getDialect(dbType);
+		if (SqlToyConstants.dialectReturnPrimaryColumnCase != null) {
+			String caseType = SqlToyConstants.dialectReturnPrimaryColumnCase.get(dialect);
+			if (caseType != null) {
+				return CaseType.getCaseType(caseType);
+			}
+			// postgresql系列数据库默认转小写
+			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15) {
+				return CaseType.LOWER;
+			}
+		}
+		return CaseType.DEFAULT;
+	}
+
+	/**
+	 * @TODO 单行记录插入需要返回主键值时,主键字段名称是否需要大小写转换，postgresql要转小写
+	 * @param columnName
+	 * @param dbType
+	 * @return
+	 */
+	public static String getReturnPrimaryKeyColumn(String columnName, Integer dbType) {
+		CaseType caseType = getReturnPrimaryKeyColumnCase(dbType);
+		if (caseType == CaseType.UPPER) {
+			return columnName.toUpperCase();
+		} else if (caseType == CaseType.LOWER) {
+			return columnName.toLowerCase();
+		}
+		return columnName;
 	}
 }
