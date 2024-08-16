@@ -176,6 +176,11 @@ public class SqlToyContext {
 	private HashMap<String, ElasticEndpoint> elasticEndpoints = new HashMap<String, ElasticEndpoint>();
 
 	/**
+	 * 单记录保存采用identity、sequence主键策略，并返回主键值时，字段名称大小写处理(lower/upper)
+	 */
+	private IgnoreKeyCaseMap<String, String> dialectReturnPrimaryColumnCase = new IgnoreKeyCaseMap<String, String>();
+
+	/**
 	 * 默认为default
 	 */
 	private String defaultElastic = "default";
@@ -423,6 +428,9 @@ public class SqlToyContext {
 		// 设置方言映射(默认OSCAR==>gaussdb)
 		if (dialectMap != null && !dialectMap.isEmpty()) {
 			DataSourceUtils.dialectMap = dialectMap;
+		}
+		if (dialectReturnPrimaryColumnCase != null) {
+			SqlToyConstants.dialectReturnPrimaryColumnCase = dialectReturnPrimaryColumnCase;
 		}
 		// 设置默认非spring等框架下的连接获取处理
 		if (appContext == null && connectionFactory == null) {
@@ -1300,4 +1308,20 @@ public class SqlToyContext {
 	public void setFirstBizCodeTrace(FirstBizCodeTrace firstBizCodeTrace) {
 		this.firstBizCodeTrace = firstBizCodeTrace;
 	}
+
+	/**
+	 * @return the dialectReturnPrimaryColumnCase
+	 */
+	public IgnoreKeyCaseMap<String, String> getDialectReturnPrimaryColumnCase() {
+		return dialectReturnPrimaryColumnCase;
+	}
+
+	/**
+	 * @param dialectReturnPrimaryColumnCase the dialectReturnPrimaryColumnCase to
+	 *                                       set
+	 */
+	public void setDialectReturnPrimaryColumnCase(IgnoreKeyCaseMap<String, String> dialectReturnPrimaryColumnCase) {
+		this.dialectReturnPrimaryColumnCase = dialectReturnPrimaryColumnCase;
+	}
+
 }

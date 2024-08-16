@@ -29,6 +29,7 @@ import org.sagacity.sqltoy.model.IgnoreCaseSet;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.CollectionUtil;
+import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.DataSourceUtils.Dialect;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
@@ -130,8 +131,8 @@ public class ClickHouseDialectUtils {
 		final Integer[] paramsType = entityMeta.getFieldsTypeArray();
 		PreparedStatement pst = null;
 		if (isIdentity || isSequence) {
-			pst = conn.prepareStatement(insertSql,
-					new String[] { entityMeta.getColumnName(entityMeta.getIdArray()[0]) });
+			pst = conn.prepareStatement(insertSql, new String[] { DataSourceUtils
+					.getReturnPrimaryKeyColumn(entityMeta.getColumnName(entityMeta.getIdArray()[0]), dbType) });
 		} else {
 			pst = conn.prepareStatement(insertSql);
 		}

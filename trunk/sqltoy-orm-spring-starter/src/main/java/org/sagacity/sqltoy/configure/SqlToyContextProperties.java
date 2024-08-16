@@ -1,6 +1,7 @@
 package org.sagacity.sqltoy.configure;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -271,6 +272,11 @@ public class SqlToyContextProperties implements Serializable {
 	 * 业务代码调用点获取
 	 */
 	private String firstBizCodeTrace;
+
+	/**
+	 * 单记录保存采用identity、sequence主键策略，并返回主键值时，字段名称大小写处理(lower/upper)
+	 */
+	private HashMap<String, String> dialectReturnPrimaryColumnCase;
 
 	/**
 	 * @return the sqlResourcesDir
@@ -767,4 +773,18 @@ public class SqlToyContextProperties implements Serializable {
 		this.firstBizCodeTrace = firstBizCodeTrace;
 	}
 
+	/**
+	 * @return the dialectReturnPrimaryColumnCase
+	 */
+	public HashMap<String, String> getDialectReturnPrimaryColumnCase() {
+		return dialectReturnPrimaryColumnCase;
+	}
+
+	/**
+	 * @param dialectReturnPrimaryColumnCase the dialectReturnPrimaryColumnCase to
+	 *                                       set
+	 */
+	public void setDialectReturnPrimaryColumnCase(HashMap<String, String> dialectReturnPrimaryColumnCase) {
+		this.dialectReturnPrimaryColumnCase = dialectReturnPrimaryColumnCase;
+	}
 }
