@@ -22,6 +22,7 @@ import org.sagacity.sqltoy.dao.impl.SqlToyLazyDaoImpl;
 import org.sagacity.sqltoy.integration.ConnectionFactory;
 import org.sagacity.sqltoy.integration.impl.SpringAppContext;
 import org.sagacity.sqltoy.integration.impl.SpringConnectionFactory;
+import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.plugins.FilterHandler;
 import org.sagacity.sqltoy.plugins.FirstBizCodeTrace;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
@@ -273,6 +274,11 @@ public class SqltoyAutoConfiguration {
 		sqlToyContext.setUpdateTipCount(properties.getUpdateTipCount());
 		if (properties.getOverPageToFirst() != null) {
 			sqlToyContext.setOverPageToFirst(properties.getOverPageToFirst());
+		}
+		// 单记录保存采用identity、sequence主键策略，并返回主键值时，字段名称大小写处理(lower/upper)
+		if (properties.getDialectReturnPrimaryColumnCase() != null) {
+			sqlToyContext.setDialectReturnPrimaryColumnCase(
+					new IgnoreKeyCaseMap<>(properties.getDialectReturnPrimaryColumnCase()));
 		}
 		// 设置公共统一属性的处理器
 		String unfiyHandler = properties.getUnifyFieldsHandler();

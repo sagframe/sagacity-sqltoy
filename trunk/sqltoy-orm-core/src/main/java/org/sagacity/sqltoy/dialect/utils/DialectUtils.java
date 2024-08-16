@@ -87,7 +87,8 @@ import org.slf4j.LoggerFactory;
  * @modify {Date:2018-9-25,修复select和from对称判断问题,影响分页查询时剔除from之前语句构建select
  *         count(1) from错误}
  * @modify {Date:2024-3-22,修复分页取count记录剔除order by片段未剔除对应参数的缺陷}
- * @modify {Date:2024-7-21 增加sqlInterceptor场景下，merge into on (条件) update set需要跳过on ()中存在的字段}
+ * @modify {Date:2024-7-21 增加sqlInterceptor场景下，merge into on (条件) update
+ *         set需要跳过on ()中存在的字段}
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class DialectUtils {
@@ -1558,8 +1559,8 @@ public class DialectUtils {
 		final Integer[] paramsType = entityMeta.getFieldsTypeArray();
 		PreparedStatement pst = null;
 		if (isIdentity || isSequence) {
-			pst = conn.prepareStatement(realInsertSql,
-					new String[] { entityMeta.getColumnName(entityMeta.getIdArray()[0]) });
+			pst = conn.prepareStatement(realInsertSql, new String[] { DataSourceUtils
+					.getReturnPrimaryKeyColumn(entityMeta.getColumnName(entityMeta.getIdArray()[0]), dbType) });
 		} else {
 			pst = conn.prepareStatement(realInsertSql);
 		}

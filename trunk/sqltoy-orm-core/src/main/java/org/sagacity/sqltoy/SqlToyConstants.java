@@ -10,6 +10,7 @@ import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.utils.FileUtil;
 import org.sagacity.sqltoy.utils.IdUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -215,6 +216,9 @@ public class SqlToyConstants {
 	public static String localDateTimeFormat;
 
 	public static String localTimeFormat;
+
+	// 单记录保存采用identity、sequence主键策略，并返回主键值时，字段名称大小写处理(lower/upper)
+	public static IgnoreKeyCaseMap<String, String> dialectReturnPrimaryColumnCase = new IgnoreKeyCaseMap<String, String>();
 
 	/**
 	 * @todo 解析模板中的参数
