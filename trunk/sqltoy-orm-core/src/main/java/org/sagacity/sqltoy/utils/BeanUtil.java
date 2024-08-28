@@ -83,7 +83,7 @@ public class BeanUtil {
 	private static ConcurrentHashMap<Class, Integer> enumGetKeyExists = new ConcurrentHashMap<Class, Integer>();
 	private static ConcurrentHashMap<String, Class> enumClassMap = new ConcurrentHashMap<String, Class>();
 
-	// 枚举类型取key值的常用方法名称
+	// 枚举类型取key值的常用方法名称,枚举类中用getValue、getKey、getId等作为取值的都可自动完成映射
 	private static String[] enumKeys = { "value", "key", "code", "id", "status", "level", "type" };
 
 	// 静态方法避免实例化和继承
@@ -103,6 +103,7 @@ public class BeanUtil {
 		Object result = null;
 		Class enumClass = enumValue.getClass();
 		Method getKeyMethod;
+		//Map缓存，不会每次都循环
 		if (enumGetKeyExists.containsKey(enumClass)) {
 			getKeyMethod = enumGetKeyMethods.get(enumClass);
 			if (getKeyMethod != null) {
