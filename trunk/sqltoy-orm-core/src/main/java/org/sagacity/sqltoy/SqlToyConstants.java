@@ -217,7 +217,7 @@ public class SqlToyConstants {
 
 	public static String localTimeFormat;
 
-	// 单记录保存采用identity、sequence主键策略，并返回主键值时，字段名称大小写处理(lower/upper)
+	//单记录保存采用identity、sequence主键策略，并返回主键值时，字段名称大小写处理(lower/upper)
 	public static IgnoreKeyCaseMap<String, String> dialectReturnPrimaryColumnCase = new IgnoreKeyCaseMap<String, String>();
 
 	/**

@@ -1,17 +1,18 @@
 package org.sagacity.sqltoy.solon.integration;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+import javax.sql.DataSource;
+
 import org.noear.solon.core.BeanInjector;
 import org.noear.solon.core.VarHolder;
-import org.sagacity.sqltoy.solon.annotation.Db;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.dao.LightDao;
 import org.sagacity.sqltoy.dao.SqlToyLazyDao;
 import org.sagacity.sqltoy.service.SqlToyCRUDService;
 import org.sagacity.sqltoy.solon.DbManager;
-
-import javax.sql.DataSource;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import org.sagacity.sqltoy.solon.annotation.Db;
 
 /**
  * @author 夜の孤城
