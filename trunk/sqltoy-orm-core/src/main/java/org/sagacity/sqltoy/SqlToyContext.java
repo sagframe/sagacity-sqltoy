@@ -24,6 +24,7 @@ import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.model.OverTimeSql;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.plugins.FilterHandler;
+import org.sagacity.sqltoy.plugins.FirstBizCodeTrace;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.plugins.OverTimeSqlHandler;
 import org.sagacity.sqltoy.plugins.SqlInterceptor;
@@ -68,7 +69,7 @@ import com.alibaba.ttl.threadpool.TtlExecutors;
 //11、提供了在新增和修改操作过程中公共字段插入和修改，如:租户、创建人、创建时间、修改时间等
 //12、提供了统一数据权限传参和数据越权校验
 //13、提供了取top、取random记录、树形表结构构造和递归查询支持、updateSaveFetch/updateFetch单次交互完成修改和查询等实用的功能
-//14、sqltoy的update、save、saveAll、load 等crud操作规避了jpa的缺陷,参见update(entity,String...forceUpdateProps)和updateFetch、updateSaveFetch
+//14、sqltoy的update、save、saveAll、load 等对象crud操作并规避了jpa的缺陷,参见update(entity,String...forceUpdateProps)和updateFetch、updateSaveFetch
 //15、提供了极为人性化的条件处理:排它性条件、日期条件加减和提取月末月初处理等
 //16、提供了查询结果日期、数字格式化、安全脱敏处理，让复杂的事情变得简单，大幅简化sql和结果的二次处理工作
 //17、提供了SqlInterceptor，可自行定义sql拦截器，用于类似租户过滤、sql注入的校验等
@@ -173,6 +174,11 @@ public class SqlToyContext {
 	 * es的地址配置
 	 */
 	private HashMap<String, ElasticEndpoint> elasticEndpoints = new HashMap<String, ElasticEndpoint>();
+
+	/**
+	 * 单记录保存采用identity、sequence主键策略，并返回主键值时，字段名称大小写处理(lower/upper)
+	 */
+	private IgnoreKeyCaseMap<String, String> dialectReturnPrimaryColumnCase = new IgnoreKeyCaseMap<String, String>();
 
 	/**
 	 * 默认为default
@@ -399,6 +405,11 @@ public class SqlToyContext {
 	private DialectDDLGenerator dialectDDLGenerator;
 
 	/**
+	 * 自定义获取业务代码调用点
+	 */
+	private FirstBizCodeTrace firstBizCodeTrace;
+
+	/**
 	 * @todo 初始化
 	 * @throws Exception
 	 */
@@ -411,9 +422,15 @@ public class SqlToyContext {
 		ReservedWordsUtil.put(reservedWords);
 		// 初始化方言对应的类别代码，避免线程安全
 		DataSourceUtils.initialize();
+		if (firstBizCodeTrace != null) {
+			SqlExecuteStat.firstBizCodeTrace = firstBizCodeTrace;
+		}
 		// 设置方言映射(默认OSCAR==>gaussdb)
 		if (dialectMap != null && !dialectMap.isEmpty()) {
 			DataSourceUtils.dialectMap = dialectMap;
+		}
+		if (dialectReturnPrimaryColumnCase != null) {
+			SqlToyConstants.dialectReturnPrimaryColumnCase = dialectReturnPrimaryColumnCase;
 		}
 		// 设置默认非spring等框架下的连接获取处理
 		if (appContext == null && connectionFactory == null) {
@@ -427,9 +444,8 @@ public class SqlToyContext {
 		scriptLoader.initialize(this.debug, delayCheckSeconds, scriptCheckIntervalSeconds, breakWhenSqlRepeat);
 		// 初始化翻译器,update 2021-1-23 增加caffeine缓存支持
 		if (translateCacheManager == null && "caffeine".equalsIgnoreCase(this.cacheType)) {
-			translateManager.initialize(this,
-					(TranslateCacheManager) Class.forName(translateCaffeineManagerClass).newInstance(),
-					delayCheckSeconds);
+			translateManager.initialize(this, (TranslateCacheManager) Class.forName(translateCaffeineManagerClass)
+					.getDeclaredConstructor().newInstance(), delayCheckSeconds);
 		} else {
 			translateManager.initialize(this, translateCacheManager, delayCheckSeconds);
 		}
@@ -756,6 +772,8 @@ public class SqlToyContext {
 			this.dialect = Dialect.SQLITE;
 		} else if (tmp.startsWith(Dialect.GAUSSDB)) {
 			this.dialect = Dialect.GAUSSDB;
+		} else if (tmp.startsWith(Dialect.MOGDB)) {
+			this.dialect = Dialect.MOGDB;
 		} else if (tmp.startsWith(Dialect.MARIADB)) {
 			this.dialect = Dialect.MARIADB;
 		} else if (tmp.startsWith(Dialect.CLICKHOUSE)) {
@@ -1286,4 +1304,24 @@ public class SqlToyContext {
 	public void setDialectDDLGenerator(DialectDDLGenerator dialectDDLGenerator) {
 		this.dialectDDLGenerator = dialectDDLGenerator;
 	}
+
+	public void setFirstBizCodeTrace(FirstBizCodeTrace firstBizCodeTrace) {
+		this.firstBizCodeTrace = firstBizCodeTrace;
+	}
+
+	/**
+	 * @return the dialectReturnPrimaryColumnCase
+	 */
+	public IgnoreKeyCaseMap<String, String> getDialectReturnPrimaryColumnCase() {
+		return dialectReturnPrimaryColumnCase;
+	}
+
+	/**
+	 * @param dialectReturnPrimaryColumnCase the dialectReturnPrimaryColumnCase to
+	 *                                       set
+	 */
+	public void setDialectReturnPrimaryColumnCase(IgnoreKeyCaseMap<String, String> dialectReturnPrimaryColumnCase) {
+		this.dialectReturnPrimaryColumnCase = dialectReturnPrimaryColumnCase;
+	}
+
 }

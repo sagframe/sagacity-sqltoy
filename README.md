@@ -46,17 +46,17 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
 # 最新版本 
-* 5.6.7 LTS (jdk17+/springboot3.x)/5.6.7.jre8 (兼容5.2.x/5.3.x版本)      发版日期: 2024-5-20
+* 5.6.20 LTS (jdk17+/springboot3.x)/5.6.20.jre8 (兼容5.2.x/5.3.x版本)      发版日期: 2024-8-16
 ```xml
 <dependency>
 	<groupId>com.sagframe</groupId>
 	<artifactId>sagacity-sqltoy-spring-starter</artifactId>
 	<!-- solon 适配版本 <artifactId>sagacity-sqltoy-solon-plugin</artifactId> -->
-        <!-- jdk8 对应的版本号为：5.6.7.jre8 -->
-	<version>5.6.7</version>
+        <!-- jdk8 对应的版本号为：5.6.20.jre8 -->
+	<version>5.6.20</version>
 </dependency>
 ```
-* 5.2.104 LTS (jdk1.8+)                 发版日期: 2024-5-11
+* 5.2.106 LTS (jdk1.8+)                 发版日期: 2024-7-12
 
 # 1. 前言
 ## 1.1 sqltoy-orm是什么
@@ -84,7 +84,7 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 * 提供了大量辅助功能:数据脱敏、格式化、条件参数预处理等
 
 ### 支持多种数据库
-* 常规的mysql、oracle、db2、postgresql、 sqlserver、dm、kingbase、sqlite、h2、 oceanBase、polardb、gaussdb、tidb、oscar(神通)、瀚高
+* 常规的mysql、oracle、db2、postgresql、 sqlserver、dm、kingbase、sqlite、h2、 oceanBase、polardb、gaussdb、tidb、oscar(神通)、瀚高、mogdb
 * 支持分布式olap数据库: clickhouse、StarRocks、greenplum、impala(kudu)
 * 支持elasticsearch、mongodb
 * 所有基于sql和jdbc 各类数据库查询

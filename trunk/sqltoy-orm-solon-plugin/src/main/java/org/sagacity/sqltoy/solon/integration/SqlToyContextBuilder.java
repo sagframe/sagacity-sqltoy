@@ -18,7 +18,9 @@ import org.sagacity.sqltoy.config.SqlScriptLoader;
 import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.integration.AppContext;
 import org.sagacity.sqltoy.integration.ConnectionFactory;
+import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.plugins.FilterHandler;
+import org.sagacity.sqltoy.plugins.FirstBizCodeTrace;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.plugins.OverTimeSqlHandler;
 import org.sagacity.sqltoy.plugins.SqlInterceptor;
@@ -54,12 +56,12 @@ public class SqlToyContextBuilder {
 
 	/**
 	 * 路径切分且去空格去重
+	 * 
 	 * @param str
 	 * @return
 	 */
-	private Set<String> strSplitTrim(String str){
-		String[] strs = str.replaceAll("\\；", ",").replaceAll("\\，", ",").replaceAll("\\;", ",")
-				.split("\\,");
+	private Set<String> strSplitTrim(String str) {
+		String[] strs = str.replaceAll("\\；", ",").replaceAll("\\，", ",").replaceAll("\\;", ",").split("\\,");
 		Set<String> set = new TreeSet<>();
 		for (String subStr : strs) {
 			set.add(subStr.trim());
@@ -69,6 +71,7 @@ public class SqlToyContextBuilder {
 
 	/**
 	 * 扫描静态文件
+	 * 
 	 * @param resList
 	 * @param dir
 	 * @param suffix
@@ -89,47 +92,50 @@ public class SqlToyContextBuilder {
 			// "请检查sqltoy配置,是sqltoy作为前缀,而不是spring.sqltoy!\n正确范例:
 			// sqltoy.sqlResourcesDir=classpath:com/sagframe/modules");
 		}
-		//当aot模式下需要调整配置文件到具体的每个文件
+		// 当aot模式下需要调整配置文件到具体的每个文件
 		if (System.getProperty("org.graalvm.nativeimage.imagecode") != null) {
-			//1、sql文件配置重置
+			// 1、sql文件配置重置
 			String sqlResourcesDir = properties.getSqlResourcesDir();
-			//1.1、置空目录设置
-			properties.setSqlResourcesDir(null);
-			//1.2、遍历其具体的文件
+			// 1.1、置空目录设置
+			// properties.setSqlResourcesDir(null);
+			// 1.2、遍历其具体的文件
 			Set<String> sqlDirSet = this.strSplitTrim(sqlResourcesDir);
 			List<String> sqlResourceList = new CopyOnWriteArrayList<>();
 			for (String dir : sqlDirSet) {
 				SqlScriptLoader.checkSqlResourcesDir(dir);
 				this.scanResources(sqlResourceList, dir, "**\\.sql\\.xml");
 			}
-			//1.3、合并SqlResources
-			if(properties.getSqlResources() != null){
+			// 设置resourcesDir转换为了resourceList,不再做路径加载
+			SqlScriptLoader.setResourcesDirToList(true);
+			// 1.3、合并SqlResources
+			if (properties.getSqlResources() != null) {
 				for (String sqlResource : properties.getSqlResources()) {
 					sqlResourceList.add(sqlResource);
 				}
 			}
-			//1.4、重设置到sqlResources属性
+			// 1.4、重设置到sqlResources属性
 			properties.setSqlResources(sqlResourceList.toArray(String[]::new));
-			//2、重置翻译文件
+			// 2、重置翻译文件
 			String translateConfig = properties.getTranslateConfig();
-			if(translateConfig == null){
+			if (translateConfig == null) {
 				translateConfig = TranslateManager.defaultTranslateConfig;
 			}
-			//2.1、遍历其具体的文件
+			// 2.1、遍历其具体的文件
 			Set<String> translateConfigDirSet = this.strSplitTrim(translateConfig);
 			List<String> translateConfigResourceList = new CopyOnWriteArrayList<>();
 			for (String dir : translateConfigDirSet) {
-				if(dir.endsWith(".xml")){
+				if (dir.endsWith(".xml")) {
 					translateConfigResourceList.add(dir);
-				}else{
+				} else {
 					this.scanResources(translateConfigResourceList, dir, "**\\.xml");
 				}
 			}
-			//2.2、重新设置值
+			// 2.2、重新设置值
 			properties.setTranslateConfig(translateConfigResourceList.stream().collect(Collectors.joining(",")));
-			//输出日志
-			//System.out.println("a: " + Arrays.stream(properties.getSqlResources()).collect(Collectors.joining(",")));
-			//System.out.println("b: " + properties.getTranslateConfig());
+			// 输出日志
+			// System.out.println("a: " +
+			// Arrays.stream(properties.getSqlResources()).collect(Collectors.joining(",")));
+			// System.out.println("b: " + properties.getTranslateConfig());
 		}
 		SqlToyContext sqlToyContext = new SqlToyContext();
 
@@ -269,6 +275,11 @@ public class SqlToyContextBuilder {
 		if (properties.getOverPageToFirst() != null) {
 			sqlToyContext.setOverPageToFirst(properties.getOverPageToFirst());
 		}
+		// 单记录保存采用identity、sequence主键策略，并返回主键值时，字段名称大小写处理(lower/upper)
+		if (properties.getDialectReturnPrimaryColumnCase() != null) {
+			sqlToyContext.setDialectReturnPrimaryColumnCase(
+					new IgnoreKeyCaseMap<>(properties.getDialectReturnPrimaryColumnCase()));
+		}
 		// 设置公共统一属性的处理器
 		String unfiyHandler = properties.getUnifyFieldsHandler();
 		if (StringUtil.isNotBlank(unfiyHandler)) {
@@ -346,6 +357,18 @@ public class SqlToyContextBuilder {
 			} // 包名和类名称
 			else if (translateCacheManager.contains(".")) {
 				sqlToyContext.setTranslateCacheManager(ClassUtil.tryInstance(translateCacheManager));
+			}
+		}
+
+		// 自定义业务代码调用点
+		String firstBizCodeTrace = properties.getFirstBizCodeTrace();
+		if (StringUtil.isNotBlank(firstBizCodeTrace)) {
+			if (appContext.containsBean(firstBizCodeTrace)) {
+				sqlToyContext.setFirstBizCodeTrace((FirstBizCodeTrace) appContext.getBean(firstBizCodeTrace));
+			} // 包名和类名称
+			else if (firstBizCodeTrace.contains(".")) {
+				sqlToyContext.setFirstBizCodeTrace(
+						(FirstBizCodeTrace) Class.forName(firstBizCodeTrace).getDeclaredConstructor().newInstance());
 			}
 		}
 

@@ -52,7 +52,7 @@ public abstract class TranslateCacheManager {
 	 * @todo 将数据放入缓存
 	 * @param cacheModel
 	 * @param cacheName
-	 * @param cacheType   (默认为null，针对诸如数据字典类型的，对应字典类型)
+	 * @param cacheType  (默认为null，针对诸如数据字典类型的，对应字典类型)
 	 * @param cacheValue
 	 */
 	public abstract void put(TranslateConfigModel cacheModel, String cacheName, String cacheType,

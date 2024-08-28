@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package org.sagacity.sqltoy.plugins.ddl;
 
@@ -34,7 +34,7 @@ import org.slf4j.LoggerFactory;
  * @description 数据库表脚本创建、更新等操作
  * @author zhongxuchen
  * @version v1.0, Date:2023年7月13日
- * @modify 2023年7月13日,修改说明
+ * @modify 2023年7月13日, 修改说明
  */
 public class DDLFactory {
 	/**
@@ -53,6 +53,7 @@ public class DDLFactory {
 			break;
 		}
 		case DBType.GAUSSDB:
+		case DBType.MOGDB:
 		case DBType.POSTGRESQL:
 		case DBType.POSTGRESQL15: {
 			generator = new PostgreSqlDDLGenerator();

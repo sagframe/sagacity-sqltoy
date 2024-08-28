@@ -45,6 +45,9 @@ public class Instr extends IFunction {
 	 */
 	@Override
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
+		if (args == null || args.length == 0) {
+			return super.IGNORE;
+		}
 		String[] realArgs;
 		String funLow = functionName.toLowerCase();
 		if ("position".equals(funLow)) {
@@ -92,7 +95,8 @@ public class Instr extends IFunction {
 			}
 			return result.append(")").toString();
 		}
-		if (dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL15 || dialect == DBType.GAUSSDB) {
+		if (dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL15 || dialect == DBType.GAUSSDB
+				|| dialect == DBType.MOGDB) {
 			if ("position".equals(funLow)) {
 				return super.IGNORE;
 			}

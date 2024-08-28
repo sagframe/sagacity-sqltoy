@@ -32,7 +32,7 @@ public class CacheFilterModel implements Serializable {
 	 * 对比类型
 	 */
 	private String compareType = "eq";
-	
+
 	private Object[] compareValues;
 
 	/**
@@ -85,5 +85,4 @@ public class CacheFilterModel implements Serializable {
 		this.compareValues = compareValues;
 	}
 
-	
 }

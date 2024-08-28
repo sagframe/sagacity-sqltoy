@@ -39,13 +39,16 @@ public class Decode extends IFunction {
 	 */
 	@Override
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
+		if (args == null || args.length < 2) {
+			return super.IGNORE;
+		}
 		/*
 		 * if (dialect == DBType.MYSQL || dialect == DBType.MYSQL8) { return
 		 * wrapArgs("ELT", args); } else
 		 */
 		// oracle支持decode
 		if (dialect == DBType.ORACLE || dialect == DBType.DM || dialect == DBType.OCEANBASE
-				|| dialect == DBType.ORACLE11||dialect == DBType.H2) {
+				|| dialect == DBType.ORACLE11 || dialect == DBType.H2) {
 			return super.IGNORE;
 		}
 		// decode(param,a1,a11,a2,a21,other)

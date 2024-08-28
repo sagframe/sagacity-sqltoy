@@ -28,7 +28,7 @@ public class ToNumber extends IFunction {
 
 	@Override
 	public String dialects() {
-		return "db2,oracle,dm";
+		return ALL;
 	}
 
 	/*

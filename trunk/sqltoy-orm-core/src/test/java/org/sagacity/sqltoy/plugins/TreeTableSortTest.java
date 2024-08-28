@@ -13,7 +13,7 @@ import org.sagacity.sqltoy.config.model.TreeSortModel;
 import org.sagacity.sqltoy.plugins.calculator.TreeDataSort;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 
-import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson2.JSON;
 
 /**
  * @author zhongxuchen

@@ -5,6 +5,8 @@ package org.sagacity.sqltoy.utils;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -16,7 +18,7 @@ import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 
-import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson2.JSON;
 
 /**
  * @author zhongxuchen
@@ -182,19 +184,15 @@ public class StringUtilsTest {
 	}
 
 	@Test
-	public void testReplace2() {
-		String argValue = "111,2222";
-		String argTrim = argValue.replaceAll("\\s+", "");
-		if ((argTrim.indexOf(",") > 0 && !argTrim.endsWith(",") && SqlUtil.validateInArg(argTrim))
-				|| (argTrim.equals("''"))) {
-			System.err.println("[" + argValue + "]");
-		}
+	public void testReplace2() throws UnsupportedEncodingException {
+		String argValue = "/D:/personal/sqltoy/sqltoy%20&+quick中start/target/classes/com/sqltoy/quickstart/sql/sqltoy-quickstart.sql.xml";
+		System.err.println(URLDecoder.decode(argValue, "GBK"));
 
 	}
 
 	@Test
 	public void testMatchInclude() {
-		Map<String, Object> sqlCache =new HashMap<>();
+		Map<String, Object> sqlCache = new HashMap<>();
 		System.err.println((SqlToyConfig) sqlCache.get("test_id"));
 		String sql = "select * from table @include(id=\"adb\")";
 		System.err.println(StringUtil.matches(sql, SqlToyConstants.INCLUDE_PATTERN));
@@ -202,9 +200,9 @@ public class StringUtilsTest {
 		System.err.println(StringUtil.matches(sql, SqlToyConstants.INCLUDE_PARAM_PATTERN));
 		sql = "select * from table @include( :itemList )";
 		System.err.println(StringUtil.matches(sql, SqlToyConstants.INCLUDE_PARAM_PATTERN));
-		String tmp="select from ";
+		String tmp = "select from ";
 		if (StringUtil.matches(" " + tmp, "(?i)\\Wselect\\W") && StringUtil.matches(tmp, "(?i)\\Wfrom\\W")) {
-			System.err.println("ddd"+true);
+			System.err.println("ddd" + true);
 		}
 	}
 }

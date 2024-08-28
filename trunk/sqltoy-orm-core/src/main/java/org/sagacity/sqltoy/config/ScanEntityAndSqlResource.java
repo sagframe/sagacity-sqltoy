@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
  * @modify {Date:2017-10-28,修改getResourceUrls方法,返回枚举数组,修复maven做单元测试时只检测testClass路径的问题}
  * @modify {Date:2019-09-23,剔除根据方言剔除非本方言sql文件的逻辑,实践证明这个功能价值很低}
  * @modify {Date:2020-03-13,调整sql加载策略,jar包中的优先加载,classes下面的加载顺序在jar后面,便于增量发版覆盖}
+ * @modify {Date:2024-08-10,增加了文件路径存在空格等特殊符号的处理}
  */
 @SuppressWarnings({ "unchecked", "rawtypes" })
 public class ScanEntityAndSqlResource {
@@ -46,6 +47,10 @@ public class ScanEntityAndSqlResource {
 	private static final String CLASSPATH = "classpath:";
 	private static final String JAR = "jar";
 	private static final String RESOURCE = "resource";
+
+	// 常见路径中的特殊字符
+	private static final String[][] SPECIALCHARACTERS = new String[][] { { "%20", " " }, { "%25", "%" }, { "%23", "#" },
+			{ "%5B", "[" }, { "%5D", "]" }, { "%2E", "." } };
 
 	/**
 	 * @todo 从指定包package中获取所有的sqltoy实体对象(意义已经不大,entity类目前已经改为在使用时加载的解析模式)
@@ -248,7 +253,7 @@ public class ScanEntityAndSqlResource {
 								}
 							}
 						} else if (url.getProtocol().equals(RESOURCE)) {
-							if(!result.contains(realRes) && realRes.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)){
+							if (!result.contains(realRes) && realRes.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)) {
 								result.add(realRes);
 							}
 						} else {
@@ -281,7 +286,8 @@ public class ScanEntityAndSqlResource {
 									result.add(0, realRes);
 								}
 							} else if (url.getProtocol().equals(RESOURCE)) {
-								if(!result.contains(realRes) && realRes.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)){
+								if (!result.contains(realRes)
+										&& realRes.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)) {
 									result.add(realRes);
 								}
 							} else {
@@ -313,6 +319,21 @@ public class ScanEntityAndSqlResource {
 		}
 		if (!startClasspath) {
 			File file = new File(resource);
+			// 文件不存在,但存在%20 空格、%25 百分号的转义符号(适度兼容，路径中不要搞极端特殊的符号)
+			if (!file.exists()) {
+				String fileResource = resource;
+				boolean hasSpecChar = false;
+				for (String[] item : SPECIALCHARACTERS) {
+					if (fileResource.contains(item[0])) {
+						hasSpecChar = true;
+						fileResource = fileResource.replace(item[0], item[1]);
+					}
+				}
+				// 存在特殊字符，重新实例化文件
+				if (hasSpecChar) {
+					file = new File(fileResource);
+				}
+			}
 			if (file.exists()) {
 				Vector<URL> v = new Vector<URL>();
 				v.add(file.toURI().toURL());

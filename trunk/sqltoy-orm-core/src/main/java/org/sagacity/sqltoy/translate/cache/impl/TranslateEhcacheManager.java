@@ -81,12 +81,14 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 			// 缓存没有配置,自动创建缓存(不建议使用)
 			if (cache == null) {
 				ResourcePoolsBuilder resBuilder = ResourcePoolsBuilder.newResourcePoolsBuilder();
-				// 堆内内存大小(20000条)
+				// 堆内内存大小(默认10000条)
 				resBuilder = resBuilder.heap((cacheConfig.getHeap() < 1) ? 1000 : cacheConfig.getHeap(),
 						EntryUnit.ENTRIES);
+				//offHeap 堆外内存
 				if (cacheConfig.getOffHeap() > 0) {
 					resBuilder = resBuilder.offheap(cacheConfig.getOffHeap(), MemoryUnit.MB);
 				}
+				//disk 
 				if (cacheConfig.getDiskSize() > 0) {
 					resBuilder = resBuilder.disk(cacheConfig.getDiskSize(), MemoryUnit.MB, true);
 				}

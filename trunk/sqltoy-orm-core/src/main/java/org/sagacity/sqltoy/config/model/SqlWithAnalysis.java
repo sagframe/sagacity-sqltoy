@@ -126,7 +126,7 @@ public class SqlWithAnalysis implements Serializable {
 		String withAsMiddle;
 		String aliasParams;
 		int bracketIndex;
-		//WITH RECURSIVE search_graph(id, link, data, depth) AS 
+		// WITH RECURSIVE search_graph(id, link, data, depth) AS
 		if (withAsMatcher.find()) {
 			withAfter = "";
 			aliasParams = "";
@@ -155,7 +155,7 @@ public class SqlWithAnalysis implements Serializable {
 			}
 			ext = groupStr.substring(asIndex + 2, groupStr.indexOf("(", asIndex));
 			endWith = StringUtil.getSymMarkIndex("(", ")", tailSql, withAsMatcher.start() + asIndex);
-			withSqlBuffer.append(tailSql.substring(withAsMatcher.start()+1, endWith + 1));
+			withSqlBuffer.append(tailSql.substring(withAsMatcher.start() + 1, endWith + 1));
 			withSqlSet.add(new String[] { aliasTable, ext, tailSql.substring(withAsMatcher.end(), endWith), withAfter,
 					aliasParams });
 			tailSql = tailSql.substring(endWith + 1);

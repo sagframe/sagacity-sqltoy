@@ -1,6 +1,7 @@
 package org.sagacity.sqltoy.solon.configure;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.Map;
 
 public class SqlToyContextProperties implements Serializable {
@@ -99,7 +100,7 @@ public class SqlToyContextProperties implements Serializable {
 	 * 数据库方言参数配置
 	 */
 	private Map<String, String> dialectConfig;
-	
+
 	/**
 	 * 不同数据库方言的映射(OSCAR-->oracle)
 	 */
@@ -254,6 +255,16 @@ public class SqlToyContextProperties implements Serializable {
 	 * 是否基于实体注解动态生成表结构
 	 */
 	private Boolean autoDDL;
+
+	/**
+	 * 业务代码调用点获取
+	 */
+	private String firstBizCodeTrace;
+
+	/**
+	 * 单记录保存采用identity、sequence主键策略，并返回主键值时，字段名称大小写处理(lower/upper)
+	 */
+	private HashMap<String, String> dialectReturnPrimaryColumnCase;
 
 	/**
 	 * @return the sqlResourcesDir
@@ -748,4 +759,26 @@ public class SqlToyContextProperties implements Serializable {
 		this.dialectMap = dialectMap;
 	}
 
+	public String getFirstBizCodeTrace() {
+		return firstBizCodeTrace;
+	}
+
+	public void setFirstBizCodeTrace(String firstBizCodeTrace) {
+		this.firstBizCodeTrace = firstBizCodeTrace;
+	}
+
+	/**
+	 * @return the dialectReturnPrimaryColumnCase
+	 */
+	public HashMap<String, String> getDialectReturnPrimaryColumnCase() {
+		return dialectReturnPrimaryColumnCase;
+	}
+
+	/**
+	 * @param dialectReturnPrimaryColumnCase the dialectReturnPrimaryColumnCase to
+	 *                                       set
+	 */
+	public void setDialectReturnPrimaryColumnCase(HashMap<String, String> dialectReturnPrimaryColumnCase) {
+		this.dialectReturnPrimaryColumnCase = dialectReturnPrimaryColumnCase;
+	}
 }

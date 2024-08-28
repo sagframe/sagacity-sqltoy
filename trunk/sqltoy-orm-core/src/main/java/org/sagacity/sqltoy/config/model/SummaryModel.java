@@ -64,11 +64,11 @@ public class SummaryModel implements Serializable {
 	private boolean skipSingleRow = false;
 
 	private RoundingMode[] roundingModes;
-	
+
 	/**
 	 * 数据是否已经完成分组
 	 */
-	private boolean hasGrouped=true;
+	private boolean hasGrouped = true;
 
 	/**
 	 * @return the reverse
@@ -133,7 +133,7 @@ public class SummaryModel implements Serializable {
 	public void setLinkSign(String linkSign) {
 		this.linkSign = linkSign;
 	}
-	
+
 	public boolean isAveSkipNull() {
 		return aveSkipNull;
 	}
@@ -181,5 +181,5 @@ public class SummaryModel implements Serializable {
 	public void setHasGrouped(boolean hasGrouped) {
 		this.hasGrouped = hasGrouped;
 	}
-	
+
 }

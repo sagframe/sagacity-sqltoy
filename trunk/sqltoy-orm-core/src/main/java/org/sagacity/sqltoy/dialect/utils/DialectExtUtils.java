@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package org.sagacity.sqltoy.dialect.utils;
 
@@ -24,7 +24,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
  * @project sagacity-sqltoy
- * @description 将原本DialectUtils中的部分功能抽离出来,从而避免DialectUtils跟一些类之间的互相调用
+ * @description 将原本DialectUtils中的部分功能抽离出来, 从而避免DialectUtils跟一些类之间的互相调用
  * @author zhongxuchen
  * @version v1.0, Date:2020年7月30日
  * @modify 2022-10-19 修改processDefaultValue修复oracle、db2日期类型的支持
@@ -154,7 +154,7 @@ public class DialectExtUtils {
 	}
 
 	/**
-	 * @todo 统一对表字段默认值进行处理,主要针对merge into 等sql语句
+	 * @todo 统一对表字段默认值进行处理, 主要针对merge into 等sql语句
 	 * @param sql
 	 * @param dbType
 	 * @param fieldMeta
@@ -244,8 +244,9 @@ public class DialectExtUtils {
 					}
 				} else if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.POSTGRESQL
 						|| dbType == DBType.POSTGRESQL15 || dbType == DBType.DM || dbType == DBType.GAUSSDB
-						|| dbType == DBType.OCEANBASE || dbType == DBType.SQLITE || dbType == DBType.KINGBASE
-						|| dbType == DBType.SQLSERVER || dbType == DBType.TIDB || dbType == DBType.H2) {
+						|| dbType == DBType.MOGDB || dbType == DBType.OCEANBASE || dbType == DBType.SQLITE
+						|| dbType == DBType.KINGBASE || dbType == DBType.SQLSERVER || dbType == DBType.TIDB
+						|| dbType == DBType.H2) {
 					if (isCurrentTime) {
 						result = "CURRENT_TIMESTAMP";
 					}
@@ -462,7 +463,7 @@ public class DialectExtUtils {
 	}
 
 	/**
-	 * @TODO 针对postgresql\kingbase\guassdb等数据库
+	 * @TODO 针对postgresql\kingbase\guassdb\mogdb等数据库
 	 * @param unifyFieldsHandler
 	 * @param dbType
 	 * @param entityMeta
@@ -486,7 +487,8 @@ public class DialectExtUtils {
 		StringBuilder values = new StringBuilder(columnSize * 2 - 1);
 		if (dbType == DBType.GAUSSDB) {
 			sql.append("insert ignore into ");
-		} else {
+		} // mogdb支持insert into do nothing
+		else {
 			sql.append("insert into ");
 		}
 		sql.append(entityMeta.getSchemaTable(tableName, dbType));

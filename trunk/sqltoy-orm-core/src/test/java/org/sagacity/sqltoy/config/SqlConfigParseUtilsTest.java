@@ -2,7 +2,9 @@ package org.sagacity.sqltoy.config;
 
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -22,7 +24,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson2.JSON;
 
 public class SqlConfigParseUtilsTest {
 	private static DocumentBuilderFactory domFactory = DocumentBuilderFactory.newInstance();
@@ -247,7 +249,7 @@ public class SqlConfigParseUtilsTest {
 		String[] result = SqlConfigParseUtils.getSqlParamsName(sql, true);
 		System.err.println(JSON.toJSONString(result));
 	}
-	
+
 	@Test
 	public void testGetParamNames1() throws Exception {
 		String sql = "select * from sqltoy_fruit_order where fruit_name = :limitList[0].fruitName or fruit_name = :limitList[1].fruit_name or fruit_name = :limitList[2]";
@@ -392,7 +394,7 @@ public class SqlConfigParseUtilsTest {
 
 	@Test
 	public void testLike() throws Exception {
-		String sql = "select * from table t where t.name ilike :name and t.desc like :desc";
+		String sql = "select * from table t where t.name ilike N:name and t.desc like :desc";
 
 		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "name", "desc" },
 				new Object[] { "张三", "验证" });
@@ -451,5 +453,27 @@ public class SqlConfigParseUtilsTest {
 		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "roleId", "id" },
 				new Object[] { "a", null });
 		System.err.println(result.getSql());
+	}
+
+	//如何解决@loop() 循环中存在in (:ids) ids数据超过1000的问题，用@include(:sqlScript) 来替换loop,
+	@Test
+	public void testDynamicInclude() throws Exception {
+		//会先变成select * from view_lowcode_postion where 1=1 and equipId1 in (:equipId1) and equipId2 in (:equipId2)"
+		//当变成常规的in时候，sqltoy会自动解决in参数超过1000个的问题
+		String sql = "select * from view_lowcode_postion where 1=1 @include(:sqlScript)";
+		
+		// 演示，不具体赋值，结构就是List<Object[]>
+		List<Object[]> multiInArray = new ArrayList();
+		Map params = new HashMap();
+		//构造sqlScript，里面包含条件参数
+		String sqlScript = "";
+		for (int i = 0; i < multiInArray.size(); i++) {
+			sqlScript = sqlScript.concat("and emp.equipId"+i+ " in (:equipId" + i + ")");
+			//动态将sqlScript里面的条件参数和值放入map
+			params.put("equipId" + i, multiInArray.get(i));
+		}
+		params.put("sqlScript", sqlScript);
+		
+		
 	}
 }

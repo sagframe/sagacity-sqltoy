@@ -7,10 +7,10 @@ import java.util.regex.Pattern;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 
 /**
+ * @author zhongxuchen
+ * @version v1.0, Date:2020-05-06
  * @project sagacity-sqltoy
  * @description 用来处理sql中的数据库保留字
- * @author zhongxuchen
- * @version v1.0,Date:2020-05-06
  */
 public class ReservedWordsUtil {
 	private static HashSet<String> reservedWords = new HashSet<String>();
@@ -20,8 +20,8 @@ public class ReservedWordsUtil {
 	}
 
 	/**
-	 * @TODO 加载保留字,形成一个正则表达式
 	 * @param words
+	 * @TODO 加载保留字, 形成一个正则表达式
 	 */
 	public static void put(String words) {
 		if (StringUtil.isBlank(words)) {
@@ -46,10 +46,10 @@ public class ReservedWordsUtil {
 	}
 
 	/**
-	 * @TODO 处理框架基于对象操作生成的简单sql,对默认[]符号进行数据库转换
 	 * @param sql
 	 * @param dbType
 	 * @return
+	 * @TODO 处理框架基于对象操作生成的简单sql, 对默认[]符号进行数据库转换
 	 */
 	public static String convertSimpleSql(String sql, Integer dbType) {
 		if (reservedWords.isEmpty()) {
@@ -59,8 +59,8 @@ public class ReservedWordsUtil {
 			return sql.replaceAll("\\[", "`").replaceAll("\\]", "`");
 		}
 		if (dbType == DBType.ORACLE || dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15
-				|| dbType == DBType.DB2 || dbType == DBType.DM || dbType == DBType.GAUSSDB || dbType == DBType.OCEANBASE
-				|| dbType == DBType.ORACLE11) {
+				|| dbType == DBType.DB2 || dbType == DBType.DM || dbType == DBType.GAUSSDB || dbType == DBType.MOGDB
+				|| dbType == DBType.OCEANBASE || dbType == DBType.ORACLE11) {
 			return sql.replaceAll("\\[", "\"").replaceAll("\\]", "\"");
 		}
 		if (dbType == DBType.H2) {
@@ -74,10 +74,10 @@ public class ReservedWordsUtil {
 	}
 
 	/**
-	 * @TODO 转换单词
 	 * @param column
 	 * @param dbType
 	 * @return
+	 * @TODO 转换单词
 	 */
 	public static String convertWord(String column, Integer dbType) {
 		if (column == null) {
@@ -102,18 +102,19 @@ public class ReservedWordsUtil {
 			return "'".concat(column).concat("'");
 		}
 		if (dbType == DBType.ORACLE || dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15
-				|| dbType == DBType.KINGBASE || dbType == DBType.DB2 || dbType == DBType.GAUSSDB || dbType == DBType.DM
-				|| dbType == DBType.OCEANBASE || dbType == DBType.ORACLE11) {
+				|| dbType == DBType.KINGBASE || dbType == DBType.DB2 || dbType == DBType.GAUSSDB
+				|| dbType == DBType.MOGDB || dbType == DBType.DM || dbType == DBType.OCEANBASE
+				|| dbType == DBType.ORACLE11) {
 			return "\"".concat(column).concat("\"");
 		}
 		return column;
 	}
 
 	/**
-	 * @TODO 对整个sql进行保留字处理
 	 * @param sql
 	 * @param dbType
 	 * @return
+	 * @TODO 对整个sql进行保留字处理
 	 */
 	public static String convertSql(String sql, Integer dbType) {
 		if (reservedWords.isEmpty()) {
@@ -145,7 +146,8 @@ public class ReservedWordsUtil {
 			}
 			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.ORACLE
 					|| dbType == DBType.DB2 || dbType == DBType.KINGBASE || dbType == DBType.GAUSSDB
-					|| dbType == DBType.DM || dbType == DBType.OCEANBASE || dbType == DBType.ORACLE11) {
+					|| dbType == DBType.MOGDB || dbType == DBType.DM || dbType == DBType.OCEANBASE
+					|| dbType == DBType.ORACLE11) {
 				sqlBuff.append("\"").append(keyWord).append("\"");
 			} else if (dbType == DBType.SQLSERVER || dbType == DBType.SQLITE) {
 				sqlBuff.append("[").append(keyWord).append("]");
@@ -168,9 +170,9 @@ public class ReservedWordsUtil {
 	}
 
 	/**
-	 * @TODO 判断列名称是否是关键词
 	 * @param column
 	 * @return
+	 * @TODO 判断列名称是否是关键词
 	 */
 	public static boolean isKeyWord(String column) {
 		if (column == null) {

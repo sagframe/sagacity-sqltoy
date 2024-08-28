@@ -3,6 +3,7 @@ package org.sagacity.sqltoy.support;
 import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.sql.Connection;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -89,6 +90,7 @@ import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.BeanWrapper;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.DateUtil;
+import org.sagacity.sqltoy.utils.IdUtil;
 import org.sagacity.sqltoy.utils.MapperUtils;
 import org.sagacity.sqltoy.utils.QueryExecutorBuilder;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
@@ -500,7 +502,7 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected <T extends Serializable> T load(final T entity, final LockMode lockMode, final DataSource dataSource) {
-		return dialectFactory.load(sqlToyContext, entity, null, lockMode, this.getDataSource(dataSource));
+		return dialectFactory.load(sqlToyContext, entity, false, null, lockMode, this.getDataSource(dataSource));
 	}
 
 	/**
@@ -519,7 +521,7 @@ public class SqlToyDaoSupport {
 		if (cascades == null || cascades.length == 0) {
 			cascades = getEntityMeta(entity.getClass()).getCascadeTypes();
 		}
-		return dialectFactory.load(sqlToyContext, entity, cascades, lockMode, this.getDataSource(null));
+		return dialectFactory.load(sqlToyContext, entity, false, cascades, lockMode, this.getDataSource(null));
 	}
 
 	/**
@@ -529,7 +531,7 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected <T extends Serializable> List<T> loadAll(final List<T> entities, final LockMode lockMode) {
-		return dialectFactory.loadAll(sqlToyContext, entities, null, lockMode, this.getDataSource(null));
+		return dialectFactory.loadAll(sqlToyContext, entities, null, null, lockMode, this.getDataSource(null));
 	}
 
 	/**
@@ -569,18 +571,25 @@ public class SqlToyDaoSupport {
 			realIds = ids;
 		}
 		List<T> entities = BeanUtil.wrapEntities(sqlToyContext.getTypeHandler(), entityMeta, entityClass, realIds);
-		return dialectFactory.loadAll(sqlToyContext, entities, null, lockMode, this.getDataSource(null));
+		return dialectFactory.loadAll(sqlToyContext, entities, null, null, lockMode, this.getDataSource(null));
+	}
+
+	protected <T extends Serializable> List<T> loadAllCascade(final List<T> entities, final LockMode lockMode,
+			final Class... cascadeTypes) {
+		return loadAllCascade(entities, null, lockMode, cascadeTypes);
 	}
 
 	/**
 	 * @todo 批量对象级联加载,指定级联加载的子表
+	 * @param <T>
 	 * @param entities
+	 * @param onlySubTable
 	 * @param lockMode
 	 * @param cascadeTypes
 	 * @return
 	 */
-	protected <T extends Serializable> List<T> loadAllCascade(final List<T> entities, final LockMode lockMode,
-			final Class... cascadeTypes) {
+	protected <T extends Serializable> List<T> loadAllCascade(final List<T> entities, final Boolean onlySubTable,
+			final LockMode lockMode, final Class... cascadeTypes) {
 		if (entities == null || entities.isEmpty()) {
 			return entities;
 		}
@@ -588,7 +597,8 @@ public class SqlToyDaoSupport {
 		if (cascades == null || cascades.length == 0) {
 			cascades = getEntityMeta(entities.get(0).getClass()).getCascadeTypes();
 		}
-		return dialectFactory.loadAll(sqlToyContext, entities, cascades, lockMode, this.getDataSource(null));
+		return dialectFactory.loadAll(sqlToyContext, entities, onlySubTable, cascades, lockMode,
+				this.getDataSource(null));
 	}
 
 	protected <T> T loadBySql(final String sqlOrSqlId, final Map<String, Object> paramsMap, final Class<T> resultType) {
@@ -1459,7 +1469,7 @@ public class SqlToyDaoSupport {
 		if (distributeIdGenerator == null) {
 			try {
 				distributeIdGenerator = (DistributeIdGenerator) Class
-						.forName(sqlToyContext.getDistributeIdGeneratorClass()).newInstance();
+						.forName(sqlToyContext.getDistributeIdGeneratorClass()).getDeclaredConstructor().newInstance();
 				distributeIdGenerator.initialize(sqlToyContext.getAppContext());
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -1500,6 +1510,35 @@ public class SqlToyDaoSupport {
 		return idGenerator.getId(entityMeta.getTableName(), entityMeta.getBizIdSignature(),
 				entityMeta.getBizIdRelatedColumns(), relatedColValue, new Date(), businessIdType,
 				entityMeta.getBizIdLength(), entityMeta.getBizIdSequenceSize()).toString();
+	}
+
+	/**
+	 * @TODO 根据指定的表名、业务码，业务码的属性和值map，动态获取业务主键值 例如:generateBizId("sag_test",
+	 *       "HW@case(orderType,SALE,SC,BUY,PO)@day(yyMMdd)",
+	 *       MapKit.map("orderType", "SALE"), null, 12, 2);
+	 * @param tableName
+	 * @param signature    一个表达式字符串，支持@case(name,value1,then1,val2,then2)
+	 *                     和 @day(yyMMdd)或@day(yyyyMMdd)、@substr(name,start,length)
+	 *                     等
+	 * @param keyValues
+	 * @param bizDate      在signature为空时生效
+	 * @param length
+	 * @param sequenceSize
+	 * @return
+	 */
+	protected String generateBizId(String tableName, String signature, Map<String, Object> keyValues, LocalDate bizDate,
+			int length, int sequenceSize) {
+		if (distributeIdGenerator == null) {
+			try {
+				distributeIdGenerator = (DistributeIdGenerator) Class
+						.forName(sqlToyContext.getDistributeIdGeneratorClass()).getDeclaredConstructor().newInstance();
+				distributeIdGenerator.initialize(sqlToyContext.getAppContext());
+			} catch (Exception e) {
+				e.printStackTrace();
+				throw new DataAccessException("实例化分布式id产生器失败:" + e.getMessage());
+			}
+		}
+		return IdUtil.getId(distributeIdGenerator, tableName, signature, keyValues, bizDate, length, sequenceSize);
 	}
 
 	/**
