@@ -139,8 +139,8 @@ public class RowsChainRelative {
 						if (divedRowList.get(colIndex) != null) {
 							divedData = new BigDecimal(divedRowList.get(colIndex).toString());
 						}
-						if (divedData.equals(BigDecimal.ZERO)) {
-							divIsZero = divData.equals(BigDecimal.ZERO);
+						if (divedData.compareTo(BigDecimal.ZERO) == 0) {
+							divIsZero = divData.compareTo(BigDecimal.ZERO) == 0;
 							if (format == null) {
 								divRowList.set(colIndex + 1, divIsZero ? BigDecimal.ZERO : defaultValue);
 							} else {
@@ -182,8 +182,9 @@ public class RowsChainRelative {
 						if (divedRowList.get(colIndex) != null) {
 							divedData = new BigDecimal(divedRowList.get(colIndex).toString());
 						}
-						if (divedData.equals(BigDecimal.ZERO)) {
-							divIsZero = divData.equals(BigDecimal.ZERO);
+						// update 2024-08-30 divedData.equals(BigDecimal.ZERO) 存在bug
+						if (divedData.compareTo(BigDecimal.ZERO) == 0) {
+							divIsZero = divData.compareTo(BigDecimal.ZERO) == 0;
 							if (format == null) {
 								divRowList.set(colIndex + 1, divIsZero ? BigDecimal.ZERO : defaultValue);
 							} else {
