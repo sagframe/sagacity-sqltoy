@@ -113,8 +113,8 @@ public class ColsChainRelative {
 						if (rowList.get(divedIndex) != null) {
 							divedData = new BigDecimal(rowList.get(divedIndex).toString());
 						}
-						if (divedData.equals(BigDecimal.ZERO)) {
-							divIsZero = divData.equals(BigDecimal.ZERO);
+						if (divedData.compareTo(BigDecimal.ZERO) == 0) {
+							divIsZero = divData.compareTo(BigDecimal.ZERO) == 0;
 							// 插入(8-3+2+2)
 							if (isAppend) {
 								if (format == null) {

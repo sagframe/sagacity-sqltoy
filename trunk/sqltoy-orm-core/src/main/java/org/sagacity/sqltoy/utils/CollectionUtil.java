@@ -957,7 +957,7 @@ public class CollectionUtil {
 		for (SummaryColMeta colMeta : groupMeta.getSummaryCols()) {
 			sumValue = colMeta.getSumValue();
 			// 计算平均值
-			if (sumValue.equals(BigDecimal.ZERO)) {
+			if (sumValue.compareTo(BigDecimal.ZERO) == 0) {
 				aveValue = BigDecimal.ZERO;
 			} else {
 				if (colMeta.isAveSkipNull()) {
