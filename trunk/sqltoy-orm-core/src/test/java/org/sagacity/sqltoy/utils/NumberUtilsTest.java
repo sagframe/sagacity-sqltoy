@@ -43,4 +43,12 @@ public class NumberUtilsTest {
 		BigDecimal value1 = new BigDecimal(209);
 		System.err.println(NumberUtil.toCapitalMoney(value1));
 	}
+	
+	@Test
+	public void testDecimalCompare() {
+		BigDecimal value = new BigDecimal("0.00");
+		System.err.println(value.compareTo(BigDecimal.ZERO));
+		
+	
+	}
 }
