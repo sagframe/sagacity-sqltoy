@@ -58,7 +58,7 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 	<version>5.6.22</version>
 </dependency>
 ```
-* 5.2.106 LTS (jdk1.8+)                 发版日期: 2024-7-12
+* 5.2.107 LTS (jdk1.8+)                 发版日期: 2024-9-3
 
 # 1. 前言
 ## 1.1 sqltoy-orm是什么
