@@ -76,10 +76,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @project sqltoy-orm
- * @description 提供一些不同数据库都通用的逻辑处理,避免在各个数据库工具类中写重复代码
  * @author zhongxuchen
- * @version v1.0,Date:2014年12月26日
+ * @version v1.0, Date:2014年12月26日
+ * @project sqltoy-orm
+ * @description 提供一些不同数据库都通用的逻辑处理, 避免在各个数据库工具类中写重复代码
  * @modify {Date:2017-2-24,优化count sql处理逻辑,排除统计型查询导致的问题,本质统计性查询不应该用分页方式查询}
  * @modify {Date:2018-1-6,优化对数据库表字段默认值的处理,提供统一的处理方法}
  * @modify {Date:2018-1-22,增加业务主键生成赋值,同时对saveAll等操作返回生成的主键值映射到VO集合中}
@@ -87,6 +87,8 @@ import org.slf4j.LoggerFactory;
  * @modify {Date:2018-9-25,修复select和from对称判断问题,影响分页查询时剔除from之前语句构建select
  *         count(1) from错误}
  * @modify {Date:2024-3-22,修复分页取count记录剔除order by片段未剔除对应参数的缺陷}
+ * @modify {Date:2024-7-21 增加sqlInterceptor场景下，merge into on (条件) update
+ *         set需要跳过on ()中存在的字段}
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class DialectUtils {
@@ -130,6 +132,7 @@ public class DialectUtils {
 
 	private static final HashMap<String, String> QuesFilters = new HashMap<String, String>() {
 		private static final long serialVersionUID = 7135705054559913831L;
+
 		{
 			put("'", "'");
 			put("\"", "\"");
@@ -137,7 +140,6 @@ public class DialectUtils {
 	};
 
 	/**
-	 * @todo 处理分页sql的参数
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param queryExecutor
@@ -146,6 +148,7 @@ public class DialectUtils {
 	 * @param endIndex
 	 * @return
 	 * @throws Exception
+	 * @todo 处理分页sql的参数
 	 */
 	public static SqlToyResult wrapPageSqlParams(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, String pageSql, Object startIndex, Object endIndex, String dialect)
@@ -224,7 +227,6 @@ public class DialectUtils {
 	}
 
 	/**
-	 * @todo 实现普通的sql语句查询
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param sql
@@ -238,6 +240,7 @@ public class DialectUtils {
 	 * @param maxRows
 	 * @return
 	 * @throws Exception
+	 * @todo 实现普通的sql语句查询
 	 */
 	public static QueryResult findBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
 			final String sql, final Object[] paramsValue, final QueryExecutorExtend extend,
@@ -280,7 +283,6 @@ public class DialectUtils {
 	}
 
 	/**
-	 * @todo 实现普通的sql语句查询
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param sql
@@ -293,6 +295,7 @@ public class DialectUtils {
 	 * @param maxRows
 	 * @return
 	 * @throws Exception
+	 * @todo 实现普通的sql语句查询
 	 */
 	public static QueryResult updateFetchBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
 			final String sql, final Object[] paramsValue, final UpdateRowHandler updateRowHandler,
@@ -331,8 +334,6 @@ public class DialectUtils {
 	}
 
 	/**
-	 * @todo 通用的查询记录总数(包含剔除order by和智能判断是直接select count from ()
-	 *       还是直接剔除from之前的语句补充select count)
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param sql
@@ -342,6 +343,8 @@ public class DialectUtils {
 	 * @param dbType
 	 * @return
 	 * @throws Exception
+	 * @todo 通用的查询记录总数(包含剔除order by和智能判断是直接select count from ()
+	 *       还是直接剔除from之前的语句补充select count)
 	 */
 	public static Long getCountBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
 			final String sql, final Object[] paramsValue, final boolean isLastSql, final Connection conn,
@@ -479,7 +482,6 @@ public class DialectUtils {
 	}
 
 	/**
-	 * @todo 统一将查询的sql参数由?形式变成:named形式(分页和查询随机记录时)
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param queryExecutor
@@ -487,6 +489,7 @@ public class DialectUtils {
 	 * @param wrapNamed     只在分页场景下需要将?模式传参统一成:name模式，便于跟后面分页startIndex和endIndex参数结合，从而利用sql预编译功能
 	 * @return
 	 * @throws Exception
+	 * @todo 统一将查询的sql参数由?形式变成:named形式(分页和查询随机记录时)
 	 */
 	public static SqlToyConfig getUnifyParamsNamedConfig(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, String dialect, boolean wrapNamed) throws Exception {
@@ -571,10 +574,10 @@ public class DialectUtils {
 	/**
 	 * update 2020-08-15 增强对非条件参数?的判断处理
 	 *
-	 * @todo sql中替换?为:sagParamName+i形式,便于查询处理(主要针对分页和取随机记录的查询)
 	 * @param sql
 	 * @param startIndex
 	 * @return
+	 * @todo sql中替换?为:sagParamName+i形式,便于查询处理(主要针对分页和取随机记录的查询)
 	 */
 	public static SqlParamsModel convertParamsToNamed(String sql, int startIndex) {
 		SqlParamsModel sqlParam = new SqlParamsModel();
@@ -605,7 +608,6 @@ public class DialectUtils {
 	}
 
 	/**
-	 * @todo 执行批量保存或修改操作
 	 * @param sqlToyContext
 	 * @param entities
 	 * @param batchSize
@@ -618,6 +620,7 @@ public class DialectUtils {
 	 * @param autoCommit
 	 * @return
 	 * @throws Exception
+	 * @todo 执行批量保存或修改操作
 	 */
 	public static Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			EntityMeta entityMeta, String[] forceUpdateFields, GenerateSqlHandler generateSqlHandler,
@@ -696,7 +699,7 @@ public class DialectUtils {
 	}
 
 	/**
-	 * @todo 处理加工对象基于db2、oracle数据库的saveOrUpdateSql
+	 * @param sqlToyContext
 	 * @param unifyFieldsHandler
 	 * @param dbType
 	 * @param entityMeta
@@ -708,9 +711,10 @@ public class DialectUtils {
 	 * @param isAssignPK
 	 * @param tableName
 	 * @return
+	 * @todo 处理加工对象基于db2、oracle数据库的saveOrUpdateSql
 	 */
-	public static String getSaveOrUpdateSql(IUnifyFieldsHandler unifyFieldsHandler, Integer dbType,
-			EntityMeta entityMeta, PKStrategy pkStrategy, String[] forceUpdateFields, String fromTable,
+	public static String getSaveOrUpdateSql(SqlToyContext sqlToyContext, IUnifyFieldsHandler unifyFieldsHandler,
+			Integer dbType, EntityMeta entityMeta, PKStrategy pkStrategy, String[] forceUpdateFields, String fromTable,
 			String isNullFunction, String sequence, boolean isAssignPK, String tableName) {
 		String realTable = entityMeta.getSchemaTable(tableName, dbType);
 		// 在无主键的情况下产生insert sql语句
@@ -795,6 +799,9 @@ public class DialectUtils {
 		StringBuilder insertRejIdColValues = new StringBuilder();
 		// 是否全部是ID,匹配上则无需进行更新，只需将未匹配上的插入即可
 		boolean allIds = (entityMeta.getRejectIdFieldArray() == null);
+		// update 2024-7-21 增加sqlInterceptor场景下，merge into on (条件) update 需要跳过on 中存在的字段
+		IgnoreCaseSet tenantFields = getTenantFields(sqlToyContext.getSqlInterceptors(), entityMeta,
+				OperateType.saveOrUpdate);
 		if (!allIds) {
 			// update 操作
 			sql.append(SqlToyConstants.MERGE_UPDATE);
@@ -807,40 +814,49 @@ public class DialectUtils {
 				}
 			}
 			String defaultValue;
+			boolean ignoreUpdate = false;
+			boolean notFirst = false;
 			// update 只针对非主键字段进行修改
 			for (int i = 0; i < rejectIdColumnSize; i++) {
 				fieldMeta = entityMeta.getFieldMeta(entityMeta.getRejectIdFieldArray()[i]);
 				columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
+				ignoreUpdate = tenantFields.contains(fieldMeta.getFieldName());
 				// 修改字段
 				currentTimeStr = SqlUtil.getDBTime(dbType, fieldMeta, updateSqlTimeFields);
+				// 被统一sqlInterceptor中on 中增加了条件，update不能修改
+				if (!ignoreUpdate) {
+					if (notFirst) {
+						sql.append(",");
+					}
+					if (DBType.POSTGRESQL15 != dbType) {
+						sql.append(" ta.");
+					}
+					sql.append(columnName).append("=");
+					if (null != currentTimeStr && forceUpdateSqlTimeFields.contains(fieldMeta.getFieldName())) {
+						sql.append(currentTimeStr);
+					} else if (fupc.contains(columnName)) {
+						sql.append("tv.").append(columnName);
+					} else {
+						sql.append(isNullFunction);
+						sql.append("(tv.").append(columnName);
+						sql.append(",");
+						if (null != currentTimeStr) {
+							sql.append(currentTimeStr);
+						} else {
+							if (DBType.POSTGRESQL15 == dbType) {
+								sql.append(realTable + ".");
+							} else {
+								sql.append("ta.");
+							}
+							sql.append(columnName);
+						}
+						sql.append(")");
+					}
+					notFirst = true;
+				}
 				if (i > 0) {
-					sql.append(",");
 					insertRejIdCols.append(",");
 					insertRejIdColValues.append(",");
-				}
-				if (DBType.POSTGRESQL15 != dbType) {
-					sql.append(" ta.");
-				}
-				sql.append(columnName).append("=");
-				if (null != currentTimeStr && forceUpdateSqlTimeFields.contains(fieldMeta.getFieldName())) {
-					sql.append(currentTimeStr);
-				} else if (fupc.contains(columnName)) {
-					sql.append("tv.").append(columnName);
-				} else {
-					sql.append(isNullFunction);
-					sql.append("(tv.").append(columnName);
-					sql.append(",");
-					if (null != currentTimeStr) {
-						sql.append(currentTimeStr);
-					} else {
-						if (DBType.POSTGRESQL15 == dbType) {
-							sql.append(realTable + ".");
-						} else {
-							sql.append("ta.");
-						}
-						sql.append(columnName);
-					}
-					sql.append(")");
 				}
 				insertRejIdCols.append(columnName);
 				// 新增
@@ -921,7 +937,33 @@ public class DialectUtils {
 	}
 
 	/**
-	 * @todo 产生对象update的语句
+	 * @TODO 获取参与条件过滤的租户字段
+	 * @param sqlInterceptors
+	 * @param entityMeta
+	 * @param operateType
+	 * @return
+	 */
+	private static IgnoreCaseSet getTenantFields(List<SqlInterceptor> sqlInterceptors, EntityMeta entityMeta,
+			OperateType operateType) {
+		IgnoreCaseSet result = new IgnoreCaseSet();
+		if (sqlInterceptors == null || sqlInterceptors.isEmpty()) {
+			return result;
+		}
+		String[] fields;
+		for (SqlInterceptor sqlInterceptor : sqlInterceptors) {
+			fields = sqlInterceptor.tenantFieldNames(entityMeta, operateType);
+			if (fields != null) {
+				for (String str : fields) {
+					if (null != str) {
+						result.add(str);
+					}
+				}
+			}
+		}
+		return result;
+	}
+
+	/**
 	 * @param unifyFieldsHandler
 	 * @param dbType
 	 * @param entityMeta
@@ -929,6 +971,7 @@ public class DialectUtils {
 	 * @param forceUpdateFields
 	 * @param tableName          已经增加了schema
 	 * @return
+	 * @todo 产生对象update的语句
 	 */
 	private static String generateUpdateSql(IUnifyFieldsHandler unifyFieldsHandler, Integer dbType,
 			EntityMeta entityMeta, String nullFunction, String[] forceUpdateFields, String tableName) {
@@ -1015,7 +1058,6 @@ public class DialectUtils {
 	}
 
 	/**
-	 * @todo 加载获取单笔数据库记录
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param sql
@@ -1026,10 +1068,11 @@ public class DialectUtils {
 	 * @param dbType
 	 * @return
 	 * @throws Exception
+	 * @todo 加载获取单笔数据库记录
 	 */
 	public static Serializable load(final SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			EntityMeta entityMeta, Serializable entity, List<Class> cascadeTypes, Connection conn, final Integer dbType)
-			throws Exception {
+			EntityMeta entityMeta, Serializable entity, boolean onlySubTables, List<Class> cascadeTypes,
+			Connection conn, final Integer dbType) throws Exception {
 		Object[] pkValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getIdArray());
 		// 检查主键值是否合法
 		for (int i = 0; i < pkValues.length; i++) {
@@ -1038,31 +1081,38 @@ public class DialectUtils {
 						+ " load method must assign value for pk,null pk field is:" + entityMeta.getIdArray()[i]);
 			}
 		}
-		SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(sql, entityMeta.getIdArray(), pkValues, null);
-		// 加密字段解密
-		DecryptHandler decryptHandler = null;
-		if (entityMeta.getSecureColumns() != null) {
-			decryptHandler = new DecryptHandler(sqlToyContext.getFieldsSecureProvider(), entityMeta.getSecureColumns());
-		}
-		// 增加sql执行拦截器 update 2022-9-10
-		sqlToyResult = doInterceptors(sqlToyContext, sqlToyConfig, OperateType.load, sqlToyResult, entity.getClass(),
-				dbType);
-		QueryResult queryResult = findBySql(sqlToyContext, sqlToyConfig, sqlToyResult.getSql(),
-				sqlToyResult.getParamsValue(), null, decryptHandler, conn, dbType, 0, -1, -1);
-		List rows = queryResult.getRows();
+		SqlToyResult sqlToyResult = null;
 		Serializable result = null;
-		Class entityClass;
-		if (rows != null && rows.size() > 0) {
-			entityClass = BeanUtil.getEntityClass(entity.getClass());
-			rows = BeanUtil.reflectListToBean(sqlToyContext.getTypeHandler(), rows,
-					ResultUtils.humpFieldNames(queryResult.getLabelNames(), entityMeta.getColumnFieldMap()),
-					entityClass);
-			result = (Serializable) rows.get(0);
-			// 处理类中的@Translate注解，进行缓存翻译
-			ResultUtils.wrapResultTranslate(sqlToyContext, result, entityClass);
-		}
-		if (result == null) {
-			return null;
+		// 加载主表
+		if (!onlySubTables) {
+			sqlToyResult = SqlConfigParseUtils.processSql(sql, entityMeta.getIdArray(), pkValues, null);
+			// 加密字段解密
+			DecryptHandler decryptHandler = null;
+			if (entityMeta.getSecureColumns() != null) {
+				decryptHandler = new DecryptHandler(sqlToyContext.getFieldsSecureProvider(),
+						entityMeta.getSecureColumns());
+			}
+			// 增加sql执行拦截器 update 2022-9-10
+			sqlToyResult = doInterceptors(sqlToyContext, sqlToyConfig, OperateType.load, sqlToyResult,
+					entity.getClass(), dbType);
+			QueryResult queryResult = findBySql(sqlToyContext, sqlToyConfig, sqlToyResult.getSql(),
+					sqlToyResult.getParamsValue(), null, decryptHandler, conn, dbType, 0, -1, -1);
+			List rows = queryResult.getRows();
+			Class entityClass;
+			if (rows != null && rows.size() > 0) {
+				entityClass = BeanUtil.getEntityClass(entity.getClass());
+				rows = BeanUtil.reflectListToBean(sqlToyContext.getTypeHandler(), rows,
+						ResultUtils.humpFieldNames(queryResult.getLabelNames(), entityMeta.getColumnFieldMap()),
+						entityClass);
+				result = (Serializable) rows.get(0);
+				// 处理类中的@Translate注解，进行缓存翻译
+				ResultUtils.wrapResultTranslate(sqlToyContext, result, entityClass);
+			}
+			if (result == null) {
+				return null;
+			}
+		} else {
+			result = entity;
 		}
 		// 存在主表对应子表
 		if (null != cascadeTypes && !cascadeTypes.isEmpty() && !entityMeta.getCascadeModels().isEmpty()) {
@@ -1115,9 +1165,9 @@ public class DialectUtils {
 	}
 
 	/**
-	 * @todo 提供统一的loadAll处理机制
 	 * @param sqlToyContext
 	 * @param entities
+	 * @param onlySubTables
 	 * @param cascadeTypes
 	 * @param lockMode
 	 * @param conn
@@ -1128,10 +1178,11 @@ public class DialectUtils {
 	 * @param maxRows
 	 * @return
 	 * @throws Exception
+	 * @todo 提供统一的loadAll处理机制
 	 */
-	public static List<?> loadAll(final SqlToyContext sqlToyContext, List<?> entities, List<Class> cascadeTypes,
-			LockMode lockMode, Connection conn, final Integer dbType, String tableName, LockSqlHandler lockSqlHandler,
-			final int fetchSize, final int maxRows) throws Exception {
+	public static List<?> loadAll(final SqlToyContext sqlToyContext, List<?> entities, boolean onlySubTables,
+			List<Class> cascadeTypes, LockMode lockMode, Connection conn, final Integer dbType, String tableName,
+			LockSqlHandler lockSqlHandler, final int fetchSize, final int maxRows) throws Exception {
 		if (entities == null || entities.isEmpty()) {
 			return entities;
 		}
@@ -1142,95 +1193,103 @@ public class DialectUtils {
 			throw new IllegalArgumentException(
 					entityClass.getName() + " Entity Object hasn't primary key,cann't use loadAll method!");
 		}
-		DecryptHandler decryptHandler = null;
-		if (entityMeta.getSecureColumns() != null) {
-			decryptHandler = new DecryptHandler(sqlToyContext.getFieldsSecureProvider(), entityMeta.getSecureColumns());
-		}
-		int idSize = entityMeta.getIdArray().length;
-		SqlToyResult sqlToyResult = null;
-		List<Object[]> sortIds = new ArrayList();
-		// 单主键
-		if (idSize == 1) {
-			// 切取id数组
-			Object[] idValues = BeanUtil.sliceToArray(entities, entityMeta.getIdArray()[0]);
-			if (idValues == null || idValues.length == 0) {
-				throw new IllegalArgumentException(
-						tableName + " loadAll method must assign value for pk field:" + entityMeta.getIdArray()[0]);
+		List<?> entitySet = null;
+		if (!onlySubTables) {
+			SqlToyResult sqlToyResult = null;
+			DecryptHandler decryptHandler = null;
+			if (entityMeta.getSecureColumns() != null) {
+				decryptHandler = new DecryptHandler(sqlToyContext.getFieldsSecureProvider(),
+						entityMeta.getSecureColumns());
 			}
-			for (int i = 0; i < idValues.length; i++) {
-				sortIds.add(new Object[] { idValues[i] });
-			}
-			// 组织loadAll sql语句
-			String sql = wrapLoadAll(entityMeta, idValues.length, tableName, lockSqlHandler, lockMode, dbType);
-			sqlToyResult = SqlConfigParseUtils.processSql(sql, null, new Object[] { idValues }, null);
-		} // 复合主键
-		else {
-			List<Object[]> idValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getIdArray(), null, null);
-			sortIds = idValues;
-			Object[] rowData;
-			Object cellValue;
-			// 将条件构造成一个数组
-			Object[] realValues = new Object[idValues.size() * idSize];
-			int index = 0;
-			for (int i = 0, n = idValues.size(); i < n; i++) {
-				rowData = idValues.get(i);
-				for (int j = 0; j < idSize; j++) {
-					cellValue = rowData[j];
-					// 验证主键值是否合法
-					if (StringUtil.isBlank(cellValue)) {
-						throw new IllegalArgumentException(tableName + " loadAll method must assign value for pk,row:"
-								+ i + " pk field:" + entityMeta.getIdArray()[j]);
-					}
-					realValues[index] = cellValue;
-					index++;
+			int idSize = entityMeta.getIdArray().length;
+			List<Object[]> sortIds = new ArrayList();
+			// 单主键
+			if (idSize == 1) {
+				// 切取id数组
+				Object[] idValues = BeanUtil.sliceToArray(entities, entityMeta.getIdArray()[0]);
+				if (idValues == null || idValues.length == 0) {
+					throw new IllegalArgumentException(
+							tableName + " loadAll method must assign value for pk field:" + entityMeta.getIdArray()[0]);
 				}
-			}
-			// 组织loadAll sql语句
-			String sql = wrapLoadAll(entityMeta, idValues.size(), tableName, lockSqlHandler, lockMode, dbType);
-			sqlToyResult = SqlConfigParseUtils.processSql(sql, null, realValues, null);
-		}
-		// 增加sql执行拦截器 update 2022-9-10
-		SqlToyConfig sqlToyConfig = new SqlToyConfig(DataSourceUtils.getDialect(dbType));
-		sqlToyConfig.setSqlType(SqlType.search);
-		sqlToyConfig.setSql(sqlToyResult.getSql());
-		sqlToyConfig.setParamsName(entityMeta.getIdArray());
-		sqlToyResult = doInterceptors(sqlToyContext, sqlToyConfig, OperateType.loadAll, sqlToyResult, entityClass,
-				dbType);
-		SqlExecuteStat.showSql("执行依据主键批量查询", sqlToyResult.getSql(), sqlToyResult.getParamsValue());
-		List<?> entitySet = SqlUtil.findByJdbcQuery(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(),
-				sqlToyResult.getParamsValue(), entityClass, null, decryptHandler, conn, dbType, false,
-				entityMeta.getColumnFieldMap(), fetchSize, maxRows);
-		// 处理类中的@Translate注解，进行缓存翻译
-		ResultUtils.wrapResultTranslate(sqlToyContext, entitySet, entityClass);
-		if (entitySet == null || entitySet.isEmpty()) {
-			return entitySet;
-		}
-		// 按传入的集合顺序进行排序 update 2022-9-9 由网友夜孤城反馈
-		List<Object[]> resultIds = BeanUtil.reflectBeansToInnerAry(entitySet, entityMeta.getIdArray(), null, null);
-		Object[] ids;
-		Object[] idVars;
-		boolean isEqual;
-		List sortEntities = new ArrayList();
-		for (int i = 0; i < sortIds.size(); i++) {
-			ids = sortIds.get(i);
-			for (int j = 0; j < resultIds.size(); j++) {
-				idVars = resultIds.get(j);
-				isEqual = true;
-				// 主键值进行对比
-				for (int k = 0; k < idSize; k++) {
-					if (!ids[k].equals(idVars[k])) {
-						isEqual = false;
+				for (int i = 0; i < idValues.length; i++) {
+					sortIds.add(new Object[] { idValues[i] });
+				}
+				// 组织loadAll sql语句
+				String sql = wrapLoadAll(entityMeta, idValues.length, tableName, lockSqlHandler, lockMode, dbType);
+				sqlToyResult = SqlConfigParseUtils.processSql(sql, null, new Object[] { idValues }, null);
+			} // 复合主键
+			else {
+				List<Object[]> idValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getIdArray(), null,
+						null);
+				sortIds = idValues;
+				Object[] rowData;
+				Object cellValue;
+				// 将条件构造成一个数组
+				Object[] realValues = new Object[idValues.size() * idSize];
+				int index = 0;
+				for (int i = 0, n = idValues.size(); i < n; i++) {
+					rowData = idValues.get(i);
+					for (int j = 0; j < idSize; j++) {
+						cellValue = rowData[j];
+						// 验证主键值是否合法
+						if (StringUtil.isBlank(cellValue)) {
+							throw new IllegalArgumentException(
+									tableName + " loadAll method must assign value for pk,row:" + i + " pk field:"
+											+ entityMeta.getIdArray()[j]);
+						}
+						realValues[index] = cellValue;
+						index++;
 					}
 				}
-				if (isEqual) {
-					// 把对比成功的数据移除出待比较队列
-					sortEntities.add(entitySet.remove(j));
-					resultIds.remove(j);
-					break;
+				// 组织loadAll sql语句
+				String sql = wrapLoadAll(entityMeta, idValues.size(), tableName, lockSqlHandler, lockMode, dbType);
+				sqlToyResult = SqlConfigParseUtils.processSql(sql, null, realValues, null);
+			}
+			// 增加sql执行拦截器 update 2022-9-10
+			SqlToyConfig sqlToyConfig = new SqlToyConfig(DataSourceUtils.getDialect(dbType));
+			sqlToyConfig.setSqlType(SqlType.search);
+			sqlToyConfig.setSql(sqlToyResult.getSql());
+			sqlToyConfig.setParamsName(entityMeta.getIdArray());
+			sqlToyResult = doInterceptors(sqlToyContext, sqlToyConfig, OperateType.loadAll, sqlToyResult, entityClass,
+					dbType);
+			SqlExecuteStat.showSql("执行依据主键批量查询", sqlToyResult.getSql(), sqlToyResult.getParamsValue());
+			entitySet = SqlUtil.findByJdbcQuery(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(),
+					sqlToyResult.getParamsValue(), entityClass, null, decryptHandler, conn, dbType, false,
+					entityMeta.getColumnFieldMap(), fetchSize, maxRows);
+			// 处理类中的@Translate注解，进行缓存翻译
+			ResultUtils.wrapResultTranslate(sqlToyContext, entitySet, entityClass);
+			if (entitySet == null || entitySet.isEmpty()) {
+				return entitySet;
+			}
+			// 按传入的集合顺序进行排序 update 2022-9-9 由网友夜孤城反馈
+			List<Object[]> resultIds = BeanUtil.reflectBeansToInnerAry(entitySet, entityMeta.getIdArray(), null, null);
+			Object[] ids;
+			Object[] idVars;
+			boolean isEqual;
+			List sortEntities = new ArrayList();
+			for (int i = 0; i < sortIds.size(); i++) {
+				ids = sortIds.get(i);
+				for (int j = 0; j < resultIds.size(); j++) {
+					idVars = resultIds.get(j);
+					isEqual = true;
+					// 主键值进行对比
+					for (int k = 0; k < idSize; k++) {
+						if (!ids[k].equals(idVars[k])) {
+							isEqual = false;
+						}
+					}
+					if (isEqual) {
+						// 把对比成功的数据移除出待比较队列
+						sortEntities.add(entitySet.remove(j));
+						resultIds.remove(j);
+						break;
+					}
 				}
 			}
+			entitySet = sortEntities;
+		} else {
+			entitySet = entities;
 		}
-		entitySet = sortEntities;
 		// 存在主表对应子表
 		if (null != cascadeTypes && !cascadeTypes.isEmpty() && !entityMeta.getCascadeModels().isEmpty()) {
 			StringBuilder subTableSql = new StringBuilder();
@@ -1347,7 +1406,6 @@ public class DialectUtils {
 	}
 
 	/**
-	 * @TODO 组织loadAll sql语句
 	 * @param entityMeta
 	 * @param dataSize
 	 * @param tableName
@@ -1355,6 +1413,7 @@ public class DialectUtils {
 	 * @param lockMode
 	 * @param dbType
 	 * @return
+	 * @TODO 组织loadAll sql语句
 	 */
 	private static String wrapLoadAll(EntityMeta entityMeta, int dataSize, String tableName,
 			LockSqlHandler lockSqlHandler, LockMode lockMode, Integer dbType) {
@@ -1412,7 +1471,6 @@ public class DialectUtils {
 	}
 
 	/**
-	 * @todo 保存对象
 	 * @param sqlToyContext
 	 * @param entityMeta
 	 * @param pkStrategy
@@ -1425,6 +1483,7 @@ public class DialectUtils {
 	 * @param dbType
 	 * @return
 	 * @throws Exception
+	 * @todo 保存对象
 	 */
 	public static Object save(final SqlToyContext sqlToyContext, final EntityMeta entityMeta,
 			final PKStrategy pkStrategy, final boolean isAssignPK, final String insertSql, Serializable entity,
@@ -1500,8 +1559,8 @@ public class DialectUtils {
 		final Integer[] paramsType = entityMeta.getFieldsTypeArray();
 		PreparedStatement pst = null;
 		if (isIdentity || isSequence) {
-			pst = conn.prepareStatement(realInsertSql,
-					new String[] { entityMeta.getColumnName(entityMeta.getIdArray()[0]) });
+			pst = conn.prepareStatement(realInsertSql, new String[] { DataSourceUtils
+					.getReturnPrimaryKeyColumn(entityMeta.getColumnName(entityMeta.getIdArray()[0]), dbType) });
 		} else {
 			pst = conn.prepareStatement(realInsertSql);
 		}
@@ -1577,7 +1636,6 @@ public class DialectUtils {
 	}
 
 	/**
-	 * @todo 保存批量对象数据
 	 * @param sqlToyContext
 	 * @param entityMeta
 	 * @param pkStrategy
@@ -1591,6 +1649,7 @@ public class DialectUtils {
 	 * @param autoCommit
 	 * @return
 	 * @throws Exception
+	 * @todo 保存批量对象数据
 	 */
 	public static Long saveAll(SqlToyContext sqlToyContext, EntityMeta entityMeta, PKStrategy pkStrategy,
 			boolean isAssignPK, String insertSql, List<?> entities, final int batchSize,
@@ -1681,7 +1740,6 @@ public class DialectUtils {
 	}
 
 	/**
-	 * @todo 执行批量保存或修改操作
 	 * @param sqlToyContext
 	 * @param entities
 	 * @param batchSize
@@ -1693,6 +1751,7 @@ public class DialectUtils {
 	 * @param autoCommit
 	 * @return
 	 * @throws Exception
+	 * @todo 执行批量保存或修改操作
 	 */
 	public static Long saveAllIgnoreExist(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			EntityMeta entityMeta, GenerateSqlHandler generateSqlHandler, ReflectPropsHandler reflectPropsHandler,
@@ -1773,7 +1832,6 @@ public class DialectUtils {
 	}
 
 	/**
-	 * @todo 单笔记录修改
 	 * @param sqlToyContext
 	 * @param entity
 	 * @param entityMeta
@@ -1784,6 +1842,7 @@ public class DialectUtils {
 	 * @param tableName
 	 * @return
 	 * @throws Exception
+	 * @todo 单笔记录修改
 	 */
 	public static Long update(SqlToyContext sqlToyContext, Serializable entity, EntityMeta entityMeta,
 			String nullFunction, String[] forceUpdateFields, Connection conn, final Integer dbType, String tableName)
@@ -1831,7 +1890,6 @@ public class DialectUtils {
 	}
 
 	/**
-	 * @todo 单个对象修改，包含接连修改
 	 * @param sqlToyContext
 	 * @param entity
 	 * @param nullFunction
@@ -1843,6 +1901,7 @@ public class DialectUtils {
 	 * @param conn
 	 * @param tableName
 	 * @throws Exception
+	 * @todo 单个对象修改，包含接连修改
 	 */
 	public static Long update(SqlToyContext sqlToyContext, Serializable entity, String nullFunction,
 			String[] forceUpdateFields, final boolean cascade, final GenerateSqlHandler generateSqlHandler,
@@ -1991,7 +2050,7 @@ public class DialectUtils {
 				String sequence = entityMeta.getSequence() + ".nextval";
 				if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
 					pkStrategy = PKStrategy.SEQUENCE;
-					sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
+					sequence = entityMeta.getFieldMeta(entityMeta.getIdArray()[0]).getDefaultValue();
 				}
 				return DialectExtUtils.mergeIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 						pkStrategy, "dual", "nvl", sequence, OracleDialectUtils.isAssignPKValue(pkStrategy), tableName);
@@ -2018,7 +2077,8 @@ public class DialectUtils {
 			public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 				PKStrategy pkStrategy = entityMeta.getIdStrategy();
 				String sequence = "nextval('" + entityMeta.getSequence() + "')";
-				if (dbType == DBType.GAUSSDB && pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE)) {
+				if ((dbType == DBType.GAUSSDB || dbType == DBType.MOGDB) && pkStrategy != null
+						&& pkStrategy.equals(PKStrategy.SEQUENCE)) {
 					sequence = entityMeta.getSequence() + ".nextval";
 				}
 				if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
@@ -2029,6 +2089,8 @@ public class DialectUtils {
 				boolean isAssignPK = PostgreSqlDialectUtils.isAssignPKValue(pkStrategy);
 				if (dbType == DBType.GAUSSDB) {
 					isAssignPK = GaussDialectUtils.isAssignPKValue(pkStrategy);
+				} else if (dbType == DBType.MOGDB) {
+					isAssignPK = MogDBDialectUtils.isAssignPKValue(pkStrategy);
 				}
 				return DialectExtUtils.insertIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 						pkStrategy, "COALESCE", sequence, isAssignPK, tableName);
@@ -2061,7 +2123,6 @@ public class DialectUtils {
 	}
 
 	/**
-	 * @todo 批量对象修改
 	 * @param sqlToyContext
 	 * @param entities
 	 * @param batchSize
@@ -2075,6 +2136,7 @@ public class DialectUtils {
 	 * @param skipNull
 	 * @return
 	 * @throws Exception
+	 * @todo 批量对象修改
 	 */
 	public static Long updateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			final String[] forceUpdateFields, ReflectPropsHandler reflectPropsHandler, String nullFunction,
@@ -2156,7 +2218,6 @@ public class DialectUtils {
 	}
 
 	/**
-	 * @todo 删除单个对象以及其级联表数据
 	 * @param sqlToyContext
 	 * @param entity
 	 * @param conn
@@ -2164,6 +2225,7 @@ public class DialectUtils {
 	 * @param tableName
 	 * @return
 	 * @throws Exception
+	 * @todo 删除单个对象以及其级联表数据
 	 */
 	public static Long delete(SqlToyContext sqlToyContext, Serializable entity, Connection conn, final Integer dbType,
 			final String tableName) throws Exception {
@@ -2238,7 +2300,6 @@ public class DialectUtils {
 	}
 
 	/**
-	 * @todo 批量删除对象并级联删除掉子表数据
 	 * @param sqlToyContext
 	 * @param entities
 	 * @param batchSize
@@ -2248,6 +2309,7 @@ public class DialectUtils {
 	 * @param tableName
 	 * @return
 	 * @throws Exception
+	 * @todo 批量删除对象并级联删除掉子表数据
 	 */
 	public static Long deleteAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize, Connection conn,
 			final Integer dbType, final Boolean autoCommit, final String tableName) throws Exception {
@@ -2344,7 +2406,6 @@ public class DialectUtils {
 	}
 
 	/**
-	 * @todo 进行唯一性查询判定
 	 * @param sqlToyContext
 	 * @param entity
 	 * @param paramsNamed
@@ -2353,6 +2414,7 @@ public class DialectUtils {
 	 * @param tableName
 	 * @param uniqueSqlHandler
 	 * @return
+	 * @todo 进行唯一性查询判定
 	 */
 	public static boolean isUnique(SqlToyContext sqlToyContext, Serializable entity, final String[] paramsNamed,
 			Connection conn, final Integer dbType, final String tableName, final UniqueSqlHandler uniqueSqlHandler) {
@@ -2451,9 +2513,9 @@ public class DialectUtils {
 	}
 
 	/**
-	 * @todo 判断是否复杂分页查询(union,多表关联、存在top 、distinct等)
 	 * @param queryStr
 	 * @return
+	 * @todo 判断是否复杂分页查询(union, 多表关联 、 存在top 、 distinct等)
 	 */
 	public static boolean isComplexPageQuery(String queryStr) {
 		// 清除不必要的字符并转小写
@@ -2483,9 +2545,9 @@ public class DialectUtils {
 	}
 
 	/**
-	 * @todo 判断是否有order by 和union 逻辑语句
 	 * @param sql
 	 * @return
+	 * @todo 判断是否有order by 和union 逻辑语句
 	 */
 	public static boolean hasOrderByOrUnion(String sql) {
 		String unDisturbSql = clearDisturbSql(sql);
@@ -2496,9 +2558,9 @@ public class DialectUtils {
 	}
 
 	/**
-	 * @todo 去除掉sql中的所有对称的括号中的内容，排除干扰
 	 * @param sql
 	 * @return
+	 * @todo 去除掉sql中的所有对称的括号中的内容，排除干扰
 	 */
 	public static String clearDisturbSql(String sql) {
 		StringBuilder lastSql = new StringBuilder(sql);
@@ -2523,9 +2585,9 @@ public class DialectUtils {
 	}
 
 	/**
-	 * @todo 去除掉sql中的所有对称的select 和 from 中的内容，排除干扰
 	 * @param sql
 	 * @return
+	 * @todo 去除掉sql中的所有对称的select 和 from 中的内容，排除干扰
 	 */
 	private static String clearSymSelectFromSql(String sql) {
 		// 先转化为小写
@@ -2550,7 +2612,6 @@ public class DialectUtils {
 	}
 
 	/**
-	 * @todo <b>通用的存储过程调用，inParam需放在outParam前面</b>
 	 * @param sqlToyConfig
 	 * @param sqlToyContext
 	 * @param storeSql
@@ -2561,6 +2622,7 @@ public class DialectUtils {
 	 * @param fetchSize
 	 * @return
 	 * @throws Exception
+	 * @todo <b>通用的存储过程调用，inParam需放在outParam前面</b>
 	 */
 	public static StoreResult executeStore(final SqlToyConfig sqlToyConfig, final SqlToyContext sqlToyContext,
 			final String storeSql, final Object[] inParamValues, final Integer[] outParamTypes,
@@ -2662,11 +2724,11 @@ public class DialectUtils {
 	}
 
 	/**
-	 * @todo 构造新增记录参数反射赋值处理器
 	 * @param entityMeta
 	 * @param preHandler
 	 * @param unifyFieldsHandler
 	 * @return
+	 * @todo 构造新增记录参数反射赋值处理器
 	 */
 	public static ReflectPropsHandler getAddReflectHandler(EntityMeta entityMeta, final ReflectPropsHandler preHandler,
 			IUnifyFieldsHandler unifyFieldsHandler) {
@@ -2717,11 +2779,11 @@ public class DialectUtils {
 	}
 
 	/**
-	 * @todo 构造修改记录参数反射赋值处理器
 	 * @param preHandler
 	 * @param forceUpdateProps
 	 * @param unifyFieldsHandler
 	 * @return
+	 * @todo 构造修改记录参数反射赋值处理器
 	 */
 	public static ReflectPropsHandler getUpdateReflectHandler(final ReflectPropsHandler preHandler,
 			String[] forceUpdateProps, IUnifyFieldsHandler unifyFieldsHandler) {
@@ -2767,12 +2829,12 @@ public class DialectUtils {
 	}
 
 	/**
-	 * @TODO 对字段值进行加密
 	 * @param preHandler
 	 * @param fieldsSecureProvider
 	 * @param desensitizeProvider
 	 * @param secureFields
 	 * @return
+	 * @TODO 对字段值进行加密
 	 */
 	public static ReflectPropsHandler getSecureReflectHandler(final ReflectPropsHandler preHandler,
 			final FieldsSecureProvider fieldsSecureProvider, final DesensitizeProvider desensitizeProvider,
@@ -2831,12 +2893,12 @@ public class DialectUtils {
 	}
 
 	/**
-	 * @todo 构造创建和修改记录时的反射
 	 * @param idFields
 	 * @param prepHandler
 	 * @param forceUpdateProps
 	 * @param unifyFieldsHandler
 	 * @return
+	 * @todo 构造创建和修改记录时的反射
 	 */
 	public static ReflectPropsHandler getSaveOrUpdateReflectHandler(final String[] idFields,
 			final ReflectPropsHandler prepHandler, String[] forceUpdateProps, IUnifyFieldsHandler unifyFieldsHandler) {
@@ -2898,9 +2960,9 @@ public class DialectUtils {
 	}
 
 	/**
-	 * @todo 提取sql中参数的个数
 	 * @param queryStr
 	 * @return
+	 * @todo 提取sql中参数的个数
 	 */
 	public static int getParamsCount(String queryStr) {
 		if (StringUtil.isBlank(queryStr)) {
@@ -2915,10 +2977,10 @@ public class DialectUtils {
 	}
 
 	/**
-	 * @TODO 判断主键值是否为空，用于saveOrUpdate判断是否save
 	 * @param sqlToyContext
 	 * @param entity
 	 * @return
+	 * @TODO 判断主键值是否为空，用于saveOrUpdate判断是否save
 	 */
 	public static boolean isEmptyPK(SqlToyContext sqlToyContext, Serializable entity) {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
@@ -2934,11 +2996,11 @@ public class DialectUtils {
 	}
 
 	/**
-	 * @TODO 针对批量sql执行，判断是新增还是修改，并统一填充公共字段信息
 	 * @param sql
 	 * @param reflectPropsHandler
 	 * @param unifyFieldsHandler
 	 * @return
+	 * @TODO 针对批量sql执行，判断是新增还是修改，并统一填充公共字段信息
 	 */
 	public static ReflectPropsHandler wrapReflectWithUnifyFields(String sql, ReflectPropsHandler reflectPropsHandler,
 			IUnifyFieldsHandler unifyFieldsHandler) {
@@ -2959,7 +3021,6 @@ public class DialectUtils {
 	}
 
 	/**
-	 * @TODO 执行自定义sql拦截器,对sql进行二次加工，比如加入租户过滤等
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param operateType
@@ -2967,6 +3028,7 @@ public class DialectUtils {
 	 * @param entityClass
 	 * @param dbType
 	 * @return
+	 * @TODO 执行自定义sql拦截器, 对sql进行二次加工，比如加入租户过滤等
 	 */
 	public static SqlToyResult doInterceptors(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			OperateType operateType, SqlToyResult sqlToyResult, Class entityClass, Integer dbType) {

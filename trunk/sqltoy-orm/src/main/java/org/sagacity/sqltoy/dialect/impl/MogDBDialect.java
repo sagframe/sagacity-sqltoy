@@ -1,6 +1,3 @@
-/**
- *
- */
 package org.sagacity.sqltoy.dialect.impl;
 
 import java.io.Serializable;
@@ -9,7 +6,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DecryptHandler;
 import org.sagacity.sqltoy.callback.GenerateSavePKStrategy;
@@ -17,6 +13,7 @@ import org.sagacity.sqltoy.callback.GenerateSqlHandler;
 import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
+import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.dialect.Dialect;
@@ -24,7 +21,8 @@ import org.sagacity.sqltoy.dialect.model.SavePKStrategy;
 import org.sagacity.sqltoy.dialect.utils.DefaultDialectUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectExtUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
-import org.sagacity.sqltoy.dialect.utils.MySqlDialectUtils;
+import org.sagacity.sqltoy.dialect.utils.MogDBDialectUtils;
+import org.sagacity.sqltoy.dialect.utils.PostgreSqlDialectUtils;
 import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryExecutor;
@@ -32,37 +30,35 @@ import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
-import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
+import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
+import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @author zhongxuchen
- * @version v1.0, Date:2013-3-21
  * @project sqltoy-orm
- * @description mysql数据库方言的不同操作实现 (针对mysql 的with as 兼容问题因mysql
- *              临时表不能在一次查询中多次引用,报reopen table 错误,因此mysql 中没有很好的机制来兼容with as语法)
- *              mysql8.x版本开始已经支持with as语法。
- * @modify {Date:2018-5-19,修改saveOrUpdate为先update后saveIgnore，因为mysql on
- *         duplicate key update 非空字段修改报错}
- * @modify {Date:2022-10-12,修复lock nowait等针对mysql5.x版本的支持}
+ * @description 提供适配Mogdb数据库方言的实现(以postgresql9.5+为蓝本实现)
+ * @author ming
+ * @version v1.0,Date:2024-7-2
+ * @modify {Date:2024-7-2,初始创建}
  */
 @SuppressWarnings({ "rawtypes" })
-public class MySqlDialect implements Dialect {
+public class MogDBDialect implements Dialect {
+
 	/**
 	 * 定义日志
 	 */
-	protected final Logger logger = LoggerFactory.getLogger(MySqlDialect.class);
+	protected final Logger logger = LoggerFactory.getLogger(MogDBDialect.class);
 
 	/**
 	 * 判定为null的函数
 	 */
-	public static final String NVL_FUNCTION = "ifnull";
+	public static final String NVL_FUNCTION = "NVL";
 
 	@Override
-	public boolean isUnique(final SqlToyContext sqlToyContext, Serializable entity, String[] paramsNamed,
-			Connection conn, final Integer dbType, final String tableName) {
+	public boolean isUnique(SqlToyContext sqlToyContext, Serializable entity, String[] paramsNamed, Connection conn,
+			final Integer dbType, String tableName) {
 		return DialectUtils.isUnique(sqlToyContext, entity, paramsNamed, conn, dbType, tableName,
 				(entityMeta, realParamNamed, table, topSize) -> {
 					String queryStr = DialectExtUtils.wrapUniqueSql(entityMeta, realParamNamed, dbType, table);
@@ -72,9 +68,9 @@ public class MySqlDialect implements Dialect {
 
 	/*
 	 * (non-Javadoc)
-	 *
-	 * @see org.sagacity.sqltoy.dialect.Dialect#getRandomResult(org. sagacity
-	 * .sqltoy.SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
+	 * 
+	 * @see org.sagacity.sqltoy.dialect.Dialect#getRandomResult(org.sagacity.sqltoy.
+	 * SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
 	 * org.sagacity.sqltoy.model.QueryExecutor, java.lang.Long, java.lang.Long,
 	 * java.sql.Connection)
 	 */
@@ -83,18 +79,17 @@ public class MySqlDialect implements Dialect {
 			QueryExecutor queryExecutor, final DecryptHandler decryptHandler, Long totalCount, Long randomCount,
 			Connection conn, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
 			throws Exception {
-		return DefaultDialectUtils.getRandomResult(sqlToyContext, sqlToyConfig, queryExecutor, decryptHandler,
+		return PostgreSqlDialectUtils.getRandomResult(sqlToyContext, sqlToyConfig, queryExecutor, decryptHandler,
 				totalCount, randomCount, conn, dbType, dialect, fetchSize, maxRows);
 	}
 
 	/*
 	 * (non-Javadoc)
-	 *
-	 * @see org.sagacity.sqltoy.dialect.Dialect#findPageBySql(org.sagacity
-	 * .sqltoy.SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
-	 * org.sagacity.sqltoy.model.QueryExecutor,
-	 * org.sagacity.sqltoy.callback.RowCallbackHandler, java.lang.Long,
-	 * java.lang.Integer, java.sql.Connection)
+	 * 
+	 * @see org.sagacity.sqltoy.dialect.Dialect#findPageBySql(org.sagacity.sqltoy.
+	 * SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
+	 * org.sagacity.sqltoy.model.QueryExecutor, java.lang.Long, java.lang.Integer,
+	 * java.sql.Connection)
 	 */
 	@Override
 	public QueryResult findPageBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
@@ -107,7 +102,7 @@ public class MySqlDialect implements Dialect {
 
 	/*
 	 * (non-Javadoc)
-	 *
+	 * 
 	 * @see org.sagacity.sqltoy.dialect.Dialect#findTopBySql(org.sagacity.sqltoy.
 	 * SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
 	 * org.sagacity.sqltoy.model.QueryExecutor, double, java.sql.Connection)
@@ -122,17 +117,17 @@ public class MySqlDialect implements Dialect {
 
 	/*
 	 * (non-Javadoc)
-	 *
-	 * @see org.sagacity.sqltoy.dialect.Dialect#findBySql(org.sagacity.
-	 * sqltoy.config.model.SqlToyConfig, java.lang.String[], java.lang.Object[],
-	 * java.lang.reflect.Type, org.sagacity.sqltoy.callback.RowCallbackHandler,
-	 * java.sql.Connection)
+	 * 
+	 * @see org.sagacity.sqltoy.dialect.Dialect#findBySql(org.sagacity.sqltoy.
+	 * SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
+	 * java.lang.String, java.lang.Object[],
+	 * org.sagacity.sqltoy.callback.RowCallbackHandler, java.sql.Connection)
 	 */
 	@Override
-	public QueryResult findBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
-			final Object[] paramsValue, final QueryExecutorExtend queryExecutorExtend,
-			final DecryptHandler decryptHandler, final Connection conn, final LockMode lockMode, final Integer dbType,
-			final String dialect, final int fetchSize, final int maxRows) throws Exception {
+	public QueryResult findBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
+			Object[] paramsValue, QueryExecutorExtend queryExecutorExtend, final DecryptHandler decryptHandler,
+			final Connection conn, final LockMode lockMode, final Integer dbType, final String dialect,
+			final int fetchSize, final int maxRows) throws Exception {
 		String realSql = sql.concat(getLockSql(sql, dbType, lockMode));
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, queryExecutorExtend,
 				decryptHandler, conn, dbType, 0, fetchSize, maxRows);
@@ -140,89 +135,27 @@ public class MySqlDialect implements Dialect {
 
 	/*
 	 * (non-Javadoc)
-	 *
-	 * @see org.sagacity.sqltoy.dialect.Dialect#getCountBySql(java.lang .String,
-	 * java.lang.String[], java.lang.Object[], java.sql.Connection)
+	 * 
+	 * @see org.sagacity.sqltoy.dialect.Dialect#getCountBySql(org.sagacity.sqltoy.
+	 * SqlToyContext, java.lang.String, java.lang.Object[], boolean,
+	 * java.sql.Connection)
 	 */
 	@Override
-	public Long getCountBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramsValue, boolean isLastSql, final Connection conn, final Integer dbType, final String dialect)
+	public Long getCountBySql(SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, String sql,
+			Object[] paramsValue, boolean isLastSql, Connection conn, final Integer dbType, final String dialect)
 			throws Exception {
 		return DialectUtils.getCountBySql(sqlToyContext, sqlToyConfig, sql, paramsValue, isLastSql, conn, dbType);
 	}
 
 	/*
 	 * (non-Javadoc)
-	 *
-	 * @see org.sagacity.sqltoy.dialect.Dialect#saveOrUpdate(org.sagacity.sqltoy.
-	 * SqlToyContext, java.io.Serializable, java.sql.Connection)
+	 * 
+	 * @see org.sagacity.sqltoy.dialect.Dialect#load(org.sagacity.sqltoy.
+	 * SqlToyContext, java.io.Serializable, java.util.List,
+	 * org.sagacity.sqltoy.lock.LockMode, java.sql.Connection)
 	 */
 	@Override
-	public Long saveOrUpdate(SqlToyContext sqlToyContext, Serializable entity, final String[] forceUpdateFields,
-			Connection conn, final Integer dbType, final String dialect, final Boolean autoCommit,
-			final String tableName) throws Exception {
-		List<Serializable> entities = new ArrayList<Serializable>();
-		entities.add(entity);
-		return saveOrUpdateAll(sqlToyContext, entities, sqlToyContext.getBatchSize(), null, forceUpdateFields, conn,
-				dbType, dialect, autoCommit, tableName);
-	}
-
-	// mysql的on duplicate key update 针对非空字段先校验了insert导致无法走到update set
-	// xxx=ifnull(null,xxx)
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see org.sagacity.sqltoy.dialect.Dialect#saveOrUpdateAll(org.sagacity.sqltoy
-	 * .SqlToyContext, java.util.List, java.sql.Connection)
-	 */
-	@Override
-	public Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			ReflectPropsHandler reflectPropsHandler, final String[] forceUpdateFields, Connection conn,
-			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
-			throws Exception {
-		Long updateCnt = DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields,
-				reflectPropsHandler, NVL_FUNCTION, conn, dbType, autoCommit, tableName, true);
-		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
-		if (updateCnt >= entities.size()) {
-			SqlExecuteStat.debug("修改记录", "修改记录量:" + updateCnt + " 条,等于entities集合长度,不再做insert操作!");
-			return updateCnt;
-		}
-		Long saveCnt = saveAllIgnoreExist(sqlToyContext, entities, batchSize, reflectPropsHandler, conn, dbType,
-				dialect, autoCommit, tableName);
-		SqlExecuteStat.debug("新增记录", "新建记录数量:" + saveCnt + " 条!");
-		return updateCnt + saveCnt;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see org.sagacity.sqltoy.dialect.Dialect#saveAllNotExist(org.sagacity.sqltoy.
-	 * SqlToyContext, java.util.List,
-	 * org.sagacity.sqltoy.callback.ReflectPropsHandler, java.sql.Connection,
-	 * java.lang.Boolean)
-	 */
-	@Override
-	public Long saveAllIgnoreExist(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType, final String dialect,
-			final Boolean autoCommit, final String tableName) throws Exception {
-		// mysql只支持identity,sequence 值忽略
-		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-		boolean isAssignPK = MySqlDialectUtils.isAssignPKValue(entityMeta.getIdStrategy());
-		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
-				entityMeta.getIdStrategy(), NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK,
-				tableName).replaceFirst("(?i)insert ", "insert ignore ");
-		return DialectUtils.saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql,
-				entities, batchSize, reflectPropsHandler, conn, dbType, autoCommit);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see org.sagacity.sqltoy.dialect.Dialect#load(java.io.Serializable,
-	 * java.util.List, java.sql.Connection)
-	 */
-	@Override
-	public Serializable load(final SqlToyContext sqlToyContext, Serializable entity, boolean onlySubTables,
+	public Serializable load(SqlToyContext sqlToyContext, Serializable entity, boolean onlySubTables,
 			List<Class> cascadeTypes, LockMode lockMode, Connection conn, final Integer dbType, final String dialect,
 			final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
@@ -237,12 +170,13 @@ public class MySqlDialect implements Dialect {
 
 	/*
 	 * (non-Javadoc)
-	 *
-	 * @see org.sagacity.sqltoy.dialect.Dialect#loadAll(java.util.List,
-	 * java.util.List, java.sql.Connection)
+	 * 
+	 * @see org.sagacity.sqltoy.dialect.Dialect#loadAll(org.sagacity.sqltoy.
+	 * SqlToyContext, java.util.List, java.util.List,
+	 * org.sagacity.sqltoy.lock.LockMode, java.sql.Connection)
 	 */
 	@Override
-	public List<?> loadAll(final SqlToyContext sqlToyContext, List<?> entities, boolean onlySubTables,
+	public List<?> loadAll(SqlToyContext sqlToyContext, List<?> entities, boolean onlySubTables,
 			List<Class> cascadeTypes, LockMode lockMode, Connection conn, final Integer dbType, final String dialect,
 			final String tableName, final int fetchSize, final int maxRows) throws Exception {
 		return DialectUtils.loadAll(sqlToyContext, entities, onlySubTables, cascadeTypes, lockMode, conn, dbType,
@@ -253,84 +187,106 @@ public class MySqlDialect implements Dialect {
 
 	/*
 	 * (non-Javadoc)
-	 *
+	 * 
 	 * @see org.sagacity.sqltoy.dialect.Dialect#save(org.sagacity.sqltoy.
-	 * SqlToyContext , java.io.Serializable, java.util.List, java.sql.Connection)
+	 * SqlToyContext, java.io.Serializable, java.sql.Connection)
 	 */
 	@Override
 	public Object save(SqlToyContext sqlToyContext, Serializable entity, Connection conn, final Integer dbType,
 			final String dialect, final String tableName) throws Exception {
-		// mysql只支持identity,sequence 值忽略,mysql identity可以手工插入
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
-		boolean isAssignPK = MySqlDialectUtils.isAssignPKValue(entityMeta.getIdStrategy());
+		PKStrategy pkStrategy = entityMeta.getIdStrategy();
+		String sequence = entityMeta.getSequence() + ".nextval";
+		// gaussdb 主键策略是sequence模式需要先获取主键值
+		if (pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE)) {
+			// 取实体对象的主键值
+			Object id = BeanUtil.getProperty(entity, entityMeta.getIdArray()[0]);
+			// 为null通过sequence获取
+			if (StringUtil.isBlank(id)) {
+				id = SqlUtil.getSequenceValue(conn, entityMeta.getSequence(), dbType);
+				BeanUtil.setProperty(entity, entityMeta.getIdArray()[0], id);
+			}
+			pkStrategy = PKStrategy.ASSIGN;
+		}
+		boolean isAssignPK = MogDBDialectUtils.isAssignPKValue(pkStrategy);
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
-				entityMeta.getIdStrategy(), NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK,
-				tableName);
-		return DialectUtils.save(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql, entity,
+				pkStrategy, NVL_FUNCTION, sequence, isAssignPK, tableName);
+		return DialectUtils.save(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entity,
 				new GenerateSqlHandler() {
 					@Override
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateField) {
+						PKStrategy pkStrategy = entityMeta.getIdStrategy();
+						String sequence = entityMeta.getSequence() + ".nextval";
 						return DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
-								entityMeta, entityMeta.getIdStrategy(), NVL_FUNCTION,
-								"NEXTVAL FOR " + entityMeta.getSequence(),
-								MySqlDialectUtils.isAssignPKValue(entityMeta.getIdStrategy()), null);
+								entityMeta, pkStrategy, NVL_FUNCTION, sequence,
+								MogDBDialectUtils.isAssignPKValue(pkStrategy), null);
 					}
 				}, new GenerateSavePKStrategy() {
 					@Override
 					public SavePKStrategy generate(EntityMeta entityMeta) {
 						return new SavePKStrategy(entityMeta.getIdStrategy(),
-								MySqlDialectUtils.isAssignPKValue(entityMeta.getIdStrategy()));
+								MogDBDialectUtils.isAssignPKValue(entityMeta.getIdStrategy()));
 					}
 				}, conn, dbType);
 	}
 
 	/*
 	 * (non-Javadoc)
-	 *
+	 * 
 	 * @see org.sagacity.sqltoy.dialect.Dialect#saveAll(org.sagacity.sqltoy.
-	 * SqlToyContext , java.util.List,
+	 * SqlToyContext, java.util.List,
 	 * org.sagacity.sqltoy.callback.ReflectPropsHandler, java.sql.Connection)
 	 */
 	@Override
 	public Long saveAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType, final String dialect,
 			final Boolean autoCommit, final String tableName) throws Exception {
-		// mysql只支持identity,sequence 值忽略
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-		boolean isAssignPK = MySqlDialectUtils.isAssignPKValue(entityMeta.getIdStrategy());
+		PKStrategy pkStrategy = entityMeta.getIdStrategy();
+		String sequence = entityMeta.getSequence() + ".nextval";
+		boolean isAssignPK = MogDBDialectUtils.isAssignPKValue(pkStrategy);
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
-				entityMeta.getIdStrategy(), NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK,
-				tableName);
-		return DialectUtils.saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql,
-				entities, batchSize, reflectPropsHandler, conn, dbType, autoCommit);
+				pkStrategy, NVL_FUNCTION, sequence, isAssignPK, tableName);
+		return DialectUtils.saveAll(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entities, batchSize,
+				reflectPropsHandler, conn, dbType, autoCommit);
 	}
 
 	/*
 	 * (non-Javadoc)
-	 *
+	 * 
 	 * @see org.sagacity.sqltoy.dialect.Dialect#update(org.sagacity.sqltoy.
-	 * SqlToyContext , java.io.Serializable, java.lang.String[],
-	 * java.sql.Connection)
+	 * SqlToyContext, java.io.Serializable, java.lang.String[], boolean,
+	 * java.lang.Class[], java.util.HashMap, java.sql.Connection)
 	 */
 	@Override
-	public Long update(SqlToyContext sqlToyContext, Serializable entity, String[] forceUpdateFields,
-			final boolean cascade, final Class[] forceCascadeClasses,
-			final HashMap<Class, String[]> subTableForceUpdateProps, Connection conn, final Integer dbType,
-			final String dialect, final String tableName) throws Exception {
-		return DialectUtils.update(sqlToyContext, entity, NVL_FUNCTION, forceUpdateFields, cascade, null,
-				forceCascadeClasses, subTableForceUpdateProps, conn, dbType, tableName);
+	public Long update(SqlToyContext sqlToyContext, Serializable entity, String[] forceUpdateFields, boolean cascade,
+			Class[] forceCascadeClasses, HashMap<Class, String[]> subTableForceUpdateProps, Connection conn,
+			final Integer dbType, final String dialect, final String tableName) throws Exception {
+		return DialectUtils.update(sqlToyContext, entity, NVL_FUNCTION, forceUpdateFields, cascade,
+				(cascade == false) ? null : new GenerateSqlHandler() {
+					@Override
+					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
+						PKStrategy pkStrategy = entityMeta.getIdStrategy();
+						String sequence = entityMeta.getSequence() + ".nextval";
+						boolean isAssignPK = MogDBDialectUtils.isAssignPKValue(pkStrategy);
+						// update 级联操作过程中会自动判断数据库类型
+						return DialectUtils.getSaveOrUpdateSql(sqlToyContext, sqlToyContext.getUnifyFieldsHandler(),
+								dbType, entityMeta, pkStrategy, forceUpdateFields, null, NVL_FUNCTION, sequence,
+								isAssignPK, null);
+					}
+				}, forceCascadeClasses, subTableForceUpdateProps, conn, dbType, tableName);
 	}
 
 	/*
 	 * (non-Javadoc)
-	 *
+	 * 
 	 * @see org.sagacity.sqltoy.dialect.Dialect#updateAll(org.sagacity.sqltoy.
-	 * SqlToyContext, java.util.List,
+	 * SqlToyContext, java.util.List, java.lang.String[],
 	 * org.sagacity.sqltoy.callback.ReflectPropsHandler, java.sql.Connection)
 	 */
 	@Override
 	public Long updateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			final String[] uniqueFields, final String[] forceUpdateFields, ReflectPropsHandler reflectPropsHandler,
+			final String[] uniqueFields, String[] forceUpdateFields, ReflectPropsHandler reflectPropsHandler,
 			Connection conn, final Integer dbType, final String dialect, final Boolean autoCommit,
 			final String tableName) throws Exception {
 		return DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropsHandler,
@@ -347,9 +303,71 @@ public class MySqlDialect implements Dialect {
 
 	/*
 	 * (non-Javadoc)
-	 *
+	 * 
+	 * @see org.sagacity.sqltoy.dialect.Dialect#saveOrUpdate(org.sagacity.sqltoy.
+	 * SqlToyContext, java.io.Serializable, java.lang.String[], java.sql.Connection,
+	 * java.lang.Boolean)
+	 */
+	@Override
+	public Long saveOrUpdate(SqlToyContext sqlToyContext, Serializable entity, String[] forceUpdateFields,
+			Connection conn, final Integer dbType, final String dialect, final Boolean autoCommit,
+			final String tableName) throws Exception {
+		List<Serializable> entities = new ArrayList<Serializable>();
+		entities.add(entity);
+		return saveOrUpdateAll(sqlToyContext, entities, sqlToyContext.getBatchSize(), null, forceUpdateFields, conn,
+				dbType, dialect, autoCommit, tableName);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.sagacity.sqltoy.dialect.Dialect#saveOrUpdateAll(org.sagacity.sqltoy.
+	 * SqlToyContext, java.util.List,
+	 * org.sagacity.sqltoy.callback.ReflectPropsHandler, java.lang.String[],
+	 * java.sql.Connection, java.lang.Boolean)
+	 */
+	@Override
+	public Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
+			ReflectPropsHandler reflectPropsHandler, String[] forceUpdateFields, Connection conn, final Integer dbType,
+			final String dialect, final Boolean autoCommit, final String tableName) throws Exception {
+		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
+		return DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta, forceUpdateFields,
+				new GenerateSqlHandler() {
+					@Override
+					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
+						PKStrategy pkStrategy = entityMeta.getIdStrategy();
+						String sequence = entityMeta.getSequence() + ".nextval";
+						boolean isAssignPK = MogDBDialectUtils.isAssignPKValue(pkStrategy);
+						return DialectUtils.getSaveOrUpdateSql(sqlToyContext, sqlToyContext.getUnifyFieldsHandler(),
+								dbType, entityMeta, pkStrategy, forceUpdateFields, null, NVL_FUNCTION, sequence,
+								isAssignPK, tableName);
+					}
+				}, reflectPropsHandler, conn, dbType, autoCommit);
+	}
+
+	@Override
+	public Long saveAllIgnoreExist(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
+			ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType, final String dialect,
+			final Boolean autoCommit, final String tableName) throws Exception {
+		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
+		return DialectUtils.saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta,
+				new GenerateSqlHandler() {
+					@Override
+					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
+						PKStrategy pkStrategy = entityMeta.getIdStrategy();
+						String sequence = entityMeta.getSequence() + ".nextval";
+						boolean isAssignPK = MogDBDialectUtils.isAssignPKValue(pkStrategy);
+						return DialectExtUtils.mergeIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
+								pkStrategy, null, NVL_FUNCTION, sequence, isAssignPK, tableName);
+					}
+				}, reflectPropsHandler, conn, dbType, autoCommit);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.sagacity.sqltoy.dialect.Dialect#delete(org.sagacity.sqltoy.
-	 * SqlToyContext , java.io.Serializable, java.sql.Connection)
+	 * SqlToyContext, java.io.Serializable, java.sql.Connection)
 	 */
 	@Override
 	public Long delete(SqlToyContext sqlToyContext, Serializable entity, Connection conn, final Integer dbType,
@@ -359,7 +377,7 @@ public class MySqlDialect implements Dialect {
 
 	/*
 	 * (non-Javadoc)
-	 *
+	 * 
 	 * @see org.sagacity.sqltoy.dialect.Dialect#deleteAll(org.sagacity.sqltoy.
 	 * SqlToyContext, java.util.List, java.sql.Connection)
 	 */
@@ -372,18 +390,18 @@ public class MySqlDialect implements Dialect {
 
 	/*
 	 * (non-Javadoc)
-	 *
-	 * @see org.sagacity.sqltoy.dialect.Dialect#updateFatch(org.sagacity.sqltoy.
+	 * 
+	 * @see org.sagacity.sqltoy.dialect.Dialect#updateFetch(org.sagacity.sqltoy.
 	 * SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
-	 * org.sagacity.sqltoy.model.QueryExecutor,
+	 * java.lang.String, java.lang.Object[],
 	 * org.sagacity.sqltoy.callback.UpdateRowHandler, java.sql.Connection)
 	 */
 	@Override
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramsValue, UpdateRowHandler updateRowHandler, Connection conn, final Integer dbType,
+			Object[] paramValues, UpdateRowHandler updateRowHandler, Connection conn, final Integer dbType,
 			final String dialect, final LockMode lockMode, final int fetchSize, final int maxRows) throws Exception {
 		String realSql = sql.concat(getLockSql(sql, dbType, (lockMode == null) ? LockMode.UPGRADE : lockMode));
-		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
+		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramValues, updateRowHandler, conn,
 				dbType, 0, fetchSize, maxRows);
 	}
 
@@ -398,23 +416,19 @@ public class MySqlDialect implements Dialect {
 	@Override
 	public List<ColumnMeta> getTableColumns(String catalog, String schema, String tableName, Connection conn,
 			Integer dbType, String dialect) throws Exception {
-		return DefaultDialectUtils.getTableColumns(catalog, schema, tableName, conn, dbType, dialect);
+		return MogDBDialectUtils.getTableColumns(catalog, schema, tableName, conn, dbType, dialect);
 	}
 
 	@Override
 	public List<TableMeta> getTables(String catalog, String schema, String tableName, Connection conn, Integer dbType,
 			String dialect) throws Exception {
-		return DefaultDialectUtils.getTables(catalog, schema, tableName, conn, dbType, dialect);
+		return MogDBDialectUtils.getTables(catalog, schema, tableName, conn, dbType, dialect);
 	}
 
 	private String getLockSql(String sql, Integer dbType, LockMode lockMode) {
 		// 判断是否已经包含for update
 		if (lockMode == null || SqlUtil.hasLock(sql, dbType)) {
 			return "";
-		}
-		// 兼容低版本数据库
-		if (dbType == DBType.MYSQL57) {
-			return " for update ";
 		}
 		if (lockMode == LockMode.UPGRADE_NOWAIT) {
 			return " for update nowait ";
@@ -424,4 +438,5 @@ public class MySqlDialect implements Dialect {
 		}
 		return " for update ";
 	}
+
 }

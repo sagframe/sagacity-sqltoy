@@ -17,7 +17,7 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
  */
 public class Nvl extends IFunction {
 
-	private static Pattern regex = Pattern.compile("(?i)\\W(nvl|isnull|ifnull|coalesce)\\(");
+	private static Pattern regex = Pattern.compile("(?i)\\W(nvl|isnull|ifnull)\\(");
 
 	/*
 	 * (non-Javadoc)
@@ -50,12 +50,12 @@ public class Nvl extends IFunction {
 		if (args == null || args.length == 0) {
 			return super.IGNORE;
 		}
-		String funLow = functionName.toLowerCase();
+		//String funLow = functionName.toLowerCase();
 		if (dialect == DBType.SQLSERVER) {
 			return wrapArgs("isnull", args);
 		}
 		if (dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL15 || dialect == DBType.DB2
-				|| dialect == DBType.GAUSSDB || dialect == DBType.H2) {
+				|| dialect == DBType.GAUSSDB || dialect == DBType.MOGDB || dialect == DBType.H2) {
 			return wrapArgs("coalesce", args);
 		}
 		if (dialect == DBType.MYSQL || dialect == DBType.TIDB || dialect == DBType.MYSQL57) {
@@ -72,10 +72,7 @@ public class Nvl extends IFunction {
 			return wrapArgs("nvl", args);
 		}
 		if (dialect == DBType.H2) {
-			if ("coalesce".equals(funLow)) {
-				return wrapArgs("coalesce", args);
-			}
-			return wrapArgs("ifnull", args);
+			return wrapArgs("coalesce", args);
 		}
 		return super.IGNORE;
 	}

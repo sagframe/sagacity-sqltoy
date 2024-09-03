@@ -10,15 +10,16 @@ import javax.sql.DataSource;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DataSourceCallbackHandler;
+import org.sagacity.sqltoy.config.model.CaseType;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * @author zhongxuchen
+ * @version v1.0, Date:2015年3月3日
  * @project sagacity-sqltoy
  * @description 提供统一的dataSource管理
- * @author zhongxuchen
- * @version v1.0,Date:2015年3月3日
  * @modify data:2020-06-10 剔除mssql2008,hana,增加tidb、guassdb、oceanbase、dm数据库方言的支持
  * @modify data:2022-08-29 增加h2数据库的支持
  * @modify data:2022-09-29 getDialect(DataSource)和getDBType(DataSource)
@@ -101,6 +102,9 @@ public class DataSourceUtils {
 		// h2
 		public final static String H2 = "h2";
 
+		// mogdb
+		public final static String MOGDB = "mogdb";
+
 		public final static String UNDEFINE = "UNDEFINE";
 	}
 
@@ -148,6 +152,9 @@ public class DataSourceUtils {
 		// h2
 		public final static int H2 = 170;
 		public final static int OSCAR = 180;
+
+		// MOGDB 基于openGauss开发。
+		public final static int MOGDB = 190;
 	}
 
 	static {
@@ -169,6 +176,8 @@ public class DataSourceUtils {
 		DBNameTypeMap.put(Dialect.POSTGRESQL15, DBType.POSTGRESQL15);
 		DBNameTypeMap.put(Dialect.GREENPLUM, DBType.POSTGRESQL);
 		DBNameTypeMap.put(Dialect.GAUSSDB, DBType.GAUSSDB);
+		// 20240702 增加对mogdb的支持
+		DBNameTypeMap.put(Dialect.MOGDB, DBType.MOGDB);
 
 		DBNameTypeMap.put(Dialect.MONGO, DBType.MONGO);
 		DBNameTypeMap.put(Dialect.ES, DBType.ES);
@@ -187,14 +196,16 @@ public class DataSourceUtils {
 		// 20220829 增加对h2的支持
 		DBNameTypeMap.put(Dialect.H2, DBType.H2);
 		DBNameTypeMap.put(Dialect.OSCAR, DBType.OSCAR);
+
 		// 默认设置oscar数据库用gaussdb方言来实现
 		dialectMap.put(Dialect.OSCAR, Dialect.GAUSSDB);
+
 	}
 
 	/**
-	 * @todo 获取数据库类型名称
 	 * @param dbType
 	 * @return
+	 * @todo 获取数据库类型名称
 	 */
 	public static String getDialect(Integer dbType) {
 		switch (dbType) {
@@ -224,6 +235,9 @@ public class DataSourceUtils {
 		}
 		case DBType.GAUSSDB: {
 			return Dialect.GAUSSDB;
+		}
+		case DBType.MOGDB: {
+			return Dialect.MOGDB;
 		}
 		case DBType.CLICKHOUSE: {
 			return Dialect.CLICKHOUSE;
@@ -264,9 +278,9 @@ public class DataSourceUtils {
 	}
 
 	/**
-	 * @todo <b>获取数据库批量sql语句的分割符号</b>
 	 * @param conn
 	 * @return
+	 * @todo <b>获取数据库批量sql语句的分割符号</b>
 	 */
 	public static String getDatabaseSqlSplitSign(Connection conn) {
 		try {
@@ -287,10 +301,10 @@ public class DataSourceUtils {
 	}
 
 	/**
-	 * @todo 获取数据库类型
 	 * @param conn
 	 * @return
 	 * @throws SQLException
+	 * @todo 获取数据库类型
 	 */
 	public static String getCurrentDBDialect(final Connection conn) throws SQLException {
 		String dilectName = Dialect.UNDEFINE;
@@ -327,8 +341,10 @@ public class DataSourceUtils {
 			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.GAUSSDB) != -1
 					|| "zenith".equalsIgnoreCase(dbDialect) || "opengauss".equalsIgnoreCase(dbDialect)) {
 				dilectName = Dialect.GAUSSDB;
-			} // sqlite
-			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.SQLITE) != -1) {
+			} // MOGDB
+			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.MOGDB) != -1) {
+				dilectName = Dialect.MOGDB;
+			} else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.SQLITE) != -1) {
 				dilectName = Dialect.SQLITE;
 			} // dm
 			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.DM) != -1) {
@@ -371,10 +387,10 @@ public class DataSourceUtils {
 	}
 
 	/**
-	 * @todo 获取当前数据库的版本
 	 * @param conn
 	 * @return
 	 * @throws SQLException
+	 * @todo 获取当前数据库的版本
 	 */
 	private static int getDBVersion(final Connection conn) throws SQLException {
 		// -1表示版本不确定
@@ -389,10 +405,10 @@ public class DataSourceUtils {
 	}
 
 	/**
-	 * @todo <b>获取数据库类型</b>
 	 * @param conn
 	 * @return
 	 * @throws SQLException
+	 * @todo <b>获取数据库类型</b>
 	 */
 	public static int getDBType(final Connection conn) throws SQLException {
 		// 从hashMap中获取
@@ -440,6 +456,8 @@ public class DataSourceUtils {
 				dbType = DBType.OCEANBASE;
 			} else if (dbDialect.equals(Dialect.GAUSSDB)) {
 				dbType = DBType.GAUSSDB;
+			} else if (dbDialect.equals(Dialect.MOGDB)) {
+				dbType = DBType.MOGDB;
 			} else if (dbDialect.equals(Dialect.SQLITE)) {
 				dbType = DBType.SQLITE;
 			} else if (dbDialect.equals(Dialect.DM)) {
@@ -467,9 +485,9 @@ public class DataSourceUtils {
 	}
 
 	/**
-	 * @TODO 这里的方言已经在SqlToyContext中已经做了规整(因此不会超出范围)
 	 * @param dialect
 	 * @return
+	 * @TODO 这里的方言已经在SqlToyContext中已经做了规整(因此不会超出范围)
 	 */
 	public static int getDBType(String dialect) {
 		if (StringUtil.isBlank(dialect)) {
@@ -489,7 +507,7 @@ public class DataSourceUtils {
 
 	/**
 	 * 获取不同数据库validator语句
-	 * 
+	 *
 	 * @param dbType
 	 * @return
 	 * @throws Exception
@@ -509,6 +527,7 @@ public class DataSourceUtils {
 		case DBType.POSTGRESQL:
 		case DBType.POSTGRESQL15:
 		case DBType.OSCAR:
+		case DBType.MOGDB:
 		case DBType.GAUSSDB: {
 			return "select version()";
 		}
@@ -519,10 +538,10 @@ public class DataSourceUtils {
 	}
 
 	/**
-	 * @todo 获取不同数据库validator语句
 	 * @param conn
 	 * @return
 	 * @throws Exception
+	 * @todo 获取不同数据库validator语句
 	 */
 	public static String getValidateQuery(final Connection conn) throws Exception {
 		int dbType = getDBType(conn);
@@ -530,11 +549,11 @@ public class DataSourceUtils {
 	}
 
 	/**
-	 * @todo <b>统一处理DataSource以及对应的Connection，便于跟spring事务集成</b>
 	 * @param sqltoyContext
 	 * @param datasource
 	 * @param handler
 	 * @return
+	 * @todo <b>统一处理DataSource以及对应的Connection，便于跟spring事务集成</b>
 	 */
 	public static Object processDataSource(SqlToyContext sqltoyContext, DataSource datasource,
 			DataSourceCallbackHandler handler) {
@@ -576,10 +595,10 @@ public class DataSourceUtils {
 	}
 
 	/**
-	 * @TODO 获取数据库的类型
 	 * @param sqltoyContext
 	 * @param datasource
 	 * @return
+	 * @TODO 获取数据库的类型
 	 */
 	public static int getDBType(SqlToyContext sqltoyContext, DataSource datasource) {
 		if (datasource == null) {
@@ -608,10 +627,10 @@ public class DataSourceUtils {
 	}
 
 	/**
-	 * @TDDO 获取数据库类型的名称
 	 * @param sqltoyContext
 	 * @param datasource
 	 * @return
+	 * @TDDO 获取数据库类型的名称
 	 */
 	public static String getDialect(SqlToyContext sqltoyContext, DataSource datasource) {
 		if (datasource == null) {
@@ -640,10 +659,10 @@ public class DataSourceUtils {
 	}
 
 	/**
-	 * @TODO 根据连接获取数据库方言
 	 * @param conn
 	 * @return
 	 * @throws Exception
+	 * @TODO 根据连接获取数据库方言
 	 */
 	private static String getDialect(Connection conn) throws Exception {
 		if (conn == null) {
@@ -680,6 +699,8 @@ public class DataSourceUtils {
 			return Dialect.TDENGINE;
 		case DBType.GAUSSDB:
 			return Dialect.GAUSSDB;
+		case DBType.MOGDB:
+			return Dialect.MOGDB;
 		case DBType.IMPALA:
 			return Dialect.IMPALA;
 		case DBType.H2:
@@ -692,9 +713,9 @@ public class DataSourceUtils {
 	}
 
 	/**
-	 * @TODO 获取数据库对应的nvl函数
 	 * @param dbType
 	 * @return
+	 * @TODO 获取数据库对应的nvl函数
 	 */
 	public static String getNvlFunction(Integer dbType) {
 		switch (dbType) {
@@ -722,6 +743,7 @@ public class DataSourceUtils {
 		case DBType.DM:
 			return "nvl";
 		case DBType.GAUSSDB:
+		case DBType.MOGDB:
 		case DBType.OSCAR:
 			return "nvl";
 		case DBType.KINGBASE:
@@ -733,5 +755,41 @@ public class DataSourceUtils {
 		default:
 			return "nvl";
 		}
+	}
+
+	/**
+	 * 
+	 * @param dbType
+	 * @return
+	 */
+	public static CaseType getReturnPrimaryKeyColumnCase(Integer dbType) {
+		String dialect = getDialect(dbType);
+		if (SqlToyConstants.dialectReturnPrimaryColumnCase != null) {
+			String caseType = SqlToyConstants.dialectReturnPrimaryColumnCase.get(dialect);
+			if (caseType != null) {
+				return CaseType.getCaseType(caseType);
+			}
+			// postgresql系列数据库默认转小写
+			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15) {
+				return CaseType.LOWER;
+			}
+		}
+		return CaseType.DEFAULT;
+	}
+
+	/**
+	 * @TODO 单行记录插入需要返回主键值时,主键字段名称是否需要大小写转换，postgresql要转小写
+	 * @param columnName
+	 * @param dbType
+	 * @return
+	 */
+	public static String getReturnPrimaryKeyColumn(String columnName, Integer dbType) {
+		CaseType caseType = getReturnPrimaryKeyColumnCase(dbType);
+		if (caseType == CaseType.UPPER) {
+			return columnName.toUpperCase();
+		} else if (caseType == CaseType.LOWER) {
+			return columnName.toLowerCase();
+		}
+		return columnName;
 	}
 }

@@ -379,8 +379,12 @@ public class EntityMeta implements Serializable {
 				colName = bizIdRelatedColumns[i].toLowerCase();
 				if (fieldIndexs.containsKey(colName)) {
 					this.bizIdRelatedColIndex[i] = fieldIndexs.get(colName);
-				} else {
+				} else if (fieldIndexs.containsKey(colName.replace("_", ""))) {
 					this.bizIdRelatedColIndex[i] = fieldIndexs.get(colName.replace("_", ""));
+				} else {
+					// add 2024-08-11 增加业务主键关联字段设置错误场景下的提示,便于开发者提前发现问题
+					throw new IllegalArgumentException(entityClass.getName()
+							+ "业务主键@BusinessId()定义的关联字段:relatedColumns,其中:[" + bizIdRelatedColumns[i] + "]属性不存在,请检查!");
 				}
 			}
 		}

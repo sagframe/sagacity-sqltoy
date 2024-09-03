@@ -65,6 +65,8 @@ import org.slf4j.LoggerFactory;
  * @modify {Date:2023-08-25 支持itemList[0].fieldName或itemList[0].item.name 形式传参 }
  * @modify {Date:2024-03-22
  *         优化getSqlParamsName、processNamedParamsQuery方法，优化了参数名称匹配，设置了匹配偏移量 }
+ * @modify {Date:2024-08-10 修复(t.id,t.type) in (:list.id,:list.type)
+ *         参数都为null时自动补全双括号(t.id,t.type) in ((null,null))}
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class SqlConfigParseUtils {
@@ -145,7 +147,10 @@ public class SqlConfigParseUtils {
 	// sql不等于
 	public final static Pattern NOT_EQUAL_PATTERN = Pattern.compile("(\\!\\=|\\<\\>|\\^\\=)\\s*$");
 	public final static Pattern WHERE_PATTERN = Pattern.compile("(?i)\\Wwhere\\W");
-
+	// (t.id,t.type) in (:list.id,:list.type) 提取 t.id,t.type 用途
+	public final static String MORE_IN_FIELDS_REGEX = "[\\s\\(\\)\\}\\{\\]\\[]";
+	// (t.id,t.type) in (:list.id,:list.type) 语句判断是否是not in
+	public final static String NOT_IN_REGEX = "\\s*not$";
 	// 利用宏模式来完成@loop循环处理
 	private static Map<String, AbstractMacro> macros = new HashMap<String, AbstractMacro>();
 
@@ -296,7 +301,7 @@ public class SqlConfigParseUtils {
 	}
 
 	/**
-	 * @TODO 剔除掉sql中的??特殊转义符号，避免对?传参的干扰
+	 * @TODO 用特殊字符替换掉sql中的??特殊转义符号，避免对?传参的干扰(最后再替换回来)
 	 * @param sql
 	 * @return
 	 */
@@ -417,7 +422,7 @@ public class SqlConfigParseUtils {
 	/**
 	 * @todo 提取sql中参数(:paramName)名称组成数组返回(去除重复)
 	 * @param queryStr
-	 * @param distinct
+	 * @param distinct 是否去除重复
 	 * @return
 	 */
 	public static String[] getSqlParamsName(String queryStr, boolean distinct) {
@@ -791,7 +796,10 @@ public class SqlConfigParseUtils {
 				// 直接组织好的(?,?,?) 语句
 				if (commTypeCnt == paramCnt) {
 					partSql = StringUtil.loopAppendWithSign(ARG_NAME, ",", paramCnt);
-					if (StringUtil.matches(m.group().trim(), "(\\s*\\)){2}$")) {
+					// 参数非数组(全部为null也是一种特例场景) in 后面是(()) 形式，要额外增加()，后面in ("+partSql+") 重新构成双括号
+					// 是(t1.a,t1.b) in (?,?) 形式,也需要补充一层括号()
+					if (StringUtil.matches(m.group().trim(), "(\\(\\s*){2}")
+							|| isMoreFieldIn(queryStr.substring(start, m.start()))) {
 						partSql = "(".concat(partSql).concat(")");
 					}
 				} else {
@@ -907,7 +915,7 @@ public class SqlConfigParseUtils {
 	private static String wrapOverSizeInSql(String sqlPart, String loopArgs, int paramsSize) {
 		String sql = sqlPart.trim();
 		// 判断是否 t.field not in (?) 模式
-		int notIndex = StringUtil.matchIndex(sql.toLowerCase(), "\\s*not$");
+		int notIndex = StringUtil.matchIndex(sql.toLowerCase(), NOT_IN_REGEX);
 		boolean isNotIn = false;
 		if (notIndex > 0) {
 			isNotIn = true;
@@ -917,18 +925,18 @@ public class SqlConfigParseUtils {
 		sql = " ".concat(sql);
 		int paramIndex;
 		String paramName;
-		String regex = "[\\s\\(\\)\\}\\{\\]\\[]";
+		// MORE_IN_FIELDS_REGEX = "[\\s\\(\\)\\}\\{\\]\\[]";
 		// in 前面的参数可能是(t.field||'') 或concat(t.field1,t.field2),确保精准的切取到参数
 		if (sql.trim().endsWith(")")) {
 			String reverseSql = new StringBuilder(sql).reverse().toString();
 			// "concat(a,b)" 反转后 ")b,a(tacnoc" 找到对称的(符号位置
 			int symIndex = StringUtil.getSymMarkIndex(")", "(", reverseSql, 0);
 			int start = sql.length() - symIndex - 1;
-			paramIndex = StringUtil.matchLastIndex(sql.substring(0, start), regex) + 1;
+			paramIndex = StringUtil.matchLastIndex(sql.substring(0, start), MORE_IN_FIELDS_REGEX) + 1;
 			paramName = sql.substring(paramIndex);
 		} else {
 			// 提取出sql in 前面的实际字段名称(空白、括号等),如: and t.order_id 结果:t.order_id
-			paramIndex = StringUtil.matchLastIndex(sql, regex) + 1;
+			paramIndex = StringUtil.matchLastIndex(sql, MORE_IN_FIELDS_REGEX) + 1;
 			paramName = sql.substring(paramIndex);
 		}
 		sql = sql.substring(0, paramIndex);
@@ -959,6 +967,44 @@ public class SqlConfigParseUtils {
 		}
 		result.append(") ");
 		return result.toString();
+	}
+
+	/**
+	 * add 2024-08-10
+	 * 
+	 * @TODO 判断sql是否是 (t.id,t.name) in (?,?) 多字段in场景
+	 * @param sqlPart
+	 * @return
+	 */
+	private static boolean isMoreFieldIn(String sqlPart) {
+		String sql = sqlPart.trim();
+		// 判断是否 t.field not in (?) 模式
+		int notIndex = StringUtil.matchIndex(sql.toLowerCase(), NOT_IN_REGEX);
+		if (notIndex > 0) {
+			// 剔除掉not和not前面的空白
+			sql = sql.substring(0, notIndex);
+		}
+		sql = " ".concat(sql);
+		int paramIndex;
+		String paramName;
+		// MORE_IN_FIELDS_REGEX = "[\\s\\(\\)\\}\\{\\]\\[]";
+		// in 前面的参数可能是(t.field||'') 或concat(t.field1,t.field2),确保精准的切取到参数
+		if (sql.trim().endsWith(")")) {
+			String reverseSql = new StringBuilder(sql).reverse().toString();
+			// "concat(a,b)" 反转后 ")b,a(tacnoc" 找到对称的(符号位置
+			int symIndex = StringUtil.getSymMarkIndex(")", "(", reverseSql, 0);
+			int start = sql.length() - symIndex - 1;
+			paramIndex = StringUtil.matchLastIndex(sql.substring(0, start), MORE_IN_FIELDS_REGEX) + 1;
+			paramName = sql.substring(paramIndex);
+		} else {
+			// 提取出sql in 前面的实际字段名称(空白、括号等),如: and t.order_id 结果:t.order_id
+			paramIndex = StringUtil.matchLastIndex(sql, MORE_IN_FIELDS_REGEX) + 1;
+			paramName = sql.substring(paramIndex);
+		}
+		if (paramName.contains(",")) {
+			return true;
+		}
+		return false;
 	}
 
 	/**

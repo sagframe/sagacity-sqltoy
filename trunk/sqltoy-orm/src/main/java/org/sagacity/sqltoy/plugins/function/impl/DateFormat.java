@@ -55,6 +55,7 @@ public class DateFormat extends IFunction {
 		case DBType.POSTGRESQL15:
 		case DBType.ORACLE:
 		case DBType.GAUSSDB:
+		case DBType.MOGDB:
 		case DBType.OCEANBASE:
 		case DBType.DM:
 		case DBType.ORACLE11: {

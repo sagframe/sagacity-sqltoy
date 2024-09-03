@@ -33,7 +33,7 @@ public class UUIDGenerator implements IdGenerator {
 	 */
 	@Override
 	public Object getId(String tableName, String signature, String[] relatedColumns, Object[] relatedColValue,
-			Date bizDate, String idJavaType, int length, int sequencSize) {
+			Date bizDate, String idJavaType, int length, int sequenceSize) {
 		return IdUtil.getUUID();
 	}
 

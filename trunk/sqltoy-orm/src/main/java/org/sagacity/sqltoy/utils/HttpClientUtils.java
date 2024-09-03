@@ -6,13 +6,13 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.BasicCredentialsProvider;
@@ -69,6 +69,7 @@ public class HttpClientUtils {
 		httpPost.setHeader("Connection", "close");
 		httpPost.setConfig(requestConfig);
 		CloseableHttpClient client = null;
+		CloseableHttpResponse response = null;
 		try {
 			if (StringUtil.isNotBlank(username) && StringUtil.isNotBlank(password)) {
 				// 凭据提供器
@@ -91,7 +92,7 @@ public class HttpClientUtils {
 				((UrlEncodedFormEntity) httpEntity).setContentType(CONTENT_TYPE);
 				httpPost.setEntity(httpEntity);
 			}
-			HttpResponse response = client.execute(httpPost);
+			response = client.execute(httpPost);
 			// 返回结果
 			HttpEntity reponseEntity = response.getEntity();
 			if (reponseEntity != null) {
@@ -99,6 +100,17 @@ public class HttpClientUtils {
 			}
 		} catch (Exception e) {
 			throw e;
+		} finally {
+			try {
+				if (response != null) {
+					response.close();
+				}
+				if (client != null) {
+					client.close();
+				}
+			} catch (Exception e) {
+
+			}
 		}
 		return null;
 	}
@@ -137,6 +149,7 @@ public class HttpClientUtils {
 		String realUrl;
 		// 返回结果
 		HttpEntity reponseEntity = null;
+		String result = null;
 		// 使用elastic rest client(默认)
 		if (esConfig.getRestClient() != null) {
 			realUrl = wrapUrl(esConfig, nosqlConfig);
@@ -146,17 +159,25 @@ public class HttpClientUtils {
 			}
 			// 默认采用post请求
 			RestClient restClient = null;
+			Response response;
 			try {
 				restClient = esConfig.getRestClient();
 				Request request = new Request(POST, realUrl);
 				request.setEntity(httpEntity);
-				Response response = restClient.performRequest(request);
+				response = restClient.performRequest(request);
 				reponseEntity = response.getEntity();
+				if (reponseEntity != null) {
+					result = EntityUtils.toString(reponseEntity, nosqlConfig.getCharset());
+				}
 			} catch (Exception e) {
 				throw e;
 			} finally {
-				if (restClient != null) {
-					restClient.close();
+				try {
+					if (restClient != null) {
+						restClient.close();
+					}
+				} catch (Exception e) {
+
 				}
 			}
 		} // 组织httpclient模式调用(此种模式不推荐使用)
@@ -180,6 +201,7 @@ public class HttpClientUtils {
 				httpPost.setConfig(requestConfig);
 			}
 			CloseableHttpClient client = null;
+			CloseableHttpResponse response = null;
 			try {
 				if (StringUtil.isNotBlank(esConfig.getUsername()) && StringUtil.isNotBlank(esConfig.getPassword())) {
 					// 凭据提供器
@@ -191,21 +213,31 @@ public class HttpClientUtils {
 				} else {
 					client = HttpClients.createDefault();
 				}
-				HttpResponse response = client.execute(httpPost);
+				response = client.execute(httpPost);
 				reponseEntity = response.getEntity();
+				if (reponseEntity != null) {
+					result = EntityUtils.toString(reponseEntity, nosqlConfig.getCharset());
+				}
 			} catch (Exception e) {
 				throw e;
-			}
-		}
-		String result = null;
-		if (reponseEntity != null) {
-			result = EntityUtils.toString(reponseEntity, nosqlConfig.getCharset());
-			if (sqltoyContext.isDebug()) {
-				logger.debug("result={}", result);
+			} finally {
+				try {
+					if (response != null) {
+						response.close();
+					}
+					if (client != null) {
+						client.close();
+					}
+				} catch (Exception e) {
+
+				}
 			}
 		}
 		if (StringUtil.isBlank(result)) {
 			return null;
+		}
+		if (sqltoyContext.isDebug()) {
+			logger.debug("result={}", result);
 		}
 		// 将结果转换为JSON对象
 		JSONObject json = JSON.parseObject(result);

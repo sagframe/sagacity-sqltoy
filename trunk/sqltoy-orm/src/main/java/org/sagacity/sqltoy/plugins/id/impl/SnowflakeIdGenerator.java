@@ -39,7 +39,7 @@ public class SnowflakeIdGenerator implements IdGenerator {
 	 */
 	@Override
 	public Object getId(String tableName, String signature, String[] relatedColumns, Object[] relatedColValue,
-			Date bizDate, String idJavaType, int length, int sequencSize) {
+			Date bizDate, String idJavaType, int length, int sequenceSize) {
 		// 如果是多个应用，在一个节点服务器上(相同IP)，主键容易产生重复，要通过下面形式设置不同服务id
 		// <32
 		// java -Dsqltoy.snowflake.workerId=11

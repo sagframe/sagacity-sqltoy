@@ -69,6 +69,7 @@ import org.slf4j.LoggerFactory;
  * @modify {Date:2020-07-29,修复OneToMany解析时编写错误,由智客软件反馈 }
  * @modify {Date:2022-09-23,增加@DataVersion数据版本功能 }
  * @modify {Date:2022-10-12,修复cascade解析存在的两个对象相互级联死循环问题以及支持一个对象级联多次相同对象，由俊华反馈 }
+ * @modify {Date:2024-07-18,增加对4.x早期版本主键策略被修改包路径的兼容处理 }
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class EntityManager {
@@ -115,6 +116,9 @@ public class EntityManager {
 	 * id产生器的包路径(针对类名补充包路径，直接包含了包路径的除外)
 	 */
 	private static final String IdGeneratorPackage = "org.sagacity.sqltoy.plugins.id.impl.";
+	// 历史id主键策略的包路径，5.x版本开始剔除了兼容处理，2024-7-16日增加了兼容处理
+	private static final String IdGeneratorOldPackage = "org.sagacity.sqltoy.plugin.id.";
+	private static final String IdGeneratorOldPackage_v1 = "org.sagacity.sqltoy.plugins.id.";
 
 	/**
 	 * 扫描的包(意义不大,sqltoy已经改为在使用时自动加载)
@@ -780,6 +784,11 @@ public class EntityManager {
 		} else {
 			String generator = IdGenerators.get(idGenerator.toLowerCase());
 			generator = (generator != null) ? IdGeneratorPackage.concat(generator) : idGenerator;
+			// 针对历史id策略包路径提供兼容处理:update 2024-07-16
+			if (generator.startsWith(IdGeneratorOldPackage)
+					|| (generator.startsWith(IdGeneratorOldPackage_v1) && !generator.startsWith(IdGeneratorPackage))) {
+				generator = IdGeneratorPackage.concat(generator.substring(generator.lastIndexOf(".") + 1));
+			}
 			// 自定义(不依赖spring模式),用法在quickvo中配置例如:com.xxxx..CustomIdGenerator
 			try {
 				IdGenerator idGeneratorBean = (IdGenerator) Class.forName(generator).getDeclaredConstructor()

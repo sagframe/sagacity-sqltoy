@@ -10,6 +10,7 @@ import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.utils.FileUtil;
 import org.sagacity.sqltoy.utils.IdUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -206,6 +207,14 @@ public class SqlToyConstants {
 	public final static String MERGE_ALIAS_ON_REGEX = "\\)\\s+tv\\s+on\\s+\\(";
 	public final static String MERGE_UPDATE = " when matched then update set ";
 	public final static String MERGE_INSERT = " when not matched then insert ";
+
+	// 单记录保存采用identity、sequence主键策略，并返回主键值时，字段名称大小写处理(lower/upper)
+	public static IgnoreKeyCaseMap<String, String> dialectReturnPrimaryColumnCase = new IgnoreKeyCaseMap<String, String>();
+
+	/**
+	 * sqltoy的框架包路径
+	 */
+	public final static String SQLTOY_PACKAGE = "org.sagacity.sqltoy";
 
 	public static String localDateTimeFormat;
 

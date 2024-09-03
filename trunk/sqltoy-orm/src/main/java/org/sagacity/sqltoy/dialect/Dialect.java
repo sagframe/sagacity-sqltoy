@@ -147,6 +147,7 @@ public interface Dialect {
 	 * @todo 获取单个对象
 	 * @param sqlToyContext
 	 * @param entity
+	 * @param onlySubTables
 	 * @param cascadeTypes
 	 * @param lockMode
 	 * @param conn
@@ -156,7 +157,7 @@ public interface Dialect {
 	 * @return
 	 * @throws Exception
 	 */
-	public Serializable load(final SqlToyContext sqlToyContext, final Serializable entity,
+	public Serializable load(final SqlToyContext sqlToyContext, final Serializable entity, final boolean onlySubTables,
 			final List<Class> cascadeTypes, final LockMode lockMode, final Connection conn, final Integer dbType,
 			final String dialect, final String tableName) throws Exception;
 
@@ -164,20 +165,21 @@ public interface Dialect {
 	 * @todo 批量级联查询
 	 * @param sqlToyContext
 	 * @param entities
+	 * @param onlySubTables,
 	 * @param cascadeTypes
 	 * @param lockMode
 	 * @param conn
 	 * @param dbType
 	 * @param dialect
-	 * @param tableName     分表场景对应取得的表名(无分表则当前表名)
+	 * @param tableName      分表场景对应取得的表名(无分表则当前表名)
 	 * @param fetchSize
 	 * @param maxRows
 	 * @return
 	 * @throws Exception
 	 */
-	public List<?> loadAll(final SqlToyContext sqlToyContext, List<?> entities, List<Class> cascadeTypes,
-			LockMode lockMode, final Connection conn, final Integer dbType, final String dialect,
-			final String tableName, final int fetchSize, final int maxRows) throws Exception;
+	public List<?> loadAll(final SqlToyContext sqlToyContext, List<?> entities, boolean onlySubTables,
+			List<Class> cascadeTypes, LockMode lockMode, final Connection conn, final Integer dbType,
+			final String dialect, final String tableName, final int fetchSize, final int maxRows) throws Exception;
 
 	/**
 	 * @todo 保存单条记录

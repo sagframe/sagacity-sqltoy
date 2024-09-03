@@ -32,6 +32,7 @@ import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
+import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -154,17 +155,17 @@ public class GaussDBDialect implements Dialect {
 	 * org.sagacity.sqltoy.lock.LockMode, java.sql.Connection)
 	 */
 	@Override
-	public Serializable load(SqlToyContext sqlToyContext, Serializable entity, List<Class> cascadeTypes,
-			LockMode lockMode, Connection conn, final Integer dbType, final String dialect, final String tableName)
-			throws Exception {
+	public Serializable load(SqlToyContext sqlToyContext, Serializable entity, boolean onlySubTables,
+			List<Class> cascadeTypes, LockMode lockMode, Connection conn, final Integer dbType, final String dialect,
+			final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		// 获取loadsql(loadsql 可以通过@loadSql进行改变，所以需要sqltoyContext重新获取)
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(entityMeta.getLoadSql(tableName), SqlType.search,
 				dialect, null);
 		String loadSql = sqlToyConfig.getSql(dialect);
 		loadSql = loadSql.concat(getLockSql(loadSql, dbType, lockMode));
-		return (Serializable) DialectUtils.load(sqlToyContext, sqlToyConfig, loadSql, entityMeta, entity, cascadeTypes,
-				conn, dbType);
+		return (Serializable) DialectUtils.load(sqlToyContext, sqlToyConfig, loadSql, entityMeta, entity, onlySubTables,
+				cascadeTypes, conn, dbType);
 	}
 
 	/*
@@ -175,11 +176,11 @@ public class GaussDBDialect implements Dialect {
 	 * org.sagacity.sqltoy.lock.LockMode, java.sql.Connection)
 	 */
 	@Override
-	public List<?> loadAll(SqlToyContext sqlToyContext, List<?> entities, List<Class> cascadeTypes, LockMode lockMode,
-			Connection conn, final Integer dbType, final String dialect, final String tableName, final int fetchSize,
-			final int maxRows) throws Exception {
-		return DialectUtils.loadAll(sqlToyContext, entities, cascadeTypes, lockMode, conn, dbType, tableName,
-				(sql, dbTypeValue, lockedMode) -> {
+	public List<?> loadAll(SqlToyContext sqlToyContext, List<?> entities, boolean onlySubTables,
+			List<Class> cascadeTypes, LockMode lockMode, Connection conn, final Integer dbType, final String dialect,
+			final String tableName, final int fetchSize, final int maxRows) throws Exception {
+		return DialectUtils.loadAll(sqlToyContext, entities, onlySubTables, cascadeTypes, lockMode, conn, dbType,
+				tableName, (sql, dbTypeValue, lockedMode) -> {
 					return getLockSql(sql, dbTypeValue, lockedMode);
 				}, fetchSize, maxRows);
 	}
@@ -198,9 +199,11 @@ public class GaussDBDialect implements Dialect {
 		String sequence = entityMeta.getSequence() + ".nextval";
 		// gaussdb 主键策略是sequence模式需要先获取主键值
 		if (pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE)) {
-			// 不允许手工赋值，重新取值覆盖
-			Object id = SqlUtil.getSequenceValue(conn, entityMeta.getSequence(), dbType);
-			if (id != null) {
+			// 取实体对象的主键值
+			Object id = BeanUtil.getProperty(entity, entityMeta.getIdArray()[0]);
+			// 为null通过sequence获取
+			if (StringUtil.isBlank(id)) {
+				id = SqlUtil.getSequenceValue(conn, entityMeta.getSequence(), dbType);
 				BeanUtil.setProperty(entity, entityMeta.getIdArray()[0], id);
 			}
 			pkStrategy = PKStrategy.ASSIGN;
@@ -267,9 +270,9 @@ public class GaussDBDialect implements Dialect {
 						String sequence = entityMeta.getSequence() + ".nextval";
 						boolean isAssignPK = GaussDialectUtils.isAssignPKValue(pkStrategy);
 						// update 级联操作过程中会自动判断数据库类型
-						return DialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
-								entityMeta, pkStrategy, forceUpdateFields, null, NVL_FUNCTION, sequence, isAssignPK,
-								null);
+						return DialectUtils.getSaveOrUpdateSql(sqlToyContext, sqlToyContext.getUnifyFieldsHandler(),
+								dbType, entityMeta, pkStrategy, forceUpdateFields, null, NVL_FUNCTION, sequence,
+								isAssignPK, null);
 					}
 				}, forceCascadeClasses, subTableForceUpdateProps, conn, dbType, tableName);
 	}
@@ -335,9 +338,9 @@ public class GaussDBDialect implements Dialect {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = entityMeta.getSequence() + ".nextval";
 						boolean isAssignPK = GaussDialectUtils.isAssignPKValue(pkStrategy);
-						return DialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
-								entityMeta, pkStrategy, forceUpdateFields, null, NVL_FUNCTION, sequence, isAssignPK,
-								tableName);
+						return DialectUtils.getSaveOrUpdateSql(sqlToyContext, sqlToyContext.getUnifyFieldsHandler(),
+								dbType, entityMeta, pkStrategy, forceUpdateFields, null, NVL_FUNCTION, sequence,
+								isAssignPK, tableName);
 					}
 				}, reflectPropsHandler, conn, dbType, autoCommit);
 	}

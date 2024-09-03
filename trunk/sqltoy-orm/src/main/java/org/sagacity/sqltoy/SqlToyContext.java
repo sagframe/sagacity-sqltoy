@@ -151,6 +151,11 @@ public class SqlToyContext {
 	private OverTimeSqlHandler overTimeSqlHandler = new DefaultOverTimeHandler();
 
 	/**
+	 * 单记录保存采用identity、sequence主键策略，并返回主键值时，字段名称大小写处理(lower/upper)
+	 */
+	private IgnoreKeyCaseMap<String, String> dialectReturnPrimaryColumnCase = new IgnoreKeyCaseMap<String, String>();
+
+	/**
 	 * @param unifyFieldsHandler the unifyFieldsHandler to set
 	 */
 	public void setUnifyFieldsHandler(IUnifyFieldsHandler unifyFieldsHandler) {
@@ -419,6 +424,9 @@ public class SqlToyContext {
 		if (dialectMap != null && !dialectMap.isEmpty()) {
 			DataSourceUtils.dialectMap = dialectMap;
 		}
+		if (dialectReturnPrimaryColumnCase != null) {
+			SqlToyConstants.dialectReturnPrimaryColumnCase = dialectReturnPrimaryColumnCase;
+		}
 		// 初始化默认dataSource
 		initDefaultDataSource();
 		// 设置workerId和dataCenterId,为使用snowflake主键ID产生算法服务
@@ -427,9 +435,8 @@ public class SqlToyContext {
 		scriptLoader.initialize(this.debug, delayCheckSeconds, scriptCheckIntervalSeconds, breakWhenSqlRepeat);
 		// 初始化翻译器,update 2021-1-23 增加caffeine缓存支持
 		if (translateCacheManager == null && "caffeine".equalsIgnoreCase(this.cacheType)) {
-			translateManager.initialize(this,
-					(TranslateCacheManager) Class.forName(translateCaffeineManagerClass).newInstance(),
-					delayCheckSeconds);
+			translateManager.initialize(this, (TranslateCacheManager) Class.forName(translateCaffeineManagerClass)
+					.getDeclaredConstructor().newInstance(), delayCheckSeconds);
 		} else {
 			translateManager.initialize(this, translateCacheManager, delayCheckSeconds);
 		}
@@ -756,6 +763,8 @@ public class SqlToyContext {
 			this.dialect = Dialect.SQLITE;
 		} else if (tmp.startsWith(Dialect.GAUSSDB)) {
 			this.dialect = Dialect.GAUSSDB;
+		} else if (tmp.startsWith(Dialect.MOGDB)) {
+			this.dialect = Dialect.MOGDB;
 		} else if (tmp.startsWith(Dialect.MARIADB)) {
 			this.dialect = Dialect.MARIADB;
 		} else if (tmp.startsWith(Dialect.CLICKHOUSE)) {
@@ -1286,4 +1295,13 @@ public class SqlToyContext {
 	public void setDialectDDLGenerator(DialectDDLGenerator dialectDDLGenerator) {
 		this.dialectDDLGenerator = dialectDDLGenerator;
 	}
+
+	public IgnoreKeyCaseMap<String, String> getDialectReturnPrimaryColumnCase() {
+		return dialectReturnPrimaryColumnCase;
+	}
+
+	public void setDialectReturnPrimaryColumnCase(IgnoreKeyCaseMap<String, String> dialectReturnPrimaryColumnCase) {
+		this.dialectReturnPrimaryColumnCase = dialectReturnPrimaryColumnCase;
+	}
+
 }

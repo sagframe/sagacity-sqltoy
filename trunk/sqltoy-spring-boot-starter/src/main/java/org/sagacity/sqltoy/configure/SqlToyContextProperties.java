@@ -1,6 +1,7 @@
 package org.sagacity.sqltoy.configure;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -266,6 +267,11 @@ public class SqlToyContextProperties implements Serializable {
 	 * 1、auto 2、"HH:mm:ss.SSS" 3、"HH:mm:ss.SSSSSS" 4、"HH:mm:ss.SSSSSSSSS"
 	 */
 	private String localTimeFormat = "HH:mm:ss";
+	
+	/**
+	 * 单记录保存采用identity、sequence主键策略，并返回主键值时，字段名称大小写处理(lower/upper)
+	 */
+	private HashMap<String, String> dialectReturnPrimaryColumnCase;
 
 	/**
 	 * @return the sqlResourcesDir
@@ -752,6 +758,14 @@ public class SqlToyContextProperties implements Serializable {
 	 */
 	public void setDialectDDLGenerator(String dialectDDLGenerator) {
 		this.dialectDDLGenerator = dialectDDLGenerator;
+	}
+
+	public HashMap<String, String> getDialectReturnPrimaryColumnCase() {
+		return dialectReturnPrimaryColumnCase;
+	}
+
+	public void setDialectReturnPrimaryColumnCase(HashMap<String, String> dialectReturnPrimaryColumnCase) {
+		this.dialectReturnPrimaryColumnCase = dialectReturnPrimaryColumnCase;
 	}
 
 }
