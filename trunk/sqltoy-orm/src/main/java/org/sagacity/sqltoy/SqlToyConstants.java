@@ -208,9 +208,6 @@ public class SqlToyConstants {
 	public final static String MERGE_UPDATE = " when matched then update set ";
 	public final static String MERGE_INSERT = " when not matched then insert ";
 
-	// 单记录保存采用identity、sequence主键策略，并返回主键值时，字段名称大小写处理(lower/upper)
-	public static IgnoreKeyCaseMap<String, String> dialectReturnPrimaryColumnCase = new IgnoreKeyCaseMap<String, String>();
-
 	/**
 	 * sqltoy的框架包路径
 	 */
@@ -219,6 +216,9 @@ public class SqlToyConstants {
 	public static String localDateTimeFormat;
 
 	public static String localTimeFormat;
+
+	//单记录保存采用identity、sequence主键策略，并返回主键值时，字段名称大小写处理(lower/upper)
+	public static IgnoreKeyCaseMap<String, String> dialectReturnPrimaryColumnCase = new IgnoreKeyCaseMap<String, String>();
 
 	/**
 	 * @todo 解析模板中的参数
@@ -285,11 +285,11 @@ public class SqlToyConstants {
 	}
 
 	/**
-	 * @todo 获取项目中在代码中编写的sql数量
+	 * @todo 获取项目中在代码中编写的sql数量，超过此阈值不纳入缓存
 	 * @return
 	 */
 	public static int getMaxCodeSqlCount() {
-		// 默认值为2000
+		// 默认值为2500
 		return Integer.parseInt(getKeyValue("sqltoy.max.code.sql.count", "2500"));
 	}
 
@@ -416,7 +416,7 @@ public class SqlToyConstants {
 	 * @return
 	 */
 	public static int getLoadAllBatchSize() {
-		// 默认值为100
+		// 默认值为1000
 		return Integer.parseInt(getKeyValue("sqltoy.loadAll.batchsize", "1000"));
 	}
 
