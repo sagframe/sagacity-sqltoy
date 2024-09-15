@@ -35,7 +35,8 @@ import org.slf4j.LoggerFactory;
 
 /**
  * @project sqltoy-orm
- * @description 国产达梦数据库方言支持(从DM8开始支持)
+ * @description 国产达梦数据库方言支持(从DM8开始支持),问题: 1、dm数据库跟oracle差异:在merge
+ *              into里面使用nvl报错;目前采取了先更新后saveIgnore的操作模式 2、updateFetch操作报游标错误
  * @author zhongxuchen
  * @version v1.0,Date:2020-06-05
  * @modify Date:2020-06-05 初始创建达梦数据库支持

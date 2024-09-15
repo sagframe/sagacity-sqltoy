@@ -137,6 +137,8 @@ public class SqlConfigParseUtils {
 	public final static Pattern WHERE_CLOSE_PATTERN = Pattern
 			.compile("^((order|group)\\s+by|(inner|left|right|full)\\s+join|having|union|limit)\\W");
 
+	public final static Pattern START_AND_OR = Pattern.compile("^\\s*(and|or)\\W");
+
 	public final static String DBL_QUESTMARK = "#sqltoy_dblqsmark_placeholder#";
 	// field=? 判断等于号
 	public final static Pattern EQUAL_PATTERN = Pattern.compile("[^\\>\\<\\!\\:]\\=\\s*$");
@@ -512,6 +514,8 @@ public class SqlConfigParseUtils {
 		boolean sqlhasIs;
 		String evalStr;
 		int logicParamCnt;
+		// sql内容体是否以and 或 or 结尾
+		boolean isEndWithAndOr = false;
 		while (pseudoMarkStart != -1) {
 			// 始终从最后一个#[]进行处理
 			beginMarkIndex = queryStr.lastIndexOf(SQL_PSEUDO_START_MARK);
@@ -527,12 +531,16 @@ public class SqlConfigParseUtils {
 			markContentSql = BLANK
 					.concat(queryStr.substring(beginMarkIndex + SQL_PSEUDO_START_MARK_LENGTH, endMarkIndex))
 					.concat(BLANK);
+			isEndWithAndOr = false;
+			if (StringUtil.matches(markContentSql, SqlToyConstants.AND_OR_END)) {
+				isEndWithAndOr = true;
+			}
 			tailSql = queryStr.substring(endMarkIndex + SQL_PSEUDO_END_MARK_LENGTH);
 			// 获取#[]中的参数数量
 			paramCnt = StringUtil.matchCnt(markContentSql, ARG_NAME_PATTERN, 0);
 			// #[]中无参数，拼接preSql+markContentSql+tailSql
 			if (paramCnt == 0) {
-				queryStr = processWhereLinkAnd(preSql, BLANK, tailSql);
+				queryStr = processWhereLinkAnd(preSql, BLANK, isEndWithAndOr, tailSql);
 			} else {
 				// 在#[前的参数个数
 				preParamCnt = StringUtil.matchCnt(preSql, ARG_NAME_PATTERN, 0);
@@ -601,7 +609,7 @@ public class SqlConfigParseUtils {
 						}
 					}
 				}
-				queryStr = processWhereLinkAnd(preSql, markContentSql, tailSql);
+				queryStr = processWhereLinkAnd(preSql, markContentSql, isEndWithAndOr, tailSql);
 			}
 			pseudoMarkStart = queryStr.indexOf(SQL_PSEUDO_START_MARK);
 		}
@@ -1012,10 +1020,12 @@ public class SqlConfigParseUtils {
 	 *       后面就无需写1=1,sqltoy自动补充或去除1=1(where 后面有and 或 or则会自动去除1=1)
 	 * @param preSql
 	 * @param markContentSql
+	 * @param isEndWithAndOr
 	 * @param tailSql
 	 * @return
 	 */
-	public static String processWhereLinkAnd(String preSql, String markContentSql, String tailSql) {
+	public static String processWhereLinkAnd(String preSql, String markContentSql, boolean isEndWithAndOr,
+			String tailSql) {
 		String subStr = markContentSql.concat(tailSql);
 		String tmp = subStr.trim();
 		int index = StringUtil.matchIndex(preSql, WHERE_END_PATTERN);
@@ -1031,20 +1041,34 @@ public class SqlConfigParseUtils {
 			} else if (StringUtil.matches(tmp, OR_START_PATTERN)) {
 				return preSql.concat(" ").concat(subStr.trim().substring(2)).concat(" ");
 			} else if ("".equals(markContentSql.trim())) {
+				String tailTrim = tailSql.trim();
+				String tailTrimLow = tailTrim.toLowerCase();
 				// 排除部分场景直接剔除where 语句
 				// 以where拼接")" 开头字符串,剔除where
-				if (tailSql.trim().startsWith(")")) {
+				if (tailTrim.startsWith(")")) {
 					return preSql.substring(0, index + 1).concat(" ").concat(tailSql).concat(" ");
 				} // where 后面跟order by、group by、left join、right join、full join、having、union、limit
-				else if (StringUtil.matches(tailSql.trim().toLowerCase(), WHERE_CLOSE_PATTERN)) {
+				else if (StringUtil.matches(tailTrimLow, WHERE_CLOSE_PATTERN)) {
 					// 删除掉where
 					return preSql.substring(0, index + 1).concat(" ").concat(tailSql).concat(" ");
 				} // where 后面非关键词增加1=1
 				else {
 					// 注意这里1=1 要保留，where #[被剔除内容] limit 10，就会出现where limit
-					// 同时避免where #[id=:id] #[status=:status] 这种缺少连接词错误写法
-					// 正确写法:where #[id=:id] #[and status=:status] ,注意连接词 and 不能缺少
-					return preSql.concat(" 1=1 ").concat(tailSql).concat(" ");
+					// where 后续拼接tailsql是#[]形式，增加1=1
+					if (tailTrim.startsWith(SQL_PSEUDO_START_MARK)) {
+						return preSql.concat(" 1=1 ").concat(tailSql).concat(" ");
+					}
+					// where #[field1=:val1 and] field2=:val2, and在前面#[]中形式，去除#[field1=:val1 and]
+					else if (isEndWithAndOr) {
+						return preSql.concat(" ").concat(tailSql).concat(" ");
+					} else {
+						// tailSql不是limit、order 等开头，也不是and 、or 开头，补充1=1 and
+						if (!StringUtil.matches(tailTrimLow, WHERE_CLOSE_PATTERN)
+								&& !StringUtil.matches(tailTrimLow, START_AND_OR)) {
+							return preSql.concat(" ").concat(tailSql).concat(" ");
+						}
+						return preSql.concat(" 1=1 ").concat(tailSql).concat(" ");
+					}
 				}
 			}
 		}

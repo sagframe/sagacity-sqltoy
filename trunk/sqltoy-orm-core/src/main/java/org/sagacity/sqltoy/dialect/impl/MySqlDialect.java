@@ -169,6 +169,23 @@ public class MySqlDialect implements Dialect {
 
 	// mysql的on duplicate key update 针对非空字段先校验了insert导致无法走到update set
 	// xxx=ifnull(null,xxx)
+	// step1: create table
+	//
+	// CREATE TABLE TEST1 (
+	// ID varchar(100) NOT NULL,
+	// NAME varchar(100) NOT NULL,
+	// STATUS varchar(100) NOT NULL,
+	// PRIMARY KEY (ID)
+	// )
+	//
+	// step 2、insert record:
+	// insert into TEST1 (ID, NAME,STATUS ) values('4','test','6') ;
+	//
+	// step 3、execute insert on duplicate update (same PK)
+	//
+	// insert into TEST1 (ID, NAME,STATUS ) values('4',null,'6')
+	// on duplicate key update TEST1.NAME=ifnull(values(NAME),TEST1.NAME),
+	// TEST1.STATUS=ifnull(values(STATUS),TEST1.STATUS);
 	/*
 	 * (non-Javadoc)
 	 *

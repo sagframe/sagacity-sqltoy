@@ -114,11 +114,17 @@ public class SqlToyConstantsTest {
 
 	@Test
 	public void testBeanInfo1() {
-		String sql = SqlToyConstants.MERGE_ALIAS_ON + " ta.name=tv.name)";
-		int onTenantIndex = sql.indexOf(SqlToyConstants.MERGE_ALIAS_ON);
-		int end = onTenantIndex + SqlToyConstants.MERGE_ALIAS_ON.length();
-		String aliasName = sql.substring(end, sql.indexOf(".", end)).trim();
-		System.err.println("[" + aliasName + "]");
+		String sql = "id=:id and t1 ";
+
+		System.err.println(sql+"结果:"+StringUtil.matches(sql, SqlToyConstants.AND_OR_END));
+		sql = "id=:id) and ";
+		System.err.println(sql+"结果:"+StringUtil.matches(sql, SqlToyConstants.AND_OR_END));
+		sql = "id=:id)and ";
+		System.err.println(sql+"结果:"+StringUtil.matches(sql, SqlToyConstants.AND_OR_END));
+		sql = "id=:id)or ";
+		System.err.println(sql+"结果:"+StringUtil.matches(sql, SqlToyConstants.AND_OR_END));
+		sql = "id=:id)_or ";
+		System.err.println(sql+"结果:"+StringUtil.matches(sql, SqlToyConstants.AND_OR_END));
 	}
 
 	@Test

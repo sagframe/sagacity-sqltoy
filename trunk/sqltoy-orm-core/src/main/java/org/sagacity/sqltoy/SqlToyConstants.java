@@ -181,6 +181,9 @@ public class SqlToyConstants {
 	// 以空白结尾
 	public final static Pattern BLANK_END = Pattern.compile("\\s$");
 
+	// 以and 或 or结尾
+	public final static Pattern AND_OR_END = Pattern.compile("(?i)\\W(and|or)\\s*$");
+
 	/**
 	 * 不输出sql的表达式
 	 */
@@ -217,7 +220,7 @@ public class SqlToyConstants {
 
 	public static String localTimeFormat;
 
-	//单记录保存采用identity、sequence主键策略，并返回主键值时，字段名称大小写处理(lower/upper)
+	// 单记录保存采用identity、sequence主键策略，并返回主键值时，字段名称大小写处理(lower/upper)
 	public static IgnoreKeyCaseMap<String, String> dialectReturnPrimaryColumnCase = new IgnoreKeyCaseMap<String, String>();
 
 	/**
