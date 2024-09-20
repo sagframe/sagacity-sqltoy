@@ -126,7 +126,7 @@ public class SqlConfigParseUtilsTest {
 
 	@Test
 	public void testNull1() throws Exception {
-		String sql = "select * from table where #[id=:id ] #[status=:status]";
+		String sql = "select * from table where #[id=:id ] #[ status=:status]";
 		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "id", "status" },
 				new Object[] { null, "1" });
 		System.err.println(JSON.toJSONString(result));
@@ -134,9 +134,9 @@ public class SqlConfigParseUtilsTest {
 
 	@Test
 	public void testNull2() throws Exception {
-		String sql = "select * from table where #[id=:id ] #[status=:status] limit10";
+		String sql = "select * from table where #[id=:id and] status=:status limit10";
 		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "id", "status" },
-				new Object[] { null, null });
+				new Object[] { null, 1});
 		System.err.println(JSON.toJSONString(result));
 	}
 
