@@ -137,8 +137,6 @@ public class SqlConfigParseUtils {
 	public final static Pattern WHERE_CLOSE_PATTERN = Pattern
 			.compile("^((order|group)\\s+by|(inner|left|right|full)\\s+join|having|union|limit)\\W");
 
-	public final static Pattern START_AND_OR = Pattern.compile("^\\s*(and|or)\\W");
-
 	public final static String DBL_QUESTMARK = "#sqltoy_dblqsmark_placeholder#";
 	// field=? 判断等于号
 	public final static Pattern EQUAL_PATTERN = Pattern.compile("[^\\>\\<\\!\\:]\\=\\s*$");
@@ -1042,31 +1040,21 @@ public class SqlConfigParseUtils {
 				return preSql.concat(" ").concat(subStr.trim().substring(2)).concat(" ");
 			} else if ("".equals(markContentSql.trim())) {
 				String tailTrim = tailSql.trim();
-				String tailTrimLow = tailTrim.toLowerCase();
 				// 排除部分场景直接剔除where 语句
 				// 以where拼接")" 开头字符串,剔除where
 				if (tailTrim.startsWith(")")) {
 					return preSql.substring(0, index + 1).concat(" ").concat(tailSql).concat(" ");
 				} // where 后面跟order by、group by、left join、right join、full join、having、union、limit
-				else if (StringUtil.matches(tailTrimLow, WHERE_CLOSE_PATTERN)) {
+				else if (StringUtil.matches(tailTrim.toLowerCase(), WHERE_CLOSE_PATTERN)) {
 					// 删除掉where
 					return preSql.substring(0, index + 1).concat(" ").concat(tailSql).concat(" ");
 				} // where 后面非关键词增加1=1
 				else {
 					// 注意这里1=1 要保留，where #[被剔除内容] limit 10，就会出现where limit
-					// where 后续拼接tailsql是#[]形式，增加1=1
-					if (tailTrim.startsWith(SQL_PSEUDO_START_MARK)) {
-						return preSql.concat(" 1=1 ").concat(tailSql).concat(" ");
-					}
 					// where #[field1=:val1 and] field2=:val2, and在前面#[]中形式，去除#[field1=:val1 and]
-					else if (isEndWithAndOr) {
+					if (isEndWithAndOr) {
 						return preSql.concat(" ").concat(tailSql).concat(" ");
 					} else {
-						// tailSql不是limit、order 等开头，也不是and 、or 开头，补充1=1 and
-						if (!StringUtil.matches(tailTrimLow, WHERE_CLOSE_PATTERN)
-								&& !StringUtil.matches(tailTrimLow, START_AND_OR)) {
-							return preSql.concat(" ").concat(tailSql).concat(" ");
-						}
 						return preSql.concat(" 1=1 ").concat(tailSql).concat(" ");
 					}
 				}
@@ -1282,5 +1270,4 @@ public class SqlConfigParseUtils {
 			}
 		}
 	}
-
 }
