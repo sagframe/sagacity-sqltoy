@@ -223,8 +223,7 @@ public class SqlExecuteStat {
 						+ (null == content ? "" : ":" + StringUtil.fillArgs(content, args)));
 			}
 		}
-		result.append("\n/*|----------------------完成执行报告输出 --------------------------------------------------*/");
-		result.append("\n");
+		result.append("\n/*|----------------------完成执行报告输出 --------------------------------------------------*/\n");
 		if (sqlTrace.isError()) {
 			logger.error(result.toString());
 		} else if (sqlTrace.isOverTime()) {

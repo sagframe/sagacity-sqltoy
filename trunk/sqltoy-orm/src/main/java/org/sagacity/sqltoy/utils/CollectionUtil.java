@@ -250,14 +250,14 @@ public class CollectionUtil {
 	 * @param pids
 	 * @return
 	 */
-	public static List sortTreeList(List treeList, TreeIdAndPidGet treeIdAndPidGet, Object... pids) {
+	public static <T> List<T> sortTreeList(List<T> treeList, TreeIdAndPidGet<T> treeIdAndPidGet, Object... pids) {
 		if (treeList == null || treeList.isEmpty() || pids == null || pids.length == 0) {
 			return treeList;
 		}
 		int totalRecord = treeList.size();
 		// 支持多根节点
-		List result = new ArrayList();
-		Object row;
+		List<T> result = new ArrayList<T>();
+		T row;
 		Object pid;
 		for (int i = 0; i < treeList.size(); i++) {
 			row = treeList.get(i);

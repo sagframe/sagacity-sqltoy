@@ -173,6 +173,8 @@ public class MongoElasticUtils {
 		int logicParamCnt;
 		Object paramValue;
 		boolean isNull;
+		// sql内容体是否以and 或 or 结尾
+		boolean isEndWithAndOr = false;
 		while (pseudoMarkStart != -1) {
 			// 始终从最后一个#[]进行处理
 			beginMarkIndex = queryStr.lastIndexOf(startMark);
@@ -192,12 +194,20 @@ public class MongoElasticUtils {
 			// 最后#[]中的查询语句,加空白减少substr(index+1)可能引起的错误
 			markContentSql = BLANK.concat(queryStr.substring(beginMarkIndex + startMarkLength, endMarkIndex))
 					.concat(BLANK);
+			isEndWithAndOr = false;
+			if (sqlMode && StringUtil.matches(markContentSql, SqlToyConstants.AND_OR_END)) {
+				isEndWithAndOr = true;
+			}
 			tailSql = queryStr.substring(endMarkIndex + endMarkLength);
 			// 获取#[]中的参数数量
 			paramCnt = StringUtil.matchCnt(markContentSql, namedPattern, sqlMode ? 1 : 0);
 			// #[]中无参数，拼接preSql+markContentSql+tailSql
 			if (paramCnt == 0) {
-				queryStr = preSql.concat(BLANK).concat(tailSql);
+				if (sqlMode) {
+					queryStr = SqlConfigParseUtils.processWhereLinkAnd(preSql, BLANK, isEndWithAndOr, tailSql);
+				} else {
+					queryStr = preSql.concat(BLANK).concat(tailSql);
+				}
 			} else {
 				// 在#[前的参数个数
 				preParamCnt = StringUtil.matchCnt(preSql, namedPattern, sqlMode ? 1 : 0);
@@ -259,7 +269,7 @@ public class MongoElasticUtils {
 					}
 				}
 				if (sqlMode) {
-					queryStr = SqlConfigParseUtils.processWhereLinkAnd(preSql, markContentSql, tailSql);
+					queryStr = SqlConfigParseUtils.processWhereLinkAnd(preSql, markContentSql, isEndWithAndOr, tailSql);
 				} else {
 					queryStr = preSql.concat(BLANK).concat(markContentSql).concat(BLANK).concat(tailSql);
 				}
