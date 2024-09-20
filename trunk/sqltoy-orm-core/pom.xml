@@ -3,19 +3,19 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sagframe</groupId>
-	<version>5.6.22</version>
+	<version>5.6.23</version>
 	<name>sagacity-sqltoy</name>
 	<description>sqltoy core code</description>
 	<artifactId>sagacity-sqltoy</artifactId>
 	<url>https://github.com/sagframe/sagacity-sqltoy</url>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<ojdbc.version>19.24.0.0</ojdbc.version>
+		<ojdbc11.version>23.5.0.24.07</ojdbc11.version>
 		<ehcache.version>3.10.8</ehcache.version>
 		<httpclient.version>4.5.14</httpclient.version>
 		<httpclient-core.version>4.4.16</httpclient-core.version>
-		<elastic-rest-client.version>8.15.0</elastic-rest-client.version>
-		<fastjson.version>2.0.52</fastjson.version>
+		<elastic-rest-client.version>8.15.1</elastic-rest-client.version>
+		<fastjson.version>2.0.53</fastjson.version>
 		<mongo.version>3.12.14</mongo.version>
 		<junit-jupiter.version>5.11.0</junit-jupiter.version>
 		<junit-platform.version>1.11.0</junit-platform.version>
@@ -98,8 +98,8 @@
 
 		<dependency>
 			<groupId>com.oracle.database.jdbc</groupId>
-			<artifactId>ojdbc8</artifactId>
-			<version>${ojdbc.version}</version>
+			<artifactId>ojdbc11</artifactId>
+			<version>${ojdbc11.version}</version>
 			<scope>provided</scope>
 			<optional>true</optional>
 			<exclusions>
