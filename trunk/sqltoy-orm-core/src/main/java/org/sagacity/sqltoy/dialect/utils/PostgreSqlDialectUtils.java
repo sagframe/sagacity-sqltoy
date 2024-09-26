@@ -44,6 +44,7 @@ public class PostgreSqlDialectUtils {
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param queryExecutor
+	 * @param decryptHandler
 	 * @param totalCount
 	 * @param randomCount
 	 * @param conn

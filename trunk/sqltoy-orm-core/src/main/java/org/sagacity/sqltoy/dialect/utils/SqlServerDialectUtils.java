@@ -79,6 +79,7 @@ public class SqlServerDialectUtils {
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param queryExecutor
+	 * @param decryptHandler
 	 * @param totalCount
 	 * @param randomCount
 	 * @param conn
@@ -395,6 +396,7 @@ public class SqlServerDialectUtils {
 
 	/**
 	 * @todo sqlserver 相对特殊不支持timestamp类型的插入，所以单独提供sql生成功能
+	 * @param unifyFieldsHandler
 	 * @param dbType
 	 * @param entityMeta
 	 * @param pkStrategy
@@ -550,6 +552,7 @@ public class SqlServerDialectUtils {
 
 	/**
 	 * @todo 产生对象对应的insert sql语句
+	 * @param unifyFieldsHandler
 	 * @param dbType
 	 * @param entityMeta
 	 * @param tableName

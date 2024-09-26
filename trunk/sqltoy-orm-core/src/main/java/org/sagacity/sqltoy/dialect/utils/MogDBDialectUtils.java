@@ -42,7 +42,7 @@ public class MogDBDialectUtils {
 	}
 
 	/**
-	 *
+	 * @todo 获取表全部字段信息
 	 * @param catalog
 	 * @param schema
 	 * @param tableName 小写
@@ -127,6 +127,7 @@ public class MogDBDialectUtils {
 	 * @return
 	 * @throws Exception
 	 */
+	@SuppressWarnings({ "unchecked" })
 	public static List<TableMeta> getTables(String catalog, String schema, String tableName, Connection conn,
 			Integer dbType, String dialect) throws Exception {
 		// 可自定义 PreparedStatement pst=conn.xxx;

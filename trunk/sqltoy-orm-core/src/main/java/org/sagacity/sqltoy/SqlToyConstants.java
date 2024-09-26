@@ -254,6 +254,19 @@ public class SqlToyConstants {
 	}
 
 	/**
+	 * 关闭数据库多字段in支持
+	 * 
+	 * @return
+	 */
+	public static boolean closeMultiFieldIn() {
+		String result = getKeyValue("sqltoy.close.multiFieldIn");
+		if (result != null && result.equalsIgnoreCase("true")) {
+			return true;
+		}
+		return false;
+	}
+
+	/**
 	 * @todo 获取常量值
 	 * @param key
 	 * @param defaultValue

@@ -1270,5 +1270,4 @@ public class SqlConfigParseUtils {
 			}
 		}
 	}
-
 }
