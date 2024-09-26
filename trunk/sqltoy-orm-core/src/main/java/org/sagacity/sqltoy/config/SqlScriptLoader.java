@@ -38,6 +38,7 @@ import org.slf4j.LoggerFactory;
  * @modify Date:2023-8-19 增加了@include(:scriptName) 模式
  * @modify Date:2024-5-13 @include(id="sqlId")
  *         增强兼容sqlId根据dialect方言找sqlId_dialect模式
+ * @modify Date:2024-09-19 增加@fast(@include("sqlId")) 场景
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class SqlScriptLoader {

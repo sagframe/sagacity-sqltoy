@@ -99,7 +99,7 @@ public class EntityManager {
 			put("redis", "RedisIdGenerator");
 			// 26位
 			put("nanotime", "NanoTimeIdGenerator");
-			// 16位雪花算法
+			// 19位雪花算法
 			put("snowflake", "SnowflakeIdGenerator");
 			// default的命名容错
 			put("defaultidgenerator", "DefaultIdGenerator");

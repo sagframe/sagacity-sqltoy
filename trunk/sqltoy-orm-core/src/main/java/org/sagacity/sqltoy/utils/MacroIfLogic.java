@@ -75,11 +75,11 @@ public class MacroIfLogic {
 		}
 		// 2020-08-25 增加include场景
 		// 比较符号(等于用==,最后用=进行容错处理),<>符号前面已经统一规范成!=
-		String[] compareStr = { "!=", "==", ">=", "<=", ">", "<", "=", " include ", " in ", " out ", " startswith ",
-				" endswith " };
+		String[] compareStr = { "!=", "==", ">=", "<=", ">", "<", "=", " include ", " exclude ", " in ", " out ",
+				" startswith ", " endswith " };
 		// 增加对应compareStr的切割表达式(2020-10-21 修改为正则表达式，修复split错误)
 		String[] splitReg = { "\\!\\=", "\\=\\=", "\\>\\=", "\\<\\=", "\\>", "\\<", "\\=", "\\s+include\\s+",
-				"\\s+in\\s+", "\\s+out\\s+", "\\s+startswith\\s+", "\\s+endswith\\s+" };
+				"\\s+exclude\\s+", "\\s+in\\s+", "\\s+out\\s+", "\\s+startswith\\s+", "\\s+endswith\\s+" };
 		String splitStr = "==";
 		String logicStr = "\\&\\&";
 		String[] expressions;
@@ -269,6 +269,10 @@ public class MacroIfLogic {
 		// 包含
 		if ("include".equals(compareType)) {
 			return include(value, valueStr, compareValue, type);
+		}
+		// 不包含
+		if ("exclude".equals(compareType)) {
+			return !include(value, valueStr, compareValue, type);
 		}
 		// 在数组范围内
 		if ("in".equals(compareType)) {

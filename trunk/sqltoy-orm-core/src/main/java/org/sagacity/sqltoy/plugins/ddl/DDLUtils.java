@@ -168,6 +168,7 @@ public class DDLUtils {
 	/**
 	 * @TODO 设置类型
 	 * @param colMeta
+	 * @param dbType
 	 * @return
 	 */
 	public static String convertType(ColumnMeta colMeta, int dbType) {
