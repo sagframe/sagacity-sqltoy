@@ -661,13 +661,18 @@ public class SqlServerDialectUtils {
 	public static Object save(SqlToyContext sqlToyContext, Serializable entity, final Connection conn,
 			final Integer dbType, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
-		final boolean isIdentity = entityMeta.getIdStrategy() != null
-				&& entityMeta.getIdStrategy().equals(PKStrategy.IDENTITY);
-		final boolean isSequence = entityMeta.getIdStrategy() != null
-				&& entityMeta.getIdStrategy().equals(PKStrategy.SEQUENCE);
-
+		PKStrategy pkStrategy = entityMeta.getIdStrategy();
+		// 主键值已经存在，则主键策略改为assign，避免跳号
+		if (pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE)) {
+			Object id = BeanUtil.getProperty(entity, entityMeta.getIdArray()[0]);
+			if (StringUtil.isNotBlank(id)) {
+				pkStrategy = PKStrategy.ASSIGN;
+			}
+		}
+		final boolean isIdentity = pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY);
+		final boolean isSequence = pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE);
 		String insertSql = generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta, tableName,
-				entityMeta.getIdStrategy(), "isnull", "@mySeqVariable", isIdentity ? false : true);
+				pkStrategy, "isnull", "@mySeqVariable", isIdentity ? false : true);
 		if (isSequence) {
 			insertSql = "set nocount on DECLARE @mySeqVariable as numeric(20)=NEXT VALUE FOR "
 					+ entityMeta.getSequence() + " " + insertSql + " select @mySeqVariable ";
@@ -684,7 +689,7 @@ public class SqlServerDialectUtils {
 		// 是否存在业务ID
 		boolean hasBizId = (entityMeta.getBusinessIdGenerator() == null) ? false : true;
 		int bizIdColIndex = hasBizId ? entityMeta.getFieldIndex(entityMeta.getBusinessIdField()) : 0;
-		boolean hasId = (entityMeta.getIdStrategy() != null && null != entityMeta.getIdGenerator()) ? true : false;
+		boolean hasId = (pkStrategy != null && null != entityMeta.getIdGenerator()) ? true : false;
 		// 主键、业务主键生成并回写对象
 		if (hasId || hasBizId) {
 			Integer[] relatedColumn = entityMeta.getBizIdRelatedColIndex();
