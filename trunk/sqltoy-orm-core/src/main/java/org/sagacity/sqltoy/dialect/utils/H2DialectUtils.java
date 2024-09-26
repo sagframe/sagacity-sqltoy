@@ -10,7 +10,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
 /**
  * @project sagacity-sqltoy
  * @description 提供h2数据库相关的特殊逻辑处理封装
- * @author zhong
+ * @author zhongxuchen
  * @version v1.0, Date:2023年6月8日
  * @modify 2023年6月8日,修改说明
  */

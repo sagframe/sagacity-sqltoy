@@ -295,6 +295,7 @@ public class OracleDialectUtils {
 	 * @param storeSql
 	 * @param inParamValues
 	 * @param outParamTypes
+	 * @param moreResult
 	 * @param conn
 	 * @param dbType
 	 * @param fetchSize
