@@ -33,6 +33,7 @@ import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
+import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
@@ -213,8 +214,7 @@ public class KingbaseDialect implements Dialect {
 						String sequence = "NEXTVAL('" + entityMeta.getSequence() + "')";
 						// kingbase identity 是sequence的一种变化实现
 						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
-							String defaultValue = entityMeta.getFieldMeta(entityMeta.getIdArray()[0])
-									.getDefaultValue();
+							String defaultValue = entityMeta.getFieldMeta(entityMeta.getIdArray()[0]).getDefaultValue();
 							if (StringUtil.isNotBlank(defaultValue)) {
 								pkStrategy = PKStrategy.SEQUENCE;
 								sequence = "NEXTVAL('" + defaultValue + "')";
@@ -273,11 +273,18 @@ public class KingbaseDialect implements Dialect {
 	public Object save(SqlToyContext sqlToyContext, Serializable entity, Connection conn, final Integer dbType,
 			final String dialect, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
-		boolean isAssignPK = KingbaseDialectUtils.isAssignPKValue(entityMeta.getIdStrategy());
+		PKStrategy pkStrategy = entityMeta.getIdStrategy();
+		// 主键值已经存在，则主键策略改为assign，避免跳号
+		if (pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE)) {
+			Object id = BeanUtil.getProperty(entity, entityMeta.getIdArray()[0]);
+			if (StringUtil.isNotBlank(id)) {
+				pkStrategy = PKStrategy.ASSIGN;
+			}
+		}
+		boolean isAssignPK = KingbaseDialectUtils.isAssignPKValue(pkStrategy);
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
-				entityMeta.getIdStrategy(), NVL_FUNCTION, "NEXTVAL('" + entityMeta.getSequence() + "')", isAssignPK,
-				tableName);
-		return DialectUtils.save(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql, entity,
+				pkStrategy, NVL_FUNCTION, "NEXTVAL('" + entityMeta.getSequence() + "')", isAssignPK, tableName);
+		return DialectUtils.save(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entity,
 				new GenerateSqlHandler() {
 					@Override
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateField) {
@@ -335,8 +342,7 @@ public class KingbaseDialect implements Dialect {
 						String sequence = "NEXTVAL('" + entityMeta.getSequence() + "')";
 						// kingbase identity 是sequence的一种变化实现
 						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
-							String defaultValue = entityMeta.getFieldMeta(entityMeta.getIdArray()[0])
-									.getDefaultValue();
+							String defaultValue = entityMeta.getFieldMeta(entityMeta.getIdArray()[0]).getDefaultValue();
 							if (StringUtil.isNotBlank(defaultValue)) {
 								pkStrategy = PKStrategy.SEQUENCE;
 								sequence = "NEXTVAL('" + defaultValue + "')";
