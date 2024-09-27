@@ -103,7 +103,7 @@ public class BeanUtil {
 		Object result = null;
 		Class enumClass = enumValue.getClass();
 		Method getKeyMethod;
-		//Map缓存，不会每次都循环
+		// Map缓存，不会每次都循环
 		if (enumGetKeyExists.containsKey(enumClass)) {
 			getKeyMethod = enumGetKeyMethods.get(enumClass);
 			if (getKeyMethod != null) {
@@ -534,7 +534,6 @@ public class BeanUtil {
 		if (null == compared) {
 			return 1;
 		}
-
 		// 直接相等
 		if (target.equals(compared)) {
 			return 0;
@@ -1998,7 +1997,7 @@ public class BeanUtil {
 	 * @param typeHandler
 	 * @param entityMeta
 	 * @param voClass
-	 * @param ids
+	 * @param ids         数组
 	 * @return
 	 */
 	public static <T extends Serializable> List<T> wrapEntities(TypeHandler typeHandler, EntityMeta entityMeta,

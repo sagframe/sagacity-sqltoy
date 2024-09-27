@@ -44,7 +44,7 @@ public class CacheUpdateWatcher extends Thread {
 	private final String dateFmt = DateUtil.FORMAT.DATETIME_HORIZONTAL;
 
 	/**
-	 * 更新检测器
+	 * 缓存数据更新检测器
 	 */
 	private CopyOnWriteArrayList<CheckerConfigModel> updateCheckers;
 
@@ -65,7 +65,7 @@ public class CacheUpdateWatcher extends Thread {
 	private int delaySeconds = 30;
 
 	/**
-	 * 集群的节点时间差异(秒)
+	 * 集群不同节点之间的时间差异(秒)
 	 */
 	private int deviationSeconds = 0;
 

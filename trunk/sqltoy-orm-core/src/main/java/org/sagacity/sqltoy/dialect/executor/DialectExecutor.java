@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * @project sagacity-sqltoy
- * @description 数据库方言并行执行器
+ * @description 数据库方言并行执行器(ParallelUtils将数据按策略分组后并行执行,DialectExecutor作为一个并行单元)
  * @author zhongxuchen
  * @version v1.0,Date:2017年11月3日
  */

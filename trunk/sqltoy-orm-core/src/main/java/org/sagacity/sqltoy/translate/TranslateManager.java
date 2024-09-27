@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * @project sqltoy-orm
- * @description sqltoy 缓存翻译器(通过缓存存储常用数据，如数据字典、机构、员工等，从而在数据库查询时可以避免 关联查询)
+ * @description sqltoy 缓存翻译器(通过缓存存储常用数据,如:数据字典、机构、员工等,从而在数据库查询时可以避免关联查询)
  * @author zhongxuchen
  * @version v1.0,Date:2013年4月8日
  * @modify {Date:2018-1-5,增强缓存更新检测机制}

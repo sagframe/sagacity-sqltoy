@@ -95,14 +95,13 @@ public class SqlConfigParseUtils {
 	 */
 	public final static Pattern FAST_PATTERN = Pattern.compile("(?i)\\@fast(Page)?\\([\\w\\W]+\\)");
 
-	// update 2022-5-24 开始支持(id,type) in (:idValues,:typeValues) 或 (id,type) in
-	// ((:idValues,:typeValues)) 模式
+	// 2022-5-24支持(id,type) in ((:idValues,:typeValues))或in(:idValues,:typeValues)模式
 	public final static Pattern IN_PATTERN = Pattern.compile(
 			"(?i)\\s+in\\s*((\\(\\s*\\?(\\s*\\,\\s*\\?)*\\s*\\))|((\\(\\s*){2}\\?(\\s*\\,\\s*\\?)+(\\s*\\)){2}))");
 	// update 2022-11-11 兼容ilike
 	public final static Pattern LIKE_PATTERN = Pattern.compile("(?i)\\s+i?like\\s+\\?");
 
-	// add 2016-5-27 by chenrenfei
+	// add 2016-5-27
 	public final static String BLANK_REGEX = "(?i)\\@blank\\s*\\(\\s*\\?\\s*\\)";
 	public final static String BLANK_START_REGEX = "(?i)^\\@blank\\s*\\(\\s*\\?\\s*\\)";
 	public final static Pattern BLANK_PATTERN = Pattern.compile(BLANK_REGEX);

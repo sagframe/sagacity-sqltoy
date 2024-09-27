@@ -2521,7 +2521,7 @@ public class DialectUtils {
 	}
 
 	/**
-	 * @TODO 根据主键或外键单个sql批量删除
+	 * @TODO 根据主键或外键组织in (?,?) 或多字段in模式批量删除
 	 * @param sqlToyContext
 	 * @param entityMeta
 	 * @param fields
@@ -3221,5 +3221,24 @@ public class DialectUtils {
 			result = interceptor.decorate(sqlToyContext, sqlToyConfig, operateType, result, entityClass, dbType);
 		}
 		return result;
+	}
+
+	/**
+	 * @todo 统一根据主键是否赋值，来调整save行为的主键策略
+	 * @param entityMeta
+	 * @param entity
+	 * @param dbType
+	 * @return
+	 */
+	public static PKStrategy getSavePKStrategy(EntityMeta entityMeta, Serializable entity, Integer dbType) {
+		PKStrategy pkStrategy = entityMeta.getIdStrategy();
+		// 主键值已经存在，则主键策略改为assign，避免跳号
+		if (pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE)) {
+			Object id = BeanUtil.getProperty(entity, entityMeta.getIdArray()[0]);
+			if (StringUtil.isNotBlank(id)) {
+				pkStrategy = PKStrategy.ASSIGN;
+			}
+		}
+		return pkStrategy;
 	}
 }

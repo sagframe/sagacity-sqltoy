@@ -55,6 +55,7 @@ public class ClickHouseDialectUtils {
 	 * @todo 保存对象
 	 * @param sqlToyContext
 	 * @param entityMeta
+	 * @param pkStrategy
 	 * @param insertSql
 	 * @param entity
 	 * @param conn
@@ -62,9 +63,8 @@ public class ClickHouseDialectUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	public static Object save(SqlToyContext sqlToyContext, final EntityMeta entityMeta, final String insertSql,
-			Serializable entity, final Connection conn, final Integer dbType) throws Exception {
-		PKStrategy pkStrategy = entityMeta.getIdStrategy();
+	public static Object save(SqlToyContext sqlToyContext, final EntityMeta entityMeta, PKStrategy pkStrategy,
+			final String insertSql, Serializable entity, final Connection conn, final Integer dbType) throws Exception {
 		final boolean isIdentity = (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY));
 		final boolean isSequence = (pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE));
 		String[] reflectColumns;
