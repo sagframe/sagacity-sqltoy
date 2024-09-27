@@ -26,8 +26,6 @@ import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
-import org.sagacity.sqltoy.utils.BeanUtil;
-import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
  * @project sqltoy-orm
@@ -128,14 +126,8 @@ public class ClickHouseDialect implements Dialect {
 	public Object save(SqlToyContext sqlToyContext, Serializable entity, Connection conn, Integer dbType,
 			String dialect, String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
-		PKStrategy pkStrategy = entityMeta.getIdStrategy();
-		// 主键值已经存在，则主键策略改为assign，避免跳号
-		if (pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE)) {
-			Object id = BeanUtil.getProperty(entity, entityMeta.getIdArray()[0]);
-			if (StringUtil.isNotBlank(id)) {
-				pkStrategy = PKStrategy.ASSIGN;
-			}
-		}
+		// save行为根据主键是否赋值情况调整最终的主键策略
+		PKStrategy pkStrategy = DialectUtils.getSavePKStrategy(entityMeta, entity, dbType);
 		// clickhouse 不支持sequence，支持identity自增模式
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 				pkStrategy, NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(),

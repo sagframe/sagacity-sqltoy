@@ -35,8 +35,6 @@ import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
-import org.sagacity.sqltoy.utils.BeanUtil;
-import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -257,14 +255,8 @@ public class SqliteDialect implements Dialect {
 			final String dialect, final String tableName) throws Exception {
 		// sqlite 只提供autoincrement 机制，即identity模式，所以sequence可以忽略
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
-		PKStrategy pkStrategy = entityMeta.getIdStrategy();
-		// 主键值已经存在，则主键策略改为assign，避免跳号
-		if (pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE)) {
-			Object id = BeanUtil.getProperty(entity, entityMeta.getIdArray()[0]);
-			if (StringUtil.isNotBlank(id)) {
-				pkStrategy = PKStrategy.ASSIGN;
-			}
-		}
+		// save行为根据主键是否赋值情况调整最终的主键策略
+		PKStrategy pkStrategy = DialectUtils.getSavePKStrategy(entityMeta, entity, dbType);
 		boolean isAssignPk = SqliteDialectUtils.isAssignPKValue(pkStrategy);
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 				pkStrategy, NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(), isAssignPk, tableName);

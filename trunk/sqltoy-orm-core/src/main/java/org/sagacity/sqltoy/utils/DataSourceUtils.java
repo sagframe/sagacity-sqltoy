@@ -805,10 +805,10 @@ public class DataSourceUtils {
 			return false;
 		}
 		if (dbType == DBType.MYSQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB
-				|| dbType == DBType.MOGDB || dbType == DBType.SQLSERVER || dbType == DBType.ORACLE
-				|| dbType == DBType.ORACLE11 || dbType == DBType.SQLITE || dbType == DBType.H2
-				|| dbType == DBType.CLICKHOUSE || dbType == DBType.DM || dbType == DBType.TIDB
-				|| dbType == DBType.KINGBASE) {
+				|| dbType == DBType.SQLSERVER || dbType == DBType.ORACLE || dbType == DBType.DM || dbType == DBType.TIDB
+				|| dbType == DBType.KINGBASE || dbType == DBType.MOGDB || dbType == DBType.OSCAR
+				|| dbType == DBType.POSTGRESQL || dbType == DBType.CLICKHOUSE || dbType == DBType.H2
+				|| dbType == DBType.SQLITE || dbType == DBType.ORACLE11) {
 			return true;
 		}
 		return false;

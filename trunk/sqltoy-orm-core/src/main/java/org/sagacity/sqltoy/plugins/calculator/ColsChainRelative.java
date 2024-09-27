@@ -16,6 +16,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @description 对集合数据进行列与列之间的比较(环比计算)
  * @author zhongxuchen
  * @version v1.0,Date:2020-3-25
+ * @modify 2024-08-30 divedData.equals(BigDecimal.ZERO) 存在bug
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class ColsChainRelative {
@@ -113,6 +114,7 @@ public class ColsChainRelative {
 						if (rowList.get(divedIndex) != null) {
 							divedData = new BigDecimal(rowList.get(divedIndex).toString());
 						}
+						//update 2024-08-30 divedData.equals(BigDecimal.ZERO) 存在bug
 						if (divedData.compareTo(BigDecimal.ZERO) == 0) {
 							divIsZero = divData.compareTo(BigDecimal.ZERO) == 0;
 							// 插入(8-3+2+2)

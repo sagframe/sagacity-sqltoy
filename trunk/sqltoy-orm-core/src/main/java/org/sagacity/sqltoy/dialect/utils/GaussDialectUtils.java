@@ -1,6 +1,13 @@
 package org.sagacity.sqltoy.dialect.utils;
 
+import java.io.Serializable;
+import java.sql.Connection;
+
+import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.PKStrategy;
+import org.sagacity.sqltoy.utils.BeanUtil;
+import org.sagacity.sqltoy.utils.SqlUtil;
+import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
  * @project sagacity-sqltoy
@@ -28,5 +35,31 @@ public class GaussDialectUtils {
 			return true;
 		}
 		return true;
+	}
+
+	/**
+	 * 组织获取gaussdb、mogdb类型数据库的save场景下的主键策略
+	 * 
+	 * @param entityMeta
+	 * @param entity
+	 * @param dbType
+	 * @param conn
+	 * @return
+	 */
+	public static PKStrategy getSavePkStrategy(EntityMeta entityMeta, Serializable entity, Integer dbType,
+			Connection conn) {
+		PKStrategy pkStrategy = entityMeta.getIdStrategy();
+		// gaussdb\mogdb 主键策略是sequence模式需要先获取主键值
+		if (pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE)) {
+			// 取实体对象的主键值
+			Object id = BeanUtil.getProperty(entity, entityMeta.getIdArray()[0]);
+			// 为null通过sequence获取
+			if (StringUtil.isBlank(id)) {
+				id = SqlUtil.getSequenceValue(conn, entityMeta.getSequence(), dbType);
+				BeanUtil.setProperty(entity, entityMeta.getIdArray()[0], id);
+			}
+			pkStrategy = PKStrategy.ASSIGN;
+		}
+		return pkStrategy;
 	}
 }

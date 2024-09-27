@@ -33,7 +33,6 @@ import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
-import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
@@ -273,14 +272,8 @@ public class KingbaseDialect implements Dialect {
 	public Object save(SqlToyContext sqlToyContext, Serializable entity, Connection conn, final Integer dbType,
 			final String dialect, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
-		PKStrategy pkStrategy = entityMeta.getIdStrategy();
-		// 主键值已经存在，则主键策略改为assign，避免跳号
-		if (pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE)) {
-			Object id = BeanUtil.getProperty(entity, entityMeta.getIdArray()[0]);
-			if (StringUtil.isNotBlank(id)) {
-				pkStrategy = PKStrategy.ASSIGN;
-			}
-		}
+		// save行为根据主键是否赋值情况调整最终的主键策略
+		PKStrategy pkStrategy = DialectUtils.getSavePKStrategy(entityMeta, entity, dbType);
 		boolean isAssignPK = KingbaseDialectUtils.isAssignPKValue(pkStrategy);
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 				pkStrategy, NVL_FUNCTION, "NEXTVAL('" + entityMeta.getSequence() + "')", isAssignPK, tableName);
