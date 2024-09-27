@@ -350,6 +350,7 @@ public class Oracle11gDialect implements Dialect {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		PKStrategy pkStrategy = entityMeta.getIdStrategy();
 		String sequence = entityMeta.getSequence() + NEXTVAL;
+		// oracle11 是不支持identity主键策略的
 		if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
 			pkStrategy = PKStrategy.SEQUENCE;
 			sequence = entityMeta.getFieldMeta(entityMeta.getIdArray()[0]).getDefaultValue();

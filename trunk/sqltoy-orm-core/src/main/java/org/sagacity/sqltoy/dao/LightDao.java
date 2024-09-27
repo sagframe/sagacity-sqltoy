@@ -809,11 +809,17 @@ public interface LightDao {
 	/**
 	 * @todo 对数据集合通过反调函数对具体属性进行翻译
 	 *       <p>
-	 *       sqlToyLazyDao.translate(staffVOs<StaffInfoVO>, "staffIdName", new
-	 *       TranslateHandler() { //告知key值 public Object getKey(Object row) { return
-	 *       ((StaffInfoVO)row).getStaffId(); } // 将翻译后的名称值设置到对应的属性上 public void
-	 *       setName(Object row, String name) {
-	 *       ((StaffInfoVO)row).setStaffName(name); } });
+	 *       <li>sqlToyLazyDao.translate(staffVOs<StaffInfoVO>, "staffIdName",
+	 *       <li>----new TranslateHandler() {
+	 *       <li>----//告知key值
+	 *       <li>----public Object getKey(Object row) {
+	 *       <li>--------return ((StaffInfoVO)row).getStaffId();
+	 *       <li>----}
+	 *       <li>----// 将翻译后的名称值设置到对应的属性上
+	 *       <li>----public void setName(Object row, String name) {
+	 *       <li>--------((StaffInfoVO)row).setStaffName(name);
+	 *       <li>----}
+	 *       <li>});
 	 *       </p>
 	 * @param dataSet        数据集合
 	 * @param cacheName      缓存名称

@@ -167,7 +167,7 @@ public class SqlUtilsExt {
 				defaultValue = entityMeta.getFieldsDefaultValue()[i];
 				nullable = entityMeta.getFieldsNullable()[i];
 				fieldMeta = entityMeta.getFieldMeta(fieldName);
-				// 唯一主键不允许有默认值
+				// 唯一主键不允许有默认值(EntityManager.parseFieldTypeAndDefault()已经跳过了唯一主键的默认值设置)
 				if (!(fieldMeta.isPK() && isUniqPk) && null != defaultValue) {
 					fieldType = entityMeta.getFieldsTypeArray()[i];
 					result[i] = getDefaultValue(null, defaultValue, fieldType, (nullable == null) ? false : nullable);
@@ -200,17 +200,17 @@ public class SqlUtilsExt {
 				return defaultValue;
 			}
 			boolean isBlank = "".equals(defaultValue.trim());
-			boolean isNumber = NumberUtil.isNumber(defaultValue);
 			// update 2023-2-15增加容错性处理 非字符类型且允许为null，默认值为空白返回null
 			if (isBlank && nullable) {
 				return null;
 			}
+			// update 2024-9-26 增加转数字类型时的判断
 			if (jdbcType == java.sql.Types.INTEGER || jdbcType == java.sql.Types.TINYINT
 					|| jdbcType == java.sql.Types.SMALLINT) {
 				if (isBlank) {
 					return Integer.valueOf(0);
 				}
-				if (!isNumber) {
+				if (!NumberUtil.isNumber(defaultValue)) {
 					return null;
 				}
 				realValue = Integer.valueOf(defaultValue);
@@ -230,7 +230,7 @@ public class SqlUtilsExt {
 				if (isBlank) {
 					return BigInteger.ZERO;
 				}
-				if (!isNumber) {
+				if (!NumberUtil.isNumber(defaultValue)) {
 					return null;
 				}
 				realValue = new BigDecimal(defaultValue);
@@ -238,7 +238,7 @@ public class SqlUtilsExt {
 				if (isBlank) {
 					return BigInteger.ZERO;
 				}
-				if (!isNumber) {
+				if (!NumberUtil.isNumber(defaultValue)) {
 					return null;
 				}
 				realValue = new BigInteger(defaultValue);
@@ -252,7 +252,7 @@ public class SqlUtilsExt {
 				if (isBlank) {
 					return Double.valueOf("0");
 				}
-				if (!isNumber) {
+				if (!NumberUtil.isNumber(defaultValue)) {
 					return null;
 				}
 				realValue = Double.valueOf(defaultValue);
@@ -262,7 +262,7 @@ public class SqlUtilsExt {
 				if (isBlank) {
 					return Float.valueOf("0");
 				}
-				if (!isNumber) {
+				if (!NumberUtil.isNumber(defaultValue)) {
 					return null;
 				}
 				realValue = Float.valueOf(defaultValue);
@@ -273,7 +273,7 @@ public class SqlUtilsExt {
 					if (isBlank) {
 						return Integer.parseInt("0");
 					}
-					if (!isNumber) {
+					if (!NumberUtil.isNumber(defaultValue)) {
 						return null;
 					}
 					realValue = Integer.parseInt(defaultValue);
