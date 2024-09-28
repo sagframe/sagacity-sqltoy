@@ -68,7 +68,7 @@ public class MacroIfLogic {
 	 * @return
 	 */
 	private static String evalSimpleExpress(String evalExpression, List paramValues, int preCount) {
-		// 不能超过两个运算符
+		// 目前只支持单一运算符,不支持同时有与和或(待强化:在其他领域已经解决此问题,将算法融入进来，供借鉴学习)
 		if (evalExpression.indexOf("||") != -1 && evalExpression.indexOf("&&") != -1) {
 			return "undefine";
 		}

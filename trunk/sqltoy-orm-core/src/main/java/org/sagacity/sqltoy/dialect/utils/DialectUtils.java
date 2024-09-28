@@ -2579,7 +2579,7 @@ public class DialectUtils {
 		SqlToyResult queryParam = SqlConfigParseUtils.processSql(sqlToyConfig.getSql(null),
 				sqlToyConfig.getParamsName(), query.getInnerModel().getParamsValue(sqlToyContext, sqlToyConfig),
 				dialect);
-		queryParam = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig, OperateType.deleteAll, queryParam,
+		queryParam = doInterceptors(sqlToyContext, sqlToyConfig, OperateType.deleteAll, queryParam,
 				entityMeta.getEntityClass(), dbType);
 		return SqlUtil.executeSql(sqlToyContext.getTypeHandler(), queryParam.getSql(), queryParam.getParamsValue(),
 				null, conn, dbType, autoCommit, false);
