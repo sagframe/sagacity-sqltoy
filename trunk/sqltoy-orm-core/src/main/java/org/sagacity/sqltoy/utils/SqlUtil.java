@@ -2226,12 +2226,19 @@ public class SqlUtil {
 	 * @return
 	 */
 	public static String adjustMergeIntoSql(String sql, Integer dbType) {
+		String sqlTrimLow = sql.toLowerCase().trim();
+		// 非merge into 不做任何处理
+		if (!StringUtil.matches(sqlTrimLow, MERGE_INTO_PATTERN)) {
+			return sql;
+		}
+		boolean isBranchEnd = sqlTrimLow.endsWith(";");
 		// sqlserver merge into 要以;结尾
-		if (dbType == DBType.SQLSERVER) {
-			String sqlTrimLow = sql.toLowerCase().trim();
-			if (StringUtil.matches(sqlTrimLow, MERGE_INTO_PATTERN) && !sqlTrimLow.endsWith(";")) {
-				return sql.concat(";");
-			}
+		if (dbType == DBType.SQLSERVER && !isBranchEnd) {
+			return sql.concat(";");
+		}
+		// 其他数据库merge into 以;结尾则需要剔除分号
+		if (isBranchEnd) {
+			return sql.substring(0, sql.lastIndexOf(";"));
 		}
 		return sql;
 	}
