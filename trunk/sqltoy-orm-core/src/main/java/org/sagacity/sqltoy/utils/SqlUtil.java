@@ -2237,7 +2237,7 @@ public class SqlUtil {
 			return sql.concat(";");
 		}
 		// 其他数据库merge into 以;结尾则需要剔除分号
-		if (isBranchEnd) {
+		if (isBranchEnd && dbType != DBType.SQLSERVER) {
 			return sql.substring(0, sql.lastIndexOf(";"));
 		}
 		return sql;
