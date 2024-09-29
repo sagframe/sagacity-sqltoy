@@ -93,6 +93,9 @@ public class SqlUtil {
 	public static final Pattern ONE_QUOTA = Pattern.compile("\'");
 	public static final Pattern DOUBLE_QUOTA = Pattern.compile("\"");
 
+	// 判断sql是否是merge into 开头
+	public static final Pattern MERGE_INTO_PATTERN = Pattern.compile("^merge\\s+into\\s+");
+
 	public static final Pattern SQLINJECT_PATTERN = Pattern.compile(
 			"(?i)\\W((delete\\s+from)|update|(truncate\\s+table)|(alter\\s+table)|modify|(insert\\s+into)|select|set|create|drop|(merge\\s+into))\\s+");
 
@@ -2213,5 +2216,30 @@ public class SqlUtil {
 			}
 		}
 		return result.toString();
+	}
+
+	/**
+	 * merge into sql特定数据库下需要补充;符号(sql加工成SqlToyConfig 时统一清理掉了分号)
+	 * 
+	 * @param sql
+	 * @param dbType
+	 * @return
+	 */
+	public static String adjustMergeIntoSql(String sql, Integer dbType) {
+		String sqlTrimLow = sql.toLowerCase().trim();
+		// 非merge into 不做任何处理
+		if (!StringUtil.matches(sqlTrimLow, MERGE_INTO_PATTERN)) {
+			return sql;
+		}
+		boolean isBranchEnd = sqlTrimLow.endsWith(";");
+		// sqlserver merge into 要以;结尾
+		if (dbType == DBType.SQLSERVER && !isBranchEnd) {
+			return sql.concat(";");
+		}
+		// 其他数据库merge into 以;结尾则需要剔除分号
+		if (isBranchEnd) {
+			return sql.substring(0, sql.lastIndexOf(";"));
+		}
+		return sql;
 	}
 }

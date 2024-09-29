@@ -29,8 +29,7 @@ import org.slf4j.LoggerFactory;
  * @description 对QueryExecutor参数进行初始化，避免之前在其内部包含过多逻辑，导致维护和理解困难
  * @author zhongxuchen
  * @version v1.0,Date:2021年10月11日
- * @modify 2023-06-11 {兼容查询:names("xxx").values(new
- *         Object[]{}),单个参数名，传递的值是数组特殊场景}
+ * @modify 2023-06-11 {兼容查询:names("xxx").values(new Object[]{}),单个参数名传递的值是数组场景}
  */
 public class QueryExecutorBuilder {
 	/**
@@ -207,11 +206,11 @@ public class QueryExecutorBuilder {
 	/**
 	 * @TODO 构造sql实际使用到的全部参数名称,包括:cache-args(参数名-->别名，sql中用别名导致原参数名未被包含)、分库分表对应的参数名称
 	 * @param paramNames
-	 * @param extend
+	 * @param queryExecutorExtend
 	 * @param sqlToyConfig
 	 * @return
 	 */
-	private static String[] wrapFullParamNames(String[] paramNames, QueryExecutorExtend extend,
+	private static String[] wrapFullParamNames(String[] paramNames, QueryExecutorExtend queryExecutorExtend,
 			SqlToyConfig sqlToyConfig) {
 		Set<String> keys = new HashSet<String>();
 		List<String> params = new ArrayList<String>();
@@ -227,7 +226,7 @@ public class QueryExecutorBuilder {
 			}
 		}
 		// 分表参数(以QueryExecutor中指定的优先)
-		List<ShardingStrategyConfig> tableShardings = extend.tableShardings;
+		List<ShardingStrategyConfig> tableShardings = queryExecutorExtend.tableShardings;
 		// 未指定则以sql中指定的分表策略为准
 		if (tableShardings == null || tableShardings.isEmpty()) {
 			tableShardings = sqlToyConfig.getTableShardings();
@@ -246,7 +245,7 @@ public class QueryExecutorBuilder {
 			}
 		}
 		// 分库参数
-		ShardingStrategyConfig dbSharding = extend.dbSharding;
+		ShardingStrategyConfig dbSharding = queryExecutorExtend.dbSharding;
 		if (dbSharding == null) {
 			dbSharding = sqlToyConfig.getDataSourceSharding();
 		}
@@ -260,8 +259,8 @@ public class QueryExecutorBuilder {
 			}
 		}
 		// 兼容参数属性只出现在cache-arg 中
-		if (extend.paramFilters != null && !extend.paramFilters.isEmpty()) {
-			for (ParamsFilter filter : extend.paramFilters) {
+		if (queryExecutorExtend.paramFilters != null && !queryExecutorExtend.paramFilters.isEmpty()) {
+			for (ParamsFilter filter : queryExecutorExtend.paramFilters) {
 				if ("cache-arg".equals(filter.getType())) {
 					key = filter.getParams()[0].toLowerCase();
 					if (!keys.contains(key)) {
@@ -286,16 +285,16 @@ public class QueryExecutorBuilder {
 
 	/**
 	 * @TODO 获取分表的参数名称
-	 * @param extend
+	 * @param queryExecutorExtend
 	 * @param sqlToyConfig
 	 * @return
 	 */
-	private static String[] getTableShardingParams(QueryExecutorExtend extend, SqlToyConfig sqlToyConfig) {
+	private static String[] getTableShardingParams(QueryExecutorExtend queryExecutorExtend, SqlToyConfig sqlToyConfig) {
 		Set<String> keys = new HashSet<String>();
 		List<String> params = new ArrayList<String>();
 		String key;
 		// 分表参数
-		List<ShardingStrategyConfig> tableShardings = extend.tableShardings;
+		List<ShardingStrategyConfig> tableShardings = queryExecutorExtend.tableShardings;
 		if (tableShardings == null || tableShardings.isEmpty()) {
 			tableShardings = sqlToyConfig.getTableShardings();
 		}
@@ -320,16 +319,16 @@ public class QueryExecutorBuilder {
 
 	/**
 	 * @TODO 获取分库的参数名称
-	 * @param extend
+	 * @param queryExecutorExtend
 	 * @param sqlToyConfig
 	 * @return
 	 */
-	private static String[] getDbShardingParams(QueryExecutorExtend extend, SqlToyConfig sqlToyConfig) {
+	private static String[] getDbShardingParams(QueryExecutorExtend queryExecutorExtend, SqlToyConfig sqlToyConfig) {
 		Set<String> keys = new HashSet<String>();
 		List<String> params = new ArrayList<String>();
 		String key;
 		// 分库参数
-		ShardingStrategyConfig dbSharding = extend.dbSharding;
+		ShardingStrategyConfig dbSharding = queryExecutorExtend.dbSharding;
 		if (dbSharding == null) {
 			dbSharding = sqlToyConfig.getDataSourceSharding();
 		}
@@ -392,15 +391,16 @@ public class QueryExecutorBuilder {
 
 	/**
 	 * @TODO 组织在分页查询时，sql中以?模式传参，统一成:named 模式，便于后面插入分页开始行截止行参数，并使用pst预编译功能
-	 * @param extend
+	 * @param queryExecutorExtend
 	 * @param sqlToyConfig
 	 * @param wrapNamedArgs
 	 * @return
 	 */
-	private static boolean wrapParamNames(QueryExecutorExtend extend, SqlToyConfig sqlToyConfig,
+	private static boolean wrapParamNames(QueryExecutorExtend queryExecutorExtend, SqlToyConfig sqlToyConfig,
 			boolean wrapNamedArgs) {
 		// :named 模式传参
-		if (sqlToyConfig.isNamedParam() || (extend.paramsName != null && extend.paramsName.length > 0)) {
+		if (sqlToyConfig.isNamedParam()
+				|| (queryExecutorExtend.paramsName != null && queryExecutorExtend.paramsName.length > 0)) {
 			return false;
 		}
 		// ?参数个数
@@ -409,11 +409,11 @@ public class QueryExecutorBuilder {
 		// 存在?传参
 		if (argCount > 0) {
 			// 验证传参数量合法性
-			int valuesSize = (extend.paramsValue == null) ? 0 : extend.paramsValue.length;
+			int valuesSize = (queryExecutorExtend.paramsValue == null) ? 0 : queryExecutorExtend.paramsValue.length;
 			// update 2022-7-18 增强单? 且为in (?) 模式传参兼容性处理
 			if (argCount == 1 && valuesSize > 1
 					&& StringUtil.matches(sqlToyConfig.getSql(), SqlConfigParseUtils.IN_PATTERN)) {
-				extend.paramsValue = new Object[] { extend.paramsValue };
+				queryExecutorExtend.paramsValue = new Object[] { queryExecutorExtend.paramsValue };
 				valuesSize = 1;
 			}
 
@@ -428,16 +428,17 @@ public class QueryExecutorBuilder {
 				for (int i = 0; i < argCount; i++) {
 					paramsName[i] = SqlToyConstants.DEFAULT_PARAM_NAME + (i + 1);
 				}
-				extend.paramsName = paramsName;
-				extend.wrappedParamNames = true;
+				queryExecutorExtend.paramsName = paramsName;
+				queryExecutorExtend.wrappedParamNames = true;
 			}
 			return true;
 		} // 无:name且无?，且参数是空Map，将参数值设置为null(2023-10-07)
 		else if (argCount == 0) {
 			// null instanceof Map 是false
-			if (extend.paramsValue != null && extend.paramsValue.length == 1
-					&& ((extend.paramsValue[0] instanceof Map) && ((Map) extend.paramsValue[0]).isEmpty())) {
-				extend.paramsValue = null;
+			if (queryExecutorExtend.paramsValue != null && queryExecutorExtend.paramsValue.length == 1
+					&& ((queryExecutorExtend.paramsValue[0] instanceof Map)
+							&& ((Map) queryExecutorExtend.paramsValue[0]).isEmpty())) {
+				queryExecutorExtend.paramsValue = null;
 			}
 		}
 		return false;
@@ -451,12 +452,12 @@ public class QueryExecutorBuilder {
 	public static Object getParamValues(QueryExecutor queryExecutor) {
 		Object result = null;
 		if (queryExecutor != null) {
-			QueryExecutorExtend extend = queryExecutor.getInnerModel();
-			if (extend.entity != null) {
-				result = extend.entity;
+			QueryExecutorExtend queryExecutorExtend = queryExecutor.getInnerModel();
+			if (queryExecutorExtend.entity != null) {
+				result = queryExecutorExtend.entity;
 			} else {
-				String[] paramsName = extend.paramsName;
-				Object[] paramsValue = extend.paramsValue;
+				String[] paramsName = queryExecutorExtend.paramsName;
+				Object[] paramsValue = queryExecutorExtend.paramsValue;
 				if (paramsName != null && paramsValue != null && paramsName.length > 0
 						&& paramsName.length == paramsValue.length) {
 					IgnoreKeyCaseMap map = new IgnoreKeyCaseMap();

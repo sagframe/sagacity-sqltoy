@@ -11,6 +11,7 @@ import org.sagacity.sqltoy.callback.DecryptHandler;
 import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
+import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.dialect.Dialect;
@@ -125,11 +126,13 @@ public class ClickHouseDialect implements Dialect {
 	public Object save(SqlToyContext sqlToyContext, Serializable entity, Connection conn, Integer dbType,
 			String dialect, String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
+		// save行为根据主键是否赋值情况调整最终的主键策略
+		PKStrategy pkStrategy = DialectUtils.getSavePKStrategy(entityMeta, entity, dbType);
 		// clickhouse 不支持sequence，支持identity自增模式
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
-				entityMeta.getIdStrategy(), NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(),
-				ClickHouseDialectUtils.isAssignPKValue(entityMeta.getIdStrategy()), tableName);
-		return ClickHouseDialectUtils.save(sqlToyContext, entityMeta, insertSql, entity, conn, dbType);
+				pkStrategy, NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(),
+				ClickHouseDialectUtils.isAssignPKValue(pkStrategy), tableName);
+		return ClickHouseDialectUtils.save(sqlToyContext, entityMeta, pkStrategy, insertSql, entity, conn, dbType);
 	}
 
 	@Override

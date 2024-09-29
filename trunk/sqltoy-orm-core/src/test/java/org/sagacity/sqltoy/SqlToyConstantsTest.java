@@ -26,6 +26,7 @@ import org.sagacity.sqltoy.model.DateType;
 import org.sagacity.sqltoy.model.MapKit;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.MapperUtils;
+import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 import com.alibaba.fastjson2.JSON;
@@ -85,6 +86,56 @@ public class SqlToyConstantsTest {
 	}
 
 	@Test
+	public void testSql() {
+		String columns = "(";
+		String condition = "(";
+		String[] ids = { "id", "code" };
+		String colName;
+		StringBuilder loadSql = new StringBuilder("select * from table where ");
+		int dataSize = 5;
+		for (int i = 0; i < ids.length; i++) {
+			colName = ids[i];
+			if (i > 0) {
+				columns = columns.concat(",");
+				condition = condition.concat(",");
+			}
+			condition = condition.concat("?");
+			columns = columns.concat(colName);
+		}
+		condition = condition.concat(")");
+		columns = columns.concat(")");
+		StringBuilder conditionStr = new StringBuilder();
+		int groupIndex = 0;
+		int groupCnt = 0;
+		int groupSize = 10;
+		if (dataSize > groupSize) {
+			loadSql.append(" ( ");
+		}
+		for (int i = 0; i < dataSize; i++) {
+			if (groupIndex > 0) {
+				conditionStr.append(",");
+			}
+			conditionStr.append(condition);
+			groupIndex++;
+			// in 最大支持1000
+			if (((i + 1) % groupSize) == 0 || i + 1 == dataSize) {
+				if (groupCnt > 0) {
+					loadSql.append(" or ");
+				}
+				loadSql.append(columns).append(" in (").append(conditionStr.toString()).append(")");
+				groupIndex = 0;
+				groupCnt++;
+				// 清空
+				conditionStr.setLength(0);
+			}
+		}
+		if (dataSize > groupSize) {
+			loadSql.append(" ) ");
+		}
+		System.err.print(loadSql.toString());
+	}
+
+	@Test
 	public void testBeanInfo() {
 		Class classType = StaffInfoVO.class;
 		System.err.println(StaffInfoVO.class.getName());
@@ -116,15 +167,15 @@ public class SqlToyConstantsTest {
 	public void testBeanInfo1() {
 		String sql = "id=:id and t1 ";
 
-		System.err.println(sql+"结果:"+StringUtil.matches(sql, SqlToyConstants.AND_OR_END));
+		System.err.println(sql + "结果:" + StringUtil.matches(sql, SqlToyConstants.AND_OR_END));
 		sql = "id=:id) and ";
-		System.err.println(sql+"结果:"+StringUtil.matches(sql, SqlToyConstants.AND_OR_END));
+		System.err.println(sql + "结果:" + StringUtil.matches(sql, SqlToyConstants.AND_OR_END));
 		sql = "id=:id)and ";
-		System.err.println(sql+"结果:"+StringUtil.matches(sql, SqlToyConstants.AND_OR_END));
+		System.err.println(sql + "结果:" + StringUtil.matches(sql, SqlToyConstants.AND_OR_END));
 		sql = "id=:id)or ";
-		System.err.println(sql+"结果:"+StringUtil.matches(sql, SqlToyConstants.AND_OR_END));
+		System.err.println(sql + "结果:" + StringUtil.matches(sql, SqlToyConstants.AND_OR_END));
 		sql = "id=:id)_or ";
-		System.err.println(sql+"结果:"+StringUtil.matches(sql, SqlToyConstants.AND_OR_END));
+		System.err.println(sql + "结果:" + StringUtil.matches(sql, SqlToyConstants.AND_OR_END));
 	}
 
 	@Test

@@ -792,4 +792,25 @@ public class DataSourceUtils {
 		}
 		return columnName;
 	}
+
+	/**
+	 * 数据库是否支持where (code,type) in ((:codeList,:typeList)) 多字段in场景
+	 * 
+	 * @param dbType
+	 * @return
+	 */
+	public static boolean isSupportMultiFieldIn(Integer dbType) {
+		// 通过sqltoy.close.multiFieldIn 参数关闭多字段in,避免当前数据库不支持多字段in
+		if (SqlToyConstants.closeMultiFieldIn()) {
+			return false;
+		}
+		if (dbType == DBType.MYSQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB
+				|| dbType == DBType.SQLSERVER || dbType == DBType.ORACLE || dbType == DBType.DM || dbType == DBType.TIDB
+				|| dbType == DBType.KINGBASE || dbType == DBType.MOGDB || dbType == DBType.OSCAR
+				|| dbType == DBType.POSTGRESQL || dbType == DBType.CLICKHOUSE || dbType == DBType.H2
+				|| dbType == DBType.SQLITE || dbType == DBType.ORACLE11) {
+			return true;
+		}
+		return false;
+	}
 }

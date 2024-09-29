@@ -7,10 +7,10 @@ import java.util.regex.Pattern;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 
 /**
- * @author zhongxuchen
- * @version v1.0, Date:2020-05-06
  * @project sagacity-sqltoy
  * @description 用来处理sql中的数据库保留字
+ * @author zhongxuchen
+ * @version v1.0, Date:2020-05-06
  */
 public class ReservedWordsUtil {
 	private static HashSet<String> reservedWords = new HashSet<String>();

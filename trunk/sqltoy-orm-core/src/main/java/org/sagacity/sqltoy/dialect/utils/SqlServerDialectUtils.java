@@ -79,6 +79,7 @@ public class SqlServerDialectUtils {
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param queryExecutor
+	 * @param decryptHandler
 	 * @param totalCount
 	 * @param randomCount
 	 * @param conn
@@ -166,9 +167,9 @@ public class SqlServerDialectUtils {
 				new GenerateSqlHandler() {
 					@Override
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
-						String sql = SqlServerDialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(),
-								dbType, entityMeta, entityMeta.getIdStrategy(), forceUpdateFields, tableName, "isnull",
-								"@mySeqVariable", false);
+						String sql = getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
+								entityMeta.getIdStrategy(), forceUpdateFields, tableName, "isnull", "@mySeqVariable",
+								false);
 						if (entityMeta.getIdStrategy() != null
 								&& entityMeta.getIdStrategy().equals(PKStrategy.SEQUENCE)) {
 							sql = "DECLARE @mySeqVariable as numeric(20)=NEXT VALUE FOR " + entityMeta.getSequence()
@@ -395,6 +396,7 @@ public class SqlServerDialectUtils {
 
 	/**
 	 * @todo sqlserver 相对特殊不支持timestamp类型的插入，所以单独提供sql生成功能
+	 * @param unifyFieldsHandler
 	 * @param dbType
 	 * @param entityMeta
 	 * @param pkStrategy
@@ -550,6 +552,7 @@ public class SqlServerDialectUtils {
 
 	/**
 	 * @todo 产生对象对应的insert sql语句
+	 * @param unifyFieldsHandler
 	 * @param dbType
 	 * @param entityMeta
 	 * @param tableName
@@ -658,13 +661,12 @@ public class SqlServerDialectUtils {
 	public static Object save(SqlToyContext sqlToyContext, Serializable entity, final Connection conn,
 			final Integer dbType, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
-		final boolean isIdentity = entityMeta.getIdStrategy() != null
-				&& entityMeta.getIdStrategy().equals(PKStrategy.IDENTITY);
-		final boolean isSequence = entityMeta.getIdStrategy() != null
-				&& entityMeta.getIdStrategy().equals(PKStrategy.SEQUENCE);
-
+		// save行为根据主键是否赋值情况调整最终的主键策略
+		PKStrategy pkStrategy = DialectUtils.getSavePKStrategy(entityMeta, entity, dbType);
+		final boolean isIdentity = pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY);
+		final boolean isSequence = pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE);
 		String insertSql = generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta, tableName,
-				entityMeta.getIdStrategy(), "isnull", "@mySeqVariable", isIdentity ? false : true);
+				pkStrategy, "isnull", "@mySeqVariable", isIdentity ? false : true);
 		if (isSequence) {
 			insertSql = "set nocount on DECLARE @mySeqVariable as numeric(20)=NEXT VALUE FOR "
 					+ entityMeta.getSequence() + " " + insertSql + " select @mySeqVariable ";
@@ -681,7 +683,7 @@ public class SqlServerDialectUtils {
 		// 是否存在业务ID
 		boolean hasBizId = (entityMeta.getBusinessIdGenerator() == null) ? false : true;
 		int bizIdColIndex = hasBizId ? entityMeta.getFieldIndex(entityMeta.getBusinessIdField()) : 0;
-		boolean hasId = (entityMeta.getIdStrategy() != null && null != entityMeta.getIdGenerator()) ? true : false;
+		boolean hasId = (pkStrategy != null && null != entityMeta.getIdGenerator()) ? true : false;
 		// 主键、业务主键生成并回写对象
 		if (hasId || hasBizId) {
 			Integer[] relatedColumn = entityMeta.getBizIdRelatedColIndex();

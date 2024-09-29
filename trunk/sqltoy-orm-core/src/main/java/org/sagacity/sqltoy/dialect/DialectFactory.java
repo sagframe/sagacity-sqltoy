@@ -294,7 +294,8 @@ public class DialectFactory {
 										sqlParamsModel.getParamsName());
 							}
 							// 做sql签名
-							realSql = SqlUtilsExt.signSql(realSql, dbType, sqlToyConfig);
+							realSql = SqlUtilsExt.signSql(SqlUtil.adjustMergeIntoSql(realSql, dbType), dbType,
+									sqlToyConfig);
 							SqlExecuteStat.showSql("批量sql执行", realSql, null);
 							this.setResult(SqlUtil.batchUpdateByJdbc(sqlToyContext.getTypeHandler(), realSql, values,
 									batchSize, insertCallhandler, fieldTypes, autoCommit, conn, dbType));
@@ -362,7 +363,8 @@ public class DialectFactory {
 										sqlToyConfig.getSqlType());
 							}
 							// 做sql签名
-							String executeSql = SqlUtilsExt.signSql(sql, dbType, realSqlToyConfig);
+							String executeSql = SqlUtilsExt.signSql(SqlUtil.adjustMergeIntoSql(sql, dbType), dbType,
+									realSqlToyConfig);
 							// 2022-3-21 存在类似in (?) ?对应参数为数组，将参数和类型长度变得不一致则去除类型约束
 							if (paramsTypes != null && queryParam.getParamsValue() != null
 									&& queryParam.getParamsValue().length != paramsTypes.length) {

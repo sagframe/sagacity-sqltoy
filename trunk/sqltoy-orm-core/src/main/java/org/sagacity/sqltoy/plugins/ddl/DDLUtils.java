@@ -168,6 +168,7 @@ public class DDLUtils {
 	/**
 	 * @TODO 设置类型
 	 * @param colMeta
+	 * @param dbType
 	 * @return
 	 */
 	public static String convertType(ColumnMeta colMeta, int dbType) {
@@ -387,7 +388,7 @@ public class DDLUtils {
 	 * @param tableMeta
 	 * @param dbType
 	 * @param tableSql
-	 * @param outerTable
+	 * @param outerTable create table () 括号外还是内部
 	 */
 	public static void wrapTableIndexes(TableMeta tableMeta, int dbType, StringBuilder tableSql, boolean outerTable) {
 		if (tableMeta.getIndexes() == null || tableMeta.getIndexes().isEmpty()) {
@@ -435,7 +436,7 @@ public class DDLUtils {
 	 * @param tableMeta
 	 * @param dbType
 	 * @param tableSql
-	 * @param outerTable
+	 * @param outerTable create table () 括号外还是内部
 	 */
 	public static void wrapForeignKeys(TableMeta tableMeta, int dbType, StringBuilder tableSql, boolean outerTable) {
 		if (tableMeta.getForeigns() == null || tableMeta.getForeigns().isEmpty()) {

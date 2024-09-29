@@ -30,9 +30,7 @@ import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
-import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
-import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -195,19 +193,8 @@ public class GaussDBDialect implements Dialect {
 	public Object save(SqlToyContext sqlToyContext, Serializable entity, Connection conn, final Integer dbType,
 			final String dialect, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
-		PKStrategy pkStrategy = entityMeta.getIdStrategy();
+		PKStrategy pkStrategy = GaussDialectUtils.getSavePkStrategy(entityMeta, entity, dbType, conn);
 		String sequence = entityMeta.getSequence() + ".nextval";
-		// gaussdb 主键策略是sequence模式需要先获取主键值
-		if (pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE)) {
-			// 取实体对象的主键值
-			Object id = BeanUtil.getProperty(entity, entityMeta.getIdArray()[0]);
-			// 为null通过sequence获取
-			if (StringUtil.isBlank(id)) {
-				id = SqlUtil.getSequenceValue(conn, entityMeta.getSequence(), dbType);
-				BeanUtil.setProperty(entity, entityMeta.getIdArray()[0], id);
-			}
-			pkStrategy = PKStrategy.ASSIGN;
-		}
 		boolean isAssignPK = GaussDialectUtils.isAssignPKValue(pkStrategy);
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 				pkStrategy, NVL_FUNCTION, sequence, isAssignPK, tableName);

@@ -21,8 +21,7 @@ import org.sagacity.sqltoy.config.SqlConfigParseUtils;
  * @modify {Date:2020-08-25 增加include场景,数组类型或字符串类型包含某个特定值 }
  * @modify {Date:2020-09-24 增加数组长度的提取 length(:paramName)>10 模式}
  * @modify {Date:2022-05-10 支持@if(1==1)无参数模式}
- * @modify {Date:2023-05-6 支持@if(:param==:param || 1==:flage)
- *         对比双方都是变量、变量可以在右边的场景}
+ * @modify {Date:2023-05-6 支持@if(:param1==:param2 || 1==:param3) 左右参数可都是变量的场景}
  */
 @SuppressWarnings("rawtypes")
 public class MacroIfLogic {
@@ -31,7 +30,7 @@ public class MacroIfLogic {
 	}
 
 	/**
-	 * @todo 简单逻辑判断,只支持2个逻辑,update 2017-12-4 剔除freemarker复杂逻辑判断,减少框架依赖性
+	 * @todo 只支持||和&&简单逻辑判断
 	 * @param evalExpression 表达式
 	 * @param paramValues
 	 * @param preCount
@@ -69,17 +68,17 @@ public class MacroIfLogic {
 	 * @return
 	 */
 	private static String evalSimpleExpress(String evalExpression, List paramValues, int preCount) {
-		// 不能超过两个运算符
+		// 目前只支持单一运算符,不支持同时有与和或(待强化:在其他领域已经解决此问题,将算法融入进来，供借鉴学习)
 		if (evalExpression.indexOf("||") != -1 && evalExpression.indexOf("&&") != -1) {
 			return "undefine";
 		}
 		// 2020-08-25 增加include场景
 		// 比较符号(等于用==,最后用=进行容错处理),<>符号前面已经统一规范成!=
-		String[] compareStr = { "!=", "==", ">=", "<=", ">", "<", "=", " include ", " in ", " out ", " startswith ",
-				" endswith " };
+		String[] compareStr = { "!=", "==", ">=", "<=", ">", "<", "=", " include ", " exclude ", " in ", " out ",
+				" startswith ", " endswith " };
 		// 增加对应compareStr的切割表达式(2020-10-21 修改为正则表达式，修复split错误)
 		String[] splitReg = { "\\!\\=", "\\=\\=", "\\>\\=", "\\<\\=", "\\>", "\\<", "\\=", "\\s+include\\s+",
-				"\\s+in\\s+", "\\s+out\\s+", "\\s+startswith\\s+", "\\s+endswith\\s+" };
+				"\\s+exclude\\s+", "\\s+in\\s+", "\\s+out\\s+", "\\s+startswith\\s+", "\\s+endswith\\s+" };
 		String splitStr = "==";
 		String logicStr = "\\&\\&";
 		String[] expressions;
@@ -171,8 +170,7 @@ public class MacroIfLogic {
 				}
 			}
 
-			// 只支持&& 和||
-			// 与运算
+			// 只支持&& 和||与运算
 			if ("\\&\\&".equals(logicStr) || "&&".equals(logicStr)) {
 				for (int i = 0; i < expressions.length; i++) {
 					if (!expressResult[i]) {
@@ -269,6 +267,10 @@ public class MacroIfLogic {
 		// 包含
 		if ("include".equals(compareType)) {
 			return include(value, valueStr, compareValue, type);
+		}
+		// 不包含
+		if ("exclude".equals(compareType)) {
+			return !include(value, valueStr, compareValue, type);
 		}
 		// 在数组范围内
 		if ("in".equals(compareType)) {

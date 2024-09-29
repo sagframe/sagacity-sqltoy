@@ -213,8 +213,7 @@ public class KingbaseDialect implements Dialect {
 						String sequence = "NEXTVAL('" + entityMeta.getSequence() + "')";
 						// kingbase identity 是sequence的一种变化实现
 						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
-							String defaultValue = entityMeta.getFieldMeta(entityMeta.getIdArray()[0])
-									.getDefaultValue();
+							String defaultValue = entityMeta.getFieldMeta(entityMeta.getIdArray()[0]).getDefaultValue();
 							if (StringUtil.isNotBlank(defaultValue)) {
 								pkStrategy = PKStrategy.SEQUENCE;
 								sequence = "NEXTVAL('" + defaultValue + "')";
@@ -273,11 +272,12 @@ public class KingbaseDialect implements Dialect {
 	public Object save(SqlToyContext sqlToyContext, Serializable entity, Connection conn, final Integer dbType,
 			final String dialect, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
-		boolean isAssignPK = KingbaseDialectUtils.isAssignPKValue(entityMeta.getIdStrategy());
+		// save行为根据主键是否赋值情况调整最终的主键策略
+		PKStrategy pkStrategy = DialectUtils.getSavePKStrategy(entityMeta, entity, dbType);
+		boolean isAssignPK = KingbaseDialectUtils.isAssignPKValue(pkStrategy);
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
-				entityMeta.getIdStrategy(), NVL_FUNCTION, "NEXTVAL('" + entityMeta.getSequence() + "')", isAssignPK,
-				tableName);
-		return DialectUtils.save(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql, entity,
+				pkStrategy, NVL_FUNCTION, "NEXTVAL('" + entityMeta.getSequence() + "')", isAssignPK, tableName);
+		return DialectUtils.save(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entity,
 				new GenerateSqlHandler() {
 					@Override
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateField) {
@@ -335,8 +335,7 @@ public class KingbaseDialect implements Dialect {
 						String sequence = "NEXTVAL('" + entityMeta.getSequence() + "')";
 						// kingbase identity 是sequence的一种变化实现
 						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
-							String defaultValue = entityMeta.getFieldMeta(entityMeta.getIdArray()[0])
-									.getDefaultValue();
+							String defaultValue = entityMeta.getFieldMeta(entityMeta.getIdArray()[0]).getDefaultValue();
 							if (StringUtil.isNotBlank(defaultValue)) {
 								pkStrategy = PKStrategy.SEQUENCE;
 								sequence = "NEXTVAL('" + defaultValue + "')";
