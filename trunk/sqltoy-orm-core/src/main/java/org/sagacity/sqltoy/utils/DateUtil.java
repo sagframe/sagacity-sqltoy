@@ -853,8 +853,8 @@ public class DateUtil {
 	 */
 	public static int getIntervalDays(Object floorDate, Object goalDate) {
 		BigDecimal result = new BigDecimal(
-				Double.valueOf(getIntervalMillSeconds(DateUtil.formatDate(floorDate, FORMAT.DATE_HORIZONTAL),
-						DateUtil.formatDate(goalDate, FORMAT.DATE_HORIZONTAL))) / (3600 * 1000 * 24));
+				Double.valueOf(getIntervalMillSeconds(formatDate(floorDate, FORMAT.DATE_HORIZONTAL),
+						formatDate(goalDate, FORMAT.DATE_HORIZONTAL))) / (3600 * 1000 * 24));
 		return result.setScale(1, RoundingMode.HALF_UP).intValue();
 	}
 
