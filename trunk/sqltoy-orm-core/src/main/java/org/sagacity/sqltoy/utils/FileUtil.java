@@ -971,7 +971,7 @@ public class FileUtil {
 	 * @return
 	 */
 	public static String skipPath(String basePath, String skipFile) {
-		String realFile = FileUtil.formatPath(skipFile).trim();
+		String realFile = formatPath(skipFile).trim();
 		if (realFile.indexOf("." + File.separator) == 0) {
 			realFile = realFile.substring(2);
 		}
