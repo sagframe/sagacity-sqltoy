@@ -136,7 +136,7 @@ public class SqlConfigParseUtilsTest {
 	public void testNull2() throws Exception {
 		String sql = "select * from table where #[id=:id and] status=:status limit10";
 		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "id", "status" },
-				new Object[] { null, 1});
+				new Object[] { null, 1 });
 		System.err.println(JSON.toJSONString(result));
 	}
 
@@ -383,9 +383,33 @@ public class SqlConfigParseUtilsTest {
 	}
 
 	@Test
+	public void testIfElse() throws Exception {
+		String sql = """
+				select * from table where name=1
+				#[@if(:flag==1) and #[status=:status]]
+				#[@elseif(:flag==2) and name like :name]
+				#[@else and orderType=:orderType]
+				""";
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql,
+				new String[] { "flag", "status", "name", "orderType" }, new Object[] { 1, 1, "陈", "SALE" });
+		System.err.println(JSON.toJSONString(result));
+	}
+
+	@Test
+	public void testIfElse1() throws Exception {
+		String sql = """
+				select * from table where name=1
+				#[ @if(:flag==1) and #[status=:status]]
+				#[@else()and status in (1,2)]
+				""";
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "flag", "status" },
+				new Object[] { 2, 1 });
+		System.err.println(JSON.toJSONString(result));
+	}
+
+	@Test
 	public void testOverSizeIn6() throws Exception {
 		String sql = "select * from table t where t.biz_date >=:dates[0] and t.biz_date<=:dates[1]";
-
 		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "dates" },
 				new Object[] { new Object[] { "2022-10-1", "2022-10-30" } });
 		System.err.println(result.getSql());
@@ -455,25 +479,25 @@ public class SqlConfigParseUtilsTest {
 		System.err.println(result.getSql());
 	}
 
-	//如何解决@loop() 循环中存在in (:ids) ids数据超过1000的问题，用@include(:sqlScript) 来替换loop,
+	// 如何解决@loop() 循环中存在in (:ids) ids数据超过1000的问题，用@include(:sqlScript) 来替换loop,
 	@Test
 	public void testDynamicInclude() throws Exception {
-		//会先变成select * from view_lowcode_postion where 1=1 and equipId1 in (:equipId1) and equipId2 in (:equipId2)"
-		//当变成常规的in时候，sqltoy会自动解决in参数超过1000个的问题
+		// 会先变成select * from view_lowcode_postion where 1=1 and equipId1 in (:equipId1)
+		// and equipId2 in (:equipId2)"
+		// 当变成常规的in时候，sqltoy会自动解决in参数超过1000个的问题
 		String sql = "select * from view_lowcode_postion where 1=1 @include(:sqlScript)";
-		
+
 		// 演示，不具体赋值，结构就是List<Object[]>
 		List<Object[]> multiInArray = new ArrayList();
 		Map params = new HashMap();
-		//构造sqlScript，里面包含条件参数
+		// 构造sqlScript，里面包含条件参数
 		String sqlScript = "";
 		for (int i = 0; i < multiInArray.size(); i++) {
-			sqlScript = sqlScript.concat("and emp.equipId"+i+ " in (:equipId" + i + ")");
-			//动态将sqlScript里面的条件参数和值放入map
+			sqlScript = sqlScript.concat("and emp.equipId" + i + " in (:equipId" + i + ")");
+			// 动态将sqlScript里面的条件参数和值放入map
 			params.put("equipId" + i, multiInArray.get(i));
 		}
 		params.put("sqlScript", sqlScript);
-		
-		
+
 	}
 }

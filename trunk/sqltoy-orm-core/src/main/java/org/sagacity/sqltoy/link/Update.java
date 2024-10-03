@@ -11,6 +11,7 @@ import java.util.List;
 import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.model.ParallelConfig;
 
 /**
  * @project sagacity-sqltoy
@@ -58,6 +59,13 @@ public class Update extends BaseLink {
 	 * 子表分别需要强制修改的属性
 	 */
 	private HashMap<Class, String[]> subTableForceUpdateProps;
+
+	private ParallelConfig parallelConfig;
+
+	public Update parallelConfig(ParallelConfig parallelConfig) {
+		this.parallelConfig = parallelConfig;
+		return this;
+	}
 
 	/**
 	 * @param sqlToyContext
@@ -157,7 +165,7 @@ public class Update extends BaseLink {
 		if (uniqueFields != null && uniqueFields.length > 0) {
 			List entities = new ArrayList();
 			entities.add(entity);
-			return dialectFactory.updateAll(sqlToyContext, entities, 1, uniqueFields, forceUpdate, null,
+			return dialectFactory.updateAll(sqlToyContext, entities, 1, uniqueFields, forceUpdate, null, null,
 					getDataSource(null), null);
 		}
 		return dialectFactory.update(sqlToyContext, entity, forceUpdate, cascade, forceCascadeClasses,
@@ -186,6 +194,6 @@ public class Update extends BaseLink {
 		}
 		int realBatchSize = (batchSize > 0) ? batchSize : sqlToyContext.getBatchSize();
 		return dialectFactory.updateAll(sqlToyContext, entities, realBatchSize, uniqueFields, forceUpdate, null,
-				getDataSource(null), autoCommit);
+				parallelConfig, getDataSource(null), autoCommit);
 	}
 }

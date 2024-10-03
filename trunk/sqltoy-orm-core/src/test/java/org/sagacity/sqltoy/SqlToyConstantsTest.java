@@ -166,16 +166,13 @@ public class SqlToyConstantsTest {
 	@Test
 	public void testBeanInfo1() {
 		String sql = "id=:id and t1 ";
-
-		System.err.println(sql + "结果:" + StringUtil.matches(sql, SqlToyConstants.AND_OR_END));
-		sql = "id=:id) and ";
-		System.err.println(sql + "结果:" + StringUtil.matches(sql, SqlToyConstants.AND_OR_END));
-		sql = "id=:id)and ";
-		System.err.println(sql + "结果:" + StringUtil.matches(sql, SqlToyConstants.AND_OR_END));
-		sql = "id=:id)or ";
-		System.err.println(sql + "结果:" + StringUtil.matches(sql, SqlToyConstants.AND_OR_END));
-		sql = "id=:id)_or ";
-		System.err.println(sql + "结果:" + StringUtil.matches(sql, SqlToyConstants.AND_OR_END));
+		Pattern IF_ELSE_PATTERN = Pattern.compile("(?i)\\@(((if|elseif|else)\\s*\\()|else\\W)");
+		System.err.println(sql + "结果:" + StringUtil.matches("@if() and ", IF_ELSE_PATTERN));
+		System.err.println(sql + "结果:" + StringUtil.matches("@else and ", IF_ELSE_PATTERN));
+		System.err.println(sql + "结果:" + StringUtil.matches("@else() and ", IF_ELSE_PATTERN));
+		System.err.println(sql + "结果:" + StringUtil.matches("@elseif() and", IF_ELSE_PATTERN));
+		System.err.println(sql + "结果:" + StringUtil.matches("@else () and ", IF_ELSE_PATTERN));
+		
 	}
 
 	@Test

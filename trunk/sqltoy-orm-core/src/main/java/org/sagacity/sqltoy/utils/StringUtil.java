@@ -396,18 +396,18 @@ public class StringUtil {
 		if (beginSignIndex[0] == -1) {
 			return matchIndex(source, endP, startIndex)[0];
 		}
-		int[] endIndex = matchIndex(source, endP, beginSignIndex[1] + 1);
+		int[] endIndex = matchIndex(source, endP, beginSignIndex[1]);
 		int[] tmpIndex = { 0, 0 };
 		while (endIndex[0] > beginSignIndex[0]) {
 			// 寻找下一个开始符号
-			beginSignIndex = matchIndex(source, startP, (symMarkIsEqual ? endIndex[1] : beginSignIndex[1]) + 1);
+			beginSignIndex = matchIndex(source, startP, (symMarkIsEqual ? endIndex[1] : beginSignIndex[1]));
 			// 找不到或则下一个开始符号位置大于截止符号则返回
 			if (beginSignIndex[0] == -1 || beginSignIndex[0] > endIndex[0]) {
 				return endIndex[0];
 			}
 			tmpIndex = endIndex;
 			// 开始符号在截止符号前则寻找下一个截止符号
-			endIndex = matchIndex(source, endP, (symMarkIsEqual ? beginSignIndex[1] : endIndex[1]) + 1);
+			endIndex = matchIndex(source, endP, (symMarkIsEqual ? beginSignIndex[1] : endIndex[1]));
 			// 找不到则返回
 			if (endIndex[0] == -1) {
 				return tmpIndex[0];
