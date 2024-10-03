@@ -54,6 +54,11 @@ public class MongoElasticUtils {
 	public final static Pattern BLANK_PATTERN = Pattern.compile(BLANK_REGEX);
 	public final static String VALUE_REGEX = "(?i)\\@value\\s*\\(\\s*\\:[A-Za-z_0-9\\-]+\\s*\\)";
 	public final static Pattern VALUE_PATTERN = Pattern.compile(VALUE_REGEX);
+	public final static Pattern IF_PATTERN = Pattern.compile("(?i)\\@if\\s*\\(");
+	public final static Pattern ELSEIF_PATTERN = Pattern.compile("(?i)\\@elseif\\s*\\(");
+	public final static Pattern ELSE_PATTERN = Pattern.compile("(?i)\\@else(\\s+|\\s*\\(\\s*\\))");
+	public final static Pattern IF_ALL_PATTERN = Pattern
+			.compile("(?i)\\@((if|elseif)\\s*\\(|else(\\s+|\\s*\\(\\s*\\)))");
 
 	private MongoElasticUtils() {
 	}
@@ -69,19 +74,20 @@ public class MongoElasticUtils {
 		String mql = sqlToyConfig.getSql(null);
 		// 提取条件参数
 		String[] fullNames = null;
-		if (sqlToyConfig.getNoSqlConfigModel().isSqlMode()) {
+		boolean sqlMode = sqlToyConfig.getNoSqlConfigModel().isSqlMode();
+		if (sqlMode) {
 			fullNames = SqlConfigParseUtils.getSqlParamsName(mql, false);
 		} else {
 			fullNames = SqlConfigParseUtils.getNoSqlParamsName(mql, false);
 		}
+		Pattern namedPattern = sqlMode ? SqlToyConstants.SQL_NAMED_PATTERN : SqlToyConstants.NOSQL_NAMED_PATTERN;
 		// 提取参数值
 		Object[] fullParamValues = SqlConfigParseUtils.matchNamedParam(fullNames, paramNames, paramValues);
-		SqlToyResult sqlToyResult = processNullConditions(mql, fullParamValues,
-				sqlToyConfig.getNoSqlConfigModel().isSqlMode());
+		SqlToyResult sqlToyResult = processNullConditions(mql, fullParamValues, sqlMode);
 		// 处理@blank(:name)
-		processBlank(sqlToyResult);
+		processBlank(sqlToyResult, namedPattern, sqlMode);
 		// 处理@value(:name)
-		processValue(sqlToyResult);
+		processValue(sqlToyResult, namedPattern, sqlMode);
 		return sqlToyResult;
 	}
 
@@ -163,19 +169,17 @@ public class MongoElasticUtils {
 		int startMarkLength = startMark.length();
 		int endMarkLength = endMark.length();
 		int pseudoMarkStart = queryStr.indexOf(startMark);
-		int beginIndex, endIndex, paramCnt, preParamCnt, beginMarkIndex, endMarkIndex;
+		int paramCnt, preParamCnt, beginMarkIndex, endMarkIndex;
 		String preSql, markContentSql, tailSql;
 		List paramValuesList = CollectionUtil.arrayToList(paramValues);
-		boolean logicValue = true;
-		int start;
-		int end;
-		String evalStr;
-		int logicParamCnt;
-		Object paramValue;
-		boolean isNull;
+		int ifStart;
+		int ifLogicSignStart;
 		// sql内容体是否以and 或 or 结尾
 		boolean isEndWithAndOr = false;
+		// 0 无if、else等1:单个if；>1：if+else等
+		int ifLogicCnt = 0;
 		while (pseudoMarkStart != -1) {
+			ifLogicCnt = 0;
 			// 始终从最后一个#[]进行处理
 			beginMarkIndex = queryStr.lastIndexOf(startMark);
 			// update 2021-01-17 兼容sql中存在"["和"]"符号场景
@@ -194,16 +198,32 @@ public class MongoElasticUtils {
 			// 最后#[]中的查询语句,加空白减少substr(index+1)可能引起的错误
 			markContentSql = BLANK.concat(queryStr.substring(beginMarkIndex + startMarkLength, endMarkIndex))
 					.concat(BLANK);
-			isEndWithAndOr = false;
-			if (sqlMode && StringUtil.matches(markContentSql, SqlToyConstants.AND_OR_END)) {
-				isEndWithAndOr = true;
+			ifLogicSignStart = StringUtil.matchIndex(markContentSql, IF_ALL_PATTERN);
+			ifStart = StringUtil.matchIndex(markContentSql, IF_PATTERN);
+			// 单一的@if 逻辑
+			if (ifStart == ifLogicSignStart && ifStart > 0) {
+				ifLogicCnt = 1;
+			}
+			// 属于@elseif 或@else()
+			else if (ifStart == -1 && ifLogicSignStart > 0) {
+				// 逆向找到@else 或@elseif 对称的@if位置，因为是从末尾最内层查询#[],所以if else也是最内层，不存在嵌套
+				int symIfIndex = StringUtil.matchLastIndex(preSql, IF_PATTERN);
+				if (symIfIndex == -1) {
+					throw new IllegalFormatFlagsException("编写模式存在错误:@elseif(?==xx) @else 条件判断必须要有对应的@if()形成对称格式!");
+				}
+				beginMarkIndex = queryStr.substring(0, symIfIndex).lastIndexOf(startMark);
+				preSql = queryStr.substring(0, beginMarkIndex).concat(BLANK);
+				markContentSql = BLANK.concat(queryStr.substring(beginMarkIndex + startMarkLength, endMarkIndex))
+						.concat(BLANK);
+				ifLogicCnt = StringUtil.matchCnt(markContentSql, IF_ALL_PATTERN);
 			}
 			tailSql = queryStr.substring(endMarkIndex + endMarkLength);
-			// 获取#[]中的参数数量
+			// 获取#[]中的参数数量,最后一位参数offset,sql参数匹配表达式末尾是\\s?,需向前移动一位
 			paramCnt = StringUtil.matchCnt(markContentSql, namedPattern, sqlMode ? 1 : 0);
 			// #[]中无参数，拼接preSql+markContentSql+tailSql
 			if (paramCnt == 0) {
 				if (sqlMode) {
+					isEndWithAndOr = StringUtil.matches(markContentSql, SqlToyConstants.AND_OR_END);
 					queryStr = SqlConfigParseUtils.processWhereLinkAnd(preSql, BLANK, isEndWithAndOr, tailSql);
 				} else {
 					queryStr = preSql.concat(BLANK).concat(tailSql);
@@ -211,63 +231,18 @@ public class MongoElasticUtils {
 			} else {
 				// 在#[前的参数个数
 				preParamCnt = StringUtil.matchCnt(preSql, namedPattern, sqlMode ? 1 : 0);
-				logicValue = true;
-				start = markContentSql.toLowerCase().indexOf("@if(");
-				// sql中存在逻辑判断
-				if (start > -1) {
-					end = StringUtil.getSymMarkIndex("(", ")", markContentSql, start);
-					evalStr = BLANK.concat(markContentSql.substring(markContentSql.indexOf("(", start) + 1, end));
-					logicParamCnt = StringUtil.matchCnt(evalStr, namedPattern, sqlMode ? 1 : 0);
-					// update 2017-4-14 增加@if()简单逻辑判断
-					logicValue = MacroIfLogic.evalLogic(evalStr, paramValuesList, preParamCnt, logicParamCnt);
-					// 逻辑不成立,剔除sql和对应参数
-					if (!logicValue) {
-						markContentSql = BLANK;
-						for (int k = paramCnt; k > 0; k--) {
-							paramValuesList.remove(k + preParamCnt - 1);
-						}
-					} else {
-						// 逻辑成立,去除@if()部分sql和对应的参数,同时将剩余参数数量减掉@if()中的参数数量
-						markContentSql = markContentSql.substring(0, start).concat(markContentSql.substring(end + 1));
-						for (int k = 0; k < logicParamCnt; k++) {
-							paramValuesList.remove(preParamCnt);
-						}
-						paramCnt = paramCnt - logicParamCnt;
-					}
+				markContentSql = SqlConfigParseUtils.processIfLogic(markContentSql, startMark, endMark, namedPattern,
+						paramValuesList, preSql, preParamCnt, ifLogicCnt, sqlMode ? 1 : 0);
+				// 存在if场景，重新获取内容中的参数数量
+				if (ifLogicCnt > 0) {
+					paramCnt = StringUtil.matchCnt(markContentSql, namedPattern, sqlMode ? 1 : 0);
+				}
+				if (sqlMode) {
+					isEndWithAndOr = StringUtil.matches(markContentSql, SqlToyConstants.AND_OR_END);
 				}
 				// 逻辑成立,继续sql中参数是否为null的逻辑判断
-				if (logicValue) {
-					beginIndex = 0;
-					endIndex = 0;
-					// 按顺序处理#[]中sql的参数
-					for (int i = preParamCnt; i < preParamCnt + paramCnt; i++) {
-						paramValue = paramValuesList.get(i);
-						beginIndex = endIndex;
-						endIndex = StringUtil.matchIndex(markContentSql.substring(beginIndex), namedPattern);
-						isNull = false;
-						if (null == paramValue) {
-							isNull = true;
-						} else if (null != paramValue) {
-							if (paramValue.getClass().isArray()
-									&& CollectionUtil.convertArray(paramValue).length == 0) {
-								isNull = true;
-							} else if ((paramValue instanceof Collection) && ((Collection) paramValue).isEmpty()) {
-								isNull = true;
-							}
-						}
-
-						// 1、参数值为null且非is 条件sql语句
-						// 2、is 条件sql语句值非null、true、false 剔除#[]部分内容，同时将参数从数组中剔除
-						if (isNull) {
-							// sql中剔除最后部分的#[]内容
-							markContentSql = BLANK;
-							for (int k = paramCnt; k > 0; k--) {
-								paramValuesList.remove(k + preParamCnt - 1);
-							}
-							break;
-						}
-					}
-				}
+				markContentSql = processMarkContent(markContentSql, namedPattern, paramValuesList, preParamCnt,
+						paramCnt);
 				if (sqlMode) {
 					queryStr = SqlConfigParseUtils.processWhereLinkAnd(preSql, markContentSql, isEndWithAndOr, tailSql);
 				} else {
@@ -281,11 +256,49 @@ public class MongoElasticUtils {
 		return sqlToyResult;
 	}
 
+	private static String processMarkContent(String markContentSql, Pattern namedPattern, List paramValuesList,
+			int preParamCnt, int paramCnt) {
+		String resultStr = markContentSql;
+		int beginIndex = 0;
+		int endIndex = 0;
+		Object paramValue;
+		boolean isNull;
+		// 按顺序处理#[]中sql的参数
+		for (int i = preParamCnt; i < preParamCnt + paramCnt; i++) {
+			paramValue = paramValuesList.get(i);
+			beginIndex = endIndex;
+			endIndex = StringUtil.matchIndex(markContentSql.substring(beginIndex), namedPattern);
+			isNull = false;
+			if (null == paramValue) {
+				isNull = true;
+			} else {
+				if (paramValue.getClass().isArray() && CollectionUtil.convertArray(paramValue).length == 0) {
+					isNull = true;
+				} else if ((paramValue instanceof Collection) && ((Collection) paramValue).isEmpty()) {
+					isNull = true;
+				}
+			}
+			// 1、参数值为null且非is 条件sql语句
+			// 2、is 条件sql语句值非null、true、false 剔除#[]部分内容，同时将参数从数组中剔除
+			if (isNull) {
+				// sql中剔除最后部分的#[]内容
+				resultStr = BLANK;
+				for (int k = paramCnt; k > 0; k--) {
+					paramValuesList.remove(k + preParamCnt - 1);
+				}
+				break;
+			}
+		}
+		return resultStr;
+	}
+
 	/**
 	 * @TODO 将@blank(:paramName) 设置为" "空白输出,同时在条件数组中剔除:paramName对应位置的条件值
 	 * @param sqlToyResult
+	 * @param argNamedPattern
+	 * @param sqlMode
 	 */
-	private static void processBlank(SqlToyResult sqlToyResult) {
+	private static void processBlank(SqlToyResult sqlToyResult, Pattern argNamedPattern, boolean sqlMode) {
 		if (null == sqlToyResult.getParamsValue() || sqlToyResult.getParamsValue().length == 0) {
 			return;
 		}
@@ -300,7 +313,7 @@ public class MongoElasticUtils {
 				paramValueList = CollectionUtil.arrayToList(sqlToyResult.getParamsValue());
 			}
 			index = m.start();
-			paramCnt = StringUtil.matchCnt(queryStr.substring(0, index), SqlToyConstants.SQL_NAMED_PATTERN, 1);
+			paramCnt = StringUtil.matchCnt(queryStr.substring(0, index), argNamedPattern, sqlMode ? 1 : 0);
 			// 剔除参数@blank(?) 对应的参数值
 			paramValueList.remove(paramCnt - blankCnt);
 			blankCnt++;
@@ -314,8 +327,10 @@ public class MongoElasticUtils {
 	/**
 	 * @TODO 处理直接显示参数值:#[@value(:paramNamed) sql]
 	 * @param sqlToyResult
+	 * @param argNamedPattern
+	 * @param sqlMode
 	 */
-	private static void processValue(SqlToyResult sqlToyResult) {
+	private static void processValue(SqlToyResult sqlToyResult, Pattern namedPattern, boolean sqlMode) {
 		if (null == sqlToyResult.getParamsValue() || sqlToyResult.getParamsValue().length == 0) {
 			return;
 		}
@@ -332,7 +347,7 @@ public class MongoElasticUtils {
 				paramValueList = CollectionUtil.arrayToList(sqlToyResult.getParamsValue());
 			}
 			index = m.start();
-			paramCnt = StringUtil.matchCnt(queryStr.substring(0, index), SqlToyConstants.SQL_NAMED_PATTERN, 1);
+			paramCnt = StringUtil.matchCnt(queryStr.substring(0, index), namedPattern, sqlMode ? 1 : 0);
 			// 用参数的值直接覆盖@value(:name)
 			paramValue = paramValueList.get(paramCnt - valueCnt);
 			sqlToyResult.setSql(sqlToyResult.getSql().replaceFirst(VALUE_REGEX,
@@ -735,5 +750,4 @@ public class MongoElasticUtils {
 		result.setAliasLabels(aliasFields);
 		return result;
 	}
-
 }
