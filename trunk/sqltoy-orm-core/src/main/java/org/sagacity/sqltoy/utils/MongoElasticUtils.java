@@ -1,12 +1,6 @@
 package org.sagacity.sqltoy.utils;
 
-import java.sql.Time;
-import java.sql.Timestamp;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.IllegalFormatFlagsException;
 import java.util.List;
@@ -30,6 +24,8 @@ import org.slf4j.LoggerFactory;
  * @description 提供针对mongodb、elasticSearch集成的处理函数和逻辑
  * @author zhongxuchen
  * @version v1.0,Date:2017年3月10日
+ * @modify {Date:2024-10-2 强化@if功能，增加@elseif 和 @else 的支持,elastic
+ *         sql增加field=null改为field is null }
  */
 public class MongoElasticUtils {
 	/**
@@ -69,19 +65,20 @@ public class MongoElasticUtils {
 		String mql = sqlToyConfig.getSql(null);
 		// 提取条件参数
 		String[] fullNames = null;
-		if (sqlToyConfig.getNoSqlConfigModel().isSqlMode()) {
+		boolean sqlMode = sqlToyConfig.getNoSqlConfigModel().isSqlMode();
+		if (sqlMode) {
 			fullNames = SqlConfigParseUtils.getSqlParamsName(mql, false);
 		} else {
 			fullNames = SqlConfigParseUtils.getNoSqlParamsName(mql, false);
 		}
+		Pattern namedPattern = sqlMode ? SqlToyConstants.SQL_NAMED_PATTERN : SqlToyConstants.NOSQL_NAMED_PATTERN;
 		// 提取参数值
 		Object[] fullParamValues = SqlConfigParseUtils.matchNamedParam(fullNames, paramNames, paramValues);
-		SqlToyResult sqlToyResult = processNullConditions(mql, fullParamValues,
-				sqlToyConfig.getNoSqlConfigModel().isSqlMode());
+		SqlToyResult sqlToyResult = processNullConditions(mql, fullParamValues, sqlMode);
 		// 处理@blank(:name)
-		processBlank(sqlToyResult);
+		processBlank(sqlToyResult, namedPattern, sqlMode);
 		// 处理@value(:name)
-		processValue(sqlToyResult);
+		processValue(sqlToyResult, namedPattern, sqlMode);
 		return sqlToyResult;
 	}
 
@@ -98,9 +95,9 @@ public class MongoElasticUtils {
 		}
 		SqlToyResult sqlToyResult = wrapNoSql(sqlToyConfig, paramNames, paramValues);
 		if (sqlToyConfig.getNoSqlConfigModel().isSqlMode()) {
-			return replaceSqlParams(sqlToyResult.getSql(), sqlToyResult.getParamsValue(), "'");
+			return replaceSqlParams(sqlToyResult.getSql(), sqlToyResult.getParamsValue(), true);
 		}
-		String mongoJson = replaceNoSqlParams(sqlToyResult.getSql(), sqlToyResult.getParamsValue(), "'").trim();
+		String mongoJson = replaceNoSqlParams(sqlToyResult.getSql(), sqlToyResult.getParamsValue(), true).trim();
 		// json格式补全
 		if (!mongoJson.startsWith("{")) {
 			mongoJson = "{".concat(mongoJson);
@@ -125,9 +122,9 @@ public class MongoElasticUtils {
 		SqlToyResult sqlToyResult = wrapNoSql(sqlToyConfig, paramNames, paramValues);
 		// 替换mql中的参数(双引号)
 		if (sqlToyConfig.getNoSqlConfigModel().isSqlMode()) {
-			return replaceSqlParams(sqlToyResult.getSql(), sqlToyResult.getParamsValue(), "'");
+			return replaceSqlParams(sqlToyResult.getSql(), sqlToyResult.getParamsValue(), true);
 		}
-		String elasticJson = replaceNoSqlParams(sqlToyResult.getSql(), sqlToyResult.getParamsValue(), "\"").trim();
+		String elasticJson = replaceNoSqlParams(sqlToyResult.getSql(), sqlToyResult.getParamsValue(), false).trim();
 		// json格式补全
 		if (!elasticJson.startsWith("{")) {
 			elasticJson = "{".concat(elasticJson);
@@ -163,28 +160,25 @@ public class MongoElasticUtils {
 		int startMarkLength = startMark.length();
 		int endMarkLength = endMark.length();
 		int pseudoMarkStart = queryStr.indexOf(startMark);
-		int beginIndex, endIndex, paramCnt, preParamCnt, beginMarkIndex, endMarkIndex;
+		int paramCnt, preParamCnt, beginMarkIndex, endMarkIndex;
 		String preSql, markContentSql, tailSql;
 		List paramValuesList = CollectionUtil.arrayToList(paramValues);
-		boolean logicValue = true;
-		int start;
-		int end;
-		String evalStr;
-		int logicParamCnt;
-		Object paramValue;
-		boolean isNull;
+		int ifStart;
+		int ifLogicSignStart;
 		// sql内容体是否以and 或 or 结尾
 		boolean isEndWithAndOr = false;
+		// 0 无if、else等1:单个if；>1：if+else等
+		int ifLogicCnt = 0;
+		boolean isDynamicSql;
 		while (pseudoMarkStart != -1) {
+			ifLogicCnt = 0;
+			isEndWithAndOr = false;
 			// 始终从最后一个#[]进行处理
 			beginMarkIndex = queryStr.lastIndexOf(startMark);
 			// update 2021-01-17 兼容sql中存在"["和"]"符号场景
-			if (startMark.equals(SQL_PSEUDO_START_MARK)) {
-				endMarkIndex = StringUtil.getSymMarkIndex(SQL_PSEUDO_SYM_START_MARK, endMark, queryStr, beginMarkIndex);
-			} else {
-				endMarkIndex = StringUtil.getSymMarkIndex(startMark, endMark, queryStr,
-						beginMarkIndex + startMarkLength);
-			}
+			endMarkIndex = StringUtil.getSymMarkIndex(
+					startMark.equals(SQL_PSEUDO_START_MARK) ? SQL_PSEUDO_SYM_START_MARK : startMark, endMark, queryStr,
+					beginMarkIndex);
 			if (endMarkIndex == -1) {
 				throw new IllegalFormatFlagsException(
 						"json查询语句中缺乏:\"" + startMark + "\" 相对称的:\"" + endMark + "\"符号,请检查json查询语句格式!");
@@ -194,85 +188,62 @@ public class MongoElasticUtils {
 			// 最后#[]中的查询语句,加空白减少substr(index+1)可能引起的错误
 			markContentSql = BLANK.concat(queryStr.substring(beginMarkIndex + startMarkLength, endMarkIndex))
 					.concat(BLANK);
-			isEndWithAndOr = false;
-			if (sqlMode && StringUtil.matches(markContentSql, SqlToyConstants.AND_OR_END)) {
-				isEndWithAndOr = true;
+			ifLogicSignStart = StringUtil.matchIndex(markContentSql, SqlConfigParseUtils.IF_ALL_PATTERN);
+			ifStart = StringUtil.matchIndex(markContentSql, SqlConfigParseUtils.IF_PATTERN);
+			// 单一的@if 逻辑
+			if (ifStart == ifLogicSignStart && ifStart > 0) {
+				ifLogicCnt = 1;
+			}
+			// 属于@elseif 或@else()
+			else if (ifStart == -1 && ifLogicSignStart > 0) {
+				// 逆向找到@else 或@elseif 对称的@if位置
+				int symIfIndex = SqlConfigParseUtils.getStartIfIndex(preSql,
+						startMark.equals(SQL_PSEUDO_START_MARK) ? SQL_PSEUDO_SYM_START_MARK : startMark, endMark);
+				if (symIfIndex == -1) {
+					throw new IllegalFormatFlagsException("编写模式存在错误:@elseif(?==xx) @else 条件判断必须要有对应的@if()形成对称格式!");
+				}
+				beginMarkIndex = queryStr.substring(0, symIfIndex).lastIndexOf(startMark);
+				preSql = queryStr.substring(0, beginMarkIndex).concat(BLANK);
+				markContentSql = BLANK.concat(queryStr.substring(beginMarkIndex + startMarkLength, endMarkIndex))
+						.concat(BLANK);
+				ifLogicCnt = StringUtil.matchCnt(markContentSql, SqlConfigParseUtils.IF_ALL_PATTERN);
 			}
 			tailSql = queryStr.substring(endMarkIndex + endMarkLength);
-			// 获取#[]中的参数数量
-			paramCnt = StringUtil.matchCnt(markContentSql, namedPattern, sqlMode ? 1 : 0);
-			// #[]中无参数，拼接preSql+markContentSql+tailSql
-			if (paramCnt == 0) {
-				if (sqlMode) {
-					queryStr = SqlConfigParseUtils.processWhereLinkAnd(preSql, BLANK, isEndWithAndOr, tailSql);
-				} else {
-					queryStr = preSql.concat(BLANK).concat(tailSql);
+			// 在#[前的参数个数
+			preParamCnt = StringUtil.matchCnt(preSql, namedPattern, sqlMode ? 1 : 0);
+			markContentSql = SqlConfigParseUtils.processIfLogic(markContentSql, startMark, endMark, namedPattern,
+					paramValuesList, preSql, preParamCnt, ifLogicCnt, sqlMode ? 1 : 0, sqlMode ? 1 : 2);
+			isDynamicSql = SqlConfigParseUtils.isDynamicSql(markContentSql, startMark, endMark);
+			// 默认为false(原本模式)，即#[@if() sqlPart] sqlPart中参数值为null即剔除sqlPart
+			if (SqlToyConstants.STANDARD_IF_LOGIC_STRATEGY) {
+				// 只在#[] 非if else 逻辑场景下，对内容中参数是否为null做判断并清理内容
+				if (ifLogicCnt == 0) {
+					if (sqlMode) {
+						isEndWithAndOr = StringUtil.matches(markContentSql, SqlToyConstants.AND_OR_END);
+					}
+					// 存在if场景，重新获取内容中的参数数量
+					paramCnt = StringUtil.matchCnt(markContentSql, namedPattern, sqlMode ? 1 : 0);
+					markContentSql = SqlConfigParseUtils.processMarkContent(markContentSql, namedPattern,
+							paramValuesList, preParamCnt, paramCnt, sqlMode);
 				}
 			} else {
-				// 在#[前的参数个数
-				preParamCnt = StringUtil.matchCnt(preSql, namedPattern, sqlMode ? 1 : 0);
-				logicValue = true;
-				start = markContentSql.toLowerCase().indexOf("@if(");
-				// sql中存在逻辑判断
-				if (start > -1) {
-					end = StringUtil.getSymMarkIndex("(", ")", markContentSql, start);
-					evalStr = BLANK.concat(markContentSql.substring(markContentSql.indexOf("(", start) + 1, end));
-					logicParamCnt = StringUtil.matchCnt(evalStr, namedPattern, sqlMode ? 1 : 0);
-					// update 2017-4-14 增加@if()简单逻辑判断
-					logicValue = MacroIfLogic.evalLogic(evalStr, paramValuesList, preParamCnt, logicParamCnt);
-					// 逻辑不成立,剔除sql和对应参数
-					if (!logicValue) {
-						markContentSql = BLANK;
-						for (int k = paramCnt; k > 0; k--) {
-							paramValuesList.remove(k + preParamCnt - 1);
-						}
-					} else {
-						// 逻辑成立,去除@if()部分sql和对应的参数,同时将剩余参数数量减掉@if()中的参数数量
-						markContentSql = markContentSql.substring(0, start).concat(markContentSql.substring(end + 1));
-						for (int k = 0; k < logicParamCnt; k++) {
-							paramValuesList.remove(preParamCnt);
-						}
-						paramCnt = paramCnt - logicParamCnt;
+				// 校验sql片段中的参数是否有null存在(如果存在#[ and t.xxx=?] 场景，则先跳过null处理)
+				if (!isDynamicSql || ifLogicCnt <= 1) {
+					if (sqlMode) {
+						isEndWithAndOr = StringUtil.matches(markContentSql, SqlToyConstants.AND_OR_END);
 					}
+					// 存在if场景，重新获取内容中的参数数量
+					paramCnt = StringUtil.matchCnt(markContentSql, namedPattern, sqlMode ? 1 : 0);
+					markContentSql = SqlConfigParseUtils.processMarkContent(markContentSql, namedPattern,
+							paramValuesList, preParamCnt, paramCnt, sqlMode);
+				} else if (ifLogicCnt > 1 && !innerMark(markContentSql, startMark, endMark)) {
+					markContentSql = startMark.concat(markContentSql).concat(endMark);
 				}
-				// 逻辑成立,继续sql中参数是否为null的逻辑判断
-				if (logicValue) {
-					beginIndex = 0;
-					endIndex = 0;
-					// 按顺序处理#[]中sql的参数
-					for (int i = preParamCnt; i < preParamCnt + paramCnt; i++) {
-						paramValue = paramValuesList.get(i);
-						beginIndex = endIndex;
-						endIndex = StringUtil.matchIndex(markContentSql.substring(beginIndex), namedPattern);
-						isNull = false;
-						if (null == paramValue) {
-							isNull = true;
-						} else if (null != paramValue) {
-							if (paramValue.getClass().isArray()
-									&& CollectionUtil.convertArray(paramValue).length == 0) {
-								isNull = true;
-							} else if ((paramValue instanceof Collection) && ((Collection) paramValue).isEmpty()) {
-								isNull = true;
-							}
-						}
-
-						// 1、参数值为null且非is 条件sql语句
-						// 2、is 条件sql语句值非null、true、false 剔除#[]部分内容，同时将参数从数组中剔除
-						if (isNull) {
-							// sql中剔除最后部分的#[]内容
-							markContentSql = BLANK;
-							for (int k = paramCnt; k > 0; k--) {
-								paramValuesList.remove(k + preParamCnt - 1);
-							}
-							break;
-						}
-					}
-				}
-				if (sqlMode) {
-					queryStr = SqlConfigParseUtils.processWhereLinkAnd(preSql, markContentSql, isEndWithAndOr, tailSql);
-				} else {
-					queryStr = preSql.concat(BLANK).concat(markContentSql).concat(BLANK).concat(tailSql);
-				}
+			}
+			if (sqlMode) {
+				queryStr = SqlConfigParseUtils.processWhereLinkAnd(preSql, markContentSql, isEndWithAndOr, tailSql);
+			} else {
+				queryStr = preSql.concat(BLANK).concat(markContentSql).concat(BLANK).concat(tailSql);
 			}
 			pseudoMarkStart = queryStr.indexOf(startMark);
 		}
@@ -281,11 +252,21 @@ public class MongoElasticUtils {
 		return sqlToyResult;
 	}
 
+	private static boolean innerMark(String sql, String startMark, String endMark) {
+		String tmp = sql.trim();
+		if (tmp.startsWith(startMark) && tmp.endsWith(endMark)) {
+			return true;
+		}
+		return false;
+	}
+
 	/**
 	 * @TODO 将@blank(:paramName) 设置为" "空白输出,同时在条件数组中剔除:paramName对应位置的条件值
 	 * @param sqlToyResult
+	 * @param argNamedPattern
+	 * @param sqlMode
 	 */
-	private static void processBlank(SqlToyResult sqlToyResult) {
+	private static void processBlank(SqlToyResult sqlToyResult, Pattern argNamedPattern, boolean sqlMode) {
 		if (null == sqlToyResult.getParamsValue() || sqlToyResult.getParamsValue().length == 0) {
 			return;
 		}
@@ -300,7 +281,7 @@ public class MongoElasticUtils {
 				paramValueList = CollectionUtil.arrayToList(sqlToyResult.getParamsValue());
 			}
 			index = m.start();
-			paramCnt = StringUtil.matchCnt(queryStr.substring(0, index), SqlToyConstants.SQL_NAMED_PATTERN, 1);
+			paramCnt = StringUtil.matchCnt(queryStr.substring(0, index), argNamedPattern, sqlMode ? 1 : 0);
 			// 剔除参数@blank(?) 对应的参数值
 			paramValueList.remove(paramCnt - blankCnt);
 			blankCnt++;
@@ -314,8 +295,10 @@ public class MongoElasticUtils {
 	/**
 	 * @TODO 处理直接显示参数值:#[@value(:paramNamed) sql]
 	 * @param sqlToyResult
+	 * @param argNamedPattern
+	 * @param sqlMode
 	 */
-	private static void processValue(SqlToyResult sqlToyResult) {
+	private static void processValue(SqlToyResult sqlToyResult, Pattern namedPattern, boolean sqlMode) {
 		if (null == sqlToyResult.getParamsValue() || sqlToyResult.getParamsValue().length == 0) {
 			return;
 		}
@@ -332,7 +315,7 @@ public class MongoElasticUtils {
 				paramValueList = CollectionUtil.arrayToList(sqlToyResult.getParamsValue());
 			}
 			index = m.start();
-			paramCnt = StringUtil.matchCnt(queryStr.substring(0, index), SqlToyConstants.SQL_NAMED_PATTERN, 1);
+			paramCnt = StringUtil.matchCnt(queryStr.substring(0, index), namedPattern, sqlMode ? 1 : 0);
 			// 用参数的值直接覆盖@value(:name)
 			paramValue = paramValueList.get(paramCnt - valueCnt);
 			sqlToyResult.setSql(sqlToyResult.getSql().replaceFirst(VALUE_REGEX,
@@ -379,10 +362,10 @@ public class MongoElasticUtils {
 	 * @todo 将参数的值带入实际查询语句中
 	 * @param sql
 	 * @param paramValues
-	 * @param charSign
+	 * @param addSingleQuotation
 	 * @return
 	 */
-	public static String replaceNoSqlParams(String sql, Object[] paramValues, String charSign) {
+	public static String replaceNoSqlParams(String sql, Object[] paramValues, boolean addSingleQuotation) {
 		if (paramValues == null || paramValues.length == 0) {
 			return sql;
 		}
@@ -396,9 +379,7 @@ public class MongoElasticUtils {
 		boolean isAry = false;
 		Object[] ary = null;
 		int i;
-		String timeStr;
-		int nanoValue;
-		Object itemVar;
+		String sign = addSingleQuotation ? "'" : "";
 		while (m.find()) {
 			groupStr = m.group();
 			realMql.append(sql.substring(start, m.start()));
@@ -425,56 +406,10 @@ public class MongoElasticUtils {
 					}
 					if (item == null) {
 						realMql.append("null");
+					} else if (item instanceof CharSequence) {
+						realMql.append(sign).append(removeDangerWords(item.toString())).append(sign);
 					} else {
-						if (item instanceof Enum) {
-							itemVar = BeanUtil.getEnumValue(item);
-						} else {
-							itemVar = item;
-						}
-						if (itemVar instanceof CharSequence) {
-							realMql.append(charSign).append(removeDangerWords(itemVar.toString())).append(charSign);
-						} else if (itemVar instanceof Timestamp) {
-							realMql.append(charSign).append(DateUtil.formatDate(itemVar, "yyyy-MM-dd HH:mm:ss.SSS"))
-									.append(charSign);
-						} else if (itemVar instanceof LocalDateTime) {
-							nanoValue = ((LocalDateTime) itemVar).getNano();
-							if (nanoValue > 0) {
-								if (SqlToyConstants.localDateTimeFormat != null
-										&& !SqlToyConstants.localDateTimeFormat.equals("auto")) {
-									timeStr = DateUtil.formatDate(itemVar, SqlToyConstants.localDateTimeFormat);
-								} else {
-									timeStr = DateUtil.formatDate(itemVar, "yyyy-MM-dd HH:mm:ss")
-											+ DateUtil.processNano(nanoValue);
-								}
-							} else {
-								timeStr = DateUtil.formatDate(itemVar, "yyyy-MM-dd HH:mm:ss");
-							}
-							realMql.append(charSign).append(timeStr).append(charSign);
-						} else if (itemVar instanceof LocalDate) {
-							realMql.append(charSign).append(DateUtil.formatDate(itemVar, "yyyy-MM-dd"))
-									.append(charSign);
-						} else if (itemVar instanceof LocalTime) {
-							nanoValue = ((LocalTime) itemVar).getNano();
-							if (nanoValue > 0) {
-								if (SqlToyConstants.localTimeFormat != null
-										&& !SqlToyConstants.localTimeFormat.equals("auto")) {
-									timeStr = DateUtil.formatDate(itemVar, SqlToyConstants.localTimeFormat);
-								} else {
-									timeStr = DateUtil.formatDate(itemVar, "HH:mm:ss")
-											+ DateUtil.processNano(nanoValue);
-								}
-							} else {
-								timeStr = DateUtil.formatDate(itemVar, "HH:mm:ss");
-							}
-							realMql.append(charSign).append(timeStr).append(charSign);
-						} else if (itemVar instanceof Time) {
-							realMql.append(charSign).append(DateUtil.formatDate(itemVar, "HH:mm:ss")).append(charSign);
-						} else if ((itemVar instanceof Date)) {
-							realMql.append(charSign).append(DateUtil.formatDate(itemVar, "yyyy-MM-dd HH:mm:ss"))
-									.append(charSign);
-						} else {
-							realMql.append("" + itemVar);
-						}
+						realMql.append(SqlUtil.toSqlString(item, addSingleQuotation));
 					}
 					i++;
 				}
@@ -492,10 +427,10 @@ public class MongoElasticUtils {
 	 * @todo 替换sql模式的查询参数
 	 * @param sql
 	 * @param paramValues
-	 * @param charSign
+	 * @param addSingleQuotation
 	 * @return
 	 */
-	public static String replaceSqlParams(String sql, Object[] paramValues, String charSign) {
+	public static String replaceSqlParams(String sql, Object[] paramValues, boolean addSingleQuotation) {
 		if (paramValues == null || paramValues.length == 0) {
 			return sql;
 		}
@@ -504,79 +439,26 @@ public class MongoElasticUtils {
 		int start = 0;
 		int index = 0;
 		Object value;
-		Object[] ary = null;
-		int i;
-		String timeStr;
-		int nanoValue;
-		Object itemVar;
+		String sqlPart;
+		boolean isUpdateOrNotWhere = false;
+		String preSql;
 		while (m.find(start)) {
-			// m.start()+1 补偿\\W开始的字符,如 t.name=:name 保留下=号
-			realMql.append(sql.substring(start, m.start() + 1));
 			value = paramValues[index];
-			if (value != null && value.getClass().isArray()) {
-				ary = CollectionUtil.convertArray(value);
-			} else if (value instanceof Collection) {
-				ary = ((Collection) value).toArray();
+			// m.start()+1 补偿\\W开始的字符,如 t.name=:name 保留下=号
+			sqlPart = sql.substring(start, m.start() + 1);
+			if (value == null) {
+				preSql = sql.substring(0, m.start() + 1);
+				isUpdateOrNotWhere = false;
+				// update field=?或sql中没有where
+				if (StringUtil.matches(preSql, SqlConfigParseUtils.UPDATE_EQUAL_PATTERN)
+						|| !StringUtil.matches(preSql, SqlConfigParseUtils.WHERE_PATTERN)) {
+					isUpdateOrNotWhere = true;
+				}
+				// processNull，针对=null和!=null 逻辑调整为is null和 is not null
+				realMql.append(processNull(sqlPart, isUpdateOrNotWhere)).append("null");
 			} else {
-				ary = new Object[] { value };
-			}
-			i = 0;
-			for (Object item : ary) {
-				if (i > 0) {
-					realMql.append(",");
-				}
-				if (item == null) {
-					realMql.append("null");
-				} else {
-					if (item instanceof Enum) {
-						itemVar = BeanUtil.getEnumValue(item);
-					} else {
-						itemVar = item;
-					}
-					if (itemVar instanceof CharSequence) {
-						realMql.append(charSign).append(removeDangerWords(itemVar.toString())).append(charSign);
-					} else if (itemVar instanceof Timestamp) {
-						realMql.append(charSign).append(DateUtil.formatDate(itemVar, "yyyy-MM-dd HH:mm:ss.SSS"))
-								.append(charSign);
-					} else if (itemVar instanceof LocalDateTime) {
-						nanoValue = ((LocalDateTime) itemVar).getNano();
-						if (nanoValue > 0) {
-							if (SqlToyConstants.localDateTimeFormat != null
-									&& !SqlToyConstants.localDateTimeFormat.equals("auto")) {
-								timeStr = DateUtil.formatDate(itemVar, SqlToyConstants.localDateTimeFormat);
-							} else {
-								timeStr = DateUtil.formatDate(itemVar, "yyyy-MM-dd HH:mm:ss")
-										+ DateUtil.processNano(nanoValue);
-							}
-						} else {
-							timeStr = DateUtil.formatDate(itemVar, "yyyy-MM-dd HH:mm:ss");
-						}
-						realMql.append(charSign).append(timeStr).append(charSign);
-					} else if (itemVar instanceof LocalDate) {
-						realMql.append(charSign).append(DateUtil.formatDate(itemVar, "yyyy-MM-dd")).append(charSign);
-					} else if (itemVar instanceof LocalTime) {
-						nanoValue = ((LocalTime) itemVar).getNano();
-						if (nanoValue > 0) {
-							if (SqlToyConstants.localTimeFormat != null
-									&& !SqlToyConstants.localTimeFormat.equals("auto")) {
-								timeStr = DateUtil.formatDate(itemVar, SqlToyConstants.localTimeFormat);
-							} else {
-								timeStr = DateUtil.formatDate(itemVar, "HH:mm:ss") + DateUtil.processNano(nanoValue);
-							}
-						} else {
-							timeStr = DateUtil.formatDate(itemVar, "HH:mm:ss");
-						}
-						realMql.append(charSign).append(timeStr).append(charSign);
-					} else if (itemVar instanceof Time) {
-						realMql.append(charSign).append(DateUtil.formatDate(itemVar, "HH:mm:ss")).append(charSign);
-					} else if ((itemVar instanceof Date)) {
-						realMql.append(charSign).append(DateUtil.formatDate(itemVar, "yyyy-MM-dd HH:mm:ss"))
-								.append(charSign);
-					} else {
-						realMql.append("" + itemVar);
-					}
-				}
-				i++;
+				realMql.append(sqlPart);
+				realMql.append(SqlUtil.toSqlString(value, true));
 			}
 			index++;
 			// 参数正则表达式:param\s? 末尾可能为空白
@@ -589,6 +471,38 @@ public class MongoElasticUtils {
 		// 切去尾部sql
 		realMql.append(sql.substring(start));
 		return realMql.toString();
+	}
+
+	/**
+	 * 针对条件查询中的参数为null时,将=null、<>null 语句调整为is null和is not null
+	 * 
+	 * @param sqlContent
+	 * @param isUpdateOrNotWhere
+	 * @return
+	 */
+	private static String processNull(String sqlContent, boolean isUpdateOrNotWhere) {
+		int compareIndex = StringUtil.matchIndex(sqlContent, SqlConfigParseUtils.NOT_EQUAL_PATTERN);
+		String sqlPart = " is not ";
+		// 判断等于
+		if (compareIndex == -1) {
+			compareIndex = StringUtil.matchIndex(sqlContent, SqlConfigParseUtils.EQUAL_PATTERN);
+			if (compareIndex != -1) {
+				// update field=?或sql中没有where
+				if (isUpdateOrNotWhere) {
+					compareIndex = -1;
+				}
+			}
+			// [^><!]= 非某个字符开头占用了一位，要往后移动一位
+			if (compareIndex != -1) {
+				compareIndex = compareIndex + 1;
+			}
+			sqlPart = " is ";
+		}
+		// 存在where条件参数为=或<> 改成is (not) null
+		if (compareIndex != -1) {
+			return sqlContent.substring(0, compareIndex).concat(sqlPart);
+		}
+		return sqlContent;
 	}
 
 	/**
@@ -735,5 +649,4 @@ public class MongoElasticUtils {
 		result.setAliasLabels(aliasFields);
 		return result;
 	}
-
 }

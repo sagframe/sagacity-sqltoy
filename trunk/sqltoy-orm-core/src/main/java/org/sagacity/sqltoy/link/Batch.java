@@ -11,6 +11,7 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.InsertRowCallbackHandler;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
+import org.sagacity.sqltoy.model.ParallelConfig;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
@@ -52,6 +53,11 @@ public class Batch extends BaseLink {
 	private String sql;
 
 	/**
+	 * 设置批量操作的并行度
+	 */
+	private ParallelConfig parallelConfig;
+
+	/**
 	 * @param sqlToyContext
 	 * @param dataSource
 	 */
@@ -85,6 +91,11 @@ public class Batch extends BaseLink {
 		return this;
 	}
 
+	public Batch parallelConfig(ParallelConfig parallelConfig) {
+		this.parallelConfig = parallelConfig;
+		return this;
+	}
+
 	/**
 	 * 提供插入记录的反调处理，目前意义不大，极少使用
 	 * 
@@ -103,6 +114,6 @@ public class Batch extends BaseLink {
 		int realBatchSize = (batchSize > 0) ? batchSize : sqlToyContext.getBatchSize();
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql, SqlType.update, super.getDialect(), null);
 		return dialectFactory.batchUpdate(sqlToyContext, sqlToyConfig, dataSet, realBatchSize, null, insertCallhandler,
-				autoCommit, getDataSource(sqlToyConfig));
+				parallelConfig, autoCommit, getDataSource(sqlToyConfig));
 	}
 }

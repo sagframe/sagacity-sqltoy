@@ -396,24 +396,66 @@ public class StringUtil {
 		if (beginSignIndex[0] == -1) {
 			return matchIndex(source, endP, startIndex)[0];
 		}
-		int[] endIndex = matchIndex(source, endP, beginSignIndex[1] + 1);
+		int[] endIndex = matchIndex(source, endP, beginSignIndex[1]);
 		int[] tmpIndex = { 0, 0 };
 		while (endIndex[0] > beginSignIndex[0]) {
 			// 寻找下一个开始符号
-			beginSignIndex = matchIndex(source, startP, (symMarkIsEqual ? endIndex[1] : beginSignIndex[1]) + 1);
+			beginSignIndex = matchIndex(source, startP, (symMarkIsEqual ? endIndex[1] : beginSignIndex[1]));
 			// 找不到或则下一个开始符号位置大于截止符号则返回
 			if (beginSignIndex[0] == -1 || beginSignIndex[0] > endIndex[0]) {
 				return endIndex[0];
 			}
 			tmpIndex = endIndex;
 			// 开始符号在截止符号前则寻找下一个截止符号
-			endIndex = matchIndex(source, endP, (symMarkIsEqual ? beginSignIndex[1] : endIndex[1]) + 1);
+			endIndex = matchIndex(source, endP, (symMarkIsEqual ? beginSignIndex[1] : endIndex[1]));
 			// 找不到则返回
 			if (endIndex[0] == -1) {
 				return tmpIndex[0];
 			}
 		}
 		return endIndex[0];
+	}
+
+	/**
+	 * @todo 逆向查询对称标记符号的位置
+	 * @param beginMarkSign
+	 * @param endMarkSign
+	 * @param source
+	 * @param endIndex
+	 * @return
+	 */
+	public static int getSymMarkReverseIndex(String beginMarkSign, String endMarkSign, String source, int endIndex) {
+		int beginIndex = source.length() - endIndex;
+		// 兼容性处理,避免直接通过lastIndexOf(endMarkSign)取的endIndex,增加字符自身长度的偏移量
+		boolean isSubEndMarkLength = false;
+		// endIndex取lastIndexOf(endMarkSign)取的endIndex,没有做偏移量调整
+		if (source.length() - endIndex >= endMarkSign.length()) {
+			String signStr = source.substring(endIndex, endIndex + endMarkSign.length());
+			if (signStr.equals(endMarkSign)) {
+				isSubEndMarkLength = true;
+			}
+		}
+		// endIndex已经是lastIndexOf(endMarkSign)+endMarkSign.length()
+		if (endIndex >= endMarkSign.length()) {
+			String signStr = source.substring(endIndex - endMarkSign.length(), endIndex);
+			if (signStr.equals(endMarkSign)) {
+				isSubEndMarkLength = false;
+			}
+		}
+		if (isSubEndMarkLength) {
+			beginIndex = source.length() - endIndex - endMarkSign.length();
+		}
+		String realSource = new StringBuffer(source).reverse().toString();
+		String realStartMark = beginMarkSign;
+		String realEndMark = endMarkSign;
+		if (realStartMark.length() > 1) {
+			realStartMark = new StringBuffer(realStartMark).reverse().toString();
+		}
+		if (realEndMark.length() > 1) {
+			realEndMark = new StringBuffer(realEndMark).reverse().toString();
+		}
+		int index = getSymMarkIndex(realEndMark, realStartMark, realSource, beginIndex < 0 ? 0 : beginIndex);
+		return source.length() - index - realStartMark.length();
 	}
 
 	/**
