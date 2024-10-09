@@ -172,6 +172,7 @@ public class SqlToyContextBuilder {
 		sqlToyContext.setDialectMap(properties.getDialectMap());
 		sqlToyContext.setLocalDateTimeFormat(properties.getLocalDateTimeFormat());
 		sqlToyContext.setLocalTimeFormat(properties.getLocalTimeFormat());
+		sqlToyContext.setUseStandardIfLogic(properties.isUseStandardIfLogic());
 		// map 类型结果label是否自动转驼峰处理
 		if (properties.getHumpMapResultTypeLabel() != null) {
 			sqlToyContext.setHumpMapResultTypeLabel(properties.getHumpMapResultTypeLabel());

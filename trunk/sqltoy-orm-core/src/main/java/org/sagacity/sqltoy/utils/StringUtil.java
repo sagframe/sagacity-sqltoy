@@ -417,6 +417,48 @@ public class StringUtil {
 	}
 
 	/**
+	 * @todo 逆向查询对称标记符号的位置
+	 * @param beginMarkSign
+	 * @param endMarkSign
+	 * @param source
+	 * @param endIndex
+	 * @return
+	 */
+	public static int getSymMarkReverseIndex(String beginMarkSign, String endMarkSign, String source, int endIndex) {
+		int beginIndex = source.length() - endIndex;
+		// 兼容性处理,避免直接通过lastIndexOf(endMarkSign)取的endIndex,增加字符自身长度的偏移量
+		boolean isSubEndMarkLength = false;
+		// endIndex取lastIndexOf(endMarkSign)取的endIndex,没有做偏移量调整
+		if (source.length() - endIndex >= endMarkSign.length()) {
+			String signStr = source.substring(endIndex, endIndex + endMarkSign.length());
+			if (signStr.equals(endMarkSign)) {
+				isSubEndMarkLength = true;
+			}
+		}
+		// endIndex已经是lastIndexOf(endMarkSign)+endMarkSign.length()
+		if (endIndex >= endMarkSign.length()) {
+			String signStr = source.substring(endIndex - endMarkSign.length(), endIndex);
+			if (signStr.equals(endMarkSign)) {
+				isSubEndMarkLength = false;
+			}
+		}
+		if (isSubEndMarkLength) {
+			beginIndex = source.length() - endIndex - endMarkSign.length();
+		}
+		String realSource = new StringBuffer(source).reverse().toString();
+		String realStartMark = beginMarkSign;
+		String realEndMark = endMarkSign;
+		if (realStartMark.length() > 1) {
+			realStartMark = new StringBuffer(realStartMark).reverse().toString();
+		}
+		if (realEndMark.length() > 1) {
+			realEndMark = new StringBuffer(realEndMark).reverse().toString();
+		}
+		int index = getSymMarkIndex(realEndMark, realStartMark, realSource, beginIndex < 0 ? 0 : beginIndex);
+		return source.length() - index - realStartMark.length();
+	}
+
+	/**
 	 * @todo 通过正则表达式判断是否匹配
 	 * @param source
 	 * @param regex

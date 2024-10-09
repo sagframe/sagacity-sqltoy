@@ -144,10 +144,10 @@ public class ParallelUtils {
 		if (entityMeta != null) {
 			shardingModel.setTableName(entityMeta.getTableName());
 		}
-		// 并行设置为null或者
 		int recordSize = entities.size();
 		// 分组记录量
 		int groupSize;
+		// 并行设置为null,则全部记录为一个分组
 		if (parallelConfig == null) {
 			groupSize = recordSize;
 		} else {

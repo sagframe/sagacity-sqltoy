@@ -3,7 +3,11 @@ package org.sagacity.sqltoy.config.model;
 import java.io.Serializable;
 
 /**
- * 
+ * @project sagacity-sqltoy
+ * @description 构造存放@if @elseif @else sql中逻辑处理的数据模型
+ * @author zhongxuchen
+ * @version v1.0, Date:2024年10月1日
+ * @modify 2024年10月1日,修改说明
  */
 public class IfLogicModel implements Serializable {
 	/**
@@ -19,6 +23,9 @@ public class IfLogicModel implements Serializable {
 	 */
 	private String logicExpression;
 
+	/**
+	 * 表达式计算结果
+	 */
 	private boolean logicResult = false;
 
 	/**
@@ -26,12 +33,19 @@ public class IfLogicModel implements Serializable {
 	 */
 	private String sqlPart;
 
-	// 当前逻辑内参数数量
+	/**
+	 * 包含逻辑计算和sql中参数数量
+	 */
 	private int paramsCnt;
 
-	// 前面总参数数量
+	/**
+	 * 在此逻辑片段前面所有sql中所有的参数数量
+	 */
 	private int preParamsCnt;
 
+	/**
+	 * 逻辑表达式中的参数数量
+	 */
 	private int logicParamsCnt;
 
 	public int getType() {

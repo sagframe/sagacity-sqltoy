@@ -96,6 +96,7 @@ import org.slf4j.LoggerFactory;
  * @update data:2022-12-14 启动TDengine的支持
  * @update data:2023-09-16
  *         优化wrapTreeTableRoute，纠正rootId为pidValue，同时增加pidValue为null的校验
+ * @update data:2024-9-30 针对batchUpdate、saveAll等批量操作提供并行执行机制
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class DialectFactory {
@@ -120,6 +121,8 @@ public class DialectFactory {
 	 * 问号模式的参数匹配
 	 */
 	private static Pattern ARG_PATTERN = Pattern.compile("\\?");
+	private static Pattern DELETE_PATTERN = Pattern.compile("(?i)^\\s*delete\\s");
+	private static Pattern UPDATE_PATTERN = Pattern.compile("(?i)^\\s*update\\s");
 
 	/**
 	 * 私有化避免直接实例化
@@ -274,7 +277,7 @@ public class DialectFactory {
 		}
 		try {
 			// 启动执行日志(会在threadlocal中创建一个当前执行信息,并建立一个唯一跟踪id)
-			SqlExecuteStat.start(sqlToyConfig.getId(), "batchUpdate:[" + dataSet.size() + "]条记录!",
+			SqlExecuteStat.start(sqlToyConfig.getId(), "batchUpdate", new Long(dataSet.size()),
 					sqlToyConfig.isShowSql());
 			List<Long> result = ParallelUtils.execute(sqlToyContext, dataSet, false, true, SqlType.update, dataSource,
 					parallelConfig, (context, batchModel) -> {
@@ -356,8 +359,16 @@ public class DialectFactory {
 			// 将修改语句当做特殊的查询，其处理过程在交jdbc执行前完全一致
 			final QueryExecutorExtend extend = queryExecutor.getInnerModel();
 			// 组织参数和参数校验，但忽视数据权限数据的传参和校验
+			String executeType = "executeSql";
+			if (extend.entityClass != null) {
+				if (StringUtil.matches(sqlToyConfig.getSql(), DELETE_PATTERN)) {
+					executeType = "executeSqlSingleTableDelete";
+				} else if (StringUtil.matches(sqlToyConfig.getSql(), UPDATE_PATTERN)) {
+					executeType = "executeSqlSingleTableUpdate";
+				}
+			}
 			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
-			SqlExecuteStat.start(sqlToyConfig.getId(), "executeSql",
+			SqlExecuteStat.start(sqlToyConfig.getId(), executeType,
 					(extend.showSql != null) ? extend.showSql : sqlToyConfig.isShowSql());
 			Long updateTotalCnt = (Long) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
@@ -1423,8 +1434,8 @@ public class DialectFactory {
 		validEntity(sqlToyContext, entityClass, false);
 		try {
 			// 启动执行日志
-			SqlExecuteStat.start(BeanUtil.getEntityClass(entityClass).getName(),
-					"saveOrUpdateAll:[" + entities.size() + "]条记录!", sqlToyContext.isDebug());
+			SqlExecuteStat.start(BeanUtil.getEntityClass(entityClass).getName(), "saveOrUpdateAll",
+					new Long(entities.size()), sqlToyContext.isDebug());
 			// 改进点:利用目前分库分表的策略，针对超大数据集，比如1万条，按2500条记录作为一个并行度(限制最大并行度)进行并行执行
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, true, false, SqlType.update, dataSource,
 					parallelConfig, (context, batchModel) -> {
@@ -1490,8 +1501,8 @@ public class DialectFactory {
 		Class entityClass = entities.get(0).getClass();
 		validEntity(sqlToyContext, entityClass, false);
 		try {
-			SqlExecuteStat.start(BeanUtil.getEntityClass(entityClass).getName(),
-					"saveAllNotExist:[" + entities.size() + "]条记录!", sqlToyContext.isDebug());
+			SqlExecuteStat.start(BeanUtil.getEntityClass(entityClass).getName(), "saveAllIgnoreExist",
+					new Long(entities.size()), sqlToyContext.isDebug());
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, true, false, SqlType.update, dataSource,
 					parallelConfig, (context, batchModel) -> {
 						ShardingModel shardingModel = batchModel.getShardingModel();
@@ -1595,8 +1606,8 @@ public class DialectFactory {
 		Class entityClass = entities.get(0).getClass();
 		validEntity(sqlToyContext, entityClass, true);
 		try {
-			SqlExecuteStat.start(BeanUtil.getEntityClass(entityClass).getName(),
-					"loadAll:[" + entities.size() + "]条记录!", sqlToyContext.isDebug());
+			SqlExecuteStat.start(BeanUtil.getEntityClass(entityClass).getName(), "loadAll", new Long(entities.size()),
+					sqlToyContext.isDebug());
 			// 一般in的最大数量是1000
 			int batchSize = SqlToyConstants.getLoadAllBatchSize();
 			// 对可能存在的配置参数定义错误进行校正,最大控制在1000内
@@ -1699,8 +1710,8 @@ public class DialectFactory {
 		Class entityClass = entities.get(0).getClass();
 		validEntity(sqlToyContext, entityClass, false);
 		try {
-			SqlExecuteStat.start(BeanUtil.getEntityClass(entityClass).getName(),
-					"saveAll:[" + entities.size() + "]条记录!", sqlToyContext.isDebug());
+			SqlExecuteStat.start(BeanUtil.getEntityClass(entityClass).getName(), "saveAll", new Long(entities.size()),
+					sqlToyContext.isDebug());
 			// 分库分表并行执行
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, true, false, SqlType.insert, dataSource,
 					parallelConfig, (context, batchModel) -> {
@@ -1850,8 +1861,8 @@ public class DialectFactory {
 		Class entityClass = entities.get(0).getClass();
 		validEntity(sqlToyContext, entityClass, true);
 		try {
-			SqlExecuteStat.start(BeanUtil.getEntityClass(entityClass).getName(),
-					"updateAll:[" + entities.size() + "]条记录!", sqlToyContext.isDebug());
+			SqlExecuteStat.start(BeanUtil.getEntityClass(entityClass).getName(), "updateAll", new Long(entities.size()),
+					sqlToyContext.isDebug());
 			// 分库分表并行执行
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, false, false, SqlType.update, dataSource,
 					parallelConfig, (context, batchModel) -> {
@@ -1953,8 +1964,8 @@ public class DialectFactory {
 		Class entityClass = entities.get(0).getClass();
 		validEntity(sqlToyContext, entityClass, true);
 		try {
-			SqlExecuteStat.start(BeanUtil.getEntityClass(entityClass).getName(),
-					"deleteAll:[" + entities.size() + "]条记录!", sqlToyContext.isDebug());
+			SqlExecuteStat.start(BeanUtil.getEntityClass(entityClass).getName(), "deleteAll", new Long(entities.size()),
+					sqlToyContext.isDebug());
 			// 分库分表并行执行
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, false, false, SqlType.delete, dataSource,
 					parallelConfig, (context, batchModel) -> {

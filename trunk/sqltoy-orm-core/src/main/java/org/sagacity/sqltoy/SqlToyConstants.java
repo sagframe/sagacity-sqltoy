@@ -147,6 +147,11 @@ public class SqlToyConstants {
 	public static boolean executeSqlBlankToNull = true;
 
 	/**
+	 * 是否启用标准的if else 内容处理逻辑,默认为false
+	 */
+	public static boolean STANDARD_IF_LOGIC_STRATEGY = false;
+
+	/**
 	 * 分页中间表名称
 	 */
 	public static String INTERMEDIATE_TABLE = "SAG_INTERMEDIATE_TABLE";

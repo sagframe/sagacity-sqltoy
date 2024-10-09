@@ -386,13 +386,92 @@ public class SqlConfigParseUtilsTest {
 	public void testIfElse() throws Exception {
 		String sql = """
 				select * from table where name=1
-				#[@if(:flag==1) and #[status=:status]]
+				#[@if(:flag==1) #[and status=:status] #[and saleType is not :saleType] ]
 				#[@elseif(:flag==2) and name like :name]
 				#[@else and orderType=:orderType]
 				""";
 		SqlToyResult result = SqlConfigParseUtils.processSql(sql,
-				new String[] { "flag", "status", "name", "orderType" }, new Object[] { 1, 1, "陈", "SALE" });
+				new String[] { "flag", "status", "name", "orderType", "saleType" },
+				new Object[] { 2, 1, "陈", "SALE", null });
 		System.err.println(JSON.toJSONString(result));
+	}
+
+	@Test
+	public void testInnerIfElse() throws Exception {
+		String sql = """
+				select * from table where name=1
+				#[@if(:flag==1)
+				    #[@if(:operateType==1) and status=:status]
+				    #[@elseif(:operateType==2) and saleType is not :saleType]
+				    #[@else and saleType is :saleType]
+				]
+				#[@elseif(:flag==2) and name like :name]
+				#[@else and orderType=:orderType]
+				""";
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql,
+				new String[] { "flag", "status", "name", "orderType", "saleType", "operateType" },
+				new Object[] { 1, 1, "张", "SALE", null, 3 });
+		System.err.println(JSON.toJSONString(result));
+	}
+
+	@Test
+	public void testMultiInnerIfElse() throws Exception {
+		String sql = """
+				select * from table where 1=1
+				#[@if(:flag==1) and status=:status
+				    #[@if(:operateType==2) and saleType is not :saleType]
+				    #[@else and saleType is :saleType]
+				]
+				#[@elseif(:flag==2) and name like :name]
+				#[@else and orderType=:orderType]
+				#[@if(:tenantId==4) and tenant=1]
+				#[@elseif(:tenantId==3) and tenant=3]
+				""";
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql,
+				new String[] { "flag", "status", "name", "orderType", "saleType", "operateType", "tenantId" },
+				new Object[] { 1, 1, "张", "SALE", null, 4, 3 });
+		System.err.println(JSON.toJSONString(result));
+	}
+
+	@Test
+	public void testMultiInnerIfElse1() throws Exception {
+		String sql = """
+				select * from table where 1=1
+				#[@if(:flag==1) and name like :name]
+				#[@elseif(:flag==2)
+				 	#[@if(:operateType==1) and status=:status]
+				    #[@elseif(:operateType==2) and saleType is not :saleType]
+				    #[@else and saleType is :saleType]
+				]
+				#[@else and orderType=:orderType]
+				#[@if(:tenantId==4) and tenant=1]
+				#[@elseif(:tenantId==3) and tenant=3]
+				""";
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql,
+				new String[] { "flag", "status", "name", "orderType", "saleType", "operateType", "tenantId" },
+				new Object[] { 2, 1, "陈", "SALE", null, 4, 3 });
+		System.err.println(JSON.toJSONString(result));
+	}
+
+	@Test
+	public void testReversIndex() throws Exception {
+		String sql = """
+				select * from table where name=1
+				#[@if(:flag==1)
+				    #[@if(:operateType==1) and status=:status]
+				    #[@elseif(:operateType==2) and saleType is not :saleType]
+				    #[@else and saleType is :saleType]
+				]A
+				#[@elseif(:flag==2) and name like :name]
+				#[@else and orderType=:orderType]
+				""";
+		System.err.println("#[@if(:flag==1) index=" + sql.indexOf("#[@if(:flag==1)"));
+		System.err.println("A=" + sql.lastIndexOf("A"));
+		// System.err.println(StringUtil.getSymMarkReverseIndex("#[", "]", sql,
+		// sql.lastIndexOf("A")));
+		System.err.println("]=" + sql.lastIndexOf("]"));
+		System.err.println("else" + sql.lastIndexOf("#[@else "));
+		System.err.println(StringUtil.getSymMarkReverseIndex("#[", "]", sql, sql.lastIndexOf("]") + 1));
 	}
 
 	@Test
