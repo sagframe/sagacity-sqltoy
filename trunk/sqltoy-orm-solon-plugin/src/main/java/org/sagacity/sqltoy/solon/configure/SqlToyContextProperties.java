@@ -267,6 +267,11 @@ public class SqlToyContextProperties implements Serializable {
 	private HashMap<String, String> dialectReturnPrimaryColumnCase;
 
 	/**
+	 * 是否开启sql中if、elseif、else对内容的标准处理模式
+	 */
+	private boolean useStandardIfLogic = false;
+
+	/**
 	 * @return the sqlResourcesDir
 	 */
 	public String getSqlResourcesDir() {
@@ -695,6 +700,14 @@ public class SqlToyContextProperties implements Serializable {
 		this.defaultPageSize = defaultPageSize;
 	}
 
+	public Boolean getAutoDDL() {
+		return autoDDL;
+	}
+
+	public void setAutoDDL(Boolean autoDDL) {
+		this.autoDDL = autoDDL;
+	}
+
 	/**
 	 * @return the dialectDDLGenerator
 	 */
@@ -738,20 +751,6 @@ public class SqlToyContextProperties implements Serializable {
 	}
 
 	/**
-	 * @return the autoDDL
-	 */
-	public Boolean getAutoDDL() {
-		return autoDDL;
-	}
-
-	/**
-	 * @param autoDDL the autoDDL to set
-	 */
-	public void setAutoDDL(Boolean autoDDL) {
-		this.autoDDL = autoDDL;
-	}
-
-	/**
 	 * @return the dialectMap
 	 */
 	public Map<String, String> getDialectMap() {
@@ -786,6 +785,20 @@ public class SqlToyContextProperties implements Serializable {
 	 */
 	public void setDialectReturnPrimaryColumnCase(HashMap<String, String> dialectReturnPrimaryColumnCase) {
 		this.dialectReturnPrimaryColumnCase = dialectReturnPrimaryColumnCase;
+	}
+
+	/**
+	 * @return the useStandardIfLogic
+	 */
+	public boolean isUseStandardIfLogic() {
+		return useStandardIfLogic;
+	}
+
+	/**
+	 * @param useStandardIfLogic the useStandardIfLogic to set
+	 */
+	public void setUseStandardIfLogic(boolean useStandardIfLogic) {
+		this.useStandardIfLogic = useStandardIfLogic;
 	}
 
 }

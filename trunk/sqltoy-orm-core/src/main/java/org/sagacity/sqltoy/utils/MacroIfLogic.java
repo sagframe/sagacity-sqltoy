@@ -9,6 +9,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
+import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 
 /**
@@ -22,9 +23,11 @@ import org.sagacity.sqltoy.config.SqlConfigParseUtils;
  * @modify {Date:2020-09-24 增加数组长度的提取 length(:paramName)>10 模式}
  * @modify {Date:2022-05-10 支持@if(1==1)无参数模式}
  * @modify {Date:2023-05-6 支持@if(:param1==:param2 || 1==:param3) 左右参数可都是变量的场景}
+ * @modify {Date:2024-10-5 增加sqlParamType参数,支持?、:name、@(:name) 三种场景 }
  */
 @SuppressWarnings("rawtypes")
 public class MacroIfLogic {
+	private final static String BLANK = " ";
 
 	private MacroIfLogic() {
 	}
@@ -35,9 +38,11 @@ public class MacroIfLogic {
 	 * @param paramValues
 	 * @param preCount
 	 * @param logicParamCnt
+	 * @param sqlParamType   0:?常规sql;1:elastich sql;2:mongodb
 	 * @return
 	 */
-	public static boolean evalLogic(String evalExpression, List paramValues, int preCount, int logicParamCnt) {
+	public static boolean evalLogic(String evalExpression, List paramValues, int preCount, int logicParamCnt,
+			int sqlParamType) {
 		Object value;
 		for (int i = 0; i < logicParamCnt; i++) {
 			value = paramValues.get(preCount + i);
@@ -52,7 +57,8 @@ public class MacroIfLogic {
 		// 规范判断符号标准(<>转为!=)
 		evalExpression = evalExpression.replaceAll("\\<\\>", "!=").replaceAll("\r|\t|\n", " ").trim();
 		// 先通过简单表达式进行计算,格式如:@if(:name>=xxx || :name<=xxx)
-		String simpleResult = evalSimpleExpress(evalExpression, (logicParamCnt == 0) ? null : paramValues, preCount);
+		String simpleResult = evalSimpleExpress(evalExpression, (logicParamCnt == 0) ? null : paramValues, preCount,
+				sqlParamType);
 		if (!"undefine".equals(simpleResult)) {
 			return Boolean.parseBoolean(simpleResult);
 		}
@@ -65,9 +71,10 @@ public class MacroIfLogic {
 	 * @param evalExpression
 	 * @param paramValues
 	 * @param preCount
+	 * @param sqlParamType
 	 * @return
 	 */
-	private static String evalSimpleExpress(String evalExpression, List paramValues, int preCount) {
+	private static String evalSimpleExpress(String evalExpression, List paramValues, int preCount, int sqlParamType) {
 		// 目前只支持单一运算符,不支持同时有与和或(待强化:在其他领域已经解决此问题,将算法融入进来，供借鉴学习)
 		if (evalExpression.indexOf("||") != -1 && evalExpression.indexOf("&&") != -1) {
 			return "undefine";
@@ -118,7 +125,7 @@ public class MacroIfLogic {
 				leftParamLow = params[0].trim().toLowerCase();
 				// 判断左边是否有?参数
 				if (paramValues != null) {
-					hasArg = StringUtil.matches(leftParamLow, SqlConfigParseUtils.ARG_NAME_PATTERN);
+					hasArg = hasArg(leftParamLow, sqlParamType);
 				}
 				// 取出实际参数值
 				isNegate = false;
@@ -147,7 +154,7 @@ public class MacroIfLogic {
 					}
 				}
 				// 对比值也是动态参数(update 2023-05-05)
-				if (paramValues != null && "?".equals(rightValue)) {
+				if (paramValues != null && isArg(rightValue, sqlParamType)) {
 					rightObj = paramValues.get(preCount + meter);
 					if (rightObj == null) {
 						rightValue = "null";
@@ -515,5 +522,58 @@ public class MacroIfLogic {
 			return source.substring(1, source.length() - 1);
 		}
 		return source;
+	}
+
+	/**
+	 * @todo 判断包含动态参数
+	 * @param value
+	 * @param sqlParamType
+	 * @return
+	 */
+	private static boolean hasArg(String value, int sqlParamType) {
+		// 常规sql ?
+		if (sqlParamType == 0 && StringUtil.matches(value, SqlConfigParseUtils.ARG_NAME_PATTERN)) {
+			return true;
+		}
+		// elasticsearch sql :name
+		if (sqlParamType == 1
+				&& StringUtil.matches(BLANK.concat(value).concat(BLANK), SqlToyConstants.SQL_NAMED_PATTERN)) {
+			return true;
+		}
+		// mongo nosql @(:name)
+		if (sqlParamType == 2 && StringUtil.matches(value, SqlToyConstants.NOSQL_NAMED_PATTERN)) {
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * @todo 判断是否等于动态参数
+	 * @param value
+	 * @param sqlParamType
+	 * @return
+	 */
+	private static boolean isArg(String value, int sqlParamType) {
+		// 常规sql ?
+		if (sqlParamType == 0 && value.equals(SqlConfigParseUtils.ARG_NAME)) {
+			return true;
+		}
+		// elasticsearch sql :name
+		if (sqlParamType == 1) {
+			// sql name 模式前后有特殊符号判断,indexes[1]等于实际长度+2个空白长度
+			int[] indexes = StringUtil.matchIndex(BLANK.concat(value).concat(BLANK), SqlToyConstants.SQL_NAMED_PATTERN,
+					0);
+			if (indexes[1] == value.length() + 2) {
+				return true;
+			}
+		}
+		// mongo nosql @(:name)
+		if (sqlParamType == 2) {
+			int[] indexes = StringUtil.matchIndex(value, SqlToyConstants.NOSQL_NAMED_PATTERN, 0);
+			if (indexes[1] == value.length()) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

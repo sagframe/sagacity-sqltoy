@@ -10,6 +10,7 @@ import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.model.LockMode;
+import org.sagacity.sqltoy.model.ParallelConfig;
 
 /**
  * @project sagacity-sqltoy
@@ -42,6 +43,13 @@ public class Load extends BaseLink {
 	 * 仅仅只加载子对象，主对象无需重复加载查询
 	 */
 	private boolean onlyCascade = false;
+
+	private ParallelConfig parallelConfig;
+
+	public Load parallelConfig(ParallelConfig parallelConfig) {
+		this.parallelConfig = parallelConfig;
+		return this;
+	}
 
 	/**
 	 * @param sqlToyContext
@@ -119,7 +127,7 @@ public class Load extends BaseLink {
 		if ((cascadeTypes == null || cascadeTypes.length == 0) && (cascadeAll || onlyCascade)) {
 			cascadeTypes = sqlToyContext.getEntityMeta(entities.get(0).getClass()).getCascadeTypes();
 		}
-		return dialectFactory.loadAll(sqlToyContext, entities, onlyCascade, cascadeTypes, lockMode,
+		return dialectFactory.loadAll(sqlToyContext, entities, onlyCascade, cascadeTypes, lockMode, parallelConfig,
 				getDataSource(null));
 	}
 

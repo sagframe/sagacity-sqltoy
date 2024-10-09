@@ -73,6 +73,11 @@ public class SqlExecuteTrace implements Serializable {
 	private String type;
 
 	/**
+	 * 批量信息
+	 */
+	private Long batchSize;
+
+	/**
 	 * 是否发生异常
 	 */
 	private boolean error = false;
@@ -193,4 +198,17 @@ public class SqlExecuteTrace implements Serializable {
 		this.dialect = dialect;
 	}
 
+	/**
+	 * @return the batchSize
+	 */
+	public Long getBatchSize() {
+		return batchSize;
+	}
+
+	/**
+	 * @param batchSize the batchSize to set
+	 */
+	public void setBatchSize(Long batchSize) {
+		this.batchSize = batchSize;
+	}
 }

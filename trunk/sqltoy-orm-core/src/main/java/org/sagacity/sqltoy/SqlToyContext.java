@@ -371,6 +371,11 @@ public class SqlToyContext {
 	private boolean executeSqlBlankToNull = true;
 
 	/**
+	 * 是否开启标准的if else 逻辑
+	 */
+	private boolean useStandardIfLogic = false;
+
+	/**
 	 * sql 日志输出时LocalDateTime类型的输出格式
 	 */
 	private String localDateTimeFormat = "yyyy-MM-dd HH:mm:ss";
@@ -457,6 +462,7 @@ public class SqlToyContext {
 		SqlToyConstants.DEFAULT_PAGE_SIZE = this.defaultPageSize;
 		SqlToyConstants.localDateTimeFormat = this.localDateTimeFormat;
 		SqlToyConstants.localTimeFormat = this.localTimeFormat;
+		SqlToyConstants.STANDARD_IF_LOGIC_STRATEGY = this.isUseStandardIfLogic();
 		// 初始化sql执行统计的基本参数
 		SqlExecuteStat.setDebug(this.debug);
 		SqlExecuteStat.setOverTimeSqlHandler(overTimeSqlHandler);
@@ -1322,6 +1328,20 @@ public class SqlToyContext {
 	 */
 	public void setDialectReturnPrimaryColumnCase(IgnoreKeyCaseMap<String, String> dialectReturnPrimaryColumnCase) {
 		this.dialectReturnPrimaryColumnCase = dialectReturnPrimaryColumnCase;
+	}
+
+	/**
+	 * @return the useStandardIfLogic
+	 */
+	public boolean isUseStandardIfLogic() {
+		return useStandardIfLogic;
+	}
+
+	/**
+	 * @param useStandardIfLogic the useStandardIfLogic to set
+	 */
+	public void setUseStandardIfLogic(boolean useStandardIfLogic) {
+		this.useStandardIfLogic = useStandardIfLogic;
 	}
 
 }
