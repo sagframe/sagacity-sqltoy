@@ -131,7 +131,7 @@ public class StringUtil {
 			return sourceStr;
 		}
 		if (sourceStr.length() == 1) {
-			return sourceStr.toUpperCase();
+			return sourceStr.toLowerCase();
 		}
 		return sourceStr.substring(0, 1).toLowerCase().concat(sourceStr.substring(1));
 	}

@@ -898,6 +898,7 @@ public class DialectFactory {
 										SqlExecuteStat.debug("过程提示", "分页查询提取count数为:0");
 									}
 								} else {
+									SqlExecuteStat.debug("过程提示", "分页查询提取count数为:{}", recordCnt);
 									long preTime = System.currentTimeMillis();
 									// 合法的全记录提取,设置页号为1按记录数
 									if (pageNo == -1) {
