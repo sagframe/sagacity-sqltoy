@@ -221,4 +221,26 @@ public class StringUtilsTest {
 			System.err.println("ddd" + true);
 		}
 	}
+
+	@Test
+	public void testClearSymMark() {
+		String sql = "select * from table #[and field=:field]  #[]#[]and t1=t1";
+		System.err.println(StringUtil.clearSymMarkContent(sql, "#[", "]"));
+	}
+
+	@Test
+	public void testMatchCount() {
+		String sql = "select * from table #[[[]]]";
+		System.err.println(StringUtil.matchCnt(sql, Pattern.compile("\\["), 0));
+	}
+
+	@Test
+	public void testMatchIndex() {
+		String sql = "select * from table #[[";
+		int[] indexes = StringUtil.matchIndex(sql, Pattern.compile("\\#\\["), 0);
+		System.err.println("firstIndex=" + indexes[0]);
+		System.err.println("firstEnd=" + indexes[1]);
+		System.err.println("nextStart=" + StringUtil.matchIndex(sql, Pattern.compile("\\["), indexes[1])[0]);
+		System.err.println("nextEnd=" + StringUtil.matchIndex(sql, Pattern.compile("\\["), indexes[1])[1]);
+	}
 }

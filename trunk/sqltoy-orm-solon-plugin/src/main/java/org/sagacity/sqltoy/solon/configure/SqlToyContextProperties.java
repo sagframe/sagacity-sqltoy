@@ -267,11 +267,6 @@ public class SqlToyContextProperties implements Serializable {
 	private HashMap<String, String> dialectReturnPrimaryColumnCase;
 
 	/**
-	 * 是否开启sql中if、elseif、else对内容的标准处理模式
-	 */
-	private boolean useStandardIfLogic = false;
-
-	/**
 	 * @return the sqlResourcesDir
 	 */
 	public String getSqlResourcesDir() {
@@ -785,20 +780,6 @@ public class SqlToyContextProperties implements Serializable {
 	 */
 	public void setDialectReturnPrimaryColumnCase(HashMap<String, String> dialectReturnPrimaryColumnCase) {
 		this.dialectReturnPrimaryColumnCase = dialectReturnPrimaryColumnCase;
-	}
-
-	/**
-	 * @return the useStandardIfLogic
-	 */
-	public boolean isUseStandardIfLogic() {
-		return useStandardIfLogic;
-	}
-
-	/**
-	 * @param useStandardIfLogic the useStandardIfLogic to set
-	 */
-	public void setUseStandardIfLogic(boolean useStandardIfLogic) {
-		this.useStandardIfLogic = useStandardIfLogic;
 	}
 
 }

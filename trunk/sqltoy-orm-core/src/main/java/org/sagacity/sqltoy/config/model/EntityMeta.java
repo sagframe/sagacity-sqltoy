@@ -863,4 +863,27 @@ public class EntityMeta implements Serializable {
 	public void setForeignFields(Map<String, ForeignModel> foreignFields) {
 		this.foreignFields = foreignFields;
 	}
+
+	/**
+	 * 提取唯一索引信息,用于saveAllIgnoreExist
+	 * 
+	 * @return
+	 */
+	public IndexModel getUniqueIndex() {
+		if (this.indexModels == null || this.indexModels.length == 0) {
+			return null;
+		}
+		int count = 0;
+		IndexModel result = null;
+		for (IndexModel indexModel : indexModels) {
+			if (indexModel.isUnique()) {
+				count++;
+				result = indexModel;
+			}
+		}
+		if (count == 1) {
+			return result;
+		}
+		return null;
+	}
 }
