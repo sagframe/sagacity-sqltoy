@@ -16,6 +16,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Test;
+import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.DataType;
 import org.sagacity.sqltoy.demo.vo.A1;
 import org.sagacity.sqltoy.demo.vo.A2;
@@ -50,25 +51,21 @@ public class SqlToyConstantsTest {
 
 	@Test
 	public void rtrim() {
-		Pattern COMPARE_PATTERN = Pattern.compile("(!=|<>|\\^=|=|>=|<=)");
-		System.err.println(StringUtil.matches("where id!=1", COMPARE_PATTERN));
-		System.err.println(StringUtil.matches("where id<>1", COMPARE_PATTERN));
-		System.err.println(StringUtil.matches("where id<=1", COMPARE_PATTERN));
-		System.err.println(StringUtil.matches("where id=1", COMPARE_PATTERN));
 
-		Map map = new HashMap<String, Object>();
-		map.put("1", null);
-		System.err.println("map=" + map.containsKey("1"));
-		System.err.println(List.class.isAssignableFrom(ArrayList.class));
-		System.err.println(Collection.class.isAssignableFrom(List.class));
-		System.err.println(Map.class.isAssignableFrom(HashMap.class));
-		String[] abc = new String[2];
-		System.err.println(abc.getClass().isArray());
-		System.err.println(DataType.class.isEnum());
-		String idColumns = "ta.staff_id";
-		System.err.println(idColumns.replaceAll("ta\\.", ""));
-		System.err.println(idColumns.replaceAll("ta\\.", "tv."));
-		System.err.println("[" + "v  by bn 1 ".replaceAll("\\s+", "") + "]");
+		String value = ":name";
+		// value = "@(:name)";
+		int[] indexes = StringUtil.matchIndex(" ".concat(value).concat("+1"), SqlToyConstants.SQL_NAMED_PATTERN, 0);
+		Pattern DELETE_PATTERN = Pattern.compile("(?i)^\\s*delete\\s");
+		System.err.println(StringUtil.matches("delete from", DELETE_PATTERN));
+		if (indexes[1] == value.length() + 2) {
+			System.err.println("---------:name value=" + value);
+		}
+		value = "@(:name)";
+		indexes = StringUtil.matchIndex(value, SqlToyConstants.NOSQL_NAMED_PATTERN, 0);
+		if (indexes[1] == value.length()) {
+			System.err.println("---------@(:name)value=" + indexes[1] + "length=" + value.length());
+			System.err.println("---------@(:name)value=" + value);
+		}
 	}
 
 	@Test
@@ -166,16 +163,13 @@ public class SqlToyConstantsTest {
 	@Test
 	public void testBeanInfo1() {
 		String sql = "id=:id and t1 ";
+		Pattern IF_ELSE_PATTERN = Pattern.compile("(?i)\\@(((if|elseif|else)\\s*\\()|else\\W)");
+		System.err.println(sql + "结果:" + StringUtil.matches("@if() and ", IF_ELSE_PATTERN));
+		System.err.println(sql + "结果:" + StringUtil.matches("@else and ", IF_ELSE_PATTERN));
+		System.err.println(sql + "结果:" + StringUtil.matches("@else() and ", IF_ELSE_PATTERN));
+		System.err.println(sql + "结果:" + StringUtil.matches("@elseif() and", IF_ELSE_PATTERN));
+		System.err.println(sql + "结果:" + StringUtil.matches("@else () and ", IF_ELSE_PATTERN));
 
-		System.err.println(sql + "结果:" + StringUtil.matches(sql, SqlToyConstants.AND_OR_END));
-		sql = "id=:id) and ";
-		System.err.println(sql + "结果:" + StringUtil.matches(sql, SqlToyConstants.AND_OR_END));
-		sql = "id=:id)and ";
-		System.err.println(sql + "结果:" + StringUtil.matches(sql, SqlToyConstants.AND_OR_END));
-		sql = "id=:id)or ";
-		System.err.println(sql + "结果:" + StringUtil.matches(sql, SqlToyConstants.AND_OR_END));
-		sql = "id=:id)_or ";
-		System.err.println(sql + "结果:" + StringUtil.matches(sql, SqlToyConstants.AND_OR_END));
 	}
 
 	@Test

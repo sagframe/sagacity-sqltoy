@@ -10,6 +10,7 @@ import java.util.List;
 import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.model.ParallelConfig;
 import org.sagacity.sqltoy.model.SaveMode;
 
 /**
@@ -49,6 +50,13 @@ public class Save extends BaseLink {
 	 * 批处理提交记录数量
 	 */
 	private int batchSize = 0;
+
+	private ParallelConfig parallelConfig;
+
+	public Save parallelConfig(ParallelConfig parallelConfig) {
+		this.parallelConfig = parallelConfig;
+		return this;
+	}
 
 	public Save deeply(boolean deeply) {
 		this.deeply = deeply;
@@ -130,7 +138,7 @@ public class Save extends BaseLink {
 		if (saveMode == SaveMode.IGNORE) {
 			List entities = new ArrayList();
 			entities.add(entity);
-			return dialectFactory.saveAllIgnoreExist(sqlToyContext, entities, 1, null, getDataSource(null), null);
+			return dialectFactory.saveAllIgnoreExist(sqlToyContext, entities, 1, null, null, getDataSource(null), null);
 		}
 		return null;
 	}
@@ -147,8 +155,8 @@ public class Save extends BaseLink {
 		}
 		int realBatchSize = (batchSize > 0) ? batchSize : sqlToyContext.getBatchSize();
 		if (saveMode == SaveMode.IGNORE) {
-			return dialectFactory.saveAllIgnoreExist(sqlToyContext, entities, realBatchSize, null, getDataSource(null),
-					autoCommit);
+			return dialectFactory.saveAllIgnoreExist(sqlToyContext, entities, realBatchSize, null, parallelConfig,
+					getDataSource(null), autoCommit);
 		}
 		if (saveMode == SaveMode.UPDATE) {
 			// 深度修改获取全部字段属性
@@ -156,8 +164,9 @@ public class Save extends BaseLink {
 				forceUpdateProps = sqlToyContext.getEntityMeta(entities.get(0).getClass()).getRejectIdFieldArray();
 			}
 			return dialectFactory.saveOrUpdateAll(sqlToyContext, entities, realBatchSize, forceUpdateProps, null,
-					getDataSource(null), autoCommit);
+					parallelConfig, getDataSource(null), autoCommit);
 		}
-		return dialectFactory.saveAll(sqlToyContext, entities, realBatchSize, null, getDataSource(null), autoCommit);
+		return dialectFactory.saveAll(sqlToyContext, entities, realBatchSize, null, parallelConfig, getDataSource(null),
+				autoCommit);
 	}
 }

@@ -191,6 +191,22 @@ public class StringUtilsTest {
 	}
 
 	@Test
+	public void testIfMatch() throws UnsupportedEncodingException {
+		Pattern IF_PATTERN = Pattern.compile("(?i)\\@if\\s*\\(");
+		Pattern ELSEIF_PATTERN = Pattern.compile("(?i)\\@elseif\\s*\\(");
+		Pattern ELSE_PATTERN = Pattern.compile("(?i)\\@else(\\s+|\\s*\\(\\s*\\))");
+		Pattern IF_ALL_PATTERN = Pattern.compile("(?i)\\@((if|elseif)\\s*\\(|else(\\s+|\\s*\\(\\s*\\)))");
+		System.err.println(StringUtil.matches("@else(and ", IF_ALL_PATTERN));
+		System.err.println(StringUtil.matches("@else and ", IF_ALL_PATTERN));
+		System.err.println(StringUtil.matches("@elseif and ", IF_ALL_PATTERN));
+		System.err.println(StringUtil.matches("@elseif(:a==1) and ", IF_ALL_PATTERN));
+		System.err.println(StringUtil.matches("@if(:a==1) and ", IF_ALL_PATTERN));
+		System.err.println(StringUtil.matches("@else(:a==1) and ", IF_ALL_PATTERN));
+		System.err.println(StringUtil.matches("@else() and ", IF_ALL_PATTERN));
+
+	}
+
+	@Test
 	public void testMatchInclude() {
 		Map<String, Object> sqlCache = new HashMap<>();
 		System.err.println((SqlToyConfig) sqlCache.get("test_id"));
@@ -204,5 +220,17 @@ public class StringUtilsTest {
 		if (StringUtil.matches(" " + tmp, "(?i)\\Wselect\\W") && StringUtil.matches(tmp, "(?i)\\Wfrom\\W")) {
 			System.err.println("ddd" + true);
 		}
+	}
+
+	@Test
+	public void testClearSymMark() {
+		String sql = "select * from table #[and field=:field]  #[]#[]and t1=t1";
+		System.err.println(StringUtil.clearSymMarkContent(sql, "#[", "]"));
+	}
+
+	@Test
+	public void testMatchCount() {
+		String sql = "select * from table #[[[]]]";
+		System.err.println(StringUtil.matchCnt(sql, Pattern.compile("\\["), 0));
 	}
 }

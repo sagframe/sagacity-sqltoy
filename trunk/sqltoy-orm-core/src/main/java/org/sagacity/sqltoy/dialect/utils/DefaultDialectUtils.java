@@ -65,7 +65,8 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @description 提供默认方言的通用处理工具
  * @author zhongxuchen
  * @version v1.0, Date:2021-5-20
- * @modify 2024-8-8 修复updateSaveFetch中uniqueProps对应属性值为null时构建的sql where id=null改为id is null
+ * @modify 2024-8-8 修复updateSaveFetch中uniqueProps对应属性值为null时构建的sql where
+ *         id=null改为id is null
  */
 public class DefaultDialectUtils {
 	/**

@@ -1323,5 +1323,4 @@ public class SqlToyContext {
 	public void setDialectReturnPrimaryColumnCase(IgnoreKeyCaseMap<String, String> dialectReturnPrimaryColumnCase) {
 		this.dialectReturnPrimaryColumnCase = dialectReturnPrimaryColumnCase;
 	}
-
 }

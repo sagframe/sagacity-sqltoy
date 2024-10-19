@@ -131,7 +131,7 @@ public class StringUtil {
 			return sourceStr;
 		}
 		if (sourceStr.length() == 1) {
-			return sourceStr.toUpperCase();
+			return sourceStr.toLowerCase();
 		}
 		return sourceStr.substring(0, 1).toLowerCase().concat(sourceStr.substring(1));
 	}
@@ -396,24 +396,72 @@ public class StringUtil {
 		if (beginSignIndex[0] == -1) {
 			return matchIndex(source, endP, startIndex)[0];
 		}
-		int[] endIndex = matchIndex(source, endP, beginSignIndex[1] + 1);
+		int[] endIndex = matchIndex(source, endP, beginSignIndex[1]);
 		int[] tmpIndex = { 0, 0 };
 		while (endIndex[0] > beginSignIndex[0]) {
 			// 寻找下一个开始符号
-			beginSignIndex = matchIndex(source, startP, (symMarkIsEqual ? endIndex[1] : beginSignIndex[1]) + 1);
+			beginSignIndex = matchIndex(source, startP, (symMarkIsEqual ? endIndex[1] : beginSignIndex[1]));
 			// 找不到或则下一个开始符号位置大于截止符号则返回
 			if (beginSignIndex[0] == -1 || beginSignIndex[0] > endIndex[0]) {
 				return endIndex[0];
 			}
 			tmpIndex = endIndex;
 			// 开始符号在截止符号前则寻找下一个截止符号
-			endIndex = matchIndex(source, endP, (symMarkIsEqual ? beginSignIndex[1] : endIndex[1]) + 1);
+			endIndex = matchIndex(source, endP, (symMarkIsEqual ? beginSignIndex[1] : endIndex[1]));
 			// 找不到则返回
 			if (endIndex[0] == -1) {
 				return tmpIndex[0];
 			}
 		}
 		return endIndex[0];
+	}
+
+	/**
+	 * @todo 逆向查询对称标记符号的位置
+	 * @param beginMarkSign
+	 * @param endMarkSign
+	 * @param source
+	 * @param endIndex      主要endMarkSign的length,一般lastIndex(sign)+sign.length()
+	 * @return
+	 */
+	public static int getSymMarkReverseIndex(String beginMarkSign, String endMarkSign, String source, int endIndex) {
+		int beginIndex = source.length() - endIndex;
+		String realSource = new StringBuffer(source).reverse().toString();
+		String realStartMark = beginMarkSign;
+		String realEndMark = endMarkSign;
+		if (realStartMark.length() > 1) {
+			realStartMark = new StringBuffer(realStartMark).reverse().toString();
+		}
+		if (realEndMark.length() > 1) {
+			realEndMark = new StringBuffer(realEndMark).reverse().toString();
+		}
+		int index = getSymMarkIndex(realEndMark, realStartMark, realSource, beginIndex < 0 ? 0 : beginIndex);
+		return source.length() - index - realStartMark.length();
+	}
+
+	/**
+	 * @todo 剔除字符串中对称符号和中间的内容
+	 * @param sql
+	 * @param startMark
+	 * @param endMark
+	 * @return
+	 */
+	public static String clearSymMarkContent(String sql, String startMark, String endMark) {
+		StringBuilder lastSql = new StringBuilder(sql);
+		int endMarkLength = endMark.length();
+		// 删除所有对称的括号中的内容
+		int start = lastSql.indexOf(startMark);
+		int symMarkEnd;
+		while (start != -1) {
+			symMarkEnd = StringUtil.getSymMarkIndex(startMark, endMark, lastSql.toString(), start);
+			if (symMarkEnd != -1) {
+				lastSql.delete(start, symMarkEnd + endMarkLength);
+				start = lastSql.indexOf(startMark);
+			} else {
+				break;
+			}
+		}
+		return lastSql.toString();
 	}
 
 	/**

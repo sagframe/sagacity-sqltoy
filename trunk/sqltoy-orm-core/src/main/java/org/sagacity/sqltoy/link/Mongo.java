@@ -166,6 +166,13 @@ public class Mongo extends BaseLink {
 			if (noSqlModel.isHasAggs()) {
 				return aggregate(sqlToyConfig, realMql, (Class) extend.resultType, extend.humpMapLabel);
 			}
+			if (sqlToyContext.isDebug()) {
+				if (logger.isDebugEnabled()) {
+					logger.debug("findByMongo script=" + realMql);
+				} else {
+					System.out.println("findByMongo script=" + realMql);
+				}
+			}
 			return findTop(sqlToyConfig, null, realMql, (Class) extend.resultType, extend.humpMapLabel);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -191,6 +198,13 @@ public class Mongo extends BaseLink {
 			// 最后的执行语句
 			String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, extend.getParamsName(),
 					extend.getParamsValue(sqlToyContext, sqlToyConfig));
+			if (sqlToyContext.isDebug()) {
+				if (logger.isDebugEnabled()) {
+					logger.debug("findTopByMongo script=" + realMql);
+				} else {
+					System.out.println("findTopByMongo script=" + realMql);
+				}
+			}
 			return findTop(sqlToyConfig, topSize, realMql, (Class) extend.resultType, extend.humpMapLabel);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -216,6 +230,13 @@ public class Mongo extends BaseLink {
 			// 最后的执行语句
 			String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, extend.getParamsName(),
 					extend.getParamsValue(sqlToyContext, sqlToyConfig));
+			if (sqlToyContext.isDebug()) {
+				if (logger.isDebugEnabled()) {
+					logger.debug("findPageByMongo script=" + realMql);
+				} else {
+					System.out.println("findPageByMongo script=" + realMql);
+				}
+			}
 			return findPage(sqlToyConfig, page, realMql, (Class) extend.resultType, extend.humpMapLabel);
 		} catch (Exception e) {
 			e.printStackTrace();

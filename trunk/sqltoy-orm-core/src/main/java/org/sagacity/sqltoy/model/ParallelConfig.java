@@ -28,6 +28,11 @@ public class ParallelConfig implements Serializable {
 	 */
 	private Integer maxThreads = 10;
 
+	/**
+	 * 集合启动并行的最小分组记录量，如1万条记录，按groupSize=2000，则5个并行
+	 */
+	private int groupSize = 2000;
+
 	public static ParallelConfig create() {
 		return new ParallelConfig();
 	}
@@ -66,4 +71,14 @@ public class ParallelConfig implements Serializable {
 		return this;
 	}
 
+	public ParallelConfig groupSize(int groupSize) {
+		if (groupSize > 200) {
+			this.groupSize = groupSize;
+		}
+		return this;
+	}
+	
+	public int getGroupSize() {
+		return groupSize;
+	}
 }
