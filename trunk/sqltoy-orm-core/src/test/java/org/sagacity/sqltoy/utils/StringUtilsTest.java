@@ -221,4 +221,16 @@ public class StringUtilsTest {
 			System.err.println("ddd" + true);
 		}
 	}
+
+	@Test
+	public void testClearSymMark() {
+		String sql = "select * from table #[and field=:field]  #[]#[]and t1=t1";
+		System.err.println(StringUtil.clearSymMarkContent(sql, "#[", "]"));
+	}
+
+	@Test
+	public void testMatchCount() {
+		String sql = "select * from table #[[[]]]";
+		System.err.println(StringUtil.matchCnt(sql, Pattern.compile("\\["), 0));
+	}
 }

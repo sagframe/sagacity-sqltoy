@@ -421,30 +421,11 @@ public class StringUtil {
 	 * @param beginMarkSign
 	 * @param endMarkSign
 	 * @param source
-	 * @param endIndex
+	 * @param endIndex      主要endMarkSign的length,一般lastIndex(sign)+sign.length()
 	 * @return
 	 */
 	public static int getSymMarkReverseIndex(String beginMarkSign, String endMarkSign, String source, int endIndex) {
 		int beginIndex = source.length() - endIndex;
-		// 兼容性处理,避免直接通过lastIndexOf(endMarkSign)取的endIndex,增加字符自身长度的偏移量
-		boolean isSubEndMarkLength = false;
-		// endIndex取lastIndexOf(endMarkSign)取的endIndex,没有做偏移量调整
-		if (source.length() - endIndex >= endMarkSign.length()) {
-			String signStr = source.substring(endIndex, endIndex + endMarkSign.length());
-			if (signStr.equals(endMarkSign)) {
-				isSubEndMarkLength = true;
-			}
-		}
-		// endIndex已经是lastIndexOf(endMarkSign)+endMarkSign.length()
-		if (endIndex >= endMarkSign.length()) {
-			String signStr = source.substring(endIndex - endMarkSign.length(), endIndex);
-			if (signStr.equals(endMarkSign)) {
-				isSubEndMarkLength = false;
-			}
-		}
-		if (isSubEndMarkLength) {
-			beginIndex = source.length() - endIndex - endMarkSign.length();
-		}
 		String realSource = new StringBuffer(source).reverse().toString();
 		String realStartMark = beginMarkSign;
 		String realEndMark = endMarkSign;
@@ -456,6 +437,31 @@ public class StringUtil {
 		}
 		int index = getSymMarkIndex(realEndMark, realStartMark, realSource, beginIndex < 0 ? 0 : beginIndex);
 		return source.length() - index - realStartMark.length();
+	}
+
+	/**
+	 * @todo 剔除字符串中对称符号和中间的内容
+	 * @param sql
+	 * @param startMark
+	 * @param endMark
+	 * @return
+	 */
+	public static String clearSymMarkContent(String sql, String startMark, String endMark) {
+		StringBuilder lastSql = new StringBuilder(sql);
+		int endMarkLength = endMark.length();
+		// 删除所有对称的括号中的内容
+		int start = lastSql.indexOf(startMark);
+		int symMarkEnd;
+		while (start != -1) {
+			symMarkEnd = StringUtil.getSymMarkIndex(startMark, endMark, lastSql.toString(), start);
+			if (symMarkEnd != -1) {
+				lastSql.delete(start, symMarkEnd + endMarkLength);
+				start = lastSql.indexOf(startMark);
+			} else {
+				break;
+			}
+		}
+		return lastSql.toString();
 	}
 
 	/**
