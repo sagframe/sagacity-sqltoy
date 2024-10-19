@@ -233,4 +233,14 @@ public class StringUtilsTest {
 		String sql = "select * from table #[[[]]]";
 		System.err.println(StringUtil.matchCnt(sql, Pattern.compile("\\["), 0));
 	}
+
+	@Test
+	public void testMatchIndex() {
+		String sql = "select * from table #[[";
+		int[] indexes = StringUtil.matchIndex(sql, Pattern.compile("\\#\\["), 0);
+		System.err.println("firstIndex=" + indexes[0]);
+		System.err.println("firstEnd=" + indexes[1]);
+		System.err.println("nextStart=" + StringUtil.matchIndex(sql, Pattern.compile("\\["), indexes[1])[0]);
+		System.err.println("nextEnd=" + StringUtil.matchIndex(sql, Pattern.compile("\\["), indexes[1])[1]);
+	}
 }

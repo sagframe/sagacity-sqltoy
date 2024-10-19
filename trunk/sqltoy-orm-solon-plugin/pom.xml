@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.sagframe</groupId>
-    <version>5.6.25</version>
+    <version>5.6.28</version>
 
     <artifactId>sagacity-sqltoy-solon-plugin</artifactId>
     <name>sagacity-sqltoy-solon-plugin</name>
@@ -16,14 +16,14 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <solon.version>2.9.4</solon.version>
-        <redisx.version>1.6.5</redisx.version>
-        <mongo.version>3.12.14</mongo.version>
+        <solon.version>3.0.1</solon.version>
+        <redisx.version>1.6.6</redisx.version>
+        <mongo.version>5.2.0</mongo.version>
         <slf4j.version>2.0.16</slf4j.version>
         <caffeine.version>3.1.8</caffeine.version>
         <lombok.version>1.18.34</lombok.version>
-        <HikariCP.version>5.1.0</HikariCP.version>
-        <mysql.version>8.4.0</mysql.version>
+        <HikariCP.version>6.0.0</HikariCP.version>
+        <mysql.version>9.0.0</mysql.version>
     </properties>
 
     <licenses>
@@ -97,7 +97,7 @@
 
         <dependency>
             <groupId>org.mongodb</groupId>
-            <artifactId>mongo-java-driver</artifactId>
+            <artifactId>mongodb-driver-sync</artifactId>
             <version>${mongo.version}</version>
             <scope>provided</scope>
             <optional>true</optional>
