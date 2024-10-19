@@ -11,6 +11,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.sagacity.sqltoy.SqlToyConstants;
+import org.sagacity.sqltoy.config.model.IfLogicModel;
 import org.sagacity.sqltoy.config.model.KeyAndIndex;
 import org.sagacity.sqltoy.config.model.SqlParamsModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
@@ -67,6 +68,7 @@ import org.slf4j.LoggerFactory;
  *         优化getSqlParamsName、processNamedParamsQuery方法，优化了参数名称匹配，设置了匹配偏移量 }
  * @modify {Date:2024-08-10 修复(t.id,t.type) in (:list.id,:list.type)
  *         参数都为null时自动补全双括号(t.id,t.type) in ((null,null))}
+ * @modify {Date:2024-10-2 强化@if功能，增加@elseif 和 @else 的支持 }
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class SqlConfigParseUtils {
@@ -109,10 +111,17 @@ public class SqlConfigParseUtils {
 	public final static String VALUE_REGEX = "(?i)\\@value\\s*\\(\\s*(\\?|null)\\s*\\)";
 	public final static Pattern VALUE_PATTERN = Pattern.compile(VALUE_REGEX);
 	public final static Pattern IF_PATTERN = Pattern.compile("(?i)\\@if\\s*\\(");
+	public final static Pattern START_IF_PATTERN = Pattern.compile("(?i)^\\s*\\@if\\s*\\(");
+	public final static Pattern ELSEIF_PATTERN = Pattern.compile("(?i)\\@elseif\\s*\\(");
+	public final static Pattern START_ELSEIF_PATTERN = Pattern.compile("(?i)^\\s*\\@elseif\\s*\\(");
+	public final static Pattern ELSE_PATTERN = Pattern.compile("(?i)\\@else(\\s+|\\s*\\(\\s*\\))");
+	public final static Pattern START_ELSE_PATTERN = Pattern.compile("(?i)^\\s*\\@else(\\s+|\\s*\\(\\s*\\))");
+	public final static Pattern IF_ALL_PATTERN = Pattern
+			.compile("(?i)\\@((if|elseif)\\s*\\(|else(\\s+|\\s*\\(\\s*\\)))");
 
 	public final static String BLANK = " ";
 	// 匹配时已经转小写
-	public final static Pattern IS_PATTERN = Pattern.compile("\\s+is\\s+(not)?\\s+\\?");
+	public final static Pattern IS_END_PATTERN = Pattern.compile("\\s+is\\s+(not)?\\s+$");
 	public final static String ARG_NAME = "?";
 	public final static String ARG_REGEX = "\\?";
 	public final static String ARG_DBL_NAME = "??";
@@ -500,20 +509,19 @@ public class SqlConfigParseUtils {
 		if (pseudoMarkStart == -1) {
 			return;
 		}
-		int beginIndex, endIndex, paramCnt, preParamCnt, beginMarkIndex, endMarkIndex;
-		String preSql, markContentSql, tailSql, iMarkSql;
+		int paramCnt, preParamCnt, beginMarkIndex, endMarkIndex;
+		String preSql, markContentSql, tailSql;
 		List paramValuesList = CollectionUtil.arrayToList(sqlToyResult.getParamsValue());
-		boolean logicValue;
 		int ifStart;
-		int ifEnd;
-		Object paramValue;
-		// sql中是否存在is
-		boolean sqlhasIs;
-		String evalStr;
-		int logicParamCnt;
+		int ifLogicSignStart;
 		// sql内容体是否以and 或 or 结尾
 		boolean isEndWithAndOr = false;
+		// 0 无if、else等1:单个if；>1：if+else等
+		int ifLogicCnt = 0;
+		boolean isDynamicSql;
 		while (pseudoMarkStart != -1) {
+			ifLogicCnt = 0;
+			isEndWithAndOr = false;
 			// 始终从最后一个#[]进行处理
 			beginMarkIndex = queryStr.lastIndexOf(SQL_PSEUDO_START_MARK);
 			// update 2021-01-17 按照"["和"]" 找对称位置，兼容sql中存在[]场景
@@ -528,90 +536,168 @@ public class SqlConfigParseUtils {
 			markContentSql = BLANK
 					.concat(queryStr.substring(beginMarkIndex + SQL_PSEUDO_START_MARK_LENGTH, endMarkIndex))
 					.concat(BLANK);
-			isEndWithAndOr = false;
-			if (StringUtil.matches(markContentSql, SqlToyConstants.AND_OR_END)) {
-				isEndWithAndOr = true;
+			ifLogicSignStart = StringUtil.matchIndex(markContentSql, IF_ALL_PATTERN);
+			ifStart = StringUtil.matchIndex(markContentSql, IF_PATTERN);
+			// 单一的@if 逻辑
+			if (ifStart == ifLogicSignStart && ifStart > 0) {
+				ifLogicCnt = 1;
+			}
+			// 属于@elseif 或@else()
+			else if (ifStart == -1 && ifLogicSignStart > 0) {
+				// 逆向找到@else 或@elseif 对称的@if位置
+				int symIfIndex = getStartIfIndex(preSql, SQL_PSEUDO_SYM_START_MARK, SQL_PSEUDO_END_MARK);
+				if (symIfIndex == -1) {
+					throw new IllegalFormatFlagsException("sql编写模式存在错误:@elseif(?==xx) @else 条件判断必须要有对应的@if()形成对称格式!");
+				}
+				beginMarkIndex = queryStr.substring(0, symIfIndex).lastIndexOf(SQL_PSEUDO_START_MARK);
+				preSql = queryStr.substring(0, beginMarkIndex).concat(BLANK);
+				markContentSql = BLANK
+						.concat(queryStr.substring(beginMarkIndex + SQL_PSEUDO_START_MARK_LENGTH, endMarkIndex))
+						.concat(BLANK);
+				ifLogicCnt = StringUtil.matchCnt(markContentSql, IF_ALL_PATTERN);
 			}
 			tailSql = queryStr.substring(endMarkIndex + SQL_PSEUDO_END_MARK_LENGTH);
-			// 获取#[]中的参数数量
-			paramCnt = StringUtil.matchCnt(markContentSql, ARG_NAME_PATTERN, 0);
-			// #[]中无参数，拼接preSql+markContentSql+tailSql
-			if (paramCnt == 0) {
-				queryStr = processWhereLinkAnd(preSql, BLANK, isEndWithAndOr, tailSql);
+			// 在#[前的参数个数
+			preParamCnt = StringUtil.matchCnt(preSql, ARG_NAME_PATTERN, 0);
+			markContentSql = processIfLogic(markContentSql, SQL_PSEUDO_START_MARK, SQL_PSEUDO_END_MARK,
+					ARG_NAME_PATTERN, paramValuesList, preSql, preParamCnt, ifLogicCnt, 0, 0);
+			// 没有if逻辑,#[sqlPart] 中间的sqlPart中无参数,整体剔除，有参数则判断参数是否有为null的决定是否剔除sqlPart
+			if (ifLogicCnt == 0) {
+				isEndWithAndOr = StringUtil.matches(markContentSql, SqlToyConstants.AND_OR_END);
+				paramCnt = StringUtil.matchCnt(markContentSql, ARG_NAME_PATTERN, 0);
+				markContentSql = (paramCnt == 0) ? BLANK
+						: processMarkContent(markContentSql, ARG_NAME_PATTERN, paramValuesList, preParamCnt, paramCnt,
+								true);
 			} else {
-				// 在#[前的参数个数
-				preParamCnt = StringUtil.matchCnt(preSql, ARG_NAME_PATTERN, 0);
-				// 判断是否有@if(xx==value1||xx>=value2) 形式的逻辑判断
-				logicValue = true;
-				ifStart = StringUtil.matchIndex(markContentSql, IF_PATTERN);
-				// sql中存在逻辑判断
-				if (ifStart > -1) {
-					ifEnd = StringUtil.getSymMarkIndex("(", ")", markContentSql, ifStart);
-					evalStr = markContentSql.substring(markContentSql.indexOf("(", ifStart) + 1, ifEnd);
-					logicParamCnt = StringUtil.matchCnt(evalStr, ARG_NAME_PATTERN, 0);
-					// update 2019-10-11 修复@if(:name==null) 不参与逻辑判断bug
-					// update 2022-5-10 支持@if(1==1) 无参数场景
-					logicValue = MacroIfLogic.evalLogic(evalStr, paramValuesList, preParamCnt, logicParamCnt);
-					// 逻辑不成立,剔除sql和对应参数
-					if (!logicValue) {
-						markContentSql = BLANK;
-						for (int k = paramCnt; k > 0; k--) {
-							paramValuesList.remove(k + preParamCnt - 1);
-						}
+				isDynamicSql = isDynamicSql(markContentSql, SQL_PSEUDO_START_MARK, SQL_PSEUDO_END_MARK);
+				// #[sqlPart] 中sqlPart里面没有#[]
+				if (!isDynamicSql) {
+					isEndWithAndOr = StringUtil.matches(markContentSql, SqlToyConstants.AND_OR_END);
+					paramCnt = StringUtil.matchCnt(markContentSql, ARG_NAME_PATTERN, 0);
+					// 判断sqlPart中参数是否为null，决定是否剔除sqlPart
+					markContentSql = processMarkContent(markContentSql, ARG_NAME_PATTERN, paramValuesList, preParamCnt,
+							paramCnt, true);
+				} else {
+					// sqlPart中存在#[],剔除掉所有#[],再判断剩余sql中是否有动态参数
+					String clearSymMarkStr = StringUtil.clearSymMarkContent(markContentSql, SQL_PSEUDO_START_MARK,
+							SQL_PSEUDO_END_MARK);
+					// 剩余sql中的动态参数个数
+					int clearAfterArgCnt = StringUtil.matchCnt(clearSymMarkStr, ARG_NAME_PATTERN, 0);
+					// 动态参数大于0,类似 and status=:status #[xxx] 有:status参数，则变成#[and status=:status
+					// #[xxx]]继续利用sqltoy的判空剔除规则
+					if (clearAfterArgCnt > 0) {
+						markContentSql = SQL_PSEUDO_START_MARK.concat(markContentSql).concat(SQL_PSEUDO_END_MARK);
 					} else {
-						// 逻辑成立,去除@if()部分sql和对应的参数,同时将剩余参数数量减掉@if()中的参数数量
-						markContentSql = markContentSql.substring(0, ifStart)
-								.concat(markContentSql.substring(ifEnd + 1));
-						for (int k = 0; k < logicParamCnt; k++) {
-							paramValuesList.remove(preParamCnt);
-						}
-						paramCnt = paramCnt - logicParamCnt;
+						isEndWithAndOr = StringUtil.matches(markContentSql, SqlToyConstants.AND_OR_END);
 					}
 				}
-				// @if() 条件成立继续判断内部是否有:paramName 为null
-				if (logicValue) {
-					beginIndex = 0;
-					endIndex = 0;
-					// 按顺序处理#[]中sql的参数
-					for (int i = preParamCnt; i < preParamCnt + paramCnt; i++) {
-						sqlhasIs = false;
-						beginIndex = endIndex;
-						endIndex = markContentSql.indexOf(ARG_NAME, beginIndex);
-						// 不是#[]中的最后一个参数
-						if (i - preParamCnt + 1 < paramCnt) {
-							iMarkSql = markContentSql.substring(beginIndex + 1,
-									StringUtil.indexOrder(markContentSql, ARG_NAME, i - preParamCnt + 1));
-						} else {
-							iMarkSql = markContentSql.substring(beginIndex + 1);
-						}
-						// 判断是否是is 条件
-						if (StringUtil.matches(iMarkSql.toLowerCase(), IS_PATTERN)) {
-							sqlhasIs = true;
-						}
-						paramValue = paramValuesList.get(i);
-						// 1、参数值为null且非is 条件sql语句
-						// 2、is 条件sql语句值非null、true、false 剔除#[]部分内容，同时将参数从数组中剔除
-						if ((null == paramValue && !sqlhasIs)
-								|| (null != paramValue && paramValue.getClass().isArray()
-										&& CollectionUtil.convertArray(paramValue).length == 0)
-								|| (null != paramValue && (paramValue instanceof Collection)
-										&& ((Collection) paramValue).isEmpty())
-								|| (sqlhasIs && null != paramValue && !(paramValue instanceof java.lang.Boolean))) {
-							// sql中剔除最后部分的#[]内容
-							markContentSql = BLANK;
-							for (int k = paramCnt; k > 0; k--) {
-								paramValuesList.remove(k + preParamCnt - 1);
-							}
-							break;
-						}
-					}
-				}
-				queryStr = processWhereLinkAnd(preSql, markContentSql, isEndWithAndOr, tailSql);
 			}
+			queryStr = processWhereLinkAnd(preSql, markContentSql, isEndWithAndOr, tailSql);
 			pseudoMarkStart = queryStr.indexOf(SQL_PSEUDO_START_MARK);
 		}
 		sqlToyResult.setSql(queryStr);
 		sqlToyResult.setParamsValue(paramValuesList.toArray());
+	}
+
+	/**
+	 * @todo 判断sql中是否存在#[] 表示sql是动态语句
+	 * @param sql
+	 * @param startMark
+	 * @param endMark
+	 * @return
+	 */
+	public static boolean isDynamicSql(String sql, String startMark, String endMark) {
+		int startMarkIndex = sql.indexOf(startMark);
+		if (startMarkIndex >= 0 && sql.indexOf(endMark, startMarkIndex) > 0) {
+			return true;
+		}
+		return false;
+	}
+	
+	/**
+	 * @todo 找到@elseif 或@else 对应的@if位置
+	 * @param preSql
+	 * @param startMark
+	 * @param endMark
+	 * @return
+	 */
+	public static int getStartIfIndex(String preSql, String startMark, String endMark) {
+		String sql = preSql;
+		int endIndex;
+		int startIndex = -1;
+		int ifIndex = -1;
+		while (true) {
+			endIndex = sql.lastIndexOf(endMark);
+			if (endIndex == -1) {
+				break;
+			}
+			// 通过] 逆向找#[对应位置
+			startIndex = StringUtil.getSymMarkReverseIndex(startMark, endMark, sql, endIndex + endMark.length());
+			if (startIndex == -1) {
+				break;
+			}
+			// 判断是否是@if
+			ifIndex = StringUtil.matchIndex(sql.substring(startIndex + startMark.length()), START_IF_PATTERN);
+			if (ifIndex != -1) {
+				return ifIndex + startIndex + startMark.length();
+			} else {
+				sql = sql.substring(0, startIndex);
+			}
+		}
+		if (ifIndex == -1) {
+			throw new IllegalFormatFlagsException("sql语句@elseif、@else 缺少对应的@if");
+		}
+		return ifIndex;
+	}
+
+	/**
+	 * @todo 处理#[@if() sqlPart] if成立后sqlPart部分判断参数是否为null
+	 * @param markContentSql
+	 * @param namedPattern
+	 * @param paramValuesList
+	 * @param preParamCnt
+	 * @param paramCnt
+	 * @param sqlMode
+	 * @return
+	 */
+	public static String processMarkContent(String markContentSql, Pattern namedPattern, List paramValuesList,
+			int preParamCnt, int paramCnt, boolean sqlMode) {
+		String resultStr = markContentSql;
+		int beginIndex = 0;
+		int endIndex = 0;
+		Object paramValue;
+		// sql中是否存在is
+		boolean sqlhasIs;
+		String sqlPart;
+		int offset = sqlMode ? 1 : 2;
+		// 按顺序处理#[]中sql的参数
+		for (int i = preParamCnt; i < preParamCnt + paramCnt; i++) {
+			paramValue = paramValuesList.get(i);
+			beginIndex = endIndex;
+			// fromIndex 往后移动一位，避免where id=? 始终找到同一个位置
+			endIndex = StringUtil.matchIndex(markContentSql, namedPattern, beginIndex + offset)[0];
+			sqlhasIs = false;
+			if (sqlMode) {
+				// 截取and t.field=? 中and t.field= 不含?的sql部分
+				sqlPart = markContentSql.substring(beginIndex + offset, endIndex);
+				sqlhasIs = StringUtil.matches(BLANK + sqlPart.toLowerCase() + BLANK, IS_END_PATTERN);
+			}
+			// 1、参数值为null且非is 条件sql语句
+			// 2、is 条件sql语句值非null、true、false 剔除#[]部分内容，同时将参数从数组中剔除
+			if ((null == paramValue && !sqlhasIs)
+					|| (null != paramValue && paramValue.getClass().isArray()
+							&& CollectionUtil.convertArray(paramValue).length == 0)
+					|| (null != paramValue && (paramValue instanceof Collection) && ((Collection) paramValue).isEmpty())
+					|| (sqlhasIs && null != paramValue && !(paramValue instanceof java.lang.Boolean))) {
+				// sql中剔除最后部分的#[]内容
+				resultStr = BLANK;
+				for (int k = paramCnt; k > 0; k--) {
+					paramValuesList.remove(k + preParamCnt - 1);
+				}
+				break;
+			}
+		}
+		return resultStr;
 	}
 
 	/**
@@ -1101,11 +1187,11 @@ public class SqlConfigParseUtils {
 			return;
 		}
 		String sql = sqlToyResult.getSql().concat(BLANK);
-		List paramList = CollectionUtil.arrayToList(sqlToyResult.getParamsValue());
 		int index = StringUtil.indexOrder(sql, ARG_NAME, afterParamIndex);
 		if (index == -1) {
 			return;
 		}
+		List paramList = CollectionUtil.arrayToList(sqlToyResult.getParamsValue());
 		String preSql;
 		String tailSql;
 		String sqlPart;
@@ -1122,7 +1208,7 @@ public class SqlConfigParseUtils {
 				if (compareIndex == -1) {
 					compareIndex = StringUtil.matchIndex(preSql, EQUAL_PATTERN);
 					if (compareIndex != -1) {
-						// update field=? 非where条件
+						// update field=?或sql中没有where
 						if (StringUtil.matches(preSql, UPDATE_EQUAL_PATTERN)
 								|| !StringUtil.matches(preSql.concat(BLANK), WHERE_PATTERN)) {
 							compareIndex = -1;
@@ -1268,5 +1354,124 @@ public class SqlConfigParseUtils {
 				}
 			}
 		}
+	}
+
+	/**
+	 * @todo 处理 "@if() ] #[@elseif() ] #[@else() "中间内容体
+	 * @param contentSql
+	 * @param startMark
+	 * @param endMark
+	 * @param namedPattern
+	 * @param paramsList
+	 * @param preSql
+	 * @param preParamsCnt
+	 * @param ifLogicCnt
+	 * @param offset
+	 * @param sqlParamType 0:?常规sql;1:elastich sql;2:mongodb
+	 * @return
+	 */
+	public static String processIfLogic(String contentSql, String startMark, String endMark, Pattern namedPattern,
+			List paramsList, String preSql, int preParamsCnt, int ifLogicCnt, int offset, int sqlParamType) {
+		if (ifLogicCnt == 0) {
+			return contentSql;
+		}
+		List<IfLogicModel> ifLogicModelAry = new ArrayList<>();
+		// @if() ] #[@elseif() ] #[@else()构造#[@if() ] #[@elseif() ] #[@else()
+		// ],统一格式再处理
+		String fullIfSql = startMark.concat(contentSql).concat(endMark);
+		int start;
+		int end;
+		int ifEnd;
+		int ifStart;
+		// #[@if() and xxx] 剔除@if() 之外的and xxx部分sql
+		String sqlPart;
+		int preParamsAccount = preParamsCnt;
+		boolean logicResult = false;
+		int startMarkLenght = startMark.length();
+		int endMarkLength = endMark.length();
+		// 1:@if();2:@elseif();3:@else
+		int logicType = 0;
+		String realStartMark = startMark.equals(SQL_PSEUDO_START_MARK) ? SQL_PSEUDO_SYM_START_MARK : startMark;
+		for (int i = 0; i < ifLogicCnt; i++) {
+			logicType = 0;
+			IfLogicModel ifLogicModel = new IfLogicModel();
+			start = fullIfSql.indexOf(startMark);
+			end = StringUtil.getSymMarkIndex(realStartMark, endMark, fullIfSql, 0);
+			if (start == -1 || end == -1) {
+				break;
+			}
+			sqlPart = fullIfSql.substring(start + startMarkLenght, end);
+			ifLogicModel.setPreParamsCnt(preParamsAccount);
+			ifLogicModel.setParamsCnt(StringUtil.matchCnt(sqlPart, namedPattern, offset));
+			// 下一组if中的前面的参数数量
+			preParamsAccount = preParamsAccount + ifLogicModel.getParamsCnt();
+			if ((ifStart = StringUtil.matchIndex(sqlPart, START_IF_PATTERN)) >= 0) {
+				logicType = 1;
+			} else if ((ifStart = StringUtil.matchIndex(sqlPart, START_ELSEIF_PATTERN)) >= 0) {
+				logicType = 2;
+			} else if ((ifStart = StringUtil.matchIndex(sqlPart, START_ELSE_PATTERN)) >= 0) {
+				logicType = 3;
+			}
+			ifLogicModel.setType(logicType);
+			// @if() 和@elseif()
+			if (logicType == 1 || logicType == 2) {
+				ifEnd = StringUtil.getSymMarkIndex("(", ")", sqlPart, ifStart);
+				ifLogicModel.setLogicExpression(sqlPart.substring(sqlPart.indexOf("(", ifStart) + 1, ifEnd));
+				sqlPart = sqlPart.substring(ifEnd + 1);
+				ifLogicModel.setLogicParamsCnt(
+						StringUtil.matchCnt(ifLogicModel.getLogicExpression(), namedPattern, offset));
+			} else if (logicType == 3) {
+				// 返回{m.start+offset,m.end()+offset}
+				int[] indexes = StringUtil.matchIndex(sqlPart, ELSE_PATTERN, 0);
+				sqlPart = sqlPart.substring(indexes[1]);
+				ifLogicModel.setLogicExpression("");
+				ifLogicModel.setLogicParamsCnt(0);
+			}
+			// 最终#[@if(?==xxx) sqlPart]剔除if逻辑字符后的sql部分
+			ifLogicModel.setSqlPart(sqlPart);
+			if (!logicResult) {
+				// 前面的都不成立，else则成立
+				if (logicType == 3) {
+					logicResult = true;
+					ifLogicModel.setLogicResult(true);
+				} else if (logicType == 1 || logicType == 2) {
+					// @if 或 @elseif计算表达式
+					boolean evalValue = MacroIfLogic.evalLogic(ifLogicModel.getLogicExpression(), paramsList,
+							ifLogicModel.getPreParamsCnt(), ifLogicModel.getLogicParamsCnt(), sqlParamType);
+					if (evalValue) {
+						ifLogicModel.setLogicResult(true);
+						logicResult = true;
+					}
+				}
+			}
+			if (logicType > 0) {
+				ifLogicModelAry.add(ifLogicModel);
+			} else {
+				break;
+			}
+			// 下一个#[@elseif(?==x) and xxx] 或 #[@else and xxx]
+			fullIfSql = fullIfSql.substring(end + endMarkLength);
+		}
+		IfLogicModel ifLogicModel;
+		// 如果if条件全部不成立则返回空白
+		String resultSql = BLANK;
+		// 从后往前删除参数
+		for (int j = ifLogicModelAry.size(); j > 0; j--) {
+			ifLogicModel = ifLogicModelAry.get(j - 1);
+			// 逻辑不成立,其sql不作为结果并剔除sql中所有参数参数
+			if (!ifLogicModel.isLogicResult()) {
+				for (int k = ifLogicModel.getParamsCnt(); k > 0; k--) {
+					paramsList.remove(k + ifLogicModel.getPreParamsCnt() - 1);
+				}
+			} else {
+				// 逻辑成立，该逻辑sql作为结果sql
+				resultSql = ifLogicModel.getSqlPart();
+				// 剔除逻辑部分的参数
+				for (int k = 0; k < ifLogicModel.getLogicParamsCnt(); k++) {
+					paramsList.remove(ifLogicModel.getPreParamsCnt());
+				}
+			}
+		}
+		return resultSql;
 	}
 }
