@@ -170,6 +170,8 @@ public class MongoElasticUtils {
 		// 0 无if、else等1:单个if；>1：if+else等
 		int ifLogicCnt = 0;
 		boolean isDynamicSql;
+		int offset = sqlMode ? 1 : 0;
+		int sqlParamType = sqlMode ? 1 : 2;
 		while (pseudoMarkStart != -1) {
 			ifLogicCnt = 0;
 			isEndWithAndOr = false;
@@ -210,34 +212,45 @@ public class MongoElasticUtils {
 			}
 			tailSql = queryStr.substring(endMarkIndex + endMarkLength);
 			// 在#[前的参数个数
-			preParamCnt = StringUtil.matchCnt(preSql, namedPattern, sqlMode ? 1 : 0);
+			preParamCnt = StringUtil.matchCnt(preSql, namedPattern, offset);
 			markContentSql = SqlConfigParseUtils.processIfLogic(markContentSql, startMark, endMark, namedPattern,
-					paramValuesList, preSql, preParamCnt, ifLogicCnt, sqlMode ? 1 : 0, sqlMode ? 1 : 2);
-			isDynamicSql = SqlConfigParseUtils.isDynamicSql(markContentSql, startMark, endMark);
-			// 默认为false(原本模式)，即#[@if() sqlPart] sqlPart中参数值为null即剔除sqlPart
-			if (SqlToyConstants.STANDARD_IF_LOGIC_STRATEGY) {
-				// 只在#[] 非if else 逻辑场景下，对内容中参数是否为null做判断并清理内容
-				if (ifLogicCnt == 0) {
-					if (sqlMode) {
-						isEndWithAndOr = StringUtil.matches(markContentSql, SqlToyConstants.AND_OR_END);
-					}
-					// 存在if场景，重新获取内容中的参数数量
-					paramCnt = StringUtil.matchCnt(markContentSql, namedPattern, sqlMode ? 1 : 0);
-					markContentSql = SqlConfigParseUtils.processMarkContent(markContentSql, namedPattern,
-							paramValuesList, preParamCnt, paramCnt, sqlMode);
+					paramValuesList, preSql, preParamCnt, ifLogicCnt, offset, sqlParamType);
+			// 没有@if 或@else 等逻辑。简单的最内层单一的#[sqlPart]对sqlPart的处理
+			if (ifLogicCnt == 0) {
+				if (sqlMode) {
+					isEndWithAndOr = StringUtil.matches(markContentSql, SqlToyConstants.AND_OR_END);
 				}
+				// 判断sqlPart中是否有动态参数
+				paramCnt = StringUtil.matchCnt(markContentSql, namedPattern, offset);
+				// 无参数，整体剔除;有参数，判断参数是否为null决定是否剔除sqlPart
+				markContentSql = (paramCnt == 0) ? BLANK
+						: SqlConfigParseUtils.processMarkContent(markContentSql, namedPattern, paramValuesList,
+								preParamCnt, paramCnt, sqlMode);
 			} else {
-				// 校验sql片段中的参数是否有null存在(如果存在#[ and t.xxx=?] 场景，则先跳过null处理)
-				if (!isDynamicSql || ifLogicCnt <= 1) {
+				isDynamicSql = SqlConfigParseUtils.isDynamicSql(markContentSql, startMark, endMark);
+				// #[sqlPart] 中sqlPart里面没有#[]
+				if (!isDynamicSql) {
 					if (sqlMode) {
 						isEndWithAndOr = StringUtil.matches(markContentSql, SqlToyConstants.AND_OR_END);
 					}
-					// 存在if场景，重新获取内容中的参数数量
-					paramCnt = StringUtil.matchCnt(markContentSql, namedPattern, sqlMode ? 1 : 0);
+					paramCnt = StringUtil.matchCnt(markContentSql, namedPattern, offset);
+					// 判断sqlPart中参数是否为null，决定是否剔除sqlPart
 					markContentSql = SqlConfigParseUtils.processMarkContent(markContentSql, namedPattern,
 							paramValuesList, preParamCnt, paramCnt, sqlMode);
-				} else if (ifLogicCnt > 1 && !innerMark(markContentSql, startMark, endMark)) {
-					markContentSql = startMark.concat(markContentSql).concat(endMark);
+				} else {
+					// sqlPart中存在#[],剔除掉所有#[],再判断剩余sql中是否有动态参数
+					String clearSymMarkStr = StringUtil.clearSymMarkContent(markContentSql, startMark, endMark);
+					// 剩余sql中的动态参数个数
+					int clearAfterArgCnt = StringUtil.matchCnt(clearSymMarkStr, namedPattern, offset);
+					// 动态参数大于0,类似 and status=:status #[xxx] 有:status参数，则变成#[and status=:status
+					// #[xxx]]继续利用sqltoy的判空剔除规则
+					if (clearAfterArgCnt > 0) {
+						markContentSql = startMark.concat(markContentSql).concat(endMark);
+					} else {
+						if (sqlMode) {
+							isEndWithAndOr = StringUtil.matches(markContentSql, SqlToyConstants.AND_OR_END);
+						}
+					}
 				}
 			}
 			if (sqlMode) {
@@ -250,14 +263,6 @@ public class MongoElasticUtils {
 		sqlToyResult.setSql(sqlMode ? queryStr : processComma(queryStr));
 		sqlToyResult.setParamsValue(paramValuesList.toArray());
 		return sqlToyResult;
-	}
-
-	private static boolean innerMark(String sql, String startMark, String endMark) {
-		String tmp = sql.trim();
-		if (tmp.startsWith(startMark) && tmp.endsWith(endMark)) {
-			return true;
-		}
-		return false;
 	}
 
 	/**

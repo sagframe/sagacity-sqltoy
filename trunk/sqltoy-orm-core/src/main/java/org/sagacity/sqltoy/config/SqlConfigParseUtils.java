@@ -561,28 +561,35 @@ public class SqlConfigParseUtils {
 			preParamCnt = StringUtil.matchCnt(preSql, ARG_NAME_PATTERN, 0);
 			markContentSql = processIfLogic(markContentSql, SQL_PSEUDO_START_MARK, SQL_PSEUDO_END_MARK,
 					ARG_NAME_PATTERN, paramValuesList, preSql, preParamCnt, ifLogicCnt, 0, 0);
-			isDynamicSql = isDynamicSql(markContentSql, SQL_PSEUDO_START_MARK, SQL_PSEUDO_END_MARK);
-			// 默认为false(原本模式)，即#[@if() sqlPart] sqlPart中参数值为null即剔除sqlPart
-			if (SqlToyConstants.STANDARD_IF_LOGIC_STRATEGY) {
-				// 只在#[] 非if else 逻辑场景下，对内容中参数是否为null做判断并清理内容
-				if (ifLogicCnt == 0) {
-					// 存在if场景，重新获取内容中的参数数量
-					paramCnt = StringUtil.matchCnt(markContentSql, ARG_NAME_PATTERN, 0);
-					isEndWithAndOr = StringUtil.matches(markContentSql, SqlToyConstants.AND_OR_END);
-					markContentSql = processMarkContent(markContentSql, ARG_NAME_PATTERN, paramValuesList, preParamCnt,
-							paramCnt, true);
-				}
+			// 没有if逻辑,#[sqlPart] 中间的sqlPart中无参数,整体剔除，有参数则判断参数是否有为null的决定是否剔除sqlPart
+			if (ifLogicCnt == 0) {
+				isEndWithAndOr = StringUtil.matches(markContentSql, SqlToyConstants.AND_OR_END);
+				paramCnt = StringUtil.matchCnt(markContentSql, ARG_NAME_PATTERN, 0);
+				markContentSql = (paramCnt == 0) ? BLANK
+						: processMarkContent(markContentSql, ARG_NAME_PATTERN, paramValuesList, preParamCnt, paramCnt,
+								true);
 			} else {
-				// 旧模式,不区分if else场景，都对内容进行参数为null判断，为null则清空内容
-				if (!isDynamicSql || ifLogicCnt <= 1) {
-					// 存在if场景，重新获取内容中的参数数量
-					paramCnt = StringUtil.matchCnt(markContentSql, ARG_NAME_PATTERN, 0);
+				isDynamicSql = isDynamicSql(markContentSql, SQL_PSEUDO_START_MARK, SQL_PSEUDO_END_MARK);
+				// #[sqlPart] 中sqlPart里面没有#[]
+				if (!isDynamicSql) {
 					isEndWithAndOr = StringUtil.matches(markContentSql, SqlToyConstants.AND_OR_END);
+					paramCnt = StringUtil.matchCnt(markContentSql, ARG_NAME_PATTERN, 0);
+					// 判断sqlPart中参数是否为null，决定是否剔除sqlPart
 					markContentSql = processMarkContent(markContentSql, ARG_NAME_PATTERN, paramValuesList, preParamCnt,
 							paramCnt, true);
-				} // 在@if @else 场景下,将sql片段重新组装成#[sqlPart]放入原sql中再从最内层找#[]
-				else if (ifLogicCnt > 1 && !innerMark(markContentSql)) {
-					markContentSql = SQL_PSEUDO_START_MARK.concat(markContentSql).concat(SQL_PSEUDO_END_MARK);
+				} else {
+					// sqlPart中存在#[],剔除掉所有#[],再判断剩余sql中是否有动态参数
+					String clearSymMarkStr = StringUtil.clearSymMarkContent(markContentSql, SQL_PSEUDO_START_MARK,
+							SQL_PSEUDO_END_MARK);
+					// 剩余sql中的动态参数个数
+					int clearAfterArgCnt = StringUtil.matchCnt(clearSymMarkStr, ARG_NAME_PATTERN, 0);
+					// 动态参数大于0,类似 and status=:status #[xxx] 有:status参数，则变成#[and status=:status
+					// #[xxx]]继续利用sqltoy的判空剔除规则
+					if (clearAfterArgCnt > 0) {
+						markContentSql = SQL_PSEUDO_START_MARK.concat(markContentSql).concat(SQL_PSEUDO_END_MARK);
+					} else {
+						isEndWithAndOr = StringUtil.matches(markContentSql, SqlToyConstants.AND_OR_END);
+					}
 				}
 			}
 			queryStr = processWhereLinkAnd(preSql, markContentSql, isEndWithAndOr, tailSql);
@@ -606,7 +613,7 @@ public class SqlConfigParseUtils {
 		}
 		return false;
 	}
-
+	
 	/**
 	 * @todo 找到@elseif 或@else 对应的@if位置
 	 * @param preSql
@@ -625,7 +632,7 @@ public class SqlConfigParseUtils {
 				break;
 			}
 			// 通过] 逆向找#[对应位置
-			startIndex = StringUtil.getSymMarkReverseIndex(startMark, endMark, sql, endIndex);
+			startIndex = StringUtil.getSymMarkReverseIndex(startMark, endMark, sql, endIndex + endMark.length());
 			if (startIndex == -1) {
 				break;
 			}
@@ -641,19 +648,6 @@ public class SqlConfigParseUtils {
 			throw new IllegalFormatFlagsException("sql语句@elseif、@else 缺少对应的@if");
 		}
 		return ifIndex;
-	}
-
-	/**
-	 * @todo 判断sql是否是#[sql],即#[]是否在最外层
-	 * @param sql
-	 * @return
-	 */
-	private static boolean innerMark(String sql) {
-		String tmp = sql.trim();
-		if (tmp.startsWith(SQL_PSEUDO_START_MARK) && tmp.endsWith(SQL_PSEUDO_END_MARK)) {
-			return true;
-		}
-		return false;
 	}
 
 	/**

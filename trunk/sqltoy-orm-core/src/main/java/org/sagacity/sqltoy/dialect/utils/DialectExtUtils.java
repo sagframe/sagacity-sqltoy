@@ -294,7 +294,7 @@ public class DialectExtUtils {
 	 * @param dbType
 	 * @param entityMeta
 	 * @param pkStrategy
-	 * @param fromTable      (不同数据库方言虚表，如dual)
+	 * @param fromTable          (不同数据库方言虚表，如dual)
 	 * @param isNullFunction
 	 * @param sequence
 	 * @param isAssignPK
@@ -306,7 +306,7 @@ public class DialectExtUtils {
 			String tableName) {
 		// 在无主键的情况下产生insert sql语句
 		String realTable = entityMeta.getSchemaTable(tableName, dbType);
-		if (entityMeta.getIdArray() == null) {
+		if (entityMeta.getIdArray() == null && entityMeta.getUniqueIndex() == null) {
 			return generateInsertSql(unifyFieldsHandler, dbType, entityMeta, pkStrategy, isNullFunction, sequence,
 					isAssignPK, realTable);
 		}
@@ -360,9 +360,11 @@ public class DialectExtUtils {
 		// sql.append(") tv on (");
 		sql.append(SqlToyConstants.MERGE_ALIAS_ON);
 		StringBuilder idColumns = new StringBuilder();
-		// 组织on部分的主键条件判断
-		for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
-			columnName = entityMeta.getColumnName(entityMeta.getIdArray()[i]);
+		boolean hasId = (entityMeta.getIdArray() == null) ? false : true;
+		String[] fields = hasId ? entityMeta.getIdArray() : entityMeta.getUniqueIndex().getColumns();
+		// 组织on部分的主键条件判断(update 2024-10-16 增加无主键场景下,用唯一索引来替代的方式)
+		for (int i = 0, n = fields.length; i < n; i++) {
+			columnName = hasId ? entityMeta.getColumnName(fields[i]) : fields[i];
 			columnName = ReservedWordsUtil.convertWord(columnName, dbType);
 			if (i > 0) {
 				sql.append(" and ");
@@ -381,8 +383,9 @@ public class DialectExtUtils {
 		// 排除id的其他字段信息
 		StringBuilder insertRejIdCols = new StringBuilder();
 		StringBuilder insertRejIdColValues = new StringBuilder();
-		// 是否全部是ID,匹配上则无需进行更新，只需将未匹配上的插入即可
+		// 是否全部是ID,insert 按主键来构造语句
 		boolean allIds = (entityMeta.getRejectIdFieldArray() == null);
+		// 部分主键，则按非主键来构造insert字段
 		if (!allIds) {
 			int rejectIdColumnSize = entityMeta.getRejectIdFieldArray().length;
 			// update 只针对非主键字段进行修改
@@ -421,40 +424,46 @@ public class DialectExtUtils {
 			sql.append(idsColumnStr.replace("ta.", "tv."));
 		} else {
 			sql.append(insertRejIdCols.toString());
-			// sequence方式主键
-			if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
-				columnName = entityMeta.getColumnName(entityMeta.getIdArray()[0]);
-				columnName = ReservedWordsUtil.convertWord(columnName, dbType);
-				sql.append(",");
-				sql.append(columnName);
+			// 无主键
+			if (pkStrategy == null) {
 				sql.append(") values (");
-				sql.append(insertRejIdColValues).append(",");
-				if (isAssignPK) {
-					sql.append(isNullFunction);
-					sql.append("(tv.").append(columnName).append(",");
-					sql.append(sequence).append(") ");
-				} else {
-					sql.append(sequence);
-				}
-			} else if (pkStrategy.equals(PKStrategy.IDENTITY)) {
-				columnName = entityMeta.getColumnName(entityMeta.getIdArray()[0]);
-				columnName = ReservedWordsUtil.convertWord(columnName, dbType);
-				if (isAssignPK) {
+				sql.append(insertRejIdColValues);
+			} else {
+				// sequence方式主键
+				if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
+					columnName = entityMeta.getColumnName(entityMeta.getIdArray()[0]);
+					columnName = ReservedWordsUtil.convertWord(columnName, dbType);
 					sql.append(",");
 					sql.append(columnName);
+					sql.append(") values (");
+					sql.append(insertRejIdColValues).append(",");
+					if (isAssignPK) {
+						sql.append(isNullFunction);
+						sql.append("(tv.").append(columnName).append(",");
+						sql.append(sequence).append(") ");
+					} else {
+						sql.append(sequence);
+					}
+				} else if (pkStrategy.equals(PKStrategy.IDENTITY)) {
+					columnName = entityMeta.getColumnName(entityMeta.getIdArray()[0]);
+					columnName = ReservedWordsUtil.convertWord(columnName, dbType);
+					if (isAssignPK) {
+						sql.append(",");
+						sql.append(columnName);
+					}
+					sql.append(") values (");
+					// identity 模式insert无需写插入该字段语句
+					sql.append(insertRejIdColValues);
+					if (isAssignPK) {
+						sql.append(",").append("tv.").append(columnName);
+					}
+				} else {
+					sql.append(",");
+					sql.append(idsColumnStr.replace("ta.", ""));
+					sql.append(") values (");
+					sql.append(insertRejIdColValues).append(",");
+					sql.append(idsColumnStr.replace("ta.", "tv."));
 				}
-				sql.append(") values (");
-				// identity 模式insert无需写插入该字段语句
-				sql.append(insertRejIdColValues);
-				if (isAssignPK) {
-					sql.append(",").append("tv.").append(columnName);
-				}
-			} else {
-				sql.append(",");
-				sql.append(idsColumnStr.replace("ta.", ""));
-				sql.append(") values (");
-				sql.append(insertRejIdColValues).append(",");
-				sql.append(idsColumnStr.replace("ta.", "tv."));
 			}
 		}
 		sql.append(")");
