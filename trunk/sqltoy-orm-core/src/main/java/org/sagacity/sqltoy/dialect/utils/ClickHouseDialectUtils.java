@@ -561,21 +561,26 @@ public class ClickHouseDialectUtils {
 				new PreparedStatementResultHandler() {
 					@Override
 					public void execute(Object rowData, PreparedStatement pst, ResultSet rs) throws Exception {
-						pst.setString(1, tableName);
-						rs = pst.executeQuery();
-						Map<String, ColumnMeta> colComments = new HashMap<String, ColumnMeta>();
-						while (rs.next()) {
-							ColumnMeta colMeta = new ColumnMeta();
-							colMeta.setColName(rs.getString("COLUMN_NAME"));
-							colMeta.setComments(rs.getString("COMMENTS"));
-							colMeta.setPK("1".equals(rs.getString("PRIMARY_KEY")) ? true : false);
-							colMeta.setPartitionKey("1".equals(rs.getString("PARTITION_KEY")) ? true : false);
-							colComments.put(colMeta.getColName(), colMeta);
-						}
-						this.setResult(colComments);
-						if (rs != null) {
-							rs.close();
-							rs = null;
+						try {
+							pst.setString(1, tableName);
+							rs = pst.executeQuery();
+							Map<String, ColumnMeta> colComments = new HashMap<String, ColumnMeta>();
+							while (rs.next()) {
+								ColumnMeta colMeta = new ColumnMeta();
+								colMeta.setColName(rs.getString("COLUMN_NAME"));
+								colMeta.setComments(rs.getString("COMMENTS"));
+								colMeta.setPK("1".equals(rs.getString("PRIMARY_KEY")) ? true : false);
+								colMeta.setPartitionKey("1".equals(rs.getString("PARTITION_KEY")) ? true : false);
+								colComments.put(colMeta.getColName(), colMeta);
+							}
+							this.setResult(colComments);
+						} catch (Exception e) {
+							throw e;
+						} finally {
+							if (rs != null) {
+								rs.close();
+								rs = null;
+							}
 						}
 					}
 				});

@@ -23,7 +23,8 @@ public @interface OneToMany {
 	// 关联表对应对象的属性
 	String[] mappedFields();
 
-	// 加载自定义sql
+	// 加载自定义sql,如: enable=1 或者是一个完整的sql
+	// 完整sql必须要包含外键条件字段select * from table where fkField=:fkField (不推荐)
 	String load() default "";
 
 	// 是否级联删除
