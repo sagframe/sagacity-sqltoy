@@ -14,7 +14,7 @@ public class MacroIfLogicTest {
 		String sql = "size(:statusAry) >=4";
 		List params = new ArrayList();
 		params.add(new Object[] { 1, 2 });
-		boolean result = MacroIfLogic.evalLogic(sql, params, 0, 1);
+		boolean result = MacroIfLogic.evalLogic(sql, params, 0, 1, 1);
 		assertEquals(result, true);
 	}
 
@@ -24,7 +24,7 @@ public class MacroIfLogicTest {
 		List params = new ArrayList();
 		params.add(3);
 		params.add(3);
-		boolean result = MacroIfLogic.evalLogic(sql, params, 0, 2);
+		boolean result = MacroIfLogic.evalLogic(sql, params, 0, 2, 1);
 		assertEquals(result, true);
 	}
 
@@ -35,7 +35,7 @@ public class MacroIfLogicTest {
 		params.add(2);
 		params.add(2);
 		params.add(2);
-		boolean result = MacroIfLogic.evalLogic(sql, params, 0, params.size());
+		boolean result = MacroIfLogic.evalLogic(sql, params, 0, params.size(), 1);
 		assertEquals(result, true);
 	}
 
@@ -46,7 +46,7 @@ public class MacroIfLogicTest {
 		List params = new ArrayList();
 		params.add(2);
 		params.add(2);
-		boolean result = MacroIfLogic.evalLogic(sql, params, 0, params.size());
+		boolean result = MacroIfLogic.evalLogic(sql, params, 0, params.size(), 1);
 		assertEquals(result, true);
 	}
 
@@ -56,7 +56,7 @@ public class MacroIfLogicTest {
 		List params = new ArrayList();
 		params.add(2);
 		params.add(2);
-		boolean result = MacroIfLogic.evalLogic(sql, params, 0, params.size());
+		boolean result = MacroIfLogic.evalLogic(sql, params, 0, params.size(), 1);
 		assertEquals(result, true);
 	}
 
@@ -65,7 +65,7 @@ public class MacroIfLogicTest {
 		String sql = ":status in '1,2,4'";
 		List params = new ArrayList();
 		params.add(2);
-		boolean result = MacroIfLogic.evalLogic(sql, params, 0, params.size());
+		boolean result = MacroIfLogic.evalLogic(sql, params, 0, params.size(), 1);
 		assertEquals(result, true);
 	}
 
@@ -75,7 +75,7 @@ public class MacroIfLogicTest {
 		List params = new ArrayList();
 		// params.add(2);
 		params.add(3);
-		boolean result = MacroIfLogic.evalLogic(sql, params, 0, params.size());
+		boolean result = MacroIfLogic.evalLogic(sql, params, 0, params.size(), 1);
 		assertEquals(result, true);
 	}
 
@@ -88,13 +88,12 @@ public class MacroIfLogicTest {
 		}
 	}
 
-
 	@Test
 	public void testStartsWith() {
 		String sql = ":status startswith 'a10'";
 		List params = new ArrayList();
 		params.add("a1011");
-		boolean result = MacroIfLogic.evalLogic(sql, params, 0, params.size());
+		boolean result = MacroIfLogic.evalLogic(sql, params, 0, params.size(), 1);
 		assertEquals(result, true);
 	}
 
@@ -103,7 +102,7 @@ public class MacroIfLogicTest {
 		String sql = ":status endswith '011'";
 		List params = new ArrayList();
 		params.add("a1011");
-		boolean result = MacroIfLogic.evalLogic(sql, params, 0, params.size());
+		boolean result = MacroIfLogic.evalLogic(sql, params, 0, params.size(), 1);
 		assertEquals(result, true);
 	}
 }

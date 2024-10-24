@@ -14,6 +14,7 @@ import java.util.List;
 
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.config.model.EntityMeta;
+import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
@@ -154,12 +155,20 @@ public class SqlUtilsExt {
 		int fieldType;
 		String fieldName = null;
 		Boolean nullable;
+		// 是否是唯一主键
+		boolean isUniqPk = false;
+		if (entityMeta.getIdArray() != null && entityMeta.getIdArray().length == 1) {
+			isUniqPk = true;
+		}
 		try {
+			FieldMeta fieldMeta;
 			for (int i = 0; i < size; i++) {
 				fieldName = entityMeta.getFieldsArray()[i];
 				defaultValue = entityMeta.getFieldsDefaultValue()[i];
 				nullable = entityMeta.getFieldsNullable()[i];
-				if (null != defaultValue) {
+				fieldMeta = entityMeta.getFieldMeta(fieldName);
+				// 唯一主键不允许有默认值(EntityManager.parseFieldTypeAndDefault()已经跳过了唯一主键的默认值设置)
+				if (!(fieldMeta.isPK() && isUniqPk) && null != defaultValue) {
 					fieldType = entityMeta.getFieldsTypeArray()[i];
 					result[i] = getDefaultValue(null, defaultValue, fieldType, (nullable == null) ? false : nullable);
 				}
@@ -195,9 +204,16 @@ public class SqlUtilsExt {
 			if (isBlank && nullable) {
 				return null;
 			}
+			// update 2024-9-26 增加转数字类型时的判断
 			if (jdbcType == java.sql.Types.INTEGER || jdbcType == java.sql.Types.TINYINT
 					|| jdbcType == java.sql.Types.SMALLINT) {
-				realValue = Integer.valueOf(isBlank ? "0" : defaultValue);
+				if (isBlank) {
+					return Integer.valueOf(0);
+				}
+				if (!NumberUtil.isNumber(defaultValue)) {
+					return null;
+				}
+				realValue = Integer.valueOf(defaultValue);
 			} else if (jdbcType == java.sql.Types.DATE) {
 				if (isBlank || isCurrentTime(defaultValue)) {
 					realValue = new Date();
@@ -211,9 +227,21 @@ public class SqlUtilsExt {
 					realValue = DateUtil.getTimestamp(defaultValue);
 				}
 			} else if (jdbcType == java.sql.Types.DECIMAL || jdbcType == java.sql.Types.NUMERIC) {
-				realValue = isBlank ? BigDecimal.ZERO : new BigDecimal(defaultValue);
+				if (isBlank) {
+					return BigInteger.ZERO;
+				}
+				if (!NumberUtil.isNumber(defaultValue)) {
+					return null;
+				}
+				realValue = new BigDecimal(defaultValue);
 			} else if (jdbcType == java.sql.Types.BIGINT) {
-				realValue = isBlank ? BigInteger.ZERO : new BigInteger(defaultValue);
+				if (isBlank) {
+					return BigInteger.ZERO;
+				}
+				if (!NumberUtil.isNumber(defaultValue)) {
+					return null;
+				}
+				realValue = new BigInteger(defaultValue);
 			} else if (jdbcType == java.sql.Types.TIME) {
 				if (isBlank || isCurrentTime(defaultValue)) {
 					realValue = LocalTime.now();
@@ -221,16 +249,34 @@ public class SqlUtilsExt {
 					realValue = DateUtil.asLocalTime(DateUtil.convertDateObject(defaultValue));
 				}
 			} else if (jdbcType == java.sql.Types.DOUBLE) {
-				realValue = Double.valueOf(isBlank ? "0" : defaultValue);
+				if (isBlank) {
+					return Double.valueOf("0");
+				}
+				if (!NumberUtil.isNumber(defaultValue)) {
+					return null;
+				}
+				realValue = Double.valueOf(defaultValue);
 			} else if (jdbcType == java.sql.Types.BOOLEAN) {
 				realValue = Boolean.parseBoolean(isBlank ? "false" : defaultValue);
 			} else if (jdbcType == java.sql.Types.FLOAT || jdbcType == java.sql.Types.REAL) {
-				realValue = Float.valueOf(isBlank ? "0" : defaultValue);
+				if (isBlank) {
+					return Float.valueOf("0");
+				}
+				if (!NumberUtil.isNumber(defaultValue)) {
+					return null;
+				}
+				realValue = Float.valueOf(defaultValue);
 			} else if (jdbcType == java.sql.Types.BIT) {
 				if ("true".equalsIgnoreCase(defaultValue) || "false".equalsIgnoreCase(defaultValue)) {
 					realValue = Boolean.parseBoolean(defaultValue.toLowerCase());
 				} else {
-					realValue = Integer.parseInt(isBlank ? "0" : defaultValue);
+					if (isBlank) {
+						return Integer.parseInt("0");
+					}
+					if (!NumberUtil.isNumber(defaultValue)) {
+						return null;
+					}
+					realValue = Integer.parseInt(defaultValue);
 				}
 			} else {
 				realValue = defaultValue;

@@ -250,9 +250,10 @@ public class DMDialect implements Dialect {
 	public Object save(SqlToyContext sqlToyContext, Serializable entity, Connection conn, final Integer dbType,
 			final String dialect, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
-		PKStrategy pkStrategy = entityMeta.getIdStrategy();
-		String sequence = entityMeta.getSequence().concat(".nextval");
+		// save行为根据主键是否赋值情况调整最终的主键策略
+		PKStrategy pkStrategy = DialectUtils.getSavePKStrategy(entityMeta, entity, dbType);
 		boolean isAssignPK = DMDialectUtils.isAssignPKValue(pkStrategy);
+		String sequence = entityMeta.getSequence().concat(".nextval");
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 				pkStrategy, NVL_FUNCTION, sequence, isAssignPK, tableName);
 		return DialectUtils.save(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entity,
@@ -269,7 +270,7 @@ public class DMDialect implements Dialect {
 					@Override
 					public SavePKStrategy generate(EntityMeta entityMeta) {
 						return new SavePKStrategy(entityMeta.getIdStrategy(),
-								DMDialectUtils.isAssignPKValue(pkStrategy));
+								DMDialectUtils.isAssignPKValue(entityMeta.getIdStrategy()));
 					}
 				}, conn, dbType);
 	}

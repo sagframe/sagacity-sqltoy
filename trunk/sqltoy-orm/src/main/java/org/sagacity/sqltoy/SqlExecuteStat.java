@@ -67,6 +67,13 @@ public class SqlExecuteStat {
 		threadLocal.set(new SqlExecuteTrace(sqlId, type, (debugPrint == null) ? debug : debugPrint.booleanValue()));
 	}
 
+	public static void start(String sqlId, String type, Long batchSize, Boolean debugPrint) {
+		SqlExecuteTrace sqlExecuteTrace = new SqlExecuteTrace(sqlId, type,
+				(debugPrint == null) ? debug : debugPrint.booleanValue());
+		sqlExecuteTrace.setBatchSize(batchSize);
+		threadLocal.set(sqlExecuteTrace);
+	}
+	
 	/**
 	 * @todo 向线程中登记发生了异常,便于在finally里面明确是错误并打印相关sql
 	 * @param exception
@@ -164,7 +171,8 @@ public class SqlExecuteStat {
 		}
 		String uid = sqlTrace.getUid();
 		StringBuilder result = new StringBuilder();
-		String optType = sqlTrace.getType();
+		String optType = sqlTrace.getType()
+				+ (sqlTrace.getBatchSize() != null ? "[" + sqlTrace.getBatchSize() + "条记录]" : "");
 		String codeTrace = getFirstTrace();
 		result.append("\n/*|----------------------开始执行报告输出 --------------------------------------------------*/");
 		result.append("\n/*|任 务 ID: " + uid);

@@ -51,6 +51,7 @@ import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.model.IgnoreCaseSet;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.model.LockMode;
+import org.sagacity.sqltoy.model.MapKit;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.SecureType;
@@ -67,6 +68,7 @@ import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.DateUtil;
+import org.sagacity.sqltoy.utils.QueryExecutorBuilder;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.ResultUtils;
 import org.sagacity.sqltoy.utils.SqlUtil;
@@ -140,15 +142,16 @@ public class DialectUtils {
 	};
 
 	/**
+	 * @todo 处理分页sql的参数
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param queryExecutor
 	 * @param pageSql
 	 * @param startIndex
 	 * @param endIndex
+	 * @param dialect
 	 * @return
 	 * @throws Exception
-	 * @todo 处理分页sql的参数
 	 */
 	public static SqlToyResult wrapPageSqlParams(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, String pageSql, Object startIndex, Object endIndex, String dialect)
@@ -270,19 +273,25 @@ public class DialectUtils {
 		return (QueryResult) SqlUtil.preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
 			@Override
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws Exception {
-				SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, pst, paramsValue, null, 0);
-				rs = pst.executeQuery();
-				this.setResult(ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn, rs, extend, null,
-						decryptHandler, startIndex));
-				if (rs != null) {
-					rs.close();
-					rs = null;
+				try {
+					SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, pst, paramsValue, null, 0);
+					rs = pst.executeQuery();
+					this.setResult(ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn, rs, extend, null,
+							decryptHandler, startIndex));
+				} catch (Exception e) {
+					throw e;
+				} finally {
+					if (rs != null) {
+						rs.close();
+						rs = null;
+					}
 				}
 			}
 		});
 	}
 
 	/**
+	 * @todo 实现普通的sql语句查询
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param sql
@@ -295,7 +304,6 @@ public class DialectUtils {
 	 * @param maxRows
 	 * @return
 	 * @throws Exception
-	 * @todo 实现普通的sql语句查询
 	 */
 	public static QueryResult updateFetchBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
 			final String sql, final Object[] paramsValue, final UpdateRowHandler updateRowHandler,
@@ -321,19 +329,26 @@ public class DialectUtils {
 		return (QueryResult) SqlUtil.preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
 			@Override
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws Exception {
-				SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, pst, paramsValue, null, 0);
-				rs = pst.executeQuery();
-				this.setResult(ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn, rs, null,
-						updateRowHandler, null, startIndex));
-				if (rs != null) {
-					rs.close();
-					rs = null;
+				try {
+					SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, pst, paramsValue, null, 0);
+					rs = pst.executeQuery();
+					this.setResult(ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn, rs, null,
+							updateRowHandler, null, startIndex));
+				} catch (Exception e) {
+					throw e;
+				} finally {
+					if (rs != null) {
+						rs.close();
+						rs = null;
+					}
 				}
 			}
 		});
 	}
 
 	/**
+	 * @todo 通用的查询记录总数(包含剔除order by和智能判断是直接select count from ()
+	 *       还是直接剔除from之前的语句补充select count)
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param sql
@@ -343,8 +358,6 @@ public class DialectUtils {
 	 * @param dbType
 	 * @return
 	 * @throws Exception
-	 * @todo 通用的查询记录总数(包含剔除order by和智能判断是直接select count from ()
-	 *       还是直接剔除from之前的语句补充select count)
 	 */
 	public static Long getCountBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
 			final String sql, final Object[] paramsValue, final boolean isLastSql, final Connection conn,
@@ -465,23 +478,29 @@ public class DialectUtils {
 			@Override
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
 				long resultCount = 0;
-				if (realParams != null) {
-					SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, pst, realParams, null, 0);
-				}
-				rs = pst.executeQuery();
-				if (rs.next()) {
-					resultCount = rs.getLong(1);
-				}
-				this.setResult(resultCount);
-				if (rs != null) {
-					rs.close();
-					rs = null;
+				try {
+					if (realParams != null) {
+						SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, pst, realParams, null, 0);
+					}
+					rs = pst.executeQuery();
+					if (rs.next()) {
+						resultCount = rs.getLong(1);
+					}
+					this.setResult(resultCount);
+				} catch (Exception e) {
+					throw e;
+				} finally {
+					if (rs != null) {
+						rs.close();
+						rs = null;
+					}
 				}
 			}
 		});
 	}
 
 	/**
+	 * @todo 统一将查询的sql参数由?形式变成:named形式(分页和查询随机记录时)
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param queryExecutor
@@ -489,7 +508,6 @@ public class DialectUtils {
 	 * @param wrapNamed     只在分页场景下需要将?模式传参统一成:name模式，便于跟后面分页startIndex和endIndex参数结合，从而利用sql预编译功能
 	 * @return
 	 * @throws Exception
-	 * @todo 统一将查询的sql参数由?形式变成:named形式(分页和查询随机记录时)
 	 */
 	public static SqlToyConfig getUnifyParamsNamedConfig(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, String dialect, boolean wrapNamed) throws Exception {
@@ -573,11 +591,11 @@ public class DialectUtils {
 
 	/**
 	 * update 2020-08-15 增强对非条件参数?的判断处理
-	 *
+	 * 
+	 * @todo sql中替换?为:sagParamName+i形式,便于查询处理(主要针对分页和取随机记录的查询)
 	 * @param sql
 	 * @param startIndex
 	 * @return
-	 * @todo sql中替换?为:sagParamName+i形式,便于查询处理(主要针对分页和取随机记录的查询)
 	 */
 	public static SqlParamsModel convertParamsToNamed(String sql, int startIndex) {
 		SqlParamsModel sqlParam = new SqlParamsModel();
@@ -608,6 +626,7 @@ public class DialectUtils {
 	}
 
 	/**
+	 * @todo 执行批量保存或修改操作
 	 * @param sqlToyContext
 	 * @param entities
 	 * @param batchSize
@@ -620,7 +639,6 @@ public class DialectUtils {
 	 * @param autoCommit
 	 * @return
 	 * @throws Exception
-	 * @todo 执行批量保存或修改操作
 	 */
 	public static Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			EntityMeta entityMeta, String[] forceUpdateFields, GenerateSqlHandler generateSqlHandler,
@@ -699,6 +717,7 @@ public class DialectUtils {
 	}
 
 	/**
+	 * @todo 处理加工对象基于db2、oracle数据库的saveOrUpdateSql
 	 * @param sqlToyContext
 	 * @param unifyFieldsHandler
 	 * @param dbType
@@ -711,7 +730,6 @@ public class DialectUtils {
 	 * @param isAssignPK
 	 * @param tableName
 	 * @return
-	 * @todo 处理加工对象基于db2、oracle数据库的saveOrUpdateSql
 	 */
 	public static String getSaveOrUpdateSql(SqlToyContext sqlToyContext, IUnifyFieldsHandler unifyFieldsHandler,
 			Integer dbType, EntityMeta entityMeta, PKStrategy pkStrategy, String[] forceUpdateFields, String fromTable,
@@ -964,6 +982,7 @@ public class DialectUtils {
 	}
 
 	/**
+	 * @todo 产生对象update的语句
 	 * @param unifyFieldsHandler
 	 * @param dbType
 	 * @param entityMeta
@@ -971,7 +990,6 @@ public class DialectUtils {
 	 * @param forceUpdateFields
 	 * @param tableName          已经增加了schema
 	 * @return
-	 * @todo 产生对象update的语句
 	 */
 	private static String generateUpdateSql(IUnifyFieldsHandler unifyFieldsHandler, Integer dbType,
 			EntityMeta entityMeta, String nullFunction, String[] forceUpdateFields, String tableName) {
@@ -1058,6 +1076,7 @@ public class DialectUtils {
 	}
 
 	/**
+	 * @todo 加载获取单笔数据库记录
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param sql
@@ -1068,7 +1087,6 @@ public class DialectUtils {
 	 * @param dbType
 	 * @return
 	 * @throws Exception
-	 * @todo 加载获取单笔数据库记录
 	 */
 	public static Serializable load(final SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			EntityMeta entityMeta, Serializable entity, boolean onlySubTables, List<Class> cascadeTypes,
@@ -1165,6 +1183,7 @@ public class DialectUtils {
 	}
 
 	/**
+	 * @todo 提供统一的loadAll处理机制
 	 * @param sqlToyContext
 	 * @param entities
 	 * @param onlySubTables
@@ -1178,7 +1197,6 @@ public class DialectUtils {
 	 * @param maxRows
 	 * @return
 	 * @throws Exception
-	 * @todo 提供统一的loadAll处理机制
 	 */
 	public static List<?> loadAll(final SqlToyContext sqlToyContext, List<?> entities, boolean onlySubTables,
 			List<Class> cascadeTypes, LockMode lockMode, Connection conn, final Integer dbType, String tableName,
@@ -1243,7 +1261,7 @@ public class DialectUtils {
 				}
 				// 组织loadAll sql语句
 				String sql = wrapLoadAll(entityMeta, idValues.size(), tableName, lockSqlHandler, lockMode, dbType);
-				sqlToyResult = SqlConfigParseUtils.processSql(sql, null, realValues, null);
+				sqlToyResult = new SqlToyResult(sql, realValues);
 			}
 			// 增加sql执行拦截器 update 2022-9-10
 			SqlToyConfig sqlToyConfig = new SqlToyConfig(DataSourceUtils.getDialect(dbType));
@@ -1301,6 +1319,8 @@ public class DialectUtils {
 			String colName;
 			Object[] rowData;
 			Object cellValue;
+			int dataSize = entitySet.size();
+			boolean supportMultiFieldIn = DataSourceUtils.isSupportMultiFieldIn(dbType);
 			for (TableCascadeModel cascadeModel : entityMeta.getCascadeModels()) {
 				if (cascadeTypes.contains(cascadeModel.getMappedType())) {
 					mappedMeta = sqlToyContext.getEntityMeta(cascadeModel.getMappedType());
@@ -1324,33 +1344,81 @@ public class DialectUtils {
 						}
 					} // 复合主键
 					else {
-						// 构造(field1=? and field2=?)
-						String condition = " (";
-						for (int i = 0; i < fieldSize; i++) {
-							colName = cascadeModel.getMappedColumns()[i];
-							colName = ReservedWordsUtil.convertWord(colName, dbType);
-							if (i > 0) {
-								condition = condition.concat(" and ");
+						if (supportMultiFieldIn) {
+							String columns = "(";
+							String condition = "(";
+							for (int i = 0; i < fieldSize; i++) {
+								if (i > 0) {
+									columns = columns.concat(",");
+									condition = condition.concat(",");
+								}
+								colName = cascadeModel.getMappedColumns()[i];
+								colName = ReservedWordsUtil.convertWord(colName, dbType);
+								condition = condition.concat("?");
+								columns = columns.concat(colName);
+								if (hasOrder) {
+									orderCols = orderCols.concat(colName).concat(",");
+								}
 							}
-							condition = condition.concat(colName).concat("=?");
-							if (hasOrder) {
-								orderCols = orderCols.concat(colName).concat(",");
+							condition = condition.concat(")");
+							columns = columns.concat(")");
+							StringBuilder conditionStr = new StringBuilder();
+							int groupIndex = 0;
+							int groupCnt = 0;
+							int groupSize = 1000;
+							if (dataSize > groupSize) {
+								subTableSql.append(" ( ");
 							}
-						}
-						condition = condition.concat(") ");
-						// 构造成 (field1=? and field2=?) or (field1=? and field2=?)
-						if (hasExtCondtion) {
-							subTableSql.append(" (");
-						}
-						idValues = BeanUtil.reflectBeansToInnerAry(entitySet, cascadeModel.getFields(), null, null);
-						for (int i = 0; i < idValues.size(); i++) {
-							if (i > 0) {
-								subTableSql.append(" or ");
+							for (int i = 0; i < dataSize; i++) {
+								if (groupIndex > 0) {
+									conditionStr.append(",");
+								}
+								conditionStr.append(condition);
+								groupIndex++;
+								// in 最大支持1000
+								if (((i + 1) % groupSize) == 0 || i + 1 == dataSize) {
+									if (groupCnt > 0) {
+										subTableSql.append(" or ");
+									}
+									subTableSql.append(columns).append(" in (").append(conditionStr.toString())
+											.append(")");
+									groupIndex = 0;
+									groupCnt++;
+									// 清空
+									conditionStr.setLength(0);
+								}
 							}
-							subTableSql.append(condition);
-						}
-						if (hasExtCondtion) {
-							subTableSql.append(") ");
+							if (dataSize > groupSize) {
+								subTableSql.append(" ) ");
+							}
+						} else {
+							// 构造(field1=? and field2=?)
+							String condition = " (";
+							for (int i = 0; i < fieldSize; i++) {
+								colName = cascadeModel.getMappedColumns()[i];
+								colName = ReservedWordsUtil.convertWord(colName, dbType);
+								if (i > 0) {
+									condition = condition.concat(" and ");
+								}
+								condition = condition.concat(colName).concat("=?");
+								if (hasOrder) {
+									orderCols = orderCols.concat(colName).concat(",");
+								}
+							}
+							condition = condition.concat(") ");
+							// 构造成 (field1=? and field2=?) or (field1=? and field2=?)
+							if (hasExtCondtion) {
+								subTableSql.append(" (");
+							}
+							for (int i = 0; i < dataSize; i++) {
+								if (i > 0) {
+									subTableSql.append(" or ");
+								}
+								subTableSql.append(condition);
+							}
+							if (hasExtCondtion) {
+								subTableSql.append(") ");
+							}
 						}
 					}
 					// 自定义扩展条件
@@ -1366,6 +1434,7 @@ public class DialectUtils {
 						subToyResult = SqlConfigParseUtils.processSql(subTableSql.toString(), null,
 								new Object[] { pkValues }, null);
 					} else {
+						idValues = BeanUtil.reflectBeansToInnerAry(entitySet, cascadeModel.getFields(), null, null);
 						// 复合主键,将条件值构造成一个数组
 						Object[] realValues = new Object[idValues.size() * fieldSize];
 						int index = 0;
@@ -1377,7 +1446,7 @@ public class DialectUtils {
 								index++;
 							}
 						}
-						subToyResult = SqlConfigParseUtils.processSql(subTableSql.toString(), null, realValues, null);
+						subToyResult = new SqlToyResult(subTableSql.toString(), realValues);
 					}
 					// 加密字段解密
 					DecryptHandler subDecryptHandler = null;
@@ -1444,26 +1513,71 @@ public class DialectUtils {
 			loadSql.append(colName);
 			loadSql.append(" in (?) ");
 		} else {
-			// 复合主键构造 (field1=? and field2=?)
-			String condition = " (";
-			for (int i = 0; i < idSize; i++) {
-				field = entityMeta.getIdArray()[i];
-				colName = ReservedWordsUtil.convertWord(entityMeta.getColumnName(field), dbType);
-				if (i > 0) {
-					condition = condition.concat(" and ");
+			// 构造 (id,code) in ((?,?),(?,?)) 形式
+			if (DataSourceUtils.isSupportMultiFieldIn(dbType)) {
+				String columns = "(";
+				String condition = "(";
+				for (int i = 0; i < idSize; i++) {
+					if (i > 0) {
+						columns = columns.concat(",");
+						condition = condition.concat(",");
+					}
+					field = entityMeta.getIdArray()[i];
+					colName = ReservedWordsUtil.convertWord(entityMeta.getColumnName(field), dbType);
+					condition = condition.concat("?");
+					columns = columns.concat(colName);
 				}
-				condition = condition.concat(colName).concat("=?");
-			}
-			condition = condition.concat(")");
-			// 构造 (field1=? and field2=?) or (field1=? and field2=?)
-			for (int i = 0; i < dataSize; i++) {
-				if (i > 0) {
-					loadSql.append(" or ");
+				condition = condition.concat(")");
+				columns = columns.concat(")");
+				StringBuilder conditionStr = new StringBuilder();
+				int groupIndex = 0;
+				int groupCnt = 0;
+				int groupSize = 1000;
+				if (dataSize > groupSize) {
+					loadSql.append(" ( ");
 				}
-				loadSql.append(condition);
+				for (int i = 0; i < dataSize; i++) {
+					if (groupIndex > 0) {
+						conditionStr.append(",");
+					}
+					conditionStr.append(condition);
+					groupIndex++;
+					// in 最大支持1000
+					if (((i + 1) % groupSize) == 0 || i + 1 == dataSize) {
+						if (groupCnt > 0) {
+							loadSql.append(" or ");
+						}
+						loadSql.append(columns).append(" in (").append(conditionStr.toString()).append(")");
+						groupIndex = 0;
+						groupCnt++;
+						// 清空
+						conditionStr.setLength(0);
+					}
+				}
+				if (dataSize > groupSize) {
+					loadSql.append(" ) ");
+				}
+			} else {
+				// 复合主键构造 (field1=? and field2=?)
+				String condition = " (";
+				for (int i = 0; i < idSize; i++) {
+					field = entityMeta.getIdArray()[i];
+					colName = ReservedWordsUtil.convertWord(entityMeta.getColumnName(field), dbType);
+					if (i > 0) {
+						condition = condition.concat(" and ");
+					}
+					condition = condition.concat(colName).concat("=?");
+				}
+				condition = condition.concat(")");
+				// 构造 (field1=? and field2=?) or (field1=? and field2=?)
+				for (int i = 0; i < dataSize; i++) {
+					if (i > 0) {
+						loadSql.append(" or ");
+					}
+					loadSql.append(condition);
+				}
 			}
 		}
-
 		if (lockSqlHandler != null) {
 			loadSql.append(lockSqlHandler.getLockSql(loadSql.toString(), dbType, lockMode));
 		}
@@ -1899,6 +2013,7 @@ public class DialectUtils {
 	 * @param forceCascadeClasses
 	 * @param subTableForceUpdateProps
 	 * @param conn
+	 * @param dbType
 	 * @param tableName
 	 * @throws Exception
 	 * @todo 单个对象修改，包含接连修改
@@ -2337,6 +2452,8 @@ public class DialectUtils {
 		for (int i = 0, n = idsLength; i < n; i++) {
 			parameterTypes[i] = entityMeta.getColumnJdbcType(entityMeta.getIdArray()[i]);
 		}
+		// 数据库是否支持(field1,field2) in (:value1,:value2) 多字段in
+		boolean supportMultiFieldIn = DataSourceUtils.isSupportMultiFieldIn(dbType);
 		// 级联批量删除子表数据
 		if (!entityMeta.getCascadeModels().isEmpty()) {
 			EntityMeta subTableMeta;
@@ -2361,30 +2478,43 @@ public class DialectUtils {
 						}
 						meter++;
 					}
-					Integer[] subTableFieldType = new Integer[mapFieldSize];
-					for (int i = 0, n = mapFieldSize; i < n; i++) {
-						subTableFieldType[i] = subTableMeta.getColumnJdbcType(cascadeModel.getMappedFields()[i]);
+					// 单主键或多主键且数据库支持in 多字段
+					if (mapFieldSize == 1 || supportMultiFieldIn) {
+						deleteByIds(sqlToyContext, subTableMeta, cascadeModel.getFields(),
+								cascadeModel.getMappedFields(), conn, dbType, autoCommit,
+								subTableMeta.getSchemaTable(null, null), entities);
+					} else {
+						Integer[] subTableFieldType = new Integer[mapFieldSize];
+						for (int i = 0, n = mapFieldSize; i < n; i++) {
+							subTableFieldType[i] = subTableMeta.getColumnJdbcType(cascadeModel.getMappedFields()[i]);
+						}
+						delSubTableSql = ReservedWordsUtil.convertSql(cascadeModel.getDeleteSubTableSql(), dbType);
+						List<Object[]> realParams = mainFieldValues;
+						String realSql = delSubTableSql;
+						if (sqlToyContext.hasSqlInterceptors()) {
+							SqlToyConfig sqlToyConfig = new SqlToyConfig(DataSourceUtils.getDialect(dbType));
+							sqlToyConfig.setSqlType(SqlType.delete);
+							sqlToyConfig.setSql(delSubTableSql);
+							sqlToyConfig.setParamsName(cascadeModel.getFields());
+							SqlToyResult sqlToyResult = new SqlToyResult(delSubTableSql, mainFieldValues.toArray());
+							sqlToyResult = doInterceptors(sqlToyContext, sqlToyConfig, OperateType.deleteAll,
+									sqlToyResult, cascadeModel.getMappedType(), dbType);
+							realSql = sqlToyResult.getSql();
+							realParams = CollectionUtil.arrayToList(sqlToyResult.getParamsValue());
+						}
+						SqlExecuteStat.showSql("级联删除子表记录", realSql, null);
+						SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), realSql, realParams,
+								subTableFieldType, null, null, sqlToyContext.getBatchSize(), null, conn, dbType);
 					}
-					delSubTableSql = ReservedWordsUtil.convertSql(cascadeModel.getDeleteSubTableSql(), dbType);
-					List<Object[]> realParams = mainFieldValues;
-					String realSql = delSubTableSql;
-					if (sqlToyContext.hasSqlInterceptors()) {
-						SqlToyConfig sqlToyConfig = new SqlToyConfig(DataSourceUtils.getDialect(dbType));
-						sqlToyConfig.setSqlType(SqlType.delete);
-						sqlToyConfig.setSql(delSubTableSql);
-						sqlToyConfig.setParamsName(cascadeModel.getFields());
-						SqlToyResult sqlToyResult = new SqlToyResult(delSubTableSql, mainFieldValues.toArray());
-						sqlToyResult = doInterceptors(sqlToyContext, sqlToyConfig, OperateType.deleteAll, sqlToyResult,
-								cascadeModel.getMappedType(), dbType);
-						realSql = sqlToyResult.getSql();
-						realParams = CollectionUtil.arrayToList(sqlToyResult.getParamsValue());
-					}
-					SqlExecuteStat.showSql("级联删除子表记录", realSql, null);
-					SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), realSql, realParams,
-							subTableFieldType, null, null, sqlToyContext.getBatchSize(), null, conn, dbType);
 				}
 			}
 		}
+		// 单主键或多主键且数据库支持in 多字段
+		if (idsLength == 1 || supportMultiFieldIn) {
+			return deleteByIds(sqlToyContext, entityMeta, entityMeta.getIdArray(), entityMeta.getIdArray(), conn,
+					dbType, autoCommit, realTable, entities);
+		}
+
 		String deleteSql = ReservedWordsUtil
 				.convertSql("delete from ".concat(realTable).concat(" ").concat(entityMeta.getIdArgWhereSql()), dbType);
 		List<Object[]> realParams = idValues;
@@ -2403,6 +2533,71 @@ public class DialectUtils {
 		SqlExecuteStat.showSql("批量删除[" + realParams.size() + "]条记录", realSql, null);
 		return SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), realSql, realParams, parameterTypes, null,
 				null, batchSize, autoCommit, conn, dbType);
+	}
+
+	/**
+	 * @TODO 根据主键或外键组织in (?,?) 或多字段in模式批量删除
+	 * @param sqlToyContext
+	 * @param entityMeta
+	 * @param fields
+	 * @param mappedFields
+	 * @param conn
+	 * @param dbType
+	 * @param autoCommit
+	 * @param tableName
+	 * @param entities
+	 * @return
+	 * @throws Exception
+	 */
+	private static Long deleteByIds(SqlToyContext sqlToyContext, EntityMeta entityMeta, String[] fields,
+			String[] mappedFields, Connection conn, Integer dbType, Boolean autoCommit, String tableName,
+			List<?> entities) throws Exception {
+		StringBuilder sqlString;
+		String key = "entities";
+		if (dbType == DBType.CLICKHOUSE) {
+			// alter table tableName delete where
+			sqlString = new StringBuilder("alter table ".concat(tableName).concat(" delete where "));
+		} else {
+			sqlString = new StringBuilder("delete from ".concat(tableName).concat(" where "));
+		}
+		// 构造成:where (column1,column2) in ((:entities.field1,:entities.field2))
+		// 是否多个条件字段
+		int fieldsCnt = fields.length;
+		if (fieldsCnt > 1) {
+			sqlString.append(" (");
+		}
+		int index = 0;
+		StringBuilder argsParamName = new StringBuilder();
+		for (String mappedField : mappedFields) {
+			if (index > 0) {
+				sqlString.append(",");
+				argsParamName.append(",");
+			}
+			sqlString.append(ReservedWordsUtil.convertWord(entityMeta.getColumnName(mappedField), dbType));
+			argsParamName.append(":").append(key).append(".").append(fields[index]);
+			index++;
+		}
+		if (fieldsCnt > 1) {
+			sqlString.append(") ");
+		}
+		sqlString.append(" in ");
+		if (fieldsCnt > 1) {
+			sqlString.append(" ((").append(argsParamName.toString()).append("))");
+		} else {
+			sqlString.append(" (").append(argsParamName.toString()).append(")");
+		}
+		String dialect = DataSourceUtils.getDialect(dbType);
+		// 借用查询语句参数提取机制
+		QueryExecutor query = new QueryExecutor(sqlString.toString(), MapKit.map(key, entities));
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(query, SqlType.delete, dialect);
+		QueryExecutorBuilder.initQueryExecutor(sqlToyContext, query.getInnerModel(), sqlToyConfig, false, false);
+		SqlToyResult queryParam = SqlConfigParseUtils.processSql(sqlToyConfig.getSql(null),
+				sqlToyConfig.getParamsName(), query.getInnerModel().getParamsValue(sqlToyContext, sqlToyConfig),
+				dialect);
+		queryParam = doInterceptors(sqlToyContext, sqlToyConfig, OperateType.deleteAll, queryParam,
+				entityMeta.getEntityClass(), dbType);
+		return SqlUtil.executeSql(sqlToyContext.getTypeHandler(), queryParam.getSql(), queryParam.getParamsValue(),
+				null, conn, dbType, autoCommit, false);
 	}
 
 	/**
@@ -2617,6 +2812,7 @@ public class DialectUtils {
 	 * @param storeSql
 	 * @param inParamValues
 	 * @param outParamTypes
+	 * @param moreResult
 	 * @param conn
 	 * @param dbType
 	 * @param fetchSize
@@ -2633,91 +2829,96 @@ public class DialectUtils {
 		return (StoreResult) SqlUtil.callableStatementProcess(null, callStat, rs, new CallableStatementResultHandler() {
 			@Override
 			public void execute(Object obj, CallableStatement callStat, ResultSet rs) throws Exception {
-				callStat = conn.prepareCall(storeSql);
-				if (fetchSize > 0) {
-					callStat.setFetchSize(fetchSize);
-				}
-				boolean isFirstResult = StringUtil.matches(storeSql, STORE_PATTERN);
-				int addIndex = isFirstResult ? 1 : 0;
-				SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, callStat, inParamValues, null,
-						addIndex);
-				int inCount = (inParamValues == null) ? 0 : inParamValues.length;
-				int outCount = (outParamTypes == null) ? 0 : outParamTypes.length;
-				// 注册输出参数
-				if (outCount != 0) {
-					if (isFirstResult) {
-						callStat.registerOutParameter(1, outParamTypes[0]);
+				try {
+					callStat = conn.prepareCall(storeSql);
+					if (fetchSize > 0) {
+						callStat.setFetchSize(fetchSize);
 					}
-					for (int i = addIndex; i < outCount; i++) {
-						callStat.registerOutParameter(i + inCount + 1, outParamTypes[i]);
-					}
-				}
-				StoreResult storeResult = new StoreResult();
-				// 存在多个返回集合
-				if (moreResult) {
-					boolean hasResult = callStat.execute();
-					List<String[]> labelsList = new ArrayList<String[]>();
-					List<String[]> labelTypesList = new ArrayList<String[]>();
-					List<List> dataSets = new ArrayList<List>();
-					int meter = 0;
-					SqlToyConfig notFirstConfig = new SqlToyConfig(sqlToyConfig.getId(), sqlToyConfig.getSql());
-					while (hasResult) {
-						rs = callStat.getResultSet();
-						if (rs != null) {
-							QueryResult tempResult = ResultUtils.processResultSet(sqlToyContext,
-									(meter == 0) ? sqlToyConfig : notFirstConfig, conn, rs, null, null, null, 0);
-							labelsList.add(tempResult.getLabelNames());
-							labelTypesList.add(tempResult.getLabelTypes());
-							dataSets.add(tempResult.getRows());
-							meter++;
+					boolean isFirstResult = StringUtil.matches(storeSql, STORE_PATTERN);
+					int addIndex = isFirstResult ? 1 : 0;
+					SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, callStat, inParamValues, null,
+							addIndex);
+					int inCount = (inParamValues == null) ? 0 : inParamValues.length;
+					int outCount = (outParamTypes == null) ? 0 : outParamTypes.length;
+					// 注册输出参数
+					if (outCount != 0) {
+						if (isFirstResult) {
+							callStat.registerOutParameter(1, outParamTypes[0]);
 						}
-						hasResult = callStat.getMoreResults();
-					}
-					storeResult.setLabelsList(labelsList);
-					storeResult.setLabelTypesList(labelTypesList);
-					List[] moreResults = new List[dataSets.size()];
-					dataSets.toArray(moreResults);
-					storeResult.setMoreResults(moreResults);
-					// 默认第一个集合作为后续sql 配置处理的对象(如缓存翻译、格式化等)
-					if (dataSets.size() > 0) {
-						storeResult.setLabelNames(labelsList.get(0));
-						storeResult.setLabelTypes(labelTypesList.get(0));
-						storeResult.setRows(dataSets.get(0));
-					}
-				} else {
-					boolean hasResult = callStat.execute();
-					if (hasResult) {
-						rs = callStat.getResultSet();
-						if (rs != null) {
-							QueryResult tempResult = ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn, rs,
-									null, null, null, 0);
-							storeResult.setLabelNames(tempResult.getLabelNames());
-							storeResult.setLabelTypes(tempResult.getLabelTypes());
-							storeResult.setRows(tempResult.getRows());
+						for (int i = addIndex; i < outCount; i++) {
+							callStat.registerOutParameter(i + inCount + 1, outParamTypes[i]);
 						}
 					}
-				}
+					StoreResult storeResult = new StoreResult();
+					// 存在多个返回集合
+					if (moreResult) {
+						boolean hasResult = callStat.execute();
+						List<String[]> labelsList = new ArrayList<String[]>();
+						List<String[]> labelTypesList = new ArrayList<String[]>();
+						List<List> dataSets = new ArrayList<List>();
+						int meter = 0;
+						SqlToyConfig notFirstConfig = new SqlToyConfig(sqlToyConfig.getId(), sqlToyConfig.getSql());
+						while (hasResult) {
+							rs = callStat.getResultSet();
+							if (rs != null) {
+								QueryResult tempResult = ResultUtils.processResultSet(sqlToyContext,
+										(meter == 0) ? sqlToyConfig : notFirstConfig, conn, rs, null, null, null, 0);
+								labelsList.add(tempResult.getLabelNames());
+								labelTypesList.add(tempResult.getLabelTypes());
+								dataSets.add(tempResult.getRows());
+								meter++;
+							}
+							hasResult = callStat.getMoreResults();
+						}
+						storeResult.setLabelsList(labelsList);
+						storeResult.setLabelTypesList(labelTypesList);
+						List[] moreResults = new List[dataSets.size()];
+						dataSets.toArray(moreResults);
+						storeResult.setMoreResults(moreResults);
+						// 默认第一个集合作为后续sql 配置处理的对象(如缓存翻译、格式化等)
+						if (dataSets.size() > 0) {
+							storeResult.setLabelNames(labelsList.get(0));
+							storeResult.setLabelTypes(labelTypesList.get(0));
+							storeResult.setRows(dataSets.get(0));
+						}
+					} else {
+						boolean hasResult = callStat.execute();
+						if (hasResult) {
+							rs = callStat.getResultSet();
+							if (rs != null) {
+								QueryResult tempResult = ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn,
+										rs, null, null, null, 0);
+								storeResult.setLabelNames(tempResult.getLabelNames());
+								storeResult.setLabelTypes(tempResult.getLabelTypes());
+								storeResult.setRows(tempResult.getRows());
+							}
+						}
+					}
 
-				// 有返回参数如:(?=call (? in,? out) )
-				if (outCount != 0) {
-					Object[] outParams = new Object[outCount];
-					if (isFirstResult) {
-						outParams[0] = callStat.getObject(1);
+					// 有返回参数如:(?=call (? in,? out) )
+					if (outCount != 0) {
+						Object[] outParams = new Object[outCount];
+						if (isFirstResult) {
+							outParams[0] = callStat.getObject(1);
+						}
+						for (int i = addIndex; i < outCount; i++) {
+							outParams[i] = callStat.getObject(i + inCount + 1);
+						}
+						storeResult.setOutResult(outParams);
 					}
-					for (int i = addIndex; i < outCount; i++) {
-						outParams[i] = callStat.getObject(i + inCount + 1);
+					storeResult.setUpdateCount(Long.valueOf(callStat.getUpdateCount()));
+					this.setResult(storeResult);
+				} catch (Exception e) {
+					throw e;
+				} finally {
+					if (rs != null) {
+						rs.close();
+						rs = null;
 					}
-					storeResult.setOutResult(outParams);
-				}
-				storeResult.setUpdateCount(Long.valueOf(callStat.getUpdateCount()));
-				this.setResult(storeResult);
-				if (rs != null) {
-					rs.close();
-					rs = null;
-				}
-				if (callStat != null) {
-					callStat.close();
-					callStat = null;
+					if (callStat != null) {
+						callStat.close();
+						callStat = null;
+					}
 				}
 			}
 		});
@@ -3040,5 +3241,24 @@ public class DialectUtils {
 			result = interceptor.decorate(sqlToyContext, sqlToyConfig, operateType, result, entityClass, dbType);
 		}
 		return result;
+	}
+
+	/**
+	 * @todo 统一根据主键是否赋值，来调整save行为的主键策略
+	 * @param entityMeta
+	 * @param entity
+	 * @param dbType
+	 * @return
+	 */
+	public static PKStrategy getSavePKStrategy(EntityMeta entityMeta, Serializable entity, Integer dbType) {
+		PKStrategy pkStrategy = entityMeta.getIdStrategy();
+		// 主键值已经存在，则主键策略改为assign，避免跳号
+		if (pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE)) {
+			Object id = BeanUtil.getProperty(entity, entityMeta.getIdArray()[0]);
+			if (StringUtil.isNotBlank(id)) {
+				pkStrategy = PKStrategy.ASSIGN;
+			}
+		}
+		return pkStrategy;
 	}
 }

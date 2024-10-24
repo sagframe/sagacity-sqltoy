@@ -52,7 +52,7 @@ public class TableMeta implements Serializable {
 	 * 外键信息
 	 */
 	private List<ForeignModel> foreigns;
-	
+
 	/**
 	 * 主键约束名称
 	 */
@@ -127,6 +127,5 @@ public class TableMeta implements Serializable {
 	public void setPkConstraint(String pkConstraint) {
 		this.pkConstraint = pkConstraint;
 	}
-	
-	
+
 }

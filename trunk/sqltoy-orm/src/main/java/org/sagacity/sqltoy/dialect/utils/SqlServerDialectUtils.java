@@ -79,6 +79,7 @@ public class SqlServerDialectUtils {
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param queryExecutor
+	 * @param decryptHandler
 	 * @param totalCount
 	 * @param randomCount
 	 * @param conn
@@ -166,9 +167,9 @@ public class SqlServerDialectUtils {
 				new GenerateSqlHandler() {
 					@Override
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
-						String sql = SqlServerDialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(),
-								dbType, entityMeta, entityMeta.getIdStrategy(), forceUpdateFields, tableName, "isnull",
-								"@mySeqVariable", false);
+						String sql = getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
+								entityMeta.getIdStrategy(), forceUpdateFields, tableName, "isnull", "@mySeqVariable",
+								false);
 						if (entityMeta.getIdStrategy() != null
 								&& entityMeta.getIdStrategy().equals(PKStrategy.SEQUENCE)) {
 							sql = "DECLARE @mySeqVariable as numeric(20)=NEXT VALUE FOR " + entityMeta.getSequence()
@@ -395,6 +396,7 @@ public class SqlServerDialectUtils {
 
 	/**
 	 * @todo sqlserver 相对特殊不支持timestamp类型的插入，所以单独提供sql生成功能
+	 * @param unifyFieldsHandler
 	 * @param dbType
 	 * @param entityMeta
 	 * @param pkStrategy
@@ -408,7 +410,7 @@ public class SqlServerDialectUtils {
 			EntityMeta entityMeta, PKStrategy pkStrategy, String tableName, String isNullFunction, String sequence,
 			boolean isAssignPK) {
 		// 在无主键的情况下产生insert sql语句
-		if (entityMeta.getIdArray() == null) {
+		if (entityMeta.getIdArray() == null && entityMeta.getUniqueIndex() == null) {
 			return generateInsertSql(unifyFieldsHandler, dbType, entityMeta, tableName, pkStrategy, isNullFunction,
 					sequence, isAssignPK);
 		}
@@ -445,9 +447,11 @@ public class SqlServerDialectUtils {
 		}
 		sql.append(SqlToyConstants.MERGE_ALIAS_ON);
 		StringBuilder idColumns = new StringBuilder();
+		boolean hasId = (entityMeta.getIdArray() == null) ? false : true;
+		String[] fields = hasId ? entityMeta.getIdArray() : entityMeta.getUniqueIndex().getColumns();
 		// 组织on部分的主键条件判断
-		for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
-			columnName = entityMeta.getColumnName(entityMeta.getIdArray()[i]);
+		for (int i = 0, n = fields.length; i < n; i++) {
+			columnName = hasId ? entityMeta.getColumnName(fields[i]) : fields[i];
 			columnName = ReservedWordsUtil.convertWord(columnName, dbType);
 			if (i > 0) {
 				sql.append(" and ");
@@ -506,40 +510,46 @@ public class SqlServerDialectUtils {
 			sql.append(idsColumnStr.replace("ta.", "tv."));
 		} else {
 			sql.append(insertRejIdCols.toString());
-			// sequence方式主键
-			if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
-				columnName = entityMeta.getColumnName(entityMeta.getIdArray()[0]);
-				columnName = ReservedWordsUtil.convertWord(columnName, dbType);
-				sql.append(",");
-				sql.append(columnName);
+			// 无主键
+			if (pkStrategy == null) {
 				sql.append(") values (");
-				sql.append(insertRejIdColValues).append(",");
-				if (isAssignPK) {
-					sql.append(isNullFunction);
-					sql.append("(tv.").append(columnName).append(",");
-					sql.append(sequence).append(") ");
-				} else {
-					sql.append(sequence);
-				}
-			} else if (pkStrategy.equals(PKStrategy.IDENTITY)) {
-				columnName = entityMeta.getColumnName(entityMeta.getIdArray()[0]);
-				columnName = ReservedWordsUtil.convertWord(columnName, dbType);
-				if (isAssignPK) {
+				sql.append(insertRejIdColValues);
+			} else {
+				// sequence方式主键
+				if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
+					columnName = entityMeta.getColumnName(entityMeta.getIdArray()[0]);
+					columnName = ReservedWordsUtil.convertWord(columnName, dbType);
 					sql.append(",");
 					sql.append(columnName);
+					sql.append(") values (");
+					sql.append(insertRejIdColValues).append(",");
+					if (isAssignPK) {
+						sql.append(isNullFunction);
+						sql.append("(tv.").append(columnName).append(",");
+						sql.append(sequence).append(") ");
+					} else {
+						sql.append(sequence);
+					}
+				} else if (pkStrategy.equals(PKStrategy.IDENTITY)) {
+					columnName = entityMeta.getColumnName(entityMeta.getIdArray()[0]);
+					columnName = ReservedWordsUtil.convertWord(columnName, dbType);
+					if (isAssignPK) {
+						sql.append(",");
+						sql.append(columnName);
+					}
+					sql.append(") values (");
+					// identity 模式insert无需写插入该字段语句
+					sql.append(insertRejIdColValues);
+					if (isAssignPK) {
+						sql.append(",").append("tv.").append(columnName);
+					}
+				} else {
+					sql.append(",");
+					sql.append(idsColumnStr.replace("ta.", ""));
+					sql.append(") values (");
+					sql.append(insertRejIdColValues).append(",");
+					sql.append(idsColumnStr.replace("ta.", "tv."));
 				}
-				sql.append(") values (");
-				// identity 模式insert无需写插入该字段语句
-				sql.append(insertRejIdColValues);
-				if (isAssignPK) {
-					sql.append(",").append("tv.").append(columnName);
-				}
-			} else {
-				sql.append(",");
-				sql.append(idsColumnStr.replace("ta.", ""));
-				sql.append(") values (");
-				sql.append(insertRejIdColValues).append(",");
-				sql.append(idsColumnStr.replace("ta.", "tv."));
 			}
 		}
 		sql.append(")");
@@ -550,6 +560,7 @@ public class SqlServerDialectUtils {
 
 	/**
 	 * @todo 产生对象对应的insert sql语句
+	 * @param unifyFieldsHandler
 	 * @param dbType
 	 * @param entityMeta
 	 * @param tableName
@@ -658,13 +669,12 @@ public class SqlServerDialectUtils {
 	public static Object save(SqlToyContext sqlToyContext, Serializable entity, final Connection conn,
 			final Integer dbType, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
-		final boolean isIdentity = entityMeta.getIdStrategy() != null
-				&& entityMeta.getIdStrategy().equals(PKStrategy.IDENTITY);
-		final boolean isSequence = entityMeta.getIdStrategy() != null
-				&& entityMeta.getIdStrategy().equals(PKStrategy.SEQUENCE);
-
+		// save行为根据主键是否赋值情况调整最终的主键策略
+		PKStrategy pkStrategy = DialectUtils.getSavePKStrategy(entityMeta, entity, dbType);
+		final boolean isIdentity = pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY);
+		final boolean isSequence = pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE);
 		String insertSql = generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta, tableName,
-				entityMeta.getIdStrategy(), "isnull", "@mySeqVariable", isIdentity ? false : true);
+				pkStrategy, "isnull", "@mySeqVariable", isIdentity ? false : true);
 		if (isSequence) {
 			insertSql = "set nocount on DECLARE @mySeqVariable as numeric(20)=NEXT VALUE FOR "
 					+ entityMeta.getSequence() + " " + insertSql + " select @mySeqVariable ";
@@ -681,7 +691,7 @@ public class SqlServerDialectUtils {
 		// 是否存在业务ID
 		boolean hasBizId = (entityMeta.getBusinessIdGenerator() == null) ? false : true;
 		int bizIdColIndex = hasBizId ? entityMeta.getFieldIndex(entityMeta.getBusinessIdField()) : 0;
-		boolean hasId = (entityMeta.getIdStrategy() != null && null != entityMeta.getIdGenerator()) ? true : false;
+		boolean hasId = (pkStrategy != null && null != entityMeta.getIdGenerator()) ? true : false;
 		// 主键、业务主键生成并回写对象
 		if (hasId || hasBizId) {
 			Integer[] relatedColumn = entityMeta.getBizIdRelatedColIndex();
@@ -1100,31 +1110,36 @@ public class SqlServerDialectUtils {
 		return (List<TableMeta>) SqlUtil.preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
 			@Override
 			public void execute(Object rowData, PreparedStatement pst, ResultSet rs) throws Exception {
-				if (StringUtil.isNotBlank(tableName)) {
-					if (tableName.contains("%")) {
-						pst.setString(1, tableName);
-					} else {
-						pst.setString(1, "%" + tableName + "%");
+				try {
+					if (StringUtil.isNotBlank(tableName)) {
+						if (tableName.contains("%")) {
+							pst.setString(1, tableName);
+						} else {
+							pst.setString(1, "%" + tableName + "%");
+						}
 					}
-				}
-				rs = pst.executeQuery();
-				List<TableMeta> tables = new ArrayList<TableMeta>();
-				while (rs.next()) {
-					TableMeta tableMeta = new TableMeta();
-					tableMeta.setTableName(rs.getString("TABLE_NAME"));
-					tableMeta.setType(rs.getString("TABLE_TYPE"));
-					if ("V".equals(tableMeta.getType())) {
-						tableMeta.setType("VIEW");
-					} else {
-						tableMeta.setType("TABLE");
+					rs = pst.executeQuery();
+					List<TableMeta> tables = new ArrayList<TableMeta>();
+					while (rs.next()) {
+						TableMeta tableMeta = new TableMeta();
+						tableMeta.setTableName(rs.getString("TABLE_NAME"));
+						tableMeta.setType(rs.getString("TABLE_TYPE"));
+						if ("V".equals(tableMeta.getType())) {
+							tableMeta.setType("VIEW");
+						} else {
+							tableMeta.setType("TABLE");
+						}
+						tableMeta.setRemarks(rs.getString("COMMENTS"));
+						tables.add(tableMeta);
 					}
-					tableMeta.setRemarks(rs.getString("COMMENTS"));
-					tables.add(tableMeta);
-				}
-				this.setResult(tables);
-				if (rs != null) {
-					rs.close();
-					rs = null;
+					this.setResult(tables);
+				} catch (Exception e) {
+					throw e;
+				} finally {
+					if (rs != null) {
+						rs.close();
+						rs = null;
+					}
 				}
 			}
 		});
@@ -1154,16 +1169,23 @@ public class SqlServerDialectUtils {
 						rs = pst.executeQuery();
 						Map<String, String> colComments = new HashMap<String, String>();
 						String comment;
-						while (rs.next()) {
-							comment = rs.getString("COMMENTS");
-							if (comment != null) {
-								colComments.put(rs.getString("COLUMN_NAME").toUpperCase(), comment);
+						String colName;
+						try {
+							while (rs.next()) {
+								colName = rs.getString("COLUMN_NAME");
+								comment = rs.getString("COMMENTS");
+								if (colName != null && comment != null) {
+									colComments.put(colName.toUpperCase(), comment);
+								}
 							}
-						}
-						this.setResult(colComments);
-						if (rs != null) {
-							rs.close();
-							rs = null;
+							this.setResult(colComments);
+						} catch (Exception e) {
+							throw e;
+						} finally {
+							if (rs != null) {
+								rs.close();
+								rs = null;
+							}
 						}
 					}
 				});

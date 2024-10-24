@@ -787,6 +787,8 @@ public class SqlToyContext {
 			this.dialect = Dialect.H2;
 		} else if (tmp.startsWith(Dialect.OSCAR)) {
 			this.dialect = Dialect.OSCAR;
+		} else if (tmp.startsWith(Dialect.VASTBASE)) {
+			this.dialect = Dialect.VASTBASE;
 		} else {
 			this.dialect = dialect;
 		}

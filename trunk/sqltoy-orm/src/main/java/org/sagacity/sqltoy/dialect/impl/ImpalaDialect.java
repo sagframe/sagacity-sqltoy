@@ -30,7 +30,9 @@ import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
+import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
+import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -242,12 +244,19 @@ public class ImpalaDialect implements Dialect {
 	public Object save(SqlToyContext sqlToyContext, Serializable entity, Connection conn, final Integer dbType,
 			final String dialect, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
-		boolean isAssignPK = isAssignPKValue(entityMeta.getIdStrategy());
+		PKStrategy pkStrategy = entityMeta.getIdStrategy();
+		// 主键值已经存在，则主键策略改为assign，避免跳号
+		if (pkStrategy != null && (pkStrategy.equals(PKStrategy.IDENTITY) || pkStrategy.equals(PKStrategy.SEQUENCE))) {
+			Object id = BeanUtil.getProperty(entity, entityMeta.getIdArray()[0]);
+			if (StringUtil.isNotBlank(id)) {
+				pkStrategy = PKStrategy.ASSIGN;
+			}
+		}
+		boolean isAssignPK = isAssignPKValue(pkStrategy);
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
-				entityMeta.getIdStrategy(), NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK,
-				tableName);
-		return DialectUtils.save(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql, entity,
-				null, null, conn, dbType);
+				pkStrategy, NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName);
+		return DialectUtils.save(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entity, null, null, conn,
+				dbType);
 	}
 
 	/*
@@ -365,8 +374,9 @@ public class ImpalaDialect implements Dialect {
 		List<ColumnMeta> tableCols = DefaultDialectUtils.getTableColumns(catalog, schema, tableName, conn, dbType,
 				dialect);
 		// 获取主键信息
-		ResultSet rs = conn.createStatement().executeQuery("DESCRIBE " + tableName);
-		Map<String, ColumnMeta> colMap = (Map<String, ColumnMeta>) SqlUtil.preparedStatementProcess(null, null, rs,
+		PreparedStatement pst = conn.prepareStatement("DESCRIBE " + tableName);
+		ResultSet rs = pst.executeQuery();
+		Map<String, ColumnMeta> colMap = (Map<String, ColumnMeta>) SqlUtil.preparedStatementProcess(null, pst, rs,
 				new PreparedStatementResultHandler() {
 					@Override
 					public void execute(Object rowData, PreparedStatement pst, ResultSet rs) throws Exception {

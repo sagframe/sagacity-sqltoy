@@ -9,6 +9,7 @@ import java.util.List;
 import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.model.ParallelConfig;
 
 /**
  * @project sagacity-sqltoy
@@ -32,6 +33,13 @@ public class Delete extends BaseLink {
 	 * 是否自动提交
 	 */
 	private Boolean autoCommit = null;
+
+	private ParallelConfig parallelConfig;
+
+	public Delete parallelConfig(ParallelConfig parallelConfig) {
+		this.parallelConfig = parallelConfig;
+		return this;
+	}
 
 	/**
 	 * @param sqlToyContext
@@ -82,7 +90,8 @@ public class Delete extends BaseLink {
 			throw new IllegalArgumentException("deleteAll entities is null or empty!");
 		}
 		int realBatchSize = (batchSize > 0) ? batchSize : sqlToyContext.getBatchSize();
-		return dialectFactory.deleteAll(sqlToyContext, entities, realBatchSize, getDataSource(null), autoCommit);
+		return dialectFactory.deleteAll(sqlToyContext, entities, realBatchSize, parallelConfig, getDataSource(null),
+				autoCommit);
 	}
 
 }

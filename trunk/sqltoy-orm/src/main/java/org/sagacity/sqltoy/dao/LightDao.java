@@ -82,7 +82,8 @@ public interface LightDao {
 	public Store store();
 
 	/**
-	 * @TODO 提供链式操作模式保存操作集合
+	 * @TODO 提供链式操作模式保存操作集合,如:lightDao.save().dataSource(xxx).one(entity)
+	 *       lightDao.save().dataSource(xxx).many(entities)
 	 * @return
 	 */
 	public Save save();
@@ -534,7 +535,8 @@ public interface LightDao {
 
 	/**
 	 * @TODO 根据QueryExecutor来链式操作灵活定义查询sql、条件、数据源等
-	 * @param query new QueryExecutor(sql).names().values().filters() 链式设置查询
+	 * @param query new QueryExecutor(sql).dataSource().names().values().filters()
+	 *              链式设置查询
 	 * @return
 	 */
 	public Object loadByQuery(final QueryExecutor query);
@@ -585,7 +587,7 @@ public interface LightDao {
 	 * @todo 通过QueryExecutor来构造查询逻辑进行分页查询
 	 * @param page
 	 * @param queryExecutor 范例:new
-	 *                      QueryExecutor(sql).names(xxx).values(xxx).filters()
+	 *                      QueryExecutor(sql).dataSource(dataSource).names(xxx).values(xxx).filters()
 	 *                      链式设置查询
 	 * @return
 	 */
@@ -642,7 +644,9 @@ public interface LightDao {
 			final double topSize);
 
 	/*
-	 * 用QueryExecutor组织查询逻辑,findTopByQuery(new QueryExecutor(sqlOrSqlId,MapKit.keys(...).values(...)).resultType(resultDTO),10)
+	 * 用QueryExecutor组织查询逻辑,findTopByQuery(new
+	 * QueryExecutor(sqlOrSqlId,MapKit.keys(...).values(...)).resultType(resultDTO),
+	 * 10)
 	 */
 	public QueryResult findTopByQuery(final QueryExecutor queryExecutor, final double topSize);
 
@@ -758,15 +762,17 @@ public interface LightDao {
 	 * @return
 	 */
 	public String generateBizId(Serializable entity);
-	
+
 	/**
-	 * @TODO 根据指定的表名、业务码，业务码的属性和值map，动态获取业务主键值
-	 * 例如:generateBizId("sag_test", "HW@case(orderType,SALE,SC,BUY,PO)@day(yyMMdd)",
-				MapKit.map("orderType", "SALE"), null, 12, 2);
+	 * @TODO 根据指定的表名、业务码，业务码的属性和值map，动态获取业务主键值 例如:generateBizId("sag_test",
+	 *       "HW@case(orderType,SALE,SC,BUY,PO)@day(yyMMdd)",
+	 *       MapKit.map("orderType", "SALE"), null, 12, 2);
 	 * @param tableName
-	 * @param signature 一个表达式字符串，支持@case(name,value1,then1,val2,then2) 和 @day(yyMMdd)或@day(yyyyMMdd)、@substr(name,start,length) 等
+	 * @param signature    一个表达式字符串，支持@case(name,value1,then1,val2,then2)
+	 *                     和 @day(yyMMdd)或@day(yyyyMMdd)、@substr(name,start,length)
+	 *                     等
 	 * @param keyValues
-	 * @param bizDate 在signature为空时生效
+	 * @param bizDate      在signature为空时生效
 	 * @param length
 	 * @param sequenceSize
 	 * @return
@@ -803,18 +809,18 @@ public interface LightDao {
 	/**
 	 * @todo 对数据集合通过反调函数对具体属性进行翻译
 	 *       <p>
-	 *       sqlToyLazyDao.translate(staffVOs<StaffInfoVO>, "staffIdName", new
-	 *       TranslateHandler() { 
-	 *      	//告知key值 
-	 *       	public Object getKey(Object row) {
-	 *       		return ((StaffInfoVO)row).getStaffId(); 
-	 *       	} 
-	 *       	// 将翻译后的名称值设置到对应的属性上 
-	 *       	public void setName(Object row, String name) {
-	 *      		((StaffInfoVO)row).setStaffName(name); 
-	 *      	} 
-	 *      });
-	 *      </p>
+	 *       <li>sqlToyLazyDao.translate(staffVOs<StaffInfoVO>, "staffIdName",
+	 *       <li>----new TranslateHandler() {
+	 *       <li>----//告知key值
+	 *       <li>----public Object getKey(Object row) {
+	 *       <li>--------return ((StaffInfoVO)row).getStaffId();
+	 *       <li>----}
+	 *       <li>----// 将翻译后的名称值设置到对应的属性上
+	 *       <li>----public void setName(Object row, String name) {
+	 *       <li>--------((StaffInfoVO)row).setStaffName(name);
+	 *       <li>----}
+	 *       <li>});
+	 *       </p>
 	 * @param dataSet        数据集合
 	 * @param cacheName      缓存名称
 	 * @param cacheType      例如数据字典存在分类的缓存填写字典分类，其它的如员工、机构等填null

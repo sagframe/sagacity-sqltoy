@@ -14,7 +14,8 @@ import java.util.List;
  */
 public interface DynamicCacheFetch {
 	// sid、properties
-	// 两个属性是在sqltoy-translate.xml中的定义的，给接口扩展提供辅助，只有在local-translate且dynamic-cache="true"场景生效
+	// 两个属性是在sqltoy-translate.xml中的定义的，给接口扩展提供辅助
+	// 只有在local-translate且dynamic-cache="true"场景生效
 	// <local-translate cache="" sid="" properties="" dynamic-cache="true"/>
 	/**
 	 * @TODO 取单个值的缓存数据
