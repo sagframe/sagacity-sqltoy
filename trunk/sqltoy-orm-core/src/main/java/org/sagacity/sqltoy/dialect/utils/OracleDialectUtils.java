@@ -311,93 +311,100 @@ public class OracleDialectUtils {
 		return (StoreResult) SqlUtil.callableStatementProcess(null, callStat, rs, new CallableStatementResultHandler() {
 			@Override
 			public void execute(Object obj, CallableStatement callStat, ResultSet rs) throws Exception {
-				callStat = conn.prepareCall(storeSql);
-				if (fetchSize > 0) {
-					callStat.setFetchSize(fetchSize);
-				}
-				SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, callStat, inParamValues, null, 0);
-				int cursorIndex = -1;
-				int cursorCnt = 0;
-				int inCount = (inParamValues == null) ? 0 : inParamValues.length;
-				int outCount = (outParamTypes == null) ? 0 : outParamTypes.length;
-				// 记录输出集合的index
-				List<Integer> cursorIndexes = new ArrayList<Integer>();
-				// 注册输出参数
-				if (outCount != 0) {
-					for (int i = 0; i < outCount; i++) {
-						callStat.registerOutParameter(i + inCount + 1, outParamTypes[i]);
-						if (OracleTypes.CURSOR == outParamTypes[i].intValue()) {
-							cursorCnt++;
-							cursorIndex = i;
-							cursorIndexes.add(i);
-						}
+				try {
+					callStat = conn.prepareCall(storeSql);
+					if (fetchSize > 0) {
+						callStat.setFetchSize(fetchSize);
 					}
-				}
-				callStat.execute();
-				StoreResult storeResult = new StoreResult();
-				// 只返回最后一个CURSOR 类型的数据集
-				if (cursorIndex != -1) {
-					if (moreResult) {
-						List<String[]> labelsList = new ArrayList<String[]>();
-						List<String[]> labelTypesList = new ArrayList<String[]>();
-						List<List> dataSets = new ArrayList<List>();
-						int meter = 0;
-						SqlToyConfig notFirstConfig = new SqlToyConfig(sqlToyConfig.getId(), sqlToyConfig.getSql());
-						for (int outIndex : cursorIndexes) {
-							rs = (ResultSet) callStat.getObject(inCount + outIndex + 1);
-							if (rs != null) {
-								QueryResult tempResult = ResultUtils.processResultSet(sqlToyContext,
-										(meter == 0) ? sqlToyConfig : notFirstConfig, conn, rs, null, null, null, 0);
-								labelsList.add(tempResult.getLabelNames());
-								labelTypesList.add(tempResult.getLabelTypes());
-								dataSets.add(tempResult.getRows());
-								meter++;
+					SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, callStat, inParamValues, null,
+							0);
+					int cursorIndex = -1;
+					int cursorCnt = 0;
+					int inCount = (inParamValues == null) ? 0 : inParamValues.length;
+					int outCount = (outParamTypes == null) ? 0 : outParamTypes.length;
+					// 记录输出集合的index
+					List<Integer> cursorIndexes = new ArrayList<Integer>();
+					// 注册输出参数
+					if (outCount != 0) {
+						for (int i = 0; i < outCount; i++) {
+							callStat.registerOutParameter(i + inCount + 1, outParamTypes[i]);
+							if (OracleTypes.CURSOR == outParamTypes[i].intValue()) {
+								cursorCnt++;
+								cursorIndex = i;
+								cursorIndexes.add(i);
 							}
 						}
-						storeResult.setLabelsList(labelsList);
-						storeResult.setLabelTypesList(labelTypesList);
-						List[] moreResults = new List[dataSets.size()];
-						dataSets.toArray(moreResults);
-						storeResult.setMoreResults(moreResults);
-						// 默认第一个集合作为后续sql 配置处理的对象(如缓存翻译、格式化等)
-						if (dataSets.size() > 0) {
-							storeResult.setLabelNames(labelsList.get(0));
-							storeResult.setLabelTypes(labelTypesList.get(0));
-							storeResult.setRows(dataSets.get(0));
-						}
-					} else {
-						rs = (ResultSet) callStat.getObject(inCount + cursorIndex + 1);
-						if (rs != null) {
-							QueryResult tempResult = ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn, rs,
-									null, null, null, 0);
-							storeResult.setLabelNames(tempResult.getLabelNames());
-							storeResult.setLabelTypes(tempResult.getLabelTypes());
-							storeResult.setRows(tempResult.getRows());
+					}
+					callStat.execute();
+					StoreResult storeResult = new StoreResult();
+					// 只返回最后一个CURSOR 类型的数据集
+					if (cursorIndex != -1) {
+						if (moreResult) {
+							List<String[]> labelsList = new ArrayList<String[]>();
+							List<String[]> labelTypesList = new ArrayList<String[]>();
+							List<List> dataSets = new ArrayList<List>();
+							int meter = 0;
+							SqlToyConfig notFirstConfig = new SqlToyConfig(sqlToyConfig.getId(), sqlToyConfig.getSql());
+							for (int outIndex : cursorIndexes) {
+								rs = (ResultSet) callStat.getObject(inCount + outIndex + 1);
+								if (rs != null) {
+									QueryResult tempResult = ResultUtils.processResultSet(sqlToyContext,
+											(meter == 0) ? sqlToyConfig : notFirstConfig, conn, rs, null, null, null,
+											0);
+									labelsList.add(tempResult.getLabelNames());
+									labelTypesList.add(tempResult.getLabelTypes());
+									dataSets.add(tempResult.getRows());
+									meter++;
+								}
+							}
+							storeResult.setLabelsList(labelsList);
+							storeResult.setLabelTypesList(labelTypesList);
+							List[] moreResults = new List[dataSets.size()];
+							dataSets.toArray(moreResults);
+							storeResult.setMoreResults(moreResults);
+							// 默认第一个集合作为后续sql 配置处理的对象(如缓存翻译、格式化等)
+							if (dataSets.size() > 0) {
+								storeResult.setLabelNames(labelsList.get(0));
+								storeResult.setLabelTypes(labelTypesList.get(0));
+								storeResult.setRows(dataSets.get(0));
+							}
+						} else {
+							rs = (ResultSet) callStat.getObject(inCount + cursorIndex + 1);
+							if (rs != null) {
+								QueryResult tempResult = ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn,
+										rs, null, null, null, 0);
+								storeResult.setLabelNames(tempResult.getLabelNames());
+								storeResult.setLabelTypes(tempResult.getLabelTypes());
+								storeResult.setRows(tempResult.getRows());
+							}
 						}
 					}
-				}
 
-				// 有返回参数(CURSOR 的类型不包含在内)
-				if (outCount != 0) {
-					Object[] outParams = new Object[outCount - cursorCnt];
-					int index = 0;
-					for (int i = 0; i < outCount; i++) {
-						if (OracleTypes.CURSOR != outParamTypes[i].intValue()) {
-							// 存储过程自动分页第一个返回参数是总记录数
-							outParams[index] = callStat.getObject(i + inCount + 1);
-							index++;
+					// 有返回参数(CURSOR 的类型不包含在内)
+					if (outCount != 0) {
+						Object[] outParams = new Object[outCount - cursorCnt];
+						int index = 0;
+						for (int i = 0; i < outCount; i++) {
+							if (OracleTypes.CURSOR != outParamTypes[i].intValue()) {
+								// 存储过程自动分页第一个返回参数是总记录数
+								outParams[index] = callStat.getObject(i + inCount + 1);
+								index++;
+							}
 						}
+						storeResult.setOutResult(outParams);
 					}
-					storeResult.setOutResult(outParams);
-				}
-				this.setResult(storeResult);
-				if (rs != null) {
-					rs.close();
-					rs = null;
-				}
-				if (callStat != null) {
-					callStat.close();
-					callStat = null;
+					this.setResult(storeResult);
+				} catch (Exception e) {
+					throw e;
+				} finally {
+					if (rs != null) {
+						rs.close();
+						rs = null;
+					}
+					if (callStat != null) {
+						callStat.close();
+						callStat = null;
+					}
 				}
 			}
 		});
@@ -430,20 +437,27 @@ public class OracleDialectUtils {
 				new PreparedStatementResultHandler() {
 					@Override
 					public void execute(Object rowData, PreparedStatement pst, ResultSet rs) throws Exception {
-						pst.setString(1, tableName);
-						rs = pst.executeQuery();
-						Map<String, String> colComments = new HashMap<String, String>();
-						String comment;
-						while (rs.next()) {
-							comment = rs.getString("COMMENTS");
-							if (comment != null) {
-								colComments.put(rs.getString("COLUMN_NAME").toUpperCase(), comment);
+						try {
+							pst.setString(1, tableName);
+							rs = pst.executeQuery();
+							Map<String, String> colComments = new HashMap<String, String>();
+							String comment;
+							String colName;
+							while (rs.next()) {
+								comment = rs.getString("COMMENTS");
+								colName = rs.getString("COLUMN_NAME");
+								if (colName != null && comment != null) {
+									colComments.put(colName.toUpperCase(), comment);
+								}
 							}
-						}
-						this.setResult(colComments);
-						if (rs != null) {
-							rs.close();
-							rs = null;
+							this.setResult(colComments);
+						} catch (Exception e) {
+							throw e;
+						} finally {
+							if (rs != null) {
+								rs.close();
+								rs = null;
+							}
 						}
 					}
 				});
@@ -466,26 +480,31 @@ public class OracleDialectUtils {
 		return (List<TableMeta>) SqlUtil.preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
 			@Override
 			public void execute(Object rowData, PreparedStatement pst, ResultSet rs) throws Exception {
-				if (StringUtil.isNotBlank(tableName)) {
-					if (tableName.contains("%")) {
-						pst.setString(1, tableName);
-					} else {
-						pst.setString(1, "%" + tableName + "%");
+				try {
+					if (StringUtil.isNotBlank(tableName)) {
+						if (tableName.contains("%")) {
+							pst.setString(1, tableName);
+						} else {
+							pst.setString(1, "%" + tableName + "%");
+						}
 					}
-				}
-				rs = pst.executeQuery();
-				List<TableMeta> tables = new ArrayList<TableMeta>();
-				while (rs.next()) {
-					TableMeta tableMeta = new TableMeta();
-					tableMeta.setTableName(rs.getString("TABLE_NAME"));
-					tableMeta.setType(rs.getString("TABLE_TYPE"));
-					tableMeta.setRemarks(rs.getString("COMMENTS"));
-					tables.add(tableMeta);
-				}
-				this.setResult(tables);
-				if (rs != null) {
-					rs.close();
-					rs = null;
+					rs = pst.executeQuery();
+					List<TableMeta> tables = new ArrayList<TableMeta>();
+					while (rs.next()) {
+						TableMeta tableMeta = new TableMeta();
+						tableMeta.setTableName(rs.getString("TABLE_NAME"));
+						tableMeta.setType(rs.getString("TABLE_TYPE"));
+						tableMeta.setRemarks(rs.getString("COMMENTS"));
+						tables.add(tableMeta);
+					}
+					this.setResult(tables);
+				} catch (Exception e) {
+					throw e;
+				} finally {
+					if (rs != null) {
+						rs.close();
+						rs = null;
+					}
 				}
 			}
 		});

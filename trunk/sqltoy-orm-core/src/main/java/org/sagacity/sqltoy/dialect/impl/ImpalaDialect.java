@@ -374,8 +374,9 @@ public class ImpalaDialect implements Dialect {
 		List<ColumnMeta> tableCols = DefaultDialectUtils.getTableColumns(catalog, schema, tableName, conn, dbType,
 				dialect);
 		// 获取主键信息
-		ResultSet rs = conn.createStatement().executeQuery("DESCRIBE " + tableName);
-		Map<String, ColumnMeta> colMap = (Map<String, ColumnMeta>) SqlUtil.preparedStatementProcess(null, null, rs,
+		PreparedStatement pst = conn.prepareStatement("DESCRIBE " + tableName);
+		ResultSet rs = pst.executeQuery();
+		Map<String, ColumnMeta> colMap = (Map<String, ColumnMeta>) SqlUtil.preparedStatementProcess(null, pst, rs,
 				new PreparedStatementResultHandler() {
 					@Override
 					public void execute(Object rowData, PreparedStatement pst, ResultSet rs) throws Exception {

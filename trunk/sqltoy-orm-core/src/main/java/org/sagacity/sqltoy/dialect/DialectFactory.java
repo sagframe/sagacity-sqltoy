@@ -723,11 +723,13 @@ public class DialectFactory {
 			throw new IllegalArgumentException(
 					"findSkipTotalCountPage operate  pageSize:" + pageSize + "<1 or pageNo:" + pageNo + " < 1!");
 		}
+		// 负数表示不限制
 		int limitSize = sqlToyContext.getPageFetchSizeLimit();
 		// 分页查询不允许单页数据超过上限，避免大规模数据提取
-		if (pageSize >= limitSize) {
-			throw new IllegalArgumentException("findSkipTotalCountPage operate args is Illegal,pageSize={" + pageSize
-					+ "}>= limit:{" + limitSize + "}!");
+		if (limitSize > 0 && pageSize >= limitSize) {
+			throw new IllegalArgumentException(
+					"findSkipTotalCountPage非法查询(可设置参数:spring.sqltoy.pageFetchSizeLimit进行调整(-1表示不限制)),pageSize={"
+							+ pageSize + "}>= limitSize:{" + limitSize + "}!");
 		}
 		try {
 			Long startTime = System.currentTimeMillis();
@@ -2233,15 +2235,20 @@ public class DialectFactory {
 							SqlUtil.preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
 								@Override
 								public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws Exception {
-									SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, pst,
-											paramsValue, null, 0);
-									rs = pst.executeQuery();
-									ResultUtils.consumeResult(sqlToyContext, extend, sqlToyConfig, conn, rs,
-											streamResultHandler, (Class) extend.resultType, extend.humpMapLabel,
-											extend.fieldsMap);
-									if (rs != null) {
-										rs.close();
-										rs = null;
+									try {
+										SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, pst,
+												paramsValue, null, 0);
+										rs = pst.executeQuery();
+										ResultUtils.consumeResult(sqlToyContext, extend, sqlToyConfig, conn, rs,
+												streamResultHandler, (Class) extend.resultType, extend.humpMapLabel,
+												extend.fieldsMap);
+									} catch (Exception e) {
+										throw e;
+									} finally {
+										if (rs != null) {
+											rs.close();
+											rs = null;
+										}
 									}
 								}
 							});

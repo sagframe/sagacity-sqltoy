@@ -1110,31 +1110,36 @@ public class SqlServerDialectUtils {
 		return (List<TableMeta>) SqlUtil.preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
 			@Override
 			public void execute(Object rowData, PreparedStatement pst, ResultSet rs) throws Exception {
-				if (StringUtil.isNotBlank(tableName)) {
-					if (tableName.contains("%")) {
-						pst.setString(1, tableName);
-					} else {
-						pst.setString(1, "%" + tableName + "%");
+				try {
+					if (StringUtil.isNotBlank(tableName)) {
+						if (tableName.contains("%")) {
+							pst.setString(1, tableName);
+						} else {
+							pst.setString(1, "%" + tableName + "%");
+						}
 					}
-				}
-				rs = pst.executeQuery();
-				List<TableMeta> tables = new ArrayList<TableMeta>();
-				while (rs.next()) {
-					TableMeta tableMeta = new TableMeta();
-					tableMeta.setTableName(rs.getString("TABLE_NAME"));
-					tableMeta.setType(rs.getString("TABLE_TYPE"));
-					if ("V".equals(tableMeta.getType())) {
-						tableMeta.setType("VIEW");
-					} else {
-						tableMeta.setType("TABLE");
+					rs = pst.executeQuery();
+					List<TableMeta> tables = new ArrayList<TableMeta>();
+					while (rs.next()) {
+						TableMeta tableMeta = new TableMeta();
+						tableMeta.setTableName(rs.getString("TABLE_NAME"));
+						tableMeta.setType(rs.getString("TABLE_TYPE"));
+						if ("V".equals(tableMeta.getType())) {
+							tableMeta.setType("VIEW");
+						} else {
+							tableMeta.setType("TABLE");
+						}
+						tableMeta.setRemarks(rs.getString("COMMENTS"));
+						tables.add(tableMeta);
 					}
-					tableMeta.setRemarks(rs.getString("COMMENTS"));
-					tables.add(tableMeta);
-				}
-				this.setResult(tables);
-				if (rs != null) {
-					rs.close();
-					rs = null;
+					this.setResult(tables);
+				} catch (Exception e) {
+					throw e;
+				} finally {
+					if (rs != null) {
+						rs.close();
+						rs = null;
+					}
 				}
 			}
 		});
@@ -1164,16 +1169,23 @@ public class SqlServerDialectUtils {
 						rs = pst.executeQuery();
 						Map<String, String> colComments = new HashMap<String, String>();
 						String comment;
-						while (rs.next()) {
-							comment = rs.getString("COMMENTS");
-							if (comment != null) {
-								colComments.put(rs.getString("COLUMN_NAME").toUpperCase(), comment);
+						String colName;
+						try {
+							while (rs.next()) {
+								colName = rs.getString("COLUMN_NAME");
+								comment = rs.getString("COMMENTS");
+								if (colName != null && comment != null) {
+									colComments.put(colName.toUpperCase(), comment);
+								}
 							}
-						}
-						this.setResult(colComments);
-						if (rs != null) {
-							rs.close();
-							rs = null;
+							this.setResult(colComments);
+						} catch (Exception e) {
+							throw e;
+						} finally {
+							if (rs != null) {
+								rs.close();
+								rs = null;
+							}
 						}
 					}
 				});

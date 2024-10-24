@@ -3,17 +3,17 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sagframe</groupId>
-	<version>5.6.28</version>
+	<version>5.6.29</version>
 	<name>sagacity-sqltoy-spring</name>
 	<description>sagacity-sqltoy-spring</description>
 	<artifactId>sagacity-sqltoy-spring</artifactId>
 	<url>https://github.com/sagframe/sagacity-sqltoy</url>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<spring-framework.version>6.1.13</spring-framework.version>
-		<spring-data-commons.version>3.3.4</spring-data-commons.version>
-		<spring-data-redis.version>3.3.4</spring-data-redis.version>
-		<spring-data-mongo.version>4.3.4</spring-data-mongo.version>
+		<spring-framework.version>6.1.14</spring-framework.version>
+		<spring-data-commons.version>3.3.5</spring-data-commons.version>
+		<spring-data-redis.version>3.3.5</spring-data-redis.version>
+		<spring-data-mongo.version>4.3.5</spring-data-mongo.version>
 		<mongo.version>5.2.0</mongo.version>
 		<slf4j.version>2.0.16</slf4j.version>
 		<caffeine.version>3.1.8</caffeine.version>
