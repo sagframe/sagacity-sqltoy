@@ -422,111 +422,119 @@ public class DefaultDialectUtils {
 								null, 0);
 						// 执行类似 select xxx from table for update(sqlserver语法有差异)
 						ResultSet finalRs = pst.executeQuery();
-						int rowCnt = finalRs.getMetaData().getColumnCount();
-						int index = 0;
-						List result = new ArrayList();
-						DataVersionConfig dataVersion = entityMeta.getDataVersion();
-						final String dataVersionField = (dataVersion == null) ? null : dataVersion.getField();
-						while (finalRs.next()) {
-							if (index > 0) {
-								throw new DataAccessException("updateSaveFetch操作只能针对单条记录进行操作,请检查uniqueProps参数设置!");
-							}
-							// 存在修改记录
-							if (hasUpdateRow) {
-								SqlExecuteStat.debug("执行updateRow", "记录存在调用updateRowHandler.updateRow!");
-								// 存在数据版本:1、校验当前的版本是否为null(目前跳过)；2、对比传递过来的版本值跟数据库中的值是否一致；3、修改数据库中数据版本+1
-								if (dataVersion != null) {
-									String nowVersion = finalRs.getString(entityMeta.getColumnName(dataVersionField));
-									if (entityVersion != null && !entityVersion.toString().equals(nowVersion)) {
-										throw new IllegalArgumentException("表:" + entityMeta.getTableName()
-												+ " 存在版本@DataVersion配置，在updateSaveFetch做更新时，属性:" + dataVersionField
-												+ " 值不等于当前数据库中的值:" + entityVersion + "<>" + nowVersion
-												+ ",说明数据已经被修改过!");
-									}
-									// 以日期开头
-									if (dataVersion.isStartDate()) {
-										String nowDate = DateUtil.formatDate(DateUtil.getNowTime(),
-												DateUtil.FORMAT.DATE_8CHAR);
-										if (nowVersion.startsWith(nowDate)) {
-											nowVersion = nowDate + (Integer.parseInt(nowVersion.substring(8)) + 1);
-										} else {
-											nowVersion = nowDate + 1;
-										}
-									} else {
-										nowVersion = "" + (Integer.parseInt(nowVersion) + 1);
-									}
-									// 修改数据版本
-									resultUpdate(conn, finalRs, entityMeta.getFieldMeta(dataVersionField), nowVersion,
-											dbType, false);
+						try {
+							int rowCnt = finalRs.getMetaData().getColumnCount();
+							int index = 0;
+							List result = new ArrayList();
+							DataVersionConfig dataVersion = entityMeta.getDataVersion();
+							final String dataVersionField = (dataVersion == null) ? null : dataVersion.getField();
+							while (finalRs.next()) {
+								if (index > 0) {
+									throw new DataAccessException("updateSaveFetch操作只能针对单条记录进行操作,请检查uniqueProps参数设置!");
 								}
-								// 执行update反调，实现锁定行记录值的修改
-								updateRowHandler.updateRow(finalRs, index);
-								updateRowHandler.updateRow(finalRs, index, (fieldName, fieldValue) -> {
-									// 排除dataVersionField字段避免被重复处理
-									if (dataVersionField == null || !fieldName.equals(dataVersionField)) {
-										Optional.ofNullable(entityMeta.getFieldMeta(fieldName)).ifPresent(fieldMeta -> {
-											try {
-												resultUpdate(conn, finalRs, fieldMeta, fieldValue, dbType, false);
-											} catch (Exception e) {
-												throw new RuntimeException(e);
-											}
-										});
-									}
-								});
-								// 考虑公共字段修改
-								if (unifyFieldsHandler != null && unifyFieldsHandler.updateUnifyFields() != null) {
-									Map<String, Object> updateProps = unifyFieldsHandler.updateUnifyFields();
-									String field;
-									FieldMeta fieldMeta;
-									Object fieldValue;
-									for (Map.Entry<String, Object> entry : updateProps.entrySet()) {
-										field = entry.getKey();
-										fieldValue = entry.getValue();
-										fieldMeta = entityMeta.getFieldMeta(field);
-										// 存在公共的修改属性
-										if (fieldMeta != null) {
-											// 强制修改
-											if (unifyFieldsHandler.forceUpdateFields() != null
-													&& unifyFieldsHandler.forceUpdateFields().contains(field)) {
-												resultUpdate(conn, finalRs, fieldMeta, fieldValue, dbType, false);
+								// 存在修改记录
+								if (hasUpdateRow) {
+									SqlExecuteStat.debug("执行updateRow", "记录存在调用updateRowHandler.updateRow!");
+									// 存在数据版本:1、校验当前的版本是否为null(目前跳过)；2、对比传递过来的版本值跟数据库中的值是否一致；3、修改数据库中数据版本+1
+									if (dataVersion != null) {
+										String nowVersion = finalRs
+												.getString(entityMeta.getColumnName(dataVersionField));
+										if (entityVersion != null && !entityVersion.toString().equals(nowVersion)) {
+											throw new IllegalArgumentException("表:" + entityMeta.getTableName()
+													+ " 存在版本@DataVersion配置，在updateSaveFetch做更新时，属性:" + dataVersionField
+													+ " 值不等于当前数据库中的值:" + entityVersion + "<>" + nowVersion
+													+ ",说明数据已经被修改过!");
+										}
+										// 以日期开头
+										if (dataVersion.isStartDate()) {
+											String nowDate = DateUtil.formatDate(DateUtil.getNowTime(),
+													DateUtil.FORMAT.DATE_8CHAR);
+											if (nowVersion.startsWith(nowDate)) {
+												nowVersion = nowDate + (Integer.parseInt(nowVersion.substring(8)) + 1);
 											} else {
-												// 反射对象属性取值
-												Object pojoFieldValue = BeanUtil.getProperty(entity, field);
-												// 不为null，则以对象传递的值为准
-												if (pojoFieldValue != null) {
-													fieldValue = pojoFieldValue;
+												nowVersion = nowDate + 1;
+											}
+										} else {
+											nowVersion = "" + (Integer.parseInt(nowVersion) + 1);
+										}
+										// 修改数据版本
+										resultUpdate(conn, finalRs, entityMeta.getFieldMeta(dataVersionField),
+												nowVersion, dbType, false);
+									}
+									// 执行update反调，实现锁定行记录值的修改
+									updateRowHandler.updateRow(finalRs, index);
+									updateRowHandler.updateRow(finalRs, index, (fieldName, fieldValue) -> {
+										// 排除dataVersionField字段避免被重复处理
+										if (dataVersionField == null || !fieldName.equals(dataVersionField)) {
+											Optional.ofNullable(entityMeta.getFieldMeta(fieldName))
+													.ifPresent(fieldMeta -> {
+														try {
+															resultUpdate(conn, finalRs, fieldMeta, fieldValue, dbType,
+																	false);
+														} catch (Exception e) {
+															throw new RuntimeException(e);
+														}
+													});
+										}
+									});
+									// 考虑公共字段修改
+									if (unifyFieldsHandler != null && unifyFieldsHandler.updateUnifyFields() != null) {
+										Map<String, Object> updateProps = unifyFieldsHandler.updateUnifyFields();
+										String field;
+										FieldMeta fieldMeta;
+										Object fieldValue;
+										for (Map.Entry<String, Object> entry : updateProps.entrySet()) {
+											field = entry.getKey();
+											fieldValue = entry.getValue();
+											fieldMeta = entityMeta.getFieldMeta(field);
+											// 存在公共的修改属性
+											if (fieldMeta != null) {
+												// 强制修改
+												if (unifyFieldsHandler.forceUpdateFields() != null
+														&& unifyFieldsHandler.forceUpdateFields().contains(field)) {
+													resultUpdate(conn, finalRs, fieldMeta, fieldValue, dbType, false);
+												} else {
+													// 反射对象属性取值
+													Object pojoFieldValue = BeanUtil.getProperty(entity, field);
+													// 不为null，则以对象传递的值为准
+													if (pojoFieldValue != null) {
+														fieldValue = pojoFieldValue;
+													}
+													resultUpdate(conn, finalRs, fieldMeta, fieldValue, dbType, false);
 												}
-												resultUpdate(conn, finalRs, fieldMeta, fieldValue, dbType, false);
 											}
 										}
 									}
+									// 执行update
+									finalRs.updateRow();
 								}
-								// 执行update
-								finalRs.updateRow();
+								index++;
+								// 重新获得修改后的值
+								result.add(ResultUtils.processResultRow(finalRs, 0, rowCnt, false));
 							}
-							index++;
-							// 重新获得修改后的值
-							result.add(ResultUtils.processResultRow(finalRs, 0, rowCnt, false));
-						}
-						// 没有查询到记录，表示是需要首次插入
-						if (index == 0) {
-							SqlExecuteStat.debug("执行insertRow", "查询未匹配到结果则进行首次插入!");
-							// 移到插入行
-							finalRs.moveToInsertRow();
-							FieldMeta fieldMeta;
-							Object[] fullFieldvalues = (fieldValues == null)
-									? processFieldValues(sqlToyContext, entityMeta, entity)
-									: fieldValues;
-							for (int i = 0; i < entityMeta.getFieldsArray().length; i++) {
-								fieldMeta = entityMeta.getFieldMeta(entityMeta.getFieldsArray()[i]);
-								resultUpdate(conn, finalRs, fieldMeta, fullFieldvalues[i], dbType, true);
+							// 没有查询到记录，表示是需要首次插入
+							if (index == 0) {
+								SqlExecuteStat.debug("执行insertRow", "查询未匹配到结果则进行首次插入!");
+								// 移到插入行
+								finalRs.moveToInsertRow();
+								FieldMeta fieldMeta;
+								Object[] fullFieldvalues = (fieldValues == null)
+										? processFieldValues(sqlToyContext, entityMeta, entity)
+										: fieldValues;
+								for (int i = 0; i < entityMeta.getFieldsArray().length; i++) {
+									fieldMeta = entityMeta.getFieldMeta(entityMeta.getFieldsArray()[i]);
+									resultUpdate(conn, finalRs, fieldMeta, fullFieldvalues[i], dbType, true);
+								}
+								// 执行插入
+								finalRs.insertRow();
 							}
-							// 执行插入
-							finalRs.insertRow();
-						}
-						this.setResult(result);
-						if (finalRs != null) {
-							finalRs.close();
+							this.setResult(result);
+						} catch (Exception e) {
+							throw e;
+						} finally {
+							if (finalRs != null) {
+								finalRs.close();
+							}
 						}
 					}
 				});

@@ -273,13 +273,18 @@ public class DialectUtils {
 		return (QueryResult) SqlUtil.preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
 			@Override
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws Exception {
-				SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, pst, paramsValue, null, 0);
-				rs = pst.executeQuery();
-				this.setResult(ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn, rs, extend, null,
-						decryptHandler, startIndex));
-				if (rs != null) {
-					rs.close();
-					rs = null;
+				try {
+					SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, pst, paramsValue, null, 0);
+					rs = pst.executeQuery();
+					this.setResult(ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn, rs, extend, null,
+							decryptHandler, startIndex));
+				} catch (Exception e) {
+					throw e;
+				} finally {
+					if (rs != null) {
+						rs.close();
+						rs = null;
+					}
 				}
 			}
 		});
@@ -324,13 +329,18 @@ public class DialectUtils {
 		return (QueryResult) SqlUtil.preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
 			@Override
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws Exception {
-				SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, pst, paramsValue, null, 0);
-				rs = pst.executeQuery();
-				this.setResult(ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn, rs, null,
-						updateRowHandler, null, startIndex));
-				if (rs != null) {
-					rs.close();
-					rs = null;
+				try {
+					SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, pst, paramsValue, null, 0);
+					rs = pst.executeQuery();
+					this.setResult(ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn, rs, null,
+							updateRowHandler, null, startIndex));
+				} catch (Exception e) {
+					throw e;
+				} finally {
+					if (rs != null) {
+						rs.close();
+						rs = null;
+					}
 				}
 			}
 		});
@@ -468,17 +478,22 @@ public class DialectUtils {
 			@Override
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
 				long resultCount = 0;
-				if (realParams != null) {
-					SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, pst, realParams, null, 0);
-				}
-				rs = pst.executeQuery();
-				if (rs.next()) {
-					resultCount = rs.getLong(1);
-				}
-				this.setResult(resultCount);
-				if (rs != null) {
-					rs.close();
-					rs = null;
+				try {
+					if (realParams != null) {
+						SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, pst, realParams, null, 0);
+					}
+					rs = pst.executeQuery();
+					if (rs.next()) {
+						resultCount = rs.getLong(1);
+					}
+					this.setResult(resultCount);
+				} catch (Exception e) {
+					throw e;
+				} finally {
+					if (rs != null) {
+						rs.close();
+						rs = null;
+					}
 				}
 			}
 		});
@@ -2814,91 +2829,96 @@ public class DialectUtils {
 		return (StoreResult) SqlUtil.callableStatementProcess(null, callStat, rs, new CallableStatementResultHandler() {
 			@Override
 			public void execute(Object obj, CallableStatement callStat, ResultSet rs) throws Exception {
-				callStat = conn.prepareCall(storeSql);
-				if (fetchSize > 0) {
-					callStat.setFetchSize(fetchSize);
-				}
-				boolean isFirstResult = StringUtil.matches(storeSql, STORE_PATTERN);
-				int addIndex = isFirstResult ? 1 : 0;
-				SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, callStat, inParamValues, null,
-						addIndex);
-				int inCount = (inParamValues == null) ? 0 : inParamValues.length;
-				int outCount = (outParamTypes == null) ? 0 : outParamTypes.length;
-				// 注册输出参数
-				if (outCount != 0) {
-					if (isFirstResult) {
-						callStat.registerOutParameter(1, outParamTypes[0]);
+				try {
+					callStat = conn.prepareCall(storeSql);
+					if (fetchSize > 0) {
+						callStat.setFetchSize(fetchSize);
 					}
-					for (int i = addIndex; i < outCount; i++) {
-						callStat.registerOutParameter(i + inCount + 1, outParamTypes[i]);
-					}
-				}
-				StoreResult storeResult = new StoreResult();
-				// 存在多个返回集合
-				if (moreResult) {
-					boolean hasResult = callStat.execute();
-					List<String[]> labelsList = new ArrayList<String[]>();
-					List<String[]> labelTypesList = new ArrayList<String[]>();
-					List<List> dataSets = new ArrayList<List>();
-					int meter = 0;
-					SqlToyConfig notFirstConfig = new SqlToyConfig(sqlToyConfig.getId(), sqlToyConfig.getSql());
-					while (hasResult) {
-						rs = callStat.getResultSet();
-						if (rs != null) {
-							QueryResult tempResult = ResultUtils.processResultSet(sqlToyContext,
-									(meter == 0) ? sqlToyConfig : notFirstConfig, conn, rs, null, null, null, 0);
-							labelsList.add(tempResult.getLabelNames());
-							labelTypesList.add(tempResult.getLabelTypes());
-							dataSets.add(tempResult.getRows());
-							meter++;
+					boolean isFirstResult = StringUtil.matches(storeSql, STORE_PATTERN);
+					int addIndex = isFirstResult ? 1 : 0;
+					SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, callStat, inParamValues, null,
+							addIndex);
+					int inCount = (inParamValues == null) ? 0 : inParamValues.length;
+					int outCount = (outParamTypes == null) ? 0 : outParamTypes.length;
+					// 注册输出参数
+					if (outCount != 0) {
+						if (isFirstResult) {
+							callStat.registerOutParameter(1, outParamTypes[0]);
 						}
-						hasResult = callStat.getMoreResults();
-					}
-					storeResult.setLabelsList(labelsList);
-					storeResult.setLabelTypesList(labelTypesList);
-					List[] moreResults = new List[dataSets.size()];
-					dataSets.toArray(moreResults);
-					storeResult.setMoreResults(moreResults);
-					// 默认第一个集合作为后续sql 配置处理的对象(如缓存翻译、格式化等)
-					if (dataSets.size() > 0) {
-						storeResult.setLabelNames(labelsList.get(0));
-						storeResult.setLabelTypes(labelTypesList.get(0));
-						storeResult.setRows(dataSets.get(0));
-					}
-				} else {
-					boolean hasResult = callStat.execute();
-					if (hasResult) {
-						rs = callStat.getResultSet();
-						if (rs != null) {
-							QueryResult tempResult = ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn, rs,
-									null, null, null, 0);
-							storeResult.setLabelNames(tempResult.getLabelNames());
-							storeResult.setLabelTypes(tempResult.getLabelTypes());
-							storeResult.setRows(tempResult.getRows());
+						for (int i = addIndex; i < outCount; i++) {
+							callStat.registerOutParameter(i + inCount + 1, outParamTypes[i]);
 						}
 					}
-				}
+					StoreResult storeResult = new StoreResult();
+					// 存在多个返回集合
+					if (moreResult) {
+						boolean hasResult = callStat.execute();
+						List<String[]> labelsList = new ArrayList<String[]>();
+						List<String[]> labelTypesList = new ArrayList<String[]>();
+						List<List> dataSets = new ArrayList<List>();
+						int meter = 0;
+						SqlToyConfig notFirstConfig = new SqlToyConfig(sqlToyConfig.getId(), sqlToyConfig.getSql());
+						while (hasResult) {
+							rs = callStat.getResultSet();
+							if (rs != null) {
+								QueryResult tempResult = ResultUtils.processResultSet(sqlToyContext,
+										(meter == 0) ? sqlToyConfig : notFirstConfig, conn, rs, null, null, null, 0);
+								labelsList.add(tempResult.getLabelNames());
+								labelTypesList.add(tempResult.getLabelTypes());
+								dataSets.add(tempResult.getRows());
+								meter++;
+							}
+							hasResult = callStat.getMoreResults();
+						}
+						storeResult.setLabelsList(labelsList);
+						storeResult.setLabelTypesList(labelTypesList);
+						List[] moreResults = new List[dataSets.size()];
+						dataSets.toArray(moreResults);
+						storeResult.setMoreResults(moreResults);
+						// 默认第一个集合作为后续sql 配置处理的对象(如缓存翻译、格式化等)
+						if (dataSets.size() > 0) {
+							storeResult.setLabelNames(labelsList.get(0));
+							storeResult.setLabelTypes(labelTypesList.get(0));
+							storeResult.setRows(dataSets.get(0));
+						}
+					} else {
+						boolean hasResult = callStat.execute();
+						if (hasResult) {
+							rs = callStat.getResultSet();
+							if (rs != null) {
+								QueryResult tempResult = ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn,
+										rs, null, null, null, 0);
+								storeResult.setLabelNames(tempResult.getLabelNames());
+								storeResult.setLabelTypes(tempResult.getLabelTypes());
+								storeResult.setRows(tempResult.getRows());
+							}
+						}
+					}
 
-				// 有返回参数如:(?=call (? in,? out) )
-				if (outCount != 0) {
-					Object[] outParams = new Object[outCount];
-					if (isFirstResult) {
-						outParams[0] = callStat.getObject(1);
+					// 有返回参数如:(?=call (? in,? out) )
+					if (outCount != 0) {
+						Object[] outParams = new Object[outCount];
+						if (isFirstResult) {
+							outParams[0] = callStat.getObject(1);
+						}
+						for (int i = addIndex; i < outCount; i++) {
+							outParams[i] = callStat.getObject(i + inCount + 1);
+						}
+						storeResult.setOutResult(outParams);
 					}
-					for (int i = addIndex; i < outCount; i++) {
-						outParams[i] = callStat.getObject(i + inCount + 1);
+					storeResult.setUpdateCount(Long.valueOf(callStat.getUpdateCount()));
+					this.setResult(storeResult);
+				} catch (Exception e) {
+					throw e;
+				} finally {
+					if (rs != null) {
+						rs.close();
+						rs = null;
 					}
-					storeResult.setOutResult(outParams);
-				}
-				storeResult.setUpdateCount(Long.valueOf(callStat.getUpdateCount()));
-				this.setResult(storeResult);
-				if (rs != null) {
-					rs.close();
-					rs = null;
-				}
-				if (callStat != null) {
-					callStat.close();
-					callStat = null;
+					if (callStat != null) {
+						callStat.close();
+						callStat = null;
+					}
 				}
 			}
 		});

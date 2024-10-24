@@ -160,6 +160,7 @@ public class DDLFactory {
 						} finally {
 							if (rs != null) {
 								rs.close();
+								rs = null;
 							}
 						}
 						// 数据库不存在当前表，则进行创建

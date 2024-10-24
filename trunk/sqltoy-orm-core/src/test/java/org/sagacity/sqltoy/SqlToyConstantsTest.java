@@ -5,7 +5,6 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Hashtable;
@@ -16,8 +15,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Test;
-import org.sagacity.sqltoy.config.SqlConfigParseUtils;
-import org.sagacity.sqltoy.config.model.DataType;
 import org.sagacity.sqltoy.demo.vo.A1;
 import org.sagacity.sqltoy.demo.vo.A2;
 import org.sagacity.sqltoy.demo.vo.B1;
@@ -27,7 +24,6 @@ import org.sagacity.sqltoy.model.DateType;
 import org.sagacity.sqltoy.model.MapKit;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.MapperUtils;
-import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 import com.alibaba.fastjson2.JSON;

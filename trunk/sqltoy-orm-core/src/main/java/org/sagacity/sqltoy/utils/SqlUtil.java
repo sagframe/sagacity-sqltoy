@@ -1006,13 +1006,18 @@ public class SqlUtil {
 		List result = (List) preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
 			@Override
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws Exception {
-				setParamsValue(typeHandler, conn, dbType, pst, params, null, 0);
-				rs = pst.executeQuery();
-				this.setResult(processResultSet(typeHandler, rs, voClass, rowCallbackHandler, decryptHandler, 0,
-						ignoreAllEmptySet, colFieldMap));
-				if (rs != null) {
-					rs.close();
-					rs = null;
+				try {
+					setParamsValue(typeHandler, conn, dbType, pst, params, null, 0);
+					rs = pst.executeQuery();
+					this.setResult(processResultSet(typeHandler, rs, voClass, rowCallbackHandler, decryptHandler, 0,
+							ignoreAllEmptySet, colFieldMap));
+				} catch (Exception e) {
+					throw e;
+				} finally {
+					if (rs != null) {
+						rs.close();
+						rs = null;
+					}
 				}
 			}
 		});
