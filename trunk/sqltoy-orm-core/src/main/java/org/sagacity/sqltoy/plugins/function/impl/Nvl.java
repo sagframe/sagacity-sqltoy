@@ -55,7 +55,7 @@ public class Nvl extends IFunction {
 			return wrapArgs("isnull", args);
 		}
 		if (dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL15 || dialect == DBType.DB2
-				|| dialect == DBType.GAUSSDB || dialect == DBType.MOGDB || dialect == DBType.H2) {
+				|| dialect == DBType.GAUSSDB || dialect == DBType.MOGDB || dialect == DBType.VASTBASE || dialect == DBType.H2) {
 			return wrapArgs("coalesce", args);
 		}
 		if (dialect == DBType.MYSQL || dialect == DBType.TIDB || dialect == DBType.MYSQL57) {

@@ -244,7 +244,7 @@ public class DialectExtUtils {
 					}
 				} else if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.POSTGRESQL
 						|| dbType == DBType.POSTGRESQL15 || dbType == DBType.DM || dbType == DBType.GAUSSDB
-						|| dbType == DBType.MOGDB || dbType == DBType.OCEANBASE || dbType == DBType.SQLITE
+						|| dbType == DBType.MOGDB || dbType == DBType.VASTBASE || dbType == DBType.OCEANBASE || dbType == DBType.SQLITE
 						|| dbType == DBType.KINGBASE || dbType == DBType.SQLSERVER || dbType == DBType.TIDB
 						|| dbType == DBType.H2) {
 					if (isCurrentTime) {

@@ -2192,7 +2192,7 @@ public class DialectUtils {
 			public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 				PKStrategy pkStrategy = entityMeta.getIdStrategy();
 				String sequence = "nextval('" + entityMeta.getSequence() + "')";
-				if ((dbType == DBType.GAUSSDB || dbType == DBType.MOGDB) && pkStrategy != null
+				if ((dbType == DBType.GAUSSDB || dbType == DBType.MOGDB || dbType == DBType.VASTBASE) && pkStrategy != null
 						&& pkStrategy.equals(PKStrategy.SEQUENCE)) {
 					sequence = entityMeta.getSequence() + ".nextval";
 				}
@@ -2206,6 +2206,8 @@ public class DialectUtils {
 					isAssignPK = GaussDialectUtils.isAssignPKValue(pkStrategy);
 				} else if (dbType == DBType.MOGDB) {
 					isAssignPK = MogDBDialectUtils.isAssignPKValue(pkStrategy);
+				} else if(dbType == DBType.VASTBASE){
+					isAssignPK = VastbaseDialectUtils.isAssignPKValue(pkStrategy);
 				}
 				return DialectExtUtils.insertIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 						pkStrategy, "COALESCE", sequence, isAssignPK, tableName);

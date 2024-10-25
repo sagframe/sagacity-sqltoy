@@ -706,7 +706,7 @@ public class DefaultDialectUtils {
 	private static void setArray(Integer dbType, Connection conn, ResultSet rs, String columnName, Object paramValue)
 			throws SQLException {
 		// 目前只支持Integer 和 String两种类型
-		if (dbType == DBType.GAUSSDB || dbType == DBType.MOGDB) {
+		if (dbType == DBType.GAUSSDB || dbType == DBType.MOGDB || dbType == DBType.VASTBASE) {
 			if (paramValue instanceof Integer[]) {
 				Array array = conn.createArrayOf("INTEGER", (Integer[]) paramValue);
 				rs.updateArray(columnName, array);
