@@ -48,6 +48,7 @@ public class ToChar extends IFunction {
 		case DBType.ORACLE:
 		case DBType.GAUSSDB:
 		case DBType.MOGDB:
+		case DBType.VASTBASE:
 		case DBType.OCEANBASE:
 		case DBType.DM:
 		case DBType.ORACLE11: {

@@ -54,6 +54,7 @@ public class DDLFactory {
 		}
 		case DBType.GAUSSDB:
 		case DBType.MOGDB:
+		case DBType.VASTBASE:
 		case DBType.POSTGRESQL:
 		case DBType.POSTGRESQL15: {
 			generator = new PostgreSqlDDLGenerator();

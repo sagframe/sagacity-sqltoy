@@ -391,7 +391,7 @@ public class SqlUtil {
 			pst.setString(paramIndex, tmpStr);
 		} else if (paramValue instanceof byte[]) {
 			if (jdbcType == java.sql.Types.BLOB) {
-				if (dbType == DBType.MOGDB) {
+				if (dbType == DBType.MOGDB || dbType == DBType.VASTBASE) {
 					pst.setBlob(paramIndex, new ByteArrayInputStream((byte[]) paramValue));
 				} else {
 					Blob blob = null;
@@ -485,7 +485,7 @@ public class SqlUtil {
 	private static void setArray(Integer dbType, Connection conn, PreparedStatement pst, int paramIndex,
 			Object paramValue) throws SQLException {
 		// 目前只支持Integer 和 String两种类型
-		if (dbType == DBType.GAUSSDB || dbType == DBType.MOGDB) {
+		if (dbType == DBType.GAUSSDB || dbType == DBType.MOGDB || dbType == DBType.VASTBASE) {
 			if (paramValue instanceof Integer[]) {
 				Array array = conn.createArrayOf("INTEGER", (Integer[]) paramValue);
 				pst.setArray(paramIndex, array);
@@ -932,7 +932,7 @@ public class SqlUtil {
 			sql = "select nextval('" + sequence + "')";
 		} else if (dbType == DBType.SQLSERVER) {
 			sql = "select NEXT VALUE FOR " + sequence;
-		} else if (dbType == DBType.GAUSSDB || dbType == DBType.MOGDB || dbType == DBType.OCEANBASE
+		} else if (dbType == DBType.GAUSSDB || dbType == DBType.MOGDB || dbType == DBType.VASTBASE || dbType == DBType.OCEANBASE
 				|| dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
 			sql = "select " + sequence + ".nextval";
 		} else {
@@ -2010,7 +2010,7 @@ public class SqlUtil {
 						|| dbType == DBType.POSTGRESQL15 || dbType == DBType.KINGBASE || dbType == DBType.DB2
 						|| dbType == DBType.OCEANBASE) {
 					return "current_time";
-				} else if (dbType == DBType.GAUSSDB || dbType == DBType.MOGDB) {
+				} else if (dbType == DBType.GAUSSDB || dbType == DBType.MOGDB || dbType == DBType.VASTBASE) {
 					return "now()";
 				} else if (dbType == DBType.SQLSERVER) {
 					return "getdate()";
