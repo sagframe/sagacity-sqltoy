@@ -49,7 +49,7 @@ public class GaussDialectUtils {
 	public static PKStrategy getSavePkStrategy(EntityMeta entityMeta, Serializable entity, Integer dbType,
 			Connection conn) {
 		PKStrategy pkStrategy = entityMeta.getIdStrategy();
-		// gaussdb\mogdb 主键策略是sequence模式需要先获取主键值
+		// gaussdb\mogdb\vastbase 主键策略是sequence模式需要先获取主键值
 		if (pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE)) {
 			// 取实体对象的主键值
 			Object id = BeanUtil.getProperty(entity, entityMeta.getIdArray()[0]);

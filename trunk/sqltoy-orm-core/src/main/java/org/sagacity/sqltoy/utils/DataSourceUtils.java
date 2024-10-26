@@ -203,7 +203,6 @@ public class DataSourceUtils {
 
 		// 默认设置oscar、vastbase数据库用gaussdb方言来实现
 		dialectMap.put(Dialect.OSCAR, Dialect.GAUSSDB);
-		//dialectMap.put(Dialect.VASTBASE, Dialect.GAUSSDB);
 	}
 
 	/**

@@ -928,7 +928,7 @@ public class DefaultDialectUtils {
 	}
 
 	/**
-	 * @TODO 获取表的索引信息
+	 * @TODO 获取表的索引信息(这里只能用于标记字段是否是索引列)
 	 * @param catalog
 	 * @param schema
 	 * @param tableName
@@ -941,14 +941,17 @@ public class DefaultDialectUtils {
 	@SuppressWarnings("unchecked")
 	public static Map<String, ColumnMeta> getTableIndexes(String catalog, String schema, String tableName,
 			Connection conn, final Integer dbType, String dialect) throws Exception {
-		ResultSet rs = null;
-		try {
-			rs = conn.getMetaData().getIndexInfo(catalog, schema, tableName, false, false);
-		} catch (Exception e) {
-
+		if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11) {
+			return getOracleTableIndexes(catalog, schema, tableName, conn, dbType, dialect);
 		}
-		if (rs != null) {
-			return (Map<String, ColumnMeta>) SqlUtil.preparedStatementProcess(null, null, rs,
+		Map<String, ColumnMeta> result = new HashMap<>();
+		boolean[] uniqueAndNotUnique = { false, true };
+		ResultSet rs;
+		Map<String, ColumnMeta> tableIndexes;
+		for (int i = 0; i < uniqueAndNotUnique.length; i++) {
+			boolean isUnique = uniqueAndNotUnique[i];
+			rs = conn.getMetaData().getIndexInfo(catalog, schema, tableName, false, false);
+			tableIndexes = (Map<String, ColumnMeta>) SqlUtil.preparedStatementProcess(null, null, rs,
 					new PreparedStatementResultHandler() {
 						@Override
 						public void execute(Object rowData, PreparedStatement pst, ResultSet rs) throws Exception {
@@ -957,42 +960,48 @@ public class DefaultDialectUtils {
 								ColumnMeta colMeta = new ColumnMeta();
 								colMeta.setColName(rs.getString("COLUMN_NAME"));
 								colMeta.setIndex(true);
-								colMeta.setUnique(!rs.getBoolean("NON_UNIQUE"));
+								colMeta.setUnique(isUnique);
 								colMeta.setIndexName(rs.getString("INDEX_NAME"));
 								indexsMeta.put(colMeta.getColName(), colMeta);
 							}
 							this.setResult(indexsMeta);
 						}
 					});
-		} // 针对旧版本jdbc驱动起作用
-		else if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11) {
-			String tableNameUp = tableName.toUpperCase();
-			String sql = "SELECT t1.INDEX_NAME,t1.COLUMN_NAME,t0.UNIQUENESS FROM USER_IND_COLUMNS t1 LEFT JOIN "
-					+ " (SELECT INDEX_NAME,UNIQUENESS FROM USER_INDEXES WHERE TABLE_NAME ='" + tableNameUp + "') t0 ON "
-					+ " t1.INDEX_NAME = t0.INDEX_NAME WHERE TABLE_NAME ='" + tableNameUp + "'";
-			rs = conn.createStatement().executeQuery(sql);
-			return (Map<String, ColumnMeta>) SqlUtil.preparedStatementProcess(null, null, rs,
-					new PreparedStatementResultHandler() {
-
-						@Override
-						public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException {
-							Map<String, ColumnMeta> indexsMeta = new HashMap<String, ColumnMeta>();
-							while (rs.next()) {
-								ColumnMeta colMeta = new ColumnMeta();
-								colMeta.setColName(rs.getString("COLUMN_NAME"));
-								colMeta.setIndex(true);
-								if ("UNIQUE".equalsIgnoreCase(rs.getString("UNIQUENESS"))) {
-									colMeta.setUnique(true);
-								}
-								colMeta.setIndexName(rs.getString("INDEX_NAME"));
-								indexsMeta.put(colMeta.getColName(), colMeta);
-							}
-							this.setResult(indexsMeta);
-						}
-
-					});
+			if (tableIndexes != null) {
+				result.putAll(tableIndexes);
+			}
 		}
-		return null;
+		return result;
+	}
+
+	@SuppressWarnings("unchecked")
+	private static Map<String, ColumnMeta> getOracleTableIndexes(String catalog, String schema, String tableName,
+			Connection conn, final Integer dbType, String dialect) throws Exception {
+		String tableNameUp = tableName.toUpperCase();
+		String sql = "SELECT t1.INDEX_NAME,t1.COLUMN_NAME,t0.UNIQUENESS FROM USER_IND_COLUMNS t1 LEFT JOIN "
+				+ " (SELECT INDEX_NAME,UNIQUENESS FROM USER_INDEXES WHERE TABLE_NAME ='" + tableNameUp + "') t0 ON "
+				+ " t1.INDEX_NAME = t0.INDEX_NAME WHERE TABLE_NAME ='" + tableNameUp + "'";
+		ResultSet rs = conn.createStatement().executeQuery(sql);
+		return (Map<String, ColumnMeta>) SqlUtil.preparedStatementProcess(null, null, rs,
+				new PreparedStatementResultHandler() {
+
+					@Override
+					public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException {
+						Map<String, ColumnMeta> indexsMeta = new HashMap<String, ColumnMeta>();
+						while (rs.next()) {
+							ColumnMeta colMeta = new ColumnMeta();
+							colMeta.setColName(rs.getString("COLUMN_NAME"));
+							colMeta.setIndex(true);
+							if ("UNIQUE".equalsIgnoreCase(rs.getString("UNIQUENESS"))) {
+								colMeta.setUnique(true);
+							}
+							colMeta.setIndexName(rs.getString("INDEX_NAME"));
+							indexsMeta.put(colMeta.getColName(), colMeta);
+						}
+						this.setResult(indexsMeta);
+					}
+
+				});
 	}
 
 	/**
@@ -1030,7 +1039,8 @@ public class DefaultDialectUtils {
 							this.setResult(pkMeta);
 						}
 					});
-		} else if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57) {
+		} // 针对starrocks(用的mysql驱动)
+		else if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57) {
 			rs = conn.createStatement().executeQuery("desc " + tableName);
 			return (Map<String, ColumnMeta>) SqlUtil.preparedStatementProcess(null, null, rs,
 					new PreparedStatementResultHandler() {
