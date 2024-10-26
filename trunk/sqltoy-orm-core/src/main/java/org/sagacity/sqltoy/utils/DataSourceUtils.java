@@ -784,7 +784,8 @@ public class DataSourceUtils {
 				return CaseType.getCaseType(caseType);
 			}
 			// postgresql系列数据库默认转小写
-			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15) {
+			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.MOGDB
+					|| dbType == DBType.VASTBASE) {
 				return CaseType.LOWER;
 			}
 		}

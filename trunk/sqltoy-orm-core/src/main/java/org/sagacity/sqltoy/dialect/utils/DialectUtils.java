@@ -11,6 +11,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -1673,8 +1674,9 @@ public class DialectUtils {
 		final Integer[] paramsType = entityMeta.getFieldsTypeArray();
 		PreparedStatement pst = null;
 		if (isIdentity || isSequence) {
-			pst = conn.prepareStatement(realInsertSql, new String[] { DataSourceUtils
-					.getReturnPrimaryKeyColumn(entityMeta.getColumnName(entityMeta.getIdArray()[0]), dbType) });
+//			pst = conn.prepareStatement(realInsertSql, new String[] { DataSourceUtils
+//					.getReturnPrimaryKeyColumn(entityMeta.getColumnName(entityMeta.getIdArray()[0]), dbType) });
+			pst = conn.prepareStatement(realInsertSql, Statement.RETURN_GENERATED_KEYS);
 		} else {
 			pst = conn.prepareStatement(realInsertSql);
 		}
@@ -2192,8 +2194,8 @@ public class DialectUtils {
 			public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 				PKStrategy pkStrategy = entityMeta.getIdStrategy();
 				String sequence = "nextval('" + entityMeta.getSequence() + "')";
-				if ((dbType == DBType.GAUSSDB || dbType == DBType.MOGDB || dbType == DBType.VASTBASE) && pkStrategy != null
-						&& pkStrategy.equals(PKStrategy.SEQUENCE)) {
+				if ((dbType == DBType.GAUSSDB || dbType == DBType.MOGDB || dbType == DBType.VASTBASE)
+						&& pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE)) {
 					sequence = entityMeta.getSequence() + ".nextval";
 				}
 				if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
@@ -2206,7 +2208,7 @@ public class DialectUtils {
 					isAssignPK = GaussDialectUtils.isAssignPKValue(pkStrategy);
 				} else if (dbType == DBType.MOGDB) {
 					isAssignPK = MogDBDialectUtils.isAssignPKValue(pkStrategy);
-				} else if(dbType == DBType.VASTBASE){
+				} else if (dbType == DBType.VASTBASE) {
 					isAssignPK = VastbaseDialectUtils.isAssignPKValue(pkStrategy);
 				}
 				return DialectExtUtils.insertIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
