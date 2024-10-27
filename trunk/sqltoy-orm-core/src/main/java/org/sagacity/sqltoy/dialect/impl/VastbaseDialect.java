@@ -1,25 +1,38 @@
 package org.sagacity.sqltoy.dialect.impl;
 
+import java.io.Serializable;
+import java.sql.Connection;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
 import org.sagacity.sqltoy.SqlToyContext;
-import org.sagacity.sqltoy.callback.*;
+import org.sagacity.sqltoy.callback.DecryptHandler;
+import org.sagacity.sqltoy.callback.GenerateSavePKStrategy;
+import org.sagacity.sqltoy.callback.GenerateSqlHandler;
+import org.sagacity.sqltoy.callback.ReflectPropsHandler;
+import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.dialect.Dialect;
 import org.sagacity.sqltoy.dialect.model.SavePKStrategy;
-import org.sagacity.sqltoy.dialect.utils.*;
-import org.sagacity.sqltoy.model.*;
+import org.sagacity.sqltoy.dialect.utils.DefaultDialectUtils;
+import org.sagacity.sqltoy.dialect.utils.DialectExtUtils;
+import org.sagacity.sqltoy.dialect.utils.DialectUtils;
+import org.sagacity.sqltoy.dialect.utils.PostgreSqlDialectUtils;
+import org.sagacity.sqltoy.dialect.utils.VastbaseDialectUtils;
+import org.sagacity.sqltoy.model.ColumnMeta;
+import org.sagacity.sqltoy.model.LockMode;
+import org.sagacity.sqltoy.model.QueryExecutor;
+import org.sagacity.sqltoy.model.QueryResult;
+import org.sagacity.sqltoy.model.StoreResult;
+import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.Serializable;
-import java.sql.Connection;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 
 /**
  * @project sqltoy-orm
@@ -180,7 +193,8 @@ public class VastbaseDialect implements Dialect {
     public Object save(SqlToyContext sqlToyContext, Serializable entity, Connection conn, final Integer dbType,
                        final String dialect, final String tableName) throws Exception {
         EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
-        PKStrategy pkStrategy = GaussDialectUtils.getSavePkStrategy(entityMeta, entity, dbType, conn);
+        //PKStrategy pkStrategy = GaussDialectUtils.getSavePkStrategy(entityMeta, entity, dbType, conn);
+        PKStrategy pkStrategy = DialectUtils.getSavePKStrategy(entityMeta, entity, dbType);
         String sequence = entityMeta.getSequence() + ".nextval";
         boolean isAssignPK = VastbaseDialectUtils.isAssignPKValue(pkStrategy);
         String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,

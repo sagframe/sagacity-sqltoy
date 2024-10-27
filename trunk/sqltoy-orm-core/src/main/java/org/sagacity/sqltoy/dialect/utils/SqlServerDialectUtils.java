@@ -10,6 +10,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -739,8 +740,9 @@ public class SqlServerDialectUtils {
 		SqlExecuteStat.showSql("mssql单条记录插入", realInsertSql, null);
 		PreparedStatement pst = null;
 		if (isIdentity) {
-			pst = conn.prepareStatement(realInsertSql,
-					new String[] { entityMeta.getColumnName(entityMeta.getIdArray()[0]) });
+//			pst = conn.prepareStatement(realInsertSql,
+//					new String[] { entityMeta.getColumnName(entityMeta.getIdArray()[0]) });
+			pst = conn.prepareStatement(realInsertSql, Statement.RETURN_GENERATED_KEYS);
 		} else {
 			pst = conn.prepareStatement(realInsertSql);
 		}
