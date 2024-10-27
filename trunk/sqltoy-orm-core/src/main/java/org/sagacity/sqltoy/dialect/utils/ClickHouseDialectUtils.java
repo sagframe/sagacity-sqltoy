@@ -6,7 +6,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -132,9 +131,9 @@ public class ClickHouseDialectUtils {
 		final Integer[] paramsType = entityMeta.getFieldsTypeArray();
 		PreparedStatement pst = null;
 		if (isIdentity || isSequence) {
-//			pst = conn.prepareStatement(insertSql, new String[] { DataSourceUtils
-//					.getReturnPrimaryKeyColumn(entityMeta.getColumnName(entityMeta.getIdArray()[0]), dbType) });
-			pst = conn.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS);
+			pst = conn.prepareStatement(insertSql, new String[] { DataSourceUtils
+					.getReturnPrimaryKeyColumn(entityMeta.getColumnName(entityMeta.getIdArray()[0]), dbType) });
+			// pst = conn.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS);
 		} else {
 			pst = conn.prepareStatement(insertSql);
 		}

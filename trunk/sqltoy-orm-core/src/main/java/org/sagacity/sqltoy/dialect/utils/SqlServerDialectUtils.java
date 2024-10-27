@@ -46,6 +46,7 @@ import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.CollectionUtil;
+import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.DataSourceUtils.Dialect;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
@@ -740,9 +741,9 @@ public class SqlServerDialectUtils {
 		SqlExecuteStat.showSql("mssql单条记录插入", realInsertSql, null);
 		PreparedStatement pst = null;
 		if (isIdentity) {
-//			pst = conn.prepareStatement(realInsertSql,
-//					new String[] { entityMeta.getColumnName(entityMeta.getIdArray()[0]) });
-			pst = conn.prepareStatement(realInsertSql, Statement.RETURN_GENERATED_KEYS);
+			pst = conn.prepareStatement(realInsertSql, new String[] { DataSourceUtils
+					.getReturnPrimaryKeyColumn(entityMeta.getColumnName(entityMeta.getIdArray()[0]), dbType) });
+			// pst = conn.prepareStatement(realInsertSql, Statement.RETURN_GENERATED_KEYS);
 		} else {
 			pst = conn.prepareStatement(realInsertSql);
 		}

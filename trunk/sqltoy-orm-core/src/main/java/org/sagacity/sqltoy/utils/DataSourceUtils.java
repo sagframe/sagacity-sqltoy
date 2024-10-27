@@ -772,6 +772,7 @@ public class DataSourceUtils {
 	}
 
 	/**
+	 * 默认postgresql、gaussdb、mogdb、vastbase要转小写
 	 * 
 	 * @param dbType
 	 * @return
@@ -783,11 +784,11 @@ public class DataSourceUtils {
 			if (caseType != null) {
 				return CaseType.getCaseType(caseType);
 			}
-			// postgresql系列数据库默认转小写
-			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.MOGDB
-					|| dbType == DBType.VASTBASE) {
-				return CaseType.LOWER;
-			}
+		}
+		// postgresql系列数据库默认转小写
+		if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB
+				|| dbType == DBType.MOGDB || dbType == DBType.VASTBASE) {
+			return CaseType.LOWER;
 		}
 		return CaseType.DEFAULT;
 	}
