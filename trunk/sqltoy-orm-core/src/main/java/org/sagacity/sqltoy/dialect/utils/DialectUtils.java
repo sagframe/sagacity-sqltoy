@@ -1673,7 +1673,7 @@ public class DialectUtils {
 		final Integer[] paramsType = entityMeta.getFieldsTypeArray();
 		PreparedStatement pst = null;
 		if (isIdentity || isSequence) {
-			// oracle identity策略下RETURN_GENERATED_KEYS有问题
+			// RETURN_GENERATED_KEYS 适合auto_increment,不适合sequence
 			// pst = conn.prepareStatement(realInsertSql, Statement.RETURN_GENERATED_KEYS);
 			pst = conn.prepareStatement(realInsertSql, new String[] { DataSourceUtils
 					.getReturnPrimaryKeyColumn(entityMeta.getColumnName(entityMeta.getIdArray()[0]), dbType) });
