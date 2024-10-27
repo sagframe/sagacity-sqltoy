@@ -21,6 +21,7 @@ import org.sagacity.sqltoy.dialect.model.SavePKStrategy;
 import org.sagacity.sqltoy.dialect.utils.DefaultDialectUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectExtUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
+import org.sagacity.sqltoy.dialect.utils.GaussDialectUtils;
 import org.sagacity.sqltoy.dialect.utils.PostgreSqlDialectUtils;
 import org.sagacity.sqltoy.dialect.utils.VastbaseDialectUtils;
 import org.sagacity.sqltoy.model.ColumnMeta;
@@ -193,8 +194,7 @@ public class VastbaseDialect implements Dialect {
     public Object save(SqlToyContext sqlToyContext, Serializable entity, Connection conn, final Integer dbType,
                        final String dialect, final String tableName) throws Exception {
         EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
-        //PKStrategy pkStrategy = GaussDialectUtils.getSavePkStrategy(entityMeta, entity, dbType, conn);
-        PKStrategy pkStrategy = DialectUtils.getSavePKStrategy(entityMeta, entity, dbType);
+        PKStrategy pkStrategy = GaussDialectUtils.getSavePkStrategy(entityMeta, entity, dbType, conn);
         String sequence = entityMeta.getSequence() + ".nextval";
         boolean isAssignPK = VastbaseDialectUtils.isAssignPKValue(pkStrategy);
         String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,

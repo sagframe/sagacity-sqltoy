@@ -193,12 +193,7 @@ public class GaussDBDialect implements Dialect {
 	public Object save(SqlToyContext sqlToyContext, Serializable entity, Connection conn, final Integer dbType,
 			final String dialect, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
-		// update 2024-10-27 sequenece处理策略从:
-		// conn.prepareStatement(sql,new String[]{id})
-		// 改为 conn.prepareStatement(sql,Statement.RETURN_GENERATED_KEYS),规避了字段大小写问题
-		
-		// PKStrategy pkStrategy = GaussDialectUtils.getSavePkStrategy(entityMeta,entity, dbType, conn);
-		PKStrategy pkStrategy = DialectUtils.getSavePKStrategy(entityMeta, entity, dbType);
+		PKStrategy pkStrategy = GaussDialectUtils.getSavePkStrategy(entityMeta,entity, dbType, conn);
 		String sequence = entityMeta.getSequence() + ".nextval";
 		boolean isAssignPK = GaussDialectUtils.isAssignPKValue(pkStrategy);
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
