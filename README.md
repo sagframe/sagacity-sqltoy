@@ -86,7 +86,7 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 * 提供了大量辅助功能:数据脱敏、格式化、条件参数预处理等
 
 ### 支持多种数据库
-* 常规的mysql、oracle、db2、postgresql、 sqlserver、dm、kingbase、sqlite、h2、 oceanBase、polardb、gaussdb、tidb、oscar(神通)、瀚高、mogdb、vastbase
+* 常规的mysql、oracle、db2、postgresql、 sqlserver、dm、kingbase、sqlite、h2、 oceanBase、polardb、gaussdb、tidb、oscar(神通)、瀚高、mogdb、vastbase、stardb
 * 支持分布式olap数据库: clickhouse、StarRocks、greenplum、impala(kudu)
 * 支持elasticsearch、mongodb
 * 所有基于sql和jdbc 各类数据库查询
