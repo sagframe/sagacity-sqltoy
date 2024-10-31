@@ -613,7 +613,7 @@ public class SqlConfigParseUtils {
 		}
 		return false;
 	}
-	
+
 	/**
 	 * @todo 找到@elseif 或@else 对应的@if位置
 	 * @param preSql
@@ -1411,13 +1411,20 @@ public class SqlConfigParseUtils {
 				logicType = 2;
 			} else if ((ifStart = StringUtil.matchIndex(sqlPart, START_ELSE_PATTERN)) >= 0) {
 				logicType = 3;
+			} else if ((ifStart = StringUtil.matchIndex(sqlPart, IF_PATTERN)) >= 0 && ifLogicCnt == 1) {
+				logicType = 1;
 			}
 			ifLogicModel.setType(logicType);
 			// @if() 和@elseif()
 			if (logicType == 1 || logicType == 2) {
 				ifEnd = StringUtil.getSymMarkIndex("(", ")", sqlPart, ifStart);
 				ifLogicModel.setLogicExpression(sqlPart.substring(sqlPart.indexOf("(", ifStart) + 1, ifEnd));
-				sqlPart = sqlPart.substring(ifEnd + 1);
+				// 兼容老版本只有@if的逻辑
+				if (ifLogicCnt == 1 && logicType == 1) {
+					sqlPart = sqlPart.substring(0, ifStart).concat(sqlPart.substring(ifEnd + 1));
+				} else {
+					sqlPart = sqlPart.substring(ifEnd + 1);
+				}
 				ifLogicModel.setLogicParamsCnt(
 						StringUtil.matchCnt(ifLogicModel.getLogicExpression(), namedPattern, offset));
 			} else if (logicType == 3) {

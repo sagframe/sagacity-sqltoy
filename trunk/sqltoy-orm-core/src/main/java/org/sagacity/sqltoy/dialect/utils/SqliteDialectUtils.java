@@ -12,6 +12,11 @@ import org.sagacity.sqltoy.config.model.PKStrategy;
  * @version v1.0,Date:2015年3月5日
  */
 public class SqliteDialectUtils {
+	/**
+	 * 指的是在identity、sequence主键场景下，是否允许手工给主键赋值
+	 * @param pkStrategy
+	 * @return
+	 */
 	public static boolean isAssignPKValue(PKStrategy pkStrategy) {
 		if (pkStrategy == null) {
 			return true;
