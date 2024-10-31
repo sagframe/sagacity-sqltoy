@@ -2194,7 +2194,8 @@ public class DialectUtils {
 			public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 				PKStrategy pkStrategy = entityMeta.getIdStrategy();
 				String sequence = "nextval('" + entityMeta.getSequence() + "')";
-				if ((dbType == DBType.GAUSSDB || dbType == DBType.MOGDB || dbType == DBType.VASTBASE)
+				if ((dbType == DBType.GAUSSDB || dbType == DBType.OPENGAUSS || dbType == DBType.STARDB
+						|| dbType == DBType.OSCAR || dbType == DBType.MOGDB || dbType == DBType.VASTBASE)
 						&& pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE)) {
 					sequence = entityMeta.getSequence() + ".nextval";
 				}
@@ -2204,12 +2205,9 @@ public class DialectUtils {
 					sequence = "DEFAULT";
 				}
 				boolean isAssignPK = PostgreSqlDialectUtils.isAssignPKValue(pkStrategy);
-				if (dbType == DBType.GAUSSDB) {
-					isAssignPK = GaussDialectUtils.isAssignPKValue(pkStrategy);
-				} else if (dbType == DBType.MOGDB) {
-					isAssignPK = MogDBDialectUtils.isAssignPKValue(pkStrategy);
-				} else if (dbType == DBType.VASTBASE) {
-					isAssignPK = VastbaseDialectUtils.isAssignPKValue(pkStrategy);
+				if (dbType == DBType.GAUSSDB || dbType == DBType.MOGDB || dbType == DBType.STARDB
+						|| dbType == DBType.OSCAR || dbType == DBType.OPENGAUSS || dbType == DBType.VASTBASE) {
+					isAssignPK = OpenGaussDialectUtils.isAssignPKValue(pkStrategy);
 				}
 				return DialectExtUtils.insertIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 						pkStrategy, "COALESCE", sequence, isAssignPK, tableName);

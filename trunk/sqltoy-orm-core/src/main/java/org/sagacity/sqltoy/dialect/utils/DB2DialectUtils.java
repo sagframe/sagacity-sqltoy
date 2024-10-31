@@ -142,6 +142,12 @@ public class DB2DialectUtils {
 		sql.append(columnName);
 	}
 
+	/**
+	 * 指的是在identity、sequence主键场景下，是否允许手工给主键赋值
+	 * 
+	 * @param pkStrategy
+	 * @return
+	 */
 	public static boolean isAssignPKValue(PKStrategy pkStrategy) {
 		if (pkStrategy == null) {
 			return true;

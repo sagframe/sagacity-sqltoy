@@ -106,7 +106,8 @@ public class DataSourceUtils {
 		public final static String MOGDB = "mogdb";
 		// 海量数据库(opengauss)
 		public final static String VASTBASE = "vastbase";
-
+		public final static String OPENGAUSS = "opengauss";
+		public final static String STARDB = "stardb";
 		public final static String UNDEFINE = "UNDEFINE";
 	}
 
@@ -158,6 +159,8 @@ public class DataSourceUtils {
 		// MOGDB 基于openGauss开发。
 		public final static int MOGDB = 190;
 		public final static int VASTBASE = 200;
+		public final static int OPENGAUSS = 210;
+		public final static int STARDB = 220;
 	}
 
 	static {
@@ -181,7 +184,8 @@ public class DataSourceUtils {
 		DBNameTypeMap.put(Dialect.GAUSSDB, DBType.GAUSSDB);
 		// 20240702 增加对mogdb的支持
 		DBNameTypeMap.put(Dialect.MOGDB, DBType.MOGDB);
-
+		DBNameTypeMap.put(Dialect.OPENGAUSS, DBType.OPENGAUSS);
+		DBNameTypeMap.put(Dialect.STARDB, DBType.STARDB);
 		DBNameTypeMap.put(Dialect.MONGO, DBType.MONGO);
 		DBNameTypeMap.put(Dialect.ES, DBType.ES);
 		DBNameTypeMap.put(Dialect.SQLITE, DBType.SQLITE);
@@ -202,7 +206,7 @@ public class DataSourceUtils {
 		DBNameTypeMap.put(Dialect.VASTBASE, DBType.VASTBASE);
 
 		// 默认设置oscar、vastbase数据库用gaussdb方言来实现
-		dialectMap.put(Dialect.OSCAR, Dialect.GAUSSDB);
+		// dialectMap.put(Dialect.OSCAR, Dialect.OPENGAUSS);
 	}
 
 	/**
@@ -241,6 +245,12 @@ public class DataSourceUtils {
 		}
 		case DBType.MOGDB: {
 			return Dialect.MOGDB;
+		}
+		case DBType.STARDB: {
+			return Dialect.STARDB;
+		}
+		case DBType.OPENGAUSS: {
+			return Dialect.OPENGAUSS;
 		}
 		case DBType.CLICKHOUSE: {
 			return Dialect.CLICKHOUSE;
@@ -343,13 +353,19 @@ public class DataSourceUtils {
 			} // OCEANBASE
 			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.OCEANBASE) != -1) {
 				dilectName = Dialect.OCEANBASE;
-			} // GAUSSDB
+			} // opengauss
+			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.OPENGAUSS) != -1) {
+				dilectName = Dialect.OPENGAUSS;
+			}
+			// GAUSSDB
 			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.GAUSSDB) != -1
-					|| "zenith".equalsIgnoreCase(dbDialect) || "opengauss".equalsIgnoreCase(dbDialect)) {
+					|| "zenith".equalsIgnoreCase(dbDialect)) {
 				dilectName = Dialect.GAUSSDB;
 			} // MOGDB
 			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.MOGDB) != -1) {
 				dilectName = Dialect.MOGDB;
+			} else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.STARDB) != -1) {
+				dilectName = Dialect.STARDB;
 			} else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.SQLITE) != -1) {
 				dilectName = Dialect.SQLITE;
 			} // dm
@@ -462,10 +478,14 @@ public class DataSourceUtils {
 				dbType = DBType.CLICKHOUSE;
 			} else if (dbDialect.equals(Dialect.OCEANBASE)) {
 				dbType = DBType.OCEANBASE;
+			} else if (dbDialect.equals(Dialect.OPENGAUSS)) {
+				dbType = DBType.OPENGAUSS;
 			} else if (dbDialect.equals(Dialect.GAUSSDB)) {
 				dbType = DBType.GAUSSDB;
 			} else if (dbDialect.equals(Dialect.MOGDB)) {
 				dbType = DBType.MOGDB;
+			} else if (dbDialect.equals(Dialect.STARDB)) {
+				dbType = DBType.STARDB;
 			} else if (dbDialect.equals(Dialect.SQLITE)) {
 				dbType = DBType.SQLITE;
 			} else if (dbDialect.equals(Dialect.DM)) {
@@ -539,6 +559,8 @@ public class DataSourceUtils {
 		case DBType.OSCAR:
 		case DBType.VASTBASE:
 		case DBType.MOGDB:
+		case DBType.STARDB:
+		case DBType.OPENGAUSS:
 		case DBType.GAUSSDB: {
 			return "select version()";
 		}
@@ -708,10 +730,14 @@ public class DataSourceUtils {
 			return Dialect.KINGBASE;
 		case DBType.TDENGINE:
 			return Dialect.TDENGINE;
+		case DBType.OPENGAUSS:
+			return Dialect.OPENGAUSS;
 		case DBType.GAUSSDB:
 			return Dialect.GAUSSDB;
 		case DBType.MOGDB:
 			return Dialect.MOGDB;
+		case DBType.STARDB:
+			return Dialect.STARDB;
 		case DBType.IMPALA:
 			return Dialect.IMPALA;
 		case DBType.H2:
@@ -756,7 +782,9 @@ public class DataSourceUtils {
 		case DBType.DM:
 			return "nvl";
 		case DBType.GAUSSDB:
+		case DBType.OPENGAUSS:
 		case DBType.MOGDB:
+		case DBType.STARDB:
 		case DBType.OSCAR:
 		case DBType.VASTBASE:
 			return "nvl";
@@ -786,8 +814,7 @@ public class DataSourceUtils {
 			}
 		}
 		// postgresql系列数据库默认转小写
-		if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB
-				|| dbType == DBType.MOGDB || dbType == DBType.VASTBASE) {
+		if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15) {
 			return CaseType.LOWER;
 		}
 		return CaseType.DEFAULT;
@@ -822,9 +849,10 @@ public class DataSourceUtils {
 		}
 		if (dbType == DBType.MYSQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB
 				|| dbType == DBType.SQLSERVER || dbType == DBType.ORACLE || dbType == DBType.DM || dbType == DBType.TIDB
-				|| dbType == DBType.KINGBASE || dbType == DBType.MOGDB || dbType == DBType.OSCAR
-				|| dbType == DBType.VASTBASE || dbType == DBType.POSTGRESQL || dbType == DBType.CLICKHOUSE
-				|| dbType == DBType.H2 || dbType == DBType.SQLITE || dbType == DBType.ORACLE11) {
+				|| dbType == DBType.KINGBASE || dbType == DBType.MOGDB || dbType == DBType.STARDB
+				|| dbType == DBType.OSCAR || dbType == DBType.OPENGAUSS || dbType == DBType.VASTBASE
+				|| dbType == DBType.POSTGRESQL || dbType == DBType.CLICKHOUSE || dbType == DBType.H2
+				|| dbType == DBType.SQLITE || dbType == DBType.ORACLE11) {
 			return true;
 		}
 		return false;

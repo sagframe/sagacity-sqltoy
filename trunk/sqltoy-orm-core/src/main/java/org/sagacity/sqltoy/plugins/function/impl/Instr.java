@@ -96,6 +96,7 @@ public class Instr extends IFunction {
 			return result.append(")").toString();
 		}
 		if (dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL15 || dialect == DBType.GAUSSDB
+				|| dialect == DBType.OPENGAUSS || dialect == DBType.OSCAR || dialect == DBType.STARDB
 				|| dialect == DBType.MOGDB || dialect == DBType.VASTBASE) {
 			if ("position".equals(funLow)) {
 				return super.IGNORE;

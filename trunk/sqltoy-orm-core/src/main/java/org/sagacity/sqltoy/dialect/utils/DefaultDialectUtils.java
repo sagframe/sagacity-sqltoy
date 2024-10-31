@@ -706,7 +706,8 @@ public class DefaultDialectUtils {
 	private static void setArray(Integer dbType, Connection conn, ResultSet rs, String columnName, Object paramValue)
 			throws SQLException {
 		// 目前只支持Integer 和 String两种类型
-		if (dbType == DBType.GAUSSDB || dbType == DBType.MOGDB || dbType == DBType.VASTBASE) {
+		if (dbType == DBType.GAUSSDB || dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.OSCAR
+				|| dbType == DBType.STARDB || dbType == DBType.VASTBASE) {
 			if (paramValue instanceof Integer[]) {
 				Array array = conn.createArrayOf("INTEGER", (Integer[]) paramValue);
 				rs.updateArray(columnName, array);
@@ -1063,10 +1064,11 @@ public class DefaultDialectUtils {
 	}
 
 	@SuppressWarnings("unchecked")
-	public static List<TableMeta> getTables(String catalog, String schema, String tableName, Connection conn,
-			Integer dbType, String dialect) throws Exception {
+	public static List<TableMeta> getTables(String catalogPattern, String schemaPattern, String tableNamePattern,
+			Connection conn, Integer dbType, String dialect) throws Exception {
 		// 可自定义 PreparedStatement pst=conn.xxx;
-		ResultSet rs = conn.getMetaData().getTables(catalog, schema, tableName, new String[] { "TABLE", "VIEW" });
+		ResultSet rs = conn.getMetaData().getTables(catalogPattern, schemaPattern, tableNamePattern,
+				new String[] { "TABLE", "VIEW" });
 		// 通过preparedStatementProcess反调，第二个参数是pst
 		return (List<TableMeta>) SqlUtil.preparedStatementProcess(null, null, rs, new PreparedStatementResultHandler() {
 			@Override

@@ -37,7 +37,28 @@ import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
-import org.sagacity.sqltoy.dialect.impl.*;
+import org.sagacity.sqltoy.dialect.impl.ClickHouseDialect;
+import org.sagacity.sqltoy.dialect.impl.DB2Dialect;
+import org.sagacity.sqltoy.dialect.impl.DMDialect;
+import org.sagacity.sqltoy.dialect.impl.DefaultDialect;
+import org.sagacity.sqltoy.dialect.impl.GaussDBDialect;
+import org.sagacity.sqltoy.dialect.impl.H2Dialect;
+import org.sagacity.sqltoy.dialect.impl.ImpalaDialect;
+import org.sagacity.sqltoy.dialect.impl.KingbaseDialect;
+import org.sagacity.sqltoy.dialect.impl.MogDBDialect;
+import org.sagacity.sqltoy.dialect.impl.MySqlDialect;
+import org.sagacity.sqltoy.dialect.impl.OceanBaseDialect;
+import org.sagacity.sqltoy.dialect.impl.OpenGaussDialect;
+import org.sagacity.sqltoy.dialect.impl.Oracle11gDialect;
+import org.sagacity.sqltoy.dialect.impl.OracleDialect;
+import org.sagacity.sqltoy.dialect.impl.OscarDialect;
+import org.sagacity.sqltoy.dialect.impl.PostgreSqlDialect;
+import org.sagacity.sqltoy.dialect.impl.SqlServerDialect;
+import org.sagacity.sqltoy.dialect.impl.SqliteDialect;
+import org.sagacity.sqltoy.dialect.impl.StarDBDialect;
+import org.sagacity.sqltoy.dialect.impl.TDengineDialect;
+import org.sagacity.sqltoy.dialect.impl.TidbDialect;
+import org.sagacity.sqltoy.dialect.impl.VastbaseDialect;
 import org.sagacity.sqltoy.dialect.utils.ClickHouseDialectUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.dialect.utils.PageOptimizeUtils;
@@ -186,13 +207,27 @@ public class DialectFactory {
 			dialectSqlWrapper = new GaussDBDialect();
 			break;
 		}
+		// 华为guassdb(postgresql 为蓝本的)
+		case DBType.OPENGAUSS: {
+			dialectSqlWrapper = new OpenGaussDialect();
+			break;
+		}
 		// mogdb
 		case DBType.MOGDB: {
 			dialectSqlWrapper = new MogDBDialect();
 			break;
 		}
+		// starDB(京东)
+		case DBType.STARDB: {
+			dialectSqlWrapper = new StarDBDialect();
+			break;
+		} // 神通数据库
+		case DBType.OSCAR: {
+			dialectSqlWrapper = new OscarDialect();
+			break;
+		}
 		// vastbase 海量数据库
-		case DBType.VASTBASE:{
+		case DBType.VASTBASE: {
 			dialectSqlWrapper = new VastbaseDialect();
 			break;
 		}

@@ -39,6 +39,7 @@ public class GroupConcat extends IFunction {
 			sign = tmp.substring(matchIndex + 11).trim();
 		}
 		if (dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL15 || dialect == DBType.GAUSSDB
+				|| dialect == DBType.OPENGAUSS || dialect == DBType.OSCAR || dialect == DBType.STARDB
 				|| dialect == DBType.MOGDB || dialect == DBType.VASTBASE) {
 			if ("string_agg".equals(functionName.toLowerCase())) {
 				return super.IGNORE;

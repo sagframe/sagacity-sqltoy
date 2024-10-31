@@ -56,8 +56,10 @@ public class Length extends IFunction {
 			return wrapArgs("len", args);
 		}
 		if (dialect == DBType.ORACLE || dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL15
-				|| dialect == DBType.DB2 || dialect == DBType.GAUSSDB || dialect == DBType.MOGDB || dialect == DBType.VASTBASE
-				|| dialect == DBType.OCEANBASE || dialect == DBType.DM || dialect == DBType.ORACLE11) {
+				|| dialect == DBType.DB2 || dialect == DBType.GAUSSDB || dialect == DBType.MOGDB
+				|| dialect == DBType.VASTBASE || dialect == DBType.OPENGAUSS || dialect == DBType.STARDB
+				|| dialect == DBType.OSCAR || dialect == DBType.OCEANBASE || dialect == DBType.DM
+				|| dialect == DBType.ORACLE11) {
 			if ("datalength".equals(funLow) || "char_length".equals(funLow) || "len".equals(funLow)) {
 				return wrapArgs("length", args);
 			}
