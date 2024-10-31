@@ -60,7 +60,8 @@ public class ReservedWordsUtil {
 		}
 		if (dbType == DBType.ORACLE || dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15
 				|| dbType == DBType.DB2 || dbType == DBType.DM || dbType == DBType.GAUSSDB || dbType == DBType.MOGDB
-				|| dbType == DBType.OCEANBASE || dbType == DBType.ORACLE11) {
+				|| dbType == DBType.STARDB || dbType == DBType.OSCAR || dbType == DBType.OPENGAUSS
+				|| dbType == DBType.VASTBASE || dbType == DBType.OCEANBASE || dbType == DBType.ORACLE11) {
 			return sql.replaceAll("\\[", "\"").replaceAll("\\]", "\"");
 		}
 		if (dbType == DBType.H2) {
@@ -103,8 +104,9 @@ public class ReservedWordsUtil {
 		}
 		if (dbType == DBType.ORACLE || dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15
 				|| dbType == DBType.KINGBASE || dbType == DBType.DB2 || dbType == DBType.GAUSSDB
-				|| dbType == DBType.MOGDB || dbType == DBType.DM || dbType == DBType.OCEANBASE
-				|| dbType == DBType.ORACLE11) {
+				|| dbType == DBType.MOGDB || dbType == DBType.OPENGAUSS || dbType == DBType.VASTBASE
+				|| dbType == DBType.STARDB || dbType == DBType.OSCAR || dbType == DBType.DM
+				|| dbType == DBType.OCEANBASE || dbType == DBType.ORACLE11) {
 			return "\"".concat(column).concat("\"");
 		}
 		return column;
@@ -146,8 +148,9 @@ public class ReservedWordsUtil {
 			}
 			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.ORACLE
 					|| dbType == DBType.DB2 || dbType == DBType.KINGBASE || dbType == DBType.GAUSSDB
-					|| dbType == DBType.MOGDB || dbType == DBType.DM || dbType == DBType.OCEANBASE
-					|| dbType == DBType.ORACLE11) {
+					|| dbType == DBType.MOGDB || dbType == DBType.OPENGAUSS || dbType == DBType.VASTBASE
+					|| dbType == DBType.DM || dbType == DBType.OCEANBASE || dbType == DBType.ORACLE11
+					|| dbType == DBType.STARDB || dbType == DBType.OSCAR) {
 				sqlBuff.append("\"").append(keyWord).append("\"");
 			} else if (dbType == DBType.SQLSERVER || dbType == DBType.SQLITE) {
 				sqlBuff.append("[").append(keyWord).append("]");

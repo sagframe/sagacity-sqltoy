@@ -13,6 +13,11 @@ import org.sagacity.sqltoy.config.model.PKStrategy;
  * @modify 2020年7月30日,修改说明
  */
 public class DMDialectUtils {
+	/**
+	 * 指的是在identity、sequence主键场景下，是否允许手工给主键赋值
+	 * @param pkStrategy
+	 * @return
+	 */
 	public static boolean isAssignPKValue(PKStrategy pkStrategy) {
 		if (pkStrategy == null) {
 			return true;

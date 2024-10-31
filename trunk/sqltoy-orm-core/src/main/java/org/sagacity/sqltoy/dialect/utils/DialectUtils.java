@@ -1673,6 +1673,8 @@ public class DialectUtils {
 		final Integer[] paramsType = entityMeta.getFieldsTypeArray();
 		PreparedStatement pst = null;
 		if (isIdentity || isSequence) {
+			// RETURN_GENERATED_KEYS 适合auto_increment,不适合sequence
+			// pst = conn.prepareStatement(realInsertSql, Statement.RETURN_GENERATED_KEYS);
 			pst = conn.prepareStatement(realInsertSql, new String[] { DataSourceUtils
 					.getReturnPrimaryKeyColumn(entityMeta.getColumnName(entityMeta.getIdArray()[0]), dbType) });
 		} else {
@@ -2192,8 +2194,9 @@ public class DialectUtils {
 			public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 				PKStrategy pkStrategy = entityMeta.getIdStrategy();
 				String sequence = "nextval('" + entityMeta.getSequence() + "')";
-				if ((dbType == DBType.GAUSSDB || dbType == DBType.MOGDB) && pkStrategy != null
-						&& pkStrategy.equals(PKStrategy.SEQUENCE)) {
+				if ((dbType == DBType.GAUSSDB || dbType == DBType.OPENGAUSS || dbType == DBType.STARDB
+						|| dbType == DBType.OSCAR || dbType == DBType.MOGDB || dbType == DBType.VASTBASE)
+						&& pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE)) {
 					sequence = entityMeta.getSequence() + ".nextval";
 				}
 				if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
@@ -2202,10 +2205,9 @@ public class DialectUtils {
 					sequence = "DEFAULT";
 				}
 				boolean isAssignPK = PostgreSqlDialectUtils.isAssignPKValue(pkStrategy);
-				if (dbType == DBType.GAUSSDB) {
-					isAssignPK = GaussDialectUtils.isAssignPKValue(pkStrategy);
-				} else if (dbType == DBType.MOGDB) {
-					isAssignPK = MogDBDialectUtils.isAssignPKValue(pkStrategy);
+				if (dbType == DBType.GAUSSDB || dbType == DBType.MOGDB || dbType == DBType.STARDB
+						|| dbType == DBType.OSCAR || dbType == DBType.OPENGAUSS || dbType == DBType.VASTBASE) {
+					isAssignPK = OpenGaussDialectUtils.isAssignPKValue(pkStrategy);
 				}
 				return DialectExtUtils.insertIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 						pkStrategy, "COALESCE", sequence, isAssignPK, tableName);
