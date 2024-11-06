@@ -391,7 +391,10 @@ public class DialectUtils {
 			int sql_from_index = 0;
 			// sql不以from开头，截取from 后的部分语句
 			if (StringUtil.indexOfIgnoreCase(query_tmp, "from") != 0) {
-				sql_from_index = StringUtil.getSymMarkMatchIndex(SELECT_REGEX, FROM_REGEX, query_tmp.toLowerCase(), 0);
+				// 这里逻辑有点问题select (day from) as a from xxx 就导致错误
+				sql_from_index = SqlUtil.getSymMarkIndexExcludeKeyWords(query_tmp, SELECT_REGEX, FROM_REGEX, 0);
+				// StringUtil.getSymMarkMatchIndex(SELECT_REGEX, FROM_REGEX,
+				// query_tmp.toLowerCase(), 0);
 			}
 			// 剔除order提高运行效率
 			int orderByIndex = StringUtil.matchLastIndex(query_tmp, ORDER_BY_PATTERN, 1);
@@ -2720,8 +2723,9 @@ public class DialectUtils {
 		boolean isComplexQuery = SqlUtil.hasUnion(tmpQuery, false);
 		// from 和 where之间有","表示多表查询
 		if (!isComplexQuery) {
-			int fromIndex = StringUtil.getSymMarkMatchIndex(SELECT_REGEX, FROM_REGEX, tmpQuery, 0);
-			int fromWhereIndex = StringUtil.getSymMarkMatchIndex(FROM_REGEX, WHERE_REGEX, tmpQuery, fromIndex - 1);
+			int fromIndex = SqlUtil.getSymMarkIndexExcludeKeyWords(tmpQuery, SELECT_REGEX, FROM_REGEX, 0);
+			int fromWhereIndex = SqlUtil.getSymMarkIndexExcludeKeyWords(tmpQuery, FROM_REGEX, WHERE_REGEX,
+					fromIndex - 1);
 			String fromLastStr = (fromWhereIndex == -1) ? tmpQuery.substring(fromIndex)
 					: tmpQuery.substring(fromIndex, fromWhereIndex);
 			if (fromLastStr.indexOf(",") != -1 || fromLastStr.indexOf(" join ") != -1
