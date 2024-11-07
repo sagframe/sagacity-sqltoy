@@ -436,4 +436,15 @@ public class BeanUtilTest {
 			System.err.println("[" + config.getSecureType() + "]");
 		}
 	}
+
+	@Test
+	public void testSetValue1() {
+		// 2024-11-07 10:52:36.12345
+		DataRange dataRange = new DataRange();
+		String lastUpdateTime = "2024-11-07 10:52:36.12345";
+
+		BeanUtil.setProperty(dataRange, "lastUpdateTime", lastUpdateTime);
+
+		DateUtil.parseLocalDateTime(lastUpdateTime, "yyyyMMdd HHmmss.SSSSSS");
+	}
 }

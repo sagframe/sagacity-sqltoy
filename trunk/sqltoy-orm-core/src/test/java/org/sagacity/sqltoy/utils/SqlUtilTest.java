@@ -97,4 +97,32 @@ public class SqlUtilTest {
 		System.err.println(hasSqlKeyWord);
 		System.err.println(SqlUtil.validateInArg(argValue));
 	}
+
+	@Test
+	public void testGetFromIndex() {
+		String sql = "select sum(a),(day from(ab)) as b from (select * from tableb) as b where (a+b)>5 and c.a>(1+5)";
+		int fromIndex = SqlUtil.getSymMarkIndexExcludeKeyWords(sql, "select\\s+", "\\s+from[\\(\\s+]", 0);
+		System.err.println(fromIndex);
+
+		sql = "select sum(a),(day xxx(ab)) as b from (select * from tableb) as b where (a+b)>5 and c.a>(1+5)";
+		fromIndex = SqlUtil.getSymMarkIndexExcludeKeyWords(sql, "select\\s+", "\\s+from[\\(\\s+]", 0);
+		System.err.println(fromIndex);
+
+		sql = "select a, b from (select * from tableb) as b where (a+b)>5 and c.a>(1+5)";
+		fromIndex = SqlUtil.getSymMarkIndexExcludeKeyWords(sql, "select\\s+", "\\s+from[\\(\\s+]", 0);
+		System.err.println(fromIndex);
+
+		sql = "select a, b from (select * from tableb where 1=1 and t.m>100) as b where (a+b)>5 and c.a>(1+5)";
+		fromIndex = SqlUtil.getSymMarkIndexExcludeKeyWords(sql, "\\s+from[\\(\\s+]", "\\s+where[\\(\\s+]", 0);
+		System.err.println(fromIndex);
+	}
+
+	@Test
+	public void testGetFromIndex1() {
+		String sql = "select a, b from (select * from tableb where 1=1 and t.m>100) as b where (a+b)>5 and c.a>(1+5)";
+		int fromIndex = SqlUtil.getSymMarkIndexExcludeKeyWords(sql, "select\\s+", "\\s+from[\\(\\s+]", 0);
+		fromIndex = SqlUtil.getSymMarkIndexExcludeKeyWords(sql, "\\s+from[\\(\\s+]", "\\s+where[\\(\\s+]", fromIndex - 1);
+		System.err.println(fromIndex);
+	}
+
 }

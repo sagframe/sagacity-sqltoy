@@ -216,13 +216,16 @@ public class DateUtil {
 						.replace(":", "").replace("/", "");
 				int preSize = dateStr.indexOf(" ");
 				size = dateStr.length();
-				if (size >= 24) {
+				if (size > 21) {
+					dateStr = addZero(dateStr, size, 24);
 					realDF = "yyyyMMdd HHmmssSSSSSSSSS";
 					isLocalDateTime = true;
-				} else if (size >= 21) {
+				} else if (size > 18) {
+					dateStr = addZero(dateStr, size, 21);
 					realDF = "yyyyMMdd HHmmssSSSSSS";
 					isLocalDateTime = true;
-				} else if (size >= 18) {
+				} else if (size > 16) {
+					dateStr = addZero(dateStr, size, 18);
 					realDF = "yyyyMMdd HHmmssSSS";
 					isLocalDateTime = true;
 				} else if (size == 16) {
@@ -256,13 +259,16 @@ public class DateUtil {
 				size = dateStr.length();
 				if (dateStr.indexOf(":") != -1) {
 					if (dateStr.indexOf(".") != -1) {
-						if (size >= 18) {
+						if (size > 15) {
+							dateStr = addZero(dateStr, size, 18);
 							realDF = "HH:mm:ss.SSSSSSSSS";
 							isLocalTime = true;
-						} else if (size >= 15) {
+						} else if (size > 12) {
+							dateStr = addZero(dateStr, size, 15);
 							realDF = "HH:mm:ss.SSSSSS";
 							isLocalTime = true;
-						} else if (size >= 12) {
+						} else if (size > 10) {
+							dateStr = addZero(dateStr, size, 12);
 							realDF = "HH:mm:ss.SSS";
 							isLocalTime = true;
 						} else {
@@ -293,26 +299,28 @@ public class DateUtil {
 							realDF = "yy/MM";
 						}
 					} else {
-						if (size >= 23) {
+						if (size > 22) {
 							dateStr = dateStr.substring(0, 8).concat(" ").concat(dateStr.substring(8, 14)).concat(".")
-									.concat(dateStr.substring(14));
+									.concat(addZero(dateStr.substring(14), 9));
 							realDF = "yyyyMMdd HHmmss.SSSSSSSSS";
 							isLocalDateTime = true;
-						} else if (size >= 20) {
+						} else if (size > 19) {
 							dateStr = dateStr.substring(0, 8).concat(" ").concat(dateStr.substring(8, 14)).concat(".")
-									.concat(dateStr.substring(14));
+									.concat(addZero(dateStr.substring(14), 6));
 							realDF = "yyyyMMdd HHmmss.SSSSSS";
 							isLocalDateTime = true;
-						} else if (size >= 17) {
+						} else if (size > 17) {
 							dateStr = dateStr.substring(0, 8).concat(" ").concat(dateStr.substring(8, 14)).concat(".")
-									.concat(dateStr.substring(14));
+									.concat(addZero(dateStr.substring(14), 3));
 							realDF = "yyyyMMdd HHmmss.SSS";
 							isLocalDateTime = true;
-						} else if (size >= 15) {
+						} else if (size == 17) {
 							dateStr = dateStr.substring(0, 8).concat(" ").concat(dateStr.substring(8, 14)).concat(".")
 									.concat(dateStr.substring(14));
 							realDF = "yyyyMMdd HHmmss.S";
 							isLocalDateTime = true;
+						} else if (size == 15) {
+							realDF = "yyyyMMdd HHmmss";
 						} else if (size == 14) {
 							realDF = "yyyyMMddHHmmss";
 						} // 无空白纯数字13位是System.currentTimeMillis()对应的值
@@ -398,11 +406,14 @@ public class DateUtil {
 						.replace(":", "").replace("/", "");
 				int preSize = dateStr.indexOf(" ");
 				size = dateStr.length();
-				if (size >= 24) {
+				if (size > 21) {
+					dateStr = addZero(dateStr, size, 24);
 					realDF = "yyyyMMdd HHmmssSSSSSSSSS";
-				} else if (size >= 21) {
+				} else if (size > 18) {
+					dateStr = addZero(dateStr, size, 21);
 					realDF = "yyyyMMdd HHmmssSSSSSS";
-				} else if (size >= 18) {
+				} else if (size > 16) {
+					dateStr = addZero(dateStr, size, 18);
 					realDF = "yyyyMMdd HHmmssSSS";
 				} else if (size == 16) {
 					if (preSize == 8) {
@@ -433,11 +444,14 @@ public class DateUtil {
 				size = dateStr.length();
 				if (dateStr.indexOf(":") != -1) {
 					if (dateStr.indexOf(".") != -1) {
-						if (size >= 18) {
+						if (size > 15) {
+							dateStr = addZero(dateStr, size, 18);
 							realDF = "HH:mm:ss.SSSSSSSSS";
-						} else if (size >= 15) {
+						} else if (size > 12) {
+							dateStr = addZero(dateStr, size, 15);
 							realDF = "HH:mm:ss.SSSSSS";
-						} else if (size >= 12) {
+						} else if (size > 10) {
+							dateStr = addZero(dateStr, size, 12);
 							realDF = "HH:mm:ss.SSS";
 						} else {
 							realDF = "HH:mm:ss.S";
@@ -469,22 +483,24 @@ public class DateUtil {
 						}
 						isDate = true;
 					} else {
-						if (size >= 23) {
+						if (size > 22) {
 							realDF = "yyyyMMdd HHmmss.SSSSSSSSS";
 							dateStr = dateStr.substring(0, 8).concat(" ").concat(dateStr.substring(8, 14)).concat(".")
-									.concat(dateStr.substring(14));
-						} else if (size >= 20) {
+									.concat(addZero(dateStr.substring(14), 9));
+						} else if (size > 19) {
 							dateStr = dateStr.substring(0, 8).concat(" ").concat(dateStr.substring(8, 14)).concat(".")
-									.concat(dateStr.substring(14));
+									.concat(addZero(dateStr.substring(14), 6));
 							realDF = "yyyyMMdd HHmmss.SSSSSS";
-						} else if (size >= 17) {
+						} else if (size > 17) {
 							dateStr = dateStr.substring(0, 8).concat(" ").concat(dateStr.substring(8, 14)).concat(".")
-									.concat(dateStr.substring(14));
+									.concat(addZero(dateStr.substring(14), 3));
 							realDF = "yyyyMMdd HHmmss.SSS";
-						} else if (size >= 15) {
+						} else if (size == 17) {
 							dateStr = dateStr.substring(0, 8).concat(" ").concat(dateStr.substring(8, 14)).concat(".")
 									.concat(dateStr.substring(14));
 							realDF = "yyyyMMdd HHmmss.S";
+						} else if (size == 15) {
+							realDF = "yyyyMMdd HHmmss";
 						} else if (size == 14) {
 							realDF = "yyyyMMddHHmmss";
 						} // 无空白纯数字13位是System.currentTimeMillis()对应的值
@@ -1201,4 +1217,29 @@ public class DateUtil {
 		}
 		return "." + nanoStr;
 	}
+
+	private static String addZero(String timeStr, int toLength) {
+		return addZero(timeStr, timeStr.length(), toLength);
+	}
+
+	/**
+	 * 快速补充零
+	 * 
+	 * @param timeStr
+	 * @param size
+	 * @param toLength
+	 * @return
+	 */
+	private static String addZero(String timeStr, int size, int toLength) {
+		int addSize = toLength - size;
+		if (addSize == 1) {
+			return timeStr.concat("0");
+		} else if (addSize == 2) {
+			return timeStr.concat("00");
+		} else if (addSize == 3) {
+			return timeStr.concat("000");
+		}
+		return timeStr;
+	}
+
 }

@@ -2252,4 +2252,57 @@ public class SqlUtil {
 		}
 		return sql;
 	}
+
+	/**
+	 * 提供两种场景功能： 1、获取select 对称的from位置 2、获取from 对称的where的位置
+	 * 
+	 * @param sql
+	 * @param startRegex
+	 * @param endRegex
+	 * @param startIndex
+	 * @return
+	 */
+	public static int getSymMarkIndexExcludeKeyWords(String sql, String startRegex, String endRegex, int startIndex) {
+		Pattern endPattern = Pattern.compile(endRegex);
+		String sqlLow = sql.toLowerCase();
+		int startRegexIndex = StringUtil.matchIndex(sqlLow, startRegex, startIndex)[0];
+		int endRegIndex = StringUtil.getSymMarkMatchIndex(startRegex, endRegex, sqlLow, startIndex);
+		// 就一个endPattern直接返回
+		if (endRegIndex > 0
+				&& StringUtil.matchCnt(startIndex == 0 ? sqlLow : sqlLow.substring(startIndex), endPattern) == 1) {
+			return endRegIndex;
+		}
+		String startMark = "(", endMark = ")";
+		int startBreaket = sqlLow.indexOf(startMark, startRegexIndex);
+		// 在select 和from之间有()符号，要排除select (day from()) from 场景
+		if (startBreaket < endRegIndex && startBreaket > 0) {
+			// 删除所有对称的括号中的内容
+			int start = startBreaket;
+			int symMarkEnd;
+			String tail;
+			while (start != -1) {
+				symMarkEnd = StringUtil.getSymMarkIndex(startMark, endMark, sqlLow, start);
+				if (symMarkEnd != -1) {
+					tail = sqlLow.substring(symMarkEnd);
+					// 替换掉对称()中的select、from、where为等长字符，避免找select 对称的from位置形成干扰
+					sqlLow = sqlLow.substring(0, start) + sqlLow.substring(start, symMarkEnd).replace("from", "AAAA")
+							.replace("select", "AAAAAA").replace("where", "AAAAA") + tail;
+					// 后续sql中没有endPattern则停止处理
+					if (!StringUtil.matches(tail, endPattern)) {
+						break;
+					}
+					start = sqlLow.indexOf(startMark, symMarkEnd);
+				} else {
+					break;
+				}
+			}
+			int lastEndRegIndex = StringUtil.getSymMarkMatchIndex(startRegex, endRegex, sqlLow, startIndex);
+			if (lastEndRegIndex == -1) {
+				return endRegIndex;
+			}
+			return lastEndRegIndex;
+		}
+		return endRegIndex;
+	}
+
 }
