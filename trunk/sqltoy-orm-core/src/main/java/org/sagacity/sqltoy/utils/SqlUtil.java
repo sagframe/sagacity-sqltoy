@@ -2272,11 +2272,10 @@ public class SqlUtil {
 				&& StringUtil.matchCnt(startIndex == 0 ? sqlLow : sqlLow.substring(startIndex), endPattern) == 1) {
 			return endRegIndex;
 		}
-		String startMark = "(";
-		String endMark = ")";
+		String startMark = "(", endMark = ")";
 		int startBreaket = sqlLow.indexOf(startMark, startRegexIndex);
-		// 在select 和from之间有()符号，要排除select (day from()) from 场景，将（）内的from改成等长的字符
-		if (startBreaket < endRegIndex) {
+		// 在select 和from之间有()符号，要排除select (day from()) from 场景
+		if (startBreaket < endRegIndex && startBreaket > 0) {
 			// 删除所有对称的括号中的内容
 			int start = startBreaket;
 			int symMarkEnd;
@@ -2285,10 +2284,10 @@ public class SqlUtil {
 				symMarkEnd = StringUtil.getSymMarkIndex(startMark, endMark, sqlLow, start);
 				if (symMarkEnd != -1) {
 					tail = sqlLow.substring(symMarkEnd);
-					// 替换掉对称()中的from\select为等长字符，避免找select 对称的from位置形成干扰
+					// 替换掉对称()中的select、from、where为等长字符，避免找select 对称的from位置形成干扰
 					sqlLow = sqlLow.substring(0, start) + sqlLow.substring(start, symMarkEnd).replace("from", "AAAA")
 							.replace("select", "AAAAAA").replace("where", "AAAAA") + tail;
-					// 后续sql中没有from就截止掉
+					// 后续sql中没有endPattern则停止处理
 					if (!StringUtil.matches(tail, endPattern)) {
 						break;
 					}

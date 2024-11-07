@@ -1365,8 +1365,6 @@ public class DialectFactory {
 				int unionSqlSize = unionSqls.length;
 				String countPart = dbType.equals(DBType.ES) ? " count(*) " : " count(1) ";
 				for (int i = 0; i < unionSqlSize; i++) {
-//					sql_from_index = StringUtil.getSymMarkMatchIndex("(?i)select\\s+", "(?i)\\s+from[\\(\\s+]",
-//							unionSqls[i], 0);
 					sql_from_index = SqlUtil.getSymMarkIndexExcludeKeyWords(unionSqls[i], "select\\s+",
 							"\\s+from[\\(\\s+]", 0);
 					countSql.append(" select ").append(countPart).append(" row_count ")

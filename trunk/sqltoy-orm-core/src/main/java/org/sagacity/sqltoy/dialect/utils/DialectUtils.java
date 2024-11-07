@@ -393,8 +393,6 @@ public class DialectUtils {
 			if (StringUtil.indexOfIgnoreCase(query_tmp, "from") != 0) {
 				// 这里逻辑有点问题select (day from) as a from xxx 就导致错误
 				sql_from_index = SqlUtil.getSymMarkIndexExcludeKeyWords(query_tmp, SELECT_REGEX, FROM_REGEX, 0);
-				// StringUtil.getSymMarkMatchIndex(SELECT_REGEX, FROM_REGEX,
-				// query_tmp.toLowerCase(), 0);
 			}
 			// 剔除order提高运行效率
 			int orderByIndex = StringUtil.matchLastIndex(query_tmp, ORDER_BY_PATTERN, 1);
@@ -2725,7 +2723,7 @@ public class DialectUtils {
 		if (!isComplexQuery) {
 			int fromIndex = SqlUtil.getSymMarkIndexExcludeKeyWords(tmpQuery, SELECT_REGEX, FROM_REGEX, 0);
 			int fromWhereIndex = SqlUtil.getSymMarkIndexExcludeKeyWords(tmpQuery, FROM_REGEX, WHERE_REGEX,
-					fromIndex - 1);
+					(fromIndex < 1) ? 0 : (fromIndex - 1));
 			String fromLastStr = (fromWhereIndex == -1) ? tmpQuery.substring(fromIndex)
 					: tmpQuery.substring(fromIndex, fromWhereIndex);
 			if (fromLastStr.indexOf(",") != -1 || fromLastStr.indexOf(" join ") != -1
