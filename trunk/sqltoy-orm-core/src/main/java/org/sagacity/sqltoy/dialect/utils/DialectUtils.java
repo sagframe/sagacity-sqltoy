@@ -391,7 +391,7 @@ public class DialectUtils {
 			int sql_from_index = 0;
 			// sql不以from开头，截取from 后的部分语句
 			if (StringUtil.indexOfIgnoreCase(query_tmp, "from") != 0) {
-				// 这里逻辑有点问题select (day from) as a from xxx 就导致错误
+				// update 2024-11-8 优化select (day from) as a from xxx 语句的兼容
 				sql_from_index = SqlUtil.getSymMarkIndexExcludeKeyWords(query_tmp, SELECT_REGEX, FROM_REGEX, 0);
 			}
 			// 剔除order提高运行效率
