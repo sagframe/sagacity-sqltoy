@@ -10,17 +10,17 @@ import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
+ * @author ming
+ * @version v1.0, Date:2024年10月25日
  * @project sagacity-sqltoy
  * @description 提供gaussdb数据库相关的特殊逻辑处理封装
- * @author zhongxuchen
- * @version v1.0, Date:2023年6月8日
- * @modify 2023年6月8日,修改说明
+ * @modify 2024年10月25日, 修改说明
  */
-public class GaussDialectUtils {
+public class OpenGaussDialectUtils {
 	/**
-	 * @TODO 定义当使用sequence或identity时,是否允许自定义值(即不通过sequence或identity产生，而是由外部直接赋值)
 	 * @param pkStrategy
 	 * @return
+	 * @TODO 定义当使用sequence或identity时, 是否允许自定义值(即不通过sequence或identity产生 ， 而是由外部直接赋值)
 	 */
 	public static boolean isAssignPKValue(PKStrategy pkStrategy) {
 		if (pkStrategy == null) {
@@ -49,7 +49,7 @@ public class GaussDialectUtils {
 	public static PKStrategy getSavePkStrategy(EntityMeta entityMeta, Serializable entity, Integer dbType,
 			Connection conn) {
 		PKStrategy pkStrategy = entityMeta.getIdStrategy();
-		// gaussdb\mogdb 主键策略是sequence模式需要先获取主键值
+		// gaussdb\mogdb\vastbase\opengauss 主键策略是sequence模式需要先获取主键值
 		if (pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE)) {
 			// 取实体对象的主键值
 			Object id = BeanUtil.getProperty(entity, entityMeta.getIdArray()[0]);

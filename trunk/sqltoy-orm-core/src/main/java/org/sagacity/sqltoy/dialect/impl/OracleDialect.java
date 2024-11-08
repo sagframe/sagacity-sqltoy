@@ -56,6 +56,8 @@ public class OracleDialect implements Dialect {
 	 */
 	public static final String NVL_FUNCTION = "nvl";
 
+	public static final String NEXTVAL = ".nextval";
+
 	/**
 	 * 虚表
 	 */
@@ -185,7 +187,7 @@ public class OracleDialect implements Dialect {
 					@Override
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
-						String sequence = entityMeta.getSequence() + ".nextval";
+						String sequence = entityMeta.getSequence() + NEXTVAL;
 						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
 							pkStrategy = PKStrategy.SEQUENCE;
 							sequence = entityMeta.getFieldMeta(entityMeta.getIdArray()[0]).getDefaultValue();
@@ -215,7 +217,7 @@ public class OracleDialect implements Dialect {
 					@Override
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
-						String sequence = entityMeta.getSequence() + ".nextval";
+						String sequence = entityMeta.getSequence() + NEXTVAL;
 						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
 							pkStrategy = PKStrategy.SEQUENCE;
 							sequence = entityMeta.getFieldMeta(entityMeta.getIdArray()[0]).getDefaultValue();
@@ -266,7 +268,7 @@ public class OracleDialect implements Dialect {
 			final String dialect, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		PKStrategy pkStrategy = entityMeta.getIdStrategy();
-		String sequence = entityMeta.getSequence().concat(".nextval");
+		String sequence = entityMeta.getSequence() + NEXTVAL;
 		// oracle identity本质是用sequence模拟(主键策略尽量少用跟数据库相关的)
 		if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
 			pkStrategy = PKStrategy.SEQUENCE;
@@ -287,7 +289,7 @@ public class OracleDialect implements Dialect {
 					@Override
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateField) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
-						String sequence = entityMeta.getSequence().concat(".nextval");
+						String sequence = entityMeta.getSequence() + NEXTVAL;
 						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
 							pkStrategy = PKStrategy.SEQUENCE;
 							sequence = entityMeta.getFieldMeta(entityMeta.getIdArray()[0]).getDefaultValue();
@@ -323,7 +325,7 @@ public class OracleDialect implements Dialect {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		PKStrategy pkStrategy = entityMeta.getIdStrategy();
 		boolean isAssignPK = OracleDialectUtils.isAssignPKValue(pkStrategy);
-		String sequence = entityMeta.getSequence().concat(".nextval");
+		String sequence = entityMeta.getSequence() + NEXTVAL;
 		if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
 			pkStrategy = PKStrategy.SEQUENCE;
 			sequence = entityMeta.getFieldMeta(entityMeta.getIdArray()[0]).getDefaultValue();
@@ -351,7 +353,7 @@ public class OracleDialect implements Dialect {
 					@Override
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
-						String sequence = entityMeta.getSequence().concat(".nextval");
+						String sequence = entityMeta.getSequence() + NEXTVAL;
 						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
 							pkStrategy = PKStrategy.SEQUENCE;
 							sequence = entityMeta.getFieldMeta(entityMeta.getIdArray()[0]).getDefaultValue();

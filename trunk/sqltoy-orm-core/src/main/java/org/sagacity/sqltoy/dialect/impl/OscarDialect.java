@@ -8,13 +8,12 @@ import org.sagacity.sqltoy.model.ColumnMeta;
 
 /**
  * @project sqltoy-orm
- * @description 提供适配华为guassdb数据库方言的实现(以postgresql9.5+为蓝本实现)
+ * @description 神通数据库适配
  * @author zhongxuchen
- * @version v1.0,Date:2020-6-9
- * @modify {Date:2020-6-9,初始创建}
+ * @version v1.0,Date:2024-10-29
+ * @modify {Date:2024-10-29,初始创建}
  */
-public class GaussDBDialect extends OpenGaussDialect {
-
+public class OscarDialect extends OpenGaussDialect {
 	@Override
 	public List<ColumnMeta> getTableColumns(String catalog, String schema, String tableName, Connection conn,
 			Integer dbType, String dialect) throws Exception {

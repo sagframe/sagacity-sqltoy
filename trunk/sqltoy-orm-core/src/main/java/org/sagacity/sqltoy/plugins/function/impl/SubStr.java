@@ -42,7 +42,9 @@ public class SubStr extends IFunction {
 			return super.IGNORE;
 		}
 		if (dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL15 || dialect == DBType.GAUSSDB
-				|| dialect == DBType.MOGDB || dialect == DBType.SQLSERVER || dialect == DBType.H2) {
+				|| dialect == DBType.OPENGAUSS || dialect == DBType.MOGDB || dialect == DBType.VASTBASE
+				|| dialect == DBType.SQLSERVER || dialect == DBType.H2 || dialect == DBType.STARDB
+				|| dialect == DBType.OSCAR) {
 			if (dialect == DBType.SQLSERVER && args.length == 2) {
 				return "substring(" + args[0] + "," + args[1] + ",len(" + args[0] + "))";
 			}

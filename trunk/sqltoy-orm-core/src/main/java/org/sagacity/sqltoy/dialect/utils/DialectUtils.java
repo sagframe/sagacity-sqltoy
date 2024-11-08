@@ -391,7 +391,8 @@ public class DialectUtils {
 			int sql_from_index = 0;
 			// sql不以from开头，截取from 后的部分语句
 			if (StringUtil.indexOfIgnoreCase(query_tmp, "from") != 0) {
-				sql_from_index = StringUtil.getSymMarkMatchIndex(SELECT_REGEX, FROM_REGEX, query_tmp.toLowerCase(), 0);
+				// update 2024-11-8 优化select (day from) as a from xxx 语句的兼容
+				sql_from_index = SqlUtil.getSymMarkIndexExcludeKeyWords(query_tmp, SELECT_REGEX, FROM_REGEX, 0);
 			}
 			// 剔除order提高运行效率
 			int orderByIndex = StringUtil.matchLastIndex(query_tmp, ORDER_BY_PATTERN, 1);
@@ -1673,6 +1674,8 @@ public class DialectUtils {
 		final Integer[] paramsType = entityMeta.getFieldsTypeArray();
 		PreparedStatement pst = null;
 		if (isIdentity || isSequence) {
+			// RETURN_GENERATED_KEYS 适合auto_increment,不适合sequence
+			// pst = conn.prepareStatement(realInsertSql, Statement.RETURN_GENERATED_KEYS);
 			pst = conn.prepareStatement(realInsertSql, new String[] { DataSourceUtils
 					.getReturnPrimaryKeyColumn(entityMeta.getColumnName(entityMeta.getIdArray()[0]), dbType) });
 		} else {
@@ -2192,8 +2195,9 @@ public class DialectUtils {
 			public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 				PKStrategy pkStrategy = entityMeta.getIdStrategy();
 				String sequence = "nextval('" + entityMeta.getSequence() + "')";
-				if ((dbType == DBType.GAUSSDB || dbType == DBType.MOGDB) && pkStrategy != null
-						&& pkStrategy.equals(PKStrategy.SEQUENCE)) {
+				if ((dbType == DBType.GAUSSDB || dbType == DBType.OPENGAUSS || dbType == DBType.STARDB
+						|| dbType == DBType.OSCAR || dbType == DBType.MOGDB || dbType == DBType.VASTBASE)
+						&& pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE)) {
 					sequence = entityMeta.getSequence() + ".nextval";
 				}
 				if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
@@ -2202,10 +2206,9 @@ public class DialectUtils {
 					sequence = "DEFAULT";
 				}
 				boolean isAssignPK = PostgreSqlDialectUtils.isAssignPKValue(pkStrategy);
-				if (dbType == DBType.GAUSSDB) {
-					isAssignPK = GaussDialectUtils.isAssignPKValue(pkStrategy);
-				} else if (dbType == DBType.MOGDB) {
-					isAssignPK = MogDBDialectUtils.isAssignPKValue(pkStrategy);
+				if (dbType == DBType.GAUSSDB || dbType == DBType.MOGDB || dbType == DBType.STARDB
+						|| dbType == DBType.OSCAR || dbType == DBType.OPENGAUSS || dbType == DBType.VASTBASE) {
+					isAssignPK = OpenGaussDialectUtils.isAssignPKValue(pkStrategy);
 				}
 				return DialectExtUtils.insertIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 						pkStrategy, "COALESCE", sequence, isAssignPK, tableName);
@@ -2718,8 +2721,9 @@ public class DialectUtils {
 		boolean isComplexQuery = SqlUtil.hasUnion(tmpQuery, false);
 		// from 和 where之间有","表示多表查询
 		if (!isComplexQuery) {
-			int fromIndex = StringUtil.getSymMarkMatchIndex(SELECT_REGEX, FROM_REGEX, tmpQuery, 0);
-			int fromWhereIndex = StringUtil.getSymMarkMatchIndex(FROM_REGEX, WHERE_REGEX, tmpQuery, fromIndex - 1);
+			int fromIndex = SqlUtil.getSymMarkIndexExcludeKeyWords(tmpQuery, SELECT_REGEX, FROM_REGEX, 0);
+			int fromWhereIndex = SqlUtil.getSymMarkIndexExcludeKeyWords(tmpQuery, FROM_REGEX, WHERE_REGEX,
+					(fromIndex < 1) ? 0 : (fromIndex - 1));
 			String fromLastStr = (fromWhereIndex == -1) ? tmpQuery.substring(fromIndex)
 					: tmpQuery.substring(fromIndex, fromWhereIndex);
 			if (fromLastStr.indexOf(",") != -1 || fromLastStr.indexOf(" join ") != -1

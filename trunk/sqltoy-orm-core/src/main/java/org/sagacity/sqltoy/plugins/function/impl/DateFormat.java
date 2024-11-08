@@ -56,6 +56,10 @@ public class DateFormat extends IFunction {
 		case DBType.ORACLE:
 		case DBType.GAUSSDB:
 		case DBType.MOGDB:
+		case DBType.STARDB:
+		case DBType.OSCAR:
+		case DBType.OPENGAUSS:
+		case DBType.VASTBASE:
 		case DBType.OCEANBASE:
 		case DBType.DM:
 		case DBType.ORACLE11: {

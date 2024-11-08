@@ -48,13 +48,17 @@ import org.sagacity.sqltoy.dialect.impl.KingbaseDialect;
 import org.sagacity.sqltoy.dialect.impl.MogDBDialect;
 import org.sagacity.sqltoy.dialect.impl.MySqlDialect;
 import org.sagacity.sqltoy.dialect.impl.OceanBaseDialect;
+import org.sagacity.sqltoy.dialect.impl.OpenGaussDialect;
 import org.sagacity.sqltoy.dialect.impl.Oracle11gDialect;
 import org.sagacity.sqltoy.dialect.impl.OracleDialect;
+import org.sagacity.sqltoy.dialect.impl.OscarDialect;
 import org.sagacity.sqltoy.dialect.impl.PostgreSqlDialect;
 import org.sagacity.sqltoy.dialect.impl.SqlServerDialect;
 import org.sagacity.sqltoy.dialect.impl.SqliteDialect;
+import org.sagacity.sqltoy.dialect.impl.StarDBDialect;
 import org.sagacity.sqltoy.dialect.impl.TDengineDialect;
 import org.sagacity.sqltoy.dialect.impl.TidbDialect;
+import org.sagacity.sqltoy.dialect.impl.VastbaseDialect;
 import org.sagacity.sqltoy.dialect.utils.ClickHouseDialectUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.dialect.utils.PageOptimizeUtils;
@@ -203,9 +207,28 @@ public class DialectFactory {
 			dialectSqlWrapper = new GaussDBDialect();
 			break;
 		}
+		// 华为guassdb(postgresql 为蓝本的)
+		case DBType.OPENGAUSS: {
+			dialectSqlWrapper = new OpenGaussDialect();
+			break;
+		}
 		// mogdb
 		case DBType.MOGDB: {
 			dialectSqlWrapper = new MogDBDialect();
+			break;
+		}
+		// starDB(京东)
+		case DBType.STARDB: {
+			dialectSqlWrapper = new StarDBDialect();
+			break;
+		} // 神通数据库
+		case DBType.OSCAR: {
+			dialectSqlWrapper = new OscarDialect();
+			break;
+		}
+		// vastbase 海量数据库
+		case DBType.VASTBASE: {
+			dialectSqlWrapper = new VastbaseDialect();
 			break;
 		}
 		case DBType.IMPALA: {
@@ -1342,8 +1365,8 @@ public class DialectFactory {
 				int unionSqlSize = unionSqls.length;
 				String countPart = dbType.equals(DBType.ES) ? " count(*) " : " count(1) ";
 				for (int i = 0; i < unionSqlSize; i++) {
-					sql_from_index = StringUtil.getSymMarkMatchIndex("(?i)select\\s+", "(?i)\\s+from[\\(\\s+]",
-							unionSqls[i], 0);
+					sql_from_index = SqlUtil.getSymMarkIndexExcludeKeyWords(unionSqls[i], "select\\s+",
+							"\\s+from[\\(\\s+]", 0);
 					countSql.append(" select ").append(countPart).append(" row_count ")
 							.append((sql_from_index != -1 ? unionSqls[i].substring(sql_from_index) : unionSqls[i]));
 					if (i < unionSqlSize - 1) {
