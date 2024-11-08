@@ -1046,7 +1046,7 @@ public class SqlServerDialectUtils {
 		if (lockMode == null || SqlUtil.hasLock(loadSql, DBType.SQLSERVER)) {
 			return loadSql;
 		}
-		int fromIndex = StringUtil.getSymMarkMatchIndex("(?i)select\\s+", "(?i)\\s+from[\\(\\s+]", loadSql, 0);
+		int fromIndex = SqlUtil.getSymMarkIndexExcludeKeyWords(loadSql, "select\\s+", "\\s+from[\\(\\s+]", 0);
 		String selectPart = loadSql.substring(0, fromIndex);
 		String fromPart = loadSql.substring(fromIndex);
 		String[] sqlChips = fromPart.trim().split("\\s+");
