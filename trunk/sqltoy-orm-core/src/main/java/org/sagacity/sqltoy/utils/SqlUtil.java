@@ -2254,7 +2254,12 @@ public class SqlUtil {
 	}
 
 	/**
-	 * 提供两种场景功能： 1、获取select 对称的from位置 2、获取from 对称的where的位置
+	 * <p>
+	 * 主要用于分页场景(极端特殊情况自定义count-sql):
+	 * <li>1、获取select 对称的from位置;</li>
+	 * <li>2、判断是否复杂查询(分页是否select count(1) from (sql))，获取from 对称的where的位置</li>
+	 * <li>非分页:sqlserver 锁查询，提取from位置,此场景sql简单,不会产生问题</li>
+	 * </p>
 	 * 
 	 * @param sql
 	 * @param startRegex
@@ -2272,6 +2277,7 @@ public class SqlUtil {
 				&& StringUtil.matchCnt(startIndex == 0 ? sqlLow : sqlLow.substring(startIndex), endPattern) == 1) {
 			return endRegIndex;
 		}
+		// 如果有select concat(a,'(') from 判断就可能有问题
 		String startMark = "(", endMark = ")";
 		int startBreaket = sqlLow.indexOf(startMark, startRegexIndex);
 		// 在select 和from之间有()符号，要排除select (day from()) from 场景
