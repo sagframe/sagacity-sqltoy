@@ -133,6 +133,7 @@ public class ClickHouseDialectUtils {
 		if (isIdentity || isSequence) {
 			pst = conn.prepareStatement(insertSql, new String[] { DataSourceUtils
 					.getReturnPrimaryKeyColumn(entityMeta.getColumnName(entityMeta.getIdArray()[0]), dbType) });
+			// pst = conn.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS);
 		} else {
 			pst = conn.prepareStatement(insertSql);
 		}
