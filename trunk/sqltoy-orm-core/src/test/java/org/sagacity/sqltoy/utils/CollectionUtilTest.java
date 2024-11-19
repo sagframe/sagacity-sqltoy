@@ -167,4 +167,15 @@ public class CollectionUtilTest {
 		CollectionUtil.removeNull(dataSet);
 		System.err.println(JSON.toJSONString(dataSet));
 	}
+
+	@Test
+	public void testRemoveRepeat() {
+		List dataSet = new ArrayList();
+		dataSet.add(new Object[] { 1, 3, 1, 9 });
+		dataSet.add(new Object[] { 11, 3, 1, 9 });
+		dataSet.add(new Object[] { 12, 3, 12, 9 });
+
+		dataSet = CollectionUtil.clearRepeat(dataSet);
+		System.err.println(JSON.toJSONString(dataSet));
+	}
 }
