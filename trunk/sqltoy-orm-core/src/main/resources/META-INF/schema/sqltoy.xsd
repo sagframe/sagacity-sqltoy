@@ -180,6 +180,7 @@
 							<xsd:restriction base="xsd:string">
 								<xsd:enumeration value="ARRAY" />
 								<xsd:enumeration value="LIST" />
+								<xsd:enumeration value="SET" />
 							</xsd:restriction>
 						</xsd:simpleType>
 					</xsd:attribute>

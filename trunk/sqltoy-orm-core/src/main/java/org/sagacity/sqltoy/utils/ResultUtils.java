@@ -578,7 +578,7 @@ public class ResultUtils {
 			// 判断link拼接是否重新开始
 			boolean isLastProcess = false;
 			boolean doLink = true;
-			// -1:正常link，1:List;2:Array
+			// -1:正常link，1:List;2:Array;3:HashSet
 			int linkResultType = linkModel.getResultType();
 			while (rs.next()) {
 				isLastProcess = false;
@@ -610,6 +610,9 @@ public class ResultUtils {
 						} // Array
 						else if (linkResultType == 2) {
 							items.get(items.size() - 1).set(linkIndex, linkList.toArray());
+							linkList = new ArrayList();
+						} else if (linkResultType == 3) {
+							items.get(items.size() - 1).set(linkIndex, new HashSet(linkList));
 							linkList = new ArrayList();
 						} else {
 							items.get(items.size() - 1).set(linkIndex, linkBuffer.toString());
@@ -678,6 +681,8 @@ public class ResultUtils {
 					items.get(items.size() - 1).set(linkIndex, linkList);
 				} else if (linkResultType == 2) {
 					items.get(items.size() - 1).set(linkIndex, linkList.toArray());
+				} else if (linkResultType == 3) {
+					items.get(items.size() - 1).set(linkIndex, new HashSet(linkList));
 				} else {
 					items.get(items.size() - 1).set(linkIndex, linkBuffer.toString());
 				}

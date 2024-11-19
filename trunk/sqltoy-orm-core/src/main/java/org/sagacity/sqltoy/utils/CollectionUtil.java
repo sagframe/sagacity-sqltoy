@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -1408,5 +1409,41 @@ public class CollectionUtil {
 		} else {
 			return new BigDecimal(tmpCellValue.toString().replaceAll(",", "").replaceFirst(ILLEGAL_NUM_REGEX, ""));
 		}
+	}
+
+	/**
+	 * @todo 去除in中的重复数据
+	 * @param inArgsList
+	 * @return
+	 */
+	public static List<Object[]> clearRepeat(List<Object[]> inArgsList) {
+		if (inArgsList == null || inArgsList.isEmpty() || inArgsList.get(0).length < 2) {
+			return inArgsList;
+		}
+		int size = inArgsList.size();
+		List<List> middleList = new ArrayList<>();
+		List<Object[]> result = new ArrayList<>();
+		for (int i = 0; i < size; i++) {
+			middleList.add(new ArrayList<>());
+		}
+		HashSet<String> notRepeatSet = new HashSet<>();
+		String key;
+		int loopSize = inArgsList.get(0).length;
+		for (int i = 0; i < loopSize; i++) {
+			key = "";
+			for (int j = 0; j < size; j++) {
+				key = key + ",{" + inArgsList.get(j)[i] + "}";
+			}
+			if (!notRepeatSet.contains(key)) {
+				notRepeatSet.add(key);
+				for (int j = 0; j < size; j++) {
+					middleList.get(j).add(inArgsList.get(j)[i]);
+				}
+			}
+		}
+		for (int i = 0; i < size; i++) {
+			result.add(middleList.get(i).toArray());
+		}
+		return result;
 	}
 }
