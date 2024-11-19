@@ -1,6 +1,7 @@
 package org.sagacity.sqltoy.config;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -859,7 +860,6 @@ public class SqlConfigParseUtils {
 		String partSql = null;
 		Object[] inParamArray = null;
 		String argValue;
-		Collection inParamList;
 		boolean overSize = false;
 		int paramCnt = 0;
 		while (matched) {
@@ -902,8 +902,7 @@ public class SqlConfigParseUtils {
 					List<Object[]> inParamsList = new ArrayList<Object[]>();
 					for (int i = 0; i < paramCnt; i++) {
 						if (paramsValue[startIndex + i] instanceof Collection) {
-							inParamList = (Collection) paramsValue[startIndex + i];
-							inParamArray = inParamList.toArray();
+							inParamArray = ((Collection) paramsValue[startIndex + i]).toArray();
 						} else {
 							inParamArray = CollectionUtil.convertArray(paramsValue[startIndex + i]);
 						}
@@ -914,58 +913,62 @@ public class SqlConfigParseUtils {
 											+ "<>" + inParamsList.get(i - 1).length + "!");
 						}
 					}
+					// 去除重复
+					inParamsList = CollectionUtil.clearRepeat(inParamsList);
+					int inArgLength = inParamsList.get(0).length;
 					// 超过1000长度，进行(name in (?,?) or name in (?,?)) 分割
-					if (inParamArray.length > 1000) {
+					if (inArgLength > 1000) {
 						overSize = true;
-						partSql = wrapOverSizeInSql(queryStr.substring(start, m.start()), loopArgs,
-								inParamArray.length);
+						partSql = wrapOverSizeInSql(queryStr.substring(start, m.start()), loopArgs, inArgLength);
 						lastSql.append(" ").append(partSql).append(" ");
-					} else if (inParamArray.length == 0) {
+					} else if (inArgLength == 0) {
 						partSql = "(".concat(StringUtil.loopAppendWithSign("null", ",", paramCnt)).concat(")");
 					} else {
 						// 循环组合成in(?,?*)
-						partSql = StringUtil.loopAppendWithSign(loopArgs, ",", inParamArray.length);
+						partSql = StringUtil.loopAppendWithSign(loopArgs, ",", inArgLength);
 					}
 					for (int i = 0; i < paramCnt; i++) {
 						paramValueList.remove(startIndex + incrementIndex);
 					}
 					int addIndex = startIndex + incrementIndex;
-					for (int i = 0; i < inParamArray.length; i++) {
+					for (int i = 0; i < inArgLength; i++) {
 						for (int j = 0; j < paramCnt; j++) {
 							paramValueList.add(addIndex, inParamsList.get(j)[i]);
 							addIndex++;
 						}
 					}
-					incrementIndex += inParamArray.length * paramCnt - paramCnt;
+					incrementIndex += inArgLength * paramCnt - paramCnt;
 				}
 			} // 单个?，且值为null不在processIn中处理，最终replaceNull统一处理
 			else if (null != paramsValue[parameterMarkCnt - 1]) {
+				Object inValueObject = paramsValue[parameterMarkCnt - 1];
 				// 数组或集合数据类型
-				if (paramsValue[parameterMarkCnt - 1].getClass().isArray()
-						|| paramsValue[parameterMarkCnt - 1] instanceof Collection) {
+				if (inValueObject.getClass().isArray() || inValueObject instanceof Collection) {
 					// update 2012-12-5 增加了对Collection数据类型的处理
-					if (paramsValue[parameterMarkCnt - 1] instanceof Collection) {
-						inParamList = (Collection) paramsValue[parameterMarkCnt - 1];
-						inParamArray = inParamList.toArray();
+					// update 2024-11-19 增加去除重复功能
+					if (inValueObject instanceof HashSet) {
+						inParamArray = ((HashSet) inValueObject).toArray();
+					} else if (inValueObject instanceof Collection) {
+						inParamArray = new HashSet((Collection) inValueObject).toArray();
 					} else {
-						inParamArray = CollectionUtil.convertArray(paramsValue[parameterMarkCnt - 1]);
+						inParamArray = new HashSet(Arrays.asList(CollectionUtil.convertArray(inValueObject))).toArray();
 					}
+					int inArgLength = inParamArray.length;
 					// 超过1000长度，进行(name in (?,?) or name in (?,?)) 分割
-					if (inParamArray.length > 1000) {
+					if (inArgLength > 1000) {
 						overSize = true;
-						partSql = wrapOverSizeInSql(queryStr.substring(start, m.start()), ARG_NAME,
-								inParamArray.length);
+						partSql = wrapOverSizeInSql(queryStr.substring(start, m.start()), ARG_NAME, inArgLength);
 						lastSql.append(BLANK).append(partSql).append(BLANK);
-					} else if (inParamArray.length == 0) {
+					} else if (inArgLength == 0) {
 						partSql = "null";
 					} else {
 						// 循环组合成in(?,?*)
-						partSql = StringUtil.loopAppendWithSign(ARG_NAME, ",", inParamArray.length);
+						partSql = StringUtil.loopAppendWithSign(ARG_NAME, ",", inArgLength);
 					}
 					paramValueList.remove(parameterMarkCnt - 1 + incrementIndex);
 					paramValueList.addAll(parameterMarkCnt - 1 + incrementIndex,
 							CollectionUtil.arrayToList(inParamArray));
-					incrementIndex += inParamArray.length - 1;
+					incrementIndex += inArgLength - 1;
 				}
 				// 逗号分隔的条件参数
 				else if (paramsValue[parameterMarkCnt - 1] instanceof String) {

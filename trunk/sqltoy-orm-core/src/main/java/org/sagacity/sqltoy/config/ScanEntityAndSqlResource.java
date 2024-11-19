@@ -34,6 +34,8 @@ import org.slf4j.LoggerFactory;
  */
 @SuppressWarnings({ "unchecked", "rawtypes" })
 public class ScanEntityAndSqlResource {
+	//springboot场景下已经支持
+	//欠缺一个功能:路径增加匹配能力，如:classpath:com/sagframe/**/sqltoy/*.sql.xml
 	/**
 	 * 定义日志
 	 */
@@ -54,16 +56,16 @@ public class ScanEntityAndSqlResource {
 
 	/**
 	 * @todo 从指定包package中获取所有的sqltoy实体对象(意义已经不大,entity类目前已经改为在使用时加载的解析模式)
-	 * @param pack
+	 * @param entitiesPackage
 	 * @param recursive 是否递归往下钻取
 	 * @param charset
 	 * @return
 	 */
-	public static Set<Class<?>> getPackageEntities(String pack, boolean recursive, String charset) {
+	public static Set<Class<?>> getPackageEntities(String entitiesPackage, boolean recursive, String charset) {
 		// class类的集合
 		Set<Class<?>> entities = new LinkedHashSet<Class<?>>();
 		// 获取包的名字 并进行替换
-		String packageName = pack.trim();
+		String packageName = entitiesPackage.trim();
 		// 剔除第一个字符为目录的符号,并统一packName为xxx.xxx 格式
 		if (packageName.length() > 0 && packageName.charAt(0) == '/') {
 			packageName = packageName.substring(1);
