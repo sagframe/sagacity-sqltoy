@@ -1192,6 +1192,8 @@ public class SqlXMLConfigParse {
 				linkModel.setResultType(1);
 			} else if (resultType.equalsIgnoreCase("ARRAY")) {
 				linkModel.setResultType(2);
+			} else if (resultType.equalsIgnoreCase("SET") || resultType.equalsIgnoreCase("HASHSET")) {
+				linkModel.setResultType(3);
 			}
 		}
 		if (link.hasAttribute("distinct")) {
