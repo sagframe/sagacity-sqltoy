@@ -78,7 +78,15 @@ public class SqlToyContextBuilder {
 	 * @throws IOException
 	 */
 	private void scanResources(List<String> resList, String dir, String suffix) throws IOException {
-		dir += (dir.endsWith("/") ? "" : "/") + suffix;
+		// dir += (dir.endsWith("/") ? "" : "/") + suffix;
+		// 为今后路径直接支持**/*.sql.xml 模式做准备
+		if (!dir.endsWith(suffix)) {
+			if (dir.endsWith("/**/")) {
+				dir += suffix;
+			} else {
+				dir += (dir.endsWith("/") ? "**/" : "/**/") + suffix;
+			}
+		}
 		Collection<String> subSqlResourceList = ResourceUtil.scanResources(dir);
 		for (String subSqlResource : subSqlResourceList) {
 			resList.add(subSqlResource.replaceFirst("resource:/", ""));

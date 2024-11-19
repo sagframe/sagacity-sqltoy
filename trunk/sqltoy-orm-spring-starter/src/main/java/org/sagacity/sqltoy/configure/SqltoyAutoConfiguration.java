@@ -522,7 +522,14 @@ public class SqltoyAutoConfiguration {
 	 * @throws IOException
 	 */
 	private void scanResources(List<String> resList, String dir, String suffix, String charset) throws IOException {
-		dir += (dir.endsWith("/") ? "" : "/") + "**/" + suffix;
+		// update 2024-11-9 为后续路径支持匹配模式做铺垫
+		if (!dir.endsWith(suffix)) {
+			if (dir.endsWith("/**/")) {
+				dir += suffix;
+			} else {
+				dir += (dir.endsWith("/") ? "**/" : "/**/") + suffix;
+			}
+		}
 		Resource[] resources = resourcePatternResolver
 				.getResources(dir.replaceFirst("classpath:", ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX));
 		// 遍历资源目录树
