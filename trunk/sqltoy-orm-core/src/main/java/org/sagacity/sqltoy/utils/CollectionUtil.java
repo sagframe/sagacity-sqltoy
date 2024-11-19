@@ -1432,7 +1432,7 @@ public class CollectionUtil {
 		for (int i = 0; i < loopSize; i++) {
 			key = "";
 			for (int j = 0; j < size; j++) {
-				key = "" + inArgsList.get(j)[i] + ",";
+				key = key + ",{" + inArgsList.get(j)[i] + "}";
 			}
 			if (!notRepeatSet.contains(key)) {
 				notRepeatSet.add(key);
