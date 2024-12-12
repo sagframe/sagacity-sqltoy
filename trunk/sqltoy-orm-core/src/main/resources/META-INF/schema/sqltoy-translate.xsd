@@ -68,7 +68,6 @@
 		</xsd:attribute>
 		<xsd:attribute name="check-frequency" type="xsd:string" />
 	</xsd:attributeGroup>
-	<!-- root -->
 	<xsd:element name="sagacity">
 		<xsd:complexType>
 			<xsd:choice maxOccurs="unbounded">
@@ -194,7 +193,6 @@
 					</xsd:complexType>
 
 				</xsd:element>
-				<!-- 缓存变更检测 -->
 				<xsd:element name="cache-update-checkers" minOccurs="0"
 					maxOccurs="1">
 					<xsd:annotation>
