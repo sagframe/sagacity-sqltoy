@@ -29,6 +29,7 @@ import java.util.Optional;
 import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.SqlToyThreadDataHolder;
 import org.sagacity.sqltoy.callback.DecryptHandler;
 import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
 import org.sagacity.sqltoy.callback.ReflectPropsHandler;
@@ -49,7 +50,6 @@ import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
-import org.sagacity.sqltoy.plugins.UnifyUpdateFieldsController;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
@@ -399,7 +399,7 @@ public class DefaultDialectUtils {
 			}
 		}
 		// 统一字段赋值处理
-		IUnifyFieldsHandler unifyFieldsHandler = UnifyUpdateFieldsController.useUnifyFields()
+		IUnifyFieldsHandler unifyFieldsHandler = SqlToyThreadDataHolder.useUnifyFields()
 				? sqlToyContext.getUnifyFieldsHandler()
 				: null;
 		final Object[] fieldValues = tempFieldValues;

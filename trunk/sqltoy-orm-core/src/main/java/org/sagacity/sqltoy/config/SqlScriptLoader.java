@@ -299,7 +299,8 @@ public class SqlScriptLoader {
 				String sql = result.getSql();
 				// update 2024-09-19 增加@fast(@include("sqlId")) 场景，result.getSql()
 				// 已经剔除了@fast,导致再次解析时已经无法判断是@fast语句，所以需要拼接上@fast还原原本的sql
-				// SqlToyConfig.setSql(fastPreSql.concat(" (").concat(fastSql).concat(")").concat(fastTailSql)),剔除了@fast
+				// SqlToyConfig.setSql(fastPreSql.concat("
+				// (").concat(fastSql).concat(")").concat(fastTailSql)),剔除了@fast
 				if (result.isHasFast()) {
 					sql = result.getFastPreSql(null).concat(" @fast(").concat(result.getFastSql(null)).concat(") ")
 							.concat(result.getFastTailSql(null));

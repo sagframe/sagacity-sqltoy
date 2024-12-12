@@ -7,6 +7,7 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import org.sagacity.sqltoy.model.OperateDetailType;
 import org.sagacity.sqltoy.utils.IdUtil;
 
 /**
@@ -21,9 +22,9 @@ public class SqlExecuteTrace implements Serializable {
 	 */
 	private static final long serialVersionUID = 6050450953137017285L;
 
-	public SqlExecuteTrace(String id, String type, boolean isPrint) {
+	public SqlExecuteTrace(String id, OperateDetailType operateDetailType, boolean isPrint) {
 		this.id = id;
-		this.type = type;
+		this.operateDetailType = operateDetailType;
 		this.start = System.currentTimeMillis();
 		this.isPrint = isPrint;
 		// 不需要体现年月日
@@ -70,7 +71,7 @@ public class SqlExecuteTrace implements Serializable {
 	/**
 	 * sql执行的类别(分页查询\普通查询\修改操作)
 	 */
-	private String type;
+	private OperateDetailType operateDetailType;
 
 	/**
 	 * 批量信息
@@ -119,14 +120,18 @@ public class SqlExecuteTrace implements Serializable {
 	 * @return the type
 	 */
 	public String getType() {
-		return type;
+		return (operateDetailType == null) ? "" : operateDetailType.value();
+	}
+
+	public OperateDetailType getOperateDetailType() {
+		return operateDetailType;
 	}
 
 	/**
 	 * @param type the type to set
 	 */
-	public void setType(String type) {
-		this.type = type;
+	public void setOperateDetailType(OperateDetailType operateDetailType) {
+		this.operateDetailType = operateDetailType;
 	}
 
 	/**

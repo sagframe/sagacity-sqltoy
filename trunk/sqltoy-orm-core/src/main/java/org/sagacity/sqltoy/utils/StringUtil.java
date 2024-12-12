@@ -1155,4 +1155,32 @@ public class StringUtil {
 		}
 		return value;
 	}
+
+	/**
+	 * 替换正则表达式指定匹配次序的字符
+	 * @param source
+	 * @param pattern
+	 * @param replaceStr
+	 * @param matchCnt
+	 * @param offset 偏移字符数量
+	 * @return
+	 */
+	public static String replaceRegex(String source, Pattern pattern, String replaceStr, int matchCnt, int offset) {
+		if (source == null) {
+			return source;
+		}
+		Matcher matcher = pattern.matcher(source);
+		int count = 0;
+		int start = 0;
+		int end = -1;
+		while (matcher.find(start)) {
+			count++;
+			end = matcher.end();
+			if (count == matchCnt) {
+				return source.substring(0, matcher.start()) + replaceStr + source.substring(end);
+			}
+			start = end - offset;
+		}
+		return source;
+	}
 }

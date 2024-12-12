@@ -296,6 +296,19 @@ public class SqlConfigParseUtilsTest {
 	}
 
 	@Test
+	public void testOverSizeInAndDymicParam() throws Exception {
+		String sql = "select * from table t where name=@value(:name) and t.@value(:field) in (:oderId)";
+		String[] orderIds = new String[1100];
+		for (int i = 1; i <= 1100; i++) {
+			orderIds[i - 1] = "" + i;
+		}
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "name", "field", "oderId" },
+				new Object[] { "chen?xf", "id", orderIds });
+		System.err.println(result.getSql());
+		System.err.println(result.getParamsValue().length);
+	}
+
+	@Test
 	public void testOverSizeIn1() throws Exception {
 		String sql = "select * from table t where concat(t.order_id,t.type) in (:oderId)";
 		String[] orderIds = new String[2000];
