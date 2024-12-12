@@ -23,6 +23,7 @@ import java.util.regex.Pattern;
 import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.SqlToyThreadDataHolder;
 import org.sagacity.sqltoy.callback.CallableStatementResultHandler;
 import org.sagacity.sqltoy.callback.DecryptHandler;
 import org.sagacity.sqltoy.callback.GenerateSavePKStrategy;
@@ -59,7 +60,6 @@ import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.plugins.SqlInterceptor;
-import org.sagacity.sqltoy.plugins.UnifyUpdateFieldsController;
 import org.sagacity.sqltoy.plugins.secure.DesensitizeProvider;
 import org.sagacity.sqltoy.plugins.secure.FieldsSecureProvider;
 import org.sagacity.sqltoy.plugins.sharding.ShardingUtils;
@@ -2954,7 +2954,7 @@ public class DialectUtils {
 		}
 		// 强制修改字段赋值
 		IgnoreCaseSet tmpSet = (unifyFieldsHandler == null) ? null : unifyFieldsHandler.forceUpdateFields();
-		final IgnoreCaseSet forceUpdateFields = (!UnifyUpdateFieldsController.useUnifyFields() || tmpSet == null)
+		final IgnoreCaseSet forceUpdateFields = (!SqlToyThreadDataHolder.useUnifyFields() || tmpSet == null)
 				? new IgnoreCaseSet()
 				: tmpSet;
 		final Integer realVersion = dataVersion;
@@ -2992,7 +2992,7 @@ public class DialectUtils {
 	 */
 	public static ReflectPropsHandler getUpdateReflectHandler(final ReflectPropsHandler preHandler,
 			String[] forceUpdateProps, IUnifyFieldsHandler unifyFieldsHandler) {
-		if (unifyFieldsHandler == null || !UnifyUpdateFieldsController.useUnifyFields()) {
+		if (unifyFieldsHandler == null || !SqlToyThreadDataHolder.useUnifyFields()) {
 			return preHandler;
 		}
 		final Map<String, Object> keyValues = unifyFieldsHandler.updateUnifyFields();
@@ -3111,7 +3111,7 @@ public class DialectUtils {
 			return prepHandler;
 		}
 		final Map<String, Object> addKeyValues = unifyFieldsHandler.createUnifyFields();
-		final Map<String, Object> updateKeyValues = UnifyUpdateFieldsController.useUnifyFields()
+		final Map<String, Object> updateKeyValues = SqlToyThreadDataHolder.useUnifyFields()
 				? unifyFieldsHandler.updateUnifyFields()
 				: null;
 		if ((addKeyValues == null || addKeyValues.isEmpty())

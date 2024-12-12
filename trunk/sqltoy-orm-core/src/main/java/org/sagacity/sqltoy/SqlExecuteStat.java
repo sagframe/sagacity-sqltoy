@@ -9,6 +9,7 @@ import java.util.regex.Pattern;
 
 import org.sagacity.sqltoy.config.model.SqlExecuteLog;
 import org.sagacity.sqltoy.config.model.SqlExecuteTrace;
+import org.sagacity.sqltoy.model.OperateDetailType;
 import org.sagacity.sqltoy.model.OverTimeSql;
 import org.sagacity.sqltoy.plugins.FirstBizCodeTrace;
 import org.sagacity.sqltoy.plugins.OverTimeSqlHandler;
@@ -70,11 +71,11 @@ public class SqlExecuteStat {
 	 * @param type
 	 * @param debugPrint
 	 */
-	public static void start(String sqlId, String type, Boolean debugPrint) {
+	public static void start(String sqlId, OperateDetailType type, Boolean debugPrint) {
 		threadLocal.set(new SqlExecuteTrace(sqlId, type, (debugPrint == null) ? debug : debugPrint.booleanValue()));
 	}
 
-	public static void start(String sqlId, String type, Long batchSize, Boolean debugPrint) {
+	public static void start(String sqlId, OperateDetailType type, Long batchSize, Boolean debugPrint) {
 		SqlExecuteTrace sqlExecuteTrace = new SqlExecuteTrace(sqlId, type,
 				(debugPrint == null) ? debug : debugPrint.booleanValue());
 		sqlExecuteTrace.setBatchSize(batchSize);

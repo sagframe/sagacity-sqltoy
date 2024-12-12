@@ -24,6 +24,7 @@ import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.SqlToyThreadDataHolder;
 import org.sagacity.sqltoy.callback.DataSourceCallbackHandler;
 import org.sagacity.sqltoy.callback.StreamResultHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
@@ -81,7 +82,6 @@ import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.inner.TranslateExtend;
 import org.sagacity.sqltoy.plugins.CrossDbAdapter;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
-import org.sagacity.sqltoy.plugins.UnifyUpdateFieldsController;
 import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
 import org.sagacity.sqltoy.plugins.id.IdGenerator;
 import org.sagacity.sqltoy.translate.TranslateHandler;
@@ -2146,7 +2146,7 @@ public class SqlToyDaoSupport {
 		// 对统一更新字段做处理
 		IUnifyFieldsHandler unifyHandler = getSqlToyContext().getUnifyFieldsHandler();
 		if (unifyHandler != null) {
-			Map<String, Object> updateFields = UnifyUpdateFieldsController.useUnifyFields()
+			Map<String, Object> updateFields = SqlToyThreadDataHolder.useUnifyFields()
 					? unifyHandler.updateUnifyFields()
 					: null;
 			if (updateFields != null && !updateFields.isEmpty()) {
@@ -2191,7 +2191,7 @@ public class SqlToyDaoSupport {
 		}
 		// 强制修改的日期时间字段，且以数据库时间为准
 		IgnoreCaseSet forceUpdateSqlFields = new IgnoreCaseSet();
-		if (unifyHandler != null && UnifyUpdateFieldsController.useUnifyFields()
+		if (unifyHandler != null && SqlToyThreadDataHolder.useUnifyFields()
 				&& unifyHandler.forceUpdateFields() != null && unifyHandler.updateSqlTimeFields() != null) {
 			unifyHandler.forceUpdateFields().forEach((sqlUpdateField) -> {
 				if (unifyHandler.updateSqlTimeFields().contains(sqlUpdateField)) {
