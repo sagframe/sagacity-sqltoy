@@ -292,6 +292,8 @@ public class SqlConfigParseUtils {
 		processBlank(sqlToyResult);
 		// 检查 like 对应参数部分，如果参数中不存在%符合则自动两边增加%
 		processLike(sqlToyResult);
+		// add update 2024-12-12 将@value(?) 参数值中不含?的提前完成处理
+		processValue(sqlToyResult, dialect, true);
 		// in 处理策略2012-7-10 进行了修改，提供参数preparedStatement.setObject()机制，并同时兼容
 		// 用具体数据替换 in (?)中问号的处理机制
 		processIn(sqlToyResult);
@@ -299,7 +301,7 @@ public class SqlConfigParseUtils {
 		replaceNull(sqlToyResult, 0);
 		// update 2021-4-29 放在最后，避免参数值中存在?号
 		// 替换@value(?) 为参数对应的数值
-		processValue(sqlToyResult, dialect);
+		processValue(sqlToyResult, dialect, false);
 		// 将特殊字符替换回问号
 		if (isNamedArgs) {
 			sqlToyResult.setSql(sqlToyResult.getSql().replaceAll(questionMark, ARG_NAME));
@@ -737,8 +739,9 @@ public class SqlConfigParseUtils {
 	 * @TODO 处理直接显示参数值:#[@value(:paramNamed) sql]
 	 * @param sqlToyResult
 	 * @param dialect
+	 * @param hasNotArgRun
 	 */
-	private static void processValue(SqlToyResult sqlToyResult, String dialect) {
+	private static void processValue(SqlToyResult sqlToyResult, String dialect, boolean hasNotArgRun) {
 		if (null == sqlToyResult.getParamsValue() || sqlToyResult.getParamsValue().length == 0) {
 			return;
 		}
@@ -747,12 +750,15 @@ public class SqlConfigParseUtils {
 		Matcher m = VALUE_PATTERN.matcher(queryStr);
 		int index = 0;
 		int paramCnt = 0;
-		int valueCnt = 0;
+		int atValueCnt = 0;
 		List paramValueList = null;
 		Object paramValue = null;
 		String valueStr;
+		boolean hasArg;
+		// 跳过的@value(?) 数量
+		int skipAtValueCnt = 0;
 		while (m.find()) {
-			if (valueCnt == 0) {
+			if (atValueCnt == 0) {
 				paramValueList = CollectionUtil.arrayToList(sqlToyResult.getParamsValue());
 			}
 			index = m.start();
@@ -760,24 +766,32 @@ public class SqlConfigParseUtils {
 			if (m.group().contains(ARG_NAME)) {
 				paramCnt = StringUtil.matchCnt(queryStr.substring(0, index), ARG_NAME_PATTERN, 0);
 				// 用参数的值直接覆盖@value(:name)
-				paramValue = paramValueList.get(paramCnt - valueCnt);
+				paramValue = paramValueList.get(paramCnt - atValueCnt);
 				// update 2024-03-03 强化对数组、枚举、日期等类型的输出
 				valueStr = SqlUtil.toSqlString(paramValue, false);
-				// update 2021-11-13 加强@value对应值中存在函数，进行跨数据库适配
-				if (dialect != null && valueStr.contains("(") && valueStr.contains(")")) {
-					valueStr = FunctionUtils.getDialectSql(valueStr, dialect);
+				// 判断值中是否有问号，有问号放最后处理(有?提前处理会影响后续的参数查询和定位)
+				hasArg = valueStr.contains(ARG_NAME);
+				if (!hasArg || !hasNotArgRun) {
+					// update 2021-11-13 加强@value对应值中存在函数，进行跨数据库适配
+					if (dialect != null && valueStr.contains("(") && valueStr.contains(")")) {
+						valueStr = FunctionUtils.getDialectSql(valueStr, dialect);
+					}
+					// 将sql中第skipAtValueCnt + 1位置的@value替换成具体值,@value偏移量为6
+					sqlToyResult.setSql(StringUtil.replaceRegex(sqlToyResult.getSql(), VALUE_PATTERN,
+							Matcher.quoteReplacement(valueStr), skipAtValueCnt + 1, 6));
+					// 剔除参数@value(?) 对应的参数值
+					paramValueList.remove(paramCnt - atValueCnt);
+					atValueCnt++;
+				} else {
+					skipAtValueCnt++;
 				}
-				sqlToyResult
-						.setSql(sqlToyResult.getSql().replaceFirst(VALUE_REGEX, Matcher.quoteReplacement(valueStr)));
-				// 剔除参数@value(?) 对应的参数值
-				paramValueList.remove(paramCnt - valueCnt);
-				valueCnt++;
 			} // @value(null)
 			else {
-				sqlToyResult.setSql(sqlToyResult.getSql().replaceFirst(VALUE_REGEX, "null"));
+				sqlToyResult.setSql(
+						StringUtil.replaceRegex(sqlToyResult.getSql(), VALUE_PATTERN, "null", skipAtValueCnt + 1, 6));
 			}
 		}
-		if (valueCnt > 0) {
+		if (atValueCnt > 0) {
 			sqlToyResult.setParamsValue(paramValueList.toArray());
 		}
 	}

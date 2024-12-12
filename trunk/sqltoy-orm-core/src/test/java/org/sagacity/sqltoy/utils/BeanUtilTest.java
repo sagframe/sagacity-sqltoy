@@ -275,7 +275,6 @@ public class BeanUtilTest {
 
 	@Test
 	public void testParall() {
-		DebugUtil.beginTime("00001");
 		ExecutorService pool = null;
 		try {
 			pool = Executors.newFixedThreadPool(2);
@@ -313,12 +312,10 @@ public class BeanUtilTest {
 				pool.shutdownNow();
 			}
 		}
-		DebugUtil.endTime("00001");
 	}
 
 	@Test
 	public void testParall2() {
-		DebugUtil.beginTime("00002");
 		ExecutorService pool = null;
 		try {
 			pool = Executors.newFixedThreadPool(2);
@@ -340,13 +337,11 @@ public class BeanUtilTest {
 				pool.shutdownNow();
 			}
 		}
-		DebugUtil.endTime("00002");
 	}
 
 	@Test
 	public void testParall3() {
 		ExecutorService pool = null;
-		DebugUtil.beginTime("00001");
 		try {
 			pool = Executors.newFixedThreadPool(2);
 			// 查询总记录数量
@@ -373,9 +368,7 @@ public class BeanUtilTest {
 				pool.shutdownNow();
 			}
 		}
-		DebugUtil.endTime("00001");
 
-		DebugUtil.beginTime("00002");
 		try {
 			pool = Executors.newFixedThreadPool(2);
 			// 查询总记录数量
@@ -396,7 +389,6 @@ public class BeanUtilTest {
 				pool.shutdownNow();
 			}
 		}
-		DebugUtil.endTime("00002");
 	}
 
 	@Test

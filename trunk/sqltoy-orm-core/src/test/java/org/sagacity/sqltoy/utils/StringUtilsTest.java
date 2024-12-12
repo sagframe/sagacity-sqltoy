@@ -15,6 +15,7 @@ import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.SqlToyConstants;
+import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 
@@ -242,5 +243,11 @@ public class StringUtilsTest {
 		System.err.println("firstEnd=" + indexes[1]);
 		System.err.println("nextStart=" + StringUtil.matchIndex(sql, Pattern.compile("\\["), indexes[1])[0]);
 		System.err.println("nextEnd=" + StringUtil.matchIndex(sql, Pattern.compile("\\["), indexes[1])[1]);
+	}
+
+	@Test
+	public void testMatchReplaceRegex() {
+		String sql = "select * from @value(?) and @value(null) t.name like 'df'";
+		System.err.println(StringUtil.replaceRegex(sql, SqlConfigParseUtils.VALUE_PATTERN, "1=1", 2, 6));
 	}
 }

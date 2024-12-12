@@ -23,6 +23,7 @@ import java.util.concurrent.ConcurrentMap;
 import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.SqlToyThreadDataHolder;
 import org.sagacity.sqltoy.callback.DecryptHandler;
 import org.sagacity.sqltoy.callback.StreamResultHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
@@ -55,7 +56,6 @@ import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.inner.DataSetResult;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.inner.TranslateExtend;
-import org.sagacity.sqltoy.plugins.I18nThreadHolder;
 import org.sagacity.sqltoy.plugins.calculator.ColsChainRelative;
 import org.sagacity.sqltoy.plugins.calculator.GroupSummary;
 import org.sagacity.sqltoy.plugins.calculator.ReverseList;
@@ -2064,7 +2064,7 @@ public class ResultUtils {
 	public static HashMap<String, Translate> wrapI18nIndex(TranslateManager translateManager,
 			HashMap<String, Translate> translateConfig) {
 		// 获取当前线程中存放的locale，如:US、CN 等
-		String locale = I18nThreadHolder.getLocale();
+		String locale = SqlToyThreadDataHolder.getLanguage();
 		if (locale == null || translateConfig == null || translateConfig.isEmpty()) {
 			return translateConfig;
 		}

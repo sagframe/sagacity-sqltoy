@@ -10,8 +10,12 @@
 		</xsd:annotation>
 		<xsd:complexType>
 			<xsd:choice minOccurs="0" maxOccurs="unbounded">
-				<!-- 全局类型sql type -->
 				<xsd:element name="sql" type="sqlToySqlType">
+					<xsd:annotation>
+						<xsd:documentation>
+						<![CDATA[全局类型sql type]]>
+						</xsd:documentation>
+					</xsd:annotation>
 					<xsd:unique name="sqlToySqlIdUnique">
 						<xsd:selector xpath="tns:sql" />
 						<xsd:field xpath="@id" />
@@ -23,8 +27,12 @@
 						<xsd:field xpath="@id" />
 					</xsd:unique>
 				</xsd:element>
-				<!-- elasticsearch type -->
 				<xsd:element name="eql" type="sqlToyEqlType">
+					<xsd:annotation>
+						<xsd:documentation>
+						<![CDATA[elasticsearch type]]>
+						</xsd:documentation>
+					</xsd:annotation>
 					<xsd:unique name="sqlToyEqlIdUnique">
 						<xsd:selector xpath="tns:eql" />
 						<xsd:field xpath="@id" />
@@ -305,17 +313,15 @@
 						use="required" />
 				</xsd:complexType>
 			</xsd:element>
-			<!-- 分页优化 -->
 			<xsd:element name="page-optimize" minOccurs="0"
 				maxOccurs="1" type="sqltoyPageOptimizeType">
 				<xsd:annotation>
 					<xsd:documentation><![CDATA[分页优化,通过缓存来保留查询条件一样的分页查询对应count语句查询结果,当下次查询时可以直接获得count记录数]]></xsd:documentation>
 				</xsd:annotation>
 			</xsd:element>
-			<!-- 行数据环比 -->
 			<xsd:element name="rows-chain-relative" maxOccurs="1">
 				<xsd:annotation>
-					<xsd:documentation><![CDATA[垂直环比,行数据之间比较]]></xsd:documentation>
+					<xsd:documentation><![CDATA[垂直行数据环比,行数据之间比较]]></xsd:documentation>
 				</xsd:annotation>
 				<xsd:complexType>
 					<xsd:attribute name="reduce-one" type="xsd:boolean"
@@ -376,17 +382,17 @@
 							<xsd:documentation><![CDATA[百分比:#.00%,千分比:#.00‰]]></xsd:documentation>
 						</xsd:annotation>
 					</xsd:attribute>
-					<xsd:attribute name="insert" type="xsd:boolean" default="true">
+					<xsd:attribute name="insert" type="xsd:boolean"
+						default="true">
 						<xsd:annotation>
 							<xsd:documentation><![CDATA[环比值是否自动插入新的列,否则自己写sql时提前构造出相应的列]]></xsd:documentation>
 						</xsd:annotation>
 					</xsd:attribute>
 				</xsd:complexType>
 			</xsd:element>
-			<!-- 列数据环比 -->
 			<xsd:element name="cols-chain-relative" maxOccurs="1">
 				<xsd:annotation>
-					<xsd:documentation><![CDATA[水平同类列数据之间比较]]></xsd:documentation>
+					<xsd:documentation><![CDATA[列数据环比,水平同类列数据之间比较]]></xsd:documentation>
 				</xsd:annotation>
 				<xsd:complexType>
 					<xsd:attribute name="reduce-one" type="xsd:boolean"
@@ -421,7 +427,8 @@
 					<xsd:attribute name="relative-indexs"
 						type="xsd:string" use="required">
 						<xsd:annotation>
-							<xsd:documentation><![CDATA[relative-indexs相对于group而言的,如月份之间对比(1月~4月),
+							<xsd:documentation>
+							<![CDATA[relative-indexs相对于group而言的,如月份之间对比(1月~4月),
 							比较交易笔数、商品数量、交易金额中的交易金额一项,relative-indexs则为2,如比较交易笔数、商品数量、交易金额三项，则,relative-indexs="0,1,2"]]></xsd:documentation>
 						</xsd:annotation>
 					</xsd:attribute>
@@ -449,7 +456,6 @@
 					</xsd:attribute>
 				</xsd:complexType>
 			</xsd:element>
-			<!-- 数据反转 -->
 			<xsd:element name="reverse" maxOccurs="2">
 				<xsd:annotation>
 					<xsd:documentation><![CDATA[数据逆序排列]]></xsd:documentation>
@@ -481,7 +487,16 @@
 				</xsd:restriction>
 			</xsd:simpleType>
 		</xsd:attribute>
-		<xsd:attribute name="debug" type="xsd:boolean" />
+		<xsd:attribute name="debug" type="xsd:boolean">
+			<xsd:annotation>
+				<xsd:documentation><![CDATA[是否输出sql执行日志]]></xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+		<xsd:attribute name="dataSource" type="xsd:string">
+			<xsd:annotation>
+				<xsd:documentation><![CDATA[在sql上指定数据源名称,供特殊场景下使用]]></xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
 	</xsd:complexType>
 	<xsd:complexType name="sqlToyMqlType" mixed="true">
 		<xsd:annotation>
@@ -560,8 +575,6 @@
 			</xsd:simpleType>
 		</xsd:attribute>
 	</xsd:complexType>
-
-	<!-- 全局filter type -->
 	<xsd:complexType name="sqltoyFiltersType">
 		<xsd:annotation>
 			<xsd:documentation><![CDATA[通用filter定义,用于对条件参数进行转null处理或者进行格式化或类型转换、或加减处理,便于后续条件判断]]></xsd:documentation>
@@ -1152,30 +1165,25 @@
 		<xsd:attribute name="mask-rate" type="xsd:integer" />
 	</xsd:complexType>
 
-	<!-- 分页优化 -->
 	<xsd:complexType name="sqltoyPageOptimizeType">
-		<!-- 并行查询 -->
 		<xsd:attribute name="parallel" type="xsd:boolean"
 			default="false">
 			<xsd:annotation>
 				<xsd:documentation><![CDATA[是否并行执行count和结果查询,达到效率提升]]></xsd:documentation>
 			</xsd:annotation>
 		</xsd:attribute>
-		<!-- 并行查询最大等待时长(秒) -->
 		<xsd:attribute name="parallel-maxwait-seconds"
 			type="xsd:long">
 			<xsd:annotation>
 				<xsd:documentation><![CDATA[并行查询最大等待时长(秒),避免执行时间过长]]></xsd:documentation>
 			</xsd:annotation>
 		</xsd:attribute>
-		<!-- 保留多少个不同查询 -->
 		<xsd:attribute name="alive-max"
 			type="xsd:nonNegativeInteger" default="100">
 			<xsd:annotation>
 				<xsd:documentation><![CDATA[最大允许保存多少条不同查询条件组合对应的count记录,默认100]]></xsd:documentation>
 			</xsd:annotation>
 		</xsd:attribute>
-		<!-- 相同查询间隔多久刷新 -->
 		<xsd:attribute name="alive-seconds"
 			type="xsd:nonNegativeInteger" default="90">
 			<xsd:annotation>
