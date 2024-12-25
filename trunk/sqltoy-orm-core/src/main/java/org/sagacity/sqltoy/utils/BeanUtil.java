@@ -791,7 +791,12 @@ public class BeanUtil {
 			// blob类型处理
 			if (paramValue instanceof java.sql.Blob) {
 				java.sql.Blob blob = (java.sql.Blob) paramValue;
-				return blob.getBytes(1, (int) blob.length());
+				int size = (int) blob.length();
+				if (size > 0) {
+					return blob.getBytes(1, size);
+				} else {
+					return new byte[0];
+				}
 			}
 			return paramValue.toString().getBytes();
 		}
