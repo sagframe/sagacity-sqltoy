@@ -1145,6 +1145,7 @@ public class ResultUtils {
 		Object fieldValue;
 		// 单行所有字段结果为null
 		boolean allNull = true;
+		int blobSize;
 		for (int i = startColIndex; i < rowCnt; i++) {
 			fieldValue = rs.getObject(i + 1);
 			if (null != fieldValue) {
@@ -1152,7 +1153,12 @@ public class ResultUtils {
 					fieldValue = SqlUtil.clobToString((java.sql.Clob) fieldValue);
 				} else if (fieldValue instanceof java.sql.Blob) {
 					java.sql.Blob blob = (java.sql.Blob) fieldValue;
-					fieldValue = blob.getBytes(1, (int) blob.length());
+					blobSize = (int) blob.length();
+					if (blobSize > 0) {
+						fieldValue = blob.getBytes(1, blobSize);
+					} else {
+						fieldValue = new byte[0];
+					}
 				}
 
 				// 有一个非null
@@ -1174,6 +1180,7 @@ public class ResultUtils {
 		// 单行所有字段结果为null
 		boolean allNull = true;
 		String label;
+		int blobSize;
 		for (int i = 0; i < size; i++) {
 			label = labelNames[i];
 			fieldValue = rs.getObject(label);
@@ -1182,7 +1189,12 @@ public class ResultUtils {
 					fieldValue = SqlUtil.clobToString((java.sql.Clob) fieldValue);
 				} else if (fieldValue instanceof java.sql.Blob) {
 					java.sql.Blob blob = (java.sql.Blob) fieldValue;
-					fieldValue = blob.getBytes(1, (int) blob.length());
+					blobSize = (int) blob.length();
+					if (blobSize > 0) {
+						fieldValue = blob.getBytes(1, blobSize);
+					} else {
+						fieldValue = new byte[0];
+					}
 				}
 				// 解密
 				if (decryptHandler != null) {
@@ -1221,6 +1233,7 @@ public class ResultUtils {
 		String label;
 		String keyIndex;
 		boolean allNull = true;
+		int blobSize;
 		for (int i = 0; i < size; i++) {
 			label = labelNames[i];
 			fieldValue = rs.getObject(label);
@@ -1232,7 +1245,12 @@ public class ResultUtils {
 					fieldValue = SqlUtil.clobToString((java.sql.Clob) fieldValue);
 				} else if (fieldValue instanceof java.sql.Blob) {
 					java.sql.Blob blob = (java.sql.Blob) fieldValue;
-					fieldValue = blob.getBytes(1, (int) blob.length());
+					blobSize = (int) blob.length();
+					if (blobSize > 0) {
+						fieldValue = blob.getBytes(1, blobSize);
+					} else {
+						fieldValue = new byte[0];
+					}
 				}
 				// 解密
 				if (decryptHandler != null) {

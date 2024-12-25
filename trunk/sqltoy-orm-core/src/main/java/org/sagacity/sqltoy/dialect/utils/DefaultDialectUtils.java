@@ -650,8 +650,13 @@ public class DefaultDialectUtils {
 		} else if (paramValue instanceof java.lang.Float) {
 			rs.updateFloat(columnName, ((Float) paramValue));
 		} else if (paramValue instanceof java.sql.Blob) {
-			Blob tmp = (java.sql.Blob) paramValue;
-			rs.updateBytes(columnName, tmp.getBytes(0, Long.valueOf(tmp.length()).intValue()));
+			Blob blob = (java.sql.Blob) paramValue;
+			int size = (int) blob.length();
+			if (size > 0) {
+				rs.updateBytes(columnName, blob.getBytes(1, size));
+			} else {
+				rs.updateBytes(columnName, new byte[0]);
+			}
 		} else if (paramValue instanceof java.sql.Date) {
 			rs.updateDate(columnName, (java.sql.Date) paramValue);
 		} else if (paramValue instanceof java.lang.Boolean) {
