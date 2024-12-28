@@ -38,6 +38,7 @@ import org.sagacity.sqltoy.config.model.DataVersionConfig;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.FieldSecureConfig;
+import org.sagacity.sqltoy.config.model.FieldTranslate;
 import org.sagacity.sqltoy.config.model.OperateType;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
@@ -535,7 +536,19 @@ public class DialectUtils {
 		SqlToyConfig result = sqlToyConfig.clone();
 		// 存在扩展的缓存翻译
 		if (!extend.translates.isEmpty()) {
-			result.getTranslateMap().putAll(extend.translates);
+			HashMap<String, FieldTranslate> transMap = result.getTranslateMap();
+			// colName自动已经小写，无需再处理
+			extend.translates.forEach((colName, translate) -> {
+				if (transMap.containsKey(colName)) {
+					transMap.get(colName).put(translate);
+				} else {
+					FieldTranslate fieldTranslate = new FieldTranslate();
+					fieldTranslate.colName = colName;
+					fieldTranslate.put(translate);
+					transMap.put(colName, fieldTranslate);
+				}
+			});
+			result.setTranslateMap(transMap);
 		}
 		// 扩展的link计算
 		if (extend.linkModel != null) {
