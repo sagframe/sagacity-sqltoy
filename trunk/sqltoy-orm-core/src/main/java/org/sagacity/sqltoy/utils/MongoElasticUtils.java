@@ -4,18 +4,17 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.IllegalFormatFlagsException;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
+import org.sagacity.sqltoy.config.model.FieldTranslate;
 import org.sagacity.sqltoy.config.model.NoSqlFieldsModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
-import org.sagacity.sqltoy.config.model.Translate;
-import org.sagacity.sqltoy.model.inner.TranslateExtend;
+import org.sagacity.sqltoy.translate.FieldTranslateCacheHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -529,92 +528,45 @@ public class MongoElasticUtils {
 	public static void processTranslate(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, List resultSet,
 			String[] fields) {
 		// 判断是否有缓存翻译器定义
-		HashMap<String, Translate> translateMap = sqlToyConfig.getTranslateMap();
-		HashMap<String, HashMap<String, Object[]>> translateCache = null;
+		HashMap<String, FieldTranslate> translateMap = sqlToyConfig.getTranslateMap();
 		// 存在缓存翻译,获取缓存数据
 		if (!sqlToyConfig.getTranslateMap().isEmpty()) {
-			translateCache = sqlToyContext.getTranslateManager().getTranslates(translateMap);
-			if (translateCache == null || translateCache.isEmpty()) {
-				logger.warn("mongo or elastic cache:{} has no data!{}", translateMap.keySet(), sqlToyConfig.getSql());
-			} else {
-				// i18n国际化处理
-				translateMap = ResultUtils.wrapI18nIndex(sqlToyContext.getTranslateManager(), translateMap);
-				translate(translateCache, translateMap, resultSet, null, fields);
-			}
+			HashMap<String, FieldTranslateCacheHolder> translateCache = sqlToyContext.getTranslateManager().getTranslates(translateMap);
+			translate(translateCache, resultSet, fields);
 		}
 	}
 
 	/**
 	 * @todo 对结果集合进行缓存翻译
 	 * @param translateCache
-	 * @param translateMap
 	 * @param dataSet
-	 * @param dataMap
 	 * @param fields
 	 */
-	private static void translate(HashMap<String, HashMap<String, Object[]>> translateCache,
-			HashMap<String, Translate> translateMap, List<List> dataSet, Map dataMap, String[] fields) {
-		if (translateMap == null || translateMap.isEmpty()) {
+	private static void translate(HashMap<String, FieldTranslateCacheHolder> translateCache, List<List> dataSet,
+			String[] fields) {
+		if (translateCache == null || translateCache.isEmpty()) {
 			return;
 		}
-		if ((dataSet == null || dataSet.isEmpty()) && (dataMap == null || dataMap.isEmpty())) {
+		if (dataSet == null || dataSet.isEmpty()) {
 			return;
 		}
-		int[] cacheMapIndex = new int[translateMap.size()];
-		int[] realIndex = new int[translateMap.size()];
-		String[] lables = new String[translateMap.size()];
-		String field;
-		int index = 0;
-		TranslateExtend extend;
-		HashMap<String, Integer> map = new HashMap<String, Integer>();
-		for (int i = 0; i < fields.length; i++) {
-			map.put(fields[i].toLowerCase(), i);
+		HashMap<String, Integer> colIndexMap = new HashMap<String, Integer>();
+		int fieldCnt = fields.length;
+		for (int i = 0; i < fieldCnt; i++) {
+			colIndexMap.put(fields[i].toLowerCase(), i);
 		}
-		for (int i = 0; i < fields.length; i++) {
-			field = fields[i].toLowerCase();
-			if (translateMap.containsKey(field)) {
-				extend = translateMap.get(field).getExtend();
-				cacheMapIndex[index] = i;
-				// alias是对应有效列
-				realIndex[index] = map.get(extend.alias);
-				// 实际对应的列
-				lables[index] = field;
-				index++;
-			}
-		}
+		int size = dataSet.size();
+		List rowList;
 		Object value;
-		HashMap<String, Object[]> keyValues;
-		int cacheIndex;
-		Object[] translateAry;
-		if (dataSet != null) {
-			int size = dataSet.size();
-			int colIndex;
-			for (int i = 0; i < cacheMapIndex.length; i++) {
-				colIndex = cacheMapIndex[i];
-				keyValues = translateCache.get(lables[i]);
-				extend = translateMap.get(lables[i]).getExtend();
-				cacheIndex = extend.index;
+		FieldTranslateCacheHolder fieldTranslateHandler;
+		for (int i = 0; i < fieldCnt; i++) {
+			fieldTranslateHandler = translateCache.get(fields[i].toLowerCase());
+			if (fieldTranslateHandler != null) {
 				for (int j = 0; j < size; j++) {
-					value = dataSet.get(j).get(realIndex[i]);
+					rowList = dataSet.get(j);
+					value = rowList.get(i);
 					if (value != null) {
-						translateAry = keyValues.get(value.toString());
-						if (null != translateAry) {
-							dataSet.get(j).set(colIndex, keyValues.get(value.toString())[cacheIndex]);
-						}
-					}
-				}
-			}
-		} else {
-			for (int i = 0; i < cacheMapIndex.length; i++) {
-				keyValues = translateCache.get(lables[i]);
-				extend = translateMap.get(lables[i]).getExtend();
-				cacheIndex = extend.index;
-				// 实际列
-				value = dataMap.get(extend.alias);
-				if (value != null) {
-					translateAry = keyValues.get(value.toString());
-					if (null != translateAry) {
-						dataMap.put(lables[i], keyValues.get(value.toString())[cacheIndex]);
+						rowList.set(i, fieldTranslateHandler.getRowCacheValue(rowList, colIndexMap, value.toString()));
 					}
 				}
 			}
