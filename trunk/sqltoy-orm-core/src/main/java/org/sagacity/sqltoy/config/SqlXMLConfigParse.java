@@ -1168,9 +1168,13 @@ public class SqlXMLConfigParse {
 						translateModel.setCompareValues(compareValues);
 					}
 					if (uncachedTemplate != null) {
-						// 统一未匹配中的通配符号为${value}
-						translateModel.setUncached(
-								uncachedTemplate.replaceAll("(?i)\\$?\\{\\s*key\\s*\\}", "\\$\\{value\\}"));
+						if (uncachedTemplate.trim().equals("")) {
+							translateModel.setUncached(null);
+						} else {
+							// 统一未匹配中的通配符号为${value}
+							translateModel.setUncached(
+									uncachedTemplate.replaceAll("(?i)\\$?\\{\\s*key\\s*\\}", "\\$\\{value\\}"));
+						}
 					}
 					if (cacheIndexs != null) {
 						if (i < cacheIndexs.length - 1) {

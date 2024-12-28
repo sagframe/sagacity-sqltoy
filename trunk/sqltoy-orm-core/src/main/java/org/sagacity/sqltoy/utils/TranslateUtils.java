@@ -6,6 +6,12 @@ import org.sagacity.sqltoy.model.inner.TranslateExtend;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * @project sagacity-sqltoy
+ * @description 对结果翻译提供一个工具类
+ * @author zhongxuchen
+ * @version v1.0,Date:2024-12-28
+ */
 public class TranslateUtils {
 
 	/**
@@ -89,27 +95,27 @@ public class TranslateUtils {
 
 	/**
 	 * @TODO 对翻译器的条件逻辑进行计算，判断是否需要执行缓存翻译
-	 * @param compareValue
+	 * @param sourceValue
 	 * @param compareType
 	 * @param compareValues
 	 * @return
 	 */
-	public static boolean judgeTranslate(Object compareValue, String compareType, String[] compareValues) {
-		String compareValueStr = (compareValues == null) ? "null" : compareValues.toString().toLowerCase();
+	public static boolean judgeTranslate(Object sourceValue, String compareType, String[] compareValues) {
+		String sourceStr = (sourceValue == null) ? "null" : sourceValue.toString().toLowerCase();
 		if (compareType.equals("eq")) {
-			return compareValues[0].equals(compareValueStr);
+			return compareValues[0].equals(sourceStr);
 		} else if (compareType.equals("neq")) {
-			return !compareValues[0].equals(compareValueStr);
+			return !compareValues[0].equals(sourceStr);
 		} else if (compareType.equals("in")) {
 			for (String compareStr : compareValues) {
-				if (compareStr.equals(compareValueStr)) {
+				if (compareStr.equals(sourceStr)) {
 					return true;
 				}
 			}
 			return false;
 		} else if (compareType.equals("out")) {
 			for (String compareStr : compareValues) {
-				if (compareStr.equals(compareValueStr)) {
+				if (compareStr.equals(sourceStr)) {
 					return false;
 				}
 			}

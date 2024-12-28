@@ -66,12 +66,24 @@ public class TranslateExtend implements Serializable, java.lang.Cloneable {
 	 */
 	public String keyTemplate = null;
 
+	/**
+	 * 存在compareColumn==xxx 表达式即表示存在是否进行缓存翻译的逻辑判断
+	 */
 	public boolean hasLogic = false;
 
+	/**
+	 * 逻辑判断的参照字段
+	 */
 	public String compareColumn;
 
+	/**
+	 * 逻辑判断的类型，四种:eq\neq\in\out
+	 */
 	public String compareType;
 
+	/**
+	 * 逻辑判断的对比参照值
+	 */
 	public String[] compareValues;
 
 	/**
