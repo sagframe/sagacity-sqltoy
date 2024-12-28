@@ -172,11 +172,7 @@ public class ElasticSearchPlugin {
 			fields = BeanUtil.matchSetMethodNames(resultClass);
 		}
 		if (sqlToyContext.isDebug()) {
-			if (logger.isDebugEnabled()) {
-				logger.debug("execute elastic eql=" + jsonQuery.toJSONString());
-			} else {
-				System.out.println("execute elastic eql=" + jsonQuery.toJSONString());
-			}
+			logger.debug("execute elastic eql=" + jsonQuery.toJSONString());
 		}
 
 		// 执行请求
