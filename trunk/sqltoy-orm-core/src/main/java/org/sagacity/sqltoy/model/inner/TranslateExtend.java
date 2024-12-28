@@ -66,6 +66,14 @@ public class TranslateExtend implements Serializable, java.lang.Cloneable {
 	 */
 	public String keyTemplate = null;
 
+	public boolean hasLogic = false;
+
+	public String compareColumn;
+
+	public String compareType;
+
+	public String[] compareValues;
+
 	/**
 	 * 未被缓存的模板
 	 */

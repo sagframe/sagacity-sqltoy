@@ -45,7 +45,7 @@ public class DateUtilTest {
 
 	@Test
 	public void testOther() throws SQLException {
-		System.err.println(DateUtil.getDay("2023-12-9"));
+		System.err.println(DateUtil.getDayOfMonth("2023-12-9"));
 		System.err.println(DateUtil.getMonth("2023-12-9"));
 		System.err.println(DateUtil.getYear("2023-12-9"));
 	}

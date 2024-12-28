@@ -261,6 +261,7 @@ public class SqlToyContext {
 
 	/**
 	 * sql脚本检测间隔时长(debug模式下默认3秒,非debug默认15秒)
+	 * -1 表示关闭更新检测
 	 */
 	private Integer scriptCheckIntervalSeconds;
 

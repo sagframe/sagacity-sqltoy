@@ -19,6 +19,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.config.model.CacheFilterModel;
 import org.sagacity.sqltoy.config.model.ColsChainRelativeModel;
+import org.sagacity.sqltoy.config.model.FieldTranslate;
 import org.sagacity.sqltoy.config.model.FormatModel;
 import org.sagacity.sqltoy.config.model.LinkModel;
 import org.sagacity.sqltoy.config.model.NoSqlConfigModel;
@@ -85,6 +86,10 @@ public class SqlXMLConfigParse {
 
 	private static DocumentBuilderFactory domFactory = DocumentBuilderFactory.newInstance();
 
+	private static String[] WHERE_COMPARE = { "!=", "==", "=", " in ", " out " };
+	private static String[] WHERE_COMPARE_TYPES = { "neq", "eq", "eq", "in", "out" };
+	// 增加对应compareStr的切割表达式(2020-10-21 修改为正则表达式，修复split错误)
+	private static String[] WHERE_SPLIT_REGEX = { "\\!\\=", "\\=\\=", "\\=", "\\s+in\\s+", "\\s+out\\s+" };
 	public static HashMap<String, String> filters = new HashMap<String, String>() {
 		/**
 		 * 
@@ -1044,13 +1049,16 @@ public class SqlXMLConfigParse {
 			return;
 		}
 		// 翻译器
-		HashMap<String, Translate> translateMap = new HashMap<String, Translate>();
+		HashMap<String, FieldTranslate> translateMap = new HashMap<String, FieldTranslate>();
 		String cacheType;
 		String cacheName;
 		String[] columns;
 		Integer[] cacheIndexs;
 		String[] cacheIndexStr;
 		String uncachedTemplate;
+		String compareColumn;
+		String compareType;
+		String[] compareValues;
 		// 为mongo和elastic模式提供备用
 		String[] aliasNames;
 		// 分隔表达式
@@ -1059,9 +1067,13 @@ public class SqlXMLConfigParse {
 		String linkSign = ",";
 		boolean hasLink = false;
 		Element translate;
+		String where;
 		for (int k = 0; k < translates.getLength(); k++) {
 			translate = (Element) translates.item(k);
 			hasLink = false;
+			compareColumn = null;
+			compareType = "eq";
+			compareValues = null;
 			cacheName = translate.getAttribute("cache");
 			// 具体的缓存子分类，如数据字典类别
 			if (translate.hasAttribute("cache-type")) {
@@ -1079,6 +1091,22 @@ public class SqlXMLConfigParse {
 				uncachedTemplate = translate.getAttribute("uncached-template");
 			} else if (translate.hasAttribute("uncached")) {
 				uncachedTemplate = translate.getAttribute("uncached");
+			}
+			if (translate.hasAttribute("where")) {
+				where = translate.getAttribute("where").trim().toLowerCase();
+				// 规范一下in 和 out的格式，同一分割方式
+				where = where.replace(" in(", " in (").replace(" out(", " out (");
+				for (int i = 0; i < WHERE_COMPARE.length; i++) {
+					if (where.indexOf(WHERE_COMPARE[i]) != -1) {
+						compareType = WHERE_COMPARE_TYPES[i];
+						String[] params = where.split(WHERE_SPLIT_REGEX[i]);
+						compareColumn = params[0].replace("${", "").replace("{", "").replace("}", "").trim();
+						// 去除括号、单引号
+						compareValues = trimParams(params[1].replace("(", "").replace(")", "").replace("'", "")
+								.replace("\"", "").split("\\,"));
+						break;
+					}
+				}
 			}
 			if (translate.hasAttribute("split-regex")) {
 				splitRegex = translate.getAttribute("split-regex");
@@ -1134,6 +1162,11 @@ public class SqlXMLConfigParse {
 					translateModel.setCacheType(cacheType);
 					translateModel.setSplitRegex(splitRegex);
 					translateModel.setLinkSign(linkSign);
+					if (compareColumn != null && compareValues != null) {
+						translateModel.setCompareColumn(compareColumn);
+						translateModel.setCompareType(compareType);
+						translateModel.setCompareValues(compareValues);
+					}
 					if (uncachedTemplate != null) {
 						// 统一未匹配中的通配符号为${value}
 						translateModel.setUncached(
@@ -1147,7 +1180,15 @@ public class SqlXMLConfigParse {
 						}
 					}
 					// column 已经小写
-					translateMap.put(translateModel.getExtend().column, translateModel);
+					if (translateMap.containsKey(translateModel.getExtend().column)) {
+						FieldTranslate translateAry = translateMap.get(translateModel.getExtend().column);
+						translateAry.put(translateModel);
+					} else {
+						FieldTranslate fieldTranslate = new FieldTranslate();
+						fieldTranslate.colName = translateModel.getExtend().column;
+						fieldTranslate.put(translateModel);
+						translateMap.put(translateModel.getExtend().column, fieldTranslate);
+					}
 				}
 			} else if (cacheIndexs != null && cacheIndexs.length != columns.length) {
 				logger.warn("sqlId:{} 对应的cache translate columns suggest config with cache-indexs!",
