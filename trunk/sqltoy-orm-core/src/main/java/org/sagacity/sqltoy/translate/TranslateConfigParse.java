@@ -21,6 +21,7 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.XMLCallbackHandler;
 import org.sagacity.sqltoy.config.ScanEntityAndSqlResource;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
+import org.sagacity.sqltoy.config.model.FieldTranslate;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
@@ -63,7 +64,7 @@ public class TranslateConfigParse {
 			"service", "rest", "rest-increment" };
 
 	// 存放类包含缓存翻译注解配置
-	private final static HashMap<String, HashMap<String, Translate>> classTranslateConfigMap = new HashMap<String, HashMap<String, Translate>>();
+	private final static HashMap<String, HashMap<String, FieldTranslate>> classTranslateConfigMap = new HashMap<String, HashMap<String, FieldTranslate>>();
 
 	// 缓存更新检测器,用于辨别是否重复定义
 	private final static HashSet<String> cacheCheckers = new HashSet<String>();
@@ -342,7 +343,7 @@ public class TranslateConfigParse {
 	 * @param classType
 	 * @return
 	 */
-	public static HashMap<String, Translate> getClassTranslates(Class classType) {
+	public static HashMap<String, FieldTranslate> getClassTranslates(Class classType) {
 		if (classType == null || classType.equals(Map.class) || classType.equals(HashMap.class)
 				|| classType.equals(List.class) || classType.equals(ArrayList.class) || classType.equals(Array.class)
 				|| BeanUtil.isBaseDataType(classType)) {
@@ -353,7 +354,7 @@ public class TranslateConfigParse {
 		if (classTranslateConfigMap.containsKey(className)) {
 			return classTranslateConfigMap.get(className);
 		}
-		HashMap<String, Translate> translateConfig = new HashMap<String, Translate>();
+		HashMap<String, FieldTranslate> translateConfig = new HashMap<String, FieldTranslate>();
 		org.sagacity.sqltoy.config.annotation.Translate translate;
 		Class classVar = classType;
 		while (classVar != null && !classVar.equals(Object.class)) {
@@ -380,7 +381,11 @@ public class TranslateConfigParse {
 					if (translate.uncached() != null && !"".equals(translate.uncached())) {
 						trans.setUncached(translate.uncached().trim());
 					}
-					translateConfig.put(field.getName(), trans);
+					FieldTranslate fieldTranslate = new FieldTranslate();
+					fieldTranslate.colName = field.getName();
+					fieldTranslate.keyColumn = translate.keyField();
+					fieldTranslate.translates = new Translate[] { trans };
+					translateConfig.put(field.getName(), fieldTranslate);
 				}
 			}
 			// 向父类递归
