@@ -55,12 +55,12 @@ public class FieldTranslate implements Serializable {
 		}
 	}
 
-	@Override
-	public FieldTranslate clone() {
-		FieldTranslate result = new FieldTranslate();
-		result.colName = this.colName;
-		result.keyColumn = this.keyColumn;
-		result.translates = this.translates;
-		return result;
-	}
+//	@Override
+//	public FieldTranslate clone() {
+//		FieldTranslate result = new FieldTranslate();
+//		result.colName = this.colName;
+//		result.keyColumn = this.keyColumn;
+//		result.translates = this.translates;
+//		return result;
+//	}
 }
