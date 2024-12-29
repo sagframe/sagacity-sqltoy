@@ -7,8 +7,12 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -61,6 +65,7 @@ import org.sagacity.sqltoy.plugins.calculator.RowsChainRelative;
 import org.sagacity.sqltoy.plugins.calculator.TreeDataSort;
 import org.sagacity.sqltoy.plugins.calculator.UnpivotList;
 import org.sagacity.sqltoy.plugins.secure.DesensitizeProvider;
+import org.sagacity.sqltoy.translate.DynamicCacheFetch;
 import org.sagacity.sqltoy.translate.FieldTranslateCacheHolder;
 import org.sagacity.sqltoy.translate.TranslateConfigParse;
 import org.slf4j.Logger;
@@ -249,6 +254,7 @@ public class ResultUtils {
 		int[] indexs = null;
 		HashMap<String, FieldTranslateCacheHolder> cacheDatas = null;
 		HashMap<String, FieldTranslate> translateConfig = null;
+		DynamicCacheFetch dynamicCacheFetch = sqlToyContext.getDynamicCacheFetch();
 		String[] mapLabelNames = labelNames;
 		if (resultType != null && resultType != ArrayList.class && resultType != Collection.class
 				&& resultType != List.class && !BeanUtil.isBaseDataType(resultType)) {
@@ -306,7 +312,8 @@ public class ResultUtils {
 		index = 0;
 		List rowTemp;
 		while (rs.next()) {
-			rowTemp = processResultRow(rs, labelNames, columnSize, translateCache, realDecryptHandler, ignoreAllEmpty);
+			rowTemp = processResultRow(dynamicCacheFetch, rs, labelNames, columnSize, translateCache,
+					realDecryptHandler, ignoreAllEmpty);
 			if (rowTemp != null) {
 				// 字段脱敏
 				if (sqlSecure) {
@@ -351,7 +358,7 @@ public class ResultUtils {
 							methodTypeValues, methodTypes, genericTypes, rowTemp, indexs, realProps, resultType);
 					// 有基于注解@Translate的缓存翻译
 					if (cacheDatas != null) {
-						wrapBeanTranslate(sqlToyContext, cacheDatas, bean);
+						wrapBeanTranslate(dynamicCacheFetch, cacheDatas, bean);
 					}
 					streamResultHandler.consume(bean, index);
 				}
@@ -498,6 +505,8 @@ public class ResultUtils {
 		Boolean hasTranslate = (sqlToyConfig.getTranslateMap().isEmpty()) ? false : true;
 		HashMap<String, FieldTranslate> translateMap = sqlToyConfig.getTranslateMap();
 		HashMap<String, FieldTranslateCacheHolder> translateCache = null;
+		// 动态获取缓存的实现
+		DynamicCacheFetch dynamicCacheFetch = sqlToyContext.getDynamicCacheFetch();
 		if (hasTranslate) {
 			translateCache = sqlToyContext.getTranslateManager().getTranslates(translateMap);
 		}
@@ -516,7 +525,8 @@ public class ResultUtils {
 		if (maxThresholds > 1 && maxThresholds <= warnThresholds) {
 			maxThresholds = warnThresholds;
 		}
-		List rowTemp;
+		List tempRow;
+		// 单列link
 		if (linkModel != null) {
 			Object identity = null;
 			String linkColumn = linkModel.getColumns()[0];
@@ -544,7 +554,7 @@ public class ResultUtils {
 			// 判断link拼接是否重新开始
 			boolean isLastProcess = false;
 			boolean doLink = true;
-			// -1:正常link，1:List;2:Array;3:HashSet
+			// 0:字符拼接，1:List;2:Array;3:HashSet
 			int linkResultType = linkModel.getResultType();
 			Object tmpObject;
 			while (rs.next()) {
@@ -553,8 +563,8 @@ public class ResultUtils {
 				if (linkValue == null) {
 					linkStr = "";
 				} else if (translateLink) {
-					tmpObject = fieldTranslateHandler.getRSCacheValue(rs, linkValue.toString());
-					linkStr = tmpObject == null ? "" : tmpObject.toString();
+					tmpObject = fieldTranslateHandler.getRSCacheValue(dynamicCacheFetch, rs, linkValue.toString());
+					linkStr = (tmpObject == null) ? linkValue.toString() : tmpObject.toString();
 				} else {
 					linkStr = linkValue.toString();
 				}
@@ -591,10 +601,10 @@ public class ResultUtils {
 						linkBuffer.append(linkStr);
 					}
 					linkSet.add(linkStr);
-					rowTemp = processResultRow(rs, labelNames, columnSize, translateCache, decryptHandler,
-							ignoreAllEmpty);
-					if (rowTemp != null) {
-						items.add(rowTemp);
+					tempRow = processResultRow(dynamicCacheFetch, rs, labelNames, columnSize, translateCache,
+							decryptHandler, ignoreAllEmpty);
+					if (tempRow != null) {
+						items.add(tempRow);
 					}
 					preIdentity = identity;
 				} else {
@@ -633,6 +643,7 @@ public class ResultUtils {
 			}
 			// 对最后一条写入循环值
 			if (isLastProcess) {
+				// 0:字符拼接，1:List;2:Array;3:HashSet
 				if (linkResultType == 1) {
 					items.get(items.size() - 1).set(linkIndex, linkList);
 				} else if (linkResultType == 2) {
@@ -654,9 +665,10 @@ public class ResultUtils {
 					updateRowHandler.updateRow(rs, index);
 					rs.updateRow();
 				}
-				rowTemp = processResultRow(rs, labelNames, columnSize, translateCache, decryptHandler, ignoreAllEmpty);
-				if (rowTemp != null) {
-					items.add(rowTemp);
+				tempRow = processResultRow(dynamicCacheFetch, rs, labelNames, columnSize, translateCache,
+						decryptHandler, ignoreAllEmpty);
+				if (tempRow != null) {
+					items.add(tempRow);
 				}
 				index++;
 				// 存在超出25000条数据的查询(具体数据规模可以通过参数进行定义)
@@ -732,6 +744,7 @@ public class ResultUtils {
 		Boolean hasTranslate = (sqlToyConfig.getTranslateMap().isEmpty()) ? false : true;
 		HashMap<String, FieldTranslate> translateMap = sqlToyConfig.getTranslateMap();
 		HashMap<String, FieldTranslateCacheHolder> translateCache = null;
+		DynamicCacheFetch dynamicCacheFetch = sqlToyContext.getDynamicCacheFetch();
 		if (hasTranslate) {
 			translateCache = sqlToyContext.getTranslateManager().getTranslates(translateMap);
 		}
@@ -781,12 +794,12 @@ public class ResultUtils {
 		Object preIdentity = null;
 		Object[] linkValues = new Object[linkCols];
 		String[] linkStrs = new String[linkCols];
-		List rowTemp;
+		List tempRow;
 		Object identity = null;
 		// 判断link拼接是否重新开始
 		boolean isLastProcess = false;
 		boolean doLink = false;
-		FieldTranslateCacheHolder fieldTranslateHandler;
+		FieldTranslateCacheHolder fieldTranslateCacheHolder;
 		Object tmpObject;
 		while (rs.next()) {
 			isLastProcess = false;
@@ -796,9 +809,10 @@ public class ResultUtils {
 				if (linkValues[i] == null) {
 					linkStrs[i] = "";
 				} else if (translateLinks[i]) {
-					fieldTranslateHandler = translateCache.get(linkLowColumns[i]);
-					tmpObject = fieldTranslateHandler.getRSCacheValue(rs, linkValues[i].toString());
-					linkStrs[i] = (tmpObject == null) ? "" : tmpObject.toString();
+					fieldTranslateCacheHolder = translateCache.get(linkLowColumns[i]);
+					tmpObject = fieldTranslateCacheHolder.getRSCacheValue(dynamicCacheFetch, rs,
+							linkValues[i].toString());
+					linkStrs[i] = (tmpObject == null) ? linkValues[i].toString() : tmpObject.toString();
 				} else {
 					linkStrs[i] = linkValues[i].toString();
 				}
@@ -810,9 +824,9 @@ public class ResultUtils {
 			if (!identity.equals(preIdentity)) {
 				// 不相等时先对最后一条记录修改，写入拼接后的字符串
 				if (index != 0) {
-					rowTemp = items.get(items.size() - 1);
+					tempRow = items.get(items.size() - 1);
 					for (int i = 0; i < linkCols; i++) {
-						rowTemp.set(linkIndexs[i], linkBuffers[i].toString());
+						tempRow.set(linkIndexs[i], linkBuffers[i].toString());
 						linkBuffers[i].delete(0, linkBuffers[i].length());
 						// 清除
 						if (linkModel.isDistinct()) {
@@ -828,9 +842,10 @@ public class ResultUtils {
 					}
 				}
 				// 提取result中的数据(identity相等时不需要提取)
-				rowTemp = processResultRow(rs, labelNames, columnSize, translateCache, decryptHandler, ignoreAllEmpty);
-				if (rowTemp != null) {
-					items.add(rowTemp);
+				tempRow = processResultRow(dynamicCacheFetch, rs, labelNames, columnSize, translateCache,
+						decryptHandler, ignoreAllEmpty);
+				if (tempRow != null) {
+					items.add(tempRow);
 				}
 				preIdentity = identity;
 			} else {
@@ -867,9 +882,9 @@ public class ResultUtils {
 		}
 		// 数据集合不为空,对最后一条记录写入循环值
 		if (isLastProcess) {
-			rowTemp = items.get(items.size() - 1);
+			tempRow = items.get(items.size() - 1);
 			for (int i = 0; i < linkCols; i++) {
-				rowTemp.set(linkIndexs[i], linkBuffers[i].toString());
+				tempRow.set(linkIndexs[i], linkBuffers[i].toString());
 			}
 		}
 		// 超出警告阀值
@@ -940,7 +955,7 @@ public class ResultUtils {
 	 */
 	private static List extractCategory(List items, Integer[] categoryCols) {
 		List categoryList = new ArrayList();
-		HashMap identityMap = new HashMap();
+		Set<String> identitySet = new HashSet<>();
 		String tmpStr;
 		int categorySize = categoryCols.length;
 		Object obj;
@@ -956,9 +971,9 @@ public class ResultUtils {
 				tmpStr = tmpStr.concat(obj == null ? "null" : obj.toString());
 			}
 			// 不存在
-			if (!identityMap.containsKey(tmpStr)) {
+			if (!identitySet.contains(tmpStr)) {
 				categoryList.add(categoryRow);
-				identityMap.put(tmpStr, "");
+				identitySet.add(tmpStr);
 			}
 		}
 		// 分组排序输出
@@ -1018,6 +1033,10 @@ public class ResultUtils {
 		Object jData;
 		// 1:string,2:数字;3:日期
 		boolean lessThen = false;
+		String str1, str2;
+		int dataType = 1;
+		// 是否已经判断过数据类型
+		boolean finishedJudgeType = false;
 		for (int i = start; i < end; i++) {
 			for (int j = i + 1; j < end + 1; j++) {
 				iData = sortList.get(i).get(orderCol);
@@ -1027,7 +1046,43 @@ public class ResultUtils {
 				} else if (iData == null && jData != null) {
 					lessThen = true;
 				} else {
-					lessThen = (iData.toString()).compareTo(jData.toString()) < 0;
+					// 首次判断数据类型
+					if (!finishedJudgeType) {
+						if (iData instanceof java.lang.Number) {
+							dataType = 2;
+						} else if (iData instanceof java.util.Date) {
+							dataType = 3;
+						} else if (iData instanceof LocalDate) {
+							dataType = 4;
+						} else if (iData instanceof LocalDateTime) {
+							dataType = 5;
+						} else if (iData instanceof LocalTime) {
+							dataType = 6;
+						}
+						finishedJudgeType = true;
+					}
+					// 字符串
+					if (dataType == 1) {
+						str1 = iData.toString();
+						str2 = jData.toString();
+						if (str1.length() < str2.length()) {
+							lessThen = true;
+						} else if (str1.length() > str2.length()) {
+							lessThen = false;
+						} else {
+							lessThen = str1.compareTo(str2) < 0;
+						}
+					} else if (dataType == 2) {
+						lessThen = ((Number) iData).doubleValue() < ((Number) jData).doubleValue();
+					} else if (dataType == 3) {
+						lessThen = ((Date) iData).before((Date) jData);
+					} else if (dataType == 4) {
+						lessThen = ((LocalDate) iData).compareTo((LocalDate) jData) < 0;
+					} else if (dataType == 5) {
+						lessThen = ((LocalDateTime) iData).compareTo((LocalDateTime) jData) < 0;
+					} else if (dataType == 6) {
+						lessThen = ((LocalTime) iData).compareTo((LocalTime) jData) < 0;
+					}
 				}
 				if ((ascend && !lessThen) || (!ascend && lessThen)) {
 					List tempList = sortList.get(i);
@@ -1050,8 +1105,8 @@ public class ResultUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	public static List processResultRow(ResultSet rs, String[] labelNames, int size,
-			HashMap<String, FieldTranslateCacheHolder> translateCaches, DecryptHandler decryptHandler,
+	public static List processResultRow(DynamicCacheFetch dynamicCacheFetch, ResultSet rs, String[] labelNames,
+			int size, HashMap<String, FieldTranslateCacheHolder> translateCaches, DecryptHandler decryptHandler,
 			boolean ignoreAllEmptySet) throws Exception {
 		List rowData = new ArrayList();
 		Object fieldValue;
@@ -1089,7 +1144,8 @@ public class ResultUtils {
 				if (doTranslate) {
 					fieldTranslateHandler = translateCaches.get(label);
 					if (fieldTranslateHandler != null) {
-						fieldValue = fieldTranslateHandler.getRSCacheValue(rs, fieldValue.toString());
+						fieldValue = fieldTranslateHandler.getRSCacheValue(dynamicCacheFetch, rs,
+								fieldValue.toString());
 					}
 				}
 				// 有一个非null
@@ -1801,8 +1857,9 @@ public class ResultUtils {
 		// 获取缓存数据
 		HashMap<String, FieldTranslateCacheHolder> fieldTranslateHandlers = sqlToyContext.getTranslateManager()
 				.getTranslates(translateConfig);
+		DynamicCacheFetch dynamicCacheFetch = sqlToyContext.getDynamicCacheFetch();
 		for (int i = 0, n = voList.size(); i < n; i++) {
-			wrapBeanTranslate(sqlToyContext, fieldTranslateHandlers, voList.get(i));
+			wrapBeanTranslate(dynamicCacheFetch, fieldTranslateHandlers, voList.get(i));
 		}
 	}
 
@@ -1813,14 +1870,14 @@ public class ResultUtils {
 	 * @param translateConfig
 	 * @param item
 	 */
-	private static void wrapBeanTranslate(SqlToyContext sqlToyContext,
+	private static void wrapBeanTranslate(DynamicCacheFetch dynamicCacheFetch,
 			HashMap<String, FieldTranslateCacheHolder> fieldTranslateHandlers, Object item) {
 		fieldTranslateHandlers.forEach((fieldName, fieldTranslateHandler) -> {
-			Object srcFieldValue = BeanUtil.getProperty(item, fieldTranslateHandler.getKeyColumn());
+			Object srcFieldValue = BeanUtil.getProperty(item, fieldTranslateHandler.getKeyField());
 			Object fieldValue = BeanUtil.getProperty(item, fieldName);
 			if (srcFieldValue != null && !"".equals(srcFieldValue.toString()) && fieldValue == null) {
 				BeanUtil.setProperty(item, fieldName,
-						fieldTranslateHandler.getBeanCacheValue(item, srcFieldValue.toString()));
+						fieldTranslateHandler.getBeanCacheValue(dynamicCacheFetch, item, srcFieldValue.toString()));
 			}
 		});
 	}

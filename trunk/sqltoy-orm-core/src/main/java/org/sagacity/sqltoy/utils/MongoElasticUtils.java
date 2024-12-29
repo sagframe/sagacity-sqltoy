@@ -14,6 +14,8 @@ import org.sagacity.sqltoy.config.model.FieldTranslate;
 import org.sagacity.sqltoy.config.model.NoSqlFieldsModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
+import org.sagacity.sqltoy.config.model.Translate;
+import org.sagacity.sqltoy.translate.DynamicCacheFetch;
 import org.sagacity.sqltoy.translate.FieldTranslateCacheHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -531,8 +533,9 @@ public class MongoElasticUtils {
 		HashMap<String, FieldTranslate> translateMap = sqlToyConfig.getTranslateMap();
 		// 存在缓存翻译,获取缓存数据
 		if (!sqlToyConfig.getTranslateMap().isEmpty()) {
-			HashMap<String, FieldTranslateCacheHolder> translateCache = sqlToyContext.getTranslateManager().getTranslates(translateMap);
-			translate(translateCache, resultSet, fields);
+			HashMap<String, FieldTranslateCacheHolder> translateCache = sqlToyContext.getTranslateManager()
+					.getTranslates(translateMap);
+			translate(sqlToyContext.getDynamicCacheFetch(), translateCache, resultSet, fields);
 		}
 	}
 
@@ -542,8 +545,8 @@ public class MongoElasticUtils {
 	 * @param dataSet
 	 * @param fields
 	 */
-	private static void translate(HashMap<String, FieldTranslateCacheHolder> translateCache, List<List> dataSet,
-			String[] fields) {
+	private static void translate(DynamicCacheFetch dynamicCacheFetch,
+			HashMap<String, FieldTranslateCacheHolder> translateCache, List<List> dataSet, String[] fields) {
 		if (translateCache == null || translateCache.isEmpty()) {
 			return;
 		}
@@ -555,10 +558,22 @@ public class MongoElasticUtils {
 		for (int i = 0; i < fieldCnt; i++) {
 			colIndexMap.put(fields[i].toLowerCase(), i);
 		}
+		// 校验缓存翻译的配置是否正确
+		translateCache.forEach((field, fieldTranslateCacheHolder) -> {
+			for (Translate translate : fieldTranslateCacheHolder.getTranslates()) {
+				if (translate.getExtend().hasLogic) {
+					if (!colIndexMap.containsKey(translate.getExtend().compareColumn)) {
+						throw new IllegalArgumentException(
+								"缓存翻译配置where表达式中的逻辑判断列:[" + translate.getExtend().compareColumn + "]不存在,请检查缓存翻译!");
+					}
+				}
+			}
+		});
 		int size = dataSet.size();
 		List rowList;
 		Object value;
 		FieldTranslateCacheHolder fieldTranslateHandler;
+
 		for (int i = 0; i < fieldCnt; i++) {
 			fieldTranslateHandler = translateCache.get(fields[i].toLowerCase());
 			if (fieldTranslateHandler != null) {
@@ -566,7 +581,8 @@ public class MongoElasticUtils {
 					rowList = dataSet.get(j);
 					value = rowList.get(i);
 					if (value != null) {
-						rowList.set(i, fieldTranslateHandler.getRowCacheValue(rowList, colIndexMap, value.toString()));
+						rowList.set(i, fieldTranslateHandler.getRowCacheValue(dynamicCacheFetch, rowList, colIndexMap,
+								value.toString()));
 					}
 				}
 			}

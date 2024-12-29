@@ -3,6 +3,7 @@ package org.sagacity.sqltoy.utils;
 import java.util.HashMap;
 
 import org.sagacity.sqltoy.model.inner.TranslateExtend;
+import org.sagacity.sqltoy.translate.DynamicCacheFetch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,12 +24,13 @@ public class TranslateUtils {
 	 * @date 2018-5-26 优化缓存翻译，提供keyCode1,keyCode2,keyCode3 形式的多代码翻译
 	 * @todo 统一对key进行缓存翻译
 	 * @param extend
+	 * @param dynamicCacheFetch 预留功能,暂时不开放,需再思考一下必要性
 	 * @param translateKeyMap
 	 * @param fieldValue
 	 * @return
 	 */
-	public static Object translateKey(TranslateExtend extend, HashMap<String, Object[]> translateKeyMap,
-			Object fieldValue) {
+	public static Object translateKey(TranslateExtend extend, DynamicCacheFetch dynamicCacheFetch,
+			HashMap<String, Object[]> translateKeyMap, Object fieldValue) {
 		String fieldStr = fieldValue.toString();
 		// 单值翻译
 		if (extend.splitRegex == null) {
@@ -38,6 +40,14 @@ public class TranslateUtils {
 			}
 			// 根据key获取缓存值
 			Object[] cacheValues = translateKeyMap.get(fieldStr);
+			// 执行动态缓存获取(暂时不开放)
+//			if (cacheValues == null && extend.dynamicCache && dynamicCacheFetch != null) {
+//				cacheValues = dynamicCacheFetch.getCache(extend.cache, extend.cacheSid, extend.cacheProperties,
+//						fieldStr);
+//				if (cacheValues != null) {
+//					translateKeyMap.put(fieldStr, cacheValues);
+//				}
+//			}
 			// 未匹配到
 			if (cacheValues == null || cacheValues.length == 0) {
 				// 定义未匹配模板则不输出日志
@@ -76,6 +86,14 @@ public class TranslateUtils {
 				result.append(linkSign);
 			}
 			cacheValues = translateKeyMap.get(key.trim());
+			// 暂时不开放
+//			if (cacheValues == null && extend.dynamicCache && dynamicCacheFetch != null) {
+//				cacheValues = dynamicCacheFetch.getCache(extend.cache, extend.cacheSid, extend.cacheProperties,
+//						fieldStr);
+//				if (cacheValues != null) {
+//					translateKeyMap.put(fieldStr, cacheValues);
+//				}
+//			}
 			if (cacheValues == null || cacheValues.length == 0) {
 				// 定义未匹配模板则不输出日志
 				if (extend.uncached != null) {

@@ -176,13 +176,17 @@ public class TranslateManager {
 			FieldTranslateCacheHolder fieldTranslateHandler = new FieldTranslateCacheHolder();
 			translateSize = fieldTranslate.translates.length;
 			fieldTranslateHandler.setTranslates(fieldTranslate.translates);
-			fieldTranslateHandler.setKeyColumn(fieldTranslate.keyColumn);
-			HashMap<String, Object[]>[] caches = new HashMap[translateSize];
+			fieldTranslateHandler.setKeyField(fieldTranslate.keyField);
+			HashMap<String, Object[]>[] cacheAry = new HashMap[translateSize];
 			for (int i = 0; i < translateSize; i++) {
 				translate = fieldTranslate.translates[i];
 				extend = translate.getExtend();
 				if (translateMap.containsKey(extend.cache)) {
 					cacheModel = translateMap.get(extend.cache);
+					// 是否动态缓存(预留)
+					extend.dynamicCache = cacheModel.isDynamicCache();
+					extend.cacheSid = cacheModel.getSid();
+					extend.cacheProperties = cacheModel.getProperties();
 					cache = getCacheData(cacheModel, extend.cacheType);
 					if (cache != null) {
 						// update 2022-1-4 增加缓存使用时cache-index 合法性校验
@@ -194,18 +198,18 @@ public class TranslateManager {
 										+ ")[缓存内容数组长度],请检查cache-indexs值确保跟缓存数据具体列保持一致!");
 							}
 						}
-						caches[i] = cache;
+						cacheAry[i] = cache;
 					} else {
-						caches[i] = new HashMap<String, Object[]>();
+						cacheAry[i] = new HashMap<String, Object[]>();
 						logger.warn("sqltoy translate:cacheName={},cache-type={},column={}配置不正确,未获取对应cache数据!",
 								cacheModel.getCache(), extend.cacheType, extend.column);
 					}
 				} else {
-					caches[i] = new HashMap<String, Object[]>();
+					cacheAry[i] = new HashMap<String, Object[]>();
 					logger.error("cacheName:{} 没有配置,请检查缓存配置文件!", extend.cache);
 				}
 			}
-			fieldTranslateHandler.setCacheArray(caches);
+			fieldTranslateHandler.setCacheArray(cacheAry);
 			result.put(colName, fieldTranslateHandler);
 		}
 		// 将调用获取缓存之前的日志放回线程中
@@ -258,7 +262,7 @@ public class TranslateManager {
 					i++;
 				}
 				newFieldTranslate.colName = colName;
-				newFieldTranslate.keyColumn=fieldTranslate.keyColumn;
+				newFieldTranslate.keyField = fieldTranslate.keyField;
 				newFieldTranslate.translates = translatesAry;
 				result.put(colName, newFieldTranslate);
 			} else {

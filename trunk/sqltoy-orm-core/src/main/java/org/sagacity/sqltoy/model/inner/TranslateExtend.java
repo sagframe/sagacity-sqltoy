@@ -72,6 +72,14 @@ public class TranslateExtend implements Serializable, java.lang.Cloneable {
 	public boolean hasLogic = false;
 
 	/**
+	 * 是否动态缓存
+	 */
+	public boolean dynamicCache = false;
+
+	public String cacheSid;
+	public String[] cacheProperties;
+
+	/**
 	 * 逻辑判断的参照字段
 	 */
 	public String compareColumn;
@@ -99,6 +107,20 @@ public class TranslateExtend implements Serializable, java.lang.Cloneable {
 			e.printStackTrace();
 		}
 		return null;
+	}
+
+	/**
+	 * @return the cacheProperties
+	 */
+	public String[] getCacheProperties() {
+		return cacheProperties;
+	}
+
+	/**
+	 * @param cacheProperties the cacheProperties to set
+	 */
+	public void setCacheProperties(String[] cacheProperties) {
+		this.cacheProperties = cacheProperties;
 	}
 
 }

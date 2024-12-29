@@ -17,17 +17,22 @@ import org.sagacity.sqltoy.utils.TranslateUtils;
  * @author zhongxuchen
  * @version v1.0,Date:2024-12-28
  */
-public class FieldTranslateCacheHolder implements Serializable{
+public class FieldTranslateCacheHolder implements Serializable {
 
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = -8556392032470721886L;
+
+	/**
+	 * 一列上存在几个缓存翻译(正常情况下一个)
+	 */
 	private int translateSize = 1;
+
 	/**
 	 * 针对VO上@Translate注解,缓存翻译的字段依据某个key字段的值
 	 */
-	private String keyColumn;
+	private String keyField;
 
 	/**
 	 * 多个缓存翻译器数组
@@ -41,12 +46,14 @@ public class FieldTranslateCacheHolder implements Serializable{
 
 	/**
 	 * @TODO 针对一行数据进行翻译
+	 * @param dynamicCacheFetch
 	 * @param rowList
 	 * @param colIndexMap
 	 * @param key
 	 * @return
 	 */
-	public Object getRowCacheValue(List rowList, HashMap<String, Integer> colIndexMap, String key) {
+	public Object getRowCacheValue(DynamicCacheFetch dynamicCacheFetch, List<?> rowList,
+			HashMap<String, Integer> colIndexMap, String key) {
 		TranslateExtend translateExtand;
 		Object translateValue = key;
 		Object compareValue;
@@ -55,13 +62,16 @@ public class FieldTranslateCacheHolder implements Serializable{
 			translateExtand = translates[i].getExtend();
 			doTranslate = true;
 			compareValue = null;
+			// 存在逻辑判断
 			if (translateExtand.hasLogic) {
 				compareValue = rowList.get(colIndexMap.get(translateExtand.compareColumn));
+				// 执行逻辑判断，得出是否执行缓存翻译
 				doTranslate = TranslateUtils.judgeTranslate(compareValue, translateExtand.compareType,
 						translateExtand.compareValues);
 			}
 			if (doTranslate) {
-				translateValue = TranslateUtils.translateKey(translateExtand, cacheArray[i], translateValue);
+				translateValue = TranslateUtils.translateKey(translateExtand, dynamicCacheFetch, cacheArray[i],
+						translateValue);
 			}
 		}
 		return translateValue;
@@ -69,12 +79,13 @@ public class FieldTranslateCacheHolder implements Serializable{
 
 	/**
 	 * @TODO 针对ResultSet 进行翻译
+	 * @param dynamicCacheFetch
 	 * @param rs
 	 * @param key
 	 * @return
 	 * @throws SQLException
 	 */
-	public Object getRSCacheValue(ResultSet rs, String key) throws SQLException {
+	public Object getRSCacheValue(DynamicCacheFetch dynamicCacheFetch, ResultSet rs, String key) throws SQLException {
 		TranslateExtend translateExtand;
 		Object translateValue = key;
 		Object compareValue;
@@ -89,7 +100,8 @@ public class FieldTranslateCacheHolder implements Serializable{
 						translateExtand.compareValues);
 			}
 			if (doTranslate) {
-				translateValue = TranslateUtils.translateKey(translateExtand, cacheArray[i], translateValue);
+				translateValue = TranslateUtils.translateKey(translateExtand, dynamicCacheFetch, cacheArray[i],
+						translateValue);
 			}
 		}
 		return translateValue;
@@ -97,11 +109,12 @@ public class FieldTranslateCacheHolder implements Serializable{
 
 	/**
 	 * @TODO 针对VO\DTO的属性进行翻译
-	 * @param dto
+	 * @param dynamicCacheFetch
+	 * @param item
 	 * @param key
 	 * @return
 	 */
-	public Object getBeanCacheValue(Object item, String key) {
+	public Object getBeanCacheValue(DynamicCacheFetch dynamicCacheFetch, Object item, String key) {
 		TranslateExtend translateExtand;
 		Object translateValue = key;
 		Object compareValue;
@@ -116,7 +129,8 @@ public class FieldTranslateCacheHolder implements Serializable{
 						translateExtand.compareValues);
 			}
 			if (doTranslate) {
-				translateValue = TranslateUtils.translateKey(translateExtand, cacheArray[i], translateValue);
+				translateValue = TranslateUtils.translateKey(translateExtand, dynamicCacheFetch, cacheArray[i],
+						translateValue);
 			}
 		}
 		return translateValue;
@@ -144,16 +158,16 @@ public class FieldTranslateCacheHolder implements Serializable{
 	}
 
 	/**
-	 * @return the keyColumn
+	 * @return the keyField
 	 */
-	public String getKeyColumn() {
-		return keyColumn;
+	public String getKeyField() {
+		return keyField;
 	}
 
 	/**
-	 * @param keyColumn the keyColumn to set
+	 * @param keyField the keyField to set
 	 */
-	public void setKeyColumn(String keyColumn) {
-		this.keyColumn = keyColumn;
+	public void setKeyField(String keyField) {
+		this.keyField = keyField;
 	}
 }

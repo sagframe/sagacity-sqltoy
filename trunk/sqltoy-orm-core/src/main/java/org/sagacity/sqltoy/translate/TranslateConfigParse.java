@@ -21,6 +21,7 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.XMLCallbackHandler;
 import org.sagacity.sqltoy.config.ScanEntityAndSqlResource;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
+import org.sagacity.sqltoy.config.SqlXMLConfigParse;
 import org.sagacity.sqltoy.config.model.FieldTranslate;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.Translate;
@@ -355,36 +356,49 @@ public class TranslateConfigParse {
 			return classTranslateConfigMap.get(className);
 		}
 		HashMap<String, FieldTranslate> translateConfig = new HashMap<String, FieldTranslate>();
-		org.sagacity.sqltoy.config.annotation.Translate translate;
+		org.sagacity.sqltoy.config.annotation.Translate[] annotaTranslates;
 		Class classVar = classType;
+		org.sagacity.sqltoy.config.annotation.Translate annotaTranslate;
 		while (classVar != null && !classVar.equals(Object.class)) {
 			for (Field field : classVar.getDeclaredFields()) {
-				translate = field.getAnnotation(org.sagacity.sqltoy.config.annotation.Translate.class);
-				// 以子类注解为优先
-				if (translate != null && !translateConfig.containsKey(field.getName())) {
-					Translate trans = new Translate(translate.cacheName());
-					trans.setIndex(translate.cacheIndex());
-					if (StringUtil.isNotBlank(translate.cacheType())) {
-						trans.setCacheType(translate.cacheType());
-					}
-					trans.setKeyColumn(translate.keyField());
-					// 内部转了小写
-					trans.setColumn(field.getName());
-					trans.setAlias(field.getName());
-					if (StringUtil.isNotBlank(translate.split())) {
-						trans.setSplitRegex(translate.split());
-					}
-					// 默认是,逗号
-					if (StringUtil.isNotBlank(translate.join())) {
-						trans.setLinkSign(translate.join());
-					}
-					if (translate.uncached() != null && !"".equals(translate.uncached())) {
-						trans.setUncached(translate.uncached().trim());
-					}
+				annotaTranslates = field.getAnnotationsByType(org.sagacity.sqltoy.config.annotation.Translate.class);
+				if (annotaTranslates != null && annotaTranslates.length > 0
+						&& !translateConfig.containsKey(field.getName())) {
 					FieldTranslate fieldTranslate = new FieldTranslate();
 					fieldTranslate.colName = field.getName();
-					fieldTranslate.keyColumn = translate.keyField();
-					fieldTranslate.translates = new Translate[] { trans };
+					Translate[] translates = new Translate[annotaTranslates.length];
+					for (int i = 0; i < annotaTranslates.length; i++) {
+						annotaTranslate = annotaTranslates[i];
+						Translate translate = new Translate(annotaTranslate.cacheName());
+						translate.setIndex(annotaTranslate.cacheIndex());
+						if (StringUtil.isNotBlank(annotaTranslate.cacheType())) {
+							translate.setCacheType(annotaTranslate.cacheType());
+						}
+						translate.setKeyColumn(annotaTranslate.keyField());
+						// 内部转了小写
+						translate.setColumn(field.getName());
+						translate.setAlias(field.getName());
+						if (StringUtil.isNotBlank(annotaTranslate.split())) {
+							translate.setSplitRegex(annotaTranslate.split());
+						}
+						// 默认是,逗号
+						if (StringUtil.isNotBlank(annotaTranslate.join())) {
+							translate.setLinkSign(annotaTranslate.join());
+						}
+						if (annotaTranslate.uncached() != null) {
+							// 重置默认值为null
+							if ("".equals(annotaTranslate.uncached().trim())) {
+								translate.setUncached(null);
+							} else {
+								translate.setUncached(annotaTranslate.uncached().trim());
+							}
+						}
+						// 解析where逻辑表达式
+						SqlXMLConfigParse.parseTranslateWhere(translate, annotaTranslate.where());
+						fieldTranslate.keyField = annotaTranslate.keyField();
+						translates[i] = translate;
+					}
+					fieldTranslate.translates = translates;
 					translateConfig.put(field.getName(), fieldTranslate);
 				}
 			}

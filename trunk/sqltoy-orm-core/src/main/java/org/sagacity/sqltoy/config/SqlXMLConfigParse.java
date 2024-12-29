@@ -1056,9 +1056,6 @@ public class SqlXMLConfigParse {
 		Integer[] cacheIndexs;
 		String[] cacheIndexStr;
 		String uncachedTemplate;
-		String compareColumn;
-		String compareType;
-		String[] compareValues;
 		// 为mongo和elastic模式提供备用
 		String[] aliasNames;
 		// 分隔表达式
@@ -1067,13 +1064,11 @@ public class SqlXMLConfigParse {
 		String linkSign = ",";
 		boolean hasLink = false;
 		Element translate;
-		String where;
+		String where = null;
 		for (int k = 0; k < translates.getLength(); k++) {
 			translate = (Element) translates.item(k);
 			hasLink = false;
-			compareColumn = null;
-			compareType = "eq";
-			compareValues = null;
+			where = null;
 			cacheName = translate.getAttribute("cache");
 			// 具体的缓存子分类，如数据字典类别
 			if (translate.hasAttribute("cache-type")) {
@@ -1092,21 +1087,9 @@ public class SqlXMLConfigParse {
 			} else if (translate.hasAttribute("uncached")) {
 				uncachedTemplate = translate.getAttribute("uncached");
 			}
+			// add 2024-12-28 增加条件判断
 			if (translate.hasAttribute("where")) {
-				where = translate.getAttribute("where").trim().toLowerCase();
-				// 规范一下in 和 out的格式，同一分割方式
-				where = where.replace(" in(", " in (").replace(" out(", " out (");
-				for (int i = 0; i < WHERE_COMPARE.length; i++) {
-					if (where.indexOf(WHERE_COMPARE[i]) != -1) {
-						compareType = WHERE_COMPARE_TYPES[i];
-						String[] params = where.split(WHERE_SPLIT_REGEX[i]);
-						compareColumn = params[0].replace("${", "").replace("{", "").replace("}", "").trim();
-						// 去除括号、单引号
-						compareValues = trimParams(params[1].replace("(", "").replace(")", "").replace("'", "")
-								.replace("\"", "").split("\\,"));
-						break;
-					}
-				}
+				where = translate.getAttribute("where");
 			}
 			if (translate.hasAttribute("split-regex")) {
 				splitRegex = translate.getAttribute("split-regex");
@@ -1162,12 +1145,10 @@ public class SqlXMLConfigParse {
 					translateModel.setCacheType(cacheType);
 					translateModel.setSplitRegex(splitRegex);
 					translateModel.setLinkSign(linkSign);
-					if (compareColumn != null && compareValues != null) {
-						translateModel.setCompareColumn(compareColumn);
-						translateModel.setCompareType(compareType);
-						translateModel.setCompareValues(compareValues);
-					}
+					// 解析where逻辑表达式
+					parseTranslateWhere(translateModel, where);
 					if (uncachedTemplate != null) {
+						// 未匹配模板为空白，设置为null,表示显示未翻译的值
 						if (uncachedTemplate.trim().equals("")) {
 							translateModel.setUncached(null);
 						} else {
@@ -1200,6 +1181,42 @@ public class SqlXMLConfigParse {
 			}
 		}
 		sqlToyConfig.setTranslateMap(translateMap);
+	}
+
+	/**
+	 * @TODO 解析translate中的where表达式(field==xx 或 field in (A,B) 形式)
+	 * @param translate
+	 * @param whereStr
+	 */
+	public static void parseTranslateWhere(Translate translate, String whereStr) {
+		if (StringUtil.isBlank(whereStr)) {
+			return;
+		}
+		String where = whereStr.trim().toLowerCase();
+		// 规范一下in 和 out的格式，同一分割方式
+		where = where.replace(" in(", " in (").replace(" out(", " out (");
+		// 对比列
+		String compareColumn = null;
+		// 对比类型(eq\neq\in\out 四种)
+		String compareType = "eq";
+		// 对比的值
+		String[] compareValues = null;
+		for (int i = 0; i < WHERE_COMPARE.length; i++) {
+			if (where.indexOf(WHERE_COMPARE[i]) != -1) {
+				compareType = WHERE_COMPARE_TYPES[i];
+				String[] params = where.split(WHERE_SPLIT_REGEX[i]);
+				compareColumn = params[0].replace("${", "").replace("{", "").replace("}", "").trim();
+				// 去除括号、单引号
+				compareValues = trimParams(
+						params[1].replace("(", "").replace(")", "").replace("'", "").replace("\"", "").split("\\,"));
+				break;
+			}
+		}
+		if (compareColumn != null && compareValues != null) {
+			translate.setCompareColumn(compareColumn);
+			translate.setCompareType(compareType);
+			translate.setCompareValues(compareValues);
+		}
 	}
 
 	/**

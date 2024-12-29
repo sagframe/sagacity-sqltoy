@@ -22,7 +22,7 @@ public class FieldTranslate implements Serializable {
 	/**
 	 * 依据字段(VO中缓存翻译注解)
 	 */
-	public String keyColumn;
+	public String keyField;
 
 	/**
 	 * 缓存翻译配置
@@ -33,20 +33,23 @@ public class FieldTranslate implements Serializable {
 		if (translates == null) {
 			translates = new Translate[] { translate };
 		} else {
-			boolean hasCache = false;
+			// 是否存在相同的缓存
+			boolean hasSameCache = false;
 			String cacheName;
 			String cacheType;
 			for (int j = 0; j < translates.length; j++) {
 				cacheName = translates[j].getExtend().cache;
 				cacheType = translates[j].getExtend().cacheType;
+				// 判断cache和cacheType组合是否相同,确定是同一个缓存
 				if (cacheName.equals(translate.getExtend().cache)
 						&& (cacheType == null || cacheType.equals(translate.getExtend().cacheType))) {
 					translates[j] = translate;
-					hasCache = true;
+					hasSameCache = true;
 					break;
 				}
 			}
-			if (!hasCache) {
+			// 不同缓存,扩容数组
+			if (!hasSameCache) {
 				Translate[] tmpAry = new Translate[translates.length + 1];
 				System.arraycopy(translates, 0, tmpAry, 0, translates.length);
 				tmpAry[translates.length] = translate;
