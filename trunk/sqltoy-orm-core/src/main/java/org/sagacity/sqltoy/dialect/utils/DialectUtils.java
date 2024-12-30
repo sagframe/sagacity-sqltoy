@@ -538,7 +538,8 @@ public class DialectUtils {
 		if (!extend.translates.isEmpty()) {
 			HashMap<String, FieldTranslate> transMap = result.getTranslateMap();
 			// colName自动已经小写，无需再处理
-			extend.translates.forEach((colName, translate) -> {
+			extend.translates.forEach((translate) -> {
+				String colName = translate.getExtend().column.toLowerCase();
 				if (transMap.containsKey(colName)) {
 					transMap.get(colName).put(translate);
 				} else {

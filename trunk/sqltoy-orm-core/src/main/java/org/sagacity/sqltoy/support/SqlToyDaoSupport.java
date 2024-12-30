@@ -1876,11 +1876,10 @@ public class SqlToyDaoSupport {
 		String translateFields = "";
 		// 将缓存翻译对应的查询补充到select column 上,形成select keyColumn as viewColumn 模式
 		if (!innerModel.translates.isEmpty()) {
-			Iterator<Translate> iter = innerModel.translates.values().iterator();
 			String keyColumn;
 			TranslateExtend extend;
-			while (iter.hasNext()) {
-				extend = iter.next().getExtend();
+			for (Translate translate : innerModel.translates) {
+				extend = translate.getExtend();
 				// 将java模式的字段名称转化为数据库字段名称
 				keyColumn = entityMeta.getColumnName(extend.keyColumn);
 				if (keyColumn == null) {
@@ -2013,7 +2012,7 @@ public class SqlToyDaoSupport {
 		queryExecutor.getInnerModel().entityClass = entityClass;
 		// 设置额外的缓存翻译
 		if (!innerModel.translates.isEmpty()) {
-			queryExecutor.getInnerModel().translates.putAll(innerModel.translates);
+			queryExecutor.getInnerModel().translates.addAll(innerModel.translates);
 		}
 		// 设置额外的参数条件过滤
 		if (!innerModel.paramFilters.isEmpty()) {
@@ -2191,8 +2190,8 @@ public class SqlToyDaoSupport {
 		}
 		// 强制修改的日期时间字段，且以数据库时间为准
 		IgnoreCaseSet forceUpdateSqlFields = new IgnoreCaseSet();
-		if (unifyHandler != null && SqlToyThreadDataHolder.useUnifyFields()
-				&& unifyHandler.forceUpdateFields() != null && unifyHandler.updateSqlTimeFields() != null) {
+		if (unifyHandler != null && SqlToyThreadDataHolder.useUnifyFields() && unifyHandler.forceUpdateFields() != null
+				&& unifyHandler.updateSqlTimeFields() != null) {
 			unifyHandler.forceUpdateFields().forEach((sqlUpdateField) -> {
 				if (unifyHandler.updateSqlTimeFields().contains(sqlUpdateField)) {
 					forceUpdateSqlFields.add(sqlUpdateField);
