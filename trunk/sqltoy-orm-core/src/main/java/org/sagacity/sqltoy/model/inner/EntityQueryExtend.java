@@ -5,7 +5,6 @@ package org.sagacity.sqltoy.model.inner;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
@@ -91,7 +90,7 @@ public class EntityQueryExtend implements Serializable {
 	/**
 	 * 动态增加缓存翻译配置
 	 */
-	public HashMap<String, Translate> translates = new HashMap<String, Translate>();
+	public List<Translate> translates = new ArrayList<Translate>();
 
 	/**
 	 * 动态组织的order by 排序

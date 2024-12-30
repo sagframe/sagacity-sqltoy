@@ -50,6 +50,7 @@ import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
+import org.sagacity.sqltoy.translate.DynamicCacheFetch;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
@@ -411,6 +412,7 @@ public class DefaultDialectUtils {
 		queryParam = DialectUtils.doInterceptors(sqlToyContext, null, OperateType.singleTable, queryParam,
 				entity.getClass(), dbType);
 		SqlExecuteStat.showSql("执行锁记录查询", queryParam.getSql(), queryParam.getParamsValue());
+		DynamicCacheFetch dynamicCacheFetch = sqlToyContext.getDynamicCacheFetch();
 		// 可编辑结果集
 		PreparedStatement pst = conn.prepareStatement(queryParam.getSql(), ResultSet.TYPE_FORWARD_ONLY,
 				ResultSet.CONCUR_UPDATABLE);
@@ -510,7 +512,8 @@ public class DefaultDialectUtils {
 								}
 								index++;
 								// 重新获得修改后的值
-								result.add(ResultUtils.processResultRow(finalRs, 0, rowCnt, false));
+								result.add(ResultUtils.processResultRow(dynamicCacheFetch, finalRs, null, rowCnt, null,
+										null, false));
 							}
 							// 没有查询到记录，表示是需要首次插入
 							if (index == 0) {
@@ -650,8 +653,13 @@ public class DefaultDialectUtils {
 		} else if (paramValue instanceof java.lang.Float) {
 			rs.updateFloat(columnName, ((Float) paramValue));
 		} else if (paramValue instanceof java.sql.Blob) {
-			Blob tmp = (java.sql.Blob) paramValue;
-			rs.updateBytes(columnName, tmp.getBytes(0, Long.valueOf(tmp.length()).intValue()));
+			Blob blob = (java.sql.Blob) paramValue;
+			int size = (int) blob.length();
+			if (size > 0) {
+				rs.updateBytes(columnName, blob.getBytes(1, size));
+			} else {
+				rs.updateBytes(columnName, new byte[0]);
+			}
 		} else if (paramValue instanceof java.sql.Date) {
 			rs.updateDate(columnName, (java.sql.Date) paramValue);
 		} else if (paramValue instanceof java.lang.Boolean) {

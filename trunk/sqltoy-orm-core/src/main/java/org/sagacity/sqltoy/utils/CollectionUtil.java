@@ -207,11 +207,17 @@ public class CollectionUtil {
 			Object iData;
 			Object jData;
 			// 1:string,2:数字;3:日期
-			Integer dataType = 1;
-			if (aryData[0] instanceof java.util.Date) {
-				dataType = 3;
-			} else if (aryData[0] instanceof java.lang.Number) {
+			int dataType = 1;
+			if (aryData[0] instanceof java.lang.Number) {
 				dataType = 2;
+			} else if (aryData[0] instanceof java.util.Date) {
+				dataType = 3;
+			} else if (aryData[0] instanceof LocalDate) {
+				dataType = 4;
+			} else if (aryData[0] instanceof LocalDateTime) {
+				dataType = 5;
+			} else if (aryData[0] instanceof LocalTime) {
+				dataType = 6;
 			}
 			String str1, str2;
 			boolean lessThen = false;
@@ -219,11 +225,8 @@ public class CollectionUtil {
 				for (int j = i + 1; j < length; j++) {
 					iData = aryData[i];
 					jData = aryData[j];
-					if (dataType == 2) {
-						lessThen = ((Number) iData).doubleValue() < ((Number) jData).doubleValue();
-					} else if (dataType == 3) {
-						lessThen = ((Date) iData).before((Date) jData);
-					} else {
+					// 字符
+					if (dataType == 1) {
 						str1 = iData.toString();
 						str2 = jData.toString();
 						if (str1.length() < str2.length()) {
@@ -233,6 +236,16 @@ public class CollectionUtil {
 						} else {
 							lessThen = str1.compareTo(str2) < 0;
 						}
+					} else if (dataType == 2) {
+						lessThen = ((Number) iData).doubleValue() < ((Number) jData).doubleValue();
+					} else if (dataType == 3) {
+						lessThen = ((Date) iData).before((Date) jData);
+					} else if (dataType == 4) {
+						lessThen = ((LocalDate) iData).compareTo((LocalDate) jData) < 0;
+					} else if (dataType == 5) {
+						lessThen = ((LocalDateTime) iData).compareTo((LocalDateTime) jData) < 0;
+					} else if (dataType == 6) {
+						lessThen = ((LocalTime) iData).compareTo((LocalTime) jData) < 0;
 					}
 					// 小于
 					if ((descend && lessThen) || (!descend && !lessThen)) {

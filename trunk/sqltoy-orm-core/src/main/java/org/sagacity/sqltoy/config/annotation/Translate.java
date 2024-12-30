@@ -32,6 +32,9 @@ public @interface Translate {
 	// 针对split分割翻译后结果拼接字符串定义
 	String join() default "";
 
+	// add 2024-12-29 example: orderType==PO
+	String where() default "";
+
 	// 未匹配的模板,默认:[${value}]未定义,${value} 引用key值
 	String uncached() default "";
 }

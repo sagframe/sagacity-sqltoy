@@ -36,6 +36,7 @@ import org.sagacity.sqltoy.plugins.secure.DesensitizeProvider;
 import org.sagacity.sqltoy.plugins.secure.FieldsSecureProvider;
 import org.sagacity.sqltoy.service.SqlToyCRUDService;
 import org.sagacity.sqltoy.service.impl.SqlToyCRUDServiceImpl;
+import org.sagacity.sqltoy.translate.DynamicCacheFetch;
 import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -469,6 +470,18 @@ public class SqltoyAutoConfiguration {
 			else if (dialectDDLGenerator.contains(".")) {
 				sqlToyContext.setDialectDDLGenerator((DialectDDLGenerator) Class.forName(dialectDDLGenerator)
 						.getDeclaredConstructor().newInstance());
+			}
+		}
+
+		// add 2024-12-29 动态缓存数据获取
+		String dynamicCacheFetch = properties.getDynamicCacheFetch();
+		if (StringUtil.isNotBlank(dynamicCacheFetch)) {
+			if (applicationContext.containsBean(dynamicCacheFetch)) {
+				sqlToyContext.setDynamicCacheFetch((DynamicCacheFetch) appContext.getBean(dynamicCacheFetch));
+			} // 包名和类名称
+			else if (dynamicCacheFetch.contains(".")) {
+				sqlToyContext.setDynamicCacheFetch(
+						(DynamicCacheFetch) Class.forName(dynamicCacheFetch).getDeclaredConstructor().newInstance());
 			}
 		}
 

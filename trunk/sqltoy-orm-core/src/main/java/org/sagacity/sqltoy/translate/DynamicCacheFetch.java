@@ -5,6 +5,8 @@ package org.sagacity.sqltoy.translate;
 
 import java.util.List;
 
+import org.sagacity.sqltoy.integration.AppContext;
+
 /**
  * @project sagacity-sqltoy
  * @description 针对localCache提供动态从redis或数据库获取值并放入缓存的机制(目前还未实现)
@@ -13,6 +15,13 @@ import java.util.List;
  * @modify 2024年1月18日,修改说明
  */
 public interface DynamicCacheFetch {
+	/**
+	 * 初始化方法,供提供类似redis、redisTemplate定义等
+	 * 
+	 * @param appContext
+	 */
+	public void initialize(AppContext appContext);
+
 	// sid、properties
 	// 两个属性是在sqltoy-translate.xml中的定义的，给接口扩展提供辅助
 	// 只有在local-translate且dynamic-cache="true"场景生效

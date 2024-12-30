@@ -222,9 +222,12 @@ public class SqlScriptLoader {
 			// update 2019-08-25 增加独立的文件变更检测程序用于重新加载sql
 			if (sleepSeconds > 0 && sleepSeconds <= maxWait) {
 				if (enabledDebug) {
-					logger.debug("已经开启sql文件变更检测，会自动间隔:{}秒检测一次,发生变更会自动重新载入!", sleepSeconds);
+					logger.debug(
+							"已经开启sql文件变更检测，会自动间隔:{}秒检测一次,发生变更会自动重新载入(spring.sqltoy.scriptCheckIntervalSeconds=-1可关闭自动检测)!",
+							sleepSeconds);
 				} else {
-					out.println("已经开启sql文件变更检测，会自动间隔:" + sleepSeconds + "秒检测一次,发生变更会自动重新载入!");
+					out.println("已经开启sql文件变更检测，会自动间隔:" + sleepSeconds
+							+ "秒检测一次,发生变更会自动重新载入(spring.sqltoy.scriptCheckIntervalSeconds=-1可关闭自动检测)!");
 				}
 				watcher = new SqlFileModifyWatcher(sqlCache, filesLastModifyMap, realSqlList, dialect, encoding,
 						delayCheckSeconds, sleepSeconds);

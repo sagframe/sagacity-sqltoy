@@ -52,7 +52,7 @@
 		<!-- 缓存翻译,可以对例如:A,B 这种拼连的进行翻译(要指定分隔符号后最后拼装符号 split-regex="," link-sign=",") 
 			uncached-template 是针对未能匹配时显示的补充,${value} 表示显示key值,可以key=[${value}未定义 这种写法 -->
 		<translate cache="dictCache" cache-type="POST_TYPE"
-			columns="POST_TYPE" cache-indexs="1" uncached-template="" />
+			columns="POST_TYPE" cache-indexs="1" uncached-template="" where="a==b"/>
 		<!-- 安全掩码:tel\姓名\地址\卡号 -->
 		<!--最简单用法: <secure-mask columns="" type="tel"/> -->
 		<secure-mask columns="" type="name" head-size="3"

@@ -10,6 +10,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.SqlToyThreadDataHolder;
+import org.sagacity.sqltoy.config.model.FieldTranslate;
 import org.sagacity.sqltoy.config.model.SqlExecuteTrace;
 import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
@@ -155,49 +157,130 @@ public class TranslateManager {
 	 * @param translates
 	 * @return
 	 */
-	public HashMap<String, HashMap<String, Object[]>> getTranslates(HashMap<String, Translate> translates) {
+	public HashMap<String, FieldTranslateCacheHolder> getTranslates(HashMap<String, FieldTranslate> translates) {
 		// 获得当前线程中的sql执行日志，后续缓存获取会覆盖掉日志
 		SqlExecuteTrace sqlTrace = SqlExecuteStat.get();
-		HashMap<String, HashMap<String, Object[]>> result = new HashMap<String, HashMap<String, Object[]>>();
+		HashMap<String, FieldTranslateCacheHolder> result = new HashMap<String, FieldTranslateCacheHolder>();
 		HashMap<String, Object[]> cache;
 		TranslateConfigModel cacheModel;
 		TranslateExtend extend;
 		int cacheEltLength;
-		for (Map.Entry<String, Translate> entry : translates.entrySet()) {
-			extend = entry.getValue().getExtend();
-			if (translateMap.containsKey(extend.cache)) {
-				cacheModel = translateMap.get(extend.cache);
-				cache = getCacheData(cacheModel, extend.cacheType);
-				if (cache != null) {
-					// update 2022-1-4 增加缓存使用时cache-index 合法性校验
-					if (cache.size() > 0) {
-						cacheEltLength = cache.values().iterator().next().length;
-						if (extend.index >= cacheEltLength) {
-							throw new IllegalArgumentException("缓存取值数组越界:cacheName:" + extend.cache + ", column:"
-									+ extend.column + ",cache-indexs:(" + extend.index + ">=" + cacheEltLength
-									+ ")[缓存内容数组长度],请检查cache-indexs值确保跟缓存数据具体列保持一致!");
+		FieldTranslate fieldTranslate;
+		String colName;
+		int translateSize;
+		Translate translate;
+		HashMap<String, FieldTranslate> realTranslates = wrapI18nIndex(translates);
+		for (Map.Entry<String, FieldTranslate> entry : realTranslates.entrySet()) {
+			fieldTranslate = entry.getValue();
+			colName = entry.getKey();
+			FieldTranslateCacheHolder fieldTranslateHandler = new FieldTranslateCacheHolder();
+			translateSize = fieldTranslate.translates.length;
+			fieldTranslateHandler.setTranslates(fieldTranslate.translates);
+			fieldTranslateHandler.setKeyField(fieldTranslate.keyField);
+			HashMap<String, Object[]>[] cacheAry = new HashMap[translateSize];
+			for (int i = 0; i < translateSize; i++) {
+				translate = fieldTranslate.translates[i];
+				extend = translate.getExtend();
+				if (translateMap.containsKey(extend.cache)) {
+					cacheModel = translateMap.get(extend.cache);
+					// 是否动态缓存(预留)
+					extend.dynamicCache = cacheModel.isDynamicCache();
+					extend.cacheSid = cacheModel.getSid();
+					extend.cacheProperties = cacheModel.getProperties();
+					cache = getCacheData(cacheModel, extend.cacheType);
+					if (cache != null) {
+						// update 2022-1-4 增加缓存使用时cache-index 合法性校验
+						if (cache.size() > 0) {
+							cacheEltLength = cache.values().iterator().next().length;
+							if (extend.index >= cacheEltLength) {
+								throw new IllegalArgumentException("缓存取值数组越界:cacheName:" + extend.cache + ", column:"
+										+ extend.column + ",cache-indexs:(" + extend.index + ">=" + cacheEltLength
+										+ ")[缓存内容数组长度],请检查cache-indexs值确保跟缓存数据具体列保持一致!");
+							}
 						}
-					}
-					result.put(extend.column, cache);
-				} else {
-					result.put(extend.column, new HashMap<String, Object[]>());
-					if (logger.isWarnEnabled()) {
+						cacheAry[i] = cache;
+					} else {
+						cacheAry[i] = new HashMap<String, Object[]>();
 						logger.warn("sqltoy translate:cacheName={},cache-type={},column={}配置不正确,未获取对应cache数据!",
 								cacheModel.getCache(), extend.cacheType, extend.column);
-					} else {
-						System.err.println("sqltoy translate:cacheName=" + cacheModel.getCache() + ",cache-type="
-								+ extend.cacheType + ",column=" + extend.column + " 配置不正确,未获取对应cache数据!");
 					}
+				} else {
+					cacheAry[i] = new HashMap<String, Object[]>();
+					logger.error("cacheName:{} 没有配置,请检查缓存配置文件!", extend.cache);
 				}
-			} else {
-				logger.error("cacheName:{} 没有配置,请检查缓存配置文件!", extend.cache);
 			}
+			fieldTranslateHandler.setCacheArray(cacheAry);
+			result.put(colName, fieldTranslateHandler);
 		}
 		// 将调用获取缓存之前的日志放回线程中
 		if (sqlTrace != null) {
 			SqlExecuteStat.set(sqlTrace);
 		}
 		return result;
+	}
+
+	/**
+	 * @TODO 根据是否存在国际化，重新组织缓存对应实际翻译名称列
+	 * @param translateManager
+	 * @param translateConfig
+	 * @return
+	 */
+	private HashMap<String, FieldTranslate> wrapI18nIndex(HashMap<String, FieldTranslate> translateConfig) {
+		// 获取当前线程中存放的locale，如:US、CN 等
+		String locale = SqlToyThreadDataHolder.getLanguage();
+		if (locale == null) {
+			return translateConfig;
+		}
+		HashMap<String, FieldTranslate> result = new HashMap<String, FieldTranslate>();
+		// 存在国际化配置
+		String colName;
+		TranslateExtend transExt;
+		TranslateConfigModel translateConfigModel;
+		Integer realIndex;
+		FieldTranslate fieldTranslate;
+		for (Map.Entry<String, FieldTranslate> entry : translateConfig.entrySet()) {
+			colName = entry.getKey();
+			fieldTranslate = entry.getValue();
+			if (hasI18n(fieldTranslate)) {
+				FieldTranslate newFieldTranslate = new FieldTranslate();
+				Translate[] translatesAry = new Translate[fieldTranslate.translates.length];
+				int i = 0;
+				for (Translate translate : fieldTranslate.translates) {
+					translatesAry[i] = translate;
+					transExt = translate.getExtend();
+					translateConfigModel = getCacheConfig(transExt.cache);
+					if (translateConfigModel.hasI18n(transExt.index)) {
+						// zh:1,us:2 获取方言对应的列
+						realIndex = translateConfigModel.getI18nIndex(locale);
+						// 存在方言列，且跟当前默认配置列不同，重新clone复制一份
+						if (realIndex != null && realIndex.intValue() != transExt.index) {
+							Translate cloneTrans = translate.clone();
+							cloneTrans.setIndex(realIndex);
+							translatesAry[i] = cloneTrans;
+						}
+					}
+					i++;
+				}
+				newFieldTranslate.colName = colName;
+				newFieldTranslate.keyField = fieldTranslate.keyField;
+				newFieldTranslate.translates = translatesAry;
+				result.put(colName, newFieldTranslate);
+			} else {
+				result.put(colName, fieldTranslate);
+			}
+		}
+		return result;
+	}
+
+	private boolean hasI18n(FieldTranslate fieldTranslate) {
+		TranslateExtend transExt;
+		for (Translate translate : fieldTranslate.translates) {
+			transExt = translate.getExtend();
+			if (getCacheConfig(transExt.cache).hasI18n(transExt.index)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

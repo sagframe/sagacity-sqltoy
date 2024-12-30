@@ -413,8 +413,13 @@ public class SqlUtil {
 		} else if (paramValue instanceof java.lang.Float) {
 			pst.setFloat(paramIndex, ((Float) paramValue));
 		} else if (paramValue instanceof java.sql.Blob) {
-			Blob tmp = (java.sql.Blob) paramValue;
-			pst.setBytes(paramIndex, tmp.getBytes(0, Long.valueOf(tmp.length()).intValue()));
+			Blob blob = (java.sql.Blob) paramValue;
+			int size = (int) blob.length();
+			if (size > 0) {
+				pst.setBytes(paramIndex, blob.getBytes(1, size));
+			} else {
+				pst.setBytes(paramIndex, new byte[0]);
+			}
 		} else if (paramValue instanceof java.sql.Date) {
 			pst.setDate(paramIndex, (java.sql.Date) paramValue);
 		} else if (paramValue instanceof java.lang.Boolean) {

@@ -41,6 +41,7 @@ import org.sagacity.sqltoy.plugins.secure.FieldsSecureProvider;
 import org.sagacity.sqltoy.plugins.secure.impl.DesensitizeDefaultProvider;
 import org.sagacity.sqltoy.plugins.secure.impl.FieldsRSASecureProvider;
 import org.sagacity.sqltoy.plugins.sharding.ShardingStrategy;
+import org.sagacity.sqltoy.translate.DynamicCacheFetch;
 import org.sagacity.sqltoy.translate.TranslateManager;
 import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
 import org.sagacity.sqltoy.utils.BeanUtil;
@@ -260,7 +261,7 @@ public class SqlToyContext {
 	private DataSource defaultDataSource;
 
 	/**
-	 * sql脚本检测间隔时长(debug模式下默认3秒,非debug默认15秒)
+	 * sql脚本检测间隔时长(debug模式下默认3秒,非debug默认15秒) -1 表示关闭更新检测
 	 */
 	private Integer scriptCheckIntervalSeconds;
 
@@ -410,6 +411,11 @@ public class SqlToyContext {
 	private FirstBizCodeTrace firstBizCodeTrace;
 
 	/**
+	 * 动态缓存获取
+	 */
+	private DynamicCacheFetch dynamicCacheFetch;
+
+	/**
 	 * @todo 初始化
 	 * @throws Exception
 	 */
@@ -448,6 +454,10 @@ public class SqlToyContext {
 					.getDeclaredConstructor().newInstance(), delayCheckSeconds);
 		} else {
 			translateManager.initialize(this, translateCacheManager, delayCheckSeconds);
+		}
+		// 动态缓存初始化(预留)
+		if (dynamicCacheFetch != null) {
+			dynamicCacheFetch.initialize(appContext);
 		}
 		// 初始化实体对象管理器(此功能已经无实际意义,已经改为即用即加载而非提前加载)
 		entityManager.initialize(this);
@@ -1327,4 +1337,19 @@ public class SqlToyContext {
 	public void setDialectReturnPrimaryColumnCase(IgnoreKeyCaseMap<String, String> dialectReturnPrimaryColumnCase) {
 		this.dialectReturnPrimaryColumnCase = dialectReturnPrimaryColumnCase;
 	}
+
+	/**
+	 * @return the dynamicCacheFetch
+	 */
+	public DynamicCacheFetch getDynamicCacheFetch() {
+		return dynamicCacheFetch;
+	}
+
+	/**
+	 * @param dynamicCacheFetch the dynamicCacheFetch to set
+	 */
+	public void setDynamicCacheFetch(DynamicCacheFetch dynamicCacheFetch) {
+		this.dynamicCacheFetch = dynamicCacheFetch;
+	}
+
 }
