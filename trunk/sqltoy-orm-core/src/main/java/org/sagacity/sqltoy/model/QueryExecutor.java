@@ -312,7 +312,7 @@ public class QueryExecutor implements Serializable {
 					throw new IllegalArgumentException(
 							"给查询增加的缓存翻译时未定义具体的cacheName=[" + extend.cache + "] 或 对应的column=[" + extend.column + "]!");
 				}
-				innerModel.translates.put(extend.column, trans);
+				innerModel.translates.add(trans);
 			}
 		}
 		return this;

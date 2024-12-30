@@ -100,6 +100,33 @@ public class Translate implements Serializable {
 	}
 
 	/**
+	 * @param compareColumn the compareColumn to set
+	 */
+	public Translate setCompareColumn(String compareColumn) {
+		if (compareColumn != null) {
+			extend.compareColumn = compareColumn;
+			extend.hasLogic = true;
+		}
+		return this;
+	}
+
+	/**
+	 * @param compareType the compareType to set
+	 */
+	public Translate setCompareType(String compareType) {
+		extend.compareType = compareType;
+		return this;
+	}
+
+	/**
+	 * @param compareValues the compareValues to set
+	 */
+	public Translate setCompareValues(String[] compareValues) {
+		extend.compareValues = compareValues;
+		return this;
+	}
+
+	/**
 	 * @param keyTemplate the keyTemplate to set
 	 */
 	public Translate setKeyTemplate(String keyTemplate) {

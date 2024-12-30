@@ -34,6 +34,7 @@ import org.sagacity.sqltoy.solon.configure.Elastic;
 import org.sagacity.sqltoy.solon.configure.ElasticConfig;
 import org.sagacity.sqltoy.solon.configure.SqlToyContextProperties;
 import org.sagacity.sqltoy.solon.configure.SqlToyContextTaskPoolProperties;
+import org.sagacity.sqltoy.translate.DynamicCacheFetch;
 import org.sagacity.sqltoy.translate.TranslateManager;
 import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -465,6 +466,18 @@ public class SqlToyContextBuilder {
 			else if (dialectDDLGenerator.contains(".")) {
 				sqlToyContext.setDialectDDLGenerator((DialectDDLGenerator) Class.forName(dialectDDLGenerator)
 						.getDeclaredConstructor().newInstance());
+			}
+		}
+
+		// add 2024-12-29 动态缓存数据获取
+		String dynamicCacheFetch = properties.getDynamicCacheFetch();
+		if (StringUtil.isNotBlank(dynamicCacheFetch)) {
+			if (appContext.containsBean(dynamicCacheFetch)) {
+				sqlToyContext.setDynamicCacheFetch((DynamicCacheFetch) appContext.getBean(dynamicCacheFetch));
+			} // 包名和类名称
+			else if (dynamicCacheFetch.contains(".")) {
+				sqlToyContext.setDynamicCacheFetch(
+						(DynamicCacheFetch) Class.forName(dynamicCacheFetch).getDeclaredConstructor().newInstance());
 			}
 		}
 		// 自定义sql拦截处理器

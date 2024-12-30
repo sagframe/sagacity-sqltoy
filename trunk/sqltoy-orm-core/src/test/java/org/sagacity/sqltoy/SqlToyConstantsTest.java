@@ -68,7 +68,7 @@ public class SqlToyConstantsTest {
 	public void testBigIntger() {
 		double var = 1000 / 12;
 		System.err.println(var);
-		MapKit.startOf(null, "").get();
+		MapKit.map(null, "");
 		BigInteger a = new BigInteger("2993439899898779987777777777897777");
 		System.err.println(a.toString());
 		BigDecimal b = new BigDecimal("2993439899898779987777777777897777");

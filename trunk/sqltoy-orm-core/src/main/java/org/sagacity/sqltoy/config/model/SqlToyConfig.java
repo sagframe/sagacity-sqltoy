@@ -46,7 +46,7 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	/**
 	 * 翻译器
 	 */
-	private HashMap<String, Translate> translateMap = new HashMap<String, Translate>();
+	private HashMap<String, FieldTranslate> translateMap = new HashMap<String, FieldTranslate>();
 
 	/**
 	 * 安全脱敏配置
@@ -339,14 +339,14 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	/**
 	 * @return the translateMap
 	 */
-	public HashMap<String, Translate> getTranslateMap() {
+	public HashMap<String, FieldTranslate> getTranslateMap() {
 		return translateMap;
 	}
 
 	/**
 	 * @param translateMap the translateMap to set
 	 */
-	public void setTranslateMap(HashMap<String, Translate> translateMap) {
+	public void setTranslateMap(HashMap<String, FieldTranslate> translateMap) {
 		this.translateMap = translateMap;
 	}
 

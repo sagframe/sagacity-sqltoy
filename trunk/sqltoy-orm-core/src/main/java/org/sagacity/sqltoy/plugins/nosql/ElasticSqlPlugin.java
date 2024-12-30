@@ -48,11 +48,7 @@ public class ElasticSqlPlugin {
 		realSql = realSql + " limit " + (pageModel.getPageNo() - 1) * pageModel.getPageSize() + ","
 				+ pageModel.getPageSize();
 		if (sqlToyContext.isDebug()) {
-			if (logger.isDebugEnabled()) {
-				logger.debug("findPageByElastic sql=" + realSql);
-			} else {
-				System.out.println("findPageByElastic sql=" + realSql);
-			}
+			logger.debug("findPageByElastic sql=" + realSql);
 		}
 		Page page = new Page();
 		page.setPageNo(pageModel.getPageNo());
@@ -85,11 +81,7 @@ public class ElasticSqlPlugin {
 			realSql = realSql + " limit " + topSize;
 		}
 		if (sqlToyContext.isDebug()) {
-			if (logger.isDebugEnabled()) {
-				logger.debug("findTopByElastic sql=" + realSql);
-			} else {
-				System.out.println("findTopByElastic sql=" + realSql);
-			}
+			logger.debug("findTopByElastic sql=" + realSql);
 		}
 		DataSetResult result = ElasticSearchUtils.executeQuery(sqlToyContext, sqlToyConfig, realSql,
 				(Class) extend.resultType, extend.humpMapLabel);
