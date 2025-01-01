@@ -571,18 +571,17 @@ public class MongoElasticUtils {
 		});
 		int size = dataSet.size();
 		List rowList;
-		Object value;
+		Object cellValue;
 		FieldTranslateCacheHolder fieldTranslateHandler;
-
 		for (int i = 0; i < fieldCnt; i++) {
 			fieldTranslateHandler = translateCache.get(fields[i].toLowerCase());
 			if (fieldTranslateHandler != null) {
 				for (int j = 0; j < size; j++) {
 					rowList = dataSet.get(j);
-					value = rowList.get(i);
-					if (value != null) {
+					cellValue = rowList.get(i);
+					if (cellValue != null) {
 						rowList.set(i, fieldTranslateHandler.getRowCacheValue(dynamicCacheFetch, rowList, colIndexMap,
-								value.toString()));
+								cellValue.toString()));
 					}
 				}
 			}

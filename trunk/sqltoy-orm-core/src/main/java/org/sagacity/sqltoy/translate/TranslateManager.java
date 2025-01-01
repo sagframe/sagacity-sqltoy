@@ -166,6 +166,7 @@ public class TranslateManager {
 		TranslateExtend extend;
 		int cacheEltLength;
 		FieldTranslate fieldTranslate;
+		// 需要翻译的列名称
 		String colName;
 		int translateSize;
 		Translate translate;

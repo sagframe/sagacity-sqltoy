@@ -81,11 +81,13 @@ public class FieldTranslateCacheHolder implements Serializable {
 	 * @TODO 针对ResultSet 进行翻译
 	 * @param dynamicCacheFetch
 	 * @param rs
+	 * @param lowKeyLabelNameMap
 	 * @param key
 	 * @return
 	 * @throws SQLException
 	 */
-	public Object getRSCacheValue(DynamicCacheFetch dynamicCacheFetch, ResultSet rs, String key) throws SQLException {
+	public Object getRSCacheValue(DynamicCacheFetch dynamicCacheFetch, ResultSet rs,
+			HashMap<String, String> lowKeyLabelNameMap, String key) throws SQLException {
 		TranslateExtend translateExtand;
 		Object translateValue = key;
 		Object compareValue;
@@ -95,7 +97,8 @@ public class FieldTranslateCacheHolder implements Serializable {
 			translateExtand = translates[i].getExtend();
 			compareValue = null;
 			if (translateExtand.hasLogic) {
-				compareValue = rs.getObject(translateExtand.compareColumn);
+				// translateExtand.compareColumn小写，通过map获取实际的resultset的名称
+				compareValue = rs.getObject(lowKeyLabelNameMap.get(translateExtand.compareColumn));
 				doTranslate = TranslateUtils.judgeTranslate(compareValue, translateExtand.compareType,
 						translateExtand.compareValues);
 			}

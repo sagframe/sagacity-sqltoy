@@ -104,7 +104,7 @@ public class Translate implements Serializable {
 	 */
 	public Translate setCompareColumn(String compareColumn) {
 		if (compareColumn != null) {
-			extend.compareColumn = compareColumn;
+			extend.compareColumn = compareColumn.toLowerCase();
 			extend.hasLogic = true;
 		}
 		return this;
@@ -114,7 +114,14 @@ public class Translate implements Serializable {
 	 * @param compareType the compareType to set
 	 */
 	public Translate setCompareType(String compareType) {
-		extend.compareType = compareType;
+		if (compareType != null) {
+			String lowCompareType = compareType.toLowerCase();
+			if (!lowCompareType.equals("eq") && !lowCompareType.equals("neq") && !lowCompareType.equals("in")
+					&& !lowCompareType.equals("out")) {
+				throw new IllegalArgumentException("缓存翻译中逻辑判断:compareType只支持eq、neq、in、out四种类型!");
+			}
+			extend.compareType = compareType.toLowerCase();
+		}
 		return this;
 	}
 

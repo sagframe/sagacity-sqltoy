@@ -48,6 +48,7 @@ import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.config.model.SummaryModel;
 import org.sagacity.sqltoy.config.model.TableCascadeModel;
+import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.config.model.TreeSortModel;
 import org.sagacity.sqltoy.config.model.UnpivotModel;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
@@ -206,6 +207,7 @@ public class ResultUtils {
 		String[] labelNames = new String[columnSize];
 		String[] labelTypes = new String[columnSize];
 		String labeNameLow;
+		// 字段名称统一转大写或小写,默认为default,即不做任何处理
 		String colLabelUpperOrLower = sqlToyContext.getColumnLabelUpperOrLower();
 		int index = 0;
 		for (int i = 0; i < columnSize; i++) {
@@ -252,6 +254,7 @@ public class ResultUtils {
 		Class[] genericTypes = null;
 		String[] realProps = null;
 		int[] indexs = null;
+		HashMap<String, String> lowKeyLabelNameMap = labelLowKeyMap(labelNames);
 		HashMap<String, FieldTranslateCacheHolder> cacheDatas = null;
 		HashMap<String, FieldTranslate> translateConfig = null;
 		DynamicCacheFetch dynamicCacheFetch = sqlToyContext.getDynamicCacheFetch();
@@ -312,8 +315,8 @@ public class ResultUtils {
 		index = 0;
 		List rowTemp;
 		while (rs.next()) {
-			rowTemp = processResultRow(dynamicCacheFetch, rs, labelNames, columnSize, translateCache,
-					realDecryptHandler, ignoreAllEmpty);
+			rowTemp = processResultRow(dynamicCacheFetch, rs, labelNames, lowKeyLabelNameMap, columnSize,
+					translateCache, realDecryptHandler, ignoreAllEmpty);
 			if (rowTemp != null) {
 				// 字段脱敏
 				if (sqlSecure) {
@@ -503,12 +506,14 @@ public class ResultUtils {
 		List<List> items = new ArrayList();
 		// 判断是否有缓存翻译器定义
 		Boolean hasTranslate = (sqlToyConfig.getTranslateMap().isEmpty()) ? false : true;
+		HashMap<String, String> lowKeyLabelNameMap = labelLowKeyMap(labelNames);
 		HashMap<String, FieldTranslate> translateMap = sqlToyConfig.getTranslateMap();
-		HashMap<String, FieldTranslateCacheHolder> translateCache = null;
+		HashMap<String, FieldTranslateCacheHolder> fieldTranslateCacheHolders = null;
 		// 动态获取缓存的实现
 		DynamicCacheFetch dynamicCacheFetch = sqlToyContext.getDynamicCacheFetch();
 		if (hasTranslate) {
-			translateCache = sqlToyContext.getTranslateManager().getTranslates(translateMap);
+			validateCacheConfig(translateMap, lowKeyLabelNameMap);
+			fieldTranslateCacheHolders = sqlToyContext.getTranslateManager().getTranslates(translateMap);
 		}
 		// 单个字段link运算
 		int columnSize = labelNames.length;
@@ -534,6 +539,8 @@ public class ResultUtils {
 			if (!labelIndexMap.containsKey(linkColumnLow)) {
 				throw new DataAccessException("做link操作时,查询结果字段中没有字段:" + linkColumn + ",请检查sql或link 配置的正确性!");
 			}
+			// 转换成实际sql as的名称,避免手写字符大小写差异
+			linkColumn = lowKeyLabelNameMap.get(linkColumnLow);
 			Set<String> linkSet = new HashSet<String>();
 			int linkIndex = labelIndexMap.get(linkColumnLow);
 			StringBuilder linkBuffer = new StringBuilder();
@@ -549,7 +556,7 @@ public class ResultUtils {
 			boolean translateLink = hasTranslate ? translateMap.containsKey(linkColumnLow) : false;
 			FieldTranslateCacheHolder fieldTranslateHandler = null;
 			if (translateLink) {
-				fieldTranslateHandler = translateCache.get(linkColumnLow);
+				fieldTranslateHandler = fieldTranslateCacheHolders.get(linkColumnLow);
 			}
 			// 判断link拼接是否重新开始
 			boolean isLastProcess = false;
@@ -563,7 +570,8 @@ public class ResultUtils {
 				if (linkValue == null) {
 					linkStr = "";
 				} else if (translateLink) {
-					tmpObject = fieldTranslateHandler.getRSCacheValue(dynamicCacheFetch, rs, linkValue.toString());
+					tmpObject = fieldTranslateHandler.getRSCacheValue(dynamicCacheFetch, rs, lowKeyLabelNameMap,
+							linkValue.toString());
 					linkStr = (tmpObject == null) ? linkValue.toString() : tmpObject.toString();
 				} else {
 					linkStr = linkValue.toString();
@@ -601,8 +609,8 @@ public class ResultUtils {
 						linkBuffer.append(linkStr);
 					}
 					linkSet.add(linkStr);
-					tempRow = processResultRow(dynamicCacheFetch, rs, labelNames, columnSize, translateCache,
-							decryptHandler, ignoreAllEmpty);
+					tempRow = processResultRow(dynamicCacheFetch, rs, labelNames, lowKeyLabelNameMap, columnSize,
+							fieldTranslateCacheHolders, decryptHandler, ignoreAllEmpty);
 					if (tempRow != null) {
 						items.add(tempRow);
 					}
@@ -665,8 +673,8 @@ public class ResultUtils {
 					updateRowHandler.updateRow(rs, index);
 					rs.updateRow();
 				}
-				tempRow = processResultRow(dynamicCacheFetch, rs, labelNames, columnSize, translateCache,
-						decryptHandler, ignoreAllEmpty);
+				tempRow = processResultRow(dynamicCacheFetch, rs, labelNames, lowKeyLabelNameMap, columnSize,
+						fieldTranslateCacheHolders, decryptHandler, ignoreAllEmpty);
 				if (tempRow != null) {
 					items.add(tempRow);
 				}
@@ -693,6 +701,30 @@ public class ResultUtils {
 					index, sqlToyConfig.getId(), sqlToyConfig.getSql(null));
 		}
 		return items;
+	}
+
+	/**
+	 * 校验缓存翻译配置正确性
+	 * 
+	 * @param fieldTranslateMap
+	 * @param lowKeyLabelNameMap
+	 */
+	private static void validateCacheConfig(HashMap<String, FieldTranslate> fieldTranslateMap,
+			HashMap<String, String> lowKeyLabelNameMap) {
+		if (fieldTranslateMap == null || fieldTranslateMap.isEmpty()) {
+			return;
+		}
+		fieldTranslateMap.forEach((fieldName, fieldTranslate) -> {
+			for (Translate translate : fieldTranslate.translates) {
+				if (translate.getExtend().hasLogic) {
+					// compareColumn 设置时已经小写
+					if (!lowKeyLabelNameMap.containsKey(translate.getExtend().compareColumn)) {
+						throw new DataAccessException("查询结果字段中没有:[" + translate.getExtend().compareColumn
+								+ "]字段,请检查cache=" + translate.getExtend().cache + "的缓存翻译,其逻辑表达式where的配置!");
+					}
+				}
+			}
+		});
 	}
 
 	/**
@@ -742,11 +774,13 @@ public class ResultUtils {
 		List<List> items = new ArrayList();
 		// 判断是否有缓存翻译器定义
 		Boolean hasTranslate = (sqlToyConfig.getTranslateMap().isEmpty()) ? false : true;
+		HashMap<String, String> lowKeyLabelNameMap = labelLowKeyMap(labelNames);
 		HashMap<String, FieldTranslate> translateMap = sqlToyConfig.getTranslateMap();
-		HashMap<String, FieldTranslateCacheHolder> translateCache = null;
+		HashMap<String, FieldTranslateCacheHolder> fieldTranslateCacheHolders = null;
 		DynamicCacheFetch dynamicCacheFetch = sqlToyContext.getDynamicCacheFetch();
 		if (hasTranslate) {
-			translateCache = sqlToyContext.getTranslateManager().getTranslates(translateMap);
+			validateCacheConfig(translateMap, lowKeyLabelNameMap);
+			fieldTranslateCacheHolders = sqlToyContext.getTranslateManager().getTranslates(translateMap);
 		}
 		int columnSize = labelNames.length;
 		int index = 0;
@@ -762,21 +796,24 @@ public class ResultUtils {
 		if (maxThresholds > 1 && maxThresholds <= warnThresholds) {
 			maxThresholds = warnThresholds;
 		}
-		int linkCols = linkModel.getColumns().length;
+		int linkColCnt = linkModel.getColumns().length;
 		String[] linkColumns = linkModel.getColumns();
-		int[] linkIndexs = new int[linkCols];
-		boolean[] translateLinks = new boolean[linkCols];
-		StringBuilder[] linkBuffers = new StringBuilder[linkCols];
-		Set<String>[] linkSets = linkModel.isDistinct() ? new HashSet[linkCols] : null;
+		int[] linkIndexs = new int[linkColCnt];
+		String[] linkRealLabels = new String[linkColCnt];
+		// link字段是否存在缓存翻译行为
+		boolean[] translateLinks = new boolean[linkColCnt];
+		StringBuilder[] linkBuffers = new StringBuilder[linkColCnt];
+		Set<String>[] linkSets = linkModel.isDistinct() ? new HashSet[linkColCnt] : null;
 		String linkColumnLow;
-		String[] linkLowColumns = new String[linkCols];
-		for (int i = 0; i < linkCols; i++) {
+		String[] linkLowColumns = new String[linkColCnt];
+		for (int i = 0; i < linkColCnt; i++) {
 			linkBuffers[i] = new StringBuilder();
 			linkColumnLow = linkColumns[i].toLowerCase();
 			linkLowColumns[i] = linkColumnLow;
 			if (!labelIndexMap.containsKey(linkColumnLow)) {
 				throw new DataAccessException("做link操作时,查询结果字段中没有字段:" + linkColumnLow + ",请检查sql或link 配置的正确性!");
 			}
+			linkRealLabels[i] = lowKeyLabelNameMap.get(linkColumnLow);
 			linkIndexs[i] = labelIndexMap.get(linkColumnLow);
 			if (hasTranslate) {
 				translateLinks[i] = translateMap.containsKey(linkColumnLow);
@@ -792,8 +829,8 @@ public class ResultUtils {
 			isLeft = "left".equals(linkModel.getDecorateAlign()) ? true : false;
 		}
 		Object preIdentity = null;
-		Object[] linkValues = new Object[linkCols];
-		String[] linkStrs = new String[linkCols];
+		Object[] linkValues = new Object[linkColCnt];
+		String[] linkStrs = new String[linkColCnt];
 		List tempRow;
 		Object identity = null;
 		// 判断link拼接是否重新开始
@@ -804,13 +841,13 @@ public class ResultUtils {
 		while (rs.next()) {
 			isLastProcess = false;
 			// 对多个link字段取值并进行翻译转义
-			for (int i = 0; i < linkCols; i++) {
-				linkValues[i] = rs.getObject(linkColumns[i]);
+			for (int i = 0; i < linkColCnt; i++) {
+				linkValues[i] = rs.getObject(linkRealLabels[i]);
 				if (linkValues[i] == null) {
 					linkStrs[i] = "";
 				} else if (translateLinks[i]) {
-					fieldTranslateCacheHolder = translateCache.get(linkLowColumns[i]);
-					tmpObject = fieldTranslateCacheHolder.getRSCacheValue(dynamicCacheFetch, rs,
+					fieldTranslateCacheHolder = fieldTranslateCacheHolders.get(linkLowColumns[i]);
+					tmpObject = fieldTranslateCacheHolder.getRSCacheValue(dynamicCacheFetch, rs, lowKeyLabelNameMap,
 							linkValues[i].toString());
 					linkStrs[i] = (tmpObject == null) ? linkValues[i].toString() : tmpObject.toString();
 				} else {
@@ -825,7 +862,7 @@ public class ResultUtils {
 				// 不相等时先对最后一条记录修改，写入拼接后的字符串
 				if (index != 0) {
 					tempRow = items.get(items.size() - 1);
-					for (int i = 0; i < linkCols; i++) {
+					for (int i = 0; i < linkColCnt; i++) {
 						tempRow.set(linkIndexs[i], linkBuffers[i].toString());
 						linkBuffers[i].delete(0, linkBuffers[i].length());
 						// 清除
@@ -835,15 +872,15 @@ public class ResultUtils {
 					}
 				}
 				// 再写入新的拼接串
-				for (int i = 0; i < linkCols; i++) {
+				for (int i = 0; i < linkColCnt; i++) {
 					linkBuffers[i].append(linkStrs[i]);
 					if (linkModel.isDistinct()) {
 						linkSets[i].add(linkStrs[i]);
 					}
 				}
 				// 提取result中的数据(identity相等时不需要提取)
-				tempRow = processResultRow(dynamicCacheFetch, rs, labelNames, columnSize, translateCache,
-						decryptHandler, ignoreAllEmpty);
+				tempRow = processResultRow(dynamicCacheFetch, rs, labelNames, lowKeyLabelNameMap, columnSize,
+						fieldTranslateCacheHolders, decryptHandler, ignoreAllEmpty);
 				if (tempRow != null) {
 					items.add(tempRow);
 				}
@@ -851,7 +888,7 @@ public class ResultUtils {
 			} else {
 				isLastProcess = true;
 				// identity相同，表示还在同一组内，直接拼接link字符
-				for (int i = 0; i < linkCols; i++) {
+				for (int i = 0; i < linkColCnt; i++) {
 					doLink = true;
 					// 判断是否已经重复
 					if (linkModel.isDistinct()) {
@@ -883,7 +920,7 @@ public class ResultUtils {
 		// 数据集合不为空,对最后一条记录写入循环值
 		if (isLastProcess) {
 			tempRow = items.get(items.size() - 1);
-			for (int i = 0; i < linkCols; i++) {
+			for (int i = 0; i < linkColCnt; i++) {
 				tempRow.set(linkIndexs[i], linkBuffers[i].toString());
 			}
 		}
@@ -945,6 +982,20 @@ public class ResultUtils {
 			}
 		}
 		return result;
+	}
+
+	/**
+	 * 针对resultSet label提供小写key map
+	 * 
+	 * @param labelNames
+	 * @return
+	 */
+	private static HashMap<String, String> labelLowKeyMap(String[] labelNames) {
+		HashMap<String, String> lowKeyMap = new HashMap<>();
+		for (String label : labelNames) {
+			lowKeyMap.put(label.toLowerCase(), label);
+		}
+		return lowKeyMap;
 	}
 
 	/**
@@ -1096,8 +1147,10 @@ public class ResultUtils {
 
 	/**
 	 * @todo 处理Result单行数据
+	 * @param dynamicCacheFetch
 	 * @param rs
 	 * @param labelNames
+	 * @param lowKeyLabelNameMap
 	 * @param size
 	 * @param translateCaches
 	 * @param decryptHandler
@@ -1106,7 +1159,8 @@ public class ResultUtils {
 	 * @throws Exception
 	 */
 	public static List processResultRow(DynamicCacheFetch dynamicCacheFetch, ResultSet rs, String[] labelNames,
-			int size, HashMap<String, FieldTranslateCacheHolder> translateCaches, DecryptHandler decryptHandler,
+			HashMap<String, String> lowKeyLabelNameMap, int size,
+			HashMap<String, FieldTranslateCacheHolder> translateCaches, DecryptHandler decryptHandler,
 			boolean ignoreAllEmptySet) throws Exception {
 		List rowData = new ArrayList();
 		Object fieldValue;
@@ -1144,7 +1198,7 @@ public class ResultUtils {
 				if (doTranslate) {
 					fieldTranslateHandler = translateCaches.get(label);
 					if (fieldTranslateHandler != null) {
-						fieldValue = fieldTranslateHandler.getRSCacheValue(dynamicCacheFetch, rs,
+						fieldValue = fieldTranslateHandler.getRSCacheValue(dynamicCacheFetch, rs, lowKeyLabelNameMap,
 								fieldValue.toString());
 					}
 				}
@@ -1368,11 +1422,11 @@ public class ResultUtils {
 		// 如果结果类型是hashMap
 		if (Map.class.isAssignableFrom(resultType)) {
 			int width = labelNames.length;
-			String[] realLabel = labelNames;
+			String[] realLabels = labelNames;
 			boolean isHumpLabel = (humpMapLabel == null ? sqlToyContext.isHumpMapResultTypeLabel() : humpMapLabel);
 			// 驼峰处理
 			if (isHumpLabel) {
-				realLabel = humpFieldNames(labelNames, null);
+				realLabels = humpFieldNames(labelNames, null);
 			}
 			List result = new ArrayList();
 			List rowList;
@@ -1389,7 +1443,7 @@ public class ResultUtils {
 					rowMap = (Map) resultType.getDeclaredConstructor().newInstance();
 				}
 				for (int j = 0; j < width; j++) {
-					rowMap.put(realLabel[j], rowList.get(j));
+					rowMap.put(realLabels[j], rowList.get(j));
 				}
 				result.add(rowMap);
 			}
