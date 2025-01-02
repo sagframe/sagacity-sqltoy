@@ -1158,13 +1158,13 @@ public class CollectionUtil {
 	 * @return
 	 */
 	public static boolean any(Object value, boolean ignoreCase, Object... compareAry) {
-		if (value == null || (compareAry == null || compareAry.length == 0)) {
+		if (compareAry == null || compareAry.length == 0) {
 			return false;
 		}
-		String valueStr = value.toString();
+		String valueStr = (value == null) ? "" : value.toString();
 		for (Object s : compareAry) {
-			if (s == null) {
-				return false;
+			if (value == null || s == null) {
+				return value == s;
 			}
 			if (value.equals(s)) {
 				return true;

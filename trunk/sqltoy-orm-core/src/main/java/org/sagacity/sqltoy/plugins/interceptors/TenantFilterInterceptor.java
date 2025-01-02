@@ -73,6 +73,11 @@ public class TenantFilterInterceptor implements SqlInterceptor {
 			sqlPart = sqlPart.concat(tenantColumn).concat("in (")
 					.concat(SqlUtil.combineQueryInStr(tenants, null, null, true).concat(") and "));
 		}
+		// 更精细的操作行为可以通过
+		/*
+		 * SqlExecuteStat.get().getOperateDetailType()
+		 * 枚举类型进行判断,主要是目前OperateType.singleTable区分度较低
+		 */
 		// 所有基于对象操作和查询、更新操作进行租户过滤
 		if (operateType.equals(OperateType.load) || operateType.equals(OperateType.loadAll)
 				|| operateType.equals(OperateType.update) || operateType.equals(OperateType.updateAll)

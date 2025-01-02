@@ -343,9 +343,10 @@ public class MapperUtils {
 			return sourceProps;
 		}
 		IgnoreKeyCaseMap<String, String> ignoreKeyCaseMap = new IgnoreKeyCaseMap<>(sourceTargetMap);
-		String[] resultProps = new String[sourceProps.length];
+		int aryLength = sourceProps.length;
+		String[] resultProps = new String[aryLength];
 		String key;
-		for (int i = 0; i < resultProps.length; i++) {
+		for (int i = 0; i < aryLength; i++) {
 			key = sourceProps[i];
 			if (ignoreKeyCaseMap.containsKey(key)) {
 				resultProps[i] = ignoreKeyCaseMap.get(key);
@@ -675,7 +676,7 @@ public class MapperUtils {
 		// 判断get方法和set方法是否都是null，都是null无需进行后续操作
 		boolean getAllNull = true;
 		boolean setAllNull = true;
-		for (int i = 0; i < getMethods.length; i++) {
+		for (int i = 0, n = getMethods.length; i < n; i++) {
 			if (getMethods[i] != null) {
 				getAllNull = false;
 			}
@@ -700,7 +701,7 @@ public class MapperUtils {
 				ignoreProps.add(ignoreProp.toLowerCase());
 			}
 			// 以set方法为映射主体
-			for (int i = 0; i < setMethods.length; i++) {
+			for (int i = 0, n = setMethods.length; i < n; i++) {
 				if (setMethods[i] != null) {
 					methodName = setMethods[i].getName().toLowerCase();
 					paramType = setMethods[i].getParameterTypes()[0];

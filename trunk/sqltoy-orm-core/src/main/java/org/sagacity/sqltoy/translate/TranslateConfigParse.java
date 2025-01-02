@@ -94,7 +94,7 @@ public class TranslateConfigParse {
 		boolean fileExist;
 		Set<String> fileSet = new HashSet<>();
 		int index = 0;
-		for (int i = 0; i < translateFiles.size(); i++) {
+		for (int i = 0, n = translateFiles.size(); i < n; i++) {
 			translateFile = translateFiles.get(i);
 			if (translateFile instanceof File) {
 				translateFlieStr = ((File) translateFile).getPath();

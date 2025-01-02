@@ -243,7 +243,7 @@ public class ResultUtils {
 		boolean extSecure = (extend != null && !extend.secureMask.isEmpty());
 		boolean extFormat = (extend != null && !extend.colsFormat.isEmpty());
 		DesensitizeProvider desensitizeProvider = sqlToyContext.getDesensitizeProvider();
-		// 1:List；2：array;3:map;4:voClass
+		// 1:List;2:array;3:map;4:voClass
 		int type = 1;
 		boolean isMap = false;
 		boolean isConMap = false;

@@ -64,19 +64,7 @@ public class TranslateUtils {
 			return fieldValue;
 		}
 		// 将字符串用分隔符切分开进行逐个翻译
-		String[] keys = null;
-		String splitReg = extend.splitRegex.trim();
-		if (",".equals(splitReg)) {
-			keys = fieldStr.split("\\,");
-		} else if (";".equals(splitReg)) {
-			keys = fieldStr.split("\\;");
-		} else if (":".equals(splitReg)) {
-			keys = fieldStr.split("\\:");
-		} else if ("".equals(splitReg)) {
-			keys = fieldStr.split("\\s+");
-		} else {
-			keys = fieldStr.split(extend.splitRegex);
-		}
+		String[] keys = StringUtil.splitRegex(fieldStr, extend.splitRegex, true);
 		String linkSign = extend.linkSign;
 		StringBuilder result = new StringBuilder();
 		int index = 0;
@@ -85,7 +73,7 @@ public class TranslateUtils {
 			if (index > 0) {
 				result.append(linkSign);
 			}
-			cacheValues = translateKeyMap.get(key.trim());
+			cacheValues = translateKeyMap.get(key);
 			// 暂时不开放
 //			if (cacheValues == null && extend.dynamicCache && dynamicCacheFetch != null) {
 //				cacheValues = dynamicCacheFetch.getCache(extend.cache, extend.cacheSid, extend.cacheProperties,
@@ -119,6 +107,7 @@ public class TranslateUtils {
 	 * @return
 	 */
 	public static boolean judgeTranslate(Object sourceValue, String compareType, String[] compareValues) {
+		//compareValues长度不做校验,解析设置时已经校验必须有值
 		String sourceStr = (sourceValue == null) ? "null" : sourceValue.toString().toLowerCase();
 		if (compareType.equals("eq")) {
 			return compareValues[0].equals(sourceStr);
