@@ -1919,9 +1919,8 @@ public class ResultUtils {
 
 	/**
 	 * @TODO 处理基于pojo或dto上@Translate注解，进行实际缓存调用给属性赋值
-	 * @param sqlToyContext
-	 * @param cacheDatas
-	 * @param translateConfig
+	 * @param dynamicCacheFetch
+	 * @param fieldTranslateHandlers
 	 * @param item
 	 */
 	private static void wrapBeanTranslate(DynamicCacheFetch dynamicCacheFetch,

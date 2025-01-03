@@ -535,7 +535,8 @@ public class MongoElasticUtils {
 		if (!sqlToyConfig.getTranslateMap().isEmpty()) {
 			HashMap<String, FieldTranslateCacheHolder> translateCache = sqlToyContext.getTranslateManager()
 					.getTranslates(translateMap);
-			translate(sqlToyContext.getDynamicCacheFetch(), translateCache, resultSet, fields);
+			translate(sqlToyContext.getDynamicCacheFetch(), sqlToyConfig.getTranslateMap(), translateCache, resultSet,
+					fields);
 		}
 	}
 
@@ -545,7 +546,7 @@ public class MongoElasticUtils {
 	 * @param dataSet
 	 * @param fields
 	 */
-	private static void translate(DynamicCacheFetch dynamicCacheFetch,
+	private static void translate(DynamicCacheFetch dynamicCacheFetch, HashMap<String, FieldTranslate> translateMap,
 			HashMap<String, FieldTranslateCacheHolder> translateCache, List<List> dataSet, String[] fields) {
 		if (translateCache == null || translateCache.isEmpty()) {
 			return;
@@ -555,11 +556,12 @@ public class MongoElasticUtils {
 		}
 		HashMap<String, Integer> colIndexMap = new HashMap<String, Integer>();
 		int fieldCnt = fields.length;
+		int[] realIndex = new int[fieldCnt];
 		for (int i = 0; i < fieldCnt; i++) {
 			colIndexMap.put(fields[i].toLowerCase(), i);
 		}
 		// 校验缓存翻译的配置是否正确
-		translateCache.forEach((field, fieldTranslateCacheHolder) -> {
+		translateCache.forEach((fieldName, fieldTranslateCacheHolder) -> {
 			for (Translate translate : fieldTranslateCacheHolder.getTranslates()) {
 				if (translate.getExtend().hasLogic) {
 					if (!colIndexMap.containsKey(translate.getExtend().compareColumn)) {
@@ -569,6 +571,20 @@ public class MongoElasticUtils {
 				}
 			}
 		});
+		// 针对mongodb存在别名模式,翻译的字段依赖另外的字段值作为基础
+		String fieldLow;
+		FieldTranslate fieldTranslate;
+		for (int i = 0; i < fieldCnt; i++) {
+			fieldLow = fields[i].toLowerCase();
+			realIndex[i] = i;
+			if (translateMap.containsKey(fieldLow)) {
+				fieldTranslate = translateMap.get(fieldLow);
+				// alias是对应有效列,即原始值列
+				if (fieldTranslate.aliasName != null) {
+					realIndex[i] = colIndexMap.get(fieldTranslate.aliasName.toLowerCase());
+				}
+			}
+		}
 		int size = dataSet.size();
 		List rowList;
 		Object cellValue;
@@ -578,7 +594,8 @@ public class MongoElasticUtils {
 			if (fieldTranslateHandler != null) {
 				for (int j = 0; j < size; j++) {
 					rowList = dataSet.get(j);
-					cellValue = rowList.get(i);
+					// 取realIndex实际对应的值列
+					cellValue = rowList.get(realIndex[i]);
 					if (cellValue != null) {
 						rowList.set(i, fieldTranslateHandler.getRowCacheValue(dynamicCacheFetch, rowList, colIndexMap,
 								cellValue.toString()));

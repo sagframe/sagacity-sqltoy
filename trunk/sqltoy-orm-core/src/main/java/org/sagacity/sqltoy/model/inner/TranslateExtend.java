@@ -47,7 +47,7 @@ public class TranslateExtend implements Serializable, java.lang.Cloneable {
 	public String keyColumn;
 
 	/**
-	 * 字段别名
+	 * 字段别名(es、mongo使用)
 	 */
 	public String alias;
 
