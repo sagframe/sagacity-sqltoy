@@ -21,6 +21,8 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.XMLCallbackHandler;
 import org.sagacity.sqltoy.config.ScanEntityAndSqlResource;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
+import org.sagacity.sqltoy.config.SqlXMLConfigParse;
+import org.sagacity.sqltoy.config.model.FieldTranslate;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
@@ -63,7 +65,7 @@ public class TranslateConfigParse {
 			"service", "rest", "rest-increment" };
 
 	// 存放类包含缓存翻译注解配置
-	private final static HashMap<String, HashMap<String, Translate>> classTranslateConfigMap = new HashMap<String, HashMap<String, Translate>>();
+	private final static HashMap<String, HashMap<String, FieldTranslate>> classTranslateConfigMap = new HashMap<String, HashMap<String, FieldTranslate>>();
 
 	// 缓存更新检测器,用于辨别是否重复定义
 	private final static HashSet<String> cacheCheckers = new HashSet<String>();
@@ -92,7 +94,7 @@ public class TranslateConfigParse {
 		boolean fileExist;
 		Set<String> fileSet = new HashSet<>();
 		int index = 0;
-		for (int i = 0; i < translateFiles.size(); i++) {
+		for (int i = 0, n = translateFiles.size(); i < n; i++) {
 			translateFile = translateFiles.get(i);
 			if (translateFile instanceof File) {
 				translateFlieStr = ((File) translateFile).getPath();
@@ -342,7 +344,7 @@ public class TranslateConfigParse {
 	 * @param classType
 	 * @return
 	 */
-	public static HashMap<String, Translate> getClassTranslates(Class classType) {
+	public static HashMap<String, FieldTranslate> getClassTranslates(Class classType) {
 		if (classType == null || classType.equals(Map.class) || classType.equals(HashMap.class)
 				|| classType.equals(List.class) || classType.equals(ArrayList.class) || classType.equals(Array.class)
 				|| BeanUtil.isBaseDataType(classType)) {
@@ -353,34 +355,32 @@ public class TranslateConfigParse {
 		if (classTranslateConfigMap.containsKey(className)) {
 			return classTranslateConfigMap.get(className);
 		}
-		HashMap<String, Translate> translateConfig = new HashMap<String, Translate>();
-		org.sagacity.sqltoy.config.annotation.Translate translate;
+		HashMap<String, FieldTranslate> translateConfig = new HashMap<String, FieldTranslate>();
 		Class classVar = classType;
+		org.sagacity.sqltoy.config.annotation.Translate[] annotaTranslateAry;
+		org.sagacity.sqltoy.config.annotation.Translate annotaTranslate;
+		org.sagacity.sqltoy.config.annotation.Translates anotaTranslates;
 		while (classVar != null && !classVar.equals(Object.class)) {
 			for (Field field : classVar.getDeclaredFields()) {
-				translate = field.getAnnotation(org.sagacity.sqltoy.config.annotation.Translate.class);
-				// 以子类注解为优先
-				if (translate != null && !translateConfig.containsKey(field.getName())) {
-					Translate trans = new Translate(translate.cacheName());
-					trans.setIndex(translate.cacheIndex());
-					if (StringUtil.isNotBlank(translate.cacheType())) {
-						trans.setCacheType(translate.cacheType());
+				anotaTranslates = field.getAnnotation(org.sagacity.sqltoy.config.annotation.Translates.class);
+				if (anotaTranslates != null && anotaTranslates.value().length > 0) {
+					annotaTranslateAry = anotaTranslates.value();
+				} else {
+					annotaTranslateAry = field
+							.getAnnotationsByType(org.sagacity.sqltoy.config.annotation.Translate.class);
+				}
+				if (annotaTranslateAry != null && annotaTranslateAry.length > 0) {
+					FieldTranslate fieldTranslate = new FieldTranslate();
+					String fieldLow = field.getName().toLowerCase();
+					fieldTranslate.colName = fieldLow;
+					Translate[] translates = new Translate[annotaTranslateAry.length];
+					for (int i = 0; i < annotaTranslateAry.length; i++) {
+						annotaTranslate = annotaTranslateAry[i];
+						fieldTranslate.keyField = annotaTranslate.keyField();
+						translates[i] = parseAnnotaTrans(fieldLow, annotaTranslate);
 					}
-					trans.setKeyColumn(translate.keyField());
-					// 内部转了小写
-					trans.setColumn(field.getName());
-					trans.setAlias(field.getName());
-					if (StringUtil.isNotBlank(translate.split())) {
-						trans.setSplitRegex(translate.split());
-					}
-					// 默认是,逗号
-					if (StringUtil.isNotBlank(translate.join())) {
-						trans.setLinkSign(translate.join());
-					}
-					if (translate.uncached() != null && !"".equals(translate.uncached())) {
-						trans.setUncached(translate.uncached().trim());
-					}
-					translateConfig.put(field.getName(), trans);
+					fieldTranslate.translates = translates;
+					translateConfig.put(fieldLow, fieldTranslate);
 				}
 			}
 			// 向父类递归
@@ -388,6 +388,43 @@ public class TranslateConfigParse {
 		}
 		classTranslateConfigMap.put(className, translateConfig);
 		return translateConfig;
+	}
+
+	/**
+	 * @TODO 解析注解Translate配置
+	 * @param fieldName
+	 * @param annotTranslate
+	 * @return
+	 */
+	private static Translate parseAnnotaTrans(String fieldName,
+			org.sagacity.sqltoy.config.annotation.Translate annotTranslate) {
+		Translate translate = new Translate(annotTranslate.cacheName());
+		translate.setIndex(annotTranslate.cacheIndex());
+		if (StringUtil.isNotBlank(annotTranslate.cacheType())) {
+			translate.setCacheType(annotTranslate.cacheType());
+		}
+		translate.setKeyColumn(annotTranslate.keyField());
+		// 内部转了小写
+		translate.setColumn(fieldName);
+		translate.setAlias(fieldName);
+		if (StringUtil.isNotBlank(annotTranslate.split())) {
+			translate.setSplitRegex(annotTranslate.split());
+		}
+		// 默认是,逗号
+		if (StringUtil.isNotBlank(annotTranslate.join())) {
+			translate.setLinkSign(annotTranslate.join());
+		}
+		if (annotTranslate.uncached() != null) {
+			// 重置默认值为null
+			if ("".equals(annotTranslate.uncached().trim())) {
+				translate.setUncached(null);
+			} else {
+				translate.setUncached(annotTranslate.uncached().trim());
+			}
+		}
+		// 解析where逻辑表达式
+		SqlXMLConfigParse.parseTranslateWhere(translate, annotTranslate.where());
+		return translate;
 	}
 
 	/**

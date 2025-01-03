@@ -1,6 +1,7 @@
 package org.sagacity.sqltoy.config.annotation;
 
 import java.lang.annotation.ElementType;
+import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
@@ -13,6 +14,7 @@ import java.lang.annotation.Target;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
+@Repeatable(value=Translates.class)
 public @interface Translate {
 	// 缓存名称
 	String cacheName();
@@ -31,6 +33,9 @@ public @interface Translate {
 
 	// 针对split分割翻译后结果拼接字符串定义
 	String join() default "";
+
+	// add 2024-12-29 example: orderType==PO
+	String where() default "";
 
 	// 未匹配的模板,默认:[${value}]未定义,${value} 引用key值
 	String uncached() default "";

@@ -7,8 +7,12 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -23,7 +27,6 @@ import java.util.concurrent.ConcurrentMap;
 import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
-import org.sagacity.sqltoy.SqlToyThreadDataHolder;
 import org.sagacity.sqltoy.callback.DecryptHandler;
 import org.sagacity.sqltoy.callback.StreamResultHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
@@ -31,6 +34,7 @@ import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.ColsChainRelativeModel;
 import org.sagacity.sqltoy.config.model.DataType;
 import org.sagacity.sqltoy.config.model.EntityMeta;
+import org.sagacity.sqltoy.config.model.FieldTranslate;
 import org.sagacity.sqltoy.config.model.FormatModel;
 import org.sagacity.sqltoy.config.model.LabelIndexModel;
 import org.sagacity.sqltoy.config.model.LinkModel;
@@ -55,7 +59,6 @@ import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.inner.DataSetResult;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
-import org.sagacity.sqltoy.model.inner.TranslateExtend;
 import org.sagacity.sqltoy.plugins.calculator.ColsChainRelative;
 import org.sagacity.sqltoy.plugins.calculator.GroupSummary;
 import org.sagacity.sqltoy.plugins.calculator.ReverseList;
@@ -63,9 +66,9 @@ import org.sagacity.sqltoy.plugins.calculator.RowsChainRelative;
 import org.sagacity.sqltoy.plugins.calculator.TreeDataSort;
 import org.sagacity.sqltoy.plugins.calculator.UnpivotList;
 import org.sagacity.sqltoy.plugins.secure.DesensitizeProvider;
+import org.sagacity.sqltoy.translate.DynamicCacheFetch;
+import org.sagacity.sqltoy.translate.FieldTranslateCacheHolder;
 import org.sagacity.sqltoy.translate.TranslateConfigParse;
-import org.sagacity.sqltoy.translate.TranslateManager;
-import org.sagacity.sqltoy.translate.model.TranslateConfigModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -204,6 +207,7 @@ public class ResultUtils {
 		String[] labelNames = new String[columnSize];
 		String[] labelTypes = new String[columnSize];
 		String labeNameLow;
+		// 字段名称统一转大写或小写,默认为default,即不做任何处理
 		String colLabelUpperOrLower = sqlToyContext.getColumnLabelUpperOrLower();
 		int index = 0;
 		for (int i = 0; i < columnSize; i++) {
@@ -221,20 +225,12 @@ public class ResultUtils {
 			}
 			index++;
 		}
+		HashMap<String, FieldTranslate> translateMap = sqlToyConfig.getTranslateMap();
 		// 判断是否有缓存翻译器定义
-		Boolean hasTranslate = (sqlToyConfig.getTranslateMap().isEmpty()) ? false : true;
-		HashMap<String, Translate> translateMap = sqlToyConfig.getTranslateMap();
-		HashMap<String, HashMap<String, Object[]>> translateCache = null;
+		Boolean hasTranslate = (translateMap.isEmpty()) ? false : true;
+		HashMap<String, FieldTranslateCacheHolder> translateCache = null;
 		if (hasTranslate) {
 			translateCache = sqlToyContext.getTranslateManager().getTranslates(translateMap);
-			if (translateCache == null || translateCache.isEmpty()) {
-				hasTranslate = false;
-				logger.debug("通过缓存配置未获取到缓存数据,请正确配置TranslateManager!");
-			}
-			// i18n国际化处理
-			if (hasTranslate) {
-				translateMap = wrapI18nIndex(sqlToyContext.getTranslateManager(), translateMap);
-			}
 		}
 
 		LabelIndexModel labelIndexModel = wrapLabelIndexMap(labelNames);
@@ -247,7 +243,7 @@ public class ResultUtils {
 		boolean extSecure = (extend != null && !extend.secureMask.isEmpty());
 		boolean extFormat = (extend != null && !extend.colsFormat.isEmpty());
 		DesensitizeProvider desensitizeProvider = sqlToyContext.getDesensitizeProvider();
-		// 1:List；2：array;3:map;4:voClass
+		// 1:List;2:array;3:map;4:voClass
 		int type = 1;
 		boolean isMap = false;
 		boolean isConMap = false;
@@ -258,8 +254,10 @@ public class ResultUtils {
 		Class[] genericTypes = null;
 		String[] realProps = null;
 		int[] indexs = null;
-		HashMap<String, HashMap<String, Object[]>> cacheDatas = null;
-		HashMap<String, Translate> translateConfig = null;
+		HashMap<String, String> lowKeyLabelNameMap = labelLowKeyMap(labelNames);
+		HashMap<String, FieldTranslateCacheHolder> cacheDatas = null;
+		HashMap<String, FieldTranslate> translateConfig = null;
+		DynamicCacheFetch dynamicCacheFetch = sqlToyContext.getDynamicCacheFetch();
 		String[] mapLabelNames = labelNames;
 		if (resultType != null && resultType != ArrayList.class && resultType != Collection.class
 				&& resultType != List.class && !BeanUtil.isBaseDataType(resultType)) {
@@ -312,18 +310,13 @@ public class ResultUtils {
 				}
 			}
 		}
-
 		// 执行开始
 		streamResultHandler.start(labelNames, labelTypes);
 		index = 0;
 		List rowTemp;
 		while (rs.next()) {
-			if (hasTranslate) {
-				rowTemp = processResultRowWithTranslate(translateMap, translateCache, labelNames, rs, columnSize,
-						realDecryptHandler, ignoreAllEmpty);
-			} else {
-				rowTemp = processResultRow(rs, labelNames, columnSize, realDecryptHandler, ignoreAllEmpty);
-			}
+			rowTemp = processResultRow(dynamicCacheFetch, rs, labelNames, lowKeyLabelNameMap, columnSize,
+					translateCache, realDecryptHandler, ignoreAllEmpty);
 			if (rowTemp != null) {
 				// 字段脱敏
 				if (sqlSecure) {
@@ -368,9 +361,7 @@ public class ResultUtils {
 							methodTypeValues, methodTypes, genericTypes, rowTemp, indexs, realProps, resultType);
 					// 有基于注解@Translate的缓存翻译
 					if (cacheDatas != null) {
-						// i18n国际化处理
-						translateConfig = wrapI18nIndex(sqlToyContext.getTranslateManager(), translateConfig);
-						wrapBeanTranslate(sqlToyContext, cacheDatas, translateConfig, bean);
+						wrapBeanTranslate(dynamicCacheFetch, cacheDatas, bean);
 					}
 					streamResultHandler.consume(bean, index);
 				}
@@ -515,24 +506,18 @@ public class ResultUtils {
 		List<List> items = new ArrayList();
 		// 判断是否有缓存翻译器定义
 		Boolean hasTranslate = (sqlToyConfig.getTranslateMap().isEmpty()) ? false : true;
-		HashMap<String, Translate> translateMap = sqlToyConfig.getTranslateMap();
-		HashMap<String, HashMap<String, Object[]>> translateCache = null;
+		HashMap<String, String> lowKeyLabelNameMap = labelLowKeyMap(labelNames);
+		HashMap<String, FieldTranslate> translateMap = sqlToyConfig.getTranslateMap();
+		HashMap<String, FieldTranslateCacheHolder> fieldTranslateCacheHolders = null;
+		// 动态获取缓存的实现
+		DynamicCacheFetch dynamicCacheFetch = sqlToyContext.getDynamicCacheFetch();
 		if (hasTranslate) {
-			translateCache = sqlToyContext.getTranslateManager().getTranslates(translateMap);
-			if (translateCache == null || translateCache.isEmpty()) {
-				hasTranslate = false;
-				logger.debug("通过缓存配置未获取到缓存数据,请正确配置TranslateManager!");
-			}
-			// i18n国际化处理
-			if (hasTranslate) {
-				translateMap = wrapI18nIndex(sqlToyContext.getTranslateManager(), translateMap);
-			}
+			validateCacheConfig(translateMap, lowKeyLabelNameMap);
+			fieldTranslateCacheHolders = sqlToyContext.getTranslateManager().getTranslates(translateMap);
 		}
-
 		// 单个字段link运算
 		int columnSize = labelNames.length;
 		int index = 0;
-
 		// 警告阀值
 		int warnThresholds = SqlToyConstants.getWarnThresholds();
 		boolean warnLimit = false;
@@ -545,7 +530,8 @@ public class ResultUtils {
 		if (maxThresholds > 1 && maxThresholds <= warnThresholds) {
 			maxThresholds = warnThresholds;
 		}
-		List rowTemp;
+		List tempRow;
+		// 单列link
 		if (linkModel != null) {
 			Object identity = null;
 			String linkColumn = linkModel.getColumns()[0];
@@ -553,6 +539,8 @@ public class ResultUtils {
 			if (!labelIndexMap.containsKey(linkColumnLow)) {
 				throw new DataAccessException("做link操作时,查询结果字段中没有字段:" + linkColumn + ",请检查sql或link 配置的正确性!");
 			}
+			// 转换成实际sql as的名称,避免手写字符大小写差异
+			linkColumn = lowKeyLabelNameMap.get(linkColumnLow);
 			Set<String> linkSet = new HashSet<String>();
 			int linkIndex = labelIndexMap.get(linkColumnLow);
 			StringBuilder linkBuffer = new StringBuilder();
@@ -566,35 +554,25 @@ public class ResultUtils {
 			Object linkValue;
 			String linkStr;
 			boolean translateLink = hasTranslate ? translateMap.containsKey(linkColumnLow) : false;
-			HashMap<String, Object[]> linkTranslateMap = null;
-			int linkTranslateIndex = 1;
-			TranslateExtend extend = null;
+			FieldTranslateCacheHolder fieldTranslateHandler = null;
 			if (translateLink) {
-				extend = translateMap.get(linkColumnLow).getExtend();
-				linkTranslateIndex = extend.index;
-				linkTranslateMap = translateCache.get(extend.column);
+				fieldTranslateHandler = fieldTranslateCacheHolders.get(linkColumnLow);
 			}
-			Object[] cacheValues;
 			// 判断link拼接是否重新开始
 			boolean isLastProcess = false;
 			boolean doLink = true;
-			// -1:正常link，1:List;2:Array;3:HashSet
+			// 0:字符拼接，1:List;2:Array;3:HashSet
 			int linkResultType = linkModel.getResultType();
+			Object tmpObject;
 			while (rs.next()) {
 				isLastProcess = false;
 				linkValue = rs.getObject(linkColumn);
 				if (linkValue == null) {
 					linkStr = "";
 				} else if (translateLink) {
-					cacheValues = linkTranslateMap.get(linkValue.toString());
-					if (cacheValues == null) {
-						linkStr = "[" + linkValue + "]未匹配";
-						logger.debug("translate cache:{},cacheType:{}, 对应的key:{} 没有设置相应的value!", extend.cache,
-								extend.cacheType, linkValue);
-					} else {
-						linkStr = (cacheValues[linkTranslateIndex] == null) ? ""
-								: cacheValues[linkTranslateIndex].toString();
-					}
+					tmpObject = fieldTranslateHandler.getRSCacheValue(dynamicCacheFetch, rs, lowKeyLabelNameMap,
+							linkValue.toString());
+					linkStr = (tmpObject == null) ? linkValue.toString() : tmpObject.toString();
 				} else {
 					linkStr = linkValue.toString();
 				}
@@ -631,14 +609,10 @@ public class ResultUtils {
 						linkBuffer.append(linkStr);
 					}
 					linkSet.add(linkStr);
-					if (hasTranslate) {
-						rowTemp = processResultRowWithTranslate(translateMap, translateCache, labelNames, rs,
-								columnSize, decryptHandler, ignoreAllEmpty);
-					} else {
-						rowTemp = processResultRow(rs, labelNames, columnSize, decryptHandler, ignoreAllEmpty);
-					}
-					if (rowTemp != null) {
-						items.add(rowTemp);
+					tempRow = processResultRow(dynamicCacheFetch, rs, labelNames, lowKeyLabelNameMap, columnSize,
+							fieldTranslateCacheHolders, decryptHandler, ignoreAllEmpty);
+					if (tempRow != null) {
+						items.add(tempRow);
 					}
 					preIdentity = identity;
 				} else {
@@ -677,6 +651,7 @@ public class ResultUtils {
 			}
 			// 对最后一条写入循环值
 			if (isLastProcess) {
+				// 0:字符拼接，1:List;2:Array;3:HashSet
 				if (linkResultType == 1) {
 					items.get(items.size() - 1).set(linkIndex, linkList);
 				} else if (linkResultType == 2) {
@@ -693,50 +668,25 @@ public class ResultUtils {
 			if (updateRowHandler != null) {
 				isUpdate = true;
 			}
-			// 循环通过java reflection将rs中的值映射到VO中
-			if (hasTranslate) {
-				while (rs.next()) {
-					// 先修改后再获取最终值
-					if (isUpdate) {
-						updateRowHandler.updateRow(rs, index);
-						rs.updateRow();
-					}
-					rowTemp = processResultRowWithTranslate(translateMap, translateCache, labelNames, rs, columnSize,
-							decryptHandler, ignoreAllEmpty);
-					if (rowTemp != null) {
-						items.add(rowTemp);
-					}
-					index++;
-					// 存在超出25000条数据的查询(具体数据规模可以通过参数进行定义)
-					if (index == warnThresholds) {
-						warnLimit = true;
-					}
-					// 超出最大提取数据阀值,直接终止数据提取
-					if (index == maxThresholds) {
-						maxLimit = true;
-						break;
-					}
+			while (rs.next()) {
+				if (isUpdate) {
+					updateRowHandler.updateRow(rs, index);
+					rs.updateRow();
 				}
-			} else {
-				while (rs.next()) {
-					if (isUpdate) {
-						updateRowHandler.updateRow(rs, index);
-						rs.updateRow();
-					}
-					rowTemp = processResultRow(rs, labelNames, columnSize, decryptHandler, ignoreAllEmpty);
-					if (rowTemp != null) {
-						items.add(rowTemp);
-					}
-					index++;
-					// 存在超出警告规模级的数据查询
-					if (index == warnThresholds) {
-						warnLimit = true;
-					}
-					// 提取数据超过上限(-1表示不限制)
-					if (index == maxThresholds) {
-						maxLimit = true;
-						break;
-					}
+				tempRow = processResultRow(dynamicCacheFetch, rs, labelNames, lowKeyLabelNameMap, columnSize,
+						fieldTranslateCacheHolders, decryptHandler, ignoreAllEmpty);
+				if (tempRow != null) {
+					items.add(tempRow);
+				}
+				index++;
+				// 存在超出25000条数据的查询(具体数据规模可以通过参数进行定义)
+				if (index == warnThresholds) {
+					warnLimit = true;
+				}
+				// 提取数据超过上限(-1表示不限制)
+				if (index == maxThresholds) {
+					maxLimit = true;
+					break;
 				}
 			}
 		}
@@ -751,6 +701,30 @@ public class ResultUtils {
 					index, sqlToyConfig.getId(), sqlToyConfig.getSql(null));
 		}
 		return items;
+	}
+
+	/**
+	 * 校验缓存翻译配置正确性
+	 * 
+	 * @param fieldTranslateMap
+	 * @param lowKeyLabelNameMap
+	 */
+	private static void validateCacheConfig(HashMap<String, FieldTranslate> fieldTranslateMap,
+			HashMap<String, String> lowKeyLabelNameMap) {
+		if (fieldTranslateMap == null || fieldTranslateMap.isEmpty()) {
+			return;
+		}
+		fieldTranslateMap.forEach((fieldName, fieldTranslate) -> {
+			for (Translate translate : fieldTranslate.translates) {
+				if (translate.getExtend().hasLogic) {
+					// compareColumn 设置时已经小写
+					if (!lowKeyLabelNameMap.containsKey(translate.getExtend().compareColumn)) {
+						throw new DataAccessException("查询结果字段中没有:[" + translate.getExtend().compareColumn
+								+ "]字段,请检查cache=" + translate.getExtend().cache + "的缓存翻译,其逻辑表达式where的配置!");
+					}
+				}
+			}
+		});
 	}
 
 	/**
@@ -800,18 +774,13 @@ public class ResultUtils {
 		List<List> items = new ArrayList();
 		// 判断是否有缓存翻译器定义
 		Boolean hasTranslate = (sqlToyConfig.getTranslateMap().isEmpty()) ? false : true;
-		HashMap<String, Translate> translateMap = sqlToyConfig.getTranslateMap();
-		HashMap<String, HashMap<String, Object[]>> translateCache = null;
+		HashMap<String, String> lowKeyLabelNameMap = labelLowKeyMap(labelNames);
+		HashMap<String, FieldTranslate> translateMap = sqlToyConfig.getTranslateMap();
+		HashMap<String, FieldTranslateCacheHolder> fieldTranslateCacheHolders = null;
+		DynamicCacheFetch dynamicCacheFetch = sqlToyContext.getDynamicCacheFetch();
 		if (hasTranslate) {
-			translateCache = sqlToyContext.getTranslateManager().getTranslates(translateMap);
-			if (translateCache == null || translateCache.isEmpty()) {
-				hasTranslate = false;
-				logger.debug("通过缓存配置未获取到缓存数据,请正确配置TranslateManager!");
-			}
-			// i18n国际化处理
-			if (hasTranslate) {
-				translateMap = wrapI18nIndex(sqlToyContext.getTranslateManager(), translateMap);
-			}
+			validateCacheConfig(translateMap, lowKeyLabelNameMap);
+			fieldTranslateCacheHolders = sqlToyContext.getTranslateManager().getTranslates(translateMap);
 		}
 		int columnSize = labelNames.length;
 		int index = 0;
@@ -827,26 +796,27 @@ public class ResultUtils {
 		if (maxThresholds > 1 && maxThresholds <= warnThresholds) {
 			maxThresholds = warnThresholds;
 		}
-		int linkCols = linkModel.getColumns().length;
+		int linkColCnt = linkModel.getColumns().length;
 		String[] linkColumns = linkModel.getColumns();
-		int[] linkIndexs = new int[linkCols];
-		StringBuilder[] linkBuffers = new StringBuilder[linkCols];
-		Set<String>[] linkSets = linkModel.isDistinct() ? new HashSet[linkCols] : null;
-		boolean[] translateLinks = new boolean[linkCols];
-		TranslateExtend[] transExtends = new TranslateExtend[linkCols];
+		int[] linkIndexs = new int[linkColCnt];
+		String[] linkRealLabels = new String[linkColCnt];
+		// link字段是否存在缓存翻译行为
+		boolean[] translateLinks = new boolean[linkColCnt];
+		StringBuilder[] linkBuffers = new StringBuilder[linkColCnt];
+		Set<String>[] linkSets = linkModel.isDistinct() ? new HashSet[linkColCnt] : null;
 		String linkColumnLow;
-		for (int i = 0; i < linkCols; i++) {
+		String[] linkLowColumns = new String[linkColCnt];
+		for (int i = 0; i < linkColCnt; i++) {
 			linkBuffers[i] = new StringBuilder();
 			linkColumnLow = linkColumns[i].toLowerCase();
+			linkLowColumns[i] = linkColumnLow;
 			if (!labelIndexMap.containsKey(linkColumnLow)) {
 				throw new DataAccessException("做link操作时,查询结果字段中没有字段:" + linkColumnLow + ",请检查sql或link 配置的正确性!");
 			}
+			linkRealLabels[i] = lowKeyLabelNameMap.get(linkColumnLow);
 			linkIndexs[i] = labelIndexMap.get(linkColumnLow);
 			if (hasTranslate) {
 				translateLinks[i] = translateMap.containsKey(linkColumnLow);
-				if (translateLinks[i]) {
-					transExtends[i] = translateMap.get(linkColumnLow).getExtend();
-				}
 			}
 			if (linkModel.isDistinct()) {
 				linkSets[i] = new HashSet<String>();
@@ -859,32 +829,27 @@ public class ResultUtils {
 			isLeft = "left".equals(linkModel.getDecorateAlign()) ? true : false;
 		}
 		Object preIdentity = null;
-		Object[] linkValues = new Object[linkCols];
-		String[] linkStrs = new String[linkCols];
-		TranslateExtend extend = null;
-		Object[] cacheValues;
-		List rowTemp;
+		Object[] linkValues = new Object[linkColCnt];
+		String[] linkStrs = new String[linkColCnt];
+		List tempRow;
 		Object identity = null;
 		// 判断link拼接是否重新开始
 		boolean isLastProcess = false;
 		boolean doLink = false;
+		FieldTranslateCacheHolder fieldTranslateCacheHolder;
+		Object tmpObject;
 		while (rs.next()) {
 			isLastProcess = false;
 			// 对多个link字段取值并进行翻译转义
-			for (int i = 0; i < linkCols; i++) {
-				linkValues[i] = rs.getObject(linkColumns[i]);
+			for (int i = 0; i < linkColCnt; i++) {
+				linkValues[i] = rs.getObject(linkRealLabels[i]);
 				if (linkValues[i] == null) {
 					linkStrs[i] = "";
 				} else if (translateLinks[i]) {
-					extend = transExtends[i];
-					cacheValues = translateCache.get(extend.column).get(linkValues[i].toString());
-					if (cacheValues == null) {
-						linkStrs[i] = "[" + linkValues[i] + "]未匹配";
-						logger.debug("translate cache:{},cacheType:{}, 对应的key:{} 没有设置相应的value!", extend.cache,
-								extend.cacheType, linkValues[i]);
-					} else {
-						linkStrs[i] = (cacheValues[extend.index] == null) ? "" : cacheValues[extend.index].toString();
-					}
+					fieldTranslateCacheHolder = fieldTranslateCacheHolders.get(linkLowColumns[i]);
+					tmpObject = fieldTranslateCacheHolder.getRSCacheValue(dynamicCacheFetch, rs, lowKeyLabelNameMap,
+							linkValues[i].toString());
+					linkStrs[i] = (tmpObject == null) ? linkValues[i].toString() : tmpObject.toString();
 				} else {
 					linkStrs[i] = linkValues[i].toString();
 				}
@@ -896,9 +861,9 @@ public class ResultUtils {
 			if (!identity.equals(preIdentity)) {
 				// 不相等时先对最后一条记录修改，写入拼接后的字符串
 				if (index != 0) {
-					rowTemp = items.get(items.size() - 1);
-					for (int i = 0; i < linkCols; i++) {
-						rowTemp.set(linkIndexs[i], linkBuffers[i].toString());
+					tempRow = items.get(items.size() - 1);
+					for (int i = 0; i < linkColCnt; i++) {
+						tempRow.set(linkIndexs[i], linkBuffers[i].toString());
 						linkBuffers[i].delete(0, linkBuffers[i].length());
 						// 清除
 						if (linkModel.isDistinct()) {
@@ -907,27 +872,23 @@ public class ResultUtils {
 					}
 				}
 				// 再写入新的拼接串
-				for (int i = 0; i < linkCols; i++) {
+				for (int i = 0; i < linkColCnt; i++) {
 					linkBuffers[i].append(linkStrs[i]);
 					if (linkModel.isDistinct()) {
 						linkSets[i].add(linkStrs[i]);
 					}
 				}
 				// 提取result中的数据(identity相等时不需要提取)
-				if (hasTranslate) {
-					rowTemp = processResultRowWithTranslate(translateMap, translateCache, labelNames, rs, columnSize,
-							decryptHandler, ignoreAllEmpty);
-				} else {
-					rowTemp = processResultRow(rs, labelNames, columnSize, decryptHandler, ignoreAllEmpty);
-				}
-				if (rowTemp != null) {
-					items.add(rowTemp);
+				tempRow = processResultRow(dynamicCacheFetch, rs, labelNames, lowKeyLabelNameMap, columnSize,
+						fieldTranslateCacheHolders, decryptHandler, ignoreAllEmpty);
+				if (tempRow != null) {
+					items.add(tempRow);
 				}
 				preIdentity = identity;
 			} else {
 				isLastProcess = true;
 				// identity相同，表示还在同一组内，直接拼接link字符
-				for (int i = 0; i < linkCols; i++) {
+				for (int i = 0; i < linkColCnt; i++) {
 					doLink = true;
 					// 判断是否已经重复
 					if (linkModel.isDistinct()) {
@@ -958,9 +919,9 @@ public class ResultUtils {
 		}
 		// 数据集合不为空,对最后一条记录写入循环值
 		if (isLastProcess) {
-			rowTemp = items.get(items.size() - 1);
-			for (int i = 0; i < linkCols; i++) {
-				rowTemp.set(linkIndexs[i], linkBuffers[i].toString());
+			tempRow = items.get(items.size() - 1);
+			for (int i = 0; i < linkColCnt; i++) {
+				tempRow.set(linkIndexs[i], linkBuffers[i].toString());
 			}
 		}
 		// 超出警告阀值
@@ -1024,6 +985,20 @@ public class ResultUtils {
 	}
 
 	/**
+	 * 针对resultSet label提供小写key map
+	 * 
+	 * @param labelNames
+	 * @return
+	 */
+	private static HashMap<String, String> labelLowKeyMap(String[] labelNames) {
+		HashMap<String, String> lowKeyMap = new HashMap<>();
+		for (String label : labelNames) {
+			lowKeyMap.put(label.toLowerCase(), label);
+		}
+		return lowKeyMap;
+	}
+
+	/**
 	 * @todo 提取出选择的横向分类信息
 	 * @param items
 	 * @param categoryCols
@@ -1031,7 +1006,7 @@ public class ResultUtils {
 	 */
 	private static List extractCategory(List items, Integer[] categoryCols) {
 		List categoryList = new ArrayList();
-		HashMap identityMap = new HashMap();
+		Set<String> identitySet = new HashSet<>();
 		String tmpStr;
 		int categorySize = categoryCols.length;
 		Object obj;
@@ -1047,9 +1022,9 @@ public class ResultUtils {
 				tmpStr = tmpStr.concat(obj == null ? "null" : obj.toString());
 			}
 			// 不存在
-			if (!identityMap.containsKey(tmpStr)) {
+			if (!identitySet.contains(tmpStr)) {
 				categoryList.add(categoryRow);
-				identityMap.put(tmpStr, "");
+				identitySet.add(tmpStr);
 			}
 		}
 		// 分组排序输出
@@ -1109,6 +1084,10 @@ public class ResultUtils {
 		Object jData;
 		// 1:string,2:数字;3:日期
 		boolean lessThen = false;
+		String str1, str2;
+		int dataType = 1;
+		// 是否已经判断过数据类型
+		boolean finishedJudgeType = false;
 		for (int i = start; i < end; i++) {
 			for (int j = i + 1; j < end + 1; j++) {
 				iData = sortList.get(i).get(orderCol);
@@ -1118,7 +1097,43 @@ public class ResultUtils {
 				} else if (iData == null && jData != null) {
 					lessThen = true;
 				} else {
-					lessThen = (iData.toString()).compareTo(jData.toString()) < 0;
+					// 首次判断数据类型
+					if (!finishedJudgeType) {
+						if (iData instanceof java.lang.Number) {
+							dataType = 2;
+						} else if (iData instanceof java.util.Date) {
+							dataType = 3;
+						} else if (iData instanceof LocalDate) {
+							dataType = 4;
+						} else if (iData instanceof LocalDateTime) {
+							dataType = 5;
+						} else if (iData instanceof LocalTime) {
+							dataType = 6;
+						}
+						finishedJudgeType = true;
+					}
+					// 字符串
+					if (dataType == 1) {
+						str1 = iData.toString();
+						str2 = jData.toString();
+						if (str1.length() < str2.length()) {
+							lessThen = true;
+						} else if (str1.length() > str2.length()) {
+							lessThen = false;
+						} else {
+							lessThen = str1.compareTo(str2) < 0;
+						}
+					} else if (dataType == 2) {
+						lessThen = ((Number) iData).doubleValue() < ((Number) jData).doubleValue();
+					} else if (dataType == 3) {
+						lessThen = ((Date) iData).before((Date) jData);
+					} else if (dataType == 4) {
+						lessThen = ((LocalDate) iData).compareTo((LocalDate) jData) < 0;
+					} else if (dataType == 5) {
+						lessThen = ((LocalDateTime) iData).compareTo((LocalDateTime) jData) < 0;
+					} else if (dataType == 6) {
+						lessThen = ((LocalTime) iData).compareTo((LocalTime) jData) < 0;
+					}
 				}
 				if ((ascend && !lessThen) || (!ascend && lessThen)) {
 					List tempList = sortList.get(i);
@@ -1131,116 +1146,40 @@ public class ResultUtils {
 	}
 
 	/**
-	 * @todo 处理ResultSet的单行数据
+	 * @todo 处理Result单行数据
+	 * @param dynamicCacheFetch
 	 * @param rs
-	 * @param startColIndex
-	 * @param rowCnt
-	 * @param ignoreAllEmptySet
-	 * @return
-	 * @throws Exception
-	 */
-	public static List processResultRow(ResultSet rs, int startColIndex, int rowCnt, boolean ignoreAllEmptySet)
-			throws Exception {
-		List rowData = new ArrayList();
-		Object fieldValue;
-		// 单行所有字段结果为null
-		boolean allNull = true;
-		int blobSize;
-		for (int i = startColIndex; i < rowCnt; i++) {
-			fieldValue = rs.getObject(i + 1);
-			if (null != fieldValue) {
-				if (fieldValue instanceof java.sql.Clob) {
-					fieldValue = SqlUtil.clobToString((java.sql.Clob) fieldValue);
-				} else if (fieldValue instanceof java.sql.Blob) {
-					java.sql.Blob blob = (java.sql.Blob) fieldValue;
-					blobSize = (int) blob.length();
-					if (blobSize > 0) {
-						fieldValue = blob.getBytes(1, blobSize);
-					} else {
-						fieldValue = new byte[0];
-					}
-				}
-
-				// 有一个非null
-				allNull = false;
-			}
-			rowData.add(fieldValue);
-		}
-		// 全null返回null结果，外围判断结果为null则不加入结果集合
-		if (allNull && ignoreAllEmptySet) {
-			return null;
-		}
-		return rowData;
-	}
-
-	public static List processResultRow(ResultSet rs, String[] labelNames, int size, DecryptHandler decryptHandler,
-			boolean ignoreAllEmptySet) throws Exception {
-		List rowData = new ArrayList();
-		Object fieldValue;
-		// 单行所有字段结果为null
-		boolean allNull = true;
-		String label;
-		int blobSize;
-		for (int i = 0; i < size; i++) {
-			label = labelNames[i];
-			fieldValue = rs.getObject(label);
-			if (null != fieldValue) {
-				if (fieldValue instanceof java.sql.Clob) {
-					fieldValue = SqlUtil.clobToString((java.sql.Clob) fieldValue);
-				} else if (fieldValue instanceof java.sql.Blob) {
-					java.sql.Blob blob = (java.sql.Blob) fieldValue;
-					blobSize = (int) blob.length();
-					if (blobSize > 0) {
-						fieldValue = blob.getBytes(1, blobSize);
-					} else {
-						fieldValue = new byte[0];
-					}
-				}
-				// 解密
-				if (decryptHandler != null) {
-					fieldValue = decryptHandler.decrypt(label, fieldValue);
-				}
-				// 有一个非null
-				allNull = false;
-			}
-			rowData.add(fieldValue);
-		}
-		// 全null返回null结果，外围判断结果为null则不加入结果集合
-		if (allNull && ignoreAllEmptySet) {
-			return null;
-		}
-		return rowData;
-	}
-
-	/**
-	 * @todo 存在缓存翻译的结果处理
-	 * @param translateMap
-	 * @param translateCaches
 	 * @param labelNames
-	 * @param rs
+	 * @param lowKeyLabelNameMap
 	 * @param size
+	 * @param translateCaches
 	 * @param decryptHandler
 	 * @param ignoreAllEmptySet
 	 * @return
 	 * @throws Exception
 	 */
-	private static List processResultRowWithTranslate(HashMap<String, Translate> translateMap,
-			HashMap<String, HashMap<String, Object[]>> translateCaches, String[] labelNames, ResultSet rs, int size,
-			DecryptHandler decryptHandler, boolean ignoreAllEmptySet) throws Exception {
+	public static List processResultRow(DynamicCacheFetch dynamicCacheFetch, ResultSet rs, String[] labelNames,
+			HashMap<String, String> lowKeyLabelNameMap, int size,
+			HashMap<String, FieldTranslateCacheHolder> translateCaches, DecryptHandler decryptHandler,
+			boolean ignoreAllEmptySet) throws Exception {
 		List rowData = new ArrayList();
 		Object fieldValue;
-		TranslateExtend extend;
-		String label;
-		String keyIndex;
+		// 单行所有字段结果为null
 		boolean allNull = true;
+		String label = null;
 		int blobSize;
+		boolean isLabel = (labelNames == null) ? false : true;
+		boolean doTranslate = (translateCaches == null) ? false : true;
+		FieldTranslateCacheHolder fieldTranslateHandler;
 		for (int i = 0; i < size; i++) {
-			label = labelNames[i];
-			fieldValue = rs.getObject(label);
-			label = label.toLowerCase();
-			keyIndex = Integer.toString(i);
+			if (isLabel) {
+				label = labelNames[i];
+				fieldValue = rs.getObject(label);
+				label = label.toLowerCase();
+			} else {
+				fieldValue = rs.getObject(i + 1);
+			}
 			if (null != fieldValue) {
-				allNull = false;
 				if (fieldValue instanceof java.sql.Clob) {
 					fieldValue = SqlUtil.clobToString((java.sql.Clob) fieldValue);
 				} else if (fieldValue instanceof java.sql.Blob) {
@@ -1256,95 +1195,23 @@ public class ResultUtils {
 				if (decryptHandler != null) {
 					fieldValue = decryptHandler.decrypt(label, fieldValue);
 				}
-				if (translateMap.containsKey(label) || translateMap.containsKey(keyIndex)) {
-					extend = translateMap.get(label).getExtend();
-					if (extend == null) {
-						extend = translateMap.get(keyIndex).getExtend();
+				if (doTranslate) {
+					fieldTranslateHandler = translateCaches.get(label);
+					if (fieldTranslateHandler != null) {
+						fieldValue = fieldTranslateHandler.getRSCacheValue(dynamicCacheFetch, rs, lowKeyLabelNameMap,
+								fieldValue.toString());
 					}
-					fieldValue = translateKey(extend, translateCaches.get(extend.column), fieldValue);
 				}
+				// 有一个非null
+				allNull = false;
 			}
 			rowData.add(fieldValue);
 		}
+		// 全null返回null结果，外围判断结果为null则不加入结果集合
 		if (allNull && ignoreAllEmptySet) {
 			return null;
 		}
 		return rowData;
-	}
-
-	/**
-	 * @date 2018-5-26 优化缓存翻译，提供keyCode1,keyCode2,keyCode3 形式的多代码翻译
-	 * @todo 统一对key进行缓存翻译
-	 * @param extend
-	 * @param translateKeyMap
-	 * @param fieldValue
-	 * @return
-	 */
-	private static Object translateKey(TranslateExtend extend, HashMap<String, Object[]> translateKeyMap,
-			Object fieldValue) {
-		String fieldStr = fieldValue.toString();
-		// 单值翻译
-		if (extend.splitRegex == null) {
-			if (extend.keyTemplate != null) {
-				// keyTemplate已经提前做了规整,将${key},${},${0} 统一成了{}
-				fieldStr = extend.keyTemplate.replace("{}", fieldStr);
-			}
-			// 根据key获取缓存值
-			Object[] cacheValues = translateKeyMap.get(fieldStr);
-			// 未匹配到
-			if (cacheValues == null || cacheValues.length == 0) {
-				// 定义未匹配模板则不输出日志
-				if (extend.uncached != null) {
-					fieldValue = extend.uncached.replace("${value}", fieldStr);
-				} else {
-					fieldValue = fieldValue.toString();
-					logger.warn("translate cache:{},cacheType:{}, 对应的key:{}没有设置相应的value!", extend.cache,
-							extend.cacheType, fieldValue);
-				}
-			} else {
-				fieldValue = cacheValues[extend.index];
-			}
-			return fieldValue;
-		}
-		// 将字符串用分隔符切分开进行逐个翻译
-		String[] keys = null;
-		String splitReg = extend.splitRegex.trim();
-		if (",".equals(splitReg)) {
-			keys = fieldStr.split("\\,");
-		} else if (";".equals(splitReg)) {
-			keys = fieldStr.split("\\;");
-		} else if (":".equals(splitReg)) {
-			keys = fieldStr.split("\\:");
-		} else if ("".equals(splitReg)) {
-			keys = fieldStr.split("\\s+");
-		} else {
-			keys = fieldStr.split(extend.splitRegex);
-		}
-
-		String linkSign = extend.linkSign;
-		StringBuilder result = new StringBuilder();
-		int index = 0;
-		Object[] cacheValues;
-		for (String key : keys) {
-			if (index > 0) {
-				result.append(linkSign);
-			}
-			cacheValues = translateKeyMap.get(key.trim());
-			if (cacheValues == null || cacheValues.length == 0) {
-				// 定义未匹配模板则不输出日志
-				if (extend.uncached != null) {
-					result.append(extend.uncached.replace("${value}", key));
-				} else {
-					result.append(key);
-					logger.warn("translate cache:{},cacheType:{}, 对应的key:{}没有设置相应的value!", extend.cache,
-							extend.cacheType, key);
-				}
-			} else {
-				result.append(cacheValues[extend.index]);
-			}
-			index++;
-		}
-		return result.toString();
 	}
 
 	/**
@@ -1555,11 +1422,11 @@ public class ResultUtils {
 		// 如果结果类型是hashMap
 		if (Map.class.isAssignableFrom(resultType)) {
 			int width = labelNames.length;
-			String[] realLabel = labelNames;
+			String[] realLabels = labelNames;
 			boolean isHumpLabel = (humpMapLabel == null ? sqlToyContext.isHumpMapResultTypeLabel() : humpMapLabel);
 			// 驼峰处理
 			if (isHumpLabel) {
-				realLabel = humpFieldNames(labelNames, null);
+				realLabels = humpFieldNames(labelNames, null);
 			}
 			List result = new ArrayList();
 			List rowList;
@@ -1576,7 +1443,7 @@ public class ResultUtils {
 					rowMap = (Map) resultType.getDeclaredConstructor().newInstance();
 				}
 				for (int j = 0; j < width; j++) {
-					rowMap.put(realLabel[j], rowList.get(j));
+					rowMap.put(realLabels[j], rowList.get(j));
 				}
 				result.add(rowMap);
 			}
@@ -2027,13 +1894,10 @@ public class ResultUtils {
 	 * @param resultType
 	 */
 	public static void wrapResultTranslate(SqlToyContext sqlToyContext, Object result, Class resultType) {
-		HashMap<String, Translate> translateConfig = TranslateConfigParse.getClassTranslates(resultType);
+		HashMap<String, FieldTranslate> translateConfig = TranslateConfigParse.getClassTranslates(resultType);
 		if (result == null || translateConfig == null || translateConfig.isEmpty()) {
 			return;
 		}
-		// 获取缓存数据
-		HashMap<String, HashMap<String, Object[]>> cacheDatas = sqlToyContext.getTranslateManager()
-				.getTranslates(translateConfig);
 		List voList;
 		if (result instanceof List) {
 			voList = (List) result;
@@ -2044,105 +1908,30 @@ public class ResultUtils {
 		if (voList.isEmpty()) {
 			return;
 		}
-		// i18n国际化处理
-		translateConfig = wrapI18nIndex(sqlToyContext.getTranslateManager(), translateConfig);
-		Object item;
-		String field = null;
-		TranslateExtend trans;
-		Object srcFieldValue;
-		Object fieldValue;
-		HashMap<String, Object[]> cacheData;
-		try {
-			for (int i = 0; i < voList.size(); i++) {
-				item = voList.get(i);
-				for (Map.Entry<String, Translate> entry : translateConfig.entrySet()) {
-					field = entry.getKey();
-					trans = entry.getValue().getExtend();
-					// column是field小写后的值
-					cacheData = cacheDatas.get(trans.column);
-					srcFieldValue = BeanUtil.getProperty(item, trans.keyColumn);
-					fieldValue = BeanUtil.getProperty(item, field);
-					if (srcFieldValue != null && !"".equals(srcFieldValue.toString()) && fieldValue == null) {
-						BeanUtil.setProperty(item, field, translateKey(trans, cacheData, srcFieldValue));
-					}
-				}
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-			logger.error("针对类:{} 的属性:{} 进行缓存翻译发生异常!{}", resultType.getName(), field, e.getMessage());
+		// 获取缓存数据
+		HashMap<String, FieldTranslateCacheHolder> fieldTranslateHandlers = sqlToyContext.getTranslateManager()
+				.getTranslates(translateConfig);
+		DynamicCacheFetch dynamicCacheFetch = sqlToyContext.getDynamicCacheFetch();
+		for (int i = 0, n = voList.size(); i < n; i++) {
+			wrapBeanTranslate(dynamicCacheFetch, fieldTranslateHandlers, voList.get(i));
 		}
-	}
-
-	/**
-	 * @TODO 根据是否存在国际化，重新组织缓存对应实际翻译名称列
-	 * @param translateManager
-	 * @param translateConfig
-	 * @return
-	 */
-	public static HashMap<String, Translate> wrapI18nIndex(TranslateManager translateManager,
-			HashMap<String, Translate> translateConfig) {
-		// 获取当前线程中存放的locale，如:US、CN 等
-		String locale = SqlToyThreadDataHolder.getLanguage();
-		if (locale == null || translateConfig == null || translateConfig.isEmpty()) {
-			return translateConfig;
-		}
-		HashMap<String, Translate> result = new HashMap<String, Translate>();
-		// 存在国际化配置
-		String key;
-		TranslateExtend transExt;
-		TranslateConfigModel translateConfigModel;
-		Integer realIndex;
-		for (Map.Entry<String, Translate> entry : translateConfig.entrySet()) {
-			key = entry.getKey();
-			transExt = entry.getValue().getExtend();
-			result.put(key, entry.getValue());
-			// 获取到缓存配置
-			translateConfigModel = translateManager.getCacheConfig(transExt.cache);
-			// 缓存列在定义的i18n列范围中，则进行国际化切换
-			if (translateConfigModel.hasI18n(transExt.index)) {
-				// zh:1,us:2 获取方言对应的列
-				realIndex = translateConfigModel.getI18nIndex(locale);
-				// 存在方言列，且跟当前默认配置列不同，重新clone复制一份
-				if (realIndex != null && realIndex.intValue() != transExt.index) {
-					Translate translate = entry.getValue().clone();
-					translate.setIndex(realIndex);
-					result.put(key, translate);
-				}
-			}
-		}
-		return result;
 	}
 
 	/**
 	 * @TODO 处理基于pojo或dto上@Translate注解，进行实际缓存调用给属性赋值
-	 * @param sqlToyContext
-	 * @param cacheDatas
-	 * @param translateConfig
+	 * @param dynamicCacheFetch
+	 * @param fieldTranslateHandlers
 	 * @param item
 	 */
-	private static void wrapBeanTranslate(SqlToyContext sqlToyContext,
-			HashMap<String, HashMap<String, Object[]>> cacheDatas, HashMap<String, Translate> translateConfig,
-			Object item) {
-		String field = null;
-		TranslateExtend trans;
-		Object srcFieldValue;
-		Object fieldValue;
-		HashMap<String, Object[]> cacheData;
-		try {
-			for (Map.Entry<String, Translate> entry : translateConfig.entrySet()) {
-				field = entry.getKey();
-				trans = entry.getValue().getExtend();
-				// column是field小写后的值
-				cacheData = cacheDatas.get(trans.column);
-				srcFieldValue = BeanUtil.getProperty(item, trans.keyColumn);
-				fieldValue = BeanUtil.getProperty(item, field);
-				if (srcFieldValue != null && !"".equals(srcFieldValue.toString()) && fieldValue == null) {
-					BeanUtil.setProperty(item, field, translateKey(trans, cacheData, srcFieldValue));
-				}
+	private static void wrapBeanTranslate(DynamicCacheFetch dynamicCacheFetch,
+			HashMap<String, FieldTranslateCacheHolder> fieldTranslateHandlers, Object item) {
+		fieldTranslateHandlers.forEach((fieldName, fieldTranslateHandler) -> {
+			Object srcFieldValue = BeanUtil.getProperty(item, fieldTranslateHandler.getKeyField());
+			Object fieldValue = BeanUtil.getProperty(item, fieldName);
+			if (srcFieldValue != null && !"".equals(srcFieldValue.toString()) && fieldValue == null) {
+				BeanUtil.setProperty(item, fieldName,
+						fieldTranslateHandler.getBeanCacheValue(dynamicCacheFetch, item, srcFieldValue.toString()));
 			}
-		} catch (Exception e) {
-			e.printStackTrace();
-			logger.error("针对类:{} 的属性:{} 进行缓存翻译发生异常!{}", item.getClass().getName(), field, e.getMessage());
-		}
+		});
 	}
 }

@@ -68,7 +68,7 @@ public class FunctionUtils {
 		IFunction function;
 		String dialectSql = sqlContent;
 		String dialectLow = dialect.toLowerCase();
-		for (int i = 0; i < functionConverts.size(); i++) {
+		for (int i = 0, n = functionConverts.size(); i < n; i++) {
 			function = functionConverts.get(i);
 			// 方言为null或空白表示适配所有数据库,适配的方言包含当前方言也执行替换
 			if (StringUtil.isBlank(function.dialects()) || function.dialects().toLowerCase().contains(dialectLow)) {
@@ -179,7 +179,7 @@ public class FunctionUtils {
 			// 排除重复,让自定义同名函数生效
 			Set<String> nameSet = new HashSet<String>();
 			String className;
-			for (int i = 0; i < realConverts.size(); i++) {
+			for (int i = 0, n = realConverts.size(); i < n; i++) {
 				functionName = realConverts.get(i).trim();
 				// sql函数包名变更,修正调整后的包路径,保持兼容
 				if (functionName.startsWith("org.sagacity.sqltoy")) {

@@ -828,7 +828,7 @@ public class ParamFilterUtils {
 				arrays = paramValue.toString().split("\\;");
 			} else if (":".equals(split)) {
 				arrays = paramValue.toString().split("\\:");
-			} else if ("".equals(split)) {
+			} else if ("".equals(split) && splitSign.length() > 0) {
 				arrays = paramValue.toString().split("\\s+");
 			} else {
 				arrays = paramValue.toString().split(splitSign);

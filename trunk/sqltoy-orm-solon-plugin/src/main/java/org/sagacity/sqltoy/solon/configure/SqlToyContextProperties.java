@@ -265,6 +265,11 @@ public class SqlToyContextProperties implements Serializable {
 	 * 单记录保存采用identity、sequence主键策略，并返回主键值时，字段名称大小写处理(lower/upper)
 	 */
 	private HashMap<String, String> dialectReturnPrimaryColumnCase;
+	
+	/**
+	 * 动态获取缓存的实现(一般基于redis)
+	 */
+	private String dynamicCacheFetch;
 
 	/**
 	 * @return the sqlResourcesDir
@@ -781,4 +786,19 @@ public class SqlToyContextProperties implements Serializable {
 	public void setDialectReturnPrimaryColumnCase(HashMap<String, String> dialectReturnPrimaryColumnCase) {
 		this.dialectReturnPrimaryColumnCase = dialectReturnPrimaryColumnCase;
 	}
+
+	/**
+	 * @return the dynamicCacheFetch
+	 */
+	public String getDynamicCacheFetch() {
+		return dynamicCacheFetch;
+	}
+
+	/**
+	 * @param dynamicCacheFetch the dynamicCacheFetch to set
+	 */
+	public void setDynamicCacheFetch(String dynamicCacheFetch) {
+		this.dynamicCacheFetch = dynamicCacheFetch;
+	}
+	
 }

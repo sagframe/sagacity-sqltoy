@@ -1133,6 +1133,11 @@
 				<xsd:documentation><![CDATA[服务于elastic、mongo在不使用sql模式,无法select staff_id as staffName,这里alias-name 对应staff_id]]></xsd:documentation>
 			</xsd:annotation>
 		</xsd:attribute>
+		<xsd:attribute name="where" type="xsd:string">
+			<xsd:annotation>
+				<xsd:documentation><![CDATA[针对某列的值做逻辑判断,条件成立则进行缓存翻译,包含四种逻辑:order_type==PO、order_type!=PO、order_type in (PO)、order_type out (SALES)]]></xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
 	</xsd:complexType>
 
 	<xsd:complexType name="sqltoySecureMaskType">

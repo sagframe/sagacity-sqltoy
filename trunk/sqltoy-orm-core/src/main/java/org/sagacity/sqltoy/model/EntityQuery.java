@@ -46,8 +46,7 @@ public class EntityQuery implements Serializable {
 		if (fields != null && fields.length > 0) {
 			// 支持"fieldA,fieldB" 这种模式编写
 			if (fields.length == 1) {
-				innerModel.fields = fields[0].split("\\,");
-				StringUtil.arrayTrim(innerModel.fields);
+				innerModel.fields = StringUtil.trimArray(fields[0].split("\\,"));
 			} else {
 				innerModel.fields = fields;
 			}
@@ -298,7 +297,7 @@ public class EntityQuery implements Serializable {
 							"针对EntityQuery设置缓存翻译必须要明确:cacheName=[" + extend.cache + "]、keyColumn=[" + extend.keyColumn
 									+ "](作为key的字段列)、 column=[" + extend.column + "](翻译结果映射的列)!");
 				}
-				innerModel.translates.put(extend.column, trans);
+				innerModel.translates.add(trans);
 			}
 		}
 		return this;

@@ -510,7 +510,8 @@ public class DefaultDialectUtils {
 								}
 								index++;
 								// 重新获得修改后的值
-								result.add(ResultUtils.processResultRow(finalRs, 0, rowCnt, false));
+								result.add(ResultUtils.processResultRow(null, finalRs, null, null, rowCnt, null, null,
+										false));
 							}
 							// 没有查询到记录，表示是需要首次插入
 							if (index == 0) {

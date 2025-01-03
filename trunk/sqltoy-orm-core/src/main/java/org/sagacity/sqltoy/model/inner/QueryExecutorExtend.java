@@ -110,7 +110,7 @@ public class QueryExecutorExtend implements Serializable {
 	/**
 	 * 动态增加缓存翻译配置
 	 */
-	public HashMap<String, Translate> translates = new HashMap<String, Translate>();
+	public List<Translate> translates = new ArrayList<Translate>();
 
 	/**
 	 * 动态设置filters

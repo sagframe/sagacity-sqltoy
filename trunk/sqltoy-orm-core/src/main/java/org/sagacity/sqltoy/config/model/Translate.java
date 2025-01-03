@@ -100,6 +100,40 @@ public class Translate implements Serializable {
 	}
 
 	/**
+	 * @param compareColumn the compareColumn to set
+	 */
+	public Translate setCompareColumn(String compareColumn) {
+		if (compareColumn != null && !compareColumn.trim().equals("")) {
+			extend.compareColumn = compareColumn.toLowerCase();
+			extend.hasLogic = true;
+		}
+		return this;
+	}
+
+	/**
+	 * @param compareType the compareType to set
+	 */
+	public Translate setCompareType(String compareType) {
+		if (compareType != null) {
+			String lowCompareType = compareType.toLowerCase();
+			if (!lowCompareType.equals("eq") && !lowCompareType.equals("neq") && !lowCompareType.equals("in")
+					&& !lowCompareType.equals("out")) {
+				throw new IllegalArgumentException("缓存翻译中逻辑判断:compareType只支持eq、neq、in、out四种类型!");
+			}
+			extend.compareType = lowCompareType;
+		}
+		return this;
+	}
+
+	/**
+	 * @param compareValues the compareValues to set
+	 */
+	public Translate setCompareValues(String[] compareValues) {
+		extend.compareValues = compareValues;
+		return this;
+	}
+
+	/**
 	 * @param keyTemplate the keyTemplate to set
 	 */
 	public Translate setKeyTemplate(String keyTemplate) {

@@ -47,7 +47,7 @@ public class TranslateExtend implements Serializable, java.lang.Cloneable {
 	public String keyColumn;
 
 	/**
-	 * 字段别名
+	 * 字段别名(es、mongo使用)
 	 */
 	public String alias;
 
@@ -67,6 +67,41 @@ public class TranslateExtend implements Serializable, java.lang.Cloneable {
 	public String keyTemplate = null;
 
 	/**
+	 * 存在compareColumn==xxx 表达式即表示存在是否进行缓存翻译的逻辑判断
+	 */
+	public boolean hasLogic = false;
+
+	/**
+	 * 是否动态缓存(预留)
+	 */
+	public boolean dynamicCache = false;
+
+	/**
+	 * 动态缓存配置的标识(预留)
+	 */
+	public String cacheSid;
+
+	/**
+	 * 动态缓存的列属性(预留)
+	 */
+	public String[] cacheProperties;
+
+	/**
+	 * 逻辑判断的参照字段
+	 */
+	public String compareColumn;
+
+	/**
+	 * 逻辑判断的类型，四种:eq\neq\in\out
+	 */
+	public String compareType;
+
+	/**
+	 * 逻辑判断的对比参照值
+	 */
+	public String[] compareValues;
+
+	/**
 	 * 未被缓存的模板
 	 */
 	public String uncached = SqlToyConstants.UNCACHED_KEY_RESULT;
@@ -79,6 +114,20 @@ public class TranslateExtend implements Serializable, java.lang.Cloneable {
 			e.printStackTrace();
 		}
 		return null;
+	}
+
+	/**
+	 * @return the cacheProperties
+	 */
+	public String[] getCacheProperties() {
+		return cacheProperties;
+	}
+
+	/**
+	 * @param cacheProperties the cacheProperties to set
+	 */
+	public void setCacheProperties(String[] cacheProperties) {
+		this.cacheProperties = cacheProperties;
 	}
 
 }

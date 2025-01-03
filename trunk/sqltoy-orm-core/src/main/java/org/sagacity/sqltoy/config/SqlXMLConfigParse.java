@@ -19,6 +19,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.config.model.CacheFilterModel;
 import org.sagacity.sqltoy.config.model.ColsChainRelativeModel;
+import org.sagacity.sqltoy.config.model.FieldTranslate;
 import org.sagacity.sqltoy.config.model.FormatModel;
 import org.sagacity.sqltoy.config.model.LinkModel;
 import org.sagacity.sqltoy.config.model.NoSqlConfigModel;
@@ -85,6 +86,10 @@ public class SqlXMLConfigParse {
 
 	private static DocumentBuilderFactory domFactory = DocumentBuilderFactory.newInstance();
 
+	private static String[] WHERE_COMPARE = { "!=", "==", "=", " in ", " out " };
+	private static String[] WHERE_COMPARE_TYPES = { "neq", "eq", "eq", "in", "out" };
+	// 增加对应compareStr的切割表达式(2020-10-21 修改为正则表达式，修复split错误)
+	private static String[] WHERE_SPLIT_REGEX = { "\\!\\=", "\\=\\=", "\\=", "\\s+in\\s+", "\\s+out\\s+" };
 	public static HashMap<String, String> filters = new HashMap<String, String>() {
 		/**
 		 * 
@@ -480,9 +485,9 @@ public class SqlXMLConfigParse {
 		}
 		// valueRoot
 		if (sqlElt.hasAttribute("value-root")) {
-			noSqlConfig.setValueRoot(trimParams(sqlElt.getAttribute("value-root").split("\\,")));
+			noSqlConfig.setValueRoot(StringUtil.trimArray(sqlElt.getAttribute("value-root").split("\\,")));
 		} else if (sqlElt.hasAttribute("value-path")) {
-			noSqlConfig.setValueRoot(trimParams(sqlElt.getAttribute("value-path").split("\\,")));
+			noSqlConfig.setValueRoot(StringUtil.trimArray(sqlElt.getAttribute("value-path").split("\\,")));
 		}
 		String nodeName = sqlElt.getNodeName().toLowerCase();
 		// 是否有聚合查询
@@ -530,7 +535,7 @@ public class SqlXMLConfigParse {
 		}
 		Element decryptElt = (Element) decryptElts.item(0);
 		if (decryptElt.hasAttribute("columns")) {
-			String[] columns = trimParams(decryptElt.getAttribute("columns").toLowerCase().split("\\,"));
+			String[] columns = StringUtil.trimArray(decryptElt.getAttribute("columns").toLowerCase().split("\\,"));
 			IgnoreCaseSet decryptColumns = new IgnoreCaseSet();
 			for (String col : columns) {
 				decryptColumns.add(col);
@@ -560,7 +565,7 @@ public class SqlXMLConfigParse {
 			if (tmp == null) {
 				tmp = getAttrValue(elt, "column");
 			}
-			String[] columns = trimParams(tmp.toLowerCase().split("\\,"));
+			String[] columns = StringUtil.trimArray(tmp.toLowerCase().split("\\,"));
 			String type = getAttrValue(elt, "type").toLowerCase();
 			String maskCode = getAttrValue(elt, "mask-code");
 			String headSize = getAttrValue(elt, "head-size");
@@ -687,7 +692,7 @@ public class SqlXMLConfigParse {
 			elt = (Element) shardingTables.item(i);
 			if (elt.hasAttribute("tables") && elt.hasAttribute("strategy")) {
 				ShardingStrategyConfig shardingModel = new ShardingStrategyConfig(1);
-				shardingModel.setTables(trimParams(elt.getAttribute("tables").split("\\,")));
+				shardingModel.setTables(StringUtil.trimArray(elt.getAttribute("tables").split("\\,")));
 				String[] fields;
 				if (elt.hasAttribute("params")) {
 					fields = elt.getAttribute("params").replace(";", ",").toLowerCase().split("\\,");
@@ -810,7 +815,7 @@ public class SqlXMLConfigParse {
 		if (!filter.hasAttribute("params")) {
 			filterModel.setParams(new String[] { "*" });
 		} else {
-			filterModel.setParams(trimParams(filter.getAttribute("params").toLowerCase().split("\\,")));
+			filterModel.setParams(StringUtil.trimArray(filter.getAttribute("params").toLowerCase().split("\\,")));
 		}
 		// equals\any\not-any等类型
 		if (filter.hasAttribute("value")) {
@@ -924,7 +929,7 @@ public class SqlXMLConfigParse {
 				}
 			}
 			if (filter.hasAttribute("cache-mapping-indexes")) {
-				String[] cacheIndexes = trimParams(filter.getAttribute("cache-mapping-indexes").split("\\,"));
+				String[] cacheIndexes = StringUtil.trimArray(filter.getAttribute("cache-mapping-indexes").split("\\,"));
 				int[] mappingIndexes = new int[cacheIndexes.length];
 				for (int i = 0; i < cacheIndexes.length; i++) {
 					mappingIndexes[i] = Integer.parseInt(cacheIndexes[i]);
@@ -980,9 +985,9 @@ public class SqlXMLConfigParse {
 		}
 		// exclusive 排他性filter 当条件成立时需要修改的参数(即排斥的参数)
 		if (filter.hasAttribute("set-params")) {
-			filterModel.setUpdateParams(trimParams(filter.getAttribute("set-params").toLowerCase().split("\\,")));
+			filterModel.setUpdateParams(StringUtil.trimArray(filter.getAttribute("set-params").toLowerCase().split("\\,")));
 		} else if (filter.hasAttribute("exclusive-params")) {
-			filterModel.setUpdateParams(trimParams(filter.getAttribute("exclusive-params").toLowerCase().split("\\,")));
+			filterModel.setUpdateParams(StringUtil.trimArray(filter.getAttribute("exclusive-params").toLowerCase().split("\\,")));
 		}
 		// exclusive 排他性filter 对排斥的参数设置的值(默认置为null)
 		if (filter.hasAttribute("set-value")) {
@@ -1019,9 +1024,9 @@ public class SqlXMLConfigParse {
 		if (filter.hasAttribute("compare-values")) {
 			String compareValue = filter.getAttribute("compare-values");
 			if (compareValue.indexOf(";") != -1) {
-				filterModel.setCompareValues(trimParams(compareValue.split("\\;")));
+				filterModel.setCompareValues(StringUtil.trimArray(compareValue.split("\\;")));
 			} else {
-				filterModel.setCompareValues(trimParams(compareValue.split("\\,")));
+				filterModel.setCompareValues(StringUtil.trimArray(compareValue.split("\\,")));
 			}
 		}
 		// 数据类型
@@ -1044,7 +1049,7 @@ public class SqlXMLConfigParse {
 			return;
 		}
 		// 翻译器
-		HashMap<String, Translate> translateMap = new HashMap<String, Translate>();
+		HashMap<String, FieldTranslate> translateMap = new HashMap<String, FieldTranslate>();
 		String cacheType;
 		String cacheName;
 		String[] columns;
@@ -1059,9 +1064,11 @@ public class SqlXMLConfigParse {
 		String linkSign = ",";
 		boolean hasLink = false;
 		Element translate;
+		String where = null;
 		for (int k = 0; k < translates.getLength(); k++) {
 			translate = (Element) translates.item(k);
 			hasLink = false;
+			where = null;
 			cacheName = translate.getAttribute("cache");
 			// 具体的缓存子分类，如数据字典类别
 			if (translate.hasAttribute("cache-type")) {
@@ -1070,7 +1077,7 @@ public class SqlXMLConfigParse {
 				cacheType = null;
 			}
 			// 已经小写
-			columns = trimParams(translate.getAttribute("columns").toLowerCase().split("\\,"));
+			columns = StringUtil.trimArray(translate.getAttribute("columns").toLowerCase().split("\\,"));
 			aliasNames = null;
 			uncachedTemplate = null;
 			if (translate.hasAttribute("undefine-template")) {
@@ -1079,6 +1086,10 @@ public class SqlXMLConfigParse {
 				uncachedTemplate = translate.getAttribute("uncached-template");
 			} else if (translate.hasAttribute("uncached")) {
 				uncachedTemplate = translate.getAttribute("uncached");
+			}
+			// add 2024-12-28 增加条件判断
+			if (translate.hasAttribute("where")) {
+				where = translate.getAttribute("where");
 			}
 			if (translate.hasAttribute("split-regex")) {
 				splitRegex = translate.getAttribute("split-regex");
@@ -1105,21 +1116,21 @@ public class SqlXMLConfigParse {
 			}
 			// 使用alias时只能针对单列处理
 			if (translate.hasAttribute("alias-name")) {
-				aliasNames = trimParams(translate.getAttribute("alias-name").toLowerCase().split("\\,"));
+				aliasNames = StringUtil.trimArray(translate.getAttribute("alias-name").toLowerCase().split("\\,"));
 			} else if (translate.hasAttribute("original-columns")) {
-				aliasNames = trimParams(translate.getAttribute("original-columns").toLowerCase().split("\\,"));
+				aliasNames = StringUtil.trimArray(translate.getAttribute("original-columns").toLowerCase().split("\\,"));
 			}
 			// 翻译key对应value的在缓存数组中对应的列
 			cacheIndexs = null;
 			if (translate.hasAttribute("cache-indexs")) {
-				cacheIndexStr = trimParams(translate.getAttribute("cache-indexs").split("\\,"));
+				cacheIndexStr = StringUtil.trimArray(translate.getAttribute("cache-indexs").split("\\,"));
 				cacheIndexs = new Integer[cacheIndexStr.length];
 				for (int i = 0; i < cacheIndexStr.length; i++) {
 					cacheIndexs[i] = Integer.parseInt(cacheIndexStr[i]);
 				}
 			} // 兼容参数命名
 			else if (translate.hasAttribute("cache-indexes")) {
-				cacheIndexStr = trimParams(translate.getAttribute("cache-indexes").split("\\,"));
+				cacheIndexStr = StringUtil.trimArray(translate.getAttribute("cache-indexes").split("\\,"));
 				cacheIndexs = new Integer[cacheIndexStr.length];
 				for (int i = 0; i < cacheIndexStr.length; i++) {
 					cacheIndexs[i] = Integer.parseInt(cacheIndexStr[i]);
@@ -1134,10 +1145,17 @@ public class SqlXMLConfigParse {
 					translateModel.setCacheType(cacheType);
 					translateModel.setSplitRegex(splitRegex);
 					translateModel.setLinkSign(linkSign);
+					// 解析where逻辑表达式
+					parseTranslateWhere(translateModel, where);
 					if (uncachedTemplate != null) {
-						// 统一未匹配中的通配符号为${value}
-						translateModel.setUncached(
-								uncachedTemplate.replaceAll("(?i)\\$?\\{\\s*key\\s*\\}", "\\$\\{value\\}"));
+						// 未匹配模板为空白，设置为null,表示显示未翻译的值
+						if (uncachedTemplate.trim().equals("")) {
+							translateModel.setUncached(null);
+						} else {
+							// 统一未匹配中的通配符号为${value}
+							translateModel.setUncached(
+									uncachedTemplate.replaceAll("(?i)\\$?\\{\\s*key\\s*\\}", "\\$\\{value\\}"));
+						}
 					}
 					if (cacheIndexs != null) {
 						if (i < cacheIndexs.length - 1) {
@@ -1147,7 +1165,15 @@ public class SqlXMLConfigParse {
 						}
 					}
 					// column 已经小写
-					translateMap.put(translateModel.getExtend().column, translateModel);
+					if (translateMap.containsKey(translateModel.getExtend().column)) {
+						FieldTranslate translateAry = translateMap.get(translateModel.getExtend().column);
+						translateAry.put(translateModel);
+					} else {
+						FieldTranslate fieldTranslate = new FieldTranslate();
+						fieldTranslate.colName = translateModel.getExtend().column;
+						fieldTranslate.put(translateModel);
+						translateMap.put(translateModel.getExtend().column, fieldTranslate);
+					}
 				}
 			} else if (cacheIndexs != null && cacheIndexs.length != columns.length) {
 				logger.warn("sqlId:{} 对应的cache translate columns suggest config with cache-indexs!",
@@ -1155,6 +1181,43 @@ public class SqlXMLConfigParse {
 			}
 		}
 		sqlToyConfig.setTranslateMap(translateMap);
+	}
+
+	/**
+	 * @TODO 解析translate中的where表达式(field==xx 或 field in (A,B) 形式)
+	 * @param translate
+	 * @param whereStr
+	 */
+	public static void parseTranslateWhere(Translate translate, String whereStr) {
+		if (StringUtil.isBlank(whereStr)) {
+			return;
+		}
+		String where = whereStr.trim().toLowerCase();
+		// 规范一下in 和 out的格式，统一分割方式
+		where = where.replace(" in(", " in (").replace(" out(", " out (");
+		// 对比列
+		String compareColumn = null;
+		// 对比类型(eq\neq\in\out 四种)
+		String compareType = "eq";
+		// 对比的值
+		String[] compareValues = null;
+		for (int i = 0; i < WHERE_COMPARE.length; i++) {
+			if (where.indexOf(WHERE_COMPARE[i]) != -1) {
+				compareType = WHERE_COMPARE_TYPES[i];
+				String[] params = where.split(WHERE_SPLIT_REGEX[i]);
+				compareColumn = params[0].replace("${", "").replace("{", "").replace("}", "").trim();
+				// 去除括号、单引号
+				compareValues = StringUtil.trimArray(
+						params[1].replace("(", "").replace(")", "").replace("'", "").replace("\"", "").split("\\,"));
+				break;
+			}
+		}
+		// 列必须有值
+		if (StringUtil.isNotBlank(compareColumn) && compareValues != null && compareValues.length > 0) {
+			translate.setCompareColumn(compareColumn);
+			translate.setCompareType(compareType);
+			translate.setCompareValues(compareValues);
+		}
 	}
 
 	/**
@@ -1171,17 +1234,17 @@ public class SqlXMLConfigParse {
 		LinkModel linkModel = new LinkModel();
 		// update 2020-09-07 增加支持多列场景(兼容旧的模式)
 		if (link.hasAttribute("column")) {
-			linkModel.setColumns(trimParams(link.getAttribute("column").split("\\,")));
+			linkModel.setColumns(StringUtil.trimArray(link.getAttribute("column").split("\\,")));
 		} else if (link.hasAttribute("columns")) {
-			linkModel.setColumns(trimParams(link.getAttribute("columns").split("\\,")));
+			linkModel.setColumns(StringUtil.trimArray(link.getAttribute("columns").split("\\,")));
 		}
 		// update 2021-10-15 支持多列
 		if (link.hasAttribute("id-columns")) {
-			linkModel.setGroupColumns(trimParams(link.getAttribute("id-columns").split("\\,")));
+			linkModel.setGroupColumns(StringUtil.trimArray(link.getAttribute("id-columns").split("\\,")));
 		} else if (link.hasAttribute("group-columns")) {
-			linkModel.setGroupColumns(trimParams(link.getAttribute("group-columns").split("\\,")));
+			linkModel.setGroupColumns(StringUtil.trimArray(link.getAttribute("group-columns").split("\\,")));
 		} else if (link.hasAttribute("id-column")) {
-			linkModel.setGroupColumns(trimParams(link.getAttribute("id-column").split("\\,")));
+			linkModel.setGroupColumns(StringUtil.trimArray(link.getAttribute("id-column").split("\\,")));
 		}
 		if (link.hasAttribute("sign")) {
 			linkModel.setSign(link.getAttribute("sign"));
@@ -1223,7 +1286,7 @@ public class SqlXMLConfigParse {
 			Element df;
 			for (int i = 0; i < dfElts.getLength(); i++) {
 				df = (Element) dfElts.item(i);
-				String[] columns = trimParams(df.getAttribute("columns").toLowerCase().split("\\,"));
+				String[] columns = StringUtil.trimArray(df.getAttribute("columns").toLowerCase().split("\\,"));
 				String format = df.hasAttribute("format") ? df.getAttribute("format") : "yyyy-MM-dd";
 				String locale = df.hasAttribute("locale") ? df.getAttribute("locale") : null;
 				for (String col : columns) {
@@ -1240,7 +1303,7 @@ public class SqlXMLConfigParse {
 			Element nf;
 			for (int i = 0; i < nfElts.getLength(); i++) {
 				nf = (Element) nfElts.item(i);
-				String[] columns = trimParams(nf.getAttribute("columns").toLowerCase().split("\\,"));
+				String[] columns = StringUtil.trimArray(nf.getAttribute("columns").toLowerCase().split("\\,"));
 				String format = nf.hasAttribute("format") ? nf.getAttribute("format") : "capital";
 				String roundStr = nf.hasAttribute("roundingMode") ? nf.getAttribute("roundingMode").toUpperCase()
 						: null;
@@ -1292,11 +1355,11 @@ public class SqlXMLConfigParse {
 					PivotModel pivotModel = new PivotModel();
 					if (elt.hasAttribute("group-columns")) {
 						pivotModel
-								.setGroupCols(trimParams(elt.getAttribute("group-columns").toLowerCase().split("\\,")));
+								.setGroupCols(StringUtil.trimArray(elt.getAttribute("group-columns").toLowerCase().split("\\,")));
 					}
 					if (elt.hasAttribute("category-columns")) {
 						pivotModel.setCategoryCols(
-								trimParams(elt.getAttribute("category-columns").toLowerCase().split("\\,")));
+								StringUtil.trimArray(elt.getAttribute("category-columns").toLowerCase().split("\\,")));
 					}
 					if (elt.hasAttribute("category-sql")) {
 						pivotModel.setCategorySql(elt.getAttribute("category-sql"));
@@ -1368,7 +1431,7 @@ public class SqlXMLConfigParse {
 						summaryModel.setRadixSize(trimParamsToInt(elt.getAttribute("radix-size").split("\\,")));
 					}
 					if (elt.hasAttribute("average-rounding-modes")) {
-						String[] roundingModeAry = trimParams(
+						String[] roundingModeAry = StringUtil.trimArray(
 								elt.getAttribute("average-rounding-modes").toUpperCase().split("\\,"));
 						RoundingMode[] roudingModes = new RoundingMode[roundingModeAry.length];
 						String roundingMode;
@@ -1534,22 +1597,6 @@ public class SqlXMLConfigParse {
 	private static InputStream getResourceAsStream(String resource) {
 		return Thread.currentThread().getContextClassLoader().getResourceAsStream(
 				(resource.length() > 0 && resource.charAt(0) == '/') ? resource.substring(1) : resource);
-	}
-
-	/**
-	 * @todo 对split之后参数名称进行trim
-	 * @param paramNames
-	 * @return
-	 */
-	private static String[] trimParams(String[] paramNames) {
-		if (paramNames == null || paramNames.length == 0) {
-			return paramNames;
-		}
-		String[] realParamNames = new String[paramNames.length];
-		for (int i = 0; i < paramNames.length; i++) {
-			realParamNames[i] = (paramNames[i] == null) ? null : paramNames[i].trim();
-		}
-		return realParamNames;
 	}
 
 	private static Integer[] trimParamsToInt(String[] paramNames) {
