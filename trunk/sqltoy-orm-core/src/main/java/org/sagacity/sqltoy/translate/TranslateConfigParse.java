@@ -94,7 +94,7 @@ public class TranslateConfigParse {
 		boolean fileExist;
 		Set<String> fileSet = new HashSet<>();
 		int index = 0;
-		for (int i = 0; i < translateFiles.size(); i++) {
+		for (int i = 0, n = translateFiles.size(); i < n; i++) {
 			translateFile = translateFiles.get(i);
 			if (translateFile instanceof File) {
 				translateFlieStr = ((File) translateFile).getPath();
@@ -356,50 +356,31 @@ public class TranslateConfigParse {
 			return classTranslateConfigMap.get(className);
 		}
 		HashMap<String, FieldTranslate> translateConfig = new HashMap<String, FieldTranslate>();
-		org.sagacity.sqltoy.config.annotation.Translate[] annotaTranslates;
 		Class classVar = classType;
+		org.sagacity.sqltoy.config.annotation.Translate[] annotaTranslateAry;
 		org.sagacity.sqltoy.config.annotation.Translate annotaTranslate;
+		org.sagacity.sqltoy.config.annotation.Translates anotaTranslates;
 		while (classVar != null && !classVar.equals(Object.class)) {
 			for (Field field : classVar.getDeclaredFields()) {
-				annotaTranslates = field.getAnnotationsByType(org.sagacity.sqltoy.config.annotation.Translate.class);
-				if (annotaTranslates != null && annotaTranslates.length > 0
-						&& !translateConfig.containsKey(field.getName())) {
+				anotaTranslates = field.getAnnotation(org.sagacity.sqltoy.config.annotation.Translates.class);
+				if (anotaTranslates != null && anotaTranslates.value().length > 0) {
+					annotaTranslateAry = anotaTranslates.value();
+				} else {
+					annotaTranslateAry = field
+							.getAnnotationsByType(org.sagacity.sqltoy.config.annotation.Translate.class);
+				}
+				if (annotaTranslateAry != null && annotaTranslateAry.length > 0) {
 					FieldTranslate fieldTranslate = new FieldTranslate();
-					fieldTranslate.colName = field.getName();
-					Translate[] translates = new Translate[annotaTranslates.length];
-					for (int i = 0; i < annotaTranslates.length; i++) {
-						annotaTranslate = annotaTranslates[i];
-						Translate translate = new Translate(annotaTranslate.cacheName());
-						translate.setIndex(annotaTranslate.cacheIndex());
-						if (StringUtil.isNotBlank(annotaTranslate.cacheType())) {
-							translate.setCacheType(annotaTranslate.cacheType());
-						}
-						translate.setKeyColumn(annotaTranslate.keyField());
-						// 内部转了小写
-						translate.setColumn(field.getName());
-						translate.setAlias(field.getName());
-						if (StringUtil.isNotBlank(annotaTranslate.split())) {
-							translate.setSplitRegex(annotaTranslate.split());
-						}
-						// 默认是,逗号
-						if (StringUtil.isNotBlank(annotaTranslate.join())) {
-							translate.setLinkSign(annotaTranslate.join());
-						}
-						if (annotaTranslate.uncached() != null) {
-							// 重置默认值为null
-							if ("".equals(annotaTranslate.uncached().trim())) {
-								translate.setUncached(null);
-							} else {
-								translate.setUncached(annotaTranslate.uncached().trim());
-							}
-						}
-						// 解析where逻辑表达式
-						SqlXMLConfigParse.parseTranslateWhere(translate, annotaTranslate.where());
+					String fieldLow = field.getName().toLowerCase();
+					fieldTranslate.colName = fieldLow;
+					Translate[] translates = new Translate[annotaTranslateAry.length];
+					for (int i = 0; i < annotaTranslateAry.length; i++) {
+						annotaTranslate = annotaTranslateAry[i];
 						fieldTranslate.keyField = annotaTranslate.keyField();
-						translates[i] = translate;
+						translates[i] = parseAnnotaTrans(fieldLow, annotaTranslate);
 					}
 					fieldTranslate.translates = translates;
-					translateConfig.put(field.getName(), fieldTranslate);
+					translateConfig.put(fieldLow, fieldTranslate);
 				}
 			}
 			// 向父类递归
@@ -407,6 +388,43 @@ public class TranslateConfigParse {
 		}
 		classTranslateConfigMap.put(className, translateConfig);
 		return translateConfig;
+	}
+
+	/**
+	 * @TODO 解析注解Translate配置
+	 * @param fieldName
+	 * @param annotTranslate
+	 * @return
+	 */
+	private static Translate parseAnnotaTrans(String fieldName,
+			org.sagacity.sqltoy.config.annotation.Translate annotTranslate) {
+		Translate translate = new Translate(annotTranslate.cacheName());
+		translate.setIndex(annotTranslate.cacheIndex());
+		if (StringUtil.isNotBlank(annotTranslate.cacheType())) {
+			translate.setCacheType(annotTranslate.cacheType());
+		}
+		translate.setKeyColumn(annotTranslate.keyField());
+		// 内部转了小写
+		translate.setColumn(fieldName);
+		translate.setAlias(fieldName);
+		if (StringUtil.isNotBlank(annotTranslate.split())) {
+			translate.setSplitRegex(annotTranslate.split());
+		}
+		// 默认是,逗号
+		if (StringUtil.isNotBlank(annotTranslate.join())) {
+			translate.setLinkSign(annotTranslate.join());
+		}
+		if (annotTranslate.uncached() != null) {
+			// 重置默认值为null
+			if ("".equals(annotTranslate.uncached().trim())) {
+				translate.setUncached(null);
+			} else {
+				translate.setUncached(annotTranslate.uncached().trim());
+			}
+		}
+		// 解析where逻辑表达式
+		SqlXMLConfigParse.parseTranslateWhere(translate, annotTranslate.where());
+		return translate;
 	}
 
 	/**

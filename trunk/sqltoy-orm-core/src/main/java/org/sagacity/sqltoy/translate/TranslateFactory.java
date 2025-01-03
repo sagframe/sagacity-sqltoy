@@ -184,7 +184,7 @@ public class TranslateFactory {
 		List<CacheCheckResult> checkResult = new ArrayList<CacheCheckResult>();
 		Object[] row;
 		CacheCheckResult item;
-		for (int i = 0; i < cacheSet.size(); i++) {
+		for (int i = 0, n = cacheSet.size(); i < n; i++) {
 			row = (Object[]) cacheSet.get(i);
 			item = new CacheCheckResult();
 			item.setCacheName((String) row[0]);
@@ -226,7 +226,7 @@ public class TranslateFactory {
 		Object[] row;
 		CacheCheckResult item;
 		Object[] cacheValue;
-		for (int i = 0; i < cacheSet.size(); i++) {
+		for (int i = 0, n = cacheSet.size(); i < n; i++) {
 			row = (Object[]) cacheSet.get(i);
 			item = new CacheCheckResult();
 			item.setCacheName(cacheName);

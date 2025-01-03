@@ -35,6 +35,7 @@ import com.alibaba.fastjson2.JSONObject;
  * @author zhongxuchen
  * @version v1.0,Date:2018年1月3日
  */
+@SuppressWarnings("rawtypes")
 public class ElasticSearchPlugin {
 	/**
 	 * 定义全局日志

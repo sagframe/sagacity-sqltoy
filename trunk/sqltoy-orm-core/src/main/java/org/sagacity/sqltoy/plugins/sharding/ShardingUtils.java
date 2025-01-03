@@ -174,7 +174,7 @@ public class ShardingUtils {
 		String dataGroupKey;
 		String tableName = null;
 		String dataSourceName = null;
-		for (int i = 0; i < entities.size(); i++) {
+		for (int i = 0, n = entities.size(); i < n; i++) {
 			// 分库
 			if (hasDB) {
 				valueMap = hashParams(dbConfig.getAliasNames(), shardingDBValues.get(i));
@@ -525,7 +525,7 @@ public class ShardingUtils {
 		Object pkValue;
 		Object[] relatedColValue = null;
 		Object[] fullParamValues;
-		for (int i = 0; i < entities.size(); i++) {
+		for (int i = 0, n = entities.size(); i < n; i++) {
 			pkValue = ids.get(i)[0];
 			// 主键值未赋予,则自动赋予
 			if (pkValue == null || "".equals(pkValue.toString().trim())) {

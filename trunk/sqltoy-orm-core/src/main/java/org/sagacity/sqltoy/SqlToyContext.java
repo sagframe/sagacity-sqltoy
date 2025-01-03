@@ -810,7 +810,9 @@ public class SqlToyContext {
 			this.dialect = Dialect.VASTBASE;
 		} else if (tmp.startsWith(Dialect.OPENGAUSS)) {
 			this.dialect = Dialect.OPENGAUSS;
-		} else {
+		} else if (tmp.startsWith(Dialect.STARDB)) {
+			this.dialect = Dialect.STARDB;
+		}else {
 			this.dialect = dialect;
 		}
 		scriptLoader.setDialect(this.dialect);
