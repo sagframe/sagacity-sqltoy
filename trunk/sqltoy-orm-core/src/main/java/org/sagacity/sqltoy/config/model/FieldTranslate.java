@@ -25,6 +25,11 @@ public class FieldTranslate implements Serializable {
 	public String keyField;
 
 	/**
+	 * 供es使用
+	 */
+	public String aliasName;
+	
+	/**
 	 * 缓存翻译配置
 	 */
 	public Translate[] translates;
@@ -32,6 +37,7 @@ public class FieldTranslate implements Serializable {
 	public void put(Translate translate) {
 		if (translates == null) {
 			translates = new Translate[] { translate };
+			aliasName = translate.getExtend().alias;
 		} else {
 			// 是否存在相同的缓存
 			boolean hasSameCache = false;
@@ -40,6 +46,7 @@ public class FieldTranslate implements Serializable {
 			for (int j = 0; j < translates.length; j++) {
 				cacheName = translates[j].getExtend().cache;
 				cacheType = translates[j].getExtend().cacheType;
+				aliasName = translates[j].getExtend().alias;
 				// 判断cache和cacheType组合是否相同,确定是同一个缓存
 				if (cacheName.equals(translate.getExtend().cache)
 						&& (cacheType == null || cacheType.equals(translate.getExtend().cacheType))) {
@@ -54,6 +61,7 @@ public class FieldTranslate implements Serializable {
 				System.arraycopy(translates, 0, tmpAry, 0, translates.length);
 				tmpAry[translates.length] = translate;
 				translates = tmpAry;
+				aliasName = translate.getExtend().alias;
 			}
 		}
 	}

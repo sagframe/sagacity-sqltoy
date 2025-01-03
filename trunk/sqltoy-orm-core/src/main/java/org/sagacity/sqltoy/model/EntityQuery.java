@@ -46,8 +46,7 @@ public class EntityQuery implements Serializable {
 		if (fields != null && fields.length > 0) {
 			// 支持"fieldA,fieldB" 这种模式编写
 			if (fields.length == 1) {
-				innerModel.fields = fields[0].split("\\,");
-				StringUtil.arrayTrim(innerModel.fields);
+				innerModel.fields = StringUtil.trimArray(fields[0].split("\\,"));
 			} else {
 				innerModel.fields = fields;
 			}

@@ -105,7 +105,7 @@ public class CacheUpdateWatcher extends Thread {
 		int hourMinutes;
 		while (isRun) {
 			// 多个检测任务
-			for (int i = 0; i < updateCheckers.size(); i++) {
+			for (int i = 0, n = updateCheckers.size(); i < n; i++) {
 				checkerConfig = updateCheckers.get(i);
 				checker = checkerConfig.getId();
 				// 上次检测时间

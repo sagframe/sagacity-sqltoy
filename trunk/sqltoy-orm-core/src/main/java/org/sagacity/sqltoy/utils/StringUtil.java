@@ -651,43 +651,11 @@ public class StringUtil {
 			return new String[] { source };
 		}
 		if (filterMap == null || filterMap.isEmpty()) {
-			if ("?".equals(splitSign)) {
-				return source.split("\\?");
-			} else if (",".equals(splitSign)) {
-				return source.split("\\,");
-			} else if (";".equals(splitSign)) {
-				return source.split("\\;");
-			} else if (":".equals(splitSign)) {
-				return source.split("\\:");
-			} else if ("".equals(splitSign.trim())) {
-				return source.split("\\s+");
-			} else if ("||".equals(splitSign.trim())) {
-				return source.split("\\|{2}");
-			} else if ("&&".equals(splitSign.trim())) {
-				return source.split("\\&{2}");
-			} else {
-				return source.split(splitSign);
-			}
+			return splitRegex(source, splitSign, false);
 		}
 		List<String[]> filters = matchFilters(source, filterMap);
 		if (filters.isEmpty()) {
-			if ("?".equals(splitSign)) {
-				return source.split("\\?");
-			} else if (",".equals(splitSign)) {
-				return source.split("\\,");
-			} else if (";".equals(splitSign)) {
-				return source.split("\\;");
-			} else if (":".equals(splitSign)) {
-				return source.split("\\:");
-			} else if ("".equals(splitSign.trim())) {
-				return source.split("\\s+");
-			} else if ("||".equals(splitSign.trim())) {
-				return source.split("\\|{2}");
-			} else if ("&&".equals(splitSign.trim())) {
-				return source.split("\\&{2}");
-			} else {
-				return source.split(splitSign);
-			}
+			return splitRegex(source, splitSign, false);
 		}
 		int splitSignLen = splitSign.length();
 		int start = 0;
@@ -724,8 +692,9 @@ public class StringUtil {
 			}
 		}
 		splitResults.add(source.substring(start));
-		String[] resultStr = new String[splitResults.size()];
-		for (int j = 0; j < splitResults.size(); j++) {
+		int resultSize = splitResults.size();
+		String[] resultStr = new String[resultSize];
+		for (int j = 0; j < resultSize; j++) {
 			resultStr[j] = (String) splitResults.get(j);
 		}
 		return resultStr;
@@ -872,7 +841,7 @@ public class StringUtil {
 		String[] humpAry = source.trim().replace("-", "_").split("\\_");
 		String cell;
 		StringBuilder result = new StringBuilder();
-		for (int i = 0; i < humpAry.length; i++) {
+		for (int i = 0, n = humpAry.length; i < n; i++) {
 			cell = humpAry[i];
 			if (i > 0 && !removeDealine) {
 				result.append("_");
@@ -937,7 +906,7 @@ public class StringUtil {
 		StringBuilder result = new StringBuilder();
 		int charInt;
 		int uperCaseCnt = 0;
-		for (int i = 0; i < chars.length; i++) {
+		for (int i = 0, n = chars.length; i < n; i++) {
 			charInt = chars[i];
 			if (charInt >= 65 && charInt <= 90) {
 				uperCaseCnt++;
@@ -1101,13 +1070,16 @@ public class StringUtil {
 		return true;
 	}
 
-	public static void arrayTrim(String[] params) {
-		if (params == null || params.length == 0) {
-			return;
+	public static String[] trimArray(String[] paramNames) {
+		if (paramNames == null || paramNames.length == 0) {
+			return paramNames;
 		}
-		for (int i = 0; i < params.length; i++) {
-			params[i] = params[i].trim();
+		int size = paramNames.length;
+		String[] realParamNames = new String[size];
+		for (int i = 0; i < size; i++) {
+			realParamNames[i] = (paramNames[i] == null) ? null : paramNames[i].trim();
 		}
+		return realParamNames;
 	}
 
 	/**
@@ -1130,13 +1102,17 @@ public class StringUtil {
 			result = source.split("\\;");
 		} else if (":".equals(regex)) {
 			result = source.split("\\:");
-		} else if ("".equals(regex.trim())) {
+		} else if (regex.length() > 0 && "".equals(regex.trim())) {
 			result = source.split("\\s+");
+		} else if ("||".equals(regex)) {
+			result = source.split("\\|{2}");
+		} else if ("&&".equals(regex)) {
+			result = source.split("\\&{2}");
 		} else {
 			result = source.split(regex);
 		}
 		if (doTrim) {
-			for (int i = 0; i < result.length; i++) {
+			for (int i = 0, n = result.length; i < n; i++) {
 				result[i] = result[i].trim();
 			}
 		}
@@ -1158,11 +1134,12 @@ public class StringUtil {
 
 	/**
 	 * 替换正则表达式指定匹配次序的字符
+	 * 
 	 * @param source
 	 * @param pattern
 	 * @param replaceStr
 	 * @param matchCnt
-	 * @param offset 偏移字符数量
+	 * @param offset     偏移字符数量
 	 * @return
 	 */
 	public static String replaceRegex(String source, Pattern pattern, String replaceStr, int matchCnt, int offset) {

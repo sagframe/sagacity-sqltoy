@@ -47,7 +47,7 @@ public class TranslateExtend implements Serializable, java.lang.Cloneable {
 	public String keyColumn;
 
 	/**
-	 * 字段别名
+	 * 字段别名(es、mongo使用)
 	 */
 	public String alias;
 
@@ -72,11 +72,18 @@ public class TranslateExtend implements Serializable, java.lang.Cloneable {
 	public boolean hasLogic = false;
 
 	/**
-	 * 是否动态缓存
+	 * 是否动态缓存(预留)
 	 */
 	public boolean dynamicCache = false;
 
+	/**
+	 * 动态缓存配置的标识(预留)
+	 */
 	public String cacheSid;
+
+	/**
+	 * 动态缓存的列属性(预留)
+	 */
 	public String[] cacheProperties;
 
 	/**
