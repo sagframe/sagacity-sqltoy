@@ -1877,6 +1877,7 @@ public class SqlToyDaoSupport {
 		// 将缓存翻译对应的查询补充到select column 上,形成select keyColumn as viewColumn 模式
 		if (!innerModel.translates.isEmpty()) {
 			String keyColumn;
+			String compareColumn;
 			TranslateExtend extend;
 			for (Translate translate : innerModel.translates) {
 				extend = translate.getExtend();
@@ -1884,6 +1885,14 @@ public class SqlToyDaoSupport {
 				keyColumn = entityMeta.getColumnName(extend.keyColumn);
 				if (keyColumn == null) {
 					keyColumn = extend.keyColumn;
+				}
+
+				// 将对象属性名称设置为表字段名称
+				if (StringUtil.isNotBlank(extend.compareColumn)) {
+					compareColumn = entityMeta.getColumnName(extend.compareColumn);
+					if (compareColumn != null) {
+						translate.setCompareColumn(compareColumn);
+					}
 				}
 				// 保留字处理
 				keyColumn = ReservedWordsUtil.convertWord(keyColumn, null);
