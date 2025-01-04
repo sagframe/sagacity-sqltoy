@@ -86,10 +86,11 @@ public class SqlXMLConfigParse {
 
 	private static DocumentBuilderFactory domFactory = DocumentBuilderFactory.newInstance();
 
-	private static String[] WHERE_COMPARE = { "!=", "==", "=", " in ", " out " };
-	private static String[] WHERE_COMPARE_TYPES = { "neq", "eq", "eq", "in", "out" };
+	private static String[] WHERE_COMPARE = { "!=", "==", "=", " in ", " out ", " neq ", " eq " };
+	private static String[] WHERE_COMPARE_TYPES = { "neq", "eq", "eq", "in", "out", "neq", "eq" };
 	// 增加对应compareStr的切割表达式(2020-10-21 修改为正则表达式，修复split错误)
-	private static String[] WHERE_SPLIT_REGEX = { "\\!\\=", "\\=\\=", "\\=", "\\s+in\\s+", "\\s+out\\s+" };
+	private static String[] WHERE_SPLIT_REGEX = { "\\!\\=", "\\=\\=", "\\=", "\\s+in\\s+", "\\s+out\\s+", "\\s+neq\\s+",
+			"\\s+eq\\s+" };
 	public static HashMap<String, String> filters = new HashMap<String, String>() {
 		/**
 		 * 
@@ -985,9 +986,11 @@ public class SqlXMLConfigParse {
 		}
 		// exclusive 排他性filter 当条件成立时需要修改的参数(即排斥的参数)
 		if (filter.hasAttribute("set-params")) {
-			filterModel.setUpdateParams(StringUtil.trimArray(filter.getAttribute("set-params").toLowerCase().split("\\,")));
+			filterModel.setUpdateParams(
+					StringUtil.trimArray(filter.getAttribute("set-params").toLowerCase().split("\\,")));
 		} else if (filter.hasAttribute("exclusive-params")) {
-			filterModel.setUpdateParams(StringUtil.trimArray(filter.getAttribute("exclusive-params").toLowerCase().split("\\,")));
+			filterModel.setUpdateParams(
+					StringUtil.trimArray(filter.getAttribute("exclusive-params").toLowerCase().split("\\,")));
 		}
 		// exclusive 排他性filter 对排斥的参数设置的值(默认置为null)
 		if (filter.hasAttribute("set-value")) {
@@ -1118,7 +1121,8 @@ public class SqlXMLConfigParse {
 			if (translate.hasAttribute("alias-name")) {
 				aliasNames = StringUtil.trimArray(translate.getAttribute("alias-name").toLowerCase().split("\\,"));
 			} else if (translate.hasAttribute("original-columns")) {
-				aliasNames = StringUtil.trimArray(translate.getAttribute("original-columns").toLowerCase().split("\\,"));
+				aliasNames = StringUtil
+						.trimArray(translate.getAttribute("original-columns").toLowerCase().split("\\,"));
 			}
 			// 翻译key对应value的在缓存数组中对应的列
 			cacheIndexs = null;
@@ -1354,8 +1358,8 @@ public class SqlXMLConfigParse {
 				if (eltName.equals(local.concat("pivot"))) {
 					PivotModel pivotModel = new PivotModel();
 					if (elt.hasAttribute("group-columns")) {
-						pivotModel
-								.setGroupCols(StringUtil.trimArray(elt.getAttribute("group-columns").toLowerCase().split("\\,")));
+						pivotModel.setGroupCols(
+								StringUtil.trimArray(elt.getAttribute("group-columns").toLowerCase().split("\\,")));
 					}
 					if (elt.hasAttribute("category-columns")) {
 						pivotModel.setCategoryCols(
@@ -1431,8 +1435,8 @@ public class SqlXMLConfigParse {
 						summaryModel.setRadixSize(trimParamsToInt(elt.getAttribute("radix-size").split("\\,")));
 					}
 					if (elt.hasAttribute("average-rounding-modes")) {
-						String[] roundingModeAry = StringUtil.trimArray(
-								elt.getAttribute("average-rounding-modes").toUpperCase().split("\\,"));
+						String[] roundingModeAry = StringUtil
+								.trimArray(elt.getAttribute("average-rounding-modes").toUpperCase().split("\\,"));
 						RoundingMode[] roudingModes = new RoundingMode[roundingModeAry.length];
 						String roundingMode;
 						RoundingMode roundMode = null;
