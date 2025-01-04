@@ -92,9 +92,9 @@ public class TranslateExtend implements Serializable, java.lang.Cloneable {
 	public String compareColumn;
 
 	/**
-	 * 逻辑判断的类型，四种:eq\neq\in\out
+	 * 逻辑判断的类型，四种:eq\neq\in\out，默认：eq
 	 */
-	public String compareType;
+	public String compareType = "eq";
 
 	/**
 	 * 逻辑判断的对比参照值
