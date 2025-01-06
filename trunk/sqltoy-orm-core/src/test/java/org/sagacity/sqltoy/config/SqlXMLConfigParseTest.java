@@ -3,6 +3,7 @@ package org.sagacity.sqltoy.config;
 import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
+import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.utils.FileUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,15 +52,23 @@ public class SqlXMLConfigParseTest {
 		SqlToyConfig sqlToyConfig = SqlConfigParseUtils.parseSqlToyConfig(sql, "mysql", SqlType.search);
 		System.err.println(JSON.toJSONString(sqlToyConfig));
 	}
-	
+
 	@Test
 	public void testWith() throws Exception {
 		String sql = "with t1 (a, b) as not  materialized (select * from table),t2(c,d) as materialized(select name from ta) "
-				+ ""
-				+ ""
 				+ "@fast(select * from t1)";
 		SqlToyConfig sqlToyConfig = SqlConfigParseUtils.parseSqlToyConfig(sql, "mysql", SqlType.search);
 		System.err.println(sqlToyConfig.getFastSql(null));
 		System.err.println(sqlToyConfig.getFastWithSql(null));
+	}
+
+	@Test
+	public void testParseWhere() throws Exception {
+		String sql = "orderType in 'abc,efg,zgd'";
+		Translate translate = new Translate("");
+		SqlXMLConfigParse.parseTranslateWhere(translate, sql);
+		System.err.println(translate.getExtend().compareColumn);
+		System.err.println(translate.getExtend().compareType);
+		System.err.println(JSON.toJSON(translate.getExtend().compareValues));
 	}
 }
