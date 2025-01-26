@@ -97,7 +97,7 @@ public class SqlConfigParseUtils {
 	/**
 	 * 先通过分页最小化符合条件的数据集,然后再关联查询,建议@fast(xx)模式,@fastPage(xx) 为兼容旧版
 	 */
-	public final static Pattern FAST_PATTERN = Pattern.compile("(?i)\\@fast(Page)?\\([\\w\\W]+\\)");
+	public final static Pattern FAST_PATTERN = Pattern.compile("(?i)\\@fast(Page)?\\s*\\([\\w\\W]+\\)");
 
 	// 2022-5-24支持(id,type) in ((:idValues,:typeValues))或in(:idValues,:typeValues)模式
 	public final static Pattern IN_PATTERN = Pattern.compile(
