@@ -121,8 +121,56 @@ public class SqlUtilTest {
 	public void testGetFromIndex1() {
 		String sql = "select a, b from (select * from tableb where 1=1 and t.m>100) as b where (a+b)>5 and c.a>(1+5)";
 		int fromIndex = SqlUtil.getSymMarkIndexExcludeKeyWords(sql, "select\\s+", "\\s+from[\\(\\s+]", 0);
-		fromIndex = SqlUtil.getSymMarkIndexExcludeKeyWords(sql, "\\s+from[\\(\\s+]", "\\s+where[\\(\\s+]", fromIndex - 1);
+		fromIndex = SqlUtil.getSymMarkIndexExcludeKeyWords(sql, "\\s+from[\\(\\s+]", "\\s+where[\\(\\s+]",
+				fromIndex - 1);
 		System.err.println(fromIndex);
 	}
 
+	@Test
+	public void testUniformMarks() {
+		String sql = """
+				select *
+				from sqltoy_order_info soi
+				where 1=1
+				-- @fast_start
+				(
+					select * from table1
+				)
+				-- @fast_end
+				and status=1
+								""";
+		sql = SqlUtil.uniformFastMarks(sql);
+		System.err.println(sql);
+	}
+	
+	@Test
+	public void testUniformMarks1() {
+		String sql = """
+				select *
+				from sqltoy_order_info soi
+				where 1=1
+				/*@fast_start*/(
+					select * from table1
+				)/*@fast_end*/
+				and status=1
+								""";
+		sql = SqlUtil.uniformFastMarks(sql);
+		System.err.println(sql);
+	}
+	
+	@Test
+	public void testUniformMarksql2() {
+		String sql = """
+				select *
+				from sqltoy_order_info soi
+				where 1=1
+				-- @fast_start
+				(
+					select * from table1
+				)/*@fast_end*/
+				and status=1
+								""";
+		sql = SqlUtil.uniformFastMarks(sql);
+		System.err.println(sql);
+	}
 }
