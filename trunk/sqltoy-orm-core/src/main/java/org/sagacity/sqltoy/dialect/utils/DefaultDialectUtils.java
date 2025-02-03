@@ -20,6 +20,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -33,6 +34,7 @@ import org.sagacity.sqltoy.SqlToyThreadDataHolder;
 import org.sagacity.sqltoy.callback.DecryptHandler;
 import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
 import org.sagacity.sqltoy.callback.ReflectPropsHandler;
+import org.sagacity.sqltoy.callback.ThreeBiConsumer;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.DataVersionConfig;
@@ -428,6 +430,22 @@ public class DefaultDialectUtils {
 							List result = new ArrayList();
 							DataVersionConfig dataVersion = entityMeta.getDataVersion();
 							final String dataVersionField = (dataVersion == null) ? null : dataVersion.getField();
+							ThreeBiConsumer<String, String[], Object> setValConsumer = (fieldName, forcedFieldNames,
+									fieldValue) -> {
+								// 排除dataVersionField字段避免被重复处理
+								if (dataVersionField == null || !fieldName.equals(dataVersionField)) {
+									Optional.ofNullable(entityMeta.getFieldMeta(fieldName)).ifPresent(fieldMeta -> {
+										try {
+											resultUpdate(conn, finalRs, fieldMeta, fieldValue, dbType, false,
+													(forcedFieldNames != null && Arrays.stream(forcedFieldNames)
+															.anyMatch(x -> fieldName != null
+																	&& fieldName.equalsIgnoreCase(x))));
+										} catch (Exception e) {
+											throw new RuntimeException(e);
+										}
+									});
+								}
+							};
 							while (finalRs.next()) {
 								if (index > 0) {
 									throw new DataAccessException("updateSaveFetch操作只能针对单条记录进行操作,请检查uniqueProps参数设置!");
@@ -464,19 +482,12 @@ public class DefaultDialectUtils {
 									// 执行update反调，实现锁定行记录值的修改
 									updateRowHandler.updateRow(finalRs, index);
 									updateRowHandler.updateRow(finalRs, index, (fieldName, fieldValue) -> {
-										// 排除dataVersionField字段避免被重复处理
-										if (dataVersionField == null || !fieldName.equals(dataVersionField)) {
-											Optional.ofNullable(entityMeta.getFieldMeta(fieldName))
-													.ifPresent(fieldMeta -> {
-														try {
-															resultUpdate(conn, finalRs, fieldMeta, fieldValue, dbType,
-																	false);
-														} catch (Exception e) {
-															throw new RuntimeException(e);
-														}
-													});
-										}
+										setValConsumer.accept(fieldName, null, fieldValue);
 									});
+									updateRowHandler.updateRow(finalRs, index,
+											(fieldName, forcedFieldNames, fieldValue) -> {
+												setValConsumer.accept(fieldName, forcedFieldNames, fieldValue);
+											});
 									// 考虑公共字段修改
 									if (unifyFieldsHandler != null && unifyFieldsHandler.updateUnifyFields() != null) {
 										Map<String, Object> updateProps = unifyFieldsHandler.updateUnifyFields();
@@ -563,18 +574,34 @@ public class DefaultDialectUtils {
 	 */
 	private static void resultUpdate(Connection conn, ResultSet rs, FieldMeta fieldMeta, Object paramValue,
 			Integer dbType, boolean isInsert) throws Exception {
+		resultUpdate(conn, rs, fieldMeta, paramValue, dbType, isInsert, Boolean.FALSE);
+	}
+
+	/**
+	 * @TODO 插入对象
+	 * @param conn
+	 * @param rs
+	 * @param fieldMeta
+	 * @param paramValue
+	 * @param dbType
+	 * @param isInsert
+	 * @param isForcedUpdate 是否强制更新
+	 * @throws Exception
+	 */
+	private static void resultUpdate(Connection conn, ResultSet rs, FieldMeta fieldMeta, Object paramValue,
+			Integer dbType, boolean isInsert, boolean isForcedUpdate) throws Exception {
 		if (!fieldMeta.isPK() && isInsert) {
 			paramValue = SqlUtilsExt.getDefaultValue(paramValue, fieldMeta.getDefaultValue(), fieldMeta.getType(),
 					fieldMeta.isNullable());
 		}
-		// 插入设置具体列的值
-		if (paramValue == null) {
-			return;
-		}
 		String tmpStr;
 		int jdbcType = fieldMeta.getType();
 		String columnName = fieldMeta.getColumnName();
-		if (paramValue instanceof java.lang.String) {
+		if (paramValue == null) {
+			if (isForcedUpdate) {
+				rs.updateNull(columnName);
+			}
+		} else if (paramValue instanceof java.lang.String) {
 			tmpStr = (String) paramValue;
 			// clob 类型只有oracle、db2、dm、oceanBase等数据库支持
 			if (jdbcType == java.sql.Types.CLOB) {

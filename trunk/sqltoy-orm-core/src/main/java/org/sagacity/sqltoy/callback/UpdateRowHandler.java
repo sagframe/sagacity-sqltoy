@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package org.sagacity.sqltoy.callback;
 
@@ -24,6 +24,17 @@ public interface UpdateRowHandler {
 	}
 
 	default void updateRow(ResultSet rs, int index, BiConsumer<String, Object> setValConsumer) throws Exception {
+
+	}
+
+	/**
+	 *
+	 * @param rs
+	 * @param index
+	 * @param setValConsumer, <属性, 强制更新字段, 值>
+	 * @throws Exception
+	 */
+	default void updateRow(ResultSet rs, int index, ThreeBiConsumer<String, String[], Object> setValConsumer) throws Exception {
 
 	}
 }

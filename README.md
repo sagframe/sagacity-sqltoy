@@ -10,6 +10,7 @@
 
 # WORD版详细文档(完整)
 ## 请见:docs/睿智平台SqlToy5.6 使用手册.doc
+# [在线文档(正在施工)](https://sagframe.github.io/sqltoy-docs/)
 ## xml中sql查询完整配置 
 https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 
@@ -58,7 +59,6 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 	<version>5.6.37</version>
 </dependency>
 ```
-* 5.2.112 (jdk1.8+)                 发版日期: 2024-12-12
 
 # 1. 前言
 ## 1.1 sqltoy-orm是什么

@@ -97,7 +97,7 @@ public class SqlConfigParseUtils {
 	/**
 	 * 先通过分页最小化符合条件的数据集,然后再关联查询,建议@fast(xx)模式,@fastPage(xx) 为兼容旧版
 	 */
-	public final static Pattern FAST_PATTERN = Pattern.compile("(?i)\\@fast(Page)?\\([\\w\\W]+\\)");
+	public final static Pattern FAST_PATTERN = Pattern.compile("(?i)\\@fast(Page)?\\s*\\([\\w\\W]+\\)");
 
 	// 2022-5-24支持(id,type) in ((:idValues,:typeValues))或in(:idValues,:typeValues)模式
 	public final static Pattern IN_PATTERN = Pattern.compile(
@@ -1271,8 +1271,9 @@ public class SqlConfigParseUtils {
 		}
 		// 是否忽视空记录
 		sqlToyConfig.setIgnoreEmpty(StringUtil.matches(querySql, SqlToyConstants.IGNORE_EMPTY_REGEX));
+		//2025-2-3 增加SqlUtil.uniformFastMarks逻辑,通过/*@fast_start*/注释方式代替@fast便于sql调试
 		// 清理sql中的一些注释、以及特殊的符号
-		String originalSql = SqlUtil.clearMistyChars(SqlUtil.clearMark(querySql), BLANK).concat(BLANK);
+		String originalSql = SqlUtil.clearMistyChars(SqlUtil.clearMark(SqlUtil.uniformFastMarks(querySql)), BLANK).concat(BLANK);
 		// 对sql中的函数进行特定数据库方言转换
 		originalSql = FunctionUtils.getDialectSql(originalSql, dialect);
 		// 对关键词根据数据库类型进行转换,比如mysql的 ``变成mssql时变为[]

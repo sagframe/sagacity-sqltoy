@@ -161,14 +161,18 @@ public class SqltoyAutoConfiguration {
 		String sqlResourcesDir = properties.getSqlResourcesDir();
 		String charset = StringUtil.ifBlank(properties.getEncoding(), "UTF-8");
 		if (sqlResourcesDir != null && sqlResourcesDir.length() > 0) {
-			Set<String> sqlDirSet = this.strSplitTrim(sqlResourcesDir);
-			for (String dir : sqlDirSet) {
-				SqlScriptLoader.checkSqlResourcesDir(dir);
-				this.scanResources(resList, dir, "*.sql.xml", charset);
-			}
-			// 设置dir已经转为resourceList标记
-			SqlScriptLoader.setResourcesDirToList(true);
 			sqlToyContext.setSqlResourcesDir(sqlResourcesDir);
+			//update 2025-1-22 只在原生场景下生效sql文件以Resource形式加载(原因:非原生场景下支持文件更新检测重新加载)
+			// 当aot模式下需要调整配置文件到具体的每个文件
+			if (System.getProperty("org.graalvm.nativeimage.imagecode") != null) {
+				Set<String> sqlDirSet = this.strSplitTrim(sqlResourcesDir);
+				for (String dir : sqlDirSet) {
+					SqlScriptLoader.checkSqlResourcesDir(dir);
+					this.scanResources(resList, dir, "*.sql.xml", charset);
+				}
+				// 设置dir已经转为resourceList标记
+				SqlScriptLoader.setResourcesDirToList(true);
+			}
 		}
 		if (properties.getSqlResources() != null && properties.getSqlResources().length > 0) {
 			for (String prop : properties.getSqlResources()) {
