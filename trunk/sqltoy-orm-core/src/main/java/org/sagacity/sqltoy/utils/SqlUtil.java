@@ -112,6 +112,11 @@ public class SqlUtil {
 	// union 匹配模式
 	public static final Pattern UNION_PATTERN = Pattern.compile("(?i)\\W+union\\W+");
 	public final static String BLANK = " ";
+	// 为了便于sql调试(@fast不方便调试)利用/*@fast_start*/代替@fast标记位置
+	private final static String[] FAST_START_REGEXS = { "(?i)\\-{2}\\s+\\@fast\\_start",
+			"(?i)\\/\\*\\s*\\@fast\\_start\\s*\\*\\/" };
+	private final static String[] FAST_END_REGEXS = { "(?i)\\-{2}\\s+\\@fast\\_end",
+			"(?i)\\/\\*\\s*\\@fast\\_end\\s*\\*\\/" };
 
 	/**
 	 * 存放转换后的sql
@@ -2316,4 +2321,40 @@ public class SqlUtil {
 		return endRegIndex;
 	}
 
+	/**
+	 * 统一将sql中@fast的位置标识注释符号转化为@fast，目的是便于sql调试
+	 * 
+	 * @param sql
+	 * @return
+	 */
+	public static String uniformFastMarks(String sql) {
+		int startRegexIndex = 0;
+		int endRegexIndex = 0;
+		int fastStart = -1;
+		int fastEnd = -1;
+		int startRegexLength = FAST_START_REGEXS.length;
+		int endRegexLength = FAST_END_REGEXS.length;
+		while (startRegexIndex < startRegexLength) {
+			fastStart = StringUtil.matchIndex(sql, FAST_START_REGEXS[startRegexIndex]);
+			if (fastStart >= 0) {
+				break;
+			}
+			startRegexIndex++;
+		}
+		if (fastStart == -1) {
+			return sql;
+		}
+		while (endRegexIndex < endRegexLength) {
+			fastEnd = StringUtil.matchIndex(sql, FAST_END_REGEXS[endRegexIndex]);
+			if (fastEnd > 0) {
+				break;
+			}
+			endRegexIndex++;
+		}
+		if (fastEnd > fastStart) {
+			return sql.replaceFirst(FAST_START_REGEXS[startRegexIndex], "@fast")
+					.replaceFirst(FAST_END_REGEXS[endRegexIndex], " ");
+		}
+		return sql;
+	}
 }
