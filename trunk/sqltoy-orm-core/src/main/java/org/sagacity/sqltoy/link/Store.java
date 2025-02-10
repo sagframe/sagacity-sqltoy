@@ -38,7 +38,10 @@ public class Store extends BaseLink {
 	 */
 	private Class[] resultTypes;
 
-	private boolean moreResult = false;
+	/**
+	 * 是否返回多个结果集合
+	 */
+	private Boolean moreResult;
 
 	/**
 	 * 存储过程语句({?=call xxxStore(? in,? in,? out)})
@@ -71,8 +74,8 @@ public class Store extends BaseLink {
 	}
 
 	public Store resultTypes(Class... resultTypes) {
-		//多个结果类型，则默认表示存储过程返回多个结果集
-		if (resultTypes != null && resultTypes.length > 1) {
+		// 多个结果类型且moreResult没有被设置过值，则默认表示存储过程返回多个结果集
+		if (this.moreResult == null && resultTypes != null && resultTypes.length > 1) {
 			this.moreResult = true;
 		}
 		this.resultTypes = resultTypes;
@@ -114,6 +117,6 @@ public class Store extends BaseLink {
 		}
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql, SqlType.search, "", null);
 		return dialectFactory.executeStore(sqlToyContext, sqlToyConfig, inParamsValue, outParamsType, resultTypes,
-				moreResult, getDataSource(sqlToyConfig));
+				(moreResult == null) ? false : moreResult.booleanValue(), getDataSource(sqlToyConfig));
 	}
 }
