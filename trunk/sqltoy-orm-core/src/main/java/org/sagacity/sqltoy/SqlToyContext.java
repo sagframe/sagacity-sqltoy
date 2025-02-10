@@ -219,9 +219,9 @@ public class SqlToyContext {
 	private boolean debug = false;
 
 	/**
-	 * 超时打印sql(毫秒,默认30秒)
+	 * 超时打印sql(毫秒,默认8秒)
 	 */
-	private int printSqlTimeoutMillis = 30000;
+	private int printSqlTimeoutMillis = 8000;
 
 	/**
 	 * 数据修改提示的记录数量阈值，默认2000条

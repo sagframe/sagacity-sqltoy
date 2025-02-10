@@ -30,6 +30,7 @@ public class StoreResult<T> extends DataSetResult<T> implements Serializable {
 
 	/**
 	 * 针对一个存储过程返回多个结果集合
+	 * getRow()只返回第一个集合，moreResults是包含getRow()的第一个集合全部集合
 	 */
 	private List[] moreResults;
 

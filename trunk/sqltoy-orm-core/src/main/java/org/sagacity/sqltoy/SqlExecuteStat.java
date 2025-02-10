@@ -42,9 +42,9 @@ public class SqlExecuteStat {
 	private static boolean debug = false;
 
 	/**
-	 * 打印慢sql(单位毫秒,默认超过18秒)
+	 * 打印慢sql(单位毫秒,默认超过8秒)
 	 */
-	private static int printSqlTimeoutMillis = 18000;
+	private static int printSqlTimeoutMillis = 8000;
 
 	// 用于拟合sql中的条件值表达式(前后都以非字符和数字为依据目的是最大幅度的避免参数值里面存在问号,实际执行过程中这个问题已经被规避,但调试打印参数带入无法规避)
 	private final static Pattern ARG_PATTERN = Pattern.compile("\\W\\?\\W");
