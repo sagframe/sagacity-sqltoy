@@ -89,7 +89,7 @@ public class SqlToyContextProperties implements Serializable {
 	private Integer pageFetchSizeLimit;
 
 	/**
-	 * 超时打印sql(毫秒,默认30秒)
+	 * 超时打印sql(毫秒,默认8秒)
 	 */
 	private Integer printSqlTimeoutMillis;
 

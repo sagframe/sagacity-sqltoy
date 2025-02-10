@@ -71,6 +71,10 @@ public class Store extends BaseLink {
 	}
 
 	public Store resultTypes(Class... resultTypes) {
+		//多个结果类型，则默认表示存储过程返回多个结果集
+		if (resultTypes != null && resultTypes.length > 1) {
+			this.moreResult = true;
+		}
 		this.resultTypes = resultTypes;
 		return this;
 	}
