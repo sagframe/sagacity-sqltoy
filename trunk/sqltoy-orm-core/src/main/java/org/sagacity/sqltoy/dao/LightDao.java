@@ -63,27 +63,37 @@ public interface LightDao {
 	public Mongo mongo();
 
 	/**
-	 * @TODO 提供链式操作模式删除操作集合
-	 * 
+	 * @TODO 提供链式操作模式删除操作集合 示例:
+	 *       <li>lightDao.delete().dataSource(xxxx).one(entity);</li>
+	 *       <li>lightDao.delete().batchSize(1000).autoCommit(true).many(entities);</li>
+	 *       <li>lightDao.delete().parallelConfig(ParallelConfig.create().groupSize(5000).maxThreads(10)).many(entities);</li>
 	 * @return
 	 */
 	public Delete delete();
 
 	/**
-	 * @TODO 提供链式操作模式修改操作集合
+	 * @TODO 提供链式操作模式修改记录
+	 *       <li>lightDao.update().dataSource(xxx).forceUpdateProps("status").one(entity)</li>
+	 *       <li>lightDao.update().dataSource(xxx).forceUpdateProps("status").many(entities)</li>
+	 *       <li>大批量并行:lightDao.update().parallelConfig(ParallelConfig.create().groupSize(5000).maxThreads(10)).forceUpdateProps("status").many(entities)</li>
 	 * @return
 	 */
 	public Update update();
 
 	/**
-	 * @TODO 提供链式操作模式存储过程操作集合
+	 * @TODO 提供链式操作模式存储过程操作集合,示例:
+	 *       <li>lightDao.store().dataSource(xxx).sql(xxxStoreSql).inParams(x,b,c).resultTypes(xxx.Class).submit();</li>
 	 * @return
 	 */
 	public Store store();
 
 	/**
-	 * @TODO 提供链式操作模式保存操作集合,如:lightDao.save().dataSource(xxx).one(entity)
-	 *       lightDao.save().dataSource(xxx).many(entities)
+	 * @TODO 提供链式操作模式保存操作集合,如:
+	 *       <li>lightDao.save().dataSource(xxx).one(entity)</li>
+	 *       <li>lightDao.save().dataSource(xxx).many(entities)</li>
+	 *       <li>lightDao.save().dataSource(xxx).saveMode(SaveMode.UPDATE).many(entities)</li>
+	 *       <li>大批量并行:lightDao.save().parallelConfig(ParallelConfig.create().groupSize(5000).maxThreads(10)).many(entities)</li>
+	 * 
 	 * @return
 	 */
 	public Save save();
@@ -96,20 +106,26 @@ public interface LightDao {
 
 	/**
 	 * @TODO 提供链式操作模式对象加载操作集合
+	 *       <li>lightDao.load().dataSource(xxxx).lock(LockMode.UPGRADE_NOWAIT).one(new
+	 *       StaffInfo("S0001"));</li>
+	 *       <li>lightDao.load().parallelConfig(ParallelConfig.create().groupSize(5000).maxThreads(10)).many(entities);</li>
+	 *       <li>加载主对象，同时级联加载子对象:lightDao.load().cascade(OrderItem.class,OrderDeliveryPlan.class).many(entities);</li>
+	 *       <li>只根据主对象的主键级联加载子对象:lightDao.load().cascade(OrderItem.class,OrderDeliveryPlan.class).onlyCascade().many(entities);</li>
 	 * @return
 	 */
 	public Load load();
 
 	/**
 	 * @TODO 提供链式操作模式唯一性验证操作集合
-	 * 
+	 *       <li>lightDao.unique().entity(entity).fields("staffCode","tenantId").submit();</li>
 	 * @return
 	 */
 	public Unique unique();
 
 	/**
 	 * @TODO 提供链式操作模式树形表结构封装操作集合
-	 * 
+	 *       <li>lightDao.treeTable().treeModel(new
+	 *       TreeTableModel(organInfoVO).idField("organCode").pidField("organPid")).submit();</li>
 	 * @return
 	 */
 	public TreeTable treeTable();
@@ -187,7 +203,7 @@ public interface LightDao {
 	 * @param inParamValues
 	 * @param outParamsType 可以为null
 	 * @param resultType    可以是VO、Map.class、LinkedHashMap.class、Array.class,null(二维List)
-	 * @return StoreResult
+	 * @return StoreResult 用:getRows()获得查询结果
 	 */
 	public StoreResult executeStore(String storeSqlOrKey, Object[] inParamValues, Integer[] outParamsType,
 			Class resultType);
@@ -198,7 +214,7 @@ public interface LightDao {
 	 * @param inParamValues
 	 * @param outParamsType 可以为null
 	 * @param resultTypes   可以是VO、Map.class、LinkedHashMap.class、Array.class,null(二维List)
-	 * @return StoreResult
+	 * @return StoreResult 用:getRows()获取主记录、List[] getMoreResults()获取全部结果
 	 */
 	public StoreResult executeMoreResultStore(String storeSqlOrKey, Object[] inParamValues, Integer[] outParamsType,
 			Class... resultTypes);
@@ -248,9 +264,10 @@ public interface LightDao {
 	 */
 	public Long updateDeeply(Serializable entity);
 
+	// 注意:这里的查询核心目的是数据逻辑校验，页面展示性查询不用用此方法
 	// sqltoy的updateFetch是jpa没有的，可以深入了解其原理，一次交互完成查询、锁定、修改并返回修改后结果
 	/**
-	 * @todo 获取并锁定数据并进行修改(只支持针对单表查询，查询语句要简单)
+	 * @todo 获取并锁定数据并进行修改(一般为简单查询，查询的目的是锁住记录进行:逻辑校验(如扣减后不能<0)，符合条件进行修改)
 	 * @param queryExecutor
 	 * @param updateRowHandler
 	 * @return
@@ -276,9 +293,12 @@ public interface LightDao {
 
 	/**
 	 * @TODO 基于对象单表对象查询进行数据更新
+	 *       <li>自更新:EntityUpdate.create().set("totalAmt=totalAmt+?",10).where("staffName
+	 *       like ?").values("张")</li>
+	 *       <li>常规:EntityUpdate.create().set("createBy", "S0001").where("staffName
+	 *       like ?").values("张")</li>
 	 * @param entityClass
-	 * @param entityUpdate 例如:EntityUpdate.create().set("createBy",
-	 *                     "S0001").where("staffName like ?").values("张")
+	 * @param entityUpdate
 	 * @return Long 数据库发生变更的记录量
 	 */
 	public Long updateByQuery(Class entityClass, EntityUpdate entityUpdate);
@@ -287,8 +307,8 @@ public interface LightDao {
 	 * @todo 级联修改数据并返回数据库记录变更数量
 	 * @param entity
 	 * @param forceUpdateProps
-	 * @param forceCascadeClasses
-	 * @param subTableForceUpdateProps
+	 * @param forceCascadeClasses      级联对象为null或空时，是否表示强制删除级联记录
+	 * @param subTableForceUpdateProps 设置级联修改对象强制修改的属性
 	 * @return Long 数据库发生变更的记录量
 	 */
 	public Long updateCascade(Serializable entity, String[] forceUpdateProps, Class[] forceCascadeClasses,
@@ -726,6 +746,8 @@ public interface LightDao {
 
 	/**
 	 * @todo 构造树形表的节点路径、层次等级、是否叶子节点等必要信息
+	 *       <li>lightDao.wrapTreeTableRoute(new
+	 *       TreeTableModel(organInfoVO).idField("organCode").pidField("organPid"));</li>
 	 * @param treeTableModel
 	 * @return
 	 */
@@ -793,7 +815,7 @@ public interface LightDao {
 	 * @param <T>
 	 * @param cacheName
 	 * @param cacheType  如是数据字典,则传入字典类型否则为null即可
-	 * @param reusltType
+	 * @param reusltType 缓存定义时的sql属性名称或自定义的properties属性要跟resultType的属性对应
 	 * @return
 	 */
 	public <T> List<T> getTranslateCache(String cacheName, String cacheType, Class<T> reusltType);
@@ -809,7 +831,7 @@ public interface LightDao {
 	/**
 	 * @todo 对数据集合通过反调函数对具体属性进行翻译
 	 *       <p>
-	 *       <li>sqlToyLazyDao.translate(staffVOs<StaffInfoVO>, "staffIdName",
+	 *       <li>lightDao.translate(staffVOs<StaffInfoVO>, "staffIdName",
 	 *       <li>----new TranslateHandler() {
 	 *       <li>----//告知key值
 	 *       <li>----public Object getKey(Object row) {
@@ -824,7 +846,7 @@ public interface LightDao {
 	 * @param dataSet        数据集合
 	 * @param cacheName      缓存名称
 	 * @param cacheType      例如数据字典存在分类的缓存填写字典分类，其它的如员工、机构等填null
-	 * @param cacheNameIndex
+	 * @param cacheNameIndex 默认为1，缓存名称在缓存数组的第几列(因为有:名称、别名、简称、全称之说)
 	 * @param handler
 	 */
 	public void translate(Collection dataSet, String cacheName, String cacheType, Integer cacheNameIndex,

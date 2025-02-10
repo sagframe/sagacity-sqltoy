@@ -2351,6 +2351,10 @@ public class SqlUtil {
 			}
 			endRegexIndex++;
 		}
+		// update 2025-2-5 支持只有-- @fast_start标记场景
+		if (fastEnd == -1) {
+			return sql.replaceFirst(FAST_START_REGEXS[startRegexIndex], "@fast");
+		}
 		if (fastEnd > fastStart) {
 			return sql.replaceFirst(FAST_START_REGEXS[startRegexIndex], "@fast")
 					.replaceFirst(FAST_END_REGEXS[endRegexIndex], " ");

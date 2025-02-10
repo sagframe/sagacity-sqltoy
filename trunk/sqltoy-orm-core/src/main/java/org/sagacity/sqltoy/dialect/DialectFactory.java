@@ -1661,40 +1661,52 @@ public class DialectFactory {
 		try {
 			SqlExecuteStat.start(BeanUtil.getEntityClass(entityClass).getName(), OperateDetailType.loadAll,
 					Long.valueOf(entities.size()), sqlToyContext.isDebug());
+			final boolean parallelOnlySubTable = (onlySubTable == null) ? false : onlySubTable.booleanValue();
+			final List<Class> cascadeTypesList = (cascadeTypes == null) ? null
+					: CollectionUtil.arrayToList(cascadeTypes);
+			final int fetchSize = getFetchSize(-1);
 			// 一般in的最大数量是1000
 			int batchSize = SqlToyConstants.getLoadAllBatchSize();
 			// 对可能存在的配置参数定义错误进行校正,最大控制在1000内
-			if (batchSize > 1000 || batchSize < 1) {
-				batchSize = 1000;
-			}
-			int totalSize = entities.size();
-			int batch = (totalSize + batchSize - 1) / batchSize;
-			List result = new ArrayList();
-			List batchEntities;
-			for (int i = 0; i < batch; i++) {
-				// 切取单个批次的记录
-				batchEntities = entities.subList(i * batchSize, (i == batch - 1) ? totalSize : (i + 1) * batchSize);
-				// 分库分表并行执行,并返回结果
-				result.addAll(ParallelUtils.execute(sqlToyContext, batchEntities, false, false, SqlType.search,
-						dataSource, parallelConfig, (context, batchModel) -> {
-							ShardingModel shardingModel = batchModel.getShardingModel();
-							return (List) DataSourceUtils.processDataSource(context, shardingModel.getDataSource(),
-									new DataSourceCallbackHandler() {
-										@Override
-										public void doConnection(Connection conn, Integer dbType, String dialect)
-												throws Exception {
-											SqlExecuteStat.setDialect(dialect);
+			final int realBatchSize = (batchSize > 1000 || batchSize < 1) ? 1000 : batchSize;
+			List result = ParallelUtils.execute(sqlToyContext, entities, false, false, SqlType.search, dataSource,
+					parallelConfig, (context, batchModel) -> {
+						ShardingModel shardingModel = batchModel.getShardingModel();
+						return (List) DataSourceUtils.processDataSource(context, shardingModel.getDataSource(),
+								new DataSourceCallbackHandler() {
+									@Override
+									public void doConnection(Connection conn, Integer dbType, String dialect)
+											throws Exception {
+										SqlExecuteStat.setDialect(dialect);
+										List parallelEntities = batchModel.getEntities();
+										int totalSize = parallelEntities.size();
+										if (totalSize <= realBatchSize) {
+											SqlExecuteStat.debug("单一批次加载", "加载记录数量:{}<=分批量:{}!", totalSize,
+													realBatchSize);
 											this.setResult(getDialectSqlWrapper(dbType).loadAll(context,
-													batchModel.getEntities(),
-													(onlySubTable == null) ? false : onlySubTable.booleanValue(),
-													(cascadeTypes == null) ? null
-															: CollectionUtil.arrayToList(cascadeTypes),
-													lockMode, conn, dbType, dialect, shardingModel.getTableName(),
-													getFetchSize(-1), -1));
+													parallelEntities, parallelOnlySubTable, cascadeTypesList, lockMode,
+													conn, dbType, dialect, shardingModel.getTableName(), fetchSize,
+													-1));
+										} else {
+											int batchCnt = (totalSize + realBatchSize - 1) / realBatchSize;
+											List parallelResult = new ArrayList();
+											List batchEntities;
+											SqlExecuteStat.debug("分批加载", "总记录数量:{},分:{}批!", totalSize, batchCnt);
+											for (int i = 0; i < batchCnt; i++) {
+												batchEntities = parallelEntities.subList(i * realBatchSize,
+														(i == batchCnt - 1) ? totalSize : (i + 1) * realBatchSize);
+												SqlExecuteStat.debug("分批加载", "加载第:{}批次的:{}条记录!", i + 1,
+														batchEntities.size());
+												parallelResult.addAll(getDialectSqlWrapper(dbType).loadAll(context,
+														batchEntities, parallelOnlySubTable, cascadeTypesList, lockMode,
+														conn, dbType, dialect, shardingModel.getTableName(), fetchSize,
+														-1));
+											}
+											this.setResult(parallelResult);
 										}
-									});
-						}));
-			}
+									}
+								});
+					});
 			SqlExecuteStat.debug("执行结果", "查询结果记录:{} 条!", result.size());
 			return result;
 		} catch (Exception e) {
