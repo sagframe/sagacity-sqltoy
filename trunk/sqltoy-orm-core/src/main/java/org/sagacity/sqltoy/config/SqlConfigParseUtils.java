@@ -1271,7 +1271,7 @@ public class SqlConfigParseUtils {
 		}
 		// 是否忽视空记录
 		sqlToyConfig.setIgnoreEmpty(StringUtil.matches(querySql, SqlToyConstants.IGNORE_EMPTY_REGEX));
-		
+		//2025-2-3 增加SqlUtil.uniformFastMarks逻辑,通过/*@fast_start*/注释方式代替@fast便于sql调试
 		// 清理sql中的一些注释、以及特殊的符号
 		String originalSql = SqlUtil.clearMistyChars(SqlUtil.clearMark(SqlUtil.uniformFastMarks(querySql)), BLANK).concat(BLANK);
 		// 对sql中的函数进行特定数据库方言转换
