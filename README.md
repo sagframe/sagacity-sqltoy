@@ -120,16 +120,12 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 
    //深度修改,不管是否null全部字段修改
    lightDao.updateDeeply(staffInfo);
-
-   List<StaffInfoVO> staffList = new ArrayList<StaffInfoVO>();
-   StaffInfoVO staffInfo = new StaffInfoVO();
-   StaffInfoVO staffInfo1 = new StaffInfoVO();
-   staffList.add(staffInfo);
-   staffList.add(staffInfo1);
    //批量保存或修改
    lightDao.saveOrUpdateAll(staffList);
    //批量保存
    lightDao.saveAll(staffList);
+   //并行保存
+   lightDao.save().parallelConfig(ParallelConfig.create().groupSize(5000).maxThreads(10)).many(entities)
    ...............
    lightDao.loadByIds(StaffInfoVO.class,"S2007")
    //唯一性验证
