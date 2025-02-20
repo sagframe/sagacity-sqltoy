@@ -10,7 +10,7 @@
 
 # WORD版详细文档(完整)
 ## 请见:docs/睿智平台SqlToy5.6 使用手册.doc
-# [在线文档(35%正在施工)](https://sagframe.github.io/sqltoy-docs/)
+<!-- # [在线文档(35%正在施工)](https://sagframe.github.io/sqltoy-docs/) -->
 ## xml中sql查询完整配置 
 https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 
