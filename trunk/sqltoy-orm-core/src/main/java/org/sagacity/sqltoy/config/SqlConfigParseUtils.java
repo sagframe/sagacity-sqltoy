@@ -520,7 +520,7 @@ public class SqlConfigParseUtils {
 		int ifLogicSignStart;
 		// sql内容体是否以and 或 or 结尾
 		boolean isEndWithAndOr = false;
-		// 0 无if、else等1:单个if；>1：if+else等
+		// 0:无if、else等;1:单个if; >1:if+else等
 		int ifLogicCnt = 0;
 		boolean isDynamicSql;
 		while (pseudoMarkStart != -1) {
@@ -877,6 +877,7 @@ public class SqlConfigParseUtils {
 		String argValue;
 		boolean overSize = false;
 		int paramCnt = 0;
+		Object loopAsValue;
 		while (matched) {
 			end = m.end();
 			partSql = ARG_NAME;
@@ -886,17 +887,20 @@ public class SqlConfigParseUtils {
 			paramCnt = StringUtil.matchCnt(m.group(), ARG_REGEX);
 			overSize = false;
 			if (paramCnt > 1) {
-				int nullCnt = 0;
 				int startIndex = parameterMarkCnt - paramCnt;
 				// 普通非数组类型数量
 				int commTypeCnt = 0;
+				int arrayTypeCnt = 0;
 				for (int i = 0; i < paramCnt; i++) {
-					if (paramsValue[startIndex + i] == null) {
-						nullCnt++;
+					loopAsValue = paramsValue[startIndex + i];
+					if (loopAsValue == null) {
 						commTypeCnt++;
-					} else if (!paramsValue[startIndex + i].getClass().isArray()
-							&& !(paramsValue[startIndex + i] instanceof Collection)) {
-						commTypeCnt++;
+					} else {
+						if (loopAsValue.getClass().isArray() || loopAsValue instanceof Collection) {
+							arrayTypeCnt++;
+						} else {
+							commTypeCnt++;
+						}
 					}
 				}
 				// 直接组织好的(?,?,?) 语句
@@ -909,17 +913,39 @@ public class SqlConfigParseUtils {
 						partSql = "(".concat(partSql).concat(")");
 					}
 				} else {
-					if ((nullCnt > 0 && nullCnt < paramCnt) || commTypeCnt > 0) {
+					// update 2025-02-26 (a,b) in (:list.item,:staffId) 只需要其中一个值为数组即可
+					if (arrayTypeCnt == 0) {
 						throw new IllegalArgumentException(
-								"多字段in的:(field1,field2) in (:field1Set,:field2Set) 对应参数值非法，要求是数组类型且不能为null!");
+								"多字段in的:(field1,field2) in (:field1Set,:field2Set) 对应参数值非法，要求其中必须有一个参数是数组且不能为null!");
 					}
 					String loopArgs = "(".concat(StringUtil.loopAppendWithSign(ARG_NAME, ",", paramCnt)).concat(")");
 					List<Object[]> inParamsList = new ArrayList<Object[]>();
+					// 取in中的数组长度
+					int inParamSize = 1;
 					for (int i = 0; i < paramCnt; i++) {
-						if (paramsValue[startIndex + i] instanceof Collection) {
-							inParamArray = ((Collection) paramsValue[startIndex + i]).toArray();
+						loopAsValue = paramsValue[startIndex + i];
+						if (loopAsValue != null) {
+							if (loopAsValue instanceof Collection) {
+								inParamSize = ((Collection) loopAsValue).size();
+								break;
+							} else if (loopAsValue instanceof Object[]) {
+								inParamSize = ((Object[]) loopAsValue).length;
+								break;
+							}
+						}
+					}
+					for (int i = 0; i < paramCnt; i++) {
+						loopAsValue = paramsValue[startIndex + i];
+						if (loopAsValue instanceof Collection) {
+							inParamArray = ((Collection) loopAsValue).toArray();
+						} else if (loopAsValue instanceof Object[]) {
+							inParamArray = CollectionUtil.convertArray(loopAsValue);
 						} else {
-							inParamArray = CollectionUtil.convertArray(paramsValue[startIndex + i]);
+							// 非数组，构造成等长数组
+							inParamArray = new Object[inParamSize];
+							for (int k = 0; k < inParamSize; k++) {
+								inParamArray[k] = loopAsValue;
+							}
 						}
 						inParamsList.add(inParamArray);
 						if (i > 0 && (inParamArray.length != inParamsList.get(i - 1).length)) {
@@ -1271,9 +1297,10 @@ public class SqlConfigParseUtils {
 		}
 		// 是否忽视空记录
 		sqlToyConfig.setIgnoreEmpty(StringUtil.matches(querySql, SqlToyConstants.IGNORE_EMPTY_REGEX));
-		//2025-2-3 增加SqlUtil.uniformFastMarks逻辑,通过/*@fast_start*/注释方式代替@fast便于sql调试
+		// 2025-2-3 增加SqlUtil.uniformFastMarks逻辑,通过/*@fast_start*/注释方式代替@fast便于sql调试
 		// 清理sql中的一些注释、以及特殊的符号
-		String originalSql = SqlUtil.clearMistyChars(SqlUtil.clearMark(SqlUtil.uniformFastMarks(querySql)), BLANK).concat(BLANK);
+		String originalSql = SqlUtil.clearMistyChars(SqlUtil.clearMark(SqlUtil.uniformFastMarks(querySql)), BLANK)
+				.concat(BLANK);
 		// 对sql中的函数进行特定数据库方言转换
 		originalSql = FunctionUtils.getDialectSql(originalSql, dialect);
 		// 对关键词根据数据库类型进行转换,比如mysql的 ``变成mssql时变为[]

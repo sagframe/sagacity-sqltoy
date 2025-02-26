@@ -26,11 +26,13 @@ import org.sagacity.sqltoy.demo.vo.TypeShowCase;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.model.IgnoreCaseLinkedMap;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
+import org.sagacity.sqltoy.model.MapKit;
 import org.sagacity.sqltoy.model.MaskType;
 import org.sagacity.sqltoy.model.SaveMode;
 import org.sagacity.sqltoy.model.SecureType;
 
 import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONArray;
 
 public class BeanUtilTest {
 
@@ -438,5 +440,16 @@ public class BeanUtilTest {
 		BeanUtil.setProperty(dataRange, "lastUpdateTime", lastUpdateTime);
 
 		DateUtil.parseLocalDateTime(lastUpdateTime, "yyyyMMdd HHmmss.SSSSSS");
+	}
+
+	@Test
+	public void testGetValues() {
+		String jsonString = "[{\"name\":\"张三\",\"id\":\"10001\"},{\"name\":\"李四\",\"id\":\"10002\"}]";
+		JSONArray jsonArray = JSON.parseArray(jsonString);
+		System.err.println("jsonArray instanceof:" + (jsonArray instanceof List));
+		Object[] resultObjects = BeanUtil.reflectBeanToAry(
+				MapKit.keys("itemList", "staffId").values(jsonArray, "S0001"), "itemList.name", "staffId");
+
+		System.err.println(JSON.toJSONString(resultObjects[0]));
 	}
 }
