@@ -73,9 +73,15 @@ public class PageOptimizeUtils {
 			}
 			if (value == null) {
 				cacheKey.append("null");
-			} else if ((value instanceof Object[]) || value.getClass().isArray() || (value instanceof List)) {
-				Object[] arrayValue = (value instanceof List) ? ((List) value).toArray()
-						: CollectionUtil.convertArray(value);
+			} else if ((value instanceof Object[]) || (value instanceof Iterable) || value.getClass().isArray()) {
+				Object[] arrayValue = null;
+				if (value instanceof List) {
+					arrayValue = ((List) value).toArray();
+				} else if (value instanceof Iterable) {
+					arrayValue = CollectionUtil.iterableToArray((Iterable) value);
+				} else {
+					arrayValue = CollectionUtil.convertArray(value);
+				}
 				cacheKey.append("[");
 				for (Object obj : arrayValue) {
 					cacheKey.append((obj == null) ? "null" : obj.toString()).append(",");
