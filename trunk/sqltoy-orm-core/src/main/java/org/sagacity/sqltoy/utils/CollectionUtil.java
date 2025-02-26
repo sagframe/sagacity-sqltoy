@@ -1459,4 +1459,22 @@ public class CollectionUtil {
 		}
 		return result;
 	}
+
+	/**
+	 * 将Iterator转为Array数组
+	 * 
+	 * @param iterable
+	 * @return
+	 */
+	public static Object[] iterableToArray(Iterable iterable) {
+		if (iterable == null) {
+			return null;
+		}
+		Iterator iters = iterable.iterator();
+		List resultList = new ArrayList<>();
+		while (iters.hasNext()) {
+			resultList.add(iters.next());
+		}
+		return resultList.toArray();
+	}
 }

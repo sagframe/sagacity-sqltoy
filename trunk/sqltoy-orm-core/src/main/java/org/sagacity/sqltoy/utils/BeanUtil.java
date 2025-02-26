@@ -1316,8 +1316,18 @@ public class BeanUtil {
 									}
 								}
 							} // update 2022-5-25 支持将集合的属性直接映射成数组
-							else if (fieldValue instanceof List) {
-								List tmp = (List) fieldValue;
+								// update 2025-2-26 将instanceof List扩展成Iterable
+							else if (fieldValue instanceof Iterable) {
+								List tmp = null;
+								if (fieldValue instanceof List) {
+									tmp = (List) fieldValue;
+								} else {
+									tmp = new ArrayList();
+									Iterator iters = ((Iterable) fieldValue).iterator();
+									while (iters.hasNext()) {
+										tmp.add(iters.next());
+									}
+								}
 								// a.b.c 在最后一个属性c之前的属性取值
 								if (index < fieldLen - 1) {
 									fieldValue = sliceToArray(tmp, field);
@@ -2353,6 +2363,8 @@ public class BeanUtil {
 			ary = (Object[]) result;
 		} else if (result instanceof Collection) {
 			ary = ((Collection) result).toArray();
+		} else if (result instanceof Iterable) {
+			ary = CollectionUtil.iterableToArray((Iterable) result);
 		}
 		if (ary != null && ary.length > index) {
 			return ary[index];

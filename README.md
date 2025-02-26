@@ -10,7 +10,7 @@
 
 # WORD版详细文档(完整)
 ## 请见:docs/睿智平台SqlToy5.6 使用手册.doc
-# [在线文档(25%正在施工)](https://sagframe.github.io/sqltoy-docs/)
+<!-- # [在线文档(35%正在施工)](https://sagframe.github.io/sqltoy-docs/) -->
 ## xml中sql查询完整配置 
 https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 
@@ -47,7 +47,7 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
 # 最新版本 
-* 5.6.39 LTS (jdk17+/springboot3.x)/5.6.39.jre8 (兼容5.2.x/5.3.x版本)      发版日期: 2025-2-10
+* 5.6.40 LTS (jdk17+/springboot3.x)/5.6.40.jre8 (兼容5.2.x/5.3.x版本)      发版日期: 2025-2-26
 ```xml
 <dependency>
 	<groupId>com.sagframe</groupId>
@@ -55,8 +55,8 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 	<!-- solon 适配版本 <artifactId>sagacity-sqltoy-solon-plugin</artifactId> -->
         <!-- 传统spring项目 <artifactId>sagacity-sqltoy-spring</artifactId> -->
         <!-- 单纯sqltoy <artifactId>sagacity-sqltoy</artifactId> -->
-        <!-- jdk8 对应的版本号为：5.6.39.jre8 -->
-	<version>5.6.39</version>
+        <!-- jdk8 对应的版本号为：5.6.40.jre8 -->
+	<version>5.6.40</version>
 </dependency>
 ```
 
@@ -120,16 +120,12 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 
    //深度修改,不管是否null全部字段修改
    lightDao.updateDeeply(staffInfo);
-
-   List<StaffInfoVO> staffList = new ArrayList<StaffInfoVO>();
-   StaffInfoVO staffInfo = new StaffInfoVO();
-   StaffInfoVO staffInfo1 = new StaffInfoVO();
-   staffList.add(staffInfo);
-   staffList.add(staffInfo1);
    //批量保存或修改
    lightDao.saveOrUpdateAll(staffList);
    //批量保存
    lightDao.saveAll(staffList);
+   //并行保存
+   lightDao.save().parallelConfig(ParallelConfig.create().groupSize(5000).maxThreads(10)).many(entities)
    ...............
    lightDao.loadByIds(StaffInfoVO.class,"S2007")
    //唯一性验证
