@@ -191,8 +191,10 @@ public class DateUtil {
 		String realDF = null;
 		boolean isLocalDateTime = false;
 		boolean isLocalTime = false;
-		if (StringUtil.isNotBlank(dateFormat)) {
+		boolean hasFmt = false;
+		if (dateFormat != null && !dateFormat.trim().equals("")) {
 			realDF = dateFormat;
+			hasFmt = true;
 		} // 英文日期格式(2个以上字母)
 		else if (StringUtil.matches(dateStr, "[a-zA-Z]{2}")) {
 			return parseEnglishDate(dateStr, locale);
@@ -358,9 +360,10 @@ public class DateUtil {
 			DateFormat df = (locale == null) ? new SimpleDateFormat(realDF) : new SimpleDateFormat(realDF, locale);
 			result = df.parse(dateStr);
 		} catch (ParseException e) {
+			e.printStackTrace();
 		}
-		// 为null，通过字符自动解析进行一次补偿处理
-		if (result == null) {
+		// 在指定format情况下result==null，则将format置为null,通过自动解析方式获取具体的格式
+		if (result == null && hasFmt) {
 			result = parseString(dateVar, null, locale);
 			result = parseString(formatDate(result, realDF));
 		}
@@ -382,8 +385,10 @@ public class DateUtil {
 		String realDF = null;
 		boolean isTime = false;
 		boolean isDate = false;
-		if (StringUtil.isNotBlank(dateFormat)) {
+		boolean hasFmt = false;
+		if (dateFormat != null && !dateFormat.trim().equals("")) {
 			realDF = dateFormat;
+			hasFmt = true;
 		} // 英文日期格式(2个以上字母)
 		else if (StringUtil.matches(dateStr, "[a-zA-Z]{2}")) {
 			return asLocalDateTime(parseEnglishDate(dateStr, null));
@@ -543,9 +548,10 @@ public class DateUtil {
 			}
 			result = LocalDateTime.parse(dateStr, DateTimeFormatter.ofPattern(realDF));
 		} catch (Exception e) {
+			e.printStackTrace();
 		}
-		// 为null，通过字符自动解析进行一次补偿处理
-		if (result == null) {
+		// 结果为null，格式不为null,通过自动格式匹配模式，进行一次补偿处理
+		if (result == null && hasFmt) {
 			result = parseLocalDateTime(dateStr, null);
 			result = parseLocalDateTime(formatDate(result, realDF));
 		}
@@ -655,7 +661,7 @@ public class DateUtil {
 			return (month < 10 ? "0" : "").concat(Integer.toString(month));
 		}
 		if ("DD".equals(fmtUpper)) {
-			int day = getDay(dt);
+			int day = getDayOfMonth(dt);
 			return (day < 10 ? "0" : "").concat(Integer.toString(day));
 		}
 		if (dt instanceof LocalDateTime) {
