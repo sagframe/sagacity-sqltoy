@@ -81,6 +81,7 @@ import org.slf4j.LoggerFactory;
  * @modify Date:2020-05-29 {将脱敏和格式化转到calculate中,便于elastic和mongo查询提供同样的功能}
  * @modify Date:2024-03-15 {由俊华反馈，优化hiberarchySet支持逻辑业务主子关系，如单据中的创建人，审批人分别映射员工表}
  * @modify Date:2024-08-08 {修复hiberarchySet方法中遗漏对主对象集合进行缓存翻译的缺陷}
+ * @modify Date:2025-03-31 {修复查询结果做link操作,结果为List、Set、Array的处理遗漏最后一条的处理缺陷}
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class ResultUtils {
@@ -132,16 +133,16 @@ public class ResultUtils {
 				realDecryptHandler = new DecryptHandler(sqlToyContext.getFieldsSecureProvider(), decryptColumns);
 			}
 			// 取得字段列数,在没有rowCallbackHandler時用数组返回
-			int rowCnt = rs.getMetaData().getColumnCount();
+			int columnCnt = rs.getMetaData().getColumnCount();
 			// 类型转成string的列
 			Set<String> strTypeCols = getStringColumns(sqlToyConfig);
 			boolean hasToStrCols = !strTypeCols.isEmpty();
-			String[] labelNames = new String[rowCnt - startColIndex];
-			String[] labelTypes = new String[rowCnt - startColIndex];
+			String[] labelNames = new String[columnCnt - startColIndex];
+			String[] labelTypes = new String[columnCnt - startColIndex];
 			HashMap<String, Integer> labelIndexMap = new HashMap<String, Integer>();
 			String labeNameLow;
 			String colLabelUpperOrLower = sqlToyContext.getColumnLabelUpperOrLower();
-			for (int i = startColIndex; i < rowCnt; i++) {
+			for (int i = startColIndex; i < columnCnt; i++) {
 				labelNames[index] = rs.getMetaData().getColumnLabel(i + 1);
 				labeNameLow = labelNames[index].toLowerCase();
 				if ("lower".equals(colLabelUpperOrLower)) {
@@ -162,7 +163,7 @@ public class ResultUtils {
 			// 返回结果为非VO class时才可以应用旋转和汇总合计功能
 			try {
 				result.setRows(getResultSet(queryExecutorExtend, sqlToyConfig, sqlToyContext, conn, rs,
-						updateRowHandler, realDecryptHandler, rowCnt, labelIndexMap, labelNames, startColIndex));
+						updateRowHandler, realDecryptHandler, columnCnt, labelIndexMap, labelNames, startColIndex));
 			} // update 2019-09-11 此处增加数组溢出异常是因为经常有开发设置缓存cache-indexs时写错误，为了增加错误提示信息的友好性增加此处理
 			catch (Exception oie) {
 				logger.error("sql={} 提取结果发生异常:{}!", sqlToyConfig.getId(), oie.getMessage());
@@ -490,7 +491,7 @@ public class ResultUtils {
 
 	private static List getResultSet(QueryExecutorExtend queryExtend, SqlToyConfig sqlToyConfig,
 			SqlToyContext sqlToyContext, Connection conn, ResultSet rs, UpdateRowHandler updateRowHandler,
-			DecryptHandler decryptHandler, int rowCnt, HashMap<String, Integer> labelIndexMap, String[] labelNames,
+			DecryptHandler decryptHandler, int columnCnt, HashMap<String, Integer> labelIndexMap, String[] labelNames,
 			int startColIndex) throws Exception {
 		// 字段连接(多行数据拼接成一个数据,以一行显示)
 		LinkModel linkModel = sqlToyConfig.getLinkModel();
@@ -499,7 +500,7 @@ public class ResultUtils {
 		}
 		// update 2020-09-13 存在多列link(独立出去编写,避免对单列产生影响)
 		if (linkModel != null && linkModel.getColumns().length > 1) {
-			return getMoreLinkResultSet(sqlToyConfig, sqlToyContext, decryptHandler, conn, rs, rowCnt, labelIndexMap,
+			return getMoreLinkResultSet(sqlToyConfig, sqlToyContext, decryptHandler, conn, rs, columnCnt, labelIndexMap,
 					labelNames, startColIndex);
 		}
 
@@ -558,14 +559,12 @@ public class ResultUtils {
 			if (translateLink) {
 				fieldTranslateHandler = fieldTranslateCacheHolders.get(linkColumnLow);
 			}
-			// 判断link拼接是否重新开始
-			boolean isLastProcess = false;
 			boolean doLink = true;
 			// 0:字符拼接，1:List;2:Array;3:HashSet
 			int linkResultType = linkModel.getResultType();
 			Object tmpObject;
+			int notEqualCnt = 0;
 			while (rs.next()) {
-				isLastProcess = false;
 				linkValue = rs.getObject(linkColumn);
 				if (linkValue == null) {
 					linkStr = "";
@@ -576,47 +575,48 @@ public class ResultUtils {
 				} else {
 					linkStr = linkValue.toString();
 				}
+				// groupColumns为null即表示全部集合合并
 				identity = (linkModel.getGroupColumns() == null) ? "default"
 						: getLinkColumnsId(rs, linkModel.getGroupColumns());
 				// 不相等
 				if (!identity.equals(preIdentity)) {
-					if (index != 0) {
-						// List
-						if (linkResultType == 1) {
-							items.get(items.size() - 1).set(linkIndex, linkList);
-							linkList = new ArrayList();
-						} // Array
-						else if (linkResultType == 2) {
-							items.get(items.size() - 1).set(linkIndex, linkList.toArray());
-							linkList = new ArrayList();
-						} else if (linkResultType == 3) {
-							items.get(items.size() - 1).set(linkIndex, new HashSet(linkList));
-							linkList = new ArrayList();
-						} else {
-							items.get(items.size() - 1).set(linkIndex, linkBuffer.toString());
-							linkBuffer.delete(0, linkBuffer.length());
-						}
-						linkSet.clear();
-					}
-					// 非字符拼接模式
-					if (linkResultType > 0) {
-						if (translateLink) {
-							linkList.add(linkStr);
-						} else {
-							linkList.add(linkValue);
-						}
-					} else {
-						linkBuffer.append(linkStr);
-					}
-					linkSet.add(linkStr);
 					tempRow = processResultRow(dynamicCacheFetch, rs, labelNames, lowKeyLabelNameMap, columnSize,
 							fieldTranslateCacheHolders, decryptHandler, ignoreAllEmpty);
 					if (tempRow != null) {
+						if (notEqualCnt > 0) {
+							// List
+							if (linkResultType == 1) {
+								items.get(items.size() - 1).set(linkIndex, linkList);
+								linkList = new ArrayList();
+							} // Array
+							else if (linkResultType == 2) {
+								items.get(items.size() - 1).set(linkIndex, linkList.toArray());
+								linkList = new ArrayList();
+							} else if (linkResultType == 3) {
+								items.get(items.size() - 1).set(linkIndex, new HashSet(linkList));
+								linkList = new ArrayList();
+							} else {
+								items.get(items.size() - 1).set(linkIndex, linkBuffer.toString());
+								linkBuffer.delete(0, linkBuffer.length());
+							}
+							linkSet.clear();
+						}
+						// 非字符拼接模式
+						if (linkResultType > 0) {
+							if (translateLink) {
+								linkList.add(linkStr);
+							} else {
+								linkList.add(linkValue);
+							}
+						} else {
+							linkBuffer.append(linkStr);
+						}
+						linkSet.add(linkStr);
 						items.add(tempRow);
+						preIdentity = identity;
+						notEqualCnt++;
 					}
-					preIdentity = identity;
 				} else {
-					isLastProcess = true;
 					doLink = true;
 					if (linkModel.isDistinct() && linkSet.contains(linkStr)) {
 						doLink = false;
@@ -650,7 +650,7 @@ public class ResultUtils {
 				}
 			}
 			// 对最后一条写入循环值
-			if (isLastProcess) {
+			if (notEqualCnt > 0) {
 				// 0:字符拼接，1:List;2:Array;3:HashSet
 				if (linkResultType == 1) {
 					items.get(items.size() - 1).set(linkIndex, linkList);
@@ -759,7 +759,7 @@ public class ResultUtils {
 	 * @param decryptHandler
 	 * @param conn
 	 * @param rs
-	 * @param rowCnt
+	 * @param columnCnt
 	 * @param labelIndexMap
 	 * @param labelNames
 	 * @param startColIndex
@@ -767,7 +767,7 @@ public class ResultUtils {
 	 * @throws Exception
 	 */
 	private static List getMoreLinkResultSet(SqlToyConfig sqlToyConfig, SqlToyContext sqlToyContext,
-			DecryptHandler decryptHandler, Connection conn, ResultSet rs, int rowCnt,
+			DecryptHandler decryptHandler, Connection conn, ResultSet rs, int columnCnt,
 			HashMap<String, Integer> labelIndexMap, String[] labelNames, int startColIndex) throws Exception {
 		// 字段连接(多行数据拼接成一个数据,以一行显示)
 		LinkModel linkModel = sqlToyConfig.getLinkModel();
@@ -783,7 +783,6 @@ public class ResultUtils {
 			fieldTranslateCacheHolders = sqlToyContext.getTranslateManager().getTranslates(translateMap);
 		}
 		int columnSize = labelNames.length;
-		int index = 0;
 		// 警告阀值
 		int warnThresholds = SqlToyConstants.getWarnThresholds();
 		boolean warnLimit = false;
@@ -833,13 +832,12 @@ public class ResultUtils {
 		String[] linkStrs = new String[linkColCnt];
 		List tempRow;
 		Object identity = null;
-		// 判断link拼接是否重新开始
-		boolean isLastProcess = false;
 		boolean doLink = false;
 		FieldTranslateCacheHolder fieldTranslateCacheHolder;
 		Object tmpObject;
+		int index = 0;
+		int notEqualCnt = 0;
 		while (rs.next()) {
-			isLastProcess = false;
 			// 对多个link字段取值并进行翻译转义
 			for (int i = 0; i < linkColCnt; i++) {
 				linkValues[i] = rs.getObject(linkRealLabels[i]);
@@ -854,39 +852,39 @@ public class ResultUtils {
 					linkStrs[i] = linkValues[i].toString();
 				}
 			}
-			// 取分组列的值
+			// 取分组列的值,groupColumns为null，即全部集合进行合并
 			identity = (linkModel.getGroupColumns() == null) ? "default"
 					: getLinkColumnsId(rs, linkModel.getGroupColumns());
 			// 不相等
 			if (!identity.equals(preIdentity)) {
-				// 不相等时先对最后一条记录修改，写入拼接后的字符串
-				if (index != 0) {
-					tempRow = items.get(items.size() - 1);
-					for (int i = 0; i < linkColCnt; i++) {
-						tempRow.set(linkIndexs[i], linkBuffers[i].toString());
-						linkBuffers[i].delete(0, linkBuffers[i].length());
-						// 清除
-						if (linkModel.isDistinct()) {
-							linkSets[i].clear();
-						}
-					}
-				}
-				// 再写入新的拼接串
-				for (int i = 0; i < linkColCnt; i++) {
-					linkBuffers[i].append(linkStrs[i]);
-					if (linkModel.isDistinct()) {
-						linkSets[i].add(linkStrs[i]);
-					}
-				}
 				// 提取result中的数据(identity相等时不需要提取)
 				tempRow = processResultRow(dynamicCacheFetch, rs, labelNames, lowKeyLabelNameMap, columnSize,
 						fieldTranslateCacheHolders, decryptHandler, ignoreAllEmpty);
 				if (tempRow != null) {
+					// 不相等时先对最后一条记录修改，写入拼接后的字符串
+					if (notEqualCnt > 0) {
+						tempRow = items.get(items.size() - 1);
+						for (int i = 0; i < linkColCnt; i++) {
+							tempRow.set(linkIndexs[i], linkBuffers[i].toString());
+							linkBuffers[i].delete(0, linkBuffers[i].length());
+							// 清除
+							if (linkModel.isDistinct()) {
+								linkSets[i].clear();
+							}
+						}
+					}
+					// 再写入新的拼接串
+					for (int i = 0; i < linkColCnt; i++) {
+						linkBuffers[i].append(linkStrs[i]);
+						if (linkModel.isDistinct()) {
+							linkSets[i].add(linkStrs[i]);
+						}
+					}
 					items.add(tempRow);
+					notEqualCnt++;
+					preIdentity = identity;
 				}
-				preIdentity = identity;
 			} else {
-				isLastProcess = true;
 				// identity相同，表示还在同一组内，直接拼接link字符
 				for (int i = 0; i < linkColCnt; i++) {
 					doLink = true;
@@ -918,7 +916,7 @@ public class ResultUtils {
 			}
 		}
 		// 数据集合不为空,对最后一条记录写入循环值
-		if (isLastProcess) {
+		if (notEqualCnt > 0) {
 			tempRow = items.get(items.size() - 1);
 			for (int i = 0; i < linkColCnt; i++) {
 				tempRow.set(linkIndexs[i], linkBuffers[i].toString());

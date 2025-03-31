@@ -1,18 +1,21 @@
 package org.sagacity.sqltoy.utils;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.BasicCredentialsProvider;
@@ -38,6 +41,7 @@ import com.alibaba.fastjson2.JSONObject;
  * @description 提供基于http请求的工具类
  * @author zhongxuchen
  * @version v1.0,Date:2018年1月7日
+ * @modified 2025-3-17 适配性优化，为切换httpclient5做准备
  */
 public class HttpClientUtils {
 	/**
@@ -67,9 +71,7 @@ public class HttpClientUtils {
 		HttpPost httpPost = new HttpPost(url);
 		// 设置connection是否自动关闭
 		httpPost.setHeader("Connection", "close");
-		httpPost.setConfig(requestConfig);
 		CloseableHttpClient client = null;
-		CloseableHttpResponse response = null;
 		try {
 			if (StringUtil.isNotBlank(username) && StringUtil.isNotBlank(password)) {
 				// 凭据提供器
@@ -77,9 +79,10 @@ public class HttpClientUtils {
 				credsProvider.setCredentials(AuthScope.ANY,
 						// 认证用户名和密码
 						new UsernamePasswordCredentials(username, password));
-				client = HttpClients.custom().setDefaultCredentialsProvider(credsProvider).build();
+				client = HttpClients.custom().setDefaultRequestConfig(requestConfig)
+						.setDefaultCredentialsProvider(credsProvider).build();
 			} else {
-				client = HttpClients.createDefault();
+				client = HttpClients.custom().setDefaultRequestConfig(requestConfig).build();
 			}
 			if (paramValue != null && paramValue.length > 0) {
 				List<NameValuePair> nvps = new ArrayList<NameValuePair>();
@@ -92,27 +95,22 @@ public class HttpClientUtils {
 				((UrlEncodedFormEntity) httpEntity).setContentType(CONTENT_TYPE);
 				httpPost.setEntity(httpEntity);
 			}
-			response = client.execute(httpPost);
-			// 返回结果
-			HttpEntity reponseEntity = response.getEntity();
-			if (reponseEntity != null) {
-				return EntityUtils.toString(reponseEntity, CHARSET);
-			}
+			return client.execute(httpPost, new ResponseHandler<String>() {
+				@Override
+				public String handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+					// 返回结果
+					HttpEntity reponseEntity = response.getEntity();
+					if (reponseEntity != null) {
+						return EntityUtils.toString(reponseEntity, CHARSET);
+					}
+					return null;
+				}
+			});
 		} catch (Exception e) {
 			throw e;
 		} finally {
-			try {
-				if (response != null) {
-					response.close();
-				}
-				if (client != null) {
-					client.close();
-				}
-			} catch (Exception e) {
-
-			}
+			IOUtil.closeQuietly(client);
 		}
-		return null;
 	}
 
 	/**
@@ -148,7 +146,6 @@ public class HttpClientUtils {
 		((StringEntity) httpEntity).setContentType(CONTENT_TYPE);
 		String realUrl;
 		// 返回结果
-		HttpEntity reponseEntity = null;
 		String result = null;
 		// 使用elastic rest client(默认)
 		if (esConfig.getRestClient() != null) {
@@ -165,20 +162,14 @@ public class HttpClientUtils {
 				Request request = new Request(POST, realUrl);
 				request.setEntity(httpEntity);
 				response = restClient.performRequest(request);
-				reponseEntity = response.getEntity();
+				HttpEntity reponseEntity = response.getEntity();
 				if (reponseEntity != null) {
 					result = EntityUtils.toString(reponseEntity, nosqlConfig.getCharset());
 				}
 			} catch (Exception e) {
 				throw e;
 			} finally {
-				try {
-					if (restClient != null) {
-						restClient.close();
-					}
-				} catch (Exception e) {
-
-				}
+				IOUtil.closeQuietly(restClient);
 			}
 		} // 组织httpclient模式调用(此种模式不推荐使用)
 		else {
@@ -188,20 +179,9 @@ public class HttpClientUtils {
 				logger.debug("httpClient执行URL=[{}],执行的JSON=[{}]", realUrl, JSON.toJSONString(postValue));
 			}
 			httpPost.setEntity(httpEntity);
-
 			// 设置connection是否自动关闭
 			httpPost.setHeader("Connection", "close");
-			// 自定义超时
-			if (nosqlConfig.getRequestTimeout() != 30000 || nosqlConfig.getConnectTimeout() != 10000
-					|| nosqlConfig.getSocketTimeout() != 180000) {
-				httpPost.setConfig(RequestConfig.custom().setConnectionRequestTimeout(nosqlConfig.getRequestTimeout())
-						.setConnectTimeout(nosqlConfig.getConnectTimeout())
-						.setSocketTimeout(nosqlConfig.getSocketTimeout()).build());
-			} else {
-				httpPost.setConfig(requestConfig);
-			}
 			CloseableHttpClient client = null;
-			CloseableHttpResponse response = null;
 			try {
 				if (StringUtil.isNotBlank(esConfig.getUsername()) && StringUtil.isNotBlank(esConfig.getPassword())) {
 					// 凭据提供器
@@ -209,28 +189,25 @@ public class HttpClientUtils {
 					credsProvider.setCredentials(AuthScope.ANY,
 							// 认证用户名和密码
 							new UsernamePasswordCredentials(esConfig.getUsername(), esConfig.getPassword()));
-					client = HttpClients.custom().setDefaultCredentialsProvider(credsProvider).build();
+					client = HttpClients.custom().setDefaultRequestConfig(getRequestConfig(nosqlConfig))
+							.setDefaultCredentialsProvider(credsProvider).build();
 				} else {
-					client = HttpClients.createDefault();
+					client = HttpClients.custom().setDefaultRequestConfig(getRequestConfig(nosqlConfig)).build();
 				}
-				response = client.execute(httpPost);
-				reponseEntity = response.getEntity();
-				if (reponseEntity != null) {
-					result = EntityUtils.toString(reponseEntity, nosqlConfig.getCharset());
-				}
+				result = client.execute(httpPost, new ResponseHandler<String>() {
+					@Override
+					public String handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+						HttpEntity reponseEntity = response.getEntity();
+						if (reponseEntity != null) {
+							return EntityUtils.toString(reponseEntity, nosqlConfig.getCharset());
+						}
+						return null;
+					}
+				});
 			} catch (Exception e) {
 				throw e;
 			} finally {
-				try {
-					if (response != null) {
-						response.close();
-					}
-					if (client != null) {
-						client.close();
-					}
-				} catch (Exception e) {
-
-				}
+				IOUtil.closeQuietly(client);
 			}
 		}
 		if (StringUtil.isBlank(result)) {
@@ -285,5 +262,16 @@ public class HttpClientUtils {
 			}
 		}
 		return url;
+	}
+
+	private static RequestConfig getRequestConfig(NoSqlConfigModel nosqlConfig) {
+		if (nosqlConfig != null && (nosqlConfig.getRequestTimeout() != 30000 || nosqlConfig.getConnectTimeout() != 10000
+				|| nosqlConfig.getSocketTimeout() != 180000)) {
+			return RequestConfig.custom().setConnectTimeout(nosqlConfig.getConnectTimeout())
+					.setConnectionRequestTimeout(nosqlConfig.getRequestTimeout())
+					.setSocketTimeout(nosqlConfig.getSocketTimeout()).build();
+		} else {
+			return requestConfig;
+		}
 	}
 }
