@@ -4,6 +4,7 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -15,6 +16,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
+import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.config.model.FieldSecureConfig;
 import org.sagacity.sqltoy.config.model.Translate;
@@ -30,6 +32,7 @@ import org.sagacity.sqltoy.model.MapKit;
 import org.sagacity.sqltoy.model.MaskType;
 import org.sagacity.sqltoy.model.SaveMode;
 import org.sagacity.sqltoy.model.SecureType;
+import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
@@ -451,5 +454,21 @@ public class BeanUtilTest {
 				MapKit.keys("itemList", "staffId").values(jsonArray, "S0001"), "itemList.name", "staffId");
 
 		System.err.println(JSON.toJSONString(resultObjects[0]));
+	}
+
+	@Test
+	public void testFillSql() {
+		String sql = "select * from where t.create_time BETWEEN ? AND ?";
+		System.err.println(SqlExecuteStat.fitSqlParams(sql,
+				new Object[] { LocalDateTime.now().plusDays(-10), LocalDateTime.now() }, DBType.ORACLE));
+		sql = "select * from where t.create_time> ? AND t.create_time< ?";
+		System.err.println(SqlExecuteStat.fitSqlParams(sql,
+				new Object[] { LocalDateTime.now().plusDays(-10), LocalDateTime.now() }, DBType.ORACLE));
+		sql = "select * from where t.create_time>= ? AND t.create_time< ?";
+		System.err.println(SqlExecuteStat.fitSqlParams(sql,
+				new Object[] { LocalDateTime.now().plusDays(-10), LocalDateTime.now() }, DBType.ORACLE));
+		sql = "select * from where trunc(?,'year')>= 10 AND t.create_time< ?";
+		System.err.println(SqlExecuteStat.fitSqlParams(sql,
+				new Object[] { LocalDateTime.now().plusDays(-10), LocalDateTime.now() }, DBType.ORACLE));
 	}
 }
