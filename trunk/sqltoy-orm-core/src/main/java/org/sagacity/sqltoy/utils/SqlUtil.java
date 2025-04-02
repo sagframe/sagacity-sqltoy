@@ -99,6 +99,10 @@ public class SqlUtil {
 	public static final Pattern SQLINJECT_PATTERN = Pattern.compile(
 			"(?i)\\W((delete\\s+from)|update|(truncate\\s+table)|(alter\\s+table)|modify|(insert\\s+into)|select|set|create|drop|(merge\\s+into))\\s+");
 
+	// 只针对比较符号、和(的日期字符加函数
+	public static final Pattern COMPARE_PATTERN = Pattern
+			.compile("(?i)(\\<|\\=|\\>|\\<\\>|\\!\\=|\\<\\=|\\>\\=|\\Wand|\\Wbetween|\\()\\s*$");
+
 	/**
 	 * 查询select 匹配
 	 */
@@ -2166,6 +2170,311 @@ public class SqlUtil {
 			valueStr = "" + paramValue;
 		}
 		return valueStr;
+	}
+
+	/**
+	 * @param sqlArgValue
+	 * @param preSql             前面的sql片段
+	 * @param addSingleQuotation 是否加单引号
+	 * @param dbType             数据库方言
+	 * @return
+	 * @TODO 将参数值转成字符传
+	 */
+	public static String toSqlLogStr(Object sqlArgValue, String preSql, boolean addSingleQuotation, int dbType) {
+		if (sqlArgValue == null) {
+			return "null";
+		}
+		// 参数前面是否是条件比较符号，如果是比较符号针对日期、字符串加单引号
+		String sign = addSingleQuotation ? "'" : "";
+		String valueStr;
+		int nanoValue;
+		// 1:day,2:dateTime;3,timestamp;4:time;5:time(3) 毫秒
+		int dateType = -1;
+		String timeStr;
+		Object paramValue;
+		if (sqlArgValue instanceof Enum) {
+			paramValue = BeanUtil.getEnumValue(sqlArgValue);
+		} else {
+			paramValue = sqlArgValue;
+		}
+		if (paramValue instanceof CharSequence) {
+			valueStr = sign + paramValue + sign;
+		} else if (paramValue instanceof Timestamp) {
+			valueStr = sign + DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss.SSS") + sign;
+			dateType = 3;
+		} else if (paramValue instanceof LocalDateTime) {
+			nanoValue = ((LocalDateTime) paramValue).getNano();
+			if (nanoValue > 0) {
+				if (SqlToyConstants.localDateTimeFormat != null
+						&& !SqlToyConstants.localDateTimeFormat.equals("auto")) {
+					timeStr = DateUtil.formatDate(paramValue, SqlToyConstants.localDateTimeFormat);
+				} else {
+					timeStr = DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss") + DateUtil.processNano(nanoValue);
+				}
+				if (timeStr.length() > 19) {
+					dateType = 3;
+				} else {
+					dateType = 2;
+				}
+			} else {
+				timeStr = DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss");
+				dateType = 2;
+			}
+			valueStr = sign + timeStr + sign;
+		} else if (paramValue instanceof LocalDate) {
+			valueStr = sign + DateUtil.formatDate(paramValue, "yyyy-MM-dd") + sign;
+			dateType = 1;
+		} else if (paramValue instanceof LocalTime) {
+			nanoValue = ((LocalTime) paramValue).getNano();
+			if (nanoValue > 0) {
+				if (SqlToyConstants.localTimeFormat != null && !SqlToyConstants.localTimeFormat.equals("auto")) {
+					timeStr = DateUtil.formatDate(paramValue, SqlToyConstants.localTimeFormat);
+				} else {
+					timeStr = DateUtil.formatDate(paramValue, "HH:mm:ss") + DateUtil.processNano(nanoValue);
+				}
+				if (timeStr.length() > 8) {
+					dateType = 5;
+				} else {
+					dateType = 4;
+				}
+			} else {
+				timeStr = DateUtil.formatDate(paramValue, "HH:mm:ss");
+				dateType = 4;
+			}
+			valueStr = sign + timeStr + sign;
+		} else if (paramValue instanceof Time) {
+			valueStr = sign + DateUtil.formatDate(paramValue, "HH:mm:ss") + sign;
+			dateType = 4;
+		} else if (paramValue instanceof Date) {
+			valueStr = sign + DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss") + sign;
+			dateType = 2;
+		} else if (paramValue instanceof Object[]) {
+			valueStr = combineArray((Object[]) paramValue);
+		} else if (paramValue instanceof Collection) {
+			valueStr = combineArray(((Collection) paramValue).toArray());
+		} else {
+			valueStr = "" + paramValue;
+		}
+		// 增加单引号和日期类型
+		if (dateType != -1 && addSingleQuotation) {
+			return addDateFunction(valueStr, preSql, dateType, dbType);
+		}
+		return valueStr;
+	}
+
+	/**
+	 * add 2025-04-01 sql日志日期、时间类型条件参数增加转日期函数输出
+	 * 
+	 * @param dateStr
+	 * @param preSql
+	 * @param type
+	 * @param dbType
+	 * @return
+	 */
+	private static String addDateFunction(String dateStr, String preSql, int type, int dbType) {
+		// 前置sql片段不以<,=,<,between,and 作为结尾则不增加函数
+		if (!StringUtil.matches(preSql, COMPARE_PATTERN)) {
+			return dateStr;
+		}
+		int dateLength = dateStr.length() - 2;
+		// oracle 和dm
+		if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM || dbType == DBType.OCEANBASE) {
+			// day
+			if (type == 1) {
+				return "TO_DATE(" + dateStr + ",'YYYY-MM-DD')";
+			}
+			// datetime
+			if (type == 2) {
+				return "TO_DATE(" + dateStr + ",'YYYY-MM-DD HH24:MI:SS')";
+			}
+			// timestamp
+			if (type == 3) {
+				if (dateLength > 23) {
+					return "TO_TIMESTAMP(" + dateStr + ",'YYYY-MM-DD HH24:MI:SS.FF')";
+				} else {
+					return "TO_TIMESTAMP(" + dateStr + ",'YYYY-MM-DD HH24:MI:SS.FF3')";
+				}
+			}
+			// time
+			if (type == 4) {
+				return "CAST(TO_DATE(" + dateStr + ",'HH24:MI:SS') as TIME)";
+			}
+			// 毫秒time
+			if (type == 5) {
+				if (dateLength > 12) {
+					return "CAST(TO_DATE(" + dateStr + ",'HH24:MI:SS.FF') as TIME)";
+				} else {
+					return "CAST(TO_DATE(" + dateStr + ",'HH24:MI:SS.FF3') as TIME)";
+				}
+			}
+		}
+		if (dbType == DBType.SQLSERVER) {
+			// day
+			if (type == 1) {
+				return "CONVERT(date," + dateStr + ")";
+			}
+			// datetime
+			if (type == 2) {
+				return "CONVERT(datetime," + dateStr + ")";
+			}
+			// timestamp
+			if (type == 3) {
+				return "CONVERT(datetime2," + dateStr + ")";
+			}
+			// time
+			if (type == 4) {
+				return "CONVERT(time," + dateStr + ")";
+			}
+			// 毫秒time
+			if (type == 5) {
+				return "CONVERT(time(3)," + dateStr + ")";
+			}
+		}
+		// mysql和tidb
+		if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.TIDB) {
+			// day
+			if (type == 1) {
+				return "STR_TO_DATE(" + dateStr + ",'%Y-%m-%d')";
+			}
+			// datetime
+			if (type == 2) {
+				return "STR_TO_DATE(" + dateStr + ",'%Y-%m-%d %H:%i:%s')";
+			}
+			// timestamp
+			if (type == 3) {
+				return "STR_TO_DATE(" + dateStr + ",'%Y-%m-%d %H:%i:%s.%f')";
+			}
+			// time
+			if (type == 4) {
+				return "STR_TO_DATE(" + dateStr + ",'%H:%i:%s')";
+			}
+			// 毫秒time
+			if (type == 5) {
+				return "STR_TO_DATE(" + dateStr + ",'%H:%i:%s.%f')";
+			}
+		}
+		// postgresql系列
+		if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB
+				|| dbType == DBType.STARDB || dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB
+				|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE) {
+			// day
+			if (type == 1) {
+				return "TO_DATE(" + dateStr + ",'YYYY-MM-DD')";
+			}
+			// datetime
+			if (type == 2) {
+				return "TO_TIMESTAMP(" + dateStr + ",'YYYY-MM-DD HH24:MI:SS')";
+			}
+			// timestamp
+			if (type == 3) {
+				if (dateLength > 23) {
+					return "TO_TIMESTAMP(" + dateStr + ",'YYYY-MM-DD HH24:MI:SS.US')";
+				} else {
+					return "TO_TIMESTAMP(" + dateStr + ",'YYYY-MM-DD HH24:MI:SS.MS')";
+				}
+			}
+			// time
+			if (type == 4) {
+				return "" + dateStr + "::TIME";
+			}
+			// 毫秒time
+			if (type == 5) {
+				return "" + dateStr + "::TIME";
+			}
+		}
+		if (dbType == DBType.KINGBASE) {
+			// day
+			if (type == 1) {
+				return "TO_DATE(" + dateStr + ",'YYYY-MM-DD')";
+			}
+			// datetime
+			if (type == 2) {
+				return "TO_DATE(" + dateStr + ",'YYYY-MM-DD HH24:MI:SS')";
+			}
+			// timestamp
+			if (type == 3) {
+				if (dateLength > 23) {
+					return "TO_TIMESTAMP(" + dateStr + ",'YYYY-MM-DD HH24:MI:SS.US')";
+				} else {
+					return "TO_TIMESTAMP(" + dateStr + ",'YYYY-MM-DD HH24:MI:SS.MS')";
+				}
+			}
+			// time
+			if (type == 4) {
+				return "TIME(TO_TIMESTAMP(" + dateStr + ",'YYYY-MM-DD HH24:MI:SS'))";
+			}
+			// 毫秒time
+			if (type == 5) {
+				if (dateLength > 12) {
+					return "TIME(TO_TIMESTAMP(" + dateStr + ",'YYYY-MM-DD HH24:MI:SS.US'))";
+				} else {
+					return "TIME(TO_TIMESTAMP(" + dateStr + ",'YYYY-MM-DD HH24:MI:SS.MS'))";
+				}
+			}
+		}
+		// clickhouse
+		if (dbType == DBType.CLICKHOUSE) {
+			// day
+			if (type == 1) {
+				return "toDate(" + dateStr + ")";
+			}
+			// datetime
+			if (type == 2) {
+				return "toDateTime(" + dateStr + ")";
+			}
+			// timestamp
+			if (type == 3) {
+				if (dateLength > 23) {
+					return "toDateTime64(" + dateStr + ",6)";
+				} else {
+					return "toDateTime64(" + dateStr + ",3)";
+				}
+			}
+			// time
+			if (type == 4) {
+				return "formatDateTime(toDateTime(" + dateStr + "), '%H:%M:%S')";
+			}
+			// 毫秒time
+			if (type == 5) {
+				if (dateLength > 12) {
+					return "formatDateTime(toDateTime64(" + dateStr + ",6), '%H:%M:%S.%f')";
+				} else {
+					return "formatDateTime(toDateTime64(" + dateStr + ",3), '%H:%M:%S.%f')";
+				}
+			}
+		}
+		// db2
+		if (dbType == DBType.DB2) {
+			// day
+			if (type == 1) {
+				return "TO_DATE(" + dateStr + ",'YYYY-MM-DD')";
+			}
+			// datetime
+			if (type == 2) {
+				return "TO_DATE(" + dateStr + ",'YYYY-MM-DD HH24:MI:SS')";
+			}
+			// timestamp
+			if (type == 3) {
+				if (dateLength > 23) {
+					return "TO_TIMESTAMP(" + dateStr + ",'YYYY-MM-DD HH24:MI:SS.FF')";
+				} else {
+					return "TO_TIMESTAMP(" + dateStr + ",'YYYY-MM-DD HH24:MI:SS.FF3')";
+				}
+			}
+			// time
+			if (type == 4) {
+				return "TIME(TO_TIMESTAMP(" + dateStr + ",'YYYY-MM-DD HH24:MI:SS'))";
+			}
+			// 毫秒time
+			if (type == 5) {
+				if (dateLength > 12) {
+					return "TIME(TO_TIMESTAMP(" + dateStr + ",'HH24:MI:SS.FF'))";
+				} else {
+					return "TIME(TO_TIMESTAMP(" + dateStr + ",'HH24:MI:SS.FF3'))";
+				}
+			}
+		}
+		return dateStr;
 	}
 
 	/**

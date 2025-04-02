@@ -4,18 +4,18 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sagframe</groupId>
-	<version>5.6.41</version>
+	<version>5.6.42</version>
 	<name>sagacity-sqltoy-spring-starter</name>
 	<artifactId>sagacity-sqltoy-spring-starter</artifactId>
 	<description>sqltoy springboot starter</description>
 	<url>https://github.com/sagframe/sagacity-sqltoy</url>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<spring-boot.version>3.4.3</spring-boot.version>
-		<spring-data-commons.version>3.4.3</spring-data-commons.version>
-		<spring-data-redis.version>3.4.3</spring-data-redis.version>
-		<spring-data-mongo.version>4.4.3</spring-data-mongo.version>
-		<mongo.version>5.3.1</mongo.version>
+		<spring-boot.version>3.4.4</spring-boot.version>
+		<spring-data-commons.version>3.4.4</spring-data-commons.version>
+		<spring-data-redis.version>3.4.4</spring-data-redis.version>
+		<spring-data-mongo.version>4.4.4</spring-data-mongo.version>
+		<mongo.version>5.4.0</mongo.version>
 		<caffeine.version>3.2.0</caffeine.version>
 	</properties>
 	<licenses>
@@ -80,6 +80,7 @@
 		<dependency>
 			<groupId>com.github.ben-manes.caffeine</groupId>
 			<artifactId>caffeine</artifactId>
+			<version>${caffeine.version}</version>
 			<scope>provided</scope>
 			<optional>true</optional>
 		</dependency>
