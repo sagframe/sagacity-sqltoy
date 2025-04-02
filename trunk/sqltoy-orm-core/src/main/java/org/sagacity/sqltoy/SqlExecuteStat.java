@@ -14,6 +14,7 @@ import org.sagacity.sqltoy.model.OverTimeSql;
 import org.sagacity.sqltoy.plugins.FirstBizCodeTrace;
 import org.sagacity.sqltoy.plugins.OverTimeSqlHandler;
 import org.sagacity.sqltoy.plugins.formater.SqlFormater;
+import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
@@ -179,6 +180,7 @@ public class SqlExecuteStat {
 		}
 		String uid = sqlTrace.getUid();
 		StringBuilder result = new StringBuilder();
+		int dbType = DataSourceUtils.getDBType(sqlTrace.getDialect());
 		String optType = sqlTrace.getType()
 				+ (sqlTrace.getBatchSize() != null ? "[" + sqlTrace.getBatchSize() + "条记录]" : "");
 		String codeTrace = getFirstTrace();
@@ -209,10 +211,10 @@ public class SqlExecuteStat {
 				// 区别一些批量写和更新操作，参数较多不便于输出
 				if (optType.startsWith("save") || optType.startsWith("deleteAll")
 						|| optType.startsWith("batchUpdate")) {
-					result.append("\n/*|     内部sql: ").append(fitSqlParams(content, args));
+					result.append("\n/*|     内部sql: ").append(fitSqlParams(content, args, dbType));
 					result.append("\n/*|     save(All)|saveOrUpdate(All)|deleleAll|batchUpdate等不输出sql执行参数");
 				} else {
-					sql = fitSqlParams(content, args);
+					sql = fitSqlParams(content, args, dbType);
 					// 对sql格式化输出
 					if (sqlFormater != null) {
 						sql = sqlFormater.format(sql, sqlTrace.getDialect());
@@ -293,9 +295,10 @@ public class SqlExecuteStat {
 	 * @TODO 将参数值拟合到sql中作为debug输出,便于开发进行调试(2020-06-15)
 	 * @param sql
 	 * @param params
+	 * @param dbType
 	 * @return
 	 */
-	private static String fitSqlParams(String sql, Object[] params) {
+	public static String fitSqlParams(String sql, Object[] params, int dbType) {
 		if (sql == null || params == null || params.length == 0) {
 			return sql;
 		}
@@ -305,11 +308,13 @@ public class SqlExecuteStat {
 		int start = 0;
 		int index = 0;
 		int paramSize = params.length;
+		String preSql;
 		// 逐个查找?用实际参数值进行替换
 		while (matcher.find(start)) {
-			lastSql.append(sql.substring(start, matcher.start() + 1));
+			preSql = sql.substring(start, matcher.start() + 1);
+			lastSql.append(preSql);
 			if (index < paramSize) {
-				lastSql.append(SqlUtil.toSqlString(params[index], true));
+				lastSql.append(SqlUtil.toSqlLogStr(params[index], preSql, true, dbType));
 			} else {
 				// 问号数量大于参数值数量,说明sql中存在写死的条件值里面存在问号,因此不再进行条件值拟合
 				return sql;
