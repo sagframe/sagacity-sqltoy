@@ -888,7 +888,10 @@ public class DefaultDialectUtils {
 	@SuppressWarnings("unchecked")
 	public static List<ColumnMeta> getTableColumns(String catalog, String schema, String tableName, Connection conn,
 			Integer dbType, String dialect) throws Exception {
-		ResultSet rs = conn.getMetaData().getColumns(catalog, schema, tableName, "%");
+		String realCatalog = SqlToyConstants.getDialectLowcaseStrategyName(catalog, dialect);
+		String realSchema = SqlToyConstants.getDialectLowcaseStrategyName(schema, dialect);
+		String realTableName = SqlToyConstants.getDialectLowcaseStrategyName(tableName, dialect);
+		ResultSet rs = conn.getMetaData().getColumns(realCatalog, realSchema, realTableName, "%");
 		// 通过preparedStatementProcess反调，第二个参数是pst
 		List<ColumnMeta> tableCols = (List<ColumnMeta>) SqlUtil.preparedStatementProcess(null, null, rs,
 				new PreparedStatementResultHandler() {
@@ -975,8 +978,11 @@ public class DefaultDialectUtils {
 	@SuppressWarnings("unchecked")
 	public static Map<String, ColumnMeta> getTableIndexes(String catalog, String schema, String tableName,
 			Connection conn, final Integer dbType, String dialect) throws Exception {
+		String realCatalog = SqlToyConstants.getDialectLowcaseStrategyName(catalog, dialect);
+		String realSchema = SqlToyConstants.getDialectLowcaseStrategyName(schema, dialect);
+		String realTableName = SqlToyConstants.getDialectLowcaseStrategyName(tableName, dialect);
 		if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11) {
-			return getOracleTableIndexes(catalog, schema, tableName, conn, dbType, dialect);
+			return getOracleTableIndexes(realCatalog, realSchema, realTableName, conn, dbType, dialect);
 		}
 		Map<String, ColumnMeta> result = new HashMap<>();
 		boolean[] uniqueAndNotUnique = { false, true };
@@ -984,7 +990,7 @@ public class DefaultDialectUtils {
 		Map<String, ColumnMeta> tableIndexes;
 		for (int i = 0; i < uniqueAndNotUnique.length; i++) {
 			boolean isUnique = uniqueAndNotUnique[i];
-			rs = conn.getMetaData().getIndexInfo(catalog, schema, tableName, false, false);
+			rs = conn.getMetaData().getIndexInfo(realCatalog, realSchema, realTableName, isUnique, false);
 			tableIndexes = (Map<String, ColumnMeta>) SqlUtil.preparedStatementProcess(null, null, rs,
 					new PreparedStatementResultHandler() {
 						@Override
@@ -1052,9 +1058,12 @@ public class DefaultDialectUtils {
 	@SuppressWarnings("unchecked")
 	public static Map<String, ColumnMeta> getTablePrimaryKeys(String catalog, String schema, String tableName,
 			Connection conn, final Integer dbType, String dialect) throws Exception {
+		String realCatalog = SqlToyConstants.getDialectLowcaseStrategyName(catalog, dialect);
+		String realSchema = SqlToyConstants.getDialectLowcaseStrategyName(schema, dialect);
+		String realTableName = SqlToyConstants.getDialectLowcaseStrategyName(tableName, dialect);
 		ResultSet rs = null;
 		try {
-			rs = conn.getMetaData().getPrimaryKeys(catalog, schema, tableName);
+			rs = conn.getMetaData().getPrimaryKeys(realCatalog, realSchema, realTableName);
 		} catch (Exception e) {
 
 		}
@@ -1099,9 +1108,18 @@ public class DefaultDialectUtils {
 	@SuppressWarnings("unchecked")
 	public static List<TableMeta> getTables(String catalogPattern, String schemaPattern, String tableNamePattern,
 			Connection conn, Integer dbType, String dialect) throws Exception {
+		String realCatalogPattern = SqlToyConstants.getDialectLowcaseStrategyName(catalogPattern, dialect);
+		String realSchemaPattern = SqlToyConstants.getDialectLowcaseStrategyName(schemaPattern, dialect);
+		String realTableNamePattern = SqlToyConstants.getDialectLowcaseStrategyName(tableNamePattern, dialect);
+		ResultSet rs;
 		// 可自定义 PreparedStatement pst=conn.xxx;
-		ResultSet rs = conn.getMetaData().getTables(catalogPattern, schemaPattern, tableNamePattern,
-				new String[] { "TABLE", "VIEW" });
+		if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15) {
+			rs = conn.getMetaData().getTables(realCatalogPattern, realSchemaPattern, realTableNamePattern,
+					new String[] { "TABLE", "VIEW", "PARTITIONED TABLE" });
+		} else {
+			rs = conn.getMetaData().getTables(realCatalogPattern, realSchemaPattern, realTableNamePattern,
+					new String[] { "TABLE", "VIEW" });
+		}
 		// 通过preparedStatementProcess反调，第二个参数是pst
 		return (List<TableMeta>) SqlUtil.preparedStatementProcess(null, null, rs, new PreparedStatementResultHandler() {
 			@Override
