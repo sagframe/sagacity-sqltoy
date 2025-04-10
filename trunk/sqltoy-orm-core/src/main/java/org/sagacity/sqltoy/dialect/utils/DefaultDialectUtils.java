@@ -23,9 +23,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyConstants;
@@ -1111,15 +1113,11 @@ public class DefaultDialectUtils {
 		String realCatalogPattern = SqlToyConstants.getDialectLowcaseStrategyName(catalogPattern, dialect);
 		String realSchemaPattern = SqlToyConstants.getDialectLowcaseStrategyName(schemaPattern, dialect);
 		String realTableNamePattern = SqlToyConstants.getDialectLowcaseStrategyName(tableNamePattern, dialect);
-		ResultSet rs;
-		// 可自定义 PreparedStatement pst=conn.xxx;
-		if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15) {
-			rs = conn.getMetaData().getTables(realCatalogPattern, realSchemaPattern, realTableNamePattern,
-					new String[] { "TABLE", "VIEW", "PARTITIONED TABLE" });
-		} else {
-			rs = conn.getMetaData().getTables(realCatalogPattern, realSchemaPattern, realTableNamePattern,
-					new String[] { "TABLE", "VIEW" });
-		}
+		boolean isPG = (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15);
+		// pg会拿出全部子分区表，需要排除掉
+		final Set<String> subPartitionTables = isPG ? getInnerPartitionTables(conn, dbType) : new HashSet<>();
+		ResultSet rs = conn.getMetaData().getTables(realCatalogPattern, realSchemaPattern, realTableNamePattern,
+				isPG ? new String[] { "TABLE", "VIEW", "PARTITIONED TABLE" } : new String[] { "TABLE", "VIEW" });
 		// 通过preparedStatementProcess反调，第二个参数是pst
 		return (List<TableMeta>) SqlUtil.preparedStatementProcess(null, null, rs, new PreparedStatementResultHandler() {
 			@Override
@@ -1131,10 +1129,34 @@ public class DefaultDialectUtils {
 					tableMeta.setSchema(rs.getString("TABLE_SCHEM"));
 					tableMeta.setType(rs.getString("TABLE_TYPE"));
 					tableMeta.setRemarks(rs.getString("REMARKS"));
-					tables.add(tableMeta);
+					// 排除子分区表
+					if (!subPartitionTables.contains(tableMeta.getTableName())) {
+						tables.add(tableMeta);
+					}
 				}
 				this.setResult(tables);
 			}
 		});
+	}
+
+	/**
+	 * @todo 查询子分区表
+	 * @param conn
+	 * @param dbType
+	 * @return
+	 * @throws Exception
+	 */
+	private static Set<String> getInnerPartitionTables(Connection conn, Integer dbType) throws Exception {
+		String sql = "SELECT inhrelid::regclass AS TABLE_NAME FROM pg_inherits";
+		List partitionTables = SqlUtil.findByJdbcQuery(null, sql, null, TableMeta.class, null, null, conn, dbType,
+				false, null, 0, 0);
+		Set<String> resultSet = new HashSet<>();
+		if (partitionTables == null || partitionTables.isEmpty()) {
+			return resultSet;
+		}
+		for (Object tableMeta : partitionTables) {
+			resultSet.add(((TableMeta) tableMeta).getTableName());
+		}
+		return resultSet;
 	}
 }
