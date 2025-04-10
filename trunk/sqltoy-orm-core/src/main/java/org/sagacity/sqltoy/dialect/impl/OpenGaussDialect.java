@@ -390,16 +390,14 @@ public class OpenGaussDialect implements Dialect {
 	public List<ColumnMeta> getTableColumns(String catalog, String schema, String tableName, Connection conn,
 			Integer dbType, String dialect) throws Exception {
 		// 表名转小写
-		return DefaultDialectUtils.getTableColumns(catalog, schema, tableName.toLowerCase(), conn, dbType, dialect);
+		return DefaultDialectUtils.getTableColumns(catalog, schema, tableName, conn, dbType, dialect);
 	}
 
 	@Override
 	public List<TableMeta> getTables(String catalog, String schema, String tableName, Connection conn, Integer dbType,
 			String dialect) throws Exception {
 		// 这里tableName不是具体的名字，而是正则表达式,要变小写则(?i)
-		return DefaultDialectUtils.getTables(catalog == null ? null : catalog.toLowerCase(),
-				schema == null ? null : schema.toLowerCase(), tableName == null ? null : tableName.toLowerCase(), conn,
-				dbType, dialect);
+		return DefaultDialectUtils.getTables(catalog, schema, tableName, conn, dbType, dialect);
 	}
 
 	private String getLockSql(String sql, Integer dbType, LockMode lockMode) {

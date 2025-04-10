@@ -17,8 +17,6 @@ public class MogDBDialect extends OpenGaussDialect {
 	public List<TableMeta> getTables(String catalog, String schema, String tableName, Connection conn, Integer dbType,
 			String dialect) throws Exception {
 		// TODO Auto-generated method stub
-		return super.getTables(catalog == null ? null : catalog.toLowerCase(),
-				schema == null ? null : schema.toLowerCase(), tableName == null ? null : tableName.toLowerCase(), conn,
-				dbType, dialect);
+		return super.getTables(catalog, schema, tableName, conn, dbType, dialect);
 	}
 }
