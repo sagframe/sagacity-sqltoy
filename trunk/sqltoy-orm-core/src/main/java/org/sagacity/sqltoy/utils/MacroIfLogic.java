@@ -112,6 +112,8 @@ public class MacroIfLogic {
 				hasArg = false;
 				express = expressions[i].trim();
 				expressLow = express.toLowerCase();
+				// 默认为等于判断(update 2025-4-9 @if(:paramType!=1 && :booleanParam))
+				compareType = "==";
 				// 匹配对应的判断逻辑符号
 				for (int j = 0; j < compareStr.length; j++) {
 					if (expressLow.indexOf(compareStr[j]) != -1) {

@@ -501,4 +501,37 @@ public class SqlToyConstants {
 			logger.error("设置workerId和dataCenterId发生错误:{}", e.getMessage());
 		}
 	}
+
+	/**
+	 * 部分数据库表名和字段名取小写或大写，有些数据库大小写不敏感
+	 * 
+	 * @param tableOrColumnName
+	 * @param dialect
+	 * @return
+	 */
+	public static String getDialectLowcaseStrategyName(String tableOrColumnName, String dialect) {
+		if (tableOrColumnName == null) {
+			return null;
+		}
+		// 规避版本影响
+		String realDialect = dialect.toLowerCase();
+		if (realDialect.startsWith("postgresql")) {
+			realDialect = "postgresql";
+		} else if (realDialect.startsWith("oracle")) {
+			realDialect = "oracle";
+		} else if (realDialect.startsWith("mysql")) {
+			realDialect = "mysql";
+		}
+		String result = getKeyValue("sqltoy.table_names.strategy.".concat(realDialect));
+		if (result == null) {
+			return tableOrColumnName;
+		}
+		String lowResult = result.toLowerCase();
+		if (lowResult.startsWith("lower")) {
+			return tableOrColumnName.toLowerCase();
+		} else if (lowResult.startsWith("upper")) {
+			return tableOrColumnName.toUpperCase();
+		}
+		return tableOrColumnName;
+	}
 }
