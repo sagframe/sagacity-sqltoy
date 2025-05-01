@@ -1477,4 +1477,69 @@ public class CollectionUtil {
 		}
 		return resultList.toArray();
 	}
+
+	/**
+	 * @todo 切取集合中的某列值组成数组对象返回，一般用于sql in (:values) 条件数组数据提取
+	 * @param dataSet
+	 * @param column   可以是数字也可以是一个字段名称
+	 * @param distinct 是否去除重复
+	 * @return
+	 */
+	public static Object[] sliceColumn(List dataSet, String column, boolean distinct) {
+		if (dataSet == null || dataSet.isEmpty()) {
+			return null;
+		}
+		if (NumberUtil.isInteger(column)) {
+			return sliceColumn(dataSet, Integer.parseInt(column), distinct).toArray();
+		}
+		if (dataSet.get(0) instanceof Map) {
+			List result = new ArrayList();
+			Object value;
+			for (int i = 0; i < dataSet.size(); i++) {
+				value = ((Map) dataSet.get(i)).get(column);
+				if (distinct) {
+					if (!result.contains(value)) {
+						result.add(value);
+					}
+				} else {
+					result.add(value);
+				}
+			}
+			return result.toArray();
+		}
+		try {
+			List tmpResult = BeanUtil.reflectBeansToList(dataSet, new String[] { column });
+			return sliceColumn(tmpResult, 0, distinct).toArray();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	/**
+	 * @todo 切取集合的单一列（切片）
+	 * @param source
+	 * @param columnIndex
+	 * @param distinct    是否去除重复
+	 * @return
+	 */
+	public static List sliceColumn(List source, int columnIndex, boolean distinct) {
+		if (source == null || source.isEmpty()) {
+			return null;
+		}
+		boolean isArray = (source.get(0).getClass().isArray()) ? true : false;
+		List result = new ArrayList();
+		Object cell;
+		for (int i = 0, n = source.size(); i < n; i++) {
+			cell = isArray ? convertArray(source.get(i))[columnIndex] : ((List) source.get(i)).get(columnIndex);
+			if (distinct) {
+				if (!result.contains(cell)) {
+					result.add(cell);
+				}
+			} else {
+				result.add(cell);
+			}
+		}
+		return result;
+	}
 }
