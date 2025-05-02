@@ -565,7 +565,8 @@ public interface LightDao {
 
 	/**
 	 * @TODO 获取查询结果的第一条、第一列的值，一般用select max(x) from 等
-	 *      <li>lightDao.getValue("select max(amt) from table",null,BigDecimal.class)</li>
+	 *       <li>lightDao.getValue("select max(amt) from
+	 *       table",null,BigDecimal.class)</li>
 	 * @param <T>
 	 * @param sqlOrSqlId
 	 * @param paramsMap

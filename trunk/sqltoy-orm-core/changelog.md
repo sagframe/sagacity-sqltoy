@@ -1,4 +1,138 @@
-﻿# v5.2.9  2022-8-21
+﻿# v5.6.43 2025-04-10
+1、getTables方法优化了postgresql分区表的过滤，保留基础分区表，过滤掉子分区表
+2、增强@if(:param1<>A && :boolParam) 含boolean类型参数不完整表达式[完整模式:booleanParam==true]的兼容处理
+
+# v5.6.42 2025-04-02
+1、修复分组link结果为List、Set时最后一条为一组时未被处理的缺陷
+
+```xml
+<sql id="common_resourceRoles" debug="false" dataSource="portalDataSource">
+<link id-columns="res_url" columns="role_code" distinct="true" result-type="SET"/>
+<value>
+    	<![CDATA[
+            select
+                t3.res_url,
+                t2.role_code
+            from SAG_ROLE_RESOURCES t1
+            left join sag_resource t3 on t3.res_id=t1.res_id
+            left join sag_role t2 on t2.role_id=t1.role_id
+            where t3.res_url is not null and t3.NODE_LEVEL >= 3
+            and t3.status=1
+            and t1.status=1
+            -- and t3.view_type='F'
+            and t3.app_code=:appCode
+            order by t3.res_url
+    		]]>
+    </value>
+</sql>
+```
+
+# v5.6.41 2025-03-03
+1、修复DateUtil字符串转日期，字符串值不合规未能提示的缺陷
+
+# v5.6.40 2025-02-26
+1、查询条件参数支持JSONArray和JSONObject
+2、多字段in支持(id,type) in （:list.id,:typeCode）参数值存在部分数组场景
+3、升级solon、spring依赖版本
+
+# v5.6.39 2025-02-10
+1、优化5.6.38 -- @fast_start 和 -- @fast_end的标记，支持只需要-- @fast_start即可标记
+2、优化支持lightDao.Store().resultTypes(Class...clasess)多个结果类型即可替代.moreResult(true)的设置
+3、优化loadAll,改进大批量并行执行(之前是先分批后拆分并行，导致并行实际并未生效或无法起到实质效果)
+4、调整提示慢sql的时间标准，默认值从30秒改为8秒
+
+# v5.6.38 2025-02-04
+1、增加通过/* @fast_start */ 和 /* @fast_end */代替@fast标记快速分页的开始和结束位置，从而便于sql调试
+2、@fast支持@fast （sql) 左括号跟@fast之间存在空格情况的匹配
+
+# v5.6.37 2024-12-29
+1、提供针对同一个字段进行多次翻译或根据具体逻辑条件进行翻译的功能
+
+```xml
+<sql id="sqltoy_complax_trans">
+      <!-- where like colName==xxx | colName!=xxx | colName in (a,b) |colName out (a,b) -->
+      <translate cache="dictCache" cache-type="purchase_deliver_type" columns="deliver_type" where="order_type==purchase"/>
+      <translate cache="dictCache" cache-type="sales_deliver_type" columns="deliver_type" where="order_type==sales"/>
+      <value><!CDATA[[
+       select order_id,order_type,deliver_type
+       from order_info
+         ]]>
+      </value>
+</sql>
+```
+
+# v5.6.35 2024-12-25
+1、修复数据库Blob类型字段值长度为0时场景处理缺陷
+2、升级solon依赖为3.0.5版本、springboot3.4.1
+
+# v5.6.34 2024-12-12
+1、修复@value(:inField) in (:ids) ids超过1000场景下的缺陷
+2、升级solon依赖为3.0.4版本、springboot3.4
+
+# v5.6.33 2024-11-19
+1、增强in条件的参数值去重功能
+2、sql查询代替group_concat的link功能支持结果类型为HashSet
+3、升级solon依赖为3.0.3版本
+
+# v5.6.31 2024-11-08
+1、增强sql自动分页提取count部分sql的算法，兼容最终from前面有非（select from）对称场景:
+
+```sql
+select field1,(day from(xxx)) as aliase from table 
+```
+2、优化DateUtil,对非规范长度的字符串(如:2024-11-07 10:52:36.12345)转LocalDateTime、LocalTime的兼容处理
+3、强化opengauss系列getTables方法，表名匹配小写化
+
+# v5.6.30 2024-10-31
+1、增加opengauss、stardb数据库的支持，将vastbase、mogdb改为继承opengauss模式
+
+# v5.6.29 2024-10-24
+1、增加海量数据库(vastbase)支持，默认映射成gaussdb执行
+2、分页最大单页记录pageFetchSizeLimit(对应参数:spring.sqltoy.pageFetchSizeLimit)小于0表示不做限制
+3、优化个别rs.close()行为，统一放入finally块中处理
+4、升级solon3.0.2版本
+
+# v5.6.28 2024-10-17
+1、规范if/elseif/else的逻辑(历史版本:if场景，sql中无动态参数也会被剔除)
+
+```sql
+select * from table where name='测试'
+-- 非if逻辑场景下,内部动态参数为null，最终为and status=1 也要自动剔除
+#[and status=1 #[and type=:type] #[and orderName like :orderName] ]
+-- flag==1成立，因为内容存在动态参数，所以继续变成#[and status=:status]参数为null剔除，不为null则保留
+#[@if(:flag==1) and status=:status]
+-- 成立,因为and status=1 没有动态参数,则保留and status=1
+#[@if(:flag==1) and status=1 ]
+#[@elseif(:flag==2) and status in (2,4) ]
+#[@else and status in (1,2)]
+```
+
+# v5.6.27 2024-10-16
+1、修复StringUtil.firstToLowerCase单字符处理缺陷
+
+# v5.6.26 2024-10-01
+1、针对batchUpdate、saveAll、updateAll、saveOrUpdateAll、loadAll等批量操作，针对超大数据集场景提供并行执行机制
+
+# v5.6.25 2024-09-29
+1、save操作增加判断主键值不为空时，且是sequence主键策略则主动调整为assgin，避免sequence跳号
+2、batchUpdate、executeSql操作时，增加判断sql是否是merge into 且方言是sqlserver，帮助自动补充分号结尾(sqlserver merge into 必须是;结尾)
+3、完善代码注释以及变更日志，增强代码可理解性和变更原因
+4、升级pom第三方组件的依赖版本
+
+# v5.6.24 2024-09-25
+1、增加 @if （:param exclude xxx）逻辑(include的取反)
+2、优化deleteAll底层逻辑，改为delete from table id in （:ids）,复合主键为: (code,type) in （(:codes,:types))，提升效率
+3、优化loadAll级联加载，复合主键支持select * from table （id，code） in ((x1,x2),(x11,x22)) 多字段in模式，提升效率
+
+# v5.6.23 2024-09-19
+1、修复@fast( @include("sqlId") ) 场景缺陷
+2、强化where #[field1=:field1Value and] field2=:field2Value 场景sql处理缺陷
+
+# v5.6.22 2024-08-30
+1、修复同比环比计算中除数跟零的对比缺陷(BigDeciaml("0.00") 不等于BigDeciaml.ZERO)
+2、修复跨数据库适配Nvl函数，排除coalesce匹配，coalesce各种数据库都支持且非单纯的ifnull/nvl逻辑
+
+# v5.2.9  2022-8-21
 1、针对一下产品化的软件(适配多种数据库:mysql\oracle\postgres\db2\mssql),要求在一个数据库场景下可以测试相同的功能是否可以适配不同数据库
 
 # v5.2.8  2022-8-11

@@ -683,6 +683,12 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected Long executeSql(final String sqlOrSqlId, final Serializable entity) {
+		// update 2025-4-29 兼容executeSql(sql,Object...params) 只有一个参数时的场景
+		if (entity == null || BeanUtil.isBaseDataType(entity.getClass())) {
+			return executeSql(sqlOrSqlId, null, new Object[] { entity }, null, null);
+		} else if (entity instanceof Collection) {
+			return executeSql(sqlOrSqlId, null, ((Collection) entity).toArray(), null, null);
+		}
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sqlOrSqlId, SqlType.update, getDialect(dataSource),
 				entity);
 		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, new QueryExecutor(sqlOrSqlId, entity), null, null,

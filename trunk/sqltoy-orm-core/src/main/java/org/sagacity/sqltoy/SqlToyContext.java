@@ -301,6 +301,8 @@ public class SqlToyContext {
 	private AppContext appContext;
 
 	/**
+	 * spring.sqltoy.dialectConfig:
+	 *                        sqltoy.table_names.strategy.vastbase: lower_case      
 	 * 对sqltoy-default.properties 值的修改(一般情况下不会涉及)
 	 */
 	private Map<String, String> dialectConfig;

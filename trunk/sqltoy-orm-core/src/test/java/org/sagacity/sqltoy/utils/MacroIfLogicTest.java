@@ -42,10 +42,20 @@ public class MacroIfLogicTest {
 	// sqltoy @if() 逻辑兼容=和==场景
 	@Test
 	public void testEqual() {
-		String sql = ":status='1' || :status=='2'";
+		String sql = ":status='1' || :status == '2'";
 		List params = new ArrayList();
 		params.add(2);
 		params.add(2);
+		boolean result = MacroIfLogic.evalLogic(sql, params, 0, params.size(), 1);
+		assertEquals(result, true);
+	}
+
+	@Test
+	public void testBoolEqual() {
+		String sql = ":status !=null && :status";
+		List params = new ArrayList();
+		params.add(true);
+		params.add(true);
 		boolean result = MacroIfLogic.evalLogic(sql, params, 0, params.size(), 1);
 		assertEquals(result, true);
 	}

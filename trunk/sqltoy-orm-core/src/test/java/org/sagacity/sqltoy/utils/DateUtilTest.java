@@ -83,12 +83,11 @@ public class DateUtilTest {
 //		System.err.println(new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH)
 //				.parse("Fri Dec 15 10:20:43 CEST 2023"));
 	}
-	
+
 	@Test
 	public void testParseUsDate1() throws ParseException {
 		System.out.println(DateUtil.parseString("Thur 14 Dec 2023 10:20:43 CEST"));
 	}
-
 
 	@Test
 	public void testDateAdd() throws ParseException {
@@ -162,6 +161,7 @@ public class DateUtilTest {
 		System.err.println(DateUtil.parseLocalDateTime("12:30:30.123"));
 		System.err.println(DateUtil.parseLocalDateTime("12:30:30.1"));
 		System.err.println(DateUtil.parseLocalDateTime("12:30:30"));
+		System.err.println(DateUtil.parseString("江苏华海通上海分"));
 
 	}
 
