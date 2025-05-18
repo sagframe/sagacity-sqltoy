@@ -29,6 +29,9 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 * https://github.com/sagframe/sqltoy-quickstart 
 * 阅读其readme.md学习 
 
+## solon 项目演示
+* https://github.com/CoCoTeaNet/sqltoy-solon-demo
+
 ## POJO和DTO 严格分层演示项目
 * https://github.com/sagframe/sqltoy-strict
 
