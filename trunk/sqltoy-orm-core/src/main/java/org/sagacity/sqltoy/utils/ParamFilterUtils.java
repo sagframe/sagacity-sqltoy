@@ -123,7 +123,7 @@ public class ParamFilterUtils {
 					if (index != -1 && (paramValues[index] != null || "default".equals(filterType))) {
 						if (!paramFilterModel.getExcludes().contains(filterParam)) {
 							paramValues[index] = filterSingleParam(sqlToyContext, paramValues, paramValues[index],
-									paramFilterModel, paramIndexMap);
+									paramFilterModel, filterParam, paramIndexMap);
 						}
 					}
 				}
@@ -549,11 +549,12 @@ public class ParamFilterUtils {
 	 * @param paramValues
 	 * @param paramValue
 	 * @param paramFilterModel
+	 * @param filterParam
 	 * @param paramIndexMap
 	 * @return
 	 */
 	private static Object filterSingleParam(SqlToyContext sqlToyContext, Object[] paramValues, Object paramValue,
-			ParamFilterModel paramFilterModel, HashMap<String, Integer> paramIndexMap) {
+			ParamFilterModel paramFilterModel, String filterParam, HashMap<String, Integer> paramIndexMap) {
 		String filterType = paramFilterModel.getFilterType();
 		// null或者非设置default默认值(这里属于冗余校验，上面调用前已经校验是否为null或default)
 		if (null == paramValue && !"default".equals(filterType)) {
@@ -681,6 +682,11 @@ public class ParamFilterUtils {
 					throw new RuntimeException("sql 参数过滤转换过程将数组转成in (:params) 形式的条件值过程错误:" + e.getMessage());
 				}
 			}
+		} else if ("sql-injection".equals(filterType)) {
+			if (SqlUtil.isSqlInjection(paramFilterModel.getSqlInjectionLevel(), paramValue)) {
+				throw new RuntimeException("属性[" + filterParam + "]对应的值未能通过sql注入校验,校验策略:["
+						+ paramFilterModel.getSqlInjectionLevel().value() + "]!");
+			}
 		} else if ("custom-handler".equals(filterType)) {
 			if (sqlToyContext.getCustomFilterHandler() == null) {
 				throw new RuntimeException("sql中filter使用了custom-handler类型,但spring.sqltoy.customFilterHandler未定义具体实现类!");
@@ -698,14 +704,37 @@ public class ParamFilterUtils {
 	 * @param isLeft
 	 * @return
 	 */
-	private static String like(Object paramValue, boolean isLeft) {
+	private static Object like(Object paramValue, boolean isLeft) {
 		if (StringUtil.isBlank(paramValue)) {
 			return null;
 		}
-		if (isLeft) {
-			return "%".concat(paramValue.toString());
+		if (paramValue instanceof String) {
+			if (isLeft) {
+				return "%".concat(paramValue.toString());
+			}
+			return paramValue.toString().concat("%");
+		} else if (paramValue instanceof String[]) {
+			String[] tmpAry = (String[]) paramValue;
+			for (int i = 0; i < tmpAry.length; i++) {
+				if (tmpAry[i] != null) {
+					tmpAry[i] = isLeft ? "%".concat(tmpAry[i]) : tmpAry[i].concat("%");
+				}
+			}
+			return tmpAry;
+		} else if (paramValue instanceof List) {
+			List tmpList = (List) paramValue;
+			if (tmpList.size() == 0 || !(tmpList.get(0) instanceof String)) {
+				return paramValue;
+			}
+			for (int i = 0; i < tmpList.size(); i++) {
+				if (tmpList.get(i) != null) {
+					tmpList.set(i,
+							isLeft ? "%".concat(tmpList.get(i).toString()) : tmpList.get(i).toString().concat("%"));
+				}
+			}
+			return tmpList;
 		}
-		return paramValue.toString().concat("%");
+		return paramValue;
 	}
 
 	/**

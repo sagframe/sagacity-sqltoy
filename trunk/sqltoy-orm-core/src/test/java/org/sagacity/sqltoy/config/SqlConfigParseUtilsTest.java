@@ -206,6 +206,30 @@ public class SqlConfigParseUtilsTest {
 	}
 
 	@Test
+	public void testSecureLoopTsName() throws Exception {
+		String sql = """
+				selet * from table t1
+				where 1=1 #[(@secure-loop(:nameList ,' t1.name like :nameList[i] ',' or '))]
+				""";
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "nameList" },
+				new Object[] { new String[] { "张三", "李四", "王二" } });
+		System.err.println(result.getSql());
+
+	}
+
+	@Test
+	public void testSecureLoopTsName1() throws Exception {
+		String sql = """
+				selet * from table t1
+				where 1=1 #[@secure-loop(:nameList ,' t1.name like :nameList[i] ',' or ')]
+				""";
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "nameList" },
+				new Object[] { new String[] { "张三", "李四", "王二" } });
+		System.err.println(result.getSql());
+
+	}
+	
+	@Test
 	public void testSynSign() throws Exception {
 		String sql = "select * from table where #[id in [arraystringconcat(name)] and id=:id ]#[and name like :name] #[and status=:status]";
 		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "id", "name", "status" },

@@ -39,6 +39,7 @@ import org.sagacity.sqltoy.config.model.TreeSortModel;
 import org.sagacity.sqltoy.config.model.UnpivotModel;
 import org.sagacity.sqltoy.dialect.utils.PageOptimizeUtils;
 import org.sagacity.sqltoy.model.IgnoreCaseSet;
+import org.sagacity.sqltoy.model.SqlInjectionLevel;
 import org.sagacity.sqltoy.model.TimeUnit;
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
@@ -1039,6 +1040,12 @@ public class SqlXMLConfigParse {
 		// default 功能中设置数组
 		if (filter.hasAttribute("is-array")) {
 			filterModel.setIsArray(Boolean.parseBoolean(filter.getAttribute("is-array")));
+		}
+		// sql注入验证等级
+		if (filter.hasAttribute("level")) {
+			if (filterModel.getFilterType().equalsIgnoreCase("sql-injection")) {
+				filterModel.setSqlInjectionLevel(SqlInjectionLevel.valueOf(filter.getAttribute("level").toUpperCase()));
+			}
 		}
 	}
 

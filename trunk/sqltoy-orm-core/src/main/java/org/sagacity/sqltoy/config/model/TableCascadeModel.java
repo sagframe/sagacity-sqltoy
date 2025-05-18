@@ -90,6 +90,13 @@ public class TableCascadeModel implements Serializable {
 	 */
 	private String cascadeUpdateSql;
 
+	//update 2025-5-16 提供基于in 批量查询、修改、删除的语句
+	private String loadBatchSubTableSql;
+
+	private String deleteBatchSubTableSql;
+
+	private String cascadeBatchUpdateSql;
+
 	/**
 	 * 排序
 	 */
@@ -304,6 +311,30 @@ public class TableCascadeModel implements Serializable {
 
 	public void setNotNullField(String notNullField) {
 		this.notNullField = notNullField;
+	}
+
+	public String getLoadBatchSubTableSql() {
+		return loadBatchSubTableSql;
+	}
+
+	public void setLoadBatchSubTableSql(String loadBatchSubTableSql) {
+		this.loadBatchSubTableSql = loadBatchSubTableSql;
+	}
+
+	public String getDeleteBatchSubTableSql() {
+		return deleteBatchSubTableSql;
+	}
+
+	public void setDeleteBatchSubTableSql(String deleteBatchSubTableSql) {
+		this.deleteBatchSubTableSql = deleteBatchSubTableSql;
+	}
+
+	public String getCascadeBatchUpdateSql() {
+		return cascadeBatchUpdateSql;
+	}
+
+	public void setCascadeBatchUpdateSql(String cascadeBatchUpdateSql) {
+		this.cascadeBatchUpdateSql = cascadeBatchUpdateSql;
 	}
 
 }

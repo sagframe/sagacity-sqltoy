@@ -16,6 +16,7 @@ import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.plugins.id.macro.AbstractMacro;
+import org.sagacity.sqltoy.plugins.id.macro.MacroUtils;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
@@ -37,7 +38,7 @@ public class SqlLoop extends AbstractMacro {
 	/**
 	 * 匹配sql片段中的参数名称,包含:xxxx.xxx对象属性形式
 	 */
-	private final static Pattern paramPattern = Pattern
+	public final static Pattern paramPattern = Pattern
 			.compile("\\:sqlToyLoopAsKey_\\d+A(\\.[a-zA-Z\u4e00-\u9fa5][0-9a-zA-Z\u4e00-\u9fa5_]*)*\\W");
 
 	// sql中的比较运算符号
@@ -58,11 +59,12 @@ public class SqlLoop extends AbstractMacro {
 	}
 
 	@Override
-	public String execute(String[] params, Map<String, Object> keyValues, Object paramValues, String preSql,
+	public String execute(String[] params, Map<String, Object> keyValuesMap, Object paramValues, String preSql,
 			String extSign) {
-		if (params == null || params.length < 2 || keyValues == null || keyValues.size() == 0) {
+		if (params == null || params.length < 2 || keyValuesMap == null || keyValuesMap.size() == 0) {
 			return " ";
 		}
+		IgnoreKeyCaseMap<String, Object> realKeyValuesMap = new IgnoreKeyCaseMap<String, Object>(keyValuesMap);
 		// 剔除为了规避宏参数切割附加的符号
 		String varStr;
 		for (int i = 0; i < params.length; i++) {
@@ -84,7 +86,7 @@ public class SqlLoop extends AbstractMacro {
 		// 循环连接符号(字符串)
 		String linkSign = (params.length > 2) ? params[2] : " ";
 		// 获取循环依据的参数数组值
-		Object[] loopValues = CollectionUtil.convertArray(keyValues.get(loopParam));
+		Object[] loopValues = CollectionUtil.convertArray(realKeyValuesMap.get(loopParam));
 		// 返回@blank(:paramName),便于#[ and @loop(:name,"name like ':name[i]'"," or ")]
 		// 先loop后没有参数导致#[]中内容全部被剔除的缺陷
 		if (loopValues == null || loopValues.length == 0) {
@@ -109,18 +111,18 @@ public class SqlLoop extends AbstractMacro {
 		List<Object[]> regParamValues = new ArrayList<Object[]>();
 		String lowContent = loopContent.toLowerCase();
 		String key;
-		Iterator<String> keyEnums = keyValues.keySet().iterator();
+		Iterator<String> keyEnums = realKeyValuesMap.keySet().iterator();
 		int index = 0;
+		String asName = ":sqlToyLoopAsKey_";
 		while (keyEnums.hasNext()) {
 			key = keyEnums.next().toLowerCase();
 			// 统一标准为paramName[i]模式
 			if (lowContent.contains(":" + key + "[i]") || lowContent.contains(":" + key + "[index]")) {
 				keys.add(key);
 				// 统一转为:sqlToyLoopAsKey_1_模式,简化后续匹配
-				loopContent = loopContent.replaceAll("(?i)\\:" + key + "\\[index\\]",
-						":sqlToyLoopAsKey_" + index + "A");
-				loopContent = loopContent.replaceAll("(?i)\\:" + key + "\\[i\\]", ":sqlToyLoopAsKey_" + index + "A");
-				regParamValues.add(CollectionUtil.convertArray(keyValues.get(key)));
+				loopContent = loopContent.replaceAll("(?i)\\:" + key + "\\[index\\]", asName + index + "A");
+				loopContent = loopContent.replaceAll("(?i)\\:" + key + "\\[i\\]", asName + index + "A");
+				regParamValues.add(CollectionUtil.convertArray(realKeyValuesMap.get(key)));
 				index++;
 			}
 		}
@@ -132,7 +134,7 @@ public class SqlLoop extends AbstractMacro {
 		index = 0;
 		String[] loopParamNames;
 		Object[] loopParamValues;
-		Map<String, String[]> loopParamNamesMap = parseParams(loopContent);
+		Map<String, String[]> loopParamNamesMap = MacroUtils.parseParams(paramPattern, loopContent);
 		Object loopVar;
 		// 循环的参数和对应值
 		Map<String, Object> loopKeyValueMap = new HashMap<String, Object>();
@@ -151,7 +153,7 @@ public class SqlLoop extends AbstractMacro {
 				result.append(BLANK);
 				loopKeyValueMap.clear();
 				for (int j = 0; j < keys.size(); j++) {
-					key = ":sqlToyLoopAsKey_" + j + "A";
+					key = asName + j + "A";
 					loopParamNames = loopParamNamesMap.get(key);
 					// paramName[i] 模式
 					if (loopParamNames.length == 0) {
@@ -167,8 +169,8 @@ public class SqlLoop extends AbstractMacro {
 				// 处理#[ and t.xxx=:paramName]模式，决定是否要去除
 				if (hasNullFilter) {
 					allKeyValueMap.clear();
-					// 放入整天sql涉及的参数，#[loop[i] and status=:status],即循环内容中存在非循环集合的条件参数:status
-					allKeyValueMap.putAll(keyValues);
+					// 放入整体sql涉及的参数，#[loop[i] and status=:status],即循环内容中存在非循环集合的条件参数:status
+					allKeyValueMap.putAll(realKeyValuesMap);
 					allKeyValueMap.putAll(loopKeyValueMap);
 					loopStr = processNullConditions(loopStr, allKeyValueMap);
 				}
@@ -342,40 +344,5 @@ public class SqlLoop extends AbstractMacro {
 			return preSql.substring(0, compareIndex).concat(sqlPart).concat("null");
 		}
 		return preSql.concat("null");
-	}
-
-	/**
-	 * @todo 解析模板中的参数
-	 * @param template
-	 * @return
-	 */
-	public static Map<String, String[]> parseParams(String template) {
-		Map<String, String[]> paramsMap = new HashMap<String, String[]>();
-		Matcher m = paramPattern.matcher(template.concat(" "));
-		String group;
-		String key;
-		int dotIndex;
-		int start = 0;
-		while (m.find(start)) {
-			group = m.group();
-			group = group.substring(0, group.length() - 1);
-			dotIndex = group.indexOf(".");
-			if (dotIndex != -1) {
-				key = group.substring(0, dotIndex);
-				String[] items = paramsMap.get(key);
-				if (items == null) {
-					paramsMap.put(key, new String[] { group.substring(dotIndex + 1) });
-				} else {
-					String[] newItems = new String[items.length + 1];
-					newItems[items.length] = group.substring(dotIndex + 1);
-					System.arraycopy(items, 0, newItems, 0, items.length);
-					paramsMap.put(key, newItems);
-				}
-			} else {
-				paramsMap.put(group, new String[] {});
-			}
-			start = m.end() - 1;
-		}
-		return paramsMap;
 	}
 }

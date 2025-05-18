@@ -5,6 +5,8 @@
 	<sql id="show_case">
 		<!-- filters 用来对参与查询或执行的参数值进行转化处理 -->
 		<filters>
+			<!-- 主要针对@loop和@value 场景进行sql注入参数校验:one_word 仅仅数字字符下划线,key_words:关键词排除 -->
+			<sql-injection params="productIds" level="ONE_WORD"/>
 			<!-- 参数等于某个值则将参数值设置为null -->
 			<eq params="organType" value="-1" />
 			<!-- 将参数条件值转换为日期格式,format可以是yyyy-MM-dd这种自定义格式也可以是: first_day:月的第一天;last_day:月的最后一天,first_year_day:年的第一天,last_year_day年的最后一天 -->

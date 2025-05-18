@@ -264,7 +264,7 @@ public interface LightDao {
 	 */
 	public Long updateDeeply(Serializable entity);
 
-	// 注意:这里的查询核心目的是数据逻辑校验，页面展示性查询不用用此方法
+	// 注意:updateFetch查询核心目的是用于数据逻辑校验，页面展示性查询不要用此方法
 	// sqltoy的updateFetch是jpa没有的，可以深入了解其原理，一次交互完成查询、锁定、修改并返回修改后结果
 	/**
 	 * @todo 获取并锁定数据并进行修改(一般为简单查询，查询的目的是锁住记录进行:逻辑校验(如扣减后不能<0)，符合条件进行修改)
@@ -910,20 +910,20 @@ public interface LightDao {
 	/**
 	 * @TODO 提供基于Map传参的并行查询
 	 * @param <T>
-	 * @param parallQueryList<ParallQuery> ParallQuery中可以单独对本查询设置条件参数
+	 * @param parallelQueryList<ParallQuery> ParallQuery中可以单独对本查询设置条件参数
 	 * @param paramsMap
 	 * @return
 	 */
-	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String, Object> paramsMap);
+	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallelQueryList, Map<String, Object> paramsMap);
 
 	/**
 	 * @TODO 提供基于Map传参的并行查询,并提供并行线程数、最大等待时长等参数设置
 	 * @param <T>
-	 * @param parallQueryList<ParallQuery> ParallQuery中可以单独对本查询设置条件参数
+	 * @param parallelQueryList<ParallQuery> ParallQuery中可以单独对本查询设置条件参数
 	 * @param paramsMap
 	 * @param parallelConfig               例如:ParallelConfig.create().maxThreads(20)
 	 * @return
 	 */
-	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String, Object> paramsMap,
+	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallelQueryList, Map<String, Object> paramsMap,
 			ParallelConfig parallelConfig);
 }

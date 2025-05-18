@@ -182,22 +182,15 @@ public class EntityQuery implements Serializable {
 	 */
 	public EntityQuery orderBy(String... fields) {
 		// 默认为升序
-		if (fields != null && fields.length > 0) {
-			String[] realFields;
-			if (fields.length == 1) {
-				realFields = fields[0].split("\\,");
-			} else {
-				realFields = fields;
-			}
-			for (String field : realFields) {
-				innerModel.orderBy.put(field.trim(), " ");
-			}
-		}
-		return this;
+		return wrapOrder(" ", fields);
 	}
 
 	// 逆序
 	public EntityQuery orderByDesc(String... fields) {
+		return wrapOrder(" desc ", fields);
+	}
+
+	private EntityQuery wrapOrder(String orderWay, String... fields) {
 		if (fields != null && fields.length > 0) {
 			String[] realFields;
 			if (fields.length == 1) {
@@ -205,8 +198,12 @@ public class EntityQuery implements Serializable {
 			} else {
 				realFields = fields;
 			}
+			// update 2025-5-15 增加字段内空白切割，判断是否已经存在desc或asc
+			String[] fieldAndSort;
 			for (String field : realFields) {
-				innerModel.orderBy.put(field.trim(), " desc ");
+				fieldAndSort = field.trim().split("\\s+");
+				innerModel.orderBy.put(fieldAndSort[0],
+						(fieldAndSort.length > 1) ? " ".concat(fieldAndSort[1]).concat(" ") : orderWay);
 			}
 		}
 		return this;
