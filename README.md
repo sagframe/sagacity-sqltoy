@@ -121,7 +121,9 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
    //public Long update(Serializable entity, String... forceUpdateProps);
    // 这里对photo 属性进行强制修改，其他为null自动会跳过
    lightDao.update(staffInfo, "photo");
-
+   //只更新指定字段
+   lightDao.update().updateFields("name","status").one(entity);
+   lightDao.update().updateFields("name","status").many(entities);
    //深度修改,不管是否null全部字段修改
    lightDao.updateDeeply(staffInfo);
    //批量保存或修改
