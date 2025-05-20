@@ -51,6 +51,7 @@ import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.model.IgnoreCaseSet;
+import org.sagacity.sqltoy.model.SqlInjectionLevel;
 import org.sagacity.sqltoy.model.TreeTableModel;
 import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
@@ -96,8 +97,8 @@ public class SqlUtil {
 	// 判断sql是否是merge into 开头
 	public static final Pattern MERGE_INTO_PATTERN = Pattern.compile("^merge\\s+into\\s+");
 
-	public static final Pattern SQLINJECT_PATTERN = Pattern.compile(
-			"(?i)\\W((delete\\s+from)|update|(truncate\\s+table)|(alter\\s+table)|modify|(insert\\s+into)|select|set|create|drop|(merge\\s+into))\\s+");
+	public static Pattern SQL_INJECT_PATTERN = Pattern.compile(
+			"(?i)\\W((delete\\s+from)|update|(truncate\\s+table)|(alter\\s+table)|modify|(insert\\s+into)|(sleep\\s*\\(\\s*\\d+\\s*\\))|select|set|create|drop|(merge\\s+into))\\s+");
 
 	// 只针对比较符号、和(的日期字符加函数
 	public static final Pattern COMPARE_PATTERN = Pattern
@@ -121,6 +122,33 @@ public class SqlUtil {
 			"(?i)\\/\\*\\s*\\@fast\\_start\\s*\\*\\/" };
 	private final static String[] FAST_END_REGEXS = { "(?i)\\-{2}\\s+\\@fast\\_end",
 			"(?i)\\/\\*\\s*\\@fast\\_end\\s*\\*\\/" };
+
+	// 数字、字母、下划线、横杠
+	public static final Pattern STRICT_WORD = Pattern.compile("^[a-zA-Z0-9_\\-\\.]+$");
+	// 含中文、点号、%号、单引号、双引号、@
+	public static final Pattern RELAXED_WORD = Pattern
+			.compile("^[a-zA-Z0-9_\\-\u4e00-\u9fa5\\.\\%'\"@\\[\\]\\（\\）\\【\\】\\{\\}]+$");
+
+	// 函数:abc_edf( 或 abc(
+	public static final Pattern FUNCTION_PATTERN = Pattern
+			.compile("(?i)\\b([a-zA-Z]+)(_[a-zA-Z]+)*\\s*\\([\\w\\W]*\\)");
+
+	// hint /*+ xxx */
+	public static final Pattern COMMENT_PATTERN = Pattern.compile("(?i)\\/\\*\\s*\\+[\\w\\W]*\\*\\/");
+
+	/**
+	 * 条件表达式:or 1=1 或 and 1<>1
+	 */
+	public static final Pattern CONDITION_PATTERN = Pattern
+			.compile("(?i)\\b((or|and)\\s+)?[\\w\\W]+(>|>=|<>|=|<|<=|!=|(between\\b)|(is\\s+))\\s*");
+
+	// 关键词
+	public static final Pattern SQL_KEYWORD_PATTERN = Pattern.compile(
+			"(?i)\\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|UNION|JOIN|WHERE|FROM|DISTINCT|EXECUTE|EXEC|HAVING|(TRUNCATE\\s+TABLE)|(ORDER\\s+BY)|(GROUP\\s+BY)|(MERGE\\s+INTO)|(LIMIT\\s+\\d+)|(OFFSET\\s+\\d+))\\b");
+
+	// sql 注入
+	public static Pattern[] SQL_INJECTION_KEY_WORDS = { FUNCTION_PATTERN, COMMENT_PATTERN, CONDITION_PATTERN,
+			SQL_KEYWORD_PATTERN };
 
 	/**
 	 * 存放转换后的sql
@@ -2056,7 +2084,7 @@ public class SqlUtil {
 	 */
 	public static boolean validateInArg(String argValue) {
 		// 判断是否有关键词
-		boolean hasSqlKeyWord = StringUtil.matches(BLANK + argValue, SQLINJECT_PATTERN);
+		boolean hasSqlKeyWord = StringUtil.matches(BLANK + argValue, SQL_INJECT_PATTERN);
 		String argTrim = argValue.replaceAll("\\s+", "");
 		String[] args = null;
 		// 判断是否有逗号分割
@@ -2669,5 +2697,85 @@ public class SqlUtil {
 					.replaceFirst(FAST_END_REGEXS[endRegexIndex], " ");
 		}
 		return sql;
+	}
+
+	/**
+	 * @TODO 校验参数是否存在sql注入(即sql片段)
+	 * @param sqlInjectionLevel
+	 * @param paramValue
+	 * @throws IllegalArgumentException
+	 */
+	public static boolean isSqlInjection(SqlInjectionLevel sqlInjectionLevel, Object paramValue) {
+		List<String> matchValues = toList(paramValue);
+		if (matchValues == null || matchValues.isEmpty()) {
+			return false;
+		}
+		Pattern[] patterns = null;
+		// 是否取反
+		boolean isNegate = false;
+		// 一个单词
+		if (sqlInjectionLevel.equals(SqlInjectionLevel.STRICT_WORD)) {
+			patterns = new Pattern[] { STRICT_WORD };
+			isNegate = true;
+		} else if (sqlInjectionLevel.equals(SqlInjectionLevel.RELAXED_WORD)) {
+			patterns = new Pattern[] { RELAXED_WORD };
+			isNegate = true;
+		} else if (sqlInjectionLevel.equals(SqlInjectionLevel.SQL_KEYWORD)) {
+			patterns = SQL_INJECTION_KEY_WORDS;
+			isNegate = false;
+		}
+		boolean isInjection = false;
+		if (patterns != null) {
+			for (Pattern pattern : patterns) {
+				for (String paramStr : matchValues) {
+					isInjection = isNegate ? !StringUtil.matches(paramStr, pattern)
+							: StringUtil.matches(paramStr, pattern);
+					if (isInjection) {
+						break;
+					}
+				}
+				if (isInjection) {
+					break;
+				}
+			}
+		}
+		return isInjection;
+	}
+
+	/**
+	 * sql注入校验的参数，将字符类型的转成List<String>供统一处理，非字符类型返回空集合(无需验证)
+	 * 
+	 * @param paramValue
+	 * @return
+	 */
+	private static List<String> toList(Object paramValue) {
+		List<String> result = new ArrayList<>();
+		if (paramValue instanceof String) {
+			result.add(paramValue.toString());
+			return result;
+		} else if (paramValue instanceof String[]) {
+			String[] paramsStr = (String[]) paramValue;
+			for (String param : paramsStr) {
+				result.add(param);
+			}
+		} else if (paramValue instanceof Iterable) {
+			Iterator iter = ((Iterable) paramValue).iterator();
+			Object iterValue;
+			boolean isStr = false;
+			while (iter.hasNext()) {
+				iterValue = iter.next();
+				if (isStr) {
+					result.add(iterValue == null ? null : iterValue.toString());
+				} else if (iterValue != null) {
+					if (!(iterValue instanceof String)) {
+						break;
+					} else {
+						isStr = true;
+						result.add(iterValue.toString());
+					}
+				}
+			}
+		}
+		return result;
 	}
 }

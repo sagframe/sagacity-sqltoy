@@ -182,31 +182,44 @@ public class EntityQuery implements Serializable {
 	 */
 	public EntityQuery orderBy(String... fields) {
 		// 默认为升序
-		if (fields != null && fields.length > 0) {
-			String[] realFields;
-			if (fields.length == 1) {
-				realFields = fields[0].split("\\,");
-			} else {
-				realFields = fields;
-			}
-			for (String field : realFields) {
-				innerModel.orderBy.put(field.trim(), " ");
-			}
-		}
-		return this;
+		return wrapOrder(" ", fields);
 	}
 
 	// 逆序
 	public EntityQuery orderByDesc(String... fields) {
+		return wrapOrder(" desc ", fields);
+	}
+
+	private EntityQuery wrapOrder(String orderWay, String... fields) {
 		if (fields != null && fields.length > 0) {
 			String[] realFields;
 			if (fields.length == 1) {
 				realFields = fields[0].split("\\,");
+			} else if (fields.length == 2) {
+				// 排序为空，默认为asc
+				String sortWay = (fields[1] == null) ? "asc" : fields[1].trim().toLowerCase();
+				// 排序字段为空当作无效参数
+				if (StringUtil.isBlank(fields[0]) && (sortWay.equals("asc") || sortWay.equals("desc"))) {
+					return this;
+				}
+				// {field,sortWay} 模式，field中间无空格,第二个字符串是desc或asc
+				if (!StringUtil.matches(fields[0].trim(), "\\s+")
+						&& (sortWay.equals("asc") || sortWay.equals("desc"))) {
+					realFields = new String[] { fields[0].concat(" ").concat(fields[1]) };
+				} else {
+					realFields = fields;
+				}
 			} else {
 				realFields = fields;
 			}
+			// update 2025-5-15 增加字段内空白切割，判断是否已经存在desc或asc
+			String[] fieldAndSort;
 			for (String field : realFields) {
-				innerModel.orderBy.put(field.trim(), " desc ");
+				if (field != null && !field.trim().equals("")) {
+					fieldAndSort = field.trim().split("\\s+");
+					innerModel.orderBy.put(fieldAndSort[0],
+							(fieldAndSort.length > 1) ? " ".concat(fieldAndSort[1]).concat(" ") : orderWay);
+				}
 			}
 		}
 		return this;

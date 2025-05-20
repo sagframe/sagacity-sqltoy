@@ -200,6 +200,42 @@ public class MacroUtils {
 
 	/**
 	 * @todo 解析模板中的参数
+	 * @param paramPattern
+	 * @param template
+	 * @return
+	 */
+	public static Map<String, String[]> parseParams(Pattern paramPattern, String template) {
+		Map<String, String[]> paramsMap = new HashMap<String, String[]>();
+		Matcher m = paramPattern.matcher(template.concat(" "));
+		String group;
+		String key;
+		int dotIndex;
+		int start = 0;
+		while (m.find(start)) {
+			group = m.group();
+			group = group.substring(0, group.length() - 1);
+			dotIndex = group.indexOf(".");
+			if (dotIndex != -1) {
+				key = group.substring(0, dotIndex);
+				String[] items = paramsMap.get(key);
+				if (items == null) {
+					paramsMap.put(key, new String[] { group.substring(dotIndex + 1) });
+				} else {
+					String[] newItems = new String[items.length + 1];
+					newItems[items.length] = group.substring(dotIndex + 1);
+					System.arraycopy(items, 0, newItems, 0, items.length);
+					paramsMap.put(key, newItems);
+				}
+			} else {
+				paramsMap.put(group, new String[] {});
+			}
+			start = m.end() - 1;
+		}
+		return paramsMap;
+	}
+
+	/**
+	 * @todo 解析模板中的参数
 	 * @param template
 	 * @return
 	 */

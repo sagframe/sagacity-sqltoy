@@ -14,6 +14,11 @@ public class SqlToyThreadDataHolder {
 	 */
 	private static ThreadLocal<String> i18nThreadLocal = new TransmittableThreadLocal<String>();
 
+	/**
+	 * 计数器
+	 */
+	private static ThreadLocal<Integer> counterThreadLocal = new TransmittableThreadLocal<Integer>();
+
 	// 是否启用统一字段处理中修改行为(一些业务数据不需要强制对修改人、修改时间做强制覆盖)
 	private static ThreadLocal<Boolean> unifyUpdateFields = new TransmittableThreadLocal<Boolean>();
 
@@ -33,6 +38,24 @@ public class SqlToyThreadDataHolder {
 	 */
 	public static void stopUnifyUpdate() {
 		unifyUpdateFields.set(true);
+	}
+
+	// 设置计数器
+	public static void setCounter(Integer counter) {
+		counterThreadLocal.set(counter == null ? 0 : counter);
+	}
+
+	public static Integer incrementCounterAndGet() {
+		Integer count = counterThreadLocal.get();
+		if (count != null) {
+			counterThreadLocal.set(count + 1);
+		}
+		return count;
+	}
+
+	public static void clearCounter() {
+		counterThreadLocal.remove();
+		counterThreadLocal.set(null);
 	}
 
 	/**

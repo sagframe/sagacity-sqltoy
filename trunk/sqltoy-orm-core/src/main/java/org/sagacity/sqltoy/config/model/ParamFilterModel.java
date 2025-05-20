@@ -7,6 +7,7 @@ import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.sagacity.sqltoy.model.SqlInjectionLevel;
 import org.sagacity.sqltoy.model.TimeUnit;
 
 /**
@@ -185,6 +186,11 @@ public class ParamFilterModel implements Serializable {
 	 * 缓存未匹配到key，返回检索词自身
 	 */
 	private boolean cacheNotMatchedReturnSelf = true;
+	
+	/**
+	 * sql注入验证等级
+	 */
+	private SqlInjectionLevel sqlInjectionLevel;
 
 	/**
 	 * 是否数组
@@ -588,4 +594,14 @@ public class ParamFilterModel implements Serializable {
 	public void setIsArray(Boolean isArray) {
 		this.isArray = isArray;
 	}
+
+	public SqlInjectionLevel getSqlInjectionLevel() {
+		return sqlInjectionLevel;
+	}
+
+	public void setSqlInjectionLevel(SqlInjectionLevel sqlInjectionLevel) {
+		this.sqlInjectionLevel = sqlInjectionLevel;
+	}
+	
+	
 }

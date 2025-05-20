@@ -12,7 +12,7 @@ import java.io.Serializable;
  * @version v1.0, Date:2020-8-25
  * @modify 2020-8-25,修改说明
  */
-public class ParallQueryResult implements Serializable {
+public class ParallelQueryResult implements Serializable {
 	/**
 	 * 
 	 */

@@ -11,9 +11,9 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.dialect.DialectFactory;
 import org.sagacity.sqltoy.model.ParallQuery;
-import org.sagacity.sqltoy.model.ParallQueryResult;
+import org.sagacity.sqltoy.model.ParallelQueryResult;
 import org.sagacity.sqltoy.model.QueryExecutor;
-import org.sagacity.sqltoy.model.inner.ParallQueryExtend;
+import org.sagacity.sqltoy.model.inner.ParallelQueryExtend;
 import org.sagacity.sqltoy.plugins.CrossDbAdapter;
 
 /**
@@ -23,7 +23,7 @@ import org.sagacity.sqltoy.plugins.CrossDbAdapter;
  * @version v1.0, Date:2020-8-25
  * @modify 2020-8-25,修改说明
  */
-public class ParallQueryExecutor implements Callable<ParallQueryResult> {
+public class ParallelQueryExecutor implements Callable<ParallelQueryResult> {
 
 	/**
 	 * sqltoy上下文
@@ -33,28 +33,28 @@ public class ParallQueryExecutor implements Callable<ParallQueryResult> {
 	private DialectFactory dialectFactory;
 
 	private DataSource dataSource;
-	private ParallQuery parallQuery;
+	private ParallQuery parallelQuery;
 	private SqlToyConfig sqlToyConfig;
 	private String[] paramNames;
 
 	private Object[] paramValues;
 
-	public ParallQueryExecutor(SqlToyContext sqlToyContext, DialectFactory dialectFactory, SqlToyConfig sqlToyConfig,
-			ParallQuery parallQuery, String[] paramNames, Object[] paramValues, DataSource dataSource) {
+	public ParallelQueryExecutor(SqlToyContext sqlToyContext, DialectFactory dialectFactory, SqlToyConfig sqlToyConfig,
+			ParallQuery parallelQuery, String[] paramNames, Object[] paramValues, DataSource dataSource) {
 		this.sqlToyContext = sqlToyContext;
 		this.dialectFactory = dialectFactory;
 		this.sqlToyConfig = sqlToyConfig;
-		this.parallQuery = parallQuery;
+		this.parallelQuery = parallelQuery;
 		this.dataSource = dataSource;
 		this.paramNames = paramNames;
 		this.paramValues = paramValues;
 	}
 
 	@Override
-	public ParallQueryResult call() {
-		ParallQueryResult result = new ParallQueryResult();
+	public ParallelQueryResult call() {
+		ParallelQueryResult result = new ParallelQueryResult();
 		try {
-			ParallQueryExtend extend = parallQuery.getExtend();
+			ParallelQueryExtend extend = parallelQuery.getExtend();
 			QueryExecutor queryExecutor = new QueryExecutor(extend.sql).resultType(extend.resultType).names(paramNames)
 					.values(paramValues).showSql(extend.showSql);
 			// 分页

@@ -38,7 +38,7 @@ import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.dialect.DialectFactory;
-import org.sagacity.sqltoy.dialect.executor.ParallQueryExecutor;
+import org.sagacity.sqltoy.dialect.executor.ParallelQueryExecutor;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.integration.DistributeIdGenerator;
@@ -66,8 +66,8 @@ import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.MapKit;
 import org.sagacity.sqltoy.model.Page;
 import org.sagacity.sqltoy.model.ParallQuery;
-import org.sagacity.sqltoy.model.ParallQueryResult;
 import org.sagacity.sqltoy.model.ParallelConfig;
+import org.sagacity.sqltoy.model.ParallelQueryResult;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.SaveMode;
@@ -2405,19 +2405,19 @@ public class SqlToyDaoSupport {
 	 * 
 	 * @TODO 并行查询并返回一维List，有几个查询List中就包含几个结果对象，paramNames和paramValues是全部sql的条件参数的合集
 	 * @param <T>
-	 * @param parallQueryList
+	 * @param parallelQueryList
 	 * @param paramNames
 	 * @param paramValues
 	 * @return
 	 */
-	protected <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
+	protected <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallelQueryList, String[] paramNames,
 			Object[] paramValues) {
-		return parallQuery(parallQueryList, paramNames, paramValues, null);
+		return parallQuery(parallelQueryList, paramNames, paramValues, null);
 	}
 
-	protected <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String, Object> paramsMap,
+	protected <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallelQueryList, Map<String, Object> paramsMap,
 			ParallelConfig parallelConfig) {
-		return parallQuery(parallQueryList, null, new Object[] { new IgnoreKeyCaseMap(paramsMap) }, parallelConfig);
+		return parallQuery(parallelQueryList, null, new Object[] { new IgnoreKeyCaseMap(paramsMap) }, parallelConfig);
 	}
 
 	/**
@@ -2448,15 +2448,15 @@ public class SqlToyDaoSupport {
 
 	/**
 	 * @TODO 并行查询并返回一维List，有几个查询List中就包含几个结果对象，paramNames和paramValues是全部sql的条件参数的合集
-	 * @param parallQueryList
+	 * @param parallelQueryList
 	 * @param paramNames
 	 * @param paramValues
 	 * @param parallelConfig
 	 * @return
 	 */
-	protected <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
+	protected <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallelQueryList, String[] paramNames,
 			Object[] paramValues, ParallelConfig parallelConfig) {
-		if (parallQueryList == null || parallQueryList.isEmpty()) {
+		if (parallelQueryList == null || parallelQueryList.isEmpty()) {
 			return null;
 		}
 		ParallelConfig parallConfig = parallelConfig;
@@ -2468,27 +2468,27 @@ public class SqlToyDaoSupport {
 			parallConfig.maxThreads(10);
 		}
 		int thread = parallConfig.getMaxThreads();
-		if (parallQueryList.size() < thread) {
-			thread = parallQueryList.size();
+		if (parallelQueryList.size() < thread) {
+			thread = parallelQueryList.size();
 		}
 		List<QueryResult<T>> results = new ArrayList<QueryResult<T>>();
 		ExecutorService pool = null;
 		try {
 			pool = Executors.newFixedThreadPool(thread);
-			List<Future<ParallQueryResult>> futureResult = new ArrayList<Future<ParallQueryResult>>();
+			List<Future<ParallelQueryResult>> futureResult = new ArrayList<Future<ParallelQueryResult>>();
 			SqlToyConfig sqlToyConfig;
-			Future<ParallQueryResult> future;
-			for (ParallQuery query : parallQueryList) {
+			Future<ParallelQueryResult> future;
+			for (ParallQuery query : parallelQueryList) {
 				sqlToyConfig = sqlToyContext.getSqlToyConfig(
 						new QueryExecutor(query.getExtend().sql).resultType(query.getExtend().resultType),
 						SqlType.search, getDialect(query.getExtend().dataSource));
 				// 自定义条件参数
 				if (query.getExtend().selfCondition) {
-					future = pool.submit(new ParallQueryExecutor(sqlToyContext, dialectFactory, sqlToyConfig, query,
+					future = pool.submit(new ParallelQueryExecutor(sqlToyContext, dialectFactory, sqlToyConfig, query,
 							query.getExtend().names, query.getExtend().values,
 							getDataSource(query.getExtend().dataSource, sqlToyConfig)));
 				} else {
-					future = pool.submit(new ParallQueryExecutor(sqlToyContext, dialectFactory, sqlToyConfig, query,
+					future = pool.submit(new ParallelQueryExecutor(sqlToyContext, dialectFactory, sqlToyConfig, query,
 							paramNames, paramValues, getDataSource(query.getExtend().dataSource, sqlToyConfig)));
 				}
 				futureResult.add(future);
@@ -2500,9 +2500,9 @@ public class SqlToyDaoSupport {
 			} else {
 				pool.awaitTermination(SqlToyConstants.PARALLEL_MAXWAIT_SECONDS, TimeUnit.SECONDS);
 			}
-			ParallQueryResult item;
+			ParallelQueryResult item;
 			int index = 0;
-			for (Future<ParallQueryResult> result : futureResult) {
+			for (Future<ParallelQueryResult> result : futureResult) {
 				index++;
 				item = result.get();
 				// 存在执行异常则整体抛出
