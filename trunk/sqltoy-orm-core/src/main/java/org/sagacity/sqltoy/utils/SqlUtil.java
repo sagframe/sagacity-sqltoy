@@ -98,7 +98,7 @@ public class SqlUtil {
 	public static final Pattern MERGE_INTO_PATTERN = Pattern.compile("^merge\\s+into\\s+");
 
 	public static Pattern SQL_INJECT_PATTERN = Pattern.compile(
-			"(?i)\\W((delete\\s+from)|update|(truncate\\s+table)|(alter\\s+table)|modify|(insert\\s+into)|select|set|create|drop|(merge\\s+into))\\s+");
+			"(?i)\\W((delete\\s+from)|update|(truncate\\s+table)|(alter\\s+table)|modify|(insert\\s+into)|(sleep\\s*\\(\\s*\\d+\\s*\\))|select|set|create|drop|(merge\\s+into))\\s+");
 
 	// 只针对比较符号、和(的日期字符加函数
 	public static final Pattern COMPARE_PATTERN = Pattern
@@ -124,10 +124,10 @@ public class SqlUtil {
 			"(?i)\\/\\*\\s*\\@fast\\_end\\s*\\*\\/" };
 
 	// 数字、字母、下划线、横杠
-	public static final Pattern STRICT_WORD = Pattern.compile("^[a-zA-Z0-9_-]+$");
+	public static final Pattern STRICT_WORD = Pattern.compile("^[a-zA-Z0-9_\\-\\.]+$");
 	// 含中文、点号、%号、单引号、双引号、@
 	public static final Pattern RELAXED_WORD = Pattern
-			.compile("^[a-zA-Z0-9_-\u4e00-\u9fa5\\.\\%'\"@\\[\\]\\（\\）\\【\\】\\{\\}]+$");
+			.compile("^[a-zA-Z0-9_\\-\u4e00-\u9fa5\\.\\%'\"@\\[\\]\\（\\）\\【\\】\\{\\}]+$");
 
 	// 函数:abc_edf( 或 abc(
 	public static final Pattern FUNCTION_PATTERN = Pattern
@@ -2705,36 +2705,41 @@ public class SqlUtil {
 	 * @param paramValue
 	 * @throws IllegalArgumentException
 	 */
-	public static boolean isSqlInjection(SqlInjectionLevel sqlInjectionLevel, Object paramValue)
-			throws IllegalArgumentException {
+	public static boolean isSqlInjection(SqlInjectionLevel sqlInjectionLevel, Object paramValue) {
 		List<String> matchValues = toList(paramValue);
 		if (matchValues == null || matchValues.isEmpty()) {
 			return false;
 		}
 		Pattern[] patterns = null;
+		// 是否取反
+		boolean isNegate = false;
 		// 一个单词
 		if (sqlInjectionLevel.equals(SqlInjectionLevel.STRICT_WORD)) {
 			patterns = new Pattern[] { STRICT_WORD };
+			isNegate = true;
 		} else if (sqlInjectionLevel.equals(SqlInjectionLevel.RELAXED_WORD)) {
 			patterns = new Pattern[] { RELAXED_WORD };
+			isNegate = true;
 		} else if (sqlInjectionLevel.equals(SqlInjectionLevel.SQL_KEYWORD)) {
 			patterns = SQL_INJECTION_KEY_WORDS;
+			isNegate = false;
 		}
-		boolean isMatched = false;
+		boolean isInjection = false;
 		if (patterns != null) {
 			for (Pattern pattern : patterns) {
 				for (String paramStr : matchValues) {
-					isMatched = StringUtil.matches(paramStr, pattern);
-					if (isMatched) {
+					isInjection = isNegate ? !StringUtil.matches(paramStr, pattern)
+							: StringUtil.matches(paramStr, pattern);
+					if (isInjection) {
 						break;
 					}
 				}
-				if (isMatched) {
+				if (isInjection) {
 					break;
 				}
 			}
 		}
-		return isMatched;
+		return isInjection;
 	}
 
 	/**

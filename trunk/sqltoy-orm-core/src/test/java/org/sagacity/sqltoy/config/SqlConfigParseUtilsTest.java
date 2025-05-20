@@ -221,12 +221,12 @@ public class SqlConfigParseUtilsTest {
 	public void testSecureLoopTsName1() throws Exception {
 		String sql = """
 				selet * from table t1
-				where 1=1 #[@secure-loop(:nameList ,' t1.name like :nameList[i] ',' or ')]
+				where 1=1 #[@secure-loop(:nameList ,' t1.name like @value(:nameList[i]) and t.status=:status',' or ')]
 				""";
-		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "nameList" },
-				new Object[] { new String[] { "张三", "李四", "王二" } });
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "nameList" ,"status"},
+				new Object[] { new String[] { "张三", "李四", "王二" },1 });
 		System.err.println(result.getSql());
-
+		System.err.println(JSON.toJSONString(result.getParamsValue()));
 	}
 	
 	@Test

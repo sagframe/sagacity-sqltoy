@@ -247,6 +247,8 @@ public class StringUtilsTest {
 
 	@Test
 	public void testMatchReplaceRegex() {
+		String[] fields=new String[] {"t.name desc"};
+		System.err.println(!StringUtil.matches(fields[0].trim(), "\\s+"));
 		String sql = "select * from @value(?) and @value(null) t.name like 'df'";
 		System.err.println(StringUtil.replaceRegex(sql, SqlConfigParseUtils.VALUE_PATTERN, "1=1", 2, 6));
 	}

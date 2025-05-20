@@ -277,11 +277,16 @@ public class SqlToyContextProperties implements Serializable {
 	 * 单记录保存采用identity、sequence主键策略，并返回主键值时，字段名称大小写处理(lower/upper)
 	 */
 	private HashMap<String, String> dialectReturnPrimaryColumnCase;
-	
+
 	/**
 	 * 动态获取缓存的实现(一般基于redis)
 	 */
 	private String dynamicCacheFetch;
+
+	/**
+	 * sql注入表达式
+	 */
+	private String sqlInjectionRegexes[];
 
 	/**
 	 * @return the sqlResourcesDir
@@ -805,5 +810,13 @@ public class SqlToyContextProperties implements Serializable {
 	 */
 	public void setDynamicCacheFetch(String dynamicCacheFetch) {
 		this.dynamicCacheFetch = dynamicCacheFetch;
+	}
+
+	public String[] getSqlInjectionRegexes() {
+		return sqlInjectionRegexes;
+	}
+
+	public void setSqlInjectionRegexes(String[] sqlInjectionRegexes) {
+		this.sqlInjectionRegexes = sqlInjectionRegexes;
 	}
 }

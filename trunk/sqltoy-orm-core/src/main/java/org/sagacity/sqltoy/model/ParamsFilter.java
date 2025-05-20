@@ -82,6 +82,8 @@ public class ParamsFilter implements Serializable {
 
 	private CacheArg cacheArg;
 
+	private SqlInjectionLevel sqlInjectionLevel;
+
 	public ParamsFilter(String... params) {
 		this.params = params;
 	}
@@ -279,6 +281,12 @@ public class ParamsFilter implements Serializable {
 		return this;
 	}
 
+	public ParamsFilter sqlInjection(SqlInjectionLevel sqlInjectionLevel) {
+		this.type = "sql-injection";
+		this.sqlInjectionLevel = sqlInjectionLevel;
+		return this;
+	}
+
 	/**
 	 * @TODO 排斥法:当某个属性值为xx时，设置其他几个属性值为xxx
 	 * @param exclusive
@@ -408,4 +416,7 @@ public class ParamsFilter implements Serializable {
 		return cacheArg;
 	}
 
+	public SqlInjectionLevel getSqlInjectionLevel() {
+		return sqlInjectionLevel;
+	}
 }

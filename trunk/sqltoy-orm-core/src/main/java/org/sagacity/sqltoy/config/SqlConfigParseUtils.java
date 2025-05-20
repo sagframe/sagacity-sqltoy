@@ -24,7 +24,7 @@ import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
 import org.sagacity.sqltoy.plugins.id.macro.AbstractMacro;
 import org.sagacity.sqltoy.plugins.id.macro.MacroUtils;
-import org.sagacity.sqltoy.plugins.id.macro.impl.Foreach;
+import org.sagacity.sqltoy.plugins.id.macro.impl.SecureSqlLoop;
 import org.sagacity.sqltoy.plugins.id.macro.impl.SqlLoop;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.CollectionUtil;
@@ -173,8 +173,8 @@ public class SqlConfigParseUtils {
 		macros.put("@loop-full", new SqlLoop(false));
 
 		// 非注入式循环(25-5-18)
-		macros.put("@secure-loop", new Foreach(true));
-		macros.put("@secure-loop-full", new Foreach(false));
+		macros.put("@secure-loop", new SecureSqlLoop(true));
+		macros.put("@secure-loop-full", new SecureSqlLoop(false));
 	}
 
 	// 避免实例化

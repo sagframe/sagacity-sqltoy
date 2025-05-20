@@ -17,11 +17,11 @@ import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
  * @project sagacity-sqltoy
- * @description 增强loop,采用参数非拼接模式，防止sql
+ * @description SqlLoop增强,采用参数非拼接模式，防止sql注入
  * @author zhongxuchen
  * @version v1.0, Date:2025-5-18
  */
-public class Foreach extends AbstractMacro {
+public class SecureSqlLoop extends AbstractMacro {
 	/**
 	 * 匹配sql片段中的参数名称,包含:xxxx.xxx对象属性形式
 	 */
@@ -35,10 +35,10 @@ public class Foreach extends AbstractMacro {
 	 */
 	private boolean skipBlank = true;
 
-	public Foreach() {
+	public SecureSqlLoop() {
 	}
 
-	public Foreach(boolean skipBlank) {
+	public SecureSqlLoop(boolean skipBlank) {
 		this.skipBlank = skipBlank;
 	}
 
@@ -49,7 +49,8 @@ public class Foreach extends AbstractMacro {
 			return " ";
 		}
 		IgnoreKeyCaseMap<String, Object> realKeyValuesMap = new IgnoreKeyCaseMap<String, Object>(keyValuesMap);
-		int loopCount = SqlToyThreadDataHolder.incrementCounterAndGet();
+		// 第几个@secure-loop,避免参数名称重复
+		int secureLoopCnt = SqlToyThreadDataHolder.incrementCounterAndGet();
 		// 剔除为了规避宏参数切割附加的符号
 		String varStr;
 		for (int i = 0; i < params.length; i++) {
@@ -98,15 +99,15 @@ public class Foreach extends AbstractMacro {
 		String key;
 		Iterator<String> keyEnums = realKeyValuesMap.keySet().iterator();
 		int index = 0;
-		String asName = ":sqlToyLoopAsKey_";
+		String keyNamePrefix = ":sqlToyLoopAsKey_";
 		while (keyEnums.hasNext()) {
 			key = keyEnums.next().toLowerCase();
 			// 统一标准为paramName[i]模式
 			if (lowContent.contains(":" + key + "[i]") || lowContent.contains(":" + key + "[index]")) {
 				keys.add(key);
 				// 统一转为:sqlToyLoopAsKey_1_模式,简化后续匹配
-				loopContent = loopContent.replaceAll("(?i)\\:" + key + "\\[index\\]", asName + index + "A");
-				loopContent = loopContent.replaceAll("(?i)\\:" + key + "\\[i\\]", asName + index + "A");
+				loopContent = loopContent.replaceAll("(?i)\\:" + key + "\\[index\\]", keyNamePrefix + index + "A");
+				loopContent = loopContent.replaceAll("(?i)\\:" + key + "\\[i\\]", keyNamePrefix + index + "A");
 				regParamValues.add(CollectionUtil.convertArray(realKeyValuesMap.get(key)));
 				index++;
 			}
@@ -119,12 +120,13 @@ public class Foreach extends AbstractMacro {
 		Object loopVar;
 		// 循环的参数和对应值
 		Map<String, Object> loopKeyValueMap = new HashMap<String, Object>();
-		String loopStr;
-		String keyStart = "sqlLoopKey" + (loopCount == 0 ? "" : loopCount) + "_S";
+		String realLoopContent;
+		// 构建最终使用的参数名称前缀
+		String realKeyNamePrefix = "sqlLoopKey" + (secureLoopCnt == 0 ? "" : secureLoopCnt) + "_S";
 		String realKey;
 		int paramCnt = 1;
 		for (int i = start; i < end; i++) {
-			loopStr = loopContent;
+			realLoopContent = loopContent;
 			// 当前循环的值
 			loopVar = loopValues[i];
 			// 循环值为null或空白默认被跳过
@@ -135,28 +137,28 @@ public class Foreach extends AbstractMacro {
 				}
 				result.append(BLANK);
 				for (int j = 0; j < keys.size(); j++) {
-					key = asName + j + "A";
+					key = keyNamePrefix + j + "A";
 					loopParamNames = loopParamNamesMap.get(key);
 					// paramName[i] 模式
 					if (loopParamNames.length == 0) {
 						// 以字母结束,避免数字产生包含关系(S1,S12,S12包含了S1)
-						realKey = keyStart + paramCnt + "B";
-						loopStr = loopStr.replaceAll(key, ":".concat(realKey));
+						realKey = realKeyNamePrefix + paramCnt + "B";
+						realLoopContent = realLoopContent.replaceAll(key, ":".concat(realKey));
 						loopKeyValueMap.put(realKey, regParamValues.get(j)[i]);
 						paramCnt++;
 					} else {
 						// paramName[i].xxxx 模式
 						loopParamValues = BeanUtil.reflectBeanToAry(regParamValues.get(j)[i], loopParamNames);
 						for (int k = 0; k < loopParamNames.length; k++) {
-							realKey = keyStart + paramCnt + "B";
-							loopStr = loopStr.replaceAll(key.concat(".").concat(loopParamNames[k]),
+							realKey = realKeyNamePrefix + paramCnt + "B";
+							realLoopContent = realLoopContent.replaceAll(key.concat(".").concat(loopParamNames[k]),
 									":".concat(realKey));
 							loopKeyValueMap.put(realKey, loopParamValues[k]);
 							paramCnt++;
 						}
 					}
 				}
-				result.append(loopStr);
+				result.append(realLoopContent);
 				index++;
 			}
 		}

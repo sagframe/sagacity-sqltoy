@@ -786,6 +786,10 @@ public class SqlXMLConfigParse {
 							filterType = "date-format";
 						} else if ("to-str".equals(filterType)) {
 							filterType = "to-string";
+						} else if ("valid-sqlInjection".equalsIgnoreCase(filterType)) {
+							filterType = "sql-injection";
+						} else if ("sql-injection".equalsIgnoreCase(filterType)) {
+							filterType = "sql-injection";
 						}
 						filterModel.setFilterType(filterType);
 						parseFilterElt(sqlToyConfig, filterModel, filter, local);
@@ -1043,7 +1047,7 @@ public class SqlXMLConfigParse {
 		}
 		// sql注入验证等级
 		if (filter.hasAttribute("level")) {
-			if (filterModel.getFilterType().equalsIgnoreCase("sql-injection")) {
+			if (filterModel.getFilterType().equals("sql-injection")) {
 				filterModel.setSqlInjectionLevel(SqlInjectionLevel.valueOf(filter.getAttribute("level").toUpperCase()));
 			}
 		}

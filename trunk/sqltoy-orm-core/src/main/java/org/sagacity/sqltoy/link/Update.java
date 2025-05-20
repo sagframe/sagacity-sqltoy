@@ -6,12 +6,16 @@ package org.sagacity.sqltoy.link;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.model.ParallelConfig;
+import org.sagacity.sqltoy.model.PropsMapperConfig;
+import org.sagacity.sqltoy.utils.MapperUtils;
 
 /**
  * @project sagacity-sqltoy
@@ -28,7 +32,9 @@ public class Update extends BaseLink {
 	/**
 	 * 强制修改的字段属性
 	 */
-	private String[] forceUpdateProps;
+	private String[] forceUpdateFields;
+
+	private String[] updateFields;
 
 	/**
 	 * 是否深度修改
@@ -58,7 +64,7 @@ public class Update extends BaseLink {
 	/**
 	 * 子表分别需要强制修改的属性
 	 */
-	private HashMap<Class, String[]> subTableForceUpdateProps;
+	private HashMap<Class, String[]> subTableForceUpdateFields;
 
 	private ParallelConfig parallelConfig;
 
@@ -96,6 +102,19 @@ public class Update extends BaseLink {
 		return this;
 	}
 
+	/**
+	 * 仅仅修改指定字段
+	 * 
+	 * @param updateFields
+	 * @return
+	 */
+	public Update updateFields(String... updateFields) {
+		this.updateFields = updateFields;
+		this.forceUpdateFields = updateFields;
+		this.deeply = false;
+		return this;
+	}
+
 	// 暂时不开放
 //	public Update uniqueFields(String... uniqueFields) {
 //		if (uniqueFields != null && uniqueFields.length > 0) {
@@ -129,18 +148,25 @@ public class Update extends BaseLink {
 	 * @param subTableForceUpdateProps
 	 * @return
 	 */
-	public Update cascadeForceUpdate(HashMap<Class, String[]> subTableForceUpdateProps) {
-		this.subTableForceUpdateProps = subTableForceUpdateProps;
+	public Update cascadeForceUpdate(HashMap<Class, String[]> subTableForceUpdateFields) {
+		this.subTableForceUpdateFields = subTableForceUpdateFields;
 		return this;
 	}
 
 	/**
+	 * @see forceUpdateFields(String... forceUpdateFields)
 	 * @todo 设置强制修改的属性
-	 * @param forceUpdateProps
+	 * @param forceUpdateFields
 	 * @return
 	 */
+	@Deprecated
 	public Update forceUpdateProps(String... forceUpdateProps) {
-		this.forceUpdateProps = forceUpdateProps;
+		this.forceUpdateFields = forceUpdateProps;
+		return this;
+	}
+
+	public Update forceUpdateFields(String... forceUpdateFields) {
+		this.forceUpdateFields = forceUpdateFields;
 		return this;
 	}
 
@@ -154,22 +180,37 @@ public class Update extends BaseLink {
 		}
 		boolean cascade = false;
 		if ((forceCascadeClasses != null && forceCascadeClasses.length > 0)
-				|| (subTableForceUpdateProps != null && !subTableForceUpdateProps.isEmpty())) {
+				|| (subTableForceUpdateFields != null && !subTableForceUpdateFields.isEmpty())) {
 			cascade = true;
 		}
-		String[] forceUpdate = forceUpdateProps;
+		String[] forceUpdate = forceUpdateFields;
 		// 深度修改
 		if (deeply) {
 			forceUpdate = sqlToyContext.getEntityMeta(entity.getClass()).getRejectIdFieldArray();
 		}
 		if (uniqueFields != null && uniqueFields.length > 0) {
 			List entities = new ArrayList();
-			entities.add(entity);
+			// 仅仅修改指定字段
+			if (this.updateFields != null && updateFields.length > 0) {
+				String[] copyFields = mergeArray(uniqueFields, updateFields);
+				// 复制指定部分属性
+				entities.add(MapperUtils.map(entity, entity.getClass(), new PropsMapperConfig(copyFields)));
+			} else {
+				entities.add(entity);
+			}
 			return dialectFactory.updateAll(sqlToyContext, entities, 1, uniqueFields, forceUpdate, null, null,
 					getDataSource(null), null);
 		}
+		if (this.updateFields != null && updateFields.length > 0) {
+			String[] copyFields = mergeArray(sqlToyContext.getEntityMeta(entity.getClass()).getIdArray(), updateFields);
+			// 考虑级联复制
+			Serializable realEntity = MapperUtils.map(entity, entity.getClass(), cascade ? 1 : 0,
+					new PropsMapperConfig(copyFields));
+			return dialectFactory.update(sqlToyContext, realEntity, forceUpdate, cascade, forceCascadeClasses,
+					subTableForceUpdateFields, getDataSource(null));
+		}
 		return dialectFactory.update(sqlToyContext, entity, forceUpdate, cascade, forceCascadeClasses,
-				subTableForceUpdateProps, getDataSource(null));
+				subTableForceUpdateFields, getDataSource(null));
 	}
 
 	/**
@@ -180,7 +221,7 @@ public class Update extends BaseLink {
 		if (entities == null || entities.isEmpty()) {
 			throw new IllegalArgumentException("updateAll operate entities is null or empty!");
 		}
-		String[] forceUpdate = forceUpdateProps;
+		String[] forceUpdate = forceUpdateFields;
 		// 深度修改
 		if (deeply) {
 			Object entity = null;
@@ -193,7 +234,45 @@ public class Update extends BaseLink {
 			forceUpdate = sqlToyContext.getEntityMeta(entity.getClass()).getRejectIdFieldArray();
 		}
 		int realBatchSize = (batchSize > 0) ? batchSize : sqlToyContext.getBatchSize();
+		if (this.updateFields != null && this.updateFields.length > 0) {
+			Class resultType = entities.get(0).getClass();
+			String[] copyFields = mergeArray(sqlToyContext.getEntityMeta(resultType).getIdArray(), updateFields);
+			// 复制指定属性形成新的POJO集合
+			List realEntities = MapperUtils.mapList(entities, resultType, new PropsMapperConfig(copyFields));
+			return dialectFactory.updateAll(sqlToyContext, realEntities, realBatchSize, uniqueFields, forceUpdate, null,
+					parallelConfig, getDataSource(null), autoCommit);
+		}
 		return dialectFactory.updateAll(sqlToyContext, entities, realBatchSize, uniqueFields, forceUpdate, null,
 				parallelConfig, getDataSource(null), autoCommit);
+	}
+
+	/**
+	 * @TODO 合并两个数组
+	 * @param sourceAry
+	 * @param targetAry
+	 * @return
+	 */
+	public static String[] mergeArray(String[] sourceAry, String[] targetAry) {
+		Set<String> copyFields = new HashSet<>();
+		Set<String> ignoreKeySet = new HashSet<>();
+		if (sourceAry != null) {
+			for (String str : sourceAry) {
+				if (!ignoreKeySet.contains(str.toLowerCase())) {
+					ignoreKeySet.add(str.toLowerCase());
+					copyFields.add(str);
+				}
+			}
+		}
+		if (targetAry != null) {
+			for (String str : targetAry) {
+				if (!ignoreKeySet.contains(str.toLowerCase())) {
+					ignoreKeySet.add(str.toLowerCase());
+					copyFields.add(str);
+				}
+			}
+		}
+		String[] result = new String[copyFields.size()];
+		copyFields.toArray(result);
+		return result;
 	}
 }

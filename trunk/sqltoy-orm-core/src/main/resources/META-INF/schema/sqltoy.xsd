@@ -1098,7 +1098,7 @@
 						use="required" />
 				</xsd:complexType>
 			</xsd:element>
-			<xsd:element name="sql-injection" minOccurs="0"
+			<xsd:element name="valid-sqlInjection" minOccurs="0"
 				maxOccurs="unbounded">
 				<xsd:annotation>
 					<xsd:documentation><![CDATA[sql注入参数校验]]></xsd:documentation>

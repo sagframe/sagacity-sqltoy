@@ -245,6 +245,13 @@ public class SqlUtilTest {
 		System.err.println(SqlUtil.isSqlInjection(SqlInjectionLevel.STRICT_WORD, "sel ect"));
 		System.err.println(SqlUtil.isSqlInjection(SqlInjectionLevel.STRICT_WORD, "sel+ect"));
 		System.err.println(SqlUtil.isSqlInjection(SqlInjectionLevel.STRICT_WORD, "sel-ect"));
+		System.err.println(SqlUtil.isSqlInjection(SqlInjectionLevel.STRICT_WORD, "t1.name"));
+	}
+	
+	@Test
+	public void testSqlInjectionSqlKeyWord() {
+		System.err.println(SqlUtil.isSqlInjection(SqlInjectionLevel.SQL_KEYWORD, "S0009()"));
+		
 	}
 	
 	@Test
@@ -257,5 +264,6 @@ public class SqlUtilTest {
 		System.err.println(SqlUtil.isSqlInjection(SqlInjectionLevel.RELAXED_WORD, "sel-ect("));
 		System.err.println(SqlUtil.isSqlInjection(SqlInjectionLevel.RELAXED_WORD, "s中文el-ect("));
 		System.err.println(SqlUtil.isSqlInjection(SqlInjectionLevel.RELAXED_WORD, "sum{"));
+		System.err.println(SqlUtil.isSqlInjection(SqlInjectionLevel.RELAXED_WORD, "t.name"));
 	}
 }

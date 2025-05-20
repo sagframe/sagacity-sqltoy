@@ -1678,6 +1678,7 @@ public class ParamFilterUtils {
 			// 加减天数
 			paramFilter.setIncrementTime(Double.valueOf(filter.getIncrease()));
 			paramFilter.setTimeUnit(filter.getTimeUnit());
+			paramFilter.setSqlInjectionLevel(filter.getSqlInjectionLevel());
 			// 反向缓存
 			if (filter.getCacheArg() != null && filter.getCacheArg().getCacheName() != null) {
 				CacheArg cacheArg = filter.getCacheArg();

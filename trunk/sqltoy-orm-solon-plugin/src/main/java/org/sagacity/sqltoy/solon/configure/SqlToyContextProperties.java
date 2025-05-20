@@ -272,6 +272,11 @@ public class SqlToyContextProperties implements Serializable {
 	private String dynamicCacheFetch;
 
 	/**
+	 * sql注入表达式
+	 */
+	private String[] sqlInjectionRegexes;
+	
+	/**
 	 * @return the sqlResourcesDir
 	 */
 	public String getSqlResourcesDir() {
@@ -799,6 +804,14 @@ public class SqlToyContextProperties implements Serializable {
 	 */
 	public void setDynamicCacheFetch(String dynamicCacheFetch) {
 		this.dynamicCacheFetch = dynamicCacheFetch;
+	}
+
+	public String[] getSqlInjectionRegexes() {
+		return sqlInjectionRegexes;
+	}
+
+	public void setSqlInjectionRegexes(String[] sqlInjectionRegexes) {
+		this.sqlInjectionRegexes = sqlInjectionRegexes;
 	}
 	
 }

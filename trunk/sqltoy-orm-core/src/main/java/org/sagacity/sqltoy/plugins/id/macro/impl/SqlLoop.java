@@ -113,15 +113,15 @@ public class SqlLoop extends AbstractMacro {
 		String key;
 		Iterator<String> keyEnums = realKeyValuesMap.keySet().iterator();
 		int index = 0;
-		String asName = ":sqlToyLoopAsKey_";
+		String keyNamePrefix = ":sqlToyLoopAsKey_";
 		while (keyEnums.hasNext()) {
 			key = keyEnums.next().toLowerCase();
 			// 统一标准为paramName[i]模式
 			if (lowContent.contains(":" + key + "[i]") || lowContent.contains(":" + key + "[index]")) {
 				keys.add(key);
 				// 统一转为:sqlToyLoopAsKey_1_模式,简化后续匹配
-				loopContent = loopContent.replaceAll("(?i)\\:" + key + "\\[index\\]", asName + index + "A");
-				loopContent = loopContent.replaceAll("(?i)\\:" + key + "\\[i\\]", asName + index + "A");
+				loopContent = loopContent.replaceAll("(?i)\\:" + key + "\\[index\\]", keyNamePrefix + index + "A");
+				loopContent = loopContent.replaceAll("(?i)\\:" + key + "\\[i\\]", keyNamePrefix + index + "A");
 				regParamValues.add(CollectionUtil.convertArray(realKeyValuesMap.get(key)));
 				index++;
 			}
@@ -130,7 +130,7 @@ public class SqlLoop extends AbstractMacro {
 		boolean hasNullFilter = (lowContent.indexOf(SqlConfigParseUtils.SQL_PSEUDO_START_MARK) > 0) ? true : false;
 		StringBuilder result = new StringBuilder();
 		result.append(" @blank(:" + loopParam + ") ");
-		String loopStr;
+		String realLoopContent;
 		index = 0;
 		String[] loopParamNames;
 		Object[] loopParamValues;
@@ -145,7 +145,7 @@ public class SqlLoop extends AbstractMacro {
 			loopVar = loopValues[i];
 			// 循环值为null或空白默认被跳过
 			if (!skipBlank || StringUtil.isNotBlank(loopVar)) {
-				loopStr = loopContent;
+				realLoopContent = loopContent;
 				if (index > 0) {
 					result.append(BLANK);
 					result.append(linkSign);
@@ -153,7 +153,7 @@ public class SqlLoop extends AbstractMacro {
 				result.append(BLANK);
 				loopKeyValueMap.clear();
 				for (int j = 0; j < keys.size(); j++) {
-					key = asName + j + "A";
+					key = keyNamePrefix + j + "A";
 					loopParamNames = loopParamNamesMap.get(key);
 					// paramName[i] 模式
 					if (loopParamNames.length == 0) {
@@ -172,11 +172,11 @@ public class SqlLoop extends AbstractMacro {
 					// 放入整体sql涉及的参数，#[loop[i] and status=:status],即循环内容中存在非循环集合的条件参数:status
 					allKeyValueMap.putAll(realKeyValuesMap);
 					allKeyValueMap.putAll(loopKeyValueMap);
-					loopStr = processNullConditions(loopStr, allKeyValueMap);
+					realLoopContent = processNullConditions(realLoopContent, allKeyValueMap);
 				}
 				// 只替换循环变量参数值
-				loopStr = replaceAllArgs(loopStr, loopKeyValueMap, preSql);
-				result.append(loopStr);
+				realLoopContent = replaceAllArgs(realLoopContent, loopKeyValueMap, preSql);
+				result.append(realLoopContent);
 				index++;
 			}
 		}
