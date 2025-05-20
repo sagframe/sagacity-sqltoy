@@ -861,9 +861,10 @@ public class EntityManager {
 		String[] mappedColumns = new String[fields.length];
 		// 剔除下划线,避免手工维护时将属性名称写成数据库字段名称
 		fields = StringUtil.humpFieldNames(fields);
+		int fieldCnt = fields.length;
 		mappedFields = StringUtil.humpFieldNames(mappedFields);
 		// 主表字段名称
-		for (int i = 0; i < fields.length; i++) {
+		for (int i = 0; i < fieldCnt; i++) {
 			// 检查属性名称配置是否正确
 			if (entityMeta.getFieldMeta(fields[i]) == null) {
 				throw new IllegalArgumentException(
@@ -887,18 +888,30 @@ public class EntityManager {
 		cascadeModel.setAnnotations(field.getAnnotations());
 		// 子表外键查询条件
 		String subWhereSql = " where ";
+		String batchWhereSql = "";
 		// 级联删除，自动组装sql不允许外部修改，所以用?作为条件，顺序在对象加载时约定
 		String subDeleteSql = "delete from ".concat(subSchemaTable).concat(" where ");
-		for (int i = 0; i < fields.length; i++) {
+		for (int i = 0; i < fieldCnt; i++) {
 			if (i > 0) {
 				subWhereSql = subWhereSql.concat(" and ");
 				subDeleteSql = subDeleteSql.concat(" and ");
+				batchWhereSql = batchWhereSql.concat(",");
 			}
+			batchWhereSql = batchWhereSql.concat(mappedColumns[i]);
 			subWhereSql = subWhereSql.concat(mappedColumns[i]).concat("=:").concat(mappedFields[i]);
 			subDeleteSql = subDeleteSql.concat(mappedColumns[i]).concat("=?");
 		}
+		if (fieldCnt == 1) {
+			batchWhereSql = " where ".concat(batchWhereSql).concat(" in (?) ");
+		} else {
+			batchWhereSql = " where (".concat(batchWhereSql)
+					.concat(") in ((" + StringUtil.loopAppendWithSign("?", ",", fieldCnt) + ")) ");
+		}
 		cascadeModel.setLoadSubTableSql(subTableMeta.getLoadAllSql().concat(subWhereSql));
 		cascadeModel.setDeleteSubTableSql(subDeleteSql);
+		// 通过in批量操作
+		cascadeModel.setLoadBatchSubTableSql(subTableMeta.getLoadAllSql().concat(batchWhereSql));
+		cascadeModel.setDeleteBatchSubTableSql("delete from ".concat(subSchemaTable).concat(batchWhereSql));
 		boolean matchedWhere = false;
 		// 自定义load sql
 		if (StringUtil.isNotBlank(load)) {
@@ -916,8 +929,9 @@ public class EntityManager {
 				if (matchedWhere) {
 					cascadeModel.setLoadSubTableSql(loadSql);
 				} else {
-					cascadeModel.setLoadSubTableSql(
-							subTableMeta.getLoadAllSql().concat(subWhereSql).concat(" and ").concat(loadSql));
+					cascadeModel.setLoadSubTableSql(cascadeModel.getLoadSubTableSql().concat(" and ").concat(loadSql));
+					cascadeModel.setLoadBatchSubTableSql(
+							cascadeModel.getLoadBatchSubTableSql().concat(" and ").concat(loadSql));
 					cascadeModel.setLoadExtCondition(loadSql);
 				}
 			}
@@ -928,6 +942,8 @@ public class EntityManager {
 			orderBy = SqlUtil.convertFieldsToColumns(subTableMeta, orderBy);
 			cascadeModel.setOrderBy(orderBy);
 			cascadeModel.setLoadSubTableSql(cascadeModel.getLoadSubTableSql().concat(" order by ").concat(orderBy));
+			cascadeModel.setLoadBatchSubTableSql(
+					cascadeModel.getLoadBatchSubTableSql().concat(" order by ").concat(orderBy));
 		}
 		// 深度级联修改
 		if (StringUtil.isNotBlank(update)) {
@@ -935,11 +951,14 @@ public class EntityManager {
 			// 表示先删除子表
 			if ("delete".equals(updateLow)) {
 				cascadeModel.setCascadeUpdateSql("delete from ".concat(subSchemaTable).concat(subWhereSql));
+				cascadeModel.setCascadeBatchUpdateSql(cascadeModel.getDeleteBatchSubTableSql());
 			} else {
 				// 修改数据(如设置记录状态为失效)
 				matchedWhere = StringUtil.matches(updateLow, "\\s+where\\s+");
 				cascadeModel.setCascadeUpdateSql("update ".concat(subSchemaTable).concat(" set ").concat(update)
 						.concat(matchedWhere ? "" : subWhereSql));
+				cascadeModel.setCascadeBatchUpdateSql("update ".concat(subSchemaTable).concat(" set ").concat(update)
+						.concat(matchedWhere ? "" : batchWhereSql));
 			}
 		}
 		// 是否完成了覆盖

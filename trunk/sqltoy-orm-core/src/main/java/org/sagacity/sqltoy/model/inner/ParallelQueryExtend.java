@@ -13,7 +13,7 @@ import org.sagacity.sqltoy.model.Page;
  * @version v1.0, Date:2020-8-25
  * @modify 2020-8-25,修改说明
  */
-public class ParallQueryExtend implements Serializable {
+public class ParallelQueryExtend implements Serializable {
 
 	/**
 	 * 

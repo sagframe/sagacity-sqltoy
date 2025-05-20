@@ -1098,6 +1098,24 @@
 						use="required" />
 				</xsd:complexType>
 			</xsd:element>
+			<xsd:element name="valid-sqlInjection" minOccurs="0"
+				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[sql注入参数校验]]></xsd:documentation>
+				</xsd:annotation>
+				<xsd:complexType>
+					<xsd:attribute name="params" type="xsd:string"/>
+					<xsd:attribute name="level" default="STRICT_WORD">
+						<xsd:simpleType>
+							<xsd:restriction base="xsd:string">
+								<xsd:enumeration value="STRICT_WORD" />
+								<xsd:enumeration value="RELAXED_WORD" />
+								<xsd:enumeration value="SQL_KEYWORD" />
+							</xsd:restriction>
+						</xsd:simpleType>
+					</xsd:attribute>
+				</xsd:complexType>
+			</xsd:element>
 		</xsd:choice>
 	</xsd:complexType>
 

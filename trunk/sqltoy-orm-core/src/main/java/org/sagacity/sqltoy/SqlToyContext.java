@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ForkJoinPool;
+import java.util.regex.Pattern;
 
 import javax.sql.DataSource;
 
@@ -301,8 +302,7 @@ public class SqlToyContext {
 	private AppContext appContext;
 
 	/**
-	 * spring.sqltoy.dialectConfig:
-	 *                        sqltoy.table_names.strategy.vastbase: lower_case      
+	 * spring.sqltoy.dialectConfig: sqltoy.table_names.strategy.vastbase: lower_case
 	 * 对sqltoy-default.properties 值的修改(一般情况下不会涉及)
 	 */
 	private Map<String, String> dialectConfig;
@@ -418,6 +418,11 @@ public class SqlToyContext {
 	private DynamicCacheFetch dynamicCacheFetch;
 
 	/**
+	 * sql注入正则表达式
+	 */
+	private String[] sqlInjectionRegexes;
+
+	/**
 	 * @todo 初始化
 	 * @throws Exception
 	 */
@@ -443,6 +448,16 @@ public class SqlToyContext {
 		// 设置默认非spring等框架下的连接获取处理
 		if (appContext == null && connectionFactory == null) {
 			connectionFactory = new SimpleConnectionFactory();
+		}
+		// 设置sql注入关键词
+		if (sqlInjectionRegexes != null && sqlInjectionRegexes.length > 0) {
+			Pattern[] patterns = new Pattern[sqlInjectionRegexes.length];
+			int index = 0;
+			for (String regex : sqlInjectionRegexes) {
+				patterns[index] = Pattern.compile(regex);
+				index++;
+			}
+			SqlUtil.SQL_INJECTION_KEY_WORDS = patterns;
 		}
 		// 初始化默认dataSource
 		initDefaultDataSource();
@@ -814,7 +829,7 @@ public class SqlToyContext {
 			this.dialect = Dialect.OPENGAUSS;
 		} else if (tmp.startsWith(Dialect.STARDB)) {
 			this.dialect = Dialect.STARDB;
-		}else {
+		} else {
 			this.dialect = dialect;
 		}
 		scriptLoader.setDialect(this.dialect);
@@ -1354,6 +1369,14 @@ public class SqlToyContext {
 	 */
 	public void setDynamicCacheFetch(DynamicCacheFetch dynamicCacheFetch) {
 		this.dynamicCacheFetch = dynamicCacheFetch;
+	}
+
+	public String[] getSqlInjectionRegexes() {
+		return sqlInjectionRegexes;
+	}
+
+	public void setSqlInjectionRegexes(String[] sqlInjectionRegexes) {
+		this.sqlInjectionRegexes = sqlInjectionRegexes;
 	}
 
 }

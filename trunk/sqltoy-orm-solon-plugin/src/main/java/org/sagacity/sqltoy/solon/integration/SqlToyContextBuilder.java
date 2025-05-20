@@ -185,7 +185,8 @@ public class SqlToyContextBuilder {
 		if (properties.getHumpMapResultTypeLabel() != null) {
 			sqlToyContext.setHumpMapResultTypeLabel(properties.getHumpMapResultTypeLabel());
 		}
-
+		// 2025-5-15 增加sql注入表达式
+		sqlToyContext.setSqlInjectionRegexes(properties.getSqlInjectionRegexes());
 		// sql 文件资源路径
 		sqlToyContext.setSqlResourcesDir(properties.getSqlResourcesDir());
 		if (properties.getSqlResources() != null && properties.getSqlResources().length > 0) {
