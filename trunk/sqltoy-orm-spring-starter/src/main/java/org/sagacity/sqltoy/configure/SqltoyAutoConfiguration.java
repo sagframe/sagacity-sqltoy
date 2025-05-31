@@ -156,13 +156,15 @@ public class SqltoyAutoConfiguration {
 		if (properties.getHumpMapResultTypeLabel() != null) {
 			sqlToyContext.setHumpMapResultTypeLabel(properties.getHumpMapResultTypeLabel());
 		}
+		// 2025-5-15 增加sql注入表达式
+		sqlToyContext.setSqlInjectionRegexes(properties.getSqlInjectionRegexes());
 		// sql 文件资源路径
 		List<String> resList = new ArrayList<String>();
 		String sqlResourcesDir = properties.getSqlResourcesDir();
 		String charset = StringUtil.ifBlank(properties.getEncoding(), "UTF-8");
 		if (sqlResourcesDir != null && sqlResourcesDir.length() > 0) {
 			sqlToyContext.setSqlResourcesDir(sqlResourcesDir);
-			//update 2025-1-22 只在原生场景下生效sql文件以Resource形式加载(原因:非原生场景下支持文件更新检测重新加载)
+			// update 2025-1-22 只在原生场景下生效sql文件以Resource形式加载(原因:非原生场景下支持文件更新检测重新加载)
 			// 当aot模式下需要调整配置文件到具体的每个文件
 			if (System.getProperty("org.graalvm.nativeimage.imagecode") != null) {
 				Set<String> sqlDirSet = this.strSplitTrim(sqlResourcesDir);

@@ -12,6 +12,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.sagacity.sqltoy.SqlToyConstants;
+import org.sagacity.sqltoy.SqlToyThreadDataHolder;
 import org.sagacity.sqltoy.config.model.IfLogicModel;
 import org.sagacity.sqltoy.config.model.KeyAndIndex;
 import org.sagacity.sqltoy.config.model.SqlParamsModel;
@@ -23,6 +24,7 @@ import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
 import org.sagacity.sqltoy.plugins.id.macro.AbstractMacro;
 import org.sagacity.sqltoy.plugins.id.macro.MacroUtils;
+import org.sagacity.sqltoy.plugins.id.macro.impl.SecureSqlLoop;
 import org.sagacity.sqltoy.plugins.id.macro.impl.SqlLoop;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.CollectionUtil;
@@ -169,6 +171,10 @@ public class SqlConfigParseUtils {
 		macros.put("@loop", new SqlLoop(true));
 		// 全量循环
 		macros.put("@loop-full", new SqlLoop(false));
+
+		// 非注入式循环(25-5-18)
+		macros.put("@secure-loop", new SecureSqlLoop(true));
+		macros.put("@secure-loop-full", new SecureSqlLoop(false));
 	}
 
 	// 避免实例化
@@ -269,8 +275,24 @@ public class SqlConfigParseUtils {
 		String questionMark = "#sqltoy_qsmark_placeholder#";
 		if (isNamedArgs) {
 			String sql = queryStr.replaceAll(ARG_REGEX, questionMark);
-			// update 2020-09-23 处理sql中的循环(提前处理循环，避免循环中存在其它条件参数)
-			sql = processLoop(sql, paramsNamed, paramsValue);
+			if (paramsNamed != null && paramsValue.length > 0) {
+				// update 2020-09-23 处理sql中的循环(提前处理循环，避免循环中存在其它条件参数)
+				Map<String, Object> keyValues = new HashMap<String, Object>();
+				for (int i = 0; i < paramsNamed.length; i++) {
+					keyValues.put(paramsNamed[i], paramsValue[i]);
+				}
+				sql = processLoop(sql, keyValues);
+				if (keyValues.size() > paramsNamed.length) {
+					paramsNamed = new String[keyValues.size()];
+					paramsValue = new Object[keyValues.size()];
+					int meter = 0;
+					for (Map.Entry<String, Object> entry : keyValues.entrySet()) {
+						paramsNamed[meter] = entry.getKey();
+						paramsValue[meter] = entry.getValue();
+						meter++;
+					}
+				}
+			}
 			sqlParam = processNamedParamsQuery(sql);
 		} else {
 			// 将sql中的??符号替换成特殊字符,?? 符号在json场景下有特殊含义
@@ -808,16 +830,15 @@ public class SqlConfigParseUtils {
 	 * @param paramsValue
 	 * @return
 	 */
-	private static String processLoop(String queryStr, String[] paramsNamed, Object[] paramsValue) {
-		if (null == paramsValue || paramsValue.length == 0) {
-			return queryStr;
+	private static String processLoop(String queryStr, Map<String, Object> keyValues) {
+		try {
+			// 2025-5-17 增加threadLocal计数器，记录存在多少个@loop调用
+			SqlToyThreadDataHolder.setCounter(0);
+			// 这里是借用业务主键生成里面的宏处理模式来解决
+			return MacroUtils.replaceMacros(queryStr, keyValues, null, false, macros, null);
+		} finally {
+			SqlToyThreadDataHolder.clearCounter();
 		}
-		IgnoreKeyCaseMap<String, Object> keyValues = new IgnoreKeyCaseMap<String, Object>();
-		for (int i = 0; i < paramsNamed.length; i++) {
-			keyValues.put(paramsNamed[i], paramsValue[i]);
-		}
-		// 这里是借用业务主键生成里面的宏处理模式来解决
-		return MacroUtils.replaceMacros(queryStr, keyValues, null, false, macros, null);
 	}
 
 	/**

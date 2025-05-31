@@ -5,7 +5,7 @@ import java.util.Map;
 
 import javax.sql.DataSource;
 
-import org.sagacity.sqltoy.model.inner.ParallQueryExtend;
+import org.sagacity.sqltoy.model.inner.ParallelQueryExtend;
 
 /**
  * @project sagacity-sqltoy
@@ -24,9 +24,9 @@ public class ParallQuery implements Serializable {
 	/**
 	 * 参数内部类化，减少get方法
 	 */
-	private ParallQueryExtend extend = new ParallQueryExtend();
+	private ParallelQueryExtend extend = new ParallelQueryExtend();
 
-	public ParallQueryExtend getExtend() {
+	public ParallelQueryExtend getExtend() {
 		return extend;
 	}
 

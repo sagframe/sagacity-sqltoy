@@ -8,6 +8,7 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.demo.vo.StaffInfoVO;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
+import org.sagacity.sqltoy.plugins.id.macro.MacroUtils;
 import org.sagacity.sqltoy.plugins.id.macro.impl.SqlLoop;
 
 import com.alibaba.fastjson2.JSON;
@@ -72,7 +73,7 @@ public class SqlLoopTest {
 	public void testParseParams() {
 		SqlLoop sqlLoop = new SqlLoop();
 		String template = ":sqlToyLoopAsKey_0A.item=1 and name like '%:sqlToyLoopAsKey_0A.name%' :sqlToyLoopAsKey_0A.sexType名称 or :sqlToyLoopAsKey_0A.订单_名称_id";
-		Map<String, String[]> result = sqlLoop.parseParams(template);
+		Map<String, String[]> result = MacroUtils.parseParams(SqlLoop.paramPattern, template);
 		System.err.println(JSON.toJSONString(result));
 	}
 }

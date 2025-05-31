@@ -87,14 +87,15 @@ public class CacheUpdateWatcher extends Thread {
 	 */
 	@Override
 	public void run() {
+		boolean isRun = true;
 		// 延时,避免项目启动过程中检测
 		try {
 			if (delaySeconds >= 1) {
 				Thread.sleep(1000 * delaySeconds);
 			}
 		} catch (InterruptedException e) {
+			isRun = false;
 		}
-		boolean isRun = true;
 		Long preCheck;
 		CheckerConfigModel checkerConfig;
 		long interval;
@@ -133,7 +134,11 @@ public class CacheUpdateWatcher extends Thread {
 			}
 			try {
 				// 一秒钟监测一次是否有到时的检测任务
-				Thread.sleep(1000);
+				if (Thread.currentThread().isInterrupted()) {
+					isRun = false;
+				} else {
+					Thread.sleep(1000);
+				}
 			} catch (InterruptedException e) {
 				logger.warn("缓存翻译检测缓存变更异常,检测线程将终止!{}", e.getMessage(), e);
 				isRun = false;

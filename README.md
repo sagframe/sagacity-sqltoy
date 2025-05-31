@@ -29,6 +29,9 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 * https://github.com/sagframe/sqltoy-quickstart 
 * 阅读其readme.md学习 
 
+## solon 项目演示
+* https://github.com/CoCoTeaNet/sqltoy-solon-demo
+
 ## POJO和DTO 严格分层演示项目
 * https://github.com/sagframe/sqltoy-strict
 
@@ -48,7 +51,7 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
 # 最新版本 
-* 5.6.44 LTS (jdk17+/springboot3.x)/5.6.44.jre8 (兼容5.2.x/5.3.x版本)      发版日期: 2025-5-2
+* 5.6.46 LTS (jdk17+/springboot3.x)/5.6.46.jre8 (兼容5.2.x/5.3.x版本)      发版日期: 2025-5-20
 ```xml
 <dependency>
 	<groupId>com.sagframe</groupId>
@@ -56,8 +59,8 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 	<!-- solon 适配版本 <artifactId>sagacity-sqltoy-solon-plugin</artifactId> -->
         <!-- 传统spring项目 <artifactId>sagacity-sqltoy-spring</artifactId> -->
         <!-- 单纯sqltoy <artifactId>sagacity-sqltoy</artifactId> -->
-        <!-- jdk8 对应的版本号为：5.6.44.jre8 -->
-	<version>5.6.44</version>
+        <!-- jdk8 对应的版本号为：5.6.46.jre8 -->
+	<version>5.6.46</version>
 </dependency>
 ```
 
@@ -118,7 +121,9 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
    //public Long update(Serializable entity, String... forceUpdateProps);
    // 这里对photo 属性进行强制修改，其他为null自动会跳过
    lightDao.update(staffInfo, "photo");
-
+   //只更新指定字段
+   lightDao.update().updateFields("name","status").one(entity);
+   lightDao.update().updateFields("name","status").many(entities);
    //深度修改,不管是否null全部字段修改
    lightDao.updateDeeply(staffInfo);
    //批量保存或修改

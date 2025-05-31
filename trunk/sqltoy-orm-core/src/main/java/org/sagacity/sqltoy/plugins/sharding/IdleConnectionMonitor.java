@@ -54,14 +54,15 @@ public class IdleConnectionMonitor extends Thread {
 
 	@Override
 	public void run() {
+		boolean isRun = true;
 		// 延时
 		try {
 			if (delaySeconds >= 1) {
 				Thread.sleep(1000 * delaySeconds);
 			}
 		} catch (InterruptedException e) {
+			isRun = false;
 		}
-		boolean isRun = true;
 		DataSource dataSource = null;
 		Connection conn = null;
 		PreparedStatement pst = null;
@@ -107,8 +108,12 @@ public class IdleConnectionMonitor extends Thread {
 			}
 
 			try {
-				// 设置检测间隔
-				Thread.sleep(1000 * intervalSeconds);
+				if (Thread.currentThread().isInterrupted()) {
+					isRun = false;
+				} else {
+					// 设置检测间隔
+					Thread.sleep(1000 * intervalSeconds);
+				}
 			} catch (InterruptedException e) {
 				logger.warn("datasource sharding 可用性检测监测将终止!{}", e.getMessage(), e);
 				isRun = false;

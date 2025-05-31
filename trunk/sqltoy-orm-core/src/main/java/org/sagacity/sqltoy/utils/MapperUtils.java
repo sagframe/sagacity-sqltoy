@@ -272,7 +272,7 @@ public class MapperUtils {
 	 * @return
 	 * @throws RuntimeException
 	 */
-	private static <T extends Serializable> T map(Serializable source, Class<T> resultType, int recursionLevel,
+	public static <T extends Serializable> T map(Serializable source, Class<T> resultType, int recursionLevel,
 			PropsMapperConfig propsMapperConfig) throws RuntimeException {
 		// 转成List做统一处理
 		List<Serializable> sourceList = new ArrayList<Serializable>();
@@ -295,7 +295,7 @@ public class MapperUtils {
 	 * @return
 	 * @throws RuntimeException
 	 */
-	private static <T extends Serializable> List<T> mapList(List sourceList, Class<T> targetClass, int recursionLevel,
+	public static <T extends Serializable> List<T> mapList(List sourceList, Class<T> targetClass, int recursionLevel,
 			PropsMapperConfig propsMapperConfig) throws RuntimeException {
 		Class sourceClass = sourceList.iterator().next().getClass();
 		Method[] getMethods;

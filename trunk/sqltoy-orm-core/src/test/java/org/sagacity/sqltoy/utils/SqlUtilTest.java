@@ -3,11 +3,13 @@ package org.sagacity.sqltoy.utils;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.HashMap;
+import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
+import org.sagacity.sqltoy.model.SqlInjectionLevel;
 
 import com.alibaba.fastjson2.JSON;
 
@@ -93,7 +95,7 @@ public class SqlUtilTest {
 	@Test
 	public void testValidateSqlInArg() {
 		String argValue = "'alter1 table'";
-		boolean hasSqlKeyWord = StringUtil.matches(" " + argValue, SqlUtil.SQLINJECT_PATTERN);
+		boolean hasSqlKeyWord = StringUtil.matches(" " + argValue, SqlUtil.SQL_INJECT_PATTERN);
 		System.err.println(hasSqlKeyWord);
 		System.err.println(SqlUtil.validateInArg(argValue));
 	}
@@ -142,7 +144,7 @@ public class SqlUtilTest {
 		sql = SqlUtil.uniformFastMarks(sql);
 		System.err.println(sql);
 	}
-	
+
 	@Test
 	public void testUniformMarks1() {
 		String sql = """
@@ -157,7 +159,7 @@ public class SqlUtilTest {
 		sql = SqlUtil.uniformFastMarks(sql);
 		System.err.println(sql);
 	}
-	
+
 	@Test
 	public void testUniformMarksql2() {
 		String sql = """
@@ -172,5 +174,96 @@ public class SqlUtilTest {
 								""";
 		sql = SqlUtil.uniformFastMarks(sql);
 		System.err.println(sql);
+	}
+
+	@Test
+	public void testSqlInjection() {
+		System.err.println(SqlUtil.isSqlInjection(SqlInjectionLevel.SQL_KEYWORD, "select"));
+		System.err.println(SqlUtil.isSqlInjection(SqlInjectionLevel.SQL_KEYWORD, "from"));
+		System.err.println(SqlUtil.isSqlInjection(SqlInjectionLevel.SQL_KEYWORD, "order by"));
+		System.err.println(SqlUtil.isSqlInjection(SqlInjectionLevel.SQL_KEYWORD, "or t.field>0"));
+		System.err.println(SqlUtil.isSqlInjection(SqlInjectionLevel.SQL_KEYWORD, "or t.field between1"));
+		System.err.println(SqlUtil.isSqlInjection(SqlInjectionLevel.SQL_KEYWORD, "/*+*/"));
+		System.err.println(SqlUtil.isSqlInjection(SqlInjectionLevel.SQL_KEYWORD, "/**/"));
+		System.err.println(SqlUtil.isSqlInjection(SqlInjectionLevel.SQL_KEYWORD, "sleep"));
+		System.err.println(SqlUtil.isSqlInjection(SqlInjectionLevel.SQL_KEYWORD, "sleep("));
+		System.err.println(SqlUtil.isSqlInjection(SqlInjectionLevel.SQL_KEYWORD, "sleep()"));
+		System.err.println(SqlUtil.isSqlInjection(SqlInjectionLevel.SQL_KEYWORD, "sleep(10)"));
+		System.err.println("=====================================================");
+		System.err.println(StringUtil.matches("sleep(5)", SqlUtil.FUNCTION_PATTERN));
+		System.err.println(SqlUtil.isSqlInjection(SqlInjectionLevel.SQL_KEYWORD, "sleep(5)"));
+		Pattern pattern = Pattern.compile("(?i)\\b(or|and)\\s+[\\w\\W]+(>|>=|<>|=|<|<=|(is\\s+)|!=)\\s*");
+		System.err.println(StringUtil.matches("or 'a' is", pattern));
+		Pattern SQL_KEYWORD_PATTERN1 = Pattern.compile(
+				"(?i)\\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|UNION|JOIN|WHERE|FROM|DISTINCT|EXECUTE|EXEC|HAVING|(TRUNCATE\\s+TABLE)|(ORDER\\s+BY)|(GROUP\\s+BY)|(MERGE\\s+INTO)|(LIMIT\\s+\\d+)|(OFFSET\\s+\\d+))\\b");
+		Pattern[] SQL_INJECTION_KEY_WORDS1 = { SqlUtil.FUNCTION_PATTERN, SqlUtil.COMMENT_PATTERN,
+				SqlUtil.SQL_KEYWORD_PATTERN };
+
+		System.err.println(StringUtil.matches("selec+", SqlUtil.SQL_KEYWORD_PATTERN));
+		System.err.println(StringUtil.matches("group by ", SQL_KEYWORD_PATTERN1));
+		System.err.println(StringUtil.matches("group by1", SQL_KEYWORD_PATTERN1));
+		System.err.println(StringUtil.matches("group by+", SQL_KEYWORD_PATTERN1));
+		System.err.println(StringUtil.matches("limit ", SQL_KEYWORD_PATTERN1));
+		System.err.println(StringUtil.matches("limit+10", SQL_KEYWORD_PATTERN1));
+		System.err.println(StringUtil.matches("limit 10", SQL_KEYWORD_PATTERN1));
+		System.err.println("=====================================================");
+		Pattern CONDITION_PATTERN = Pattern
+				.compile("(?i)\\b((or|and)\\s+)?[\\w\\W]+(>|>=|<>|=|<|<=|!=|(is\\s+)|between)\\s*");
+
+		System.err.println(StringUtil.matches("or t.field<>0", CONDITION_PATTERN));
+		System.err.println(StringUtil.matches("or field<>0", CONDITION_PATTERN));
+		System.err.println(StringUtil.matches("field<>0", CONDITION_PATTERN));
+		System.err.println(StringUtil.matches("or t.field<>0", CONDITION_PATTERN));
+		System.err.println(StringUtil.matches("or t.field is ", CONDITION_PATTERN));
+		System.err.println(StringUtil.matches("or t.field ", CONDITION_PATTERN));
+		System.err.println(StringUtil.matches("or t.field between", CONDITION_PATTERN));
+		System.err.println(StringUtil.matches("or t.field>", CONDITION_PATTERN));
+		System.err.println("=====================================================");
+		// Pattern COMMENT_PATTERN =
+		// Pattern.compile("(?i)\\/\\*\\s*\\+[\\w\\W]*\\*\\/");
+		System.err.println(StringUtil.matches("/*+ */", SqlUtil.COMMENT_PATTERN));
+		System.err.println(StringUtil.matches("/*+(", SqlUtil.COMMENT_PATTERN));
+		System.err.println(StringUtil.matches("/*+*/", SqlUtil.COMMENT_PATTERN));
+		System.err.println(StringUtil.matches("/* + chen*/", SqlUtil.COMMENT_PATTERN));
+		System.err.println(StringUtil.matches("/*+(*/", SqlUtil.COMMENT_PATTERN));
+		System.err.println("=====================================================");
+		Pattern RELAXED_WORD = Pattern.compile("^[a-zA-Z0-9_-\u4e00-\u9fa5\\.\\%'\"@\\[\\]\\（\\）\\【\\】]+$");
+		System.err.println(StringUtil.matches("chen.abc", RELAXED_WORD));
+		System.err.println(StringUtil.matches("chen.abc ", RELAXED_WORD));
+		System.err.println(StringUtil.matches("'chen.abc", RELAXED_WORD));
+		System.err.println(StringUtil.matches("'chen>abc", RELAXED_WORD));
+		System.err.println(StringUtil.matches("'chen%abc", RELAXED_WORD));
+		System.err.println(StringUtil.matches("'chen-abc_f", RELAXED_WORD));
+		System.err.println(StringUtil.matches("'chen@abc.com]", RELAXED_WORD));
+		System.err.println(StringUtil.matches("'chen@abc.com)", RELAXED_WORD));
+		System.err.println(StringUtil.matches("'chen@abc.com（）", RELAXED_WORD));
+	}
+
+	@Test
+	public void testSqlInjectionStrictWord() {
+		System.err.println(SqlUtil.isSqlInjection(SqlInjectionLevel.STRICT_WORD, "select"));
+		System.err.println(SqlUtil.isSqlInjection(SqlInjectionLevel.STRICT_WORD, "sel ect"));
+		System.err.println(SqlUtil.isSqlInjection(SqlInjectionLevel.STRICT_WORD, "sel+ect"));
+		System.err.println(SqlUtil.isSqlInjection(SqlInjectionLevel.STRICT_WORD, "sel-ect"));
+		System.err.println(SqlUtil.isSqlInjection(SqlInjectionLevel.STRICT_WORD, "t1.name"));
+	}
+	
+	@Test
+	public void testSqlInjectionSqlKeyWord() {
+		System.err.println(SqlUtil.isSqlInjection(SqlInjectionLevel.SQL_KEYWORD, "S0009()"));
+		
+	}
+	
+	@Test
+	public void testSqlInjectionRELAXEDWord() {
+		System.err.println(SqlUtil.isSqlInjection(SqlInjectionLevel.RELAXED_WORD, "select"));
+		System.err.println(SqlUtil.isSqlInjection(SqlInjectionLevel.RELAXED_WORD, "sel ect"));
+		System.err.println(SqlUtil.isSqlInjection(SqlInjectionLevel.RELAXED_WORD, "sel+ect"));
+		System.err.println(SqlUtil.isSqlInjection(SqlInjectionLevel.RELAXED_WORD, "sel-ect"));
+		System.err.println(SqlUtil.isSqlInjection(SqlInjectionLevel.RELAXED_WORD, "sel-ect（"));
+		System.err.println(SqlUtil.isSqlInjection(SqlInjectionLevel.RELAXED_WORD, "sel-ect("));
+		System.err.println(SqlUtil.isSqlInjection(SqlInjectionLevel.RELAXED_WORD, "s中文el-ect("));
+		System.err.println(SqlUtil.isSqlInjection(SqlInjectionLevel.RELAXED_WORD, "sum{"));
+		System.err.println(SqlUtil.isSqlInjection(SqlInjectionLevel.RELAXED_WORD, "t.name"));
 	}
 }
