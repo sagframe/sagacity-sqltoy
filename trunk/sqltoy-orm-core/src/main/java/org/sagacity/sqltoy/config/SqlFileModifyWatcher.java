@@ -61,14 +61,15 @@ public class SqlFileModifyWatcher extends Thread {
 
 	@Override
 	public void run() {
+		boolean isRun = true;
 		// 延时(避免应用刚启动就检测,尽量启动完后开始检测)
 		try {
 			if (delayCheckSeconds >= 1) {
 				Thread.sleep(1000 * delayCheckSeconds);
 			}
 		} catch (InterruptedException e) {
+			isRun = false;
 		}
-		boolean isRun = true;
 		while (isRun) {
 			try {
 				SqlXMLConfigParse.parseXML(realSqlList, filesLastModifyMap, sqlCache, encoding, dialect);
@@ -77,8 +78,12 @@ public class SqlFileModifyWatcher extends Thread {
 				logger.error("重新解析SQL对应的xml文件错误!{}", e.getMessage(), e);
 			}
 			try {
-				// 隔几秒进行一次检测,默认开发模式为1秒钟
-				Thread.sleep(1000 * sleepSeconds);
+				if (Thread.currentThread().isInterrupted()) {
+					isRun = false;
+				} else {
+					// 隔几秒进行一次检测,默认开发模式为1秒钟
+					Thread.sleep(1000 * sleepSeconds);
+				}
 			} catch (InterruptedException e) {
 				logger.warn("sql文件变更监测程序进程异常,监测将终止!{}", e.getMessage(), e);
 				isRun = false;
