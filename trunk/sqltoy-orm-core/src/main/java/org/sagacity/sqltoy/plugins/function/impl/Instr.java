@@ -76,12 +76,13 @@ public class Instr extends IFunction {
 		}
 		if (dialect == DBType.MYSQL || dialect == DBType.ORACLE || dialect == DBType.DB2 || dialect == DBType.OCEANBASE
 				|| dialect == DBType.DM || dialect == DBType.TIDB || dialect == DBType.ORACLE11
-				|| dialect == DBType.MYSQL57 || dialect == DBType.H2) {
+				|| dialect == DBType.MYSQL57 || dialect == DBType.H2 || dialect == DBType.DORIS) {
 			if ("instr".equals(funLow)) {
 				return super.IGNORE;
 			}
 			// position mysql、h2也支持 update 2021-11-11
-			if (dialect == DBType.MYSQL || dialect == DBType.MYSQL57 || dialect == DBType.H2) {
+			if (dialect == DBType.MYSQL || dialect == DBType.MYSQL57 || dialect == DBType.H2
+					|| dialect == DBType.DORIS) {
 				if ("position".equals(funLow)) {
 					return super.IGNORE;
 				}

@@ -65,7 +65,8 @@ public class Length extends IFunction {
 			}
 			return wrapArgs(functionName, args);
 		}
-		if (dialect == DBType.MYSQL || dialect == DBType.TIDB || dialect == DBType.MYSQL57 || dialect == DBType.H2) {
+		if (dialect == DBType.MYSQL || dialect == DBType.TIDB || dialect == DBType.MYSQL57 || dialect == DBType.H2
+				|| dialect == DBType.DORIS) {
 			if ("char_length".equals(funLow)) {
 				return wrapArgs(functionName, args);
 			}

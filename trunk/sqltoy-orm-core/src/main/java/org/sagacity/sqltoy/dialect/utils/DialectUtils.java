@@ -2110,7 +2110,8 @@ public class DialectUtils {
 				BeanUtil.batchSetProperties(subTableData, mappedFields, mappedFieldValues, true);
 				// update 2020-07-30,针对mysql和postgresql、sqlite常用数据库做针对性处理
 				// 这里需要进行修改,mysql\postgresql\sqlite 等存在缺陷(字段值不为null时会报错)
-				if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.TIDB) {
+				if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.TIDB
+						|| dbType == DBType.DORIS) {
 					mysqlSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, null, forceUpdateProps, conn,
 							dbType);
 				} else if (dbType == DBType.POSTGRESQL) {

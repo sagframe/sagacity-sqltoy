@@ -71,6 +71,7 @@ public class DateFormat extends IFunction {
 			return "to_char(" + args[0] + "," + format + ")";
 		}
 		case DBType.MYSQL:
+		case DBType.DORIS:
 		case DBType.TIDB:
 		case DBType.MYSQL57: {
 			// 日期

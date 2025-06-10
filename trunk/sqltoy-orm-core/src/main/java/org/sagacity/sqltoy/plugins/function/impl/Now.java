@@ -48,7 +48,8 @@ public class Now extends IFunction {
 		if (dialect == DBType.MYSQL || dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL15
 				|| dialect == DBType.TIDB || dialect == DBType.GAUSSDB || dialect == DBType.OPENGAUSS
 				|| dialect == DBType.MOGDB || dialect == DBType.STARDB || dialect == DBType.OSCAR
-				|| dialect == DBType.VASTBASE || dialect == DBType.MYSQL57 || dialect == DBType.H2) {
+				|| dialect == DBType.VASTBASE || dialect == DBType.MYSQL57 || dialect == DBType.H2
+				|| dialect == DBType.DORIS) {
 			return wrapArgs("now", args);
 		}
 		if (dialect == DBType.ORACLE || dialect == DBType.OCEANBASE || dialect == DBType.DM

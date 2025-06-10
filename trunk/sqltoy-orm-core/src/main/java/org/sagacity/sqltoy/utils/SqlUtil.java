@@ -1397,7 +1397,7 @@ public class SqlUtil {
 			StringBuilder updateTrunkLeafSql = new StringBuilder();
 			updateTrunkLeafSql.append("update ").append(tableName);
 			// 支持mysql8 update 2018-5-11
-			if (dbType == DataSourceUtils.DBType.MYSQL || dbType == DataSourceUtils.DBType.MYSQL57) {
+			if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.DORIS) {
 				// update sys_organ_info a inner join (select t.organ_pid from
 				// sys_organ_info t) b
 				// on a.organ_id=b.organ_pid set IS_LEAF=0
@@ -2054,7 +2054,7 @@ public class SqlUtil {
 				if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.TIDB
 						|| dbType == DBType.SQLITE || dbType == DBType.H2 || dbType == DBType.POSTGRESQL
 						|| dbType == DBType.POSTGRESQL15 || dbType == DBType.KINGBASE || dbType == DBType.DB2
-						|| dbType == DBType.OCEANBASE) {
+						|| dbType == DBType.OCEANBASE || dbType == DBType.DORIS) {
 					return "current_time";
 				} else if (dbType == DBType.GAUSSDB || dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB
 						|| dbType == DBType.VASTBASE || dbType == DBType.STARDB || dbType == DBType.OSCAR) {
@@ -2359,7 +2359,7 @@ public class SqlUtil {
 			}
 		}
 		// mysql和tidb
-		if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.TIDB) {
+		if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.TIDB || dbType == DBType.DORIS) {
 			// day
 			if (type == 1) {
 				return "STR_TO_DATE(" + dateStr + ",'%Y-%m-%d')";
