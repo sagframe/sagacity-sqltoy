@@ -53,6 +53,13 @@ public class TenantFilterInterceptor implements SqlInterceptor {
 		}
 		// 授权租户信息为空不做过滤
 		String[] tenants = sqlToyContext.getUnifyFieldsHandler().authTenants(entityClass, operateType);
+		// 通过当前用户的租户id构造成授权租户id数组
+		if (tenants == null || tenants.length == 0) {
+			String userTenantId = sqlToyContext.getUnifyFieldsHandler().getUserTenantId();
+			if (userTenantId != null) {
+				tenants = new String[] { userTenantId };
+			}
+		}
 		if (tenants == null || tenants.length == 0) {
 			return sqlToyResult;
 		}

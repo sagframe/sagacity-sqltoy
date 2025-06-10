@@ -134,6 +134,7 @@ public class CacheUpdateWatcher extends Thread {
 			}
 			try {
 				// 一秒钟监测一次是否有到时的检测任务
+				//update 2025-5-30 增加当前线程是否被终止的检测
 				if (Thread.currentThread().isInterrupted()) {
 					isRun = false;
 				} else {

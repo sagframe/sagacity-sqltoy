@@ -52,7 +52,7 @@ public class SubStr extends IFunction {
 		}
 		if (dialect == DBType.MYSQL || dialect == DBType.ORACLE || dialect == DBType.TIDB || dialect == DBType.MYSQL57
 				|| dialect == DBType.DB2 || dialect == DBType.DM || dialect == DBType.OCEANBASE
-				|| dialect == DBType.ORACLE11) {
+				|| dialect == DBType.ORACLE11 || dialect == DBType.DORIS) {
 			return wrapArgs("substr", args);
 		}
 		// 表示不做修改

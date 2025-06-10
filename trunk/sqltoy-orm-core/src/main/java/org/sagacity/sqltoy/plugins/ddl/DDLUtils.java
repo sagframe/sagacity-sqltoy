@@ -285,7 +285,8 @@ public class DDLUtils {
 			typeName = "TIMESTAMP";
 			break;
 		case java.sql.Types.DATE:
-			if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.SQLSERVER) {
+			if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.SQLSERVER
+					|| dbType == DBType.DORIS) {
 				typeName = "DATETIME";
 			} else {
 				typeName = "DATE";
