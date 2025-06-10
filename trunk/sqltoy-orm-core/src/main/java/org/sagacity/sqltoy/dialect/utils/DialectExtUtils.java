@@ -247,7 +247,7 @@ public class DialectExtUtils {
 						|| dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.STARDB
 						|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE || dbType == DBType.OCEANBASE
 						|| dbType == DBType.SQLITE || dbType == DBType.KINGBASE || dbType == DBType.SQLSERVER
-						|| dbType == DBType.TIDB || dbType == DBType.H2) {
+						|| dbType == DBType.TIDB || dbType == DBType.H2 || dbType == DBType.DORIS) {
 					if (isCurrentTime) {
 						result = "CURRENT_TIMESTAMP";
 					}

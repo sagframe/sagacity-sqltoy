@@ -41,6 +41,7 @@ import org.sagacity.sqltoy.dialect.impl.ClickHouseDialect;
 import org.sagacity.sqltoy.dialect.impl.DB2Dialect;
 import org.sagacity.sqltoy.dialect.impl.DMDialect;
 import org.sagacity.sqltoy.dialect.impl.DefaultDialect;
+import org.sagacity.sqltoy.dialect.impl.DorisDialect;
 import org.sagacity.sqltoy.dialect.impl.GaussDBDialect;
 import org.sagacity.sqltoy.dialect.impl.H2Dialect;
 import org.sagacity.sqltoy.dialect.impl.ImpalaDialect;
@@ -260,7 +261,10 @@ public class DialectFactory {
 			dialectSqlWrapper = new H2Dialect();
 			break;
 		}
-
+		case DBType.DORIS: {
+			dialectSqlWrapper = new DorisDialect();
+			break;
+		}
 		// tdengine
 		case DBType.TDENGINE: {
 			dialectSqlWrapper = new TDengineDialect();
@@ -2295,7 +2299,7 @@ public class DialectFactory {
 							if (extend.fetchSize != -1) {
 								pst.setFetchSize(extend.fetchSize);
 							} // mysql 有点特殊必须要设置为MIN_VALUE
-							else if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57) {
+							else if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.DORIS) {
 								pst.setFetchSize(Integer.MIN_VALUE);
 							} // 默认为1000
 							else {

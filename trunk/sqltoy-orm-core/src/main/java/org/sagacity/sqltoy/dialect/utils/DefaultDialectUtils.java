@@ -1085,7 +1085,7 @@ public class DefaultDialectUtils {
 						}
 					});
 		} // 针对starrocks(用的mysql驱动)
-		else if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57) {
+		else if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.DORIS) {
 			rs = conn.createStatement().executeQuery("desc " + tableName);
 			return (Map<String, ColumnMeta>) SqlUtil.preparedStatementProcess(null, null, rs,
 					new PreparedStatementResultHandler() {

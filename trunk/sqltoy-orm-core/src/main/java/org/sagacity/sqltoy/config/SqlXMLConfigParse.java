@@ -1086,7 +1086,7 @@ public class SqlXMLConfigParse {
 			cacheName = translate.getAttribute("cache");
 			// 具体的缓存子分类，如数据字典类别
 			if (translate.hasAttribute("cache-type")) {
-				cacheType = translate.getAttribute("cache-type");
+				cacheType = translate.getAttribute("cache-type").trim();
 			} else {
 				cacheType = null;
 			}
