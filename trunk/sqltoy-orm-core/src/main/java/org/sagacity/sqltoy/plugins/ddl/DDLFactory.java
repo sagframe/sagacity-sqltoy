@@ -48,7 +48,8 @@ public class DDLFactory {
 		DialectDDLGenerator generator = null;
 		switch (dbType) {
 		case DBType.MYSQL:
-		case DBType.MYSQL57: {
+		case DBType.MYSQL57:
+		case DBType.DORIS: {
 			generator = new MySqlDDLGenerator();
 			break;
 		}

@@ -531,7 +531,7 @@ public class ResultUtils {
 		if (maxThresholds > 1 && maxThresholds <= warnThresholds) {
 			maxThresholds = warnThresholds;
 		}
-		List tempRow;
+		List itemRow;
 		// 单列link
 		if (linkModel != null) {
 			Object identity = null;
@@ -580,9 +580,10 @@ public class ResultUtils {
 						: getLinkColumnsId(rs, linkModel.getGroupColumns());
 				// 不相等
 				if (!identity.equals(preIdentity)) {
-					tempRow = processResultRow(dynamicCacheFetch, rs, labelNames, lowKeyLabelNameMap, columnSize,
+					itemRow = processResultRow(dynamicCacheFetch, rs, labelNames, lowKeyLabelNameMap, columnSize,
 							fieldTranslateCacheHolders, decryptHandler, ignoreAllEmpty);
-					if (tempRow != null) {
+					if (itemRow != null) {
+						// 只要有过一次不等，避免是第一行记录
 						if (notEqualCnt > 0) {
 							// List
 							if (linkResultType == 1) {
@@ -592,10 +593,12 @@ public class ResultUtils {
 							else if (linkResultType == 2) {
 								items.get(items.size() - 1).set(linkIndex, linkList.toArray());
 								linkList = new ArrayList();
-							} else if (linkResultType == 3) {
+							} // Set
+							else if (linkResultType == 3) {
 								items.get(items.size() - 1).set(linkIndex, new HashSet(linkList));
 								linkList = new ArrayList();
-							} else {
+							} // String
+							else {
 								items.get(items.size() - 1).set(linkIndex, linkBuffer.toString());
 								linkBuffer.delete(0, linkBuffer.length());
 							}
@@ -612,11 +615,12 @@ public class ResultUtils {
 							linkBuffer.append(linkStr);
 						}
 						linkSet.add(linkStr);
-						items.add(tempRow);
+						items.add(itemRow);
 						preIdentity = identity;
 						notEqualCnt++;
 					}
 				} else {
+					// identity相同，组织数据拼接
 					doLink = true;
 					if (linkModel.isDistinct() && linkSet.contains(linkStr)) {
 						doLink = false;
@@ -649,7 +653,7 @@ public class ResultUtils {
 					break;
 				}
 			}
-			// 对最后一条写入循环值
+			// 只要存在记录，都对最后一条写入循环值
 			if (notEqualCnt > 0) {
 				// 0:字符拼接，1:List;2:Array;3:HashSet
 				if (linkResultType == 1) {
@@ -673,10 +677,10 @@ public class ResultUtils {
 					updateRowHandler.updateRow(rs, index);
 					rs.updateRow();
 				}
-				tempRow = processResultRow(dynamicCacheFetch, rs, labelNames, lowKeyLabelNameMap, columnSize,
+				itemRow = processResultRow(dynamicCacheFetch, rs, labelNames, lowKeyLabelNameMap, columnSize,
 						fieldTranslateCacheHolders, decryptHandler, ignoreAllEmpty);
-				if (tempRow != null) {
-					items.add(tempRow);
+				if (itemRow != null) {
+					items.add(itemRow);
 				}
 				index++;
 				// 存在超出25000条数据的查询(具体数据规模可以通过参数进行定义)
@@ -830,7 +834,8 @@ public class ResultUtils {
 		Object preIdentity = null;
 		Object[] linkValues = new Object[linkColCnt];
 		String[] linkStrs = new String[linkColCnt];
-		List tempRow;
+		List itemRow;
+		List preItemRow;
 		Object identity = null;
 		boolean doLink = false;
 		FieldTranslateCacheHolder fieldTranslateCacheHolder;
@@ -858,14 +863,14 @@ public class ResultUtils {
 			// 不相等
 			if (!identity.equals(preIdentity)) {
 				// 提取result中的数据(identity相等时不需要提取)
-				tempRow = processResultRow(dynamicCacheFetch, rs, labelNames, lowKeyLabelNameMap, columnSize,
+				itemRow = processResultRow(dynamicCacheFetch, rs, labelNames, lowKeyLabelNameMap, columnSize,
 						fieldTranslateCacheHolders, decryptHandler, ignoreAllEmpty);
-				if (tempRow != null) {
+				if (itemRow != null) {
 					// 不相等时先对最后一条记录修改，写入拼接后的字符串
 					if (notEqualCnt > 0) {
-						tempRow = items.get(items.size() - 1);
+						preItemRow = items.get(items.size() - 1);
 						for (int i = 0; i < linkColCnt; i++) {
-							tempRow.set(linkIndexs[i], linkBuffers[i].toString());
+							preItemRow.set(linkIndexs[i], linkBuffers[i].toString());
 							linkBuffers[i].delete(0, linkBuffers[i].length());
 							// 清除
 							if (linkModel.isDistinct()) {
@@ -880,7 +885,7 @@ public class ResultUtils {
 							linkSets[i].add(linkStrs[i]);
 						}
 					}
-					items.add(tempRow);
+					items.add(itemRow);
 					notEqualCnt++;
 					preIdentity = identity;
 				}
@@ -917,9 +922,9 @@ public class ResultUtils {
 		}
 		// 数据集合不为空,对最后一条记录写入循环值
 		if (notEqualCnt > 0) {
-			tempRow = items.get(items.size() - 1);
+			preItemRow = items.get(items.size() - 1);
 			for (int i = 0; i < linkColCnt; i++) {
-				tempRow.set(linkIndexs[i], linkBuffers[i].toString());
+				preItemRow.set(linkIndexs[i], linkBuffers[i].toString());
 			}
 		}
 		// 超出警告阀值

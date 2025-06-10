@@ -17,6 +17,7 @@ import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
  * @modify {Date:2023-3-9,完善了SqlInterceptors，增加authTenants方法获取当前用户的授权租户id数组}
  * @modify {Date:2023-5-13,增加了createSqlTimeFields、updateSqlTimeFields
  *         解决增加和修改记录时，创建时间和修改时间采用数据库时间}
+ * @modify {Date:2025-6-5,增加getUserTenantId()方法获取当前用户所在租户id}
  */
 public interface IUnifyFieldsHandler {
 
@@ -119,14 +120,25 @@ public interface IUnifyFieldsHandler {
 	/**
 	 * @TODO 获取授权租户信息，传递表名和操作类型目的为程序可以控制返回:所在租户和授权租户 提供部分决策依据
 	 *       一般你可以直接返回当前用户的授权租户id数组，主要用于SqlInterceptors，如自定义的TenantInterceptor
-	 * @param entityClass
-	 * @param operType
+	 *       简单实现
+	 * @param entityClass 可以为null
+	 * @param operType 可以为null
 	 * @return
 	 */
 	public default String[] authTenants(Class entityClass, OperateType operType) {
 		// 你可以不用管entityClass、operType参数，直接返回当前用户授权的租户Id
 		// 怎么获取? 通过filter将用户信息放入ThreadLocal，这里就随意获取了,请根据情况发挥
 		// return getCurrentUserAuthedTenants();
+		return null;
+	}
+
+	/**
+	 * 返回当前用户的租户id
+	 * 
+	 * @return
+	 */
+	public default String getUserTenantId() {
+		//return getUserTenant();
 		return null;
 	}
 }

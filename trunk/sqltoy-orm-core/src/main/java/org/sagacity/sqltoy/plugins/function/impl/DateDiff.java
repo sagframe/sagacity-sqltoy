@@ -21,7 +21,7 @@ public class DateDiff extends IFunction {
 	}
 
 	@Override
-	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
+	public String wrap(int dbType, String functionName, boolean hasArgs, String... args) {
 		if (args == null || args.length < 2) {
 			return super.IGNORE;
 		}
@@ -36,20 +36,20 @@ public class DateDiff extends IFunction {
 		String unitType = realArgs[0].toUpperCase().replace("'", "").replace("\"", "");
 		String realFunctionName = "datediff";
 		String[][] unitConstracts = null;
-		if (dialect == DBType.MYSQL || dialect == DBType.MYSQL57) {
+		if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.DORIS) {
 			unitConstracts = new String[][] { { "DD", "DAY" }, { "MM", "MONTH" }, { "YY", "YEAR" },
 					{ "YYYY", "YEAR" } };
 			realFunctionName = "timestampdiff";
-		} else if (dialect == DBType.ORACLE || dialect == DBType.ORACLE11) {
+		} else if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11) {
 			if (unitType.equals("YEAR")) {
 				return "TRUNC(MONTHS_BETWEEN(" + realArgs[1] + "," + realArgs[2] + ")/12,1)";
-			}else if (unitType.equals("MONTH")) {
+			} else if (unitType.equals("MONTH")) {
 				return "TRUNC(MONTHS_BETWEEN(" + realArgs[1] + "," + realArgs[2] + "),1)";
-			}else if (unitType.equals("DAY")) {
+			} else if (unitType.equals("DAY")) {
 				return "EXTRACT(DAY FROM (" + realArgs[2] + "-" + realArgs[1] + "))";
 			}
-		} else if (dialect == DBType.MOGDB || dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL15
-				|| dialect == DBType.OPENGAUSS || dialect == DBType.VASTBASE || dialect == DBType.STARDB) {
+		} else if (dbType == DBType.MOGDB || dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15
+				|| dbType == DBType.OPENGAUSS || dbType == DBType.VASTBASE || dbType == DBType.STARDB) {
 			// round(extract(epoch from(tni.update_time-tni.utime))/3600,2)
 			if (unitType.equals("YEAR")) {
 				return "(date_part('year'," + realArgs[2] + ")-date_part('year'," + realArgs[1] + "))";
@@ -67,7 +67,7 @@ public class DateDiff extends IFunction {
 			} else if (unitType.equals("SECOND")) {
 				return "round(extract(epoch from(" + realArgs[2] + "-" + realArgs[1] + ")),0)";
 			}
-		} else if (dialect == DBType.SQLSERVER) {
+		} else if (dbType == DBType.SQLSERVER) {
 
 		}
 		if (unitConstracts != null) {

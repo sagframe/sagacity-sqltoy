@@ -14,6 +14,7 @@ import org.sagacity.sqltoy.SqlToyThreadDataHolder;
 import org.sagacity.sqltoy.config.model.FieldTranslate;
 import org.sagacity.sqltoy.config.model.SqlExecuteTrace;
 import org.sagacity.sqltoy.config.model.Translate;
+import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.model.inner.TranslateExtend;
 import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
@@ -32,6 +33,7 @@ import org.slf4j.LoggerFactory;
  * @version v1.0,Date:2013年4月8日
  * @modify {Date:2018-1-5,增强缓存更新检测机制}
  * @modify {Date:2022-06-11,支持多个缓存翻译定义文件}
+ * @modify {Date:2025-06-05,获取缓存cacheType支持动态传递当前用户的租户Id}
  */
 public class TranslateManager {
 	/**
@@ -291,14 +293,41 @@ public class TranslateManager {
 	 * @return
 	 */
 	private HashMap<String, Object[]> getCacheData(TranslateConfigModel cacheModel, String cacheType) {
+		String realCacheType = null;
+		if (cacheType != null) {
+			// ${user_tenant_id}形式传递租户id
+			if (cacheType.startsWith("${") && cacheType.endsWith("}")) {
+				String lowCacheType = cacheType.substring(2, cacheType.length() - 1).replace("_", "").trim()
+						.toLowerCase();
+				if (lowCacheType.equals("usertenantid") || lowCacheType.equals("currentusertenantid")) {
+					if (sqlToyContext.getUnifyFieldsHandler() == null) {
+						throw new DataAccessException("缓存翻译使用:" + cacheType
+								+ "形式传递租户信息，必须要实现:IUnifyFieldsHandler.getUserTenantId()或IUnifyFieldsHandler.authTenants(null,null)来获取当前用户的租户id!");
+					}
+					realCacheType = sqlToyContext.getUnifyFieldsHandler().getUserTenantId();
+					if (realCacheType == null) {
+						String[] authedTenantIds = sqlToyContext.getUnifyFieldsHandler().authTenants(null, null);
+						//只支持单一租户
+						if (authedTenantIds != null && authedTenantIds.length > 0) {
+							realCacheType = authedTenantIds[0];
+						} else {
+							throw new DataAccessException("缓存翻译使用:" + cacheType
+									+ "形式传递租户信息，必须要实现:IUnifyFieldsHandler.getUserTenantId()或IUnifyFieldsHandler.authTenants(null,null)来获取当前用户的租户id!");
+						}
+					}
+				}
+			} else {
+				realCacheType = cacheType;
+			}
+		}
 		// 从缓存中提取数据
-		HashMap<String, Object[]> result = translateCacheManager.getCache(cacheModel.getCache(), cacheType);
+		HashMap<String, Object[]> result = translateCacheManager.getCache(cacheModel.getCache(), realCacheType);
 		// 数据为空则执行调用逻辑提取数据放入缓存，否则直接返回
 		if (result == null || result.isEmpty()) {
-			result = TranslateFactory.getCacheData(sqlToyContext, cacheModel, cacheType);
+			result = TranslateFactory.getCacheData(sqlToyContext, cacheModel, realCacheType);
 			// 放入缓存
 			if (result != null && !result.isEmpty()) {
-				translateCacheManager.put(cacheModel, cacheModel.getCache(), cacheType, result);
+				translateCacheManager.put(cacheModel, cacheModel.getCache(), realCacheType, result);
 			}
 		}
 		return result;

@@ -401,7 +401,7 @@ public class TranslateConfigParse {
 		Translate translate = new Translate(annotTranslate.cacheName());
 		translate.setIndex(annotTranslate.cacheIndex());
 		if (StringUtil.isNotBlank(annotTranslate.cacheType())) {
-			translate.setCacheType(annotTranslate.cacheType());
+			translate.setCacheType(annotTranslate.cacheType().trim());
 		}
 		translate.setKeyColumn(annotTranslate.keyField());
 		// 内部转了小写

@@ -27,7 +27,7 @@ public class GroupConcat extends IFunction {
 	}
 
 	@Override
-	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
+	public String wrap(int dbType, String functionName, boolean hasArgs, String... args) {
 		if (args == null || args.length == 0) {
 			return super.IGNORE;
 		}
@@ -38,9 +38,9 @@ public class GroupConcat extends IFunction {
 			// "\\Wseparator\\W" 表达式长度11
 			sign = tmp.substring(matchIndex + 11).trim();
 		}
-		if (dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL15 || dialect == DBType.GAUSSDB
-				|| dialect == DBType.OPENGAUSS || dialect == DBType.OSCAR || dialect == DBType.STARDB
-				|| dialect == DBType.MOGDB || dialect == DBType.VASTBASE) {
+		if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB
+				|| dbType == DBType.OPENGAUSS || dbType == DBType.OSCAR || dbType == DBType.STARDB
+				|| dbType == DBType.MOGDB || dbType == DBType.VASTBASE) {
 			if ("string_agg".equals(functionName.toLowerCase())) {
 				return super.IGNORE;
 			}
@@ -54,7 +54,8 @@ public class GroupConcat extends IFunction {
 				return " array_to_string(ARRAY_AGG(" + args[0] + ")," + sign + ") ";
 			}
 		}
-		if (dialect == DBType.MYSQL || dialect == DBType.TIDB || dialect == DBType.MYSQL57 || dialect == DBType.H2) {
+		if (dbType == DBType.MYSQL || dbType == DBType.TIDB || dbType == DBType.MYSQL57 || dbType == DBType.H2
+				|| dbType == DBType.DORIS) {
 			if ("group_concat".equals(functionName.toLowerCase())) {
 				return super.IGNORE;
 			}
