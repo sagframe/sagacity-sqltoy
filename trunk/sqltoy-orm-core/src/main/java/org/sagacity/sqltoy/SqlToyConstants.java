@@ -91,11 +91,6 @@ public class SqlToyConstants {
 	public final static String TEMPLATE_TABLE_HOLDER = "@templateTable";
 
 	/**
-	 * 缓存翻译时在缓存中未匹配上key的返回信息
-	 */
-	public static String UNCACHED_KEY_RESULT = "[${value}]未定义";
-
-	/**
 	 * 存放sqltoy的系统参数
 	 */
 	private static Map<String, String> sqlToyProps = new HashMap<String, String>();
@@ -393,13 +388,6 @@ public class SqlToyConstants {
 			return defaultValue;
 		}
 		return realDefault;
-	}
-
-	/**
-	 * @param uncachedKeyResult the uncachedKeyResult to set
-	 */
-	public static void setUncachedKeyResult(String uncachedKeyResult) {
-		UNCACHED_KEY_RESULT = uncachedKeyResult;
 	}
 
 	/**
