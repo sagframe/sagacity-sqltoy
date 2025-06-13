@@ -1163,14 +1163,9 @@ public class SqlXMLConfigParse {
 					// 解析where逻辑表达式
 					parseTranslateWhere(translateModel, where);
 					if (uncachedTemplate != null) {
-						// 未匹配模板为空白，设置为null,表示显示未翻译的值
-						if (uncachedTemplate.trim().equals("")) {
-							translateModel.setUncached(null);
-						} else {
-							// 统一未匹配中的通配符号为${value}
-							translateModel.setUncached(
-									uncachedTemplate.replaceAll("(?i)\\$?\\{\\s*key\\s*\\}", "\\$\\{value\\}"));
-						}
+						// 统一未匹配中的通配符号为${value}
+						translateModel.setUncached(
+								uncachedTemplate.replaceAll("(?i)\\$?\\{\\s*key\\s*\\}", "\\$\\{value\\}"));
 					}
 					if (cacheIndexs != null) {
 						if (i < cacheIndexs.length - 1) {
