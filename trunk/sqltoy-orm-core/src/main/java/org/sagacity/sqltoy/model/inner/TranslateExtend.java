@@ -104,7 +104,7 @@ public class TranslateExtend implements Serializable, java.lang.Cloneable {
 	/**
 	 * 未被缓存的模板
 	 */
-	public String uncached = SqlToyConstants.UNCACHED_KEY_RESULT;
+	public String uncached;
 
 	@Override
 	public TranslateExtend clone() {
