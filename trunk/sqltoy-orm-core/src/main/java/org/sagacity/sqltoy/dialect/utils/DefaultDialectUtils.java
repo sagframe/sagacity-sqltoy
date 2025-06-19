@@ -54,6 +54,7 @@ import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
+import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
@@ -408,6 +409,7 @@ public class DefaultDialectUtils {
 				: null;
 		final Object[] fieldValues = tempFieldValues;
 		final Object entityVersion = tmpVersionValue;
+		TypeHandler typeHandler = sqlToyContext.getTypeHandler();
 		final boolean hasUpdateRow = (updateRowHandler == null) ? false : true;
 		// 组织select * from table for update 语句
 		SqlToyResult queryParam = wrapFetchSql(entityMeta, dbType, whereFields, whereParamValues, tableName);
@@ -523,8 +525,8 @@ public class DefaultDialectUtils {
 								}
 								index++;
 								// 重新获得修改后的值
-								result.add(ResultUtils.processResultRow(null, finalRs, null, null, rowCnt, null, null,
-										false));
+								result.add(ResultUtils.processResultRow(dbType, typeHandler, null, finalRs, null, null,
+										rowCnt, null, null, false));
 							}
 							// 没有查询到记录，表示是需要首次插入
 							if (index == 0) {

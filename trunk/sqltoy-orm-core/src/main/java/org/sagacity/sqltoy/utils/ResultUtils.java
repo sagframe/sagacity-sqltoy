@@ -59,6 +59,7 @@ import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.inner.DataSetResult;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
+import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.sagacity.sqltoy.plugins.calculator.ColsChainRelative;
 import org.sagacity.sqltoy.plugins.calculator.GroupSummary;
 import org.sagacity.sqltoy.plugins.calculator.ReverseList;
@@ -106,9 +107,9 @@ public class ResultUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	public static QueryResult processResultSet(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
-			Connection conn, ResultSet rs, QueryExecutorExtend queryExecutorExtend, UpdateRowHandler updateRowHandler,
-			DecryptHandler decryptHandler, int startColIndex) throws Exception {
+	public static QueryResult processResultSet(final Integer dbType, final SqlToyContext sqlToyContext,
+			final SqlToyConfig sqlToyConfig, Connection conn, ResultSet rs, QueryExecutorExtend queryExecutorExtend,
+			UpdateRowHandler updateRowHandler, DecryptHandler decryptHandler, int startColIndex) throws Exception {
 		QueryResult result = new QueryResult();
 		// 记录行记数器
 		int index = 0;
@@ -162,7 +163,7 @@ public class ResultUtils {
 			result.setLabelTypes(labelTypes);
 			// 返回结果为非VO class时才可以应用旋转和汇总合计功能
 			try {
-				result.setRows(getResultSet(queryExecutorExtend, sqlToyConfig, sqlToyContext, conn, rs,
+				result.setRows(getResultSet(dbType, queryExecutorExtend, sqlToyConfig, sqlToyContext, conn, rs,
 						updateRowHandler, realDecryptHandler, columnCnt, labelIndexMap, labelNames, startColIndex));
 			} // update 2019-09-11 此处增加数组溢出异常是因为经常有开发设置缓存cache-indexs时写错误，为了增加错误提示信息的友好性增加此处理
 			catch (Exception oie) {
@@ -190,8 +191,8 @@ public class ResultUtils {
 	 * @param fieldsMap
 	 * @throws Exception
 	 */
-	public static void consumeResult(final SqlToyContext sqlToyContext, final QueryExecutorExtend extend,
-			final SqlToyConfig sqlToyConfig, Connection conn, ResultSet rs,
+	public static void consumeResult(final Integer dbType, final SqlToyContext sqlToyContext,
+			final QueryExecutorExtend extend, final SqlToyConfig sqlToyConfig, Connection conn, ResultSet rs,
 			final StreamResultHandler streamResultHandler, Class resultType, Boolean humpMapLabel,
 			Map<Class, IgnoreKeyCaseMap<String, String>> fieldsMap) throws Exception {
 		// 重新组合解密字段(entityMeta中的和sql自定义的合并)
@@ -315,9 +316,10 @@ public class ResultUtils {
 		streamResultHandler.start(labelNames, labelTypes);
 		index = 0;
 		List rowTemp;
+		TypeHandler typeHandler = sqlToyContext.getTypeHandler();
 		while (rs.next()) {
-			rowTemp = processResultRow(dynamicCacheFetch, rs, labelNames, lowKeyLabelNameMap, columnSize,
-					translateCache, realDecryptHandler, ignoreAllEmpty);
+			rowTemp = processResultRow(dbType, typeHandler, dynamicCacheFetch, rs, labelNames, lowKeyLabelNameMap,
+					columnSize, translateCache, realDecryptHandler, ignoreAllEmpty);
 			if (rowTemp != null) {
 				// 字段脱敏
 				if (sqlSecure) {
@@ -489,7 +491,7 @@ public class ResultUtils {
 		}
 	}
 
-	private static List getResultSet(QueryExecutorExtend queryExtend, SqlToyConfig sqlToyConfig,
+	private static List getResultSet(Integer dbType, QueryExecutorExtend queryExtend, SqlToyConfig sqlToyConfig,
 			SqlToyContext sqlToyContext, Connection conn, ResultSet rs, UpdateRowHandler updateRowHandler,
 			DecryptHandler decryptHandler, int columnCnt, HashMap<String, Integer> labelIndexMap, String[] labelNames,
 			int startColIndex) throws Exception {
@@ -500,8 +502,8 @@ public class ResultUtils {
 		}
 		// update 2020-09-13 存在多列link(独立出去编写,避免对单列产生影响)
 		if (linkModel != null && linkModel.getColumns().length > 1) {
-			return getMoreLinkResultSet(sqlToyConfig, sqlToyContext, decryptHandler, conn, rs, columnCnt, labelIndexMap,
-					labelNames, startColIndex);
+			return getMoreLinkResultSet(dbType, sqlToyConfig, sqlToyContext, decryptHandler, conn, rs, columnCnt,
+					labelIndexMap, labelNames, startColIndex);
 		}
 
 		List<List> items = new ArrayList();
@@ -527,6 +529,7 @@ public class ResultUtils {
 		boolean maxLimit = false;
 		// 是否判断全部为null的行记录
 		boolean ignoreAllEmpty = sqlToyConfig.isIgnoreEmpty();
+		TypeHandler typeHandler = sqlToyContext.getTypeHandler();
 		// 最大值要大于等于警告阀值
 		if (maxThresholds > 1 && maxThresholds <= warnThresholds) {
 			maxThresholds = warnThresholds;
@@ -580,8 +583,8 @@ public class ResultUtils {
 						: getLinkColumnsId(rs, linkModel.getGroupColumns());
 				// 不相等
 				if (!identity.equals(preIdentity)) {
-					itemRow = processResultRow(dynamicCacheFetch, rs, labelNames, lowKeyLabelNameMap, columnSize,
-							fieldTranslateCacheHolders, decryptHandler, ignoreAllEmpty);
+					itemRow = processResultRow(dbType, typeHandler, dynamicCacheFetch, rs, labelNames,
+							lowKeyLabelNameMap, columnSize, fieldTranslateCacheHolders, decryptHandler, ignoreAllEmpty);
 					if (itemRow != null) {
 						// 只要有过一次不等，避免是第一行记录
 						if (notEqualCnt > 0) {
@@ -677,8 +680,8 @@ public class ResultUtils {
 					updateRowHandler.updateRow(rs, index);
 					rs.updateRow();
 				}
-				itemRow = processResultRow(dynamicCacheFetch, rs, labelNames, lowKeyLabelNameMap, columnSize,
-						fieldTranslateCacheHolders, decryptHandler, ignoreAllEmpty);
+				itemRow = processResultRow(dbType, typeHandler, dynamicCacheFetch, rs, labelNames, lowKeyLabelNameMap,
+						columnSize, fieldTranslateCacheHolders, decryptHandler, ignoreAllEmpty);
 				if (itemRow != null) {
 					items.add(itemRow);
 				}
@@ -770,7 +773,7 @@ public class ResultUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	private static List getMoreLinkResultSet(SqlToyConfig sqlToyConfig, SqlToyContext sqlToyContext,
+	private static List getMoreLinkResultSet(Integer dbType, SqlToyConfig sqlToyConfig, SqlToyContext sqlToyContext,
 			DecryptHandler decryptHandler, Connection conn, ResultSet rs, int columnCnt,
 			HashMap<String, Integer> labelIndexMap, String[] labelNames, int startColIndex) throws Exception {
 		// 字段连接(多行数据拼接成一个数据,以一行显示)
@@ -842,6 +845,7 @@ public class ResultUtils {
 		Object tmpObject;
 		int index = 0;
 		int notEqualCnt = 0;
+		TypeHandler typeHandler = sqlToyContext.getTypeHandler();
 		while (rs.next()) {
 			// 对多个link字段取值并进行翻译转义
 			for (int i = 0; i < linkColCnt; i++) {
@@ -863,8 +867,8 @@ public class ResultUtils {
 			// 不相等
 			if (!identity.equals(preIdentity)) {
 				// 提取result中的数据(identity相等时不需要提取)
-				itemRow = processResultRow(dynamicCacheFetch, rs, labelNames, lowKeyLabelNameMap, columnSize,
-						fieldTranslateCacheHolders, decryptHandler, ignoreAllEmpty);
+				itemRow = processResultRow(dbType, typeHandler, dynamicCacheFetch, rs, labelNames, lowKeyLabelNameMap,
+						columnSize, fieldTranslateCacheHolders, decryptHandler, ignoreAllEmpty);
 				if (itemRow != null) {
 					// 不相等时先对最后一条记录修改，写入拼接后的字符串
 					if (notEqualCnt > 0) {
@@ -1161,8 +1165,8 @@ public class ResultUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	public static List processResultRow(DynamicCacheFetch dynamicCacheFetch, ResultSet rs, String[] labelNames,
-			HashMap<String, String> lowKeyLabelNameMap, int size,
+	public static List processResultRow(Integer dbType, TypeHandler typeHandler, DynamicCacheFetch dynamicCacheFetch,
+			ResultSet rs, String[] labelNames, HashMap<String, String> lowKeyLabelNameMap, int size,
 			HashMap<String, FieldTranslateCacheHolder> translateCaches, DecryptHandler decryptHandler,
 			boolean ignoreAllEmptySet) throws Exception {
 		List rowData = new ArrayList();
@@ -1173,6 +1177,8 @@ public class ResultUtils {
 		int blobSize;
 		boolean isLabel = (labelNames == null) ? false : true;
 		boolean doTranslate = (translateCaches == null) ? false : true;
+		// oracle 的时间戳非标准java类型
+		boolean convertOracleTimestamp = SqlToyConstants.convertOracleTimestamp();
 		FieldTranslateCacheHolder fieldTranslateHandler;
 		for (int i = 0; i < size; i++) {
 			if (isLabel) {
@@ -1193,6 +1199,13 @@ public class ResultUtils {
 					} else {
 						fieldValue = new byte[0];
 					}
+				} else if (convertOracleTimestamp
+						&& fieldValue.getClass().getTypeName().equals("oracle.sql.TIMESTAMP")) {
+					fieldValue = BeanUtil.oracleTimeStampConvert(fieldValue);
+				}
+				// java 特定类型处理
+				if (typeHandler != null) {
+					fieldValue = typeHandler.toJavaType(dbType, fieldValue);
 				}
 				// 解密
 				if (decryptHandler != null) {

@@ -296,6 +296,15 @@ public class SqlToyConstants {
 	}
 
 	/**
+	 * oracle.sql.TIMESTAMP是否默认要转为java.sql.Timestamp类型
+	 * 
+	 * @return
+	 */
+	public static boolean convertOracleTimestamp() {
+		return Boolean.parseBoolean(getKeyValue("sqltoy.convert.oracle.timestamp", "true"));
+	}
+
+	/**
 	 * @todo 获取项目中在代码中编写的sql数量，超过此阈值不纳入缓存
 	 * @return
 	 */
