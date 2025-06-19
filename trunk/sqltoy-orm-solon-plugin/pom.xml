@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.sagframe</groupId>
-    <version>5.6.49.jre8</version>
+    <version>5.6.50.jre8</version>
 
     <artifactId>sagacity-sqltoy-solon-plugin</artifactId>
     <name>sagacity-sqltoy-solon-plugin</name>

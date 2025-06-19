@@ -277,8 +277,8 @@ public class DialectUtils {
 				try {
 					SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, pst, paramsValue, null, 0);
 					rs = pst.executeQuery();
-					this.setResult(ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn, rs, extend, null,
-							decryptHandler, startIndex));
+					this.setResult(ResultUtils.processResultSet(dbType, sqlToyContext, sqlToyConfig, conn, rs, extend,
+							null, decryptHandler, startIndex));
 				} catch (Exception e) {
 					throw e;
 				} finally {
@@ -333,7 +333,7 @@ public class DialectUtils {
 				try {
 					SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, pst, paramsValue, null, 0);
 					rs = pst.executeQuery();
-					this.setResult(ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn, rs, null,
+					this.setResult(ResultUtils.processResultSet(dbType, sqlToyContext, sqlToyConfig, conn, rs, null,
 							updateRowHandler, null, startIndex));
 				} catch (Exception e) {
 					throw e;
@@ -2880,7 +2880,7 @@ public class DialectUtils {
 						while (hasResult) {
 							rs = callStat.getResultSet();
 							if (rs != null) {
-								QueryResult tempResult = ResultUtils.processResultSet(sqlToyContext,
+								QueryResult tempResult = ResultUtils.processResultSet(dbType, sqlToyContext,
 										(meter == 0) ? sqlToyConfig : notFirstConfig, conn, rs, null, null, null, 0);
 								labelsList.add(tempResult.getLabelNames());
 								labelTypesList.add(tempResult.getLabelTypes());
@@ -2905,8 +2905,8 @@ public class DialectUtils {
 						if (hasResult) {
 							rs = callStat.getResultSet();
 							if (rs != null) {
-								QueryResult tempResult = ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn,
-										rs, null, null, null, 0);
+								QueryResult tempResult = ResultUtils.processResultSet(dbType, sqlToyContext,
+										sqlToyConfig, conn, rs, null, null, null, 0);
 								storeResult.setLabelNames(tempResult.getLabelNames());
 								storeResult.setLabelTypes(tempResult.getLabelTypes());
 								storeResult.setRows(tempResult.getRows());

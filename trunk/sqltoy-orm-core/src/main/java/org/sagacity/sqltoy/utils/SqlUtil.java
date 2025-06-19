@@ -1055,8 +1055,8 @@ public class SqlUtil {
 				try {
 					setParamsValue(typeHandler, conn, dbType, pst, params, null, 0);
 					rs = pst.executeQuery();
-					this.setResult(processResultSet(typeHandler, rs, voClass, rowCallbackHandler, decryptHandler, 0,
-							ignoreAllEmptySet, colFieldMap));
+					this.setResult(processResultSet(dbType, typeHandler, rs, voClass, rowCallbackHandler,
+							decryptHandler, 0, ignoreAllEmptySet, colFieldMap));
 				} catch (Exception e) {
 					throw e;
 				} finally {
@@ -1087,7 +1087,7 @@ public class SqlUtil {
 	 * @throws Exception
 	 * @todo 处理sql查询时的结果集, 当没有反调或voClass反射处理时以数组方式返回resultSet的数据
 	 */
-	public static List processResultSet(TypeHandler typeHandler, ResultSet rs, Class voClass,
+	public static List processResultSet(Integer dbType, TypeHandler typeHandler, ResultSet rs, Class voClass,
 			RowCallbackHandler rowCallbackHandler, final DecryptHandler decryptHandler, int startColIndex,
 			boolean ignoreAllEmptySet, final HashMap<String, String> colFieldMap) throws Exception {
 		// 记录行记数器
@@ -1127,6 +1127,9 @@ public class SqlUtil {
 			List items = new ArrayList();
 			Object fieldValue = null;
 			boolean allNull = true;
+			// oracle 的时间戳非标准java类型
+			boolean convertOracleTimestamp = SqlToyConstants.convertOracleTimestamp();
+			int blobSize;
 			while (rs.next()) {
 				allNull = true;
 				List rowData = new ArrayList();
@@ -1137,6 +1140,21 @@ public class SqlUtil {
 						allNull = false;
 						if (fieldValue instanceof java.sql.Clob) {
 							fieldValue = clobToString((java.sql.Clob) fieldValue);
+						} else if (fieldValue instanceof java.sql.Blob) {
+							java.sql.Blob blob = (java.sql.Blob) fieldValue;
+							blobSize = (int) blob.length();
+							if (blobSize > 0) {
+								fieldValue = blob.getBytes(1, blobSize);
+							} else {
+								fieldValue = new byte[0];
+							}
+						} else if (convertOracleTimestamp
+								&& fieldValue.getClass().getTypeName().equals("oracle.sql.TIMESTAMP")) {
+							fieldValue = BeanUtil.oracleTimeStampConvert(fieldValue);
+						}
+						// java 特定类型处理
+						if (typeHandler != null) {
+							fieldValue = typeHandler.toJavaType(dbType, fieldValue);
 						}
 					}
 					rowData.add(fieldValue);

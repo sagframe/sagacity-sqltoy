@@ -2314,7 +2314,7 @@ public class DialectFactory {
 										SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, pst,
 												paramsValue, null, 0);
 										rs = pst.executeQuery();
-										ResultUtils.consumeResult(sqlToyContext, extend, sqlToyConfig, conn, rs,
+										ResultUtils.consumeResult(dbType, sqlToyContext, extend, sqlToyConfig, conn, rs,
 												streamResultHandler, (Class) extend.resultType, extend.humpMapLabel,
 												extend.fieldsMap);
 									} catch (Exception e) {
