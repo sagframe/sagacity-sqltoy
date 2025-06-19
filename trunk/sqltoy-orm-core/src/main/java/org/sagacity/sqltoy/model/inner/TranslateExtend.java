@@ -5,8 +5,6 @@ package org.sagacity.sqltoy.model.inner;
 
 import java.io.Serializable;
 
-import org.sagacity.sqltoy.SqlToyConstants;
-
 /**
  * @project sagacity-sqltoy
  * @description Translate内部扩展类，便于隐藏属性避免暴露过多get方法

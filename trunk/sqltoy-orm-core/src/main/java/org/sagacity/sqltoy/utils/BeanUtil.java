@@ -1011,11 +1011,11 @@ public class BeanUtil {
 		return boolVar;
 	}
 
-	private static Timestamp oracleTimeStampConvert(Object obj) throws Exception {
+	public static Timestamp oracleTimeStampConvert(Object obj) throws Exception {
 		return ((oracle.sql.TIMESTAMP) obj).timestampValue();
 	}
 
-	private static Date oracleDateConvert(Object obj) throws Exception {
+	public static Date oracleDateConvert(Object obj) throws Exception {
 		return ((oracle.sql.TIMESTAMP) obj).dateValue();
 	}
 

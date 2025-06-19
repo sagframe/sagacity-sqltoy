@@ -348,7 +348,7 @@ public class OracleDialectUtils {
 							for (int outIndex : cursorIndexes) {
 								rs = (ResultSet) callStat.getObject(inCount + outIndex + 1);
 								if (rs != null) {
-									QueryResult tempResult = ResultUtils.processResultSet(sqlToyContext,
+									QueryResult tempResult = ResultUtils.processResultSet(dbType, sqlToyContext,
 											(meter == 0) ? sqlToyConfig : notFirstConfig, conn, rs, null, null, null,
 											0);
 									labelsList.add(tempResult.getLabelNames());
@@ -371,8 +371,8 @@ public class OracleDialectUtils {
 						} else {
 							rs = (ResultSet) callStat.getObject(inCount + cursorIndex + 1);
 							if (rs != null) {
-								QueryResult tempResult = ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn,
-										rs, null, null, null, 0);
+								QueryResult tempResult = ResultUtils.processResultSet(dbType, sqlToyContext,
+										sqlToyConfig, conn, rs, null, null, null, 0);
 								storeResult.setLabelNames(tempResult.getLabelNames());
 								storeResult.setLabelTypes(tempResult.getLabelTypes());
 								storeResult.setRows(tempResult.getRows());
@@ -512,6 +512,7 @@ public class OracleDialectUtils {
 
 	/**
 	 * 指的是在identity、sequence主键场景下，是否允许手工给主键赋值
+	 * 
 	 * @param pkStrategy
 	 * @return
 	 */

@@ -52,4 +52,16 @@ public abstract class TypeHandler {
 	public Object toJavaType(String javaTypeName, Class genericType, Object jdbcValue) throws Exception {
 		return null;
 	}
+
+	/**
+	 * @TODO 针对ResultSet.get(index)
+	 *       返回的数据库特定类型，转化成java常见的类型,如oracle.sql.TIMESTAMP或Strut等类型
+	 * @param dbType
+	 * @param jdbcValue
+	 * @return
+	 * @throws Exception
+	 */
+	public Object toJavaType(Integer dbType, Object jdbcValue) throws Exception {
+		return jdbcValue;
+	}
 }
