@@ -5,8 +5,6 @@ package org.sagacity.sqltoy.model.inner;
 
 import java.io.Serializable;
 
-import org.sagacity.sqltoy.SqlToyConstants;
-
 /**
  * @project sagacity-sqltoy
  * @description Translate内部扩展类，便于隐藏属性避免暴露过多get方法
@@ -104,7 +102,7 @@ public class TranslateExtend implements Serializable, java.lang.Cloneable {
 	/**
 	 * 未被缓存的模板
 	 */
-	public String uncached = SqlToyConstants.UNCACHED_KEY_RESULT;
+	public String uncached;
 
 	@Override
 	public TranslateExtend clone() {

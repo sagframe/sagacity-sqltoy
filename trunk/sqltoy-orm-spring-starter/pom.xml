@@ -4,19 +4,19 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sagframe</groupId>
-	<version>5.6.48</version>
+	<version>5.6.51</version>
 	<name>sagacity-sqltoy-spring-starter</name>
 	<artifactId>sagacity-sqltoy-spring-starter</artifactId>
 	<description>sqltoy springboot starter</description>
 	<url>https://github.com/sagframe/sagacity-sqltoy</url>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<spring-boot.version>3.5.0</spring-boot.version>
-		<spring-data-commons.version>3.5.0</spring-data-commons.version>
-		<spring-data-redis.version>3.5.0</spring-data-redis.version>
-		<spring-data-mongo.version>4.5.0</spring-data-mongo.version>
+		<spring-boot.version>3.5.4</spring-boot.version>
+		<spring-data-commons.version>3.5.2</spring-data-commons.version>
+		<spring-data-redis.version>3.5.2</spring-data-redis.version>
+		<spring-data-mongo.version>4.5.2</spring-data-mongo.version>
 		<mongo.version>5.5.1</mongo.version>
-		<caffeine.version>3.2.0</caffeine.version>
+		<caffeine.version>3.2.2</caffeine.version>
 	</properties>
 	<licenses>
 		<license>
@@ -40,18 +40,6 @@
 			<timezone>+8</timezone>
 		</developer>
 	</developers>
-	<distributionManagement>
-
-		<snapshotRepository>
-			<id>sonatype-nexus-snapshots</id>
-			<url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-		</snapshotRepository>
-		<repository>
-			<id>sonatype-nexus-staging</id>
-			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-		</repository>
-	</distributionManagement>
-
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
@@ -210,14 +198,14 @@
 				</executions>
 			</plugin>
 			<plugin>
-				<groupId>org.sonatype.plugins</groupId>
-				<artifactId>nexus-staging-maven-plugin</artifactId>
-				<version>1.6.12</version>
+				<groupId>org.sonatype.central</groupId>
+				<artifactId>central-publishing-maven-plugin</artifactId>
+				<version>0.8.0</version>
 				<extensions>true</extensions>
 				<configuration>
-					<serverId>sonatype-nexus-staging</serverId>
-					<nexusUrl>https://oss.sonatype.org/</nexusUrl>
-					<autoReleaseAfterClose>true</autoReleaseAfterClose>
+					<publishingServerId>central</publishingServerId>
+					<autoPublish>true</autoPublish>
+					<waitUntil>published</waitUntil>
 				</configuration>
 			</plugin>
 		</plugins>

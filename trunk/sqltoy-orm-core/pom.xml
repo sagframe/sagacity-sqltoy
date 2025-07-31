@@ -3,26 +3,26 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sagframe</groupId>
-	<version>5.6.48</version>
+	<version>5.6.51</version>
 	<name>sagacity-sqltoy</name>
 	<description>sqltoy core code</description>
 	<artifactId>sagacity-sqltoy</artifactId>
 	<url>https://github.com/sagframe/sagacity-sqltoy</url>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<ojdbc11.version>23.8.0.25.04</ojdbc11.version>
+		<ojdbc11.version>23.9.0.25.07</ojdbc11.version>
 		<ehcache.version>3.10.8</ehcache.version>
 		<httpclient.version>4.5.14</httpclient.version>
 		<httpclient-core.version>4.4.16</httpclient-core.version>
-		<elastic-rest-client.version>9.0.2</elastic-rest-client.version>
+		<elastic-rest-client.version>9.1.0</elastic-rest-client.version>
 		<fastjson.version>2.0.57</fastjson.version>
 		<mongo.version>5.5.1</mongo.version>
-		<junit-jupiter.version>5.13.1</junit-jupiter.version>
-		<junit-platform.version>1.13.1</junit-platform.version>
+		<junit-jupiter.version>5.13.4</junit-jupiter.version>
+		<junit-platform.version>1.13.4</junit-platform.version>
 		<slf4j.version>2.0.17</slf4j.version>
 		<h2.version>2.3.232</h2.version>
 		<lombok.version>1.18.38</lombok.version>
-		<druid.version>1.2.25</druid.version>
+		<druid.version>1.2.27</druid.version>
 		<transmittable-thread-local>2.14.5</transmittable-thread-local>
 	</properties>
 	<licenses>
@@ -56,16 +56,6 @@
 			<timezone>+8</timezone>
 		</developer>
 	</developers>
-	<distributionManagement>
-		<snapshotRepository>
-			<id>sonatype-nexus-snapshots</id>
-			<url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-		</snapshotRepository>
-		<repository>
-			<id>sonatype-nexus-staging</id>
-			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-		</repository>
-	</distributionManagement>
 	<dependencies>
 		<dependency>
 			<groupId>org.projectlombok</groupId>
@@ -298,14 +288,14 @@
 				</executions>
 			</plugin>
 			<plugin>
-				<groupId>org.sonatype.plugins</groupId>
-				<artifactId>nexus-staging-maven-plugin</artifactId>
-				<version>1.6.12</version>
+				<groupId>org.sonatype.central</groupId>
+				<artifactId>central-publishing-maven-plugin</artifactId>
+				<version>0.8.0</version>
 				<extensions>true</extensions>
 				<configuration>
-					<serverId>sonatype-nexus-staging</serverId>
-					<nexusUrl>https://oss.sonatype.org/</nexusUrl>
-					<autoReleaseAfterClose>true</autoReleaseAfterClose>
+					<publishingServerId>central</publishingServerId>
+					<autoPublish>true</autoPublish>
+					<waitUntil>published</waitUntil>
 				</configuration>
 			</plugin>
 		</plugins>

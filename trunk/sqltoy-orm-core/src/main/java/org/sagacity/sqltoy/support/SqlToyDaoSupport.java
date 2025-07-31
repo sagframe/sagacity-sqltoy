@@ -903,7 +903,7 @@ public class SqlToyDaoSupport {
 
 	protected <T> Page<T> findPageBySql(final Page page, final String sqlOrSqlId, final Map<String, Object> paramsMap,
 			Class<T> resultType) {
-		return (Page<T>) findPageByQuery(page, new QueryExecutor(sqlOrSqlId, paramsMap).resultType(resultType))
+		return (Page<T>) findPageByQuery(page, new QueryExecutor(sqlOrSqlId, (paramsMap == null) ? MapKit.map() : paramsMap).resultType(resultType))
 				.getPageResult();
 	}
 

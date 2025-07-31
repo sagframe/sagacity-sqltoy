@@ -91,11 +91,6 @@ public class SqlToyConstants {
 	public final static String TEMPLATE_TABLE_HOLDER = "@templateTable";
 
 	/**
-	 * 缓存翻译时在缓存中未匹配上key的返回信息
-	 */
-	public static String UNCACHED_KEY_RESULT = "[${value}]未定义";
-
-	/**
 	 * 存放sqltoy的系统参数
 	 */
 	private static Map<String, String> sqlToyProps = new HashMap<String, String>();
@@ -301,6 +296,15 @@ public class SqlToyConstants {
 	}
 
 	/**
+	 * oracle.sql.TIMESTAMP是否默认要转为java.sql.Timestamp类型
+	 * 
+	 * @return
+	 */
+	public static boolean convertOracleTimestamp() {
+		return Boolean.parseBoolean(getKeyValue("sqltoy.convert.oracle.timestamp", "true"));
+	}
+
+	/**
 	 * @todo 获取项目中在代码中编写的sql数量，超过此阈值不纳入缓存
 	 * @return
 	 */
@@ -393,13 +397,6 @@ public class SqlToyConstants {
 			return defaultValue;
 		}
 		return realDefault;
-	}
-
-	/**
-	 * @param uncachedKeyResult the uncachedKeyResult to set
-	 */
-	public static void setUncachedKeyResult(String uncachedKeyResult) {
-		UNCACHED_KEY_RESULT = uncachedKeyResult;
 	}
 
 	/**

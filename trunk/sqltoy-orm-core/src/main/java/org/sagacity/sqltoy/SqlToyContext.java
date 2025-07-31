@@ -934,13 +934,6 @@ public class SqlToyContext {
 		translateManager.setTranslateConfig(translateConfig);
 	}
 
-	/**
-	 * @param uncachedKeyResult the nocacheKeyResult to set
-	 */
-	public void setUncachedKeyResult(String uncachedKeyResult) {
-		SqlToyConstants.setUncachedKeyResult(uncachedKeyResult);
-	}
-
 	public AppContext getAppContext() {
 		return appContext;
 	}
