@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.sagframe</groupId>
-    <version>5.6.50.jre8</version>
+    <version>5.6.51.jre8</version>
 
     <artifactId>sagacity-sqltoy-solon-plugin</artifactId>
     <name>sagacity-sqltoy-solon-plugin</name>
@@ -16,8 +16,8 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <solon.version>3.3.2</solon.version>
-        <redisx.version>1.6.11</redisx.version>
+        <solon.version>3.4.2</solon.version>
+        <redisx.version>1.7.0</redisx.version>
         <mongo.version>5.2.1</mongo.version>
         <slf4j.version>2.0.17</slf4j.version>
         <caffeine.version>2.9.3</caffeine.version>
@@ -55,17 +55,6 @@
             <name>rabbit</name>
         </developer>
     </developers>
-
-    <distributionManagement>
-        <snapshotRepository>
-            <id>sonatype-nexus-snapshots</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-        </snapshotRepository>
-        <repository>
-            <id>sonatype-nexus-staging</id>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-        </repository>
-    </distributionManagement>
 
     <dependencies>
         <dependency>
@@ -186,16 +175,16 @@
                 </executions>
             </plugin>
             <plugin>
-                <groupId>org.sonatype.plugins</groupId>
-                <artifactId>nexus-staging-maven-plugin</artifactId>
-                <version>1.6.12</version>
-                <extensions>true</extensions>
-                <configuration>
-                    <serverId>sonatype-nexus-staging</serverId>
-                    <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-                    <autoReleaseAfterClose>true</autoReleaseAfterClose>
-                </configuration>
-            </plugin>
+				<groupId>org.sonatype.central</groupId>
+				<artifactId>central-publishing-maven-plugin</artifactId>
+				<version>0.8.0</version>
+				<extensions>true</extensions>
+				<configuration>
+					<publishingServerId>central</publishingServerId>
+					<autoPublish>true</autoPublish>
+					<waitUntil>published</waitUntil>
+				</configuration>
+			</plugin>
         </plugins>
     </build>
 </project>
