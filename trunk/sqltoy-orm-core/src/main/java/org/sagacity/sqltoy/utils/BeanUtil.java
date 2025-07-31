@@ -9,6 +9,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.RecordComponent;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -300,6 +301,23 @@ public class BeanUtil {
 	 * @return
 	 */
 	public static Method[] matchGetMethods(Class voClass, String... props) {
+		int indexSize = props.length;
+		Method[] result = new Method[indexSize];
+		// update 2025/07/30 支持Record类型
+		if (voClass.isRecord()) {
+			RecordComponent[] components = voClass.getRecordComponents();
+			String propName;
+			for (int i = 0; i < indexSize; i++) {
+				propName = props[i];
+				for (RecordComponent component : components) {
+					if (propName.equalsIgnoreCase(component.getName())) {
+						result[i] = component.getAccessor();
+						break;
+					}
+				}
+			}
+			return result;
+		}
 		Method[] methods = voClass.getMethods();
 		List<Method> realMeth = new ArrayList<Method>();
 		String name;
@@ -312,8 +330,6 @@ public class BeanUtil {
 				}
 			}
 		}
-		int indexSize = props.length;
-		Method[] result = new Method[indexSize];
 		if (realMeth.isEmpty()) {
 			return result;
 		}

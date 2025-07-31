@@ -459,7 +459,7 @@ public class SqltoyAutoConfiguration {
 				sqlToyContext
 						.setOverTimeSqlHandler((OverTimeSqlHandler) applicationContext.getBean(overTimeSqlHandler));
 			} // 包名和类名称
-			else if (customFilterHandler.contains(".")) {
+			else if (overTimeSqlHandler.contains(".")) {
 				sqlToyContext.setOverTimeSqlHandler(
 						(OverTimeSqlHandler) Class.forName(overTimeSqlHandler).getDeclaredConstructor().newInstance());
 			}
