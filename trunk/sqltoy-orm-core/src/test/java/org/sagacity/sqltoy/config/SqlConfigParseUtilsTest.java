@@ -223,12 +223,12 @@ public class SqlConfigParseUtilsTest {
 				selet * from table t1
 				where 1=1 #[@secure-loop(:nameList ,' t1.name like @value(:nameList[i]) and t.status=:status',' or ')]
 				""";
-		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "nameList" ,"status"},
-				new Object[] { new String[] { "张三", "李四", "王二" },1 });
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "nameList", "status" },
+				new Object[] { new String[] { "张三", "李四", "王二" }, 1 });
 		System.err.println(result.getSql());
 		System.err.println(JSON.toJSONString(result.getParamsValue()));
 	}
-	
+
 	@Test
 	public void testSynSign() throws Exception {
 		String sql = "select * from table where #[id in [arraystringconcat(name)] and id=:id ]#[and name like :name] #[and status=:status]";
@@ -453,6 +453,24 @@ public class SqlConfigParseUtilsTest {
 	}
 
 	@Test
+	public void testInnerIfElseNUll() throws Exception {
+		String sql = """
+				select * from table where name=1
+				#[@if(:flag==1)
+				    #[@if(:operateType==1) and status=:status]
+				    #[@elseif(:operateType==2) and saleType is not :saleType]
+				    #[@else and saleType is :saleType]
+				]
+				#[@elseif(:flag==2) and name like :name]
+				#[@else and orderType=:orderType]
+				""";
+		SqlToyResult result = SqlConfigParseUtils.processSql(SqlUtil.clearMark(sql),
+				new String[] { "flag", "status", "name", "orderType", "saleType", "operateType" },
+				new Object[] { 1, 1, "张", "SALE", null, 1 });
+		System.err.println(JSON.toJSONString(result));
+	}
+
+	@Test
 	public void testMultiInnerIfElse() throws Exception {
 		String sql = """
 				select * from table where 1=1
@@ -474,20 +492,20 @@ public class SqlConfigParseUtilsTest {
 	@Test
 	public void testMultiInnerIfElse1() throws Exception {
 		String sql = """
-				select * from table where 1=1
-				#[@if(:flag==1) and name like :name]
-				#[@elseif(:flag==2)
-				 	#[@if(:operateType==1) and status=:status]
-				    #[@elseif(:operateType==2) and saleType is not :saleType]
-				    #[@else and saleType is :saleType]
-				]
-				#[@else and orderType=:orderType]
-				#[@if(:tenantId==4) and tenant=1]
-				#[@elseif(:tenantId==3) and tenant=3]
+				 SELECT t0.*, 'Biz' MODEL_TYPE
+				 FROM table_0 t0
+				 WHERE EXISTS(
+				   SELECT * FROM table_1 t1
+				   LEFT JOIN table_2 t2 ON t2.PK_ID = t1.REF_RULE_API_ID
+				   WHERE t1.REF_DEPEND_ID = t0.PK_ID
+				     AND t1.DEPEND_TYPE='Biz'
+				     #[@if(:refRuleApiId ==1) AND t1.REF_RULE_API_ID IN(:refRuleApiIds)]
+				     #[@else AND t1.REF_RULE_API_ID = :refRuleApiId]
+				 )
 				""";
-		SqlToyResult result = SqlConfigParseUtils.processSql(SqlUtil.clearMark(sql),
-				new String[] { "flag", "status", "name", "orderType", "saleType", "operateType", "tenantId" },
-				new Object[] { 2, 1, "陈", "SALE", null, 4, 3 });
+		Map<String,Object> paramMap=new HashMap<String,Object>();
+		//paramMap.put("refRuleApiIds", new String[] {"1","2"});
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, paramMap);
 		System.err.println(JSON.toJSONString(result));
 	}
 

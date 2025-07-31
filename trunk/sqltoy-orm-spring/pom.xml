@@ -3,20 +3,20 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sagframe</groupId>
-	<version>5.6.50</version>
+	<version>5.6.51</version>
 	<name>sagacity-sqltoy-spring</name>
 	<description>sagacity-sqltoy-spring</description>
 	<artifactId>sagacity-sqltoy-spring</artifactId>
 	<url>https://github.com/sagframe/sagacity-sqltoy</url>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<spring-framework.version>6.2.7</spring-framework.version>
-		<spring-data-commons.version>3.5.0</spring-data-commons.version>
-		<spring-data-redis.version>3.5.0</spring-data-redis.version>
-		<spring-data-mongo.version>4.5.0</spring-data-mongo.version>
+		<spring-framework.version>6.2.9</spring-framework.version>
+		<spring-data-commons.version>3.5.2</spring-data-commons.version>
+		<spring-data-redis.version>3.5.2</spring-data-redis.version>
+		<spring-data-mongo.version>4.5.2</spring-data-mongo.version>
 		<mongo.version>5.5.1</mongo.version>
 		<slf4j.version>2.0.17</slf4j.version>
-		<caffeine.version>3.2.1</caffeine.version>
+		<caffeine.version>3.2.2</caffeine.version>
 		<lombok.version>1.18.38</lombok.version>
 	</properties>
 	<licenses>
@@ -50,16 +50,6 @@
 			<timezone>+8</timezone>
 		</developer>
 	</developers>
-	<distributionManagement>
-		<snapshotRepository>
-			<id>sonatype-nexus-snapshots</id>
-			<url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-		</snapshotRepository>
-		<repository>
-			<id>sonatype-nexus-staging</id>
-			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-		</repository>
-	</distributionManagement>
 	<dependencies>
 		<dependency>
 			<groupId>com.sagframe</groupId>
@@ -245,14 +235,14 @@
 				</executions>
 			</plugin>
 			<plugin>
-				<groupId>org.sonatype.plugins</groupId>
-				<artifactId>nexus-staging-maven-plugin</artifactId>
-				<version>1.6.12</version>
+				<groupId>org.sonatype.central</groupId>
+				<artifactId>central-publishing-maven-plugin</artifactId>
+				<version>0.8.0</version>
 				<extensions>true</extensions>
 				<configuration>
-					<serverId>sonatype-nexus-staging</serverId>
-					<nexusUrl>https://oss.sonatype.org/</nexusUrl>
-					<autoReleaseAfterClose>true</autoReleaseAfterClose>
+					<publishingServerId>central</publishingServerId>
+					<autoPublish>true</autoPublish>
+					<waitUntil>published</waitUntil>
 				</configuration>
 			</plugin>
 		</plugins>
