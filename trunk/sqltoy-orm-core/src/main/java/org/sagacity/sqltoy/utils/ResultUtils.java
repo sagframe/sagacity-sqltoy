@@ -317,6 +317,7 @@ public class ResultUtils {
 		index = 0;
 		List rowTemp;
 		TypeHandler typeHandler = sqlToyContext.getTypeHandler();
+		boolean doNext = true;
 		while (rs.next()) {
 			rowTemp = processResultRow(dbType, typeHandler, dynamicCacheFetch, rs, labelNames, lowKeyLabelNameMap,
 					columnSize, translateCache, realDecryptHandler, ignoreAllEmpty);
@@ -339,11 +340,13 @@ public class ResultUtils {
 				// 消费每行数据
 				if (type == 1) {
 					streamResultHandler.consume(rowTemp, index);
+					doNext = streamResultHandler.doNextConsume(rowTemp, index);
 				} // 数组
 				else if (type == 2) {
 					Object[] rowAry = new Object[rowTemp.size()];
 					rowTemp.toArray(rowAry);
 					streamResultHandler.consume(rowAry, index);
+					doNext = streamResultHandler.doNextConsume(rowAry, index);
 				} // map
 				else if (type == 3) {
 					Map rowMap;
@@ -358,6 +361,7 @@ public class ResultUtils {
 						rowMap.put(mapLabelNames[j], rowTemp.get(j));
 					}
 					streamResultHandler.consume(rowMap, index);
+					doNext = streamResultHandler.doNextConsume(rowMap, index);
 				} // 封装成VO对象形式
 				else {
 					Object bean = BeanUtil.reflectRowToBean(sqlToyContext.getTypeHandler(), realMethods,
@@ -367,8 +371,13 @@ public class ResultUtils {
 						wrapBeanTranslate(dynamicCacheFetch, cacheDatas, bean);
 					}
 					streamResultHandler.consume(bean, index);
+					doNext = streamResultHandler.doNextConsume(bean, index);
 				}
 				index++;
+			}
+			// 终止消费
+			if (!doNext) {
+				break;
 			}
 		}
 		// 完成消费
