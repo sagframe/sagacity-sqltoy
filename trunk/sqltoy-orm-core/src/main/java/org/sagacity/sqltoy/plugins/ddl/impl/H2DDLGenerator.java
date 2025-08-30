@@ -18,12 +18,13 @@ public class H2DDLGenerator implements DialectDDLGenerator {
 	private String TAB = "   ";
 
 	@Override
-	public String createTableSql(TableMeta tableMeta, String schema, int dbType) {
+	public String createTableSql(TableMeta tableMeta, String schema, String upperOrLower, int dbType) {
 		if (tableMeta == null) {
 			return null;
 		}
 		StringBuilder tableSql = new StringBuilder();
-		tableSql.append("create table ").append(tableMeta.getTableName()).append(NEWLINE);
+		String tableName = StringUtil.toLowerOrUpper(tableMeta.getTableName(), upperOrLower);
+		tableSql.append("CREATE TABLE ").append(tableName).append(NEWLINE);
 		tableSql.append("(").append(NEWLINE);
 		int index = 0;
 		for (ColumnMeta colMeta : tableMeta.getColumns()) {
@@ -31,18 +32,18 @@ public class H2DDLGenerator implements DialectDDLGenerator {
 				tableSql.append(",").append(NEWLINE);
 			}
 			// 字段名
-			tableSql.append(TAB).append(colMeta.getColName());
+			tableSql.append(TAB).append(StringUtil.toLowerOrUpper(colMeta.getColName(), upperOrLower));
 			// 类型
 			tableSql.append(" ").append(DDLUtils.convertType(colMeta, dbType));
 			// 是否为null
 			if (!colMeta.isNullable()) {
-				tableSql.append(" not null");
+				tableSql.append(" NOT NULL");
 			}
 			// 自增
 			if (colMeta.isAutoIncrement()) {
-				tableSql.append(" auto_increment");
+				tableSql.append(" AUTO_INCREMENT");
 			} else if (StringUtil.isNotBlank(colMeta.getDefaultValue())) {
-				tableSql.append(" default ");
+				tableSql.append(" DEFAULT ");
 				if (DDLUtils.isNotChar(colMeta.getDataType())) {
 					tableSql.append(colMeta.getDefaultValue());
 				} else {
@@ -51,28 +52,28 @@ public class H2DDLGenerator implements DialectDDLGenerator {
 			}
 			// 列注释
 			if (StringUtil.isNotBlank(colMeta.getComments())) {
-				tableSql.append(" comment '")
+				tableSql.append(" COMMENT '")
 						.append(colMeta.getComments().replaceAll("\\\\", "").replaceAll("\"", "").replaceAll("\'", ""))
 						.append("'");
 			}
 			index++;
 		}
 		// 主键
-		DDLUtils.wrapTablePrimaryKeys(tableMeta, dbType, tableSql);
+		DDLUtils.wrapTablePrimaryKeys(tableMeta, upperOrLower, dbType, tableSql);
 		tableSql.append(NEWLINE);
 		tableSql.append(")");
 		// 表备注
 		if (StringUtil.isNotBlank(tableMeta.getRemarks())) {
 			tableSql.append(";");
 			tableSql.append(NEWLINE);
-			tableSql.append(" comment on table ").append(tableMeta.getTableName()).append(" is '")
+			tableSql.append(" COMMENT ON TABLE ").append(tableName).append(" IS '")
 					.append(tableMeta.getRemarks().replaceAll("\\\\", "").replaceAll("\"", "").replaceAll("\'", ""))
 					.append("'");
 		}
 		// 索引
-		DDLUtils.wrapTableIndexes(tableMeta, dbType, tableSql, true);
+		DDLUtils.wrapTableIndexes(tableMeta, upperOrLower, dbType, tableSql, true);
 		// 外键
-		DDLUtils.wrapForeignKeys(tableMeta, dbType, tableSql, true);
+		DDLUtils.wrapForeignKeys(tableMeta, upperOrLower, dbType, tableSql, true);
 		return tableSql.toString();
 	}
 

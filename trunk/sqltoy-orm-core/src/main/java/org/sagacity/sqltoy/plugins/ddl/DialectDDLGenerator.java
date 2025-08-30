@@ -21,7 +21,7 @@ public interface DialectDDLGenerator {
 	 * @param dbType
 	 * @return
 	 */
-	public default String createTableSql(TableMeta tableMeta, String schema, int dbType) {
+	public default String createTableSql(TableMeta tableMeta, String schema, String upperOrLower, int dbType) {
 		return null;
 	}
 }

@@ -13,6 +13,7 @@ import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.model.QueryExecutor;
+import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
@@ -111,6 +112,26 @@ public class Execute extends BaseLink {
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecute, SqlType.update, super.getDialect());
 		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, queryExecute, null, autoCommit,
 				getDataSource(sqlToyConfig));
+	}
+
+	/**
+	 * @todo 执行insert语句并返回主键字段值
+	 * @param primaryField
+	 * @return
+	 */
+	public Object insertReturnPrimaryKey(String primaryField) {
+		if (StringUtil.isBlank(sql)) {
+			throw new IllegalArgumentException("execute operate sql is null!");
+		}
+		QueryExecutor queryExecute = build();
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecute, SqlType.insert, super.getDialect());
+		Object returnPkValue = dialectFactory.insertReturnPrimaryKey(sqlToyContext, sqlToyConfig, queryExecute, null,
+				primaryField, autoCommit, getDataSource(sqlToyConfig));
+		if (returnPkValue != null && entity != null && !(entity instanceof Map)
+				&& !BeanUtil.isBaseDataType(entity.getClass())) {
+			BeanUtil.setProperty(entity, StringUtil.toHumpStr(primaryField, false), returnPkValue);
+		}
+		return returnPkValue;
 	}
 
 	private QueryExecutor build() {

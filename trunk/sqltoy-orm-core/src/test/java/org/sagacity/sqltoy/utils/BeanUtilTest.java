@@ -477,5 +477,10 @@ public class BeanUtilTest {
 	public void testRecord() {
 		Student student = new Student("S0001", "chenrenfei", 24, LocalDate.now());
 		System.err.println(JSON.toJSONString(BeanUtil.reflectBeanToAry(student, "age", "id")));
+		List<Object[]> dataSet = new ArrayList();
+		dataSet.add(new Object[] { "S0001", "chrenfei", 32, LocalDate.now() });
+		dataSet.add(new Object[] { "S0002", "zhangsan", 31, LocalDate.now() });
+		System.err.println(JSON.toJSONString(BeanUtil.reflectListToBean(null, dataSet,
+				new String[] { "id", "name", "age", "birthDay", "tel" }, Student.class)));
 	}
 }

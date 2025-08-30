@@ -247,9 +247,37 @@ public class StringUtilsTest {
 
 	@Test
 	public void testMatchReplaceRegex() {
-		String[] fields=new String[] {"t.name desc"};
+		String[] fields = new String[] { "t.name desc" };
 		System.err.println(!StringUtil.matches(fields[0].trim(), "\\s+"));
 		String sql = "select * from @value(?) and @value(null) t.name like 'df'";
 		System.err.println(StringUtil.replaceRegex(sql, SqlConfigParseUtils.VALUE_PATTERN, "1=1", 2, 6));
+	}
+
+	@Test
+	public void testSql() {
+		String sql = "select * from table where (id,type) in (:ids,:type)";
+		Pattern pattern;
+		Matcher matcher;
+		String group;
+		boolean hasMatched = false;
+		StringBuffer result = new StringBuffer();
+		String[] fields = { "id", "type" };
+		for (int i = 0; i < 2; i++) {
+			hasMatched = false;
+			pattern = Pattern.compile("(?i)\\:" + fields[i] + "\\W");
+			matcher = pattern.matcher(sql);
+			while (matcher.find()) {
+				hasMatched = true;
+				group = matcher.group();
+				matcher.appendReplacement(result, "?" + group.substring(group.length() - 1));
+			}
+			if (hasMatched) {
+				matcher.appendTail(result);
+				sql = result.toString();
+				result.delete(0, result.length());
+			}
+		}
+
+		System.err.println(sql);
 	}
 }

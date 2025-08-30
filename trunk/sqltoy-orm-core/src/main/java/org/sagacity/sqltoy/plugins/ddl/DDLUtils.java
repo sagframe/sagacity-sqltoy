@@ -231,7 +231,7 @@ public class DDLUtils {
 			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB
 					|| dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.STARDB
 					|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE) {
-				typeName = "bytea";
+				typeName = "BYTEA";
 			} else if (dbType == DBType.SQLSERVER) {
 				typeName = "IMAGE";
 			} else {
@@ -243,7 +243,7 @@ public class DDLUtils {
 			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB
 					|| dbType == DBType.OPENGAUSS || dbType == DBType.STARDB || dbType == DBType.OSCAR
 					|| dbType == DBType.MOGDB || dbType == DBType.VASTBASE) {
-				typeName = "bytea";
+				typeName = "BYTEA";
 			} else if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
 				typeName = "BLOB";
 			} else if (dbType == DBType.SQLSERVER) {
@@ -259,7 +259,7 @@ public class DDLUtils {
 			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB
 					|| dbType == DBType.OPENGAUSS || dbType == DBType.STARDB || dbType == DBType.OSCAR
 					|| dbType == DBType.MOGDB || dbType == DBType.VASTBASE) {
-				typeName = "bytea";
+				typeName = "BYTEA";
 			} else if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
 				typeName = "BLOB";
 			} else if (dbType == DBType.SQLSERVER) {
@@ -367,10 +367,12 @@ public class DDLUtils {
 	/**
 	 * @TODO 包装主键信息
 	 * @param tableMeta
+	 * @param toUpperOrLower
 	 * @param dbType
 	 * @param tableSql
 	 */
-	public static void wrapTablePrimaryKeys(TableMeta tableMeta, int dbType, StringBuilder tableSql) {
+	public static void wrapTablePrimaryKeys(TableMeta tableMeta, String toUpperOrLower, int dbType,
+			StringBuilder tableSql) {
 		String primaryKeys = "";
 		for (ColumnMeta colMeta : tableMeta.getColumns()) {
 			if (colMeta.isPK()) {
@@ -385,7 +387,7 @@ public class DDLUtils {
 		if (!primaryKeys.equals("")) {
 			tableSql.append(",").append(NEWLINE);
 			tableSql.append(TAB);
-			tableSql.append("primary key (").append(primaryKeys).append(")");
+			tableSql.append("PRIMARY KEY (").append(StringUtil.toLowerOrUpper(primaryKeys, toUpperOrLower)).append(")");
 		}
 	}
 
@@ -396,28 +398,32 @@ public class DDLUtils {
 	 * @param tableSql
 	 * @param outerTable create table () 括号外还是内部
 	 */
-	public static void wrapTableIndexes(TableMeta tableMeta, int dbType, StringBuilder tableSql, boolean outerTable) {
+	public static void wrapTableIndexes(TableMeta tableMeta, String toUpperOrLower, int dbType, StringBuilder tableSql,
+			boolean outerTable) {
 		if (tableMeta.getIndexes() == null || tableMeta.getIndexes().isEmpty()) {
 			return;
 		}
 		String splitSign = ";";
+		String tableName = StringUtil.toLowerOrUpper(tableMeta.getTableName(), toUpperOrLower);
+		String indexName;
 		// 索引
 		for (IndexModel indexModel : tableMeta.getIndexes()) {
+			indexName = StringUtil.toLowerOrUpper(indexModel.getName(), toUpperOrLower);
 			if (outerTable) {
 				tableSql.append(splitSign).append(NEWLINE);
-				tableSql.append("create ");
+				tableSql.append("CREATE ");
 				if (indexModel.isUnique()) {
 					tableSql.append("UNIQUE ");
 				}
-				tableSql.append("index ").append(indexModel.getName());
-				tableSql.append(" on ").append(tableMeta.getTableName());
+				tableSql.append("INDEX ").append(indexName);
+				tableSql.append(" ON ").append(tableName);
 			} else {
 				tableSql.append(",").append(NEWLINE);
 				tableSql.append(TAB);
 				if (indexModel.isUnique()) {
 					tableSql.append("UNIQUE ");
 				}
-				tableSql.append("KEY ").append(indexModel.getName());
+				tableSql.append("KEY ").append(indexName);
 			}
 			tableSql.append(" (");
 			int meter = 0;
@@ -440,11 +446,13 @@ public class DDLUtils {
 	/**
 	 * @TODO 组织外键信息
 	 * @param tableMeta
+	 * @param lowerOrUpper
 	 * @param dbType
 	 * @param tableSql
-	 * @param outerTable create table () 括号外还是内部
+	 * @param outerTable   create table () 括号外还是内部
 	 */
-	public static void wrapForeignKeys(TableMeta tableMeta, int dbType, StringBuilder tableSql, boolean outerTable) {
+	public static void wrapForeignKeys(TableMeta tableMeta, String lowerOrUpper, int dbType, StringBuilder tableSql,
+			boolean outerTable) {
 		if (tableMeta.getForeigns() == null || tableMeta.getForeigns().isEmpty()) {
 			return;
 		}
@@ -454,16 +462,21 @@ public class DDLUtils {
 			isOracle = (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM);
 			if (outerTable) {
 				tableSql.append(splitSign).append(NEWLINE);
-				tableSql.append("alter table ").append(tableMeta.getTableName());
-				tableSql.append(" add ");
+				tableSql.append("ALTER TABLE ")
+						.append(StringUtil.toLowerOrUpper(tableMeta.getTableName(), lowerOrUpper));
+				tableSql.append(" ADD ");
 			} else {
 				tableSql.append(",").append(NEWLINE);
 				tableSql.append(TAB);
 			}
 			tableSql.append(" CONSTRAINT ").append(foreign.getConstraintName());
-			tableSql.append(" FOREIGN KEY (").append(StringUtil.linkAry(",", true, foreign.getColumns())).append(")");
-			tableSql.append(" REFERENCES ").append(foreign.getForeignTable()).append("(");
-			tableSql.append(StringUtil.linkAry(",", true, foreign.getForeignColumns()));
+			tableSql.append(" FOREIGN KEY (").append(
+					StringUtil.toLowerOrUpper(StringUtil.linkAry(",", true, foreign.getColumns()), lowerOrUpper))
+					.append(")");
+			tableSql.append(" REFERENCES ").append(StringUtil.toLowerOrUpper(foreign.getForeignTable(), lowerOrUpper))
+					.append("(");
+			tableSql.append(StringUtil.toLowerOrUpper(StringUtil.linkAry(",", true, foreign.getForeignColumns()),
+					lowerOrUpper));
 			tableSql.append(")");
 			if (foreign.getDeleteRestict() == 1) {
 				if (!isOracle) {
@@ -497,16 +510,19 @@ public class DDLUtils {
 	/**
 	 * @TODO 统一处理表和字段的备注
 	 * @param tableMeta
+	 * @param lowerOrUpper
 	 * @param dbType
 	 * @param tableSql
 	 */
-	public static void wrapTableAndColumnsComment(TableMeta tableMeta, int dbType, StringBuilder tableSql) {
+	public static void wrapTableAndColumnsComment(TableMeta tableMeta, String lowerOrUpper, int dbType,
+			StringBuilder tableSql) {
 		String splitSign = ";";
 		// 表注释
 		if (StringUtil.isNotBlank(tableMeta.getRemarks())) {
 			tableSql.append(splitSign);
 			tableSql.append(NEWLINE);
-			tableSql.append("COMMENT ON TABLE ").append(tableMeta.getTableName()).append(" IS '")
+			tableSql.append("COMMENT ON TABLE ")
+					.append(StringUtil.toLowerOrUpper(tableMeta.getTableName(), lowerOrUpper)).append(" IS '")
 					.append(tableMeta.getRemarks()).append("'");
 		}
 		// 字段注释
@@ -514,7 +530,8 @@ public class DDLUtils {
 			if (StringUtil.isNotBlank(colMeta.getComments())) {
 				tableSql.append(splitSign);
 				tableSql.append(NEWLINE);
-				tableSql.append("COMMENT ON COLUMN ").append(tableMeta.getTableName()).append(".")
+				tableSql.append("COMMENT ON COLUMN ")
+						.append(StringUtil.toLowerOrUpper(tableMeta.getTableName(), lowerOrUpper)).append(".")
 						.append(colMeta.getColName()).append(" IS '").append(colMeta.getComments()).append("'");
 			}
 		}

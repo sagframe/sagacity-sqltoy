@@ -522,6 +522,11 @@ public class LightDaoImpl extends SolonDaoSupport implements LightDao {
 	}
 
 	@Override
+	public Object insertReturnPrimaryKey(String sqlOrSqlId, Serializable entity, String pkField) {
+		return super.execute().sql(sqlOrSqlId).entity(entity).insertReturnPrimaryKey(pkField);
+	}
+
+	@Override
 	public Long executeSql(String sqlOrSqlId) {
 		return super.executeSql(sqlOrSqlId, MapKit.map());
 	}
@@ -570,7 +575,7 @@ public class LightDaoImpl extends SolonDaoSupport implements LightDao {
 	public String generateBizId(Serializable entity) {
 		return super.generateBizId(entity);
 	}
-	
+
 	@Override
 	public String generateBizId(String tableName, String signature, Map<String, Object> keyValues, LocalDate bizDate,
 			int length, int sequenceSize) {

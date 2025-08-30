@@ -1160,4 +1160,16 @@ public class StringUtil {
 		}
 		return source;
 	}
+
+	public static String toLowerOrUpper(String source, String upperOrLower) {
+		if (upperOrLower == null || source == null) {
+			return source;
+		}
+		if (upperOrLower.equals("upper")) {
+			return source.toUpperCase();
+		} else if (upperOrLower.equals("lower")) {
+			return source.toLowerCase();
+		}
+		return source;
+	}
 }

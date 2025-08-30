@@ -23,32 +23,34 @@ public class SqlServerDDLGenerator implements DialectDDLGenerator {
 	/**
 	 * 生成创建表sql
 	 */
-	public String createTableSql(TableMeta tableMeta, String schema, int dbType) {
+	public String createTableSql(TableMeta tableMeta, String schema, String upperOrLower, int dbType) {
 		if (tableMeta == null) {
 			return null;
 		}
 		StringBuilder tableSql = new StringBuilder();
-		tableSql.append("create table ").append(tableMeta.getTableName()).append(NEWLINE);
+		String tableName = StringUtil.toLowerOrUpper(tableMeta.getTableName(), upperOrLower);
+		tableSql.append("CREATE TABLE ").append(tableName).append(NEWLINE);
 		tableSql.append("(").append(NEWLINE);
 		int index = 0;
 		String splitSign = ";";
+		String realSchema = StringUtil.toLowerOrUpper(schema, upperOrLower);
 		for (ColumnMeta colMeta : tableMeta.getColumns()) {
 			if (index > 0) {
 				tableSql.append(",").append(NEWLINE);
 			}
 			// 字段名
-			tableSql.append(TAB).append(colMeta.getColName());
+			tableSql.append(TAB).append(StringUtil.toLowerOrUpper(colMeta.getColName(), upperOrLower));
 			// 类型
 			tableSql.append(" ").append(DDLUtils.convertType(colMeta, dbType));
 			// 是否为null
 			if (!colMeta.isNullable()) {
-				tableSql.append(" not null");
+				tableSql.append(" NOT NULL");
 			}
 			// 自增
 			if (colMeta.isAutoIncrement()) {
 				tableSql.append(" IDENTITY ");
 			} else if (StringUtil.isNotBlank(colMeta.getDefaultValue())) {
-				tableSql.append(" default ");
+				tableSql.append(" DEFAULT ");
 				if (DDLUtils.isNotChar(colMeta.getDataType())) {
 					tableSql.append(colMeta.getDefaultValue());
 				} else {
@@ -58,7 +60,7 @@ public class SqlServerDDLGenerator implements DialectDDLGenerator {
 			index++;
 		}
 		// 主键
-		DDLUtils.wrapTablePrimaryKeys(tableMeta, dbType, tableSql);
+		DDLUtils.wrapTablePrimaryKeys(tableMeta, upperOrLower, dbType, tableSql);
 		tableSql.append(NEWLINE);
 		tableSql.append(")");
 		// 表注释，sqlserver比较特殊，不支持comment
@@ -72,8 +74,8 @@ public class SqlServerDDLGenerator implements DialectDDLGenerator {
 				tableSql.append(NEWLINE);
 				tableSql.append("EXECUTE sp_addextendedproperty 'MS_Description','").append(tableMeta.getRemarks())
 						.append("',");
-				tableSql.append("'schema','" + schema + "',");
-				tableSql.append("'table','").append(tableMeta.getTableName()).append("'");
+				tableSql.append("'SCHEMA','" + realSchema + "',");
+				tableSql.append("'TABLE','").append(tableName).append("'");
 			}
 			// 字段注释
 			for (ColumnMeta colMeta : tableMeta.getColumns()) {
@@ -83,16 +85,17 @@ public class SqlServerDDLGenerator implements DialectDDLGenerator {
 					tableSql.append(NEWLINE);
 					tableSql.append("EXECUTE sp_addextendedproperty 'MS_Description','").append(colMeta.getComments())
 							.append("',");
-					tableSql.append("'schema','" + schema + "',");
-					tableSql.append("'table','").append(tableMeta.getTableName()).append("',");
-					tableSql.append("'column','").append(colMeta.getColName()).append("'");
+					tableSql.append("'SCHEMA','" + realSchema + "',");
+					tableSql.append("'TABLE','").append(tableName).append("',");
+					tableSql.append("'COLUMN','").append(StringUtil.toLowerOrUpper(colMeta.getColName(), upperOrLower))
+							.append("'");
 				}
 			}
 		}
 		// 索引
-		DDLUtils.wrapTableIndexes(tableMeta, dbType, tableSql, true);
+		DDLUtils.wrapTableIndexes(tableMeta, upperOrLower, dbType, tableSql, true);
 		// 外键
-		DDLUtils.wrapForeignKeys(tableMeta, dbType, tableSql, true);
+		DDLUtils.wrapForeignKeys(tableMeta, upperOrLower, dbType, tableSql, true);
 		return tableSql.toString();
 	}
 }
