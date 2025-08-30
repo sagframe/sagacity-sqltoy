@@ -26,6 +26,7 @@ import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.FileUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
+import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,17 +85,23 @@ public class DDLFactory {
 		return generator;
 	}
 
+	public static void createSqlFile(String[] scanPackages, String saveFile, Integer dbType, String schema,
+			DialectDDLGenerator dialectDDLGenerator) throws Exception {
+		createSqlFile(scanPackages, saveFile, null, dbType, schema, dialectDDLGenerator);
+	}
+
 	/**
 	 * @TODO 提供动态根据POJO产生数据库表创建的脚本文件
 	 * @param scanPackages
 	 * @param saveFile
+	 * @param upperOrLower        upper|lower
 	 * @param dbType
 	 * @param schema
 	 * @param dialectDDLGenerator 自己指定ddl创建器
 	 * @throws Exception
 	 */
-	public static void createSqlFile(String[] scanPackages, String saveFile, Integer dbType, String schema,
-			DialectDDLGenerator dialectDDLGenerator) throws Exception {
+	public static void createSqlFile(String[] scanPackages, String saveFile, String upperOrLower, Integer dbType,
+			String schema, DialectDDLGenerator dialectDDLGenerator) throws Exception {
 		EntityManager entityManager = new EntityManager();
 		entityManager.setPackagesToScan(scanPackages);
 		entityManager.initialize(null);
@@ -120,7 +127,7 @@ public class DDLFactory {
 			logger.debug("一共有:[" + tableMetas.size() + "]个实体对象需生成建表语句!");
 			for (TableMeta tableMeta : tableMetas) {
 				logger.debug("begin generate table:[" + tableMeta.getTableName() + "] ddl sql!");
-				tableSql = generator.createTableSql(tableMeta, schema, dbType);
+				tableSql = generator.createTableSql(tableMeta, schema, upperOrLower, dbType);
 				if (tableSql != null && !tableSql.equals("")) {
 					if (index > 0) {
 						tableSql = splitSign.concat(NEWLINE).concat(NEWLINE).concat(tableSql);
@@ -145,27 +152,19 @@ public class DDLFactory {
 		}
 		try {
 			List<EntityMeta> allTableEntities = DDLUtils.sortTables(entitysMetaMap);
+			final String upperOrLower = sqlToyContext.getDdlLowerOrUpper();
 			for (EntityMeta entityMeta : allTableEntities) {
 				DataSourceUtils.processDataSource(sqlToyContext, dataSource, new DataSourceCallbackHandler() {
 					@Override
 					public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 						// 判断表是否已经存在
-						ResultSet rs = null;
-						String tableName = null;
-						try {
-							rs = conn.getMetaData().getTables(conn.getCatalog(),
-									(entityMeta.getSchema() == null) ? conn.getSchema() : entityMeta.getSchema(),
-									entityMeta.getTableName(), new String[] { "TABLE" });
-							while (rs.next()) {
-								tableName = rs.getString("TABLE_NAME");
-								break;
-							}
-						} catch (Exception e) {
-
-						} finally {
-							if (rs != null) {
-								rs.close();
-								rs = null;
+						String tableName = getTable(conn, entityMeta, upperOrLower);
+						// 增加一次判断
+						if (tableName == null && upperOrLower == null) {
+							if (entityMeta.getTableName().toUpperCase().equals(entityMeta.getTableName())) {
+								tableName = getTable(conn, entityMeta, "lower");
+							} else if (entityMeta.getTableName().toLowerCase().equals(entityMeta.getTableName())) {
+								tableName = getTable(conn, entityMeta, "upper");
 							}
 						}
 						// 数据库不存在当前表，则进行创建
@@ -175,12 +174,14 @@ public class DDLFactory {
 							DialectDDLGenerator dialectDDLGenerator = (sqlToyContext.getDialectDDLGenerator() == null)
 									? getGenerator(dbType)
 									: sqlToyContext.getDialectDDLGenerator();
-							String createSql = dialectDDLGenerator.createTableSql(tableMeta, conn.getSchema(), dbType);
+							String createSql = dialectDDLGenerator.createTableSql(tableMeta, conn.getSchema(),
+									upperOrLower, dbType);
 							try {
 								if (createSql != null && !createSql.equals("")) {
 									SqlUtil.executeSql(null, createSql, null, null, conn, dbType, null, true);
 								}
 							} catch (Exception e) {
+								logger.warn("如:表已经存在错误，可尝试:spring.sqltoy.ddlLowerOrUpper=upper|lower 配置!");
 								e.printStackTrace();
 							}
 						} else {
@@ -194,4 +195,27 @@ public class DDLFactory {
 		}
 	}
 
+	private static String getTable(Connection conn, EntityMeta entityMeta, String upperOrLower) throws Exception {
+		// 判断表是否已经存在
+		ResultSet rs = null;
+		String tableName = null;
+		try {
+			rs = conn.getMetaData().getTables(conn.getCatalog(),
+					(entityMeta.getSchema() == null) ? conn.getSchema()
+							: StringUtil.toLowerOrUpper(entityMeta.getSchema(), upperOrLower),
+					StringUtil.toLowerOrUpper(entityMeta.getTableName(), upperOrLower), new String[] { "TABLE" });
+			while (rs.next()) {
+				tableName = rs.getString("TABLE_NAME");
+				break;
+			}
+		} catch (Exception e) {
+
+		} finally {
+			if (rs != null) {
+				rs.close();
+				rs = null;
+			}
+		}
+		return tableName;
+	}
 }

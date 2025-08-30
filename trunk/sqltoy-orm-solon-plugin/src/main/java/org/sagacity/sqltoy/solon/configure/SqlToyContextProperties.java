@@ -256,6 +256,9 @@ public class SqlToyContextProperties implements Serializable {
 	 */
 	private Boolean autoDDL;
 
+	// ddl转小写还是大写
+	private String ddlLowerOrUpper;
+	
 	/**
 	 * 业务代码调用点获取
 	 */
@@ -265,7 +268,7 @@ public class SqlToyContextProperties implements Serializable {
 	 * 单记录保存采用identity、sequence主键策略，并返回主键值时，字段名称大小写处理(lower/upper)
 	 */
 	private HashMap<String, String> dialectReturnPrimaryColumnCase;
-	
+
 	/**
 	 * 动态获取缓存的实现(一般基于redis)
 	 */
@@ -275,7 +278,7 @@ public class SqlToyContextProperties implements Serializable {
 	 * sql注入表达式
 	 */
 	private String[] sqlInjectionRegexes;
-	
+
 	/**
 	 * @return the sqlResourcesDir
 	 */
@@ -813,5 +816,12 @@ public class SqlToyContextProperties implements Serializable {
 	public void setSqlInjectionRegexes(String[] sqlInjectionRegexes) {
 		this.sqlInjectionRegexes = sqlInjectionRegexes;
 	}
-	
+
+	public String getDdlLowerOrUpper() {
+		return ddlLowerOrUpper;
+	}
+
+	public void setDdlLowerOrUpper(String ddlLowerOrUpper) {
+		this.ddlLowerOrUpper = ddlLowerOrUpper;
+	}
 }

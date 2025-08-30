@@ -16,7 +16,7 @@ import org.sagacity.sqltoy.plugins.ddl.DialectDDLGenerator;
 public class DefaultDDLGenerator implements DialectDDLGenerator {
 
 	@Override
-	public String createTableSql(TableMeta tableMeta, String schema, int dbType) {
+	public String createTableSql(TableMeta tableMeta, String schema, String upperOrLower, int dbType) {
 		throw new RuntimeException("该方言还未提供DDL产生的实现,请通过spring.sqltoy.dialectDDLGenerator=xxxxx 形式提供自定义实现!");
 	}
 

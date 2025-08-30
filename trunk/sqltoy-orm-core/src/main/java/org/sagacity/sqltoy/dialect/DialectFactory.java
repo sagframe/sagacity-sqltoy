@@ -451,6 +451,56 @@ public class DialectFactory {
 		}
 	}
 
+	public Object insertReturnPrimaryKey(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
+			final QueryExecutor queryExecutor, final Integer[] paramsTypes, final String primaryField,
+			final Boolean autoCommit, final DataSource dataSource) {
+		try {
+			// 将修改语句当做特殊的查询，其处理过程在交jdbc执行前完全一致
+			final QueryExecutorExtend extend = queryExecutor.getInnerModel();
+			// 组织参数和参数校验，但忽视数据权限数据的传参和校验
+			OperateDetailType executeType = OperateDetailType.executeSqlSingleTableUpdate;
+			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
+			SqlExecuteStat.start(sqlToyConfig.getId(), executeType,
+					(extend.showSql != null) ? extend.showSql : sqlToyConfig.isShowSql());
+			Object returnPkValue = DataSourceUtils.processDataSource(sqlToyContext,
+					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
+					new DataSourceCallbackHandler() {
+						@Override
+						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+							SqlExecuteStat.setDialect(dialect);
+							// 进行sharding table替换
+							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
+									sqlToyConfig, queryExecutor, dialect, false);
+							SqlToyResult queryParam = SqlConfigParseUtils.processSql(realSqlToyConfig.getSql(dialect),
+									extend.getParamsName(), extend.getParamsValue(sqlToyContext, realSqlToyConfig),
+									dialect);
+							// 增加sql执行拦截器 update 2022-9-10
+							queryParam = DialectUtils.doInterceptors(sqlToyContext, realSqlToyConfig,
+									OperateType.singleTable, queryParam, extend.entityClass, dbType);
+							// 做sql签名
+							String executeSql = SqlUtilsExt.signSql(queryParam.getSql(), dbType, realSqlToyConfig);
+							// 2022-3-21 存在类似in (?) ?对应参数为数组，将参数和类型长度变得不一致则去除类型约束
+							if (paramsTypes != null && queryParam.getParamsValue() != null
+									&& queryParam.getParamsValue().length != paramsTypes.length) {
+								this.setResult(SqlUtil.insertReturnPrimaryKey(sqlToyContext.getTypeHandler(),
+										executeSql, queryParam.getParamsValue(), null, primaryField, conn, dbType,
+										autoCommit, false));
+							} else {
+								this.setResult(SqlUtil.insertReturnPrimaryKey(sqlToyContext.getTypeHandler(),
+										executeSql, queryParam.getParamsValue(), paramsTypes, primaryField, conn,
+										dbType, autoCommit, false));
+							}
+						}
+					});
+			return returnPkValue;
+		} catch (Exception e) {
+			SqlExecuteStat.error(e);
+			throw new DataAccessException(e);
+		} finally {
+			SqlExecuteStat.destroy();
+		}
+	}
+
 	/**
 	 * @param sqlToyContext
 	 * @param uniqueExecutor

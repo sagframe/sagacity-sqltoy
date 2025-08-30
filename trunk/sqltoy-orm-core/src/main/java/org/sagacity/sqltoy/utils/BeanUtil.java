@@ -5,6 +5,7 @@ import static java.lang.System.err;
 import java.io.BufferedReader;
 import java.io.Serializable;
 import java.io.StringWriter;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -38,6 +39,7 @@ import org.sagacity.sqltoy.config.annotation.SqlToyEntity;
 import org.sagacity.sqltoy.config.model.DataType;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.KeyAndIndex;
+import org.sagacity.sqltoy.config.model.PropertyType;
 import org.sagacity.sqltoy.config.model.TableCascadeModel;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
@@ -86,6 +88,8 @@ public class BeanUtil {
 
 	// 枚举类型取key值的常用方法名称,枚举类中用getValue、getKey、getId等作为取值的都可自动完成映射
 	private static String[] enumKeys = { "value", "key", "code", "id", "status", "level", "type" };
+
+	private static ConcurrentHashMap<Class, PropertyType[]> recordProperties = new ConcurrentHashMap<Class, PropertyType[]>();
 
 	// 静态方法避免实例化和继承
 	private BeanUtil() {
@@ -409,6 +413,9 @@ public class BeanUtil {
 		if (properties == null || properties.length == 0) {
 			return null;
 		}
+		if (voClass.isRecord()) {
+			return matchRecordType(voClass, properties);
+		}
 		int indexSize = properties.length;
 		Method[] methods = voClass.getMethods();
 		Integer[] fieldsType = new Integer[indexSize];
@@ -428,6 +435,72 @@ public class BeanUtil {
 						&& (methodName.equals("get".concat(property)) || methodName.equals("is".concat(property))
 								|| (methodName.startsWith("is") && methodName.equals(property)))) {
 					typeName = method.getReturnType().getSimpleName().toLowerCase();
+					if ("string".equals(typeName)) {
+						fieldsType[i] = java.sql.Types.VARCHAR;
+					} else if ("integer".equals(typeName)) {
+						fieldsType[i] = java.sql.Types.INTEGER;
+					} else if ("bigdecimal".equals(typeName)) {
+						fieldsType[i] = java.sql.Types.DECIMAL;
+					} else if ("date".equals(typeName)) {
+						fieldsType[i] = java.sql.Types.DATE;
+					} else if ("timestamp".equals(typeName)) {
+						fieldsType[i] = java.sql.Types.TIMESTAMP;
+					} else if ("int".equals(typeName)) {
+						fieldsType[i] = java.sql.Types.INTEGER;
+					} else if ("long".equals(typeName)) {
+						fieldsType[i] = java.sql.Types.NUMERIC;
+					} else if ("double".equals(typeName)) {
+						fieldsType[i] = java.sql.Types.DOUBLE;
+					} else if ("clob".equals(typeName)) {
+						fieldsType[i] = java.sql.Types.CLOB;
+					} else if ("biginteger".equals(typeName)) {
+						fieldsType[i] = java.sql.Types.BIGINT;
+					} else if ("blob".equals(typeName)) {
+						fieldsType[i] = java.sql.Types.BLOB;
+					} else if ("byte[]".equals(typeName)) {
+						fieldsType[i] = java.sql.Types.BINARY;
+					} else if ("boolean".equals(typeName)) {
+						fieldsType[i] = java.sql.Types.BOOLEAN;
+					} else if ("char".equals(typeName)) {
+						fieldsType[i] = java.sql.Types.CHAR;
+					} else if ("number".equals(typeName)) {
+						fieldsType[i] = java.sql.Types.NUMERIC;
+					} else if ("short".equals(typeName)) {
+						fieldsType[i] = java.sql.Types.NUMERIC;
+					} else if ("float".equals(typeName)) {
+						fieldsType[i] = java.sql.Types.FLOAT;
+					} else if ("datetime".equals(typeName)) {
+						fieldsType[i] = java.sql.Types.DATE;
+					} else if ("time".equals(typeName)) {
+						fieldsType[i] = java.sql.Types.TIME;
+					} else if ("byte".equals(typeName)) {
+						fieldsType[i] = java.sql.Types.TINYINT;
+					} else if (typeName.endsWith("[]")) {
+						fieldsType[i] = java.sql.Types.ARRAY;
+					} else {
+						fieldsType[i] = java.sql.Types.NULL;
+					}
+					break;
+				}
+			}
+		}
+		return fieldsType;
+	}
+
+	private static Integer[] matchRecordType(Class voClass, String... properties) {
+		if (properties == null || properties.length == 0) {
+			return null;
+		}
+		int indexSize = properties.length;
+		Integer[] fieldsType = new Integer[indexSize];
+		RecordComponent[] components = voClass.getRecordComponents();
+		String propName;
+		String typeName;
+		for (int i = 0; i < indexSize; i++) {
+			propName = properties[i];
+			for (RecordComponent component : components) {
+				if (propName.equalsIgnoreCase(component.getName())) {
+					typeName = component.getType().getSimpleName().toLowerCase();
 					if ("string".equals(typeName)) {
 						fieldsType[i] = java.sql.Types.VARCHAR;
 					} else if ("integer".equals(typeName)) {
@@ -1537,6 +1610,10 @@ public class BeanUtil {
 		if (Modifier.isAbstract(voClass.getModifiers()) || Modifier.isInterface(voClass.getModifiers())) {
 			throw new IllegalArgumentException("toClassType:" + voClass.getName() + " 是抽象类或接口,非法参数!");
 		}
+		// record类型
+		if (voClass.isRecord()) {
+			return reflectListToRecord(typeHandler, datas, indexs, properties, voClass, autoConvertType);
+		}
 		List resultList = new ArrayList();
 		Object cellData = null;
 		String propertyName = null;
@@ -1544,9 +1621,9 @@ public class BeanUtil {
 			Object rowObject = null;
 			Object bean;
 			boolean isArray = false;
-			int meter = 0;
-			Object[] rowArray;
-			List rowList;
+			int notNullRowIndex = 0;
+			Object[] rowArray = null;
+			List rowList = null;
 			int indexSize = indexs.length;
 			Method[] realMethods = matchSetMethods(voClass, properties);
 			String[] methodTypes = new String[indexSize];
@@ -1578,7 +1655,7 @@ public class BeanUtil {
 				rowObject = iter.next();
 				if (rowObject != null) {
 					bean = voClass.getDeclaredConstructor().newInstance();
-					if (meter == 0) {
+					if (notNullRowIndex == 0) {
 						if (rowObject instanceof Object[]) {
 							isArray = true;
 						}
@@ -1586,47 +1663,30 @@ public class BeanUtil {
 					if (isArray) {
 						rowArray = (Object[]) rowObject;
 						size = rowArray.length;
-						for (int i = 0; i < indexSize; i++) {
-							if (indexs[i] < size) {
-								cellData = rowArray[indexs[i]];
-								if (realMethods[i] != null && cellData != null) {
-									propertyName = realMethods[i].getName();
-									// 类型相同
-									if (cellData.getClass().getTypeName().equals(methodTypes[i])) {
-										realMethods[i].invoke(bean, cellData);
-									} else {
-										realMethods[i].invoke(bean,
-												autoConvertType
-														? convertType(typeHandler, cellData, methodTypeValues[i],
-																methodTypes[i], genericTypes[i])
-														: cellData);
-									}
-								}
-							}
-						}
 					} else {
 						rowList = (List) rowObject;
 						size = rowList.size();
-						for (int i = 0; i < indexSize; i++) {
-							if (indexs[i] < size) {
-								cellData = rowList.get(indexs[i]);
-								if (realMethods[i] != null && cellData != null) {
-									propertyName = realMethods[i].getName();
-									if (cellData.getClass().getTypeName().equals(methodTypes[i])) {
-										realMethods[i].invoke(bean, cellData);
-									} else {
-										realMethods[i].invoke(bean,
-												autoConvertType
-														? convertType(typeHandler, cellData, methodTypeValues[i],
-																methodTypes[i], genericTypes[i])
-														: cellData);
-									}
+					}
+					for (int i = 0; i < indexSize; i++) {
+						if (indexs[i] < size) {
+							cellData = isArray ? rowArray[indexs[i]] : rowList.get(indexs[i]);
+							if (realMethods[i] != null && cellData != null) {
+								propertyName = realMethods[i].getName();
+								// 类型相同
+								if (cellData.getClass().getTypeName().equals(methodTypes[i])) {
+									realMethods[i].invoke(bean, cellData);
+								} else {
+									realMethods[i].invoke(bean,
+											autoConvertType
+													? convertType(typeHandler, cellData, methodTypeValues[i],
+															methodTypes[i], genericTypes[i])
+													: cellData);
 								}
 							}
 						}
 					}
 					resultList.add(bean);
-					meter++;
+					notNullRowIndex++;
 				} else {
 					if (logger.isDebugEnabled()) {
 						logger.debug("BeanUtil.reflectListToBean 方法,第:{}行数据为null,如果是sql查询请检查写法是否正确!", index);
@@ -1647,6 +1707,115 @@ public class BeanUtil {
 						+ e.getMessage();
 				logger.error(errorMsg);
 			}
+			throw new RuntimeException(errorMsg, e);
+		}
+		return resultList;
+	}
+
+	private static PropertyType[] getRecordFields(Class recordType) {
+		if (recordProperties.containsKey(recordType)) {
+			return recordProperties.get(recordType);
+		}
+		RecordComponent[] components = recordType.getRecordComponents();
+		PropertyType[] propTypes = new PropertyType[components.length];
+		int index = 0;
+		for (RecordComponent component : components) {
+			PropertyType propertyType = new PropertyType();
+			propertyType.setProperty(component.getName());
+			propertyType.setIndex(index);
+			propertyType.setType(component.getType());
+			propertyType.setTypeName(component.getType().getTypeName());
+			propertyType.setTypeValue(DataType.getType(component.getType()));
+			propertyType.setGenericType((Class) component.getGenericType());
+			propTypes[index] = propertyType;
+			index++;
+		}
+		recordProperties.put(recordType, propTypes);
+		return propTypes;
+	}
+
+	private static List reflectListToRecord(TypeHandler typeHandler, Collection datas, int[] indexs,
+			String[] properties, Class voClass, boolean autoConvertType) {
+		PropertyType[] recordProps = getRecordFields(voClass);
+		int fieldsCnt = recordProps.length;
+		Integer[] propIndexes = new Integer[fieldsCnt];
+		String propName;
+		Class[] parameterTypes = new Class[fieldsCnt];
+		for (int i = 0; i < fieldsCnt; i++) {
+			propName = recordProps[i].getProperty();
+			parameterTypes[i] = recordProps[i].getType();
+			for (int j = 0; j < properties.length; j++) {
+				if (propName.equalsIgnoreCase(properties[j])) {
+					propIndexes[i] = indexs[j];
+					break;
+				}
+			}
+		}
+		List resultList = new ArrayList();
+		Object cellData = null;
+		try {
+			Constructor constructor = voClass.getDeclaredConstructor(parameterTypes);
+			if (!constructor.canAccess(null)) {
+				constructor.setAccessible(true);
+			}
+			Object rowObject = null;
+			Iterator iter = datas.iterator();
+			int index = 0;
+			int rowSize;
+			boolean isArray = false;
+			Object recordBean;
+			int notNullRowIndex = 0;
+			Object[] rowArray = null;
+			List rowList = null;
+			Object[] recordArgs;
+			PropertyType recordPropTypes;
+			while (iter.hasNext()) {
+				rowObject = iter.next();
+				if (rowObject != null) {
+					if (notNullRowIndex == 0) {
+						if (rowObject instanceof Object[]) {
+							isArray = true;
+						}
+					}
+					recordArgs = new Object[fieldsCnt];
+					if (isArray) {
+						rowArray = (Object[]) rowObject;
+						rowSize = rowArray.length;
+					} else {
+						rowList = (List) rowObject;
+						rowSize = rowList.size();
+					}
+					for (int i = 0; i < fieldsCnt; i++) {
+						recordPropTypes = recordProps[i];
+						if (propIndexes[i] != null && propIndexes[i] < rowSize) {
+							cellData = isArray ? rowArray[propIndexes[i]] : rowList.get(propIndexes[i]);
+							if (cellData != null) {
+								// 类型相同
+								if (cellData.getClass().equals(recordPropTypes.getType())) {
+									recordArgs[i] = cellData;
+								} else {
+									recordArgs[i] = convertType(typeHandler, cellData, recordPropTypes.getTypeValue(),
+											recordPropTypes.getTypeName(), recordPropTypes.getGenericType());
+								}
+							}
+						}
+					}
+					recordBean = constructor.newInstance(recordArgs);
+					resultList.add(recordBean);
+					notNullRowIndex++;
+				} else {
+					if (logger.isDebugEnabled()) {
+						logger.debug("BeanUtil.reflectListToBean 方法,第:{}行数据为null,如果是sql查询请检查写法是否正确!", index);
+					} else {
+						err.println("BeanUtil.reflectListToBean 方法,第:{" + index + "}行数据为null,如果是sql查询请检查写法是否正确!");
+					}
+					resultList.add(null);
+				}
+				index++;
+			}
+		} catch (Exception e) {
+			String errorMsg = "将集合数据:[" + cellData + "] 映射到Record对象:" + voClass.getName() + " 的过程异常!" + e.getMessage();
+			logger.error(errorMsg);
 			throw new RuntimeException(errorMsg, e);
 		}
 		return resultList;

@@ -24,7 +24,8 @@ public @interface OneToMany {
 	String[] mappedFields();
 
 	// 加载自定义sql,如: enable=1 或者是一个完整的sql
-	// 完整sql必须要包含外键条件字段select * from table where fkField=:fkField (不推荐)
+	// 完整sql必须要包含外键条件字段select * from table where fkField=:fkField 
+	// 批量级联select * from table where fkField in (:fkField)
 	String load() default "";
 
 	// 是否级联删除

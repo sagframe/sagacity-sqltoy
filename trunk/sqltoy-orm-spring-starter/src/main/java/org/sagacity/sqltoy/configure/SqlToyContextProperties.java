@@ -83,6 +83,9 @@ public class SqlToyContextProperties implements Serializable {
 	 */
 	private Boolean autoDDL = false;
 
+	// ddl转小写还是大写
+	private String ddlLowerOrUpper;
+
 	/**
 	 * 分页最大单页数据量(默认是5万)
 	 */
@@ -818,5 +821,13 @@ public class SqlToyContextProperties implements Serializable {
 
 	public void setSqlInjectionRegexes(String[] sqlInjectionRegexes) {
 		this.sqlInjectionRegexes = sqlInjectionRegexes;
+	}
+
+	public String getDdlLowerOrUpper() {
+		return ddlLowerOrUpper;
+	}
+
+	public void setDdlLowerOrUpper(String ddlLowerOrUpper) {
+		this.ddlLowerOrUpper = ddlLowerOrUpper;
 	}
 }

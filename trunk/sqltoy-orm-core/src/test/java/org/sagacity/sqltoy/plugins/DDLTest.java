@@ -19,7 +19,7 @@ public class DDLTest {
 	public void testCreateSqlFile() {
 		String[] scanPackages = new String[] { "org.sagacity.sqltoy.demo.domain" };
 		try {
-			DDLFactory.createSqlFile(scanPackages, "D://sqltoy.sql", DBType.MYSQL, null, null);
+			DDLFactory.createSqlFile(scanPackages, "D://sqltoy.sql", "upper", DBType.MYSQL, null, null);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

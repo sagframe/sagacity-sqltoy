@@ -719,6 +719,15 @@ public interface LightDao {
 	 * @param autoCommit (一般为null)
 	 */
 	public Long batchUpdate(final String sqlOrSqlId, final List dataSet, final Boolean autoCommit);
+	
+	/**
+	 * @TODO 针对类似时序数据库执行插入操作并返回主键值
+	 * @param sqlOrSqlId
+	 * @param entity
+	 * @param pkField
+	 * @return
+	 */
+	public Object insertReturnPrimaryKey(final String sqlOrSqlId,final Serializable entity,String pkField);
 
 	public Long executeSql(final String sqlOrSqlId);
 
