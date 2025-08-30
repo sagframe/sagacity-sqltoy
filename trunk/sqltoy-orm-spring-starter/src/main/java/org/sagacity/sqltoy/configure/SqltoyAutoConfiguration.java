@@ -147,6 +147,7 @@ public class SqltoyAutoConfiguration {
 		sqlToyContext.setBreakWhenSqlRepeat(properties.isBreakWhenSqlRepeat());
 		// 是否自动创建或更新表
 		sqlToyContext.setAutoDDL(properties.getAutoDDL());
+		sqlToyContext.setDdlLowerOrUpper(properties.getDdlLowerOrUpper());
 		// 开放设置默认单页记录数量
 		sqlToyContext.setDefaultPageSize(properties.getDefaultPageSize());
 		sqlToyContext.setDefaultPageOffset(properties.isDefaultPageOffset());

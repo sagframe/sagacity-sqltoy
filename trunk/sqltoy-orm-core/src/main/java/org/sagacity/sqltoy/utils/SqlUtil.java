@@ -1718,6 +1718,48 @@ public class SqlUtil {
 		return updateCounts;
 	}
 
+	public static Object insertReturnPrimaryKey(TypeHandler typeHandler, final String executeSql, final Object[] params,
+			final Integer[] paramsType, final String primaryField, final Connection conn, final Integer dbType,
+			final Boolean autoCommit, boolean processWord) throws Exception {
+		// 对sql进行关键词符号替换
+		String realSql = processWord ? ReservedWordsUtil.convertSql(executeSql, dbType) : executeSql;
+		SqlExecuteStat.showSql("execute sql=", realSql, params);
+		boolean hasSetAutoCommit = false;
+		if (autoCommit != null) {
+			if (!autoCommit == conn.getAutoCommit()) {
+				conn.setAutoCommit(autoCommit);
+				hasSetAutoCommit = true;
+			}
+		}
+		PreparedStatement pst = conn.prepareStatement(realSql,
+				new String[] { DataSourceUtils.getReturnPrimaryKeyColumn(primaryField, dbType) });
+		Object result = preparedStatementProcess(null, pst, null, new PreparedStatementResultHandler() {
+			@Override
+			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
+				// sqlserver 存在timestamp不能赋值问题,通过对象完成的修改、插入忽视掉timestamp列
+				if (dbType == DBType.SQLSERVER && paramsType != null) {
+					setSqlServerParamsValue(typeHandler, conn, dbType, pst, params, paramsType, 0);
+				} else {
+					setParamsValue(typeHandler, conn, dbType, pst, params, paramsType, 0);
+				}
+				pst.execute();
+				ResultSet keyResult = pst.getGeneratedKeys();
+				if (keyResult != null) {
+					while (keyResult.next()) {
+						this.setResult(keyResult.getObject(1));
+					}
+					keyResult.close();
+				}
+				// 返回update的记录数量
+				SqlExecuteStat.debug("执行结果", "insertReturnPrimaryKey操作影响记录量:{} 条!", Long.valueOf(pst.getUpdateCount()));
+			}
+		});
+		if (hasSetAutoCommit && autoCommit != null) {
+			conn.setAutoCommit(!autoCommit);
+		}
+		return result;
+	}
+
 	/**
 	 * @param idValue
 	 * @param idType

@@ -529,6 +529,11 @@ public class DefaultLightDaoImpl extends SqlToyDaoSupport implements LightDao {
 	}
 
 	@Override
+	public Object insertReturnPrimaryKey(String sqlOrSqlId, Serializable entity, String pkField) {
+		return super.execute().sql(sqlOrSqlId).entity(entity).insertReturnPrimaryKey(pkField);
+	}
+
+	@Override
 	public Long executeSql(String sqlOrSqlId) {
 		return super.executeSql(sqlOrSqlId, MapKit.map());
 	}

@@ -918,7 +918,7 @@ public class EntityManager {
 			String loadLow = load.toLowerCase();
 			// 是否是:xxx形式的引入主键条件(原则上不允许这么操作)
 			boolean isNamedSql = SqlConfigParseUtils.isNamedQuery(load);
-			if (isNamedSql && !StringUtil.matches(loadLow, "(\\>|\\<)|(\\=)|(\\<\\>)|(\\>\\=|\\<\\=)")) {
+			if (isNamedSql && !StringUtil.matches(loadLow, "(\\>|\\<)|(\\=)|(\\<\\>)|(\\>\\=|\\<\\=|\\Win\\s*\\()")) {
 				// 自定义加载完整sql
 				if (!"default".equals(loadLow) && !"true".equals(loadLow)) {
 					cascadeModel.setLoadSubTableSql(load);
@@ -928,6 +928,10 @@ public class EntityManager {
 				matchedWhere = StringUtil.matches(loadLow, "\\s+where\\s+");
 				if (matchedWhere) {
 					cascadeModel.setLoadSubTableSql(loadSql);
+					//自定义sql含in
+					if (StringUtil.matches(loadLow, "\\Win\\s*\\(")) {
+						cascadeModel.setLoadSqlSupportBatch(true);
+					}
 				} else {
 					cascadeModel.setLoadSubTableSql(cascadeModel.getLoadSubTableSql().concat(" and ").concat(loadSql));
 					cascadeModel.setLoadBatchSubTableSql(

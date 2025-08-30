@@ -82,6 +82,11 @@ public class SqlToyContextProperties implements Serializable {
 	 * 自动根据POJO创建或更新表
 	 */
 	private Boolean autoDDL = false;
+	
+	/**
+	 * ddl大小写
+	 */
+	private String ddlLowerOrUpper;
 
 	/**
 	 * 分页最大单页数据量(默认是5万)
@@ -805,6 +810,14 @@ public class SqlToyContextProperties implements Serializable {
 	 */
 	public void setDynamicCacheFetch(String dynamicCacheFetch) {
 		this.dynamicCacheFetch = dynamicCacheFetch;
+	}
+
+	public String getDdlLowerOrUpper() {
+		return ddlLowerOrUpper;
+	}
+
+	public void setDdlLowerOrUpper(String ddlLowerOrUpper) {
+		this.ddlLowerOrUpper = ddlLowerOrUpper;
 	}
 
 }

@@ -401,6 +401,11 @@ public class SqlToyContext {
 	 * 自动创建表
 	 */
 	private Boolean autoDDL = false;
+	
+	/**
+	 * ddl大小写
+	 */
+	private String ddlLowerOrUpper;
 
 	/**
 	 * 自定义通过pojo生成ddl实现类
@@ -1372,6 +1377,14 @@ public class SqlToyContext {
 
 	public void setSqlInjectionRegexes(String[] sqlInjectionRegexes) {
 		this.sqlInjectionRegexes = sqlInjectionRegexes;
+	}
+
+	public String getDdlLowerOrUpper() {
+		return ddlLowerOrUpper;
+	}
+
+	public void setDdlLowerOrUpper(String ddlLowerOrUpper) {
+		this.ddlLowerOrUpper = ddlLowerOrUpper;
 	}
 
 }

@@ -82,6 +82,7 @@ public class SqlToyContextBuilder {
 		sqlToyContext.setBreakWhenSqlRepeat(properties.isBreakWhenSqlRepeat());
 		// 设置autoDDL属性
 		sqlToyContext.setAutoDDL(properties.getAutoDDL());
+		sqlToyContext.setDdlLowerOrUpper(properties.getDdlLowerOrUpper());
 		// 开放设置默认单页记录数量
 		sqlToyContext.setDefaultPageSize(properties.getDefaultPageSize());
 		sqlToyContext.setDefaultPageOffset(properties.isDefaultPageOffset());

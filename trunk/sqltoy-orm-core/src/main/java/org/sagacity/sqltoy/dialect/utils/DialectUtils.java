@@ -18,6 +18,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.sagacity.sqltoy.SqlExecuteStat;
@@ -1341,107 +1342,135 @@ public class DialectUtils {
 					mappedMeta = sqlToyContext.getEntityMeta(cascadeModel.getMappedType());
 					// 清空buffer
 					subTableSql.delete(0, subTableSql.length());
-					// 构造查询语句,update 2019-12-09 使用完整字段
-					subTableSql.append(ReservedWordsUtil.convertSimpleSql(mappedMeta.getLoadAllSql(), dbType))
-							.append(" where ");
-					String orderCols = "";
-					boolean hasOrder = StringUtil.isNotBlank(cascadeModel.getOrderBy());
-					boolean hasExtCondtion = StringUtil.isNotBlank(cascadeModel.getLoadExtCondition()) ? true : false;
 					fieldSize = cascadeModel.getMappedFields().length;
-					// 单主键
-					if (fieldSize == 1) {
-						colName = cascadeModel.getMappedColumns()[0];
-						colName = ReservedWordsUtil.convertWord(colName, dbType);
-						subTableSql.append(colName);
-						subTableSql.append(" in (?) ");
-						if (hasOrder) {
-							orderCols = orderCols.concat(colName).concat(",");
+					// loadSql中用in作为条件，支持批量
+					if (cascadeModel.isLoadSqlSupportBatch()) {
+						String sql = cascadeModel.getLoadBatchSubTableSql();
+						Pattern pattern;
+						Matcher matcher;
+						String group;
+						StringBuffer result = new StringBuffer();
+						boolean hasMatched = false;
+						// 替换in (:id)笔名为?
+						for (int i = 0; i < fieldSize; i++) {
+							hasMatched = false;
+							pattern = Pattern.compile("(?i)\\:" + cascadeModel.getMappedFields()[i] + "\\W");
+							matcher = pattern.matcher(sql);
+							while (matcher.find()) {
+								hasMatched = true;
+								group = matcher.group();
+								matcher.appendReplacement(result, "?" + group.substring(group.length() - 1));
+							}
+							if (hasMatched) {
+								matcher.appendTail(result);
+								sql = result.toString();
+								result.delete(0, result.length());
+							}
 						}
-					} // 复合主键
-					else {
-						if (supportMultiFieldIn) {
-							String columns = "(";
-							String condition = "(";
-							for (int i = 0; i < fieldSize; i++) {
-								if (i > 0) {
-									columns = columns.concat(",");
-									condition = condition.concat(",");
-								}
-								colName = cascadeModel.getMappedColumns()[i];
-								colName = ReservedWordsUtil.convertWord(colName, dbType);
-								condition = condition.concat("?");
-								columns = columns.concat(colName);
-								if (hasOrder) {
-									orderCols = orderCols.concat(colName).concat(",");
-								}
+						subTableSql.append(ReservedWordsUtil.convertSimpleSql(sql, dbType));
+					} else {
+						// 构造查询语句,update 2019-12-09 使用完整字段
+						subTableSql.append(ReservedWordsUtil.convertSimpleSql(mappedMeta.getLoadAllSql(), dbType))
+								.append(" where ");
+						String orderCols = "";
+						boolean hasOrder = StringUtil.isNotBlank(cascadeModel.getOrderBy());
+						boolean hasExtCondtion = StringUtil.isNotBlank(cascadeModel.getLoadExtCondition()) ? true
+								: false;
+						// 单主键
+						if (fieldSize == 1) {
+							colName = cascadeModel.getMappedColumns()[0];
+							colName = ReservedWordsUtil.convertWord(colName, dbType);
+							subTableSql.append(colName);
+							subTableSql.append(" in (?) ");
+							if (hasOrder) {
+								orderCols = orderCols.concat(colName).concat(",");
 							}
-							condition = condition.concat(")");
-							columns = columns.concat(")");
-							StringBuilder conditionStr = new StringBuilder();
-							int groupIndex = 0;
-							int groupCnt = 0;
-							int groupSize = 1000;
-							if (dataSize > groupSize) {
-								subTableSql.append(" ( ");
-							}
-							for (int i = 0; i < dataSize; i++) {
-								if (groupIndex > 0) {
-									conditionStr.append(",");
+						} // 复合主键
+						else {
+							if (supportMultiFieldIn) {
+								String columns = "(";
+								String condition = "(";
+								for (int i = 0; i < fieldSize; i++) {
+									if (i > 0) {
+										columns = columns.concat(",");
+										condition = condition.concat(",");
+									}
+									colName = cascadeModel.getMappedColumns()[i];
+									colName = ReservedWordsUtil.convertWord(colName, dbType);
+									condition = condition.concat("?");
+									columns = columns.concat(colName);
+									if (hasOrder) {
+										orderCols = orderCols.concat(colName).concat(",");
+									}
 								}
-								conditionStr.append(condition);
-								groupIndex++;
-								// in 最大支持1000
-								if (((i + 1) % groupSize) == 0 || i + 1 == dataSize) {
-									if (groupCnt > 0) {
+								condition = condition.concat(")");
+								columns = columns.concat(")");
+								StringBuilder conditionStr = new StringBuilder();
+								int groupIndex = 0;
+								int groupCnt = 0;
+								int groupSize = 1000;
+								if (dataSize > groupSize) {
+									subTableSql.append(" ( ");
+								}
+								for (int i = 0; i < dataSize; i++) {
+									if (groupIndex > 0) {
+										conditionStr.append(",");
+									}
+									conditionStr.append(condition);
+									groupIndex++;
+									// in 最大支持1000
+									if (((i + 1) % groupSize) == 0 || i + 1 == dataSize) {
+										if (groupCnt > 0) {
+											subTableSql.append(" or ");
+										}
+										subTableSql.append(columns).append(" in (").append(conditionStr.toString())
+												.append(")");
+										groupIndex = 0;
+										groupCnt++;
+										// 清空
+										conditionStr.setLength(0);
+									}
+								}
+								if (dataSize > groupSize) {
+									subTableSql.append(" ) ");
+								}
+							} else {
+								// 构造(field1=? and field2=?)
+								String condition = " (";
+								for (int i = 0; i < fieldSize; i++) {
+									colName = cascadeModel.getMappedColumns()[i];
+									colName = ReservedWordsUtil.convertWord(colName, dbType);
+									if (i > 0) {
+										condition = condition.concat(" and ");
+									}
+									condition = condition.concat(colName).concat("=?");
+									if (hasOrder) {
+										orderCols = orderCols.concat(colName).concat(",");
+									}
+								}
+								condition = condition.concat(") ");
+								// 构造成 (field1=? and field2=?) or (field1=? and field2=?)
+								if (hasExtCondtion) {
+									subTableSql.append(" (");
+								}
+								for (int i = 0; i < dataSize; i++) {
+									if (i > 0) {
 										subTableSql.append(" or ");
 									}
-									subTableSql.append(columns).append(" in (").append(conditionStr.toString())
-											.append(")");
-									groupIndex = 0;
-									groupCnt++;
-									// 清空
-									conditionStr.setLength(0);
+									subTableSql.append(condition);
 								}
-							}
-							if (dataSize > groupSize) {
-								subTableSql.append(" ) ");
-							}
-						} else {
-							// 构造(field1=? and field2=?)
-							String condition = " (";
-							for (int i = 0; i < fieldSize; i++) {
-								colName = cascadeModel.getMappedColumns()[i];
-								colName = ReservedWordsUtil.convertWord(colName, dbType);
-								if (i > 0) {
-									condition = condition.concat(" and ");
+								if (hasExtCondtion) {
+									subTableSql.append(") ");
 								}
-								condition = condition.concat(colName).concat("=?");
-								if (hasOrder) {
-									orderCols = orderCols.concat(colName).concat(",");
-								}
-							}
-							condition = condition.concat(") ");
-							// 构造成 (field1=? and field2=?) or (field1=? and field2=?)
-							if (hasExtCondtion) {
-								subTableSql.append(" (");
-							}
-							for (int i = 0; i < dataSize; i++) {
-								if (i > 0) {
-									subTableSql.append(" or ");
-								}
-								subTableSql.append(condition);
-							}
-							if (hasExtCondtion) {
-								subTableSql.append(") ");
 							}
 						}
-					}
-					// 自定义扩展条件
-					if (hasExtCondtion) {
-						subTableSql.append(" and ").append(cascadeModel.getLoadExtCondition());
-					}
-					if (hasOrder) {
-						subTableSql.append(" order by ").append(orderCols).append(cascadeModel.getOrderBy());
+						// 自定义扩展条件
+						if (hasExtCondtion) {
+							subTableSql.append(" and ").append(cascadeModel.getLoadExtCondition());
+						}
+						if (hasOrder) {
+							subTableSql.append(" order by ").append(orderCols).append(cascadeModel.getOrderBy());
+						}
 					}
 					// 单主键
 					if (fieldSize == 1) {

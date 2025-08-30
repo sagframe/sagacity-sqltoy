@@ -7,6 +7,7 @@ package org.sagacity.sqltoy.callback;
  * @version v1.0, Date:2022-7-23
  */
 public interface StreamResultHandler {
+
 	/**
 	 * @TODO 开始
 	 * @param columnsLabels 查询结果列标题
@@ -20,7 +21,19 @@ public interface StreamResultHandler {
 	 * @param row
 	 * @param rowIndex
 	 */
-	public void consume(Object row, int rowIndex);
+	public default void consume(Object row, int rowIndex) {
+
+	}
+
+	/**
+	 * 有条件存在终止行为的消费
+	 * @param row
+	 * @param rowIndex
+	 * @return
+	 */
+	public default boolean doNextConsume(Object row, int rowIndex) {
+		return true;
+	}
 
 	/**
 	 * @TODO 流数据提取完成
