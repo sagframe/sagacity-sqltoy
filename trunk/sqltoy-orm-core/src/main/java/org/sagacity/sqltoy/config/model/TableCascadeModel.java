@@ -71,6 +71,11 @@ public class TableCascadeModel implements Serializable {
 	private boolean delete = false;
 
 	/**
+	 * 自定义sql中包含in，支持批量处理
+	 */
+	private boolean loadSqlSupportBatch = false;
+
+	/**
 	 * 对应子表对象的类型
 	 */
 	private Class mappedType;
@@ -90,7 +95,7 @@ public class TableCascadeModel implements Serializable {
 	 */
 	private String cascadeUpdateSql;
 
-	//update 2025-5-16 提供基于in 批量查询、修改、删除的语句
+	// update 2025-5-16 提供基于in 批量查询、修改、删除的语句
 	private String loadBatchSubTableSql;
 
 	private String deleteBatchSubTableSql;
@@ -335,6 +340,14 @@ public class TableCascadeModel implements Serializable {
 
 	public void setCascadeBatchUpdateSql(String cascadeBatchUpdateSql) {
 		this.cascadeBatchUpdateSql = cascadeBatchUpdateSql;
+	}
+
+	public boolean isLoadSqlSupportBatch() {
+		return loadSqlSupportBatch;
+	}
+
+	public void setLoadSqlSupportBatch(boolean loadSqlSupportBatch) {
+		this.loadSqlSupportBatch = loadSqlSupportBatch;
 	}
 
 }

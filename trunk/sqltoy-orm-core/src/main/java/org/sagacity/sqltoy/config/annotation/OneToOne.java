@@ -27,7 +27,7 @@ public @interface OneToOne {
 	// 是否级联删除
 	boolean delete() default false;
 
-	// 加载自定义sql
+	// 加载自定义sql，支持完全自定义sql语句
 	String load() default "";
 
 	// 定制级联修改保存对子表的操作语句
