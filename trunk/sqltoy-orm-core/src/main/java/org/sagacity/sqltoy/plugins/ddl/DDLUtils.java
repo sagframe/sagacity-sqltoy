@@ -286,7 +286,7 @@ public class DDLUtils {
 			break;
 		case java.sql.Types.DATE:
 			if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.SQLSERVER
-					|| dbType == DBType.DORIS) {
+					|| dbType == DBType.DORIS|| dbType == DBType.STARROCKS) {
 				typeName = "DATETIME";
 			} else {
 				typeName = "DATE";

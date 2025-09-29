@@ -55,7 +55,7 @@ public class GroupConcat extends IFunction {
 			}
 		}
 		if (dbType == DBType.MYSQL || dbType == DBType.TIDB || dbType == DBType.MYSQL57 || dbType == DBType.H2
-				|| dbType == DBType.DORIS) {
+				|| dbType == DBType.DORIS || dbType == DBType.STARROCKS) {
 			if ("group_concat".equals(functionName.toLowerCase())) {
 				return super.IGNORE;
 			}

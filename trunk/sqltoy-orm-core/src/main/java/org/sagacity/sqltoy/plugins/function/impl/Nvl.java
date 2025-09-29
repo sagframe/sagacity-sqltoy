@@ -60,7 +60,8 @@ public class Nvl extends IFunction {
 				|| dialect == DBType.H2) {
 			return wrapArgs("coalesce", args);
 		}
-		if (dialect == DBType.MYSQL || dialect == DBType.TIDB || dialect == DBType.MYSQL57 || dialect == DBType.DORIS) {
+		if (dialect == DBType.MYSQL || dialect == DBType.TIDB || dialect == DBType.MYSQL57 || dialect == DBType.DORIS
+				|| dialect == DBType.STARROCKS) {
 			if (args.length == 1) {
 				return wrapArgs("isnull", args);
 			}

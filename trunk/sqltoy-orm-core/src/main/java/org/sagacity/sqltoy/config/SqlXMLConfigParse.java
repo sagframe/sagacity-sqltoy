@@ -899,6 +899,8 @@ public class SqlXMLConfigParse {
 		// 分割符号
 		if (filter.hasAttribute("split-sign")) {
 			filterModel.setSplit(filter.getAttribute("split-sign"));
+		} else if (filter.hasAttribute("split")) {
+			filterModel.setSplit(filter.getAttribute("split"));
 		}
 		// 互斥型和决定性(primary)filter的参数
 		if (filter.hasAttribute("excludes")) {
@@ -970,7 +972,10 @@ public class SqlXMLConfigParse {
 					// 对比条件参数(有可能本身就是一个值)
 					compareParam = cacheFilter.getAttribute("compare-param").toLowerCase();
 					// 纯粹的一个数值集合
-					if (cacheFilter.hasAttribute("split")) {
+					if (cacheFilter.hasAttribute("split-sign")) {
+						split = cacheFilter.getAttribute("split-sign");
+						cacheFilterModel.setCompareValues(StringUtil.splitRegex(compareParam, split, true));
+					} else if (cacheFilter.hasAttribute("split")) {
 						split = cacheFilter.getAttribute("split");
 						cacheFilterModel.setCompareValues(StringUtil.splitRegex(compareParam, split, true));
 					} else {
@@ -1079,6 +1084,7 @@ public class SqlXMLConfigParse {
 		boolean hasLink = false;
 		Element translate;
 		String where = null;
+		String splitSign = null;
 		for (int k = 0; k < translates.getLength(); k++) {
 			translate = (Element) translates.item(k);
 			hasLink = false;
@@ -1105,8 +1111,16 @@ public class SqlXMLConfigParse {
 			if (translate.hasAttribute("where")) {
 				where = translate.getAttribute("where");
 			}
-			if (translate.hasAttribute("split-regex")) {
-				splitRegex = translate.getAttribute("split-regex");
+			splitSign = null;
+			if (translate.hasAttribute("split-sign")) {
+				splitSign = "split-sign";
+			} else if (translate.hasAttribute("split-regex")) {
+				splitSign = "split-regex";
+			} else if (translate.hasAttribute("split")) {
+				splitSign = "split";
+			}
+			if (null != splitSign) {
+				splitRegex = translate.getAttribute(splitSign);
 				if (translate.hasAttribute("link-sign")) {
 					linkSign = translate.getAttribute("link-sign");
 					hasLink = true;
