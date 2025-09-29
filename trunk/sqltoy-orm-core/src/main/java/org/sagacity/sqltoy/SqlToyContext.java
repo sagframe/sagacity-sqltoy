@@ -836,6 +836,8 @@ public class SqlToyContext {
 			this.dialect = Dialect.STARDB;
 		} else if (tmp.startsWith(Dialect.DORIS)) {
 			this.dialect = Dialect.DORIS;
+		} else if (tmp.startsWith(Dialect.STARROCKS)) {
+			this.dialect = Dialect.STARROCKS;
 		} else {
 			this.dialect = dialect;
 		}

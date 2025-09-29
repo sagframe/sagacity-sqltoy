@@ -599,7 +599,8 @@ public class ParamFilterUtils {
 			result = replace(paramValue, paramFilterModel.getRegex(), paramFilterModel.getValues()[0],
 					paramFilterModel.isFirst());
 		} else if ("split".equals(filterType)) {
-			result = splitToArray(paramValue, paramFilterModel.getSplit(), paramFilterModel.getDataType());
+			result = splitToArray(paramValue, (null == paramFilterModel.getSplit()) ? "," : paramFilterModel.getSplit(),
+					paramFilterModel.getDataType());
 		} else if ("date-format".equals(filterType)) {
 			result = dateFormat(paramValue, paramFilterModel.getFormat());
 		} else if ("neq".equals(filterType)) {
@@ -756,7 +757,19 @@ public class ParamFilterUtils {
 				return paramValues[paramIndexMap.get(valueString.toLowerCase())];
 			}
 			if (paramFilterModel.getIsArray()) {
-				return splitToArray(valueString, paramFilterModel.getSplit(), paramFilterModel.getDataType());
+				int arySize = values.length;
+				String splitSign = (null == paramFilterModel.getSplit()) ? "," : paramFilterModel.getSplit();
+				// 默认用逗号做了切割
+				if (arySize > 1 && (",".equals(splitSign) || "\\,".equals(splitSign))) {
+					Object[] result = new Object[arySize];
+					for (int i = 0, n = arySize; i < n; i++) {
+						if (null != values[i]) {
+							result[i] = convertType(values[i].toString(), paramFilterModel.getDataType());
+						}
+					}
+					return result;
+				}
+				return splitToArray(valueString, splitSign, paramFilterModel.getDataType());
 			}
 			return convertType(valueString, paramFilterModel.getDataType());
 		} else {
@@ -962,60 +975,60 @@ public class ParamFilterUtils {
 				addValue = 0 - addValue;
 			}
 		}
-		Date starDate;
+		Date startDate;
 		// '2019-12-13' 形式
 		if (firstString.startsWith("'") && firstString.endsWith("'")) {
 			firstString = firstString.substring(1, firstString.length() - 1);
 		}
 		if ("sysdate()".equals(firstString) || "now()".equals(firstString)) {
-			starDate = DateUtil.getNowTime();
+			startDate = DateUtil.getNowTime();
 		} else if ("first_of_month".equals(firstString)) {
-			starDate = DateUtil.firstDayOfMonth(DateUtil.getNowTime());
+			startDate = DateUtil.firstDayOfMonth(DateUtil.getNowTime());
 		} else if ("first_of_year".equals(firstString)) {
-			starDate = DateUtil.parse((DateUtil.getYear(DateUtil.getNowTime()) + "-01-01"), "yyyy-MM-dd");
+			startDate = DateUtil.parse((DateUtil.getYear(DateUtil.getNowTime()) + "-01-01"), "yyyy-MM-dd");
 		} else if ("last_of_month".equals(firstString)) {
-			starDate = DateUtil.lastDayOfMonth(DateUtil.getNowTime());
+			startDate = DateUtil.lastDayOfMonth(DateUtil.getNowTime());
 		} else if ("last_of_year".equals(firstString)) {
-			starDate = DateUtil.parse((DateUtil.getYear(DateUtil.getNowTime()) + "-12-31"), "yyyy-MM-dd");
+			startDate = DateUtil.parse((DateUtil.getYear(DateUtil.getNowTime()) + "-12-31"), "yyyy-MM-dd");
 		} else if ("first_of_month".equals(firstString)) {
-			starDate = DateUtil.firstDayOfMonth(DateUtil.getNowTime());
+			startDate = DateUtil.firstDayOfMonth(DateUtil.getNowTime());
 		} else if ("first_of_week".equals(firstString)) {
 			Calendar ca = Calendar.getInstance();
 			ca.setTime(DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT));
 			ca.add(Calendar.DAY_OF_WEEK, -ca.get(Calendar.DAY_OF_WEEK) + 2);
-			starDate = ca.getTime();
+			startDate = ca.getTime();
 		} else if ("last_of_week".equals(firstString)) {
 			Calendar ca = Calendar.getInstance();
 			ca.setTime(DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT));
 			ca.add(Calendar.DAY_OF_WEEK, -ca.get(Calendar.DAY_OF_WEEK) + 8);
-			starDate = ca.getTime();
+			startDate = ca.getTime();
 		} else {
-			starDate = DateUtil.parseString(firstString);
+			startDate = DateUtil.parseString(firstString);
 		}
 		if (addValue == 0) {
-			return starDate;
+			return startDate;
 		}
 		// 小时
 		if (addType == 1) {
-			return DateUtil.addSecond(starDate, addValue * 3600);
+			return DateUtil.addSecond(startDate, addValue * 3600);
 		}
 		// 天
 		if (addType == 2) {
-			return DateUtil.addDay(starDate, addValue);
+			return DateUtil.addDay(startDate, addValue);
 		}
 		// 周
 		if (addType == 3) {
-			return DateUtil.addDay(starDate, addValue * 7);
+			return DateUtil.addDay(startDate, addValue * 7);
 		}
 		// 月
 		if (addType == 4) {
-			return DateUtil.addMonth(starDate, addValue);
+			return DateUtil.addMonth(startDate, addValue);
 		}
 		// 年
 		if (addType == 5) {
-			return DateUtil.addYear(starDate, addValue);
+			return DateUtil.addYear(startDate, addValue);
 		}
-		return starDate;
+		return startDate;
 	}
 
 	/**

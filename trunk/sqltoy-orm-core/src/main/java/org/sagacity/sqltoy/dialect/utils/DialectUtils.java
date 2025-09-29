@@ -2140,7 +2140,7 @@ public class DialectUtils {
 				// update 2020-07-30,针对mysql和postgresql、sqlite常用数据库做针对性处理
 				// 这里需要进行修改,mysql\postgresql\sqlite 等存在缺陷(字段值不为null时会报错)
 				if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.TIDB
-						|| dbType == DBType.DORIS) {
+						|| dbType == DBType.DORIS || dbType == DBType.STARROCKS) {
 					mysqlSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, null, forceUpdateProps, conn,
 							dbType);
 				} else if (dbType == DBType.POSTGRESQL) {
@@ -2183,7 +2183,7 @@ public class DialectUtils {
 			return;
 		}
 		// mysql只支持identity,sequence 值忽略
-		boolean isAssignPK = MySqlDialectUtils.isAssignPKValue(entityMeta.getIdStrategy());
+		boolean isAssignPK = MySqlDialectUtils.isAssignPKValue(entityMeta.getIdStrategy(), dbType);
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 				entityMeta.getIdStrategy(), "ifnull", "NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName)
 				.replaceFirst("(?i)insert ", "insert ignore ");

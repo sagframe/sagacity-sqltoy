@@ -63,6 +63,7 @@ public class DataSourceUtils {
 		public final static String INNOSQL = "innosql";
 		public final static String MARIADB = "mariadb";
 		public final static String DORIS = "doris";
+		public final static String STARROCKS = "starrocks";
 
 		// 9.5+ 开始
 		public final static String POSTGRESQL = "postgresql";
@@ -129,6 +130,7 @@ public class DataSourceUtils {
 		public final static int MYSQL = 40;
 		public final static int MYSQL57 = 42;
 		public final static int DORIS = 46;
+		public final static int STARROCKS = 47;
 
 		// 默认9.5+版本
 		public final static int POSTGRESQL = 50;
@@ -207,6 +209,7 @@ public class DataSourceUtils {
 		DBNameTypeMap.put(Dialect.OSCAR, DBType.OSCAR);
 		DBNameTypeMap.put(Dialect.VASTBASE, DBType.VASTBASE);
 		DBNameTypeMap.put(Dialect.DORIS, DBType.DORIS);
+		DBNameTypeMap.put(Dialect.STARROCKS, DBType.STARROCKS);
 
 		// 默认设置oscar、vastbase数据库用gaussdb方言来实现
 		// dialectMap.put(Dialect.OSCAR, Dialect.OPENGAUSS);
@@ -294,6 +297,9 @@ public class DataSourceUtils {
 		case DBType.DORIS: {
 			return Dialect.DORIS;
 		}
+		case DBType.STARROCKS: {
+			return Dialect.STARROCKS;
+		}
 		default:
 			return Dialect.UNDEFINE;
 		}
@@ -345,6 +351,8 @@ public class DataSourceUtils {
 			} // doris
 			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.DORIS) != -1) {
 				dilectName = Dialect.DORIS;
+			} else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.STARROCKS) != -1) {
+				dilectName = Dialect.STARROCKS;
 			}
 			// postgresql
 			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.POSTGRESQL) != -1) {
@@ -518,6 +526,8 @@ public class DataSourceUtils {
 				dbType = DBType.VASTBASE;
 			} else if (dbDialect.equals(Dialect.DORIS)) {
 				dbType = DBType.DORIS;
+			} else if (dbDialect.equals(Dialect.STARROCKS)) {
+				dbType = DBType.STARROCKS;
 			}
 			DBNameTypeMap.put(dbKey, dbType);
 		} else if (dialectMap.containsKey(dbKey)) {
@@ -760,6 +770,8 @@ public class DataSourceUtils {
 			return Dialect.VASTBASE;
 		case DBType.DORIS:
 			return Dialect.DORIS;
+		case DBType.STARROCKS:
+			return Dialect.STARROCKS;
 		default:
 			return "";
 		}
@@ -783,6 +795,7 @@ public class DataSourceUtils {
 		case DBType.MYSQL:
 		case DBType.MYSQL57:
 		case DBType.DORIS:
+		case DBType.STARROCKS:
 			return "ifnull";
 		case DBType.SQLSERVER:
 			return "isnull";
@@ -867,7 +880,8 @@ public class DataSourceUtils {
 				|| dbType == DBType.KINGBASE || dbType == DBType.MOGDB || dbType == DBType.STARDB
 				|| dbType == DBType.OSCAR || dbType == DBType.OPENGAUSS || dbType == DBType.VASTBASE
 				|| dbType == DBType.POSTGRESQL || dbType == DBType.CLICKHOUSE || dbType == DBType.H2
-				|| dbType == DBType.SQLITE || dbType == DBType.ORACLE11 || dbType == DBType.DORIS) {
+				|| dbType == DBType.SQLITE || dbType == DBType.ORACLE11 || dbType == DBType.DORIS
+				|| dbType == DBType.STARROCKS) {
 			return true;
 		}
 		return false;

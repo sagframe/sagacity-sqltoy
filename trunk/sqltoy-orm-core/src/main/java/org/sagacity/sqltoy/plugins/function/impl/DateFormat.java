@@ -72,6 +72,7 @@ public class DateFormat extends IFunction {
 		}
 		case DBType.MYSQL:
 		case DBType.DORIS:
+		case DBType.STARROCKS:
 		case DBType.TIDB:
 		case DBType.MYSQL57: {
 			// 日期

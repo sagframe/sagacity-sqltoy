@@ -601,11 +601,6 @@ public class QueryExecutor implements Serializable {
 		return this;
 	}
 
-	public QueryExecutor primaryField(String primaryField) {
-		innerModel.primaryField = primaryField;
-		return this;
-	}
-
 	/**
 	 * @TODO 是否是sql片段，即不是单独的一句查询(正常无需使用)
 	 * @param sqlSegment

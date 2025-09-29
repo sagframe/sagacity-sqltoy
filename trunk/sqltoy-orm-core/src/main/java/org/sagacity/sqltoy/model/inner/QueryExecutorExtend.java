@@ -185,11 +185,6 @@ public class QueryExecutorExtend implements Serializable {
 	 */
 	public boolean sqlSegment = false;
 
-	/**
-	 * 针对插入操作返回的主键字段
-	 */
-	public String primaryField;
-
 	// 分表策略配置
 	public List<ShardingStrategyConfig> tableShardings = new ArrayList<ShardingStrategyConfig>();
 

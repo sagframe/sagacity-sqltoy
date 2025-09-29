@@ -942,7 +942,7 @@
 							</xsd:restriction>
 						</xsd:simpleType>
 					</xsd:attribute>
-					<xsd:attribute name="split" type="xsd:string" />
+					<xsd:attribute name="split-sign" type="xsd:string" />
 					<xsd:attribute name="is-array" type="xsd:boolean" />
 				</xsd:complexType>
 			</xsd:element>
@@ -1011,7 +1011,7 @@
 										</xsd:restriction>
 									</xsd:simpleType>
 								</xsd:attribute>
-								<xsd:attribute name="split" type="xsd:string" />
+								<xsd:attribute name="split-sign" type="xsd:string" />
 							</xsd:complexType>
 						</xsd:element>
 					</xsd:choice>
@@ -1133,7 +1133,7 @@
 		<xsd:attribute name="columns" type="xsd:string"
 			use="required" />
 		<xsd:attribute name="cache-type" type="xsd:string" />
-		<xsd:attribute name="split-regex" type="xsd:string">
+		<xsd:attribute name="split-sign" type="xsd:string">
 			<xsd:annotation>
 				<xsd:documentation><![CDATA[F,M这种多代码翻译的分隔符号]]></xsd:documentation>
 			</xsd:annotation>
