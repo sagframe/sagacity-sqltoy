@@ -4,6 +4,7 @@
 package org.sagacity.sqltoy.dialect.utils;
 
 import org.sagacity.sqltoy.config.model.PKStrategy;
+import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 
 /**
  * @project sqltoy-orm
@@ -12,13 +13,14 @@ import org.sagacity.sqltoy.config.model.PKStrategy;
  * @version v1.0,Date:2015年2月13日
  */
 public class MySqlDialectUtils {
-	
+
 	/**
 	 * 指的是在identity、sequence主键场景下，是否允许手工给主键赋值
+	 * 
 	 * @param pkStrategy
 	 * @return
 	 */
-	public static boolean isAssignPKValue(PKStrategy pkStrategy) {
+	public static boolean isAssignPKValue(PKStrategy pkStrategy, Integer dbType) {
 		if (pkStrategy == null) {
 			return true;
 		}
@@ -27,6 +29,9 @@ public class MySqlDialectUtils {
 			return false;
 		}
 		if (pkStrategy.equals(PKStrategy.IDENTITY)) {
+			if (dbType == DBType.DORIS || dbType == DBType.STARROCKS) {
+				return false;
+			}
 			return true;
 		}
 		return true;

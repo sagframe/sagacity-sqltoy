@@ -184,11 +184,9 @@ public class SqlScriptLoader {
 					}
 					if (breakWhenSqlRepeat) {
 						logger.error(repeatSqlIds.toString());
+						throw new Exception(repeatSqlIds.toString());
 					} else {
 						logger.warn(repeatSqlIds.toString());
-					}
-					if (breakWhenSqlRepeat) {
-						throw new Exception(repeatSqlIds.toString());
 					}
 				}
 			} else {
