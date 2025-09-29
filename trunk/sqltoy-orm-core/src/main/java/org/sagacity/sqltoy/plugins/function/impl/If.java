@@ -26,7 +26,8 @@ public class If extends IFunction {
 
 	@Override
 	public String wrap(int dbType, String functionName, boolean hasArgs, String... args) {
-		if (dbType == DBType.MYSQL || dbType == DBType.TIDB || dbType == DBType.MYSQL57 || dbType == DBType.DORIS) {
+		if (dbType == DBType.MYSQL || dbType == DBType.TIDB || dbType == DBType.MYSQL57 || dbType == DBType.DORIS
+				|| dbType == DBType.STARROCKS) {
 			return super.IGNORE;
 		}
 		if (args == null || args.length < 3) {

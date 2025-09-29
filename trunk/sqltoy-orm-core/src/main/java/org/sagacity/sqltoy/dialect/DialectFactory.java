@@ -261,7 +261,8 @@ public class DialectFactory {
 			dialectSqlWrapper = new H2Dialect();
 			break;
 		}
-		case DBType.DORIS: {
+		case DBType.DORIS:
+		case DBType.STARROCKS: {
 			dialectSqlWrapper = new DorisDialect();
 			break;
 		}
@@ -2349,7 +2350,8 @@ public class DialectFactory {
 							if (extend.fetchSize != -1) {
 								pst.setFetchSize(extend.fetchSize);
 							} // mysql 有点特殊必须要设置为MIN_VALUE
-							else if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.DORIS) {
+							else if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.DORIS
+									|| dbType == DBType.STARROCKS) {
 								pst.setFetchSize(Integer.MIN_VALUE);
 							} // 默认为1000
 							else {

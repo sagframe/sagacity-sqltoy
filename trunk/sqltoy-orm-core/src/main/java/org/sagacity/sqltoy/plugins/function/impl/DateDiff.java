@@ -36,7 +36,8 @@ public class DateDiff extends IFunction {
 		String unitType = realArgs[0].toUpperCase().replace("'", "").replace("\"", "");
 		String realFunctionName = "datediff";
 		String[][] unitConstracts = null;
-		if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.DORIS) {
+		if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.DORIS
+				|| dbType == DBType.STARROCKS) {
 			unitConstracts = new String[][] { { "DD", "DAY" }, { "MM", "MONTH" }, { "YY", "YEAR" },
 					{ "YYYY", "YEAR" } };
 			realFunctionName = "timestampdiff";

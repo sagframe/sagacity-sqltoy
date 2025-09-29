@@ -199,7 +199,7 @@ public class TidbDialect implements Dialect {
 			final Boolean autoCommit, final String tableName) throws Exception {
 		// mysql只支持identity,sequence 值忽略
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-		boolean isAssignPK = MySqlDialectUtils.isAssignPKValue(entityMeta.getIdStrategy());
+		boolean isAssignPK = MySqlDialectUtils.isAssignPKValue(entityMeta.getIdStrategy(), dbType);
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 				entityMeta.getIdStrategy(), NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK,
 				tableName).replaceFirst("(?i)insert ", "insert ignore ");
@@ -256,7 +256,7 @@ public class TidbDialect implements Dialect {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		// save行为根据主键是否赋值情况调整最终的主键策略
 		PKStrategy pkStrategy = DialectUtils.getSavePKStrategy(entityMeta, entity, dbType);
-		boolean isAssignPK = MySqlDialectUtils.isAssignPKValue(pkStrategy);
+		boolean isAssignPK = MySqlDialectUtils.isAssignPKValue(pkStrategy, dbType);
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 				pkStrategy, NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName);
 		return DialectUtils.save(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entity,
@@ -266,13 +266,13 @@ public class TidbDialect implements Dialect {
 						return DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
 								entityMeta, entityMeta.getIdStrategy(), NVL_FUNCTION,
 								"NEXTVAL FOR " + entityMeta.getSequence(),
-								MySqlDialectUtils.isAssignPKValue(entityMeta.getIdStrategy()), null);
+								MySqlDialectUtils.isAssignPKValue(entityMeta.getIdStrategy(), dbType), null);
 					}
 				}, new GenerateSavePKStrategy() {
 					@Override
 					public SavePKStrategy generate(EntityMeta entityMeta) {
 						return new SavePKStrategy(entityMeta.getIdStrategy(),
-								MySqlDialectUtils.isAssignPKValue(entityMeta.getIdStrategy()));
+								MySqlDialectUtils.isAssignPKValue(entityMeta.getIdStrategy(), dbType));
 					}
 				}, conn, dbType);
 	}
@@ -290,7 +290,7 @@ public class TidbDialect implements Dialect {
 			final Boolean autoCommit, final String tableName) throws Exception {
 		// mysql只支持identity,sequence 值忽略
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-		boolean isAssignPK = MySqlDialectUtils.isAssignPKValue(entityMeta.getIdStrategy());
+		boolean isAssignPK = MySqlDialectUtils.isAssignPKValue(entityMeta.getIdStrategy(), dbType);
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 				entityMeta.getIdStrategy(), NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK,
 				tableName);
