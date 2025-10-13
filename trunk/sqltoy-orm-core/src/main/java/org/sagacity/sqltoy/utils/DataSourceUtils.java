@@ -880,10 +880,10 @@ public class DataSourceUtils {
 				|| dbType == DBType.KINGBASE || dbType == DBType.MOGDB || dbType == DBType.STARDB
 				|| dbType == DBType.OSCAR || dbType == DBType.OPENGAUSS || dbType == DBType.VASTBASE
 				|| dbType == DBType.POSTGRESQL || dbType == DBType.CLICKHOUSE || dbType == DBType.H2
-				|| dbType == DBType.SQLITE || dbType == DBType.ORACLE11 || dbType == DBType.DORIS
-				|| dbType == DBType.STARROCKS) {
+				|| dbType == DBType.SQLITE || dbType == DBType.ORACLE11) {
 			return true;
 		}
+		// update 2025-10-13 starrocks不支持
 		return false;
 	}
 }
