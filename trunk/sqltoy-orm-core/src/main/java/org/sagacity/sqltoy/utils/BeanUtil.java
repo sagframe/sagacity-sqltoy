@@ -425,7 +425,6 @@ public class BeanUtil {
 		Method[] methods = voClass.getMethods();
 		Integer[] fieldsType = new Integer[indexSize];
 		String methodName;
-		String typeName;
 		int methodCnt = methods.length;
 		String property;
 		Method method;
@@ -439,54 +438,7 @@ public class BeanUtil {
 				if (!void.class.equals(method.getReturnType()) && method.getParameterTypes().length == 0
 						&& (methodName.equals("get".concat(property)) || methodName.equals("is".concat(property))
 								|| (methodName.startsWith("is") && methodName.equals(property)))) {
-					typeName = method.getReturnType().getSimpleName().toLowerCase();
-					if ("string".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.VARCHAR;
-					} else if ("integer".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.INTEGER;
-					} else if ("bigdecimal".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.DECIMAL;
-					} else if ("date".equals(typeName)|| "localdate".equals(typeName)||"datetime".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.DATE;
-					} else if ("timestamp".equals(typeName) || "localdatetime".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.TIMESTAMP;
-					} else if ("offsetdatetime".equals(typeName) || "zoneddatetime".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.TIMESTAMP_WITH_TIMEZONE;
-					} else if ("int".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.INTEGER;
-					} else if ("long".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.NUMERIC;
-					} else if ("double".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.DOUBLE;
-					} else if ("clob".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.CLOB;
-					} else if ("biginteger".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.BIGINT;
-					} else if ("blob".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.BLOB;
-					} else if ("byte[]".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.BINARY;
-					} else if ("boolean".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.BOOLEAN;
-					} else if ("char".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.CHAR;
-					} else if ("number".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.NUMERIC;
-					} else if ("short".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.NUMERIC;
-					} else if ("float".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.FLOAT;
-					} else if ("time".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.TIME;
-					} else if ("offsettime".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.TIME_WITH_TIMEZONE;
-					} else if ("byte".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.TINYINT;
-					} else if (typeName.endsWith("[]")) {
-						fieldsType[i] = java.sql.Types.ARRAY;
-					} else {
-						fieldsType[i] = java.sql.Types.NULL;
-					}
+					fieldsType[i] = getSqlType(method.getReturnType().getSimpleName().toLowerCase());
 					break;
 				}
 			}
@@ -502,64 +454,66 @@ public class BeanUtil {
 		Integer[] fieldsType = new Integer[indexSize];
 		RecordComponent[] components = voClass.getRecordComponents();
 		String propName;
-		String typeName;
 		for (int i = 0; i < indexSize; i++) {
 			propName = properties[i];
 			for (RecordComponent component : components) {
 				if (propName.equalsIgnoreCase(component.getName())) {
-					typeName = component.getType().getSimpleName().toLowerCase();
-					if ("string".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.VARCHAR;
-					} else if ("integer".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.INTEGER;
-					} else if ("bigdecimal".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.DECIMAL;
-					} else if ("date".equals(typeName) || "localdate".equals(typeName)||"datetime".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.DATE;
-					} else if ("timestamp".equals(typeName) || "localdatetime".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.TIMESTAMP;
-					} else if ("offsetdatetime".equals(typeName) || "zoneddatetime".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.TIMESTAMP_WITH_TIMEZONE;
-					} else if ("int".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.INTEGER;
-					} else if ("long".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.NUMERIC;
-					} else if ("double".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.DOUBLE;
-					} else if ("clob".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.CLOB;
-					} else if ("biginteger".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.BIGINT;
-					} else if ("blob".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.BLOB;
-					} else if ("byte[]".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.BINARY;
-					} else if ("boolean".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.BOOLEAN;
-					} else if ("char".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.CHAR;
-					} else if ("number".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.NUMERIC;
-					} else if ("short".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.NUMERIC;
-					} else if ("float".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.FLOAT;
-					} else if ("time".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.TIME;
-					} else if ("offsettime".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.TIME_WITH_TIMEZONE;
-					} else if ("byte".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.TINYINT;
-					} else if (typeName.endsWith("[]")) {
-						fieldsType[i] = java.sql.Types.ARRAY;
-					} else {
-						fieldsType[i] = java.sql.Types.NULL;
-					}
+					fieldsType[i] = getSqlType(component.getType().getSimpleName().toLowerCase());
 					break;
 				}
 			}
 		}
 		return fieldsType;
+	}
+
+	private static int getSqlType(String typeName) {
+		if ("string".equals(typeName)) {
+			return java.sql.Types.VARCHAR;
+		} else if ("integer".equals(typeName)) {
+			return java.sql.Types.INTEGER;
+		} else if ("bigdecimal".equals(typeName)) {
+			return java.sql.Types.DECIMAL;
+		} else if ("date".equals(typeName) || "localdate".equals(typeName) || "datetime".equals(typeName)) {
+			return java.sql.Types.DATE;
+		} else if ("timestamp".equals(typeName) || "localdatetime".equals(typeName)) {
+			return java.sql.Types.TIMESTAMP;
+		} else if ("offsetdatetime".equals(typeName) || "zoneddatetime".equals(typeName)) {
+			return java.sql.Types.TIMESTAMP_WITH_TIMEZONE;
+		} else if ("int".equals(typeName)) {
+			return java.sql.Types.INTEGER;
+		} else if ("long".equals(typeName)) {
+			return java.sql.Types.NUMERIC;
+		} else if ("double".equals(typeName)) {
+			return java.sql.Types.DOUBLE;
+		} else if ("clob".equals(typeName)) {
+			return java.sql.Types.CLOB;
+		} else if ("biginteger".equals(typeName)) {
+			return java.sql.Types.BIGINT;
+		} else if ("blob".equals(typeName)) {
+			return java.sql.Types.BLOB;
+		} else if ("byte[]".equals(typeName)) {
+			return java.sql.Types.BINARY;
+		} else if ("boolean".equals(typeName)) {
+			return java.sql.Types.BOOLEAN;
+		} else if ("char".equals(typeName)) {
+			return java.sql.Types.CHAR;
+		} else if ("number".equals(typeName)) {
+			return java.sql.Types.NUMERIC;
+		} else if ("short".equals(typeName)) {
+			return java.sql.Types.NUMERIC;
+		} else if ("float".equals(typeName)) {
+			return java.sql.Types.FLOAT;
+		} else if ("time".equals(typeName)) {
+			return java.sql.Types.TIME;
+		} else if ("offsettime".equals(typeName)) {
+			return java.sql.Types.TIME_WITH_TIMEZONE;
+		} else if ("byte".equals(typeName)) {
+			return java.sql.Types.TINYINT;
+		} else if (typeName.endsWith("[]")) {
+			return java.sql.Types.ARRAY;
+		} else {
+			return java.sql.Types.NULL;
+		}
 	}
 
 	/**
