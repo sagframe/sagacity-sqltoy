@@ -227,6 +227,17 @@ public class DDLUtils {
 				typeName = "TEXT";
 			}
 			break;
+		case java.sql.Types.TIMESTAMP_WITH_TIMEZONE:
+			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB
+					|| dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.STARDB
+					|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE || dbType == DBType.ORACLE) {
+				typeName = setLength("TIMESTAMP WITH TIME ZONE", true, colMeta);
+			} else if (dbType == DBType.SQLSERVER) {
+				typeName = setLength("DATETIMEOFFSET", true, colMeta);
+			} else {
+				typeName = "TIMESTAMP";
+			}
+			break;
 		case java.sql.Types.BLOB:
 			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB
 					|| dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.STARDB
@@ -286,7 +297,7 @@ public class DDLUtils {
 			break;
 		case java.sql.Types.DATE:
 			if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.SQLSERVER
-					|| dbType == DBType.DORIS|| dbType == DBType.STARROCKS) {
+					|| dbType == DBType.DORIS || dbType == DBType.STARROCKS) {
 				typeName = "DATETIME";
 			} else {
 				typeName = "DATE";

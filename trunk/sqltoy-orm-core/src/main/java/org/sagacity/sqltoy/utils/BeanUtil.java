@@ -19,6 +19,10 @@ import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.OffsetDateTime;
+import java.time.OffsetTime;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -31,6 +35,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
+import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.config.annotation.Entity;
 import org.sagacity.sqltoy.config.annotation.OneToMany;
@@ -420,7 +425,6 @@ public class BeanUtil {
 		Method[] methods = voClass.getMethods();
 		Integer[] fieldsType = new Integer[indexSize];
 		String methodName;
-		String typeName;
 		int methodCnt = methods.length;
 		String property;
 		Method method;
@@ -434,52 +438,7 @@ public class BeanUtil {
 				if (!void.class.equals(method.getReturnType()) && method.getParameterTypes().length == 0
 						&& (methodName.equals("get".concat(property)) || methodName.equals("is".concat(property))
 								|| (methodName.startsWith("is") && methodName.equals(property)))) {
-					typeName = method.getReturnType().getSimpleName().toLowerCase();
-					if ("string".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.VARCHAR;
-					} else if ("integer".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.INTEGER;
-					} else if ("bigdecimal".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.DECIMAL;
-					} else if ("date".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.DATE;
-					} else if ("timestamp".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.TIMESTAMP;
-					} else if ("int".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.INTEGER;
-					} else if ("long".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.NUMERIC;
-					} else if ("double".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.DOUBLE;
-					} else if ("clob".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.CLOB;
-					} else if ("biginteger".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.BIGINT;
-					} else if ("blob".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.BLOB;
-					} else if ("byte[]".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.BINARY;
-					} else if ("boolean".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.BOOLEAN;
-					} else if ("char".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.CHAR;
-					} else if ("number".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.NUMERIC;
-					} else if ("short".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.NUMERIC;
-					} else if ("float".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.FLOAT;
-					} else if ("datetime".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.DATE;
-					} else if ("time".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.TIME;
-					} else if ("byte".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.TINYINT;
-					} else if (typeName.endsWith("[]")) {
-						fieldsType[i] = java.sql.Types.ARRAY;
-					} else {
-						fieldsType[i] = java.sql.Types.NULL;
-					}
+					fieldsType[i] = getSqlType(method.getReturnType().getSimpleName().toLowerCase());
 					break;
 				}
 			}
@@ -495,62 +454,66 @@ public class BeanUtil {
 		Integer[] fieldsType = new Integer[indexSize];
 		RecordComponent[] components = voClass.getRecordComponents();
 		String propName;
-		String typeName;
 		for (int i = 0; i < indexSize; i++) {
 			propName = properties[i];
 			for (RecordComponent component : components) {
 				if (propName.equalsIgnoreCase(component.getName())) {
-					typeName = component.getType().getSimpleName().toLowerCase();
-					if ("string".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.VARCHAR;
-					} else if ("integer".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.INTEGER;
-					} else if ("bigdecimal".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.DECIMAL;
-					} else if ("date".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.DATE;
-					} else if ("timestamp".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.TIMESTAMP;
-					} else if ("int".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.INTEGER;
-					} else if ("long".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.NUMERIC;
-					} else if ("double".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.DOUBLE;
-					} else if ("clob".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.CLOB;
-					} else if ("biginteger".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.BIGINT;
-					} else if ("blob".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.BLOB;
-					} else if ("byte[]".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.BINARY;
-					} else if ("boolean".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.BOOLEAN;
-					} else if ("char".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.CHAR;
-					} else if ("number".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.NUMERIC;
-					} else if ("short".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.NUMERIC;
-					} else if ("float".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.FLOAT;
-					} else if ("datetime".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.DATE;
-					} else if ("time".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.TIME;
-					} else if ("byte".equals(typeName)) {
-						fieldsType[i] = java.sql.Types.TINYINT;
-					} else if (typeName.endsWith("[]")) {
-						fieldsType[i] = java.sql.Types.ARRAY;
-					} else {
-						fieldsType[i] = java.sql.Types.NULL;
-					}
+					fieldsType[i] = getSqlType(component.getType().getSimpleName().toLowerCase());
 					break;
 				}
 			}
 		}
 		return fieldsType;
+	}
+
+	private static int getSqlType(String typeName) {
+		if ("string".equals(typeName)) {
+			return java.sql.Types.VARCHAR;
+		} else if ("integer".equals(typeName)) {
+			return java.sql.Types.INTEGER;
+		} else if ("bigdecimal".equals(typeName)) {
+			return java.sql.Types.DECIMAL;
+		} else if ("date".equals(typeName) || "localdate".equals(typeName) || "datetime".equals(typeName)) {
+			return java.sql.Types.DATE;
+		} else if ("timestamp".equals(typeName) || "localdatetime".equals(typeName)) {
+			return java.sql.Types.TIMESTAMP;
+		} else if ("offsetdatetime".equals(typeName) || "zoneddatetime".equals(typeName)) {
+			return java.sql.Types.TIMESTAMP_WITH_TIMEZONE;
+		} else if ("int".equals(typeName)) {
+			return java.sql.Types.INTEGER;
+		} else if ("long".equals(typeName)) {
+			return java.sql.Types.NUMERIC;
+		} else if ("double".equals(typeName)) {
+			return java.sql.Types.DOUBLE;
+		} else if ("clob".equals(typeName)) {
+			return java.sql.Types.CLOB;
+		} else if ("biginteger".equals(typeName)) {
+			return java.sql.Types.BIGINT;
+		} else if ("blob".equals(typeName)) {
+			return java.sql.Types.BLOB;
+		} else if ("byte[]".equals(typeName)) {
+			return java.sql.Types.BINARY;
+		} else if ("boolean".equals(typeName)) {
+			return java.sql.Types.BOOLEAN;
+		} else if ("char".equals(typeName)) {
+			return java.sql.Types.CHAR;
+		} else if ("number".equals(typeName)) {
+			return java.sql.Types.NUMERIC;
+		} else if ("short".equals(typeName)) {
+			return java.sql.Types.NUMERIC;
+		} else if ("float".equals(typeName)) {
+			return java.sql.Types.FLOAT;
+		} else if ("time".equals(typeName)) {
+			return java.sql.Types.TIME;
+		} else if ("offsettime".equals(typeName)) {
+			return java.sql.Types.TIME_WITH_TIMEZONE;
+		} else if ("byte".equals(typeName)) {
+			return java.sql.Types.TINYINT;
+		} else if (typeName.endsWith("[]")) {
+			return java.sql.Types.ARRAY;
+		} else {
+			return java.sql.Types.NULL;
+		}
 	}
 
 	/**
@@ -629,9 +592,11 @@ public class BeanUtil {
 		}
 		// 日期类型
 		if ((target instanceof Date || target instanceof LocalDate || target instanceof LocalTime
-				|| target instanceof LocalDateTime)
+				|| target instanceof LocalDateTime || target instanceof OffsetDateTime
+				|| target instanceof ZonedDateTime)
 				|| (compared instanceof Date || compared instanceof LocalDate || compared instanceof LocalTime
-						|| compared instanceof LocalDateTime)) {
+						|| compared instanceof LocalDateTime || compared instanceof OffsetDateTime
+						|| compared instanceof ZonedDateTime)) {
 			return DateUtil.convertDateObject(target).compareTo(DateUtil.convertDateObject(compared));
 		} // 数字
 		else if ((target instanceof Number) || (compared instanceof Number)) {
@@ -753,7 +718,47 @@ public class BeanUtil {
 			if ("oracle.sql.TIMESTAMP".equals(paramValue.getClass().getTypeName())) {
 				return oracleTimeStampConvert(paramValue).toLocalDateTime();
 			}
+			if (paramValue instanceof OffsetDateTime) {
+				return ((OffsetDateTime) paramValue).toLocalDateTime();
+			}
+			if (paramValue instanceof ZonedDateTime) {
+				return ((ZonedDateTime) paramValue).toLocalDateTime();
+			}
 			return DateUtil.asLocalDateTime(DateUtil.convertDateObject(paramValue));
+		}
+		if (DataType.offsetDateTimeType == typeValue) {
+			if (paramValue instanceof OffsetDateTime) {
+				return (OffsetDateTime) paramValue;
+			}
+			if (paramValue instanceof LocalDateTime) {
+				return ((LocalDateTime) paramValue).atZone(SqlToyConstants.getZoneId()).toOffsetDateTime();
+			}
+			if (paramValue instanceof ZonedDateTime) {
+				return ((ZonedDateTime) paramValue).toOffsetDateTime();
+			}
+			// 修复oracle.sql.timestamp 转localdatetime的缺陷
+			if ("oracle.sql.TIMESTAMP".equals(paramValue.getClass().getTypeName())) {
+				return oracleTimeStampConvert(paramValue).toLocalDateTime().atZone(SqlToyConstants.getZoneId())
+						.toOffsetDateTime();
+			}
+			return DateUtil.asLocalDateTime(DateUtil.convertDateObject(paramValue)).atZone(SqlToyConstants.getZoneId())
+					.toOffsetDateTime();
+		}
+		if (DataType.zonedDateTimeType == typeValue) {
+			if (paramValue instanceof ZonedDateTime) {
+				return (ZonedDateTime) paramValue;
+			}
+			if (paramValue instanceof OffsetDateTime) {
+				return ((OffsetDateTime) paramValue).toZonedDateTime();
+			}
+			if (paramValue instanceof LocalDateTime) {
+				return ((LocalDateTime) paramValue).atZone(SqlToyConstants.getZoneId());
+			}
+			// 修复oracle.sql.timestamp 转localdatetime的缺陷
+			if ("oracle.sql.TIMESTAMP".equals(paramValue.getClass().getTypeName())) {
+				return oracleTimeStampConvert(paramValue).toLocalDateTime().atZone(SqlToyConstants.getZoneId());
+			}
+			return DateUtil.asLocalDateTime(DateUtil.convertDateObject(paramValue)).atZone(SqlToyConstants.getZoneId());
 		}
 		// 9 第五
 		if (DataType.localDateType == typeValue) {
@@ -769,6 +774,12 @@ public class BeanUtil {
 		if (DataType.timestampType == typeValue) {
 			if (paramValue instanceof java.sql.Timestamp) {
 				return (java.sql.Timestamp) paramValue;
+			}
+			if (paramValue instanceof OffsetDateTime) {
+				return Timestamp.valueOf((((OffsetDateTime) paramValue).toLocalDateTime()));
+			}
+			if (paramValue instanceof ZonedDateTime) {
+				return Timestamp.valueOf((((ZonedDateTime) paramValue).toLocalDateTime()));
 			}
 			if (paramValue instanceof java.util.Date) {
 				return new Timestamp(((java.util.Date) paramValue).getTime());
@@ -824,6 +835,12 @@ public class BeanUtil {
 			if (paramValue instanceof Number) {
 				return new java.util.Date(((Number) paramValue).longValue());
 			}
+			if (paramValue instanceof OffsetDateTime) {
+				return java.util.Date.from(((OffsetDateTime) paramValue).toInstant());
+			}
+			if (paramValue instanceof ZonedDateTime) {
+				return java.util.Date.from(((ZonedDateTime) paramValue).toInstant());
+			}
 			if ("oracle.sql.TIMESTAMP".equals(paramValue.getClass().getTypeName())) {
 				return oracleDateConvert(paramValue);
 			}
@@ -850,10 +867,31 @@ public class BeanUtil {
 			if (paramValue instanceof LocalTime) {
 				return (LocalTime) paramValue;
 			}
+			if (paramValue instanceof OffsetTime) {
+				return ((OffsetTime) paramValue).toLocalTime();
+			}
 			if ("oracle.sql.TIMESTAMP".equals(paramValue.getClass().getTypeName())) {
 				return DateUtil.asLocalTime(oracleTimeStampConvert(paramValue));
 			}
 			return DateUtil.asLocalTime(DateUtil.convertDateObject(paramValue));
+		}
+		// update 2025-11-3 增加带时区的时间类型
+		if (DataType.offsetTimeType == typeValue) {
+			if (paramValue instanceof OffsetTime) {
+				return (OffsetTime) paramValue;
+			}
+			LocalTime localTime;
+			if (paramValue instanceof LocalTime) {
+				localTime = ((LocalTime) paramValue);
+			} else if ("oracle.sql.TIMESTAMP".equals(paramValue.getClass().getTypeName())) {
+				localTime = DateUtil.asLocalTime(oracleTimeStampConvert(paramValue));
+			} else {
+				localTime = DateUtil.asLocalTime(DateUtil.convertDateObject(paramValue));
+			}
+			// 2. 获取该时区在当前日期的偏移量（需结合日期，这里用当天）
+			ZoneOffset offset = SqlToyConstants.getZoneId().getRules()
+					.getOffset(LocalDateTime.of(LocalDate.now(), localTime));
+			return localTime.atOffset(offset);
 		}
 		// 19
 		if (DataType.primitiveLongType == typeValue) {
@@ -932,6 +970,12 @@ public class BeanUtil {
 			if ("oracle.sql.TIMESTAMP".equals(paramValue.getClass().getTypeName())) {
 				return new java.sql.Date(oracleDateConvert(paramValue).getTime());
 			}
+			if (paramValue instanceof OffsetDateTime) {
+				return java.sql.Date.valueOf(((OffsetDateTime) paramValue).toLocalDate());
+			}
+			if (paramValue instanceof ZonedDateTime) {
+				return java.sql.Date.valueOf(((ZonedDateTime) paramValue).toLocalDate());
+			}
 			String valueStr = paramValue.toString();
 			if ("".equals(valueStr.trim())) {
 				return null;
@@ -963,6 +1007,9 @@ public class BeanUtil {
 			}
 			if ("oracle.sql.TIMESTAMP".equals(paramValue.getClass().getTypeName())) {
 				return new java.sql.Time(oracleDateConvert(paramValue).getTime());
+			}
+			if (paramValue instanceof OffsetTime) {
+				return java.sql.Time.valueOf(((OffsetTime) paramValue).toLocalTime());
 			}
 			return new java.sql.Time(DateUtil.parseString(paramValue.toString()).getTime());
 		}
