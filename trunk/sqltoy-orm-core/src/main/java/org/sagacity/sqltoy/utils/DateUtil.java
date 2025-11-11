@@ -11,7 +11,10 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.OffsetDateTime;
+import java.time.OffsetTime;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -580,6 +583,10 @@ public class DateUtil {
 			return result;
 		} else if (dt instanceof java.time.LocalDateTime) {
 			return (LocalDateTime) dt;
+		} else if (dt instanceof java.time.OffsetDateTime) {
+			return ((OffsetDateTime) dt).toLocalDateTime();
+		} else if (dt instanceof java.time.ZonedDateTime) {
+			return ((ZonedDateTime) dt).toLocalDateTime();
 		} else if (dt instanceof java.lang.Number) {
 			return parseLocalDateTime(dt.toString().trim());
 		} else if (dt instanceof java.time.LocalTime) {
@@ -615,6 +622,10 @@ public class DateUtil {
 			result = asDate((LocalDate) dt);
 		} else if (dt instanceof java.time.LocalDateTime) {
 			result = asDate((LocalDateTime) dt);
+		} else if (dt instanceof java.time.OffsetDateTime) {
+			result = asDate(((OffsetDateTime) dt).toLocalDateTime());
+		} else if (dt instanceof java.time.ZonedDateTime) {
+			result = asDate(((ZonedDateTime) dt).toLocalDateTime());
 		} else if (dt instanceof java.lang.Number) {
 			String dtStr = dt.toString().trim();
 			// 13位表示毫秒数
@@ -625,6 +636,8 @@ public class DateUtil {
 			}
 		} else if (dt instanceof java.time.LocalTime) {
 			result = asDate((LocalTime) dt);
+		}  else if (dt instanceof java.time.OffsetTime) {
+			result = asDate(((OffsetTime) dt).toLocalTime());
 		} else {
 			result = parseString(dt.toString().trim(), format, locale);
 		}
@@ -666,6 +679,10 @@ public class DateUtil {
 		}
 		if (dt instanceof LocalDateTime) {
 			return DateTimeFormatter.ofPattern(format).format((LocalDateTime) dt);
+		} else if (dt instanceof OffsetDateTime) {
+			return DateTimeFormatter.ofPattern(format).format(((OffsetDateTime) dt).toLocalDateTime());
+		} else if (dt instanceof ZonedDateTime) {
+			return DateTimeFormatter.ofPattern(format).format(((ZonedDateTime) dt).toLocalDateTime());
 		} else if (dt instanceof LocalTime) {
 			return DateTimeFormatter.ofPattern(format).format((LocalTime) dt);
 		} else if (dt instanceof LocalDate) {
@@ -710,11 +727,38 @@ public class DateUtil {
 	 * @return
 	 */
 	public static java.sql.Date getSqlDate(Object date) {
-		return new java.sql.Date(convertDateObject(date == null ? new Date() : date).getTime());
+		if (date == null) {
+			return new java.sql.Date(System.currentTimeMillis());
+		}
+		if (date instanceof LocalDate) {
+			return java.sql.Date.valueOf((LocalDate) date);
+		}
+		if (date instanceof LocalDateTime) {
+			return java.sql.Date.valueOf(((LocalDateTime) date).toLocalDate());
+		}
+		if (date instanceof OffsetDateTime) {
+			return java.sql.Date.valueOf(((OffsetDateTime) date).toLocalDate());
+		}
+		if (date instanceof ZonedDateTime) {
+			return java.sql.Date.valueOf(((ZonedDateTime) date).toLocalDate());
+		}
+		return new java.sql.Date(convertDateObject(date).getTime());
 	}
 
 	public static java.sql.Timestamp getTimestamp(Object date) {
-		return new Timestamp(date == null ? System.currentTimeMillis() : convertDateObject(date).getTime());
+		if (date == null) {
+			return new Timestamp(System.currentTimeMillis());
+		}
+		if (date instanceof LocalDateTime) {
+			return Timestamp.valueOf((LocalDateTime) date);
+		}
+		if (date instanceof OffsetDateTime) {
+			return Timestamp.valueOf(((OffsetDateTime) date).toLocalDateTime());
+		}
+		if (date instanceof ZonedDateTime) {
+			return Timestamp.valueOf(((ZonedDateTime) date).toLocalDateTime());
+		}
+		return new Timestamp(convertDateObject(date).getTime());
 	}
 
 	/**
@@ -737,6 +781,10 @@ public class DateUtil {
 			return (LocalDate) date;
 		} else if (date instanceof LocalDateTime) {
 			return ((LocalDateTime) date).toLocalDate();
+		} else if (date instanceof OffsetDateTime) {
+			return ((OffsetDateTime) date).toLocalDate();
+		} else if (date instanceof ZonedDateTime) {
+			return ((ZonedDateTime) date).toLocalDate();
 		}
 		return asLocalDate(convertDateObject(date));
 	}
@@ -751,6 +799,10 @@ public class DateUtil {
 		}
 		if (date instanceof LocalDateTime) {
 			return (LocalDateTime) date;
+		} else if (date instanceof OffsetDateTime) {
+			return ((OffsetDateTime) date).toLocalDateTime();
+		} else if (date instanceof ZonedDateTime) {
+			return ((ZonedDateTime) date).toLocalDateTime();
 		}
 		return asLocalDateTime(convertDateObject(date));
 	}

@@ -9,6 +9,9 @@ import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.OffsetDateTime;
+import java.time.OffsetTime;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -694,8 +697,12 @@ public class EntityManager {
 				fieldMeta.setType(java.sql.Types.DATE);
 			} else if (fieldType.equals(Timestamp.class)) {
 				fieldMeta.setType(java.sql.Types.TIMESTAMP);
+			} else if (fieldType.equals(OffsetDateTime.class) || fieldType.equals(ZonedDateTime.class)) {
+				fieldMeta.setType(java.sql.Types.TIMESTAMP_WITH_TIMEZONE);
 			} else if (fieldType.equals(LocalTime.class) || fieldType.equals(Time.class)) {
 				fieldMeta.setType(java.sql.Types.TIME);
+			} else if (fieldType.equals(OffsetTime.class)) {
+				fieldMeta.setType(java.sql.Types.TIME_WITH_TIMEZONE);
 			} else if (fieldType.equals(Long.class) || fieldType.equals(BigInteger.class)) {
 				fieldMeta.setType(java.sql.Types.BIGINT);
 			} else if (fieldType.equals(Integer.class) || fieldType.equals(int.class) || fieldType.equals(long.class)
@@ -928,7 +935,7 @@ public class EntityManager {
 				matchedWhere = StringUtil.matches(loadLow, "\\s+where\\s+");
 				if (matchedWhere) {
 					cascadeModel.setLoadSubTableSql(loadSql);
-					//自定义sql含in
+					// 自定义sql含in
 					if (StringUtil.matches(loadLow, "\\Win\\s*\\(")) {
 						cascadeModel.setLoadSqlSupportBatch(true);
 					}
