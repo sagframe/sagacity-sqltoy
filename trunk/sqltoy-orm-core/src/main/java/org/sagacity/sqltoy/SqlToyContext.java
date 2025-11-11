@@ -401,7 +401,7 @@ public class SqlToyContext {
 	 * 自动创建表
 	 */
 	private Boolean autoDDL = false;
-	
+
 	/**
 	 * ddl大小写
 	 */

@@ -38,12 +38,15 @@ public class DataType {
 	// 日期类型
 	public static final int localDateType = 41;
 	public static final int timestampType = 42;
+
 	public static final int localDateTimeType = 43;
 	public static final int localTimeType = 44;
 	public static final int dateType = 45;
 	public static final int sqlDateType = 46;
 	public static final int sqlTimeType = 47;
-
+	public static final int offsetDateTimeType = 48;
+	public static final int zonedDateTimeType = 49;
+	public static final int offsetTimeType = 50;
 	// 数组类型
 	public static final int aryCharType = 91;
 	public static final int aryByteType = 92;
@@ -152,8 +155,17 @@ public class DataType {
 		if ("java.time.LocalDateTime".equals(typeName)) {
 			return localDateTimeType;
 		}
+		if ("java.time.OffsetDateTime".equals(typeName)) {
+			return offsetDateTimeType;
+		}
+		if ("java.time.ZonedDateTime".equals(typeName)) {
+			return zonedDateTimeType;
+		}
 		if ("java.time.LocalTime".equals(typeName)) {
 			return localTimeType;
+		}
+		if ("java.time.OffsetTime".equals(typeName)) {
+			return offsetTimeType;
 		}
 		// 数组类型
 		if ("char[]".equals(typeName)) {

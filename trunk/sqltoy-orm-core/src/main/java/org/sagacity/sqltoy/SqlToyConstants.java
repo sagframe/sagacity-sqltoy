@@ -2,6 +2,7 @@ package org.sagacity.sqltoy;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -259,6 +260,19 @@ public class SqlToyConstants {
 			return true;
 		}
 		return false;
+	}
+
+	/**
+	 * 获得默认时区
+	 * @return
+	 */
+	public static ZoneId getZoneId() {
+		String zoneStr = getKeyValue("sqltoy.default_zone");
+		if (zoneStr == null) {
+			return ZoneId.systemDefault();
+		} else {
+			return ZoneId.of(zoneStr);
+		}
 	}
 
 	/**
