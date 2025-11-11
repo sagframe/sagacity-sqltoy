@@ -29,6 +29,13 @@ public class DateUtilTest {
 	}
 
 	@Test
+	public void testGetOffsetDateTime() {
+		TIMESTAMP timestamp = new TIMESTAMP(DateUtil.getTimestamp(null));
+		Date date = DateUtil.convertDateObject(timestamp, null, null);
+		System.err.println(date);
+	}
+	
+	@Test
 	public void testOracleTimestampAsLocalDate() throws SQLException {
 		TIMESTAMP timestamp = new TIMESTAMP(DateUtil.getTimestamp(null));
 		LocalTime date = DateUtil.asLocalTime(timestamp.timestampValue());

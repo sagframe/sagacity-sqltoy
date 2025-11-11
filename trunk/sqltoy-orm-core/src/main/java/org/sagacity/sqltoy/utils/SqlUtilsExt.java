@@ -8,7 +8,12 @@ import java.math.BigInteger;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.OffsetDateTime;
+import java.time.OffsetTime;
+import java.time.ZoneOffset;
 import java.util.Date;
 import java.util.List;
 
@@ -226,6 +231,13 @@ public class SqlUtilsExt {
 				} else {
 					realValue = DateUtil.getTimestamp(defaultValue);
 				}
+			} else if (jdbcType == java.sql.Types.TIMESTAMP_WITH_TIMEZONE) {
+				if (isBlank || isCurrentTime(defaultValue)) {
+					realValue = OffsetDateTime.now();
+				} else {
+					realValue = DateUtil.getDateTime(defaultValue).atZone(SqlToyConstants.getZoneId())
+							.toOffsetDateTime();
+				}
 			} else if (jdbcType == java.sql.Types.DECIMAL || jdbcType == java.sql.Types.NUMERIC) {
 				if (isBlank) {
 					return BigInteger.ZERO;
@@ -247,6 +259,16 @@ public class SqlUtilsExt {
 					realValue = LocalTime.now();
 				} else {
 					realValue = DateUtil.asLocalTime(DateUtil.convertDateObject(defaultValue));
+				}
+			} else if (jdbcType == java.sql.Types.TIME_WITH_TIMEZONE) {
+				if (isBlank || isCurrentTime(defaultValue)) {
+					realValue = OffsetTime.now();
+				} else {
+					LocalTime localTime = DateUtil.asLocalTime(DateUtil.convertDateObject(defaultValue));
+					// 2. 获取该时区在当前日期的偏移量（需结合日期，这里用当天）
+					ZoneOffset offset = SqlToyConstants.getZoneId().getRules()
+							.getOffset(LocalDateTime.of(LocalDate.now(), localTime));
+					realValue = localTime.atOffset(offset);
 				}
 			} else if (jdbcType == java.sql.Types.DOUBLE) {
 				if (isBlank) {
