@@ -205,12 +205,13 @@ public class MacroIfLogic {
 	 * @todo 两个数据进行比较
 	 * @param value
 	 * @param compareType
-	 * @param compareValue
+	 * @param originalCompareValue
 	 * @return
 	 */
-	public static boolean compare(Object value, String compareType, String compareValue) {
+	public static boolean compare(Object value, String compareType, String originalCompareValue) {
 		// 剔除首尾字符串标志符号
-		compareValue = removeStartEndQuote(compareValue);
+		originalCompareValue = removeStartEndQuote(originalCompareValue);
+		String compareValue = originalCompareValue;
 		// 只支持加减运算
 		String append = "0";
 		String[] calculateStr = { "+", "-" };
@@ -219,10 +220,13 @@ public class MacroIfLogic {
 		for (String calculate : calculateStr) {
 			if (compareValue.trim().indexOf(calculate) > 0) {
 				tmpAry = compareValue.split("+".equals(calculate) ? "\\+" : "\\-");
-				// 正负数字
-				append = calculate + tmpAry[1].trim();
-				compareValue = tmpAry[0].trim();
-				break;
+				// ±符号后面必须是数字才能纳入运算(update 2025-11-17)
+				if (NumberUtil.isNumber(tmpAry[1].trim())) {
+					compareValue = tmpAry[0].trim();
+					// 正负数字
+					append = calculate + tmpAry[1].trim();
+					break;
+				}
 			}
 		}
 		String type = "string";
@@ -238,6 +242,8 @@ public class MacroIfLogic {
 				|| "${.day}".equals(lowCompareValue)) {
 			compareValue = DateUtil.formatDate(DateUtil.addSecond(new Date(), Double.parseDouble(append)), dayFmt);
 			type = "date";
+		} else {
+			compareValue = originalCompareValue;
 		}
 		String valueStr = (value == null) ? "null" : removeStartEndQuote(value.toString());
 		if ("time".equals(type)) {
