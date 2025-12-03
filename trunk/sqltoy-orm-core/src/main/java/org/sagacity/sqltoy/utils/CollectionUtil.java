@@ -1542,4 +1542,20 @@ public class CollectionUtil {
 		}
 		return result;
 	}
+
+	/**
+	 * 判断是否存在，不存在则加入
+	 * 
+	 * @param notRepeatSet
+	 * @param value
+	 * @return
+	 */
+	public static boolean notContainsAdd(Set notRepeatSet, Object value) {
+		if (notRepeatSet.contains(value)) {
+			return false;
+		} else {
+			notRepeatSet.add(value);
+			return true;
+		}
+	}
 }
