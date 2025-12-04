@@ -233,6 +233,9 @@ public class ScanEntityAndSqlResource {
 				startClasspath = false;
 				if (realRes.toLowerCase().startsWith(CLASSPATH)) {
 					realRes = realRes.substring(10).trim();
+					if (realRes.charAt(0) == '/') {
+						realRes = realRes.substring(1);
+					}
 					startClasspath = true;
 				}
 				// update 2025-11-19 增加路径重复判断
@@ -281,6 +284,9 @@ public class ScanEntityAndSqlResource {
 					startClasspath = false;
 					if (realRes.toLowerCase().startsWith(CLASSPATH)) {
 						realRes = realRes.substring(10).trim();
+						if (realRes.charAt(0) == '/') {
+							realRes = realRes.substring(1);
+						}
 						startClasspath = true;
 					}
 					// update 2025-11-19 增加路径重复判断
