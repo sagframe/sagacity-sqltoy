@@ -6,6 +6,9 @@ import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.OffsetTime;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.Locale;
 
@@ -34,7 +37,7 @@ public class DateUtilTest {
 		Date date = DateUtil.convertDateObject(timestamp, null, null);
 		System.err.println(date);
 	}
-	
+
 	@Test
 	public void testOracleTimestampAsLocalDate() throws SQLException {
 		TIMESTAMP timestamp = new TIMESTAMP(DateUtil.getTimestamp(null));
@@ -185,6 +188,7 @@ public class DateUtilTest {
 
 	@Test
 	public void testFormatStr() throws ParseException {
+		System.err.println(DateUtil.formatDate("2023-11-12 23:23:12", "yyyy", null));
 		System.err.println(DateUtil.formatDate("2023-11-12 23:23:12.343231123", "yyyy-MM-dd HH:mm:ss.SSSSSS", null));
 		System.err.println(DateUtil.formatDate("2023-11-12 23:23:12.343231123", "yyyy-MM-dd HH:mm:ss.SSS", null));
 		System.err.println(DateUtil.formatDate("2023-11-12 23:23:12", "yyyy-MM-dd HH:mm:ss.SSSSSS", null));
@@ -219,6 +223,7 @@ public class DateUtilTest {
 	@Test
 	public void testParseDateString() throws ParseException {
 		DateUtil.parse("21:34:22.2", null);
+		System.err.println(DateUtil.parse(LocalDate.now(), "yyyy"));
 		System.err.println(DateUtil.asLocalDateTime(DateUtil.parse("21:34:22.2", null)).getNano());
 		System.err.println(DateUtil.parse("2023-10-22", null));
 		System.err.println(DateUtil.parse("2023-10-22", "yyyy-MM-dd"));
@@ -226,6 +231,7 @@ public class DateUtilTest {
 		System.err.println(DateUtil.parse(new Date(), "yyyy-MM-dd HH:mm:ss"));
 		System.err.println(DateUtil.parse(LocalDateTime.now(), "yyyy-MM-dd HH:mm:ss"));
 		System.err.println(DateUtil.parse(LocalDate.now(), "yyyy-MM-dd"));
+		
 		System.err.println(DateUtil.parse(LocalTime.now(), "HH:mm:ss"));
 		System.err.println(DateUtil.parse("2023-10-22", "yyyy-MM-dd HH:mm:ss"));
 		System.err.println(DateUtil.parse("12:23:21", "yyyy-MM-dd HH:mm:ss"));
@@ -274,8 +280,8 @@ public class DateUtilTest {
 		System.err.println(DateUtil.parseString("21:34:22.234"));
 		System.err.println(DateUtil.parseString("21:34:22.2"));
 		System.err.println(
-				DateUtil.formatDate(DateUtil.parseString("2020-11-20 21:34:22.234345"), "yyyy-MM-dd HH:mm:ss.SSS"));
-		System.err.println(DateUtil.parseLocalDateTime("2020-11-20 21:34:22.234", "yyyy"));
+				DateUtil.formatDate(DateUtil.parseString("2020-11-20 21:34:22.234345+8:00"), "yyyy-MM-dd HH:mm:ss.SSS"));
+		//System.err.println(DateUtil.parseLocalDateTime("2020-11-20 21:34:22.234", "yyyy-MM-dd HH:mm:ss.SSS"));
 	}
 
 	@Test
@@ -285,5 +291,16 @@ public class DateUtilTest {
 //		dateStr = dateStr.substring(0, 8).concat(" ").concat(dateStr.substring(8, 14)).concat(".")
 //				.concat(dateStr.substring(14));
 //		System.err.println(dateStr);
+	}
+
+	@Test
+	public void parseZonedDateTime() throws ParseException {
+		String dateVar = ZonedDateTime.of(LocalDateTime.now(), ZoneOffset.of("-05:00")).toString();
+		
+		dateVar = OffsetTime.now().toString();
+		//System.err.println(dateVar);
+		//System.err.println(DateUtil.parseZonedDateTime(dateVar));
+		System.err.println(DateUtil.parseZonedDateTime("21:34:22.234345+8:00"));
+
 	}
 }

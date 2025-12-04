@@ -5,7 +5,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>com.sagframe</groupId>
-	<version>5.6.56</version>
+	<version>5.6.57</version>
 
 	<artifactId>sagacity-sqltoy-solon-plugin</artifactId>
 	<name>sagacity-sqltoy-solon-plugin</name>
@@ -16,13 +16,13 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<solon.version>3.6.4</solon.version>
+		<solon.version>3.7.2</solon.version>
 		<redisx.version>1.8.2</redisx.version>
 		<mongo.version>5.6.1</mongo.version>
 		<slf4j.version>2.0.17</slf4j.version>
 		<lombok.version>1.18.42</lombok.version>
 		<HikariCP.version>7.0.2</HikariCP.version>
-		<mysql.version>9.4.0</mysql.version>
+		<mysql.version>9.5.0</mysql.version>
 	</properties>
 
 	<licenses>
@@ -59,20 +59,20 @@
 		<!--solon aot start（用于 aot 时注册 native 元信息）-->
 		<dependency>
 			<groupId>org.noear</groupId>
-			<artifactId>solon.aot</artifactId>
+			<artifactId>solon-aot</artifactId>
 			<version>${solon.version}</version>
 		</dependency>
 		<!--solon aot end-->
 
 		<dependency>
 			<groupId>org.noear</groupId>
-			<artifactId>solon.data</artifactId>
+			<artifactId>solon-data</artifactId>
 			<version>${solon.version}</version>
 		</dependency>
 
 		<dependency>
 			<groupId>org.noear</groupId>
-			<artifactId>solon.proxy</artifactId>
+			<artifactId>solon-proxy</artifactId>
 			<version>${solon.version}</version>
 		</dependency>
 

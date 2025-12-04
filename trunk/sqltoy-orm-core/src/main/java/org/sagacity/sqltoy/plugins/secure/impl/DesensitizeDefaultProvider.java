@@ -14,7 +14,7 @@ public class DesensitizeDefaultProvider implements DesensitizeProvider {
 
 	@Override
 	public String desensitize(String content, SecureMask maskType) {
-		if (content == null || "".equals(content)) {
+		if (StringUtil.isBlank(content)) {
 			return content;
 		}
 		return maskStr(maskType, content);
@@ -72,7 +72,7 @@ public class DesensitizeDefaultProvider implements DesensitizeProvider {
 		}
 		// 邮件(首字符@gmail.com 形式)
 		if ("email".equals(type)) {
-			String maskStr = (maskCode == null || "".equals(maskCode)) ? "***" : maskCode;
+			String maskStr = StringUtil.ifBlank(maskCode, "***");
 			return realStr.substring(0, 1).concat(maskStr).concat(realStr.substring(realStr.indexOf("@")));
 		}
 		// 身份证
