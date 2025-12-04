@@ -311,6 +311,15 @@ public class XMLUtil {
 		if ("java.sql.time".equals(lowCaseTypeName) || "time".equals(lowCaseTypeName)) {
 			return DateUtil.parseString(value);
 		}
+		if ("java.time.offsetdatetime".equals(lowCaseTypeName) || "offsetdatetime".equals(lowCaseTypeName)) {
+			return DateUtil.parseZonedDateTime(value).toOffsetDateTime();
+		}
+		if ("java.time.zoneddatetime".equals(lowCaseTypeName) || "zoneddatetime".equals(lowCaseTypeName)) {
+			return DateUtil.parseZonedDateTime(value);
+		}
+		if ("java.time.offsettime".equals(lowCaseTypeName) || "offsettime".equals(lowCaseTypeName)) {
+			return DateUtil.parseZonedDateTime(value).toOffsetDateTime().toOffsetTime();
+		}
 		return value;
 	}
 }

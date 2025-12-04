@@ -9,6 +9,7 @@ import java.net.URL;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -18,6 +19,7 @@ import java.util.jar.JarFile;
 
 import org.sagacity.sqltoy.config.annotation.Entity;
 import org.sagacity.sqltoy.config.annotation.SqlToyEntity;
+import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,8 +36,8 @@ import org.slf4j.LoggerFactory;
  */
 @SuppressWarnings({ "unchecked", "rawtypes" })
 public class ScanEntityAndSqlResource {
-	//springboot场景下已经支持
-	//欠缺一个功能:路径增加匹配能力，如:classpath:com/sagframe/**/sqltoy/*.sql.xml
+	// springboot场景下已经支持
+	// 欠缺一个功能:路径增加匹配能力，如:classpath:com/sagframe/**/sqltoy/*.sql.xml
 	/**
 	 * 定义日志
 	 */
@@ -57,7 +59,7 @@ public class ScanEntityAndSqlResource {
 	/**
 	 * @todo 从指定包package中获取所有的sqltoy实体对象(意义已经不大,entity类目前已经改为在使用时加载的解析模式)
 	 * @param entitiesPackage
-	 * @param recursive 是否递归往下钻取
+	 * @param recursive       是否递归往下钻取
 	 * @param charset
 	 * @return
 	 */
@@ -225,67 +227,40 @@ public class ScanEntityAndSqlResource {
 			Enumeration<JarEntry> entries;
 			JarEntry entry;
 			String sqlFile;
+			Set notRepeatDirs = new HashSet();
 			for (String dir : dirSet) {
 				realRes = dir.trim();
 				startClasspath = false;
 				if (realRes.toLowerCase().startsWith(CLASSPATH)) {
 					realRes = realRes.substring(10).trim();
+					if (realRes.charAt(0) == '/') {
+						realRes = realRes.substring(1);
+					}
 					startClasspath = true;
 				}
-				urls = getResourceUrls(realRes, startClasspath);
-				if (urls != null) {
-					while (urls.hasMoreElements()) {
-						url = urls.nextElement();
-						if (url.getProtocol().equals(JAR)) {
-							if (realRes.length() > 0 && realRes.charAt(0) == '/') {
-								realRes = realRes.substring(1);
-							}
-							jar = ((JarURLConnection) url.openConnection()).getJarFile();
-							entries = jar.entries();
-							while (entries.hasMoreElements()) {
-								// 获取jar里的一个实体 可以是目录 和一些jar包里的其他文件 如META-INF等文件
-								entry = entries.nextElement();
-								sqlFile = entry.getName();
-								if (sqlFile.startsWith(realRes)
-										&& sqlFile.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)
-										&& !entry.isDirectory()) {
-									// update 2020-03-13 调整sql加载策略
-									// jar中的sql顺序放在前面,从而便于classes里面的sql可以在后面加载可以覆盖前面的，便于项目做增量更新
-									result.add(0, sqlFile);
-								}
-							}
-						} else if (url.getProtocol().equals(RESOURCE)) {
-							if (!result.contains(realRes) && realRes.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)) {
-								result.add(realRes);
-							}
-						} else {
-							getPathFiles(new File(url.toURI()), result);
-						}
-					}
-				}
-			}
-		}
-		if (mappingResources != null && !mappingResources.isEmpty()) {
-			for (int i = 0; i < mappingResources.size(); i++) {
-				realRes = mappingResources.get(i).trim();
-				// 必须是以.sql.xml结尾的文件
-				if (realRes.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)) {
-					startClasspath = false;
-					if (realRes.toLowerCase().startsWith(CLASSPATH)) {
-						realRes = realRes.substring(10).trim();
-						startClasspath = true;
-					}
+				// update 2025-11-19 增加路径重复判断
+				if (CollectionUtil.notContainsAdd(notRepeatDirs, realRes)) {
 					urls = getResourceUrls(realRes, startClasspath);
 					if (null != urls) {
 						while (urls.hasMoreElements()) {
 							url = urls.nextElement();
-							if (realRes.length() > 0 && realRes.charAt(0) == '/') {
-								realRes = realRes.substring(1);
-							}
 							if (url.getProtocol().equals(JAR)) {
-								if (!result.contains(realRes)) {
-									// jar中的sql优先加载,从而确保直接放于classes目录下面的sql可以实现对之前的覆盖,便于项目增量发版管理
-									result.add(0, realRes);
+								if (realRes.length() > 0 && realRes.charAt(0) == '/') {
+									realRes = realRes.substring(1);
+								}
+								jar = ((JarURLConnection) url.openConnection()).getJarFile();
+								entries = jar.entries();
+								while (entries.hasMoreElements()) {
+									// 获取jar里的一个实体 可以是目录 和一些jar包里的其他文件 如META-INF等文件
+									entry = entries.nextElement();
+									sqlFile = entry.getName();
+									if (sqlFile.startsWith(realRes)
+											&& sqlFile.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)
+											&& !entry.isDirectory()) {
+										// update 2020-03-13 调整sql加载策略
+										// jar中的sql顺序放在前面,从而便于classes里面的sql可以在后面加载可以覆盖前面的，便于项目做增量更新
+										result.add(0, sqlFile);
+									}
 								}
 							} else if (url.getProtocol().equals(RESOURCE)) {
 								if (!result.contains(realRes)
@@ -293,10 +268,52 @@ public class ScanEntityAndSqlResource {
 									result.add(realRes);
 								}
 							} else {
-								file = new File(url.toURI());
-								if (file.getName().toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)
-										&& !result.contains(file)) {
-									result.add(file);
+								getPathFiles(new File(url.toURI()), result);
+							}
+						}
+					}
+				}
+			}
+		}
+		if (mappingResources != null && !mappingResources.isEmpty()) {
+			Set notRepeatResoures = new HashSet();
+			for (int i = 0; i < mappingResources.size(); i++) {
+				realRes = mappingResources.get(i).trim();
+				// 必须是以.sql.xml结尾的文件
+				if (realRes.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)) {
+					startClasspath = false;
+					if (realRes.toLowerCase().startsWith(CLASSPATH)) {
+						realRes = realRes.substring(10).trim();
+						if (realRes.charAt(0) == '/') {
+							realRes = realRes.substring(1);
+						}
+						startClasspath = true;
+					}
+					// update 2025-11-19 增加路径重复判断
+					if (CollectionUtil.notContainsAdd(notRepeatResoures, realRes)) {
+						urls = getResourceUrls(realRes, startClasspath);
+						if (null != urls) {
+							while (urls.hasMoreElements()) {
+								url = urls.nextElement();
+								if (realRes.length() > 0 && realRes.charAt(0) == '/') {
+									realRes = realRes.substring(1);
+								}
+								if (url.getProtocol().equals(JAR)) {
+									if (!result.contains(realRes)) {
+										// jar中的sql优先加载,从而确保直接放于classes目录下面的sql可以实现对之前的覆盖,便于项目增量发版管理
+										result.add(0, realRes);
+									}
+								} else if (url.getProtocol().equals(RESOURCE)) {
+									if (!result.contains(realRes)
+											&& realRes.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)) {
+										result.add(realRes);
+									}
+								} else {
+									file = new File(url.toURI());
+									if (file.getName().toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)
+											&& !result.contains(file)) {
+										result.add(file);
+									}
 								}
 							}
 						}
