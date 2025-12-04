@@ -230,13 +230,13 @@ public class ScanEntityAndSqlResource {
 			Set notRepeatDirs = new HashSet();
 			for (String dir : dirSet) {
 				realRes = dir.trim();
+				startClasspath = false;
+				if (realRes.toLowerCase().startsWith(CLASSPATH)) {
+					realRes = realRes.substring(10).trim();
+					startClasspath = true;
+				}
 				// update 2025-11-19 增加路径重复判断
 				if (CollectionUtil.notContainsAdd(notRepeatDirs, realRes)) {
-					startClasspath = false;
-					if (realRes.toLowerCase().startsWith(CLASSPATH)) {
-						realRes = realRes.substring(10).trim();
-						startClasspath = true;
-					}
 					urls = getResourceUrls(realRes, startClasspath);
 					if (null != urls) {
 						while (urls.hasMoreElements()) {
@@ -276,14 +276,15 @@ public class ScanEntityAndSqlResource {
 			Set notRepeatResoures = new HashSet();
 			for (int i = 0; i < mappingResources.size(); i++) {
 				realRes = mappingResources.get(i).trim();
-				if (CollectionUtil.notContainsAdd(notRepeatResoures, realRes)) {
-					// 必须是以.sql.xml结尾的文件
-					if (realRes.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)) {
-						startClasspath = false;
-						if (realRes.toLowerCase().startsWith(CLASSPATH)) {
-							realRes = realRes.substring(10).trim();
-							startClasspath = true;
-						}
+				// 必须是以.sql.xml结尾的文件
+				if (realRes.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)) {
+					startClasspath = false;
+					if (realRes.toLowerCase().startsWith(CLASSPATH)) {
+						realRes = realRes.substring(10).trim();
+						startClasspath = true;
+					}
+					// update 2025-11-19 增加路径重复判断
+					if (CollectionUtil.notContainsAdd(notRepeatResoures, realRes)) {
 						urls = getResourceUrls(realRes, startClasspath);
 						if (null != urls) {
 							while (urls.hasMoreElements()) {

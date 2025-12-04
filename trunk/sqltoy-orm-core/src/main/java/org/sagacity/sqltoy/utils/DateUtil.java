@@ -14,6 +14,7 @@ import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.OffsetTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -30,6 +31,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.sagacity.sqltoy.SqlToyConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -94,6 +96,8 @@ public class DateUtil {
 	private final static Pattern DAYTH_PATTERN = Pattern.compile("(?i)\\s\\d{1,2}(st|th|nd|rd)\\s");
 	private final static Pattern TIME_PATTERN = Pattern.compile("\\d{1,2}\\:\\d{1,2}");
 	private final static Pattern TIME_DOT_PATTERN = Pattern.compile("\\d\\.\\d");
+	private final static Pattern ZONED_TIME_PATTERN = Pattern
+			.compile("(\\+|\\-)\\d{1,2}\\:\\d{2}(\\[[a-z|A-Z|\\/|\\_]+\\])?$");
 
 	/**
 	 * 定义日期的格式
@@ -177,6 +181,20 @@ public class DateUtil {
 	}
 
 	/**
+	 * 去除字符串中的时区信息，避免时间解析错误
+	 * 
+	 * @param dateVar
+	 * @return
+	 */
+	private static String removeZoneInfo(String dateVar) {
+		Matcher m = ZONED_TIME_PATTERN.matcher(dateVar);
+		if (m.find()) {
+			return dateVar.substring(0, m.start());
+		}
+		return dateVar;
+	}
+
+	/**
 	 * @todo 将日期字符串或时间转换成时间类型 日期字符串中的日期分隔符可是:"/",".","-"， 返回时间具体到秒 只提供常用的日期格式处理
 	 * @param dateVar
 	 * @param dateFormat
@@ -191,6 +209,8 @@ public class DateUtil {
 		if ("".equals(dateStr) || dateStr.toLowerCase().equals("null")) {
 			return null;
 		}
+		// 去除时区信息
+		dateStr = removeZoneInfo(dateStr);
 		String realDF = null;
 		boolean isLocalDateTime = false;
 		boolean isLocalTime = false;
@@ -221,24 +241,18 @@ public class DateUtil {
 						.replace(":", "").replace("/", "");
 				int preSize = dateStr.indexOf(" ");
 				size = dateStr.length();
-				if (size > 21) {
+				if (size > 16) {
 					dateStr = addZero(dateStr, size, 24);
 					realDF = "yyyyMMdd HHmmssSSSSSSSSS";
 					isLocalDateTime = true;
-				} else if (size > 18) {
-					dateStr = addZero(dateStr, size, 21);
-					realDF = "yyyyMMdd HHmmssSSSSSS";
-					isLocalDateTime = true;
-				} else if (size > 16) {
-					dateStr = addZero(dateStr, size, 18);
-					realDF = "yyyyMMdd HHmmssSSS";
-					isLocalDateTime = true;
 				} else if (size == 16) {
 					if (preSize == 8) {
-						realDF = "yyyyMMdd HHmmssS";
+						dateStr = addZero(dateStr, size, 21);
+						realDF = "yyyyMMdd HHmmssSSSSSS";
 						isLocalDateTime = true;
 					} else {
-						realDF = "yyMMdd HHmmssSSS";
+						dateStr = addZero(dateStr, size, 19);
+						realDF = "yyMMdd HHmmssSSSSSS";
 						isLocalDateTime = true;
 					}
 				} else if (size == 13) {
@@ -264,22 +278,9 @@ public class DateUtil {
 				size = dateStr.length();
 				if (dateStr.indexOf(":") != -1) {
 					if (dateStr.indexOf(".") != -1) {
-						if (size > 15) {
-							dateStr = addZero(dateStr, size, 18);
-							realDF = "HH:mm:ss.SSSSSSSSS";
-							isLocalTime = true;
-						} else if (size > 12) {
-							dateStr = addZero(dateStr, size, 15);
-							realDF = "HH:mm:ss.SSSSSS";
-							isLocalTime = true;
-						} else if (size > 10) {
-							dateStr = addZero(dateStr, size, 12);
-							realDF = "HH:mm:ss.SSS";
-							isLocalTime = true;
-						} else {
-							realDF = "HH:mm:ss.S";
-							isLocalTime = true;
-						}
+						dateStr = addZero(dateStr, size, 18);
+						realDF = "HH:mm:ss.SSSSSSSSS";
+						isLocalTime = true;
 					} else {
 						if (size == 5) {
 							realDF = "HH:mm";
@@ -304,25 +305,10 @@ public class DateUtil {
 							realDF = "yy/MM";
 						}
 					} else {
-						if (size > 22) {
+						if (size > 16) {
 							dateStr = dateStr.substring(0, 8).concat(" ").concat(dateStr.substring(8, 14)).concat(".")
 									.concat(addZero(dateStr.substring(14), 9));
 							realDF = "yyyyMMdd HHmmss.SSSSSSSSS";
-							isLocalDateTime = true;
-						} else if (size > 19) {
-							dateStr = dateStr.substring(0, 8).concat(" ").concat(dateStr.substring(8, 14)).concat(".")
-									.concat(addZero(dateStr.substring(14), 6));
-							realDF = "yyyyMMdd HHmmss.SSSSSS";
-							isLocalDateTime = true;
-						} else if (size > 17) {
-							dateStr = dateStr.substring(0, 8).concat(" ").concat(dateStr.substring(8, 14)).concat(".")
-									.concat(addZero(dateStr.substring(14), 3));
-							realDF = "yyyyMMdd HHmmss.SSS";
-							isLocalDateTime = true;
-						} else if (size == 17) {
-							dateStr = dateStr.substring(0, 8).concat(" ").concat(dateStr.substring(8, 14)).concat(".")
-									.concat(dateStr.substring(14));
-							realDF = "yyyyMMdd HHmmss.S";
 							isLocalDateTime = true;
 						} else if (size == 15) {
 							realDF = "yyyyMMdd HHmmss";
@@ -358,19 +344,49 @@ public class DateUtil {
 			return asDate(localDateTime);
 		}
 		Date result = null;
+		boolean hasException = false;
+		Exception ex = null;
 		// 通过异常模式进行一次容错处理
 		try {
 			DateFormat df = (locale == null) ? new SimpleDateFormat(realDF) : new SimpleDateFormat(realDF, locale);
 			result = df.parse(dateStr);
 		} catch (ParseException e) {
-			e.printStackTrace();
+			hasException = true;
+			ex = e;
 		}
 		// 在指定format情况下result==null，则将format置为null,通过自动解析方式获取具体的格式
 		if (result == null && hasFmt) {
 			result = parseString(dateVar, null, locale);
 			result = parseString(formatDate(result, realDF));
+			if (result == null && hasException) {
+				ex.printStackTrace();
+			}
 		}
 		return result;
+	}
+
+	public static ZonedDateTime parseZonedDateTime(String dateVar) {
+		if (dateVar == null) {
+			return null;
+		}
+		// 含时区正则表达式匹配
+		Matcher m = ZONED_TIME_PATTERN.matcher(dateVar);
+		if (m.find()) {
+			LocalDateTime baseDate = parseLocalDateTime(dateVar.substring(0, m.start()));
+			// 提取偏差hour
+			String timeZone = m.group();
+			if (timeZone.contains("[") && timeZone.contains("]")) {
+				// 时区，如Asia/Shanghai
+				timeZone = timeZone.substring(timeZone.indexOf("[") + 1, timeZone.indexOf("]"));
+				return ZonedDateTime.of(baseDate, ZoneId.of(timeZone));
+			} // 补齐0，保障±08:00 六位长度
+			else if (timeZone.length() == 5) {
+				timeZone = timeZone.substring(0, 1).concat("0").concat(timeZone.substring(1));
+			}
+			return ZonedDateTime.of(baseDate, ZoneOffset.of(timeZone));
+		}
+		LocalDateTime baseDate = parseLocalDateTime(dateVar);
+		return ZonedDateTime.of(baseDate, SqlToyConstants.getZoneId());
 	}
 
 	public static LocalDateTime parseLocalDateTime(String dateVar) {
@@ -385,6 +401,8 @@ public class DateUtil {
 		if ("".equals(dateStr) || dateStr.toLowerCase().equals("null")) {
 			return null;
 		}
+		// 去除时区信息
+		dateStr = removeZoneInfo(dateStr);
 		String realDF = null;
 		boolean isTime = false;
 		boolean isDate = false;
@@ -414,20 +432,16 @@ public class DateUtil {
 						.replace(":", "").replace("/", "");
 				int preSize = dateStr.indexOf(" ");
 				size = dateStr.length();
-				if (size > 21) {
+				if (size > 16) {
 					dateStr = addZero(dateStr, size, 24);
 					realDF = "yyyyMMdd HHmmssSSSSSSSSS";
-				} else if (size > 18) {
-					dateStr = addZero(dateStr, size, 21);
-					realDF = "yyyyMMdd HHmmssSSSSSS";
-				} else if (size > 16) {
-					dateStr = addZero(dateStr, size, 18);
-					realDF = "yyyyMMdd HHmmssSSS";
 				} else if (size == 16) {
 					if (preSize == 8) {
-						realDF = "yyyyMMdd HHmmssS";
+						dateStr = addZero(dateStr, size, 21);
+						realDF = "yyyyMMdd HHmmssSSSSSS";
 					} else {
-						realDF = "yyMMdd HHmmssSSS";
+						dateStr = addZero(dateStr, size, 19);
+						realDF = "yyMMdd HHmmssSSSSSS";
 					}
 				} else if (size == 13) {
 					if (preSize == 8) {
@@ -452,18 +466,8 @@ public class DateUtil {
 				size = dateStr.length();
 				if (dateStr.indexOf(":") != -1) {
 					if (dateStr.indexOf(".") != -1) {
-						if (size > 15) {
-							dateStr = addZero(dateStr, size, 18);
-							realDF = "HH:mm:ss.SSSSSSSSS";
-						} else if (size > 12) {
-							dateStr = addZero(dateStr, size, 15);
-							realDF = "HH:mm:ss.SSSSSS";
-						} else if (size > 10) {
-							dateStr = addZero(dateStr, size, 12);
-							realDF = "HH:mm:ss.SSS";
-						} else {
-							realDF = "HH:mm:ss.S";
-						}
+						dateStr = addZero(dateStr, size, 18);
+						realDF = "HH:mm:ss.SSSSSSSSS";
 					} else {
 						if (size == 5) {
 							realDF = "HH:mm";
@@ -491,22 +495,10 @@ public class DateUtil {
 						}
 						isDate = true;
 					} else {
-						if (size > 22) {
+						if (size > 16) {
 							realDF = "yyyyMMdd HHmmss.SSSSSSSSS";
 							dateStr = dateStr.substring(0, 8).concat(" ").concat(dateStr.substring(8, 14)).concat(".")
 									.concat(addZero(dateStr.substring(14), 9));
-						} else if (size > 19) {
-							dateStr = dateStr.substring(0, 8).concat(" ").concat(dateStr.substring(8, 14)).concat(".")
-									.concat(addZero(dateStr.substring(14), 6));
-							realDF = "yyyyMMdd HHmmss.SSSSSS";
-						} else if (size > 17) {
-							dateStr = dateStr.substring(0, 8).concat(" ").concat(dateStr.substring(8, 14)).concat(".")
-									.concat(addZero(dateStr.substring(14), 3));
-							realDF = "yyyyMMdd HHmmss.SSS";
-						} else if (size == 17) {
-							dateStr = dateStr.substring(0, 8).concat(" ").concat(dateStr.substring(8, 14)).concat(".")
-									.concat(dateStr.substring(14));
-							realDF = "yyyyMMdd HHmmss.S";
 						} else if (size == 15) {
 							realDF = "yyyyMMdd HHmmss";
 						} else if (size == 14) {
@@ -636,7 +628,7 @@ public class DateUtil {
 			}
 		} else if (dt instanceof java.time.LocalTime) {
 			result = asDate((LocalTime) dt);
-		}  else if (dt instanceof java.time.OffsetTime) {
+		} else if (dt instanceof java.time.OffsetTime) {
 			result = asDate(((OffsetTime) dt).toLocalTime());
 		} else {
 			result = parseString(dt.toString().trim(), format, locale);
@@ -1296,8 +1288,20 @@ public class DateUtil {
 			return timeStr.concat("00");
 		} else if (addSize == 3) {
 			return timeStr.concat("000");
+		} else if (addSize == 5) {
+			return timeStr.concat("00000");
+		} else if (addSize == 6) {
+			return timeStr.concat("000000");
+		} else if (addSize == 8) {
+			return timeStr.concat("00000000");
+		} else if (addSize == 4) {
+			return timeStr.concat("0000");
+		} else if (addSize == 7) {
+			return timeStr.concat("0000000");
 		}
 		return timeStr;
 	}
+
+//	private 
 
 }
