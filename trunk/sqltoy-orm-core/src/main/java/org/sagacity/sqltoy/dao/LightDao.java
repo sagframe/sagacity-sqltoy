@@ -92,6 +92,8 @@ public interface LightDao {
 	 *       <li>lightDao.save().dataSource(xxx).one(entity)</li>
 	 *       <li>lightDao.save().dataSource(xxx).many(entities)</li>
 	 *       <li>lightDao.save().dataSource(xxx).saveMode(SaveMode.UPDATE).many(entities)</li>
+	 *       <li>lightDao.save().dataSource(xxx).saveMode(SaveMode.UPDATE).deeply(true).many(entities)</li>
+	 *       <li>lightDao.save().saveMode(SaveMode.UPDATE).deeply(true).many(entities)</li>
 	 *       <li>大批量并行:lightDao.save().parallelConfig(ParallelConfig.create().groupSize(5000).maxThreads(10)).many(entities)</li>
 	 * 
 	 * @return

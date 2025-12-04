@@ -693,6 +693,9 @@ public class BeanUtil {
 			if (paramValue instanceof ZonedDateTime) {
 				return ((ZonedDateTime) paramValue).toOffsetDateTime();
 			}
+			if (paramValue instanceof String) {
+				return DateUtil.parseZonedDateTime(paramValue.toString()).toOffsetDateTime();
+			}
 			// 修复oracle.sql.timestamp 转localdatetime的缺陷
 			if ("oracle.sql.TIMESTAMP".equals(paramValue.getClass().getTypeName())) {
 				return oracleTimeStampConvert(paramValue).toLocalDateTime().atZone(SqlToyConstants.getZoneId())
@@ -710,6 +713,9 @@ public class BeanUtil {
 			}
 			if (paramValue instanceof LocalDateTime) {
 				return ((LocalDateTime) paramValue).atZone(SqlToyConstants.getZoneId());
+			}
+			if (paramValue instanceof String) {
+				return DateUtil.parseZonedDateTime(paramValue.toString());
 			}
 			// 修复oracle.sql.timestamp 转localdatetime的缺陷
 			if ("oracle.sql.TIMESTAMP".equals(paramValue.getClass().getTypeName())) {
@@ -840,6 +846,8 @@ public class BeanUtil {
 			LocalTime localTime;
 			if (paramValue instanceof LocalTime) {
 				localTime = ((LocalTime) paramValue);
+			} else if (paramValue instanceof String) {
+				return DateUtil.parseZonedDateTime(paramValue.toString()).toOffsetDateTime().toOffsetTime();
 			} else if ("oracle.sql.TIMESTAMP".equals(paramValue.getClass().getTypeName())) {
 				localTime = DateUtil.asLocalTime(oracleTimeStampConvert(paramValue));
 			} else {

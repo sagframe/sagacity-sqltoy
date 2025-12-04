@@ -77,8 +77,12 @@ public class StringUtil {
 		if (null == str) {
 			return true;
 		}
-		if ((str instanceof CharSequence) && "".equals(str.toString().trim())) {
-			return true;
+		if (str instanceof CharSequence) {
+			if ("".equals(str.toString().trim())) {
+				return true;
+			} else {
+				return false;
+			}
 		}
 		// 下面做了一些冗余性校验
 		if ((str instanceof Collection) && ((Collection) str).isEmpty()) {

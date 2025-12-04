@@ -22,7 +22,7 @@ public class NumberUtilsTest {
 		System.err.println(NumberUtil.convertToEnglishMoney("398,392,923.03"));
 		System.err.println(NumberUtil.convertToEnglishMoney("-8,392,923.03"));
 	}
-	
+
 	@Test
 	public void testToMinuseEnglish() {
 		BigDecimal value = new BigDecimal(-209.98);
@@ -32,23 +32,27 @@ public class NumberUtilsTest {
 	@Test
 	public void testNumFmt() {
 		BigDecimal value = new BigDecimal(-209.98);
-		System.err.println(NumberUtil.format(value,"##,###.00"));
+		System.err.println(NumberUtil.format(value, "##,###.00"));
 	}
-	
+
 	@Test
 	public void testNumFmtChina() {
 		BigDecimal value = new BigDecimal(209.98);
 		System.err.println(NumberUtil.toCapitalMoney(value));
-		
+
 		BigDecimal value1 = new BigDecimal(209);
 		System.err.println(NumberUtil.toCapitalMoney(value1));
 	}
-	
+
 	@Test
 	public void testDecimalCompare() {
 		BigDecimal value = new BigDecimal("0.00");
 		System.err.println(value.compareTo(BigDecimal.ZERO));
-		
-	
+
+	}
+
+	@Test
+	public void testIsNumber() {
+		System.err.println(NumberUtil.isNumber("-0.9"));
 	}
 }
