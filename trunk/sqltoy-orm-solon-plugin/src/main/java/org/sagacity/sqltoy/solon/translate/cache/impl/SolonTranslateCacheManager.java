@@ -12,14 +12,22 @@ import org.sagacity.sqltoy.translate.model.TranslateConfigModel;
  *  * @since 1.5
  */
 public class SolonTranslateCacheManager extends TranslateCacheManager {
-    static final String prefix="sqltoy.translate:";
+    static final String prefix = "sqltoy.translate:";
     CacheService cacheService;
 
-    public SolonTranslateCacheManager(CacheService cacheService){
-       this.cacheService=cacheService;
+    public SolonTranslateCacheManager(CacheService cacheService) {
+        this.cacheService = cacheService;
     }
-    private String buildKey(String cacheName,String cacheType){
-        return prefix+":"+cacheName+":"+cacheType;
+
+    private String buildKey(String cacheName, String cacheType) {
+        return prefix + ":" + cacheName + ":" + cacheType;
+    }
+
+
+    public void setCacheService(CacheService cacheService) {
+        if (cacheService != null) {
+            this.cacheService = cacheService;
+        }
     }
 
     @Override
@@ -30,17 +38,17 @@ public class SolonTranslateCacheManager extends TranslateCacheManager {
 
     @Override
     public HashMap<String, Object[]> getCache(String cacheName, String cacheType) {
-       return (HashMap<String, Object[]> )cacheService.get(buildKey(cacheName,cacheType), HashMap.class);
+        return (HashMap<String, Object[]>) cacheService.get(buildKey(cacheName, cacheType), HashMap.class);
     }
 
     @Override
     public void put(TranslateConfigModel cacheModel, String cacheName, String cacheType, HashMap<String, Object[]> cacheValue) {
-        cacheService.store(buildKey(cacheName,cacheType),cacheValue,cacheModel.getKeepAlive());
+        cacheService.store(buildKey(cacheName, cacheType), cacheValue, cacheModel.getKeepAlive());
     }
 
     @Override
     public void clear(String cacheName, String cacheType) {
-        cacheService.remove(buildKey(cacheName,cacheType));
+        cacheService.remove(buildKey(cacheName, cacheType));
     }
 
     @Override
