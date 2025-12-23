@@ -10,18 +10,21 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.plugins.id.IdGenerator;
 import org.sagacity.sqltoy.utils.SnowflakeIdWorker;
 import org.sagacity.sqltoy.utils.SqlUtil;
+import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
  * @project sagacity-sqltoy
  * @description 基于twitter的分布式自增ID生成策略
  * @author zhongxuchen
  * @version v1.0,Date:2017年3月21日
+ * @modify 2025-12-22 按照表名创建雪花算法实例
  */
 public class SnowflakeIdGenerator implements IdGenerator {
-
-	private static SnowflakeIdWorker idWorker = null;
+	private static String DEFAULT_TABLE_NAME = "SQLTOY_SNOWFLAKE_GLOBAL_TABLE_NAME";
 
 	private static IdGenerator me = new SnowflakeIdGenerator();
+
+	private static SnowflakeIdWorker idWorker = null;
 
 	/**
 	 * @TODO 获取对象单例
@@ -44,11 +47,11 @@ public class SnowflakeIdGenerator implements IdGenerator {
 		// <32
 		// java -Dsqltoy.snowflake.workerId=11
 		// java -Dsqltoy.snowflake.dataCenterId=20
-		// 冗余判断
 		if (null == idWorker) {
 			idWorker = new SnowflakeIdWorker(SqlToyConstants.WORKER_ID, SqlToyConstants.DATA_CENTER_ID);
 		}
-		return SqlUtil.convertIdValueType(idWorker.nextId(), idJavaType);
+		String realTableName = StringUtil.ifBlank(tableName, DEFAULT_TABLE_NAME);
+		return SqlUtil.convertIdValueType(idWorker.nextId(realTableName), idJavaType);
 	}
 
 	// 实例化时增加初始化，避免多线程并发问题

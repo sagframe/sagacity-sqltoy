@@ -1481,7 +1481,7 @@ public class SqlToyDaoSupport {
 				throw new DataAccessException("实例化分布式id产生器失败:" + e.getMessage());
 			}
 		}
-		return distributeIdGenerator.generateId(signature, increment, null);
+		return distributeIdGenerator.generateId(signature, increment, SqlToyConstants.getDistributeIdCacheExpireDate());
 	}
 
 	/**

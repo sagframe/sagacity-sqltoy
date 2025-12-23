@@ -5,7 +5,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>com.sagframe</groupId>
-	<version>5.6.57</version>
+	<version>5.6.58</version>
 
 	<artifactId>sagacity-sqltoy-solon-plugin</artifactId>
 	<name>sagacity-sqltoy-solon-plugin</name>
@@ -16,9 +16,10 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<solon.version>3.7.2</solon.version>
-		<redisx.version>1.8.2</redisx.version>
-		<mongo.version>5.6.1</mongo.version>
+		<solon.version>3.7.3</solon.version>
+		<sqltoy.version>5.6.58</sqltoy.version>
+		<redisx.version>1.8.3</redisx.version>
+		<mongo.version>5.6.2</mongo.version>
 		<slf4j.version>2.0.17</slf4j.version>
 		<lombok.version>1.18.42</lombok.version>
 		<HikariCP.version>7.0.2</HikariCP.version>
@@ -61,6 +62,7 @@
 			<groupId>org.noear</groupId>
 			<artifactId>solon-aot</artifactId>
 			<version>${solon.version}</version>
+			<scope>provided</scope>
 		</dependency>
 		<!--solon aot end-->
 
@@ -79,7 +81,7 @@
 		<dependency>
 			<groupId>com.sagframe</groupId>
 			<artifactId>sagacity-sqltoy</artifactId>
-			<version>${project.version}</version>
+			<version>${sqltoy.version}</version>
 		</dependency>
 
 		<dependency>

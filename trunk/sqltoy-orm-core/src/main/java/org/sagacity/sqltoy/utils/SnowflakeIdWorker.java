@@ -1,5 +1,7 @@
 package org.sagacity.sqltoy.utils;
 
+import java.util.concurrent.ConcurrentHashMap;
+
 /**
  * Twitter_Snowflake<br>
  * SnowFlake的结构如下(每部分用-分开):<br>
@@ -54,11 +56,7 @@ public class SnowflakeIdWorker {
 	/** 数据中心ID(0~31) */
 	private long datacenterId;
 
-	/** 毫秒内序列(0~4095) */
-	private long sequence = 0L;
-
-	/** 上次生成ID的时间截 */
-	private long lastTimestamp = -1L;
+	private static ConcurrentHashMap<String, Long[]> tableTimeStampSeqMap = new ConcurrentHashMap<>();
 
 	// ==============================Constructors=====================================
 	/**
@@ -82,41 +80,52 @@ public class SnowflakeIdWorker {
 
 	// ==============================Methods==========================================
 	/**
-	 * 获得下一个ID (该方法是线程安全的)
+	 * update 2025-12-23 将产生id的策略跟具体表绑定 获得下一个ID (该方法是线程安全的)
 	 * 
-	 * @return SnowflakeId
+	 * @param tableName
+	 * @return
 	 */
-	public synchronized long nextId() {
-		long timestamp = timeGen();
-
-		// 如果当前时间小于上一次ID生成的时间戳，说明系统时钟回退过这个时候应当抛出异常
-		if (timestamp < lastTimestamp) {
-			throw new RuntimeException(String.format(
-					"Clock moved backwards.  Refusing to generate id for %d milliseconds", lastTimestamp - timestamp));
-		}
-
-		// 如果是同一时间生成的，则进行毫秒内序列
-		if (lastTimestamp == timestamp) {
-			sequence = (sequence + 1) & sequenceMask;
-			// 毫秒内序列溢出
-			if (sequence == 0) {
-				// 阻塞到下一个毫秒,获得新的时间戳
-				timestamp = tilNextMillis(lastTimestamp);
+	public long nextId(String tableName) {
+		synchronized (tableName) {
+			long timestamp = timeGen();
+			/** 毫秒内序列(0~4095) */
+			// {lastTimestamp、sequence}
+			Long[] tableTimestampSeq = tableTimeStampSeqMap.get(tableName);
+			if (tableTimestampSeq == null) {
+				tableTimestampSeq = new Long[] { -1L, 0L };
+				tableTimeStampSeqMap.put(tableName, tableTimestampSeq);
 			}
-		}
-		// 时间戳改变，毫秒内序列重置
-		else {
-			sequence = 0L;
-		}
 
-		// 上次生成ID的时间截
-		lastTimestamp = timestamp;
+			// 如果当前时间小于上一次ID生成的时间戳，说明系统时钟回退过这个时候应当抛出异常
+			if (timestamp < tableTimestampSeq[0]) {
+				throw new RuntimeException(
+						String.format("Clock moved backwards.  Refusing to generate id for %d milliseconds",
+								tableTimestampSeq[0] - timestamp));
+			}
 
-		// 移位并通过或运算拼到一起组成64位的ID
-		return ((timestamp - twepoch) << timestampLeftShift) //
-				| (datacenterId << datacenterIdShift) //
-				| (workerId << workerIdShift) //
-				| sequence;
+			// 如果是同一时间生成的，则进行毫秒内序列
+			if (tableTimestampSeq[0] == timestamp) {
+				tableTimestampSeq[1] = (tableTimestampSeq[1] + 1) & sequenceMask;
+				// 毫秒内序列溢出
+				if (tableTimestampSeq[1] == 0) {
+					// 阻塞到下一个毫秒,获得新的时间戳
+					timestamp = tilNextMillis(tableTimestampSeq[0]);
+				}
+			}
+			// 时间戳改变，毫秒内序列重置
+			else {
+				tableTimestampSeq[1] = 0L;
+			}
+
+			// 上次生成ID的时间截
+			tableTimestampSeq[0] = timestamp;
+
+			// 移位并通过或运算拼到一起组成64位的ID
+			return ((timestamp - twepoch) << timestampLeftShift) //
+					| (datacenterId << datacenterIdShift) //
+					| (workerId << workerIdShift) //
+					| tableTimestampSeq[1];
+		}
 	}
 
 	/**

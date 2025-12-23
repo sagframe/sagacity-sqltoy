@@ -758,7 +758,8 @@ public class DateUtil {
 	 * @return 当前操作系统的时间
 	 */
 	public static Date getNowTime() {
-		return Calendar.getInstance().getTime();
+		//return Calendar.getInstance().getTime();
+		return Date.from(Instant.now());
 	}
 
 	public static LocalDate getDate() {
