@@ -428,6 +428,11 @@ public class SqlToyContext {
 	private String[] sqlInjectionRegexes;
 
 	/**
+	 * 分布式id key的缓存天数(一般基于redis，避免长期储存占用空间)，多少天失效
+	 */
+	private Integer distributeIdCacheExpireDays;
+
+	/**
 	 * @todo 初始化
 	 * @throws Exception
 	 */
@@ -436,6 +441,9 @@ public class SqlToyContext {
 		// 加载sqltoy的各类参数,如db2是否要增加with
 		// ur等,详见org/sagacity/sqltoy/sqltoy-default.properties
 		SqlToyConstants.loadProperties(dialectConfig);
+		if (this.distributeIdCacheExpireDays != null) {
+			SqlToyConstants.distributeIdCacheExpireDays = distributeIdCacheExpireDays;
+		}
 		// 设置保留字
 		ReservedWordsUtil.put(reservedWords);
 		// 初始化方言对应的类别代码，避免线程安全
@@ -1387,6 +1395,14 @@ public class SqlToyContext {
 
 	public void setDdlLowerOrUpper(String ddlLowerOrUpper) {
 		this.ddlLowerOrUpper = ddlLowerOrUpper;
+	}
+
+	public Integer getDistributeIdCacheExpireDays() {
+		return distributeIdCacheExpireDays;
+	}
+
+	public void setDistributeIdCacheExpireDays(Integer distributeIdCacheExpireDays) {
+		this.distributeIdCacheExpireDays = distributeIdCacheExpireDays;
 	}
 
 }

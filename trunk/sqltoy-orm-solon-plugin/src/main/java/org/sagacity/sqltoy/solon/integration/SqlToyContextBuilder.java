@@ -53,7 +53,6 @@ public class SqlToyContextBuilder {
 			// "请检查sqltoy配置,是sqltoy作为前缀,而不是spring.sqltoy!\n正确范例:
 			// sqltoy.sqlResourcesDir=classpath:com/sagframe/modules");
 		}
-
 		SqlToyContext sqlToyContext = new SqlToyContext();
 
 		// --------5.2 变化的地方----------------------------------
@@ -90,11 +89,13 @@ public class SqlToyContextBuilder {
 		sqlToyContext.setDialectMap(properties.getDialectMap());
 		sqlToyContext.setLocalDateTimeFormat(properties.getLocalDateTimeFormat());
 		sqlToyContext.setLocalTimeFormat(properties.getLocalTimeFormat());
+		sqlToyContext.setDistributeIdCacheExpireDays(properties.getDistributeIdCacheExpireDays());
 		// map 类型结果label是否自动转驼峰处理
 		if (properties.getHumpMapResultTypeLabel() != null) {
 			sqlToyContext.setHumpMapResultTypeLabel(properties.getHumpMapResultTypeLabel());
 		}
-
+		// 2025-5-15 增加sql注入表达式
+		sqlToyContext.setSqlInjectionRegexes(properties.getSqlInjectionRegexes());
 		// sql 文件资源路径
 		sqlToyContext.setSqlResourcesDir(properties.getSqlResourcesDir());
 		if (properties.getSqlResources() != null && properties.getSqlResources().length > 0) {
@@ -289,6 +290,7 @@ public class SqlToyContextBuilder {
 						(FirstBizCodeTrace) Class.forName(firstBizCodeTrace).getDeclaredConstructor().newInstance());
 			}
 		}
+
 		// 自定义typeHandler
 		String typeHandler = properties.getTypeHandler();
 		if (StringUtil.isNotBlank(typeHandler)) {
@@ -388,7 +390,6 @@ public class SqlToyContextBuilder {
 						(DynamicCacheFetch) Class.forName(dynamicCacheFetch).getDeclaredConstructor().newInstance());
 			}
 		}
-
 		// 自定义sql拦截处理器
 		String[] sqlInterceptors = properties.getSqlInterceptors();
 		if (null != sqlInterceptors && sqlInterceptors.length > 0) {

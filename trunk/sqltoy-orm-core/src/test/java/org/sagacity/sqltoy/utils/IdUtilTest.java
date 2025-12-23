@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
+import org.sagacity.sqltoy.SqlToyConstants;
 
 public class IdUtilTest {
 	@Test
@@ -64,6 +65,14 @@ public class IdUtilTest {
 		System.err.println(id2);
 		for (int i = 0; i < 10000; i++) {
 			System.err.println(IdUtil.getShortNanoTimeId("001"));
+		}
+	}
+
+	@Test
+	public void testSnowflakeId() {
+		SnowflakeIdWorker idWorker = new SnowflakeIdWorker(12, 4);
+		for (int i = 0; i < 100; i++) {
+			System.err.println(idWorker.nextId("sqlTest" + i));
 		}
 	}
 }

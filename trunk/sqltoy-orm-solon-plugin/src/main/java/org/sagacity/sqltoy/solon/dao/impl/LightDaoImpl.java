@@ -525,7 +525,7 @@ public class LightDaoImpl extends SolonDaoSupport implements LightDao {
 	public Object insertReturnPrimaryKey(String sqlOrSqlId, Serializable entity, String pkField) {
 		return super.execute().sql(sqlOrSqlId).entity(entity).insertReturnPrimaryKey(pkField);
 	}
-	
+
 	@Override
 	public Long executeSql(String sqlOrSqlId) {
 		return super.executeSql(sqlOrSqlId, MapKit.map());
@@ -581,7 +581,7 @@ public class LightDaoImpl extends SolonDaoSupport implements LightDao {
 			int length, int sequenceSize) {
 		return super.generateBizId(tableName, signature, keyValues, bizDate, length, sequenceSize);
 	}
-	
+
 	@Override
 	public HashMap<String, Object[]> getTranslateCache(String cacheName, String cacheType) {
 		return super.getTranslateCache(cacheName, cacheType);

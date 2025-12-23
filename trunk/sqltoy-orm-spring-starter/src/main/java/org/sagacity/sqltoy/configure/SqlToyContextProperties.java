@@ -287,6 +287,11 @@ public class SqlToyContextProperties implements Serializable {
 	 * 动态获取缓存的实现(一般基于redis)
 	 */
 	private String dynamicCacheFetch;
+	
+	/**
+	 * 分布式id key的缓存天数(一般基于redis，避免长期储存占用空间)，多少天失效
+	 */
+	private Integer distributeIdCacheExpireDays;
 
 	/**
 	 * @return the sqlResourcesDir
@@ -818,6 +823,14 @@ public class SqlToyContextProperties implements Serializable {
 
 	public void setDdlLowerOrUpper(String ddlLowerOrUpper) {
 		this.ddlLowerOrUpper = ddlLowerOrUpper;
+	}
+
+	public Integer getDistributeIdCacheExpireDays() {
+		return distributeIdCacheExpireDays;
+	}
+
+	public void setDistributeIdCacheExpireDays(Integer distributeIdCacheExpireDays) {
+		this.distributeIdCacheExpireDays = distributeIdCacheExpireDays;
 	}
 
 }

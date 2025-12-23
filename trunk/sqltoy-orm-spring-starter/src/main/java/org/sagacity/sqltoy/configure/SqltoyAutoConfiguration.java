@@ -155,6 +155,7 @@ public class SqltoyAutoConfiguration {
 		sqlToyContext.setDialectMap(properties.getDialectMap());
 		sqlToyContext.setLocalDateTimeFormat(properties.getLocalDateTimeFormat());
 		sqlToyContext.setLocalTimeFormat(properties.getLocalTimeFormat());
+		sqlToyContext.setDistributeIdCacheExpireDays(properties.getDistributeIdCacheExpireDays());
 		// map 类型结果label是否自动转驼峰处理
 		if (properties.getHumpMapResultTypeLabel() != null) {
 			sqlToyContext.setHumpMapResultTypeLabel(properties.getHumpMapResultTypeLabel());

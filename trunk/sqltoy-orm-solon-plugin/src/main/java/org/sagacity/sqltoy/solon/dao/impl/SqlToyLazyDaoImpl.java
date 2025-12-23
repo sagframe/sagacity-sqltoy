@@ -809,12 +809,12 @@ public class SqlToyLazyDaoImpl extends SolonDaoSupport implements SqlToyLazyDao 
         return super.generateBizId(entity);
     }
     
-	@Override
+    @Override
 	public String generateBizId(String tableName, String signature, Map<String, Object> keyValues, LocalDate bizDate,
 			int length, int sequenceSize) {
 		return super.generateBizId(tableName, signature, keyValues, bizDate, length, sequenceSize);
 	}
-	
+    
     /*
      * (non-Javadoc)
      *
