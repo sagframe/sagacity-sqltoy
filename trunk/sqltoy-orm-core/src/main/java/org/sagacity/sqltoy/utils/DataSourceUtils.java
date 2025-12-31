@@ -614,7 +614,7 @@ public class DataSourceUtils {
 			DataSourceCallbackHandler handler) {
 		if (datasource == null) {
 			throw new IllegalArgumentException(
-					"dataSource为null,异常原因参考:\n 1、数据库连接池配置错误，根本就没有成功创建DataSource;\n 2、多数据源场景未配置spring.sqltoy.defaultDataSoure=xxx 默认数据源;\n 3、dao中指定的dataSource名称不存在!");
+					"dataSource为null,异常原因参考:\n 1、数据库连接池配置错误，根本就没有成功创建DataSource;\n 2、多数据源场景未配置spring.sqltoy.defaultDataSource=xxx 默认数据源;\n 3、dao中指定的dataSource名称不存在!");
 		}
 		Connection conn = sqltoyContext.getConnection(datasource);
 		Integer dbType;

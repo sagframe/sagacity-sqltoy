@@ -3,7 +3,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sagframe</groupId>
-	<version>5.6.57</version>
+	<version>5.6.60</version>
 	<name>sagacity-sqltoy</name>
 	<description>sqltoy core code</description>
 	<artifactId>sagacity-sqltoy</artifactId>
@@ -14,9 +14,9 @@
 		<ehcache.version>3.11.1</ehcache.version>
 		<httpclient.version>4.5.14</httpclient.version>
 		<httpclient-core.version>4.4.16</httpclient-core.version>
-		<elastic-rest-client.version>9.2.1</elastic-rest-client.version>
+		<elastic-rest-client.version>9.2.3</elastic-rest-client.version>
 		<fastjson.version>2.0.60</fastjson.version>
-		<mongo.version>5.6.1</mongo.version>
+		<mongo.version>5.6.2</mongo.version>
 		<junit-jupiter.version>6.0.1</junit-jupiter.version>
 		<junit-platform.version>6.0.1</junit-platform.version>
 		<slf4j.version>2.0.17</slf4j.version>
@@ -24,6 +24,7 @@
 		<lombok.version>1.18.42</lombok.version>
 		<druid.version>1.2.27</druid.version>
 		<transmittable-thread-local>2.14.5</transmittable-thread-local>
+		<ulid-creator.version>5.2.3</ulid-creator.version>
 	</properties>
 	<licenses>
 		<license>
@@ -57,6 +58,12 @@
 		</developer>
 	</developers>
 	<dependencies>
+		<dependency>
+			<groupId>com.github.f4b6a3</groupId>
+			<artifactId>ulid-creator</artifactId>
+			<version>${ulid-creator.version}</version>
+			<optional>true</optional>
+		</dependency>
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
@@ -113,7 +120,7 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
-	
+
 		<dependency>
 			<groupId>org.mongodb</groupId>
 			<artifactId>mongodb-driver-sync</artifactId>
@@ -150,7 +157,7 @@
 		</dependency>
 		<dependency>
 			<groupId>com.alibaba.fastjson2</groupId>
-    		<artifactId>fastjson2</artifactId>
+			<artifactId>fastjson2</artifactId>
 			<version>${fastjson.version}</version>
 			<scope>provided</scope>
 			<optional>true</optional>

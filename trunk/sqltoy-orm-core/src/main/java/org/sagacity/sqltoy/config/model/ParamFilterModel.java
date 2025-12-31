@@ -186,11 +186,16 @@ public class ParamFilterModel implements Serializable {
 	 * 缓存未匹配到key，返回检索词自身
 	 */
 	private boolean cacheNotMatchedReturnSelf = true;
-	
+
 	/**
 	 * sql注入验证等级
 	 */
 	private SqlInjectionLevel sqlInjectionLevel;
+
+	/**
+	 * 针对remove-null 提供是否删除空白选项
+	 */
+	private boolean removeBlank = true;
 
 	/**
 	 * 是否数组
@@ -602,6 +607,13 @@ public class ParamFilterModel implements Serializable {
 	public void setSqlInjectionLevel(SqlInjectionLevel sqlInjectionLevel) {
 		this.sqlInjectionLevel = sqlInjectionLevel;
 	}
-	
-	
+
+	public boolean isRemoveBlank() {
+		return removeBlank;
+	}
+
+	public void setRemoveBlank(boolean removeBlank) {
+		this.removeBlank = removeBlank;
+	}
+
 }

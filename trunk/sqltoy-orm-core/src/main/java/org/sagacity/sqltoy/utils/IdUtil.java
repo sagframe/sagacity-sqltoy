@@ -11,9 +11,9 @@ import java.util.Date;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.config.model.CurrentTimeMaxValue;
 import org.sagacity.sqltoy.integration.DistributeIdGenerator;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
@@ -52,10 +52,11 @@ public class IdUtil {
 	}
 
 	/**
-	 * 封装JDK自带的UUID, 通过Random数字生成,中间有-分割
+	 * update 2025-12-24 改为uuidv7版本
 	 */
 	public static String getUUID() {
-		return UUID.randomUUID().toString().replace("-", "");
+		// return UUID.randomUUID().toString().replace("-", "");
+		return StandardUUIDv7Generator.generateString().replace("-", "");
 	}
 
 	/**
@@ -237,7 +238,7 @@ public class IdUtil {
 		}
 		return serverIdentity;
 	}
-	
+
 	/**
 	 * @todo 产生分布式主键
 	 * @param distributeIdGenerator
@@ -280,10 +281,11 @@ public class IdUtil {
 		Long result;
 		// update 2019-1-24 key命名策略改为SQLTOY_GL_ID:tableName:xxx 便于redis检索
 		if (tableName != null) {
-			result = distributeIdGenerator
-					.generateId("".equals(realKey) ? tableName : tableName.concat(":").concat(realKey), 1, null);
+			result = distributeIdGenerator.generateId(
+					"".equals(realKey) ? tableName : tableName.concat(":").concat(realKey), 1,
+					SqlToyConstants.getDistributeIdCacheExpireDate());
 		} else {
-			result = distributeIdGenerator.generateId(realKey, 1, null);
+			result = distributeIdGenerator.generateId(realKey, 1, SqlToyConstants.getDistributeIdCacheExpireDate());
 		}
 		return realKey.concat(
 				StringUtil.addLeftZero2Len("" + result, (sequenceSize > 0) ? sequenceSize : length - realKey.length()));

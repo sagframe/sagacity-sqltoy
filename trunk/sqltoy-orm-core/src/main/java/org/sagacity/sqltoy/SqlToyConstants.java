@@ -3,6 +3,7 @@ package org.sagacity.sqltoy;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.ZoneId;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -12,6 +13,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
+import org.sagacity.sqltoy.utils.DateUtil;
 import org.sagacity.sqltoy.utils.FileUtil;
 import org.sagacity.sqltoy.utils.IdUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -220,6 +222,11 @@ public class SqlToyConstants {
 	public static IgnoreKeyCaseMap<String, String> dialectReturnPrimaryColumnCase = new IgnoreKeyCaseMap<String, String>();
 
 	/**
+	 * 分布式id缓存失效天数
+	 */
+	public static Integer distributeIdCacheExpireDays;
+
+	/**
 	 * @todo 解析模板中的参数
 	 * @param template
 	 * @return
@@ -264,6 +271,7 @@ public class SqlToyConstants {
 
 	/**
 	 * 获得默认时区
+	 * 
 	 * @return
 	 */
 	public static ZoneId getZoneId() {
@@ -544,5 +552,13 @@ public class SqlToyConstants {
 			return tableOrColumnName.toUpperCase();
 		}
 		return tableOrColumnName;
+	}
+
+	public static Date getDistributeIdCacheExpireDate() {
+		if (distributeIdCacheExpireDays == null) {
+			return null;
+		} else {
+			return DateUtil.addDay(DateUtil.getNowTime(), distributeIdCacheExpireDays);
+		}
 	}
 }

@@ -1098,6 +1098,17 @@
 						use="required" />
 				</xsd:complexType>
 			</xsd:element>
+			<xsd:element name="remove-null" minOccurs="0"
+				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[剔除数组集合中为null或空白的值]]></xsd:documentation>
+				</xsd:annotation>
+				<xsd:complexType>
+					<xsd:attribute name="params" type="xsd:string"
+						use="required" />
+					<xsd:attribute name="remove-blank" type="xsd:boolean" default="true"/>
+				</xsd:complexType>
+			</xsd:element>
 			<xsd:element name="valid-sqlInjection" minOccurs="0"
 				maxOccurs="unbounded">
 				<xsd:annotation>

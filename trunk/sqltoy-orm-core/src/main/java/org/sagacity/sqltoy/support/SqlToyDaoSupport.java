@@ -1481,7 +1481,7 @@ public class SqlToyDaoSupport {
 				throw new DataAccessException("实例化分布式id产生器失败:" + e.getMessage());
 			}
 		}
-		return distributeIdGenerator.generateId(signature, increment, null);
+		return distributeIdGenerator.generateId(signature, increment, SqlToyConstants.getDistributeIdCacheExpireDate());
 	}
 
 	/**
@@ -2037,6 +2037,10 @@ public class SqlToyDaoSupport {
 		// 设置安全脱敏
 		if (!innerModel.secureMask.isEmpty()) {
 			queryExecutor.getInnerModel().secureMask.putAll(innerModel.secureMask);
+		}
+		// 设置解密字段
+		if (!innerModel.decryptColumns.isEmpty()) {
+			queryExecutor.getInnerModel().decryptColumns.addAll(innerModel.decryptColumns);
 		}
 		// 是否输出sql
 		if (innerModel.showSql != null) {

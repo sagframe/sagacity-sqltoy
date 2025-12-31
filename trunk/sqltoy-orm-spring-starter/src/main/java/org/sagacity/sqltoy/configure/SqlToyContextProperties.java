@@ -180,11 +180,13 @@ public class SqlToyContextProperties implements Serializable {
 
 	/**
 	 * 字段安全加密处理器定义(开发者可以自行扩展，sqltoy默认提供了RSA的实现)
+	 * 接口:org.sagacity.sqltoy.plugins.secure.FieldsSecureProvider
 	 */
 	private String fieldsSecureProvider;
 
 	/**
 	 * 字段展示安全脱敏处理器(sqltoy默认提供了实现，此处提供不满足的情况下的自行扩展)
+	 * 接口:org.sagacity.sqltoy.plugins.secure.DesensitizeProvider
 	 */
 	private String desensitizeProvider;
 
@@ -290,6 +292,11 @@ public class SqlToyContextProperties implements Serializable {
 	 * sql注入表达式
 	 */
 	private String sqlInjectionRegexes[];
+	
+	/**
+	 * 分布式id key的缓存天数(一般基于redis，避免长期储存占用空间)，多少天失效
+	 */
+	private Integer distributeIdCacheExpireDays;
 
 	/**
 	 * @return the sqlResourcesDir
@@ -829,5 +836,13 @@ public class SqlToyContextProperties implements Serializable {
 
 	public void setDdlLowerOrUpper(String ddlLowerOrUpper) {
 		this.ddlLowerOrUpper = ddlLowerOrUpper;
+	}
+
+	public Integer getDistributeIdCacheExpireDays() {
+		return distributeIdCacheExpireDays;
+	}
+
+	public void setDistributeIdCacheExpireDays(Integer distributeIdCacheExpireDays) {
+		this.distributeIdCacheExpireDays = distributeIdCacheExpireDays;
 	}
 }
