@@ -1543,8 +1543,9 @@ public class DialectFactory {
 			// 启动执行日志
 			SqlExecuteStat.start(BeanUtil.getEntityClass(entityClass).getName(), OperateDetailType.saveOrUpdateAll,
 					Long.valueOf(entities.size()), sqlToyContext.isDebug());
-			// 改进点:利用目前分库分表的策略，针对超大数据集，比如1万条，按2500条记录作为一个并行度(限制最大并行度)进行并行执行
-			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, true, false, SqlType.update, dataSource,
+			// 改进说明:利用目前分库分表的策略，针对超大数据集，比如1万条，按2500条记录作为一个并行度(限制最大并行度)进行并行执行
+			// update 2025-12-30将原本自动给主键赋值由true改为false
+			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, false, false, SqlType.update, dataSource,
 					parallelConfig, (context, batchModel) -> {
 						ShardingModel shardingModel = batchModel.getShardingModel();
 						Long updateCnt = (Long) DataSourceUtils.processDataSource(context,

@@ -231,7 +231,7 @@ public class DateUtilTest {
 		System.err.println(DateUtil.parse(new Date(), "yyyy-MM-dd HH:mm:ss"));
 		System.err.println(DateUtil.parse(LocalDateTime.now(), "yyyy-MM-dd HH:mm:ss"));
 		System.err.println(DateUtil.parse(LocalDate.now(), "yyyy-MM-dd"));
-
+		
 		System.err.println(DateUtil.parse(LocalTime.now(), "HH:mm:ss"));
 		System.err.println(DateUtil.parse("2023-10-22", "yyyy-MM-dd HH:mm:ss"));
 		System.err.println(DateUtil.parse("12:23:21", "yyyy-MM-dd HH:mm:ss"));
@@ -279,10 +279,9 @@ public class DateUtilTest {
 		System.err.println(DateUtil.parseString("21:34:22.234345"));
 		System.err.println(DateUtil.parseString("21:34:22.234"));
 		System.err.println(DateUtil.parseString("21:34:22.2"));
-		System.err.println(DateUtil.formatDate(DateUtil.parseString("2020-11-20 21:34:22.234345+8:00"),
-				"yyyy-MM-dd HH:mm:ss.SSS"));
-		// System.err.println(DateUtil.parseLocalDateTime("2020-11-20 21:34:22.234",
-		// "yyyy-MM-dd HH:mm:ss.SSS"));
+		System.err.println(
+				DateUtil.formatDate(DateUtil.parseString("2020-11-20 21:34:22.234345+8:00"), "yyyy-MM-dd HH:mm:ss.SSS"));
+		//System.err.println(DateUtil.parseLocalDateTime("2020-11-20 21:34:22.234", "yyyy-MM-dd HH:mm:ss.SSS"));
 	}
 
 	@Test
@@ -297,17 +296,11 @@ public class DateUtilTest {
 	@Test
 	public void parseZonedDateTime() throws ParseException {
 		String dateVar = ZonedDateTime.of(LocalDateTime.now(), ZoneOffset.of("-05:00")).toString();
-
+		
 		dateVar = OffsetTime.now().toString();
-		// System.err.println(dateVar);
-		// System.err.println(DateUtil.parseZonedDateTime(dateVar));
+		//System.err.println(dateVar);
+		//System.err.println(DateUtil.parseZonedDateTime(dateVar));
 		System.err.println(DateUtil.parseZonedDateTime("21:34:22.234345+8:00"));
-
-	}
-
-	@Test
-	public void testAddDate() throws ParseException {
-		System.err.println(DateUtil.addDay(DateUtil.getNowTime(), 2));
 
 	}
 }

@@ -428,7 +428,8 @@ public class SqlToyContext {
 	private String[] sqlInjectionRegexes;
 
 	/**
-	 * 分布式id key的缓存天数(一般基于redis，避免长期储存占用空间)，多少天失效
+	 * 一般指基于分布式redis缓存产生唯一有规则的id(如日期+流水),key(一般是日期格式)保留的天数
+	 * 一般一天一条记录,周期长了之后redis中记录较多
 	 */
 	private Integer distributeIdCacheExpireDays;
 
@@ -441,7 +442,8 @@ public class SqlToyContext {
 		// 加载sqltoy的各类参数,如db2是否要增加with
 		// ur等,详见org/sagacity/sqltoy/sqltoy-default.properties
 		SqlToyConstants.loadProperties(dialectConfig);
-		if (this.distributeIdCacheExpireDays != null) {
+		//设置分布式id缓存时效天数
+		if (distributeIdCacheExpireDays != null) {
 			SqlToyConstants.distributeIdCacheExpireDays = distributeIdCacheExpireDays;
 		}
 		// 设置保留字
@@ -1404,5 +1406,4 @@ public class SqlToyContext {
 	public void setDistributeIdCacheExpireDays(Integer distributeIdCacheExpireDays) {
 		this.distributeIdCacheExpireDays = distributeIdCacheExpireDays;
 	}
-
 }

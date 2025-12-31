@@ -42,7 +42,7 @@ public class ParallelUtils {
 	 * @todo 将集合进行根据sharding字段的值提取sharding策略并按照策略将集合分组，然后并行执行
 	 * @param sqlToyContext
 	 * @param entities
-	 * @param wrapIdValue
+	 * @param wrapIdValue 是否需要事先主动给类似雪花算法、uuid等基于算法的id赋值
 	 * @param notSharding
 	 * @param dataSource
 	 * @param parallelConfig

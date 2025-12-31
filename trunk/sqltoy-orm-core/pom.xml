@@ -3,7 +3,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sagframe</groupId>
-	<version>5.6.58.jre8</version>
+	<version>5.6.60.jre8</version>
 	<name>sagacity-sqltoy</name>
 	<description>sqltoy core code</description>
 	<artifactId>sagacity-sqltoy</artifactId>
@@ -24,6 +24,7 @@
 		<lombok.version>1.18.38</lombok.version>
 		<druid.version>1.2.24</druid.version>
 		<transmittable-thread-local>2.14.5</transmittable-thread-local>
+		<ulid-creator.version>5.2.3</ulid-creator.version>
 	</properties>
 	<licenses>
 		<license>
@@ -67,6 +68,12 @@
 		</repository>
 	</distributionManagement>
 	<dependencies>
+		<dependency>
+			<groupId>com.github.f4b6a3</groupId>
+			<artifactId>ulid-creator</artifactId>
+			<version>${ulid-creator.version}</version>
+			<optional>true</optional>
+		</dependency>
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
@@ -123,7 +130,7 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
-	
+
 		<dependency>
 			<groupId>org.mongodb</groupId>
 			<artifactId>mongodb-driver-sync</artifactId>
@@ -160,7 +167,7 @@
 		</dependency>
 		<dependency>
 			<groupId>com.alibaba.fastjson2</groupId>
-    		<artifactId>fastjson2</artifactId>
+			<artifactId>fastjson2</artifactId>
 			<version>${fastjson.version}</version>
 			<scope>provided</scope>
 			<optional>true</optional>

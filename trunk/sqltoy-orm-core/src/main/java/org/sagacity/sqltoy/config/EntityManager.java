@@ -51,6 +51,7 @@ import org.sagacity.sqltoy.config.model.ShardingConfig;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.config.model.TableCascadeModel;
 import org.sagacity.sqltoy.model.IgnoreCaseSet;
+import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.model.SecureType;
 import org.sagacity.sqltoy.plugins.id.IdGenerator;
 import org.sagacity.sqltoy.utils.BeanUtil;
@@ -84,12 +85,12 @@ public class EntityManager {
 	/**
 	 * 存放主键生成策略实例
 	 */
-	private static HashMap<String, IdGenerator> idGenerators = new HashMap<String, IdGenerator>();
+	private static IgnoreKeyCaseMap<String, IdGenerator> IdGeneratorsInstance = new IgnoreKeyCaseMap<String, IdGenerator>();
 
 	/**
 	 * 定义常用的主键生成方式类名称
 	 */
-	private static HashMap<String, String> IdGenerators = new HashMap<String, String>() {
+	private static HashMap<String, String> IdGeneratorsMap = new HashMap<String, String>() {
 		/**
 		 * 
 		 */
@@ -97,8 +98,9 @@ public class EntityManager {
 		{
 			// 13位当前毫秒+6位纳秒+3位主机ID 构成的22位不重复且有序的ID
 			put("default", "DefaultIdGenerator");
-			// 32位uuid
+			// 32位uuid(2025-12-24 改进为uuid v7版本)
 			put("uuid", "UUIDGenerator");
+			put("ulid", "ULIDGenerator");
 			put("redis", "RedisIdGenerator");
 			// 26位
 			put("nanotime", "NanoTimeIdGenerator");
@@ -111,6 +113,7 @@ public class EntityManager {
 			// 雪花算法命名容错
 			put("snowflakeidgenerator", "SnowflakeIdGenerator");
 			put("uuidgenerator", "UUIDGenerator");
+			put("ulidgenerator", "ULIDGenerator");
 			put("redisidgenerator", "RedisIdGenerator");
 		}
 	};
@@ -732,7 +735,7 @@ public class EntityManager {
 			String idGenerator = id.generator();
 			if (StringUtil.isNotBlank(idGenerator)) {
 				processIdGenerator(sqlToyContext, entityMeta, idGenerator);
-				entityMeta.setIdGenerator(idGenerators.get(idGenerator));
+				entityMeta.setIdGenerator(IdGeneratorsInstance.get(idGenerator));
 			}
 			if (loadNamedWhereSql.length() > 1) {
 				loadNamedWhereSql.append(" and ");
@@ -763,11 +766,11 @@ public class EntityManager {
 			processIdGenerator(sqlToyContext, entityMeta, bizGenerator);
 			// 如果是业务主键跟ID重叠,则ID以业务主键策略生成
 			if (id != null) {
-				entityMeta.setIdGenerator(idGenerators.get(bizGenerator));
+				entityMeta.setIdGenerator(IdGeneratorsInstance.get(bizGenerator));
 				fieldMeta.setLength(bizId.length());
 				entityMeta.setBizIdEqPK(true);
 			} else {
-				entityMeta.setBusinessIdGenerator(idGenerators.get(bizGenerator));
+				entityMeta.setBusinessIdGenerator(IdGeneratorsInstance.get(bizGenerator));
 			}
 		}
 	}
@@ -780,16 +783,16 @@ public class EntityManager {
 	 */
 	private void processIdGenerator(SqlToyContext sqlToyContext, EntityMeta entityMeta, String idGenerator) {
 		// 已经存在跳过处理
-		if (sqlToyContext == null || idGenerators.containsKey(idGenerator)) {
+		if (sqlToyContext == null || IdGeneratorsInstance.containsKey(idGenerator)) {
 			return;
 		}
 		// 自定义springbean 模式，用法在quickvo中配置@bean(beanName)
 		if (idGenerator.toLowerCase().startsWith("@bean(")) {
 			String beanName = idGenerator.substring(idGenerator.indexOf("(") + 1, idGenerator.indexOf(")"))
 					.replaceAll("\"|\'", "").trim();
-			idGenerators.put(idGenerator, (IdGenerator) sqlToyContext.getBean(beanName));
+			IdGeneratorsInstance.put(idGenerator, (IdGenerator) sqlToyContext.getBean(beanName));
 		} else {
-			String generator = IdGenerators.get(idGenerator.toLowerCase());
+			String generator = IdGeneratorsMap.get(idGenerator.toLowerCase());
 			generator = (generator != null) ? IdGeneratorPackage.concat(generator) : idGenerator;
 			// 针对历史id策略包路径提供兼容处理:update 2024-07-16
 			if (generator.startsWith(IdGeneratorOldPackage)
@@ -801,7 +804,7 @@ public class EntityManager {
 				IdGenerator idGeneratorBean = (IdGenerator) Class.forName(generator).getDeclaredConstructor()
 						.newInstance();
 				idGeneratorBean.initialize(sqlToyContext);
-				idGenerators.put(idGenerator, idGeneratorBean);
+				IdGeneratorsInstance.put(idGenerator, idGeneratorBean);
 			} catch (Exception e) {
 				throw new RuntimeException("实例化主键生成策略失败:className=" + generator + ",错误信息:" + e.getMessage());
 			}

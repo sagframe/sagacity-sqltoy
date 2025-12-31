@@ -713,6 +713,10 @@ public class DialectUtils {
 				}
 			}
 		}
+		// 批量回写saveOrUpdate公共属性值
+		BeanUtil.batchBackWriteUnifyFields(entities,
+				BeanUtil.getUnifyFieldIndex(sqlToyContext.getUnifyFieldsHandler(), entityMeta.getFieldsArray(), 3),
+				paramValues);
 		String saveOrUpdateSql = generateSqlHandler.generateSql(entityMeta, forceUpdateFields);
 		List<Object[]> realParams = paramValues;
 		String realSql = saveOrUpdateSql;
@@ -1704,6 +1708,9 @@ public class DialectUtils {
 				BeanUtil.setProperty(entity, entityMeta.getBusinessIdField(), fullParamValues[bizIdColIndex]);
 			}
 		}
+		// 回写save公共属性值
+		BeanUtil.backWriteUnifyFields(entity,
+				BeanUtil.getUnifyFieldIndex(sqlToyContext.getUnifyFieldsHandler(), reflectColumns, 1), fullParamValues);
 		SqlToyConfig sqlToyConfig = new SqlToyConfig(DataSourceUtils.getDialect(dbType));
 		sqlToyConfig.setSqlType(SqlType.insert);
 		sqlToyConfig.setSql(insertSql);
@@ -1880,6 +1887,9 @@ public class DialectUtils {
 				BeanUtil.setProperty(entities.get(i), entityMeta.getDataVersion().getField(), rowData[dataVerIndex]);
 			}
 		}
+		// 批量回写save公共属性值
+		BeanUtil.batchBackWriteUnifyFields(entities,
+				BeanUtil.getUnifyFieldIndex(sqlToyContext.getUnifyFieldsHandler(), reflectColumns, 1), paramValues);
 		List<Object[]> realParams = paramValues;
 		String realSql = insertSql;
 		if (sqlToyContext.hasSqlInterceptors()) {
@@ -2045,6 +2055,10 @@ public class DialectUtils {
 		// 增加sql执行拦截器 update 2022-9-10
 		sqlToyResult = doInterceptors(sqlToyContext, sqlToyConfig, OperateType.update, sqlToyResult, entity.getClass(),
 				dbType);
+		// 回写update公共属性值
+		BeanUtil.backWriteUnifyFields(entity,
+				BeanUtil.getUnifyFieldIndex(sqlToyContext.getUnifyFieldsHandler(), entityMeta.getFieldsArray(), 2),
+				fieldsValues);
 		return SqlUtil.executeSql(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(), sqlToyResult.getParamsValue(),
 				entityMeta.getFieldsTypeArray(), conn, dbType, null, false);
 	}
@@ -2374,6 +2388,10 @@ public class DialectUtils {
 			realSql = sqlToyResult.getSql();
 			realParams = CollectionUtil.arrayToList(sqlToyResult.getParamsValue());
 		}
+		// 批量回写update公共属性值
+		BeanUtil.batchBackWriteUnifyFields(entities,
+				BeanUtil.getUnifyFieldIndex(sqlToyContext.getUnifyFieldsHandler(), entityMeta.getFieldsArray(), 2),
+				paramsValues);
 		SqlExecuteStat.showSql("批量修改[" + realParams.size() + "]条记录", realSql, null);
 		return SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), realSql, realParams,
 				entityMeta.getFieldsTypeArray(), null, null, batchSize, autoCommit, conn, dbType);

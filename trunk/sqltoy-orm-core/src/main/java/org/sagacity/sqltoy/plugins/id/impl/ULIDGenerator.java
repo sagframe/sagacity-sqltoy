@@ -1,21 +1,20 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.plugins.id.impl;
 
 import java.util.Date;
 
 import org.sagacity.sqltoy.plugins.id.IdGenerator;
-import org.sagacity.sqltoy.utils.IdUtil;
+
+import com.github.f4b6a3.ulid.Ulid;
+import com.github.f4b6a3.ulid.UlidCreator;
 
 /**
  * @project sqltoy-orm
- * @description 产生32位UUID字符串,基于uuid v7
+ * @description 产生26位ULID字符串
  * @author zhongxuchen
- * @version v1.0,Date:2012-6-4
+ * @version v1.0,Date:2025-12-23
  */
-public class UUIDGenerator implements IdGenerator {
-	private static IdGenerator me = new UUIDGenerator();
+public class ULIDGenerator implements IdGenerator {
+	private static IdGenerator me = new ULIDGenerator();
 
 	/**
 	 * @TODO 获取对象单例
@@ -34,7 +33,7 @@ public class UUIDGenerator implements IdGenerator {
 	@Override
 	public Object getId(String tableName, String signature, String[] relatedColumns, Object[] relatedColValue,
 			Date bizDate, String idJavaType, int length, int sequenceSize) {
-		return IdUtil.getUUID();
+		Ulid ulid = UlidCreator.getUlid();
+		return ulid.toString();
 	}
-
 }

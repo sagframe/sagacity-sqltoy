@@ -383,6 +383,21 @@ public class QueryExecutor implements Serializable {
 	}
 
 	/**
+	 * 指定解密列
+	 * 
+	 * @param columns
+	 * @return
+	 */
+	public QueryExecutor secureDecrypt(String... columns) {
+		if (columns.length > 0) {
+			for (String column : columns) {
+				innerModel.decryptColumns.add(column);
+			}
+		}
+		return this;
+	}
+
+	/**
 	 * @TODO 分页优化
 	 * @param pageOptimize
 	 * @return

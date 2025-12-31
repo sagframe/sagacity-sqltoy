@@ -225,7 +225,7 @@ public class SqlToyConstants {
 	 * 分布式id缓存失效天数
 	 */
 	public static Integer distributeIdCacheExpireDays;
-	
+
 	/**
 	 * @todo 解析模板中的参数
 	 * @param template
@@ -271,6 +271,7 @@ public class SqlToyConstants {
 
 	/**
 	 * 获得默认时区
+	 * 
 	 * @return
 	 */
 	public static ZoneId getZoneId() {
@@ -552,7 +553,7 @@ public class SqlToyConstants {
 		}
 		return tableOrColumnName;
 	}
-	
+
 	public static Date getDistributeIdCacheExpireDate() {
 		if (distributeIdCacheExpireDays == null) {
 			return null;

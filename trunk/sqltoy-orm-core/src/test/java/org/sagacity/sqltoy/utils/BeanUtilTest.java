@@ -24,7 +24,6 @@ import org.sagacity.sqltoy.demo.domain.DeviceOrderVO;
 import org.sagacity.sqltoy.demo.domain.StaffInfo;
 import org.sagacity.sqltoy.demo.vo.DataRange;
 import org.sagacity.sqltoy.demo.vo.StaffInfoVO;
-import org.sagacity.sqltoy.demo.vo.Student;
 import org.sagacity.sqltoy.demo.vo.TypeShowCase;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.model.IgnoreCaseLinkedMap;
@@ -473,14 +472,4 @@ public class BeanUtilTest {
 				new Object[] { LocalDateTime.now().plusDays(-10), LocalDateTime.now() }, DBType.ORACLE));
 	}
 
-	@Test
-	public void testRecord() {
-		Student student = new Student("S0001", "chenrenfei", 24, LocalDate.now());
-		System.err.println(JSON.toJSONString(BeanUtil.reflectBeanToAry(student, "age", "id")));
-		List<Object[]> dataSet = new ArrayList();
-		dataSet.add(new Object[] { "S0001", "chrenfei", 32, LocalDate.now() });
-		dataSet.add(new Object[] { "S0002", "zhangsan", 31, LocalDate.now() });
-		System.err.println(JSON.toJSONString(BeanUtil.reflectListToBean(null, dataSet,
-				new String[] { "id", "name", "age", "birthDay", "tel" }, Student.class)));
-	}
 }

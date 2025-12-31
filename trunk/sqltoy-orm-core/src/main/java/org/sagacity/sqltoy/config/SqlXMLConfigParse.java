@@ -880,6 +880,10 @@ public class SqlXMLConfigParse {
 		if (filter.hasAttribute("type")) {
 			filterModel.setType(filter.getAttribute("type").toLowerCase());
 		}
+		// remove-null 中设置remove-blank
+		if (filter.hasAttribute("remove-blank")) {
+			filterModel.setRemoveBlank(Boolean.parseBoolean(filter.getAttribute("remove-blank")));
+		}
 		// regex(replace filter)
 		if (filter.hasAttribute("regex")) {
 			filterModel.setRegex(filter.getAttribute("regex"));
