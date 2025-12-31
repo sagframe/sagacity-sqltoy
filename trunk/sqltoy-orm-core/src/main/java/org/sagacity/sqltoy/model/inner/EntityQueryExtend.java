@@ -15,6 +15,7 @@ import org.sagacity.sqltoy.config.model.PageOptimize;
 import org.sagacity.sqltoy.config.model.SecureMask;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.config.model.Translate;
+import org.sagacity.sqltoy.model.IgnoreCaseSet;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.ParamsFilter;
 
@@ -106,6 +107,11 @@ public class EntityQueryExtend implements Serializable {
 	 * 对字段进行安全脱敏
 	 */
 	public LinkedHashMap<String, SecureMask> secureMask = new LinkedHashMap<String, SecureMask>();
+	
+	/**
+	 * 解密的列
+	 */
+	public IgnoreCaseSet decryptColumns=new IgnoreCaseSet();
 
 	// 分库策略配置
 	public ShardingStrategyConfig dbSharding;

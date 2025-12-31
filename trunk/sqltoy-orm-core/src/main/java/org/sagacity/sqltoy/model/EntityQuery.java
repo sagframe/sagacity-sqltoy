@@ -264,6 +264,21 @@ public class EntityQuery implements Serializable {
 		}
 		return this;
 	}
+	
+	/**
+	 * 指定解密列
+	 * 
+	 * @param columns
+	 * @return
+	 */
+	public EntityQuery secureDecrypt(String... columns) {
+		if (columns.length > 0) {
+			for (String column : columns) {
+				innerModel.decryptColumns.add(column);
+			}
+		}
+		return this;
+	}
 
 	/**
 	 * @TODO 动态增加参数过滤,对参数进行转null或其他的加工处理

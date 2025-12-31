@@ -11,7 +11,6 @@ import java.util.Date;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.sagacity.sqltoy.SqlToyConstants;
@@ -53,10 +52,11 @@ public class IdUtil {
 	}
 
 	/**
-	 * 封装JDK自带的UUID, 通过Random数字生成,中间有-分割
+	 * update 2025-12-24 改为uuidv7版本
 	 */
 	public static String getUUID() {
-		return UUID.randomUUID().toString().replace("-", "");
+		// return UUID.randomUUID().toString().replace("-", "");
+		return StandardUUIDv7Generator.generateString().replace("-", "");
 	}
 
 	/**

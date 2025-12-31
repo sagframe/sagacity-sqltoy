@@ -121,13 +121,17 @@ public class ResultUtils {
 			result.setRows(queryExecutorExtend.rowCallbackHandler.getResult());
 		} else {
 			// 重新组合解密字段(entityMeta中的和sql自定义的合并)
-			IgnoreCaseSet decryptColumns = (decryptHandler == null) ? null : decryptHandler.getColumns();
+			IgnoreCaseSet decryptColumns = new IgnoreCaseSet();
+			// 这里注意，要保留，主要是load、loadAll等对象查询时POJO注解有解密配置
+			if (decryptHandler != null && decryptHandler.getColumns() != null) {
+				decryptColumns.addAll(decryptHandler.getColumns());
+			}
 			if (sqlToyConfig.getDecryptColumns() != null) {
-				if (decryptColumns == null) {
-					decryptColumns = sqlToyConfig.getDecryptColumns();
-				} else {
-					decryptColumns.addAll(sqlToyConfig.getDecryptColumns());
-				}
+				decryptColumns.addAll(sqlToyConfig.getDecryptColumns());
+			}
+			// update 2025-12-27 增加代码中指定解密的列
+			if (queryExecutorExtend != null && queryExecutorExtend.decryptColumns != null) {
+				decryptColumns.addAll(queryExecutorExtend.decryptColumns);
 			}
 			DecryptHandler realDecryptHandler = null;
 			if (decryptColumns != null && !decryptColumns.isEmpty()) {
@@ -196,7 +200,14 @@ public class ResultUtils {
 			final StreamResultHandler streamResultHandler, Class resultType, Boolean humpMapLabel,
 			Map<Class, IgnoreKeyCaseMap<String, String>> fieldsMap) throws Exception {
 		// 重新组合解密字段(entityMeta中的和sql自定义的合并)
-		IgnoreCaseSet decryptColumns = sqlToyConfig.getDecryptColumns();
+		IgnoreCaseSet decryptColumns = new IgnoreCaseSet();
+		if (sqlToyConfig.getDecryptColumns() != null) {
+			decryptColumns.addAll(sqlToyConfig.getDecryptColumns());
+		}
+		// update 2025-12-27 增加代码中指定解密的列
+		if (extend != null && extend.decryptColumns != null) {
+			decryptColumns.addAll(extend.decryptColumns);
+		}
 		DecryptHandler realDecryptHandler = null;
 		if (decryptColumns != null && !decryptColumns.isEmpty()) {
 			realDecryptHandler = new DecryptHandler(sqlToyContext.getFieldsSecureProvider(), decryptColumns);
@@ -386,7 +397,7 @@ public class ResultUtils {
 	}
 
 	/**
-	 * @todo 对字段进行安全脱敏
+	 * @todo 对List<List> 二维集合字段进行安全脱敏
 	 * @param desensitizeProvider
 	 * @param rows
 	 * @param masks
@@ -413,6 +424,14 @@ public class ResultUtils {
 		}
 	}
 
+	/**
+	 * 对单行记录进行安全脱敏
+	 * 
+	 * @param desensitizeProvider
+	 * @param row
+	 * @param masks
+	 * @param labelIndexMap
+	 */
 	private static void secureMaskRow(DesensitizeProvider desensitizeProvider, List row, Iterator<SecureMask> masks,
 			LabelIndexModel labelIndexMap) {
 		Integer index;

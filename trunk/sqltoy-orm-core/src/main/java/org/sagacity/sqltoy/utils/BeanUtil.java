@@ -47,7 +47,9 @@ import org.sagacity.sqltoy.config.model.KeyAndIndex;
 import org.sagacity.sqltoy.config.model.PropertyType;
 import org.sagacity.sqltoy.config.model.TableCascadeModel;
 import org.sagacity.sqltoy.exception.DataAccessException;
+import org.sagacity.sqltoy.model.IgnoreCaseSet;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
+import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -2610,5 +2612,84 @@ public class BeanUtil {
 			return ary[index];
 		}
 		return null;
+	}
+
+	/**
+	 * 根据save/update/saveOrUpdate操作类型提取公共字段属性
+	 * 
+	 * @param unifyFieldsHandler
+	 * @param fieldsAry
+	 * @param type               1:save;2:update;3:saveOrUpdate
+	 * @return
+	 */
+	public static Map<String, Integer> getUnifyFieldIndex(IUnifyFieldsHandler unifyFieldsHandler, String[] fieldsAry,
+			int type) {
+		Map<String, Integer> fieldIndexMap = new HashMap<>();
+		if (unifyFieldsHandler == null) {
+			return fieldIndexMap;
+		}
+		IgnoreCaseSet fieldSet = new IgnoreCaseSet();
+		// 新增时，公共字段
+		if (type == 1) {
+			if (unifyFieldsHandler.createUnifyFields() != null) {
+				fieldSet.addAll(unifyFieldsHandler.createUnifyFields().keySet());
+			}
+		} // 修改
+		else if (type == 2) {
+			if (unifyFieldsHandler.updateUnifyFields() != null) {
+				fieldSet.addAll(unifyFieldsHandler.updateUnifyFields().keySet());
+			}
+		} // saveOrUpdate
+		else if (type == 3) {
+			if (unifyFieldsHandler.createUnifyFields() != null) {
+				fieldSet.addAll(unifyFieldsHandler.createUnifyFields().keySet());
+			}
+			if (unifyFieldsHandler.updateUnifyFields() != null) {
+				fieldSet.addAll(unifyFieldsHandler.updateUnifyFields().keySet());
+			}
+		}
+		for (int i = 0; i < fieldsAry.length; i++) {
+			// 不区分大小写包含
+			if (fieldSet.contains(fieldsAry[i])) {
+				fieldIndexMap.put(fieldsAry[i], i);
+			}
+		}
+		return fieldIndexMap;
+	}
+
+	/**
+	 * @TODO 回写POJO的：创建人、创建时间、修改人、修改时间等公共字段
+	 * @param entity
+	 * @param fieldIndexMap
+	 * @param values
+	 */
+	public static void backWriteUnifyFields(Object entity, Map<String, Integer> fieldIndexMap, Object[] values) {
+		List entities = new ArrayList();
+		List valueList = new ArrayList();
+		entities.add(entity);
+		valueList.add(values);
+		batchBackWriteUnifyFields(entities, fieldIndexMap, valueList);
+	}
+
+	/**
+	 * @TODO 批量回写POJO的：创建人、创建时间、修改人、修改时间等公共字段
+	 * @param entitis
+	 * @param fieldIndexMap
+	 * @param values
+	 */
+	public static void batchBackWriteUnifyFields(List entitis, Map<String, Integer> fieldIndexMap,
+			List<Object[]> values) {
+		if (fieldIndexMap.isEmpty()) {
+			return;
+		}
+		String[] fields = new String[fieldIndexMap.size()];
+		int[] indexs = new int[fieldIndexMap.size()];
+		int i = 0;
+		for (Map.Entry<String, Integer> entry : fieldIndexMap.entrySet()) {
+			fields[i] = entry.getKey();
+			indexs[i] = entry.getValue();
+			i++;
+		}
+		mappingSetProperties(entitis, fields, values, indexs, true, false);
 	}
 }

@@ -2038,6 +2038,10 @@ public class SqlToyDaoSupport {
 		if (!innerModel.secureMask.isEmpty()) {
 			queryExecutor.getInnerModel().secureMask.putAll(innerModel.secureMask);
 		}
+		// 设置解密字段
+		if (!innerModel.decryptColumns.isEmpty()) {
+			queryExecutor.getInnerModel().decryptColumns.addAll(innerModel.decryptColumns);
+		}
 		// 是否输出sql
 		if (innerModel.showSql != null) {
 			queryExecutor.showSql(innerModel.showSql);
