@@ -14,6 +14,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -683,6 +684,8 @@ public class ParamFilterUtils {
 					throw new RuntimeException("sql 参数过滤转换过程将数组转成in (:params) 形式的条件值过程错误:" + e.getMessage());
 				}
 			}
+		} else if ("remove-null".equals(filterType)) {
+			result = removeNull(paramValue, paramFilterModel.isRemoveBlank());
 		} else if ("sql-injection".equals(filterType)) {
 			if (SqlUtil.isSqlInjection(paramFilterModel.getSqlInjectionLevel(), paramValue)) {
 				throw new RuntimeException("属性[" + filterParam + "]对应的值未能通过sql注入校验,校验策略:["
@@ -697,6 +700,78 @@ public class ParamFilterUtils {
 			logger.warn("sql中filters定义的filterType={} 目前没有对应的实现!", filterType);
 		}
 		return result;
+	}
+
+	/**
+	 * @todo 剔除数组集合中为null的值
+	 * @param paramValue
+	 * @param removeBlank
+	 * @return
+	 */
+	private static Object removeNull(Object paramValue, boolean removeBlank) {
+		if (StringUtil.isBlank(paramValue)) {
+			return null;
+		}
+		if (paramValue instanceof Object[]) {
+			List result = new ArrayList();
+			Object[] tmpAry = (Object[]) paramValue;
+			for (Object cell : tmpAry) {
+				if (removeBlank) {
+					if (StringUtil.isNotBlank(cell)) {
+						result.add(cell);
+					}
+				} else if (cell != null) {
+					result.add(cell);
+				}
+			}
+			return result.toArray();
+		} else if (paramValue instanceof List) {
+			List result = new ArrayList();
+			Iterator iter = ((List) paramValue).iterator();
+			Object cell;
+			while (iter.hasNext()) {
+				cell = iter.next();
+				if (removeBlank) {
+					if (StringUtil.isNotBlank(cell)) {
+						result.add(cell);
+					}
+				} else if (cell != null) {
+					result.add(cell);
+				}
+			}
+			return result;
+		} else if (paramValue instanceof LinkedHashSet) {
+			Set result = new LinkedHashSet();
+			Iterator iter = ((LinkedHashSet) paramValue).iterator();
+			Object cell;
+			while (iter.hasNext()) {
+				cell = iter.next();
+				if (removeBlank) {
+					if (StringUtil.isNotBlank(cell)) {
+						result.add(cell);
+					}
+				} else if (cell != null) {
+					result.add(cell);
+				}
+			}
+			return result;
+		} else if (paramValue instanceof Set) {
+			Set result = new HashSet();
+			Iterator iter = ((Set) paramValue).iterator();
+			Object cell;
+			while (iter.hasNext()) {
+				cell = iter.next();
+				if (removeBlank) {
+					if (StringUtil.isNotBlank(cell)) {
+						result.add(cell);
+					}
+				} else if (cell != null) {
+					result.add(cell);
+				}
+			}
+			return result;
+		}
+		return paramValue;
 	}
 
 	/**

@@ -428,7 +428,8 @@ public class SqlToyContext {
 	private String[] sqlInjectionRegexes;
 
 	/**
-	 * 分布式id
+	 * 一般指基于分布式redis缓存产生唯一有规则的id(如日期+流水),key(一般是日期格式)保留的天数
+	 * 一般一天一条记录,周期长了之后redis中记录较多
 	 */
 	private Integer distributeIdCacheExpireDays;
 

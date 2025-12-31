@@ -180,11 +180,13 @@ public class SqlToyContextProperties implements Serializable {
 
 	/**
 	 * 字段安全加密处理器定义(开发者可以自行扩展，sqltoy默认提供了RSA的实现)
+	 * 接口:org.sagacity.sqltoy.plugins.secure.FieldsSecureProvider
 	 */
 	private String fieldsSecureProvider;
 
 	/**
 	 * 字段展示安全脱敏处理器(sqltoy默认提供了实现，此处提供不满足的情况下的自行扩展)
+	 * 接口:org.sagacity.sqltoy.plugins.secure.DesensitizeProvider
 	 */
 	private String desensitizeProvider;
 

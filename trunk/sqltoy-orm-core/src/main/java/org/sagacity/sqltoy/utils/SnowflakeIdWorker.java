@@ -58,6 +58,8 @@ public class SnowflakeIdWorker {
 
 	private static ConcurrentHashMap<String, Long[]> tableTimeStampSeqMap = new ConcurrentHashMap<>();
 
+	private static String DEFAULT_TABLE_NAME = "SQLTOY_SNOWFLAKE_GLOBAL_TABLE_NAME";
+
 	// ==============================Constructors=====================================
 	/**
 	 * 构造函数
@@ -79,6 +81,10 @@ public class SnowflakeIdWorker {
 	}
 
 	// ==============================Methods==========================================
+	public long nextId() {
+		return nextId(DEFAULT_TABLE_NAME);
+	}
+
 	/**
 	 * update 2025-12-23 将产生id的策略跟具体表绑定 获得下一个ID (该方法是线程安全的)
 	 * 
@@ -86,14 +92,15 @@ public class SnowflakeIdWorker {
 	 * @return
 	 */
 	public long nextId(String tableName) {
-		synchronized (tableName) {
+		String realTableName = StringUtil.ifBlank(tableName, DEFAULT_TABLE_NAME);
+		synchronized (realTableName) {
 			long timestamp = timeGen();
 			/** 毫秒内序列(0~4095) */
 			// {lastTimestamp、sequence}
-			Long[] tableTimestampSeq = tableTimeStampSeqMap.get(tableName);
+			Long[] tableTimestampSeq = tableTimeStampSeqMap.get(realTableName);
 			if (tableTimestampSeq == null) {
 				tableTimestampSeq = new Long[] { -1L, 0L };
-				tableTimeStampSeqMap.put(tableName, tableTimestampSeq);
+				tableTimeStampSeqMap.put(realTableName, tableTimestampSeq);
 			}
 
 			// 如果当前时间小于上一次ID生成的时间戳，说明系统时钟回退过这个时候应当抛出异常

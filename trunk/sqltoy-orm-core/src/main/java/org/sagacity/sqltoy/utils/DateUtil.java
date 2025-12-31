@@ -1303,6 +1303,4 @@ public class DateUtil {
 		return timeStr;
 	}
 
-//	private 
-
 }
