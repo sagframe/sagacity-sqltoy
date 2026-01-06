@@ -17,7 +17,7 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 # [gitee地址](https://gitee.com/sagacity/sagacity-sqltoy) 
 # [gitcode地址](https://gitcode.com/sqltoy/sagacity-sqltoy) 
 # [sqltoy Lambda](https://gitee.com/gzghde/sqltoy-plus) 
-# [sqltoy管理系统脚手架](https://github.com/CoCoTeaNet/sra-admin)
+# [sqltoy管理系统脚手架](https://github.com/CoCoTeaNet/CyreneAdmin)
 # [sqltoy idea 插件](https://github.com/imyuyu/sqltoy-idea-plugin) 
 
 # 范例演示项目
