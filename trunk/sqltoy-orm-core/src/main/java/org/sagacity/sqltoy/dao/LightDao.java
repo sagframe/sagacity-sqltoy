@@ -611,7 +611,7 @@ public interface LightDao {
 	 * @todo 通过QueryExecutor来构造查询逻辑进行分页查询
 	 * @param page
 	 * @param queryExecutor 范例:new
-	 *                      QueryExecutor(sql).dataSource(dataSource).names(xxx).values(xxx).filters()
+	 *                      QueryExecutor(sql).dataSource(dataSource).names(xxx).values(xxx).secureDecrypt(password).filters()
 	 *                      链式设置查询
 	 * @return
 	 */
