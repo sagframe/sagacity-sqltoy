@@ -306,8 +306,8 @@ public class DialectFactory {
 		}
 		try {
 			// 启动执行日志(会在threadlocal中创建一个当前执行信息,并建立一个唯一跟踪id)
-			SqlExecuteStat.start(sqlToyConfig.getId(), OperateDetailType.batchUpdate, Long.valueOf(dataSet.size()),
-					sqlToyConfig.isShowSql());
+			SqlExecuteStat.start(sqlToyConfig.getId(), OperateDetailType.batchUpdate, null,
+					Long.valueOf(dataSet.size()), sqlToyConfig.isShowSql());
 			List<Long> result = ParallelUtils.execute(sqlToyContext, dataSet, false, true, SqlType.update, dataSource,
 					parallelConfig, (context, batchModel) -> {
 						ShardingModel shardingModel = batchModel.getShardingModel();
@@ -398,6 +398,7 @@ public class DialectFactory {
 			}
 			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
 			SqlExecuteStat.start(sqlToyConfig.getId(), executeType,
+					(extend.resultType == null) ? null : (Class) extend.resultType,
 					(extend.showSql != null) ? extend.showSql : sqlToyConfig.isShowSql());
 			Long updateTotalCnt = (Long) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
@@ -462,6 +463,7 @@ public class DialectFactory {
 			OperateDetailType executeType = OperateDetailType.executeSqlSingleTableUpdate;
 			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
 			SqlExecuteStat.start(sqlToyConfig.getId(), executeType,
+					(extend.resultType == null) ? null : (Class) extend.resultType,
 					(extend.showSql != null) ? extend.showSql : sqlToyConfig.isShowSql());
 			Object returnPkValue = DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
@@ -516,7 +518,7 @@ public class DialectFactory {
 		}
 		try {
 			SqlExecuteStat.start(BeanUtil.getEntityClass(uniqueExecutor.getEntity().getClass()).getName(),
-					OperateDetailType.isUnique, sqlToyContext.isDebug());
+					OperateDetailType.isUnique, uniqueExecutor.getEntity().getClass(), sqlToyContext.isDebug());
 			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, uniqueExecutor.getEntity(),
 					false, dataSource);
 			Boolean isUnique = (Boolean) DataSourceUtils.processDataSource(sqlToyContext, shardingModel.getDataSource(),
@@ -563,6 +565,7 @@ public class DialectFactory {
 				operateDetailType = OperateDetailType.getRandomResultSingleTable;
 			}
 			SqlExecuteStat.start(sqlToyConfig.getId(), operateDetailType,
+					(extend.resultType == null) ? null : (Class) extend.resultType,
 					(extend.showSql != null) ? extend.showSql : sqlToyConfig.isShowSql());
 			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
@@ -766,7 +769,7 @@ public class DialectFactory {
 							"树形表:父节点字段:" + treeModel.getPidField() + " 没有被赋值，即父节点属性值为null,请用setPidValue(xx)赋值!");
 				}
 			}
-			SqlExecuteStat.start(treeModel.getTableName(), OperateDetailType.wrapTreeTableRoute,
+			SqlExecuteStat.start(treeModel.getTableName(), OperateDetailType.wrapTreeTableRoute, null,
 					sqlToyContext.isDebug());
 			return (Boolean) DataSourceUtils.processDataSource(sqlToyContext, dataSource,
 					new DataSourceCallbackHandler() {
@@ -824,6 +827,7 @@ public class DialectFactory {
 				operateDetailType = OperateDetailType.findSkipTotalCountPageSingleTable;
 			}
 			SqlExecuteStat.start(sqlToyConfig.getId(), operateDetailType,
+					(extend.resultType == null) ? null : (Class) extend.resultType,
 					(extend.showSql != null) ? extend.showSql : sqlToyConfig.isShowSql());
 			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
@@ -898,6 +902,7 @@ public class DialectFactory {
 				operateDetailType = OperateDetailType.findPageSingleTable;
 			}
 			SqlExecuteStat.start(sqlToyConfig.getId(), operateDetailType,
+					(extend.resultType == null) ? null : (Class) extend.resultType,
 					(extend.showSql != null) ? extend.showSql : sqlToyConfig.isShowSql());
 			final DataSource realDataSource = ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig,
 					queryExecutor, dataSource);
@@ -1209,6 +1214,7 @@ public class DialectFactory {
 				operateDetailType = OperateDetailType.findTopSingleTable;
 			}
 			SqlExecuteStat.start(sqlToyConfig.getId(), operateDetailType,
+					(extend.resultType == null) ? null : (Class) extend.resultType,
 					(extend.showSql != null) ? extend.showSql : sqlToyConfig.isShowSql());
 			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
@@ -1296,6 +1302,7 @@ public class DialectFactory {
 				operateDetailType = OperateDetailType.findByQuerySingleTable;
 			}
 			SqlExecuteStat.start(sqlToyConfig.getId(), operateDetailType,
+					(extend.resultType == null) ? null : (Class) extend.resultType,
 					(extend.showSql != null) ? extend.showSql : sqlToyConfig.isShowSql());
 			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
@@ -1370,6 +1377,7 @@ public class DialectFactory {
 				operateDetailType = OperateDetailType.getCountSingleTable;
 			}
 			SqlExecuteStat.start(sqlToyConfig.getId(), operateDetailType,
+					(extend.resultType == null) ? null : (Class) extend.resultType,
 					(extend.showSql != null) ? extend.showSql : sqlToyConfig.isShowSql());
 			Long count = (Long) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
@@ -1496,7 +1504,8 @@ public class DialectFactory {
 		}
 		try {
 			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, true, dataSource);
-			SqlExecuteStat.start(entity.getClass().getName(), OperateDetailType.saveOrUpdate, sqlToyContext.isDebug());
+			SqlExecuteStat.start(entity.getClass().getName(), OperateDetailType.saveOrUpdate, entity.getClass(),
+					sqlToyContext.isDebug());
 			Long updateTotalCnt = (Long) DataSourceUtils.processDataSource(sqlToyContext, shardingModel.getDataSource(),
 					new DataSourceCallbackHandler() {
 						@Override
@@ -1542,7 +1551,7 @@ public class DialectFactory {
 		try {
 			// 启动执行日志
 			SqlExecuteStat.start(BeanUtil.getEntityClass(entityClass).getName(), OperateDetailType.saveOrUpdateAll,
-					Long.valueOf(entities.size()), sqlToyContext.isDebug());
+					entityClass, Long.valueOf(entities.size()), sqlToyContext.isDebug());
 			// 改进说明:利用目前分库分表的策略，针对超大数据集，比如1万条，按2500条记录作为一个并行度(限制最大并行度)进行并行执行
 			// update 2025-12-30将原本自动给主键赋值由true改为false
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, false, false, SqlType.update, dataSource,
@@ -1610,7 +1619,7 @@ public class DialectFactory {
 		validEntity(sqlToyContext, entityClass, false);
 		try {
 			SqlExecuteStat.start(BeanUtil.getEntityClass(entityClass).getName(), OperateDetailType.saveAllIgnoreExist,
-					Long.valueOf(entities.size()), sqlToyContext.isDebug());
+					entityClass, Long.valueOf(entities.size()), sqlToyContext.isDebug());
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, true, false, SqlType.update, dataSource,
 					parallelConfig, (context, batchModel) -> {
 						ShardingModel shardingModel = batchModel.getShardingModel();
@@ -1672,7 +1681,7 @@ public class DialectFactory {
 			// 单记录操作返回对应的库和表配置
 			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, false, dataSource);
 			SqlExecuteStat.start(BeanUtil.getEntityClass(entity.getClass()).getName(), OperateDetailType.load,
-					sqlToyContext.isDebug());
+					entity.getClass(), sqlToyContext.isDebug());
 			return (T) DataSourceUtils.processDataSource(sqlToyContext, shardingModel.getDataSource(),
 					new DataSourceCallbackHandler() {
 						@Override
@@ -1715,7 +1724,7 @@ public class DialectFactory {
 		Class entityClass = entities.get(0).getClass();
 		validEntity(sqlToyContext, entityClass, true);
 		try {
-			SqlExecuteStat.start(BeanUtil.getEntityClass(entityClass).getName(), OperateDetailType.loadAll,
+			SqlExecuteStat.start(BeanUtil.getEntityClass(entityClass).getName(), OperateDetailType.loadAll, entityClass,
 					Long.valueOf(entities.size()), sqlToyContext.isDebug());
 			final boolean parallelOnlySubTable = (onlySubTable == null) ? false : onlySubTable.booleanValue();
 			final List<Class> cascadeTypesList = (cascadeTypes == null) ? null
@@ -1789,7 +1798,7 @@ public class DialectFactory {
 		validEntity(sqlToyContext, entity.getClass(), false);
 		try {
 			SqlExecuteStat.start(BeanUtil.getEntityClass(entity.getClass()).getName(), OperateDetailType.save,
-					sqlToyContext.isDebug());
+					entity.getClass(), sqlToyContext.isDebug());
 			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, true, dataSource);
 			Serializable result = (Serializable) DataSourceUtils.processDataSource(sqlToyContext,
 					shardingModel.getDataSource(), new DataSourceCallbackHandler() {
@@ -1832,7 +1841,7 @@ public class DialectFactory {
 		Class entityClass = entities.get(0).getClass();
 		validEntity(sqlToyContext, entityClass, false);
 		try {
-			SqlExecuteStat.start(BeanUtil.getEntityClass(entityClass).getName(), OperateDetailType.saveAll,
+			SqlExecuteStat.start(BeanUtil.getEntityClass(entityClass).getName(), OperateDetailType.saveAll, entityClass,
 					Long.valueOf(entities.size()), sqlToyContext.isDebug());
 			// 分库分表并行执行
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, true, false, SqlType.insert, dataSource,
@@ -1896,7 +1905,7 @@ public class DialectFactory {
 		validEntity(sqlToyContext, entity.getClass(), true);
 		try {
 			SqlExecuteStat.start(BeanUtil.getEntityClass(entity.getClass()).getName(), OperateDetailType.update,
-					sqlToyContext.isDebug());
+					entity.getClass(), sqlToyContext.isDebug());
 			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, false, dataSource);
 			Long updateTotalCnt = (Long) DataSourceUtils.processDataSource(sqlToyContext, shardingModel.getDataSource(),
 					new DataSourceCallbackHandler() {
@@ -1936,7 +1945,7 @@ public class DialectFactory {
 		validEntity(sqlToyContext, entity.getClass(), false);
 		try {
 			SqlExecuteStat.start(BeanUtil.getEntityClass(entity.getClass()).getName(),
-					OperateDetailType.updateSaveFetch, sqlToyContext.isDebug());
+					OperateDetailType.updateSaveFetch, entity.getClass(), sqlToyContext.isDebug());
 			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, false, dataSource);
 			Serializable result = (Serializable) DataSourceUtils.processDataSource(sqlToyContext,
 					shardingModel.getDataSource(), new DataSourceCallbackHandler() {
@@ -1984,7 +1993,7 @@ public class DialectFactory {
 		validEntity(sqlToyContext, entityClass, true);
 		try {
 			SqlExecuteStat.start(BeanUtil.getEntityClass(entityClass).getName(), OperateDetailType.updateAll,
-					Long.valueOf(entities.size()), sqlToyContext.isDebug());
+					entityClass, Long.valueOf(entities.size()), sqlToyContext.isDebug());
 			// 分库分表并行执行
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, false, false, SqlType.update, dataSource,
 					parallelConfig, (context, batchModel) -> {
@@ -2041,7 +2050,7 @@ public class DialectFactory {
 		validEntity(sqlToyContext, entity.getClass(), true);
 		try {
 			SqlExecuteStat.start(BeanUtil.getEntityClass(entity.getClass()).getName(), OperateDetailType.delete,
-					sqlToyContext.isDebug());
+					entity.getClass(), sqlToyContext.isDebug());
 			// 获取分库分表策略结果
 			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, false, dataSource);
 			Long updateTotalCnt = (Long) DataSourceUtils.processDataSource(sqlToyContext, shardingModel.getDataSource(),
@@ -2087,7 +2096,7 @@ public class DialectFactory {
 		validEntity(sqlToyContext, entityClass, true);
 		try {
 			SqlExecuteStat.start(BeanUtil.getEntityClass(entityClass).getName(), OperateDetailType.deleteAll,
-					Long.valueOf(entities.size()), sqlToyContext.isDebug());
+					entityClass, Long.valueOf(entities.size()), sqlToyContext.isDebug());
 			// 分库分表并行执行
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, false, false, SqlType.delete, dataSource,
 					parallelConfig, (context, batchModel) -> {
@@ -2146,7 +2155,8 @@ public class DialectFactory {
 			if (extend.entityClass != null) {
 				operateDetailType = OperateDetailType.updateFetchSingleTable;
 			}
-			SqlExecuteStat.start(sqlToyConfig.getId(), operateDetailType, sqlToyConfig.isShowSql());
+			SqlExecuteStat.start(sqlToyConfig.getId(), operateDetailType,
+					(extend.resultType == null) ? null : (Class) extend.resultType, sqlToyConfig.isShowSql());
 			// 组织参数和参数校验，但忽视数据权限数据的传参和校验
 			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
 			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
@@ -2210,7 +2220,7 @@ public class DialectFactory {
 			final boolean moreResult, final DataSource dataSource) {
 		try {
 			Long startTime = System.currentTimeMillis();
-			SqlExecuteStat.start(sqlToyConfig.getId(), OperateDetailType.executeStore, sqlToyConfig.isShowSql());
+			SqlExecuteStat.start(sqlToyConfig.getId(), OperateDetailType.executeStore, null, sqlToyConfig.isShowSql());
 			StoreResult result = (StoreResult) DataSourceUtils.processDataSource(sqlToyContext, dataSource,
 					new DataSourceCallbackHandler() {
 						@Override
@@ -2324,6 +2334,7 @@ public class DialectFactory {
 				operateDetailType = OperateDetailType.fetchStreamSingleTable;
 			}
 			SqlExecuteStat.start(sqlToyConfig.getId(), operateDetailType,
+					(extend.resultType == null) ? null : (Class) extend.resultType,
 					(extend.showSql != null) ? extend.showSql : sqlToyConfig.isShowSql());
 			DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
