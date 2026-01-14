@@ -574,7 +574,17 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	@Override
 	public SqlToyConfig clone() {
 		try {
-			return (SqlToyConfig) super.clone();
+			SqlToyConfig cloned = (SqlToyConfig) super.clone();
+			// dialectSqlMap必须要深度clone，避免还是对象引用关系(在一些场景下会改变dialectSqlMap)
+			// 其他属性则无需进行深度clone，因为不会去改变
+			if (this.dialectSqlMap != null) {
+				cloned.dialectSqlMap = new ConcurrentHashMap<>(this.dialectSqlMap);
+			}
+			// 克隆paramsName(冗余性，本质此参数不会被修改)
+			if (this.paramsName != null) {
+				cloned.paramsName = this.paramsName.clone();
+			}
+			return cloned;
 		} catch (CloneNotSupportedException e) {
 			e.printStackTrace();
 		}
