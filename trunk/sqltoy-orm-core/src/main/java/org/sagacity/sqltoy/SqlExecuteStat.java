@@ -72,12 +72,14 @@ public class SqlExecuteStat {
 	 * @param type
 	 * @param debugPrint
 	 */
-	public static void start(String sqlId, OperateDetailType type, Boolean debugPrint) {
-		threadLocal.set(new SqlExecuteTrace(sqlId, type, (debugPrint == null) ? debug : debugPrint.booleanValue()));
+	public static void start(String sqlId, OperateDetailType type, Class resultType, Boolean debugPrint) {
+		threadLocal.set(
+				new SqlExecuteTrace(sqlId, type, resultType, (debugPrint == null) ? debug : debugPrint.booleanValue()));
 	}
 
-	public static void start(String sqlId, OperateDetailType type, Long batchSize, Boolean debugPrint) {
-		SqlExecuteTrace sqlExecuteTrace = new SqlExecuteTrace(sqlId, type,
+	public static void start(String sqlId, OperateDetailType type, Class resultType, Long batchSize,
+			Boolean debugPrint) {
+		SqlExecuteTrace sqlExecuteTrace = new SqlExecuteTrace(sqlId, type, resultType,
 				(debugPrint == null) ? debug : debugPrint.booleanValue());
 		sqlExecuteTrace.setBatchSize(batchSize);
 		threadLocal.set(sqlExecuteTrace);

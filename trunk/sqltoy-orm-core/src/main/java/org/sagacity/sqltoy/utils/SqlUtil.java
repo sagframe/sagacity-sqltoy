@@ -388,8 +388,21 @@ public class SqlUtil {
 				} else {
 					pst.setString(paramIndex, tmpStr);
 				}
+			} else if (jdbcType == java.sql.Types.BIGINT || jdbcType == java.sql.Types.DECIMAL
+					|| jdbcType == java.sql.Types.FLOAT) {
+				pst.setBigDecimal(paramIndex, new BigDecimal(tmpStr));
+			} else if (jdbcType == java.sql.Types.INTEGER) {
+				pst.setInt(paramIndex, Integer.valueOf(tmpStr));
 			} else {
-				pst.setString(paramIndex, tmpStr);
+				if (jdbcType == java.sql.Types.BOOLEAN) {
+					if (tmpStr.equalsIgnoreCase("true") || tmpStr.equals("1")) {
+						pst.setBoolean(paramIndex, true);
+					} else {
+						pst.setBoolean(paramIndex, false);
+					}
+				} else {
+					pst.setString(paramIndex, tmpStr);
+				}
 			}
 		} else if (paramValue instanceof java.lang.Integer) {
 			// update 2023-6-2 兼容前端int对应数据库是boolean场景
@@ -400,6 +413,9 @@ public class SqlUtil {
 				} else {
 					pst.setBoolean(paramIndex, false);
 				}
+			} else if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NCHAR
+					|| jdbcType == java.sql.Types.NVARCHAR) {
+				pst.setString(paramIndex, paramValue.toString());
 			} else {
 				pst.setInt(paramIndex, paramInt);
 			}
@@ -418,11 +434,21 @@ public class SqlUtil {
 				pst.setTimestamp(paramIndex, new Timestamp(((java.util.Date) paramValue).getTime()));
 			}
 		} else if (paramValue instanceof java.math.BigInteger) {
-			pst.setBigDecimal(paramIndex, new BigDecimal(((BigInteger) paramValue)));
+			if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NCHAR
+					|| jdbcType == java.sql.Types.NVARCHAR) {
+				pst.setString(paramIndex, paramValue.toString());
+			} else {
+				pst.setBigDecimal(paramIndex, new BigDecimal(((BigInteger) paramValue)));
+			}
 		} else if (paramValue instanceof java.lang.Double) {
 			pst.setDouble(paramIndex, ((Double) paramValue));
 		} else if (paramValue instanceof java.lang.Long) {
-			pst.setLong(paramIndex, ((Long) paramValue));
+			if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NCHAR
+					|| jdbcType == java.sql.Types.NVARCHAR) {
+				pst.setString(paramIndex, paramValue.toString());
+			} else {
+				pst.setLong(paramIndex, ((Long) paramValue));
+			}
 		} else if (paramValue instanceof java.sql.Clob) {
 			tmpStr = clobToString((java.sql.Clob) paramValue);
 			pst.setString(paramIndex, tmpStr);
@@ -1415,7 +1441,8 @@ public class SqlUtil {
 			StringBuilder updateTrunkLeafSql = new StringBuilder();
 			updateTrunkLeafSql.append("update ").append(tableName);
 			// 支持mysql8 update 2018-5-11
-			if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.DORIS|| dbType == DBType.STARROCKS) {
+			if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.DORIS
+					|| dbType == DBType.STARROCKS) {
 				// update sys_organ_info a inner join (select t.organ_pid from
 				// sys_organ_info t) b
 				// on a.organ_id=b.organ_pid set IS_LEAF=0
@@ -2114,7 +2141,7 @@ public class SqlUtil {
 				if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.TIDB
 						|| dbType == DBType.SQLITE || dbType == DBType.H2 || dbType == DBType.POSTGRESQL
 						|| dbType == DBType.POSTGRESQL15 || dbType == DBType.KINGBASE || dbType == DBType.DB2
-						|| dbType == DBType.OCEANBASE || dbType == DBType.DORIS|| dbType == DBType.STARROCKS) {
+						|| dbType == DBType.OCEANBASE || dbType == DBType.DORIS || dbType == DBType.STARROCKS) {
 					return "current_time";
 				} else if (dbType == DBType.GAUSSDB || dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB
 						|| dbType == DBType.VASTBASE || dbType == DBType.STARDB || dbType == DBType.OSCAR) {
@@ -2419,7 +2446,8 @@ public class SqlUtil {
 			}
 		}
 		// mysql和tidb
-		if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.TIDB || dbType == DBType.DORIS|| dbType == DBType.STARROCKS) {
+		if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.TIDB || dbType == DBType.DORIS
+				|| dbType == DBType.STARROCKS) {
 			// day
 			if (type == 1) {
 				return "STR_TO_DATE(" + dateStr + ",'%Y-%m-%d')";

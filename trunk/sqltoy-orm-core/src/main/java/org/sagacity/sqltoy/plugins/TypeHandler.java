@@ -27,7 +27,9 @@ public abstract class TypeHandler {
 	}
 
 	/**
-	 * @TODO 自行定义对特定类型的setValue操作
+	 * @TODO 自行定义对特定类型的setValue操作，
+	 *       <li>返回true表示已经匹配到特殊类型并完成处理，</li>
+	 *       <li>返回false则表示未处理，需继续后续框架自动处理</li>
 	 * @param dbType
 	 * @param pst
 	 * @param paramIndex
@@ -54,8 +56,10 @@ public abstract class TypeHandler {
 	}
 
 	/**
-	 * @TODO 针对ResultSet.get(index)
-	 *       返回的数据库特定类型，转化成java常见的类型,如oracle.sql.TIMESTAMP或Strut等类型
+	 * 针对没有用VO/DTO对象接数据场景，返回的类型如:List<List>或List<Map>，需要进行转换
+	 * 
+	 * @TODO 针对ResultSet.get(index) 返回的数据库特定类型(如:Struct、数组等)，转化成java常见的类型
+	 *       (oracle.sql.TIMESTAMP 框架已经默认处理),
 	 * @param dbType
 	 * @param jdbcValue
 	 * @return

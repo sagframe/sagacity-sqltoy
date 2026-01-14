@@ -250,7 +250,6 @@ public class SqlScriptLoader {
 		if (StringUtil.isBlank(sqlKey)) {
 			throw new IllegalArgumentException("sql or sqlId is null!");
 		}
-
 		SqlToyConfig result = null;
 		String realDialect = (dialect == null) ? "" : dialect.toLowerCase();
 		// sqlId形式
@@ -290,14 +289,15 @@ public class SqlScriptLoader {
 			}
 			// 存在@include("sqlId") 重新组织sql
 			if (result != null && result.isHasIncludeSql()) {
-				boolean isParamInclude = StringUtil.matches(result.getSql(), SqlToyConstants.INCLUDE_PARAM_PATTERN);
+				// 替换include的实际sql
+				String sql=result.getSql();
+				boolean isParamInclude = StringUtil.matches(sql, SqlToyConstants.INCLUDE_PARAM_PATTERN);
 				// 复制一份，避免直接修改sql缓存中的模型
 				if (isParamInclude) {
 					result = result.clone();
 					result.clearDialectSql();
 				}
-				// 替换include的实际sql
-				String sql = result.getSql();
+				String countSql = result.getCountSql(null);
 				// update 2024-09-19 增加@fast(@include("sqlId")) 场景，result.getSql()
 				// 已经剔除了@fast,导致再次解析时已经无法判断是@fast语句，所以需要拼接上@fast还原原本的sql
 				// SqlToyConfig.setSql(fastPreSql.concat("
@@ -318,8 +318,6 @@ public class SqlScriptLoader {
 				result.setFastWithSql(tmpConfig.getFastWithSql(null));
 				result.setSql(tmpConfig.getSql());
 				result.setParamsName(tmpConfig.getParamsName());
-
-				String countSql = result.getCountSql(null);
 				if (countSql != null && StringUtil.matches(countSql, SqlToyConstants.INCLUDE_PATTERN)) {
 					countSql = MacroUtils.replaceMacros(countSql, (Map) sqlCache, paramValues, false, macros, dialect);
 					countSql = FunctionUtils.getDialectSql(countSql, realDialect);

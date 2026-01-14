@@ -32,6 +32,8 @@ public class TranslateUtils {
 	public static Object translateKey(TranslateExtend translateExtend, DynamicCacheFetch dynamicCacheFetch,
 			HashMap<String, Object[]> cacheData, Object fieldValue) {
 		String fieldStr = fieldValue.toString();
+		// 是否使用动态缓存数据抓取
+		//boolean useDynamicCache = translateExtend.dynamicCache && dynamicCacheFetch != null;
 		// 单值翻译
 		if (translateExtend.splitRegex == null) {
 			// ${key}_ZH_CN 用于组合匹配缓存
@@ -42,11 +44,11 @@ public class TranslateUtils {
 			// 根据key获取缓存值
 			Object[] cacheValues = cacheData.get(fieldStr);
 			// 执行动态缓存获取(暂时不开放)
-//			if (cacheValues == null && extend.dynamicCache && dynamicCacheFetch != null) {
-//				cacheValues = dynamicCacheFetch.getCache(extend.cache, extend.cacheSid, extend.cacheProperties,
-//						fieldStr);
+//			if (cacheValues == null && useDynamicCache) {
+//				cacheValues = dynamicCacheFetch.getCache(translateExtend.cache, translateExtend.cacheSid,
+//						translateExtend.cacheProperties, fieldStr);
 //				if (cacheValues != null) {
-//					translateKeyMap.put(fieldStr, cacheValues);
+//					cacheData.put(fieldStr, cacheValues);
 //				}
 //			}
 			// 未匹配到
@@ -76,11 +78,11 @@ public class TranslateUtils {
 			}
 			cacheValues = cacheData.get(key);
 			// 暂时不开放
-//			if (cacheValues == null && extend.dynamicCache && dynamicCacheFetch != null) {
-//				cacheValues = dynamicCacheFetch.getCache(extend.cache, extend.cacheSid, extend.cacheProperties,
-//						fieldStr);
+//			if (cacheValues == null && useDynamicCache) {
+//				cacheValues = dynamicCacheFetch.getCache(translateExtend.cache, translateExtend.cacheSid,
+//						translateExtend.cacheProperties, fieldStr);
 //				if (cacheValues != null) {
-//					translateKeyMap.put(fieldStr, cacheValues);
+//					cacheData.put(fieldStr, cacheValues);
 //				}
 //			}
 			if (cacheValues == null || cacheValues.length == 0) {

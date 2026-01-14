@@ -22,10 +22,11 @@ public class SqlExecuteTrace implements Serializable {
 	 */
 	private static final long serialVersionUID = 6050450953137017285L;
 
-	public SqlExecuteTrace(String id, OperateDetailType operateDetailType, boolean isPrint) {
+	public SqlExecuteTrace(String id, OperateDetailType operateDetailType, Class resultType, boolean isPrint) {
 		this.id = id;
 		this.operateDetailType = operateDetailType;
 		this.start = System.currentTimeMillis();
+		this.resultType = resultType;
 		this.isPrint = isPrint;
 		// 不需要体现年月日
 		this.uid = IdUtil.getDebugId();
@@ -60,6 +61,11 @@ public class SqlExecuteTrace implements Serializable {
 	 * 数据库类型
 	 */
 	private String dialect;
+
+	/**
+	 * 查询结果类型
+	 */
+	private Class resultType;
 
 	/**
 	 * @return the isPrint
@@ -215,5 +221,13 @@ public class SqlExecuteTrace implements Serializable {
 	 */
 	public void setBatchSize(Long batchSize) {
 		this.batchSize = batchSize;
+	}
+
+	public Class getResultType() {
+		return resultType;
+	}
+
+	public void setResultType(Class resultType) {
+		this.resultType = resultType;
 	}
 }
