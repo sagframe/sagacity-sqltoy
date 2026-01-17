@@ -84,6 +84,7 @@ import org.sagacity.sqltoy.plugins.CrossDbAdapter;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
 import org.sagacity.sqltoy.plugins.id.IdGenerator;
+import org.sagacity.sqltoy.translate.DynamicCacheFetch;
 import org.sagacity.sqltoy.translate.TranslateHandler;
 import org.sagacity.sqltoy.translate.model.TranslateConfigModel;
 import org.sagacity.sqltoy.utils.BeanUtil;
@@ -96,6 +97,7 @@ import org.sagacity.sqltoy.utils.QueryExecutorBuilder;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
+import org.sagacity.sqltoy.utils.TranslateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -1797,16 +1799,50 @@ public class SqlToyDaoSupport {
 			throw new IllegalArgumentException("缓存翻译行取key和设置name的反调函数不能为null!");
 		}
 		// 获取缓存,框架会自动判断null并实现缓存数据的加载和更新检测
-		final HashMap<String, Object[]> cache = getTranslateCache(cacheName, cacheType);
-		if (cache == null || cache.isEmpty()) {
-			return;
+		TranslateConfigModel cacheModel = sqlToyContext.getTranslateManager().getCacheConfig(cacheName);
+		if (cacheModel == null) {
+			throw new IllegalArgumentException("缓存:{" + cacheName + "} 不存在,请检查缓存定义的配置文件!");
 		}
+		// 默认名称字段列为1
+		int cacheIndex = (cacheNameIndex == null) ? 1 : cacheNameIndex.intValue();
 		Iterator iter = dataSet.iterator();
 		Object row;
 		Object key;
 		Object name;
-		// 默认名称字段列为1
-		int cacheIndex = (cacheNameIndex == null) ? 1 : cacheNameIndex.intValue();
+		// 动态查询缓存数据模式
+		if (cacheModel.isDynamicCache()) {
+			DynamicCacheFetch dynamicCacheFetch = sqlToyContext.getDynamicCacheFetch();
+			if (dynamicCacheFetch == null) {
+				throw new RuntimeException(
+						"缓存为dynamicCache即动态获取缓存数据，未定义DynamicCacheFetch的实现类，请正确配置:spring.sqltoy.dynamicCacheFetch=xxxx.xxx.DynamicCacheFetchImpl");
+			}
+			TranslateExtend extend = new TranslateExtend();
+			extend.dynamicCache = cacheModel.isDynamicCache();
+			extend.cacheSid = cacheModel.getSid();
+			extend.cacheProperties = cacheModel.getProperties();
+			extend.index = cacheIndex;
+			extend.cache = cacheName;
+			extend.cacheType = cacheType;
+			HashMap<String, Object[]> cache = sqlToyContext.getDynamicFecthCacheManager().getDynamicCache(cacheModel,
+					cacheType);
+			// 循环获取行数据
+			while (iter.hasNext()) {
+				row = iter.next();
+				if (row != null) {
+					// 反调获取需要翻译的key
+					key = translateHandler.getKey(row);
+					if (key != null) {
+						name = TranslateUtils.translateKey(extend, dynamicCacheFetch, cache, key);
+						translateHandler.setName(row, (name == null) ? "" : name.toString());
+					}
+				}
+			}
+			return;
+		}
+		final HashMap<String, Object[]> cache = getTranslateCache(cacheName, cacheType);
+		if (cache == null || cache.isEmpty()) {
+			return;
+		}
 		Object[] keyRow;
 		// 循环获取行数据
 		while (iter.hasNext()) {
