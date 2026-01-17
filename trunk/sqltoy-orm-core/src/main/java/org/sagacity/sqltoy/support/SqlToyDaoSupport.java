@@ -1839,6 +1839,7 @@ public class SqlToyDaoSupport {
 			}
 			return;
 		}
+		// 固定缓存
 		final HashMap<String, Object[]> cache = getTranslateCache(cacheName, cacheType);
 		if (cache == null || cache.isEmpty()) {
 			return;
