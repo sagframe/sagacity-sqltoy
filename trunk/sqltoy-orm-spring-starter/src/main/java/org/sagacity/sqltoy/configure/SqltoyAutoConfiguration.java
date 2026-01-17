@@ -37,6 +37,7 @@ import org.sagacity.sqltoy.plugins.secure.FieldsSecureProvider;
 import org.sagacity.sqltoy.service.SqlToyCRUDService;
 import org.sagacity.sqltoy.service.impl.SqlToyCRUDServiceImpl;
 import org.sagacity.sqltoy.translate.DynamicCacheFetch;
+import org.sagacity.sqltoy.translate.cache.DynamicFecthCacheManager;
 import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -296,8 +297,8 @@ public class SqltoyAutoConfiguration {
 				if (unfiyHandler.contains(".")) {
 					handler = (IUnifyFieldsHandler) Class.forName(unfiyHandler).getDeclaredConstructor().newInstance();
 				} // spring bean名称
-				else if (applicationContext.containsBean(unfiyHandler)) {
-					handler = (IUnifyFieldsHandler) applicationContext.getBean(unfiyHandler);
+				else if (appContext.containsBean(unfiyHandler)) {
+					handler = (IUnifyFieldsHandler) appContext.getBean(unfiyHandler);
 					if (handler == null) {
 						throw new ClassNotFoundException("项目中未定义unifyFieldsHandler=" + unfiyHandler + " 对应的bean!");
 					}
@@ -357,9 +358,9 @@ public class SqltoyAutoConfiguration {
 		String translateCacheManager = properties.getTranslateCacheManager();
 		if (StringUtil.isNotBlank(translateCacheManager)) {
 			// 缓存管理器的bean名称
-			if (applicationContext.containsBean(translateCacheManager)) {
-				sqlToyContext.setTranslateCacheManager(
-						(TranslateCacheManager) applicationContext.getBean(translateCacheManager));
+			if (appContext.containsBean(translateCacheManager)) {
+				sqlToyContext
+						.setTranslateCacheManager((TranslateCacheManager) appContext.getBean(translateCacheManager));
 			} // 包名和类名称
 			else if (translateCacheManager.contains(".")) {
 				sqlToyContext.setTranslateCacheManager((TranslateCacheManager) Class.forName(translateCacheManager)
@@ -370,8 +371,8 @@ public class SqltoyAutoConfiguration {
 		// 自定义业务代码调用点
 		String firstBizCodeTrace = properties.getFirstBizCodeTrace();
 		if (StringUtil.isNotBlank(firstBizCodeTrace)) {
-			if (applicationContext.containsBean(firstBizCodeTrace)) {
-				sqlToyContext.setFirstBizCodeTrace((FirstBizCodeTrace) applicationContext.getBean(firstBizCodeTrace));
+			if (appContext.containsBean(firstBizCodeTrace)) {
+				sqlToyContext.setFirstBizCodeTrace((FirstBizCodeTrace) appContext.getBean(firstBizCodeTrace));
 			} // 包名和类名称
 			else if (firstBizCodeTrace.contains(".")) {
 				sqlToyContext.setFirstBizCodeTrace(
@@ -382,8 +383,8 @@ public class SqltoyAutoConfiguration {
 		// 自定义typeHandler
 		String typeHandler = properties.getTypeHandler();
 		if (StringUtil.isNotBlank(typeHandler)) {
-			if (applicationContext.containsBean(typeHandler)) {
-				sqlToyContext.setTypeHandler((TypeHandler) applicationContext.getBean(typeHandler));
+			if (appContext.containsBean(typeHandler)) {
+				sqlToyContext.setTypeHandler((TypeHandler) appContext.getBean(typeHandler));
 			} // 包名和类名称
 			else if (typeHandler.contains(".")) {
 				sqlToyContext.setTypeHandler(
@@ -394,9 +395,8 @@ public class SqltoyAutoConfiguration {
 		// 自定义数据源选择器
 		String dataSourceSelector = properties.getDataSourceSelector();
 		if (StringUtil.isNotBlank(dataSourceSelector)) {
-			if (applicationContext.containsBean(dataSourceSelector)) {
-				sqlToyContext
-						.setDataSourceSelector((DataSourceSelector) applicationContext.getBean(dataSourceSelector));
+			if (appContext.containsBean(dataSourceSelector)) {
+				sqlToyContext.setDataSourceSelector((DataSourceSelector) appContext.getBean(dataSourceSelector));
 			} // 包名和类名称
 			else if (dataSourceSelector.contains(".")) {
 				sqlToyContext.setDataSourceSelector(
@@ -407,8 +407,8 @@ public class SqltoyAutoConfiguration {
 		// 自定义数据库连接获取和释放的接口实现
 		String connectionFactory = properties.getConnectionFactory();
 		if (StringUtil.isNotBlank(connectionFactory)) {
-			if (applicationContext.containsBean(connectionFactory)) {
-				sqlToyContext.setConnectionFactory((ConnectionFactory) applicationContext.getBean(connectionFactory));
+			if (appContext.containsBean(connectionFactory)) {
+				sqlToyContext.setConnectionFactory((ConnectionFactory) appContext.getBean(connectionFactory));
 			} // 包名和类名称
 			else if (connectionFactory.contains(".")) {
 				sqlToyContext.setConnectionFactory(
@@ -419,9 +419,8 @@ public class SqltoyAutoConfiguration {
 		// 自定义字段安全实现器
 		String fieldsSecureProvider = properties.getFieldsSecureProvider();
 		if (StringUtil.isNotBlank(fieldsSecureProvider)) {
-			if (applicationContext.containsBean(fieldsSecureProvider)) {
-				sqlToyContext.setFieldsSecureProvider(
-						(FieldsSecureProvider) applicationContext.getBean(fieldsSecureProvider));
+			if (appContext.containsBean(fieldsSecureProvider)) {
+				sqlToyContext.setFieldsSecureProvider((FieldsSecureProvider) appContext.getBean(fieldsSecureProvider));
 			} // 包名和类名称
 			else if (fieldsSecureProvider.contains(".")) {
 				sqlToyContext.setFieldsSecureProvider((FieldsSecureProvider) Class.forName(fieldsSecureProvider)
@@ -432,9 +431,8 @@ public class SqltoyAutoConfiguration {
 		// 自定义字段脱敏处理器
 		String desensitizeProvider = properties.getDesensitizeProvider();
 		if (StringUtil.isNotBlank(desensitizeProvider)) {
-			if (applicationContext.containsBean(desensitizeProvider)) {
-				sqlToyContext
-						.setDesensitizeProvider((DesensitizeProvider) applicationContext.getBean(desensitizeProvider));
+			if (appContext.containsBean(desensitizeProvider)) {
+				sqlToyContext.setDesensitizeProvider((DesensitizeProvider) appContext.getBean(desensitizeProvider));
 			} // 包名和类名称
 			else if (desensitizeProvider.contains(".")) {
 				sqlToyContext.setDesensitizeProvider((DesensitizeProvider) Class.forName(desensitizeProvider)
@@ -445,8 +443,8 @@ public class SqltoyAutoConfiguration {
 		// 自定义sql中filter处理器
 		String customFilterHandler = properties.getCustomFilterHandler();
 		if (StringUtil.isNotBlank(customFilterHandler)) {
-			if (applicationContext.containsBean(customFilterHandler)) {
-				sqlToyContext.setCustomFilterHandler((FilterHandler) applicationContext.getBean(customFilterHandler));
+			if (appContext.containsBean(customFilterHandler)) {
+				sqlToyContext.setCustomFilterHandler((FilterHandler) appContext.getBean(customFilterHandler));
 			} // 包名和类名称
 			else if (customFilterHandler.contains(".")) {
 				sqlToyContext.setCustomFilterHandler(
@@ -457,9 +455,8 @@ public class SqltoyAutoConfiguration {
 		// 自定义sql执行超时处理器
 		String overTimeSqlHandler = properties.getOverTimeSqlHandler();
 		if (StringUtil.isNotBlank(overTimeSqlHandler)) {
-			if (applicationContext.containsBean(overTimeSqlHandler)) {
-				sqlToyContext
-						.setOverTimeSqlHandler((OverTimeSqlHandler) applicationContext.getBean(overTimeSqlHandler));
+			if (appContext.containsBean(overTimeSqlHandler)) {
+				sqlToyContext.setOverTimeSqlHandler((OverTimeSqlHandler) appContext.getBean(overTimeSqlHandler));
 			} // 包名和类名称
 			else if (overTimeSqlHandler.contains(".")) {
 				sqlToyContext.setOverTimeSqlHandler(
@@ -470,9 +467,8 @@ public class SqltoyAutoConfiguration {
 		// 自定义pojo创建表结构产生器
 		String dialectDDLGenerator = properties.getDialectDDLGenerator();
 		if (StringUtil.isNotBlank(dialectDDLGenerator)) {
-			if (applicationContext.containsBean(dialectDDLGenerator)) {
-				sqlToyContext
-						.setDialectDDLGenerator((DialectDDLGenerator) applicationContext.getBean(dialectDDLGenerator));
+			if (appContext.containsBean(dialectDDLGenerator)) {
+				sqlToyContext.setDialectDDLGenerator((DialectDDLGenerator) appContext.getBean(dialectDDLGenerator));
 			} // 包名和类名称
 			else if (dialectDDLGenerator.contains(".")) {
 				sqlToyContext.setDialectDDLGenerator((DialectDDLGenerator) Class.forName(dialectDDLGenerator)
@@ -483,8 +479,8 @@ public class SqltoyAutoConfiguration {
 		// add 2024-12-29 动态缓存数据获取
 		String dynamicCacheFetch = properties.getDynamicCacheFetch();
 		if (StringUtil.isNotBlank(dynamicCacheFetch)) {
-			if (applicationContext.containsBean(dynamicCacheFetch)) {
-				sqlToyContext.setDynamicCacheFetch((DynamicCacheFetch) applicationContext.getBean(dynamicCacheFetch));
+			if (appContext.containsBean(dynamicCacheFetch)) {
+				sqlToyContext.setDynamicCacheFetch((DynamicCacheFetch) appContext.getBean(dynamicCacheFetch));
 			} // 包名和类名称
 			else if (dynamicCacheFetch.contains(".")) {
 				sqlToyContext.setDynamicCacheFetch(
@@ -492,6 +488,18 @@ public class SqltoyAutoConfiguration {
 			}
 		}
 
+		// 动态捕获缓存的缓存管理器
+		String dynamicFecthCacheManager = properties.getDynamicFecthCacheManager();
+		if (StringUtil.isNotBlank(dynamicFecthCacheManager)) {
+			if (appContext.containsBean(dynamicFecthCacheManager)) {
+				sqlToyContext.setDynamicFecthCacheManager(
+						(DynamicFecthCacheManager) appContext.getBean(dynamicFecthCacheManager));
+			} // 包名和类名称
+			else if (dynamicFecthCacheManager.contains(".")) {
+				sqlToyContext.setDynamicFecthCacheManager((DynamicFecthCacheManager) Class
+						.forName(dynamicFecthCacheManager).getDeclaredConstructor().newInstance());
+			}
+		}
 		// ---- sqltoy默认的规则，即:先判断是否包含beanName，然后判断是否是包路径再new 构造
 		// 自定义sql拦截处理器
 		String[] sqlInterceptors = properties.getSqlInterceptors();
@@ -499,8 +507,8 @@ public class SqltoyAutoConfiguration {
 			List<SqlInterceptor> sqlInterceptorList = new ArrayList<SqlInterceptor>();
 			for (String interceptor : sqlInterceptors) {
 				// 优先检查beanName
-				if (applicationContext.containsBean(interceptor)) {
-					sqlInterceptorList.add((SqlInterceptor) applicationContext.getBean(interceptor));
+				if (appContext.containsBean(interceptor)) {
+					sqlInterceptorList.add((SqlInterceptor) appContext.getBean(interceptor));
 				} // 包名和类名称
 				else if (interceptor.contains(".")) {
 					sqlInterceptorList
@@ -518,8 +526,8 @@ public class SqltoyAutoConfiguration {
 					|| sqlFormater.equalsIgnoreCase("defaultSqlFormater")) {
 				sqlFormater = "org.sagacity.sqltoy.plugins.formater.impl.DefaultSqlFormater";
 			}
-			if (applicationContext.containsBean(sqlFormater)) {
-				sqlToyContext.setSqlFormater((SqlFormater) applicationContext.getBean(sqlFormater));
+			if (appContext.containsBean(sqlFormater)) {
+				sqlToyContext.setSqlFormater((SqlFormater) appContext.getBean(sqlFormater));
 			} // 包名和类名称
 			else if (sqlFormater.contains(".")) {
 				sqlToyContext.setSqlFormater(

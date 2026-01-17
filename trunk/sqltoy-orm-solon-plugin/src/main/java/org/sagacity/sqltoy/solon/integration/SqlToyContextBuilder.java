@@ -36,6 +36,7 @@ import org.sagacity.sqltoy.solon.configure.SqlToyContextProperties;
 import org.sagacity.sqltoy.solon.configure.SqlToyContextTaskPoolProperties;
 import org.sagacity.sqltoy.translate.DynamicCacheFetch;
 import org.sagacity.sqltoy.translate.TranslateManager;
+import org.sagacity.sqltoy.translate.cache.DynamicFecthCacheManager;
 import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
 import org.sagacity.sqltoy.utils.StringUtil;
 
@@ -481,6 +482,18 @@ public class SqlToyContextBuilder {
 			else if (dynamicCacheFetch.contains(".")) {
 				sqlToyContext.setDynamicCacheFetch(
 						(DynamicCacheFetch) Class.forName(dynamicCacheFetch).getDeclaredConstructor().newInstance());
+			}
+		}
+		// 动态捕获缓存的缓存管理器
+		String dynamicFecthCacheManager = properties.getDynamicFecthCacheManager();
+		if (StringUtil.isNotBlank(dynamicFecthCacheManager)) {
+			if (appContext.containsBean(dynamicFecthCacheManager)) {
+				sqlToyContext.setDynamicFecthCacheManager(
+						(DynamicFecthCacheManager) appContext.getBean(dynamicFecthCacheManager));
+			} // 包名和类名称
+			else if (dynamicFecthCacheManager.contains(".")) {
+				sqlToyContext.setDynamicFecthCacheManager((DynamicFecthCacheManager) Class
+						.forName(dynamicFecthCacheManager).getDeclaredConstructor().newInstance());
 			}
 		}
 		// 自定义sql拦截处理器

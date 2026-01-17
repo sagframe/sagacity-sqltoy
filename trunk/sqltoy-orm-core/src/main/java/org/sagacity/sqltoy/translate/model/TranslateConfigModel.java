@@ -107,6 +107,15 @@ public class TranslateConfigModel implements Serializable {
 	private Set<Integer> i18nIndexes = new HashSet<Integer>();
 
 	/**
+	 * 默认十万
+	 */
+	private int dynamicCacheMaxSize = 100000;
+
+	private int dynamiceCacheInitSize = 10000;
+
+	private float dynamicCacheLoadFactor = 0.75F;
+
+	/**
 	 * 缓存说明
 	 */
 	private String desc;
@@ -364,5 +373,29 @@ public class TranslateConfigModel implements Serializable {
 			return false;
 		}
 		return i18nIndexes.contains(index);
+	}
+
+	public int getDynamicCacheMaxSize() {
+		return dynamicCacheMaxSize;
+	}
+
+	public void setDynamicCacheMaxSize(int dynamicCacheMaxSize) {
+		this.dynamicCacheMaxSize = dynamicCacheMaxSize;
+	}
+
+	public int getDynamiceCacheInitSize() {
+		return dynamiceCacheInitSize;
+	}
+
+	public void setDynamiceCacheInitSize(int dynamiceCacheInitSize) {
+		this.dynamiceCacheInitSize = dynamiceCacheInitSize;
+	}
+
+	public float getDynamicCacheLoadFactor() {
+		return dynamicCacheLoadFactor;
+	}
+
+	public void setDynamicCacheLoadFactor(float dynamicCacheLoadFactor) {
+		this.dynamicCacheLoadFactor = dynamicCacheLoadFactor;
 	}
 }

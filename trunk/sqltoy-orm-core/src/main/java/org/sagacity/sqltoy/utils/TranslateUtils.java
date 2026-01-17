@@ -33,7 +33,7 @@ public class TranslateUtils {
 			HashMap<String, Object[]> cacheData, Object fieldValue) {
 		String fieldStr = fieldValue.toString();
 		// 是否使用动态缓存数据抓取
-		//boolean useDynamicCache = translateExtend.dynamicCache && dynamicCacheFetch != null;
+		boolean useDynamicCache = translateExtend.dynamicCache;
 		// 单值翻译
 		if (translateExtend.splitRegex == null) {
 			// ${key}_ZH_CN 用于组合匹配缓存
@@ -44,13 +44,13 @@ public class TranslateUtils {
 			// 根据key获取缓存值
 			Object[] cacheValues = cacheData.get(fieldStr);
 			// 执行动态缓存获取(暂时不开放)
-//			if (cacheValues == null && useDynamicCache) {
-//				cacheValues = dynamicCacheFetch.getCache(translateExtend.cache, translateExtend.cacheSid,
-//						translateExtend.cacheProperties, fieldStr);
-//				if (cacheValues != null) {
-//					cacheData.put(fieldStr, cacheValues);
-//				}
-//			}
+			if (cacheValues == null && useDynamicCache) {
+				cacheValues = dynamicCacheFetch.getCache(translateExtend.cache, translateExtend.cacheType,
+						translateExtend.cacheSid, translateExtend.cacheProperties, fieldStr);
+				if (cacheValues != null) {
+					cacheData.put(fieldStr, cacheValues);
+				}
+			}
 			// 未匹配到
 			if (cacheValues == null || cacheValues.length == 0) {
 				// 定义未匹配模板则不输出日志
@@ -78,13 +78,13 @@ public class TranslateUtils {
 			}
 			cacheValues = cacheData.get(key);
 			// 暂时不开放
-//			if (cacheValues == null && useDynamicCache) {
-//				cacheValues = dynamicCacheFetch.getCache(translateExtend.cache, translateExtend.cacheSid,
-//						translateExtend.cacheProperties, fieldStr);
-//				if (cacheValues != null) {
-//					cacheData.put(fieldStr, cacheValues);
-//				}
-//			}
+			if (cacheValues == null && useDynamicCache) {
+				cacheValues = dynamicCacheFetch.getCache(translateExtend.cache, translateExtend.cacheType,
+						translateExtend.cacheSid, translateExtend.cacheProperties, fieldStr);
+				if (cacheValues != null) {
+					cacheData.put(fieldStr, cacheValues);
+				}
+			}
 			if (cacheValues == null || cacheValues.length == 0) {
 				// 定义未匹配模板则不输出日志
 				if (translateExtend.uncached != null) {
