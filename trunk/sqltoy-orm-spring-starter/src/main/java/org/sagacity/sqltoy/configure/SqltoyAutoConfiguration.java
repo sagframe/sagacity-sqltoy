@@ -37,6 +37,7 @@ import org.sagacity.sqltoy.plugins.secure.FieldsSecureProvider;
 import org.sagacity.sqltoy.service.SqlToyCRUDService;
 import org.sagacity.sqltoy.service.impl.SqlToyCRUDServiceImpl;
 import org.sagacity.sqltoy.translate.DynamicCacheFetch;
+import org.sagacity.sqltoy.translate.cache.DynamicFecthCacheManager;
 import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -489,7 +490,18 @@ public class SqltoyAutoConfiguration {
 						(DynamicCacheFetch) Class.forName(dynamicCacheFetch).getDeclaredConstructor().newInstance());
 			}
 		}
-
+		// 动态捕获缓存的缓存管理器
+		String dynamicFecthCacheManager = properties.getDynamicFecthCacheManager();
+		if (StringUtil.isNotBlank(dynamicFecthCacheManager)) {
+			if (appContext.containsBean(dynamicFecthCacheManager)) {
+				sqlToyContext.setDynamicFecthCacheManager(
+						(DynamicFecthCacheManager) appContext.getBean(dynamicFecthCacheManager));
+			} // 包名和类名称
+			else if (dynamicFecthCacheManager.contains(".")) {
+				sqlToyContext.setDynamicFecthCacheManager((DynamicFecthCacheManager) Class
+						.forName(dynamicFecthCacheManager).getDeclaredConstructor().newInstance());
+			}
+		}
 		// ---- sqltoy默认的规则，即:先判断是否包含beanName，然后判断是否是包路径再new 构造
 		// 自定义sql拦截处理器
 		String[] sqlInterceptors = properties.getSqlInterceptors();

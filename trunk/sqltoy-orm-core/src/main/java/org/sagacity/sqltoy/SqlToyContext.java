@@ -44,7 +44,9 @@ import org.sagacity.sqltoy.plugins.secure.impl.FieldsRSASecureProvider;
 import org.sagacity.sqltoy.plugins.sharding.ShardingStrategy;
 import org.sagacity.sqltoy.translate.DynamicCacheFetch;
 import org.sagacity.sqltoy.translate.TranslateManager;
+import org.sagacity.sqltoy.translate.cache.DynamicFecthCacheManager;
 import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
+import org.sagacity.sqltoy.translate.cache.impl.FIFODynamicFetchCacheManager;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils.Dialect;
@@ -423,13 +425,17 @@ public class SqlToyContext {
 	private DynamicCacheFetch dynamicCacheFetch;
 
 	/**
+	 * 动态获取缓存数据的缓存管理器(未定义则使用框架默认的实现)
+	 */
+	private DynamicFecthCacheManager dynamicFecthCacheManager;
+
+	/**
 	 * sql注入正则表达式
 	 */
 	private String[] sqlInjectionRegexes;
 
 	/**
-	 * 一般指基于分布式redis缓存产生唯一有规则的id(如日期+流水),key(一般是日期格式)保留的天数
-	 * 一般一天一条记录,周期长了之后redis中记录较多
+	 * 一般指基于分布式redis缓存产生唯一有规则的id(如日期+流水),key(一般是日期格式)保留的天数 一般一天一条记录,周期长了之后redis中记录较多
 	 */
 	private Integer distributeIdCacheExpireDays;
 
@@ -442,7 +448,7 @@ public class SqlToyContext {
 		// 加载sqltoy的各类参数,如db2是否要增加with
 		// ur等,详见org/sagacity/sqltoy/sqltoy-default.properties
 		SqlToyConstants.loadProperties(dialectConfig);
-		//设置分布式id缓存时效天数
+		// 设置分布式id缓存时效天数
 		if (distributeIdCacheExpireDays != null) {
 			SqlToyConstants.distributeIdCacheExpireDays = distributeIdCacheExpireDays;
 		}
@@ -459,6 +465,10 @@ public class SqlToyContext {
 		}
 		if (dialectReturnPrimaryColumnCase != null) {
 			SqlToyConstants.dialectReturnPrimaryColumnCase = dialectReturnPrimaryColumnCase;
+		}
+		if (dynamicFecthCacheManager == null) {
+			dynamicFecthCacheManager = new FIFODynamicFetchCacheManager();
+			dynamicFecthCacheManager.initialize();
 		}
 		// 设置默认非spring等框架下的连接获取处理
 		if (appContext == null && connectionFactory == null) {
@@ -1071,7 +1081,12 @@ public class SqlToyContext {
 	public void destroy() {
 		try {
 			scriptLoader.destroy();
-			translateManager.destroy();
+			if (translateManager != null) {
+				translateManager.destroy();
+			}
+			if (dynamicFecthCacheManager != null) {
+				dynamicFecthCacheManager.destroy();
+			}
 		} catch (Exception e) {
 
 		}
@@ -1406,4 +1421,13 @@ public class SqlToyContext {
 	public void setDistributeIdCacheExpireDays(Integer distributeIdCacheExpireDays) {
 		this.distributeIdCacheExpireDays = distributeIdCacheExpireDays;
 	}
+
+	public DynamicFecthCacheManager getDynamicFecthCacheManager() {
+		return dynamicFecthCacheManager;
+	}
+
+	public void setDynamicFecthCacheManager(DynamicFecthCacheManager dynamicFecthCacheManager) {
+		this.dynamicFecthCacheManager = dynamicFecthCacheManager;
+	}
+
 }

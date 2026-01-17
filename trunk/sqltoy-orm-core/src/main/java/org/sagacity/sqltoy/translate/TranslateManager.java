@@ -17,6 +17,7 @@ import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.model.inner.TranslateExtend;
+import org.sagacity.sqltoy.translate.cache.DynamicFecthCacheManager;
 import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
 import org.sagacity.sqltoy.translate.cache.impl.TranslateEhcacheManager;
 import org.sagacity.sqltoy.translate.model.CheckerConfigModel;
@@ -173,6 +174,8 @@ public class TranslateManager {
 		int translateSize;
 		Translate translate;
 		HashMap<String, FieldTranslate> realTranslates = wrapI18nIndex(translates);
+		DynamicFecthCacheManager dynamicFecthCacheManager = sqlToyContext.getDynamicFecthCacheManager();
+		boolean hasDynamicFetchImpl = sqlToyContext.getDynamicCacheFetch() != null;
 		for (Map.Entry<String, FieldTranslate> entry : realTranslates.entrySet()) {
 			fieldTranslate = entry.getValue();
 			colName = entry.getKey();
@@ -187,10 +190,15 @@ public class TranslateManager {
 				if (translateMap.containsKey(extend.cache)) {
 					cacheModel = translateMap.get(extend.cache);
 					// 是否动态缓存(预留)
-					extend.dynamicCache = cacheModel.isDynamicCache();
+					extend.dynamicCache = (cacheModel.isDynamicCache() && hasDynamicFetchImpl);
 					extend.cacheSid = cacheModel.getSid();
 					extend.cacheProperties = cacheModel.getProperties();
-					cache = getCacheData(cacheModel, extend.cacheType);
+					// 动态缓存，采用动态缓存管理器获取缓存数据
+					if (cacheModel.isDynamicCache()) {
+						cache = dynamicFecthCacheManager.getDynamicCache(cacheModel, extend.cacheType);
+					} else {
+						cache = getCacheData(cacheModel, extend.cacheType);
+					}
 					if (cache != null) {
 						// update 2022-1-4 增加缓存使用时cache-index 合法性校验
 						if (cache.size() > 0) {
@@ -307,7 +315,7 @@ public class TranslateManager {
 					realCacheType = sqlToyContext.getUnifyFieldsHandler().getUserTenantId();
 					if (realCacheType == null) {
 						String[] authedTenantIds = sqlToyContext.getUnifyFieldsHandler().authTenants(null, null);
-						//只支持单一租户
+						// 只支持单一租户
 						if (authedTenantIds != null && authedTenantIds.length > 0) {
 							realCacheType = authedTenantIds[0];
 						} else {
