@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
  * @description 对结果翻译提供一个工具类
  * @author zhongxuchen
  * @version v1.0,Date:2024-12-28
+ * @modify 2026-1-16 开放dynamicCacheFetch功能
  */
 public class TranslateUtils {
 
@@ -24,7 +25,7 @@ public class TranslateUtils {
 	 * @date 2018-5-26 优化缓存翻译，提供keyCode1,keyCode2,keyCode3 形式的多代码翻译
 	 * @todo 统一对key进行缓存翻译
 	 * @param translateExtend
-	 * @param dynamicCacheFetch 预留功能,暂时不开放,需再思考一下必要性
+	 * @param dynamicCacheFetch
 	 * @param cacheData
 	 * @param fieldValue
 	 * @return
@@ -43,7 +44,7 @@ public class TranslateUtils {
 			}
 			// 根据key获取缓存值
 			Object[] cacheValues = cacheData.get(fieldStr);
-			// 执行动态缓存获取(暂时不开放)
+			// 动态查询数据放入缓存
 			if (cacheValues == null && useDynamicCache) {
 				cacheValues = dynamicCacheFetch.getCache(translateExtend.cache, translateExtend.cacheType,
 						translateExtend.cacheSid, translateExtend.cacheProperties, fieldStr);
@@ -77,7 +78,7 @@ public class TranslateUtils {
 				result.append(linkSign);
 			}
 			cacheValues = cacheData.get(key);
-			// 暂时不开放
+			// 动态查询数据放入缓存
 			if (cacheValues == null && useDynamicCache) {
 				cacheValues = dynamicCacheFetch.getCache(translateExtend.cache, translateExtend.cacheType,
 						translateExtend.cacheSid, translateExtend.cacheProperties, fieldStr);
