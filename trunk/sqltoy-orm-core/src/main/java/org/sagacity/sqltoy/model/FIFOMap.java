@@ -48,9 +48,9 @@ public class FIFOMap<K, V> extends LinkedHashMap<K, V> {
 	}
 
 	/**
-	 * @param initialCapacity
-	 * @param maxSize
-	 * @param loadFactor
+	 * @param initialCapacity 初始数量
+	 * @param maxSize 最大数量
+	 * @param loadFactor 加载因子，用于map扩容控制，比如0.8，即容量 100 的数组能装 80 个元素才扩容
 	 * @param accessOrder     是否频繁使用的放后面
 	 */
 	public FIFOMap(int initialCapacity, int maxSize, float loadFactor, boolean accessOrder) {

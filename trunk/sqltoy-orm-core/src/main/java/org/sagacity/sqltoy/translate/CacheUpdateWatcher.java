@@ -8,6 +8,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
+import org.sagacity.sqltoy.translate.cache.DynamicFecthCacheManager;
 import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
 import org.sagacity.sqltoy.translate.model.CacheCheckResult;
 import org.sagacity.sqltoy.translate.model.CheckerConfigModel;
@@ -52,6 +53,9 @@ public class CacheUpdateWatcher extends Thread {
 
 	private TranslateCacheManager translateCacheManager;
 
+	// 动态查询数据的缓存管理器
+	private DynamicFecthCacheManager dynamicFecthCacheManager;
+
 	private IgnoreKeyCaseMap<String, TranslateConfigModel> translateMap = null;
 
 	/**
@@ -73,6 +77,7 @@ public class CacheUpdateWatcher extends Thread {
 			IgnoreKeyCaseMap<String, TranslateConfigModel> translateMap,
 			CopyOnWriteArrayList<CheckerConfigModel> updateCheckers, int delaySeconds, int deviationSeconds) {
 		this.sqlToyContext = sqlToyContext;
+		this.dynamicFecthCacheManager = sqlToyContext.getDynamicFecthCacheManager();
 		this.translateCacheManager = translateCacheManager;
 		this.translateMap = translateMap;
 		this.updateCheckers = updateCheckers;
@@ -134,7 +139,7 @@ public class CacheUpdateWatcher extends Thread {
 			}
 			try {
 				// 一秒钟监测一次是否有到时的检测任务
-				//update 2025-5-30 增加当前线程是否被终止的检测
+				// update 2025-5-30 增加当前线程是否被终止的检测
 				if (Thread.currentThread().isInterrupted()) {
 					isRun = false;
 				} else {
@@ -185,15 +190,25 @@ public class CacheUpdateWatcher extends Thread {
 			// 指定了缓存名称
 			if (StringUtil.isNotBlank(checkerConfig.getCache())) {
 				translateConfig = translateMap.get(checkerConfig.getCache());
-				logger.debug("检测到缓存:{} 发生更新,将清除缓存便于后续缓存全量更新!", translateConfig.getCache());
-				translateCacheManager.clear(translateConfig.getCache(), null);
+				if (translateConfig != null) {
+					logger.debug("检测到缓存:{} 发生更新,将清除缓存便于后续缓存全量更新!", translateConfig.getCache());
+					if (translateConfig.isDynamicCache()) {
+						dynamicFecthCacheManager.clear(translateConfig.getCache(), null);
+					} else {
+						translateCacheManager.clear(translateConfig.getCache(), null);
+					}
+				}
 			} else {
 				for (CacheCheckResult result : results) {
 					translateConfig = translateMap.get(result.getCacheName());
 					if (translateConfig != null) {
 						logger.debug("检测到缓存发生更新: cacheName:{} cacheType:{}!", translateConfig.getCache(),
 								(result.getCacheType() == null) ? "无" : result.getCacheType());
-						translateCacheManager.clear(translateConfig.getCache(), result.getCacheType());
+						if (translateConfig.isDynamicCache()) {
+							dynamicFecthCacheManager.clear(translateConfig.getCache(), result.getCacheType());
+						} else {
+							translateCacheManager.clear(translateConfig.getCache(), result.getCacheType());
+						}
 					}
 				}
 			}
@@ -203,9 +218,15 @@ public class CacheUpdateWatcher extends Thread {
 			if (translateConfig == null) {
 				return;
 			}
+			// 是否动态捕获数据缓存
+			boolean isDynamicFetchCache = translateConfig.isDynamicCache();
 			String cacheName = translateConfig.getCache();
 			// 缓存还未首次加载不做更新检测
-			if (!translateCacheManager.hasCache(cacheName)) {
+			if (isDynamicFetchCache) {
+				if (!dynamicFecthCacheManager.hasCache(cacheName)) {
+					return;
+				}
+			} else if (!translateCacheManager.hasCache(cacheName)) {
 				return;
 			}
 			List<CacheCheckResult> results = TranslateFactory.doCheck(sqlToyContext, checkerConfig,
@@ -219,25 +240,54 @@ public class CacheUpdateWatcher extends Thread {
 			try {
 				// 内部不存在分组的缓存
 				if (!checkerConfig.isHasInsideGroup()) {
-					cacheData = translateCacheManager.getCache(cacheName, null);
+					if (isDynamicFetchCache) {
+						cacheData = dynamicFecthCacheManager.getDynamicCache(translateConfig, null);
+					} else {
+						cacheData = translateCacheManager.getCache(cacheName, null);
+					}
 					if (cacheData != null) {
+						String key;
 						for (CacheCheckResult result : results) {
 							// key不能为null
 							if (result.getItem() != null && result.getItem()[0] != null) {
-								cacheData.put(result.getItem()[0].toString(), result.getItem());
-								count++;
+								key = result.getItem()[0].toString();
+								// 动态数据捕获的缓存，要判断存在才能覆盖
+								if (isDynamicFetchCache) {
+									if (cacheData.containsKey(key)) {
+										cacheData.put(key, result.getItem());
+										count++;
+									}
+								} else {
+									cacheData.put(key, result.getItem());
+									count++;
+								}
 							}
 						}
 					}
 				} // 内部存在分组的缓存(如数据字典)
 				else {
+					String key;
 					for (CacheCheckResult result : results) {
 						if (result.getItem() != null && result.getItem()[0] != null) {
-							cacheData = translateCacheManager.getCache(cacheName, result.getCacheType());
+							if (isDynamicFetchCache) {
+								cacheData = dynamicFecthCacheManager.getDynamicCache(translateConfig,
+										result.getCacheType());
+							} else {
+								cacheData = translateCacheManager.getCache(cacheName, result.getCacheType());
+							}
 							// 为null则等待首次调用加载
 							if (cacheData != null) {
-								cacheData.put(result.getItem()[0].toString(), result.getItem());
-								count++;
+								key = result.getItem()[0].toString();
+								// 动态数据捕获的缓存，要判断存在才能覆盖
+								if (isDynamicFetchCache) {
+									if (cacheData.containsKey(key)) {
+										cacheData.put(key, result.getItem());
+										count++;
+									}
+								} else {
+									cacheData.put(key, result.getItem());
+									count++;
+								}
 							}
 						}
 					}

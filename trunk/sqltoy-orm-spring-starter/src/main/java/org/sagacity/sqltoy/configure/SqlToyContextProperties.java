@@ -297,6 +297,11 @@ public class SqlToyContextProperties implements Serializable {
 	 * 分布式id key的缓存天数(一般基于redis，避免长期储存占用空间)，多少天失效
 	 */
 	private Integer distributeIdCacheExpireDays;
+	
+	/**
+	 * 动态捕获缓存的缓存管理器，框架提供了默认实现
+	 */
+	private String dynamicFecthCacheManager;
 
 	/**
 	 * @return the sqlResourcesDir
@@ -845,4 +850,13 @@ public class SqlToyContextProperties implements Serializable {
 	public void setDistributeIdCacheExpireDays(Integer distributeIdCacheExpireDays) {
 		this.distributeIdCacheExpireDays = distributeIdCacheExpireDays;
 	}
+
+	public String getDynamicFecthCacheManager() {
+		return dynamicFecthCacheManager;
+	}
+
+	public void setDynamicFecthCacheManager(String dynamicFecthCacheManager) {
+		this.dynamicFecthCacheManager = dynamicFecthCacheManager;
+	}
+
 }
