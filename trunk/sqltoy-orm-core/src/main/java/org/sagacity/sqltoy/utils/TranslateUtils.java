@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
  * @description 对结果翻译提供一个工具类
  * @author zhongxuchen
  * @version v1.0,Date:2024-12-28
+ * @modify 2026-1-16 开放dynamicCacheFetch功能
  */
 public class TranslateUtils {
 
@@ -24,7 +25,7 @@ public class TranslateUtils {
 	 * @date 2018-5-26 优化缓存翻译，提供keyCode1,keyCode2,keyCode3 形式的多代码翻译
 	 * @todo 统一对key进行缓存翻译
 	 * @param translateExtend
-	 * @param dynamicCacheFetch 预留功能,暂时不开放,需再思考一下必要性
+	 * @param dynamicCacheFetch
 	 * @param cacheData
 	 * @param fieldValue
 	 * @return
@@ -32,6 +33,8 @@ public class TranslateUtils {
 	public static Object translateKey(TranslateExtend translateExtend, DynamicCacheFetch dynamicCacheFetch,
 			HashMap<String, Object[]> cacheData, Object fieldValue) {
 		String fieldStr = fieldValue.toString();
+		// 是否使用动态缓存数据抓取
+		boolean useDynamicCache = translateExtend.dynamicCache;
 		// 单值翻译
 		if (translateExtend.splitRegex == null) {
 			// ${key}_ZH_CN 用于组合匹配缓存
@@ -41,14 +44,14 @@ public class TranslateUtils {
 			}
 			// 根据key获取缓存值
 			Object[] cacheValues = cacheData.get(fieldStr);
-			// 执行动态缓存获取(暂时不开放)
-//			if (cacheValues == null && extend.dynamicCache && dynamicCacheFetch != null) {
-//				cacheValues = dynamicCacheFetch.getCache(extend.cache, extend.cacheSid, extend.cacheProperties,
-//						fieldStr);
-//				if (cacheValues != null) {
-//					translateKeyMap.put(fieldStr, cacheValues);
-//				}
-//			}
+			// 动态查询数据放入缓存
+			if (cacheValues == null && useDynamicCache) {
+				cacheValues = dynamicCacheFetch.getCache(translateExtend.cache, translateExtend.cacheType,
+						translateExtend.cacheSid, translateExtend.cacheProperties, fieldStr);
+				if (cacheValues != null) {
+					cacheData.put(fieldStr, cacheValues);
+				}
+			}
 			// 未匹配到
 			if (cacheValues == null || cacheValues.length == 0) {
 				// 定义未匹配模板则不输出日志
@@ -75,14 +78,14 @@ public class TranslateUtils {
 				result.append(linkSign);
 			}
 			cacheValues = cacheData.get(key);
-			// 暂时不开放
-//			if (cacheValues == null && extend.dynamicCache && dynamicCacheFetch != null) {
-//				cacheValues = dynamicCacheFetch.getCache(extend.cache, extend.cacheSid, extend.cacheProperties,
-//						fieldStr);
-//				if (cacheValues != null) {
-//					translateKeyMap.put(fieldStr, cacheValues);
-//				}
-//			}
+			// 动态查询数据放入缓存
+			if (cacheValues == null && useDynamicCache) {
+				cacheValues = dynamicCacheFetch.getCache(translateExtend.cache, translateExtend.cacheType,
+						translateExtend.cacheSid, translateExtend.cacheProperties, fieldStr);
+				if (cacheValues != null) {
+					cacheData.put(fieldStr, cacheValues);
+				}
+			}
 			if (cacheValues == null || cacheValues.length == 0) {
 				// 定义未匹配模板则不输出日志
 				if (translateExtend.uncached != null) {

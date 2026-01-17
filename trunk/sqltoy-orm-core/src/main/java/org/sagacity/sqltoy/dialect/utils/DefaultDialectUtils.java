@@ -626,6 +626,11 @@ public class DefaultDialectUtils {
 				} else {
 					rs.updateString(columnName, tmpStr);
 				}
+			} else if (jdbcType == java.sql.Types.BIGINT || jdbcType == java.sql.Types.DECIMAL
+					|| jdbcType == java.sql.Types.FLOAT) {
+				rs.updateBigDecimal(columnName, new BigDecimal(tmpStr));
+			} else if (jdbcType == java.sql.Types.INTEGER) {
+				rs.updateInt(columnName, Integer.valueOf(tmpStr));
 			} else {
 				rs.updateString(columnName, tmpStr);
 			}
@@ -637,6 +642,9 @@ public class DefaultDialectUtils {
 				} else {
 					rs.updateBoolean(columnName, false);
 				}
+			} else if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NCHAR
+					|| jdbcType == java.sql.Types.NVARCHAR) {
+				rs.updateString(columnName, paramValue.toString());
 			} else {
 				rs.updateInt(columnName, paramInt);
 			}
@@ -655,11 +663,21 @@ public class DefaultDialectUtils {
 				rs.updateTimestamp(columnName, new Timestamp(((java.util.Date) paramValue).getTime()));
 			}
 		} else if (paramValue instanceof java.math.BigInteger) {
-			rs.updateBigDecimal(columnName, new BigDecimal(((BigInteger) paramValue)));
+			if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NCHAR
+					|| jdbcType == java.sql.Types.NVARCHAR) {
+				rs.updateString(columnName, paramValue.toString());
+			} else {
+				rs.updateBigDecimal(columnName, new BigDecimal(((BigInteger) paramValue)));
+			}
 		} else if (paramValue instanceof java.lang.Double) {
 			rs.updateDouble(columnName, ((Double) paramValue));
 		} else if (paramValue instanceof java.lang.Long) {
-			rs.updateLong(columnName, ((Long) paramValue));
+			if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NCHAR
+					|| jdbcType == java.sql.Types.NVARCHAR) {
+				rs.updateString(columnName, paramValue.toString());
+			} else {
+				rs.updateLong(columnName, ((Long) paramValue));
+			}
 		} else if (paramValue instanceof java.sql.Clob) {
 			tmpStr = SqlUtil.clobToString((java.sql.Clob) paramValue);
 			rs.updateString(columnName, tmpStr);
@@ -1087,7 +1105,8 @@ public class DefaultDialectUtils {
 						}
 					});
 		} // 针对starrocks(用的mysql驱动)
-		else if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.DORIS || dbType == DBType.STARROCKS) {
+		else if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.DORIS
+				|| dbType == DBType.STARROCKS) {
 			rs = conn.createStatement().executeQuery("desc " + tableName);
 			return (Map<String, ColumnMeta>) SqlUtil.preparedStatementProcess(null, null, rs,
 					new PreparedStatementResultHandler() {

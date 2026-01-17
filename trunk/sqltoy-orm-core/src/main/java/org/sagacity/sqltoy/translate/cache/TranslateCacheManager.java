@@ -78,5 +78,4 @@ public abstract class TranslateCacheManager {
 	public void setTranslateMap(IgnoreKeyCaseMap<String, TranslateConfigModel> translateMap) {
 		this.translateMap = translateMap;
 	}
-
 }
