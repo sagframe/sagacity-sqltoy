@@ -2340,6 +2340,10 @@ public class DialectUtils {
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
 		List<Object[]> paramsValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getFieldsArray(), null,
 				handler);
+		// 批量回写update公共属性值
+		BeanUtil.batchBackWriteUnifyFields(entities,
+				BeanUtil.getUnifyFieldIndex(sqlToyContext.getUnifyFieldsHandler(), entityMeta.getFieldsArray(), 2),
+				paramsValues);
 		// 判断主键是否为空
 		int pkIndex = entityMeta.getIdIndex();
 		int end = pkIndex + entityMeta.getIdArray().length;
@@ -2388,10 +2392,6 @@ public class DialectUtils {
 			realSql = sqlToyResult.getSql();
 			realParams = CollectionUtil.arrayToList(sqlToyResult.getParamsValue());
 		}
-		// 批量回写update公共属性值
-		BeanUtil.batchBackWriteUnifyFields(entities,
-				BeanUtil.getUnifyFieldIndex(sqlToyContext.getUnifyFieldsHandler(), entityMeta.getFieldsArray(), 2),
-				paramsValues);
 		SqlExecuteStat.showSql("批量修改[" + realParams.size() + "]条记录", realSql, null);
 		return SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), realSql, realParams,
 				entityMeta.getFieldsTypeArray(), null, null, batchSize, autoCommit, conn, dbType);
