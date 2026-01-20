@@ -2010,8 +2010,8 @@ public class BeanUtil {
 		if (null == voList || voList.isEmpty()) {
 			return;
 		}
-		if (null == properties || properties.length < 1 || null == values || values.get(0).length < 1
-				|| properties.length != index.length) {
+		if (null == properties || properties.length < 1 || null == values || values.isEmpty()
+				|| values.get(0).length < 1 || properties.length != index.length) {
 			throw new IllegalArgumentException("集合或属性名称数组为空,请检查参数信息!");
 		}
 		try {
@@ -2664,6 +2664,9 @@ public class BeanUtil {
 	 * @param values
 	 */
 	public static void backWriteUnifyFields(Object entity, Map<String, Integer> fieldIndexMap, Object[] values) {
+		if (null == fieldIndexMap || fieldIndexMap.isEmpty() || null == values || values.length == 0) {
+			return;
+		}
 		List entities = new ArrayList();
 		List valueList = new ArrayList();
 		entities.add(entity);
@@ -2679,7 +2682,7 @@ public class BeanUtil {
 	 */
 	public static void batchBackWriteUnifyFields(List entitis, Map<String, Integer> fieldIndexMap,
 			List<Object[]> values) {
-		if (fieldIndexMap.isEmpty()) {
+		if (null == fieldIndexMap || fieldIndexMap.isEmpty() || null == values || values.isEmpty()) {
 			return;
 		}
 		String[] fields = new String[fieldIndexMap.size()];
