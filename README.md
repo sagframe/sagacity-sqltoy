@@ -10,7 +10,7 @@
 
 # WORD版详细文档(完整)
 ## 请见:docs/睿智平台SqlToy5.6 使用手册.doc
-<!-- # [在线文档(持续完善中)](https://sagframe.github.io/sqltoy-docs/) -->
+# [在线文档(持续完善中)](https://sagframe.github.io/sqltoy-docs/)
 ## xml中sql查询完整配置 
 https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 
@@ -51,8 +51,8 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
 # 最新版本 
-* 5.6.62 LTS (jdk17+/springboot3/springboot4)/5.6.62.jre8 (兼容5.2.x/5.3.x版本)      发版日期: 2026-1-15
-* （jre8版本EOL:2025-12-31）
+* 5.6.65 LTS (jdk17+/springboot3/springboot4)/5.6.65.jre8 (兼容5.2.x/5.3.x版本)      发版日期: 2026-1-20
+* （jre8版本EOL:2026-2-17）
 ```xml
 <dependency>
 	<groupId>com.sagframe</groupId>
@@ -60,8 +60,8 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 	<!-- solon 适配版本 <artifactId>sagacity-sqltoy-solon-plugin</artifactId> -->
         <!-- 传统spring项目 <artifactId>sagacity-sqltoy-spring</artifactId> -->
         <!-- 单纯sqltoy <artifactId>sagacity-sqltoy</artifactId> -->
-        <!-- jdk8 对应的版本号为：5.6.62.jre8 -->
-	<version>5.6.62</version>
+        <!-- jdk8 对应的版本号为：5.6.65.jre8 -->
+	<version>5.6.65</version>
 </dependency>
 ```
 
