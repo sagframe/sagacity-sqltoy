@@ -2508,7 +2508,7 @@ public class BeanUtil {
 	 * @param values
 	 */
 	public static void backWriteUnifyFields(Object entity, Map<String, Integer> fieldIndexMap, Object[] values) {
-		if (fieldIndexMap.isEmpty() || null == values || values.length == 0) {
+		if (null == fieldIndexMap || fieldIndexMap.isEmpty() || null == values || values.length == 0) {
 			return;
 		}
 		List entities = new ArrayList();
@@ -2526,7 +2526,7 @@ public class BeanUtil {
 	 */
 	public static void batchBackWriteUnifyFields(List entitis, Map<String, Integer> fieldIndexMap,
 			List<Object[]> values) {
-		if (fieldIndexMap.isEmpty() || null == values || values.size() == 0) {
+		if (null == fieldIndexMap || fieldIndexMap.isEmpty() || null == values || values.size() == 0) {
 			return;
 		}
 		String[] fields = new String[fieldIndexMap.size()];
