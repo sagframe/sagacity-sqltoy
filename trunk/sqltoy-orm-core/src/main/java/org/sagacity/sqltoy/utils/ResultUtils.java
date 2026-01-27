@@ -70,6 +70,8 @@ import org.sagacity.sqltoy.plugins.secure.DesensitizeProvider;
 import org.sagacity.sqltoy.translate.DynamicCacheFetch;
 import org.sagacity.sqltoy.translate.FieldTranslateCacheHolder;
 import org.sagacity.sqltoy.translate.TranslateConfigParse;
+import org.sagacity.sqltoy.translate.model.BatchDynamicCache;
+import org.sagacity.sqltoy.translate.model.DynamicCacheHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -328,10 +330,12 @@ public class ResultUtils {
 		index = 0;
 		List rowTemp;
 		TypeHandler typeHandler = sqlToyContext.getTypeHandler();
+		// 基于游标模式的必须逐行翻译
+		DynamicCacheHolder dynamicCacheHolder = new DynamicCacheHolder();
 		boolean doNext = true;
 		while (rs.next()) {
-			rowTemp = processResultRow(dbType, typeHandler, dynamicCacheFetch, rs, labelNames, lowKeyLabelNameMap,
-					columnSize, translateCache, realDecryptHandler, ignoreAllEmpty);
+			rowTemp = processResultRow(dbType, typeHandler, dynamicCacheFetch, dynamicCacheHolder, rs, labelNames,
+					lowKeyLabelNameMap, columnSize, translateCache, realDecryptHandler, ignoreAllEmpty);
 			if (rowTemp != null) {
 				// 字段脱敏
 				if (sqlSecure) {
@@ -379,7 +383,7 @@ public class ResultUtils {
 							methodTypeValues, methodTypes, genericTypes, rowTemp, indexs, realProps, resultType);
 					// 有基于注解@Translate的缓存翻译
 					if (cacheDatas != null) {
-						wrapBeanTranslate(dynamicCacheFetch, cacheDatas, bean);
+						wrapBeanTranslate(dynamicCacheFetch, dynamicCacheHolder, cacheDatas, bean);
 					}
 					streamResultHandler.consume(bean, index);
 					doNext = streamResultHandler.doNextConsume(bean, index);
@@ -562,6 +566,9 @@ public class ResultUtils {
 		if (maxThresholds > 1 && maxThresholds <= warnThresholds) {
 			maxThresholds = warnThresholds;
 		}
+		// 待修改
+		BatchDynamicCache batchDynamicCache = null;
+		DynamicCacheHolder dynamicCacheHolder = null;
 		List itemRow;
 		// 单列link
 		if (linkModel != null) {
@@ -590,6 +597,10 @@ public class ResultUtils {
 			if (translateLink) {
 				fieldTranslateHandler = fieldTranslateCacheHolders.get(linkColumnLow);
 			}
+			batchDynamicCache = TranslateUtils.getBatchTranslates(sqlToyContext, fieldTranslateCacheHolders,
+					linkColumn);
+			dynamicCacheHolder = new DynamicCacheHolder(batchDynamicCache.getCacheAndTypeForRealMap(),
+					batchDynamicCache.getCacheAndTypeForRealType(), batchDynamicCache.getDynamicCaches());
 			boolean doLink = true;
 			// 0:字符拼接，1:List;2:Array;3:HashSet
 			int linkResultType = linkModel.getResultType();
@@ -600,8 +611,8 @@ public class ResultUtils {
 				if (linkValue == null) {
 					linkStr = "";
 				} else if (translateLink) {
-					tmpObject = fieldTranslateHandler.getRSCacheValue(dynamicCacheFetch, rs, lowKeyLabelNameMap,
-							linkValue.toString());
+					tmpObject = fieldTranslateHandler.getRSCacheValue(dynamicCacheFetch, dynamicCacheHolder, rs,
+							lowKeyLabelNameMap, linkValue.toString());
 					linkStr = (tmpObject == null) ? linkValue.toString() : tmpObject.toString();
 				} else {
 					linkStr = linkValue.toString();
@@ -611,8 +622,9 @@ public class ResultUtils {
 						: getLinkColumnsId(rs, linkModel.getGroupColumns());
 				// 不相等
 				if (!identity.equals(preIdentity)) {
-					itemRow = processResultRow(dbType, typeHandler, dynamicCacheFetch, rs, labelNames,
-							lowKeyLabelNameMap, columnSize, fieldTranslateCacheHolders, decryptHandler, ignoreAllEmpty);
+					itemRow = processResultRow(dbType, typeHandler, dynamicCacheFetch, dynamicCacheHolder, rs,
+							labelNames, lowKeyLabelNameMap, columnSize, fieldTranslateCacheHolders, decryptHandler,
+							ignoreAllEmpty);
 					if (itemRow != null) {
 						// 只要有过一次不等，避免是第一行记录
 						if (notEqualCnt > 0) {
@@ -703,13 +715,16 @@ public class ResultUtils {
 			if (updateRowHandler != null) {
 				isUpdate = true;
 			}
+			batchDynamicCache = TranslateUtils.getBatchTranslates(sqlToyContext, fieldTranslateCacheHolders);
+			dynamicCacheHolder = new DynamicCacheHolder(batchDynamicCache.getCacheAndTypeForRealMap(),
+					batchDynamicCache.getCacheAndTypeForRealType(), batchDynamicCache.getDynamicCaches());
 			while (rs.next()) {
 				if (isUpdate) {
 					updateRowHandler.updateRow(rs, index);
 					rs.updateRow();
 				}
-				itemRow = processResultRow(dbType, typeHandler, dynamicCacheFetch, rs, labelNames, lowKeyLabelNameMap,
-						columnSize, fieldTranslateCacheHolders, decryptHandler, ignoreAllEmpty);
+				itemRow = processResultRow(dbType, typeHandler, dynamicCacheFetch, dynamicCacheHolder, rs, labelNames,
+						lowKeyLabelNameMap, columnSize, fieldTranslateCacheHolders, decryptHandler, ignoreAllEmpty);
 				if (itemRow != null) {
 					items.add(itemRow);
 				}
@@ -735,6 +750,8 @@ public class ResultUtils {
 					"MaxLargeResult:执行sql提取数据超出最大阀值限制{}(可通过[spring.sqltoy.pageFetchSizeLimit]参数调整),sqlId={},具体语句={}",
 					index, sqlToyConfig.getId(), sqlToyConfig.getSql(null));
 		}
+		TranslateUtils.translateListByDynamicCache(sqlToyContext.getTranslateManager(), batchDynamicCache,
+				dynamicCacheHolder, dynamicCacheFetch, labelIndexMap, items, false);
 		return items;
 	}
 
@@ -817,6 +834,7 @@ public class ResultUtils {
 			validateCacheConfig(translateMap, lowKeyLabelNameMap);
 			fieldTranslateCacheHolders = sqlToyContext.getTranslateManager().getTranslates(translateMap);
 		}
+
 		int columnSize = labelNames.length;
 		// 警告阀值
 		int warnThresholds = SqlToyConstants.getWarnThresholds();
@@ -874,6 +892,11 @@ public class ResultUtils {
 		int index = 0;
 		int notEqualCnt = 0;
 		TypeHandler typeHandler = sqlToyContext.getTypeHandler();
+		// 提取可批量获取的动态缓存翻译配置
+		BatchDynamicCache batchDynamicCache = TranslateUtils.getBatchTranslates(sqlToyContext,
+				fieldTranslateCacheHolders, linkLowColumns);
+		DynamicCacheHolder dynamicCacheHolder = new DynamicCacheHolder(batchDynamicCache.getCacheAndTypeForRealMap(),
+				batchDynamicCache.getCacheAndTypeForRealType(), batchDynamicCache.getDynamicCaches());
 		while (rs.next()) {
 			// 对多个link字段取值并进行翻译转义
 			for (int i = 0; i < linkColCnt; i++) {
@@ -882,8 +905,8 @@ public class ResultUtils {
 					linkStrs[i] = "";
 				} else if (translateLinks[i]) {
 					fieldTranslateCacheHolder = fieldTranslateCacheHolders.get(linkLowColumns[i]);
-					tmpObject = fieldTranslateCacheHolder.getRSCacheValue(dynamicCacheFetch, rs, lowKeyLabelNameMap,
-							linkValues[i].toString());
+					tmpObject = fieldTranslateCacheHolder.getRSCacheValue(dynamicCacheFetch, dynamicCacheHolder, rs,
+							lowKeyLabelNameMap, linkValues[i].toString());
 					linkStrs[i] = (tmpObject == null) ? linkValues[i].toString() : tmpObject.toString();
 				} else {
 					linkStrs[i] = linkValues[i].toString();
@@ -895,8 +918,8 @@ public class ResultUtils {
 			// 不相等
 			if (!identity.equals(preIdentity)) {
 				// 提取result中的数据(identity相等时不需要提取)
-				itemRow = processResultRow(dbType, typeHandler, dynamicCacheFetch, rs, labelNames, lowKeyLabelNameMap,
-						columnSize, fieldTranslateCacheHolders, decryptHandler, ignoreAllEmpty);
+				itemRow = processResultRow(dbType, typeHandler, dynamicCacheFetch, dynamicCacheHolder, rs, labelNames,
+						lowKeyLabelNameMap, columnSize, fieldTranslateCacheHolders, decryptHandler, ignoreAllEmpty);
 				if (itemRow != null) {
 					// 不相等时先对最后一条记录修改，写入拼接后的字符串
 					if (notEqualCnt > 0) {
@@ -952,6 +975,7 @@ public class ResultUtils {
 				break;
 			}
 		}
+		// if(dynamicCacheHolder.)
 		// 数据集合不为空,对最后一条记录写入循环值
 		if (notEqualCnt > 0) {
 			preItemRow = items.get(items.size() - 1);
@@ -969,6 +993,8 @@ public class ResultUtils {
 					"MaxLargeResult:执行sql提取数据超出最大阀值限制{}(可通过[spring.sqltoy.pageFetchSizeLimit]参数调整),sqlId={},具体语句={}",
 					index, sqlToyConfig.getId(), sqlToyConfig.getSql(null));
 		}
+		TranslateUtils.translateListByDynamicCache(sqlToyContext.getTranslateManager(), batchDynamicCache,
+				dynamicCacheHolder, dynamicCacheFetch, labelIndexMap, items, false);
 		return items;
 	}
 
@@ -1194,7 +1220,8 @@ public class ResultUtils {
 	 * @throws Exception
 	 */
 	public static List processResultRow(Integer dbType, TypeHandler typeHandler, DynamicCacheFetch dynamicCacheFetch,
-			ResultSet rs, String[] labelNames, HashMap<String, String> lowKeyLabelNameMap, int size,
+			DynamicCacheHolder dynamicCacheHolder, ResultSet rs, String[] labelNames,
+			HashMap<String, String> lowKeyLabelNameMap, int size,
 			HashMap<String, FieldTranslateCacheHolder> translateCaches, DecryptHandler decryptHandler,
 			boolean ignoreAllEmptySet) throws Exception {
 		List rowData = new ArrayList();
@@ -1242,8 +1269,8 @@ public class ResultUtils {
 				if (doTranslate) {
 					fieldTranslateHandler = translateCaches.get(label);
 					if (fieldTranslateHandler != null) {
-						fieldValue = fieldTranslateHandler.getRSCacheValue(dynamicCacheFetch, rs, lowKeyLabelNameMap,
-								fieldValue.toString());
+						fieldValue = fieldTranslateHandler.getRSCacheValue(dynamicCacheFetch, dynamicCacheHolder, rs,
+								lowKeyLabelNameMap, fieldValue.toString());
 					}
 				}
 				// 有一个非null
@@ -1956,9 +1983,15 @@ public class ResultUtils {
 		HashMap<String, FieldTranslateCacheHolder> fieldTranslateHandlers = sqlToyContext.getTranslateManager()
 				.getTranslates(translateConfig);
 		DynamicCacheFetch dynamicCacheFetch = sqlToyContext.getDynamicCacheFetch();
+		BatchDynamicCache batchDynamicCache = TranslateUtils.getBatchTranslates(sqlToyContext, fieldTranslateHandlers);
+		DynamicCacheHolder dynamicCacheHolder = new DynamicCacheHolder(batchDynamicCache.getCacheAndTypeForRealMap(),
+				batchDynamicCache.getCacheAndTypeForRealType(), batchDynamicCache.getDynamicCaches());
+		// 逐行翻译
 		for (int i = 0, n = voList.size(); i < n; i++) {
-			wrapBeanTranslate(dynamicCacheFetch, fieldTranslateHandlers, voList.get(i));
+			wrapBeanTranslate(dynamicCacheFetch, dynamicCacheHolder, fieldTranslateHandlers, voList.get(i));
 		}
+		TranslateUtils.translateBeanByDynamicCache(sqlToyContext.getTranslateManager(), batchDynamicCache,
+				dynamicCacheHolder, dynamicCacheFetch, voList);
 	}
 
 	/**
@@ -1967,14 +2000,14 @@ public class ResultUtils {
 	 * @param fieldTranslateHandlers
 	 * @param item
 	 */
-	private static void wrapBeanTranslate(DynamicCacheFetch dynamicCacheFetch,
+	private static void wrapBeanTranslate(DynamicCacheFetch dynamicCacheFetch, DynamicCacheHolder dynamicCacheHolder,
 			HashMap<String, FieldTranslateCacheHolder> fieldTranslateHandlers, Object item) {
 		fieldTranslateHandlers.forEach((fieldName, fieldTranslateHandler) -> {
 			Object srcFieldValue = BeanUtil.getProperty(item, fieldTranslateHandler.getKeyField());
 			Object fieldValue = BeanUtil.getProperty(item, fieldName);
 			if (srcFieldValue != null && !"".equals(srcFieldValue.toString()) && fieldValue == null) {
-				BeanUtil.setProperty(item, fieldName,
-						fieldTranslateHandler.getBeanCacheValue(dynamicCacheFetch, item, srcFieldValue.toString()));
+				BeanUtil.setProperty(item, fieldName, fieldTranslateHandler.getBeanCacheValue(dynamicCacheFetch,
+						dynamicCacheHolder, item, srcFieldValue.toString()));
 			}
 		});
 	}

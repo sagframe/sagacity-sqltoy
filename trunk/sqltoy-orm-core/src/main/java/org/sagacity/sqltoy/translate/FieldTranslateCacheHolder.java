@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.model.inner.TranslateExtend;
+import org.sagacity.sqltoy.translate.model.DynamicCacheHolder;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.TranslateUtils;
 
@@ -47,13 +48,14 @@ public class FieldTranslateCacheHolder implements Serializable {
 	/**
 	 * @TODO 针对一行数据进行翻译
 	 * @param dynamicCacheFetch
+	 * @param dynamicCacheHolder
 	 * @param rowList
 	 * @param colIndexMap
 	 * @param key
 	 * @return
 	 */
-	public Object getRowCacheValue(DynamicCacheFetch dynamicCacheFetch, List<?> rowList,
-			HashMap<String, Integer> colIndexMap, String key) {
+	public Object getRowCacheValue(DynamicCacheFetch dynamicCacheFetch, DynamicCacheHolder dynamicCacheHolder,
+			List<?> rowList, HashMap<String, Integer> colIndexMap, String key) {
 		TranslateExtend translateExtand;
 		Object translateValue = key;
 		Object compareValue;
@@ -70,8 +72,8 @@ public class FieldTranslateCacheHolder implements Serializable {
 						translateExtand.compareValues);
 			}
 			if (doTranslate) {
-				translateValue = TranslateUtils.translateKey(translateExtand, dynamicCacheFetch, cacheArray[i],
-						translateValue);
+				translateValue = TranslateUtils.translateKey(translateExtand, dynamicCacheFetch, dynamicCacheHolder,
+						cacheArray[i], translateValue);
 			}
 		}
 		return translateValue;
@@ -80,14 +82,15 @@ public class FieldTranslateCacheHolder implements Serializable {
 	/**
 	 * @TODO 针对ResultSet 进行翻译
 	 * @param dynamicCacheFetch
+	 * @param dynamicCacheHolder
 	 * @param rs
 	 * @param lowKeyLabelNameMap
 	 * @param key
 	 * @return
 	 * @throws SQLException
 	 */
-	public Object getRSCacheValue(DynamicCacheFetch dynamicCacheFetch, ResultSet rs,
-			HashMap<String, String> lowKeyLabelNameMap, String key) throws SQLException {
+	public Object getRSCacheValue(DynamicCacheFetch dynamicCacheFetch, DynamicCacheHolder dynamicCacheHolder,
+			ResultSet rs, HashMap<String, String> lowKeyLabelNameMap, String key) throws SQLException {
 		TranslateExtend translateExtand;
 		Object translateValue = key;
 		Object compareValue;
@@ -103,8 +106,8 @@ public class FieldTranslateCacheHolder implements Serializable {
 						translateExtand.compareValues);
 			}
 			if (doTranslate) {
-				translateValue = TranslateUtils.translateKey(translateExtand, dynamicCacheFetch, cacheArray[i],
-						translateValue);
+				translateValue = TranslateUtils.translateKey(translateExtand, dynamicCacheFetch, dynamicCacheHolder,
+						cacheArray[i], translateValue);
 			}
 		}
 		return translateValue;
@@ -113,11 +116,13 @@ public class FieldTranslateCacheHolder implements Serializable {
 	/**
 	 * @TODO 针对VO\DTO的属性进行翻译
 	 * @param dynamicCacheFetch
+	 * @param dynamicCacheHolder
 	 * @param item
 	 * @param key
 	 * @return
 	 */
-	public Object getBeanCacheValue(DynamicCacheFetch dynamicCacheFetch, Object item, String key) {
+	public Object getBeanCacheValue(DynamicCacheFetch dynamicCacheFetch, DynamicCacheHolder dynamicCacheHolder,
+			Object item, String key) {
 		TranslateExtend translateExtand;
 		Object translateValue = key;
 		Object compareValue;
@@ -132,8 +137,8 @@ public class FieldTranslateCacheHolder implements Serializable {
 						translateExtand.compareValues);
 			}
 			if (doTranslate) {
-				translateValue = TranslateUtils.translateKey(translateExtand, dynamicCacheFetch, cacheArray[i],
-						translateValue);
+				translateValue = TranslateUtils.translateKey(translateExtand, dynamicCacheFetch, dynamicCacheHolder,
+						cacheArray[i], translateValue);
 			}
 		}
 		return translateValue;

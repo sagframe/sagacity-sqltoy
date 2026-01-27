@@ -14,7 +14,6 @@ import org.sagacity.sqltoy.SqlToyThreadDataHolder;
 import org.sagacity.sqltoy.config.model.FieldTranslate;
 import org.sagacity.sqltoy.config.model.SqlExecuteTrace;
 import org.sagacity.sqltoy.config.model.Translate;
-import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.model.inner.TranslateExtend;
 import org.sagacity.sqltoy.translate.cache.DynamicFecthCacheManager;
@@ -24,6 +23,7 @@ import org.sagacity.sqltoy.translate.model.CheckerConfigModel;
 import org.sagacity.sqltoy.translate.model.DefaultConfig;
 import org.sagacity.sqltoy.translate.model.TranslateConfigModel;
 import org.sagacity.sqltoy.utils.StringUtil;
+import org.sagacity.sqltoy.utils.TranslateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -176,6 +176,7 @@ public class TranslateManager {
 		HashMap<String, FieldTranslate> realTranslates = wrapI18nIndex(translates);
 		DynamicFecthCacheManager dynamicFecthCacheManager = sqlToyContext.getDynamicFecthCacheManager();
 		boolean hasDynamicFetchImpl = sqlToyContext.getDynamicCacheFetch() != null;
+		String realCacheType;
 		for (Map.Entry<String, FieldTranslate> entry : realTranslates.entrySet()) {
 			fieldTranslate = entry.getValue();
 			colName = entry.getKey();
@@ -193,11 +194,12 @@ public class TranslateManager {
 					extend.dynamicCache = (cacheModel.isDynamicCache() && hasDynamicFetchImpl);
 					extend.cacheSid = cacheModel.getSid();
 					extend.cacheProperties = cacheModel.getProperties();
+					realCacheType = TranslateUtils.getRealCacheType(sqlToyContext, extend.cacheType);
 					// 动态缓存，采用动态缓存管理器获取缓存数据
 					if (cacheModel.isDynamicCache()) {
-						cache = dynamicFecthCacheManager.getDynamicCache(cacheModel, extend.cacheType);
+						cache = dynamicFecthCacheManager.getDynamicCache(cacheModel, realCacheType);
 					} else {
-						cache = getCacheData(cacheModel, extend.cacheType);
+						cache = getCacheData(cacheModel, realCacheType);
 					}
 					if (cache != null) {
 						// update 2022-1-4 增加缓存使用时cache-index 合法性校验
@@ -213,7 +215,7 @@ public class TranslateManager {
 					} else {
 						cacheAry[i] = new HashMap<String, Object[]>();
 						logger.warn("sqltoy translate:cacheName={},cache-type={},column={}配置不正确,未获取对应cache数据!",
-								cacheModel.getCache(), extend.cacheType, extend.column);
+								cacheModel.getCache(), realCacheType, extend.column);
 					}
 				} else {
 					cacheAry[i] = new HashMap<String, Object[]>();
@@ -301,33 +303,7 @@ public class TranslateManager {
 	 * @return
 	 */
 	private HashMap<String, Object[]> getCacheData(TranslateConfigModel cacheModel, String cacheType) {
-		String realCacheType = null;
-		if (cacheType != null) {
-			// ${user_tenant_id}形式传递租户id
-			if (cacheType.startsWith("${") && cacheType.endsWith("}")) {
-				String lowCacheType = cacheType.substring(2, cacheType.length() - 1).replace("_", "").trim()
-						.toLowerCase();
-				if (lowCacheType.equals("usertenantid") || lowCacheType.equals("currentusertenantid")) {
-					if (sqlToyContext.getUnifyFieldsHandler() == null) {
-						throw new DataAccessException("缓存翻译使用:" + cacheType
-								+ "形式传递租户信息，必须要实现:IUnifyFieldsHandler.getUserTenantId()或IUnifyFieldsHandler.authTenants(null,null)来获取当前用户的租户id!");
-					}
-					realCacheType = sqlToyContext.getUnifyFieldsHandler().getUserTenantId();
-					if (realCacheType == null) {
-						String[] authedTenantIds = sqlToyContext.getUnifyFieldsHandler().authTenants(null, null);
-						// 只支持单一租户
-						if (authedTenantIds != null && authedTenantIds.length > 0) {
-							realCacheType = authedTenantIds[0];
-						} else {
-							throw new DataAccessException("缓存翻译使用:" + cacheType
-									+ "形式传递租户信息，必须要实现:IUnifyFieldsHandler.getUserTenantId()或IUnifyFieldsHandler.authTenants(null,null)来获取当前用户的租户id!");
-						}
-					}
-				}
-			} else {
-				realCacheType = cacheType;
-			}
-		}
+		String realCacheType = TranslateUtils.getRealCacheType(sqlToyContext, cacheType);
 		// 从缓存中提取数据
 		HashMap<String, Object[]> result = translateCacheManager.getCache(cacheModel.getCache(), realCacheType);
 		// 数据为空则执行调用逻辑提取数据放入缓存，否则直接返回
@@ -353,6 +329,10 @@ public class TranslateManager {
 			logger.error("cacheName:{} 没有配置,请检查缓存配置文件!", cacheName);
 			return null;
 		}
+		if (cacheModel.isDynamicCache()) {
+			return sqlToyContext.getDynamicFecthCacheManager().getDynamicCache(cacheModel,
+					TranslateUtils.getRealCacheType(sqlToyContext, cacheType));
+		}
 		// 获得当前线程中的sql执行日志，后续缓存获取会覆盖掉日志
 		SqlExecuteTrace sqlTrace = SqlExecuteStat.get();
 		HashMap<String, Object[]> result = getCacheData(cacheModel, cacheType);
@@ -376,7 +356,13 @@ public class TranslateManager {
 				logger.error("cacheName:{} 没有配置,请检查缓存配置文件!", cacheName);
 				return;
 			}
-			translateCacheManager.put(cacheModel, cacheModel.getCache(), cacheType, cacheValue);
+			String realCacheType = TranslateUtils.getRealCacheType(sqlToyContext, cacheType);
+			if (cacheModel.isDynamicCache()) {
+				sqlToyContext.getDynamicFecthCacheManager().getDynamicCache(cacheModel, realCacheType)
+						.putAll(cacheValue);
+			} else {
+				translateCacheManager.put(cacheModel, cacheModel.getCache(), realCacheType, cacheValue);
+			}
 		} else {
 			logger.error("因没有定义缓存翻译的配置文件(可不定义具体缓存)，则没有启用缓存翻译,无法设置缓存数据!");
 		}
@@ -391,7 +377,12 @@ public class TranslateManager {
 		if (translateCacheManager != null) {
 			TranslateConfigModel cacheModel = translateMap.get(cacheName);
 			if (cacheModel != null) {
-				translateCacheManager.clear(cacheModel.getCache(), cacheType);
+				String realCacheType = TranslateUtils.getRealCacheType(sqlToyContext, cacheType);
+				if (cacheModel.isDynamicCache()) {
+					sqlToyContext.getDynamicFecthCacheManager().getDynamicCache(cacheModel, realCacheType).clear();
+				} else {
+					translateCacheManager.clear(cacheModel.getCache(), realCacheType);
+				}
 			}
 		}
 	}
