@@ -591,8 +591,8 @@ public class MongoElasticUtils {
 		int size = dataSet.size();
 		List rowList;
 		Object cellValue;
+		// 提取可批量获取的动态缓存翻译配置
 		BatchDynamicCache batchDynamicCache = TranslateUtils.getBatchTranslates(sqlToyContext, translateCache);
-		// 待修改
 		DynamicCacheHolder dynamicCacheHolder = new DynamicCacheHolder(batchDynamicCache.getCacheAndTypeForRealMap(),
 				batchDynamicCache.getCacheAndTypeForRealType(), batchDynamicCache.getDynamicCaches());
 		DynamicCacheFetch dynamicCacheFetch = sqlToyContext.getDynamicCacheFetch();
@@ -611,7 +611,8 @@ public class MongoElasticUtils {
 				}
 			}
 		}
-		TranslateUtils.translateListByDynamicCache(sqlToyContext.getTranslateManager(), batchDynamicCache,
+		// 对集合进行批量获取未匹配的缓存数据进行翻译
+		TranslateUtils.translateArrayListByDynamicCache(sqlToyContext.getTranslateManager(), batchDynamicCache,
 				dynamicCacheHolder, dynamicCacheFetch, colIndexMap, dataSet, true);
 	}
 

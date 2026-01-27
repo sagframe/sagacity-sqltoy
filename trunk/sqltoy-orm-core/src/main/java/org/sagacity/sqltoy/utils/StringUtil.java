@@ -1123,6 +1123,12 @@ public class StringUtil {
 		return result;
 	}
 
+	/**
+	 * @TODO 用字符串index分割字符串，主要用于动态缓存翻译key,key2,key3形式经过翻译后用特定字符拼接:name1->key2->name3,再用link符号切割开对key2进行翻译形成name1->name2->name3形式
+	 * @param str
+	 * @param delimiter
+	 * @return
+	 */
 	public static String[] splitByIndex(String str, String delimiter) {
 		return splitByIndex(str, delimiter, false);
 	}

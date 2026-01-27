@@ -202,7 +202,7 @@ public class TranslateUtils {
 	 * @param dynamicCacheFetch
 	 * @param items
 	 */
-	public static void translateBeanByDynamicCache(TranslateManager translateManager,
+	public static void translateDTOListByDynamicCache(TranslateManager translateManager,
 			BatchDynamicCache batchDynamicCache, DynamicCacheHolder dynamicCacheHolder,
 			DynamicCacheFetch dynamicCacheFetch, List items) {
 		// 没有动态查询数据的缓存
@@ -270,7 +270,7 @@ public class TranslateUtils {
 	 * @param items
 	 * @param hasAliasName       针对mongo存在别名场景
 	 */
-	public static void translateListByDynamicCache(TranslateManager translateManager,
+	public static void translateArrayListByDynamicCache(TranslateManager translateManager,
 			BatchDynamicCache batchDynamicCache, DynamicCacheHolder dynamicCacheHolder,
 			DynamicCacheFetch dynamicCacheFetch, HashMap<String, Integer> labelIndexMap, List items,
 			boolean hasAliasName) {
@@ -408,7 +408,8 @@ public class TranslateUtils {
 			if (cacheType.startsWith("${") && cacheType.endsWith("}")) {
 				String lowCacheType = cacheType.substring(2, cacheType.length() - 1).replace("_", "").trim()
 						.toLowerCase();
-				if (lowCacheType.equals("usertenantid") || lowCacheType.equals("currentusertenantid")) {
+				if (lowCacheType.equals("usertenantid") || lowCacheType.equals("currentusertenantid")
+						|| lowCacheType.equals("tenantid")) {
 					if (sqlToyContext.getUnifyFieldsHandler() == null) {
 						throw new DataAccessException("缓存翻译使用:" + cacheType
 								+ "形式传递租户信息，必须要实现:IUnifyFieldsHandler.getUserTenantId()或IUnifyFieldsHandler.authTenants(null,null)来获取当前用户的租户id!");

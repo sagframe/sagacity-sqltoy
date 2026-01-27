@@ -330,7 +330,7 @@ public class ResultUtils {
 		index = 0;
 		List rowTemp;
 		TypeHandler typeHandler = sqlToyContext.getTypeHandler();
-		// 基于游标模式的必须逐行翻译
+		// 基于游标流模式的数据查询和翻译必须逐行翻译,所以只需定义一个实例即可
 		DynamicCacheHolder dynamicCacheHolder = new DynamicCacheHolder();
 		boolean doNext = true;
 		while (rs.next()) {
@@ -566,7 +566,7 @@ public class ResultUtils {
 		if (maxThresholds > 1 && maxThresholds <= warnThresholds) {
 			maxThresholds = warnThresholds;
 		}
-		// 待修改
+		// 提取可批量查询数据的缓存翻译
 		BatchDynamicCache batchDynamicCache = null;
 		DynamicCacheHolder dynamicCacheHolder = null;
 		List itemRow;
@@ -750,7 +750,8 @@ public class ResultUtils {
 					"MaxLargeResult:执行sql提取数据超出最大阀值限制{}(可通过[spring.sqltoy.pageFetchSizeLimit]参数调整),sqlId={},具体语句={}",
 					index, sqlToyConfig.getId(), sqlToyConfig.getSql(null));
 		}
-		TranslateUtils.translateListByDynamicCache(sqlToyContext.getTranslateManager(), batchDynamicCache,
+		// 对集合进行批量获取未匹配的缓存数据进行翻译
+		TranslateUtils.translateArrayListByDynamicCache(sqlToyContext.getTranslateManager(), batchDynamicCache,
 				dynamicCacheHolder, dynamicCacheFetch, labelIndexMap, items, false);
 		return items;
 	}
@@ -993,7 +994,8 @@ public class ResultUtils {
 					"MaxLargeResult:执行sql提取数据超出最大阀值限制{}(可通过[spring.sqltoy.pageFetchSizeLimit]参数调整),sqlId={},具体语句={}",
 					index, sqlToyConfig.getId(), sqlToyConfig.getSql(null));
 		}
-		TranslateUtils.translateListByDynamicCache(sqlToyContext.getTranslateManager(), batchDynamicCache,
+		// 对集合进行批量获取未匹配的缓存数据进行翻译
+		TranslateUtils.translateArrayListByDynamicCache(sqlToyContext.getTranslateManager(), batchDynamicCache,
 				dynamicCacheHolder, dynamicCacheFetch, labelIndexMap, items, false);
 		return items;
 	}
@@ -1983,6 +1985,7 @@ public class ResultUtils {
 		HashMap<String, FieldTranslateCacheHolder> fieldTranslateHandlers = sqlToyContext.getTranslateManager()
 				.getTranslates(translateConfig);
 		DynamicCacheFetch dynamicCacheFetch = sqlToyContext.getDynamicCacheFetch();
+		// 提取可批量获取的动态缓存翻译配置
 		BatchDynamicCache batchDynamicCache = TranslateUtils.getBatchTranslates(sqlToyContext, fieldTranslateHandlers);
 		DynamicCacheHolder dynamicCacheHolder = new DynamicCacheHolder(batchDynamicCache.getCacheAndTypeForRealMap(),
 				batchDynamicCache.getCacheAndTypeForRealType(), batchDynamicCache.getDynamicCaches());
@@ -1990,7 +1993,8 @@ public class ResultUtils {
 		for (int i = 0, n = voList.size(); i < n; i++) {
 			wrapBeanTranslate(dynamicCacheFetch, dynamicCacheHolder, fieldTranslateHandlers, voList.get(i));
 		}
-		TranslateUtils.translateBeanByDynamicCache(sqlToyContext.getTranslateManager(), batchDynamicCache,
+		// 对集合进行批量获取未匹配的缓存数据进行翻译
+		TranslateUtils.translateDTOListByDynamicCache(sqlToyContext.getTranslateManager(), batchDynamicCache,
 				dynamicCacheHolder, dynamicCacheFetch, voList);
 	}
 
