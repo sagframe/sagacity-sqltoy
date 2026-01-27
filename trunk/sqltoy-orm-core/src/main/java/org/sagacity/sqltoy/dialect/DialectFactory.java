@@ -1048,11 +1048,21 @@ public class DialectFactory {
 											if (rowSize == 0) {
 												queryResult.setRecordCount(recordCnt);
 											} else {
-												queryResult.setRecordCount(minCount);
+												// 存在快速分页场景，快速分页内部总记录小于等于外部join后的记录数量
+												if (realSqlToyConfig.isHasFast()) {
+													queryResult.setRecordCount(recordCnt);
+												} else {
+													queryResult.setRecordCount(minCount);
+												}
 											}
 										} // 第2页，7条不足一页，total>17,说明total过大不正确
 										else if (rowSize < pageSize && recordCnt > minCount && minCount >= 0) {
-											queryResult.setRecordCount(minCount);
+											// 存在@fast快速分页，inner join后记录会存在变少的场景
+											if (realSqlToyConfig.isHasFast()) {
+												queryResult.setRecordCount(recordCnt);
+											} else {
+												queryResult.setRecordCount(minCount);
+											}
 										} else {
 											queryResult.setRecordCount(recordCnt);
 										}
@@ -1171,12 +1181,12 @@ public class DialectFactory {
 			long minCount = (queryResult.getPageNo() - 1) * queryResult.getPageSize() + rowSize;
 			// 总记录数小于实际查询记录数量(rowSize <= queryResult.getPageSize() 防止单页数据关联扩大了记录量的场景)
 			if (queryResult.getRecordCount() < minCount && rowSize <= queryResult.getPageSize()) {
-				if (rowSize > 0) {
+				if (rowSize > 0 && !sqlToyConfig.isHasFast()) {
 					queryResult.setRecordCount(minCount);
 				}
 			} // 总记录数量大于实际记录数量
-			else if (rowSize < queryResult.getPageSize() && (queryResult.getRecordCount() > minCount)
-					&& minCount >= 0) {
+			else if (rowSize < queryResult.getPageSize() && (queryResult.getRecordCount() > minCount) && minCount >= 0
+					&& !sqlToyConfig.isHasFast()) {
 				queryResult.setRecordCount(minCount);
 			}
 			if (queryResult.getRecordCount() == 0 && overPageToFirst) {

@@ -1123,6 +1123,41 @@ public class StringUtil {
 		return result;
 	}
 
+	public static String[] splitByIndex(String str, String delimiter) {
+		return splitByIndex(str, delimiter, false);
+	}
+
+	public static String[] splitByIndex(String str, String delimiter, boolean doTrim) {
+		List<String> parts = new ArrayList<>();
+		if (str == null || str.isEmpty()) {
+			return new String[] {};
+		}
+		if (delimiter == null || delimiter.isEmpty()) {
+			return new String[] { str };
+		}
+		int delimiterLength = delimiter.length();
+		int startIndex = 0;
+		int foundIndex;
+		// 循环查找分隔符位置并截取
+		while ((foundIndex = str.indexOf(delimiter, startIndex)) != -1) {
+			// 截取从startIndex到分隔符起始位置的子串
+			if (doTrim) {
+				parts.add(str.substring(startIndex, foundIndex).trim());
+			} else {
+				parts.add(str.substring(startIndex, foundIndex));
+			}
+			// 更新起始位置为分隔符结束位置
+			startIndex = foundIndex + delimiterLength;
+		}
+		// 截取最后一段（分隔符之后的剩余部分）
+		if (doTrim) {
+			parts.add(str.substring(startIndex).trim());
+		} else {
+			parts.add(str.substring(startIndex));
+		}
+		return parts.toArray(new String[0]);
+	}
+
 	/**
 	 * @TODO 处理空白和null，给与默认值
 	 * @param value

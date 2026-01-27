@@ -75,15 +75,16 @@ public class TenantFilterInterceptor implements SqlInterceptor {
 		String where = " where ";
 		String sqlPart = where;
 		if (tenants.length == 1) {
-			sqlPart = sqlPart.concat(tenantColumn).concat("='").concat(tenants[0]).concat("' and ");
+			sqlPart = sqlPart.concat(tenantColumn).concat("='").concat(tenants[0])
+					.concat(whereIndex > 0 ? "' and " : "' ");
 		} else {
-			sqlPart = sqlPart.concat(tenantColumn).concat("in (")
-					.concat(SqlUtil.combineQueryInStr(tenants, null, null, true).concat(") and "));
+			sqlPart = sqlPart.concat(tenantColumn).concat("in (").concat(
+					SqlUtil.combineQueryInStr(tenants, null, null, true).concat(whereIndex > 0 ? ") and " : ") "));
 		}
-		
+
 		// 更精细的操作行为可以通过
 		/*
-		 * SqlExecuteStat.get().getResultType()  返回查询结果的类型(注意要判断一下null)，可用于其他延申应用场景
+		 * SqlExecuteStat.get().getResultType() 返回查询结果的类型(注意要判断一下null)，可用于其他延申应用场景
 		 * SqlExecuteStat.get().getOperateDetailType()
 		 * 枚举类型进行判断,主要是目前OperateType.singleTable区分度较低
 		 */
@@ -109,7 +110,26 @@ public class TenantFilterInterceptor implements SqlInterceptor {
 						SqlToyConstants.MERGE_ALIAS_ON.concat(sqlPart));
 				sqlToyResult.setSql(sql);
 			} else {
-				sql = sql.replaceFirst("(?i)\\swhere\\s", sqlPart);
+				// 可能是singleTable单表,没有where 条件
+				if (whereIndex < 0) {
+					//\\Wgroup,匹配到位置要往后移1位
+					int groupByIndex = StringUtil.matchIndex(sql, SqlUtil.GROUP_BY_PATTERN);
+					// \\Worder,匹配到位置要往后移1位
+					int orderByIndex = StringUtil.matchIndex(sql, SqlUtil.ORDER_BY_PATTERN);
+					if (groupByIndex < 0) {
+						if (orderByIndex < 0) {
+							sql = sql.concat(sqlPart);
+						} else {
+							sql = sql.substring(0, orderByIndex + 1).concat(sqlPart)
+									.concat(sql.substring(orderByIndex + 1));
+						}
+					} else {
+						sql = sql.substring(0, groupByIndex + 1).concat(sqlPart)
+								.concat(sql.substring(groupByIndex + 1));
+					}
+				} else {
+					sql = sql.replaceFirst("(?i)\\swhere\\s", sqlPart);
+				}
 				sqlToyResult.setSql(sql);
 			}
 		}
