@@ -149,7 +149,7 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	private List<String> cacheArgNames = new ArrayList<String>();
 
 	/**
-	 * 是否有分页
+	 * 是否有分页优化
 	 */
 	private boolean hasFast = false;
 
@@ -758,5 +758,4 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	public void setHasIncludeSql(boolean hasIncludeSql) {
 		this.hasIncludeSql = hasIncludeSql;
 	}
-
 }

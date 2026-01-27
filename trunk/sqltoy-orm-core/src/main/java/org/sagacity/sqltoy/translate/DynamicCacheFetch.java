@@ -65,7 +65,7 @@ public interface DynamicCacheFetch {
 	public Object[] getCache(String cacheName, String cacheType, String sid, String[] properties, String key);
 
 	/**
-	 * @TODO 获取多个key的数据(预留功能，建议要实现，未来框架优化会采取批量查询模式，减少io次数)
+	 * @TODO 获取多个key的数据(5.6.67版本实现，采取批量查询模式，减少io次数)
 	 * @param cacheName
 	 * @param cacheType  类似数据字典的分组(根据情况使用(非分组场景则为null))
 	 * @param sid        缓存定义中的sid便于给接口实现提供辅助标记(保留标记,一般为null可忽略)

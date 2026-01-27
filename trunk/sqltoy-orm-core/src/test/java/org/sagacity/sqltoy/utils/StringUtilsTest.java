@@ -280,4 +280,14 @@ public class StringUtilsTest {
 
 		System.err.println(sql);
 	}
+
+	@Test
+	public void testSplitByIndex() {
+		String tmpStr = "select * from ->table where-> (id,type) in-> (:ids,:type)";
+		String[] result = StringUtil.splitByIndex(tmpStr, "->", false);
+
+		for (String str : result) {
+			System.err.println("[" + str + "]");
+		}
+	}
 }

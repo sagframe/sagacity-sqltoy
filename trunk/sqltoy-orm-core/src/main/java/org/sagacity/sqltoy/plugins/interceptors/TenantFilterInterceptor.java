@@ -112,7 +112,7 @@ public class TenantFilterInterceptor implements SqlInterceptor {
 			} else {
 				// 可能是singleTable单表,没有where 条件
 				if (whereIndex < 0) {
-					//\\Wgroup,匹配到位置要往后移1位
+					// \\Wgroup,匹配到位置要往后移1位
 					int groupByIndex = StringUtil.matchIndex(sql, SqlUtil.GROUP_BY_PATTERN);
 					// \\Worder,匹配到位置要往后移1位
 					int orderByIndex = StringUtil.matchIndex(sql, SqlUtil.ORDER_BY_PATTERN);
