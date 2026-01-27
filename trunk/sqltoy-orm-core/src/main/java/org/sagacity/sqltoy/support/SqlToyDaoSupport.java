@@ -97,7 +97,6 @@ import org.sagacity.sqltoy.utils.QueryExecutorBuilder;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
-import org.sagacity.sqltoy.utils.TranslateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -1809,6 +1808,7 @@ public class SqlToyDaoSupport {
 		Object row;
 		Object key;
 		Object name;
+		Object[] keyRow;
 		// 动态查询缓存数据模式
 		if (cacheModel.isDynamicCache()) {
 			DynamicCacheFetch dynamicCacheFetch = sqlToyContext.getDynamicCacheFetch();
@@ -1816,34 +1816,58 @@ public class SqlToyDaoSupport {
 				throw new RuntimeException(
 						"缓存为dynamicCache即动态获取缓存数据，未定义DynamicCacheFetch的实现类，请正确配置:spring.sqltoy.dynamicCacheFetch=xxxx.xxx.DynamicCacheFetchImpl");
 			}
-			TranslateExtend extend = new TranslateExtend();
-			extend.dynamicCache = cacheModel.isDynamicCache();
-			extend.cacheSid = cacheModel.getSid();
-			extend.cacheProperties = cacheModel.getProperties();
-			extend.index = cacheIndex;
-			extend.cache = cacheName;
-			extend.cacheType = cacheType;
 			HashMap<String, Object[]> cache = sqlToyContext.getDynamicFecthCacheManager().getDynamicCache(cacheModel,
 					cacheType);
-			// 循环获取行数据
+			// 构建暂停
+			Set<String> notMatchedKeySet = new HashSet<>();
+			// 逐行翻译
+			String keyStr;
 			while (iter.hasNext()) {
 				row = iter.next();
 				if (row != null) {
 					// 反调获取需要翻译的key
 					key = translateHandler.getKey(row);
 					if (key != null) {
-						name = TranslateUtils.translateKey(extend, dynamicCacheFetch, cache, key);
-						translateHandler.setName(row, (name == null) ? "" : name.toString());
+						keyStr = key.toString();
+						keyRow = cache.get(keyStr);
+						if (null == keyRow) {
+							notMatchedKeySet.add(keyStr);
+						} else {
+							name = keyRow[cacheIndex];
+							translateHandler.setName(row, (name == null) ? "" : name.toString());
+						}
+					}
+				}
+			}
+			// 未匹配的key，组织批量查询
+			if (!notMatchedKeySet.isEmpty()) {
+				String[] notMatchedKeys = notMatchedKeySet.toArray(new String[0]);
+				Map<String, Object[]> cacheDatas = dynamicCacheFetch.getCache(cacheName, cacheType, cacheModel.getSid(),
+						cacheModel.getProperties(), notMatchedKeys);
+				if (cacheDatas != null && !cacheDatas.isEmpty()) {
+					// 回写缓存
+					cache.putAll(cacheDatas);
+					iter = dataSet.iterator();
+					// 循环获取行数据
+					while (iter.hasNext()) {
+						row = iter.next();
+						if (row != null) {
+							// 反调获取需要翻译的key
+							key = translateHandler.getKey(row);
+							if (key != null && cacheDatas.containsKey(key)) {
+								name = cacheDatas.get(key)[cacheIndex];
+								translateHandler.setName(row, (name == null) ? "" : name.toString());
+							}
+						}
 					}
 				}
 			}
 			return;
 		}
-		final HashMap<String, Object[]> cache = getTranslateCache(cacheName, cacheType);
+		HashMap<String, Object[]> cache = getTranslateCache(cacheName, cacheType);
 		if (cache == null || cache.isEmpty()) {
 			return;
 		}
-		Object[] keyRow;
 		// 循环获取行数据
 		while (iter.hasNext()) {
 			row = iter.next();
