@@ -247,13 +247,27 @@ public class SqlUtilTest {
 		System.err.println(SqlUtil.isSqlInjection(SqlInjectionLevel.STRICT_WORD, "sel-ect"));
 		System.err.println(SqlUtil.isSqlInjection(SqlInjectionLevel.STRICT_WORD, "t1.name"));
 	}
-	
+
 	@Test
 	public void testSqlInjectionSqlKeyWord() {
 		System.err.println(SqlUtil.isSqlInjection(SqlInjectionLevel.SQL_KEYWORD, "S0009()"));
-		
+		String sql = "select * from table group by id order by name desc";
+		String sqlPart = " where tenant_id=2 ";
+		int groupByIndex = StringUtil.matchIndex(sql, SqlUtil.GROUP_BY_PATTERN);
+		// \\Worder,匹配到位置要往后移1位
+		int orderByIndex = StringUtil.matchIndex(sql, SqlUtil.ORDER_BY_PATTERN);
+		if (groupByIndex < 0) {
+			if (orderByIndex < 0) {
+				sql = sql.concat(sqlPart);
+			} else {
+				sql = sql.substring(0, orderByIndex + 1).concat(sqlPart).concat(sql.substring(orderByIndex + 1));
+			}
+		} else {
+			sql = sql.substring(0, groupByIndex + 1).concat(sqlPart).concat(sql.substring(groupByIndex + 1));
+		}
+		System.err.println("[" + sql + "]");
 	}
-	
+
 	@Test
 	public void testSqlInjectionRELAXEDWord() {
 		System.err.println(SqlUtil.isSqlInjection(SqlInjectionLevel.RELAXED_WORD, "select"));
@@ -265,5 +279,23 @@ public class SqlUtilTest {
 		System.err.println(SqlUtil.isSqlInjection(SqlInjectionLevel.RELAXED_WORD, "s中文el-ect("));
 		System.err.println(SqlUtil.isSqlInjection(SqlInjectionLevel.RELAXED_WORD, "sum{"));
 		System.err.println(SqlUtil.isSqlInjection(SqlInjectionLevel.RELAXED_WORD, "t.name"));
+	}
+
+	public static void main(String[] args) {
+		String sql = "select * from table group by id order by name desc";
+		String sqlPart = " where tenant_id=2 ";
+		int groupByIndex = StringUtil.matchIndex(sql, SqlUtil.GROUP_BY_PATTERN);
+		// \\Worder,匹配到位置要往后移1位
+		int orderByIndex = StringUtil.matchIndex(sql, SqlUtil.ORDER_BY_PATTERN);
+		if (groupByIndex < 0) {
+			if (orderByIndex < 0) {
+				sql = sql.concat(sqlPart);
+			} else {
+				sql = sql.substring(0, orderByIndex + 1).concat(sqlPart).concat(sql.substring(orderByIndex + 1));
+			}
+		} else {
+			sql = sql.substring(0, groupByIndex + 1).concat(sqlPart).concat(sql.substring(groupByIndex + 1));
+		}
+		System.err.println("[" + sql + "]");
 	}
 }

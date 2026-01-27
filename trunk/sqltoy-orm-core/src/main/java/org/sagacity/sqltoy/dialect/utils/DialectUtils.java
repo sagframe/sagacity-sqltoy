@@ -2340,7 +2340,7 @@ public class DialectUtils {
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
 		List<Object[]> paramsValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getFieldsArray(), null,
 				handler);
-		// 批量回写update公共属性值
+		// 批量回写update公共属性值(update 2026-1-20 移到判主键为null前面，避免数据被移除回写无法对应)
 		BeanUtil.batchBackWriteUnifyFields(entities,
 				BeanUtil.getUnifyFieldIndex(sqlToyContext.getUnifyFieldsHandler(), entityMeta.getFieldsArray(), 2),
 				paramsValues);

@@ -2526,7 +2526,7 @@ public class BeanUtil {
 	 */
 	public static void batchBackWriteUnifyFields(List entitis, Map<String, Integer> fieldIndexMap,
 			List<Object[]> values) {
-		if (null == fieldIndexMap || fieldIndexMap.isEmpty() || null == values || values.size() == 0) {
+		if (null == fieldIndexMap || fieldIndexMap.isEmpty() || null == values || values.isEmpty()) {
 			return;
 		}
 		String[] fields = new String[fieldIndexMap.size()];
