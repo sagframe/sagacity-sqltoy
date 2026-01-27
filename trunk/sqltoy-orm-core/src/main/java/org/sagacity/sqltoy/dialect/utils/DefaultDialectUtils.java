@@ -55,6 +55,8 @@ import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.plugins.TypeHandler;
+import org.sagacity.sqltoy.translate.DynamicCacheFetch;
+import org.sagacity.sqltoy.translate.model.DynamicCacheHolder;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
@@ -420,6 +422,8 @@ public class DefaultDialectUtils {
 		// 可编辑结果集
 		PreparedStatement pst = conn.prepareStatement(queryParam.getSql(), ResultSet.TYPE_FORWARD_ONLY,
 				ResultSet.CONCUR_UPDATABLE);
+		DynamicCacheFetch dynamicCacheFetch = sqlToyContext.getDynamicCacheFetch();
+		DynamicCacheHolder dynamicCacheHolder = new DynamicCacheHolder();
 		List updateResult = (List) SqlUtil.preparedStatementProcess(queryParam.getParamsValue(), pst, null,
 				new PreparedStatementResultHandler() {
 					@Override
@@ -525,8 +529,8 @@ public class DefaultDialectUtils {
 								}
 								index++;
 								// 重新获得修改后的值
-								result.add(ResultUtils.processResultRow(dbType, typeHandler, null, finalRs, null, null,
-										rowCnt, null, null, false));
+								result.add(ResultUtils.processResultRow(dbType, typeHandler, dynamicCacheFetch,
+										dynamicCacheHolder, finalRs, null, null, rowCnt, null, null, false));
 							}
 							// 没有查询到记录，表示是需要首次插入
 							if (index == 0) {
