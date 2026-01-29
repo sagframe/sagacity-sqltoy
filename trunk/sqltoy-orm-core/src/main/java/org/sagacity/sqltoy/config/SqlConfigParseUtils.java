@@ -449,7 +449,7 @@ public class SqlConfigParseUtils {
 		// 添加尾部sql
 		lastSql.append(queryStr.substring(start));
 		sqlParam.setSql(lastSql.toString());
-		sqlParam.setParamsName(paramsName.toArray(new String[paramsName.size()]));
+		sqlParam.setParamsName(paramsName.toArray(new String[0]));
 		return sqlParam;
 	}
 
@@ -486,7 +486,7 @@ public class SqlConfigParseUtils {
 		if (paramsNameList.isEmpty()) {
 			return null;
 		}
-		return paramsNameList.toArray(new String[paramsNameList.size()]);
+		return paramsNameList.toArray(new String[0]);
 	}
 
 	/**
@@ -519,7 +519,7 @@ public class SqlConfigParseUtils {
 		if (paramsNameList.isEmpty()) {
 			return null;
 		}
-		return paramsNameList.toArray(new String[paramsNameList.size()]);
+		return paramsNameList.toArray(new String[0]);
 	}
 
 	/**

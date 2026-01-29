@@ -267,8 +267,9 @@ public class IdUtil {
 		String realKey = MacroUtils.replaceMacros(key, keyValueMap);
 		// 没有宏
 		if (realKey.equals(key)) {
-			// 长度够放下6位日期 或没有设置长度且流水长度小于6,则默认增加一个6位日期作为前置
-			if ((length <= 0 && sequenceSize < 6) || (length - realKey.length() > 6)) {
+			// 1、length<=0(默认为-1)且sequenceSize<6
+			// 2、length-keySize-6(yyMMdd)>2 确保有三位流水
+			if ((length <= 0 && sequenceSize < 6) || (length - realKey.length() > 8)) {
 				LocalDate realBizDate = (bizDate == null ? LocalDate.now() : bizDate);
 				realKey = realKey.concat(DateUtil.formatDate(realBizDate, "yyMMdd"));
 			}

@@ -1134,13 +1134,13 @@ public class StringUtil {
 	}
 
 	public static String[] splitByIndex(String str, String delimiter, boolean doTrim) {
-		List<String> parts = new ArrayList<>();
 		if (str == null || str.isEmpty()) {
 			return new String[] {};
 		}
 		if (delimiter == null || delimiter.isEmpty()) {
 			return new String[] { str };
 		}
+		List<String> parts = new ArrayList<>();
 		int delimiterLength = delimiter.length();
 		int startIndex = 0;
 		int foundIndex;

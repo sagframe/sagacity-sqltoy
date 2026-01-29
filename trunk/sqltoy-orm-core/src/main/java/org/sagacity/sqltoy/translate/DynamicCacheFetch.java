@@ -70,8 +70,8 @@ public interface DynamicCacheFetch {
 	 * @param cacheType  类似数据字典的分组(根据情况使用(非分组场景则为null))
 	 * @param sid        缓存定义中的sid便于给接口实现提供辅助标记(保留标记,一般为null可忽略)
 	 * @param properties 缓存定义中的属性信息,如取哪几列值(保留属性，一般为null可忽略)
-	 * @param keys
-	 * @return Map<key,Object[]> 返回Map避免key本身存在重复，解决key和数据的映射问题
+	 * @param keys 已经去除重复
+	 * @return Map<key,Object[]> 结构:<id,[id,name,email]>
 	 */
 	public Map<String, Object[]> getCache(String cacheName, String cacheType, String sid, String[] properties,
 			String[] keys);

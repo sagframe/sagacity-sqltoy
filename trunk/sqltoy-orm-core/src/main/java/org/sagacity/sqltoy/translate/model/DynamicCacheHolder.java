@@ -14,7 +14,7 @@ import java.util.Set;
  *              <li>3、再取完完整结果后，一次性调用获取缓存，然后对集合进行批量翻译，并将新获取的数据放入缓存</li>
  *              </p>
  * @author zhongxuchen
- * @version v1.0,Date:2018年3月11日
+ * @version v1.0,Date:2026年1月23日
  */
 public class DynamicCacheHolder {
 	/**

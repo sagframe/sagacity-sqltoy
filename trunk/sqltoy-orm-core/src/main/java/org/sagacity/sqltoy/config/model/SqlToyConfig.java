@@ -637,7 +637,7 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 				params.add(item);
 			}
 		}
-		return params.toArray(new String[params.size()]);
+		return params.toArray(new String[0]);
 	}
 
 	/**

@@ -359,9 +359,7 @@ public class EntityMeta implements Serializable {
 				fields.add(fieldsArray[i]);
 			}
 		}
-		String[] result = new String[fields.size()];
-		fields.toArray(result);
-		return result;
+		return fields.toArray(new String[0]);
 	}
 
 	/**
