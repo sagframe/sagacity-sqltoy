@@ -34,6 +34,10 @@ public class TranslateUtils {
 	 */
 	protected final static Logger logger = LoggerFactory.getLogger(TranslateUtils.class);
 
+	// 跟link-sign不能存在冲突，定义较为特殊的符号
+	private final static String UN_MATCHED_SIGN = "^";
+	private final static int UN_MATCHED_SIGN_LENGTH = UN_MATCHED_SIGN.length();
+
 	/**
 	 * @date 2018-5-26 优化缓存翻译，提供keyCode1,keyCode2,keyCode3 形式的多代码翻译
 	 * @todo 统一对key进行缓存翻译
@@ -66,7 +70,11 @@ public class TranslateUtils {
 						// 未匹配的key加入到集合，后续整体查询
 						dynamicCacheHolder.addNotMatchedKey(realCacheNameAndType, fieldStr);
 						// 值赋予原始key，后续再批量翻译
-						fieldValue = fieldStr;
+						if (translateExtend.uncached != null) {
+							fieldValue = UN_MATCHED_SIGN + fieldStr;
+						} else {
+							fieldValue = fieldStr;
+						}
 					} else {
 						String realCacheType = dynamicCacheHolder.getRealCacheType(translateExtend.cacheNameAndType);
 						// 动态获取缓存数据并放入缓存
@@ -126,7 +134,11 @@ public class TranslateUtils {
 					if (isPauseTranslate) {
 						// 未匹配的key加入到集合，后续整体查询
 						dynamicCacheHolder.addNotMatchedKey(realCacheNameAndType, key);
-						result.append(key);
+						if (translateExtend.uncached != null) {
+							result.append(UN_MATCHED_SIGN).append(key);
+						} else {
+							result.append(key);
+						}
 					} else {
 						cacheValues = dynamicCacheFetch.getCache(translateExtend.cache, realCacheType,
 								translateExtend.cacheSid, translateExtend.cacheProperties, key);
@@ -354,6 +366,7 @@ public class TranslateUtils {
 	private static Object translateKey(Map<String, Object[]> notMatchedKeyCacheData, TranslateExtend translateExtend,
 			List rowList, Object dto, boolean isBean, int compareValueIndex, Object translateValue) {
 		boolean doTranslate = true;
+		boolean hasUnmatchTemplate = translateExtend.uncached != null;
 		Object compareValue = null;
 		if (translateExtend.hasLogic) {
 			compareValue = isBean ? BeanUtil.getProperty(dto, translateExtend.compareColumn)
@@ -363,12 +376,19 @@ public class TranslateUtils {
 		if (doTranslate) {
 			Object[] cacheValues;
 			String keyStr = translateValue.toString();
+			boolean hasUnMatchSign = false;
 			// 单值翻译
 			if (translateExtend.splitRegex == null) {
+				if (hasUnmatchTemplate && keyStr.startsWith(UN_MATCHED_SIGN)) {
+					keyStr = keyStr.substring(UN_MATCHED_SIGN_LENGTH);
+					hasUnMatchSign = true;
+				}
 				// 根据key获取缓存值
 				cacheValues = notMatchedKeyCacheData.get(keyStr);
 				if (cacheValues != null) {
 					return cacheValues[translateExtend.index];
+				} else if (hasUnMatchSign) {
+					return translateExtend.uncached.replace("${value}", keyStr);
 				}
 				return keyStr;
 			}
@@ -378,13 +398,22 @@ public class TranslateUtils {
 			StringBuilder result = new StringBuilder();
 			int index = 0;
 			for (String key : keys) {
+				hasUnMatchSign = false;
 				if (index > 0) {
 					result.append(linkSign);
+				}
+				if (hasUnmatchTemplate && key.startsWith(UN_MATCHED_SIGN)) {
+					key = key.substring(UN_MATCHED_SIGN_LENGTH);
+					hasUnMatchSign = true;
 				}
 				cacheValues = notMatchedKeyCacheData.get(key);
 				// 没有匹配到(之前已经匹配过，已经是翻译后的结果)
 				if (cacheValues == null) {
-					result.append(key);
+					if (hasUnMatchSign) {
+						result.append(translateExtend.uncached.replace("${value}", key));
+					} else {
+						result.append(key);
+					}
 				} else {
 					result.append(cacheValues[translateExtend.index]);
 				}

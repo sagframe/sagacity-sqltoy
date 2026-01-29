@@ -53,14 +53,6 @@ public class Translate implements Serializable {
 	}
 
 	/**
-	 * @param cache the cache to set
-	 */
-	public Translate setCache(String cache) {
-		extend.cache = cache;
-		return this;
-	}
-
-	/**
 	 * @param index the index to set
 	 */
 	public Translate setIndex(int index) {
