@@ -1124,6 +1124,47 @@ public class StringUtil {
 	}
 
 	/**
+	 * @TODO 用字符串index分割字符串，主要用于动态缓存翻译key,key2,key3形式经过翻译后用特定字符拼接:name1->key2->name3,再用link符号切割开对key2进行翻译形成name1->name2->name3形式
+	 * @param str
+	 * @param delimiter
+	 * @return
+	 */
+	public static String[] splitByIndex(String str, String delimiter) {
+		return splitByIndex(str, delimiter, false);
+	}
+
+	public static String[] splitByIndex(String str, String delimiter, boolean doTrim) {
+		if (str == null || str.isEmpty()) {
+			return new String[] {};
+		}
+		if (delimiter == null || delimiter.isEmpty()) {
+			return new String[] { str };
+		}
+		List<String> parts = new ArrayList<>();
+		int delimiterLength = delimiter.length();
+		int startIndex = 0;
+		int foundIndex;
+		// 循环查找分隔符位置并截取
+		while ((foundIndex = str.indexOf(delimiter, startIndex)) != -1) {
+			// 截取从startIndex到分隔符起始位置的子串
+			if (doTrim) {
+				parts.add(str.substring(startIndex, foundIndex).trim());
+			} else {
+				parts.add(str.substring(startIndex, foundIndex));
+			}
+			// 更新起始位置为分隔符结束位置
+			startIndex = foundIndex + delimiterLength;
+		}
+		// 截取最后一段（分隔符之后的剩余部分）
+		if (doTrim) {
+			parts.add(str.substring(startIndex).trim());
+		} else {
+			parts.add(str.substring(startIndex));
+		}
+		return parts.toArray(new String[0]);
+	}
+
+	/**
 	 * @TODO 处理空白和null，给与默认值
 	 * @param value
 	 * @param defaultValue

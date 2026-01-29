@@ -55,6 +55,8 @@ public class DateUtilTest {
 
 	@Test
 	public void testOther() throws SQLException {
+		Long addMin=9L;
+		System.err.println(DateUtil.addMinute(DateUtil.getDateTime(),addMin));
 		System.err.println(DateUtil.getDayOfMonth("2023-12-9"));
 		System.err.println(DateUtil.getMonth("2023-12-9"));
 		System.err.println(DateUtil.getYear("2023-12-9"));
@@ -302,5 +304,10 @@ public class DateUtilTest {
 		//System.err.println(DateUtil.parseZonedDateTime(dateVar));
 		System.err.println(DateUtil.parseZonedDateTime("21:34:22.234345+8:00"));
 
+	}
+	
+	@Test
+	public void testGetWeekOfYear()  {
+		System.err.println(DateUtil.getWeekOfYear("2026-02-23"));
 	}
 }

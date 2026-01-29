@@ -27,6 +27,7 @@ public class Translate implements Serializable {
 
 	public Translate(String cacheName) {
 		extend.cache = cacheName;
+		extend.cacheNameAndType = cacheName;
 	}
 
 	/**
@@ -43,14 +44,11 @@ public class Translate implements Serializable {
 	 */
 	public Translate setCacheType(String cacheType) {
 		extend.cacheType = cacheType;
-		return this;
-	}
-
-	/**
-	 * @param cache the cache to set
-	 */
-	public Translate setCache(String cache) {
-		extend.cache = cache;
+		if (cacheType != null) {
+			extend.cacheNameAndType = extend.cache.concat("_").concat(cacheType);
+		} else {
+			extend.cacheNameAndType = extend.cache;
+		}
 		return this;
 	}
 

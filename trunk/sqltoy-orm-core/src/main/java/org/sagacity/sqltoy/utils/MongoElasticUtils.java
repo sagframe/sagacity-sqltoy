@@ -17,6 +17,8 @@ import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.translate.DynamicCacheFetch;
 import org.sagacity.sqltoy.translate.FieldTranslateCacheHolder;
+import org.sagacity.sqltoy.translate.model.BatchDynamicCache;
+import org.sagacity.sqltoy.translate.model.DynamicCacheHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -535,18 +537,19 @@ public class MongoElasticUtils {
 		if (!sqlToyConfig.getTranslateMap().isEmpty()) {
 			HashMap<String, FieldTranslateCacheHolder> translateCache = sqlToyContext.getTranslateManager()
 					.getTranslates(translateMap);
-			translate(sqlToyContext.getDynamicCacheFetch(), sqlToyConfig.getTranslateMap(), translateCache, resultSet,
-					fields);
+			translate(sqlToyContext, sqlToyConfig.getTranslateMap(), translateCache, resultSet, fields);
 		}
 	}
 
 	/**
 	 * @todo 对结果集合进行缓存翻译
+	 * @param sqlToyContext
+	 * @param translateMap
 	 * @param translateCache
 	 * @param dataSet
 	 * @param fields
 	 */
-	private static void translate(DynamicCacheFetch dynamicCacheFetch, HashMap<String, FieldTranslate> translateMap,
+	private static void translate(SqlToyContext sqlToyContext, HashMap<String, FieldTranslate> translateMap,
 			HashMap<String, FieldTranslateCacheHolder> translateCache, List<List> dataSet, String[] fields) {
 		if (translateCache == null || translateCache.isEmpty()) {
 			return;
@@ -588,6 +591,11 @@ public class MongoElasticUtils {
 		int size = dataSet.size();
 		List rowList;
 		Object cellValue;
+		// 提取可批量获取的动态缓存翻译配置
+		BatchDynamicCache batchDynamicCache = TranslateUtils.getBatchTranslates(sqlToyContext, translateCache);
+		DynamicCacheHolder dynamicCacheHolder = new DynamicCacheHolder(batchDynamicCache.getCacheAndTypeForRealMap(),
+				batchDynamicCache.getCacheAndTypeForRealType(), batchDynamicCache.getDynamicCaches());
+		DynamicCacheFetch dynamicCacheFetch = sqlToyContext.getDynamicCacheFetch();
 		FieldTranslateCacheHolder fieldTranslateHandler;
 		for (int i = 0; i < fieldCnt; i++) {
 			fieldTranslateHandler = translateCache.get(fields[i].toLowerCase());
@@ -597,12 +605,15 @@ public class MongoElasticUtils {
 					// 取realIndex实际对应的值列
 					cellValue = rowList.get(realIndex[i]);
 					if (cellValue != null) {
-						rowList.set(i, fieldTranslateHandler.getRowCacheValue(dynamicCacheFetch, rowList, colIndexMap,
-								cellValue.toString()));
+						rowList.set(i, fieldTranslateHandler.getRowCacheValue(dynamicCacheFetch, dynamicCacheHolder,
+								rowList, colIndexMap, cellValue.toString()));
 					}
 				}
 			}
 		}
+		// 对集合进行批量获取未匹配的缓存数据进行翻译
+		TranslateUtils.translateArrayListByDynamicCache(sqlToyContext.getTranslateManager(), batchDynamicCache,
+				dynamicCacheHolder, dynamicCacheFetch, colIndexMap, dataSet, true);
 	}
 
 	/**

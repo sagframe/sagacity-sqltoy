@@ -86,7 +86,7 @@ public class SqlUtil {
 	 * sql中的单行注释
 	 */
 	public final static Pattern maskPattern = Pattern.compile("\\/\\*[^+!]");
-
+	public static final Pattern GROUP_BY_PATTERN = Pattern.compile("(?i)\\Wgroup\\s+by\\W");
 	public static final Pattern ORDER_BY_PATTERN = Pattern.compile("(?i)\\Worder\\s+by\\W");
 
 	public static final Pattern UPCASE_ORDER_PATTERN = Pattern.compile("\\WORder\\s+");

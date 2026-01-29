@@ -2706,7 +2706,7 @@ public class DialectUtils {
 					}
 				}
 				paramValues = paramValueList.toArray();
-				realParamNamed = paramNames.toArray(new String[paramNames.size()]);
+				realParamNamed = paramNames.toArray(new String[0]);
 			} else {
 				realParamNamed = paramsNamed;
 				paramValues = BeanUtil.reflectBeanToAry(entity, paramsNamed);
