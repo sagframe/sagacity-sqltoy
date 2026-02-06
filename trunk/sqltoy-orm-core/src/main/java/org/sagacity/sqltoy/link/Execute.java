@@ -34,9 +34,9 @@ public class Execute extends BaseLink {
 	private String sql;
 
 	/**
-	 * 作为参数传递的实体对象(属性跟sql中的参数名称对应)
+	 * 作为参数传递的参数对象(属性跟sql中的参数名称对应)
 	 */
-	private Serializable entity;
+	private Serializable params;
 
 	/**
 	 * 是否自动提交
@@ -67,8 +67,8 @@ public class Execute extends BaseLink {
 		return this;
 	}
 
-	public Execute entity(Serializable entity) {
-		this.entity = entity;
+	public Execute entity(Serializable entityVO) {
+		this.params = entityVO;
 		return this;
 	}
 
@@ -80,9 +80,9 @@ public class Execute extends BaseLink {
 	public Execute values(Object... paramsValue) {
 		if (paramsValue != null && paramsValue.length == 1 && paramsValue[0] != null && paramsValue[0] instanceof Map) {
 			if (paramsValue[0] instanceof IgnoreKeyCaseMap) {
-				this.entity = (IgnoreKeyCaseMap) paramsValue[0];
+				this.params = (IgnoreKeyCaseMap) paramsValue[0];
 			} else {
-				this.entity = new IgnoreKeyCaseMap((Map) paramsValue[0]);
+				this.params = new IgnoreKeyCaseMap((Map) paramsValue[0]);
 			}
 		} else {
 			this.paramsValue = paramsValue;
@@ -127,17 +127,17 @@ public class Execute extends BaseLink {
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecute, SqlType.insert, super.getDialect());
 		Object returnPkValue = dialectFactory.insertReturnPrimaryKey(sqlToyContext, sqlToyConfig, queryExecute, null,
 				primaryField, autoCommit, getDataSource(sqlToyConfig));
-		if (returnPkValue != null && entity != null && !(entity instanceof Map)
-				&& !BeanUtil.isBaseDataType(entity.getClass())) {
-			BeanUtil.setProperty(entity, StringUtil.toHumpStr(primaryField, false), returnPkValue);
+		if (returnPkValue != null && params != null && !(params instanceof Map)
+				&& !BeanUtil.isBaseDataType(params.getClass())) {
+			BeanUtil.setProperty(params, StringUtil.toHumpStr(primaryField, false), returnPkValue);
 		}
 		return returnPkValue;
 	}
 
 	private QueryExecutor build() {
 		QueryExecutor queryExecutor = null;
-		if (entity != null) {
-			queryExecutor = new QueryExecutor(sql, entity);
+		if (params != null) {
+			queryExecutor = new QueryExecutor(sql, params);
 		} else {
 			queryExecutor = new QueryExecutor(sql).names(paramsNamed).values(paramsValue);
 		}

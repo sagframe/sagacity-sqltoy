@@ -4,6 +4,7 @@
 package org.sagacity.sqltoy.config.model;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -177,6 +178,11 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	 * sql中是否包含@include(sqlId) sql片段嵌入
 	 */
 	private boolean hasIncludeSql = false;
+	
+	/**
+	 * xml最后修改时间
+	 */
+	private LocalDateTime lastUpdateTime;
 
 	/**
 	 * @return the hasUnion
@@ -757,5 +763,13 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 
 	public void setHasIncludeSql(boolean hasIncludeSql) {
 		this.hasIncludeSql = hasIncludeSql;
+	}
+
+	public LocalDateTime getLastUpdateTime() {
+		return lastUpdateTime;
+	}
+
+	public void setLastUpdateTime(LocalDateTime lastUpdateTime) {
+		this.lastUpdateTime = lastUpdateTime;
 	}
 }

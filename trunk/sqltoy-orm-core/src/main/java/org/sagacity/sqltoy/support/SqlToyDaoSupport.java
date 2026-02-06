@@ -620,13 +620,13 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @todo 解析sql中:named 属性到entity对象获取对应的属性值作为查询条件,并将查询结果以entity的class类型返回
+	 * @todo 解析sql中:named 属性到params对象获取对应的属性值作为查询条件,并将查询结果以params的class类型返回
 	 * @param sqlOrSqlId
-	 * @param entity
+	 * @param params 查询参数对象（支持任意实现了Serializable的Bean，如VO、DTO、QueryParam等，对象的属性名将与SQL中的命名参数进行匹配）
 	 * @return
 	 */
-	protected <T extends Serializable> T loadBySql(final String sqlOrSqlId, final T entity) {
-		return (T) loadByQuery(new QueryExecutor(sqlOrSqlId, entity));
+	protected <T extends Serializable> T loadBySql(final String sqlOrSqlId, final T params) {
+		return (T) loadByQuery(new QueryExecutor(sqlOrSqlId, params));
 	}
 
 	protected <T extends Serializable> T loadEntity(Class<T> entityClass, EntityQuery entityQuery) {
@@ -678,21 +678,21 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @todo 解析sql中的参数名称，以此名称到entity中提取对应的值作为查询条件值执行sql
+	 * @todo 解析sql中的参数名称，以此名称到params中提取对应的值作为查询条件值执行sql
 	 * @param sqlOrSqlId
-	 * @param entity
+	 * @param params 查询参数对象（支持任意实现了Serializable的Bean，如VO、DTO、QueryParam等，对象的属性名将与SQL中的命名参数进行匹配）
 	 * @return
 	 */
-	protected Long executeSql(final String sqlOrSqlId, final Serializable entity) {
+	protected Long executeSql(final String sqlOrSqlId, final Serializable params) {
 		// update 2025-4-29 兼容executeSql(sql,Object...params) 只有一个参数时的场景
-		if (entity == null || BeanUtil.isBaseDataType(entity.getClass())) {
-			return executeSql(sqlOrSqlId, null, new Object[] { entity }, null, null);
-		} else if (entity instanceof Collection) {
-			return executeSql(sqlOrSqlId, null, ((Collection) entity).toArray(), null, null);
+		if (params == null || BeanUtil.isBaseDataType(params.getClass())) {
+			return executeSql(sqlOrSqlId, null, new Object[] { params }, null, null);
+		} else if (params instanceof Collection) {
+			return executeSql(sqlOrSqlId, null, ((Collection) params).toArray(), null, null);
 		}
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sqlOrSqlId, SqlType.update, getDialect(dataSource),
-				entity);
-		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, new QueryExecutor(sqlOrSqlId, entity), null, null,
+				params);
+		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, new QueryExecutor(sqlOrSqlId, params), null, null,
 				getDataSource(null, sqlToyConfig));
 	}
 
@@ -781,13 +781,13 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @todo 以entity对象的属性给sql中的:named 传参数，进行查询，并返回entityClass类型的集合
+	 * @todo 以params对象的属性给sql中的:named 传参数，进行查询，并返回params的class类型的集合
 	 * @param sqlOrSqlId
-	 * @param entity
+	 * @param params 查询参数对象（支持任意实现了Serializable的Bean，如VO、DTO、QueryParam等，对象的属性名将与SQL中的命名参数进行匹配）
 	 * @return
 	 */
-	protected <T extends Serializable> List<T> findBySql(final String sqlOrSqlId, final T entity) {
-		return (List<T>) findByQuery(new QueryExecutor(sqlOrSqlId, entity)).getRows();
+	protected <T extends Serializable> List<T> findBySql(final String sqlOrSqlId, final T params) {
+		return (List<T>) findByQuery(new QueryExecutor(sqlOrSqlId, params)).getRows();
 	}
 
 	protected <T> List<T> findBySql(final String sqlOrSqlId, final Map<String, Object> paramsMap,
@@ -898,8 +898,8 @@ public class SqlToyDaoSupport {
 		return (Page<T>) findPageByQuery(page, query).getPageResult();
 	}
 
-	protected <T extends Serializable> Page<T> findPageBySql(final Page page, final String sqlOrSqlId, final T entity) {
-		return (Page<T>) findPageByQuery(page, new QueryExecutor(sqlOrSqlId, entity)).getPageResult();
+	protected <T extends Serializable> Page<T> findPageBySql(final Page page, final String sqlOrSqlId, final T params) {
+		return (Page<T>) findPageByQuery(page, new QueryExecutor(sqlOrSqlId, params)).getPageResult();
 	}
 
 	protected <T> Page<T> findPageBySql(final Page page, final String sqlOrSqlId, final Map<String, Object> paramsMap,
@@ -933,9 +933,9 @@ public class SqlToyDaoSupport {
 				topSize).getRows();
 	}
 
-	protected <T extends Serializable> List<T> findTopBySql(final String sqlOrSqlId, final T entity,
+	protected <T extends Serializable> List<T> findTopBySql(final String sqlOrSqlId, final T params,
 			final double topSize) {
-		return (List<T>) findTopByQuery(new QueryExecutor(sqlOrSqlId, entity), topSize).getRows();
+		return (List<T>) findTopByQuery(new QueryExecutor(sqlOrSqlId, params), topSize).getRows();
 	}
 
 	/**
@@ -1977,8 +1977,7 @@ public class SqlToyDaoSupport {
 				}
 			}
 			if (selectFields.size() > 0) {
-				selectFieldAry = new String[selectFields.size()];
-				selectFields.toArray(selectFieldAry);
+				selectFieldAry = selectFields.toArray(new String[0]);
 			}
 		} else {
 			selectFieldAry = innerModel.fields;
