@@ -480,9 +480,9 @@ public class MapperUtils {
 		}
 		// 模型赋值
 		result.fromClassName = fromClass.getName();
-		result.fromProps = (String[]) fromClassProps.toArray(new String[fromClassProps.size()]);
+		result.fromProps = fromClassProps.toArray(new String[0]);
 		result.targetClassName = targetClass.getName();
-		result.targetProps = (String[]) targetProps.toArray(new String[targetProps.size()]);
+		result.targetProps = targetProps.toArray(new String[0]);
 		// 没有匹配的属性
 		if (fromClassProps.isEmpty()) {
 			return result;

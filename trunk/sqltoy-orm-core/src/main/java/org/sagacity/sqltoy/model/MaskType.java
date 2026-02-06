@@ -8,7 +8,7 @@ package org.sagacity.sqltoy.model;
  * @modify 2020-10-21,修改说明
  */
 public enum MaskType {
-	// 电话
+	// 电话,TEL("tel"),或TEL("tel","电话号码"),
 	TEL("tel"),
 	// 姓名
 	NAME("name"),

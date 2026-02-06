@@ -259,13 +259,13 @@ public class DefaultLazyDaoImpl extends SqlToyDaoSupport implements SqlToyLazyDa
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#getRandomResultBySql(java.lang.
 	 * String, java.io.Serializable, double)
 	 */
 	@Override
-	public <T extends Serializable> List<T> getRandomResult(String sqlOrSqlId, T entity, double randomCount) {
-		return (List<T>) super.getRandomResult(new QueryExecutor(sqlOrSqlId, entity), randomCount).getRows();
+	public <T extends Serializable> List<T> getRandomResult(String sqlOrSqlId, T params, double randomCount) {
+		return (List<T>) super.getRandomResult(new QueryExecutor(sqlOrSqlId, params), randomCount).getRows();
 	}
 
 	@Override

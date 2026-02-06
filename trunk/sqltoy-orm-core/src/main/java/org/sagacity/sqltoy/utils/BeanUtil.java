@@ -107,8 +107,12 @@ public class BeanUtil {
 		if (enumValue == null) {
 			return null;
 		}
-		Object result = null;
 		Class enumClass = enumValue.getClass();
+		// 无自定义属性
+		if (EnumUtil.isEnumWithoutCustomField(enumClass)) {
+			return ((Enum) enumValue).name();
+		}
+		Object result = null;
 		Method getKeyMethod;
 		// Map缓存，不会每次都循环
 		if (enumGetKeyExists.containsKey(enumClass)) {
@@ -148,6 +152,7 @@ public class BeanUtil {
 		if (key == null) {
 			return null;
 		}
+		String keyStr = key.toString();
 		Method getKeyMethod = null;
 		if (enumGetKeyExists.containsKey(enumClass)) {
 			getKeyMethod = enumGetKeyMethods.get(enumClass);
@@ -158,18 +163,27 @@ public class BeanUtil {
 			}
 			enumGetKeyExists.put(enumClass, 1);
 		}
-		if (getKeyMethod == null) {
-			return null;
-		}
 		Object[] enums = enumClass.getEnumConstants();
-		try {
-			for (Object enumVal : enums) {
-				if (key.equals(getKeyMethod.invoke(enumVal))) {
-					return enumVal;
+		if (getKeyMethod == null) {
+			Enum<?> enumVal;
+			for (Object enumConstant : enums) {
+				if (enumConstant instanceof Enum<?>) {
+					enumVal = (Enum<?>) enumConstant;
+					if (keyStr.equalsIgnoreCase(enumVal.name())) {
+						return enumVal;
+					}
 				}
 			}
-		} catch (Exception e) {
+		} else {
+			try {
+				for (Object enumVal : enums) {
+					if (keyStr.equalsIgnoreCase(getKeyMethod.invoke(enumVal).toString())) {
+						return enumVal;
+					}
+				}
+			} catch (Exception e) {
 
+			}
 		}
 		return null;
 	}
@@ -1943,9 +1957,7 @@ public class BeanUtil {
 				}
 			}
 		}
-		String[] result = new String[methodAry.size()];
-		methodAry.toArray(result);
-		return result;
+		return methodAry.toArray(new String[0]);
 	}
 
 	/**
@@ -2367,7 +2379,7 @@ public class BeanUtil {
 			// 支持多级继承关系
 			classType = classType.getSuperclass();
 		}
-		return cascadeFields.toArray(new Field[cascadeFields.size()]);
+		return cascadeFields.toArray(new Field[0]);
 	}
 
 	/**

@@ -702,10 +702,10 @@ public interface SqlToyLazyDao {
 	/**
 	 * @todo 执行sql,并返回被修改的记录数量
 	 * @param sqlOrSqlId
-	 * @param entity
+	 * @param params 查询参数对象（支持任意实现了Serializable的Bean，如VO、DTO、QueryParam等，对象的属性名将与SQL中的命名参数进行匹配）
 	 * @return Long 数据库发生变更的记录数
 	 */
-	public Long executeSql(final String sqlOrSqlId, final Serializable entity);
+	public Long executeSql(final String sqlOrSqlId, final Serializable params);
 
 	/**
 	 * @TODO 通过数组传参执行sql,并返回更新记录量

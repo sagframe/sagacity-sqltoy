@@ -549,11 +549,11 @@ public interface LightDao {
 	/**
 	 * @todo 通过对象实体传参数,框架结合sql中的参数名称来映射对象属性取值
 	 * @param sqlOrSqlId
-	 * @param entity
+	 * @param params 查询参数对象（支持任意实现了Serializable的Bean，如VO、DTO、QueryParam等，对象的属性名将与SQL中的命名参数进行匹配）
 	 * @param resultType
 	 * @return
 	 */
-	public <T> T findOne(final String sqlOrSqlId, final Serializable entity, final Class<T> resultType);
+	public <T> T findOne(final String sqlOrSqlId, final Serializable params, final Class<T> resultType);
 
 	/**
 	 * @TODO 根据QueryExecutor来链式操作灵活定义查询sql、条件、数据源等
@@ -579,8 +579,10 @@ public interface LightDao {
 
 	/**
 	 * @todo 通过Query构造查询条件进行数据查询
-	 * @param query 范例:new QueryExecutor(sql).names(xxx).values(xxx).filters()
+	 * @param query 范例1:new QueryExecutor(sql).names(xxx).values(xxx).filters()
 	 *              链式设置查询
+	 *              范例2:可以将完整的sql xml配置动态注册并查询new QueryExecutor(new XMLBinding(xml).id(id).lastUpdateTime(lastUpdateTime))
+	 *              
 	 * @return
 	 */
 	public QueryResult findByQuery(final QueryExecutor query);
@@ -589,11 +591,11 @@ public interface LightDao {
 	 * @todo 通过对象传参数,简化paramName[],paramValue[] 模式传参
 	 * @param <T>
 	 * @param sqlOrSqlId 可以是具体sql也可以是对应xml中的sqlId
-	 * @param entity     通过对象传参数
+	 * @param params 查询参数对象（支持任意实现了Serializable的Bean，如VO、DTO、QueryParam等，对象的属性名将与SQL中的命名参数进行匹配）
 	 * @param resultType
 	 * @return
 	 */
-	public <T> List<T> find(final String sqlOrSqlId, final Serializable entity, final Class<T> resultType);
+	public <T> List<T> find(final String sqlOrSqlId, final Serializable params, final Class<T> resultType);
 
 	/**
 	 * @TODO 提供基于Map传参查询
@@ -636,11 +638,11 @@ public interface LightDao {
 	 * @param <T>
 	 * @param page
 	 * @param sqlOrSqlId
-	 * @param entity
+	 * @param params 查询参数对象（支持任意实现了Serializable的Bean，如VO、DTO、QueryParam等，对象的属性名将与SQL中的命名参数进行匹配）
 	 * @param resultType
 	 * @return
 	 */
-	public <T> Page<T> findPage(final Page page, final String sqlOrSqlId, final Serializable entity,
+	public <T> Page<T> findPage(final Page page, final String sqlOrSqlId, final Serializable params,
 			final Class<T> resultType);
 
 	/**
@@ -659,12 +661,12 @@ public interface LightDao {
 	 * @todo 基于对象传参数模式(内部会根据sql中的参数提取对象对应属性的值),并返回对象对应类型的List
 	 * @param <T>
 	 * @param sqlOrSqlId
-	 * @param entity
+	 * @param params 查询参数对象（支持任意实现了Serializable的Bean，如VO、DTO、QueryParam等，对象的属性名将与SQL中的命名参数进行匹配）
 	 * @param resultType
 	 * @param topSize    (大于1则取固定数量的记录，小于1，则表示按比例提取)
 	 * @return
 	 */
-	public <T> List<T> findTop(final String sqlOrSqlId, final Serializable entity, final Class<T> resultType,
+	public <T> List<T> findTop(final String sqlOrSqlId, final Serializable params, final Class<T> resultType,
 			final double topSize);
 
 	/*
@@ -680,12 +682,12 @@ public interface LightDao {
 	 * @TODO 通过对象传参模式取随机记录
 	 * @param <T>
 	 * @param sqlOrSqlId
-	 * @param entity
+	 * @param params 查询参数对象（支持任意实现了Serializable的Bean，如VO、DTO、QueryParam等，对象的属性名将与SQL中的命名参数进行匹配）
 	 * @param resultType
 	 * @param randomCount 小于1表示按比例提取，大于1则按整数部分提取记录数量
 	 * @return
 	 */
-	public <T> List<T> findRandom(final String sqlOrSqlId, final Serializable entity, final Class<T> resultType,
+	public <T> List<T> findRandom(final String sqlOrSqlId, final Serializable params, final Class<T> resultType,
 			final double randomCount);
 
 	/**
@@ -736,10 +738,10 @@ public interface LightDao {
 	/**
 	 * @todo 执行sql,并返回被修改的记录数量
 	 * @param sqlOrSqlId
-	 * @param entity
+	 * @param params 查询参数对象（支持任意实现了Serializable的Bean，如VO、DTO、QueryParam等，对象的属性名将与SQL中的命名参数进行匹配）
 	 * @return Long 数据库发生变更的记录数
 	 */
-	public Long executeSql(final String sqlOrSqlId, final Serializable entity);
+	public Long executeSql(final String sqlOrSqlId, final Serializable params);
 
 	/**
 	 * @TODO 通过数组传参执行sql,并返回更新记录量

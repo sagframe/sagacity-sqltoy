@@ -290,7 +290,7 @@ public class SqlScriptLoader {
 			// 存在@include("sqlId") 重新组织sql
 			if (result != null && result.isHasIncludeSql()) {
 				// 替换include的实际sql
-				String sql=result.getSql();
+				String sql = result.getSql();
 				boolean isParamInclude = StringUtil.matches(sql, SqlToyConstants.INCLUDE_PARAM_PATTERN);
 				// 复制一份，避免直接修改sql缓存中的模型
 				if (isParamInclude) {
@@ -357,6 +357,13 @@ public class SqlScriptLoader {
 		return result;
 	}
 
+	public SqlToyConfig getSqlToyConfig(String sqlId) {
+		if (sqlId == null) {
+			return null;
+		}
+		return sqlCache.get(sqlId);
+	}
+
 	/**
 	 * @todo 加入sql 片段解析产生对应的sqlToyConfig 放入缓存
 	 * @param sqlSegment
@@ -364,7 +371,11 @@ public class SqlScriptLoader {
 	 * @throws Exception
 	 */
 	public SqlToyConfig parseSqlSagment(Object sqlSegment) throws Exception {
-		return SqlXMLConfigParse.parseSagment(sqlSegment, this.encoding, this.dialect);
+		return SqlXMLConfigParse.parseSagment(sqlSegment, this.encoding, this.dialect, null);
+	}
+
+	public SqlToyConfig parseSqlSagment(Object sqlSegment, String id) throws Exception {
+		return SqlXMLConfigParse.parseSagment(sqlSegment, this.encoding, this.dialect, id);
 	}
 
 	/**
@@ -393,6 +404,19 @@ public class SqlScriptLoader {
 			PageOptimizeUtils.remove(sqlToyConfig.getId());
 		}
 		sqlCache.put(sqlToyConfig.getId(), sqlToyConfig);
+	}
+
+	/**
+	 * @TODO 判断sqlId是否存在
+	 * @param sqlId
+	 * @return
+	 */
+	public boolean existSqlId(String sqlId) {
+		return sqlCache.containsKey(sqlId);
+	}
+
+	public void removeSql(String sqlId) {
+		sqlCache.remove(sqlId);
 	}
 
 	/**

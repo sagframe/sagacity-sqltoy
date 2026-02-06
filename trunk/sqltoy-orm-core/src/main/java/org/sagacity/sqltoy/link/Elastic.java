@@ -55,7 +55,7 @@ public class Elastic extends BaseLink {
 	/**
 	 * 查询条件赋值的对象,自动根据sql中的参数名称跟对象的属性进行匹配提取响应的值作为条件
 	 */
-	private Serializable entity;
+	private Serializable params;
 
 	/**
 	 * 返回结果类型
@@ -91,7 +91,7 @@ public class Elastic extends BaseLink {
 	}
 
 	public Elastic entity(Serializable entityVO) {
-		this.entity = entityVO;
+		this.params = entityVO;
 		return this;
 	}
 
@@ -246,8 +246,8 @@ public class Elastic extends BaseLink {
 	 */
 	private QueryExecutor build() {
 		QueryExecutor queryExecutor = null;
-		if (entity != null) {
-			queryExecutor = new QueryExecutor(sql, entity);
+		if (params != null) {
+			queryExecutor = new QueryExecutor(sql, params);
 		} else {
 			queryExecutor = new QueryExecutor(sql).names(names).values(values);
 		}

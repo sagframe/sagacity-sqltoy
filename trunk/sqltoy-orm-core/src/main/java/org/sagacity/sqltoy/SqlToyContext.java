@@ -1,6 +1,7 @@
 package org.sagacity.sqltoy;
 
 import java.sql.Connection;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -24,6 +25,7 @@ import org.sagacity.sqltoy.integration.impl.SimpleConnectionFactory;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.model.OverTimeSql;
 import org.sagacity.sqltoy.model.QueryExecutor;
+import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.plugins.FilterHandler;
 import org.sagacity.sqltoy.plugins.FirstBizCodeTrace;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
@@ -638,12 +640,36 @@ public class SqlToyContext {
 	}
 
 	public SqlToyConfig getSqlToyConfig(QueryExecutor queryExecutor, SqlType sqlType, String dialect) {
-		String sqlKey = queryExecutor.getInnerModel().sql;
+		QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		String sqlKey = extend.sql;
 		if (StringUtil.isBlank(sqlKey)) {
 			throw new IllegalArgumentException("sql or sqlId is null!");
 		}
+		boolean skipCompletion = false;
+		// 动态解析xml并绑定id类型的查询
+		if (extend.xmlBinding != null && StringUtil.isNotBlank(extend.xmlBinding.getXml())) {
+			SqlToyConfig sqlToyConfig = scriptLoader.getSqlToyConfig(sqlKey);
+			LocalDateTime lastUpdateTime = extend.xmlBinding.getLastUpdateTime();
+			skipCompletion = true;
+			if (sqlToyConfig == null || (lastUpdateTime != null && sqlToyConfig.getLastUpdateTime() != null
+					&& lastUpdateTime.isAfter(sqlToyConfig.getLastUpdateTime()))) {
+				try {
+					sqlToyConfig = scriptLoader.parseSqlSagment(extend.xmlBinding.getXml(), sqlKey);
+					// 覆盖id
+					sqlToyConfig.setId(sqlKey);
+					sqlToyConfig.setLastUpdateTime(lastUpdateTime);
+					sqlToyConfig.setDialect(dialect);
+					sqlToyConfig.setSqlType(sqlType);
+					// 放入缓存
+					scriptLoader.putSqlToyConfig(sqlToyConfig);
+				} catch (Exception e) {
+					e.printStackTrace();
+					throw new IllegalArgumentException("动态传入的sql xml内容或格式存在错误!" + e.getMessage());
+				}
+			}
+		}
 		// 查询语句补全select * from table,避免一些sql直接从from 开始
-		if (SqlType.search.equals(sqlType)) {
+		if (!skipCompletion && SqlType.search.equals(sqlType)) {
 			if (queryExecutor.getInnerModel().resultType != null) {
 				sqlKey = SqlUtil.completionSql(this, (Class) queryExecutor.getInnerModel().resultType, sqlKey);
 			} // update 2021-12-7 sql 类似 from table where xxxx 形式，补全select *
@@ -778,6 +804,10 @@ public class SqlToyContext {
 	 */
 	public synchronized void putSqlToyConfig(SqlToyConfig sqlToyConfig) throws Exception {
 		scriptLoader.putSqlToyConfig(sqlToyConfig);
+	}
+
+	public void removeSql(String sqlId) {
+		scriptLoader.removeSql(sqlId);
 	}
 
 	/**

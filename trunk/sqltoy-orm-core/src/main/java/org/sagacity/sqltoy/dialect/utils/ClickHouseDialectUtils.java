@@ -480,9 +480,7 @@ public class ClickHouseDialectUtils {
 				fieldTypes.add(fieldTypesArray[i]);
 			}
 		}
-		Integer[] result = new Integer[fieldTypes.size()];
-		fieldTypes.toArray(result);
-		return result;
+		return fieldTypes.toArray(new Integer[0]);
 	}
 
 	private static String generateUpdateSql(IUnifyFieldsHandler unifyFieldsHandler, Integer dbType,

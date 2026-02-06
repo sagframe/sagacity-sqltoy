@@ -59,19 +59,41 @@ public class QueryExecutor implements Serializable {
 	}
 
 	/**
+	 * 用于直接将xml内容并指定id来进行查询使用
+	 * <p>
+	 * <li>1、lastUpdateTime如果大于上次调用传递的值，则会重新解析xml，否则会通过id从缓存获取
+	 * lightDao.findByQuery(new QueryExecutor(new XMLBinding(xml).id(id).lastUpdateTime(lastUpdateTime)));
+	 * </li>
+	 * <li>2、你也可以通过lightDao.getSqlToyContext().removeSql(sqlId)从缓存删除，然后调用
+	 * lightDao.findByQuery(new QueryExecutor(new XMLBinding(xml).id(id)))
+	 * </li>
+	 * </p>
+	 * 
+	 * @param xmlBinding
+	 */
+	public QueryExecutor(XMLBinding xmlBinding) {
+		if (StringUtil.isBlank(xmlBinding.getId()) || StringUtil.isBlank(xmlBinding.getXml())) {
+			throw new IllegalArgumentException(
+					"XMLBinding中的xml内容和id不能为空,请正确配置:new XMLBinding().xml(xml).id(id),且id要保持唯一!");
+		}
+		innerModel.sql = xmlBinding.getId();
+		innerModel.xmlBinding = xmlBinding;
+	}
+
+	/**
 	 * @TODO sql和以entity对象实体传参模式
 	 * @param sql
-	 * @param entity 对象传参(可以是任意VO对象)
+	 * @param params 查询参数对象（支持任意实现了Serializable的Bean，如VO、DTO、QueryParam等，对象的属性名将与SQL中的命名参数进行匹配）
 	 */
-	public QueryExecutor(String sql, Serializable entity) {
+	public QueryExecutor(String sql, Serializable params) {
 		innerModel.sql = sql;
-		innerModel.entity = entity;
-		if (entity != null) {
+		innerModel.entity = params;
+		if (params != null) {
 			// 避免使用{{}}双大括号来初始化对象时getClass不是VO自身的问题
-			innerModel.resultType = BeanUtil.getEntityClass(entity.getClass());
+			innerModel.resultType = BeanUtil.getEntityClass(params.getClass());
 			// 类型检测
 			if (innerModel.resultType.equals("".getClass().getClass())) {
-				throw new IllegalArgumentException("查询参数是要求传递对象的实例,不是传递对象的class类别!你的参数=" + ((Class) entity).getName());
+				throw new IllegalArgumentException("查询参数是要求传递对象的实例,不是传递对象的class类别!你的参数=" + ((Class) params).getName());
 			}
 		} else {
 			logger.warn("请关注:查询语句sql={} 指定的查询条件参数entity=null,将以ArrayList作为默认类型返回!", sql);
