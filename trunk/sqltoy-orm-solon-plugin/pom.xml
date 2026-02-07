@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.sagframe</groupId>
-    <version>5.6.67.jre8</version>
+    <version>5.6.68.jre8</version>
 
     <artifactId>sagacity-sqltoy-solon-plugin</artifactId>
     <name>sagacity-sqltoy-solon-plugin</name>
@@ -21,7 +21,7 @@
         <mongo.version>5.2.1</mongo.version>
         <slf4j.version>2.0.17</slf4j.version>
         <caffeine.version>2.9.3</caffeine.version>
-        <sqltoy.version>5.6.67.jre8</sqltoy.version>
+        <sqltoy.version>5.6.68.jre8</sqltoy.version>
         <lombok.version>1.18.42</lombok.version>
         <HikariCP.version>7.0.2</HikariCP.version>
         <mysql.version>9.5.0</mysql.version>

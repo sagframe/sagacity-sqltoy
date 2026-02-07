@@ -69,7 +69,7 @@ public class QueryExecutor implements Serializable {
 	 * </li>
 	 * </p>
 	 * 
-	 * @param xmlBinding
+	 * @param xmlBinding 三个属性:1、xml内容 ；2、绑定的sqlId；3、lastUpdateTime xml内容最后修改时间
 	 */
 	public QueryExecutor(XMLBinding xmlBinding) {
 		if (StringUtil.isBlank(xmlBinding.getId()) || StringUtil.isBlank(xmlBinding.getXml())) {

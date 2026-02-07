@@ -651,9 +651,11 @@ public class SqlToyContext {
 			SqlToyConfig sqlToyConfig = scriptLoader.getSqlToyConfig(sqlKey);
 			LocalDateTime lastUpdateTime = extend.xmlBinding.getLastUpdateTime();
 			skipCompletion = true;
-			if (sqlToyConfig == null || (lastUpdateTime != null && sqlToyConfig.getLastUpdateTime() != null
-					&& lastUpdateTime.isAfter(sqlToyConfig.getLastUpdateTime()))) {
+			if (sqlToyConfig == null || (lastUpdateTime != null && sqlToyConfig.getLastUpdateTime() == null)
+					|| (lastUpdateTime != null && sqlToyConfig.getLastUpdateTime() != null
+							&& lastUpdateTime.isAfter(sqlToyConfig.getLastUpdateTime()))) {
 				try {
+					logger.debug("sqlKey={}初始调用或修改时间发生变化，重新解析xml!", sqlKey);
 					sqlToyConfig = scriptLoader.parseSqlSagment(extend.xmlBinding.getXml(), sqlKey);
 					// 覆盖id
 					sqlToyConfig.setId(sqlKey);
@@ -666,6 +668,8 @@ public class SqlToyContext {
 					e.printStackTrace();
 					throw new IllegalArgumentException("动态传入的sql xml内容或格式存在错误!" + e.getMessage());
 				}
+			} else {
+				logger.debug("缓存中:sqlKey={}已经存在,修改时间也未发生变化，直接从缓存获取配置!", sqlKey);
 			}
 		}
 		// 查询语句补全select * from table,避免一些sql直接从from 开始
