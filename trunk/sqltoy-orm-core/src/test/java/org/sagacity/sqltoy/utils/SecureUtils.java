@@ -18,11 +18,12 @@ public class SecureUtils {
 	public static final String KEY_ALGORITHM = "RSA";
 	private static final String PUBLIC_KEY = "RSAPublicKey";
 	private static final String PRIVATE_KEY = "RSAPrivateKey";
+	private static final int KEY_SIZE = 2048;
 
 	public static Map<String, Object> initKey() throws Exception {
 		// 获得对象 KeyPairGenerator 参数 RSA 1024个字节
 		KeyPairGenerator keyPairGen = KeyPairGenerator.getInstance(KEY_ALGORITHM);
-		keyPairGen.initialize(1024);
+		keyPairGen.initialize(KEY_SIZE);
 		// 通过对象 KeyPairGenerator 获取对象KeyPair
 		KeyPair keyPair = keyPairGen.generateKeyPair();
 

@@ -27,6 +27,7 @@ import org.sagacity.sqltoy.model.IgnoreCaseSet;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.ParamsFilter;
+import org.sagacity.sqltoy.model.XMLBinding;
 import org.sagacity.sqltoy.utils.ParamFilterUtils;
 
 /**
@@ -71,6 +72,8 @@ public class QueryExecutorExtend implements Serializable {
 	 * jdbc查询最大返回记录数量
 	 */
 	public int maxRows = -1;
+	
+	public XMLBinding xmlBinding;
 
 	/**
 	 * 结果集反调处理(已经极少极少使用,可以废弃)
@@ -187,7 +190,7 @@ public class QueryExecutorExtend implements Serializable {
 	public Class entityClass = null;
 
 	/**
-	 * 是否是sql片段(正常无需使用)
+	 * 是否是sql段落(正常无需使用)
 	 */
 	public boolean sqlSegment = false;
 

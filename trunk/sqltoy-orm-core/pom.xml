@@ -3,20 +3,20 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sagframe</groupId>
-	<version>5.6.67</version>
+	<version>5.6.68</version>
 	<name>sagacity-sqltoy</name>
 	<description>sqltoy core code</description>
 	<artifactId>sagacity-sqltoy</artifactId>
 	<url>https://github.com/sagframe/sagacity-sqltoy</url>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<ojdbc11.version>23.26.0.0.0</ojdbc11.version>
+		<ojdbc11.version>23.26.1.0.0</ojdbc11.version>
 		<ehcache.version>3.11.1</ehcache.version>
 		<httpclient.version>4.5.14</httpclient.version>
 		<httpclient-core.version>4.4.16</httpclient-core.version>
-		<elastic-rest-client.version>9.2.4</elastic-rest-client.version>
+		<elastic-rest-client.version>9.3.0</elastic-rest-client.version>
 		<fastjson.version>2.0.60</fastjson.version>
-		<mongo.version>5.6.2</mongo.version>
+		<mongo.version>5.6.3</mongo.version>
 		<junit-jupiter.version>6.0.2</junit-jupiter.version>
 		<junit-platform.version>6.0.2</junit-platform.version>
 		<slf4j.version>2.0.17</slf4j.version>
@@ -240,6 +240,7 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.13.0</version>
 				<configuration>
+					<release>17</release>
 					<source>17</source>
 					<target>17</target>
 				</configuration>
@@ -276,6 +277,8 @@
 							<goal>jar</goal>
 						</goals>
 						<configuration>
+							<source>17</source> <!-- 核心补充：指定Javadoc解析的源码级别为17 -->
+							<encoding>UTF-8</encoding> <!-- 可选，避免中文注释乱码 -->
 							<additionalJOption>-Xdoclint:none</additionalJOption>
 						</configuration>
 					</execution>

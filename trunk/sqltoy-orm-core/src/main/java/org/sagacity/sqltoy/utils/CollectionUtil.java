@@ -770,8 +770,7 @@ public class CollectionUtil {
 			}
 			// 子分组合并父分组的列
 			if (groupCols.size() > 0) {
-				Integer[] cols = new Integer[groupCols.size()];
-				groupCols.toArray(cols);
+				Integer[] cols = groupCols.toArray(new Integer[0]);
 				groupMeta.setGroupCols(cols);
 			}
 			// 转小写
