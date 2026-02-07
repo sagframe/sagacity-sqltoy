@@ -256,8 +256,8 @@ public class SqlToyLazyDaoImpl extends SolonDaoSupport implements SqlToyLazyDao 
      * String, java.io.Serializable, double)
      */
     @Override
-    public <T extends Serializable> List<T> getRandomResult(String sqlOrSqlId, T entity, double randomCount) {
-        return (List<T>) super.getRandomResult(new QueryExecutor(sqlOrSqlId, entity), randomCount).getRows();
+    public <T extends Serializable> List<T> getRandomResult(String sqlOrSqlId, T params, double randomCount) {
+        return (List<T>) super.getRandomResult(new QueryExecutor(sqlOrSqlId, params), randomCount).getRows();
     }
     
     @Override
@@ -616,8 +616,8 @@ public class SqlToyLazyDaoImpl extends SolonDaoSupport implements SqlToyLazyDao 
     }
     
     @Override
-    public Long executeSql(String sqlOrSqlId, Serializable entity) {
-        return super.executeSql(sqlOrSqlId, entity);
+    public Long executeSql(String sqlOrSqlId, Serializable params) {
+        return super.executeSql(sqlOrSqlId, params);
     }
     
     @Override
