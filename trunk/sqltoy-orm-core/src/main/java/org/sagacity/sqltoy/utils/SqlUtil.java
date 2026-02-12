@@ -26,6 +26,8 @@ import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -420,18 +422,40 @@ public class SqlUtil {
 				pst.setInt(paramIndex, paramInt);
 			}
 		} else if (paramValue instanceof java.time.LocalDateTime) {
-			pst.setTimestamp(paramIndex, Timestamp.valueOf((LocalDateTime) paramValue));
+			// 带时区的日期类型
+			if (jdbcType == java.sql.Types.TIMESTAMP_WITH_TIMEZONE) {
+				pst.setObject(paramIndex,
+						((LocalDateTime) paramValue).atZone(SqlToyConstants.getZoneId()).toOffsetDateTime());
+			} else {
+				pst.setTimestamp(paramIndex, Timestamp.valueOf((LocalDateTime) paramValue));
+			}
+		} else if (paramValue instanceof OffsetDateTime) {
+			pst.setObject(paramIndex, (OffsetDateTime) paramValue);
+		} else if (paramValue instanceof ZonedDateTime) {
+			pst.setObject(paramIndex, ((ZonedDateTime) paramValue).toOffsetDateTime());
 		} else if (paramValue instanceof BigDecimal) {
 			pst.setBigDecimal(paramIndex, (BigDecimal) paramValue);
 		} else if (paramValue instanceof java.time.LocalDate) {
 			pst.setDate(paramIndex, java.sql.Date.valueOf((LocalDate) paramValue));
 		} else if (paramValue instanceof java.sql.Timestamp) {
-			pst.setTimestamp(paramIndex, (java.sql.Timestamp) paramValue);
-		} else if (paramValue instanceof java.util.Date) {
-			if (dbType == DBType.CLICKHOUSE) {
-				pst.setDate(paramIndex, new java.sql.Date(((java.util.Date) paramValue).getTime()));
+			// 带时区的日期类型
+			if (jdbcType == java.sql.Types.TIMESTAMP_WITH_TIMEZONE) {
+				pst.setObject(paramIndex, (DateUtil.asLocalDateTime((java.sql.Timestamp) paramValue))
+						.atZone(SqlToyConstants.getZoneId()).toOffsetDateTime());
 			} else {
-				pst.setTimestamp(paramIndex, new Timestamp(((java.util.Date) paramValue).getTime()));
+				pst.setTimestamp(paramIndex, (java.sql.Timestamp) paramValue);
+			}
+		} else if (paramValue instanceof java.util.Date) {
+			// 带时区的日期类型
+			if (jdbcType == java.sql.Types.TIMESTAMP_WITH_TIMEZONE) {
+				pst.setObject(paramIndex, (DateUtil.asLocalDateTime((Date) paramValue))
+						.atZone(SqlToyConstants.getZoneId()).toOffsetDateTime());
+			} else {
+				if (dbType == DBType.CLICKHOUSE) {
+					pst.setDate(paramIndex, new java.sql.Date(((java.util.Date) paramValue).getTime()));
+				} else {
+					pst.setTimestamp(paramIndex, new Timestamp(((java.util.Date) paramValue).getTime()));
+				}
 			}
 		} else if (paramValue instanceof java.math.BigInteger) {
 			if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NCHAR
