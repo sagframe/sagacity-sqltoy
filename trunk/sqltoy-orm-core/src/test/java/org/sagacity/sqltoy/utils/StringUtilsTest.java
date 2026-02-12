@@ -290,4 +290,10 @@ public class StringUtilsTest {
 			System.err.println("[" + str + "]");
 		}
 	}
+
+	@Test
+	public void testEscopeComment() {
+		String tmp = "\\\\$\\{{datetime}} {{product-RGB}}";
+		System.err.println(StringUtil.escapeComment(tmp));
+	}
 }

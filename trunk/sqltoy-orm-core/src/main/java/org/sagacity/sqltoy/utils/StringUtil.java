@@ -2,6 +2,7 @@ package org.sagacity.sqltoy.utils;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -39,10 +40,58 @@ public class StringUtil {
 
 	private static Pattern twoQuotaChkPattern = Pattern.compile("[^\\\\]\"");
 
+	// 数据库注释转义映射表（核心规则：仅转义必要字符，避免重复转义）
+	private static final Map<Character, String> DEFAULT_ESCAPE_MAP;
+
+	static {
+		Map<Character, String> tempMap = new HashMap<>();
+		// 核心规则：仅添加1个反斜杠（避免框架二次转义导致冗余）
+		tempMap.put('\\', "\\"); // 反斜杠：保留1个，防止重复转义
+		tempMap.put('$', "\\$"); // 美元符：$ → \$（避免EL表达式解析）
+		tempMap.put('{', "\\{"); // 左花括号：{ → \{
+		tempMap.put('}', "\\}"); // 右花括号：} → \}
+		tempMap.put('"', "\\\""); // 双引号：" → \"（适配数据库字符串解析）
+		tempMap.put('\'', "\\'"); // 单引号：' → \'（适配数据库字符串解析）
+		tempMap.put('%', "\\%"); // 百分号：% → \%（避免MySQL通配符解析）
+		tempMap.put('_', "\\_"); // 下划线：_ → \_（避免MySQL通配符解析）
+		// 包装为不可变Map，防止规则被篡改
+		DEFAULT_ESCAPE_MAP = Collections.unmodifiableMap(tempMap);
+	}
+
 	/**
 	 * private constructor,cann't be instantiated by other class 私有构造函数方法防止被实例化
 	 */
 	private StringUtil() {
+	}
+
+	/**
+	 * 转义注释中的特殊字符（修复：逐字符检测，避免重复转义+部分转义遗漏）
+	 *
+	 * @param commentStr 原始注释字符串（可为null/空）
+	 * @return 转义后的字符串，null/空输入返回原值
+	 */
+	public static String escapeComment(String commentStr) {
+		// 1. 空值安全处理：null/空字符串直接返回
+		if (commentStr == null || commentStr.isEmpty()) {
+			return commentStr;
+		}
+		// 2. 逐字符处理：检测当前字符是否已被转义，仅处理未转义的特殊字符
+		StringBuilder sb = new StringBuilder((int) (commentStr.length() * 1.2));
+		char[] chars = commentStr.toCharArray();
+		for (int i = 0; i < chars.length; i++) {
+			char c = chars[i];
+			// 关键：检测当前字符的前一个字符是否是反斜杠（即当前字符已被转义）
+			boolean isEscaped = (i > 0 && chars[i - 1] == '\\');
+
+			// 仅对「未被转义」且「在转义映射表中」的字符进行转义
+			if (!isEscaped && DEFAULT_ESCAPE_MAP.containsKey(c)) {
+				sb.append(DEFAULT_ESCAPE_MAP.get(c));
+			} else {
+				// 已转义的字符/普通字符：直接保留
+				sb.append(c);
+			}
+		}
+		return sb.toString();
 	}
 
 	public static String trim(String str) {
