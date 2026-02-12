@@ -829,14 +829,6 @@ public class DateUtil {
 		return addMilliSecond(dt, millisecond.longValue());
 	}
 
-	/*
-	 * @see addDay(Object dt, double day) 兼容addDay(Object dt, long day) 无需保留2个方法
-	 */
-	@Deprecated
-	public static Date addDay(Object dt, long day) {
-		return addMilliSecond(dt, 1000L * 60L * 60L * 24L * day);
-	}
-
 	public static Date addDay(Object dt, double day) {
 		Double millisecond = Double.valueOf(1000.0 * 60.0 * 60.0 * 24.0 * day);
 		return addMilliSecond(dt, millisecond.longValue());
