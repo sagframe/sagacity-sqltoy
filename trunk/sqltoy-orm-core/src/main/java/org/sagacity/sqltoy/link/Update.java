@@ -271,8 +271,6 @@ public class Update extends BaseLink {
 				}
 			}
 		}
-		String[] result = new String[copyFields.size()];
-		copyFields.toArray(result);
-		return result;
+		return copyFields.toArray(new String[0]);
 	}
 }

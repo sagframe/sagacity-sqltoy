@@ -4,6 +4,7 @@
 package org.sagacity.sqltoy.config.model;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -149,7 +150,7 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	private List<String> cacheArgNames = new ArrayList<String>();
 
 	/**
-	 * 是否有分页
+	 * 是否有分页优化
 	 */
 	private boolean hasFast = false;
 
@@ -177,6 +178,11 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	 * sql中是否包含@include(sqlId) sql片段嵌入
 	 */
 	private boolean hasIncludeSql = false;
+	
+	/**
+	 * xml最后修改时间
+	 */
+	private LocalDateTime lastUpdateTime;
 
 	/**
 	 * @return the hasUnion
@@ -637,7 +643,7 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 				params.add(item);
 			}
 		}
-		return params.toArray(new String[params.size()]);
+		return params.toArray(new String[0]);
 	}
 
 	/**
@@ -759,4 +765,11 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 		this.hasIncludeSql = hasIncludeSql;
 	}
 
+	public LocalDateTime getLastUpdateTime() {
+		return lastUpdateTime;
+	}
+
+	public void setLastUpdateTime(LocalDateTime lastUpdateTime) {
+		this.lastUpdateTime = lastUpdateTime;
+	}
 }

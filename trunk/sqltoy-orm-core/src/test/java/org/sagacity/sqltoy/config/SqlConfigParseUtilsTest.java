@@ -68,7 +68,7 @@ public class SqlConfigParseUtilsTest {
 			obj = sqlElts.item(i);
 			if (obj.getNodeType() == Node.ELEMENT_NODE) {
 				sqlElt = (Element) obj;
-				result.add(SqlXMLConfigParse.parseSingleSql(sqlElt, "mysql"));
+				result.add(SqlXMLConfigParse.parseSingleSql(sqlElt, "mysql", null));
 			}
 		}
 		for (SqlToyConfig config : result) {
@@ -94,7 +94,7 @@ public class SqlConfigParseUtilsTest {
 			obj = sqlElts.item(i);
 			if (obj.getNodeType() == Node.ELEMENT_NODE) {
 				sqlElt = (Element) obj;
-				result.add(SqlXMLConfigParse.parseSingleSql(sqlElt, "mysql"));
+				result.add(SqlXMLConfigParse.parseSingleSql(sqlElt, "mysql", null));
 			}
 		}
 		for (SqlToyConfig config : result) {
@@ -503,8 +503,8 @@ public class SqlConfigParseUtilsTest {
 				     #[@else AND t1.REF_RULE_API_ID = :refRuleApiId]
 				 )
 				""";
-		Map<String,Object> paramMap=new HashMap<String,Object>();
-		//paramMap.put("refRuleApiIds", new String[] {"1","2"});
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		// paramMap.put("refRuleApiIds", new String[] {"1","2"});
 		SqlToyResult result = SqlConfigParseUtils.processSql(sql, paramMap);
 		System.err.println(JSON.toJSONString(result));
 	}

@@ -17,6 +17,7 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.WeekFields;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -758,7 +759,7 @@ public class DateUtil {
 	 * @return 当前操作系统的时间
 	 */
 	public static Date getNowTime() {
-		//return Calendar.getInstance().getTime();
+		// return Calendar.getInstance().getTime();
 		return Date.from(Instant.now());
 	}
 
@@ -818,8 +819,14 @@ public class DateUtil {
 		return addMilliSecond(dt, millisecond.longValue());
 	}
 
-	public static Date addDay(Object dt, long day) {
-		return addMilliSecond(dt, 1000L * 60L * 60L * 24L * day);
+	public static Date addMinute(Object dt, double minute) {
+		Double millisecond = Double.valueOf(1000.0 * 60.0 * minute);
+		return addMilliSecond(dt, millisecond.longValue());
+	}
+
+	public static Date addHour(Object dt, double hour) {
+		Double millisecond = 1000.0 * 60.0 * 60.0 * hour;
+		return addMilliSecond(dt, millisecond.longValue());
 	}
 
 	public static Date addDay(Object dt, double day) {
@@ -888,6 +895,36 @@ public class DateUtil {
 			return LocalDate.now().getDayOfWeek().getValue();
 		}
 		return convertLocalDateTime(dateValue).getDayOfWeek().getValue();
+	}
+
+	/**
+	 * @todo 获取给定日期所在年的第几周
+	 * @param dateValue
+	 * @return
+	 */
+	public static int getWeekOfYear(Object dateValue) {
+		// 默认使用当前日期
+		LocalDate targetDate = LocalDate.now();
+		if (dateValue != null) {
+			// 将传入的 dateValue 转换为 LocalDate（需根据实际类型适配 convertDateObject）
+			Date date = convertDateObject(dateValue);
+			targetDate = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+		}
+		// 定义周的规则：比如中国习惯（周一为一周第一天，第一周至少有1天）
+		WeekFields weekFields = WeekFields.of(Locale.CHINA);
+		// 获取周数（从1开始），减1转为从0开始
+		return targetDate.get(weekFields.weekOfYear()) - 1;
+	}
+
+	/**
+	 * @todo 获取相隔两个时间的周数
+	 * @param floorDate
+	 * @param goalDate
+	 * @return
+	 */
+	public static double getIntervalWeeks(Object floorDate, Object goalDate) {
+		BigDecimal result = new BigDecimal(getIntervalHours(floorDate, goalDate) / (7 * 24));
+		return result.setScale(1, RoundingMode.HALF_UP).doubleValue();
 	}
 
 	/**

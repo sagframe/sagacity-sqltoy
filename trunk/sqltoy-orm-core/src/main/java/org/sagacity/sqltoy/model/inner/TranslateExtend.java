@@ -35,6 +35,14 @@ public class TranslateExtend implements Serializable, java.lang.Cloneable {
 	public String cache;
 
 	/**
+	 * <p>
+	 * <li>1、有cacheType:cacheName+"_"+cacheType</li>
+	 * <li>2、无cacheType:cacheName</li>
+	 * </p>
+	 */
+	public String cacheNameAndType;
+
+	/**
 	 * 默认第二列为value，第一列为key
 	 */
 	public int index = 1;

@@ -190,7 +190,7 @@ public class SqlXMLConfigParse {
 					obj = sqlElts.item(i);
 					if (obj.getNodeType() == Node.ELEMENT_NODE) {
 						sqlElt = (Element) obj;
-						sqlToyConfig = parseSingleSql(sqlElt, dialect);
+						sqlToyConfig = parseSingleSql(sqlElt, dialect, null);
 						if (sqlToyConfig != null) {
 							// 去除sql中的注释语句并放入缓存
 							if (cache.containsKey(sqlToyConfig.getId())) {
@@ -220,15 +220,21 @@ public class SqlXMLConfigParse {
 		return repeatSql;
 	}
 
+	public static SqlToyConfig parseSagment(Object sqlSegment, String encoding, String dialect) throws Exception {
+		return parseSagment(sqlSegment, encoding, dialect, null);
+	}
+
 	/**
 	 * @todo 解析单个sql片段
 	 * @param sqlSegment
 	 * @param encoding
 	 * @param dialect
+	 * @param sqlId
 	 * @return
 	 * @throws Exception
 	 */
-	public static SqlToyConfig parseSagment(Object sqlSegment, String encoding, String dialect) throws Exception {
+	public static SqlToyConfig parseSagment(Object sqlSegment, String encoding, String dialect, String sqlId)
+			throws Exception {
 		Element elt = null;
 		if (sqlSegment instanceof String) {
 			Document doc = domFactory.newDocumentBuilder().parse(
@@ -241,7 +247,7 @@ public class SqlXMLConfigParse {
 			logger.error("sqlSegment type must is String or org.w3c.dom.Element!");
 			throw new IllegalArgumentException("sqlSegment type must is String or org.w3c.dom.Element!");
 		}
-		return parseSingleSql(elt, dialect);
+		return parseSingleSql(elt, dialect, sqlId);
 	}
 
 	/**
@@ -270,14 +276,19 @@ public class SqlXMLConfigParse {
 		return nodeName;
 	}
 
+	public static SqlToyConfig parseSingleSql(Element sqlElt, String dialect) throws Exception {
+		return parseSingleSql(sqlElt, dialect, null);
+	}
+
 	/**
 	 * @todo 解析单个sql element元素,update 2020-7-2 支持外部集成命名空间前缀适配
 	 * @param sqlElt
 	 * @param dialect
+	 * @param sqlId
 	 * @return
 	 * @throws Exception
 	 */
-	public static SqlToyConfig parseSingleSql(Element sqlElt, String dialect) throws Exception {
+	public static SqlToyConfig parseSingleSql(Element sqlElt, String dialect, String sqlId) throws Exception {
 		String realDialect = dialect;
 		String nodeName = sqlElt.getNodeName().toLowerCase();
 		// 剔除前缀
@@ -291,7 +302,10 @@ public class SqlXMLConfigParse {
 		}
 		String id = sqlElt.getAttribute("id");
 		if (id == null) {
-			throw new RuntimeException("请检查sql配置,没有给定sql对应的 id值!");
+			id = sqlId;
+			if (id == null) {
+				throw new RuntimeException("请检查sql配置,没有给定sql对应的 id值!");
+			}
 		}
 		// 获取元素的namespace前缀
 		String localName = getElementPrefixName(sqlElt);
@@ -305,7 +319,7 @@ public class SqlXMLConfigParse {
 			sqlContent = StringUtil.trim(sqlElt.getTextContent());
 		}
 		if (StringUtil.isBlank(sqlContent)) {
-			throw new RuntimeException("请检查sql-id='" + id + "' 的配置,没有正确填写sql内容!");
+			throw new RuntimeException("请检查<sql id='" + id + "'> 的配置,没有正确填写sql内容!");
 		}
 		nodeList = sqlElt.getElementsByTagName(local.concat("count-sql"));
 		String countSql = null;

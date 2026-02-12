@@ -415,8 +415,8 @@ public class LightDaoImpl extends SpringDaoSupport implements LightDao {
 	}
 
 	@Override
-	public <T> T findOne(String sqlOrSqlId, Serializable entity, Class<T> resultType) {
-		return (T) super.loadByQuery(new QueryExecutor(sqlOrSqlId, entity).resultType(resultType));
+	public <T> T findOne(String sqlOrSqlId, Serializable params, Class<T> resultType) {
+		return (T) super.loadByQuery(new QueryExecutor(sqlOrSqlId, params).resultType(resultType));
 	}
 
 	@Override
@@ -450,8 +450,8 @@ public class LightDaoImpl extends SpringDaoSupport implements LightDao {
 	}
 
 	@Override
-	public <T> List<T> find(String sqlOrSqlId, Serializable entity, Class<T> resultType) {
-		return (List<T>) super.findByQuery(new QueryExecutor(sqlOrSqlId, entity).resultType(resultType)).getRows();
+	public <T> List<T> find(String sqlOrSqlId, Serializable params, Class<T> resultType) {
+		return (List<T>) super.findByQuery(new QueryExecutor(sqlOrSqlId, params).resultType(resultType)).getRows();
 	}
 
 	@Override
@@ -470,8 +470,8 @@ public class LightDaoImpl extends SpringDaoSupport implements LightDao {
 	}
 
 	@Override
-	public <T> Page<T> findPage(Page page, String sqlOrSqlId, Serializable entity, Class<T> resultType) {
-		return (Page<T>) super.findPageByQuery(page, new QueryExecutor(sqlOrSqlId, entity).resultType(resultType))
+	public <T> Page<T> findPage(Page page, String sqlOrSqlId, Serializable params, Class<T> resultType) {
+		return (Page<T>) super.findPageByQuery(page, new QueryExecutor(sqlOrSqlId, params).resultType(resultType))
 				.getPageResult();
 	}
 
@@ -481,8 +481,8 @@ public class LightDaoImpl extends SpringDaoSupport implements LightDao {
 	}
 
 	@Override
-	public <T> List<T> findTop(String sqlOrSqlId, Serializable entity, Class<T> resultType, double topSize) {
-		return (List<T>) super.findTopByQuery(new QueryExecutor(sqlOrSqlId, entity).resultType(resultType), topSize)
+	public <T> List<T> findTop(String sqlOrSqlId, Serializable params, Class<T> resultType, double topSize) {
+		return (List<T>) super.findTopByQuery(new QueryExecutor(sqlOrSqlId, params).resultType(resultType), topSize)
 				.getRows();
 	}
 
@@ -503,8 +503,8 @@ public class LightDaoImpl extends SpringDaoSupport implements LightDao {
 	}
 
 	@Override
-	public <T> List<T> findRandom(String sqlOrSqlId, Serializable entity, Class<T> resultType, double randomCount) {
-		return (List<T>) super.getRandomResult(new QueryExecutor(sqlOrSqlId, entity).resultType(resultType),
+	public <T> List<T> findRandom(String sqlOrSqlId, Serializable params, Class<T> resultType, double randomCount) {
+		return (List<T>) super.getRandomResult(new QueryExecutor(sqlOrSqlId, params).resultType(resultType),
 				randomCount).getRows();
 	}
 
@@ -534,8 +534,8 @@ public class LightDaoImpl extends SpringDaoSupport implements LightDao {
 	}
 
 	@Override
-	public Long executeSql(String sqlOrSqlId, Serializable entity) {
-		return super.executeSql(sqlOrSqlId, entity);
+	public Long executeSql(String sqlOrSqlId, Serializable params) {
+		return super.executeSql(sqlOrSqlId, params);
 	}
 
 	@Override

@@ -7,6 +7,9 @@ import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.OffsetDateTime;
+import java.time.OffsetTime;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
@@ -535,6 +538,8 @@ public class ParamFilterUtils {
 				cloneValue = ((Object[]) paramValue).clone();
 			} else if (paramValue instanceof ArrayList) {
 				cloneValue = ((ArrayList) paramValue).clone();
+			} else if (paramValue instanceof HashSet) {
+				cloneValue = ((HashSet) paramValue).clone();
 			} else {
 				cloneValue = paramValue;
 			}
@@ -619,6 +624,13 @@ public class ParamFilterUtils {
 					valueList.set(i, toDate(valueList.get(i), paramFilterModel));
 				}
 				result = valueList;
+			} else if (paramValue instanceof Set) {
+				Set tmpSet = (paramValue instanceof LinkedHashSet) ? new LinkedHashSet() : new HashSet<>();
+				Iterator iter = ((Set) paramValue).iterator();
+				while (iter.hasNext()) {
+					tmpSet.add(toDate(iter.next(), paramFilterModel));
+				}
+				result = tmpSet;
 			} else {
 				result = toDate(paramValue, paramFilterModel);
 			}
@@ -635,6 +647,13 @@ public class ParamFilterUtils {
 					valueList.set(i, toNumber(valueList.get(i), paramFilterModel.getDataType()));
 				}
 				result = valueList;
+			} else if (paramValue instanceof Set) {
+				Set tmpSet = (paramValue instanceof LinkedHashSet) ? new LinkedHashSet() : new HashSet<>();
+				Iterator iter = ((Set) paramValue).iterator();
+				while (iter.hasNext()) {
+					tmpSet.add(toNumber(iter.next(), paramFilterModel.getDataType()));
+				}
+				result = tmpSet;
 			} else {
 				result = toNumber(paramValue, paramFilterModel.getDataType());
 			}
@@ -740,23 +759,8 @@ public class ParamFilterUtils {
 				}
 			}
 			return result;
-		} else if (paramValue instanceof LinkedHashSet) {
-			Set result = new LinkedHashSet();
-			Iterator iter = ((LinkedHashSet) paramValue).iterator();
-			Object cell;
-			while (iter.hasNext()) {
-				cell = iter.next();
-				if (removeBlank) {
-					if (StringUtil.isNotBlank(cell)) {
-						result.add(cell);
-					}
-				} else if (cell != null) {
-					result.add(cell);
-				}
-			}
-			return result;
 		} else if (paramValue instanceof Set) {
-			Set result = new HashSet();
+			Set result = (paramValue instanceof LinkedHashSet) ? new LinkedHashSet() : new HashSet();
 			Iterator iter = ((Set) paramValue).iterator();
 			Object cell;
 			while (iter.hasNext()) {
@@ -809,6 +813,24 @@ public class ParamFilterUtils {
 				}
 			}
 			return tmpList;
+		} else if (paramValue instanceof Set) {
+			Set tmpSet = (Set) paramValue;
+			if (tmpSet.size() == 0) {
+				return paramValue;
+			}
+			Set result = (paramValue instanceof LinkedHashSet) ? new LinkedHashSet() : new HashSet();
+			Iterator iter = tmpSet.iterator();
+			int index = 0;
+			Object cell;
+			while (iter.hasNext()) {
+				cell = iter.next();
+				if (index == 0 && !(cell instanceof String)) {
+					return paramValue;
+				}
+				result.add(isLeft ? "%".concat(cell.toString()) : cell.toString().concat("%"));
+				index++;
+			}
+			return result;
 		}
 		return paramValue;
 	}
@@ -912,6 +934,14 @@ public class ParamFilterUtils {
 				valueList.set(i, DateUtil.formatDate(valueList.get(i), format));
 			}
 			result = valueList;
+		} else if (paramValue instanceof Set) {
+			Set valueSet = (Set) paramValue;
+			Set tmpSet = (paramValue instanceof LinkedHashSet) ? new LinkedHashSet() : new HashSet();
+			Iterator iter = valueSet.iterator();
+			while (iter.hasNext()) {
+				tmpSet.add(DateUtil.formatDate(iter.next(), format));
+			}
+			result = tmpSet;
 		} else {
 			result = DateUtil.formatDate(paramValue, format);
 		}
@@ -1147,11 +1177,12 @@ public class ParamFilterUtils {
 		String result;
 		if (paramValue instanceof BigDecimal) {
 			result = ((BigDecimal) paramValue).toPlainString();
-		} else if (paramValue instanceof LocalTime) {
+		} else if ((paramValue instanceof LocalTime) || (paramValue instanceof OffsetTime)) {
 			result = DateUtil.formatDate(paramValue, "HH:mm:ss");
 		} else if (paramValue instanceof LocalDate) {
 			result = DateUtil.formatDate(paramValue, "yyyy-MM-dd");
-		} else if ((paramValue instanceof LocalDateTime) || (paramValue instanceof Date)) {
+		} else if ((paramValue instanceof LocalDateTime) || (paramValue instanceof Date)
+				|| (paramValue instanceof OffsetDateTime) || (paramValue instanceof ZonedDateTime)) {
 			result = DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss");
 		} else if (paramValue instanceof Enum) {
 			result = BeanUtil.getEnumValue(paramValue).toString();

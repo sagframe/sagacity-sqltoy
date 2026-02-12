@@ -97,7 +97,6 @@ import org.sagacity.sqltoy.utils.QueryExecutorBuilder;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
-import org.sagacity.sqltoy.utils.TranslateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -621,13 +620,13 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @todo 解析sql中:named 属性到entity对象获取对应的属性值作为查询条件,并将查询结果以entity的class类型返回
+	 * @todo 解析sql中:named 属性到params对象获取对应的属性值作为查询条件,并将查询结果以params的class类型返回
 	 * @param sqlOrSqlId
-	 * @param entity
+	 * @param params 查询参数对象（支持任意实现了Serializable的Bean，如VO、DTO、QueryParam等，对象的属性名将与SQL中的命名参数进行匹配）
 	 * @return
 	 */
-	protected <T extends Serializable> T loadBySql(final String sqlOrSqlId, final T entity) {
-		return (T) loadByQuery(new QueryExecutor(sqlOrSqlId, entity));
+	protected <T extends Serializable> T loadBySql(final String sqlOrSqlId, final T params) {
+		return (T) loadByQuery(new QueryExecutor(sqlOrSqlId, params));
 	}
 
 	protected <T extends Serializable> T loadEntity(Class<T> entityClass, EntityQuery entityQuery) {
@@ -679,21 +678,21 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @todo 解析sql中的参数名称，以此名称到entity中提取对应的值作为查询条件值执行sql
+	 * @todo 解析sql中的参数名称，以此名称到params中提取对应的值作为查询条件值执行sql
 	 * @param sqlOrSqlId
-	 * @param entity
+	 * @param params 查询参数对象（支持任意实现了Serializable的Bean，如VO、DTO、QueryParam等，对象的属性名将与SQL中的命名参数进行匹配）
 	 * @return
 	 */
-	protected Long executeSql(final String sqlOrSqlId, final Serializable entity) {
+	protected Long executeSql(final String sqlOrSqlId, final Serializable params) {
 		// update 2025-4-29 兼容executeSql(sql,Object...params) 只有一个参数时的场景
-		if (entity == null || BeanUtil.isBaseDataType(entity.getClass())) {
-			return executeSql(sqlOrSqlId, null, new Object[] { entity }, null, null);
-		} else if (entity instanceof Collection) {
-			return executeSql(sqlOrSqlId, null, ((Collection) entity).toArray(), null, null);
+		if (params == null || BeanUtil.isBaseDataType(params.getClass())) {
+			return executeSql(sqlOrSqlId, null, new Object[] { params }, null, null);
+		} else if (params instanceof Collection) {
+			return executeSql(sqlOrSqlId, null, ((Collection) params).toArray(), null, null);
 		}
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sqlOrSqlId, SqlType.update, getDialect(dataSource),
-				entity);
-		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, new QueryExecutor(sqlOrSqlId, entity), null, null,
+				params);
+		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, new QueryExecutor(sqlOrSqlId, params), null, null,
 				getDataSource(null, sqlToyConfig));
 	}
 
@@ -782,13 +781,13 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @todo 以entity对象的属性给sql中的:named 传参数，进行查询，并返回entityClass类型的集合
+	 * @todo 以params对象的属性给sql中的:named 传参数，进行查询，并返回params的class类型的集合
 	 * @param sqlOrSqlId
-	 * @param entity
+	 * @param params 查询参数对象（支持任意实现了Serializable的Bean，如VO、DTO、QueryParam等，对象的属性名将与SQL中的命名参数进行匹配）
 	 * @return
 	 */
-	protected <T extends Serializable> List<T> findBySql(final String sqlOrSqlId, final T entity) {
-		return (List<T>) findByQuery(new QueryExecutor(sqlOrSqlId, entity)).getRows();
+	protected <T extends Serializable> List<T> findBySql(final String sqlOrSqlId, final T params) {
+		return (List<T>) findByQuery(new QueryExecutor(sqlOrSqlId, params)).getRows();
 	}
 
 	protected <T> List<T> findBySql(final String sqlOrSqlId, final Map<String, Object> paramsMap,
@@ -899,8 +898,8 @@ public class SqlToyDaoSupport {
 		return (Page<T>) findPageByQuery(page, query).getPageResult();
 	}
 
-	protected <T extends Serializable> Page<T> findPageBySql(final Page page, final String sqlOrSqlId, final T entity) {
-		return (Page<T>) findPageByQuery(page, new QueryExecutor(sqlOrSqlId, entity)).getPageResult();
+	protected <T extends Serializable> Page<T> findPageBySql(final Page page, final String sqlOrSqlId, final T params) {
+		return (Page<T>) findPageByQuery(page, new QueryExecutor(sqlOrSqlId, params)).getPageResult();
 	}
 
 	protected <T> Page<T> findPageBySql(final Page page, final String sqlOrSqlId, final Map<String, Object> paramsMap,
@@ -934,9 +933,9 @@ public class SqlToyDaoSupport {
 				topSize).getRows();
 	}
 
-	protected <T extends Serializable> List<T> findTopBySql(final String sqlOrSqlId, final T entity,
+	protected <T extends Serializable> List<T> findTopBySql(final String sqlOrSqlId, final T params,
 			final double topSize) {
-		return (List<T>) findTopByQuery(new QueryExecutor(sqlOrSqlId, entity), topSize).getRows();
+		return (List<T>) findTopByQuery(new QueryExecutor(sqlOrSqlId, params), topSize).getRows();
 	}
 
 	/**
@@ -1809,6 +1808,7 @@ public class SqlToyDaoSupport {
 		Object row;
 		Object key;
 		Object name;
+		Object[] keyRow;
 		// 动态查询缓存数据模式
 		if (cacheModel.isDynamicCache()) {
 			DynamicCacheFetch dynamicCacheFetch = sqlToyContext.getDynamicCacheFetch();
@@ -1816,34 +1816,58 @@ public class SqlToyDaoSupport {
 				throw new RuntimeException(
 						"缓存为dynamicCache即动态获取缓存数据，未定义DynamicCacheFetch的实现类，请正确配置:spring.sqltoy.dynamicCacheFetch=xxxx.xxx.DynamicCacheFetchImpl");
 			}
-			TranslateExtend extend = new TranslateExtend();
-			extend.dynamicCache = cacheModel.isDynamicCache();
-			extend.cacheSid = cacheModel.getSid();
-			extend.cacheProperties = cacheModel.getProperties();
-			extend.index = cacheIndex;
-			extend.cache = cacheName;
-			extend.cacheType = cacheType;
 			HashMap<String, Object[]> cache = sqlToyContext.getDynamicFecthCacheManager().getDynamicCache(cacheModel,
 					cacheType);
-			// 循环获取行数据
+			// 构建暂停
+			Set<String> notMatchedKeySet = new HashSet<>();
+			// 逐行翻译
+			String keyStr;
 			while (iter.hasNext()) {
 				row = iter.next();
 				if (row != null) {
 					// 反调获取需要翻译的key
 					key = translateHandler.getKey(row);
 					if (key != null) {
-						name = TranslateUtils.translateKey(extend, dynamicCacheFetch, cache, key);
-						translateHandler.setName(row, (name == null) ? "" : name.toString());
+						keyStr = key.toString();
+						keyRow = cache.get(keyStr);
+						if (null == keyRow) {
+							notMatchedKeySet.add(keyStr);
+						} else {
+							name = keyRow[cacheIndex];
+							translateHandler.setName(row, (name == null) ? "" : name.toString());
+						}
+					}
+				}
+			}
+			// 未匹配的key，组织批量查询
+			if (!notMatchedKeySet.isEmpty()) {
+				String[] notMatchedKeys = notMatchedKeySet.toArray(new String[0]);
+				Map<String, Object[]> cacheDatas = dynamicCacheFetch.getCache(cacheName, cacheType, cacheModel.getSid(),
+						cacheModel.getProperties(), notMatchedKeys);
+				if (cacheDatas != null && !cacheDatas.isEmpty()) {
+					// 回写缓存
+					cache.putAll(cacheDatas);
+					iter = dataSet.iterator();
+					// 循环获取行数据
+					while (iter.hasNext()) {
+						row = iter.next();
+						if (row != null) {
+							// 反调获取需要翻译的key
+							key = translateHandler.getKey(row);
+							if (key != null && cacheDatas.containsKey(key)) {
+								name = cacheDatas.get(key)[cacheIndex];
+								translateHandler.setName(row, (name == null) ? "" : name.toString());
+							}
+						}
 					}
 				}
 			}
 			return;
 		}
-		final HashMap<String, Object[]> cache = getTranslateCache(cacheName, cacheType);
+		HashMap<String, Object[]> cache = getTranslateCache(cacheName, cacheType);
 		if (cache == null || cache.isEmpty()) {
 			return;
 		}
-		Object[] keyRow;
 		// 循环获取行数据
 		while (iter.hasNext()) {
 			row = iter.next();
@@ -1953,8 +1977,7 @@ public class SqlToyDaoSupport {
 				}
 			}
 			if (selectFields.size() > 0) {
-				selectFieldAry = new String[selectFields.size()];
-				selectFields.toArray(selectFieldAry);
+				selectFieldAry = selectFields.toArray(new String[0]);
 			}
 		} else {
 			selectFieldAry = innerModel.fields;

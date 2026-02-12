@@ -4,6 +4,7 @@
 package org.sagacity.sqltoy.utils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -178,4 +179,12 @@ public class CollectionUtilTest {
 		dataSet = CollectionUtil.clearRepeat(dataSet);
 		System.err.println(JSON.toJSONString(dataSet));
 	}
+	
+	@Test
+	public void testBean() {
+		String[] tmp=new String[] {"1","2","3"};
+		Object result=Arrays.stream(tmp);
+	}
+	
+	
 }

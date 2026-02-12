@@ -351,12 +351,12 @@ public class EntityManager {
 				entityMeta.setIdNameWhereSql(loadNamedWhereSql.toString());
 				// 排除主键外的字段
 				if (rejectIdFieldList.size() > 0) {
-					entityMeta.setRejectIdFieldArray(rejectIdFieldList.toArray(new String[rejectIdFieldList.size()]));
+					entityMeta.setRejectIdFieldArray(rejectIdFieldList.toArray(new String[0]));
 					fieldList.addAll(rejectIdFieldList);
 				}
 				// 存在主键，主键必须放在fieldList最后面，影响到insert，update等语句
 				if (idList.size() > 0) {
-					entityMeta.setIdArray(idList.toArray(new String[idList.size()]));
+					entityMeta.setIdArray(idList.toArray(new String[0]));
 					fieldList.addAll(idList);
 					// 注解未定义load sql则提供主键为条件的查询为loadsql
 					if (StringUtil.isBlank(entityMeta.getLoadSql(null))) {
@@ -364,7 +364,7 @@ public class EntityManager {
 					}
 				}
 				// 内部存在逻辑设置allFields
-				entityMeta.setFieldsArray(fieldList.toArray(new String[rejectIdFieldList.size() + idList.size()]));
+				entityMeta.setFieldsArray(fieldList.toArray(new String[0]));
 				// 设置字段类型和默认值
 				parseFieldTypeAndDefault(entityMeta);
 				// 解析sharding策略
@@ -620,7 +620,7 @@ public class EntityManager {
 			// 支持多级继承关系
 			classType = classType.getSuperclass();
 		}
-		return allFields.toArray(new Field[allFields.size()]);
+		return allFields.toArray(new Field[0]);
 	}
 
 	/**
@@ -767,7 +767,9 @@ public class EntityManager {
 			// 如果是业务主键跟ID重叠,则ID以业务主键策略生成
 			if (id != null) {
 				entityMeta.setIdGenerator(IdGeneratorsInstance.get(bizGenerator));
-				fieldMeta.setLength(bizId.length());
+				if (bizId.length() > 0) {
+					fieldMeta.setLength(bizId.length());
+				}
 				entityMeta.setBizIdEqPK(true);
 			} else {
 				entityMeta.setBusinessIdGenerator(IdGeneratorsInstance.get(bizGenerator));

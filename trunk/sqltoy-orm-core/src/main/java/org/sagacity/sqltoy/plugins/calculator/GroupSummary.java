@@ -50,8 +50,8 @@ public class GroupSummary {
 			throw new IllegalArgumentException("summary计算未正确配置sum-columns或average-columns或group分组信息!");
 		}
 		// 全部计算列
-		Integer[] summaryCols = new Integer[summaryColsSet.size()];
-		summaryColsSet.toArray(summaryCols);
+		//Integer[] summaryCols = new Integer[summaryColsSet.size()];
+		Integer[] summaryCols =summaryColsSet.toArray(new Integer[0]);
 		// 同时存在求和、求平均
 		boolean bothSumAverage = !sumColList.isEmpty() && !aveColList.isEmpty();
 		// 组织分组配置
@@ -75,8 +75,8 @@ public class GroupSummary {
 			sumSite = (summaryModel.getSumSite() == null) ? "top" : summaryModel.getSumSite().toLowerCase();
 			List<Integer> groupColsList = CalculateUtils.parseColumns(labelIndexMap, groupMeta.getGroupColumn(),
 					dataWidth);
-			Integer[] groupCols = new Integer[groupColsList.size()];
-			groupColsList.toArray(groupCols);
+			//Integer[] groupCols = new Integer[groupColsList.size()];
+			Integer[] groupCols =groupColsList.toArray(new Integer[0]);
 			// 分组列
 			groupMeta.setGroupCols(groupCols);
 			preAllGroups.addAll(groupColsList);
@@ -96,8 +96,8 @@ public class GroupSummary {
 				}
 				// 排序方式
 				boolean desc = groupMeta.getOrderWay().equalsIgnoreCase("desc") ? true : false;
-				Integer[] groupIndexes = new Integer[preAllGroups.size()];
-				preAllGroups.toArray(groupIndexes);
+				//Integer[] groupIndexes = new Integer[preAllGroups.size()];
+				Integer[] groupIndexes=preAllGroups.toArray(new Integer[0]);
 				// 以新增加的末尾列排序
 				if (groupIndexes.length == 1) {
 					// 先用分组列排序，再通过分组的计算值排序，避免存在不同分组之间计算列的值一样，产生顺序混乱

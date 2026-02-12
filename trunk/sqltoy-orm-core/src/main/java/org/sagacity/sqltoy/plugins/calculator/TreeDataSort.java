@@ -43,8 +43,8 @@ public class TreeDataSort {
 		sortTree(treeList, idColIndex, pidColIndex);
 		// 树结构从底层往上级汇总
 		if (!sumColList.isEmpty()) {
-			Integer[] sumIndexes = new Integer[sumColList.size()];
-			sumColList.toArray(sumIndexes);
+			//Integer[] sumIndexes = new Integer[sumColList.size()];
+			Integer[] sumIndexes=sumColList.toArray(new Integer[0]);
 			summaryTreeList(treeTableSortModel, labelIndexMap, treeList, sumIndexes, idColIndex, pidColIndex);
 		}
 		// 对每层的数据进行排序
