@@ -54,6 +54,11 @@ public class EntityUpdateExtend implements Serializable {
 	public Boolean showSql;
 
 	/**
+	 * 上下文数据, 用于执行过程中的共享数据
+	 */
+	public Object contextData;
+
+	/**
 	 * update 的字段名称和对应的值
 	 */
 	public IgnoreCaseLinkedMap<String, Object> updateValues = new IgnoreCaseLinkedMap<String, Object>();

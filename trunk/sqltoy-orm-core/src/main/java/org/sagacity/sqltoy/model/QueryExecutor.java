@@ -7,9 +7,7 @@ import java.io.Serializable;
 import java.lang.reflect.Type;
 import java.math.RoundingMode;
 import java.util.Map;
-
 import javax.sql.DataSource;
-
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.config.model.ColsChainRelativeModel;
 import org.sagacity.sqltoy.config.model.FormatModel;
@@ -645,6 +643,18 @@ public class QueryExecutor implements Serializable {
 	 */
 	public QueryExecutor sqlSegment(boolean sqlSegment) {
 		innerModel.sqlSegment = sqlSegment;
+		return this;
+	}
+
+
+
+	/**
+	 * @TODO 设置执行时上下文数据，如：在拦截器中取值用以业务判断
+	 * @param contextData
+	 * @return
+	 */
+	public QueryExecutor contextData(Object contextData) {
+		innerModel.contextData = contextData;
 		return this;
 	}
 

@@ -51,7 +51,7 @@ public class DDLFactory {
 		case DBType.MYSQL:
 		case DBType.MYSQL57:
 		case DBType.DORIS:
-		case DBType.STARROCKS:{
+		case DBType.STARROCKS: {
 			generator = new MySqlDDLGenerator();
 			break;
 		}

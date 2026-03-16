@@ -66,21 +66,34 @@ public class SqlExecuteStat {
 	 */
 	private static SqlFormater sqlFormater;
 
+	public static void start(String sqlId, OperateDetailType type, Class resultType, Boolean debugPrint) {
+		threadLocal.set(
+			new SqlExecuteTrace(sqlId, type, resultType, (debugPrint == null) ? debug : debugPrint.booleanValue()));
+	}
+
 	/**
 	 * @todo 登记开始执行
 	 * @param sqlId
 	 * @param type
 	 * @param debugPrint
 	 */
-	public static void start(String sqlId, OperateDetailType type, Class resultType, Boolean debugPrint) {
+	public static void start(String sqlId, OperateDetailType type, Class resultType, Boolean debugPrint, Object contextData) {
 		threadLocal.set(
-				new SqlExecuteTrace(sqlId, type, resultType, (debugPrint == null) ? debug : debugPrint.booleanValue()));
+				new SqlExecuteTrace(sqlId, type, resultType, (debugPrint == null) ? debug : debugPrint.booleanValue(), contextData));
 	}
 
 	public static void start(String sqlId, OperateDetailType type, Class resultType, Long batchSize,
-			Boolean debugPrint) {
+		Boolean debugPrint) {
 		SqlExecuteTrace sqlExecuteTrace = new SqlExecuteTrace(sqlId, type, resultType,
-				(debugPrint == null) ? debug : debugPrint.booleanValue());
+			(debugPrint == null) ? debug : debugPrint.booleanValue());
+		sqlExecuteTrace.setBatchSize(batchSize);
+		threadLocal.set(sqlExecuteTrace);
+	}
+
+	public static void start(String sqlId, OperateDetailType type, Class resultType, Long batchSize,
+			Boolean debugPrint, Object contextData) {
+		SqlExecuteTrace sqlExecuteTrace = new SqlExecuteTrace(sqlId, type, resultType,
+				(debugPrint == null) ? debug : debugPrint.booleanValue(), contextData);
 		sqlExecuteTrace.setBatchSize(batchSize);
 		threadLocal.set(sqlExecuteTrace);
 	}

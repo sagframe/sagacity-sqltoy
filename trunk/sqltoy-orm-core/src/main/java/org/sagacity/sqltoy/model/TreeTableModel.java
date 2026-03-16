@@ -87,6 +87,11 @@ public class TreeTableModel implements Serializable {
 	 */
 	private int idLength = -1;
 
+	/**
+	 * 上下文数据, 用于执行过程中的共享数据
+	 */
+	private Object contextData;
+
 	public TreeTableModel() {
 
 	}
@@ -304,4 +309,12 @@ public class TreeTableModel implements Serializable {
 		return this;
 	}
 
+	public <T> T getContextData() {
+		return (T)contextData;
+	}
+
+	public TreeTableModel setContextData(Object contextData) {
+		this.contextData = contextData;
+		return this;
+	}
 }

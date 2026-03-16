@@ -184,6 +184,11 @@ public class QueryExecutorExtend implements Serializable {
 	 * 执行时是否输出sql 日志
 	 */
 	public Boolean showSql;
+
+	/**
+	 * 上下文数据, 用于执行过程中的共享数据
+	 */
+	public Object contextData;
 	/**
 	 * 标记基于单表的简单操作
 	 */
