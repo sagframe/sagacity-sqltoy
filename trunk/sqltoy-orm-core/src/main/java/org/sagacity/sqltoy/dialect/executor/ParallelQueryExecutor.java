@@ -56,7 +56,7 @@ public class ParallelQueryExecutor implements Callable<ParallelQueryResult> {
 		try {
 			ParallelQueryExtend extend = parallelQuery.getExtend();
 			QueryExecutor queryExecutor = new QueryExecutor(extend.sql).resultType(extend.resultType).names(paramNames)
-					.values(paramValues).showSql(extend.showSql);
+					.values(paramValues).showSql(extend.showSql).contextData(extend.contextData);
 			// 分页
 			if (extend.page != null) {
 				// 不取总记录数分页模式

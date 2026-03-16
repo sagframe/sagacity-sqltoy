@@ -2105,6 +2105,8 @@ public class SqlToyDaoSupport {
 		if (innerModel.showSql != null) {
 			queryExecutor.showSql(innerModel.showSql);
 		}
+		// 设置上下文数据
+		queryExecutor.contextData(innerModel.contextData);
 		// 设置分页优化
 		queryExecutor.getInnerModel().pageOptimize = innerModel.pageOptimize;
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search,
@@ -2372,6 +2374,7 @@ public class SqlToyDaoSupport {
 				? SqlToyConstants.executeSqlBlankToNull
 				: innerModel.blankToNull;
 		queryExecutor.getInnerModel().showSql = innerModel.showSql;
+		queryExecutor.getInnerModel().contextData = innerModel.contextData;
 		// 为后续租户过滤提供判断依据(单表简单sql和对应的实体对象)
 		queryExecutor.getInnerModel().entityClass = entityClass;
 		setEntitySharding(queryExecutor, entityMeta);

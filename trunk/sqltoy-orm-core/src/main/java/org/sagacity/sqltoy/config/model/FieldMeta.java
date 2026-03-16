@@ -125,6 +125,11 @@ public class FieldMeta implements Serializable {
 	private boolean isPK;
 
 	/**
+	 * 仅用于创建ddl
+	 */
+	private boolean assistPk = true;
+
+	/**
 	 * @return the type
 	 */
 	public int getType() {
@@ -307,5 +312,13 @@ public class FieldMeta implements Serializable {
 
 	public void setComments(String comments) {
 		this.comments = comments;
+	}
+
+	public boolean isAssistPk() {
+		return assistPk;
+	}
+
+	public void setAssistPk(boolean assistPk) {
+		this.assistPk = assistPk;
 	}
 }
