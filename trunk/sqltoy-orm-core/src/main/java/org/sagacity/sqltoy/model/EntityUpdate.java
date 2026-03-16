@@ -5,9 +5,7 @@ package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
 import java.util.Map;
-
 import javax.sql.DataSource;
-
 import org.sagacity.sqltoy.model.inner.EntityUpdateExtend;
 
 /**
@@ -76,6 +74,16 @@ public class EntityUpdate implements Serializable {
 
 	public EntityUpdate dataSource(DataSource dataSource) {
 		innerModel.dataSource = dataSource;
+		return this;
+	}
+
+	/**
+	 * @TODO 设置执行时上下文数据，如：在拦截器中取值用以业务判断
+	 * @param contextData
+	 * @return
+	 */
+	public EntityUpdate contextData(Object contextData) {
+		innerModel.contextData = contextData;
 		return this;
 	}
 

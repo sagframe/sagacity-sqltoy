@@ -34,6 +34,11 @@ public class UniqueExecutor implements Serializable {
 	 */
 	private DataSource dataSource;
 
+	/**
+	 * 上下文数据, 用于执行过程中的共享数据
+	 */
+	private Object contextData;
+
 	public UniqueExecutor entity(Serializable entity) {
 		this.entity = entity;
 		return this;
@@ -74,4 +79,12 @@ public class UniqueExecutor implements Serializable {
 		return dataSource;
 	}
 
+	public <T> T getContextData() {
+		return (T)contextData;
+	}
+
+	public UniqueExecutor setContextData(Object contextData) {
+		this.contextData = contextData;
+		return this;
+	}
 }

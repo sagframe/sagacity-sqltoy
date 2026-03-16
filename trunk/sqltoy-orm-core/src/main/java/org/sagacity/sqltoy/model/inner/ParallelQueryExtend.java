@@ -61,6 +61,11 @@ public class ParallelQueryExtend implements Serializable {
 	public Boolean showSql;
 
 	/**
+	 * 上下文数据, 用于执行过程中的共享数据
+	 */
+	public Object contextData;
+
+	/**
 	 * 取最上面的记录量
 	 */
 	public double topSize = -1;

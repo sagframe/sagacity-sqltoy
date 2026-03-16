@@ -2,9 +2,7 @@ package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
 import java.util.Map;
-
 import javax.sql.DataSource;
-
 import org.sagacity.sqltoy.model.inner.ParallelQueryExtend;
 
 /**
@@ -115,6 +113,16 @@ public class ParallQuery implements Serializable {
 
 	public ParallQuery showSql(Boolean showSql) {
 		extend.showSql = showSql;
+		return this;
+	}
+
+	/**
+	 * @TODO 设置执行时上下文数据，如：在拦截器中取值用以业务判断
+	 * @param contextData
+	 * @return
+	 */
+	public ParallQuery contextData(Object contextData) {
+		extend.contextData = contextData;
 		return this;
 	}
 }

@@ -416,6 +416,16 @@ public class EntityQuery implements Serializable {
 		return this;
 	}
 
+	/**
+	 * @TODO 设置执行时上下文数据，如：在拦截器中取值用以业务判断
+	 * @param contextData
+	 * @return
+	 */
+	public EntityQuery contextData(Object contextData) {
+		innerModel.contextData = contextData;
+		return this;
+	}
+
 	public EntityQueryExtend getInnerModel() {
 		return innerModel;
 	}
