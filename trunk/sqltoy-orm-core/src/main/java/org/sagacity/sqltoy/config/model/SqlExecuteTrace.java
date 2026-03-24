@@ -6,6 +6,7 @@ package org.sagacity.sqltoy.config.model;
 import java.io.Serializable;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+
 import org.sagacity.sqltoy.model.OperateDetailType;
 import org.sagacity.sqltoy.utils.IdUtil;
 

@@ -122,6 +122,9 @@ public class SqlConfigParseUtils {
 	public final static Pattern START_ELSE_PATTERN = Pattern.compile("(?i)^\\s*\\@else(\\s+|\\s*\\(\\s*\\))");
 	public final static Pattern IF_ALL_PATTERN = Pattern
 			.compile("(?i)\\@((if|elseif)\\s*\\(|else(\\s+|\\s*\\(\\s*\\)))");
+	// public final static String SPLIT_REGEX =
+	// "(?i)\\@split\\(\\s*\\?(?:,([^)]*))?\\s*\\)";
+	public final static Pattern SPLIT_PATTERN = Pattern.compile("(?i)\\@split\\(\\s*\\?(?:,([^)]*))?\\s*\\)");
 
 	public final static String BLANK = " ";
 	// 匹配时已经转小写
@@ -316,6 +319,7 @@ public class SqlConfigParseUtils {
 		processLike(sqlToyResult);
 		// add update 2024-12-12 将@value(?) 参数值中不含?的提前完成处理
 		processValue(sqlToyResult, dialect, true);
+		processSplit(sqlToyResult);
 		// in 处理策略2012-7-10 进行了修改，提供参数preparedStatement.setObject()机制，并同时兼容
 		// 用具体数据替换 in (?)中问号的处理机制
 		processIn(sqlToyResult);
@@ -757,6 +761,93 @@ public class SqlConfigParseUtils {
 	}
 
 	/**
+	 * 处理sql中有@split(?) 或 @spilt(?,';') 或@split(?,int,',') 等函数的场景
+	 *
+	 * @param sqlToyResult
+	 */
+	private static void processSplit(SqlToyResult sqlToyResult) {
+		if (null == sqlToyResult.getParamsValue() || sqlToyResult.getParamsValue().length == 0) {
+			return;
+		}
+		String queryStr = sqlToyResult.getSql();
+		// @split(?) 或@split(?,',');
+		Matcher m = SPLIT_PATTERN.matcher(queryStr);
+		int index = 0;
+		int paramCnt = 0;
+		List paramValueList = CollectionUtil.arrayToList(sqlToyResult.getParamsValue());
+		Object paramValue = null;
+		String groupStr;
+		String splitRegex = "\\s*\\,\\s*";
+		// 转数字
+		boolean toInt = false;
+		while (m.find()) {
+			toInt = false;
+			index = m.start();
+			groupStr = m.group();
+			if (groupStr.contains(",")) {
+				splitRegex = groupStr.substring(groupStr.indexOf(",") + 1, groupStr.length() - 1).trim();
+				// int或integer
+				if (splitRegex.toLowerCase().startsWith("int") && splitRegex.contains(",")) {
+					splitRegex = splitRegex.substring(splitRegex.indexOf(",") + 1).trim();
+					toInt = true;
+				}
+				if (splitRegex.trim().equals("")) {
+					splitRegex = "\\s";
+				} else if ((splitRegex.startsWith("'") && splitRegex.endsWith("'"))
+						|| (splitRegex.startsWith("\"") && splitRegex.endsWith("\""))) {
+					splitRegex = splitRegex.substring(1, splitRegex.length() - 1);
+				}
+			}
+			paramCnt = StringUtil.matchCnt(queryStr.substring(0, index), ARG_NAME_PATTERN, 0);
+			paramValue = paramValueList.get(paramCnt);
+			// 切割成数组重新放入参数集合中
+			if (paramValue != null && paramValue instanceof String) {
+				String paramStr = paramValue.toString();
+				// 存在头尾单引号或双引号
+				boolean hasDot = (paramStr.startsWith("'") && paramStr.endsWith("'"))
+						|| (paramStr.startsWith("\"") && paramStr.endsWith("\""));
+				boolean clearHeadAndTail = false;
+				String tmpStr;
+				// 字符串本身开头包含逗号或双引号
+				if (hasDot) {
+					tmpStr = paramStr.substring(1, paramStr.length() - 1);
+					if (tmpStr.contains("'") || tmpStr.contains("\"")) {
+						clearHeadAndTail = true;
+					} else {
+						paramStr = tmpStr;
+					}
+				}
+				// 分割字符，并trim处理
+				String[] realParamValue = StringUtil.splitRegex(paramStr, splitRegex, true);
+				// 去除首尾的单引号或双引号
+				if (clearHeadAndTail) {
+					for (int i = 0; i < realParamValue.length; i++) {
+						tmpStr = realParamValue[i];
+						realParamValue[i] = tmpStr.substring(1, tmpStr.length() - 1);
+					}
+				}
+				// 转数字
+				if (toInt) {
+					List<Integer> intList = new ArrayList<>();
+					for (int i = 0; i < realParamValue.length; i++) {
+						tmpStr = realParamValue[i].trim();
+						// 去除空白
+						if (!tmpStr.equals("")) {
+							intList.add(Integer.parseInt(tmpStr));
+						}
+					}
+					paramValueList.set(paramCnt, intList.toArray(new Integer[0]));
+				} else {
+					paramValueList.set(paramCnt, realParamValue);
+				}
+			}
+			sqlToyResult.setParamsValue(paramValueList.toArray());
+			// 替换sql中的@split(?)为?
+			sqlToyResult.setSql(StringUtil.replaceRegex(sqlToyResult.getSql(), SPLIT_PATTERN, "?", 1, 0));
+		}
+	}
+
+	/**
 	 * @update 2021-04-29 @value放在最后处理，同时兼容replaceNull 造成@value(?) 变成@value(null)的情况
 	 * @TODO 处理直接显示参数值:#[@value(:paramNamed) sql]
 	 * @param sqlToyResult
@@ -1127,7 +1218,7 @@ public class SqlConfigParseUtils {
 
 	/**
 	 * add 2024-08-10
-	 * 
+	 *
 	 * @TODO 判断sql是否是 (t.id,t.name) in (?,?) 多字段in场景
 	 * @param sqlPart
 	 * @return

@@ -968,7 +968,7 @@ public class ParamFilterUtils {
 			}
 		} else {
 			String[] arrays = null;
-			String split = splitSign.trim();
+			String split = (splitSign == null) ? "," : splitSign.trim();
 			if (",".equals(split)) {
 				arrays = paramValue.toString().split("\\,");
 			} else if (";".equals(split)) {
@@ -1794,6 +1794,8 @@ public class ParamFilterUtils {
 			paramFilter.setUpdateValue(filter.getAssignValue());
 			// for to-string
 			paramFilter.setAddQuote(filter.getAddQueto());
+			// split
+			paramFilter.setSplit(filter.getSplitSign());
 			// 加减天数
 			paramFilter.setIncrementTime(Double.valueOf(filter.getIncrease()));
 			paramFilter.setTimeUnit(filter.getTimeUnit());

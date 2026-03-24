@@ -628,6 +628,18 @@ public class SqlConfigParseUtilsTest {
 		System.err.println(result.getSql());
 	}
 
+	@Test
+	public void testSplit() throws Exception {
+		String sql = "select * from view_lowcode_postion where 1=1 #[@blank(:roleId) and role_id=:roleId]"
+				+ "#[@blank(:id) and id=:id] and id in (@split(:idArray,int,','))";
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "roleId", "id", "idArray" },
+				new Object[] { "a", null, "1,2,4" });
+		System.err.println(result.getSql());
+		for (Object obj : result.getParamsValue()) {
+			System.err.println(JSON.toJSONString(obj));
+		}
+	}
+
 	// 如何解决@loop() 循环中存在in (:ids) ids数据超过1000的问题，用@include(:sqlScript) 来替换loop,
 	@Test
 	public void testDynamicInclude() throws Exception {
