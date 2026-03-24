@@ -16,8 +16,10 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.SqlScriptLoader;
 import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.dao.LightDao;
+import org.sagacity.sqltoy.dao.SqlToyDao;
 import org.sagacity.sqltoy.dao.SqlToyLazyDao;
 import org.sagacity.sqltoy.dao.impl.LightDaoImpl;
+import org.sagacity.sqltoy.dao.impl.SqlToyDaoImpl;
 import org.sagacity.sqltoy.dao.impl.SqlToyLazyDaoImpl;
 import org.sagacity.sqltoy.integration.ConnectionFactory;
 import org.sagacity.sqltoy.integration.impl.SpringAppContext;
@@ -598,6 +600,14 @@ public class SqltoyAutoConfiguration {
 		SqlToyLazyDaoImpl lazyDao = new SqlToyLazyDaoImpl();
 		lazyDao.setSqlToyContext(sqlToyContext);
 		return lazyDao;
+	}
+	
+	@Bean(name = "sqlToyDao")
+	@ConditionalOnMissingBean
+	public SqlToyDao sqlToyDao(SqlToyContext sqlToyContext) {
+		SqlToyDaoImpl sqlToyDao = new SqlToyDaoImpl();
+		sqlToyDao.setSqlToyContext(sqlToyContext);
+		return sqlToyDao;
 	}
 
 	@Bean(name = "lightDao")

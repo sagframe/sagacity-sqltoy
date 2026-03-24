@@ -5,7 +5,9 @@ package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
 import java.util.Map;
+
 import javax.sql.DataSource;
+
 import org.sagacity.sqltoy.model.inner.EntityUpdateExtend;
 
 /**

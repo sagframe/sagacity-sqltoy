@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
+
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.config.annotation.Entity;
