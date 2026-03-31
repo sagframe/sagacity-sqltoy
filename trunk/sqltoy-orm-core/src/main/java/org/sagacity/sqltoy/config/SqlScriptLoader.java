@@ -261,6 +261,13 @@ public class SqlScriptLoader {
 				if (result == null) {
 					result = sqlCache.get(realDialect.concat("_").concat(sqlKey));
 				}
+				// 兼容oracle11 sql获取不到，用oracle再次获取
+				if (result == null && realDialect.equals(Dialect.ORACLE11)) {
+					result = sqlCache.get(sqlKey.concat("_oracle"));
+					if (result == null) {
+						result = sqlCache.get("oracle_".concat(sqlKey));
+					}
+				}
 				// 兼容一下sqlserver的命名
 				if (result == null && realDialect.equals(Dialect.SQLSERVER)) {
 					result = sqlCache.get(sqlKey.concat("_mssql"));
