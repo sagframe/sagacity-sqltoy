@@ -28,6 +28,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -395,6 +396,12 @@ public class SqlUtil {
 				pst.setBigDecimal(paramIndex, new BigDecimal(tmpStr));
 			} else if (jdbcType == java.sql.Types.INTEGER) {
 				pst.setInt(paramIndex, Integer.valueOf(tmpStr));
+			} else if (jdbcType == java.sql.Types.DATE) {
+				pst.setDate(paramIndex, new java.sql.Date(DateUtil.parseString(tmpStr).getTime()));
+			} else if (jdbcType == java.sql.Types.TIMESTAMP) {
+				pst.setTimestamp(paramIndex, new Timestamp(DateUtil.parseString(tmpStr).getTime()));
+			} else if (jdbcType == java.sql.Types.TIME) {
+				pst.setTime(paramIndex, new Time(DateUtil.parseString(tmpStr).getTime()));
 			} else {
 				if (jdbcType == java.sql.Types.BOOLEAN) {
 					if (tmpStr.equalsIgnoreCase("true") || tmpStr.equals("1")) {
@@ -426,22 +433,49 @@ public class SqlUtil {
 			if (jdbcType == java.sql.Types.TIMESTAMP_WITH_TIMEZONE) {
 				pst.setObject(paramIndex,
 						((LocalDateTime) paramValue).atZone(SqlToyConstants.getZoneId()).toOffsetDateTime());
+			} else if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NCHAR
+					|| jdbcType == java.sql.Types.NVARCHAR) {
+				pst.setString(paramIndex, ((LocalDateTime) paramValue).format(DateTimeFormatter.ISO_DATE_TIME));
 			} else {
 				pst.setTimestamp(paramIndex, Timestamp.valueOf((LocalDateTime) paramValue));
 			}
 		} else if (paramValue instanceof OffsetDateTime) {
-			pst.setObject(paramIndex, (OffsetDateTime) paramValue);
+			if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NCHAR
+					|| jdbcType == java.sql.Types.NVARCHAR) {
+				pst.setString(paramIndex, ((OffsetDateTime) paramValue).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+			} else {
+				pst.setObject(paramIndex, (OffsetDateTime) paramValue);
+			}
 		} else if (paramValue instanceof ZonedDateTime) {
-			pst.setObject(paramIndex, ((ZonedDateTime) paramValue).toOffsetDateTime());
+			if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NCHAR
+					|| jdbcType == java.sql.Types.NVARCHAR) {
+				pst.setString(paramIndex, (((ZonedDateTime) paramValue).toOffsetDateTime())
+						.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+			} else {
+				pst.setObject(paramIndex, ((ZonedDateTime) paramValue).toOffsetDateTime());
+			}
 		} else if (paramValue instanceof BigDecimal) {
-			pst.setBigDecimal(paramIndex, (BigDecimal) paramValue);
+			if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NCHAR
+					|| jdbcType == java.sql.Types.NVARCHAR) {
+				pst.setString(paramIndex, ((BigDecimal) paramValue).toPlainString());
+			} else {
+				pst.setBigDecimal(paramIndex, (BigDecimal) paramValue);
+			}
 		} else if (paramValue instanceof java.time.LocalDate) {
-			pst.setDate(paramIndex, java.sql.Date.valueOf((LocalDate) paramValue));
+			if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NCHAR
+					|| jdbcType == java.sql.Types.NVARCHAR) {
+				pst.setString(paramIndex, ((LocalDate) paramValue).format(DateTimeFormatter.ISO_LOCAL_DATE));
+			} else {
+				pst.setDate(paramIndex, java.sql.Date.valueOf((LocalDate) paramValue));
+			}
 		} else if (paramValue instanceof java.sql.Timestamp) {
 			// 带时区的日期类型
 			if (jdbcType == java.sql.Types.TIMESTAMP_WITH_TIMEZONE) {
 				pst.setObject(paramIndex, (DateUtil.asLocalDateTime((java.sql.Timestamp) paramValue))
 						.atZone(SqlToyConstants.getZoneId()).toOffsetDateTime());
+			} else if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NCHAR
+					|| jdbcType == java.sql.Types.NVARCHAR) {
+				pst.setString(paramIndex, DateUtil.formatDate(paramValue, DateUtil.FORMAT.DATETIME_HORIZONTAL));
 			} else {
 				pst.setTimestamp(paramIndex, (java.sql.Timestamp) paramValue);
 			}
@@ -450,6 +484,9 @@ public class SqlUtil {
 			if (jdbcType == java.sql.Types.TIMESTAMP_WITH_TIMEZONE) {
 				pst.setObject(paramIndex, (DateUtil.asLocalDateTime((Date) paramValue))
 						.atZone(SqlToyConstants.getZoneId()).toOffsetDateTime());
+			} else if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NCHAR
+					|| jdbcType == java.sql.Types.NVARCHAR) {
+				pst.setString(paramIndex, DateUtil.formatDate(paramValue, DateUtil.FORMAT.DATETIME_HORIZONTAL));
 			} else {
 				if (dbType == DBType.CLICKHOUSE) {
 					pst.setDate(paramIndex, new java.sql.Date(((java.util.Date) paramValue).getTime()));
@@ -465,7 +502,12 @@ public class SqlUtil {
 				pst.setBigDecimal(paramIndex, new BigDecimal(((BigInteger) paramValue)));
 			}
 		} else if (paramValue instanceof java.lang.Double) {
-			pst.setDouble(paramIndex, ((Double) paramValue));
+			if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NCHAR
+					|| jdbcType == java.sql.Types.NVARCHAR) {
+				pst.setString(paramIndex, paramValue.toString());
+			} else {
+				pst.setDouble(paramIndex, ((Double) paramValue));
+			}
 		} else if (paramValue instanceof java.lang.Long) {
 			if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NCHAR
 					|| jdbcType == java.sql.Types.NVARCHAR) {
@@ -498,7 +540,12 @@ public class SqlUtil {
 				pst.setBytes(paramIndex, (byte[]) paramValue);
 			}
 		} else if (paramValue instanceof java.lang.Float) {
-			pst.setFloat(paramIndex, ((Float) paramValue));
+			if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NCHAR
+					|| jdbcType == java.sql.Types.NVARCHAR) {
+				pst.setString(paramIndex, paramValue.toString());
+			} else {
+				pst.setFloat(paramIndex, ((Float) paramValue));
+			}
 		} else if (paramValue instanceof java.sql.Blob) {
 			Blob blob = (java.sql.Blob) paramValue;
 			int size = (int) blob.length();
@@ -508,7 +555,12 @@ public class SqlUtil {
 				pst.setBytes(paramIndex, new byte[0]);
 			}
 		} else if (paramValue instanceof java.sql.Date) {
-			pst.setDate(paramIndex, (java.sql.Date) paramValue);
+			if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NCHAR
+					|| jdbcType == java.sql.Types.NVARCHAR) {
+				pst.setString(paramIndex, DateUtil.formatDate(paramValue, DateUtil.FORMAT.DATETIME_HORIZONTAL));
+			} else {
+				pst.setDate(paramIndex, (java.sql.Date) paramValue);
+			}
 		} else if (paramValue instanceof java.lang.Boolean) {
 			// update 2023-10-16 增强特殊情况下的兼容
 			if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.CHAR) {
@@ -520,21 +572,41 @@ public class SqlUtil {
 				pst.setBoolean(paramIndex, (Boolean) paramValue);
 			}
 		} else if (paramValue instanceof java.time.LocalTime) {
-			pst.setTime(paramIndex, java.sql.Time.valueOf((LocalTime) paramValue));
+			if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NCHAR
+					|| jdbcType == java.sql.Types.NVARCHAR) {
+				pst.setString(paramIndex, ((LocalTime) paramValue).format(DateTimeFormatter.ISO_LOCAL_TIME));
+			} else {
+				pst.setTime(paramIndex, java.sql.Time.valueOf((LocalTime) paramValue));
+			}
 		} else if (paramValue instanceof java.sql.Time) {
-			pst.setTime(paramIndex, (java.sql.Time) paramValue);
+			if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NCHAR
+					|| jdbcType == java.sql.Types.NVARCHAR) {
+				pst.setString(paramIndex, DateUtil.formatDate(paramValue, "HH:mm:ss"));
+			} else {
+				pst.setTime(paramIndex, (java.sql.Time) paramValue);
+			}
 		} else if (paramValue instanceof java.lang.Character) {
 			tmpStr = ((Character) paramValue).toString();
 			pst.setString(paramIndex, tmpStr);
 		} else if (paramValue instanceof java.lang.Short) {
-			pst.setShort(paramIndex, (java.lang.Short) paramValue);
+			if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NCHAR
+					|| jdbcType == java.sql.Types.NVARCHAR) {
+				pst.setString(paramIndex, paramValue.toString());
+			} else {
+				pst.setShort(paramIndex, (java.lang.Short) paramValue);
+			}
 		} else if (paramValue instanceof java.lang.Byte) {
 			pst.setByte(paramIndex, (Byte) paramValue);
 		} else if (paramValue instanceof Object[]) {
 			setArray(dbType, conn, pst, paramIndex, paramValue);
 		} // update 2023-08-02 增加默认的枚举类型处理
 		else if (paramValue instanceof Enum) {
-			pst.setObject(paramIndex, BeanUtil.getEnumValue(paramValue));
+			if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NCHAR
+					|| jdbcType == java.sql.Types.NVARCHAR) {
+				pst.setString(paramIndex, BeanUtil.getEnumValue(paramValue).toString());
+			} else {
+				pst.setObject(paramIndex, BeanUtil.getEnumValue(paramValue));
+			}
 		}
 		// update 2023-5-26 增加集合类型场景支持(对应数据库Array)
 		else if (paramValue instanceof Collection) {
