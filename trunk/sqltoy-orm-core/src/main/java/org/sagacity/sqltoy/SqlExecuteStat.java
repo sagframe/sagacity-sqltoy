@@ -53,6 +53,9 @@ public class SqlExecuteStat {
 	// 通过ThreadLocal 来保存线程数据
 	private static ThreadLocal<SqlExecuteTrace> threadLocal = new TransmittableThreadLocal<SqlExecuteTrace>();
 
+	// 通过ThreadLocal 来保存开启调试模式数据
+	private static ThreadLocal<Boolean> threadLocalDebug = new TransmittableThreadLocal<>();
+
 	// sql执行超时处理器
 	public static OverTimeSqlHandler overTimeSqlHandler;
 
@@ -282,6 +285,8 @@ public class SqlExecuteStat {
 		destroyLog();
 		threadLocal.remove();
 		threadLocal.set(null);
+		threadLocalDebug.remove();
+		threadLocalDebug.set(null);
 	}
 
 	/**
@@ -406,4 +411,11 @@ public class SqlExecuteStat {
 		threadLocal.set(sqlTrace);
 	}
 
+	public static Boolean getShowSql() {
+		return threadLocalDebug.get();
+	}
+
+	public static void setShowSql(Boolean debug) {
+		threadLocalDebug.set(debug);
+	}
 }

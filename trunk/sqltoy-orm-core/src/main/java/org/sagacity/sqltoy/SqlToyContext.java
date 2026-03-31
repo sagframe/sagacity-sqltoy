@@ -903,7 +903,7 @@ public class SqlToyContext {
 	 * @return the debug
 	 */
 	public boolean isDebug() {
-		return debug;
+		return SqlExecuteStat.getShowSql() == null ? debug : SqlExecuteStat.getShowSql();
 	}
 
 	/**
