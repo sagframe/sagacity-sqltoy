@@ -374,7 +374,7 @@ public class NumberUtil {
 				sum = sum.add(bigArray[i]);
 			}
 		}
-		return sum.divide(new BigDecimal(bigArray.length), 8, RoundingMode.HALF_UP);
+		return sum.divide(new BigDecimal(bigArray.length), 4, RoundingMode.HALF_UP);
 	}
 
 	/**
