@@ -175,7 +175,9 @@ public class SqlScriptLoader {
 				int repeatSqlSize = repeatSql.size();
 				if (repeatSqlSize > 0) {
 					StringBuilder repeatSqlIds = new StringBuilder();
-					repeatSqlIds.append("\n/*----------- 总计发现:" + repeatSqlSize + " 个重复的sqlId,请检查处理---------------\n");
+					repeatSqlIds.append("\n/*----------- 总计发现:");
+					repeatSqlIds.append(repeatSqlSize);
+					repeatSqlIds.append(" 个重复的sqlId,请检查处理---------------\n");
 					if (breakWhenSqlRepeat) {
 						repeatSqlIds.append("/*--提示:设置 spring.sqltoy.breakWhenSqlRepeat=false 可允许sqlId重复并覆盖!-------\n");
 					}
@@ -470,7 +472,7 @@ public class SqlScriptLoader {
 				watcher.interrupt();
 			}
 		} catch (Exception e) {
-
+			logger.warn("sql文件更新检测线程销毁异常!" + e.getMessage());
 		}
 	}
 }

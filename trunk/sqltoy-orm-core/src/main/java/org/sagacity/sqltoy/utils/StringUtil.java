@@ -1,6 +1,7 @@
 package org.sagacity.sqltoy.utils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -65,7 +66,7 @@ public class StringUtil {
 	}
 
 	/**
-	 * 转义注释中的特殊字符（修复：逐字符检测，避免重复转义+部分转义遗漏）
+	 * 转义注释中的特殊字符（修复:逐字符检测，避免重复转义+部分转义遗漏）
 	 *
 	 * @param commentStr 原始注释字符串（可为null/空）
 	 * @return 转义后的字符串，null/空输入返回原值
@@ -127,11 +128,7 @@ public class StringUtil {
 			return true;
 		}
 		if (str instanceof CharSequence) {
-			if ("".equals(str.toString().trim())) {
-				return true;
-			} else {
-				return false;
-			}
+			return str.toString().trim().isEmpty();
 		}
 		// 下面做了一些冗余性校验
 		if ((str instanceof Collection) && ((Collection) str).isEmpty()) {
@@ -695,7 +692,7 @@ public class StringUtil {
 	 * @param filterMap
 	 * @return
 	 */
-	public static String[] splitExcludeSymMark(String source, String splitSign, HashMap filterMap) {
+	public static String[] splitExcludeSymMark(String source, String splitSign, Map<String, String> filterMap) {
 		if (source == null) {
 			return null;
 		}
@@ -822,7 +819,7 @@ public class StringUtil {
 	 * @param filterMap
 	 * @return
 	 */
-	public static List<String[]> matchFilters(String source, HashMap filterMap) {
+	public static List<String[]> matchFilters(String source, Map<String, String> filterMap) {
 		List<String[]> result = new ArrayList<String[]>();
 		Iterator iter = filterMap.entrySet().iterator();
 		String beginSign;
@@ -939,10 +936,9 @@ public class StringUtil {
 	 * @return
 	 */
 	public static boolean hasChinese(String str) {
-		if (chinaPattern.matcher(str).find()) {
-			return true;
-		}
-		return false;
+		if (str == null)
+			return false;
+		return chinaPattern.matcher(str).find();
 	}
 
 	/**
@@ -1124,15 +1120,9 @@ public class StringUtil {
 	}
 
 	public static String[] trimArray(String[] paramNames) {
-		if (paramNames == null || paramNames.length == 0) {
-			return paramNames;
-		}
-		int size = paramNames.length;
-		String[] realParamNames = new String[size];
-		for (int i = 0; i < size; i++) {
-			realParamNames[i] = (paramNames[i] == null) ? null : paramNames[i].trim();
-		}
-		return realParamNames;
+		if (paramNames == null)
+			return null;
+		return Arrays.stream(paramNames).map(s -> s == null ? null : s.trim()).toArray(String[]::new);
 	}
 
 	/**

@@ -168,10 +168,11 @@ public class MySqlDialect implements Dialect {
 				dbType, dialect, autoCommit, tableName);
 	}
 
+	// 已经测试:mysql9.7 也存在此问题
 	// mysql的on duplicate key update 针对非空字段先校验了insert导致无法走到update set
 	// xxx=ifnull(null,xxx)
 	// step1: create table
-	//
+	// 
 	// CREATE TABLE TEST1 (
 	// ID varchar(100) NOT NULL,
 	// NAME varchar(100) NOT NULL,

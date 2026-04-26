@@ -9,6 +9,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import org.sagacity.sqltoy.SqlToyConstants;
+import org.sagacity.sqltoy.config.model.GeneratedType;
 
 /**
  * @project sqltoy-orm
@@ -39,6 +40,12 @@ public @interface Column {
 
 	// 小数位长度
 	int scale() default 0;
+
+	// 计算列类型
+	GeneratedType generatedType() default GeneratedType.NULL;
+
+	// 计算列的逻辑脚本,用于后续生成数据库ddl，如 a+b
+	String generatedScript() default "";
 
 	// 是否是关键词(目前没有使用)
 	boolean keyword() default false;

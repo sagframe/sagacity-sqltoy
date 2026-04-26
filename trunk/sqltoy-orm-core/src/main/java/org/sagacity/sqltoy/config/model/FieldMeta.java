@@ -58,6 +58,11 @@ public class FieldMeta implements Serializable {
 	// 对应数据库中的类型:java.sql.Types.xxx
 	private int type;
 
+	// 计算列类型
+	private int generatedType = 0;
+
+	private String generatedScript;
+
 	/**
 	 * 字段java类型(已经转小写)
 	 */
@@ -321,4 +326,21 @@ public class FieldMeta implements Serializable {
 	public void setAssistPk(boolean assistPk) {
 		this.assistPk = assistPk;
 	}
+
+	public int getGeneratedType() {
+		return generatedType;
+	}
+
+	public void setGeneratedType(int generatedType) {
+		this.generatedType = generatedType;
+	}
+
+	public String getGeneratedScript() {
+		return generatedScript;
+	}
+
+	public void setGeneratedScript(String generatedScript) {
+		this.generatedScript = generatedScript;
+	}
+
 }

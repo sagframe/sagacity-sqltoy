@@ -45,6 +45,7 @@ import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.FieldSecureConfig;
 import org.sagacity.sqltoy.config.model.ForeignModel;
+import org.sagacity.sqltoy.config.model.GeneratedType;
 import org.sagacity.sqltoy.config.model.IndexModel;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.ShardingConfig;
@@ -645,6 +646,11 @@ public class EntityManager {
 				(SqlToyConstants.DEFAULT_NULL.equals(column.defaultValue())) ? null : column.defaultValue(),
 				column.nativeType(), column.type(), column.nullable(), column.keyword(),
 				Long.valueOf(column.length()).intValue(), column.precision(), column.scale());
+		// 计算列
+		if (column.generatedType() != null && column.generatedType() != GeneratedType.NULL) {
+			fieldMeta.setGeneratedType(column.generatedType().getValue());
+			fieldMeta.setGeneratedScript(column.generatedScript());
+		}
 		// 增加字段
 		allFieldAry.add(column.name());
 		// 字段是否自增

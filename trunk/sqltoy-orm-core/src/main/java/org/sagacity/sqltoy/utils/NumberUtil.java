@@ -40,8 +40,6 @@ public class NumberUtil {
 	 */
 	private final static String NUMBER_REGEX = "^[+-]?[\\d]+(\\.\\d+)?$";
 
-	protected final BigDecimal ONE_BIGDECIMAL = new BigDecimal(1);
-
 	// 最大到京
 	private final static String[] moneyUOM = { "拾", "佰", "仟", "万", "拾", "佰", "仟", "亿", "拾", "佰", "仟", "万", "拾", "佰",
 			"仟", "兆", "拾", "佰", "仟", "万", "拾", "佰", "仟", "亿", "拾", "佰", "仟", "万", "拾", "佰", "仟", "京" };
@@ -49,6 +47,13 @@ public class NumberUtil {
 			"兆", "十", "百", "千", "万", "十", "百", "千", "亿", "十", "百", "千", "万", "十", "百", "千", "京" };
 	private final static String[] capitalMoneyNumber = { "", "壹", "贰", "叁", "肆", "伍", "陆", "柒", "捌", "玖" };
 	private final static String[] captialNumber = { "", "一", "二", "三", "四", "五", "六", "七", "八", "九", "十" };
+
+	private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
+	// 一亿常量
+	private static final BigDecimal HUNDRED_MILLION = new BigDecimal("100000000");
+	// 一万
+	private static final BigDecimal TEN_THOUSAND = new BigDecimal("10000");
 
 	public final static class Pattern {
 		public final static String CAPITAL = "capital";
@@ -247,10 +252,10 @@ public class NumberUtil {
 			splitsCapitalMoney[2] = capitalMoney.substring(capitalMoney.indexOf("元") + 1);
 		}
 		// 分段处理合并
-		BigDecimal result = parseMillMoney(splitsCapitalMoney[0]).multiply(new BigDecimal("100000000"))
+		BigDecimal result = parseMillMoney(splitsCapitalMoney[0]).multiply(HUNDRED_MILLION)
 				.add(parseMillMoney(splitsCapitalMoney[1])).add(parseLowThousandMoney(splitsCapitalMoney[2]));
 		if (capitalMoney.indexOf("负") == 0) {
-			return new BigDecimal(0).subtract(result).setScale(scale, RoundingMode.HALF_UP);
+			return BigDecimal.ZERO.subtract(result).setScale(scale, RoundingMode.HALF_UP);
 		}
 		return result.setScale(scale, RoundingMode.HALF_UP);
 	}
@@ -285,7 +290,7 @@ public class NumberUtil {
 		}
 
 		// 小于零
-		if (money.compareTo(new BigDecimal("0")) < 0) {
+		if (money.compareTo(BigDecimal.ZERO) < 0) {
 			result = "负" + result;
 		}
 
@@ -365,9 +370,11 @@ public class NumberUtil {
 			return sum;
 		}
 		for (int i = 0; i < bigArray.length; i++) {
-			sum = sum.add(bigArray[i]);
+			if (bigArray[i] != null) {
+				sum = sum.add(bigArray[i]);
+			}
 		}
-		return sum.divide(new BigDecimal(bigArray.length));
+		return sum.divide(new BigDecimal(bigArray.length), 8, RoundingMode.HALF_UP);
 	}
 
 	/**
@@ -381,7 +388,9 @@ public class NumberUtil {
 			return sum;
 		}
 		for (int i = 0; i < bigArray.length; i++) {
-			sum = sum.add(bigArray[i]);
+			if (bigArray[i] != null) {
+				sum = sum.add(bigArray[i]);
+			}
 		}
 		return sum;
 	}
@@ -410,7 +419,6 @@ public class NumberUtil {
 			if (minIntDigits != null) {
 				nf.setMinimumIntegerDigits(minIntDigits.intValue());
 			}
-
 			// 最大小数位
 			if (maxFractionDigits != null) {
 				nf.setMaximumFractionDigits(maxFractionDigits.intValue());
@@ -421,7 +429,7 @@ public class NumberUtil {
 			}
 			return nf.parse(parseTarget.replace(",", ""));
 		} catch (ParseException e) {
-			e.printStackTrace();
+			logger.error("value:" + parseTarget + "" + e.getMessage());
 		}
 		return null;
 	}
@@ -444,7 +452,7 @@ public class NumberUtil {
 		} else {
 			lowthousand = capitalMoneyStr;
 		}
-		return parseLowThousandMoney(millStr).multiply(new BigDecimal("10000")).add(parseLowThousandMoney(lowthousand));
+		return parseLowThousandMoney(millStr).multiply(TEN_THOUSAND).add(parseLowThousandMoney(lowthousand));
 	}
 
 	/**
@@ -544,8 +552,11 @@ public class NumberUtil {
 	}
 
 	public static int getRandomNum(int start, int end) {
-		long value = Math.abs(new SecureRandom().nextLong()) % (end - start);
-		return Long.valueOf(value + start).intValue();
+		if (start >= end) {
+			throw new IllegalArgumentException("start必须小于end");
+		}
+		// 生成 [start, end) 区间的随机 int
+		return start + SECURE_RANDOM.nextInt(end - start);
 	}
 
 	/**
@@ -713,7 +724,6 @@ public class NumberUtil {
 		} else if (s.length() < 2) {
 			s = "0" + s;
 		}
-
 		if (s.startsWith("0")) // 07 - seven 是否小於10
 		{
 			value = parseFirst(s);
@@ -730,8 +740,8 @@ public class NumberUtil {
 	}
 
 	private static String parseMore(String s) {
-		String[] a = new String[] { "", "THOUSAND", "MILLION", "BILLION", "TRILLION", "QUADRILLION" };
-		return a[Integer.parseInt(s)];
+		String[] unitAry = new String[] { "", "THOUSAND", "MILLION", "BILLION", "TRILLION", "QUADRILLION" };
+		return unitAry[Integer.parseInt(s)];
 	}
 
 	// 制作叁位的数
