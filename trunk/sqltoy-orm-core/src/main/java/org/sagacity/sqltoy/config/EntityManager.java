@@ -752,10 +752,16 @@ public class EntityManager {
 		if (id != null && !id.isAssist()) {
 			fieldMeta.setPK(true);
 			// 主键生成策略
-			entityMeta.setIdStrategy(PKStrategy.getPKStrategy(id.strategy().toLowerCase()));
+			if (StringUtil.isNotBlank(id.strategy())) {
+				entityMeta.setIdStrategy(PKStrategy.getPKStrategy(id.strategy().toLowerCase()));
+			}
 			entityMeta.setSequence(id.sequence());
 			String idGenerator = id.generator();
 			if (StringUtil.isNotBlank(idGenerator)) {
+				// GENERATOR不为空且主键策略未配置，则主键策略默认为PKStrategy.GENERATOR
+				if (StringUtil.isBlank(id.strategy()) || id.strategy().equals("assign")) {
+					entityMeta.setIdStrategy(PKStrategy.GENERATOR);
+				}
 				processIdGenerator(sqlToyContext, entityMeta, idGenerator);
 				entityMeta.setIdGenerator(IdGeneratorsInstance.get(idGenerator));
 			}
