@@ -3,9 +3,11 @@ package org.sagacity.sqltoy.utils;
 import java.math.BigDecimal;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
@@ -46,6 +48,8 @@ public class IdUtil {
 
 	// 根据表名存放当前毫秒对应的计数值，毫秒变化就重新计数
 	private static ConcurrentHashMap<String, CurrentTimeMaxValue> tablesCurrentTimeId = new ConcurrentHashMap<String, CurrentTimeMaxValue>();
+
+	private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyMMddHHmmssSSS");
 
 	private IdUtil() {
 
@@ -94,9 +98,9 @@ public class IdUtil {
 	public static BigDecimal getNanoTimeId(String identityName, String workerId) {
 		String realIdentityName = StringUtil.isBlank(identityName) ? SQLTOY_ID : identityName;
 		long[] currentValue = getCurrentValue(realIdentityName, 99999999);
-		DateFormat df = new SimpleDateFormat("yyMMddHHmmssSSS");
+		LocalDateTime nowTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(currentValue[0]), ZoneId.systemDefault());
 		// 15位
-		String nowTimeStr = df.format(new Date(currentValue[0]));
+		String nowTimeStr = DATE_FORMATTER.format(nowTime);
 		// 8位
 		String currentId = StringUtil.addLeftZero2Len("" + (currentValue[1] % 100000000), 8);
 		// 3位主机ID,根据IP提取,默认提取IPv4的后3位
@@ -130,7 +134,7 @@ public class IdUtil {
 				try {
 					Thread.sleep(1);
 				} catch (Exception e) {
-
+					Thread.currentThread().interrupt();
 				}
 				currentValue.setCurrentTime(System.currentTimeMillis());
 				currentValue.setValue(1);
@@ -177,7 +181,7 @@ public class IdUtil {
 				netCards = ni.getInetAddresses();
 				while (netCards.hasMoreElements()) {
 					ip = (InetAddress) netCards.nextElement();
-					if (!ip.isLoopbackAddress() && (hasIPV6 ? true : ip.getHostAddress().indexOf(":") == -1)) {
+					if (!ip.isLoopbackAddress() && (hasIPV6 || ip.getHostAddress().indexOf(":") == -1)) {
 						if (hasHostName && !result.contains(ip.getHostName())) {
 							result.add(ip.getHostName());
 						}

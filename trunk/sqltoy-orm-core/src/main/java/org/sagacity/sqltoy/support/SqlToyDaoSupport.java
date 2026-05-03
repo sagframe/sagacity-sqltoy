@@ -1181,7 +1181,7 @@ public class SqlToyDaoSupport {
 			return 0L;
 		}
 		EntityMeta entityMeta = getEntityMeta(entity.getClass());
-		return this.update(entity, (entityMeta == null) ? null : entityMeta.getRejectIdFieldArray(),
+		return this.update(entity, (entityMeta == null) ? null : entityMeta.getRejectIdFieldArray(true),
 				getDataSource(dataSource));
 	}
 
@@ -1233,7 +1233,7 @@ public class SqlToyDaoSupport {
 			return 0L;
 		}
 		EntityMeta entityMeta = getEntityMeta(entities.get(0).getClass());
-		return updateAll(entities, (entityMeta == null) ? null : entityMeta.getRejectIdFieldArray(), null);
+		return updateAll(entities, (entityMeta == null) ? null : entityMeta.getRejectIdFieldArray(true), null);
 	}
 
 	protected Long saveOrUpdate(final Serializable entity, final String... forceUpdateProps) {
@@ -1498,7 +1498,7 @@ public class SqlToyDaoSupport {
 		}
 		String businessIdType = entityMeta.getColumnJavaType(entityMeta.getBusinessIdField());
 		Integer[] relatedColumn = entityMeta.getBizIdRelatedColIndex();
-		Object[] fullParamValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getFieldsArray());
+		Object[] fullParamValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getFieldsArray(false));
 		// 提取关联属性的值
 		Object[] relatedColValue = null;
 		if (relatedColumn != null) {
@@ -1971,7 +1971,7 @@ public class SqlToyDaoSupport {
 		Set<String> notSelect = innerModel.notSelectFields;
 		if (notSelect != null) {
 			List<String> selectFields = new ArrayList<String>();
-			for (String field : entityMeta.getFieldsArray()) {
+			for (String field : entityMeta.getFieldsArray(false)) {
 				if (!notSelect.contains(field.toLowerCase())) {
 					selectFields.add(field);
 				}
@@ -2627,7 +2627,7 @@ public class SqlToyDaoSupport {
 		if (entityMeta == null) {
 			throw new IllegalArgumentException("Class=[" + entityClass.getName() + "]没有@Entity标记为POJO实体对象!");
 		}
-		if (entityMeta.getFieldsArray() == null || entityMeta.getFieldsArray().length == 0) {
+		if (entityMeta.getFieldsArray(false) == null || entityMeta.getFieldsArray(false).length == 0) {
 			throw new IllegalArgumentException("Class=[" + entityClass.getName() + "]没有@Column定义具体的字段信息!");
 		}
 		if (validatePK && (entityMeta.getIdArray() == null || entityMeta.getIdArray().length == 0)) {

@@ -144,7 +144,7 @@ public class SqlToyConstantsTest {
 		double multiply = 1.2;
 		System.err.println(((divData - divedData) * multiply) / divedData);
 		BigDecimal value = new BigDecimal(((divData - divedData) * multiply) / divedData).setScale(3,
-				RoundingMode.FLOOR);
+				RoundingMode.HALF_UP);
 
 		System.err.println(value);
 

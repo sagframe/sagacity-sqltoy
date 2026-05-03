@@ -42,6 +42,11 @@ public class SqlServerDDLGenerator implements DialectDDLGenerator {
 			tableSql.append(TAB).append(StringUtil.toLowerOrUpper(colMeta.getColName(), upperOrLower));
 			// 类型
 			tableSql.append(" ").append(DDLUtils.convertType(colMeta, dbType));
+			// 计算列
+			if (colMeta.getGeneratedType() > 0 && StringUtil.isNotBlank(colMeta.getDefaultValue())) {
+				tableSql.append(" AS (").append(colMeta.getDefaultValue()).append(") ");
+				tableSql.append(colMeta.getGeneratedType() == 1 ? "" : " PERSISTED ");
+			}
 			// 是否为null
 			if (!colMeta.isNullable()) {
 				tableSql.append(" NOT NULL");
@@ -49,9 +54,12 @@ public class SqlServerDDLGenerator implements DialectDDLGenerator {
 			// 自增
 			if (colMeta.isAutoIncrement()) {
 				tableSql.append(" IDENTITY ");
-			} else if (StringUtil.isNotBlank(colMeta.getDefaultValue())) {
+			} else if (colMeta.getGeneratedType() == 0 && StringUtil.isNotBlank(colMeta.getDefaultValue())) {
 				tableSql.append(" DEFAULT ");
 				if (DDLUtils.isNotChar(colMeta.getDataType())) {
+					tableSql.append(colMeta.getDefaultValue());
+				} else if (DDLUtils.isDate(colMeta.getDataType())
+						&& DDLUtils.isDateFunction(colMeta.getDefaultValue().toUpperCase())) {
 					tableSql.append(colMeta.getDefaultValue());
 				} else {
 					tableSql.append("'").append(colMeta.getDefaultValue()).append("'");

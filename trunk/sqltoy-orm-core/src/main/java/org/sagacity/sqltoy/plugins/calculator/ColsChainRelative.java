@@ -92,6 +92,8 @@ public class ColsChainRelative {
 		BigDecimal value;
 		String defaultValue = relativeModel.getDefaultValue();
 		boolean divIsZero;
+		RoundingMode roundingMode = (relativeModel.getRoundingMode() == null) ? RoundingMode.HALF_UP
+				: relativeModel.getRoundingMode();
 		for (int i = end; i > start; i = i - groupSize) {
 			for (int j = 0; j < dataSize; j++) {
 				rowList = (List) result.get(j);
@@ -114,7 +116,7 @@ public class ColsChainRelative {
 						if (rowList.get(divedIndex) != null) {
 							divedData = new BigDecimal(rowList.get(divedIndex).toString());
 						}
-						//update 2024-08-30 divedData.equals(BigDecimal.ZERO) 存在bug
+						// update 2024-08-30 divedData.equals(BigDecimal.ZERO) 存在bug
 						if (divedData.compareTo(BigDecimal.ZERO) == 0) {
 							divIsZero = divData.compareTo(BigDecimal.ZERO) == 0;
 							// 插入(8-3+2+2)
@@ -137,9 +139,9 @@ public class ColsChainRelative {
 						} else {
 							if (isIncrement) {
 								value = divData.subtract(divedData).multiply(multiply).divide(divedData, radixSize,
-										RoundingMode.FLOOR);
+										roundingMode);
 							} else {
-								value = divData.multiply(multiply).divide(divedData, radixSize, RoundingMode.FLOOR);
+								value = divData.multiply(multiply).divide(divedData, radixSize, roundingMode);
 							}
 							if (isAppend) {
 								rowList.add(divIndex + 1, format == null ? value : NumberUtil.format(value, format));

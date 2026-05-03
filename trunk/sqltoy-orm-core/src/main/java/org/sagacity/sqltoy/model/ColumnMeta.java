@@ -82,6 +82,11 @@ public class ColumnMeta implements Serializable {
 	 */
 	private String comments;
 
+	/**
+	 * 计算列类型(1:VIRTUAL,2:STORED)
+	 */
+	private int generatedType = 0;
+
 	// DECIMAL_DIGITS
 	private int decimalDigits;
 
@@ -246,4 +251,11 @@ public class ColumnMeta implements Serializable {
 		this.nativeType = nativeType;
 	}
 
+	public int getGeneratedType() {
+		return generatedType;
+	}
+
+	public void setGeneratedType(int generatedType) {
+		this.generatedType = generatedType;
+	}
 }

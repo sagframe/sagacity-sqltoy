@@ -2500,7 +2500,7 @@ public class DialectFactory {
 		if (entityMeta == null) {
 			throw new IllegalArgumentException("Class=[" + entityClass.getName() + "]没有@Entity标记为POJO实体对象!");
 		}
-		if (entityMeta.getFieldsArray() == null || entityMeta.getFieldsArray().length == 0) {
+		if (entityMeta.getFieldsArray(false) == null || entityMeta.getFieldsArray(false).length == 0) {
 			throw new IllegalArgumentException("Class=[" + entityClass.getName() + "]没有@Column定义具体的字段信息!");
 		}
 		if (validatePK && (entityMeta.getIdArray() == null || entityMeta.getIdArray().length == 0)) {

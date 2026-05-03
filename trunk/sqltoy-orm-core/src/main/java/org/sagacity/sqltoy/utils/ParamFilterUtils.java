@@ -4,14 +4,16 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.OffsetTime;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -1095,18 +1097,13 @@ public class ParamFilterUtils {
 			startDate = DateUtil.lastDayOfMonth(DateUtil.getNowTime());
 		} else if ("last_of_year".equals(firstString)) {
 			startDate = DateUtil.parse((DateUtil.getYear(DateUtil.getNowTime()) + "-12-31"), "yyyy-MM-dd");
-		} else if ("first_of_month".equals(firstString)) {
-			startDate = DateUtil.firstDayOfMonth(DateUtil.getNowTime());
 		} else if ("first_of_week".equals(firstString)) {
-			Calendar ca = Calendar.getInstance();
-			ca.setTime(DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT));
-			ca.add(Calendar.DAY_OF_WEEK, -ca.get(Calendar.DAY_OF_WEEK) + 2);
-			startDate = ca.getTime();
+			LocalDate firstOfWeek = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+			startDate = Date.from(firstOfWeek.atStartOfDay(ZoneId.systemDefault()).toInstant());
 		} else if ("last_of_week".equals(firstString)) {
-			Calendar ca = Calendar.getInstance();
-			ca.setTime(DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT));
-			ca.add(Calendar.DAY_OF_WEEK, -ca.get(Calendar.DAY_OF_WEEK) + 8);
-			startDate = ca.getTime();
+			LocalDate lastOfWeek = LocalDate.now().with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
+			// 本周最后一天（周日）
+			startDate = Date.from(lastOfWeek.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant());
 		} else {
 			startDate = DateUtil.parseString(firstString);
 		}
@@ -1322,16 +1319,15 @@ public class ParamFilterUtils {
 			result = DateUtil.getYear(paramValue) + "-12-31";
 		} // 取指定日期的星期一的日期
 		else if ("first_of_week".equals(fmtStyle)) {
-			Calendar ca = Calendar.getInstance();
-			ca.setTime(DateUtil.parse(paramValue, DAY_FORMAT));
-			ca.add(Calendar.DAY_OF_WEEK, -ca.get(Calendar.DAY_OF_WEEK) + 2);
-			result = ca.getTime();
+			LocalDate firstOfWeek = DateUtil.asLocalDate(DateUtil.parse(paramValue, DAY_FORMAT))
+					.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+			result = Date.from(firstOfWeek.atStartOfDay(ZoneId.systemDefault()).toInstant());
 		} // 取指定日期的星期天的日期
 		else if ("last_of_week".equals(fmtStyle)) {
-			Calendar ca = Calendar.getInstance();
-			ca.setTime(DateUtil.parse(paramValue, DAY_FORMAT));
-			ca.add(Calendar.DAY_OF_WEEK, -ca.get(Calendar.DAY_OF_WEEK) + 8);
-			result = ca.getTime();
+			LocalDate lastOfWeek = DateUtil.asLocalDate(DateUtil.parse(paramValue, DAY_FORMAT))
+					.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
+			// 本周最后一天（周日）
+			result = Date.from(lastOfWeek.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant());
 		} else {
 			result = DateUtil.convertDateObject(paramValue);
 			if (StringUtil.isNotBlank(format)) {
@@ -1341,39 +1337,40 @@ public class ParamFilterUtils {
 			}
 		}
 		// 存在日期加减
-		if (paramFilterModel.getIncrementTime() != 0) {
+		Double incrementTime = paramFilterModel.getIncrementTime();
+		if (incrementTime != 0) {
 			switch (paramFilterModel.getTimeUnit()) {
 			// 天优先
 			case DAYS: {
-				result = DateUtil.addDay(result, paramFilterModel.getIncrementTime());
+				result = DateUtil.addDay(result, incrementTime);
 				break;
 			}
 			case SECONDS: {
-				result = DateUtil.addSecond(result, paramFilterModel.getIncrementTime());
+				result = DateUtil.addSecond(result, incrementTime);
 				break;
 			}
 			case MILLISECONDS: {
-				result = DateUtil.addMilliSecond(result, paramFilterModel.getIncrementTime().longValue());
+				result = DateUtil.addMilliSecond(result, incrementTime.longValue());
 				break;
 			}
 			case MINUTES: {
-				result = DateUtil.addSecond(result, 60 * paramFilterModel.getIncrementTime());
+				result = DateUtil.addSecond(result, 60 * incrementTime);
 				break;
 			}
 			case HOURS: {
-				result = DateUtil.addSecond(result, 3600 * paramFilterModel.getIncrementTime());
+				result = DateUtil.addSecond(result, 3600 * incrementTime);
 				break;
 			}
 			case MONTHS: {
-				result = DateUtil.addMonth(result, paramFilterModel.getIncrementTime().intValue());
+				result = DateUtil.addMonth(result, incrementTime.intValue());
 				break;
 			}
 			case YEARS: {
-				result = DateUtil.addYear(result, paramFilterModel.getIncrementTime().intValue());
+				result = DateUtil.addYear(result, incrementTime.intValue());
 				break;
 			}
 			default: {
-				result = DateUtil.addDay(result, paramFilterModel.getIncrementTime());
+				result = DateUtil.addDay(result, incrementTime);
 				break;
 			}
 			}

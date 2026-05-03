@@ -127,13 +127,16 @@
 							<xsd:union memberTypes="numberFormatType xsd:string" />
 						</xsd:simpleType>
 					</xsd:attribute>
-					<xsd:attribute name="roundingMode">
+					<xsd:attribute name="rounding-mode">
 						<xsd:simpleType>
 							<xsd:restriction base="xsd:string">
+								<xsd:enumeration value="DOWN" />
+								<xsd:enumeration value="UP" />
 								<xsd:enumeration value="HALF_UP" />
 								<xsd:enumeration value="HALF_DOWN" />
-								<xsd:enumeration value="ROUND_DOWN" />
-								<xsd:enumeration value="ROUND_UP" />
+								<xsd:enumeration value="CEILING" />
+								<xsd:enumeration value="FLOOR" />
+								<xsd:enumeration value="HALF_EVEN" />
 							</xsd:restriction>
 						</xsd:simpleType>
 					</xsd:attribute>
@@ -359,6 +362,19 @@
 							<xsd:documentation><![CDATA[保留小数位,默认保留3位]]></xsd:documentation>
 						</xsd:annotation>
 					</xsd:attribute>
+					<xsd:attribute name="rounding-mode" default="HALF_UP">
+						<xsd:simpleType>
+							<xsd:restriction base="xsd:string">
+								<xsd:enumeration value="DOWN" />
+								<xsd:enumeration value="UP" />
+								<xsd:enumeration value="HALF_UP" />
+								<xsd:enumeration value="HALF_DOWN" />
+								<xsd:enumeration value="CEILING" />
+								<xsd:enumeration value="FLOOR" />
+								<xsd:enumeration value="HALF_EVEN" />
+							</xsd:restriction>
+						</xsd:simpleType>
+					</xsd:attribute>
 					<xsd:attribute name="group-column" type="xsd:string"
 						use="required">
 						<xsd:annotation>
@@ -448,6 +464,19 @@
 						<xsd:annotation>
 							<xsd:documentation><![CDATA[保留小数位,默认保留3位]]></xsd:documentation>
 						</xsd:annotation>
+					</xsd:attribute>
+					<xsd:attribute name="rounding-mode" default="HALF_UP">
+						<xsd:simpleType>
+							<xsd:restriction base="xsd:string">
+								<xsd:enumeration value="DOWN" />
+								<xsd:enumeration value="UP" />
+								<xsd:enumeration value="HALF_UP" />
+								<xsd:enumeration value="HALF_DOWN" />
+								<xsd:enumeration value="CEILING" />
+								<xsd:enumeration value="FLOOR" />
+								<xsd:enumeration value="HALF_EVEN" />
+							</xsd:restriction>
+						</xsd:simpleType>
 					</xsd:attribute>
 					<xsd:attribute name="format" type="xsd:string">
 						<xsd:annotation>

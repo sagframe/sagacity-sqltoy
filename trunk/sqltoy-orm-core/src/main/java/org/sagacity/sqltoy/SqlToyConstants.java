@@ -164,7 +164,10 @@ public class SqlToyConstants {
 			"[^A-Za-z0-9:\u4e00-\u9fa5]\\:\\s*[a-zA-Z\u4e00-\u9fa5][a-zA-Z0-9_\u4e00-\u9fa5]*(\\.[\\w\u4e00-\u9fa5]+)*(\\[\\d+\\](\\.[a-zA-Z0-9_\u4e00-\u9fa5]+)*)?\\s?");
 	public final static Pattern NOSQL_NAMED_PATTERN = Pattern.compile(
 			"(?i)\\@(param|blank|value)?\\(\\s*\\:\\s*[a-zA-Z\u4e00-\u9fa5][a-zA-Z0-9_\u4e00-\u9fa5]*(\\.[\\w\u4e00-\u9fa5]+)*(\\[\\d+\\](\\.[a-zA-Z0-9_\u4e00-\u9fa5]+)*)?\\s*\\)");
-
+	//${paramName}
+	public final static Pattern EMBED_NAMED_PATTERN = Pattern.compile(
+			"\\$\\{\\s*\\:?[a-zA-Z\u4e00-\u9fa5][a-zA-Z0-9_\u4e00-\u9fa5]*(\\.[\\w\u4e00-\u9fa5]+)*(\\[\\d+\\](\\.[a-zA-Z0-9_\u4e00-\u9fa5]+)*)?\\s*\\}");
+	
 	// mysql8 支持 with recursive cte as
 	// postgresql12 支持materialized 物化
 	// with aliasTable as materialized ()

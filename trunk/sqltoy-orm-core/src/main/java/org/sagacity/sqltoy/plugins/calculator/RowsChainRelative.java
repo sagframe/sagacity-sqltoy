@@ -110,6 +110,8 @@ public class RowsChainRelative {
 		int radixSize = rowsRelative.getRadixSize();
 		boolean isIncrement = rowsRelative.isReduceOne();
 		BigDecimal multiply = BigDecimal.valueOf(rowsRelative.getMultiply());
+		RoundingMode roundingMode = (rowsRelative.getRoundingMode() == null) ? RoundingMode.HALF_UP
+				: rowsRelative.getRoundingMode();
 		// 由下往上排序(第一组数据无需计算)
 		int index;
 		int colIndex;
@@ -151,9 +153,9 @@ public class RowsChainRelative {
 						} else {
 							if (isIncrement) {
 								value = divData.subtract(divedData).multiply(multiply).divide(divedData, radixSize,
-										RoundingMode.FLOOR);
+										roundingMode);
 							} else {
-								value = divData.multiply(multiply).divide(divedData, radixSize, RoundingMode.FLOOR);
+								value = divData.multiply(multiply).divide(divedData, radixSize, roundingMode);
 							}
 							if (format == null) {
 								divRowList.set(colIndex + 1, value);
@@ -195,9 +197,9 @@ public class RowsChainRelative {
 						} else {
 							if (isIncrement) {
 								value = divData.subtract(divedData).multiply(multiply).divide(divedData, radixSize,
-										RoundingMode.FLOOR);
+										roundingMode);
 							} else {
-								value = divData.multiply(multiply).divide(divedData, radixSize, RoundingMode.FLOOR);
+								value = divData.multiply(multiply).divide(divedData, radixSize, roundingMode);
 							}
 							if (format == null) {
 								divRowList.set(colIndex + 1, value);
