@@ -186,7 +186,7 @@ public class Update extends BaseLink {
 		String[] forceUpdate = forceUpdateFields;
 		// 深度修改
 		if (deeply) {
-			forceUpdate = sqlToyContext.getEntityMeta(entity.getClass()).getRejectIdFieldArray();
+			forceUpdate = sqlToyContext.getEntityMeta(entity.getClass()).getRejectIdFieldArray(true);
 		}
 		if (uniqueFields != null && uniqueFields.length > 0) {
 			List entities = new ArrayList();
@@ -231,7 +231,7 @@ public class Update extends BaseLink {
 					break;
 				}
 			}
-			forceUpdate = sqlToyContext.getEntityMeta(entity.getClass()).getRejectIdFieldArray();
+			forceUpdate = sqlToyContext.getEntityMeta(entity.getClass()).getRejectIdFieldArray(true);
 		}
 		int realBatchSize = (batchSize > 0) ? batchSize : sqlToyContext.getBatchSize();
 		if (this.updateFields != null && this.updateFields.length > 0) {

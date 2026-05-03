@@ -4,6 +4,7 @@
 package org.sagacity.sqltoy.config.model;
 
 import java.io.Serializable;
+import java.math.RoundingMode;
 
 /**
  * @project sagacity-sqltoy
@@ -62,6 +63,11 @@ public class ColsChainRelativeModel implements Serializable {
 	 * 保留多少小数位
 	 */
 	private int radixSize = 3;
+	
+	/**
+	 * 小数位舍入规则
+	 */
+	private RoundingMode roundingMode = RoundingMode.HALF_UP;
 
 	/**
 	 * 默认值
@@ -159,6 +165,14 @@ public class ColsChainRelativeModel implements Serializable {
 
 	public void setDefaultValue(String defaultValue) {
 		this.defaultValue = defaultValue;
+	}
+
+	public RoundingMode getRoundingMode() {
+		return roundingMode;
+	}
+
+	public void setRoundingMode(RoundingMode roundingMode) {
+		this.roundingMode = roundingMode;
 	}
 
 }

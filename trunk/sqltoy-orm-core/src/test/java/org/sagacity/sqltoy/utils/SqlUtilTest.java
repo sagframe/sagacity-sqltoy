@@ -281,6 +281,15 @@ public class SqlUtilTest {
 		System.err.println(SqlUtil.isSqlInjection(SqlInjectionLevel.RELAXED_WORD, "t.name"));
 	}
 
+	@Test
+	public static void testReplaceEmbedSqlParams() {
+		// String sql = "select * from user where name = ${:name} and age = ${age} and
+		// id = ${ userId }";
+		String sql = "select * from user where name = :name and age = age and id = userId";
+		String result = SqlUtil.replaceEmbedSqlParams(sql);
+		System.out.println(result);
+	}
+	
 	public static void main(String[] args) {
 		String sql = "select * from table group by id order by name desc";
 		String sqlPart = " where tenant_id=2 ";

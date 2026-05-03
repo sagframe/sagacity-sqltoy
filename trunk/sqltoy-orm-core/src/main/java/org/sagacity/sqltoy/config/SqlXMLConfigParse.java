@@ -364,6 +364,8 @@ public class SqlXMLConfigParse {
 			countSql = SqlUtil.clearMistyChars(SqlUtil.clearMark(countSql), " ").concat(" ");
 			countSql = FunctionUtils.getDialectSql(countSql, dialect);
 			countSql = ReservedWordsUtil.convertSql(countSql, DataSourceUtils.getDBType(dialect));
+			// 将${paramName}或${:paramName}替换为@value(:paramName)
+			countSql = SqlUtil.replaceEmbedSqlParams(countSql);
 			sqlToyConfig.setCountSql(countSql);
 			if (StringUtil.matches(countSql, SqlToyConstants.INCLUDE_PATTERN)) {
 				sqlToyConfig.setHasIncludeSql(true);
@@ -1349,19 +1351,12 @@ public class SqlXMLConfigParse {
 				String format = nf.hasAttribute("format") ? nf.getAttribute("format") : "capital";
 				String roundStr = nf.hasAttribute("roundingMode") ? nf.getAttribute("roundingMode").toUpperCase()
 						: null;
-				String locale = nf.hasAttribute("locale") ? nf.getAttribute("locale") : null;
-				RoundingMode roundMode = null;
-				if (roundStr != null) {
-					if ("HALF_UP".equals(roundStr)) {
-						roundMode = RoundingMode.HALF_UP;
-					} else if ("HALF_DOWN".equals(roundStr)) {
-						roundMode = RoundingMode.HALF_DOWN;
-					} else if ("ROUND_DOWN".equals(roundStr)) {
-						roundMode = RoundingMode.DOWN;
-					} else if ("ROUND_UP".equals(roundStr)) {
-						roundMode = RoundingMode.UP;
-					}
+				//update 2026-4-30 兼容新的参数名称
+				if (nf.hasAttribute("rounding-mode")) {
+					roundStr = nf.getAttribute("rounding-mode").toUpperCase();
 				}
+				String locale = nf.hasAttribute("locale") ? nf.getAttribute("locale") : null;
+				RoundingMode roundMode = convertRoundingMode(roundStr);
 				for (String col : columns) {
 					FormatModel formatModel = new FormatModel();
 					formatModel.setColumn(col);
@@ -1476,22 +1471,8 @@ public class SqlXMLConfigParse {
 						String[] roundingModeAry = StringUtil
 								.trimArray(elt.getAttribute("average-rounding-modes").toUpperCase().split("\\,"));
 						RoundingMode[] roudingModes = new RoundingMode[roundingModeAry.length];
-						String roundingMode;
-						RoundingMode roundMode = null;
 						for (int k = 0; k < roundingModeAry.length; k++) {
-							roundingMode = roundingModeAry[k];
-							if ("HALF_UP".equals(roundingMode)) {
-								roundMode = RoundingMode.HALF_UP;
-							} else if ("HALF_DOWN".equals(roundingMode)) {
-								roundMode = RoundingMode.HALF_DOWN;
-							} else if ("ROUND_DOWN".equals(roundingMode)) {
-								roundMode = RoundingMode.DOWN;
-							} else if ("ROUND_UP".equals(roundingMode)) {
-								roundMode = RoundingMode.UP;
-							} else {
-								roundMode = RoundingMode.HALF_UP;
-							}
-							roudingModes[k] = roundMode;
+							roudingModes[k] = convertRoundingMode(roundingModeAry[k]);
 						}
 						summaryModel.setRoundingModes(roudingModes);
 					}
@@ -1580,11 +1561,17 @@ public class SqlXMLConfigParse {
 				else if (eltName.equals(local.concat("cols-chain-relative"))) {
 					ColsChainRelativeModel colsRelativeModel = new ColsChainRelativeModel();
 					XMLUtil.setAttributes(elt, colsRelativeModel);
+					if (elt.hasAttribute("rounding-mode")) {
+						colsRelativeModel.setRoundingMode(convertRoundingMode(elt.getAttribute("rounding-mode")));
+					}
 					resultProcessor.add(colsRelativeModel);
 				} // 行与行进行比较
 				else if (eltName.equals(local.concat("rows-chain-relative"))) {
 					RowsChainRelativeModel rowsRelativeModel = new RowsChainRelativeModel();
 					XMLUtil.setAttributes(elt, rowsRelativeModel);
+					if (elt.hasAttribute("rounding-mode")) {
+						rowsRelativeModel.setRoundingMode(convertRoundingMode(elt.getAttribute("rounding-mode")));
+					}
 					resultProcessor.add(rowsRelativeModel);
 				} // 集合数据顺序颠倒
 				else if (eltName.equals(local.concat("reverse"))) {
@@ -1681,5 +1668,28 @@ public class SqlXMLConfigParse {
 		String[] result = new String[fieldSet.size()];
 		fieldSet.toArray(result);
 		return result;
+	}
+
+	private static RoundingMode convertRoundingMode(String roundingModeStr) {
+		if (StringUtil.isBlank(roundingModeStr)) {
+			return null;
+		}
+		String roundingStr = roundingModeStr.toUpperCase();
+		if (roundingStr.equals("UP")) {
+			return RoundingMode.UP;
+		} else if (roundingStr.equals("DOWN")) {
+			return RoundingMode.DOWN;
+		} else if (roundingStr.equals("FLOOR")) {
+			return RoundingMode.FLOOR;
+		} else if (roundingStr.equals("HALF_UP")) {
+			return RoundingMode.HALF_UP;
+		} else if (roundingStr.equals("HALF_DOWN")) {
+			return RoundingMode.HALF_DOWN;
+		} else if (roundingStr.equals("HALF_EVEN")) {
+			return RoundingMode.HALF_EVEN;
+		} else if (roundingStr.equals("CEILING")) {
+			return RoundingMode.CEILING;
+		}
+		return RoundingMode.HALF_UP;
 	}
 }

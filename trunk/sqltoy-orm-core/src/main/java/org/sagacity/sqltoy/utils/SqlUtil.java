@@ -37,6 +37,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.sagacity.sqltoy.SqlExecuteStat;
@@ -2010,7 +2011,7 @@ public class SqlUtil {
 		if (convertSqlMap.containsKey(key)) {
 			return convertSqlMap.get(key);
 		}
-		String[] fields = entityMeta.getFieldsArray();
+		String[] fields = entityMeta.getFieldsArray(false);
 		StringBuilder sqlBuff = new StringBuilder();
 		// 末尾补齐一位空白,便于后续取index时避免越界
 		String realSql = sql.concat(BLANK);
@@ -2077,7 +2078,7 @@ public class SqlUtil {
 	 * @TODO 组合动态条件
 	 */
 	public static String wrapWhere(EntityMeta entityMeta) {
-		String[] fields = entityMeta.getFieldsArray();
+		String[] fields = entityMeta.getFieldsArray(false);
 		StringBuilder sqlBuff = new StringBuilder(" 1=1 ");
 		String columnName;
 		for (String field : fields) {
@@ -2961,5 +2962,30 @@ public class SqlUtil {
 			}
 		}
 		return result;
+	}
+
+	/**
+	 * 替换 SQL 中的 ${xxx}或 ${:xxx} 为 @value(:xxx)
+	 * 
+	 * @param originalSql 原始 SQL
+	 * @return 替换后的 SQL
+	 */
+	public static String replaceEmbedSqlParams(String originalSql) {
+		if (originalSql == null || originalSql.isEmpty()) {
+			return originalSql;
+		}
+		// ${paramName} 或${:paramName} 匹配
+		Matcher matcher = SqlToyConstants.EMBED_NAMED_PATTERN.matcher(originalSql);
+		StringBuffer sb = new StringBuffer();
+		String paramName;
+		while (matcher.find()) {
+			paramName = matcher.group();
+			paramName = paramName.substring(2, paramName.length() - 1).trim();
+			// 替换成 @value(:参数名)
+			matcher.appendReplacement(sb,
+					paramName.startsWith(":") ? "@value(" + paramName + ")" : "@value(:" + paramName + ")");
+		}
+		matcher.appendTail(sb);
+		return sb.toString();
 	}
 }

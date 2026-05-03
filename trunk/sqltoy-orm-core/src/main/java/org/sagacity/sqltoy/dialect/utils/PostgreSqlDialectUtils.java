@@ -5,6 +5,9 @@ package org.sagacity.sqltoy.dialect.utils;
 
 import java.io.Serializable;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.sagacity.sqltoy.SqlToyConstants;
@@ -12,6 +15,7 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DecryptHandler;
 import org.sagacity.sqltoy.callback.GenerateSavePKStrategy;
 import org.sagacity.sqltoy.callback.GenerateSqlHandler;
+import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
 import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
@@ -22,7 +26,9 @@ import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.dialect.model.SavePKStrategy;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
+import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
+import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.SqlUtilsExt;
 import org.sagacity.sqltoy.utils.StringUtil;
 
@@ -261,5 +267,75 @@ public class PostgreSqlDialectUtils {
 			return false;
 		}
 		return true;
+	}
+
+	/**
+	 * postgresql 获取表和view信息，表排除分区子表
+	 * 
+	 * @param catalog
+	 * @param schema
+	 * @param tableName
+	 * @param conn
+	 * @param dbType
+	 * @param dialect
+	 * @return
+	 * @throws Exception
+	 */
+	public static List<TableMeta> getTables(String catalog, String schema, String tableName, Connection conn,
+			Integer dbType, String dialect) throws Exception {
+		// v10 支持 AND c.relispartition = false
+		// <v10 用 AND c.oid NOT IN (SELECT inhrelid FROM pg_inherits)
+		String sql = """
+					SELECT
+					    c.relname AS TABLE_NAME,
+					    CASE c.relkind
+					        WHEN 'r' THEN 'TABLE'
+					        WHEN 'p' THEN 'TABLE'
+					        WHEN 'v' THEN 'VIEW'
+					    END AS TABLE_TYPE,
+					    d.description AS COMMENTS
+					FROM pg_class c
+							LEFT JOIN pg_description d
+				    			ON d.objoid = c.oid AND d.objsubid = 0
+					WHERE
+					    c.relkind IN ('r', 'v', 'p')
+					    AND c.relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public')
+					    AND c.oid NOT IN (SELECT inhrelid FROM pg_inherits)
+					    AND c.relname NOT LIKE 'pg_%'
+				""";
+		if (StringUtil.isNotBlank(tableName)) {
+			if (tableName.contains("%")) {
+				sql = sql.concat(" and c.relname like '" + tableName + "'");
+			} else {
+				sql = sql.concat(" and c.relname like '%" + tableName + "%'");
+			}
+		}
+		PreparedStatement pst = conn.prepareStatement(sql);
+		ResultSet rs = null;
+		// 通过preparedStatementProcess反调，第二个参数是pst
+		return (List<TableMeta>) SqlUtil.preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
+			@Override
+			public void execute(Object rowData, PreparedStatement pst, ResultSet rs) throws Exception {
+				try {
+					rs = pst.executeQuery();
+					List<TableMeta> tables = new ArrayList<TableMeta>();
+					while (rs.next()) {
+						TableMeta tableMeta = new TableMeta();
+						tableMeta.setTableName(rs.getString("TABLE_NAME"));
+						tableMeta.setType(rs.getString("TABLE_TYPE"));
+						tableMeta.setRemarks(rs.getString("COMMENTS"));
+						tables.add(tableMeta);
+					}
+					this.setResult(tables);
+				} catch (Exception e) {
+					throw e;
+				} finally {
+					if (rs != null) {
+						rs.close();
+						rs = null;
+					}
+				}
+			}
+		});
 	}
 }

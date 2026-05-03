@@ -114,7 +114,7 @@ public class DDLFactory {
 		List<EntityMeta> allTableEntities = DDLUtils.sortTables(entitysMetaMap);
 		List<TableMeta> tableMetas = new ArrayList<>();
 		for (EntityMeta entityMeta : allTableEntities) {
-			tableMetas.add(DDLUtils.wrapTableMeta(entityMeta));
+			tableMetas.add(DDLUtils.wrapTableMeta(entityMeta, dbType));
 		}
 		// 写文件
 		if (!tableMetas.isEmpty()) {
@@ -170,7 +170,7 @@ public class DDLFactory {
 						}
 						// 数据库不存在当前表，则进行创建
 						if (tableName == null) {
-							TableMeta tableMeta = DDLUtils.wrapTableMeta(entityMeta);
+							TableMeta tableMeta = DDLUtils.wrapTableMeta(entityMeta,dbType);
 							logger.debug("开始创建表:[" + tableMeta.getTableName() + "]的表结构!");
 							DialectDDLGenerator dialectDDLGenerator = (sqlToyContext.getDialectDDLGenerator() == null)
 									? getGenerator(dbType)

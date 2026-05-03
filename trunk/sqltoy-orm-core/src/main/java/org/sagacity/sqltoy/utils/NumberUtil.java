@@ -359,22 +359,26 @@ public class NumberUtil {
 		return min;
 	}
 
+	public static BigDecimal getAverage(BigDecimal[] bigDeicmalArray) {
+		return getAverage(bigDeicmalArray, 4);
+	}
+
 	/**
 	 * @todo 求数组中数据的平均值
-	 * @param bigArray
+	 * @param bigDeicmalArray
 	 * @return
 	 */
-	public static BigDecimal getAverage(BigDecimal[] bigArray) {
+	public static BigDecimal getAverage(BigDecimal[] bigDeicmalArray, int radixSize) {
 		BigDecimal sum = BigDecimal.ZERO;
-		if (bigArray == null || bigArray.length == 0) {
+		if (bigDeicmalArray == null || bigDeicmalArray.length == 0) {
 			return sum;
 		}
-		for (int i = 0; i < bigArray.length; i++) {
-			if (bigArray[i] != null) {
-				sum = sum.add(bigArray[i]);
+		for (int i = 0; i < bigDeicmalArray.length; i++) {
+			if (bigDeicmalArray[i] != null) {
+				sum = sum.add(bigDeicmalArray[i]);
 			}
 		}
-		return sum.divide(new BigDecimal(bigArray.length), 4, RoundingMode.HALF_UP);
+		return sum.divide(new BigDecimal(bigDeicmalArray.length), radixSize, RoundingMode.HALF_UP);
 	}
 
 	/**

@@ -63,7 +63,7 @@ public class EntityMeta implements Serializable {
 	private String[] idArray;
 
 	/**
-	 * 所有字段信息(主键字段放于末尾)
+	 * 所有字段信息(排序规则:计算列、常规列、主键字段 即:计算列放于首位、主键列放于末尾)
 	 */
 	private String[] fieldsArray;
 
@@ -230,6 +230,16 @@ public class EntityMeta implements Serializable {
 	private IndexModel[] indexModels;
 
 	/**
+	 * 计算列数量
+	 */
+	private int generatedColsCnt = 0;
+
+	/**
+	 * 排除计算列后的列信息
+	 */
+	private NotGeneratedColMeta notGeneratedColMeta = new NotGeneratedColMeta();
+
+	/**
 	 * @return the loadAllSql
 	 */
 	public String getLoadAllSql() {
@@ -346,16 +356,19 @@ public class EntityMeta implements Serializable {
 	/**
 	 * @return the fieldArray
 	 */
-	public String[] getFieldsArray() {
+	public String[] getFieldsArray(boolean excludeGenerateCols) {
+		if (excludeGenerateCols) {
+			return notGeneratedColMeta.getFieldsArray();
+		}
 		return fieldsArray;
 	}
 
-	public String[] getFieldsNotPartitionKey() {
+	public String[] getFieldsNotPartitionKey(boolean excludeGeneratedCol) {
 		List<String> fields = new ArrayList<String>();
 		FieldMeta fieldMeta;
 		for (int i = 0; i < fieldsArray.length; i++) {
 			fieldMeta = fieldsMeta.get(fieldsArray[i].toLowerCase());
-			if (!fieldMeta.isPartitionKey()) {
+			if (!fieldMeta.isPartitionKey() && !(fieldMeta.getGeneratedType() > 0 && excludeGeneratedCol)) {
 				fields.add(fieldsArray[i]);
 			}
 		}
@@ -427,7 +440,10 @@ public class EntityMeta implements Serializable {
 	/**
 	 * @return the rejectIdFieldArray
 	 */
-	public String[] getRejectIdFieldArray() {
+	public String[] getRejectIdFieldArray(boolean excludeGeneratedCol) {
+		if (excludeGeneratedCol) {
+			return notGeneratedColMeta.getRejectIdFieldArray();
+		}
 		return rejectIdFieldArray;
 	}
 
@@ -552,7 +568,10 @@ public class EntityMeta implements Serializable {
 	/**
 	 * @return the fieldsTypeArray
 	 */
-	public Integer[] getFieldsTypeArray() {
+	public Integer[] getFieldsTypeArray(boolean excludeGeneratedCols) {
+		if (excludeGeneratedCols) {
+			return notGeneratedColMeta.getFieldsTypeArray();
+		}
 		return fieldsTypeArray;
 	}
 
@@ -566,7 +585,10 @@ public class EntityMeta implements Serializable {
 	/**
 	 * @return the fieldsDefaultValue
 	 */
-	public String[] getFieldsDefaultValue() {
+	public String[] getFieldsDefaultValue(boolean excludeGeneratedCols) {
+		if (excludeGeneratedCols) {
+			return notGeneratedColMeta.getFieldsDefaultValue();
+		}
 		return fieldsDefaultValue;
 	}
 
@@ -601,7 +623,10 @@ public class EntityMeta implements Serializable {
 	/**
 	 * @return the fieldsNullable
 	 */
-	public Boolean[] getFieldsNullable() {
+	public Boolean[] getFieldsNullable(boolean excludeGeneratedCols) {
+		if (excludeGeneratedCols) {
+			return notGeneratedColMeta.getFieldsNullable();
+		}
 		return fieldsNullable;
 	}
 
@@ -883,5 +908,21 @@ public class EntityMeta implements Serializable {
 			return result;
 		}
 		return null;
+	}
+
+	public int getGeneratedColsCnt() {
+		return generatedColsCnt;
+	}
+
+	public void setGeneratedColsCnt(int generatedColsCnt) {
+		this.generatedColsCnt = generatedColsCnt;
+	}
+
+	public NotGeneratedColMeta getNotGeneratedColMeta() {
+		return notGeneratedColMeta;
+	}
+
+	public void setNotGeneratedColMeta(NotGeneratedColMeta notGeneratedColMeta) {
+		this.notGeneratedColMeta = notGeneratedColMeta;
 	}
 }

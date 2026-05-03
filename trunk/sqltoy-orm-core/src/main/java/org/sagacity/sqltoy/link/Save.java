@@ -131,7 +131,7 @@ public class Save extends BaseLink {
 		}
 		if (saveMode == SaveMode.UPDATE) {
 			if (deeply) {
-				forceUpdateProps = sqlToyContext.getEntityMeta(entity.getClass()).getRejectIdFieldArray();
+				forceUpdateProps = sqlToyContext.getEntityMeta(entity.getClass()).getRejectIdFieldArray(true);
 			}
 			return dialectFactory.saveOrUpdate(sqlToyContext, entity, forceUpdateProps, getDataSource(null));
 		}
@@ -161,7 +161,7 @@ public class Save extends BaseLink {
 		if (saveMode == SaveMode.UPDATE) {
 			// 深度修改获取全部字段属性
 			if (deeply) {
-				forceUpdateProps = sqlToyContext.getEntityMeta(entities.get(0).getClass()).getRejectIdFieldArray();
+				forceUpdateProps = sqlToyContext.getEntityMeta(entities.get(0).getClass()).getRejectIdFieldArray(true);
 			}
 			return dialectFactory.saveOrUpdateAll(sqlToyContext, entities, realBatchSize, forceUpdateProps, null,
 					parallelConfig, getDataSource(null), autoCommit);

@@ -70,9 +70,9 @@ public class ClickHouseDialectUtils {
 		String[] reflectColumns;
 		boolean isAssignPK = isAssignPKValue(pkStrategy);
 		if ((isIdentity && !isAssignPK) || (isSequence && !isAssignPK)) {
-			reflectColumns = entityMeta.getRejectIdFieldArray();
+			reflectColumns = entityMeta.getRejectIdFieldArray(true);
 		} else {
-			reflectColumns = entityMeta.getFieldsArray();
+			reflectColumns = entityMeta.getFieldsArray(true);
 		}
 		// 构造全新的新增记录参数赋值反射(覆盖之前的)，涉及数据版本、创建人、创建时间、租户等
 		ReflectPropsHandler handler = DialectUtils.getAddReflectHandler(entityMeta, null,
@@ -80,12 +80,13 @@ public class ClickHouseDialectUtils {
 		handler = DialectUtils.getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
 		Object[] fullParamValues = BeanUtil.reflectBeanToAry(entity, reflectColumns,
-				SqlUtilsExt.getDefaultValues(entityMeta), handler);
+				SqlUtilsExt.getDefaultValues(entityMeta, true), handler);
 		boolean needUpdatePk = false;
-		int pkIndex = entityMeta.getIdIndex();
+		int generatedColCnt = entityMeta.getGeneratedColsCnt();
+		int pkIndex = entityMeta.getIdIndex() - generatedColCnt;
 		// 是否存在业务ID
 		boolean hasBizId = (entityMeta.getBusinessIdGenerator() == null) ? false : true;
-		int bizIdColIndex = hasBizId ? entityMeta.getFieldIndex(entityMeta.getBusinessIdField()) : 0;
+		int bizIdColIndex = hasBizId ? entityMeta.getFieldIndex(entityMeta.getBusinessIdField()) - generatedColCnt : 0;
 		boolean hasId = (pkStrategy != null && null != entityMeta.getIdGenerator()) ? true : false;
 		// 主键、业务主键生成并回写对象
 		if (hasId || hasBizId) {
@@ -95,7 +96,7 @@ public class ClickHouseDialectUtils {
 				int relatedColumnSize = relatedColumn.length;
 				relatedColValue = new Object[relatedColumnSize];
 				for (int meter = 0; meter < relatedColumnSize; meter++) {
-					relatedColValue[meter] = fullParamValues[relatedColumn[meter]];
+					relatedColValue[meter] = fullParamValues[relatedColumn[meter] - generatedColCnt];
 					if (StringUtil.isBlank(relatedColValue[meter])) {
 						throw new IllegalArgumentException("对象:" + entityMeta.getEntityClass().getName()
 								+ " 生成业务主键依赖的关联字段:" + entityMeta.getBizIdRelatedColumns()[meter] + " 值为null!");
@@ -128,7 +129,7 @@ public class ClickHouseDialectUtils {
 		String realInsertSql = sqlToyResult.getSql();
 		SqlExecuteStat.showSql("执行单记录插入", realInsertSql, null);
 		final Object[] paramValues = sqlToyResult.getParamsValue();
-		final Integer[] paramsType = entityMeta.getFieldsTypeArray();
+		final Integer[] paramsType = entityMeta.getFieldsTypeArray(true);
 		PreparedStatement pst = null;
 		if (isIdentity || isSequence) {
 			pst = conn.prepareStatement(insertSql, new String[] { DataSourceUtils
@@ -156,7 +157,7 @@ public class ClickHouseDialectUtils {
 		// 回写数据版本号
 		if (entityMeta.getDataVersion() != null) {
 			String dataVersionField = entityMeta.getDataVersion().getField();
-			int dataVersionIndex = entityMeta.getFieldIndex(dataVersionField);
+			int dataVersionIndex = entityMeta.getFieldIndex(dataVersionField) - generatedColCnt;
 			BeanUtil.setProperty(entity, dataVersionField, fullParamValues[dataVersionIndex]);
 		}
 		// 无主键直接返回null
@@ -196,9 +197,9 @@ public class ClickHouseDialectUtils {
 		String[] reflectColumns;
 		boolean isAssignPK = isAssignPKValue(pkStrategy);
 		if ((isIdentity && !isAssignPK) || (isSequence && !isAssignPK)) {
-			reflectColumns = entityMeta.getRejectIdFieldArray();
+			reflectColumns = entityMeta.getRejectIdFieldArray(true);
 		} else {
-			reflectColumns = entityMeta.getFieldsArray();
+			reflectColumns = entityMeta.getFieldsArray(true);
 		}
 		// 构造全新的新增记录参数赋值反射(覆盖之前的)，涉及数据版本、创建人、创建时间、租户等
 		ReflectPropsHandler handler = DialectUtils.getAddReflectHandler(entityMeta, reflectPropsHandler,
@@ -206,15 +207,18 @@ public class ClickHouseDialectUtils {
 		handler = DialectUtils.getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
 		List<Object[]> paramValues = BeanUtil.reflectBeansToInnerAry(entities, reflectColumns,
-				SqlUtilsExt.getDefaultValues(entityMeta), handler);
-		int pkIndex = entityMeta.getIdIndex();
+				SqlUtilsExt.getDefaultValues(entityMeta, true), handler);
+		int generatedColCnt = entityMeta.getGeneratedColsCnt();
+		int pkIndex = entityMeta.getIdIndex() - generatedColCnt;
 		// 是否存在业务ID
 		boolean hasBizId = (entityMeta.getBusinessIdGenerator() == null) ? false : true;
-		int bizIdColIndex = hasBizId ? entityMeta.getFieldIndex(entityMeta.getBusinessIdField()) : 0;
+		int bizIdColIndex = hasBizId ? entityMeta.getFieldIndex(entityMeta.getBusinessIdField()) - generatedColCnt : 0;
 		Integer[] relatedColumn = entityMeta.getBizIdRelatedColIndex();
 		String[] relatedColumnNames = entityMeta.getBizIdRelatedColumns();
 		boolean hasDataVersion = (entityMeta.getDataVersion() == null) ? false : true;
-		int dataVerIndex = hasDataVersion ? entityMeta.getFieldIndex(entityMeta.getDataVersion().getField()) : 0;
+		int dataVerIndex = hasDataVersion
+				? entityMeta.getFieldIndex(entityMeta.getDataVersion().getField()) - generatedColCnt
+				: 0;
 		int relatedColumnSize = (relatedColumn == null) ? 0 : relatedColumn.length;
 		boolean hasId = (pkStrategy != null && null != entityMeta.getIdGenerator()) ? true : false;
 		Object[] rowData;
@@ -226,7 +230,7 @@ public class ClickHouseDialectUtils {
 			if (relatedColumn != null) {
 				relatedColValue = new Object[relatedColumnSize];
 				for (int meter = 0; meter < relatedColumnSize; meter++) {
-					relatedColValue[meter] = rowData[relatedColumn[meter]];
+					relatedColValue[meter] = rowData[relatedColumn[meter] - generatedColCnt];
 					if (StringUtil.isBlank(relatedColValue[meter])) {
 						throw new IllegalArgumentException("对象:" + entityMeta.getEntityClass().getName()
 								+ " 生成业务主键依赖的关联字段:" + relatedColumnNames[meter] + " 值为null!");
@@ -269,8 +273,8 @@ public class ClickHouseDialectUtils {
 		}
 		SqlExecuteStat.showSql("批量保存[" + realParams.size() + "]条记录", realSql, null);
 		return SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), realSql, realParams,
-				entityMeta.getFieldsTypeArray(), entityMeta.getFieldsDefaultValue(), entityMeta.getFieldsNullable(),
-				batchSize, autoCommit, conn, dbType);
+				entityMeta.getFieldsTypeArray(true), entityMeta.getFieldsDefaultValue(true),
+				entityMeta.getFieldsNullable(true), batchSize, autoCommit, conn, dbType);
 	}
 
 	/**
@@ -331,7 +335,7 @@ public class ClickHouseDialectUtils {
 			throw new IllegalArgumentException("表:" + realTable + " 无主键,不符合update/updateAll规则,请检查表设计是否合理!");
 		}
 		// 全部是主键则无需update
-		if (entityMeta.getRejectIdFieldArray() == null) {
+		if (entityMeta.getRejectIdFieldArray(true) == null) {
 			logger.warn("表:" + realTable + " 字段全部是主键不存在更新字段,无需执行更新操作!");
 			return 0L;
 		}
@@ -341,7 +345,7 @@ public class ClickHouseDialectUtils {
 		handler = DialectUtils.getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
 		// 排除分区字段
-		String[] fields = entityMeta.getFieldsNotPartitionKey();
+		String[] fields = entityMeta.getFieldsNotPartitionKey(true);
 		Object[] fieldsValues = BeanUtil.reflectBeanToAry(entity, fields, null, handler);
 		// 判断主键是否为空
 		int end = fields.length;
@@ -400,7 +404,7 @@ public class ClickHouseDialectUtils {
 			throw new IllegalArgumentException("表:" + realTable + " 无主键,不符合update/updateAll规则,请检查表设计是否合理!");
 		}
 		// 全部是主键则无需update
-		if (entityMeta.getRejectIdFieldArray() == null) {
+		if (entityMeta.getRejectIdFieldArray(true) == null) {
 			logger.warn("表:" + realTable + " 字段全部是主键不存在更新字段,无需执行更新操作!");
 			return 0L;
 		}
@@ -409,7 +413,7 @@ public class ClickHouseDialectUtils {
 				sqlToyContext.getUnifyFieldsHandler());
 		handler = DialectUtils.getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
-		String[] fields = entityMeta.getFieldsNotPartitionKey();
+		String[] fields = entityMeta.getFieldsNotPartitionKey(true);
 		List<Object[]> paramsValues = BeanUtil.reflectBeansToInnerAry(entities, fields, null, handler);
 		// 判断主键是否为空
 		int end = fields.length;
@@ -472,8 +476,8 @@ public class ClickHouseDialectUtils {
 	private static Integer[] getIgnorePartionFieldsTypes(EntityMeta entityMeta) {
 		List<Integer> fieldTypes = new ArrayList<Integer>();
 		FieldMeta fieldMeta;
-		String[] fields = entityMeta.getFieldsArray();
-		Integer[] fieldTypesArray = entityMeta.getFieldsTypeArray();
+		String[] fields = entityMeta.getFieldsArray(true);
+		Integer[] fieldTypesArray = entityMeta.getFieldsTypeArray(true);
 		for (int i = 0; i < fields.length; i++) {
 			fieldMeta = entityMeta.getFieldMeta(fields[i]);
 			if (!fieldMeta.isPartitionKey()) {
@@ -493,7 +497,7 @@ public class ClickHouseDialectUtils {
 				|| unifyFieldsHandler.updateSqlTimeFields() == null) ? new IgnoreCaseSet()
 						: unifyFieldsHandler.updateSqlTimeFields();
 		String currentTimeStr;
-		StringBuilder sql = new StringBuilder(entityMeta.getFieldsArray().length * 30 + 30);
+		StringBuilder sql = new StringBuilder(entityMeta.getFieldsArray(true).length * 30 + 30);
 		sql.append(" alter table  ");
 		sql.append(tableName);
 		sql.append(" update ");
@@ -507,8 +511,9 @@ public class ClickHouseDialectUtils {
 		}
 		FieldMeta fieldMeta;
 		int meter = 0;
-		for (int i = 0, n = entityMeta.getRejectIdFieldArray().length; i < n; i++) {
-			fieldMeta = entityMeta.getFieldMeta(entityMeta.getRejectIdFieldArray()[i]);
+		String[] rejectIdFieldArray = entityMeta.getRejectIdFieldArray(true);
+		for (int i = 0, n = rejectIdFieldArray.length; i < n; i++) {
+			fieldMeta = entityMeta.getFieldMeta(rejectIdFieldArray[i]);
 			// 排除分区字段
 			if (!fieldMeta.isPartitionKey()) {
 				columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);

@@ -516,7 +516,7 @@ public class ShardingUtils {
 		// 业务主键跟主键重叠，已经将主键长度设置为业务主键长度
 		int idLength = entityMeta.getIdLength();
 		int sequenceSize = entityMeta.getBizIdSequenceSize();
-		String[] reflectColumns = entityMeta.getFieldsArray();
+		String[] reflectColumns = entityMeta.getFieldsArray(false);
 		// 标识符
 		String signature = entityMeta.getBizIdSignature();
 		Integer[] relatedColumnIndex = entityMeta.getBizIdRelatedColIndex();

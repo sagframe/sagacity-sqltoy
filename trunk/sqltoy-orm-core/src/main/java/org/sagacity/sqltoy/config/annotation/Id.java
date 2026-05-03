@@ -26,6 +26,6 @@ public @interface Id {
 	// 主键产生类
 	String generator() default "";
 
-	// 辅助主键，即类似mysql分区表，要求分区字段必须包含在主键内的场景
-	boolean assistPK() default false;
+	// 是否是辅助主键，主要是作为分区字段(mysql、pg等数据库分区字段在表有主键的情况下，分区字段也必须是主键)
+	boolean isAssist() default false;
 }

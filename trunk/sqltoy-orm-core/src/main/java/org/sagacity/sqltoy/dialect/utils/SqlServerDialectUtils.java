@@ -223,7 +223,8 @@ public class SqlServerDialectUtils {
 		}
 		String currentTimeStr;
 		String realTable = entityMeta.getSchemaTable(tableName, dbType);
-		int columnSize = entityMeta.getFieldsArray().length;
+		String[] fieldsArray = entityMeta.getFieldsArray(true);
+		int columnSize = fieldsArray.length;
 		StringBuilder sql = new StringBuilder(columnSize * 30 + 100);
 		String columnName;
 		sql.append("merge into ");
@@ -231,7 +232,7 @@ public class SqlServerDialectUtils {
 		sql.append(" ta ");
 		sql.append(" using (select ");
 		for (int i = 0; i < columnSize; i++) {
-			columnName = entityMeta.getColumnName(entityMeta.getFieldsArray()[i]);
+			columnName = entityMeta.getColumnName(fieldsArray[i]);
 			columnName = ReservedWordsUtil.convertWord(columnName, dbType);
 			if (i > 0) {
 				sql.append(",");
@@ -256,12 +257,13 @@ public class SqlServerDialectUtils {
 		// 排除id的其他字段信息
 		StringBuilder insertRejIdCols = new StringBuilder();
 		StringBuilder insertRejIdColValues = new StringBuilder();
+		String[] rejectIdFieldArray = entityMeta.getRejectIdFieldArray(true);
 		// 是否全部是ID,匹配上则无需进行更新，只需将未匹配上的插入即可
-		boolean allIds = (entityMeta.getRejectIdFieldArray() == null);
+		boolean allIds = (rejectIdFieldArray == null);
 		if (!allIds) {
 			// update 操作
 			sql.append(SqlToyConstants.MERGE_UPDATE);
-			int rejectIdColumnSize = entityMeta.getRejectIdFieldArray().length;
+			int rejectIdColumnSize = rejectIdFieldArray.length;
 			// 需要被强制修改的字段
 			HashSet<String> fupc = new HashSet<String>();
 			if (forceUpdateFields != null) {
@@ -277,7 +279,7 @@ public class SqlServerDialectUtils {
 			int decimalLength;
 			int decimalScale;
 			for (int i = 0; i < rejectIdColumnSize; i++) {
-				fieldMeta = entityMeta.getFieldMeta(entityMeta.getRejectIdFieldArray()[i]);
+				fieldMeta = entityMeta.getFieldMeta(rejectIdFieldArray[i]);
 				// sqlserver不支持timestamp类型的数据进行插入赋值和变更
 				if (fieldMeta.getType() != java.sql.Types.TIMESTAMP) {
 					columnName = fieldMeta.getColumnName();
@@ -420,7 +422,8 @@ public class SqlServerDialectUtils {
 		if (null != insertIgnoreSql) {
 			return insertIgnoreSql;
 		}
-		int columnSize = entityMeta.getFieldsArray().length;
+		String[] fieldsArray = entityMeta.getFieldsArray(true);
+		int columnSize = fieldsArray.length;
 		StringBuilder sql = new StringBuilder(columnSize * 30 + 100);
 		String realTable = entityMeta.getSchemaTable(tableName, dbType);
 		String columnName;
@@ -438,7 +441,7 @@ public class SqlServerDialectUtils {
 		sql.append(" ta ");
 		sql.append(" using (select ");
 		for (int i = 0; i < columnSize; i++) {
-			columnName = entityMeta.getColumnName(entityMeta.getFieldsArray()[i]);
+			columnName = entityMeta.getColumnName(fieldsArray[i]);
 			columnName = ReservedWordsUtil.convertWord(columnName, dbType);
 			if (i > 0) {
 				sql.append(",");
@@ -465,15 +468,16 @@ public class SqlServerDialectUtils {
 		// 排除id的其他字段信息
 		StringBuilder insertRejIdCols = new StringBuilder();
 		StringBuilder insertRejIdColValues = new StringBuilder();
+		String[] rejectIdFieldArray = entityMeta.getRejectIdFieldArray(true);
 		// 是否全部是ID,匹配上则无需进行更新，只需将未匹配上的插入即可
-		boolean allIds = (entityMeta.getRejectIdFieldArray() == null);
+		boolean allIds = (rejectIdFieldArray == null);
 		if (!allIds) {
-			int rejectIdColumnSize = entityMeta.getRejectIdFieldArray().length;
+			int rejectIdColumnSize = rejectIdFieldArray.length;
 			FieldMeta fieldMeta;
 			// update 只针对非主键字段进行修改
 			int meter = 0;
 			for (int i = 0; i < rejectIdColumnSize; i++) {
-				fieldMeta = entityMeta.getFieldMeta(entityMeta.getRejectIdFieldArray()[i]);
+				fieldMeta = entityMeta.getFieldMeta(rejectIdFieldArray[i]);
 				columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
 				// sqlserver不支持timestamp类型的数据进行插入赋值
 				if (fieldMeta.getType() != java.sql.Types.TIMESTAMP) {
@@ -579,7 +583,8 @@ public class SqlServerDialectUtils {
 		if (null != insertSql) {
 			return insertSql;
 		}
-		int columnSize = entityMeta.getFieldsArray().length;
+		String[] fieldsArray = entityMeta.getFieldsArray(true);
+		int columnSize = fieldsArray.length;
 		StringBuilder sql = new StringBuilder(columnSize * 20 + 30);
 		StringBuilder values = new StringBuilder(columnSize * 2 - 1);
 		sql.append(" insert into ");
@@ -595,7 +600,7 @@ public class SqlServerDialectUtils {
 						: unifyFieldsHandler.createSqlTimeFields();
 		String currentTimeStr;
 		for (int i = 0; i < columnSize; i++) {
-			field = entityMeta.getFieldsArray()[i];
+			field = fieldsArray[i];
 			fieldMeta = entityMeta.getFieldMeta(field);
 			columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
 			if (fieldMeta.isPK()) {
@@ -680,18 +685,20 @@ public class SqlServerDialectUtils {
 			insertSql = "set nocount on DECLARE @mySeqVariable as numeric(20)=NEXT VALUE FOR "
 					+ entityMeta.getSequence() + " " + insertSql + " select @mySeqVariable ";
 		}
-		int pkIndex = entityMeta.getIdIndex();
+		int generatedColCnt = entityMeta.getGeneratedColsCnt();
+		int pkIndex = entityMeta.getIdIndex() - generatedColCnt;
 		ReflectPropsHandler handler = DialectUtils.getAddReflectHandler(entityMeta, null,
 				sqlToyContext.getUnifyFieldsHandler());
 		handler = DialectUtils.getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
-		String[] reflectColumns = (isIdentity) ? entityMeta.getRejectIdFieldArray() : entityMeta.getFieldsArray();
+		String[] reflectColumns = (isIdentity) ? entityMeta.getRejectIdFieldArray(true)
+				: entityMeta.getFieldsArray(true);
 		Object[] fullParamValues = BeanUtil.reflectBeanToAry(entity, reflectColumns,
-				SqlUtilsExt.getDefaultValues(entityMeta), handler);
+				SqlUtilsExt.getDefaultValues(entityMeta, true), handler);
 		boolean needUpdatePk = false;
 		// 是否存在业务ID
 		boolean hasBizId = (entityMeta.getBusinessIdGenerator() == null) ? false : true;
-		int bizIdColIndex = hasBizId ? entityMeta.getFieldIndex(entityMeta.getBusinessIdField()) : 0;
+		int bizIdColIndex = hasBizId ? entityMeta.getFieldIndex(entityMeta.getBusinessIdField()) - generatedColCnt : 0;
 		boolean hasId = (pkStrategy != null && null != entityMeta.getIdGenerator()) ? true : false;
 		// 主键、业务主键生成并回写对象
 		if (hasId || hasBizId) {
@@ -701,7 +708,7 @@ public class SqlServerDialectUtils {
 			if (relatedColumn != null) {
 				relatedColValue = new Object[relatedColumn.length];
 				for (int meter = 0; meter < relatedColumn.length; meter++) {
-					relatedColValue[meter] = fullParamValues[relatedColumn[meter]];
+					relatedColValue[meter] = fullParamValues[relatedColumn[meter] - generatedColCnt];
 					if (relatedColValue[meter] == null) {
 						throw new IllegalArgumentException("对象:" + entityMeta.getEntityClass().getName()
 								+ " 生成业务主键依赖的关联字段:" + entityMeta.getBizIdRelatedColumns()[meter] + " 值为null!");
@@ -735,7 +742,7 @@ public class SqlServerDialectUtils {
 		sqlToyResult = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig, OperateType.insert, sqlToyResult,
 				entity.getClass(), dbType);
 		final Object[] paramValues = sqlToyResult.getParamsValue();
-		final Integer[] paramsType = entityMeta.getFieldsTypeArray();
+		final Integer[] paramsType = entityMeta.getFieldsTypeArray(true);
 		String realInsertSql = sqlToyResult.getSql();
 		SqlExecuteStat.showSql("mssql单条记录插入", realInsertSql, null);
 		PreparedStatement pst = null;
@@ -780,7 +787,7 @@ public class SqlServerDialectUtils {
 		// 回写数据版本号
 		if (entityMeta.getDataVersion() != null) {
 			String dataVersionField = entityMeta.getDataVersion().getField();
-			int dataVersionIndex = entityMeta.getFieldIndex(dataVersionField);
+			int dataVersionIndex = entityMeta.getFieldIndex(dataVersionField) - generatedColCnt;
 			BeanUtil.setProperty(entity, dataVersionField, fullParamValues[dataVersionIndex]);
 		}
 		// 无主键直接返回null
@@ -874,27 +881,30 @@ public class SqlServerDialectUtils {
 		boolean isSequence = pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE);
 		String[] reflectColumns;
 		if ((isIdentity && !isAssignPK) || (isSequence && !isAssignPK)) {
-			reflectColumns = entityMeta.getRejectIdFieldArray();
+			reflectColumns = entityMeta.getRejectIdFieldArray(true);
 		} else {
-			reflectColumns = entityMeta.getFieldsArray();
+			reflectColumns = entityMeta.getFieldsArray(true);
 		}
 		ReflectPropsHandler handler = DialectUtils.getAddReflectHandler(entityMeta, reflectPropsHandler,
 				sqlToyContext.getUnifyFieldsHandler());
 		handler = DialectUtils.getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
 		List<Object[]> paramValues = BeanUtil.reflectBeansToInnerAry(entities, reflectColumns,
-				SqlUtilsExt.getDefaultValues(entityMeta), handler);
-		int pkIndex = entityMeta.getIdIndex();
+				SqlUtilsExt.getDefaultValues(entityMeta, true), handler);
+		int generatedColCnt = entityMeta.getGeneratedColsCnt();
+		int pkIndex = entityMeta.getIdIndex() - generatedColCnt;
 		// 是否存在业务ID
 		boolean hasBizId = (entityMeta.getBusinessIdGenerator() == null) ? false : true;
-		int bizIdColIndex = hasBizId ? entityMeta.getFieldIndex(entityMeta.getBusinessIdField()) : 0;
+		int bizIdColIndex = hasBizId ? entityMeta.getFieldIndex(entityMeta.getBusinessIdField()) - generatedColCnt : 0;
 		// 标识符
 		String signature = entityMeta.getBizIdSignature();
 		Integer[] relatedColumn = entityMeta.getBizIdRelatedColIndex();
 		String[] relatedColumnNames = entityMeta.getBizIdRelatedColumns();
 		int relatedColumnSize = (relatedColumn == null) ? 0 : relatedColumn.length;
 		boolean hasDataVersion = (entityMeta.getDataVersion() == null) ? false : true;
-		int dataVerIndex = hasDataVersion ? entityMeta.getFieldIndex(entityMeta.getDataVersion().getField()) : 0;
+		int dataVerIndex = hasDataVersion
+				? entityMeta.getFieldIndex(entityMeta.getDataVersion().getField()) - generatedColCnt
+				: 0;
 		boolean hasId = (pkStrategy != null && null != entityMeta.getIdGenerator()) ? true : false;
 		Object[] rowData;
 		Object[] relatedColValue = null;
@@ -905,7 +915,7 @@ public class SqlServerDialectUtils {
 			if (relatedColumn != null) {
 				relatedColValue = new Object[relatedColumnSize];
 				for (int meter = 0; meter < relatedColumnSize; meter++) {
-					relatedColValue[meter] = rowData[relatedColumn[meter]];
+					relatedColValue[meter] = rowData[relatedColumn[meter] - generatedColCnt];
 					if (relatedColValue[meter] == null) {
 						throw new IllegalArgumentException("对象:" + entityMeta.getEntityClass().getName()
 								+ " 生成业务主键依赖的关联字段:" + relatedColumnNames[meter] + " 值为null!");
@@ -949,7 +959,7 @@ public class SqlServerDialectUtils {
 		}
 		SqlExecuteStat.showSql("mssql批量保存", realSql, null);
 		return SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), realSql, realParams,
-				entityMeta.getFieldsTypeArray(), entityMeta.getFieldsDefaultValue(), entityMeta.getFieldsNullable(),
+				entityMeta.getFieldsTypeArray(true), entityMeta.getFieldsDefaultValue(true), entityMeta.getFieldsNullable(true),
 				sqlToyContext.getBatchSize(), autoCommit, conn, dbType);
 	}
 
