@@ -296,4 +296,13 @@ public class StringUtilsTest {
 		String tmp = "\\\\$\\{{datetime}} {{product-RGB}}";
 		System.err.println(StringUtil.escapeComment(tmp));
 	}
+
+	@Test
+	public void testTrimArray() {
+		String[] tmp = { " dd ", "ffed ", "abc" };
+		String[] result = StringUtil.trimArray(tmp);
+		for (String str : result) {
+			System.err.println("[" + str + "]");
+		}
+	}
 }

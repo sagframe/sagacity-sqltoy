@@ -1120,8 +1120,9 @@ public class StringUtil {
 	}
 
 	public static String[] trimArray(String[] paramNames) {
-		if (paramNames == null)
+		if (paramNames == null) {
 			return null;
+		}
 		return Arrays.stream(paramNames).map(s -> s == null ? null : s.trim()).toArray(String[]::new);
 	}
 

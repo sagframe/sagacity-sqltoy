@@ -360,15 +360,20 @@ public class NumberUtil {
 	}
 
 	public static BigDecimal getAverage(BigDecimal[] bigDeicmalArray) {
-		return getAverage(bigDeicmalArray, 4);
+		return getAverage(bigDeicmalArray, 4, RoundingMode.HALF_UP);
 	}
 
 	/**
 	 * @todo 求数组中数据的平均值
 	 * @param bigDeicmalArray
+	 * @param radixSize
 	 * @return
 	 */
 	public static BigDecimal getAverage(BigDecimal[] bigDeicmalArray, int radixSize) {
+		return getAverage(bigDeicmalArray, radixSize, RoundingMode.HALF_UP);
+	}
+
+	public static BigDecimal getAverage(BigDecimal[] bigDeicmalArray, int radixSize, RoundingMode roundingMode) {
 		BigDecimal sum = BigDecimal.ZERO;
 		if (bigDeicmalArray == null || bigDeicmalArray.length == 0) {
 			return sum;
@@ -378,7 +383,8 @@ public class NumberUtil {
 				sum = sum.add(bigDeicmalArray[i]);
 			}
 		}
-		return sum.divide(new BigDecimal(bigDeicmalArray.length), radixSize, RoundingMode.HALF_UP);
+		return sum.divide(new BigDecimal(bigDeicmalArray.length), radixSize,
+				roundingMode == null ? RoundingMode.HALF_UP : roundingMode);
 	}
 
 	/**
