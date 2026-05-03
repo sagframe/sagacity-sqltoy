@@ -83,11 +83,6 @@ public class ColumnMeta implements Serializable {
 	private String comments;
 
 	/**
-	 * 字段是否是只读
-	 */
-	private Boolean isReadOnly = false;
-
-	/**
 	 * 计算列类型(1:VIRTUAL,2:STORED)
 	 */
 	private int generatedType = 0;
@@ -262,13 +257,5 @@ public class ColumnMeta implements Serializable {
 
 	public void setGeneratedType(int generatedType) {
 		this.generatedType = generatedType;
-	}
-
-	public Boolean isReadOnly() {
-		return isReadOnly;
-	}
-
-	public void setReadOnly(Boolean isReadOnly) {
-		this.isReadOnly = isReadOnly;
 	}
 }
