@@ -87,7 +87,7 @@ public class H2Dialect extends PostgreSqlDialect {
 						// virtual_table为dual
 						return DialectUtils.getSaveOrUpdateSql(sqlToyContext, sqlToyContext.getUnifyFieldsHandler(),
 								dbType, entityMeta, pkStrategy, forceUpdateFields, VIRTUAL_TABLE, NVL_FUNCTION,
-								sequence, H2DialectUtils.isAssignPKValue(pkStrategy), null);
+								sequence, H2DialectUtils.allowAssignPKValue(pkStrategy), null);
 					}
 				}, forceCascadeClasses, subTableForceUpdateProps, conn, dbType, tableName);
 	}
@@ -100,7 +100,7 @@ public class H2Dialect extends PostgreSqlDialect {
 		String sequence = "nextval('" + entityMeta.getSequence() + "')";
 		// save行为根据主键是否赋值情况调整最终的主键策略
 		PKStrategy pkStrategy = DialectUtils.getSavePKStrategy(entityMeta, entity, dbType);
-		boolean isAssignPK = H2DialectUtils.isAssignPKValue(pkStrategy);
+		boolean isAssignPK = H2DialectUtils.allowAssignPKValue(pkStrategy);
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 				pkStrategy, NVL_FUNCTION, sequence, isAssignPK, tableName);
 		return DialectUtils.save(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entity,
@@ -111,13 +111,13 @@ public class H2Dialect extends PostgreSqlDialect {
 						String sequence = "nextval('" + entityMeta.getSequence() + "')";
 						return DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
 								entityMeta, pkStrategy, NVL_FUNCTION, sequence,
-								H2DialectUtils.isAssignPKValue(pkStrategy), null);
+								H2DialectUtils.allowAssignPKValue(pkStrategy), null);
 					}
 				}, new GenerateSavePKStrategy() {
 					@Override
 					public SavePKStrategy generate(EntityMeta entityMeta) {
 						return new SavePKStrategy(entityMeta.getIdStrategy(),
-								H2DialectUtils.isAssignPKValue(entityMeta.getIdStrategy()));
+								H2DialectUtils.allowAssignPKValue(entityMeta.getIdStrategy()));
 					}
 				}, conn, dbType);
 	}
@@ -129,7 +129,7 @@ public class H2Dialect extends PostgreSqlDialect {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		PKStrategy pkStrategy = entityMeta.getIdStrategy();
 		String sequence = "nextval('" + entityMeta.getSequence() + "')";
-		boolean isAssignPK = H2DialectUtils.isAssignPKValue(pkStrategy);
+		boolean isAssignPK = H2DialectUtils.allowAssignPKValue(pkStrategy);
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 				pkStrategy, NVL_FUNCTION, sequence, isAssignPK, tableName);
 		return DialectUtils.saveAll(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entities, batchSize,
@@ -158,7 +158,7 @@ public class H2Dialect extends PostgreSqlDialect {
 						String sequence = "nextval('" + entityMeta.getSequence() + "')";
 						return DialectUtils.getSaveOrUpdateSql(sqlToyContext, sqlToyContext.getUnifyFieldsHandler(),
 								dbType, entityMeta, pkStrategy, forceUpdateFields, VIRTUAL_TABLE, NVL_FUNCTION,
-								sequence, H2DialectUtils.isAssignPKValue(pkStrategy), tableName);
+								sequence, H2DialectUtils.allowAssignPKValue(pkStrategy), tableName);
 					}
 				}, reflectPropsHandler, conn, dbType, autoCommit);
 	}
@@ -176,7 +176,7 @@ public class H2Dialect extends PostgreSqlDialect {
 						String sequence = "nextval('" + entityMeta.getSequence() + "')";
 						return DialectExtUtils.mergeIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 								pkStrategy, VIRTUAL_TABLE, NVL_FUNCTION, sequence,
-								H2DialectUtils.isAssignPKValue(pkStrategy), tableName);
+								H2DialectUtils.allowAssignPKValue(pkStrategy), tableName);
 					}
 				}, reflectPropsHandler, conn, dbType, autoCommit);
 	}

@@ -124,7 +124,7 @@ public class PostgreSqlDialectUtils {
 		String sequence = "nextval('" + entityMeta.getSequence() + "')";
 		// save行为根据主键是否赋值情况调整最终的主键策略
 		PKStrategy pkStrategy = DialectUtils.getSavePKStrategy(entityMeta, entity, dbType);
-		boolean isAssignPK = isAssignPKValue(pkStrategy);
+		boolean isAssignPK = allowAssignPKValue(pkStrategy);
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 				pkStrategy, NVL_FUNCTION, sequence, isAssignPK, tableName);
 		return DialectUtils.save(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entity,
@@ -134,13 +134,13 @@ public class PostgreSqlDialectUtils {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = "nextval('" + entityMeta.getSequence() + "')";
 						return DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
-								entityMeta, pkStrategy, NVL_FUNCTION, sequence, isAssignPKValue(pkStrategy), null);
+								entityMeta, pkStrategy, NVL_FUNCTION, sequence, allowAssignPKValue(pkStrategy), null);
 					}
 				}, new GenerateSavePKStrategy() {
 					@Override
 					public SavePKStrategy generate(EntityMeta entityMeta) {
 						return new SavePKStrategy(entityMeta.getIdStrategy(),
-								isAssignPKValue(entityMeta.getIdStrategy()));
+								allowAssignPKValue(entityMeta.getIdStrategy()));
 					}
 				}, conn, dbType);
 	}
@@ -164,7 +164,7 @@ public class PostgreSqlDialectUtils {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		PKStrategy pkStrategy = entityMeta.getIdStrategy();
 		String sequence = "nextval('" + entityMeta.getSequence() + "')";
-		boolean isAssignPK = isAssignPKValue(pkStrategy);
+		boolean isAssignPK = allowAssignPKValue(pkStrategy);
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 				pkStrategy, NVL_FUNCTION, sequence, isAssignPK, tableName);
 		return DialectUtils.saveAll(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entities, batchSize,
@@ -198,7 +198,7 @@ public class PostgreSqlDialectUtils {
 						String sequence = "nextval('" + entityMeta.getSequence() + "')";
 						return DialectUtils.getSaveOrUpdateSql(sqlToyContext, sqlToyContext.getUnifyFieldsHandler(),
 								dbType, entityMeta, pkStrategy, forceUpdateFields, null, NVL_FUNCTION, sequence,
-								isAssignPKValue(pkStrategy), tableName);
+								allowAssignPKValue(pkStrategy), tableName);
 					}
 				}, reflectPropsHandler, conn, dbType, autoCommit);
 	}
@@ -254,11 +254,11 @@ public class PostgreSqlDialectUtils {
 	}
 
 	/**
-	 * @TODO 定义当使用sequence或identity时,是否允许自定义值(即不通过sequence或identity产生，而是由外部直接赋值)
+	 * @TODO 主键策略是identity或sequence时，主键值允许不由数据库内部自动产生，可人工赋值
 	 * @param pkStrategy
 	 * @return
 	 */
-	public static boolean isAssignPKValue(PKStrategy pkStrategy) {
+	public static boolean allowAssignPKValue(PKStrategy pkStrategy) {
 		if (pkStrategy == null) {
 			return true;
 		}
@@ -299,10 +299,14 @@ public class PostgreSqlDialectUtils {
 				    			ON d.objoid = c.oid AND d.objsubid = 0
 					WHERE
 					    c.relkind IN ('r', 'v', 'p')
-					    AND c.relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public')
 					    AND c.oid NOT IN (SELECT inhrelid FROM pg_inherits)
 					    AND c.relname NOT LIKE 'pg_%'
 				""";
+		String namespace = StringUtil.ifBlank(catalog, schema);
+		if (StringUtil.isNotBlank(namespace)) {
+			sql = sql.concat(
+					" AND c.relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = '" + namespace + "') ");
+		}
 		if (StringUtil.isNotBlank(tableName)) {
 			if (tableName.contains("%")) {
 				sql = sql.concat(" and c.relname like '" + tableName + "'");

@@ -181,7 +181,7 @@ public class OpenGaussDialect implements Dialect {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		PKStrategy pkStrategy = OpenGaussDialectUtils.getSavePkStrategy(entityMeta, entity, dbType, conn);
 		String sequence = entityMeta.getSequence() + ".nextval";
-		boolean isAssignPK = OpenGaussDialectUtils.isAssignPKValue(pkStrategy);
+		boolean isAssignPK = OpenGaussDialectUtils.allowAssignPKValue(pkStrategy);
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 				pkStrategy, NVL_FUNCTION, sequence, isAssignPK, tableName);
 		return DialectUtils.save(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entity,
@@ -192,13 +192,13 @@ public class OpenGaussDialect implements Dialect {
 						String sequence = entityMeta.getSequence() + ".nextval";
 						return DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
 								entityMeta, pkStrategy, NVL_FUNCTION, sequence,
-								OpenGaussDialectUtils.isAssignPKValue(pkStrategy), null);
+								OpenGaussDialectUtils.allowAssignPKValue(pkStrategy), null);
 					}
 				}, new GenerateSavePKStrategy() {
 					@Override
 					public SavePKStrategy generate(EntityMeta entityMeta) {
 						return new SavePKStrategy(entityMeta.getIdStrategy(),
-								OpenGaussDialectUtils.isAssignPKValue(entityMeta.getIdStrategy()));
+								OpenGaussDialectUtils.allowAssignPKValue(entityMeta.getIdStrategy()));
 					}
 				}, conn, dbType);
 	}
@@ -217,7 +217,7 @@ public class OpenGaussDialect implements Dialect {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		PKStrategy pkStrategy = entityMeta.getIdStrategy();
 		String sequence = entityMeta.getSequence() + ".nextval";
-		boolean isAssignPK = OpenGaussDialectUtils.isAssignPKValue(pkStrategy);
+		boolean isAssignPK = OpenGaussDialectUtils.allowAssignPKValue(pkStrategy);
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 				pkStrategy, NVL_FUNCTION, sequence, isAssignPK, tableName);
 		return DialectUtils.saveAll(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entities, batchSize,
@@ -241,7 +241,7 @@ public class OpenGaussDialect implements Dialect {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = entityMeta.getSequence() + ".nextval";
-						boolean isAssignPK = OpenGaussDialectUtils.isAssignPKValue(pkStrategy);
+						boolean isAssignPK = OpenGaussDialectUtils.allowAssignPKValue(pkStrategy);
 						// update 级联操作过程中会自动判断数据库类型
 						return DialectUtils.getSaveOrUpdateSql(sqlToyContext, sqlToyContext.getUnifyFieldsHandler(),
 								dbType, entityMeta, pkStrategy, forceUpdateFields, null, NVL_FUNCTION, sequence,
@@ -310,7 +310,7 @@ public class OpenGaussDialect implements Dialect {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = entityMeta.getSequence() + ".nextval";
-						boolean isAssignPK = OpenGaussDialectUtils.isAssignPKValue(pkStrategy);
+						boolean isAssignPK = OpenGaussDialectUtils.allowAssignPKValue(pkStrategy);
 						return DialectUtils.getSaveOrUpdateSql(sqlToyContext, sqlToyContext.getUnifyFieldsHandler(),
 								dbType, entityMeta, pkStrategy, forceUpdateFields, null, NVL_FUNCTION, sequence,
 								isAssignPK, tableName);
@@ -329,7 +329,7 @@ public class OpenGaussDialect implements Dialect {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = entityMeta.getSequence() + ".nextval";
-						boolean isAssignPK = OpenGaussDialectUtils.isAssignPKValue(pkStrategy);
+						boolean isAssignPK = OpenGaussDialectUtils.allowAssignPKValue(pkStrategy);
 						return DialectExtUtils.mergeIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 								pkStrategy, null, NVL_FUNCTION, sequence, isAssignPK, tableName);
 					}

@@ -2207,7 +2207,7 @@ public class DialectUtils {
 			return;
 		}
 		// mysql只支持identity,sequence 值忽略
-		boolean isAssignPK = MySqlDialectUtils.isAssignPKValue(entityMeta.getIdStrategy(), dbType);
+		boolean isAssignPK = MySqlDialectUtils.allowAssignPKValue(entityMeta.getIdStrategy(), dbType);
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 				entityMeta.getIdStrategy(), "ifnull", "NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName)
 				.replaceFirst("(?i)insert ", "insert ignore ");
@@ -2239,7 +2239,7 @@ public class DialectUtils {
 					sequence = entityMeta.getFieldMeta(entityMeta.getIdArray()[0]).getDefaultValue();
 				}
 				return DialectExtUtils.mergeIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
-						pkStrategy, "dual", "nvl", sequence, OracleDialectUtils.isAssignPKValue(pkStrategy), tableName);
+						pkStrategy, "dual", "nvl", sequence, OracleDialectUtils.allowAssignPKValue(pkStrategy), tableName);
 			}
 		}, reflectPropsHandler, conn, dbType, null);
 		logger.debug("级联子表:{} 变更记录数:{},新建记录数为:{}", tableName, updateCnt, saveCnt);
@@ -2273,10 +2273,10 @@ public class DialectUtils {
 					pkStrategy = PKStrategy.SEQUENCE;
 					sequence = "DEFAULT";
 				}
-				boolean isAssignPK = PostgreSqlDialectUtils.isAssignPKValue(pkStrategy);
+				boolean isAssignPK = PostgreSqlDialectUtils.allowAssignPKValue(pkStrategy);
 				if (dbType == DBType.GAUSSDB || dbType == DBType.MOGDB || dbType == DBType.STARDB
 						|| dbType == DBType.OSCAR || dbType == DBType.OPENGAUSS || dbType == DBType.VASTBASE) {
-					isAssignPK = OpenGaussDialectUtils.isAssignPKValue(pkStrategy);
+					isAssignPK = OpenGaussDialectUtils.allowAssignPKValue(pkStrategy);
 				}
 				return DialectExtUtils.insertIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 						pkStrategy, "COALESCE", sequence, isAssignPK, tableName);
@@ -2299,7 +2299,7 @@ public class DialectUtils {
 			return;
 		}
 		// sqlite只支持identity,sequence 值忽略
-		boolean isAssignPK = SqliteDialectUtils.isAssignPKValue(entityMeta.getIdStrategy());
+		boolean isAssignPK = SqliteDialectUtils.allowAssignPKValue(entityMeta.getIdStrategy());
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 				entityMeta.getIdStrategy(), "ifnull", "NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName)
 				.replaceFirst("(?i)insert ", "insert or ignore ");

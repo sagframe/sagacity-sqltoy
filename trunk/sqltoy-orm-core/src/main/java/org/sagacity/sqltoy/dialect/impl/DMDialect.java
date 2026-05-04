@@ -178,7 +178,7 @@ public class DMDialect implements Dialect {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = entityMeta.getSequence() + ".nextval";
-						boolean isAssignPK = DMDialectUtils.isAssignPKValue(pkStrategy);
+						boolean isAssignPK = DMDialectUtils.allowAssignPKValue(pkStrategy);
 						return DialectUtils.getSaveOrUpdateSql(sqlToyContext, sqlToyContext.getUnifyFieldsHandler(),
 								dbType, entityMeta, pkStrategy, forceUpdateFields, "dual", NVL_FUNCTION, sequence,
 								isAssignPK, tableName);
@@ -205,7 +205,7 @@ public class DMDialect implements Dialect {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = entityMeta.getSequence() + ".nextval";
-						boolean isAssignPK = DMDialectUtils.isAssignPKValue(pkStrategy);
+						boolean isAssignPK = DMDialectUtils.allowAssignPKValue(pkStrategy);
 						return DialectExtUtils.mergeIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 								pkStrategy, "dual", NVL_FUNCTION, sequence, isAssignPK, tableName);
 					}
@@ -252,7 +252,7 @@ public class DMDialect implements Dialect {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		// save行为根据主键是否赋值情况调整最终的主键策略
 		PKStrategy pkStrategy = DialectUtils.getSavePKStrategy(entityMeta, entity, dbType);
-		boolean isAssignPK = DMDialectUtils.isAssignPKValue(pkStrategy);
+		boolean isAssignPK = DMDialectUtils.allowAssignPKValue(pkStrategy);
 		String sequence = entityMeta.getSequence().concat(".nextval");
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 				pkStrategy, NVL_FUNCTION, sequence, isAssignPK, tableName);
@@ -264,13 +264,13 @@ public class DMDialect implements Dialect {
 						String sequence = entityMeta.getSequence().concat(".nextval");
 						return DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
 								entityMeta, pkStrategy, NVL_FUNCTION, sequence,
-								DMDialectUtils.isAssignPKValue(pkStrategy), null);
+								DMDialectUtils.allowAssignPKValue(pkStrategy), null);
 					}
 				}, new GenerateSavePKStrategy() {
 					@Override
 					public SavePKStrategy generate(EntityMeta entityMeta) {
 						return new SavePKStrategy(entityMeta.getIdStrategy(),
-								DMDialectUtils.isAssignPKValue(entityMeta.getIdStrategy()));
+								DMDialectUtils.allowAssignPKValue(entityMeta.getIdStrategy()));
 					}
 				}, conn, dbType);
 	}
@@ -290,7 +290,7 @@ public class DMDialect implements Dialect {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		PKStrategy pkStrategy = entityMeta.getIdStrategy();
 		String sequence = entityMeta.getSequence().concat(".nextval");
-		boolean isAssignPK = DMDialectUtils.isAssignPKValue(pkStrategy);
+		boolean isAssignPK = DMDialectUtils.allowAssignPKValue(pkStrategy);
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 				pkStrategy, NVL_FUNCTION, sequence, isAssignPK, tableName);
 		return DialectUtils.saveAll(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entities, batchSize,
@@ -315,7 +315,7 @@ public class DMDialect implements Dialect {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = entityMeta.getSequence().concat(".nextval");
-						boolean isAssignPK = DMDialectUtils.isAssignPKValue(pkStrategy);
+						boolean isAssignPK = DMDialectUtils.allowAssignPKValue(pkStrategy);
 						return DialectUtils.getSaveOrUpdateSql(sqlToyContext, sqlToyContext.getUnifyFieldsHandler(),
 								dbType, entityMeta, pkStrategy, forceUpdateFields, "dual", NVL_FUNCTION, sequence,
 								isAssignPK, null);

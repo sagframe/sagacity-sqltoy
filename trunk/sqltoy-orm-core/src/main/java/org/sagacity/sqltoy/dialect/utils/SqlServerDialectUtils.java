@@ -847,7 +847,7 @@ public class SqlServerDialectUtils {
 	public static Long saveAll(SqlToyContext sqlToyContext, List<?> entities, ReflectPropsHandler reflectPropsHandler,
 			Connection conn, final Integer dbType, final Boolean autoCommit, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-		boolean isAssignPK = isAssignPKValue(entityMeta.getIdStrategy());
+		boolean isAssignPK = allowAssignPKValue(entityMeta.getIdStrategy());
 		String insertSql = generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta, tableName,
 				entityMeta.getIdStrategy(), "isnull", "@mySeqVariable", isAssignPK);
 		if (entityMeta.getIdStrategy() != null && entityMeta.getIdStrategy().equals(PKStrategy.SEQUENCE)) {
@@ -1208,7 +1208,12 @@ public class SqlServerDialectUtils {
 	}
 
 	// sqlserver identity主键是不允许写insert table (id,xxx) values (?,?)不能显式体现identity列
-	private static boolean isAssignPKValue(PKStrategy pkStrategy) {
+	/**
+	 * @TODO 主键策略是identity或sequence时，主键值允许不由数据库内部自动产生，可人工赋值
+	 * @param pkStrategy
+	 * @return
+	 */
+	private static boolean allowAssignPKValue(PKStrategy pkStrategy) {
 		if (pkStrategy == null) {
 			return true;
 		}

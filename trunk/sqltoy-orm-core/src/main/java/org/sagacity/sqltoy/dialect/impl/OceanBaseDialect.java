@@ -210,7 +210,7 @@ public class OceanBaseDialect implements Dialect {
 						}
 						return DialectExtUtils.mergeIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 								pkStrategy, "dual", NVL_FUNCTION, sequence,
-								OracleDialectUtils.isAssignPKValue(pkStrategy), tableName);
+								OracleDialectUtils.allowAssignPKValue(pkStrategy), tableName);
 					}
 				}, reflectPropsHandler, conn, dbType, autoCommit);
 	}
@@ -266,7 +266,7 @@ public class OceanBaseDialect implements Dialect {
 				pkStrategy = PKStrategy.ASSIGN;
 			}
 		}
-		boolean isAssignPK = OracleDialectUtils.isAssignPKValue(pkStrategy);
+		boolean isAssignPK = OracleDialectUtils.allowAssignPKValue(pkStrategy);
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 				pkStrategy, NVL_FUNCTION, sequence, isAssignPK, tableName);
 		return DialectUtils.save(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entity,
@@ -281,7 +281,7 @@ public class OceanBaseDialect implements Dialect {
 						}
 						return DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
 								entityMeta, pkStrategy, NVL_FUNCTION, sequence,
-								OracleDialectUtils.isAssignPKValue(pkStrategy), null);
+								OracleDialectUtils.allowAssignPKValue(pkStrategy), null);
 					}
 				}, new GenerateSavePKStrategy() {
 					@Override
@@ -290,7 +290,7 @@ public class OceanBaseDialect implements Dialect {
 						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
 							pkStrategy = PKStrategy.SEQUENCE;
 						}
-						return new SavePKStrategy(pkStrategy, OracleDialectUtils.isAssignPKValue(pkStrategy));
+						return new SavePKStrategy(pkStrategy, OracleDialectUtils.allowAssignPKValue(pkStrategy));
 					}
 				}, conn, dbType);
 	}
@@ -315,9 +315,9 @@ public class OceanBaseDialect implements Dialect {
 			sequence = entityMeta.getFieldMeta(entityMeta.getIdArray()[0]).getDefaultValue();
 		}
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
-				pkStrategy, NVL_FUNCTION, sequence, OracleDialectUtils.isAssignPKValue(pkStrategy), tableName);
+				pkStrategy, NVL_FUNCTION, sequence, OracleDialectUtils.allowAssignPKValue(pkStrategy), tableName);
 		return DialectUtils.saveAll(sqlToyContext, entityMeta, pkStrategy,
-				OracleDialectUtils.isAssignPKValue(pkStrategy), insertSql, entities, batchSize, reflectPropsHandler,
+				OracleDialectUtils.allowAssignPKValue(pkStrategy), insertSql, entities, batchSize, reflectPropsHandler,
 				conn, dbType, autoCommit);
 	}
 
@@ -345,7 +345,7 @@ public class OceanBaseDialect implements Dialect {
 						}
 						return DialectUtils.getSaveOrUpdateSql(sqlToyContext, sqlToyContext.getUnifyFieldsHandler(),
 								dbType, entityMeta, pkStrategy, forceUpdateFields, "dual", NVL_FUNCTION, sequence,
-								OracleDialectUtils.isAssignPKValue(pkStrategy), null);
+								OracleDialectUtils.allowAssignPKValue(pkStrategy), null);
 					}
 				}, forceCascadeClass, subTableForceUpdateProps, conn, dbType, tableName);
 	}

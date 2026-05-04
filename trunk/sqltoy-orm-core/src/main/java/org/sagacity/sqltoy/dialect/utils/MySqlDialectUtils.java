@@ -15,12 +15,11 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 public class MySqlDialectUtils {
 
 	/**
-	 * 指的是在identity、sequence主键场景下，是否允许手工给主键赋值
-	 * 
+	 * @TODO 主键策略是identity或sequence时，主键值允许不由数据库内部自动产生，可人工赋值
 	 * @param pkStrategy
 	 * @return
 	 */
-	public static boolean isAssignPKValue(PKStrategy pkStrategy, Integer dbType) {
+	public static boolean allowAssignPKValue(PKStrategy pkStrategy, Integer dbType) {
 		if (pkStrategy == null) {
 			return true;
 		}

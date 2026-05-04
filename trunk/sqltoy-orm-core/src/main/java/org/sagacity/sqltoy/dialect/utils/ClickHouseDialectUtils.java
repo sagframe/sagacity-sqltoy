@@ -68,7 +68,7 @@ public class ClickHouseDialectUtils {
 		final boolean isIdentity = (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY));
 		final boolean isSequence = (pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE));
 		String[] reflectColumns;
-		boolean isAssignPK = isAssignPKValue(pkStrategy);
+		boolean isAssignPK = allowAssignPKValue(pkStrategy);
 		if ((isIdentity && !isAssignPK) || (isSequence && !isAssignPK)) {
 			reflectColumns = entityMeta.getRejectIdFieldArray(true);
 		} else {
@@ -195,7 +195,7 @@ public class ClickHouseDialectUtils {
 		boolean isIdentity = pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY);
 		boolean isSequence = pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE);
 		String[] reflectColumns;
-		boolean isAssignPK = isAssignPKValue(pkStrategy);
+		boolean isAssignPK = allowAssignPKValue(pkStrategy);
 		if ((isIdentity && !isAssignPK) || (isSequence && !isAssignPK)) {
 			reflectColumns = entityMeta.getRejectIdFieldArray(true);
 		} else {
@@ -600,7 +600,12 @@ public class ClickHouseDialectUtils {
 		return tableColumns;
 	}
 
-	public static boolean isAssignPKValue(PKStrategy pkStrategy) {
+	/**
+	 * @TODO 主键策略是identity或sequence时，主键值允许不由数据库内部自动产生，可人工赋值
+	 * @param pkStrategy
+	 * @return
+	 */
+	public static boolean allowAssignPKValue(PKStrategy pkStrategy) {
 		if (pkStrategy == null) {
 			return true;
 		}

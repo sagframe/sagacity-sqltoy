@@ -140,7 +140,7 @@ public class DefaultDialect implements Dialect {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		// save行为根据主键是否赋值情况调整最终的主键策略
 		PKStrategy pkStrategy = DialectUtils.getSavePKStrategy(entityMeta, entity, dbType);
-		boolean isAssignPK = isAssignPKValue(pkStrategy);
+		boolean isAssignPK = allowAssignPKValue(pkStrategy);
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 				pkStrategy, NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName);
 		return DialectUtils.save(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entity,
@@ -149,14 +149,14 @@ public class DefaultDialect implements Dialect {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateField) {
 						return DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
 								entityMeta, entityMeta.getIdStrategy(), NVL_FUNCTION,
-								"NEXTVAL FOR " + entityMeta.getSequence(), isAssignPKValue(entityMeta.getIdStrategy()),
+								"NEXTVAL FOR " + entityMeta.getSequence(), allowAssignPKValue(entityMeta.getIdStrategy()),
 								null);
 					}
 				}, new GenerateSavePKStrategy() {
 					@Override
 					public SavePKStrategy generate(EntityMeta entityMeta) {
 						return new SavePKStrategy(entityMeta.getIdStrategy(),
-								isAssignPKValue(entityMeta.getIdStrategy()));
+								allowAssignPKValue(entityMeta.getIdStrategy()));
 					}
 				}, conn, dbType);
 	}
@@ -166,7 +166,7 @@ public class DefaultDialect implements Dialect {
 			ReflectPropsHandler reflectPropsHandler, Connection conn, Integer dbType, String dialect,
 			Boolean autoCommit, String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-		boolean isAssignPK = isAssignPKValue(entityMeta.getIdStrategy());
+		boolean isAssignPK = allowAssignPKValue(entityMeta.getIdStrategy());
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 				entityMeta.getIdStrategy(), NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK,
 				tableName);
@@ -230,7 +230,7 @@ public class DefaultDialect implements Dialect {
 			ReflectPropsHandler reflectPropsHandler, Connection conn, Integer dbType, String dialect,
 			Boolean autoCommit, String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-		boolean isAssignPK = isAssignPKValue(entityMeta.getIdStrategy());
+		boolean isAssignPK = allowAssignPKValue(entityMeta.getIdStrategy());
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 				entityMeta.getIdStrategy(), NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK,
 				tableName).replaceFirst("(?i)insert ", "insert ignore ");
@@ -282,11 +282,11 @@ public class DefaultDialect implements Dialect {
 	}
 
 	/**
-	 * 指的是在identity、sequence主键场景下，是否允许手工给主键赋值
+	 * @TODO 主键策略是identity或sequence时，主键值允许不由数据库内部自动产生，可人工赋值
 	 * @param pkStrategy
 	 * @return
 	 */
-	private static boolean isAssignPKValue(PKStrategy pkStrategy) {
+	private static boolean allowAssignPKValue(PKStrategy pkStrategy) {
 		if (pkStrategy == null) {
 			return true;
 		}
