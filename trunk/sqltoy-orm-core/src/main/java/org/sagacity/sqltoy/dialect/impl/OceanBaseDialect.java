@@ -53,6 +53,7 @@ public class OceanBaseDialect implements Dialect {
 	 * 判定为null的函数
 	 */
 	public static final String NVL_FUNCTION = "nvl";
+	public static final String NEXT_VAL = ".nextval";
 
 	@Override
 	public boolean isUnique(SqlToyContext sqlToyContext, Serializable entity, String[] paramsNamed, Connection conn,
@@ -203,14 +204,14 @@ public class OceanBaseDialect implements Dialect {
 					@Override
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
-						String sequence = entityMeta.getSequence() + ".nextval";
+						String sequence = entityMeta.getSequence() + NEXT_VAL;
 						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
 							pkStrategy = PKStrategy.SEQUENCE;
 							sequence = entityMeta.getFieldMeta(entityMeta.getIdArray()[0]).getDefaultValue();
 						}
 						return DialectExtUtils.mergeIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 								pkStrategy, "dual", NVL_FUNCTION, sequence,
-								OracleDialectUtils.isAssignPKValue(pkStrategy), tableName);
+								OracleDialectUtils.allowAssignPKValue(pkStrategy), tableName);
 					}
 				}, reflectPropsHandler, conn, dbType, autoCommit);
 	}
@@ -254,7 +255,7 @@ public class OceanBaseDialect implements Dialect {
 			final String dialect, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		PKStrategy pkStrategy = entityMeta.getIdStrategy();
-		String sequence = entityMeta.getSequence().concat(".nextval");
+		String sequence = entityMeta.getSequence().concat(NEXT_VAL);
 		if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
 			pkStrategy = PKStrategy.SEQUENCE;
 			sequence = entityMeta.getFieldMeta(entityMeta.getIdArray()[0]).getDefaultValue();
@@ -266,7 +267,7 @@ public class OceanBaseDialect implements Dialect {
 				pkStrategy = PKStrategy.ASSIGN;
 			}
 		}
-		boolean isAssignPK = OracleDialectUtils.isAssignPKValue(pkStrategy);
+		boolean isAssignPK = OracleDialectUtils.allowAssignPKValue(pkStrategy);
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 				pkStrategy, NVL_FUNCTION, sequence, isAssignPK, tableName);
 		return DialectUtils.save(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entity,
@@ -274,14 +275,14 @@ public class OceanBaseDialect implements Dialect {
 					@Override
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateField) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
-						String sequence = entityMeta.getSequence().concat(".nextval");
+						String sequence = entityMeta.getSequence().concat(NEXT_VAL);
 						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
 							pkStrategy = PKStrategy.SEQUENCE;
 							sequence = entityMeta.getFieldMeta(entityMeta.getIdArray()[0]).getDefaultValue();
 						}
 						return DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
 								entityMeta, pkStrategy, NVL_FUNCTION, sequence,
-								OracleDialectUtils.isAssignPKValue(pkStrategy), null);
+								OracleDialectUtils.allowAssignPKValue(pkStrategy), null);
 					}
 				}, new GenerateSavePKStrategy() {
 					@Override
@@ -290,7 +291,7 @@ public class OceanBaseDialect implements Dialect {
 						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
 							pkStrategy = PKStrategy.SEQUENCE;
 						}
-						return new SavePKStrategy(pkStrategy, OracleDialectUtils.isAssignPKValue(pkStrategy));
+						return new SavePKStrategy(pkStrategy, OracleDialectUtils.allowAssignPKValue(pkStrategy));
 					}
 				}, conn, dbType);
 	}
@@ -309,15 +310,15 @@ public class OceanBaseDialect implements Dialect {
 		// oracle12c 开始支持identity机制
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		PKStrategy pkStrategy = entityMeta.getIdStrategy();
-		String sequence = entityMeta.getSequence().concat(".nextval");
+		String sequence = entityMeta.getSequence().concat(NEXT_VAL);
 		if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
 			pkStrategy = PKStrategy.SEQUENCE;
 			sequence = entityMeta.getFieldMeta(entityMeta.getIdArray()[0]).getDefaultValue();
 		}
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
-				pkStrategy, NVL_FUNCTION, sequence, OracleDialectUtils.isAssignPKValue(pkStrategy), tableName);
+				pkStrategy, NVL_FUNCTION, sequence, OracleDialectUtils.allowAssignPKValue(pkStrategy), tableName);
 		return DialectUtils.saveAll(sqlToyContext, entityMeta, pkStrategy,
-				OracleDialectUtils.isAssignPKValue(pkStrategy), insertSql, entities, batchSize, reflectPropsHandler,
+				OracleDialectUtils.allowAssignPKValue(pkStrategy), insertSql, entities, batchSize, reflectPropsHandler,
 				conn, dbType, autoCommit);
 	}
 
@@ -338,14 +339,14 @@ public class OceanBaseDialect implements Dialect {
 					@Override
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
-						String sequence = entityMeta.getSequence().concat(".nextval");
+						String sequence = entityMeta.getSequence().concat(NEXT_VAL);
 						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
 							pkStrategy = PKStrategy.SEQUENCE;
 							sequence = entityMeta.getFieldMeta(entityMeta.getIdArray()[0]).getDefaultValue();
 						}
 						return DialectUtils.getSaveOrUpdateSql(sqlToyContext, sqlToyContext.getUnifyFieldsHandler(),
 								dbType, entityMeta, pkStrategy, forceUpdateFields, "dual", NVL_FUNCTION, sequence,
-								OracleDialectUtils.isAssignPKValue(pkStrategy), null);
+								OracleDialectUtils.allowAssignPKValue(pkStrategy), null);
 					}
 				}, forceCascadeClass, subTableForceUpdateProps, conn, dbType, tableName);
 	}

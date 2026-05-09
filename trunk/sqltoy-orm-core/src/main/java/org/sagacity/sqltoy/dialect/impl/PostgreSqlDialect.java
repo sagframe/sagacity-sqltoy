@@ -231,7 +231,7 @@ public class PostgreSqlDialect implements Dialect {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = "nextval('" + entityMeta.getSequence() + "')";
-						boolean isAssignPK = PostgreSqlDialectUtils.isAssignPKValue(pkStrategy);
+						boolean isAssignPK = PostgreSqlDialectUtils.allowAssignPKValue(pkStrategy);
 						// update 级联操作过程中会自动判断postgresql15，而采用不同策略(这里统一按15的规则提供，14之前版本并不用到)
 						return DialectUtils.getSaveOrUpdateSql(sqlToyContext, sqlToyContext.getUnifyFieldsHandler(),
 								dbType, entityMeta, pkStrategy, forceUpdateFields, null, NVL_FUNCTION, sequence,
@@ -333,7 +333,7 @@ public class PostgreSqlDialect implements Dialect {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = "nextval('" + entityMeta.getSequence() + "')";
-						boolean isAssignPK = PostgreSqlDialectUtils.isAssignPKValue(pkStrategy);
+						boolean isAssignPK = PostgreSqlDialectUtils.allowAssignPKValue(pkStrategy);
 						if (dbType == DBType.POSTGRESQL15) {
 							return DialectExtUtils.mergeIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType,
 									entityMeta, pkStrategy, null, NVL_FUNCTION, sequence, isAssignPK, tableName);
@@ -403,7 +403,7 @@ public class PostgreSqlDialect implements Dialect {
 	@Override
 	public List<TableMeta> getTables(String catalog, String schema, String tableName, Connection conn, Integer dbType,
 			String dialect) throws Exception {
-		return DefaultDialectUtils.getTables(catalog, schema, tableName, conn, dbType, dialect);
+		return PostgreSqlDialectUtils.getTables(catalog, schema, tableName, conn, dbType, dialect);
 	}
 
 	private String getLockSql(String sql, Integer dbType, LockMode lockMode) {

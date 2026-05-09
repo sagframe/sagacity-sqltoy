@@ -25,4 +25,7 @@ public @interface Id {
 
 	// 主键产生类
 	String generator() default "";
+
+	// 是否是辅助主键，主要是作为分区字段(mysql、pg等数据库分区字段在表有主键的情况下，分区字段也必须是主键)
+	boolean isAssist() default false;
 }

@@ -399,7 +399,7 @@ public class DialectFactory {
 			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
 			SqlExecuteStat.start(sqlToyConfig.getId(), executeType,
 					(extend.resultType == null) ? null : (Class) extend.resultType,
-					(extend.showSql != null) ? extend.showSql : sqlToyConfig.isShowSql());
+					(extend.showSql != null) ? extend.showSql : sqlToyConfig.isShowSql(), extend.contextData);
 			Long updateTotalCnt = (Long) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
@@ -464,7 +464,7 @@ public class DialectFactory {
 			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
 			SqlExecuteStat.start(sqlToyConfig.getId(), executeType,
 					(extend.resultType == null) ? null : (Class) extend.resultType,
-					(extend.showSql != null) ? extend.showSql : sqlToyConfig.isShowSql());
+					(extend.showSql != null) ? extend.showSql : sqlToyConfig.isShowSql(), extend.contextData);
 			Object returnPkValue = DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
@@ -518,7 +518,7 @@ public class DialectFactory {
 		}
 		try {
 			SqlExecuteStat.start(BeanUtil.getEntityClass(uniqueExecutor.getEntity().getClass()).getName(),
-					OperateDetailType.isUnique, uniqueExecutor.getEntity().getClass(), sqlToyContext.isDebug());
+					OperateDetailType.isUnique, uniqueExecutor.getEntity().getClass(), sqlToyContext.isDebug(), uniqueExecutor.getContextData());
 			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, uniqueExecutor.getEntity(),
 					false, dataSource);
 			Boolean isUnique = (Boolean) DataSourceUtils.processDataSource(sqlToyContext, shardingModel.getDataSource(),
@@ -566,7 +566,7 @@ public class DialectFactory {
 			}
 			SqlExecuteStat.start(sqlToyConfig.getId(), operateDetailType,
 					(extend.resultType == null) ? null : (Class) extend.resultType,
-					(extend.showSql != null) ? extend.showSql : sqlToyConfig.isShowSql());
+					(extend.showSql != null) ? extend.showSql : sqlToyConfig.isShowSql(), extend.contextData);
 			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
@@ -770,7 +770,7 @@ public class DialectFactory {
 				}
 			}
 			SqlExecuteStat.start(treeModel.getTableName(), OperateDetailType.wrapTreeTableRoute, null,
-					sqlToyContext.isDebug());
+					sqlToyContext.isDebug(), treeModel.getContextData());
 			return (Boolean) DataSourceUtils.processDataSource(sqlToyContext, dataSource,
 					new DataSourceCallbackHandler() {
 						@Override
@@ -828,7 +828,7 @@ public class DialectFactory {
 			}
 			SqlExecuteStat.start(sqlToyConfig.getId(), operateDetailType,
 					(extend.resultType == null) ? null : (Class) extend.resultType,
-					(extend.showSql != null) ? extend.showSql : sqlToyConfig.isShowSql());
+					(extend.showSql != null) ? extend.showSql : sqlToyConfig.isShowSql(), extend.contextData);
 			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
@@ -903,7 +903,7 @@ public class DialectFactory {
 			}
 			SqlExecuteStat.start(sqlToyConfig.getId(), operateDetailType,
 					(extend.resultType == null) ? null : (Class) extend.resultType,
-					(extend.showSql != null) ? extend.showSql : sqlToyConfig.isShowSql());
+					(extend.showSql != null) ? extend.showSql : sqlToyConfig.isShowSql(), extend.contextData);
 			final DataSource realDataSource = ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig,
 					queryExecutor, dataSource);
 			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext, realDataSource,
@@ -1225,7 +1225,7 @@ public class DialectFactory {
 			}
 			SqlExecuteStat.start(sqlToyConfig.getId(), operateDetailType,
 					(extend.resultType == null) ? null : (Class) extend.resultType,
-					(extend.showSql != null) ? extend.showSql : sqlToyConfig.isShowSql());
+					(extend.showSql != null) ? extend.showSql : sqlToyConfig.isShowSql(), extend.contextData);
 			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
@@ -1313,7 +1313,7 @@ public class DialectFactory {
 			}
 			SqlExecuteStat.start(sqlToyConfig.getId(), operateDetailType,
 					(extend.resultType == null) ? null : (Class) extend.resultType,
-					(extend.showSql != null) ? extend.showSql : sqlToyConfig.isShowSql());
+					(extend.showSql != null) ? extend.showSql : sqlToyConfig.isShowSql(), extend.contextData);
 			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
@@ -1388,7 +1388,7 @@ public class DialectFactory {
 			}
 			SqlExecuteStat.start(sqlToyConfig.getId(), operateDetailType,
 					(extend.resultType == null) ? null : (Class) extend.resultType,
-					(extend.showSql != null) ? extend.showSql : sqlToyConfig.isShowSql());
+					(extend.showSql != null) ? extend.showSql : sqlToyConfig.isShowSql(), extend.contextData);
 			Long count = (Long) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
@@ -2166,7 +2166,7 @@ public class DialectFactory {
 				operateDetailType = OperateDetailType.updateFetchSingleTable;
 			}
 			SqlExecuteStat.start(sqlToyConfig.getId(), operateDetailType,
-					(extend.resultType == null) ? null : (Class) extend.resultType, sqlToyConfig.isShowSql());
+					(extend.resultType == null) ? null : (Class) extend.resultType, sqlToyConfig.isShowSql(), extend.contextData);
 			// 组织参数和参数校验，但忽视数据权限数据的传参和校验
 			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
 			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
@@ -2345,7 +2345,7 @@ public class DialectFactory {
 			}
 			SqlExecuteStat.start(sqlToyConfig.getId(), operateDetailType,
 					(extend.resultType == null) ? null : (Class) extend.resultType,
-					(extend.showSql != null) ? extend.showSql : sqlToyConfig.isShowSql());
+					(extend.showSql != null) ? extend.showSql : sqlToyConfig.isShowSql(), extend.contextData);
 			DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
@@ -2500,7 +2500,7 @@ public class DialectFactory {
 		if (entityMeta == null) {
 			throw new IllegalArgumentException("Class=[" + entityClass.getName() + "]没有@Entity标记为POJO实体对象!");
 		}
-		if (entityMeta.getFieldsArray() == null || entityMeta.getFieldsArray().length == 0) {
+		if (entityMeta.getFieldsArray(false) == null || entityMeta.getFieldsArray(false).length == 0) {
 			throw new IllegalArgumentException("Class=[" + entityClass.getName() + "]没有@Column定义具体的字段信息!");
 		}
 		if (validatePK && (entityMeta.getIdArray() == null || entityMeta.getIdArray().length == 0)) {

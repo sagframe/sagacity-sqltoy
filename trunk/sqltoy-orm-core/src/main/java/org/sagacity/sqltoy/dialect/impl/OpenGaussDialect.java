@@ -39,6 +39,7 @@ public class OpenGaussDialect implements Dialect {
 	 * 判定为null的函数
 	 */
 	public static final String NVL_FUNCTION = "NVL";
+	public static final String NEXT_VAL = ".nextval";
 
 	@Override
 	public boolean isUnique(SqlToyContext sqlToyContext, Serializable entity, String[] paramsNamed, Connection conn,
@@ -180,8 +181,8 @@ public class OpenGaussDialect implements Dialect {
 			final String dialect, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		PKStrategy pkStrategy = OpenGaussDialectUtils.getSavePkStrategy(entityMeta, entity, dbType, conn);
-		String sequence = entityMeta.getSequence() + ".nextval";
-		boolean isAssignPK = OpenGaussDialectUtils.isAssignPKValue(pkStrategy);
+		String sequence = entityMeta.getSequence() + NEXT_VAL;
+		boolean isAssignPK = OpenGaussDialectUtils.allowAssignPKValue(pkStrategy);
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 				pkStrategy, NVL_FUNCTION, sequence, isAssignPK, tableName);
 		return DialectUtils.save(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entity,
@@ -189,16 +190,16 @@ public class OpenGaussDialect implements Dialect {
 					@Override
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateField) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
-						String sequence = entityMeta.getSequence() + ".nextval";
+						String sequence = entityMeta.getSequence() + NEXT_VAL;
 						return DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
 								entityMeta, pkStrategy, NVL_FUNCTION, sequence,
-								OpenGaussDialectUtils.isAssignPKValue(pkStrategy), null);
+								OpenGaussDialectUtils.allowAssignPKValue(pkStrategy), null);
 					}
 				}, new GenerateSavePKStrategy() {
 					@Override
 					public SavePKStrategy generate(EntityMeta entityMeta) {
 						return new SavePKStrategy(entityMeta.getIdStrategy(),
-								OpenGaussDialectUtils.isAssignPKValue(entityMeta.getIdStrategy()));
+								OpenGaussDialectUtils.allowAssignPKValue(entityMeta.getIdStrategy()));
 					}
 				}, conn, dbType);
 	}
@@ -216,8 +217,8 @@ public class OpenGaussDialect implements Dialect {
 			final Boolean autoCommit, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		PKStrategy pkStrategy = entityMeta.getIdStrategy();
-		String sequence = entityMeta.getSequence() + ".nextval";
-		boolean isAssignPK = OpenGaussDialectUtils.isAssignPKValue(pkStrategy);
+		String sequence = entityMeta.getSequence() + NEXT_VAL;
+		boolean isAssignPK = OpenGaussDialectUtils.allowAssignPKValue(pkStrategy);
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 				pkStrategy, NVL_FUNCTION, sequence, isAssignPK, tableName);
 		return DialectUtils.saveAll(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entities, batchSize,
@@ -240,8 +241,8 @@ public class OpenGaussDialect implements Dialect {
 					@Override
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
-						String sequence = entityMeta.getSequence() + ".nextval";
-						boolean isAssignPK = OpenGaussDialectUtils.isAssignPKValue(pkStrategy);
+						String sequence = entityMeta.getSequence() + NEXT_VAL;
+						boolean isAssignPK = OpenGaussDialectUtils.allowAssignPKValue(pkStrategy);
 						// update 级联操作过程中会自动判断数据库类型
 						return DialectUtils.getSaveOrUpdateSql(sqlToyContext, sqlToyContext.getUnifyFieldsHandler(),
 								dbType, entityMeta, pkStrategy, forceUpdateFields, null, NVL_FUNCTION, sequence,
@@ -309,8 +310,8 @@ public class OpenGaussDialect implements Dialect {
 					@Override
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
-						String sequence = entityMeta.getSequence() + ".nextval";
-						boolean isAssignPK = OpenGaussDialectUtils.isAssignPKValue(pkStrategy);
+						String sequence = entityMeta.getSequence() + NEXT_VAL;
+						boolean isAssignPK = OpenGaussDialectUtils.allowAssignPKValue(pkStrategy);
 						return DialectUtils.getSaveOrUpdateSql(sqlToyContext, sqlToyContext.getUnifyFieldsHandler(),
 								dbType, entityMeta, pkStrategy, forceUpdateFields, null, NVL_FUNCTION, sequence,
 								isAssignPK, tableName);
@@ -328,8 +329,8 @@ public class OpenGaussDialect implements Dialect {
 					@Override
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
-						String sequence = entityMeta.getSequence() + ".nextval";
-						boolean isAssignPK = OpenGaussDialectUtils.isAssignPKValue(pkStrategy);
+						String sequence = entityMeta.getSequence() + NEXT_VAL;
+						boolean isAssignPK = OpenGaussDialectUtils.allowAssignPKValue(pkStrategy);
 						return DialectExtUtils.mergeIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 								pkStrategy, null, NVL_FUNCTION, sequence, isAssignPK, tableName);
 					}
@@ -397,7 +398,9 @@ public class OpenGaussDialect implements Dialect {
 	public List<TableMeta> getTables(String catalog, String schema, String tableName, Connection conn, Integer dbType,
 			String dialect) throws Exception {
 		// 这里tableName不是具体的名字，而是正则表达式,要变小写则(?i)
-		return DefaultDialectUtils.getTables(catalog, schema, tableName, conn, dbType, dialect);
+		// return DefaultDialectUtils.getTables(catalog, schema, tableName, conn,
+		// dbType, dialect);
+		return PostgreSqlDialectUtils.getTables(catalog, schema, tableName, conn, dbType, dialect);
 	}
 
 	private String getLockSql(String sql, Integer dbType, LockMode lockMode) {

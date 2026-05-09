@@ -290,4 +290,28 @@ public class StringUtilsTest {
 			System.err.println("[" + str + "]");
 		}
 	}
+
+	@Test
+	public void testEscopeComment() {
+		String tmp = "\\\\$\\{{datetime}} {{product-RGB}}";
+		System.err.println(StringUtil.escapeComment(tmp));
+	}
+
+	@Test
+	public void testTrimArray() {
+		String[] tmp = { " dd ", "ffed ", "abc" };
+		String[] result = StringUtil.trimArray(tmp);
+		for (String str : result) {
+			System.err.println("[" + str + "]");
+		}
+	}
+
+	@Test
+	public void loopAppendWithSign() {
+		String result = StringUtil.loopAppendWithSign("?", ",", 10);
+		System.err.println("[" + result + "]");
+		result = StringUtil.loopAppendWithSign("?", ",", 1);
+		System.err.println("[" + result + "]");
+	}
+
 }

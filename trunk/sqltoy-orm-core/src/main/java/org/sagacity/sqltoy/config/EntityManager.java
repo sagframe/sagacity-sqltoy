@@ -45,7 +45,9 @@ import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.FieldSecureConfig;
 import org.sagacity.sqltoy.config.model.ForeignModel;
+import org.sagacity.sqltoy.config.model.GeneratedType;
 import org.sagacity.sqltoy.config.model.IndexModel;
+import org.sagacity.sqltoy.config.model.NotGeneratedColMeta;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.ShardingConfig;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
@@ -203,7 +205,7 @@ public class EntityManager {
 				throw new IllegalArgumentException("您传入的对象:[".concat(className)
 						.concat(" ]不是一个@Entity实体POJO对象,sqltoy实体对象必须使用 @Entity/@Id 等注解来标识!"));
 			} // update 2022-10-24 加强提示，避免一些手工编写pojo情景遇到问题不知所措(手工编写是因为根本不了解quickvo的特性)
-			else if (entityMeta.getFieldsArray() == null || entityMeta.getFieldsArray().length == 0) {
+			else if (entityMeta.getFieldsArray(false) == null || entityMeta.getFieldsArray(false).length == 0) {
 				throw new RuntimeException(
 						"您传入的对象:[".concat(className).concat(" ] 没有@column等配置,无法获得POJO属性映射数据库字段的关系,请用quickvo自动生成POJO!"));
 			}
@@ -354,7 +356,8 @@ public class EntityManager {
 					entityMeta.setRejectIdFieldArray(rejectIdFieldList.toArray(new String[0]));
 					fieldList.addAll(rejectIdFieldList);
 				}
-				// 存在主键，主键必须放在fieldList最后面，影响到insert，update等语句
+				// 计算列放在开始位置、主键必须放在fieldList最后面，
+				// 影响到insert，update等语句
 				if (idList.size() > 0) {
 					entityMeta.setIdArray(idList.toArray(new String[0]));
 					fieldList.addAll(idList);
@@ -373,6 +376,8 @@ public class EntityManager {
 				parseSecureConfig(entityMeta, entityClass);
 				// 解析索引
 				parseIndexes(entityMeta, entityClass);
+				// 过滤计算列 add 2026-4-30
+				processNotGeneratedColMeta(entityMeta);
 				// 数据版本
 				if (dataVersion != null) {
 					if (dataVersionField == null) {
@@ -589,9 +594,11 @@ public class EntityManager {
 	 */
 	private void parseIdFileds(List<String> idList, Field[] allFields) {
 		// 优先提取id集合,有利于统一主键在子表操作中的顺序
+		Id id;
 		for (Field field : allFields) {
+			id = field.getAnnotation(Id.class);
 			// 判断字段是否为主键
-			if (field.getAnnotation(Id.class) != null) {
+			if (id != null && !id.isAssist()) {
 				idList.add(field.getName());
 			}
 		}
@@ -640,18 +647,34 @@ public class EntityManager {
 		if (column == null) {
 			return;
 		}
+		// 空白场景处理
+		String defaultValue = StringUtil.isBlank(column.defaultValue()) ? SqlToyConstants.DEFAULT_NULL
+				: column.defaultValue().trim();
+		//清理defaultValue的一些不符合最终使用的字符，如(x)、((x))、x::text等
+		defaultValue = SqlUtil.clearDefaultValue(defaultValue);
 		// 字段的详细配置信息,字段名称，字段对应数据库表字段，字段默认值，字段类型
 		FieldMeta fieldMeta = new FieldMeta(field.getName(), column.name(),
-				(SqlToyConstants.DEFAULT_NULL.equals(column.defaultValue())) ? null : column.defaultValue(),
-				column.nativeType(), column.type(), column.nullable(), column.keyword(),
-				Long.valueOf(column.length()).intValue(), column.precision(), column.scale());
-		// 增加字段
-		allFieldAry.add(column.name());
+				(SqlToyConstants.DEFAULT_NULL.equals(defaultValue)) ? null : defaultValue, column.nativeType(),
+				column.type(), column.nullable(), column.keyword(), Long.valueOf(column.length()).intValue(),
+				column.precision(), column.scale());
+		// 计算列
+		boolean isGenerateCol = false;
+		if (column.generatedType() != null && column.generatedType() != GeneratedType.DEFAULT) {
+			fieldMeta.setGeneratedType(column.generatedType().getValue());
+			isGenerateCol = true;
+			entityMeta.setGeneratedColsCnt(entityMeta.getGeneratedColsCnt() + 1);
+		}
+		// 计算列放首位
+		if (isGenerateCol) {
+			allFieldAry.add(0, column.name());
+		} else {
+			allFieldAry.add(column.name());
+		}
 		// 字段是否自增
 		fieldMeta.setAutoIncrement(column.autoIncrement());
 		// 设置type类型，并转小写便于后续对比的统一
 		fieldMeta.setFieldType(field.getType().getTypeName().toLowerCase());
-		fieldMeta.setComments(column.comment());
+		fieldMeta.setComments(StringUtil.isBlank(column.comment()) ? null : column.comment().trim());
 		// 设置是否分区字段
 		if (field.getAnnotation(PartitionKey.class) != null) {
 			fieldMeta.setPartitionKey(true);
@@ -727,13 +750,23 @@ public class EntityManager {
 		entityMeta.addFieldMeta(fieldMeta);
 		// 判断字段是否为主键
 		Id id = field.getAnnotation(Id.class);
+		// 针对mysql 分区字段也要纳入主键的场景
 		if (id != null) {
+			fieldMeta.setDdlPk(true);
+		}
+		if (id != null && !id.isAssist()) {
 			fieldMeta.setPK(true);
 			// 主键生成策略
-			entityMeta.setIdStrategy(PKStrategy.getPKStrategy(id.strategy().toLowerCase()));
+			if (StringUtil.isNotBlank(id.strategy())) {
+				entityMeta.setIdStrategy(PKStrategy.getPKStrategy(id.strategy().toLowerCase()));
+			}
 			entityMeta.setSequence(id.sequence());
 			String idGenerator = id.generator();
 			if (StringUtil.isNotBlank(idGenerator)) {
+				// GENERATOR不为空且主键策略未配置，则主键策略默认为PKStrategy.GENERATOR
+				if (StringUtil.isBlank(id.strategy()) || id.strategy().equals("assign")) {
+					entityMeta.setIdStrategy(PKStrategy.GENERATOR);
+				}
 				processIdGenerator(sqlToyContext, entityMeta, idGenerator);
 				entityMeta.setIdGenerator(IdGeneratorsInstance.get(idGenerator));
 			}
@@ -748,7 +781,11 @@ public class EntityManager {
 			loadNamedWhereSql.append(idColName).append("=:").append(field.getName());
 			loadArgWhereSql.append(idColName).append("=?");
 		} else {
-			rejectIdFieldList.add(field.getName());
+			if (isGenerateCol) {
+				rejectIdFieldList.add(0, field.getName());
+			} else {
+				rejectIdFieldList.add(field.getName());
+			}
 		}
 		// 业务主键策略配置解析
 		BusinessId bizId = field.getAnnotation(BusinessId.class);
@@ -765,7 +802,7 @@ public class EntityManager {
 			}
 			processIdGenerator(sqlToyContext, entityMeta, bizGenerator);
 			// 如果是业务主键跟ID重叠,则ID以业务主键策略生成
-			if (id != null) {
+			if (id != null && !id.isAssist()) {
 				entityMeta.setIdGenerator(IdGeneratorsInstance.get(bizGenerator));
 				if (bizId.length() > 0) {
 					fieldMeta.setLength(bizId.length());
@@ -991,7 +1028,7 @@ public class EntityManager {
 	 */
 	private void parseFieldTypeAndDefault(EntityMeta entityMeta) {
 		// 组织对象对应表字段的类型和默认值以及是否可以为null
-		int fieldSize = entityMeta.getFieldsArray().length;
+		int fieldSize = entityMeta.getFieldsArray(false).length;
 		int pkSize = (entityMeta.getIdArray() == null) ? 0 : entityMeta.getIdArray().length;
 		Integer[] fieldsTypeArray = new Integer[fieldSize];
 		// 提供对象save\saveAll 构建默认值(主键无需设置)
@@ -1000,7 +1037,7 @@ public class EntityManager {
 		FieldMeta fieldMeta;
 		boolean hasDefault = false;
 		for (int i = 0; i < fieldSize; i++) {
-			fieldMeta = entityMeta.getFieldMeta(entityMeta.getFieldsArray()[i]);
+			fieldMeta = entityMeta.getFieldMeta(entityMeta.getFieldsArray(false)[i]);
 			fieldsTypeArray[i] = fieldMeta.getType();
 			// update 2022-09-29 非主键或复合主键字段支持默认值
 			if (!fieldMeta.isPK() || pkSize > 1) {
@@ -1016,6 +1053,53 @@ public class EntityManager {
 			entityMeta.setFieldsDefaultValue(fieldsDefaultValue);
 		}
 		entityMeta.setFieldsNullable(fieldsNullable);
+	}
+
+	/**
+	 * 处理排除计算列外的字段信息，供insert、update操作行为使用
+	 * 
+	 * @date 2026-4-30
+	 * @param entityMeta
+	 */
+	private void processNotGeneratedColMeta(EntityMeta entityMeta) {
+		NotGeneratedColMeta notGeneratedColMeta = entityMeta.getNotGeneratedColMeta();
+		int startIndex = entityMeta.getGeneratedColsCnt();
+		// 计算列数量为0
+		if (startIndex == 0) {
+			notGeneratedColMeta.setFieldsArray(entityMeta.getFieldsArray(false));
+			notGeneratedColMeta.setFieldsDefaultValue(entityMeta.getFieldsDefaultValue(false));
+			notGeneratedColMeta.setFieldsNullable(entityMeta.getFieldsNullable(false));
+			notGeneratedColMeta.setFieldsTypeArray(entityMeta.getFieldsTypeArray(false));
+			notGeneratedColMeta.setRejectIdFieldArray(entityMeta.getRejectIdFieldArray(false));
+		} else {
+			int length = entityMeta.getFieldsArray(false).length - startIndex;
+			// fieldsArray
+			String[] fieldsArray = new String[length];
+			System.arraycopy(entityMeta.getFieldsArray(false), startIndex, fieldsArray, 0, length);
+			notGeneratedColMeta.setFieldsArray(fieldsArray);
+			// fieldsDefaultValue
+			String[] fieldDefaultValue = new String[length];
+			System.arraycopy(entityMeta.getFieldsDefaultValue(false), startIndex, fieldDefaultValue, 0, length);
+			notGeneratedColMeta.setFieldsDefaultValue(fieldDefaultValue);
+			// fieldsNullable
+			Boolean[] fieldsNullable = new Boolean[length];
+			System.arraycopy(entityMeta.getFieldsNullable(false), startIndex, fieldsNullable, 0, length);
+			notGeneratedColMeta.setFieldsNullable(fieldsNullable);
+			// fieldsTypeArray
+			Integer[] fieldsTypeArray = new Integer[length];
+			System.arraycopy(entityMeta.getFieldsTypeArray(false), startIndex, fieldsTypeArray, 0, length);
+			notGeneratedColMeta.setFieldsTypeArray(fieldsTypeArray);
+			// rejectIdFields
+			String[] rejectIdFieldsArray = entityMeta.getRejectIdFieldArray(false);
+			if (rejectIdFieldsArray != null) {
+				length = rejectIdFieldsArray.length - startIndex;
+				if (length > 0) {
+					String[] rejectIdFieldArray = new String[length];
+					System.arraycopy(rejectIdFieldsArray, startIndex, rejectIdFieldArray, 0, length);
+					notGeneratedColMeta.setRejectIdFieldArray(rejectIdFieldArray);
+				}
+			}
+		}
 	}
 
 	/**

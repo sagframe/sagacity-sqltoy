@@ -148,13 +148,15 @@ public class SqlUtilsExt {
 	/**
 	 * @TODO 获得全部字段的默认值
 	 * @param entityMeta
+	 * @param excludeGeneratedCols
 	 * @return
 	 */
-	public static Object[] getDefaultValues(EntityMeta entityMeta) {
-		if (null == entityMeta || null == entityMeta.getFieldsDefaultValue()) {
+	public static Object[] getDefaultValues(EntityMeta entityMeta, boolean excludeGeneratedCols) {
+		String[] fieldsDefaultValue = entityMeta.getFieldsDefaultValue(excludeGeneratedCols);
+		if (null == entityMeta || null == fieldsDefaultValue || fieldsDefaultValue.length == 0) {
 			return null;
 		}
-		int size = entityMeta.getFieldsDefaultValue().length;
+		int size = fieldsDefaultValue.length;
 		Object[] result = new Object[size];
 		String defaultValue = null;
 		int fieldType;
@@ -167,14 +169,17 @@ public class SqlUtilsExt {
 		}
 		try {
 			FieldMeta fieldMeta;
+			String[] fieldsArray = entityMeta.getFieldsArray(excludeGeneratedCols);
+			Boolean[] fieldsNullable = entityMeta.getFieldsNullable(excludeGeneratedCols);
+			Integer[] fieldsTypeArray = entityMeta.getFieldsTypeArray(excludeGeneratedCols);
 			for (int i = 0; i < size; i++) {
-				fieldName = entityMeta.getFieldsArray()[i];
-				defaultValue = entityMeta.getFieldsDefaultValue()[i];
-				nullable = entityMeta.getFieldsNullable()[i];
+				fieldName = fieldsArray[i];
+				defaultValue = fieldsDefaultValue[i];
+				nullable = fieldsNullable[i];
 				fieldMeta = entityMeta.getFieldMeta(fieldName);
 				// 唯一主键不允许有默认值(EntityManager.parseFieldTypeAndDefault()已经跳过了唯一主键的默认值设置)
 				if (!(fieldMeta.isPK() && isUniqPk) && null != defaultValue) {
-					fieldType = entityMeta.getFieldsTypeArray()[i];
+					fieldType = fieldsTypeArray[i];
 					result[i] = getDefaultValue(null, defaultValue, fieldType, (nullable == null) ? false : nullable);
 				}
 			}

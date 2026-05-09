@@ -62,7 +62,8 @@ public class DialectExtUtils {
 		if (null != insertSql) {
 			return insertSql;
 		}
-		int columnSize = entityMeta.getFieldsArray().length;
+		String[] fieldsArray = entityMeta.getFieldsArray(true);
+		int columnSize = fieldsArray.length;
 		StringBuilder sql = new StringBuilder(columnSize * 20 + 30);
 		StringBuilder values = new StringBuilder(columnSize * 2 - 1);
 		sql.append("insert into ");
@@ -80,7 +81,7 @@ public class DialectExtUtils {
 		String currentTimeStr;
 		boolean isString = false;
 		for (int i = 0; i < columnSize; i++) {
-			field = entityMeta.getFieldsArray()[i];
+			field = fieldsArray[i];
 			fieldMeta = entityMeta.getFieldMeta(field);
 			isString = false;
 			if ("java.lang.string".equals(fieldMeta.getFieldType())) {
@@ -327,7 +328,8 @@ public class DialectExtUtils {
 			forceUpdateSqlTimeFields = unifyFieldsHandler.forceUpdateFields();
 		}
 		String currentTimeStr;
-		int columnSize = entityMeta.getFieldsArray().length;
+		String[] fieldsArray = entityMeta.getFieldsArray(true);
+		int columnSize = fieldsArray.length;
 		StringBuilder sql = new StringBuilder(columnSize * 30 + 100);
 		String columnName;
 		sql.append("merge into ");
@@ -339,7 +341,7 @@ public class DialectExtUtils {
 		sql.append(" using (select ");
 		FieldMeta fieldMeta;
 		for (int i = 0; i < columnSize; i++) {
-			fieldMeta = entityMeta.getFieldMeta(entityMeta.getFieldsArray()[i]);
+			fieldMeta = entityMeta.getFieldMeta(fieldsArray[i]);
 			columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
 			if (i > 0) {
 				sql.append(",");
@@ -386,13 +388,14 @@ public class DialectExtUtils {
 		StringBuilder insertRejIdCols = new StringBuilder();
 		StringBuilder insertRejIdColValues = new StringBuilder();
 		// 是否全部是ID,insert 按主键来构造语句
-		boolean allIds = (entityMeta.getRejectIdFieldArray() == null);
+		String[] rejectIdFieldArray = entityMeta.getRejectIdFieldArray(true);
+		boolean allIds = (rejectIdFieldArray == null);
 		// 部分主键，则按非主键来构造insert字段
 		if (!allIds) {
-			int rejectIdColumnSize = entityMeta.getRejectIdFieldArray().length;
+			int rejectIdColumnSize = rejectIdFieldArray.length;
 			// update 只针对非主键字段进行修改
 			for (int i = 0; i < rejectIdColumnSize; i++) {
-				fieldMeta = entityMeta.getFieldMeta(entityMeta.getRejectIdFieldArray()[i]);
+				fieldMeta = entityMeta.getFieldMeta(rejectIdFieldArray[i]);
 				columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
 				if (i > 0) {
 					insertRejIdCols.append(",");
@@ -494,7 +497,8 @@ public class DialectExtUtils {
 		if (null != insertIgnoreSql) {
 			return insertIgnoreSql;
 		}
-		int columnSize = entityMeta.getFieldsArray().length;
+		String[] fieldsArray = entityMeta.getFieldsArray(true);
+		int columnSize = fieldsArray.length;
 		StringBuilder sql = new StringBuilder(columnSize * 20 + 30);
 		StringBuilder values = new StringBuilder(columnSize * 2 - 1);
 		if (dbType == DBType.GAUSSDB) {
@@ -515,7 +519,7 @@ public class DialectExtUtils {
 						: unifyFieldsHandler.createSqlTimeFields();
 		String currentTimeStr;
 		for (int i = 0; i < columnSize; i++) {
-			field = entityMeta.getFieldsArray()[i];
+			field = fieldsArray[i];
 			fieldMeta = entityMeta.getFieldMeta(field);
 			columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
 			if (fieldMeta.isPK()) {

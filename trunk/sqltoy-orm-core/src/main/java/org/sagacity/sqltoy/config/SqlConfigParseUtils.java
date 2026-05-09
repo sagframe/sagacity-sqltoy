@@ -1417,6 +1417,8 @@ public class SqlConfigParseUtils {
 		originalSql = FunctionUtils.getDialectSql(originalSql, dialect);
 		// 对关键词根据数据库类型进行转换,比如mysql的 ``变成mssql时变为[]
 		originalSql = ReservedWordsUtil.convertSql(originalSql, DataSourceUtils.getDBType(dialect));
+		// 将${paramName}或${:paramName}替换为@value(:paramName)
+		originalSql = SqlUtil.replaceEmbedSqlParams(originalSql);
 		// 判定是否有with查询模式
 		sqlToyConfig.setHasWith(hasWith(originalSql));
 		// 判定是否有union语句(先验证有union 然后再精确判断union 是否有效,在括号内的局部union 不起作用)

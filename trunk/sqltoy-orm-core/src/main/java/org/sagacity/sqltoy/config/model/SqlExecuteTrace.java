@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package org.sagacity.sqltoy.config.model;
 
@@ -18,7 +18,7 @@ import org.sagacity.sqltoy.utils.IdUtil;
  */
 public class SqlExecuteTrace implements Serializable {
 	/**
-	 * 
+	 *
 	 */
 	private static final long serialVersionUID = 6050450953137017285L;
 
@@ -30,6 +30,11 @@ public class SqlExecuteTrace implements Serializable {
 		this.isPrint = isPrint;
 		// 不需要体现年月日
 		this.uid = IdUtil.getDebugId();
+	}
+
+	public SqlExecuteTrace(String id, OperateDetailType operateDetailType, Class resultType, boolean isPrint, Object contextData) {
+		this(id, operateDetailType, resultType, isPrint);
+		this.contextData = contextData;
 	}
 
 	/**
@@ -95,6 +100,11 @@ public class SqlExecuteTrace implements Serializable {
 	private List<SqlExecuteLog> executeLogs = new CopyOnWriteArrayList<>();
 
 	/**
+	 * 上下文信息
+	 */
+	private Object contextData;
+
+	/**
 	 * @return the start
 	 */
 	public Long getStart() {
@@ -134,7 +144,7 @@ public class SqlExecuteTrace implements Serializable {
 	}
 
 	/**
-	 * @param type the type to set
+	 * @param operateDetailType the type to set
 	 */
 	public void setOperateDetailType(OperateDetailType operateDetailType) {
 		this.operateDetailType = operateDetailType;
@@ -229,5 +239,13 @@ public class SqlExecuteTrace implements Serializable {
 
 	public void setResultType(Class resultType) {
 		this.resultType = resultType;
+	}
+
+	public <T> T getContextData() {
+		return (T)contextData;
+	}
+
+	public void setContextData(Object contextData) {
+		this.contextData = contextData;
 	}
 }

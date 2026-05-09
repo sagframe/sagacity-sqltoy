@@ -5,6 +5,9 @@ package org.sagacity.sqltoy.dialect.utils;
 
 import java.io.Serializable;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.sagacity.sqltoy.SqlToyConstants;
@@ -12,6 +15,7 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DecryptHandler;
 import org.sagacity.sqltoy.callback.GenerateSavePKStrategy;
 import org.sagacity.sqltoy.callback.GenerateSqlHandler;
+import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
 import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
@@ -22,7 +26,9 @@ import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.dialect.model.SavePKStrategy;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
+import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
+import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.SqlUtilsExt;
 import org.sagacity.sqltoy.utils.StringUtil;
 
@@ -118,7 +124,7 @@ public class PostgreSqlDialectUtils {
 		String sequence = "nextval('" + entityMeta.getSequence() + "')";
 		// save行为根据主键是否赋值情况调整最终的主键策略
 		PKStrategy pkStrategy = DialectUtils.getSavePKStrategy(entityMeta, entity, dbType);
-		boolean isAssignPK = isAssignPKValue(pkStrategy);
+		boolean isAssignPK = allowAssignPKValue(pkStrategy);
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 				pkStrategy, NVL_FUNCTION, sequence, isAssignPK, tableName);
 		return DialectUtils.save(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entity,
@@ -128,13 +134,13 @@ public class PostgreSqlDialectUtils {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = "nextval('" + entityMeta.getSequence() + "')";
 						return DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
-								entityMeta, pkStrategy, NVL_FUNCTION, sequence, isAssignPKValue(pkStrategy), null);
+								entityMeta, pkStrategy, NVL_FUNCTION, sequence, allowAssignPKValue(pkStrategy), null);
 					}
 				}, new GenerateSavePKStrategy() {
 					@Override
 					public SavePKStrategy generate(EntityMeta entityMeta) {
 						return new SavePKStrategy(entityMeta.getIdStrategy(),
-								isAssignPKValue(entityMeta.getIdStrategy()));
+								allowAssignPKValue(entityMeta.getIdStrategy()));
 					}
 				}, conn, dbType);
 	}
@@ -158,7 +164,7 @@ public class PostgreSqlDialectUtils {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		PKStrategy pkStrategy = entityMeta.getIdStrategy();
 		String sequence = "nextval('" + entityMeta.getSequence() + "')";
-		boolean isAssignPK = isAssignPKValue(pkStrategy);
+		boolean isAssignPK = allowAssignPKValue(pkStrategy);
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 				pkStrategy, NVL_FUNCTION, sequence, isAssignPK, tableName);
 		return DialectUtils.saveAll(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entities, batchSize,
@@ -192,7 +198,7 @@ public class PostgreSqlDialectUtils {
 						String sequence = "nextval('" + entityMeta.getSequence() + "')";
 						return DialectUtils.getSaveOrUpdateSql(sqlToyContext, sqlToyContext.getUnifyFieldsHandler(),
 								dbType, entityMeta, pkStrategy, forceUpdateFields, null, NVL_FUNCTION, sequence,
-								isAssignPKValue(pkStrategy), tableName);
+								allowAssignPKValue(pkStrategy), tableName);
 					}
 				}, reflectPropsHandler, conn, dbType, autoCommit);
 	}
@@ -248,11 +254,11 @@ public class PostgreSqlDialectUtils {
 	}
 
 	/**
-	 * @TODO 定义当使用sequence或identity时,是否允许自定义值(即不通过sequence或identity产生，而是由外部直接赋值)
+	 * @TODO 主键策略是identity或sequence时，主键值允许不由数据库内部自动产生，可人工赋值
 	 * @param pkStrategy
 	 * @return
 	 */
-	public static boolean isAssignPKValue(PKStrategy pkStrategy) {
+	public static boolean allowAssignPKValue(PKStrategy pkStrategy) {
 		if (pkStrategy == null) {
 			return true;
 		}
@@ -261,5 +267,75 @@ public class PostgreSqlDialectUtils {
 			return false;
 		}
 		return true;
+	}
+
+	/**
+	 * postgresql 获取表和view信息，表排除分区子表
+	 * 
+	 * @param catalog
+	 * @param schema
+	 * @param tableName
+	 * @param conn
+	 * @param dbType
+	 * @param dialect
+	 * @return
+	 * @throws Exception
+	 */
+	public static List<TableMeta> getTables(String catalog, String schema, String tableName, Connection conn,
+			Integer dbType, String dialect) throws Exception {
+		// v10 支持 AND c.relispartition = false
+		// <v10 用 AND c.oid NOT IN (SELECT inhrelid FROM pg_inherits)
+		StringBuilder sql =new StringBuilder();
+		sql.append("SELECT ");
+		sql.append("	  c.relname AS TABLE_NAME,");
+		sql.append("	  CASE c.relkind ");
+		sql.append("	    WHEN 'r' THEN 'TABLE' ");
+		sql.append("	    WHEN 'p' THEN 'TABLE' ");
+		sql.append("	    WHEN 'v' THEN 'VIEW' ");
+		sql.append("	  END AS TABLE_TYPE, ");
+		sql.append("	  d.description AS COMMENTS ");
+		sql.append(" FROM pg_class c ");
+		sql.append(" 	LEFT JOIN pg_description d ON d.objoid = c.oid AND d.objsubid = 0 ");
+		sql.append(" 	JOIN pg_namespace n ON n.oid = c.relnamespace ");
+		sql.append(" WHERE ");
+		sql.append("   c.relkind IN ('r', 'v', 'p') ");
+		sql.append("   AND c.oid NOT IN (SELECT inhrelid FROM pg_inherits) ");
+		sql.append("   AND c.relname NOT LIKE 'pg_%' ");
+		sql.append("   AND n.nspname NOT LIKE 'pg_%' ");
+		sql.append("   AND n.nspname = ANY (current_schemas(false)) ");
+		if (StringUtil.isNotBlank(tableName)) {
+			if (tableName.contains("%")) {
+				sql.append(" and c.relname like '" + tableName + "'");
+			} else {
+				sql.append(" and c.relname like '%" + tableName + "%'");
+			}
+		}
+		PreparedStatement pst = conn.prepareStatement(sql.toString());
+		ResultSet rs = null;
+		// 通过preparedStatementProcess反调，第二个参数是pst
+		return (List<TableMeta>) SqlUtil.preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
+			@Override
+			public void execute(Object rowData, PreparedStatement pst, ResultSet rs) throws Exception {
+				try {
+					rs = pst.executeQuery();
+					List<TableMeta> tables = new ArrayList<TableMeta>();
+					while (rs.next()) {
+						TableMeta tableMeta = new TableMeta();
+						tableMeta.setTableName(rs.getString("TABLE_NAME"));
+						tableMeta.setType(rs.getString("TABLE_TYPE"));
+						tableMeta.setRemarks(StringUtil.escapeComment(rs.getString("COMMENTS")));
+						tables.add(tableMeta);
+					}
+					this.setResult(tables);
+				} catch (Exception e) {
+					throw e;
+				} finally {
+					if (rs != null) {
+						rs.close();
+						rs = null;
+					}
+				}
+			}
+		});
 	}
 }

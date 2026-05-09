@@ -114,7 +114,7 @@ public class HttpClientUtils {
 	}
 
 	/**
-	 * @todo 执行post请求
+	 * @TODO 执行post请求
 	 * @param sqltoyContext
 	 * @param nosqlConfig
 	 * @param esConfig
@@ -228,7 +228,7 @@ public class HttpClientUtils {
 	}
 
 	/**
-	 * @todo 重新组织url
+	 * @TODO 重新组织url
 	 * @param esConfig
 	 * @param nosqlConfig
 	 * @return

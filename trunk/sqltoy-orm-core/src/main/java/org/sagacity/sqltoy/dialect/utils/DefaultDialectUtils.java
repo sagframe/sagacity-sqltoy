@@ -23,11 +23,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyConstants;
@@ -399,7 +397,7 @@ public class DefaultDialectUtils {
 			// 唯一性属性值存在空，则表示首次插入
 			if (StringUtil.isBlank(whereParamValues[i])) {
 				// 调用默认值、主键策略等
-				tempFieldValues = processFieldValues(sqlToyContext, entityMeta, entity);
+				tempFieldValues = processFieldValues(sqlToyContext, entityMeta, entity, false);
 				// 重新反射获取主键等字段值
 				whereParamValues = BeanUtil.reflectBeanToAry(entity, whereFields);
 				break;
@@ -538,11 +536,13 @@ public class DefaultDialectUtils {
 								// 移到插入行
 								finalRs.moveToInsertRow();
 								FieldMeta fieldMeta;
+								// 过滤掉计算列
 								Object[] fullFieldvalues = (fieldValues == null)
-										? processFieldValues(sqlToyContext, entityMeta, entity)
+										? processFieldValues(sqlToyContext, entityMeta, entity, false)
 										: fieldValues;
-								for (int i = 0; i < entityMeta.getFieldsArray().length; i++) {
-									fieldMeta = entityMeta.getFieldMeta(entityMeta.getFieldsArray()[i]);
+								String[] fieldsArray = entityMeta.getFieldsArray(false);
+								for (int i = 0; i < fieldsArray.length; i++) {
+									fieldMeta = entityMeta.getFieldMeta(fieldsArray[i]);
 									resultUpdate(conn, finalRs, fieldMeta, fullFieldvalues[i], dbType, true);
 								}
 								// 执行插入
@@ -564,8 +564,8 @@ public class DefaultDialectUtils {
 		}
 		List rowList = (List) updateResult.get(0);
 		// 覆盖返回值
-		for (int i = 0; i < entityMeta.getFieldsArray().length; i++) {
-			BeanUtil.setProperty(entity, entityMeta.getFieldsArray()[i], rowList.get(i));
+		for (int i = 0; i < entityMeta.getFieldsArray(false).length; i++) {
+			BeanUtil.setProperty(entity, entityMeta.getFieldsArray(false)[i], rowList.get(i));
 		}
 		return entity;
 	}
@@ -598,6 +598,10 @@ public class DefaultDialectUtils {
 	 */
 	private static void resultUpdate(Connection conn, ResultSet rs, FieldMeta fieldMeta, Object paramValue,
 			Integer dbType, boolean isInsert, boolean isForcedUpdate) throws Exception {
+		// 计算列不做修改操作
+		if (fieldMeta.getGeneratedType() > 0) {
+			return;
+		}
 		if (!fieldMeta.isPK() && isInsert) {
 			paramValue = SqlUtilsExt.getDefaultValue(paramValue, fieldMeta.getDefaultValue(), fieldMeta.getType(),
 					fieldMeta.isNullable());
@@ -807,8 +811,9 @@ public class DefaultDialectUtils {
 		String realTable = entityMeta.getSchemaTable(tableName, dbType);
 		StringBuilder sql = new StringBuilder("select ");
 		String columnName;
-		for (int i = 0; i < entityMeta.getFieldsArray().length; i++) {
-			columnName = entityMeta.getColumnName(entityMeta.getFieldsArray()[i]);
+		String[] fieldsArray = entityMeta.getFieldsArray(false);
+		for (int i = 0; i < fieldsArray.length; i++) {
+			columnName = entityMeta.getColumnName(fieldsArray[i]);
 			if (i > 0) {
 				sql.append(",");
 			}
@@ -850,33 +855,36 @@ public class DefaultDialectUtils {
 	 * @param sqlToyContext
 	 * @param entityMeta
 	 * @param entity
+	 * @param excludeGeneratedCols
 	 * @return
 	 * @throws Exception
 	 */
 	private static Object[] processFieldValues(final SqlToyContext sqlToyContext, EntityMeta entityMeta,
-			Serializable entity) throws Exception {
+			Serializable entity, boolean excludeGeneratedCols) throws Exception {
 		// 构造全新的新增记录参数赋值反射(覆盖之前的)，涉及数据版本、创建人、创建时间、租户等
 		ReflectPropsHandler handler = DialectUtils.getAddReflectHandler(entityMeta, null,
 				sqlToyContext.getUnifyFieldsHandler());
 		handler = DialectUtils.getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
+		int generatedColCnt = excludeGeneratedCols ? entityMeta.getGeneratedColsCnt() : 0;
 		// 这里不体现defaultValue 值，产生的insert sql语句中已经处理了default值问题
-		Object[] fullParamValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getFieldsArray(), null, handler);
+		Object[] fullParamValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getFieldsArray(excludeGeneratedCols),
+				null, handler);
 		// 主键采用assign方式赋予，则调用generator产生id并赋予其值
 		boolean hasId = (entityMeta.getIdStrategy() != null && null != entityMeta.getIdGenerator()) ? true : false;
 		// 是否存在业务ID
 		boolean hasBizId = (entityMeta.getBusinessIdGenerator() == null) ? false : true;
-		int bizIdColIndex = hasBizId ? entityMeta.getFieldIndex(entityMeta.getBusinessIdField()) : 0;
+		int bizIdColIndex = hasBizId ? entityMeta.getFieldIndex(entityMeta.getBusinessIdField()) - generatedColCnt : 0;
 		// 主键、业务主键生成并回写对象
 		if (hasId || hasBizId) {
-			int pkIndex = entityMeta.getIdIndex();
+			int pkIndex = entityMeta.getIdIndex() - generatedColCnt;
 			Integer[] relatedColumn = entityMeta.getBizIdRelatedColIndex();
 			Object[] relatedColValue = null;
 			if (relatedColumn != null) {
 				int relatedColumnSize = relatedColumn.length;
 				relatedColValue = new Object[relatedColumnSize];
 				for (int meter = 0; meter < relatedColumnSize; meter++) {
-					relatedColValue[meter] = fullParamValues[relatedColumn[meter]];
+					relatedColValue[meter] = fullParamValues[relatedColumn[meter] - generatedColCnt];
 					if (StringUtil.isBlank(relatedColValue[meter])) {
 						throw new IllegalArgumentException("对象:" + entityMeta.getEntityClass().getName()
 								+ " 生成业务主键依赖的关联字段:" + entityMeta.getBizIdRelatedColumns()[meter] + " 值为null!");
@@ -905,7 +913,7 @@ public class DefaultDialectUtils {
 		// 回写数据版本号
 		if (entityMeta.getDataVersion() != null) {
 			String dataVersionField = entityMeta.getDataVersion().getField();
-			int dataVersionIndex = entityMeta.getFieldIndex(dataVersionField);
+			int dataVersionIndex = entityMeta.getFieldIndex(dataVersionField) - generatedColCnt;
 			BeanUtil.setProperty(entity, dataVersionField, fullParamValues[dataVersionIndex]);
 		}
 		return fullParamValues;
@@ -934,7 +942,8 @@ public class DefaultDialectUtils {
 							colMeta.setColumnSize(rs.getInt("COLUMN_SIZE"));
 							colMeta.setDecimalDigits(rs.getInt("DECIMAL_DIGITS"));
 							colMeta.setNumPrecRadix(rs.getInt("NUM_PREC_RADIX"));
-							colMeta.setComments(rs.getString("REMARKS"));
+							colMeta.setComments(StringUtil.escapeComment(rs.getString("REMARKS")));
+							// colMeta.setReadOnly(rs.getBoolean("READ_ONLY"));
 							colMeta.setAutoIncrement(false);
 							// oracle autoincrement 取法不同
 							if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11) {
@@ -1138,11 +1147,9 @@ public class DefaultDialectUtils {
 		String realCatalogPattern = SqlToyConstants.getDialectLowcaseStrategyName(catalogPattern, dialect);
 		String realSchemaPattern = SqlToyConstants.getDialectLowcaseStrategyName(schemaPattern, dialect);
 		String realTableNamePattern = SqlToyConstants.getDialectLowcaseStrategyName(tableNamePattern, dialect);
-		boolean isPG = (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15);
 		// pg会拿出全部子分区表，需要排除掉
-		final Set<String> subPartitionTables = isPG ? getInnerPartitionTables(conn, dbType) : new HashSet<>();
 		ResultSet rs = conn.getMetaData().getTables(realCatalogPattern, realSchemaPattern, realTableNamePattern,
-				isPG ? new String[] { "TABLE", "VIEW", "PARTITIONED TABLE" } : new String[] { "TABLE", "VIEW" });
+				new String[] { "TABLE", "VIEW" });
 		// 通过preparedStatementProcess反调，第二个参数是pst
 		return (List<TableMeta>) SqlUtil.preparedStatementProcess(null, null, rs, new PreparedStatementResultHandler() {
 			@Override
@@ -1153,35 +1160,11 @@ public class DefaultDialectUtils {
 					tableMeta.setTableName(rs.getString("TABLE_NAME"));
 					tableMeta.setSchema(rs.getString("TABLE_SCHEM"));
 					tableMeta.setType(rs.getString("TABLE_TYPE"));
-					tableMeta.setRemarks(rs.getString("REMARKS"));
-					// 排除子分区表
-					if (!subPartitionTables.contains(tableMeta.getTableName())) {
-						tables.add(tableMeta);
-					}
+					tableMeta.setRemarks(StringUtil.escapeComment(rs.getString("REMARKS")));
+					tables.add(tableMeta);
 				}
 				this.setResult(tables);
 			}
 		});
-	}
-
-	/**
-	 * @todo 查询子分区表
-	 * @param conn
-	 * @param dbType
-	 * @return
-	 * @throws Exception
-	 */
-	private static Set<String> getInnerPartitionTables(Connection conn, Integer dbType) throws Exception {
-		String sql = "SELECT inhrelid::regclass AS TABLE_NAME FROM pg_inherits";
-		List partitionTables = SqlUtil.findByJdbcQuery(null, sql, null, TableMeta.class, null, null, conn, dbType,
-				false, null, 0, 0);
-		Set<String> resultSet = new HashSet<>();
-		if (partitionTables == null || partitionTables.isEmpty()) {
-			return resultSet;
-		}
-		for (Object tableMeta : partitionTables) {
-			resultSet.add(((TableMeta) tableMeta).getTableName());
-		}
-		return resultSet;
 	}
 }

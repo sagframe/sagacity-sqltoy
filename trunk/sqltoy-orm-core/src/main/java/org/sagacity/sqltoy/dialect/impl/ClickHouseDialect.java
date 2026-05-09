@@ -131,7 +131,7 @@ public class ClickHouseDialect implements Dialect {
 		// clickhouse 不支持sequence，支持identity自增模式
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 				pkStrategy, NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(),
-				ClickHouseDialectUtils.isAssignPKValue(pkStrategy), tableName);
+				ClickHouseDialectUtils.allowAssignPKValue(pkStrategy), tableName);
 		return ClickHouseDialectUtils.save(sqlToyContext, entityMeta, pkStrategy, insertSql, entity, conn, dbType);
 	}
 
@@ -143,7 +143,7 @@ public class ClickHouseDialect implements Dialect {
 		// clickhouse 不支持sequence，支持identity自增模式
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 				entityMeta.getIdStrategy(), NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(),
-				ClickHouseDialectUtils.isAssignPKValue(entityMeta.getIdStrategy()), tableName);
+				ClickHouseDialectUtils.allowAssignPKValue(entityMeta.getIdStrategy()), tableName);
 		return ClickHouseDialectUtils.saveAll(sqlToyContext, entityMeta, insertSql, entities, batchSize,
 				reflectPropsHandler, conn, dbType, autoCommit);
 	}

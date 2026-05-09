@@ -759,7 +759,6 @@ public class DateUtil {
 	 * @return 当前操作系统的时间
 	 */
 	public static Date getNowTime() {
-		// return Calendar.getInstance().getTime();
 		return Date.from(Instant.now());
 	}
 
@@ -836,17 +835,15 @@ public class DateUtil {
 
 	// add month
 	public static Date addMonth(Object dt, int month) {
-		GregorianCalendar gc = new GregorianCalendar();
-		gc.setTime(convertDateObject(dt));
-		gc.add(Calendar.MONTH, month);
-		return gc.getTime();
+		LocalDateTime dateTime = getDateTime(convertDateObject(dt));
+		LocalDateTime newDateTime = dateTime.plusMonths(month);
+		return asDate(newDateTime);
 	}
 
 	public static Date addYear(Object dt, int year) {
-		GregorianCalendar gc = new GregorianCalendar();
-		gc.setTime(convertDateObject(dt));
-		gc.add(Calendar.YEAR, year);
-		return gc.getTime();
+		LocalDateTime dateTime = getDateTime(convertDateObject(dt));
+		LocalDateTime newDateTime = dateTime.plusYears(year);
+		return asDate(newDateTime);
 	}
 
 	public static int getYear(Object dateValue) {

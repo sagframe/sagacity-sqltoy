@@ -177,7 +177,7 @@ public interface LightDao {
 
 	/**
 	 * @TODO 通过map传参获取记录数量
-	 * @param sqlOrSqlId
+	 * @param sqlOrSqlId sql中可通过注释:-- #print或#debug 打开sql显示日志通过#not_print 或#not_debug 关闭--
 	 * @param paramsMap
 	 * @return Long 查询符合条件的记录数量
 	 */
@@ -223,7 +223,7 @@ public interface LightDao {
 
 	/**
 	 * @TODO 流式获取查询结果
-	 * @param queryExecutor
+	 * @param queryExecutor 可通过queryExecutor.showsql()开关sql输出日志
 	 * @param streamResultHandler
 	 */
 	public void fetchStream(final QueryExecutor queryExecutor, final StreamResultHandler streamResultHandler);

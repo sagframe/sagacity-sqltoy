@@ -6,12 +6,14 @@ import java.util.HashMap;
 import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Test;
+import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.model.SqlInjectionLevel;
 
 import com.alibaba.fastjson2.JSON;
+import com.terracottatech.offheapstore.filesystem.FileSystem;
 
 public class SqlUtilTest {
 
@@ -279,6 +281,32 @@ public class SqlUtilTest {
 		System.err.println(SqlUtil.isSqlInjection(SqlInjectionLevel.RELAXED_WORD, "s中文el-ect("));
 		System.err.println(SqlUtil.isSqlInjection(SqlInjectionLevel.RELAXED_WORD, "sum{"));
 		System.err.println(SqlUtil.isSqlInjection(SqlInjectionLevel.RELAXED_WORD, "t.name"));
+	}
+
+	@Test
+	public void testReplaceEmbedSqlParams() {
+		// String sql = "select * from user where name = ${:name} and age = ${age} and
+		// id = ${ userId }";
+		String sql = "select * from user where name = :name and age = age and id = userId";
+		String result = SqlUtil.replaceEmbedSqlParams(sql);
+		System.out.println(result);
+	}
+
+	@Test
+	public void testClearDefaultValue() {
+		String[] tests = { "3.14::real", "3.14::double precision", "name::varchar(50)", "price::numeric(10,2)", // 带逗号
+				"age::int", "col::char(10)", "create_time::timestamp(6)", "now()::text", // 不会误删函数括号
+				"id::bigint", "3.14::double precision(10,2)", "3.14::double precision(10,2) as ", """
+								CASE order_status
+						   WHEN 0 THEN '待支付'::text
+						   WHEN 1 THEN '已支付'::text
+						   WHEN 2 THEN '已完成'::text
+						   ELSE '取消'::text
+						END
+								""", "(a+b)::numberic(10,2)", "NULL::text" };
+		for (String t : tests) {
+			System.out.println(t + "  ->  [" + SqlUtil.clearDefaultValue(t) + "]");
+		}
 	}
 
 	public static void main(String[] args) {

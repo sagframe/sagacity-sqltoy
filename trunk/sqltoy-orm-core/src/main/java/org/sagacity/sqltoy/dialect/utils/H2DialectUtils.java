@@ -16,11 +16,11 @@ import org.sagacity.sqltoy.utils.StringUtil;
  */
 public class H2DialectUtils {
 	/**
-	 * @TODO 定义当使用sequence或identity时,是否允许自定义值(即不通过sequence或identity产生，而是由外部直接赋值)
+	 * @TODO 主键策略是identity或sequence时，主键值允许不由数据库内部自动产生，可人工赋值
 	 * @param pkStrategy
 	 * @return
 	 */
-	public static boolean isAssignPKValue(PKStrategy pkStrategy) {
+	public static boolean allowAssignPKValue(PKStrategy pkStrategy) {
 		if (pkStrategy == null) {
 			return true;
 		}

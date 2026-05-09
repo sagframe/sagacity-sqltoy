@@ -115,12 +115,13 @@ public class DDLUtils {
 	/**
 	 * @TODO 将EntityMeta转化为TableMeta 便于输出表结构
 	 * @param entityMeta
+	 * @param dbType
 	 * @return
 	 */
-	public static TableMeta wrapTableMeta(EntityMeta entityMeta) {
+	public static TableMeta wrapTableMeta(EntityMeta entityMeta, Integer dbType) {
 		TableMeta tableMeta = new TableMeta();
 		tableMeta.setTableName(entityMeta.getTableName());
-		tableMeta.setRemarks(translateSpecialSymbols(entityMeta.getTableComment()));
+		tableMeta.setRemarks(StringUtil.escapeComment(entityMeta.getTableComment()));
 		tableMeta.setSchema(entityMeta.getSchema());
 		tableMeta.setPkConstraint(entityMeta.getPkConstraint());
 		// 索引信息
@@ -155,7 +156,8 @@ public class DDLUtils {
 			columnMeta.setNullable(fieldMeta.isNullable());
 			columnMeta.setDataType(fieldMeta.getType());
 			columnMeta.setTypeName(fieldMeta.getFieldType());
-			columnMeta.setPK(fieldMeta.isPK());
+			columnMeta.setPK(fieldMeta.isPK() || fieldMeta.isDdlPk());
+			columnMeta.setGeneratedType(fieldMeta.getGeneratedType());
 			columnMeta.setDecimalDigits(fieldMeta.getPrecision());
 			columnMeta.setNumPrecRadix(fieldMeta.getScale());
 			columnMeta.setNativeType(fieldMeta.getNativeType());
@@ -558,6 +560,37 @@ public class DDLUtils {
 				|| dataType == Types.DECIMAL || dataType == Types.DOUBLE || dataType == Types.NUMERIC
 				|| dataType == Types.FLOAT || dataType == Types.REAL || dataType == Types.SMALLINT
 				|| dataType == Types.TINYINT || dataType == Types.BIT) {
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * 判断是否是日期或时间类型
+	 * 
+	 * @param dataType
+	 * @return
+	 */
+	public static boolean isDate(int dataType) {
+		if (dataType == Types.DATE || dataType == Types.TIME || dataType == Types.TIMESTAMP
+				|| dataType == Types.TIME_WITH_TIMEZONE || dataType == Types.TIMESTAMP_WITH_TIMEZONE) {
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * 判断是否是日期函数，对默认值处理时不需要加单引号
+	 * 
+	 * @param defaultValue
+	 * @return
+	 */
+	public static boolean isDateFunction(String defaultValue) {
+		if (defaultValue.equals("SYSDATE()") || defaultValue.equals("SYSDATE") || defaultValue.equals("NOW()")
+				|| defaultValue.equals("GETDATE()") || defaultValue.equals("CURRENT_TIMESTAMP()")
+				|| defaultValue.equals("CURRENT_TIMESTAMP") || defaultValue.equals("CURRENT_DATE")
+				|| defaultValue.equals("CURDATE()") || defaultValue.equals("CURTIME()")
+				|| defaultValue.equals("LOCALTIMESTAMP")) {
 			return true;
 		}
 		return false;

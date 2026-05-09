@@ -192,7 +192,7 @@ public class KingbaseDialect implements Dialect {
 								sequence = "NEXTVAL('" + defaultValue + "')";
 							}
 						}
-						boolean isAssignPK = KingbaseDialectUtils.isAssignPKValue(pkStrategy);
+						boolean isAssignPK = KingbaseDialectUtils.allowAssignPKValue(pkStrategy);
 						return DialectUtils.getSaveOrUpdateSql(sqlToyContext, sqlToyContext.getUnifyFieldsHandler(),
 								dbType, entityMeta, pkStrategy, forceUpdateFields, null, NVL_FUNCTION, sequence,
 								isAssignPK, tableName);
@@ -219,7 +219,7 @@ public class KingbaseDialect implements Dialect {
 								sequence = "NEXTVAL('" + defaultValue + "')";
 							}
 						}
-						boolean isAssignPK = KingbaseDialectUtils.isAssignPKValue(pkStrategy);
+						boolean isAssignPK = KingbaseDialectUtils.allowAssignPKValue(pkStrategy);
 						return DialectExtUtils.mergeIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 								pkStrategy, null, NVL_FUNCTION, sequence, isAssignPK, tableName);
 					}
@@ -274,7 +274,7 @@ public class KingbaseDialect implements Dialect {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		// save行为根据主键是否赋值情况调整最终的主键策略
 		PKStrategy pkStrategy = DialectUtils.getSavePKStrategy(entityMeta, entity, dbType);
-		boolean isAssignPK = KingbaseDialectUtils.isAssignPKValue(pkStrategy);
+		boolean isAssignPK = KingbaseDialectUtils.allowAssignPKValue(pkStrategy);
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 				pkStrategy, NVL_FUNCTION, "NEXTVAL('" + entityMeta.getSequence() + "')", isAssignPK, tableName);
 		return DialectUtils.save(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entity,
@@ -284,13 +284,13 @@ public class KingbaseDialect implements Dialect {
 						return DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
 								entityMeta, entityMeta.getIdStrategy(), NVL_FUNCTION,
 								"NEXTVAL('" + entityMeta.getSequence() + "')",
-								KingbaseDialectUtils.isAssignPKValue(entityMeta.getIdStrategy()), null);
+								KingbaseDialectUtils.allowAssignPKValue(entityMeta.getIdStrategy()), null);
 					}
 				}, new GenerateSavePKStrategy() {
 					@Override
 					public SavePKStrategy generate(EntityMeta entityMeta) {
 						return new SavePKStrategy(entityMeta.getIdStrategy(),
-								KingbaseDialectUtils.isAssignPKValue(entityMeta.getIdStrategy()));
+								KingbaseDialectUtils.allowAssignPKValue(entityMeta.getIdStrategy()));
 					}
 				}, conn, dbType);
 	}
@@ -307,7 +307,7 @@ public class KingbaseDialect implements Dialect {
 			ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType, final String dialect,
 			final Boolean autoCommit, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-		boolean isAssignPK = KingbaseDialectUtils.isAssignPKValue(entityMeta.getIdStrategy());
+		boolean isAssignPK = KingbaseDialectUtils.allowAssignPKValue(entityMeta.getIdStrategy());
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 				entityMeta.getIdStrategy(), NVL_FUNCTION, "NEXTVAL('" + entityMeta.getSequence() + "')", isAssignPK,
 				tableName);
@@ -341,7 +341,7 @@ public class KingbaseDialect implements Dialect {
 								sequence = "NEXTVAL('" + defaultValue + "')";
 							}
 						}
-						boolean isAssignPK = KingbaseDialectUtils.isAssignPKValue(pkStrategy);
+						boolean isAssignPK = KingbaseDialectUtils.allowAssignPKValue(pkStrategy);
 						// update 级联操作过程中会自动判断数据库类型
 						return DialectUtils.getSaveOrUpdateSql(sqlToyContext, sqlToyContext.getUnifyFieldsHandler(),
 								dbType, entityMeta, pkStrategy, forceUpdateFields, null, NVL_FUNCTION, sequence,

@@ -648,6 +648,18 @@ public class QueryExecutor implements Serializable {
 		return this;
 	}
 
+
+
+	/**
+	 * @TODO 设置执行时上下文数据，如：在拦截器中取值用以业务判断
+	 * @param contextData
+	 * @return
+	 */
+	public QueryExecutor contextData(Object contextData) {
+		innerModel.contextData = contextData;
+		return this;
+	}
+
 	public QueryExecutorExtend getInnerModel() {
 		return innerModel;
 	}

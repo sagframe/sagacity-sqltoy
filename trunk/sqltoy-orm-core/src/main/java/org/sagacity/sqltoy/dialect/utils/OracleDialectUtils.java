@@ -494,7 +494,7 @@ public class OracleDialectUtils {
 						TableMeta tableMeta = new TableMeta();
 						tableMeta.setTableName(rs.getString("TABLE_NAME"));
 						tableMeta.setType(rs.getString("TABLE_TYPE"));
-						tableMeta.setRemarks(rs.getString("COMMENTS"));
+						tableMeta.setRemarks(StringUtil.escapeComment(rs.getString("COMMENTS")));
 						tables.add(tableMeta);
 					}
 					this.setResult(tables);
@@ -511,12 +511,11 @@ public class OracleDialectUtils {
 	}
 
 	/**
-	 * 指的是在identity、sequence主键场景下，是否允许手工给主键赋值
-	 * 
+	 * @TODO 主键策略是identity或sequence时，主键值允许不由数据库内部自动产生，可人工赋值
 	 * @param pkStrategy
 	 * @return
 	 */
-	public static boolean isAssignPKValue(PKStrategy pkStrategy) {
+	public static boolean allowAssignPKValue(PKStrategy pkStrategy) {
 		return true;
 	}
 }

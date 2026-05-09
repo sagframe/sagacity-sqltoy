@@ -79,6 +79,16 @@ public class EntityUpdate implements Serializable {
 		return this;
 	}
 
+	/**
+	 * @TODO 设置执行时上下文数据，如：在拦截器中取值用以业务判断
+	 * @param contextData
+	 * @return
+	 */
+	public EntityUpdate contextData(Object contextData) {
+		innerModel.contextData = contextData;
+		return this;
+	}
+
 	public EntityUpdateExtend getInnerModel() {
 		return innerModel;
 	}

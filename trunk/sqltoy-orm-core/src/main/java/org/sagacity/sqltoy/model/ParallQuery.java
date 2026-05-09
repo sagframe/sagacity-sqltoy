@@ -117,4 +117,14 @@ public class ParallQuery implements Serializable {
 		extend.showSql = showSql;
 		return this;
 	}
+
+	/**
+	 * @TODO 设置执行时上下文数据，如：在拦截器中取值用以业务判断
+	 * @param contextData
+	 * @return
+	 */
+	public ParallQuery contextData(Object contextData) {
+		extend.contextData = contextData;
+		return this;
+	}
 }

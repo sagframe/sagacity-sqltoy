@@ -58,6 +58,9 @@ public class FieldMeta implements Serializable {
 	// 对应数据库中的类型:java.sql.Types.xxx
 	private int type;
 
+	// 计算列类型
+	private int generatedType = 0;
+
 	/**
 	 * 字段java类型(已经转小写)
 	 */
@@ -123,6 +126,11 @@ public class FieldMeta implements Serializable {
 	 * 是否主键
 	 */
 	private boolean isPK;
+
+	/**
+	 * 仅用于创建ddl
+	 */
+	private boolean ddlPk = false;
 
 	/**
 	 * @return the type
@@ -307,5 +315,21 @@ public class FieldMeta implements Serializable {
 
 	public void setComments(String comments) {
 		this.comments = comments;
+	}
+
+	public boolean isDdlPk() {
+		return ddlPk;
+	}
+
+	public void setDdlPk(boolean ddlPk) {
+		this.ddlPk = ddlPk;
+	}
+
+	public int getGeneratedType() {
+		return generatedType;
+	}
+
+	public void setGeneratedType(int generatedType) {
+		this.generatedType = generatedType;
 	}
 }

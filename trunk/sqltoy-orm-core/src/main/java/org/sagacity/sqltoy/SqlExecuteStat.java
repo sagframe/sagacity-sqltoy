@@ -53,6 +53,9 @@ public class SqlExecuteStat {
 	// 通过ThreadLocal 来保存线程数据
 	private static ThreadLocal<SqlExecuteTrace> threadLocal = new TransmittableThreadLocal<SqlExecuteTrace>();
 
+	// 通过ThreadLocal 来保存开启调试模式数据
+	private static ThreadLocal<Boolean> threadLocalDebug = new TransmittableThreadLocal<>();
+
 	// sql执行超时处理器
 	public static OverTimeSqlHandler overTimeSqlHandler;
 
@@ -66,21 +69,34 @@ public class SqlExecuteStat {
 	 */
 	private static SqlFormater sqlFormater;
 
+	public static void start(String sqlId, OperateDetailType type, Class resultType, Boolean debugPrint) {
+		threadLocal.set(
+			new SqlExecuteTrace(sqlId, type, resultType, (debugPrint == null) ? debug : debugPrint.booleanValue()));
+	}
+
 	/**
 	 * @todo 登记开始执行
 	 * @param sqlId
 	 * @param type
 	 * @param debugPrint
 	 */
-	public static void start(String sqlId, OperateDetailType type, Class resultType, Boolean debugPrint) {
+	public static void start(String sqlId, OperateDetailType type, Class resultType, Boolean debugPrint, Object contextData) {
 		threadLocal.set(
-				new SqlExecuteTrace(sqlId, type, resultType, (debugPrint == null) ? debug : debugPrint.booleanValue()));
+				new SqlExecuteTrace(sqlId, type, resultType, (debugPrint == null) ? debug : debugPrint.booleanValue(), contextData));
 	}
 
 	public static void start(String sqlId, OperateDetailType type, Class resultType, Long batchSize,
-			Boolean debugPrint) {
+		Boolean debugPrint) {
 		SqlExecuteTrace sqlExecuteTrace = new SqlExecuteTrace(sqlId, type, resultType,
-				(debugPrint == null) ? debug : debugPrint.booleanValue());
+			(debugPrint == null) ? debug : debugPrint.booleanValue());
+		sqlExecuteTrace.setBatchSize(batchSize);
+		threadLocal.set(sqlExecuteTrace);
+	}
+
+	public static void start(String sqlId, OperateDetailType type, Class resultType, Long batchSize,
+			Boolean debugPrint, Object contextData) {
+		SqlExecuteTrace sqlExecuteTrace = new SqlExecuteTrace(sqlId, type, resultType,
+				(debugPrint == null) ? debug : debugPrint.booleanValue(), contextData);
 		sqlExecuteTrace.setBatchSize(batchSize);
 		threadLocal.set(sqlExecuteTrace);
 	}
@@ -269,6 +285,8 @@ public class SqlExecuteStat {
 		destroyLog();
 		threadLocal.remove();
 		threadLocal.set(null);
+		threadLocalDebug.remove();
+		threadLocalDebug.set(null);
 	}
 
 	/**
@@ -393,4 +411,11 @@ public class SqlExecuteStat {
 		threadLocal.set(sqlTrace);
 	}
 
+	public static Boolean getShowSql() {
+		return threadLocalDebug.get();
+	}
+
+	public static void setShowSql(Boolean debug) {
+		threadLocalDebug.set(debug);
+	}
 }

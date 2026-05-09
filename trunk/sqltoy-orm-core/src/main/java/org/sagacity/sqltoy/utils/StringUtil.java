@@ -1,8 +1,9 @@
 package org.sagacity.sqltoy.utils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -45,6 +46,42 @@ public class StringUtil {
 	private StringUtil() {
 	}
 
+	/**
+	 * 转义注释中的特殊字符（修复:逐字符检测，避免重复转义+部分转义遗漏）
+	 *
+	 * @param commentStr 原始注释字符串（可为null/空）
+	 * @return 转义后的字符串，null/空输入返回原值
+	 */
+	public static String escapeComment(String commentStr) {
+		// 1. 空值安全处理：null/空字符串直接返回
+		if (commentStr == null || commentStr.isEmpty()) {
+			return commentStr;
+		}
+		StringBuilder sb = new StringBuilder(commentStr.length() + 20);
+		char[] chars = commentStr.toCharArray();
+		for (int i = 0; i < chars.length; i++) {
+			char c = chars[i];
+			// 核心：如果是 \，并且下一个也是 \ → 已经转义，直接跳过
+			if (c == '\\' && i < chars.length - 1 && chars[i + 1] == '\\') {
+				sb.append("\\\\"); // 保留原样 \\
+				i++; // 跳过下一个字符（因为已经一起处理）
+			}
+			// 普通 \ 未转义，需要转义
+			else if (c == '\\') {
+				sb.append("\\\\");
+			}
+			// 双引号必须转义
+			else if (c == '"') {
+				sb.append("\\\"");
+			}
+			// 其他字符原样保留
+			else {
+				sb.append(c);
+			}
+		}
+		return sb.toString();
+	}
+
 	public static String trim(String str) {
 		if (str == null) {
 			return null;
@@ -78,11 +115,7 @@ public class StringUtil {
 			return true;
 		}
 		if (str instanceof CharSequence) {
-			if ("".equals(str.toString().trim())) {
-				return true;
-			} else {
-				return false;
-			}
+			return str.toString().trim().isEmpty();
 		}
 		// 下面做了一些冗余性校验
 		if ((str instanceof Collection) && ((Collection) str).isEmpty()) {
@@ -236,17 +269,10 @@ public class StringUtil {
 	 * @return
 	 */
 	public static String loopAppendWithSign(String source, String sign, int loopSize) {
-		if (loopSize == 0) {
+		if (loopSize <= 0) {
 			return "";
 		}
-		if (loopSize == 1) {
-			return source;
-		}
-		StringBuilder result = new StringBuilder(source);
-		for (int i = 1; i < loopSize; i++) {
-			result.append(sign).append(source);
-		}
-		return result.toString();
+		return String.join(sign, Collections.nCopies(loopSize, source));
 	}
 
 	/**
@@ -646,7 +672,7 @@ public class StringUtil {
 	 * @param filterMap
 	 * @return
 	 */
-	public static String[] splitExcludeSymMark(String source, String splitSign, HashMap filterMap) {
+	public static String[] splitExcludeSymMark(String source, String splitSign, Map<String, String> filterMap) {
 		if (source == null) {
 			return null;
 		}
@@ -773,7 +799,7 @@ public class StringUtil {
 	 * @param filterMap
 	 * @return
 	 */
-	public static List<String[]> matchFilters(String source, HashMap filterMap) {
+	public static List<String[]> matchFilters(String source, Map<String, String> filterMap) {
 		List<String[]> result = new ArrayList<String[]>();
 		Iterator iter = filterMap.entrySet().iterator();
 		String beginSign;
@@ -890,10 +916,9 @@ public class StringUtil {
 	 * @return
 	 */
 	public static boolean hasChinese(String str) {
-		if (chinaPattern.matcher(str).find()) {
-			return true;
-		}
-		return false;
+		if (str == null)
+			return false;
+		return chinaPattern.matcher(str).find();
 	}
 
 	/**
@@ -1075,15 +1100,10 @@ public class StringUtil {
 	}
 
 	public static String[] trimArray(String[] paramNames) {
-		if (paramNames == null || paramNames.length == 0) {
-			return paramNames;
+		if (paramNames == null) {
+			return null;
 		}
-		int size = paramNames.length;
-		String[] realParamNames = new String[size];
-		for (int i = 0; i < size; i++) {
-			realParamNames[i] = (paramNames[i] == null) ? null : paramNames[i].trim();
-		}
-		return realParamNames;
+		return Arrays.stream(paramNames).map(s -> s == null ? null : s.trim()).toArray(String[]::new);
 	}
 
 	/**

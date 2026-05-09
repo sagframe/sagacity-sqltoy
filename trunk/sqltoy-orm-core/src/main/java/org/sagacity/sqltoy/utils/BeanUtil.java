@@ -2305,27 +2305,30 @@ public class BeanUtil {
 			return;
 		}
 		boolean isOneToMany = (cascadeModel.getCascadeType() == 1);
-		Object mainEntity;
 		String[] mainProps = cascadeModel.getFields();
-		Object[] mainValues;
-		Object[] mappedFieldValues;
 		String property = cascadeModel.getProperty();
-		Object itemEntity;
 		String[] mappedFields = cascadeModel.getMappedFields();
+		List<Object[]> itemEntityMappedFieldList = new ArrayList<>();
+		for (Object itemEntity : itemEntities) {
+			itemEntityMappedFieldList.add(reflectBeanToAry(itemEntity, mappedFields, null, null));
+		}
 		List itemList = null;
 		int fieldLength = mainProps.length;
 		boolean isEqual = true;
 		int itemSize = 0;
-		for (int i = 0; i < mainEntities.size(); i++) {
-			mainEntity = mainEntities.get(i);
+		int itemEntitiesSize = itemEntities.size();
+		Object itemEntity;
+		Object[] mainValues;
+		Object[] mappedFieldValues;
+		for (Object mainEntity : mainEntities) {
 			mainValues = reflectBeanToAry(mainEntity, mainProps, null, null);
 			if (isOneToMany) {
 				itemList = new ArrayList();
 			}
 			itemSize = 0;
-			for (int j = 0; j < itemEntities.size(); j++) {
+			for (int j = 0; j < itemEntitiesSize; j++) {
 				itemEntity = itemEntities.get(j);
-				mappedFieldValues = reflectBeanToAry(itemEntity, mappedFields, null, null);
+				mappedFieldValues = itemEntityMappedFieldList.get(j);
 				isEqual = true;
 				for (int k = 0; k < fieldLength; k++) {
 					if (null == mainValues[k] || !mainValues[k].equals(mappedFieldValues[k])) {

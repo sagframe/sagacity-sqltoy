@@ -471,5 +471,4 @@ public class BeanUtilTest {
 		System.err.println(SqlExecuteStat.fitSqlParams(sql,
 				new Object[] { LocalDateTime.now().plusDays(-10), LocalDateTime.now() }, DBType.ORACLE));
 	}
-
 }

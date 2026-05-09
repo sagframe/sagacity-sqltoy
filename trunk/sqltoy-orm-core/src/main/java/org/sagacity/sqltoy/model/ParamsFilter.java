@@ -84,6 +84,8 @@ public class ParamsFilter implements Serializable {
 
 	private SqlInjectionLevel sqlInjectionLevel;
 
+	private String splitSign;
+
 	public ParamsFilter(String... params) {
 		this.params = params;
 	}
@@ -176,6 +178,12 @@ public class ParamsFilter implements Serializable {
 	 */
 	public ParamsFilter rlike() {
 		this.type = "r-like";
+		return this;
+	}
+
+	public ParamsFilter split(String splitSign) {
+		this.type = "split";
+		this.splitSign = (splitSign == null) ? "\\s*\\,\\s*" : splitSign;
 		return this;
 	}
 
@@ -418,5 +426,9 @@ public class ParamsFilter implements Serializable {
 
 	public SqlInjectionLevel getSqlInjectionLevel() {
 		return sqlInjectionLevel;
+	}
+
+	public String getSplitSign() {
+		return splitSign;
 	}
 }

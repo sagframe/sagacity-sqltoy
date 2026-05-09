@@ -651,9 +651,10 @@ public class SqlToyContext {
 			SqlToyConfig sqlToyConfig = scriptLoader.getSqlToyConfig(sqlKey);
 			LocalDateTime lastUpdateTime = extend.xmlBinding.getLastUpdateTime();
 			skipCompletion = true;
-			if (sqlToyConfig == null || (lastUpdateTime != null && sqlToyConfig.getLastUpdateTime() == null)
+			if (sqlToyConfig == null
 					|| (lastUpdateTime != null && sqlToyConfig.getLastUpdateTime() != null
-							&& lastUpdateTime.isAfter(sqlToyConfig.getLastUpdateTime()))) {
+							&& lastUpdateTime.isAfter(sqlToyConfig.getLastUpdateTime()))
+					|| (lastUpdateTime != null && sqlToyConfig.getLastUpdateTime() == null)) {
 				try {
 					logger.debug("sqlKey={}初始调用或修改时间发生变化，重新解析xml!", sqlKey);
 					sqlToyConfig = scriptLoader.parseSqlSagment(extend.xmlBinding.getXml(), sqlKey);
@@ -902,7 +903,7 @@ public class SqlToyContext {
 	 * @return the debug
 	 */
 	public boolean isDebug() {
-		return debug;
+		return SqlExecuteStat.getShowSql() == null ? debug : SqlExecuteStat.getShowSql();
 	}
 
 	/**

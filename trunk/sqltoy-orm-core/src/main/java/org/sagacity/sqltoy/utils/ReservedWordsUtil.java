@@ -115,10 +115,10 @@ public class ReservedWordsUtil {
 	}
 
 	/**
+	 * @TODO 对整个sql进行保留字处理
 	 * @param sql
 	 * @param dbType
 	 * @return
-	 * @TODO 对整个sql进行保留字处理
 	 */
 	public static String convertSql(String sql, Integer dbType) {
 		if (reservedWords.isEmpty()) {
@@ -175,9 +175,9 @@ public class ReservedWordsUtil {
 	}
 
 	/**
+	 * @TODO 判断列名称是否是关键词
 	 * @param column
 	 * @return
-	 * @TODO 判断列名称是否是关键词
 	 */
 	public static boolean isKeyWord(String column) {
 		if (column == null) {

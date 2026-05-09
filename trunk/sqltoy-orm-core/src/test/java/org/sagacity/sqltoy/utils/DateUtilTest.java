@@ -3,12 +3,14 @@ package org.sagacity.sqltoy.utils;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.text.ParseException;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.OffsetTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.time.temporal.TemporalAdjusters;
 import java.util.Date;
 import java.util.Locale;
 
@@ -55,8 +57,8 @@ public class DateUtilTest {
 
 	@Test
 	public void testOther() throws SQLException {
-		Long addMin=9L;
-		System.err.println(DateUtil.addMinute(DateUtil.getDateTime(),addMin));
+		Long addMin = 9L;
+		System.err.println(DateUtil.addMinute(DateUtil.getDateTime(), addMin));
 		System.err.println(DateUtil.getDayOfMonth("2023-12-9"));
 		System.err.println(DateUtil.getMonth("2023-12-9"));
 		System.err.println(DateUtil.getYear("2023-12-9"));
@@ -233,7 +235,7 @@ public class DateUtilTest {
 		System.err.println(DateUtil.parse(new Date(), "yyyy-MM-dd HH:mm:ss"));
 		System.err.println(DateUtil.parse(LocalDateTime.now(), "yyyy-MM-dd HH:mm:ss"));
 		System.err.println(DateUtil.parse(LocalDate.now(), "yyyy-MM-dd"));
-		
+
 		System.err.println(DateUtil.parse(LocalTime.now(), "HH:mm:ss"));
 		System.err.println(DateUtil.parse("2023-10-22", "yyyy-MM-dd HH:mm:ss"));
 		System.err.println(DateUtil.parse("12:23:21", "yyyy-MM-dd HH:mm:ss"));
@@ -281,9 +283,10 @@ public class DateUtilTest {
 		System.err.println(DateUtil.parseString("21:34:22.234345"));
 		System.err.println(DateUtil.parseString("21:34:22.234"));
 		System.err.println(DateUtil.parseString("21:34:22.2"));
-		System.err.println(
-				DateUtil.formatDate(DateUtil.parseString("2020-11-20 21:34:22.234345+8:00"), "yyyy-MM-dd HH:mm:ss.SSS"));
-		//System.err.println(DateUtil.parseLocalDateTime("2020-11-20 21:34:22.234", "yyyy-MM-dd HH:mm:ss.SSS"));
+		System.err.println(DateUtil.formatDate(DateUtil.parseString("2020-11-20 21:34:22.234345+8:00"),
+				"yyyy-MM-dd HH:mm:ss.SSS"));
+		// System.err.println(DateUtil.parseLocalDateTime("2020-11-20 21:34:22.234",
+		// "yyyy-MM-dd HH:mm:ss.SSS"));
 	}
 
 	@Test
@@ -298,16 +301,22 @@ public class DateUtilTest {
 	@Test
 	public void parseZonedDateTime() throws ParseException {
 		String dateVar = ZonedDateTime.of(LocalDateTime.now(), ZoneOffset.of("-05:00")).toString();
-		
+
 		dateVar = OffsetTime.now().toString();
-		//System.err.println(dateVar);
-		//System.err.println(DateUtil.parseZonedDateTime(dateVar));
+		// System.err.println(dateVar);
+		// System.err.println(DateUtil.parseZonedDateTime(dateVar));
 		System.err.println(DateUtil.parseZonedDateTime("21:34:22.234345+8:00"));
 
 	}
-	
+
 	@Test
-	public void testGetWeekOfYear()  {
+	public void testGetWeekOfYear() {
 		System.err.println(DateUtil.getWeekOfYear("2026-02-23"));
+
+		LocalDate lastOfWeek = DateUtil.asLocalDate(DateUtil.parse("2026-05-08", "yyyy-MM-dd"))
+				.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
+		// 本周最后一天（周日）
+		Date result = Date.from(lastOfWeek.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant());
+		System.err.println(result);
 	}
 }
