@@ -287,26 +287,23 @@ public class PostgreSqlDialectUtils {
 		// <v10 用 AND c.oid NOT IN (SELECT inhrelid FROM pg_inherits)
 		String sql = """
 					SELECT
-					    c.relname AS TABLE_NAME,
-					    CASE c.relkind
-					        WHEN 'r' THEN 'TABLE'
-					        WHEN 'p' THEN 'TABLE'
-					        WHEN 'v' THEN 'VIEW'
-					    END AS TABLE_TYPE,
-					    d.description AS COMMENTS
+						  c.relname AS TABLE_NAME,
+						  CASE c.relkind
+						    WHEN 'r' THEN 'TABLE'
+						    WHEN 'p' THEN 'TABLE'
+						    WHEN 'v' THEN 'VIEW'
+						  END AS TABLE_TYPE,
+						  d.description AS COMMENTS
 					FROM pg_class c
-							LEFT JOIN pg_description d
-				    			ON d.objoid = c.oid AND d.objsubid = 0
+						LEFT JOIN pg_description d ON d.objoid = c.oid AND d.objsubid = 0
+						JOIN pg_namespace n ON n.oid = c.relnamespace
 					WHERE
-					    c.relkind IN ('r', 'v', 'p')
-					    AND c.oid NOT IN (SELECT inhrelid FROM pg_inherits)
-					    AND c.relname NOT LIKE 'pg_%'
+					  c.relkind IN ('r', 'v', 'p')
+					  AND c.oid NOT IN (SELECT inhrelid FROM pg_inherits)
+					  AND c.relname NOT LIKE 'pg_%'
+					  AND n.nspname NOT LIKE 'pg_%'
+					  AND n.nspname = ANY (current_schemas(false))
 				""";
-		String namespace = StringUtil.ifBlank(catalog, schema);
-		if (StringUtil.isNotBlank(namespace)) {
-			sql = sql.concat(
-					" AND c.relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = '" + namespace + "') ");
-		}
 		if (StringUtil.isNotBlank(tableName)) {
 			if (tableName.contains("%")) {
 				sql = sql.concat(" and c.relname like '" + tableName + "'");

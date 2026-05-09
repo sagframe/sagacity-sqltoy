@@ -305,4 +305,13 @@ public class StringUtilsTest {
 			System.err.println("[" + str + "]");
 		}
 	}
+
+	@Test
+	public void loopAppendWithSign() {
+		String result = StringUtil.loopAppendWithSign("?", ",", 10);
+		System.err.println("[" + result + "]");
+		result = StringUtil.loopAppendWithSign("?", ",", 1);
+		System.err.println("[" + result + "]");
+	}
+
 }

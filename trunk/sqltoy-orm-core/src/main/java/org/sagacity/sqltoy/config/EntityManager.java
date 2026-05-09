@@ -647,11 +647,16 @@ public class EntityManager {
 		if (column == null) {
 			return;
 		}
+		// 空白场景处理
+		String defaultValue = StringUtil.isBlank(column.defaultValue()) ? SqlToyConstants.DEFAULT_NULL
+				: column.defaultValue().trim();
+		//清理defaultValue的一些不符合最终使用的字符，如(x)、((x))、x::text等
+		defaultValue = SqlUtil.clearDefaultValue(defaultValue);
 		// 字段的详细配置信息,字段名称，字段对应数据库表字段，字段默认值，字段类型
 		FieldMeta fieldMeta = new FieldMeta(field.getName(), column.name(),
-				(SqlToyConstants.DEFAULT_NULL.equals(column.defaultValue())) ? null : column.defaultValue(),
-				column.nativeType(), column.type(), column.nullable(), column.keyword(),
-				Long.valueOf(column.length()).intValue(), column.precision(), column.scale());
+				(SqlToyConstants.DEFAULT_NULL.equals(defaultValue)) ? null : defaultValue, column.nativeType(),
+				column.type(), column.nullable(), column.keyword(), Long.valueOf(column.length()).intValue(),
+				column.precision(), column.scale());
 		// 计算列
 		boolean isGenerateCol = false;
 		if (column.generatedType() != null && column.generatedType() != GeneratedType.DEFAULT) {
@@ -669,7 +674,7 @@ public class EntityManager {
 		fieldMeta.setAutoIncrement(column.autoIncrement());
 		// 设置type类型，并转小写便于后续对比的统一
 		fieldMeta.setFieldType(field.getType().getTypeName().toLowerCase());
-		fieldMeta.setComments(column.comment());
+		fieldMeta.setComments(StringUtil.isBlank(column.comment()) ? null : column.comment().trim());
 		// 设置是否分区字段
 		if (field.getAnnotation(PartitionKey.class) != null) {
 			fieldMeta.setPartitionKey(true);

@@ -53,6 +53,7 @@ public class OceanBaseDialect implements Dialect {
 	 * 判定为null的函数
 	 */
 	public static final String NVL_FUNCTION = "nvl";
+	public static final String NEXT_VAL = ".nextval";
 
 	@Override
 	public boolean isUnique(SqlToyContext sqlToyContext, Serializable entity, String[] paramsNamed, Connection conn,
@@ -203,7 +204,7 @@ public class OceanBaseDialect implements Dialect {
 					@Override
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
-						String sequence = entityMeta.getSequence() + ".nextval";
+						String sequence = entityMeta.getSequence() + NEXT_VAL;
 						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
 							pkStrategy = PKStrategy.SEQUENCE;
 							sequence = entityMeta.getFieldMeta(entityMeta.getIdArray()[0]).getDefaultValue();
@@ -254,7 +255,7 @@ public class OceanBaseDialect implements Dialect {
 			final String dialect, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		PKStrategy pkStrategy = entityMeta.getIdStrategy();
-		String sequence = entityMeta.getSequence().concat(".nextval");
+		String sequence = entityMeta.getSequence().concat(NEXT_VAL);
 		if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
 			pkStrategy = PKStrategy.SEQUENCE;
 			sequence = entityMeta.getFieldMeta(entityMeta.getIdArray()[0]).getDefaultValue();
@@ -274,7 +275,7 @@ public class OceanBaseDialect implements Dialect {
 					@Override
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateField) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
-						String sequence = entityMeta.getSequence().concat(".nextval");
+						String sequence = entityMeta.getSequence().concat(NEXT_VAL);
 						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
 							pkStrategy = PKStrategy.SEQUENCE;
 							sequence = entityMeta.getFieldMeta(entityMeta.getIdArray()[0]).getDefaultValue();
@@ -309,7 +310,7 @@ public class OceanBaseDialect implements Dialect {
 		// oracle12c 开始支持identity机制
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		PKStrategy pkStrategy = entityMeta.getIdStrategy();
-		String sequence = entityMeta.getSequence().concat(".nextval");
+		String sequence = entityMeta.getSequence().concat(NEXT_VAL);
 		if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
 			pkStrategy = PKStrategy.SEQUENCE;
 			sequence = entityMeta.getFieldMeta(entityMeta.getIdArray()[0]).getDefaultValue();
@@ -338,7 +339,7 @@ public class OceanBaseDialect implements Dialect {
 					@Override
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
-						String sequence = entityMeta.getSequence().concat(".nextval");
+						String sequence = entityMeta.getSequence().concat(NEXT_VAL);
 						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
 							pkStrategy = PKStrategy.SEQUENCE;
 							sequence = entityMeta.getFieldMeta(entityMeta.getIdArray()[0]).getDefaultValue();

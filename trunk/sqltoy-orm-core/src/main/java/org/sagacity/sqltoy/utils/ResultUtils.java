@@ -429,8 +429,7 @@ public class ResultUtils {
 	}
 
 	/**
-	 * 对单行记录进行安全脱敏
-	 * 
+	 * @todo 对单行记录进行安全脱敏
 	 * @param desensitizeProvider
 	 * @param row
 	 * @param masks
@@ -537,7 +536,6 @@ public class ResultUtils {
 			return getMoreLinkResultSet(dbType, sqlToyConfig, sqlToyContext, decryptHandler, conn, rs, columnCnt,
 					labelIndexMap, labelNames, startColIndex);
 		}
-
 		List<List> items = new ArrayList();
 		// 判断是否有缓存翻译器定义
 		Boolean hasTranslate = (sqlToyConfig.getTranslateMap().isEmpty()) ? false : true;
@@ -757,8 +755,7 @@ public class ResultUtils {
 	}
 
 	/**
-	 * 校验缓存翻译配置正确性
-	 * 
+	 * @todo 校验缓存翻译配置正确性
 	 * @param fieldTranslateMap
 	 * @param lowKeyLabelNameMap
 	 */
@@ -1048,8 +1045,7 @@ public class ResultUtils {
 	}
 
 	/**
-	 * 针对resultSet label提供小写key map
-	 * 
+	 * @todo 针对resultSet label提供小写key map
 	 * @param labelNames
 	 * @return
 	 */

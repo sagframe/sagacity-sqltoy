@@ -282,14 +282,31 @@ public class SqlUtilTest {
 	}
 
 	@Test
-	public static void testReplaceEmbedSqlParams() {
+	public void testReplaceEmbedSqlParams() {
 		// String sql = "select * from user where name = ${:name} and age = ${age} and
 		// id = ${ userId }";
 		String sql = "select * from user where name = :name and age = age and id = userId";
 		String result = SqlUtil.replaceEmbedSqlParams(sql);
 		System.out.println(result);
 	}
-	
+
+	@Test
+	public void testClearDefaultValue() {
+		String[] tests = { "3.14::real", "3.14::double precision", "name::varchar(50)", "price::numeric(10,2)", // 带逗号
+				"age::int", "col::char(10)", "create_time::timestamp(6)", "now()::text", // 不会误删函数括号
+				"id::bigint", "3.14::double precision(10,2)", "3.14::double precision(10,2) as ", """
+								CASE order_status
+						   WHEN 0 THEN '待支付'::text
+						   WHEN 1 THEN '已支付'::text
+						   WHEN 2 THEN '已完成'::text
+						   ELSE '取消'::text
+						END
+								""", "(a+b)::numberic(10,2)", "NULL::text" };
+		for (String t : tests) {
+			System.out.println(t + "  ->  [" + SqlUtil.clearDefaultValue(t) + "]");
+		}
+	}
+
 	public static void main(String[] args) {
 		String sql = "select * from table group by id order by name desc";
 		String sqlPart = " where tenant_id=2 ";

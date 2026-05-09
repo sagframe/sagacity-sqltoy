@@ -745,6 +745,9 @@ public class ParamFilterUtils {
 					result.add(cell);
 				}
 			}
+			if (result.isEmpty()) {
+				return null;
+			}
 			return result.toArray();
 		} else if (paramValue instanceof List) {
 			List result = new ArrayList();
@@ -760,6 +763,9 @@ public class ParamFilterUtils {
 					result.add(cell);
 				}
 			}
+			if (result.isEmpty()) {
+				return null;
+			}
 			return result;
 		} else if (paramValue instanceof Set) {
 			Set result = (paramValue instanceof LinkedHashSet) ? new LinkedHashSet() : new HashSet();
@@ -774,6 +780,9 @@ public class ParamFilterUtils {
 				} else if (cell != null) {
 					result.add(cell);
 				}
+			}
+			if (result.isEmpty()) {
+				return null;
 			}
 			return result;
 		}

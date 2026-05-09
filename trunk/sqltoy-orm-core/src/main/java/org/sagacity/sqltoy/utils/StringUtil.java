@@ -282,17 +282,10 @@ public class StringUtil {
 	 * @return
 	 */
 	public static String loopAppendWithSign(String source, String sign, int loopSize) {
-		if (loopSize == 0) {
+		if (loopSize <= 0) {
 			return "";
 		}
-		if (loopSize == 1) {
-			return source;
-		}
-		StringBuilder result = new StringBuilder(source);
-		for (int i = 1; i < loopSize; i++) {
-			result.append(sign).append(source);
-		}
-		return result.toString();
+		return String.join(sign, Collections.nCopies(loopSize, source));
 	}
 
 	/**

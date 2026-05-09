@@ -588,7 +588,9 @@ public class DDLUtils {
 	public static boolean isDateFunction(String defaultValue) {
 		if (defaultValue.equals("SYSDATE()") || defaultValue.equals("SYSDATE") || defaultValue.equals("NOW()")
 				|| defaultValue.equals("GETDATE()") || defaultValue.equals("CURRENT_TIMESTAMP()")
-				|| defaultValue.equals("CURRENT_TIMESTAMP") || defaultValue.equals("CURRENT_DATE")) {
+				|| defaultValue.equals("CURRENT_TIMESTAMP") || defaultValue.equals("CURRENT_DATE")
+				|| defaultValue.equals("CURDATE()") || defaultValue.equals("CURTIME()")
+				|| defaultValue.equals("LOCALTIMESTAMP")) {
 			return true;
 		}
 		return false;
