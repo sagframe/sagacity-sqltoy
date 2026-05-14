@@ -43,6 +43,11 @@ public class EntityQueryExtend implements Serializable {
 	public int maxRows = -1;
 
 	/**
+	 * 单位秒
+	 */
+	public Integer timeout;
+
+	/**
 	 * 条件语句
 	 */
 	public String where;
@@ -107,11 +112,11 @@ public class EntityQueryExtend implements Serializable {
 	 * 对字段进行安全脱敏
 	 */
 	public LinkedHashMap<String, SecureMask> secureMask = new LinkedHashMap<String, SecureMask>();
-	
+
 	/**
 	 * 解密的列
 	 */
-	public IgnoreCaseSet decryptColumns=new IgnoreCaseSet();
+	public IgnoreCaseSet decryptColumns = new IgnoreCaseSet();
 
 	// 分库策略配置
 	public ShardingStrategyConfig dbSharding;

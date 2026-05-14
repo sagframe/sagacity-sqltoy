@@ -959,8 +959,8 @@ public class SqlServerDialectUtils {
 		}
 		SqlExecuteStat.showSql("mssql批量保存", realSql, null);
 		return SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), realSql, realParams,
-				entityMeta.getFieldsTypeArray(true), entityMeta.getFieldsDefaultValue(true), entityMeta.getFieldsNullable(true),
-				sqlToyContext.getBatchSize(), autoCommit, conn, dbType);
+				entityMeta.getFieldsTypeArray(true), entityMeta.getFieldsDefaultValue(true),
+				entityMeta.getFieldsNullable(true), sqlToyContext.getBatchSize(), autoCommit, conn, dbType);
 	}
 
 	/**
@@ -1141,7 +1141,7 @@ public class SqlServerDialectUtils {
 						} else {
 							tableMeta.setType("TABLE");
 						}
-						tableMeta.setRemarks(rs.getString("COMMENTS"));
+						tableMeta.setRemarks(StringUtil.escapeComment(rs.getString("COMMENTS")));
 						tables.add(tableMeta);
 					}
 					this.setResult(tables);

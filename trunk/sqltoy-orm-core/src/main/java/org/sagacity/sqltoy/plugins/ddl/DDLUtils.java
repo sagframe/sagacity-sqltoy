@@ -121,7 +121,7 @@ public class DDLUtils {
 	public static TableMeta wrapTableMeta(EntityMeta entityMeta, Integer dbType) {
 		TableMeta tableMeta = new TableMeta();
 		tableMeta.setTableName(entityMeta.getTableName());
-		tableMeta.setRemarks(translateSpecialSymbols(entityMeta.getTableComment()));
+		tableMeta.setRemarks(StringUtil.escapeComment(entityMeta.getTableComment()));
 		tableMeta.setSchema(entityMeta.getSchema());
 		tableMeta.setPkConstraint(entityMeta.getPkConstraint());
 		// 索引信息

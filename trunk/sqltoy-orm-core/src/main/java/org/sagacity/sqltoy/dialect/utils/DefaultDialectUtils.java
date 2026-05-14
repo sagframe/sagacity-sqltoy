@@ -942,7 +942,7 @@ public class DefaultDialectUtils {
 							colMeta.setColumnSize(rs.getInt("COLUMN_SIZE"));
 							colMeta.setDecimalDigits(rs.getInt("DECIMAL_DIGITS"));
 							colMeta.setNumPrecRadix(rs.getInt("NUM_PREC_RADIX"));
-							colMeta.setComments(rs.getString("REMARKS"));
+							colMeta.setComments(StringUtil.escapeComment(rs.getString("REMARKS")));
 							// colMeta.setReadOnly(rs.getBoolean("READ_ONLY"));
 							colMeta.setAutoIncrement(false);
 							// oracle autoincrement 取法不同
@@ -1160,7 +1160,7 @@ public class DefaultDialectUtils {
 					tableMeta.setTableName(rs.getString("TABLE_NAME"));
 					tableMeta.setSchema(rs.getString("TABLE_SCHEM"));
 					tableMeta.setType(rs.getString("TABLE_TYPE"));
-					tableMeta.setRemarks(rs.getString("REMARKS"));
+					tableMeta.setRemarks(StringUtil.escapeComment(rs.getString("REMARKS")));
 					tables.add(tableMeta);
 				}
 				this.setResult(tables);

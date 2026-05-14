@@ -304,8 +304,8 @@ public class OracleDialectUtils {
 	 */
 	public static StoreResult executeStore(final SqlToyConfig sqlToyConfig, final SqlToyContext sqlToyContext,
 			final String storeSql, final Object[] inParamValues, final Integer[] outParamTypes,
-			final boolean moreResult, final Connection conn, final Integer dbType, final int fetchSize)
-			throws Exception {
+			final boolean moreResult, final Connection conn, final Integer dbType, final int fetchSize,
+			final Integer timeout) throws Exception {
 		CallableStatement callStat = null;
 		ResultSet rs = null;
 		return (StoreResult) SqlUtil.callableStatementProcess(null, callStat, rs, new CallableStatementResultHandler() {
@@ -315,6 +315,13 @@ public class OracleDialectUtils {
 					callStat = conn.prepareCall(storeSql);
 					if (fetchSize > 0) {
 						callStat.setFetchSize(fetchSize);
+					}
+					Integer realTimeout = sqlToyConfig.getQueryTimeout();
+					if (timeout != null && timeout > 0) {
+						realTimeout = timeout;
+					}
+					if (realTimeout != null && realTimeout > 0) {
+						callStat.setQueryTimeout(realTimeout);
 					}
 					SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, callStat, inParamValues, null,
 							0);
@@ -494,7 +501,7 @@ public class OracleDialectUtils {
 						TableMeta tableMeta = new TableMeta();
 						tableMeta.setTableName(rs.getString("TABLE_NAME"));
 						tableMeta.setType(rs.getString("TABLE_TYPE"));
-						tableMeta.setRemarks(rs.getString("COMMENTS"));
+						tableMeta.setRemarks(StringUtil.escapeComment(rs.getString("COMMENTS")));
 						tables.add(tableMeta);
 					}
 					this.setResult(tables);

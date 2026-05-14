@@ -271,6 +271,10 @@ public class DialectUtils {
 			// sql段落，含多句sql(正常不使用)
 			pst = conn.prepareStatement(lastSql);
 		}
+		// 设置查询超时(秒)
+		if (extend.timeout != null && extend.timeout > 0) {
+			pst.setQueryTimeout(extend.timeout);
+		}
 		ResultSet rs = null;
 		return (QueryResult) SqlUtil.preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
 			@Override
@@ -362,8 +366,8 @@ public class DialectUtils {
 	 * @throws Exception
 	 */
 	public static Long getCountBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
-			final String sql, final Object[] paramsValue, final boolean isLastSql, final Connection conn,
-			final Integer dbType) throws Exception {
+			final String sql, final Object[] paramsValue, final boolean isLastSql, final QueryExecutorExtend extend,
+			final Connection conn, final Integer dbType) throws Exception {
 		String lastCountSql;
 		int paramCnt = 0;
 		int withParamCnt = 0;
@@ -476,6 +480,10 @@ public class DialectUtils {
 		// 打印sql
 		SqlExecuteStat.showSql("执行count查询", lastCountSql, realParams);
 		PreparedStatement pst = conn.prepareStatement(lastCountSql);
+		// 设置查询超时时长(秒)
+		if (extend.timeout != null && extend.timeout > 0) {
+			pst.setQueryTimeout(extend.timeout);
+		}
 		ResultSet rs = null;
 		return (Long) SqlUtil.preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
 			@Override
@@ -2045,7 +2053,7 @@ public class DialectUtils {
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
 		Object[] fieldsValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getFieldsArray(true), null, handler);
 		// 判断主键是否为空
-		int pkIndex = entityMeta.getIdIndex()-entityMeta.getGeneratedColsCnt();
+		int pkIndex = entityMeta.getIdIndex() - entityMeta.getGeneratedColsCnt();
 		for (int i = pkIndex, end = pkIndex + entityMeta.getIdArray().length; i < end; i++) {
 			if (StringUtil.isBlank(fieldsValues[i])) {
 				throw new IllegalArgumentException("通过对象对表:" + realTable + " 进行update操作,主键字段必须要赋值!");
@@ -2239,7 +2247,8 @@ public class DialectUtils {
 					sequence = entityMeta.getFieldMeta(entityMeta.getIdArray()[0]).getDefaultValue();
 				}
 				return DialectExtUtils.mergeIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
-						pkStrategy, "dual", "nvl", sequence, OracleDialectUtils.allowAssignPKValue(pkStrategy), tableName);
+						pkStrategy, "dual", "nvl", sequence, OracleDialectUtils.allowAssignPKValue(pkStrategy),
+						tableName);
 			}
 		}, reflectPropsHandler, conn, dbType, null);
 		logger.debug("级联子表:{} 变更记录数:{},新建记录数为:{}", tableName, updateCnt, saveCnt);
@@ -2898,8 +2907,8 @@ public class DialectUtils {
 	 */
 	public static StoreResult executeStore(final SqlToyConfig sqlToyConfig, final SqlToyContext sqlToyContext,
 			final String storeSql, final Object[] inParamValues, final Integer[] outParamTypes,
-			final boolean moreResult, final Connection conn, final Integer dbType, final int fetchSize)
-			throws Exception {
+			final boolean moreResult, final Connection conn, final Integer dbType, final int fetchSize,
+			final Integer timeout) throws Exception {
 		CallableStatement callStat = null;
 		ResultSet rs = null;
 		return (StoreResult) SqlUtil.callableStatementProcess(null, callStat, rs, new CallableStatementResultHandler() {
@@ -2909,6 +2918,13 @@ public class DialectUtils {
 					callStat = conn.prepareCall(storeSql);
 					if (fetchSize > 0) {
 						callStat.setFetchSize(fetchSize);
+					}
+					Integer realTimeout = sqlToyConfig.getQueryTimeout();
+					if (timeout != null && timeout > 0) {
+						realTimeout = timeout;
+					}
+					if (realTimeout != null && realTimeout > 0) {
+						callStat.setQueryTimeout(realTimeout);
 					}
 					boolean isFirstResult = StringUtil.matches(storeSql, STORE_PATTERN);
 					int addIndex = isFirstResult ? 1 : 0;

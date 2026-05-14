@@ -462,7 +462,7 @@ public class TranslateConfigParse {
 				while (urls.hasMoreElements()) {
 					url = urls.nextElement();
 					if (url.getProtocol().equals(JAR)) {
-						if (realRes.length() > 0 && realRes.charAt(0) == '/') {
+						if (!realRes.isEmpty() && realRes.startsWith("/")) {
 							realRes = realRes.substring(1);
 						}
 						jar = ((JarURLConnection) url.openConnection()).getJarFile();

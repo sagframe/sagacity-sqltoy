@@ -518,7 +518,8 @@ public class DialectFactory {
 		}
 		try {
 			SqlExecuteStat.start(BeanUtil.getEntityClass(uniqueExecutor.getEntity().getClass()).getName(),
-					OperateDetailType.isUnique, uniqueExecutor.getEntity().getClass(), sqlToyContext.isDebug(), uniqueExecutor.getContextData());
+					OperateDetailType.isUnique, uniqueExecutor.getEntity().getClass(), sqlToyContext.isDebug(),
+					uniqueExecutor.getContextData());
 			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, uniqueExecutor.getEntity(),
 					false, dataSource);
 			Boolean isUnique = (Boolean) DataSourceUtils.processDataSource(sqlToyContext, shardingModel.getDataSource(),
@@ -1485,7 +1486,7 @@ public class DialectFactory {
 				(extend.entityClass == null) ? OperateType.count : OperateType.singleTable, queryParam,
 				extend.entityClass, dbType);
 		return getDialectSqlWrapper(dbType).getCountBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(),
-				queryParam.getParamsValue(), isLastSql, conn, dbType, dialect);
+				queryParam.getParamsValue(), isLastSql, extend, conn, dbType, dialect);
 	}
 
 	// mysql、postgresql、sqlite等类似的on duplicate key update
@@ -2166,7 +2167,8 @@ public class DialectFactory {
 				operateDetailType = OperateDetailType.updateFetchSingleTable;
 			}
 			SqlExecuteStat.start(sqlToyConfig.getId(), operateDetailType,
-					(extend.resultType == null) ? null : (Class) extend.resultType, sqlToyConfig.isShowSql(), extend.contextData);
+					(extend.resultType == null) ? null : (Class) extend.resultType, sqlToyConfig.isShowSql(),
+					extend.contextData);
 			// 组织参数和参数校验，但忽视数据权限数据的传参和校验
 			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
 			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
@@ -2227,7 +2229,7 @@ public class DialectFactory {
 	 */
 	public StoreResult executeStore(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
 			final Object[] inParamsValue, final Integer[] outParamsType, final Class[] resultTypes,
-			final boolean moreResult, final DataSource dataSource) {
+			final boolean moreResult, final Integer timeout, final DataSource dataSource) {
 		try {
 			Long startTime = System.currentTimeMillis();
 			SqlExecuteStat.start(sqlToyConfig.getId(), OperateDetailType.executeStore, null, sqlToyConfig.isShowSql());
@@ -2255,7 +2257,7 @@ public class DialectFactory {
 							SqlExecuteStat.showSql("存储过程执行", sqlToyResult.getSql(), sqlToyResult.getParamsValue());
 							StoreResult queryResult = getDialectSqlWrapper(dbType).executeStore(sqlToyContext,
 									sqlToyConfig, sqlToyResult.getSql(), sqlToyResult.getParamsValue(), outParamsType,
-									moreResult, conn, dbType, dialect, -1);
+									moreResult, conn, dbType, dialect, -1, timeout);
 							// 进行数据必要的数据处理(一般存储过程不会结合旋转sql进行数据旋转操作)
 							// {此区域代码正常情况下不会使用
 							QueryExecutor queryExecutor = new QueryExecutor(null, sqlToyConfig.getParamsName(),

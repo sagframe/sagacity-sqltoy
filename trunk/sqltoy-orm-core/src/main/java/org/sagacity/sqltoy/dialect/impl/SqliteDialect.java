@@ -143,9 +143,10 @@ public class SqliteDialect implements Dialect {
 	 */
 	@Override
 	public Long getCountBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
-			final Object[] paramsValue, final boolean isLastSql, final Connection conn, final Integer dbType,
-			final String dialect) throws Exception {
-		return DialectUtils.getCountBySql(sqlToyContext, sqlToyConfig, sql, paramsValue, isLastSql, conn, dbType);
+			final Object[] paramsValue, final boolean isLastSql, final QueryExecutorExtend extend,
+			final Connection conn, final Integer dbType, final String dialect) throws Exception {
+		return DialectUtils.getCountBySql(sqlToyContext, sqlToyConfig, sql, paramsValue, isLastSql, extend, conn,
+				dbType);
 	}
 
 	/*
@@ -383,7 +384,8 @@ public class SqliteDialect implements Dialect {
 	@Override
 	public StoreResult executeStore(SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
 			final Object[] inParamsValue, final Integer[] outParamsType, final boolean moreResult,
-			final Connection conn, final Integer dbType, final String dialect, final int fetchSize) throws Exception {
+			final Connection conn, final Integer dbType, final String dialect, final int fetchSize,
+			final Integer timeout) throws Exception {
 		// 不支持
 		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
 	}

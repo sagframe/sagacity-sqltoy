@@ -76,6 +76,13 @@ public class EntityQuery implements Serializable {
 		return this;
 	}
 
+	public EntityQuery timeout(Integer timeout) {
+		if (timeout != null && timeout > 0) {
+			innerModel.timeout = timeout;
+		}
+		return this;
+	}
+
 	/**
 	 * @TODO 查询时增加distinct
 	 * @return
@@ -264,7 +271,7 @@ public class EntityQuery implements Serializable {
 		}
 		return this;
 	}
-	
+
 	/**
 	 * 指定解密列
 	 * 

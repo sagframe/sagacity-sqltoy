@@ -104,8 +104,10 @@ public class DefaultDialect implements Dialect {
 
 	@Override
 	public Long getCountBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql, Object[] paramsValue,
-			boolean isLastSql, Connection conn, Integer dbType, String dialect) throws Exception {
-		return DialectUtils.getCountBySql(sqlToyContext, sqlToyConfig, sql, paramsValue, isLastSql, conn, dbType);
+			boolean isLastSql, final QueryExecutorExtend extend, Connection conn, Integer dbType, String dialect)
+			throws Exception {
+		return DialectUtils.getCountBySql(sqlToyContext, sqlToyConfig, sql, paramsValue, isLastSql, extend, conn,
+				dbType);
 	}
 
 	@Override
@@ -262,9 +264,9 @@ public class DefaultDialect implements Dialect {
 	@Override
 	public StoreResult executeStore(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] inParamsValue, Integer[] outParamsType, final boolean moreResult, Connection conn, Integer dbType,
-			String dialect, final int fetchSize) throws Exception {
+			String dialect, final int fetchSize, final Integer timeout) throws Exception {
 		return DialectUtils.executeStore(sqlToyConfig, sqlToyContext, sql, inParamsValue, outParamsType, moreResult,
-				conn, dbType, fetchSize);
+				conn, dbType, fetchSize, timeout);
 	}
 
 	private String getLockSql(String sql, Integer dbType, LockMode lockMode) {

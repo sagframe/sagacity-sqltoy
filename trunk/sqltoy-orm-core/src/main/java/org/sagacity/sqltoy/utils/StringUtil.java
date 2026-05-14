@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -41,24 +40,6 @@ public class StringUtil {
 
 	private static Pattern twoQuotaChkPattern = Pattern.compile("[^\\\\]\"");
 
-	// 数据库注释转义映射表（核心规则：仅转义必要字符，避免重复转义）
-	private static final Map<Character, String> DEFAULT_ESCAPE_MAP;
-
-	static {
-		Map<Character, String> tempMap = new HashMap<>();
-		// 核心规则：仅添加1个反斜杠（避免框架二次转义导致冗余）
-		tempMap.put('\\', "\\"); // 反斜杠：保留1个，防止重复转义
-		tempMap.put('$', "\\$"); // 美元符：$ → \$（避免EL表达式解析）
-		tempMap.put('{', "\\{"); // 左花括号：{ → \{
-		tempMap.put('}', "\\}"); // 右花括号：} → \}
-		tempMap.put('"', "\\\""); // 双引号：" → \"（适配数据库字符串解析）
-		tempMap.put('\'', "\\'"); // 单引号：' → \'（适配数据库字符串解析）
-		tempMap.put('%', "\\%"); // 百分号：% → \%（避免MySQL通配符解析）
-		tempMap.put('_', "\\_"); // 下划线：_ → \_（避免MySQL通配符解析）
-		// 包装为不可变Map，防止规则被篡改
-		DEFAULT_ESCAPE_MAP = Collections.unmodifiableMap(tempMap);
-	}
-
 	/**
 	 * private constructor,cann't be instantiated by other class 私有构造函数方法防止被实例化
 	 */
@@ -76,19 +57,25 @@ public class StringUtil {
 		if (commentStr == null || commentStr.isEmpty()) {
 			return commentStr;
 		}
-		// 2. 逐字符处理：检测当前字符是否已被转义，仅处理未转义的特殊字符
-		StringBuilder sb = new StringBuilder((int) (commentStr.length() * 1.2));
+		StringBuilder sb = new StringBuilder(commentStr.length() + 20);
 		char[] chars = commentStr.toCharArray();
 		for (int i = 0; i < chars.length; i++) {
 			char c = chars[i];
-			// 关键：检测当前字符的前一个字符是否是反斜杠（即当前字符已被转义）
-			boolean isEscaped = (i > 0 && chars[i - 1] == '\\');
-
-			// 仅对「未被转义」且「在转义映射表中」的字符进行转义
-			if (!isEscaped && DEFAULT_ESCAPE_MAP.containsKey(c)) {
-				sb.append(DEFAULT_ESCAPE_MAP.get(c));
-			} else {
-				// 已转义的字符/普通字符：直接保留
+			// 核心：如果是 \，并且下一个也是 \ → 已经转义，直接跳过
+			if (c == '\\' && i < chars.length - 1 && chars[i + 1] == '\\') {
+				sb.append("\\\\"); // 保留原样 \\
+				i++; // 跳过下一个字符（因为已经一起处理）
+			}
+			// 普通 \ 未转义，需要转义
+			else if (c == '\\') {
+				sb.append("\\\\");
+			}
+			// 双引号必须转义
+			else if (c == '"') {
+				sb.append("\\\"");
+			}
+			// 其他字符原样保留
+			else {
 				sb.append(c);
 			}
 		}
@@ -483,7 +470,7 @@ public class StringUtil {
 	}
 
 	/**
-	 * @todo 剔除字符串中对称符号和中间的内容
+	 * @todo 剔除字符串中对称符号和中间的内容,便于判断剩余部分内容是否有动态参数,减少干扰
 	 * @param sql
 	 * @param startMark
 	 * @param endMark
@@ -873,7 +860,7 @@ public class StringUtil {
 	 * @todo 将字符串转换成驼峰形式
 	 * @param source
 	 * @param firstIsUpperCase
-	 * @param removeDealine
+	 * @param removeDealine    是否移除下划线
 	 * @return
 	 */
 	public static String toHumpStr(String source, boolean firstIsUpperCase, boolean removeDealine) {
@@ -929,8 +916,9 @@ public class StringUtil {
 	 * @return
 	 */
 	public static boolean hasChinese(String str) {
-		if (str == null)
+		if (str == null) {
 			return false;
+		}
 		return chinaPattern.matcher(str).find();
 	}
 
@@ -987,13 +975,13 @@ public class StringUtil {
 	}
 
 	/**
-	 * @todo 填充args参数
+	 * @todo 填充args参数,将字符串中的${}按位置顺序填入具体参数值
 	 * @param template
 	 * @param args
 	 * @return
 	 */
 	public static String fillArgs(String template, Object... args) {
-		if (template == null || (args == null || args.length == 0)) {
+		if (template == null || args == null || args.length == 0) {
 			return template;
 		}
 		for (Object arg : args) {
@@ -1010,10 +998,12 @@ public class StringUtil {
 	 * @param target
 	 * @return
 	 */
+	@Deprecated
 	public static String replaceAllStr(String source, String template, String target) {
 		return replaceAllStr(source, template, target, 0);
 	}
 
+	@Deprecated
 	public static String replaceAllStr(String source, String template, String target, int fromIndex) {
 		if (source == null || template.equals(target)) {
 			return source;
@@ -1029,6 +1019,7 @@ public class StringUtil {
 		return source;
 	}
 
+	@Deprecated
 	public static String replaceAllStr(String source, String template, String target, int fromIndex, int endIndex) {
 		if (source == null || template.equals(target) || endIndex <= fromIndex) {
 			return source;

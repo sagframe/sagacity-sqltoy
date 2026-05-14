@@ -72,7 +72,7 @@ public class QueryExecutorExtend implements Serializable {
 	 * jdbc查询最大返回记录数量
 	 */
 	public int maxRows = -1;
-	
+
 	public XMLBinding xmlBinding;
 
 	/**
@@ -130,11 +130,11 @@ public class QueryExecutorExtend implements Serializable {
 	 * 对字段进行安全脱敏
 	 */
 	public LinkedHashMap<String, SecureMask> secureMask = new LinkedHashMap<String, SecureMask>();
-	
+
 	/**
 	 * 解密的列
 	 */
-	public IgnoreCaseSet decryptColumns=new IgnoreCaseSet();
+	public IgnoreCaseSet decryptColumns = new IgnoreCaseSet();
 
 	/**
 	 * 列格式模型
@@ -198,6 +198,11 @@ public class QueryExecutorExtend implements Serializable {
 	 * 是否是sql段落(正常无需使用)
 	 */
 	public boolean sqlSegment = false;
+
+	/**
+	 * 单位秒
+	 */
+	public Integer timeout;
 
 	// 分表策略配置
 	public List<ShardingStrategyConfig> tableShardings = new ArrayList<ShardingStrategyConfig>();

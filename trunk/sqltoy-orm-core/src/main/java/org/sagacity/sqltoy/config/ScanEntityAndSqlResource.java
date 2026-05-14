@@ -69,7 +69,7 @@ public class ScanEntityAndSqlResource {
 		// 获取包的名字 并进行替换
 		String packageName = entitiesPackage.trim();
 		// 剔除第一个字符为目录的符号,并统一packName为xxx.xxx 格式
-		if (packageName.length() > 0 && packageName.charAt(0) == '/') {
+		if (!packageName.isEmpty() && packageName.startsWith("/")) {
 			packageName = packageName.substring(1);
 		}
 		if (packageName.endsWith("/")) {
@@ -233,19 +233,19 @@ public class ScanEntityAndSqlResource {
 				startClasspath = false;
 				if (realRes.toLowerCase().startsWith(CLASSPATH)) {
 					realRes = realRes.substring(10).trim();
-					if (realRes.charAt(0) == '/') {
+					if (realRes.startsWith("/")) {
 						realRes = realRes.substring(1);
 					}
 					startClasspath = true;
 				}
 				// update 2025-11-19 增加路径重复判断
 				if (CollectionUtil.notContainsAdd(notRepeatDirs, realRes)) {
-					urls = getResourceUrls(realRes, startClasspath);
+					urls = startClasspath ? getClasspathResourceUrls(realRes) : getResourceUrls(realRes);
 					if (null != urls) {
 						while (urls.hasMoreElements()) {
 							url = urls.nextElement();
 							if (url.getProtocol().equals(JAR)) {
-								if (realRes.length() > 0 && realRes.charAt(0) == '/') {
+								if (!realRes.isEmpty() && realRes.startsWith("/")) {
 									realRes = realRes.substring(1);
 								}
 								jar = ((JarURLConnection) url.openConnection()).getJarFile();
@@ -275,6 +275,7 @@ public class ScanEntityAndSqlResource {
 				}
 			}
 		}
+		// 具体的完整路径指定的.sql.xml文件
 		if (mappingResources != null && !mappingResources.isEmpty()) {
 			Set notRepeatResoures = new HashSet();
 			for (int i = 0; i < mappingResources.size(); i++) {
@@ -284,18 +285,18 @@ public class ScanEntityAndSqlResource {
 					startClasspath = false;
 					if (realRes.toLowerCase().startsWith(CLASSPATH)) {
 						realRes = realRes.substring(10).trim();
-						if (realRes.charAt(0) == '/') {
+						if (realRes.startsWith("/")) {
 							realRes = realRes.substring(1);
 						}
 						startClasspath = true;
 					}
 					// update 2025-11-19 增加路径重复判断
 					if (CollectionUtil.notContainsAdd(notRepeatResoures, realRes)) {
-						urls = getResourceUrls(realRes, startClasspath);
+						urls = startClasspath ? getClasspathResourceUrls(realRes) : getResourceUrls(realRes);
 						if (null != urls) {
 							while (urls.hasMoreElements()) {
 								url = urls.nextElement();
-								if (realRes.length() > 0 && realRes.charAt(0) == '/') {
+								if (!realRes.isEmpty() && realRes.startsWith("/")) {
 									realRes = realRes.substring(1);
 								}
 								if (url.getProtocol().equals(JAR)) {
@@ -324,52 +325,62 @@ public class ScanEntityAndSqlResource {
 		return result;
 	}
 
+	public static Enumeration<URL> getResourceUrls(String resource, boolean startClasspath) throws Exception {
+		if (startClasspath) {
+			return getClasspathResourceUrls(resource);
+		}
+		return getResourceUrls(resource);
+	}
+
 	/**
 	 * @todo 获取资源的URL
 	 * @param resource
-	 * @param startClasspath
 	 * @return
 	 * @throws Exception
 	 */
-	public static Enumeration<URL> getResourceUrls(String resource, boolean startClasspath) throws Exception {
+	public static Enumeration<URL> getResourceUrls(String resource) throws Exception {
 		Enumeration<URL> urls = null;
 		if (null == resource) {
 			return urls;
 		}
-		if (!startClasspath) {
-			File file = new File(resource);
-			// 文件不存在,但存在%20 空格、%25 百分号的转义符号(适度兼容，路径中不要搞极端特殊的符号)
-			if (!file.exists()) {
-				String fileResource = resource;
-				boolean hasSpecChar = false;
-				for (String[] item : SPECIALCHARACTERS) {
-					if (fileResource.contains(item[0])) {
-						hasSpecChar = true;
-						fileResource = fileResource.replace(item[0], item[1]);
-					}
-				}
-				// 存在特殊字符，重新实例化文件
-				if (hasSpecChar) {
-					file = new File(fileResource);
+		File file = new File(resource);
+		// 文件不存在,但存在%20 空格、%25 百分号的转义符号(适度兼容，路径中不要搞极端特殊的符号)
+		if (!file.exists()) {
+			String fileResource = resource;
+			boolean hasSpecChar = false;
+			for (String[] item : SPECIALCHARACTERS) {
+				if (fileResource.contains(item[0])) {
+					hasSpecChar = true;
+					fileResource = fileResource.replace(item[0], item[1]);
 				}
 			}
-			if (file.exists()) {
-				Vector<URL> v = new Vector<URL>();
-				v.add(file.toURI().toURL());
-				urls = v.elements();
-			} else {
-				if (resource.length() > 0 && resource.charAt(0) == '/') {
-					resource = resource.substring(1);
-				}
-				urls = Thread.currentThread().getContextClassLoader().getResources(resource);
+			// 存在特殊字符，重新实例化文件
+			if (hasSpecChar) {
+				file = new File(fileResource);
 			}
+		}
+		if (file.exists()) {
+			Vector<URL> v = new Vector<URL>();
+			v.add(file.toURI().toURL());
+			urls = v.elements();
 		} else {
-			if (resource.length() > 0 && resource.charAt(0) == '/') {
+			if (!resource.isEmpty() && resource.startsWith("/")) {
 				resource = resource.substring(1);
 			}
 			urls = Thread.currentThread().getContextClassLoader().getResources(resource);
 		}
 		return urls;
+	}
+
+	public static Enumeration<URL> getClasspathResourceUrls(String resource) throws Exception {
+		Enumeration<URL> urls = null;
+		if (null == resource) {
+			return urls;
+		}
+		if (!resource.isEmpty() && resource.startsWith("/")) {
+			resource = resource.substring(1);
+		}
+		return Thread.currentThread().getContextClassLoader().getResources(resource);
 	}
 
 	/**

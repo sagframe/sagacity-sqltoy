@@ -62,11 +62,10 @@ public class QueryExecutor implements Serializable {
 	 * 用于直接将xml内容并指定id来进行查询使用
 	 * <p>
 	 * <li>1、lastUpdateTime如果大于上次调用传递的值，则会重新解析xml，否则会通过id从缓存获取
-	 * lightDao.findByQuery(new QueryExecutor(new XMLBinding(xml).id(id).lastUpdateTime(lastUpdateTime)));
-	 * </li>
+	 * lightDao.findByQuery(new QueryExecutor(new
+	 * XMLBinding(xml).id(id).lastUpdateTime(lastUpdateTime)));</li>
 	 * <li>2、你也可以通过lightDao.getSqlToyContext().removeSql(sqlId)从缓存删除，然后调用
-	 * lightDao.findByQuery(new QueryExecutor(new XMLBinding(xml).id(id)))
-	 * </li>
+	 * lightDao.findByQuery(new QueryExecutor(new XMLBinding(xml).id(id)))</li>
 	 * </p>
 	 * 
 	 * @param xmlBinding 三个属性:1、xml内容 ；2、绑定的sqlId；3、lastUpdateTime xml内容最后修改时间
@@ -648,7 +647,12 @@ public class QueryExecutor implements Serializable {
 		return this;
 	}
 
-
+	public QueryExecutor timeout(Integer timeout) {
+		if (timeout != null && timeout > 0) {
+			innerModel.timeout = timeout;
+		}
+		return this;
+	}
 
 	/**
 	 * @TODO 设置执行时上下文数据，如：在拦截器中取值用以业务判断
