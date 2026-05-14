@@ -16,6 +16,8 @@ import java.io.PrintWriter;
 import java.io.RandomAccessFile;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.util.ArrayList;
@@ -989,5 +991,21 @@ public class FileUtil {
 			index = realFile.indexOf(pattern);
 		}
 		return linkPath(lastFile, realFile);
+	}
+
+	/**
+	 * 解码URL编码的路径，处理空白等特殊字符被转义的情况。
+	 * 
+	 * @param path 可能包含URL编码的路径
+	 * @return 解码后的路径
+	 */
+	public static String decodePath(String path) {
+		if (path == null || !path.contains("%"))
+			return path;
+		try {
+			return URLDecoder.decode(path, StandardCharsets.UTF_8.name());
+		} catch (Exception e) {
+			return path;
+		}
 	}
 }

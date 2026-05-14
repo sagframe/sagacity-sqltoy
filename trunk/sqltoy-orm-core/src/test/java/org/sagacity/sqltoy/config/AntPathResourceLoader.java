@@ -4,8 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.JarURLConnection;
 import java.net.URL;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -531,22 +529,20 @@ public class AntPathResourceLoader {
 
 					if (bundleWiring != null) {
 						// 调用 bundleWiring.listResources(path, pattern, options)
-						java.lang.reflect.Method listResourcesMethod = bundleWiringClass.getMethod(
-								"listResources", String.class, String.class, int.class);
+						java.lang.reflect.Method listResourcesMethod = bundleWiringClass.getMethod("listResources",
+								String.class, String.class, int.class);
 						// LISTRESOURCES_RECURSE = 2, LISTRESOURCES_LOCAL = 1
 						@SuppressWarnings("unchecked")
-						Collection<String> resources = (Collection<String>) listResourcesMethod.invoke(
-								bundleWiring, basePath, "*", 2);
+						Collection<String> resources = (Collection<String>) listResourcesMethod.invoke(bundleWiring,
+								basePath, "*", 2);
 
 						if (resources != null) {
 							for (String resourcePath : resources) {
 								if (matchCached(resourcePath, patternParts)) {
 									try {
-										URL resourceUrl = bundle.getClass()
-												.getMethod("getResource", String.class)
+										URL resourceUrl = bundle.getClass().getMethod("getResource", String.class)
 												.invoke(bundle, resourcePath) instanceof URL
-														? (URL) bundle.getClass()
-																.getMethod("getResource", String.class)
+														? (URL) bundle.getClass().getMethod("getResource", String.class)
 																.invoke(bundle, resourcePath)
 														: null;
 										if (resourceUrl != null) {
@@ -571,11 +567,11 @@ public class AntPathResourceLoader {
 				Object bundle = getBundleFromUrl(bundleUrl);
 				if (bundle != null) {
 					// 调用 bundle.findEntries(path, pattern, recurse)
-					java.lang.reflect.Method findEntriesMethod = bundleClass.getMethod(
-							"findEntries", String.class, String.class, boolean.class);
+					java.lang.reflect.Method findEntriesMethod = bundleClass.getMethod("findEntries", String.class,
+							String.class, boolean.class);
 					@SuppressWarnings("unchecked")
-					Enumeration<URL> entries = (Enumeration<URL>) findEntriesMethod.invoke(
-							bundle, basePath.startsWith("/") ? basePath.substring(1) : basePath, "*", true);
+					Enumeration<URL> entries = (Enumeration<URL>) findEntriesMethod.invoke(bundle,
+							basePath.startsWith("/") ? basePath.substring(1) : basePath, "*", true);
 
 					if (entries != null) {
 						while (entries.hasMoreElements()) {
@@ -632,7 +628,8 @@ public class AntPathResourceLoader {
 					if (matcher.find()) {
 						long bundleId = Long.parseLong(matcher.group(1));
 						// 调用 bundleContext.getBundle(bundleId)
-						java.lang.reflect.Method getBundleByIdMethod = bundleContextClass.getMethod("getBundle", long.class);
+						java.lang.reflect.Method getBundleByIdMethod = bundleContextClass.getMethod("getBundle",
+								long.class);
 						return getBundleByIdMethod.invoke(bundleContext, bundleId);
 					}
 
@@ -676,23 +673,6 @@ public class AntPathResourceLoader {
 	}
 
 	/**
-	 * 解码URL编码的路径，处理空白等特殊字符被转义的情况。
-	 * 
-	 * @param path 可能包含URL编码的路径
-	 * @return 解码后的路径
-	 */
-	private static String decodePath(String path) {
-		if (path == null || !path.contains("%"))
-			return path;
-
-		try {
-			return URLDecoder.decode(path, StandardCharsets.UTF_8.name());
-		} catch (Exception e) {
-			return path;
-		}
-	}
-
-	/**
 	 * 扫描文件系统绝对路径。
 	 * 
 	 * <p>
@@ -712,7 +692,7 @@ public class AntPathResourceLoader {
 		}
 
 		// 解码URL编码的路径（处理空白被转义的情况）
-		// path = decodePath(path.trim());
+		// path = FileUtil.decodePath(path.trim());
 
 		// 统一使用正斜杠处理
 		path = path.replace("\\", "/");
@@ -793,6 +773,14 @@ public class AntPathResourceLoader {
 				}
 				// 存在特殊字符，重新实例化文件
 				if (hasSpecChar) {
+					file = new File(fileResource);
+					if (file.exists()) {
+						return fileResource;
+					}
+				}
+				// 文件依旧不存在
+				if (fileResource.contains("%")) {
+					fileResource = FileUtil.decodePath(fileResource);
 					file = new File(fileResource);
 					if (file.exists()) {
 						return fileResource;

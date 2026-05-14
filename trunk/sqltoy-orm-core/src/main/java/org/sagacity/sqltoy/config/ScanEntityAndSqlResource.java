@@ -20,6 +20,7 @@ import java.util.jar.JarFile;
 import org.sagacity.sqltoy.config.annotation.Entity;
 import org.sagacity.sqltoy.config.annotation.SqlToyEntity;
 import org.sagacity.sqltoy.utils.CollectionUtil;
+import org.sagacity.sqltoy.utils.FileUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -334,14 +335,18 @@ public class ScanEntityAndSqlResource {
 
 	/**
 	 * @todo 获取资源的URL
-	 * @param resource
+	 * @param resourcePath
 	 * @return
 	 * @throws Exception
 	 */
-	public static Enumeration<URL> getResourceUrls(String resource) throws Exception {
+	public static Enumeration<URL> getResourceUrls(String resourcePath) throws Exception {
 		Enumeration<URL> urls = null;
-		if (null == resource) {
+		if (null == resourcePath) {
 			return urls;
+		}
+		String resource = resourcePath;
+		if (resource.startsWith("file:")) {
+			resource = resource.substring(5);
 		}
 		File file = new File(resource);
 		// 文件不存在,但存在%20 空格、%25 百分号的转义符号(适度兼容，路径中不要搞极端特殊的符号)
@@ -357,6 +362,10 @@ public class ScanEntityAndSqlResource {
 			// 存在特殊字符，重新实例化文件
 			if (hasSpecChar) {
 				file = new File(fileResource);
+			}
+			// 文件依旧不存在，用decode转特殊符号
+			if (!file.exists() && resource.contains("%")) {
+				file = new File(FileUtil.decodePath(resource));
 			}
 		}
 		if (file.exists()) {
