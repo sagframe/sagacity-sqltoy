@@ -76,6 +76,10 @@ public class SqlUtilsExt {
 				hasSetAutoCommit = true;
 			}
 			pst = conn.prepareStatement(updateSql);
+			// 设置全局statementTimeout，默认为null
+			if (SqlToyConstants.defaultStatementTimeout != null && SqlToyConstants.defaultStatementTimeout > 0) {
+				pst.setQueryTimeout(SqlToyConstants.defaultStatementTimeout);
+			}
 			int totalRows = rowDatas.size();
 			// 只有一条记录不采用批量
 			boolean useBatch = (totalRows > 1) ? true : false;

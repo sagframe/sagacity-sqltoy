@@ -403,14 +403,14 @@ public class SqlToyDaoSupport {
 			final Integer[] outParamsType, final Class resultType, final DataSource dataSource) {
 		SqlToyConfig sqlToyConfig = getSqlToyConfig(storeSqlOrKey, SqlType.search);
 		return dialectFactory.executeStore(sqlToyContext, sqlToyConfig, inParamsValue, outParamsType,
-				new Class[] { resultType }, false, getDataSource(dataSource, sqlToyConfig));
+				new Class[] { resultType }, false, null, getDataSource(dataSource, sqlToyConfig));
 	}
 
 	protected StoreResult executeMoreResultStore(final String storeSqlOrKey, final Object[] inParamsValue,
 			final Integer[] outParamsType, final Class[] resultTypes) {
 		SqlToyConfig sqlToyConfig = getSqlToyConfig(storeSqlOrKey, SqlType.search);
 		return dialectFactory.executeStore(sqlToyContext, sqlToyConfig, inParamsValue, outParamsType, resultTypes, true,
-				getDataSource(null, sqlToyConfig));
+				null, getDataSource(null, sqlToyConfig));
 	}
 
 	/**
@@ -622,7 +622,7 @@ public class SqlToyDaoSupport {
 	/**
 	 * @todo 解析sql中:named 属性到params对象获取对应的属性值作为查询条件,并将查询结果以params的class类型返回
 	 * @param sqlOrSqlId
-	 * @param params 查询参数对象（支持任意实现了Serializable的Bean，如VO、DTO、QueryParam等，对象的属性名将与SQL中的命名参数进行匹配）
+	 * @param params     查询参数对象（支持任意实现了Serializable的Bean，如VO、DTO、QueryParam等，对象的属性名将与SQL中的命名参数进行匹配）
 	 * @return
 	 */
 	protected <T extends Serializable> T loadBySql(final String sqlOrSqlId, final T params) {
@@ -680,7 +680,7 @@ public class SqlToyDaoSupport {
 	/**
 	 * @todo 解析sql中的参数名称，以此名称到params中提取对应的值作为查询条件值执行sql
 	 * @param sqlOrSqlId
-	 * @param params 查询参数对象（支持任意实现了Serializable的Bean，如VO、DTO、QueryParam等，对象的属性名将与SQL中的命名参数进行匹配）
+	 * @param params     查询参数对象（支持任意实现了Serializable的Bean，如VO、DTO、QueryParam等，对象的属性名将与SQL中的命名参数进行匹配）
 	 * @return
 	 */
 	protected Long executeSql(final String sqlOrSqlId, final Serializable params) {
@@ -783,7 +783,7 @@ public class SqlToyDaoSupport {
 	/**
 	 * @todo 以params对象的属性给sql中的:named 传参数，进行查询，并返回params的class类型的集合
 	 * @param sqlOrSqlId
-	 * @param params 查询参数对象（支持任意实现了Serializable的Bean，如VO、DTO、QueryParam等，对象的属性名将与SQL中的命名参数进行匹配）
+	 * @param params     查询参数对象（支持任意实现了Serializable的Bean，如VO、DTO、QueryParam等，对象的属性名将与SQL中的命名参数进行匹配）
 	 * @return
 	 */
 	protected <T extends Serializable> List<T> findBySql(final String sqlOrSqlId, final T params) {
@@ -2081,6 +2081,8 @@ public class SqlToyDaoSupport {
 					.resultType(resultType).dataSource(getDataSource(innerModel.dataSource))
 					.fetchSize(innerModel.fetchSize).maxRows(innerModel.maxRows);
 		}
+		// 查询超时时长
+		queryExecutor.getInnerModel().timeout = innerModel.timeout;
 		// 设置是否空白转null
 		queryExecutor.getInnerModel().blankToNull = innerModel.blankToNull;
 		// 为后续租户过滤提供判断依据(单表简单sql和对应的实体对象)

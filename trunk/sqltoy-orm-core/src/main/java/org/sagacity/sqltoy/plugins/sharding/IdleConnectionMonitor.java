@@ -10,6 +10,7 @@ import java.sql.SQLException;
 
 import javax.sql.DataSource;
 
+import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.integration.AppContext;
 import org.sagacity.sqltoy.integration.ConnectionFactory;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
@@ -76,6 +77,11 @@ public class IdleConnectionMonitor extends Thread {
 					if (((Integer) dataBase[1]).intValue() > 0 && null != dataSource) {
 						conn = connectionFactory.getConnection(dataSource);
 						pst = conn.prepareStatement(DataSourceUtils.getValidateQuery(conn));
+						// 设置全局statementTimeout，默认为null
+						if (SqlToyConstants.defaultStatementTimeout != null
+								&& SqlToyConstants.defaultStatementTimeout > 0) {
+							pst.setQueryTimeout(SqlToyConstants.defaultStatementTimeout);
+						}
 						rs = pst.executeQuery();
 						weights[i] = (Integer) dataBase[1];
 					} else {
