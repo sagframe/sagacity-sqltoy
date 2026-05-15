@@ -217,13 +217,13 @@ public class ScanEntityAndSqlResource {
 		String realRes;
 		Enumeration<URL> urls;
 		URL url;
-		File file;
 		boolean startClasspath = false;
 		if (StringUtil.isNotBlank(resourceDir) && !resourceDir.equalsIgnoreCase("none") && !resourceDir.equals("\'\'")
 				&& !resourceDir.equals("\"\"")) {
+			// 规范路径中的名称
+			resourceDir = clearIrregularChar(resourceDir);
 			// 统一全角半角，用逗号分隔
-			String[] dirSet = resourceDir.replaceAll("\\；", ",").replaceAll("\\，", ",").replaceAll("\\;", ",")
-					.split("\\,");
+			String[] dirSet = resourceDir.split("\\,");
 			JarFile jar;
 			Enumeration<JarEntry> entries;
 			JarEntry entry;
@@ -241,7 +241,7 @@ public class ScanEntityAndSqlResource {
 				}
 				// update 2025-11-19 增加路径重复判断
 				if (CollectionUtil.notContainsAdd(notRepeatDirs, realRes)) {
-					urls = startClasspath ? getClasspathResourceUrls(realRes) : getResourceUrls(realRes);
+					urls = getResourceUrls(realRes, startClasspath);
 					if (null != urls) {
 						while (urls.hasMoreElements()) {
 							url = urls.nextElement();
@@ -276,54 +276,83 @@ public class ScanEntityAndSqlResource {
 				}
 			}
 		}
+		// 扫描解析指定的完整路径的sql.xml文件
+		scanMappingResources(result, mappingResources);
+		return result;
+	}
+
+	/**
+	 * @todo 扫描解析指定的完整路径的sql.xml文件
+	 * @param result
+	 * @param mappingResources
+	 * @throws Exception
+	 */
+	private static void scanMappingResources(List result, List<String> mappingResources) throws Exception {
+		if (mappingResources == null || mappingResources.isEmpty()) {
+			return;
+		}
+		String realRes;
+		Enumeration<URL> urls;
 		// 具体的完整路径指定的.sql.xml文件
-		if (mappingResources != null && !mappingResources.isEmpty()) {
-			Set notRepeatResoures = new HashSet();
-			for (int i = 0; i < mappingResources.size(); i++) {
-				realRes = mappingResources.get(i).trim();
-				// 必须是以.sql.xml结尾的文件
-				if (realRes.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)) {
-					startClasspath = false;
-					if (realRes.toLowerCase().startsWith(CLASSPATH)) {
-						realRes = realRes.substring(10).trim();
-						if (realRes.startsWith("/")) {
-							realRes = realRes.substring(1);
-						}
-						startClasspath = true;
+		Set notRepeatResoures = new HashSet();
+		boolean startClasspath;
+		for (int i = 0; i < mappingResources.size(); i++) {
+			realRes = mappingResources.get(i).trim();
+			// 必须是以.sql.xml结尾的文件
+			if (realRes.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)) {
+				startClasspath = false;
+				if (realRes.toLowerCase().startsWith(CLASSPATH)) {
+					realRes = realRes.substring(10).trim();
+					if (realRes.startsWith("/")) {
+						realRes = realRes.substring(1);
 					}
-					// update 2025-11-19 增加路径重复判断
-					if (CollectionUtil.notContainsAdd(notRepeatResoures, realRes)) {
-						urls = startClasspath ? getClasspathResourceUrls(realRes) : getResourceUrls(realRes);
-						if (null != urls) {
-							while (urls.hasMoreElements()) {
-								url = urls.nextElement();
-								if (!realRes.isEmpty() && realRes.startsWith("/")) {
-									realRes = realRes.substring(1);
-								}
-								if (url.getProtocol().equals(JAR)) {
-									if (!result.contains(realRes)) {
-										// jar中的sql优先加载,从而确保直接放于classes目录下面的sql可以实现对之前的覆盖,便于项目增量发版管理
-										result.add(0, realRes);
-									}
-								} else if (url.getProtocol().equals(RESOURCE)) {
-									if (!result.contains(realRes)
-											&& realRes.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)) {
-										result.add(realRes);
-									}
-								} else {
-									file = new File(url.toURI());
-									if (file.getName().toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)
-											&& !result.contains(file)) {
-										result.add(file);
-									}
-								}
-							}
-						}
-					}
+					startClasspath = true;
+				}
+				// update 2025-11-19 增加路径重复判断
+				if (CollectionUtil.notContainsAdd(notRepeatResoures, realRes)) {
+					urls = getResourceUrls(realRes, startClasspath);
+					processMappingResourcesUrls(result, realRes, urls);
 				}
 			}
 		}
-		return result;
+	}
+
+	/**
+	 * 处理完整路径文件url的sql文件
+	 * 
+	 * @param result
+	 * @param realRes
+	 * @param urls
+	 * @throws Exception
+	 */
+	private static void processMappingResourcesUrls(List result, String realRes, Enumeration<URL> urls)
+			throws Exception {
+		if (urls == null) {
+			return;
+		}
+		URL url;
+		File file;
+		while (urls.hasMoreElements()) {
+			url = urls.nextElement();
+			if (!realRes.isEmpty() && realRes.startsWith("/")) {
+				realRes = realRes.substring(1);
+			}
+			if (url.getProtocol().equals(JAR)) {
+				if (!result.contains(realRes)) {
+					// jar中的sql优先加载,从而确保直接放于classes目录下面的sql可以实现对之前的覆盖,便于项目增量发版管理
+					result.add(0, realRes);
+				}
+			} else if (url.getProtocol().equals(RESOURCE)) {
+				if (!result.contains(realRes) && realRes.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)) {
+					result.add(realRes);
+				}
+			} else {
+				file = new File(url.toURI());
+				if (file.getName().toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX) && !result.contains(file)) {
+					result.add(file);
+				}
+			}
+		}
 	}
 
 	public static Enumeration<URL> getResourceUrls(String resource, boolean startClasspath) throws Exception {
@@ -381,6 +410,13 @@ public class ScanEntityAndSqlResource {
 		return urls;
 	}
 
+	/**
+	 * classpath:com/xxx/*.sql.xml
+	 * 
+	 * @param resource
+	 * @return
+	 * @throws Exception
+	 */
 	public static Enumeration<URL> getClasspathResourceUrls(String resource) throws Exception {
 		Enumeration<URL> urls = null;
 		if (null == resource) {
@@ -419,5 +455,18 @@ public class ScanEntityAndSqlResource {
 		else if (fileName.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)) {
 			fileList.add(parentFile);
 		}
+	}
+
+	/**
+	 * 替换全角字符,统一多路径分割符号为逗号
+	 * 
+	 * @param resourcesDir
+	 * @return
+	 */
+	private static String clearIrregularChar(String resourcesDir) {
+		if (resourcesDir == null || resourcesDir.isEmpty()) {
+			return resourcesDir;
+		}
+		return resourcesDir.replaceAll("\\；", ",").replaceAll("\\，", ",").replaceAll("\\;", ",");
 	}
 }
