@@ -178,11 +178,16 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	 * sql中是否包含@include(sqlId) sql片段嵌入
 	 */
 	private boolean hasIncludeSql = false;
-	
+
 	/**
 	 * xml最后修改时间
 	 */
 	private LocalDateTime lastUpdateTime;
+
+	/**
+	 * 查询超时时长(秒)
+	 */
+	private Integer queryTimeout;
 
 	/**
 	 * @return the hasUnion
@@ -771,5 +776,13 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 
 	public void setLastUpdateTime(LocalDateTime lastUpdateTime) {
 		this.lastUpdateTime = lastUpdateTime;
+	}
+
+	public Integer getQueryTimeout() {
+		return queryTimeout;
+	}
+
+	public void setQueryTimeout(Integer queryTimeout) {
+		this.queryTimeout = queryTimeout;
 	}
 }

@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.sagacity.sqltoy.SqlExecuteStat;
+import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
 import org.sagacity.sqltoy.callback.ReflectPropsHandler;
@@ -137,6 +138,10 @@ public class ClickHouseDialectUtils {
 			// pst = conn.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS);
 		} else {
 			pst = conn.prepareStatement(insertSql);
+		}
+		// 设置全局statementTimeout，默认为null
+		if (SqlToyConstants.defaultStatementTimeout != null && SqlToyConstants.defaultStatementTimeout > 0) {
+			pst.setQueryTimeout(SqlToyConstants.defaultStatementTimeout);
 		}
 		Object result = SqlUtil.preparedStatementProcess(null, pst, null, new PreparedStatementResultHandler() {
 			@Override
@@ -559,6 +564,10 @@ public class ClickHouseDialectUtils {
 				dialect);
 		String sql = "SELECT name COLUMN_NAME,comment COMMENTS,is_in_primary_key PRIMARY_KEY,is_in_partition_key PARTITION_KEY from system.columns t where t.table=?";
 		PreparedStatement pst = conn.prepareStatement(sql);
+		// 设置全局statementTimeout，默认为null
+		if (SqlToyConstants.defaultStatementTimeout != null && SqlToyConstants.defaultStatementTimeout > 0) {
+			pst.setQueryTimeout(SqlToyConstants.defaultStatementTimeout);
+		}
 		ResultSet rs = null;
 		// 通过preparedStatementProcess反调，第二个参数是pst
 		Map<String, ColumnMeta> colMap = (Map<String, ColumnMeta>) SqlUtil.preparedStatementProcess(null, pst, rs,
@@ -572,7 +581,7 @@ public class ClickHouseDialectUtils {
 							while (rs.next()) {
 								ColumnMeta colMeta = new ColumnMeta();
 								colMeta.setColName(rs.getString("COLUMN_NAME"));
-								colMeta.setComments(rs.getString("COMMENTS"));
+								colMeta.setComments(StringUtil.escapeComment(rs.getString("COMMENTS")));
 								colMeta.setPK("1".equals(rs.getString("PRIMARY_KEY")) ? true : false);
 								colMeta.setPartitionKey("1".equals(rs.getString("PARTITION_KEY")) ? true : false);
 								colComments.put(colMeta.getColName(), colMeta);

@@ -140,9 +140,10 @@ public class ImpalaDialect implements Dialect {
 	 */
 	@Override
 	public Long getCountBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramsValue, boolean isLastSql, final Connection conn, final Integer dbType, final String dialect)
-			throws Exception {
-		return DialectUtils.getCountBySql(sqlToyContext, sqlToyConfig, sql, paramsValue, isLastSql, conn, dbType);
+			Object[] paramsValue, boolean isLastSql, final QueryExecutorExtend extend, final Connection conn,
+			final Integer dbType, final String dialect) throws Exception {
+		return DialectUtils.getCountBySql(sqlToyContext, sqlToyConfig, sql, paramsValue, isLastSql, extend, conn,
+				dbType);
 	}
 
 	/*
@@ -361,9 +362,10 @@ public class ImpalaDialect implements Dialect {
 	@Override
 	public StoreResult executeStore(SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
 			final Object[] inParamsValue, final Integer[] outParamsType, final boolean moreResult,
-			final Connection conn, final Integer dbType, final String dialect, final int fetchSize) throws Exception {
+			final Connection conn, final Integer dbType, final String dialect, final int fetchSize,
+			final Integer timeout) throws Exception {
 		return DialectUtils.executeStore(sqlToyConfig, sqlToyContext, sql, inParamsValue, outParamsType, moreResult,
-				conn, dbType, fetchSize);
+				conn, dbType, fetchSize, timeout);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -374,6 +376,10 @@ public class ImpalaDialect implements Dialect {
 				dialect);
 		// 获取主键信息
 		PreparedStatement pst = conn.prepareStatement("DESCRIBE " + tableName);
+		// 设置全局statementTimeout，默认为null
+		if (SqlToyConstants.defaultStatementTimeout != null && SqlToyConstants.defaultStatementTimeout > 0) {
+			pst.setQueryTimeout(SqlToyConstants.defaultStatementTimeout);
+		}
 		ResultSet rs = pst.executeQuery();
 		Map<String, ColumnMeta> colMap = (Map<String, ColumnMeta>) SqlUtil.preparedStatementProcess(null, pst, rs,
 				new PreparedStatementResultHandler() {

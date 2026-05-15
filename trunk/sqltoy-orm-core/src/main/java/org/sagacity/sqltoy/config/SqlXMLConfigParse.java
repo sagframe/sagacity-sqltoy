@@ -352,6 +352,10 @@ public class SqlXMLConfigParse {
 		if (sqlElt.hasAttribute("debug")) {
 			sqlToyConfig.setShowSql(Boolean.valueOf(sqlElt.getAttribute("debug")));
 		}
+		// 查询超时时长(秒)
+		if (sqlElt.hasAttribute("query-timeout")) {
+			sqlToyConfig.setQueryTimeout(Integer.valueOf(sqlElt.getAttribute("query-timeout")));
+		}
 		sqlToyConfig.setId(id);
 		// 为sql提供特定数据库的扩展
 		if (sqlElt.hasAttribute("dataSource")) {
@@ -1351,7 +1355,7 @@ public class SqlXMLConfigParse {
 				String format = nf.hasAttribute("format") ? nf.getAttribute("format") : "capital";
 				String roundStr = nf.hasAttribute("roundingMode") ? nf.getAttribute("roundingMode").toUpperCase()
 						: null;
-				//update 2026-4-30 兼容新的参数名称
+				// update 2026-4-30 兼容新的参数名称
 				if (nf.hasAttribute("rounding-mode")) {
 					roundStr = nf.getAttribute("rounding-mode").toUpperCase();
 				}
@@ -1625,7 +1629,7 @@ public class SqlXMLConfigParse {
 	 */
 	private static InputStream getResourceAsStream(String resource) {
 		return Thread.currentThread().getContextClassLoader().getResourceAsStream(
-				(resource.length() > 0 && resource.charAt(0) == '/') ? resource.substring(1) : resource);
+				(!resource.isEmpty() && resource.startsWith("/")) ? resource.substring(1) : resource);
 	}
 
 	private static Integer[] trimParamsToInt(String[] paramNames) {

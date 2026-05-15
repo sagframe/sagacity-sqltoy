@@ -144,9 +144,10 @@ public class KingbaseDialect implements Dialect {
 	 */
 	@Override
 	public Long getCountBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramsValue, boolean isLastSql, final Connection conn, final Integer dbType, final String dialect)
-			throws Exception {
-		return DialectUtils.getCountBySql(sqlToyContext, sqlToyConfig, sql, paramsValue, isLastSql, conn, dbType);
+			Object[] paramsValue, boolean isLastSql, final QueryExecutorExtend extend, final Connection conn,
+			final Integer dbType, final String dialect) throws Exception {
+		return DialectUtils.getCountBySql(sqlToyContext, sqlToyConfig, sql, paramsValue, isLastSql, extend, conn,
+				dbType);
 	}
 
 	/*
@@ -419,9 +420,10 @@ public class KingbaseDialect implements Dialect {
 	@Override
 	public StoreResult executeStore(SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
 			final Object[] inParamsValue, final Integer[] outParamsType, final boolean moreResult,
-			final Connection conn, final Integer dbType, final String dialect, final int fetchSize) throws Exception {
+			final Connection conn, final Integer dbType, final String dialect, final int fetchSize,
+			final Integer timeout) throws Exception {
 		return DialectUtils.executeStore(sqlToyConfig, sqlToyContext, sql, inParamsValue, outParamsType, moreResult,
-				conn, dbType, fetchSize);
+				conn, dbType, fetchSize, timeout);
 	}
 
 	@Override
