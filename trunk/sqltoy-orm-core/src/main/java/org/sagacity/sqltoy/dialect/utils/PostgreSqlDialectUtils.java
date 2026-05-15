@@ -300,18 +300,28 @@ public class PostgreSqlDialectUtils {
 					WHERE
 					  c.relkind IN ('r', 'v', 'p')
 					  AND c.oid NOT IN (SELECT inhrelid FROM pg_inherits)
-					  AND c.relname NOT LIKE 'pg_%'
-					  AND n.nspname NOT LIKE 'pg_%'
-					  AND n.nspname = ANY (current_schemas(false))
 				""";
+		String realSchema = schema;
+		if (StringUtil.isBlank(realSchema)) {
+			realSchema = catalog;
+		}
+		if (StringUtil.isNotBlank(realSchema)) {
+			sql = sql.concat(" AND n.nspname='" + realSchema + "' ");
+		} else {
+			sql = sql.concat(" AND c.relname NOT LIKE 'pg_%' AND n.nspname NOT LIKE 'pg_%' ");
+		}
 		if (StringUtil.isNotBlank(tableName)) {
 			if (tableName.contains("%")) {
-				sql = sql.concat(" and c.relname like '" + tableName + "'");
+				sql = sql.concat(" AND c.relname like '" + tableName + "'");
 			} else {
-				sql = sql.concat(" and c.relname like '%" + tableName + "%'");
+				sql = sql.concat(" AND c.relname like '%" + tableName + "%'");
 			}
 		}
 		PreparedStatement pst = conn.prepareStatement(sql);
+		// 设置全局statementTimeout，默认为null
+		if (SqlToyConstants.defaultStatementTimeout != null && SqlToyConstants.defaultStatementTimeout > 0) {
+			pst.setQueryTimeout(SqlToyConstants.defaultStatementTimeout);
+		}
 		ResultSet rs = null;
 		// 通过preparedStatementProcess反调，第二个参数是pst
 		return (List<TableMeta>) SqlUtil.preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
@@ -324,7 +334,7 @@ public class PostgreSqlDialectUtils {
 						TableMeta tableMeta = new TableMeta();
 						tableMeta.setTableName(rs.getString("TABLE_NAME"));
 						tableMeta.setType(rs.getString("TABLE_TYPE"));
-						tableMeta.setRemarks(rs.getString("COMMENTS"));
+						tableMeta.setRemarks(StringUtil.escapeComment(rs.getString("COMMENTS")));
 						tables.add(tableMeta);
 					}
 					this.setResult(tables);

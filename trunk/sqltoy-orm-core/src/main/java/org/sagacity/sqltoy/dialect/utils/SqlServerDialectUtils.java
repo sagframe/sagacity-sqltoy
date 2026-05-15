@@ -753,6 +753,10 @@ public class SqlServerDialectUtils {
 		} else {
 			pst = conn.prepareStatement(realInsertSql);
 		}
+		// 设置全局statementTimeout，默认为null
+		if (SqlToyConstants.defaultStatementTimeout != null && SqlToyConstants.defaultStatementTimeout > 0) {
+			pst.setQueryTimeout(SqlToyConstants.defaultStatementTimeout);
+		}
 		Object result = SqlUtil.preparedStatementProcess(null, pst, null, new PreparedStatementResultHandler() {
 			@Override
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
@@ -959,8 +963,8 @@ public class SqlServerDialectUtils {
 		}
 		SqlExecuteStat.showSql("mssql批量保存", realSql, null);
 		return SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), realSql, realParams,
-				entityMeta.getFieldsTypeArray(true), entityMeta.getFieldsDefaultValue(true), entityMeta.getFieldsNullable(true),
-				sqlToyContext.getBatchSize(), autoCommit, conn, dbType);
+				entityMeta.getFieldsTypeArray(true), entityMeta.getFieldsDefaultValue(true),
+				entityMeta.getFieldsNullable(true), sqlToyContext.getBatchSize(), autoCommit, conn, dbType);
 	}
 
 	/**
@@ -1117,6 +1121,10 @@ public class SqlServerDialectUtils {
 			sql = sql.concat(" and d.name like ?");
 		}
 		PreparedStatement pst = conn.prepareStatement(sql);
+		// 设置全局statementTimeout，默认为null
+		if (SqlToyConstants.defaultStatementTimeout != null && SqlToyConstants.defaultStatementTimeout > 0) {
+			pst.setQueryTimeout(SqlToyConstants.defaultStatementTimeout);
+		}
 		ResultSet rs = null;
 		// 通过preparedStatementProcess反调，第二个参数是pst
 		return (List<TableMeta>) SqlUtil.preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
@@ -1141,7 +1149,7 @@ public class SqlServerDialectUtils {
 						} else {
 							tableMeta.setType("TABLE");
 						}
-						tableMeta.setRemarks(rs.getString("COMMENTS"));
+						tableMeta.setRemarks(StringUtil.escapeComment(rs.getString("COMMENTS")));
 						tables.add(tableMeta);
 					}
 					this.setResult(tables);
@@ -1171,6 +1179,10 @@ public class SqlServerDialectUtils {
 				+ "				 on a.id=g.major_id AND a.colid = g.minor_id   where d.name=? "
 				+ "   order by a.id,a.colorder";
 		PreparedStatement pst = conn.prepareStatement(sql);
+		// 设置全局statementTimeout，默认为null
+		if (SqlToyConstants.defaultStatementTimeout != null && SqlToyConstants.defaultStatementTimeout > 0) {
+			pst.setQueryTimeout(SqlToyConstants.defaultStatementTimeout);
+		}
 		ResultSet rs = null;
 		// 通过preparedStatementProcess反调，第二个参数是pst
 		Map<String, String> colMap = (Map<String, String>) SqlUtil.preparedStatementProcess(null, pst, rs,

@@ -16,6 +16,8 @@ import java.io.PrintWriter;
 import java.io.RandomAccessFile;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.util.ArrayList;
@@ -242,7 +244,7 @@ public class FileUtil {
 			if (StringUtil.indexOfIgnoreCase(realFile.trim(), "classpath:") == 0) {
 				realFile = realFile.trim().substring(10).trim();
 			}
-			if (realFile.length() > 0 && realFile.charAt(0) == '/') {
+			if (!realFile.isEmpty() && realFile.startsWith("/")) {
 				realFile = realFile.substring(1);
 			}
 			InputStream result = Thread.currentThread().getContextClassLoader().getResourceAsStream(realFile);
@@ -293,7 +295,7 @@ public class FileUtil {
 			if (StringUtil.indexOfIgnoreCase(realFile.trim(), "classpath:") == 0) {
 				realFile = realFile.trim().substring(10).trim();
 			}
-			if (realFile.length() > 0 && realFile.charAt(0) == '/') {
+			if (!realFile.isEmpty() && realFile.startsWith("/")) {
 				realFile = realFile.substring(1);
 			}
 			result = Thread.currentThread().getContextClassLoader().getResourceAsStream(realFile);
@@ -426,12 +428,20 @@ public class FileUtil {
 	 * @return
 	 */
 	public static boolean isRootPath(String path) {
-		// linux操作系统
-		if (System.getProperty("os.name").toUpperCase().indexOf("WINDOWS") == -1) {
-			if (path.indexOf("/") == 0) {
-				return true;
-			}
-		} else if (StringUtil.matches(path, "^[a-zA-Z]+:\\w*")) {
+		if (path == null || path.isBlank()) {
+			return false;
+		}
+		String trimmed = path.trim();
+		// 处理 file: 前缀
+		if (trimmed.startsWith("file:")) {
+			trimmed = trimmed.substring(5);
+		}
+		// Unix/Linux绝对路径
+		if (trimmed.startsWith("/")) {
+			return true;
+		}
+		// Windows绝对路径 (如 D:\ 或 D:/)
+		if (trimmed.length() >= 2 && Character.isLetter(trimmed.charAt(0)) && trimmed.charAt(1) == ':') {
 			return true;
 		}
 		return false;
@@ -778,20 +788,13 @@ public class FileUtil {
 		if (lowPath != null && isRootPath(lowPath)) {
 			return lowPath;
 		}
-		String firstPath = "";
-		String secondPath = "";
-		if (StringUtil.isNotBlank(topPath)) {
-			firstPath = topPath;
-		}
-		if (StringUtil.isNotBlank(lowPath)) {
-			secondPath = lowPath;
-		}
-		if ("".equals(firstPath.concat(secondPath).trim())) {
+		String firstPath = StringUtil.isBlank(topPath) ? "" : topPath;
+		String secondPath = StringUtil.isBlank(lowPath) ? "" : lowPath;
+		if (firstPath.isEmpty() && secondPath.isEmpty()) {
 			return "";
 		}
-		if (!"".equals(firstPath)) {
-			if ("/".equals(firstPath.substring(firstPath.length() - 1))
-					|| "\\".equals(firstPath.substring(firstPath.length() - 1))) {
+		if (!firstPath.isEmpty()) {
+			if (firstPath.endsWith("/") || firstPath.endsWith("\\")) {
 				firstPath = firstPath.substring(0, firstPath.length() - 1) + File.separator;
 			} else {
 				firstPath += File.separator;
@@ -799,8 +802,7 @@ public class FileUtil {
 		} else {
 			firstPath += File.separator;
 		}
-		if (!"".equals(secondPath)
-				&& ("/".equals(secondPath.substring(0, 1)) || "\\".equals(secondPath.substring(0, 1)))) {
+		if (!secondPath.isEmpty() && (secondPath.startsWith("/") || secondPath.startsWith("\\"))) {
 			secondPath = secondPath.substring(1);
 		}
 		return firstPath.concat(secondPath);
@@ -812,10 +814,10 @@ public class FileUtil {
 	 * @return
 	 */
 	public static String formatPath(String path) {
-		path = StringUtil.replaceAllStr(path, "\\\\", File.separator);
-		path = StringUtil.replaceAllStr(path, "\\", File.separator);
-		path = StringUtil.replaceAllStr(path, "/", File.separator);
-		return path;
+		if (path == null) {
+			return null;
+		}
+		return path.replaceAll("[\\\\/]+", "/").replace("/", File.separator);
 	}
 
 	/**
@@ -827,10 +829,11 @@ public class FileUtil {
 		if (fileName == null) {
 			return null;
 		}
+		String trimmed = fileName.trim();
 		File result = null;
-		if (fileName.trim().toLowerCase().startsWith("classpath:")) {
-			String realPath = fileName.trim().substring(10).trim();
-			if (realPath.length() > 0 && realPath.charAt(0) == '/') {
+		if (trimmed.toLowerCase().startsWith("classpath:")) {
+			String realPath = trimmed.substring(10).trim();
+			if (!realPath.isEmpty() && realPath.startsWith("/")) {
 				realPath = realPath.substring(1);
 			}
 			URL url = Thread.currentThread().getContextClassLoader().getResource(realPath);
@@ -838,11 +841,13 @@ public class FileUtil {
 				try {
 					result = new File(url.toURI());
 				} catch (URISyntaxException e) {
-					e.printStackTrace();
+					// 根据项目日志框架记录
 				}
 			}
+		} else if (trimmed.toLowerCase().startsWith("file:")) {
+			result = new File(trimmed.substring(5));
 		} else {
-			result = new File(fileName);
+			result = new File(trimmed);
 		}
 		return result;
 	}
@@ -986,5 +991,21 @@ public class FileUtil {
 			index = realFile.indexOf(pattern);
 		}
 		return linkPath(lastFile, realFile);
+	}
+
+	/**
+	 * 解码URL编码的路径，处理空白等特殊字符被转义的情况。
+	 * 
+	 * @param path 可能包含URL编码的路径
+	 * @return 解码后的路径
+	 */
+	public static String decodePath(String path) {
+		if (path == null || !path.contains("%"))
+			return path;
+		try {
+			return URLDecoder.decode(path, StandardCharsets.UTF_8.name());
+		} catch (Exception e) {
+			return path;
+		}
 	}
 }
