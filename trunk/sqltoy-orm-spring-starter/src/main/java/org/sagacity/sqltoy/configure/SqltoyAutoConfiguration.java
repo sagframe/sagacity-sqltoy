@@ -64,8 +64,6 @@ import com.alibaba.ttl.threadpool.TtlExecutors;
  * @modify {Date:2020-2-20,完善配置支持es等,实现完整功能}
  * @modify {Date:2024-8-10,修复项目文件路径存在空格等特殊符号场景下无法加载sql.xml文件的问题}
  */
-//@Configuration springboot2.x
-//@AutoConfiguration springboot3.x
 @AutoConfiguration
 @EnableConfigurationProperties(SqlToyContextProperties.class)
 public class SqltoyAutoConfiguration {
@@ -289,6 +287,10 @@ public class SqltoyAutoConfiguration {
 		if (properties.getDialectReturnPrimaryColumnCase() != null) {
 			sqlToyContext.setDialectReturnPrimaryColumnCase(
 					new IgnoreKeyCaseMap<>(properties.getDialectReturnPrimaryColumnCase()));
+		}
+		// 设置全局默认的statementTimeout
+		if (properties.getDefaultStatementTimeout() != null) {
+			sqlToyContext.setDefaultStatementTimeout(properties.getDefaultStatementTimeout());
 		}
 		// 设置公共统一属性的处理器
 		String unfiyHandler = properties.getUnifyFieldsHandler();
@@ -601,7 +603,7 @@ public class SqltoyAutoConfiguration {
 		lazyDao.setSqlToyContext(sqlToyContext);
 		return lazyDao;
 	}
-	
+
 	@Bean(name = "sqlToyDao")
 	@ConditionalOnMissingBean
 	public SqlToyDao sqlToyDao(SqlToyContext sqlToyContext) {

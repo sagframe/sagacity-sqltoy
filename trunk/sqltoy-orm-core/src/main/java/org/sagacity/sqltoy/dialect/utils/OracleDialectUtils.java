@@ -320,8 +320,12 @@ public class OracleDialectUtils {
 					if (timeout != null && timeout > 0) {
 						realTimeout = timeout;
 					}
+					// 设置全局statementTimeout，默认为null
 					if (realTimeout != null && realTimeout > 0) {
 						callStat.setQueryTimeout(realTimeout);
+					} else if (SqlToyConstants.defaultStatementTimeout != null
+							&& SqlToyConstants.defaultStatementTimeout > 0) {
+						callStat.setQueryTimeout(SqlToyConstants.defaultStatementTimeout);
 					}
 					SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, callStat, inParamValues, null,
 							0);
@@ -438,6 +442,10 @@ public class OracleDialectUtils {
 				dialect);
 		String sql = "SELECT COLUMN_NAME,COMMENTS FROM USER_COL_COMMENTS WHERE TABLE_NAME=?";
 		PreparedStatement pst = conn.prepareStatement(sql);
+		// 设置全局statementTimeout，默认为null
+		if (SqlToyConstants.defaultStatementTimeout != null && SqlToyConstants.defaultStatementTimeout > 0) {
+			pst.setQueryTimeout(SqlToyConstants.defaultStatementTimeout);
+		}
 		ResultSet rs = null;
 		// 通过preparedStatementProcess反调，第二个参数是pst
 		Map<String, String> colMap = (Map<String, String>) SqlUtil.preparedStatementProcess(null, pst, rs,
@@ -482,6 +490,10 @@ public class OracleDialectUtils {
 			sql = sql.concat(" where TABLE_NAME like ?");
 		}
 		PreparedStatement pst = conn.prepareStatement(sql);
+		// 设置全局statementTimeout，默认为null
+		if (SqlToyConstants.defaultStatementTimeout != null && SqlToyConstants.defaultStatementTimeout > 0) {
+			pst.setQueryTimeout(SqlToyConstants.defaultStatementTimeout);
+		}
 		ResultSet rs = null;
 		// 通过preparedStatementProcess反调，第二个参数是pst
 		return (List<TableMeta>) SqlUtil.preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {

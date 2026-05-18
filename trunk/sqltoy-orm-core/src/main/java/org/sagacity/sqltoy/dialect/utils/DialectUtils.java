@@ -274,6 +274,8 @@ public class DialectUtils {
 		// 设置查询超时(秒)
 		if (extend.timeout != null && extend.timeout > 0) {
 			pst.setQueryTimeout(extend.timeout);
+		} else if (SqlToyConstants.defaultStatementTimeout != null && SqlToyConstants.defaultStatementTimeout > 0) {
+			pst.setQueryTimeout(SqlToyConstants.defaultStatementTimeout);
 		}
 		ResultSet rs = null;
 		return (QueryResult) SqlUtil.preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
@@ -483,6 +485,8 @@ public class DialectUtils {
 		// 设置查询超时时长(秒)
 		if (extend.timeout != null && extend.timeout > 0) {
 			pst.setQueryTimeout(extend.timeout);
+		} else if (SqlToyConstants.defaultStatementTimeout != null && SqlToyConstants.defaultStatementTimeout > 0) {
+			pst.setQueryTimeout(SqlToyConstants.defaultStatementTimeout);
 		}
 		ResultSet rs = null;
 		return (Long) SqlUtil.preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
@@ -1745,6 +1749,10 @@ public class DialectUtils {
 		} else {
 			pst = conn.prepareStatement(realInsertSql);
 		}
+		// 设置全局statementTimeout，默认为null
+		if (SqlToyConstants.defaultStatementTimeout != null && SqlToyConstants.defaultStatementTimeout > 0) {
+			pst.setQueryTimeout(SqlToyConstants.defaultStatementTimeout);
+		}
 		Object result = SqlUtil.preparedStatementProcess(null, pst, null, new PreparedStatementResultHandler() {
 			@Override
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
@@ -2925,6 +2933,9 @@ public class DialectUtils {
 					}
 					if (realTimeout != null && realTimeout > 0) {
 						callStat.setQueryTimeout(realTimeout);
+					} else if (SqlToyConstants.defaultStatementTimeout != null
+							&& SqlToyConstants.defaultStatementTimeout > 0) {
+						callStat.setQueryTimeout(SqlToyConstants.defaultStatementTimeout);
 					}
 					boolean isFirstResult = StringUtil.matches(storeSql, STORE_PATTERN);
 					int addIndex = isFirstResult ? 1 : 0;

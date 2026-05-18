@@ -2382,6 +2382,12 @@ public class DialectFactory {
 								pst.setFetchSize(1000);
 							}
 							pst.setFetchDirection(ResultSet.FETCH_FORWARD);
+							if (extend.timeout != null && extend.timeout > 0) {
+								pst.setQueryTimeout(extend.timeout);
+							} else if (SqlToyConstants.defaultStatementTimeout != null
+									&& SqlToyConstants.defaultStatementTimeout > 0) {
+								pst.setQueryTimeout(SqlToyConstants.defaultStatementTimeout);
+							}
 							ResultSet rs = null;
 							SqlUtil.preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
 								@Override

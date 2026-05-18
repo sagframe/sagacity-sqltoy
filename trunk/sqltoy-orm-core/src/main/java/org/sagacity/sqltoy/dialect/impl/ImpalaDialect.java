@@ -376,6 +376,10 @@ public class ImpalaDialect implements Dialect {
 				dialect);
 		// 获取主键信息
 		PreparedStatement pst = conn.prepareStatement("DESCRIBE " + tableName);
+		// 设置全局statementTimeout，默认为null
+		if (SqlToyConstants.defaultStatementTimeout != null && SqlToyConstants.defaultStatementTimeout > 0) {
+			pst.setQueryTimeout(SqlToyConstants.defaultStatementTimeout);
+		}
 		ResultSet rs = pst.executeQuery();
 		Map<String, ColumnMeta> colMap = (Map<String, ColumnMeta>) SqlUtil.preparedStatementProcess(null, pst, rs,
 				new PreparedStatementResultHandler() {
