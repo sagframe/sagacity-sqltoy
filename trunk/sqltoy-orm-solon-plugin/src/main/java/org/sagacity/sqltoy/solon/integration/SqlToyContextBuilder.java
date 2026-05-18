@@ -293,6 +293,10 @@ public class SqlToyContextBuilder {
 			sqlToyContext.setDialectReturnPrimaryColumnCase(
 					new IgnoreKeyCaseMap<>(properties.getDialectReturnPrimaryColumnCase()));
 		}
+		// 设置全局默认的statementTimeout
+		if (properties.getDefaultStatementTimeout() != null) {
+			sqlToyContext.setDefaultStatementTimeout(properties.getDefaultStatementTimeout());
+		}
 		// 设置公共统一属性的处理器
 		String unfiyHandler = properties.getUnifyFieldsHandler();
 		if (StringUtil.isNotBlank(unfiyHandler)) {
