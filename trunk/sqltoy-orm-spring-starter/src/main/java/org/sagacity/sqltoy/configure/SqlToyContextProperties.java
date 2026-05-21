@@ -297,6 +297,11 @@ public class SqlToyContextProperties implements Serializable {
 	 * 动态捕获缓存的缓存管理器，框架提供了默认实现
 	 */
 	private String dynamicFecthCacheManager;
+	
+	/**
+	 * 默认查询超时时长(秒)
+	 */
+	private Integer defaultStatementTimeout; 
 
 	/**
 	 * @return the sqlResourcesDir
@@ -845,4 +850,13 @@ public class SqlToyContextProperties implements Serializable {
 	public void setDynamicFecthCacheManager(String dynamicFecthCacheManager) {
 		this.dynamicFecthCacheManager = dynamicFecthCacheManager;
 	}
+
+	public Integer getDefaultStatementTimeout() {
+		return defaultStatementTimeout;
+	}
+
+	public void setDefaultStatementTimeout(Integer defaultStatementTimeout) {
+		this.defaultStatementTimeout = defaultStatementTimeout;
+	}
+	
 }

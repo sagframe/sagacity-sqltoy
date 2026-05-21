@@ -79,8 +79,10 @@ public class TDengineDialect extends DefaultDialect {
 
 	@Override
 	public Long getCountBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql, Object[] paramsValue,
-			boolean isLastSql, Connection conn, Integer dbType, String dialect) throws Exception {
-		return super.getCountBySql(sqlToyContext, sqlToyConfig, sql, paramsValue, isLastSql, conn, dbType, dialect);
+			boolean isLastSql, final QueryExecutorExtend extend, Connection conn, Integer dbType, String dialect)
+			throws Exception {
+		return super.getCountBySql(sqlToyContext, sqlToyConfig, sql, paramsValue, isLastSql, extend, conn, dbType,
+				dialect);
 	}
 
 	@Override
@@ -185,7 +187,7 @@ public class TDengineDialect extends DefaultDialect {
 	@Override
 	public StoreResult executeStore(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] inParamsValue, Integer[] outParamsType, final boolean moreResult, Connection conn, Integer dbType,
-			String dialect, int fetchSize) throws Exception {
+			String dialect, int fetchSize, final Integer timeout) throws Exception {
 		// 不支持
 		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
 	}

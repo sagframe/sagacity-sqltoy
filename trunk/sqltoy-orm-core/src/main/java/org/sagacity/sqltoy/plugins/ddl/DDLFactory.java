@@ -97,7 +97,7 @@ public class DDLFactory {
 	 * @param saveFile
 	 * @param upperOrLower        upper|lower
 	 * @param dbType
-	 * @param schema
+	 * @param schema              针对sqlserver一般需要提供
 	 * @param dialectDDLGenerator 自己指定ddl创建器
 	 * @throws Exception
 	 */

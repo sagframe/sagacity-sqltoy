@@ -1117,6 +1117,10 @@ public class SqlUtil {
 		try {
 			SqlExecuteStat.showSql("获取sequence下一个值", sql, null);
 			pst = conn.prepareStatement(sql);
+			// 设置全局statementTimeout，默认为null
+			if (SqlToyConstants.defaultStatementTimeout != null && SqlToyConstants.defaultStatementTimeout > 0) {
+				pst.setQueryTimeout(SqlToyConstants.defaultStatementTimeout);
+			}
 			rs = pst.executeQuery();
 			while (rs.next()) {
 				id = rs.getObject(1);
@@ -1175,6 +1179,10 @@ public class SqlUtil {
 		}
 		if (maxRows > 0) {
 			pst.setMaxRows(maxRows);
+		}
+		// 设置全局statementTimeout，默认为null
+		if (SqlToyConstants.defaultStatementTimeout != null && SqlToyConstants.defaultStatementTimeout > 0) {
+			pst.setQueryTimeout(SqlToyConstants.defaultStatementTimeout);
 		}
 		List result = (List) preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
 			@Override
@@ -1352,6 +1360,10 @@ public class SqlUtil {
 				hasSetAutoCommit = true;
 			}
 			pst = conn.prepareStatement(updateSql);
+			// 设置全局statementTimeout，默认为null
+			if (SqlToyConstants.defaultStatementTimeout != null && SqlToyConstants.defaultStatementTimeout > 0) {
+				pst.setQueryTimeout(SqlToyConstants.defaultStatementTimeout);
+			}
 			int totalRows = rowDatas.size();
 			boolean useBatch = (totalRows > 1) ? true : false;
 			Object rowData;
@@ -1823,6 +1835,10 @@ public class SqlUtil {
 			}
 		}
 		PreparedStatement pst = conn.prepareStatement(realSql);
+		// 设置全局statementTimeout，默认为null
+		if (SqlToyConstants.defaultStatementTimeout != null && SqlToyConstants.defaultStatementTimeout > 0) {
+			pst.setQueryTimeout(SqlToyConstants.defaultStatementTimeout);
+		}
 		Object result = preparedStatementProcess(null, pst, null, new PreparedStatementResultHandler() {
 			@Override
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
@@ -1861,6 +1877,10 @@ public class SqlUtil {
 		}
 		PreparedStatement pst = conn.prepareStatement(realSql,
 				new String[] { DataSourceUtils.getReturnPrimaryKeyColumn(primaryField, dbType) });
+		// 设置全局statementTimeout，默认为null
+		if (SqlToyConstants.defaultStatementTimeout != null && SqlToyConstants.defaultStatementTimeout > 0) {
+			pst.setQueryTimeout(SqlToyConstants.defaultStatementTimeout);
+		}
 		Object result = preparedStatementProcess(null, pst, null, new PreparedStatementResultHandler() {
 			@Override
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {

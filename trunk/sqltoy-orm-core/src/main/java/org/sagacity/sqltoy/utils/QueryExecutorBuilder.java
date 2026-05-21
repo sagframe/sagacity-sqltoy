@@ -52,6 +52,13 @@ public class QueryExecutorBuilder {
 	 */
 	public static void initQueryExecutor(SqlToyContext sqlToyContext, QueryExecutorExtend extend,
 			SqlToyConfig sqlToyConfig, boolean wrapNamedArgs, boolean filterAuthData) {
+		// sql xml中特别设置了超时时长,但代码QueryExecutor设置优先
+		if (sqlToyConfig.getQueryTimeout() != null && sqlToyConfig.getQueryTimeout() > 0) {
+			// QueryExecutor 中timeout为null则启用sql xml文件中的设置
+			if (extend.timeout == null || extend.timeout <= 0) {
+				extend.timeout = sqlToyConfig.getQueryTimeout();
+			}
+		}
 		// 在分页场景下，sql以?模式传参，因分页后续要构造startIndex和endIndex参数，需将?模式全部转成:paramName模式
 		if (wrapParamNames(extend, sqlToyConfig, wrapNamedArgs)) {
 			return;

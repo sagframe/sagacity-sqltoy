@@ -285,7 +285,7 @@ public class PostgreSqlDialectUtils {
 			Integer dbType, String dialect) throws Exception {
 		// v10 支持 AND c.relispartition = false
 		// <v10 用 AND c.oid NOT IN (SELECT inhrelid FROM pg_inherits)
-		StringBuilder sql =new StringBuilder();
+		StringBuilder sql = new StringBuilder();
 		sql.append("SELECT ");
 		sql.append("	  c.relname AS TABLE_NAME,");
 		sql.append("	  CASE c.relkind ");
@@ -311,6 +311,10 @@ public class PostgreSqlDialectUtils {
 			}
 		}
 		PreparedStatement pst = conn.prepareStatement(sql.toString());
+		// 设置全局statementTimeout，默认为null
+		if (SqlToyConstants.defaultStatementTimeout != null && SqlToyConstants.defaultStatementTimeout > 0) {
+			pst.setQueryTimeout(SqlToyConstants.defaultStatementTimeout);
+		}
 		ResultSet rs = null;
 		// 通过preparedStatementProcess反调，第二个参数是pst
 		return (List<TableMeta>) SqlUtil.preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {

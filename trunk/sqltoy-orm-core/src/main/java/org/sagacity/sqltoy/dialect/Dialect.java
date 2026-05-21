@@ -140,8 +140,8 @@ public interface Dialect {
 	 * @throws Exception
 	 */
 	public Long getCountBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
-			final Object[] paramsValue, final boolean isLastSql, final Connection conn, final Integer dbType,
-			final String dialect) throws Exception;
+			final Object[] paramsValue, final boolean isLastSql, final QueryExecutorExtend extend,
+			final Connection conn, final Integer dbType, final String dialect) throws Exception;
 
 	/**
 	 * @todo 获取单个对象
@@ -395,7 +395,8 @@ public interface Dialect {
 	 */
 	public StoreResult executeStore(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
 			final String sql, final Object[] inParamsValue, final Integer[] outParamsType, final boolean moreResult,
-			final Connection conn, final Integer dbType, final String dialect, final int fetchSize) throws Exception;
+			final Connection conn, final Integer dbType, final String dialect, final int fetchSize,
+			final Integer timeout) throws Exception;
 
 	/**
 	 * @TODO 获得表的字段信息

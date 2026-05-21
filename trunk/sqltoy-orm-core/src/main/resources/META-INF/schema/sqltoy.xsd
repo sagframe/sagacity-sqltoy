@@ -521,6 +521,11 @@
 				<xsd:documentation><![CDATA[是否输出sql执行日志]]></xsd:documentation>
 			</xsd:annotation>
 		</xsd:attribute>
+		<xsd:attribute name="query-timeout" type="xsd:integer">
+			<xsd:annotation>
+				<xsd:documentation><![CDATA[查询超时时长,单位秒]]></xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
 		<xsd:attribute name="dataSource" type="xsd:string">
 			<xsd:annotation>
 				<xsd:documentation><![CDATA[在sql上指定数据源名称,供特殊场景下使用]]></xsd:documentation>

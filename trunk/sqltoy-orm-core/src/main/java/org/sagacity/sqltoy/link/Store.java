@@ -49,6 +49,11 @@ public class Store extends BaseLink {
 	private String sql;
 
 	/**
+	 * 查询超时时长(秒)
+	 */
+	private Integer timeout;
+
+	/**
 	 * @param sqlToyContext
 	 * @param dataSource
 	 */
@@ -108,6 +113,11 @@ public class Store extends BaseLink {
 		return this;
 	}
 
+	public Store timeout(Integer timeout) {
+		this.timeout = timeout;
+		return this;
+	}
+
 	/**
 	 * @return
 	 */
@@ -117,6 +127,6 @@ public class Store extends BaseLink {
 		}
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql, SqlType.search, "", null);
 		return dialectFactory.executeStore(sqlToyContext, sqlToyConfig, inParamsValue, outParamsType, resultTypes,
-				(moreResult == null) ? false : moreResult.booleanValue(), getDataSource(sqlToyConfig));
+				(moreResult == null) ? false : moreResult.booleanValue(), timeout, getDataSource(sqlToyConfig));
 	}
 }

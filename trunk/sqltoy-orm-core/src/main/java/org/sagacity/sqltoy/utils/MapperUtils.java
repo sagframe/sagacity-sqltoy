@@ -41,7 +41,7 @@ public class MapperUtils {
 	/**
 	 * 利用缓存来提升匹配效率
 	 */
-	private static Map<String, DTOEntityMapModel> dtoEntityMapperCache = new HashMap<String, DTOEntityMapModel>();
+	private static ConcurrentHashMap<String, DTOEntityMapModel> dtoEntityMapperCache = new ConcurrentHashMap<String, DTOEntityMapModel>();
 
 	private static ConcurrentHashMap<String, HashMap<String, String>> classHasAliasMap = new ConcurrentHashMap<>();
 

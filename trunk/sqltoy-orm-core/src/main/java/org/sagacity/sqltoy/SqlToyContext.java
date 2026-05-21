@@ -442,6 +442,11 @@ public class SqlToyContext {
 	private Integer distributeIdCacheExpireDays;
 
 	/**
+	 * 默认查询超时时长(秒)
+	 */
+	private Integer defaultStatementTimeout;
+
+	/**
 	 * @todo 初始化
 	 * @throws Exception
 	 */
@@ -511,6 +516,7 @@ public class SqlToyContext {
 		SqlToyConstants.DEFAULT_PAGE_SIZE = this.defaultPageSize;
 		SqlToyConstants.localDateTimeFormat = this.localDateTimeFormat;
 		SqlToyConstants.localTimeFormat = this.localTimeFormat;
+		SqlToyConstants.defaultStatementTimeout = this.defaultStatementTimeout;
 		// 初始化sql执行统计的基本参数
 		SqlExecuteStat.setDebug(this.debug);
 		SqlExecuteStat.setOverTimeSqlHandler(overTimeSqlHandler);
@@ -1465,4 +1471,7 @@ public class SqlToyContext {
 		this.dynamicFecthCacheManager = dynamicFecthCacheManager;
 	}
 
+	public void setDefaultStatementTimeout(Integer defaultStatementTimeout) {
+		this.defaultStatementTimeout = defaultStatementTimeout;
+	}
 }

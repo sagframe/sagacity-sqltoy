@@ -470,7 +470,7 @@ public class StringUtil {
 	}
 
 	/**
-	 * @todo 剔除字符串中对称符号和中间的内容
+	 * @todo 剔除字符串中对称符号和中间的内容,便于判断剩余部分内容是否有动态参数,减少干扰
 	 * @param sql
 	 * @param startMark
 	 * @param endMark
@@ -860,7 +860,7 @@ public class StringUtil {
 	 * @todo 将字符串转换成驼峰形式
 	 * @param source
 	 * @param firstIsUpperCase
-	 * @param removeDealine
+	 * @param removeDealine    是否移除下划线
 	 * @return
 	 */
 	public static String toHumpStr(String source, boolean firstIsUpperCase, boolean removeDealine) {
@@ -916,8 +916,9 @@ public class StringUtil {
 	 * @return
 	 */
 	public static boolean hasChinese(String str) {
-		if (str == null)
+		if (str == null) {
 			return false;
+		}
 		return chinaPattern.matcher(str).find();
 	}
 
@@ -974,13 +975,13 @@ public class StringUtil {
 	}
 
 	/**
-	 * @todo 填充args参数
+	 * @todo 填充args参数,将字符串中的${}按位置顺序填入具体参数值
 	 * @param template
 	 * @param args
 	 * @return
 	 */
 	public static String fillArgs(String template, Object... args) {
-		if (template == null || (args == null || args.length == 0)) {
+		if (template == null || args == null || args.length == 0) {
 			return template;
 		}
 		for (Object arg : args) {
@@ -997,10 +998,12 @@ public class StringUtil {
 	 * @param target
 	 * @return
 	 */
+	@Deprecated
 	public static String replaceAllStr(String source, String template, String target) {
 		return replaceAllStr(source, template, target, 0);
 	}
 
+	@Deprecated
 	public static String replaceAllStr(String source, String template, String target, int fromIndex) {
 		if (source == null || template.equals(target)) {
 			return source;
@@ -1016,6 +1019,7 @@ public class StringUtil {
 		return source;
 	}
 
+	@Deprecated
 	public static String replaceAllStr(String source, String template, String target, int fromIndex, int endIndex) {
 		if (source == null || template.equals(target) || endIndex <= fromIndex) {
 			return source;
