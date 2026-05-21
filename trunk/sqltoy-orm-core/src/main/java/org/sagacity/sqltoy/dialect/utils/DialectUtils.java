@@ -272,7 +272,7 @@ public class DialectUtils {
 			pst = conn.prepareStatement(lastSql);
 		}
 		// 设置查询超时(秒)
-		if (extend.timeout != null && extend.timeout > 0) {
+		if (extend != null && extend.timeout != null && extend.timeout > 0) {
 			pst.setQueryTimeout(extend.timeout);
 		} else if (SqlToyConstants.defaultStatementTimeout != null && SqlToyConstants.defaultStatementTimeout > 0) {
 			pst.setQueryTimeout(SqlToyConstants.defaultStatementTimeout);
@@ -483,7 +483,7 @@ public class DialectUtils {
 		SqlExecuteStat.showSql("执行count查询", lastCountSql, realParams);
 		PreparedStatement pst = conn.prepareStatement(lastCountSql);
 		// 设置查询超时时长(秒)
-		if (extend.timeout != null && extend.timeout > 0) {
+		if (extend != null && extend.timeout != null && extend.timeout > 0) {
 			pst.setQueryTimeout(extend.timeout);
 		} else if (SqlToyConstants.defaultStatementTimeout != null && SqlToyConstants.defaultStatementTimeout > 0) {
 			pst.setQueryTimeout(SqlToyConstants.defaultStatementTimeout);
