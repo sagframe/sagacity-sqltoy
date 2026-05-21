@@ -284,6 +284,7 @@ public class SqlConfigParseUtils {
 				for (int i = 0; i < paramsNamed.length; i++) {
 					keyValues.put(paramsNamed[i], paramsValue[i]);
 				}
+				// 优先处理sql中的循环
 				sql = processLoop(sql, keyValues);
 				if (keyValues.size() > paramsNamed.length) {
 					paramsNamed = new String[keyValues.size()];

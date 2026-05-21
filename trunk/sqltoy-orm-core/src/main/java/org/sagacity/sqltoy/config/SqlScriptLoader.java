@@ -2,6 +2,7 @@ package org.sagacity.sqltoy.config;
 
 import static java.lang.System.out;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -79,6 +80,11 @@ public class SqlScriptLoader {
 	private List realSqlList;
 
 	/**
+	 * File类型的sql,用数组单独存放用于变更检查
+	 */
+	private List<File> checkModifyFileTypeSqlList = new ArrayList<File>();
+
+	/**
 	 * 是否初始化过
 	 */
 	private boolean initialized = false;
@@ -118,17 +124,8 @@ public class SqlScriptLoader {
 		if (SQLRESOURCESDIRTOLIST) {
 			return;
 		}
-		if (StringUtil.isNotBlank(sqlResourcesDir)
-				&& (sqlResourcesDir.toLowerCase().contains(".sql.xml") || sqlResourcesDir.contains("*"))) {
-			throw new IllegalArgumentException("\n您的配置:spring.sqltoy.sqlResourcesDir=" + sqlResourcesDir + " 不正确!\n"
-					+ "/*----正确格式只接受单个或逗号分隔的多个路径模式且不能有*和**以及*.sql.xml等配符(会自动递归往下钻取!)----*/\n"
-					+ "/*- 1、单路径模式:spring.sqltoy.sqlResourcesDir=classpath:com/sagacity/crm\n"
-					+ "/*- 2、多路径模式:spring.sqltoy.sqlResourcesDir=classpath:com/sagacity/crm,classpath:com/sagacity/hr\n"
-					+ "/*- 3、绝对路径模式:spring.sqltoy.sqlResourcesDir=/home/web/project/sql\n"
-					+ "/*-----------错误范例(请看仔细:不能有*、**和*.sql.xml)----------------------*/\n"
-					+ "/*-1、classpath:*/com/yourproject/yourpackage/**/*.sql.xml\n"
-					+ "/*-2、classpath*:/com/yourproject/yourpackage/**/**.sql.xml\n"
-					+ "/*-----------------------------------------------------------------------*/");
+		if (StringUtil.isBlank(sqlResourcesDir)) {
+			logger.warn("\n您的配置:spring.sqltoy.sqlResourcesDir=" + sqlResourcesDir + " 不正确,不能为空!\n");
 		}
 	}
 
@@ -156,7 +153,7 @@ public class SqlScriptLoader {
 		boolean enabledDebug = logger.isDebugEnabled();
 		try {
 			// 检索所有匹配的sql.xml文件
-			realSqlList = ScanEntityAndSqlResource.getSqlResources(SQLRESOURCESDIRTOLIST ? null : sqlResourcesDir,
+			realSqlList = SqlResourceScanner.getSqlResources(SQLRESOURCESDIRTOLIST ? null : sqlResourcesDir,
 					sqlResources);
 			if (realSqlList != null && !realSqlList.isEmpty()) {
 				// 此处提供大量提示信息,避免开发者配置错误或未将资源文件编译到bin或classes下
@@ -168,9 +165,14 @@ public class SqlScriptLoader {
 					out.println("如果.sql.xml文件不在下列清单中,很可能是文件没有在编译路径下(bin、classes等),请仔细检查!");
 				}
 				List<String> repeatSql = new ArrayList<String>();
+				Object sqlFile;
 				for (int i = 0; i < realSqlList.size(); i++) {
-					repeatSql.addAll(SqlXMLConfigParse.parseSingleFile(realSqlList.get(i), filesLastModifyMap, sqlCache,
-							encoding, dialect, false, i));
+					sqlFile = realSqlList.get(i);
+					if (sqlFile != null && sqlFile instanceof File) {
+						checkModifyFileTypeSqlList.add((File) sqlFile);
+					}
+					repeatSql.addAll(SqlXMLConfigParse.parseSingleFile(sqlFile, filesLastModifyMap, sqlCache, encoding,
+							dialect, false, i));
 				}
 				int repeatSqlSize = repeatSql.size();
 				if (repeatSqlSize > 0) {
@@ -206,8 +208,8 @@ public class SqlScriptLoader {
 			logger.error("加载和解析以sql.xml结尾的文件过程发生异常!" + e.getMessage(), e);
 			throw e;
 		}
-		// 存在sql文件，启动文件变更检测便于重新加载sql
-		if (realSqlList != null && !realSqlList.isEmpty()) {
+		// 针对开发环境存在File类型的sql文件，启动文件变更检测便于重新加载sql
+		if (!checkModifyFileTypeSqlList.isEmpty()) {
 			int sleepSeconds = 0;
 			if (scriptCheckIntervalSeconds == null) {
 				// debug模式下,sql文件每隔2秒检测
@@ -229,8 +231,8 @@ public class SqlScriptLoader {
 					out.println("已经开启sql文件变更检测，会自动间隔:" + sleepSeconds
 							+ "秒检测一次,发生变更会自动重新载入(spring.sqltoy.scriptCheckIntervalSeconds=-1可关闭自动检测)!");
 				}
-				watcher = new SqlFileModifyWatcher(sqlCache, filesLastModifyMap, realSqlList, dialect, encoding,
-						delayCheckSeconds, sleepSeconds);
+				watcher = new SqlFileModifyWatcher(sqlCache, filesLastModifyMap, checkModifyFileTypeSqlList, dialect,
+						encoding, delayCheckSeconds, sleepSeconds);
 				watcher.start();
 			} else {
 				logger.warn("sql文件更新检测:sleepSeconds={} 小于1秒或大于24小时，表示关闭sql文件变更检测!", sleepSeconds);

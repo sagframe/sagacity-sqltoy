@@ -223,7 +223,12 @@ public class EntityManager {
 		// 扫描并获取包以及包下层包中的sqltoy entity对象
 		if (packagesToScan != null && packagesToScan.length > 0) {
 			for (String pkg : this.packagesToScan) {
-				entities.addAll(ScanEntityAndSqlResource.getPackageEntities(pkg.trim(), recursive, "UTF-8"));
+				List entitys = EntityScanner.scanEntityClasses(pkg.trim(), recursive, "UTF-8");
+				if (entitys != null && !entitys.isEmpty()) {
+					entities.addAll(entitys);
+				} else {
+					logger.warn("sqltoy扫描加载POJO路径:{} 未匹配到含@Entity或@SqlToyEntity注解的实体类!", pkg);
+				}
 			}
 		}
 		// 加载直接指定的sqltoy entity对象
@@ -232,7 +237,7 @@ public class EntityManager {
 			for (String annotationClass : annotatedClasses) {
 				try {
 					entityClass = Thread.currentThread().getContextClassLoader().loadClass(annotationClass);
-					if (ScanEntityAndSqlResource.isSqlToyEntity(entityClass)) {
+					if (EntityScanner.isSqlToyEntity(entityClass)) {
 						entities.add(entityClass);
 					}
 				} catch (ClassNotFoundException e) {
@@ -650,7 +655,7 @@ public class EntityManager {
 		// 空白场景处理
 		String defaultValue = StringUtil.isBlank(column.defaultValue()) ? SqlToyConstants.DEFAULT_NULL
 				: column.defaultValue().trim();
-		//清理defaultValue的一些不符合最终使用的字符，如(x)、((x))、x::text等
+		// 清理defaultValue的一些不符合最终使用的字符，如(x)、((x))、x::text等
 		defaultValue = SqlUtil.clearDefaultValue(defaultValue);
 		// 字段的详细配置信息,字段名称，字段对应数据库表字段，字段默认值，字段类型
 		FieldMeta fieldMeta = new FieldMeta(field.getName(), column.name(),

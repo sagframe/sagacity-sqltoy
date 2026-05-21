@@ -18,12 +18,17 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.PathMatcher;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,6 +45,7 @@ public class FileUtil {
 	 * 定义全局日志
 	 */
 	private final static Logger logger = LoggerFactory.getLogger(FileUtil.class);
+	private static final boolean IS_WINDOWS = System.getProperty("os.name").toLowerCase().contains("win");
 
 	private FileUtil() {
 	}
@@ -858,6 +864,9 @@ public class FileUtil {
 	 * @return
 	 */
 	public static boolean isPackage(String file) {
+		if (file.trim().startsWith("classpath*:")) {
+			return true;
+		}
 		if (file.trim().startsWith("classpath:")) {
 			return true;
 		}
@@ -1000,12 +1009,49 @@ public class FileUtil {
 	 * @return 解码后的路径
 	 */
 	public static String decodePath(String path) {
-		if (path == null || !path.contains("%"))
+		if (path == null || path.isEmpty()) {
 			return path;
+		}
 		try {
 			return URLDecoder.decode(path, StandardCharsets.UTF_8.name());
 		} catch (Exception e) {
 			return path;
 		}
+	}
+
+	/**
+	 * 用 Files.walk + Ant Path 匹配文件
+	 * 
+	 * @param root       根目录
+	 * @param antPattern Ant 表达式（如 ** /*.java）
+	 * @return 匹配到的文件列表
+	 */
+	public static List<Path> matchAntPath(Path root, String antPattern) throws Exception {
+		PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:" + antPattern);
+		return Files.walk(root).filter(Files::isRegularFile).filter(matcher::matches).collect(Collectors.toList());
+	}
+
+	public static String getJarPath(URL jarUrl) throws Exception {
+		// 直接获取路径，不经过 URI，# 不会被截断！
+		String path = jarUrl.getPath();
+		// 先解码！顺序绝对不能错
+		path = URLDecoder.decode(path, StandardCharsets.UTF_8.name());
+		// 去掉 file: 前缀
+		if (path.startsWith("file:")) {
+			path = path.substring(5);
+		}
+
+		// 截取 ! 之前的路径
+		int markIdx = path.indexOf("!");
+		if (markIdx > -1) {
+			path = path.substring(0, markIdx);
+		}
+
+		// Windows 路径处理
+		if (IS_WINDOWS && path.startsWith("/")) {
+			path = path.substring(1);
+		}
+
+		return path;
 	}
 }

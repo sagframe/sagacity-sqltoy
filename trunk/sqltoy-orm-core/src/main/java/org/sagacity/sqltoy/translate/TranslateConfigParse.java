@@ -19,8 +19,8 @@ import java.util.jar.JarFile;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.XMLCallbackHandler;
-import org.sagacity.sqltoy.config.ScanEntityAndSqlResource;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
+import org.sagacity.sqltoy.config.SqlResourceScanner;
 import org.sagacity.sqltoy.config.SqlXMLConfigParse;
 import org.sagacity.sqltoy.config.model.FieldTranslate;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
@@ -450,6 +450,7 @@ public class TranslateConfigParse {
 		JarEntry entry;
 		String transConfigFile;
 		File transFile;
+		ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
 		for (String translate : translateCfgs) {
 			realRes = translate.trim();
 			startClasspath = false;
@@ -457,7 +458,8 @@ public class TranslateConfigParse {
 				realRes = realRes.substring(10).trim();
 				startClasspath = true;
 			}
-			urls = ScanEntityAndSqlResource.getResourceUrls(realRes, startClasspath);
+			urls = startClasspath ? SqlResourceScanner.getClasspathResourceUrls(realRes, classLoader)
+					: SqlResourceScanner.getResourceUrls(realRes, classLoader);
 			if (urls != null) {
 				while (urls.hasMoreElements()) {
 					url = urls.nextElement();

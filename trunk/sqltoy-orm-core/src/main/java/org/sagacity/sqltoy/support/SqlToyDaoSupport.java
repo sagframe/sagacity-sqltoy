@@ -1354,6 +1354,7 @@ public class SqlToyDaoSupport {
 		setEntitySharding(queryExecutor, entityMeta);
 		// 为后续租户过滤提供判断依据(单表简单sql和对应的实体对象)
 		queryExecutor.getInnerModel().entityClass = entityClass;
+		queryExecutor.getInnerModel().showSql = innerModel.showSql;
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.delete,
 				getDialect(innerModel.dataSource));
 		sqlToyConfig.setSqlType(SqlType.delete);
