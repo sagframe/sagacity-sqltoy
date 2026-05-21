@@ -65,6 +65,7 @@ public class SqlResourceScanner {
 	 */
 	public static List getSqlResources(String resourceDir, List<String> mappingResources) throws Exception {
 		List result = new ArrayList();
+		// 判断文件重复的集合
 		Set<String> globalNotRepeatDirs = ConcurrentHashMap.newKeySet();
 		ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
 		if (StringUtil.isNotBlank(resourceDir) && !resourceDir.equalsIgnoreCase("none") && !resourceDir.equals("\'\'")
@@ -81,6 +82,7 @@ public class SqlResourceScanner {
 						+ "5)单字符匹配:file:/root/project/?/sqlMapping");
 			}
 		}
+		// 完整路线的sql文件
 		scanMappingResources(result, mappingResources, globalNotRepeatDirs, classLoader);
 		return result;
 	}
@@ -110,16 +112,25 @@ public class SqlResourceScanner {
 			if (IS_WINDOWS && realRes.startsWith("/")) {
 				realRes = realRes.substring(1);
 			}
-			boolean hasWildcard = realRes.contains("*") || realRes.contains("?");
 			boolean isClasspathAll = realRes.toLowerCase().startsWith(CLASSPATH_STAR);
-			boolean isFileSystemPath = FileUtil.isRootPath(realRes);
-			if (hasWildcard || isClasspathAll || isFileSystemPath) {
-				if (CollectionUtil.notContainsAdd(notRepeatDirs, realRes)) {
+			// 排除classpath*的干扰
+			String tmpResPath = isClasspathAll ? realRes.substring(CLASSPATH_STAR.length()) : realRes;
+			boolean hasWildcard = tmpResPath.contains("*") || tmpResPath.contains("?");
+			// 规避路径重复
+			if (CollectionUtil.notContainsAdd(notRepeatDirs, realRes)) {
+				// 存在通配符号
+				if (hasWildcard) {
 					scanWithAntPattern(result, realRes, globalNotRepeatDirs, classLoader);
-				}
-			} else {
-				if (CollectionUtil.notContainsAdd(notRepeatDirs, realRes)) {
-					scanTraditionalPath(result, realRes, globalNotRepeatDirs, classLoader);
+				} else {
+					// 本身路径就是一个完整的sql文件路径,走scanMappingResources
+					if (realRes.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)) {
+						List<String> mappingFile = new ArrayList<>();
+						mappingFile.add(realRes);
+						scanMappingResources(result, mappingFile, globalNotRepeatDirs, classLoader);
+					} else {
+						// 无通配符号且是一个路径,走路径递归查找方式
+						scanTraditionalPath(result, realRes, globalNotRepeatDirs, classLoader);
+					}
 				}
 			}
 		}
@@ -134,11 +145,9 @@ public class SqlResourceScanner {
 	private static void scanWithAntPattern(List result, String pattern, Set<String> notRepeatDirs,
 			ClassLoader classLoader) {
 		try {
-			boolean scanAllClasspaths = pattern.toLowerCase().startsWith(CLASSPATH_STAR);
 			boolean isFileSystemPath = FileUtil.isRootPath(pattern);
 			String antPattern = pattern;
-
-			if (scanAllClasspaths) {
+			if (pattern.toLowerCase().startsWith(CLASSPATH_STAR)) {
 				antPattern = pattern.substring(CLASSPATH_STAR.length());
 			} else if (pattern.toLowerCase().startsWith(CLASSPATH)) {
 				antPattern = pattern.substring(CLASSPATH.length());
@@ -147,7 +156,6 @@ public class SqlResourceScanner {
 				antPattern = antPattern.substring(1);
 			}
 			antPattern = antPattern.replace("\\", "/");
-
 			// 自动补全后缀匹配规则
 			if (!antPattern.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)) {
 				if (!antPattern.endsWith("/")) {
@@ -155,18 +163,16 @@ public class SqlResourceScanner {
 				}
 				antPattern = antPattern + "**/*" + SQLTOY_SQL_FILE_SUFFIX;
 			}
-
 			String rootPath = extractRootPath(antPattern);
 			String[] allParts = antPattern.split("/");
 			// 计算根路径有多少段，模式部分从根路径段数之后开始
 			String[] rootParts = rootPath.isEmpty() ? new String[0] : rootPath.split("/");
 			String[] patternParts = new String[allParts.length - rootParts.length];
 			System.arraycopy(allParts, rootParts.length, patternParts, 0, patternParts.length);
-
 			if (isFileSystemPath) {
 				scanFileSystemWithPattern(result, rootPath, patternParts, notRepeatDirs);
 			} else {
-				scanClasspathWithPattern(result, rootPath, patternParts, scanAllClasspaths, notRepeatDirs, classLoader);
+				scanClasspathWithPattern(result, rootPath, patternParts, notRepeatDirs, classLoader);
 			}
 		} catch (Exception e) {
 			logger.error("Ant pattern scan error:{}", pattern, e);
@@ -184,22 +190,14 @@ public class SqlResourceScanner {
 			logger.debug("Root path does not exist: " + rootPath);
 			return;
 		}
-		// 处理单个文件的情况
-		if (rootDir.isFile()) {
-			if (rootDir.getName().toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)
-					&& CollectionUtil.notContainsAdd(notRepeatDirs, rootDir.getAbsolutePath())) {
-				result.add(rootDir);
-			}
-			return;
-		}
 		Queue<File> dirQueue = new LinkedList<>();
 		dirQueue.offer(rootDir);
 		while (!dirQueue.isEmpty()) {
 			File currentDir = dirQueue.poll();
 			File[] files = currentDir.listFiles();
-			if (files == null)
+			if (files == null) {
 				continue;
-
+			}
 			for (File file : files) {
 				if (file.isDirectory()) {
 					dirQueue.offer(file);
@@ -225,12 +223,10 @@ public class SqlResourceScanner {
 		if (!filePath.startsWith(rootPath)) {
 			return false;
 		}
-
 		String relativePath = filePath.substring(rootPath.length());
 		if (relativePath.startsWith(File.separator)) {
 			relativePath = relativePath.substring(1);
 		}
-
 		String[] pathParts = relativePath.split("\\\\|/");
 		return matchAntRecursive(pathParts, 0, patternParts, 0);
 	}
@@ -239,7 +235,7 @@ public class SqlResourceScanner {
 	 * 扫描classpath路径（支持Ant通配符）
 	 */
 	private static void scanClasspathWithPattern(List result, String rootPath, String[] patternParts,
-			boolean scanAllClasspaths, Set<String> notRepeatDirs, ClassLoader classLoader) throws Exception {
+			Set<String> notRepeatDirs, ClassLoader classLoader) throws Exception {
 		Enumeration<URL> roots = getClasspathResourceUrls(rootPath, classLoader);
 		while (roots.hasMoreElements()) {
 			URL rootUrl = roots.nextElement();
@@ -248,19 +244,18 @@ public class SqlResourceScanner {
 				scanJarWithPattern(rootUrl, rootPath, patternParts, result, notRepeatDirs);
 			} else if (RESOURCE.equals(protocol)) {
 				String path = new URI(rootUrl.toString()).getPath();
-				if (path.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)
+				if (path != null && path.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)
 						&& CollectionUtil.notContainsAdd(notRepeatDirs, path)) {
 					result.add(0, path);
 				}
 			} else {
 				String filePath = new URI(rootUrl.toString()).getPath();
-				if (IS_WINDOWS && filePath.startsWith("/")) {
-					filePath = filePath.substring(1);
+				if (filePath != null) {
+					if (IS_WINDOWS && filePath.startsWith("/")) {
+						filePath = filePath.substring(1);
+					}
+					scanFileSystemWithPattern(result, filePath, patternParts, notRepeatDirs);
 				}
-				scanFileSystemWithPattern(result, filePath, patternParts, notRepeatDirs);
-			}
-			if (!scanAllClasspaths) {
-				break;
 			}
 		}
 	}
@@ -271,18 +266,26 @@ public class SqlResourceScanner {
 	private static void scanJarWithPattern(URL jarUrl, String rootPath, String[] patternParts, List result,
 			Set<String> notRepeatDirs) throws Exception {
 		JarURLConnection conn = (JarURLConnection) jarUrl.openConnection();
+		String normalizedRoot = rootPath;
+		if (!normalizedRoot.isEmpty() && !normalizedRoot.endsWith("/")) {
+			normalizedRoot = normalizedRoot + "/";
+		}
 		try (JarFile jarFile = conn.getJarFile()) {
 			Enumeration<JarEntry> entries = jarFile.entries();
-
 			while (entries.hasMoreElements()) {
 				JarEntry entry = entries.nextElement();
 				if (entry.isDirectory()) {
 					continue;
 				}
-
 				String entryPath = entry.getName();
-				// 检查是否匹配Ant模式
-				if (matchAntPattern(entryPath, patternParts)) {
+				// 先检查是否在rootPath目录下
+				if (!normalizedRoot.isEmpty() && !entryPath.startsWith(normalizedRoot)) {
+					continue;
+				}
+				// 提取相对路径进行匹配
+				String relativePath = normalizedRoot.isEmpty() ? entryPath
+						: entryPath.substring(normalizedRoot.length());
+				if (matchAntPattern(relativePath, patternParts)) {
 					if (entryPath.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)
 							&& CollectionUtil.notContainsAdd(notRepeatDirs, entryPath)) {
 						// JAR资源优先加载
@@ -314,9 +317,7 @@ public class SqlResourceScanner {
 		if (patternIndex >= patternParts.length) {
 			return false;
 		}
-
 		String pattern = patternParts[patternIndex];
-
 		// ** 匹配任意层级
 		if ("**".equals(pattern)) {
 			// 尝试匹配0到多个路径段
@@ -327,17 +328,14 @@ public class SqlResourceScanner {
 			}
 			return false;
 		}
-
 		// 路径用完但模式还有（且不是**）
 		if (pathIndex >= pathParts.length) {
 			return false;
 		}
-
 		// 匹配当前段
 		if (matchPattern(pathParts[pathIndex], pattern)) {
 			return matchAntRecursive(pathParts, pathIndex + 1, patternParts, patternIndex + 1);
 		}
-
 		return false;
 	}
 
@@ -357,12 +355,10 @@ public class SqlResourceScanner {
 		if (!pattern.contains("*") && !pattern.contains("?")) {
 			return text.equals(pattern);
 		}
-
 		// 动态规划或贪心匹配
 		int t = 0, p = 0;
 		int starIdx = -1;
 		int matchIdx = 0;
-
 		while (t < text.length()) {
 			if (p < pattern.length() && pattern.charAt(p) == '*') {
 				starIdx = p;
@@ -379,11 +375,9 @@ public class SqlResourceScanner {
 				return false;
 			}
 		}
-
 		while (p < pattern.length() && pattern.charAt(p) == '*') {
 			p++;
 		}
-
 		return p == pattern.length();
 	}
 
@@ -419,7 +413,6 @@ public class SqlResourceScanner {
 			ClassLoader classLoader) throws Exception {
 		String realRes = resourceDir;
 		boolean startClasspath = false;
-
 		if (realRes.toLowerCase().startsWith(CLASSPATH_STAR)) {
 			realRes = realRes.substring(11).trim();
 			if (realRes.startsWith("/")) {
@@ -433,7 +426,6 @@ public class SqlResourceScanner {
 			}
 			startClasspath = true;
 		}
-
 		if (CollectionUtil.notContainsAdd(notRepeatDirs, realRes)) {
 			Enumeration<URL> urls = startClasspath ? getClasspathResourceUrls(realRes, classLoader)
 					: getResourceUrls(realRes, classLoader);
@@ -443,7 +435,6 @@ public class SqlResourceScanner {
 				Enumeration<JarEntry> entries;
 				JarEntry entry;
 				String sqlFile;
-
 				while (urls.hasMoreElements()) {
 					url = urls.nextElement();
 					if (url.getProtocol().equals(JAR)) {
@@ -490,8 +481,9 @@ public class SqlResourceScanner {
 		}
 		String realRes;
 		Enumeration<URL> urls;
+		// 内部避免文件重复
+		Set<String> notRepeatMappingResources = ConcurrentHashMap.newKeySet();
 		// 具体的完整路径指定的.sql.xml文件
-		Set<String> notRepeatResoures = ConcurrentHashMap.newKeySet();
 		boolean startClasspath;
 		for (int i = 0; i < mappingResources.size(); i++) {
 			realRes = mappingResources.get(i).trim();
@@ -512,7 +504,7 @@ public class SqlResourceScanner {
 					startClasspath = true;
 				}
 				// update 2025-11-19 增加路径重复判断
-				if (CollectionUtil.notContainsAdd(notRepeatResoures, realRes)) {
+				if (CollectionUtil.notContainsAdd(notRepeatMappingResources, realRes)) {
 					urls = startClasspath ? getClasspathResourceUrls(realRes, classLoader)
 							: getResourceUrls(realRes, classLoader);
 					processMappingResourcesUrls(result, realRes, urls, globalNotRepeatDirs);
@@ -522,7 +514,7 @@ public class SqlResourceScanner {
 	}
 
 	/**
-	 * 处理完整路径文件url的sql文件
+	 * 处理单个完整路径的sql文件
 	 * 
 	 * @param result
 	 * @param realRes
@@ -544,7 +536,8 @@ public class SqlResourceScanner {
 		while (urls.hasMoreElements()) {
 			url = urls.nextElement();
 			if (url.getProtocol().equals(JAR)) {
-				if (CollectionUtil.notContainsAdd(notRepeatResources, normalizedRes)) {
+				if (normalizedRes.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)
+						&& CollectionUtil.notContainsAdd(notRepeatResources, normalizedRes)) {
 					// jar中的sql优先加载,从而确保直接放于classes目录下面的sql可以实现对之前的覆盖,便于项目增量发版管理
 					result.add(0, normalizedRes);
 				}
@@ -669,8 +662,9 @@ public class SqlResourceScanner {
 			if (curr.isDirectory()) {
 				File[] files = curr.listFiles();
 				if (files != null) {
-					for (File f : files)
+					for (File f : files) {
 						queue.offer(f);
+					}
 				}
 			} else {
 				if (curr.getName().toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)) {

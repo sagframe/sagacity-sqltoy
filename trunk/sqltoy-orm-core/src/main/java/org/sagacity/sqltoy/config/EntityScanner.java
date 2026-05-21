@@ -70,18 +70,22 @@ public class EntityScanner {
 				classLoader = ClassLoader.getSystemClassLoader();
 			}
 			Enumeration<URL> resources = classLoader.getResources(basePath);
+			URL url;
+			String protocol;
 			while (resources.hasMoreElements()) {
-				URL url = resources.nextElement();
-				String protocol = url.getProtocol();
+				url = resources.nextElement();
+				protocol = url.getProtocol();
 				if ("file".equals(protocol)) {
 					// 兼容路径中中文、空格、+ 号等场景
 					String filePath = new URI(url.toString()).getPath();
-					if (IS_WINDOWS && filePath.startsWith("/")) {
-						filePath = filePath.substring(1);
-					}
-					File dir = new File(filePath);
-					if (dir.exists() && dir.isDirectory()) {
-						scanDirectory(dir, basePackage, relativePattern, result, classLoader);
+					if (filePath != null) {
+						if (IS_WINDOWS && filePath.startsWith("/")) {
+							filePath = filePath.substring(1);
+						}
+						File dir = new File(filePath);
+						if (dir.exists() && dir.isDirectory()) {
+							scanDirectory(dir, basePackage, relativePattern, result, classLoader);
+						}
 					}
 				} else if ("jar".equals(protocol)) {
 					scanJar(url, packagePattern, result, charset, classLoader);
@@ -199,8 +203,7 @@ public class EntityScanner {
 				// 替换占位符为实际正则
 				.replace("<<PATH_SEG>>", "(/[^/]*)*").replace("<<PATH_END>>", "(/[^/]*)*")
 				.replace("<<PATH_START>>", "([^/]*/)*");
-		boolean result = path.matches(regex);
-		return result;
+		return path.matches(regex);
 	}
 
 	/**
