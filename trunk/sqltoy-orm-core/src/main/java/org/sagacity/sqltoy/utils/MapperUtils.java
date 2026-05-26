@@ -403,7 +403,10 @@ public class MapperUtils {
 			return dtoEntityMapperCache.get(key);
 		}
 		DTOEntityMapModel result = sourceMapTarget(sourceClass, resultType, fieldsNameMap);
-		dtoEntityMapperCache.put(key, result);
+		// ConcurrentHashMap不允许value为null
+		if (result != null) {
+			dtoEntityMapperCache.put(key, result);
+		}
 		return result;
 	}
 

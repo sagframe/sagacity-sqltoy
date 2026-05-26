@@ -2195,7 +2195,7 @@ public class SqlUtil {
 			return null;
 		}
 		if ("".equals(defaultValue.trim())) {
-			return "";
+			return defaultValue;
 		}
 		String result = defaultValue.trim();
 		if (result.toUpperCase().startsWith("NULL::") && StringUtil.matches(result, PG_CAST_PATTERN)) {
