@@ -2194,8 +2194,9 @@ public class SqlUtil {
 		if (defaultValue == null) {
 			return null;
 		}
+		// 按原默认值返回
 		if ("".equals(defaultValue.trim())) {
-			return "";
+			return defaultValue;
 		}
 		String result = defaultValue.trim();
 		if (result.toUpperCase().startsWith("NULL::") && StringUtil.matches(result, PG_CAST_PATTERN)) {

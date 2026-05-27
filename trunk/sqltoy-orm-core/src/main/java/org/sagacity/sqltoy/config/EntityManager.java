@@ -652,11 +652,8 @@ public class EntityManager {
 		if (column == null) {
 			return;
 		}
-		// 空白场景处理
-		String defaultValue = StringUtil.isBlank(column.defaultValue()) ? SqlToyConstants.DEFAULT_NULL
-				: column.defaultValue().trim();
 		// 清理defaultValue的一些不符合最终使用的字符，如(x)、((x))、x::text等
-		defaultValue = SqlUtil.clearDefaultValue(defaultValue);
+		String defaultValue = SqlUtil.clearDefaultValue(column.defaultValue());
 		// 字段的详细配置信息,字段名称，字段对应数据库表字段，字段默认值，字段类型
 		FieldMeta fieldMeta = new FieldMeta(field.getName(), column.name(),
 				(SqlToyConstants.DEFAULT_NULL.equals(defaultValue)) ? null : defaultValue, column.nativeType(),
