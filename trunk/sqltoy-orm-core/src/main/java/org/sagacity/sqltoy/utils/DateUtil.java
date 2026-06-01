@@ -100,6 +100,8 @@ public class DateUtil {
 	private final static Pattern ZONED_TIME_PATTERN = Pattern
 			.compile("(\\+|\\-)\\d{1,2}\\:\\d{2}(\\[[a-z|A-Z|\\/|\\_]+\\])?$");
 
+	private final static Pattern DATE_PATTERN = Pattern.compile("(\\d{2,4})-(\\d)(?=-)|-(\\d)(?=\\s)");
+
 	/**
 	 * 定义日期的格式
 	 */
@@ -237,9 +239,10 @@ public class DateUtil {
 			int startIndex;
 			// 日期和时间的组合
 			if (hasBlank) {
+				dateStr = dateStr.replaceFirst("\\s+", " ").replaceFirst("(?i)T", " ");
+				dateStr = padDateString(dateStr);
 				// 统一格式(去除掉日期中的符号变成全数字),update 2019-08-12 支持jdk8日期
-				dateStr = dateStr.replaceFirst("\\s+", " ").replaceFirst("(?i)T", " ").replace("-", "").replace(".", "")
-						.replace(":", "").replace("/", "");
+				dateStr = dateStr.replace("-", "").replace(".", "").replace(":", "").replace("/", "");
 				int preSize = dateStr.indexOf(" ");
 				size = dateStr.length();
 				if (size > 16) {
@@ -428,9 +431,10 @@ public class DateUtil {
 			int startIndex;
 			// 日期和时间的组合
 			if (hasBlank) {
+				dateStr = dateStr.replaceFirst("\\s+", " ").replaceFirst("(?i)T", " ");
+				dateStr = padDateString(dateStr);
 				// 统一格式(去除掉日期中的符号变成全数字),update 2019-08-12 支持jdk8日期
-				dateStr = dateStr.replaceFirst("\\s+", " ").replaceFirst("(?i)T", " ").replace("-", "").replace(".", "")
-						.replace(":", "").replace("/", "");
+				dateStr = dateStr.replace("-", "").replace(".", "").replace(":", "").replace("/", "");
 				int preSize = dateStr.indexOf(" ");
 				size = dateStr.length();
 				if (size > 16) {
@@ -1337,4 +1341,23 @@ public class DateUtil {
 		return timeStr;
 	}
 
+	/**
+	 * 给日期月和日一位数字补零
+	 * 
+	 * @param dateStr
+	 * @return
+	 */
+	private static String padDateString(String dateStr) {
+		Matcher matcher = DATE_PATTERN.matcher(dateStr);
+		StringBuffer sb = new StringBuffer();
+		while (matcher.find()) {
+			if (matcher.group(2) != null) {
+				matcher.appendReplacement(sb, "$1-0$2");
+			} else {
+				matcher.appendReplacement(sb, "-0$3");
+			}
+		}
+		matcher.appendTail(sb);
+		return sb.toString();
+	}
 }
