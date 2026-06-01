@@ -8,6 +8,8 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
 
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
@@ -28,6 +30,10 @@ import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 @SuppressWarnings("rawtypes")
 public class MacroIfLogic {
 	private final static String BLANK = " ";
+
+	private final static Pattern timePattern = Pattern.compile("(?i)\\d+[SHDWMY]?$");
+
+	private final static Pattern timeTypePattern = Pattern.compile("(?i)\\d+[SHDWMY]$");
 
 	private MacroIfLogic() {
 	}
@@ -172,8 +178,7 @@ public class MacroIfLogic {
 				}
 				// 计算单个比较的结果(update 2020-09-24 增加数组长度的提取)
 				if (hasArg && (leftParamLow.startsWith("size(") || leftParamLow.startsWith("length("))) {
-					expressResult[i] = compare((leftValue == null) ? 0 : CollectionUtil.convertArray(leftValue).length,
-							compareType, rightValue);
+					expressResult[i] = compare((leftValue == null) ? 0 : getSize(leftValue), compareType, rightValue);
 				} else {
 					expressResult[i] = compare(leftValue, compareType, rightValue);
 				}
@@ -202,6 +207,52 @@ public class MacroIfLogic {
 	}
 
 	/**
+	 * 获取对比数据的长度，字符串返回字符串长度、数组和集合返回size
+	 * 
+	 * @param compareValue
+	 * @return
+	 */
+	private static int getSize(Object compareValue) {
+		if (compareValue == null) {
+			return 0;
+		}
+		if (compareValue instanceof Object[]) {
+			return ((Object[]) compareValue).length;
+		}
+		if (compareValue instanceof Collection) {
+			return ((Collection) compareValue).size();
+		}
+		if (compareValue instanceof CharSequence) {
+			return ((CharSequence) compareValue).length();
+		}
+		if (compareValue instanceof Map) {
+			return ((Map) compareValue).size();
+		}
+		if (compareValue instanceof int[]) {
+			return ((int[]) compareValue).length;
+		}
+		if (compareValue instanceof long[]) {
+			return ((long[]) compareValue).length;
+		}
+		if (compareValue instanceof double[]) {
+			return ((double[]) compareValue).length;
+		}
+		if (compareValue instanceof boolean[]) {
+			return ((boolean[]) compareValue).length;
+		}
+		if (compareValue instanceof short[]) {
+			return ((short[]) compareValue).length;
+		}
+		if (compareValue instanceof char[]) {
+			return ((char[]) compareValue).length;
+		}
+		if (compareValue instanceof byte[]) {
+			return ((byte[]) compareValue).length;
+		}
+		return 0;
+	}
+
+	/**
 	 * @todo 两个数据进行比较
 	 * @param value
 	 * @param compareType
@@ -216,15 +267,38 @@ public class MacroIfLogic {
 		String append = "0";
 		String[] calculateStr = { "+", "-" };
 		String[] tmpAry;
+		// 0:second;1:hour;2:day;3:week;4:month;5:year
+		int addType = -1;
+		boolean hasCalculate = false;
 		// 判断是否有加减运算
 		for (String calculate : calculateStr) {
 			if (compareValue.trim().indexOf(calculate) > 0) {
 				tmpAry = compareValue.split("+".equals(calculate) ? "\\+" : "\\-");
 				// ±符号后面必须是数字才能纳入运算(update 2025-11-17)
-				if (NumberUtil.isNumber(tmpAry[1].trim())) {
+				if (StringUtil.matches(tmpAry[1].trim(), timePattern)) {
+					hasCalculate = true;
 					compareValue = tmpAry[0].trim();
 					// 正负数字
 					append = calculate + tmpAry[1].trim();
+					// 时间单位
+					if (StringUtil.matches(append, timeTypePattern)) {
+						// 取最后一位
+						String timeType = append.substring(append.length() - 1).toUpperCase();
+						append = append.substring(0, append.length() - 1);
+						if (timeType.equals("S")) {
+							addType = 0;
+						} else if (timeType.equals("H")) {
+							addType = 1;
+						} else if (timeType.equals("D")) {
+							addType = 2;
+						} else if (timeType.equals("W")) {
+							addType = 3;
+						} else if (timeType.equals("M")) {
+							addType = 4;
+						} else if (timeType.equals("Y")) {
+							addType = 5;
+						}
+					}
 					break;
 				}
 			}
@@ -232,16 +306,27 @@ public class MacroIfLogic {
 		String type = "string";
 		String dayTimeFmt = "yyyy-MM-dd HH:mm:ss";
 		String dayFmt = "yyyy-MM-dd";
-		String lowCompareValue = compareValue.toLowerCase();
-		if ("now()".equals(lowCompareValue) || ".now".equals(lowCompareValue) || "${.now}".equals(lowCompareValue)
-				|| "nowtime()".equals(lowCompareValue)) {
-			compareValue = DateUtil.formatDate(DateUtil.addSecond(new Date(), Double.parseDouble(append)), dayTimeFmt);
-			type = "time";
-		} else if ("day()".equals(lowCompareValue) || "sysdate()".equals(lowCompareValue)
-				|| ".day".equals(lowCompareValue) || ".day()".equals(lowCompareValue)
-				|| "${.day}".equals(lowCompareValue)) {
-			compareValue = DateUtil.formatDate(DateUtil.addSecond(new Date(), Double.parseDouble(append)), dayFmt);
-			type = "date";
+		// 存在计算符号
+		if (hasCalculate) {
+			String lowCompareValue = compareValue.toLowerCase();
+			// 默认秒
+			if ("now()".equals(lowCompareValue) || ".now".equals(lowCompareValue) || "${.now}".equals(lowCompareValue)
+					|| "nowtime()".equals(lowCompareValue) || "systime()".equals(lowCompareValue)
+					|| "curtime()".equals(lowCompareValue) || "curtime".equals(lowCompareValue)
+					|| "sysdate()".equals(lowCompareValue) || "sysdate".equals(lowCompareValue)
+					|| "sysdatetime".equals(lowCompareValue) || "sysdatetime()".equals(lowCompareValue)) {
+				compareValue = DateUtil.formatDate(addTimeByType(new Date(), append, addType == -1 ? 0 : addType),
+						dayTimeFmt);
+				type = "time";
+			} // 默认天
+			else if ("day()".equals(lowCompareValue) || ".day".equals(lowCompareValue)
+					|| ".day()".equals(lowCompareValue) || "${.day}".equals(lowCompareValue)) {
+				compareValue = DateUtil.formatDate(addTimeByType(new Date(), append, addType == -1 ? 2 : addType),
+						dayFmt);
+				type = "date";
+			} else {
+				compareValue = ExpressionUtil.calculate(originalCompareValue).toString();
+			}
 		} else {
 			compareValue = originalCompareValue;
 		}
@@ -311,6 +396,29 @@ public class MacroIfLogic {
 			}
 		}
 		return true;
+	}
+
+	private static Date addTimeByType(Date date, String append, int addType) {
+		// 秒
+		if (addType == 0) {
+			return DateUtil.addSecond(date, Double.parseDouble(append));
+		} // 小时
+		else if (addType == 1) {
+			return DateUtil.addHour(date, Double.parseDouble(append));
+		} // 天
+		else if (addType == 2) {
+			return DateUtil.addDay(date, Double.parseDouble(append));
+		} // 周
+		else if (addType == 3) {
+			return DateUtil.addDay(date, Double.parseDouble(append) * 7);
+		} // 月
+		else if (addType == 4) {
+			return DateUtil.addMonth(date, Double.valueOf(append).intValue());
+		} // 年
+		else if (addType == 5) {
+			return DateUtil.addYear(date, Double.valueOf(append).intValue());
+		}
+		return date;
 	}
 
 	/**
@@ -426,6 +534,10 @@ public class MacroIfLogic {
 					return true;
 				}
 			}
+		}
+		// map
+		if (value instanceof Map) {
+			return ((Map) value).containsKey(compare);
 		}
 		return false;
 	}

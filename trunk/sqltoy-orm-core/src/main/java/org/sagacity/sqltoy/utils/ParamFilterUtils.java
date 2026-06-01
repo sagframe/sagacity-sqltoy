@@ -1049,14 +1049,15 @@ public class ParamFilterUtils {
 	 * @return
 	 */
 	private static Date parseDateStr(String dateStr) {
-		if ("sysdate()".equals(dateStr) || "now()".equals(dateStr)) {
+		if ("sysdate()".equals(dateStr) || "now()".equals(dateStr) || "curtime()".equals(dateStr)
+				|| "systime()".equals(dateStr) || "currenttime()".equals(dateStr)) {
 			return DateUtil.getNowTime();
 		}
 		String[] tmpAry = null;
 		boolean isAdd = false;
 		String firstString = dateStr.toLowerCase();
 		int addValue = 0;
-		// 1:hour;2:day;3:week;4:month;5:year
+		// 0:second;1:hour;2:day;3:week;4:month;5:year
 		int addType = 2;
 		if (dateStr.contains("+")) {
 			tmpAry = dateStr.split("\\+");
@@ -1074,7 +1075,9 @@ public class ParamFilterUtils {
 			if (StringUtil.matches(addStr, "[a-z|A-Z]$")) {
 				// 最后一位字母
 				String addTypeStr = addStr.substring(addStr.length() - 1).toLowerCase();
-				if ("h".equals(addTypeStr)) {
+				if ("s".equals(addTypeStr)) {
+					addType = 0;
+				} else if ("h".equals(addTypeStr)) {
 					addType = 1;
 				} else if ("w".equals(addTypeStr)) {
 					addType = 3;
@@ -1118,6 +1121,10 @@ public class ParamFilterUtils {
 		}
 		if (addValue == 0) {
 			return startDate;
+		}
+		// 秒
+		if (addType == 0) {
+			return DateUtil.addSecond(startDate, addValue);
 		}
 		// 小时
 		if (addType == 1) {
