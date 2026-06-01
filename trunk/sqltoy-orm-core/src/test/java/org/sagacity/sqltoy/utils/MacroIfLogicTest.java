@@ -106,6 +106,32 @@ public class MacroIfLogicTest {
 		boolean result = MacroIfLogic.evalLogic(sql, params, 0, params.size(), 1);
 		assertEquals(result, true);
 	}
+	
+	@Test
+	public void testSize() {
+		String sql = "size(:status)==2";
+		List params = new ArrayList();
+		params.add(new int[]{1,2});
+		boolean result = MacroIfLogic.evalLogic(sql, params, 0, params.size(), 1);
+		assertEquals(result, true);
+	}
+	
+	@Test
+	public void testSize1() {
+		String sql = "size(:status)==5";
+		List params = new ArrayList();
+		params.add("S0001");
+		boolean result = MacroIfLogic.evalLogic(sql, params, 0, params.size(), 1);
+		assertEquals(result, true);
+	}
+	@Test
+	public void testTimeCompare() {
+		String sql = ":bizDate>=sysdate()-3600";
+		List params = new ArrayList();
+		params.add("2026-5-26");
+		boolean result = MacroIfLogic.evalLogic(sql, params, 0, params.size(), 1);
+		assertEquals(result, true);
+	}
 
 	@Test
 	public void testEndsWith() {
