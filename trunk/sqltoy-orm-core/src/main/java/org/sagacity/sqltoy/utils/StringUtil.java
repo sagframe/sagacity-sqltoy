@@ -1241,4 +1241,23 @@ public class StringUtil {
 		}
 		return source;
 	}
+
+	/**
+	 * 剔除首位逗号和双引号
+	 * 
+	 * @param str
+	 * @return
+	 */
+	public static String removeStartEndQuote(String str) {
+		if (str == null || str.length() < 2) {
+			return str;
+		}
+		int endIndex = str.length() - 1;
+		char first = str.charAt(0);
+		char last = str.charAt(endIndex);
+		if ((first == '"' && last == '"') || (first == '\'' && last == '\'')) {
+			return str.substring(1, endIndex);
+		}
+		return str;
+	}
 }
