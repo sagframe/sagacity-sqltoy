@@ -1079,6 +1079,8 @@ public class ParamFilterUtils {
 					addType = 0;
 				} else if ("h".equals(addTypeStr)) {
 					addType = 1;
+				} else if ("d".equals(addTypeStr)) {
+					addType = 2;
 				} else if ("w".equals(addTypeStr)) {
 					addType = 3;
 				} else if ("m".equals(addTypeStr)) {

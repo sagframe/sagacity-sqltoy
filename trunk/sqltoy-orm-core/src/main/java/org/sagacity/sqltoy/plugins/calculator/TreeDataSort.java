@@ -43,8 +43,8 @@ public class TreeDataSort {
 		sortTree(treeList, idColIndex, pidColIndex);
 		// 树结构从底层往上级汇总
 		if (!sumColList.isEmpty()) {
-			//Integer[] sumIndexes = new Integer[sumColList.size()];
-			Integer[] sumIndexes=sumColList.toArray(new Integer[0]);
+			// Integer[] sumIndexes = new Integer[sumColList.size()];
+			Integer[] sumIndexes = sumColList.toArray(new Integer[0]);
 			summaryTreeList(treeTableSortModel, labelIndexMap, treeList, sumIndexes, idColIndex, pidColIndex);
 		}
 		// 对每层的数据进行排序
@@ -168,7 +168,7 @@ public class TreeDataSort {
 			if (hasFilter) {
 				filterValue = idRow.get(labelIndexMap.get(treeTableSortModel.getFilterColumn()));
 				doSum = MacroIfLogic.compare(filterValue, treeTableSortModel.getCompareType(),
-						treeTableSortModel.getCompareValues());
+						treeTableSortModel.getCompareValues(), null);
 			}
 			// 上一行开始寻找父节点
 			if (doSum) {
