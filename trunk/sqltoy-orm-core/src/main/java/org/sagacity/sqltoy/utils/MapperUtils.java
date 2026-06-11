@@ -15,6 +15,7 @@ import org.sagacity.sqltoy.config.annotation.SqlToyFieldAlias;
 import org.sagacity.sqltoy.config.model.DTOEntityMapModel;
 import org.sagacity.sqltoy.config.model.DataType;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
+import org.sagacity.sqltoy.model.JdbcTypes;
 import org.sagacity.sqltoy.model.Page;
 import org.sagacity.sqltoy.model.PropsMapperConfig;
 import org.slf4j.Logger;
@@ -565,8 +566,8 @@ public class MapperUtils {
 						// 基本类型
 						if (methodTypeValues[j] != DataType.objectType && methodTypeValues[j] != DataType.listType
 								&& methodTypeValues[j] != DataType.setType) {
-							realMethods[j].invoke(bean,
-									BeanUtil.convertType(cellData, methodTypeValues[j], methodTypes[j]));
+							realMethods[j].invoke(bean, BeanUtil.convertType(cellData, JdbcTypes.OTHER,
+									methodTypeValues[j], methodTypes[j]));
 						} // List<DTO>
 						else if (methodGenTypes[j] != null && (cellData instanceof List) && isList[j]) {
 							cellList = (List) cellData;
@@ -643,15 +644,15 @@ public class MapperUtils {
 							// 基本类型
 							if (methodTypeValues[j] != DataType.objectType && methodTypeValues[j] != DataType.listType
 									&& methodTypeValues[j] != DataType.setType) {
-								realMethods[j].invoke(bean,
-										BeanUtil.convertType(cellData, methodTypeValues[j], methodTypes[j]));
+								realMethods[j].invoke(bean, BeanUtil.convertType(cellData, JdbcTypes.OTHER,
+										methodTypeValues[j], methodTypes[j]));
 							} // 类型相同直接赋值
 							else if (cellData.getClass().getTypeName().equals(methodTypes[j])) {
 								realMethods[j].invoke(bean, cellData);
 							}
 						} else if (!skipNull) {
-							realMethods[j].invoke(bean,
-									BeanUtil.convertType(cellData, methodTypeValues[j], methodTypes[j]));
+							realMethods[j].invoke(bean, BeanUtil.convertType(cellData, JdbcTypes.OTHER,
+									methodTypeValues[j], methodTypes[j]));
 						}
 					}
 				}

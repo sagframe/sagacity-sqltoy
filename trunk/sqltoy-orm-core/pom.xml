@@ -3,20 +3,20 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sagframe</groupId>
-	<version>5.6.78</version>
+	<version>5.6.80</version>
 	<name>sagacity-sqltoy</name>
 	<description>sqltoy core code</description>
 	<artifactId>sagacity-sqltoy</artifactId>
 	<url>https://github.com/sagframe/sagacity-sqltoy</url>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<ojdbc11.version>23.26.1.0.0</ojdbc11.version>
+		<ojdbc11.version>23.26.2.0.0</ojdbc11.version>
 		<ehcache.version>3.12.0</ehcache.version>
 		<httpclient.version>4.5.14</httpclient.version>
 		<httpclient-core.version>4.4.16</httpclient-core.version>
-		<elastic-rest-client.version>9.4.1</elastic-rest-client.version>
+		<elastic-rest-client.version>9.4.2</elastic-rest-client.version>
 		<fastjson.version>2.0.62</fastjson.version>
-		<mongo.version>5.7.0</mongo.version>
+		<mongo.version>5.8.0</mongo.version>
 		<junit-jupiter.version>6.1.0</junit-jupiter.version>
 		<junit-platform.version>6.1.0</junit-platform.version>
 		<slf4j.version>2.0.18</slf4j.version>
@@ -25,6 +25,7 @@
 		<druid.version>1.2.28</druid.version>
 		<transmittable-thread-local>2.14.5</transmittable-thread-local>
 		<ulid-creator.version>5.2.4</ulid-creator.version>
+		<postgresql.version>42.7.11</postgresql.version>
 	</properties>
 	<licenses>
 		<license>
@@ -62,6 +63,14 @@
 			<groupId>com.github.f4b6a3</groupId>
 			<artifactId>ulid-creator</artifactId>
 			<version>${ulid-creator.version}</version>
+			<optional>true</optional>
+		</dependency>
+		<!-- Source:
+		https://mvnrepository.com/artifact/org.postgresql/postgresql -->
+		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+			<version>${postgresql.version}</version>
 			<optional>true</optional>
 		</dependency>
 		<dependency>

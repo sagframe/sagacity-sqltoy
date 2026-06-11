@@ -459,7 +459,7 @@ public class Mongo extends BaseLink {
 		// 查询集合的行列转换,对集合进行汇总、行列转换等
 		boolean changedCols = ResultUtils.calculate(sqlToyContext.getDesensitizeProvider(), sqlToyConfig, dataSetResult,
 				null, null);
-		return ResultUtils.wrapQueryResult(sqlToyContext, resultSet, StringUtil.humpFieldNames(translateFields),
+		return ResultUtils.wrapQueryResult(sqlToyContext, resultSet, StringUtil.humpFieldNames(translateFields), null,
 				resultClass, changedCols, humpMapLabel, false, null, null);
 	}
 

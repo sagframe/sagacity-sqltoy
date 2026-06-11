@@ -37,6 +37,7 @@ import java.util.regex.Pattern;
 
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.callback.ReflectPropsHandler;
+import org.sagacity.sqltoy.config.annotation.Column;
 import org.sagacity.sqltoy.config.annotation.Entity;
 import org.sagacity.sqltoy.config.annotation.OneToMany;
 import org.sagacity.sqltoy.config.annotation.OneToOne;
@@ -49,6 +50,7 @@ import org.sagacity.sqltoy.config.model.TableCascadeModel;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.model.IgnoreCaseSet;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
+import org.sagacity.sqltoy.model.JdbcTypes;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.slf4j.Logger;
@@ -626,22 +628,23 @@ public class BeanUtil {
 	 * @return
 	 * @throws Exception
 	 */
-	public static Object convertType(Object value, int typeValue, String typeName) throws Exception {
-		return convertType(null, value, typeValue, typeName, null);
+	public static Object convertType(Object value, int jdbcType, int typeValue, String typeName) throws Exception {
+		return convertType(null, value, jdbcType, typeValue, typeName, null);
 	}
 
 	/**
 	 * @todo 类型转换 2022-10-18 已经完成了优化，减少了不必要的判断
 	 * @param typeHandler
 	 * @param value
-	 * @param typeValue
+	 * @param jdbcType    sqlTypes.xxx
+	 * @param typeValue   set(Type) set参数的类型
 	 * @param typeName    getTypeName()没有转大小写
 	 * @param genericType 泛型类型
 	 * @return
 	 * @throws Exception
 	 */
-	public static Object convertType(TypeHandler typeHandler, Object value, int typeValue, String typeName,
-			Class genericType) throws Exception {
+	public static Object convertType(TypeHandler typeHandler, Object value, int jdbcType, int typeValue,
+			String typeName, Class genericType) throws Exception {
 		Object paramValue = value;
 		// 1
 		if (paramValue == null) {
@@ -667,6 +670,15 @@ public class BeanUtil {
 		// 3 针对非常规类型转换，将jdbc获取的字段结果转为java对象属性对应的类型
 		if (typeHandler != null) {
 			Object result = typeHandler.toJavaType(typeName, genericType, paramValue);
+			if (result != null) {
+				return result;
+			}
+		}
+		// 统一处理json字符类型转java对象
+		if ((jdbcType == JdbcTypes.JSON || jdbcType == JdbcTypes.JSONB)
+				&& (typeValue == DataType.objectType || typeValue == DataType.listType
+						|| typeValue == DataType.aryOtherType || typeValue == DataType.setType)) {
+			Object result = JSONTypeUtil.jsonToJavaType(jdbcType, typeName, genericType, value);
 			if (result != null) {
 				return result;
 			}
@@ -1629,7 +1641,7 @@ public class BeanUtil {
 	}
 
 	public static List reflectListToBean(TypeHandler typeHandler, Collection datas, String[] properties,
-			Class voClass) {
+			String[] columnTypes, Class voClass) {
 		int[] indexs = null;
 		if (properties != null && properties.length > 0) {
 			indexs = new int[properties.length];
@@ -1637,7 +1649,7 @@ public class BeanUtil {
 				indexs[i] = i;
 			}
 		}
-		return reflectListToBean(typeHandler, datas, indexs, properties, voClass, true);
+		return reflectListToBean(typeHandler, datas, indexs, properties, columnTypes, voClass, true);
 	}
 
 	/**
@@ -1651,8 +1663,8 @@ public class BeanUtil {
 	 * @throws RuntimeException
 	 */
 	public static List reflectListToBean(TypeHandler typeHandler, Collection datas, int[] indexs, String[] properties,
-			Class voClass) throws RuntimeException {
-		return reflectListToBean(typeHandler, datas, indexs, properties, voClass, true);
+			String[] columnTypes, Class voClass) throws RuntimeException {
+		return reflectListToBean(typeHandler, datas, indexs, properties, columnTypes, voClass, true);
 	}
 
 	/**
@@ -1666,7 +1678,7 @@ public class BeanUtil {
 	 * @return
 	 */
 	public static List reflectListToBean(TypeHandler typeHandler, Collection datas, int[] indexs, String[] properties,
-			Class voClass, boolean autoConvertType) {
+			String[] columnTypes, Class voClass, boolean autoConvertType) {
 		if (null == datas || datas.isEmpty()) {
 			return null;
 		}
@@ -1679,7 +1691,7 @@ public class BeanUtil {
 		}
 		// record类型
 		if (voClass.isRecord()) {
-			return reflectListToRecord(typeHandler, datas, indexs, properties, voClass, autoConvertType);
+			return reflectListToRecord(typeHandler, datas, indexs, properties, columnTypes, voClass, autoConvertType);
 		}
 		List resultList = new ArrayList();
 		Object cellData = null;
@@ -1689,23 +1701,47 @@ public class BeanUtil {
 			Object bean;
 			boolean isArray = false;
 			int notNullRowIndex = 0;
+			int columnTypeLength = (columnTypes == null) ? 0 : columnTypes.length;
 			Object[] rowArray = null;
 			List rowList = null;
 			int indexSize = indexs.length;
 			Method[] realMethods = matchSetMethods(voClass, properties);
 			String[] methodTypes = new String[indexSize];
+			int[] propertySqlTypes = new int[indexSize];
 			int[] methodTypeValues = new int[indexSize];
 			Class[] genericTypes = new Class[indexSize];
+			Map<String, Integer> fieldTypeMap = getClassFieldMap(voClass, properties);
 			Type[] types;
 			Class methodType;
 			// 自动适配属性的数据类型
 			if (autoConvertType) {
+				String tmpStr;
 				for (int i = 0; i < indexSize; i++) {
+					propertySqlTypes[i] = java.sql.Types.OTHER;
 					if (null != realMethods[i]) {
 						methodType = realMethods[i].getParameterTypes()[0];
 						methodTypes[i] = methodType.getTypeName();
 						methodTypeValues[i] = DataType.getType(methodType);
 						types = realMethods[i].getGenericParameterTypes();
+						if (properties[i] != null) {
+							tmpStr = properties[i].toLowerCase();
+							// 先取字段注解上的sqlType
+							if (fieldTypeMap.containsKey(tmpStr)) {
+								propertySqlTypes[i] = fieldTypeMap.get(tmpStr);
+							} // 再取sql查询getColumnType对应的类型,目前主要针对JSON/JSONB，预留GEOMETRY
+							else if (columnTypeLength > i && columnTypes[i] != null) {
+								tmpStr = columnTypes[i].toUpperCase();
+								if (tmpStr.equals("JSON")) {
+									propertySqlTypes[i] = JdbcTypes.JSON;
+								} else if (tmpStr.equals("JSONB")) {
+									propertySqlTypes[i] = JdbcTypes.JSONB;
+								} else if (tmpStr.equals("GEOMETRY")) {
+									propertySqlTypes[i] = JdbcTypes.GEOMETRY;
+								} else if (tmpStr.equals("UUID")) {
+									propertySqlTypes[i] = JdbcTypes.UUID;
+								}
+							}
+						}
 						if (types.length > 0) {
 							if (types[0] instanceof ParameterizedType) {
 								genericTypes[i] = (Class) ((ParameterizedType) types[0]).getActualTypeArguments()[0];
@@ -1745,8 +1781,8 @@ public class BeanUtil {
 								} else {
 									realMethods[i].invoke(bean,
 											autoConvertType
-													? convertType(typeHandler, cellData, methodTypeValues[i],
-															methodTypes[i], genericTypes[i])
+													? convertType(typeHandler, cellData, propertySqlTypes[i],
+															methodTypeValues[i], methodTypes[i], genericTypes[i])
 													: cellData);
 								}
 							}
@@ -1802,18 +1838,34 @@ public class BeanUtil {
 	}
 
 	private static List reflectListToRecord(TypeHandler typeHandler, Collection datas, int[] indexs,
-			String[] properties, Class voClass, boolean autoConvertType) {
+			String[] properties, String[] columnTypes, Class voClass, boolean autoConvertType) {
 		PropertyType[] recordProps = getRecordFields(voClass);
 		int fieldsCnt = recordProps.length;
 		Integer[] propIndexes = new Integer[fieldsCnt];
 		String propName;
 		Class[] parameterTypes = new Class[fieldsCnt];
+		int[] propertySqlTypes = new int[fieldsCnt];
+		int columnTypesLength = (columnTypes == null) ? 0 : columnTypes.length;
+		String tmpStr;
 		for (int i = 0; i < fieldsCnt; i++) {
 			propName = recordProps[i].getProperty();
 			parameterTypes[i] = recordProps[i].getType();
+			propertySqlTypes[i] = JdbcTypes.OTHER;
 			for (int j = 0; j < properties.length; j++) {
 				if (propName.equalsIgnoreCase(properties[j])) {
 					propIndexes[i] = indexs[j];
+					if (columnTypesLength > j && columnTypes[j] != null) {
+						tmpStr = columnTypes[i].toUpperCase();
+						if (tmpStr.equals("JSON")) {
+							propertySqlTypes[i] = JdbcTypes.JSON;
+						} else if (tmpStr.equals("JSONB")) {
+							propertySqlTypes[i] = JdbcTypes.JSONB;
+						} else if (tmpStr.equals("GEOMETRY")) {
+							propertySqlTypes[i] = JdbcTypes.GEOMETRY;
+						} else if (tmpStr.equals("UUID")) {
+							propertySqlTypes[i] = JdbcTypes.UUID;
+						}
+					}
 					break;
 				}
 			}
@@ -1861,8 +1913,9 @@ public class BeanUtil {
 								if (cellData.getClass().equals(recordPropTypes.getType())) {
 									recordArgs[i] = cellData;
 								} else {
-									recordArgs[i] = convertType(typeHandler, cellData, recordPropTypes.getTypeValue(),
-											recordPropTypes.getTypeName(), recordPropTypes.getGenericType());
+									recordArgs[i] = convertType(typeHandler, cellData, propertySqlTypes[i],
+											recordPropTypes.getTypeValue(), recordPropTypes.getTypeName(),
+											recordPropTypes.getGenericType());
 								}
 							}
 						}
@@ -1906,8 +1959,8 @@ public class BeanUtil {
 						if (cellData.getClass().getTypeName().equals(methodTypes[i])) {
 							realMethods[i].invoke(bean, cellData);
 						} else {
-							realMethods[i].invoke(bean, convertType(typeHandler, cellData, methodTypeValues[i],
-									methodTypes[i], genericTypes[i]));
+							realMethods[i].invoke(bean, convertType(typeHandler, cellData, JdbcTypes.OTHER,
+									methodTypeValues[i], methodTypes[i], genericTypes[i]));
 						}
 					}
 				}
@@ -1987,8 +2040,8 @@ public class BeanUtil {
 						if (realMethods[i] != null && (forceUpdate || values[i] != null)) {
 							realMethods[i].invoke(bean,
 									autoConvertType
-											? convertType(null, values[i], methodTypeValues[i], methodTypes[i],
-													genericTypes[i])
+											? convertType(null, values[i], JdbcTypes.OTHER, methodTypeValues[i],
+													methodTypes[i], genericTypes[i])
 											: values[i]);
 						}
 					}
@@ -2068,8 +2121,8 @@ public class BeanUtil {
 						if (realMethods[i] != null && (forceUpdate || rowData[index[i]] != null)) {
 							realMethods[i].invoke(bean,
 									autoConvertType
-											? convertType(null, rowData[index[i]], methodTypeValues[i], methodTypes[i],
-													genericTypes[i])
+											? convertType(null, rowData[index[i]], JdbcTypes.OTHER, methodTypeValues[i],
+													methodTypes[i], genericTypes[i])
 											: rowData[index[i]]);
 						}
 					}
@@ -2176,8 +2229,8 @@ public class BeanUtil {
 			}
 		}
 		try {
-			method.invoke(bean,
-					convertType(null, value, DataType.getType(method.getParameterTypes()[0]), typeName, genericType));
+			method.invoke(bean, convertType(null, value, JdbcTypes.OTHER,
+					DataType.getType(method.getParameterTypes()[0]), typeName, genericType));
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException(e.getMessage());
@@ -2286,7 +2339,8 @@ public class BeanUtil {
 				// 去除重复
 				if (id != null && !repeat.contains(id)) {
 					bean = voClass.getDeclaredConstructor().newInstance();
-					method.invoke(bean, convertType(typeHandler, id, typeValue, typeName, genericType));
+					method.invoke(bean,
+							convertType(typeHandler, id, JdbcTypes.OTHER, typeValue, typeName, genericType));
 					entities.add(bean);
 					repeat.add(id);
 				}
@@ -2705,5 +2759,33 @@ public class BeanUtil {
 			i++;
 		}
 		mappingSetProperties(entitis, fields, values, indexs, true, false);
+	}
+
+	/**
+	 * 根据字段名称提取类字段上@Column注解中的jdbcType，便于识别json和jsonb等特殊类型
+	 * 
+	 * @param voClass
+	 * @param properties
+	 * @return
+	 */
+	public static Map<String, Integer> getClassFieldMap(Class voClass, String[] properties) {
+		Map<String, Integer> fieldMap = new HashMap<>();
+		Field[] allFields = voClass.getDeclaredFields();
+		Set<String> fieldNameSet = new HashSet<>();
+		for (String str : properties) {
+			fieldNameSet.add(str.toLowerCase());
+		}
+		String strLow;
+		for (Field field : allFields) {
+			strLow = field.getName().toLowerCase();
+			if (fieldNameSet.contains(strLow)) {
+				field.setAccessible(true);
+				Column column = field.getAnnotation(Column.class);
+				if (column != null) {
+					fieldMap.put(strLow, column.type());
+				}
+			}
+		}
+		return fieldMap;
 	}
 }

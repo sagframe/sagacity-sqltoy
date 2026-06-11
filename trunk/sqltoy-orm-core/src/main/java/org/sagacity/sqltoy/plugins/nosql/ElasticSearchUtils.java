@@ -86,8 +86,8 @@ public class ElasticSearchUtils {
 				null, null);
 		// 将结果数据映射到具体对象类型中
 		resultSet.setRows(ResultUtils.wrapQueryResult(sqlToyContext, resultSet.getRows(),
-				StringUtil.humpFieldNames(resultSet.getLabelNames()), resultClass, changedCols, humpMapLabel, false,
-				null, null));
+				StringUtil.humpFieldNames(resultSet.getLabelNames()), resultSet.getLabelTypes(), resultClass,
+				changedCols, humpMapLabel, false, null, null));
 		return resultSet;
 	}
 

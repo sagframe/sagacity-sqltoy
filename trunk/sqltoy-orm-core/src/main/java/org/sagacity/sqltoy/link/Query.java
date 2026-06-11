@@ -13,6 +13,7 @@ import org.sagacity.sqltoy.config.model.DataType;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.exception.DataAccessException;
+import org.sagacity.sqltoy.model.JdbcTypes;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.Page;
 import org.sagacity.sqltoy.model.QueryExecutor;
@@ -167,7 +168,8 @@ public class Query extends BaseLink {
 	public <T> T getValue(final Class<T> resultType) {
 		Object result = getValue();
 		try {
-			return (T) BeanUtil.convertType(result, DataType.getType(resultType), resultType.getTypeName());
+			return (T) BeanUtil.convertType(result, JdbcTypes.OTHER, DataType.getType(resultType),
+					resultType.getTypeName());
 		} catch (Exception e) {
 			throw new DataAccessException("getValue方法获取单个值失败:" + e.getMessage(), e);
 		}

@@ -1157,7 +1157,7 @@ public class DialectUtils {
 				entityClass = BeanUtil.getEntityClass(entity.getClass());
 				rows = BeanUtil.reflectListToBean(sqlToyContext.getTypeHandler(), rows,
 						ResultUtils.humpFieldNames(queryResult.getLabelNames(), entityMeta.getColumnFieldMap()),
-						entityClass);
+						queryResult.getLabelTypes(), entityClass);
 				result = (Serializable) rows.get(0);
 				// 处理类中的@Translate注解，进行缓存翻译
 				ResultUtils.wrapResultTranslate(sqlToyContext, result, entityClass);

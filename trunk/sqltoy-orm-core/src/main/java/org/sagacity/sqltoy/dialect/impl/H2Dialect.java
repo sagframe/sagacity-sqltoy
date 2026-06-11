@@ -20,11 +20,14 @@ import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.dialect.model.SavePKStrategy;
+import org.sagacity.sqltoy.dialect.utils.DefaultDialectUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectExtUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.dialect.utils.H2DialectUtils;
+import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryResult;
+import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.slf4j.Logger;
@@ -188,6 +191,18 @@ public class H2Dialect extends PostgreSqlDialect {
 		String realSql = sql.concat(getLockSql(sql, dbType, (lockMode == null) ? LockMode.UPGRADE : lockMode));
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
 				dbType, 0, fetchSize, maxRows);
+	}
+
+	@Override
+	public List<TableMeta> getTables(String catalog, String schema, String tableName, Connection conn, Integer dbType,
+			String dialect) throws Exception {
+		return DefaultDialectUtils.getTables(catalog, schema, tableName, conn, dbType, dialect);
+	}
+
+	@Override
+	public List<ColumnMeta> getTableColumns(String catalog, String schema, String tableName, Connection conn,
+			Integer dbType, String dialect) throws Exception {
+		return DefaultDialectUtils.getTableColumns(catalog, schema, tableName, conn, dbType, dialect);
 	}
 
 	private String getLockSql(String sql, Integer dbType, LockMode lockMode) {

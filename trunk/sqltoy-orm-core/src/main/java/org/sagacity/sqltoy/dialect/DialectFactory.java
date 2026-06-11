@@ -629,10 +629,11 @@ public class DialectFactory {
 								// 结果映射成对象(含Map),为什么不放在rs循环过程中?因为rs循环里面有link、缓存翻译等很多处理
 								// 将结果映射对象单独出来为了解耦，性能影响其实可以忽略，上万条也是1毫秒级
 								if (extend.resultType != null) {
-									queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext,
-											queryResult.getRows(), queryResult.getLabelNames(),
-											(Class) extend.resultType, changedCols, extend.humpMapLabel,
-											extend.hiberarchy, extend.hiberarchyClasses, extend.fieldsMap));
+									queryResult
+											.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
+													queryResult.getLabelNames(), queryResult.getLabelTypes(),
+													(Class) extend.resultType, changedCols, extend.humpMapLabel,
+													extend.hiberarchy, extend.hiberarchyClasses, extend.fieldsMap));
 								}
 							}
 							SqlExecuteStat.debug("查询结果", "取得随机记录数:{}条!", queryResult.getRecordCount());
@@ -855,10 +856,11 @@ public class DialectFactory {
 								// 结果映射成对象(含Map),为什么不放在rs循环过程中?因为rs循环里面有link、缓存翻译等很多处理
 								// 将结果映射对象单独出来为了解耦，性能影响其实可以忽略，上万条也是1毫秒级
 								if (extend.resultType != null) {
-									queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext,
-											queryResult.getRows(), queryResult.getLabelNames(),
-											(Class) extend.resultType, changedCols, extend.humpMapLabel,
-											extend.hiberarchy, extend.hiberarchyClasses, extend.fieldsMap));
+									queryResult
+											.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
+													queryResult.getLabelNames(), queryResult.getLabelTypes(),
+													(Class) extend.resultType, changedCols, extend.humpMapLabel,
+													extend.hiberarchy, extend.hiberarchyClasses, extend.fieldsMap));
 								}
 							}
 							queryResult.setSkipQueryCount(true);
@@ -1081,10 +1083,11 @@ public class DialectFactory {
 								// 结果映射成对象(含Map),为什么不放在rs循环过程中?因为rs循环里面有link、缓存翻译等很多处理
 								// 将结果映射对象单独出来为了解耦，性能影响其实可以忽略，上万条也是1毫秒级
 								if (extend.resultType != null) {
-									queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext,
-											queryResult.getRows(), queryResult.getLabelNames(),
-											(Class) extend.resultType, changedCols, extend.humpMapLabel,
-											extend.hiberarchy, extend.hiberarchyClasses, extend.fieldsMap));
+									queryResult
+											.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
+													queryResult.getLabelNames(), queryResult.getLabelTypes(),
+													(Class) extend.resultType, changedCols, extend.humpMapLabel,
+													extend.hiberarchy, extend.hiberarchyClasses, extend.fieldsMap));
 								}
 							}
 							SqlExecuteStat.debug("查询结果", "分页总记录数:{}条,取得本页记录数:{}条!",
@@ -1268,10 +1271,11 @@ public class DialectFactory {
 								// 结果映射成对象(含Map),为什么不放在rs循环过程中?因为rs循环里面有link、缓存翻译等很多处理,后续可能还有旋转、汇总等计算
 								// 将结果映射对象单独出来为了解耦，性能影响其实可以忽略，上万条也是1毫秒级
 								if (extend.resultType != null) {
-									queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext,
-											queryResult.getRows(), queryResult.getLabelNames(),
-											(Class) extend.resultType, changedCols, extend.humpMapLabel,
-											extend.hiberarchy, extend.hiberarchyClasses, extend.fieldsMap));
+									queryResult
+											.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
+													queryResult.getLabelNames(), queryResult.getLabelTypes(),
+													(Class) extend.resultType, changedCols, extend.humpMapLabel,
+													extend.hiberarchy, extend.hiberarchyClasses, extend.fieldsMap));
 								}
 							}
 							SqlExecuteStat.debug("查询结果", "实际取得top记录数: {}条!", queryResult.getRecordCount());
@@ -1346,10 +1350,11 @@ public class DialectFactory {
 								// 结果映射成对象(含Map),为什么不放在rs循环过程中?因为rs循环里面有link、缓存翻译等很多处理,后续可能还有旋转、汇总等计算
 								// 将结果映射对象单独出来为了解耦，性能影响其实可以忽略，上万条也是1毫秒级
 								if (extend.resultType != null) {
-									queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext,
-											queryResult.getRows(), queryResult.getLabelNames(),
-											(Class) extend.resultType, changedCols, extend.humpMapLabel,
-											extend.hiberarchy, extend.hiberarchyClasses, extend.fieldsMap));
+									queryResult
+											.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
+													queryResult.getLabelNames(), queryResult.getLabelTypes(),
+													(Class) extend.resultType, changedCols, extend.humpMapLabel,
+													extend.hiberarchy, extend.hiberarchyClasses, extend.fieldsMap));
 								}
 							}
 							SqlExecuteStat.debug("查询结果", "共查询出记录数={}条!", queryResult.getRecordCount());
@@ -2193,9 +2198,9 @@ public class DialectFactory {
 									getFetchSize(extend.fetchSize), extend.maxRows);
 							if (extend.resultType != null) {
 								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
-										queryResult.getLabelNames(), (Class) extend.resultType, false,
-										extend.humpMapLabel, extend.hiberarchy, extend.hiberarchyClasses,
-										extend.fieldsMap));
+										queryResult.getLabelNames(), queryResult.getLabelTypes(),
+										(Class) extend.resultType, false, extend.humpMapLabel, extend.hiberarchy,
+										extend.hiberarchyClasses, extend.fieldsMap));
 							}
 							if (queryResult.getRecordCount() > sqlToyContext.getUpdateTipCount()) {
 								SqlExecuteStat.debug("执行结果", "updateFetch操作影响记录量:{} 条,大于数据修改提示阈值:{}条!",
@@ -2281,6 +2286,7 @@ public class DialectFactory {
 									Class resultType;
 									List row;
 									List<String[]> labelNamesList = queryResult.getLabelsList();
+									List<String[]> labelTypesList = queryResult.getLabelTypesList();
 									String totalCount = "";
 									for (int i = 0; i < endSize; i++) {
 										row = queryResult.getMoreResults()[i];
@@ -2291,7 +2297,7 @@ public class DialectFactory {
 										resultType = resultTypes[i];
 										if (resultType != null) {
 											queryResult.getMoreResults()[i] = ResultUtils.wrapQueryResult(sqlToyContext,
-													row, labelNamesList.get(i), resultType,
+													row, labelNamesList.get(i), labelTypesList.get(i), resultType,
 													(i == 0) ? changedCols : false, null, false, null, null);
 
 										}
@@ -2299,9 +2305,10 @@ public class DialectFactory {
 									SqlExecuteStat.debug("执行结果", "executeStore返回多集合数据，记录量分别为:{} 条,更新影响记录量:{}条!",
 											totalCount, queryResult.getUpdateCount());
 								} else if (null != resultTypes[0]) {
-									queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext,
-											queryResult.getRows(), queryResult.getLabelNames(), resultTypes[0],
-											changedCols, null, false, null, null));
+									queryResult
+											.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
+													queryResult.getLabelNames(), queryResult.getLabelTypes(),
+													resultTypes[0], changedCols, null, false, null, null));
 									SqlExecuteStat.debug("执行结果", "executeStore返回单集合记录量:{} 条,更新影响记录量:{}条!",
 											queryResult.getRecordCount(), queryResult.getUpdateCount());
 								}

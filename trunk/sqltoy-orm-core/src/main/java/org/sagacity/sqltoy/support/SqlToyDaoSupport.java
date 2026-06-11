@@ -62,6 +62,7 @@ import org.sagacity.sqltoy.model.EntityUpdate;
 import org.sagacity.sqltoy.model.IgnoreCaseLinkedMap;
 import org.sagacity.sqltoy.model.IgnoreCaseSet;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
+import org.sagacity.sqltoy.model.JdbcTypes;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.MapKit;
 import org.sagacity.sqltoy.model.Page;
@@ -444,7 +445,8 @@ public class SqlToyDaoSupport {
 			return null;
 		}
 		try {
-			return (T) BeanUtil.convertType(value, DataType.getType(resultType), resultType.getTypeName());
+			return (T) BeanUtil.convertType(value, JdbcTypes.OTHER, DataType.getType(resultType),
+					resultType.getTypeName());
 		} catch (Exception e) {
 			throw new DataAccessException("getSingleValue方法获取单个值失败:" + e.getMessage(), e);
 		}
@@ -1623,7 +1625,7 @@ public class SqlToyDaoSupport {
 			}
 			return result;
 		}
-		return (List<T>) BeanUtil.reflectListToBean(sqlToyContext.getTypeHandler(), cacheData.values(), props,
+		return (List<T>) BeanUtil.reflectListToBean(sqlToyContext.getTypeHandler(), cacheData.values(), props, null,
 				reusltType);
 	}
 

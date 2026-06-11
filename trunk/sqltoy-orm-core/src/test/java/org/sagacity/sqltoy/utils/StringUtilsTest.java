@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -328,11 +327,12 @@ public class StringUtilsTest {
 //        System.err.println(DateUtil.parseString("20231130112031033456789"));
 //		System.err.println(DateUtil.parseString("20231130112031033456"));
 //		System.err.println(DateUtil.parseString("20231130112031033"));
-		//System.err.println(DateUtil.parseString("202311301120311"));
+		// System.err.println(DateUtil.parseString("202311301120311"));
 		System.err.println(DateUtil.parseLocalDateTime("2023-1-1 123030.123345321"));
-		//System.err.println(DateUtil.parseString("2023-06-22 12:22:11"));
-		//LocalDateTime dateValue = LocalDateTime.parse("2023-11-29T20:23:23.123456");
-		//System.err.println(DateUtil.formatDate(dateValue, "yyyy-MM-dd HH:mm:ss.SSSSSSSSS"));
+		// System.err.println(DateUtil.parseString("2023-06-22 12:22:11"));
+		// LocalDateTime dateValue = LocalDateTime.parse("2023-11-29T20:23:23.123456");
+		// System.err.println(DateUtil.formatDate(dateValue, "yyyy-MM-dd
+		// HH:mm:ss.SSSSSSSSS"));
 
 	}
 }
