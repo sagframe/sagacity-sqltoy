@@ -95,7 +95,7 @@ public class BeanWrapper {
 			rowList.add(values[i]);
 			valuesSet.add(rowList);
 		}
-		return BeanUtil.reflectListToBean(null, valuesSet, new int[] { 0 }, names, (Class) type);
+		return BeanUtil.reflectListToBean(null, valuesSet, new int[] { 0 }, names, null, (Class) type);
 	}
 
 	/**

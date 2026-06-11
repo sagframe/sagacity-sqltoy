@@ -481,6 +481,6 @@ public class BeanUtilTest {
 		dataSet.add(new Object[] { "S0001", "chrenfei", 32, LocalDate.now() });
 		dataSet.add(new Object[] { "S0002", "zhangsan", 31, LocalDate.now() });
 		System.err.println(JSON.toJSONString(BeanUtil.reflectListToBean(null, dataSet,
-				new String[] { "id", "name", "age", "birthDay", "tel" }, Student.class)));
+				new String[] { "id", "name", "age", "birthDay", "tel" }, null, Student.class)));
 	}
 }
