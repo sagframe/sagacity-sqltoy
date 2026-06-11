@@ -78,7 +78,7 @@ public class JSONTypeUtil {
 	public static void setJSONValue(Integer dbType, PreparedStatement pst, int paramIndex, int jdbcType, Object value)
 			throws SQLException {
 		if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15) {
-			PostgreSqlDialectUtils.setJSONValue(pst, paramIndex, jdbcType, value);
+			PostgreSqlDialectUtils.setJSONValue(pst, paramIndex, jdbcType, JSON.toJSONString(value));
 		} else {
 			pst.setString(paramIndex, JSON.toJSONString(value));
 		}

@@ -35,8 +35,6 @@ import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.SqlUtilsExt;
 import org.sagacity.sqltoy.utils.StringUtil;
 
-import com.alibaba.fastjson2.JSON;
-
 /**
  * @project sqltoy-orm
  * @description 提供postgresql数据库共用的逻辑实现，便于今后postgresql不同版本之间共享共性部分的实现
@@ -347,20 +345,20 @@ public class PostgreSqlDialectUtils {
 			}
 		});
 	}
-	
+
 	/**
 	 * 
 	 * @param pst
 	 * @param paramIndex
 	 * @param jdbcType
-	 * @param value
+	 * @param jsonStr
 	 * @throws SQLException
 	 */
-	public static void setJSONValue(PreparedStatement pst, int paramIndex, int jdbcType, Object value)
+	public static void setJSONValue(PreparedStatement pst, int paramIndex, int jdbcType, String jsonStr)
 			throws SQLException {
 		PGobject pgObject = new PGobject();
 		pgObject.setType(jdbcType == JdbcTypes.JSONB ? "jsonb" : "json");
-		pgObject.setValue(JSON.toJSONString(value));
+		pgObject.setValue(jsonStr);
 		pst.setObject(paramIndex, pgObject);
 	}
 }
