@@ -55,6 +55,7 @@ import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.model.IgnoreCaseSet;
+import org.sagacity.sqltoy.model.JdbcTypes;
 import org.sagacity.sqltoy.model.SqlInjectionLevel;
 import org.sagacity.sqltoy.model.TreeTableModel;
 import org.sagacity.sqltoy.plugins.TypeHandler;
@@ -362,6 +363,8 @@ public class SqlUtil {
 					} else {
 						pst.setNull(paramIndex, java.sql.Types.NVARCHAR);
 					}
+				} else if (jdbcType == JdbcTypes.JSON || jdbcType == JdbcTypes.JSONB) {
+					JSONTypeUtil.setNull(dbType, pst, paramIndex, jdbcType);
 				} else {
 					pst.setNull(paramIndex, jdbcType);
 				}
@@ -372,6 +375,10 @@ public class SqlUtil {
 		}
 		// 自定义类型处理器，完成setValue处理
 		if (typeHandler != null && typeHandler.setValue(dbType, pst, paramIndex, jdbcType, paramValue)) {
+			return;
+		}
+		if (jdbcType == JdbcTypes.JSON || jdbcType == JdbcTypes.JSONB) {
+			JSONTypeUtil.setJSONValue(dbType, pst, paramIndex, jdbcType, paramValue);
 			return;
 		}
 		String tmpStr;
@@ -709,6 +716,7 @@ public class SqlUtil {
 		}
 		// rs 中的列名称
 		String[] columnNames = getColumnLabels(rs.getMetaData());
+		String[] columnTypes = getColumnTypes(rs.getMetaData());
 		// 组织vo中对应的属性
 		String[] fields = new String[columnNames.length];
 		// update 2020-12-24 增加映射对象时属性映射关系提取
@@ -732,14 +740,35 @@ public class SqlUtil {
 		// set方法对应参数的类型,并全部转为小写
 		String[] propTypes = new String[setMethods.length];
 		int[] propTypeValues = new int[setMethods.length];
+		int[] propertySqlTypes = new int[setMethods.length];
 		Class[] genericTypes = new Class[setMethods.length];
+		Map<String, Integer> fieldTypeMap = BeanUtil.getClassFieldMap(voClass, fields);
 		Type[] types;
 		Class methodType;
+		String tmpStr;
 		for (int i = 0; i < propTypes.length; i++) {
+			propertySqlTypes[i] = java.sql.Types.OTHER;
 			if (setMethods[i] != null) {
 				methodType = setMethods[i].getParameterTypes()[0];
 				propTypes[i] = methodType.getTypeName();
 				propTypeValues[i] = DataType.getType(methodType);
+				if (fields[i] != null) {
+					tmpStr = fields[i].toLowerCase();
+					if (fieldTypeMap.containsKey(tmpStr)) {
+						propertySqlTypes[i] = fieldTypeMap.get(tmpStr);
+					} else if (columnTypes[i] != null) {
+						tmpStr = columnTypes[i].toUpperCase();
+						if (tmpStr.equals("JSON")) {
+							propertySqlTypes[i] = JdbcTypes.JSON;
+						} else if (tmpStr.equals("JSONB")) {
+							propertySqlTypes[i] = JdbcTypes.JSONB;
+						} else if (tmpStr.equals("GEOMETRY")) {
+							propertySqlTypes[i] = JdbcTypes.GEOMETRY;
+						} else if (tmpStr.equals("UUID")) {
+							propertySqlTypes[i] = JdbcTypes.UUID;
+						}
+					}
+				}
 				types = setMethods[i].getGenericParameterTypes();
 				if (types.length > 0 && (types[0] instanceof ParameterizedType)) {
 					genericTypes[i] = (Class) ((ParameterizedType) types[0]).getActualTypeArguments()[0];
@@ -750,8 +779,8 @@ public class SqlUtil {
 		// 循环通过java reflection将rs中的值映射到VO中
 		Object rowData;
 		while (rs.next()) {
-			rowData = reflectResultRowToVOClass(typeHandler, decryptHandler, rs, columnNames, setMethods,
-					propTypeValues, propTypes, genericTypes, voClass, ignoreAllEmptySet);
+			rowData = reflectResultRowToVOClass(typeHandler, decryptHandler, rs, columnNames, propertySqlTypes,
+					setMethods, propTypeValues, propTypes, genericTypes, voClass, ignoreAllEmptySet);
 			if (rowData != null) {
 				resultList.add(rowData);
 			}
@@ -783,6 +812,7 @@ public class SqlUtil {
 	 * @param decryptHandler    解密
 	 * @param rs
 	 * @param columnLabels
+	 * @param propertySqlTypes  jdbcTypes.JSON 等
 	 * @param setMethods
 	 * @param propTypeValues    对应类型int值
 	 * @param propTypes         没有做大小写处理
@@ -793,8 +823,8 @@ public class SqlUtil {
 	 * @throws Exception
 	 */
 	private static Object reflectResultRowToVOClass(TypeHandler typeHandler, DecryptHandler decryptHandler,
-			ResultSet rs, String[] columnLabels, Method[] setMethods, int[] propTypeValues, String[] propTypes,
-			Class[] genericTypes, Class voClass, boolean ignoreAllEmptySet) throws Exception {
+			ResultSet rs, String[] columnLabels, int[] propertySqlTypes, Method[] setMethods, int[] propTypeValues,
+			String[] propTypes, Class[] genericTypes, Class voClass, boolean ignoreAllEmptySet) throws Exception {
 		// 根据匹配的字段通过java reflection将rs中的值映射到VO中
 		Object bean = voClass.getDeclaredConstructor().newInstance();
 		Object fieldValue;
@@ -804,20 +834,23 @@ public class SqlUtil {
 		String typeName;
 		String label;
 		int typeValue;
+		int columnJdbcType;
 		for (int i = 0, n = columnLabels.length; i < n; i++) {
 			label = columnLabels[i];
+			columnJdbcType = propertySqlTypes[i];
 			method = setMethods[i];
 			typeName = propTypes[i];
 			typeValue = propTypeValues[i];
 			if (method != null) {
 				fieldValue = rs.getObject(label);
+				// fieldType=rs.gett
 				if (null != fieldValue) {
 					if (decryptHandler != null) {
 						fieldValue = decryptHandler.decrypt(label, fieldValue);
 					}
 					allNull = false;
-					method.invoke(bean,
-							BeanUtil.convertType(typeHandler, fieldValue, typeValue, typeName, genericTypes[i]));
+					method.invoke(bean, BeanUtil.convertType(typeHandler, fieldValue, columnJdbcType, typeValue,
+							typeName, genericTypes[i]));
 				}
 			}
 		}
@@ -840,6 +873,15 @@ public class SqlUtil {
 			columnNames[i - 1] = rsmd.getColumnLabel(i);
 		}
 		return columnNames;
+	}
+
+	private static String[] getColumnTypes(ResultSetMetaData rsmd) throws SQLException {
+		int fieldCnt = rsmd.getColumnCount();
+		String[] columnTypes = new String[fieldCnt];
+		for (int i = 1; i < fieldCnt + 1; i++) {
+			columnTypes[i - 1] = rsmd.getColumnTypeName(i);
+		}
+		return columnTypes;
 	}
 
 	/**
@@ -2194,6 +2236,7 @@ public class SqlUtil {
 		if (defaultValue == null) {
 			return null;
 		}
+		// 按原默认值返回
 		if ("".equals(defaultValue.trim())) {
 			return defaultValue;
 		}

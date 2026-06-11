@@ -314,4 +314,25 @@ public class StringUtilsTest {
 		System.err.println("[" + result + "]");
 	}
 
+	@Test
+	public void loopAppendWithSign1() {
+//		String reg = "(\\d{2,4})-(\\d)(?=-)-(\\d)(?=\\s)";
+//
+//        System.out.println("26-6-1 18:20:00".replaceAll(reg, "$1-0$2-0$3"));    // 26-06-01 18:20:00
+//        System.out.println("2026-6-1 18:20:00".replaceAll(reg, "$1-0$2-0$3"));  // 2026-06-01 18:20:00
+//        System.out.println("26-12-05 09:00:00".replaceAll(reg, "$1-0$2-0$3"));  // 26-12-05 09:00:00
+//        System.out.println("2026-12-05 09:00:00".replaceAll(reg, "$1-0$2-0$3"));// 2026-12-05 09:00:00
+//        System.out.println("09:00:00".replaceAll(reg, "$1-0$2-0$3"));// 2026-12-05 09:00:00
+//        
+//        System.err.println(DateUtil.parseString("20231130112031033456789"));
+//		System.err.println(DateUtil.parseString("20231130112031033456"));
+//		System.err.println(DateUtil.parseString("20231130112031033"));
+		// System.err.println(DateUtil.parseString("202311301120311"));
+		System.err.println(DateUtil.parseLocalDateTime("2023-1-1 123030.123345321"));
+		// System.err.println(DateUtil.parseString("2023-06-22 12:22:11"));
+		// LocalDateTime dateValue = LocalDateTime.parse("2023-11-29T20:23:23.123456");
+		// System.err.println(DateUtil.formatDate(dateValue, "yyyy-MM-dd
+		// HH:mm:ss.SSSSSSSSS"));
+
+	}
 }

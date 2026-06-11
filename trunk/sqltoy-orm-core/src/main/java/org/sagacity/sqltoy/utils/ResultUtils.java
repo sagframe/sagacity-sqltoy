@@ -55,6 +55,7 @@ import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.model.IgnoreCaseSet;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
+import org.sagacity.sqltoy.model.JdbcTypes;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.inner.DataSetResult;
@@ -1460,8 +1461,8 @@ public class ResultUtils {
 	 * @throws Exception
 	 */
 	public static List wrapQueryResult(SqlToyContext sqlToyContext, List queryResultRows, String[] labelNames,
-			Class resultType, boolean changedCols, Boolean humpMapLabel, boolean hiberarchy, Class[] hiberarchyClasses,
-			Map<Class, IgnoreKeyCaseMap<String, String>> fieldsMap) throws Exception {
+			String[] columnTypes, Class resultType, boolean changedCols, Boolean humpMapLabel, boolean hiberarchy,
+			Class[] hiberarchyClasses, Map<Class, IgnoreKeyCaseMap<String, String>> fieldsMap) throws Exception {
 		if (queryResultRows == null || queryResultRows.isEmpty() || resultType == null) {
 			return queryResultRows;
 		}
@@ -1541,13 +1542,14 @@ public class ResultUtils {
 		if (!hasCascade) {
 			// 封装成VO对象形式
 			result = BeanUtil.reflectListToBean(sqlToyContext.getTypeHandler(), queryResultRows,
-					convertRealProps(wrapMapFields(labelNames, fieldsMap, resultType), columnFieldMap), resultType);
+					convertRealProps(wrapMapFields(labelNames, fieldsMap, resultType), columnFieldMap), columnTypes,
+					resultType);
 			// update 2021-11-16 支持VO或POJO 属性上@Translate注解,进行缓存翻译
 			wrapResultTranslate(sqlToyContext, result, resultType);
 		} else {
 			// 内部完成了wrapResultTranslate行为
-			result = hiberarchySet(sqlToyContext, entityMeta, columnFieldMap, queryResultRows, labelNames, resultType,
-					cascadeModel, hiberarchyClasses, fieldsMap);
+			result = hiberarchySet(sqlToyContext, entityMeta, columnFieldMap, queryResultRows, labelNames, columnTypes,
+					resultType, cascadeModel, hiberarchyClasses, fieldsMap);
 		}
 		return result;
 	}
@@ -1570,7 +1572,7 @@ public class ResultUtils {
 		try {
 			for (Object row : rows) {
 				cell = ((List) row).get(0);
-				result.add((T) BeanUtil.convertType(cell, typeValue, typeName));
+				result.add((T) BeanUtil.convertType(cell, JdbcTypes.OTHER, typeValue, typeName));
 			}
 			return result;
 		} catch (Exception e) {
@@ -1613,8 +1615,8 @@ public class ResultUtils {
 	 * @throws Exception
 	 */
 	private static List hiberarchySet(SqlToyContext sqlToyContext, EntityMeta entityMeta,
-			HashMap<String, String> columnFieldMap, List queryResultRows, String[] labelNames, Class resultType,
-			List<TableCascadeModel> cascadeModels, Class[] hiberarchyClasses,
+			HashMap<String, String> columnFieldMap, List queryResultRows, String[] labelNames, String[] columnTypes,
+			Class resultType, List<TableCascadeModel> cascadeModels, Class[] hiberarchyClasses,
 			Map<Class, IgnoreKeyCaseMap<String, String>> fieldsMap) throws Exception {
 		IgnoreKeyCaseMap<String, Integer> labelIndexs = new IgnoreKeyCaseMap<String, Integer>();
 		int index = 0;
@@ -1646,7 +1648,8 @@ public class ResultUtils {
 		}
 		// 构造主对象集合
 		List result = BeanUtil.reflectListToBean(sqlToyContext.getTypeHandler(), masterData,
-				convertRealProps(wrapMapFields(labelNames, fieldsMap, resultType), columnFieldMap), resultType);
+				convertRealProps(wrapMapFields(labelNames, fieldsMap, resultType), columnFieldMap), columnTypes,
+				resultType);
 		// add 2024-8-7 (用户:一颗开心果反馈)在一个查询封装成对象级联平铺模式，主对象上未处理类上@Translate缓存翻译注解
 		wrapResultTranslate(sqlToyContext, result, resultType);
 		List<List> oneToOnes = new ArrayList();
@@ -1687,7 +1690,7 @@ public class ResultUtils {
 					List oneToOneList = BeanUtil.reflectListToBean(sqlToyContext.getTypeHandler(), masterData,
 							convertRealProps(wrapMapFields(realLabelNames, fieldsMap, cascade.getMappedType()),
 									columnFieldMap),
-							cascade.getMappedType());
+							columnTypes, cascade.getMappedType());
 					// 处理OneToOne子类上@Translate注解进行缓存翻译
 					wrapResultTranslate(sqlToyContext, oneToOneList, cascade.getMappedType());
 					oneToOnes.add(oneToOneList);
@@ -1746,7 +1749,7 @@ public class ResultUtils {
 				masterBean = result.get(index);
 				item = BeanUtil.reflectListToBean(sqlToyContext.getTypeHandler(), groupListIter.next(),
 						convertRealProps(wrapMapFields(realLabelNames, fieldsMap, oneToManyClass), columnFieldMap),
-						oneToManyClass);
+						columnTypes, oneToManyClass);
 				// 移除属性值为null的空对象记录
 				if (notNullField != null) {
 					for (int k = 0; k < item.size(); k++) {

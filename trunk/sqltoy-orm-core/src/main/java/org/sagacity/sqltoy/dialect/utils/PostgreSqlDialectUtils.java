@@ -7,9 +7,11 @@ import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.postgresql.util.PGobject;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DecryptHandler;
@@ -24,6 +26,7 @@ import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.dialect.model.SavePKStrategy;
+import org.sagacity.sqltoy.model.JdbcTypes;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.TableMeta;
@@ -31,6 +34,8 @@ import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.SqlUtilsExt;
 import org.sagacity.sqltoy.utils.StringUtil;
+
+import com.alibaba.fastjson2.JSON;
 
 /**
  * @project sqltoy-orm
@@ -341,5 +346,21 @@ public class PostgreSqlDialectUtils {
 				}
 			}
 		});
+	}
+	
+	/**
+	 * 
+	 * @param pst
+	 * @param paramIndex
+	 * @param jdbcType
+	 * @param value
+	 * @throws SQLException
+	 */
+	public static void setJSONValue(PreparedStatement pst, int paramIndex, int jdbcType, Object value)
+			throws SQLException {
+		PGobject pgObject = new PGobject();
+		pgObject.setType(jdbcType == JdbcTypes.JSONB ? "jsonb" : "json");
+		pgObject.setValue(JSON.toJSONString(value));
+		pst.setObject(paramIndex, pgObject);
 	}
 }

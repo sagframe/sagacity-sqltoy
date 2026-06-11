@@ -54,7 +54,7 @@ public class QueryExecutorBuilder {
 			SqlToyConfig sqlToyConfig, boolean wrapNamedArgs, boolean filterAuthData) {
 		// sql xml中特别设置了超时时长,但代码QueryExecutor设置优先
 		if (sqlToyConfig.getQueryTimeout() != null && sqlToyConfig.getQueryTimeout() > 0) {
-			// QueryExecutor 中timeout为null则启用sql xml文件中的设置
+			// QueryExecutor 中为null则启用sql xml文件中的设置
 			if (extend.timeout == null || extend.timeout <= 0) {
 				extend.timeout = sqlToyConfig.getQueryTimeout();
 			}
