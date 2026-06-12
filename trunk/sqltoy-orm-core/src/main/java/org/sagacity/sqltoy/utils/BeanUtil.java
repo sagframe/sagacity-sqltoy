@@ -636,9 +636,7 @@ public class BeanUtil {
 			}
 		}
 		// 统一处理json字符类型转java对象
-		if ((jdbcType == JdbcTypes.JSON || jdbcType == JdbcTypes.JSONB)
-				&& (typeValue == DataType.objectType || typeValue == DataType.listType
-						|| typeValue == DataType.aryOtherType || typeValue == DataType.setType)) {
+		if (jdbcType == JdbcTypes.JSON || jdbcType == JdbcTypes.JSONB) {
 			Object result = JSONTypeUtil.jsonToJavaType(jdbcType, typeName, genericType, value);
 			if (result != null) {
 				return result;
