@@ -259,6 +259,14 @@ public class JSONTypeUtil {
 				return null;
 			}
 		}
+		// byte[] 类型 - 尝试转为UTF-8字符串
+		if (jdbcValue instanceof byte[]) {
+			String str = new String((byte[]) jdbcValue, java.nio.charset.StandardCharsets.UTF_8);
+			if (str.startsWith("\"") && str.endsWith("\"")) {
+				return JSON.parseObject(str, String.class);
+			}
+			return str;
+		}
 		// 其他类型尝试 toString
 		return jdbcValue.toString();
 	}
