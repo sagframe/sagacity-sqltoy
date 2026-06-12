@@ -10,6 +10,11 @@ import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @project sagacity-sqltoy
@@ -18,6 +23,10 @@ import java.nio.ByteBuffer;
  * @version v1.0,Date:2008-12-14
  */
 public class IOUtil {
+	/**
+	 * 定义日志
+	 */
+	protected final static Logger logger = LoggerFactory.getLogger(IOUtil.class);
 
 	private IOUtil() {
 	}
@@ -30,10 +39,11 @@ public class IOUtil {
 	 * @throws Exception
 	 */
 	public static InputStream strToInputStream(String str, String charset) throws Exception {
-		if (charset != null) {
-			return new ByteArrayInputStream(str.getBytes(charset));
+		if (str == null) {
+			return null;
 		}
-		return new ByteArrayInputStream(str.getBytes());
+		Charset cs = StringUtil.isNotBlank(charset) ? Charset.forName(charset) : StandardCharsets.UTF_8;
+		return new ByteArrayInputStream(str.getBytes(cs));
 	}
 
 	/**
@@ -45,19 +55,16 @@ public class IOUtil {
 		if (obj == null) {
 			return null;
 		}
-		ByteArrayOutputStream out = null;
-		ObjectOutputStream outputStream = null;
-		try {
-			out = new ByteArrayOutputStream();
-			outputStream = new ObjectOutputStream(out);
-			outputStream.writeObject(obj);
-			outputStream.flush();
-			return out.toByteArray();
+		// 预分配缓冲区，减少扩容
+		try (ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
+				ObjectOutputStream oos = new ObjectOutputStream(bos)) {
+			oos.writeObject(obj);
+			// 主动刷出缓冲区
+			oos.flush();
+			return bos.toByteArray();
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("对象序列化失败: {}", e.getMessage(), e);
 			return null;
-		} finally {
-			closeQuietly(outputStream, out);
 		}
 	}
 
@@ -70,17 +77,12 @@ public class IOUtil {
 		if (objBytes == null || objBytes.length == 0) {
 			return null;
 		}
-		Object obj = null;
-		ObjectInputStream in = null;
-		try {
-			in = new ObjectInputStream(new ByteArrayInputStream(objBytes));
-			obj = in.readObject();
+		try (ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(objBytes))) {
+			return in.readObject();
 		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			closeQuietly(in);
+			logger.error("对象反序列化失败: {}", e.getMessage(), e);
+			return null;
 		}
-		return obj;
 	}
 
 	/**
@@ -92,80 +94,84 @@ public class IOUtil {
 		if (is == null) {
 			return null;
 		}
-		Object obj = null;
-		ObjectInputStream in = null;
-		try {
-			in = new ObjectInputStream(is);
-			obj = in.readObject();
+		try (ObjectInputStream in = new ObjectInputStream(is)) {
+			return in.readObject();
 		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			closeQuietly(in);
+			logger.error("对象反序列化失败: {}", e.getMessage(), e);
+			return null;
 		}
-		return obj;
 	}
 
 	/**
 	 * @todo 将inputStream转换成byte数组
 	 * @param is
 	 * @return
-	 * @throws Exception
+	 * @throws IOException
 	 */
 	public static byte[] getBytes(InputStream is) throws IOException {
 		if (is == null) {
 			return null;
 		}
-		// 无需关闭
-		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-		byte[] buffer = new byte[1024];
-		int len;
-		while ((len = is.read(buffer)) != -1) {
-			outputStream.write(buffer, 0, len);
+		try (InputStream stream = is) {
+			// 8KB 缓冲区
+			byte[] buffer = new byte[1024 * 8];
+			ByteArrayOutputStream bos = new ByteArrayOutputStream();
+			int len;
+			while ((len = stream.read(buffer)) != -1) {
+				bos.write(buffer, 0, len);
+			}
+			return bos.toByteArray();
 		}
-		return outputStream.toByteArray();
 	}
 
+	/**
+	 * @todo 将inputStream转换成字符串
+	 * @param is
+	 * @param encoding
+	 * @return
+	 */
 	public static String inputStreamToStr(InputStream is, String encoding) {
-		if (null == is) {
+		if (is == null) {
 			return null;
 		}
-		StringBuilder buffer = new StringBuilder();
-		BufferedReader in = null;
-		try {
-			if (StringUtil.isNotBlank(encoding)) {
-				in = new BufferedReader(new InputStreamReader(is, encoding));
-			} else {
-				in = new BufferedReader(new InputStreamReader(is));
-			}
-			String line = "";
+		Charset charset = StringUtil.isNotBlank(encoding) ? Charset.forName(encoding) : StandardCharsets.UTF_8;
+		final String lineSep = System.lineSeparator();
+		try (BufferedReader in = new BufferedReader(new InputStreamReader(is, charset))) {
+			StringBuilder buffer = new StringBuilder();
+			String line;
+			boolean firstLine = true;
 			while ((line = in.readLine()) != null) {
+				if (!firstLine) {
+					buffer.append(lineSep);
+				}
 				buffer.append(line);
-				buffer.append("\r\n");
+				firstLine = false;
 			}
+			return buffer.toString();
 		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			closeQuietly(in);
+			logger.error("读取InputStream失败: {}", e.getMessage(), e);
+			return null;
 		}
-		return buffer.toString();
 	}
-	
+
+	/**
+	 * @todo 将对象转换成ByteBuffer
+	 * @param obj
+	 * @return
+	 * @throws IOException
+	 */
 	public static ByteBuffer getByteBuffer(Object obj) throws IOException {
 		if (obj == null) {
 			return null;
 		}
-		ByteArrayOutputStream bOut = null;
-		ObjectOutputStream out = null;
-		try {
-			bOut = new ByteArrayOutputStream();
-			out = new ObjectOutputStream(bOut);
+		try (ByteArrayOutputStream bOut = new ByteArrayOutputStream(1024);
+				ObjectOutputStream out = new ObjectOutputStream(bOut)) {
 			out.writeObject(obj);
 			out.flush();
+			// 直接使用内部数组，不再二次拷贝（慎用：BAOS 内部数组会随操作变化）
+			// 稳妥写法：wrap(toByteArray())，追求极致性能用下面注释行
+			// return ByteBuffer.wrap(bOut.buf, 0, bOut.count);
 			return ByteBuffer.wrap(bOut.toByteArray());
-		} catch (IOException ie) {
-			throw ie;
-		} finally {
-			closeQuietly(out, bOut);
 		}
 	}
 
@@ -176,10 +182,22 @@ public class IOUtil {
 	 */
 	public static void close(Closeable... closeables) throws IOException {
 		if (closeables != null) {
+			IOException firstException = null;
 			for (Closeable closeable : closeables) {
 				if (closeable != null) {
-					closeable.close();
+					try {
+						closeable.close();
+					} catch (IOException e) {
+						if (firstException == null) {
+							firstException = e;
+						} else {
+							firstException.addSuppressed(e);
+						}
+					}
 				}
+			}
+			if (firstException != null) {
+				throw firstException;
 			}
 		}
 	}

@@ -1,7 +1,6 @@
 package org.sagacity.sqltoy.utils;
 
 import java.io.ByteArrayInputStream;
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Reader;
@@ -1829,22 +1828,16 @@ public class SqlUtil {
 		if (clob == null) {
 			return null;
 		}
-		// clob.getSubString(1, (int) clob.length())
-		StringBuffer sb = new StringBuffer(1024 * 8);// 8K
-		Reader clobStream = null;
-		try {
-			clobStream = clob.getCharacterStream();
-			char[] b = new char[1024];// 每次获取1K
-			int i = 0;
-			while ((i = clobStream.read(b)) != -1) {
-				sb.append(b, 0, i);
+		// 8K
+		StringBuilder sb = new StringBuilder(1024 * 8);
+		char[] buf = new char[1024];
+		int len;
+		try (Reader r = clob.getCharacterStream()) {
+			while ((len = r.read(buf)) != -1) {
+				sb.append(buf, 0, len);
 			}
-		} catch (Exception ex) {
-			sb = null;
-		} finally {
-			closeQuietly(clobStream);
-		}
-		if (sb == null) {
+		} catch (Exception e) {
+			logger.error("读取Clob失败: {}", e.getMessage(), e);
 			return null;
 		}
 		return sb.toString();
@@ -1993,33 +1986,6 @@ public class SqlUtil {
 			return Short.valueOf(idValue.toString()).shortValue();
 		}
 		return idValue;
-	}
-
-	/**
-	 * @todo 关闭一个或多个流对象
-	 * @param closeables 可关闭的流对象列表
-	 * @throws IOException
-	 */
-	public static void close(Closeable... closeables) throws IOException {
-		if (closeables != null) {
-			for (Closeable closeable : closeables) {
-				if (closeable != null) {
-					closeable.close();
-				}
-			}
-		}
-	}
-
-	/**
-	 * @todo 关闭一个或多个流对象
-	 * @param closeables 可关闭的流对象列表
-	 */
-	public static void closeQuietly(Closeable... closeables) {
-		try {
-			close(closeables);
-		} catch (IOException e) {
-			// do nothing
-		}
 	}
 
 	/**

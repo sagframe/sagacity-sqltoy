@@ -2,9 +2,7 @@ package org.sagacity.sqltoy.utils;
 
 import static java.lang.System.err;
 
-import java.io.BufferedReader;
 import java.io.Serializable;
-import java.io.StringWriter;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -702,8 +700,7 @@ public class BeanUtil {
 		// 5 字符串第一优先
 		if (DataType.stringType == typeValue) {
 			if (paramValue instanceof java.sql.Clob) {
-				java.sql.Clob clob = (java.sql.Clob) paramValue;
-				return clob.getSubString((long) 1, (int) clob.length());
+				return SqlUtil.clobToString((java.sql.Clob) paramValue);
 			} else if (paramValue instanceof LocalDate) {
 				return DateUtil.formatDate(paramValue, "yyyy-MM-dd");
 			} else if (paramValue instanceof LocalTime) {
@@ -1018,14 +1015,7 @@ public class BeanUtil {
 			if (paramValue instanceof String) {
 				return paramValue.toString();
 			}
-			java.sql.Clob clob = (java.sql.Clob) paramValue;
-			BufferedReader in = new BufferedReader(clob.getCharacterStream());
-			StringWriter out = new StringWriter();
-			int c;
-			while ((c = in.read()) != -1) {
-				out.write(c);
-			}
-			return out.toString();
+			return SqlUtil.clobToString((java.sql.Clob) paramValue);
 		}
 		// 28
 		if (DataType.sqlTimeType == typeValue) {
@@ -1061,14 +1051,8 @@ public class BeanUtil {
 				return (char[]) paramValue;
 			}
 			if (paramValue instanceof java.sql.Clob) {
-				java.sql.Clob clob = (java.sql.Clob) paramValue;
-				BufferedReader in = new BufferedReader(clob.getCharacterStream());
-				StringWriter out = new StringWriter();
-				int c;
-				while ((c = in.read()) != -1) {
-					out.write(c);
-				}
-				return out.toString().toCharArray();
+				String str = SqlUtil.clobToString((java.sql.Clob) paramValue);
+				return str != null ? str.toCharArray() : null;
 			}
 			return paramValue.toString().toCharArray();
 		}
