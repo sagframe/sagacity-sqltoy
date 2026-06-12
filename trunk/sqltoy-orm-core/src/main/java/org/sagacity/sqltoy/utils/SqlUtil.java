@@ -1829,6 +1829,7 @@ public class SqlUtil {
 		if (clob == null) {
 			return null;
 		}
+		// clob.getSubString(1, (int) clob.length())
 		StringBuffer sb = new StringBuffer(1024 * 8);// 8K
 		Reader clobStream = null;
 		try {

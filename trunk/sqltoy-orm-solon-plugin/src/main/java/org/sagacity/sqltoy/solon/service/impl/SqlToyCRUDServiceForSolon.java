@@ -9,10 +9,11 @@ import java.util.Set;
 
 import org.noear.solon.annotation.Component;
 import org.noear.solon.annotation.Singleton;
-import org.noear.solon.data.annotation.Tran;
-import org.sagacity.sqltoy.dao.SqlToyLazyDao;
+import org.noear.solon.data.annotation.Transaction;
+import org.sagacity.sqltoy.dao.LightDao;
 import org.sagacity.sqltoy.model.CacheMatchFilter;
 import org.sagacity.sqltoy.model.LockMode;
+import org.sagacity.sqltoy.model.MapKit;
 import org.sagacity.sqltoy.model.Page;
 import org.sagacity.sqltoy.model.ParallQuery;
 import org.sagacity.sqltoy.model.ParallelConfig;
@@ -21,203 +22,201 @@ import org.sagacity.sqltoy.model.TreeTableModel;
 import org.sagacity.sqltoy.service.SqlToyCRUDService;
 import org.sagacity.sqltoy.translate.TranslateHandler;
 
-
 /**
  *
  * @author 夜の孤城
  * @since 1.10
- * */
-@Singleton(false) //因为会被多数据源使用，所以不能是单例
+ */
+@Singleton(false) // 因为会被多数据源使用，所以不能是单例
 @Component
 public class SqlToyCRUDServiceForSolon implements SqlToyCRUDService {
-    protected SqlToyLazyDao sqlToyLazyDao;
+	protected LightDao lightDao;
 
-    public void setSqlToyLazyDao(SqlToyLazyDao sqlToyLazyDao) {
-        this.sqlToyLazyDao = sqlToyLazyDao;
-    }
+	public void setLightDao(LightDao lightDao) {
+		this.lightDao = lightDao;
+	}
 
-    @Tran
-    public Object save(Serializable entity) {
-        return this.sqlToyLazyDao.save(entity);
-    }
+	@Transaction
+	public Object save(Serializable entity) {
+		return this.lightDao.save(entity);
+	}
 
-    @Tran
-    public <T extends Serializable> Long saveAll(List<T> entities) {
-        return this.sqlToyLazyDao.saveAll(entities);
-    }
+	@Transaction
+	public <T extends Serializable> Long saveAll(List<T> entities) {
+		return this.lightDao.saveAll(entities);
+	}
 
-    @Tran
-    public <T extends Serializable> Long saveAllIgnoreExist(List<T> entities) {
-        return this.sqlToyLazyDao.saveAllIgnoreExist(entities);
-    }
+	@Transaction
+	public <T extends Serializable> Long saveAllIgnoreExist(List<T> entities) {
+		return this.lightDao.saveAllIgnoreExist(entities);
+	}
 
-    @Tran
-    public Long update(Serializable entity, String... forceUpdateProps) {
-        if (null == entity) {
-            throw new IllegalArgumentException("update 数据对象为null!");
-        } else {
-            return this.sqlToyLazyDao.update(entity, forceUpdateProps);
-        }
-    }
+	@Transaction
+	public Long update(Serializable entity, String... forceUpdateProps) {
+		if (null == entity) {
+			throw new IllegalArgumentException("update 数据对象为null!");
+		} else {
+			return this.lightDao.update(entity, forceUpdateProps);
+		}
+	}
 
-    @Tran
-    public Long updateCascade(Serializable entity, String... forceUpdateProps) {
-        if (null == entity) {
-            throw new IllegalArgumentException("update 数据对象为null!");
-        } else {
-            return this.sqlToyLazyDao.updateCascade(entity, forceUpdateProps, (Class[])null, (HashMap)null);
-        }
-    }
+	@Transaction
+	public Long updateCascade(Serializable entity, String... forceUpdateProps) {
+		if (null == entity) {
+			throw new IllegalArgumentException("update 数据对象为null!");
+		} else {
+			return this.lightDao.updateCascade(entity, forceUpdateProps, (Class[]) null, (HashMap) null);
+		}
+	}
 
-    @Tran
-    public Long updateDeeply(Serializable entity) {
-        if (null == entity) {
-            throw new IllegalArgumentException("updateDeeply 数据对象为null!");
-        } else {
-            return this.sqlToyLazyDao.updateDeeply(entity);
-        }
-    }
+	@Transaction
+	public Long updateDeeply(Serializable entity) {
+		if (null == entity) {
+			throw new IllegalArgumentException("updateDeeply 数据对象为null!");
+		} else {
+			return this.lightDao.updateDeeply(entity);
+		}
+	}
 
-    @Tran
-    public <T extends Serializable> Long updateAll(List<T> entities, String... forceUpdateProps) {
-        return this.sqlToyLazyDao.updateAll(entities, forceUpdateProps);
-    }
+	@Transaction
+	public <T extends Serializable> Long updateAll(List<T> entities, String... forceUpdateProps) {
+		return this.lightDao.updateAll(entities, forceUpdateProps);
+	}
 
-    @Tran
-    public <T extends Serializable> Long updateAllDeeply(List<T> entities) {
-        return this.sqlToyLazyDao.updateAllDeeply(entities);
-    }
+	@Transaction
+	public <T extends Serializable> Long updateAllDeeply(List<T> entities) {
+		return this.lightDao.updateAllDeeply(entities);
+	}
 
-    @Tran
-    public Long saveOrUpdate(Serializable entity, String... forceUpdateProps) {
-        if (null == entity) {
-            throw new IllegalArgumentException("saveOrUpdate  数据对象为null!");
-        } else {
-            return this.sqlToyLazyDao.saveOrUpdate(entity, forceUpdateProps);
-        }
-    }
+	@Transaction
+	public Long saveOrUpdate(Serializable entity, String... forceUpdateProps) {
+		if (null == entity) {
+			throw new IllegalArgumentException("saveOrUpdate  数据对象为null!");
+		} else {
+			return this.lightDao.saveOrUpdate(entity, forceUpdateProps);
+		}
+	}
 
-    @Tran
-    public <T extends Serializable> Long saveOrUpdateAll(List<T> entities, String... forceUpdateProps) {
-        return this.sqlToyLazyDao.saveOrUpdateAll(entities, forceUpdateProps);
-    }
+	@Transaction
+	public <T extends Serializable> Long saveOrUpdateAll(List<T> entities, String... forceUpdateProps) {
+		return this.lightDao.saveOrUpdateAll(entities, forceUpdateProps);
+	}
 
-    @Tran
-    public <T extends Serializable> T load(T entity) {
-        return this.sqlToyLazyDao.load(entity);
-    }
+	public <T extends Serializable> T load(T entity) {
+		return this.lightDao.load(entity);
+	}
 
-    @Tran
-    public <T extends Serializable> T loadCascade(T entity) {
-        return this.sqlToyLazyDao.loadCascade(entity, (LockMode)null, new Class[0]);
-    }
+	public <T extends Serializable> T loadCascade(T entity) {
+		return this.lightDao.loadCascade(entity, (LockMode) null, new Class[0]);
+	}
 
-    @Tran
-    public <T extends Serializable> List<T> loadAll(List<T> entities) {
-        return this.sqlToyLazyDao.loadAll(entities);
-    }
+	public <T extends Serializable> List<T> loadAll(List<T> entities) {
+		return this.lightDao.loadAll(entities);
+	}
 
-    @Tran
-    public <T extends Serializable> List<T> loadAllCascade(List<T> entities, Class... cascadeTypes) {
-        return this.sqlToyLazyDao.loadAllCascade(entities, cascadeTypes);
-    }
+	public <T extends Serializable> List<T> loadAllCascade(List<T> entities, Class... cascadeTypes) {
+		return this.lightDao.loadAllCascade(entities, cascadeTypes);
+	}
 
-    @Tran
-    public <T extends Serializable> List<T> loadByIds(Class<T> voClass, Object... ids) {
-        return this.sqlToyLazyDao.loadByIds(voClass, ids);
-    }
+	@Transaction
+	public <T extends Serializable> List<T> loadByIds(Class<T> voClass, Object... ids) {
+		return this.lightDao.loadByIds(voClass, ids);
+	}
 
-    @Tran
-    public Long delete(Serializable entity) {
-        return this.sqlToyLazyDao.delete(entity);
-    }
+	@Transaction
+	public Long delete(Serializable entity) {
+		return this.lightDao.delete(entity);
+	}
 
-    @Tran
-    public <T extends Serializable> Long deleteAll(List<T> entities) {
-        return this.sqlToyLazyDao.deleteAll(entities);
-    }
+	@Transaction
+	public <T extends Serializable> Long deleteAll(List<T> entities) {
+		return this.lightDao.deleteAll(entities);
+	}
 
-    public Long deleteByIds(Class entityClass, Object... ids) {
-        return this.sqlToyLazyDao.deleteByIds(entityClass, ids);
-    }
+	@Transaction
+	public Long deleteByIds(Class entityClass, Object... ids) {
+		return this.lightDao.deleteByIds(entityClass, ids);
+	}
 
-    @Tran
-    public void truncate(Class entityClass) {
-        this.sqlToyLazyDao.truncate(entityClass);
-    }
+	@Transaction
+	public void truncate(Class entityClass) {
+		this.lightDao.truncate(entityClass);
+	}
 
-    @Tran
-    public boolean isUnique(Serializable entity, String... paramsNamed) {
-        return this.sqlToyLazyDao.isUnique(entity, paramsNamed);
-    }
+	@Transaction
+	public boolean isUnique(Serializable entity, String... paramsNamed) {
+		return this.lightDao.isUnique(entity, paramsNamed);
+	}
 
-    @Tran
-    public boolean wrapTreeTableRoute(Serializable entity, String pidField) {
-        return this.sqlToyLazyDao.wrapTreeTableRoute((new TreeTableModel(entity)).pidField(pidField));
-    }
+	@Transaction
+	public boolean wrapTreeTableRoute(Serializable entity, String pidField) {
+		return this.lightDao.wrapTreeTableRoute((new TreeTableModel(entity)).pidField(pidField));
+	}
 
-    @Tran
-    public boolean wrapTreeTableRoute(Serializable entity, String pidField, int appendIdSize) {
-        return this.sqlToyLazyDao.wrapTreeTableRoute((new TreeTableModel(entity)).pidField(pidField).idLength(appendIdSize));
-    }
+	@Transaction
+	public boolean wrapTreeTableRoute(Serializable entity, String pidField, int appendIdSize) {
+		return this.lightDao.wrapTreeTableRoute((new TreeTableModel(entity)).pidField(pidField).idLength(appendIdSize));
+	}
 
-    @Tran
-    public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames, Object[] paramValues) {
-        return this.sqlToyLazyDao.parallQuery(parallQueryList, paramNames, paramValues, (ParallelConfig)null);
-    }
+	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
+			Object[] paramValues) {
+		return this.lightDao.parallQuery(parallQueryList, MapKit.keys(paramNames).values(paramValues),
+				(ParallelConfig) null);
+	}
 
-    @Tran
-    public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames, Object[] paramValues, ParallelConfig parallelConfig) {
-        return this.sqlToyLazyDao.parallQuery(parallQueryList, paramNames, paramValues, parallelConfig);
-    }
+	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
+			Object[] paramValues, ParallelConfig parallelConfig) {
+		return this.lightDao.parallQuery(parallQueryList, MapKit.keys(paramNames).values(paramValues), parallelConfig);
+	}
 
-    @Tran
-    public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String, Object> paramsMap, ParallelConfig parallelConfig) {
-        return this.sqlToyLazyDao.parallQuery(parallQueryList, paramsMap, parallelConfig);
-    }
+	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String, Object> paramsMap,
+			ParallelConfig parallelConfig) {
+		return this.lightDao.parallQuery(parallQueryList, paramsMap, parallelConfig);
+	}
 
-    public long generateBizId(String signature, int increment) {
-        return this.sqlToyLazyDao.generateBizId(signature, increment);
-    }
+	public long generateBizId(String signature, int increment) {
+		return this.lightDao.generateBizId(signature, increment);
+	}
 
-    public String generateBizId(Serializable entity) {
-        return this.sqlToyLazyDao.generateBizId(entity);
-    }
+	public String generateBizId(Serializable entity) {
+		return this.lightDao.generateBizId(entity);
+	}
 
-    public void translate(Collection dataSet, String cacheName, TranslateHandler handler) {
-        this.sqlToyLazyDao.translate(dataSet, cacheName, (String)null, 1, handler);
-    }
+	public void translate(Collection dataSet, String cacheName, TranslateHandler handler) {
+		this.lightDao.translate(dataSet, cacheName, (String) null, 1, handler);
+	}
 
-    public void translate(Collection dataSet, String cacheName, String dictType, Integer index, TranslateHandler handler) {
-        this.sqlToyLazyDao.translate(dataSet, cacheName, dictType, index, handler);
-    }
+	public void translate(Collection dataSet, String cacheName, String dictType, Integer index,
+			TranslateHandler handler) {
+		this.lightDao.translate(dataSet, cacheName, dictType, index, handler);
+	}
 
-    public boolean existCache(String cacheName) {
-        return this.sqlToyLazyDao.existCache(cacheName);
-    }
+	public boolean existCache(String cacheName) {
+		return this.lightDao.existCache(cacheName);
+	}
 
-    public Set<String> getCacheNames() {
-        return this.sqlToyLazyDao.getCacheNames();
-    }
+	public Set<String> getCacheNames() {
+		return this.lightDao.getCacheNames();
+	}
 
-    public String[] cacheMatchKeys(String matchRegex, CacheMatchFilter cacheMatchFilter) {
-        return this.sqlToyLazyDao.cacheMatchKeys(matchRegex, cacheMatchFilter);
-    }
+	public String[] cacheMatchKeys(String matchRegex, CacheMatchFilter cacheMatchFilter) {
+		return this.lightDao.cacheMatchKeys(cacheMatchFilter, matchRegex);
+	}
 
-    @Override
-    public String[] cacheMatchKeys(CacheMatchFilter cacheMatchFilter, String... strings) {
-        return this.sqlToyLazyDao.cacheMatchKeys(cacheMatchFilter, strings);
-    }
+	@Override
+	public String[] cacheMatchKeys(CacheMatchFilter cacheMatchFilter, String... strings) {
+		return this.lightDao.cacheMatchKeys(cacheMatchFilter, strings);
+	}
 
-    public <T extends Serializable> List<T> convertType(List sourceList, Class<T> resultType) {
-        return this.sqlToyLazyDao.convertType(sourceList, resultType, new String[0]);
-    }
+	public <T extends Serializable> List<T> convertType(List sourceList, Class<T> resultType) {
+		return this.lightDao.convertType(sourceList, resultType, new String[0]);
+	}
 
-    public <T extends Serializable> T convertType(Serializable source, Class<T> resultType) {
-        return this.sqlToyLazyDao.convertType(source, resultType, new String[0]);
-    }
+	public <T extends Serializable> T convertType(Serializable source, Class<T> resultType) {
+		return this.lightDao.convertType(source, resultType, new String[0]);
+	}
 
-    public <T extends Serializable> Page<T> convertType(Page sourcePage, Class<T> resultType) {
-        return this.sqlToyLazyDao.convertType(sourcePage, resultType, new String[0]);
-    }
+	public <T extends Serializable> Page<T> convertType(Page sourcePage, Class<T> resultType) {
+		return this.lightDao.convertType(sourcePage, resultType, new String[0]);
+	}
 }

@@ -1,11 +1,12 @@
 package com.sqltoy.helloworld.service;
 
 
-import org.noear.solon.data.annotation.Tran;
 import org.noear.solon.annotation.Component;
+import org.noear.solon.data.annotation.Transaction;
 import org.sagacity.sqltoy.dao.SqlToyLazyDao;
-import com.sqltoy.helloworld.vo.FruitOrderVO;
 import org.sagacity.sqltoy.solon.annotation.Db;
+
+import com.sqltoy.helloworld.vo.FruitOrderVO;
 
 /**
  * 水果订单服务
@@ -22,7 +23,7 @@ public class FruitOrderService {
 	@Db("tow")
 	private SqlToyLazyDao sqlToyLazyDao2;
 
-	@Tran
+	@Transaction
 	public void createFruitOrder(FruitOrderVO fruitOrderVO) {
 		sqlToyLazyDao.save(fruitOrderVO);
 	}
