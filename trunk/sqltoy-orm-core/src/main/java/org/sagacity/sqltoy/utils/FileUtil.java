@@ -149,10 +149,11 @@ public class FileUtil {
 	 */
 	public static String readFileAsStr(File file, String charset) throws IOException {
 		byte[] fileBytes = readAsBytes(file);
-		if (StringUtil.isBlank(charset)) {
-			return new String(fileBytes);
+		if (fileBytes == null) {
+			return null;
 		}
-		return new String(fileBytes, charset);
+		Charset cs = StringUtil.isNotBlank(charset) ? Charset.forName(charset) : StandardCharsets.UTF_8;
+		return new String(fileBytes, cs);
 	}
 
 	/**

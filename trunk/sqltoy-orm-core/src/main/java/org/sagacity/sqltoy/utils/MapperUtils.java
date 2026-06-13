@@ -42,7 +42,7 @@ public class MapperUtils {
 	/**
 	 * 利用缓存来提升匹配效率
 	 */
-	private static ConcurrentHashMap<String, DTOEntityMapModel> dtoEntityMapperCache = new ConcurrentHashMap<String, DTOEntityMapModel>();
+	private static ConcurrentHashMap<String, DTOEntityMapModel> dtoEntityMapperCache = new ConcurrentHashMap<>();
 
 	private static ConcurrentHashMap<String, HashMap<String, String>> classHasAliasMap = new ConcurrentHashMap<>();
 
@@ -115,7 +115,7 @@ public class MapperUtils {
 			throw new IllegalArgumentException("resultType:" + resultType.getName() + " 是抽象类或接口,非法参数!");
 		}
 		if (sourceList.isEmpty()) {
-			return new ArrayList<T>();
+			return new ArrayList<>();
 		}
 		return mapList(sourceList, resultType, 0, propsMapperConfig);
 	}
@@ -150,7 +150,7 @@ public class MapperUtils {
 		if (resultType == null || BeanUtil.isBaseDataType(resultType)) {
 			throw new IllegalArgumentException("resultType 不能为null,且resultType不能为基本类型!");
 		}
-		Page result = new Page();
+		Page<T> result = new Page<>();
 		result.setPageNo(sourcePage.getPageNo());
 		result.setPageSize(sourcePage.getPageSize());
 		result.setRecordCount(sourcePage.getRecordCount());
@@ -251,7 +251,6 @@ public class MapperUtils {
 			List dataSets = invokeGetValues(sourceList, getMethods);
 			listToList(dataSets, targetList, setMethods, propsMapperConfig.getSkipNull());
 		} catch (Exception e) {
-			e.printStackTrace();
 			throw new RuntimeException("copyProperties<List>类型:[" + sourceClass.getName() + "-->"
 					+ targetClass.getName() + "]映射操作失败:" + e.getMessage());
 		}
@@ -298,6 +297,12 @@ public class MapperUtils {
 	 */
 	public static <T extends Serializable> List<T> mapList(List sourceList, Class<T> targetClass, int recursionLevel,
 			PropsMapperConfig propsMapperConfig) throws RuntimeException {
+		if (sourceList == null) {
+			return null;
+		}
+		if (sourceList.isEmpty()) {
+			return new ArrayList<T>();
+		}
 		Class sourceClass = sourceList.iterator().next().getClass();
 		Method[] getMethods;
 		Method[] setMethods;
@@ -400,12 +405,12 @@ public class MapperUtils {
 		String key = "fromClass=".concat(sourceKey).concat(";toClass=").concat(resultKey).concat(";mapKey=")
 				.concat(mapKey);
 		// 通过缓存获取
-		if (dtoEntityMapperCache.containsKey(key)) {
-			return dtoEntityMapperCache.get(key);
-		}
-		DTOEntityMapModel result = sourceMapTarget(sourceClass, resultType, fieldsNameMap);
-		if (result != null) {
-			dtoEntityMapperCache.put(key, result);
+		DTOEntityMapModel result = dtoEntityMapperCache.get(key);
+		if (result == null) {
+			result = sourceMapTarget(sourceClass, resultType, fieldsNameMap);
+			if (result != null) {
+				dtoEntityMapperCache.put(key, result);
+			}
 		}
 		return result;
 	}
@@ -423,7 +428,7 @@ public class MapperUtils {
 			return null;
 		}
 		// 是否要匹配别名(两个不同对象之间，属性名称不一致，通过注解提供别名模式进行映射)
-		boolean checkAlias = fromClass.equals(targetClass) ? false : true;
+		boolean checkAlias = !fromClass.equals(targetClass);
 		DTOEntityMapModel result = new DTOEntityMapModel();
 		String fieldName;
 		SqlToyFieldAlias alias;

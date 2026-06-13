@@ -185,6 +185,14 @@ public class StringUtilsTest {
 	}
 
 	@Test
+	public void testReplaceAllStr() {
+//		System.err.println(StringUtil.replaceAllStr("addcdChen8888Chen9000", "Chen", "陈", 5, 13));
+//		System.err.println(StringUtil.replaceAllStr("addcdChen8888Chen9000", "Chen", "陈", 5));
+//		System.err.println(StringUtil.replaceAllStr("addcdChen8888Chen9000", "Chen", "陈"));
+		System.err.println(StringUtil.replaceAllStr("addcdChen8888Chen9000", "Chen", ""));
+	}
+
+	@Test
 	public void testReplace2() throws UnsupportedEncodingException {
 		String argValue = "/D:/personal/sqltoy/sqltoy%20&+quick中start/target/classes/com/sqltoy/quickstart/sql/sqltoy-quickstart.sql.xml";
 		System.err.println(URLDecoder.decode(argValue, "GBK"));

@@ -447,7 +447,7 @@ public class SqlToyConstants {
 				entry = iter.next();
 				value = getKeyValue(entry.getValue());
 				if (value != null) {
-					result = result.replace(entry.getKey(), value);
+					result = StringUtil.replaceAllStr(result, entry.getKey(), value);
 				}
 			}
 		}

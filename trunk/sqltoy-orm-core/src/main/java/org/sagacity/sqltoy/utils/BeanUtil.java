@@ -14,6 +14,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Array;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -79,24 +80,47 @@ public class BeanUtil {
 	/**
 	 * 保存set方法
 	 */
-	private static ConcurrentHashMap<String, Method> setMethods = new ConcurrentHashMap<String, Method>();
+	private static ConcurrentHashMap<String, Method> setMethods = new ConcurrentHashMap<>();
 
 	/**
 	 * 保存get方法
 	 */
-	private static ConcurrentHashMap<String, Method> getMethods = new ConcurrentHashMap<String, Method>();
+	private static ConcurrentHashMap<String, Method> getMethods = new ConcurrentHashMap<>();
 
 	// 保存pojo的级联关系
-	private static ConcurrentHashMap<String, List> cascadeModels = new ConcurrentHashMap<String, List>();
+	private static ConcurrentHashMap<String, List> cascadeModels = new ConcurrentHashMap<>();
 
-	private static ConcurrentHashMap<Class, Method> enumGetKeyMethods = new ConcurrentHashMap<Class, Method>();
-	private static ConcurrentHashMap<Class, Integer> enumGetKeyExists = new ConcurrentHashMap<Class, Integer>();
-	private static ConcurrentHashMap<String, Class> enumClassMap = new ConcurrentHashMap<String, Class>();
+	private static ConcurrentHashMap<Class, Method> enumGetKeyMethods = new ConcurrentHashMap<>();
+	private static ConcurrentHashMap<Class, Integer> enumGetKeyExists = new ConcurrentHashMap<>();
+	private static ConcurrentHashMap<String, Class> enumClassMap = new ConcurrentHashMap<>();
 
 	// 枚举类型取key值的常用方法名称,枚举类中用getValue、getKey、getId等作为取值的都可自动完成映射
 	private static String[] enumKeys = { "value", "key", "code", "id", "status", "level", "type" };
 
-	private static ConcurrentHashMap<Class, PropertyType[]> recordProperties = new ConcurrentHashMap<Class, PropertyType[]>();
+	private static ConcurrentHashMap<Class, PropertyType[]> recordProperties = new ConcurrentHashMap<>();
+
+	private static final Set<Class<?>> BASE_TYPE = ConcurrentHashMap.newKeySet();
+
+	static {
+		BASE_TYPE.add(String.class);
+		BASE_TYPE.add(Integer.class);
+		BASE_TYPE.add(Byte.class);
+		BASE_TYPE.add(Long.class);
+		BASE_TYPE.add(Double.class);
+		BASE_TYPE.add(Float.class);
+		BASE_TYPE.add(Character.class);
+		BASE_TYPE.add(Short.class);
+		BASE_TYPE.add(Boolean.class);
+		BASE_TYPE.add(BigDecimal.class);
+		BASE_TYPE.add(BigInteger.class);
+		BASE_TYPE.add(Date.class);
+		BASE_TYPE.add(Timestamp.class);
+		BASE_TYPE.add(LocalDate.class);
+		BASE_TYPE.add(LocalDateTime.class);
+		BASE_TYPE.add(LocalTime.class);
+		BASE_TYPE.add(OffsetDateTime.class);
+		BASE_TYPE.add(ZonedDateTime.class);
+	}
 
 	// 静态方法避免实例化和继承
 	private BeanUtil() {
@@ -119,7 +143,7 @@ public class BeanUtil {
 		}
 		Object result = null;
 		Method getKeyMethod;
-		// Map缓存，不会每次都循环
+		// 这里为什么增加enumGetKeyExists缓存? 即只要matchEnumKeyMethod一次即使返回null也被缓存
 		if (enumGetKeyExists.containsKey(enumClass)) {
 			getKeyMethod = enumGetKeyMethods.get(enumClass);
 			if (getKeyMethod != null) {
@@ -479,53 +503,32 @@ public class BeanUtil {
 	}
 
 	private static int getSqlType(String typeName) {
-		if ("string".equals(typeName)) {
-			return java.sql.Types.VARCHAR;
-		} else if ("integer".equals(typeName)) {
-			return java.sql.Types.INTEGER;
-		} else if ("bigdecimal".equals(typeName)) {
-			return java.sql.Types.DECIMAL;
-		} else if ("date".equals(typeName) || "localdate".equals(typeName) || "datetime".equals(typeName)) {
-			return java.sql.Types.DATE;
-		} else if ("timestamp".equals(typeName) || "localdatetime".equals(typeName)) {
-			return java.sql.Types.TIMESTAMP;
-		} else if ("offsetdatetime".equals(typeName) || "zoneddatetime".equals(typeName)) {
-			return java.sql.Types.TIMESTAMP_WITH_TIMEZONE;
-		} else if ("int".equals(typeName)) {
-			return java.sql.Types.INTEGER;
-		} else if ("long".equals(typeName)) {
-			return java.sql.Types.NUMERIC;
-		} else if ("double".equals(typeName)) {
-			return java.sql.Types.DOUBLE;
-		} else if ("clob".equals(typeName)) {
-			return java.sql.Types.CLOB;
-		} else if ("biginteger".equals(typeName)) {
-			return java.sql.Types.BIGINT;
-		} else if ("blob".equals(typeName)) {
-			return java.sql.Types.BLOB;
-		} else if ("byte[]".equals(typeName)) {
-			return java.sql.Types.BINARY;
-		} else if ("boolean".equals(typeName)) {
-			return java.sql.Types.BOOLEAN;
-		} else if ("char".equals(typeName)) {
-			return java.sql.Types.CHAR;
-		} else if ("number".equals(typeName)) {
-			return java.sql.Types.NUMERIC;
-		} else if ("short".equals(typeName)) {
-			return java.sql.Types.NUMERIC;
-		} else if ("float".equals(typeName)) {
-			return java.sql.Types.FLOAT;
-		} else if ("time".equals(typeName)) {
-			return java.sql.Types.TIME;
-		} else if ("offsettime".equals(typeName)) {
-			return java.sql.Types.TIME_WITH_TIMEZONE;
-		} else if ("byte".equals(typeName)) {
-			return java.sql.Types.TINYINT;
-		} else if (typeName.endsWith("[]")) {
-			return java.sql.Types.ARRAY;
-		} else {
-			return java.sql.Types.NULL;
+		return switch (typeName) {
+		case "string" -> Types.VARCHAR;
+		case "integer", "int" -> Types.INTEGER;
+		case "bigdecimal" -> Types.DECIMAL;
+		case "date", "localdate", "datetime" -> Types.DATE;
+		case "timestamp", "localdatetime" -> Types.TIMESTAMP;
+		case "offsetdatetime", "zoneddatetime" -> Types.TIMESTAMP_WITH_TIMEZONE;
+		case "long", "number", "short" -> Types.NUMERIC;
+		case "double" -> Types.DOUBLE;
+		case "clob" -> Types.CLOB;
+		case "biginteger" -> Types.BIGINT;
+		case "blob" -> Types.BLOB;
+		case "byte[]" -> Types.BINARY;
+		case "boolean" -> Types.BOOLEAN;
+		case "char" -> Types.CHAR;
+		case "float" -> Types.FLOAT;
+		case "time" -> Types.TIME;
+		case "offsettime" -> Types.TIME_WITH_TIMEZONE;
+		case "byte" -> Types.TINYINT;
+		default -> {
+			if (typeName.endsWith("[]")) {
+				yield Types.ARRAY;
+			}
+			yield Types.NULL;
 		}
+		};
 	}
 
 	/**
@@ -1562,7 +1565,7 @@ public class BeanUtil {
 			Object rowObject = null;
 			Object[] params = new Object[] {};
 			// 判断是否存在属性值处理反调
-			boolean hasHandler = (reflectPropsHandler != null) ? true : false;
+			boolean hasHandler = reflectPropsHandler != null;
 			// 存在反调，则将对象的属性和属性所在的顺序放入hashMap中，便于后面反调中通过属性调用
 			if (hasHandler) {
 				HashMap<String, Integer> propertyIndexMap = new HashMap<String, Integer>();
@@ -2175,12 +2178,10 @@ public class BeanUtil {
 	 * @return
 	 */
 	public static boolean isBaseDataType(Class clazz) {
-		return (clazz.isPrimitive() || clazz.equals(String.class) || clazz.equals(Integer.class)
-				|| clazz.equals(Byte.class) || clazz.equals(Long.class) || clazz.equals(Double.class)
-				|| clazz.equals(Float.class) || clazz.equals(Character.class) || clazz.equals(Short.class)
-				|| clazz.equals(BigDecimal.class) || clazz.equals(BigInteger.class) || clazz.equals(Boolean.class)
-				|| clazz.equals(Date.class) || clazz.equals(LocalDate.class) || clazz.equals(LocalDateTime.class)
-				|| clazz.equals(LocalTime.class) || clazz.equals(Timestamp.class));
+		if (clazz == null) {
+			return false;
+		}
+		return clazz.isPrimitive() || BASE_TYPE.contains(clazz);
 	}
 
 	/**

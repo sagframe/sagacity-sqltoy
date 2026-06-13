@@ -1090,14 +1090,11 @@ public class SqlUtil {
 	}
 
 	private static String loopBlank(int size) {
-		if (size == 0) {
+		if (size <= 0) {
 			return "";
 		}
-		StringBuilder result = new StringBuilder();
-		for (int i = 0; i < size; i++) {
-			result.append(BLANK);
-		}
-		return result.toString();
+		// Java 11+
+		return BLANK.repeat(size);
 	}
 
 	/**
