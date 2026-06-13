@@ -17,6 +17,7 @@ import java.io.RandomAccessFile;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLDecoder;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -148,10 +149,11 @@ public class FileUtil {
 	 */
 	public static String readFileAsStr(File file, String charset) throws IOException {
 		byte[] fileBytes = readAsBytes(file);
-		if (StringUtil.isBlank(charset)) {
-			return new String(fileBytes);
+		if (fileBytes == null) {
+			return null;
 		}
-		return new String(fileBytes, charset);
+		Charset cs = StringUtil.isNotBlank(charset) ? Charset.forName(charset) : StandardCharsets.UTF_8;
+		return new String(fileBytes, cs);
 	}
 
 	/**
@@ -161,7 +163,7 @@ public class FileUtil {
 	 * @return
 	 */
 	public static String readFileAsStr(Object file, String charset) {
-		return inputStreamToStr(getFileInputStream(file), charset);
+		return IOUtil.inputStreamToStr(getFileInputStream(file), charset);
 	}
 
 	/**
@@ -171,59 +173,31 @@ public class FileUtil {
 	 * @return
 	 */
 	public static String inputStreamToStr(InputStream is, String encoding) {
-		if (null == is) {
-			return null;
-		}
-		StringBuilder buffer = new StringBuilder();
-		BufferedReader in = null;
-		try {
-			if (StringUtil.isNotBlank(encoding)) {
-				in = new BufferedReader(new InputStreamReader(is, encoding));
-			} else {
-				in = new BufferedReader(new InputStreamReader(is));
-			}
-			String line = "";
-			int meter = 0;
-			while ((line = in.readLine()) != null) {
-				if (meter > 0) {
-					buffer.append("\n");
-				}
-				buffer.append(line);
-				meter++;
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-			logger.error(e.getMessage());
-		} finally {
-			IOUtil.closeQuietly(in);
-		}
-		return buffer.toString();
+		return IOUtil.inputStreamToStr(is, encoding);
 	}
 
 	public static String readLineAsStr(File file, String charset) {
-		BufferedReader reader = null;
-		StringBuilder result = new StringBuilder();
-		try {
-			if (StringUtil.isBlank(charset)) {
-				reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
-			} else {
-				reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), charset));
-			}
+		if (file == null || !file.exists() || !file.isFile()) {
+			return null;
+		}
+		Charset cs = StringUtil.isNotBlank(charset) ? Charset.forName(charset) : StandardCharsets.UTF_8;
+		final String lineSep = System.lineSeparator();
+		try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), cs))) {
+			StringBuilder result = new StringBuilder();
 			String line;
-			int meter = 0;
+			boolean firstLine = true;
 			while ((line = reader.readLine()) != null) {
-				if (meter > 0) {
-					result.append("\n");
+				if (!firstLine) {
+					result.append(lineSep);
 				}
 				result.append(line);
-				meter++;
+				firstLine = false;
 			}
+			return result.toString();
 		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			IOUtil.closeQuietly(reader);
+			logger.error("读取文件失败: {}", e.getMessage(), e);
+			return null;
 		}
-		return result.toString();
 	}
 
 	/**
@@ -338,17 +312,12 @@ public class FileUtil {
 		if (file == null) {
 			return null;
 		}
-		InputStream in = null;
-		byte[] ret = null;
-		try {
-			in = getFileInputStream(file);
-			ret = IOUtil.getBytes(in);
+		try (InputStream in = getFileInputStream(file)) {
+			return IOUtil.getBytes(in);
 		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			IOUtil.closeQuietly(in);
+			logger.error("读取文件失败: {}", e.getMessage(), e);
+			return null;
 		}
-		return ret;
 	}
 
 	/**

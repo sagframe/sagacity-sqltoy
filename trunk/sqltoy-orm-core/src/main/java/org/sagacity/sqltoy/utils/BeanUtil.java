@@ -2,9 +2,7 @@ package org.sagacity.sqltoy.utils;
 
 import static java.lang.System.err;
 
-import java.io.BufferedReader;
 import java.io.Serializable;
-import java.io.StringWriter;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -78,22 +76,44 @@ public class BeanUtil {
 	/**
 	 * 保存set方法
 	 */
-	private static ConcurrentHashMap<String, Method> setMethods = new ConcurrentHashMap<String, Method>();
+	private static ConcurrentHashMap<String, Method> setMethods = new ConcurrentHashMap<>();
 
 	/**
 	 * 保存get方法
 	 */
-	private static ConcurrentHashMap<String, Method> getMethods = new ConcurrentHashMap<String, Method>();
+	private static ConcurrentHashMap<String, Method> getMethods = new ConcurrentHashMap<>();
 
 	// 保存pojo的级联关系
-	private static ConcurrentHashMap<String, List> cascadeModels = new ConcurrentHashMap<String, List>();
+	private static ConcurrentHashMap<String, List> cascadeModels = new ConcurrentHashMap<>();
 
-	private static ConcurrentHashMap<Class, Method> enumGetKeyMethods = new ConcurrentHashMap<Class, Method>();
-	private static ConcurrentHashMap<Class, Integer> enumGetKeyExists = new ConcurrentHashMap<Class, Integer>();
-	private static ConcurrentHashMap<String, Class> enumClassMap = new ConcurrentHashMap<String, Class>();
+	private static ConcurrentHashMap<Class, Method> enumGetKeyMethods = new ConcurrentHashMap<>();
+	private static ConcurrentHashMap<Class, Integer> enumGetKeyExists = new ConcurrentHashMap<>();
+	private static ConcurrentHashMap<String, Class> enumClassMap = new ConcurrentHashMap<>();
 
 	// 枚举类型取key值的常用方法名称,枚举类中用getValue、getKey、getId等作为取值的都可自动完成映射
 	private static String[] enumKeys = { "value", "key", "code", "id", "status", "level", "type" };
+
+	private static final Set<Class<?>> BASE_TYPE = ConcurrentHashMap.newKeySet();
+	static {
+		BASE_TYPE.add(String.class);
+		BASE_TYPE.add(Integer.class);
+		BASE_TYPE.add(Byte.class);
+		BASE_TYPE.add(Long.class);
+		BASE_TYPE.add(Double.class);
+		BASE_TYPE.add(Float.class);
+		BASE_TYPE.add(Character.class);
+		BASE_TYPE.add(Short.class);
+		BASE_TYPE.add(Boolean.class);
+		BASE_TYPE.add(BigDecimal.class);
+		BASE_TYPE.add(BigInteger.class);
+		BASE_TYPE.add(Date.class);
+		BASE_TYPE.add(Timestamp.class);
+		BASE_TYPE.add(LocalDate.class);
+		BASE_TYPE.add(LocalDateTime.class);
+		BASE_TYPE.add(LocalTime.class);
+		BASE_TYPE.add(OffsetDateTime.class);
+		BASE_TYPE.add(ZonedDateTime.class);
+	}
 
 	// 静态方法避免实例化和继承
 	private BeanUtil() {
@@ -663,8 +683,7 @@ public class BeanUtil {
 		// 5 字符串第一优先
 		if (DataType.stringType == typeValue) {
 			if (paramValue instanceof java.sql.Clob) {
-				java.sql.Clob clob = (java.sql.Clob) paramValue;
-				return clob.getSubString((long) 1, (int) clob.length());
+				return SqlUtil.clobToString((java.sql.Clob) paramValue);
 			} else if (paramValue instanceof LocalDate) {
 				return DateUtil.formatDate(paramValue, "yyyy-MM-dd");
 			} else if (paramValue instanceof LocalTime) {
@@ -979,14 +998,7 @@ public class BeanUtil {
 			if (paramValue instanceof String) {
 				return paramValue.toString();
 			}
-			java.sql.Clob clob = (java.sql.Clob) paramValue;
-			BufferedReader in = new BufferedReader(clob.getCharacterStream());
-			StringWriter out = new StringWriter();
-			int c;
-			while ((c = in.read()) != -1) {
-				out.write(c);
-			}
-			return out.toString();
+			return SqlUtil.clobToString((java.sql.Clob) paramValue);
 		}
 		// 28
 		if (DataType.sqlTimeType == typeValue) {
@@ -1022,14 +1034,8 @@ public class BeanUtil {
 				return (char[]) paramValue;
 			}
 			if (paramValue instanceof java.sql.Clob) {
-				java.sql.Clob clob = (java.sql.Clob) paramValue;
-				BufferedReader in = new BufferedReader(clob.getCharacterStream());
-				StringWriter out = new StringWriter();
-				int c;
-				while ((c = in.read()) != -1) {
-					out.write(c);
-				}
-				return out.toString().toCharArray();
+				String str = SqlUtil.clobToString((java.sql.Clob) paramValue);
+				return str != null ? str.toCharArray() : null;
 			}
 			return paramValue.toString().toCharArray();
 		}
@@ -1539,7 +1545,7 @@ public class BeanUtil {
 			Object rowObject = null;
 			Object[] params = new Object[] {};
 			// 判断是否存在属性值处理反调
-			boolean hasHandler = (reflectPropsHandler != null) ? true : false;
+			boolean hasHandler = reflectPropsHandler != null;
 			// 存在反调，则将对象的属性和属性所在的顺序放入hashMap中，便于后面反调中通过属性调用
 			if (hasHandler) {
 				HashMap<String, Integer> propertyIndexMap = new HashMap<String, Integer>();
@@ -2020,12 +2026,10 @@ public class BeanUtil {
 	 * @return
 	 */
 	public static boolean isBaseDataType(Class clazz) {
-		return (clazz.isPrimitive() || clazz.equals(String.class) || clazz.equals(Integer.class)
-				|| clazz.equals(Byte.class) || clazz.equals(Long.class) || clazz.equals(Double.class)
-				|| clazz.equals(Float.class) || clazz.equals(Character.class) || clazz.equals(Short.class)
-				|| clazz.equals(BigDecimal.class) || clazz.equals(BigInteger.class) || clazz.equals(Boolean.class)
-				|| clazz.equals(Date.class) || clazz.equals(LocalDate.class) || clazz.equals(LocalDateTime.class)
-				|| clazz.equals(LocalTime.class) || clazz.equals(Timestamp.class));
+		if (clazz == null) {
+			return false;
+		}
+		return clazz.isPrimitive() || BASE_TYPE.contains(clazz);
 	}
 
 	/**

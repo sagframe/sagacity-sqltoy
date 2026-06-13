@@ -94,8 +94,11 @@ public class JSONTypeUtil {
 		if (jdbcValue == null) {
 			return null;
 		}
-		String javaTypeNameLow = javaTypeName.toLowerCase();
 		String jsonStr = extractJsonString(jdbcValue);
+		if (jsonStr == null) {
+			return null;
+		}
+		String javaTypeNameLow = javaTypeName.toLowerCase();
 		// 2.字符串
 		if (javaTypeNameLow.equals(STRING_TYPE)) {
 			return jsonStr;
@@ -219,7 +222,7 @@ public class JSONTypeUtil {
 	/**
 	 * 从 JDBC 值中提取 JSON 字符串
 	 */
-	private static String extractJsonString(Object jdbcValue) {
+	private static String extractJsonString(Object jdbcValue) throws SQLException {
 		if (jdbcValue == null) {
 			return null;
 		}
@@ -228,9 +231,6 @@ public class JSONTypeUtil {
 			return (String) jdbcValue;
 		}
 		String className = jdbcValue.getClass().getName();
-		// 预留:记得判断UNDEFINE
-//		Integer dbType = SqlExecuteStat.get() == null ? DBType.UNDEFINE
-//				: DataSourceUtils.getDBType(SqlExecuteStat.get().getDialect());
 		// PostgreSQL PGobject
 		if (className.equals("org.postgresql.util.PGobject")) {
 			return jdbcValue.toString();
@@ -239,29 +239,23 @@ public class JSONTypeUtil {
 		if (className.startsWith("oracle.sql.json.OracleJson")) {
 			return jdbcValue.toString();
 		}
-		// Clob 类型
+		// Clob 类型 (包括 NClob，因为 NClob 继承自 Clob)
 		if (jdbcValue instanceof java.sql.Clob) {
-			try {
-				java.sql.Clob clob = (java.sql.Clob) jdbcValue;
-				return clob.getSubString(1, (int) clob.length());
-			} catch (SQLException e) {
-				logger.warn("读取 Clob 失败: {}", e.getMessage());
-				return null;
-			}
-		}
-		// NClob
-		if (jdbcValue instanceof java.sql.NClob) {
-			try {
-				java.sql.NClob nclob = (java.sql.NClob) jdbcValue;
-				return nclob.getSubString(1, (int) nclob.length());
-			} catch (SQLException e) {
-				logger.warn("读取 NClob 失败: {}", e.getMessage());
-				return null;
-			}
+			return SqlUtil.clobToString((java.sql.Clob) jdbcValue);
 		}
 		// byte[] 类型 - 尝试转为UTF-8字符串
 		if (jdbcValue instanceof byte[]) {
 			String str = new String((byte[]) jdbcValue, java.nio.charset.StandardCharsets.UTF_8);
+			if (str.startsWith("\"") && str.endsWith("\"")) {
+				return JSON.parseObject(str, String.class);
+			}
+			return str;
+		}
+		// Blob 类型
+		if (jdbcValue instanceof java.sql.Blob) {
+			java.sql.Blob blob = (java.sql.Blob) jdbcValue;
+			byte[] bytes = blob.getBytes(1, (int) blob.length());
+			String str = new String(bytes, java.nio.charset.StandardCharsets.UTF_8);
 			if (str.startsWith("\"") && str.endsWith("\"")) {
 				return JSON.parseObject(str, String.class);
 			}

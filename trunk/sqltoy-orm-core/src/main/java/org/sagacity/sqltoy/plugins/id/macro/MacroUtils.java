@@ -151,17 +151,24 @@ public class MacroUtils {
 		return false;
 	}
 
+	/**
+	 * 从开始位置替换一次
+	 * 
+	 * @param source
+	 * @param template
+	 * @param target
+	 * @param fromIndex
+	 * @return
+	 */
 	private static String replaceStr(String source, String template, String target, int fromIndex) {
-		if (source == null) {
-			return null;
-		}
-		if (template == null) {
+		if (source == null || template == null || template.isEmpty() || template.equals(target)) {
 			return source;
 		}
-		if (fromIndex >= source.length() - 1) {
+		int realFrom = Math.max(0, fromIndex);
+		if (realFrom >= source.length() - 1) {
 			return source;
 		}
-		int index = source.indexOf(template, fromIndex);
+		int index = source.indexOf(template, realFrom);
 		if (index != -1) {
 			source = source.substring(0, index).concat(target).concat(source.substring(index + template.length()));
 		}
@@ -191,7 +198,7 @@ public class MacroUtils {
 					if (value instanceof Enum) {
 						value = BeanUtil.getEnumValue(value);
 					}
-					result = replaceAllStr(result, entry.getKey().toString(), value.toString());
+					result = StringUtil.replaceAllStr(result, entry.getKey(), value.toString());
 				}
 			}
 		}
@@ -249,20 +256,5 @@ public class MacroUtils {
 			paramsMap.put(group, group.substring(2, group.length() - 1).trim().toLowerCase());
 		}
 		return paramsMap;
-	}
-
-	private static String replaceAllStr(String source, String template, String target) {
-		if (source == null || template.equals(target)) {
-			return source;
-		}
-		int index = source.indexOf(template, 0);
-		int subLength = target.length() - template.length();
-		int begin = index - 1;
-		while (index != -1 && index >= begin) {
-			source = source.substring(0, index).concat(target).concat(source.substring(index + template.length()));
-			begin = index + subLength + 1;
-			index = source.indexOf(template, begin);
-		}
-		return source;
 	}
 }

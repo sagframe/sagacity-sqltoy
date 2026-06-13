@@ -992,55 +992,49 @@ public class StringUtil {
 	}
 
 	/**
-	 * @todo 针对jdk1.4 replace(char,char)提供jdk1.5中replace(String,String)的功能
+	 * @TODO 提供偏移替换后字符长度的全量替换
 	 * @param source
 	 * @param template
 	 * @param target
 	 * @return
 	 */
-	@Deprecated
 	public static String replaceAllStr(String source, String template, String target) {
 		return replaceAllStr(source, template, target, 0);
 	}
 
-	@Deprecated
 	public static String replaceAllStr(String source, String template, String target, int fromIndex) {
-		if (source == null || template.equals(target)) {
+		if (source == null) {
 			return source;
 		}
-		int index = source.indexOf(template, fromIndex);
-		int subLength = target.length() - template.length();
-		int begin = index - 1;
-		while (index != -1 && index >= begin) {
-			source = source.substring(0, index).concat(target).concat(source.substring(index + template.length()));
-			begin = index + subLength + 1;
-			index = source.indexOf(template, begin);
-		}
-		return source;
+		return replaceAllStr(source, template, target, fromIndex, source.length() - 1);
 	}
 
-	@Deprecated
 	public static String replaceAllStr(String source, String template, String target, int fromIndex, int endIndex) {
-		if (source == null || template.equals(target) || endIndex <= fromIndex) {
+		if (source == null || template == null || target == null || template.isEmpty() || template.equals(target)) {
 			return source;
 		}
-		if (endIndex >= source.length() - 1) {
-			return replaceAllStr(source, template, target, fromIndex);
+		int srcLen = source.length();
+		// 边界矫正：统一收敛到合法下标
+		int realFrom = Math.max(0, fromIndex);
+		int realEnd = Math.min(srcLen - 1, endIndex);
+		// 区间无效，直接返回
+		if (realFrom >= realEnd) {
+			return source;
 		}
-		String beforeStr = (fromIndex == 0) ? "" : source.substring(0, fromIndex);
-		String replaceBody = source.substring(fromIndex, endIndex + 1);
-		String endStr = source.substring(endIndex + 1);
-		int index = replaceBody.indexOf(template);
-		int begin = index - 1;
-		// 替换后的偏移量，避免在替换内容中再次替换形成死循环
-		int subLength = target.length() - template.length();
-		while (index != -1 && index >= begin) {
-			replaceBody = replaceBody.substring(0, index).concat(target)
-					.concat(replaceBody.substring(index + template.length()));
-			begin = index + subLength + 1;
-			index = replaceBody.indexOf(template, begin);
+		// 拆分：前缀 + 待替换区间 + 后缀（基于原字符串下标，绝对安全）
+		String prefix = source.substring(0, realFrom);
+		String mid = source.substring(realFrom, realEnd + 1);
+		String suffix = source.substring(realEnd + 1);
+		// 在子串内做替换 + 控制偏移，防死循环/重复匹配
+		StringBuilder midSb = new StringBuilder(mid);
+		int tplLen = template.length();
+		int targetLen = target.length();
+		int pos = 0;
+		while ((pos = midSb.indexOf(template, pos)) != -1) {
+			midSb.replace(pos, pos + tplLen, target);
+			pos += targetLen;
 		}
-		return beforeStr.concat(replaceBody).concat(endStr);
+		return prefix + midSb + suffix;
 	}
 
 	/**
