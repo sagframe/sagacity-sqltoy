@@ -772,11 +772,11 @@ public class NumberUtil {
 
 	private static String reverse(String s) {
 		char[] aChr = s.toCharArray();
-		StringBuffer tmp = new StringBuffer();
+		StringBuilder sb = new StringBuilder();
 		for (int i = aChr.length - 1; i >= 0; i--) {
-			tmp.append(aChr[i]);
+			sb.append(aChr[i]);
 		}
-		return tmp.toString();
+		return sb.toString();
 	}
 
 	/****************** 数字金额转换为英文格式 End ********************************/

@@ -128,7 +128,7 @@ public class MacroUtils {
 				return result;
 			}
 			String macroResult = (result == null) ? "" : result;
-			hasMacroStr = replaceStr(hasMacroStr, macroStr, macroResult, macroIndex);
+			hasMacroStr = replaceFirst(hasMacroStr, macroStr, macroResult, macroIndex);
 			return replaceMacros(hasMacroStr, keyValues, paramsValues, isOuter, macros, extSign);
 		}
 		return hasMacroStr;
@@ -160,7 +160,7 @@ public class MacroUtils {
 	 * @param fromIndex
 	 * @return
 	 */
-	private static String replaceStr(String source, String template, String target, int fromIndex) {
+	private static String replaceFirst(String source, String template, String target, int fromIndex) {
 		if (source == null || template == null || template.isEmpty() || template.equals(target)) {
 			return source;
 		}

@@ -714,8 +714,9 @@ public class SqlUtil {
 			maxThresholds = warnThresholds;
 		}
 		// rs 中的列名称
-		String[] columnNames = getColumnLabels(rs.getMetaData());
-		String[] columnTypes = getColumnTypes(rs.getMetaData());
+		String[][] columnLabelAndTypes = getColumnLabelAndTypes(rs.getMetaData());
+		String[] columnNames = columnLabelAndTypes[0];
+		String[] columnTypes = columnLabelAndTypes[1];
 		// 组织vo中对应的属性
 		String[] fields = new String[columnNames.length];
 		// update 2020-12-24 增加映射对象时属性映射关系提取
@@ -842,7 +843,6 @@ public class SqlUtil {
 			typeValue = propTypeValues[i];
 			if (method != null) {
 				fieldValue = rs.getObject(label);
-				// fieldType=rs.gett
 				if (null != fieldValue) {
 					if (decryptHandler != null) {
 						fieldValue = decryptHandler.decrypt(label, fieldValue);
@@ -860,27 +860,19 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @TODO 获取ResultSet 里面的列名称
+	 * @TODO 获取ResultSet 里面的列名称和类型
 	 * @param rsmd
 	 * @return
 	 * @throws SQLException
 	 */
-	private static String[] getColumnLabels(ResultSetMetaData rsmd) throws SQLException {
+	private static String[][] getColumnLabelAndTypes(ResultSetMetaData rsmd) throws SQLException {
 		int fieldCnt = rsmd.getColumnCount();
-		String[] columnNames = new String[fieldCnt];
+		String[][] columnLabelAndTypes = new String[2][fieldCnt];
 		for (int i = 1; i < fieldCnt + 1; i++) {
-			columnNames[i - 1] = rsmd.getColumnLabel(i);
+			columnLabelAndTypes[0][i - 1] = rsmd.getColumnLabel(i);
+			columnLabelAndTypes[1][i - 1] = rsmd.getColumnTypeName(i);
 		}
-		return columnNames;
-	}
-
-	private static String[] getColumnTypes(ResultSetMetaData rsmd) throws SQLException {
-		int fieldCnt = rsmd.getColumnCount();
-		String[] columnTypes = new String[fieldCnt];
-		for (int i = 1; i < fieldCnt + 1; i++) {
-			columnTypes[i - 1] = rsmd.getColumnTypeName(i);
-		}
-		return columnTypes;
+		return columnLabelAndTypes;
 	}
 
 	/**
@@ -1055,7 +1047,7 @@ public class SqlUtil {
 		while (start != -1) {
 			symMarkEnd = StringUtil.getSymMarkIndex("'", "'", sql, start);
 			if (symMarkEnd != -1) {
-				sql = sql.substring(0, start).concat(loopBlank(symMarkEnd - start + 1))
+				sql = sql.substring(0, start).concat(repeatBlank(symMarkEnd - start + 1))
 						.concat(sql.substring(symMarkEnd + 1));
 				start = StringUtil.matchIndex(sql, "\'");
 			} else {
@@ -1067,7 +1059,7 @@ public class SqlUtil {
 		while (start != -1) {
 			symMarkEnd = StringUtil.getSymMarkIndex("\"", "\"", sql, start);
 			if (symMarkEnd != -1) {
-				sql = sql.substring(0, start).concat(loopBlank(symMarkEnd - start + 1))
+				sql = sql.substring(0, start).concat(repeatBlank(symMarkEnd - start + 1))
 						.concat(sql.substring(symMarkEnd + 1));
 				start = StringUtil.matchIndex(sql, "\"");
 			} else {
@@ -1079,7 +1071,7 @@ public class SqlUtil {
 		while (start != -1) {
 			symMarkEnd = StringUtil.getSymMarkIndex("/*", "*/", sql, start);
 			if (symMarkEnd != -1) {
-				sql = sql.substring(0, start).concat(loopBlank(symMarkEnd - start + 2))
+				sql = sql.substring(0, start).concat(repeatBlank(symMarkEnd - start + 2))
 						.concat(sql.substring(symMarkEnd + 2));
 				start = sql.indexOf("/*");
 			} else {
@@ -1089,7 +1081,13 @@ public class SqlUtil {
 		return sql.indexOf("--");
 	}
 
-	private static String loopBlank(int size) {
+	/**
+	 * 将剔除掉n的字符串替换为等长度的空白字符串，避免对sql解析造成影响
+	 * 
+	 * @param size
+	 * @return
+	 */
+	private static String repeatBlank(int size) {
 		if (size <= 0) {
 			return "";
 		}
