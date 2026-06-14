@@ -771,12 +771,7 @@ public class NumberUtil {
 	}
 
 	private static String reverse(String s) {
-		char[] aChr = s.toCharArray();
-		StringBuilder sb = new StringBuilder();
-		for (int i = aChr.length - 1; i >= 0; i--) {
-			sb.append(aChr[i]);
-		}
-		return sb.toString();
+		return new StringBuilder(s).reverse().toString();
 	}
 
 	/****************** 数字金额转换为英文格式 End ********************************/
