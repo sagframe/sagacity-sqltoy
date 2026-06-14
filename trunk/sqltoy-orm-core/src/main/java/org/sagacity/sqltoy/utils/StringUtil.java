@@ -456,14 +456,14 @@ public class StringUtil {
 	 */
 	public static int getSymMarkReverseIndex(String beginMarkSign, String endMarkSign, String source, int endIndex) {
 		int beginIndex = source.length() - endIndex;
-		String realSource = new StringBuffer(source).reverse().toString();
+		String realSource = new StringBuilder(source).reverse().toString();
 		String realStartMark = beginMarkSign;
 		String realEndMark = endMarkSign;
 		if (realStartMark.length() > 1) {
-			realStartMark = new StringBuffer(realStartMark).reverse().toString();
+			realStartMark = new StringBuilder(realStartMark).reverse().toString();
 		}
 		if (realEndMark.length() > 1) {
-			realEndMark = new StringBuffer(realEndMark).reverse().toString();
+			realEndMark = new StringBuilder(realEndMark).reverse().toString();
 		}
 		int index = getSymMarkIndex(realEndMark, realStartMark, realSource, beginIndex < 0 ? 0 : beginIndex);
 		return source.length() - index - realStartMark.length();
