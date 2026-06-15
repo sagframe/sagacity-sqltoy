@@ -1349,7 +1349,7 @@ public class DateUtil {
 	 */
 	private static String padDateString(String dateStr) {
 		Matcher matcher = DATE_PATTERN.matcher(dateStr);
-		StringBuffer sb = new StringBuffer();
+		StringBuilder sb = new StringBuilder();
 		while (matcher.find()) {
 			if (matcher.group(2) != null) {
 				matcher.appendReplacement(sb, "$1-0$2");
