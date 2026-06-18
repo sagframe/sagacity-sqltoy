@@ -11,6 +11,7 @@ import java.util.Set;
 import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.callback.EntityUpdateCallback;
 import org.sagacity.sqltoy.callback.StreamResultHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
@@ -317,6 +318,12 @@ public class SqlToyDaoImpl extends SpringDaoSupport implements SqlToyDao {
 	}
 
 	@Override
+	public <T extends Serializable> T updateSaveFetch(T entity, EntityUpdateCallback<T> callback,
+			String... uniqueProps) {
+		return super.updateSaveFetch(entity, callback, uniqueProps, dataSource);
+	}
+
+	@Override
 	public Long updateByQuery(Class entityClass, EntityUpdate entityUpdate) {
 		return super.updateByQuery(entityClass, entityUpdate);
 	}
@@ -489,8 +496,7 @@ public class SqlToyDaoImpl extends SpringDaoSupport implements SqlToyDao {
 	}
 
 	@Override
-	public <T extends Serializable> List<T> findAllCascade(List<T> entities, LockMode lockMode,
-			Class... cascadeTypes) {
+	public <T extends Serializable> List<T> findAllCascade(List<T> entities, LockMode lockMode, Class... cascadeTypes) {
 		return super.loadAllCascade(entities, lockMode, cascadeTypes);
 	}
 
