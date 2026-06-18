@@ -11,6 +11,7 @@ import java.util.List;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DecryptHandler;
 import org.sagacity.sqltoy.callback.ReflectPropsHandler;
+import org.sagacity.sqltoy.callback.UpdateRowCallback;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.model.ColumnMeta;
@@ -248,6 +249,10 @@ public interface Dialect {
 	 */
 	public Serializable updateSaveFetch(final SqlToyContext sqlToyContext, final Serializable entity,
 			final UpdateRowHandler updateRowHandler, final String[] uniqueProps, final Connection conn,
+			final Integer dbType, final String dialect, final String tableName) throws Exception;
+
+	public Serializable updateSaveFetch(final SqlToyContext sqlToyContext, final Serializable entity,
+			final UpdateRowCallback updateRowCallback, final String[] uniqueProps, final Connection conn,
 			final Integer dbType, final String dialect, final String tableName) throws Exception;
 
 	/**

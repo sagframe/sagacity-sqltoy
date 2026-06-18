@@ -22,6 +22,11 @@ public class SqlToyThreadDataHolder {
 	// 是否启用统一字段处理中修改行为(一些业务数据不需要强制对修改人、修改时间做强制覆盖)
 	private static ThreadLocal<Boolean> unifyUpdateFields = new TransmittableThreadLocal<Boolean>();
 
+	/**
+	 * 自由场景(预留)
+	 */
+	private static ThreadLocal<Integer> freeSceneThreadLocal = new TransmittableThreadLocal<Integer>();
+
 	// 放入当前用户语言方言
 	public static void setLanguage(String locale) {
 		if (locale != null) {
@@ -31,6 +36,14 @@ public class SqlToyThreadDataHolder {
 
 	public static String getLanguage() {
 		return i18nThreadLocal.get();
+	}
+
+	public static void setFreeScene(Integer scene) {
+		freeSceneThreadLocal.set(scene == null ? 0 : scene);
+	}
+
+	public static Integer getFreeScene() {
+		return freeSceneThreadLocal.get();
 	}
 
 	/**
@@ -56,6 +69,7 @@ public class SqlToyThreadDataHolder {
 	public static void clearCounter() {
 		counterThreadLocal.remove();
 		counterThreadLocal.set(null);
+
 	}
 
 	/**
@@ -82,8 +96,14 @@ public class SqlToyThreadDataHolder {
 		unifyUpdateFields.set(null);
 	}
 
+	public static void clearFreeScene() {
+		freeSceneThreadLocal.remove();
+		freeSceneThreadLocal.set(null);
+	}
+
 	public static void clearAll() {
 		clearLanguage();
 		resumeUnifyUpdate();
+		clearFreeScene();
 	}
 }

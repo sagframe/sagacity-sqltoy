@@ -11,6 +11,7 @@ import java.util.Set;
 import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.callback.EntityUpdateCallback;
 import org.sagacity.sqltoy.callback.StreamResultHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
@@ -250,6 +251,12 @@ public class LightDaoImpl extends SolonDaoSupport implements LightDao {
 	public <T extends Serializable> T updateSaveFetch(T entity, UpdateRowHandler updateRowHandler,
 			String... uniqueProps) {
 		return super.updateSaveFetch(entity, updateRowHandler, uniqueProps, dataSource);
+	}
+
+	@Override
+	public <T extends Serializable> T updateSaveFetch(T entity, EntityUpdateCallback<T> callback,
+			String... uniqueProps) {
+		return super.updateSaveFetch(entity, callback, uniqueProps, dataSource);
 	}
 
 	@Override

@@ -264,4 +264,19 @@ public class JSONTypeUtil {
 		// 其他类型尝试 toString
 		return jdbcValue.toString();
 	}
+
+	/**
+	 * 将 Java 对象转换为 JSON 字符串，特殊处理字符串类型直接返回原值
+	 * @param value
+	 * @return
+	 */
+	public static String toJSONString(Object value) {
+		if (value == null) {
+			return null;
+		}
+		if (value instanceof String) {
+			return (String) value;
+		}
+		return JSON.toJSONString(value);
+	}
 }

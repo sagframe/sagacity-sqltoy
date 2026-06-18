@@ -35,6 +35,7 @@ import org.sagacity.sqltoy.callback.DecryptHandler;
 import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
 import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.callback.ThreeBiConsumer;
+import org.sagacity.sqltoy.callback.UpdateRowCallback;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.DataVersionConfig;
@@ -359,6 +360,20 @@ public class DefaultDialectUtils {
 				null, conn, dbType, autoCommit, false);
 	}
 
+	public static Serializable updateSaveFetch(final SqlToyContext sqlToyContext, final Serializable entity,
+			final UpdateRowHandler updateRowHandler, String[] uniqueProps, final Connection conn, final Integer dbType,
+			String dialect, String tableName) throws Exception {
+		return updateSaveFetch(sqlToyContext, entity, updateRowHandler, null, uniqueProps, conn, dbType, dialect,
+				tableName);
+	}
+
+	public static Serializable updateSaveFetch(final SqlToyContext sqlToyContext, final Serializable entity,
+			final UpdateRowCallback updateRowCallback, String[] uniqueProps, final Connection conn,
+			final Integer dbType, String dialect, String tableName) throws Exception {
+		return updateSaveFetch(sqlToyContext, entity, null, updateRowCallback, uniqueProps, conn, dbType, dialect,
+				tableName);
+	}
+
 	/**
 	 * @TODO 实现：1、锁查询；2、记录存在则修改；3、记录不存在则执行insert；4、返回修改或插入的记录信息，尽量不要使用identity、sequence主键
 	 * @param sqlToyContext
@@ -373,8 +388,8 @@ public class DefaultDialectUtils {
 	 * @throws Exception
 	 */
 	public static Serializable updateSaveFetch(final SqlToyContext sqlToyContext, final Serializable entity,
-			final UpdateRowHandler updateRowHandler, String[] uniqueProps, final Connection conn, final Integer dbType,
-			String dialect, String tableName) throws Exception {
+			final UpdateRowHandler updateRowHandler, final UpdateRowCallback updateRowCallback, String[] uniqueProps,
+			final Connection conn, final Integer dbType, String dialect, String tableName) throws Exception {
 		final EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		// 条件字段
 		String[] whereFields = uniqueProps;
@@ -410,7 +425,7 @@ public class DefaultDialectUtils {
 		final Object[] fieldValues = tempFieldValues;
 		final Object entityVersion = tmpVersionValue;
 		TypeHandler typeHandler = sqlToyContext.getTypeHandler();
-		final boolean hasUpdateRow = (updateRowHandler == null) ? false : true;
+		final boolean hasUpdateRow = (updateRowHandler == null && updateRowCallback == null) ? false : true;
 		// 组织select * from table for update 语句
 		SqlToyResult queryParam = wrapFetchSql(entityMeta, dbType, whereFields, whereParamValues, tableName);
 		// 增加sql执行拦截器 update 2022-9-10
@@ -440,22 +455,25 @@ public class DefaultDialectUtils {
 							List result = new ArrayList();
 							DataVersionConfig dataVersion = entityMeta.getDataVersion();
 							final String dataVersionField = (dataVersion == null) ? null : dataVersion.getField();
-							ThreeBiConsumer<String, String[], Object> setValConsumer = (fieldName, forcedFieldNames,
-									fieldValue) -> {
-								// 排除dataVersionField字段避免被重复处理
-								if (dataVersionField == null || !fieldName.equals(dataVersionField)) {
-									Optional.ofNullable(entityMeta.getFieldMeta(fieldName)).ifPresent(fieldMeta -> {
-										try {
-											resultUpdate(conn, finalRs, fieldMeta, fieldValue, dbType, false,
-													(forcedFieldNames != null && Arrays.stream(forcedFieldNames)
-															.anyMatch(x -> fieldName != null
-																	&& fieldName.equalsIgnoreCase(x))));
-										} catch (Exception e) {
-											throw new RuntimeException(e);
+							ThreeBiConsumer<String, String[], Object> setValConsumer = (updateRowHandler == null) ? null
+									: (fieldName, forcedFieldNames, fieldValue) -> {
+										// 排除dataVersionField字段避免被重复处理
+										if (dataVersionField == null || !fieldName.equals(dataVersionField)) {
+											Optional.ofNullable(entityMeta.getFieldMeta(fieldName))
+													.ifPresent(fieldMeta -> {
+														try {
+															resultUpdate(conn, finalRs, fieldMeta, fieldValue, dbType,
+																	false,
+																	(forcedFieldNames != null && Arrays
+																			.stream(forcedFieldNames)
+																			.anyMatch(x -> fieldName != null
+																					&& fieldName.equalsIgnoreCase(x))));
+														} catch (Exception e) {
+															throw new RuntimeException(e);
+														}
+													});
 										}
-									});
-								}
-							};
+									};
 							while (finalRs.next()) {
 								if (index > 0) {
 									throw new DataAccessException("updateSaveFetch操作只能针对单条记录进行操作,请检查uniqueProps参数设置!");
@@ -490,14 +508,18 @@ public class DefaultDialectUtils {
 												nowVersion, dbType, false);
 									}
 									// 执行update反调，实现锁定行记录值的修改
-									updateRowHandler.updateRow(finalRs, index);
-									updateRowHandler.updateRow(finalRs, index, (fieldName, fieldValue) -> {
-										setValConsumer.accept(fieldName, null, fieldValue);
-									});
-									updateRowHandler.updateRow(finalRs, index,
-											(fieldName, forcedFieldNames, fieldValue) -> {
-												setValConsumer.accept(fieldName, forcedFieldNames, fieldValue);
-											});
+									if (updateRowHandler != null) {
+										updateRowHandler.updateRow(finalRs, index);
+										updateRowHandler.updateRow(finalRs, index, (fieldName, fieldValue) -> {
+											setValConsumer.accept(fieldName, null, fieldValue);
+										});
+										updateRowHandler.updateRow(finalRs, index,
+												(fieldName, forcedFieldNames, fieldValue) -> {
+													setValConsumer.accept(fieldName, forcedFieldNames, fieldValue);
+												});
+									} else if (updateRowCallback != null) {
+										updateRowCallback.updateRow(finalRs, index);
+									}
 									// 考虑公共字段修改
 									if (unifyFieldsHandler != null && unifyFieldsHandler.updateUnifyFields() != null) {
 										Map<String, Object> updateProps = unifyFieldsHandler.updateUnifyFields();

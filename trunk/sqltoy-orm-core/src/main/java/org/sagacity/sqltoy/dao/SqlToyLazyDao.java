@@ -11,6 +11,7 @@ import java.util.Set;
 import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.callback.EntityUpdateCallback;
 import org.sagacity.sqltoy.callback.StreamResultHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
@@ -189,6 +190,9 @@ public interface SqlToyLazyDao {
 	public <T extends Serializable> T updateSaveFetch(final T entity, final UpdateRowHandler updateRowHandler,
 			final String... uniqueProps);
 
+	public <T extends Serializable> T updateSaveFetch(final T entity, final EntityUpdateCallback<T> callback,
+			final String... uniqueProps);
+	
 	/**
 	 * @todo 深度修改,不管是否为null全部字段强制修改
 	 * @param serializableVO

@@ -13,6 +13,7 @@ import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Array;
+import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.LocalDate;
@@ -35,7 +36,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
 import org.sagacity.sqltoy.SqlToyConstants;
+import org.sagacity.sqltoy.callback.EntityUpdateCallback;
 import org.sagacity.sqltoy.callback.ReflectPropsHandler;
+import org.sagacity.sqltoy.callback.UpdateRowCallback;
 import org.sagacity.sqltoy.config.annotation.Column;
 import org.sagacity.sqltoy.config.annotation.Entity;
 import org.sagacity.sqltoy.config.annotation.OneToMany;
@@ -50,6 +53,7 @@ import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.model.IgnoreCaseSet;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.model.JdbcTypes;
+import org.sagacity.sqltoy.plugins.EntityResultSetProxy;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.slf4j.Logger;
@@ -2770,5 +2774,21 @@ public class BeanUtil {
 			}
 		}
 		return fieldMap;
+	}
+	
+	/**
+	 * 适配转换，传入实体元数据、实体Class + 业务对象回调，输出原生UpdateRowHandler
+	 * 
+	 * @param entityMeta  实体元数据（上层预先获取缓存实例）
+	 * @param entityClass 实体DTO类
+	 * @param callback    面向对象行更新回调
+	 * @return SqlToy原生UpdateRowHandler
+	 */
+	public static <T extends Serializable> UpdateRowCallback toSqlToyHandler(EntityMeta entityMeta,
+			Class<? extends T> entityClass, EntityUpdateCallback<T> callback) {
+		return (ResultSet rs, int index) -> {
+			T proxyEntity = EntityResultSetProxy.createProxy(rs, entityClass, entityMeta);
+			callback.update(proxyEntity, index);
+		};
 	}
 }
