@@ -25,6 +25,7 @@ import org.sagacity.sqltoy.callback.InsertRowCallbackHandler;
 import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
 import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.callback.StreamResultHandler;
+import org.sagacity.sqltoy.callback.UpdateRowCallback;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.EntityMeta;
@@ -1970,6 +1971,36 @@ public class DialectFactory {
 							SqlExecuteStat.setDialect(dialect);
 							this.setResult(getDialectSqlWrapper(dbType).updateSaveFetch(sqlToyContext, entity,
 									updateRowHandler, uniqueProps, conn, dbType, dialect,
+									shardingModel.getTableName()));
+						}
+					});
+			return result;
+		} catch (Exception e) {
+			SqlExecuteStat.error(e);
+			throw new DataAccessException(e);
+		} finally {
+			SqlExecuteStat.destroy();
+		}
+	}
+
+	public Serializable updateSaveFetch(final SqlToyContext sqlToyContext, final Serializable entity,
+			final UpdateRowCallback updateRowCallback, final String[] uniqueProps, final DataSource dataSource) {
+		if (entity == null || updateRowCallback == null) {
+			logger.warn("updateSaveFetch entity or updateRowCallback is null,please check!");
+			return null;
+		}
+		validEntity(sqlToyContext, entity.getClass(), false);
+		try {
+			SqlExecuteStat.start(BeanUtil.getEntityClass(entity.getClass()).getName(),
+					OperateDetailType.updateSaveFetch, entity.getClass(), sqlToyContext.isDebug());
+			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, false, dataSource);
+			Serializable result = (Serializable) DataSourceUtils.processDataSource(sqlToyContext,
+					shardingModel.getDataSource(), new DataSourceCallbackHandler() {
+						@Override
+						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+							SqlExecuteStat.setDialect(dialect);
+							this.setResult(getDialectSqlWrapper(dbType).updateSaveFetch(sqlToyContext, entity,
+									updateRowCallback, uniqueProps, conn, dbType, dialect,
 									shardingModel.getTableName()));
 						}
 					});

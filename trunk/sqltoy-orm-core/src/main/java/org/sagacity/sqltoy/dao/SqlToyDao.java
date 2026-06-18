@@ -11,6 +11,7 @@ import java.util.Set;
 import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.callback.EntityUpdateCallback;
 import org.sagacity.sqltoy.callback.StreamResultHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
@@ -44,15 +45,12 @@ import org.sagacity.sqltoy.translate.TranslateHandler;
 
 /**
  * @project sqltoy-orm
- * @description 独立DAO接口，不继承LightDao，提供完整的规范命名方法体系。
- *              查询方法统一命名规范：
- *              - findOneById / findAllByIds: 按主键查询
- *              - findOneByEntity: 按实体主键查询单条
- *              - findAllByEntities: 按实体集合批量加载
- *              - findOneCascade / findAllCascade: 级联加载
- *              - findOne: 按条件/SQL/QueryExecutor查询单条
- *              - findList: 按条件/SQL/QueryExecutor查询多条
- *              - findTop / findRandom / findPage: Top/随机/分页查询
+ * @description 独立DAO接口，不继承LightDao，提供完整的规范命名方法体系。 查询方法统一命名规范： - findOneById /
+ *              findAllByIds: 按主键查询 - findOneByEntity: 按实体主键查询单条 -
+ *              findAllByEntities: 按实体集合批量加载 - findOneCascade / findAllCascade:
+ *              级联加载 - findOne: 按条件/SQL/QueryExecutor查询单条 - findList:
+ *              按条件/SQL/QueryExecutor查询多条 - findTop / findRandom / findPage:
+ *              Top/随机/分页查询
  * @author zhongxuchen
  * @version v1.0,Date:2025年
  */
@@ -131,8 +129,7 @@ public interface SqlToyDao {
 
 	public Set<String> getCacheNames();
 
-	public <T extends Serializable> T convertType(Serializable source, Class<T> resultType,
-			String... ignoreProperties);
+	public <T extends Serializable> T convertType(Serializable source, Class<T> resultType, String... ignoreProperties);
 
 	public <T extends Serializable> List<T> convertType(List sourceList, Class<T> resultType,
 			String... ignoreProperties);
@@ -176,6 +173,9 @@ public interface SqlToyDao {
 	public List updateFetch(QueryExecutor queryExecutor, UpdateRowHandler updateRowHandler);
 
 	public <T extends Serializable> T updateSaveFetch(T entity, UpdateRowHandler updateRowHandler,
+			String... uniqueProps);
+
+	public <T extends Serializable> T updateSaveFetch(T entity, EntityUpdateCallback<T> callback,
 			String... uniqueProps);
 
 	public Long updateByQuery(Class entityClass, EntityUpdate entityUpdate);

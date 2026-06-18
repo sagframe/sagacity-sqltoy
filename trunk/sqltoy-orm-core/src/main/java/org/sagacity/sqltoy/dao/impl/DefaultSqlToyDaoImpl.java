@@ -11,6 +11,7 @@ import java.util.Set;
 import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.callback.EntityUpdateCallback;
 import org.sagacity.sqltoy.callback.StreamResultHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
@@ -46,8 +47,8 @@ import org.sagacity.sqltoy.translate.TranslateHandler;
 
 /**
  * @project sqltoy-orm
- * @description SqlToyDao 的默认实现类，直接继承 SqlToyDaoSupport，
- *              不依赖 LightDao/DefaultLightDaoImpl，实现完整规范命名的查询方法
+ * @description SqlToyDao 的默认实现类，直接继承 SqlToyDaoSupport， 不依赖
+ *              LightDao/DefaultLightDaoImpl，实现完整规范命名的查询方法
  * @author zhongxuchen
  * @version v1.0,Date:2025年
  */
@@ -319,6 +320,12 @@ public class DefaultSqlToyDaoImpl extends SqlToyDaoSupport implements SqlToyDao 
 	}
 
 	@Override
+	public <T extends Serializable> T updateSaveFetch(T entity, EntityUpdateCallback<T> callback,
+			String... uniqueProps) {
+		return super.updateSaveFetch(entity, callback, uniqueProps, dataSource);
+	}
+
+	@Override
 	public Long updateByQuery(Class entityClass, EntityUpdate entityUpdate) {
 		return super.updateByQuery(entityClass, entityUpdate);
 	}
@@ -412,7 +419,7 @@ public class DefaultSqlToyDaoImpl extends SqlToyDaoSupport implements SqlToyDao 
 	// ============================================
 	// 按主键查询 - findOneById / findAllByIds
 	// ============================================
-	
+
 	@Override
 	public <T extends Serializable> T findOneById(Class<T> entityClass, Object id) {
 		List<T> result = super.loadByIds(entityClass, id);
@@ -424,7 +431,7 @@ public class DefaultSqlToyDaoImpl extends SqlToyDaoSupport implements SqlToyDao 
 		}
 		throw new IllegalArgumentException("findOneById 查询出:" + result.size() + " 条记录，不符合查询单条记录的预期!");
 	}
-	
+
 	@Override
 	public <T extends Serializable> T findOneById(Class<T> entityClass, Object id, LockMode lockMode) {
 		List<T> result = super.loadByIds(entityClass, lockMode, id);
@@ -436,12 +443,12 @@ public class DefaultSqlToyDaoImpl extends SqlToyDaoSupport implements SqlToyDao 
 		}
 		throw new IllegalArgumentException("findOneById 查询出:" + result.size() + " 条记录，不符合查询单条记录的预期!");
 	}
-	
+
 	@Override
 	public <T extends Serializable> List<T> findAllByIds(Class<T> entityClass, Object... ids) {
 		return super.loadByIds(entityClass, ids);
 	}
-	
+
 	@Override
 	public <T extends Serializable> List<T> findAllByIds(Class<T> entityClass, LockMode lockMode, Object... ids) {
 		return super.loadByIds(entityClass, lockMode, ids);
@@ -491,8 +498,7 @@ public class DefaultSqlToyDaoImpl extends SqlToyDaoSupport implements SqlToyDao 
 	}
 
 	@Override
-	public <T extends Serializable> List<T> findAllCascade(List<T> entities, LockMode lockMode,
-			Class... cascadeTypes) {
+	public <T extends Serializable> List<T> findAllCascade(List<T> entities, LockMode lockMode, Class... cascadeTypes) {
 		return super.loadAllCascade(entities, lockMode, cascadeTypes);
 	}
 

@@ -3,7 +3,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sagframe</groupId>
-	<version>5.6.82</version>
+	<version>5.6.83.RC2</version>
 	<name>sagacity-sqltoy</name>
 	<description>sqltoy core code</description>
 	<artifactId>sagacity-sqltoy</artifactId>
@@ -26,6 +26,7 @@
 		<transmittable-thread-local>2.14.5</transmittable-thread-local>
 		<ulid-creator.version>5.2.4</ulid-creator.version>
 		<postgresql.version>42.7.11</postgresql.version>
+		<byte-buddy.version>1.18.10</byte-buddy.version>
 	</properties>
 	<licenses>
 		<license>
@@ -63,6 +64,12 @@
 			<groupId>com.github.f4b6a3</groupId>
 			<artifactId>ulid-creator</artifactId>
 			<version>${ulid-creator.version}</version>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>net.bytebuddy</groupId>
+			<artifactId>byte-buddy</artifactId>
+			<version>${byte-buddy.version}</version>
 			<optional>true</optional>
 		</dependency>
 		<!-- Source:
