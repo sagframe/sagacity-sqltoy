@@ -450,8 +450,8 @@ public class DefaultDialectUtils {
 											Optional.ofNullable(entityMeta.getFieldMeta(fieldName))
 													.ifPresent(fieldMeta -> {
 														try {
-															SqlUtilsExt.resultUpdate(conn, finalRs, fieldMeta,
-																	fieldValue, dbType, false,
+															SqlUtilsExt.resultUpdate(typeHandler, conn, finalRs,
+																	fieldMeta, fieldValue, dbType, false,
 																	(forcedFieldNames != null && Arrays
 																			.stream(forcedFieldNames)
 																			.anyMatch(x -> fieldName != null
@@ -492,7 +492,7 @@ public class DefaultDialectUtils {
 											nowVersion = "" + (Integer.parseInt(nowVersion) + 1);
 										}
 										// 修改数据版本
-										SqlUtilsExt.resultUpdate(conn, finalRs,
+										SqlUtilsExt.resultUpdate(typeHandler, conn, finalRs,
 												entityMeta.getFieldMeta(dataVersionField), nowVersion, dbType, false);
 									}
 									// 执行update反调，实现锁定行记录值的修改
@@ -506,7 +506,7 @@ public class DefaultDialectUtils {
 													setValConsumer.accept(fieldName, forcedFieldNames, fieldValue);
 												});
 									} else if (updateRowCallback != null) {
-										updateRowCallback.updateRow(dbType, conn, finalRs, index);
+										updateRowCallback.updateRow(typeHandler, dbType, conn, finalRs, index);
 									}
 									// 考虑公共字段修改
 									if (unifyFieldsHandler != null && unifyFieldsHandler.updateUnifyFields() != null) {
@@ -523,8 +523,8 @@ public class DefaultDialectUtils {
 												// 强制修改
 												if (unifyFieldsHandler.forceUpdateFields() != null
 														&& unifyFieldsHandler.forceUpdateFields().contains(field)) {
-													SqlUtilsExt.resultUpdate(conn, finalRs, fieldMeta, fieldValue,
-															dbType, false);
+													SqlUtilsExt.resultUpdate(typeHandler, conn, finalRs, fieldMeta,
+															fieldValue, dbType, false);
 												} else {
 													// 反射对象属性取值
 													Object pojoFieldValue = BeanUtil.getProperty(entity, field);
@@ -532,8 +532,8 @@ public class DefaultDialectUtils {
 													if (pojoFieldValue != null) {
 														fieldValue = pojoFieldValue;
 													}
-													SqlUtilsExt.resultUpdate(conn, finalRs, fieldMeta, fieldValue,
-															dbType, false);
+													SqlUtilsExt.resultUpdate(typeHandler, conn, finalRs, fieldMeta,
+															fieldValue, dbType, false);
 												}
 											}
 										}
@@ -559,8 +559,8 @@ public class DefaultDialectUtils {
 								String[] fieldsArray = entityMeta.getFieldsArray(false);
 								for (int i = 0; i < fieldsArray.length; i++) {
 									fieldMeta = entityMeta.getFieldMeta(fieldsArray[i]);
-									SqlUtilsExt.resultUpdate(conn, finalRs, fieldMeta, fullFieldvalues[i], dbType,
-											true);
+									SqlUtilsExt.resultUpdate(typeHandler, conn, finalRs, fieldMeta, fullFieldvalues[i],
+											dbType, true);
 								}
 								// 执行插入
 								finalRs.insertRow();

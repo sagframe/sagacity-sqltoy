@@ -2787,8 +2787,8 @@ public class BeanUtil {
 	 */
 	public static <T extends Serializable> UpdateRowCallback toSqlToyHandler(EntityMeta entityMeta,
 			Class<? extends T> entityClass, EntityUpdateCallback<T> callback) {
-		return (Integer dbType, Connection conn, ResultSet rs, int index) -> {
-			T proxyEntity = EntityResultSetProxy.createProxy(dbType, conn, rs, entityClass, entityMeta);
+		return (TypeHandler typeHandler, Integer dbType, Connection conn, ResultSet rs, int index) -> {
+			T proxyEntity = EntityResultSetProxy.createProxy(typeHandler, dbType, conn, rs, entityClass, entityMeta);
 			callback.update(proxyEntity, index);
 		};
 	}
