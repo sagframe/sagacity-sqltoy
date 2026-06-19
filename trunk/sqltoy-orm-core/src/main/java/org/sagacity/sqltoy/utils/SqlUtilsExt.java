@@ -502,7 +502,7 @@ public class SqlUtilsExt {
 					|| jdbcType == java.sql.Types.NCHAR) {
 				rs.updateString(columnName, paramValue.toString());
 			} else {
-				rs.updateObject(columnName, (BigInteger) paramValue);
+				rs.updateBigDecimal(columnName, new BigDecimal((BigInteger) paramValue));
 			}
 		} else if (paramValue instanceof java.lang.Double || paramValue.getClass() == double.class) {
 			if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NVARCHAR

@@ -49,17 +49,16 @@ public class EntityResultSetProxy<T> {
 			int subSize = methodName.startsWith("get") ? 3 : 2;
 			String propName = methodName.substring(subSize);
 			FieldMeta fieldMeta = entityMeta.getFieldMeta(propName);
-			String col = fieldMeta.getColumnName();
-			if (col == null) {
+			if (fieldMeta == null) {
 				return superCall.call();
 			}
-			Object obj = rs.getObject(col);
-			if (obj == null) {
+			Object columnValue = rs.getObject(fieldMeta.getColumnName());
+			if (columnValue == null) {
 				return null;
 			}
 			Class<?> returnType = method.getReturnType();
 			// 字符串、日期等通用转换
-			return BeanUtil.convertType(obj, fieldMeta.getType(), DataType.getType(returnType.getTypeName()),
+			return BeanUtil.convertType(columnValue, fieldMeta.getType(), DataType.getType(returnType.getTypeName()),
 					returnType.getTypeName());
 		}
 
@@ -67,8 +66,7 @@ public class EntityResultSetProxy<T> {
 		if (methodName.startsWith("set") && args != null && args.length == 1) {
 			String propName = methodName.substring(3);
 			FieldMeta fieldMeta = entityMeta.getFieldMeta(propName);
-			String col = fieldMeta.getColumnName();
-			if (col == null) {
+			if (fieldMeta == null) {
 				return superCall.call();
 			}
 			SqlUtilsExt.resultUpdate(conn, rs, fieldMeta, args[0], dbType, false, true);
