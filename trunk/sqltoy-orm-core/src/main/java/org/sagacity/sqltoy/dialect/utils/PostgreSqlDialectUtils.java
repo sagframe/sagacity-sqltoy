@@ -368,4 +368,11 @@ public class PostgreSqlDialectUtils {
 		pgObject.setValue(jsonStr);
 		pst.setObject(paramIndex, pgObject);
 	}
+
+	public static void updateJSON(ResultSet rs, String columnName, int jdbcType, String jsonStr) throws SQLException {
+		PGobject pgObject = new PGobject();
+		pgObject.setType(jdbcType == JdbcTypes.JSONB ? "jsonb" : "json");
+		pgObject.setValue(jsonStr);
+		rs.updateObject(columnName, pgObject);
+	}
 }

@@ -71,7 +71,7 @@ public class SqlExecuteStat {
 
 	public static void start(String sqlId, OperateDetailType type, Class resultType, Boolean debugPrint) {
 		threadLocal.set(
-			new SqlExecuteTrace(sqlId, type, resultType, (debugPrint == null) ? debug : debugPrint.booleanValue()));
+				new SqlExecuteTrace(sqlId, type, resultType, (debugPrint == null) ? debug : debugPrint.booleanValue()));
 	}
 
 	/**
@@ -80,21 +80,22 @@ public class SqlExecuteStat {
 	 * @param type
 	 * @param debugPrint
 	 */
-	public static void start(String sqlId, OperateDetailType type, Class resultType, Boolean debugPrint, Object contextData) {
-		threadLocal.set(
-				new SqlExecuteTrace(sqlId, type, resultType, (debugPrint == null) ? debug : debugPrint.booleanValue(), contextData));
+	public static void start(String sqlId, OperateDetailType type, Class resultType, Boolean debugPrint,
+			Object contextData) {
+		threadLocal.set(new SqlExecuteTrace(sqlId, type, resultType,
+				(debugPrint == null) ? debug : debugPrint.booleanValue(), contextData));
 	}
 
 	public static void start(String sqlId, OperateDetailType type, Class resultType, Long batchSize,
-		Boolean debugPrint) {
+			Boolean debugPrint) {
 		SqlExecuteTrace sqlExecuteTrace = new SqlExecuteTrace(sqlId, type, resultType,
-			(debugPrint == null) ? debug : debugPrint.booleanValue());
+				(debugPrint == null) ? debug : debugPrint.booleanValue());
 		sqlExecuteTrace.setBatchSize(batchSize);
 		threadLocal.set(sqlExecuteTrace);
 	}
 
-	public static void start(String sqlId, OperateDetailType type, Class resultType, Long batchSize,
-			Boolean debugPrint, Object contextData) {
+	public static void start(String sqlId, OperateDetailType type, Class resultType, Long batchSize, Boolean debugPrint,
+			Object contextData) {
 		SqlExecuteTrace sqlExecuteTrace = new SqlExecuteTrace(sqlId, type, resultType,
 				(debugPrint == null) ? debug : debugPrint.booleanValue(), contextData);
 		sqlExecuteTrace.setBatchSize(batchSize);
@@ -128,9 +129,10 @@ public class SqlExecuteStat {
 		}
 	}
 
-	public static void setDialect(String dialect) {
+	public static void setDialect(Integer dbType, String dialect) {
 		if (threadLocal.get() != null) {
 			threadLocal.get().setDialect(dialect);
+			threadLocal.get().setDbType(dbType);
 		}
 	}
 

@@ -2,6 +2,7 @@ package org.sagacity.sqltoy.utils;
 
 import java.lang.reflect.Array;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -81,6 +82,15 @@ public class JSONTypeUtil {
 			PostgreSqlDialectUtils.setJSONValue(pst, paramIndex, jdbcType, JSON.toJSONString(value));
 		} else {
 			pst.setString(paramIndex, JSON.toJSONString(value));
+		}
+	}
+
+	public static void updateJSONValue(Integer dbType, ResultSet rs, String columnName, int jdbcType, Object value)
+			throws SQLException {
+		if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15) {
+			PostgreSqlDialectUtils.updateJSON(rs, columnName, jdbcType, columnName);
+		} else {
+			rs.updateString(columnName, JSON.toJSONString(value));
 		}
 	}
 
@@ -267,6 +277,7 @@ public class JSONTypeUtil {
 
 	/**
 	 * 将 Java 对象转换为 JSON 字符串，特殊处理字符串类型直接返回原值
+	 * 
 	 * @param value
 	 * @return
 	 */
