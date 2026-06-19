@@ -26,7 +26,9 @@ import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.SqlToyThreadDataHolder;
 import org.sagacity.sqltoy.callback.DataSourceCallbackHandler;
+import org.sagacity.sqltoy.callback.EntityUpdateCallback;
 import org.sagacity.sqltoy.callback.StreamResultHandler;
+import org.sagacity.sqltoy.callback.UpdateRowCallback;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.DataType;
@@ -1159,6 +1161,15 @@ public class SqlToyDaoSupport {
 	public <T extends Serializable> T updateSaveFetch(final T entity, final UpdateRowHandler updateRowHandler,
 			final String[] uniqueProps, final DataSource dataSource) {
 		return (T) dialectFactory.updateSaveFetch(sqlToyContext, entity, updateRowHandler, uniqueProps,
+				getDataSource(dataSource));
+	}
+
+	public <T extends Serializable> T updateSaveFetch(final T entity, EntityUpdateCallback<T> callback,
+			final String[] uniqueProps, final DataSource dataSource) {
+		Class<T> entityClazz = (Class<T>) entity.getClass();
+		UpdateRowCallback updateRowCallback = BeanUtil.toSqlToyHandler(getEntityMeta(entityClazz), entityClazz,
+				callback);
+		return (T) dialectFactory.updateSaveFetch(sqlToyContext, entity, updateRowCallback, uniqueProps,
 				getDataSource(dataSource));
 	}
 

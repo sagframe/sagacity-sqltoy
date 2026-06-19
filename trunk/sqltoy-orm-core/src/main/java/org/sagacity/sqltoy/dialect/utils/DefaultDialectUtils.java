@@ -3,25 +3,13 @@
  */
 package org.sagacity.sqltoy.dialect.utils;
 
-import java.io.OutputStream;
 import java.io.Serializable;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.sql.Array;
-import java.sql.Blob;
-import java.sql.Clob;
 import java.sql.Connection;
-import java.sql.NClob;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +23,7 @@ import org.sagacity.sqltoy.callback.DecryptHandler;
 import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
 import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.callback.ThreeBiConsumer;
+import org.sagacity.sqltoy.callback.UpdateRowCallback;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.DataVersionConfig;
@@ -359,6 +348,20 @@ public class DefaultDialectUtils {
 				null, conn, dbType, autoCommit, false);
 	}
 
+	public static Serializable updateSaveFetch(final SqlToyContext sqlToyContext, final Serializable entity,
+			final UpdateRowHandler updateRowHandler, String[] uniqueProps, final Connection conn, final Integer dbType,
+			String dialect, String tableName) throws Exception {
+		return updateSaveFetch(sqlToyContext, entity, updateRowHandler, null, uniqueProps, conn, dbType, dialect,
+				tableName);
+	}
+
+	public static Serializable updateSaveFetch(final SqlToyContext sqlToyContext, final Serializable entity,
+			final UpdateRowCallback updateRowCallback, String[] uniqueProps, final Connection conn,
+			final Integer dbType, String dialect, String tableName) throws Exception {
+		return updateSaveFetch(sqlToyContext, entity, null, updateRowCallback, uniqueProps, conn, dbType, dialect,
+				tableName);
+	}
+
 	/**
 	 * @TODO 实现：1、锁查询；2、记录存在则修改；3、记录不存在则执行insert；4、返回修改或插入的记录信息，尽量不要使用identity、sequence主键
 	 * @param sqlToyContext
@@ -373,8 +376,8 @@ public class DefaultDialectUtils {
 	 * @throws Exception
 	 */
 	public static Serializable updateSaveFetch(final SqlToyContext sqlToyContext, final Serializable entity,
-			final UpdateRowHandler updateRowHandler, String[] uniqueProps, final Connection conn, final Integer dbType,
-			String dialect, String tableName) throws Exception {
+			final UpdateRowHandler updateRowHandler, final UpdateRowCallback updateRowCallback, String[] uniqueProps,
+			final Connection conn, final Integer dbType, String dialect, String tableName) throws Exception {
 		final EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		// 条件字段
 		String[] whereFields = uniqueProps;
@@ -410,7 +413,7 @@ public class DefaultDialectUtils {
 		final Object[] fieldValues = tempFieldValues;
 		final Object entityVersion = tmpVersionValue;
 		TypeHandler typeHandler = sqlToyContext.getTypeHandler();
-		final boolean hasUpdateRow = (updateRowHandler == null) ? false : true;
+		final boolean hasUpdateRow = (updateRowHandler == null && updateRowCallback == null) ? false : true;
 		// 组织select * from table for update 语句
 		SqlToyResult queryParam = wrapFetchSql(entityMeta, dbType, whereFields, whereParamValues, tableName);
 		// 增加sql执行拦截器 update 2022-9-10
@@ -440,22 +443,25 @@ public class DefaultDialectUtils {
 							List result = new ArrayList();
 							DataVersionConfig dataVersion = entityMeta.getDataVersion();
 							final String dataVersionField = (dataVersion == null) ? null : dataVersion.getField();
-							ThreeBiConsumer<String, String[], Object> setValConsumer = (fieldName, forcedFieldNames,
-									fieldValue) -> {
-								// 排除dataVersionField字段避免被重复处理
-								if (dataVersionField == null || !fieldName.equals(dataVersionField)) {
-									Optional.ofNullable(entityMeta.getFieldMeta(fieldName)).ifPresent(fieldMeta -> {
-										try {
-											resultUpdate(conn, finalRs, fieldMeta, fieldValue, dbType, false,
-													(forcedFieldNames != null && Arrays.stream(forcedFieldNames)
-															.anyMatch(x -> fieldName != null
-																	&& fieldName.equalsIgnoreCase(x))));
-										} catch (Exception e) {
-											throw new RuntimeException(e);
+							ThreeBiConsumer<String, String[], Object> setValConsumer = (updateRowHandler == null) ? null
+									: (fieldName, forcedFieldNames, fieldValue) -> {
+										// 排除dataVersionField字段避免被重复处理
+										if (dataVersionField == null || !fieldName.equals(dataVersionField)) {
+											Optional.ofNullable(entityMeta.getFieldMeta(fieldName))
+													.ifPresent(fieldMeta -> {
+														try {
+															SqlUtilsExt.resultUpdate(conn, finalRs, fieldMeta,
+																	fieldValue, dbType, false,
+																	(forcedFieldNames != null && Arrays
+																			.stream(forcedFieldNames)
+																			.anyMatch(x -> fieldName != null
+																					&& fieldName.equalsIgnoreCase(x))));
+														} catch (Exception e) {
+															throw new RuntimeException(e);
+														}
+													});
 										}
-									});
-								}
-							};
+									};
 							while (finalRs.next()) {
 								if (index > 0) {
 									throw new DataAccessException("updateSaveFetch操作只能针对单条记录进行操作,请检查uniqueProps参数设置!");
@@ -486,18 +492,22 @@ public class DefaultDialectUtils {
 											nowVersion = "" + (Integer.parseInt(nowVersion) + 1);
 										}
 										// 修改数据版本
-										resultUpdate(conn, finalRs, entityMeta.getFieldMeta(dataVersionField),
-												nowVersion, dbType, false);
+										SqlUtilsExt.resultUpdate(conn, finalRs,
+												entityMeta.getFieldMeta(dataVersionField), nowVersion, dbType, false);
 									}
 									// 执行update反调，实现锁定行记录值的修改
-									updateRowHandler.updateRow(finalRs, index);
-									updateRowHandler.updateRow(finalRs, index, (fieldName, fieldValue) -> {
-										setValConsumer.accept(fieldName, null, fieldValue);
-									});
-									updateRowHandler.updateRow(finalRs, index,
-											(fieldName, forcedFieldNames, fieldValue) -> {
-												setValConsumer.accept(fieldName, forcedFieldNames, fieldValue);
-											});
+									if (updateRowHandler != null) {
+										updateRowHandler.updateRow(finalRs, index);
+										updateRowHandler.updateRow(finalRs, index, (fieldName, fieldValue) -> {
+											setValConsumer.accept(fieldName, null, fieldValue);
+										});
+										updateRowHandler.updateRow(finalRs, index,
+												(fieldName, forcedFieldNames, fieldValue) -> {
+													setValConsumer.accept(fieldName, forcedFieldNames, fieldValue);
+												});
+									} else if (updateRowCallback != null) {
+										updateRowCallback.updateRow(dbType, conn, finalRs, index);
+									}
 									// 考虑公共字段修改
 									if (unifyFieldsHandler != null && unifyFieldsHandler.updateUnifyFields() != null) {
 										Map<String, Object> updateProps = unifyFieldsHandler.updateUnifyFields();
@@ -513,7 +523,8 @@ public class DefaultDialectUtils {
 												// 强制修改
 												if (unifyFieldsHandler.forceUpdateFields() != null
 														&& unifyFieldsHandler.forceUpdateFields().contains(field)) {
-													resultUpdate(conn, finalRs, fieldMeta, fieldValue, dbType, false);
+													SqlUtilsExt.resultUpdate(conn, finalRs, fieldMeta, fieldValue,
+															dbType, false);
 												} else {
 													// 反射对象属性取值
 													Object pojoFieldValue = BeanUtil.getProperty(entity, field);
@@ -521,7 +532,8 @@ public class DefaultDialectUtils {
 													if (pojoFieldValue != null) {
 														fieldValue = pojoFieldValue;
 													}
-													resultUpdate(conn, finalRs, fieldMeta, fieldValue, dbType, false);
+													SqlUtilsExt.resultUpdate(conn, finalRs, fieldMeta, fieldValue,
+															dbType, false);
 												}
 											}
 										}
@@ -547,7 +559,8 @@ public class DefaultDialectUtils {
 								String[] fieldsArray = entityMeta.getFieldsArray(false);
 								for (int i = 0; i < fieldsArray.length; i++) {
 									fieldMeta = entityMeta.getFieldMeta(fieldsArray[i]);
-									resultUpdate(conn, finalRs, fieldMeta, fullFieldvalues[i], dbType, true);
+									SqlUtilsExt.resultUpdate(conn, finalRs, fieldMeta, fullFieldvalues[i], dbType,
+											true);
 								}
 								// 执行插入
 								finalRs.insertRow();
@@ -572,233 +585,6 @@ public class DefaultDialectUtils {
 			BeanUtil.setProperty(entity, entityMeta.getFieldsArray(false)[i], rowList.get(i));
 		}
 		return entity;
-	}
-
-	/**
-	 * @TODO 插入对象
-	 * @param conn
-	 * @param rs
-	 * @param fieldMeta
-	 * @param paramValue
-	 * @param dbType
-	 * @param isInsert
-	 * @throws Exception
-	 */
-	private static void resultUpdate(Connection conn, ResultSet rs, FieldMeta fieldMeta, Object paramValue,
-			Integer dbType, boolean isInsert) throws Exception {
-		resultUpdate(conn, rs, fieldMeta, paramValue, dbType, isInsert, Boolean.FALSE);
-	}
-
-	/**
-	 * @TODO 插入对象
-	 * @param conn
-	 * @param rs
-	 * @param fieldMeta
-	 * @param paramValue
-	 * @param dbType
-	 * @param isInsert
-	 * @param isForcedUpdate 是否强制更新
-	 * @throws Exception
-	 */
-	private static void resultUpdate(Connection conn, ResultSet rs, FieldMeta fieldMeta, Object paramValue,
-			Integer dbType, boolean isInsert, boolean isForcedUpdate) throws Exception {
-		// 计算列不做修改操作
-		if (fieldMeta.getGeneratedType() > 0) {
-			return;
-		}
-		if (!fieldMeta.isPK() && isInsert) {
-			paramValue = SqlUtilsExt.getDefaultValue(paramValue, fieldMeta.getDefaultValue(), fieldMeta.getType(),
-					fieldMeta.isNullable());
-		}
-		String tmpStr;
-		int jdbcType = fieldMeta.getType();
-		String columnName = fieldMeta.getColumnName();
-		if (paramValue == null) {
-			if (isForcedUpdate) {
-				rs.updateNull(columnName);
-			}
-		} else if (paramValue instanceof java.lang.String) {
-			tmpStr = (String) paramValue;
-			// clob 类型只有oracle、db2、dm、oceanBase等数据库支持
-			if (jdbcType == java.sql.Types.CLOB) {
-				if (DBType.ORACLE == dbType || DBType.DB2 == dbType || DBType.OCEANBASE == dbType
-						|| DBType.ORACLE11 == dbType || DBType.DM == dbType || DBType.KINGBASE == dbType) {
-					Clob clob = conn.createClob();
-					clob.setString(1, tmpStr);
-					rs.updateClob(columnName, clob);
-				} else {
-					rs.updateString(columnName, tmpStr);
-				}
-			} else if (jdbcType == java.sql.Types.NCLOB) {
-				if (DBType.ORACLE == dbType || DBType.DB2 == dbType || DBType.OCEANBASE == dbType
-						|| DBType.ORACLE11 == dbType || DBType.DM == dbType || DBType.KINGBASE == dbType) {
-					NClob nclob = conn.createNClob();
-					nclob.setString(1, tmpStr);
-					rs.updateNClob(columnName, nclob);
-				} else {
-					rs.updateString(columnName, tmpStr);
-				}
-			} else if (jdbcType == java.sql.Types.BIGINT || jdbcType == java.sql.Types.DECIMAL
-					|| jdbcType == java.sql.Types.FLOAT) {
-				rs.updateBigDecimal(columnName, new BigDecimal(tmpStr));
-			} else if (jdbcType == java.sql.Types.INTEGER) {
-				rs.updateInt(columnName, Integer.valueOf(tmpStr));
-			} else {
-				rs.updateString(columnName, tmpStr);
-			}
-		} else if (paramValue instanceof java.lang.Integer) {
-			Integer paramInt = (Integer) paramValue;
-			if (jdbcType == java.sql.Types.BOOLEAN) {
-				if (paramInt == 1) {
-					rs.updateBoolean(columnName, true);
-				} else {
-					rs.updateBoolean(columnName, false);
-				}
-			} else if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NCHAR
-					|| jdbcType == java.sql.Types.NVARCHAR) {
-				rs.updateString(columnName, paramValue.toString());
-			} else {
-				rs.updateInt(columnName, paramInt);
-			}
-		} else if (paramValue instanceof java.time.LocalDateTime) {
-			rs.updateTimestamp(columnName, Timestamp.valueOf((LocalDateTime) paramValue));
-		} else if (paramValue instanceof BigDecimal) {
-			rs.updateBigDecimal(columnName, (BigDecimal) paramValue);
-		} else if (paramValue instanceof java.time.LocalDate) {
-			rs.updateDate(columnName, java.sql.Date.valueOf((LocalDate) paramValue));
-		} else if (paramValue instanceof java.sql.Timestamp) {
-			rs.updateTimestamp(columnName, (java.sql.Timestamp) paramValue);
-		} else if (paramValue instanceof java.util.Date) {
-			if (dbType == DBType.CLICKHOUSE) {
-				rs.updateDate(columnName, new java.sql.Date(((java.util.Date) paramValue).getTime()));
-			} else {
-				rs.updateTimestamp(columnName, new Timestamp(((java.util.Date) paramValue).getTime()));
-			}
-		} else if (paramValue instanceof java.math.BigInteger) {
-			if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NCHAR
-					|| jdbcType == java.sql.Types.NVARCHAR) {
-				rs.updateString(columnName, paramValue.toString());
-			} else {
-				rs.updateBigDecimal(columnName, new BigDecimal(((BigInteger) paramValue)));
-			}
-		} else if (paramValue instanceof java.lang.Double) {
-			rs.updateDouble(columnName, ((Double) paramValue));
-		} else if (paramValue instanceof java.lang.Long) {
-			if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NCHAR
-					|| jdbcType == java.sql.Types.NVARCHAR) {
-				rs.updateString(columnName, paramValue.toString());
-			} else {
-				rs.updateLong(columnName, ((Long) paramValue));
-			}
-		} else if (paramValue instanceof java.sql.Clob) {
-			tmpStr = SqlUtil.clobToString((java.sql.Clob) paramValue);
-			rs.updateString(columnName, tmpStr);
-		} else if (paramValue instanceof byte[]) {
-			if (jdbcType == java.sql.Types.BLOB) {
-				Blob blob = null;
-				try {
-					blob = conn.createBlob();
-					OutputStream out = blob.setBinaryStream(1);
-					out.write((byte[]) paramValue);
-					out.flush();
-					out.close();
-					rs.updateBlob(columnName, blob);
-				} catch (Exception e) {
-					rs.updateBytes(columnName, (byte[]) paramValue);
-				}
-			} else {
-				rs.updateBytes(columnName, (byte[]) paramValue);
-			}
-		} else if (paramValue instanceof java.lang.Float) {
-			rs.updateFloat(columnName, ((Float) paramValue));
-		} else if (paramValue instanceof java.sql.Blob) {
-			Blob blob = (java.sql.Blob) paramValue;
-			int size = (int) blob.length();
-			if (size > 0) {
-				rs.updateBytes(columnName, blob.getBytes(1, size));
-			} else {
-				rs.updateBytes(columnName, new byte[0]);
-			}
-		} else if (paramValue instanceof java.sql.Date) {
-			rs.updateDate(columnName, (java.sql.Date) paramValue);
-		} else if (paramValue instanceof java.lang.Boolean) {
-			if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.CHAR) {
-				rs.updateString(columnName, ((Boolean) paramValue) ? "1" : "0");
-			} else if (jdbcType == java.sql.Types.INTEGER || jdbcType == java.sql.Types.SMALLINT
-					|| jdbcType == java.sql.Types.TINYINT) {
-				rs.updateInt(columnName, ((Boolean) paramValue) ? 1 : 0);
-			} else {
-				rs.updateBoolean(columnName, (Boolean) paramValue);
-			}
-		} else if (paramValue instanceof java.time.LocalTime) {
-			rs.updateTime(columnName, java.sql.Time.valueOf((LocalTime) paramValue));
-		} else if (paramValue instanceof java.sql.Time) {
-			rs.updateTime(columnName, (java.sql.Time) paramValue);
-		} else if (paramValue instanceof java.lang.Character) {
-			tmpStr = ((Character) paramValue).toString();
-			rs.updateString(columnName, tmpStr);
-		} else if (paramValue instanceof java.lang.Short) {
-			rs.updateShort(columnName, (java.lang.Short) paramValue);
-		} else if (paramValue instanceof java.lang.Byte) {
-			rs.updateByte(columnName, (Byte) paramValue);
-		} else if (paramValue instanceof Object[]) {
-			setArray(dbType, conn, rs, columnName, paramValue);
-		} else if (paramValue instanceof Enum) {
-			rs.updateObject(columnName, BeanUtil.getEnumValue(paramValue));
-		} else if (paramValue instanceof Collection) {
-			Object[] values = ((Collection) paramValue).toArray();
-			// 集合为空，无法判断具体类型，设置为null
-			if (values.length > 0) {
-				String type = null;
-				for (Object val : values) {
-					if (val != null) {
-						type = val.getClass().getName().concat("[]");
-						break;
-					}
-				}
-				// 将Object[] 转为具体类型的数组(否则会抛异常)
-				if (type != null) {
-					setArray(dbType, conn, rs, columnName, BeanUtil.convertArray(values, type));
-				}
-			}
-		} else {
-			if (jdbcType != java.sql.Types.NULL) {
-				rs.updateObject(columnName, paramValue, jdbcType);
-			} else {
-				rs.updateObject(columnName, paramValue);
-			}
-		}
-	}
-
-	private static void setArray(Integer dbType, Connection conn, ResultSet rs, String columnName, Object paramValue)
-			throws SQLException {
-		// 目前只支持Integer 和 String两种类型
-		if (dbType == DBType.GAUSSDB || dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.OSCAR
-				|| dbType == DBType.STARDB || dbType == DBType.VASTBASE) {
-			if (paramValue instanceof Integer[]) {
-				Array array = conn.createArrayOf("INTEGER", (Integer[]) paramValue);
-				rs.updateArray(columnName, array);
-			} else if (paramValue instanceof String[]) {
-				Array array = conn.createArrayOf("VARCHAR", (String[]) paramValue);
-				rs.updateArray(columnName, array);
-			} else if (paramValue instanceof BigDecimal[]) {
-				Array array = conn.createArrayOf("NUMBER", (BigDecimal[]) paramValue);
-				rs.updateArray(columnName, array);
-			} else if (paramValue instanceof BigInteger[]) {
-				Array array = conn.createArrayOf("BIGINT", (BigInteger[]) paramValue);
-				rs.updateArray(columnName, array);
-			} else if (paramValue instanceof Float[]) {
-				Array array = conn.createArrayOf("FLOAT", (Float[]) paramValue);
-				rs.updateArray(columnName, array);
-			} else if (paramValue instanceof Long[]) {
-				Array array = conn.createArrayOf("INTEGER", (Long[]) paramValue);
-				rs.updateArray(columnName, array);
-			} else {
-				rs.updateObject(columnName, paramValue, java.sql.Types.ARRAY);
-			}
-		} else {
-			rs.updateObject(columnName, paramValue, java.sql.Types.ARRAY);
-		}
 	}
 
 	/**
