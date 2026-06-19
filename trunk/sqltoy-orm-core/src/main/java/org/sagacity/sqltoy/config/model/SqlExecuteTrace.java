@@ -32,7 +32,8 @@ public class SqlExecuteTrace implements Serializable {
 		this.uid = IdUtil.getDebugId();
 	}
 
-	public SqlExecuteTrace(String id, OperateDetailType operateDetailType, Class resultType, boolean isPrint, Object contextData) {
+	public SqlExecuteTrace(String id, OperateDetailType operateDetailType, Class resultType, boolean isPrint,
+			Object contextData) {
 		this(id, operateDetailType, resultType, isPrint);
 		this.contextData = contextData;
 	}
@@ -66,6 +67,11 @@ public class SqlExecuteTrace implements Serializable {
 	 * 数据库类型
 	 */
 	private String dialect;
+
+	/**
+	 * 数据库类型
+	 */
+	private int dbType;
 
 	/**
 	 * 查询结果类型
@@ -242,10 +248,18 @@ public class SqlExecuteTrace implements Serializable {
 	}
 
 	public <T> T getContextData() {
-		return (T)contextData;
+		return (T) contextData;
 	}
 
 	public void setContextData(Object contextData) {
 		this.contextData = contextData;
+	}
+
+	public int getDbType() {
+		return dbType;
+	}
+
+	public void setDbType(int dbType) {
+		this.dbType = dbType;
 	}
 }

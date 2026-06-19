@@ -684,6 +684,8 @@ public class DateUtil {
 			return DateTimeFormatter.ofPattern(format).format((LocalTime) dt);
 		} else if (dt instanceof LocalDate) {
 			return DateTimeFormatter.ofPattern(format).format((LocalDate) dt);
+		} else if (dt instanceof Time) {
+			return DateTimeFormatter.ofPattern(format).format(((Time) dt).toLocalTime());
 		}
 		// 高精度时间用localDateTime、localTime
 		if (locale == null && (fmtUpper.endsWith("SSS") || fmtUpper.endsWith(".S"))) {

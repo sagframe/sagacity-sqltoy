@@ -295,6 +295,28 @@ public interface LightDao {
 	public <T extends Serializable> T updateSaveFetch(final T entity, final UpdateRowHandler updateRowHandler,
 			final String... uniqueProps);
 
+	/**
+	 * <p>
+	 * 示例行更新回调使用：
+	 * 
+	 * <pre>{@code
+	 * lightDao.updateSaveFetch(invStock, (entity, rowIndex) -> {
+	 * 		// 这里entity取值，实际通过代理，走的是rs.getInt("stock_num")获取的值
+	 * 		Integer stockNum = entity.getStockNum();
+	 *   	if (stockNum != null && stockNum > 0) {
+	 *    		// 这里set，实际是rs.updateInt("stock_num", stockNum - 10)进行更新			
+	 *    		entity.setStockNum(stockNum - 10);
+	 *      }
+	 * }
+	 * }</pre>
+	 * </p>
+	 * 
+	 * @param <T>
+	 * @param entity
+	 * @param callback
+	 * @param uniqueProps
+	 * @return
+	 */
 	public <T extends Serializable> T updateSaveFetch(final T entity, final EntityUpdateCallback<T> callback,
 			final String... uniqueProps);
 

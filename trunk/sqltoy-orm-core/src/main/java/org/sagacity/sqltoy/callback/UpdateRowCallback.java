@@ -3,6 +3,7 @@
  */
 package org.sagacity.sqltoy.callback;
 
+import java.sql.Connection;
 import java.sql.ResultSet;
 
 /**
@@ -19,5 +20,5 @@ public interface UpdateRowCallback {
 	 * @param index
 	 * @throws Exception
 	 */
-	void updateRow(ResultSet rs, int index) throws Exception;
+	void updateRow(Integer dbType, Connection conn, ResultSet rs, int index) throws Exception;
 }
