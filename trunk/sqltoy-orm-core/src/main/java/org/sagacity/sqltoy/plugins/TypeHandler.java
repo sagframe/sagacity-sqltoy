@@ -1,7 +1,11 @@
 package org.sagacity.sqltoy.plugins;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+
+import org.sagacity.sqltoy.config.model.FieldMeta;
 
 /**
  * @project sagacity-sqltoy
@@ -67,5 +71,24 @@ public abstract class TypeHandler {
 	 */
 	public Object toJavaType(Integer dbType, Object jdbcValue) throws Exception {
 		return jdbcValue;
+	}
+
+	/**
+	 * <p>
+	 * 一般此方法不会涉及 json等框架已经处理，主要针对向量类型、地理位置类型等特殊场景 用于updateSaveFetch中rs.update操作
+	 * false：即没有处理，交由框架处理; true: 自定义完成处理，后续不再进行处理
+	 * </p>
+	 * 
+	 * @param dbType
+	 * @param conn
+	 * @param rs
+	 * @param fieldMeta
+	 * @param value
+	 * @return
+	 */
+	public boolean updateValue(Integer dbType, Connection conn, ResultSet rs, FieldMeta fieldMeta, Object value) {
+		// fieldMeta.getType() 对应java.sql.Types.xxx
+		// rs.updateObject(fieldMeta.getColumnName(),value)
+		return false;
 	}
 }

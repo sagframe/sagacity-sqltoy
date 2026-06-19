@@ -386,9 +386,9 @@ public class SqlUtilsExt {
 	 * @param isInsert
 	 * @throws Exception
 	 */
-	public static void resultUpdate(Connection conn, ResultSet rs, FieldMeta fieldMeta, Object paramValue,
-			Integer dbType, boolean isInsert) throws Exception {
-		resultUpdate(conn, rs, fieldMeta, paramValue, dbType, isInsert, Boolean.FALSE);
+	public static void resultUpdate(TypeHandler typeHandler, Connection conn, ResultSet rs, FieldMeta fieldMeta,
+			Object paramValue, Integer dbType, boolean isInsert) throws Exception {
+		resultUpdate(typeHandler, conn, rs, fieldMeta, paramValue, dbType, isInsert, Boolean.FALSE);
 	}
 
 	/**
@@ -402,8 +402,8 @@ public class SqlUtilsExt {
 	 * @param isForcedUpdate 是否强制更新
 	 * @throws Exception
 	 */
-	public static void resultUpdate(Connection conn, ResultSet rs, FieldMeta fieldMeta, Object paramValue,
-			Integer dbType, boolean isInsert, boolean isForcedUpdate) throws Exception {
+	public static void resultUpdate(TypeHandler typeHandler, Connection conn, ResultSet rs, FieldMeta fieldMeta,
+			Object paramValue, Integer dbType, boolean isInsert, boolean isForcedUpdate) throws Exception {
 		// 计算列不做修改操作
 		if (fieldMeta.getGeneratedType() > 0) {
 			return;
@@ -419,8 +419,14 @@ public class SqlUtilsExt {
 			if (isForcedUpdate) {
 				rs.updateNull(columnName);
 			}
-		} // 默认json支持
-		else if (jdbcType == JdbcTypes.JSON || jdbcType == JdbcTypes.JSONB) {
+			return;
+		}
+		// 特殊类型通过自定义处理器处理，返回true表示完成了处理，返回false则由框架完成处理
+		if (typeHandler != null && typeHandler.updateValue(dbType, conn, rs, fieldMeta, paramValue)) {
+			return;
+		}
+		// 默认json支持
+		if (jdbcType == JdbcTypes.JSON || jdbcType == JdbcTypes.JSONB) {
 			JSONTypeUtil.updateJSONValue(dbType, rs, columnName, jdbcType, paramValue);
 		} else if (paramValue instanceof java.lang.String) {
 			tmpStr = (String) paramValue;

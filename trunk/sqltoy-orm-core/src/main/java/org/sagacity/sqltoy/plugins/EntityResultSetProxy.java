@@ -1,6 +1,8 @@
 package org.sagacity.sqltoy.plugins;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.util.concurrent.Callable;
@@ -28,12 +30,15 @@ import net.bytebuddy.matcher.ElementMatchers;
  * @date 2026-6-18
  */
 public class EntityResultSetProxy<T> {
+	private TypeHandler typeHandler;
 	private int dbType;
 	private Connection conn;
 	private final ResultSet rs;
 	private EntityMeta entityMeta;
 
-	public EntityResultSetProxy(Integer dbType, Connection conn, ResultSet rs, EntityMeta entityMeta) {
+	public EntityResultSetProxy(TypeHandler typeHandler, Integer dbType, Connection conn, ResultSet rs,
+			EntityMeta entityMeta) {
+		this.typeHandler = typeHandler;
 		this.dbType = dbType;
 		this.conn = conn;
 		this.rs = rs;
@@ -57,9 +62,15 @@ public class EntityResultSetProxy<T> {
 				return null;
 			}
 			Class<?> returnType = method.getReturnType();
+			// 取泛型
+			Class GenericType = null;
+			Type type = method.getGenericReturnType();
+			if (type instanceof ParameterizedType) {
+				GenericType = (Class) ((ParameterizedType) type).getActualTypeArguments()[0];
+			}
 			// 字符串、日期等通用转换
-			return BeanUtil.convertType(columnValue, fieldMeta.getType(), DataType.getType(returnType.getTypeName()),
-					returnType.getTypeName());
+			return BeanUtil.convertType(typeHandler, columnValue, fieldMeta.getType(),
+					DataType.getType(returnType.getTypeName()), returnType.getTypeName(), GenericType);
 		}
 
 		// setter: setAmt(100) → 截取Amt → amt属性
@@ -69,7 +80,7 @@ public class EntityResultSetProxy<T> {
 			if (fieldMeta == null) {
 				return superCall.call();
 			}
-			SqlUtilsExt.resultUpdate(conn, rs, fieldMeta, args[0], dbType, false, true);
+			SqlUtilsExt.resultUpdate(typeHandler,conn, rs, fieldMeta, args[0], dbType, false, true);
 			return null;
 		}
 		// toString/equals等原生方法直接执行
@@ -80,9 +91,9 @@ public class EntityResultSetProxy<T> {
 	 * 创建实体代理对象
 	 */
 	@SuppressWarnings("unchecked")
-	public static <T> T createProxy(Integer dbType, Connection conn, ResultSet rs, Class<T> clazz,
-			EntityMeta entityMeta) throws Exception {
-		EntityResultSetProxy<T> interceptor = new EntityResultSetProxy<>(dbType, conn, rs, entityMeta);
+	public static <T> T createProxy(TypeHandler typeHandler, Integer dbType, Connection conn, ResultSet rs,
+			Class<T> clazz, EntityMeta entityMeta) throws Exception {
+		EntityResultSetProxy<T> interceptor = new EntityResultSetProxy<>(typeHandler, dbType, conn, rs, entityMeta);
 		// 动态生成子类，拦截全部方法委托到interceptor.intercept
 		Class<?> proxyCls = new ByteBuddy().subclass(clazz).method(ElementMatchers.any())
 				.intercept(MethodDelegation.to(interceptor)).make().load(clazz.getClassLoader()).getLoaded();
