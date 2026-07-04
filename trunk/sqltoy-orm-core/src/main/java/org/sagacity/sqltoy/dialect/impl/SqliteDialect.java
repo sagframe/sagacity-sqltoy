@@ -36,6 +36,7 @@ import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
+import org.sagacity.sqltoy.utils.SqlUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,12 +62,12 @@ public class SqliteDialect implements Dialect {
 
 	@Override
 	public boolean isUnique(SqlToyContext sqlToyContext, Serializable entity, String[] paramsNamed, Connection conn,
-			final Integer dbType, final String tableName) {
+			final Integer dbType, final String tableName, final Integer queryTimeout) {
 		return DialectUtils.isUnique(sqlToyContext, entity, paramsNamed, conn, dbType, tableName,
 				(entityMeta, realParamNamed, table, topSize) -> {
 					String queryStr = DialectExtUtils.wrapUniqueSql(entityMeta, realParamNamed, dbType, table);
 					return queryStr + " limit " + topSize;
-				});
+				}, queryTimeout);
 	}
 
 	/*
@@ -132,7 +133,14 @@ public class SqliteDialect implements Dialect {
 			final Object[] paramsValue, final QueryExecutorExtend queryExecutorExtend,
 			final DecryptHandler decryptHandler, final Connection conn, final LockMode lockMode, final Integer dbType,
 			final String dialect, final int fetchSize, final int maxRows) throws Exception {
-		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, sql, paramsValue, queryExecutorExtend,
+		String realSql = sql.concat(getLockSql(sql, dbType, lockMode));
+		// sqlite 不支持设置锁时长，用queryTimeout代替
+		if (lockMode != null && lockMode == LockMode.UPGRADE && queryExecutorExtend.lockWaitTimeout > 0) {
+			if (queryExecutorExtend.timeout == null || queryExecutorExtend.timeout <= 0) {
+				queryExecutorExtend.timeout = queryExecutorExtend.lockWaitTimeout;
+			}
+		}
+		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, queryExecutorExtend,
 				decryptHandler, conn, dbType, 0, fetchSize, maxRows);
 	}
 
@@ -222,15 +230,17 @@ public class SqliteDialect implements Dialect {
 	 */
 	@Override
 	public Serializable load(final SqlToyContext sqlToyContext, Serializable entity, boolean onlySubTables,
-			List<Class> cascadeTypes, LockMode lockMode, Connection conn, final Integer dbType, final String dialect,
-			final String tableName) throws Exception {
+			List<Class> cascadeTypes, LockMode lockMode, int lockWaitTimeout, Connection conn, final Integer dbType,
+			final String dialect, final String tableName, final Integer queryTimeout) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		// 获取loadsql(loadsql 可以通过@loadSql进行改变，所以需要sqltoyContext重新获取)
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(entityMeta.getLoadSql(tableName), SqlType.search,
 				dialect, null);
 		String loadSql = sqlToyConfig.getSql(dialect);
 		return (Serializable) DialectUtils.load(sqlToyContext, sqlToyConfig, loadSql, entityMeta, entity, onlySubTables,
-				cascadeTypes, conn, dbType);
+				cascadeTypes, conn, dbType,
+				(lockMode != null && lockMode == LockMode.UPGRADE && lockWaitTimeout > 0) ? lockWaitTimeout
+						: queryTimeout);
 	}
 
 	/*
@@ -241,10 +251,11 @@ public class SqliteDialect implements Dialect {
 	 */
 	@Override
 	public List<?> loadAll(final SqlToyContext sqlToyContext, List<?> entities, boolean onlySubTables,
-			List<Class> cascadeTypes, LockMode lockMode, Connection conn, final Integer dbType, final String dialect,
-			final String tableName, final int fetchSize, final int maxRows) throws Exception {
+			List<Class> cascadeTypes, LockMode lockMode, final int lockWaitTimeout, Connection conn,
+			final Integer dbType, final String dialect, final String tableName, final int fetchSize, final int maxRows,
+			final Integer queryTimeout) throws Exception {
 		return DialectUtils.loadAll(sqlToyContext, entities, onlySubTables, cascadeTypes, lockMode, conn, dbType,
-				tableName, null, fetchSize, maxRows);
+				tableName, null, fetchSize, maxRows, queryTimeout);
 	}
 
 	/*
@@ -335,17 +346,17 @@ public class SqliteDialect implements Dialect {
 
 	@Override
 	public Serializable updateSaveFetch(SqlToyContext sqlToyContext, Serializable entity,
-			UpdateRowHandler updateRowHandler, String[] uniqueProps, Connection conn, Integer dbType, String dialect,
-			String tableName) throws Exception {
+			UpdateRowHandler updateRowHandler, int lockWaitTimeout, String[] uniqueProps, Connection conn,
+			Integer dbType, String dialect, String tableName) throws Exception {
 		return DefaultDialectUtils.updateSaveFetch(sqlToyContext, entity, updateRowHandler, uniqueProps, conn, dbType,
-				dialect, tableName);
+				dialect, tableName, lockWaitTimeout);
 	}
-	
+
 	public Serializable updateSaveFetch(SqlToyContext sqlToyContext, Serializable entity,
-			UpdateRowCallback updateRowCallback, String[] uniqueProps, Connection conn, Integer dbType, String dialect,
-			String tableName) throws Exception {
+			UpdateRowCallback updateRowCallback, int lockWaitTimeout, String[] uniqueProps, Connection conn,
+			Integer dbType, String dialect, String tableName) throws Exception {
 		return DefaultDialectUtils.updateSaveFetch(sqlToyContext, entity, updateRowCallback, uniqueProps, conn, dbType,
-				dialect, tableName);
+				dialect, tableName, lockWaitTimeout);
 	}
 
 	/*
@@ -384,7 +395,8 @@ public class SqliteDialect implements Dialect {
 	@Override
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, UpdateRowHandler updateRowHandler, Connection conn, final Integer dbType,
-			final String dialect, final LockMode lockMode, final int fetchSize, final int maxRows) throws Exception {
+			final String dialect, final LockMode lockMode, int lockWaitTimeout, final int fetchSize, final int maxRows)
+			throws Exception {
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, sql, paramsValue, updateRowHandler, conn,
 				dbType, 0, fetchSize, maxRows);
 	}
@@ -408,5 +420,19 @@ public class SqliteDialect implements Dialect {
 	public List<TableMeta> getTables(String catalog, String schema, String tableName, Connection conn, Integer dbType,
 			String dialect) throws Exception {
 		return DefaultDialectUtils.getTables(catalog, schema, tableName, conn, dbType, dialect);
+	}
+
+	private String getLockSql(String sql, Integer dbType, LockMode lockMode) {
+		// 判断是否已经包含for update
+		if (lockMode == null || SqlUtil.hasLock(sql, dbType)) {
+			return "";
+		}
+		if (lockMode == LockMode.UPGRADE_NOWAIT) {
+			return " for update nowait ";
+		}
+		if (lockMode == LockMode.UPGRADE_SKIPLOCK) {
+			return " for update SKIP LOCKED ";
+		}
+		return " for update ";
 	}
 }

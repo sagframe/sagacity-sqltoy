@@ -314,13 +314,19 @@ public class SqlToyDaoImpl extends SpringDaoSupport implements SqlToyDao {
 	@Override
 	public <T extends Serializable> T updateSaveFetch(T entity, UpdateRowHandler updateRowHandler,
 			String... uniqueProps) {
-		return super.updateSaveFetch(entity, updateRowHandler, uniqueProps, dataSource);
+		return super.updateSaveFetch(entity, updateRowHandler, -1, uniqueProps, dataSource);
 	}
 
 	@Override
 	public <T extends Serializable> T updateSaveFetch(T entity, EntityUpdateCallback<T> callback,
 			String... uniqueProps) {
-		return super.updateSaveFetch(entity, callback, uniqueProps, dataSource);
+		return super.updateSaveFetch(entity, callback, -1, uniqueProps, dataSource);
+	}
+
+	@Override
+	public <T extends Serializable> T updateSaveFetch(T entity, EntityUpdateCallback<T> callback, int lockWaitTimeout,
+			String... uniqueProps) {
+		return super.updateSaveFetch(entity, callback, lockWaitTimeout, uniqueProps, dataSource);
 	}
 
 	@Override

@@ -31,7 +31,7 @@ public class Oracle11gDialect extends OracleDialect {
 
 	@Override
 	public boolean isUnique(SqlToyContext sqlToyContext, Serializable entity, String[] paramsNamed, Connection conn,
-			final Integer dbType, String tableName) {
+			final Integer dbType, String tableName, final Integer queryTimeout) {
 		return DialectUtils.isUnique(sqlToyContext, entity, paramsNamed, conn, dbType, tableName,
 				(entityMeta, realParamNamed, table, topSize) -> {
 					StringBuilder sql = new StringBuilder();
@@ -40,7 +40,7 @@ public class Oracle11gDialect extends OracleDialect {
 					sql.append(") sag_uniqueTop where ROWNUM <=");
 					sql.append(topSize);
 					return sql.toString();
-				});
+				}, queryTimeout);
 	}
 
 	/*

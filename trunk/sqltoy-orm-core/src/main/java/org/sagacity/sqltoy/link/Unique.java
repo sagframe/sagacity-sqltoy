@@ -32,6 +32,8 @@ public class Unique extends BaseLink {
 	 */
 	private String[] fields;
 
+	private int queryTimeout = -1;
+
 	/**
 	 * @param sqlToyContext
 	 * @param dataSource
@@ -56,6 +58,11 @@ public class Unique extends BaseLink {
 		return this;
 	}
 
+	public Unique queryTimeout(int queryTimeout) {
+		this.queryTimeout = queryTimeout;
+		return this;
+	}
+
 	/**
 	 * @todo 提交执行返回结果
 	 * @return
@@ -64,6 +71,8 @@ public class Unique extends BaseLink {
 		if (entity == null) {
 			throw new IllegalArgumentException("Unique check operate entity is null!");
 		}
-		return dialectFactory.isUnique(sqlToyContext, new UniqueExecutor(entity, fields), getDataSource(null));
+		UniqueExecutor uniqueExecutor = new UniqueExecutor(entity, fields);
+		uniqueExecutor.queryTimeout(queryTimeout);
+		return dialectFactory.isUnique(sqlToyContext, uniqueExecutor, getDataSource(null));
 	}
 }

@@ -1,5 +1,6 @@
 package org.sagacity.sqltoy.utils;
 
+import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -1556,5 +1557,33 @@ public class CollectionUtil {
 			notRepeatSet.add(value);
 			return true;
 		}
+	}
+
+	public static boolean isNotEmpty(Object set) {
+		return !isEmpty(set);
+	}
+
+	/**
+	 * @todo 判断对象是否为null或为空
+	 * @param set
+	 * @return
+	 */
+	public static boolean isEmpty(Object set) {
+		if (null == set) {
+			return true;
+		}
+		if ((set instanceof Collection) && ((Collection) set).isEmpty()) {
+			return true;
+		}
+		if ((set instanceof Map) && ((Map) set).isEmpty()) {
+			return true;
+		}
+		if (set.getClass().isArray() && Array.getLength(set) == 0) {
+			return true;
+		}
+		if ((set instanceof CharSequence) && set.toString().trim().equals("")) {
+			return true;
+		}
+		return false;
 	}
 }

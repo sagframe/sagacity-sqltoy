@@ -59,14 +59,21 @@ public class H2Dialect extends PostgreSqlDialect {
 			final Connection conn, final LockMode lockMode, final Integer dbType, final String dialect,
 			final int fetchSize, final int maxRows) throws Exception {
 		String realSql = sql.concat(getLockSql(sql, dbType, lockMode));
+		// h2 不支持设置锁时长，用queryTimeout代替
+		if (lockMode != null && lockMode == LockMode.UPGRADE && queryExecutorExtend.lockWaitTimeout > 0) {
+			if (queryExecutorExtend.timeout == null || queryExecutorExtend.timeout <= 0) {
+				queryExecutorExtend.timeout = queryExecutorExtend.lockWaitTimeout;
+			}
+		}
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, queryExecutorExtend,
 				decryptHandler, conn, dbType, 0, fetchSize, maxRows);
 	}
 
 	@Override
 	public Serializable load(SqlToyContext sqlToyContext, Serializable entity, boolean onlySubTables,
-			List<Class> cascadeTypes, LockMode lockMode, Connection conn, final Integer dbType, final String dialect,
-			final String tableName) throws Exception {
+			List<Class> cascadeTypes, LockMode lockMode, final int lockWaitTimeout, Connection conn,
+			final Integer dbType, final String dialect, final String tableName, final Integer queryTimeout)
+			throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		// 获取loadsql(loadsql 可以通过@loadSql进行改变，所以需要sqltoyContext重新获取)
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(entityMeta.getLoadSql(tableName), SqlType.search,
@@ -74,7 +81,9 @@ public class H2Dialect extends PostgreSqlDialect {
 		String loadSql = sqlToyConfig.getSql(dialect);
 		loadSql = loadSql.concat(getLockSql(loadSql, dbType, lockMode));
 		return (Serializable) DialectUtils.load(sqlToyContext, sqlToyConfig, loadSql, entityMeta, entity, onlySubTables,
-				cascadeTypes, conn, dbType);
+				cascadeTypes, conn, dbType,
+				(lockMode != null && lockMode == LockMode.UPGRADE && lockWaitTimeout > 0) ? lockWaitTimeout
+						: queryTimeout);
 	}
 
 	@Override
@@ -187,7 +196,8 @@ public class H2Dialect extends PostgreSqlDialect {
 	@Override
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, UpdateRowHandler updateRowHandler, Connection conn, final Integer dbType,
-			final String dialect, final LockMode lockMode, final int fetchSize, final int maxRows) throws Exception {
+			final String dialect, final LockMode lockMode, int lockWaitTimeout, final int fetchSize, final int maxRows)
+			throws Exception {
 		String realSql = sql.concat(getLockSql(sql, dbType, (lockMode == null) ? LockMode.UPGRADE : lockMode));
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
 				dbType, 0, fetchSize, maxRows);

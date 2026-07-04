@@ -321,6 +321,18 @@ public interface LightDao {
 			final String... uniqueProps);
 
 	/**
+	 * 带设置锁时长的:锁查询、存在则修改、不存在则插入操作
+	 * @param <T>
+	 * @param entity
+	 * @param callback
+	 * @param lockWaitTimeout 单位秒
+	 * @param uniqueProps
+	 * @return
+	 */
+	public <T extends Serializable> T updateSaveFetch(final T entity, final EntityUpdateCallback<T> callback,
+			final int lockWaitTimeout, final String... uniqueProps);
+
+	/**
 	 * @TODO 基于对象单表对象查询进行数据更新
 	 *       <li>自更新:EntityUpdate.create().set("totalAmt=totalAmt+?",10).where("staffName
 	 *       like ?").values("张")</li>

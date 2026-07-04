@@ -253,6 +253,16 @@ public class EntityQuery implements Serializable {
 		innerModel.lockMode = lockMode;
 		return this;
 	}
+	
+	/**
+	 * 锁等待时长(秒)
+	 * @param lockWaitTimeout
+	 * @return
+	 */
+	public EntityQuery lockWaitTimeout(int lockWaitTimeout) {
+		innerModel.lockWaitTimeout = lockWaitTimeout;
+		return this;
+	}
 
 	/**
 	 * @TODO 对结果字段进行安全脱敏

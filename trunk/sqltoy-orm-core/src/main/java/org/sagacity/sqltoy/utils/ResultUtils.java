@@ -1316,6 +1316,14 @@ public class ResultUtils {
 					SqlToyConfig pivotSqlConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
 							sqlToyContext.getSqlToyConfig(pivotModel.getCategorySql(), SqlType.search, "", null),
 							queryExecutor, dialect, false);
+					Integer queryTimeout = null;
+					if (pivotSqlConfig.getQueryTimeout() != null && pivotSqlConfig.getQueryTimeout() > 0) {
+						queryTimeout = pivotSqlConfig.getQueryTimeout();
+					}
+					if ((queryTimeout == null || queryTimeout <= 0)
+							&& (extend != null && extend.timeout != null && extend.timeout > 0)) {
+						queryTimeout = extend.timeout;
+					}
 					SqlToyResult pivotSqlToyResult = SqlConfigParseUtils.processSql(pivotSqlConfig.getSql(dialect),
 							extend.getParamsName(), extend.getParamsValue(sqlToyContext, pivotSqlConfig), dialect);
 					// 增加sql执行拦截器 update 2022-9-10
@@ -1323,7 +1331,7 @@ public class ResultUtils {
 							pivotSqlToyResult, null, dbType);
 					List pivotCategory = SqlUtil.findByJdbcQuery(sqlToyContext.getTypeHandler(),
 							pivotSqlToyResult.getSql(), pivotSqlToyResult.getParamsValue(), null, null, null, conn,
-							dbType, sqlToyConfig.isIgnoreEmpty(), null, SqlToyConstants.FETCH_SIZE, -1);
+							dbType, sqlToyConfig.isIgnoreEmpty(), null, SqlToyConstants.FETCH_SIZE, -1, queryTimeout);
 					// 行转列返回
 					return CollectionUtil.convertColToRow(pivotCategory, null);
 				}
