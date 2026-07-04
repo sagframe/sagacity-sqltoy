@@ -178,6 +178,9 @@ public interface SqlToyDao {
 	public <T extends Serializable> T updateSaveFetch(T entity, EntityUpdateCallback<T> callback,
 			String... uniqueProps);
 
+	public <T extends Serializable> T updateSaveFetch(final T entity, final EntityUpdateCallback<T> callback,
+			final int lockWaitTimeout, final String... uniqueProps);
+
 	public Long updateByQuery(Class entityClass, EntityUpdate entityUpdate);
 
 	public Long updateCascade(Serializable entity, String[] forceUpdateProps, Class[] forceCascadeClasses,

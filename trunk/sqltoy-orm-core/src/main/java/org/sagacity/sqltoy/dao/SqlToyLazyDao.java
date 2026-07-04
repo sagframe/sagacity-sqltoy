@@ -192,7 +192,10 @@ public interface SqlToyLazyDao {
 
 	public <T extends Serializable> T updateSaveFetch(final T entity, final EntityUpdateCallback<T> callback,
 			final String... uniqueProps);
-	
+
+	public <T extends Serializable> T updateSaveFetch(final T entity, final EntityUpdateCallback<T> callback,
+			final int lockWaitTimeout, final String... uniqueProps);
+
 	/**
 	 * @todo 深度修改,不管是否为null全部字段强制修改
 	 * @param serializableVO
@@ -706,7 +709,7 @@ public interface SqlToyLazyDao {
 	/**
 	 * @todo 执行sql,并返回被修改的记录数量
 	 * @param sqlOrSqlId
-	 * @param params 查询参数对象（支持任意实现了Serializable的Bean，如VO、DTO、QueryParam等，对象的属性名将与SQL中的命名参数进行匹配）
+	 * @param params     查询参数对象（支持任意实现了Serializable的Bean，如VO、DTO、QueryParam等，对象的属性名将与SQL中的命名参数进行匹配）
 	 * @return Long 数据库发生变更的记录数
 	 */
 	public Long executeSql(final String sqlOrSqlId, final Serializable params);
@@ -766,15 +769,17 @@ public interface SqlToyLazyDao {
 	 * @return
 	 */
 	public String generateBizId(Serializable entity);
-	
+
 	/**
-	 * @TODO 根据指定的表名、业务码，业务码的属性和值map，动态获取业务主键值
-	 * 例如:generateBizId("sag_test", "HW@case(orderType,SALE,SC,BUY,PO)@day(yyMMdd)",
-				MapKit.map("orderType", "SALE"), null, 12, 2);
+	 * @TODO 根据指定的表名、业务码，业务码的属性和值map，动态获取业务主键值 例如:generateBizId("sag_test",
+	 *       "HW@case(orderType,SALE,SC,BUY,PO)@day(yyMMdd)",
+	 *       MapKit.map("orderType", "SALE"), null, 12, 2);
 	 * @param tableName
-	 * @param signature 一个表达式字符串，支持@case(name,value1,then1,val2,then2) 和 @day(yyMMdd)或@day(yyyyMMdd)、@substr(name,start,length) 等
+	 * @param signature    一个表达式字符串，支持@case(name,value1,then1,val2,then2)
+	 *                     和 @day(yyMMdd)或@day(yyyyMMdd)、@substr(name,start,length)
+	 *                     等
 	 * @param keyValues
-	 * @param bizDate 在signature为空时生效
+	 * @param bizDate      在signature为空时生效
 	 * @param length
 	 * @param sequenceSize
 	 * @return

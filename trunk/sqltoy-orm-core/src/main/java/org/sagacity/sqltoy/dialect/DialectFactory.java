@@ -62,6 +62,7 @@ import org.sagacity.sqltoy.dialect.impl.TDengineDialect;
 import org.sagacity.sqltoy.dialect.impl.TidbDialect;
 import org.sagacity.sqltoy.dialect.impl.VastbaseDialect;
 import org.sagacity.sqltoy.dialect.utils.ClickHouseDialectUtils;
+import org.sagacity.sqltoy.dialect.utils.DefaultDialectUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.dialect.utils.PageOptimizeUtils;
 import org.sagacity.sqltoy.exception.DataAccessException;
@@ -530,7 +531,7 @@ public class DialectFactory {
 							SqlExecuteStat.setDialect(dbType, dialect);
 							this.setResult(getDialectSqlWrapper(dbType).isUnique(sqlToyContext,
 									uniqueExecutor.getEntity(), uniqueExecutor.getUniqueFields(), conn, dbType,
-									shardingModel.getTableName()));
+									shardingModel.getTableName(), uniqueExecutor.getTimeout()));
 						}
 					});
 			SqlExecuteStat.debug("查询结果", "唯一性验证返回结果={}!", isUnique);
@@ -780,7 +781,7 @@ public class DialectFactory {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							SqlExecuteStat.setDialect(dbType, dialect);
 							this.setResult(SqlUtil.wrapTreeTableRoute(sqlToyContext.getTypeHandler(), treeModel, conn,
-									dbType));
+									dbType, -1));
 						}
 					});
 		} catch (Exception e) {
@@ -1337,6 +1338,7 @@ public class DialectFactory {
 							queryParam = DialectUtils.doInterceptors(sqlToyContext, realSqlToyConfig,
 									(extend.entityClass == null) ? OperateType.search : OperateType.singleTable,
 									queryParam, extend.entityClass, dbType);
+							DefaultDialectUtils.setSessionLockWait(dbType, conn, lockMode, extend.lockWaitTimeout);
 							QueryResult queryResult = getDialectSqlWrapper(dbType).findBySql(sqlToyContext,
 									realSqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(), extend,
 									wrapDecryptHandler(sqlToyContext, extend.resultType), conn, lockMode, dbType,
@@ -1682,13 +1684,14 @@ public class DialectFactory {
 	 * @param onlySubTables
 	 * @param cascadeTypes
 	 * @param lockMode
+	 * @param lockTimeout
 	 * @param dataSource
 	 * @return
 	 * @todo 加载单个对象
 	 */
 	public <T extends Serializable> T load(final SqlToyContext sqlToyContext, final T entity,
-			final Boolean onlySubTables, final Class[] cascadeTypes, final LockMode lockMode,
-			final DataSource dataSource) {
+			final Boolean onlySubTables, final Class[] cascadeTypes, final LockMode lockMode, final int lockWaitTimeout,
+			final DataSource dataSource, final int queryTimeout) {
 		if (entity == null) {
 			logger.warn("load entity is null,please check!");
 			return null;
@@ -1704,10 +1707,12 @@ public class DialectFactory {
 						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							SqlExecuteStat.setDialect(dbType, dialect);
+							DefaultDialectUtils.setSessionLockWait(dbType, conn, lockMode, lockWaitTimeout);
 							this.setResult(getDialectSqlWrapper(dbType).load(sqlToyContext, entity,
 									(onlySubTables == null) ? false : onlySubTables.booleanValue(),
 									(cascadeTypes == null) ? null : CollectionUtil.arrayToList(cascadeTypes), lockMode,
-									conn, dbType, dialect, shardingModel.getTableName()));
+									lockWaitTimeout, conn, dbType, dialect, shardingModel.getTableName(),
+									queryTimeout));
 						}
 					});
 		} catch (Exception e) {
@@ -1724,14 +1729,15 @@ public class DialectFactory {
 	 * @param onlySubTable
 	 * @param cascadeTypes
 	 * @param lockMode
+	 * @param lockWaitTimeout
 	 * @param parallelConfig
 	 * @param dataSource
 	 * @return
 	 * @todo 批量加载集合(自4.13.1 版本已经自动将超大规模集合拆分执行)，规避了jpa等框架的缺陷
 	 */
 	public <T extends Serializable> List<T> loadAll(final SqlToyContext sqlToyContext, final List<T> entities,
-			final Boolean onlySubTable, final Class[] cascadeTypes, final LockMode lockMode,
-			final ParallelConfig parallelConfig, final DataSource dataSource) {
+			final Boolean onlySubTable, final Class[] cascadeTypes, final LockMode lockMode, final int lockWaitTimeout,
+			final ParallelConfig parallelConfig, final DataSource dataSource, final int queryTimeout) {
 		// 清除集合中的null值
 		CollectionUtil.removeNull(entities);
 		if (entities == null || entities.isEmpty()) {
@@ -1760,6 +1766,7 @@ public class DialectFactory {
 									public void doConnection(Connection conn, Integer dbType, String dialect)
 											throws Exception {
 										SqlExecuteStat.setDialect(dbType, dialect);
+										DefaultDialectUtils.setSessionLockWait(dbType, conn, lockMode, lockWaitTimeout);
 										List parallelEntities = batchModel.getEntities();
 										int totalSize = parallelEntities.size();
 										if (totalSize <= realBatchSize) {
@@ -1767,8 +1774,8 @@ public class DialectFactory {
 													realBatchSize);
 											this.setResult(getDialectSqlWrapper(dbType).loadAll(context,
 													parallelEntities, parallelOnlySubTable, cascadeTypesList, lockMode,
-													conn, dbType, dialect, shardingModel.getTableName(), fetchSize,
-													-1));
+													lockWaitTimeout, conn, dbType, dialect,
+													shardingModel.getTableName(), fetchSize, -1, queryTimeout));
 										} else {
 											int batchCnt = (totalSize + realBatchSize - 1) / realBatchSize;
 											List parallelResult = new ArrayList();
@@ -1781,8 +1788,8 @@ public class DialectFactory {
 														batchEntities.size());
 												parallelResult.addAll(getDialectSqlWrapper(dbType).loadAll(context,
 														batchEntities, parallelOnlySubTable, cascadeTypesList, lockMode,
-														conn, dbType, dialect, shardingModel.getTableName(), fetchSize,
-														-1));
+														lockWaitTimeout, conn, dbType, dialect,
+														shardingModel.getTableName(), fetchSize, -1, queryTimeout));
 											}
 											this.setResult(parallelResult);
 										}
@@ -1954,7 +1961,8 @@ public class DialectFactory {
 	 * @TODO 适用于库存台账、客户资金账强事务高并发场景，一次数据库交互实现：1、锁查询；2、记录存在则修改；3、记录不存在则执行insert；4、返回修改或插入的记录信息
 	 */
 	public Serializable updateSaveFetch(final SqlToyContext sqlToyContext, final Serializable entity,
-			final UpdateRowHandler updateRowHandler, final String[] uniqueProps, final DataSource dataSource) {
+			final UpdateRowHandler updateRowHandler, final int lockWaitTimeout, final String[] uniqueProps,
+			final DataSource dataSource) {
 		if (entity == null || updateRowHandler == null) {
 			logger.warn("updateSaveFetch entity or updateRowHandler is null,please check!");
 			return null;
@@ -1969,8 +1977,9 @@ public class DialectFactory {
 						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							SqlExecuteStat.setDialect(dbType, dialect);
+							DefaultDialectUtils.setSessionLockWait(dbType, conn, LockMode.UPGRADE, lockWaitTimeout);
 							this.setResult(getDialectSqlWrapper(dbType).updateSaveFetch(sqlToyContext, entity,
-									updateRowHandler, uniqueProps, conn, dbType, dialect,
+									updateRowHandler, lockWaitTimeout, uniqueProps, conn, dbType, dialect,
 									shardingModel.getTableName()));
 						}
 					});
@@ -1984,7 +1993,8 @@ public class DialectFactory {
 	}
 
 	public Serializable updateSaveFetch(final SqlToyContext sqlToyContext, final Serializable entity,
-			final UpdateRowCallback updateRowCallback, final String[] uniqueProps, final DataSource dataSource) {
+			final UpdateRowCallback updateRowCallback, final int lockWaitTimeout, final String[] uniqueProps,
+			final DataSource dataSource) {
 		if (entity == null || updateRowCallback == null) {
 			logger.warn("updateSaveFetch entity or updateRowCallback is null,please check!");
 			return null;
@@ -1999,8 +2009,9 @@ public class DialectFactory {
 						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							SqlExecuteStat.setDialect(dbType, dialect);
+							DefaultDialectUtils.setSessionLockWait(dbType, conn, LockMode.UPGRADE, lockWaitTimeout);
 							this.setResult(getDialectSqlWrapper(dbType).updateSaveFetch(sqlToyContext, entity,
-									updateRowCallback, uniqueProps, conn, dbType, dialect,
+									updateRowCallback, lockWaitTimeout, uniqueProps, conn, dbType, dialect,
 									shardingModel.getTableName()));
 						}
 					});
@@ -2222,10 +2233,11 @@ public class DialectFactory {
 							// 增加sql执行拦截器 update 2022-9-10
 							queryParam = DialectUtils.doInterceptors(sqlToyContext, realSqlToyConfig,
 									OperateType.fetchUpdate, queryParam, null, dbType);
+							LockMode lockMode = (extend.lockMode == null) ? LockMode.UPGRADE : extend.lockMode;
+							DefaultDialectUtils.setSessionLockWait(dbType, conn, lockMode, extend.lockWaitTimeout);
 							QueryResult queryResult = getDialectSqlWrapper(dbType).updateFetch(sqlToyContext,
 									realSqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-									updateRowHandler, conn, dbType, dialect,
-									(extend.lockMode == null) ? LockMode.UPGRADE : extend.lockMode,
+									updateRowHandler, conn, dbType, dialect, lockMode, extend.lockWaitTimeout,
 									getFetchSize(extend.fetchSize), extend.maxRows);
 							if (extend.resultType != null) {
 								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),

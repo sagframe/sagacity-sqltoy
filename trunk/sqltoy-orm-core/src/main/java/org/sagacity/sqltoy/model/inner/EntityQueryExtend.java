@@ -87,6 +87,11 @@ public class EntityQueryExtend implements Serializable {
 	 * 锁类型
 	 */
 	public LockMode lockMode;
+	
+	/**
+	 * lockMode为UPGRADE时设置锁等待时长，单位秒
+	 */
+	public int lockWaitTimeout = -1;
 
 	/**
 	 * 空白字符转为null，默认为true

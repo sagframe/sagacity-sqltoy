@@ -8,6 +8,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -350,16 +351,16 @@ public class DefaultDialectUtils {
 
 	public static Serializable updateSaveFetch(final SqlToyContext sqlToyContext, final Serializable entity,
 			final UpdateRowHandler updateRowHandler, String[] uniqueProps, final Connection conn, final Integer dbType,
-			String dialect, String tableName) throws Exception {
+			String dialect, String tableName, int lockWaitTimeout) throws Exception {
 		return updateSaveFetch(sqlToyContext, entity, updateRowHandler, null, uniqueProps, conn, dbType, dialect,
-				tableName);
+				tableName, lockWaitTimeout);
 	}
 
 	public static Serializable updateSaveFetch(final SqlToyContext sqlToyContext, final Serializable entity,
 			final UpdateRowCallback updateRowCallback, String[] uniqueProps, final Connection conn,
-			final Integer dbType, String dialect, String tableName) throws Exception {
+			final Integer dbType, String dialect, String tableName, int lockWaitTimeout) throws Exception {
 		return updateSaveFetch(sqlToyContext, entity, null, updateRowCallback, uniqueProps, conn, dbType, dialect,
-				tableName);
+				tableName, lockWaitTimeout);
 	}
 
 	/**
@@ -377,7 +378,8 @@ public class DefaultDialectUtils {
 	 */
 	public static Serializable updateSaveFetch(final SqlToyContext sqlToyContext, final Serializable entity,
 			final UpdateRowHandler updateRowHandler, final UpdateRowCallback updateRowCallback, String[] uniqueProps,
-			final Connection conn, final Integer dbType, String dialect, String tableName) throws Exception {
+			final Connection conn, final Integer dbType, String dialect, String tableName, int lockWaitTimeout)
+			throws Exception {
 		final EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		// 条件字段
 		String[] whereFields = uniqueProps;
@@ -415,7 +417,8 @@ public class DefaultDialectUtils {
 		TypeHandler typeHandler = sqlToyContext.getTypeHandler();
 		final boolean hasUpdateRow = (updateRowHandler == null && updateRowCallback == null) ? false : true;
 		// 组织select * from table for update 语句
-		SqlToyResult queryParam = wrapFetchSql(entityMeta, dbType, whereFields, whereParamValues, tableName);
+		SqlToyResult queryParam = wrapFetchSql(entityMeta, dbType, whereFields, whereParamValues, tableName,
+				lockWaitTimeout);
 		// 增加sql执行拦截器 update 2022-9-10
 		queryParam = DialectUtils.doInterceptors(sqlToyContext, null, OperateType.singleTable, queryParam,
 				entity.getClass(), dbType);
@@ -594,10 +597,11 @@ public class DefaultDialectUtils {
 	 * @param uniqueProps
 	 * @param whereParamValues
 	 * @param tableName
+	 * @param lockWaitTimeout
 	 * @return
 	 */
 	private static SqlToyResult wrapFetchSql(EntityMeta entityMeta, Integer dbType, String[] uniqueProps,
-			Object[] whereParamValues, String tableName) {
+			Object[] whereParamValues, String tableName, int lockWaitTimeout) {
 		String realTable = entityMeta.getSchemaTable(tableName, dbType);
 		StringBuilder sql = new StringBuilder("select ");
 		String columnName;
@@ -636,6 +640,11 @@ public class DefaultDialectUtils {
 			lastSql = sql.append(" for update with rs").toString();
 		} else {
 			lastSql = sql.append(" for update").toString();
+		}
+		// 设置锁等待超时时长(oracle、dm、oceanbase、kingbase)
+		if (lockWaitTimeout > 0 && (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM
+				|| dbType == DBType.KINGBASE || dbType == DBType.OCEANBASE)) {
+			lastSql = lastSql.concat(" wait " + lockWaitTimeout);
 		}
 		return new SqlToyResult(lastSql, realParamValues.toArray());
 	}
@@ -956,5 +965,40 @@ public class DefaultDialectUtils {
 				this.setResult(tables);
 			}
 		});
+	}
+
+	/**
+	 * 设置会话级锁超时
+	 * 
+	 * @param dbType
+	 * @param conn
+	 * @param lockMode
+	 * @param lockWaitTimeout 单位秒
+	 * @throws Exception
+	 */
+	public static void setSessionLockWait(Integer dbType, Connection conn, LockMode lockMode, int lockWaitTimeout)
+			throws Exception {
+		if (lockWaitTimeout < 1 || lockMode == null || lockMode != LockMode.UPGRADE) {
+			return;
+		}
+		if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.TIDB) {
+			try (Statement setLockStmt = conn.createStatement()) {
+				setLockStmt.execute("SET SESSION innodb_lock_wait_timeout =" + lockWaitTimeout);
+			}
+		} else if (dbType == DBType.SQLSERVER) {
+			try (Statement setLockStmt = conn.createStatement()) {
+				setLockStmt.execute("SET LOCK_TIMEOUT " + 1000 * lockWaitTimeout);
+			}
+		} else if (dbType == DBType.DB2) {
+			try (Statement setLockStmt = conn.createStatement()) {
+				setLockStmt.execute("SET CURRENT LOCK TIMEOUT=" + lockWaitTimeout);
+			}
+		} else if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB
+				|| dbType == DBType.OPENGAUSS || dbType == DBType.STARDB || dbType == DBType.VASTBASE
+				|| dbType == DBType.OSCAR || dbType == DBType.MOGDB) {
+			try (Statement setLockStmt = conn.createStatement()) {
+				setLockStmt.execute("SET lock_timeout='" + 1000 * lockWaitTimeout + "ms'");
+			}
+		}
 	}
 }

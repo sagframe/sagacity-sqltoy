@@ -1,5 +1,6 @@
 package org.sagacity.sqltoy.utils;
 
+import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Time;
@@ -584,7 +585,7 @@ public class ParamFilterUtils {
 					result = null;
 				}
 			} else if (paramValue.getClass().isArray()) {
-				if (CollectionUtil.convertArray(paramValue).length == 0) {
+				if (Array.getLength(paramValue) == 0) {
 					result = null;
 				}
 			}

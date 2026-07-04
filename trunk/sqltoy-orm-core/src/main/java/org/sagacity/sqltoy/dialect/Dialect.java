@@ -44,7 +44,7 @@ public interface Dialect {
 	 * @return
 	 */
 	public boolean isUnique(final SqlToyContext sqlToyContext, final Serializable entity, final String[] paramsNamed,
-			Connection conn, final Integer dbType, final String tableName);
+			Connection conn, final Integer dbType, final String tableName, final Integer queryTimeout);
 
 	/**
 	 * @todo 获取随机记录
@@ -151,16 +151,18 @@ public interface Dialect {
 	 * @param onlySubTables
 	 * @param cascadeTypes
 	 * @param lockMode
+	 * @param lockWaitTimeout
 	 * @param conn
 	 * @param dbType
 	 * @param dialect
-	 * @param tableName     分表场景对应取得的表名(无分表则当前表名)
+	 * @param tableName       分表场景对应取得的表名(无分表则当前表名)
 	 * @return
 	 * @throws Exception
 	 */
 	public Serializable load(final SqlToyContext sqlToyContext, final Serializable entity, final boolean onlySubTables,
-			final List<Class> cascadeTypes, final LockMode lockMode, final Connection conn, final Integer dbType,
-			final String dialect, final String tableName) throws Exception;
+			final List<Class> cascadeTypes, final LockMode lockMode, final int lockWaitTimeout, final Connection conn,
+			final Integer dbType, final String dialect, final String tableName, final Integer queryTimeout)
+			throws Exception;
 
 	/**
 	 * @todo 批量级联查询
@@ -169,18 +171,20 @@ public interface Dialect {
 	 * @param onlySubTables,
 	 * @param cascadeTypes
 	 * @param lockMode
+	 * @param lockWaitTimeout
 	 * @param conn
 	 * @param dbType
 	 * @param dialect
-	 * @param tableName      分表场景对应取得的表名(无分表则当前表名)
+	 * @param tableName       分表场景对应取得的表名(无分表则当前表名)
 	 * @param fetchSize
 	 * @param maxRows
 	 * @return
 	 * @throws Exception
 	 */
 	public List<?> loadAll(final SqlToyContext sqlToyContext, List<?> entities, boolean onlySubTables,
-			List<Class> cascadeTypes, LockMode lockMode, final Connection conn, final Integer dbType,
-			final String dialect, final String tableName, final int fetchSize, final int maxRows) throws Exception;
+			List<Class> cascadeTypes, LockMode lockMode, final int lockWaitTimeout, final Connection conn,
+			final Integer dbType, final String dialect, final String tableName, final int fetchSize, final int maxRows,
+			final Integer queryTimeout) throws Exception;
 
 	/**
 	 * @todo 保存单条记录
@@ -239,6 +243,7 @@ public interface Dialect {
 	 * @param sqlToyContext
 	 * @param entity
 	 * @param updateRowHandler
+	 * @param lockWaitTimeout  秒
 	 * @param uniqueProps      唯一性pojo属性，为空默认为主键字段
 	 * @param conn
 	 * @param dbType
@@ -248,12 +253,12 @@ public interface Dialect {
 	 * @throws Exception
 	 */
 	public Serializable updateSaveFetch(final SqlToyContext sqlToyContext, final Serializable entity,
-			final UpdateRowHandler updateRowHandler, final String[] uniqueProps, final Connection conn,
-			final Integer dbType, final String dialect, final String tableName) throws Exception;
+			final UpdateRowHandler updateRowHandler, final int lockWaitTimeout, final String[] uniqueProps,
+			final Connection conn, final Integer dbType, final String dialect, final String tableName) throws Exception;
 
 	public Serializable updateSaveFetch(final SqlToyContext sqlToyContext, final Serializable entity,
-			final UpdateRowCallback updateRowCallback, final String[] uniqueProps, final Connection conn,
-			final Integer dbType, final String dialect, final String tableName) throws Exception;
+			final UpdateRowCallback updateRowCallback, final int lockWaitTimeout, final String[] uniqueProps,
+			final Connection conn, final Integer dbType, final String dialect, final String tableName) throws Exception;
 
 	/**
 	 * @todo 批量修改对象
@@ -373,6 +378,7 @@ public interface Dialect {
 	 * @param dbType
 	 * @param dialect
 	 * @param lockMode
+	 * @param lockWaitTimeout  秒
 	 * @param fetchSize
 	 * @param maxRows
 	 * @return
@@ -380,8 +386,8 @@ public interface Dialect {
 	 */
 	public QueryResult updateFetch(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
 			final Object[] paramValues, final UpdateRowHandler updateRowHandler, final Connection conn,
-			final Integer dbType, final String dialect, final LockMode lockMode, final int fetchSize, final int maxRows)
-			throws Exception;
+			final Integer dbType, final String dialect, final LockMode lockMode, final int lockWaitTimeout,
+			final int fetchSize, final int maxRows) throws Exception;
 
 	/**
 	 * @todo 执行存储过程

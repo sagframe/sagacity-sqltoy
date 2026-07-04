@@ -177,6 +177,17 @@ public class QueryExecutor implements Serializable {
 	}
 
 	/**
+	 * 锁等待时长(秒)
+	 * 
+	 * @param lockWaitTimeout
+	 * @return
+	 */
+	public QueryExecutor lockWaitTimeout(int lockWaitTimeout) {
+		innerModel.lockWaitTimeout = lockWaitTimeout;
+		return this;
+	}
+
+	/**
 	 * @TODO 是否将结果封装成父子对象级联模式
 	 * @param hiberarchy
 	 * @return

@@ -61,16 +61,16 @@ public class OracleDialectUtils {
 	 * @throws Exception
 	 */
 	public static Serializable load(final SqlToyContext sqlToyContext, Serializable entity, boolean onlySubTables,
-			List<Class> cascadeTypes, LockMode lockMode, Connection conn, final Integer dbType, final String dialect,
-			String tableName) throws Exception {
+			List<Class> cascadeTypes, LockMode lockMode, int lockWaitTimeout, Connection conn, final Integer dbType,
+			final String dialect, String tableName, final Integer queryTimeout) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		// 获取loadsql(loadsql 可以通过@loadSql进行改变，所以需要sqltoyContext重新获取)
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(entityMeta.getLoadSql(tableName), SqlType.search,
 				dialect, null);
 		String loadSql = sqlToyConfig.getSql(dialect);
-		loadSql = loadSql.concat(getLockSql(loadSql, dbType, lockMode));
+		loadSql = loadSql.concat(getLockSql(loadSql, dbType, lockMode, lockWaitTimeout));
 		return (Serializable) DialectUtils.load(sqlToyContext, sqlToyConfig, loadSql, entityMeta, entity, onlySubTables,
-				cascadeTypes, conn, dbType);
+				cascadeTypes, conn, dbType, queryTimeout);
 	}
 
 	/**
@@ -89,12 +89,12 @@ public class OracleDialectUtils {
 	 * @throws Exception
 	 */
 	public static List<?> loadAll(final SqlToyContext sqlToyContext, List<?> entities, boolean onlySubTables,
-			List<Class> cascadeTypes, LockMode lockMode, Connection conn, final Integer dbType, String tableName,
-			final int fetchSize, final int maxRows) throws Exception {
+			List<Class> cascadeTypes, LockMode lockMode, int lockWaitTimeout, Connection conn, final Integer dbType,
+			String tableName, final int fetchSize, final int maxRows, final Integer queryTimeout) throws Exception {
 		return DialectUtils.loadAll(sqlToyContext, entities, onlySubTables, cascadeTypes, lockMode, conn, dbType,
 				tableName, (sql, dbTypeValue, lockedMode) -> {
-					return getLockSql(sql, dbTypeValue, lockedMode);
-				}, fetchSize, maxRows);
+					return getLockSql(sql, dbTypeValue, lockedMode, lockWaitTimeout);
+				}, fetchSize, maxRows, queryTimeout);
 	}
 
 	/**
@@ -421,20 +421,6 @@ public class OracleDialectUtils {
 		});
 	}
 
-	public static String getLockSql(String sql, Integer dbType, LockMode lockMode) {
-		// 判断是否已经包含for update
-		if (lockMode == null || SqlUtil.hasLock(sql, dbType)) {
-			return "";
-		}
-		if (lockMode == LockMode.UPGRADE_NOWAIT) {
-			return " for update nowait ";
-		}
-		if (lockMode == LockMode.UPGRADE_SKIPLOCK) {
-			return " for update skip locked";
-		}
-		return " for update ";
-	}
-
 	@SuppressWarnings("unchecked")
 	public static List<ColumnMeta> getTableColumns(String catalog, String schema, String tableName, Connection conn,
 			Integer dbType, String dialect) throws Exception {
@@ -536,5 +522,19 @@ public class OracleDialectUtils {
 	 */
 	public static boolean allowAssignPKValue(PKStrategy pkStrategy) {
 		return true;
+	}
+
+	public static String getLockSql(String sql, Integer dbType, LockMode lockMode, int lockWaitTimeout) {
+		// 判断是否已经包含for update
+		if (lockMode == null || SqlUtil.hasLock(sql, dbType)) {
+			return "";
+		}
+		if (lockMode == LockMode.UPGRADE_NOWAIT) {
+			return " for update nowait ";
+		}
+		if (lockMode == LockMode.UPGRADE_SKIPLOCK) {
+			return " for update skip locked";
+		}
+		return " for update " + (lockWaitTimeout > 0 ? " wait " + lockWaitTimeout : "");
 	}
 }

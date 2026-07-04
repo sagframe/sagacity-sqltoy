@@ -316,13 +316,19 @@ public class DefaultSqlToyDaoImpl extends SqlToyDaoSupport implements SqlToyDao 
 	@Override
 	public <T extends Serializable> T updateSaveFetch(T entity, UpdateRowHandler updateRowHandler,
 			String... uniqueProps) {
-		return super.updateSaveFetch(entity, updateRowHandler, uniqueProps, dataSource);
+		return super.updateSaveFetch(entity, updateRowHandler, -1, uniqueProps, dataSource);
 	}
 
 	@Override
 	public <T extends Serializable> T updateSaveFetch(T entity, EntityUpdateCallback<T> callback,
 			String... uniqueProps) {
-		return super.updateSaveFetch(entity, callback, uniqueProps, dataSource);
+		return super.updateSaveFetch(entity, callback, -1, uniqueProps, dataSource);
+	}
+
+	@Override
+	public <T extends Serializable> T updateSaveFetch(T entity, EntityUpdateCallback<T> callback, int lockWaitTimeout,
+			String... uniqueProps) {
+		return super.updateSaveFetch(entity, callback, lockWaitTimeout, uniqueProps, dataSource);
 	}
 
 	@Override
@@ -408,6 +414,11 @@ public class DefaultSqlToyDaoImpl extends SqlToyDaoSupport implements SqlToyDao 
 
 	@Override
 	public Long executeSql(String sqlOrSqlId, Object... paramsValue) {
+		SqlToyConfig sqlToyConfig = this.getSqlToyConfig(sqlOrSqlId, SqlType.update);
+		if (sqlToyConfig.isNamedParam()) {
+			throw new IllegalArgumentException(
+					"executeSql(sqlOrSqlId, Object... paramsValue)方法不支持命名参数的sql,请使用executeSql(sqlOrSqlId, Map<String,Object> paramsMap)方法!");
+		}
 		return super.executeSql(sqlOrSqlId, null, paramsValue);
 	}
 
