@@ -90,6 +90,27 @@ public class StringUtil {
 	}
 
 	/**
+	 * 字符串trim后比较是否相等
+	 * 
+	 * @param soure
+	 * @param target
+	 * @return
+	 */
+	public static boolean trimedEquals(String soure, String target) {
+		if (soure == null || target == null) {
+			return soure == target;
+		}
+		return soure.trim().equals(target.trim());
+	}
+
+	public static boolean trimedIgnoreCaseEquals(String soure, String target) {
+		if (soure == null || target == null) {
+			return soure == target;
+		}
+		return soure.trim().equalsIgnoreCase(target.trim());
+	}
+
+	/**
 	 * @todo 将对象转为字符串排除null
 	 * @param obj
 	 * @return

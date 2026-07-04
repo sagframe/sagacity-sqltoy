@@ -58,12 +58,12 @@ public class OceanBaseDialect implements Dialect {
 
 	@Override
 	public boolean isUnique(SqlToyContext sqlToyContext, Serializable entity, String[] paramsNamed, Connection conn,
-			final Integer dbType, String tableName) {
+			final Integer dbType, String tableName, final Integer queryTimeout) {
 		return DialectUtils.isUnique(sqlToyContext, entity, paramsNamed, conn, dbType, tableName,
 				(entityMeta, realParamNamed, table, topSize) -> {
 					String queryStr = DialectExtUtils.wrapUniqueSql(entityMeta, realParamNamed, dbType, table);
 					return queryStr + " fetch first " + topSize + " rows only";
-				});
+				}, queryTimeout);
 	}
 
 	/*
@@ -129,7 +129,8 @@ public class OceanBaseDialect implements Dialect {
 			final Object[] paramsValue, final QueryExecutorExtend queryExecutorExtend,
 			final DecryptHandler decryptHandler, final Connection conn, final LockMode lockMode, final Integer dbType,
 			final String dialect, final int fetchSize, final int maxRows) throws Exception {
-		String realSql = sql.concat(OracleDialectUtils.getLockSql(sql, dbType, lockMode));
+		String realSql = sql
+				.concat(OracleDialectUtils.getLockSql(sql, dbType, lockMode, queryExecutorExtend.lockWaitTimeout));
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, queryExecutorExtend,
 				decryptHandler, conn, dbType, 0, fetchSize, maxRows);
 	}
@@ -226,10 +227,10 @@ public class OceanBaseDialect implements Dialect {
 	 */
 	@Override
 	public Serializable load(final SqlToyContext sqlToyContext, Serializable entity, boolean onlySubTables,
-			List<Class> cascadeTypes, LockMode lockMode, Connection conn, final Integer dbType, final String dialect,
-			final String tableName) throws Exception {
-		return OracleDialectUtils.load(sqlToyContext, entity, onlySubTables, cascadeTypes, lockMode, conn, dbType,
-				dialect, tableName);
+			List<Class> cascadeTypes, LockMode lockMode, int lockWaitTimeout, Connection conn, final Integer dbType,
+			final String dialect, final String tableName, final Integer queryTimeout) throws Exception {
+		return OracleDialectUtils.load(sqlToyContext, entity, onlySubTables, cascadeTypes, lockMode, lockWaitTimeout,
+				conn, dbType, dialect, tableName, queryTimeout);
 	}
 
 	/*
@@ -240,10 +241,11 @@ public class OceanBaseDialect implements Dialect {
 	 */
 	@Override
 	public List<?> loadAll(final SqlToyContext sqlToyContext, List<?> entities, boolean onlySubTables,
-			List<Class> cascadeTypes, LockMode lockMode, Connection conn, final Integer dbType, final String dialect,
-			final String tableName, final int fetchSize, final int maxRows) throws Exception {
-		return OracleDialectUtils.loadAll(sqlToyContext, entities, onlySubTables, cascadeTypes, lockMode, conn, dbType,
-				tableName, fetchSize, maxRows);
+			List<Class> cascadeTypes, LockMode lockMode, final int lockWaitTimeout, Connection conn,
+			final Integer dbType, final String dialect, final String tableName, final int fetchSize, final int maxRows,
+			final Integer queryTimeout) throws Exception {
+		return OracleDialectUtils.loadAll(sqlToyContext, entities, onlySubTables, cascadeTypes, lockMode,
+				lockWaitTimeout, conn, dbType, tableName, fetchSize, maxRows, queryTimeout);
 	}
 
 	/*
@@ -371,19 +373,19 @@ public class OceanBaseDialect implements Dialect {
 
 	@Override
 	public Serializable updateSaveFetch(SqlToyContext sqlToyContext, Serializable entity,
-			UpdateRowHandler updateRowHandler, String[] uniqueProps, Connection conn, Integer dbType, String dialect,
-			String tableName) throws Exception {
+			UpdateRowHandler updateRowHandler, int lockWaitTimeout, String[] uniqueProps, Connection conn,
+			Integer dbType, String dialect, String tableName) throws Exception {
 		return DefaultDialectUtils.updateSaveFetch(sqlToyContext, entity, updateRowHandler, uniqueProps, conn, dbType,
-				dialect, tableName);
+				dialect, tableName, lockWaitTimeout);
 	}
 
 	public Serializable updateSaveFetch(SqlToyContext sqlToyContext, Serializable entity,
-			UpdateRowCallback updateRowCallback, String[] uniqueProps, Connection conn, Integer dbType, String dialect,
-			String tableName) throws Exception {
+			UpdateRowCallback updateRowCallback, int lockWaitTimeout, String[] uniqueProps, Connection conn,
+			Integer dbType, String dialect, String tableName) throws Exception {
 		return DefaultDialectUtils.updateSaveFetch(sqlToyContext, entity, updateRowCallback, uniqueProps, conn, dbType,
-				dialect, tableName);
+				dialect, tableName, lockWaitTimeout);
 	}
-	
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -420,9 +422,10 @@ public class OceanBaseDialect implements Dialect {
 	@Override
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, UpdateRowHandler updateRowHandler, Connection conn, final Integer dbType,
-			final String dialect, final LockMode lockMode, final int fetchSize, final int maxRows) throws Exception {
-		String realSql = sql
-				.concat(OracleDialectUtils.getLockSql(sql, dbType, (lockMode == null) ? LockMode.UPGRADE : lockMode));
+			final String dialect, final LockMode lockMode, int lockWaitTimeout, final int fetchSize, final int maxRows)
+			throws Exception {
+		String realSql = sql.concat(OracleDialectUtils.getLockSql(sql, dbType,
+				(lockMode == null) ? LockMode.UPGRADE : lockMode, lockWaitTimeout));
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
 				dbType, 0, fetchSize, maxRows);
 	}

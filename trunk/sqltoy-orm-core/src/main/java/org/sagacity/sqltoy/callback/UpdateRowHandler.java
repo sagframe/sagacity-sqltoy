@@ -34,7 +34,8 @@ public interface UpdateRowHandler {
 	 * @param setValConsumer, <属性, 强制更新字段, 值>
 	 * @throws Exception
 	 */
-	default void updateRow(ResultSet rs, int index, ThreeBiConsumer<String, String[], Object> setValConsumer) throws Exception {
+	default void updateRow(ResultSet rs, int index, ThreeBiConsumer<String, String[], Object> setValConsumer)
+			throws Exception {
 
 	}
 }

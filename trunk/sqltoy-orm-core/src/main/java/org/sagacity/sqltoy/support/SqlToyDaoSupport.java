@@ -506,7 +506,7 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected <T extends Serializable> T load(final T entity, final LockMode lockMode, final DataSource dataSource) {
-		return dialectFactory.load(sqlToyContext, entity, false, null, lockMode, getDataSource(dataSource));
+		return dialectFactory.load(sqlToyContext, entity, false, null, lockMode, -1, getDataSource(dataSource), -1);
 	}
 
 	/**
@@ -525,7 +525,7 @@ public class SqlToyDaoSupport {
 		if (cascades == null || cascades.length == 0) {
 			cascades = getEntityMeta(entity.getClass()).getCascadeTypes();
 		}
-		return dialectFactory.load(sqlToyContext, entity, false, cascades, lockMode, getDataSource(null));
+		return dialectFactory.load(sqlToyContext, entity, false, cascades, lockMode, -1, getDataSource(null), -1);
 	}
 
 	/**
@@ -535,7 +535,7 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected <T extends Serializable> List<T> loadAll(final List<T> entities, final LockMode lockMode) {
-		return dialectFactory.loadAll(sqlToyContext, entities, null, null, lockMode, null, getDataSource(null));
+		return dialectFactory.loadAll(sqlToyContext, entities, null, null, lockMode, -1, null, getDataSource(null), -1);
 	}
 
 	/**
@@ -575,7 +575,7 @@ public class SqlToyDaoSupport {
 			realIds = ids;
 		}
 		List<T> entities = BeanUtil.wrapEntities(sqlToyContext.getTypeHandler(), entityMeta, entityClass, realIds);
-		return dialectFactory.loadAll(sqlToyContext, entities, null, null, lockMode, null, getDataSource(null));
+		return dialectFactory.loadAll(sqlToyContext, entities, null, null, lockMode, -1, null, getDataSource(null), -1);
 	}
 
 	protected <T extends Serializable> List<T> loadAllCascade(final List<T> entities, final LockMode lockMode,
@@ -601,8 +601,8 @@ public class SqlToyDaoSupport {
 		if (cascades == null || cascades.length == 0) {
 			cascades = getEntityMeta(entities.get(0).getClass()).getCascadeTypes();
 		}
-		return dialectFactory.loadAll(sqlToyContext, entities, onlySubTable, cascades, lockMode, null,
-				getDataSource(null));
+		return dialectFactory.loadAll(sqlToyContext, entities, onlySubTable, cascades, lockMode, -1, null,
+				getDataSource(null), -1);
 	}
 
 	protected <T> T loadBySql(final String sqlOrSqlId, final Map<String, Object> paramsMap, final Class<T> resultType) {
@@ -1159,18 +1159,24 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	public <T extends Serializable> T updateSaveFetch(final T entity, final UpdateRowHandler updateRowHandler,
+			final int lockWaitTimeout, final String[] uniqueProps, final DataSource dataSource) {
+		return (T) dialectFactory.updateSaveFetch(sqlToyContext, entity, updateRowHandler, lockWaitTimeout, uniqueProps,
+				getDataSource(dataSource));
+	}
+
+	public <T extends Serializable> T updateSaveFetch(final T entity, final UpdateRowHandler updateRowHandler,
 			final String[] uniqueProps, final DataSource dataSource) {
-		return (T) dialectFactory.updateSaveFetch(sqlToyContext, entity, updateRowHandler, uniqueProps,
+		return (T) dialectFactory.updateSaveFetch(sqlToyContext, entity, updateRowHandler, -1, uniqueProps,
 				getDataSource(dataSource));
 	}
 
 	public <T extends Serializable> T updateSaveFetch(final T entity, EntityUpdateCallback<T> callback,
-			final String[] uniqueProps, final DataSource dataSource) {
+			int lockWaitTimeout, final String[] uniqueProps, final DataSource dataSource) {
 		Class<T> entityClazz = (Class<T>) entity.getClass();
 		UpdateRowCallback updateRowCallback = BeanUtil.toSqlToyHandler(getEntityMeta(entityClazz), entityClazz,
 				callback);
-		return (T) dialectFactory.updateSaveFetch(sqlToyContext, entity, updateRowCallback, uniqueProps,
-				getDataSource(dataSource));
+		return (T) dialectFactory.updateSaveFetch(sqlToyContext, entity, updateRowCallback, lockWaitTimeout,
+				uniqueProps, getDataSource(dataSource));
 	}
 
 	/**
@@ -2125,6 +2131,8 @@ public class SqlToyDaoSupport {
 		queryExecutor.contextData(innerModel.contextData);
 		// 设置分页优化
 		queryExecutor.getInnerModel().pageOptimize = innerModel.pageOptimize;
+		queryExecutor.getInnerModel().lockMode = innerModel.lockMode;
+		queryExecutor.getInnerModel().lockWaitTimeout = innerModel.lockWaitTimeout;
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search,
 				getDialect(queryExecutor.getInnerModel().dataSource));
 		// 加密字段，查询时解密

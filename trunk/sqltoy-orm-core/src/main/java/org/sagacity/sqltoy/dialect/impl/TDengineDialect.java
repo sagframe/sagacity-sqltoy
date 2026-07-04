@@ -39,7 +39,7 @@ public class TDengineDialect extends DefaultDialect {
 
 	@Override
 	public boolean isUnique(SqlToyContext sqlToyContext, Serializable entity, String[] paramsNamed, Connection conn,
-			Integer dbType, String tableName) {
+			Integer dbType, String tableName, final Integer queryTimeout) {
 		// 不支持
 		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
 	}
@@ -87,18 +87,18 @@ public class TDengineDialect extends DefaultDialect {
 
 	@Override
 	public Serializable load(SqlToyContext sqlToyContext, Serializable entity, boolean onlySubTables,
-			List<Class> cascadeTypes, LockMode lockMode, Connection conn, Integer dbType, String dialect,
-			String tableName) throws Exception {
-		return super.load(sqlToyContext, entity, onlySubTables, cascadeTypes, lockMode, conn, dbType, dialect,
-				tableName);
+			List<Class> cascadeTypes, LockMode lockMode, int lockWaitTimeout, Connection conn, Integer dbType,
+			String dialect, String tableName, final Integer queryTimeout) throws Exception {
+		return super.load(sqlToyContext, entity, onlySubTables, cascadeTypes, lockMode, lockWaitTimeout, conn, dbType,
+				dialect, tableName, queryTimeout);
 	}
 
 	@Override
 	public List<?> loadAll(SqlToyContext sqlToyContext, List<?> entities, boolean onlySubTables,
-			List<Class> cascadeTypes, LockMode lockMode, Connection conn, Integer dbType, String dialect,
-			String tableName, int fetchSize, int maxRows) throws Exception {
-		return super.loadAll(sqlToyContext, entities, onlySubTables, cascadeTypes, lockMode, conn, dbType, dialect,
-				tableName, fetchSize, maxRows);
+			List<Class> cascadeTypes, LockMode lockMode, final int lockWaitTimeout, Connection conn, Integer dbType,
+			String dialect, String tableName, int fetchSize, int maxRows, final Integer queryTimeout) throws Exception {
+		return super.loadAll(sqlToyContext, entities, onlySubTables, cascadeTypes, lockMode, lockWaitTimeout, conn,
+				dbType, dialect, tableName, fetchSize, maxRows, queryTimeout);
 	}
 
 	@Override
@@ -125,8 +125,8 @@ public class TDengineDialect extends DefaultDialect {
 
 	@Override
 	public Serializable updateSaveFetch(SqlToyContext sqlToyContext, Serializable entity,
-			UpdateRowHandler updateRowHandler, String[] uniqueProps, Connection conn, Integer dbType, String dialect,
-			String tableName) throws Exception {
+			UpdateRowHandler updateRowHandler, int lockWaitTimeout, String[] uniqueProps, Connection conn,
+			Integer dbType, String dialect, String tableName) throws Exception {
 		// 不支持
 		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
 	}
@@ -179,7 +179,7 @@ public class TDengineDialect extends DefaultDialect {
 	@Override
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramValues, UpdateRowHandler updateRowHandler, Connection conn, Integer dbType, String dialect,
-			LockMode lockMode, int fetchSize, int maxRows) throws Exception {
+			LockMode lockMode, int lockWaitTimeout, int fetchSize, int maxRows) throws Exception {
 		// 不支持
 		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
 	}

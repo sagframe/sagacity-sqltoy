@@ -1114,10 +1114,10 @@ public class SqlUtil {
 	 */
 	public static Object loadByJdbcQuery(TypeHandler typeHandler, final String queryStr, final Object[] params,
 			final Class voClass, final RowCallbackHandler rowCallbackHandler, final Connection conn,
-			final Integer dbType, final boolean ignoreAllEmptySet, final HashMap<String, String> colFieldMap)
-			throws Exception {
+			final Integer dbType, final boolean ignoreAllEmptySet, final HashMap<String, String> colFieldMap,
+			final Integer queryTimeout) throws Exception {
 		List result = findByJdbcQuery(typeHandler, queryStr, params, voClass, rowCallbackHandler, null, conn, dbType,
-				ignoreAllEmptySet, colFieldMap, -1, -1);
+				ignoreAllEmptySet, colFieldMap, -1, -1, queryTimeout);
 		if (result != null && !result.isEmpty()) {
 			if (result.size() > 1) {
 				throw new IllegalAccessException("查询结果不唯一,loadByJdbcQuery 方法只针对单条结果的数据查询!");
@@ -1209,7 +1209,8 @@ public class SqlUtil {
 	public static List findByJdbcQuery(TypeHandler typeHandler, final String queryStr, final Object[] params,
 			final Class voClass, final RowCallbackHandler rowCallbackHandler, final DecryptHandler decryptHandler,
 			final Connection conn, final Integer dbType, final boolean ignoreAllEmptySet,
-			final HashMap<String, String> colFieldMap, final int fetchSize, final int maxRows) throws Exception {
+			final HashMap<String, String> colFieldMap, final int fetchSize, final int maxRows,
+			final Integer queryTimeout) throws Exception {
 		ResultSet rs = null;
 		PreparedStatement pst = conn.prepareStatement(queryStr, ResultSet.TYPE_FORWARD_ONLY,
 				ResultSet.CONCUR_READ_ONLY);
@@ -1219,8 +1220,11 @@ public class SqlUtil {
 		if (maxRows > 0) {
 			pst.setMaxRows(maxRows);
 		}
+		if (queryTimeout != null && queryTimeout > 0) {
+			pst.setQueryTimeout(queryTimeout);
+		}
 		// 设置全局statementTimeout，默认为null
-		if (SqlToyConstants.defaultStatementTimeout != null && SqlToyConstants.defaultStatementTimeout > 0) {
+		else if (SqlToyConstants.defaultStatementTimeout != null && SqlToyConstants.defaultStatementTimeout > 0) {
 			pst.setQueryTimeout(SqlToyConstants.defaultStatementTimeout);
 		}
 		List result = (List) preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
@@ -1494,7 +1498,7 @@ public class SqlUtil {
 	 * @throws Exception
 	 */
 	public static boolean wrapTreeTableRoute(TypeHandler typeHandler, final TreeTableModel treeTableModel,
-			Connection conn, final Integer dbType) throws Exception {
+			Connection conn, final Integer dbType, final Integer queryTimeout) throws Exception {
 		if (StringUtil.isBlank(treeTableModel.getTableName()) || StringUtil.isBlank(treeTableModel.getIdField())
 				|| StringUtil.isBlank(treeTableModel.getPidField())
 				|| StringUtil.isBlank(treeTableModel.getPidValue())) {
@@ -1527,7 +1531,7 @@ public class SqlUtil {
 			}
 			// 获取层次等级
 			List idInfo = findByJdbcQuery(typeHandler, idInfoSql, null, null, null, null, conn, dbType, false, null,
-					SqlToyConstants.FETCH_SIZE, -1);
+					SqlToyConstants.FETCH_SIZE, -1, queryTimeout);
 			// 设置第一层level
 			int nodeLevel = 0;
 			String nodeRoute = "";
@@ -1565,16 +1569,17 @@ public class SqlUtil {
 				}
 				ids = findByJdbcQuery(typeHandler, firstNextNodeQuery.toString(),
 						new Object[] { treeTableModel.getIdValue() }, null, null, null, conn, dbType, false, null,
-						SqlToyConstants.FETCH_SIZE, -1);
+						SqlToyConstants.FETCH_SIZE, -1, queryTimeout);
 			} else {
 				ids = findByJdbcQuery(typeHandler,
 						nextNodeQueryStr.toString().replaceFirst("\\$\\{inStr\\}",
 								flag + treeTableModel.getPidValue() + flag),
-						null, null, null, null, conn, dbType, false, null, SqlToyConstants.FETCH_SIZE, -1);
+						null, null, null, null, conn, dbType, false, null, SqlToyConstants.FETCH_SIZE, -1,
+						queryTimeout);
 			}
 			if (ids != null && !ids.isEmpty()) {
 				processNextLevel(typeHandler, updateLevelAndRoute.toString(), nextNodeQueryStr.toString(),
-						treeTableModel, pidsMap, ids, nodeLevel + 1, conn, dbType);
+						treeTableModel, pidsMap, ids, nodeLevel + 1, conn, dbType, queryTimeout);
 			}
 		}
 		// 设置节点是否为叶子节点，（mysql不支持update table where in 机制）
@@ -1649,7 +1654,7 @@ public class SqlUtil {
 	 */
 	private static void processNextLevel(TypeHandler typeHandler, final String updateLevelAndRoute,
 			final String nextNodeQueryStr, final TreeTableModel treeTableModel, final HashMap pidsMap, List ids,
-			final int nodeLevel, Connection conn, final int dbType) throws Exception {
+			final int nodeLevel, Connection conn, final int dbType, final Integer queryTimeout) throws Exception {
 		// 修改节点level和节点路径
 		batchUpdateByJdbc(typeHandler, updateLevelAndRoute, ids, 500, new InsertRowCallbackHandler() {
 			@Override
@@ -1722,11 +1727,12 @@ public class SqlUtil {
 			inStrs = combineQueryInStr(subIds, 0, null, treeTableModel.isChar());
 			// 获取下一层节点
 			nextIds = findByJdbcQuery(typeHandler, nextNodeQueryStr.replaceFirst("\\$\\{inStr\\}", inStrs), null, null,
-					null, null, conn, dbType, false, null, SqlToyConstants.FETCH_SIZE, -1);
+					null, null, conn, dbType, false, null, SqlToyConstants.FETCH_SIZE, -1, queryTimeout);
 			// 递归处理下一层
 			if (nextIds != null && !nextIds.isEmpty()) {
 				processNextLevel(typeHandler, updateLevelAndRoute, nextNodeQueryStr, treeTableModel,
-						CollectionUtil.hashList(subIds, 0, 1, true), nextIds, nodeLevel + 1, conn, dbType);
+						CollectionUtil.hashList(subIds, 0, 1, true), nextIds, nodeLevel + 1, conn, dbType,
+						queryTimeout);
 			}
 			if (exist) {
 				break;

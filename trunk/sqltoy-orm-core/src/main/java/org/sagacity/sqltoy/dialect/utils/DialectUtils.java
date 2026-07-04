@@ -1126,7 +1126,7 @@ public class DialectUtils {
 	 */
 	public static Serializable load(final SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			EntityMeta entityMeta, Serializable entity, boolean onlySubTables, List<Class> cascadeTypes,
-			Connection conn, final Integer dbType) throws Exception {
+			Connection conn, final Integer dbType, final Integer queryTimeout) throws Exception {
 		Object[] pkValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getIdArray());
 		// 检查主键值是否合法
 		for (int i = 0; i < pkValues.length; i++) {
@@ -1149,8 +1149,13 @@ public class DialectUtils {
 			// 增加sql执行拦截器 update 2022-9-10
 			sqlToyResult = doInterceptors(sqlToyContext, sqlToyConfig, OperateType.load, sqlToyResult,
 					entity.getClass(), dbType);
+			QueryExecutorExtend extend = null;
+			if (queryTimeout > 0) {
+				extend = new QueryExecutorExtend();
+				extend.timeout = queryTimeout;
+			}
 			QueryResult queryResult = findBySql(sqlToyContext, sqlToyConfig, sqlToyResult.getSql(),
-					sqlToyResult.getParamsValue(), null, decryptHandler, conn, dbType, 0, -1, -1);
+					sqlToyResult.getParamsValue(), extend, decryptHandler, conn, dbType, 0, -1, -1);
 			List rows = queryResult.getRows();
 			Class entityClass;
 			if (rows != null && rows.size() > 0) {
@@ -1196,7 +1201,8 @@ public class DialectUtils {
 							cascadeModel.getMappedType(), dbType);
 					pkRefDetails = SqlUtil.findByJdbcQuery(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(),
 							sqlToyResult.getParamsValue(), cascadeModel.getMappedType(), null, subDecryptHandler, conn,
-							dbType, false, mappedMeta.getColumnFieldMap(), SqlToyConstants.FETCH_SIZE, -1);
+							dbType, false, mappedMeta.getColumnFieldMap(), SqlToyConstants.FETCH_SIZE, -1,
+							queryTimeout);
 					// 处理子类中@Translate注解，进行缓存翻译
 					ResultUtils.wrapResultTranslate(sqlToyContext, pkRefDetails, cascadeModel.getMappedType());
 					if (null != pkRefDetails && !pkRefDetails.isEmpty()) {
@@ -1236,7 +1242,8 @@ public class DialectUtils {
 	 */
 	public static List<?> loadAll(final SqlToyContext sqlToyContext, List<?> entities, boolean onlySubTables,
 			List<Class> cascadeTypes, LockMode lockMode, Connection conn, final Integer dbType, String tableName,
-			LockSqlHandler lockSqlHandler, final int fetchSize, final int maxRows) throws Exception {
+			LockSqlHandler lockSqlHandler, final int fetchSize, final int maxRows, Integer queryTimeout)
+			throws Exception {
 		if (entities == null || entities.isEmpty()) {
 			return entities;
 		}
@@ -1309,7 +1316,7 @@ public class DialectUtils {
 			SqlExecuteStat.showSql("执行依据主键批量查询", sqlToyResult.getSql(), sqlToyResult.getParamsValue());
 			entitySet = SqlUtil.findByJdbcQuery(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(),
 					sqlToyResult.getParamsValue(), entityClass, null, decryptHandler, conn, dbType, false,
-					entityMeta.getColumnFieldMap(), fetchSize, maxRows);
+					entityMeta.getColumnFieldMap(), fetchSize, maxRows, queryTimeout);
 			// 处理类中的@Translate注解，进行缓存翻译
 			ResultUtils.wrapResultTranslate(sqlToyContext, entitySet, entityClass);
 			if (entitySet == null || entitySet.isEmpty()) {
@@ -1526,7 +1533,8 @@ public class DialectUtils {
 					SqlExecuteStat.showSql("执行级联加载子表", subToyResult.getSql(), subToyResult.getParamsValue());
 					items = SqlUtil.findByJdbcQuery(sqlToyContext.getTypeHandler(), subToyResult.getSql(),
 							subToyResult.getParamsValue(), cascadeModel.getMappedType(), null, subDecryptHandler, conn,
-							dbType, false, mappedMeta.getColumnFieldMap(), SqlToyConstants.FETCH_SIZE, maxRows);
+							dbType, false, mappedMeta.getColumnFieldMap(), SqlToyConstants.FETCH_SIZE, maxRows,
+							queryTimeout);
 					// 处理子类中的@Translate注解，进行缓存翻译
 					ResultUtils.wrapResultTranslate(sqlToyContext, items, cascadeModel.getMappedType());
 					SqlExecuteStat.debug("子表加载结果", "子记录数:{} 条", items.size());
@@ -2704,7 +2712,8 @@ public class DialectUtils {
 	 * @todo 进行唯一性查询判定
 	 */
 	public static boolean isUnique(SqlToyContext sqlToyContext, Serializable entity, final String[] paramsNamed,
-			Connection conn, final Integer dbType, final String tableName, final UniqueSqlHandler uniqueSqlHandler) {
+			Connection conn, final Integer dbType, final String tableName, final UniqueSqlHandler uniqueSqlHandler,
+			final Integer queryTimeout) {
 		try {
 			EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 			String[] realParamNamed;
@@ -2751,7 +2760,7 @@ public class DialectUtils {
 					entity.getClass(), dbType);
 			SqlExecuteStat.showSql("唯一性验证", sqlToyResult.getSql(), sqlToyResult.getParamsValue());
 			List result = SqlUtil.findByJdbcQuery(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(),
-					sqlToyResult.getParamsValue(), null, null, null, conn, dbType, false, null, -1, -1);
+					sqlToyResult.getParamsValue(), null, null, null, conn, dbType, false, null, -1, -1, queryTimeout);
 			SqlExecuteStat.debug("唯一性条件结果", "记录数量:{}", result.size());
 			if (result.size() == 0) {
 				return true;

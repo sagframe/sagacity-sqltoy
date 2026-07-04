@@ -160,6 +160,11 @@ public class QueryExecutorExtend implements Serializable {
 	public LockMode lockMode = null;
 
 	/**
+	 * lockMode为UPGRADE时设置锁等待时长，单位秒
+	 */
+	public int lockWaitTimeout = -1;
+
+	/**
 	 * 是否构造过条件参数名称
 	 */
 	public boolean wrappedParamNames = false;

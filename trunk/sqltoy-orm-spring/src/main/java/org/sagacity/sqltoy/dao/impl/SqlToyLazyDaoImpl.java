@@ -392,15 +392,21 @@ public class SqlToyLazyDaoImpl extends SpringDaoSupport implements SqlToyLazyDao
 	@Override
 	public <T extends Serializable> T updateSaveFetch(T entity, UpdateRowHandler updateRowHandler,
 			String... uniqueProps) {
-		return super.updateSaveFetch(entity, updateRowHandler, uniqueProps, null);
+		return super.updateSaveFetch(entity, updateRowHandler, -1, uniqueProps, null);
 	}
 
 	@Override
 	public <T extends Serializable> T updateSaveFetch(T entity, EntityUpdateCallback<T> callback,
 			String... uniqueProps) {
-		return super.updateSaveFetch(entity, callback, uniqueProps, dataSource);
+		return super.updateSaveFetch(entity, callback, -1, uniqueProps, dataSource);
 	}
-	
+
+	@Override
+	public <T extends Serializable> T updateSaveFetch(T entity, EntityUpdateCallback<T> callback, int lockWaitTimeout,
+			String... uniqueProps) {
+		return super.updateSaveFetch(entity, callback, lockWaitTimeout, uniqueProps, dataSource);
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -817,7 +823,7 @@ public class SqlToyLazyDaoImpl extends SpringDaoSupport implements SqlToyLazyDao
 	public String generateBizId(Serializable entity) {
 		return super.generateBizId(entity);
 	}
-	
+
 	@Override
 	public String generateBizId(String tableName, String signature, Map<String, Object> keyValues, LocalDate bizDate,
 			int length, int sequenceSize) {

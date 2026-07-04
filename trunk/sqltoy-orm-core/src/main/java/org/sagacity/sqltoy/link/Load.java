@@ -30,6 +30,16 @@ public class Load extends BaseLink {
 	private LockMode lockMode;
 
 	/**
+	 * 锁等待时长(秒)
+	 */
+	private int lockWaitTimeout = -1;
+
+	/**
+	 * 查询超时时长（秒）
+	 */
+	private int timeout;
+
+	/**
 	 * 级联的对象类型
 	 */
 	private Class<?>[] cascadeTypes;
@@ -70,6 +80,11 @@ public class Load extends BaseLink {
 		return this;
 	}
 
+	public Load queryTimeout(int timeout) {
+		this.timeout = timeout;
+		return this;
+	}
+
 	/**
 	 * @todo 级联加载的对象
 	 * @param cascadeTypes
@@ -95,6 +110,11 @@ public class Load extends BaseLink {
 		return this;
 	}
 
+	public Load lockWaitTimeout(int lockWaitTimeout) {
+		this.lockWaitTimeout = lockWaitTimeout;
+		return this;
+	}
+
 	public Load onlyCascade() {
 		this.onlyCascade = true;
 		return this;
@@ -112,7 +132,8 @@ public class Load extends BaseLink {
 		if ((cascadeTypes == null || cascadeTypes.length == 0) && (cascadeAll || onlyCascade)) {
 			cascadeTypes = sqlToyContext.getEntityMeta(entity.getClass()).getCascadeTypes();
 		}
-		return dialectFactory.load(sqlToyContext, entity, onlyCascade, cascadeTypes, lockMode, getDataSource(null));
+		return dialectFactory.load(sqlToyContext, entity, onlyCascade, cascadeTypes, lockMode, lockWaitTimeout,
+				getDataSource(null), timeout);
 	}
 
 	/**
@@ -127,8 +148,8 @@ public class Load extends BaseLink {
 		if ((cascadeTypes == null || cascadeTypes.length == 0) && (cascadeAll || onlyCascade)) {
 			cascadeTypes = sqlToyContext.getEntityMeta(entities.get(0).getClass()).getCascadeTypes();
 		}
-		return dialectFactory.loadAll(sqlToyContext, entities, onlyCascade, cascadeTypes, lockMode, parallelConfig,
-				getDataSource(null));
+		return dialectFactory.loadAll(sqlToyContext, entities, onlyCascade, cascadeTypes, lockMode, lockWaitTimeout,
+				parallelConfig, getDataSource(null), timeout);
 	}
 
 }

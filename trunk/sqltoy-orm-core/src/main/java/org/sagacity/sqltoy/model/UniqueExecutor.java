@@ -39,6 +39,8 @@ public class UniqueExecutor implements Serializable {
 	 */
 	private Object contextData;
 
+	private int timeout = -1;
+
 	public UniqueExecutor entity(Serializable entity) {
 		this.entity = entity;
 		return this;
@@ -55,6 +57,11 @@ public class UniqueExecutor implements Serializable {
 
 	public UniqueExecutor dataSource(DataSource dataSource) {
 		this.dataSource = dataSource;
+		return this;
+	}
+
+	public UniqueExecutor queryTimeout(Integer timeout) {
+		this.timeout = timeout;
 		return this;
 	}
 
@@ -79,8 +86,12 @@ public class UniqueExecutor implements Serializable {
 		return dataSource;
 	}
 
+	public int getTimeout() {
+		return timeout;
+	}
+	
 	public <T> T getContextData() {
-		return (T)contextData;
+		return (T) contextData;
 	}
 
 	public UniqueExecutor setContextData(Object contextData) {

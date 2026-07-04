@@ -252,15 +252,21 @@ public class LightDaoImpl extends SpringDaoSupport implements LightDao {
 	@Override
 	public <T extends Serializable> T updateSaveFetch(T entity, UpdateRowHandler updateRowHandler,
 			String... uniqueProps) {
-		return super.updateSaveFetch(entity, updateRowHandler, uniqueProps, dataSource);
+		return super.updateSaveFetch(entity, updateRowHandler, -1, uniqueProps, dataSource);
 	}
 
 	@Override
 	public <T extends Serializable> T updateSaveFetch(T entity, EntityUpdateCallback<T> callback,
 			String... uniqueProps) {
-		return super.updateSaveFetch(entity, callback, uniqueProps, dataSource);
+		return super.updateSaveFetch(entity, callback, -1, uniqueProps, dataSource);
 	}
-	
+
+	@Override
+	public <T extends Serializable> T updateSaveFetch(T entity, EntityUpdateCallback<T> callback, int lockWaitTimeout,
+			String... uniqueProps) {
+		return super.updateSaveFetch(entity, callback, lockWaitTimeout, uniqueProps, dataSource);
+	}
+
 	@Override
 	public Long updateDeeply(Serializable entity) {
 		return super.updateDeeply(entity);
@@ -539,7 +545,7 @@ public class LightDaoImpl extends SpringDaoSupport implements LightDao {
 	public Object insertReturnPrimaryKey(String sqlOrSqlId, Serializable entity, String pkField) {
 		return super.execute().sql(sqlOrSqlId).entity(entity).insertReturnPrimaryKey(pkField);
 	}
-	
+
 	@Override
 	public Long executeSql(String sqlOrSqlId, Serializable entity) {
 		return super.executeSql(sqlOrSqlId, entity);
@@ -590,7 +596,7 @@ public class LightDaoImpl extends SpringDaoSupport implements LightDao {
 			int length, int sequenceSize) {
 		return super.generateBizId(tableName, signature, keyValues, bizDate, length, sequenceSize);
 	}
-	
+
 	@Override
 	public HashMap<String, Object[]> getTranslateCache(String cacheName, String cacheType) {
 		return super.getTranslateCache(cacheName, cacheType);

@@ -79,6 +79,10 @@ public class Query extends BaseLink {
 	 */
 	private LockMode lockMode;
 
+	private int lockWaitTimeout = -1;
+
+	private int queryTimeout = -1;
+
 	/**
 	 * @param sqlToyContext
 	 * @param dataSource
@@ -100,6 +104,16 @@ public class Query extends BaseLink {
 
 	public Query lock(LockMode lockMode) {
 		this.lockMode = lockMode;
+		return this;
+	}
+
+	public Query lockWaitTimeout(int lockWaitTimeout) {
+		this.lockWaitTimeout = lockWaitTimeout;
+		return this;
+	}
+
+	public Query queryTimeout(int queryTimeout) {
+		this.queryTimeout = queryTimeout;
 		return this;
 	}
 
@@ -307,6 +321,8 @@ public class Query extends BaseLink {
 			queryExecutor.resultType(resultType);
 		}
 		queryExecutor.humpMapLabel(humpMapLabel);
+		queryExecutor.timeout(queryTimeout);
+		queryExecutor.lockWaitTimeout(lockWaitTimeout);
 		queryExecutor.maxRows(maxRows);
 		queryExecutor.fetchSize(fetchSize);
 		return queryExecutor;
