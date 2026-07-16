@@ -15,7 +15,7 @@
 		<spring-data-commons.version>4.1.0</spring-data-commons.version>
 		<spring-data-redis.version>4.1.0</spring-data-redis.version>
 		<spring-data-mongo.version>5.1.0</spring-data-mongo.version>
-		<mongo.version>5.8.0</mongo.version>
+		<mongo.version>5.9.0</mongo.version>
 		<caffeine.version>3.2.4</caffeine.version>
 	</properties>
 	<licenses>
