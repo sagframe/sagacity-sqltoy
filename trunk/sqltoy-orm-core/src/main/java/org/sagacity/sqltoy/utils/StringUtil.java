@@ -1012,6 +1012,22 @@ public class StringUtil {
 		return template;
 	}
 
+	public static String replaceFirstStr(String source, String target, String replacement, int fromIndex) {
+		if (source == null || target == null || target.isEmpty()) {
+			return source;
+		}
+		// 从fromIndex位置开始查找
+		int idx = source.indexOf(target, fromIndex);
+		if (idx == -1) {
+			return source;
+		}
+		return source.substring(0, idx) + replacement + source.substring(idx + target.length());
+	}
+
+	public static String replaceFirstStr(String source, String target, String replacement) {
+		return replaceFirstStr(source, target, replacement, 0);
+	}
+
 	/**
 	 * @TODO 提供偏移替换后字符长度的全量替换
 	 * @param source

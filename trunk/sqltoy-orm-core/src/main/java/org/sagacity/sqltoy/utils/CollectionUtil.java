@@ -1180,7 +1180,7 @@ public class CollectionUtil {
 	 * @TODO 清除集合中的null值
 	 * @param dataSet
 	 */
-	public static void removeNull(List dataSet) {
+	public static void removeNull(Collection dataSet) {
 		if (dataSet != null && !dataSet.isEmpty()) {
 			Iterator iter = dataSet.iterator();
 			while (iter.hasNext()) {

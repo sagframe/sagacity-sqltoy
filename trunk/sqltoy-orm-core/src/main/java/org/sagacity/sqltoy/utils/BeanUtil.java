@@ -524,7 +524,7 @@ public class BeanUtil {
 	 * @return
 	 * @throws Exception
 	 */
-	public static Object invokeMethod(Object bean, String methodName, Object... args) throws Exception {
+	public static Object invokeMethod(Object bean, String methodName, Object[] args) throws Exception {
 		try {
 			Method method = getMethod(bean.getClass(), methodName, args == null ? 0 : args.length);
 			if (method == null) {
@@ -535,6 +535,57 @@ public class BeanUtil {
 			e.printStackTrace();
 			throw e;
 		}
+	}
+
+	public static Object invokeMethod(Object bean, String methodName, Object[] args, Class[] argsTypes)
+			throws Exception {
+		try {
+			Method method = getMethod(bean.getClass(), methodName, args == null ? 0 : args.length, argsTypes);
+			if (method == null) {
+				return null;
+			}
+			return method.invoke(bean, args);
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw e;
+		}
+	}
+
+	/**
+	 * @todo 根据方法名称、参数数量以及参数类型获取类的具体方法,支持重载方法精确匹配
+	 * @param beanClass
+	 * @param methodName
+	 * @param argLength
+	 * @param argTypes   参数类型数组,为null时退化为按名称和参数数量匹配
+	 * @return
+	 */
+	public static Method getMethod(Class beanClass, String methodName, int argLength, Class[] argTypes) {
+		if (argTypes == null || argTypes.length == 0) {
+			return getMethod(beanClass, methodName, argLength);
+		}
+		Method[] methods = beanClass.getMethods();
+		Method fallback = null;
+		for (Method method : methods) {
+			int methodArgsLength = method.getParameterTypes() != null ? method.getParameterTypes().length : 0;
+			if (!method.getName().equalsIgnoreCase(methodName) || methodArgsLength != argLength) {
+				continue;
+			}
+			if (fallback == null) {
+				fallback = method;
+			}
+			Class<?>[] paramTypes = method.getParameterTypes();
+			boolean matched = true;
+			for (int i = 0; i < argLength; i++) {
+				if (argTypes[i] != null && !paramTypes[i].isAssignableFrom(argTypes[i])) {
+					matched = false;
+					break;
+				}
+			}
+			if (matched) {
+				return method;
+			}
+		}
+		return fallback;
 	}
 
 	/**
