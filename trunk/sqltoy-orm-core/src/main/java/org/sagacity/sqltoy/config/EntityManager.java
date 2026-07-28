@@ -156,7 +156,7 @@ public class EntityManager {
 	/**
 	 * 非sqltoy entity类,一般指仅用于查询作为返回结果的VO
 	 */
-	private ConcurrentHashMap<String, String> unEntityMap = new ConcurrentHashMap<String, String>();
+	private ConcurrentHashMap<String, String> notEntityMap = new ConcurrentHashMap<String, String>();
 
 	/**
 	 * @TODO 判断是否是实体对象
@@ -170,7 +170,7 @@ public class EntityManager {
 		}
 		Class entityClass = BeanUtil.getEntityClass(voClass);
 		String className = entityClass.getName();
-		if (unEntityMap.containsKey(className)) {
+		if (notEntityMap.containsKey(className)) {
 			return false;
 		}
 		if (entitysMetaMap.containsKey(className)) {
@@ -180,7 +180,7 @@ public class EntityManager {
 		if (entityMeta != null) {
 			return true;
 		}
-		unEntityMap.put(className, "1");
+		notEntityMap.put(className, "1");
 		return false;
 	}
 
@@ -392,7 +392,7 @@ public class EntityManager {
 					if (fieldMeta != null) {
 						DataVersionConfig dataVersionConfig = new DataVersionConfig();
 						dataVersionConfig.setField(dataVersionField);
-						// 202209181至少9位数字
+						// 202209181至少9位数字(yyyyMMdd+流水号)才能作为数据版本号)
 						if (dataVersion.startDate() && fieldMeta.getLength() > 8) {
 							dataVersionConfig.setStartDate(true);
 						}

@@ -22,8 +22,9 @@ public enum SecureType {
 	// 身份证
 	ID("id-card"),
 	// 银行对公账号
-	PUBLIC_ACCOUNT("public-account"),
-
+	PUBLIC_ACCOUNT("public-account"), 
+	// 按比例离散分布
+	DISCRETE_RATE("discrete-rate"), 
 	OTHER("other");
 
 	private final String type;

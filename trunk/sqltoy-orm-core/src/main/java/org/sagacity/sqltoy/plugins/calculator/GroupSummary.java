@@ -75,7 +75,6 @@ public class GroupSummary {
 			sumSite = (summaryModel.getSumSite() == null) ? "top" : summaryModel.getSumSite().toLowerCase();
 			List<Integer> groupColsList = CalculateUtils.parseColumns(labelIndexMap, groupMeta.getGroupColumn(),
 					dataWidth);
-			//Integer[] groupCols = new Integer[groupColsList.size()];
 			Integer[] groupCols =groupColsList.toArray(new Integer[0]);
 			// 分组列
 			groupMeta.setGroupCols(groupCols);
@@ -96,7 +95,6 @@ public class GroupSummary {
 				}
 				// 排序方式
 				boolean desc = groupMeta.getOrderWay().equalsIgnoreCase("desc") ? true : false;
-				//Integer[] groupIndexes = new Integer[preAllGroups.size()];
 				Integer[] groupIndexes=preAllGroups.toArray(new Integer[0]);
 				// 以新增加的末尾列排序
 				if (groupIndexes.length == 1) {

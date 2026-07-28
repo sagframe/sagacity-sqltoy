@@ -21,7 +21,11 @@ public enum MaskType {
 	// 身份证
 	ID("id-card"),
 	// 银行对公账号
-	PUBLIC_ACCOUNT("public-account");
+	PUBLIC_ACCOUNT("public-account"),
+	// 按比例离散分布
+	DISCRETE_RATE("discrete-rate"),
+	// 其它
+	OTHER("other");
 
 	private final String type;
 

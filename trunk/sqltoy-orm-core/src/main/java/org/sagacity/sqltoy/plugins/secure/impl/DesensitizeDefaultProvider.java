@@ -44,6 +44,12 @@ public class DesensitizeDefaultProvider implements DesensitizeProvider {
 		}
 		// 按比例模糊(百分比)
 		if (mask.getMaskRate() > 0) {
+			// 离散 comment: 2026-07-27: add discrete-rate type, which means the mask rate is
+			// fixed and not related to the length of the string
+			if ("discrete-rate".equals(type)) {
+				return StringUtil.maskByRate(realStr, StringUtil.isBlank(maskCode) ? "*" : maskCode,
+						mask.getMaskRate());
+			}
 			int maskSize = Double.valueOf(size * mask.getMaskRate() * 1.00 / 100).intValue();
 			if (maskSize < 1) {
 				maskSize = 1;
@@ -52,7 +58,7 @@ public class DesensitizeDefaultProvider implements DesensitizeProvider {
 			}
 			tailSize = (size - maskSize) / 2;
 			headSize = size - maskSize - tailSize;
-			if (maskCode == null) {
+			if (StringUtil.isBlank(maskCode)) {
 				maskCode = "*";
 				if (maskSize > 3) {
 					maskCode = "***";

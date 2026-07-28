@@ -4,6 +4,9 @@
 package org.sagacity.sqltoy.utils;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
@@ -58,7 +61,7 @@ public class StringUtilsTest {
 		}
 		assertArrayEquals(result, new String[] { "a", "\"\"\",\"", "a" });
 	}
-
+	
 	@Test
 	public void testRegex() {
 		String temp = "{Key}";
@@ -342,5 +345,218 @@ public class StringUtilsTest {
 		// System.err.println(DateUtil.formatDate(dateValue, "yyyy-MM-dd
 		// HH:mm:ss.SSSSSSSSS"));
 
+	}
+
+	@Test
+	public void testMaskByRate() {
+		String str = "HelloWorld";
+		// 30% → 3个字符被脱敏
+		String result = StringUtil.maskByRate(str, "*", 30);
+		System.err.println("30%: " + str + " -> " + result);
+		assertEquals(str.length(), result.length());
+		assertEquals(3, countChar(result, '*'));
+		assertTrue(result.contains("*"));
+		// 确保脱敏字符不是连续的（离散性验证）
+		assertTrue(isDispersed(result, '*'), "脱敏字符应离散分布，非连续块");
+
+		// 50% → 5个字符被脱敏
+		result = StringUtil.maskByRate(str, "#", 50);
+		System.err.println("50%: " + str + " -> " + result);
+		assertEquals(5, countChar(result, '#'));
+
+		// 100% → 全部脱敏
+		result = StringUtil.maskByRate(str, "*", 100);
+		System.err.println("100%: " + str + " -> " + result);
+		assertEquals("**********", result);
+
+		// 10% → 1个字符被脱敏
+		result = StringUtil.maskByRate(str, "*", 10);
+		System.err.println("10%: " + str + " -> " + result);
+		assertEquals(1, countChar(result, '*'));
+	}
+
+	@Test
+	public void testMaskByRateNullAndEmpty() {
+		assertNull(StringUtil.maskByRate(null, "*", 50));
+		assertEquals("", StringUtil.maskByRate("", "*", 50));
+	}
+
+	@Test
+	public void testMaskByRateInvalidMaskCode() {
+		String str = "HelloWorld";
+		assertEquals(str, StringUtil.maskByRate(str, null, 50));
+		assertEquals(str, StringUtil.maskByRate(str, "", 50));
+	}
+
+	@Test
+	public void testMaskByRateInvalidRate() {
+		String str = "HelloWorld";
+		assertEquals(str, StringUtil.maskByRate(str, "*", 0));
+		assertEquals(str, StringUtil.maskByRate(str, "*", -1));
+	}
+
+	@Test
+	public void testMaskByRateSingleChar() {
+		assertEquals("*", StringUtil.maskByRate("a", "*", 50));
+		assertEquals("*", StringUtil.maskByRate("a", "*", 100));
+	}
+
+	@Test
+	public void testMaskByRateRateOver100() {
+		String str = "HelloWorld";
+		String result = StringUtil.maskByRate(str, "*", 200);
+		System.err.println("200%: " + str + " -> " + result);
+		assertEquals("**********", result);
+	}
+
+	@Test
+	public void testMaskByRateMultiByteMaskCode() {
+		String str = "HelloWorld";
+		// maskCode取首字符
+		String result = StringUtil.maskByRate(str, "XY", 30);
+		System.err.println("multi-byte maskCode: " + str + " -> " + result);
+		assertEquals(3, countChar(result, 'X'));
+	}
+
+	@Test
+	public void testMaskByRateChineseString() {
+		String str = "你好世界测试字符串";
+		int length = str.length();
+		String result = StringUtil.maskByRate(str, "*", 40);
+		System.err.println("中文40%: " + str + " -> " + result);
+		assertEquals(length, result.length());
+		int expected = (int) Math.ceil(length * 0.4);
+		assertEquals(expected, countChar(result, '*'));
+		assertTrue(isDispersed(result, '*'), "中文脱敏字符应离散分布");
+	}
+
+	@Test
+	public void testMaskByRateLongString() {
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < 100; i++) {
+			sb.append((char) ('A' + (i % 26)));
+		}
+		String str = sb.toString();
+		String result = StringUtil.maskByRate(str, "*", 25);
+		System.err.println("100字符25%: " + str + " -> " + result);
+		assertEquals(100, result.length());
+		assertEquals(25, countChar(result, '*'));
+		assertTrue(isDispersed(result, '*'), "长字符串脱敏字符应离散分布");
+	}
+
+	@Test
+	public void testMaskByRateOnePercent() {
+		String str = "abcdefghijklmnop"; // 16 chars, 1% → ceil(0.16) = 1
+		String result = StringUtil.maskByRate(str, "*", 1);
+		System.err.println("1%: " + str + " -> " + result);
+		assertEquals(1, countChar(result, '*'));
+	}
+
+	@Test
+	public void testMaskByRateMaskCountAccuracy() {
+		// 多种比例验证脱敏数量精确性
+		String str = "abcdefghij"; // 10 chars
+		for (int rate = 1; rate <= 100; rate++) {
+			String result = StringUtil.maskByRate(str, "*", rate);
+			int expected = Math.min((int) Math.ceil(str.length() * rate / 100.0), str.length());
+			int actual = countChar(result, '*');
+			if (actual != expected) {
+				System.err.println("FAILED rate=" + rate + " expected=" + expected + " actual=" + actual + " result="
+						+ result);
+			}
+			assertEquals(expected, actual, "rate=" + rate + " 脱敏数量不正确");
+		}
+	}
+
+	@Test
+	public void testMaskByRateDispersed() {
+		// 验证脱敏字符不会形成连续的大块（离散性核心验证）
+		String str = "0123456789ABCDEFGHIJ"; // 20 chars
+		String result = StringUtil.maskByRate(str, "*", 30);
+		System.err.println("离散验证30%: " + str + " -> " + result);
+		assertEquals(6, countChar(result, '*'));
+		assertTrue(isDispersed(result, '*'), "脱敏字符应离散分布");
+
+		// 对比：旧的连续脱敏算法会产生"0123****************"这样的连续块
+		// 新算法应该将*分散开
+		int maxConsecutive = maxConsecutiveChar(result, '*');
+		System.err.println("最大连续脱敏字符数: " + maxConsecutive);
+		assertTrue(maxConsecutive <= 3, "离散脱敏不应出现超过3个连续脱敏字符");
+	}
+
+	@Test
+	public void testMaskByRatePositionDistributed() {
+		// 验证脱敏字符分布在整个字符串范围内（头、中、尾都有）
+		String str = "0123456789012345678901234567890123456789"; // 40 chars
+		String result = StringUtil.maskByRate(str, "*", 50);
+		System.err.println("分布验证50%: " + str + " -> " + result);
+		assertEquals(20, countChar(result, '*'));
+
+		// 前1/4区域是否有脱敏字符
+		boolean hasInHead = result.substring(0, 10).contains("*");
+		// 中间区域是否有脱敏字符
+		boolean hasInMiddle = result.substring(15, 25).contains("*");
+		// 后1/4区域是否有脱敏字符
+		boolean hasInTail = result.substring(30, 40).contains("*");
+		assertTrue(hasInHead, "头部区域应有脱敏字符");
+		assertTrue(hasInMiddle, "中间区域应有脱敏字符");
+		assertTrue(hasInTail, "尾部区域应有脱敏字符");
+	}
+
+	@Test
+	public void testMaskByRateUnmaskedCharsPreserved() {
+		// 验证未被脱敏的字符保持原样
+		String str = "HelloWorld";
+		String result = StringUtil.maskByRate(str, "*", 30);
+		System.err.println("保留验证: " + str + " -> " + result);
+		for (int i = 0; i < str.length(); i++) {
+			if (result.charAt(i) != '*') {
+				assertEquals(str.charAt(i), result.charAt(i), "位置" + i + "的字符应保持原样");
+			}
+		}
+	}
+
+	/**
+	 * 统计字符出现次数
+	 */
+	private int countChar(String str, char c) {
+		int count = 0;
+		for (int i = 0; i < str.length(); i++) {
+			if (str.charAt(i) == c) {
+				count++;
+			}
+		}
+		return count;
+	}
+
+	/**
+	 * 判断脱敏字符是否离散分布（不全部连续）
+	 */
+	private boolean isDispersed(String str, char maskChar) {
+		int maskCount = countChar(str, maskChar);
+		if (maskCount <= 1) {
+			return true;
+		}
+		// 如果所有脱敏字符都连续在一起，则不是离散的
+		return maxConsecutiveChar(str, maskChar) < maskCount;
+	}
+
+	/**
+	 * 获取字符的最大连续出现次数
+	 */
+	private int maxConsecutiveChar(String str, char c) {
+		int max = 0;
+		int current = 0;
+		for (int i = 0; i < str.length(); i++) {
+			if (str.charAt(i) == c) {
+				current++;
+				if (current > max) {
+					max = current;
+				}
+			} else {
+				current = 0;
+			}
+		}
+		return max;
 	}
 }

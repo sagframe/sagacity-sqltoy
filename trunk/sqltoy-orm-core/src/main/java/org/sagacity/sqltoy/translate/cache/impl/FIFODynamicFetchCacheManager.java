@@ -113,7 +113,7 @@ public class FIFODynamicFetchCacheManager implements DynamicFecthCacheManager {
 		scheduler.scheduleAtFixedRate(this::checkAndRemoveTimeoutData, 0, CHECK_INTERVAL, TimeUnit.SECONDS);
 	}
 
-	// 如果是数据保留时间，则建议Map数据集合为Map<key,Object[]{key,name1,name2,...,initTimeMillis},
+	// 如果设置数据保留时间，则建议Map数据集合为Map<key,Object[]{key,name1,name2,...,initTimeMillis},
 	// 即在数据最后一列包含时间
 	/**
 	 * 清除数据保留时间超过keepAlive的缓存
