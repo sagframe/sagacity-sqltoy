@@ -52,7 +52,7 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 
 # 最新版本 
 * 5.6.86 LTS (jdk17+/springboot3/springboot4)/5.6.86.jre8 (兼容5.2.x/5.3.x版本)      发版日期: 2026-7-24
-* （5.6.86.jre8版本后续停止维护）
+* （jre8版本EOF,请升级使用jdk17+）
 ```xml
 <dependency>
 	<groupId>com.sagframe</groupId>
