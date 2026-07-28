@@ -122,8 +122,8 @@ public class SqlConfigParseUtils {
 	public final static Pattern START_ELSE_PATTERN = Pattern.compile("(?i)^\\s*\\@else(\\s+|\\s*\\(\\s*\\))");
 	public final static Pattern IF_ALL_PATTERN = Pattern
 			.compile("(?i)\\@((if|elseif)\\s*\\(|else(\\s+|\\s*\\(\\s*\\)))");
-	// public final static String SPLIT_REGEX =
-	// "(?i)\\@split\\(\\s*\\?(?:,([^)]*))?\\s*\\)";
+	//field in (@spilt(?,';') 或 @split(?,int,',')) 形式,用于将参数值拆分成数组,增强sql组织能力))
+	//实际编写sql时是:field in (@split(:paramName,';'))或 field in (@split(:paramName,int,',')) 形式
 	public final static Pattern SPLIT_PATTERN = Pattern.compile("(?i)\\@split\\(\\s*\\?(?:,([^)]*))?\\s*\\)");
 
 	public final static String BLANK = " ";

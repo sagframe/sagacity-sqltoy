@@ -77,9 +77,10 @@ public class SqlResourceScanner {
 						+ "resourceDir配置支持AntPath模式的路径匹配:1)**:0~n级路径;2)*:单级路径;3)?:单个字符匹配;4)路径可写可不写*.sql.xml\n"
 						+ "1)默认补充*.sql.xml结尾:classpath:com/company/project等效于classpath:com/company/project/**/*.sql.xml\n"
 						+ "2)多路径(逗号拼接):classpath:com/company/project1/**/sqlMapping,classpath:com/company/project2/modules/*/sqlMapping\n"
-						+ "3)完整路径:classpath:com/company/project/modules\n" + "4)多级匹配:file:/root/project/**/sqlMapping\n"
+						+ "3)完整路径:classpath:com/company/project/modules\n" 
+						+ "4)多级匹配:file:/root/project/**/sqlMapping\n"
 						+ "5)单级匹配:classpath:com/company/project/*/sqlMapping\n"
-						+ "5)单字符匹配:file:/root/project/?/sqlMapping");
+						+ "6)单字符匹配:file:/root/project/?/sqlMapping");
 			}
 		}
 		// 完整路线的sql文件
