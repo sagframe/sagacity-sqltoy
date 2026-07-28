@@ -1214,6 +1214,9 @@
 			</xsd:annotation>
 		</xsd:attribute>
 		<xsd:attribute name="type" use="required">
+			<xsd:annotation>
+				<xsd:documentation><![CDATA[discrete-rate:按比例离散均匀进行掩码字符替换,需要跟mask-rate配合使用]]></xsd:documentation>
+			</xsd:annotation>
 			<xsd:simpleType>
 				<xsd:restriction base="xsd:string">
 					<xsd:enumeration value="tel" />
@@ -1223,6 +1226,7 @@
 					<xsd:enumeration value="address" />
 					<xsd:enumeration value="email" />
 					<xsd:enumeration value="public-account" />
+					<xsd:enumeration value="discrete-rate"/>
 					<xsd:enumeration value="other" />
 				</xsd:restriction>
 			</xsd:simpleType>

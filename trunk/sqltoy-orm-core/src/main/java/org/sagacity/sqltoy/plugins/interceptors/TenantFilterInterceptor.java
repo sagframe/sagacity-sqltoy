@@ -97,9 +97,9 @@ public class TenantFilterInterceptor implements SqlInterceptor {
 			// 从where开始替换，避免select a,b from table where id=? for update 场景拼接在最后面是有错误的
 			// 对象操作sql由框架生成，where前后是空白
 			if (operateType.equals(OperateType.saveOrUpdate) && sql.indexOf(SqlToyConstants.MERGE_UPDATE) > 0) {
-				// 截取merge int xxxx (select ?,? from dual) as tv on (alias.field=tv.xxx)
+				// 截取merge into xxxx (select ?,? from dual) as tv on (alias.field=tv.xxx)
 				// 中的具体alias
-				// 构造成:merge int xxxx (select ?,? from dual) as tv on (alias.tenant_id=xxx and
+				// 构造成:merge into xxxx (select ?,? from dual) as tv on (alias.tenant_id=xxx and
 				// alias.field=tv.xxx)
 				int onTenantIndex = sql.indexOf(SqlToyConstants.MERGE_ALIAS_ON);
 				int end = onTenantIndex + SqlToyConstants.MERGE_ALIAS_ON.length();

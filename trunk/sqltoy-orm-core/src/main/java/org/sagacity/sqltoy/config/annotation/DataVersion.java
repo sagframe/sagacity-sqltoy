@@ -23,6 +23,6 @@ public @interface DataVersion {
 	// 数据版本字段
 	String field() default "";
 
-	// 是否以日期开头:20220915001
+	// 是否以日期开头:20220915001(yyyyMMdd+流水号)的形式)
 	boolean startDate() default false;
 }

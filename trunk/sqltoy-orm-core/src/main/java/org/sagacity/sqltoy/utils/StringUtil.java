@@ -1291,4 +1291,41 @@ public class StringUtil {
 		}
 		return str;
 	}
+
+	/**
+	 * 完全离散脱敏：将脱敏字符均匀散布在整个字符串中，而非连续块，增加逆向还原难度。 算法：根据脱敏比例计算步长 stride = ceil(length /
+	 * maskLength)，从 stride/2 开始每隔 stride 个字符脱敏一位， 末尾剩余不足部分从尾部补齐，确保脱敏字符总数准确且分布离散。
+	 *
+	 * @param str      原始字符串
+	 * @param maskCode 脱敏替换字符（取首字符）
+	 * @param maskRate 脱敏比例(1~100)，表示脱敏字符占字符串总长度的百分比
+	 * @return 脱敏后的字符串
+	 */
+	public static String maskByRate(String str, String maskCode, int maskRate) {
+		if (str == null || str.isEmpty() || maskCode == null || maskCode.isEmpty() || maskRate <= 0) {
+			return str;
+		}
+		int length = str.length();
+		int maskLength = (int) Math.ceil(length * maskRate / 100.0);
+		if (maskLength >= length) {
+			char[] maskChars = new char[length];
+			Arrays.fill(maskChars, maskCode.charAt(0));
+			return new String(maskChars);
+		}
+		int stride = (int) Math.ceil((double) length / maskLength);
+		char maskChar = maskCode.charAt(0);
+		StringBuilder maskedStr = new StringBuilder(str);
+		int count = 0;
+		for (int i = stride / 2; i < length && count < maskLength; i += stride) {
+			maskedStr.setCharAt(i, maskChar);
+			count++;
+		}
+		for (int i = length - 1; i >= 0 && count < maskLength; i--) {
+			if (maskedStr.charAt(i) != maskChar) {
+				maskedStr.setCharAt(i, maskChar);
+				count++;
+			}
+		}
+		return maskedStr.toString();
+	}
 }

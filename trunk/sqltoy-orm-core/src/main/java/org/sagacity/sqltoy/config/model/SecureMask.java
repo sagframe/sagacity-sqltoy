@@ -26,7 +26,7 @@ public class SecureMask implements Serializable {
 	private String column;
 
 	/**
-	 * 脱敏类型:tel、name、address、id-card、bank-card等几种
+	 * 脱敏类型:tel、name、address、id-card、bank-card、discrete-rate、rate等几种
 	 */
 	private String type;
 
