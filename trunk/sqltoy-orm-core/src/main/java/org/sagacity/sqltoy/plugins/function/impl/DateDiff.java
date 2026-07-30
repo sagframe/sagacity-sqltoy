@@ -49,7 +49,7 @@ public class DateDiff extends IFunction {
 			} else if (unitType.equals("DAY")) {
 				return "EXTRACT(DAY FROM (" + realArgs[2] + "-" + realArgs[1] + "))";
 			}
-		} else if (dbType == DBType.MOGDB || dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15
+		} else if (dbType == DBType.MOGDB || dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14
 				|| dbType == DBType.OPENGAUSS || dbType == DBType.VASTBASE || dbType == DBType.STARDB) {
 			// round(extract(epoch from(tni.update_time-tni.utime))/3600,2)
 			if (unitType.equals("YEAR")) {

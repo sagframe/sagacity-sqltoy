@@ -67,7 +67,8 @@ public class DataSourceUtils {
 
 		// 9.5+ 开始
 		public final static String POSTGRESQL = "postgresql";
-		public final static String POSTGRESQL15 = "postgresql15";
+		// public final static String POSTGRESQL15 = "postgresql15";
+		public final static String POSTGRESQL14 = "postgresql14";
 		public final static String GREENPLUM = "greenplum";
 		// 神通数据库
 		public final static String OSCAR = "oscar";
@@ -132,9 +133,10 @@ public class DataSourceUtils {
 		public final static int DORIS = 46;
 		public final static int STARROCKS = 47;
 
-		// 默认9.5+版本
+		// 默认15+版本(update 2026-7-30 将postgresql默认提升到15+版本，增加postgresql14 代替<=14的老版本)
 		public final static int POSTGRESQL = 50;
-		public final static int POSTGRESQL15 = 51;
+		// public final static int POSTGRESQL15 = 51;
+		public final static int POSTGRESQL14 = 52;
 
 		// clickhouse
 		public final static int CLICKHOUSE = 60;
@@ -183,7 +185,8 @@ public class DataSourceUtils {
 		DBNameTypeMap.put(Dialect.INNOSQL, DBType.MYSQL);
 
 		DBNameTypeMap.put(Dialect.POSTGRESQL, DBType.POSTGRESQL);
-		DBNameTypeMap.put(Dialect.POSTGRESQL15, DBType.POSTGRESQL15);
+		// DBNameTypeMap.put(Dialect.POSTGRESQL15, DBType.POSTGRESQL15);
+		DBNameTypeMap.put(Dialect.POSTGRESQL14, DBType.POSTGRESQL14);
 		DBNameTypeMap.put(Dialect.GREENPLUM, DBType.POSTGRESQL);
 		DBNameTypeMap.put(Dialect.GAUSSDB, DBType.GAUSSDB);
 		// 20240702 增加对mogdb的支持
@@ -234,8 +237,8 @@ public class DataSourceUtils {
 		case DBType.POSTGRESQL: {
 			return Dialect.POSTGRESQL;
 		}
-		case DBType.POSTGRESQL15: {
-			return Dialect.POSTGRESQL15;
+		case DBType.POSTGRESQL14: {
+			return Dialect.POSTGRESQL14;
 		}
 		case DBType.SQLSERVER: {
 			return Dialect.SQLSERVER;
@@ -479,11 +482,9 @@ public class DataSourceUtils {
 			} // 9.5以上为标准支持模式
 			else if (dbDialect.equals(Dialect.POSTGRESQL)) {
 				dbType = DBType.POSTGRESQL;
-				if (majorVersion >= 15) {
-					dbType = DBType.POSTGRESQL15;
+				if (majorVersion < 15) {
+					dbType = DBType.POSTGRESQL14;
 				}
-			} else if (dbDialect.equals(Dialect.POSTGRESQL15)) {
-				dbType = DBType.POSTGRESQL15;
 			} else if (dbDialect.equals(Dialect.GREENPLUM)) {
 				dbType = DBType.POSTGRESQL;
 			} // sqlserver,只支持2012或以上版本
@@ -577,7 +578,7 @@ public class DataSourceUtils {
 			return "select 1 from dual";
 		}
 		case DBType.POSTGRESQL:
-		case DBType.POSTGRESQL15:
+		case DBType.POSTGRESQL14:
 		case DBType.OSCAR:
 		case DBType.VASTBASE:
 		case DBType.MOGDB:
@@ -731,7 +732,7 @@ public class DataSourceUtils {
 		case DBType.ORACLE11:
 			return Dialect.ORACLE;
 		case DBType.POSTGRESQL:
-		case DBType.POSTGRESQL15:
+		case DBType.POSTGRESQL14:
 			return Dialect.POSTGRESQL;
 		case DBType.MYSQL:
 		case DBType.MYSQL57:
@@ -790,7 +791,7 @@ public class DataSourceUtils {
 		case DBType.ORACLE11:
 			return "nvl";
 		case DBType.POSTGRESQL:
-		case DBType.POSTGRESQL15:
+		case DBType.POSTGRESQL14:
 			return "COALESCE";
 		case DBType.MYSQL:
 		case DBType.MYSQL57:
@@ -842,7 +843,7 @@ public class DataSourceUtils {
 			}
 		}
 		// postgresql系列数据库默认转小写
-		if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15) {
+		if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14) {
 			return CaseType.LOWER;
 		}
 		return CaseType.DEFAULT;
@@ -875,11 +876,11 @@ public class DataSourceUtils {
 		if (SqlToyConstants.closeMultiFieldIn()) {
 			return false;
 		}
-		if (dbType == DBType.MYSQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB
+		if (dbType == DBType.MYSQL || dbType == DBType.POSTGRESQL || dbType == DBType.GAUSSDB
 				|| dbType == DBType.SQLSERVER || dbType == DBType.ORACLE || dbType == DBType.DM || dbType == DBType.TIDB
 				|| dbType == DBType.KINGBASE || dbType == DBType.MOGDB || dbType == DBType.STARDB
 				|| dbType == DBType.OSCAR || dbType == DBType.OPENGAUSS || dbType == DBType.VASTBASE
-				|| dbType == DBType.POSTGRESQL || dbType == DBType.CLICKHOUSE || dbType == DBType.H2
+				|| dbType == DBType.POSTGRESQL14 || dbType == DBType.CLICKHOUSE || dbType == DBType.H2
 				|| dbType == DBType.SQLITE || dbType == DBType.ORACLE11) {
 			return true;
 		}

@@ -38,7 +38,7 @@ public class GroupConcat extends IFunction {
 			// "\\Wseparator\\W" 表达式长度11
 			sign = tmp.substring(matchIndex + 11).trim();
 		}
-		if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB
+		if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 				|| dbType == DBType.OPENGAUSS || dbType == DBType.OSCAR || dbType == DBType.STARDB
 				|| dbType == DBType.MOGDB || dbType == DBType.VASTBASE) {
 			if ("string_agg".equals(functionName.toLowerCase())) {

@@ -244,7 +244,7 @@ public class DialectExtUtils {
 						result = "TO_TIMESTAMP(" + result + ",'yyyy-MM-dd HH24:mi:ss.FF')";
 					}
 				} else if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.POSTGRESQL
-						|| dbType == DBType.POSTGRESQL15 || dbType == DBType.DM || dbType == DBType.GAUSSDB
+						|| dbType == DBType.POSTGRESQL14 || dbType == DBType.DM || dbType == DBType.GAUSSDB
 						|| dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.STARDB
 						|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE || dbType == DBType.OCEANBASE
 						|| dbType == DBType.SQLITE || dbType == DBType.KINGBASE || dbType == DBType.SQLSERVER
@@ -335,7 +335,7 @@ public class DialectExtUtils {
 		sql.append("merge into ");
 		sql.append(realTable);
 		// postgresql15+ 不支持别名
-		if (DBType.POSTGRESQL15 != dbType) {
+		if (DBType.POSTGRESQL != dbType) {
 			sql.append(" ta ");
 		}
 		sql.append(" using (select ");
@@ -347,7 +347,7 @@ public class DialectExtUtils {
 				sql.append(",");
 			}
 			// postgresql15+ 需要case(? as type) as column
-			if (DBType.POSTGRESQL15 == dbType) {
+			if (DBType.POSTGRESQL == dbType) {
 				PostgreSqlDialectUtils.wrapSelectFields(sql, columnName, fieldMeta);
 			} else if (DBType.H2 == dbType) {
 				H2DialectUtils.wrapSelectFields(sql, columnName, fieldMeta);
@@ -374,8 +374,8 @@ public class DialectExtUtils {
 				sql.append(" and ");
 				idColumns.append(",");
 			}
-			// 不支持别名
-			if (DBType.POSTGRESQL15 == dbType) {
+			//postgresql15+ 不支持别名
+			if (DBType.POSTGRESQL == dbType) {
 				sql.append(realTable + ".");
 			} else {
 				sql.append("ta.");

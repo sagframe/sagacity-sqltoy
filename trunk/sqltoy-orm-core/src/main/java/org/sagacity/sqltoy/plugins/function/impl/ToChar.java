@@ -46,7 +46,7 @@ public class ToChar extends IFunction {
 			return "date_format(" + args[0] + "," + format + ")";
 		}
 		case DBType.POSTGRESQL:
-		case DBType.POSTGRESQL15:
+		case DBType.POSTGRESQL14:
 		case DBType.ORACLE:
 		case DBType.GAUSSDB:
 		case DBType.MOGDB:

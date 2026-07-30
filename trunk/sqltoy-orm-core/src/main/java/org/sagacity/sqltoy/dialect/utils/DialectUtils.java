@@ -799,7 +799,7 @@ public class DialectUtils {
 		sql.append("merge into ");
 		sql.append(realTable);
 		// postgresql15+ 不支持别名
-		if (DBType.POSTGRESQL15 != dbType) {
+		if (DBType.POSTGRESQL != dbType) {
 			sql.append(" ta ");
 		}
 		sql.append(" using (select ");
@@ -811,7 +811,7 @@ public class DialectUtils {
 				sql.append(",");
 			}
 			// postgresql15+ 需要case(? as type) as column
-			if (DBType.POSTGRESQL15 == dbType) {
+			if (DBType.POSTGRESQL == dbType) {
 				PostgreSqlDialectUtils.wrapSelectFields(sql, columnName, fieldMeta);
 			} else if (DBType.H2 == dbType) {
 				H2DialectUtils.wrapSelectFields(sql, columnName, fieldMeta);
@@ -837,7 +837,7 @@ public class DialectUtils {
 				idColumns.append(",");
 			}
 			// 不支持别名
-			if (DBType.POSTGRESQL15 == dbType) {
+			if (DBType.POSTGRESQL == dbType) {
 				sql.append(realTable + ".");
 			} else {
 				sql.append("ta.");
@@ -881,7 +881,8 @@ public class DialectUtils {
 					if (notFirst) {
 						sql.append(",");
 					}
-					if (DBType.POSTGRESQL15 != dbType) {
+					//postgresql15+ 不支持别名
+					if (DBType.POSTGRESQL != dbType) {
 						sql.append(" ta.");
 					}
 					sql.append(columnName).append("=");
@@ -896,7 +897,8 @@ public class DialectUtils {
 						if (null != currentTimeStr) {
 							sql.append(currentTimeStr);
 						} else {
-							if (DBType.POSTGRESQL15 == dbType) {
+							//postgresql15+ 不支持别名
+							if (DBType.POSTGRESQL == dbType) {
 								sql.append(realTable + ".");
 							} else {
 								sql.append("ta.");
@@ -1049,7 +1051,7 @@ public class DialectUtils {
 		if (unifyFieldsHandler != null && unifyFieldsHandler.updateSqlTimeFields() != null) {
 			updateSqlTimeFields = unifyFieldsHandler.updateSqlTimeFields();
 		}
-		boolean convertBlob = (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15);
+		boolean convertBlob = (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14);
 		boolean isMSsql = (dbType == DBType.SQLSERVER);
 		int meter = 0;
 		int decimalLength;
@@ -2191,7 +2193,7 @@ public class DialectUtils {
 						|| dbType == DBType.DORIS || dbType == DBType.STARROCKS) {
 					mysqlSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, null, forceUpdateProps, conn,
 							dbType);
-				} else if (dbType == DBType.POSTGRESQL) {
+				} else if (dbType == DBType.POSTGRESQL14) {
 					postgreSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, null, forceUpdateProps,
 							conn, dbType);
 				} else if (dbType == DBType.OCEANBASE) {

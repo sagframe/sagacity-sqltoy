@@ -59,7 +59,7 @@ public class ReservedWordsUtil {
 				|| dbType == DBType.DORIS|| dbType == DBType.STARROCKS) {
 			return sql.replaceAll("\\[", "`").replaceAll("\\]", "`");
 		}
-		if (dbType == DBType.ORACLE || dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15
+		if (dbType == DBType.ORACLE || dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14
 				|| dbType == DBType.DB2 || dbType == DBType.DM || dbType == DBType.GAUSSDB || dbType == DBType.MOGDB
 				|| dbType == DBType.STARDB || dbType == DBType.OSCAR || dbType == DBType.OPENGAUSS
 				|| dbType == DBType.VASTBASE || dbType == DBType.OCEANBASE || dbType == DBType.ORACLE11) {
@@ -104,7 +104,7 @@ public class ReservedWordsUtil {
 		if (dbType == DBType.H2) {
 			return "'".concat(column).concat("'");
 		}
-		if (dbType == DBType.ORACLE || dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15
+		if (dbType == DBType.ORACLE || dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14
 				|| dbType == DBType.KINGBASE || dbType == DBType.DB2 || dbType == DBType.GAUSSDB
 				|| dbType == DBType.MOGDB || dbType == DBType.OPENGAUSS || dbType == DBType.VASTBASE
 				|| dbType == DBType.STARDB || dbType == DBType.OSCAR || dbType == DBType.DM
@@ -148,7 +148,7 @@ public class ReservedWordsUtil {
 				keyWord = keyWord.substring(0, keyWord.length() - 1);
 				subSize = 1;
 			}
-			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.ORACLE
+			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.ORACLE
 					|| dbType == DBType.DB2 || dbType == DBType.KINGBASE || dbType == DBType.GAUSSDB
 					|| dbType == DBType.MOGDB || dbType == DBType.OPENGAUSS || dbType == DBType.VASTBASE
 					|| dbType == DBType.DM || dbType == DBType.OCEANBASE || dbType == DBType.ORACLE11

@@ -307,21 +307,22 @@ public class PostgreSqlDialect implements Dialect {
 		// 暂时不开放，postgresql类型太多,merge 语句中需要case(? as type) as columnName
 		// 目前type类型无法完整适配支持
 		// postgresql15 支持merge into
-		if (dbType.equals(DBType.POSTGRESQL15)) {
-			return PostgreSqlDialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, reflectPropsHandler,
-					forceUpdateFields, conn, dbType, dialect, autoCommit, tableName);
+		if (dbType.equals(DBType.POSTGRESQL14)) {
+			// DBType.POSTGRESQL14
+			Long updateCnt = DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields,
+					reflectPropsHandler, NVL_FUNCTION, conn, dbType, autoCommit, tableName, true);
+			// 如果修改的记录数量跟总记录数量一致,表示全部是修改
+			if (updateCnt >= entities.size()) {
+				SqlExecuteStat.debug("修改记录", "修改记录量:" + updateCnt + " 条,等于entities集合长度,不再做insert操作!");
+				return updateCnt;
+			}
+			Long saveCnt = saveAllIgnoreExist(sqlToyContext, entities, batchSize, reflectPropsHandler, conn, dbType,
+					dialect, autoCommit, tableName);
+			SqlExecuteStat.debug("新增记录", "新建记录数量:" + saveCnt + " 条!");
+			return updateCnt + saveCnt;
 		}
-		Long updateCnt = DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields,
-				reflectPropsHandler, NVL_FUNCTION, conn, dbType, autoCommit, tableName, true);
-		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
-		if (updateCnt >= entities.size()) {
-			SqlExecuteStat.debug("修改记录", "修改记录量:" + updateCnt + " 条,等于entities集合长度,不再做insert操作!");
-			return updateCnt;
-		}
-		Long saveCnt = saveAllIgnoreExist(sqlToyContext, entities, batchSize, reflectPropsHandler, conn, dbType,
-				dialect, autoCommit, tableName);
-		SqlExecuteStat.debug("新增记录", "新建记录数量:" + saveCnt + " 条!");
-		return updateCnt + saveCnt;
+		return PostgreSqlDialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, reflectPropsHandler,
+				forceUpdateFields, conn, dbType, dialect, autoCommit, tableName);
 	}
 
 	/*
@@ -344,12 +345,12 @@ public class PostgreSqlDialect implements Dialect {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = "nextval('" + entityMeta.getSequence() + "')";
 						boolean isAssignPK = PostgreSqlDialectUtils.allowAssignPKValue(pkStrategy);
-						if (dbType == DBType.POSTGRESQL15) {
-							return DialectExtUtils.mergeIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType,
-									entityMeta, pkStrategy, null, NVL_FUNCTION, sequence, isAssignPK, tableName);
+						if (dbType == DBType.POSTGRESQL14) {
+							return DialectExtUtils.insertIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType,
+									entityMeta, pkStrategy, NVL_FUNCTION, sequence, isAssignPK, tableName);
 						}
-						return DialectExtUtils.insertIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
-								pkStrategy, NVL_FUNCTION, sequence, isAssignPK, tableName);
+						return DialectExtUtils.mergeIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
+								pkStrategy, null, NVL_FUNCTION, sequence, isAssignPK, tableName);
 					}
 				}, reflectPropsHandler, conn, dbType, autoCommit);
 	}
