@@ -54,7 +54,7 @@ public class Nvl extends IFunction {
 		if (dialect == DBType.SQLSERVER) {
 			return wrapArgs("isnull", args);
 		}
-		if (dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL15 || dialect == DBType.DB2
+		if (dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL14 || dialect == DBType.DB2
 				|| dialect == DBType.OPENGAUSS || dialect == DBType.STARDB || dialect == DBType.OSCAR
 				|| dialect == DBType.GAUSSDB || dialect == DBType.MOGDB || dialect == DBType.VASTBASE
 				|| dialect == DBType.H2) {

@@ -993,7 +993,7 @@ public class DefaultDialectUtils {
 			try (Statement setLockStmt = conn.createStatement()) {
 				setLockStmt.execute("SET CURRENT LOCK TIMEOUT=" + lockWaitTimeout);
 			}
-		} else if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB
+		} else if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 				|| dbType == DBType.OPENGAUSS || dbType == DBType.STARDB || dbType == DBType.VASTBASE
 				|| dbType == DBType.OSCAR || dbType == DBType.MOGDB) {
 			try (Statement setLockStmt = conn.createStatement()) {

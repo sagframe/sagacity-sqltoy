@@ -52,6 +52,7 @@ import org.sagacity.sqltoy.translate.cache.impl.FIFODynamicFetchCacheManager;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils.Dialect;
+import org.sagacity.sqltoy.utils.NumberUtil;
 import org.sagacity.sqltoy.utils.QueryExecutorBuilder;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
@@ -855,6 +856,10 @@ public class SqlToyContext {
 			this.dialect = Dialect.ORACLE;
 		} else if (tmp.startsWith(Dialect.POSTGRESQL)) {
 			this.dialect = Dialect.POSTGRESQL;
+			String version = tmp.replace(Dialect.POSTGRESQL, "");
+			if (NumberUtil.isInteger(version) && Integer.parseInt(version) < 15) {
+				this.dialect = Dialect.POSTGRESQL14;
+			}
 		} else if (tmp.startsWith(Dialect.GREENPLUM)) {
 			this.dialect = Dialect.POSTGRESQL;
 		} else if (tmp.startsWith(Dialect.DB2)) {

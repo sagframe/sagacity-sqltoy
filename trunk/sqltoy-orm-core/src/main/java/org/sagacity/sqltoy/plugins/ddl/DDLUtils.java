@@ -178,7 +178,7 @@ public class DDLUtils {
 			if (colMeta.getNativeType().equalsIgnoreCase("JSON")) {
 				return "JSON";
 			} else if (colMeta.getNativeType().equalsIgnoreCase("BSON")) {
-				if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB
+				if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 						|| dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.STARDB
 						|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE) {
 					return "BSON";
@@ -230,7 +230,7 @@ public class DDLUtils {
 			}
 			break;
 		case java.sql.Types.TIMESTAMP_WITH_TIMEZONE:
-			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB
+			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 					|| dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.STARDB
 					|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE || dbType == DBType.ORACLE) {
 				typeName = setLength("TIMESTAMP WITH TIME ZONE", true, colMeta);
@@ -241,7 +241,7 @@ public class DDLUtils {
 			}
 			break;
 		case java.sql.Types.BLOB:
-			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB
+			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 					|| dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.STARDB
 					|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE) {
 				typeName = "BYTEA";
@@ -253,7 +253,7 @@ public class DDLUtils {
 			isBytes = true;
 			break;
 		case java.sql.Types.BINARY:
-			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB
+			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 					|| dbType == DBType.OPENGAUSS || dbType == DBType.STARDB || dbType == DBType.OSCAR
 					|| dbType == DBType.MOGDB || dbType == DBType.VASTBASE) {
 				typeName = "BYTEA";
@@ -269,7 +269,7 @@ public class DDLUtils {
 			break;
 		case java.sql.Types.VARBINARY:
 		case java.sql.Types.LONGVARBINARY:
-			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB
+			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 					|| dbType == DBType.OPENGAUSS || dbType == DBType.STARDB || dbType == DBType.OSCAR
 					|| dbType == DBType.MOGDB || dbType == DBType.VASTBASE) {
 				typeName = "BYTEA";
@@ -329,7 +329,7 @@ public class DDLUtils {
 		case java.sql.Types.NUMERIC:
 			if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
 				typeName = "NUMBER";
-			} else if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15) {
+			} else if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14) {
 				typeName = "NUMERIC";
 			} else {
 				typeName = "DECIMAL";
@@ -346,7 +346,7 @@ public class DDLUtils {
 		}
 		}
 		// 数组类型
-		if ((dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB
+		if ((dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 				|| dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.STARDB
 				|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE) && colMeta.getTypeName().endsWith("[]")
 				&& !isBytes && !typeName.startsWith("_")) {

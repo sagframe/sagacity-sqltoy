@@ -182,7 +182,7 @@ public class DialectFactory {
 		// 9.5+(9.5开始支持类似merge into形式的语法,参见具体实现)
 		// postgresql/greenplum
 		case DBType.POSTGRESQL:
-		case DBType.POSTGRESQL15: {
+		case DBType.POSTGRESQL14: {
 			dialectSqlWrapper = new PostgreSqlDialect();
 			break;
 		}
