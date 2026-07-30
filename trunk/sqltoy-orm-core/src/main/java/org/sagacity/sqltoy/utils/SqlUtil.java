@@ -343,7 +343,7 @@ public class SqlUtil {
 				}
 				// postgresql bytea类型需要统一处理成BINARY
 				if (jdbcType == java.sql.Types.BLOB) {
-					if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15) {
+					if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14) {
 						pst.setNull(paramIndex, java.sql.Types.BINARY);
 					} else {
 						pst.setNull(paramIndex, jdbcType);
@@ -1137,7 +1137,7 @@ public class SqlUtil {
 	 */
 	public static Object getSequenceValue(Connection conn, String sequence, Integer dbType) throws DataAccessException {
 		String sql = "";
-		if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.KINGBASE
+		if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.KINGBASE
 				|| dbType == DBType.H2) {
 			sql = "select nextval('" + sequence + "')";
 		} else if (dbType == DBType.SQLSERVER) {
@@ -2272,7 +2272,7 @@ public class SqlUtil {
 					|| "java.sql.time".equals(fieldMeta.getFieldType())) {
 				if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.TIDB
 						|| dbType == DBType.SQLITE || dbType == DBType.H2 || dbType == DBType.POSTGRESQL
-						|| dbType == DBType.POSTGRESQL15 || dbType == DBType.KINGBASE || dbType == DBType.DB2
+						|| dbType == DBType.POSTGRESQL14 || dbType == DBType.KINGBASE || dbType == DBType.DB2
 						|| dbType == DBType.OCEANBASE || dbType == DBType.DORIS || dbType == DBType.STARROCKS) {
 					return "current_time";
 				} else if (dbType == DBType.GAUSSDB || dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB
@@ -2602,7 +2602,7 @@ public class SqlUtil {
 			}
 		}
 		// postgresql系列
-		if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB
+		if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 				|| dbType == DBType.STARDB || dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB
 				|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE) {
 			// day

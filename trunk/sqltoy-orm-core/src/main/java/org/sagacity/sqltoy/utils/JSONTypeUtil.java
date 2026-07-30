@@ -59,7 +59,7 @@ public class JSONTypeUtil {
 			pst.setNull(paramIndex, java.sql.Types.VARCHAR);
 		} else if (dbType == DBType.SQLSERVER) {
 			pst.setNull(paramIndex, java.sql.Types.NVARCHAR);
-		} else if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB
+		} else if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 				|| dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.VASTBASE
 				|| dbType == DBType.STARDB || dbType == DBType.OSCAR) {
 			pst.setNull(paramIndex, java.sql.Types.OTHER);
@@ -78,7 +78,7 @@ public class JSONTypeUtil {
 	 */
 	public static void setJSONValue(Integer dbType, PreparedStatement pst, int paramIndex, int jdbcType, Object value)
 			throws SQLException {
-		if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15) {
+		if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14) {
 			PostgreSqlDialectUtils.setJSONValue(pst, paramIndex, jdbcType, JSON.toJSONString(value));
 		} else {
 			pst.setString(paramIndex, JSON.toJSONString(value));
@@ -87,7 +87,7 @@ public class JSONTypeUtil {
 
 	public static void updateJSONValue(Integer dbType, ResultSet rs, String columnName, int jdbcType, Object value)
 			throws SQLException {
-		if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15) {
+		if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14) {
 			PostgreSqlDialectUtils.updateJSON(rs, columnName, jdbcType, columnName);
 		} else {
 			rs.updateString(columnName, JSON.toJSONString(value));

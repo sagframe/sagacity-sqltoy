@@ -55,7 +55,7 @@ public class Length extends IFunction {
 			}
 			return wrapArgs("len", args);
 		}
-		if (dialect == DBType.ORACLE || dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL15
+		if (dialect == DBType.ORACLE || dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL14
 				|| dialect == DBType.DB2 || dialect == DBType.GAUSSDB || dialect == DBType.MOGDB
 				|| dialect == DBType.VASTBASE || dialect == DBType.OPENGAUSS || dialect == DBType.STARDB
 				|| dialect == DBType.OSCAR || dialect == DBType.OCEANBASE || dialect == DBType.DM

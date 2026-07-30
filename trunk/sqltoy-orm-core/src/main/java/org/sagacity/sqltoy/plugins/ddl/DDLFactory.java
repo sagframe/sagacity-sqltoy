@@ -62,7 +62,7 @@ public class DDLFactory {
 		case DBType.OPENGAUSS:
 		case DBType.VASTBASE:
 		case DBType.POSTGRESQL:
-		case DBType.POSTGRESQL15: {
+		case DBType.POSTGRESQL14: {
 			generator = new PostgreSqlDDLGenerator();
 			break;
 		}
