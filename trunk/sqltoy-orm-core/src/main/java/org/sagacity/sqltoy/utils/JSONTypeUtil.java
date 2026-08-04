@@ -88,7 +88,7 @@ public class JSONTypeUtil {
 	public static void updateJSONValue(Integer dbType, ResultSet rs, String columnName, int jdbcType, Object value)
 			throws SQLException {
 		if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14) {
-			PostgreSqlDialectUtils.updateJSON(rs, columnName, jdbcType, columnName);
+			PostgreSqlDialectUtils.updateJSON(rs, columnName, jdbcType, JSON.toJSONString(value));
 		} else {
 			rs.updateString(columnName, JSON.toJSONString(value));
 		}
