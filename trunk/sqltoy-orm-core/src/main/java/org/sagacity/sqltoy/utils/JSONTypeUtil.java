@@ -270,7 +270,7 @@ public class JSONTypeUtil {
 		}
 		String className = jdbcValue.getClass().getName();
 		// PostgreSQL PGobject
-		if (className.equals("org.postgresql.util.PGobject")) {
+		if (className.equals("org.postgresql.util.PGobject") || className.equals("cn.com.vastbase.util.PGobject")) {
 			return jdbcValue.toString();
 		}
 		// Oracle JSON (21c+)
