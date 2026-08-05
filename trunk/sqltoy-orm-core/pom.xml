@@ -3,7 +3,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sagframe</groupId>
-	<version>5.6.88.jre8</version>
+	<version>5.6.89.jre8</version>
 	<name>sagacity-sqltoy</name>
 	<description>sqltoy core code</description>
 	<artifactId>sagacity-sqltoy</artifactId>
@@ -87,6 +87,14 @@
 			<artifactId>lombok</artifactId>
 			<version>${lombok.version}</version>
 			<scope>test</scope>
+			<optional>true</optional>
+		</dependency>
+		<!-- Source:
+		https://mvnrepository.com/artifact/cn.com.vastdata/vastbase-jdbc -->
+		<dependency>
+			<groupId>cn.com.vastdata</groupId>
+			<artifactId>vastbase-jdbc</artifactId>
+			<version>2.15v</version>
 			<optional>true</optional>
 		</dependency>
 		<dependency>

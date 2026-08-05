@@ -811,8 +811,12 @@ public class DialectUtils {
 				sql.append(",");
 			}
 			// postgresql15+ 需要case(? as type) as column
+			// postgresql14 不走merge into
 			if (DBType.POSTGRESQL == dbType) {
 				PostgreSqlDialectUtils.wrapSelectFields(sql, columnName, fieldMeta);
+			} else if (DBType.GAUSSDB == dbType || DBType.OPENGAUSS == dbType || DBType.MOGDB == dbType
+					|| DBType.VASTBASE == dbType || DBType.STARDB == dbType || DBType.OSCAR == dbType) {
+				OpenGaussDialectUtils.wrapSelectFields(sql, columnName, fieldMeta);
 			} else if (DBType.H2 == dbType) {
 				H2DialectUtils.wrapSelectFields(sql, columnName, fieldMeta);
 			} else if (DBType.DB2 == dbType) {
@@ -881,7 +885,7 @@ public class DialectUtils {
 					if (notFirst) {
 						sql.append(",");
 					}
-					//postgresql15+ 不支持别名
+					// postgresql15+ 不支持别名
 					if (DBType.POSTGRESQL != dbType) {
 						sql.append(" ta.");
 					}
@@ -897,7 +901,7 @@ public class DialectUtils {
 						if (null != currentTimeStr) {
 							sql.append(currentTimeStr);
 						} else {
-							//postgresql15+ 不支持别名
+							// postgresql15+ 不支持别名
 							if (DBType.POSTGRESQL == dbType) {
 								sql.append(realTable + ".");
 							} else {

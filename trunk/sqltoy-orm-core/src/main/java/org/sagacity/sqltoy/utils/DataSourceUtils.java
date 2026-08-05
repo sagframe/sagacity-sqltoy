@@ -185,6 +185,7 @@ public class DataSourceUtils {
 		DBNameTypeMap.put(Dialect.INNOSQL, DBType.MYSQL);
 
 		DBNameTypeMap.put(Dialect.POSTGRESQL, DBType.POSTGRESQL);
+		// DBNameTypeMap.put(Dialect.POSTGRESQL15, DBType.POSTGRESQL15);
 		DBNameTypeMap.put(Dialect.POSTGRESQL14, DBType.POSTGRESQL14);
 		DBNameTypeMap.put(Dialect.GREENPLUM, DBType.POSTGRESQL);
 		DBNameTypeMap.put(Dialect.GAUSSDB, DBType.GAUSSDB);
