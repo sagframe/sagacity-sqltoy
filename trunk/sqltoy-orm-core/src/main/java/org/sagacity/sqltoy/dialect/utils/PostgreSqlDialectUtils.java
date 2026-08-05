@@ -48,6 +48,7 @@ public class PostgreSqlDialectUtils {
 	 */
 	public static final String NVL_FUNCTION = "COALESCE";
 
+
 	/**
 	 * @todo 提供随机记录查询
 	 * @param sqlToyContext
@@ -214,9 +215,10 @@ public class PostgreSqlDialectUtils {
 	 */
 	public static void wrapSelectFields(StringBuilder sql, String columnName, FieldMeta fieldMeta) {
 		int jdbcType = fieldMeta.getType();
-		if (jdbcType == java.sql.Types.VARCHAR) {
+		if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NVARCHAR
+				|| jdbcType == java.sql.Types.LONGVARCHAR || jdbcType == java.sql.Types.LONGNVARCHAR) {
 			sql.append("?");
-		} else if (jdbcType == java.sql.Types.CHAR) {
+		} else if (jdbcType == java.sql.Types.CHAR || jdbcType == java.sql.Types.NCHAR) {
 			sql.append("?");
 		} else if (jdbcType == java.sql.Types.DATE) {
 			sql.append("cast(? as date)");
@@ -244,6 +246,10 @@ public class PostgreSqlDialectUtils {
 			sql.append("cast(? as bytea)");
 		} else if (jdbcType == java.sql.Types.BLOB) {
 			sql.append("cast(? as bytea)");
+		} else if (jdbcType == JdbcTypes.JSON) {
+			sql.append("cast(? as json)");
+		} else if (jdbcType == JdbcTypes.JSONB) {
+			sql.append("cast(? as jsonb)");
 		} else {
 			// 数组、json等特殊类型
 			if (StringUtil.isNotBlank(fieldMeta.getNativeType())) {
