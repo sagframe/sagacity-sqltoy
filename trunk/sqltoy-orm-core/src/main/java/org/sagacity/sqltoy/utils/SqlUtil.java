@@ -3020,4 +3020,28 @@ public class SqlUtil {
 		matcher.appendTail(sb);
 		return sb.toString();
 	}
+
+	/**
+	 * @TODO 转义LIKE查询值中的特殊字符,避免用户输入的_和%被数据库当作通配符
+	 *       PreparedStatement参数值必须使用\转义(配合ESCAPE '\'子句),
+	 *       SQLServer的[]括号转义仅在SQL文本中生效,对setString()传入的参数值无效
+	 * @param value         原始值
+	 * @param dbType        数据库类型(保留用于向后兼容,所有数据库统一使用\转义)
+	 * @param escapePercent 是否转义%符号(true:将%作为字面量转义;false:保留%作为通配符)
+	 * @return 转义后的值(统一使用\转义,需配合ESCAPE '\'子句使用)
+	 */
+	public static String escapeLikeValue(String value, int dbType, boolean escapePercent) {
+		if (value == null || value.isEmpty()) {
+			return value;
+		}
+		// 先去除已有转义,确保多次调用幂等,避免二次转义
+		// 用占位符保护\\避免与\_、\%产生交叉干扰
+		String result = value.replace("\\\\", "\u0000").replace("\\_", "_").replace("\\%", "%").replace("\u0000", "\\");
+		// 重新转义
+		result = result.replace("\\", "\\\\").replace("_", "\\_");
+		if (escapePercent) {
+			result = result.replace("%", "\\%");
+		}
+		return result;
+	}
 }

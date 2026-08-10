@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 
+import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.CacheFilterModel;
 import org.sagacity.sqltoy.config.model.ParamFilterModel;
@@ -33,6 +34,7 @@ import org.sagacity.sqltoy.model.CacheArg;
 import org.sagacity.sqltoy.model.DataAuthFilterConfig;
 import org.sagacity.sqltoy.model.ParamsFilter;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
+import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -668,7 +670,10 @@ public class ParamFilterUtils {
 			result = like(paramValue, true);
 		} else if ("r-like".equals(filterType)) {
 			result = like(paramValue, false);
-		} // 增加将数组条件组合成in () 查询条件参数'x1','x2'的形式 ，add 2019-1-4
+		} else if ("escapeLike".equals(filterType)) {
+			result = escapeLike(paramValue);
+		}
+		// 增加将数组条件组合成in () 查询条件参数'x1','x2'的形式 ，add 2019-1-4
 		else if ("to-in-arg".equals(filterType)) {
 			if (paramValue instanceof CharSequence) {
 				String inArg = paramValue.toString();
@@ -791,6 +796,55 @@ public class ParamFilterUtils {
 	}
 
 	/**
+	 * 对参数值进行like特殊字符转义处理，避免like查询时出现异常
+	 * 
+	 * @param paramValue
+	 * @return
+	 */
+	private static Object escapeLike(Object paramValue) {
+		if (StringUtil.isBlank(paramValue)) {
+			return null;
+		}
+		int dbType = DBType.UNDEFINE;
+		// dialect为null时,尝试从运行时上下文获取数据库类型
+		if (SqlExecuteStat.get() != null) {
+			dbType = SqlExecuteStat.get().getDbType();
+		}
+		if (paramValue instanceof String) {
+			return SqlUtil.escapeLikeValue(paramValue.toString(), dbType, true);
+		} else if (paramValue instanceof String[]) {
+			String[] tmpAry = (String[]) paramValue;
+			for (int i = 0, n = tmpAry.length; i < n; i++) {
+				if (tmpAry[i] != null) {
+					tmpAry[i] = SqlUtil.escapeLikeValue(tmpAry[i].toString(), dbType, true);
+				}
+			}
+			return tmpAry;
+		} else if (paramValue instanceof List) {
+			List tmpList = (List) paramValue;
+			for (int i = 0, n = tmpList.size(); i < n; i++) {
+				if (tmpList.get(i) != null) {
+					tmpList.set(i, SqlUtil.escapeLikeValue(tmpList.get(i).toString(), dbType, true));
+				}
+			}
+			return tmpList;
+		} else if (paramValue instanceof Set) {
+			Set tmpSet = (Set) paramValue;
+			Set result = (paramValue instanceof LinkedHashSet) ? new LinkedHashSet() : new HashSet();
+			Iterator iter = tmpSet.iterator();
+			Object cell;
+			while (iter.hasNext()) {
+				cell = iter.next();
+				if (cell != null) {
+					result.add(SqlUtil.escapeLikeValue(cell.toString(), dbType, true));
+				}
+			}
+			return result;
+		}
+		return paramValue;
+	}
+
+	/**
 	 * @todo 对参数进行左边或右补%符号,便于like处理,sqltoy在不做处理情况下会默认左右都补%符合,单独一边补%则可以保留索引
 	 * @param paramValue
 	 * @param isLeft
@@ -807,7 +861,7 @@ public class ParamFilterUtils {
 			return paramValue.toString().concat("%");
 		} else if (paramValue instanceof String[]) {
 			String[] tmpAry = (String[]) paramValue;
-			for (int i = 0; i < tmpAry.length; i++) {
+			for (int i = 0, n = tmpAry.length; i < n; i++) {
 				if (tmpAry[i] != null) {
 					tmpAry[i] = isLeft ? "%".concat(tmpAry[i]) : tmpAry[i].concat("%");
 				}
@@ -815,10 +869,7 @@ public class ParamFilterUtils {
 			return tmpAry;
 		} else if (paramValue instanceof List) {
 			List tmpList = (List) paramValue;
-			if (tmpList.size() == 0 || !(tmpList.get(0) instanceof String)) {
-				return paramValue;
-			}
-			for (int i = 0; i < tmpList.size(); i++) {
+			for (int i = 0, n = tmpList.size(); i < n; i++) {
 				if (tmpList.get(i) != null) {
 					tmpList.set(i,
 							isLeft ? "%".concat(tmpList.get(i).toString()) : tmpList.get(i).toString().concat("%"));
@@ -827,20 +878,14 @@ public class ParamFilterUtils {
 			return tmpList;
 		} else if (paramValue instanceof Set) {
 			Set tmpSet = (Set) paramValue;
-			if (tmpSet.size() == 0) {
-				return paramValue;
-			}
 			Set result = (paramValue instanceof LinkedHashSet) ? new LinkedHashSet() : new HashSet();
 			Iterator iter = tmpSet.iterator();
-			int index = 0;
 			Object cell;
 			while (iter.hasNext()) {
 				cell = iter.next();
-				if (index == 0 && !(cell instanceof String)) {
-					return paramValue;
+				if (cell != null) {
+					result.add(isLeft ? "%".concat(cell.toString()) : cell.toString().concat("%"));
 				}
-				result.add(isLeft ? "%".concat(cell.toString()) : cell.toString().concat("%"));
-				index++;
 			}
 			return result;
 		}
