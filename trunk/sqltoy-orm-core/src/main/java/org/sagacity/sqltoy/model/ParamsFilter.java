@@ -181,6 +181,11 @@ public class ParamsFilter implements Serializable {
 		return this;
 	}
 
+	public ParamsFilter escapeLike() {
+		this.type = "escapeLike";
+		return this;
+	}
+	
 	public ParamsFilter split(String splitSign) {
 		this.type = "split";
 		this.splitSign = (splitSign == null) ? "\\s*\\,\\s*" : splitSign;

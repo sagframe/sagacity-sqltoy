@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyThreadDataHolder;
 import org.sagacity.sqltoy.config.model.IfLogicModel;
@@ -122,8 +123,9 @@ public class SqlConfigParseUtils {
 	public final static Pattern START_ELSE_PATTERN = Pattern.compile("(?i)^\\s*\\@else(\\s+|\\s*\\(\\s*\\))");
 	public final static Pattern IF_ALL_PATTERN = Pattern
 			.compile("(?i)\\@((if|elseif)\\s*\\(|else(\\s+|\\s*\\(\\s*\\)))");
-	//field in (@spilt(?,';') 或 @split(?,int,',')) 形式,用于将参数值拆分成数组,增强sql组织能力))
-	//实际编写sql时是:field in (@split(:paramName,';'))或 field in (@split(:paramName,int,',')) 形式
+	// field in (@spilt(?,';') 或 @split(?,int,',')) 形式,用于将参数值拆分成数组,增强sql组织能力))
+	// 实际编写sql时是:field in (@split(:paramName,';'))或 field in
+	// (@split(:paramName,int,',')) 形式
 	public final static Pattern SPLIT_PATTERN = Pattern.compile("(?i)\\@split\\(\\s*\\?(?:,([^)]*))?\\s*\\)");
 
 	public final static String BLANK = " ";
@@ -316,8 +318,8 @@ public class SqlConfigParseUtils {
 		processNullConditions(sqlToyResult);
 		// 替换@blank(?)为空白,增强sql组织能力
 		processBlank(sqlToyResult);
-		// 检查 like 对应参数部分，如果参数中不存在%符合则自动两边增加%
-		processLike(sqlToyResult);
+		// 检查 like 对应参数部分，如果参数中不存在%符合则自动两边增加%(同时转义_和%等特殊字符)
+		processLike(sqlToyResult, dialect);
 		// add update 2024-12-12 将@value(?) 参数值中不含?的提前完成处理
 		processValue(sqlToyResult, dialect, true);
 		processSplit(sqlToyResult);
@@ -934,27 +936,61 @@ public class SqlConfigParseUtils {
 	}
 
 	/**
-	 * @TODO 加工处理like 部分，给参数值增加%符号
+	 * @TODO 加工处理like 部分，给参数值增加%符号，同时转义用户输入中的_和%等LIKE通配符
 	 * @param sqlToyResult
+	 * @param dialect      数据库方言
 	 */
-	private static void processLike(SqlToyResult sqlToyResult) {
+	private static void processLike(SqlToyResult sqlToyResult, String dialect) {
 		if (null == sqlToyResult.getParamsValue() || sqlToyResult.getParamsValue().length == 0) {
 			return;
 		}
+		int dbType = DataSourceUtils.getDBType(dialect);
+		// dialect为null时,尝试从运行时上下文获取数据库类型
+		if (dbType == DataSourceUtils.DBType.UNDEFINE && SqlExecuteStat.get() != null) {
+			dbType = SqlExecuteStat.get().getDbType();
+		}
 		String queryStr = sqlToyResult.getSql();
 		Matcher m = LIKE_PATTERN.matcher(queryStr);
-		int index = 0;
 		int paramCnt = 0;
 		String likeValStr;
+		StringBuilder sqlBuilder = null;
+		int lastEnd = 0;
 		while (m.find()) {
-			index = m.start();
-			paramCnt = StringUtil.matchCnt(queryStr.substring(0, index), ARG_NAME_PATTERN, 0);
+			paramCnt = StringUtil.matchCnt(queryStr.substring(0, m.start()), ARG_NAME_PATTERN, 0);
 			likeValStr = (sqlToyResult.getParamsValue()[paramCnt] == null) ? null
 					: sqlToyResult.getParamsValue()[paramCnt].toString();
-			// 不存在%符号时，前后增加%
-			if (null != likeValStr && likeValStr.indexOf("%") == -1) {
-				sqlToyResult.getParamsValue()[paramCnt] = "%".concat(likeValStr).concat("%");
+			if (null == likeValStr) {
+				continue;
 			}
+			// 检查值首尾是否存在未转义的%符号(如来自l-like/r-like过滤的通配符)
+			// 已被escapeLike过滤器转义的%(\%)以及中间位置的%不视为通配符
+			String stripped = likeValStr.replace("\\%", "");
+			boolean hasPercent = stripped.startsWith("%") || stripped.endsWith("%");
+			if (hasPercent) {
+				// 值中首尾已包含%符号(如来自l-like/r-like过滤),保留原有%作为通配符
+				// 仅转义_等特殊字符,避免用户输入的_被当作通配符
+				sqlToyResult.getParamsValue()[paramCnt] = SqlUtil.escapeLikeValue(likeValStr, dbType, false);
+			} else {
+				// 值首尾不存在未转义的%符号,前后增加%作为通配符,并转义_和%等特殊字符
+				sqlToyResult.getParamsValue()[paramCnt] = "%".concat(SqlUtil.escapeLikeValue(likeValStr, dbType, true))
+						.concat("%");
+			}
+			// 所有数据库统一使用\转义(配合ESCAPE '\'子句),包括SQLServer
+			// SQLServer的[]括号转义仅在SQL文本中生效,对PreparedStatement参数值无效
+			String tailAfterMatch = queryStr.substring(m.end()).trim().toLowerCase();
+			// 已存在ESCAPE子句则不重复追加
+			if (!tailAfterMatch.startsWith("escape")) {
+				if (sqlBuilder == null) {
+					sqlBuilder = new StringBuilder();
+				}
+				sqlBuilder.append(queryStr.substring(lastEnd, m.end()));
+				sqlBuilder.append(" ESCAPE '\\\\'");
+				lastEnd = m.end();
+			}
+		}
+		if (sqlBuilder != null) {
+			sqlBuilder.append(queryStr.substring(lastEnd));
+			sqlToyResult.setSql(sqlBuilder.toString());
 		}
 	}
 
