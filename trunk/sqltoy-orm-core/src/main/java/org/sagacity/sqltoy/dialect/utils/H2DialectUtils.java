@@ -5,7 +5,6 @@ package org.sagacity.sqltoy.dialect.utils;
 
 import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.PKStrategy;
-import org.sagacity.sqltoy.model.JdbcTypes;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
@@ -40,14 +39,13 @@ public class H2DialectUtils {
 	public static void wrapSelectFields(StringBuilder sql, String columnName, FieldMeta fieldMeta) {
 		int jdbcType = fieldMeta.getType();
 		int length = fieldMeta.getLength();
-		if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NVARCHAR
-				|| jdbcType == java.sql.Types.LONGVARCHAR || jdbcType == java.sql.Types.LONGNVARCHAR) {
+		if (jdbcType == java.sql.Types.VARCHAR) {
 			if (length > 0) {
 				sql.append("cast(? as varchar(" + length + "))");
 			} else {
 				sql.append("cast(? as varchar)");
 			}
-		} else if (jdbcType == java.sql.Types.CHAR || jdbcType == java.sql.Types.NCHAR) {
+		} else if (jdbcType == java.sql.Types.CHAR) {
 			if (length > 0) {
 				sql.append("cast(? as char(" + length + "))");
 			} else {
@@ -79,8 +77,6 @@ public class H2DialectUtils {
 			sql.append("cast(? as BINARY)");
 		} else if (jdbcType == java.sql.Types.BLOB) {
 			sql.append("cast(? as BLOB)");
-		} else if (jdbcType == JdbcTypes.JSON || jdbcType == JdbcTypes.JSONB) {
-			sql.append("cast(? as JSON)");
 		} else {
 			// 数组、json等特殊类型
 			if (StringUtil.isNotBlank(fieldMeta.getNativeType())) {

@@ -334,7 +334,7 @@ public class DialectExtUtils {
 		String columnName;
 		sql.append("merge into ");
 		sql.append(realTable);
-		// postgresql15+ 不支持别名(pg系列不支持，pg14不走merge)
+		// postgresql15+ 不支持别名
 		if (DBType.POSTGRESQL != dbType) {
 			sql.append(" ta ");
 		}
@@ -349,9 +349,6 @@ public class DialectExtUtils {
 			// postgresql15+ 需要case(? as type) as column
 			if (DBType.POSTGRESQL == dbType) {
 				PostgreSqlDialectUtils.wrapSelectFields(sql, columnName, fieldMeta);
-			} else if (DBType.GAUSSDB == dbType || DBType.OPENGAUSS == dbType || DBType.MOGDB == dbType
-					|| DBType.VASTBASE == dbType || DBType.STARDB == dbType || DBType.OSCAR == dbType) {
-				OpenGaussDialectUtils.wrapSelectFields(sql, columnName, fieldMeta);
 			} else if (DBType.H2 == dbType) {
 				H2DialectUtils.wrapSelectFields(sql, columnName, fieldMeta);
 			} else if (DBType.DB2 == dbType) {
@@ -379,7 +376,7 @@ public class DialectExtUtils {
 				sql.append(" and ");
 				idColumns.append(",");
 			}
-			// postgresql15+ 不支持别名
+			//postgresql15+ 不支持别名
 			if (DBType.POSTGRESQL == dbType) {
 				sql.append(realTable + ".");
 			} else {

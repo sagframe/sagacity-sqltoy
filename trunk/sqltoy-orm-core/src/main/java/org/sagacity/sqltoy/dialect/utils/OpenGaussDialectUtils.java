@@ -4,9 +4,7 @@ import java.io.Serializable;
 import java.sql.Connection;
 
 import org.sagacity.sqltoy.config.model.EntityMeta;
-import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.PKStrategy;
-import org.sagacity.sqltoy.model.JdbcTypes;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -63,60 +61,5 @@ public class OpenGaussDialectUtils {
 			pkStrategy = PKStrategy.ASSIGN;
 		}
 		return pkStrategy;
-	}
-
-	/**
-	 * @todo 组织merge into 语句中select 的字段，进行类型转换
-	 * @param sql
-	 * @param columnName
-	 * @param fieldMeta
-	 */
-	public static void wrapSelectFields(StringBuilder sql, String columnName, FieldMeta fieldMeta) {
-		int jdbcType = fieldMeta.getType();
-		if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NVARCHAR
-				|| jdbcType == java.sql.Types.LONGVARCHAR || jdbcType == java.sql.Types.LONGNVARCHAR) {
-			sql.append("?");
-		} else if (jdbcType == java.sql.Types.CHAR || jdbcType == java.sql.Types.NCHAR) {
-			sql.append("?");
-		} else if (jdbcType == java.sql.Types.DATE) {
-			sql.append("cast(? as date)");
-		} else if (jdbcType == java.sql.Types.NUMERIC) {
-			sql.append("cast(? as numeric)");
-		} else if (jdbcType == java.sql.Types.DECIMAL) {
-			sql.append("cast(? as decimal)");
-		} else if (jdbcType == java.sql.Types.BIGINT) {
-			sql.append("cast(? as bigint)");
-		} else if (jdbcType == java.sql.Types.INTEGER || jdbcType == java.sql.Types.TINYINT) {
-			sql.append("cast(? as integer)");
-		} else if (jdbcType == java.sql.Types.TIMESTAMP) {
-			sql.append("cast(? as timestamp)");
-		} else if (jdbcType == java.sql.Types.DOUBLE) {
-			sql.append("cast(? as double)");
-		} else if (jdbcType == java.sql.Types.FLOAT) {
-			sql.append("cast(? as double)");
-		} else if (jdbcType == java.sql.Types.TIME) {
-			sql.append("cast(? as time)");
-		} else if (jdbcType == java.sql.Types.CLOB) {
-			sql.append("cast(? as text)");
-		} else if (jdbcType == java.sql.Types.BOOLEAN) {
-			sql.append("cast(? as boolean)");
-		} else if (jdbcType == java.sql.Types.BINARY) {
-			sql.append("cast(? as bytea)");
-		} else if (jdbcType == java.sql.Types.BLOB) {
-			sql.append("cast(? as bytea)");
-		} else if (jdbcType == JdbcTypes.JSON) {
-			sql.append("cast(? as json)");
-		} else if (jdbcType == JdbcTypes.JSONB) {
-			sql.append("cast(? as jsonb)");
-		} else {
-			// 数组、json等特殊类型
-			if (StringUtil.isNotBlank(fieldMeta.getNativeType())) {
-				sql.append("cast(? as " + fieldMeta.getNativeType() + ")");
-			} else {
-				sql.append("?");
-			}
-		}
-		sql.append(" as ");
-		sql.append(columnName);
 	}
 }

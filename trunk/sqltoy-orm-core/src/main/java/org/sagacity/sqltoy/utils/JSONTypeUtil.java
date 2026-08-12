@@ -12,7 +12,6 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 import org.sagacity.sqltoy.dialect.utils.PostgreSqlDialectUtils;
-import org.sagacity.sqltoy.dialect.utils.VastBaseDialectUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,29 +30,6 @@ public class JSONTypeUtil {
 	 * 定义日志
 	 */
 	protected final static Logger logger = LoggerFactory.getLogger(JSONTypeUtil.class);
-	// PGobject 是否可用(静态一次性检测)
-	private static final boolean HAS_PG_OBJECT;
-	private static final boolean HAS_VB_OBJECT;
-	static {
-		boolean pgFound;
-		try {
-			Class.forName("org.postgresql.util.PGobject");
-			pgFound = true;
-		} catch (ClassNotFoundException e) {
-			pgFound = false;
-		}
-		HAS_PG_OBJECT = pgFound;
-
-		boolean vbFound;
-		try {
-			Class.forName("cn.com.vastbase.util.PGobject");
-			vbFound = true;
-		} catch (ClassNotFoundException e) {
-			vbFound = false;
-		}
-		HAS_VB_OBJECT = vbFound;
-	}
-
 	// JSON 相关类型名称缓存
 	private static final String JSON_OBJECT = "jsonobject";
 	private static final String JSON_ARRAY = "jsonarray";
@@ -102,10 +78,8 @@ public class JSONTypeUtil {
 	 */
 	public static void setJSONValue(Integer dbType, PreparedStatement pst, int paramIndex, int jdbcType, Object value)
 			throws SQLException {
-		if (HAS_PG_OBJECT && (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14)) {
+		if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14) {
 			PostgreSqlDialectUtils.setJSONValue(pst, paramIndex, jdbcType, JSON.toJSONString(value));
-		} else if (HAS_VB_OBJECT && dbType == DBType.VASTBASE) {
-			VastBaseDialectUtils.setJSONValue(pst, paramIndex, jdbcType, JSON.toJSONString(value));
 		} else {
 			pst.setString(paramIndex, JSON.toJSONString(value));
 		}
@@ -113,10 +87,8 @@ public class JSONTypeUtil {
 
 	public static void updateJSONValue(Integer dbType, ResultSet rs, String columnName, int jdbcType, Object value)
 			throws SQLException {
-		if (HAS_PG_OBJECT && (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14)) {
-			PostgreSqlDialectUtils.updateJSON(rs, columnName, jdbcType, JSON.toJSONString(value));
-		} else if (HAS_VB_OBJECT && dbType == DBType.VASTBASE) {
-			VastBaseDialectUtils.updateJSON(rs, columnName, jdbcType, JSON.toJSONString(value));
+		if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14) {
+			PostgreSqlDialectUtils.updateJSON(rs, columnName, jdbcType, columnName);
 		} else {
 			rs.updateString(columnName, JSON.toJSONString(value));
 		}
@@ -270,7 +242,7 @@ public class JSONTypeUtil {
 		}
 		String className = jdbcValue.getClass().getName();
 		// PostgreSQL PGobject
-		if (className.equals("org.postgresql.util.PGobject") || className.equals("cn.com.vastbase.util.PGobject")) {
+		if (className.equals("org.postgresql.util.PGobject")) {
 			return jdbcValue.toString();
 		}
 		// Oracle JSON (21c+)
