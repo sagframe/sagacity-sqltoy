@@ -147,28 +147,21 @@ public class BeanUtil {
 			return ((Enum) enumValue).name();
 		}
 		Object result = null;
-		Method getKeyMethod;
-		// 这里为什么增加enumGetKeyExists缓存? 即只要matchEnumKeyMethod一次即使返回null也被缓存
-		if (enumGetKeyExists.containsKey(enumClass)) {
-			getKeyMethod = enumGetKeyMethods.get(enumClass);
-			if (getKeyMethod != null) {
-				try {
-					result = getKeyMethod.invoke(enumValue);
-				} catch (Exception e) {
-
-				}
+		// 使用computeIfAbsent保证原子性,matchEnumKeyMethod只执行一次
+		enumGetKeyExists.computeIfAbsent(enumClass, k -> {
+			Method m = matchEnumKeyMethod(k, enumKeys);
+			if (m != null) {
+				enumGetKeyMethods.put(k, m);
 			}
-		} else {
-			getKeyMethod = matchEnumKeyMethod(enumClass, enumKeys);
-			if (getKeyMethod != null) {
-				try {
-					result = getKeyMethod.invoke(enumValue);
-				} catch (Exception e) {
+			return 1;
+		});
+		Method getKeyMethod = enumGetKeyMethods.get(enumClass);
+		if (getKeyMethod != null) {
+			try {
+				result = getKeyMethod.invoke(enumValue);
+			} catch (Exception e) {
 
-				}
-				enumGetKeyMethods.put(enumClass, getKeyMethod);
 			}
-			enumGetKeyExists.put(enumClass, 1);
 		}
 		if (result == null) {
 			return enumValue.toString();
@@ -187,16 +180,15 @@ public class BeanUtil {
 			return null;
 		}
 		String keyStr = key.toString();
-		Method getKeyMethod = null;
-		if (enumGetKeyExists.containsKey(enumClass)) {
-			getKeyMethod = enumGetKeyMethods.get(enumClass);
-		} else {
-			getKeyMethod = matchEnumKeyMethod(enumClass, enumKeys);
-			if (getKeyMethod != null) {
-				enumGetKeyMethods.put(enumClass, getKeyMethod);
+		// 使用computeIfAbsent保证原子性,matchEnumKeyMethod只执行一次
+		enumGetKeyExists.computeIfAbsent(enumClass, k -> {
+			Method m = matchEnumKeyMethod(k, enumKeys);
+			if (m != null) {
+				enumGetKeyMethods.put(k, m);
 			}
-			enumGetKeyExists.put(enumClass, 1);
-		}
+			return 1;
+		});
+		Method getKeyMethod = enumGetKeyMethods.get(enumClass);
 		Object[] enums = enumClass.getEnumConstants();
 		if (getKeyMethod == null) {
 			for (Object enumConstant : enums) {
@@ -1139,11 +1131,14 @@ public class BeanUtil {
 		}
 		// 36 枚举类型
 		if (DataType.enumType == typeValue) {
-			Class enumClass = enumClassMap.get(typeName);
-			if (enumClass == null) {
-				enumClass = Class.forName(typeName);
-				enumClassMap.put(typeName, enumClass);
-			}
+			// 原子性缓存,避免并发重复加载
+			Class enumClass = enumClassMap.computeIfAbsent(typeName, tn -> {
+				try {
+					return Class.forName(tn);
+				} catch (ClassNotFoundException e) {
+					throw new DataAccessException("无法加载枚举类:" + tn, e);
+				}
+			});
 			return newEnumInstance(paramValue, enumClass);
 		}
 		return paramValue;
@@ -2196,7 +2191,7 @@ public class BeanUtil {
 	 * @param beanClass
 	 * @param methodName
 	 * @param argLength
-	 * @param argTypes    参数类型数组,为null时退化为按名称和参数数量匹配
+	 * @param argTypes   参数类型数组,为null时退化为按名称和参数数量匹配
 	 * @return
 	 */
 	public static Method getMethod(Class beanClass, String methodName, int argLength, Class[] argTypes) {
@@ -2250,14 +2245,13 @@ public class BeanUtil {
 	public static void setProperty(Object bean, String property, Object value) throws RuntimeException {
 		String key = bean.getClass().getName().concat(":set").concat(property);
 		// 利用缓存提升方法匹配效率
-		Method method = setMethods.get(key);
-		if (method == null) {
-			method = matchSetMethods(bean.getClass(), new String[] { property })[0];
-			if (method == null) {
+		Method method = setMethods.computeIfAbsent(key, k -> {
+			Method m = matchSetMethods(bean.getClass(), new String[] { property })[0];
+			if (m == null) {
 				throw new RuntimeException(bean.getClass().getName() + " 没有对应的:" + property);
 			}
-			setMethods.put(key, method);
-		}
+			return m;
+		});
 		// 将数据类型进行转换再赋值
 		String typeName = method.getParameterTypes()[0].getTypeName();
 		Type[] types = method.getGenericParameterTypes();
@@ -2291,11 +2285,14 @@ public class BeanUtil {
 		// 利用缓存提升方法匹配效率
 		Method method = getMethods.get(key);
 		if (method == null) {
-			method = matchGetMethods(bean.getClass(), new String[] { property })[0];
-			if (method == null) {
+			Method matched = matchGetMethods(bean.getClass(), new String[] { property })[0];
+			if (matched == null) {
 				return null;
 			}
-			getMethods.put(key, method);
+			method = getMethods.putIfAbsent(key, matched);
+			if (method == null) {
+				method = matched;
+			}
 		}
 		Object result = null;
 		try {
@@ -2330,11 +2327,14 @@ public class BeanUtil {
 		// 利用缓存提升方法匹配效率
 		Method method = getMethods.get(key);
 		if (method == null) {
-			method = matchGetMethods(bean.getClass(), new String[] { realProperty })[0];
-			if (method == null) {
+			Method matched = matchGetMethods(bean.getClass(), new String[] { realProperty })[0];
+			if (matched == null) {
 				return null;
 			}
-			getMethods.put(key, method);
+			method = getMethods.putIfAbsent(key, matched);
+			if (method == null) {
+				method = matched;
+			}
 		}
 		try {
 			result = method.invoke(bean);
@@ -2637,9 +2637,9 @@ public class BeanUtil {
 	 */
 	public static List<TableCascadeModel> getCascadeModels(Class entityClass) {
 		String className = entityClass.getName();
-		List<TableCascadeModel> result = cascadeModels.get(className);
-		if (result == null) {
-			result = new ArrayList<TableCascadeModel>();
+		// 原子性缓存,避免并发重复解析级联关系
+		return cascadeModels.computeIfAbsent(className, cls -> {
+			List<TableCascadeModel> result = new ArrayList<TableCascadeModel>();
 			Field[] cascadeFields = parseCascadeFields(entityClass);
 			for (Field field : cascadeFields) {
 				TableCascadeModel cascadeModel = new TableCascadeModel();
@@ -2666,9 +2666,8 @@ public class BeanUtil {
 				}
 				result.add(cascadeModel);
 			}
-			cascadeModels.put(className, result);
-		}
-		return result;
+			return result;
+		});
 	}
 
 	public static Object getMaybeArrayValue(Map value, String property) {
