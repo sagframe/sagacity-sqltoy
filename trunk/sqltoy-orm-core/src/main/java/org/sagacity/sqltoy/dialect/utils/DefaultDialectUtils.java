@@ -855,10 +855,10 @@ public class DefaultDialectUtils {
 		String sql = "SELECT t1.INDEX_NAME,t1.COLUMN_NAME,t0.UNIQUENESS FROM USER_IND_COLUMNS t1 LEFT JOIN "
 				+ " (SELECT INDEX_NAME,UNIQUENESS FROM USER_INDEXES WHERE TABLE_NAME ='" + tableNameUp + "') t0 ON "
 				+ " t1.INDEX_NAME = t0.INDEX_NAME WHERE TABLE_NAME ='" + tableNameUp + "'";
-		ResultSet rs = conn.createStatement().executeQuery(sql);
-		return (Map<String, ColumnMeta>) SqlUtil.preparedStatementProcess(null, null, rs,
+		PreparedStatement pst = conn.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+		ResultSet rs = pst.executeQuery();
+		return (Map<String, ColumnMeta>) SqlUtil.preparedStatementProcess(null, pst, rs,
 				new PreparedStatementResultHandler() {
-
 					@Override
 					public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException {
 						Map<String, ColumnMeta> indexsMeta = new HashMap<String, ColumnMeta>();
@@ -874,7 +874,6 @@ public class DefaultDialectUtils {
 						}
 						this.setResult(indexsMeta);
 					}
-
 				});
 	}
 
@@ -919,23 +918,31 @@ public class DefaultDialectUtils {
 		} // 针对starrocks(用的mysql驱动)
 		else if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.DORIS
 				|| dbType == DBType.STARROCKS) {
-			rs = conn.createStatement().executeQuery("desc " + tableName);
-			return (Map<String, ColumnMeta>) SqlUtil.preparedStatementProcess(null, null, rs,
-					new PreparedStatementResultHandler() {
-						@Override
-						public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException {
-							Map<String, ColumnMeta> pkMeta = new HashMap<String, ColumnMeta>();
-							while (rs.next()) {
-								ColumnMeta colMeta = new ColumnMeta();
-								colMeta.setColName(rs.getString("FIELD"));
-								colMeta.setPK(rs.getBoolean("KEY"));
-								if (colMeta.isPK()) {
-									pkMeta.put(colMeta.getColName(), colMeta);
+			Statement stmt = conn.createStatement();
+			rs = stmt.executeQuery("desc " + tableName);
+			try {
+				return (Map<String, ColumnMeta>) SqlUtil.preparedStatementProcess(null, null, rs,
+						new PreparedStatementResultHandler() {
+							@Override
+							public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException {
+								Map<String, ColumnMeta> pkMeta = new HashMap<String, ColumnMeta>();
+								while (rs.next()) {
+									ColumnMeta colMeta = new ColumnMeta();
+									colMeta.setColName(rs.getString("FIELD"));
+									colMeta.setPK(rs.getBoolean("KEY"));
+									if (colMeta.isPK()) {
+										pkMeta.put(colMeta.getColName(), colMeta);
+									}
 								}
+								this.setResult(pkMeta);
 							}
-							this.setResult(pkMeta);
-						}
-					});
+						});
+			} finally {
+				try {
+					stmt.close();
+				} catch (SQLException e) {
+				}
+			}
 		}
 		return null;
 	}

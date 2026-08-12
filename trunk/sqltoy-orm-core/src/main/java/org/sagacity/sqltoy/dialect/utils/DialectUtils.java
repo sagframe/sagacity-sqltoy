@@ -3031,13 +3031,17 @@ public class DialectUtils {
 				} catch (Exception e) {
 					throw e;
 				} finally {
-					if (rs != null) {
-						rs.close();
-						rs = null;
+					try {
+						if (rs != null) {
+							rs.close();
+						}
+					} catch (SQLException e) {
 					}
-					if (callStat != null) {
-						callStat.close();
-						callStat = null;
+					try {
+						if (callStat != null) {
+							callStat.close();
+						}
+					} catch (SQLException e) {
 					}
 				}
 			}
