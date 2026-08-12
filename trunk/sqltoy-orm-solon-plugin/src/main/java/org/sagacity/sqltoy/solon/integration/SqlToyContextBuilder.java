@@ -183,6 +183,7 @@ public class SqlToyContextBuilder {
 		sqlToyContext.setExecuteSqlBlankToNull(properties.isExecuteSqlBlankToNull());
 		// 是否拆分merge into 为updateAll 和 saveAllIgnoreExist 两步操作(1、seata分布式事务不支持merge)
 		sqlToyContext.setSplitMergeInto(properties.isSplitMergeInto());
+		sqlToyContext.setBackslashEscaping(properties.getBackslashEscaping());
 		// getMetaData().getColumnLabel(i) 结果做大小写处理策略
 		if (null != properties.getColumnLabelUpperOrLower()) {
 			sqlToyContext.setColumnLabelUpperOrLower(properties.getColumnLabelUpperOrLower().toLowerCase());

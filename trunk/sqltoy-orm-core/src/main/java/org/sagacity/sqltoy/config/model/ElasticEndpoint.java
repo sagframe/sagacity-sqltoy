@@ -284,6 +284,17 @@ public class ElasticEndpoint implements Serializable {
 		return restClient;
 	}
 
+	public void closeRestClient() {
+		if (restClient != null) {
+			try {
+				restClient.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			restClient = null;
+		}
+	}
+
 	public boolean isNativeSql() {
 		return nativeSql;
 	}

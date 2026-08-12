@@ -178,7 +178,9 @@ public class MacroIfLogic {
 					}
 					// 没有计算符号，将rightValue置为对象字符
 					if (!rightValue.contains("+") && !rightValue.contains("-")) {
-						rightValue = rightObj.toString();
+						if (rightObj != null) {
+							rightValue = rightObj.toString();
+						}
 					} else {
 						// 剔除可能存在的左右括号
 						if (rightValue.startsWith("(") && rightValue.endsWith(")")) {

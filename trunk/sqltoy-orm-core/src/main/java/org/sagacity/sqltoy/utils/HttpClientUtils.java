@@ -155,21 +155,13 @@ public class HttpClientUtils {
 						JSON.toJSONString(postValue));
 			}
 			// 默认采用post请求
-			RestClient restClient = null;
-			Response response;
-			try {
-				restClient = esConfig.getRestClient();
-				Request request = new Request(POST, realUrl);
-				request.setEntity(httpEntity);
-				response = restClient.performRequest(request);
-				HttpEntity reponseEntity = response.getEntity();
-				if (reponseEntity != null) {
-					result = EntityUtils.toString(reponseEntity, nosqlConfig.getCharset());
-				}
-			} catch (Exception e) {
-				throw e;
-			} finally {
-				IOUtil.closeQuietly(restClient);
+			RestClient restClient = esConfig.getRestClient();
+			Request request = new Request(POST, realUrl);
+			request.setEntity(httpEntity);
+			Response response = restClient.performRequest(request);
+			HttpEntity reponseEntity = response.getEntity();
+			if (reponseEntity != null) {
+				result = EntityUtils.toString(reponseEntity, nosqlConfig.getCharset());
 			}
 		} // 组织httpclient模式调用(此种模式不推荐使用)
 		else {

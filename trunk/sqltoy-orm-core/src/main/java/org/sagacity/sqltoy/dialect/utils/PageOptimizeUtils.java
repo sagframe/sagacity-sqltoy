@@ -108,6 +108,7 @@ public class PageOptimizeUtils {
 					cacheKey.append(tenant);
 					meter++;
 				}
+				cacheKey.append("]");
 			}
 		}
 		return cacheKey.toString();
@@ -123,10 +124,10 @@ public class PageOptimizeUtils {
 	public static Long getPageTotalCount(final SqlToyConfig sqlToyConfig, PageOptimize pageOptimize,
 			String conditionsKey) {
 		// sql初次执行查询
-		if (!pageOptimizeCache.containsKey(sqlToyConfig.getIdOrSql())) {
+		LinkedHashMap<String, Object[]> map = pageOptimizeCache.get(sqlToyConfig.getIdOrSql());
+		if (map == null) {
 			return null;
 		}
-		LinkedHashMap<String, Object[]> map = pageOptimizeCache.get(sqlToyConfig.getIdOrSql());
 		synchronized (map) {
 			// 为null表示条件初次查询或已经全部过期移除
 			if (!map.containsKey(conditionsKey)) {
@@ -165,24 +166,18 @@ public class PageOptimizeUtils {
 		int aliveMax = pageOptimize.getAliveMax();
 		// sql id
 		String id = sqlToyConfig.getIdOrSql();
-		LinkedHashMap<String, Object[]> map = null;
-		if (!pageOptimizeCache.containsKey(id)) {
-			map = new LinkedHashMap<String, Object[]>(aliveMax);
+		LinkedHashMap<String, Object[]> map = pageOptimizeCache
+				.computeIfAbsent(id, k -> new LinkedHashMap<String, Object[]>(aliveMax));
+		synchronized (map) {
+			// 已经存在,先移除队列靠前的旧值
+			if (map.containsKey(conditionsKey)) {
+				map.remove(conditionsKey);
+			}
+			// 在最后位置放入最新的记录
 			map.put(conditionsKey, new Object[] { expireTime, totalCount });
-			pageOptimizeCache.put(id, map);
-		} else {
-			map = pageOptimizeCache.get(id);
-			synchronized (map) {
-				// 已经存在,先移除队列靠前的旧值
-				if (map.containsKey(conditionsKey)) {
-					map.remove(conditionsKey);
-				}
-				// 在最后位置放入最新的记录
-				map.put(conditionsKey, new Object[] { expireTime, totalCount });
-				// 长度超阀值,移除最早进入的
-				while (map.size() > aliveMax) {
-					map.remove(map.keySet().iterator().next());
-				}
+			// 长度超阀值,移除最早进入的
+			while (map.size() > aliveMax) {
+				map.remove(map.keySet().iterator().next());
 			}
 		}
 	}

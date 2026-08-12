@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyThreadDataHolder;
 import org.sagacity.sqltoy.config.model.IfLogicModel;
@@ -29,6 +30,7 @@ import org.sagacity.sqltoy.plugins.id.macro.impl.SqlLoop;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
+import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.MacroIfLogic;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
@@ -122,8 +124,9 @@ public class SqlConfigParseUtils {
 	public final static Pattern START_ELSE_PATTERN = Pattern.compile("(?i)^\\s*\\@else(\\s+|\\s*\\(\\s*\\))");
 	public final static Pattern IF_ALL_PATTERN = Pattern
 			.compile("(?i)\\@((if|elseif)\\s*\\(|else(\\s+|\\s*\\(\\s*\\)))");
-	//field in (@spilt(?,';') 或 @split(?,int,',')) 形式,用于将参数值拆分成数组,增强sql组织能力))
-	//实际编写sql时是:field in (@split(:paramName,';'))或 field in (@split(:paramName,int,',')) 形式
+	// field in (@spilt(?,';') 或 @split(?,int,',')) 形式,用于将参数值拆分成数组,增强sql组织能力))
+	// 实际编写sql时是:field in (@split(:paramName,';'))或 field in
+	// (@split(:paramName,int,',')) 形式
 	public final static Pattern SPLIT_PATTERN = Pattern.compile("(?i)\\@split\\(\\s*\\?(?:,([^)]*))?\\s*\\)");
 
 	public final static String BLANK = " ";
@@ -316,8 +319,8 @@ public class SqlConfigParseUtils {
 		processNullConditions(sqlToyResult);
 		// 替换@blank(?)为空白,增强sql组织能力
 		processBlank(sqlToyResult);
-		// 检查 like 对应参数部分，如果参数中不存在%符合则自动两边增加%
-		processLike(sqlToyResult);
+		// 检查 like 对应参数部分，如果参数中不存在%符合则自动两边增加%(同时转义_和%等特殊字符)
+		processLike(sqlToyResult, dialect);
 		// add update 2024-12-12 将@value(?) 参数值中不含?的提前完成处理
 		processValue(sqlToyResult, dialect, true);
 		processSplit(sqlToyResult);
@@ -934,27 +937,80 @@ public class SqlConfigParseUtils {
 	}
 
 	/**
-	 * @TODO 加工处理like 部分，给参数值增加%符号
+	 * @TODO 加工处理like 部分，给参数值增加%符号，同时转义用户输入中的_和%等LIKE通配符
 	 * @param sqlToyResult
+	 * @param dialect      数据库方言
 	 */
-	private static void processLike(SqlToyResult sqlToyResult) {
+	private static void processLike(SqlToyResult sqlToyResult, String dialect) {
 		if (null == sqlToyResult.getParamsValue() || sqlToyResult.getParamsValue().length == 0) {
 			return;
 		}
+		int dbType = DataSourceUtils.getDBType(dialect);
+		// dialect为null时,尝试从运行时上下文获取数据库类型
+		if (dbType == DBType.UNDEFINE && SqlExecuteStat.get() != null) {
+			dbType = SqlExecuteStat.get().getDbType();
+		}
 		String queryStr = sqlToyResult.getSql();
 		Matcher m = LIKE_PATTERN.matcher(queryStr);
-		int index = 0;
 		int paramCnt = 0;
 		String likeValStr;
+		StringBuilder sqlBuilder = null;
+		int lastEnd = 0;
+		boolean isBackslashEscape;
+		// 用户可通过SqlToyContext.backslashEscaping 强制定义:true=ESCAPE '\\'; false=ESCAPE '\'
+		if (SqlToyConstants.backslashEscaping != null) {
+			isBackslashEscape = SqlToyConstants.backslashEscaping;
+		} else {
+			Integer actuallyDBType = SqlToyThreadDataHolder.getActuallyDBType();
+			// kingbase特殊，即使sql_mode是mysql依旧单斜杠
+			if (actuallyDBType != null && actuallyDBType == DBType.KINGBASE) {
+				isBackslashEscape = false;
+			} else {
+				// mysql、vastbase、opengauss系列都用 " ESCAPE '\\\\'"
+				// PostgreSQL/Oracle/SQLServer/DB2/h2/kingbase等 ESCAPE'\\'
+				isBackslashEscape = dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.TIDB
+						|| dbType == DBType.DORIS || dbType == DBType.STARROCKS || dbType == DBType.OCEANBASE
+						|| dbType == DBType.VASTBASE || dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB;
+			}
+		}
+		String escapeClause = isBackslashEscape ? " ESCAPE '\\\\'" : " ESCAPE '\\'";
 		while (m.find()) {
-			index = m.start();
-			paramCnt = StringUtil.matchCnt(queryStr.substring(0, index), ARG_NAME_PATTERN, 0);
+			paramCnt = StringUtil.matchCnt(queryStr.substring(0, m.start()), ARG_NAME_PATTERN, 0);
 			likeValStr = (sqlToyResult.getParamsValue()[paramCnt] == null) ? null
 					: sqlToyResult.getParamsValue()[paramCnt].toString();
-			// 不存在%符号时，前后增加%
-			if (null != likeValStr && likeValStr.indexOf("%") == -1) {
-				sqlToyResult.getParamsValue()[paramCnt] = "%".concat(likeValStr).concat("%");
+			if (null == likeValStr) {
+				continue;
 			}
+			// 已被escapeLike过滤器转义的%(\%)排除，避免干扰后续判断
+			String stripped = likeValStr.replace("\\%", "");
+			// 判断转义后的值是否包含反斜杠,决定是否需要追加ESCAPE子句
+			boolean needEscape = false;
+			//只要参数中已经有%符号，这种情况就不需要再加%符号了,否则会影响用户的查询意图
+			if (stripped.indexOf("%") != -1) {
+				// 仅转义_等特殊字符,避免用户输入的_被当作通配符
+				String escaped = SqlUtil.escapeLikeValue(likeValStr, dbType, false);
+				sqlToyResult.getParamsValue()[paramCnt] = escaped;
+				needEscape = escaped.contains("\\");
+			} else {
+				// 值首尾不存在未转义的%符号,前后增加%作为通配符,并转义_和%等特殊字符
+				String escaped = SqlUtil.escapeLikeValue(likeValStr, dbType, true);
+				sqlToyResult.getParamsValue()[paramCnt] = "%".concat(escaped).concat("%");
+				needEscape = escaped.contains("\\");
+			}
+			String tailAfterMatch = queryStr.substring(m.end()).trim().toLowerCase();
+			// 仅当值中有被转义的特殊字符且sql中尚无ESCAPE子句时才追加
+			if (needEscape && !tailAfterMatch.startsWith("escape")) {
+				if (sqlBuilder == null) {
+					sqlBuilder = new StringBuilder();
+				}
+				sqlBuilder.append(queryStr.substring(lastEnd, m.end()));
+				sqlBuilder.append(escapeClause);
+				lastEnd = m.end();
+			}
+		}
+		if (sqlBuilder != null) {
+			sqlBuilder.append(queryStr.substring(lastEnd));
+			sqlToyResult.setSql(sqlBuilder.toString());
 		}
 	}
 

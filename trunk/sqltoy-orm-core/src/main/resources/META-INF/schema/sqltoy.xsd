@@ -696,6 +696,16 @@
 						use="required" />
 				</xsd:complexType>
 			</xsd:element>
+			<xsd:element name="escapeLike" minOccurs="0"
+				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[针对like的参数进行特殊符号转义]]></xsd:documentation>
+				</xsd:annotation>
+				<xsd:complexType>
+					<xsd:attribute name="params" type="xsd:string"
+						use="required" />
+				</xsd:complexType>
+			</xsd:element>
 			<xsd:element name="lt" minOccurs="0"
 				maxOccurs="unbounded">
 				<xsd:annotation>

@@ -17,6 +17,7 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.time.temporal.WeekFields;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -71,7 +72,7 @@ public class DateUtil {
 	 * 中文星期的名称
 	 */
 	private static final String[] WEEK_CHINA_NAME = { "星期一", "星期二", "星期三", "星期四", "星期五", "星期六", "星期日" };
-	private static final String[] WEEK_ENGLISH_NAME = { "Monday", "Tuesday", "Wednesday", "Thurday", "Friday",
+	private static final String[] WEEK_ENGLISH_NAME = { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday",
 			"Saturday", "Sunday" };
 	private static final String[] WEEK_ENGLISH_NAKE = { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
 	private final static Pattern WEEK_PATTERN = Pattern.compile("(?i)(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\\s");
@@ -909,14 +910,15 @@ public class DateUtil {
 		// 默认使用当前日期
 		LocalDate targetDate = LocalDate.now();
 		if (dateValue != null) {
-			// 将传入的 dateValue 转换为 LocalDate（需根据实际类型适配 convertDateObject）
 			Date date = convertDateObject(dateValue);
-			targetDate = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+			if (date != null) {
+				targetDate = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+			}
 		}
 		// 定义周的规则：比如中国习惯（周一为一周第一天，第一周至少有1天）
 		WeekFields weekFields = WeekFields.of(Locale.CHINA);
-		// 获取周数（从1开始），减1转为从0开始
-		return targetDate.get(weekFields.weekOfYear()) - 1;
+		// 获取周数（从1开始）
+		return targetDate.get(weekFields.weekOfYear());
 	}
 
 	/**
@@ -926,7 +928,7 @@ public class DateUtil {
 	 * @return
 	 */
 	public static double getIntervalWeeks(Object floorDate, Object goalDate) {
-		BigDecimal result = new BigDecimal(getIntervalHours(floorDate, goalDate) / (7 * 24));
+		BigDecimal result = BigDecimal.valueOf(getIntervalHours(floorDate, goalDate) / (7 * 24));
 		return result.setScale(1, RoundingMode.HALF_UP).doubleValue();
 	}
 
@@ -959,10 +961,12 @@ public class DateUtil {
 	 * @return
 	 */
 	public static int getIntervalDays(Object floorDate, Object goalDate) {
-		BigDecimal result = new BigDecimal(
-				Double.valueOf(getIntervalMillSeconds(formatDate(floorDate, FORMAT.DATE_HORIZONTAL),
-						formatDate(goalDate, FORMAT.DATE_HORIZONTAL))) / (3600 * 1000 * 24));
-		return result.setScale(1, RoundingMode.HALF_UP).intValue();
+		LocalDate floor = asLocalDate(convertDateObject(floorDate));
+		LocalDate goal = asLocalDate(convertDateObject(goalDate));
+		if (floor == null || goal == null) {
+			return 0;
+		}
+		return (int) ChronoUnit.DAYS.between(floor, goal);
 	}
 
 	/**
@@ -972,7 +976,7 @@ public class DateUtil {
 	 * @return
 	 */
 	public static double getIntervalHours(Object floorDate, Object goalDate) {
-		BigDecimal result = new BigDecimal(Double.valueOf(getIntervalMillSeconds(floorDate, goalDate)) / (3600 * 1000));
+		BigDecimal result = BigDecimal.valueOf(Double.valueOf(getIntervalMillSeconds(floorDate, goalDate)) / (3600 * 1000));
 		return result.setScale(1, RoundingMode.HALF_UP).doubleValue();
 	}
 
@@ -983,7 +987,7 @@ public class DateUtil {
 	 * @return
 	 */
 	public static double getIntervalMinutes(Object floorDate, Object goalDate) {
-		BigDecimal result = new BigDecimal(Double.valueOf(getIntervalMillSeconds(floorDate, goalDate)) / (60 * 1000));
+		BigDecimal result = BigDecimal.valueOf(Double.valueOf(getIntervalMillSeconds(floorDate, goalDate)) / (60 * 1000));
 		return result.setScale(1, RoundingMode.HALF_UP).doubleValue();
 	}
 
@@ -1137,11 +1141,11 @@ public class DateUtil {
 		return Date.from(localDate.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());
 	}
 
-	public static Date asSqlDate(LocalDate localDate) {
+	public static java.sql.Date asSqlDate(LocalDate localDate) {
 		if (localDate == null) {
 			return null;
 		}
-		return Date.from(localDate.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());
+		return java.sql.Date.valueOf(localDate);
 	}
 
 	public static Date asDate(LocalTime localTime) {

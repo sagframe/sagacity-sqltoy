@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -65,7 +66,7 @@ public class TranslateConfigParse {
 			"service", "rest", "rest-increment" };
 
 	// 存放类包含缓存翻译注解配置
-	private final static HashMap<String, HashMap<String, FieldTranslate>> classTranslateConfigMap = new HashMap<String, HashMap<String, FieldTranslate>>();
+	private final static ConcurrentHashMap<String, HashMap<String, FieldTranslate>> classTranslateConfigMap = new ConcurrentHashMap<>();
 
 	// 缓存更新检测器,用于辨别是否重复定义
 	private final static HashSet<String> cacheCheckers = new HashSet<String>();
@@ -352,8 +353,9 @@ public class TranslateConfigParse {
 		}
 		String className = classType.getName();
 		// 利用Map对类中的缓存翻译配置进行缓存，规避每次都解析
-		if (classTranslateConfigMap.containsKey(className)) {
-			return classTranslateConfigMap.get(className);
+		HashMap<String, FieldTranslate> cached = classTranslateConfigMap.get(className);
+		if (cached != null) {
+			return cached;
 		}
 		HashMap<String, FieldTranslate> translateConfig = new HashMap<String, FieldTranslate>();
 		Class classVar = classType;
@@ -386,8 +388,9 @@ public class TranslateConfigParse {
 			// 向父类递归
 			classVar = classVar.getSuperclass();
 		}
-		classTranslateConfigMap.put(className, translateConfig);
-		return translateConfig;
+		// putIfAbsent保证原子性，避免并发重复计算覆盖
+		HashMap<String, FieldTranslate> existing = classTranslateConfigMap.putIfAbsent(className, translateConfig);
+		return (existing != null) ? existing : translateConfig;
 	}
 
 	/**

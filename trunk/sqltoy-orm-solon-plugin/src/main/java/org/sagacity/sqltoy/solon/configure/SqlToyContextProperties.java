@@ -293,6 +293,11 @@ public class SqlToyContextProperties implements Serializable {
 	 * 默认查询超时时长(秒)
 	 */
 	private Integer defaultStatementTimeout; 
+	
+	/**
+	 * like查询ESCAPE子句是否使用双反斜杠(true=ESCAPE '\\',false=ESCAPE '\',null=按数据库方言自动判断)
+	 */
+	private Boolean backslashEscaping;
 
 	/**
 	 * @return the sqlResourcesDir
@@ -862,5 +867,13 @@ public class SqlToyContextProperties implements Serializable {
 
 	public void setDefaultStatementTimeout(Integer defaultStatementTimeout) {
 		this.defaultStatementTimeout = defaultStatementTimeout;
+	}
+	
+	public Boolean getBackslashEscaping() {
+		return backslashEscaping;
+	}
+
+	public void setBackslashEscaping(Boolean backslashEscaping) {
+		this.backslashEscaping = backslashEscaping;
 	}
 }

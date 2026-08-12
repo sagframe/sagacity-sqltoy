@@ -810,6 +810,8 @@ public class SqlXMLConfigParse {
 							filterType = "sql-injection";
 						} else if ("sql-injection".equalsIgnoreCase(filterType)) {
 							filterType = "sql-injection";
+						} else if ("escapeLike".equalsIgnoreCase(filterType)) {
+							filterType = "escapeLike";
 						}
 						filterModel.setFilterType(filterType);
 						parseFilterElt(sqlToyConfig, filterModel, filter, local);
