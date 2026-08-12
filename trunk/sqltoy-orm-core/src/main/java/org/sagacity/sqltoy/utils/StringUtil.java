@@ -604,7 +604,7 @@ public class StringUtil {
 		}
 		Matcher m = pattern.matcher(source);
 		// offset不能为负数，做保护
-	    offset = Math.max(offset, 0);
+		offset = Math.max(offset, 0);
 		int matchIndex = -1;
 		int start = 0;
 		while (m.find(start)) {
@@ -651,7 +651,6 @@ public class StringUtil {
 		int start = 0;
 		while (matcher.find(start)) {
 			count++;
-			// start = matcher.end() - offset;
 			start = Math.max(matcher.end() - offset, matcher.start() + 1);
 		}
 		return count;

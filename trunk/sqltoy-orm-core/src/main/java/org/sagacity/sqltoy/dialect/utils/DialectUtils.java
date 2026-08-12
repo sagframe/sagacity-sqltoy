@@ -821,6 +821,8 @@ public class DialectUtils {
 				H2DialectUtils.wrapSelectFields(sql, columnName, fieldMeta);
 			} else if (DBType.DB2 == dbType) {
 				DB2DialectUtils.wrapSelectFields(sql, columnName, fieldMeta);
+			} else if (DBType.DM == dbType) {
+				DMDialectUtils.wrapSelectFields(sql, columnName, fieldMeta);
 			} else {
 				sql.append("? as ");
 				sql.append(columnName);

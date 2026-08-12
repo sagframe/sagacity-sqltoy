@@ -5,6 +5,8 @@ package org.sagacity.sqltoy.utils;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -559,4 +561,89 @@ public class StringUtilsTest {
 		}
 		return max;
 	}
+
+	@Test
+	@org.junit.jupiter.api.Timeout(2)
+	public void testMatchCntOffsetInfiniteLoop() {
+		assertEquals(2, StringUtil.matchCnt("aaa", Pattern.compile("aa"), 2));
+	}
+
+	@Test
+	@org.junit.jupiter.api.Timeout(2)
+	public void testMatchLastIndexOffsetInfiniteLoop() {
+		assertTrue(StringUtil.matchLastIndex("aaa", Pattern.compile("aa"), 2) >= 0);
+	}
+
+	@Test
+	@org.junit.jupiter.api.Timeout(2)
+	public void testReplaceRegexOffsetInfiniteLoop() {
+		assertNotNull(StringUtil.replaceRegex("aaa", Pattern.compile("aa"), "b", 1, 2));
+	}
+
+	@Test
+	public void testNullSafety() {
+		assertEquals(-1, StringUtil.getSymMarkIndex("(", ")", null, 0));
+		assertEquals(-1, StringUtil.getSymMarkMatchIndex("(", ")", null, 0));
+		assertEquals(-1, StringUtil.getSymMarkReverseIndex("(", ")", null, 1));
+		assertNull(StringUtil.clearSymMarkContent(null, "(", ")"));
+		assertEquals(-1, StringUtil.matchIndex(null, Pattern.compile("a")));
+		assertArrayEquals(new int[] { -1, -1 }, StringUtil.matchIndex(null, Pattern.compile("a"), 0));
+		assertEquals(0, StringUtil.matchCnt(null, "a", 0, 1));
+		assertEquals(0, StringUtil.matchCnt(null, "a", 0, 1, 0));
+		assertEquals(-1, StringUtil.indexOrder(null, "a", 0));
+		assertArrayEquals(new int[0], StringUtil.str2ASCII(null));
+		assertFalse(StringUtil.like(null, new String[] { "a" }));
+		assertFalse(StringUtil.matches("abc", (String) null));
+	}
+
+	@Test
+	public void testLoopAppendWithSignNullSource() {
+		String result = StringUtil.loopAppendWithSign(null, ",", 3);
+		assertEquals(",,", result);
+	}
+
+	@Test
+	public void testSymMarkMatchIndexWithRegex() {
+		// getSymMarkMatchIndex accepts regex patterns (not literal strings)
+		int idx = StringUtil.getSymMarkMatchIndex("\\(", "\\)", "a(b+c)", 0);
+		assertTrue(idx > 0);
+	}
+
+	@Test
+	public void testSplitRegexDotAndPipe() {
+		assertArrayEquals(new String[] { "1", "2", "3" }, StringUtil.splitRegex("1.2.3", ".", false));
+		assertArrayEquals(new String[] { "a", "b" }, StringUtil.splitRegex("a|b", "|", false));
+	}
+
+	@Test
+	public void testSecureMaskNegativeParams() {
+		String result = StringUtil.secureMask("hello", -1, 2, "***");
+		assertNotNull(result);
+	}
+
+	@Test
+	public void testReplaceFirstStrNullReplacement() {
+		assertEquals("ac", StringUtil.replaceFirstStr("abc", "b", null));
+	}
+
+	@Test
+	public void testHumpFieldNamesWithNullElement() {
+		String[] result = StringUtil.humpFieldNames(new String[] { "a_b", null, "c_d" });
+		assertEquals("aB", result[0]);
+		assertNull(result[1]);
+		assertEquals("cD", result[2]);
+	}
+
+	@Test
+	public void testToDBC() {
+		assertEquals("hello?world:test", StringUtil.toDBC("hello？world：test"));
+		assertEquals("a,b;c.d", StringUtil.toDBC("a，b；c．d"));
+		assertEquals("x=y(z[w])", StringUtil.toDBC("x＝y（z【w】）"));
+	}
+
+	@Test
+	public void testMatchesNullRegex() {
+		assertFalse(StringUtil.matches("abc", (String) null));
+	}
+
 }

@@ -6,6 +6,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
@@ -660,5 +664,83 @@ public class SqlConfigParseUtilsTest {
 		}
 		params.put("sqlScript", sqlScript);
 
+	}
+
+	@Test
+	public void testMultiLikeWithEscape() {
+		// SQL含两个like条件:
+		// 1. :name 的值含 _ 通配符但不含% → 应自动包裹%并转义_为\_
+		// 2. :code 的值同时含%和_ → 保留%作为通配符,仅转义_为\_
+		String sql = "select * from table t where t.name like :name and t.code like :code";
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "name", "code" },
+				new Object[] { "张_三", "A%b_c" });
+
+		// 验证SQL中两个like后面都追加了ESCAPE子句
+		String resultSql = result.getSql();
+		System.err.println(JSON.toJSONString(result));
+		assertTrue(resultSql.contains("like ? ESCAPE '\\'"),
+				"第一个like应有ESCAPE子句: " + resultSql);
+		assertTrue(resultSql.indexOf("like ? ESCAPE '\\'") != resultSql.lastIndexOf("like ? ESCAPE '\\'"),
+				"两个like都应有ESCAPE子句: " + resultSql);
+
+		// 第一个like值: "张_三" → "%张\_三%" (_被转义)
+		assertEquals("%张\\_三%", result.getParamsValue()[0],
+				"不含%的值应包裹%并转义_");
+
+		// 第二个like值: "A%b_c" → "%A\%b\_c%" (%不在首尾,视为普通字符转义,整体包裹%)
+		assertEquals("%A\\%b\\_c%", result.getParamsValue()[1],
+				"中间的%应转义,首尾无%时应包裹%");
+	}
+
+	@Test
+	public void testLikeNoSpecialChars() {
+		// value不含_和%: 应包裹%但不产生多余转义
+		String sql = "select * from table t where t.name like :name";
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "name" },
+				new Object[] { "普通文本" });
+		assertEquals("%普通文本%", result.getParamsValue()[0],
+				"无特殊字符应仅包裹%");
+	}
+
+	@Test
+	public void testLikeWithPercentOnly() {
+		// value只含%不含_ (如来自left-like/right-like过滤): %保留, 无_需转义
+		String sql = "select * from table t where t.name like :name";
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "name" },
+				new Object[] { "张%" });
+		assertEquals("张%", result.getParamsValue()[0],
+				"仅含%时应原样保留%不额外包裹");
+	}
+
+	@Test
+	public void testLikeWithEscapedPercent() {
+		// 来自escapeLike过滤器的值: 用户输入的%已被转义为\%,不视为通配符
+		// "abc\%def" → 应包裹%并保持%转义 → "%abc\%def%"
+		String sql = "select * from table t where t.name like :name";
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "name" },
+				new Object[] { "abc\\%def" });
+		assertEquals("%abc\\%def%", result.getParamsValue()[0],
+				"已转义的%不应视为通配符,应包裹%并保持转义");
+	}
+
+	@Test
+	public void testLikeWithLeadingPercent() {
+		// 来自l-like过滤器的值: 首部%为通配符
+		// "%abc" → 保留首部%通配符,不额外包裹
+		String sql = "select * from table t where t.name like :name";
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "name" },
+				new Object[] { "%abc" });
+		assertEquals("%abc", result.getParamsValue()[0],
+				"首部%应保留为通配符");
+	}
+
+	@Test
+	public void testLikeWithEscapedLeadingTrailingPercent() {
+		// escapeLike过滤器转义了首尾的%: "\%abc\%" → 不视为通配符,应包裹%
+		String sql = "select * from table t where t.name like :name";
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "name" },
+				new Object[] { "\\%abc\\%" });
+		assertEquals("%\\%abc\\%%", result.getParamsValue()[0],
+				"已转义的首尾%不应视为通配符");
 	}
 }
