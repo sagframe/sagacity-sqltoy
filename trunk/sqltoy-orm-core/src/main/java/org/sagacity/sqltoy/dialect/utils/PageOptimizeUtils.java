@@ -108,6 +108,7 @@ public class PageOptimizeUtils {
 					cacheKey.append(tenant);
 					meter++;
 				}
+				cacheKey.append("]");
 			}
 		}
 		return cacheKey.toString();
@@ -123,10 +124,10 @@ public class PageOptimizeUtils {
 	public static Long getPageTotalCount(final SqlToyConfig sqlToyConfig, PageOptimize pageOptimize,
 			String conditionsKey) {
 		// sql初次执行查询
-		if (!pageOptimizeCache.containsKey(sqlToyConfig.getIdOrSql())) {
+		LinkedHashMap<String, Object[]> map = pageOptimizeCache.get(sqlToyConfig.getIdOrSql());
+		if (map == null) {
 			return null;
 		}
-		LinkedHashMap<String, Object[]> map = pageOptimizeCache.get(sqlToyConfig.getIdOrSql());
 		synchronized (map) {
 			// 为null表示条件初次查询或已经全部过期移除
 			if (!map.containsKey(conditionsKey)) {
