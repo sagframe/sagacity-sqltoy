@@ -27,6 +27,11 @@ public class SqlToyThreadDataHolder {
 	 */
 	private static ThreadLocal<Integer> freeSceneThreadLocal = new TransmittableThreadLocal<Integer>();
 
+	/**
+	 * 实际数据库方言
+	 */
+	private static ThreadLocal<Integer> actuallyDBType = new TransmittableThreadLocal<Integer>();
+
 	// 放入当前用户语言方言
 	public static void setLanguage(String locale) {
 		if (locale != null) {
@@ -99,6 +104,19 @@ public class SqlToyThreadDataHolder {
 	public static void clearFreeScene() {
 		freeSceneThreadLocal.remove();
 		freeSceneThreadLocal.set(null);
+	}
+
+	public static void setActuallyDBType(Integer dbType) {
+		actuallyDBType.set(dbType);
+	}
+
+	public static Integer getActuallyDBType() {
+		return actuallyDBType.get();
+	}
+
+	public static void clearActuallyDBType() {
+		actuallyDBType.remove();
+		actuallyDBType.set(null);
 	}
 
 	public static void clearAll() {

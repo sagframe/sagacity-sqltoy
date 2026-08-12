@@ -9,6 +9,7 @@ import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.SqlToyThreadDataHolder;
 import org.sagacity.sqltoy.callback.DataSourceCallbackHandler;
 import org.sagacity.sqltoy.config.model.CaseType;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
@@ -56,6 +57,7 @@ public class DataSourceUtils {
 
 		// sqlserver2012或以上版本
 		public final static String SQLSERVER = "sqlserver";
+		public final static String MSSQL = "mssql";
 
 		// mysql的三个变种，5.6版本或以上
 		public final static String MYSQL = "mysql";
@@ -178,6 +180,8 @@ public class DataSourceUtils {
 		DBNameTypeMap.put(Dialect.ORACLE, DBType.ORACLE);
 		DBNameTypeMap.put(Dialect.ORACLE11, DBType.ORACLE11);
 		DBNameTypeMap.put(Dialect.SQLSERVER, DBType.SQLSERVER);
+		DBNameTypeMap.put(Dialect.MSSQL, DBType.SQLSERVER);
+		
 		DBNameTypeMap.put(Dialect.MYSQL, DBType.MYSQL);
 		DBNameTypeMap.put(Dialect.MYSQL57, DBType.MYSQL57);
 		// mariaDB的方言以mysql为基准
@@ -625,9 +629,12 @@ public class DataSourceUtils {
 			if (null != sqltoyContext && StringUtil.isNotBlank(sqltoyContext.getDialect())) {
 				dialect = sqltoyContext.getDialect();
 				dbType = getDBType(dialect);
+				Integer realDBType = getDBType(conn);
+				SqlToyThreadDataHolder.setActuallyDBType(realDBType);
 			} else {
 				dbType = getDBType(conn);
 				dialect = getDialect(dbType);
+				SqlToyThreadDataHolder.setActuallyDBType(dbType);
 			}
 			// 调试显示数据库信息,便于在多数据库场景下辨别查询对应的数据库
 			if (SqlToyConstants.showDatasourceInfo()) {
@@ -643,6 +650,7 @@ public class DataSourceUtils {
 			conn = null;
 			throw new RuntimeException(e);
 		} finally {
+			SqlToyThreadDataHolder.clearActuallyDBType();
 			// 释放连接,连接池实际是归还连接，未必一定关闭
 			sqltoyContext.releaseConnection(conn, datasource);
 		}

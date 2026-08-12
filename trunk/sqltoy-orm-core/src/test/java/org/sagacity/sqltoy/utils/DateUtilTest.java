@@ -15,6 +15,7 @@ import java.util.Date;
 import java.util.Locale;
 
 import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 import oracle.sql.TIMESTAMP;
 
@@ -318,5 +319,52 @@ public class DateUtilTest {
 		// 本周最后一天（周日）
 		Date result = Date.from(lastOfWeek.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant());
 		System.err.println(result);
+	}
+
+	@Test
+	public void testGetWeekOfYear1Based() {
+		// 2024-01-01 is Monday, should be week 1 (1-based, not 0-based)
+		assertEquals(1, DateUtil.getWeekOfYear("2024-01-01"));
+	}
+
+	@Test
+	public void testGetWeekOfYearNullSafe() {
+		// Unparseable input should not throw NPE, falls back to current date
+		int week = DateUtil.getWeekOfYear("abc");
+		assertTrue(week >= 0, "Should not throw NPE on unparseable input");
+	}
+
+	@Test
+	public void testGetIntervalDays() {
+		assertEquals(0, DateUtil.getIntervalDays("2023-10-05", "2023-10-05"));
+		assertEquals(1, DateUtil.getIntervalDays("2023-10-05", "2023-10-06"));
+		assertEquals(31, DateUtil.getIntervalDays("2023-01-01", "2023-02-01"));
+		assertEquals(-1, DateUtil.getIntervalDays("2023-10-06", "2023-10-05"));
+		assertEquals(365, DateUtil.getIntervalDays("2023-01-01", "2024-01-01"));
+	}
+
+	@Test
+	public void testParseEnglishDateThursday() {
+		// Regression test: WEEK_ENGLISH_NAME[3] was misspelled "Thurday",
+		// causing full "Thursday" to not normalize to "Thu" and parse to fail
+		Date result = DateUtil.parseString("Thursday October 5 2023", null, Locale.ENGLISH);
+		assertNotNull(result, "Full 'Thursday' date string should parse successfully");
+		LocalDate parsed = DateUtil.asLocalDate(result);
+		assertEquals(LocalDate.of(2023, 10, 5), parsed);
+	}
+
+	@Test
+	public void testAsSqlDate() {
+		LocalDate localDate = LocalDate.of(2023, 10, 5);
+		java.sql.Date sqlDate = DateUtil.asSqlDate(localDate);
+		assertNotNull(sqlDate);
+		assertEquals(java.sql.Date.valueOf("2023-10-05"), sqlDate);
+		assertNull(DateUtil.asSqlDate(null));
+	}
+
+	@Test
+	public void testParseTextDate() {
+		String lastUpdateTime = "2024-11-07 10:52:36.12345";
+		DateUtil.parseLocalDateTime(lastUpdateTime, "yyyy-MM-dd HH:mm:ss.SSSSS");
 	}
 }

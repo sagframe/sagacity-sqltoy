@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ForkJoinPool;
 import java.util.regex.Pattern;
@@ -175,7 +176,7 @@ public class SqlToyContext {
 	/**
 	 * sharding策略
 	 */
-	private HashMap<String, ShardingStrategy> shardingStrategys = new HashMap<String, ShardingStrategy>();
+	private ConcurrentHashMap<String, ShardingStrategy> shardingStrategys = new ConcurrentHashMap<String, ShardingStrategy>();
 
 	/**
 	 * es的地址配置
@@ -448,6 +449,11 @@ public class SqlToyContext {
 	private Integer defaultStatementTimeout;
 
 	/**
+	 * like查询ESCAPE子句是否使用双反斜杠(true=ESCAPE '\\',false=ESCAPE '\',null=按数据库方言自动判断)
+	 */
+	private Boolean backslashEscaping;
+
+	/**
 	 * @todo 初始化
 	 * @throws Exception
 	 */
@@ -520,6 +526,7 @@ public class SqlToyContext {
 		SqlToyConstants.defaultStatementTimeout = this.defaultStatementTimeout;
 		// 初始化sql执行统计的基本参数
 		SqlExecuteStat.setDebug(this.debug);
+		SqlToyConstants.backslashEscaping = this.backslashEscaping;
 		SqlExecuteStat.setOverTimeSqlHandler(overTimeSqlHandler);
 		SqlExecuteStat.setPrintSqlTimeoutMillis(this.printSqlTimeoutMillis);
 		// sql格式化
@@ -745,22 +752,17 @@ public class SqlToyContext {
 	 * @return
 	 */
 	public ShardingStrategy getShardingStrategy(String strategyName) {
-		// hashMap可以事先不赋值,直接定义spring的bean
-		if (shardingStrategys.containsKey(strategyName)) {
-			return shardingStrategys.get(strategyName);
-		}
-		ShardingStrategy shardingStrategy = (ShardingStrategy) appContext.getBean(strategyName);
-		if (shardingStrategy != null) {
-			shardingStrategys.put(strategyName, shardingStrategy);
-		}
-		return shardingStrategy;
+		return shardingStrategys.computeIfAbsent(strategyName, key -> {
+			ShardingStrategy strategy = (ShardingStrategy) appContext.getBean(key);
+			return strategy != null ? strategy : null;
+		});
 	}
 
 	/**
 	 * @param shardingStrategys the shardingStrategys to set
 	 */
-	public void setShardingStrategys(HashMap<String, ShardingStrategy> shardingStrategys) {
-		this.shardingStrategys = shardingStrategys;
+	public void setShardingStrategys(Map<String, ShardingStrategy> shardingStrategys) {
+		this.shardingStrategys = new ConcurrentHashMap<>(shardingStrategys);
 	}
 
 	/**
@@ -864,7 +866,7 @@ public class SqlToyContext {
 			this.dialect = Dialect.POSTGRESQL;
 		} else if (tmp.startsWith(Dialect.DB2)) {
 			this.dialect = Dialect.DB2;
-		} else if (tmp.startsWith(Dialect.SQLSERVER)) {
+		} else if (tmp.startsWith(Dialect.SQLSERVER) || tmp.startsWith(Dialect.MSSQL)) {
 			this.dialect = Dialect.SQLSERVER;
 		} else if (tmp.startsWith(Dialect.SQLITE)) {
 			this.dialect = Dialect.SQLITE;
@@ -1132,6 +1134,12 @@ public class SqlToyContext {
 			}
 			if (dynamicFecthCacheManager != null) {
 				dynamicFecthCacheManager.destroy();
+			}
+			// 关闭ElasticSearch RestClient
+			if (elasticEndpoints != null) {
+				for (ElasticEndpoint endpoint : elasticEndpoints.values()) {
+					endpoint.closeRestClient();
+				}
 			}
 		} catch (Exception e) {
 
@@ -1478,5 +1486,13 @@ public class SqlToyContext {
 
 	public void setDefaultStatementTimeout(Integer defaultStatementTimeout) {
 		this.defaultStatementTimeout = defaultStatementTimeout;
+	}
+
+	public Boolean getBackslashEscaping() {
+		return backslashEscaping;
+	}
+
+	public void setBackslashEscaping(Boolean backslashEscaping) {
+		this.backslashEscaping = backslashEscaping;
 	}
 }

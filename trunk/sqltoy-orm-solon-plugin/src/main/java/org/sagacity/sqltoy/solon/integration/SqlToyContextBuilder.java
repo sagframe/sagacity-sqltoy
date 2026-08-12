@@ -184,6 +184,7 @@ public class SqlToyContextBuilder {
 		sqlToyContext.setLocalDateTimeFormat(properties.getLocalDateTimeFormat());
 		sqlToyContext.setLocalTimeFormat(properties.getLocalTimeFormat());
 		sqlToyContext.setDistributeIdCacheExpireDays(properties.getDistributeIdCacheExpireDays());
+		sqlToyContext.setBackslashEscaping(properties.getBackslashEscaping());
 		// map 类型结果label是否自动转驼峰处理
 		if (properties.getHumpMapResultTypeLabel() != null) {
 			sqlToyContext.setHumpMapResultTypeLabel(properties.getHumpMapResultTypeLabel());

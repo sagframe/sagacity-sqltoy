@@ -40,12 +40,12 @@ public class SqlExecuteStat {
 	/**
 	 * 是否调试阶段
 	 */
-	private static boolean debug = false;
+	private static volatile boolean debug = false;
 
 	/**
 	 * 打印慢sql(单位毫秒,默认超过8秒)
 	 */
-	private static int printSqlTimeoutMillis = 8000;
+	private static volatile int printSqlTimeoutMillis = 8000;
 
 	// 用于拟合sql中的条件值表达式(前后都以非字符和数字为依据目的是最大幅度的避免参数值里面存在问号,实际执行过程中这个问题已经被规避,但调试打印参数带入无法规避)
 	private final static Pattern ARG_PATTERN = Pattern.compile("\\W\\?\\W");
@@ -57,17 +57,17 @@ public class SqlExecuteStat {
 	private static ThreadLocal<Boolean> threadLocalDebug = new TransmittableThreadLocal<>();
 
 	// sql执行超时处理器
-	public static OverTimeSqlHandler overTimeSqlHandler;
+	public static volatile OverTimeSqlHandler overTimeSqlHandler;
 
 	/**
 	 * 获取业务代码调用位置的实现类
 	 */
-	public static FirstBizCodeTrace firstBizCodeTrace;
+	public static volatile FirstBizCodeTrace firstBizCodeTrace;
 
 	/**
 	 * sql格式化输出器(用于debug sql输出)
 	 */
-	private static SqlFormater sqlFormater;
+	private static volatile SqlFormater sqlFormater;
 
 	public static void start(String sqlId, OperateDetailType type, Class resultType, Boolean debugPrint) {
 		threadLocal.set(
