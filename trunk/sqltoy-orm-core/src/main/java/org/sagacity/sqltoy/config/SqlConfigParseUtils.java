@@ -30,6 +30,7 @@ import org.sagacity.sqltoy.plugins.id.macro.impl.SqlLoop;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
+import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.MacroIfLogic;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
@@ -946,7 +947,7 @@ public class SqlConfigParseUtils {
 		}
 		int dbType = DataSourceUtils.getDBType(dialect);
 		// dialect为null时,尝试从运行时上下文获取数据库类型
-		if (dbType == DataSourceUtils.DBType.UNDEFINE && SqlExecuteStat.get() != null) {
+		if (dbType == DBType.UNDEFINE && SqlExecuteStat.get() != null) {
 			dbType = SqlExecuteStat.get().getDbType();
 		}
 		String queryStr = sqlToyResult.getSql();
@@ -955,6 +956,24 @@ public class SqlConfigParseUtils {
 		String likeValStr;
 		StringBuilder sqlBuilder = null;
 		int lastEnd = 0;
+		boolean isBackslashEscape;
+		// 用户可通过SqlToyContext.backslashEscaping 强制定义:true=ESCAPE '\\'; false=ESCAPE '\'
+		if (SqlToyConstants.backslashEscaping != null) {
+			isBackslashEscape = SqlToyConstants.backslashEscaping;
+		} else {
+			Integer actuallyDBType = SqlToyThreadDataHolder.getActuallyDBType();
+			// kingbase特殊，即使sql_mode是mysql依旧单斜杠
+			if (actuallyDBType != null && actuallyDBType == DBType.KINGBASE) {
+				isBackslashEscape = false;
+			} else {
+				// mysql、vastbase、opengauss系列都用 " ESCAPE '\\\\'"
+				// PostgreSQL/Oracle/SQLServer/DB2/h2/kingbase等 ESCAPE'\\'
+				isBackslashEscape = dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.TIDB
+						|| dbType == DBType.DORIS || dbType == DBType.STARROCKS || dbType == DBType.OCEANBASE
+						|| dbType == DBType.VASTBASE || dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB;
+			}
+		}
+		String escapeClause = isBackslashEscape ? " ESCAPE '\\\\'" : " ESCAPE '\\'";
 		while (m.find()) {
 			paramCnt = StringUtil.matchCnt(queryStr.substring(0, m.start()), ARG_NAME_PATTERN, 0);
 			likeValStr = (sqlToyResult.getParamsValue()[paramCnt] == null) ? null
@@ -975,8 +994,6 @@ public class SqlConfigParseUtils {
 				sqlToyResult.getParamsValue()[paramCnt] = "%".concat(SqlUtil.escapeLikeValue(likeValStr, dbType, true))
 						.concat("%");
 			}
-			// 所有数据库统一使用\转义(配合ESCAPE '\'子句),包括SQLServer
-			// SQLServer的[]括号转义仅在SQL文本中生效,对PreparedStatement参数值无效
 			String tailAfterMatch = queryStr.substring(m.end()).trim().toLowerCase();
 			// 已存在ESCAPE子句则不重复追加
 			if (!tailAfterMatch.startsWith("escape")) {
@@ -984,7 +1001,7 @@ public class SqlConfigParseUtils {
 					sqlBuilder = new StringBuilder();
 				}
 				sqlBuilder.append(queryStr.substring(lastEnd, m.end()));
-				sqlBuilder.append(" ESCAPE '\\\\'");
+				sqlBuilder.append(escapeClause);
 				lastEnd = m.end();
 			}
 		}

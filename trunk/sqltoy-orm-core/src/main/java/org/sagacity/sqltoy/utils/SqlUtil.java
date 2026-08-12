@@ -797,7 +797,7 @@ public class SqlUtil {
 		}
 		// 提醒实际提取数量
 		if (warnLimit) {
-		logger.warn("Large Result:class={},total={}>={}", voClass.getName(), index, warnThresholds);
+			logger.warn("Large Result:class={},total={}>={}", voClass.getName(), index, warnThresholds);
 		}
 		// 提醒实际提取数量
 		if (maxLimit) {

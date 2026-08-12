@@ -693,6 +693,28 @@ public class SqlConfigParseUtilsTest {
 	}
 
 	@Test
+	public void testLikeEscapeMysqlDialect() {
+		// MySQL系列在SQL字符串字面量中将\\解释为单个\(C风格),ESCAPE子句应为'\\'
+		String sql = "select * from table t where t.name like :name";
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "name" },
+				new Object[] { "张_三" }, "mysql");
+		String resultSql = result.getSql();
+		assertTrue(resultSql.contains("like ? ESCAPE '\\\\'"),
+				"MySQL方言ESCAPE子句应为两个反斜杠: " + resultSql);
+	}
+
+	@Test
+	public void testLikeEscapeNonMysqlDialect() {
+		// 非MySQL数据库(如Oracle)将\\视为两个字符,ESCAPE要求恰好一个字符,故应为'\'
+		String sql = "select * from table t where t.name like :name";
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "name" },
+				new Object[] { "张_三" }, "oracle");
+		String resultSql = result.getSql();
+		assertTrue(resultSql.contains("like ? ESCAPE '\\'"),
+				"非MySQL方言ESCAPE子句应为一个反斜杠: " + resultSql);
+	}
+
+	@Test
 	public void testLikeNoSpecialChars() {
 		// value不含_和%: 应包裹%但不产生多余转义
 		String sql = "select * from table t where t.name like :name";

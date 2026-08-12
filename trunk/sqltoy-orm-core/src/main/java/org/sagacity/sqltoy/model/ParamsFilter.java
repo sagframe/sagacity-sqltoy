@@ -313,15 +313,15 @@ public class ParamsFilter implements Serializable {
 		this.type = "exclusive";
 		// >,>=,<,<=,!=,in,between
 		this.compareType = (exclusive.getCompareType() == null) ? "==" : exclusive.getCompareType();
-		if (compareType == "gte") {
+		if ("gte".equals(compareType)) {
 			compareType = ">=";
-		} else if (compareType == "gt") {
+		} else if ("gt".equals(compareType)) {
 			compareType = ">";
-		} else if (compareType == "lt") {
+		} else if ("lt".equals(compareType)) {
 			compareType = "<";
-		} else if (compareType == "lte") {
+		} else if ("lte".equals(compareType)) {
 			compareType = "<=";
-		} else if (compareType == "neq") {
+		} else if ("neq".equals(compareType)) {
 			compareType = "!=";
 		}
 		this.compareValues = exclusive.getCompareValues();

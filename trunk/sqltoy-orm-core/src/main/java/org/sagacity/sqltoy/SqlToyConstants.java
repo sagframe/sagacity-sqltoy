@@ -235,6 +235,11 @@ public class SqlToyConstants {
 	public static Integer defaultStatementTimeout;
 
 	/**
+	 * like查询ESCAPE子句是否使用双反斜杠(true=ESCAPE '\\',false=ESCAPE '\',null=按数据库方言自动判断)
+	 */
+	public static Boolean backslashEscaping;
+
+	/**
 	 * @todo 解析模板中的参数
 	 * @param template
 	 * @return

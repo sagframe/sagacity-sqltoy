@@ -2,7 +2,9 @@
 /bin/
 /.settings/
 /.classpath
+/.vscode/
 .classpath
 /.idea/
 *.iml
 sagacity-sqltoy.iml
+/peon-plan/

@@ -9,6 +9,7 @@ import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.SqlToyThreadDataHolder;
 import org.sagacity.sqltoy.callback.DataSourceCallbackHandler;
 import org.sagacity.sqltoy.config.model.CaseType;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
@@ -625,9 +626,12 @@ public class DataSourceUtils {
 			if (null != sqltoyContext && StringUtil.isNotBlank(sqltoyContext.getDialect())) {
 				dialect = sqltoyContext.getDialect();
 				dbType = getDBType(dialect);
+				Integer realDBType = getDBType(conn);
+				SqlToyThreadDataHolder.setActuallyDBType(realDBType);
 			} else {
 				dbType = getDBType(conn);
 				dialect = getDialect(dbType);
+				SqlToyThreadDataHolder.setActuallyDBType(dbType);
 			}
 			// 调试显示数据库信息,便于在多数据库场景下辨别查询对应的数据库
 			if (SqlToyConstants.showDatasourceInfo()) {
@@ -643,6 +647,7 @@ public class DataSourceUtils {
 			conn = null;
 			throw new RuntimeException(e);
 		} finally {
+			SqlToyThreadDataHolder.clearActuallyDBType();
 			// 释放连接,连接池实际是归还连接，未必一定关闭
 			sqltoyContext.releaseConnection(conn, datasource);
 		}
