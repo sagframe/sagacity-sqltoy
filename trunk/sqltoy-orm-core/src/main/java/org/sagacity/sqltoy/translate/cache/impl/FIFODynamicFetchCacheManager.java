@@ -45,6 +45,9 @@ public class FIFODynamicFetchCacheManager implements DynamicFecthCacheManager {
 	// 检测线程的执行间隔：3分钟（可根据需求调整）
 	private static final long CHECK_INTERVAL = 3 * 60;
 
+	// 标记定时任务是否已经启动，防止重复调度
+	private volatile boolean schedulerStarted = false;
+
 	@Override
 	public HashMap<String, Object[]> getDynamicCache(TranslateConfigModel cacheModel, String cacheType) {
 		String cacheNameLower = cacheModel.getCache().toLowerCase();
@@ -66,8 +69,7 @@ public class FIFODynamicFetchCacheManager implements DynamicFecthCacheManager {
 					cacheModel.getDynamicCacheMaxSize(), (loadFactor > 1) ? 0.75F : loadFactor, true);
 			// 可设置<=0,则不放入过期检测，则表示长期有效
 			if (cacheModel.getKeepAlive() > 0) {
-				cacheInitTime.put(cacheKey,
-						new Long[] { System.currentTimeMillis(), cacheModel.getKeepAlive() * 1L });
+				cacheInitTime.put(cacheKey, new Long[] { System.currentTimeMillis(), cacheModel.getKeepAlive() * 1L });
 			}
 			return map;
 		});
@@ -106,7 +108,11 @@ public class FIFODynamicFetchCacheManager implements DynamicFecthCacheManager {
 	@Override
 	public void initialize() {
 		// 启动定时器
-		scheduler.scheduleAtFixedRate(this::checkAndRemoveTimeoutData, 0, CHECK_INTERVAL, TimeUnit.SECONDS);
+		// 防止多次调用initialize重复提交定时任务
+		if (!schedulerStarted) {
+			scheduler.scheduleAtFixedRate(this::checkAndRemoveTimeoutData, 0, CHECK_INTERVAL, TimeUnit.SECONDS);
+			schedulerStarted = true;
+		}
 	}
 
 	// 如果设置数据保留时间，则建议Map数据集合为Map<key,Object[]{key,name1,name2,...,initTimeMillis},
@@ -132,7 +138,7 @@ public class FIFODynamicFetchCacheManager implements DynamicFecthCacheManager {
 				cacheTypeLower = keySplit[1];
 			}
 			initTimeAndKeepAlive = entry.getValue();
-			if (System.currentTimeMillis() > initTimeAndKeepAlive[0] + initTimeAndKeepAlive[1]) {
+			if (System.currentTimeMillis() > initTimeAndKeepAlive[0] + initTimeAndKeepAlive[1] * 1000) {
 				dynamicFetchCacheMap.get(cacheNameLower)
 						.remove((cacheTypeLower == null) ? cacheNameLower : cacheTypeLower);
 				// 清除过期缓存使用时间定义
@@ -148,5 +154,6 @@ public class FIFODynamicFetchCacheManager implements DynamicFecthCacheManager {
 		if (scheduler != null && !scheduler.isTerminated()) {
 			scheduler.shutdownNow();
 		}
+		schedulerStarted = false;
 	}
 }

@@ -797,11 +797,11 @@ public class SqlUtil {
 		}
 		// 提醒实际提取数量
 		if (warnLimit) {
-			logger.warn("Large Result:class={},total:{}>={}" + index, voClass.getName(), index, warnThresholds);
+		logger.warn("Large Result:class={},total={}>={}", voClass.getName(), index, warnThresholds);
 		}
 		// 提醒实际提取数量
 		if (maxLimit) {
-			logger.warn("Large Result:class={},total:{}>={}" + index, voClass.getName(), index, maxThresholds);
+			logger.warn("Large Result:class={},total:{}>={}", voClass.getName(), index, maxThresholds);
 		}
 		return resultList;
 	}
@@ -1765,7 +1765,8 @@ public class SqlUtil {
 		try {
 			stat = conn.createStatement();
 			int meter = 0;
-			int realBatch = (batchSize == null || batchSize.intValue() > 1) ? batchSize.intValue() : 100;
+			//int realBatch = (batchSize == null || batchSize.intValue() > 1) ? batchSize.intValue() : 100;
+			int realBatch = (batchSize == null || batchSize.intValue() <= 1) ? 100 : batchSize.intValue();
 			int totalRows = statments.length;
 			int i = 0;
 			for (String sql : statments) {
