@@ -866,7 +866,7 @@ public class SqlToyContext {
 			this.dialect = Dialect.POSTGRESQL;
 		} else if (tmp.startsWith(Dialect.DB2)) {
 			this.dialect = Dialect.DB2;
-		} else if (tmp.startsWith(Dialect.SQLSERVER)) {
+		} else if (tmp.startsWith(Dialect.SQLSERVER) || tmp.startsWith(Dialect.MSSQL)) {
 			this.dialect = Dialect.SQLSERVER;
 		} else if (tmp.startsWith(Dialect.SQLITE)) {
 			this.dialect = Dialect.SQLITE;

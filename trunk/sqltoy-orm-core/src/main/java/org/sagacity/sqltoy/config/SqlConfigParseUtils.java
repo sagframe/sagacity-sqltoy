@@ -981,22 +981,25 @@ public class SqlConfigParseUtils {
 			if (null == likeValStr) {
 				continue;
 			}
-			// 检查值首尾是否存在未转义的%符号(如来自l-like/r-like过滤的通配符)
-			// 已被escapeLike过滤器转义的%(\%)以及中间位置的%不视为通配符
+			// 已被escapeLike过滤器转义的%(\%)排除，避免干扰后续判断
 			String stripped = likeValStr.replace("\\%", "");
-			boolean hasPercent = stripped.startsWith("%") || stripped.endsWith("%");
-			if (hasPercent) {
-				// 值中首尾已包含%符号(如来自l-like/r-like过滤),保留原有%作为通配符
+			// 判断转义后的值是否包含反斜杠,决定是否需要追加ESCAPE子句
+			boolean needEscape = false;
+			//只要参数中已经有%符号，这种情况就不需要再加%符号了,否则会影响用户的查询意图
+			if (stripped.indexOf("%") != -1) {
 				// 仅转义_等特殊字符,避免用户输入的_被当作通配符
-				sqlToyResult.getParamsValue()[paramCnt] = SqlUtil.escapeLikeValue(likeValStr, dbType, false);
+				String escaped = SqlUtil.escapeLikeValue(likeValStr, dbType, false);
+				sqlToyResult.getParamsValue()[paramCnt] = escaped;
+				needEscape = escaped.contains("\\");
 			} else {
 				// 值首尾不存在未转义的%符号,前后增加%作为通配符,并转义_和%等特殊字符
-				sqlToyResult.getParamsValue()[paramCnt] = "%".concat(SqlUtil.escapeLikeValue(likeValStr, dbType, true))
-						.concat("%");
+				String escaped = SqlUtil.escapeLikeValue(likeValStr, dbType, true);
+				sqlToyResult.getParamsValue()[paramCnt] = "%".concat(escaped).concat("%");
+				needEscape = escaped.contains("\\");
 			}
 			String tailAfterMatch = queryStr.substring(m.end()).trim().toLowerCase();
-			// 已存在ESCAPE子句则不重复追加
-			if (!tailAfterMatch.startsWith("escape")) {
+			// 仅当值中有被转义的特殊字符且sql中尚无ESCAPE子句时才追加
+			if (needEscape && !tailAfterMatch.startsWith("escape")) {
 				if (sqlBuilder == null) {
 					sqlBuilder = new StringBuilder();
 				}
