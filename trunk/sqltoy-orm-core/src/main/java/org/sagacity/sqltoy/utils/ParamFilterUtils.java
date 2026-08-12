@@ -854,16 +854,24 @@ public class ParamFilterUtils {
 		if (StringUtil.isBlank(paramValue)) {
 			return null;
 		}
+		int dbType = DBType.UNDEFINE;
+		// dialect为null时,尝试从运行时上下文获取数据库类型
+		if (SqlExecuteStat.get() != null) {
+			dbType = SqlExecuteStat.get().getDbType();
+		}
+		String escapeStr;
 		if (paramValue instanceof String) {
+			escapeStr = SqlUtil.escapeLikeValue(paramValue.toString(), dbType, true);
 			if (isLeft) {
-				return "%".concat(paramValue.toString());
+				return "%".concat(escapeStr);
 			}
-			return paramValue.toString().concat("%");
+			return escapeStr.concat("%");
 		} else if (paramValue instanceof String[]) {
 			String[] tmpAry = (String[]) paramValue;
 			for (int i = 0, n = tmpAry.length; i < n; i++) {
 				if (tmpAry[i] != null) {
-					tmpAry[i] = isLeft ? "%".concat(tmpAry[i]) : tmpAry[i].concat("%");
+					escapeStr = SqlUtil.escapeLikeValue(tmpAry[i], dbType, true);
+					tmpAry[i] = isLeft ? "%".concat(escapeStr) : escapeStr.concat("%");
 				}
 			}
 			return tmpAry;
@@ -871,8 +879,8 @@ public class ParamFilterUtils {
 			List tmpList = (List) paramValue;
 			for (int i = 0, n = tmpList.size(); i < n; i++) {
 				if (tmpList.get(i) != null) {
-					tmpList.set(i,
-							isLeft ? "%".concat(tmpList.get(i).toString()) : tmpList.get(i).toString().concat("%"));
+					escapeStr = SqlUtil.escapeLikeValue(tmpList.get(i).toString(), dbType, true);
+					tmpList.set(i, isLeft ? "%".concat(escapeStr) : escapeStr.concat("%"));
 				}
 			}
 			return tmpList;
@@ -884,7 +892,8 @@ public class ParamFilterUtils {
 			while (iter.hasNext()) {
 				cell = iter.next();
 				if (cell != null) {
-					result.add(isLeft ? "%".concat(cell.toString()) : cell.toString().concat("%"));
+					escapeStr = SqlUtil.escapeLikeValue(cell.toString(), dbType, true);
+					result.add(isLeft ? "%".concat(escapeStr) : escapeStr.concat("%"));
 				}
 			}
 			return result;

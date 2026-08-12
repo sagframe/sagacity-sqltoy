@@ -984,7 +984,7 @@ public class SqlConfigParseUtils {
 					sqlBuilder = new StringBuilder();
 				}
 				sqlBuilder.append(queryStr.substring(lastEnd, m.end()));
-				sqlBuilder.append(" ESCAPE '\\'");
+				sqlBuilder.append(" ESCAPE '\\\\'");
 				lastEnd = m.end();
 			}
 		}

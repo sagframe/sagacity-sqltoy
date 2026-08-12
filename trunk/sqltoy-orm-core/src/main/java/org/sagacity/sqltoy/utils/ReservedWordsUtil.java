@@ -66,7 +66,7 @@ public class ReservedWordsUtil {
 			return sql.replaceAll("\\[", "\"").replaceAll("\\]", "\"");
 		}
 		if (dbType == DBType.H2) {
-			return sql.replaceAll("\\[", "'").replaceAll("\\]", "'");
+			return sql.replaceAll("\\[", "\"").replaceAll("\\]", "\"");
 		}
 		if (dbType == null || dbType == DBType.SQLSERVER || dbType == DBType.SQLITE) {
 			return sql;
@@ -102,7 +102,7 @@ public class ReservedWordsUtil {
 			return "`".concat(column).concat("`");
 		}
 		if (dbType == DBType.H2) {
-			return "'".concat(column).concat("'");
+			return "\"".concat(column).concat("\"");
 		}
 		if (dbType == DBType.ORACLE || dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14
 				|| dbType == DBType.KINGBASE || dbType == DBType.DB2 || dbType == DBType.GAUSSDB
@@ -160,7 +160,7 @@ public class ReservedWordsUtil {
 					|| dbType == DBType.TDENGINE || dbType == DBType.DORIS|| dbType == DBType.STARROCKS) {
 				sqlBuff.append("`").append(keyWord).append("`");
 			} else if (dbType == DBType.H2) {
-				sqlBuff.append("'").append(keyWord).append("'");
+				sqlBuff.append("\"").append(keyWord).append("\"");
 			} else {
 				sqlBuff.append(keyWord);
 			}

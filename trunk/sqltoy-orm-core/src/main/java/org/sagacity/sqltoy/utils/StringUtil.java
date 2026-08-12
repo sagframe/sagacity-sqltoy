@@ -19,26 +19,26 @@ import java.util.regex.Pattern;
  * @modify {Date:2020-05-18,完整修复splitExcludeSymMark bug}
  * @modify {Date:2023-09-12,修复splitExcludeSymMark，以多字符切割的bug}
  */
-@SuppressWarnings({ "rawtypes", "unchecked" })
+@SuppressWarnings({ "rawtypes" })
 public class StringUtil {
 	/**
 	 * 字符串中包含中文的表达式
 	 */
-	private static Pattern chinaPattern = Pattern.compile("[\u4e00-\u9fa5]");
+	private static final Pattern chinaPattern = Pattern.compile("[\u4e00-\u9fa5]");
 
 	/**
 	 * 单引号匹配正则表达式
 	 */
-	private static Pattern quotaPattern = Pattern.compile("(^')|([^\\\\]')");
+	private static final Pattern quotaPattern = Pattern.compile("(^')|([^\\\\]')");
 
-	private static Pattern quotaChkPattern = Pattern.compile("[^\\\\]'");
+	private static final Pattern quotaChkPattern = Pattern.compile("[^\\\\]'");
 
 	/**
 	 * 双引号匹配正则表达式
 	 */
-	private static Pattern twoQuotaPattern = Pattern.compile("(^\")|([^\\\\]\")");
+	private static final Pattern twoQuotaPattern = Pattern.compile("(^\")|([^\\\\]\")");
 
-	private static Pattern twoQuotaChkPattern = Pattern.compile("[^\\\\]\"");
+	private static final Pattern twoQuotaChkPattern = Pattern.compile("[^\\\\]\"");
 
 	/**
 	 * private constructor,cann't be instantiated by other class 私有构造函数方法防止被实例化
@@ -92,22 +92,22 @@ public class StringUtil {
 	/**
 	 * 字符串trim后比较是否相等
 	 * 
-	 * @param soure
+	 * @param source
 	 * @param target
 	 * @return
 	 */
-	public static boolean trimedEquals(String soure, String target) {
-		if (soure == null || target == null) {
-			return soure == target;
+	public static boolean trimedEquals(String source, String target) {
+		if (source == null || target == null) {
+			return source == target;
 		}
-		return soure.trim().equals(target.trim());
+		return source.trim().equals(target.trim());
 	}
 
-	public static boolean trimedIgnoreCaseEquals(String soure, String target) {
-		if (soure == null || target == null) {
-			return soure == target;
+	public static boolean trimedIgnoreCaseEquals(String source, String target) {
+		if (source == null || target == null) {
+			return source == target;
 		}
-		return soure.trim().equalsIgnoreCase(target.trim());
+		return source.trim().equalsIgnoreCase(target.trim());
 	}
 
 	/**
@@ -293,7 +293,8 @@ public class StringUtil {
 		if (loopSize <= 0) {
 			return "";
 		}
-		return String.join(sign, Collections.nCopies(loopSize, source));
+		String item = (source == null) ? "" : source;
+		return String.join(sign, Collections.nCopies(loopSize, item));
 	}
 
 	/**
@@ -332,6 +333,9 @@ public class StringUtil {
 	 * @return
 	 */
 	public static int getSymMarkIndex(String beginMarkSign, String endMarkSign, String source, int startIndex) {
+		if (source == null) {
+			return -1;
+		}
 		Pattern pattern = null;
 		Pattern chkPattern = null;
 		// 单引号和双引号，排除\' 和 \"
@@ -439,6 +443,9 @@ public class StringUtil {
 	 * @return
 	 */
 	public static int getSymMarkMatchIndex(String beginMarkSign, String endMarkSign, String source, int startIndex) {
+		if (source == null) {
+			return -1;
+		}
 		// 判断对称符号是否相等
 		boolean symMarkIsEqual = beginMarkSign.equals(endMarkSign) ? true : false;
 		Pattern startP = Pattern.compile(beginMarkSign);
@@ -476,6 +483,9 @@ public class StringUtil {
 	 * @return
 	 */
 	public static int getSymMarkReverseIndex(String beginMarkSign, String endMarkSign, String source, int endIndex) {
+		if (source == null) {
+			return -1;
+		}
 		int beginIndex = source.length() - endIndex;
 		String realSource = new StringBuilder(source).reverse().toString();
 		String realStartMark = beginMarkSign;
@@ -498,6 +508,9 @@ public class StringUtil {
 	 * @return
 	 */
 	public static String clearSymMarkContent(String sql, String startMark, String endMark) {
+		if (sql == null) {
+			return null;
+		}
 		StringBuilder lastSql = new StringBuilder(sql);
 		int endMarkLength = endMark.length();
 		// 删除所有对称的括号中的内容
@@ -522,6 +535,9 @@ public class StringUtil {
 	 * @return
 	 */
 	public static boolean matches(String source, String regex) {
+		if (regex == null) {
+			return false;
+		}
 		return matches(source, Pattern.compile(regex));
 	}
 
@@ -553,6 +569,9 @@ public class StringUtil {
 	}
 
 	public static int matchIndex(String source, Pattern pattern) {
+		if (source == null) {
+			return -1;
+		}
 		Matcher m = pattern.matcher(source);
 		if (m.find()) {
 			return m.start();
@@ -561,7 +580,7 @@ public class StringUtil {
 	}
 
 	public static int[] matchIndex(String source, Pattern pattern, int start) {
-		if (source.length() <= start) {
+		if (source == null || source.length() <= start) {
 			return new int[] { -1, -1 };
 		}
 		Matcher m = pattern.matcher(source.substring(start));
@@ -584,11 +603,13 @@ public class StringUtil {
 			return -1;
 		}
 		Matcher m = pattern.matcher(source);
+		// offset不能为负数，做保护
+		offset = Math.max(offset, 0);
 		int matchIndex = -1;
 		int start = 0;
 		while (m.find(start)) {
 			matchIndex = m.start();
-			start = m.end() - offset;
+			start = Math.max(m.end() - offset, m.start() + 1);
 		}
 		return matchIndex;
 	}
@@ -625,11 +646,12 @@ public class StringUtil {
 			return 0;
 		}
 		Matcher matcher = pattern.matcher(source);
+		offset = Math.max(offset, 0);
 		int count = 0;
 		int start = 0;
 		while (matcher.find(start)) {
 			count++;
-			start = matcher.end() - offset;
+			start = Math.max(matcher.end() - offset, matcher.start() + 1);
 		}
 		return count;
 	}
@@ -643,10 +665,16 @@ public class StringUtil {
 	 * @return
 	 */
 	public static int matchCnt(String source, String regex, int beginIndex, int endIndex) {
+		if (source == null) {
+			return 0;
+		}
 		return matchCnt(source.substring(beginIndex, endIndex), Pattern.compile(regex), 0);
 	}
 
 	public static int matchCnt(String source, String regex, int beginIndex, int endIndex, int offset) {
+		if (source == null) {
+			return 0;
+		}
 		return matchCnt(source.substring(beginIndex, endIndex), Pattern.compile(regex), offset);
 	}
 
@@ -658,6 +686,9 @@ public class StringUtil {
 	 * @return
 	 */
 	public static int indexOrder(String source, String regex, int order) {
+		if (source == null) {
+			return -1;
+		}
 		int begin = 0;
 		int count = 0;
 		int index = source.indexOf(regex, begin);
@@ -678,6 +709,9 @@ public class StringUtil {
 	 * @return
 	 */
 	public static int[] str2ASCII(String str) {
+		if (str == null) {
+			return new int[0];
+		}
 		char[] chars = str.toCharArray(); // 把字符中转换为字符数组
 		int[] result = new int[chars.length];
 		for (int i = 0; i < chars.length; i++) {// 输出结果
@@ -712,7 +746,7 @@ public class StringUtil {
 		int start = 0;
 		int skipIndex = 0;
 		int preSplitIndex = splitIndex;
-		ArrayList splitResults = new ArrayList();
+		ArrayList<String> splitResults = new ArrayList<String>();
 		int max = -1;
 		int[] startEnd;
 		while (splitIndex != -1) {
@@ -743,12 +777,7 @@ public class StringUtil {
 			}
 		}
 		splitResults.add(source.substring(start));
-		int resultSize = splitResults.size();
-		String[] resultStr = new String[resultSize];
-		for (int j = 0; j < resultSize; j++) {
-			resultStr[j] = (String) splitResults.get(j);
-		}
-		return resultStr;
+		return splitResults.toArray(new String[0]);
 	}
 
 	/**
@@ -923,6 +952,8 @@ public class StringUtil {
 		if (value == null) {
 			return null;
 		}
+		preLength = Math.max(0, preLength);
+		tailLength = Math.max(0, tailLength);
 		String tmp = value.toString();
 		if (tmp.length() <= preLength + tailLength) {
 			return tmp;
@@ -985,6 +1016,10 @@ public class StringUtil {
 		String[] result = new String[labelNames.length];
 		int aliasIndex = 0;
 		for (int i = 0, n = labelNames.length; i < n; i++) {
+			if (labelNames[i] == null) {
+				result[i] = null;
+				continue;
+			}
 			aliasIndex = labelNames[i].indexOf(":");
 			if (aliasIndex != -1) {
 				result[i] = toHumpStr(labelNames[i].substring(aliasIndex + 1), false);
@@ -1021,7 +1056,8 @@ public class StringUtil {
 		if (idx == -1) {
 			return source;
 		}
-		return source.substring(0, idx) + replacement + source.substring(idx + target.length());
+		String rep = (replacement == null) ? "" : replacement;
+		return source.substring(0, idx) + rep + source.substring(idx + target.length());
 	}
 
 	public static String replaceFirstStr(String source, String target, String replacement) {
@@ -1055,7 +1091,7 @@ public class StringUtil {
 		int realFrom = Math.max(0, fromIndex);
 		int realEnd = Math.min(srcLen - 1, endIndex);
 		// 区间无效，直接返回
-		if (realFrom >= realEnd) {
+		if (realFrom > realEnd) {
 			return source;
 		}
 		// 拆分：前缀 + 待替换区间 + 后缀（基于原字符串下标，绝对安全）
@@ -1083,10 +1119,52 @@ public class StringUtil {
 		if (isBlank(SBCStr)) {
 			return SBCStr;
 		}
-		// 常用符号进行全角转半角
-		return SBCStr.replaceAll("\\；", ";").replaceAll("\\？", "?").replaceAll("\\．", ".").replaceAll("\\：", ":")
-				.replaceAll("\\＇", "'").replaceAll("\\＂", "\"").replaceAll("\\，", ",").replaceAll("\\【", "[")
-				.replaceAll("\\】", "]").replaceAll("\\）", ")").replaceAll("\\（", "(").replaceAll("\\＝", "=");
+		char[] chars = SBCStr.toCharArray();
+		StringBuilder sb = new StringBuilder(chars.length);
+		for (char c : chars) {
+			switch (c) {
+			case '；':
+				sb.append(';');
+				break;
+			case '？':
+				sb.append('?');
+				break;
+			case '．':
+				sb.append('.');
+				break;
+			case '：':
+				sb.append(':');
+				break;
+			case '＇':
+				sb.append('\'');
+				break;
+			case '＂':
+				sb.append('"');
+				break;
+			case '，':
+				sb.append(',');
+				break;
+			case '【':
+				sb.append('[');
+				break;
+			case '】':
+				sb.append(']');
+				break;
+			case '）':
+				sb.append(')');
+				break;
+			case '（':
+				sb.append('(');
+				break;
+			case '＝':
+				sb.append('=');
+				break;
+			default:
+				sb.append(c);
+				break;
+			}
+		}
+		return sb.toString();
 	}
 
 	/**
@@ -1122,6 +1200,9 @@ public class StringUtil {
 	 * @return
 	 */
 	public static boolean like(String source, String[] keywords) {
+		if (source == null || keywords == null || keywords.length == 0) {
+			return false;
+		}
 		int index = 0;
 		for (String keyword : keywords) {
 			index = source.indexOf(keyword, index);
@@ -1161,6 +1242,10 @@ public class StringUtil {
 			result = source.split("\\;");
 		} else if (":".equals(regex)) {
 			result = source.split("\\:");
+		} else if (".".equals(regex)) {
+			result = source.split("\\.");
+		} else if ("|".equals(regex)) {
+			result = source.split("\\|");
 		} else if (regex.length() > 0 && "".equals(regex.trim())) {
 			result = source.split("\\s+");
 		} else if ("||".equals(regex)) {
@@ -1246,6 +1331,7 @@ public class StringUtil {
 		if (source == null) {
 			return source;
 		}
+		offset = Math.max(offset, 0);
 		Matcher matcher = pattern.matcher(source);
 		int count = 0;
 		int start = 0;
@@ -1256,7 +1342,7 @@ public class StringUtil {
 			if (count == matchCnt) {
 				return source.substring(0, matcher.start()) + replaceStr + source.substring(end);
 			}
-			start = end - offset;
+			start = Math.max(end - offset, matcher.start() + 1);
 		}
 		return source;
 	}
@@ -1293,9 +1379,8 @@ public class StringUtil {
 	}
 
 	/**
-	 * 完全离散脱敏：将脱敏字符均匀散布在整个字符串中，而非连续块，增加逆向还原难度。
-	 * 算法：根据脱敏比例计算步长 stride = ceil(length / maskLength)，从 stride/2 开始每隔 stride 个字符脱敏一位，
-	 * 末尾剩余不足部分从尾部补齐，确保脱敏字符总数准确且分布离散。
+	 * 完全离散脱敏：将脱敏字符均匀散布在整个字符串中，而非连续块，增加逆向还原难度。 算法：根据脱敏比例计算步长 stride = ceil(length /
+	 * maskLength)，从 stride/2 开始每隔 stride 个字符脱敏一位， 末尾剩余不足部分从尾部补齐，确保脱敏字符总数准确且分布离散。
 	 *
 	 * @param str      原始字符串
 	 * @param maskCode 脱敏替换字符（取首字符）

@@ -797,11 +797,11 @@ public class SqlUtil {
 		}
 		// 提醒实际提取数量
 		if (warnLimit) {
-			logger.warn("Large Result:class={},total:{}>={}" + index, voClass.getName(), index, warnThresholds);
+		logger.warn("Large Result:class={},total={}>={}", voClass.getName(), index, warnThresholds);
 		}
 		// 提醒实际提取数量
 		if (maxLimit) {
-			logger.warn("Large Result:class={},total:{}>={}" + index, voClass.getName(), index, maxThresholds);
+			logger.warn("Large Result:class={},total:{}>={}", voClass.getName(), index, maxThresholds);
 		}
 		return resultList;
 	}
@@ -1765,7 +1765,8 @@ public class SqlUtil {
 		try {
 			stat = conn.createStatement();
 			int meter = 0;
-			int realBatch = (batchSize == null || batchSize.intValue() > 1) ? batchSize.intValue() : 100;
+			//int realBatch = (batchSize == null || batchSize.intValue() > 1) ? batchSize.intValue() : 100;
+			int realBatch = (batchSize == null || batchSize.intValue() <= 1) ? 100 : batchSize.intValue();
 			int totalRows = statments.length;
 			int i = 0;
 			for (String sql : statments) {
@@ -3036,11 +3037,20 @@ public class SqlUtil {
 		}
 		// 先去除已有转义,确保多次调用幂等,避免二次转义
 		// 用占位符保护\\避免与\_、\%产生交叉干扰
-		String result = value.replace("\\\\", "\u0000").replace("\\_", "_").replace("\\%", "%").replace("\u0000", "\\");
+		String result = value.replace("\\\\", "\u0000").replace("\\_", "_");
+		if (escapePercent) {
+			result = result.replace("\\%", "%");
+		} else {
+			// escapePercent=false时保护已转义的\%,避免被后续\\转义步骤破坏
+			result = result.replace("\\%", "\u0001");
+		}
+		result = result.replace("\u0000", "\\");
 		// 重新转义
 		result = result.replace("\\", "\\\\").replace("_", "\\_");
 		if (escapePercent) {
 			result = result.replace("%", "\\%");
+		} else {
+			result = result.replace("\u0001", "\\%");
 		}
 		return result;
 	}
