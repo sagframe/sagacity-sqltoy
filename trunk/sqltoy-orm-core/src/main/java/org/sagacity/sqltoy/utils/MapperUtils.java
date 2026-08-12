@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.sagacity.sqltoy.config.annotation.SqlToyFieldAlias;
@@ -333,8 +332,7 @@ public class MapperUtils {
 			List dataSets = invokeGetValues(sourceList, getMethods);
 			return reflectListToBean(dataSets, targetClass, setMethods, recursionLevel);
 		} catch (Exception e) {
-			logger.error("map/mapList,类型:[" + sourceClass.getName() + "-->" + targetClass.getName() + "]映射操作失败",
-					e);
+			e.printStackTrace();
 			throw new RuntimeException("map/mapList,类型:[" + sourceClass.getName() + "-->" + targetClass.getName()
 					+ "]映射操作失败:" + e.getMessage());
 		}
@@ -403,16 +401,15 @@ public class MapperUtils {
 			Map<String, String> fieldsNameMap) {
 		String sourceKey = sourceClass.getName();
 		String resultKey = resultType.getName();
-		// 使用TreeMap保证toString()的确定性，避免HashMap因hash桶分布不同导致缓存key不一致
-		String mapKey = (fieldsNameMap == null || fieldsNameMap.isEmpty()) ? ""
-				: new TreeMap<>(fieldsNameMap).toString();
+		String mapKey = (fieldsNameMap == null || fieldsNameMap.isEmpty()) ? "" : fieldsNameMap.toString();
 		String key = "fromClass=".concat(sourceKey).concat(";toClass=").concat(resultKey).concat(";mapKey=")
 				.concat(mapKey);
+		// 通过缓存获取
 		DTOEntityMapModel result = dtoEntityMapperCache.get(key);
 		if (result == null) {
 			result = sourceMapTarget(sourceClass, resultType, fieldsNameMap);
 			if (result != null) {
-				dtoEntityMapperCache.putIfAbsent(key, result);
+				dtoEntityMapperCache.put(key, result);
 			}
 		}
 		return result;
@@ -780,7 +777,7 @@ public class MapperUtils {
 				}
 				parentClass = parentClass.getSuperclass();
 			}
-			classHasAliasMap.putIfAbsent(mapKey, aliasMap);
+			classHasAliasMap.put(mapKey, aliasMap);
 		}
 		return aliasMap;
 	}

@@ -110,7 +110,8 @@ public class NumberUtil {
 			df.applyPattern(pattern);
 			return df.format(tmp);
 		} catch (Exception e) {
-			logger.error("value:" + target + ";pattern=" + pattern + " " + e.getMessage(), e);
+			e.printStackTrace();
+			logger.error("value:" + target + ";pattern=" + pattern + e.getMessage());
 		}
 		return target.toString();
 	}
@@ -151,7 +152,8 @@ public class NumberUtil {
 			df.applyPattern(pattern);
 			return df.format(tmp);
 		} catch (Exception e) {
-			logger.error(e.getMessage(), e);
+			e.printStackTrace();
+			logger.error(e.getMessage());
 		}
 		return target.toString();
 	}
@@ -169,7 +171,7 @@ public class NumberUtil {
 		try {
 			return Float.valueOf(nf.parse(percent).floatValue());
 		} catch (ParseException e) {
-			logger.error(e.getMessage(), e);
+			e.printStackTrace();
 		}
 		return null;
 	}
@@ -226,11 +228,6 @@ public class NumberUtil {
 	 */
 	public static BigDecimal capitalMoneyToNum(String capitalMoney) {
 		capitalMoney = capitalMoney.replaceAll("\\s+", "").replace("零", "").replace("圆", "元");
-		// 负号提前剥离，避免干扰parseLowThousandMoney的substring(index-1,index)
-		boolean isNegative = capitalMoney.startsWith("负");
-		if (isNegative) {
-			capitalMoney = capitalMoney.substring(1);
-		}
 		// 默认小数位长度，默认到厘
 		int scale = 3;
 		if (capitalMoney.endsWith("整")) {
@@ -242,30 +239,22 @@ public class NumberUtil {
 			capitalMoney = capitalMoney.replace(capitalMoneyNumber[i + 1], Integer.toString(i + 1));
 		}
 		int billionIndex = capitalMoney.lastIndexOf("亿");
-		int yuanIndex = capitalMoney.indexOf("元");
 		// [0]亿元、[1]万元、[2]角币
 		String[] splitsCapitalMoney = { "0", "0", "0" };
 		// 是否包含亿元
 		if (billionIndex != -1) {
 			splitsCapitalMoney[0] = capitalMoney.substring(0, billionIndex);
-			if (yuanIndex != -1) {
-				splitsCapitalMoney[1] = capitalMoney.substring(billionIndex + 1, yuanIndex);
-			} else {
-				splitsCapitalMoney[1] = capitalMoney.substring(billionIndex + 1);
-			}
-		} else if (yuanIndex != -1) {
-			splitsCapitalMoney[1] = capitalMoney.substring(0, yuanIndex);
-		} else {
-			// 无亿无元，整串作为万元段处理(兼容"壹佰万"、"叁仟"、"玖角捌分"等不含元的输入)
-			splitsCapitalMoney[1] = capitalMoney;
+			splitsCapitalMoney[1] = capitalMoney.substring(billionIndex + 1, capitalMoney.indexOf("元"));
+		} else if (capitalMoney.indexOf("元") != -1) {
+			splitsCapitalMoney[1] = capitalMoney.substring(0, capitalMoney.indexOf("元"));
 		}
-		if (yuanIndex != -1 && yuanIndex != capitalMoney.length() - 1) {
-			splitsCapitalMoney[2] = capitalMoney.substring(yuanIndex + 1);
+		if (capitalMoney.indexOf("元") != capitalMoney.length() - 1) {
+			splitsCapitalMoney[2] = capitalMoney.substring(capitalMoney.indexOf("元") + 1);
 		}
 		// 分段处理合并
 		BigDecimal result = parseMillMoney(splitsCapitalMoney[0]).multiply(HUNDRED_MILLION)
 				.add(parseMillMoney(splitsCapitalMoney[1])).add(parseLowThousandMoney(splitsCapitalMoney[2]));
-		if (isNegative) {
+		if (capitalMoney.indexOf("负") == 0) {
 			return BigDecimal.ZERO.subtract(result).setScale(scale, RoundingMode.HALF_UP);
 		}
 		return result.setScale(scale, RoundingMode.HALF_UP);
@@ -279,7 +268,7 @@ public class NumberUtil {
 	public static String toCapitalMoney(BigDecimal money) {
 		// 取绝对值
 		BigDecimal realMoney = money.setScale(5, RoundingMode.HALF_UP).abs();
-		if (realMoney.compareTo(BigDecimal.ZERO) == 0) {
+		if (realMoney.compareTo(new BigDecimal(0)) == 0) {
 			return "零元";
 		}
 		// 绝对值字符串
@@ -292,11 +281,12 @@ public class NumberUtil {
 		}
 		// 处理整数部分
 		String result = numberToChina(intPartStr, true);
+		// 处理以"壹拾"开头的结果统一替换成"拾"
+		if (result.startsWith("壹拾")) {
+			result = result.substring(1);
+		}
 		if (!"".equals(result)) {
 			result += "元";
-		} else if (dotIndex != -1 && !"".equals(decimalPartStr) && Integer.parseInt(decimalPartStr) != 0) {
-			// 整数部分为0但有角分，补"零元"
-			result = "零元";
 		}
 
 		// 小于零
@@ -345,9 +335,6 @@ public class NumberUtil {
 	 * @return
 	 */
 	public static BigDecimal getMax(BigDecimal[] bigArray) {
-		if (bigArray == null || bigArray.length == 0) {
-			return null;
-		}
 		BigDecimal max = bigArray[0];
 		for (int i = 0; i < bigArray.length; i++) {
 			if (max.compareTo(bigArray[i]) < 0) {
@@ -363,9 +350,6 @@ public class NumberUtil {
 	 * @return
 	 */
 	public static BigDecimal getMin(BigDecimal[] bigArray) {
-		if (bigArray == null || bigArray.length == 0) {
-			return null;
-		}
 		BigDecimal min = bigArray[0];
 		for (int i = 0; i < bigArray.length; i++) {
 			if (min.compareTo(bigArray[i]) > 0) {
@@ -455,7 +439,7 @@ public class NumberUtil {
 			}
 			return nf.parse(parseTarget.replace(",", ""));
 		} catch (ParseException e) {
-			logger.error("value:" + parseTarget + " " + e.getMessage(), e);
+			logger.error("value:" + parseTarget + "" + e.getMessage());
 		}
 		return null;
 	}
@@ -507,34 +491,18 @@ public class NumberUtil {
 			temp = Integer.parseInt(sourceInt.substring(length - i - 1, length - i));
 			if (temp == 0) {
 				if (i > 0 && i % 4 == 0) {
-					String currentUnit = numUOM[i - 1];
-					// 万亿、万兆等为复合单位，不删除前一个大单位
-					boolean isCompoundWan = currentUnit.equals("万") && i > 4;
-					if (!isCompoundWan && "万亿兆京".indexOf(firstChar) != -1) {
-						// 前一个大单位可能是复合单位(如"万亿")，需删除两个字符
-						if (firstChar.equals("万") && targetStr.length() > 1
-								&& "亿兆京".indexOf(targetStr.charAt(1)) != -1) {
-							targetStr.delete(0, 2);
-						} else {
-							targetStr.delete(0, 1);
-						}
+					// 4位全是零，剔除掉单位
+					if ("万亿兆京".indexOf(firstChar) != -1) {
+						targetStr.delete(0, 1);
 					}
-					targetStr.insert(0, currentUnit);
+					targetStr.insert(0, numUOM[i - 1]);
 				} else if ("零万亿兆京".indexOf(firstChar) == -1) {
 					targetStr.insert(0, "零");
 				}
 			} else {
+				// 4位全是零，剔除掉单位
 				if ((i > 0 && i % 4 == 0) && ("万亿兆京".indexOf(firstChar) != -1)) {
-					String currentUnit = realUOM[i - 1];
-					boolean isCompoundWan = currentUnit.equals("万") && i > 4;
-					if (!isCompoundWan) {
-						if (firstChar.equals("万") && targetStr.length() > 1
-								&& "亿兆京".indexOf(targetStr.charAt(1)) != -1) {
-							targetStr.delete(0, 2);
-						} else {
-							targetStr.delete(0, 1);
-						}
-					}
+					targetStr.delete(0, 1);
 				}
 				targetStr.insert(0, chinaNum[temp] + ((i > 0) ? realUOM[i - 1] : ""));
 			}
@@ -561,9 +529,7 @@ public class NumberUtil {
 		for (int i = 0; i < uoms.length; i++) {
 			index = capitalMoneyStr.indexOf(uoms[i]);
 			if (index != -1) {
-				// 拾/佰/仟出现在首位表示省略了"壹"(如"拾元"表示壹拾元)
-				double digit = (index == 0) ? 1 : Double.parseDouble(capitalMoneyStr.substring(index - 1, index));
-				splitMoneyNum = digit * multiples[i];
+				splitMoneyNum = Double.parseDouble(capitalMoneyStr.substring(index - 1, index)) * multiples[i];
 				moneyNum = moneyNum.add(new BigDecimal(splitMoneyNum));
 			}
 		}
@@ -625,7 +591,7 @@ public class NumberUtil {
 		Set<Integer> resultSet = new HashSet<Integer>(realSize);
 		int randomNum;
 		while (resultSet.size() < realSize) {
-			randomNum = SECURE_RANDOM.nextInt(maxValue);
+			randomNum = (int) (Math.random() * maxValue);
 			resultSet.add(randomNum);
 		}
 		return resultSet.toArray();
@@ -641,7 +607,7 @@ public class NumberUtil {
 		for (int probabilitiy : probabilities) {
 			total = total + probabilitiy;
 		}
-		int randomData = SECURE_RANDOM.nextInt(total) + 1;
+		int randomData = (int) (Math.random() * total) + 1;
 		int base = 0;
 		for (int i = 0; i < probabilities.length; i++) {
 			if (randomData > base && randomData <= base + probabilities[i]) {
@@ -661,9 +627,6 @@ public class NumberUtil {
 	public static String convertToEnglishMoney(BigDecimal value) {
 		if (null == value) {
 			return "";
-		}
-		if (value.compareTo(BigDecimal.ZERO) == 0) {
-			return "ZERO ONLY";
 		}
 		String str = value.toString();
 		int dotIndex = str.indexOf(".");
@@ -704,6 +667,7 @@ public class NumberUtil {
 		}
 
 		String lstrrev = reverse(lstr); // 对左边的字串取反
+		String[] a = new String[5]; // 定义5个字串变量来存放解析出来的叁位一组的字串
 
 		switch (lstrrev.length() % 3) {
 		case 1:
@@ -718,20 +682,20 @@ public class NumberUtil {
 		StringBuilder lm = new StringBuilder(); // 用来存放转换後的整数部分
 		int loopEnd = lstrrev.length() / 3;
 		for (int i = 0; i < loopEnd; i++) {
-			String threeDigits = reverse(lstrrev.substring(3 * i, 3 * i + 3)); // 截取第一个叁位
-			if (!"000".equals(threeDigits)) { // 用来避免这种情况：1000000 = one million thousand only
+			a[i] = reverse(lstrrev.substring(3 * i, 3 * i + 3)); // 截取第一个叁位
+			if (!"000".equals(a[i])) { // 用来避免这种情况：1000000 = one million thousand only
 				if (i != 0) {
 					// thousand、million、billion
 					if (hasPermil && lm.length() > 0) {
-						lm.insert(0, transThree(threeDigits) + " " + parseMore(String.valueOf(i)) + ",");
+						lm.insert(0, transThree(a[i]) + " " + parseMore(String.valueOf(i)) + ",");
 					} else {
-						lm.insert(0, transThree(threeDigits) + " " + parseMore(String.valueOf(i)) + " ");
+						lm.insert(0, transThree(a[i]) + " " + parseMore(String.valueOf(i)) + " ");
 					}
 				} else {
-					lm = new StringBuilder(transThree(threeDigits)); // 防止i=0时， 在多加两个空格.
+					lm = new StringBuilder(transThree(a[i])); // 防止i=0时， 在多加两个空格.
 				}
 			} else {
-				lm.append(transThree(threeDigits));
+				lm.append(transThree(a[i]));
 			}
 		}
 
@@ -739,7 +703,7 @@ public class NumberUtil {
 		if ((z > -1) && (BigDecimal.ZERO.compareTo(new BigDecimal(rstr)) == -1)) {
 			xs = " AND CENTS " + transTwo(rstr); // 小数部分存在时转换小数 xs = "AND CENTS " + transTwo(rstr) + " ";
 		} else {
-			xs = "";
+			xs = " AND CENTS";
 		}
 		return (isMinus ? "MINUS " : "") + lm.toString().trim() + xs + " ONLY";
 	}
