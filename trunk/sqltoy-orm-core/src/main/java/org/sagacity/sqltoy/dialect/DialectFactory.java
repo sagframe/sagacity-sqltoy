@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
@@ -114,9 +115,9 @@ public class DialectFactory {
 	protected final Logger logger = LoggerFactory.getLogger(DialectFactory.class);
 
 	/**
-	 * 不同数据库方言的处理器实例(为什么不采用并发map?因为这里只有取,几乎不存在放入)
+	 * 不同数据库方言的处理器实例
 	 */
-	private static HashMap<Integer, Dialect> dialects = new HashMap<Integer, Dialect>();
+	private static ConcurrentHashMap<Integer, Dialect> dialects = new ConcurrentHashMap<Integer, Dialect>();
 
 	private static DialectFactory me = new DialectFactory();
 
@@ -153,132 +154,128 @@ public class DialectFactory {
 	 * @throws Exception
 	 * @todo 根据数据库类型获取处理sql的handler
 	 */
-	private Dialect getDialectSqlWrapper(Integer dbType) throws Exception {
-		// 从map中直接获取实例，避免重复创建和判断
-		if (dialects.containsKey(dbType)) {
-			return dialects.get(dbType);
-		}
-		// 按照市场排名作为优先顺序
-		Dialect dialectSqlWrapper = null;
-		switch (dbType) {
-		// oracle12c(分页方式有了改变,支持identity主键策略(内部其实还是sequence模式))
-		case DBType.ORACLE: {
-			dialectSqlWrapper = new OracleDialect();
-			break;
-		}
-		// 5.6+(mysql 的缺陷主要集中在不支持with as以及临时表不能在一个查询中多次引用)
-		// 8.x+(支持with as语法)
-		// MariaDB 在检测的时候归并到mysql,采用跟mysql一样的语法
-		case DBType.MYSQL:
-		case DBType.MYSQL57: {
-			dialectSqlWrapper = new MySqlDialect();
-			break;
-		}
-		// sqlserver2012 以后分页方式更简单
-		case DBType.SQLSERVER: {
-			dialectSqlWrapper = new SqlServerDialect();
-			break;
-		}
-		// 9.5+(9.5开始支持类似merge into形式的语法,参见具体实现)
-		// postgresql/greenplum
-		case DBType.POSTGRESQL:
-		case DBType.POSTGRESQL14: {
-			dialectSqlWrapper = new PostgreSqlDialect();
-			break;
-		}
-		// oceanbase 数据库支持
-		case DBType.OCEANBASE: {
-			dialectSqlWrapper = new OceanBaseDialect();
-			break;
-		}
-		// db2 10.x版本分页支持offset模式
-		case DBType.DB2: {
-			dialectSqlWrapper = new DB2Dialect();
-			break;
-		}
-		// clickhouse 19.x 版本开始支持
-		case DBType.CLICKHOUSE: {
-			dialectSqlWrapper = new ClickHouseDialect();
-			break;
-		}
-		// Tidb方言支持
-		case DBType.TIDB: {
-			dialectSqlWrapper = new TidbDialect();
-			break;
-		}
-		// 华为guassdb(postgresql 为蓝本的)
-		case DBType.GAUSSDB: {
-			dialectSqlWrapper = new GaussDBDialect();
-			break;
-		}
-		// 华为OPENGAUSS(postgresql 为蓝本的)
-		case DBType.OPENGAUSS: {
-			dialectSqlWrapper = new OpenGaussDialect();
-			break;
-		}
-		// mogdb
-		case DBType.MOGDB: {
-			dialectSqlWrapper = new MogDBDialect();
-			break;
-		}
-		// starDB(京东)
-		case DBType.STARDB: {
-			dialectSqlWrapper = new StarDBDialect();
-			break;
-		} // 神通数据库
-		case DBType.OSCAR: {
-			dialectSqlWrapper = new OscarDialect();
-			break;
-		}
-		// vastbase 海量数据库
-		case DBType.VASTBASE: {
-			dialectSqlWrapper = new VastbaseDialect();
-			break;
-		}
-		case DBType.IMPALA: {
-			dialectSqlWrapper = new ImpalaDialect();
-			break;
-		}
-		// dm数据库支持(以oracle为蓝本)
-		case DBType.DM: {
-			dialectSqlWrapper = new DMDialect();
-			break;
-		}
-		// 基本支持(sqlite 本身功能就相对简单)
-		case DBType.SQLITE: {
-			dialectSqlWrapper = new SqliteDialect();
-			break;
-		}
-		// 10g,11g
-		case DBType.ORACLE11: {
-			dialectSqlWrapper = new Oracle11gDialect();
-			break;
-		} // 北大金仓
-		case DBType.KINGBASE: {
-			dialectSqlWrapper = new KingbaseDialect();
-			break;
-		}
-		// h2
-		case DBType.H2: {
-			dialectSqlWrapper = new H2Dialect();
-			break;
-		}
-		case DBType.DORIS:
-		case DBType.STARROCKS: {
-			dialectSqlWrapper = new DorisDialect();
-			break;
-		}
-		// tdengine
-		case DBType.TDENGINE: {
-			dialectSqlWrapper = new TDengineDialect();
-			break;
-		}
-		// 如果匹配不上使用默认dialect
-		default:
-			dialectSqlWrapper = new DefaultDialect();
-		}
-		dialects.put(dbType, dialectSqlWrapper);
-		return dialectSqlWrapper;
+	private Dialect getDialectSqlWrapper(Integer dbType) {
+		return dialects.computeIfAbsent(dbType, key -> {
+			Dialect dialectSqlWrapper = null;
+			switch (key) {
+			// oracle12c(分页方式有了改变,支持identity主键策略(内部其实还是sequence模式))
+			case DBType.ORACLE: {
+				dialectSqlWrapper = new OracleDialect();
+				break;
+			}
+			// 5.6+(mysql 的缺陷主要集中在不支持with as以及临时表不能在一个查询中多次引用)
+			// 8.x+(支持with as语法)
+			// MariaDB 在检测的时候归并到mysql,采用跟mysql一样的语法
+			case DBType.MYSQL:
+			case DBType.MYSQL57: {
+				dialectSqlWrapper = new MySqlDialect();
+				break;
+			}
+			// sqlserver2012 以后分页方式更简单
+			case DBType.SQLSERVER: {
+				dialectSqlWrapper = new SqlServerDialect();
+				break;
+			}
+			// 9.5+(9.5开始支持类似merge into形式的语法,参见具体实现)
+			// postgresql/greenplum
+			case DBType.POSTGRESQL:
+			case DBType.POSTGRESQL14: {
+				dialectSqlWrapper = new PostgreSqlDialect();
+				break;
+			}
+			// oceanbase 数据库支持
+			case DBType.OCEANBASE: {
+				dialectSqlWrapper = new OceanBaseDialect();
+				break;
+			}
+			// db2 10.x版本分页支持offset模式
+			case DBType.DB2: {
+				dialectSqlWrapper = new DB2Dialect();
+				break;
+			}
+			// clickhouse 19.x 版本开始支持
+			case DBType.CLICKHOUSE: {
+				dialectSqlWrapper = new ClickHouseDialect();
+				break;
+			}
+			// Tidb方言支持
+			case DBType.TIDB: {
+				dialectSqlWrapper = new TidbDialect();
+				break;
+			}
+			// 华为guassdb(postgresql 为蓝本的)
+			case DBType.GAUSSDB: {
+				dialectSqlWrapper = new GaussDBDialect();
+				break;
+			}
+			// 华为OPENGAUSS(postgresql 为蓝本的)
+			case DBType.OPENGAUSS: {
+				dialectSqlWrapper = new OpenGaussDialect();
+				break;
+			}
+			// mogdb
+			case DBType.MOGDB: {
+				dialectSqlWrapper = new MogDBDialect();
+				break;
+			}
+			// starDB(京东)
+			case DBType.STARDB: {
+				dialectSqlWrapper = new StarDBDialect();
+				break;
+			} // 神通数据库
+			case DBType.OSCAR: {
+				dialectSqlWrapper = new OscarDialect();
+				break;
+			}
+			// vastbase 海量数据库
+			case DBType.VASTBASE: {
+				dialectSqlWrapper = new VastbaseDialect();
+				break;
+			}
+			case DBType.IMPALA: {
+				dialectSqlWrapper = new ImpalaDialect();
+				break;
+			}
+			// dm数据库支持(以oracle为蓝本)
+			case DBType.DM: {
+				dialectSqlWrapper = new DMDialect();
+				break;
+			}
+			// 基本支持(sqlite 本身功能就相对简单)
+			case DBType.SQLITE: {
+				dialectSqlWrapper = new SqliteDialect();
+				break;
+			}
+			// 10g,11g
+			case DBType.ORACLE11: {
+				dialectSqlWrapper = new Oracle11gDialect();
+				break;
+			} // 北大金仓
+			case DBType.KINGBASE: {
+				dialectSqlWrapper = new KingbaseDialect();
+				break;
+			}
+			// h2
+			case DBType.H2: {
+				dialectSqlWrapper = new H2Dialect();
+				break;
+			}
+			case DBType.DORIS:
+			case DBType.STARROCKS: {
+				dialectSqlWrapper = new DorisDialect();
+				break;
+			}
+			// tdengine
+			case DBType.TDENGINE: {
+				dialectSqlWrapper = new TDengineDialect();
+				break;
+			}
+			// 如果匹配不上使用默认dialect
+			default:
+				dialectSqlWrapper = new DefaultDialect();
+			}
+			return dialectSqlWrapper;
+		});
 	}
 
 	/**
@@ -1094,7 +1091,7 @@ public class DialectFactory {
 							}
 							SqlExecuteStat.debug("查询结果", "分页总记录数:{}条,取得本页记录数:{}条!",
 									((QueryResult) queryResult).getRecordCount(),
-									((QueryResult) queryResult).getRows().size());
+									(queryResult.getRows() == null) ? 0 : queryResult.getRows().size());
 							this.setResult(queryResult);
 						}
 					});

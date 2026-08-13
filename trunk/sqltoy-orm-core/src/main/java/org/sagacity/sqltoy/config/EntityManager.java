@@ -503,7 +503,7 @@ public class EntityManager {
 			}
 			config.setTables(new String[] { entityMeta.getTableName() });
 			config.setAliasNames(aliasNames);
-			config.setDecisionType(shardingDB.decisionType());
+			config.setDecisionType(shardingTable.decisionType());
 			config.setStrategy(strategy);
 			shardingConfig.setShardingTableStrategy(config);
 		}
@@ -744,7 +744,7 @@ public class EntityManager {
 				fieldMeta.setType(java.sql.Types.DOUBLE);
 			} else if (fieldType.equals(Float.class) || fieldType.equals(float.class)) {
 				fieldMeta.setType(java.sql.Types.FLOAT);
-			} else if (fieldType.equals(Byte.class) && fieldType.isArray()) {
+			} else if (fieldType.equals(byte[].class)) {
 				fieldMeta.setType(java.sql.Types.BINARY);
 			}
 		}

@@ -20,6 +20,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -974,7 +975,6 @@ public class ResultUtils {
 				break;
 			}
 		}
-		// if(dynamicCacheHolder.)
 		// 数据集合不为空,对最后一条记录写入循环值
 		if (notEqualCnt > 0) {
 			preItemRow = items.get(items.size() - 1);
@@ -1114,7 +1114,7 @@ public class ResultUtils {
 		Object tempObj;
 		for (int i = 0; i < length; i++) {
 			tempObj = sortList.get(i).get(groupCol);
-			if (!tempObj.equals(compareValue)) {
+			if (!Objects.equals(tempObj, compareValue)) {
 				end = i - 1;
 				sortList(sortList, orderCol, start, end, ascend);
 				start = i;

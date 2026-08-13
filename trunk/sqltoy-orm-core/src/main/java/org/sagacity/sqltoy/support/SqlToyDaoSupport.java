@@ -153,7 +153,30 @@ public class SqlToyDaoSupport {
 	/**
 	 * 分布式id产生器
 	 */
-	private DistributeIdGenerator distributeIdGenerator = null;
+	private volatile DistributeIdGenerator distributeIdGenerator = null;
+
+	/**
+	 * @todo 延迟初始化分布式id产生器(double-checked locking保证线程安全)
+	 * @return
+	 */
+	private DistributeIdGenerator getDistributeIdGenerator() {
+		if (distributeIdGenerator == null) {
+			synchronized (this) {
+				if (distributeIdGenerator == null) {
+					try {
+						distributeIdGenerator = (DistributeIdGenerator) Class
+								.forName(sqlToyContext.getDistributeIdGeneratorClass())
+								.getDeclaredConstructor().newInstance();
+						distributeIdGenerator.initialize(sqlToyContext.getAppContext());
+					} catch (Exception e) {
+						e.printStackTrace();
+						throw new DataAccessException("实例化分布式id产生器失败:" + e.getMessage());
+					}
+				}
+			}
+		}
+		return distributeIdGenerator;
+	}
 
 	/**
 	 * 各种数据库方言实现
@@ -1126,7 +1149,7 @@ public class SqlToyDaoSupport {
 					verStr = nowDate + 1;
 				}
 			} else {
-				verStr = "" + (Integer.parseInt(verStr) + 1);
+				verStr = "" + (Long.parseLong(verStr) + 1);
 			}
 			// 更新版本号
 			BeanUtil.setProperty(entity, dataVersion.getField(), verStr);
@@ -1252,7 +1275,7 @@ public class SqlToyDaoSupport {
 			return 0L;
 		}
 		EntityMeta entityMeta = getEntityMeta(entities.get(0).getClass());
-		return updateAll(entities, (entityMeta == null) ? null : entityMeta.getRejectIdFieldArray(true), null);
+		return updateAll(entities, (entityMeta == null) ? null : entityMeta.getRejectIdFieldArray(true), dataSource);
 	}
 
 	protected Long saveOrUpdate(final Serializable entity, final String... forceUpdateProps) {
@@ -1492,17 +1515,8 @@ public class SqlToyDaoSupport {
 		if (StringUtil.isBlank(signature)) {
 			throw new IllegalArgumentException("signature 必须不能为空,请正确指定业务标志符号!");
 		}
-		if (distributeIdGenerator == null) {
-			try {
-				distributeIdGenerator = (DistributeIdGenerator) Class
-						.forName(sqlToyContext.getDistributeIdGeneratorClass()).getDeclaredConstructor().newInstance();
-				distributeIdGenerator.initialize(sqlToyContext.getAppContext());
-			} catch (Exception e) {
-				e.printStackTrace();
-				throw new DataAccessException("实例化分布式id产生器失败:" + e.getMessage());
-			}
-		}
-		return distributeIdGenerator.generateId(signature, increment, SqlToyConstants.getDistributeIdCacheExpireDate());
+		return getDistributeIdGenerator().generateId(signature, increment,
+				SqlToyConstants.getDistributeIdCacheExpireDate());
 	}
 
 	/**
@@ -1554,17 +1568,8 @@ public class SqlToyDaoSupport {
 	 */
 	protected String generateBizId(String tableName, String signature, Map<String, Object> keyValues, LocalDate bizDate,
 			int length, int sequenceSize) {
-		if (distributeIdGenerator == null) {
-			try {
-				distributeIdGenerator = (DistributeIdGenerator) Class
-						.forName(sqlToyContext.getDistributeIdGeneratorClass()).getDeclaredConstructor().newInstance();
-				distributeIdGenerator.initialize(sqlToyContext.getAppContext());
-			} catch (Exception e) {
-				e.printStackTrace();
-				throw new DataAccessException("实例化分布式id产生器失败:" + e.getMessage());
-			}
-		}
-		return IdUtil.getId(distributeIdGenerator, tableName, signature, keyValues, bizDate, length, sequenceSize);
+		return IdUtil.getId(getDistributeIdGenerator(), tableName, signature, keyValues, bizDate, length,
+				sequenceSize);
 	}
 
 	/**

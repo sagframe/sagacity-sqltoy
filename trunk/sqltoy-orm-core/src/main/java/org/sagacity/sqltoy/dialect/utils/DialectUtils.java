@@ -1978,13 +1978,13 @@ public class DialectUtils {
 				SqlUtilsExt.getDefaultValues(entityMeta, true), handler);
 		// 是否存在业务ID
 		boolean hasBizId = (entityMeta.getBusinessIdGenerator() == null) ? false : true;
-		int bizIdColIndex = hasBizId ? entityMeta.getFieldIndex(entityMeta.getBusinessIdField()) : 0;
+		int generatedColCnt = entityMeta.getGeneratedColsCnt();
+		int bizIdColIndex = hasBizId ? entityMeta.getFieldIndex(entityMeta.getBusinessIdField()) - generatedColCnt : 0;
 		// 标识符
 		String signature = entityMeta.getBizIdSignature();
 		Integer[] relatedColumn = entityMeta.getBizIdRelatedColIndex();
 		String[] relatedColumnNames = entityMeta.getBizIdRelatedColumns();
 		int relatedColumnSize = (relatedColumn == null) ? 0 : relatedColumn.length;
-		int generatedColCnt = entityMeta.getGeneratedColsCnt();
 		int pkIndex = entityMeta.getIdIndex() - generatedColCnt;
 		boolean hasId = (null != entityMeta.getIdStrategy() && null != entityMeta.getIdGenerator()) ? true : false;
 		// 主键、业务主键生成并回写对象(不回写数据版本号,因为已经存在数据版本号重新生成就不一致了)
@@ -2812,8 +2812,8 @@ public class DialectUtils {
 		} catch (Exception e) {
 			logger.error("执行唯一性查询失败:{}", e.getMessage());
 			e.printStackTrace();
+			throw new DataAccessException("对:entity=" + entity.getClass().getName() + "发起的唯一性查询异常" + e.getMessage());
 		}
-		return false;
 	}
 
 	/**

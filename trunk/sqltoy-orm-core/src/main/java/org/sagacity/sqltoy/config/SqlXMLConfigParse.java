@@ -301,7 +301,7 @@ public class SqlXMLConfigParse {
 			return null;
 		}
 		String id = sqlElt.getAttribute("id");
-		if (id == null) {
+		if (StringUtil.isBlank(id)) {
 			id = sqlId;
 			if (id == null) {
 				throw new RuntimeException("请检查sql配置,没有给定sql对应的 id值!");
@@ -588,7 +588,8 @@ public class SqlXMLConfigParse {
 				tmp = getAttrValue(elt, "column");
 			}
 			String[] columns = StringUtil.trimArray(tmp.toLowerCase().split("\\,"));
-			String type = getAttrValue(elt, "type").toLowerCase();
+			String type = getAttrValue(elt, "type");
+			type = (type == null) ? "" : type.toLowerCase();
 			String maskCode = getAttrValue(elt, "mask-code");
 			String headSize = getAttrValue(elt, "head-size");
 			String tailSize = getAttrValue(elt, "tail-size");
