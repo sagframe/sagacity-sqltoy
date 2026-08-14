@@ -62,7 +62,6 @@ public class DialectExecutor implements Callable<ShardingResult> {
 			result.setRows(handler.execute(sqltoyContext, shardingGroupModel));
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
-			e.printStackTrace();
 			result.setSuccess(false);
 			result.setMessage(
 					"执行分库分表,DataSource节点:" + dataSourceName + ",table=" + tableName + " 发生异常:" + e.getMessage());

@@ -133,11 +133,10 @@ public class ClickHouseDialectUtils {
 		final Integer[] paramsType = entityMeta.getFieldsTypeArray(true);
 		PreparedStatement pst = null;
 		if (isIdentity || isSequence) {
-			pst = conn.prepareStatement(insertSql, new String[] { DataSourceUtils
+			pst = conn.prepareStatement(realInsertSql, new String[] { DataSourceUtils
 					.getReturnPrimaryKeyColumn(entityMeta.getColumnName(entityMeta.getIdArray()[0]), dbType) });
-			// pst = conn.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS);
 		} else {
-			pst = conn.prepareStatement(insertSql);
+			pst = conn.prepareStatement(realInsertSql);
 		}
 		// 设置全局statementTimeout，默认为null
 		if (SqlToyConstants.defaultStatementTimeout != null && SqlToyConstants.defaultStatementTimeout > 0) {
@@ -640,11 +639,23 @@ public class ClickHouseDialectUtils {
 		if (sqlType == SqlType.delete) {
 			// 截取where开始部分构造成:alter table tableName delete where
 			// delete from table where
-			sql = startSql.concat(" delete ").concat(sql.substring(StringUtil.matchIndex(sql, "(?i)\\swhere\\s")));
+			int whereIndex = StringUtil.matchIndex(sql, "(?i)\\swhere\\s");
+			// 无where条件的delete(全表删除),matchIndex返回-1时substring(-1)越界,给出明确错误
+			if (whereIndex < 0) {
+				throw new IllegalArgumentException("clickhouse的delete操作必须含有where条件,当前sql无where:"
+						+ sql + ",请检查deleteByQuery的where设置(全表删除请直接执行alter table ... delete)");
+			}
+			sql = startSql.concat(" delete ").concat(sql.substring(whereIndex));
 		} else if (sqlType == SqlType.update) {
 			// 截取set后面语句,构造成:alter table tableName update field1=:value1,field2=:value2
 			// update table set field1=:value1,field2=:value2
-			sql = startSql.concat(" update ").concat(sql.substring(StringUtil.matchIndex(sql, "(?i)\\sset\\s") + 4));
+			int setIndex = StringUtil.matchIndex(sql, "(?i)\\sset\\s");
+			// 无set条件的update,matchIndex返回-1时-1+4=3从错误位置截断生成坏SQL
+			if (setIndex < 0) {
+				throw new IllegalArgumentException("clickhouse的update操作必须含有set子句,当前sql无set:"
+						+ sql + ",请检查updateByQuery的set设置!");
+			}
+			sql = startSql.concat(" update ").concat(sql.substring(setIndex + 4));
 		}
 		return sql;
 	}

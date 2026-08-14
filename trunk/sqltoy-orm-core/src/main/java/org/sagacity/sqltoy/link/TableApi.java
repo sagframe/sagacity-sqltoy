@@ -71,7 +71,7 @@ public class TableApi extends BaseLink {
 		String tableName = sqlToyContext.getEntityMeta(entityClass).getSchemaTable(null, null);
 		String sql = "truncate table ".concat(tableName);
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql, SqlType.delete, super.getDialect(), null);
-		dialectFactory.executeSql(sqlToyContext, sqlToyConfig, null, null, null, dataSource);
+		dialectFactory.executeSql(sqlToyContext, sqlToyConfig, null, null, null, getDataSource(null));
 	}
 
 	/**
@@ -81,7 +81,7 @@ public class TableApi extends BaseLink {
 	public void truncate(String tableName) {
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig("truncate table ".concat(tableName), SqlType.delete,
 				super.getDialect(), null);
-		dialectFactory.executeSql(sqlToyContext, sqlToyConfig, null, null, null, dataSource);
+		dialectFactory.executeSql(sqlToyContext, sqlToyConfig, null, null, null, getDataSource(null));
 	}
 
 	/**
@@ -92,13 +92,13 @@ public class TableApi extends BaseLink {
 		String tableName = sqlToyContext.getEntityMeta(entityClass).getSchemaTable(null, null);
 		String sql = "drop table ".concat(tableName);
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql, SqlType.delete, super.getDialect(), null);
-		dialectFactory.executeSql(sqlToyContext, sqlToyConfig, null, null, null, dataSource);
+		dialectFactory.executeSql(sqlToyContext, sqlToyConfig, null, null, null, getDataSource(null));
 	}
 
 	public void drop(String tableName) {
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig("drop table ".concat(tableName), SqlType.delete,
 				super.getDialect(), null);
-		dialectFactory.executeSql(sqlToyContext, sqlToyConfig, null, null, null, dataSource);
+		dialectFactory.executeSql(sqlToyContext, sqlToyConfig, null, null, null, getDataSource(null));
 	}
 
 //	/**

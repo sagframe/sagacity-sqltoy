@@ -21,7 +21,7 @@ public class PropertyType implements Serializable {
 	private int typeValue;
 
 	private String typeName;
-	
+
 	private Class genericType;
 
 	public String getProperty() {

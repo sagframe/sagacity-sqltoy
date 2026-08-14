@@ -14,7 +14,7 @@ import java.lang.annotation.Target;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-@Repeatable(value=Translates.class)
+@Repeatable(value = Translates.class)
 public @interface Translate {
 	// 缓存名称
 	String cacheName();

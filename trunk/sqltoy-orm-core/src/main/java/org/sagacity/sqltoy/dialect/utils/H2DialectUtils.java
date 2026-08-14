@@ -61,7 +61,8 @@ public class H2DialectUtils {
 			sql.append("cast(? as DECIMAL)");
 		} else if (jdbcType == java.sql.Types.BIGINT) {
 			sql.append("cast(? as bigint)");
-		} else if (jdbcType == java.sql.Types.INTEGER || jdbcType == java.sql.Types.TINYINT) {
+		} else if (jdbcType == java.sql.Types.INTEGER || jdbcType == java.sql.Types.TINYINT
+				|| jdbcType == java.sql.Types.SMALLINT) {
 			sql.append("cast(? as INT)");
 		} else if (jdbcType == java.sql.Types.TIMESTAMP) {
 			sql.append("cast(? as timestamp)");
@@ -69,6 +70,8 @@ public class H2DialectUtils {
 			sql.append("cast(? as double)");
 		} else if (jdbcType == java.sql.Types.FLOAT) {
 			sql.append("cast(? as DOUBLE)");
+		} else if (jdbcType == java.sql.Types.REAL) {
+			sql.append("cast(? as REAL)");
 		} else if (jdbcType == java.sql.Types.TIME) {
 			sql.append("cast(? as time)");
 		} else if (jdbcType == java.sql.Types.CLOB) {

@@ -957,8 +957,8 @@ public class DialectUtils {
 			sql.append(idsColumnStr.replace("ta.", "tv."));
 		} else {
 			sql.append(insertRejIdCols.toString());
-			// sequence方式主键
-			if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
+			// sequence方式主键(pkStrategy为null时@Id未配strategy/generator,判空防御避免NPE)
+			if (PKStrategy.SEQUENCE.equals(pkStrategy)) {
 				columnName = entityMeta.getColumnName(entityMeta.getIdArray()[0]);
 				columnName = ReservedWordsUtil.convertWord(columnName, dbType);
 				sql.append(",");
@@ -972,7 +972,7 @@ public class DialectUtils {
 				} else {
 					sql.append(sequence);
 				}
-			} else if (pkStrategy.equals(PKStrategy.IDENTITY)) {
+			} else if (PKStrategy.IDENTITY.equals(pkStrategy)) {
 				columnName = entityMeta.getColumnName(entityMeta.getIdArray()[0]);
 				columnName = ReservedWordsUtil.convertWord(columnName, dbType);
 				if (isAssignPK) {
@@ -1274,12 +1274,24 @@ public class DialectUtils {
 			List<Object[]> sortIds = new ArrayList();
 			// 单主键
 			if (idSize == 1) {
-				// 切取id数组
-				Object[] idValues = BeanUtil.sliceToArray(entities, entityMeta.getIdArray()[0]);
-				if (idValues == null || idValues.length == 0) {
+				// 按行提取原始主键值(sliceToArray会过滤null导致行号错位,null主键实体被静默跳过),
+				// null主键给出带行号的明确错误(与复合主键分支防护对称),而非悄悄少查
+				List idRows = BeanUtil.reflectBeansToList(entities, new String[] { entityMeta.getIdArray()[0] }, null);
+				if (idRows == null || idRows.isEmpty()) {
 					throw new IllegalArgumentException(
 							tableName + " loadAll method must assign value for pk field:" + entityMeta.getIdArray()[0]);
 				}
+				List idList = new ArrayList(idRows.size());
+				Object cellValue;
+				for (int i = 0, n = idRows.size(); i < n; i++) {
+					cellValue = (idRows.get(i) == null) ? null : ((List) idRows.get(i)).get(0);
+					if (cellValue == null) {
+						throw new IllegalArgumentException(tableName + " loadAll method must assign value for pk,row:"
+								+ i + " pk field:" + entityMeta.getIdArray()[0]);
+					}
+					idList.add(cellValue);
+				}
+				Object[] idValues = idList.toArray(new Object[idList.size()]);
 				for (int i = 0; i < idValues.length; i++) {
 					sortIds.add(new Object[] { idValues[i] });
 				}
@@ -1683,8 +1695,8 @@ public class DialectUtils {
 			final PKStrategy pkStrategy, final boolean isAssignPK, final String insertSql, Serializable entity,
 			final GenerateSqlHandler generateSqlHandler, final GenerateSavePKStrategy generateSavePKStrategy,
 			final Connection conn, final Integer dbType) throws Exception {
-		final boolean isIdentity = (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY));
-		final boolean isSequence = (pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE));
+		final boolean isIdentity = (pkStrategy != null && PKStrategy.IDENTITY.equals(pkStrategy));
+		final boolean isSequence = (pkStrategy != null && PKStrategy.SEQUENCE.equals(pkStrategy));
 		String[] reflectColumns;
 		if ((isIdentity && !isAssignPK) || (isSequence && !isAssignPK)) {
 			reflectColumns = entityMeta.getRejectIdFieldArray(true);
@@ -1860,8 +1872,8 @@ public class DialectUtils {
 			boolean isAssignPK, String insertSql, List<?> entities, final int batchSize,
 			ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType, final Boolean autoCommit)
 			throws Exception {
-		boolean isIdentity = pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY);
-		boolean isSequence = pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE);
+		boolean isIdentity = pkStrategy != null && PKStrategy.IDENTITY.equals(pkStrategy);
+		boolean isSequence = pkStrategy != null && PKStrategy.SEQUENCE.equals(pkStrategy);
 		String[] reflectColumns;
 		if ((isIdentity && !isAssignPK) || (isSequence && !isAssignPK)) {
 			reflectColumns = entityMeta.getRejectIdFieldArray(true);
@@ -2266,7 +2278,7 @@ public class DialectUtils {
 			public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 				PKStrategy pkStrategy = entityMeta.getIdStrategy();
 				String sequence = entityMeta.getSequence() + ".nextval";
-				if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
+				if (pkStrategy != null && PKStrategy.IDENTITY.equals(pkStrategy)) {
 					pkStrategy = PKStrategy.SEQUENCE;
 					sequence = entityMeta.getFieldMeta(entityMeta.getIdArray()[0]).getDefaultValue();
 				}
@@ -2298,10 +2310,10 @@ public class DialectUtils {
 				String sequence = "nextval('" + entityMeta.getSequence() + "')";
 				if ((dbType == DBType.GAUSSDB || dbType == DBType.OPENGAUSS || dbType == DBType.STARDB
 						|| dbType == DBType.OSCAR || dbType == DBType.MOGDB || dbType == DBType.VASTBASE)
-						&& pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE)) {
+						&& pkStrategy != null && PKStrategy.SEQUENCE.equals(pkStrategy)) {
 					sequence = entityMeta.getSequence() + ".nextval";
 				}
-				if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
+				if (pkStrategy != null && PKStrategy.IDENTITY.equals(pkStrategy)) {
 					// 伪造成sequence模式
 					pkStrategy = PKStrategy.SEQUENCE;
 					sequence = "DEFAULT";
@@ -2811,8 +2823,9 @@ public class DialectUtils {
 			return isEqual;
 		} catch (Exception e) {
 			logger.error("执行唯一性查询失败:{}", e.getMessage());
-			e.printStackTrace();
-			throw new DataAccessException("对:entity=" + entity.getClass().getName() + "发起的唯一性查询异常" + e.getMessage());
+			logger.error("isUnique 方法执行异常", e);
+			throw new DataAccessException("对:entity=" + entity.getClass().getName() + "发起的唯一性查询异常:" + e.getMessage(),
+					e);
 		}
 	}
 
@@ -3377,7 +3390,7 @@ public class DialectUtils {
 	public static PKStrategy getSavePKStrategy(EntityMeta entityMeta, Serializable entity, Integer dbType) {
 		PKStrategy pkStrategy = entityMeta.getIdStrategy();
 		// 主键值已经存在，则主键策略改为assign，避免跳号
-		if (pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE)) {
+		if (pkStrategy != null && PKStrategy.SEQUENCE.equals(pkStrategy)) {
 			Object id = BeanUtil.getProperty(entity, entityMeta.getIdArray()[0]);
 			if (StringUtil.isNotBlank(id)) {
 				pkStrategy = PKStrategy.ASSIGN;

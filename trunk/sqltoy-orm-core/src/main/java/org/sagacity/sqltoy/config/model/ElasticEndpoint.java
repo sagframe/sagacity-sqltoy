@@ -28,6 +28,8 @@ import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
 import org.sagacity.sqltoy.utils.FileUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @project sagacity-sqltoy
@@ -36,6 +38,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @version v1.0,Date:2018年2月5日
  */
 public class ElasticEndpoint implements Serializable {
+	private final static Logger logger = LoggerFactory.getLogger(ElasticEndpoint.class);
 
 	/**
 	 * 
@@ -289,7 +292,7 @@ public class ElasticEndpoint implements Serializable {
 			try {
 				restClient.close();
 			} catch (Exception e) {
-				e.printStackTrace();
+				logger.error("closeRestClient 方法执行异常", e);
 			}
 			restClient = null;
 		}
@@ -389,7 +392,7 @@ public class ElasticEndpoint implements Serializable {
 						hosts.add(new HttpHost(url.getHost(), url.getPort(), url.getProtocol()));
 					}
 				} catch (MalformedURLException e) {
-					e.printStackTrace();
+					logger.error("initRestClient 方法执行异常", e);
 				}
 			}
 			if (!hosts.isEmpty()) {
@@ -446,7 +449,7 @@ public class ElasticEndpoint implements Serializable {
 					});
 					restClient = builder.build();
 				} catch (Exception e) {
-					e.printStackTrace();
+					logger.error("customizeHttpClient 方法执行异常", e);
 				}
 			}
 		}

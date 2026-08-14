@@ -985,7 +985,7 @@ public class SqlConfigParseUtils {
 			String stripped = likeValStr.replace("\\%", "");
 			// 判断转义后的值是否包含反斜杠,决定是否需要追加ESCAPE子句
 			boolean needEscape = false;
-			//只要参数中已经有%符号，这种情况就不需要再加%符号了,否则会影响用户的查询意图
+			// 只要参数中已经有%符号，这种情况就不需要再加%符号了,否则会影响用户的查询意图
 			if (stripped.indexOf("%") != -1) {
 				// 仅转义_等特殊字符,避免用户输入的_被当作通配符
 				String escaped = SqlUtil.escapeLikeValue(likeValStr, dbType, false);

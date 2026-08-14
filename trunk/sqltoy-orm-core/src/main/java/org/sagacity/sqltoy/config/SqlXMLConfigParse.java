@@ -15,6 +15,7 @@ import java.util.regex.Pattern;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.config.model.CacheFilterModel;
@@ -85,7 +86,42 @@ public class SqlXMLConfigParse {
 
 	private final static Pattern GROUP_BY_PATTERN = Pattern.compile("(?i)\\Wgroup\\s+by\\W");
 
+	// DocumentBuilderFactory与DocumentBuilder均非线程安全:工厂的setFeature/newDocumentBuilder加锁执行,
+	// builder经ThreadLocal每线程独立持有并reset复用,消除watcher线程与业务线程的并发解析竞争
+	private static final Object DOM_FACTORY_LOCK = new Object();
 	private static DocumentBuilderFactory domFactory = DocumentBuilderFactory.newInstance();
+	private static volatile boolean domFeatureConfigured = false;
+	private static final ThreadLocal<DocumentBuilder> DOM_BUILDERS = new ThreadLocal<DocumentBuilder>() {
+		@Override
+		protected DocumentBuilder initialValue() {
+			try {
+				synchronized (DOM_FACTORY_LOCK) {
+					return domFactory.newDocumentBuilder();
+				}
+			} catch (ParserConfigurationException e) {
+				throw new IllegalStateException("创建DocumentBuilder失败!", e);
+			}
+		}
+	};
+
+	/**
+	 * @TODO 获取当前线程专属的DocumentBuilder(复用前reset清空上次解析状态)
+	 * @return
+	 * @throws ParserConfigurationException
+	 */
+	private static DocumentBuilder getDomBuilder() throws ParserConfigurationException {
+		if (!domFeatureConfigured) {
+			synchronized (DOM_FACTORY_LOCK) {
+				if (!domFeatureConfigured) {
+					domFactory.setFeature(SqlToyConstants.XML_FETURE, false);
+					domFeatureConfigured = true;
+				}
+			}
+		}
+		DocumentBuilder builder = DOM_BUILDERS.get();
+		builder.reset();
+		return builder;
+	}
 
 	private static String[] WHERE_COMPARE = { "!=", "==", "=", " in ", " out ", " neq ", " eq " };
 	private static String[] WHERE_COMPARE_TYPES = { "neq", "eq", "eq", "in", "out", "neq", "eq" };
@@ -175,8 +211,7 @@ public class SqlXMLConfigParse {
 			}
 			logger.debug("正在解析".concat((index != -1) ? "第:[" + index + "]个" : "").concat("sql文件:").concat(sqlFile));
 			if (fileIS != null) {
-				domFactory.setFeature(SqlToyConstants.XML_FETURE, false);
-				DocumentBuilder domBuilder = domFactory.newDocumentBuilder();
+				DocumentBuilder domBuilder = getDomBuilder();
 				Document doc = domBuilder.parse(fileIS);
 				NodeList sqlElts = doc.getDocumentElement().getChildNodes();
 				if (sqlElts == null || sqlElts.getLength() == 0) {
@@ -207,7 +242,6 @@ public class SqlXMLConfigParse {
 				}
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
 			logger.error(
 					"解析xml中对应的sql失败,对应文件={},正确的配置为<sql|mql|eql id=\"\"><![CDATA[]]></sql|mql|eql>或<sql|mql|eql id=\"\"><desc></desc><value><![CDATA[]]></value></sql|mql|eql>",
 					xmlFile, e);
@@ -237,7 +271,7 @@ public class SqlXMLConfigParse {
 			throws Exception {
 		Element elt = null;
 		if (sqlSegment instanceof String) {
-			Document doc = domFactory.newDocumentBuilder().parse(
+			Document doc = getDomBuilder().parse(
 					new ByteArrayInputStream(((String) sqlSegment).getBytes(encoding == null ? "UTF-8" : encoding)));
 			elt = doc.getDocumentElement();
 		} else if (sqlSegment instanceof Element) {
@@ -1139,6 +1173,10 @@ public class SqlXMLConfigParse {
 				where = translate.getAttribute("where");
 			}
 			splitSign = null;
+			// 每个translate元素独立判定split配置:不重置会继承上一个元素的残留,
+			// 导致后续无split配置的translate被错误地按分隔符拆分翻译
+			splitRegex = null;
+			linkSign = ",";
 			if (translate.hasAttribute("split-sign")) {
 				splitSign = "split-sign";
 			} else if (translate.hasAttribute("split-regex")) {
@@ -1197,7 +1235,8 @@ public class SqlXMLConfigParse {
 					Translate translateModel = new Translate(cacheName);
 					// 小写
 					translateModel.setColumn(columns[i]);
-					translateModel.setAlias(aliasNames == null ? columns[i] : aliasNames[i]);
+					translateModel.setAlias(
+						(aliasNames == null || aliasNames.length <= i) ? columns[i] : aliasNames[i]);
 					translateModel.setCacheType(cacheType);
 					translateModel.setSplitRegex(splitRegex);
 					translateModel.setLinkSign(linkSign);

@@ -58,10 +58,8 @@ public class DataAccessException extends RuntimeException {
 
 	@Override
 	public void printStackTrace(PrintWriter writer) {
+		// super已包含cause链的打印,不再重复输出cause堆栈
 		super.printStackTrace(writer);
-		if (getCause() != null) {
-			getCause().printStackTrace(writer);
-		}
 		writer.flush();
 	}
 

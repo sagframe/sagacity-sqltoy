@@ -18,6 +18,8 @@ import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils.Dialect;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @project sqltoy-orm
@@ -29,6 +31,8 @@ import org.sagacity.sqltoy.utils.StringUtil;
  */
 @SuppressWarnings({ "rawtypes" })
 public class SqlToyConfig implements Serializable, java.lang.Cloneable {
+	private final static Logger logger = LoggerFactory.getLogger(SqlToyConfig.class);
+
 	/**
 	 * 
 	 */
@@ -597,7 +601,7 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 			}
 			return cloned;
 		} catch (CloneNotSupportedException e) {
-			e.printStackTrace();
+			logger.error("clone 方法执行异常", e);
 		}
 		return null;
 	}
@@ -684,6 +688,10 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 			return this.sql;
 		}
 		return this.id;
+	}
+
+	public String getDialect() {
+		return dialect;
 	}
 
 	public void setDialect(String dialect) {

@@ -708,6 +708,11 @@ public class DialectFactory {
 				if (!columnMap.containsKey(treeModel.getNodeLevelField().toUpperCase())) {
 					throw new IllegalArgumentException("树形表:节点等级字段名称:" + treeModel.getNodeLevelField() + "不正确,请检查!");
 				}
+				// 树形路由依赖主键字段,无@Id实体的getIdArray()为null直接取[0]会NPE,给出明确错误
+				if (entityMeta.getIdArray() == null || entityMeta.getIdArray().length < 1) {
+					throw new IllegalArgumentException("树形表路由操作依赖主键,当前实体:"
+							+ entityMeta.getEntityClass().getName() + " 没有定义@Id主键,请检查!");
+				}
 				FieldMeta idMeta = (FieldMeta) entityMeta.getFieldMeta(entityMeta.getIdArray()[0]);
 				// 如未定义则使用主键(update 2020-10-16)
 				if (StringUtil.isBlank(treeModel.getIdField())) {
@@ -783,7 +788,7 @@ public class DialectFactory {
 					});
 		} catch (Exception e) {
 			logger.error("封装树形表节点路径操作:wrapTreeTableRoute发生错误,{}", e.getMessage());
-			e.printStackTrace();
+			logger.error("doConnection 方法执行异常", e);
 			throw new DataAccessException(e);
 		} finally {
 			SqlExecuteStat.destroy();
@@ -1149,7 +1154,7 @@ public class DialectFactory {
 					});
 					SqlExecuteStat.debug("并行查询count执行耗时", (System.currentTimeMillis() - startTime) + "毫秒!");
 				} catch (Exception e) {
-					e.printStackTrace();
+					logger.error("doConnection 方法执行异常", e);
 					queryResult.setSuccess(false);
 					queryResult.setMessage("查询总记录数异常:" + e.getMessage());
 				}
@@ -1165,7 +1170,7 @@ public class DialectFactory {
 				queryResult.setLabelTypes(result.getLabelTypes());
 				SqlExecuteStat.debug("并行查询分页记录耗时", (System.currentTimeMillis() - startTime) + "毫秒!");
 			} catch (Exception e) {
-				e.printStackTrace();
+				logger.error("doConnection 方法执行异常", e);
 				queryResult.setSuccess(false);
 				queryResult.setMessage("查询单页记录数据异常:" + e.getMessage());
 			}
@@ -1196,7 +1201,7 @@ public class DialectFactory {
 				queryResult.setPageNo(1L);
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("doConnection 方法执行异常", e);
 			throw new DataAccessException("并行查询执行错误:" + e.getMessage(), e);
 		}
 		return queryResult;
@@ -2317,8 +2322,11 @@ public class DialectFactory {
 								// 存储过程返回多个集合
 								if (moreResult) {
 									int rowsSize = queryResult.getMoreResults().length;
-									// 回写被计算后的集合(getRows()以第一个为基准)
-									queryResult.getMoreResults()[0] = queryResult.getRows();
+									// 存储过程未返回任何结果集时moreResults长度为0,跳过回写避免越界
+									if (rowsSize > 0) {
+										// 回写被计算后的集合(getRows()以第一个为基准)
+										queryResult.getMoreResults()[0] = queryResult.getRows();
+									}
 									int endSize = rowsSize;
 									if (resultTypes.length < endSize) {
 										endSize = resultTypes.length;

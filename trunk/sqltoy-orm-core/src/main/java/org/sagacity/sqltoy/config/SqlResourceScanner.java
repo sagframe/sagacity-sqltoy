@@ -77,8 +77,7 @@ public class SqlResourceScanner {
 						+ "resourceDir配置支持AntPath模式的路径匹配:1)**:0~n级路径;2)*:单级路径;3)?:单个字符匹配;4)路径可写可不写*.sql.xml\n"
 						+ "1)默认补充*.sql.xml结尾:classpath:com/company/project等效于classpath:com/company/project/**/*.sql.xml\n"
 						+ "2)多路径(逗号拼接):classpath:com/company/project1/**/sqlMapping,classpath:com/company/project2/modules/*/sqlMapping\n"
-						+ "3)完整路径:classpath:com/company/project/modules\n" 
-						+ "4)多级匹配:file:/root/project/**/sqlMapping\n"
+						+ "3)完整路径:classpath:com/company/project/modules\n" + "4)多级匹配:file:/root/project/**/sqlMapping\n"
 						+ "5)单级匹配:classpath:com/company/project/*/sqlMapping\n"
 						+ "6)单字符匹配:file:/root/project/?/sqlMapping");
 			}
@@ -432,7 +431,6 @@ public class SqlResourceScanner {
 					: getResourceUrls(realRes, classLoader);
 			if (null != urls) {
 				URL url;
-				JarFile jar;
 				Enumeration<JarEntry> entries;
 				JarEntry entry;
 				String sqlFile;
@@ -442,14 +440,18 @@ public class SqlResourceScanner {
 						if (!realRes.isEmpty() && realRes.startsWith("/")) {
 							realRes = realRes.substring(1);
 						}
-						jar = ((JarURLConnection) url.openConnection()).getJarFile();
-						entries = jar.entries();
-						while (entries.hasMoreElements()) {
-							entry = entries.nextElement();
-							sqlFile = entry.getName();
-							if (sqlFile.startsWith(realRes) && sqlFile.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)
-									&& !entry.isDirectory() && CollectionUtil.notContainsAdd(notRepeatDirs, sqlFile)) {
-								result.add(0, sqlFile);
+						// try-with-resources关闭JarFile,避免文件句柄泄漏(Windows下会锁定jar阻碍热部署)
+						try (JarFile jar = ((JarURLConnection) url.openConnection()).getJarFile()) {
+							entries = jar.entries();
+							while (entries.hasMoreElements()) {
+								entry = entries.nextElement();
+								sqlFile = entry.getName();
+								if (sqlFile.startsWith(realRes)
+										&& sqlFile.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)
+										&& !entry.isDirectory()
+										&& CollectionUtil.notContainsAdd(notRepeatDirs, sqlFile)) {
+									result.add(0, sqlFile);
+								}
 							}
 						}
 					} else if (url.getProtocol().equals(RESOURCE)) {

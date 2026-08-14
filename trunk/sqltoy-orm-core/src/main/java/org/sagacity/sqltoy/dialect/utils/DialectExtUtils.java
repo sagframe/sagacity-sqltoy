@@ -90,7 +90,7 @@ public class DialectExtUtils {
 			columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
 			if (fieldMeta.isPK()) {
 				// identity主键策略，且支持主键手工赋值
-				if (pkStrategy.equals(PKStrategy.IDENTITY)) {
+				if (PKStrategy.IDENTITY.equals(pkStrategy)) {
 					// 目前只有mysql支持
 					if (isAssignPK) {
 						if (!isStart) {
@@ -102,7 +102,7 @@ public class DialectExtUtils {
 						isStart = false;
 					}
 				} // sequence 策略，oracle12c之后的identity机制统一转化为sequence模式
-				else if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
+				else if (PKStrategy.SEQUENCE.equals(pkStrategy)) {
 					if (!isStart) {
 						sql.append(",");
 						values.append(",");
@@ -440,7 +440,7 @@ public class DialectExtUtils {
 				sql.append(insertRejIdColValues);
 			} else {
 				// sequence方式主键
-				if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
+				if (PKStrategy.SEQUENCE.equals(pkStrategy)) {
 					columnName = entityMeta.getColumnName(entityMeta.getIdArray()[0]);
 					columnName = ReservedWordsUtil.convertWord(columnName, dbType);
 					sql.append(",");
@@ -454,7 +454,7 @@ public class DialectExtUtils {
 					} else {
 						sql.append(sequence);
 					}
-				} else if (pkStrategy.equals(PKStrategy.IDENTITY)) {
+				} else if (PKStrategy.IDENTITY.equals(pkStrategy)) {
 					columnName = entityMeta.getColumnName(entityMeta.getIdArray()[0]);
 					columnName = ReservedWordsUtil.convertWord(columnName, dbType);
 					if (isAssignPK) {
@@ -529,7 +529,7 @@ public class DialectExtUtils {
 			columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
 			if (fieldMeta.isPK()) {
 				// identity主键策略，且支持主键手工赋值
-				if (pkStrategy.equals(PKStrategy.IDENTITY)) {
+				if (PKStrategy.IDENTITY.equals(pkStrategy)) {
 					if (isAssignPK) {
 						if (!isStart) {
 							sql.append(",");
@@ -539,7 +539,7 @@ public class DialectExtUtils {
 						values.append("?");
 						isStart = false;
 					}
-				} else if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
+				} else if (PKStrategy.SEQUENCE.equals(pkStrategy)) {
 					if (!isStart) {
 						sql.append(",");
 						values.append(",");
