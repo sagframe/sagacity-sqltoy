@@ -22,25 +22,18 @@ import com.alibaba.fastjson2.JSON;
 public class TreeTableSortTest {
 	@Test
 	public void testSummary() {
-		Object[][] treeData = new Object[][] {
-			   { 1, -1, 0, 0, 0,1 }, 
-			   { 9, -1, 0, 0, 0,1 }, 
-			  
-			   { 2, 1, 1, 2, 7 ,1},
-			   { 3, 1, 1, 2, 4 ,1},
-				{ 4, 3, 6, 2, 5 ,1},
-				{ 5, 3, 1, 8, 5,1 },
-				{ 6, 5, 1, 0, 5 ,0},
-				 { 31, -1, 0, 0, 0,1 }, 
-				{ 38, 31, 31, 0, 5 ,0} };
+		Object[][] treeData = new Object[][] { { 1, -1, 0, 0, 0, 1 }, { 9, -1, 0, 0, 0, 1 },
+
+				{ 2, 1, 1, 2, 7, 1 }, { 3, 1, 1, 2, 4, 1 }, { 4, 3, 6, 2, 5, 1 }, { 5, 3, 1, 8, 5, 1 },
+				{ 6, 5, 1, 0, 5, 0 }, { 31, -1, 0, 0, 0, 1 }, { 38, 31, 31, 0, 5, 0 } };
 		List treeList = CollectionUtil.arrayToDeepList(treeData);
-		TreeSortModel treeModel=new TreeSortModel();
+		TreeSortModel treeModel = new TreeSortModel();
 		treeModel.setCompareType("!=");
 		treeModel.setFilterColumn("5");
 		treeModel.setCompareValues("0");
-		LabelIndexModel labelIndexModel=new LabelIndexModel();
+		LabelIndexModel labelIndexModel = new LabelIndexModel();
 		labelIndexModel.put("5", 5);
-		Set topPids=TreeDataSort.getTopPids(treeList,0,1);
+		Set topPids = TreeDataSort.getTopPids(treeList, 0, 1);
 		List result = new ArrayList();
 		List row;
 		int pidSize = topPids.size();
@@ -84,36 +77,30 @@ public class TreeTableSortTest {
 		}
 		treeList.clear();
 		treeList.addAll(result);
-		
+
 		System.err.println(JSON.toJSONString(treeList));
 //		TreeDataSort.summaryTreeList(treeModel, labelIndexModel, treeList, new Integer[] { 2, 3, 4 }, 0, 1);
 //		for (Object row : treeList) {
 //			System.err.println(JSON.toJSONString(row));
 //		}
 	}
-	
+
 	@Test
 	public void testSort() {
-		Object[][] treeData = new Object[][] {
-			   { 1, -1, 0, 0, 0,1 }, 
-			   { 9, -1, 0, 0, 0,1 }, 
-			  
-			   { 2, 1, 1, 2, 7 ,1},
-			   { 3, 1, 1, 2, 4 ,1},
-				{ 4, 3, 6, 2, 5 ,1},
-				{ 5, 3, 1, 8, 5,1 },
-				{ 6, 5, 1, 0, 5 ,0},
-				  
-				{ 38, 31, 31, 0, 5 ,0} ,
-				{ 31, -1, 0, 0, 0,1 }};
+		Object[][] treeData = new Object[][] { { 1, -1, 0, 0, 0, 1 }, { 9, -1, 0, 0, 0, 1 },
+
+				{ 2, 1, 1, 2, 7, 1 }, { 3, 1, 1, 2, 4, 1 }, { 4, 3, 6, 2, 5, 1 }, { 5, 3, 1, 8, 5, 1 },
+				{ 6, 5, 1, 0, 5, 0 },
+
+				{ 38, 31, 31, 0, 5, 0 }, { 31, -1, 0, 0, 0, 1 } };
 		List treeList = CollectionUtil.arrayToDeepList(treeData);
-		TreeSortModel treeModel=new TreeSortModel();
+		TreeSortModel treeModel = new TreeSortModel();
 		treeModel.setCompareType("!=");
 		treeModel.setFilterColumn("5");
 		treeModel.setCompareValues("0");
-		LabelIndexModel labelIndexModel=new LabelIndexModel();
+		LabelIndexModel labelIndexModel = new LabelIndexModel();
 		labelIndexModel.put("5", 5);
-		Set topPids=TreeDataSort.getTopPids(treeList,0,1);
+		Set topPids = TreeDataSort.getTopPids(treeList, 0, 1);
 		List result = new ArrayList();
 		List row;
 		int pidSize = topPids.size();
@@ -154,8 +141,8 @@ public class TreeTableSortTest {
 		}
 		treeList.clear();
 		treeList.addAll(result);
-		for(Object item:treeList) {
-		System.err.println(JSON.toJSONString(item));
+		for (Object item : treeList) {
+			System.err.println(JSON.toJSONString(item));
 		}
 	}
 }

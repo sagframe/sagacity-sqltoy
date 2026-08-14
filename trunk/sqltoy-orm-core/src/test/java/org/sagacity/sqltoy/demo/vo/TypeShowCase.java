@@ -38,7 +38,7 @@ public class TypeShowCase implements Serializable {
 	private Integer status;
 
 	private boolean isTrue;
-	
+
 	private boolean sexType;
 
 	private Boolean enabled;

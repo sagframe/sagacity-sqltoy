@@ -14,8 +14,8 @@ import org.sagacity.sqltoy.utils.DateUtil;
 /**
  * @project sqltoy-orm
  * @description 本处测试类仅仅是开发过程中验证不同数据库方言针对sqltoy后台对象操作具体语法实现,实际sqltoy
- *              相关增删改操作全部基于对象完成， 请勿以为实际使用sqltoy需要如此复杂的写sql
-s * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ *              相关增删改操作全部基于对象完成， 请勿以为实际使用sqltoy需要如此复杂的写sql s * @author
+ *              chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:OracleDialectTest.java,Revision:v1.0,Date:2015年2月13日
  */
 public class OracleDialectTest {

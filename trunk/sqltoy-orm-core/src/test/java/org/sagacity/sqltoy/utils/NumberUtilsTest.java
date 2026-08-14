@@ -82,8 +82,7 @@ public class NumberUtilsTest {
 	@Test
 	public void testToCapitalMoneyHundredMillion() {
 		assertEquals("壹亿元整", NumberUtil.toCapitalMoney(new BigDecimal("100000000")));
-		assertEquals("壹亿贰仟叁佰肆拾伍万陆仟柒佰捌拾玖元整",
-				NumberUtil.toCapitalMoney(new BigDecimal("123456789")));
+		assertEquals("壹亿贰仟叁佰肆拾伍万陆仟柒佰捌拾玖元整", NumberUtil.toCapitalMoney(new BigDecimal("123456789")));
 	}
 
 	@Test
@@ -156,8 +155,7 @@ public class NumberUtilsTest {
 	@Test
 	public void testCapitalMoneyToNumBillion() {
 		assertEquals(0, new BigDecimal("100000000").compareTo(NumberUtil.capitalMoneyToNum("壹亿元整")));
-		assertEquals(0, new BigDecimal("123456789").compareTo(
-				NumberUtil.capitalMoneyToNum("壹亿贰仟叁佰肆拾伍万陆仟柒佰捌拾玖元整")));
+		assertEquals(0, new BigDecimal("123456789").compareTo(NumberUtil.capitalMoneyToNum("壹亿贰仟叁佰肆拾伍万陆仟柒佰捌拾玖元整")));
 	}
 
 	@Test
@@ -205,35 +203,33 @@ public class NumberUtilsTest {
 		assertEquals(0, new BigDecimal("1000000000000000").compareTo(NumberUtil.capitalMoneyToNum("壹仟万亿元整")));
 	}
 
-
-	// ======================== toCapitalMoney ↔ capitalMoneyToNum 往返测试 ========================
+	// ======================== toCapitalMoney ↔ capitalMoneyToNum 往返测试
+	// ========================
 
 	@Test
 	public void testRoundTrip() {
-		String[] testValues = { "0", "1", "10", "15", "100", "101", "110", "209", "324",
-				"1000", "1001", "1111", "10000", "10001", "12345",
-				"100000", "123456", "1000000", "1000001",
-				"100000000", "123456789" };
+		String[] testValues = { "0", "1", "10", "15", "100", "101", "110", "209", "324", "1000", "1001", "1111",
+				"10000", "10001", "12345", "100000", "123456", "1000000", "1000001", "100000000", "123456789" };
 		for (String val : testValues) {
 			BigDecimal original = new BigDecimal(val);
 			String capital = NumberUtil.toCapitalMoney(original);
 			BigDecimal roundTrip = NumberUtil.capitalMoneyToNum(capital);
-			assertEquals(0, original.compareTo(roundTrip),
-					"Round-trip failed for " + val + ": toCapitalMoney=" + capital + ", capitalMoneyToNum=" + roundTrip);
+			assertEquals(0, original.compareTo(roundTrip), "Round-trip failed for " + val + ": toCapitalMoney="
+					+ capital + ", capitalMoneyToNum=" + roundTrip);
 		}
 	}
 
 	@Test
 	public void testRoundTripWithDecimal() {
-		String[] testValues = { "0.05", "0.50", "0.98", "1.23", "209.98",
-				"100.12", "1234.56", "999.99", "0.99", "0.09" };
+		String[] testValues = { "0.05", "0.50", "0.98", "1.23", "209.98", "100.12", "1234.56", "999.99", "0.99",
+				"0.09" };
 		for (String val : testValues) {
 			BigDecimal original = new BigDecimal(val);
 			String capital = NumberUtil.toCapitalMoney(original);
 			BigDecimal roundTrip = NumberUtil.capitalMoneyToNum(capital);
 			// 因为capitalMoneyToNum的scale=3, 用同精度比较
-			assertEquals(0, original.setScale(3, RoundingMode.HALF_UP).compareTo(roundTrip),
-					"Round-trip failed for " + val + ": toCapitalMoney=" + capital + ", capitalMoneyToNum=" + roundTrip);
+			assertEquals(0, original.setScale(3, RoundingMode.HALF_UP).compareTo(roundTrip), "Round-trip failed for "
+					+ val + ": toCapitalMoney=" + capital + ", capitalMoneyToNum=" + roundTrip);
 		}
 	}
 
@@ -244,29 +240,27 @@ public class NumberUtilsTest {
 			BigDecimal original = new BigDecimal(val);
 			String capital = NumberUtil.toCapitalMoney(original);
 			BigDecimal roundTrip = NumberUtil.capitalMoneyToNum(capital);
-			int cmp = original.abs().setScale(3, RoundingMode.HALF_UP)
-					.compareTo(roundTrip.abs());
-			assertEquals(0, cmp,
-					"Round-trip failed for " + val + ": toCapitalMoney=" + capital + ", capitalMoneyToNum=" + roundTrip);
+			int cmp = original.abs().setScale(3, RoundingMode.HALF_UP).compareTo(roundTrip.abs());
+			assertEquals(0, cmp, "Round-trip failed for " + val + ": toCapitalMoney=" + capital + ", capitalMoneyToNum="
+					+ roundTrip);
 		}
 	}
 
 	@Test
 	public void testRoundTripTrillion() {
 		// 万亿级别往返测试(capitalMoneyToNum文档标注最大支持到千万亿)
-		String[] testValues = {
-				"1000000000000",       // 壹万亿
-				"10000000000000",      // 壹拾万亿
-				"100000000000000",     // 壹佰万亿
-				"1000000000000000",    // 壹仟万亿
-				"1234567890123456"     // 含万亿段的复合数字
+		String[] testValues = { "1000000000000", // 壹万亿
+				"10000000000000", // 壹拾万亿
+				"100000000000000", // 壹佰万亿
+				"1000000000000000", // 壹仟万亿
+				"1234567890123456" // 含万亿段的复合数字
 		};
 		for (String val : testValues) {
 			BigDecimal original = new BigDecimal(val);
 			String capital = NumberUtil.toCapitalMoney(original);
 			BigDecimal roundTrip = NumberUtil.capitalMoneyToNum(capital);
-			assertEquals(0, original.compareTo(roundTrip),
-					"Round-trip failed for " + val + ": toCapitalMoney=" + capital + ", capitalMoneyToNum=" + roundTrip);
+			assertEquals(0, original.compareTo(roundTrip), "Round-trip failed for " + val + ": toCapitalMoney="
+					+ capital + ", capitalMoneyToNum=" + roundTrip);
 		}
 	}
 
@@ -291,17 +285,14 @@ public class NumberUtilsTest {
 		assertEquals("玖佰玖拾玖元整", NumberUtil.toCapitalMoney(new BigDecimal("999")));
 		assertEquals("玖仟玖佰玖拾玖元整", NumberUtil.toCapitalMoney(new BigDecimal("9999")));
 		assertEquals("玖万玖仟玖佰玖拾玖元整", NumberUtil.toCapitalMoney(new BigDecimal("99999")));
-		assertEquals("玖仟玖佰玖拾玖万玖仟玖佰玖拾玖元整",
-				NumberUtil.toCapitalMoney(new BigDecimal("99999999")));
+		assertEquals("玖仟玖佰玖拾玖万玖仟玖佰玖拾玖元整", NumberUtil.toCapitalMoney(new BigDecimal("99999999")));
 	}
 
 	@Test
 	public void testToCapitalMoneyComplexNumbers() {
 		// 交错零与非零
-		assertEquals("壹亿零壹佰零壹万零壹佰零壹元整",
-				NumberUtil.toCapitalMoney(new BigDecimal("101010101")));
-		assertEquals("壹佰亿零壹拾万零壹拾元整",
-				NumberUtil.toCapitalMoney(new BigDecimal("10000100010")));
+		assertEquals("壹亿零壹佰零壹万零壹佰零壹元整", NumberUtil.toCapitalMoney(new BigDecimal("101010101")));
+		assertEquals("壹佰亿零壹拾万零壹拾元整", NumberUtil.toCapitalMoney(new BigDecimal("10000100010")));
 	}
 
 	// ======================== capitalMoneyToNum 补充场景 ========================
@@ -349,18 +340,14 @@ public class NumberUtilsTest {
 	@Test
 	public void testRoundTripInternalZeros() {
 		// 各量级内部含零的往返
-		String[] testValues = {
-				"101", "1001", "10001", "100001", "1000010",
-				"10000001", "100000001", "100010000", "100001000",
-				"101010101", "10000100010",
-				"1000000000001", "1000001000000", "1000000010000"
-		};
+		String[] testValues = { "101", "1001", "10001", "100001", "1000010", "10000001", "100000001", "100010000",
+				"100001000", "101010101", "10000100010", "1000000000001", "1000001000000", "1000000010000" };
 		for (String val : testValues) {
 			BigDecimal original = new BigDecimal(val);
 			String capital = NumberUtil.toCapitalMoney(original);
 			BigDecimal roundTrip = NumberUtil.capitalMoneyToNum(capital);
-			assertEquals(0, original.compareTo(roundTrip),
-					"Round-trip failed for " + val + ": toCapitalMoney=" + capital + ", capitalMoneyToNum=" + roundTrip);
+			assertEquals(0, original.compareTo(roundTrip), "Round-trip failed for " + val + ": toCapitalMoney="
+					+ capital + ", capitalMoneyToNum=" + roundTrip);
 		}
 	}
 
@@ -371,23 +358,20 @@ public class NumberUtilsTest {
 			BigDecimal original = new BigDecimal(val);
 			String capital = NumberUtil.toCapitalMoney(original);
 			BigDecimal roundTrip = NumberUtil.capitalMoneyToNum(capital);
-			assertEquals(0, original.compareTo(roundTrip),
-					"Round-trip failed for " + val + ": toCapitalMoney=" + capital + ", capitalMoneyToNum=" + roundTrip);
+			assertEquals(0, original.compareTo(roundTrip), "Round-trip failed for " + val + ": toCapitalMoney="
+					+ capital + ", capitalMoneyToNum=" + roundTrip);
 		}
 	}
 
 	@Test
 	public void testRoundTripLargeWithDecimal() {
-		String[] testValues = {
-				"123456789.98", "100000000.50", "999999999.99",
-				"1234567890.12", "1000000000000.99"
-		};
+		String[] testValues = { "123456789.98", "100000000.50", "999999999.99", "1234567890.12", "1000000000000.99" };
 		for (String val : testValues) {
 			BigDecimal original = new BigDecimal(val);
 			String capital = NumberUtil.toCapitalMoney(original);
 			BigDecimal roundTrip = NumberUtil.capitalMoneyToNum(capital);
-			assertEquals(0, original.setScale(3, RoundingMode.HALF_UP).compareTo(roundTrip),
-					"Round-trip failed for " + val + ": toCapitalMoney=" + capital + ", capitalMoneyToNum=" + roundTrip);
+			assertEquals(0, original.setScale(3, RoundingMode.HALF_UP).compareTo(roundTrip), "Round-trip failed for "
+					+ val + ": toCapitalMoney=" + capital + ", capitalMoneyToNum=" + roundTrip);
 		}
 	}
 
@@ -399,8 +383,8 @@ public class NumberUtilsTest {
 			BigDecimal original = new BigDecimal(val);
 			String capital = NumberUtil.toCapitalMoney(original);
 			BigDecimal roundTrip = NumberUtil.capitalMoneyToNum(capital);
-			assertEquals(0, original.setScale(3, RoundingMode.HALF_UP).compareTo(roundTrip),
-					"Round-trip failed for " + val + ": toCapitalMoney=" + capital + ", capitalMoneyToNum=" + roundTrip);
+			assertEquals(0, original.setScale(3, RoundingMode.HALF_UP).compareTo(roundTrip), "Round-trip failed for "
+					+ val + ": toCapitalMoney=" + capital + ", capitalMoneyToNum=" + roundTrip);
 		}
 	}
 
@@ -411,8 +395,8 @@ public class NumberUtilsTest {
 			BigDecimal original = new BigDecimal(val);
 			String capital = NumberUtil.toCapitalMoney(original);
 			BigDecimal roundTrip = NumberUtil.capitalMoneyToNum(capital);
-			assertEquals(0, original.abs().compareTo(roundTrip.abs()),
-					"Round-trip failed for " + val + ": toCapitalMoney=" + capital + ", capitalMoneyToNum=" + roundTrip);
+			assertEquals(0, original.abs().compareTo(roundTrip.abs()), "Round-trip failed for " + val
+					+ ": toCapitalMoney=" + capital + ", capitalMoneyToNum=" + roundTrip);
 		}
 	}
 
@@ -425,8 +409,8 @@ public class NumberUtilsTest {
 				BigDecimal original = new BigDecimal(i);
 				String capital = NumberUtil.toCapitalMoney(original);
 				BigDecimal roundTrip = NumberUtil.capitalMoneyToNum(capital);
-				assertEquals(0, original.compareTo(roundTrip),
-						"Round-trip failed for " + i + ": toCapitalMoney=" + capital + ", capitalMoneyToNum=" + roundTrip);
+				assertEquals(0, original.compareTo(roundTrip), "Round-trip failed for " + i + ": toCapitalMoney="
+						+ capital + ", capitalMoneyToNum=" + roundTrip);
 			}
 		}
 	}
@@ -434,19 +418,18 @@ public class NumberUtilsTest {
 	@Test
 	public void testRoundTripExhaustiveLargeNumbers() {
 		// 各量级边界附近的连续值(含0/9密集区域)
-		long[] bases = {
-				1000000L, 10000000L, 100000000L, 1000000000L,
-				10000000000L, 100000000000L, 1000000000000L, 10000000000000L
-		};
+		long[] bases = { 1000000L, 10000000L, 100000000L, 1000000000L, 10000000000L, 100000000000L, 1000000000000L,
+				10000000000000L };
 		for (long base : bases) {
 			for (int delta = -5; delta <= 5; delta++) {
 				long val = base + delta;
-				if (val < 0) continue;
+				if (val < 0)
+					continue;
 				BigDecimal original = new BigDecimal(val);
 				String capital = NumberUtil.toCapitalMoney(original);
 				BigDecimal roundTrip = NumberUtil.capitalMoneyToNum(capital);
-				assertEquals(0, original.compareTo(roundTrip),
-						"Round-trip failed for " + val + ": toCapitalMoney=" + capital + ", capitalMoneyToNum=" + roundTrip);
+				assertEquals(0, original.compareTo(roundTrip), "Round-trip failed for " + val + ": toCapitalMoney="
+						+ capital + ", capitalMoneyToNum=" + roundTrip);
 			}
 		}
 	}
@@ -460,13 +443,10 @@ public class NumberUtilsTest {
 			BigDecimal original = new BigDecimal(val);
 			String capital = NumberUtil.toCapitalMoney(original);
 			BigDecimal roundTrip = NumberUtil.capitalMoneyToNum(capital);
-			assertEquals(0, original.compareTo(roundTrip),
-					"Round-trip failed for " + val + ": toCapitalMoney=" + capital + ", capitalMoneyToNum=" + roundTrip);
+			assertEquals(0, original.compareTo(roundTrip), "Round-trip failed for " + val + ": toCapitalMoney="
+					+ capital + ", capitalMoneyToNum=" + roundTrip);
 		}
 	}
-
-
-
 
 	// ======================== convertToEnglishMoney 测试 ========================
 
@@ -514,12 +494,9 @@ public class NumberUtilsTest {
 
 	@Test
 	public void testConvertToEnglishMoneyWithCents() {
-		assertEquals("TWO HUNDRED AND NINE ONLY",
-				NumberUtil.convertToEnglishMoney(new BigDecimal("209.00")));
-		assertEquals("ONE HUNDRED AND CENTS ONE ONLY",
-				NumberUtil.convertToEnglishMoney(new BigDecimal("100.01")));
-		assertEquals("ONE HUNDRED AND CENTS TEN ONLY",
-				NumberUtil.convertToEnglishMoney(new BigDecimal("100.10")));
+		assertEquals("TWO HUNDRED AND NINE ONLY", NumberUtil.convertToEnglishMoney(new BigDecimal("209.00")));
+		assertEquals("ONE HUNDRED AND CENTS ONE ONLY", NumberUtil.convertToEnglishMoney(new BigDecimal("100.01")));
+		assertEquals("ONE HUNDRED AND CENTS TEN ONLY", NumberUtil.convertToEnglishMoney(new BigDecimal("100.10")));
 		assertEquals("TWO HUNDRED AND FIFTY-SIX THOUSAND TWO HUNDRED AND THIRTY-SEVEN AND CENTS NINETY-EIGHT ONLY",
 				NumberUtil.convertToEnglishMoney(new BigDecimal("256237.98")));
 	}

@@ -179,12 +179,11 @@ public class CollectionUtilTest {
 		dataSet = CollectionUtil.clearRepeat(dataSet);
 		System.err.println(JSON.toJSONString(dataSet));
 	}
-	
+
 	@Test
 	public void testBean() {
-		String[] tmp=new String[] {"1","2","3"};
-		Object result=Arrays.stream(tmp);
+		String[] tmp = new String[] { "1", "2", "3" };
+		Object result = Arrays.stream(tmp);
 	}
-	
-	
+
 }

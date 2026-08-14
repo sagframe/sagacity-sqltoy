@@ -53,10 +53,10 @@ public class DBUtilsTest {
 	 */
 	public final static String DRIVER_POSTGRESQL = "org.postgresql.Driver";
 
-    /**
-     * url like:jdbc:h2:file:/database
-     */
-    public final static String DRIVER_H2 = "org.h2.Driver";
+	/**
+	 * url like:jdbc:h2:file:/database
+	 */
+	public final static String DRIVER_H2 = "org.h2.Driver";
 
 	/**
 	 * 获取数据库连接
@@ -122,9 +122,11 @@ public class DBUtilsTest {
 		int selectIndex = StringUtil.matchIndex(sql, SELECT_REGEX);
 		String selectFields = (sql_from_index < 1) ? "" : sql.substring(selectIndex + 6, sql_from_index).toLowerCase();
 		System.err.println("1=" + clearSymSelectFromSql(selectFields));
-		
-		//Connection conn=getConnection("com.cloudera.impala.jdbc.Driver","jdbc:impala://192.168.10.141:21050/sqltoy",null,null);
-		Connection conn=getConnection("com.taosdata.jdbc.rs.RestfulDriver","jdbc:TAOS-RS://192.168.56.101:6041/sqltoy","sqltoy","sqltoy");
+
+		// Connection
+		// conn=getConnection("com.cloudera.impala.jdbc.Driver","jdbc:impala://192.168.10.141:21050/sqltoy",null,null);
+		Connection conn = getConnection("com.taosdata.jdbc.rs.RestfulDriver",
+				"jdbc:TAOS-RS://192.168.56.101:6041/sqltoy", "sqltoy", "sqltoy");
 		try {
 			System.err.println(conn.getMetaData().getDatabaseProductName());
 			System.err.println(conn.getMetaData().getDatabaseProductVersion());

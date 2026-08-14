@@ -41,7 +41,7 @@ public class IdUtilTest {
 	@Test
 	public void testMaxThread() throws Exception {
 		int threadSize = 100;
-		Set<BigDecimal> idset = new HashSet<BigDecimal>();//ConcurrentHashMap.newKeySet();
+		Set<BigDecimal> idset = new HashSet<BigDecimal>();// ConcurrentHashMap.newKeySet();
 		ExecutorService pool = Executors.newFixedThreadPool(threadSize);
 		for (int i = 0; i < threadSize; i++) {
 			pool.execute(new GetId(idset, 10000));
@@ -50,7 +50,7 @@ public class IdUtilTest {
 		assertTrue(pool.awaitTermination(300, TimeUnit.SECONDS));
 		System.err.println("maxThread test done, unique ids=" + idset.size());
 	}
-	
+
 	@Test
 	public void testMaxThread1() {
 		Set<BigDecimal> idset = new HashSet<BigDecimal>();

@@ -19,7 +19,7 @@ public class PageOptimizeTest {
 		pageOptimize.aliveMax(200);
 		// 模仿60个用户
 		for (int i = 0; i < 60; i++) {
-			PageOptimizeThread thread = new PageOptimizeThread(sqlToyConfig, pageOptimize,i);
+			PageOptimizeThread thread = new PageOptimizeThread(sqlToyConfig, pageOptimize, i);
 			thread.start();
 		}
 

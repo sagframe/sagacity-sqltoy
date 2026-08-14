@@ -63,7 +63,7 @@ public class StringUtilsTest {
 		}
 		assertArrayEquals(result, new String[] { "a", "\"\"\",\"", "a" });
 	}
-	
+
 	@Test
 	public void testRegex() {
 		String temp = "{Key}";
@@ -463,8 +463,8 @@ public class StringUtilsTest {
 			int expected = Math.min((int) Math.ceil(str.length() * rate / 100.0), str.length());
 			int actual = countChar(result, '*');
 			if (actual != expected) {
-				System.err.println("FAILED rate=" + rate + " expected=" + expected + " actual=" + actual + " result="
-						+ result);
+				System.err.println(
+						"FAILED rate=" + rate + " expected=" + expected + " actual=" + actual + " result=" + result);
 			}
 			assertEquals(expected, actual, "rate=" + rate + " 脱敏数量不正确");
 		}

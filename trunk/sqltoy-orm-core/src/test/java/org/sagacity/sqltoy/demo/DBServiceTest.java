@@ -18,7 +18,7 @@ import com.alibaba.druid.pool.DruidDataSourceFactory;
 public class DBServiceTest {
 	public void doDB() {
 		try {
-			//构建sqlToyContext
+			// 构建sqlToyContext
 			SqlToyContext sqlToyContext = new SqlToyContext();
 			sqlToyContext.setSqlResourcesDir("classpath:sqltoy/demo.sql.xml");
 			sqlToyContext.initialize();

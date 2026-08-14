@@ -94,8 +94,7 @@ public class SqltoyUnifyFieldsHandler implements IUnifyFieldsHandler {
 	}
 
 	/**
-	 * @param defaultUserName
-	 *            the defaultUserName to set
+	 * @param defaultUserName the defaultUserName to set
 	 */
 	public void setDefaultUserName(String defaultUserName) {
 		this.defaultUserName = defaultUserName;

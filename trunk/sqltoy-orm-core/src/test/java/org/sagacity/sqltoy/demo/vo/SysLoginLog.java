@@ -8,7 +8,6 @@ import org.sagacity.sqltoy.config.annotation.Column;
 import org.sagacity.sqltoy.config.annotation.Entity;
 import org.sagacity.sqltoy.config.annotation.Id;
 
-
 /**
  * @project fisher application
  * @author fisher

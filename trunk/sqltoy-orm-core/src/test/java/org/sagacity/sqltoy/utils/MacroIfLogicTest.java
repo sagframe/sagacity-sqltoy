@@ -26,7 +26,7 @@ public class MacroIfLogicTest {
 		boolean result = MacroIfLogic.evalLogic(sql, params, 0, 1, 1);
 		assertEquals(result, true);
 	}
-	
+
 	@Test
 	public void testAnd() {
 		String sql = ":status>='1' && :status<='3'";

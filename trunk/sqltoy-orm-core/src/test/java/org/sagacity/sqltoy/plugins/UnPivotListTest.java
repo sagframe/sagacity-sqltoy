@@ -107,7 +107,7 @@ public class UnPivotListTest {
 				{ "4月", "苹果", 1800, 400000, 1900, 410000, "好" }, };
 		List result = CollectionUtil.arrayToDeepList(values);
 		UnpivotModel unpivotModel = new UnpivotModel();
-		unpivotModel.setColumnsToRows(new String[] { "{quantity:数量,AMT:金额}","{quantity1,AMT1}" });
+		unpivotModel.setColumnsToRows(new String[] { "{quantity:数量,AMT:金额}", "{quantity1,AMT1}" });
 		unpivotModel.setNewColumnsLabels(new String[] { "indexName", "minValue", "maxValue" });
 		unpivotModel.setGroupSize(2);
 		LabelIndexModel labelIndexMap = new LabelIndexModel();

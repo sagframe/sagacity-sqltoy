@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -679,60 +678,51 @@ public class SqlConfigParseUtilsTest {
 		// 验证SQL中两个like后面都追加了ESCAPE子句
 		String resultSql = result.getSql();
 		System.err.println(JSON.toJSONString(result));
-		assertTrue(resultSql.contains("like ? ESCAPE '\\'"),
-				"第一个like应有ESCAPE子句: " + resultSql);
+		assertTrue(resultSql.contains("like ? ESCAPE '\\'"), "第一个like应有ESCAPE子句: " + resultSql);
 		assertTrue(resultSql.indexOf("like ? ESCAPE '\\'") != resultSql.lastIndexOf("like ? ESCAPE '\\'"),
 				"两个like都应有ESCAPE子句: " + resultSql);
 
 		// 第一个like值: "张_三" → "%张\_三%" (_被转义)
-		assertEquals("%张\\_三%", result.getParamsValue()[0],
-				"不含%的值应包裹%并转义_");
+		assertEquals("%张\\_三%", result.getParamsValue()[0], "不含%的值应包裹%并转义_");
 
 		// 第二个like值: "A%b_c" → "A%b\_c" (含%时不包裹%,仅转义_)
-		assertEquals("A%b\\_c", result.getParamsValue()[1],
-				"含%时%保留为通配符,仅转义_");
+		assertEquals("A%b\\_c", result.getParamsValue()[1], "含%时%保留为通配符,仅转义_");
 	}
 
 	@Test
 	public void testLikeEscapeMysqlDialect() {
 		// MySQL系列在SQL字符串字面量中将\\解释为单个\(C风格),ESCAPE子句应为'\\'
 		String sql = "select * from table t where t.name like :name";
-		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "name" },
-				new Object[] { "张_三" }, "mysql");
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "name" }, new Object[] { "张_三" },
+				"mysql");
 		String resultSql = result.getSql();
-		assertTrue(resultSql.contains("like ? ESCAPE '\\\\'"),
-				"MySQL方言ESCAPE子句应为两个反斜杠: " + resultSql);
+		assertTrue(resultSql.contains("like ? ESCAPE '\\\\'"), "MySQL方言ESCAPE子句应为两个反斜杠: " + resultSql);
 	}
 
 	@Test
 	public void testLikeEscapeNonMysqlDialect() {
 		// 非MySQL数据库(如Oracle)将\\视为两个字符,ESCAPE要求恰好一个字符,故应为'\'
 		String sql = "select * from table t where t.name like :name";
-		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "name" },
-				new Object[] { "张_三" }, "oracle");
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "name" }, new Object[] { "张_三" },
+				"oracle");
 		String resultSql = result.getSql();
-		assertTrue(resultSql.contains("like ? ESCAPE '\\'"),
-				"非MySQL方言ESCAPE子句应为一个反斜杠: " + resultSql);
+		assertTrue(resultSql.contains("like ? ESCAPE '\\'"), "非MySQL方言ESCAPE子句应为一个反斜杠: " + resultSql);
 	}
 
 	@Test
 	public void testLikeNoSpecialChars() {
 		// value不含_和%: 应包裹%但不产生多余转义
 		String sql = "select * from table t where t.name like :name";
-		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "name" },
-				new Object[] { "普通文本" });
-		assertEquals("%普通文本%", result.getParamsValue()[0],
-				"无特殊字符应仅包裹%");
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "name" }, new Object[] { "普通文本" });
+		assertEquals("%普通文本%", result.getParamsValue()[0], "无特殊字符应仅包裹%");
 	}
 
 	@Test
 	public void testLikeWithPercentOnly() {
 		// value只含%不含_ (如来自left-like/right-like过滤): %保留, 无_需转义
 		String sql = "select * from table t where t.name like :name";
-		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "name" },
-				new Object[] { "张%" });
-		assertEquals("张%", result.getParamsValue()[0],
-				"仅含%时应原样保留%不额外包裹");
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "name" }, new Object[] { "张%" });
+		assertEquals("张%", result.getParamsValue()[0], "仅含%时应原样保留%不额外包裹");
 	}
 
 	@Test
@@ -742,8 +732,7 @@ public class SqlConfigParseUtilsTest {
 		String sql = "select * from table t where t.name like :name";
 		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "name" },
 				new Object[] { "abc\\%def" });
-		assertEquals("%abc\\%def%", result.getParamsValue()[0],
-				"已转义的%不应视为通配符,应包裹%并保持转义");
+		assertEquals("%abc\\%def%", result.getParamsValue()[0], "已转义的%不应视为通配符,应包裹%并保持转义");
 	}
 
 	@Test
@@ -751,10 +740,8 @@ public class SqlConfigParseUtilsTest {
 		// 来自l-like过滤器的值: 首部%为通配符
 		// "%abc" → 保留首部%通配符,不额外包裹
 		String sql = "select * from table t where t.name like :name";
-		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "name" },
-				new Object[] { "%abc" });
-		assertEquals("%abc", result.getParamsValue()[0],
-				"首部%应保留为通配符");
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "name" }, new Object[] { "%abc" });
+		assertEquals("%abc", result.getParamsValue()[0], "首部%应保留为通配符");
 	}
 
 	@Test
@@ -763,8 +750,7 @@ public class SqlConfigParseUtilsTest {
 		String sql = "select * from table t where t.name like :name";
 		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "name" },
 				new Object[] { "\\%abc\\%" });
-		assertEquals("%\\%abc\\%%", result.getParamsValue()[0],
-				"已转义的首尾%不应视为通配符");
+		assertEquals("%\\%abc\\%%", result.getParamsValue()[0], "已转义的首尾%不应视为通配符");
 	}
 
 	// ==================== processLike sqlBuilder 拼接正确性测试 ====================
@@ -806,8 +792,7 @@ public class SqlConfigParseUtilsTest {
 		int escapeIdx = resultSql.indexOf("ESCAPE");
 		int firstLikeIdx = resultSql.indexOf("like ?");
 		int secondLikeIdx = resultSql.indexOf("like ?", firstLikeIdx + 1);
-		assertTrue(escapeIdx > firstLikeIdx && escapeIdx < secondLikeIdx,
-				"ESCAPE应在第一个like后、第二个like前: " + resultSql);
+		assertTrue(escapeIdx > firstLikeIdx && escapeIdx < secondLikeIdx, "ESCAPE应在第一个like后、第二个like前: " + resultSql);
 		// 第二个like后不应有ESCAPE
 		String afterSecondLike = resultSql.substring(secondLikeIdx);
 		assertFalse(afterSecondLike.contains("ESCAPE"), "第二个like后不应有ESCAPE: " + resultSql);
@@ -886,12 +871,10 @@ public class SqlConfigParseUtilsTest {
 		// 第一个like后无ESCAPE
 		int aLikeIdx = resultSql.indexOf("t.a like ?");
 		int bLikeIdxFromA = resultSql.indexOf("t.b like ?", aLikeIdx);
-		assertFalse(resultSql.substring(aLikeIdx, bLikeIdxFromA).contains("ESCAPE"),
-				"第一个like后不应有ESCAPE: " + resultSql);
+		assertFalse(resultSql.substring(aLikeIdx, bLikeIdxFromA).contains("ESCAPE"), "第一个like后不应有ESCAPE: " + resultSql);
 		// 第三个like后无ESCAPE
 		int cLikeIdx = resultSql.indexOf("t.c like ?");
-		assertFalse(resultSql.substring(cLikeIdx).contains("ESCAPE"),
-				"第三个like后不应有ESCAPE: " + resultSql);
+		assertFalse(resultSql.substring(cLikeIdx).contains("ESCAPE"), "第三个like后不应有ESCAPE: " + resultSql);
 	}
 
 	@Test
@@ -915,8 +898,7 @@ public class SqlConfigParseUtilsTest {
 	public void testSingleLikeNoEscapeNoModification() {
 		// 单个like无特殊字符: sqlBuilder不会创建,SQL不应被修改
 		String sql = "select * from table t where t.name like :name order by t.id";
-		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "name" },
-				new Object[] { "普通文本" });
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "name" }, new Object[] { "普通文本" });
 		String resultSql = result.getSql();
 		System.err.println("testSingleNoEsc: " + resultSql);
 		assertFalse(resultSql.contains("ESCAPE"), "无特殊字符不应有ESCAPE: " + resultSql);
@@ -929,8 +911,7 @@ public class SqlConfigParseUtilsTest {
 	public void testLikeAtSqlEndNoTail() {
 		// like在SQL最末尾,后面无任何SQL,验证ESCAPE正确追加且无多余字符
 		String sql = "select * from table t where t.name like :name";
-		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "name" },
-				new Object[] { "x_y" });
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "name" }, new Object[] { "x_y" });
 		String resultSql = result.getSql();
 		System.err.println("testLikeAtEnd: " + resultSql);
 		assertTrue(resultSql.trim().endsWith("ESCAPE '\\'"), "应以ESCAPE结尾: " + resultSql);
@@ -941,8 +922,7 @@ public class SqlConfigParseUtilsTest {
 	public void testLikeWithOrderByAfter() {
 		// like后面跟order by,验证ESCAPE插入在like和order by之间
 		String sql = "select * from table t where t.name like :name order by t.id desc";
-		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "name" },
-				new Object[] { "x_y" });
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "name" }, new Object[] { "x_y" });
 		String resultSql = result.getSql();
 		System.err.println("testLikeWithOrderBy: " + resultSql);
 		assertTrue(resultSql.contains("like ? ESCAPE '\\'"), "ESCAPE应在like后: " + resultSql);
@@ -974,8 +954,7 @@ public class SqlConfigParseUtilsTest {
 	public void testLikeWithBackslashInValue() {
 		// 值中包含反斜杠\本身: escapeLikeValue会将其转义为\\,因此需要ESCAPE
 		String sql = "select * from table t where t.path like :path";
-		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "path" },
-				new Object[] { "C:\\data" });
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "path" }, new Object[] { "C:\\data" });
 		String resultSql = result.getSql();
 		System.err.println("testLikeBackslash: " + resultSql);
 		assertTrue(resultSql.contains("ESCAPE"), "值含\\应有ESCAPE: " + resultSql);
@@ -1033,8 +1012,7 @@ public class SqlConfigParseUtilsTest {
 	public void testThreeLikesAllNeedEscapeWithVariousConditions() {
 		// 三个like都需ESCAPE,中间穿插=条件和in条件
 		String sql = "select * from table t where t.a like :a and t.status=:status and t.b like :b and t.type in (:types) and t.c like :c order by t.id";
-		SqlToyResult result = SqlConfigParseUtils.processSql(sql,
-				new String[] { "a", "status", "b", "types", "c" },
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "a", "status", "b", "types", "c" },
 				new Object[] { "x_y", "1", "m_n", new Object[] { "A", "B" }, "p_q" });
 		String resultSql = result.getSql();
 		System.err.println("testThreeAllEsc: " + resultSql);
@@ -1053,8 +1031,7 @@ public class SqlConfigParseUtilsTest {
 	public void testIlikePattern() {
 		// PostgreSQL ilike模式
 		String sql = "select * from table t where t.name ilike :name";
-		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "name" },
-				new Object[] { "x_y" });
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "name" }, new Object[] { "x_y" });
 		String resultSql = result.getSql();
 		System.err.println("testIlike: " + resultSql);
 		assertTrue(resultSql.contains("ilike ?"), "ilike应匹配: " + resultSql);
@@ -1066,8 +1043,7 @@ public class SqlConfigParseUtilsTest {
 	public void testLikeAlreadyHasEscapeClause() {
 		// SQL中like后面已有ESCAPE子句,不应重复追加
 		String sql = "select * from table t where t.name like :name escape '\\'";
-		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "name" },
-				new Object[] { "x_y" });
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "name" }, new Object[] { "x_y" });
 		String resultSql = result.getSql();
 		System.err.println("testExistingEscape: " + resultSql);
 		// 原有的escape应保留,不额外追加
@@ -1088,12 +1064,10 @@ public class SqlConfigParseUtilsTest {
 		return count;
 	}
 
-
 	@Test
 	public void testLikeAlreadyHasEscapeNoSpecialChar() {
 		String sql = "select * from table t where t.name like :name escape '\\'";
-		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "name" },
-				new Object[] { "普通文本" });
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "name" }, new Object[] { "普通文本" });
 		String resultSql = result.getSql();
 		System.err.println("testExistingEscNoSpecial: " + resultSql);
 		assertEquals(1, countOccurrences(resultSql.toLowerCase(), "escape"), "只保留原有ESCAPE: " + resultSql);
@@ -1103,8 +1077,7 @@ public class SqlConfigParseUtilsTest {
 	@Test
 	public void testLikeAlreadyHasEscapeWithPercent() {
 		String sql = "select * from table t where t.name like :name escape '\\'";
-		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "name" },
-				new Object[] { "%abc_def" });
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "name" }, new Object[] { "%abc_def" });
 		String resultSql = result.getSql();
 		System.err.println("testExistingEscPct: " + resultSql);
 		assertEquals(1, countOccurrences(resultSql.toLowerCase(), "escape"), "不重复ESCAPE: " + resultSql);
@@ -1114,8 +1087,8 @@ public class SqlConfigParseUtilsTest {
 	@Test
 	public void testLikeAlreadyHasEscapeMysqlDialect() {
 		String sql = "select * from table t where t.name like :name escape '\\\\'";
-		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "name" },
-				new Object[] { "x_y" }, "mysql");
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "name" }, new Object[] { "x_y" },
+				"mysql");
 		String resultSql = result.getSql();
 		System.err.println("testExistingEscMysql: " + resultSql);
 		assertEquals(1, countOccurrences(resultSql.toLowerCase(), "escape"), "MySQL不重复ESCAPE: " + resultSql);
@@ -1129,8 +1102,7 @@ public class SqlConfigParseUtilsTest {
 				new Object[] { "x_y", "A_B" });
 		String resultSql = result.getSql();
 		System.err.println("testFirstHasEscSecondNot: " + resultSql);
-		assertEquals(2, countOccurrences(resultSql.toLowerCase(), "escape"),
-				"第一个原有+第二个追加=2个ESCAPE: " + resultSql);
+		assertEquals(2, countOccurrences(resultSql.toLowerCase(), "escape"), "第一个原有+第二个追加=2个ESCAPE: " + resultSql);
 		assertEquals("%x\\_y%", result.getParamsValue()[0], "第一个参数值转义");
 		assertEquals("%A\\_B%", result.getParamsValue()[1], "第二个参数值转义");
 	}
@@ -1142,8 +1114,7 @@ public class SqlConfigParseUtilsTest {
 				new Object[] { "x_y", "A_B" });
 		String resultSql = result.getSql();
 		System.err.println("testFirstNoSecondHasEsc: " + resultSql);
-		assertEquals(2, countOccurrences(resultSql.toLowerCase(), "escape"),
-				"第一个追加+第二个原有=2个ESCAPE: " + resultSql);
+		assertEquals(2, countOccurrences(resultSql.toLowerCase(), "escape"), "第一个追加+第二个原有=2个ESCAPE: " + resultSql);
 		assertEquals("%x\\_y%", result.getParamsValue()[0]);
 		assertEquals("%A\\_B%", result.getParamsValue()[1]);
 	}
@@ -1155,8 +1126,7 @@ public class SqlConfigParseUtilsTest {
 				new Object[] { "x_y", "A_B" });
 		String resultSql = result.getSql();
 		System.err.println("testBothHaveEsc: " + resultSql);
-		assertEquals(2, countOccurrences(resultSql.toLowerCase(), "escape"),
-				"两个原有ESCAPE,不重复: " + resultSql);
+		assertEquals(2, countOccurrences(resultSql.toLowerCase(), "escape"), "两个原有ESCAPE,不重复: " + resultSql);
 		assertEquals("%x\\_y%", result.getParamsValue()[0]);
 		assertEquals("%A\\_B%", result.getParamsValue()[1]);
 	}
@@ -1164,12 +1134,10 @@ public class SqlConfigParseUtilsTest {
 	@Test
 	public void testLikeAlreadyHasEscapeUppercase() {
 		String sql = "select * from table t where t.name like :name ESCAPE '\\'";
-		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "name" },
-				new Object[] { "x_y" });
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "name" }, new Object[] { "x_y" });
 		String resultSql = result.getSql();
 		System.err.println("testUppercaseEsc: " + resultSql);
-		assertEquals(1, countOccurrences(resultSql.toLowerCase(), "escape"),
-				"大写ESCAPE不重复: " + resultSql);
+		assertEquals(1, countOccurrences(resultSql.toLowerCase(), "escape"), "大写ESCAPE不重复: " + resultSql);
 		assertEquals("%x\\_y%", result.getParamsValue()[0]);
 	}
 }

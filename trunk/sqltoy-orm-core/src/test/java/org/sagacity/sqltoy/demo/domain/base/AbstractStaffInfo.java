@@ -11,545 +11,520 @@ import org.sagacity.sqltoy.config.annotation.Column;
 import org.sagacity.sqltoy.config.annotation.Entity;
 import org.sagacity.sqltoy.config.annotation.Id;
 
-
 /**
  * @project sqltoy-quickstart
- * @version 1.0.0
- * Table: sqltoy_staff_info,Remark:员工信息表  
+ * @version 1.0.0 Table: sqltoy_staff_info,Remark:员工信息表
  */
-@Entity(tableName="sqltoy_staff_info",pk_constraint="PRIMARY")
-public abstract class AbstractStaffInfo implements Serializable,
-	java.lang.Cloneable {
-	
+@Entity(tableName = "sqltoy_staff_info", pk_constraint = "PRIMARY")
+public abstract class AbstractStaffInfo implements Serializable, java.lang.Cloneable {
+
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 3492673222889622055L;
-	
+
 	/**
-	 * jdbcType:VARCHAR
-	 * 员工ID
+	 * jdbcType:VARCHAR 员工ID
 	 */
-	@Id(strategy="generator",generator="org.sagacity.sqltoy.plugins.id.impl.DefaultIdGenerator")
-	@Column(name="STAFF_ID",length=22L,type=java.sql.Types.VARCHAR,nullable=false)
+	@Id(strategy = "generator", generator = "org.sagacity.sqltoy.plugins.id.impl.DefaultIdGenerator")
+	@Column(name = "STAFF_ID", length = 22L, type = java.sql.Types.VARCHAR, nullable = false)
 	protected String staffId;
-	
+
 	/**
-	 * jdbcType:VARCHAR
-	 * 工号
+	 * jdbcType:VARCHAR 工号
 	 */
-	@Column(name="STAFF_CODE",length=22L,type=java.sql.Types.VARCHAR,nullable=false)
+	@Column(name = "STAFF_CODE", length = 22L, type = java.sql.Types.VARCHAR, nullable = false)
 	protected String staffCode;
-	
+
 	/**
-	 * jdbcType:VARCHAR
-	 * 姓名
+	 * jdbcType:VARCHAR 姓名
 	 */
-	@Column(name="STAFF_NAME",length=30L,type=java.sql.Types.VARCHAR,nullable=false)
+	@Column(name = "STAFF_NAME", length = 30L, type = java.sql.Types.VARCHAR, nullable = false)
 	protected String staffName;
-	
+
 	/**
-	 * jdbcType:VARCHAR
-	 * 部门
+	 * jdbcType:VARCHAR 部门
 	 */
-	@Column(name="ORGAN_ID",length=22L,type=java.sql.Types.VARCHAR,nullable=false)
+	@Column(name = "ORGAN_ID", length = 22L, type = java.sql.Types.VARCHAR, nullable = false)
 	protected String organId;
-	
+
 	/**
-	 * jdbcType:CHAR
-	 * 性别
+	 * jdbcType:CHAR 性别
 	 */
-	@Column(name="SEX_TYPE",length=1L,type=java.sql.Types.CHAR,nullable=false)
+	@Column(name = "SEX_TYPE", length = 1L, type = java.sql.Types.CHAR, nullable = false)
 	protected String sexType;
-	
+
 	/**
-	 * jdbcType:DATE
-	 * 出生日期
+	 * jdbcType:DATE 出生日期
 	 */
-	@Column(name="BIRTHDAY",length=10L,type=java.sql.Types.DATE,nullable=true)
+	@Column(name = "BIRTHDAY", length = 10L, type = java.sql.Types.DATE, nullable = true)
 	protected LocalDate birthday;
-	
+
 	/**
-	 * jdbcType:DATE
-	 * 入职日期
+	 * jdbcType:DATE 入职日期
 	 */
-	@Column(name="ENTRY_DATE",length=10L,type=java.sql.Types.DATE,nullable=false)
+	@Column(name = "ENTRY_DATE", length = 10L, type = java.sql.Types.DATE, nullable = false)
 	protected LocalDate entryDate;
-	
+
 	/**
-	 * jdbcType:DATE
-	 * 离职日期
+	 * jdbcType:DATE 离职日期
 	 */
-	@Column(name="TERM_DATE",length=10L,type=java.sql.Types.DATE,nullable=true)
+	@Column(name = "TERM_DATE", length = 10L, type = java.sql.Types.DATE, nullable = true)
 	protected LocalDate termDate;
-	
+
 	/**
-	 * jdbcType:LONGBLOB
-	 * 照片
+	 * jdbcType:LONGBLOB 照片
 	 */
-	@Column(name="PHOTO",length=2147483647L,type=java.sql.Types.BLOB,nullable=true)
+	@Column(name = "PHOTO", length = 2147483647L, type = java.sql.Types.BLOB, nullable = true)
 	protected byte[] photo;
-	
+
 	/**
-	 * jdbcType:VARCHAR
-	 * 国家
+	 * jdbcType:VARCHAR 国家
 	 */
-	@Column(name="COUNTRY",length=10L,type=java.sql.Types.VARCHAR,nullable=true)
+	@Column(name = "COUNTRY", length = 10L, type = java.sql.Types.VARCHAR, nullable = true)
 	protected String country;
-	
+
 	/**
-	 * jdbcType:VARCHAR
-	 * 籍贯
+	 * jdbcType:VARCHAR 籍贯
 	 */
-	@Column(name="CENSUS_REGISTER",length=150L,type=java.sql.Types.VARCHAR,nullable=true)
+	@Column(name = "CENSUS_REGISTER", length = 150L, type = java.sql.Types.VARCHAR, nullable = true)
 	protected String censusRegister;
-	
+
 	/**
-	 * jdbcType:VARCHAR
-	 * 家庭地址
+	 * jdbcType:VARCHAR 家庭地址
 	 */
-	@Column(name="ADDRESS",length=250L,type=java.sql.Types.VARCHAR,nullable=true)
+	@Column(name = "ADDRESS", length = 250L, type = java.sql.Types.VARCHAR, nullable = true)
 	protected String address;
-	
+
 	/**
-	 * jdbcType:VARCHAR
-	 * 邮箱
+	 * jdbcType:VARCHAR 邮箱
 	 */
-	@Column(name="EMAIL",length=100L,type=java.sql.Types.VARCHAR,nullable=true)
+	@Column(name = "EMAIL", length = 100L, type = java.sql.Types.VARCHAR, nullable = true)
 	protected String email;
-	
+
 	/**
-	 * jdbcType:VARCHAR
-	 * 移动电话
+	 * jdbcType:VARCHAR 移动电话
 	 */
-	@Column(name="TEL_NO",length=20L,type=java.sql.Types.VARCHAR,nullable=true)
+	@Column(name = "TEL_NO", length = 20L, type = java.sql.Types.VARCHAR, nullable = true)
 	protected String telNo;
-	
+
 	/**
-	 * jdbcType:VARCHAR
-	 * 岗位
+	 * jdbcType:VARCHAR 岗位
 	 */
-	@Column(name="POST",length=20L,type=java.sql.Types.VARCHAR,nullable=true)
+	@Column(name = "POST", length = 20L, type = java.sql.Types.VARCHAR, nullable = true)
 	protected String post;
-	
+
 	/**
-	 * jdbcType:VARCHAR
-	 * 职位级别
+	 * jdbcType:VARCHAR 职位级别
 	 */
-	@Column(name="POST_GRADE",length=20L,type=java.sql.Types.VARCHAR,nullable=true)
+	@Column(name = "POST_GRADE", length = 20L, type = java.sql.Types.VARCHAR, nullable = true)
 	protected String postGrade;
-	
+
 	/**
-	 * jdbcType:VARCHAR
-	 * 创建人
+	 * jdbcType:VARCHAR 创建人
 	 */
-	@Column(name="CREATE_BY",length=22L,type=java.sql.Types.VARCHAR,nullable=false)
+	@Column(name = "CREATE_BY", length = 22L, type = java.sql.Types.VARCHAR, nullable = false)
 	protected String createBy;
-	
+
 	/**
-	 * jdbcType:DATETIME
-	 * 创建时间
+	 * jdbcType:DATETIME 创建时间
 	 */
-	@Column(name="CREATE_TIME",length=19L,type=java.sql.Types.DATE,nullable=false)
+	@Column(name = "CREATE_TIME", length = 19L, type = java.sql.Types.DATE, nullable = false)
 	protected LocalDateTime createTime;
-	
+
 	/**
-	 * jdbcType:VARCHAR
-	 * 最后修改人
+	 * jdbcType:VARCHAR 最后修改人
 	 */
-	@Column(name="UPDATE_BY",length=22L,type=java.sql.Types.VARCHAR,nullable=false)
+	@Column(name = "UPDATE_BY", length = 22L, type = java.sql.Types.VARCHAR, nullable = false)
 	protected String updateBy;
-	
+
 	/**
-	 * jdbcType:DATETIME
-	 * 最后修改时间
+	 * jdbcType:DATETIME 最后修改时间
 	 */
-	@Column(name="UPDATE_TIME",length=19L,type=java.sql.Types.DATE,nullable=false)
+	@Column(name = "UPDATE_TIME", length = 19L, type = java.sql.Types.DATE, nullable = false)
 	protected LocalDateTime updateTime;
-	
+
 	/**
-	 * jdbcType:DECIMAL
-	 * 状态
+	 * jdbcType:DECIMAL 状态
 	 */
-	@Column(name="STATUS",length=1L,defaultValue="1",type=java.sql.Types.INTEGER,nullable=false)
+	@Column(name = "STATUS", length = 1L, defaultValue = "1", type = java.sql.Types.INTEGER, nullable = false)
 	protected Integer status;
-	
 
 	/** default constructor */
 	public AbstractStaffInfo() {
 	}
-	
+
 	/** pk constructor */
-	public AbstractStaffInfo(String staffId)
-	{
-		this.staffId=staffId;
+	public AbstractStaffInfo(String staffId) {
+		this.staffId = staffId;
 	}
 
 	/** minimal constructor */
-	public AbstractStaffInfo(String staffId,String staffCode,String staffName,String organId,String sexType,LocalDate entryDate,String createBy,LocalDateTime createTime,String updateBy,LocalDateTime updateTime,Integer status)
-	{
-		this.staffId=staffId;
-		this.staffCode=staffCode;
-		this.staffName=staffName;
-		this.organId=organId;
-		this.sexType=sexType;
-		this.entryDate=entryDate;
-		this.createBy=createBy;
-		this.createTime=createTime;
-		this.updateBy=updateBy;
-		this.updateTime=updateTime;
-		this.status=status;
+	public AbstractStaffInfo(String staffId, String staffCode, String staffName, String organId, String sexType,
+			LocalDate entryDate, String createBy, LocalDateTime createTime, String updateBy, LocalDateTime updateTime,
+			Integer status) {
+		this.staffId = staffId;
+		this.staffCode = staffCode;
+		this.staffName = staffName;
+		this.organId = organId;
+		this.sexType = sexType;
+		this.entryDate = entryDate;
+		this.createBy = createBy;
+		this.createTime = createTime;
+		this.updateBy = updateBy;
+		this.updateTime = updateTime;
+		this.status = status;
 	}
 
 	/** full constructor */
-	public AbstractStaffInfo(String staffId,String staffCode,String staffName,String organId,String sexType,LocalDate birthday,LocalDate entryDate,LocalDate termDate,byte[] photo,String country,String censusRegister,String address,String email,String telNo,String post,String postGrade,String createBy,LocalDateTime createTime,String updateBy,LocalDateTime updateTime,Integer status)
-	{
-		this.staffId=staffId;
-		this.staffCode=staffCode;
-		this.staffName=staffName;
-		this.organId=organId;
-		this.sexType=sexType;
-		this.birthday=birthday;
-		this.entryDate=entryDate;
-		this.termDate=termDate;
-		this.photo=photo;
-		this.country=country;
-		this.censusRegister=censusRegister;
-		this.address=address;
-		this.email=email;
-		this.telNo=telNo;
-		this.post=post;
-		this.postGrade=postGrade;
-		this.createBy=createBy;
-		this.createTime=createTime;
-		this.updateBy=updateBy;
-		this.updateTime=updateTime;
-		this.status=status;
+	public AbstractStaffInfo(String staffId, String staffCode, String staffName, String organId, String sexType,
+			LocalDate birthday, LocalDate entryDate, LocalDate termDate, byte[] photo, String country,
+			String censusRegister, String address, String email, String telNo, String post, String postGrade,
+			String createBy, LocalDateTime createTime, String updateBy, LocalDateTime updateTime, Integer status) {
+		this.staffId = staffId;
+		this.staffCode = staffCode;
+		this.staffName = staffName;
+		this.organId = organId;
+		this.sexType = sexType;
+		this.birthday = birthday;
+		this.entryDate = entryDate;
+		this.termDate = termDate;
+		this.photo = photo;
+		this.country = country;
+		this.censusRegister = censusRegister;
+		this.address = address;
+		this.email = email;
+		this.telNo = telNo;
+		this.post = post;
+		this.postGrade = postGrade;
+		this.createBy = createBy;
+		this.createTime = createTime;
+		this.updateBy = updateBy;
+		this.updateTime = updateTime;
+		this.status = status;
 	}
-	
+
 	/**
-	 *@param staffId the staffId to set
+	 * @param staffId the staffId to set
 	 */
 	public AbstractStaffInfo setStaffId(String staffId) {
-		this.staffId=staffId;
+		this.staffId = staffId;
 		return this;
 	}
-		
+
 	/**
-	 *@return the StaffId
+	 * @return the StaffId
 	 */
 	public String getStaffId() {
-	    return this.staffId;
+		return this.staffId;
 	}
-	
+
 	/**
-	 *@param staffCode the staffCode to set
+	 * @param staffCode the staffCode to set
 	 */
 	public AbstractStaffInfo setStaffCode(String staffCode) {
-		this.staffCode=staffCode;
+		this.staffCode = staffCode;
 		return this;
 	}
-		
+
 	/**
-	 *@return the StaffCode
+	 * @return the StaffCode
 	 */
 	public String getStaffCode() {
-	    return this.staffCode;
+		return this.staffCode;
 	}
-	
+
 	/**
-	 *@param staffName the staffName to set
+	 * @param staffName the staffName to set
 	 */
 	public AbstractStaffInfo setStaffName(String staffName) {
-		this.staffName=staffName;
+		this.staffName = staffName;
 		return this;
 	}
-		
+
 	/**
-	 *@return the StaffName
+	 * @return the StaffName
 	 */
 	public String getStaffName() {
-	    return this.staffName;
+		return this.staffName;
 	}
-	
+
 	/**
-	 *@param organId the organId to set
+	 * @param organId the organId to set
 	 */
 	public AbstractStaffInfo setOrganId(String organId) {
-		this.organId=organId;
+		this.organId = organId;
 		return this;
 	}
-		
+
 	/**
-	 *@return the OrganId
+	 * @return the OrganId
 	 */
 	public String getOrganId() {
-	    return this.organId;
+		return this.organId;
 	}
-	
+
 	/**
-	 *@param sexType the sexType to set
+	 * @param sexType the sexType to set
 	 */
 	public AbstractStaffInfo setSexType(String sexType) {
-		this.sexType=sexType;
+		this.sexType = sexType;
 		return this;
 	}
-		
+
 	/**
-	 *@return the SexType
+	 * @return the SexType
 	 */
 	public String getSexType() {
-	    return this.sexType;
+		return this.sexType;
 	}
-	
+
 	/**
-	 *@param birthday the birthday to set
+	 * @param birthday the birthday to set
 	 */
 	public AbstractStaffInfo setBirthday(LocalDate birthday) {
-		this.birthday=birthday;
+		this.birthday = birthday;
 		return this;
 	}
-		
+
 	/**
-	 *@return the Birthday
+	 * @return the Birthday
 	 */
 	public LocalDate getBirthday() {
-	    return this.birthday;
+		return this.birthday;
 	}
-	
+
 	/**
-	 *@param entryDate the entryDate to set
+	 * @param entryDate the entryDate to set
 	 */
 	public AbstractStaffInfo setEntryDate(LocalDate entryDate) {
-		this.entryDate=entryDate;
+		this.entryDate = entryDate;
 		return this;
 	}
-		
+
 	/**
-	 *@return the EntryDate
+	 * @return the EntryDate
 	 */
 	public LocalDate getEntryDate() {
-	    return this.entryDate;
+		return this.entryDate;
 	}
-	
+
 	/**
-	 *@param termDate the termDate to set
+	 * @param termDate the termDate to set
 	 */
 	public AbstractStaffInfo setTermDate(LocalDate termDate) {
-		this.termDate=termDate;
+		this.termDate = termDate;
 		return this;
 	}
-		
+
 	/**
-	 *@return the TermDate
+	 * @return the TermDate
 	 */
 	public LocalDate getTermDate() {
-	    return this.termDate;
+		return this.termDate;
 	}
-	
+
 	/**
-	 *@param photo the photo to set
+	 * @param photo the photo to set
 	 */
 	public AbstractStaffInfo setPhoto(byte[] photo) {
-		this.photo=photo;
+		this.photo = photo;
 		return this;
 	}
-		
+
 	/**
-	 *@return the Photo
+	 * @return the Photo
 	 */
 	public byte[] getPhoto() {
-	    return this.photo;
+		return this.photo;
 	}
-	
+
 	/**
-	 *@param country the country to set
+	 * @param country the country to set
 	 */
 	public AbstractStaffInfo setCountry(String country) {
-		this.country=country;
+		this.country = country;
 		return this;
 	}
-		
+
 	/**
-	 *@return the Country
+	 * @return the Country
 	 */
 	public String getCountry() {
-	    return this.country;
+		return this.country;
 	}
-	
+
 	/**
-	 *@param censusRegister the censusRegister to set
+	 * @param censusRegister the censusRegister to set
 	 */
 	public AbstractStaffInfo setCensusRegister(String censusRegister) {
-		this.censusRegister=censusRegister;
+		this.censusRegister = censusRegister;
 		return this;
 	}
-		
+
 	/**
-	 *@return the CensusRegister
+	 * @return the CensusRegister
 	 */
 	public String getCensusRegister() {
-	    return this.censusRegister;
+		return this.censusRegister;
 	}
-	
+
 	/**
-	 *@param address the address to set
+	 * @param address the address to set
 	 */
 	public AbstractStaffInfo setAddress(String address) {
-		this.address=address;
+		this.address = address;
 		return this;
 	}
-		
+
 	/**
-	 *@return the Address
+	 * @return the Address
 	 */
 	public String getAddress() {
-	    return this.address;
+		return this.address;
 	}
-	
+
 	/**
-	 *@param email the email to set
+	 * @param email the email to set
 	 */
 	public AbstractStaffInfo setEmail(String email) {
-		this.email=email;
+		this.email = email;
 		return this;
 	}
-		
+
 	/**
-	 *@return the Email
+	 * @return the Email
 	 */
 	public String getEmail() {
-	    return this.email;
+		return this.email;
 	}
-	
+
 	/**
-	 *@param telNo the telNo to set
+	 * @param telNo the telNo to set
 	 */
 	public AbstractStaffInfo setTelNo(String telNo) {
-		this.telNo=telNo;
+		this.telNo = telNo;
 		return this;
 	}
-		
+
 	/**
-	 *@return the TelNo
+	 * @return the TelNo
 	 */
 	public String getTelNo() {
-	    return this.telNo;
+		return this.telNo;
 	}
-	
+
 	/**
-	 *@param post the post to set
+	 * @param post the post to set
 	 */
 	public AbstractStaffInfo setPost(String post) {
-		this.post=post;
+		this.post = post;
 		return this;
 	}
-		
+
 	/**
-	 *@return the Post
+	 * @return the Post
 	 */
 	public String getPost() {
-	    return this.post;
+		return this.post;
 	}
-	
+
 	/**
-	 *@param postGrade the postGrade to set
+	 * @param postGrade the postGrade to set
 	 */
 	public AbstractStaffInfo setPostGrade(String postGrade) {
-		this.postGrade=postGrade;
+		this.postGrade = postGrade;
 		return this;
 	}
-		
+
 	/**
-	 *@return the PostGrade
+	 * @return the PostGrade
 	 */
 	public String getPostGrade() {
-	    return this.postGrade;
+		return this.postGrade;
 	}
-	
+
 	/**
-	 *@param createBy the createBy to set
+	 * @param createBy the createBy to set
 	 */
 	public AbstractStaffInfo setCreateBy(String createBy) {
-		this.createBy=createBy;
+		this.createBy = createBy;
 		return this;
 	}
-		
+
 	/**
-	 *@return the CreateBy
+	 * @return the CreateBy
 	 */
 	public String getCreateBy() {
-	    return this.createBy;
+		return this.createBy;
 	}
-	
+
 	/**
-	 *@param createTime the createTime to set
+	 * @param createTime the createTime to set
 	 */
 	public AbstractStaffInfo setCreateTime(LocalDateTime createTime) {
-		this.createTime=createTime;
+		this.createTime = createTime;
 		return this;
 	}
-		
+
 	/**
-	 *@return the CreateTime
+	 * @return the CreateTime
 	 */
 	public LocalDateTime getCreateTime() {
-	    return this.createTime;
+		return this.createTime;
 	}
-	
+
 	/**
-	 *@param updateBy the updateBy to set
+	 * @param updateBy the updateBy to set
 	 */
 	public AbstractStaffInfo setUpdateBy(String updateBy) {
-		this.updateBy=updateBy;
+		this.updateBy = updateBy;
 		return this;
 	}
-		
+
 	/**
-	 *@return the UpdateBy
+	 * @return the UpdateBy
 	 */
 	public String getUpdateBy() {
-	    return this.updateBy;
+		return this.updateBy;
 	}
-	
+
 	/**
-	 *@param updateTime the updateTime to set
+	 * @param updateTime the updateTime to set
 	 */
 	public AbstractStaffInfo setUpdateTime(LocalDateTime updateTime) {
-		this.updateTime=updateTime;
+		this.updateTime = updateTime;
 		return this;
 	}
-		
+
 	/**
-	 *@return the UpdateTime
+	 * @return the UpdateTime
 	 */
 	public LocalDateTime getUpdateTime() {
-	    return this.updateTime;
+		return this.updateTime;
 	}
-	
+
 	/**
-	 *@param status the status to set
+	 * @param status the status to set
 	 */
 	public AbstractStaffInfo setStatus(Integer status) {
-		this.status=status;
+		this.status = status;
 		return this;
 	}
-		
+
 	/**
-	 *@return the Status
+	 * @return the Status
 	 */
 	public Integer getStatus() {
-	    return this.status;
+		return this.status;
 	}
 
-
-
 	/**
-     * @todo vo columns to String
-     */
-    @Override
+	 * @todo vo columns to String
+	 */
+	@Override
 	public String toString() {
-		StringBuilder columnsBuffer=new StringBuilder();
+		StringBuilder columnsBuffer = new StringBuilder();
 		columnsBuffer.append("staffId=").append(getStaffId()).append("\n");
 		columnsBuffer.append("staffCode=").append(getStaffCode()).append("\n");
 		columnsBuffer.append("staffName=").append(getStaffName()).append("\n");
