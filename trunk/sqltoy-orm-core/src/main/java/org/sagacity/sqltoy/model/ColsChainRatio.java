@@ -100,7 +100,7 @@ public class ColsChainRatio implements Serializable {
 		return this;
 	}
 
-	public boolean getIsInsert() {
+	public Boolean getIsInsert() {
 		return isInsert;
 	}
 

@@ -421,7 +421,7 @@ public class QueryExecutor implements Serializable {
 	 * @return
 	 */
 	public QueryExecutor secureDecrypt(String... columns) {
-		if (columns.length > 0) {
+		if (columns != null && columns.length > 0) {
 			for (String column : columns) {
 				innerModel.decryptColumns.add(column);
 			}
@@ -583,7 +583,7 @@ public class QueryExecutor implements Serializable {
 			colsRelative.setStartColumn(colsChainRatio.getStartColumn());
 			colsRelative.setEndColumn(colsChainRatio.getEndColumn());
 			colsRelative.setFormat(colsChainRatio.getFormat());
-			colsRelative.setInsert(colsChainRatio.getIsInsert());
+			colsRelative.setInsert(colsChainRatio.getIsInsert() == null ? true : colsChainRatio.getIsInsert());
 			// 默认3位
 			colsRelative.setRadixSize(colsChainRatio.getRadixSize());
 			colsRelative.setMultiply(colsChainRatio.getMultiply());

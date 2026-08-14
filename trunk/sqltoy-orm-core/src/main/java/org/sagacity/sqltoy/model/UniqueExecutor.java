@@ -89,7 +89,7 @@ public class UniqueExecutor implements Serializable {
 	public int getTimeout() {
 		return timeout;
 	}
-	
+
 	public <T> T getContextData() {
 		return (T) contextData;
 	}

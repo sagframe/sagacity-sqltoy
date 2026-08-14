@@ -5,8 +5,9 @@ import java.time.LocalDateTime;
 
 /**
  * @project sqltoy-orm
- * @description 用于类似从数据库或其他形式配置的xml格式的sql，用在如下场景
- * lightDao.findByQuery(new QueryExecutor(new XMLBinding(xml).id(id).lastUpdateTime(lastUpdateTime)))
+ * @description 用于类似从数据库或其他形式配置的xml格式的sql，用在如下场景 lightDao.findByQuery(new
+ *              QueryExecutor(new
+ *              XMLBinding(xml).id(id).lastUpdateTime(lastUpdateTime)))
  * @author zhongxuchen
  * @version v1.0,Date:2026-2-6
  */
@@ -18,8 +19,7 @@ public class XMLBinding implements Serializable {
 	private static final long serialVersionUID = 3068484596254185451L;
 
 	/**
-	 * sql xml形式的配置
-	 * <sql id=""></sql>
+	 * sql xml形式的配置 <sql id=""></sql>
 	 */
 	private String xml;
 

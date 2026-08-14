@@ -55,7 +55,7 @@ public class ToDate extends IFunction {
 				return wrapArgs("to_date", args);
 			} else {
 				if (args[0].length() > 12) {
-					return "to_date(" + args[0] + ",'yyyy-MM-dd HH24:mm:ss')";
+					return "to_date(" + args[0] + ",'yyyy-MM-dd HH24:mi:ss')";
 				} else {
 					return "to_date(" + args[0] + ",'yyyy-MM-dd')";
 				}

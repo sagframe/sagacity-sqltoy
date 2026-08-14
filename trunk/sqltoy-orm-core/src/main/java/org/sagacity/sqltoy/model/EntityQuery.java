@@ -206,7 +206,7 @@ public class EntityQuery implements Serializable {
 				// 排序为空，默认为asc
 				String sortWay = (fields[1] == null) ? "asc" : fields[1].trim().toLowerCase();
 				// 排序字段为空当作无效参数
-				if (StringUtil.isBlank(fields[0]) && (sortWay.equals("asc") || sortWay.equals("desc"))) {
+				if (StringUtil.isBlank(fields[0])) {
 					return this;
 				}
 				// {field,sortWay} 模式，field中间无空格,第二个字符串是desc或asc
@@ -253,9 +253,10 @@ public class EntityQuery implements Serializable {
 		innerModel.lockMode = lockMode;
 		return this;
 	}
-	
+
 	/**
 	 * 锁等待时长(秒)
+	 * 
 	 * @param lockWaitTimeout
 	 * @return
 	 */
@@ -289,7 +290,7 @@ public class EntityQuery implements Serializable {
 	 * @return
 	 */
 	public EntityQuery secureDecrypt(String... columns) {
-		if (columns.length > 0) {
+		if (columns != null && columns.length > 0) {
 			for (String column : columns) {
 				innerModel.decryptColumns.add(column);
 			}

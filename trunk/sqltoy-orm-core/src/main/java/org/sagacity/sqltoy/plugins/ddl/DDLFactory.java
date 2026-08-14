@@ -46,6 +46,9 @@ public class DDLFactory {
 	private static String NEWLINE = "\r\n";
 
 	private static DialectDDLGenerator getGenerator(Integer dbType) {
+		if (dbType == null) {
+			return new DefaultDDLGenerator();
+		}
 		DialectDDLGenerator generator = null;
 		switch (dbType) {
 		case DBType.MYSQL:
@@ -170,7 +173,7 @@ public class DDLFactory {
 						}
 						// 数据库不存在当前表，则进行创建
 						if (tableName == null) {
-							TableMeta tableMeta = DDLUtils.wrapTableMeta(entityMeta,dbType);
+							TableMeta tableMeta = DDLUtils.wrapTableMeta(entityMeta, dbType);
 							logger.debug("开始创建表:[" + tableMeta.getTableName() + "]的表结构!");
 							DialectDDLGenerator dialectDDLGenerator = (sqlToyContext.getDialectDDLGenerator() == null)
 									? getGenerator(dbType)
@@ -183,7 +186,7 @@ public class DDLFactory {
 								}
 							} catch (Exception e) {
 								logger.warn("如:表已经存在错误，可尝试:spring.sqltoy.ddlLowerOrUpper=upper|lower 配置!");
-								e.printStackTrace();
+								logger.error("doConnection 方法执行异常", e);
 							}
 						} else {
 							logger.debug("表:[" + tableName + "]在数据库中已经存在!");
@@ -192,7 +195,7 @@ public class DDLFactory {
 				});
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("doConnection 方法执行异常", e);
 		}
 	}
 
@@ -210,7 +213,7 @@ public class DDLFactory {
 				break;
 			}
 		} catch (Exception e) {
-
+			logger.warn("检查表是否存在时发生异常,表可能不存在: {}", e.getMessage());
 		} finally {
 			if (rs != null) {
 				rs.close();
