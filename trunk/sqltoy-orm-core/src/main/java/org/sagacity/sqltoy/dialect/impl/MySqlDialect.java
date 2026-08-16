@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.sagacity.sqltoy.SqlExecuteStat;
+import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DecryptHandler;
 import org.sagacity.sqltoy.callback.GenerateSavePKStrategy;
@@ -443,6 +444,10 @@ public class MySqlDialect implements Dialect {
 		// 判断是否已经包含for update
 		if (lockMode == null || SqlUtil.hasLock(sql, dbType)) {
 			return "";
+		}
+		// doris/starrocks不支持行级锁查询,显式报错优于生成解析期必然失败的sql
+		if (dbType == DBType.DORIS || dbType == DBType.STARROCKS) {
+			throw new UnsupportedOperationException("doris/starrocks lock search," + SqlToyConstants.UN_SUPPORT_MESSAGE);
 		}
 		// 兼容低版本数据库
 		if (dbType == DBType.MYSQL57) {

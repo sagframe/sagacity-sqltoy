@@ -137,7 +137,8 @@ public class SqlServerDialect implements Dialect {
 		}
 		// 不存在order by或order by存在于子查询中
 		if (orderByIndex < 0) {
-			sql.append(" order by NEWID() ");
+			// offset fetch语法要求必须有order by,用固定排序占位符,避免NEWID()导致每次分页顺序随机出现重复或丢行
+			sql.append(" order by (select 1) ");
 		}
 		// 增加分页语句
 		sql.append(" offset ");

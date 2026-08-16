@@ -15,13 +15,10 @@ import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.dialect.utils.PageOptimizeUtils;
 import org.sagacity.sqltoy.exception.DataAccessException;
-import org.sagacity.sqltoy.plugins.function.FunctionUtils;
 import org.sagacity.sqltoy.plugins.id.macro.AbstractMacro;
 import org.sagacity.sqltoy.plugins.id.macro.MacroUtils;
 import org.sagacity.sqltoy.plugins.id.macro.impl.Include;
-import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils.Dialect;
-import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -149,7 +146,6 @@ public class SqlScriptLoader {
 		if (initialized) {
 			return;
 		}
-		initialized = true;
 		boolean enabledDebug = logger.isDebugEnabled();
 		try {
 			// 检索所有匹配的sql.xml文件
@@ -238,6 +234,9 @@ public class SqlScriptLoader {
 				logger.warn("sql文件更新检测:sleepSeconds={} 小于1秒或大于24小时，表示关闭sql文件变更检测!", sleepSeconds);
 			}
 		}
+		// 全部sql文件解析成功后才置位:失败时initialized保持false,下次initialize可以重试
+		// (原实现在try之前置位,解析异常后重试被静默跳过,sql永远加载不上)
+		initialized = true;
 	}
 
 	/**
@@ -304,10 +303,12 @@ public class SqlScriptLoader {
 				String sql = result.getSql();
 				boolean isParamInclude = StringUtil.matches(sql, SqlToyConstants.INCLUDE_PARAM_PATTERN);
 				// 复制一份，避免直接修改sql缓存中的模型
-				if (isParamInclude) {
-					result = result.clone();
-					result.clearDialectSql();
-				}
+				// @include(:param)模式sql随参数变化必须每次clone;@include(sqlId)模式展开结果固定,
+				// clone解析后按命中的缓存key原子替换回去,同样只解析一次,且消除直接改写共享实例的并发撕裂
+				String hitKey = getHitCacheKey(result, sqlKey, realDialect);
+				String originalDialect = result.getDialect();
+				result = result.clone();
+				result.clearDialectSql();
 				String countSql = result.getCountSql(null);
 				// update 2024-09-19 增加@fast(@include("sqlId")) 场景，result.getSql()
 				// 已经剔除了@fast,导致再次解析时已经无法判断是@fast语句，所以需要拼接上@fast还原原本的sql
@@ -318,8 +319,9 @@ public class SqlScriptLoader {
 							.concat(result.getFastTailSql(null));
 				}
 				sql = MacroUtils.replaceMacros(sql, (Map) sqlCache, paramValues, false, macros, dialect);
-				// 重新解析sql内容
-				SqlToyConfig tmpConfig = SqlConfigParseUtils.parseSqlToyConfig(sql, realDialect, sqlType);
+				// 重新解析sql内容:用原始dialect解析,保持base sql与启动解析一致的通用形态,
+				// 避免首次查询方言的函数转换结果被固化进缓存(其他方言查询时产生错误SQL)
+				SqlToyConfig tmpConfig = SqlConfigParseUtils.parseSqlToyConfig(sql, originalDialect, sqlType);
 				result.setHasUnion(tmpConfig.isHasUnion());
 				result.setHasWith(tmpConfig.isHasWith());
 				result.setHasFast(tmpConfig.isHasFast());
@@ -331,14 +333,15 @@ public class SqlScriptLoader {
 				result.setParamsName(tmpConfig.getParamsName());
 				if (countSql != null && StringUtil.matches(countSql, SqlToyConstants.INCLUDE_PATTERN)) {
 					countSql = MacroUtils.replaceMacros(countSql, (Map) sqlCache, paramValues, false, macros, dialect);
-					countSql = FunctionUtils.getDialectSql(countSql, realDialect);
-					countSql = ReservedWordsUtil.convertSql(countSql, DataSourceUtils.getDBType(realDialect));
+					// countSql同样保持通用形态,查询时通过getCountSql(dialect)按方言惰性转换并缓存
 					result.setCountSql(countSql);
 				}
 				// 2023-8-19 增加了@include(:scriptName) 模式，每次都是动态的
 				// 完全是@include(sqlId)模式，下次无需再进行sql拼装，提升性能
 				if (!isParamInclude) {
 					result.setHasIncludeSql(false);
+					// 按实际命中的缓存key(sqlId或其方言变体)原子替换,保持只解析一次的语义
+					sqlCache.put(hitKey, result);
 				}
 			}
 		} else {
@@ -366,6 +369,44 @@ public class SqlScriptLoader {
 			}
 		}
 		return result;
+	}
+
+	/**
+	 * @todo 判断sql配置实际命中的缓存key(sqlId本身或其方言变体),供@include展开后按原key替换缓存,
+	 *       与getSqlConfig中的查找顺序保持一致
+	 * @param config
+	 * @param sqlKey
+	 * @param realDialect
+	 * @return
+	 */
+	private String getHitCacheKey(SqlToyConfig config, String sqlKey, String realDialect) {
+		String hitKey = sqlKey;
+		if (!"".equals(realDialect)) {
+			String[] variantKeys;
+			if (realDialect.equals(Dialect.ORACLE11)) {
+				variantKeys = new String[] { sqlKey.concat("_").concat(realDialect),
+						realDialect.concat("_").concat(sqlKey), sqlKey.concat("_").concat(Dialect.ORACLE),
+						Dialect.ORACLE.concat("_").concat(sqlKey) };
+			} else if (realDialect.equals(Dialect.SQLSERVER)) {
+				variantKeys = new String[] { sqlKey.concat("_").concat(realDialect),
+						realDialect.concat("_").concat(sqlKey), sqlKey.concat("_").concat("mssql"),
+						"mssql_".concat(sqlKey) };
+			} else if (realDialect.equals(Dialect.POSTGRESQL)) {
+				variantKeys = new String[] { sqlKey.concat("_").concat(realDialect),
+						realDialect.concat("_").concat(sqlKey), sqlKey.concat("_").concat("postgres"),
+						"postgres_".concat(sqlKey) };
+			} else {
+				variantKeys = new String[] { sqlKey.concat("_").concat(realDialect),
+						realDialect.concat("_").concat(sqlKey) };
+			}
+			// 按引用比对确定实际命中的key,确保替换的就是本次查找返回的缓存条目
+			for (String key : variantKeys) {
+				if (sqlCache.get(key) == config) {
+					return key;
+				}
+			}
+		}
+		return hitKey;
 	}
 
 	public SqlToyConfig getSqlToyConfig(String sqlId) {

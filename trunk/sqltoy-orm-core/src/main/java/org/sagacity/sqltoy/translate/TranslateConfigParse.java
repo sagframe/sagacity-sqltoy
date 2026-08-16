@@ -68,8 +68,9 @@ public class TranslateConfigParse {
 	// 存放类包含缓存翻译注解配置
 	private final static ConcurrentHashMap<String, HashMap<String, FieldTranslate>> classTranslateConfigMap = new ConcurrentHashMap<>();
 
-	// 缓存更新检测器,用于辨别是否重复定义
-	private final static HashSet<String> cacheCheckers = new HashSet<String>();
+	// 缓存更新检测器,用于辨别同一批配置文件内是否重复定义;
+	// 并发安全set,且每次parseTranslateConfig入口清空(按"本次解析会话"去重,二次上下文重新解析不误报)
+	private final static Set<String> cacheCheckers = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
 	/**
 	 * @todo 解析translate配置文件
@@ -88,6 +89,8 @@ public class TranslateConfigParse {
 			throws Exception {
 		// 获取全部缓存翻译定义文件
 		List translateFiles = getTranslateFiles(translateConfig);
+		// 检测器去重按本次解析会话计算,清除上一个上下文遗留的登记,避免二次初始化误报"已经存在"
+		cacheCheckers.clear();
 		Object translateFile;
 		DefaultConfig result = new DefaultConfig();
 		DefaultConfig defaultConfig = null;
@@ -324,11 +327,10 @@ public class TranslateConfigParse {
 							}
 							checker.add(checherConfigModel);
 							if (StringUtil.isNotBlank(checherConfigModel.getCache())) {
-								if (cacheCheckers.contains(checherConfigModel.getCache())) {
+								// add原子性兼具存在性判断,消除contains+add两步之间的并发窗口
+								if (!cacheCheckers.add(checherConfigModel.getCache())) {
 									throw new RuntimeException("缓存翻译配置针对缓存:[" + checherConfigModel.getCache()
 											+ "]的更新检测器已经存在!请检查文件:" + translateFileStr);
-								} else {
-									cacheCheckers.add(checherConfigModel.getCache());
 								}
 							}
 							logger.debug("已经加载针对缓存:{} 更新的检测器,type={}", checherConfigModel.getCache(), translateType);
@@ -448,7 +450,6 @@ public class TranslateConfigParse {
 		boolean startClasspath;
 		Enumeration<URL> urls;
 		URL url;
-		JarFile jar;
 		Enumeration<JarEntry> entries;
 		JarEntry entry;
 		String transConfigFile;
@@ -470,15 +471,17 @@ public class TranslateConfigParse {
 						if (!realRes.isEmpty() && realRes.startsWith("/")) {
 							realRes = realRes.substring(1);
 						}
-						jar = ((JarURLConnection) url.openConnection()).getJarFile();
-						entries = jar.entries();
-						while (entries.hasMoreElements()) {
-							// 获取jar里的一个实体 可以是目录 和一些jar包里的其他文件 如META-INF等文件
-							entry = entries.nextElement();
-							transConfigFile = entry.getName();
-							if (transConfigFile.startsWith(realRes) && isTranslateConfig(transConfigFile)
-									&& !entry.isDirectory()) {
-								result.add(transConfigFile);
+						// try-with-resources关闭JarFile,避免文件句柄泄漏(Windows下会锁定jar阻碍热部署)
+						try (JarFile jar = ((JarURLConnection) url.openConnection()).getJarFile()) {
+							entries = jar.entries();
+							while (entries.hasMoreElements()) {
+								// 获取jar里的一个实体 可以是目录 和一些jar包里的其他文件 如META-INF等文件
+								entry = entries.nextElement();
+								transConfigFile = entry.getName();
+								if (transConfigFile.startsWith(realRes) && isTranslateConfig(transConfigFile)
+										&& !entry.isDirectory()) {
+									result.add(transConfigFile);
+								}
 							}
 						}
 					} else if (url.getProtocol().equals(RESOURCE)) {

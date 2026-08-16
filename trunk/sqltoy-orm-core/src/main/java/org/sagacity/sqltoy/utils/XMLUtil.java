@@ -45,6 +45,31 @@ public class XMLUtil {
 	 * @param handler
 	 * @throws Exception
 	 */
+	/**
+	 * @TODO 加固XML解析器抵御XXE:禁用doctype与外部实体
+	 * @param factory
+	 */
+	private static void hardenXxe(DocumentBuilderFactory factory) {
+		try {
+			factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+		} catch (javax.xml.parsers.ParserConfigurationException ignore) {
+			// 部分解析器实现不支持该feature,继续尝试通用属性
+		}
+		try {
+			factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+			factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+		} catch (javax.xml.parsers.ParserConfigurationException ignore) {
+		}
+		factory.setXIncludeAware(false);
+		factory.setExpandEntityReferences(false);
+		try {
+			factory.setAttribute(javax.xml.XMLConstants.ACCESS_EXTERNAL_DTD, "");
+			factory.setAttribute(javax.xml.XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+		} catch (IllegalArgumentException ignore) {
+			// 部分JDK版本不支持这些属性
+		}
+	}
+
 	public static Object readXML(Object xmlFile, String charset, boolean isValidator, XMLCallbackHandler handler)
 			throws Exception {
 		if (StringUtil.isBlank(xmlFile)) {
@@ -56,6 +81,8 @@ public class XMLUtil {
 			if (!isValidator) {
 				factory.setFeature(NO_VALIDATOR_FEATURE, false);
 			}
+			// 禁用XXE:doctype声明与外部实体(解析不可信xml时可被注入外部实体读取本地文件/SSRF)
+			hardenXxe(factory);
 			DocumentBuilder builder = factory.newDocumentBuilder();
 			fileIS = FileUtil.getFileInputStream(xmlFile);
 			if (fileIS != null) {
@@ -194,7 +221,6 @@ public class XMLUtil {
 							method.invoke(entity, convertType(values[i], className));
 						}
 					} catch (Exception e) {
-						e.printStackTrace();
 						throw e;
 					}
 				}

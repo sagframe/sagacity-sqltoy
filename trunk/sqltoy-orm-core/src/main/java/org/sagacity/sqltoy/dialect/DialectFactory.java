@@ -710,8 +710,8 @@ public class DialectFactory {
 				}
 				// 树形路由依赖主键字段,无@Id实体的getIdArray()为null直接取[0]会NPE,给出明确错误
 				if (entityMeta.getIdArray() == null || entityMeta.getIdArray().length < 1) {
-					throw new IllegalArgumentException("树形表路由操作依赖主键,当前实体:"
-							+ entityMeta.getEntityClass().getName() + " 没有定义@Id主键,请检查!");
+					throw new IllegalArgumentException(
+							"树形表路由操作依赖主键,当前实体:" + entityMeta.getEntityClass().getName() + " 没有定义@Id主键,请检查!");
 				}
 				FieldMeta idMeta = (FieldMeta) entityMeta.getFieldMeta(entityMeta.getIdArray()[0]);
 				// 如未定义则使用主键(update 2020-10-16)

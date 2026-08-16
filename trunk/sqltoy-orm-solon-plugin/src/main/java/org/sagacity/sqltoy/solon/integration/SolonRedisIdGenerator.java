@@ -20,16 +20,20 @@ public class SolonRedisIdGenerator implements DistributeIdGenerator {
     @Override
     public long generateId(String key, int increment, Date expireTime) {
         String realKey = GLOBAL_ID_PREFIX.concat(key);
-        RedisAtomic atomic = client.getAtomic(GLOBAL_ID_PREFIX.concat(key));
+        RedisAtomic atomic = client.getAtomic(realKey);
+        long result;
+        if (increment < 1) {
+            result = atomic.increment();
+        } else {
+            result = atomic.incrementBy(increment);
+        }
+        // 过期设置须在increment之后:首次调用时key由increment创建,提前pexpireAt对不存在的key是空操作
         if (expireTime != null) {
             client.open(s -> {
                 s.jedis().pexpireAt(realKey, expireTime.getTime());
             });
         }
-        if (increment < 1) {
-            return atomic.increment();
-        }
-        return atomic.incrementBy(increment);
+        return result;
     }
 
     @Override

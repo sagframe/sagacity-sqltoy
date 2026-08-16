@@ -23,9 +23,12 @@ import org.sagacity.sqltoy.config.model.ShardingGroupModel;
 import org.sagacity.sqltoy.config.model.ShardingModel;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.dialect.executor.DialectExecutor;
+import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.model.ParallelConfig;
 import org.sagacity.sqltoy.model.ShardingResult;
 import org.sagacity.sqltoy.plugins.sharding.ShardingUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @project sagacity-sqltoy
@@ -35,6 +38,8 @@ import org.sagacity.sqltoy.plugins.sharding.ShardingUtils;
  */
 @SuppressWarnings("rawtypes")
 public class ParallelUtils {
+	private final static Logger logger = LoggerFactory.getLogger(ParallelUtils.class);
+
 	private ParallelUtils() {
 	}
 
@@ -42,7 +47,7 @@ public class ParallelUtils {
 	 * @todo 将集合进行根据sharding字段的值提取sharding策略并按照策略将集合分组，然后并行执行
 	 * @param sqlToyContext
 	 * @param entities
-	 * @param wrapIdValue 是否需要事先主动给类似雪花算法、uuid等基于算法的id赋值
+	 * @param wrapIdValue    是否需要事先主动给类似雪花算法、uuid等基于算法的id赋值
 	 * @param notSharding
 	 * @param dataSource
 	 * @param parallelConfig
@@ -100,11 +105,12 @@ public class ParallelUtils {
 			futureResults.add(future);
 		}
 		pool.shutdown();
-		// 设置最大等待时长
-		if (shardingConfig.getMaxWaitSeconds() > 0) {
-			pool.awaitTermination(shardingConfig.getMaxWaitSeconds(), TimeUnit.SECONDS);
-		} else {
-			pool.awaitTermination(SqlToyConstants.PARALLEL_MAXWAIT_SECONDS, TimeUnit.SECONDS);
+		// 最大等待时长,超时则中断未完成任务并抛出,避免调用线程在后续futureResult.get()上无限期阻塞
+		int maxWaitSeconds = (shardingConfig.getMaxWaitSeconds() > 0) ? shardingConfig.getMaxWaitSeconds()
+				: SqlToyConstants.PARALLEL_MAXWAIT_SECONDS;
+		if (!pool.awaitTermination(maxWaitSeconds, TimeUnit.SECONDS)) {
+			pool.shutdownNow();
+			throw new DataAccessException("并行执行等待:{} 秒后超时,已中断未完成的任务!", maxWaitSeconds);
 		}
 		// 提取各个线程返回的结果进行合并
 		try {
@@ -120,7 +126,6 @@ public class ParallelUtils {
 				}
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
 			throw e;
 		} finally {
 			pool.shutdownNow();

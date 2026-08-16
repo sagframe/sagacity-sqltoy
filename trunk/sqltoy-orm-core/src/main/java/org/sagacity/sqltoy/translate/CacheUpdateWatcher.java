@@ -1,8 +1,10 @@
 package org.sagacity.sqltoy.translate;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -83,6 +85,9 @@ public class CacheUpdateWatcher extends Thread {
 		this.updateCheckers = updateCheckers;
 		this.delaySeconds = delaySeconds;
 		this.deviationSeconds = deviationSeconds;
+		// daemon:translate的destroy未被调用时不阻止JVM退出
+		setDaemon(true);
+		setName("sqltoy-cache-update-watcher");
 	}
 
 	/*
@@ -99,6 +104,8 @@ public class CacheUpdateWatcher extends Thread {
 				Thread.sleep(1000 * delaySeconds);
 			}
 		} catch (InterruptedException e) {
+			// 恢复中断标志供上层感知
+			Thread.currentThread().interrupt();
 			isRun = false;
 		}
 		Long preCheck;
@@ -147,6 +154,8 @@ public class CacheUpdateWatcher extends Thread {
 				}
 			} catch (InterruptedException e) {
 				logger.warn("缓存翻译检测缓存变更异常,检测线程将终止!{}", e.getMessage(), e);
+				// 恢复中断标志供上层感知
+				Thread.currentThread().interrupt();
 				isRun = false;
 			}
 		}
@@ -237,66 +246,123 @@ public class CacheUpdateWatcher extends Thread {
 			logger.debug("检测到缓存cacheName:{} 发生:{} 条记录更新!", cacheName, results.size());
 			HashMap<String, Object[]> cacheData;
 			int count = 0;
+			// 按值存储(offheap/disk层副本)的缓存须经put整体替换同步三层,纯heap(by-reference)原地put零拷贝直接生效
+			boolean storeByValue = !isDynamicFetchCache && translateCacheManager.isStoreByValue(translateConfig);
 			try {
 				// 内部不存在分组的缓存
 				if (!checkerConfig.isHasInsideGroup()) {
-					if (isDynamicFetchCache) {
-						cacheData = dynamicFecthCacheManager.getDynamicCache(translateConfig, null);
+					if (storeByValue) {
+						count += applyIncrementByValue(translateCacheManager, translateConfig, cacheName, null,
+								results);
 					} else {
-						cacheData = translateCacheManager.getCache(cacheName, null);
-					}
-					if (cacheData != null) {
-						String key;
-						for (CacheCheckResult result : results) {
-							// key不能为null
-							if (result.getItem() != null && result.getItem()[0] != null) {
-								key = result.getItem()[0].toString();
-								// 动态数据捕获的缓存，要判断存在才能覆盖
-								if (isDynamicFetchCache) {
-									if (cacheData.containsKey(key)) {
+						if (isDynamicFetchCache) {
+							cacheData = dynamicFecthCacheManager.getDynamicCache(translateConfig, null);
+						} else {
+							cacheData = translateCacheManager.getCache(cacheName, null);
+						}
+						if (cacheData != null) {
+							String key;
+							for (CacheCheckResult result : results) {
+								// key不能为null
+								if (result.getItem() != null && result.getItem()[0] != null) {
+									key = result.getItem()[0].toString();
+									// 动态数据捕获的缓存，要判断存在才能覆盖
+									if (isDynamicFetchCache) {
+										if (cacheData.containsKey(key)) {
+											cacheData.put(key, result.getItem());
+											count++;
+										}
+									} else {
 										cacheData.put(key, result.getItem());
 										count++;
 									}
-								} else {
-									cacheData.put(key, result.getItem());
-									count++;
 								}
 							}
 						}
 					}
 				} // 内部存在分组的缓存(如数据字典)
 				else {
-					String key;
-					for (CacheCheckResult result : results) {
-						if (result.getItem() != null && result.getItem()[0] != null) {
-							if (isDynamicFetchCache) {
-								cacheData = dynamicFecthCacheManager.getDynamicCache(translateConfig,
-										result.getCacheType());
-							} else {
-								cacheData = translateCacheManager.getCache(cacheName, result.getCacheType());
+					// 按值存储:按cacheType分组后每组整体复制替换一次
+					if (storeByValue) {
+						HashMap<String, List<CacheCheckResult>> groupedResults = new HashMap<String, List<CacheCheckResult>>();
+						for (CacheCheckResult result : results) {
+							if (result.getItem() != null && result.getItem()[0] != null) {
+								List<CacheCheckResult> typeResults = groupedResults.get(result.getCacheType());
+								if (typeResults == null) {
+									typeResults = new ArrayList<CacheCheckResult>();
+									groupedResults.put(result.getCacheType(), typeResults);
+								}
+								typeResults.add(result);
 							}
-							// 为null则等待首次调用加载
-							if (cacheData != null) {
-								key = result.getItem()[0].toString();
-								// 动态数据捕获的缓存，要判断存在才能覆盖
+						}
+						for (Map.Entry<String, List<CacheCheckResult>> entry : groupedResults.entrySet()) {
+							count += applyIncrementByValue(translateCacheManager, translateConfig, cacheName,
+									entry.getKey(), entry.getValue());
+						}
+					} else {
+						String key;
+						for (CacheCheckResult result : results) {
+							if (result.getItem() != null && result.getItem()[0] != null) {
 								if (isDynamicFetchCache) {
-									if (cacheData.containsKey(key)) {
+									cacheData = dynamicFecthCacheManager.getDynamicCache(translateConfig,
+											result.getCacheType());
+								} else {
+									cacheData = translateCacheManager.getCache(cacheName, result.getCacheType());
+								}
+								// 为null则等待首次调用加载
+								if (cacheData != null) {
+									key = result.getItem()[0].toString();
+									// 动态数据捕获的缓存，要判断存在才能覆盖
+									if (isDynamicFetchCache) {
+										if (cacheData.containsKey(key)) {
+											cacheData.put(key, result.getItem());
+											count++;
+										}
+									} else {
 										cacheData.put(key, result.getItem());
 										count++;
 									}
-								} else {
-									cacheData.put(key, result.getItem());
-									count++;
 								}
 							}
 						}
 					}
 				}
 			} catch (Exception e) {
-				e.printStackTrace();
 				logger.error("缓存增量更新检测,更新缓存:{} 发生异常:{}", cacheName, e.getMessage());
 			}
 			logger.debug("缓存实际完成:{} 条记录更新!", count);
 		}
+	}
+
+	/**
+	 * @todo 按值存储缓存(offheap/disk副本)的增量更新：复制getCache返回的map → 副本应用全部增量 →
+	 *       经put整体写回同步heap/offheap/disk三层。契约依据:put语义为"存储给定map作为缓存内容"
+	 *       (官方ehcache/caffeine实现均如此);若自定义实现的put是向既有map合并条目,则本方法退化为
+	 *       单次批量合并(竞争窗口从N次收窄为1次,但未完全消除)
+	 * @param tcm       缓存管理器
+	 * @param config    缓存配置
+	 * @param cacheName 缓存名称
+	 * @param cacheType 缓存分组类型(可null)
+	 * @param results   增量更新结果
+	 * @return 实际完成更新的记录数
+	 */
+	static int applyIncrementByValue(TranslateCacheManager tcm, TranslateConfigModel config, String cacheName,
+			String cacheType, List<CacheCheckResult> results) {
+		HashMap<String, Object[]> cacheData = tcm.getCache(cacheName, cacheType);
+		if (cacheData == null || results == null || results.isEmpty()) {
+			return 0;
+		}
+		HashMap<String, Object[]> newCacheData = new HashMap<String, Object[]>(cacheData.size() + results.size());
+		newCacheData.putAll(cacheData);
+		int count = 0;
+		for (CacheCheckResult result : results) {
+			if (result.getItem() != null && result.getItem()[0] != null) {
+				newCacheData.put(result.getItem()[0].toString(), result.getItem());
+				count++;
+			}
+		}
+		// 经缓存管理器整体写回(官方实现对cacheName加锁),同步heap/offheap/disk三层副本
+		tcm.put(config, cacheName, cacheType, newCacheData);
+		return count;
 	}
 }

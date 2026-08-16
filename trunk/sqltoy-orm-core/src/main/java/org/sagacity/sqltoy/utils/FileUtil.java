@@ -30,6 +30,7 @@ import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -79,7 +80,7 @@ public class FileUtil {
 				}
 				out.flush();
 			} catch (Exception e) {
-				e.printStackTrace();
+				logger.error("putFileInOutStream 方法执行异常", e);
 			} finally {
 				IOUtil.closeQuietly(out, fileIn);
 			}
@@ -104,7 +105,7 @@ public class FileUtil {
 			}
 			fos.flush();
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("putInputStreamToFile 方法执行异常", e);
 		} finally {
 			IOUtil.closeQuietly(fos, is);
 		}
@@ -134,7 +135,7 @@ public class FileUtil {
 			fos.write(bytes);
 			fos.flush();
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("putBytesToFile 方法执行异常", e);
 		} finally {
 			IOUtil.closeQuietly(fos);
 		}
@@ -240,12 +241,12 @@ public class FileUtil {
 						}
 					}
 				} catch (Exception e) {
-					e.printStackTrace();
+					logger.error("getFileInputStream 方法执行异常", e);
 				}
 			}
 			return result;
 		} catch (FileNotFoundException fn) {
-			fn.printStackTrace();
+			logger.error("getFileInputStream 方法执行异常", fn);
 		}
 		return null;
 	}
@@ -294,7 +295,7 @@ public class FileUtil {
 				return true;
 			}
 		} catch (IOException e) {
-			e.printStackTrace();
+			logger.error("existFile 方法执行异常", e);
 		} finally {
 			if (result != null) {
 				result.close();
@@ -344,7 +345,6 @@ public class FileUtil {
 			writer.write(content);
 			writer.flush();
 		} catch (Exception e) {
-			e.printStackTrace();
 			throw e;
 		} finally {
 			IOUtil.closeQuietly(writer, osw, fos);
@@ -364,6 +364,10 @@ public class FileUtil {
 		}
 		if (parentFile.isDirectory()) {
 			File[] files = parentFile.listFiles();
+			// IO错误或无权限时listFiles()返回null
+			if (files == null) {
+				return;
+			}
 			for (int loop = 0; loop < files.length; loop++) {
 				if (!files[loop].isDirectory()) {
 					matchFilters(fileList, files[loop], filters);
@@ -453,7 +457,6 @@ public class FileUtil {
 				tmpFile.mkdirs();
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
 			logger.error("创建目录:{}操作出错{}", folderPath, e.getMessage());
 		}
 	}
@@ -520,7 +523,7 @@ public class FileUtil {
 			// 删除当前文件夹
 			new File(folderPath).delete();
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("delFolder 方法执行异常", e);
 		}
 	}
 
@@ -540,6 +543,10 @@ public class FileUtil {
 			return result;
 		}
 		String[] tempList = file.list();
+		// IO错误或无权限时list()返回null
+		if (tempList == null) {
+			return result;
+		}
 		File temp = null;
 		for (int i = 0; i < tempList.length; i++) {
 			if (path.endsWith(File.separator)) {
@@ -621,7 +628,6 @@ public class FileUtil {
 			logger.error("文件=" + oldPathFile + "不存在!计划改名对应的文件为=" + newPathFile);
 			return false;
 		} catch (Exception e) {
-			e.printStackTrace();
 			logger.error("复制文件:" + oldPathFile + " 到目标文件:" + newPathFile + " 操作失败!");
 		} finally {
 			IOUtil.closeQuietly(fs, inStream);
@@ -635,12 +641,14 @@ public class FileUtil {
 	 * @param newPath 指定绝对路径的新目录
 	 */
 	public static void copyFolder(String oldPath, String newPath) {
-		FileInputStream input = null;
-		FileOutputStream output = null;
 		try {
 			createFolder(newPath);
 			File a = new File(oldPath);
 			String[] file = a.list();
+			// IO错误或无权限时list()返回null
+			if (file == null) {
+				return;
+			}
 			File temp = null;
 			for (int i = 0; i < file.length; i++) {
 				if (oldPath.endsWith(File.separator)) {
@@ -649,24 +657,24 @@ public class FileUtil {
 					temp = new File(oldPath + File.separator + file[i]);
 				}
 				if (temp.isFile()) {
-					input = new FileInputStream(temp);
-					output = new FileOutputStream(newPath + File.separator + (temp.getName()).toString());
-					byte[] b = new byte[1024 * 5];
-					int len;
-					while ((len = input.read(b)) != -1) {
-						output.write(b, 0, len);
+					// 每个文件的流独立try-with-resources关闭,避免循环覆盖变量导致前面的流泄漏
+					try (FileInputStream input = new FileInputStream(temp);
+							FileOutputStream output = new FileOutputStream(
+									newPath + File.separator + (temp.getName()).toString())) {
+						byte[] b = new byte[1024 * 5];
+						int len;
+						while ((len = input.read(b)) != -1) {
+							output.write(b, 0, len);
+						}
+						output.flush();
 					}
-					output.flush();
 				}
-				if (temp.isDirectory()) {// 如果是子文件??
+				if (temp.isDirectory()) {// 如果是子文件夹
 					copyFolder(oldPath + File.separator + file[i], newPath + File.separator + file[i]);
 				}
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
 			logger.error("复制整个文件夹,从文件夹:{} 到文件夹:{},操作出错{}", oldPath, newPath, e.getMessage());
-		} finally {
-			IOUtil.closeQuietly(output, input);
 		}
 	}
 
@@ -712,7 +720,7 @@ public class FileUtil {
 				oldFile.renameTo(new File(distFile));
 				return 1;
 			} catch (Exception e) {
-				e.printStackTrace();
+				logger.error("rename 方法执行异常", e);
 				return 0;
 			}
 		} else {
@@ -742,11 +750,14 @@ public class FileUtil {
 			}
 
 			byte[] re = md.digest();// 获得消息摘要
+			// StringBuilder拼接,避免字符串+在循环中的O(n²)开销
+			StringBuilder digest = new StringBuilder(re.length * 2);
 			for (int i = 0; i < re.length; i++) {
-				result += Integer.toHexString((0x000000ff & re[i]) | 0xffffff00).substring(6);
+				digest.append(Integer.toHexString((0x000000ff & re[i]) | 0xffffff00).substring(6));
 			}
+			result = digest.toString();
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("getFileMessageDigest 方法执行异常", e);
 		} finally {
 			IOUtil.closeQuietly(din, fin);
 		}
@@ -868,7 +879,7 @@ public class FileUtil {
 			out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(appendFile, true)));
 			out.write(content);
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("appendFileByStream 方法执行异常", e);
 		} finally {
 			IOUtil.closeQuietly(out);
 		}
@@ -895,7 +906,7 @@ public class FileUtil {
 			writer = new FileWriter(appendFile, true);
 			writer.write(content);
 		} catch (IOException e) {
-			e.printStackTrace();
+			logger.error("appendFileByWriter 方法执行异常", e);
 		} finally {
 			IOUtil.closeQuietly(writer);
 		}
@@ -924,9 +935,10 @@ public class FileUtil {
 			long fileLength = randomFile.length();
 			// 将写文件指针移到文件尾。
 			randomFile.seek(fileLength);
-			randomFile.writeBytes(content);
+			// writeBytes(String)只写每个字符的低8位会丢中文,按UTF-8编码写入
+			randomFile.write(content.getBytes(StandardCharsets.UTF_8));
 		} catch (IOException e) {
-			e.printStackTrace();
+			logger.error("appendFileByRandomAccess 方法执行异常", e);
 		} finally {
 			IOUtil.closeQuietly(randomFile);
 		}
@@ -997,7 +1009,10 @@ public class FileUtil {
 	 */
 	public static List<Path> matchAntPath(Path root, String antPattern) throws Exception {
 		PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:" + antPattern);
-		return Files.walk(root).filter(Files::isRegularFile).filter(matcher::matches).collect(Collectors.toList());
+		// Files.walk的Stream持有目录句柄,必须关闭避免泄漏(Windows下锁定目录阻碍删除)
+		try (Stream<Path> paths = Files.walk(root)) {
+			return paths.filter(Files::isRegularFile).filter(matcher::matches).collect(Collectors.toList());
+		}
 	}
 
 	public static String getJarPath(URL jarUrl) throws Exception {

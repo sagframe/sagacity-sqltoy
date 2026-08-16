@@ -63,6 +63,10 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 
 	@Override
 	public boolean hasCache(String cacheName) {
+		// init未执行或destroy后cacheManager为null,与getCache/put/clear的判空防护对称
+		if (cacheManager == null) {
+			return false;
+		}
 		Cache<String, HashMap> cache = cacheManager.getCache(cacheName, String.class, HashMap.class);
 		if (null == cache) {
 			return false;
@@ -84,11 +88,11 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 				// 堆内内存大小(默认10000条)
 				resBuilder = resBuilder.heap((cacheConfig.getHeap() < 1) ? 1000 : cacheConfig.getHeap(),
 						EntryUnit.ENTRIES);
-				//offHeap 堆外内存
+				// offHeap 堆外内存
 				if (cacheConfig.getOffHeap() > 0) {
 					resBuilder = resBuilder.offheap(cacheConfig.getOffHeap(), MemoryUnit.MB);
 				}
-				//disk 
+				// disk
 				if (cacheConfig.getDiskSize() > 0) {
 					resBuilder = resBuilder.disk(cacheConfig.getDiskSize(), MemoryUnit.MB, true);
 				}

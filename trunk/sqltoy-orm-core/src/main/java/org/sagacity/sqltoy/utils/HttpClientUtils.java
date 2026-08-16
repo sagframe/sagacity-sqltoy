@@ -34,6 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 
 /**
@@ -86,13 +87,16 @@ public class HttpClientUtils {
 			}
 			if (paramValue != null && paramValue.length > 0) {
 				List<NameValuePair> nvps = new ArrayList<NameValuePair>();
-				for (int i = 0; i < paramValue.length; i++) {
+				// paramName与paramValue按位对应,长度不一致或name缺省时按较短者截取,避免数组越界
+				int paramSize = (paramName == null) ? 0 : Math.min(paramName.length, paramValue.length);
+				for (int i = 0; i < paramSize; i++) {
 					if (paramValue[i] != null) {
 						nvps.add(new BasicNameValuePair(paramName[i], paramValue[i]));
 					}
 				}
+				// 表单提交保持UrlEncodedFormEntity默认的application/x-www-form-urlencoded,
+				// 不能覆盖成application/json,否则服务端无法按表单解析参数
 				HttpEntity httpEntity = new UrlEncodedFormEntity(nvps, CHARSET);
-				((UrlEncodedFormEntity) httpEntity).setContentType(CONTENT_TYPE);
 				httpPost.setEntity(httpEntity);
 			}
 			return client.execute(httpPost, new ResponseHandler<String>() {
@@ -208,12 +212,36 @@ public class HttpClientUtils {
 		if (sqltoyContext.isDebug()) {
 			logger.debug("result={}", result);
 		}
+		return parseElasticResult(result);
+	}
+
+	/**
+	 * @TODO 解析elastic查询结果,存在error时抛出携带错误信息的异常
+	 * @param result elastic返回的json字符串
+	 * @return
+	 */
+	public static JSONObject parseElasticResult(String result) {
 		// 将结果转换为JSON对象
 		JSONObject json = JSON.parseObject(result);
-		// 存在错误
+		// 存在错误:error结构随版本/异常类型变化,root_cause可能缺失,error本身可能是字符串,
+		// 防御式提取避免NPE掩盖真实错误信息
 		if (json.containsKey("error")) {
-			String errorMessage = JSON.toJSONString(json.getJSONObject("error").getJSONArray("root_cause").get(0));
-			logger.error("elastic查询失败,endpoint:[{}],错误信息:[{}]", nosqlConfig.getEndpoint(), errorMessage);
+			Object errorObj = json.get("error");
+			String errorMessage;
+			if (errorObj instanceof JSONObject) {
+				JSONObject errorJson = (JSONObject) errorObj;
+				JSONArray rootCause = errorJson.getJSONArray("root_cause");
+				if (rootCause != null && !rootCause.isEmpty()) {
+					errorMessage = JSON.toJSONString(rootCause.get(0));
+				} else if (errorJson.getString("reason") != null) {
+					errorMessage = errorJson.getString("reason");
+				} else {
+					errorMessage = JSON.toJSONString(errorJson);
+				}
+			} else {
+				errorMessage = String.valueOf(errorObj);
+			}
+			logger.error("elastic查询失败,错误信息:[{}]", errorMessage);
 			throw new DataAccessException("ElasticSearch查询失败,错误信息:" + errorMessage);
 		}
 		return json;

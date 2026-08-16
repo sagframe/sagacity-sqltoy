@@ -32,8 +32,12 @@ public class DefaultOverTimeHandler implements OverTimeSqlHandler {
 	// 所有执行超时且含sqlId的sql语句
 	private HashMap<String, OverTimeSql> slowSqlMap = new HashMap<String, OverTimeSql>();
 
+	/**
+	 * log由所有sql执行线程并发调用,对slowSqlMap/queues是读改写复合操作,
+	 * getSlowest遍历时也必须与写互斥;超时sql属低频事件,方法级互斥已足够
+	 */
 	@Override
-	public void log(OverTimeSql overTimeSql) {
+	public synchronized void log(OverTimeSql overTimeSql) {
 		String sqlId = overTimeSql.getId();
 		if (null != sqlId && !"".equals(sqlId.trim())) {
 			OverTimeSql preSql = slowSqlMap.get(sqlId);
@@ -71,7 +75,7 @@ public class DefaultOverTimeHandler implements OverTimeSqlHandler {
 	 * 获取最慢的sql
 	 */
 	@Override
-	public List<OverTimeSql> getSlowest(int size, boolean hasSqlId) {
+	public synchronized List<OverTimeSql> getSlowest(int size, boolean hasSqlId) {
 		if (size < 1) {
 			throw new IllegalArgumentException("取最慢查询:size 参数必须>=1,如果要获取全部，可使用:Integer.MAX_VALUE");
 		}
@@ -94,7 +98,7 @@ public class DefaultOverTimeHandler implements OverTimeSqlHandler {
 			if (size >= result.size()) {
 				return result;
 			}
-			return result.subList(0, size - 1);
+			return result.subList(0, size);
 		}
 	}
 

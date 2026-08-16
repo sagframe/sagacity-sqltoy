@@ -69,7 +69,6 @@ public class TranslateFactory {
 			}
 			// local模式由应用自行管理
 		} catch (Exception e) {
-			e.printStackTrace();
 			logger.error("执行缓存变更检测发生错误,错误信息:{}", e.getMessage());
 		}
 
@@ -264,7 +263,6 @@ public class TranslateFactory {
 				result = getRestCacheData(sqlToyContext, cacheModel, cacheType);
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
 			logger.error("获取缓存数据失败,返回结果应该是List<List> 或List<Object[]> 或 Map<String,Object[]> 类型,错误信息:{}",
 					e.getMessage());
 		}
@@ -414,12 +412,21 @@ public class TranslateFactory {
 						row = (List) tempList.get(i);
 						rowAry = new Object[row.size()];
 						row.toArray(rowAry);
+						// key列(null)脏数据跳过并告警,不再NPE穿透查询链路
+						if (rowAry[cacheIndex] == null) {
+							logger.warn("缓存:{}的key列(第{}列)存在null值,该行数据被跳过!", cacheModel.getCache(), cacheIndex);
+							continue;
+						}
 						result.put(rowAry[cacheIndex].toString(), rowAry);
 					}
 				} else if (tempList.get(0) instanceof Object[]) {
 					Object[] row;
 					for (int i = 0, n = tempList.size(); i < n; i++) {
 						row = (Object[]) tempList.get(i);
+						if (row[cacheIndex] == null) {
+							logger.warn("缓存:{}的key列(第{}列)存在null值,该行数据被跳过!", cacheModel.getCache(), cacheIndex);
+							continue;
+						}
 						result.put(row[cacheIndex].toString(), row);
 					}
 				} // 对象数组，利用反射提取属性值
@@ -427,6 +434,10 @@ public class TranslateFactory {
 					List<Object[]> dataSet = BeanUtil.reflectBeansToInnerAry(tempList, cacheModel.getProperties(), null,
 							null);
 					for (Object[] row : dataSet) {
+						if (row[cacheIndex] == null) {
+							logger.warn("缓存:{}的key列(第{}列)存在null值,该行数据被跳过!", cacheModel.getCache(), cacheIndex);
+							continue;
+						}
 						result.put(row[cacheIndex].toString(), row);
 					}
 				}

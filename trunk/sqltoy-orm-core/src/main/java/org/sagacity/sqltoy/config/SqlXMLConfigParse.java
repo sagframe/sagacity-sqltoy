@@ -1235,8 +1235,8 @@ public class SqlXMLConfigParse {
 					Translate translateModel = new Translate(cacheName);
 					// 小写
 					translateModel.setColumn(columns[i]);
-					translateModel.setAlias(
-						(aliasNames == null || aliasNames.length <= i) ? columns[i] : aliasNames[i]);
+					translateModel
+							.setAlias((aliasNames == null || aliasNames.length <= i) ? columns[i] : aliasNames[i]);
 					translateModel.setCacheType(cacheType);
 					translateModel.setSplitRegex(splitRegex);
 					translateModel.setLinkSign(linkSign);

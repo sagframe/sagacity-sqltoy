@@ -2,7 +2,9 @@ package org.sagacity.sqltoy.utils;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.Map;
+import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.sql.DataSource;
@@ -42,6 +44,13 @@ public class DataSourceUtils {
 	public static ConcurrentHashMap<String, Integer> DBTypeMap = new ConcurrentHashMap<String, Integer>();
 	public static ConcurrentHashMap<String, Integer> DBNameTypeMap = new ConcurrentHashMap<String, Integer>();
 	public static IgnoreKeyCaseMap<String, String> dialectMap = new IgnoreKeyCaseMap<String, String>();
+
+	// 以DataSource对象为key的dbType/方言缓存:身份语义避免hashCode碰撞互串,
+	// weak引用使动态数据源被替换后旧条目可随GC回收,不再永久持有失效数据源
+	private static final Map<DataSource, Integer> dataSourceDbTypeCache = Collections
+			.synchronizedMap(new WeakHashMap<DataSource, Integer>());
+	private static final Map<DataSource, String> dataSourceDialectCache = Collections
+			.synchronizedMap(new WeakHashMap<DataSource, String>());
 
 	/**
 	 * 数据库方言定义
@@ -181,7 +190,7 @@ public class DataSourceUtils {
 		DBNameTypeMap.put(Dialect.ORACLE11, DBType.ORACLE11);
 		DBNameTypeMap.put(Dialect.SQLSERVER, DBType.SQLSERVER);
 		DBNameTypeMap.put(Dialect.MSSQL, DBType.SQLSERVER);
-		
+
 		DBNameTypeMap.put(Dialect.MYSQL, DBType.MYSQL);
 		DBNameTypeMap.put(Dialect.MYSQL57, DBType.MYSQL57);
 		// mariaDB的方言以mysql为基准
@@ -322,7 +331,7 @@ public class DataSourceUtils {
 			int dbType = getDBType(conn);
 			return getDatabaseSqlSplitSign(dbType);
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("getDatabaseSqlSplitSign 方法执行异常", e);
 		}
 		return ";";
 	}
@@ -645,7 +654,7 @@ public class DataSourceUtils {
 			// 调用反调，传入conn和数据库类型进行实际业务处理(数据库类型主要便于DialectFactory获取对应方言处理类)
 			handler.doConnection(conn, dbType, dialect);
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("processDataSource 方法执行异常", e);
 			sqltoyContext.releaseConnection(conn, datasource);
 			conn = null;
 			throw new RuntimeException(e);
@@ -668,8 +677,7 @@ public class DataSourceUtils {
 		if (datasource == null) {
 			return DBType.UNDEFINE;
 		}
-		String dsKey = "dataSource&" + datasource.hashCode();
-		Integer dbType = DBTypeMap.get(dsKey);
+		Integer dbType = dataSourceDbTypeCache.get(datasource);
 		if (dbType != null) {
 			return dbType;
 		}
@@ -677,9 +685,9 @@ public class DataSourceUtils {
 		dbType = DBType.UNDEFINE;
 		try {
 			dbType = getDBType(conn);
-			DBTypeMap.put(dsKey, dbType);
+			dataSourceDbTypeCache.put(datasource, dbType);
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("getDBType 方法执行异常", e);
 			sqltoyContext.releaseConnection(conn, datasource);
 			conn = null;
 			throw new RuntimeException(e);
@@ -701,17 +709,16 @@ public class DataSourceUtils {
 			return "";
 		}
 		// update 2022-9-30 增加缓存避免通过connection获取数据库方言
-		String dsKey = "dataSource&" + datasource.hashCode();
-		String dialect = DBDialectMap.get(dsKey);
+		String dialect = dataSourceDialectCache.get(datasource);
 		if (dialect != null) {
 			return dialect;
 		}
 		Connection conn = sqltoyContext.getConnection(datasource);
 		try {
 			dialect = getDialect(conn);
-			DBDialectMap.put(dsKey, dialect);
+			dataSourceDialectCache.put(datasource, dialect);
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("getDialect 方法执行异常", e);
 			sqltoyContext.releaseConnection(conn, datasource);
 			conn = null;
 			throw new RuntimeException(e);

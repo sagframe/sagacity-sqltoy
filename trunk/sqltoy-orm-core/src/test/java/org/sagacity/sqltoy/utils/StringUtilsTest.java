@@ -13,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
@@ -644,6 +645,25 @@ public class StringUtilsTest {
 	@Test
 	public void testMatchesNullRegex() {
 		assertFalse(StringUtil.matches("abc", (String) null));
+	}
+
+	// 土耳其语locale下I的小写是无点ı(U+0131)、i的大写是有点İ(U+0130),
+	// 标识符转换必须用Locale.ROOT保证ASCII语义,否则getId->属性名变成"ıd"导致映射失效
+	@Test
+	public void testCaseConvertUnderTurkishLocale() {
+		Locale original = Locale.getDefault();
+		try {
+			Locale.setDefault(new Locale("tr", "TR"));
+			assertEquals("id", StringUtil.firstToLowerCase("Id"));
+			// 只转首字符:ID的首字符I在tr下默认变成ı
+			assertEquals("iD", StringUtil.firstToLowerCase("ID"));
+			assertEquals("Id", StringUtil.firstToUpperCase("id"));
+			assertEquals("Id", StringUtil.firstToUpperOtherToLower("id"));
+			assertEquals("id", StringUtil.toHumpStr("ID", false, true));
+			assertEquals("staffId", StringUtil.toHumpStr("STAFF_ID", false, true));
+		} finally {
+			Locale.setDefault(original);
+		}
 	}
 
 }

@@ -24,7 +24,22 @@ public class SnowflakeIdGenerator implements IdGenerator {
 
 	private static IdGenerator me = new SnowflakeIdGenerator();
 
-	private static SnowflakeIdWorker idWorker = null;
+	private static volatile SnowflakeIdWorker idWorker = null;
+
+	/**
+	 * @TODO 双检锁获取雪花算法worker,避免多线程首次并发时重复创建与可见性问题
+	 * @return
+	 */
+	private static SnowflakeIdWorker getWorker() {
+		if (null == idWorker) {
+			synchronized (SnowflakeIdGenerator.class) {
+				if (null == idWorker) {
+					idWorker = new SnowflakeIdWorker(SqlToyConstants.WORKER_ID, SqlToyConstants.DATA_CENTER_ID);
+				}
+			}
+		}
+		return idWorker;
+	}
 
 	/**
 	 * @TODO 获取对象单例
@@ -47,19 +62,14 @@ public class SnowflakeIdGenerator implements IdGenerator {
 		// <32
 		// java -Dsqltoy.snowflake.workerId=11
 		// java -Dsqltoy.snowflake.dataCenterId=20
-		if (null == idWorker) {
-			idWorker = new SnowflakeIdWorker(SqlToyConstants.WORKER_ID, SqlToyConstants.DATA_CENTER_ID);
-		}
 		String realTableName = StringUtil.ifBlank(tableName, DEFAULT_TABLE_NAME);
-		return SqlUtil.convertIdValueType(idWorker.nextId(realTableName), idJavaType);
+		return SqlUtil.convertIdValueType(getWorker().nextId(realTableName), idJavaType);
 	}
 
 	// 实例化时增加初始化，避免多线程并发问题
 	@Override
 	public void initialize(SqlToyContext sqlToyContext) throws Exception {
-		if (null == idWorker) {
-			idWorker = new SnowflakeIdWorker(SqlToyConstants.WORKER_ID, SqlToyConstants.DATA_CENTER_ID);
-		}
+		getWorker();
 	}
 
 }
