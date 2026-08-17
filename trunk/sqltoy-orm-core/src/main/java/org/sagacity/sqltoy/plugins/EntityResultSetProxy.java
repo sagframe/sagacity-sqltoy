@@ -12,7 +12,7 @@ import org.sagacity.sqltoy.config.model.DataType;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.utils.BeanUtil;
-import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
+import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.SqlUtilsExt;
 
 import net.bytebuddy.ByteBuddy;
@@ -45,7 +45,7 @@ public class EntityResultSetProxy<T> {
 			EntityMeta entityMeta) {
 		this.typeHandler = typeHandler;
 		// dbType为Integer,直接赋值给int字段在null时拆箱NPE
-		this.dbType = (dbType == null) ? DBType.UNDEFINE : dbType.intValue();
+		this.dbType = (dbType == null) ? DataSourceUtils.DBType.UNDEFINE : dbType.intValue();
 		this.conn = conn;
 		this.rs = rs;
 		this.entityMeta = entityMeta;

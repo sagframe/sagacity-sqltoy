@@ -1102,6 +1102,10 @@ public class SqlServerDialectUtils {
 					.concat(" with (rowlock xlock) ").concat((regex.endsWith(",") ? "," : ""))));
 			break;
 		case UPGRADE_NOWAIT:
+			// nowait语义是拿不到锁立即报错,不能用readpast(会静默跳过被锁行)
+			loadSql = selectPart.concat(fromPart.replaceFirst("(?i)".concat(regex), replaceStr.replace(",", "")
+					.concat(" with (rowlock xlock nowait) ").concat((regex.endsWith(",") ? "," : ""))));
+			break;
 		case UPGRADE_SKIPLOCK:
 			loadSql = selectPart.concat(fromPart.replaceFirst("(?i)".concat(regex), replaceStr.replace(",", "")
 					.concat(" with (rowlock readpast) ").concat((regex.endsWith(",") ? "," : ""))));

@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
@@ -175,9 +176,9 @@ public class StringUtil {
 			return sourceStr;
 		}
 		if (sourceStr.length() == 1) {
-			return sourceStr.toUpperCase();
+			return sourceStr.toUpperCase(Locale.ROOT);
 		}
-		return sourceStr.substring(0, 1).toUpperCase().concat(sourceStr.substring(1));
+		return sourceStr.substring(0, 1).toUpperCase(Locale.ROOT).concat(sourceStr.substring(1));
 	}
 
 	/**
@@ -190,9 +191,9 @@ public class StringUtil {
 			return sourceStr;
 		}
 		if (sourceStr.length() == 1) {
-			return sourceStr.toLowerCase();
+			return sourceStr.toLowerCase(Locale.ROOT);
 		}
-		return sourceStr.substring(0, 1).toLowerCase().concat(sourceStr.substring(1));
+		return sourceStr.substring(0, 1).toLowerCase(Locale.ROOT).concat(sourceStr.substring(1));
 	}
 
 	/**
@@ -205,9 +206,9 @@ public class StringUtil {
 			return sourceStr;
 		}
 		if (sourceStr.length() == 1) {
-			return sourceStr.toUpperCase();
+			return sourceStr.toUpperCase(Locale.ROOT);
 		}
-		return sourceStr.substring(0, 1).toUpperCase().concat(sourceStr.substring(1).toLowerCase());
+		return sourceStr.substring(0, 1).toUpperCase(Locale.ROOT).concat(sourceStr.substring(1).toLowerCase(Locale.ROOT));
 	}
 
 	/**
@@ -943,7 +944,7 @@ public class StringUtil {
 				result.append("_");
 			}
 			// 全大写或全小写
-			if (cell.toUpperCase().equals(cell)) {
+			if (cell.toUpperCase(Locale.ROOT).equals(cell)) {
 				result.append(firstToUpperOtherToLower(cell));
 			} else {
 				result.append(firstToUpperCase(cell));

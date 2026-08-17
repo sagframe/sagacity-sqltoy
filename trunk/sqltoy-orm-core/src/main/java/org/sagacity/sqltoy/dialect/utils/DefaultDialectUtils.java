@@ -34,6 +34,7 @@ import org.sagacity.sqltoy.config.model.OperateType;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlType;
+import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.model.LockMode;
@@ -46,10 +47,10 @@ import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.sagacity.sqltoy.translate.DynamicCacheFetch;
 import org.sagacity.sqltoy.translate.model.DynamicCacheHolder;
 import org.sagacity.sqltoy.utils.BeanUtil;
-import org.sagacity.sqltoy.utils.NumberUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.DateUtil;
+import org.sagacity.sqltoy.utils.NumberUtil;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.ResultUtils;
 import org.sagacity.sqltoy.utils.SqlUtil;
@@ -93,14 +94,20 @@ public class DefaultDialectUtils {
 		// row_number 再排序方式性能稍好 同时也可以保证通用性
 		StringBuilder sql = new StringBuilder();
 		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
-		// 给原始sql标记上特殊的开始和结尾，便于sql拦截器快速定位到原始sql并进行条件补充
-		innerSql = SqlUtilsExt.markOriginalSql(innerSql);
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect));
 			if (!sqlToyConfig.isIgnoreBracket()) {
 				sql.append(" (");
 			}
 		}
+		// 存在with语句,将with部分剥离置前,避免replaceFirst将随机列误插入with定义内部
+		if (sqlToyConfig.isHasWith()) {
+			SqlWithAnalysis sqlWith = new SqlWithAnalysis(innerSql);
+			sql.append(sqlWith.getWithSql());
+			innerSql = sqlWith.getRejectWithSql();
+		}
+		// 给原始sql标记上特殊的开始和结尾，便于sql拦截器快速定位到原始sql并进行条件补充
+		innerSql = SqlUtilsExt.markOriginalSql(innerSql);
 		sql.append("select " + SqlToyConstants.INTERMEDIATE_TABLE1 + ".* from (");
 		// sql中是否存在排序或union,存在order 或union 则在sql外包裹一层
 		if (DialectUtils.hasOrderByOrUnion(innerSql)) {

@@ -316,19 +316,27 @@ public class PostgreSqlDialectUtils {
 		if (StringUtil.isBlank(realSchema)) {
 			realSchema = catalog;
 		}
+		// schema/表名统一用?绑定,避免拼接被单引号破坏或注入
+		List<Object> paramValues = new ArrayList<Object>();
 		if (StringUtil.isNotBlank(realSchema)) {
-			sql = sql.concat(" AND n.nspname='" + realSchema + "' ");
+			sql = sql.concat(" AND n.nspname=? ");
+			paramValues.add(realSchema);
 		} else {
 			sql = sql.concat(" AND c.relname NOT LIKE 'pg_%' AND n.nspname NOT LIKE 'pg_%' ");
 		}
 		if (StringUtil.isNotBlank(tableName)) {
 			if (tableName.contains("%")) {
-				sql = sql.concat(" AND c.relname like '" + tableName + "'");
+				sql = sql.concat(" AND c.relname like ?");
+				paramValues.add(tableName);
 			} else {
-				sql = sql.concat(" AND c.relname like '%" + tableName + "%'");
+				sql = sql.concat(" AND c.relname like ?");
+				paramValues.add("%" + tableName + "%");
 			}
 		}
 		PreparedStatement pst = conn.prepareStatement(sql);
+		for (int i = 0; i < paramValues.size(); i++) {
+			pst.setObject(i + 1, paramValues.get(i));
+		}
 		// 设置全局statementTimeout，默认为null
 		if (SqlToyConstants.defaultStatementTimeout != null && SqlToyConstants.defaultStatementTimeout > 0) {
 			pst.setQueryTimeout(SqlToyConstants.defaultStatementTimeout);

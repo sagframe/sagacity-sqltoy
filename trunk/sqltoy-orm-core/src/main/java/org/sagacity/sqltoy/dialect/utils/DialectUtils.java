@@ -768,6 +768,12 @@ public class DialectUtils {
 			Integer dbType, EntityMeta entityMeta, PKStrategy pkStrategy, String[] forceUpdateFields, String fromTable,
 			String isNullFunction, String sequence, boolean isAssignPK, String tableName) {
 		String realTable = entityMeta.getSchemaTable(tableName, dbType);
+		// postgresql15+ 不支持别名,目标表列限定只能用不带schema的表名(schema.table.col三段式列引用非法)
+		String pgNoSchemaTable = ReservedWordsUtil.convertWord(
+				(StringUtil.isBlank(tableName)) ? entityMeta.getTableName() : tableName, dbType);
+		if (entityMeta.getSchema() != null && pgNoSchemaTable.startsWith(entityMeta.getSchema().concat("."))) {
+			pgNoSchemaTable = pgNoSchemaTable.substring(entityMeta.getSchema().length() + 1);
+		}
 		// 在无主键的情况下产生insert sql语句
 		if (entityMeta.getIdArray() == null) {
 			return DialectExtUtils.generateInsertSql(unifyFieldsHandler, dbType, entityMeta, pkStrategy, isNullFunction,
@@ -798,7 +804,7 @@ public class DialectUtils {
 		String columnName;
 		sql.append("merge into ");
 		sql.append(realTable);
-		// postgresql15+ 不支持别名
+		// postgresql15+ 在set 环节不支持别名
 		if (DBType.POSTGRESQL != dbType) {
 			sql.append(" ta ");
 		}
@@ -812,7 +818,7 @@ public class DialectUtils {
 			}
 			// postgresql15+ 需要case(? as type) as column
 			// postgresql14 不走merge into
-			if (DBType.POSTGRESQL == dbType) {
+			if (DBType.POSTGRESQL == dbType || DBType.KINGBASE == dbType) {
 				PostgreSqlDialectUtils.wrapSelectFields(sql, columnName, fieldMeta);
 			} else if (DBType.GAUSSDB == dbType || DBType.OPENGAUSS == dbType || DBType.MOGDB == dbType
 					|| DBType.VASTBASE == dbType || DBType.STARDB == dbType || DBType.OSCAR == dbType) {
@@ -844,7 +850,7 @@ public class DialectUtils {
 			}
 			// 不支持别名
 			if (DBType.POSTGRESQL == dbType) {
-				sql.append(realTable + ".");
+				sql.append(pgNoSchemaTable + ".");
 			} else {
 				sql.append("ta.");
 			}
@@ -903,9 +909,9 @@ public class DialectUtils {
 						if (null != currentTimeStr) {
 							sql.append(currentTimeStr);
 						} else {
-							// postgresql15+ 不支持别名
+							// postgresql15 set环节不支持别名
 							if (DBType.POSTGRESQL == dbType) {
-								sql.append(realTable + ".");
+								sql.append(pgNoSchemaTable + ".");
 							} else {
 								sql.append("ta.");
 							}
@@ -1057,7 +1063,9 @@ public class DialectUtils {
 		if (unifyFieldsHandler != null && unifyFieldsHandler.updateSqlTimeFields() != null) {
 			updateSqlTimeFields = unifyFieldsHandler.updateSqlTimeFields();
 		}
-		boolean convertBlob = (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14);
+		// kingbase/gaussdb同为pg内核,bytea未定型参数同样需要cast(2023-06-11误删,现恢复)
+		boolean convertBlob = (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14
+				|| dbType == DBType.GAUSSDB || dbType == DBType.KINGBASE);
 		boolean isMSsql = (dbType == DBType.SQLSERVER);
 		int meter = 0;
 		int decimalLength;
@@ -1590,6 +1598,9 @@ public class DialectUtils {
 				loadSql.append(" with (rowlock xlock) ");
 				break;
 			case UPGRADE_NOWAIT:
+				// nowait语义是拿不到锁立即报错,不能用readpast(会静默跳过被锁行)
+				loadSql.append(" with (rowlock xlock nowait) ");
+				break;
 			case UPGRADE_SKIPLOCK:
 				loadSql.append(" with (rowlock readpast) ");
 				break;
@@ -2521,7 +2532,9 @@ public class DialectUtils {
 				}
 			}
 		}
-		String deleteSql = "delete from ".concat(realTable).concat(" ").concat(entityMeta.getIdArgWhereSql());
+		// 与deleteAll保持一致,对delete语句做保留字转换(idArgWhereSql中的保留字以sqlserver的[]形式标记)
+		String deleteSql = ReservedWordsUtil
+				.convertSql("delete from ".concat(realTable).concat(" ").concat(entityMeta.getIdArgWhereSql()), dbType);
 		SqlToyConfig sqlToyConfig = new SqlToyConfig(DataSourceUtils.getDialect(dbType));
 		sqlToyConfig.setSqlType(SqlType.delete);
 		sqlToyConfig.setSql(deleteSql);
@@ -2738,8 +2751,10 @@ public class DialectUtils {
 			EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 			String[] realParamNamed;
 			Object[] paramValues;
+			// 边界必须与getFieldsArray(false)对齐(含生成列,尾部为主键),用(false)变体取长度,
+			// 避免混用(true)变体导致有计算列时非主键/主键分界前移、字段漏判
 			int rejectIdFieldsSize = (entityMeta.getRejectIdFieldArray(false) == null) ? 0
-					: entityMeta.getRejectIdFieldArray(true).length;
+					: entityMeta.getRejectIdFieldArray(false).length;
 			// 如果没有特别指定属性，则通过数据是否为null来判断具体的字段
 			if (paramsNamed == null || paramsNamed.length == 0) {
 				String[] fieldsArray = entityMeta.getFieldsArray(false);

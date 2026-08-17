@@ -641,7 +641,7 @@ public class SqlUtilsExt {
 				Array array = conn.createArrayOf("FLOAT", (Float[]) paramValue);
 				rs.updateArray(columnName, array);
 			} else if (paramValue instanceof Long[]) {
-				Array array = conn.createArrayOf("INTEGER", (Long[]) paramValue);
+				Array array = conn.createArrayOf("BIGINT", (Long[]) paramValue);
 				rs.updateArray(columnName, array);
 			} else {
 				rs.updateObject(columnName, paramValue, java.sql.Types.ARRAY);

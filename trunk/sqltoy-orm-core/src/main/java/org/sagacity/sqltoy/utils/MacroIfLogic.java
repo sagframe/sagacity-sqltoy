@@ -39,6 +39,10 @@ public class MacroIfLogic {
 
 	private final static Pattern timeTypePattern = Pattern.compile("(?i)^\\d+[SHDWMY]$");
 
+	// 日期形式的字面量(如2024-01-01、2024/01/01 10:20:30),不能参与加减运算切割
+	private final static Pattern DATE_VALUE_PATTERN = Pattern
+			.compile("^\\d{2,4}([-/]\\d{1,2}){1,2}(\\s+\\d{1,2}:\\d{1,2}(:\\d{1,2})?(\\.\\d+)?)?$");
+
 	private MacroIfLogic() {
 	}
 
@@ -194,7 +198,9 @@ public class MacroIfLogic {
 					meter++;
 				}
 				// 计算单个比较的结果(update 2020-09-24 增加数组长度的提取)
-				if (hasArg && (leftParamLow.startsWith("size(") || leftParamLow.startsWith("length("))) {
+				// !size()/!length()取反前缀也要走长度提取,否则数组被按toString字符串比较
+				if (hasArg && (leftParamLow.startsWith("size(") || leftParamLow.startsWith("length(")
+						|| leftParamLow.startsWith("!size(") || leftParamLow.startsWith("!length("))) {
 					expressResult[i] = compare((leftValue == null) ? 0 : getSize(leftValue), compareType, rightValue,
 							rightObj);
 				} else {
@@ -287,6 +293,8 @@ public class MacroIfLogic {
 		// 剔除首尾字符串标志符号
 		originalCompareValue = StringUtil.removeStartEndQuote(originalCompareValue);
 		String compareValue = originalCompareValue;
+		// 日期形式的字面量(如2024-01-01)不参与加减运算判断,避免被切割成算术表达式
+		boolean dateLikeValue = StringUtil.matches(compareValue.trim(), DATE_VALUE_PATTERN);
 		// 只支持加减运算
 		String append = "0";
 		String[] calculateStr = { "+", "-" };
@@ -296,7 +304,7 @@ public class MacroIfLogic {
 		boolean hasCalculate = false;
 		// 判断是否有加减运算
 		for (String calculate : calculateStr) {
-			if (compareValue.trim().indexOf(calculate) > 0) {
+			if (!dateLikeValue && compareValue.trim().indexOf(calculate) > 0) {
 				tmpAry = compareValue.split("+".equals(calculate) ? "\\+" : "\\-");
 				hasCalculate = false;
 				String firstStr = tmpAry[0].trim();
@@ -404,10 +412,16 @@ public class MacroIfLogic {
 				compareValue = originalCompareValue;
 			}
 		}
+		// 右侧是日期形式的字符串而左侧是日期类型参数时,统一转成日期格式比较,避免按Date.toString()进行字符串比较
+		if (dateLikeValue && (value instanceof Date || value instanceof LocalDateTime)) {
+			type = (compareValue.indexOf(":") == -1) ? "date" : "time";
+		} else if (dateLikeValue && value instanceof LocalDate && compareValue.indexOf(":") == -1) {
+			type = "date";
+		}
 		String valueStr = (value == null) ? "null" : StringUtil.removeStartEndQuote(value.toString());
-		if ("time".equals(type)) {
+		if (value != null && "time".equals(type)) {
 			valueStr = DateUtil.formatDate(value, dayTimeFmt);
-		} else if ("date".equals(type)) {
+		} else if (value != null && "date".equals(type)) {
 			valueStr = DateUtil.formatDate(value, dayFmt);
 		}
 		// 等于(兼容等于号非法)

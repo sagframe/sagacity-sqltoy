@@ -1,7 +1,8 @@
 package org.sagacity.sqltoy.solon;
 
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.sql.DataSource;
 
@@ -19,54 +20,51 @@ import org.sagacity.sqltoy.solon.service.impl.SqlToyCRUDServiceForSolon;
  * @since 1.5
  */
 public class DbManager {
-	private static Map<DataSource, SqlToyLazyDao> daoMap = new HashMap<>();
-	private static Map<DataSource, LightDao> lightDaoMap = new HashMap<>();
-	private static Map<DataSource, SqlToyCRUDService> serviceMap = new HashMap<>();
-	private static SqlToyContext context;
+	private static final Map<DataSource, SqlToyLazyDao> daoMap = new ConcurrentHashMap<>();
+	private static final Map<DataSource, LightDao> lightDaoMap = new ConcurrentHashMap<>();
+	private static final Map<DataSource, SqlToyCRUDService> serviceMap = new ConcurrentHashMap<>();
+	private static volatile SqlToyContext context;
 
 	public static void setContext(SqlToyContext context) {
 		DbManager.context = context;
 	}
 
-	public static synchronized SqlToyLazyDao getDao(DataSource dataSource) {
+	public static SqlToyLazyDao getDao(DataSource dataSource) {
 		SqlToyLazyDao dao = daoMap.get(dataSource);
-
 		if (dao == null) {
 			SqlToyLazyDaoImpl sqlToyLazyDao = new SqlToyLazyDaoImpl();
 			sqlToyLazyDao.setDataSource(dataSource);
 			sqlToyLazyDao.setSqlToyContext(context);
-			daoMap.put(dataSource, sqlToyLazyDao);
-			dao = sqlToyLazyDao;
+			SqlToyLazyDao prev = daoMap.putIfAbsent(dataSource, sqlToyLazyDao);
+			dao = (prev != null) ? prev : sqlToyLazyDao;
 		}
-
 		return dao;
 	}
 
-	public static synchronized LightDao getLightDao(DataSource dataSource) {
+	public static LightDao getLightDao(DataSource dataSource) {
 		LightDao dao = lightDaoMap.get(dataSource);
-
 		if (dao == null) {
-			LightDaoImpl sqlToyLazyDao = new LightDaoImpl();
-			sqlToyLazyDao.setDataSource(dataSource);
-			sqlToyLazyDao.setSqlToyContext(context);
-			lightDaoMap.put(dataSource, sqlToyLazyDao);
-			dao = sqlToyLazyDao;
+			LightDaoImpl lightDao = new LightDaoImpl();
+			lightDao.setDataSource(dataSource);
+			lightDao.setSqlToyContext(context);
+			LightDao prev = lightDaoMap.putIfAbsent(dataSource, lightDao);
+			dao = (prev != null) ? prev : lightDao;
 		}
 		return dao;
 	}
 
-	public static synchronized SqlToyCRUDService getService(AppContext context, DataSource dataSource) {
+	public static SqlToyCRUDService getService(AppContext context, DataSource dataSource) {
 		SqlToyCRUDService service = serviceMap.get(dataSource);
 		if (service == null) {
 			SqlToyCRUDServiceForSolon crudService = context.beanMake(SqlToyCRUDServiceForSolon.class).get();
 			crudService.setLightDao(getLightDao(dataSource));
-			serviceMap.put(dataSource, crudService);
-			service = crudService;
+			SqlToyCRUDService prev = serviceMap.putIfAbsent(dataSource, crudService);
+			service = (prev != null) ? prev : crudService;
 		}
 		return service;
 	}
 
 	public static Map<DataSource, SqlToyCRUDService> getServiceMap() {
-		return serviceMap;
+		return Collections.unmodifiableMap(serviceMap);
 	}
 }

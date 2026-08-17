@@ -905,8 +905,8 @@ public class EntityManager {
 		// 子表类型不是@Entity实体(如普通VO)时parseEntityMeta静默返回null,给出明确配置错误而非裸NPE
 		if (subTableMeta == null) {
 			throw new IllegalArgumentException(StringUtil.fillArgs(
-					"主表:{}的级联配置属性:{} 对应的子表类型:{} 不是@Entity实体,无法解析表元数据,请检查!",
-					entityMeta.getTableName(), cascadeModel.getProperty(), cascadeModel.getMappedType().getName()));
+					"主表:{}的级联配置属性:{} 对应的子表类型:{} 不是@Entity实体,无法解析表元数据,请检查!", entityMeta.getTableName(),
+					cascadeModel.getProperty(), cascadeModel.getMappedType().getName()));
 		}
 		if ((fields == null || fields.length == 0) && idList.size() == 1) {
 			fields = entityMeta.getIdArray();

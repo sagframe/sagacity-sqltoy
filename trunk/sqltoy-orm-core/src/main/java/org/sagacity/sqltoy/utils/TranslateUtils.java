@@ -258,7 +258,8 @@ public class TranslateUtils {
 				for (int i = 0; i < rowCnt; i++) {
 					rowBean = items.get(i);
 					if (null != rowBean) {
-						keyValue = BeanUtil.getProperty(rowBean, extend.keyColumn);
+						// 读翻译字段当前值(第一遍翻译的输出),而非原始key列,避免将已翻译成功的结果覆盖回原始key
+						keyValue = BeanUtil.getProperty(rowBean, fieldName);
 						if (null != keyValue) {
 							translateResult = translateKey(notMatchedKeyCacheData, extend, null, rowBean, true, -1,
 									keyValue);
@@ -281,7 +282,7 @@ public class TranslateUtils {
 	 * @param dynamicCacheFetch
 	 * @param labelIndexMap
 	 * @param items
-	 * @param hasAliasName       针对mongo存在别名场景
+	 * @param hasAliasName       针对mongo存在别名场景(保留参数兼容既有调用,二次翻译统一回读翻译列自身)
 	 */
 	public static void translateArrayListByDynamicCache(TranslateManager translateManager,
 			BatchDynamicCache batchDynamicCache, DynamicCacheHolder dynamicCacheHolder,
@@ -301,7 +302,6 @@ public class TranslateUtils {
 		Map<String, Object[]> notMatchedKeyCacheData;
 		int rowCnt = items.size();
 		int colIndex;
-		int colAliasIndex;
 		int compareValueIndex = -1;
 		List rowList;
 		Object cellValue;
@@ -314,24 +314,16 @@ public class TranslateUtils {
 			// 翻译列不在查询结果列中时给出指向配置的明确错误,而非拆箱NPE
 			Integer columnIndex = labelIndexMap.get(columnLow);
 			if (columnIndex == null) {
-				throw new IllegalArgumentException("动态缓存翻译列:" + columnLow
-						+ " 不在查询结果的返回列中,请检查translate的columns配置与sql的select列!");
+				throw new IllegalArgumentException(
+						"动态缓存翻译列:" + columnLow + " 不在查询结果的返回列中,请检查translate的columns配置与sql的select列!");
 			}
 			colIndex = columnIndex;
-			colAliasIndex = colIndex;
-			// mongodb 存在别名场景(别名列缺失时按原列处理)
-			if (hasAliasName && extend.alias != null) {
-				Integer aliasIndex = labelIndexMap.get(extend.alias.toLowerCase());
-				if (aliasIndex != null) {
-					colAliasIndex = aliasIndex;
-				}
-			}
 			// compareColumn初始化时已经小写
 			if (extend.hasLogic) {
 				Integer compareIndex = labelIndexMap.get(extend.compareColumn);
 				if (compareIndex == null) {
-					throw new IllegalArgumentException("动态缓存翻译列:" + columnLow + " 的where条件列:"
-							+ extend.compareColumn + " 不在查询结果的返回列中,请检查translate的where配置!");
+					throw new IllegalArgumentException("动态缓存翻译列:" + columnLow + " 的where条件列:" + extend.compareColumn
+							+ " 不在查询结果的返回列中,请检查translate的where配置!");
 				}
 				compareValueIndex = compareIndex;
 			} else {
@@ -356,7 +348,8 @@ public class TranslateUtils {
 				for (int i = 0; i < rowCnt; i++) {
 					rowList = (List) items.get(i);
 					if (null != rowList) {
-						cellValue = rowList.get(colAliasIndex);
+						// 读翻译列当前值(第一遍翻译的输出),而非原始key列(mongo别名场景),避免将已翻译成功的结果覆盖回原始key
+						cellValue = rowList.get(colIndex);
 						if (null != cellValue) {
 							translateResult = translateKey(notMatchedKeyCacheData, extend, rowList, null, false,
 									compareValueIndex, cellValue);

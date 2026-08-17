@@ -414,8 +414,7 @@ public class TranslateFactory {
 						row.toArray(rowAry);
 						// key列(null)脏数据跳过并告警,不再NPE穿透查询链路
 						if (rowAry[cacheIndex] == null) {
-							logger.warn("缓存:{}的key列(第{}列)存在null值,该行数据被跳过!", cacheModel.getCache(),
-									cacheIndex);
+							logger.warn("缓存:{}的key列(第{}列)存在null值,该行数据被跳过!", cacheModel.getCache(), cacheIndex);
 							continue;
 						}
 						result.put(rowAry[cacheIndex].toString(), rowAry);
@@ -425,8 +424,7 @@ public class TranslateFactory {
 					for (int i = 0, n = tempList.size(); i < n; i++) {
 						row = (Object[]) tempList.get(i);
 						if (row[cacheIndex] == null) {
-							logger.warn("缓存:{}的key列(第{}列)存在null值,该行数据被跳过!", cacheModel.getCache(),
-									cacheIndex);
+							logger.warn("缓存:{}的key列(第{}列)存在null值,该行数据被跳过!", cacheModel.getCache(), cacheIndex);
 							continue;
 						}
 						result.put(row[cacheIndex].toString(), row);
@@ -437,8 +435,7 @@ public class TranslateFactory {
 							null);
 					for (Object[] row : dataSet) {
 						if (row[cacheIndex] == null) {
-							logger.warn("缓存:{}的key列(第{}列)存在null值,该行数据被跳过!", cacheModel.getCache(),
-									cacheIndex);
+							logger.warn("缓存:{}的key列(第{}列)存在null值,该行数据被跳过!", cacheModel.getCache(), cacheIndex);
 							continue;
 						}
 						result.put(row[cacheIndex].toString(), row);

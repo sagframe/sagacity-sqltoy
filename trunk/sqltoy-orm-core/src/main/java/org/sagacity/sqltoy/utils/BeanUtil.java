@@ -1832,7 +1832,14 @@ public class BeanUtil {
 			propertyType.setType(component.getType());
 			propertyType.setTypeName(component.getType().getTypeName());
 			propertyType.setTypeValue(DataType.getType(component.getType()));
-			propertyType.setGenericType((Class) component.getGenericType());
+			// 泛型类型(如List<String>)取原始类型,避免ParameterizedType强转Class抛异常
+			Type genericType = component.getGenericType();
+			if (genericType instanceof ParameterizedType) {
+				genericType = ((ParameterizedType) genericType).getRawType();
+			}
+			if (genericType instanceof Class) {
+				propertyType.setGenericType((Class) genericType);
+			}
 			propTypes[index] = propertyType;
 			index++;
 		}

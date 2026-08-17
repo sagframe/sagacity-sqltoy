@@ -803,7 +803,10 @@ public class ResultUtils {
 	 */
 	private static Object getLinkColumnsId(ResultSet rs, String[] columns) throws Exception {
 		if (columns.length == 1) {
-			return rs.getObject(columns[0]);
+			// 分组列值为null时返回"null"文本(与多列拼接分支的null文本化一致),
+			// 避免调用方identity.equals(preIdentity)对null调用equals抛NPE
+			Object singleValue = rs.getObject(columns[0]);
+			return (singleValue == null) ? "null" : singleValue;
 		}
 		StringBuilder result = new StringBuilder();
 		Object colValue;
@@ -2010,6 +2013,7 @@ public class ResultUtils {
 		DynamicCacheFetch dynamicCacheFetch = sqlToyContext.getDynamicCacheFetch();
 		// 提取可批量获取的动态缓存翻译配置
 		BatchDynamicCache batchDynamicCache = TranslateUtils.getBatchTranslates(sqlToyContext, fieldTranslateHandlers);
+		// 批量翻译，暂停逐行动态获取缓存数据
 		DynamicCacheHolder dynamicCacheHolder = new DynamicCacheHolder(batchDynamicCache.getCacheAndTypeForRealMap(),
 				batchDynamicCache.getCacheAndTypeForRealType(), batchDynamicCache.getDynamicCaches());
 		// 逐行翻译

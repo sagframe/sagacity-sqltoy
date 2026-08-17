@@ -94,8 +94,9 @@ public class HttpClientUtils {
 						nvps.add(new BasicNameValuePair(paramName[i], paramValue[i]));
 					}
 				}
+				// 表单提交保持UrlEncodedFormEntity默认的application/x-www-form-urlencoded,
+				// 不能覆盖成application/json,否则服务端无法按表单解析参数
 				HttpEntity httpEntity = new UrlEncodedFormEntity(nvps, CHARSET);
-				((UrlEncodedFormEntity) httpEntity).setContentType(CONTENT_TYPE);
 				httpPost.setEntity(httpEntity);
 			}
 			return client.execute(httpPost, new ResponseHandler<String>() {

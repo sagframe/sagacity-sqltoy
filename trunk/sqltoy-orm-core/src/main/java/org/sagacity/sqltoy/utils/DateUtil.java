@@ -54,10 +54,10 @@ public class DateUtil {
 	 */
 	private final static Logger logger = LoggerFactory.getLogger(DateUtil.class);
 
-	private static final String[] CHINA_DATE_KEYS = { "○", "О", "0", "Ο", "O", "零", "一", "二", "三", "四", "五", "六", "七",
-			"八", "九", "十", "年", "月", "日", "时", "分", "秒" };
-	private static final String[] CHINA_DATE_KEY_MAP = { "0", "0", "0", "0", "0", "0", "1", "2", "3", "4", "5", "6",
-			"7", "8", "9", "10", "-", "-", " ", ":", ":", " " };
+	private static final String[] CHINA_DATE_KEYS = { "○", "〇", "О", "0", "Ο", "O", "零", "一", "二", "三", "四", "五", "六",
+			"七", "八", "九", "十", "年", "月", "日", "时", "分", "秒" };
+	private static final String[] CHINA_DATE_KEY_MAP = { "0", "0", "0", "0", "0", "0", "0", "1", "2", "3", "4", "5",
+			"6", "7", "8", "9", "10", "-", "-", " ", ":", ":", " " };
 
 	/**
 	 * 英文月份名称
@@ -78,8 +78,9 @@ public class DateUtil {
 	private final static Pattern WEEK_PATTERN = Pattern.compile("(?i)(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\\s");
 	private final static Pattern DAY_PATTERN = Pattern.compile("(?i)\\s\\d{1,2}(st|th|rd)?\\s");
 
-	// 超过十的中文
-	private final static Pattern MORE_TEN_PATTERN = Pattern.compile("(一|二|三|四|五)?\\十(一|二|三|四|五|六|七|八|九)");
+	// 超过十的中文(个位可缺省,支持二十、三十等整十形式;前缀用懒惰匹配,优先将十后面的数字作为个位,如十一而非一十)
+	private final static Pattern MORE_TEN_PATTERN = Pattern
+			.compile("(一|二|三|四|五)??\\十(一|二|三|四|五|六|七|八|九)?");
 
 	/**
 	 * 英文日期的几种格式
@@ -1118,8 +1119,14 @@ public class DateUtil {
 			if (groupStr.length() == 3) {
 				map.put(groupStr, groupStr.replace("十", ""));
 			} else if (groupStr.length() == 2) {
-				map.put(groupStr, groupStr.replace("十", "1"));
+				// 两位如:十五(十开头)或二十(个位缺省的整十)
+				if (groupStr.startsWith("十")) {
+					map.put(groupStr, groupStr.replace("十", "1"));
+				} else {
+					map.put(groupStr, groupStr.replace("十", "0"));
+				}
 			}
+			// 单独一个"十"交由CHINA_DATE_KEYS统一转成10
 		}
 		for (Map.Entry<String, String> entry : map.entrySet()) {
 			tmp = tmp.replaceAll(entry.getKey(), entry.getValue());

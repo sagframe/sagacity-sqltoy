@@ -1319,7 +1319,7 @@ public class CollectionUtil {
 			lessThen = false;
 		} else if (iData == null && jData != null) {
 			lessThen = true;
-		} else {
+		} else if (iData != null && jData != null) {
 			if (iData.equals(jData)) {
 				isEqual = true;
 			} else {

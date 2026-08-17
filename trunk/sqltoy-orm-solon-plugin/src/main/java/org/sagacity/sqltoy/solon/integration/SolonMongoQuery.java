@@ -8,7 +8,6 @@ import org.bson.Document;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.integration.MongoQuery;
 
-import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
@@ -34,42 +33,22 @@ public class SolonMongoQuery implements MongoQuery {
             findIterable.limit(limit);
         }
 
-        MongoCursor<T> cur = findIterable.iterator();
+		List<T> data = new ArrayList<>();
 
-        List<T> data = new ArrayList<>();
+		try (MongoCursor<T> cur = findIterable.iterator()) {
+			while (cur.hasNext()) {
+				data.add(cur.next());
+			}
+		}
 
-        while (cur.hasNext()) {
-            data.add(cur.next());
-        }
-        cur.close();
+		return data;
+	}
 
-        return data;
-    }
-
-    @Override
-    public long count(String query, String collectionName) {
-        MongoCollection<Document> collection = getCollection(collectionName);
-        Document sum = new Document();
-        sum.put("$sum", 1);
-
-        Document count = new Document();
-        count.put("_id", null);
-        count.put("count", sum);
-
-        Document group = new Document();
-        group.put("$group", count);
-
-        List<Document> list = new ArrayList<Document>();
-        list.add(group);
-
-        AggregateIterable iterable = collection.aggregate(list);
-        MongoCursor<Document> cursor = iterable.iterator();
-        while (cursor.hasNext()) {
-            Document docu = cursor.next();
-            return (Long) docu.get("count");
-        }
-        return 0;
-    }
+	@Override
+	public long count(String query, String collectionName) {
+		MongoCollection<Document> collection = getCollection(collectionName);
+		return collection.countDocuments(BsonDocument.parse(query));
+	}
 
     @Override
     public void initialize(SqlToyContext sqlToyContext) {

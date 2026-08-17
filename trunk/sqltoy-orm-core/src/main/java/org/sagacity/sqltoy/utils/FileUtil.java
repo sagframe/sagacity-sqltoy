@@ -935,7 +935,8 @@ public class FileUtil {
 			long fileLength = randomFile.length();
 			// 将写文件指针移到文件尾。
 			randomFile.seek(fileLength);
-			randomFile.writeBytes(content);
+			// writeBytes(String)只写每个字符的低8位会丢中文,按UTF-8编码写入
+			randomFile.write(content.getBytes(StandardCharsets.UTF_8));
 		} catch (IOException e) {
 			logger.error("appendFileByRandomAccess 方法执行异常", e);
 		} finally {

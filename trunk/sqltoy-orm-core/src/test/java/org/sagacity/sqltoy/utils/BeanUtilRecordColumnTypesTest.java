@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -23,13 +24,20 @@ public class BeanUtilRecordColumnTypesTest {
 	public record OrderInfo(String id, String remark, String ext) {
 	}
 
+	/**
+	 * 含泛型字段的record:修复前getRecordFields对List<String>取getGenericType()
+	 * 得到ParameterizedType,强转Class直接抛ClassCastException
+	 */
+	public record StaffInfo(String id, List<String> roles) {
+	}
+
 	@SuppressWarnings("unchecked")
-	private List<Object> invoke(Collection datas, int[] indexs, String[] properties, String[] columnTypes)
-			throws Exception {
+	private List<Object> invoke(Collection datas, int[] indexs, String[] properties, String[] columnTypes,
+			Class recordType) throws Exception {
 		Method method = BeanUtil.class.getDeclaredMethod("reflectListToRecord", TypeHandler.class, Collection.class,
 				int[].class, String[].class, String[].class, Class.class, boolean.class);
 		method.setAccessible(true);
-		return (List<Object>) method.invoke(null, null, datas, indexs, properties, columnTypes, OrderInfo.class, true);
+		return (List<Object>) method.invoke(null, null, datas, indexs, properties, columnTypes, recordType, true);
 	}
 
 	@Test
@@ -37,7 +45,7 @@ public class BeanUtilRecordColumnTypesTest {
 		Collection datas = new ArrayList<List<Object>>();
 		datas.add(new ArrayList<>(List.of("A001", "{\"k\":1}")));
 		List<Object> result = invoke(datas, new int[] { 0, 1 }, new String[] { "ID", "EXT" },
-				new String[] { "varchar", "json" });
+				new String[] { "varchar", "json" }, OrderInfo.class);
 		OrderInfo order = (OrderInfo) result.get(0);
 		assertEquals("A001", order.id());
 		// 未匹配列的字段容忍为null
@@ -51,9 +59,20 @@ public class BeanUtilRecordColumnTypesTest {
 		Collection datas = new ArrayList<List<Object>>();
 		datas.add(new ArrayList<>(List.of("hello", "A002")));
 		List<Object> result = invoke(datas, new int[] { 0, 1 }, new String[] { "EXT", "ID" },
-				new String[] { "json", "varchar" });
+				new String[] { "json", "varchar" }, OrderInfo.class);
 		OrderInfo order = (OrderInfo) result.get(0);
 		assertEquals("A002", order.id());
 		assertEquals("hello", order.ext());
+	}
+
+	@Test
+	public void recordWithGenericFieldMaps() throws Exception {
+		Collection datas = new ArrayList<List<Object>>();
+		datas.add(new ArrayList<>(Arrays.asList("S001", null)));
+		List<Object> result = invoke(datas, new int[] { 0, 1 }, new String[] { "ID", "ROLES" },
+				new String[] { "varchar", "varchar" }, StaffInfo.class);
+		StaffInfo staff = (StaffInfo) result.get(0);
+		assertEquals("S001", staff.id());
+		assertEquals(null, staff.roles());
 	}
 }

@@ -2,7 +2,8 @@ package org.sagacity.sqltoy.translate.cache.impl;
 
 import java.time.Duration;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
 import org.sagacity.sqltoy.translate.model.TranslateConfigModel;
@@ -29,8 +30,11 @@ public class TranslateCaffeineManager extends TranslateCacheManager {
 
 	protected static CaffeineCacheManager cacheManager;
 
-	// 用于判断是否创建过缓存
-	private HashSet<String> cacheNameSet = new HashSet<String>();
+	// 用于判断是否创建过缓存(并发安全集合,避免不同cacheName并发put时结构被破坏)
+	private Set<String> cacheNameSet = ConcurrentHashMap.newKeySet();
+
+	// 注册缓存的锁,确保同一cacheName只注册一次(注册是低频操作,单锁即可)
+	private final Object registerLock = new Object();
 
 	@Override
 	public HashMap<String, Object[]> getCache(String cacheName, String cacheType) {
@@ -50,6 +54,9 @@ public class TranslateCaffeineManager extends TranslateCacheManager {
 
 	@Override
 	public boolean hasCache(String cacheName) {
+		if (cacheManager == null) {
+			return false;
+		}
 		Cache cache = cacheManager.getCache(cacheName);
 		if (null == cache) {
 			return false;
@@ -63,33 +70,35 @@ public class TranslateCaffeineManager extends TranslateCacheManager {
 		if (cacheManager == null) {
 			return;
 		}
-		synchronized (cacheName.intern()) {
-			// 判断是否创建过缓存，没有创建过统一创建再取出
-			if (!cacheNameSet.contains(cacheName)) {
-				Caffeine caffeine = Caffeine.newBuilder();
-				// 如heap设置为负数表示不限制大小,当>=1 && <100时统一设置为1000
-				if (cacheConfig.getHeap() > 0) {
-					caffeine.maximumSize(cacheConfig.getHeap() < 100 ? 1000 : cacheConfig.getHeap());
-				}
-				if (cacheConfig.getKeepAlive() > 0) {
-					caffeine.expireAfterWrite(Duration.ofSeconds(cacheConfig.getKeepAlive()));
-				}
-				cacheManager.registerCustomCache(cacheName, caffeine.build());
-				cacheNameSet.add(cacheName);
-			}
-			Cache cache = cacheManager.getCache(cacheName);
-			// 清除缓存(一般不会执行,即缓存值被设置为null表示清除缓存)
-			if (cacheValue == null) {
-				if (StringUtil.isBlank(cacheType)) {
-					cache.clear();
-				} else {
-					cache.evict(cacheType);
+		// 判断是否创建过缓存，没有创建过统一创建再取出(双重校验,确保同一cacheName只注册一次)
+		if (!cacheNameSet.contains(cacheName)) {
+			synchronized (registerLock) {
+				if (!cacheNameSet.contains(cacheName)) {
+					Caffeine caffeine = Caffeine.newBuilder();
+					// 如heap设置为负数表示不限制大小,当>=1 && <100时统一设置为1000
+					if (cacheConfig.getHeap() > 0) {
+						caffeine.maximumSize(cacheConfig.getHeap() < 100 ? 1000 : cacheConfig.getHeap());
+					}
+					if (cacheConfig.getKeepAlive() > 0) {
+						caffeine.expireAfterWrite(Duration.ofSeconds(cacheConfig.getKeepAlive()));
+					}
+					cacheManager.registerCustomCache(cacheName, caffeine.build());
+					cacheNameSet.add(cacheName);
 				}
 			}
-			// 更新缓存
-			else {
-				cache.put(StringUtil.isBlank(cacheType) ? cacheName : cacheType, cacheValue);
+		}
+		Cache cache = cacheManager.getCache(cacheName);
+		// 清除缓存(一般不会执行,即缓存值被设置为null表示清除缓存)
+		if (cacheValue == null) {
+			if (StringUtil.isBlank(cacheType)) {
+				cache.clear();
+			} else {
+				cache.evict(cacheType);
 			}
+		}
+		// 更新缓存
+		else {
+			cache.put(StringUtil.isBlank(cacheType) ? cacheName : cacheType, cacheValue);
 		}
 	}
 
@@ -101,17 +110,21 @@ public class TranslateCaffeineManager extends TranslateCacheManager {
 		if (cacheManager == null) {
 			return;
 		}
-		synchronized (cacheName.intern()) {
-			Cache cache = cacheManager.getCache(cacheName);
-			if (cache != null) {
-				if (StringUtil.isBlank(cacheType)) {
-					cache.clear();
-				} else {
-					cache.evict(cacheType);
-				}
+		Cache cache = cacheManager.getCache(cacheName);
+		if (cache != null) {
+			if (StringUtil.isBlank(cacheType)) {
+				cache.clear();
+			} else {
+				cache.evict(cacheType);
 			}
 		}
+	}
 
+	@Override
+	public boolean isStoreByValue(TranslateConfigModel cacheConfig) {
+		// caffeine仅支持heap层(put忽略offHeap/diskSize配置),存储始终为by-reference,
+		// 覆盖基类按配置判定的默认实现,避免无效的offheap配置导致误走整体复制路径
+		return false;
 	}
 
 	@Override

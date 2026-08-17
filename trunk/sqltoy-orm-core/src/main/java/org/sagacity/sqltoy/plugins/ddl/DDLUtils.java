@@ -225,7 +225,8 @@ public class DDLUtils {
 			typeName = setLength(typeName, false, colMeta);
 			break;
 		case java.sql.Types.LONGNVARCHAR:
-			if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
+			if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM
+					|| dbType == DBType.H2) {
 				typeName = "CLOB";
 			} else {
 				typeName = "TEXT";
@@ -234,10 +235,16 @@ public class DDLUtils {
 		case java.sql.Types.TIMESTAMP_WITH_TIMEZONE:
 			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 					|| dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.STARDB
-					|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE || dbType == DBType.ORACLE) {
-				typeName = setLength("TIMESTAMP WITH TIME ZONE", true, colMeta);
+					|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE || dbType == DBType.ORACLE
+					|| dbType == DBType.ORACLE11 || dbType == DBType.DM) {
+				// 精度需跟在TIMESTAMP之后:TIMESTAMP(6) WITH TIME ZONE
+				typeName = "TIMESTAMP";
+				if (colMeta.getColumnSize() > 0) {
+					typeName = typeName + "(" + colMeta.getColumnSize() + ")";
+				}
+				typeName = typeName + " WITH TIME ZONE";
 			} else if (dbType == DBType.SQLSERVER) {
-				typeName = setLength("DATETIMEOFFSET", true, colMeta);
+				typeName = setTimePrecision("DATETIMEOFFSET", colMeta);
 			} else {
 				typeName = "TIMESTAMP";
 			}
@@ -248,7 +255,7 @@ public class DDLUtils {
 					|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE) {
 				typeName = "BYTEA";
 			} else if (dbType == DBType.SQLSERVER) {
-				typeName = "IMAGE";
+				typeName = "VARBINARY(MAX)";
 			} else {
 				typeName = "BLOB";
 			}
@@ -262,7 +269,7 @@ public class DDLUtils {
 			} else if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
 				typeName = "BLOB";
 			} else if (dbType == DBType.SQLSERVER) {
-				typeName = "IMAGE";
+				typeName = "VARBINARY(MAX)";
 			} else {
 				typeName = "BINARY";
 				typeName = setLength(typeName, false, colMeta);
@@ -278,7 +285,7 @@ public class DDLUtils {
 			} else if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
 				typeName = "BLOB";
 			} else if (dbType == DBType.SQLSERVER) {
-				typeName = "IMAGE";
+				typeName = "VARBINARY(MAX)";
 			} else {
 				typeName = "VARBINARY";
 				typeName = setLength(typeName, false, colMeta);
@@ -287,7 +294,8 @@ public class DDLUtils {
 			break;
 		case java.sql.Types.CLOB:
 		case java.sql.Types.NCLOB:
-			if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
+			if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM
+					|| dbType == DBType.H2) {
 				typeName = "CLOB";
 			} else {
 				typeName = "TEXT";
@@ -297,7 +305,12 @@ public class DDLUtils {
 			typeName = "TIME";
 			break;
 		case java.sql.Types.TIMESTAMP:
-			typeName = "TIMESTAMP";
+			// sqlserver的TIMESTAMP是行版本戳(rowversion),不是日期时间类型
+			if (dbType == DBType.SQLSERVER) {
+				typeName = "DATETIME2";
+			} else {
+				typeName = "TIMESTAMP";
+			}
 			break;
 		case java.sql.Types.DATE:
 			if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.SQLSERVER
@@ -317,8 +330,15 @@ public class DDLUtils {
 				}
 			} else if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
 				typeName = "INTEGER";
-			} else {
+			} else if (dbType == DBType.SQLSERVER) {
+				// sqlserver无boolean类型,bit为0/1
+				typeName = "BIT";
+			} else if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.DORIS
+					|| dbType == DBType.STARROCKS) {
 				typeName = "TINYINT(1)";
+			} else {
+				// postgresql/openGauss/H2等原生支持boolean
+				typeName = "BOOLEAN";
 			}
 			break;
 		case java.sql.Types.FLOAT:
@@ -329,7 +349,8 @@ public class DDLUtils {
 				typeName = "BINARY_DOUBLE";
 			} else if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 					|| dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.STARDB
-					|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE || dbType == DBType.DM) {
+					|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE || dbType == DBType.DM
+					|| dbType == DBType.H2) {
 				typeName = "DOUBLE PRECISION";
 			} else if (dbType == DBType.SQLSERVER) {
 				typeName = "FLOAT";
@@ -384,6 +405,19 @@ public class DDLUtils {
 			if (typeName.equals("CHAR") || typeName.equals("VARCHAR")) {
 				return typeName + "(" + (colMeta.getColumnSize() > 10485760 ? 10485760 : colMeta.getColumnSize()) + ")";
 			}
+			return typeName + "(" + colMeta.getColumnSize() + ")";
+		}
+		return typeName;
+	}
+
+	/**
+	 * @TODO 设置时间类型的精度(只取一位精度,不能带scale)
+	 * @param typeName
+	 * @param colMeta
+	 * @return
+	 */
+	public static String setTimePrecision(String typeName, ColumnMeta colMeta) {
+		if (colMeta.getColumnSize() > 0) {
 			return typeName + "(" + colMeta.getColumnSize() + ")";
 		}
 		return typeName;
