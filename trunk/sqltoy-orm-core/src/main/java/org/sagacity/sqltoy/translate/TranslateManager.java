@@ -542,15 +542,21 @@ public class TranslateManager {
 	}
 
 	public void destroy() {
+		// 各资源独立清理:ehcache关闭抛异常不能跳过watcher的中断(watcher为后台线程,不中断则持续运行)
 		try {
 			if (translateCacheManager != null) {
 				translateCacheManager.destroy();
 			}
+		} catch (Exception e) {
+			// 清理失败仅记录(如ehcache磁盘缓存close异常)
+			logger.error("translate缓存管理器销毁过程发生异常!", e);
+		}
+		try {
 			if (cacheUpdateWatcher != null && !cacheUpdateWatcher.isInterrupted()) {
 				cacheUpdateWatcher.interrupt();
 			}
 		} catch (Exception e) {
-
+			logger.error("translate更新检测线程中断过程发生异常!", e);
 		}
 	}
 }

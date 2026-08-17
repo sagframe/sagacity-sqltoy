@@ -214,7 +214,8 @@ public class ShardingUtils {
 				} else {
 					shardingModel.setDataSource(dataSource);
 				}
-				// 分表,设置表名
+				// 默认表名,分表策略时覆盖
+				shardingModel.setTableName(entityTable);
 				if (hasTable && StringUtil.isNotBlank(tableName)) {
 					shardingModel.setTableName(tableName);
 				}

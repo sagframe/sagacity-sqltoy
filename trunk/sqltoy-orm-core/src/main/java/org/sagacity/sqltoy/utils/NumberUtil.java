@@ -493,6 +493,11 @@ public class NumberUtil {
 		}
 		String[] chinaNum = (isMoney ? capitalMoneyNumber : captialNumber);
 		String[] realUOM = (isMoney ? moneyUOM : numUOM);
+		// UOM单位数组只覆盖有限位数,超长数字提前给出明确错误而非数组越界
+		if (sourceInt.length() > realUOM.length + 1) {
+			throw new IllegalArgumentException(
+					"数字:" + sourceInt + " 位数超过中文单位覆盖范围(最大" + (realUOM.length + 1) + "位),无法转换成中文!");
+		}
 		int temp;
 		int length = sourceInt.length();
 		StringBuilder targetStr = new StringBuilder("");
@@ -736,7 +741,8 @@ public class NumberUtil {
 		}
 
 		String xs = ""; // 用来存放转换後小数部分
-		if ((z > -1) && (BigDecimal.ZERO.compareTo(new BigDecimal(rstr)) == -1)) {
+		// value以"."结尾时rstr为空串,new BigDecimal("")会抛NumberFormatException,按无小数处理
+		if ((z > -1) && rstr.length() > 0 && (BigDecimal.ZERO.compareTo(new BigDecimal(rstr)) == -1)) {
 			xs = " AND CENTS " + transTwo(rstr); // 小数部分存在时转换小数 xs = "AND CENTS " + transTwo(rstr) + " ";
 		} else {
 			xs = "";
@@ -808,6 +814,35 @@ public class NumberUtil {
 
 	private static String reverse(String s) {
 		return new StringBuilder(s).reverse().toString();
+	}
+
+	/**
+	 * 将字符串解析成RoundingMode
+	 * 
+	 * @param roundingModeStr
+	 * @return
+	 */
+	public static RoundingMode parseRoundingMode(String roundingModeStr) {
+		if (StringUtil.isBlank(roundingModeStr)) {
+			return null;
+		}
+		String roundingStr = roundingModeStr.toUpperCase();
+		if (roundingStr.equals("UP")) {
+			return RoundingMode.UP;
+		} else if (roundingStr.equals("DOWN")) {
+			return RoundingMode.DOWN;
+		} else if (roundingStr.equals("FLOOR")) {
+			return RoundingMode.FLOOR;
+		} else if (roundingStr.equals("HALF_UP")) {
+			return RoundingMode.HALF_UP;
+		} else if (roundingStr.equals("HALF_DOWN")) {
+			return RoundingMode.HALF_DOWN;
+		} else if (roundingStr.equals("HALF_EVEN")) {
+			return RoundingMode.HALF_EVEN;
+		} else if (roundingStr.equals("CEILING")) {
+			return RoundingMode.CEILING;
+		}
+		return RoundingMode.HALF_UP;
 	}
 
 	/****************** 数字金额转换为英文格式 End ********************************/

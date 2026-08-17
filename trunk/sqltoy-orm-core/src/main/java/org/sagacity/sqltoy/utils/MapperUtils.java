@@ -250,7 +250,7 @@ public class MapperUtils {
 		}
 		try {
 			List dataSets = invokeGetValues(sourceList, getMethods);
-			listToList(dataSets, targetList, setMethods, propsMapperConfig.getSkipNull());
+			listToList(dataSets, targetList, setMethods, propConfig.getSkipNull());
 		} catch (Exception e) {
 			throw new RuntimeException("copyProperties<List>类型:[" + sourceClass.getName() + "-->"
 					+ targetClass.getName() + "]映射操作失败:" + e.getMessage());
@@ -333,8 +333,7 @@ public class MapperUtils {
 			List dataSets = invokeGetValues(sourceList, getMethods);
 			return reflectListToBean(dataSets, targetClass, setMethods, recursionLevel);
 		} catch (Exception e) {
-			logger.error("map/mapList,类型:[" + sourceClass.getName() + "-->" + targetClass.getName() + "]映射操作失败",
-					e);
+			logger.error("map/mapList,类型:[" + sourceClass.getName() + "-->" + targetClass.getName() + "]映射操作失败", e);
 			throw new RuntimeException("map/mapList,类型:[" + sourceClass.getName() + "-->" + targetClass.getName()
 					+ "]映射操作失败:" + e.getMessage());
 		}
@@ -387,6 +386,9 @@ public class MapperUtils {
 					}
 				}
 				result.add(rowData);
+			} else {
+				// null行必须占位,保持结果与sourceList下标对齐,否则后续行的属性值会拷贝到错误的目标对象上
+				result.add(null);
 			}
 		}
 		return result;

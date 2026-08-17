@@ -58,6 +58,12 @@ public class SnowflakeIdWorker {
 
 	private static ConcurrentHashMap<String, Long[]> tableTimeStampSeqMap = new ConcurrentHashMap<>();
 
+	/**
+	 * 每张表独立派生的私有锁对象:同内容表名(不同字符串引用)经map归一到同一把锁;
+	 * 锁对象为类私有,不占用全局字符串池,不会被应用内其他锁interned字符串的代码干扰
+	 */
+	private static ConcurrentHashMap<String, Object> tableLockMap = new ConcurrentHashMap<>();
+
 	private static String DEFAULT_TABLE_NAME = "SQLTOY_SNOWFLAKE_GLOBAL_TABLE_NAME";
 
 	// ==============================Constructors=====================================
@@ -93,7 +99,7 @@ public class SnowflakeIdWorker {
 	 */
 	public long nextId(String tableName) {
 		String realTableName = StringUtil.ifBlank(tableName, DEFAULT_TABLE_NAME);
-		synchronized (realTableName) {
+		synchronized (tableLockMap.computeIfAbsent(realTableName, key -> new Object())) {
 			long timestamp = timeGen();
 			/** 毫秒内序列(0~4095) */
 			// {lastTimestamp、sequence}

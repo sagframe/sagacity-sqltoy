@@ -326,8 +326,10 @@ public class MongoElasticUtils {
 			paramCnt = StringUtil.matchCnt(queryStr.substring(0, index), namedPattern, sqlMode ? 1 : 0);
 			// 用参数的值直接覆盖@value(:name)
 			paramValue = paramValueList.get(paramCnt - valueCnt);
-			sqlToyResult.setSql(sqlToyResult.getSql().replaceFirst(VALUE_REGEX,
-					(paramValue == null) ? "null" : paramValue.toString()));
+			// 值经removeDangerWords清洗防注入(与replaceNoSqlParams一致),并quoteReplacement
+			// 防止值中含$或\被replaceFirst当作组引用产生异常或错误替换
+			sqlToyResult.setSql(sqlToyResult.getSql().replaceFirst(VALUE_REGEX, (paramValue == null) ? "null"
+					: Matcher.quoteReplacement(removeDangerWords(paramValue.toString()))));
 			// 剔除参数@value(:name) 对应的参数值
 			paramValueList.remove(paramCnt - valueCnt);
 			valueCnt++;
@@ -466,7 +468,12 @@ public class MongoElasticUtils {
 				realMql.append(processNull(sqlPart, isUpdateOrNotWhere)).append("null");
 			} else {
 				realMql.append(sqlPart);
-				realMql.append(SqlUtil.toSqlString(value, true));
+				// sql模式(es sql等)字符串字面量以单引号包裹,值内单引号用\转义,防止逃出字面量形成注入
+				if (value instanceof CharSequence) {
+					realMql.append("'").append(value.toString().replace("'", "\\'")).append("'");
+				} else {
+					realMql.append(SqlUtil.toSqlString(value, true));
+				}
 			}
 			index++;
 			// 参数正则表达式:param\s? 末尾可能为空白

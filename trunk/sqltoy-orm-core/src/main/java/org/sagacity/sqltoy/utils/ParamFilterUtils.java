@@ -364,8 +364,7 @@ public class ParamFilterUtils {
 				paramValues[index] = realMatched;
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
-			logger.error("通过缓存匹配查询条件key失败:{}", e.getMessage());
+			logger.error("cache-arg过滤处理异常,本次查询条件按未过滤处理(可能造成查询范围扩大),cacheName:{}!", paramFilterModel.getCacheName(), e);
 		}
 	}
 
@@ -540,7 +539,9 @@ public class ParamFilterUtils {
 				LocalTime date = (LocalTime) paramValue;
 				cloneValue = LocalTime.of(date.getHour(), date.getMinute(), date.getSecond());
 			} else if (paramValue.getClass().isArray()) {
-				cloneValue = ((Object[]) paramValue).clone();
+				// 原始类型数组(int[]等)不能直接强转Object[],经convertArray统一装箱后再拷贝,
+				// 保证clone产物是独立副本,后续过滤原地修改不影响调用方原值
+				cloneValue = CollectionUtil.convertArray(paramValue).clone();
 			} else if (paramValue instanceof ArrayList) {
 				cloneValue = ((ArrayList) paramValue).clone();
 			} else if (paramValue instanceof HashSet) {
@@ -1126,8 +1127,8 @@ public class ParamFilterUtils {
 		}
 		if (tmpAry != null && tmpAry.length == 2) {
 			String addStr = tmpAry[1].trim();
-			// sysdate()-2d 字母结尾
-			if (StringUtil.matches(addStr, "[a-z|A-Z]$")) {
+			// 增减量必须是纯数字或数字+单位字母(如2d);日期时间本身带时区偏移(如xxx+08:00)时不是增减表达式
+			if (StringUtil.matches(addStr, "^\\d+[a-zA-Z]$")) {
 				// 最后一位字母
 				String addTypeStr = addStr.substring(addStr.length() - 1).toLowerCase();
 				if ("s".equals(addTypeStr)) {
@@ -1144,8 +1145,12 @@ public class ParamFilterUtils {
 					addType = 5;
 				}
 				addValue = Integer.parseInt(addStr.substring(0, addStr.length() - 1));
-			} else {
+			} else if (StringUtil.matches(addStr, "^\\d+$")) {
 				addValue = Integer.parseInt(addStr);
+			} else {
+				// 非增减表达式,按普通日期时间字符串整体解析,避免Integer.parseInt抛NumberFormatException
+				tmpAry = null;
+				firstString = dateStr.toLowerCase();
 			}
 			if (!isAdd) {
 				addValue = 0 - addValue;
@@ -1609,7 +1614,8 @@ public class ParamFilterUtils {
 							Date compareDate = "sysdate".equalsIgnoreCase(contrast)
 									? DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT)
 									: DateUtil.convertDateObject(contrast);
-							if (DateUtil.convertDateObject(tmpVar).compareTo(compareDate) == 0) {
+							// 参照值无法解析为日期时跳过该对比(与filterEquals防护对称)
+							if (compareDate != null && DateUtil.convertDateObject(tmpVar).compareTo(compareDate) == 0) {
 								return param;
 							}
 						}

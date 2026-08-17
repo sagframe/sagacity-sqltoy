@@ -83,6 +83,9 @@ public class CacheUpdateWatcher extends Thread {
 		this.updateCheckers = updateCheckers;
 		this.delaySeconds = delaySeconds;
 		this.deviationSeconds = deviationSeconds;
+		// daemon:translate的destroy未被调用时不阻止JVM退出
+		setDaemon(true);
+		setName("sqltoy-cache-update-watcher");
 	}
 
 	/*
@@ -99,6 +102,8 @@ public class CacheUpdateWatcher extends Thread {
 				Thread.sleep(1000 * delaySeconds);
 			}
 		} catch (InterruptedException e) {
+			// 恢复中断标志供上层感知
+			Thread.currentThread().interrupt();
 			isRun = false;
 		}
 		Long preCheck;
@@ -147,6 +152,8 @@ public class CacheUpdateWatcher extends Thread {
 				}
 			} catch (InterruptedException e) {
 				logger.warn("缓存翻译检测缓存变更异常,检测线程将终止!{}", e.getMessage(), e);
+				// 恢复中断标志供上层感知
+				Thread.currentThread().interrupt();
 				isRun = false;
 			}
 		}
@@ -293,7 +300,6 @@ public class CacheUpdateWatcher extends Thread {
 					}
 				}
 			} catch (Exception e) {
-				e.printStackTrace();
 				logger.error("缓存增量更新检测,更新缓存:{} 发生异常:{}", cacheName, e.getMessage());
 			}
 			logger.debug("缓存实际完成:{} 条记录更新!", count);

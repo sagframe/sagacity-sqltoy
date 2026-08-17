@@ -671,6 +671,7 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 		}
 		String key = dialect.concat(".").concat(type);
 		if (!dialectSqlMap.containsKey(key)) {
+			// 方言函数替换
 			String dialectSql = FunctionUtils.getDialectSql(sqlContent, dialect);
 			// 保留字处理
 			dialectSql = ReservedWordsUtil.convertSql(dialectSql, DataSourceUtils.getDBType(dialect));

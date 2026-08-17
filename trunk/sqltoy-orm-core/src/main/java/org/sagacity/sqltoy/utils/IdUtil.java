@@ -156,20 +156,30 @@ public class IdUtil {
 	public static String getDebugId() {
 		// 当前时间(秒)
 		String nowTime = DateUtil.formatDate(new Date(), "HH:mm:ss");
-		// 后7位纳秒间隔
-		String nanoTime = "" + System.nanoTime();
-		int length = nanoTime.length();
+		return buildDebugId(nowTime, System.nanoTime());
+	}
+
+	/**
+	 * @TODO 组装debugId,nanoTime参数化便于测试负值场景
+	 * @param nowTime  当前时刻字符串
+	 * @param nanoTime 纳秒计数
+	 * @return
+	 */
+	static String buildDebugId(String nowTime, long nanoTime) {
+		// nanoTime原点由JVM任选(契约允许为负,部分平台开机初期为负值),无条件剥离负号再截取
+		String nanoTimeStr = Long.toString(nanoTime).replace("-", "");
+		int length = nanoTimeStr.length();
 		// 极端情况下nanoTime位数不足，补齐避免substring越界
 		if (length < 9) {
-			nanoTime = StringUtil.addLeftZero2Len(nanoTime.replace("-", ""), 9);
-			length = nanoTime.length();
+			nanoTimeStr = StringUtil.addLeftZero2Len(nanoTimeStr, 9);
+			length = nanoTimeStr.length();
 		}
-		if (nanoTime.endsWith("00")) {
-			nanoTime = nanoTime.substring(length - 9, length - 2);
+		if (nanoTimeStr.endsWith("00")) {
+			nanoTimeStr = nanoTimeStr.substring(length - 9, length - 2);
 		} else {
-			nanoTime = nanoTime.substring(length - 7);
+			nanoTimeStr = nanoTimeStr.substring(length - 7);
 		}
-		return nowTime.concat(".").concat(nanoTime);
+		return nowTime.concat(".").concat(nanoTimeStr);
 	}
 
 	/**

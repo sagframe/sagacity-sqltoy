@@ -361,10 +361,17 @@ public class DateUtil {
 		}
 		// 在指定format情况下result==null，则将format置为null,通过自动解析方式获取具体的格式
 		if (result == null && hasFmt) {
-			result = parseString(dateVar, null, locale);
-			result = parseString(formatDate(result, realDF));
-			if (result == null && hasException) {
-				ex.printStackTrace();
+			Date autoResult = parseString(dateVar, null, locale);
+			// 自动解析成功后按指定格式重新格式化再解析一次(保持与指定format路径一致的归一化行为)
+			if (autoResult != null) {
+				result = parseString(formatDate(autoResult, realDF));
+			}
+			if (result == null) {
+				// 两级解析均失败:带原始值与format输出日志,便于定位(不再静默返回null)
+				logger.warn("日期解析失败:值={},指定的format={},自动格式匹配亦未成功!", dateVar, realDF);
+				if (hasException) {
+					logger.error("parseString 方法执行异常", ex);
+				}
 			}
 		}
 		return result;
@@ -549,7 +556,7 @@ public class DateUtil {
 			}
 			result = LocalDateTime.parse(dateStr, DateTimeFormatter.ofPattern(realDF));
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("parseLocalDateTime 方法执行异常", e);
 		}
 		// 结果为null，格式不为null,通过自动格式匹配模式，进行一次补偿处理
 		if (result == null && hasFmt) {
@@ -814,6 +821,9 @@ public class DateUtil {
 	// Add millisecond
 	public static Date addMilliSecond(Object dt, long millisecond) {
 		Date result = convertDateObject(dt);
+		if (result == null) {
+			throw new IllegalArgumentException("addMilliSecond日期参数无法识别:" + dt + ",请检查日期格式!");
+		}
 		if (millisecond != 0) {
 			result.setTime(result.getTime() + millisecond);
 		}
@@ -857,14 +867,22 @@ public class DateUtil {
 		if (dateValue == null) {
 			return LocalDate.now().getYear();
 		}
-		return convertLocalDateTime(dateValue).getYear();
+		LocalDateTime dateTime = convertLocalDateTime(dateValue);
+		if (dateTime == null) {
+			throw new IllegalArgumentException("getYear日期参数无法识别:" + dateValue + ",请检查日期格式!");
+		}
+		return dateTime.getYear();
 	}
 
 	public static int getMonth(Object dateValue) {
 		if (dateValue == null) {
 			return LocalDate.now().getMonthValue();
 		}
-		return convertLocalDateTime(dateValue).getMonthValue();
+		LocalDateTime dateTime = convertLocalDateTime(dateValue);
+		if (dateTime == null) {
+			throw new IllegalArgumentException("getMonth日期参数无法识别:" + dateValue + ",请检查日期格式!");
+		}
+		return dateTime.getMonthValue();
 	}
 
 	/**
@@ -886,7 +904,11 @@ public class DateUtil {
 		if (dateValue == null) {
 			return LocalDate.now().getDayOfMonth();
 		}
-		return convertLocalDateTime(dateValue).getDayOfMonth();
+		LocalDateTime dateTime = convertLocalDateTime(dateValue);
+		if (dateTime == null) {
+			throw new IllegalArgumentException("getDayOfMonth日期参数无法识别:" + dateValue + ",请检查日期格式!");
+		}
+		return dateTime.getDayOfMonth();
 	}
 
 	/**
@@ -898,7 +920,11 @@ public class DateUtil {
 		if (dateValue == null) {
 			return LocalDate.now().getDayOfWeek().getValue();
 		}
-		return convertLocalDateTime(dateValue).getDayOfWeek().getValue();
+		LocalDateTime dateTime = convertLocalDateTime(dateValue);
+		if (dateTime == null) {
+			throw new IllegalArgumentException("getDayOfWeek日期参数无法识别:" + dateValue + ",请检查日期格式!");
+		}
+		return dateTime.getDayOfWeek().getValue();
 	}
 
 	/**
@@ -941,6 +967,10 @@ public class DateUtil {
 	public static int getIntervalMonths(Object floorDate, Object goalDate) {
 		LocalDateTime date1 = convertLocalDateTime(goalDate);
 		LocalDateTime date2 = convertLocalDateTime(floorDate);
+		if (date1 == null || date2 == null) {
+			throw new IllegalArgumentException(
+					"getIntervalMonths日期参数无法识别:floorDate=" + floorDate + ",goalDate=" + goalDate + ",请检查日期格式!");
+		}
 		return date1.getYear() * 12 + date1.getMonthValue() - date2.getYear() * 12 - date2.getMonthValue();
 	}
 
@@ -951,7 +981,13 @@ public class DateUtil {
 	 * @return
 	 */
 	public static int getIntervalYears(Object floorDate, Object goalDate) {
-		return convertLocalDateTime(goalDate).getYear() - convertLocalDateTime(floorDate).getYear();
+		LocalDateTime date1 = convertLocalDateTime(goalDate);
+		LocalDateTime date2 = convertLocalDateTime(floorDate);
+		if (date1 == null || date2 == null) {
+			throw new IllegalArgumentException(
+					"getIntervalYears日期参数无法识别:floorDate=" + floorDate + ",goalDate=" + goalDate + ",请检查日期格式!");
+		}
+		return date1.getYear() - date2.getYear();
 	}
 
 	/**
@@ -976,7 +1012,8 @@ public class DateUtil {
 	 * @return
 	 */
 	public static double getIntervalHours(Object floorDate, Object goalDate) {
-		BigDecimal result = BigDecimal.valueOf(Double.valueOf(getIntervalMillSeconds(floorDate, goalDate)) / (3600 * 1000));
+		BigDecimal result = BigDecimal
+				.valueOf(Double.valueOf(getIntervalMillSeconds(floorDate, goalDate)) / (3600 * 1000));
 		return result.setScale(1, RoundingMode.HALF_UP).doubleValue();
 	}
 
@@ -987,7 +1024,8 @@ public class DateUtil {
 	 * @return
 	 */
 	public static double getIntervalMinutes(Object floorDate, Object goalDate) {
-		BigDecimal result = BigDecimal.valueOf(Double.valueOf(getIntervalMillSeconds(floorDate, goalDate)) / (60 * 1000));
+		BigDecimal result = BigDecimal
+				.valueOf(Double.valueOf(getIntervalMillSeconds(floorDate, goalDate)) / (60 * 1000));
 		return result.setScale(1, RoundingMode.HALF_UP).doubleValue();
 	}
 
@@ -1008,7 +1046,13 @@ public class DateUtil {
 	 * @return
 	 */
 	public static long getIntervalMillSeconds(Object floorDate, Object goalDate) {
-		return convertDateObject(goalDate).getTime() - convertDateObject(floorDate).getTime();
+		Date date1 = convertDateObject(goalDate);
+		Date date2 = convertDateObject(floorDate);
+		if (date1 == null || date2 == null) {
+			throw new IllegalArgumentException(
+					"getIntervalMillSeconds日期参数无法识别:floorDate=" + floorDate + ",goalDate=" + goalDate + ",请检查日期格式!");
+		}
+		return date1.getTime() - date2.getTime();
 	}
 
 	/**

@@ -51,7 +51,8 @@ public class HashShardingStrategy implements ShardingStrategy {
 		// 单值hash取模
 		Object shardingValue = paramsMap.values().iterator().next();
 		int hashCode = shardingValue.hashCode();
-		String modeKey = Integer.toString(hashCode % tableMode);
+		// hashCode可能为负,负数直接%会得到负key,取不到分表导致数据回落基准表
+		String modeKey = Integer.toString(Math.floorMod(hashCode, tableMode));
 		logger.debug("分表取得modeKey:{},tableName:{}", modeKey, tableMap.get(modeKey));
 		return tableMap.get(modeKey);
 	}
@@ -74,7 +75,8 @@ public class HashShardingStrategy implements ShardingStrategy {
 		// 单值hash取模
 		Object shardingValue = paramsMap.values().iterator().next();
 		int hashCode = shardingValue.hashCode();
-		String modeKey = Integer.toString(hashCode % dataSourceMode);
+		// hashCode可能为负,负数直接%会得到负key,取不到数据源导致回落默认库
+		String modeKey = Integer.toString(Math.floorMod(hashCode, dataSourceMode));
 		shardingModel.setDataSourceName(dataSourceMap.get(modeKey));
 		logger.debug("分库取得modeKey:{},dataSourceName:{}", modeKey, shardingModel.getDataSourceName());
 		return shardingModel;

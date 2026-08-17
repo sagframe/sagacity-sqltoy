@@ -79,7 +79,12 @@ public class DesensitizeDefaultProvider implements DesensitizeProvider {
 		// 邮件(首字符@gmail.com 形式)
 		if ("email".equals(type)) {
 			String maskStr = StringUtil.ifBlank(maskCode, "***");
-			return realStr.substring(0, 1).concat(maskStr).concat(realStr.substring(realStr.indexOf("@")));
+			int atIndex = realStr.indexOf("@");
+			// 脏数据无@时indexOf返回-1会substring(-1)越界,中断整批结果脱敏,退化为首字符+掩码
+			if (atIndex == -1) {
+				return realStr.substring(0, 1).concat(maskStr);
+			}
+			return realStr.substring(0, 1).concat(maskStr).concat(realStr.substring(atIndex));
 		}
 		// 身份证
 		if ("id-card".equals(type)) {

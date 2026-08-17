@@ -64,6 +64,5 @@ public class BatchDynamicCache implements Serializable {
 	public void setCacheAndTypeForRealType(Map<String, String> cacheAndTypeForRealType) {
 		this.cacheAndTypeForRealType = cacheAndTypeForRealType;
 	}
-	
-	
+
 }

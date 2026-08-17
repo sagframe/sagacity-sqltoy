@@ -12,6 +12,8 @@ import java.util.regex.Pattern;
 
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @project sagacity-sqltoy
@@ -28,6 +30,8 @@ import org.sagacity.sqltoy.config.SqlConfigParseUtils;
  */
 @SuppressWarnings("rawtypes")
 public class MacroIfLogic {
+	private final static Logger logger = LoggerFactory.getLogger(MacroIfLogic.class);
+
 	private final static String BLANK = " ";
 
 	// 必须是数字开头+1位特定字符(可选)
@@ -219,7 +223,7 @@ public class MacroIfLogic {
 			}
 			return "false";
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("evalSimpleExpress 方法执行异常", e);
 		}
 		return "undefine";
 	}
@@ -492,6 +496,22 @@ public class MacroIfLogic {
 	}
 
 	/**
+	 * @TODO 日期比较辅助:任一侧无法解析为日期时返回null(调用方按false处理),
+	 *       避免convertDateObject返回null直接compareTo抛NPE中断整个@if解析
+	 * @param valueStr
+	 * @param compare
+	 * @return null表示无法比较
+	 */
+	private static Integer compareDate(String valueStr, String compare) {
+		Date date1 = DateUtil.convertDateObject(valueStr);
+		Date date2 = DateUtil.convertDateObject(compare);
+		if (date1 == null || date2 == null) {
+			return null;
+		}
+		return Integer.valueOf(date1.compareTo(date2));
+	}
+
+	/**
 	 * @todo 大于等于
 	 * @param value
 	 * @param valueStr
@@ -501,7 +521,8 @@ public class MacroIfLogic {
 	 */
 	private static boolean moreEqual(Object value, String valueStr, String compare, String type) {
 		if ("time".equals(type) || "date".equals(type)) {
-			return DateUtil.convertDateObject(valueStr).compareTo(DateUtil.convertDateObject(compare)) >= 0;
+			Integer cmpResult = compareDate(valueStr, compare);
+			return (cmpResult != null) && cmpResult.intValue() >= 0;
 		}
 		// 数字
 		if (NumberUtil.isNumber(valueStr) && NumberUtil.isNumber(compare)) {
@@ -520,7 +541,8 @@ public class MacroIfLogic {
 	 */
 	private static boolean lessEqual(Object value, String valueStr, String compare, String type) {
 		if ("time".equals(type) || "date".equals(type)) {
-			return DateUtil.convertDateObject(valueStr).compareTo(DateUtil.convertDateObject(compare)) <= 0;
+			Integer cmpResult = compareDate(valueStr, compare);
+			return (cmpResult != null) && cmpResult.intValue() <= 0;
 		}
 		// 数字
 		if (NumberUtil.isNumber(valueStr) && NumberUtil.isNumber(compare)) {
@@ -539,7 +561,8 @@ public class MacroIfLogic {
 	 */
 	private static boolean more(Object value, String valueStr, String compare, String type) {
 		if ("time".equals(type) || "date".equals(type)) {
-			return DateUtil.convertDateObject(valueStr).compareTo(DateUtil.convertDateObject(compare)) > 0;
+			Integer cmpResult = compareDate(valueStr, compare);
+			return (cmpResult != null) && cmpResult.intValue() > 0;
 		}
 		// 数字
 		if (NumberUtil.isNumber(valueStr) && NumberUtil.isNumber(compare)) {
@@ -558,7 +581,8 @@ public class MacroIfLogic {
 	 */
 	private static boolean less(Object value, String valueStr, String compare, String type) {
 		if ("time".equals(type) || "date".equals(type)) {
-			return DateUtil.convertDateObject(valueStr).compareTo(DateUtil.convertDateObject(compare)) < 0;
+			Integer cmpResult = compareDate(valueStr, compare);
+			return (cmpResult != null) && cmpResult.intValue() < 0;
 		}
 		// 数字
 		if (NumberUtil.isNumber(valueStr) && NumberUtil.isNumber(compare)) {

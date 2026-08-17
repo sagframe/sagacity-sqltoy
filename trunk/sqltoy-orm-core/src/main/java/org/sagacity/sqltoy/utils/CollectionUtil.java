@@ -383,7 +383,8 @@ public class CollectionUtil {
 				if (tmp.isEmpty()) {
 					return result;
 				}
-				firstCellValue = ((List) obj).get(0);
+				// Set等非List集合不能强转List,经迭代器取首个元素
+				firstCellValue = tmp.iterator().next();
 				if (firstCellValue != null && (firstCellValue instanceof Collection
 						|| firstCellValue.getClass().isArray() || firstCellValue instanceof Map)) {
 					result = 2;
@@ -693,7 +694,7 @@ public class CollectionUtil {
 			}
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("hashList 方法执行异常", e);
 		}
 		return result;
 	}
@@ -1116,6 +1117,9 @@ public class CollectionUtil {
 			result = new Short[values.length];
 		} else if ("java.lang.class".equals(type) || "class".equals(type)) {
 			result = new Class[values.length];
+		} else {
+			// 未识别类型按原数组返回,避免result为null时后续取result.length抛NPE
+			return values;
 		}
 		for (int i = 0; i < result.length; i++) {
 			if (values[i] != null) {
@@ -1163,14 +1167,18 @@ public class CollectionUtil {
 		}
 		String valueStr = (value == null) ? "" : value.toString();
 		for (Object s : compareAry) {
-			if (value == null || s == null) {
-				return value == s;
-			}
-			if (value.equals(s)) {
-				return true;
-			}
-			if (ignoreCase && valueStr.equalsIgnoreCase(s.toString())) {
-				return true;
+			// 值为null时仅null元素匹配;比对到null元素时跳过继续后续元素,不能提前短路结束整个判定
+			if (value == null) {
+				if (s == null) {
+					return true;
+				}
+			} else if (s != null) {
+				if (value.equals(s)) {
+					return true;
+				}
+				if (ignoreCase && valueStr.equalsIgnoreCase(s.toString())) {
+					return true;
+				}
 			}
 		}
 		return false;
@@ -1384,9 +1392,10 @@ public class CollectionUtil {
 				calculateValue = calculateValue.add(cellValue);
 			} else {
 				end = i - 1;
-				// 求平均值
+				// 求平均值:组区间[start,end]闭区间共end-start+1行,分母不能差一
 				if (!isSum && end > start) {
-					calculateValue = calculateValue.divide(BigDecimal.valueOf(end - start), 4, RoundingMode.HALF_DOWN);
+					calculateValue = calculateValue.divide(BigDecimal.valueOf(end - start + 1L), 4,
+							RoundingMode.HALF_DOWN);
 				}
 				// 将平均值插入到分组记录的最后一列，用于排序
 				for (int k = start; k <= end; k++) {
@@ -1401,9 +1410,10 @@ public class CollectionUtil {
 			// 最后一行
 			if (i == length - 1) {
 				end = i;
-				// 求平均值
+				// 求平均值:组区间[start,end]闭区间共end-start+1行,分母不能差一
 				if (!isSum && end > start) {
-					calculateValue = calculateValue.divide(BigDecimal.valueOf(end - start), 4, RoundingMode.HALF_DOWN);
+					calculateValue = calculateValue.divide(BigDecimal.valueOf(end - start + 1L), 4,
+							RoundingMode.HALF_DOWN);
 				}
 				for (int k = start; k <= end; k++) {
 					dataSet.get(k).add(calculateValue);
@@ -1511,7 +1521,7 @@ public class CollectionUtil {
 			List tmpResult = BeanUtil.reflectBeansToList(dataSet, new String[] { column });
 			return sliceColumn(tmpResult, 0, distinct).toArray();
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("sliceColumn 方法执行异常", e);
 		}
 		return null;
 	}

@@ -183,21 +183,22 @@ public class TranslateUtils {
 	 */
 	public static boolean judgeTranslate(Object sourceValue, String compareType, String[] compareValues) {
 		// compareValues长度不做校验,解析设置时已经校验必须有值
-		String sourceStr = (sourceValue == null) ? "null" : sourceValue.toString().toLowerCase();
+		// 比较值与数据值统一转小写,否则配置大写比较值将永远无法匹配
+		String sourceStr = (sourceValue == null) ? "null" : sourceValue.toString().toLowerCase(java.util.Locale.ROOT);
 		if (compareType.equals("eq")) {
-			return compareValues[0].equals(sourceStr);
+			return compareValues[0].toLowerCase(java.util.Locale.ROOT).equals(sourceStr);
 		} else if (compareType.equals("neq")) {
-			return !compareValues[0].equals(sourceStr);
+			return !compareValues[0].toLowerCase(java.util.Locale.ROOT).equals(sourceStr);
 		} else if (compareType.equals("in")) {
 			for (String compareStr : compareValues) {
-				if (compareStr.equals(sourceStr)) {
+				if (compareStr.toLowerCase(java.util.Locale.ROOT).equals(sourceStr)) {
 					return true;
 				}
 			}
 			return false;
 		} else if (compareType.equals("out")) {
 			for (String compareStr : compareValues) {
-				if (compareStr.equals(sourceStr)) {
+				if (compareStr.toLowerCase(java.util.Locale.ROOT).equals(sourceStr)) {
 					return false;
 				}
 			}
@@ -310,14 +311,32 @@ public class TranslateUtils {
 			columnLow = entry.getKey().toLowerCase();
 			translate = entry.getValue();
 			extend = translate.getExtend();
-			colIndex = labelIndexMap.get(columnLow);
+			// 翻译列不在查询结果列中时给出指向配置的明确错误,而非拆箱NPE
+			Integer columnIndex = labelIndexMap.get(columnLow);
+			if (columnIndex == null) {
+				throw new IllegalArgumentException("动态缓存翻译列:" + columnLow
+						+ " 不在查询结果的返回列中,请检查translate的columns配置与sql的select列!");
+			}
+			colIndex = columnIndex;
 			colAliasIndex = colIndex;
-			// mongodb 存在别名场景
+			// mongodb 存在别名场景(别名列缺失时按原列处理)
 			if (hasAliasName && extend.alias != null) {
-				colAliasIndex = labelIndexMap.get(extend.alias.toLowerCase());
+				Integer aliasIndex = labelIndexMap.get(extend.alias.toLowerCase());
+				if (aliasIndex != null) {
+					colAliasIndex = aliasIndex;
+				}
 			}
 			// compareColumn初始化时已经小写
-			compareValueIndex = extend.hasLogic ? labelIndexMap.get(extend.compareColumn) : -1;
+			if (extend.hasLogic) {
+				Integer compareIndex = labelIndexMap.get(extend.compareColumn);
+				if (compareIndex == null) {
+					throw new IllegalArgumentException("动态缓存翻译列:" + columnLow + " 的where条件列:"
+							+ extend.compareColumn + " 不在查询结果的返回列中,请检查translate的where配置!");
+				}
+				compareValueIndex = compareIndex;
+			} else {
+				compareValueIndex = -1;
+			}
 			realCacheType = dynamicCacheHolder.getRealCacheType(extend.cacheNameAndType);
 			realCacheNameAndType = dynamicCacheHolder.getRealCacheNameAndType(extend.cacheNameAndType);
 			notMatchedKeys = dynamicCacheHolder.getNotMatchedKeys(realCacheNameAndType);
@@ -454,6 +473,9 @@ public class TranslateUtils {
 									+ "形式传递租户信息，必须要实现:IUnifyFieldsHandler.getUserTenantId()或IUnifyFieldsHandler.authTenants(null,null)来获取当前用户的租户id!");
 						}
 					}
+				} else {
+					throw new DataAccessException("缓存翻译的cache-type只支持${usertenantid}/"
+							+ "${currentusertenantid}/${tenantid}三种动态占位符,不支持:" + cacheType + "!请检查translate配置!");
 				}
 			} else {
 				realCacheType = cacheType;

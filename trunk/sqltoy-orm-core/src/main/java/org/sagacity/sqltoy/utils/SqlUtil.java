@@ -163,6 +163,9 @@ public class SqlUtil {
 	 */
 	private static ConcurrentHashMap<String, String> convertSqlMap = new ConcurrentHashMap<String, String>();
 
+	// convertSqlMap的key含updateByQuery等动态sql,必须有容量上限防止无界内存增长
+	private static final int CONVERT_SQL_CACHE_MAX_SIZE = 2000;
+
 	// sql 注释过滤器
 	private static HashMap sqlCommentfilters = new HashMap();
 
@@ -889,7 +892,6 @@ public class SqlUtil {
 		try {
 			preparedStatementResultHandler.execute(userData, pst, rs);
 		} catch (Exception se) {
-			se.printStackTrace();
 			logger.error(se.getMessage(), se);
 			throw se;
 		} finally {
@@ -903,7 +905,7 @@ public class SqlUtil {
 					pst = null;
 				}
 			} catch (SQLException se) {
-				se.printStackTrace();
+				logger.error("preparedStatementProcess 方法执行异常", se);
 			}
 		}
 		return preparedStatementResultHandler.getResult();
@@ -923,7 +925,6 @@ public class SqlUtil {
 		try {
 			callableStatementResultHandler.execute(userData, pst, rs);
 		} catch (Exception se) {
-			se.printStackTrace();
 			logger.error(se.getMessage(), se);
 			throw se;
 		} finally {
@@ -937,7 +938,7 @@ public class SqlUtil {
 					pst = null;
 				}
 			} catch (SQLException se) {
-				se.printStackTrace();
+				logger.error("callableStatementProcess 方法执行异常", se);
 			}
 		}
 		return callableStatementResultHandler.getResult();
@@ -1163,8 +1164,8 @@ public class SqlUtil {
 				break;
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
-			throw new DataAccessException("获取sequence={} 值失败!错误信息:{}", sequence, e.getMessage());
+			logger.error("getSequenceValue 方法执行异常", e);
+			throw new DataAccessException("获取sequence=" + sequence + " 值失败!错误信息:" + e.getMessage(), e);
 		} finally {
 			if (rs != null) {
 				try {
@@ -1362,7 +1363,10 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @todo 通过jdbc方式批量插入数据，一般提供给数据采集时或插入临时表使用，一般采用hibernate 方式插入
+	 * @todo 通过jdbc方式批量插入数据，一般提供给数据采集时或插入临时表使用，一般采用hibernate 方式插入 <br/>
+	 *       返回值为影响行数统计:本方法按行执行(每次addBatch绑定一行数据),对Oracle等驱动
+	 *       executeBatch返回SUCCESS_NO_INFO(-2,语句成功但行数未知)的语句按1行计,
+	 *       对单行语句(insert、按主键update/delete)结果精确;若传入一条语句影响多行的sql则为估算值
 	 * @param typeHandler
 	 * @param updateSql
 	 * @param rowDatas
@@ -1452,11 +1456,9 @@ public class SqlUtil {
 					// 批量执行
 					if (useBatch) {
 						pst.addBatch();
-						if ((meter % batchSize) == 0 || index == totalRows) {
+						if ((meter % batchSize) == 0) {
 							int[] updateRows = pst.executeBatch();
-							for (int t : updateRows) {
-								updateCount = updateCount + ((t > 0) ? t : 0);
-							}
+							updateCount = updateCount + sumBatchUpdateCounts(updateRows);
 							pst.clearBatch();
 						}
 					} // 单条执行
@@ -1465,11 +1467,16 @@ public class SqlUtil {
 					}
 				}
 			}
+			// 集合尾部为null的行不会进入循环体内的批次执行判断，未执行的尾部批次需在循环外补齐执行
+			if (useBatch && (meter % batchSize) != 0) {
+				int[] updateRows = pst.executeBatch();
+				updateCount = updateCount + sumBatchUpdateCounts(updateRows);
+				pst.clearBatch();
+			}
 			if (hasSetAutoCommit) {
 				conn.setAutoCommit(!autoCommit);
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
 			logger.error(e.getMessage(), e);
 			throw e;
 		} finally {
@@ -1483,6 +1490,26 @@ public class SqlUtil {
 			}
 		}
 		return updateCount;
+	}
+
+	/**
+	 * @todo 统计批量执行影响行数
+	 * @description 框架批量链路均为按行执行(每次addBatch绑定一行数据):
+	 *              SUCCESS_NO_INFO(-2)表示语句执行成功但驱动不提供行数(如Oracle批量、 MySQL
+	 *              rewriteBatchedStatements),按1计才能得到真实行数; EXECUTE_FAILED(-3)按0计
+	 * @param updateRows
+	 * @return
+	 */
+	static long sumBatchUpdateCounts(int[] updateRows) {
+		long total = 0;
+		for (int t : updateRows) {
+			if (t > 0) {
+				total += t;
+			} else if (t == java.sql.Statement.SUCCESS_NO_INFO) {
+				total += 1;
+			}
+		}
+		return total;
 	}
 
 	/**
@@ -1765,7 +1792,8 @@ public class SqlUtil {
 		try {
 			stat = conn.createStatement();
 			int meter = 0;
-			//int realBatch = (batchSize == null || batchSize.intValue() > 1) ? batchSize.intValue() : 100;
+			// int realBatch = (batchSize == null || batchSize.intValue() > 1) ?
+			// batchSize.intValue() : 100;
 			int realBatch = (batchSize == null || batchSize.intValue() <= 1) ? 100 : batchSize.intValue();
 			int totalRows = statments.length;
 			int i = 0;
@@ -1782,7 +1810,6 @@ public class SqlUtil {
 				i++;
 			}
 		} catch (SQLException e) {
-			e.printStackTrace();
 			throw e;
 		} finally {
 			if (stat != null) {
@@ -2102,8 +2129,10 @@ public class SqlUtil {
 				}
 			}
 		}
-		// 放入缓存
-		convertSqlMap.put(key, realSql);
+		// 放入缓存(key含动态拼接的sql条件,设置容量上限防止无界增长,超限后不再缓存直接计算)
+		if (convertSqlMap.size() < CONVERT_SQL_CACHE_MAX_SIZE) {
+			convertSqlMap.put(key, realSql);
+		}
 		return realSql;
 	}
 
@@ -2300,8 +2329,6 @@ public class SqlUtil {
 	 * @return
 	 */
 	public static boolean validateInArg(String argValue) {
-		// 判断是否有关键词
-		boolean hasSqlKeyWord = StringUtil.matches(BLANK + argValue, SQL_INJECT_PATTERN);
 		String argTrim = argValue.replaceAll("\\s+", "");
 		String[] args = null;
 		// 判断是否有逗号分割
@@ -2332,16 +2359,17 @@ public class SqlUtil {
 				if (!item.startsWith("'") || !item.endsWith("'")) {
 					return false;
 				}
-				// 有关键词时，校验是否多个单引号，避免:''+(select field from table)+''模式
-				if (hasSqlKeyWord && StringUtil.matchCnt(item, ONE_QUOTA, 0) > 2) {
+				// 引号包裹项必须恰好一对引号且不含反斜杠:多于一对引号意味着值内拼接了额外字面量
+				// ('a' or sleep(5)--'形式),反斜杠在MySQL等方言会转义收尾引号提前闭合字面量,一律回退参数化
+				if (item.indexOf('\\') != -1 || StringUtil.matchCnt(item, ONE_QUOTA, 0) != 2) {
 					return false;
 				}
 			} else if (argType == 2) {
 				if (!item.startsWith("\"") || !item.endsWith("\"")) {
 					return false;
 				}
-				// 有关键词时，校验是否多个双引号，避免:""+(select field from table)+""模式
-				if (hasSqlKeyWord && StringUtil.matchCnt(item, DOUBLE_QUOTA, 0) > 2) {
+				// 双引号同理,\"转义可提前闭合(MySQL ANSI_QUOTES等场景),多余引号即拼接,回退参数化
+				if (item.indexOf('\\') != -1 || StringUtil.matchCnt(item, DOUBLE_QUOTA, 0) != 2) {
 					return false;
 				}
 			} else if (!NumberUtil.isNumber(item)) {

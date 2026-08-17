@@ -61,13 +61,15 @@ public class DDLUtils {
 							&& !foreignTable.startsWith(entityMeta.getSchema().concat("."))) {
 						foreignTable = entityMeta.getSchema().concat(".").concat(foreignTable);
 					}
-					if (!sortTables.containsKey(foreignTable)) {
-						sortTables.put(foreignTable, tmpEntityMeta.get(foreignTable));
+					EntityMeta foreignMeta = tmpEntityMeta.get(foreignTable);
+					if (foreignMeta != null && !sortTables.containsKey(foreignTable)) {
+						sortTables.put(foreignTable, foreignMeta);
 					} // 外表和当前表都已经在排序队列中
-					else if (sortTables.containsKey(tableName) && !isBefore(sortTables, foreignTable, tableName)) {
+					else if (foreignMeta != null && sortTables.containsKey(tableName)
+							&& !isBefore(sortTables, foreignTable, tableName)) {
 						swotTables.clear();
 						// 将外键关联的表放第一位置
-						swotTables.put(foreignTable, tmpEntityMeta.get(foreignTable));
+						swotTables.put(foreignTable, foreignMeta);
 						// 先移除外键关联表
 						sortTables.remove(foreignTable);
 						swotTables.putAll(sortTables);
@@ -121,7 +123,7 @@ public class DDLUtils {
 	public static TableMeta wrapTableMeta(EntityMeta entityMeta, Integer dbType) {
 		TableMeta tableMeta = new TableMeta();
 		tableMeta.setTableName(entityMeta.getTableName());
-		tableMeta.setRemarks(StringUtil.escapeComment(entityMeta.getTableComment()));
+		tableMeta.setRemarks(escapeCommentForDdl(entityMeta.getTableComment()));
 		tableMeta.setSchema(entityMeta.getSchema());
 		tableMeta.setPkConstraint(entityMeta.getPkConstraint());
 		// 索引信息
@@ -148,7 +150,7 @@ public class DDLUtils {
 			fieldMeta = entry.getValue();
 			ColumnMeta columnMeta = new ColumnMeta();
 			columnMeta.setColName(fieldMeta.getColumnName());
-			columnMeta.setComments(translateSpecialSymbols(fieldMeta.getComments()));
+			columnMeta.setComments(escapeCommentForDdl(fieldMeta.getComments()));
 			columnMeta.setAutoIncrement(fieldMeta.isAutoIncrement());
 			columnMeta.setColumnSize(fieldMeta.getLength());
 			columnMeta.setPartitionKey(fieldMeta.isPartitionKey());
@@ -306,7 +308,7 @@ public class DDLUtils {
 			}
 			break;
 		case java.sql.Types.BOOLEAN:
-			if (colMeta.getTypeName().equals("string")) {
+			if ("string".equals(colMeta.getTypeName())) {
 				if (colMeta.getColumnSize() > 0) {
 					typeName = "VARCHAR";
 					typeName = setLength(typeName, false, colMeta);
@@ -323,7 +325,17 @@ public class DDLUtils {
 			typeName = "FLOAT";
 			break;
 		case java.sql.Types.DOUBLE:
-			typeName = "DOUBLE";
+			if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11) {
+				typeName = "BINARY_DOUBLE";
+			} else if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
+					|| dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.STARDB
+					|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE || dbType == DBType.DM) {
+				typeName = "DOUBLE PRECISION";
+			} else if (dbType == DBType.SQLSERVER) {
+				typeName = "FLOAT";
+			} else {
+				typeName = "DOUBLE";
+			}
 			break;
 		case java.sql.Types.DECIMAL:
 		case java.sql.Types.NUMERIC:
@@ -348,8 +360,8 @@ public class DDLUtils {
 		// 数组类型
 		if ((dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 				|| dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.STARDB
-				|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE) && colMeta.getTypeName().endsWith("[]")
-				&& !isBytes && !typeName.startsWith("_")) {
+				|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE) && colMeta.getTypeName() != null
+				&& colMeta.getTypeName().endsWith("[]") && !isBytes && !typeName.startsWith("_")) {
 			return "_".concat(typeName);
 		}
 		return typeName;
@@ -597,14 +609,16 @@ public class DDLUtils {
 	}
 
 	/**
-	 * @TODO 转化单引号、双引号
+	 * @TODO 将注释中的单引号转义为标准SQL的''形式(Oracle/PostgreSQL/MySQL等主流库的字符串字面量均支持),
+	 *       表和字段注释统一使用本方法保证转义一致;注释处于单引号字面量内,双引号无需转义,
+	 *       反斜杠在标准SQL中是普通字符(MySQL特有转义由MySqlDDLGenerator输出时单独处理)
 	 * @param str
 	 * @return
 	 */
-	private static String translateSpecialSymbols(String str) {
-		if (str == null) {
+	private static String escapeCommentForDdl(String str) {
+		if (str == null || str.isEmpty()) {
 			return str;
 		}
-		return str.replaceAll("\'", "\\\\\'").replaceAll("\"", "\\\\\"");
+		return str.replace("'", "''");
 	}
 }

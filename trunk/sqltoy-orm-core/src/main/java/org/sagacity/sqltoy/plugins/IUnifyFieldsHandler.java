@@ -119,10 +119,9 @@ public interface IUnifyFieldsHandler {
 	// sql查询租户隔离，建议要实现此方法，因为在分页缓存count环节需要此值作为key的组成
 	/**
 	 * @TODO 获取授权租户信息，传递表名和操作类型目的为程序可以控制返回:所在租户和授权租户 提供部分决策依据
-	 *       一般你可以直接返回当前用户的授权租户id数组，主要用于SqlInterceptors，如自定义的TenantInterceptor
-	 *       简单实现
+	 *       一般你可以直接返回当前用户的授权租户id数组，主要用于SqlInterceptors，如自定义的TenantInterceptor 简单实现
 	 * @param entityClass 可以为null
-	 * @param operType 可以为null
+	 * @param operType    可以为null
 	 * @return
 	 */
 	public default String[] authTenants(Class entityClass, OperateType operType) {
@@ -138,7 +137,7 @@ public interface IUnifyFieldsHandler {
 	 * @return
 	 */
 	public default String getUserTenantId() {
-		//return getUserTenant();
+		// return getUserTenant();
 		return null;
 	}
 }

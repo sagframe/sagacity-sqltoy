@@ -457,27 +457,53 @@ public class SqlToyContext {
 	 * @todo 初始化
 	 * @throws Exception
 	 */
+	// JVM级静态配置的首个生效标记:多个SqlToyContext(多spring上下文/热部署/测试上下文)共存时,
+	// 后初始化context对静态全局状态的覆写会破坏先初始化context的行为,其中SQL_INJECTION_KEY_WORDS
+	// 被覆写属安全问题,故采取首个生效策略,后续context的同名配置被忽略并告警;destroy不还原(持有者销毁后静态值保持)
+	private static final java.util.Set<String> STATIC_STATE_OWNERS = java.util.concurrent.ConcurrentHashMap.newKeySet();
+	private static final Logger STATIC_LOGGER = LoggerFactory.getLogger(SqlToyContext.class);
+
+	/**
+	 * @TODO 认领JVM级静态配置项:首个认领者生效,后来者被忽略并告警
+	 * @param key         配置项标识
+	 * @param hasNewValue 当前context是否实际携带该配置(为false时不产生告警噪音)
+	 * @return true表示当前context获得该配置的设置权
+	 */
+	static boolean claimStaticState(String key, boolean hasNewValue) {
+		if (STATIC_STATE_OWNERS.add(key)) {
+			return true;
+		}
+		if (hasNewValue) {
+			STATIC_LOGGER.warn("JVM级静态配置[{}]已由先初始化的SqlToyContext设置,当前SqlToyContext的同名配置被忽略!", key);
+		}
+		return false;
+	}
+
 	public void initialize() throws Exception {
 		logger.debug("start init sqltoy ..............................");
 		// 加载sqltoy的各类参数,如db2是否要增加with
 		// ur等,详见org/sagacity/sqltoy/sqltoy-default.properties
-		SqlToyConstants.loadProperties(dialectConfig);
+		if (claimStaticState("dialectConfig", dialectConfig != null && !dialectConfig.isEmpty())) {
+			SqlToyConstants.loadProperties(dialectConfig);
+		}
 		// 设置分布式id缓存时效天数
-		if (distributeIdCacheExpireDays != null) {
+		if (distributeIdCacheExpireDays != null && claimStaticState("distributeIdCacheExpireDays", true)) {
 			SqlToyConstants.distributeIdCacheExpireDays = distributeIdCacheExpireDays;
 		}
 		// 设置保留字
-		ReservedWordsUtil.put(reservedWords);
+		if (claimStaticState("reservedWords", reservedWords != null && !reservedWords.isEmpty())) {
+			ReservedWordsUtil.put(reservedWords);
+		}
 		// 初始化方言对应的类别代码，避免线程安全
 		DataSourceUtils.initialize();
-		if (firstBizCodeTrace != null) {
+		if (firstBizCodeTrace != null && claimStaticState("firstBizCodeTrace", true)) {
 			SqlExecuteStat.firstBizCodeTrace = firstBizCodeTrace;
 		}
 		// 设置方言映射(默认OSCAR==>gaussdb)
-		if (dialectMap != null && !dialectMap.isEmpty()) {
+		if (dialectMap != null && !dialectMap.isEmpty() && claimStaticState("dialectMap", true)) {
 			DataSourceUtils.dialectMap = dialectMap;
 		}
-		if (dialectReturnPrimaryColumnCase != null) {
+		if (dialectReturnPrimaryColumnCase != null && claimStaticState("dialectReturnPrimaryColumnCase", true)) {
 			SqlToyConstants.dialectReturnPrimaryColumnCase = dialectReturnPrimaryColumnCase;
 		}
 		if (dynamicFecthCacheManager == null) {
@@ -488,8 +514,9 @@ public class SqlToyContext {
 		if (appContext == null && connectionFactory == null) {
 			connectionFactory = new SimpleConnectionFactory();
 		}
-		// 设置sql注入关键词
-		if (sqlInjectionRegexes != null && sqlInjectionRegexes.length > 0) {
+		// 设置sql注入关键词(不可被后初始化的context覆写削弱,安全攸关)
+		if (sqlInjectionRegexes != null && sqlInjectionRegexes.length > 0
+				&& claimStaticState("sqlInjectionRegexes", true)) {
 			Pattern[] patterns = new Pattern[sqlInjectionRegexes.length];
 			int index = 0;
 			for (String regex : sqlInjectionRegexes) {
@@ -500,8 +527,10 @@ public class SqlToyContext {
 		}
 		// 初始化默认dataSource
 		initDefaultDataSource();
-		// 设置workerId和dataCenterId,为使用snowflake主键ID产生算法服务
-		SqlToyConstants.setWorkerAndDataCenterId(workerId, dataCenterId, serverId);
+		// 设置workerId和dataCenterId,为使用snowflake主键ID产生算法服务(workerId被后续context覆写会导致ID重复,首个生效)
+		if (claimStaticState("workerAndDataCenterId", workerId != null || dataCenterId != null || serverId != null)) {
+			SqlToyConstants.setWorkerAndDataCenterId(workerId, dataCenterId, serverId);
+		}
 		// 初始化脚本加载器
 		scriptLoader.initialize(this.debug, delayCheckSeconds, scriptCheckIntervalSeconds, breakWhenSqlRepeat);
 		// 初始化翻译器,update 2021-1-23 增加caffeine缓存支持
@@ -517,20 +546,23 @@ public class SqlToyContext {
 		}
 		// 初始化实体对象管理器(此功能已经无实际意义,已经改为即用即加载而非提前加载)
 		entityManager.initialize(this);
-		// 设置默认fetchSize
-		SqlToyConstants.FETCH_SIZE = this.fetchSize;
-		SqlToyConstants.executeSqlBlankToNull = this.executeSqlBlankToNull;
-		SqlToyConstants.DEFAULT_PAGE_SIZE = this.defaultPageSize;
-		SqlToyConstants.localDateTimeFormat = this.localDateTimeFormat;
-		SqlToyConstants.localTimeFormat = this.localTimeFormat;
-		SqlToyConstants.defaultStatementTimeout = this.defaultStatementTimeout;
-		// 初始化sql执行统计的基本参数
-		SqlExecuteStat.setDebug(this.debug);
-		SqlToyConstants.backslashEscaping = this.backslashEscaping;
-		SqlExecuteStat.setOverTimeSqlHandler(overTimeSqlHandler);
-		SqlExecuteStat.setPrintSqlTimeoutMillis(this.printSqlTimeoutMillis);
-		// sql格式化
-		SqlExecuteStat.setSqlFormater(this.sqlFormater);
+		// 以下JVM级运行参数整体首个生效,后续context覆写会破坏先初始化context的行为
+		if (claimStaticState("runtimeConstants", true)) {
+			// 设置默认fetchSize
+			SqlToyConstants.FETCH_SIZE = this.fetchSize;
+			SqlToyConstants.executeSqlBlankToNull = this.executeSqlBlankToNull;
+			SqlToyConstants.DEFAULT_PAGE_SIZE = this.defaultPageSize;
+			SqlToyConstants.localDateTimeFormat = this.localDateTimeFormat;
+			SqlToyConstants.localTimeFormat = this.localTimeFormat;
+			SqlToyConstants.defaultStatementTimeout = this.defaultStatementTimeout;
+			SqlToyConstants.backslashEscaping = this.backslashEscaping;
+			// 初始化sql执行统计的基本参数
+			SqlExecuteStat.setDebug(this.debug);
+			SqlExecuteStat.setOverTimeSqlHandler(overTimeSqlHandler);
+			SqlExecuteStat.setPrintSqlTimeoutMillis(this.printSqlTimeoutMillis);
+			// sql格式化
+			SqlExecuteStat.setSqlFormater(this.sqlFormater);
+		}
 		// 字段加解密实现类初始化
 		if (null != fieldsSecureProvider) {
 			fieldsSecureProvider.initialize(this.encoding, securePrivateKey, securePublicKey);
@@ -579,7 +611,7 @@ public class SqlToyContext {
 			}
 			return BeanUtil.invokeMethod(beanDefine, method, args);
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("getServiceData 方法执行异常", e);
 		}
 		return null;
 	}
@@ -596,7 +628,6 @@ public class SqlToyContext {
 			}
 			return appContext.getBean((Class) beanName);
 		} catch (Exception e) {
-			e.printStackTrace();
 			logger.error("从springContext中获取Bean:{} 错误!{}", e.getMessage());
 		}
 		return null;
@@ -680,7 +711,7 @@ public class SqlToyContext {
 					// 放入缓存
 					scriptLoader.putSqlToyConfig(sqlToyConfig);
 				} catch (Exception e) {
-					e.printStackTrace();
+					logger.error("getSqlToyConfig 方法执行异常", e);
 					throw new IllegalArgumentException("动态传入的sql xml内容或格式存在错误!" + e.getMessage());
 				}
 			} else {
@@ -1034,8 +1065,8 @@ public class SqlToyContext {
 		if (elasticEndpointList == null || elasticEndpointList.isEmpty()) {
 			return;
 		}
-		// 第一个作为默认值
-		if (StringUtil.isBlank(defaultElastic)) {
+		// 第一个作为默认值(defaultElastic初始值为"default"哨兵,未显式配置时用第一个endpoint)
+		if (StringUtil.isBlank(defaultElastic) || "default".equals(defaultElastic)) {
 			defaultElastic = elasticEndpointList.get(0).getId();
 		}
 		for (ElasticEndpoint config : elasticEndpointList) {
@@ -1126,6 +1157,10 @@ public class SqlToyContext {
 		this.cacheType = cacheType;
 	}
 
+	/**
+	 * @TODO 销毁context持有的资源;JVM级静态配置(dialectMap、注入关键词、workerId等)按首个生效策略
+	 *       不随本方法还原——持有者销毁后静态值保持,后续新context的同名配置依旧被忽略,直至JVM重启
+	 */
 	public void destroy() {
 		try {
 			scriptLoader.destroy();
@@ -1142,7 +1177,8 @@ public class SqlToyContext {
 				}
 			}
 		} catch (Exception e) {
-
+			// 清理失败仅记录,不能中断其余资源的销毁
+			logger.error("sqltoy上下文资源销毁过程发生异常!", e);
 		}
 	}
 

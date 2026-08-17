@@ -13,7 +13,7 @@ import org.sagacity.sqltoy.SqlToyThreadDataHolder;
  * @modify 2024年12月6日, 统一改为SqlToyThreadDataHolder集中处理
  */
 //see SqlToyThreadDataHolder.stopUnifyUpdate();
-@Deprecated 
+@Deprecated
 public class UnifyUpdateFieldsController {
 	// 通过ThreadLocal 来保存进程数据
 	// private static ThreadLocal<Boolean> threadLocal = new ThreadLocal<Boolean>();

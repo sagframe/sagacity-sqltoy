@@ -124,12 +124,10 @@ public class SqlUtilsExt {
 					// 批量
 					if (useBatch) {
 						pst.addBatch();
-						// 判断是否是最后一条记录或到达批次量,执行批处理
-						if ((meter % batchSize) == 0 || i + 1 == totalRows) {
+						// 到达批次量执行批处理
+						if ((meter % batchSize) == 0) {
 							updateRows = pst.executeBatch();
-							for (int t : updateRows) {
-								updateCount = updateCount + ((t > 0) ? t : 0);
-							}
+							updateCount = updateCount + SqlUtil.sumBatchUpdateCounts(updateRows);
 							pst.clearBatch();
 						}
 					} else {
@@ -137,12 +135,17 @@ public class SqlUtilsExt {
 					}
 				}
 			}
+			// 集合尾部为null的行不会进入循环体内的批次执行判断，未执行的尾部批次需在循环外补齐执行
+			if (useBatch && (meter % batchSize) != 0) {
+				updateRows = pst.executeBatch();
+				updateCount = updateCount + SqlUtil.sumBatchUpdateCounts(updateRows);
+				pst.clearBatch();
+			}
 			// 恢复conn原始autoCommit默认值
 			if (hasSetAutoCommit) {
 				conn.setAutoCommit(!autoCommit);
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
 			logger.error(e.getMessage(), e);
 			throw e;
 		} finally {
@@ -197,7 +200,6 @@ public class SqlUtilsExt {
 				}
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
 			logger.error("处理字段:[" + fieldName + "]默认值[" + defaultValue + "]发生异常,请检查默认值设置,errorMsg=" + e.getMessage());
 			throw e;
 		}

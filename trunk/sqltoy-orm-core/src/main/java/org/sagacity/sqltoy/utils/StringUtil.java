@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -497,6 +498,10 @@ public class StringUtil {
 			realEndMark = new StringBuilder(realEndMark).reverse().toString();
 		}
 		int index = getSymMarkIndex(realEndMark, realStartMark, realSource, beginIndex < 0 ? 0 : beginIndex);
+		// 未找到时index=-1参与运算会返回错误下标而非-1,调用方依赖-1做终止判断
+		if (index == -1) {
+			return -1;
+		}
 		return source.length() - index - realStartMark.length();
 	}
 
@@ -538,7 +543,18 @@ public class StringUtil {
 		if (regex == null) {
 			return false;
 		}
-		return matches(source, Pattern.compile(regex));
+		return matches(source, patternOf(regex));
+	}
+
+	// 字符串regex重载的编译缓存:调用方(DateUtil日期解析等热路径)传入的均为常量正则,
+	// 避免每次Pattern.compile;超出上限时直接编译,防御极端场景下动态正则撑爆缓存
+	private static final ConcurrentHashMap<String, Pattern> PATTERN_CACHE = new ConcurrentHashMap<String, Pattern>();
+
+	private static Pattern patternOf(String regex) {
+		if (PATTERN_CACHE.size() > 1000) {
+			return Pattern.compile(regex);
+		}
+		return PATTERN_CACHE.computeIfAbsent(regex, Pattern::compile);
 	}
 
 	/**
@@ -561,11 +577,11 @@ public class StringUtil {
 	 * @return
 	 */
 	public static int matchIndex(String source, String regex) {
-		return matchIndex(source, Pattern.compile(regex));
+		return matchIndex(source, patternOf(regex));
 	}
 
 	public static int[] matchIndex(String source, String regex, int start) {
-		return matchIndex(source, Pattern.compile(regex), start);
+		return matchIndex(source, patternOf(regex), start);
 	}
 
 	public static int matchIndex(String source, Pattern pattern) {
@@ -591,7 +607,7 @@ public class StringUtil {
 	}
 
 	public static int matchLastIndex(String source, String regex) {
-		return matchLastIndex(source, Pattern.compile(regex), 0);
+		return matchLastIndex(source, patternOf(regex), 0);
 	}
 
 	public static int matchLastIndex(String source, Pattern pattern) {
@@ -621,7 +637,7 @@ public class StringUtil {
 	 * @return
 	 */
 	public static int matchCnt(String source, String regex) {
-		return matchCnt(source, Pattern.compile(regex), 0);
+		return matchCnt(source, patternOf(regex), 0);
 	}
 
 	/**
@@ -668,14 +684,14 @@ public class StringUtil {
 		if (source == null) {
 			return 0;
 		}
-		return matchCnt(source.substring(beginIndex, endIndex), Pattern.compile(regex), 0);
+		return matchCnt(source.substring(beginIndex, endIndex), patternOf(regex), 0);
 	}
 
 	public static int matchCnt(String source, String regex, int beginIndex, int endIndex, int offset) {
 		if (source == null) {
 			return 0;
 		}
-		return matchCnt(source.substring(beginIndex, endIndex), Pattern.compile(regex), offset);
+		return matchCnt(source.substring(beginIndex, endIndex), patternOf(regex), offset);
 	}
 
 	/**
