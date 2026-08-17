@@ -18,9 +18,9 @@ public class FunctionUtilTest {
 												 * funPackage.concat("Length"), funPackage.concat("ToChar"),
 												 * funPackage.concat("If"),
 												 */
-			//funPackage.concat("DateFormat"), 
+			// funPackage.concat("DateFormat"),
 			funPackage.concat("Instr")
-			//, funPackage.concat("Concat")
+			// , funPackage.concat("Concat")
 			// funPackage.concat("GroupConcat")
 	};
 

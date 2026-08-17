@@ -28,7 +28,7 @@ public class FieldTranslate implements Serializable {
 	 * 供es使用
 	 */
 	public String aliasName;
-	
+
 	/**
 	 * 缓存翻译配置
 	 */

@@ -11,10 +11,9 @@ import java.nio.file.PathMatcher;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.stream.Stream;
 
 import org.sagacity.sqltoy.config.annotation.Entity;
 import org.sagacity.sqltoy.config.annotation.SqlToyEntity;
@@ -30,7 +29,6 @@ import org.slf4j.LoggerFactory;
 public class EntityScanner {
 	protected final static Logger logger = LoggerFactory.getLogger(EntityScanner.class);
 	private static final boolean IS_WINDOWS = System.getProperty("os.name").toLowerCase().contains("win");
-	private static final Set<String> LOADED_CLASS_CACHE = new ConcurrentSkipListSet<>();
 
 	/**
 	 * 扫描sqltoy的POJO 类
@@ -92,7 +90,7 @@ public class EntityScanner {
 				}
 			}
 		} catch (Exception e) {
-			logger.error("Error scanning entity classes for pattern: " + packagePattern, e);
+			logger.error("扫描实体类发生异常,模式:{}!当前返回部分扫描结果,实体可能不完整,请检查!", packagePattern, e);
 		}
 		return result;
 	}
@@ -127,8 +125,9 @@ public class EntityScanner {
 		PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:" + globPattern);
 		// 基础包名前缀（用于拼接完整类名）
 		String packagePrefix = basePackage.isEmpty() ? "" : basePackage + ".";
-		try {
-			Files.walk(root).filter(Files::isRegularFile).forEach(path -> {
+		try (Stream<Path> paths = Files.walk(root)) {
+			// Files.walk的Stream持有目录句柄,必须关闭避免泄漏
+			paths.filter(Files::isRegularFile).forEach(path -> {
 				try {
 					Path relative = root.relativize(path);
 					// 将Windows反斜杠路径转换为正斜杠，确保与glob模式兼容
@@ -256,9 +255,9 @@ public class EntityScanner {
 
 	private static void checkAndAdd(String className, List<Class<?>> result, ClassLoader classLoader) {
 		try {
-			if (!LOADED_CLASS_CACHE.add(className)) {
-				return;
-			}
+			// 不做JVM级类名去重:EntityManager.parseEntityMeta以类名幂等去重,
+			// 静态缓存会导致二次初始化(Spring上下文刷新/热部署/多上下文)扫描结果为空、实体元数据静默丢失,
+			// 且类名先于Class.forName登记会让加载失败的类被永久跳过
 			Class<?> clazz = Class.forName(className, false, classLoader);
 			if (isSqlToyEntity(clazz)) {
 				result.add(clazz);

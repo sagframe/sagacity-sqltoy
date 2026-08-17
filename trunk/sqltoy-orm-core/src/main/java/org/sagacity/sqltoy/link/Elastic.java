@@ -20,6 +20,8 @@ import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.plugins.nosql.ElasticSearchPlugin;
 import org.sagacity.sqltoy.plugins.nosql.ElasticSqlPlugin;
 import org.sagacity.sqltoy.utils.StringUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @project sagacity-sqltoy
@@ -28,6 +30,8 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @version v1.0,Date:2018年1月1日
  */
 public class Elastic extends BaseLink {
+	private final static Logger logger = LoggerFactory.getLogger(Elastic.class);
+
 	/**
 	 * 
 	 */
@@ -148,7 +152,7 @@ public class Elastic extends BaseLink {
 			}
 			return ElasticSearchPlugin.findTop(sqlToyContext, realSqlConfig, queryExecutor, null);
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("find 方法执行异常", e);
 			throw new DataAccessException(e);
 		}
 	}
@@ -177,7 +181,7 @@ public class Elastic extends BaseLink {
 			}
 			return ElasticSearchPlugin.findTop(sqlToyContext, realSqlConfig, queryExecutor, topSize);
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("findTop 方法执行异常", e);
 			throw new DataAccessException(e);
 		}
 	}
@@ -235,7 +239,7 @@ public class Elastic extends BaseLink {
 			}
 			return pageResult;
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("findPage 方法执行异常", e);
 			throw new DataAccessException(e);
 		}
 	}

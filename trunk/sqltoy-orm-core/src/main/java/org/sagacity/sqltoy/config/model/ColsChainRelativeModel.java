@@ -63,7 +63,7 @@ public class ColsChainRelativeModel implements Serializable {
 	 * 保留多少小数位
 	 */
 	private int radixSize = 3;
-	
+
 	/**
 	 * 小数位舍入规则
 	 */

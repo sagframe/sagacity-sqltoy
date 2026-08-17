@@ -11,6 +11,8 @@ import org.sagacity.sqltoy.config.model.UnpivotModel;
 import org.sagacity.sqltoy.model.inner.DataSetResult;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.NumberUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @project sqltoy-orm
@@ -21,6 +23,8 @@ import org.sagacity.sqltoy.utils.NumberUtil;
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class UnpivotList {
+	private final static Logger logger = LoggerFactory.getLogger(UnpivotList.class);
+
 	/**
 	 * @TODO 对集合进行单组、多组列转行处理
 	 * @param unpivotModel
@@ -121,7 +125,7 @@ public class UnpivotList {
 			resultModel.setLabelTypes(newLabelTypes);
 			return newResult;
 		} catch (IndexOutOfBoundsException iot) {
-			iot.printStackTrace();
+			logger.error("process 方法执行异常", iot);
 			throw new RuntimeException(
 					"列转行处理出现数组越界,请检查columns-to-rows、new-columns-labels(类似=indexName,indexValue是两个属性)配置是否合法！"
 							+ iot.getMessage());

@@ -392,14 +392,14 @@ public class SqlToyConstants {
 				fis.close();
 			}
 		} catch (IOException e) {
-			e.printStackTrace();
+			logger.error("loadPropertyFile 方法执行异常", e);
 		} finally {
 			try {
 				if (fis != null) {
 					fis.close();
 				}
 			} catch (Exception e) {
-				e.printStackTrace();
+				logger.error("loadPropertyFile 方法执行异常", e);
 			}
 		}
 	}
@@ -529,7 +529,6 @@ public class SqlToyConstants {
 				SERVER_ID = serverNode;
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
 			logger.error("设置workerId和dataCenterId发生错误:{}", e.getMessage());
 		}
 	}

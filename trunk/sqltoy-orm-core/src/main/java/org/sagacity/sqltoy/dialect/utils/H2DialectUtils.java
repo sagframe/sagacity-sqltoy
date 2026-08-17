@@ -5,6 +5,7 @@ package org.sagacity.sqltoy.dialect.utils;
 
 import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.PKStrategy;
+import org.sagacity.sqltoy.model.JdbcTypes;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
@@ -39,36 +40,40 @@ public class H2DialectUtils {
 	public static void wrapSelectFields(StringBuilder sql, String columnName, FieldMeta fieldMeta) {
 		int jdbcType = fieldMeta.getType();
 		int length = fieldMeta.getLength();
-		if (jdbcType == java.sql.Types.VARCHAR) {
+		if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NVARCHAR
+				|| jdbcType == java.sql.Types.LONGVARCHAR || jdbcType == java.sql.Types.LONGNVARCHAR) {
 			if (length > 0) {
-				sql.append("cast(? as varchar(" + length + "))");
+				sql.append("cast(? as VARCHAR(" + length + "))");
 			} else {
-				sql.append("cast(? as varchar)");
+				sql.append("cast(? as VARCHAR)");
 			}
-		} else if (jdbcType == java.sql.Types.CHAR) {
+		} else if (jdbcType == java.sql.Types.CHAR || jdbcType == java.sql.Types.NCHAR) {
 			if (length > 0) {
-				sql.append("cast(? as char(" + length + "))");
+				sql.append("cast(? as CHAR(" + length + "))");
 			} else {
-				sql.append("cast(? as char)");
+				sql.append("cast(? as CHAR)");
 			}
 		} else if (jdbcType == java.sql.Types.DATE) {
-			sql.append("cast(? as date)");
+			sql.append("cast(? as DATE)");
 		} else if (jdbcType == java.sql.Types.NUMERIC) {
 			sql.append("cast(? as DECIMAL)");
 		} else if (jdbcType == java.sql.Types.DECIMAL) {
 			sql.append("cast(? as DECIMAL)");
 		} else if (jdbcType == java.sql.Types.BIGINT) {
-			sql.append("cast(? as bigint)");
-		} else if (jdbcType == java.sql.Types.INTEGER || jdbcType == java.sql.Types.TINYINT) {
+			sql.append("cast(? as BIGINT)");
+		} else if (jdbcType == java.sql.Types.INTEGER || jdbcType == java.sql.Types.TINYINT
+				|| jdbcType == java.sql.Types.SMALLINT) {
 			sql.append("cast(? as INT)");
 		} else if (jdbcType == java.sql.Types.TIMESTAMP) {
-			sql.append("cast(? as timestamp)");
+			sql.append("cast(? as TIMESTAMP)");
 		} else if (jdbcType == java.sql.Types.DOUBLE) {
-			sql.append("cast(? as double)");
+			sql.append("cast(? as DOUBLE PRECISION)");
 		} else if (jdbcType == java.sql.Types.FLOAT) {
-			sql.append("cast(? as DOUBLE)");
+			sql.append("cast(? as DOUBLE PRECISION)");
+		} else if (jdbcType == java.sql.Types.REAL) {
+			sql.append("cast(? as REAL)");
 		} else if (jdbcType == java.sql.Types.TIME) {
-			sql.append("cast(? as time)");
+			sql.append("cast(? as TIME)");
 		} else if (jdbcType == java.sql.Types.CLOB) {
 			sql.append("cast(? as CLOB)");
 		} else if (jdbcType == java.sql.Types.BOOLEAN) {
@@ -77,6 +82,8 @@ public class H2DialectUtils {
 			sql.append("cast(? as BINARY)");
 		} else if (jdbcType == java.sql.Types.BLOB) {
 			sql.append("cast(? as BLOB)");
+		} else if (jdbcType == JdbcTypes.JSON || jdbcType == JdbcTypes.JSONB) {
+			sql.append("cast(? as JSON)");
 		} else {
 			// 数组、json等特殊类型
 			if (StringUtil.isNotBlank(fieldMeta.getNativeType())) {

@@ -31,7 +31,8 @@ public class FileUtilTest {
 	@Test
 	public void testFormatPath() {
 		System.err.println(FileUtil.formatPath("a\\/b//c\\\\"));
-		//assertEquals("a" + File.separator + "b" + File.separator + "c", FileUtil.formatPath("a\\b/c\\"));
+		// assertEquals("a" + File.separator + "b" + File.separator + "c",
+		// FileUtil.formatPath("a\\b/c\\"));
 		System.err.println(FileUtil.formatPath(null));
 		System.err.println(FileUtil.formatPath(""));
 
@@ -41,7 +42,7 @@ public class FileUtilTest {
 		System.err.println(FileUtil.formatPath("a\\/b//c\\\\"));
 
 		// Windows 盘符
-		System.err.println("\"C:/test\\\\file.txt\" 变成 "+FileUtil.formatPath("C:/test\\file.txt"));
+		System.err.println("\"C:/test\\\\file.txt\" 变成 " + FileUtil.formatPath("C:/test\\file.txt"));
 
 		// 连续分隔符
 		System.err.println(FileUtil.formatPath("////\\\\\\\\"));

@@ -562,6 +562,10 @@ public class EntityMeta implements Serializable {
 	}
 
 	public FieldMeta getFieldMeta(String field) {
+		// null属性名返回null,避免toLowerCase抛NPE(不存在或不传属性名都返回null)
+		if (field == null) {
+			return null;
+		}
 		return fieldsMeta.get(field.toLowerCase());
 	}
 

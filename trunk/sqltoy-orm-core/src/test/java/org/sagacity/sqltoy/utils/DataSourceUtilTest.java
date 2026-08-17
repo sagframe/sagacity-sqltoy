@@ -78,6 +78,6 @@ public class DataSourceUtilTest {
 	}
 
 	public static void main(String[] args) {
-		//DataSourceUtilTest.getPolarDBDialect();
+		// DataSourceUtilTest.getPolarDBDialect();
 	}
 }

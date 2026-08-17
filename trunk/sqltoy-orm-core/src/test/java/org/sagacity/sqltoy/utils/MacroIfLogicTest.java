@@ -26,7 +26,7 @@ public class MacroIfLogicTest {
 		boolean result = MacroIfLogic.evalLogic(sql, params, 0, 1, 1);
 		assertEquals(result, true);
 	}
-	
+
 	@Test
 	public void testAnd() {
 		String sql = ":status>='1' && :status<='3'";
@@ -184,6 +184,35 @@ public class MacroIfLogicTest {
 		List params = new ArrayList();
 		params.add("a1011");
 		boolean result = MacroIfLogic.evalLogic(sql, params, 0, params.size(), 2);
+		assertEquals(result, true);
+	}
+
+	// 日期形式的字面量不能被加减运算切割成算术表达式(2024-01-01曾被误算成2022.0导致判断颠倒)
+	@Test
+	public void testDateLiteralCompare() {
+		String sql = ":beginDate <= '2024-01-01'";
+		List params = new ArrayList();
+		params.add("2023-06-01");
+		boolean result = MacroIfLogic.evalLogic(sql, params, 0, params.size(), 1);
+		assertEquals(result, true);
+	}
+
+	// 左侧日期参数与右侧日期字符串按日期格式比较,而非按toString()字符串比较
+	@Test
+	public void testDateParamEqualDateLiteral() {
+		String sql = ":bizDate == '2026-06-01'";
+		List params = new ArrayList();
+		params.add(DateUtil.parseLocalDateTime("2026-6-1 18:20:00"));
+		boolean result = MacroIfLogic.evalLogic(sql, params, 0, params.size(), 1);
+		assertEquals(result, true);
+	}
+
+	@Test
+	public void testDateParamLessDateLiteral() {
+		String sql = ":bizDate < '2026-07-01'";
+		List params = new ArrayList();
+		params.add(DateUtil.parseLocalDateTime("2026-6-1 18:20:00"));
+		boolean result = MacroIfLogic.evalLogic(sql, params, 0, params.size(), 1);
 		assertEquals(result, true);
 	}
 }

@@ -367,4 +367,17 @@ public class DateUtilTest {
 		String lastUpdateTime = "2024-11-07 10:52:36.12345";
 		DateUtil.parseLocalDateTime(lastUpdateTime, "yyyy-MM-dd HH:mm:ss.SSSSS");
 	}
+
+	@Test
+	public void testParseChinaDate() {
+		assertEquals("2026-8-30", DateUtil.parseChinaDate("二〇二六年八月三十日"));
+		// 整十日期:二十曾被逐字替换成210,静默解析成错误日期
+		assertEquals("2024-5-20", DateUtil.parseChinaDate("二〇二四年五月二十日"));
+		// 十一月/十二日:个位与整十混合,前缀懒惰匹配优先将十后面的数字作为个位
+		assertEquals("2024-11-12", DateUtil.parseChinaDate("二〇二四年十一月十二日"));
+		assertEquals("2024-12-31", DateUtil.parseChinaDate("二〇二四年十二月三十一日"));
+		// 单独的十
+		assertEquals("2026-8-10", DateUtil.parseChinaDate("二〇二六年八月十日"));
+		assertEquals("2026-10-25 10:15:30", DateUtil.parseChinaDate("二〇二六年十月二十五日十时十五分三十秒"));
+	}
 }

@@ -10,6 +10,7 @@ import org.sagacity.sqltoy.config.model.OperateType;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
+import org.sagacity.sqltoy.model.JdbcTypes;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
@@ -96,12 +97,11 @@ public class DB2DialectUtils {
 	public static void wrapSelectFields(StringBuilder sql, String columnName, FieldMeta fieldMeta) {
 		int jdbcType = fieldMeta.getType();
 		int length = fieldMeta.getLength();
-		if (jdbcType == java.sql.Types.VARCHAR) {
+		if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NVARCHAR
+				|| jdbcType == java.sql.Types.LONGVARCHAR || jdbcType == java.sql.Types.LONGNVARCHAR) {
 			sql.append("?");
-			// sql.append("cast(? as VARCHAR(" + length + "))");
-		} else if (jdbcType == java.sql.Types.CHAR) {
+		} else if (jdbcType == java.sql.Types.CHAR || jdbcType == java.sql.Types.NCHAR) {
 			sql.append("?");
-			// sql.append("cast(? as CHAR(" + length + "))");
 		} else if (jdbcType == java.sql.Types.DATE) {
 			sql.append("cast(? as DATE)");
 		} else if (jdbcType == java.sql.Types.NUMERIC) {
@@ -110,7 +110,8 @@ public class DB2DialectUtils {
 			sql.append("cast(? as DECIMAL)");
 		} else if (jdbcType == java.sql.Types.BIGINT) {
 			sql.append("cast(? as BIGINT)");
-		} else if (jdbcType == java.sql.Types.INTEGER || jdbcType == java.sql.Types.TINYINT) {
+		} else if (jdbcType == java.sql.Types.INTEGER || jdbcType == java.sql.Types.TINYINT
+				|| jdbcType == java.sql.Types.SMALLINT) {
 			sql.append("cast(? as INTEGER)");
 		} else if (jdbcType == java.sql.Types.TIMESTAMP) {
 			sql.append("cast(? as TIMESTAMP)");
@@ -118,6 +119,8 @@ public class DB2DialectUtils {
 			sql.append("cast(? as DOUBLE)");
 		} else if (jdbcType == java.sql.Types.FLOAT) {
 			sql.append("cast(? as DOUBLE)");
+		} else if (jdbcType == java.sql.Types.REAL) {
+			sql.append("cast(? as REAL)");
 		} else if (jdbcType == java.sql.Types.TIME) {
 			sql.append("cast(? as TIME)");
 		} else if (jdbcType == java.sql.Types.CLOB) {
@@ -130,6 +133,8 @@ public class DB2DialectUtils {
 		} else if (jdbcType == java.sql.Types.BLOB) {
 			sql.append("?");
 			// sql.append("cast(? as BLOB(" + length + "))");
+		} else if (jdbcType == JdbcTypes.JSON || jdbcType == JdbcTypes.JSONB) {
+			sql.append("cast(? as JSON)");
 		} else {
 			// 数组、json等特殊类型
 			if (StringUtil.isNotBlank(fieldMeta.getNativeType())) {

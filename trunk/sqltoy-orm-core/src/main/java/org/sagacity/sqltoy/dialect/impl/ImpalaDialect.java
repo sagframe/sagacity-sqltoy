@@ -258,6 +258,7 @@ public class ImpalaDialect implements Dialect {
 		boolean isAssignPK = allowAssignPKValue(pkStrategy);
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 				pkStrategy, NVL_FUNCTION, NEXT_VAL + entityMeta.getSequence(), isAssignPK, tableName);
+		// impala不提供级联子表保存支持
 		return DialectUtils.save(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entity, null, null, conn,
 				dbType);
 	}

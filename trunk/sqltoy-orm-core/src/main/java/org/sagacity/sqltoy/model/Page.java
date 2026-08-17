@@ -181,9 +181,12 @@ public class Page<T> implements Serializable {
 	}
 
 	/**
-	 * @return 最后一页
+	 * @return 最后一页(recordCount=0时无最后一页,返回0与getTotalPage()一致)
 	 */
 	public long getLastPage() {
+		if (recordCount < 1) {
+			return 0;
+		}
 		return (recordCount - 1) / getPageSize() + 1;
 	}
 

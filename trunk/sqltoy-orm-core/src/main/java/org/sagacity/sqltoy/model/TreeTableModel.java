@@ -310,7 +310,7 @@ public class TreeTableModel implements Serializable {
 	}
 
 	public <T> T getContextData() {
-		return (T)contextData;
+		return (T) contextData;
 	}
 
 	public TreeTableModel setContextData(Object contextData) {

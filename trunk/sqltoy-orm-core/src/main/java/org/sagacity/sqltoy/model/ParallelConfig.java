@@ -77,7 +77,7 @@ public class ParallelConfig implements Serializable {
 		}
 		return this;
 	}
-	
+
 	public int getGroupSize() {
 		return groupSize;
 	}

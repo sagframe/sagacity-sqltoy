@@ -486,9 +486,6 @@ public class BeanUtilTest {
 				new String[] { "id", "name", "age", "birthDay", "tel" }, null, Student.class)));
 	}
 
-
-
-
 	// ==================== 并发重构方法测试 ====================
 
 	@Test

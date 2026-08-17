@@ -66,7 +66,7 @@ public class MapperUtilsTest {
 		// staffInfoVO.setPhoto(FileUtil.readAsBytes("classpath:/mock/staff_photo.jpg"));
 		staffInfoVO.setCountry("86");
 		try {
-			System.err.println("typeName="+StaffInfo.class.getTypeName());
+			System.err.println("typeName=" + StaffInfo.class.getTypeName());
 			StaffInfo staffInfo = MapperUtils.map(staffInfoVO, StaffInfo.class,
 					new PropsMapperConfig("sexType", "staffId", "staffName", "postType"));
 			System.err.println(JSON.toJSONString(staffInfo));
