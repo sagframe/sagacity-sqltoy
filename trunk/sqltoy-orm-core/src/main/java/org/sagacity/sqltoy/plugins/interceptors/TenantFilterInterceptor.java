@@ -74,12 +74,21 @@ public class TenantFilterInterceptor implements SqlInterceptor {
 		}
 		String where = " where ";
 		String sqlPart = where;
+		// 租户id来自应用实现的IUnifyFieldsHandler回调,值可能源自外部系统编码/迁移数据等不受框架控制的来源,
+		// 拼入SQL字面量前必须将'转义为''(标准SQL转义,MySQL/PG/Oracle等通用),防止逃出字面量破坏租户隔离
 		if (tenants.length == 1) {
-			sqlPart = sqlPart.concat(tenantColumn).concat("='").concat(tenants[0])
+			sqlPart = sqlPart.concat(tenantColumn).concat("='").concat(escapeQuote(tenants[0]))
 					.concat(whereIndex > 0 ? "' and " : "' ");
 		} else {
-			sqlPart = sqlPart.concat(tenantColumn).concat("in (").concat(
-					SqlUtil.combineQueryInStr(tenants, null, null, true).concat(whereIndex > 0 ? ") and " : ") "));
+			StringBuilder tenantValues = new StringBuilder();
+			for (String tenant : tenants) {
+				if (tenantValues.length() > 0) {
+					tenantValues.append(",");
+				}
+				tenantValues.append("'").append(escapeQuote(tenant)).append("'");
+			}
+			sqlPart = sqlPart.concat(tenantColumn).concat(" in (").concat(tenantValues.toString())
+					.concat(whereIndex > 0 ? ") and " : ") ");
 		}
 
 		// 更精细的操作行为可以通过
@@ -155,5 +164,14 @@ public class TenantFilterInterceptor implements SqlInterceptor {
 			return new String[] { entityMeta.getTenantField() };
 		}
 		return null;
+	}
+
+	/**
+	 * @TODO 租户值拼入SQL字面量前的转义:'→''(标准SQL转义,主流数据库通用)
+	 * @param tenant
+	 * @return
+	 */
+	private static String escapeQuote(String tenant) {
+		return (tenant == null) ? "" : tenant.replace("'", "''");
 	}
 }

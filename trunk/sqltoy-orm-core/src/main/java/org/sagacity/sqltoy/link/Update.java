@@ -231,11 +231,24 @@ public class Update extends BaseLink {
 					break;
 				}
 			}
+			if (entity == null) {
+				throw new IllegalArgumentException("updateAll(deeply) 操作entities集合中全部元素为null!");
+			}
 			forceUpdate = sqlToyContext.getEntityMeta(entity.getClass()).getRejectIdFieldArray(true);
 		}
 		int realBatchSize = (batchSize > 0) ? batchSize : sqlToyContext.getBatchSize();
 		if (this.updateFields != null && this.updateFields.length > 0) {
-			Class resultType = entities.get(0).getClass();
+			// 首元素可能为null,取第一个非null元素判定类型(与deeply分支的处理方式一致)
+			Class resultType = null;
+			for (Object entity : entities) {
+				if (entity != null) {
+					resultType = entity.getClass();
+					break;
+				}
+			}
+			if (resultType == null) {
+				throw new IllegalArgumentException("updateAll(updateFields) 操作entities集合中全部元素为null!");
+			}
 			String[] copyFields = mergeArray(sqlToyContext.getEntityMeta(resultType).getIdArray(), updateFields);
 			// 复制指定属性形成新的POJO集合
 			List realEntities = MapperUtils.mapList(entities, resultType, new PropsMapperConfig(copyFields));

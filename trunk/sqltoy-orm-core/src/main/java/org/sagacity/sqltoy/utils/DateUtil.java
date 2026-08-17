@@ -17,6 +17,7 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.time.temporal.WeekFields;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -53,10 +54,10 @@ public class DateUtil {
 	 */
 	private final static Logger logger = LoggerFactory.getLogger(DateUtil.class);
 
-	private static final String[] CHINA_DATE_KEYS = { "○", "О", "0", "Ο", "O", "零", "一", "二", "三", "四", "五", "六", "七",
-			"八", "九", "十", "年", "月", "日", "时", "分", "秒" };
-	private static final String[] CHINA_DATE_KEY_MAP = { "0", "0", "0", "0", "0", "0", "1", "2", "3", "4", "5", "6",
-			"7", "8", "9", "10", "-", "-", " ", ":", ":", " " };
+	private static final String[] CHINA_DATE_KEYS = { "○", "〇", "О", "0", "Ο", "O", "零", "一", "二", "三", "四", "五", "六",
+			"七", "八", "九", "十", "年", "月", "日", "时", "分", "秒" };
+	private static final String[] CHINA_DATE_KEY_MAP = { "0", "0", "0", "0", "0", "0", "0", "1", "2", "3", "4", "5",
+			"6", "7", "8", "9", "10", "-", "-", " ", ":", ":", " " };
 
 	/**
 	 * 英文月份名称
@@ -71,14 +72,15 @@ public class DateUtil {
 	 * 中文星期的名称
 	 */
 	private static final String[] WEEK_CHINA_NAME = { "星期一", "星期二", "星期三", "星期四", "星期五", "星期六", "星期日" };
-	private static final String[] WEEK_ENGLISH_NAME = { "Monday", "Tuesday", "Wednesday", "Thurday", "Friday",
+	private static final String[] WEEK_ENGLISH_NAME = { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday",
 			"Saturday", "Sunday" };
 	private static final String[] WEEK_ENGLISH_NAKE = { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
 	private final static Pattern WEEK_PATTERN = Pattern.compile("(?i)(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\\s");
 	private final static Pattern DAY_PATTERN = Pattern.compile("(?i)\\s\\d{1,2}(st|th|rd)?\\s");
 
-	// 超过十的中文
-	private final static Pattern MORE_TEN_PATTERN = Pattern.compile("(一|二|三|四|五)?\\十(一|二|三|四|五|六|七|八|九)");
+	// 超过十的中文(个位可缺省,支持二十、三十等整十形式;前缀用懒惰匹配,优先将十后面的数字作为个位,如十一而非一十)
+	private final static Pattern MORE_TEN_PATTERN = Pattern
+			.compile("(一|二|三|四|五)??\\十(一|二|三|四|五|六|七|八|九)?");
 
 	/**
 	 * 英文日期的几种格式
@@ -360,10 +362,17 @@ public class DateUtil {
 		}
 		// 在指定format情况下result==null，则将format置为null,通过自动解析方式获取具体的格式
 		if (result == null && hasFmt) {
-			result = parseString(dateVar, null, locale);
-			result = parseString(formatDate(result, realDF));
-			if (result == null && hasException) {
-				ex.printStackTrace();
+			Date autoResult = parseString(dateVar, null, locale);
+			// 自动解析成功后按指定格式重新格式化再解析一次(保持与指定format路径一致的归一化行为)
+			if (autoResult != null) {
+				result = parseString(formatDate(autoResult, realDF));
+			}
+			if (result == null) {
+				// 两级解析均失败:带原始值与format输出日志,便于定位(不再静默返回null)
+				logger.warn("日期解析失败:值={},指定的format={},自动格式匹配亦未成功!", dateVar, realDF);
+				if (hasException) {
+					logger.error("parseString 方法执行异常", ex);
+				}
 			}
 		}
 		return result;
@@ -548,7 +557,7 @@ public class DateUtil {
 			}
 			result = LocalDateTime.parse(dateStr, DateTimeFormatter.ofPattern(realDF));
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("parseLocalDateTime 方法执行异常", e);
 		}
 		// 结果为null，格式不为null,通过自动格式匹配模式，进行一次补偿处理
 		if (result == null && hasFmt) {
@@ -813,6 +822,9 @@ public class DateUtil {
 	// Add millisecond
 	public static Date addMilliSecond(Object dt, long millisecond) {
 		Date result = convertDateObject(dt);
+		if (result == null) {
+			throw new IllegalArgumentException("addMilliSecond日期参数无法识别:" + dt + ",请检查日期格式!");
+		}
 		if (millisecond != 0) {
 			result.setTime(result.getTime() + millisecond);
 		}
@@ -856,14 +868,22 @@ public class DateUtil {
 		if (dateValue == null) {
 			return LocalDate.now().getYear();
 		}
-		return convertLocalDateTime(dateValue).getYear();
+		LocalDateTime dateTime = convertLocalDateTime(dateValue);
+		if (dateTime == null) {
+			throw new IllegalArgumentException("getYear日期参数无法识别:" + dateValue + ",请检查日期格式!");
+		}
+		return dateTime.getYear();
 	}
 
 	public static int getMonth(Object dateValue) {
 		if (dateValue == null) {
 			return LocalDate.now().getMonthValue();
 		}
-		return convertLocalDateTime(dateValue).getMonthValue();
+		LocalDateTime dateTime = convertLocalDateTime(dateValue);
+		if (dateTime == null) {
+			throw new IllegalArgumentException("getMonth日期参数无法识别:" + dateValue + ",请检查日期格式!");
+		}
+		return dateTime.getMonthValue();
 	}
 
 	/**
@@ -885,7 +905,11 @@ public class DateUtil {
 		if (dateValue == null) {
 			return LocalDate.now().getDayOfMonth();
 		}
-		return convertLocalDateTime(dateValue).getDayOfMonth();
+		LocalDateTime dateTime = convertLocalDateTime(dateValue);
+		if (dateTime == null) {
+			throw new IllegalArgumentException("getDayOfMonth日期参数无法识别:" + dateValue + ",请检查日期格式!");
+		}
+		return dateTime.getDayOfMonth();
 	}
 
 	/**
@@ -897,7 +921,11 @@ public class DateUtil {
 		if (dateValue == null) {
 			return LocalDate.now().getDayOfWeek().getValue();
 		}
-		return convertLocalDateTime(dateValue).getDayOfWeek().getValue();
+		LocalDateTime dateTime = convertLocalDateTime(dateValue);
+		if (dateTime == null) {
+			throw new IllegalArgumentException("getDayOfWeek日期参数无法识别:" + dateValue + ",请检查日期格式!");
+		}
+		return dateTime.getDayOfWeek().getValue();
 	}
 
 	/**
@@ -909,14 +937,15 @@ public class DateUtil {
 		// 默认使用当前日期
 		LocalDate targetDate = LocalDate.now();
 		if (dateValue != null) {
-			// 将传入的 dateValue 转换为 LocalDate（需根据实际类型适配 convertDateObject）
 			Date date = convertDateObject(dateValue);
-			targetDate = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+			if (date != null) {
+				targetDate = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+			}
 		}
 		// 定义周的规则：比如中国习惯（周一为一周第一天，第一周至少有1天）
 		WeekFields weekFields = WeekFields.of(Locale.CHINA);
-		// 获取周数（从1开始），减1转为从0开始
-		return targetDate.get(weekFields.weekOfYear()) - 1;
+		// 获取周数（从1开始）
+		return targetDate.get(weekFields.weekOfYear());
 	}
 
 	/**
@@ -926,7 +955,7 @@ public class DateUtil {
 	 * @return
 	 */
 	public static double getIntervalWeeks(Object floorDate, Object goalDate) {
-		BigDecimal result = new BigDecimal(getIntervalHours(floorDate, goalDate) / (7 * 24));
+		BigDecimal result = BigDecimal.valueOf(getIntervalHours(floorDate, goalDate) / (7 * 24));
 		return result.setScale(1, RoundingMode.HALF_UP).doubleValue();
 	}
 
@@ -939,6 +968,10 @@ public class DateUtil {
 	public static int getIntervalMonths(Object floorDate, Object goalDate) {
 		LocalDateTime date1 = convertLocalDateTime(goalDate);
 		LocalDateTime date2 = convertLocalDateTime(floorDate);
+		if (date1 == null || date2 == null) {
+			throw new IllegalArgumentException(
+					"getIntervalMonths日期参数无法识别:floorDate=" + floorDate + ",goalDate=" + goalDate + ",请检查日期格式!");
+		}
 		return date1.getYear() * 12 + date1.getMonthValue() - date2.getYear() * 12 - date2.getMonthValue();
 	}
 
@@ -949,7 +982,13 @@ public class DateUtil {
 	 * @return
 	 */
 	public static int getIntervalYears(Object floorDate, Object goalDate) {
-		return convertLocalDateTime(goalDate).getYear() - convertLocalDateTime(floorDate).getYear();
+		LocalDateTime date1 = convertLocalDateTime(goalDate);
+		LocalDateTime date2 = convertLocalDateTime(floorDate);
+		if (date1 == null || date2 == null) {
+			throw new IllegalArgumentException(
+					"getIntervalYears日期参数无法识别:floorDate=" + floorDate + ",goalDate=" + goalDate + ",请检查日期格式!");
+		}
+		return date1.getYear() - date2.getYear();
 	}
 
 	/**
@@ -959,10 +998,12 @@ public class DateUtil {
 	 * @return
 	 */
 	public static int getIntervalDays(Object floorDate, Object goalDate) {
-		BigDecimal result = new BigDecimal(
-				Double.valueOf(getIntervalMillSeconds(formatDate(floorDate, FORMAT.DATE_HORIZONTAL),
-						formatDate(goalDate, FORMAT.DATE_HORIZONTAL))) / (3600 * 1000 * 24));
-		return result.setScale(1, RoundingMode.HALF_UP).intValue();
+		LocalDate floor = asLocalDate(convertDateObject(floorDate));
+		LocalDate goal = asLocalDate(convertDateObject(goalDate));
+		if (floor == null || goal == null) {
+			return 0;
+		}
+		return (int) ChronoUnit.DAYS.between(floor, goal);
 	}
 
 	/**
@@ -972,7 +1013,8 @@ public class DateUtil {
 	 * @return
 	 */
 	public static double getIntervalHours(Object floorDate, Object goalDate) {
-		BigDecimal result = new BigDecimal(Double.valueOf(getIntervalMillSeconds(floorDate, goalDate)) / (3600 * 1000));
+		BigDecimal result = BigDecimal
+				.valueOf(Double.valueOf(getIntervalMillSeconds(floorDate, goalDate)) / (3600 * 1000));
 		return result.setScale(1, RoundingMode.HALF_UP).doubleValue();
 	}
 
@@ -983,7 +1025,8 @@ public class DateUtil {
 	 * @return
 	 */
 	public static double getIntervalMinutes(Object floorDate, Object goalDate) {
-		BigDecimal result = new BigDecimal(Double.valueOf(getIntervalMillSeconds(floorDate, goalDate)) / (60 * 1000));
+		BigDecimal result = BigDecimal
+				.valueOf(Double.valueOf(getIntervalMillSeconds(floorDate, goalDate)) / (60 * 1000));
 		return result.setScale(1, RoundingMode.HALF_UP).doubleValue();
 	}
 
@@ -1004,7 +1047,13 @@ public class DateUtil {
 	 * @return
 	 */
 	public static long getIntervalMillSeconds(Object floorDate, Object goalDate) {
-		return convertDateObject(goalDate).getTime() - convertDateObject(floorDate).getTime();
+		Date date1 = convertDateObject(goalDate);
+		Date date2 = convertDateObject(floorDate);
+		if (date1 == null || date2 == null) {
+			throw new IllegalArgumentException(
+					"getIntervalMillSeconds日期参数无法识别:floorDate=" + floorDate + ",goalDate=" + goalDate + ",请检查日期格式!");
+		}
+		return date1.getTime() - date2.getTime();
 	}
 
 	/**
@@ -1070,8 +1119,14 @@ public class DateUtil {
 			if (groupStr.length() == 3) {
 				map.put(groupStr, groupStr.replace("十", ""));
 			} else if (groupStr.length() == 2) {
-				map.put(groupStr, groupStr.replace("十", "1"));
+				// 两位如:十五(十开头)或二十(个位缺省的整十)
+				if (groupStr.startsWith("十")) {
+					map.put(groupStr, groupStr.replace("十", "1"));
+				} else {
+					map.put(groupStr, groupStr.replace("十", "0"));
+				}
 			}
+			// 单独一个"十"交由CHINA_DATE_KEYS统一转成10
 		}
 		for (Map.Entry<String, String> entry : map.entrySet()) {
 			tmp = tmp.replaceAll(entry.getKey(), entry.getValue());
@@ -1137,11 +1192,11 @@ public class DateUtil {
 		return Date.from(localDate.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());
 	}
 
-	public static Date asSqlDate(LocalDate localDate) {
+	public static java.sql.Date asSqlDate(LocalDate localDate) {
 		if (localDate == null) {
 			return null;
 		}
-		return Date.from(localDate.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());
+		return java.sql.Date.valueOf(localDate);
 	}
 
 	public static Date asDate(LocalTime localTime) {

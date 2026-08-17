@@ -112,6 +112,16 @@ public class SecureSqlLoop extends AbstractMacro {
 				index++;
 			}
 		}
+		// 循环体内引用的其他参数数组可能短于loop依据数组,按最短数组长度的下标截断,避免regParamValues.get(j)[i]越界
+		int minRegLength = Integer.MAX_VALUE;
+		for (Object[] regAry : regParamValues) {
+			if (regAry != null && regAry.length < minRegLength) {
+				minRegLength = regAry.length;
+			}
+		}
+		if (minRegLength != Integer.MAX_VALUE && end > minRegLength) {
+			end = minRegLength;
+		}
 		StringBuilder result = new StringBuilder();
 		index = 0;
 		String[] loopParamNames;

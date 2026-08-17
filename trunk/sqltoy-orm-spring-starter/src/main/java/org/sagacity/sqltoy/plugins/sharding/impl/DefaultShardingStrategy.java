@@ -5,6 +5,7 @@ package org.sagacity.sqltoy.plugins.sharding.impl;
 
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -120,11 +121,11 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 		if (paramsMap == null || baseTableName == null || tableNamesMap == null) {
 			return null;
 		}
-		if (tableNamesMap.get(baseTableName.toUpperCase()) == null) {
+		if (tableNamesMap.get(baseTableName.toUpperCase(Locale.ROOT)) == null) {
 			return null;
 		}
 		Object bizDate = null;
-		String[] shardingTable = tableNamesMap.get(baseTableName.toUpperCase()).split("\\,");
+		String[] shardingTable = tableNamesMap.get(baseTableName.toUpperCase(Locale.ROOT)).split("\\,");
 		// 单一参数，表示直接传递参数值
 		if (paramsMap.size() == 1) {
 			bizDate = paramsMap.values().iterator().next();
@@ -225,7 +226,7 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 		while (iter.hasNext()) {
 			entry = iter.next();
 			// key大写转化,避免匹配错误
-			this.tableNamesMap.put(entry.getKey().toUpperCase(), entry.getValue());
+			this.tableNamesMap.put(entry.getKey().toUpperCase(Locale.ROOT), entry.getValue());
 		}
 	}
 
@@ -244,7 +245,7 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 	 * @param dateParams the dateParams to set
 	 */
 	public void setDateParams(String dateParams) {
-		this.dateParams = dateParams.toLowerCase().split("\\,");
+		this.dateParams = dateParams.toLowerCase(Locale.ROOT).split("\\,");
 	}
 
 }

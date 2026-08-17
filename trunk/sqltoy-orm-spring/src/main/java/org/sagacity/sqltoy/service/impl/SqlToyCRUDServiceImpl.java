@@ -249,6 +249,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	}
 
 	@Override
+	@Transactional
 	public Long deleteByIds(Class entityClass, Object... ids) {
 		return lightDao.deleteByIds(entityClass, ids);
 	}

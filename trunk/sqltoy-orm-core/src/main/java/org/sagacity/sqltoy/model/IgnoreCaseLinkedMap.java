@@ -26,7 +26,7 @@ public class IgnoreCaseLinkedMap<K, V> extends LinkedHashMap<K, V> {
 	 * @return
 	 */
 	private Object toLowCaseKey(Object key) {
-		return (key != null && key instanceof String) ? key.toString().toLowerCase() : key;
+		return (key != null && key instanceof String) ? key.toString().toLowerCase(java.util.Locale.ROOT) : key;
 	}
 
 	/*

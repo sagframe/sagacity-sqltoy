@@ -12,6 +12,8 @@ import javax.crypto.Cipher;
 import org.sagacity.sqltoy.plugins.secure.FieldsSecureProvider;
 import org.sagacity.sqltoy.utils.FileUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @project sagacity-sqltoy
@@ -20,33 +22,24 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @version v1.0,Date:2021-11-05
  */
 public class FieldsRSASecureProvider implements FieldsSecureProvider {
+	private final static Logger logger = LoggerFactory.getLogger(FieldsRSASecureProvider.class);
 
 	/**
 	 * 字符集
 	 */
-	private String CHARSET = "UTF-8";
+	private volatile String CHARSET = "UTF-8";
 
 	/**
 	 * 私钥
 	 */
-	private RSAPrivateKey privateKey;
+	private volatile RSAPrivateKey privateKey;
 
 	/**
 	 * 公钥
 	 */
-	private RSAPublicKey publicKey;
+	private volatile RSAPublicKey publicKey;
 
 	private final static String ALGORITHM_RSA = "RSA";
-
-	/**
-	 * 加密cipher
-	 */
-	private Cipher encryptCipher;
-
-	/**
-	 * 解密cipher
-	 */
-	private Cipher decryptCipher;
 
 	@Override
 	public void initialize(String charset, String privateKeyStr, String publicKeyStr) throws Exception {
@@ -57,13 +50,6 @@ public class FieldsRSASecureProvider implements FieldsSecureProvider {
 		KeyFactory keyFactory = KeyFactory.getInstance(ALGORITHM_RSA);
 		privateKey = (RSAPrivateKey) keyFactory.generatePrivate(getPrivateKeySpec(privateKeyStr));
 		publicKey = (RSAPublicKey) keyFactory.generatePublic(getPublicKeySpec(publicKeyStr));
-		// 公钥加密
-		encryptCipher = Cipher.getInstance(ALGORITHM_RSA);
-		encryptCipher.init(Cipher.ENCRYPT_MODE, publicKey);
-
-		// 私钥解密
-		decryptCipher = Cipher.getInstance(ALGORITHM_RSA);
-		decryptCipher.init(Cipher.DECRYPT_MODE, privateKey);
 	}
 
 	/**
@@ -111,10 +97,14 @@ public class FieldsRSASecureProvider implements FieldsSecureProvider {
 	@Override
 	public String encrypt(String contents) {
 		try {
-			byte[] result = encryptCipher.doFinal(contents.getBytes(CHARSET));
+			// Cipher非线程安全,并发查询下共享实例doFinal会产生错乱密文,必须每次调用独立创建
+			Cipher cipher = Cipher.getInstance(ALGORITHM_RSA);
+			cipher.init(Cipher.ENCRYPT_MODE, publicKey);
+			byte[] result = cipher.doFinal(contents.getBytes(CHARSET));
 			return Base64.getEncoder().encodeToString(result);
 		} catch (Exception e) {
-			e.printStackTrace();
+			// 明文内容属于安全字段,只记录长度不可记录内容本身
+			logger.error("RSA字段加密失败(明文长度:{}),原因:{}", (contents == null) ? -1 : contents.length(), e.getMessage(), e);
 		}
 		return "";
 	}
@@ -122,10 +112,13 @@ public class FieldsRSASecureProvider implements FieldsSecureProvider {
 	@Override
 	public String decrypt(String secureContents) {
 		try {
-			byte[] result = decryptCipher.doFinal(Base64.getDecoder().decode(secureContents));
-			return new String(result);
+			Cipher cipher = Cipher.getInstance(ALGORITHM_RSA);
+			cipher.init(Cipher.DECRYPT_MODE, privateKey);
+			byte[] result = cipher.doFinal(Base64.getDecoder().decode(secureContents));
+			return new String(result, CHARSET);
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("RSA字段解密失败(密文长度:{}),原因:{}", (secureContents == null) ? -1 : secureContents.length(),
+					e.getMessage(), e);
 		}
 		return "";
 	}

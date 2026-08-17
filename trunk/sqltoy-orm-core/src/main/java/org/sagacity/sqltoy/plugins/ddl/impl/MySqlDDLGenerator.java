@@ -61,9 +61,9 @@ public class MySqlDDLGenerator implements DialectDDLGenerator {
 					tableSql.append("'").append(colMeta.getDefaultValue()).append("'");
 				}
 			}
-			// 列注释
+			// 列注释(单引号已在上游统一转义为'',MySQL字符串中反斜杠是转义符需额外转义)
 			if (StringUtil.isNotBlank(colMeta.getComments())) {
-				tableSql.append(" COMMENT '").append(colMeta.getComments()).append("'");
+				tableSql.append(" COMMENT '").append(colMeta.getComments().replace("\\", "\\\\")).append("'");
 			}
 			index++;
 		}
@@ -75,9 +75,9 @@ public class MySqlDDLGenerator implements DialectDDLGenerator {
 		DDLUtils.wrapForeignKeys(tableMeta, upperOrLower, dbType, tableSql, false);
 		tableSql.append(NEWLINE);
 		tableSql.append(")");
-		// 表备注
+		// 表备注(单引号已在上游统一转义为'',MySQL字符串中反斜杠是转义符需额外转义)
 		if (StringUtil.isNotBlank(tableMeta.getRemarks())) {
-			tableSql.append(" COMMENT '").append(tableMeta.getRemarks()).append("'");
+			tableSql.append(" COMMENT '").append(tableMeta.getRemarks().replace("\\", "\\\\")).append("'");
 		}
 		return tableSql.toString();
 	}

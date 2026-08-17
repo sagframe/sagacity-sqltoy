@@ -12,6 +12,8 @@ import java.util.regex.Pattern;
 
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @project sagacity-sqltoy
@@ -28,12 +30,18 @@ import org.sagacity.sqltoy.config.SqlConfigParseUtils;
  */
 @SuppressWarnings("rawtypes")
 public class MacroIfLogic {
+	private final static Logger logger = LoggerFactory.getLogger(MacroIfLogic.class);
+
 	private final static String BLANK = " ";
 
 	// 必须是数字开头+1位特定字符(可选)
 	private final static Pattern timePattern = Pattern.compile("(?i)^\\d+[SHDWMY]?$");
 
 	private final static Pattern timeTypePattern = Pattern.compile("(?i)^\\d+[SHDWMY]$");
+
+	// 日期形式的字面量(如2024-01-01、2024/01/01 10:20:30),不能参与加减运算切割
+	private final static Pattern DATE_VALUE_PATTERN = Pattern
+			.compile("^\\d{2,4}([-/]\\d{1,2}){1,2}(\\s+\\d{1,2}:\\d{1,2}(:\\d{1,2})?(\\.\\d+)?)?$");
 
 	private MacroIfLogic() {
 	}
@@ -178,7 +186,9 @@ public class MacroIfLogic {
 					}
 					// 没有计算符号，将rightValue置为对象字符
 					if (!rightValue.contains("+") && !rightValue.contains("-")) {
-						rightValue = rightObj.toString();
+						if (rightObj != null) {
+							rightValue = rightObj.toString();
+						}
 					} else {
 						// 剔除可能存在的左右括号
 						if (rightValue.startsWith("(") && rightValue.endsWith(")")) {
@@ -188,7 +198,9 @@ public class MacroIfLogic {
 					meter++;
 				}
 				// 计算单个比较的结果(update 2020-09-24 增加数组长度的提取)
-				if (hasArg && (leftParamLow.startsWith("size(") || leftParamLow.startsWith("length("))) {
+				// !size()/!length()取反前缀也要走长度提取,否则数组被按toString字符串比较
+				if (hasArg && (leftParamLow.startsWith("size(") || leftParamLow.startsWith("length(")
+						|| leftParamLow.startsWith("!size(") || leftParamLow.startsWith("!length("))) {
 					expressResult[i] = compare((leftValue == null) ? 0 : getSize(leftValue), compareType, rightValue,
 							rightObj);
 				} else {
@@ -217,7 +229,7 @@ public class MacroIfLogic {
 			}
 			return "false";
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("evalSimpleExpress 方法执行异常", e);
 		}
 		return "undefine";
 	}
@@ -281,6 +293,8 @@ public class MacroIfLogic {
 		// 剔除首尾字符串标志符号
 		originalCompareValue = StringUtil.removeStartEndQuote(originalCompareValue);
 		String compareValue = originalCompareValue;
+		// 日期形式的字面量(如2024-01-01)不参与加减运算判断,避免被切割成算术表达式
+		boolean dateLikeValue = StringUtil.matches(compareValue.trim(), DATE_VALUE_PATTERN);
 		// 只支持加减运算
 		String append = "0";
 		String[] calculateStr = { "+", "-" };
@@ -290,7 +304,7 @@ public class MacroIfLogic {
 		boolean hasCalculate = false;
 		// 判断是否有加减运算
 		for (String calculate : calculateStr) {
-			if (compareValue.trim().indexOf(calculate) > 0) {
+			if (!dateLikeValue && compareValue.trim().indexOf(calculate) > 0) {
 				tmpAry = compareValue.split("+".equals(calculate) ? "\\+" : "\\-");
 				hasCalculate = false;
 				String firstStr = tmpAry[0].trim();
@@ -398,10 +412,16 @@ public class MacroIfLogic {
 				compareValue = originalCompareValue;
 			}
 		}
+		// 右侧是日期形式的字符串而左侧是日期类型参数时,统一转成日期格式比较,避免按Date.toString()进行字符串比较
+		if (dateLikeValue && (value instanceof Date || value instanceof LocalDateTime)) {
+			type = (compareValue.indexOf(":") == -1) ? "date" : "time";
+		} else if (dateLikeValue && value instanceof LocalDate && compareValue.indexOf(":") == -1) {
+			type = "date";
+		}
 		String valueStr = (value == null) ? "null" : StringUtil.removeStartEndQuote(value.toString());
-		if ("time".equals(type)) {
+		if (value != null && "time".equals(type)) {
 			valueStr = DateUtil.formatDate(value, dayTimeFmt);
-		} else if ("date".equals(type)) {
+		} else if (value != null && "date".equals(type)) {
 			valueStr = DateUtil.formatDate(value, dayFmt);
 		}
 		// 等于(兼容等于号非法)
@@ -490,6 +510,22 @@ public class MacroIfLogic {
 	}
 
 	/**
+	 * @TODO 日期比较辅助:任一侧无法解析为日期时返回null(调用方按false处理),
+	 *       避免convertDateObject返回null直接compareTo抛NPE中断整个@if解析
+	 * @param valueStr
+	 * @param compare
+	 * @return null表示无法比较
+	 */
+	private static Integer compareDate(String valueStr, String compare) {
+		Date date1 = DateUtil.convertDateObject(valueStr);
+		Date date2 = DateUtil.convertDateObject(compare);
+		if (date1 == null || date2 == null) {
+			return null;
+		}
+		return Integer.valueOf(date1.compareTo(date2));
+	}
+
+	/**
 	 * @todo 大于等于
 	 * @param value
 	 * @param valueStr
@@ -499,7 +535,8 @@ public class MacroIfLogic {
 	 */
 	private static boolean moreEqual(Object value, String valueStr, String compare, String type) {
 		if ("time".equals(type) || "date".equals(type)) {
-			return DateUtil.convertDateObject(valueStr).compareTo(DateUtil.convertDateObject(compare)) >= 0;
+			Integer cmpResult = compareDate(valueStr, compare);
+			return (cmpResult != null) && cmpResult.intValue() >= 0;
 		}
 		// 数字
 		if (NumberUtil.isNumber(valueStr) && NumberUtil.isNumber(compare)) {
@@ -518,7 +555,8 @@ public class MacroIfLogic {
 	 */
 	private static boolean lessEqual(Object value, String valueStr, String compare, String type) {
 		if ("time".equals(type) || "date".equals(type)) {
-			return DateUtil.convertDateObject(valueStr).compareTo(DateUtil.convertDateObject(compare)) <= 0;
+			Integer cmpResult = compareDate(valueStr, compare);
+			return (cmpResult != null) && cmpResult.intValue() <= 0;
 		}
 		// 数字
 		if (NumberUtil.isNumber(valueStr) && NumberUtil.isNumber(compare)) {
@@ -537,7 +575,8 @@ public class MacroIfLogic {
 	 */
 	private static boolean more(Object value, String valueStr, String compare, String type) {
 		if ("time".equals(type) || "date".equals(type)) {
-			return DateUtil.convertDateObject(valueStr).compareTo(DateUtil.convertDateObject(compare)) > 0;
+			Integer cmpResult = compareDate(valueStr, compare);
+			return (cmpResult != null) && cmpResult.intValue() > 0;
 		}
 		// 数字
 		if (NumberUtil.isNumber(valueStr) && NumberUtil.isNumber(compare)) {
@@ -556,7 +595,8 @@ public class MacroIfLogic {
 	 */
 	private static boolean less(Object value, String valueStr, String compare, String type) {
 		if ("time".equals(type) || "date".equals(type)) {
-			return DateUtil.convertDateObject(valueStr).compareTo(DateUtil.convertDateObject(compare)) < 0;
+			Integer cmpResult = compareDate(valueStr, compare);
+			return (cmpResult != null) && cmpResult.intValue() < 0;
 		}
 		// 数字
 		if (NumberUtil.isNumber(valueStr) && NumberUtil.isNumber(compare)) {

@@ -768,6 +768,12 @@ public class DialectUtils {
 			Integer dbType, EntityMeta entityMeta, PKStrategy pkStrategy, String[] forceUpdateFields, String fromTable,
 			String isNullFunction, String sequence, boolean isAssignPK, String tableName) {
 		String realTable = entityMeta.getSchemaTable(tableName, dbType);
+		// postgresql15+ 不支持别名,目标表列限定只能用不带schema的表名(schema.table.col三段式列引用非法)
+		String pgNoSchemaTable = ReservedWordsUtil.convertWord(
+				(StringUtil.isBlank(tableName)) ? entityMeta.getTableName() : tableName, dbType);
+		if (entityMeta.getSchema() != null && pgNoSchemaTable.startsWith(entityMeta.getSchema().concat("."))) {
+			pgNoSchemaTable = pgNoSchemaTable.substring(entityMeta.getSchema().length() + 1);
+		}
 		// 在无主键的情况下产生insert sql语句
 		if (entityMeta.getIdArray() == null) {
 			return DialectExtUtils.generateInsertSql(unifyFieldsHandler, dbType, entityMeta, pkStrategy, isNullFunction,
@@ -798,7 +804,7 @@ public class DialectUtils {
 		String columnName;
 		sql.append("merge into ");
 		sql.append(realTable);
-		// postgresql15+ 不支持别名
+		// postgresql15+ 在set 环节不支持别名
 		if (DBType.POSTGRESQL != dbType) {
 			sql.append(" ta ");
 		}
@@ -811,8 +817,12 @@ public class DialectUtils {
 				sql.append(",");
 			}
 			// postgresql15+ 需要case(? as type) as column
-			if (DBType.POSTGRESQL == dbType) {
+			// postgresql14 不走merge into
+			if (DBType.POSTGRESQL == dbType || DBType.KINGBASE == dbType) {
 				PostgreSqlDialectUtils.wrapSelectFields(sql, columnName, fieldMeta);
+			} else if (DBType.GAUSSDB == dbType || DBType.OPENGAUSS == dbType || DBType.MOGDB == dbType
+					|| DBType.VASTBASE == dbType || DBType.STARDB == dbType || DBType.OSCAR == dbType) {
+				OpenGaussDialectUtils.wrapSelectFields(sql, columnName, fieldMeta);
 			} else if (DBType.H2 == dbType) {
 				H2DialectUtils.wrapSelectFields(sql, columnName, fieldMeta);
 			} else if (DBType.DB2 == dbType) {
@@ -840,7 +850,7 @@ public class DialectUtils {
 			}
 			// 不支持别名
 			if (DBType.POSTGRESQL == dbType) {
-				sql.append(realTable + ".");
+				sql.append(pgNoSchemaTable + ".");
 			} else {
 				sql.append("ta.");
 			}
@@ -883,7 +893,7 @@ public class DialectUtils {
 					if (notFirst) {
 						sql.append(",");
 					}
-					//postgresql15+ 不支持别名
+					// postgresql15+ 不支持别名
 					if (DBType.POSTGRESQL != dbType) {
 						sql.append(" ta.");
 					}
@@ -899,9 +909,9 @@ public class DialectUtils {
 						if (null != currentTimeStr) {
 							sql.append(currentTimeStr);
 						} else {
-							//postgresql15+ 不支持别名
+							// postgresql15 set环节不支持别名
 							if (DBType.POSTGRESQL == dbType) {
-								sql.append(realTable + ".");
+								sql.append(pgNoSchemaTable + ".");
 							} else {
 								sql.append("ta.");
 							}
@@ -953,8 +963,8 @@ public class DialectUtils {
 			sql.append(idsColumnStr.replace("ta.", "tv."));
 		} else {
 			sql.append(insertRejIdCols.toString());
-			// sequence方式主键
-			if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
+			// sequence方式主键(pkStrategy为null时@Id未配strategy/generator,判空防御避免NPE)
+			if (PKStrategy.SEQUENCE.equals(pkStrategy)) {
 				columnName = entityMeta.getColumnName(entityMeta.getIdArray()[0]);
 				columnName = ReservedWordsUtil.convertWord(columnName, dbType);
 				sql.append(",");
@@ -968,7 +978,7 @@ public class DialectUtils {
 				} else {
 					sql.append(sequence);
 				}
-			} else if (pkStrategy.equals(PKStrategy.IDENTITY)) {
+			} else if (PKStrategy.IDENTITY.equals(pkStrategy)) {
 				columnName = entityMeta.getColumnName(entityMeta.getIdArray()[0]);
 				columnName = ReservedWordsUtil.convertWord(columnName, dbType);
 				if (isAssignPK) {
@@ -1053,7 +1063,9 @@ public class DialectUtils {
 		if (unifyFieldsHandler != null && unifyFieldsHandler.updateSqlTimeFields() != null) {
 			updateSqlTimeFields = unifyFieldsHandler.updateSqlTimeFields();
 		}
-		boolean convertBlob = (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14);
+		// kingbase/gaussdb同为pg内核,bytea未定型参数同样需要cast(2023-06-11误删,现恢复)
+		boolean convertBlob = (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14
+				|| dbType == DBType.GAUSSDB || dbType == DBType.KINGBASE);
 		boolean isMSsql = (dbType == DBType.SQLSERVER);
 		int meter = 0;
 		int decimalLength;
@@ -1270,12 +1282,24 @@ public class DialectUtils {
 			List<Object[]> sortIds = new ArrayList();
 			// 单主键
 			if (idSize == 1) {
-				// 切取id数组
-				Object[] idValues = BeanUtil.sliceToArray(entities, entityMeta.getIdArray()[0]);
-				if (idValues == null || idValues.length == 0) {
+				// 按行提取原始主键值(sliceToArray会过滤null导致行号错位,null主键实体被静默跳过),
+				// null主键给出带行号的明确错误(与复合主键分支防护对称),而非悄悄少查
+				List idRows = BeanUtil.reflectBeansToList(entities, new String[] { entityMeta.getIdArray()[0] }, null);
+				if (idRows == null || idRows.isEmpty()) {
 					throw new IllegalArgumentException(
 							tableName + " loadAll method must assign value for pk field:" + entityMeta.getIdArray()[0]);
 				}
+				List idList = new ArrayList(idRows.size());
+				Object cellValue;
+				for (int i = 0, n = idRows.size(); i < n; i++) {
+					cellValue = (idRows.get(i) == null) ? null : ((List) idRows.get(i)).get(0);
+					if (cellValue == null) {
+						throw new IllegalArgumentException(tableName + " loadAll method must assign value for pk,row:"
+								+ i + " pk field:" + entityMeta.getIdArray()[0]);
+					}
+					idList.add(cellValue);
+				}
+				Object[] idValues = idList.toArray(new Object[idList.size()]);
 				for (int i = 0; i < idValues.length; i++) {
 					sortIds.add(new Object[] { idValues[i] });
 				}
@@ -1574,6 +1598,9 @@ public class DialectUtils {
 				loadSql.append(" with (rowlock xlock) ");
 				break;
 			case UPGRADE_NOWAIT:
+				// nowait语义是拿不到锁立即报错,不能用readpast(会静默跳过被锁行)
+				loadSql.append(" with (rowlock xlock nowait) ");
+				break;
 			case UPGRADE_SKIPLOCK:
 				loadSql.append(" with (rowlock readpast) ");
 				break;
@@ -1679,8 +1706,8 @@ public class DialectUtils {
 			final PKStrategy pkStrategy, final boolean isAssignPK, final String insertSql, Serializable entity,
 			final GenerateSqlHandler generateSqlHandler, final GenerateSavePKStrategy generateSavePKStrategy,
 			final Connection conn, final Integer dbType) throws Exception {
-		final boolean isIdentity = (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY));
-		final boolean isSequence = (pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE));
+		final boolean isIdentity = (pkStrategy != null && PKStrategy.IDENTITY.equals(pkStrategy));
+		final boolean isSequence = (pkStrategy != null && PKStrategy.SEQUENCE.equals(pkStrategy));
 		String[] reflectColumns;
 		if ((isIdentity && !isAssignPK) || (isSequence && !isAssignPK)) {
 			reflectColumns = entityMeta.getRejectIdFieldArray(true);
@@ -1856,8 +1883,8 @@ public class DialectUtils {
 			boolean isAssignPK, String insertSql, List<?> entities, final int batchSize,
 			ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType, final Boolean autoCommit)
 			throws Exception {
-		boolean isIdentity = pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY);
-		boolean isSequence = pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE);
+		boolean isIdentity = pkStrategy != null && PKStrategy.IDENTITY.equals(pkStrategy);
+		boolean isSequence = pkStrategy != null && PKStrategy.SEQUENCE.equals(pkStrategy);
 		String[] reflectColumns;
 		if ((isIdentity && !isAssignPK) || (isSequence && !isAssignPK)) {
 			reflectColumns = entityMeta.getRejectIdFieldArray(true);
@@ -1974,13 +2001,13 @@ public class DialectUtils {
 				SqlUtilsExt.getDefaultValues(entityMeta, true), handler);
 		// 是否存在业务ID
 		boolean hasBizId = (entityMeta.getBusinessIdGenerator() == null) ? false : true;
-		int bizIdColIndex = hasBizId ? entityMeta.getFieldIndex(entityMeta.getBusinessIdField()) : 0;
+		int generatedColCnt = entityMeta.getGeneratedColsCnt();
+		int bizIdColIndex = hasBizId ? entityMeta.getFieldIndex(entityMeta.getBusinessIdField()) - generatedColCnt : 0;
 		// 标识符
 		String signature = entityMeta.getBizIdSignature();
 		Integer[] relatedColumn = entityMeta.getBizIdRelatedColIndex();
 		String[] relatedColumnNames = entityMeta.getBizIdRelatedColumns();
 		int relatedColumnSize = (relatedColumn == null) ? 0 : relatedColumn.length;
-		int generatedColCnt = entityMeta.getGeneratedColsCnt();
 		int pkIndex = entityMeta.getIdIndex() - generatedColCnt;
 		boolean hasId = (null != entityMeta.getIdStrategy() && null != entityMeta.getIdGenerator()) ? true : false;
 		// 主键、业务主键生成并回写对象(不回写数据版本号,因为已经存在数据版本号重新生成就不一致了)
@@ -2262,7 +2289,7 @@ public class DialectUtils {
 			public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 				PKStrategy pkStrategy = entityMeta.getIdStrategy();
 				String sequence = entityMeta.getSequence() + ".nextval";
-				if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
+				if (pkStrategy != null && PKStrategy.IDENTITY.equals(pkStrategy)) {
 					pkStrategy = PKStrategy.SEQUENCE;
 					sequence = entityMeta.getFieldMeta(entityMeta.getIdArray()[0]).getDefaultValue();
 				}
@@ -2294,10 +2321,10 @@ public class DialectUtils {
 				String sequence = "nextval('" + entityMeta.getSequence() + "')";
 				if ((dbType == DBType.GAUSSDB || dbType == DBType.OPENGAUSS || dbType == DBType.STARDB
 						|| dbType == DBType.OSCAR || dbType == DBType.MOGDB || dbType == DBType.VASTBASE)
-						&& pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE)) {
+						&& pkStrategy != null && PKStrategy.SEQUENCE.equals(pkStrategy)) {
 					sequence = entityMeta.getSequence() + ".nextval";
 				}
-				if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
+				if (pkStrategy != null && PKStrategy.IDENTITY.equals(pkStrategy)) {
 					// 伪造成sequence模式
 					pkStrategy = PKStrategy.SEQUENCE;
 					sequence = "DEFAULT";
@@ -2505,7 +2532,9 @@ public class DialectUtils {
 				}
 			}
 		}
-		String deleteSql = "delete from ".concat(realTable).concat(" ").concat(entityMeta.getIdArgWhereSql());
+		// 与deleteAll保持一致,对delete语句做保留字转换(idArgWhereSql中的保留字以sqlserver的[]形式标记)
+		String deleteSql = ReservedWordsUtil
+				.convertSql("delete from ".concat(realTable).concat(" ").concat(entityMeta.getIdArgWhereSql()), dbType);
 		SqlToyConfig sqlToyConfig = new SqlToyConfig(DataSourceUtils.getDialect(dbType));
 		sqlToyConfig.setSqlType(SqlType.delete);
 		sqlToyConfig.setSql(deleteSql);
@@ -2722,8 +2751,10 @@ public class DialectUtils {
 			EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 			String[] realParamNamed;
 			Object[] paramValues;
+			// 边界必须与getFieldsArray(false)对齐(含生成列,尾部为主键),用(false)变体取长度,
+			// 避免混用(true)变体导致有计算列时非主键/主键分界前移、字段漏判
 			int rejectIdFieldsSize = (entityMeta.getRejectIdFieldArray(false) == null) ? 0
-					: entityMeta.getRejectIdFieldArray(true).length;
+					: entityMeta.getRejectIdFieldArray(false).length;
 			// 如果没有特别指定属性，则通过数据是否为null来判断具体的字段
 			if (paramsNamed == null || paramsNamed.length == 0) {
 				String[] fieldsArray = entityMeta.getFieldsArray(false);
@@ -2807,9 +2838,10 @@ public class DialectUtils {
 			return isEqual;
 		} catch (Exception e) {
 			logger.error("执行唯一性查询失败:{}", e.getMessage());
-			e.printStackTrace();
+			logger.error("isUnique 方法执行异常", e);
+			throw new DataAccessException("对:entity=" + entity.getClass().getName() + "发起的唯一性查询异常:" + e.getMessage(),
+					e);
 		}
-		return false;
 	}
 
 	/**
@@ -3373,7 +3405,7 @@ public class DialectUtils {
 	public static PKStrategy getSavePKStrategy(EntityMeta entityMeta, Serializable entity, Integer dbType) {
 		PKStrategy pkStrategy = entityMeta.getIdStrategy();
 		// 主键值已经存在，则主键策略改为assign，避免跳号
-		if (pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE)) {
+		if (pkStrategy != null && PKStrategy.SEQUENCE.equals(pkStrategy)) {
 			Object id = BeanUtil.getProperty(entity, entityMeta.getIdArray()[0]);
 			if (StringUtil.isNotBlank(id)) {
 				pkStrategy = PKStrategy.ASSIGN;

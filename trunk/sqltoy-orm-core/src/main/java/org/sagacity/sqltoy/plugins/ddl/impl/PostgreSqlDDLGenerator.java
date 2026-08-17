@@ -67,12 +67,12 @@ public class PostgreSqlDDLGenerator implements DialectDDLGenerator {
 		}
 		// 主键
 		DDLUtils.wrapTablePrimaryKeys(tableMeta, upperOrLower, dbType, tableSql);
-		// 索引
-		DDLUtils.wrapTableIndexes(tableMeta, upperOrLower, dbType, tableSql, false);
 		// 外键
 		DDLUtils.wrapForeignKeys(tableMeta, upperOrLower, dbType, tableSql, false);
 		tableSql.append(NEWLINE);
 		tableSql.append(")");
+		// 索引(postgresql不支持create table内key语法,需闭括号后单独create index)
+		DDLUtils.wrapTableIndexes(tableMeta, upperOrLower, dbType, tableSql, true);
 		// 表和字段的备注
 		DDLUtils.wrapTableAndColumnsComment(tableMeta, upperOrLower, dbType, tableSql);
 		return tableSql.toString();

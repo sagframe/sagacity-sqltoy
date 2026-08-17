@@ -242,7 +242,7 @@ public class EntityManager {
 					}
 				} catch (ClassNotFoundException e) {
 					// log.error("添加用户自定义实体POJO类错误 找不到此类的.class文件");
-					e.printStackTrace();
+					logger.error("initialize 方法执行异常", e);
 				}
 			}
 		}
@@ -426,7 +426,7 @@ public class EntityManager {
 			}
 		} catch (Exception e) {
 			if (isWarn) {
-				logger.error("Sqltoy 解析Entity对象:[{}]发生错误,请检查对象注解是否正确!" + e.getMessage(), className);
+				logger.error("Sqltoy 解析Entity对象:[{}]发生错误,请检查对象注解是否正确!错误信息:{}", className, e.getMessage(), e);
 				throw e;
 			} else {
 				return null;
@@ -436,7 +436,7 @@ public class EntityManager {
 		if (!forCascade) {
 			if (entityMeta != null) {
 				entitysMetaMap.put(className, entityMeta);
-				tableEntityNameMap.put(entityMeta.getTableName().toLowerCase(), className);
+				tableEntityNameMap.put(entityMeta.getTableName().toLowerCase(java.util.Locale.ROOT), className);
 			} else if (isWarn) {
 				logger.warn("SqlToy Entity:{}没有使用@Entity注解，表明不是一个实体类,请检查!", className);
 			}
@@ -503,7 +503,7 @@ public class EntityManager {
 			}
 			config.setTables(new String[] { entityMeta.getTableName() });
 			config.setAliasNames(aliasNames);
-			config.setDecisionType(shardingDB.decisionType());
+			config.setDecisionType(shardingTable.decisionType());
 			config.setStrategy(strategy);
 			shardingConfig.setShardingTableStrategy(config);
 		}
@@ -744,7 +744,7 @@ public class EntityManager {
 				fieldMeta.setType(java.sql.Types.DOUBLE);
 			} else if (fieldType.equals(Float.class) || fieldType.equals(float.class)) {
 				fieldMeta.setType(java.sql.Types.FLOAT);
-			} else if (fieldType.equals(Byte.class) && fieldType.isArray()) {
+			} else if (fieldType.equals(byte[].class)) {
 				fieldMeta.setType(java.sql.Types.BINARY);
 			}
 		}
@@ -902,6 +902,12 @@ public class EntityManager {
 		// update 2022-10-1
 		// 获取子表的信息(forCascade=true 避免循环解析，只解析一级)
 		EntityMeta subTableMeta = parseEntityMeta(sqlToyContext, cascadeModel.getMappedType(), false, true);
+		// 子表类型不是@Entity实体(如普通VO)时parseEntityMeta静默返回null,给出明确配置错误而非裸NPE
+		if (subTableMeta == null) {
+			throw new IllegalArgumentException(StringUtil.fillArgs(
+					"主表:{}的级联配置属性:{} 对应的子表类型:{} 不是@Entity实体,无法解析表元数据,请检查!", entityMeta.getTableName(),
+					cascadeModel.getProperty(), cascadeModel.getMappedType().getName()));
+		}
 		if ((fields == null || fields.length == 0) && idList.size() == 1) {
 			fields = entityMeta.getIdArray();
 		}
@@ -1079,10 +1085,16 @@ public class EntityManager {
 			String[] fieldsArray = new String[length];
 			System.arraycopy(entityMeta.getFieldsArray(false), startIndex, fieldsArray, 0, length);
 			notGeneratedColMeta.setFieldsArray(fieldsArray);
-			// fieldsDefaultValue
-			String[] fieldDefaultValue = new String[length];
-			System.arraycopy(entityMeta.getFieldsDefaultValue(false), startIndex, fieldDefaultValue, 0, length);
-			notGeneratedColMeta.setFieldsDefaultValue(fieldDefaultValue);
+			// fieldsDefaultValue:实体无任何字段配置defaultValue时为null(下游getFieldsDefaultValue消费方已判空),
+			// arraycopy(null,...)会在解析期抛NPE导致实体不可用
+			String[] srcDefaultValues = entityMeta.getFieldsDefaultValue(false);
+			if (srcDefaultValues == null) {
+				notGeneratedColMeta.setFieldsDefaultValue(null);
+			} else {
+				String[] fieldDefaultValue = new String[length];
+				System.arraycopy(srcDefaultValues, startIndex, fieldDefaultValue, 0, length);
+				notGeneratedColMeta.setFieldsDefaultValue(fieldDefaultValue);
+			}
 			// fieldsNullable
 			Boolean[] fieldsNullable = new Boolean[length];
 			System.arraycopy(entityMeta.getFieldsNullable(false), startIndex, fieldsNullable, 0, length);
@@ -1140,7 +1152,7 @@ public class EntityManager {
 	}
 
 	public EntityMeta getEntityMeta(String tableName) {
-		String className = tableEntityNameMap.get(tableName.toLowerCase());
+		String className = tableEntityNameMap.get(tableName.toLowerCase(java.util.Locale.ROOT));
 		if (className == null) {
 			return null;
 		}

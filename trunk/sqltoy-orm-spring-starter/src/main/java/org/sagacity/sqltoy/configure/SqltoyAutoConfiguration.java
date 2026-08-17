@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -275,7 +276,7 @@ public class SqltoyAutoConfiguration {
 		sqlToyContext.setSplitMergeInto(properties.isSplitMergeInto());
 		// getMetaData().getColumnLabel(i) 结果做大小写处理策略
 		if (null != properties.getColumnLabelUpperOrLower()) {
-			sqlToyContext.setColumnLabelUpperOrLower(properties.getColumnLabelUpperOrLower().toLowerCase());
+			sqlToyContext.setColumnLabelUpperOrLower(properties.getColumnLabelUpperOrLower().toLowerCase(Locale.ROOT));
 		}
 		sqlToyContext.setSecurePrivateKey(properties.getSecurePrivateKey());
 		sqlToyContext.setSecurePublicKey(properties.getSecurePublicKey());
@@ -294,26 +295,23 @@ public class SqltoyAutoConfiguration {
 			sqlToyContext.setDefaultStatementTimeout(properties.getDefaultStatementTimeout());
 		}
 		// 设置公共统一属性的处理器
-		String unfiyHandler = properties.getUnifyFieldsHandler();
-		if (StringUtil.isNotBlank(unfiyHandler)) {
+		String unifyHandler = properties.getUnifyFieldsHandler();
+		if (StringUtil.isNotBlank(unifyHandler)) {
 			try {
 				IUnifyFieldsHandler handler = null;
 				// 类
-				if (unfiyHandler.contains(".")) {
-					handler = (IUnifyFieldsHandler) Class.forName(unfiyHandler).getDeclaredConstructor().newInstance();
-				} // spring bean名称
-				else if (appContext.containsBean(unfiyHandler)) {
-					handler = (IUnifyFieldsHandler) appContext.getBean(unfiyHandler);
-					if (handler == null) {
-						throw new ClassNotFoundException("项目中未定义unifyFieldsHandler=" + unfiyHandler + " 对应的bean!");
-					}
+				if (unifyHandler.contains(".")) {
+					handler = (IUnifyFieldsHandler) Class.forName(unifyHandler).getDeclaredConstructor().newInstance();
+				} // spring bean名称(getBean不会返回null,bean不存在会直接抛异常)
+				else if (appContext.containsBean(unifyHandler)) {
+					handler = (IUnifyFieldsHandler) appContext.getBean(unifyHandler);
 				}
 				if (handler != null) {
 					sqlToyContext.setUnifyFieldsHandler(handler);
 				}
 			} catch (ClassNotFoundException cne) {
 				err.println("------------------- 错误提示 ------------------------------------------- ");
-				err.println("spring.sqltoy.unifyFieldsHandler=" + unfiyHandler + " 对应类不存在,错误原因:");
+				err.println("spring.sqltoy.unifyFieldsHandler=" + unifyHandler + " 对应类不存在,错误原因:");
 				err.println("--1.您可能直接copy了参照项目的配置文件,但没有将具体的类也同步copy过来!");
 				err.println("--2.如您并不需要此功能，请将配置文件中注释掉spring.sqltoy.unifyFieldsHandler");
 				err.println("-------------------------------------------------------------------------");

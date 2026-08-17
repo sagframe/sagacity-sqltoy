@@ -1,7 +1,6 @@
 package org.sagacity.sqltoy.translate.cache.impl;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -26,13 +25,13 @@ public class FIFODynamicFetchCacheManager implements DynamicFecthCacheManager {
 	/**
 	 * 定义日志
 	 */
-	private final Logger logger = LoggerFactory.getLogger(FIFODynamicFetchCacheManager.class);
+	private final static Logger logger = LoggerFactory.getLogger(FIFODynamicFetchCacheManager.class);
 	// 提供默认的先进先出Map队列作为动态缓存存储
 	// FIFOMap可设置最大数据量如10万条，
 	// 同时设置频繁使用的放在前面，使用不频繁的排在最先被挤出的位置
 	private static ConcurrentHashMap<String, ConcurrentHashMap<String, FIFOMap<String, Object[]>>> dynamicFetchCacheMap = new ConcurrentHashMap<>();
 	// 缓存被调用登记表，用户CacheUpdateWatcher更新检测，判断是否存在，不存在则无需检测
-	private static Set<String> registCaches = new HashSet<>();
+	private static Set<String> registCaches = ConcurrentHashMap.newKeySet();
 
 	// 存放缓存初始化的时间，用于定时判断超过keep-alive清除缓存，下次使用时重新初始化
 	private static ConcurrentHashMap<String, Long[]> cacheInitTime = new ConcurrentHashMap<>();
@@ -41,41 +40,41 @@ public class FIFODynamicFetchCacheManager implements DynamicFecthCacheManager {
 	private static final String CACHE_TYPE_JOIN_SIGN = "_cachetype_";
 
 	// 定时检测的线程池（单线程，避免多线程竞争）
-	private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+	// 状态Map均为static,调度器也必须为static,避免多实例(多SqlToyContext)各自调度产生重复定时任务
+	private static volatile ScheduledExecutorService scheduler;
 
 	// 检测线程的执行间隔：3分钟（可根据需求调整）
 	private static final long CHECK_INTERVAL = 3 * 60;
 
+	// 标记定时任务是否已经启动，防止重复调度
+	private static volatile boolean schedulerStarted = false;
+
 	@Override
 	public HashMap<String, Object[]> getDynamicCache(TranslateConfigModel cacheModel, String cacheType) {
 		String cacheNameLower = cacheModel.getCache().toLowerCase();
+		// 如果没有cacheType则用cacheName作为cacheType形成统一的二层结构
+		String cacheTypeLower = (cacheType == null) ? cacheNameLower : cacheType.toLowerCase();
 		String cacheKey = (cacheType == null) ? cacheNameLower
-				: cacheNameLower.concat(CACHE_TYPE_JOIN_SIGN).concat(cacheType.toLowerCase());
-		synchronized (cacheKey.intern()) {
-			// 如果没有cacheType则用cacheName作为cacheType形成统一的二层结构
-			String cacheTypeLower = (cacheType == null) ? cacheNameLower : cacheType.toLowerCase();
-			ConcurrentHashMap<String, FIFOMap<String, Object[]>> cacheElements = dynamicFetchCacheMap
-					.get(cacheNameLower);
-			if (cacheElements == null) {
-				cacheElements = new ConcurrentHashMap<>();
-				dynamicFetchCacheMap.put(cacheNameLower, cacheElements);
-				// 表示缓存已经开始使用，更新检测程序可以判断到可以对此缓存进行获取变化数据进行更新
-				registCaches.add(cacheNameLower);
+				: cacheNameLower.concat(CACHE_TYPE_JOIN_SIGN).concat(cacheTypeLower);
+		// 通过computeIfAbsent原子性完成get-or-create，替代synchronized(cacheKey.intern())
+		// 消除字符串常量池内存泄漏，同时修复同cacheName不同cacheType的竞态
+		ConcurrentHashMap<String, FIFOMap<String, Object[]>> cacheElements = dynamicFetchCacheMap
+				.computeIfAbsent(cacheNameLower, k -> {
+					// 表示缓存已经开始使用，更新检测程序可以判断到可以对此缓存进行获取变化数据进行更新
+					registCaches.add(cacheNameLower);
+					return new ConcurrentHashMap<>();
+				});
+		FIFOMap<String, Object[]> cacheDatas = cacheElements.computeIfAbsent(cacheTypeLower, k -> {
+			float loadFactor = cacheModel.getDynamicCacheLoadFactor();
+			FIFOMap<String, Object[]> map = new FIFOMap(cacheModel.getDynamiceCacheInitSize(),
+					cacheModel.getDynamicCacheMaxSize(), (loadFactor > 1) ? 0.75F : loadFactor, true);
+			// 可设置<=0,则不放入过期检测，则表示长期有效
+			if (cacheModel.getKeepAlive() > 0) {
+				cacheInitTime.put(cacheKey, new Long[] { System.currentTimeMillis(), cacheModel.getKeepAlive() * 1L });
 			}
-			FIFOMap<String, Object[]> cacheDatas = cacheElements.get(cacheTypeLower);
-			if (cacheDatas == null) {
-				float loadFactor = cacheModel.getDynamicCacheLoadFactor();
-				cacheDatas = new FIFOMap(cacheModel.getDynamiceCacheInitSize(), cacheModel.getDynamicCacheMaxSize(),
-						(loadFactor > 1) ? 0.75F : loadFactor, true);
-				cacheElements.put(cacheTypeLower, cacheDatas);
-				// 可设置<=0,则不放入过期检测，则表示长期有效
-				if (cacheModel.getKeepAlive() > 0) {
-					cacheInitTime.put(cacheKey,
-							new Long[] { System.currentTimeMillis(), cacheModel.getKeepAlive() * 1L });
-				}
-			}
-			return cacheDatas;
-		}
+			return map;
+		});
+		return cacheDatas;
 	}
 
 	@Override
@@ -89,9 +88,13 @@ public class FIFODynamicFetchCacheManager implements DynamicFecthCacheManager {
 			if (cacheType == null) {
 				logger.debug("清除动态查询数据缓存cacheName={}!", cacheName);
 				dynamicFetchCacheMap.get(cacheNameLower).clear();
+				// 同步清除该缓存全部cacheType的过期登记,避免不再使用的缓存条目常驻内存
+				cacheInitTime.keySet().removeIf(key -> key.equals(cacheNameLower)
+						|| key.startsWith(cacheNameLower.concat(CACHE_TYPE_JOIN_SIGN)));
 			} else {
 				logger.debug("清除动态查询数据缓存cacheName={},cacheType={}!", cacheName, cacheType);
 				dynamicFetchCacheMap.get(cacheNameLower).remove(cacheType.toLowerCase());
+				cacheInitTime.remove(cacheNameLower.concat(CACHE_TYPE_JOIN_SIGN).concat(cacheType.toLowerCase()));
 			}
 		}
 	}
@@ -109,8 +112,25 @@ public class FIFODynamicFetchCacheManager implements DynamicFecthCacheManager {
 
 	@Override
 	public void initialize() {
-		// 启动定时器
-		scheduler.scheduleAtFixedRate(this::checkAndRemoveTimeoutData, 0, CHECK_INTERVAL, TimeUnit.SECONDS);
+		startSchedulerIfNeeded();
+	}
+
+	/**
+	 * @TODO 启动过期检测定时任务;检测线程为daemon,destroy未被调用时不会阻止JVM退出
+	 */
+	private static synchronized void startSchedulerIfNeeded() {
+		if (schedulerStarted && scheduler != null && !scheduler.isTerminated()) {
+			return;
+		}
+		ScheduledExecutorService newScheduler = Executors.newSingleThreadScheduledExecutor(runnable -> {
+			Thread thread = new Thread(runnable, "sqltoy-fifo-dynamic-cache-checker");
+			thread.setDaemon(true);
+			return thread;
+		});
+		newScheduler.scheduleAtFixedRate(FIFODynamicFetchCacheManager::checkAndRemoveTimeoutData, 0, CHECK_INTERVAL,
+				TimeUnit.SECONDS);
+		scheduler = newScheduler;
+		schedulerStarted = true;
 	}
 
 	// 如果设置数据保留时间，则建议Map数据集合为Map<key,Object[]{key,name1,name2,...,initTimeMillis},
@@ -118,7 +138,7 @@ public class FIFODynamicFetchCacheManager implements DynamicFecthCacheManager {
 	/**
 	 * 清除数据保留时间超过keepAlive的缓存
 	 */
-	private void checkAndRemoveTimeoutData() {
+	private static void checkAndRemoveTimeoutData() {
 		if (cacheInitTime.isEmpty()) {
 			return;
 		}
@@ -136,7 +156,7 @@ public class FIFODynamicFetchCacheManager implements DynamicFecthCacheManager {
 				cacheTypeLower = keySplit[1];
 			}
 			initTimeAndKeepAlive = entry.getValue();
-			if (System.currentTimeMillis() > initTimeAndKeepAlive[0] + initTimeAndKeepAlive[1]) {
+			if (System.currentTimeMillis() > initTimeAndKeepAlive[0] + initTimeAndKeepAlive[1] * 1000) {
 				dynamicFetchCacheMap.get(cacheNameLower)
 						.remove((cacheTypeLower == null) ? cacheNameLower : cacheTypeLower);
 				// 清除过期缓存使用时间定义
@@ -149,8 +169,10 @@ public class FIFODynamicFetchCacheManager implements DynamicFecthCacheManager {
 
 	@Override
 	public void destroy() {
-		if (scheduler != null && !scheduler.isTerminated()) {
-			scheduler.shutdownNow();
+		ScheduledExecutorService current = scheduler;
+		if (current != null && !current.isTerminated()) {
+			current.shutdownNow();
 		}
+		schedulerStarted = false;
 	}
 }

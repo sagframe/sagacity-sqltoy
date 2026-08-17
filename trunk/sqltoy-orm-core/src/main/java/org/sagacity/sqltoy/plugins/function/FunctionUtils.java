@@ -14,6 +14,8 @@ import java.util.regex.Matcher;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.StringUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @project sqltoy-orm
@@ -23,6 +25,8 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @modify 2019年9月15日,修改说明
  */
 public class FunctionUtils {
+	private final static Logger logger = LoggerFactory.getLogger(FunctionUtils.class);
+
 	private final static String funPackage = "org.sagacity.sqltoy.plugins.function.impl.";
 	// 提供默认函数配置
 	public final static String[] functions = { funPackage.concat("SubStr"), funPackage.concat("Trim"),
@@ -48,7 +52,7 @@ public class FunctionUtils {
 
 		}
 	};
-	private static List<IFunction> functionConverts = new ArrayList<IFunction>();
+	private static volatile List<IFunction> functionConverts = new ArrayList<IFunction>();
 
 	public static String getDialectSql(String sql, String dialect) {
 		if (functionConverts.isEmpty() || StringUtil.isBlank(dialect) || StringUtil.isBlank(sql)) {
@@ -196,7 +200,10 @@ public class FunctionUtils {
 				}
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("setFunctionConverts 方法执行异常", e);
+			// 某函数类加载失败时保留原有完整转换器列表,不用部分列表覆盖全局,
+			// 避免部分函数的方言转换静默失效
+			return;
 		}
 		functionConverts = converts;
 	}

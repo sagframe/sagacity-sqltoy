@@ -214,9 +214,10 @@ public class PostgreSqlDialectUtils {
 	 */
 	public static void wrapSelectFields(StringBuilder sql, String columnName, FieldMeta fieldMeta) {
 		int jdbcType = fieldMeta.getType();
-		if (jdbcType == java.sql.Types.VARCHAR) {
+		if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NVARCHAR
+				|| jdbcType == java.sql.Types.LONGVARCHAR || jdbcType == java.sql.Types.LONGNVARCHAR) {
 			sql.append("?");
-		} else if (jdbcType == java.sql.Types.CHAR) {
+		} else if (jdbcType == java.sql.Types.CHAR || jdbcType == java.sql.Types.NCHAR) {
 			sql.append("?");
 		} else if (jdbcType == java.sql.Types.DATE) {
 			sql.append("cast(? as date)");
@@ -226,14 +227,17 @@ public class PostgreSqlDialectUtils {
 			sql.append("cast(? as decimal)");
 		} else if (jdbcType == java.sql.Types.BIGINT) {
 			sql.append("cast(? as bigint)");
-		} else if (jdbcType == java.sql.Types.INTEGER || jdbcType == java.sql.Types.TINYINT) {
+		} else if (jdbcType == java.sql.Types.INTEGER || jdbcType == java.sql.Types.TINYINT
+				|| jdbcType == java.sql.Types.SMALLINT) {
 			sql.append("cast(? as integer)");
 		} else if (jdbcType == java.sql.Types.TIMESTAMP) {
 			sql.append("cast(? as timestamp)");
 		} else if (jdbcType == java.sql.Types.DOUBLE) {
-			sql.append("cast(? as double)");
+			sql.append("cast(? as double precision)");
 		} else if (jdbcType == java.sql.Types.FLOAT) {
-			sql.append("cast(? as double)");
+			sql.append("cast(? as double precision)");
+		} else if (jdbcType == java.sql.Types.REAL) {
+			sql.append("cast(? as real)");
 		} else if (jdbcType == java.sql.Types.TIME) {
 			sql.append("cast(? as time)");
 		} else if (jdbcType == java.sql.Types.CLOB) {
@@ -244,6 +248,10 @@ public class PostgreSqlDialectUtils {
 			sql.append("cast(? as bytea)");
 		} else if (jdbcType == java.sql.Types.BLOB) {
 			sql.append("cast(? as bytea)");
+		} else if (jdbcType == JdbcTypes.JSON) {
+			sql.append("cast(? as json)");
+		} else if (jdbcType == JdbcTypes.JSONB) {
+			sql.append("cast(? as jsonb)");
 		} else {
 			// 数组、json等特殊类型
 			if (StringUtil.isNotBlank(fieldMeta.getNativeType())) {
@@ -308,19 +316,27 @@ public class PostgreSqlDialectUtils {
 		if (StringUtil.isBlank(realSchema)) {
 			realSchema = catalog;
 		}
+		// schema/表名统一用?绑定,避免拼接被单引号破坏或注入
+		List<Object> paramValues = new ArrayList<Object>();
 		if (StringUtil.isNotBlank(realSchema)) {
-			sql = sql.concat(" AND n.nspname='" + realSchema + "' ");
+			sql = sql.concat(" AND n.nspname=? ");
+			paramValues.add(realSchema);
 		} else {
 			sql = sql.concat(" AND c.relname NOT LIKE 'pg_%' AND n.nspname NOT LIKE 'pg_%' ");
 		}
 		if (StringUtil.isNotBlank(tableName)) {
 			if (tableName.contains("%")) {
-				sql = sql.concat(" AND c.relname like '" + tableName + "'");
+				sql = sql.concat(" AND c.relname like ?");
+				paramValues.add(tableName);
 			} else {
-				sql = sql.concat(" AND c.relname like '%" + tableName + "%'");
+				sql = sql.concat(" AND c.relname like ?");
+				paramValues.add("%" + tableName + "%");
 			}
 		}
 		PreparedStatement pst = conn.prepareStatement(sql);
+		for (int i = 0; i < paramValues.size(); i++) {
+			pst.setObject(i + 1, paramValues.get(i));
+		}
 		// 设置全局statementTimeout，默认为null
 		if (SqlToyConstants.defaultStatementTimeout != null && SqlToyConstants.defaultStatementTimeout > 0) {
 			pst.setQueryTimeout(SqlToyConstants.defaultStatementTimeout);

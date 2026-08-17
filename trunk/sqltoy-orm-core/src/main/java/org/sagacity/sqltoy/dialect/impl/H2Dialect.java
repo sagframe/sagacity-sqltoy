@@ -46,8 +46,9 @@ public class H2Dialect extends PostgreSqlDialect {
 	protected final Logger logger = LoggerFactory.getLogger(H2Dialect.class);
 
 	/**
-	 * 虚表
+	 * 虚表(h2 2.x非Oracle模式下无dual表,select支持无from,不再使用虚表;保留常量仅为兼容既有引用)
 	 */
+	@Deprecated
 	public static final String VIRTUAL_TABLE = "dual";
 
 	/*
@@ -96,9 +97,8 @@ public class H2Dialect extends PostgreSqlDialect {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = "nextval('" + entityMeta.getSequence() + "')";
-						// virtual_table为dual
 						return DialectUtils.getSaveOrUpdateSql(sqlToyContext, sqlToyContext.getUnifyFieldsHandler(),
-								dbType, entityMeta, pkStrategy, forceUpdateFields, VIRTUAL_TABLE, NVL_FUNCTION,
+								dbType, entityMeta, pkStrategy, forceUpdateFields, null, NVL_FUNCTION,
 								sequence, H2DialectUtils.allowAssignPKValue(pkStrategy), null);
 					}
 				}, forceCascadeClasses, subTableForceUpdateProps, conn, dbType, tableName);
@@ -169,7 +169,7 @@ public class H2Dialect extends PostgreSqlDialect {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = "nextval('" + entityMeta.getSequence() + "')";
 						return DialectUtils.getSaveOrUpdateSql(sqlToyContext, sqlToyContext.getUnifyFieldsHandler(),
-								dbType, entityMeta, pkStrategy, forceUpdateFields, VIRTUAL_TABLE, NVL_FUNCTION,
+								dbType, entityMeta, pkStrategy, forceUpdateFields, null, NVL_FUNCTION,
 								sequence, H2DialectUtils.allowAssignPKValue(pkStrategy), tableName);
 					}
 				}, reflectPropsHandler, conn, dbType, autoCommit);
@@ -187,7 +187,7 @@ public class H2Dialect extends PostgreSqlDialect {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = "nextval('" + entityMeta.getSequence() + "')";
 						return DialectExtUtils.mergeIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
-								pkStrategy, VIRTUAL_TABLE, NVL_FUNCTION, sequence,
+								pkStrategy, null, NVL_FUNCTION, sequence,
 								H2DialectUtils.allowAssignPKValue(pkStrategy), tableName);
 					}
 				}, reflectPropsHandler, conn, dbType, autoCommit);

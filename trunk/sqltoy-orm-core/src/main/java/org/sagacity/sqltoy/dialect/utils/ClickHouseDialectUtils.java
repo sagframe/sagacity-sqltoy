@@ -133,11 +133,10 @@ public class ClickHouseDialectUtils {
 		final Integer[] paramsType = entityMeta.getFieldsTypeArray(true);
 		PreparedStatement pst = null;
 		if (isIdentity || isSequence) {
-			pst = conn.prepareStatement(insertSql, new String[] { DataSourceUtils
+			pst = conn.prepareStatement(realInsertSql, new String[] { DataSourceUtils
 					.getReturnPrimaryKeyColumn(entityMeta.getColumnName(entityMeta.getIdArray()[0]), dbType) });
-			// pst = conn.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS);
 		} else {
-			pst = conn.prepareStatement(insertSql);
+			pst = conn.prepareStatement(realInsertSql);
 		}
 		// 设置全局statementTimeout，默认为null
 		if (SqlToyConstants.defaultStatementTimeout != null && SqlToyConstants.defaultStatementTimeout > 0) {
@@ -349,8 +348,8 @@ public class ClickHouseDialectUtils {
 				sqlToyContext.getUnifyFieldsHandler());
 		handler = DialectUtils.getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
-		// 排除分区字段
-		String[] fields = entityMeta.getFieldsNotPartitionKey(true);
+		// 排除非主键的分区字段,主键兼分区键时保留(尾部为主键)
+		String[] fields = getUpdateFields(entityMeta);
 		Object[] fieldsValues = BeanUtil.reflectBeanToAry(entity, fields, null, handler);
 		// 判断主键是否为空
 		int end = fields.length;
@@ -375,7 +374,7 @@ public class ClickHouseDialectUtils {
 		sqlToyResult = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig, OperateType.update, sqlToyResult,
 				entity.getClass(), dbType);
 		Long updateCnt = SqlUtil.executeSql(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(),
-				sqlToyResult.getParamsValue(), getIgnorePartionFieldsTypes(entityMeta), conn, dbType, null, false);
+				sqlToyResult.getParamsValue(), getUpdateFieldsTypes(entityMeta), conn, dbType, null, false);
 		return updateCnt;
 	}
 
@@ -418,7 +417,8 @@ public class ClickHouseDialectUtils {
 				sqlToyContext.getUnifyFieldsHandler());
 		handler = DialectUtils.getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
-		String[] fields = entityMeta.getFieldsNotPartitionKey(true);
+		// 排除非主键的分区字段,主键兼分区键时保留(尾部为主键)
+		String[] fields = getUpdateFields(entityMeta);
 		List<Object[]> paramsValues = BeanUtil.reflectBeansToInnerAry(entities, fields, null, handler);
 		// 判断主键是否为空
 		int end = fields.length;
@@ -470,22 +470,51 @@ public class ClickHouseDialectUtils {
 		}
 		SqlExecuteStat.showSql("批量修改[" + realParams.size() + "]条记录", realSql, null);
 		return SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), realSql, realParams,
-				getIgnorePartionFieldsTypes(entityMeta), null, null, batchSize, autoCommit, conn, dbType);
+				getUpdateFieldsTypes(entityMeta), null, null, batchSize, autoCommit, conn, dbType);
 	}
 
 	/**
-	 * @TODO 获取排除分区字段的所有字段对应的类型
+	 * @TODO update操作的参数字段:set部分为非分区且非主键字段,where部分为全部主键;
+	 *      主键同时是分区键时也会保留(否则where中的=?会多于参数值导致绑定错位),尾部为主键字段
 	 * @param entityMeta
 	 * @return
 	 */
-	private static Integer[] getIgnorePartionFieldsTypes(EntityMeta entityMeta) {
-		List<Integer> fieldTypes = new ArrayList<Integer>();
-		FieldMeta fieldMeta;
+	private static String[] getUpdateFields(EntityMeta entityMeta) {
 		String[] fields = entityMeta.getFieldsArray(true);
-		Integer[] fieldTypesArray = entityMeta.getFieldsTypeArray(true);
+		String[] idArray = entityMeta.getIdArray();
+		HashSet<String> idFields = new HashSet<String>();
+		for (String id : idArray) {
+			idFields.add(id.toLowerCase());
+		}
+		List<String> updateFields = new ArrayList<String>();
+		FieldMeta fieldMeta;
 		for (int i = 0; i < fields.length; i++) {
 			fieldMeta = entityMeta.getFieldMeta(fields[i]);
-			if (!fieldMeta.isPartitionKey()) {
+			if (idFields.contains(fields[i].toLowerCase()) || !fieldMeta.isPartitionKey()) {
+				updateFields.add(fields[i]);
+			}
+		}
+		return updateFields.toArray(new String[0]);
+	}
+
+	/**
+	 * @TODO update操作参数字段对应的类型(与getUpdateFields的过滤规则一致)
+	 * @param entityMeta
+	 * @return
+	 */
+	private static Integer[] getUpdateFieldsTypes(EntityMeta entityMeta) {
+		String[] fields = entityMeta.getFieldsArray(true);
+		Integer[] fieldTypesArray = entityMeta.getFieldsTypeArray(true);
+		String[] idArray = entityMeta.getIdArray();
+		HashSet<String> idFields = new HashSet<String>();
+		for (String id : idArray) {
+			idFields.add(id.toLowerCase());
+		}
+		List<Integer> fieldTypes = new ArrayList<Integer>();
+		FieldMeta fieldMeta;
+		for (int i = 0; i < fields.length; i++) {
+			fieldMeta = entityMeta.getFieldMeta(fields[i]);
+			if (idFields.contains(fields[i].toLowerCase()) || !fieldMeta.isPartitionKey()) {
 				fieldTypes.add(fieldTypesArray[i]);
 			}
 		}
@@ -640,11 +669,23 @@ public class ClickHouseDialectUtils {
 		if (sqlType == SqlType.delete) {
 			// 截取where开始部分构造成:alter table tableName delete where
 			// delete from table where
-			sql = startSql.concat(" delete ").concat(sql.substring(StringUtil.matchIndex(sql, "(?i)\\swhere\\s")));
+			int whereIndex = StringUtil.matchIndex(sql, "(?i)\\swhere\\s");
+			// 无where条件的delete(全表删除),matchIndex返回-1时substring(-1)越界,给出明确错误
+			if (whereIndex < 0) {
+				throw new IllegalArgumentException("clickhouse的delete操作必须含有where条件,当前sql无where:" + sql
+						+ ",请检查deleteByQuery的where设置(全表删除请直接执行alter table ... delete)");
+			}
+			sql = startSql.concat(" delete ").concat(sql.substring(whereIndex));
 		} else if (sqlType == SqlType.update) {
 			// 截取set后面语句,构造成:alter table tableName update field1=:value1,field2=:value2
 			// update table set field1=:value1,field2=:value2
-			sql = startSql.concat(" update ").concat(sql.substring(StringUtil.matchIndex(sql, "(?i)\\sset\\s") + 4));
+			int setIndex = StringUtil.matchIndex(sql, "(?i)\\sset\\s");
+			// 无set条件的update,matchIndex返回-1时-1+4=3从错误位置截断生成坏SQL
+			if (setIndex < 0) {
+				throw new IllegalArgumentException(
+						"clickhouse的update操作必须含有set子句,当前sql无set:" + sql + ",请检查updateByQuery的set设置!");
+			}
+			sql = startSql.concat(" update ").concat(sql.substring(setIndex + 4));
 		}
 		return sql;
 	}

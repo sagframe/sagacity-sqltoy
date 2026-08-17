@@ -67,7 +67,10 @@ public final class StandardUUIDv7Generator {
 	}
 
 	/**
-	 * 生成指定时间的 UUID v7 实例（支持数据迁移、时间回溯等场景）
+	 * 生成指定时间的 UUID v7 实例
+	 * <p>
+	 * 注意：内部时间戳经单调化处理（早于上次生成时间的历史 instant 会被抬升到上次时间+1），
+	 * 因此传入历史时间不会体现在生成结果中，仅供时间参数化调用，不实际支持时间回溯落盘。
 	 * 
 	 * @param instant 指定时间（不可为 null）
 	 * @return 符合 RFC 9562 标准的 UUID v7
@@ -228,13 +231,15 @@ public final class StandardUUIDv7Generator {
 	}
 
 	/**
-	 * 获取毫秒内序列值（线程安全）
+	 * 获取序列值（线程安全）
+	 * <p>
+	 * 实现为全局递增计数器按 2^20 取模（时间戳正常推进时计数器持续增长并回绕）， 替换随机数低 20 位以降低同毫秒碰撞概率；唯一性由 48 位时间戳 +
+	 * 随机高位共同保证。
 	 * 
-	 * @param currentTimestamp 当前单调时间戳
+	 * @param currentTimestamp 当前单调时间戳（回拨已由单调时钟保证，本实现不依赖该参数）
 	 * @return 20 位序列值
 	 */
 	private static long getSequence(long currentTimestamp) {
-		// 此处无需处理时间戳回拨（已由单调时间戳保证），仅需维护毫秒内序列
 		return SEQUENCE_COUNTER.incrementAndGet() & SEQUENCE_MASK;
 	}
 

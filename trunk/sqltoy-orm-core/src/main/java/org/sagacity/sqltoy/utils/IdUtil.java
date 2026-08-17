@@ -116,33 +116,37 @@ public class IdUtil {
 	 * @return
 	 */
 	private static long[] getCurrentValue(String identityName, int maxValue) {
-		synchronized (identityName.intern()) {
+		long[] result = new long[2];
+		tablesCurrentTimeId.compute(identityName, (k, v) -> {
 			long currentTime = System.currentTimeMillis();
-			CurrentTimeMaxValue currentValue = tablesCurrentTimeId.get(identityName);
 			// 首次获取，从1开始计数
-			if (null == currentValue) {
-				currentValue = new CurrentTimeMaxValue(currentTime, 1);
-				tablesCurrentTimeId.put(identityName, currentValue);
+			if (null == v) {
+				v = new CurrentTimeMaxValue(currentTime, 1);
 			} // 当前时间大于上次提取maxValue的时间，则从新计数
-			else if (currentTime > currentValue.getCurrentTime()) {
-				currentValue.setCurrentTime(currentTime);
-				currentValue.setValue(1);
+			else if (currentTime > v.getCurrentTime()) {
+				v.setCurrentTime(currentTime);
+				v.setValue(1);
 			} // currentTime == currentValue.getCurrentTime()
 				// 超出阀值，从下一个毫秒重新计数
-			else if (currentValue.getValue() >= maxValue) {
-				// 延时1毫秒
-				try {
-					Thread.sleep(1);
-				} catch (Exception e) {
-					Thread.currentThread().interrupt();
+			else if (v.getValue() >= maxValue) {
+				// 确保时间推进到下一毫秒，避免计数器重置后与同毫秒内的历史值重复
+				// 用busy-wait而非Thread.sleep(1)：sleep(1)实际耗时≥2ms，在compute锁内
+				// 会阻塞同表名其他线程，busy-wait通常<2ms且保证时间已前进
+				long newTime = System.currentTimeMillis();
+				while (newTime <= v.getCurrentTime()) {
+					newTime = System.currentTimeMillis();
 				}
-				currentValue.setCurrentTime(System.currentTimeMillis());
-				currentValue.setValue(1);
+				v.setCurrentTime(newTime);
+				v.setValue(1);
 			} else {
-				currentValue.setValue(currentValue.getValue() + 1);
+				v.setValue(v.getValue() + 1);
 			}
-			return new long[] { currentValue.getCurrentTime(), currentValue.getValue() };
-		}
+			// 必须在compute原子区域内捕获值，避免返回后被其他线程修改导致重复
+			result[0] = v.getCurrentTime();
+			result[1] = v.getValue();
+			return v;
+		});
+		return result;
 	}
 
 	/**
@@ -152,15 +156,30 @@ public class IdUtil {
 	public static String getDebugId() {
 		// 当前时间(秒)
 		String nowTime = DateUtil.formatDate(new Date(), "HH:mm:ss");
-		// 后7位纳秒间隔
-		String nanoTime = "" + System.nanoTime();
-		int length = nanoTime.length();
-		if (nanoTime.endsWith("00")) {
-			nanoTime = nanoTime.substring(length - 9, length - 2);
-		} else {
-			nanoTime = nanoTime.substring(length - 7);
+		return buildDebugId(nowTime, System.nanoTime());
+	}
+
+	/**
+	 * @TODO 组装debugId,nanoTime参数化便于测试负值场景
+	 * @param nowTime  当前时刻字符串
+	 * @param nanoTime 纳秒计数
+	 * @return
+	 */
+	static String buildDebugId(String nowTime, long nanoTime) {
+		// nanoTime原点由JVM任选(契约允许为负,部分平台开机初期为负值),无条件剥离负号再截取
+		String nanoTimeStr = Long.toString(nanoTime).replace("-", "");
+		int length = nanoTimeStr.length();
+		// 极端情况下nanoTime位数不足，补齐避免substring越界
+		if (length < 9) {
+			nanoTimeStr = StringUtil.addLeftZero2Len(nanoTimeStr, 9);
+			length = nanoTimeStr.length();
 		}
-		return nowTime.concat(".").concat(nanoTime);
+		if (nanoTimeStr.endsWith("00")) {
+			nanoTimeStr = nanoTimeStr.substring(length - 9, length - 2);
+		} else {
+			nanoTimeStr = nanoTimeStr.substring(length - 7);
+		}
+		return nowTime.concat(".").concat(nanoTimeStr);
 	}
 
 	/**
@@ -234,7 +253,7 @@ public class IdUtil {
 				serverIdentity = serverIdentity.substring(serverIdentity.length() - size);
 			}
 			// 补足位数
-			serverIdentity = StringUtil.addLeftZero2Len(ipLastNumStr, size);
+			serverIdentity = StringUtil.addLeftZero2Len(serverIdentity, size);
 		}
 		// 无网络无法获取ip场景下 update 2021-09-17
 		if (serverIdentity == null) {

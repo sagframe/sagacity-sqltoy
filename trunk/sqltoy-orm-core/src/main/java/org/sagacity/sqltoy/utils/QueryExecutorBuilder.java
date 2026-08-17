@@ -267,18 +267,20 @@ public class QueryExecutorBuilder {
 		}
 		// 兼容参数属性只出现在cache-arg 中
 		if (queryExecutorExtend.paramFilters != null && !queryExecutorExtend.paramFilters.isEmpty()) {
+			String cacheArgName;
 			for (ParamsFilter filter : queryExecutorExtend.paramFilters) {
 				if ("cache-arg".equals(filter.getType())) {
-					key = filter.getParams()[0].toLowerCase();
+					cacheArgName = filter.getParams()[0];
+					key = cacheArgName.toLowerCase();
 					if (!keys.contains(key)) {
 						keys.add(key);
-						params.add(key);
+						params.add(cacheArgName);
 					}
 					if (filter.getAsName() != null) {
 						key = filter.getAsName().toLowerCase();
 						if (!keys.contains(key)) {
 							keys.add(key);
-							params.add(key);
+							params.add(filter.getAsName());
 						}
 					}
 				}

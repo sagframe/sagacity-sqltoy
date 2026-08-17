@@ -1,6 +1,8 @@
 package org.sagacity.sqltoy.utils;
 
 import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -13,8 +15,10 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
  * @version v1.0, Date:2020-05-06
  */
 public class ReservedWordsUtil {
-	private static HashSet<String> reservedWords = new HashSet<String>();
-	private static Pattern singlePattern = null;
+	// 保留字集合与组合正则:写侧(多context初始化的put)synchronized + 整体替换后经volatile发布,
+	// 读侧(全部业务sql处理线程)无锁读取已发布快照,不修改既发布对象
+	private static volatile Set<String> reservedWords = ConcurrentHashMap.newKeySet();
+	private static volatile Pattern singlePattern = null;
 
 	private ReservedWordsUtil() {
 	}
@@ -23,25 +27,27 @@ public class ReservedWordsUtil {
 	 * @param words
 	 * @TODO 加载保留字, 形成一个正则表达式
 	 */
-	public static void put(String words) {
+	public static synchronized void put(String words) {
 		if (StringUtil.isBlank(words)) {
 			return;
 		}
-		String[] strs = words.split("\\,");
-		String regex;
-		String fullRegex = "";
-		int index = 0;
-		for (String str : strs) {
-			regex = str.trim().toLowerCase();
+		// 合并此前批次的保留字,保证组合正则与集合内容一致(原实现正则只含当次批次)
+		Set<String> merged = new HashSet<String>(reservedWords);
+		for (String str : words.split("\\,")) {
+			String regex = str.trim().toLowerCase();
 			if (!"".equals(regex)) {
-				reservedWords.add(regex);
-				if (index > 0) {
-					fullRegex = fullRegex.concat("|");
-				}
-				fullRegex = fullRegex.concat(regex);
-				index++;
+				merged.add(regex);
 			}
 		}
+		StringBuilder fullRegex = new StringBuilder();
+		for (String word : merged) {
+			if (fullRegex.length() > 0) {
+				fullRegex.append('|');
+			}
+			fullRegex.append(word);
+		}
+		// 先发布集合再发布正则(均为volatile),读侧按快照消费
+		reservedWords = merged;
 		singlePattern = Pattern.compile("(?i)(\\W||\\s)(`|'|\"|\\[)(" + fullRegex + ")(`|'|\"|\\])(\\s||\\W)");
 	}
 
@@ -56,7 +62,7 @@ public class ReservedWordsUtil {
 			return sql;
 		}
 		if (dbType == DBType.MYSQL || dbType == DBType.TIDB || dbType == DBType.MYSQL57 || dbType == DBType.TDENGINE
-				|| dbType == DBType.DORIS|| dbType == DBType.STARROCKS) {
+				|| dbType == DBType.DORIS || dbType == DBType.STARROCKS) {
 			return sql.replaceAll("\\[", "`").replaceAll("\\]", "`");
 		}
 		if (dbType == DBType.ORACLE || dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14
@@ -66,7 +72,7 @@ public class ReservedWordsUtil {
 			return sql.replaceAll("\\[", "\"").replaceAll("\\]", "\"");
 		}
 		if (dbType == DBType.H2) {
-			return sql.replaceAll("\\[", "'").replaceAll("\\]", "'");
+			return sql.replaceAll("\\[", "\"").replaceAll("\\]", "\"");
 		}
 		if (dbType == null || dbType == DBType.SQLSERVER || dbType == DBType.SQLITE) {
 			return sql;
@@ -98,11 +104,11 @@ public class ReservedWordsUtil {
 			return "[".concat(column).concat("]");
 		}
 		if (dbType == DBType.MYSQL || dbType == DBType.TIDB || dbType == DBType.MYSQL57 || dbType == DBType.TDENGINE
-				|| dbType == DBType.DORIS|| dbType == DBType.STARROCKS) {
+				|| dbType == DBType.DORIS || dbType == DBType.STARROCKS) {
 			return "`".concat(column).concat("`");
 		}
 		if (dbType == DBType.H2) {
-			return "'".concat(column).concat("'");
+			return "\"".concat(column).concat("\"");
 		}
 		if (dbType == DBType.ORACLE || dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14
 				|| dbType == DBType.KINGBASE || dbType == DBType.DB2 || dbType == DBType.GAUSSDB
@@ -121,7 +127,9 @@ public class ReservedWordsUtil {
 	 * @return
 	 */
 	public static String convertSql(String sql, Integer dbType) {
-		if (reservedWords.isEmpty()) {
+		// 按发布快照读取,模式判空防御极端可见性窗口
+		Pattern pattern = singlePattern;
+		if (reservedWords.isEmpty() || pattern == null) {
 			return sql;
 		}
 		if (dbType == null || dbType == DBType.ES || dbType == DBType.MONGO || dbType == DBType.UNDEFINE) {
@@ -132,7 +140,7 @@ public class ReservedWordsUtil {
 		int start = 0;
 		int end = 0;
 		String keyWord;
-		matcher = singlePattern.matcher(sql);
+		matcher = pattern.matcher(sql);
 		int subSize = 0;
 		while (matcher.find()) {
 			subSize = 0;
@@ -157,10 +165,10 @@ public class ReservedWordsUtil {
 			} else if (dbType == DBType.SQLSERVER || dbType == DBType.SQLITE) {
 				sqlBuff.append("[").append(keyWord).append("]");
 			} else if (dbType == DBType.MYSQL || dbType == DBType.TIDB || dbType == DBType.MYSQL57
-					|| dbType == DBType.TDENGINE || dbType == DBType.DORIS|| dbType == DBType.STARROCKS) {
+					|| dbType == DBType.TDENGINE || dbType == DBType.DORIS || dbType == DBType.STARROCKS) {
 				sqlBuff.append("`").append(keyWord).append("`");
 			} else if (dbType == DBType.H2) {
-				sqlBuff.append("'").append(keyWord).append("'");
+				sqlBuff.append("\"").append(keyWord).append("\"");
 			} else {
 				sqlBuff.append(keyWord);
 			}

@@ -34,6 +34,7 @@ import org.sagacity.sqltoy.config.model.OperateType;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlType;
+import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.model.LockMode;
@@ -49,11 +50,14 @@ import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.DateUtil;
+import org.sagacity.sqltoy.utils.NumberUtil;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.ResultUtils;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.SqlUtilsExt;
 import org.sagacity.sqltoy.utils.StringUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @project sagacity-sqltoy
@@ -64,6 +68,8 @@ import org.sagacity.sqltoy.utils.StringUtil;
  *         id=null改为id is null
  */
 public class DefaultDialectUtils {
+	private final static Logger logger = LoggerFactory.getLogger(DefaultDialectUtils.class);
+
 	/**
 	 * @TODO 取随机记录
 	 * @param sqlToyContext
@@ -88,14 +94,20 @@ public class DefaultDialectUtils {
 		// row_number 再排序方式性能稍好 同时也可以保证通用性
 		StringBuilder sql = new StringBuilder();
 		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
-		// 给原始sql标记上特殊的开始和结尾，便于sql拦截器快速定位到原始sql并进行条件补充
-		innerSql = SqlUtilsExt.markOriginalSql(innerSql);
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect));
 			if (!sqlToyConfig.isIgnoreBracket()) {
 				sql.append(" (");
 			}
 		}
+		// 存在with语句,将with部分剥离置前,避免replaceFirst将随机列误插入with定义内部
+		if (sqlToyConfig.isHasWith()) {
+			SqlWithAnalysis sqlWith = new SqlWithAnalysis(innerSql);
+			sql.append(sqlWith.getWithSql());
+			innerSql = sqlWith.getRejectWithSql();
+		}
+		// 给原始sql标记上特殊的开始和结尾，便于sql拦截器快速定位到原始sql并进行条件补充
+		innerSql = SqlUtilsExt.markOriginalSql(innerSql);
 		sql.append("select " + SqlToyConstants.INTERMEDIATE_TABLE1 + ".* from (");
 		// sql中是否存在排序或union,存在order 或union 则在sql外包裹一层
 		if (DialectUtils.hasOrderByOrUnion(innerSql)) {
@@ -472,10 +484,15 @@ public class DefaultDialectUtils {
 								// 存在修改记录
 								if (hasUpdateRow) {
 									SqlExecuteStat.debug("执行updateRow", "记录存在调用updateRowHandler.updateRow!");
-									// 存在数据版本:1、校验当前的版本是否为null(目前跳过)；2、对比传递过来的版本值跟数据库中的值是否一致；3、修改数据库中数据版本+1
+									// 存在数据版本:1、校验当前的版本是否为null;2、对比传递过来的版本值跟数据库中的值是否一致；3、修改数据库中数据版本+1
 									if (dataVersion != null) {
 										String nowVersion = finalRs
 												.getString(entityMeta.getColumnName(dataVersionField));
+										if (nowVersion == null) {
+											throw new IllegalArgumentException(
+													"表:" + entityMeta.getTableName() + " 的数据版本字段:" + dataVersionField
+															+ " 在数据库中为null,无法执行版本校验与更新,请补齐历史数据的版本值!");
+										}
 										if (entityVersion != null && !entityVersion.toString().equals(nowVersion)) {
 											throw new IllegalArgumentException("表:" + entityMeta.getTableName()
 													+ " 存在版本@DataVersion配置，在updateSaveFetch做更新时，属性:" + dataVersionField
@@ -486,13 +503,14 @@ public class DefaultDialectUtils {
 										if (dataVersion.isStartDate()) {
 											String nowDate = DateUtil.formatDate(DateUtil.getNowTime(),
 													DateUtil.FORMAT.DATE_8CHAR);
-											if (nowVersion.startsWith(nowDate)) {
+											if (nowVersion.startsWith(nowDate)
+													&& NumberUtil.isInteger(nowVersion.substring(8))) {
 												nowVersion = nowDate + (Integer.parseInt(nowVersion.substring(8)) + 1);
 											} else {
 												nowVersion = nowDate + 1;
 											}
 										} else {
-											nowVersion = "" + (Integer.parseInt(nowVersion) + 1);
+											nowVersion = "" + (Integer.parseInt(nowVersion.trim()) + 1);
 										}
 										// 修改数据版本
 										SqlUtilsExt.resultUpdate(typeHandler, conn, finalRs,
@@ -760,6 +778,8 @@ public class DefaultDialectUtils {
 										colMeta.setAutoIncrement(true);
 									}
 								} catch (Exception e) {
+									// 部分驱动不支持IS_AUTOINCREMENT伪列,保持默认非自增
+									logger.debug("读取列的IS_AUTOINCREMENT信息失败(驱动可能不支持)!", e);
 								}
 							}
 							if (rs.getInt("NULLABLE") == 1) {
@@ -852,10 +872,13 @@ public class DefaultDialectUtils {
 	private static Map<String, ColumnMeta> getOracleTableIndexes(String catalog, String schema, String tableName,
 			Connection conn, final Integer dbType, String dialect) throws Exception {
 		String tableNameUp = tableName.toUpperCase();
+		// 表名经?参数绑定,避免直接拼接形成注入面(同文件其他元数据查询一致)
 		String sql = "SELECT t1.INDEX_NAME,t1.COLUMN_NAME,t0.UNIQUENESS FROM USER_IND_COLUMNS t1 LEFT JOIN "
-				+ " (SELECT INDEX_NAME,UNIQUENESS FROM USER_INDEXES WHERE TABLE_NAME ='" + tableNameUp + "') t0 ON "
-				+ " t1.INDEX_NAME = t0.INDEX_NAME WHERE TABLE_NAME ='" + tableNameUp + "'";
+				+ " (SELECT INDEX_NAME,UNIQUENESS FROM USER_INDEXES WHERE TABLE_NAME =?) t0 ON "
+				+ " t1.INDEX_NAME = t0.INDEX_NAME WHERE TABLE_NAME =?";
 		PreparedStatement pst = conn.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+		pst.setString(1, tableNameUp);
+		pst.setString(2, tableNameUp);
 		ResultSet rs = pst.executeQuery();
 		return (Map<String, ColumnMeta>) SqlUtil.preparedStatementProcess(null, pst, rs,
 				new PreparedStatementResultHandler() {
@@ -898,7 +921,8 @@ public class DefaultDialectUtils {
 		try {
 			rs = conn.getMetaData().getPrimaryKeys(realCatalog, realSchema, realTableName);
 		} catch (Exception e) {
-
+			// 部分库(如starrocks)不支持getPrimaryKeys,失败后走mysql desc等回退路径
+			logger.debug("通过getMetaData获取表:{}主键信息失败,将尝试回退方式!", realTableName, e);
 		}
 		if (rs != null) {
 			return (Map<String, ColumnMeta>) SqlUtil.preparedStatementProcess(null, null, rs,
