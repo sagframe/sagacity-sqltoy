@@ -710,6 +710,39 @@ public class SqlConfigParseUtilsTest {
 	}
 
 	@Test
+	public void testLikeEscapeClickHouseDialect() {
+		// clickhouse的LIKE默认转义符就是\,且v26.6之前不支持ESCAPE子句,因此不追加ESCAPE
+		String sql = "select * from table t where t.name like :name";
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "name" }, new Object[] { "张_三" },
+				"clickhouse");
+		String resultSql = result.getSql();
+		assertFalse(resultSql.contains("ESCAPE"), "clickhouse不应追加ESCAPE子句: " + resultSql);
+		assertEquals("%张\\_三%", result.getParamsValue()[0], "clickhouse值仍按\\转义,配合默认转义符生效");
+	}
+
+	@Test
+	public void testLikeEscapeImpalaDialect() {
+		// impala的LIKE默认转义符就是\,且不支持ESCAPE子句,因此不追加ESCAPE
+		String sql = "select * from table t where t.name like :name";
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "name" }, new Object[] { "张_三" },
+				"impala");
+		String resultSql = result.getSql();
+		assertFalse(resultSql.contains("ESCAPE"), "impala不应追加ESCAPE子句: " + resultSql);
+		assertEquals("%张\\_三%", result.getParamsValue()[0], "impala值仍按\\转义,配合默认转义符生效");
+	}
+
+	@Test
+	public void testLikeEscapeTdengineDialect() {
+		// tdengine的LIKE默认转义符就是\,且不支持ESCAPE子句,因此不追加ESCAPE
+		String sql = "select * from table t where t.name like :name";
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "name" }, new Object[] { "张_三" },
+				"tdengine");
+		String resultSql = result.getSql();
+		assertFalse(resultSql.contains("ESCAPE"), "tdengine不应追加ESCAPE子句: " + resultSql);
+		assertEquals("%张\\_三%", result.getParamsValue()[0], "tdengine值仍按\\转义,配合默认转义符生效");
+	}
+
+	@Test
 	public void testLikeNoSpecialChars() {
 		// value不含_和%: 应包裹%但不产生多余转义
 		String sql = "select * from table t where t.name like :name";
