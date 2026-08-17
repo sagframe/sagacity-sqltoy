@@ -111,7 +111,7 @@ public class TranslateConfigModel implements Serializable {
 	 */
 	private int dynamicCacheMaxSize = 100000;
 
-	private int dynamiceCacheInitSize = 10000;
+	private int dynamicCacheInitSize = 10000;
 
 	private float dynamicCacheLoadFactor = 0.75F;
 
@@ -383,12 +383,12 @@ public class TranslateConfigModel implements Serializable {
 		this.dynamicCacheMaxSize = dynamicCacheMaxSize;
 	}
 
-	public int getDynamiceCacheInitSize() {
-		return dynamiceCacheInitSize;
+	public int getDynamicCacheInitSize() {
+		return dynamicCacheInitSize;
 	}
 
-	public void setDynamiceCacheInitSize(int dynamiceCacheInitSize) {
-		this.dynamiceCacheInitSize = dynamiceCacheInitSize;
+	public void setDynamicCacheInitSize(int dynamicCacheInitSize) {
+		this.dynamicCacheInitSize = dynamicCacheInitSize;
 	}
 
 	public float getDynamicCacheLoadFactor() {

@@ -66,7 +66,7 @@ public class FIFODynamicFetchCacheManager implements DynamicFecthCacheManager {
 				});
 		FIFOMap<String, Object[]> cacheDatas = cacheElements.computeIfAbsent(cacheTypeLower, k -> {
 			float loadFactor = cacheModel.getDynamicCacheLoadFactor();
-			FIFOMap<String, Object[]> map = new FIFOMap(cacheModel.getDynamiceCacheInitSize(),
+			FIFOMap<String, Object[]> map = new FIFOMap(cacheModel.getDynamicCacheInitSize(),
 					cacheModel.getDynamicCacheMaxSize(), (loadFactor > 1) ? 0.75F : loadFactor, true);
 			// 可设置<=0,则不放入过期检测，则表示长期有效
 			if (cacheModel.getKeepAlive() > 0) {
