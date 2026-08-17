@@ -16,30 +16,30 @@
 						<![CDATA[全局类型sql type]]>
 						</xsd:documentation>
 					</xsd:annotation>
-					<xsd:unique name="sqlToySqlIdUnique">
-						<xsd:selector xpath="tns:sql" />
-						<xsd:field xpath="@id" />
-					</xsd:unique>
 				</xsd:element>
-				<xsd:element name="mql" type="sqlToyMqlType">
-					<xsd:unique name="sqlToyMqlIdUnique">
-						<xsd:selector xpath="tns:mql" />
-						<xsd:field xpath="@id" />
-					</xsd:unique>
-				</xsd:element>
+				<xsd:element name="mql" type="sqlToyMqlType" />
 				<xsd:element name="eql" type="sqlToyEqlType">
 					<xsd:annotation>
 						<xsd:documentation>
 						<![CDATA[elasticsearch type]]>
 						</xsd:documentation>
 					</xsd:annotation>
-					<xsd:unique name="sqlToyEqlIdUnique">
-						<xsd:selector xpath="tns:eql" />
-						<xsd:field xpath="@id" />
-					</xsd:unique>
 				</xsd:element>
 			</xsd:choice>
 		</xsd:complexType>
+		<!-- 唯一性约束的作用域是声明它的元素,必须放在sqltoy根元素上,selector才能选取其sql/mql/eql子元素实现id唯一 -->
+		<xsd:unique name="sqlToySqlIdUnique">
+			<xsd:selector xpath="tns:sql" />
+			<xsd:field xpath="@id" />
+		</xsd:unique>
+		<xsd:unique name="sqlToyMqlIdUnique">
+			<xsd:selector xpath="tns:mql" />
+			<xsd:field xpath="@id" />
+		</xsd:unique>
+		<xsd:unique name="sqlToyEqlIdUnique">
+			<xsd:selector xpath="tns:eql" />
+			<xsd:field xpath="@id" />
+		</xsd:unique>
 	</xsd:element>
 
 	<xsd:complexType name="sqlToySqlType" mixed="true">
@@ -90,14 +90,13 @@
 					<xsd:attribute name="columns" type="xsd:string"
 						use="required" />
 					<xsd:attribute name="format" use="required">
+						<xsd:annotation>
+							<xsd:documentation>
+							<![CDATA[支持任意Java日期格式,常用值通过datePatternType枚举提供输入提示]]>
+							</xsd:documentation>
+						</xsd:annotation>
 						<xsd:simpleType>
-							<xsd:restriction base="xsd:string">
-								<xsd:enumeration value="yyyy-MM-dd" />
-								<xsd:enumeration value="yyyy-MM-dd HH:mm:ss" />
-								<xsd:enumeration value="yyyyMMdd" />
-								<xsd:enumeration value="yyyy-MM" />
-								<xsd:enumeration value="MM-dd" />
-							</xsd:restriction>
+							<xsd:union memberTypes="datePatternType xsd:string" />
 						</xsd:simpleType>
 					</xsd:attribute>
 					<xsd:attribute name="locale">
@@ -508,11 +507,16 @@
 		<xsd:attribute name="blank-to-null" default="true"
 			type="xsd:boolean" />
 		<xsd:attribute name="type">
+			<xsd:annotation>
+				<xsd:documentation><![CDATA[与SqlType保持一致:search/insert/update/delete,select为历史兼容写法等同于search]]></xsd:documentation>
+			</xsd:annotation>
 			<xsd:simpleType>
 				<xsd:restriction base="xsd:string">
+					<xsd:enumeration value="search" />
 					<xsd:enumeration value="select" />
 					<xsd:enumeration value="insert" />
 					<xsd:enumeration value="update" />
+					<xsd:enumeration value="delete" />
 				</xsd:restriction>
 			</xsd:simpleType>
 		</xsd:attribute>
@@ -1244,7 +1248,20 @@
 		<xsd:attribute name="head-size" type="xsd:integer" />
 		<xsd:attribute name="tail-size" type="xsd:integer" />
 		<xsd:attribute name="mask-code" type="xsd:string" />
-		<xsd:attribute name="mask-rate" type="xsd:integer" />
+		<xsd:attribute name="mask-rate">
+			<xsd:annotation>
+				<xsd:documentation><![CDATA[离散掩码比例,支持整数、小数和百分号写法,如:50、0.5、50%]]></xsd:documentation>
+			</xsd:annotation>
+			<xsd:simpleType>
+				<xsd:union memberTypes="xsd:decimal">
+					<xsd:simpleType>
+						<xsd:restriction base="xsd:string">
+							<xsd:pattern value="\d+(\.\d+)?%" />
+						</xsd:restriction>
+					</xsd:simpleType>
+				</xsd:union>
+			</xsd:simpleType>
+		</xsd:attribute>
 	</xsd:complexType>
 
 	<xsd:complexType name="sqltoyPageOptimizeType">
@@ -1416,6 +1433,16 @@
 			</xsd:annotation>
 		</xsd:attribute>
 	</xsd:complexType>
+	<!-- 常用日期格式,配合xsd:string union使用:不限制自定义格式,仅为IDE补全提供常用值提示 -->
+	<xsd:simpleType name="datePatternType">
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="yyyy-MM-dd" />
+			<xsd:enumeration value="yyyy-MM-dd HH:mm:ss" />
+			<xsd:enumeration value="yyyyMMdd" />
+			<xsd:enumeration value="yyyy-MM" />
+			<xsd:enumeration value="MM-dd" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:simpleType name="numberFormatType">
 		<xsd:restriction base="xsd:string">
 			<xsd:enumeration value="#,###.00" />
