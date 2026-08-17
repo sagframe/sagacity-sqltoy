@@ -39,7 +39,7 @@ public class Decode extends IFunction {
 	 */
 	@Override
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
-		if (args == null || args.length < 2) {
+		if (args == null || args.length < 3) {
 			return super.IGNORE;
 		}
 		/*

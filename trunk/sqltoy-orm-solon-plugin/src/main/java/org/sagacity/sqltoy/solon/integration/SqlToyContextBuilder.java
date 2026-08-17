@@ -4,6 +4,7 @@ import static java.lang.System.err;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import org.noear.solon.core.util.ClassUtil;
 import org.sagacity.sqltoy.SqlToyContext;
@@ -66,16 +67,16 @@ public class SqlToyContextBuilder {
 
 		// 分布式id产生器实现类
 		// sqlToyContext.setDistributeIdGeneratorClass("org.sagacity.sqltoy.integration.impl.SpringRedisIdGenerator");
-		sqlToyContext.setDistributeIdGeneratorClass("org.noear.solon.extend.sqltoy.impl.SolonRedisIdGenerator");
+		sqlToyContext.setDistributeIdGeneratorClass("org.sagacity.sqltoy.solon.integration.SolonRedisIdGenerator");
 
 		// 针对Caffeine缓存指定实现类型
 		// sqlToyContext.setTranslateCaffeineManagerClass("org.sagacity.sqltoy.translate.cache.impl.TranslateCaffeineManager");
-		// caffeine 缓存转由solon cache代理
-		sqlToyContext
-				.setTranslateCaffeineManagerClass("org.noear.solon.extend.sqltoy.translate.SolonTranslateCacheManager");
+		// caffeine 缓存转由solon cache代理(核心默认的TranslateCaffeineManager在spring模块中,solon环境不存在)
+		sqlToyContext.setTranslateCaffeineManagerClass(
+				"org.sagacity.sqltoy.solon.translate.cache.impl.SolonTranslateCacheManager");
 		// 注入spring的默认mongoQuery实现类
 		// sqlToyContext.setMongoQueryClass("org.sagacity.sqltoy.integration.impl.SpringMongoQuery");
-		sqlToyContext.setMongoQueryClass("org.noear.solon.extend.sqltoy.impl.SolonMongoQuery");
+		sqlToyContext.setMongoQueryClass("org.sagacity.sqltoy.solon.integration.SolonMongoQuery");
 		// --------end 5.2 -----------------------------------------
 
 		// 当发现有重复sqlId时是否抛出异常，终止程序执行
@@ -186,7 +187,7 @@ public class SqlToyContextBuilder {
 		sqlToyContext.setBackslashEscaping(properties.getBackslashEscaping());
 		// getMetaData().getColumnLabel(i) 结果做大小写处理策略
 		if (null != properties.getColumnLabelUpperOrLower()) {
-			sqlToyContext.setColumnLabelUpperOrLower(properties.getColumnLabelUpperOrLower().toLowerCase());
+			sqlToyContext.setColumnLabelUpperOrLower(properties.getColumnLabelUpperOrLower().toLowerCase(Locale.ROOT));
 		}
 		sqlToyContext.setSecurePrivateKey(properties.getSecurePrivateKey());
 		sqlToyContext.setSecurePublicKey(properties.getSecurePublicKey());
@@ -206,18 +207,18 @@ public class SqlToyContextBuilder {
 			sqlToyContext.setDefaultStatementTimeout(properties.getDefaultStatementTimeout());
 		}
 		// 设置公共统一属性的处理器
-		String unfiyHandler = properties.getUnifyFieldsHandler();
-		if (StringUtil.isNotBlank(unfiyHandler)) {
+		String unifyHandler = properties.getUnifyFieldsHandler();
+		if (StringUtil.isNotBlank(unifyHandler)) {
 			try {
 				IUnifyFieldsHandler handler = null;
 				// 类
-				if (unfiyHandler.contains(".")) {
-					handler = ClassUtil.newInstance(Class.forName(unfiyHandler));
+				if (unifyHandler.contains(".")) {
+					handler = ClassUtil.newInstance(Class.forName(unifyHandler));
 				} // spring bean名称
-				else if (appContext.containsBean(unfiyHandler)) {
-					handler = (IUnifyFieldsHandler) appContext.getBean(unfiyHandler);
+				else if (appContext.containsBean(unifyHandler)) {
+					handler = (IUnifyFieldsHandler) appContext.getBean(unifyHandler);
 					if (handler == null) {
-						throw new ClassNotFoundException("项目中未定义unifyFieldsHandler=" + unfiyHandler + " 对应的bean!");
+						throw new ClassNotFoundException("项目中未定义unifyFieldsHandler=" + unifyHandler + " 对应的bean!");
 					}
 				}
 				if (handler != null) {
@@ -225,7 +226,7 @@ public class SqlToyContextBuilder {
 				}
 			} catch (ClassNotFoundException cne) {
 				err.println("------------------- 错误提示 ------------------------------------------- ");
-				err.println("spring.sqltoy.unifyFieldsHandler=" + unfiyHandler + " 对应类不存在,错误原因:");
+				err.println("spring.sqltoy.unifyFieldsHandler=" + unifyHandler + " 对应类不存在,错误原因:");
 				err.println("--1.您可能直接copy了参照项目的配置文件,但没有将具体的类也同步copy过来!");
 				err.println("--2.如您并不需要此功能，请将配置文件中注释掉spring.sqltoy.unifyFieldsHandler");
 				err.println("------------------------------------------------");

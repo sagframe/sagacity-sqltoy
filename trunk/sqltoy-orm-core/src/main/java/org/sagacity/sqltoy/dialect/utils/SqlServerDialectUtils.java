@@ -358,7 +358,7 @@ public class SqlServerDialectUtils {
 		} else {
 			sql.append(insertRejIdCols.toString());
 			// sequence方式主键
-			if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
+			if (PKStrategy.SEQUENCE.equals(pkStrategy)) {
 				columnName = entityMeta.getColumnName(entityMeta.getIdArray()[0]);
 				columnName = ReservedWordsUtil.convertWord(columnName, dbType);
 				sql.append(",");
@@ -372,7 +372,7 @@ public class SqlServerDialectUtils {
 				} else {
 					sql.append(sequence);
 				}
-			} else if (pkStrategy.equals(PKStrategy.IDENTITY)) {
+			} else if (PKStrategy.IDENTITY.equals(pkStrategy)) {
 				columnName = entityMeta.getColumnName(entityMeta.getIdArray()[0]);
 				columnName = ReservedWordsUtil.convertWord(columnName, dbType);
 				if (isAssignPK) {
@@ -521,7 +521,7 @@ public class SqlServerDialectUtils {
 				sql.append(insertRejIdColValues);
 			} else {
 				// sequence方式主键
-				if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
+				if (PKStrategy.SEQUENCE.equals(pkStrategy)) {
 					columnName = entityMeta.getColumnName(entityMeta.getIdArray()[0]);
 					columnName = ReservedWordsUtil.convertWord(columnName, dbType);
 					sql.append(",");
@@ -535,7 +535,7 @@ public class SqlServerDialectUtils {
 					} else {
 						sql.append(sequence);
 					}
-				} else if (pkStrategy.equals(PKStrategy.IDENTITY)) {
+				} else if (PKStrategy.IDENTITY.equals(pkStrategy)) {
 					columnName = entityMeta.getColumnName(entityMeta.getIdArray()[0]);
 					columnName = ReservedWordsUtil.convertWord(columnName, dbType);
 					if (isAssignPK) {
@@ -605,7 +605,7 @@ public class SqlServerDialectUtils {
 			columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
 			if (fieldMeta.isPK()) {
 				// identity主键策略，且支持主键手工赋值
-				if (pkStrategy.equals(PKStrategy.IDENTITY)) {
+				if (PKStrategy.IDENTITY.equals(pkStrategy)) {
 					if (isAssignPK) {
 						if (!isStart) {
 							sql.append(",");
@@ -615,7 +615,7 @@ public class SqlServerDialectUtils {
 						values.append("?");
 						isStart = false;
 					}
-				} else if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
+				} else if (PKStrategy.SEQUENCE.equals(pkStrategy)) {
 					if (!isStart) {
 						sql.append(",");
 						values.append(",");
@@ -642,7 +642,8 @@ public class SqlServerDialectUtils {
 					sql.append(",");
 					values.append(",");
 				}
-				sql.append(fieldMeta.getColumnName());
+				// 非主键列同样做保留字转换(与主键分支一致,保留字列如key/value/level等生成非法insert且被持久缓存)
+				sql.append(ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType));
 				// 2023-5-11 新增操作待增加对default值的处理,nvl(?,current_timestamp)
 				currentTimeStr = SqlUtil.getDBTime(dbType, fieldMeta, createSqlTimeFields);
 				if (null != currentTimeStr) {
@@ -677,8 +678,8 @@ public class SqlServerDialectUtils {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		// save行为根据主键是否赋值情况调整最终的主键策略
 		PKStrategy pkStrategy = DialectUtils.getSavePKStrategy(entityMeta, entity, dbType);
-		final boolean isIdentity = pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY);
-		final boolean isSequence = pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE);
+		final boolean isIdentity = pkStrategy != null && PKStrategy.IDENTITY.equals(pkStrategy);
+		final boolean isSequence = pkStrategy != null && PKStrategy.SEQUENCE.equals(pkStrategy);
 		String insertSql = generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta, tableName,
 				pkStrategy, "isnull", "@mySeqVariable", isIdentity ? false : true);
 		if (isSequence) {
@@ -881,8 +882,8 @@ public class SqlServerDialectUtils {
 	private static Long saveAll(SqlToyContext sqlToyContext, EntityMeta entityMeta, PKStrategy pkStrategy,
 			boolean isAssignPK, String insertSql, List<?> entities, ReflectPropsHandler reflectPropsHandler,
 			Connection conn, final Integer dbType, final Boolean autoCommit) throws Exception {
-		boolean isIdentity = pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY);
-		boolean isSequence = pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE);
+		boolean isIdentity = pkStrategy != null && PKStrategy.IDENTITY.equals(pkStrategy);
+		boolean isSequence = pkStrategy != null && PKStrategy.SEQUENCE.equals(pkStrategy);
 		String[] reflectColumns;
 		if ((isIdentity && !isAssignPK) || (isSequence && !isAssignPK)) {
 			reflectColumns = entityMeta.getRejectIdFieldArray(true);
@@ -1076,15 +1077,15 @@ public class SqlServerDialectUtils {
 		for (int i = 0; i < chipSize; i++) {
 			tmp = sqlChips[i];
 			if (tmp.toLowerCase().indexOf(realTableName.toLowerCase()) != -1) {
-				if ("as".equals(sqlChips[i + 1].toLowerCase())) {
+				if (i + 2 < chipSize && "as".equals(sqlChips[i + 1].toLowerCase())) {
 					regex = realTableName.concat("\\s+as\\s+").concat(sqlChips[i + 2]);
 					replaceStr = realTableName.concat(" as ").concat(sqlChips[i + 2]);
 					break;
-				} else if ("where".equals(sqlChips[i + 2].toLowerCase())) {
+				} else if (i + 2 < chipSize && "where".equals(sqlChips[i + 2].toLowerCase())) {
 					regex = realTableName.concat("\\s+").concat(sqlChips[i + 1]);
 					replaceStr = realTableName.concat(" ").concat(sqlChips[i + 1]);
 					break;
-				} else if (",".equals(sqlChips[i + 2])) {
+				} else if (i + 2 < chipSize && ",".equals(sqlChips[i + 2])) {
 					regex = realTableName.concat("\\s+").concat(sqlChips[i + 1]).concat(",");
 					replaceStr = realTableName.concat(" ").concat(sqlChips[i + 1]);
 					break;
@@ -1101,6 +1102,10 @@ public class SqlServerDialectUtils {
 					.concat(" with (rowlock xlock) ").concat((regex.endsWith(",") ? "," : ""))));
 			break;
 		case UPGRADE_NOWAIT:
+			// nowait语义是拿不到锁立即报错,不能用readpast(会静默跳过被锁行)
+			loadSql = selectPart.concat(fromPart.replaceFirst("(?i)".concat(regex), replaceStr.replace(",", "")
+					.concat(" with (rowlock xlock nowait) ").concat((regex.endsWith(",") ? "," : ""))));
+			break;
 		case UPGRADE_SKIPLOCK:
 			loadSql = selectPart.concat(fromPart.replaceFirst("(?i)".concat(regex), replaceStr.replace(",", "")
 					.concat(" with (rowlock readpast) ").concat((regex.endsWith(",") ? "," : ""))));
@@ -1229,10 +1234,10 @@ public class SqlServerDialectUtils {
 		if (pkStrategy == null) {
 			return true;
 		}
-		if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
+		if (PKStrategy.SEQUENCE.equals(pkStrategy)) {
 			return true;
 		}
-		if (pkStrategy.equals(PKStrategy.IDENTITY)) {
+		if (PKStrategy.IDENTITY.equals(pkStrategy)) {
 			return false;
 		}
 		return true;

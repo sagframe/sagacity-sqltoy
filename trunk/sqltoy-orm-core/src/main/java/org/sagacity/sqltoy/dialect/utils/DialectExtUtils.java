@@ -90,7 +90,7 @@ public class DialectExtUtils {
 			columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
 			if (fieldMeta.isPK()) {
 				// identity主键策略，且支持主键手工赋值
-				if (pkStrategy.equals(PKStrategy.IDENTITY)) {
+				if (PKStrategy.IDENTITY.equals(pkStrategy)) {
 					// 目前只有mysql支持
 					if (isAssignPK) {
 						if (!isStart) {
@@ -102,7 +102,7 @@ public class DialectExtUtils {
 						isStart = false;
 					}
 				} // sequence 策略，oracle12c之后的identity机制统一转化为sequence模式
-				else if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
+				else if (PKStrategy.SEQUENCE.equals(pkStrategy)) {
 					if (!isStart) {
 						sql.append(",");
 						values.append(",");
@@ -309,6 +309,12 @@ public class DialectExtUtils {
 			String tableName) {
 		// 在无主键的情况下产生insert sql语句
 		String realTable = entityMeta.getSchemaTable(tableName, dbType);
+		// postgresql15+ 不支持别名,目标表列限定只能用不带schema的表名(schema.table.col三段式列引用非法)
+		String pgNoSchemaTable = ReservedWordsUtil.convertWord(
+				(StringUtil.isBlank(tableName)) ? entityMeta.getTableName() : tableName, dbType);
+		if (entityMeta.getSchema() != null && pgNoSchemaTable.startsWith(entityMeta.getSchema().concat("."))) {
+			pgNoSchemaTable = pgNoSchemaTable.substring(entityMeta.getSchema().length() + 1);
+		}
 		if (entityMeta.getIdArray() == null && entityMeta.getUniqueIndex() == null) {
 			return generateInsertSql(unifyFieldsHandler, dbType, entityMeta, pkStrategy, isNullFunction, sequence,
 					isAssignPK, realTable);
@@ -347,7 +353,7 @@ public class DialectExtUtils {
 				sql.append(",");
 			}
 			// postgresql15+ 需要case(? as type) as column
-			if (DBType.POSTGRESQL == dbType) {
+			if (DBType.POSTGRESQL == dbType || DBType.KINGBASE == dbType) {
 				PostgreSqlDialectUtils.wrapSelectFields(sql, columnName, fieldMeta);
 			} else if (DBType.GAUSSDB == dbType || DBType.OPENGAUSS == dbType || DBType.MOGDB == dbType
 					|| DBType.VASTBASE == dbType || DBType.STARDB == dbType || DBType.OSCAR == dbType) {
@@ -381,7 +387,7 @@ public class DialectExtUtils {
 			}
 			// postgresql15+ 不支持别名
 			if (DBType.POSTGRESQL == dbType) {
-				sql.append(realTable + ".");
+				sql.append(pgNoSchemaTable + ".");
 			} else {
 				sql.append("ta.");
 			}
@@ -440,7 +446,7 @@ public class DialectExtUtils {
 				sql.append(insertRejIdColValues);
 			} else {
 				// sequence方式主键
-				if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
+				if (PKStrategy.SEQUENCE.equals(pkStrategy)) {
 					columnName = entityMeta.getColumnName(entityMeta.getIdArray()[0]);
 					columnName = ReservedWordsUtil.convertWord(columnName, dbType);
 					sql.append(",");
@@ -454,7 +460,7 @@ public class DialectExtUtils {
 					} else {
 						sql.append(sequence);
 					}
-				} else if (pkStrategy.equals(PKStrategy.IDENTITY)) {
+				} else if (PKStrategy.IDENTITY.equals(pkStrategy)) {
 					columnName = entityMeta.getColumnName(entityMeta.getIdArray()[0]);
 					columnName = ReservedWordsUtil.convertWord(columnName, dbType);
 					if (isAssignPK) {
@@ -529,7 +535,7 @@ public class DialectExtUtils {
 			columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
 			if (fieldMeta.isPK()) {
 				// identity主键策略，且支持主键手工赋值
-				if (pkStrategy.equals(PKStrategy.IDENTITY)) {
+				if (PKStrategy.IDENTITY.equals(pkStrategy)) {
 					if (isAssignPK) {
 						if (!isStart) {
 							sql.append(",");
@@ -539,7 +545,7 @@ public class DialectExtUtils {
 						values.append("?");
 						isStart = false;
 					}
-				} else if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
+				} else if (PKStrategy.SEQUENCE.equals(pkStrategy)) {
 					if (!isStart) {
 						sql.append(",");
 						values.append(",");

@@ -334,7 +334,6 @@ public class DateUtilTest {
 		assertTrue(week >= 0, "Should not throw NPE on unparseable input");
 	}
 
-
 	@Test
 	public void testGetIntervalDays() {
 		assertEquals(0, DateUtil.getIntervalDays("2023-10-05", "2023-10-05"));
@@ -343,7 +342,6 @@ public class DateUtilTest {
 		assertEquals(-1, DateUtil.getIntervalDays("2023-10-06", "2023-10-05"));
 		assertEquals(365, DateUtil.getIntervalDays("2023-01-01", "2024-01-01"));
 	}
-
 
 	@Test
 	public void testParseEnglishDateThursday() {
@@ -362,5 +360,11 @@ public class DateUtilTest {
 		assertNotNull(sqlDate);
 		assertEquals(java.sql.Date.valueOf("2023-10-05"), sqlDate);
 		assertNull(DateUtil.asSqlDate(null));
+	}
+
+	@Test
+	public void testParseTextDate() {
+		String lastUpdateTime = "2024-11-07 10:52:36.12345";
+		DateUtil.parseLocalDateTime(lastUpdateTime, "yyyy-MM-dd HH:mm:ss.SSSSS");
 	}
 }

@@ -51,6 +51,9 @@ public class IdleConnectionMonitor extends Thread {
 		this.weights = weights;
 		this.delaySeconds = delaySeconds;
 		this.intervalSeconds = intervalSeconds;
+		// daemon:无外部停止引用的场景下不阻止JVM退出
+		setDaemon(true);
+		setName("sqltoy-idle-connection-monitor");
 	}
 
 	@Override
@@ -64,13 +67,14 @@ public class IdleConnectionMonitor extends Thread {
 		} catch (InterruptedException e) {
 			isRun = false;
 		}
-		DataSource dataSource = null;
-		Connection conn = null;
-		PreparedStatement pst = null;
-		ResultSet rs = null;
 		while (isRun) {
 			int i = 0;
 			for (Object[] dataBase : dataSourceWeightConfig) {
+				// 每轮独立声明:上轮变量残留时finally会用本轮dataSource释放上一轮已归还的连接(双重归还事故)
+				DataSource dataSource = null;
+				Connection conn = null;
+				PreparedStatement pst = null;
+				ResultSet rs = null;
 				try {
 					dataSource = (DataSource) appContext.getBean(dataBase[0].toString());
 					// 权重大于零且数据源不为null
@@ -88,25 +92,25 @@ public class IdleConnectionMonitor extends Thread {
 						weights[i] = 0;
 					}
 				} catch (Exception e) {
-					e.printStackTrace();
-					// 发生异常时将权重置为0
+					logger.error("数据源:{}可用性检测失败,权重临时置0!", dataBase[0], e);
 					weights[i] = 0;
 				} finally {
 					if (rs != null) {
 						try {
 							rs.close();
 						} catch (SQLException e) {
-							e.printStackTrace();
+							logger.error("close ResultSet 方法执行异常", e);
 						}
 					}
 					if (pst != null) {
 						try {
 							pst.close();
 						} catch (SQLException e) {
-							e.printStackTrace();
+							logger.error("close PreparedStatement 方法执行异常", e);
 						}
 					}
-					if (dataSource != null) {
+					// 只归还本轮实际获取的连接,且用获取它的同一数据源
+					if (conn != null && dataSource != null) {
 						connectionFactory.releaseConnection(conn, dataSource);
 					}
 				}

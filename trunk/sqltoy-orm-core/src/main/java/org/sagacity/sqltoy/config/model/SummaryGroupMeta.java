@@ -5,6 +5,9 @@ package org.sagacity.sqltoy.config.model;
 
 import java.io.Serializable;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * @project sqltoy-orm
  * @description SummaryModel 的分组子模型
@@ -12,6 +15,8 @@ import java.io.Serializable;
  * @version v1.0,Date:2015年3月3日
  */
 public class SummaryGroupMeta implements Serializable, java.lang.Cloneable {
+	private final static Logger logger = LoggerFactory.getLogger(SummaryGroupMeta.class);
+
 	/**
 	 * 
 	 */
@@ -202,7 +207,7 @@ public class SummaryGroupMeta implements Serializable, java.lang.Cloneable {
 		try {
 			return (SummaryGroupMeta) super.clone();
 		} catch (CloneNotSupportedException e) {
-			e.printStackTrace();
+			logger.error("clone 方法执行异常", e);
 		}
 		return null;
 	}

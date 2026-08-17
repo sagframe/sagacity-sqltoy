@@ -227,14 +227,17 @@ public class PostgreSqlDialectUtils {
 			sql.append("cast(? as decimal)");
 		} else if (jdbcType == java.sql.Types.BIGINT) {
 			sql.append("cast(? as bigint)");
-		} else if (jdbcType == java.sql.Types.INTEGER || jdbcType == java.sql.Types.TINYINT) {
+		} else if (jdbcType == java.sql.Types.INTEGER || jdbcType == java.sql.Types.TINYINT
+				|| jdbcType == java.sql.Types.SMALLINT) {
 			sql.append("cast(? as integer)");
 		} else if (jdbcType == java.sql.Types.TIMESTAMP) {
 			sql.append("cast(? as timestamp)");
 		} else if (jdbcType == java.sql.Types.DOUBLE) {
-			sql.append("cast(? as double)");
+			sql.append("cast(? as double precision)");
 		} else if (jdbcType == java.sql.Types.FLOAT) {
-			sql.append("cast(? as double)");
+			sql.append("cast(? as double precision)");
+		} else if (jdbcType == java.sql.Types.REAL) {
+			sql.append("cast(? as real)");
 		} else if (jdbcType == java.sql.Types.TIME) {
 			sql.append("cast(? as time)");
 		} else if (jdbcType == java.sql.Types.CLOB) {

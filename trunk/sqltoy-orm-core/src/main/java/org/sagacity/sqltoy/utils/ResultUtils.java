@@ -20,6 +20,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -150,8 +151,10 @@ public class ResultUtils {
 			HashMap<String, Integer> labelIndexMap = new HashMap<String, Integer>();
 			String labeNameLow;
 			String colLabelUpperOrLower = sqlToyContext.getColumnLabelUpperOrLower();
+			// 元数据提取到循环外,避免每列重复调用getMetaData()
+			java.sql.ResultSetMetaData resultSetMetaData = rs.getMetaData();
 			for (int i = startColIndex; i < columnCnt; i++) {
-				labelNames[index] = rs.getMetaData().getColumnLabel(i + 1);
+				labelNames[index] = resultSetMetaData.getColumnLabel(i + 1);
 				labeNameLow = labelNames[index].toLowerCase();
 				if ("lower".equals(colLabelUpperOrLower)) {
 					labelNames[index] = labelNames[index].toLowerCase();
@@ -159,7 +162,7 @@ public class ResultUtils {
 					labelNames[index] = labelNames[index].toUpperCase();
 				}
 				labelIndexMap.put(labeNameLow, index);
-				labelTypes[index] = rs.getMetaData().getColumnTypeName(i + 1);
+				labelTypes[index] = resultSetMetaData.getColumnTypeName(i + 1);
 				// 类型因缓存翻译、格式化转为string
 				if (hasToStrCols && strTypeCols.contains(labeNameLow)) {
 					labelTypes[index] = "VARCHAR";
@@ -474,6 +477,14 @@ public class ResultUtils {
 			}
 			if (index != null) {
 				columnIndex = index.intValue();
+				// 数字列下标越界时给出指向format配置的明确错误,而非深处的IndexOutOfBoundsException
+				if (!rows.isEmpty()) {
+					int colSize = rows.get(0).size();
+					if (columnIndex < 0 || columnIndex >= colSize) {
+						throw new IllegalArgumentException("格式化配置的列(column):" + fmt.getColumn() + " 超出查询结果的列数量:"
+								+ colSize + ",请检查sql中的date-format/number-format的columns配置!");
+					}
+				}
 				for (List row : rows) {
 					value = row.get(columnIndex);
 					if (value != null) {
@@ -506,6 +517,11 @@ public class ResultUtils {
 			}
 			if (index != null) {
 				columnIndex = index.intValue();
+				// 数字列下标越界时给出指向format配置的明确错误,而非深处的IndexOutOfBoundsException
+				if (columnIndex < 0 || columnIndex >= row.size()) {
+					throw new IllegalArgumentException("格式化配置的列(column):" + fmt.getColumn() + " 超出查询结果的列数量:"
+							+ row.size() + ",请检查sql中的date-format/number-format的columns配置!");
+				}
 				value = row.get(columnIndex);
 				if (value != null) {
 					// 日期格式
@@ -787,7 +803,10 @@ public class ResultUtils {
 	 */
 	private static Object getLinkColumnsId(ResultSet rs, String[] columns) throws Exception {
 		if (columns.length == 1) {
-			return rs.getObject(columns[0]);
+			// 分组列值为null时返回"null"文本(与多列拼接分支的null文本化一致),
+			// 避免调用方identity.equals(preIdentity)对null调用equals抛NPE
+			Object singleValue = rs.getObject(columns[0]);
+			return (singleValue == null) ? "null" : singleValue;
 		}
 		StringBuilder result = new StringBuilder();
 		Object colValue;
@@ -921,6 +940,7 @@ public class ResultUtils {
 						lowKeyLabelNameMap, columnSize, fieldTranslateCacheHolders, decryptHandler, ignoreAllEmpty);
 				if (itemRow != null) {
 					// 不相等时先对最后一条记录修改，写入拼接后的字符串
+					// 注:多列link按link-sign拼接为字符串返回,不支持单列link的result-type(List/Array等)配置
 					if (notEqualCnt > 0) {
 						preItemRow = items.get(items.size() - 1);
 						for (int i = 0; i < linkColCnt; i++) {
@@ -974,7 +994,6 @@ public class ResultUtils {
 				break;
 			}
 		}
-		// if(dynamicCacheHolder.)
 		// 数据集合不为空,对最后一条记录写入循环值
 		if (notEqualCnt > 0) {
 			preItemRow = items.get(items.size() - 1);
@@ -1114,7 +1133,7 @@ public class ResultUtils {
 		Object tempObj;
 		for (int i = 0; i < length; i++) {
 			tempObj = sortList.get(i).get(groupCol);
-			if (!tempObj.equals(compareValue)) {
+			if (!Objects.equals(tempObj, compareValue)) {
 				end = i - 1;
 				sortList(sortList, orderCol, start, end, ascend);
 				start = i;
@@ -1994,6 +2013,7 @@ public class ResultUtils {
 		DynamicCacheFetch dynamicCacheFetch = sqlToyContext.getDynamicCacheFetch();
 		// 提取可批量获取的动态缓存翻译配置
 		BatchDynamicCache batchDynamicCache = TranslateUtils.getBatchTranslates(sqlToyContext, fieldTranslateHandlers);
+		// 批量翻译，暂停逐行动态获取缓存数据
 		DynamicCacheHolder dynamicCacheHolder = new DynamicCacheHolder(batchDynamicCache.getCacheAndTypeForRealMap(),
 				batchDynamicCache.getCacheAndTypeForRealType(), batchDynamicCache.getDynamicCaches());
 		// 逐行翻译

@@ -5,8 +5,11 @@ import java.sql.SQLException;
 
 import javax.sql.DataSource;
 
+import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.integration.ConnectionFactory;
 import org.sagacity.sqltoy.utils.DBTransUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @project sagacity-sqltoy
@@ -16,6 +19,7 @@ import org.sagacity.sqltoy.utils.DBTransUtils;
  * @modify 2024年4月20日,修改说明
  */
 public class SimpleConnectionFactory implements ConnectionFactory {
+	private final static Logger logger = LoggerFactory.getLogger(SimpleConnectionFactory.class);
 
 	@Override
 	public Connection getConnection(DataSource dataSource) {
@@ -25,7 +29,8 @@ public class SimpleConnectionFactory implements ConnectionFactory {
 			try {
 				conn = dataSource.getConnection();
 			} catch (SQLException e) {
-				e.printStackTrace();
+				// 返回null会让后续所有jdbc操作以远离根因的NPE暴露,必须抛出保留根因
+				throw new DataAccessException("获取数据库连接失败:" + e.getMessage(), e);
 			}
 		}
 		return conn;
@@ -42,7 +47,7 @@ public class SimpleConnectionFactory implements ConnectionFactory {
 				conn.close();
 			}
 		} catch (SQLException e) {
-			e.printStackTrace();
+			logger.error("关闭数据库连接失败:{}", e.getMessage(), e);
 		}
 	}
 

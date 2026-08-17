@@ -175,7 +175,7 @@ public class Mongo extends BaseLink {
 			}
 			return findTop(sqlToyConfig, null, realMql, (Class) extend.resultType, extend.humpMapLabel);
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("find 方法执行异常", e);
 			throw new DataAccessException(e);
 		}
 	}
@@ -207,7 +207,7 @@ public class Mongo extends BaseLink {
 			}
 			return findTop(sqlToyConfig, topSize, realMql, (Class) extend.resultType, extend.humpMapLabel);
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("findTop 方法执行异常", e);
 			throw new DataAccessException(e);
 		}
 	}
@@ -239,7 +239,7 @@ public class Mongo extends BaseLink {
 			}
 			return findPage(sqlToyConfig, page, realMql, (Class) extend.resultType, extend.humpMapLabel);
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("findPage 方法执行异常", e);
 			throw new DataAccessException(e);
 		}
 	}

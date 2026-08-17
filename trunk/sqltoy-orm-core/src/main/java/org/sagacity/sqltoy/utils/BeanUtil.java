@@ -99,6 +99,7 @@ public class BeanUtil {
 	private static String[] enumKeys = { "value", "key", "code", "id", "status", "level", "type" };
 
 	private static final Set<Class<?>> BASE_TYPE = ConcurrentHashMap.newKeySet();
+
 	static {
 		BASE_TYPE.add(String.class);
 		BASE_TYPE.add(Integer.class);
@@ -140,7 +141,7 @@ public class BeanUtil {
 			return ((Enum) enumValue).name();
 		}
 		Object result = null;
-		// 原子性初始化枚举key方法缓存,避免并发重复匹配
+		// 使用computeIfAbsent保证原子性,matchEnumKeyMethod只执行一次
 		enumGetKeyExists.computeIfAbsent(enumClass, cls -> {
 			Method m = matchEnumKeyMethod(cls, enumKeys);
 			if (m != null) {
@@ -524,7 +525,6 @@ public class BeanUtil {
 			}
 			return method.invoke(bean, args);
 		} catch (Exception e) {
-			e.printStackTrace();
 			throw e;
 		}
 	}
@@ -538,7 +538,6 @@ public class BeanUtil {
 			}
 			return method.invoke(bean, args);
 		} catch (Exception e) {
-			e.printStackTrace();
 			throw e;
 		}
 	}
@@ -579,7 +578,7 @@ public class BeanUtil {
 		}
 		return fallback;
 	}
-
+	
 	/**
 	 * @todo <b>对象比较</b>
 	 * @param target
@@ -1324,13 +1323,19 @@ public class BeanUtil {
 							// 考虑key大小写兼容
 							for (int j = 0; j < methodLength; j++) {
 								fieldLow = properties[j].toLowerCase();
+								// 属性key缺失必须补null占位,否则行长度不足,后续按下标消费整体左移错位
+								boolean matched = false;
 								iter = rowMap.entrySet().iterator();
 								while (iter.hasNext()) {
 									entry = (Map.Entry<String, Object>) iter.next();
 									if (entry.getKey().toLowerCase().equals(fieldLow)) {
 										dataList.add(entry.getValue());
+										matched = true;
 										break;
 									}
+								}
+								if (!matched) {
+									dataList.add(null);
 								}
 							}
 						}
@@ -1368,7 +1373,7 @@ public class BeanUtil {
 			}
 		} catch (Exception e) {
 			logger.error("反射Java Bean获取数据组装List集合异常!{}", e.getMessage());
-			e.printStackTrace();
+			logger.error("reflectBeansToList 方法执行异常", e);
 			throw new RuntimeException("反射Java Bean获取数据组装List集合异常!" + e.getMessage());
 		}
 		return resultList;
@@ -1650,7 +1655,7 @@ public class BeanUtil {
 			}
 		} catch (Exception e) {
 			logger.error("反射Java Bean获取数据组装List集合异常!{}", e.getMessage());
-			e.printStackTrace();
+			logger.error("reflectBeansToInnerAry 方法执行异常", e);
 			throw new RuntimeException(e);
 		}
 		return resultList;
@@ -1737,9 +1742,11 @@ public class BeanUtil {
 						types = realMethods[i].getGenericParameterTypes();
 						if (properties[i] != null) {
 							tmpStr = properties[i].toLowerCase();
+							// 先取字段注解上的sqlType
 							if (fieldTypeMap.containsKey(tmpStr)) {
 								propertySqlTypes[i] = fieldTypeMap.get(tmpStr);
-							} else if (columnTypeLength > i && columnTypes[i] != null) {
+							} // 再取sql查询getColumnType对应的类型,目前主要针对JSON/JSONB，预留GEOMETRY
+							else if (columnTypeLength > i && columnTypes[i] != null) {
 								tmpStr = columnTypes[i].toUpperCase();
 								if (tmpStr.equals("JSON")) {
 									propertySqlTypes[i] = JdbcTypes.JSON;
@@ -1933,7 +1940,7 @@ public class BeanUtil {
 			}
 		} catch (Exception e) {
 			logger.error("将集合数据反射到Java Bean过程异常!{}", e.getMessage());
-			e.printStackTrace();
+			logger.error("batchSetProperties 方法执行异常", e);
 			throw new RuntimeException("将集合数据反射到Java Bean过程异常!{}" + e.getMessage(), e);
 		}
 	}
@@ -2015,7 +2022,7 @@ public class BeanUtil {
 			}
 		} catch (Exception e) {
 			logger.error("将集合数据反射到Java Bean过程异常!{}", e.getMessage());
-			e.printStackTrace();
+			logger.error("mappingSetProperties 方法执行异常", e);
 			throw new RuntimeException("将集合数据反射到Java Bean过程异常!" + e.getMessage());
 		}
 	}
@@ -2092,7 +2099,7 @@ public class BeanUtil {
 	 */
 	public static void setProperty(Object bean, String property, Object value) throws RuntimeException {
 		String key = bean.getClass().getName().concat(":set").concat(property);
-		// 原子性缓存,避免并发重复匹配
+		// 利用缓存提升方法匹配效率
 		Method method = setMethods.computeIfAbsent(key, k -> {
 			Method m = matchSetMethods(bean.getClass(), new String[] { property })[0];
 			if (m == null) {
@@ -2113,7 +2120,7 @@ public class BeanUtil {
 			method.invoke(bean, convertType(null, value, JdbcTypes.OTHER,
 					DataType.getType(method.getParameterTypes()[0]), typeName, genericType));
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("setProperty 方法执行异常", e);
 			throw new RuntimeException(e.getMessage());
 		}
 	}
@@ -2130,7 +2137,7 @@ public class BeanUtil {
 			return ((Map) bean).get(property);
 		}
 		String key = bean.getClass().getName().concat(":get").concat(property);
-		// 原子性缓存,避免并发重复匹配
+		// 利用缓存提升方法匹配效率
 		Method method = getMethods.get(key);
 		if (method == null) {
 			Method matched = matchGetMethods(bean.getClass(), new String[] { property })[0];
@@ -2146,7 +2153,7 @@ public class BeanUtil {
 		try {
 			result = method.invoke(bean);
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("getProperty 方法执行异常", e);
 			throw new RuntimeException(e.getMessage());
 		}
 		return result;
@@ -2172,7 +2179,7 @@ public class BeanUtil {
 			return result;
 		}
 		String key = bean.getClass().getName().concat(":get").concat(realProperty);
-		// 原子性缓存,避免并发重复匹配
+		// 利用缓存提升方法匹配效率
 		Method method = getMethods.get(key);
 		if (method == null) {
 			Method matched = matchGetMethods(bean.getClass(), new String[] { realProperty })[0];
@@ -2190,7 +2197,7 @@ public class BeanUtil {
 				result = getArrayIndexValue(result, keyAndIndex.getIndex());
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("getComplexProperty 方法执行异常", e);
 			throw new RuntimeException(e.getMessage());
 		}
 		return result;
@@ -2276,113 +2283,86 @@ public class BeanUtil {
 	 * @return
 	 */
 	public static Object convertArray(Object values, String typeName) {
+		if (values == null || typeName == null || !values.getClass().isArray()) {
+			return values;
+		}
 		// 类型完全一致
 		if (typeName.equals(values.getClass().getTypeName())) {
 			return values;
 		}
-		Object[] array = (Object[]) values;
-		int index = 0;
-		if ("java.lang.String[]".equals(typeName) && !(values instanceof String[])) {
-			String[] result = new String[array.length];
-			for (Object obj : array) {
-				if (obj != null) {
-					result[index] = obj.toString();
-				}
-				index++;
-			}
-			return result;
+		Class componentType = getArrayComponentType(typeName);
+		// 不在支持类型范围内原样返回
+		if (componentType == null) {
+			return values;
 		}
-		if ("java.lang.Integer[]".equals(typeName) && !(values instanceof Integer[])) {
-			Integer[] result = new Integer[array.length];
-			for (Object obj : array) {
-				if (obj != null) {
-					result[index] = Integer.valueOf(obj.toString());
-				}
-				index++;
+		// 通过反射Array统一处理原始类型数组和对象数组(自动装箱拆箱),
+		// 避免原先(Object[])强转导致原始类型数组在任何分支执行前就抛ClassCastException
+		int length = java.lang.reflect.Array.getLength(values);
+		Object result = java.lang.reflect.Array.newInstance(componentType, length);
+		for (int i = 0; i < length; i++) {
+			Object item = java.lang.reflect.Array.get(values, i);
+			if (item != null) {
+				java.lang.reflect.Array.set(result, i, parseArrayItem(componentType, item.toString()));
 			}
-			return result;
 		}
-		if ("java.lang.Long[]".equals(typeName) && !(values instanceof Long[])) {
-			Long[] result = new Long[array.length];
-			for (Object obj : array) {
-				if (obj != null) {
-					result[index] = Long.valueOf(obj.toString());
-				}
-				index++;
-			}
-			return result;
+		return result;
+	}
+
+	/**
+	 * @TODO 目标数组类型名称对应的组件类型,不在支持范围返回null
+	 * @param typeName
+	 * @return
+	 */
+	private static Class getArrayComponentType(String typeName) {
+		switch (typeName) {
+		case "java.lang.String[]":
+			return String.class;
+		case "java.lang.Integer[]":
+			return Integer.class;
+		case "java.lang.Long[]":
+			return Long.class;
+		case "java.math.BigDecimal[]":
+			return BigDecimal.class;
+		case "int[]":
+			return int.class;
+		case "long[]":
+			return long.class;
+		case "java.lang.Double[]":
+			return Double.class;
+		case "double[]":
+			return double.class;
+		case "java.lang.Float[]":
+			return Float.class;
+		case "float[]":
+			return float.class;
+		default:
+			return null;
 		}
-		if ("java.math.BigDecimal[]".equals(typeName) && !(values instanceof BigDecimal[])) {
-			BigDecimal[] result = new BigDecimal[array.length];
-			for (Object obj : array) {
-				if (obj != null) {
-					result[index] = new BigDecimal(obj.toString());
-				}
-				index++;
-			}
-			return result;
+	}
+
+	/**
+	 * @TODO 按目标组件类型解析数组元素字符串值
+	 * @param componentType
+	 * @param item
+	 * @return
+	 */
+	private static Object parseArrayItem(Class componentType, String item) {
+		if (componentType == String.class) {
+			return item;
 		}
-		if ("int[]".equals(typeName) && !(values instanceof int[])) {
-			int[] result = new int[array.length];
-			for (Object obj : array) {
-				if (obj != null) {
-					result[index] = Integer.parseInt(obj.toString());
-				}
-				index++;
-			}
-			return result;
+		if (componentType == Integer.class || componentType == int.class) {
+			return Integer.valueOf(item);
 		}
-		if ("long[]".equals(typeName) && !(values instanceof long[])) {
-			long[] result = new long[array.length];
-			for (Object obj : array) {
-				if (obj != null) {
-					result[index] = Long.parseLong(obj.toString());
-				}
-				index++;
-			}
-			return result;
+		if (componentType == Long.class || componentType == long.class) {
+			return Long.valueOf(item);
 		}
-		if ("java.lang.Double[]".equals(typeName) && !(values instanceof Double[])) {
-			Double[] result = new Double[array.length];
-			for (Object obj : array) {
-				if (obj != null) {
-					result[index] = Double.valueOf(obj.toString());
-				}
-				index++;
-			}
-			return result;
+		if (componentType == BigDecimal.class) {
+			return new BigDecimal(item);
 		}
-		if ("double[]".equals(typeName) && !(values instanceof double[])) {
-			double[] result = new double[array.length];
-			for (Object obj : array) {
-				if (obj != null) {
-					result[index] = Double.parseDouble(obj.toString());
-				}
-				index++;
-			}
-			return result;
+		if (componentType == Double.class || componentType == double.class) {
+			return Double.valueOf(item);
 		}
-		if ("java.lang.Float[]".equals(typeName) && !(values instanceof Float[])) {
-			Float[] result = new Float[array.length];
-			for (Object obj : array) {
-				if (obj != null) {
-					result[index] = Float.valueOf(obj.toString());
-				}
-				index++;
-			}
-			return result;
-		}
-		if ("float[]".equals(typeName) && !(values instanceof float[])) {
-			float[] result = new float[array.length];
-			for (Object obj : array) {
-				if (obj != null) {
-					result[index] = Float.parseFloat(obj.toString());
-				}
-				index++;
-			}
-			return result;
-		}
-		return values;
+		return Float.valueOf(item);
 	}
 
 	/**

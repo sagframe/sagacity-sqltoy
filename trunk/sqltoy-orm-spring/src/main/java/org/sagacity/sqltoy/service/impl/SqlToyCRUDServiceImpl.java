@@ -49,7 +49,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	protected LightDao lightDao;
 
 	/**
-	 * @param sqlToyLazyDao the sqlToyLazyDao to set
+	 * @param lightDao the sqlToyLazyDao to set
 	 */
 	@Autowired(required = false)
 	@Qualifier(value = "lightDao")
@@ -249,6 +249,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	}
 
 	@Override
+	@Transactional
 	public Long deleteByIds(Class entityClass, Object... ids) {
 		return lightDao.deleteByIds(entityClass, ids);
 	}

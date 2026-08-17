@@ -27,6 +27,7 @@ public interface StreamResultHandler {
 
 	/**
 	 * 有条件存在终止行为的消费
+	 * 
 	 * @param row
 	 * @param rowIndex
 	 * @return

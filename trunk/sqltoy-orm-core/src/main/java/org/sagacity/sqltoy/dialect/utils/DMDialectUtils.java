@@ -45,8 +45,8 @@ public class DMDialectUtils {
 	 */
 	public static void wrapSelectFields(StringBuilder sql, String columnName, FieldMeta fieldMeta) {
 		int jdbcType = fieldMeta.getType();
-		if (jdbcType == Types.VARCHAR || jdbcType == Types.NVARCHAR
-				|| jdbcType == Types.LONGVARCHAR || jdbcType == Types.LONGNVARCHAR) {
+		if (jdbcType == Types.VARCHAR || jdbcType == Types.NVARCHAR || jdbcType == Types.LONGVARCHAR
+				|| jdbcType == Types.LONGNVARCHAR) {
 			sql.append("?");
 		} else if (jdbcType == Types.CHAR || jdbcType == Types.NCHAR) {
 			sql.append("?");
@@ -58,7 +58,7 @@ public class DMDialectUtils {
 			sql.append("cast(? as DECIMAL)");
 		} else if (jdbcType == Types.BIGINT) {
 			sql.append("cast(? as BIGINT)");
-		} else if (jdbcType == Types.INTEGER || jdbcType == Types.TINYINT) {
+		} else if (jdbcType == Types.INTEGER || jdbcType == Types.TINYINT || jdbcType == Types.SMALLINT) {
 			sql.append("cast(? as INT)");
 		} else if (jdbcType == Types.TIMESTAMP) {
 			sql.append("cast(? as TIMESTAMP)");
@@ -66,6 +66,8 @@ public class DMDialectUtils {
 			sql.append("cast(? as DOUBLE)");
 		} else if (jdbcType == Types.FLOAT) {
 			sql.append("cast(? as FLOAT)");
+		} else if (jdbcType == Types.REAL) {
+			sql.append("cast(? as REAL)");
 		} else if (jdbcType == Types.TIME) {
 			sql.append("cast(? as TIME)");
 		} else if (jdbcType == Types.CLOB) {

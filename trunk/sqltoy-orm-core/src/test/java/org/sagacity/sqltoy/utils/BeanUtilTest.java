@@ -11,10 +11,12 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyConstants;
@@ -439,11 +441,11 @@ public class BeanUtilTest {
 	public void testSetValue1() {
 		// 2024-11-07 10:52:36.12345
 		DataRange dataRange = new DataRange();
-		String lastUpdateTime = "2024-11-07 10:52:36.12345";
+		String lastUpdateTime = "2024-11-07 10:52:36.123454";
 
 		BeanUtil.setProperty(dataRange, "lastUpdateTime", lastUpdateTime);
 
-		DateUtil.parseLocalDateTime(lastUpdateTime, "yyyyMMdd HHmmss.SSSSSS");
+		DateUtil.parseLocalDateTime(lastUpdateTime, "yyyy-MM-dd HH:mm:ss.SSSSSS");
 	}
 
 	@Test
@@ -483,4 +485,174 @@ public class BeanUtilTest {
 		System.err.println(JSON.toJSONString(BeanUtil.reflectListToBean(null, dataSet,
 				new String[] { "id", "name", "age", "birthDay", "tel" }, null, Student.class)));
 	}
+
+
+
+
+	// ==================== 并发重构方法测试 ====================
+
+	@Test
+	public void testGetEnumValue() {
+		// 带getValue()的枚举 → 返回value值
+		Assertions.assertEquals("address", BeanUtil.getEnumValue(MaskType.ADDRESS));
+		Assertions.assertEquals("tel", BeanUtil.getEnumValue(MaskType.TEL));
+		Assertions.assertEquals("name", BeanUtil.getEnumValue(MaskType.NAME));
+		// null → 返回null
+		Assertions.assertNull(BeanUtil.getEnumValue(null));
+		// getValue()返回int类型的枚举
+		Assertions.assertEquals(0, BeanUtil.getEnumValue(SaveMode.APPEND));
+		Assertions.assertEquals(2, BeanUtil.getEnumValue(SaveMode.IGNORE));
+	}
+
+	@Test
+	public void testGetEnumValuePlainEnum() {
+		// 无自定义属性的普通枚举 → 返回name()
+		Assertions.assertEquals("NEW", BeanUtil.getEnumValue(Thread.State.NEW));
+		Assertions.assertEquals("RUNNABLE", BeanUtil.getEnumValue(Thread.State.RUNNABLE));
+	}
+
+	@Test
+	public void testNewEnumInstance() {
+		// 通过value匹配
+		Assertions.assertEquals(MaskType.ADDRESS, BeanUtil.newEnumInstance("address", MaskType.class));
+		Assertions.assertEquals(MaskType.TEL, BeanUtil.newEnumInstance("tel", MaskType.class));
+		// 大小写不敏感匹配value
+		Assertions.assertEquals(MaskType.ADDRESS, BeanUtil.newEnumInstance("ADDRESS", MaskType.class));
+		// 通过int型value匹配
+		Assertions.assertEquals(SaveMode.IGNORE, BeanUtil.newEnumInstance("2", SaveMode.class));
+		Assertions.assertEquals(SaveMode.APPEND, BeanUtil.newEnumInstance("0", SaveMode.class));
+		// null key → 返回null
+		Assertions.assertNull(BeanUtil.newEnumInstance(null, MaskType.class));
+		// 不存在的value → 返回null
+		Assertions.assertNull(BeanUtil.newEnumInstance("xyz", MaskType.class));
+	}
+
+	@Test
+	public void testNewEnumInstancePlainEnum() {
+		// 无value方法的普通枚举 → 按name匹配
+		Assertions.assertEquals(Thread.State.NEW, BeanUtil.newEnumInstance("NEW", Thread.State.class));
+		Assertions.assertEquals(Thread.State.RUNNABLE, BeanUtil.newEnumInstance("runnable", Thread.State.class));
+		// 不存在的name → 返回null
+		Assertions.assertNull(BeanUtil.newEnumInstance("BLOCKED2", Thread.State.class));
+	}
+
+	@Test
+	public void testSetProperty() {
+		StaffInfoVO staff = new StaffInfoVO();
+		// 类型完全一致
+		BeanUtil.setProperty(staff, "staffId", "S001");
+		Assertions.assertEquals("S001", staff.getStaffId());
+		// 类型转换: String → Integer
+		BeanUtil.setProperty(staff, "resType", "5");
+		Assertions.assertEquals(Integer.valueOf(5), staff.getResType());
+		// 类型转换: String → LocalDate
+		DataRange dataRange = new DataRange();
+		BeanUtil.setProperty(dataRange, "beginDate", "2024-01-15");
+		Assertions.assertEquals(LocalDate.of(2024, 1, 15), dataRange.getBeginDate());
+		// 类型转换: String → LocalDateTime
+		BeanUtil.setProperty(dataRange, "lastUpdateTime", "2024-06-01 10:30:00");
+		Assertions.assertEquals(LocalDateTime.of(2024, 6, 1, 10, 30, 0), dataRange.getLastUpdateTime());
+	}
+
+	@Test
+	public void testSetPropertyInvalid() {
+		StaffInfoVO staff = new StaffInfoVO();
+		// 不存在的属性 → 抛出RuntimeException
+		Assertions.assertThrows(RuntimeException.class, () -> {
+			BeanUtil.setProperty(staff, "nonExistentField", "value");
+		});
+	}
+
+	@Test
+	public void testGetProperty() {
+		StaffInfoVO staff = new StaffInfoVO();
+		staff.setStaffId("S001");
+		staff.setEmail("test@test.com");
+		staff.setResType(3);
+		// 获取存在的属性
+		Assertions.assertEquals("S001", BeanUtil.getProperty(staff, "staffId"));
+		Assertions.assertEquals("test@test.com", BeanUtil.getProperty(staff, "email"));
+		Assertions.assertEquals(Integer.valueOf(3), BeanUtil.getProperty(staff, "resType"));
+		// 不存在的属性 → 返回null
+		Assertions.assertNull(BeanUtil.getProperty(staff, "nonExistentField"));
+	}
+
+	@Test
+	public void testGetPropertyMap() {
+		Map<String, Object> map = new HashMap<>();
+		map.put("key1", "value1");
+		Assertions.assertEquals("value1", BeanUtil.getProperty(map, "key1"));
+		Assertions.assertNull(BeanUtil.getProperty(map, "missingKey"));
+	}
+
+	@Test
+	public void testGetComplexProperty() {
+		StaffInfoVO staff = new StaffInfoVO();
+		staff.setStaffId("S001");
+		List items = new ArrayList();
+		items.add("item0");
+		items.add("item1");
+		staff.setItems(items);
+		// 普通属性
+		Assertions.assertEquals("S001", BeanUtil.getComplexProperty(staff, "staffId"));
+		// 数组索引语法
+		Assertions.assertEquals("item0", BeanUtil.getComplexProperty(staff, "items[0]"));
+		Assertions.assertEquals("item1", BeanUtil.getComplexProperty(staff, "items[1]"));
+		// 超出索引范围 → 返回null
+		Assertions.assertNull(BeanUtil.getComplexProperty(staff, "items[5]"));
+		// 不存在的属性 → 返回null
+		Assertions.assertNull(BeanUtil.getComplexProperty(staff, "nonExistentField"));
+	}
+
+	@Test
+	public void testGetComplexPropertyMap() {
+		Map<String, Object> map = new HashMap<>();
+		Object[] arr = { "a", "b", "c" };
+		map.put("letters", arr);
+		// Map + 数组索引
+		Assertions.assertEquals("b", BeanUtil.getComplexProperty(map, "letters[1]"));
+		Assertions.assertEquals("a", BeanUtil.getComplexProperty(map, "letters[0]"));
+		// 超出范围 → null
+		Assertions.assertNull(BeanUtil.getComplexProperty(map, "letters[10]"));
+		// Map普通取值
+		Assertions.assertArrayEquals(arr, (Object[]) BeanUtil.getComplexProperty(map, "letters"));
+	}
+
+	@Test
+	public void testConcurrentAccess() throws Exception {
+		int threadCount = 20;
+		ExecutorService pool = Executors.newFixedThreadPool(threadCount);
+		CountDownLatch latch = new CountDownLatch(threadCount);
+		List<CompletableFuture<Void>> futures = new ArrayList<>();
+		for (int i = 0; i < threadCount; i++) {
+			final int idx = i;
+			futures.add(CompletableFuture.runAsync(() -> {
+				// getEnumValue
+				Assertions.assertEquals("address", BeanUtil.getEnumValue(MaskType.ADDRESS));
+				Assertions.assertEquals("NEW", BeanUtil.getEnumValue(Thread.State.NEW));
+				// newEnumInstance
+				Assertions.assertEquals(MaskType.TEL, BeanUtil.newEnumInstance("tel", MaskType.class));
+				Assertions.assertEquals(Thread.State.NEW, BeanUtil.newEnumInstance("NEW", Thread.State.class));
+				// setProperty
+				StaffInfoVO s = new StaffInfoVO();
+				BeanUtil.setProperty(s, "staffId", "S" + idx);
+				BeanUtil.setProperty(s, "resType", String.valueOf(idx));
+				// getProperty
+				Assertions.assertEquals("S" + idx, BeanUtil.getProperty(s, "staffId"));
+				Assertions.assertEquals(Integer.valueOf(idx), BeanUtil.getProperty(s, "resType"));
+				// getComplexProperty
+				List items = new ArrayList();
+				items.add("x" + idx);
+				s.setItems(items);
+				Assertions.assertEquals("x" + idx, BeanUtil.getComplexProperty(s, "items[0]"));
+				latch.countDown();
+			}, pool));
+		}
+		// 如有任一线程抛异常,CompletableFuture.allOf会抛出ExecutionException
+		CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).get(30, TimeUnit.SECONDS);
+		pool.shutdown();
+		pool.awaitTermination(10, TimeUnit.SECONDS);
+		Assertions.assertEquals(0, latch.getCount());
+	}
+
 }

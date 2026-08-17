@@ -968,12 +968,17 @@ public class SqlConfigParseUtils {
 			} else {
 				// mysql、vastbase、opengauss系列都用 " ESCAPE '\\\\'"
 				// PostgreSQL/Oracle/SQLServer/DB2/h2/kingbase等 ESCAPE'\\'
+				// OSCAR 的 ESCAPE 形态未实测，按 Oracle 兼容行为假定
 				isBackslashEscape = dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.TIDB
 						|| dbType == DBType.DORIS || dbType == DBType.STARROCKS || dbType == DBType.OCEANBASE
-						|| dbType == DBType.VASTBASE || dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB;
+						|| dbType == DBType.GAUSSDB || dbType == DBType.VASTBASE || dbType == DBType.OPENGAUSS
+						|| dbType == DBType.MOGDB || dbType == DBType.STARDB;
 			}
 		}
 		String escapeClause = isBackslashEscape ? " ESCAPE '\\\\'" : " ESCAPE '\\'";
+		// clickhouse/impala/tdengine的LIKE默认转义符就是\,且不支持ESCAPE子句,追加任何ESCAPE都会语法错误
+		boolean supportEscapeClause = dbType != DBType.CLICKHOUSE && dbType != DBType.IMPALA
+				&& dbType != DBType.TDENGINE;
 		while (m.find()) {
 			paramCnt = StringUtil.matchCnt(queryStr.substring(0, m.start()), ARG_NAME_PATTERN, 0);
 			likeValStr = (sqlToyResult.getParamsValue()[paramCnt] == null) ? null
@@ -985,7 +990,7 @@ public class SqlConfigParseUtils {
 			String stripped = likeValStr.replace("\\%", "");
 			// 判断转义后的值是否包含反斜杠,决定是否需要追加ESCAPE子句
 			boolean needEscape = false;
-			//只要参数中已经有%符号，这种情况就不需要再加%符号了,否则会影响用户的查询意图
+			// 只要参数中已经有%符号，这种情况就不需要再加%符号了,否则会影响用户的查询意图
 			if (stripped.indexOf("%") != -1) {
 				// 仅转义_等特殊字符,避免用户输入的_被当作通配符
 				String escaped = SqlUtil.escapeLikeValue(likeValStr, dbType, false);
@@ -999,7 +1004,7 @@ public class SqlConfigParseUtils {
 			}
 			String tailAfterMatch = queryStr.substring(m.end()).trim().toLowerCase();
 			// 仅当值中有被转义的特殊字符且sql中尚无ESCAPE子句时才追加
-			if (needEscape && !tailAfterMatch.startsWith("escape")) {
+			if (needEscape && supportEscapeClause && !tailAfterMatch.startsWith("escape")) {
 				if (sqlBuilder == null) {
 					sqlBuilder = new StringBuilder();
 				}

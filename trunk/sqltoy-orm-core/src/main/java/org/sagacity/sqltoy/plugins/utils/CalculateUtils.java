@@ -54,6 +54,11 @@ public class CalculateUtils {
 				} else {
 					begin = (new BigDecimal(ExpressionUtil.calculate(beginToEnd[0]).toString())).intValue();
 				}
+				// 当输入类似 5..（有 .. 但后面没有结束值）时："5..".split("\\.\\.") → ["5"] // Java 默认删除尾部空字符串
+				// split 结果长度为 1，但紧接着的 beginToEnd[1] 会报错，故此处要判断长度
+				if (beginToEnd.length < 2) {
+					continue;
+				}
 				endColumnStr = beginToEnd[1];
 				if (NumberUtil.isInteger(endColumnStr)) {
 					end = Integer.parseInt(endColumnStr);
@@ -74,6 +79,9 @@ public class CalculateUtils {
 					} else {
 						end = (new BigDecimal(ExpressionUtil.calculate(endColumnStr).toString())).intValue();
 					}
+				}
+				if (step <= 0) {
+					step = 1;
 				}
 				for (int j = begin; j <= end; j += step) {
 					if (!result.contains(j)) {

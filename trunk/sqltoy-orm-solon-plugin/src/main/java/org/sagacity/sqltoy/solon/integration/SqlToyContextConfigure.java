@@ -59,16 +59,9 @@ public class SqlToyContextConfigure {
 
 		if ("solon".equals(properties.getCacheType())) {
 			sqlToyContext.setTranslateCacheManager(solonTranslateCacheManager);
-			try {
-				DbManager.setContext(sqlToyContext);
-				sqlToyContext.initialize();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		} else {
-			DbManager.setContext(sqlToyContext);
-			sqlToyContext.initialize();
 		}
+		DbManager.setContext(sqlToyContext);
+		sqlToyContext.initialize();
 
 		return sqlToyContext;
 	}

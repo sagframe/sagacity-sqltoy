@@ -414,6 +414,8 @@ public class TidbDialect implements Dialect {
 		return DefaultDialectUtils.getTables(catalog, schema, tableName, conn, dbType, dialect);
 	}
 
+	// lockWaitTimeout参数在此不参与sql拼装:tidb/mysql语法无for update wait n,
+	// 等待时长由DialectFactory层 SET SESSION innodb_lock_wait_timeout 统一生效
 	private String getLockSql(String sql, Integer dbType, LockMode lockMode, int lockWaitTimeout) {
 		if (lockMode == null || SqlUtil.hasLock(sql, dbType)) {
 			return "";

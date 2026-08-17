@@ -97,8 +97,8 @@ public class ExpressionUtil {
 			}
 			return Values.pop();
 		} catch (Exception e) {
-			e.printStackTrace();
-			logger.error(e.getMessage());
+			// 计算失败返回原表达式字符串是既有契约(调用方容错),补带表达式内容的日志便于定位
+			logger.error("表达式:{} 计算异常,按原样返回!", expression, e);
 		}
 		return expression;
 	}
@@ -261,11 +261,12 @@ public class ExpressionUtil {
 		throw new RuntimeException("运算符号:" + opt + "非法!");
 	}
 
+	// 函数表达式(如abs(x))提取的正则,常量提取避免每次调用重复编译
+	private final static Pattern FUNCTION_PATTERN = Pattern.compile("^([a-zA-Z0-9_]+)\\(([a-zA-Z0-9_.()]+)\\)$");
+
 	protected static String getValue(String oldValue) throws Exception {
-		String reg = "^([a-zA-Z0-9_]+)\\(([a-zA-Z0-9_.()]+)\\)$";
 		if (isFunctionCal(oldValue)) {
-			Pattern p = Pattern.compile(reg);
-			Matcher m = p.matcher(oldValue);
+			Matcher m = FUNCTION_PATTERN.matcher(oldValue);
 			m.find();
 			return calFunction(m.group(1), m.group(2));
 		}
@@ -273,8 +274,7 @@ public class ExpressionUtil {
 	}
 
 	protected static boolean isFunctionCal(String value) {
-		String reg = "^([a-zA-Z0-9_]+)\\(([a-zA-Z0-9_.()]+)\\)$";
-		return value.matches(reg);
+		return FUNCTION_PATTERN.matcher(value).matches();
 	}
 
 	protected static String calFunction(String function, String value) throws Exception {

@@ -5,6 +5,9 @@ package org.sagacity.sqltoy.model.inner;
 
 import java.io.Serializable;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * @project sagacity-sqltoy
  * @description Translate内部扩展类，便于隐藏属性避免暴露过多get方法
@@ -13,6 +16,7 @@ import java.io.Serializable;
  * @modify 2020-8-7,修改说明
  */
 public class TranslateExtend implements Serializable, java.lang.Cloneable {
+	private final static Logger logger = LoggerFactory.getLogger(TranslateExtend.class);
 
 	/**
 	 * 
@@ -117,7 +121,7 @@ public class TranslateExtend implements Serializable, java.lang.Cloneable {
 		try {
 			return (TranslateExtend) super.clone();
 		} catch (CloneNotSupportedException e) {
-			e.printStackTrace();
+			logger.error("clone 方法执行异常", e);
 		}
 		return null;
 	}

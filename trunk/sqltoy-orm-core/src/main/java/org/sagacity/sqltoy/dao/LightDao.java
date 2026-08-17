@@ -322,6 +322,7 @@ public interface LightDao {
 
 	/**
 	 * 带设置锁时长的:锁查询、存在则修改、不存在则插入操作
+	 * 
 	 * @param <T>
 	 * @param entity
 	 * @param callback
