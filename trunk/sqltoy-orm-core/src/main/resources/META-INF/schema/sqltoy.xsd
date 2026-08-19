@@ -16,30 +16,30 @@
 						<![CDATA[全局类型sql type]]>
 						</xsd:documentation>
 					</xsd:annotation>
-					<xsd:unique name="sqlToySqlIdUnique">
-						<xsd:selector xpath="tns:sql" />
-						<xsd:field xpath="@id" />
-					</xsd:unique>
 				</xsd:element>
-				<xsd:element name="mql" type="sqlToyMqlType">
-					<xsd:unique name="sqlToyMqlIdUnique">
-						<xsd:selector xpath="tns:mql" />
-						<xsd:field xpath="@id" />
-					</xsd:unique>
-				</xsd:element>
+				<xsd:element name="mql" type="sqlToyMqlType" />
 				<xsd:element name="eql" type="sqlToyEqlType">
 					<xsd:annotation>
 						<xsd:documentation>
 						<![CDATA[elasticsearch type]]>
 						</xsd:documentation>
 					</xsd:annotation>
-					<xsd:unique name="sqlToyEqlIdUnique">
-						<xsd:selector xpath="tns:eql" />
-						<xsd:field xpath="@id" />
-					</xsd:unique>
 				</xsd:element>
 			</xsd:choice>
 		</xsd:complexType>
+		<!-- 唯一性约束的作用域是声明它的元素,必须放在sqltoy根元素上,selector才能选取其sql/mql/eql子元素实现id唯一 -->
+		<xsd:unique name="sqlToySqlIdUnique">
+			<xsd:selector xpath="tns:sql" />
+			<xsd:field xpath="@id" />
+		</xsd:unique>
+		<xsd:unique name="sqlToyMqlIdUnique">
+			<xsd:selector xpath="tns:mql" />
+			<xsd:field xpath="@id" />
+		</xsd:unique>
+		<xsd:unique name="sqlToyEqlIdUnique">
+			<xsd:selector xpath="tns:eql" />
+			<xsd:field xpath="@id" />
+		</xsd:unique>
 	</xsd:element>
 
 	<xsd:complexType name="sqlToySqlType" mixed="true">
@@ -90,24 +90,23 @@
 					<xsd:attribute name="columns" type="xsd:string"
 						use="required" />
 					<xsd:attribute name="format" use="required">
+						<xsd:annotation>
+							<xsd:documentation>
+							<![CDATA[支持任意Java日期格式,常用值通过datePatternType枚举提供输入提示]]>
+							</xsd:documentation>
+						</xsd:annotation>
 						<xsd:simpleType>
-							<xsd:restriction base="xsd:string">
-								<xsd:enumeration value="yyyy-MM-dd" />
-								<xsd:enumeration value="yyyy-MM-dd HH:mm:ss" />
-								<xsd:enumeration value="yyyyMMdd" />
-								<xsd:enumeration value="yyyy-MM" />
-								<xsd:enumeration value="MM-dd" />
-							</xsd:restriction>
+							<xsd:union memberTypes="datePatternType xsd:string" />
 						</xsd:simpleType>
 					</xsd:attribute>
 					<xsd:attribute name="locale">
+						<xsd:annotation>
+							<xsd:documentation>
+							<![CDATA[区域设置,采用BCP-47格式,如:en-US、en-GB、zh-CN、ja-JP、fr-FR、de-DE;兼容旧版US/UK/CHINA/JAPAN写法,分别等价于en-US/en-GB/zh-CN/ja-JP]]>
+							</xsd:documentation>
+						</xsd:annotation>
 						<xsd:simpleType>
-							<xsd:restriction base="xsd:string">
-								<xsd:enumeration value="US" />
-								<xsd:enumeration value="UK" />
-								<xsd:enumeration value="CHINA" />
-								<xsd:enumeration value="JAPAN" />
-							</xsd:restriction>
+							<xsd:union memberTypes="localeType xsd:string" />
 						</xsd:simpleType>
 					</xsd:attribute>
 				</xsd:complexType>
@@ -141,13 +140,23 @@
 						</xsd:simpleType>
 					</xsd:attribute>
 					<xsd:attribute name="locale">
+						<xsd:annotation>
+							<xsd:documentation>
+							<![CDATA[区域设置,采用BCP-47格式,如:en-US、en-GB、zh-CN、ja-JP、fr-FR、de-DE;兼容旧版US/UK/CHINA/JAPAN写法,分别等价于en-US/en-GB/zh-CN/ja-JP]]>
+							</xsd:documentation>
+						</xsd:annotation>
 						<xsd:simpleType>
-							<xsd:restriction base="xsd:string">
-								<xsd:enumeration value="US" />
-								<xsd:enumeration value="UK" />
-								<xsd:enumeration value="CHINA" />
-								<xsd:enumeration value="JAPAN" />
-							</xsd:restriction>
+							<xsd:union memberTypes="localeType xsd:string" />
+						</xsd:simpleType>
+					</xsd:attribute>
+					<xsd:attribute name="currency">
+						<xsd:annotation>
+							<xsd:documentation>
+							<![CDATA[币种单位,仅对format=capital-en/capital-english生效:支持ISO-4217代码(如USD、AUD、JPY、RMB)或直接写单位词(如POUNDS STERLING),输出票据标准格式,如:SAY US DOLLARS ONE THOUSAND AND CENTS FIFTY-SIX ONLY]]>
+							</xsd:documentation>
+						</xsd:annotation>
+						<xsd:simpleType>
+							<xsd:union memberTypes="currencyType xsd:string" />
 						</xsd:simpleType>
 					</xsd:attribute>
 				</xsd:complexType>
@@ -508,11 +517,16 @@
 		<xsd:attribute name="blank-to-null" default="true"
 			type="xsd:boolean" />
 		<xsd:attribute name="type">
+			<xsd:annotation>
+				<xsd:documentation><![CDATA[与SqlType保持一致:search/insert/update/delete,select为历史兼容写法等同于search]]></xsd:documentation>
+			</xsd:annotation>
 			<xsd:simpleType>
 				<xsd:restriction base="xsd:string">
+					<xsd:enumeration value="search" />
 					<xsd:enumeration value="select" />
 					<xsd:enumeration value="insert" />
 					<xsd:enumeration value="update" />
+					<xsd:enumeration value="delete" />
 				</xsd:restriction>
 			</xsd:simpleType>
 		</xsd:attribute>
@@ -1244,7 +1258,20 @@
 		<xsd:attribute name="head-size" type="xsd:integer" />
 		<xsd:attribute name="tail-size" type="xsd:integer" />
 		<xsd:attribute name="mask-code" type="xsd:string" />
-		<xsd:attribute name="mask-rate" type="xsd:integer" />
+		<xsd:attribute name="mask-rate">
+			<xsd:annotation>
+				<xsd:documentation><![CDATA[离散掩码比例,支持整数、小数和百分号写法,如:50、0.5、50%]]></xsd:documentation>
+			</xsd:annotation>
+			<xsd:simpleType>
+				<xsd:union memberTypes="xsd:decimal">
+					<xsd:simpleType>
+						<xsd:restriction base="xsd:string">
+							<xsd:pattern value="\d+(\.\d+)?%" />
+						</xsd:restriction>
+					</xsd:simpleType>
+				</xsd:union>
+			</xsd:simpleType>
+		</xsd:attribute>
 	</xsd:complexType>
 
 	<xsd:complexType name="sqltoyPageOptimizeType">
@@ -1416,12 +1443,54 @@
 			</xsd:annotation>
 		</xsd:attribute>
 	</xsd:complexType>
+	<!-- 常用日期格式,配合xsd:string union使用:不限制自定义格式,仅为IDE补全提供常用值提示;
+	含MMM/EEE等英文月份、星期符号的格式在locale缺失时解析器自动按英文区域处理 -->
+	<xsd:simpleType name="datePatternType">
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="yyyy-MM-dd" />
+			<xsd:enumeration value="yyyy-MM-dd HH:mm:ss" />
+			<xsd:enumeration value="yyyyMMdd" />
+			<xsd:enumeration value="yyyy-MM" />
+			<xsd:enumeration value="MM-dd" />
+			<xsd:enumeration value="MMM d, yyyy" />
+			<xsd:enumeration value="MMMM d, yyyy" />
+			<xsd:enumeration value="d MMMM yyyy" />
+			<xsd:enumeration value="dd-MMM-yyyy" />
+			<xsd:enumeration value="EEE, MMM d, yyyy" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:simpleType name="numberFormatType">
 		<xsd:restriction base="xsd:string">
 			<xsd:enumeration value="#,###.00" />
 			<xsd:enumeration value="capital" />
 			<xsd:enumeration value="capital-rmb" />
 			<xsd:enumeration value="capital-en" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 常用区域设置(BCP-47),配合xsd:string union使用:不限制自定义值,仅为IDE补全提供常用值提示 -->
+	<xsd:simpleType name="localeType">
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="en-US" />
+			<xsd:enumeration value="en-GB" />
+			<xsd:enumeration value="zh-CN" />
+			<xsd:enumeration value="ja-JP" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 常用币种代码(ISO-4217),配合xsd:string union使用:不限制自定义单位词,仅为IDE补全提供常用值提示 -->
+	<xsd:simpleType name="currencyType">
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="USD" />
+			<xsd:enumeration value="AUD" />
+			<xsd:enumeration value="CAD" />
+			<xsd:enumeration value="HKD" />
+			<xsd:enumeration value="SGD" />
+			<xsd:enumeration value="NZD" />
+			<xsd:enumeration value="GBP" />
+			<xsd:enumeration value="EUR" />
+			<xsd:enumeration value="JPY" />
+			<xsd:enumeration value="CHF" />
+			<xsd:enumeration value="CNY" />
+			<xsd:enumeration value="RMB" />
 		</xsd:restriction>
 	</xsd:simpleType>
 </xsd:schema>

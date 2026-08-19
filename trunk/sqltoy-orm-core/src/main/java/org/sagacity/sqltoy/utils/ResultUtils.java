@@ -18,7 +18,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -490,13 +489,12 @@ public class ResultUtils {
 					if (value != null) {
 						// 日期格式
 						if (fmt.getType() == 1) {
-							row.set(columnIndex, DateUtil.formatDate(value, fmt.getFormat(),
-									(fmt.getLocale() == null) ? null : new Locale(fmt.getLocale())));
+							row.set(columnIndex, DateUtil.formatDate(value, fmt.getFormat(), fmt.getLocale()));
 						}
 						// 数字格式化
 						else {
 							row.set(columnIndex, NumberUtil.format(value, fmt.getFormat(), fmt.getRoundingMode(),
-									(fmt.getLocale() == null) ? null : new Locale(fmt.getLocale())));
+									fmt.getLocale(), fmt.getCurrency()));
 						}
 					}
 				}
@@ -526,13 +524,12 @@ public class ResultUtils {
 				if (value != null) {
 					// 日期格式
 					if (fmt.getType() == 1) {
-						row.set(columnIndex, DateUtil.formatDate(value, fmt.getFormat(),
-								(fmt.getLocale() == null) ? null : new Locale(fmt.getLocale())));
+						row.set(columnIndex, DateUtil.formatDate(value, fmt.getFormat(), fmt.getLocale()));
 					}
 					// 数字格式化
 					else {
 						row.set(columnIndex, NumberUtil.format(value, fmt.getFormat(), fmt.getRoundingMode(),
-								(fmt.getLocale() == null) ? null : new Locale(fmt.getLocale())));
+								fmt.getLocale()));
 					}
 				}
 			}

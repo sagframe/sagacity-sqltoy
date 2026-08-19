@@ -5,6 +5,7 @@ package org.sagacity.sqltoy.config.model;
 
 import java.io.Serializable;
 import java.math.RoundingMode;
+import java.util.Locale;
 
 /**
  * @project sagacity-sqltoy
@@ -37,10 +38,15 @@ public class FormatModel implements Serializable {
 	/**
 	 * 区域
 	 */
-	private String locale;
+	private Locale locale;
 
 	/**
-	 * 
+	 * 币种单位(仅对capital-en等英文金额格式生效,支持ISO-4217代码如USD或直接写单位词,输出票据标准格式)
+	 */
+	private String currency;
+
+	/**
+	 *
 	 */
 	private RoundingMode roundingMode = null;
 
@@ -100,12 +106,26 @@ public class FormatModel implements Serializable {
 		this.roundingMode = roundingMode;
 	}
 
-	public String getLocale() {
+	public Locale getLocale() {
 		return locale;
 	}
 
-	public void setLocale(String locale) {
+	public void setLocale(Locale locale) {
 		this.locale = locale;
+	}
+
+	/**
+	 * @return the currency
+	 */
+	public String getCurrency() {
+		return currency;
+	}
+
+	/**
+	 * @param currency the currency to set
+	 */
+	public void setCurrency(String currency) {
+		this.currency = currency;
 	}
 
 }

@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.time.ZoneId;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -240,6 +241,11 @@ public class SqlToyConstants {
 	public static Boolean backslashEscaping;
 
 	/**
+	 * 默认区域设置(未配置时为null,日期和数字的格式化解析按JVM默认区域处理)
+	 */
+	public static Locale defaultLocale;
+
+	/**
 	 * @todo 解析模板中的参数
 	 * @param template
 	 * @return
@@ -294,6 +300,47 @@ public class SqlToyConstants {
 		} else {
 			return ZoneId.of(zoneStr);
 		}
+	}
+
+	/**
+	 * @todo 获取默认区域,未配置defaultLocale时取JVM默认区域(用于日期、数字的格式化解析)
+	 * @return
+	 */
+	public static Locale getLocale() {
+		return (defaultLocale == null) ? Locale.getDefault() : defaultLocale;
+	}
+
+	/**
+	 * @todo 将locale配置值转化为Locale对象,支持BCP-47格式(如:en-US、zh_CN、fr-FR、en)
+	 *       兼容旧版本取自java.util.Locale常量名的US/UK/CHINA/JAPAN写法
+	 * @param localeStr
+	 * @return 无法识别时返回null,格式化时按默认区域处理
+	 */
+	public static Locale convertLocale(String localeStr) {
+		if (StringUtil.isBlank(localeStr)) {
+			return null;
+		}
+		String locale = localeStr.trim();
+		// 旧版US/UK/CHINA/JAPAN若直接当语言代码解析会得到错误区域(如UK变成乌克兰语)
+		String upperStr = locale.toUpperCase();
+		if (upperStr.equals("US")) {
+			return Locale.US;
+		}
+		if (upperStr.equals("UK")) {
+			return Locale.UK;
+		}
+		if (upperStr.equals("CHINA")) {
+			return Locale.CHINA;
+		}
+		if (upperStr.equals("JAPAN")) {
+			return Locale.JAPAN;
+		}
+		Locale result = Locale.forLanguageTag(locale.replace('_', '-'));
+		if (result == null || "und".equals(result.getLanguage())) {
+			logger.warn("locale:{} 不是合法的区域设置,请使用BCP-47格式(如:en-US、zh-CN),格式化将按默认区域处理!", localeStr);
+			return null;
+		}
+		return result;
 	}
 
 	/**

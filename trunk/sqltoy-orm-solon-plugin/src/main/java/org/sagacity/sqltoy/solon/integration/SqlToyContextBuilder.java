@@ -186,6 +186,8 @@ public class SqlToyContextBuilder {
 		sqlToyContext.setLocalTimeFormat(properties.getLocalTimeFormat());
 		sqlToyContext.setDistributeIdCacheExpireDays(properties.getDistributeIdCacheExpireDays());
 		sqlToyContext.setBackslashEscaping(properties.getBackslashEscaping());
+		// 默认区域设置,影响日期、数字格式化解析(为null则使用JVM默认区域)
+		sqlToyContext.setDefaultLocale(properties.getDefaultLocale());
 		// map 类型结果label是否自动转驼峰处理
 		if (properties.getHumpMapResultTypeLabel() != null) {
 			sqlToyContext.setHumpMapResultTypeLabel(properties.getHumpMapResultTypeLabel());

@@ -6,10 +6,14 @@ import java.security.SecureRandom;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
+import org.sagacity.sqltoy.SqlToyConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,6 +81,21 @@ public class NumberUtil {
 	}
 
 	public static String format(Object target, String pattern, RoundingMode roundingMode, Locale locale) {
+		return format(target, pattern, roundingMode, locale, null);
+	}
+
+	/**
+	 * @todo 根据给定的模式将数据对象转换成格式化的字符串,currency仅对capital-en/capital-english英文金额格式生效,
+	 *       指定币种(ISO-4217代码如USD,或直接写单位词)时输出SAY开头的票据标准格式,为null输出不带币种的既有格式
+	 * @param target
+	 * @param pattern
+	 * @param roundingMode
+	 * @param locale
+	 * @param currency   币种代码或单位词(如USD、POUNDS STERLING)
+	 * @return
+	 */
+	public static String format(Object target, String pattern, RoundingMode roundingMode, Locale locale,
+			String currency) {
 		if (target == null) {
 			return null;
 		}
@@ -98,19 +117,20 @@ public class NumberUtil {
 			if (lowPattern.equals(Pattern.CAPITAL_MONEY) || lowPattern.equals(Pattern.CAPITAL_RMB)) {
 				return toCapitalMoney(tmp);
 			}
-			// 数字转换成英文金额
+			// 数字转换成英文金额(currency指定币种时输出SAY开头的票据标准格式)
 			if (lowPattern.equals(Pattern.CAPITAL_EN) || lowPattern.equals(Pattern.CAPITAL_ENGLISH)) {
-				return convertToEnglishMoney(tmp);
+				return convertToEnglishMoney(tmp, currency);
 			}
-			DecimalFormat df = (DecimalFormat) ((locale == null) ? DecimalFormat.getInstance()
-					: DecimalFormat.getInstance(locale));
+			// locale为null时取sqltoy统一配置的默认区域(未设置则跟随JVM默认区域)
+			DecimalFormat df = (DecimalFormat) DecimalFormat
+					.getInstance((locale == null) ? SqlToyConstants.getLocale() : locale);
 			if (roundingMode != null) {
 				df.setRoundingMode(roundingMode);
 			}
 			df.applyPattern(pattern);
 			return df.format(tmp);
 		} catch (Exception e) {
-			logger.error("value:" + target + ";pattern=" + pattern + " " + e.getMessage(), e);
+			logger.error("value:" + target + ";pattern=" + pattern + ";" + e.getMessage(), e);
 		}
 		return target.toString();
 	}
@@ -146,12 +166,13 @@ public class NumberUtil {
 			if (lowPattern.equals(Pattern.CAPITAL_EN) || lowPattern.equals(Pattern.CAPITAL_ENGLISH)) {
 				return convertToEnglishMoney(tmp);
 			}
-			DecimalFormat df = (DecimalFormat) ((locale == null) ? DecimalFormat.getCurrencyInstance()
-					: DecimalFormat.getCurrencyInstance(locale));
+			// locale为null时取sqltoy统一配置的默认区域(未设置则跟随JVM默认区域)
+			DecimalFormat df = (DecimalFormat) DecimalFormat
+					.getCurrencyInstance((locale == null) ? SqlToyConstants.getLocale() : locale);
 			df.applyPattern(pattern);
 			return df.format(tmp);
 		} catch (Exception e) {
-			logger.error(e.getMessage(), e);
+			logger.error("value:" + target + ";pattern=" + pattern + ";" + e.getMessage(), e);
 		}
 		return target.toString();
 	}
@@ -169,7 +190,7 @@ public class NumberUtil {
 		try {
 			return Float.valueOf(nf.parse(percent).floatValue());
 		} catch (ParseException e) {
-			logger.error(e.getMessage(), e);
+			logger.error("解析百分数[{}]失败:{}", percent, e.getMessage());
 		}
 		return null;
 	}
@@ -199,7 +220,8 @@ public class NumberUtil {
 	public static BigDecimal parseDecimal(String decimalStr, Integer maxIntDigits, Integer maxFractionDigits) {
 		Number number = parseStr(decimalStr, maxIntDigits, null, maxFractionDigits, null);
 		if (number != null) {
-			return new BigDecimal(number.doubleValue());
+			// 用toString构造而非doubleValue:double的精确二进制展开会带来精度尾巴(如1234.56→1234.559999...945)
+			return new BigDecimal(number.toString());
 		}
 		return null;
 	}
@@ -220,13 +242,31 @@ public class NumberUtil {
 	}
 
 	/**
-	 * @todo 将大写中文金额字符串转换成数字(最大支持到千万亿)
+	 * @todo 将大写中文金额字符串转换成数字,与toCapitalMoney输出范围对称,最大支持到京级(10^63):
+	 *       单位幂值拾=10、佰=100、仟=1000、万=10^4、亿=10^8、兆=10^16、京=10^32,
+	 *       组合单位(万亿=10^12、万兆=10^20、兆京=10^48、万亿兆京=10^60等)按幂相乘解析
 	 * @param capitalMoney
 	 * @return
 	 */
 	public static BigDecimal capitalMoneyToNum(String capitalMoney) {
+		if (StringUtil.isBlank(capitalMoney)) {
+			return null;
+		}
 		capitalMoney = capitalMoney.replaceAll("\\s+", "").replace("零", "").replace("圆", "元");
-		// 负号提前剥离，避免干扰parseLowThousandMoney的substring(index-1,index)
+		// 兼容小写中文数字(一~九、两、十、百、千):统一映射为大写后再按大写金额解析,
+		// 避免numberToChina输出的小写形式无法反向解析(如"一千二百三十四")
+		String[] lowerNums = { "一", "二", "两", "三", "四", "五", "六", "七", "八", "九", "十", "百", "千" };
+		String[] upperNums = { "壹", "贰", "贰", "叁", "肆", "伍", "陆", "柒", "捌", "玖", "拾", "佰", "仟" };
+		for (int i = 0; i < lowerNums.length; i++) {
+			capitalMoney = capitalMoney.replace(lowerNums[i], upperNums[i]);
+		}
+		// 剥离币种前缀(如"人民币")
+		capitalMoney = capitalMoney.replace("人民币", "");
+		// 合法性校验:清洗后仅允许数字、大写金额字符与整/负,存在无法识别内容返回null(与englishMoneyToNum容错语义一致)
+		if (capitalMoney.isEmpty() || !capitalMoney.matches("[0-9壹贰叁肆伍陆柒捌玖拾佰仟万亿兆京元角分厘整负]+")) {
+			return null;
+		}
+		// 负号提前剥离
 		boolean isNegative = capitalMoney.startsWith("负");
 		if (isNegative) {
 			capitalMoney = capitalMoney.substring(1);
@@ -241,30 +281,60 @@ public class NumberUtil {
 		for (int i = 0; i < 9; i++) {
 			capitalMoney = capitalMoney.replace(capitalMoneyNumber[i + 1], Integer.toString(i + 1));
 		}
-		int billionIndex = capitalMoney.lastIndexOf("亿");
-		int yuanIndex = capitalMoney.indexOf("元");
-		// [0]亿元、[1]万元、[2]角币
-		String[] splitsCapitalMoney = { "0", "0", "0" };
-		// 是否包含亿元
-		if (billionIndex != -1) {
-			splitsCapitalMoney[0] = capitalMoney.substring(0, billionIndex);
-			if (yuanIndex != -1) {
-				splitsCapitalMoney[1] = capitalMoney.substring(billionIndex + 1, yuanIndex);
-			} else {
-				splitsCapitalMoney[1] = capitalMoney.substring(billionIndex + 1);
+		// 单位幂累加解析:逐字符识别数字与单位,组单位(万亿兆京)连续出现即幂相乘构成组合单位
+		BigDecimal total = BigDecimal.ZERO;
+		// 当前组内数字(仟佰拾组合而成,0~9999)
+		BigDecimal section = BigDecimal.ZERO;
+		// 当前组的组合单位幂(如万亿=10^12),为null表示尚未遇到组单位
+		BigDecimal groupUnit = null;
+		// 当前组数字(组单位生效前的基数)
+		BigDecimal groupValue = BigDecimal.ZERO;
+		// 角分厘部分,以毫(千分之一)为单位整数累计避免浮点误差
+		long fractionMilli = 0;
+		// 已读入尚未结合单位的单个数字
+		int lastDigit = 0;
+		for (int i = 0; i < capitalMoney.length(); i++) {
+			char unitChar = capitalMoney.charAt(i);
+			if (unitChar >= '1' && unitChar <= '9') {
+				// 新组数字开始:上一组的组合单位链已闭合,提交累加
+				if (groupUnit != null) {
+					total = total.add(groupValue.multiply(groupUnit));
+					groupUnit = null;
+				}
+				lastDigit = unitChar - '0';
+			} else if (unitChar == '拾' || unitChar == '佰' || unitChar == '仟') {
+				int unitVal = (unitChar == '拾') ? 10 : ((unitChar == '佰') ? 100 : 1000);
+				// 拾/佰/仟前无数字的历史写法按壹拾/壹佰/壹仟解析(如"拾元整"=10)
+				section = section.add(BigDecimal.valueOf((lastDigit == 0 ? 1 : lastDigit) * unitVal));
+				lastDigit = 0;
+			} else if (unitChar == '万' || unitChar == '亿' || unitChar == '兆' || unitChar == '京') {
+				section = section.add(BigDecimal.valueOf(lastDigit));
+				lastDigit = 0;
+				BigDecimal unitVal = (unitChar == '万') ? TEN_THOUSAND
+						: ((unitChar == '亿') ? HUNDRED_MILLION : BigDecimal.TEN.pow(unitChar == '兆' ? 16 : 32));
+				if (groupUnit == null) {
+					// 新组:组数字为当前仟佰拾累计(无数字的裸单位按壹计)
+					groupValue = (section.compareTo(BigDecimal.ZERO) == 0) ? BigDecimal.ONE : section;
+					groupUnit = unitVal;
+				} else {
+					// 组单位后无数字直接跟下一个组单位:组合单位,幂相乘(如万亿=10^4×10^8)
+					groupUnit = groupUnit.multiply(unitVal);
+				}
+				section = BigDecimal.ZERO;
+			} else if (unitChar == '元') {
+				section = section.add(BigDecimal.valueOf(lastDigit));
+				lastDigit = 0;
+			} else if (unitChar == '角' || unitChar == '分' || unitChar == '厘') {
+				fractionMilli += lastDigit * ((unitChar == '角') ? 100 : ((unitChar == '分') ? 10 : 1));
+				lastDigit = 0;
 			}
-		} else if (yuanIndex != -1) {
-			splitsCapitalMoney[1] = capitalMoney.substring(0, yuanIndex);
-		} else {
-			// 无亿无元，整串作为万元段处理(兼容"壹佰万"、"叁仟"、"玖角捌分"等不含元的输入)
-			splitsCapitalMoney[1] = capitalMoney;
+			// 其余字符(如"人民币"前缀)按单位锚定原则忽略
 		}
-		if (yuanIndex != -1 && yuanIndex != capitalMoney.length() - 1) {
-			splitsCapitalMoney[2] = capitalMoney.substring(yuanIndex + 1);
+		if (groupUnit != null) {
+			total = total.add(groupValue.multiply(groupUnit));
 		}
-		// 分段处理合并
-		BigDecimal result = parseMillMoney(splitsCapitalMoney[0]).multiply(HUNDRED_MILLION)
-				.add(parseMillMoney(splitsCapitalMoney[1])).add(parseLowThousandMoney(splitsCapitalMoney[2]));
+		BigDecimal result = total.add(section).add(BigDecimal.valueOf(lastDigit))
+				.add(BigDecimal.valueOf(fractionMilli, 3));
 		if (isNegative) {
 			return BigDecimal.ZERO.subtract(result).setScale(scale, RoundingMode.HALF_UP);
 		}
@@ -280,7 +350,8 @@ public class NumberUtil {
 		// 取绝对值
 		BigDecimal realMoney = money.setScale(5, RoundingMode.HALF_UP).abs();
 		if (realMoney.compareTo(BigDecimal.ZERO) == 0) {
-			return "零元";
+			// 人行《正确填写票据和结算凭证的基本规定》：大写金额到"元"为止应写"整"字
+			return "零元整";
 		}
 		// 绝对值字符串
 		String sourceStr = realMoney.toString();
@@ -291,12 +362,10 @@ public class NumberUtil {
 			decimalPartStr = sourceStr.substring(dotIndex + 1);
 		}
 		// 处理整数部分
+		// 金额大写规范：拾位处于金额开头必须带"壹"(如10元为"壹拾元整"而非"拾元整")，防止添字篡改
 		String result = numberToChina(intPartStr, true);
 		if (!"".equals(result)) {
 			result += "元";
-		} else if (dotIndex != -1 && !"".equals(decimalPartStr) && Integer.parseInt(decimalPartStr) != 0) {
-			// 整数部分为0但有角分，补"零元"
-			result = "零元";
 		}
 
 		// 小于零
@@ -325,6 +394,12 @@ public class NumberUtil {
 					}
 				}
 			}
+			// 人行《正确填写票据和结算凭证的基本规定》："零"仅用于数字中间补位，不足一元直接从角分写起(如0.05为"伍分"而非"零伍分")
+			if (result.isEmpty() || "负".equals(result)) {
+				while (dotPartStr.startsWith("零")) {
+					dotPartStr = dotPartStr.substring(1);
+				}
+			}
 			result += dotPartStr;
 		}
 		return result;
@@ -340,36 +415,42 @@ public class NumberUtil {
 	}
 
 	/**
-	 * @todo 求数组中数据的最大值
+	 * @todo 求数组中数据的最大值(忽略null元素)
 	 * @param bigArray
 	 * @return
 	 */
 	public static BigDecimal getMax(BigDecimal[] bigArray) {
-		if (bigArray == null || bigArray.length == 0) {
+		BigDecimal max = null;
+		if (bigArray == null) {
 			return null;
 		}
-		BigDecimal max = bigArray[0];
-		for (int i = 0; i < bigArray.length; i++) {
-			if (max.compareTo(bigArray[i]) < 0) {
-				max = bigArray[i];
+		for (BigDecimal item : bigArray) {
+			if (item == null) {
+				continue;
+			}
+			if (max == null || max.compareTo(item) < 0) {
+				max = item;
 			}
 		}
 		return max;
 	}
 
 	/**
-	 * @todo 求数组中数据的最小值
+	 * @todo 求数组中数据的最小值(忽略null元素)
 	 * @param bigArray
 	 * @return
 	 */
 	public static BigDecimal getMin(BigDecimal[] bigArray) {
-		if (bigArray == null || bigArray.length == 0) {
+		BigDecimal min = null;
+		if (bigArray == null) {
 			return null;
 		}
-		BigDecimal min = bigArray[0];
-		for (int i = 0; i < bigArray.length; i++) {
-			if (min.compareTo(bigArray[i]) > 0) {
-				min = bigArray[i];
+		for (BigDecimal item : bigArray) {
+			if (item == null) {
+				continue;
+			}
+			if (min == null || min.compareTo(item) > 0) {
+				min = item;
 			}
 		}
 		return min;
@@ -453,7 +534,12 @@ public class NumberUtil {
 			if (minFractionDigits != null) {
 				nf.setMinimumFractionDigits(minFractionDigits.intValue());
 			}
-			return nf.parse(parseTarget.replace(",", ""));
+			Number number = nf.parse(parseTarget.replace(",", ""));
+			// JDK的NumberFormat.parse不遵循maximumIntegerDigits/maximumFractionDigits设置,手动完成位数限制
+			if (number != null && (maxIntDigits != null || maxFractionDigits != null)) {
+				return applyDigitLimits(number, maxIntDigits, maxFractionDigits);
+			}
+			return number;
 		} catch (ParseException e) {
 			logger.error("value:" + parseTarget + " " + e.getMessage(), e);
 		}
@@ -461,25 +547,32 @@ public class NumberUtil {
 	}
 
 	/**
-	 * @todo 处理大于一万的字符金额
-	 * @param capitalMoneyStr
+	 * @todo 应用解析位数限制(补足JDK NumberFormat.parse不遵循位数设置的缺陷):
+	 *       maxIntDigits超限时整数部分保留低位(如1234.56限3位整数得234.56,与NumberFormat格式化语义一致),
+	 *       maxFractionDigits超限时直接截断(非四舍五入,如1.239限2位小数得1.23)
+	 * @param number
+	 * @param maxIntDigits
+	 * @param maxFractionDigits
 	 * @return
 	 */
-	private static BigDecimal parseMillMoney(String capitalMoneyStr) {
-		if ("".equals(capitalMoneyStr) || "0".equals(capitalMoneyStr)) {
-			return BigDecimal.ZERO;
+	private static Number applyDigitLimits(Number number, Integer maxIntDigits, Integer maxFractionDigits) {
+		BigDecimal decimal = new BigDecimal(number.toString());
+		if (maxIntDigits != null && maxIntDigits > 0) {
+			BigDecimal intPart = decimal.setScale(0, RoundingMode.DOWN);
+			if (intPart.abs().toBigInteger().toString().length() > maxIntDigits) {
+				decimal = decimal.subtract(intPart).add(intPart.remainder(BigDecimal.TEN.pow(maxIntDigits)));
+			}
 		}
-		String millStr = "0";
-		String lowthousand = "0";
-		int millIndex = capitalMoneyStr.indexOf("万");
-		if (millIndex != -1) {
-			millStr = capitalMoneyStr.substring(0, millIndex);
-			lowthousand = (millIndex != capitalMoneyStr.length() - 1) ? capitalMoneyStr.substring(millIndex + 1) : "0";
-		} else {
-			lowthousand = capitalMoneyStr;
+		if (maxFractionDigits != null) {
+			decimal = decimal.setScale(maxFractionDigits, RoundingMode.DOWN);
 		}
-		return parseLowThousandMoney(millStr).multiply(TEN_THOUSAND).add(parseLowThousandMoney(lowthousand));
+		return decimal;
 	}
+
+	/**
+	 * 组单位组合表：组序号按二进制位组合单位，1组=万、2组=亿、4组=兆、8组=京， 如组序号3(10^12)为"万亿"，与原单位表中万、亿、兆、京的位置一致
+	 */
+	private static final String[] GROUP_UNIT_BITS = { "万", "亿", "兆", "京" };
 
 	/**
 	 * @todo 将多位阿拉伯数字转换成中文
@@ -488,94 +581,105 @@ public class NumberUtil {
 	 * @return
 	 */
 	private static String numberToChina(String sourceInt, boolean isMoney) {
-		if ("0".equals(sourceInt)) {
+		if (StringUtil.isBlank(sourceInt)) {
 			return "";
+		}
+		// 负号处理(金额场景已在外层取绝对值，此处兼容负数直接调用)
+		boolean negative = sourceInt.startsWith("-");
+		String digits = negative ? sourceInt.substring(1) : sourceInt;
+		if (digits.isEmpty() || "0".equals(digits)) {
+			// 0按规范读"零"；金额场景整数部分为0返回空串，交由上层零头逻辑处理(如0.56为"伍角陆分")
+			return isMoney ? "" : "零";
 		}
 		String[] chinaNum = (isMoney ? capitalMoneyNumber : captialNumber);
 		String[] realUOM = (isMoney ? moneyUOM : numUOM);
-		// UOM单位数组只覆盖有限位数,超长数字提前给出明确错误而非数组越界
-		if (sourceInt.length() > realUOM.length + 1) {
-			throw new IllegalArgumentException(
-					"数字:" + sourceInt + " 位数超过中文单位覆盖范围(最大" + (realUOM.length + 1) + "位),无法转换成中文!");
-		}
-		int temp;
-		int length = sourceInt.length();
-		StringBuilder targetStr = new StringBuilder("");
-		String firstChar;
-		for (int i = 0; i < length; i++) {
-			if (targetStr.length() > 0) {
-				firstChar = String.valueOf(targetStr.charAt(0));
-			} else {
-				firstChar = "零";
+		int length = digits.length();
+		// 按4位一组从高位向低位转换；lastPos记录已输出的最低位数字所在位置(10^lastPos)，用于判断组间是否需要补零
+		int groupCount = (length + 3) / 4;
+		StringBuilder result = new StringBuilder(negative ? "负" : "");
+		int lastPos = -1;
+		for (int g = groupCount - 1; g >= 0; g--) {
+			int start = Math.max(0, length - (g + 1) * 4);
+			int end = length - g * 4;
+			int groupValue = Integer.parseInt(digits.substring(start, end));
+			if (groupValue == 0) {
+				continue;
 			}
-			// 从低位处理
-			temp = Integer.parseInt(sourceInt.substring(length - i - 1, length - i));
-			if (temp == 0) {
-				if (i > 0 && i % 4 == 0) {
-					String currentUnit = numUOM[i - 1];
-					// 万亿、万兆等为复合单位，不删除前一个大单位
-					boolean isCompoundWan = currentUnit.equals("万") && i > 4;
-					if (!isCompoundWan && "万亿兆京".indexOf(firstChar) != -1) {
-						// 前一个大单位可能是复合单位(如"万亿")，需删除两个字符
-						if (firstChar.equals("万") && targetStr.length() > 1
-								&& "亿兆京".indexOf(targetStr.charAt(1)) != -1) {
-							targetStr.delete(0, 2);
-						} else {
-							targetStr.delete(0, 1);
-						}
-					}
-					targetStr.insert(0, currentUnit);
-				} else if ("零万亿兆京".indexOf(firstChar) == -1) {
-					targetStr.insert(0, "零");
-				}
-			} else {
-				if ((i > 0 && i % 4 == 0) && ("万亿兆京".indexOf(firstChar) != -1)) {
-					String currentUnit = realUOM[i - 1];
-					boolean isCompoundWan = currentUnit.equals("万") && i > 4;
-					if (!isCompoundWan) {
-						if (firstChar.equals("万") && targetStr.length() > 1
-								&& "亿兆京".indexOf(targetStr.charAt(1)) != -1) {
-							targetStr.delete(0, 2);
-						} else {
-							targetStr.delete(0, 1);
-						}
-					}
-				}
-				targetStr.insert(0, chinaNum[temp] + ((i > 0) ? realUOM[i - 1] : ""));
+			// 本组最高位数字位置与已输出内容的间隔达到2位以上时补零
+			int highPos = 4 * g + Integer.toString(groupValue).length() - 1;
+			if (lastPos - highPos >= 2) {
+				result.append("零");
+			}
+			result.append(fourDigitsToChina(groupValue, chinaNum, realUOM)).append(groupUnit(g));
+			int trailingZeros = 0;
+			for (int t = groupValue; t % 10 == 0 && t > 0; t /= 10) {
+				trailingZeros++;
+			}
+			lastPos = 4 * g + trailingZeros;
+		}
+		String resultStr = result.toString();
+		// GB/T 15835及汉语规范读法：普通数字最高位为十位时"十"前不加"一"(如15为"十五"、100000为"十万")，
+		// 中间位置保留(如110为"一百一十")；金额场景(isMoney)按人行规定保留"壹拾"防涂改
+		if (!isMoney) {
+			if (resultStr.startsWith("一十")) {
+				resultStr = resultStr.substring(1);
+			} else if (resultStr.startsWith("负一十")) {
+				resultStr = "负".concat(resultStr.substring(2));
 			}
 		}
-		return targetStr.toString();
+		return resultStr;
 	}
 
 	/**
-	 * @todo 处理一万以内的金额
-	 * @param capitalMoneyStr
+	 * @todo 将组内(万以内)数字转换成中文，自动处理组内零(如1001为壹仟零壹)
+	 * @param groupValue 组内数值(0~9999)
+	 * @param chinaNum   数字字符表
+	 * @param realUOM    单位字符表(取仟、佰、拾)
 	 * @return
 	 */
-	private static BigDecimal parseLowThousandMoney(String capitalMoneyStr) {
-		if ("0".equals(capitalMoneyStr)) {
-			return BigDecimal.ZERO;
-		}
-		String lastStr = capitalMoneyStr.substring(capitalMoneyStr.length() - 1);
-		int lastAscii = StringUtil.str2ASCII(lastStr)[0];
-		String[] uoms = { "仟", "佰", "拾", "角", "分", "厘" };
-		double[] multiples = { 1000, 100, 10, 0.1, 0.01, 0.001 };
-		BigDecimal moneyNum = BigDecimal.ZERO;
-		int index;
-		double splitMoneyNum;
-		for (int i = 0; i < uoms.length; i++) {
-			index = capitalMoneyStr.indexOf(uoms[i]);
-			if (index != -1) {
-				// 拾/佰/仟出现在首位表示省略了"壹"(如"拾元"表示壹拾元)
-				double digit = (index == 0) ? 1 : Double.parseDouble(capitalMoneyStr.substring(index - 1, index));
-				splitMoneyNum = digit * multiples[i];
-				moneyNum = moneyNum.add(new BigDecimal(splitMoneyNum));
+	private static String fourDigitsToChina(int groupValue, String[] chinaNum, String[] realUOM) {
+		int[] digitAry = { groupValue / 1000, groupValue / 100 % 10, groupValue / 10 % 10, groupValue % 10 };
+		// 组内单位:仟、佰、拾、个
+		String[] units = { realUOM[2], realUOM[1], realUOM[0], "" };
+		StringBuilder sb = new StringBuilder();
+		boolean zeroPending = false;
+		for (int i = 0; i < 4; i++) {
+			int digit = digitAry[i];
+			if (digit == 0) {
+				// 高位出现过非零数字后遇到零，低位可能还有非零数字，挂起待补
+				if (sb.length() > 0) {
+					zeroPending = true;
+				}
+			} else {
+				if (zeroPending) {
+					sb.append("零");
+					zeroPending = false;
+				}
+				sb.append(chinaNum[digit]).append(units[i]);
 			}
 		}
-		if (lastAscii >= 49 && lastAscii <= 57) {
-			moneyNum = moneyNum.add(new BigDecimal(lastStr));
+		return sb.toString();
+	}
+
+	/**
+	 * @todo 获取组序号对应的组单位，组序号按二进制位组合(万=1组、亿=2组、兆=4组、京=8组)
+	 * @param groupIndex 组序号(0为个位组)
+	 * @return
+	 */
+	private static String groupUnit(int groupIndex) {
+		if (groupIndex == 0) {
+			return "";
 		}
-		return moneyNum;
+		if (groupIndex > 15) {
+			throw new IllegalArgumentException("数字超出支持的转换范围(10^64)");
+		}
+		StringBuilder unit = new StringBuilder();
+		for (int bit = 0; (1 << bit) <= groupIndex; bit++) {
+			if ((groupIndex & (1 << bit)) != 0) {
+				unit.append(GROUP_UNIT_BITS[bit]);
+			}
+		}
+		return unit.toString();
 	}
 
 	/**
@@ -619,19 +723,18 @@ public class NumberUtil {
 		if (realSize > maxValue) {
 			realSize = maxValue;
 		}
-		// 长度等于最大值
+		// 长度等于最大值，返回打乱后的全量数据
 		if (realSize == maxValue) {
-			Object[] result = new Object[maxValue];
+			List<Integer> result = new ArrayList<>(maxValue);
 			for (int i = 0; i < maxValue; i++) {
-				result[i] = i;
+				result.add(i);
 			}
-			return result;
+			Collections.shuffle(result, SECURE_RANDOM);
+			return result.toArray();
 		}
 		Set<Integer> resultSet = new HashSet<Integer>(realSize);
-		int randomNum;
 		while (resultSet.size() < realSize) {
-			randomNum = SECURE_RANDOM.nextInt(maxValue);
-			resultSet.add(randomNum);
+			resultSet.add(SECURE_RANDOM.nextInt(maxValue));
 		}
 		return resultSet.toArray();
 	}
@@ -667,10 +770,9 @@ public class NumberUtil {
 		if (null == value) {
 			return "";
 		}
-		if (value.compareTo(BigDecimal.ZERO) == 0) {
-			return "ZERO ONLY";
-		}
-		String str = value.toString();
+		// 用toPlainString而非toString:负scale的BigDecimal(如1E33或大整数stripTrailingZeros后)
+		// toString会产生科学计数法导致后续按位解析抛异常
+		String str = value.toPlainString();
 		int dotIndex = str.indexOf(".");
 		if (dotIndex != -1 && str.length() > dotIndex + 3) {
 			str = str.substring(0, dotIndex + 3);
@@ -720,34 +822,244 @@ public class NumberUtil {
 		default:
 			;
 		}
+		// 按补位后叁位一组的实际组数分配容量，避免超出预设组数时数组越界
+		String[] a = new String[lstrrev.length() / 3]; // 定义字串变量来存放解析出来的叁位一组的字串
 		StringBuilder lm = new StringBuilder(); // 用来存放转换後的整数部分
 		int loopEnd = lstrrev.length() / 3;
+		// 与parseMore尺度词表对齐(最大DECILLION=10^33,12组),13组及以上给出明确错误而非parseMore数组越界
+		if (loopEnd > 12) {
+			throw new IllegalArgumentException("数字超出支持的转换范围(10^36)");
+		}
 		for (int i = 0; i < loopEnd; i++) {
-			String threeDigits = reverse(lstrrev.substring(3 * i, 3 * i + 3)); // 截取第一个叁位
-			if (!"000".equals(threeDigits)) { // 用来避免这种情况：1000000 = one million thousand only
+			a[i] = reverse(lstrrev.substring(3 * i, 3 * i + 3)); // 截取第一个叁位
+			if (!"000".equals(a[i])) { // 用来避免这种情况：1000000 = one million thousand only
 				if (i != 0) {
 					// thousand、million、billion
 					if (hasPermil && lm.length() > 0) {
-						lm.insert(0, transThree(threeDigits) + " " + parseMore(String.valueOf(i)) + ",");
+						lm.insert(0, transThree(a[i]) + " " + parseMore(String.valueOf(i)) + ",");
 					} else {
-						lm.insert(0, transThree(threeDigits) + " " + parseMore(String.valueOf(i)) + " ");
+						lm.insert(0, transThree(a[i]) + " " + parseMore(String.valueOf(i)) + " ");
 					}
 				} else {
-					lm = new StringBuilder(transThree(threeDigits)); // 防止i=0时， 在多加两个空格.
+					lm = new StringBuilder(transThree(a[i])); // 防止i=0时， 在多加两个空格.
 				}
 			} else {
-				lm.append(transThree(threeDigits));
+				lm.append(transThree(a[i]));
 			}
 		}
 
 		String xs = ""; // 用来存放转换後小数部分
-		// value以"."结尾时rstr为空串,new BigDecimal("")会抛NumberFormatException,按无小数处理
-		if ((z > -1) && rstr.length() > 0 && (BigDecimal.ZERO.compareTo(new BigDecimal(rstr)) == -1)) {
-			xs = " AND CENTS " + transTwo(rstr); // 小数部分存在时转换小数 xs = "AND CENTS " + transTwo(rstr) + " ";
-		} else {
-			xs = "";
+		if ((z > -1) && !rstr.isEmpty() && (BigDecimal.ZERO.compareTo(new BigDecimal(rstr)) == -1)) {
+			// 分位按两位小数解读:单位小数处于"角"位(如0.5=50分),右补零;左补零会被当成5分误读
+			if (rstr.length() == 1) {
+				rstr = rstr.concat("0");
+			}
+			xs = " AND CENTS " + transTwo(rstr); // 小数部分存在时转换小数
 		}
-		return (isMinus ? "MINUS " : "") + lm.toString().trim() + xs + " ONLY";
+		String intPart = lm.toString().trim();
+		// 整数部分为空表示金额为零
+		if (intPart.isEmpty()) {
+			intPart = "ZERO";
+		}
+		return (isMinus ? "MINUS " : "") + intPart + xs + " ONLY";
+	}
+
+	// 票据标准币种单位词(与ISO-4217代码一一对应,RMB为惯用别名),供带币种参数的convertToEnglishMoney使用
+	private final static String[] ISO_CURRENCY_CODES = { "USD", "AUD", "CAD", "HKD", "SGD", "NZD", "GBP", "EUR",
+			"JPY", "CHF", "CNY", "RMB" };
+	private final static String[] ISO_CURRENCY_WORDS = { "US DOLLARS", "AUSTRALIAN DOLLARS", "CANADIAN DOLLARS",
+			"HONG KONG DOLLARS", "SINGAPORE DOLLARS", "NEW ZEALAND DOLLARS", "BRITISH POUNDS STERLING", "EUROS",
+			"JAPANESE YEN", "SWISS FRANCS", "CHINESE YUAN", "CHINESE YUAN" };
+
+	/**
+	 * @todo 输出票据标准格式的英文金额(SAY+币种单位词开头),如value=1234.56、currency=USD输出:
+	 *       "SAY US DOLLARS ONE THOUSAND TWO HUNDRED AND THIRTY-FOUR AND CENTS FIFTY-SIX ONLY";
+	 *       currency支持ISO-4217代码(如USD、AUD、JPY、RMB,自动映射票据标准单位词),也可直接传单位词
+	 *       (如"POUNDS STERLING");为null或空时输出不带币种的既有格式;单位词统一复数,输出可被englishMoneyToNum还原
+	 * @param value    金额数值
+	 * @param currency 币种代码或单位词
+	 * @return
+	 */
+	public static String convertToEnglishMoney(BigDecimal value, String currency) {
+		return withCurrencyWords(convertToEnglishMoney(value), currency);
+	}
+
+	/**
+	 * @todo 输出票据标准格式的英文金额,参见convertToEnglishMoney(BigDecimal,String)
+	 * @param value
+	 * @param currency
+	 * @return
+	 */
+	public static String convertToEnglishMoney(String value, String currency) {
+		return withCurrencyWords(convertToEnglishMoney(value), currency);
+	}
+
+	/**
+	 * @todo 为英文金额描述加注SAY和币种单位词前缀,形成票据标准格式
+	 * @param money    既有的英文金额描述
+	 * @param currency 币种代码或单位词
+	 * @return
+	 */
+	private static String withCurrencyWords(String money, String currency) {
+		if (StringUtil.isBlank(currency) || StringUtil.isBlank(money)) {
+			return money;
+		}
+		String unit = currency.trim().toUpperCase();
+		for (int i = 0; i < ISO_CURRENCY_CODES.length; i++) {
+			if (ISO_CURRENCY_CODES[i].equals(unit)) {
+				unit = ISO_CURRENCY_WORDS[i];
+				break;
+			}
+		}
+		return "SAY ".concat(unit).concat(" ").concat(money);
+	}
+
+	/**
+	 * @todo 将英文金额描述转换成数字,支持convertToEnglishMoney输出的完整形式 (如"MINUS ONE THOUSAND AND
+	 *       CENTS FIFTY ONLY"),也支持普通英文数字(如"one thousand and thirty-four")和带货币单位词的
+	 *       金额描述(如"one thousand two hundred thirty-four dollars and fifty-six cents"、"FIVE EUROS"),
+	 *       货币单位覆盖美元/日元/英镑/欧元/澳元/加拿大元/港币/人民币等主要货币的英文全称、国别修饰词
+	 *       (如AUSTRALIAN、CANADIAN、JAPANESE)及ISO-4217代码(如USD、JPY、AUD、CAD、HKD);
+	 *       同时兼容银行票据标准写法:SAY/SAY TOTAL抬头、AND NO CENTS、分数式分币(如"AND 56/100 DOLLARS")
+	 * @param englishMoney
+	 * @return 无法识别时返回null
+	 */
+	public static BigDecimal englishMoneyToNum(String englishMoney) {
+		if (StringUtil.isBlank(englishMoney)) {
+			return null;
+		}
+		String[] unitWords = { "ONE", "TWO", "THREE", "FOUR", "FIVE", "SIX", "SEVEN", "EIGHT", "NINE" };
+		String[] teenWords = { "TEN", "ELEVEN", "TWELVE", "THIRTEEN", "FOURTEEN", "FIFTEEN", "SIXTEEN", "SEVENTEEN",
+				"EIGHTEEN", "NINETEEN" };
+		String[] tenWords = { "TWENTY", "THIRTY", "FORTY", "FIFTY", "SIXTY", "SEVENTY", "EIGHTY", "NINETY" };
+		String[] scaleWords = { "THOUSAND", "MILLION", "BILLION", "TRILLION", "QUADRILLION", "QUINTILLION",
+				"SEXTILLION", "SEPTILLION", "OCTILLION", "NONILLION", "DECILLION" };
+		// 货币单位词:主币单位、国别地区修饰词及ISO-4217代码,解析时作为结算边界,不参与数值计算
+		String[] currencyWords = {
+				// 美元/澳元/加拿大元/港币/新西兰元/新加坡元等dollar系
+				"DOLLAR", "DOLLARS", "US", "USD", "AMERICAN", "AUSTRALIAN", "AUSTRALIA", "AUD", "CANADIAN", "CANADA",
+				"CAD", "HONG", "KONG", "HKD", "NEW", "ZEALAND", "NZD", "SINGAPORE", "SGD",
+				// 英镑/欧元
+				"POUND", "POUNDS", "BRITISH", "GBP", "STERLING", "EURO", "EUROS", "EUR",
+				// 日元/人民币
+				"YEN", "JAPANESE", "JAPAN", "JPY", "YUAN", "CHINESE", "CHINA", "CNY", "RMB",
+				// 瑞士法郎/卢比
+				"FRANC", "FRANCS", "SWISS", "CHF", "RUPEE", "RUPEES", "INDIAN", "INR" };
+		// 归一化:统一大写,逗号和连字符转空白(如TWENTY-FIVE拆成两个词),斜杠周围空白剔除(如"56 / 100"归一为"56/100"),
+		// 各类空白(含制表换行、全角空格、不间断空格等非标准空白)统一压缩为单空格,容忍复制粘贴产生的不规范空格
+		String[] tokens = englishMoney.trim().toUpperCase().replace(",", " ").replace("-", " ")
+				.replaceAll("\\s*/\\s*", "/").replaceAll("[\\s\\u00A0\\u202F\\u3000]+", " ").trim().split("\\s+");
+		boolean negative = false;
+		// CENTS之后的数值属于分币部分,单独累计后按百分位合并
+		boolean centsPart = false;
+		// 上一个有效词是否为紧邻的数字词(用于"FIFTY CENTS"后置式分币归属判定)
+		boolean lastTokenWasNumber = false;
+		BigDecimal total = BigDecimal.ZERO;
+		int current = 0;
+		int cents = 0;
+		for (String token : tokens) {
+			if (token.equals("MINUS") || token.equals("NEGATIVE")) {
+				negative = true;
+				lastTokenWasNumber = false;
+				continue;
+			}
+			// 连接词、收尾词、票据抬头词(SAY/TOTAL)与零值、无分币(NO)表述
+			if (token.equals("AND") || token.equals("ONLY") || token.equals("ZERO") || token.equals("SAY")
+					|| token.equals("TOTAL") || token.equals("NO")) {
+				lastTokenWasNumber = false;
+				continue;
+			}
+			// 美式支票标准的分币分数写法(如"AND 56/100"):分母为100,分子即分币数
+			if (token.matches("\\d+/100")) {
+				cents += Integer.parseInt(token.substring(0, token.indexOf('/')));
+				lastTokenWasNumber = false;
+				continue;
+			}
+			// 货币单位词忽略(如dollars、euros、yen),不参与数值计算
+			boolean isCurrency = false;
+			for (int i = 0; i < currencyWords.length; i++) {
+				if (token.equals(currencyWords[i])) {
+					isCurrency = true;
+					break;
+				}
+			}
+			if (isCurrency) {
+				// 主币单位词是结算边界:其前面的数值构成完整的元金额(如"two dollars fifty cents"中的2),
+				// 先结算进总额,避免与后面的分币数值(如fifty)累加混淆
+				total = total.add(BigDecimal.valueOf(current));
+				current = 0;
+				lastTokenWasNumber = false;
+				continue;
+			}
+			// 分币单位词:兼容前置("AND CENTS FIFTY")和后置("FIFTY CENTS")两种顺序,
+			// 后置时紧邻单位词且尚未结算的数值归属分币(如"two dollars fifty cents"中的50);
+			// 前置时单位词与数字间有连接词(如"THIRTY-FOUR AND CENTS FIFTY"),current保留在整数部分
+			if (token.equals("CENT") || token.equals("CENTS") || token.equals("PENNY") || token.equals("PENCE")) {
+				if (lastTokenWasNumber && current > 0) {
+					cents += current;
+					current = 0;
+				}
+				centsPart = true;
+				lastTokenWasNumber = false;
+				continue;
+			}
+			int value = -1;
+			for (int i = 0; i < unitWords.length && value == -1; i++) {
+				if (token.equals(unitWords[i])) {
+					value = i + 1;
+				}
+			}
+			for (int i = 0; i < teenWords.length && value == -1; i++) {
+				if (token.equals(teenWords[i])) {
+					value = i + 10;
+				}
+			}
+			for (int i = 0; i < tenWords.length && value == -1; i++) {
+				if (token.equals(tenWords[i])) {
+					value = (i + 2) * 10;
+				}
+			}
+			if (value > 0) {
+				if (centsPart) {
+					cents += value;
+				} else {
+					current += value;
+				}
+				lastTokenWasNumber = true;
+				continue;
+			}
+			if (token.equals("HUNDRED")) {
+				if (centsPart) {
+					cents = Math.max(cents, 1) * 100;
+				} else {
+					current = Math.max(current, 1) * 100;
+				}
+				lastTokenWasNumber = true;
+				continue;
+			}
+			boolean isScale = false;
+			for (int i = 0; i < scaleWords.length; i++) {
+				if (token.equals(scaleWords[i])) {
+					// 尺度词前缺数字时按壹计(如"THOUSAND FIVE"按一千零五处理)
+					total = total.add(
+							BigDecimal.valueOf(current == 0 ? 1 : current).multiply(BigDecimal.TEN.pow((i + 1) * 3)));
+					current = 0;
+					isScale = true;
+					lastTokenWasNumber = false;
+					break;
+				}
+			}
+			if (!isScale) {
+				logger.warn("英文金额:{} 存在无法识别的单词:{},返回null!", englishMoney, token);
+				return null;
+			}
+		}
+		// 无分币时保持整数结果(scale=0),与capitalMoneyToNum无角分返回整数值的行为一致
+		BigDecimal result = total.add(BigDecimal.valueOf(current));
+		if (cents > 0) {
+			result = result.add(BigDecimal.valueOf(cents, 2));
+		}
+		return negative ? result.negate() : result;
 	}
 
 	private static String parseFirst(String s) {
@@ -792,7 +1104,8 @@ public class NumberUtil {
 	}
 
 	private static String parseMore(String s) {
-		String[] unitAry = new String[] { "", "THOUSAND", "MILLION", "BILLION", "TRILLION", "QUADRILLION" };
+		String[] unitAry = new String[] { "", "THOUSAND", "MILLION", "BILLION", "TRILLION", "QUADRILLION",
+				"QUINTILLION", "SEXTILLION", "SEPTILLION", "OCTILLION", "NONILLION", "DECILLION" };
 		return unitAry[Integer.parseInt(s)];
 	}
 
@@ -818,15 +1131,16 @@ public class NumberUtil {
 
 	/**
 	 * 将字符串解析成RoundingMode
-	 * 
+	 *
 	 * @param roundingModeStr
 	 * @return
 	 */
 	public static RoundingMode parseRoundingMode(String roundingModeStr) {
-		if (StringUtil.isBlank(roundingModeStr)) {
+		// null表示未配置(对应FormatModel不设置舍入模式);空串或无法识别的值统一返回HALF_UP
+		if (roundingModeStr == null) {
 			return null;
 		}
-		String roundingStr = roundingModeStr.toUpperCase();
+		String roundingStr = roundingModeStr.trim().toUpperCase();
 		if (roundingStr.equals("UP")) {
 			return RoundingMode.UP;
 		} else if (roundingStr.equals("DOWN")) {

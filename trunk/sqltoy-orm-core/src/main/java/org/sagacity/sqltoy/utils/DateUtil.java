@@ -8,6 +8,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -26,7 +27,6 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -54,7 +54,7 @@ public class DateUtil {
 	 */
 	private final static Logger logger = LoggerFactory.getLogger(DateUtil.class);
 
-	private static final String[] CHINA_DATE_KEYS = { "○", "〇", "О", "0", "Ο", "O", "零", "一", "二", "三", "四", "五", "六",
+	private static final String[] CHINA_DATE_KEYS = { "○", "О", "0", "Ο", "O", "零", "〇", "一", "二", "三", "四", "五", "六",
 			"七", "八", "九", "十", "年", "月", "日", "时", "分", "秒" };
 	private static final String[] CHINA_DATE_KEY_MAP = { "0", "0", "0", "0", "0", "0", "0", "1", "2", "3", "4", "5",
 			"6", "7", "8", "9", "10", "-", "-", " ", ":", ":", " " };
@@ -76,11 +76,13 @@ public class DateUtil {
 			"Saturday", "Sunday" };
 	private static final String[] WEEK_ENGLISH_NAKE = { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
 	private final static Pattern WEEK_PATTERN = Pattern.compile("(?i)(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\\s");
-	private final static Pattern DAY_PATTERN = Pattern.compile("(?i)\\s\\d{1,2}(st|th|rd)?\\s");
+	private final static Pattern DAY_PATTERN = Pattern.compile("(?i)\\s\\d{1,2}(st|th|nd|rd)?\\s");
 
-	// 超过十的中文(个位可缺省,支持二十、三十等整十形式;前缀用懒惰匹配,优先将十后面的数字作为个位,如十一而非一十)
-	private final static Pattern MORE_TEN_PATTERN = Pattern
-			.compile("(一|二|三|四|五)??\\十(一|二|三|四|五|六|七|八|九)?");
+	// 超过十的中文，前后数字均可选，覆盖"十五"、"二十"、"二十一"等形式
+	private final static Pattern MORE_TEN_PATTERN = Pattern.compile("([一二三四五六七八九])?\\十([一二三四五六七八九])?");
+
+	// 中文数字字符，用于"X十Y"形式转数值
+	private static final String CN_DIGITS = "一二三四五六七八九";
 
 	/**
 	 * 英文日期的几种格式
@@ -89,12 +91,13 @@ public class DateUtil {
 			.asList(new String[] { "MMM dd yyyy", "MMM dd z yyyy" });
 	private static final Collection<String> DEFAULT_WEEK_DAY_PATTERNS = Arrays
 			.asList(new String[] { "EEE MMM dd yyyy", "EEE MMM dd z yyyy" });
-	private static final Collection<String> DEFAULT_TIME_PATTERNS = Arrays.asList(new String[] {
-			"MMM dd HH:mm:ss z yyyy", "MMM dd HH:mm:ss yyyy", "MMM dd yyyy HH:mm:ss", "MMM dd yyyy HH:mm:ss z" });
-	private static final Collection<String> DEFAULT_WEEK_TIME_PATTERNS = Arrays
-			.asList(new String[] { "EEE MMM dd HH:mm:ss z yyyy", "EEE MMM dd HH:mm:ss yyyy",
-					"EEE MMM dd yyyy HH:mm:ss z", "EEEE dd-MMM-yyyy HH:mm:ss", "EEEE dd-MMM-yyyy HH:mm:ss z",
-					"EEEE dd-MMM-yy HH:mm:ss z", "EEEE dd-MMM-yy HH:mm:ss" });
+	private static final Collection<String> DEFAULT_TIME_PATTERNS = Arrays
+			.asList(new String[] { "MMM dd HH:mm:ss z yyyy", "MMM dd HH:mm:ss yyyy", "MMM dd yyyy HH:mm:ss",
+					"MMM dd yyyy HH:mm:ss z", "MMM dd HH:mm yyyy", "MMM dd yyyy HH:mm" });
+	private static final Collection<String> DEFAULT_WEEK_TIME_PATTERNS = Arrays.asList(new String[] {
+			"EEE MMM dd HH:mm:ss z yyyy", "EEE MMM dd HH:mm:ss yyyy", "EEE MMM dd yyyy HH:mm:ss z",
+			"EEE MMM dd yyyy HH:mm:ss", "EEE MMM dd HH:mm yyyy", "EEE MMM dd yyyy HH:mm", "EEEE dd-MMM-yyyy HH:mm:ss",
+			"EEEE dd-MMM-yyyy HH:mm:ss z", "EEEE dd-MMM-yy HH:mm:ss z", "EEEE dd-MMM-yy HH:mm:ss" });
 
 	private final static Pattern DAYTH_PATTERN = Pattern.compile("(?i)\\s\\d{1,2}(st|th|nd|rd)\\s");
 	private final static Pattern TIME_PATTERN = Pattern.compile("\\d{1,2}\\:\\d{1,2}");
@@ -102,7 +105,8 @@ public class DateUtil {
 	private final static Pattern ZONED_TIME_PATTERN = Pattern
 			.compile("(\\+|\\-)\\d{1,2}\\:\\d{2}(\\[[a-z|A-Z|\\/|\\_]+\\])?$");
 
-	private final static Pattern DATE_PATTERN = Pattern.compile("(\\d{2,4})-(\\d)(?=-)|-(\\d)(?=\\s)");
+	// 日期分隔符(-、/、.)后跟单位数月或日(如2024/1/5、2024.1.5)时用于补零，时间部分的:和小数秒不受影响
+	private final static Pattern DATE_PATTERN = Pattern.compile("(\\d{2,4})[-/.](\\d)(?=[-/.])|[-/.](\\d)(?=\\s)");
 
 	/**
 	 * 定义日期的格式
@@ -210,7 +214,8 @@ public class DateUtil {
 		if (dateVar == null) {
 			return null;
 		}
-		String dateStr = dateVar.trim();
+		// 空白归一化:各类空白(含全角空格、不间断空格等非标准空白)统一压缩为单空格,容忍复制粘贴产生的不规范空格
+		String dateStr = dateVar.replaceAll("[\\s\\u00A0\\u202F\\u3000]+", " ").trim();
 		if ("".equals(dateStr) || dateStr.toLowerCase().equals("null")) {
 			return null;
 		}
@@ -243,8 +248,44 @@ public class DateUtil {
 			if (hasBlank) {
 				dateStr = dateStr.replaceFirst("\\s+", " ").replaceFirst("(?i)T", " ");
 				dateStr = padDateString(dateStr);
+				// 时间段含冒号时逐段补前导零(如"8:5:9"→"08:05:09"):去除分隔符合并后,
+				// 多个单位数时分秒组件仅靠原有的整体补一个零会错位(859→0859被误读成08:59)
+				int tmpBlankIndex = dateStr.indexOf(" ");
+				if (tmpBlankIndex != -1) {
+					String timeSeg = dateStr.substring(tmpBlankIndex + 1);
+					if (timeSeg.indexOf(":") != -1) {
+						String[] timeParts = timeSeg.split(":");
+						StringBuilder paddedTime = new StringBuilder();
+						for (int t = 0; t < timeParts.length; t++) {
+							String part = timeParts[t];
+							String fraction = "";
+							int dotIdx = part.indexOf(".");
+							if (dotIdx > -1) {
+								fraction = part.substring(dotIdx);
+								part = part.substring(0, dotIdx);
+							}
+							if (part.length() == 1) {
+								part = "0".concat(part);
+							}
+							paddedTime.append(part).append(fraction);
+							if (t < timeParts.length - 1) {
+								paddedTime.append(":");
+							}
+						}
+						dateStr = dateStr.substring(0, tmpBlankIndex + 1).concat(paddedTime.toString());
+					}
+				}
 				// 统一格式(去除掉日期中的符号变成全数字),update 2019-08-12 支持jdk8日期
+				// 时间部分不含小数秒且为1~5位奇数(如"20240105 304")时补前导0，避免单位数小时导致格式判断错位；
+				// 含小数秒(如"123030.123345321")时的奇数位来自小数部分，7位及以上按高精度解释，补零会破坏格式匹配
+				boolean hasFraction = dateStr.indexOf(".", dateStr.indexOf(" ")) != -1;
 				dateStr = dateStr.replace("-", "").replace(".", "").replace(":", "").replace("/", "");
+				int blankIndex = dateStr.indexOf(" ");
+				int timeSize = dateStr.length() - blankIndex - 1;
+				if (!hasFraction && timeSize < 6 && timeSize % 2 == 1) {
+					dateStr = dateStr.substring(0, blankIndex + 1).concat("0")
+							.concat(dateStr.substring(blankIndex + 1));
+				}
 				int preSize = dateStr.indexOf(" ");
 				size = dateStr.length();
 				if (size > 16) {
@@ -354,7 +395,7 @@ public class DateUtil {
 		Exception ex = null;
 		// 通过异常模式进行一次容错处理
 		try {
-			DateFormat df = (locale == null) ? new SimpleDateFormat(realDF) : new SimpleDateFormat(realDF, locale);
+			DateFormat df = new SimpleDateFormat(realDF, (locale == null) ? SqlToyConstants.getLocale() : locale);
 			result = df.parse(dateStr);
 		} catch (ParseException e) {
 			hasException = true;
@@ -386,6 +427,10 @@ public class DateUtil {
 		Matcher m = ZONED_TIME_PATTERN.matcher(dateVar);
 		if (m.find()) {
 			LocalDateTime baseDate = parseLocalDateTime(dateVar.substring(0, m.start()));
+			// 基础时间部分解析失败则整体无法构成时区时间，返回null而非抛NPE
+			if (baseDate == null) {
+				return null;
+			}
 			// 提取偏差hour
 			String timeZone = m.group();
 			if (timeZone.contains("[") && timeZone.contains("]")) {
@@ -399,7 +444,7 @@ public class DateUtil {
 			return ZonedDateTime.of(baseDate, ZoneOffset.of(timeZone));
 		}
 		LocalDateTime baseDate = parseLocalDateTime(dateVar);
-		return ZonedDateTime.of(baseDate, SqlToyConstants.getZoneId());
+		return (baseDate == null) ? null : ZonedDateTime.of(baseDate, SqlToyConstants.getZoneId());
 	}
 
 	public static LocalDateTime parseLocalDateTime(String dateVar) {
@@ -410,7 +455,8 @@ public class DateUtil {
 		if (dateVar == null) {
 			return null;
 		}
-		String dateStr = dateVar.trim();
+		// 空白归一化:各类空白(含全角空格、不间断空格等非标准空白)统一压缩为单空格,容忍复制粘贴产生的不规范空格
+		String dateStr = dateVar.replaceAll("[\\s\\u00A0\\u202F\\u3000]+", " ").trim();
 		if ("".equals(dateStr) || dateStr.toLowerCase().equals("null")) {
 			return null;
 		}
@@ -442,8 +488,44 @@ public class DateUtil {
 			if (hasBlank) {
 				dateStr = dateStr.replaceFirst("\\s+", " ").replaceFirst("(?i)T", " ");
 				dateStr = padDateString(dateStr);
+				// 时间段含冒号时逐段补前导零(如"8:5:9"→"08:05:09"):去除分隔符合并后,
+				// 多个单位数时分秒组件仅靠原有的整体补一个零会错位(859→0859被误读成08:59)
+				int tmpBlankIndex = dateStr.indexOf(" ");
+				if (tmpBlankIndex != -1) {
+					String timeSeg = dateStr.substring(tmpBlankIndex + 1);
+					if (timeSeg.indexOf(":") != -1) {
+						String[] timeParts = timeSeg.split(":");
+						StringBuilder paddedTime = new StringBuilder();
+						for (int t = 0; t < timeParts.length; t++) {
+							String part = timeParts[t];
+							String fraction = "";
+							int dotIdx = part.indexOf(".");
+							if (dotIdx > -1) {
+								fraction = part.substring(dotIdx);
+								part = part.substring(0, dotIdx);
+							}
+							if (part.length() == 1) {
+								part = "0".concat(part);
+							}
+							paddedTime.append(part).append(fraction);
+							if (t < timeParts.length - 1) {
+								paddedTime.append(":");
+							}
+						}
+						dateStr = dateStr.substring(0, tmpBlankIndex + 1).concat(paddedTime.toString());
+					}
+				}
 				// 统一格式(去除掉日期中的符号变成全数字),update 2019-08-12 支持jdk8日期
+				// 时间部分不含小数秒且为1~5位奇数(如"20240105 304")时补前导0，避免单位数小时导致格式判断错位；
+				// 含小数秒(如"123030.123345321")时的奇数位来自小数部分，7位及以上按高精度解释，补零会破坏格式匹配
+				boolean hasFraction = dateStr.indexOf(".", dateStr.indexOf(" ")) != -1;
 				dateStr = dateStr.replace("-", "").replace(".", "").replace(":", "").replace("/", "");
+				int blankIndex = dateStr.indexOf(" ");
+				int timeSize = dateStr.length() - blankIndex - 1;
+				if (!hasFraction && timeSize < 6 && timeSize % 2 == 1) {
+					dateStr = dateStr.substring(0, blankIndex + 1).concat("0")
+							.concat(dateStr.substring(blankIndex + 1));
+				}
 				int preSize = dateStr.indexOf(" ");
 				size = dateStr.length();
 				if (size > 16) {
@@ -557,7 +639,7 @@ public class DateUtil {
 			}
 			result = LocalDateTime.parse(dateStr, DateTimeFormatter.ofPattern(realDF));
 		} catch (Exception e) {
-			logger.error("parseLocalDateTime 方法执行异常", e);
+			logger.error("按格式[{}]解析日期字符串[{}]失败", realDF, dateStr, e);
 		}
 		// 结果为null，格式不为null,通过自动格式匹配模式，进行一次补偿处理
 		if (result == null && hasFmt) {
@@ -683,18 +765,22 @@ public class DateUtil {
 			int day = getDayOfMonth(dt);
 			return (day < 10 ? "0" : "").concat(Integer.toString(day));
 		}
+		// java.time分支此前用ofPattern(format)取默认区域,导致locale参数被静默忽略
+		// (如中文系统上LocalDateTime+ENGLISH输出"1月"),统一改为显式传入locale
+		// locale为null时取sqltoy统一配置的默认区域(SqlToyConstants.defaultLocale未设置则跟随JVM默认区域)
+		Locale patternLocale = (locale == null) ? SqlToyConstants.getLocale() : locale;
 		if (dt instanceof LocalDateTime) {
-			return DateTimeFormatter.ofPattern(format).format((LocalDateTime) dt);
+			return DateTimeFormatter.ofPattern(format, patternLocale).format((LocalDateTime) dt);
 		} else if (dt instanceof OffsetDateTime) {
-			return DateTimeFormatter.ofPattern(format).format(((OffsetDateTime) dt).toLocalDateTime());
+			return DateTimeFormatter.ofPattern(format, patternLocale).format(((OffsetDateTime) dt).toLocalDateTime());
 		} else if (dt instanceof ZonedDateTime) {
-			return DateTimeFormatter.ofPattern(format).format(((ZonedDateTime) dt).toLocalDateTime());
+			return DateTimeFormatter.ofPattern(format, patternLocale).format(((ZonedDateTime) dt).toLocalDateTime());
 		} else if (dt instanceof LocalTime) {
-			return DateTimeFormatter.ofPattern(format).format((LocalTime) dt);
+			return DateTimeFormatter.ofPattern(format, patternLocale).format((LocalTime) dt);
 		} else if (dt instanceof LocalDate) {
-			return DateTimeFormatter.ofPattern(format).format((LocalDate) dt);
+			return DateTimeFormatter.ofPattern(format, patternLocale).format((LocalDate) dt);
 		} else if (dt instanceof Time) {
-			return DateTimeFormatter.ofPattern(format).format(((Time) dt).toLocalTime());
+			return DateTimeFormatter.ofPattern(format, patternLocale).format(((Time) dt).toLocalTime());
 		}
 		// 高精度时间用localDateTime、localTime
 		if (locale == null && (fmtUpper.endsWith("SSS") || fmtUpper.endsWith(".S"))) {
@@ -704,13 +790,13 @@ public class DateUtil {
 			}
 			// yyyy-MM-dd HH:mm:ss.SSS
 			if (fmtUpper.startsWith("YY")) {
-				return DateTimeFormatter.ofPattern(format).format(result);
+				return DateTimeFormatter.ofPattern(format, patternLocale).format(result);
 			} else if (fmtUpper.startsWith("HH")) {
-				return DateTimeFormatter.ofPattern(format).format(result.toLocalTime());
+				return DateTimeFormatter.ofPattern(format, patternLocale).format(result.toLocalTime());
 			}
 		}
 		// 低精度用SimpleDateFormat，兼容性强
-		DateFormat df = (locale == null) ? new SimpleDateFormat(format) : new SimpleDateFormat(format, locale);
+		DateFormat df = new SimpleDateFormat(format, (locale == null) ? SqlToyConstants.getLocale() : locale);
 		Date tmp = convertDateObject(dt, null, locale);
 		return (null == tmp) ? null : df.format(tmp);
 	}
@@ -929,7 +1015,7 @@ public class DateUtil {
 	}
 
 	/**
-	 * @todo 获取给定日期所在年的第几周
+	 * @todo 获取给定日期所在年的第几周(周一为一周第一天，包含1月1日的那一周为第1周，返回值从1开始)
 	 * @param dateValue
 	 * @return
 	 */
@@ -942,9 +1028,8 @@ public class DateUtil {
 				targetDate = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
 			}
 		}
-		// 定义周的规则：比如中国习惯（周一为一周第一天，第一周至少有1天）
-		WeekFields weekFields = WeekFields.of(Locale.CHINA);
-		// 获取周数（从1开始）
+		// 中国习惯(ISO-8601)：周一为一周第一天，第一周至少有1天；显式指定规则，避免不同JDK的Locale数据差异
+		WeekFields weekFields = WeekFields.of(DayOfWeek.MONDAY, 1);
 		return targetDate.get(weekFields.weekOfYear());
 	}
 
@@ -1068,28 +1153,55 @@ public class DateUtil {
 		}
 		GregorianCalendar pointDate = new GregorianCalendar();
 		pointDate.setTime(date);
-		String tmpDate;
 		StringBuilder result = new StringBuilder();
+		// Date不携带输入精度(未指定部分被解析器填默认值,如"2024"与"2024-01-05 00:00:00"的Date相同)，
+		// 字符串输入按其形态判断输出粒度：数值取自Date、粒度取自原串；日期时间对象输入按全量输出
+		boolean withYear = true;
+		boolean withMonth = true;
+		boolean withDay = true;
+		boolean withTime = true;
 		if (dateValue instanceof String) {
-			tmpDate = (String) dateValue;
-			if (tmpDate.length() >= 4) {
-				result.append(pointDate.get(Calendar.YEAR) + "年");
+			String tmpDate = (String) dateValue;
+			if (StringUtil.matches(tmpDate, "[年月日时分秒]")) {
+				// 中文日期：按年、月、日、时/分/秒字是否出现判断(字符串长度对中文会错位)
+				withYear = tmpDate.indexOf("年") != -1;
+				withMonth = tmpDate.indexOf("月") != -1;
+				withDay = tmpDate.indexOf("日") != -1;
+				withTime = tmpDate.indexOf("时") != -1 || tmpDate.indexOf("分") != -1 || tmpDate.indexOf("秒") != -1;
+			} else if (StringUtil.matches(tmpDate, "[a-zA-Z]")) {
+				// 英文日期：必然到日；出现"时:分"则含时间
+				withTime = TIME_PATTERN.matcher(tmpDate).find();
+			} else {
+				// 数字日期：空白/冒号之前为日期段，有分隔符按组数(2024/1/5三组到日)、无分隔符按位数(8位到日)
+				int blankIndex = tmpDate.indexOf(' ');
+				int colonIndex = tmpDate.indexOf(':');
+				int cutIndex = (blankIndex == -1) ? colonIndex
+						: ((colonIndex == -1) ? blankIndex : Math.min(blankIndex, colonIndex));
+				String dateSeg = (cutIndex == -1) ? tmpDate : tmpDate.substring(0, cutIndex);
+				if (dateSeg.indexOf('-') != -1 || dateSeg.indexOf('/') != -1 || dateSeg.indexOf('.') != -1) {
+					int partCount = dateSeg.split("[-/.]").length;
+					withYear = partCount >= 1;
+					withMonth = partCount >= 2;
+					withDay = partCount >= 3;
+				} else {
+					withYear = dateSeg.length() >= 4;
+					withMonth = dateSeg.length() >= 6;
+					withDay = dateSeg.length() >= 8;
+				}
+				// 纯时间("12:30:45")日期段仅剩时间首位数字，不输出年月日；长数字(毫秒时间戳/含时间)含时间
+				withTime = cutIndex != -1 || dateSeg.length() > 10;
 			}
-			if (tmpDate.length() >= 6) {
-				result.append((pointDate.get(Calendar.MONTH) + 1) + "月");
-			}
-			if (tmpDate.length() >= 8) {
-				result.append(pointDate.get(Calendar.DAY_OF_MONTH) + "日");
-			}
-			if (tmpDate.length() > 10) {
-				result.append(pointDate.get(Calendar.HOUR_OF_DAY) + "时");
-				result.append(pointDate.get(Calendar.MINUTE) + "分");
-				result.append(pointDate.get(Calendar.SECOND) + "秒");
-			}
-		} else {
+		}
+		if (withYear) {
 			result.append(pointDate.get(Calendar.YEAR) + "年");
+		}
+		if (withMonth) {
 			result.append((pointDate.get(Calendar.MONTH) + 1) + "月");
+		}
+		if (withDay) {
 			result.append(pointDate.get(Calendar.DAY_OF_MONTH) + "日");
+		}
+		if (withTime) {
 			result.append(pointDate.get(Calendar.HOUR_OF_DAY) + "时");
 			result.append(pointDate.get(Calendar.MINUTE) + "分");
 			result.append(pointDate.get(Calendar.SECOND) + "秒");
@@ -1109,28 +1221,32 @@ public class DateUtil {
 		}
 		// 去除中文日期文字之间的空格
 		String tmp = chinaDate.replaceAll("\\s+", "");
-		// 处理十几的值
+		// 处理十几的值:单趟逐段替换,避免replaceAll字符串替换的嵌套破坏
+		// (如"十一月二十一日"中"二十一"包含"十一",先替换"十一"会把"二十一"破坏成"二11")
 		Matcher matcher = MORE_TEN_PATTERN.matcher(tmp);
-		LinkedHashMap<String, String> map = new LinkedHashMap<String, String>();
-		String groupStr;
+		StringBuilder tenReplaced = new StringBuilder();
 		while (matcher.find()) {
-			groupStr = matcher.group();
-			// 三位如:二十五
-			if (groupStr.length() == 3) {
-				map.put(groupStr, groupStr.replace("十", ""));
-			} else if (groupStr.length() == 2) {
-				// 两位如:十五(十开头)或二十(个位缺省的整十)
-				if (groupStr.startsWith("十")) {
-					map.put(groupStr, groupStr.replace("十", "1"));
-				} else {
-					map.put(groupStr, groupStr.replace("十", "0"));
-				}
+			String prefix = matcher.group(1);
+			String trailing = matcher.group(2);
+			// 单独的"十"交给后面的单字映射处理(十->10)
+			if (prefix == null && trailing == null) {
+				continue;
 			}
-			// 单独一个"十"交由CHINA_DATE_KEYS统一转成10
+			int value;
+			if (prefix == null) {
+				// 十X: 11-19
+				value = 10 + CN_DIGITS.indexOf(trailing) + 1;
+			} else if (trailing == null) {
+				// X十: 20、30等
+				value = (CN_DIGITS.indexOf(prefix) + 1) * 10;
+			} else {
+				// X十Y: 21-99
+				value = (CN_DIGITS.indexOf(prefix) + 1) * 10 + CN_DIGITS.indexOf(trailing) + 1;
+			}
+			matcher.appendReplacement(tenReplaced, Integer.toString(value));
 		}
-		for (Map.Entry<String, String> entry : map.entrySet()) {
-			tmp = tmp.replaceAll(entry.getKey(), entry.getValue());
-		}
+		matcher.appendTail(tenReplaced);
+		tmp = tenReplaced.toString();
 
 		for (int i = 0; i < CHINA_DATE_KEYS.length; i++) {
 			tmp = tmp.replaceAll(CHINA_DATE_KEYS[i], CHINA_DATE_KEY_MAP[i]);
@@ -1249,9 +1365,12 @@ public class DateUtil {
 	 * @return
 	 */
 	private static Date parseEnglishDate(String dateStr, Locale locale) {
-		// 统一格式,替换逗号和点号为空白
+		// 统一格式,替换逗号、点号和横杠为空白(支持18-Aug-2026、Aug-18-2026等横杠分隔形式)
 		dateStr = dateStr.replace(",", " ");
 		dateStr = dateStr.replace(". ", " ");
+		dateStr = dateStr.replace("-", " ");
+		// 压缩连续空白，避免逗号替换后出现双空格导致格式匹配失败
+		dateStr = dateStr.replaceAll("\\s+", " ");
 		// 替换时间格式中可能存在的点号
 		Matcher dotMatcher = TIME_DOT_PATTERN.matcher(dateStr);
 		List<Integer> indexList = new ArrayList<>();
@@ -1271,8 +1390,9 @@ public class DateUtil {
 		}
 		// 统一九月的英文
 		dateStr = dateStr.replaceFirst("(?i)Sept\\s", "Sep ");
-		// 统一星期2、星期4的英文
-		dateStr = dateStr.replaceFirst("(?i)Thur\\s", "Thu ").replaceFirst("(?i)Tues\\s", "Tue ");
+		// 统一星期2、星期4的英文(Thurs优先于Thur，否则Thurs无法命中)
+		dateStr = dateStr.replaceFirst("(?i)Thurs\\s", "Thu ").replaceFirst("(?i)Thur\\s", "Thu ")
+				.replaceFirst("(?i)Tues\\s", "Tue ");
 		for (int i = 0; i < 7; i++) {
 			dateStr = dateStr.replaceFirst("(?i)" + WEEK_ENGLISH_NAME[i], WEEK_ENGLISH_NAKE[i]);
 		}
@@ -1370,7 +1490,7 @@ public class DateUtil {
 
 	/**
 	 * 快速补充零
-	 * 
+	 *
 	 * @param timeStr
 	 * @param size
 	 * @param toLength
@@ -1378,24 +1498,14 @@ public class DateUtil {
 	 */
 	private static String addZero(String timeStr, int size, int toLength) {
 		int addSize = toLength - size;
-		if (addSize == 1) {
-			return timeStr.concat("0");
-		} else if (addSize == 2) {
-			return timeStr.concat("00");
-		} else if (addSize == 3) {
-			return timeStr.concat("000");
-		} else if (addSize == 5) {
-			return timeStr.concat("00000");
-		} else if (addSize == 6) {
-			return timeStr.concat("000000");
-		} else if (addSize == 8) {
-			return timeStr.concat("00000000");
-		} else if (addSize == 4) {
-			return timeStr.concat("0000");
-		} else if (addSize == 7) {
-			return timeStr.concat("0000000");
+		if (addSize <= 0) {
+			return timeStr;
 		}
-		return timeStr;
+		StringBuilder sb = new StringBuilder(timeStr);
+		for (int i = 0; i < addSize; i++) {
+			sb.append('0');
+		}
+		return sb.toString();
 	}
 
 	/**

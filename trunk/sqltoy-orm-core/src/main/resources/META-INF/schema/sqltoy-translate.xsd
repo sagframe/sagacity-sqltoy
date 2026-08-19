@@ -234,7 +234,8 @@
 							<xsd:element name="sql-checker" minOccurs="0"
 								maxOccurs="unbounded">
 								<xsd:complexType mixed="true">
-									<xsd:sequence>
+									<!-- sql支持三种写法:sql="sqlId"属性引用、<sql>子元素、元素内直接写sql,因此子元素可选 -->
+									<xsd:sequence minOccurs="0">
 										<xsd:element name="sql" type="xsd:string" />
 									</xsd:sequence>
 									<xsd:attribute name="id" type="xsd:string" />
@@ -272,7 +273,8 @@
 							<xsd:element name="sql-increment-checker"
 								minOccurs="0" maxOccurs="unbounded">
 								<xsd:complexType mixed="true">
-									<xsd:sequence>
+									<!-- sql支持三种写法:sql="sqlId"属性引用、<sql>子元素、元素内直接写sql,因此子元素可选 -->
+									<xsd:sequence minOccurs="0">
 										<xsd:element name="sql" type="xsd:string" />
 									</xsd:sequence>
 									<xsd:attribute name="sql" type="xsd:string" />
