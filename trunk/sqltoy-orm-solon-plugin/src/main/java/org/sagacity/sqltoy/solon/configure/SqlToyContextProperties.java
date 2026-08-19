@@ -300,6 +300,11 @@ public class SqlToyContextProperties implements Serializable {
 	private Boolean backslashEscaping;
 
 	/**
+	 * 默认区域设置(如:zh_CN、en-US),影响日期和数字格式化解析的区域符号,为null则使用JVM默认区域
+	 */
+	private String defaultLocale;
+
+	/**
 	 * @return the sqlResourcesDir
 	 */
 	public String getSqlResourcesDir() {
@@ -875,5 +880,19 @@ public class SqlToyContextProperties implements Serializable {
 
 	public void setBackslashEscaping(Boolean backslashEscaping) {
 		this.backslashEscaping = backslashEscaping;
+	}
+
+	/**
+	 * @return the defaultLocale
+	 */
+	public String getDefaultLocale() {
+		return defaultLocale;
+	}
+
+	/**
+	 * @param defaultLocale the defaultLocale to set
+	 */
+	public void setDefaultLocale(String defaultLocale) {
+		this.defaultLocale = defaultLocale;
 	}
 }

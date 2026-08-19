@@ -100,13 +100,13 @@
 						</xsd:simpleType>
 					</xsd:attribute>
 					<xsd:attribute name="locale">
+						<xsd:annotation>
+							<xsd:documentation>
+							<![CDATA[区域设置,采用BCP-47格式,如:en-US、en-GB、zh-CN、ja-JP、fr-FR、de-DE;兼容旧版US/UK/CHINA/JAPAN写法,分别等价于en-US/en-GB/zh-CN/ja-JP]]>
+							</xsd:documentation>
+						</xsd:annotation>
 						<xsd:simpleType>
-							<xsd:restriction base="xsd:string">
-								<xsd:enumeration value="US" />
-								<xsd:enumeration value="UK" />
-								<xsd:enumeration value="CHINA" />
-								<xsd:enumeration value="JAPAN" />
-							</xsd:restriction>
+							<xsd:union memberTypes="localeType xsd:string" />
 						</xsd:simpleType>
 					</xsd:attribute>
 				</xsd:complexType>
@@ -140,13 +140,23 @@
 						</xsd:simpleType>
 					</xsd:attribute>
 					<xsd:attribute name="locale">
+						<xsd:annotation>
+							<xsd:documentation>
+							<![CDATA[区域设置,采用BCP-47格式,如:en-US、en-GB、zh-CN、ja-JP、fr-FR、de-DE;兼容旧版US/UK/CHINA/JAPAN写法,分别等价于en-US/en-GB/zh-CN/ja-JP]]>
+							</xsd:documentation>
+						</xsd:annotation>
 						<xsd:simpleType>
-							<xsd:restriction base="xsd:string">
-								<xsd:enumeration value="US" />
-								<xsd:enumeration value="UK" />
-								<xsd:enumeration value="CHINA" />
-								<xsd:enumeration value="JAPAN" />
-							</xsd:restriction>
+							<xsd:union memberTypes="localeType xsd:string" />
+						</xsd:simpleType>
+					</xsd:attribute>
+					<xsd:attribute name="currency">
+						<xsd:annotation>
+							<xsd:documentation>
+							<![CDATA[币种单位,仅对format=capital-en/capital-english生效:支持ISO-4217代码(如USD、AUD、JPY、RMB)或直接写单位词(如POUNDS STERLING),输出票据标准格式,如:SAY US DOLLARS ONE THOUSAND AND CENTS FIFTY-SIX ONLY]]>
+							</xsd:documentation>
+						</xsd:annotation>
+						<xsd:simpleType>
+							<xsd:union memberTypes="currencyType xsd:string" />
 						</xsd:simpleType>
 					</xsd:attribute>
 				</xsd:complexType>
@@ -1433,7 +1443,8 @@
 			</xsd:annotation>
 		</xsd:attribute>
 	</xsd:complexType>
-	<!-- 常用日期格式,配合xsd:string union使用:不限制自定义格式,仅为IDE补全提供常用值提示 -->
+	<!-- 常用日期格式,配合xsd:string union使用:不限制自定义格式,仅为IDE补全提供常用值提示;
+	含MMM/EEE等英文月份、星期符号的格式在locale缺失时解析器自动按英文区域处理 -->
 	<xsd:simpleType name="datePatternType">
 		<xsd:restriction base="xsd:string">
 			<xsd:enumeration value="yyyy-MM-dd" />
@@ -1441,6 +1452,11 @@
 			<xsd:enumeration value="yyyyMMdd" />
 			<xsd:enumeration value="yyyy-MM" />
 			<xsd:enumeration value="MM-dd" />
+			<xsd:enumeration value="MMM d, yyyy" />
+			<xsd:enumeration value="MMMM d, yyyy" />
+			<xsd:enumeration value="d MMMM yyyy" />
+			<xsd:enumeration value="dd-MMM-yyyy" />
+			<xsd:enumeration value="EEE, MMM d, yyyy" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="numberFormatType">
@@ -1449,6 +1465,32 @@
 			<xsd:enumeration value="capital" />
 			<xsd:enumeration value="capital-rmb" />
 			<xsd:enumeration value="capital-en" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 常用区域设置(BCP-47),配合xsd:string union使用:不限制自定义值,仅为IDE补全提供常用值提示 -->
+	<xsd:simpleType name="localeType">
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="en-US" />
+			<xsd:enumeration value="en-GB" />
+			<xsd:enumeration value="zh-CN" />
+			<xsd:enumeration value="ja-JP" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 常用币种代码(ISO-4217),配合xsd:string union使用:不限制自定义单位词,仅为IDE补全提供常用值提示 -->
+	<xsd:simpleType name="currencyType">
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="USD" />
+			<xsd:enumeration value="AUD" />
+			<xsd:enumeration value="CAD" />
+			<xsd:enumeration value="HKD" />
+			<xsd:enumeration value="SGD" />
+			<xsd:enumeration value="NZD" />
+			<xsd:enumeration value="GBP" />
+			<xsd:enumeration value="EUR" />
+			<xsd:enumeration value="JPY" />
+			<xsd:enumeration value="CHF" />
+			<xsd:enumeration value="CNY" />
+			<xsd:enumeration value="RMB" />
 		</xsd:restriction>
 	</xsd:simpleType>
 </xsd:schema>

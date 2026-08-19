@@ -164,7 +164,7 @@ public class PageOptimizeUtils {
 		long expireTime = nowTime + pageOptimize.getAliveSeconds() * 1000;
 		// 同一个分页查询sql保留的不同查询条件记录数量
 		int aliveMax = pageOptimize.getAliveMax();
-		// sql id 或sql内容
+		// sql id或sql内容
 		String id = sqlToyConfig.getIdOrSql();
 		LinkedHashMap<String, Object[]> map = pageOptimizeCache.computeIfAbsent(id,
 				k -> new LinkedHashMap<String, Object[]>(aliveMax));

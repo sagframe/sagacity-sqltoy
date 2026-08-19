@@ -454,6 +454,11 @@ public class SqlToyContext {
 	private Boolean backslashEscaping;
 
 	/**
+	 * 默认区域设置(如:zh_CN、en-US),影响日期和数字格式化解析的区域符号,为null则使用JVM默认区域
+	 */
+	private String defaultLocale;
+
+	/**
 	 * @todo 初始化
 	 * @throws Exception
 	 */
@@ -489,6 +494,10 @@ public class SqlToyContext {
 		// 设置分布式id缓存时效天数
 		if (distributeIdCacheExpireDays != null && claimStaticState("distributeIdCacheExpireDays", true)) {
 			SqlToyConstants.distributeIdCacheExpireDays = distributeIdCacheExpireDays;
+		}
+		// 设置默认区域(影响日期、数字格式化解析的区域符号)
+		if (StringUtil.isNotBlank(defaultLocale) && claimStaticState("defaultLocale", true)) {
+			SqlToyConstants.defaultLocale = SqlToyConstants.convertLocale(defaultLocale);
 		}
 		// 设置保留字
 		if (claimStaticState("reservedWords", reservedWords != null && !reservedWords.isEmpty())) {
@@ -1530,5 +1539,22 @@ public class SqlToyContext {
 
 	public void setBackslashEscaping(Boolean backslashEscaping) {
 		this.backslashEscaping = backslashEscaping;
+	}
+
+	/**
+	 * @return the defaultLocale
+	 */
+	public String getDefaultLocale() {
+		return defaultLocale;
+	}
+
+	/**
+	 * @param defaultLocale the defaultLocale to set,如:zh_CN、en-US,为空保持默认null
+	 */
+	public void setDefaultLocale(String defaultLocale) {
+		if (StringUtil.isBlank(defaultLocale)) {
+			return;
+		}
+		this.defaultLocale = defaultLocale.trim();
 	}
 }

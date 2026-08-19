@@ -1379,12 +1379,17 @@ public class SqlXMLConfigParse {
 				String[] columns = StringUtil.trimArray(df.getAttribute("columns").toLowerCase().split("\\,"));
 				String format = df.hasAttribute("format") ? df.getAttribute("format") : "yyyy-MM-dd";
 				String locale = df.hasAttribute("locale") ? df.getAttribute("locale") : null;
+				// 含英文月份/星期符号(MMM、EEE系列)的格式在locale缺失时默认英文区域,
+				// 避免默认区域(如中文)将"MMM d, yyyy"输出成"8月 18, 2026"
+				if (locale == null && (format.toUpperCase().contains("MMM") || format.toUpperCase().contains("EEE"))) {
+					locale = "en";
+				}
 				for (String col : columns) {
 					FormatModel formatModel = new FormatModel();
 					formatModel.setColumn(col);
 					formatModel.setType(1);
 					formatModel.setFormat(format);
-					formatModel.setLocale(locale);
+					formatModel.setLocale(SqlToyConstants.convertLocale(locale));
 					formatModels.add(formatModel);
 				}
 			}
@@ -1402,6 +1407,8 @@ public class SqlXMLConfigParse {
 					roundStr = nf.getAttribute("rounding-mode").toUpperCase();
 				}
 				String locale = nf.hasAttribute("locale") ? nf.getAttribute("locale") : null;
+				// 币种单位,仅对capital-en等英文金额格式生效,输出票据标准格式(如:SAY US DOLLARS ONE THOUSAND ONLY)
+				String currency = nf.hasAttribute("currency") ? nf.getAttribute("currency") : null;
 				RoundingMode roundMode = convertRoundingMode(roundStr);
 				for (String col : columns) {
 					FormatModel formatModel = new FormatModel();
@@ -1409,7 +1416,8 @@ public class SqlXMLConfigParse {
 					formatModel.setRoundingMode(roundMode);
 					formatModel.setType(2);
 					formatModel.setFormat(format);
-					formatModel.setLocale(locale);
+					formatModel.setLocale(SqlToyConstants.convertLocale(locale));
+					formatModel.setCurrency(currency);
 					formatModels.add(formatModel);
 				}
 			}
@@ -1717,25 +1725,7 @@ public class SqlXMLConfigParse {
 	}
 
 	private static RoundingMode convertRoundingMode(String roundingModeStr) {
-		if (StringUtil.isBlank(roundingModeStr)) {
-			return null;
-		}
-		String roundingStr = roundingModeStr.toUpperCase();
-		if (roundingStr.equals("UP")) {
-			return RoundingMode.UP;
-		} else if (roundingStr.equals("DOWN")) {
-			return RoundingMode.DOWN;
-		} else if (roundingStr.equals("FLOOR")) {
-			return RoundingMode.FLOOR;
-		} else if (roundingStr.equals("HALF_UP")) {
-			return RoundingMode.HALF_UP;
-		} else if (roundingStr.equals("HALF_DOWN")) {
-			return RoundingMode.HALF_DOWN;
-		} else if (roundingStr.equals("HALF_EVEN")) {
-			return RoundingMode.HALF_EVEN;
-		} else if (roundingStr.equals("CEILING")) {
-			return RoundingMode.CEILING;
-		}
-		return RoundingMode.HALF_UP;
+		// 收敛到NumberUtil统一实现:null表示未配置,空串或无法识别的值统一返回HALF_UP
+		return NumberUtil.parseRoundingMode(roundingModeStr);
 	}
 }
