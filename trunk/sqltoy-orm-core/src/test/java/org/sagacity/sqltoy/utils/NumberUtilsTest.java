@@ -18,8 +18,9 @@ public class NumberUtilsTest {
 
 	@Test
 	public void testToCapitalMoneyZero() {
-		assertEquals("零元", NumberUtil.toCapitalMoney(BigDecimal.ZERO));
-		assertEquals("零元", NumberUtil.toCapitalMoney(new BigDecimal("0.00")));
+		// 人行《正确填写票据和结算凭证的基本规定》：大写金额到"元"为止应写"整"字
+		assertEquals("零元整", NumberUtil.toCapitalMoney(BigDecimal.ZERO));
+		assertEquals("零元整", NumberUtil.toCapitalMoney(new BigDecimal("0.00")));
 	}
 
 	@Test
@@ -94,18 +95,18 @@ public class NumberUtilsTest {
 
 	@Test
 	public void testToCapitalMoneyZeroYuanWithCents() {
-		// 整数部分为0但有小数部分
-		assertEquals("零元伍角", NumberUtil.toCapitalMoney(new BigDecimal("0.50")));
-		assertEquals("零元零伍分", NumberUtil.toCapitalMoney(new BigDecimal("0.05")));
-		assertEquals("零元零玖分", NumberUtil.toCapitalMoney(new BigDecimal("0.09")));
-		assertEquals("零元玖角", NumberUtil.toCapitalMoney(new BigDecimal("0.90")));
+		// 整数部分为0但有小数部分：零头直接输出，不带"零元"及前导"零"(人行规定："零"仅用于数字中间补位)
+		assertEquals("伍角", NumberUtil.toCapitalMoney(new BigDecimal("0.50")));
+		assertEquals("伍分", NumberUtil.toCapitalMoney(new BigDecimal("0.05")));
+		assertEquals("玖分", NumberUtil.toCapitalMoney(new BigDecimal("0.09")));
+		assertEquals("玖角", NumberUtil.toCapitalMoney(new BigDecimal("0.90")));
 	}
 
 	@Test
 	public void testToCapitalMoneyNegative() {
 		assertEquals("负贰佰零玖元玖角捌分", NumberUtil.toCapitalMoney(new BigDecimal("-209.98")));
 		assertEquals("负壹佰元整", NumberUtil.toCapitalMoney(new BigDecimal("-100")));
-		assertEquals("负零元伍角", NumberUtil.toCapitalMoney(new BigDecimal("-0.50")));
+		assertEquals("负伍角", NumberUtil.toCapitalMoney(new BigDecimal("-0.50")));
 	}
 
 	@Test
