@@ -44,6 +44,14 @@
 
 	<xsd:complexType name="sqlToySqlType" mixed="true">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="remarks" type="xsd:string" minOccurs="0"
+				maxOccurs="1">
+				<xsd:annotation>
+					<xsd:documentation>
+					<![CDATA[sql功能说明,便于阅读维护,不参与sql执行,须配合<value>子元素使用]]>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
 			<xsd:element name="filters" minOccurs="0" maxOccurs="1"
 				type="sqltoyFiltersType" />
 			<xsd:element name="translate" minOccurs="0"
@@ -551,6 +559,14 @@
 			<xsd:documentation><![CDATA[全局类型 mongodb查询使用]]></xsd:documentation>
 		</xsd:annotation>
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="remarks" type="xsd:string" minOccurs="0"
+				maxOccurs="1">
+				<xsd:annotation>
+					<xsd:documentation>
+					<![CDATA[sql功能说明,便于阅读维护,不参与sql执行,须配合<value>子元素使用]]>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
 			<xsd:element name="filters" minOccurs="0" maxOccurs="1"
 				type="sqltoyFiltersType" />
 			<xsd:element name="translate" minOccurs="0"
@@ -585,6 +601,14 @@
 			<xsd:documentation><![CDATA[全局类型 elasticsearch使用]]></xsd:documentation>
 		</xsd:annotation>
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="remarks" type="xsd:string" minOccurs="0"
+				maxOccurs="1">
+				<xsd:annotation>
+					<xsd:documentation>
+					<![CDATA[sql功能说明,便于阅读维护,不参与sql执行,须配合<value>子元素使用]]>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
 			<xsd:element name="filters" minOccurs="0" maxOccurs="1"
 				type="sqltoyFiltersType" />
 			<xsd:element name="translate" minOccurs="0"
