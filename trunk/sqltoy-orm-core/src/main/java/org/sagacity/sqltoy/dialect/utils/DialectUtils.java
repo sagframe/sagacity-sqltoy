@@ -29,6 +29,7 @@ import org.sagacity.sqltoy.callback.CallableStatementResultHandler;
 import org.sagacity.sqltoy.callback.DecryptHandler;
 import org.sagacity.sqltoy.callback.GenerateSavePKStrategy;
 import org.sagacity.sqltoy.callback.GenerateSqlHandler;
+import org.sagacity.sqltoy.callback.InsertRowCallbackHandler;
 import org.sagacity.sqltoy.callback.LockSqlHandler;
 import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
 import org.sagacity.sqltoy.callback.ReflectPropsHandler;
@@ -53,6 +54,7 @@ import org.sagacity.sqltoy.dialect.model.SavePKStrategy;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.model.IgnoreCaseSet;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
+import org.sagacity.sqltoy.model.JdbcTypes;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.MapKit;
 import org.sagacity.sqltoy.model.QueryExecutor;
@@ -745,8 +747,27 @@ public class DialectUtils {
 			realParams = CollectionUtil.arrayToList(sqlToyResult.getParamsValue());
 		}
 		SqlExecuteStat.showSql("执行saveOrUpdate语句", realSql, null);
-		return SqlUtil.batchUpdateByJdbc(sqlToyContext.getTypeHandler(), realSql, realParams, batchSize, null,
-				entityMeta.getFieldsTypeArray(true), autoCommit, conn, dbType);
+		final Integer[] updateTypes = entityMeta.getFieldsTypeArray(true);
+		InsertRowCallbackHandler bindHandler = null;
+		// sqlserver的timestamp(rowversion)列不能赋值,merge/insert语句生成时已排除该列,绑定时同步跳过对应参数保持占位符对齐
+		if (dbType != null && dbType.intValue() == DBType.SQLSERVER) {
+			bindHandler = (pst, index, rowData) -> {
+				Object[] rowValues = CollectionUtil.convertArray(rowData);
+				int bindIndex = 0;
+				for (int i = 0; i < rowValues.length; i++) {
+					if (updateTypes[i].intValue() != java.sql.Types.TIMESTAMP) {
+						try {
+							SqlUtil.setParamValue(sqlToyContext.getTypeHandler(), conn, dbType, pst, rowValues[i],
+									updateTypes[i], ++bindIndex);
+						} catch (IOException e) {
+							throw new SQLException("sqlserver执行saveOrUpdate绑定参数失败!", e);
+						}
+					}
+				}
+			};
+		}
+		return SqlUtil.batchUpdateByJdbc(sqlToyContext.getTypeHandler(), realSql, realParams, batchSize, bindHandler,
+				updateTypes, autoCommit, conn, dbType);
 	}
 
 	/**
@@ -769,8 +790,8 @@ public class DialectUtils {
 			String isNullFunction, String sequence, boolean isAssignPK, String tableName) {
 		String realTable = entityMeta.getSchemaTable(tableName, dbType);
 		// postgresql15+ 不支持别名,目标表列限定只能用不带schema的表名(schema.table.col三段式列引用非法)
-		String pgNoSchemaTable = ReservedWordsUtil.convertWord(
-				(StringUtil.isBlank(tableName)) ? entityMeta.getTableName() : tableName, dbType);
+		String pgNoSchemaTable = ReservedWordsUtil
+				.convertWord((StringUtil.isBlank(tableName)) ? entityMeta.getTableName() : tableName, dbType);
 		if (entityMeta.getSchema() != null && pgNoSchemaTable.startsWith(entityMeta.getSchema().concat("."))) {
 			pgNoSchemaTable = pgNoSchemaTable.substring(entityMeta.getSchema().length() + 1);
 		}
@@ -822,7 +843,7 @@ public class DialectUtils {
 				PostgreSqlDialectUtils.wrapSelectFields(sql, columnName, fieldMeta);
 			} else if (DBType.GAUSSDB == dbType || DBType.OPENGAUSS == dbType || DBType.MOGDB == dbType
 					|| DBType.VASTBASE == dbType || DBType.STARDB == dbType || DBType.OSCAR == dbType) {
-				OpenGaussDialectUtils.wrapSelectFields(sql, columnName, fieldMeta);
+				OpenGaussDialectUtils.wrapSelectFields(sql, columnName, fieldMeta, dbType);
 			} else if (DBType.H2 == dbType) {
 				H2DialectUtils.wrapSelectFields(sql, columnName, fieldMeta);
 			} else if (DBType.DB2 == dbType) {
@@ -830,7 +851,17 @@ public class DialectUtils {
 			} else if (DBType.DM == dbType) {
 				DMDialectUtils.wrapSelectFields(sql, columnName, fieldMeta);
 			} else {
-				sql.append("? as ");
+				// sqlserver(2025+)、oracle(23ai)支持vector类型;sqlserver(2008+)支持geometry类型
+				// merge into的using select子查询中显式cast保证类型正确
+				int extType = fieldMeta.getType();
+				if (extType == JdbcTypes.VECTOR && (DBType.SQLSERVER == dbType || DBType.ORACLE == dbType)) {
+					sql.append("cast(? as VECTOR)");
+				} else if (extType == JdbcTypes.GEOMETRY && DBType.SQLSERVER == dbType) {
+					sql.append("cast(? as geometry)");
+				} else {
+					sql.append("?");
+				}
+				sql.append(" as ");
 				sql.append(columnName);
 			}
 		}
@@ -1064,8 +1095,8 @@ public class DialectUtils {
 			updateSqlTimeFields = unifyFieldsHandler.updateSqlTimeFields();
 		}
 		// kingbase/gaussdb同为pg内核,bytea未定型参数同样需要cast(2023-06-11误删,现恢复)
-		boolean convertBlob = (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14
-				|| dbType == DBType.GAUSSDB || dbType == DBType.KINGBASE);
+		boolean convertBlob = (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
+				|| dbType == DBType.KINGBASE);
 		boolean isMSsql = (dbType == DBType.SQLSERVER);
 		int meter = 0;
 		int decimalLength;
@@ -2223,7 +2254,7 @@ public class DialectUtils {
 					mysqlSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, null, forceUpdateProps, conn,
 							dbType);
 				} else if (dbType == DBType.POSTGRESQL14) {
-					postgreSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, null, forceUpdateProps,
+					postgres14SaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, null, forceUpdateProps,
 							conn, dbType);
 				} else if (dbType == DBType.OCEANBASE) {
 					oceanBaseSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, null, forceUpdateProps,
@@ -2301,8 +2332,8 @@ public class DialectUtils {
 		logger.debug("级联子表:{} 变更记录数:{},新建记录数为:{}", tableName, updateCnt, saveCnt);
 	}
 
-	// 针对postgresql 数据库
-	private static void postgreSaveOrUpdateAll(SqlToyContext sqlToyContext, final EntityMeta entityMeta,
+	// 针对postgresql14以下版本 数据库
+	private static void postgres14SaveOrUpdateAll(SqlToyContext sqlToyContext, final EntityMeta entityMeta,
 			List<?> entities, ReflectPropsHandler reflectPropsHandler, final String[] forceUpdateFields,
 			Connection conn, final Integer dbType) throws Exception {
 		int batchSize = sqlToyContext.getBatchSize();
@@ -2314,30 +2345,24 @@ public class DialectUtils {
 			logger.debug("级联子表{}修改记录数为:{}", tableName, updateCnt);
 			return;
 		}
-		Long saveCnt = saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta, new GenerateSqlHandler() {
-			@Override
-			public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
-				PKStrategy pkStrategy = entityMeta.getIdStrategy();
-				String sequence = "nextval('" + entityMeta.getSequence() + "')";
-				if ((dbType == DBType.GAUSSDB || dbType == DBType.OPENGAUSS || dbType == DBType.STARDB
-						|| dbType == DBType.OSCAR || dbType == DBType.MOGDB || dbType == DBType.VASTBASE)
-						&& pkStrategy != null && PKStrategy.SEQUENCE.equals(pkStrategy)) {
-					sequence = entityMeta.getSequence() + ".nextval";
-				}
-				if (pkStrategy != null && PKStrategy.IDENTITY.equals(pkStrategy)) {
-					// 伪造成sequence模式
-					pkStrategy = PKStrategy.SEQUENCE;
-					sequence = "DEFAULT";
-				}
-				boolean isAssignPK = PostgreSqlDialectUtils.allowAssignPKValue(pkStrategy);
-				if (dbType == DBType.GAUSSDB || dbType == DBType.MOGDB || dbType == DBType.STARDB
-						|| dbType == DBType.OSCAR || dbType == DBType.OPENGAUSS || dbType == DBType.VASTBASE) {
-					isAssignPK = OpenGaussDialectUtils.allowAssignPKValue(pkStrategy);
-				}
-				return DialectExtUtils.insertIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
-						pkStrategy, "COALESCE", sequence, isAssignPK, tableName);
-			}
-		}, reflectPropsHandler, conn, dbType, null);
+		// identity不再伪造成sequence+DEFAULT(COALESCE(?,DEFAULT)在pg系是非法sql,DEFAULT只能裸用于VALUES项),
+		// 统一改走saveAll:identity主键按rejectId反射,与insertIgnore省略主键列的sql保持占位符与参数对齐
+		PKStrategy pkStrategy = entityMeta.getIdStrategy();
+		String sequence = "nextval('" + entityMeta.getSequence() + "')";
+		if ((dbType == DBType.GAUSSDB || dbType == DBType.OPENGAUSS || dbType == DBType.STARDB || dbType == DBType.OSCAR
+				|| dbType == DBType.MOGDB || dbType == DBType.VASTBASE) && pkStrategy != null
+				&& PKStrategy.SEQUENCE.equals(pkStrategy)) {
+			sequence = entityMeta.getSequence() + ".nextval";
+		}
+		boolean isAssignPK = PostgreSqlDialectUtils.allowAssignPKValue(pkStrategy);
+		if (dbType == DBType.GAUSSDB || dbType == DBType.MOGDB || dbType == DBType.STARDB || dbType == DBType.OSCAR
+				|| dbType == DBType.OPENGAUSS || dbType == DBType.VASTBASE) {
+			isAssignPK = OpenGaussDialectUtils.allowAssignPKValue(pkStrategy);
+		}
+		String insertIgnoreSql = DialectExtUtils.insertIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
+				pkStrategy, "COALESCE", sequence, isAssignPK, tableName);
+		Long saveCnt = saveAll(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertIgnoreSql, entities, batchSize,
+				reflectPropsHandler, conn, dbType, null);
 		logger.debug("级联子表:{} 变更记录数:{},新建记录数为:{}", tableName, updateCnt, saveCnt);
 	}
 

@@ -528,8 +528,8 @@ public class ResultUtils {
 					}
 					// 数字格式化
 					else {
-						row.set(columnIndex, NumberUtil.format(value, fmt.getFormat(), fmt.getRoundingMode(),
-								fmt.getLocale()));
+						row.set(columnIndex,
+								NumberUtil.format(value, fmt.getFormat(), fmt.getRoundingMode(), fmt.getLocale()));
 					}
 				}
 			}

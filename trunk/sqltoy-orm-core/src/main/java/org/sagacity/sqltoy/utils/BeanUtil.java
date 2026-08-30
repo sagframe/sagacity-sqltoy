@@ -691,6 +691,20 @@ public class BeanUtil {
 				return result;
 			}
 		}
+		// 统一处理vector向量类型转java对象(返回null表示交回框架按常规类型处理)
+		if (jdbcType == JdbcTypes.VECTOR) {
+			Object result = vectorToJavaType(typeName, genericType, paramValue);
+			if (result != null) {
+				return result;
+			}
+		}
+		// 统一处理geometry空间类型转java对象(返回null表示交回框架按常规类型处理)
+		if (jdbcType == JdbcTypes.GEOMETRY) {
+			Object result = geometryToJavaType(typeName, paramValue);
+			if (result != null) {
+				return result;
+			}
+		}
 		// 4 非数组类型,但传递的参数值是数组类型且长度为1提取出数组中的单一值
 		if (paramValue.getClass().isArray() && typeValue < DataType.aryCharType) {
 			if (typeValue == DataType.stringType && (paramValue instanceof byte[])) {
@@ -1140,6 +1154,124 @@ public class BeanUtil {
 			return newEnumInstance(paramValue, enumClass);
 		}
 		return paramValue;
+	}
+
+	/**
+	 * @todo 将数据库vector向量类型的值转为java对象属性类型,支持String、float[]、Float[]、double[]、Double[]和List<Float>/List<Double>
+	 * @param typeName    属性类型名称
+	 * @param genericType List属性的单值泛型类型
+	 * @param jdbcValue   数据库返回的向量值(pgvector
+	 *                    PGvector、oracle.sql.VECTOR、PGobject的toString以及字符串形式均为'[1,2,3]')
+	 * @return 返回null表示目标类型无法识别(如org.pgvector.PGvector等驱动专属类型),交回框架按常规类型处理
+	 */
+	private static Object vectorToJavaType(String typeName, Class genericType, Object jdbcValue) {
+		if (jdbcValue == null) {
+			return null;
+		}
+		String typeNameLow = typeName.toLowerCase();
+		boolean isString = typeNameLow.equals("java.lang.string");
+		// quickvo默认将vector列映射为Float[],因此同时支持包装类型数组和基本类型数组
+		boolean isBoxedFloatAry = typeNameLow.equals("java.lang.float[]");
+		boolean isBoxedDoubleAry = typeNameLow.equals("java.lang.double[]");
+		boolean isFloatAry = typeNameLow.equals("float[]") || isBoxedFloatAry;
+		boolean isDoubleAry = typeNameLow.equals("double[]") || isBoxedDoubleAry;
+		boolean isList = typeNameLow.equals("java.util.list") || typeNameLow.startsWith("java.util.arraylist");
+		if (!(isString || isFloatAry || isDoubleAry || isList)) {
+			return null;
+		}
+		String vectorStr = jdbcValue instanceof String ? (String) jdbcValue : jdbcValue.toString();
+		if (vectorStr == null || vectorStr.trim().isEmpty()) {
+			return null;
+		}
+		if (isString) {
+			return vectorStr;
+		}
+		vectorStr = vectorStr.trim();
+		if (!vectorStr.startsWith("[") || !vectorStr.endsWith("]")) {
+			return null;
+		}
+		String content = vectorStr.substring(1, vectorStr.length() - 1).trim();
+		// 空向量: [1,2,3] 剔除中括号后无内容
+		if (content.isEmpty()) {
+			if (isFloatAry) {
+				return isBoxedFloatAry ? new Float[0] : new float[0];
+			}
+			if (isDoubleAry) {
+				return isBoxedDoubleAry ? new Double[0] : new double[0];
+			}
+			return new ArrayList(0);
+		}
+		String[] items = content.split(",");
+		if (isFloatAry) {
+			if (isBoxedFloatAry) {
+				Float[] result = new Float[items.length];
+				for (int i = 0; i < items.length; i++) {
+					result[i] = Float.valueOf(items[i].trim());
+				}
+				return result;
+			}
+			float[] result = new float[items.length];
+			for (int i = 0; i < items.length; i++) {
+				result[i] = Float.parseFloat(items[i].trim());
+			}
+			return result;
+		}
+		if (isDoubleAry) {
+			if (isBoxedDoubleAry) {
+				Double[] result = new Double[items.length];
+				for (int i = 0; i < items.length; i++) {
+					result[i] = Double.valueOf(items[i].trim());
+				}
+				return result;
+			}
+			double[] result = new double[items.length];
+			for (int i = 0; i < items.length; i++) {
+				result[i] = Double.parseDouble(items[i].trim());
+			}
+			return result;
+		}
+		// List<Float>/List<Double>按泛型转换,默认Float(向量维度值一般为float32)
+		// 注意不能写成三元表达式,Double和Float混用会触发数值提升统一转为Double
+		boolean toDouble = (genericType == Double.class);
+		List result = new ArrayList(items.length);
+		for (String item : items) {
+			if (toDouble) {
+				result.add(Double.valueOf(Double.parseDouble(item.trim())));
+			} else {
+				result.add(Float.valueOf(Float.parseFloat(item.trim())));
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * @todo 将数据库geometry空间类型的值转为java对象属性类型,支持String(WKT/EWKT)和
+	 *       org.locationtech.jts.geom.Geometry及其子类型(需jts-core可选依赖)
+	 * @param typeName  属性类型名称
+	 * @param jdbcValue 数据库返回值(WKT/EWKT字符串、postgis EWKB hex、mysql WKB二进制、PGobject等)
+	 * @return 返回null表示目标类型无法识别或解析失败,交回框架按常规类型处理
+	 */
+	private static Object geometryToJavaType(String typeName, Object jdbcValue) {
+		if (jdbcValue == null) {
+			return null;
+		}
+		String typeNameLow = typeName.toLowerCase();
+		// String目标:已是字符串直接返回(postgis下EWKB hex形式的透传,查询侧建议ST_AsText);
+		// PGobject(EWKB hex)、byte[](mysql WKB)在JTS在场时统一转为WKT文本
+		if (typeNameLow.equals("java.lang.string")) {
+			if (jdbcValue instanceof String) {
+				return jdbcValue;
+			}
+			if (GeometryTypeUtil.hasJts()) {
+				return GeometryTypeUtil.toWKTString(jdbcValue);
+			}
+			return null;
+		}
+		// JTS Geometry及其子类型(Point/LineString/Polygon等)
+		if (typeNameLow.startsWith("org.locationtech.jts.geom.") && GeometryTypeUtil.hasJts()) {
+			return GeometryTypeUtil.parse(jdbcValue);
+		}
+		return null;
 	}
 
 	/**
@@ -1731,7 +1863,7 @@ public class BeanUtil {
 							// 先取字段注解上的sqlType
 							if (fieldTypeMap.containsKey(tmpStr)) {
 								propertySqlTypes[i] = fieldTypeMap.get(tmpStr);
-							} // 再取sql查询getColumnType对应的类型,目前主要针对JSON/JSONB，预留GEOMETRY
+							} // 再取sql查询getColumnType对应的类型,目前主要针对JSON/JSONB、VECTOR，预留GEOMETRY
 							else if (columnTypeLength > i && columnTypes[i] != null) {
 								tmpStr = columnTypes[i].toUpperCase();
 								if (tmpStr.equals("JSON")) {
@@ -1742,6 +1874,12 @@ public class BeanUtil {
 									propertySqlTypes[i] = JdbcTypes.GEOMETRY;
 								} else if (tmpStr.equals("UUID")) {
 									propertySqlTypes[i] = JdbcTypes.UUID;
+								} else if (tmpStr.equals("VECTOR") || tmpStr.equals("FLOATVECTOR")) {
+									// floatvector为gaussdb企业版的向量类型名
+									propertySqlTypes[i] = JdbcTypes.VECTOR;
+								} else if (GeometryTypeUtil.isGeometryTypeName(tmpStr)) {
+									// geometry空间类型(含mysql的POINT等子类型名)
+									propertySqlTypes[i] = JdbcTypes.GEOMETRY;
 								}
 							}
 						}
@@ -1875,6 +2013,12 @@ public class BeanUtil {
 							propertySqlTypes[i] = JdbcTypes.GEOMETRY;
 						} else if (tmpStr.equals("UUID")) {
 							propertySqlTypes[i] = JdbcTypes.UUID;
+						} else if (tmpStr.equals("VECTOR") || tmpStr.equals("FLOATVECTOR")) {
+							// floatvector为gaussdb企业版的向量类型名
+							propertySqlTypes[i] = JdbcTypes.VECTOR;
+						} else if (GeometryTypeUtil.isGeometryTypeName(tmpStr)) {
+							// geometry空间类型(含mysql的POINT等子类型名)
+							propertySqlTypes[i] = JdbcTypes.GEOMETRY;
 						}
 					}
 					break;

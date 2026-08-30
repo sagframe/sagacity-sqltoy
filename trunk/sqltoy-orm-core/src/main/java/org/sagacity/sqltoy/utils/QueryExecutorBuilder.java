@@ -63,6 +63,8 @@ public class QueryExecutorBuilder {
 		if (wrapParamNames(extend, sqlToyConfig, wrapNamedArgs)) {
 			return;
 		}
+		// sqlToyConfig.getFullParamNames()
+		// 中包含了xml配置文件中sql中定义的参数、cache-args中定义的参数、filters中的参数
 		// 构造实际参数名称，包含sql中的参数名、cacheArgs的参数名、分库、分表的参数名称
 		String[] fullParamNames = wrapFullParamNames(sqlToyConfig.getFullParamNames(), extend, sqlToyConfig);
 		if (fullParamNames == null || fullParamNames.length == 0) {

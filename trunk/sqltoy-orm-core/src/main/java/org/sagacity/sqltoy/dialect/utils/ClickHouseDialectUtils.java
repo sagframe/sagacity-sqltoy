@@ -475,7 +475,7 @@ public class ClickHouseDialectUtils {
 
 	/**
 	 * @TODO update操作的参数字段:set部分为非分区且非主键字段,where部分为全部主键;
-	 *      主键同时是分区键时也会保留(否则where中的=?会多于参数值导致绑定错位),尾部为主键字段
+	 *       主键同时是分区键时也会保留(否则where中的=?会多于参数值导致绑定错位),尾部为主键字段
 	 * @param entityMeta
 	 * @return
 	 */

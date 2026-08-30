@@ -255,6 +255,11 @@ public class SqlScriptLoader {
 		}
 		SqlToyConfig result = null;
 		String realDialect = (dialect == null) ? "" : dialect.toLowerCase();
+		// UNDEFINE表示未识别数据库方言,等同于未指定,归一化成空串避免sqlId_undefine形式的无效变体查找
+		// (忽略大小写兼容历史大写"UNDEFINE"值以及调用方传入的任意大小写形式)
+		if (Dialect.UNDEFINE.equalsIgnoreCase(realDialect)) {
+			realDialect = "";
+		}
 		// sqlId形式
 		if (SqlConfigParseUtils.isNamedQuery(sqlKey)) {
 			if (!"".equals(realDialect)) {
@@ -282,6 +287,18 @@ public class SqlScriptLoader {
 					result = sqlCache.get(sqlKey.concat("_postgres"));
 					if (result == null) {
 						result = sqlCache.get("postgres_".concat(sqlKey));
+					}
+				} // 兼容postgresql14版本方言,获取不到用postgresql命名的sql再次获取
+				if (result == null && realDialect.equals(Dialect.POSTGRESQL14)) {
+					result = sqlCache.get(sqlKey.concat("_").concat(Dialect.POSTGRESQL));
+					if (result == null) {
+						result = sqlCache.get(Dialect.POSTGRESQL.concat("_").concat(sqlKey));
+					}
+				} // 兼容mysql57版本方言,获取不到用mysql命名的sql再次获取
+				if (result == null && realDialect.equals(Dialect.MYSQL57)) {
+					result = sqlCache.get(sqlKey.concat("_").concat(Dialect.MYSQL));
+					if (result == null) {
+						result = sqlCache.get(Dialect.MYSQL.concat("_").concat(sqlKey));
 					}
 				}
 			}
@@ -345,7 +362,11 @@ public class SqlScriptLoader {
 				}
 			}
 		} else {
-			result = codeSqlCache.get(sqlKey);
+			// blankToNull参与缓存key:blank过滤器固化在缓存实例上,相同sql不同blankToNull需独立的缓存条目
+			// (true保持原有key,search查询默认即true避免主路径变化;false尾部加\u0000标记,
+			// 该字符不会出现在正常sql文本中,防止与某条真实sql的key尾部字符碰撞导致两种条目互串)
+			String codeSqlKey = blankToNull ? sqlKey : sqlKey.concat(String.valueOf((char) 0));
+			result = codeSqlCache.get(codeSqlKey);
 			if (result == null) {
 				boolean hasInclude = StringUtil.matches(sqlKey, SqlToyConstants.INCLUDE_PATTERN);
 				boolean isParamInclude = false;
@@ -364,7 +385,7 @@ public class SqlScriptLoader {
 				// 限制数量的原因是存在部分代码中的sql会拼接条件参数值，导致不同的sql无限增加
 				// 非@include(:paramName)模式才可以缓存
 				if (!isParamInclude && codeSqlCache.size() < SqlToyConstants.getMaxCodeSqlCount()) {
-					codeSqlCache.put(sqlKey, result);
+					codeSqlCache.put(codeSqlKey, result);
 				}
 			}
 		}
@@ -395,6 +416,14 @@ public class SqlScriptLoader {
 				variantKeys = new String[] { sqlKey.concat("_").concat(realDialect),
 						realDialect.concat("_").concat(sqlKey), sqlKey.concat("_").concat("postgres"),
 						"postgres_".concat(sqlKey) };
+			} else if (realDialect.equals(Dialect.POSTGRESQL14)) {
+				variantKeys = new String[] { sqlKey.concat("_").concat(realDialect),
+						realDialect.concat("_").concat(sqlKey), sqlKey.concat("_").concat(Dialect.POSTGRESQL),
+						Dialect.POSTGRESQL.concat("_").concat(sqlKey) };
+			} else if (realDialect.equals(Dialect.MYSQL57)) {
+				variantKeys = new String[] { sqlKey.concat("_").concat(realDialect),
+						realDialect.concat("_").concat(sqlKey), sqlKey.concat("_").concat(Dialect.MYSQL),
+						Dialect.MYSQL.concat("_").concat(sqlKey) };
 			} else {
 				variantKeys = new String[] { sqlKey.concat("_").concat(realDialect),
 						realDialect.concat("_").concat(sqlKey) };
