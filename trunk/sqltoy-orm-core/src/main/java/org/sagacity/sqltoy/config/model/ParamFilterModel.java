@@ -145,7 +145,7 @@ public class ParamFilterModel implements Serializable {
 	/**
 	 * 增加的时间
 	 */
-	private Double incrementTime = 0d;
+	private String incrementTime = "0";
 
 	/**
 	 * 增减时间的单位
@@ -263,14 +263,14 @@ public class ParamFilterModel implements Serializable {
 	/**
 	 * @return the incrementTime
 	 */
-	public Double getIncrementTime() {
+	public String getIncrementTime() {
 		return incrementTime;
 	}
 
 	/**
 	 * @param incrementTime the incrementTime to set
 	 */
-	public void setIncrementTime(Double incrementTime) {
+	public void setIncrementTime(String incrementTime) {
 		this.incrementTime = incrementTime;
 	}
 

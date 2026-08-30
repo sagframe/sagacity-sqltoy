@@ -430,6 +430,12 @@ public class SqlUtilsExt {
 		// 默认json支持
 		if (jdbcType == JdbcTypes.JSON || jdbcType == JdbcTypes.JSONB) {
 			JSONTypeUtil.updateJSONValue(dbType, rs, columnName, jdbcType, paramValue);
+		} else if (jdbcType == JdbcTypes.VECTOR) {
+			// vector向量类型回写(避免float[]、List等常规分支按数组或自定义类型码处理导致错误)
+			SqlUtil.updateVectorValue(dbType, rs, columnName, paramValue);
+		} else if (jdbcType == JdbcTypes.GEOMETRY) {
+			// geometry空间类型回写(避免byte[]、String等常规分支按错误类型处理)
+			SqlUtil.updateGeometryValue(dbType, rs, columnName, paramValue);
 		} else if (paramValue instanceof java.lang.String) {
 			tmpStr = (String) paramValue;
 			// clob 类型只有oracle、db2、dm、oceanBase等数据库支持

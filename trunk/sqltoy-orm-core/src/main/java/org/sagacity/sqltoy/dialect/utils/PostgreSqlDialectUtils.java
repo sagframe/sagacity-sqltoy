@@ -252,6 +252,12 @@ public class PostgreSqlDialectUtils {
 			sql.append("cast(? as json)");
 		} else if (jdbcType == JdbcTypes.JSONB) {
 			sql.append("cast(? as jsonb)");
+		} else if (jdbcType == JdbcTypes.VECTOR) {
+			// vector类型参数通过PGobject包装后类型已正确,cast用于兜底setString等字符串参数场景
+			sql.append("cast(? as vector)");
+		} else if (jdbcType == JdbcTypes.GEOMETRY) {
+			// geometry类型参数通过PGobject包装后类型已正确,cast用于兜底setString等字符串参数场景
+			sql.append("cast(? as geometry)");
 		} else {
 			// 数组、json等特殊类型
 			if (StringUtil.isNotBlank(fieldMeta.getNativeType())) {
@@ -389,6 +395,66 @@ public class PostgreSqlDialectUtils {
 		PGobject pgObject = new PGobject();
 		pgObject.setType(jdbcType == JdbcTypes.JSONB ? "jsonb" : "json");
 		pgObject.setValue(jsonStr);
+		rs.updateObject(columnName, pgObject);
+	}
+
+	/**
+	 *
+	 * @param pst
+	 * @param paramIndex
+	 * @param pgTypeName 数据库端向量类型名(pgvector为vector,gaussdb企业版为floatvector)
+	 * @param vectorStr  '[1,2,3]'形式的向量字符串
+	 * @throws SQLException
+	 */
+	public static void setVectorValue(PreparedStatement pst, int paramIndex, String pgTypeName, String vectorStr)
+			throws SQLException {
+		PGobject pgObject = new PGobject();
+		pgObject.setType(pgTypeName);
+		pgObject.setValue(vectorStr);
+		pst.setObject(paramIndex, pgObject);
+	}
+
+	/**
+	 *
+	 * @param rs
+	 * @param columnName
+	 * @param pgTypeName 数据库端向量类型名(pgvector为vector,gaussdb企业版为floatvector)
+	 * @param vectorStr  '[1,2,3]'形式的向量字符串
+	 * @throws SQLException
+	 */
+	public static void updateVector(ResultSet rs, String columnName, String pgTypeName, String vectorStr)
+			throws SQLException {
+		PGobject pgObject = new PGobject();
+		pgObject.setType(pgTypeName);
+		pgObject.setValue(vectorStr);
+		rs.updateObject(columnName, pgObject);
+	}
+
+	/**
+	 *
+	 * @param pst
+	 * @param paramIndex
+	 * @param geomStr    WKT形式的geometry字符串
+	 * @throws SQLException
+	 */
+	public static void setGeometryValue(PreparedStatement pst, int paramIndex, String geomStr) throws SQLException {
+		PGobject pgObject = new PGobject();
+		pgObject.setType("geometry");
+		pgObject.setValue(geomStr);
+		pst.setObject(paramIndex, pgObject);
+	}
+
+	/**
+	 *
+	 * @param rs
+	 * @param columnName
+	 * @param geomStr    WKT形式的geometry字符串
+	 * @throws SQLException
+	 */
+	public static void updateGeometry(ResultSet rs, String columnName, String geomStr) throws SQLException {
+		PGobject pgObject = new PGobject();
+		pgObject.setType("geometry");
+		pgObject.setValue(geomStr);
 		rs.updateObject(columnName, pgObject);
 	}
 }

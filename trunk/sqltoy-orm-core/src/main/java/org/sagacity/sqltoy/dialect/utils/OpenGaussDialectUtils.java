@@ -2,12 +2,17 @@ package org.sagacity.sqltoy.dialect.utils;
 
 import java.io.Serializable;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
+import org.opengauss.util.PGobject;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.model.JdbcTypes;
 import org.sagacity.sqltoy.utils.BeanUtil;
+import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 
@@ -70,8 +75,9 @@ public class OpenGaussDialectUtils {
 	 * @param sql
 	 * @param columnName
 	 * @param fieldMeta
+	 * @param dbType
 	 */
-	public static void wrapSelectFields(StringBuilder sql, String columnName, FieldMeta fieldMeta) {
+	public static void wrapSelectFields(StringBuilder sql, String columnName, FieldMeta fieldMeta, Integer dbType) {
 		int jdbcType = fieldMeta.getType();
 		if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NVARCHAR
 				|| jdbcType == java.sql.Types.LONGVARCHAR || jdbcType == java.sql.Types.LONGNVARCHAR) {
@@ -111,6 +117,14 @@ public class OpenGaussDialectUtils {
 			sql.append("cast(? as json)");
 		} else if (jdbcType == JdbcTypes.JSONB) {
 			sql.append("cast(? as jsonb)");
+		} else if (jdbcType == JdbcTypes.VECTOR) {
+			// gaussdb企业版向量类型名为floatvector,其余为vector
+			// cast用于兜底setString等字符串参数场景,PGobject包装参数类型已正确
+			sql.append("cast(? as ").append(dbType != null && dbType == DBType.GAUSSDB ? "floatvector" : "vector")
+					.append(")");
+		} else if (jdbcType == JdbcTypes.GEOMETRY) {
+			// geometry类型参数通过PGobject包装后类型已正确,cast用于兜底setString等字符串参数场景
+			sql.append("cast(? as geometry)");
 		} else {
 			// 数组、json等特殊类型
 			if (StringUtil.isNotBlank(fieldMeta.getNativeType())) {
@@ -121,5 +135,69 @@ public class OpenGaussDialectUtils {
 		}
 		sql.append(" as ");
 		sql.append(columnName);
+	}
+
+	/**
+	 * 针对openGauss系新包路径驱动(org.opengauss.util.PGobject)的vector向量参数赋值
+	 * 
+	 * @param pst
+	 * @param paramIndex
+	 * @param ogTypeName 数据库端向量类型名(openGauss/MogDB为vector,gaussdb企业版为floatvector)
+	 * @param vectorStr  '[1,2,3]'形式的向量字符串
+	 * @throws SQLException
+	 */
+	public static void setVectorValue(PreparedStatement pst, int paramIndex, String ogTypeName, String vectorStr)
+			throws SQLException {
+		PGobject pgObject = new PGobject();
+		pgObject.setType(ogTypeName);
+		pgObject.setValue(vectorStr);
+		pst.setObject(paramIndex, pgObject);
+	}
+
+	/**
+	 * 针对openGauss系新包路径驱动(org.opengauss.util.PGobject)的vector向量列回写
+	 * 
+	 * @param rs
+	 * @param columnName
+	 * @param ogTypeName 数据库端向量类型名(openGauss/MogDB为vector,gaussdb企业版为floatvector)
+	 * @param vectorStr  '[1,2,3]'形式的向量字符串
+	 * @throws SQLException
+	 */
+	public static void updateVector(ResultSet rs, String columnName, String ogTypeName, String vectorStr)
+			throws SQLException {
+		PGobject pgObject = new PGobject();
+		pgObject.setType(ogTypeName);
+		pgObject.setValue(vectorStr);
+		rs.updateObject(columnName, pgObject);
+	}
+
+	/**
+	 * 针对openGauss系新包路径驱动(org.opengauss.util.PGobject)的geometry空间参数赋值
+	 *
+	 * @param pst
+	 * @param paramIndex
+	 * @param geomStr    WKT形式的geometry字符串
+	 * @throws SQLException
+	 */
+	public static void setGeometryValue(PreparedStatement pst, int paramIndex, String geomStr) throws SQLException {
+		PGobject pgObject = new PGobject();
+		pgObject.setType("geometry");
+		pgObject.setValue(geomStr);
+		pst.setObject(paramIndex, pgObject);
+	}
+
+	/**
+	 * 针对openGauss系新包路径驱动(org.opengauss.util.PGobject)的geometry空间列回写
+	 *
+	 * @param rs
+	 * @param columnName
+	 * @param geomStr    WKT形式的geometry字符串
+	 * @throws SQLException
+	 */
+	public static void updateGeometry(ResultSet rs, String columnName, String geomStr) throws SQLException {
+		PGobject pgObject = new PGobject();
+		pgObject.setType("geometry");
+		pgObject.setValue(geomStr);
+		rs.updateObject(columnName, pgObject);
 	}
 }

@@ -208,7 +208,8 @@ public class StringUtil {
 		if (sourceStr.length() == 1) {
 			return sourceStr.toUpperCase(Locale.ROOT);
 		}
-		return sourceStr.substring(0, 1).toUpperCase(Locale.ROOT).concat(sourceStr.substring(1).toLowerCase(Locale.ROOT));
+		return sourceStr.substring(0, 1).toUpperCase(Locale.ROOT)
+				.concat(sourceStr.substring(1).toLowerCase(Locale.ROOT));
 	}
 
 	/**

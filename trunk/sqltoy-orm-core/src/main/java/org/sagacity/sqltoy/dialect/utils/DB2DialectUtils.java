@@ -135,6 +135,9 @@ public class DB2DialectUtils {
 			// sql.append("cast(? as BLOB(" + length + "))");
 		} else if (jdbcType == JdbcTypes.JSON || jdbcType == JdbcTypes.JSONB) {
 			sql.append("cast(? as JSON)");
+		} else if (jdbcType == JdbcTypes.VECTOR) {
+			// db2 12.1.2+支持vector类型,与应用交互采用'[1,2,3]'字符串形式,cast确保using select子查询列类型正确
+			sql.append("cast(? as VECTOR)");
 		} else {
 			// 数组、json等特殊类型
 			if (StringUtil.isNotBlank(fieldMeta.getNativeType())) {

@@ -37,6 +37,7 @@ import org.sagacity.sqltoy.config.model.TableCascadeModel;
 import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.model.IgnoreCaseSet;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
+import org.sagacity.sqltoy.model.JdbcTypes;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
@@ -168,11 +169,11 @@ public class SqlServerDialectUtils {
 				new GenerateSqlHandler() {
 					@Override
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
+						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sql = getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 								entityMeta.getIdStrategy(), forceUpdateFields, tableName, "isnull", "@mySeqVariable",
-								false);
-						if (entityMeta.getIdStrategy() != null
-								&& entityMeta.getIdStrategy().equals(PKStrategy.SEQUENCE)) {
+								allowAssignPKValue(pkStrategy));
+						if (pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE)) {
 							sql = "DECLARE @mySeqVariable as numeric(20)=NEXT VALUE FOR " + entityMeta.getSequence()
 									+ " " + sql;
 						}
@@ -227,18 +228,34 @@ public class SqlServerDialectUtils {
 		int columnSize = fieldsArray.length;
 		StringBuilder sql = new StringBuilder(columnSize * 30 + 100);
 		String columnName;
+		FieldMeta fieldMeta;
 		sql.append("merge into ");
 		sql.append(realTable);
 		sql.append(" ta ");
 		sql.append(" using (select ");
+		// 实际输出列计数,排除rowversion列后逗号按实际输出列组织
+		int usingCols = 0;
 		for (int i = 0; i < columnSize; i++) {
-			columnName = entityMeta.getColumnName(fieldsArray[i]);
-			columnName = ReservedWordsUtil.convertWord(columnName, dbType);
-			if (i > 0) {
+			fieldMeta = entityMeta.getFieldMeta(fieldsArray[i]);
+			// sqlserver的timestamp(rowversion)列不能赋值,on/update/insert环节均不引用,直接排除避免占位符与参数错位
+			if (fieldMeta.getType() == java.sql.Types.TIMESTAMP) {
+				continue;
+			}
+			columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
+			if (usingCols > 0) {
 				sql.append(",");
 			}
-			sql.append("? as ");
+			// sqlserver(2008+)支持geometry、(2025+)支持vector类型,using select子查询中显式cast保证类型正确
+			if (fieldMeta.getType() == JdbcTypes.GEOMETRY) {
+				sql.append("cast(? as geometry)");
+			} else if (fieldMeta.getType() == JdbcTypes.VECTOR) {
+				sql.append("cast(? as VECTOR)");
+			} else {
+				sql.append("?");
+			}
+			sql.append(" as ");
 			sql.append(columnName);
+			usingCols++;
 		}
 		sql.append(SqlToyConstants.MERGE_ALIAS_ON);
 		StringBuilder idColumns = new StringBuilder();
@@ -271,7 +288,6 @@ public class SqlServerDialectUtils {
 					fupc.add(ReservedWordsUtil.convertWord(entityMeta.getColumnName(field), dbType));
 				}
 			}
-			FieldMeta fieldMeta;
 			// update 只针对非主键字段进行修改
 			boolean isStart = true;
 			int meter = 0;
@@ -436,18 +452,34 @@ public class SqlServerDialectUtils {
 			forceUpdateSqlTimeFields = unifyFieldsHandler.forceUpdateFields();
 		}
 		String currentTimeStr;
+		FieldMeta fieldMeta;
 		sql.append("merge into ");
 		sql.append(realTable);
 		sql.append(" ta ");
 		sql.append(" using (select ");
+		// 实际输出列计数,排除rowversion列后逗号按实际输出列组织
+		int usingCols = 0;
 		for (int i = 0; i < columnSize; i++) {
-			columnName = entityMeta.getColumnName(fieldsArray[i]);
-			columnName = ReservedWordsUtil.convertWord(columnName, dbType);
-			if (i > 0) {
+			fieldMeta = entityMeta.getFieldMeta(fieldsArray[i]);
+			// sqlserver的timestamp(rowversion)列不能赋值,on/insert环节均不引用,直接排除避免占位符与参数错位
+			if (fieldMeta.getType() == java.sql.Types.TIMESTAMP) {
+				continue;
+			}
+			columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
+			if (usingCols > 0) {
 				sql.append(",");
 			}
-			sql.append("? as ");
+			// sqlserver(2008+)支持geometry、(2025+)支持vector类型,using select子查询中显式cast保证类型正确
+			if (fieldMeta.getType() == JdbcTypes.GEOMETRY) {
+				sql.append("cast(? as geometry)");
+			} else if (fieldMeta.getType() == JdbcTypes.VECTOR) {
+				sql.append("cast(? as VECTOR)");
+			} else {
+				sql.append("?");
+			}
+			sql.append(" as ");
 			sql.append(columnName);
+			usingCols++;
 		}
 		sql.append(SqlToyConstants.MERGE_ALIAS_ON);
 		StringBuilder idColumns = new StringBuilder();
@@ -473,7 +505,6 @@ public class SqlServerDialectUtils {
 		boolean allIds = (rejectIdFieldArray == null);
 		if (!allIds) {
 			int rejectIdColumnSize = rejectIdFieldArray.length;
-			FieldMeta fieldMeta;
 			// update 只针对非主键字段进行修改
 			int meter = 0;
 			for (int i = 0; i < rejectIdColumnSize; i++) {
@@ -500,8 +531,9 @@ public class SqlServerDialectUtils {
 					} else {
 						insertRejIdColValues.append("tv.").append(columnName);
 					}
+					// meter在timestamp排除块内自增,避免rowversion列排首位时后续列产生前置逗号
+					meter++;
 				}
-				meter++;
 			}
 		}
 		// 主键未匹配上则进行插入操作
@@ -681,7 +713,7 @@ public class SqlServerDialectUtils {
 		final boolean isIdentity = pkStrategy != null && PKStrategy.IDENTITY.equals(pkStrategy);
 		final boolean isSequence = pkStrategy != null && PKStrategy.SEQUENCE.equals(pkStrategy);
 		String insertSql = generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta, tableName,
-				pkStrategy, "isnull", "@mySeqVariable", isIdentity ? false : true);
+				pkStrategy, "isnull", "@mySeqVariable", allowAssignPKValue(pkStrategy));
 		if (isSequence) {
 			insertSql = "set nocount on DECLARE @mySeqVariable as numeric(20)=NEXT VALUE FOR "
 					+ entityMeta.getSequence() + " " + insertSql + " select @mySeqVariable ";
@@ -1230,7 +1262,7 @@ public class SqlServerDialectUtils {
 	 * @param pkStrategy
 	 * @return
 	 */
-	private static boolean allowAssignPKValue(PKStrategy pkStrategy) {
+	public static boolean allowAssignPKValue(PKStrategy pkStrategy) {
 		if (pkStrategy == null) {
 			return true;
 		}

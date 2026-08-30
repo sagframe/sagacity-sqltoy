@@ -16,6 +16,7 @@ import org.sagacity.sqltoy.model.IgnoreCaseSet;
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils.Dialect;
+import org.sagacity.sqltoy.utils.NumberUtil;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
@@ -628,8 +629,24 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 		return this.cacheArgNames;
 	}
 
+	/**
+	 * 包含 sqltoyConfig中paramsName、cacheArgNames、filters中所有参数名称的合集
+	 * 
+	 * @return
+	 */
 	public String[] getFullParamNames() {
-		if (cacheArgNames == null || cacheArgNames.isEmpty()) {
+		// filters中存在动态增量参数(increment-time="${paramName}")时,被引用的参数必须参与合并,
+		// 否则参数值会在QueryExecutorBuilder按参数名装配时被丢弃,导致增量静默失效
+		boolean hasDynIncrementParam = false;
+		if (filters != null && !filters.isEmpty()) {
+			for (ParamFilterModel filter : filters) {
+				if (filter.getIncrementTime() != null && !NumberUtil.isNumber(filter.getIncrementTime())) {
+					hasDynIncrementParam = true;
+					break;
+				}
+			}
+		}
+		if ((cacheArgNames == null || cacheArgNames.isEmpty()) && !hasDynIncrementParam) {
 			return this.paramsName;
 		}
 		Set<String> keys = new HashSet<String>();
@@ -645,11 +662,31 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 			}
 		}
 		// 增加cacheArgs中存在的参数名称
-		for (String item : this.cacheArgNames) {
-			key = item.toLowerCase();
-			if (!keys.contains(key)) {
-				keys.add(key);
-				params.add(item);
+		if (cacheArgNames != null) {
+			for (String item : cacheArgNames) {
+				key = item.toLowerCase();
+				if (!keys.contains(key)) {
+					keys.add(key);
+					params.add(item);
+				}
+			}
+		}
+		// 增加filters中存在的参数名称
+		if (filters != null && !filters.isEmpty()) {
+			String incrementTime;
+			String paramName;
+			for (ParamFilterModel filter : filters) {
+				incrementTime = filter.getIncrementTime();
+				// to-date 增加时间为动态参数${incrementDays},解析时已经去除${};
+				// -incrementDays为负数引用,剥离前导负号取真实参数名
+				if (StringUtil.isNotBlank(incrementTime) && !NumberUtil.isNumber(incrementTime)) {
+					paramName = incrementTime.startsWith("-") ? incrementTime.substring(1) : incrementTime;
+					key = paramName.toLowerCase();
+					if (!keys.contains(key)) {
+						keys.add(key);
+						params.add(paramName);
+					}
+				}
 			}
 		}
 		return params.toArray(new String[0]);

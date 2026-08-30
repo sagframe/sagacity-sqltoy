@@ -310,9 +310,12 @@ public final class JdbcTypes {
 	// ===================== 自定义扩展类型（业务/数据库专属） =====================
 	// 建议从 3000 开始，避开 JDBC 官方预留区间，防止版本更新冲突
 
-	public static final int GEOMETRY = 3001;
 	public static final int HSTORE = 3002;
 	public static final int UUID = 3003;
+
+	// 增加vector类型
+	public static final int VECTOR = 10000;
+	public static final int GEOMETRY = 10020;
 
 	// 私有构造：禁止实例化、反射构造
 	private JdbcTypes() {

@@ -52,6 +52,9 @@ import org.sagacity.sqltoy.config.model.DataType;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
+import org.sagacity.sqltoy.dialect.utils.OpenGaussDialectUtils;
+import org.sagacity.sqltoy.dialect.utils.PostgreSqlDialectUtils;
+import org.sagacity.sqltoy.dialect.utils.VastBaseDialectUtils;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.model.IgnoreCaseSet;
 import org.sagacity.sqltoy.model.JdbcTypes;
@@ -85,6 +88,42 @@ public class SqlUtil {
 	 * 定义日志
 	 */
 	private final static Logger logger = LoggerFactory.getLogger(SqlUtil.class);
+
+	// PGobject 是否可用(静态一次性检测,postgresql驱动为可选依赖)
+	private static final boolean HAS_PG_OBJECT;
+	// 海量数据库VastBase驱动PGobject是否可用(其驱动改变了包路径)
+	private static final boolean HAS_VB_OBJECT;
+	// openGauss系新包路径驱动PGobject是否可用(opengauss-jdbc为org.opengauss.util.PGobject)
+	private static final boolean HAS_OG_OBJECT;
+
+	static {
+		boolean pgFound;
+		try {
+			Class.forName("org.postgresql.util.PGobject");
+			pgFound = true;
+		} catch (ClassNotFoundException e) {
+			pgFound = false;
+		}
+		HAS_PG_OBJECT = pgFound;
+
+		boolean vbFound;
+		try {
+			Class.forName("cn.com.vastbase.util.PGobject");
+			vbFound = true;
+		} catch (ClassNotFoundException e) {
+			vbFound = false;
+		}
+		HAS_VB_OBJECT = vbFound;
+
+		boolean ogFound;
+		try {
+			Class.forName("org.opengauss.util.PGobject");
+			ogFound = true;
+		} catch (ClassNotFoundException e) {
+			ogFound = false;
+		}
+		HAS_OG_OBJECT = ogFound;
+	}
 
 	/**
 	 * sql中的单行注释
@@ -367,6 +406,26 @@ public class SqlUtil {
 					}
 				} else if (jdbcType == JdbcTypes.JSON || jdbcType == JdbcTypes.JSONB) {
 					JSONTypeUtil.setNull(dbType, pst, paramIndex, jdbcType);
+				} else if (jdbcType == JdbcTypes.VECTOR) {
+					// vector属于数据库扩展类型,sqlserver用NVARCHAR、mysql系用VARCHAR设置null,其余按OTHER
+					if (dbType == DBType.SQLSERVER) {
+						pst.setNull(paramIndex, java.sql.Types.NVARCHAR);
+					} else if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.OCEANBASE
+							|| dbType == DBType.TIDB || dbType == DBType.DORIS || dbType == DBType.STARROCKS) {
+						pst.setNull(paramIndex, java.sql.Types.VARCHAR);
+					} else {
+						pst.setNull(paramIndex, java.sql.Types.OTHER);
+					}
+				} else if (jdbcType == JdbcTypes.GEOMETRY) {
+					// geometry空间类型null值设置,策略与vector一致
+					if (dbType == DBType.SQLSERVER) {
+						pst.setNull(paramIndex, java.sql.Types.NVARCHAR);
+					} else if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.OCEANBASE
+							|| dbType == DBType.TIDB || dbType == DBType.DORIS || dbType == DBType.STARROCKS) {
+						pst.setNull(paramIndex, java.sql.Types.VARCHAR);
+					} else {
+						pst.setNull(paramIndex, java.sql.Types.OTHER);
+					}
 				} else {
 					pst.setNull(paramIndex, jdbcType);
 				}
@@ -381,6 +440,16 @@ public class SqlUtil {
 		}
 		if (jdbcType == JdbcTypes.JSON || jdbcType == JdbcTypes.JSONB) {
 			JSONTypeUtil.setJSONValue(dbType, pst, paramIndex, jdbcType, paramValue);
+			return;
+		}
+		// vector向量类型,pgvector、oracle 23ai、mysql heatwave等均接受'[1,2,3]'字符串形式
+		if (jdbcType == JdbcTypes.VECTOR) {
+			setVectorValue(dbType, pst, paramIndex, paramValue);
+			return;
+		}
+		// geometry空间类型,统一以WKT字符串为媒介
+		if (jdbcType == JdbcTypes.GEOMETRY) {
+			setGeometryValue(dbType, pst, paramIndex, paramValue);
 			return;
 		}
 		String tmpStr;
@@ -653,6 +722,200 @@ public class SqlUtil {
 	}
 
 	/**
+	 * @todo vector向量类型参数赋值,统一转为'[1,2,3]'字符串形式(pgvector、oracle 23ai、mysql
+	 *       heatwave等均支持)
+	 * @param dbType
+	 * @param pst
+	 * @param paramIndex
+	 * @param value
+	 * @throws SQLException
+	 */
+	private static void setVectorValue(Integer dbType, PreparedStatement pst, int paramIndex, Object value)
+			throws SQLException {
+		String vectorStr = toVectorString(value);
+		// org.pgvector.PGvector、oracle.sql.VECTOR、PGobject等驱动专属对象直接交由驱动解析
+		if (vectorStr == null) {
+			pst.setObject(paramIndex, value);
+			return;
+		}
+		// postgresql系需要用PGobject明确指定向量类型,避免因参数按varchar发送导致无法隐式转换
+		// gaussdb企业版向量类型名为floatvector,其余为vector
+		String pgTypeName = (dbType == DBType.GAUSSDB) ? "floatvector" : "vector";
+		if (HAS_OG_OBJECT && (dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.GAUSSDB)) {
+			// openGauss系新包路径驱动(org.opengauss.util.PGobject)
+			OpenGaussDialectUtils.setVectorValue(pst, paramIndex, pgTypeName, vectorStr);
+		} else if (HAS_PG_OBJECT && (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14
+				|| dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.GAUSSDB)) {
+			// PG官方驱动或openGauss系兼容包驱动(org.postgresql.util.PGobject)
+			PostgreSqlDialectUtils.setVectorValue(pst, paramIndex, pgTypeName, vectorStr);
+		} else if (HAS_VB_OBJECT && dbType == DBType.VASTBASE) {
+			// VastBase驱动改变了PGobject包路径,需要用其专属PGobject包装
+			VastBaseDialectUtils.setVectorValue(pst, paramIndex, vectorStr);
+		} else {
+			pst.setString(paramIndex, vectorStr);
+		}
+	}
+
+	/**
+	 * @todo vector向量列回写(upsert等场景通过ResultSet回写)
+	 * @param dbType
+	 * @param rs
+	 * @param columnName
+	 * @param value
+	 * @throws SQLException
+	 */
+	public static void updateVectorValue(Integer dbType, ResultSet rs, String columnName, Object value)
+			throws SQLException {
+		String vectorStr = toVectorString(value);
+		if (vectorStr == null) {
+			rs.updateObject(columnName, value);
+			return;
+		}
+		// gaussdb企业版向量类型名为floatvector,其余为vector
+		String pgTypeName = (dbType == DBType.GAUSSDB) ? "floatvector" : "vector";
+		if (HAS_OG_OBJECT && (dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.GAUSSDB)) {
+			// openGauss系新包路径驱动(org.opengauss.util.PGobject)
+			OpenGaussDialectUtils.updateVector(rs, columnName, pgTypeName, vectorStr);
+		} else if (HAS_PG_OBJECT && (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14
+				|| dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.GAUSSDB)) {
+			// PG官方驱动或openGauss系兼容包驱动(org.postgresql.util.PGobject)
+			PostgreSqlDialectUtils.updateVector(rs, columnName, pgTypeName, vectorStr);
+		} else if (HAS_VB_OBJECT && dbType == DBType.VASTBASE) {
+			// VastBase驱动改变了PGobject包路径,需要用其专属PGobject包装
+			VastBaseDialectUtils.updateVector(rs, columnName, vectorStr);
+		} else {
+			rs.updateString(columnName, vectorStr);
+		}
+	}
+
+	/**
+	 * @todo 将vector向量值转为'[1,2,3]'形式的字符串
+	 * @param value
+	 * @return 返回null表示属于驱动专属向量对象(如org.pgvector.PGvector、oracle.sql.VECTOR),应直接setObject透传
+	 */
+	private static String toVectorString(Object value) {
+		if (value instanceof String) {
+			return (String) value;
+		}
+		StringBuilder buf = new StringBuilder("[");
+		boolean hasElement = false;
+		if (value instanceof Collection) {
+			for (Object item : (Collection) value) {
+				bufAppendVectorElement(buf, hasElement, item);
+				hasElement = true;
+			}
+		} else if (value != null && value.getClass().isArray()) {
+			int size = java.lang.reflect.Array.getLength(value);
+			for (int i = 0; i < size; i++) {
+				bufAppendVectorElement(buf, hasElement, java.lang.reflect.Array.get(value, i));
+				hasElement = true;
+			}
+		} else {
+			return null;
+		}
+		buf.append("]");
+		return buf.toString();
+	}
+
+	/**
+	 * @todo 向字符串缓冲中追加vector单个元素(浮点数避免科学计数法表示)
+	 * @param buf
+	 * @param hasElement
+	 * @param item
+	 */
+	private static void bufAppendVectorElement(StringBuilder buf, boolean hasElement, Object item) {
+		if (item == null) {
+			throw new IllegalArgumentException("vector向量类型值中存在null元素,请检查!");
+		}
+		if (hasElement) {
+			buf.append(",");
+		}
+		if (item instanceof Float) {
+			// 通过Float.toString取最短精度表示(避免float提升为double产生精度尾巴),再转为非科学计数法
+			buf.append(new BigDecimal(Float.toString((Float) item)).toPlainString());
+		} else if (item instanceof Double) {
+			buf.append(new BigDecimal(Double.toString((Double) item)).toPlainString());
+		} else if (item instanceof BigDecimal) {
+			buf.append(((BigDecimal) item).toPlainString());
+		} else {
+			buf.append(item.toString());
+		}
+	}
+
+	/**
+	 * @todo geometry空间类型参数赋值,统一以WKT字符串为媒介:postgresql系通过PGobject包装,
+	 *       mysql、h2等setString隐式转换;oracle需SQL层SDO_UTIL.FROM_WKTGEOMETRY、
+	 *       sqlserver需SQL层cast(? as geometry)配合
+	 * @param dbType
+	 * @param pst
+	 * @param paramIndex
+	 * @param value
+	 * @throws SQLException
+	 */
+	private static void setGeometryValue(Integer dbType, PreparedStatement pst, int paramIndex, Object value)
+			throws SQLException {
+		String geomStr = toGeometryString(value);
+		// PGgeometry等驱动专属对象直接透传
+		if (geomStr == null) {
+			pst.setObject(paramIndex, value);
+			return;
+		}
+		if (HAS_OG_OBJECT && (dbType == DBType.GAUSSDB || dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB)) {
+			// openGauss系新包路径驱动(org.opengauss.util.PGobject)
+			OpenGaussDialectUtils.setGeometryValue(pst, paramIndex, geomStr);
+		} else if (HAS_PG_OBJECT && (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14
+				|| dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.GAUSSDB)) {
+			// PG官方驱动或openGauss系兼容包驱动(org.postgresql.util.PGobject)
+			PostgreSqlDialectUtils.setGeometryValue(pst, paramIndex, geomStr);
+		} else if (HAS_VB_OBJECT && dbType == DBType.VASTBASE) {
+			// VastBase驱动改变了PGobject包路径,需要用其专属PGobject包装
+			VastBaseDialectUtils.setGeometryValue(pst, paramIndex, geomStr);
+		} else {
+			pst.setString(paramIndex, geomStr);
+		}
+	}
+
+	/**
+	 * @todo geometry空间列回写(upsert等场景通过ResultSet回写)
+	 * @param dbType
+	 * @param rs
+	 * @param columnName
+	 * @param value
+	 * @throws SQLException
+	 */
+	public static void updateGeometryValue(Integer dbType, ResultSet rs, String columnName, Object value)
+			throws SQLException {
+		String geomStr = toGeometryString(value);
+		if (geomStr == null) {
+			rs.updateObject(columnName, value);
+			return;
+		}
+		if (HAS_OG_OBJECT && (dbType == DBType.GAUSSDB || dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB)) {
+			OpenGaussDialectUtils.updateGeometry(rs, columnName, geomStr);
+		} else if (HAS_PG_OBJECT && (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14
+				|| dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.GAUSSDB)) {
+			PostgreSqlDialectUtils.updateGeometry(rs, columnName, geomStr);
+		} else if (HAS_VB_OBJECT && dbType == DBType.VASTBASE) {
+			VastBaseDialectUtils.updateGeometry(rs, columnName, geomStr);
+		} else {
+			rs.updateString(columnName, geomStr);
+		}
+	}
+
+	/**
+	 * @todo 提取geometry值的WKT字符串:字符串原样透传,JTS Geometry对象转WKT
+	 *       (jts-core为可选依赖,无JTS或非Geometry对象返回null交由驱动透传)
+	 * @param value
+	 * @return
+	 */
+	private static String toGeometryString(Object value) {
+		if (value instanceof String) {
+			return (String) value;
+		}
+		return GeometryTypeUtil.toWKT(value);
+	}
+
+	/**
 	 * @TODO setArray gaussdb 必须要通过conn构造Array
 	 * @param dbType
 	 * @param conn
@@ -769,6 +1032,12 @@ public class SqlUtil {
 							propertySqlTypes[i] = JdbcTypes.GEOMETRY;
 						} else if (tmpStr.equals("UUID")) {
 							propertySqlTypes[i] = JdbcTypes.UUID;
+						} else if (tmpStr.equals("VECTOR") || tmpStr.equals("FLOATVECTOR")) {
+							// floatvector为gaussdb企业版的向量类型名
+							propertySqlTypes[i] = JdbcTypes.VECTOR;
+						} else if (GeometryTypeUtil.isGeometryTypeName(tmpStr)) {
+							// geometry空间类型(含mysql的POINT等子类型名)
+							propertySqlTypes[i] = JdbcTypes.GEOMETRY;
 						}
 					}
 				}
@@ -1777,7 +2046,7 @@ public class SqlUtil {
 		String splitSign = DataSourceUtils.getDatabaseSqlSplitSign(conn);
 		// 剔除sql中的注释
 		sqlContent = SqlUtil.clearMark(sqlContent);
-		if (splitSign.indexOf("go") != -1) {
+		if (DataSourceUtils.SQLSERVER_SPLIT_SIGN.equals(splitSign)) {
 			sqlContent = clearMistyChars(sqlContent, BLANK);
 		}
 		// 分割成多个子语句
@@ -1791,6 +2060,10 @@ public class SqlUtil {
 		Statement stat = null;
 		try {
 			stat = conn.createStatement();
+			// 设置全局statementTimeout，默认为null
+			if (SqlToyConstants.defaultStatementTimeout != null && SqlToyConstants.defaultStatementTimeout > 0) {
+				stat.setQueryTimeout(SqlToyConstants.defaultStatementTimeout);
+			}
 			int meter = 0;
 			// int realBatch = (batchSize == null || batchSize.intValue() > 1) ?
 			// batchSize.intValue() : 100;
@@ -1803,23 +2076,39 @@ public class SqlUtil {
 					logger.debug("正在批量执行的sql:{}", sql);
 					stat.addBatch(sql);
 				}
-				if ((meter % realBatch) == 0 || i + 1 == totalRows) {
+				if (meter > 0 && ((meter % realBatch) == 0 || i + 1 == totalRows)) {
 					stat.executeBatch();
 					stat.clearBatch();
 				}
 				i++;
 			}
 		} catch (SQLException e) {
+			// 已切换为手动提交的场景失败必须回滚,避免悬挂事务被后续连接复用者意外提交
+			if (hasSetAutoCommit && !autoCommit.booleanValue()) {
+				try {
+					conn.rollback();
+				} catch (SQLException re) {
+					logger.error("executeBatchSql 回滚失败!", re);
+				}
+			}
 			throw e;
 		} finally {
-			if (stat != null) {
-				stat.close();
-				stat = null;
+			try {
+				if (stat != null) {
+					stat.close();
+					stat = null;
+				}
+			} catch (SQLException se) {
+				logger.error(se.getMessage(), se);
 			}
-		}
-		// 恢复conn原始autoCommit默认值
-		if (hasSetAutoCommit) {
-			conn.setAutoCommit(!autoCommit);
+			// 恢复conn原始autoCommit默认值
+			if (hasSetAutoCommit) {
+				try {
+					conn.setAutoCommit(!autoCommit);
+				} catch (SQLException se) {
+					logger.error("executeBatchSql 恢复autoCommit失败!", se);
+				}
+			}
 		}
 	}
 

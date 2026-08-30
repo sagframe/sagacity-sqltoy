@@ -3,7 +3,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sagframe</groupId>
-	<version>5.6.92</version>
+	<version>5.6.93</version>
 	<name>sagacity-sqltoy</name>
 	<description>sqltoy core code</description>
 	<artifactId>sagacity-sqltoy</artifactId>
@@ -14,9 +14,9 @@
 		<ehcache.version>3.12.0</ehcache.version>
 		<httpclient.version>4.5.14</httpclient.version>
 		<httpclient-core.version>4.4.16</httpclient-core.version>
-		<elastic-rest-client.version>9.5.1</elastic-rest-client.version>
+		<elastic-rest-client.version>9.5.2</elastic-rest-client.version>
 		<fastjson.version>2.0.64</fastjson.version>
-		<mongo.version>5.9.2</mongo.version>
+		<mongo.version>5.10.0</mongo.version>
 		<junit-jupiter.version>6.1.3</junit-jupiter.version>
 		<junit-platform.version>6.1.3</junit-platform.version>
 		<slf4j.version>2.0.18</slf4j.version>
@@ -26,8 +26,10 @@
 		<transmittable-thread-local>2.14.5</transmittable-thread-local>
 		<ulid-creator.version>5.2.4</ulid-creator.version>
 		<postgresql.version>42.7.13</postgresql.version>
-		<vastbase.version>2.15v</vastbase.version>
-		<byte-buddy.version>1.18.11</byte-buddy.version>
+		<opengauss.version>6.0.0-og</opengauss.version>
+		<jts.version>1.20.0</jts.version>
+		<vastbase.version>2.16v</vastbase.version>
+		<byte-buddy.version>1.18.12</byte-buddy.version>
 	</properties>
 	<licenses>
 		<license>
@@ -85,6 +87,20 @@
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
 			<version>${postgresql.version}</version>
+			<optional>true</optional>
+		</dependency>
+		<!-- openGauss系新包路径驱动(org.opengauss.util.PGobject),兼容包路径场景直接用postgresql驱动 -->
+		<dependency>
+			<groupId>org.opengauss</groupId>
+			<artifactId>opengauss-jdbc</artifactId>
+			<version>${opengauss.version}</version>
+			<optional>true</optional>
+		</dependency>
+		<!-- JTS拓扑库,geometry空间类型的Java侧几何模型,可选依赖(动态探测) -->
+		<dependency>
+			<groupId>org.locationtech.jts</groupId>
+			<artifactId>jts-core</artifactId>
+			<version>${jts.version}</version>
 			<optional>true</optional>
 		</dependency>
 		<dependency>

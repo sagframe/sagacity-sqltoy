@@ -890,10 +890,10 @@ public class SqlXMLConfigParse {
 		}
 		// 解析to-date 的加减操作
 		if (filter.hasAttribute("increment-time")) {
-			filterModel.setIncrementTime(Double.valueOf(filter.getAttribute("increment-time")));
+			filterModel.setIncrementTime(clearParamSign(filter.getAttribute("increment-time")));
 		} // 兼容老版本
 		else if (filter.hasAttribute("increment-days")) {
-			filterModel.setIncrementTime(Double.valueOf(filter.getAttribute("increment-days")));
+			filterModel.setIncrementTime(clearParamSign(filter.getAttribute("increment-days")));
 		}
 		if (filter.hasAttribute("increment-unit")) {
 			String timeUnit = filter.getAttribute("increment-unit").toUpperCase();
@@ -1727,5 +1727,25 @@ public class SqlXMLConfigParse {
 	private static RoundingMode convertRoundingMode(String roundingModeStr) {
 		// 收敛到NumberUtil统一实现:null表示未配置,空串或无法识别的值统一返回HALF_UP
 		return NumberUtil.parseRoundingMode(roundingModeStr);
+	}
+
+	/**
+	 * check是否是参数占位符,如果是则去掉${}符号,否则原样返回;支持-${paramName}负数引用,
+	 * 统一成-paramName形式(负数字面量如-7保持原样)
+	 *
+	 * @param incrementTime
+	 * @return
+	 */
+	private static String clearParamSign(String incrementTime) {
+		if (StringUtil.isBlank(incrementTime)) {
+			return incrementTime;
+		}
+		String trimIncrementTime = incrementTime.trim();
+		boolean negate = trimIncrementTime.startsWith("-");
+		String value = negate ? trimIncrementTime.substring(1).trim() : trimIncrementTime;
+		if (value.startsWith("${") && value.endsWith("}")) {
+			value = value.substring(2, value.length() - 1).trim();
+		}
+		return negate ? "-".concat(value) : value;
 	}
 }

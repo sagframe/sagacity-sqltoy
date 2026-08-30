@@ -14,6 +14,7 @@ import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.model.IgnoreCaseSet;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
+import org.sagacity.sqltoy.model.JdbcTypes;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.DateUtil;
@@ -310,8 +311,8 @@ public class DialectExtUtils {
 		// 在无主键的情况下产生insert sql语句
 		String realTable = entityMeta.getSchemaTable(tableName, dbType);
 		// postgresql15+ 不支持别名,目标表列限定只能用不带schema的表名(schema.table.col三段式列引用非法)
-		String pgNoSchemaTable = ReservedWordsUtil.convertWord(
-				(StringUtil.isBlank(tableName)) ? entityMeta.getTableName() : tableName, dbType);
+		String pgNoSchemaTable = ReservedWordsUtil
+				.convertWord((StringUtil.isBlank(tableName)) ? entityMeta.getTableName() : tableName, dbType);
 		if (entityMeta.getSchema() != null && pgNoSchemaTable.startsWith(entityMeta.getSchema().concat("."))) {
 			pgNoSchemaTable = pgNoSchemaTable.substring(entityMeta.getSchema().length() + 1);
 		}
@@ -357,7 +358,7 @@ public class DialectExtUtils {
 				PostgreSqlDialectUtils.wrapSelectFields(sql, columnName, fieldMeta);
 			} else if (DBType.GAUSSDB == dbType || DBType.OPENGAUSS == dbType || DBType.MOGDB == dbType
 					|| DBType.VASTBASE == dbType || DBType.STARDB == dbType || DBType.OSCAR == dbType) {
-				OpenGaussDialectUtils.wrapSelectFields(sql, columnName, fieldMeta);
+				OpenGaussDialectUtils.wrapSelectFields(sql, columnName, fieldMeta, dbType);
 			} else if (DBType.H2 == dbType) {
 				H2DialectUtils.wrapSelectFields(sql, columnName, fieldMeta);
 			} else if (DBType.DB2 == dbType) {
@@ -365,7 +366,17 @@ public class DialectExtUtils {
 			} else if (DBType.DM == dbType) {
 				DMDialectUtils.wrapSelectFields(sql, columnName, fieldMeta);
 			} else {
-				sql.append("? as ");
+				// sqlserver(2025+)、oracle(23ai)支持vector类型;sqlserver(2008+)支持geometry类型
+				// merge into的using select子查询中显式cast保证类型正确
+				int extType = fieldMeta.getType();
+				if (extType == JdbcTypes.VECTOR && (DBType.SQLSERVER == dbType || DBType.ORACLE == dbType)) {
+					sql.append("cast(? as VECTOR)");
+				} else if (extType == JdbcTypes.GEOMETRY && DBType.SQLSERVER == dbType) {
+					sql.append("cast(? as geometry)");
+				} else {
+					sql.append("?");
+				}
+				sql.append(" as ");
 				sql.append(columnName);
 			}
 		}

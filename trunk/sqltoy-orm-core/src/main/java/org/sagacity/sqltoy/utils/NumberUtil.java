@@ -91,7 +91,7 @@ public class NumberUtil {
 	 * @param pattern
 	 * @param roundingMode
 	 * @param locale
-	 * @param currency   币种代码或单位词(如USD、POUNDS STERLING)
+	 * @param currency     币种代码或单位词(如USD、POUNDS STERLING)
 	 * @return
 	 */
 	public static String format(Object target, String pattern, RoundingMode roundingMode, Locale locale,
@@ -865,17 +865,18 @@ public class NumberUtil {
 	}
 
 	// 票据标准币种单位词(与ISO-4217代码一一对应,RMB为惯用别名),供带币种参数的convertToEnglishMoney使用
-	private final static String[] ISO_CURRENCY_CODES = { "USD", "AUD", "CAD", "HKD", "SGD", "NZD", "GBP", "EUR",
-			"JPY", "CHF", "CNY", "RMB" };
+	private final static String[] ISO_CURRENCY_CODES = { "USD", "AUD", "CAD", "HKD", "SGD", "NZD", "GBP", "EUR", "JPY",
+			"CHF", "CNY", "RMB" };
 	private final static String[] ISO_CURRENCY_WORDS = { "US DOLLARS", "AUSTRALIAN DOLLARS", "CANADIAN DOLLARS",
 			"HONG KONG DOLLARS", "SINGAPORE DOLLARS", "NEW ZEALAND DOLLARS", "BRITISH POUNDS STERLING", "EUROS",
 			"JAPANESE YEN", "SWISS FRANCS", "CHINESE YUAN", "CHINESE YUAN" };
 
 	/**
-	 * @todo 输出票据标准格式的英文金额(SAY+币种单位词开头),如value=1234.56、currency=USD输出:
-	 *       "SAY US DOLLARS ONE THOUSAND TWO HUNDRED AND THIRTY-FOUR AND CENTS FIFTY-SIX ONLY";
-	 *       currency支持ISO-4217代码(如USD、AUD、JPY、RMB,自动映射票据标准单位词),也可直接传单位词
-	 *       (如"POUNDS STERLING");为null或空时输出不带币种的既有格式;单位词统一复数,输出可被englishMoneyToNum还原
+	 * @todo 输出票据标准格式的英文金额(SAY+币种单位词开头),如value=1234.56、currency=USD输出: "SAY US
+	 *       DOLLARS ONE THOUSAND TWO HUNDRED AND THIRTY-FOUR AND CENTS FIFTY-SIX
+	 *       ONLY"; currency支持ISO-4217代码(如USD、AUD、JPY、RMB,自动映射票据标准单位词),也可直接传单位词
+	 *       (如"POUNDS
+	 *       STERLING");为null或空时输出不带币种的既有格式;单位词统一复数,输出可被englishMoneyToNum还原
 	 * @param value    金额数值
 	 * @param currency 币种代码或单位词
 	 * @return
@@ -917,8 +918,8 @@ public class NumberUtil {
 	/**
 	 * @todo 将英文金额描述转换成数字,支持convertToEnglishMoney输出的完整形式 (如"MINUS ONE THOUSAND AND
 	 *       CENTS FIFTY ONLY"),也支持普通英文数字(如"one thousand and thirty-four")和带货币单位词的
-	 *       金额描述(如"one thousand two hundred thirty-four dollars and fifty-six cents"、"FIVE EUROS"),
-	 *       货币单位覆盖美元/日元/英镑/欧元/澳元/加拿大元/港币/人民币等主要货币的英文全称、国别修饰词
+	 *       金额描述(如"one thousand two hundred thirty-four dollars and fifty-six
+	 *       cents"、"FIVE EUROS"), 货币单位覆盖美元/日元/英镑/欧元/澳元/加拿大元/港币/人民币等主要货币的英文全称、国别修饰词
 	 *       (如AUSTRALIAN、CANADIAN、JAPANESE)及ISO-4217代码(如USD、JPY、AUD、CAD、HKD);
 	 *       同时兼容银行票据标准写法:SAY/SAY TOTAL抬头、AND NO CENTS、分数式分币(如"AND 56/100 DOLLARS")
 	 * @param englishMoney

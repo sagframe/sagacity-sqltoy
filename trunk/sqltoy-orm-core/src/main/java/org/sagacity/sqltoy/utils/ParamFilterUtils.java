@@ -618,27 +618,62 @@ public class ParamFilterUtils {
 		} else if ("neq".equals(filterType)) {
 			result = filterNotEquals(paramValue, paramFilterModel.getValues());
 		} else if ("to-date".equals(filterType)) {
+			Double increaseTime = 0d;
+			String increaseTimeStr = paramFilterModel.getIncrementTime();
+			if (StringUtil.isNotBlank(increaseTimeStr)) {
+				if (NumberUtil.isNumber(increaseTimeStr)) {
+					increaseTime = Double.parseDouble(increaseTimeStr);
+				} else {
+					// -paramName为负数引用(解析层由-${paramName}规整而来),取参数值后按负号取反
+					String incParam = increaseTimeStr;
+					boolean negate = incParam.startsWith("-");
+					if (negate) {
+						incParam = incParam.substring(1);
+					}
+					if (paramIndexMap.containsKey(incParam.toLowerCase())) {
+						Object tmp = paramValues[paramIndexMap.get(incParam.toLowerCase())];
+						if (tmp != null) {
+							if (tmp instanceof Number) {
+								increaseTime = ((Number) tmp).doubleValue();
+							} else {
+								try {
+									increaseTime = Double.parseDouble(tmp.toString());
+								} catch (NumberFormatException e) {
+									throw new IllegalArgumentException(
+											"to-date过滤器increment-time引用参数:" + incParam + " 的值:" + tmp + " 不是合法数字,请检查!",
+											e);
+								}
+							}
+							if (negate) {
+								increaseTime = -increaseTime;
+							}
+						}
+					} else {
+						logger.warn("to-date过滤器increment-time引用的参数:{} 不存在(参数名拼写错误或调用时未传参),增量按0处理,请检查!", incParam);
+					}
+				}
+			}
 			if (paramValue.getClass().isArray()) {
 				Object[] arrays = CollectionUtil.convertArray(paramValue);
 				for (int i = 0, n = arrays.length; i < n; i++) {
-					arrays[i] = toDate(arrays[i], paramFilterModel);
+					arrays[i] = toDate(arrays[i], paramFilterModel, increaseTime);
 				}
 				result = arrays;
 			} else if (paramValue instanceof List) {
 				List valueList = (List) paramValue;
 				for (int i = 0, n = valueList.size(); i < n; i++) {
-					valueList.set(i, toDate(valueList.get(i), paramFilterModel));
+					valueList.set(i, toDate(valueList.get(i), paramFilterModel, increaseTime));
 				}
 				result = valueList;
 			} else if (paramValue instanceof Set) {
 				Set tmpSet = (paramValue instanceof LinkedHashSet) ? new LinkedHashSet() : new HashSet<>();
 				Iterator iter = ((Set) paramValue).iterator();
 				while (iter.hasNext()) {
-					tmpSet.add(toDate(iter.next(), paramFilterModel));
+					tmpSet.add(toDate(iter.next(), paramFilterModel, increaseTime));
 				}
 				result = tmpSet;
 			} else {
-				result = toDate(paramValue, paramFilterModel);
+				result = toDate(paramValue, paramFilterModel, increaseTime);
 			}
 		} else if ("to-number".equals(filterType)) {
 			if (paramValue.getClass().isArray()) {
@@ -1363,9 +1398,14 @@ public class ParamFilterUtils {
 	 * @todo 将sql的参数值类型转换为日期类型(页面有时会以字符串进行传输)
 	 * @param paramValue
 	 * @param paramFilterModel
+	 * @param incrementTime
 	 * @return
 	 */
-	private static Object toDate(Object paramValue, ParamFilterModel paramFilterModel) {
+	private static Object toDate(Object paramValue, ParamFilterModel paramFilterModel, Double incrementTime) {
+		// 集合中的元素可能为null,统一跳过加工返回null,避免星期计算和增量计算环节NPE
+		if (paramValue == null) {
+			return null;
+		}
 		Object result;
 		String format = (paramFilterModel.getFormat() == null) ? "" : paramFilterModel.getFormat();
 		String fmtStyle = format.toLowerCase();
@@ -1388,13 +1428,13 @@ public class ParamFilterUtils {
 			result = DateUtil.firstDayOfMonth(paramValue);
 		} // 年的第一天
 		else if ("first_of_year".equals(fmtStyle)) {
-			result = DateUtil.getYear(paramValue) + "-01-01";
+			result = DateUtil.asDate(LocalDate.of(DateUtil.getYear(paramValue), 1, 1));
 		} // 取当前月份的最后一天
 		else if ("last_of_month".equals(fmtStyle)) {
 			result = DateUtil.lastDayOfMonth(paramValue);
 		} // 年的最后一天
 		else if ("last_of_year".equals(fmtStyle)) {
-			result = DateUtil.getYear(paramValue) + "-12-31";
+			result = DateUtil.asDate(LocalDate.of(DateUtil.getYear(paramValue), 12, 31));
 		} // 取指定日期的星期一的日期
 		else if ("first_of_week".equals(fmtStyle)) {
 			LocalDate firstOfWeek = DateUtil.asLocalDate(DateUtil.parse(paramValue, DAY_FORMAT))
@@ -1407,16 +1447,16 @@ public class ParamFilterUtils {
 			// 本周最后一天（周日）
 			result = Date.from(lastOfWeek.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant());
 		} else {
-			result = DateUtil.convertDateObject(paramValue);
+			// format参与首次解析:歧义字符串(如05-03-2024)按声明的格式解析,而非依赖自动识别猜测;
+			// format与实际字符串不符时parseString内部会回退自动识别,不会因format差异导致解析失败
+			result = DateUtil.convertDateObject(paramValue, format, null);
 			if (StringUtil.isNotBlank(format)) {
 				realFmt = format;
 			} else {
 				realFmt = null;
 			}
 		}
-		// 存在日期加减
-		Double incrementTime = paramFilterModel.getIncrementTime();
-		if (incrementTime != 0) {
+		if (incrementTime != null && incrementTime != 0) {
 			switch (paramFilterModel.getTimeUnit()) {
 			// 天优先
 			case DAYS: {
@@ -1453,6 +1493,10 @@ public class ParamFilterUtils {
 			}
 			}
 		}
+		// 按realFmt精度做format->parse往返归一,不可省略:
+		// (1)Date等对象输入时convertDateObject忽略format,此处是format截断的唯一生效点;
+		// (2)增量计算可能产生比format更细的时间成分(如小时级增量),此处截回声明精度;
+		// (3)关键字分支(如last_of_month)realFmt固定为DAY_FORMAT,保障结果始终归到当天零点
 		if (realFmt != null) {
 			result = DateUtil.parse(result, realFmt);
 		}
@@ -1873,7 +1917,7 @@ public class ParamFilterUtils {
 			// split
 			paramFilter.setSplit(filter.getSplitSign());
 			// 加减天数
-			paramFilter.setIncrementTime(Double.valueOf(filter.getIncrease()));
+			paramFilter.setIncrementTime(Integer.toString(filter.getIncrease()));
 			paramFilter.setTimeUnit(filter.getTimeUnit());
 			paramFilter.setSqlInjectionLevel(filter.getSqlInjectionLevel());
 			// 反向缓存
