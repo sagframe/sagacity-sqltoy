@@ -301,12 +301,12 @@ public class SqlServerDialect implements Dialect {
 				new GenerateSqlHandler() {
 					@Override
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
+						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sql = SqlServerDialectUtils.getSaveIgnoreExistSql(sqlToyContext.getUnifyFieldsHandler(),
-								dbType, entityMeta, entityMeta.getIdStrategy(), tableName, "isnull", "@mySeqVariable",
-								false);
+								dbType, entityMeta, pkStrategy, tableName, "isnull", "@mySeqVariable",
+								SqlServerDialectUtils.allowAssignPKValue(pkStrategy));
 						// 2012 版本
-						if (entityMeta.getIdStrategy() != null
-								&& entityMeta.getIdStrategy().equals(PKStrategy.SEQUENCE)) {
+						if (pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE)) {
 							sql = "DECLARE @mySeqVariable as numeric(20)=NEXT VALUE FOR " + entityMeta.getSequence()
 									+ " " + sql;
 						}

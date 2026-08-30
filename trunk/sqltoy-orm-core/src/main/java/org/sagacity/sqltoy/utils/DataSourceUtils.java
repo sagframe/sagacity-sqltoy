@@ -2,7 +2,9 @@ package org.sagacity.sqltoy.utils;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
@@ -122,7 +124,7 @@ public class DataSourceUtils {
 		public final static String VASTBASE = "vastbase";
 		public final static String OPENGAUSS = "opengauss";
 		public final static String STARDB = "stardb";
-		public final static String UNDEFINE = "UNDEFINE";
+		public final static String UNDEFINE = "undefine";
 	}
 
 	/*
@@ -196,7 +198,6 @@ public class DataSourceUtils {
 		// mariaDB的方言以mysql为基准
 		DBNameTypeMap.put(Dialect.MARIADB, DBType.MYSQL);
 		DBNameTypeMap.put(Dialect.INNOSQL, DBType.MYSQL);
-
 		DBNameTypeMap.put(Dialect.POSTGRESQL, DBType.POSTGRESQL);
 		// DBNameTypeMap.put(Dialect.POSTGRESQL15, DBType.POSTGRESQL15);
 		DBNameTypeMap.put(Dialect.POSTGRESQL14, DBType.POSTGRESQL14);
@@ -219,16 +220,17 @@ public class DataSourceUtils {
 		DBNameTypeMap.put(Dialect.TIDB, DBType.TIDB);
 		DBNameTypeMap.put(Dialect.TDENGINE, DBType.TDENGINE);
 		DBNameTypeMap.put(Dialect.IMPALA, DBType.IMPALA);
-		DBNameTypeMap.put(Dialect.UNDEFINE, DBType.UNDEFINE);
+		
 		// 20220829 增加对h2的支持
 		DBNameTypeMap.put(Dialect.H2, DBType.H2);
 		DBNameTypeMap.put(Dialect.OSCAR, DBType.OSCAR);
 		DBNameTypeMap.put(Dialect.VASTBASE, DBType.VASTBASE);
 		DBNameTypeMap.put(Dialect.DORIS, DBType.DORIS);
 		DBNameTypeMap.put(Dialect.STARROCKS, DBType.STARROCKS);
-
+		
 		// 默认设置oscar、vastbase数据库用gaussdb方言来实现
 		// dialectMap.put(Dialect.OSCAR, Dialect.OPENGAUSS);
+		DBNameTypeMap.put(Dialect.UNDEFINE, DBType.UNDEFINE);
 	}
 
 	/**
@@ -286,6 +288,10 @@ public class DataSourceUtils {
 		case DBType.DM: {
 			return Dialect.DM;
 		}
+		// 修复遗漏:kingbase的dbType映射成方言常量,避免退化为undefine导致方言变体sql失效
+		case DBType.KINGBASE: {
+			return Dialect.KINGBASE;
+		}
 		case DBType.ORACLE11: {
 			return Dialect.ORACLE11;
 		}
@@ -336,10 +342,15 @@ public class DataSourceUtils {
 		return ";";
 	}
 
+	/**
+	 * @TODO sqlserver批量脚本通过go进行分割(前后带空格)
+	 */
+	public static final String SQLSERVER_SPLIT_SIGN = " go ";
+
 	public static String getDatabaseSqlSplitSign(int dbType) {
 		// sqlserver
 		if (dbType == DBType.SQLSERVER) {
-			return " go ";
+			return SQLSERVER_SPLIT_SIGN;
 		}
 		return ";";
 	}
@@ -354,8 +365,13 @@ public class DataSourceUtils {
 		String dilectName = Dialect.UNDEFINE;
 		// 从hashMap中获取
 		if (null != conn) {
+			String productName = conn.getMetaData().getDatabaseProductName();
+			// 个别第三方驱动getDatabaseProductName可能返回null,按未识别处理,避免replaceAll抛NPE
+			if (productName == null) {
+				return dilectName;
+			}
 			// 剔除空白
-			String dbDialect = conn.getMetaData().getDatabaseProductName().replaceAll("\\s+", "");
+			String dbDialect = productName.replaceAll("\\s+", "");
 			// oracle
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.ORACLE) != -1) {
 				dilectName = Dialect.ORACLE;
@@ -428,8 +444,13 @@ public class DataSourceUtils {
 			} else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.VASTBASE) != -1) {
 				dilectName = Dialect.VASTBASE;
 			} else if (!dialectMap.isEmpty()) {
-				// 针对框架未支持的数据库，通过dialectMap的key进行匹配
-				for (Map.Entry<String, String> entry : dialectMap.entrySet()) {
+				// 针对框架未支持的数据库，通过dialectMap的key进行匹配;
+				// IgnoreKeyCaseMap基于ConcurrentHashMap,entrySet迭代顺序不确定,
+				// 按key长度降序(最长优先)遍历,保证产品名同时命中多个key时结果稳定且取最具体匹配
+				List<Map.Entry<String, String>> dialectEntries = new ArrayList<Map.Entry<String, String>>(
+						dialectMap.entrySet());
+				dialectEntries.sort((one, two) -> two.getKey().length() - one.getKey().length());
+				for (Map.Entry<String, String> entry : dialectEntries) {
 					if (StringUtil.indexOfIgnoreCase(dbDialect, entry.getKey()) != -1) {
 						dilectName = entry.getValue().toLowerCase();
 						break;
@@ -544,8 +565,6 @@ public class DataSourceUtils {
 				dbType = DBType.STARROCKS;
 			}
 			DBNameTypeMap.put(dbKey, dbType);
-		} else if (dialectMap.containsKey(dbKey)) {
-			return DBNameTypeMap.get(dialectMap.get(dbKey).toLowerCase());
 		}
 		return DBNameTypeMap.get(dbKey);
 	}
@@ -706,7 +725,7 @@ public class DataSourceUtils {
 	 */
 	public static String getDialect(SqlToyContext sqltoyContext, DataSource datasource) {
 		if (datasource == null) {
-			return "";
+			return Dialect.UNDEFINE;
 		}
 		// update 2022-9-30 增加缓存避免通过connection获取数据库方言
 		String dialect = dataSourceDialectCache.get(datasource);
@@ -737,21 +756,24 @@ public class DataSourceUtils {
 	 */
 	private static String getDialect(Connection conn) throws Exception {
 		if (conn == null) {
-			return "";
+			return Dialect.UNDEFINE;
 		}
 		int dbType = getDBType(conn);
 		switch (dbType) {
 		case DBType.DB2:
 			return Dialect.DB2;
 		case DBType.ORACLE:
-		case DBType.ORACLE11:
 			return Dialect.ORACLE;
+		case DBType.ORACLE11:
+			return Dialect.ORACLE11;
 		case DBType.POSTGRESQL:
-		case DBType.POSTGRESQL14:
 			return Dialect.POSTGRESQL;
+		case DBType.POSTGRESQL14:
+			return Dialect.POSTGRESQL14;
 		case DBType.MYSQL:
-		case DBType.MYSQL57:
 			return Dialect.MYSQL;
+		case DBType.MYSQL57:
+			return Dialect.MYSQL57;
 		case DBType.SQLSERVER:
 			return Dialect.SQLSERVER;
 		case DBType.SQLITE:
@@ -789,7 +811,7 @@ public class DataSourceUtils {
 		case DBType.STARROCKS:
 			return Dialect.STARROCKS;
 		default:
-			return "";
+			return Dialect.UNDEFINE;
 		}
 	}
 

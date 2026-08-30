@@ -15,6 +15,7 @@ import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.ForeignModel;
 import org.sagacity.sqltoy.config.model.IndexModel;
 import org.sagacity.sqltoy.model.ColumnMeta;
+import org.sagacity.sqltoy.model.JdbcTypes;
 import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -341,6 +342,37 @@ public class DDLUtils {
 				typeName = "BOOLEAN";
 			}
 			break;
+		case JdbcTypes.VECTOR: {
+			// 向量类型:gaussdb企业版为floatvector,其余(pgvector/openGauss系/oracle 23ai/mysql heatwave/sqlserver 2025/db2 12.1.2+)为vector
+			// 维度通过@Column(length=xxx)指定,mysql heatwave和sqlserver 2025的维度为必填项
+			if (dbType == DBType.H2) {
+				// h2无向量类型,测试场景按varchar存储'[1,2,3]'字符串形式
+				typeName = "VARCHAR";
+				typeName = setLength(typeName, false, colMeta);
+			} else {
+				if (dbType == DBType.GAUSSDB) {
+					typeName = "FLOATVECTOR";
+				} else {
+					typeName = "VECTOR";
+				}
+				if (colMeta.getColumnSize() > 0) {
+					typeName = typeName + "(" + colMeta.getColumnSize() + ")";
+				}
+			}
+			break;
+		}
+		case JdbcTypes.GEOMETRY: {
+			// 空间类型:oracle/dm为SDO_GEOMETRY,其余(postgis系/mysql/sqlserver/h2)为GEOMETRY
+			// 类型精度修饰(如geometry(Point,4326)、geography)通过@Column(nativeType="...")指定
+			if (colMeta.getNativeType() != null) {
+				typeName = colMeta.getNativeType();
+			} else if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
+				typeName = "SDO_GEOMETRY";
+			} else {
+				typeName = "GEOMETRY";
+			}
+			break;
+		}
 		case java.sql.Types.FLOAT:
 			typeName = "FLOAT";
 			break;

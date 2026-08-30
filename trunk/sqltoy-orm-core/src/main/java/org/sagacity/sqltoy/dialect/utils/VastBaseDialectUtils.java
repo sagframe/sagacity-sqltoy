@@ -36,4 +36,60 @@ public class VastBaseDialectUtils {
 		pgObject.setValue(jsonStr);
 		rs.updateObject(columnName, pgObject);
 	}
+
+	/**
+	 * 
+	 * @param pst
+	 * @param paramIndex
+	 * @param vectorStr '[1,2,3]'形式的向量字符串
+	 * @throws SQLException
+	 */
+	public static void setVectorValue(PreparedStatement pst, int paramIndex, String vectorStr) throws SQLException {
+		PGobject pgObject = new PGobject();
+		pgObject.setType("vector");
+		pgObject.setValue(vectorStr);
+		pst.setObject(paramIndex, pgObject);
+	}
+
+	/**
+	 * 
+	 * @param rs
+	 * @param columnName
+	 * @param vectorStr '[1,2,3]'形式的向量字符串
+	 * @throws SQLException
+	 */
+	public static void updateVector(ResultSet rs, String columnName, String vectorStr) throws SQLException {
+		PGobject pgObject = new PGobject();
+		pgObject.setType("vector");
+		pgObject.setValue(vectorStr);
+		rs.updateObject(columnName, pgObject);
+	}
+
+	/**
+	 *
+	 * @param pst
+	 * @param paramIndex
+	 * @param geomStr    WKT形式的geometry字符串
+	 * @throws SQLException
+	 */
+	public static void setGeometryValue(PreparedStatement pst, int paramIndex, String geomStr) throws SQLException {
+		PGobject pgObject = new PGobject();
+		pgObject.setType("geometry");
+		pgObject.setValue(geomStr);
+		pst.setObject(paramIndex, pgObject);
+	}
+
+	/**
+	 *
+	 * @param rs
+	 * @param columnName
+	 * @param geomStr    WKT形式的geometry字符串
+	 * @throws SQLException
+	 */
+	public static void updateGeometry(ResultSet rs, String columnName, String geomStr) throws SQLException {
+		PGobject pgObject = new PGobject();
+		pgObject.setType("geometry");
+		pgObject.setValue(geomStr);
+		rs.updateObject(columnName, pgObject);
+	}
 }

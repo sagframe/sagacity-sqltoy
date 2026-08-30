@@ -338,6 +338,18 @@ public class PostgreSqlDialect implements Dialect {
 			ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType, final String dialect,
 			final Boolean autoCommit, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
+		// pg14通过on conflict do nothing实现saveAllIgnoreExist语义,改走saveAll:
+		// identity主键按rejectId反射,与insertIgnore省略主键列的sql保持占位符与参数对齐
+		// (原走saveAllIgnoreExist按全字段反射,identity时参数比?多一个导致绑定越界;
+		// 且伪造成sequence+DEFAULT会产生COALESCE(?,DEFAULT)非法sql,pg的DEFAULT只能裸用于VALUES项)
+		if (dbType != null && dbType.intValue() == DBType.POSTGRESQL14) {
+			PKStrategy pkStrategy = entityMeta.getIdStrategy();
+			boolean isAssignPK = PostgreSqlDialectUtils.allowAssignPKValue(pkStrategy);
+			String insertSql = DialectExtUtils.insertIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
+					pkStrategy, NVL_FUNCTION, "nextval('" + entityMeta.getSequence() + "')", isAssignPK, tableName);
+			return DialectUtils.saveAll(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entities,
+					batchSize, reflectPropsHandler, conn, dbType, autoCommit);
+		}
 		return DialectUtils.saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta,
 				new GenerateSqlHandler() {
 					@Override
@@ -345,10 +357,6 @@ public class PostgreSqlDialect implements Dialect {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = "nextval('" + entityMeta.getSequence() + "')";
 						boolean isAssignPK = PostgreSqlDialectUtils.allowAssignPKValue(pkStrategy);
-						if (dbType == DBType.POSTGRESQL14) {
-							return DialectExtUtils.insertIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType,
-									entityMeta, pkStrategy, NVL_FUNCTION, sequence, isAssignPK, tableName);
-						}
 						return DialectExtUtils.mergeIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
 								pkStrategy, null, NVL_FUNCTION, sequence, isAssignPK, tableName);
 					}

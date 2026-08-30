@@ -715,7 +715,9 @@ public class SqlToyContext {
 					// 覆盖id
 					sqlToyConfig.setId(sqlKey);
 					sqlToyConfig.setLastUpdateTime(lastUpdateTime);
-					sqlToyConfig.setDialect(dialect);
+					// 不可用查询方言覆盖dialect标签:base是按全局方言(解析方言)渲染的形态,
+					// getDialectSql靠标签判断是否早退,标签改成查询方言会让错误形态的sql跳过适配直发当前库
+					// sqlToyConfig.setDialect(dialect);
 					sqlToyConfig.setSqlType(sqlType);
 					// 放入缓存
 					scriptLoader.putSqlToyConfig(sqlToyConfig);

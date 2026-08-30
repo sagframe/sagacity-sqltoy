@@ -44,6 +44,14 @@
 
 	<xsd:complexType name="sqlToySqlType" mixed="true">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="remarks" type="xsd:string"
+				minOccurs="0" maxOccurs="1">
+				<xsd:annotation>
+					<xsd:documentation>
+					<![CDATA[sql功能说明,便于阅读维护,不参与sql执行,须配合<value>子元素使用]]>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
 			<xsd:element name="filters" minOccurs="0" maxOccurs="1"
 				type="sqltoyFiltersType" />
 			<xsd:element name="translate" minOccurs="0"
@@ -551,6 +559,14 @@
 			<xsd:documentation><![CDATA[全局类型 mongodb查询使用]]></xsd:documentation>
 		</xsd:annotation>
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="remarks" type="xsd:string"
+				minOccurs="0" maxOccurs="1">
+				<xsd:annotation>
+					<xsd:documentation>
+					<![CDATA[sql功能说明,便于阅读维护,不参与sql执行,须配合<value>子元素使用]]>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
 			<xsd:element name="filters" minOccurs="0" maxOccurs="1"
 				type="sqltoyFiltersType" />
 			<xsd:element name="translate" minOccurs="0"
@@ -585,6 +601,14 @@
 			<xsd:documentation><![CDATA[全局类型 elasticsearch使用]]></xsd:documentation>
 		</xsd:annotation>
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="remarks" type="xsd:string"
+				minOccurs="0" maxOccurs="1">
+				<xsd:annotation>
+					<xsd:documentation>
+					<![CDATA[sql功能说明,便于阅读维护,不参与sql执行,须配合<value>子元素使用]]>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
 			<xsd:element name="filters" minOccurs="0" maxOccurs="1"
 				type="sqltoyFiltersType" />
 			<xsd:element name="translate" minOccurs="0"
@@ -910,9 +934,9 @@
 						</xsd:simpleType>
 					</xsd:attribute>
 					<xsd:attribute name="increment-time"
-						type="xsd:integer">
+						type="xsd:string">
 						<xsd:annotation>
-							<xsd:documentation><![CDATA[增减时间,默认单位是天]]></xsd:documentation>
+							<xsd:documentation><![CDATA[增减时间,默认是数字，也可以是${incrementDays}动态参数名称，支持-${incrementDays}负数引用，默认单位是天]]></xsd:documentation>
 						</xsd:annotation>
 					</xsd:attribute>
 					<xsd:attribute name="increment-unit" default="days">
@@ -1164,7 +1188,8 @@
 				<xsd:complexType>
 					<xsd:attribute name="params" type="xsd:string"
 						use="required" />
-					<xsd:attribute name="remove-blank" type="xsd:boolean" default="true"/>
+					<xsd:attribute name="remove-blank" type="xsd:boolean"
+						default="true" />
 				</xsd:complexType>
 			</xsd:element>
 			<xsd:element name="valid-sqlInjection" minOccurs="0"
@@ -1173,7 +1198,7 @@
 					<xsd:documentation><![CDATA[sql注入参数校验]]></xsd:documentation>
 				</xsd:annotation>
 				<xsd:complexType>
-					<xsd:attribute name="params" type="xsd:string"/>
+					<xsd:attribute name="params" type="xsd:string" />
 					<xsd:attribute name="level" default="STRICT_WORD">
 						<xsd:simpleType>
 							<xsd:restriction base="xsd:string">
@@ -1250,7 +1275,7 @@
 					<xsd:enumeration value="address" />
 					<xsd:enumeration value="email" />
 					<xsd:enumeration value="public-account" />
-					<xsd:enumeration value="discrete-rate"/>
+					<xsd:enumeration value="discrete-rate" />
 					<xsd:enumeration value="other" />
 				</xsd:restriction>
 			</xsd:simpleType>
@@ -1443,8 +1468,7 @@
 			</xsd:annotation>
 		</xsd:attribute>
 	</xsd:complexType>
-	<!-- 常用日期格式,配合xsd:string union使用:不限制自定义格式,仅为IDE补全提供常用值提示;
-	含MMM/EEE等英文月份、星期符号的格式在locale缺失时解析器自动按英文区域处理 -->
+	<!-- 常用日期格式,配合xsd:string union使用:不限制自定义格式,仅为IDE补全提供常用值提示; 含MMM/EEE等英文月份、星期符号的格式在locale缺失时解析器自动按英文区域处理 -->
 	<xsd:simpleType name="datePatternType">
 		<xsd:restriction base="xsd:string">
 			<xsd:enumeration value="yyyy-MM-dd" />

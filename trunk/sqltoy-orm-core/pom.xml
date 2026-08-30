@@ -3,7 +3,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sagframe</groupId>
-	<version>5.6.92.jre8</version>
+	<version>5.6.93.jre8</version>
 	<name>sagacity-sqltoy</name>
 	<description>sqltoy core code</description>
 	<artifactId>sagacity-sqltoy</artifactId>
@@ -26,6 +26,9 @@
 		<transmittable-thread-local>2.14.5</transmittable-thread-local>
 		<ulid-creator.version>5.2.4</ulid-creator.version>
 		<postgresql.version>42.7.13</postgresql.version>
+		<opengauss.version>6.0.0-og</opengauss.version>
+		<vastbase.version>2.16v</vastbase.version>
+		<jts.version>1.20.0</jts.version>
 		<byte-buddy.version>1.18.11</byte-buddy.version>
 	</properties>
 	<licenses>
@@ -94,13 +97,27 @@
 		<dependency>
 			<groupId>cn.com.vastdata</groupId>
 			<artifactId>vastbase-jdbc</artifactId>
-			<version>2.15v</version>
+			<version>${vastbase.version}</version>
 			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
 			<version>${postgresql.version}</version>
+			<optional>true</optional>
+		</dependency>
+		<!-- openGauss系新包路径驱动(org.opengauss.util.PGobject),兼容包路径场景直接用postgresql驱动 -->
+		<dependency>
+			<groupId>org.opengauss</groupId>
+			<artifactId>opengauss-jdbc</artifactId>
+			<version>${opengauss.version}</version>
+			<optional>true</optional>
+		</dependency>
+		<!-- JTS拓扑库,geometry空间类型的Java侧几何模型,可选依赖(动态探测) -->
+		<dependency>
+			<groupId>org.locationtech.jts</groupId>
+			<artifactId>jts-core</artifactId>
+			<version>${jts.version}</version>
 			<optional>true</optional>
 		</dependency>
 		<dependency>
