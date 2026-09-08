@@ -50,7 +50,7 @@ public class ResultUtilsFormatColumnTest {
 		rows.add(new ArrayList<>(Arrays.asList(1234.5, "name")));
 		Throwable cause = assertThrows(IllegalArgumentException.class,
 				() -> invoke("formatColumn", rows, numberFormat("5")));
-		assertTrue(cause.getMessage().contains("列(column):5") && cause.getMessage().contains("列数量:2"),
+		assertTrue(cause.getMessage().contains("format column [5]") && cause.getMessage().contains("column count [2]"),
 				"实际:" + cause.getMessage());
 		assertTrue(cause.getMessage().contains("date-format/number-format"), "实际:" + cause.getMessage());
 	}
@@ -61,7 +61,7 @@ public class ResultUtilsFormatColumnTest {
 		rows.add(new ArrayList<>(Arrays.asList(1234.5, "name")));
 		Throwable cause = assertThrows(IllegalArgumentException.class,
 				() -> invoke("formatColumn", rows, numberFormat("-1")));
-		assertTrue(cause.getMessage().contains("列(column):-1"), "实际:" + cause.getMessage());
+		assertTrue(cause.getMessage().contains("format column [-1]"), "实际:" + cause.getMessage());
 	}
 
 	@Test
@@ -77,7 +77,7 @@ public class ResultUtilsFormatColumnTest {
 		List row = new ArrayList<>(Arrays.asList(1234.5, "name"));
 		Throwable cause = assertThrows(IllegalArgumentException.class,
 				() -> invoke("formatRowColumn", row, numberFormat("9")));
-		assertTrue(cause.getMessage().contains("列(column):9") && cause.getMessage().contains("列数量:2"),
+		assertTrue(cause.getMessage().contains("format column [9]") && cause.getMessage().contains("column count [2]"),
 				"实际:" + cause.getMessage());
 	}
 }

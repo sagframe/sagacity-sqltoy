@@ -1,6 +1,3 @@
-/**
- *
- */
 package org.sagacity.sqltoy.plugins.function.impl;
 
 import java.util.regex.Pattern;
@@ -10,10 +7,10 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 
 /**
  * @author zhongxuchen
- * @version v1.0, Date:2013-4-12
- * @project sqltoy-orm
+ * @version v1.0,Date:2013-04-12
+ * @project sagacity-sqltoy
  * @description 数据库判断空的处理逻辑函数转换
- * @modify Date:2013-4-12 {填写修改说明}
+ * @modify Date:2013-04-12 填写修改说明
  */
 public class Nvl extends IFunction {
 
@@ -50,7 +47,7 @@ public class Nvl extends IFunction {
 		if (args == null || args.length == 0) {
 			return super.IGNORE;
 		}
-		// String funLow = functionName.toLowerCase();
+		// String funLow = functionName.toLowerCase(Locale.ROOT);
 		if (dialect == DBType.SQLSERVER) {
 			return wrapArgs("isnull", args);
 		}
@@ -74,9 +71,7 @@ public class Nvl extends IFunction {
 				|| dialect == DBType.ORACLE11) {
 			return wrapArgs("nvl", args);
 		}
-		if (dialect == DBType.H2) {
-			return wrapArgs("coalesce", args);
-		}
+		// (H2已在coalesce分支处理,此处原重复分支已移除)
 		return super.IGNORE;
 	}
 

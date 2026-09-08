@@ -1,9 +1,7 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
+import java.util.Locale;
 
 import org.sagacity.sqltoy.utils.StringUtil;
 
@@ -11,13 +9,10 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @project sagacity-sqltoy
  * @description 便于在代码中为查询设置参数值过滤
  * @author zhongxuchen
- * @version v1.0, Date:2020年7月30日
- * @modify 2020年7月30日,修改说明
+ * @version v1.0,Date:2020-07-30
+ * @modify Date:2020-07-30,修改说明
  */
 public class ParamsFilter implements Serializable {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 1976248512731692880L;
 
 	/**
@@ -91,7 +86,8 @@ public class ParamsFilter implements Serializable {
 	}
 
 	/**
-	 * @TODO blank
+	 * blank
+	 * 
 	 * @return
 	 */
 	public ParamsFilter blank() {
@@ -100,7 +96,8 @@ public class ParamsFilter implements Serializable {
 	}
 
 	/**
-	 * @TODO 等于
+	 * 等于
+	 * 
 	 * @return
 	 */
 	public ParamsFilter eq(Object... values) {
@@ -110,7 +107,8 @@ public class ParamsFilter implements Serializable {
 	}
 
 	/**
-	 * @TODO 不等于
+	 * 不等于
+	 * 
 	 * @return
 	 */
 	public ParamsFilter neq(Object... values) {
@@ -120,7 +118,8 @@ public class ParamsFilter implements Serializable {
 	}
 
 	/**
-	 * @TODO 大于
+	 * 大于
+	 * 
 	 * @param values
 	 * @return
 	 */
@@ -131,7 +130,8 @@ public class ParamsFilter implements Serializable {
 	}
 
 	/**
-	 * @TODO 大于等于
+	 * 大于等于
+	 * 
 	 * @param values
 	 * @return
 	 */
@@ -142,7 +142,8 @@ public class ParamsFilter implements Serializable {
 	}
 
 	/**
-	 * @TODO 小于
+	 * 小于
+	 * 
 	 * @param values
 	 * @return
 	 */
@@ -153,7 +154,8 @@ public class ParamsFilter implements Serializable {
 	}
 
 	/**
-	 * @TODO 小于等于
+	 * 小于等于
+	 * 
 	 * @param values
 	 * @return
 	 */
@@ -164,7 +166,8 @@ public class ParamsFilter implements Serializable {
 	}
 
 	/**
-	 * @TODO left like
+	 * left like
+	 * 
 	 * @return
 	 */
 	public ParamsFilter llike() {
@@ -173,7 +176,8 @@ public class ParamsFilter implements Serializable {
 	}
 
 	/**
-	 * @TODO right like
+	 * right like
+	 * 
 	 * @return
 	 */
 	public ParamsFilter rlike() {
@@ -193,7 +197,8 @@ public class ParamsFilter implements Serializable {
 	}
 
 	/**
-	 * @TODO 参数转日期
+	 * 参数转日期
+	 * 
 	 * @param dateType
 	 * @param increase
 	 * @return
@@ -224,12 +229,13 @@ public class ParamsFilter implements Serializable {
 	 */
 	public ParamsFilter toNumber(String dataType) {
 		this.type = "to-number";
-		this.dataType = dataType.toLowerCase();
+		this.dataType = dataType.toLowerCase(Locale.ROOT);
 		return this;
 	}
 
 	/**
-	 * @TODO 将参数值转为字符传
+	 * 将参数值转为字符传
+	 * 
 	 * @param addQuote 是否加引号，none、double、single
 	 * @return
 	 */
@@ -247,8 +253,9 @@ public class ParamsFilter implements Serializable {
 
 	// primary 这里用法上确实容易存在歧义(请注意)
 	/**
-	 * @TODO 决定性参数过滤(注意:new ParamsFilter(params) 指定了首要参数,primary(excludes)
-	 *       指定的是排除哪些属性不直接设置为null)
+	 * 决定性参数过滤(注意:new ParamsFilter(params) 指定了首要参数,primary(excludes)
+	 * 指定的是排除哪些属性不直接设置为null)
+	 * 
 	 * @param excludes
 	 * @return
 	 */
@@ -259,7 +266,8 @@ public class ParamsFilter implements Serializable {
 	}
 
 	/**
-	 * @TODO 复制一个值作为另外一个属性的值
+	 * 复制一个值作为另外一个属性的值
+	 * 
 	 * @param aliasName
 	 * @return
 	 */
@@ -270,7 +278,8 @@ public class ParamsFilter implements Serializable {
 	}
 
 	/**
-	 * @TODO between
+	 * between
+	 * 
 	 * @param startValue
 	 * @param endValue
 	 * @return
@@ -282,14 +291,15 @@ public class ParamsFilter implements Serializable {
 	}
 
 	/**
-	 * @TODO 设置默认值，如:sysdate()-3
+	 * 设置默认值，如:sysdate()-3
+	 * 
 	 * @param defaultValue
 	 * @param dataType     localDateTime\localDate\Integer
 	 * @return
 	 */
 	public ParamsFilter defaultValue(Object defaultValue, String dataType) {
 		this.type = "default";
-		this.dataType = (dataType == null) ? "string" : dataType.toLowerCase();
+		this.dataType = (dataType == null) ? "string" : dataType.toLowerCase(Locale.ROOT);
 		this.value = new Object[] { defaultValue };
 		return this;
 	}
@@ -301,14 +311,16 @@ public class ParamsFilter implements Serializable {
 	}
 
 	/**
-	 * @TODO 排斥法:当某个属性值为xx时，设置其他几个属性值为xxx
+	 * 排斥法:当某个属性值为xx时，设置其他几个属性值为xxx
+	 * 
 	 * @param exclusive
 	 * @return
 	 */
 	public ParamsFilter exclusive(Exclusive exclusive) {
 		if (exclusive.getCompareType() == null || exclusive.getCompareValues() == null
 				|| exclusive.getUpdateParams() == null) {
-			throw new IllegalArgumentException("filter exclusive 必须要设置compareType、compareValues、updateParams属性值!");
+			throw new IllegalArgumentException(
+					"filter exclusive requires compareType, compareValues and updateParams to be set!");
 		}
 		this.type = "exclusive";
 		// >,>=,<,<=,!=,in,between
@@ -331,13 +343,14 @@ public class ParamsFilter implements Serializable {
 	}
 
 	/**
-	 * @TODO 反向缓存，通过名称利用缓存匹配到key集合，作为sql中in的条件，代替like关联表进行模糊查询
+	 * 反向缓存，通过名称利用缓存匹配到key集合，作为sql中in的条件，代替like关联表进行模糊查询
+	 * 
 	 * @param cacheArg
 	 * @return
 	 */
 	public ParamsFilter cacheArg(CacheArg cacheArg) {
 		if (cacheArg.getCacheName() == null) {
-			throw new IllegalArgumentException("cacheArg反向缓存必须要设置cacheName属性!");
+			throw new IllegalArgumentException("cacheArg reverse cache requires cacheName to be set!");
 		}
 		// 只支持1个属性
 		if (this.params.length > 1) {

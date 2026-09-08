@@ -1,95 +1,22 @@
 package org.sagacity.sqltoy.dialect.utils;
 
-import java.sql.Connection;
-
-import org.sagacity.sqltoy.SqlToyConstants;
-import org.sagacity.sqltoy.SqlToyContext;
-import org.sagacity.sqltoy.callback.DecryptHandler;
 import org.sagacity.sqltoy.config.model.FieldMeta;
-import org.sagacity.sqltoy.config.model.OperateType;
 import org.sagacity.sqltoy.config.model.PKStrategy;
-import org.sagacity.sqltoy.config.model.SqlToyConfig;
-import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.model.JdbcTypes;
-import org.sagacity.sqltoy.model.QueryExecutor;
-import org.sagacity.sqltoy.model.QueryResult;
-import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
-import org.sagacity.sqltoy.utils.SqlUtilsExt;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 提供db2数据库通用的操作功能实现,为不同版本提供支持
  * @author zhongxuchen
- * @version v1.0,Date:2015年2月28日
+ * @version v1.0,Date:2015-02-28
  */
 public class DB2DialectUtils {
 
-	/**
-	 * @todo 提供随机记录查询
-	 * @param sqlToyContext
-	 * @param sqlToyConfig
-	 * @param queryExecutor
-	 * @param decryptHandler
-	 * @param totalCount
-	 * @param randomCount
-	 * @param conn
-	 * @param dbType
-	 * @param dialect
-	 * @param fetchSize
-	 * @param maxRows
-	 * @return
-	 * @throws Exception
-	 */
-	public static QueryResult getRandomResult(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			QueryExecutor queryExecutor, final DecryptHandler decryptHandler, Long totalCount, Long randomCount,
-			Connection conn, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
-			throws Exception {
-		StringBuilder sql = new StringBuilder();
-		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
-		// sql中是否存在排序或union
-		boolean hasOrderOrUnion = DialectUtils.hasOrderByOrUnion(innerSql);
-		// 给原始sql标记上特殊的开始和结尾，便于sql拦截器快速定位到原始sql并进行条件补充
-		innerSql = SqlUtilsExt.markOriginalSql(innerSql);
-		if (sqlToyConfig.isHasFast()) {
-			sql.append(sqlToyConfig.getFastPreSql(dialect));
-			if (!sqlToyConfig.isIgnoreBracket()) {
-				sql.append(" (");
-			}
-		}
-		// 存在order 或union 则在sql外包裹一层
-		if (hasOrderOrUnion) {
-			sql.append("select " + SqlToyConstants.INTERMEDIATE_TABLE + ".* from (");
-		}
-		sql.append(innerSql);
-		if (hasOrderOrUnion) {
-			sql.append(") ");
-			sql.append(SqlToyConstants.INTERMEDIATE_TABLE);
-			sql.append(" ");
-		}
-		sql.append(" order by rand() fetch first ");
-		sql.append(randomCount);
-		sql.append(" rows only ");
-		if (sqlToyConfig.isHasFast()) {
-			if (!sqlToyConfig.isIgnoreBracket()) {
-				sql.append(") ");
-			}
-			sql.append(sqlToyConfig.getFastTailSql(dialect));
-		}
-		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
-				sql.toString(), null, null, dialect);
-		QueryExecutorExtend extend = queryExecutor.getInnerModel();
-		// 增加sql执行拦截器 update 2022-9-10
-		queryParam = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig,
-				(extend.entityClass == null) ? OperateType.random : OperateType.singleTable, queryParam,
-				extend.entityClass, dbType);
-		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				extend, decryptHandler, conn, dbType, 0, fetchSize, maxRows);
-	}
-
 	// 新的驱动级别无需转换(目前保留2023-06-09)
 	/**
-	 * @todo 组织merge into 语句中select 的字段，进行类型转换
+	 * 组织merge into 语句中select 的字段，进行类型转换
+	 * 
 	 * @param sql
 	 * @param columnName
 	 * @param fieldMeta
@@ -134,7 +61,14 @@ public class DB2DialectUtils {
 			sql.append("?");
 			// sql.append("cast(? as BLOB(" + length + "))");
 		} else if (jdbcType == JdbcTypes.JSON || jdbcType == JdbcTypes.JSONB) {
-			sql.append("cast(? as JSON)");
+			// update 2026-9-6 实测db2 11.5无JSON类型(cast as JSON报SQLCODE=-204 JSON未定义),
+			// JSON以字符列承载直接绑定参数(db2 12的JSON列亦接受字符串隐式转换)
+			sql.append("?");
+		} else if (jdbcType == JdbcTypes.GEOMETRY) {
+			// update 2026-9-6 实测db2(db2gse扩展,db2se enable_db启用)的ST_Geometry列
+			// 裸?+setString报类型错误,SQL层以db2gse.ST_GeomFromText(wkt,srid)包装,
+			// 参数按VARCHAR绑定(含null实测通过)
+			sql.append("db2gse.ST_GeomFromText(?,0)");
 		} else if (jdbcType == JdbcTypes.VECTOR) {
 			// db2 12.1.2+支持vector类型,与应用交互采用'[1,2,3]'字符串形式,cast确保using select子查询列类型正确
 			sql.append("cast(? as VECTOR)");
@@ -151,7 +85,8 @@ public class DB2DialectUtils {
 	}
 
 	/**
-	 * @TODO 主键策略是identity或sequence时，主键值允许不由数据库内部自动产生，可人工赋值
+	 * 主键策略是identity或sequence时，主键值允许不由数据库内部自动产生，可人工赋值
+	 * 
 	 * @param pkStrategy
 	 * @return
 	 */

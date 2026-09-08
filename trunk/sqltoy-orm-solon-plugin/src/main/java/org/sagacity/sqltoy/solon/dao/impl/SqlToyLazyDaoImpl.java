@@ -48,8 +48,8 @@ import org.sagacity.sqltoy.translate.TranslateHandler;
 
 /**
  * @author limliu
- * @version v1.0, Date:2024年3月21日
- * @project sqltoy-orm
+ * @version v1.0,Date:2024-03-21
+ * @project sagacity-sqltoy
  * @description SqlToyLazyDao提供的通用Dao逻辑实现
  */
 public class SqlToyLazyDaoImpl extends SolonDaoSupport implements SqlToyLazyDao {
@@ -865,7 +865,7 @@ public class SqlToyLazyDaoImpl extends SolonDaoSupport implements SqlToyLazyDao 
 	/**
 	 * @param cacheName
 	 * @return
-	 * @todo 判断缓存是否存在
+	 * 判断缓存是否存在
 	 */
 	@Override
 	public boolean existCache(String cacheName) {
@@ -891,7 +891,7 @@ public class SqlToyLazyDaoImpl extends SolonDaoSupport implements SqlToyLazyDao 
 		if (result.size() == 1) {
 			return result.get(0);
 		}
-		throw new IllegalArgumentException("loadEntity查询出:" + result.size() + " 条记录,不符合load查询预期!");
+		throw new IllegalArgumentException("loadEntity expect a single record but found [" + result.size() + "] rows, please check the query conditions!");
 	}
 
 	@Override
@@ -952,7 +952,7 @@ public class SqlToyLazyDaoImpl extends SolonDaoSupport implements SqlToyLazyDao 
 	 * @param resultType
 	 * @param ignoreProperties
 	 * @return
-	 * @TODO 转换分页类型
+	 * 转换分页类型
 	 */
 	@Override
 	public <T extends Serializable> Page<T> convertType(Page sourcePage, Class<T> resultType,

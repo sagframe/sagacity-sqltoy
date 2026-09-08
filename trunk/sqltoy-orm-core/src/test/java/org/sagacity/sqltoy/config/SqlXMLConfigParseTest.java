@@ -10,6 +10,9 @@ import org.slf4j.LoggerFactory;
 
 import com.alibaba.fastjson2.JSON;
 
+/**
+ * SqlXMLConfigParse 解析 sql 配置文件的单元测试
+ */
 public class SqlXMLConfigParseTest {
 	/**
 	 * 定义全局日志

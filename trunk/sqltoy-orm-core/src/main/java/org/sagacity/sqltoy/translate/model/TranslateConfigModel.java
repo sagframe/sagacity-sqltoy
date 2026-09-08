@@ -1,25 +1,20 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.translate.model;
 
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 翻译配置模型
  * @author zhongxuchen
- * @version v1.0,Date:2013-4-8
- * @modify {Date:2020-3-8 修改heap\offheap\diskSize的默认策略}
+ * @version v1.0,Date:2013-04-08
+ * @modify Date:2020-03-08 修改heap\offheap\diskSize的默认策略
  */
 public class TranslateConfigModel implements Serializable {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 4392516051742079330L;
 
 	/**
@@ -330,11 +325,11 @@ public class TranslateConfigModel implements Serializable {
 	}
 
 	public Integer getI18nIndex(String local) {
-		return i18nMap.get(local.toLowerCase());
+		return i18nMap.get(local.toLowerCase(Locale.ROOT));
 	}
 
 	public void putI18n(String key, Integer index) {
-		i18nMap.put(key.toLowerCase(), index);
+		i18nMap.put(key.toLowerCase(Locale.ROOT), index);
 		i18nIndexes.add(index);
 	}
 

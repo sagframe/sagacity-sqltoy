@@ -46,7 +46,7 @@ import org.sagacity.sqltoy.support.SqlToyDaoSupport;
 import org.sagacity.sqltoy.translate.TranslateHandler;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description SqlToyDao 的默认实现类，直接继承 SqlToyDaoSupport， 不依赖
  *              LightDao/DefaultLightDaoImpl，实现完整规范命名的查询方法
  * @author zhongxuchen
@@ -417,7 +417,7 @@ public class DefaultSqlToyDaoImpl extends SqlToyDaoSupport implements SqlToyDao 
 		SqlToyConfig sqlToyConfig = this.getSqlToyConfig(sqlOrSqlId, SqlType.update);
 		if (sqlToyConfig.isNamedParam()) {
 			throw new IllegalArgumentException(
-					"executeSql(sqlOrSqlId, Object... paramsValue)方法不支持命名参数的sql,请使用executeSql(sqlOrSqlId, Map<String,Object> paramsMap)方法!");
+					"executeSql(sqlOrSqlId, Object... paramsValue) does not support named parameter sql, please use executeSql(sqlOrSqlId, Map<String,Object> paramsMap) method!");
 		}
 		return super.executeSql(sqlOrSqlId, null, paramsValue);
 	}
@@ -440,7 +440,8 @@ public class DefaultSqlToyDaoImpl extends SqlToyDaoSupport implements SqlToyDao 
 		if (result.size() == 1) {
 			return result.get(0);
 		}
-		throw new IllegalArgumentException("findOneById 查询出:" + result.size() + " 条记录，不符合查询单条记录的预期!");
+		throw new IllegalArgumentException("findOneById expect a single record but found [" + result.size()
+				+ "] rows, please check the query conditions!");
 	}
 
 	@Override
@@ -452,7 +453,8 @@ public class DefaultSqlToyDaoImpl extends SqlToyDaoSupport implements SqlToyDao 
 		if (result.size() == 1) {
 			return result.get(0);
 		}
-		throw new IllegalArgumentException("findOneById 查询出:" + result.size() + " 条记录，不符合查询单条记录的预期!");
+		throw new IllegalArgumentException("findOneById expect a single record but found [" + result.size()
+				+ "] rows, please check the query conditions!");
 	}
 
 	@Override
@@ -546,7 +548,8 @@ public class DefaultSqlToyDaoImpl extends SqlToyDaoSupport implements SqlToyDao 
 		if (result.size() == 1) {
 			return result.get(0);
 		}
-		throw new IllegalArgumentException("findOne查询出:" + result.size() + " 条记录,不符合查询单条记录的预期!");
+		throw new IllegalArgumentException("findOne expect a single record but found [" + result.size()
+				+ "] rows, please check the query conditions!");
 	}
 
 	// ============================================

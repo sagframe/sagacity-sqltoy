@@ -82,7 +82,7 @@ public class EdgeBatch4Test {
 		IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
 				() -> entityManager.parseEntityMeta(context, MainEntity.class, true, false));
 		assertTrue(ex.getMessage().contains("PlainVo"), "实际:" + ex.getMessage());
-		assertTrue(ex.getMessage().contains("不是@Entity实体"), "实际:" + ex.getMessage());
+		assertTrue(ex.getMessage().contains("is not an @Entity entity"), "实际:" + ex.getMessage());
 	}
 
 	@Test

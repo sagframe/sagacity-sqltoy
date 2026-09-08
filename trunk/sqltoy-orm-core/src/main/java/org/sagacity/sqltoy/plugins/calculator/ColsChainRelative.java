@@ -12,11 +12,11 @@ import org.sagacity.sqltoy.utils.NumberUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 对集合数据进行列与列之间的比较(环比计算)
  * @author zhongxuchen
- * @version v1.0,Date:2020-3-25
- * @modify 2024-08-30 divedData.equals(BigDecimal.ZERO) 存在bug
+ * @version v1.0,Date:2020-03-25
+ * @modify Date:2024-08-30 divedData.equals(BigDecimal.ZERO) 存在bug
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class ColsChainRelative {

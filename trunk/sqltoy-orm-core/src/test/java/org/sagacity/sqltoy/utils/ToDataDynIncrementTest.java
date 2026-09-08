@@ -1,6 +1,7 @@
 package org.sagacity.sqltoy.utils;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDate;
@@ -13,10 +14,9 @@ import org.sagacity.sqltoy.config.model.ParamFilterModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 
 /**
- * 回归测试：to-date过滤器increment-time以${paramName}方式引用动态参数
- * (如increment-time="${incrementDaysBefore}")时:
- * (a)被引用参数名必须进入getFullParamNames()合集(否则参数值在装配阶段被丢弃,增量静默失效);
- * (b)filterValue中引用参数取值与日期增量计算端到端生效
+ * 回归测试：filters引用的非SQL参数必须进入getFullParamNames()合集,否则传值被装配丢弃、filter静默失效:
+ * (a)to-date过滤器increment-time以${paramName}方式引用动态参数(如increment-time="${incrementDaysBefore}");
+ * (b)clone型filter的param取值来源参数(sql中无对应占位符,值克隆给as-param目标参数)
  */
 public class ToDataDynIncrementTest {
 
@@ -154,5 +154,43 @@ public class ToDataDynIncrementTest {
 			}
 		}
 		assertTrue(found, "应解析出to-date过滤器!");
+	}
+
+	@Test
+	public void cloneSourceParamIncludedInFullParamNames() {
+		// clone型filter的param是取值来源,sql中可以没有对应占位符(前端传单日期,克隆给as-param的区间参数);
+		// 不合并则传值在QueryExecutorBuilder按参数名装配阶段被丢弃,clone静默失效
+		SqlToyConfig config = new SqlToyConfig("clone_date_scope",
+				"select * from logistics_pallet hp where #[hp.start_time>=:startDate and hp.start_time<:endDate]");
+		ParamFilterModel cloneFilter = new ParamFilterModel();
+		cloneFilter.setFilterType("clone");
+		cloneFilter.setParams(new String[] { "queryDate" });
+		cloneFilter.setParam("queryDate");
+		cloneFilter.setUpdateParams(new String[] { "startDate" });
+		config.addFilters(Collections.singletonList(cloneFilter));
+		boolean found = false;
+		for (String name : config.getFullParamNames()) {
+			if ("queryDate".equalsIgnoreCase(name)) {
+				found = true;
+				break;
+			}
+		}
+		assertTrue(found, "getFullParamNames应包含clone型filter的取值来源参数名!");
+	}
+
+	@Test
+	public void cloneFromSqlAbsentSourceParamEndToEnd() {
+		// 参数名数组模拟合并后fullParamNames的装配结果(queryDate在sql中无占位符),clone应将queryDate值赋给startDate
+		ParamFilterModel cloneFilter = new ParamFilterModel();
+		cloneFilter.setFilterType("clone");
+		cloneFilter.setParams(new String[] { "queryDate" });
+		cloneFilter.setParam("queryDate");
+		cloneFilter.setUpdateParams(new String[] { "startDate" });
+		Object[] result = ParamFilterUtils.filterValue(null,
+				new String[] { "startDate", "endDate", "queryDate" },
+				new Object[] { null, null, "2026-09-01" },
+				Collections.singletonList(cloneFilter));
+		assertEquals("2026-09-01", result[0]);
+		assertNull(result[1]);
 	}
 }

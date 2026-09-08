@@ -3,6 +3,12 @@ package org.sagacity.sqltoy.solon.configure;
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
 
+/**
+ * SqlToyContext 任务线程池配置属性
+ *
+ * @author noear
+ * @since 5.6
+ */
 public class SqlToyContextTaskPoolProperties {
     /**
      * 指定线程池名称，该属性指定后则以指定的线程池作为默认线程池

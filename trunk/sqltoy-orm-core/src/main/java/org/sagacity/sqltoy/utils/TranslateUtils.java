@@ -3,6 +3,7 @@ package org.sagacity.sqltoy.utils;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -24,8 +25,8 @@ import org.slf4j.LoggerFactory;
  * @description 对结果翻译提供一个工具类
  * @author zhongxuchen
  * @version v1.0,Date:2024-12-28
- * @modify 2026-1-16 开放dynamicCacheFetch功能
- * @modify 2026-1-22 完善批量查询，批量翻译功能
+ * @modify Date:2026-01-16 开放dynamicCacheFetch功能
+ * @modify Date:2026-01-22 完善批量查询，批量翻译功能
  */
 public class TranslateUtils {
 
@@ -39,14 +40,13 @@ public class TranslateUtils {
 	private final static int UN_MATCHED_SIGN_LENGTH = UN_MATCHED_SIGN.length();
 
 	/**
-	 * @date 2018-5-26 优化缓存翻译，提供keyCode1,keyCode2,keyCode3 形式的多代码翻译
-	 * @todo 统一对key进行缓存翻译
-	 * @param translateExtend
-	 * @param dynamicCacheFetch
+	 * @date 2018-5-26 优化缓存翻译，提供keyCode1,keyCode2,keyCode3 形式的多代码翻译 统一对key进行缓存翻译
+	 * @param translateExtend    翻译配置扩展信息(缓存名、取值下标、分隔符、未匹配模板等)
+	 * @param dynamicCacheFetch  动态缓存数据抓取接口，翻译配置为动态缓存时逐key实时查询
 	 * @param dynamicCacheHolder 用于判断是否暂停逐行翻译，并记录未匹配的key
-	 * @param cacheData
-	 * @param fieldValue
-	 * @return
+	 * @param cacheData          缓存数据，key为缓存key、value为缓存行数据
+	 * @param fieldValue         待翻译的字段值，支持splitRegex分隔的多值形式
+	 * @return 翻译后的值，未匹配时按uncached模板或原key返回
 	 */
 	public static Object translateKey(TranslateExtend translateExtend, DynamicCacheFetch dynamicCacheFetch,
 			DynamicCacheHolder dynamicCacheHolder, HashMap<String, Object[]> cacheData, Object fieldValue) {
@@ -91,7 +91,8 @@ public class TranslateUtils {
 								fieldValue = translateExtend.uncached.replace("${value}", fieldStr);
 							} else {
 								fieldValue = fieldStr;
-								logger.warn("translate cache:{},cacheType:{}, 对应的key:{}没有设置相应的value!",
+								logger.warn(
+										"translate cache:{},cacheType:{}, the key:{} has no corresponding value set!",
 										translateExtend.cache, realCacheType, fieldValue);
 							}
 						}
@@ -102,8 +103,8 @@ public class TranslateUtils {
 						fieldValue = translateExtend.uncached.replace("${value}", fieldStr);
 					} else {
 						fieldValue = fieldValue.toString();
-						logger.warn("translate cache:{},cacheType:{}, 对应的key:{}没有设置相应的value!", translateExtend.cache,
-								translateExtend.cacheType, fieldValue);
+						logger.warn("translate cache:{},cacheType:{}, the key:{} has no corresponding value set!",
+								translateExtend.cache, translateExtend.cacheType, fieldValue);
 					}
 				}
 			} else {
@@ -151,7 +152,8 @@ public class TranslateUtils {
 								result.append(translateExtend.uncached.replace("${value}", key));
 							} else {
 								result.append(key);
-								logger.warn("translate cache:{},cacheType:{}, 对应的key:{}没有设置相应的value!",
+								logger.warn(
+										"translate cache:{},cacheType:{}, the key:{} has no corresponding value set!",
 										translateExtend.cache, realCacheType, key);
 							}
 						}
@@ -162,8 +164,8 @@ public class TranslateUtils {
 						result.append(translateExtend.uncached.replace("${value}", key));
 					} else {
 						result.append(key);
-						logger.warn("translate cache:{},cacheType:{}, 对应的key:{}没有设置相应的value!", translateExtend.cache,
-								translateExtend.cacheType, key);
+						logger.warn("translate cache:{},cacheType:{}, the key:{} has no corresponding value set!",
+								translateExtend.cache, translateExtend.cacheType, key);
 					}
 				}
 			} else {
@@ -175,11 +177,12 @@ public class TranslateUtils {
 	}
 
 	/**
-	 * @TODO 对翻译器的条件逻辑进行计算，判断是否需要执行缓存翻译
-	 * @param sourceValue
-	 * @param compareType
-	 * @param compareValues
-	 * @return
+	 * 对翻译器的条件逻辑进行计算，判断是否需要执行缓存翻译
+	 * 
+	 * @param sourceValue   参与比较的字段实际值，null按"null"字符串处理
+	 * @param compareType   比较类型，支持eq(等于)、neq(不等于)、in(包含)、out(不包含)
+	 * @param compareValues 配置的比较值数组，统一转小写后与字段值比较
+	 * @return 满足比较条件返回true表示需要执行翻译，不满足或类型无法识别返回false
 	 */
 	public static boolean judgeTranslate(Object sourceValue, String compareType, String[] compareValues) {
 		// compareValues长度不做校验,解析设置时已经校验必须有值
@@ -208,12 +211,13 @@ public class TranslateUtils {
 	}
 
 	/**
-	 * @TODO 针对List<DTO>进行翻译
-	 * @param translateManager
-	 * @param batchDynamicCache
-	 * @param dynamicCacheHolder
-	 * @param dynamicCacheFetch
-	 * @param items
+	 * 针对List<DTO>进行翻译
+	 * 
+	 * @param translateManager   翻译管理器，用于回写动态查询到的缓存数据
+	 * @param batchDynamicCache  批量动态缓存信息(待翻译字段及对应Translate配置)
+	 * @param dynamicCacheHolder 记录逐行翻译时未匹配key的持有器
+	 * @param dynamicCacheFetch  动态缓存数据批量抓取接口
+	 * @param items              待翻译的DTO对象集合，直接在原对象上回写翻译结果
 	 */
 	public static void translateDTOListByDynamicCache(TranslateManager translateManager,
 			BatchDynamicCache batchDynamicCache, DynamicCacheHolder dynamicCacheHolder,
@@ -275,13 +279,14 @@ public class TranslateUtils {
 	}
 
 	/**
-	 * @TODO 对resultSet 查询结果集合进行批量查询key获取缓存数据并进行逐行二次翻译
-	 * @param translateManager
-	 * @param batchDynamicCache
-	 * @param dynamicCacheHolder
-	 * @param dynamicCacheFetch
-	 * @param labelIndexMap
-	 * @param items
+	 * 对resultSet 查询结果集合进行批量查询key获取缓存数据并进行逐行二次翻译
+	 * 
+	 * @param translateManager   翻译管理器，用于回写动态查询到的缓存数据
+	 * @param batchDynamicCache  批量动态缓存信息(待翻译列及对应Translate配置)
+	 * @param dynamicCacheHolder 记录逐行翻译时未匹配key的持有器
+	 * @param dynamicCacheFetch  动态缓存数据批量抓取接口
+	 * @param labelIndexMap      查询结果列名(小写)与列下标的对应关系
+	 * @param items              待翻译的二维List数据集合，直接在原行数据上回写翻译结果
 	 * @param hasAliasName       针对mongo存在别名场景(保留参数兼容既有调用,二次翻译统一回读翻译列自身)
 	 */
 	public static void translateArrayListByDynamicCache(TranslateManager translateManager,
@@ -308,22 +313,23 @@ public class TranslateUtils {
 		Object translateResult;
 		String realCacheType;
 		for (Map.Entry<String, Translate> entry : batchDynamicCache.getTranslates().entrySet()) {
-			columnLow = entry.getKey().toLowerCase();
+			columnLow = entry.getKey().toLowerCase(Locale.ROOT);
 			translate = entry.getValue();
 			extend = translate.getExtend();
 			// 翻译列不在查询结果列中时给出指向配置的明确错误,而非拆箱NPE
 			Integer columnIndex = labelIndexMap.get(columnLow);
 			if (columnIndex == null) {
-				throw new IllegalArgumentException(
-						"动态缓存翻译列:" + columnLow + " 不在查询结果的返回列中,请检查translate的columns配置与sql的select列!");
+				throw new IllegalArgumentException("the dynamic translate column [" + columnLow
+						+ "] is not in the query result columns, please check the translate columns config and the select columns of the sql!");
 			}
 			colIndex = columnIndex;
 			// compareColumn初始化时已经小写
 			if (extend.hasLogic) {
 				Integer compareIndex = labelIndexMap.get(extend.compareColumn);
 				if (compareIndex == null) {
-					throw new IllegalArgumentException("动态缓存翻译列:" + columnLow + " 的where条件列:" + extend.compareColumn
-							+ " 不在查询结果的返回列中,请检查translate的where配置!");
+					throw new IllegalArgumentException("the where compare column [" + extend.compareColumn
+							+ "] of the dynamic translate column [" + columnLow
+							+ "] is not in the query result columns, please check the translate where config!");
 				}
 				compareValueIndex = compareIndex;
 			} else {
@@ -365,15 +371,16 @@ public class TranslateUtils {
 	}
 
 	/**
-	 * @TODO 面向批量查询的缓存翻译
-	 * @param notMatchedKeyCacheData
-	 * @param translateExtend
-	 * @param rowList
-	 * @param dto
-	 * @param isBean
-	 * @param compareValueIndex
-	 * @param translateValue
-	 * @return
+	 * 面向批量查询的缓存翻译
+	 * 
+	 * @param notMatchedKeyCacheData 批量动态查询得到的缓存数据，key为缓存key、value为缓存行数据
+	 * @param translateExtend        翻译配置扩展信息(取值下标、分隔符、未匹配模板、条件逻辑等)
+	 * @param rowList                当前行数据(isBean为false时用于读取条件比较列的值)
+	 * @param dto                    当前行DTO对象(isBean为true时用于读取条件比较属性的值)
+	 * @param isBean                 true表示数据行为DTO对象，false表示为List行
+	 * @param compareValueIndex      条件比较列的下标，无条件逻辑时传-1
+	 * @param translateValue         待翻译的字段值(可能已带未匹配标记^前缀)
+	 * @return 翻译后的值；存在条件逻辑且不满足翻译条件时返回null
 	 */
 	private static Object translateKey(Map<String, Object[]> notMatchedKeyCacheData, TranslateExtend translateExtend,
 			List rowList, Object dto, boolean isBean, int compareValueIndex, Object translateValue) {
@@ -437,10 +444,11 @@ public class TranslateUtils {
 	}
 
 	/**
-	 * @TODO 判断cacheType是否是动态的${tenant_id}多租户场景下,当前租户的表达式
-	 * @param sqlToyContext
-	 * @param cacheType
-	 * @return
+	 * 判断cacheType是否是动态的${tenant_id}多租户场景下,当前租户的表达式
+	 * 
+	 * @param sqlToyContext sqltoy上下文，通过其中的统一字段处理器获取当前租户id
+	 * @param cacheType     缓存类型，支持${usertenantid}/${currentusertenantid}/${tenantid}动态占位符或普通字符串
+	 * @return 实际的缓存类型值，动态占位符解析为当前租户id，普通值原样返回，cacheType为null返回null
 	 */
 	public static String getRealCacheType(SqlToyContext sqlToyContext, String cacheType) {
 		String realCacheType = null;
@@ -448,12 +456,12 @@ public class TranslateUtils {
 			// ${user_tenant_id}形式传递租户id
 			if (cacheType.startsWith("${") && cacheType.endsWith("}")) {
 				String lowCacheType = cacheType.substring(2, cacheType.length() - 1).replace("_", "").trim()
-						.toLowerCase();
+						.toLowerCase(Locale.ROOT);
 				if (lowCacheType.equals("usertenantid") || lowCacheType.equals("currentusertenantid")
 						|| lowCacheType.equals("tenantid")) {
 					if (sqlToyContext.getUnifyFieldsHandler() == null) {
-						throw new DataAccessException("缓存翻译使用:" + cacheType
-								+ "形式传递租户信息，必须要实现:IUnifyFieldsHandler.getUserTenantId()或IUnifyFieldsHandler.authTenants(null,null)来获取当前用户的租户id!");
+						throw new DataAccessException("the translate passes tenant info via [" + cacheType
+								+ "], you must implement IUnifyFieldsHandler.getUserTenantId() or IUnifyFieldsHandler.authTenants(null,null) to get the current user's tenant id!");
 					}
 					realCacheType = sqlToyContext.getUnifyFieldsHandler().getUserTenantId();
 					if (realCacheType == null) {
@@ -462,13 +470,15 @@ public class TranslateUtils {
 						if (authedTenantIds != null && authedTenantIds.length > 0) {
 							realCacheType = authedTenantIds[0];
 						} else {
-							throw new DataAccessException("缓存翻译使用:" + cacheType
-									+ "形式传递租户信息，必须要实现:IUnifyFieldsHandler.getUserTenantId()或IUnifyFieldsHandler.authTenants(null,null)来获取当前用户的租户id!");
+							throw new DataAccessException("the translate passes tenant info via [" + cacheType
+									+ "], you must implement IUnifyFieldsHandler.getUserTenantId() or IUnifyFieldsHandler.authTenants(null,null) to get the current user's tenant id!");
 						}
 					}
 				} else {
-					throw new DataAccessException("缓存翻译的cache-type只支持${usertenantid}/"
-							+ "${currentusertenantid}/${tenantid}三种动态占位符,不支持:" + cacheType + "!请检查translate配置!");
+					throw new DataAccessException(
+							"the translate cache-type only supports the three dynamic placeholders ${usertenantid}/"
+									+ "${currentusertenantid}/${tenantid}, [" + cacheType
+									+ "] is not supported, please check the translate config!");
 				}
 			} else {
 				realCacheType = cacheType;
@@ -478,11 +488,12 @@ public class TranslateUtils {
 	}
 
 	/**
-	 * @TODO 取字段的最外层是动态取数据的翻译
-	 * @param sqlToyContext
-	 * @param fieldTranslateCacheHolders
-	 * @param linkColumns
-	 * @return
+	 * 取字段的最外层是动态取数据的翻译
+	 * 
+	 * @param sqlToyContext              sqltoy上下文，用于解析多租户动态缓存类型
+	 * @param fieldTranslateCacheHolders 字段与翻译配置持有器的映射
+	 * @param linkColumns                存在link关联查询的列名，这些列仍采取逐行翻译不参与批量提取
+	 * @return 封装了批量动态翻译列及其真实缓存名的BatchDynamicCache对象
 	 */
 	public static BatchDynamicCache getBatchTranslates(SqlToyContext sqlToyContext,
 			HashMap<String, FieldTranslateCacheHolder> fieldTranslateCacheHolders, String... linkColumns) {

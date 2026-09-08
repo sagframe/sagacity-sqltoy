@@ -4,6 +4,7 @@ import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import org.sagacity.sqltoy.config.model.LabelIndexModel;
@@ -16,14 +17,15 @@ import org.sagacity.sqltoy.utils.NumberUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 对集合进行分组汇总计算
  * @author zhongxuchen
- * @version v1.0,Date:2020-3-25
- * @modify 2022-3-3,完成算法重构，支持分别指定求和、求平均的列，不同分组可以根据averageLabel、sumLabel来判断是否只求和或求平均
- * @modify 2022-5-19,增加skipSingleRow特性，针对单行数据可配置不进行汇总、求平均
- * @modify 2022-11-24,修复汇总计算结果存放于SummaryModel导致的并发场景下的线程安全问题
- * @modify 2023-7-23，增加order-column:
+ * @version v1.0,Date:2020-03-25
+ * @modify Date:2022-03-03
+ *         完成算法重构，支持分别指定求和、求平均的列，不同分组可以根据averageLabel、sumLabel来判断是否只求和或求平均
+ * @modify Date:2022-05-19 增加skipSingleRow特性，针对单行数据可配置不进行汇总、求平均
+ * @modify Date:2022-11-24 修复汇总计算结果存放于SummaryModel导致的并发场景下的线程安全问题
+ * @modify Date:2023-07-23，增加order-column:
  *         分组排序列，order-with-sum:默认为true，order-way:desc/asc
  */
 @SuppressWarnings({ "rawtypes" })
@@ -47,7 +49,8 @@ public class GroupSummary {
 		// 未设置分组和汇总计算列信息
 		if (summaryModel.getGroupMeta() == null || summaryModel.getGroupMeta().length == 0
 				|| summaryColsSet.size() == 0) {
-			throw new IllegalArgumentException("summary计算未正确配置sum-columns或average-columns或group分组信息!");
+			throw new IllegalArgumentException(
+					"summary calculation is not correctly configured with sum-columns or average-columns or group information, please check!");
 		}
 		// 全部计算列
 		// Integer[] summaryCols = new Integer[summaryColsSet.size()];
@@ -72,7 +75,7 @@ public class GroupSummary {
 		int meter = 0;
 		for (SummaryGroupMeta meta : summaryModel.getGroupMeta()) {
 			groupMeta = meta.clone();
-			sumSite = (summaryModel.getSumSite() == null) ? "top" : summaryModel.getSumSite().toLowerCase();
+			sumSite = (summaryModel.getSumSite() == null) ? "top" : summaryModel.getSumSite().toLowerCase(Locale.ROOT);
 			List<Integer> groupColsList = CalculateUtils.parseColumns(labelIndexMap, groupMeta.getGroupColumn(),
 					dataWidth);
 			Integer[] groupCols = groupColsList.toArray(new Integer[0]);
@@ -150,7 +153,7 @@ public class GroupSummary {
 			} else {
 				groupMeta.setLabelIndex(
 						NumberUtil.isInteger(groupMeta.getLabelColumn()) ? Integer.parseInt(groupMeta.getLabelColumn())
-								: labelIndexMap.get(groupMeta.getLabelColumn().toLowerCase()));
+								: labelIndexMap.get(groupMeta.getLabelColumn().toLowerCase(Locale.ROOT)));
 			}
 			// 汇总和求平均分两行组装,update 2022-2-28 增加每个分组是否同时有汇总标题和求平均标题，允许不同分组只有汇总或求平均
 			if (groupMeta.getSummaryType() == 3 && ("top".equals(sumSite) || "bottom".equals(sumSite))) {
@@ -165,7 +168,8 @@ public class GroupSummary {
 	}
 
 	/**
-	 * @TODO 创建每个分组的汇总列配置信息(其中存放了汇总值、汇总的数据个数，所以必须每个分组创建独立的实例)
+	 * 创建每个分组的汇总列配置信息(其中存放了汇总值、汇总的数据个数，所以必须每个分组创建独立的实例)
+	 * 
 	 * @param summaryCols
 	 * @param summaryModel
 	 * @param sumColList

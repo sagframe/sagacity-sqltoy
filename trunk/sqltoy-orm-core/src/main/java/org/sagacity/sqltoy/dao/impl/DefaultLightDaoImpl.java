@@ -47,10 +47,10 @@ import org.sagacity.sqltoy.support.SqlToyDaoSupport;
 import org.sagacity.sqltoy.translate.TranslateHandler;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 提供的更加简洁通用规范的Dao逻辑实现
  * @author zhongxuchen
- * @version v1.0,Date:2023-3-15
+ * @version v1.0,Date:2023-03-15
  */
 @SuppressWarnings({ "rawtypes" })
 public class DefaultLightDaoImpl extends SqlToyDaoSupport implements LightDao {
@@ -372,7 +372,8 @@ public class DefaultLightDaoImpl extends SqlToyDaoSupport implements LightDao {
 		if (result.size() == 1) {
 			return result.get(0);
 		}
-		throw new IllegalArgumentException("loadEntity查询出:" + result.size() + " 条记录,不符合load查询单条记录的预期!");
+		throw new IllegalArgumentException("loadEntity expect a single record but found [" + result.size()
+				+ "] rows, please check the load conditions!");
 	}
 
 	@Override
@@ -414,7 +415,8 @@ public class DefaultLightDaoImpl extends SqlToyDaoSupport implements LightDao {
 		if (result.size() == 1) {
 			return result.get(0);
 		}
-		throw new IllegalArgumentException("loadById查询出:" + result.size() + " 条记录,不符合load查询预期!");
+		throw new IllegalArgumentException("loadById expect a single record but found [" + result.size()
+				+ "] rows, please check the load conditions!");
 	}
 
 	@Override
@@ -566,7 +568,7 @@ public class DefaultLightDaoImpl extends SqlToyDaoSupport implements LightDao {
 		SqlToyConfig sqlToyConfig = this.getSqlToyConfig(sqlOrSqlId, SqlType.update);
 		if (sqlToyConfig.isNamedParam()) {
 			throw new IllegalArgumentException(
-					"executeSql(sqlOrSqlId, Object... paramsValue)方法不支持命名参数的sql,请使用executeSql(sqlOrSqlId, Map<String,Object> paramsMap)方法!");
+					"executeSql(sqlOrSqlId, Object... paramsValue) does not support named parameter sql, please use executeSql(sqlOrSqlId, Map<String,Object> paramsMap) method!");
 		}
 		return super.executeSql(sqlOrSqlId, null, paramsValue);
 	}

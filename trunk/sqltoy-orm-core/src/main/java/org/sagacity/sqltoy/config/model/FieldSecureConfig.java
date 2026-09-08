@@ -13,9 +13,6 @@ import org.sagacity.sqltoy.utils.StringUtil;
  */
 public class FieldSecureConfig implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 7459628659046294643L;
 
 	/**

@@ -11,8 +11,8 @@ import org.springframework.context.ApplicationContextAware;
  * @project sagacity-sqltoy
  * @description 基于spring的bean管理，主要用于获取Bean实例
  * @author zhongxuchen
- * @version v1.0, Date:2022年6月14日
- * @modify 2022年6月14日,修改说明
+ * @version v1.0,Date:2022-06-14
+ * @modify Date:2022-06-14,修改说明
  */
 public class SpringAppContext implements AppContext, ApplicationContextAware {
 	private ApplicationContext applicationContext;

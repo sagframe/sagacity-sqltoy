@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
@@ -9,13 +6,10 @@ import java.io.Serializable;
  * @project sagacity-sqltoy
  * @description 并行查询过程中的结果存放模型，并行单个线程返回的结果,最终结果是整合各个线程结果
  * @author zhongxuchen
- * @version v1.0, Date:2020-8-25
- * @modify 2020-8-25,修改说明
+ * @version v1.0,Date:2020-08-25
+ * @modify Date:2020-08-25 修改说明
  */
 public class ParallelQueryResult implements Serializable {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 5615476778698123272L;
 
 	/**

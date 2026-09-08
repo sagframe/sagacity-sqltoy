@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.plugins;
 
 import org.sagacity.sqltoy.SqlToyThreadDataHolder;
@@ -9,8 +6,8 @@ import org.sagacity.sqltoy.SqlToyThreadDataHolder;
  * @project sagacity-sqltoy
  * @description 定义i18n国际化当前操作用户的方言线程保持容器
  * @author zhongxuchen
- * @version v1.0, Date:2022年10月5日
- * @modify 2024年12月6日,统一到SqlToyThreadDataHolder中处理
+ * @version v1.0,Date:2022-10-05
+ * @modify Date:2024-12-06,统一到SqlToyThreadDataHolder中处理
  */
 // see SqlToyThreadDataHolder.setLanguage
 @Deprecated

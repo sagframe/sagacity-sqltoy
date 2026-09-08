@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.plugins.sharding.impl;
 
 import java.util.HashMap;
@@ -30,7 +27,7 @@ import org.springframework.context.ApplicationContextAware;
  * @project sagacity-sqltoy
  * @description 提供默认的数据库sharding策略
  * @author zhongxuchen
- * @version v1.0,Date: 2017年1月3日
+ * @version v1.0,Date: 2017-01-03
  */
 public class DefaultShardingStrategy implements ShardingStrategy, ApplicationContextAware {
 	private final static Logger logger = LoggerFactory.getLogger(DefaultShardingStrategy.class);
@@ -139,7 +136,7 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 			}
 		}
 		if (bizDate == null) {
-			logger.error("分表操作对应的参数值为null,导致无法分表,请检查参数配置!");
+			logger.error("the parameter value for table sharding is null, table sharding cannot be performed, please check the parameter configuration!");
 			return null;
 		}
 		// 间隔多少天
@@ -153,7 +150,7 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 		}
 		// 返回null,表示使用原表
 		if (index == -1) {
-			logger.debug("日期间隔:{} 天,小于最小分表区间则使用当前sql中的表!", intervalDays);
+			logger.debug("date interval:{} days, less than the minimum sharding interval, the table in the current sql will be used!", intervalDays);
 			return null;
 		}
 		String tableName;
@@ -162,7 +159,7 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 		} else {
 			tableName = shardingTable[index].trim();
 		}
-		logger.debug("分表实际取得表名:{}", tableName);
+		logger.debug("the actual table name obtained by table sharding:{}", tableName);
 		return tableName;
 	}
 
@@ -185,7 +182,7 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 	}
 
 	/**
-	 * @TODO 根据权重配置分配数据库
+	 * 根据权重配置分配数据库
 	 * @return
 	 */
 	private ShardingDBModel getDataSource() {
@@ -196,7 +193,7 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 			index = NumberUtil.getProbabilityIndex(weights);
 		}
 		chooseDataSource = dataSourceWeightConfig[index][0].toString();
-		logger.debug("分库取得的数据库为:{},index={}", chooseDataSource, index);
+		logger.debug("the datasource obtained by datasource sharding:{}, index={}", chooseDataSource, index);
 		ShardingDBModel shardingModel = new ShardingDBModel();
 		shardingModel.setDataSourceName(chooseDataSource);
 		shardingModel.setDataSource((DataSource) applicationContext.getBean(chooseDataSource));

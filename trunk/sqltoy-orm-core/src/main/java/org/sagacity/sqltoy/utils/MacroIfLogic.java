@@ -7,6 +7,7 @@ import java.time.LocalTime;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -20,13 +21,13 @@ import org.slf4j.LoggerFactory;
  * @description 提供针对sql中 @if(:paramName1>=value1 && :paramName2!=value2)
  *              性质的逻辑判断,返回true或false,适用于sql和mongo等所有查询语句中使用
  * @author zhongxuchen
- * @version v1.0,Date:2017年12月9日
- * @modify {Date:2017-12-4 剔除freemarker复杂逻辑判断,减少框架依赖性}
- * @modify {Date:2020-08-25 增加include场景,数组类型或字符串类型包含某个特定值 }
- * @modify {Date:2020-09-24 增加数组长度的提取 length(:paramName)>10 模式}
- * @modify {Date:2022-05-10 支持@if(1==1)无参数模式}
- * @modify {Date:2023-05-6 支持@if(:param1==:param2 || 1==:param3) 左右参数可都是变量的场景}
- * @modify {Date:2024-10-5 增加sqlParamType参数,支持?、:name、@(:name) 三种场景 }
+ * @version v1.0,Date:2017-12-09
+ * @modify Date:2017-12-04 剔除freemarker复杂逻辑判断,减少框架依赖性
+ * @modify Date:2020-08-25 增加include场景,数组类型或字符串类型包含某个特定值
+ * @modify Date:2020-09-24 增加数组长度的提取 length(:paramName)>10 模式
+ * @modify Date:2022-05-10 支持@if(1==1)无参数模式
+ * @modify Date:2023-05-06 支持@if(:param1==:param2 || 1==:param3) 左右参数可都是变量的场景
+ * @modify Date:2024-10-05 增加sqlParamType参数,支持?、:name、@(:name) 三种场景
  */
 @SuppressWarnings("rawtypes")
 public class MacroIfLogic {
@@ -47,7 +48,8 @@ public class MacroIfLogic {
 	}
 
 	/**
-	 * @todo 只支持||和&&简单逻辑判断
+	 * 只支持||和&&简单逻辑判断
+	 * 
 	 * @param evalExpression 表达式
 	 * @param paramValues
 	 * @param preCount
@@ -81,7 +83,8 @@ public class MacroIfLogic {
 	}
 
 	/**
-	 * @todo 简单表达式(单独列出来便于做容错性处理)
+	 * 简单表达式(单独列出来便于做容错性处理)
+	 * 
 	 * @param evalExpression
 	 * @param paramValues
 	 * @param preCount
@@ -129,7 +132,7 @@ public class MacroIfLogic {
 				rightObj = null;
 				negateResult = false;
 				express = expressions[i].trim();
-				expressLow = express.toLowerCase();
+				expressLow = express.toLowerCase(Locale.ROOT);
 				// 默认为等于判断(update 2025-4-9 @if(:paramType!=1 && :booleanParam))
 				compareType = "==";
 				// 匹配对应的判断逻辑符号
@@ -142,7 +145,7 @@ public class MacroIfLogic {
 				}
 				params = express.split(splitStr);
 				// 对比的参照参数名称
-				leftParamLow = params[0].trim().toLowerCase();
+				leftParamLow = params[0].trim().toLowerCase(Locale.ROOT);
 				// 判断左边是否有?参数
 				if (paramValues != null) {
 					hasArg = hasArg(leftParamLow, sqlParamType);
@@ -229,7 +232,7 @@ public class MacroIfLogic {
 			}
 			return "false";
 		} catch (Exception e) {
-			logger.error("evalSimpleExpress 方法执行异常", e);
+			logger.error("evalSimpleExpress method execution failed", e);
 		}
 		return "undefine";
 	}
@@ -281,7 +284,8 @@ public class MacroIfLogic {
 	}
 
 	/**
-	 * @todo 两个数据进行比较
+	 * 两个数据进行比较
+	 * 
 	 * @param value
 	 * @param compareType
 	 * @param originalCompareValue 原始
@@ -318,7 +322,7 @@ public class MacroIfLogic {
 					// 时间单位
 					if (StringUtil.matches(secondStr, timeTypePattern)) {
 						// 取最后一位
-						String timeType = append.substring(append.length() - 1).toUpperCase();
+						String timeType = append.substring(append.length() - 1).toUpperCase(Locale.ROOT);
 						append = append.substring(0, append.length() - 1);
 						if (timeType.equals("S")) {
 							addType = 0;
@@ -354,7 +358,7 @@ public class MacroIfLogic {
 		String dayFmt = "yyyy-MM-dd";
 		// 存在计算符号
 		if (hasCalculate) {
-			String lowCompareValue = compareValue.toLowerCase();
+			String lowCompareValue = compareValue.toLowerCase(Locale.ROOT);
 			// 默认秒
 			if ("now()".equals(lowCompareValue) || ".now".equals(lowCompareValue) || "${.now}".equals(lowCompareValue)
 					|| "nowtime()".equals(lowCompareValue) || "systime()".equals(lowCompareValue)
@@ -510,8 +514,9 @@ public class MacroIfLogic {
 	}
 
 	/**
-	 * @TODO 日期比较辅助:任一侧无法解析为日期时返回null(调用方按false处理),
-	 *       避免convertDateObject返回null直接compareTo抛NPE中断整个@if解析
+	 * 日期比较辅助:任一侧无法解析为日期时返回null(调用方按false处理),
+	 * 避免convertDateObject返回null直接compareTo抛NPE中断整个@if解析
+	 * 
 	 * @param valueStr
 	 * @param compare
 	 * @return null表示无法比较
@@ -526,7 +531,8 @@ public class MacroIfLogic {
 	}
 
 	/**
-	 * @todo 大于等于
+	 * 大于等于
+	 * 
 	 * @param value
 	 * @param valueStr
 	 * @param compare
@@ -546,7 +552,8 @@ public class MacroIfLogic {
 	}
 
 	/**
-	 * @todo 小于等于
+	 * 小于等于
+	 * 
 	 * @param value
 	 * @param valueStr
 	 * @param compare
@@ -566,7 +573,8 @@ public class MacroIfLogic {
 	}
 
 	/**
-	 * @todo 大于
+	 * 大于
+	 * 
 	 * @param value
 	 * @param valueStr
 	 * @param compare
@@ -586,7 +594,8 @@ public class MacroIfLogic {
 	}
 
 	/**
-	 * @todo 小于
+	 * 小于
+	 * 
 	 * @param value
 	 * @param valueStr
 	 * @param compare
@@ -606,7 +615,8 @@ public class MacroIfLogic {
 	}
 
 	/**
-	 * @todo include包含(忽视大小写)
+	 * include包含(忽视大小写)
+	 * 
 	 * @param value
 	 * @param valueStr
 	 * @param compare
@@ -617,17 +627,17 @@ public class MacroIfLogic {
 		if (value == null) {
 			return false;
 		}
-		String compareLow = compare.toLowerCase();
+		String compareLow = compare.toLowerCase(Locale.ROOT);
 		// 字符串包含
 		if (value instanceof String) {
-			return valueStr.toLowerCase().contains(compareLow);
+			return valueStr.toLowerCase(Locale.ROOT).contains(compareLow);
 		}
 		// 数组集合包含
 		if (value.getClass().isArray() || value instanceof Collection) {
 			// convertArray 覆盖了Collection和数组两种场景
 			Object[] values = CollectionUtil.convertArray(value);
 			for (Object item : values) {
-				if (compareLow.equals((item == null) ? null : item.toString().toLowerCase())) {
+				if (compareLow.equals((item == null) ? null : item.toString().toLowerCase(Locale.ROOT))) {
 					return true;
 				}
 			}
@@ -640,7 +650,8 @@ public class MacroIfLogic {
 	}
 
 	/**
-	 * @TODO 在数组范围内
+	 * 在数组范围内
+	 * 
 	 * @param value
 	 * @param valueStr
 	 * @param compare
@@ -651,14 +662,14 @@ public class MacroIfLogic {
 		if (value == null) {
 			return false;
 		}
-		String valueLow = valueStr.toLowerCase();
+		String valueLow = valueStr.toLowerCase(Locale.ROOT);
 		if (compareObj != null
 				&& (compareObj.getClass().isArray() || compareObj instanceof Collection || compareObj instanceof Map)) {
 			// 数组集合包含
 			if (compareObj.getClass().isArray() || compareObj instanceof Collection) {
 				Object[] values = CollectionUtil.convertArray(compareObj);
 				for (Object item : values) {
-					if (valueLow.equals((item == null) ? null : item.toString().toLowerCase())) {
+					if (valueLow.equals((item == null) ? null : item.toString().toLowerCase(Locale.ROOT))) {
 						return true;
 					}
 				}
@@ -674,7 +685,7 @@ public class MacroIfLogic {
 			compare = compare.substring(1, compare.length() - 1).trim();
 		}
 		// 统一转小写进行比较
-		String[] compareAry = compare.toLowerCase().split("\\,");
+		String[] compareAry = compare.toLowerCase(Locale.ROOT).split("\\,");
 		if (compareAry.length == 1) {
 			return compareAry[0].contains(valueLow);
 		}
@@ -689,7 +700,8 @@ public class MacroIfLogic {
 	}
 
 	/**
-	 * @todo 参数大于等于并小于等于给定的数据范围时表示条件无效，自动置参数值为null
+	 * 参数大于等于并小于等于给定的数据范围时表示条件无效，自动置参数值为null
+	 * 
 	 * @param param
 	 * @param valueStr
 	 * @param beginContrast
@@ -723,7 +735,8 @@ public class MacroIfLogic {
 	}
 
 	/**
-	 * @todo 判断包含动态参数
+	 * 判断包含动态参数
+	 * 
 	 * @param value
 	 * @param sqlParamType
 	 * @return

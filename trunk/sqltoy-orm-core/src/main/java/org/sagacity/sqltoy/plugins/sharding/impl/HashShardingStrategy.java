@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.plugins.sharding.impl;
 
 import java.util.HashMap;
@@ -16,7 +13,7 @@ import org.slf4j.LoggerFactory;
  * @project sagacity-sqltoy
  * @description hash取模形式的分库策略
  * @author zhongxuchen
- * @version v1.0,Date:2017年11月1日
+ * @version v1.0,Date:2017-11-01
  */
 public class HashShardingStrategy implements ShardingStrategy {
 	private final static Logger logger = LoggerFactory.getLogger(HashShardingStrategy.class);
@@ -53,7 +50,7 @@ public class HashShardingStrategy implements ShardingStrategy {
 		int hashCode = shardingValue.hashCode();
 		// hashCode可能为负,负数直接%会得到负key,取不到分表导致数据回落基准表
 		String modeKey = Integer.toString(Math.floorMod(hashCode, tableMode));
-		logger.debug("分表取得modeKey:{},tableName:{}", modeKey, tableMap.get(modeKey));
+		logger.debug("table sharding got modeKey:{}, tableName:{}", modeKey, tableMap.get(modeKey));
 		return tableMap.get(modeKey);
 	}
 
@@ -78,7 +75,8 @@ public class HashShardingStrategy implements ShardingStrategy {
 		// hashCode可能为负,负数直接%会得到负key,取不到数据源导致回落默认库
 		String modeKey = Integer.toString(Math.floorMod(hashCode, dataSourceMode));
 		shardingModel.setDataSourceName(dataSourceMap.get(modeKey));
-		logger.debug("分库取得modeKey:{},dataSourceName:{}", modeKey, shardingModel.getDataSourceName());
+		logger.debug("datasource sharding got modeKey:{}, dataSourceName:{}", modeKey,
+				shardingModel.getDataSourceName());
 		return shardingModel;
 	}
 

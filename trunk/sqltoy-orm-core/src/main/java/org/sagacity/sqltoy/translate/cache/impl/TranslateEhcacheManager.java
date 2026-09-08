@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
  * @project sagacity-sqltoy
  * @description 基于ehcache缓存实现translate 提取缓存数据和存放缓存
  * @author zhongxuchen
- * @version v1.0,Date:2013-4-14
+ * @version v1.0,Date:2013-04-14
  */
 @SuppressWarnings("unchecked")
 public class TranslateEhcacheManager extends TranslateCacheManager {
@@ -153,7 +153,7 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 		if (cacheManager != null) {
 			return true;
 		}
-		logger.debug("启动ehcache 缓存管理器--------------------------------------");
+		logger.debug("started ehcache cache manager--------------------------------------");
 		// 未定义持久化文件,则由ehcache自行默认创建
 		if (StringUtil.isBlank(diskStorePath)) {
 			cacheManager = CacheManagerBuilder.newCacheManagerBuilder().build(true);

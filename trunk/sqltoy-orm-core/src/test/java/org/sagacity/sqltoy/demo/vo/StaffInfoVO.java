@@ -17,9 +17,6 @@ import org.sagacity.sqltoy.config.annotation.SqlToyFieldAlias;
  */
 public class StaffInfoVO implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 3492673222889622055L;
 
 	private String staffId;

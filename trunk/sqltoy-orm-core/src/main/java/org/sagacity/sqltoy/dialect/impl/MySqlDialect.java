@@ -1,6 +1,3 @@
-/**
- *
- */
 package org.sagacity.sqltoy.dialect.impl;
 
 import java.io.Serializable;
@@ -42,14 +39,14 @@ import org.slf4j.LoggerFactory;
 
 /**
  * @author zhongxuchen
- * @version v1.0, Date:2013-3-21
- * @project sqltoy-orm
+ * @version v1.0,Date:2013-03-21
+ * @project sagacity-sqltoy
  * @description mysql数据库方言的不同操作实现 (针对mysql 的with as 兼容问题因mysql
  *              临时表不能在一次查询中多次引用,报reopen table 错误,因此mysql 中没有很好的机制来兼容with as语法)
  *              mysql8.x版本开始已经支持with as语法。
- * @modify {Date:2018-5-19,修改saveOrUpdate为先update后saveIgnore，因为mysql on
+ * @modify Date:2018-05-19 修改saveOrUpdate为先update后saveIgnore，因为mysql on
  *         duplicate key update 非空字段修改报错}
- * @modify {Date:2022-10-12,修复lock nowait等针对mysql5.x版本的支持}
+ * @modify Date:2022-10-12 修复lock nowait等针对mysql5.x版本的支持
  */
 @SuppressWarnings({ "rawtypes" })
 public class MySqlDialect implements Dialect {
@@ -207,12 +204,13 @@ public class MySqlDialect implements Dialect {
 				reflectPropsHandler, NVL_FUNCTION, conn, dbType, autoCommit, tableName, true);
 		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
 		if (updateCnt >= entities.size()) {
-			SqlExecuteStat.debug("修改记录", "修改记录量:" + updateCnt + " 条,等于entities集合长度,不再做insert操作!");
+			SqlExecuteStat.debug("update record",
+					"update rows:" + updateCnt + " equals the size of entities collection, skip the insert operation!");
 			return updateCnt;
 		}
 		Long saveCnt = saveAllIgnoreExist(sqlToyContext, entities, batchSize, reflectPropsHandler, conn, dbType,
 				dialect, autoCommit, tableName);
-		SqlExecuteStat.debug("新增记录", "新建记录数量:" + saveCnt + " 条!");
+		SqlExecuteStat.debug("insert record", "insert rows:" + saveCnt + "!");
 		return updateCnt + saveCnt;
 	}
 

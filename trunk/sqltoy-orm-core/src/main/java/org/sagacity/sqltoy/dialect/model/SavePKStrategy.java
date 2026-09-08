@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.dialect.model;
 
 import java.io.Serializable;
@@ -8,15 +5,12 @@ import java.io.Serializable;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 插入数据操作时数据库产生主键的策略(是sequence或identity或uuid或通过自定义接口策略产生随机数)
  * @author zhongxuchen
- * @version v1.0,Date:2015年3月19日
+ * @version v1.0,Date:2015-03-19
  */
 public class SavePKStrategy implements Serializable {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -8421486950005753407L;
 
 	/**

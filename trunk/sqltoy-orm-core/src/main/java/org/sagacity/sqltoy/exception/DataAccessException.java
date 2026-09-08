@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.exception;
 
 import java.io.PrintStream;
@@ -12,14 +9,11 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @project sagacity-sqltoy
  * @description 数据存取操作异常
  * @author zhongxuchen
- * @version v1.0, Date:2019年7月3日
- * @modify 2019年7月3日,修改说明
+ * @version v1.0,Date:2019-07-03
+ * @modify Date:2019-07-03,修改说明
  */
 public class DataAccessException extends RuntimeException {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 6200356390963104605L;
 
 	public DataAccessException() {

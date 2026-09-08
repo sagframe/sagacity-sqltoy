@@ -13,6 +13,12 @@ import org.springframework.aot.hint.MemberCategory;
 import org.springframework.aot.hint.RuntimeHints;
 import org.springframework.aot.hint.RuntimeHintsRegistrar;
 
+/**
+ * Spring AOT 运行时 hints 注册：为配置属性类、主键生成器及缓存翻译相关资源注册反射与资源访问 hints
+ *
+ * @author limliu
+ * @since 5.6
+ */
 class SqltoyRuntimeHintsRegistrar implements RuntimeHintsRegistrar {
 
     @Override

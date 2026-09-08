@@ -1,21 +1,15 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.config.model;
 
 import java.io.Serializable;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description sql和解析参数后的模型,用于存放sql和sql中的参数名称数值
  * @author zhongxuchen
- * @version v1.0,Date:2015年1月9日
+ * @version v1.0,Date:2015-01-09
  */
 public class SqlParamsModel implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -3519750508404237911L;
 
 	/**

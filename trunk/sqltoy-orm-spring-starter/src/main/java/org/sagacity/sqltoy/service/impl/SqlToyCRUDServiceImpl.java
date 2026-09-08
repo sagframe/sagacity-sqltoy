@@ -23,7 +23,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 提供一些非常简单业务场景，比如传统不区分dto、pojo的项目，因一些简单的增加、修改、加载操作，在自定义的service中也只是存粹的中转一下dao.xxx形式的操作
  *              如下的service中毫无附加逻辑，存粹一个结构性中转调用，因此创建了一个通用性的Service
  *              <p>
@@ -32,7 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
  *              ligtDao.save(staffInfo); } }
  *              </p>
  * @author zhongxuchen
- * @version v1.0,Date:2012-7-16
+ * @version v1.0,Date:2012-07-16
  */
 @SuppressWarnings({ "rawtypes" })
 //@Service("sqlToyCRUDService")
@@ -96,7 +96,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	@Transactional
 	public Long update(Serializable entity, String... forceUpdateProps) {
 		if (null == entity) {
-			throw new IllegalArgumentException("update 数据对象为null!");
+			throw new IllegalArgumentException("the entity object for update is null!");
 		}
 		return lightDao.update(entity, forceUpdateProps);
 	}
@@ -105,7 +105,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	@Transactional
 	public Long updateCascade(Serializable entity, String... forceUpdateProps) {
 		if (null == entity) {
-			throw new IllegalArgumentException("update 数据对象为null!");
+			throw new IllegalArgumentException("the entity object for update is null!");
 		}
 		return lightDao.updateCascade(entity, forceUpdateProps, null, null);
 	}
@@ -121,7 +121,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	@Transactional
 	public Long updateDeeply(Serializable entity) {
 		if (null == entity) {
-			throw new IllegalArgumentException("updateDeeply 数据对象为null!");
+			throw new IllegalArgumentException("the entity object for updateDeeply is null!");
 		}
 		return lightDao.updateDeeply(entity);
 	}
@@ -160,7 +160,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	@Transactional
 	public Long saveOrUpdate(Serializable entity, String... forceUpdateProps) {
 		if (null == entity) {
-			throw new IllegalArgumentException("saveOrUpdate  数据对象为null!");
+			throw new IllegalArgumentException("the entity object for saveOrUpdate is null!");
 		}
 		return lightDao.saveOrUpdate(entity, forceUpdateProps);
 	}
@@ -352,7 +352,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	}
 
 	/**
-	 * @todo 判断缓存是否存在
+	 * 判断缓存是否存在
 	 * @param cacheName
 	 * @return
 	 */

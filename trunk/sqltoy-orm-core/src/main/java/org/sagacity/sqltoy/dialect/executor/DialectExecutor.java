@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.dialect.executor;
 
 import java.util.concurrent.Callable;
@@ -17,7 +14,7 @@ import org.slf4j.LoggerFactory;
  * @project sagacity-sqltoy
  * @description 数据库方言并行执行器(ParallelUtils将数据按策略分组后并行执行,DialectExecutor作为一个并行单元)
  * @author zhongxuchen
- * @version v1.0,Date:2017年11月3日
+ * @version v1.0,Date:2017-11-03
  */
 public class DialectExecutor implements Callable<ShardingResult> {
 	/**
@@ -48,7 +45,8 @@ public class DialectExecutor implements Callable<ShardingResult> {
 	}
 
 	/**
-	 * @todo 任务的具体过程，一旦任务传给ExecutorService的submit方法，则该方法自动在一个线程上执行。
+	 * 任务的具体过程，一旦任务传给ExecutorService的submit方法，则该方法自动在一个线程上执行。
+	 * 
 	 * @return
 	 */
 	@Override
@@ -58,14 +56,15 @@ public class DialectExecutor implements Callable<ShardingResult> {
 		ShardingResult result = new ShardingResult();
 		// 异常捕获掉,确保其他线程可以正常执行
 		try {
-			logger.debug("执行分库分表,DataSource节点:{},table={}", dataSourceName, tableName);
+			logger.debug("execute sharding, dataSource node:{}, table={}", dataSourceName, tableName);
 			result.setRows(handler.execute(sqltoyContext, shardingGroupModel));
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
 			result.setSuccess(false);
-			result.setMessage(
-					"执行分库分表,DataSource节点:" + dataSourceName + ",table=" + tableName + " 发生异常:" + e.getMessage());
-			logger.error("执行分库分表,DataSource节点:{},table={} 发生异常:{}", dataSourceName, tableName, e.getMessage());
+			result.setMessage("execute sharding, DataSource node:" + dataSourceName + ",table=" + tableName
+					+ " occurred exception:" + e.getMessage());
+			logger.error("execute sharding, dataSource node:{}, table={} error occurred:{}", dataSourceName, tableName,
+					e.getMessage());
 		} finally {
 			SqlExecuteStat.destroy();
 		}

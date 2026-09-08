@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.dialect.impl;
 
 import java.io.Serializable;
@@ -41,11 +38,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 基于sqlite数据库方言的各类操作实现
  * @author zhongxuchen
- * @version v1.0,Date:2013-8-29
- * @modify Date:2020-3-12 完成完整验证测试
+ * @version v1.0,Date:2013-08-29
+ * @modify Date:2020-03-12 完成完整验证测试
  */
 @SuppressWarnings({ "rawtypes" })
 public class SqliteDialect implements Dialect {
@@ -190,12 +187,13 @@ public class SqliteDialect implements Dialect {
 				reflectPropsHandler, NVL_FUNCTION, conn, dbType, autoCommit, tableName, true);
 		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
 		if (updateCnt >= entities.size()) {
-			SqlExecuteStat.debug("修改记录", "修改记录量:" + updateCnt + " 条,等于entities集合长度,不再做insert操作!");
+			SqlExecuteStat.debug("update record",
+					"update rows:" + updateCnt + " equals the size of entities collection, skip the insert operation!");
 			return updateCnt;
 		}
 		Long saveCnt = saveAllIgnoreExist(sqlToyContext, entities, batchSize, reflectPropsHandler, conn, dbType,
 				dialect, autoCommit, tableName);
-		SqlExecuteStat.debug("新增记录", "新建记录数量:" + saveCnt + " 条!");
+		SqlExecuteStat.debug("insert record", "insert rows:" + saveCnt + "!");
 		return updateCnt + saveCnt;
 	}
 

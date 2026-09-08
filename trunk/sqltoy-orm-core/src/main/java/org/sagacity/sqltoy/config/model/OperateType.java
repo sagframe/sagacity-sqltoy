@@ -1,14 +1,11 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.config.model;
 
 /**
  * @project sagacity-sqltoy
  * @description 细化sql类型
  * @author zhongxuchen
- * @version v1.0, Date:2022年9月9日
- * @modify 2022年9月9日,修改说明
+ * @version v1.0,Date:2022-09-09
+ * @modify Date:2022-09-09,修改说明
  */
 public enum OperateType {
 	// 普通sql查询

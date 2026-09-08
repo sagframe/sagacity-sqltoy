@@ -1,20 +1,14 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.config.model;
 
 import java.io.Serializable;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 通过sqlToy工具处理后查询条件以及sql语句的最终结果
  * @author zhongxuchen
  * @version v1.0,Date:2009-12-13
  */
 public class SqlToyResult implements Serializable {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 1290910325447165025L;
 
 	/**

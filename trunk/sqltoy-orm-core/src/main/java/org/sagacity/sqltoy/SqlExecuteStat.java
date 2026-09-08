@@ -26,10 +26,10 @@ import com.alibaba.ttl.TransmittableThreadLocal;
  * @project sagacity-sqltoy
  * @description 提供sql执行超时统计和基本的sql输出功能
  * @author zhongxuchen
- * @version v1.0,Date:2015年6月12日
- * @modify {Date:2020-06-15,改进sql日志输出,将条件参数带入到sql中输出，便于开发调试}
- * @modify {Date:2020-08-12,为日志输出增加统一uid,便于辨别同一组执行语句}
- * @modify {Date:2024-07-18,强化对首个业务代码位置的定位,支持aop场景}
+ * @version v1.0,Date:2015-06-12
+ * @modify Date:2020-06-15 改进sql日志输出,将条件参数带入到sql中输出，便于开发调试
+ * @modify Date:2020-08-12 为日志输出增加统一uid,便于辨别同一组执行语句
+ * @modify Date:2024-07-18 强化对首个业务代码位置的定位,支持aop场景
  */
 public class SqlExecuteStat {
 	/**
@@ -75,7 +75,8 @@ public class SqlExecuteStat {
 	}
 
 	/**
-	 * @todo 登记开始执行
+	 * 登记开始执行
+	 * 
 	 * @param sqlId
 	 * @param type
 	 * @param debugPrint
@@ -103,7 +104,8 @@ public class SqlExecuteStat {
 	}
 
 	/**
-	 * @todo 向线程中登记发生了异常,便于在finally里面明确是错误并打印相关sql
+	 * 向线程中登记发生了异常,便于在finally里面明确是错误并打印相关sql
+	 * 
 	 * @param exception
 	 */
 	public static void error(Exception exception) {
@@ -113,7 +115,8 @@ public class SqlExecuteStat {
 	}
 
 	/**
-	 * @todo 在debug模式下,在console端输出sql,便于开发人员查看
+	 * 在debug模式下,在console端输出sql,便于开发人员查看
+	 * 
 	 * @param topic
 	 * @param sql
 	 * @param paramValues
@@ -137,7 +140,8 @@ public class SqlExecuteStat {
 	}
 
 	/**
-	 * @TODO 提供中间日志输出
+	 * 提供中间日志输出
+	 * 
 	 * @param topic
 	 * @param message
 	 * @param args
@@ -178,7 +182,8 @@ public class SqlExecuteStat {
 	}
 
 	/**
-	 * @TODO 输出日志
+	 * 输出日志
+	 * 
 	 * @param sqlTrace
 	 */
 	private static void printLogs(SqlExecuteTrace sqlTrace) {
@@ -314,7 +319,8 @@ public class SqlExecuteStat {
 	}
 
 	/**
-	 * @TODO 将参数值拟合到sql中作为debug输出,便于开发进行调试(2020-06-15)
+	 * 将参数值拟合到sql中作为debug输出,便于开发进行调试(2020-06-15)
+	 * 
 	 * @param sql
 	 * @param params
 	 * @param dbType
@@ -350,7 +356,8 @@ public class SqlExecuteStat {
 	}
 
 	/**
-	 * @TODO 定位第一个调用sqltoy的代码位置
+	 * 定位第一个调用sqltoy的代码位置
+	 * 
 	 * @return
 	 */
 	public static String getFirstTrace() {
@@ -394,7 +401,8 @@ public class SqlExecuteStat {
 	}
 
 	/**
-	 * @TODO 获取执行总时长
+	 * 获取执行总时长
+	 * 
 	 * @return
 	 */
 	public static Long getExecuteTime() {

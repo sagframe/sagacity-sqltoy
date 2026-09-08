@@ -20,9 +20,6 @@ import org.sagacity.sqltoy.utils.TranslateUtils;
  */
 public class FieldTranslateCacheHolder implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -8556392032470721886L;
 
 	/**
@@ -46,7 +43,8 @@ public class FieldTranslateCacheHolder implements Serializable {
 	private HashMap<String, Object[]>[] cacheArray;
 
 	/**
-	 * @TODO 针对一行数据进行翻译
+	 * 针对一行数据进行翻译
+	 * 
 	 * @param dynamicCacheFetch
 	 * @param dynamicCacheHolder
 	 * @param rowList
@@ -80,7 +78,8 @@ public class FieldTranslateCacheHolder implements Serializable {
 	}
 
 	/**
-	 * @TODO 针对ResultSet 进行翻译
+	 * 针对ResultSet 进行翻译
+	 * 
 	 * @param dynamicCacheFetch
 	 * @param dynamicCacheHolder
 	 * @param rs
@@ -114,7 +113,8 @@ public class FieldTranslateCacheHolder implements Serializable {
 	}
 
 	/**
-	 * @TODO 针对VO\DTO的属性进行翻译
+	 * 针对VO\DTO的属性进行翻译
+	 * 
 	 * @param dynamicCacheFetch
 	 * @param dynamicCacheHolder
 	 * @param item

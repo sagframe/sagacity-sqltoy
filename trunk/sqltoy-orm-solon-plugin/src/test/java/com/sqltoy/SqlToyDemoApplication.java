@@ -13,6 +13,9 @@ import java.io.IOException;
 import java.math.BigDecimal;
 
 
+/**
+ * Solon 演示应用启动入口
+ */
 public class SqlToyDemoApplication {
  public static void main(String[] args) throws IOException, ClassNotFoundException, InstantiationException, IllegalAccessException {
   Solon.start(SqlToyDemoApplication.class, args);

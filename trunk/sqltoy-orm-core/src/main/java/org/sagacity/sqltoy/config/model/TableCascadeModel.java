@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.config.model;
 
 import java.io.Serializable;
@@ -8,16 +5,13 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description OneToMany数据库主子表级联关系配置
  * @author zhongxuchen
- * @version v1.0,Date:2012-9-5
+ * @version v1.0,Date:2012-09-05
  */
 @SuppressWarnings("rawtypes")
 public class TableCascadeModel implements Serializable {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 1309393602795660950L;
 
 	/**

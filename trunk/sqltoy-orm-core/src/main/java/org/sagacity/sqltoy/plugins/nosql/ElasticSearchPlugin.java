@@ -1,11 +1,9 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.plugins.nosql;
 
 import java.lang.reflect.Array;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import org.sagacity.sqltoy.SqlToyContext;
@@ -33,7 +31,7 @@ import com.alibaba.fastjson2.JSONObject;
  * @project sagacity-sqltoy
  * @description elasticSearch的插件
  * @author zhongxuchen
- * @version v1.0,Date:2018年1月3日
+ * @version v1.0,Date:2018-01-03
  */
 @SuppressWarnings("rawtypes")
 public class ElasticSearchPlugin {
@@ -43,7 +41,8 @@ public class ElasticSearchPlugin {
 	protected final static Logger logger = LoggerFactory.getLogger(ElasticSearchPlugin.class);
 
 	/**
-	 * @todo 基于es的分页查询
+	 * 基于es的分页查询
+	 * 
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param pageModel
@@ -70,7 +69,9 @@ public class ElasticSearchPlugin {
 			jsonQuery.put("from", (pageModel.getPageNo() - 1) * pageModel.getPageSize());
 			jsonQuery.put("size", pageModel.getPageSize());
 		} catch (Exception e) {
-			logger.error("分页解析es原生json错误,请检查json串格式是否正确!错误信息:{},json={}", e.getMessage(), realMql);
+			logger.error(
+					"failed to parse the es native json for pagination, please check whether the json format is correct! error message:{}, json={}",
+					e.getMessage(), realMql);
 			throw e;
 		}
 
@@ -85,7 +86,8 @@ public class ElasticSearchPlugin {
 	}
 
 	/**
-	 * @todo 提取符合条件的前多少条记录
+	 * 提取符合条件的前多少条记录
+	 * 
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param queryExecutor
@@ -114,7 +116,9 @@ public class ElasticSearchPlugin {
 				jsonQuery.put("size", topSize);
 			}
 		} catch (Exception e) {
-			logger.error("解析es原生json错误,请检查json串格式是否正确!错误信息:{},json={}", e.getMessage(), realMql);
+			logger.error(
+					"failed to parse the es native json, please check whether the json format is correct! error message:{}, json={}",
+					e.getMessage(), realMql);
 			throw e;
 		}
 		DataSetResult result = executeQuery(sqlToyContext, sqlToyConfig, jsonQuery, (Class) extend.resultType,
@@ -123,7 +127,8 @@ public class ElasticSearchPlugin {
 	}
 
 	/**
-	 * @todo 执行实际查询处理
+	 * 执行实际查询处理
+	 * 
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param jsonQuery
@@ -141,9 +146,9 @@ public class ElasticSearchPlugin {
 		boolean hasFields = false;
 		if (jsonQuery.containsKey(source)) {
 			hasFields = true;
-		} else if (jsonQuery.containsKey(source.toUpperCase())) {
+		} else if (jsonQuery.containsKey(source.toUpperCase(Locale.ROOT))) {
 			hasFields = true;
-			source = source.toUpperCase();
+			source = source.toUpperCase(Locale.ROOT);
 		}
 		String[] fields = null;
 		if (noSqlModel.getFields() != null) {
@@ -173,7 +178,7 @@ public class ElasticSearchPlugin {
 			fields = BeanUtil.matchSetMethodNames(resultClass);
 		}
 		if (sqlToyContext.isDebug()) {
-			logger.debug("execute elastic eql=" + jsonQuery.toJSONString());
+			logger.debug("execute elastic eql={}", jsonQuery.toJSONString());
 		}
 
 		// 执行请求

@@ -1,7 +1,5 @@
 package org.sagacity.sqltoy.utils;
 
-import static java.lang.System.err;
-
 import java.io.Serializable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -31,6 +29,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -65,13 +64,13 @@ import org.slf4j.LoggerFactory;
  * @description 类处理通用工具,提供反射处理
  * @author zhongxuchen
  * @version v1.0,Date:2008-11-10
- * @modify data:2019-09-05 优化匹配方式，修复setIsXXX的错误
- * @modify data:2020-06-23 优化convertType(Object, String) 方法
- * @modify data:2020-07-08 修复convertType(Object, String) 转Long类型时精度丢失问题
- * @modify data:2021-03-12 支持property中含下划线跟对象方法进行匹配
- * @modify data:2022-10-19
+ * @modify Date:2019-09-05 优化匹配方式，修复setIsXXX的错误
+ * @modify Date:2020-06-23 优化convertType(Object, String) 方法
+ * @modify Date:2020-07-08 修复convertType(Object, String) 转Long类型时精度丢失问题
+ * @modify Date:2021-03-12 支持property中含下划线跟对象方法进行匹配
+ * @modify Date:2022-10-19
  *         convertType类型匹配改成int类型的匹配,通过DataType将TypeName转化为int，批量时效率大幅提升
- * @modify data:2023-08-06 增加对枚举类型的处理
+ * @modify Date:2023-08-06 增加对枚举类型的处理
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class BeanUtil {
@@ -133,20 +132,17 @@ public class BeanUtil {
 	}
 
 	/**
-	 * @TODO 通过value\key\code\id 常规逐个排查方式得到获取key的方法
-	 * @param enumValue
-	 * @return
+	 * 通过value\key\code\id 常规逐个排查方式得到获取key的方法
+	 *
+	 * @param enumValue 枚举对象，null返回null
+	 * @return 枚举key值(存在value/key/code等getKey方法时返回其值；无getKey方法时，
+	 *         无自定义字段枚举返回枚举name，其余返回toString值)
 	 */
 	public static Object getEnumValue(Object enumValue) {
 		if (enumValue == null) {
 			return null;
 		}
 		Class enumClass = enumValue.getClass();
-		// 无自定义属性
-		if (EnumUtil.isEnumWithoutCustomField(enumClass)) {
-			return ((Enum) enumValue).name();
-		}
-		Object result = null;
 		// 使用computeIfAbsent保证原子性,matchEnumKeyMethod只执行一次
 		enumGetKeyExists.computeIfAbsent(enumClass, cls -> {
 			Method m = matchEnumKeyMethod(cls, enumKeys);
@@ -158,22 +154,27 @@ public class BeanUtil {
 		Method getKeyMethod = enumGetKeyMethods.get(enumClass);
 		if (getKeyMethod != null) {
 			try {
-				result = getKeyMethod.invoke(enumValue);
+				Object result = getKeyMethod.invoke(enumValue);
+				if (result != null) {
+					return result;
+				}
 			} catch (Exception e) {
-
+				// 反射异常交由后续逻辑兜底
 			}
 		}
-		if (result == null) {
-			return enumValue.toString();
+		// 无getKey方法时:无自定义字段枚举返回name,其余返回toString
+		if (EnumUtil.isEnumWithoutCustomField(enumClass)) {
+			return ((Enum) enumValue).name();
 		}
-		return result;
+		return enumValue.toString();
 	}
 
 	/**
-	 * @TODO 实例化枚举类型
-	 * @param key
-	 * @param enumClass
-	 * @return
+	 * 实例化枚举类型
+	 *
+	 * @param key       枚举key值或name(忽略大小写)
+	 * @param enumClass 枚举类型Class
+	 * @return 对应的枚举常量，优先按getKey值匹配，匹配不到回退name匹配；key为null或无匹配返回null
 	 */
 	public static Object newEnumInstance(Object key, Class enumClass) {
 		if (key == null) {
@@ -199,7 +200,10 @@ public class BeanUtil {
 		} else {
 			try {
 				for (Object enumVal : enums) {
-					if (keyStr.equalsIgnoreCase(getKeyMethod.invoke(enumVal).toString())) {
+					Object keyVal = getKeyMethod.invoke(enumVal);
+					// getKey值优先,匹配不到回退name匹配(与javadoc"key值或name"一致)
+					if (keyStr.equalsIgnoreCase(((Enum) enumVal).name())
+							|| (keyVal != null && keyStr.equalsIgnoreCase(keyVal.toString()))) {
 						return enumVal;
 					}
 				}
@@ -211,10 +215,11 @@ public class BeanUtil {
 	}
 
 	/**
-	 * @TODO 找到枚举类型中获取key的方法
-	 * @param enumClass
-	 * @param props
-	 * @return
+	 * 找到枚举类型中获取key的方法
+	 * 
+	 * @param enumClass 枚举类型Class
+	 * @param props     候选属性名称数组(如value、key、code、id)，按顺序匹配getXXX或XXX方法
+	 * @return 匹配到的无参有返回值方法，未匹配返回null
 	 */
 	private static Method matchEnumKeyMethod(Class enumClass, String... props) {
 		Method[] methods = enumClass.getMethods();
@@ -228,9 +233,9 @@ public class BeanUtil {
 		String prop;
 		String name;
 		for (int i = 0; i < props.length; i++) {
-			prop = props[i].toLowerCase();
+			prop = props[i].toLowerCase(Locale.ROOT);
 			for (Method getKeyMethod : realMeth) {
-				name = getKeyMethod.getName().toLowerCase();
+				name = getKeyMethod.getName().toLowerCase(Locale.ROOT);
 				if ("get".concat(prop).equals(name) || prop.equals(name)) {
 					return getKeyMethod;
 				}
@@ -246,10 +251,11 @@ public class BeanUtil {
 	 * <li>update 2021-03-12 支持property中含下划线跟对象属性进行匹配</li>
 	 * </p>
 	 * 
-	 * @todo 获取指定名称的方法集
-	 * @param voClass
-	 * @param props
-	 * @return
+	 * 获取指定名称的方法集
+	 * 
+	 * @param voClass 目标对象类型
+	 * @param props   属性名称数组，与返回数组位置一一对应
+	 * @return 与属性对应的set方法数组，未匹配到方法的位置为null
 	 */
 	public static Method[] matchSetMethods(Class voClass, String... props) {
 		int indexSize = props.length;
@@ -282,7 +288,7 @@ public class BeanUtil {
 		int index;
 		for (int i = 0; i < indexSize; i++) {
 			if (props[i] != null) {
-				prop = "set".concat(props[i].toLowerCase());
+				prop = "set".concat(props[i].toLowerCase(Locale.ROOT));
 				matched = false;
 				// 将属性名称剔除下划线
 				minProp = null;
@@ -295,7 +301,7 @@ public class BeanUtil {
 				for (int j = 0; j < realMeth.size(); j++) {
 					isBool = false;
 					method = realMeth.get(j);
-					name = method.getName().toLowerCase();
+					name = method.getName().toLowerCase(Locale.ROOT);
 					// setXXX完全匹配(优先匹配不做下划线替换的场景)
 					if (prop.equals(name)) {
 						matched = true;
@@ -337,10 +343,11 @@ public class BeanUtil {
 	}
 
 	/**
-	 * @todo 获取指定名称的方法集,不区分大小写
-	 * @param voClass
-	 * @param props
-	 * @return
+	 * 获取指定名称的方法集,不区分大小写
+	 * 
+	 * @param voClass 目标对象类型(支持Record类型)
+	 * @param props   属性名称数组，与返回数组位置一一对应
+	 * @return 与属性对应的get/is方法数组，未匹配到方法的位置为null
 	 */
 	public static Method[] matchGetMethods(Class voClass, String... props) {
 		int indexSize = props.length;
@@ -366,7 +373,7 @@ public class BeanUtil {
 		// 过滤get 和is 开头的方法
 		for (Method mt : methods) {
 			if (!void.class.equals(mt.getReturnType()) && mt.getParameterTypes().length == 0) {
-				name = mt.getName().toLowerCase();
+				name = mt.getName().toLowerCase(Locale.ROOT);
 				if (name.startsWith("get") || name.startsWith("is")) {
 					realMeth.add(mt);
 				}
@@ -386,7 +393,7 @@ public class BeanUtil {
 		int index;
 		for (int i = 0; i < indexSize; i++) {
 			if (props[i] != null) {
-				prop = props[i].toLowerCase();
+				prop = props[i].toLowerCase(Locale.ROOT);
 				matched = false;
 				// 将属性名称剔除下划线
 				minProp = null;
@@ -399,7 +406,7 @@ public class BeanUtil {
 				for (int j = 0; j < realMeth.size(); j++) {
 					isBool = false;
 					method = realMeth.get(j);
-					name = method.getName().toLowerCase();
+					name = method.getName().toLowerCase(Locale.ROOT);
 					// get完全匹配
 					if (name.equals("get".concat(prop))) {
 						matched = true;
@@ -442,10 +449,11 @@ public class BeanUtil {
 	}
 
 	/**
-	 * @todo 获取指定名称的方法集,不区分大小写
-	 * @param voClass
-	 * @param properties
-	 * @return
+	 * 获取指定名称的方法集,不区分大小写
+	 * 
+	 * @param voClass    目标对象类型(支持Record类型)
+	 * @param properties 属性名称数组
+	 * @return 各属性对应的java.sql.Types类型值数组，未匹配的位置为Types.NULL
 	 */
 	public static Integer[] matchMethodsType(Class voClass, String... properties) {
 		if (properties == null || properties.length == 0) {
@@ -463,15 +471,15 @@ public class BeanUtil {
 		Method method;
 		for (int i = 0; i < indexSize; i++) {
 			fieldsType[i] = java.sql.Types.NULL;
-			property = properties[i].toLowerCase();
+			property = properties[i].toLowerCase(Locale.ROOT);
 			for (int j = 0; j < methodCnt; j++) {
 				method = methods[j];
-				methodName = method.getName().toLowerCase();
+				methodName = method.getName().toLowerCase(Locale.ROOT);
 				// update 2012-10-25 from equals to ignoreCase
 				if (!void.class.equals(method.getReturnType()) && method.getParameterTypes().length == 0
 						&& (methodName.equals("get".concat(property)) || methodName.equals("is".concat(property))
 								|| (methodName.startsWith("is") && methodName.equals(property)))) {
-					fieldsType[i] = getSqlType(method.getReturnType().getSimpleName().toLowerCase());
+					fieldsType[i] = getSqlType(method.getReturnType().getSimpleName().toLowerCase(Locale.ROOT));
 					break;
 				}
 			}
@@ -491,7 +499,7 @@ public class BeanUtil {
 			propName = properties[i];
 			for (RecordComponent component : components) {
 				if (propName.equalsIgnoreCase(component.getName())) {
-					fieldsType[i] = getSqlType(component.getType().getSimpleName().toLowerCase());
+					fieldsType[i] = getSqlType(component.getType().getSimpleName().toLowerCase(Locale.ROOT));
 					break;
 				}
 			}
@@ -529,11 +537,12 @@ public class BeanUtil {
 	}
 
 	/**
-	 * @todo 类的方法调用
-	 * @param bean
-	 * @param methodName
-	 * @param args
-	 * @return
+	 * 类的方法调用
+	 * 
+	 * @param bean       目标对象
+	 * @param methodName 方法名称(忽略大小写)
+	 * @param args       方法参数数组
+	 * @return 方法执行结果，方法不存在返回null
 	 * @throws Exception
 	 */
 	public static Object invokeMethod(Object bean, String methodName, Object[] args) throws Exception {
@@ -562,10 +571,11 @@ public class BeanUtil {
 	}
 
 	/**
-	 * @todo <b>对象比较</b>
-	 * @param target
-	 * @param compared
-	 * @return
+	 * 对象比较
+	 * 
+	 * @param target   目标对象，null时按引用比较
+	 * @param compared 比较对象
+	 * @return 相等返回true
 	 */
 	public static boolean equals(Object target, Object compared) {
 		if (null == target) {
@@ -575,11 +585,12 @@ public class BeanUtil {
 	}
 
 	/**
-	 * @todo 用于不同类型数据之间进行比较，判断是否相等,当类型不一致时统一用String类型比较
-	 * @param target
-	 * @param compared
-	 * @param ignoreCase
-	 * @return
+	 * 用于不同类型数据之间进行比较，判断是否相等,当类型不一致时统一用String类型比较
+	 * 
+	 * @param target     目标对象，null时按引用比较
+	 * @param compared   比较对象
+	 * @param ignoreCase true按字符串忽略大小写比较
+	 * @return 相等返回true，任一为null时仅当两者同为null返回true
 	 */
 	public static boolean equalsIgnoreType(Object target, Object compared, boolean ignoreCase) {
 		if (target == null || compared == null) {
@@ -595,10 +606,11 @@ public class BeanUtil {
 	}
 
 	/**
-	 * @TODO 比较两个对象的大小
-	 * @param target
-	 * @param compared
-	 * @return
+	 * 比较两个对象的大小
+	 * 
+	 * @param target   目标对象，null视为最小
+	 * @param compared 比较对象
+	 * @return 负数表示target小于compared，0相等，正数表示大于；支持日期、数字和字符串比较
 	 */
 	public static int compare(Object target, Object compared) {
 		if (null == target && null == compared) {
@@ -631,11 +643,12 @@ public class BeanUtil {
 	}
 
 	/**
-	 * @TODO 提供对象get/set 类型转换
-	 * @param value
+	 * 提供对象get/set 类型转换
+	 * 
+	 * @param value     待转换的值，null时按原生类型返回默认值(数字0、false等)
 	 * @param typeValue DataType.getType(typeName) 注意typeName不用转小写
 	 * @param typeName  getParameterTypes()[0].getTypeName() 没有转大小写
-	 * @return
+	 * @return 转换后的目标类型值
 	 * @throws Exception
 	 */
 	public static Object convertType(Object value, int jdbcType, int typeValue, String typeName) throws Exception {
@@ -643,14 +656,15 @@ public class BeanUtil {
 	}
 
 	/**
-	 * @todo 类型转换 2022-10-18 已经完成了优化，减少了不必要的判断
-	 * @param typeHandler
-	 * @param value
+	 * 类型转换 2022-10-18 已经完成了优化，减少了不必要的判断
+	 * 
+	 * @param typeHandler 自定义类型处理器，非null时优先通过其完成非常规类型转换
+	 * @param value       待转换的值，null时按原生类型返回默认值(数字0、false等)
 	 * @param jdbcType    sqlTypes.xxx
 	 * @param typeValue   set(Type) set参数的类型
 	 * @param typeName    getTypeName()没有转大小写
 	 * @param genericType 泛型类型
-	 * @return
+	 * @return 转换后的目标类型值，无法识别的类型原值返回
 	 * @throws Exception
 	 */
 	public static Object convertType(TypeHandler typeHandler, Object value, int jdbcType, int typeValue,
@@ -714,8 +728,8 @@ public class BeanUtil {
 			} else {
 				Object[] paramAry = CollectionUtil.convertArray(paramValue);
 				if (paramAry.length > 1) {
-					throw new DataAccessException("不能将长度大于1,类型为:" + paramValue.getClass().getTypeName() + " 的数组转化为:"
-							+ typeName + " 类型的值,请检查!");
+					throw new DataAccessException("can not convert an array with length greater than 1 and type ["
+							+ paramValue.getClass().getTypeName() + "] to type [" + typeName + "], please check!");
 				}
 				paramValue = paramAry[0];
 				if (paramValue == null) {
@@ -729,12 +743,18 @@ public class BeanUtil {
 				return SqlUtil.clobToString((java.sql.Clob) paramValue);
 			} else if (paramValue instanceof LocalDate) {
 				return DateUtil.formatDate(paramValue, "yyyy-MM-dd");
+			} else if (paramValue instanceof LocalDateTime) {
+				return DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss");
 			} else if (paramValue instanceof LocalTime) {
 				return DateUtil.formatDate(paramValue, "HH:mm:ss");
 			} else if (paramValue instanceof java.util.Date) {
 				return DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss");
 			} else if (paramValue instanceof Enum) {
 				return getEnumValue(paramValue).toString();
+			} else if (paramValue instanceof OffsetDateTime) {
+				return DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss");
+			} else if (paramValue instanceof ZonedDateTime) {
+				return DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss");
 			}
 			return paramValue.toString();
 		}
@@ -865,7 +885,7 @@ public class BeanUtil {
 		// 13 第9 字符串转 boolean 型
 		if (DataType.wrapBooleanType == typeValue) {
 			String valueStr = paramValue.toString();
-			if ("true".equals(valueStr.toLowerCase()) || "1".equals(valueStr)) {
+			if ("true".equals(valueStr.toLowerCase(Locale.ROOT)) || "1".equals(valueStr)) {
 				return Boolean.TRUE;
 			}
 			return Boolean.FALSE;
@@ -873,7 +893,7 @@ public class BeanUtil {
 		// 14 第10 字符串转 boolean 型
 		if (DataType.primitiveBooleanType == typeValue) {
 			String valueStr = paramValue.toString();
-			if ("true".equals(valueStr.toLowerCase()) || "1".equals(valueStr)) {
+			if ("true".equals(valueStr.toLowerCase(Locale.ROOT)) || "1".equals(valueStr)) {
 				return true;
 			}
 			return false;
@@ -1148,7 +1168,7 @@ public class BeanUtil {
 				try {
 					return Class.forName(tn);
 				} catch (ClassNotFoundException e) {
-					throw new DataAccessException("无法加载枚举类:" + tn, e);
+					throw new DataAccessException("failed to load enum class [" + tn + "]!", e);
 				}
 			});
 			return newEnumInstance(paramValue, enumClass);
@@ -1157,7 +1177,8 @@ public class BeanUtil {
 	}
 
 	/**
-	 * @todo 将数据库vector向量类型的值转为java对象属性类型,支持String、float[]、Float[]、double[]、Double[]和List<Float>/List<Double>
+	 * 将数据库vector向量类型的值转为java对象属性类型,支持String、float[]、Float[]、double[]、Double[]和List<Float>/List<Double>
+	 * 
 	 * @param typeName    属性类型名称
 	 * @param genericType List属性的单值泛型类型
 	 * @param jdbcValue   数据库返回的向量值(pgvector
@@ -1168,7 +1189,12 @@ public class BeanUtil {
 		if (jdbcValue == null) {
 			return null;
 		}
-		String typeNameLow = typeName.toLowerCase();
+		// update 2026-9-6 达梦等数据库的vector读回为Clob(NClob)形态,toString为对象地址而非文本,
+		// 先归一为文本再解析
+		if (jdbcValue instanceof java.sql.Clob) {
+			jdbcValue = SqlUtil.clobToString((java.sql.Clob) jdbcValue);
+		}
+		String typeNameLow = typeName.toLowerCase(Locale.ROOT);
 		boolean isString = typeNameLow.equals("java.lang.string");
 		// quickvo默认将vector列映射为Float[],因此同时支持包装类型数组和基本类型数组
 		boolean isBoxedFloatAry = typeNameLow.equals("java.lang.float[]");
@@ -1245,17 +1271,24 @@ public class BeanUtil {
 	}
 
 	/**
-	 * @todo 将数据库geometry空间类型的值转为java对象属性类型,支持String(WKT/EWKT)和
-	 *       org.locationtech.jts.geom.Geometry及其子类型(需jts-core可选依赖)
+	 * 将数据库geometry空间类型的值转为java对象属性类型,支持String(WKT/EWKT)和
+	 * org.locationtech.jts.geom.Geometry及其子类型(需jts-core可选依赖)
+	 *
 	 * @param typeName  属性类型名称
-	 * @param jdbcValue 数据库返回值(WKT/EWKT字符串、postgis EWKB hex、mysql WKB二进制、PGobject等)
+	 * @param jdbcValue 数据库返回值(WKT/EWKT字符串、postgis EWKB hex、mysql WKB二进制、
+	 *                  PGobject、oracle SDO_GEOMETRY的Struct读回值等)
 	 * @return 返回null表示目标类型无法识别或解析失败,交回框架按常规类型处理
 	 */
 	private static Object geometryToJavaType(String typeName, Object jdbcValue) {
 		if (jdbcValue == null) {
 			return null;
 		}
-		String typeNameLow = typeName.toLowerCase();
+		// update 2026-9-6 达梦等数据库geometry/json以Clob形态存储读回时,先归一为文本
+		// (WKT文本直接透传,不再依赖jts;二进制WKB形态仍走jts解析)
+		if (jdbcValue instanceof java.sql.Clob) {
+			jdbcValue = SqlUtil.clobToString((java.sql.Clob) jdbcValue);
+		}
+		String typeNameLow = typeName.toLowerCase(Locale.ROOT);
 		// String目标:已是字符串直接返回(postgis下EWKB hex形式的透传,查询侧建议ST_AsText);
 		// PGobject(EWKB hex)、byte[](mysql WKB)在JTS在场时统一转为WKT文本
 		if (typeNameLow.equals("java.lang.string")) {
@@ -1277,8 +1310,8 @@ public class BeanUtil {
 	/**
 	 * 只处理非null值
 	 * 
-	 * @param paramValue
-	 * @return
+	 * @param paramValue 待转字符串的值(枚举取key值后转字符串)
+	 * @return 对应的字符串表示，调用方保证paramValue非null
 	 */
 	private static String enumToString(Object paramValue) {
 		if (paramValue instanceof Enum) {
@@ -1299,10 +1332,11 @@ public class BeanUtil {
 	}
 
 	public static String convertBoolean(String boolVar) {
-		if ("true".equals(boolVar)) {
+		// 忽略大小写,与字符串转Boolean的判断规则保持一致
+		if ("true".equalsIgnoreCase(boolVar)) {
 			return "1";
 		}
-		if ("false".equals(boolVar)) {
+		if ("false".equalsIgnoreCase(boolVar)) {
 			return "0";
 		}
 		return boolVar;
@@ -1317,10 +1351,11 @@ public class BeanUtil {
 	}
 
 	/**
-	 * @todo 利用java.lang.reflect并结合页面的property， 从对象中取出对应方法的值，组成一个List
-	 * @param datas
-	 * @param props
-	 * @return
+	 * 利用java.lang.reflect并结合页面的property， 从对象中取出对应方法的值，组成一个List
+	 * 
+	 * @param datas 对象集合(元素可为bean或Map)，null或空返回null
+	 * @param props 待提取的属性名称数组，支持xxx.yyy级联形式
+	 * @return 二维List，每行为一个对象提取出的属性值列表
 	 * @throws RuntimeException
 	 */
 	public static List reflectBeansToList(List datas, String... props) throws RuntimeException {
@@ -1328,10 +1363,11 @@ public class BeanUtil {
 	}
 
 	/**
-	 * @TODO 切取单列值并以数组返回,服务于loadAll方法
-	 * @param datas
-	 * @param propertyName
-	 * @return
+	 * 切取单列值并以数组返回,服务于loadAll方法
+	 * 
+	 * @param datas        对象集合
+	 * @param propertyName 属性名称
+	 * @return 该列的值组成的数组(剔除null值)，无有效数据返回null
 	 * @throws RuntimeException
 	 */
 	public static Object[] sliceToArray(List datas, String propertyName) throws RuntimeException {
@@ -1356,11 +1392,12 @@ public class BeanUtil {
 	}
 
 	/**
-	 * @todo 利用java.lang.reflect并结合页面的property， 从对象中取出对应方法的值，组成一个List
-	 * @param datas
-	 * @param properties
-	 * @param reflectPropsHandler
-	 * @return
+	 * 利用java.lang.reflect并结合页面的property， 从对象中取出对应方法的值，组成一个List
+	 * 
+	 * @param datas               对象集合(元素可为bean或Map)，null或空返回null
+	 * @param properties          待提取的属性名称数组，支持xxx.yyy级联形式
+	 * @param reflectPropsHandler 属性值处理回调，非null时对每行提取结果做加工处理
+	 * @return 二维List，每行为一个对象提取出的属性值列表
 	 * @throws RuntimeException
 	 */
 	public static List reflectBeansToList(List datas, String[] properties, ReflectPropsHandler reflectPropsHandler)
@@ -1378,7 +1415,7 @@ public class BeanUtil {
 			if (hasHandler) {
 				HashMap<String, Integer> propertyIndexMap = new HashMap<String, Integer>();
 				for (int i = 0; i < methodLength; i++) {
-					propertyIndexMap.put(properties[i].toLowerCase(), i);
+					propertyIndexMap.put(properties[i].toLowerCase(Locale.ROOT), i);
 				}
 				reflectPropsHandler.setPropertyIndexMap(propertyIndexMap);
 			}
@@ -1412,11 +1449,6 @@ public class BeanUtil {
 			Method[] realMethods = null;
 			boolean inited = false;
 			Object[] params = new Object[] {};
-			// 增加map类型支持
-			boolean isMap = false;
-			if (datas.get(0) != null && Map.class.isAssignableFrom(datas.get(0).getClass())) {
-				isMap = true;
-			}
 			Iterator iter;
 			String fieldLow;
 			Map.Entry<String, Object> entry;
@@ -1425,8 +1457,8 @@ public class BeanUtil {
 				rowObject = datas.get(i);
 				if (null != rowObject) {
 					List dataList = new ArrayList();
-					// 2021-10-09 支持map类型
-					if (isMap) {
+					// 2021-10-09 支持map类型(逐行判断,容忍首行为null或bean/map混排)
+					if (rowObject instanceof Map) {
 						if (rowObject instanceof IgnoreKeyCaseMap) {
 							rowMap = (IgnoreKeyCaseMap) rowObject;
 							for (int j = 0; j < methodLength; j++) {
@@ -1434,15 +1466,21 @@ public class BeanUtil {
 							}
 						} else {
 							rowMap = (Map) rowObject;
-							// 考虑key大小写兼容
 							for (int j = 0; j < methodLength; j++) {
-								fieldLow = properties[j].toLowerCase();
+								// 优先按参数名精确containsKey/get取值，尊重Map自身实现的get语义
+								// (如自定义归一化键的Map)；同时避免每个参数都O(n)遍历entrySet
+								if (rowMap.containsKey(properties[j])) {
+									dataList.add(rowMap.get(properties[j]));
+									continue;
+								}
+								// 考虑key大小写兼容
+								fieldLow = properties[j].toLowerCase(Locale.ROOT);
 								// 属性key缺失必须补null占位,否则行长度不足,后续按下标消费整体左移错位
 								boolean matched = false;
 								iter = rowMap.entrySet().iterator();
 								while (iter.hasNext()) {
 									entry = (Map.Entry<String, Object>) iter.next();
-									if (entry.getKey().toLowerCase().equals(fieldLow)) {
+									if (entry.getKey().toLowerCase(Locale.ROOT).equals(fieldLow)) {
 										dataList.add(entry.getValue());
 										matched = true;
 										break;
@@ -1477,18 +1515,17 @@ public class BeanUtil {
 						resultList.add(dataList);
 					}
 				} else {
-					if (logger.isDebugEnabled()) {
-						logger.debug("BeanUtil.reflectBeansToList 方法,第:{}行数据为null,如果是sql查询请检查写法是否正确!", i);
-					} else {
-						err.println("BeanUtil.reflectBeansToList 方法,第:{" + i + "}行数据为null,如果是sql查询请检查写法是否正确!");
-					}
+					logger.debug(
+							"BeanUtil.reflectBeansToList method, row:{} data is null, please check the sql if it is a sql query!",
+							i);
 					resultList.add(null);
 				}
 			}
 		} catch (Exception e) {
-			logger.error("反射Java Bean获取数据组装List集合异常!{}", e.getMessage());
-			logger.error("reflectBeansToList 方法执行异常", e);
-			throw new RuntimeException("反射Java Bean获取数据组装List集合异常!" + e.getMessage());
+			logger.error("exception occurred while building List from java bean by reflection!{}", e.getMessage());
+			logger.error("reflectBeansToList method execution failed", e);
+			throw new RuntimeException(
+					"reflectBeansToList error occurred while building List from java bean!" + e.getMessage());
 		}
 		return resultList;
 	}
@@ -1498,12 +1535,13 @@ public class BeanUtil {
 	}
 
 	/**
-	 * @todo 反射出单个对象中的属性并以对象数组返回
-	 * @param serializable
-	 * @param properties
-	 * @param defaultValues
-	 * @param reflectPropsHandler
-	 * @return
+	 * 反射出单个对象中的属性并以对象数组返回
+	 * 
+	 * @param serializable        目标对象(支持bean、Map，属性支持a.b.c[index]级联形式)
+	 * @param properties          待提取的属性名称数组
+	 * @param defaultValues       属性值为null时的默认值数组
+	 * @param reflectPropsHandler 属性值处理回调，非null时对提取结果做加工处理
+	 * @return 属性值组成的对象数组，与properties位置一一对应
 	 */
 	public static Object[] reflectBeanToAry(Object serializable, String[] properties, Object[] defaultValues,
 			ReflectPropsHandler reflectPropsHandler) {
@@ -1522,7 +1560,7 @@ public class BeanUtil {
 		if (hasHandler && !reflectPropsHandler.initPropsIndexMap()) {
 			HashMap<String, Integer> propertyIndexMap = new HashMap<String, Integer>();
 			for (int i = 0; i < methodLength; i++) {
-				propertyIndexMap.put(realProps[i].toLowerCase(), i);
+				propertyIndexMap.put(realProps[i].toLowerCase(Locale.ROOT), i);
 			}
 			reflectPropsHandler.setPropertyIndexMap(propertyIndexMap);
 		}
@@ -1547,14 +1585,20 @@ public class BeanUtil {
 					hasKey = false;
 					// map 类型且key本身就是xxxx.xxxx格式
 					if (fieldValue instanceof Map) {
-						iter = ((Map) fieldValue).entrySet().iterator();
-						fieldLow = realProps[i].toLowerCase();
-						while (iter.hasNext()) {
-							entry = (Map.Entry<String, Object>) iter.next();
-							if (entry.getKey().toLowerCase().equals(fieldLow)) {
-								fieldValue = entry.getValue();
-								hasKey = true;
-								break;
+						// 优先按key精确取值，尊重Map自身实现的get语义(如自定义归一化键的Map)
+						if (((Map) fieldValue).containsKey(realProps[i])) {
+							fieldValue = ((Map) fieldValue).get(realProps[i]);
+							hasKey = true;
+						} else {
+							iter = ((Map) fieldValue).entrySet().iterator();
+							fieldLow = realProps[i].toLowerCase(Locale.ROOT);
+							while (iter.hasNext()) {
+								entry = (Map.Entry<String, Object>) iter.next();
+								if (entry.getKey().toLowerCase(Locale.ROOT).equals(fieldLow)) {
+									fieldValue = entry.getValue();
+									hasKey = true;
+									break;
+								}
 							}
 						}
 					}
@@ -1588,34 +1632,46 @@ public class BeanUtil {
 										break;
 									}
 								} else {
-									iter = ((Map) fieldValue).entrySet().iterator();
-									isMapped = false;
-									fieldLow = field.toLowerCase();
-									keyAndIndex = getKeyAndIndex(fieldLow);
-									realFieldLow = (keyAndIndex == null) ? fieldLow : keyAndIndex.getKey();
-									while (iter.hasNext()) {
-										entry = (Map.Entry<String, Object>) iter.next();
-										keyLowString = entry.getKey().toLowerCase();
-										if (keyLowString.equals(realFieldLow)) {
-											if (keyAndIndex != null) {
-												fieldValue = getArrayIndexValue(entry.getValue(),
-														keyAndIndex.getIndex());
-											} else {
-												fieldValue = entry.getValue();
+									keyAndIndex = getKeyAndIndex(field);
+									realFieldLow = (keyAndIndex == null) ? field : keyAndIndex.getKey();
+									// 优先按key精确取值，尊重Map自身实现的get语义(如自定义归一化键的Map)
+									if (((Map) fieldValue).containsKey(realFieldLow)) {
+										tmpValue = ((Map) fieldValue).get(realFieldLow);
+										if (keyAndIndex != null) {
+											fieldValue = getArrayIndexValue(tmpValue, keyAndIndex.getIndex());
+										} else {
+											fieldValue = tmpValue;
+										}
+									} else {
+										iter = ((Map) fieldValue).entrySet().iterator();
+										isMapped = false;
+										fieldLow = field.toLowerCase(Locale.ROOT);
+										keyAndIndex = getKeyAndIndex(fieldLow);
+										realFieldLow = (keyAndIndex == null) ? fieldLow : keyAndIndex.getKey();
+										while (iter.hasNext()) {
+											entry = (Map.Entry<String, Object>) iter.next();
+											keyLowString = entry.getKey().toLowerCase(Locale.ROOT);
+											if (keyLowString.equals(realFieldLow)) {
+												if (keyAndIndex != null) {
+													fieldValue = getArrayIndexValue(entry.getValue(),
+															keyAndIndex.getIndex());
+												} else {
+													fieldValue = entry.getValue();
+												}
+												isMapped = true;
+												break;
 											}
-											isMapped = true;
+										}
+										// 未匹配到，做a.b.c[index]，key直接是a.b.c尝试
+										if (!isMapped) {
+											if (keyAndIndex == null) {
+												fieldValue = getMaybeArrayValue((Map) fieldValue,
+														wrapMapKey(fields, index));
+											} else {
+												fieldValue = null;
+											}
 											break;
 										}
-									}
-									// 未匹配到，做a.b.c[index]，key直接是a.b.c尝试
-									if (!isMapped) {
-										if (keyAndIndex == null) {
-											fieldValue = getMaybeArrayValue((Map) fieldValue,
-													wrapMapKey(fields, index));
-										} else {
-											fieldValue = null;
-										}
-										break;
 									}
 								}
 							} // update 2022-5-25 支持将集合的属性直接映射成数组
@@ -1694,12 +1750,13 @@ public class BeanUtil {
 	}
 
 	/**
-	 * @todo 利用java.lang.reflect并结合页面的property， 从对象中取出对应方法的值，组成一个List
-	 * @param dataSet
-	 * @param properties
-	 * @param defaultValues
-	 * @param reflectPropsHandler
-	 * @return
+	 * 利用java.lang.reflect并结合页面的property， 从对象中取出对应方法的值，组成一个List
+	 * 
+	 * @param dataSet             对象集合，null或空返回null
+	 * @param properties          待提取的属性名称数组
+	 * @param defaultValues       属性值为null时的默认值数组
+	 * @param reflectPropsHandler 属性值处理回调，非null时对每行提取结果做加工处理
+	 * @return 每行为属性值数组的List
 	 */
 	public static List<Object[]> reflectBeansToInnerAry(List dataSet, String[] properties, Object[] defaultValues,
 			ReflectPropsHandler reflectPropsHandler) {
@@ -1720,7 +1777,7 @@ public class BeanUtil {
 			if (hasHandler) {
 				HashMap<String, Integer> propertyIndexMap = new HashMap<String, Integer>();
 				for (int i = 0; i < methodLength; i++) {
-					propertyIndexMap.put(properties[i].toLowerCase(), i);
+					propertyIndexMap.put(properties[i].toLowerCase(Locale.ROOT), i);
 				}
 				reflectPropsHandler.setPropertyIndexMap(propertyIndexMap);
 			}
@@ -1759,17 +1816,15 @@ public class BeanUtil {
 						resultList.add(dataAry);
 					}
 				} else {
-					if (logger.isDebugEnabled()) {
-						logger.debug("BeanUtil.reflectBeansToInnerAry 方法,第:{}行数据为null,如果是sql查询请检查写法是否正确!", i);
-					} else {
-						err.println("BeanUtil.reflectBeansToInnerAry 方法,第:{" + i + "}行数据为null,如果是sql查询请检查写法是否正确!");
-					}
+					logger.debug(
+							"BeanUtil.reflectBeansToInnerAry method, row:{} data is null, please check the sql if it is a sql query!",
+							i);
 					resultList.add(null);
 				}
 			}
 		} catch (Exception e) {
-			logger.error("反射Java Bean获取数据组装List集合异常!{}", e.getMessage());
-			logger.error("reflectBeansToInnerAry 方法执行异常", e);
+			logger.error("exception occurred while building List from java bean by reflection!{}", e.getMessage());
+			logger.error("reflectBeansToInnerAry method execution failed", e);
 			throw new RuntimeException(e);
 		}
 		return resultList;
@@ -1788,13 +1843,14 @@ public class BeanUtil {
 	}
 
 	/**
-	 * @todo 将二维数组映射到对象集合中
-	 * @param typeHandler
-	 * @param datas
-	 * @param indexs
-	 * @param properties
-	 * @param voClass
-	 * @return
+	 * 将二维数组映射到对象集合中
+	 * 
+	 * @param typeHandler 自定义类型处理器，非null时优先通过其完成类型转换
+	 * @param datas       二维数据集合(每行为数组或List)，null或空返回null
+	 * @param indexs      数据列与属性的下标对应关系
+	 * @param properties  属性名称数组(与indexs一一对应)
+	 * @param voClass     目标VO对象类型
+	 * @return 映射后的VO对象集合，异常抛出RuntimeException
 	 * @throws RuntimeException
 	 */
 	public static List reflectListToBean(TypeHandler typeHandler, Collection datas, int[] indexs, String[] properties,
@@ -1803,14 +1859,15 @@ public class BeanUtil {
 	}
 
 	/**
-	 * @todo 利用java.lang.reflect并结合页面的property， 从对象中取出对应方法的值，组成一个List
-	 * @param typeHandler
-	 * @param datas
-	 * @param indexs
-	 * @param properties
-	 * @param voClass
-	 * @param autoConvertType
-	 * @return
+	 * 利用java.lang.reflect并结合页面的property， 从对象中取出对应方法的值，组成一个List
+	 * 
+	 * @param typeHandler     自定义类型处理器，非null时优先通过其完成类型转换
+	 * @param datas           二维数据集合(每行为数组或List)，null或空返回null
+	 * @param indexs          数据列与属性的下标对应关系
+	 * @param properties      属性名称数组(与indexs一一对应)
+	 * @param voClass         目标VO对象类型(支持Record类型)
+	 * @param autoConvertType true自动适配属性的数据类型并做类型转换
+	 * @return 映射后的VO对象集合，异常抛出RuntimeException
 	 */
 	public static List reflectListToBean(TypeHandler typeHandler, Collection datas, int[] indexs, String[] properties,
 			String[] columnTypes, Class voClass, boolean autoConvertType) {
@@ -1819,10 +1876,12 @@ public class BeanUtil {
 		}
 		if (null == properties || properties.length < 1 || null == voClass || null == indexs || indexs.length == 0
 				|| properties.length != indexs.length) {
-			throw new IllegalArgumentException("集合或属性名称数组为空,请检查参数信息!");
+			throw new IllegalArgumentException(
+					"collection or property name array is empty, please check the arguments!");
 		}
 		if (Modifier.isAbstract(voClass.getModifiers()) || Modifier.isInterface(voClass.getModifiers())) {
-			throw new IllegalArgumentException("toClassType:" + voClass.getName() + " 是抽象类或接口,非法参数!");
+			throw new IllegalArgumentException(
+					"toClassType [" + voClass.getName() + "] is an abstract class or interface, illegal argument!");
 		}
 		// record类型
 		if (voClass.isRecord()) {
@@ -1859,13 +1918,13 @@ public class BeanUtil {
 						methodTypeValues[i] = DataType.getType(methodType);
 						types = realMethods[i].getGenericParameterTypes();
 						if (properties[i] != null) {
-							tmpStr = properties[i].toLowerCase();
+							tmpStr = properties[i].toLowerCase(Locale.ROOT);
 							// 先取字段注解上的sqlType
 							if (fieldTypeMap.containsKey(tmpStr)) {
 								propertySqlTypes[i] = fieldTypeMap.get(tmpStr);
 							} // 再取sql查询getColumnType对应的类型,目前主要针对JSON/JSONB、VECTOR，预留GEOMETRY
 							else if (columnTypeLength > i && columnTypes[i] != null) {
-								tmpStr = columnTypes[i].toUpperCase();
+								tmpStr = columnTypes[i].toUpperCase(Locale.ROOT);
 								if (tmpStr.equals("JSON")) {
 									propertySqlTypes[i] = JdbcTypes.JSON;
 								} else if (tmpStr.equals("JSONB")) {
@@ -1932,11 +1991,9 @@ public class BeanUtil {
 					resultList.add(bean);
 					notNullRowIndex++;
 				} else {
-					if (logger.isDebugEnabled()) {
-						logger.debug("BeanUtil.reflectListToBean 方法,第:{}行数据为null,如果是sql查询请检查写法是否正确!", index);
-					} else {
-						err.println("BeanUtil.reflectListToBean 方法,第:{" + index + "}行数据为null,如果是sql查询请检查写法是否正确!");
-					}
+					logger.debug(
+							"BeanUtil.reflectListToBean method, row:{} data is null, please check the sql if it is a sql query!",
+							index);
 					resultList.add(null);
 				}
 				index++;
@@ -2004,7 +2061,7 @@ public class BeanUtil {
 					propIndexes[i] = indexs[j];
 					if (columnTypesLength > j && columnTypes[j] != null) {
 						// 列类型取匹配到的第j列,不能用record属性下标i(列序与属性序不一致时取错,属性多于列时越界)
-						tmpStr = columnTypes[j].toUpperCase();
+						tmpStr = columnTypes[j].toUpperCase(Locale.ROOT);
 						if (tmpStr.equals("JSON")) {
 							propertySqlTypes[i] = JdbcTypes.JSON;
 						} else if (tmpStr.equals("JSONB")) {
@@ -2079,11 +2136,9 @@ public class BeanUtil {
 					resultList.add(recordBean);
 					notNullRowIndex++;
 				} else {
-					if (logger.isDebugEnabled()) {
-						logger.debug("BeanUtil.reflectListToBean 方法,第:{}行数据为null,如果是sql查询请检查写法是否正确!", index);
-					} else {
-						err.println("BeanUtil.reflectListToBean 方法,第:{" + index + "}行数据为null,如果是sql查询请检查写法是否正确!");
-					}
+					logger.debug(
+							"BeanUtil.reflectListToBean method, row:{} data is null, please check the sql if it is a sql query!",
+							index);
 					resultList.add(null);
 				}
 				index++;
@@ -2141,12 +2196,13 @@ public class BeanUtil {
 	}
 
 	/**
-	 * @todo 批量对集合的属性设置相同的值
-	 * @param voList
-	 * @param properties
-	 * @param values
-	 * @param autoConvertType
-	 * @param forceUpdate
+	 * 批量对集合的属性设置相同的值
+	 * 
+	 * @param voList          对象集合，null或空直接返回
+	 * @param properties      待设置的属性名称数组
+	 * @param values          与属性一一对应的值数组
+	 * @param autoConvertType true按属性类型自动转换值类型
+	 * @param forceUpdate     true强制覆盖(包括null值)，false属性值为null时跳过
 	 */
 	public static void batchSetProperties(Collection voList, String[] properties, Object[] values,
 			boolean autoConvertType, boolean forceUpdate) {
@@ -2155,7 +2211,8 @@ public class BeanUtil {
 		}
 		if (null == properties || properties.length < 1 || null == values || values.length < 1
 				|| properties.length != values.length) {
-			throw new IllegalArgumentException("集合或属性名称数组为空,请检查参数信息!");
+			throw new IllegalArgumentException(
+					"collection or property name array is empty, please check the arguments!");
 		}
 		try {
 			int indexSize = properties.length;
@@ -2203,19 +2260,22 @@ public class BeanUtil {
 				}
 			}
 		} catch (Exception e) {
-			logger.error("将集合数据反射到Java Bean过程异常!{}", e.getMessage());
-			logger.error("batchSetProperties 方法执行异常", e);
-			throw new RuntimeException("将集合数据反射到Java Bean过程异常!{}" + e.getMessage(), e);
+			logger.error("exception occurred while mapping collection data to java bean!{}", e.getMessage());
+			logger.error("batchSetProperties method execution failed", e);
+			throw new RuntimeException(
+					"batchSetProperties error occurred while mapping collection data to java bean!{}" + e.getMessage(),
+					e);
 		}
 	}
 
 	/**
-	 * @todo 对集合属性进行赋值
-	 * @param voList
-	 * @param properties
-	 * @param values
-	 * @param index
-	 * @param autoConvertType
+	 * 对集合属性进行赋值
+	 * 
+	 * @param voList          对象集合，null或空直接返回
+	 * @param properties      待设置的属性名称数组
+	 * @param values          每个对象对应的行值数组集合
+	 * @param index           每个属性在行值数组中的下标
+	 * @param autoConvertType true按属性类型自动转换值类型
 	 * @throws RuntimeException
 	 */
 	public static void mappingSetProperties(Collection voList, String[] properties, List<Object[]> values, int[] index,
@@ -2230,7 +2290,8 @@ public class BeanUtil {
 		}
 		if (null == properties || properties.length < 1 || null == values || values.isEmpty()
 				|| values.get(0).length < 1 || properties.length != index.length) {
-			throw new IllegalArgumentException("集合或属性名称数组为空,请检查参数信息!");
+			throw new IllegalArgumentException(
+					"collection or property name array is empty, please check the arguments!");
 		}
 		try {
 			int indexSize = properties.length;
@@ -2285,9 +2346,10 @@ public class BeanUtil {
 				rowIndex++;
 			}
 		} catch (Exception e) {
-			logger.error("将集合数据反射到Java Bean过程异常!{}", e.getMessage());
-			logger.error("mappingSetProperties 方法执行异常", e);
-			throw new RuntimeException("将集合数据反射到Java Bean过程异常!" + e.getMessage());
+			logger.error("exception occurred while mapping collection data to java bean!{}", e.getMessage());
+			logger.error("mappingSetProperties method execution failed", e);
+			throw new RuntimeException(
+					"mappingSetProperties error occurred while mapping collection data to java bean!" + e.getMessage());
 		}
 	}
 
@@ -2307,7 +2369,7 @@ public class BeanUtil {
 			if (isGet) {
 				if ((methodName.startsWith("get") || methodName.startsWith("is"))
 						&& !void.class.equals(method.getReturnType()) && method.getParameterTypes().length == 0
-						&& !"getclass".equals(methodName.toLowerCase())) {
+						&& !"getclass".equals(methodName.toLowerCase(Locale.ROOT))) {
 					methodAry.add(StringUtil.firstToLowerCase(methodName.replaceFirst("get|is", "")));
 				}
 			} else {
@@ -2321,11 +2383,12 @@ public class BeanUtil {
 	}
 
 	/**
-	 * @todo 根据方法名称以及参数数量获取类的具体方法
-	 * @param beanClass
-	 * @param methodName
-	 * @param argLength
-	 * @return
+	 * 根据方法名称以及参数数量获取类的具体方法
+	 * 
+	 * @param beanClass  目标类型
+	 * @param methodName 方法名称(忽略大小写)
+	 * @param argLength  参数个数
+	 * @return 匹配到的方法，未找到返回null
 	 */
 	public static Method getMethod(Class beanClass, String methodName, int argLength) {
 		Method[] methods = beanClass.getMethods();
@@ -2343,12 +2406,13 @@ public class BeanUtil {
 	}
 
 	/**
-	 * @todo 根据方法名称、参数数量以及参数类型获取类的具体方法,支持重载方法精确匹配
-	 * @param beanClass
-	 * @param methodName
-	 * @param argLength
+	 * 根据方法名称、参数数量以及参数类型获取类的具体方法,支持重载方法精确匹配
+	 * 
+	 * @param beanClass  目标类型
+	 * @param methodName 方法名称(忽略大小写)
+	 * @param argLength  参数个数
 	 * @param argTypes   参数类型数组,为null时退化为按名称和参数数量匹配
-	 * @return
+	 * @return 参数类型兼容的匹配方法，无精确匹配时返回首个同名方法，均无返回null
 	 */
 	public static Method getMethod(Class beanClass, String methodName, int argLength, Class[] argTypes) {
 		if (argTypes == null || argTypes.length == 0) {
@@ -2380,9 +2444,10 @@ public class BeanUtil {
 	}
 
 	/**
-	 * @todo 判断对象是否是基本数据类型对象
-	 * @param clazz
-	 * @return
+	 * 判断对象是否是基本数据类型对象
+	 * 
+	 * @param clazz 待判断的类型，null返回false
+	 * @return true表示为原生类型或String、数字、日期等基础类型
 	 */
 	public static boolean isBaseDataType(Class clazz) {
 		if (clazz == null) {
@@ -2392,11 +2457,12 @@ public class BeanUtil {
 	}
 
 	/**
-	 * @TODO 代替PropertyUtil 和BeanUtils的setProperty方法
-	 * @param bean
-	 * @param property
-	 * @param value
-	 * @throws RuntimeException
+	 * 代替PropertyUtil 和BeanUtils的setProperty方法
+	 * 
+	 * @param bean     目标对象
+	 * @param property 属性名称
+	 * @param value    属性值(自动按属性类型转换)
+	 * @throws RuntimeException 属性不存在或赋值失败时抛出
 	 */
 	public static void setProperty(Object bean, String property, Object value) throws RuntimeException {
 		String key = bean.getClass().getName().concat(":set").concat(property);
@@ -2404,7 +2470,8 @@ public class BeanUtil {
 		Method method = setMethods.computeIfAbsent(key, k -> {
 			Method m = matchSetMethods(bean.getClass(), new String[] { property })[0];
 			if (m == null) {
-				throw new RuntimeException(bean.getClass().getName() + " 没有对应的:" + property);
+				throw new RuntimeException(
+						bean.getClass().getName() + " does not have the property [" + property + "]!");
 			}
 			return m;
 		});
@@ -2421,17 +2488,18 @@ public class BeanUtil {
 			method.invoke(bean, convertType(null, value, JdbcTypes.OTHER,
 					DataType.getType(method.getParameterTypes()[0]), typeName, genericType));
 		} catch (Exception e) {
-			logger.error("setProperty 方法执行异常", e);
+			logger.error("setProperty method execution failed", e);
 			throw new RuntimeException(e.getMessage());
 		}
 	}
 
 	/**
-	 * @TODO 代替BeanUtils.getProperty 方法
-	 * @param bean
-	 * @param property
-	 * @return
-	 * @throws RuntimeException
+	 * 代替BeanUtils.getProperty 方法
+	 * 
+	 * @param bean     目标对象(Map类型直接按key取值)
+	 * @param property 属性名称
+	 * @return 属性值，属性不存在返回null
+	 * @throws RuntimeException 方法调用失败时抛出
 	 */
 	public static Object getProperty(Object bean, String property) throws RuntimeException {
 		if (bean instanceof Map) {
@@ -2454,18 +2522,19 @@ public class BeanUtil {
 		try {
 			result = method.invoke(bean);
 		} catch (Exception e) {
-			logger.error("getProperty 方法执行异常", e);
+			logger.error("getProperty method execution failed", e);
 			throw new RuntimeException(e.getMessage());
 		}
 		return result;
 	}
 
 	/**
-	 * @TODO 代替BeanUtils.getProperty 方法,增加item[1] 数组模式调用
-	 * @param bean
-	 * @param property
-	 * @return
-	 * @throws RuntimeException
+	 * 代替BeanUtils.getProperty 方法,增加item[1] 数组模式调用
+	 * 
+	 * @param bean     目标对象(Map类型直接按key取值)
+	 * @param property 属性名称，支持xxx[1]数组下标形式
+	 * @return 属性值(数组形式取下标对应的元素)，属性不存在返回null
+	 * @throws RuntimeException 方法调用失败时抛出
 	 */
 	public static Object getComplexProperty(Object bean, String property) throws RuntimeException {
 		KeyAndIndex keyAndIndex = getKeyAndIndex(property);
@@ -2498,20 +2567,21 @@ public class BeanUtil {
 				result = getArrayIndexValue(result, keyAndIndex.getIndex());
 			}
 		} catch (Exception e) {
-			logger.error("getComplexProperty 方法执行异常", e);
+			logger.error("getComplexProperty method execution failed", e);
 			throw new RuntimeException(e.getMessage());
 		}
 		return result;
 	}
 
 	/**
-	 * @TODO 为loadByIds提供Entity集合封装,便于将调用方式统一
-	 * @param <T>
-	 * @param typeHandler
-	 * @param entityMeta
-	 * @param voClass
+	 * 为loadByIds提供Entity集合封装,便于将调用方式统一
+	 * 
+	 * @param <T>         实体类型
+	 * @param typeHandler 自定义类型处理器，非null时优先通过其完成主键值类型转换
+	 * @param entityMeta  实体元数据(用于提取主键属性)
+	 * @param voClass     实体类型
 	 * @param ids         数组
-	 * @return
+	 * @return 主键赋值后的实体对象集合(自动去重)
 	 */
 	public static <T extends Serializable> List<T> wrapEntities(TypeHandler typeHandler, EntityMeta entityMeta,
 			Class<T> voClass, Object... ids) {
@@ -2541,16 +2611,17 @@ public class BeanUtil {
 				}
 			}
 		} catch (Exception e) {
-			logger.error("将集合数据反射到Java Bean过程异常!{}", e.getMessage());
+			logger.error("exception occurred while mapping collection data to java bean!{}", e.getMessage());
 			throw new RuntimeException(e);
 		}
 		return entities;
 	}
 
 	/**
-	 * @TODO 获取VO对应的实际的entityClass,主要是规避{{}}实例导致无法正确获取类型
-	 * @param entityClass
-	 * @return
+	 * 获取VO对应的实际的entityClass,主要是规避{{}}实例导致无法正确获取类型
+	 * 
+	 * @param entityClass 传入的Class，{{}}双括号实例化场景逐层向上查找@Entity注解类
+	 * @return 实际的实体Class，无法解析时原样返回
 	 */
 	public static Class getEntityClass(Class entityClass) {
 		// update 2020-9-16
@@ -2578,10 +2649,11 @@ public class BeanUtil {
 	}
 
 	/**
-	 * @TODO 对常规类型进行转换，超出部分由自定义类型处理器完成(或配置类型完全一致)
-	 * @param values
-	 * @param typeName
-	 * @return
+	 * 对常规类型进行转换，超出部分由自定义类型处理器完成(或配置类型完全一致)
+	 * 
+	 * @param values   源数组(支持原始类型数组和对象数组)
+	 * @param typeName 目标数组类型全名，如java.lang.String[]、int[]
+	 * @return 转换后的目标类型数组，类型一致、不在支持范围或非数组时原样返回
 	 */
 	public static Object convertArray(Object values, String typeName) {
 		if (values == null || typeName == null || !values.getClass().isArray()) {
@@ -2610,9 +2682,10 @@ public class BeanUtil {
 	}
 
 	/**
-	 * @TODO 目标数组类型名称对应的组件类型,不在支持范围返回null
-	 * @param typeName
-	 * @return
+	 * 目标数组类型名称对应的组件类型,不在支持范围返回null
+	 * 
+	 * @param typeName 数组类型全名，如java.lang.String[]、int[]
+	 * @return 数组元素组件类型，不在支持范围返回null
 	 */
 	private static Class getArrayComponentType(String typeName) {
 		switch (typeName) {
@@ -2642,10 +2715,11 @@ public class BeanUtil {
 	}
 
 	/**
-	 * @TODO 按目标组件类型解析数组元素字符串值
-	 * @param componentType
-	 * @param item
-	 * @return
+	 * 按目标组件类型解析数组元素字符串值
+	 * 
+	 * @param componentType 数组元素组件类型
+	 * @param item          元素字符串值
+	 * @return 解析后的组件类型值，String原样返回，默认按Float解析
 	 */
 	private static Object parseArrayItem(Class componentType, String item) {
 		if (componentType == String.class) {
@@ -2667,10 +2741,11 @@ public class BeanUtil {
 	}
 
 	/**
-	 * @TODO 针对loadAll级联加载场景,子表通过主表id集合批量一次性完成加载的，所以子表集合包含了主表集合的全部关联信息
-	 * @param mainEntities
-	 * @param itemEntities
-	 * @param cascadeModel
+	 * 针对loadAll级联加载场景,子表通过主表id集合批量一次性完成加载的，所以子表集合包含了主表集合的全部关联信息
+	 * 
+	 * @param mainEntities 主对象集合，直接在其上回写级联属性
+	 * @param itemEntities 子对象集合
+	 * @param cascadeModel 级联配置模型(oneToMany为集合赋值，oneToOne为单对象赋值)
 	 * @throws Exception
 	 */
 	public static void loadAllMapping(List mainEntities, List itemEntities, TableCascadeModel cascadeModel)
@@ -2717,8 +2792,9 @@ public class BeanUtil {
 					else {
 						// update 2022-5-18 增加oneToOne 级联数据校验
 						if (itemSize > 0) {
-							throw new DataAccessException(
-									"请检查对象:" + mainEntity.getClass().getName() + "中的@OneToOne级联配置,级联查出的数据为>1条,不符合预期!");
+							throw new DataAccessException("please check the @OneToOne cascade configuration of object ["
+									+ mainEntity.getClass().getName()
+									+ "], the cascade query returned more than 1 row, which is unexpected!");
 						}
 						setProperty(mainEntity, property, itemEntity);
 					}
@@ -2735,9 +2811,10 @@ public class BeanUtil {
 	}
 
 	/**
-	 * @TODO 解析类中的@OneToOne 和@OneToMany注解，服务sql查询结果按对象层次结构进行封装
-	 * @param entityClass
-	 * @return
+	 * 解析类中的@OneToOne 和@OneToMany注解，服务sql查询结果按对象层次结构进行封装
+	 * 
+	 * @param entityClass 实体类型(支持多级继承)
+	 * @return 含级联注解的字段数组
 	 */
 	private static Field[] parseCascadeFields(Class entityClass) {
 		Set<String> fieldSet = new HashSet<String>();
@@ -2746,7 +2823,7 @@ public class BeanUtil {
 		String fieldName;
 		while (classType != null && !classType.equals(Object.class)) {
 			for (Field field : classType.getDeclaredFields()) {
-				fieldName = field.getName().toLowerCase();
+				fieldName = field.getName().toLowerCase(Locale.ROOT);
 				if (!fieldSet.contains(fieldName) && (field.getAnnotation(OneToMany.class) != null
 						|| field.getAnnotation(OneToOne.class) != null)) {
 					cascadeFields.add(field);
@@ -2760,9 +2837,10 @@ public class BeanUtil {
 	}
 
 	/**
-	 * @TODO 获取类的级联关系
-	 * @param entityClass
-	 * @return
+	 * 获取类的级联关系
+	 * 
+	 * @param entityClass 实体类型
+	 * @return 级联关系配置模型列表(含oneToMany、oneToOne)，无级联返回空列表
 	 */
 	public static List<TableCascadeModel> getCascadeModels(Class entityClass) {
 		String className = entityClass.getName();
@@ -2823,10 +2901,11 @@ public class BeanUtil {
 	}
 
 	/**
-	 * @TODO 将对象转数组获取index列对应的值
-	 * @param result
-	 * @param index
-	 * @return
+	 * 将对象转数组获取index列对应的值
+	 * 
+	 * @param result 目标对象，支持Object[]、Collection和Iterable类型
+	 * @param index  数组下标
+	 * @return 对应下标的元素，result为null、非集合类型或下标越界返回null
 	 */
 	public static Object getArrayIndexValue(Object result, int index) {
 		if (result == null) {
@@ -2849,10 +2928,10 @@ public class BeanUtil {
 	/**
 	 * 根据save/update/saveOrUpdate操作类型提取公共字段属性
 	 * 
-	 * @param unifyFieldsHandler
-	 * @param fieldsAry
+	 * @param unifyFieldsHandler 统一字段处理器，null返回空Map
+	 * @param fieldsAry          实体全部字段名称数组
 	 * @param type               1:save;2:update;3:saveOrUpdate
-	 * @return
+	 * @return 公共字段名称与其在fieldsAry中下标的对应Map
 	 */
 	public static Map<String, Integer> getUnifyFieldIndex(IUnifyFieldsHandler unifyFieldsHandler, String[] fieldsAry,
 			int type) {
@@ -2890,10 +2969,11 @@ public class BeanUtil {
 	}
 
 	/**
-	 * @TODO 回写POJO的：创建人、创建时间、修改人、修改时间等公共字段
-	 * @param entity
-	 * @param fieldIndexMap
-	 * @param values
+	 * 回写POJO的：创建人、创建时间、修改人、修改时间等公共字段
+	 * 
+	 * @param entity        目标实体对象
+	 * @param fieldIndexMap 公共字段名称与其下标的对应Map
+	 * @param values        与字段下标对应的公共字段值数组
 	 */
 	public static void backWriteUnifyFields(Object entity, Map<String, Integer> fieldIndexMap, Object[] values) {
 		if (null == fieldIndexMap || fieldIndexMap.isEmpty() || null == values || values.length == 0) {
@@ -2907,10 +2987,11 @@ public class BeanUtil {
 	}
 
 	/**
-	 * @TODO 批量回写POJO的：创建人、创建时间、修改人、修改时间等公共字段
-	 * @param entitis
-	 * @param fieldIndexMap
-	 * @param values
+	 * 批量回写POJO的：创建人、创建时间、修改人、修改时间等公共字段
+	 * 
+	 * @param entitis       实体对象集合，直接在其上回写公共字段
+	 * @param fieldIndexMap 公共字段名称与其下标的对应Map
+	 * @param values        每个实体对应的公共字段值数组集合
 	 */
 	public static void batchBackWriteUnifyFields(List entitis, Map<String, Integer> fieldIndexMap,
 			List<Object[]> values) {
@@ -2931,20 +3012,20 @@ public class BeanUtil {
 	/**
 	 * 根据字段名称提取类字段上@Column注解中的jdbcType，便于识别json和jsonb等特殊类型
 	 * 
-	 * @param voClass
-	 * @param properties
-	 * @return
+	 * @param voClass    目标类型
+	 * @param properties 待查询的字段名称数组
+	 * @return 小写字段名与@Column.type值的对应Map，无注解或无匹配字段的属性不包含在内
 	 */
 	public static Map<String, Integer> getClassFieldMap(Class voClass, String[] properties) {
 		Map<String, Integer> fieldMap = new HashMap<>();
 		Field[] allFields = voClass.getDeclaredFields();
 		Set<String> fieldNameSet = new HashSet<>();
 		for (String str : properties) {
-			fieldNameSet.add(str.toLowerCase());
+			fieldNameSet.add(str.toLowerCase(Locale.ROOT));
 		}
 		String strLow;
 		for (Field field : allFields) {
-			strLow = field.getName().toLowerCase();
+			strLow = field.getName().toLowerCase(Locale.ROOT);
 			if (fieldNameSet.contains(strLow)) {
 				field.setAccessible(true);
 				Column column = field.getAnnotation(Column.class);

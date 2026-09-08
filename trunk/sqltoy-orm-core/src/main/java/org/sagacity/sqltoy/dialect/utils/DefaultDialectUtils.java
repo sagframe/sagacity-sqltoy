@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.dialect.utils;
 
 import java.io.Serializable;
@@ -13,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
@@ -63,15 +61,16 @@ import org.slf4j.LoggerFactory;
  * @project sagacity-sqltoy
  * @description 提供默认方言的通用处理工具
  * @author zhongxuchen
- * @version v1.0, Date:2021-5-20
- * @modify 2024-8-8 修复updateSaveFetch中uniqueProps对应属性值为null时构建的sql where
+ * @version v1.0,Date:2021-05-20
+ * @modify Date:2024-08-08 修复updateSaveFetch中uniqueProps对应属性值为null时构建的sql where
  *         id=null改为id is null
  */
 public class DefaultDialectUtils {
 	private final static Logger logger = LoggerFactory.getLogger(DefaultDialectUtils.class);
 
 	/**
-	 * @TODO 取随机记录
+	 * 取随机记录
+	 * 
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param queryExecutor
@@ -140,7 +139,8 @@ public class DefaultDialectUtils {
 	}
 
 	/**
-	 * @todo 分页查询
+	 * 分页查询
+	 * 
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param queryExecutor
@@ -214,7 +214,8 @@ public class DefaultDialectUtils {
 	}
 
 	/**
-	 * @todo 实现top记录查询
+	 * 实现top记录查询
+	 * 
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param queryExecutor
@@ -261,7 +262,8 @@ public class DefaultDialectUtils {
 	}
 
 	/**
-	 * @todo 批量删除对象
+	 * 批量删除对象
+	 * 
 	 * @param sqlToyContext
 	 * @param entities
 	 * @param batchSize
@@ -280,7 +282,8 @@ public class DefaultDialectUtils {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		String realTable = entityMeta.getSchemaTable(tableName, dbType);
 		if (null == entityMeta.getIdArray() || entityMeta.getIdArray().length == 0) {
-			throw new IllegalArgumentException("delete/deleteAll 操作,表:" + realTable + "没有主键,请检查表设计!");
+			throw new IllegalArgumentException("delete/deleteAll operation, table [" + realTable
+					+ "] has no primary key, please check the table design!");
 		}
 		int idSize = entityMeta.getIdArray().length;
 		// 构造delete 语句
@@ -376,7 +379,8 @@ public class DefaultDialectUtils {
 	}
 
 	/**
-	 * @TODO 实现：1、锁查询；2、记录存在则修改；3、记录不存在则执行insert；4、返回修改或插入的记录信息，尽量不要使用identity、sequence主键
+	 * 实现：1、锁查询；2、记录存在则修改；3、记录不存在则执行insert；4、返回修改或插入的记录信息，尽量不要使用identity、sequence主键
+	 * 
 	 * @param sqlToyContext
 	 * @param entity
 	 * @param updateRowHandler
@@ -399,7 +403,8 @@ public class DefaultDialectUtils {
 			whereFields = entityMeta.getIdArray();
 		}
 		if (whereFields == null || whereFields.length == 0) {
-			throw new DataAccessException("updateSaveFetch操作的表:" + tableName + " 没有唯一获得一条记录的条件字段,请检查!");
+			throw new DataAccessException("updateSaveFetch table [" + tableName
+					+ "] has no condition fields to uniquely fetch a single record, please check!");
 		}
 		// 全部字段的值
 		Object[] tempFieldValues = null;
@@ -434,7 +439,7 @@ public class DefaultDialectUtils {
 		// 增加sql执行拦截器 update 2022-9-10
 		queryParam = DialectUtils.doInterceptors(sqlToyContext, null, OperateType.singleTable, queryParam,
 				entity.getClass(), dbType);
-		SqlExecuteStat.showSql("执行锁记录查询", queryParam.getSql(), queryParam.getParamsValue());
+		SqlExecuteStat.showSql("execute lock records query", queryParam.getSql(), queryParam.getParamsValue());
 		// 可编辑结果集
 		PreparedStatement pst = conn.prepareStatement(queryParam.getSql(), ResultSet.TYPE_FORWARD_ONLY,
 				ResultSet.CONCUR_UPDATABLE);
@@ -454,6 +459,10 @@ public class DefaultDialectUtils {
 						ResultSet finalRs = pst.executeQuery();
 						try {
 							int rowCnt = finalRs.getMetaData().getColumnCount();
+							// 列类型名与读取策略查询级一次预计算(结果集元数据恒定,置于行循环外;
+							// oracle的vector/json列getObject直接报ORA-17004,TEXT_READ预分类改走getString)
+							String[] usfTypeNames = ResultUtils.readColumnTypeNames(finalRs, rowCnt);
+							int[] usfKinds = ResultUtils.buildColumnKinds(dbType, usfTypeNames);
 							int index = 0;
 							List result = new ArrayList();
 							DataVersionConfig dataVersion = entityMeta.getDataVersion();
@@ -479,25 +488,29 @@ public class DefaultDialectUtils {
 									};
 							while (finalRs.next()) {
 								if (index > 0) {
-									throw new DataAccessException("updateSaveFetch操作只能针对单条记录进行操作,请检查uniqueProps参数设置!");
+									throw new DataAccessException(
+											"updateSaveFetch can only operate on a single record, please check the uniqueProps setting!");
 								}
 								// 存在修改记录
 								if (hasUpdateRow) {
-									SqlExecuteStat.debug("执行updateRow", "记录存在调用updateRowHandler.updateRow!");
+									SqlExecuteStat.debug("execute updateRow",
+											"record exists, invoke updateRowHandler.updateRow!");
 									// 存在数据版本:1、校验当前的版本是否为null;2、对比传递过来的版本值跟数据库中的值是否一致；3、修改数据库中数据版本+1
 									if (dataVersion != null) {
 										String nowVersion = finalRs
 												.getString(entityMeta.getColumnName(dataVersionField));
 										if (nowVersion == null) {
-											throw new IllegalArgumentException(
-													"表:" + entityMeta.getTableName() + " 的数据版本字段:" + dataVersionField
-															+ " 在数据库中为null,无法执行版本校验与更新,请补齐历史数据的版本值!");
+											throw new IllegalArgumentException("table [" + entityMeta.getTableName()
+													+ "] data version field [" + dataVersionField
+													+ "] is null in database, unable to verify and update the version, please complete the version value of historical data!");
 										}
 										if (entityVersion != null && !entityVersion.toString().equals(nowVersion)) {
-											throw new IllegalArgumentException("表:" + entityMeta.getTableName()
-													+ " 存在版本@DataVersion配置，在updateSaveFetch做更新时，属性:" + dataVersionField
-													+ " 值不等于当前数据库中的值:" + entityVersion + "<>" + nowVersion
-													+ ",说明数据已经被修改过!");
+											throw new IllegalArgumentException("table [" + entityMeta.getTableName()
+													+ "] has @DataVersion configuration, when updateSaveFetch updates, the property ["
+													+ dataVersionField
+													+ "] value does not equal the current value in database:"
+													+ entityVersion + "<>" + nowVersion
+													+ ", the data has been modified by others!");
 										}
 										// 以日期开头
 										if (dataVersion.isStartDate()) {
@@ -563,13 +576,15 @@ public class DefaultDialectUtils {
 									finalRs.updateRow();
 								}
 								index++;
-								// 重新获得修改后的值
+								// 重新获得修改后的值(列类型名与读取策略已在循环前查询级预计算)
 								result.add(ResultUtils.processResultRow(dbType, typeHandler, dynamicCacheFetch,
-										dynamicCacheHolder, finalRs, null, null, rowCnt, null, null, false));
+										dynamicCacheHolder, finalRs, null, null, rowCnt, null, null, false,
+										usfTypeNames, usfKinds, 0));
 							}
 							// 没有查询到记录，表示是需要首次插入
 							if (index == 0) {
-								SqlExecuteStat.debug("执行insertRow", "查询未匹配到结果则进行首次插入!");
+								SqlExecuteStat.debug("execute insertRow",
+										"perform the first insert when the query does not match any result!");
 								// 移到插入行
 								finalRs.moveToInsertRow();
 								FieldMeta fieldMeta;
@@ -609,7 +624,8 @@ public class DefaultDialectUtils {
 	}
 
 	/**
-	 * @TODO 组织updateSaveFetch的锁查询sql
+	 * 组织updateSaveFetch的锁查询sql
+	 * 
 	 * @param entityMeta
 	 * @param dbType
 	 * @param uniqueProps
@@ -668,7 +684,8 @@ public class DefaultDialectUtils {
 	}
 
 	/**
-	 * @TODO 反射实体对象的属性值到数组，并调用主键策略产生主键值并写回到entity中
+	 * 反射实体对象的属性值到数组，并调用主键策略产生主键值并写回到entity中
+	 * 
 	 * @param sqlToyContext
 	 * @param entityMeta
 	 * @param entity
@@ -703,8 +720,9 @@ public class DefaultDialectUtils {
 				for (int meter = 0; meter < relatedColumnSize; meter++) {
 					relatedColValue[meter] = fullParamValues[relatedColumn[meter] - generatedColCnt];
 					if (StringUtil.isBlank(relatedColValue[meter])) {
-						throw new IllegalArgumentException("对象:" + entityMeta.getEntityClass().getName()
-								+ " 生成业务主键依赖的关联字段:" + entityMeta.getBizIdRelatedColumns()[meter] + " 值为null!");
+						throw new IllegalArgumentException("generate business id for entity ["
+								+ entityMeta.getEntityClass().getName() + "], the related field ["
+								+ entityMeta.getBizIdRelatedColumns()[meter] + "] value is null, please check!");
 					}
 				}
 			}
@@ -765,7 +783,7 @@ public class DefaultDialectUtils {
 							// oracle autoincrement 取法不同
 							if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11) {
 								if (colMeta.getDefaultValue() != null
-										&& colMeta.getDefaultValue().toLowerCase().endsWith(".nextval")) {
+										&& colMeta.getDefaultValue().toLowerCase(Locale.ROOT).endsWith(".nextval")) {
 									colMeta.setAutoIncrement(true);
 									colMeta.setDefaultValue(colMeta.getDefaultValue().replaceAll("\"", "\\\\\""));
 								}
@@ -779,7 +797,9 @@ public class DefaultDialectUtils {
 									}
 								} catch (Exception e) {
 									// 部分驱动不支持IS_AUTOINCREMENT伪列,保持默认非自增
-									logger.debug("读取列的IS_AUTOINCREMENT信息失败(驱动可能不支持)!", e);
+									logger.debug(
+											"failed to read the IS_AUTOINCREMENT column info (the driver may not support it)!",
+											e);
 								}
 							}
 							if (rs.getInt("NULLABLE") == 1) {
@@ -819,7 +839,8 @@ public class DefaultDialectUtils {
 	}
 
 	/**
-	 * @TODO 获取表的索引信息(这里只能用于标记字段是否是索引列)
+	 * 获取表的索引信息(这里只能用于标记字段是否是索引列)
+	 * 
 	 * @param catalog
 	 * @param schema
 	 * @param tableName
@@ -871,7 +892,7 @@ public class DefaultDialectUtils {
 	@SuppressWarnings("unchecked")
 	private static Map<String, ColumnMeta> getOracleTableIndexes(String catalog, String schema, String tableName,
 			Connection conn, final Integer dbType, String dialect) throws Exception {
-		String tableNameUp = tableName.toUpperCase();
+		String tableNameUp = tableName.toUpperCase(Locale.ROOT);
 		// 表名经?参数绑定,避免直接拼接形成注入面(同文件其他元数据查询一致)
 		String sql = "SELECT t1.INDEX_NAME,t1.COLUMN_NAME,t0.UNIQUENESS FROM USER_IND_COLUMNS t1 LEFT JOIN "
 				+ " (SELECT INDEX_NAME,UNIQUENESS FROM USER_INDEXES WHERE TABLE_NAME =?) t0 ON "
@@ -901,7 +922,8 @@ public class DefaultDialectUtils {
 	}
 
 	/**
-	 * @TODO 获取表的主键字段
+	 * 获取表的主键字段
+	 * 
 	 * @param catalog
 	 * @param schema
 	 * @param tableName
@@ -922,7 +944,8 @@ public class DefaultDialectUtils {
 			rs = conn.getMetaData().getPrimaryKeys(realCatalog, realSchema, realTableName);
 		} catch (Exception e) {
 			// 部分库(如starrocks)不支持getPrimaryKeys,失败后走mysql desc等回退路径
-			logger.debug("通过getMetaData获取表:{}主键信息失败,将尝试回退方式!", realTableName, e);
+			logger.debug("failed to get the primary keys of table:{} via getMetaData, will try the fallback way!",
+					realTableName, e);
 		}
 		if (rs != null) {
 			return (Map<String, ColumnMeta>) SqlUtil.preparedStatementProcess(null, null, rs,

@@ -305,6 +305,17 @@ public class NumberUtilScenarioTest {
 				NumberUtil.capitalMoneyToNum(NumberUtil.toCapitalMoney(new BigDecimal("98765432.11"))).toPlainString());
 		check("7-13", "100050000.56", "toCapitalMoney→capitalMoneyToNum往返", "100050000.560",
 				NumberUtil.capitalMoneyToNum(NumberUtil.toCapitalMoney(new BigDecimal("100050000.56"))).toPlainString());
+		// 阿拉伯数字直接混写(校验正则允许[0-9]):连续数字按十进制累计,而非逐字符覆盖、丢弃0
+		check("7-14", "123元整(阿拉伯数字)", "capitalMoneyToNum", "123",
+				NumberUtil.capitalMoneyToNum("123元整").toPlainString());
+		check("7-15", "105元整(阿拉伯数字含0)", "capitalMoneyToNum", "105",
+				NumberUtil.capitalMoneyToNum("105元整").toPlainString());
+		check("7-16", "12元3角(阿拉伯数字)", "capitalMoneyToNum", "12.300",
+				NumberUtil.capitalMoneyToNum("12元3角").toPlainString());
+		check("7-17", "人民币123元(前缀+阿拉伯数字)", "capitalMoneyToNum", "123.000",
+				NumberUtil.capitalMoneyToNum("人民币123元").toPlainString());
+		check("7-18", "100元(阿拉伯数字整百)", "capitalMoneyToNum", "100.000",
+				NumberUtil.capitalMoneyToNum("100元").toPlainString());
 		assertNoFailure("场景七:大写金额转数字");
 	}
 
@@ -357,7 +368,7 @@ public class NumberUtilScenarioTest {
 		} catch (Exception e) {
 			overflow = "异常:" + e.getMessage();
 		}
-		check("8-09", "10^64(超出上限)", "toCapitalMoney", "异常:数字超出支持的转换范围(10^64)", overflow);
+		check("8-09", "10^64(超出上限)", "toCapitalMoney", "异常:the number exceeds the supported conversion range (10^64)!", overflow);
 		// 英文:QUADRILLION(千万亿)~DECILLION(10^33)双向
 		check("8-10", "10^15(QUADRILLION)", "convertToEnglishMoney", "ONE QUADRILLION ONLY",
 				NumberUtil.convertToEnglishMoney(new BigDecimal("1" + "0".repeat(15))));

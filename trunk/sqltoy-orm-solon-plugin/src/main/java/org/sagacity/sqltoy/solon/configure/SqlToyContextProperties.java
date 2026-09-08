@@ -2,12 +2,16 @@ package org.sagacity.sqltoy.solon.configure;
 
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+/**
+ * SqlToyContext 配置属性
+ *
+ * @author noear
+ * @since 5.6
+ */
 public class SqlToyContextProperties implements Serializable {
-	/**
-	 *
-	 */
 	private static final long serialVersionUID = -8313800149129731930L;
 
 	/**
@@ -22,8 +26,10 @@ public class SqlToyContextProperties implements Serializable {
 
 	/**
 	 * 针对不同数据库函数进行转换,非必须属性,close 表示关闭
+	 * (update 2026-9-5:Object类型无法绑定配置的数组/列表写法,会静默为null导致配置失效,改为List;
+	 * 数组写法与逗号分隔字符串写法均自动转换,兼容原逗号串配置形式)
 	 */
-	private Object functionConverts;
+	private List<String> functionConverts;
 
 	/**
 	 * 数据库方言，一般无需设置
@@ -354,16 +360,17 @@ public class SqlToyContextProperties implements Serializable {
 		this.batchSize = batchSize;
 	}
 
-	public Object getFunctionConverts() {
+	public List<String> getFunctionConverts() {
 		return functionConverts;
 	}
 
 	/**
 	 * functionConverts=close 表示关闭
+	 * (setter参数为List,绑定器以setter参数类型为绑定目标;数组与逗号分隔字符串两种写法均自动转换)
 	 *
 	 * @param functionConverts
 	 */
-	public void setFunctionConverts(Object functionConverts) {
+	public void setFunctionConverts(List<String> functionConverts) {
 		this.functionConverts = functionConverts;
 	}
 

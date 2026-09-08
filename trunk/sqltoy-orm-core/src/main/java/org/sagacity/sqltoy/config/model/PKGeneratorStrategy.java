@@ -1,20 +1,14 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.config.model;
 
 import java.io.Serializable;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 数据库主键生成策略
  * @author zhongxuchen
- * @version v1.0,Date:2012-6-7
+ * @version v1.0,Date:2012-06-07
  */
 public class PKGeneratorStrategy implements Serializable {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -1264532949768965572L;
 
 	public PKGeneratorStrategy() {

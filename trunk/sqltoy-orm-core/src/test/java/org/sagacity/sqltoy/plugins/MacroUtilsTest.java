@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.plugins;
 
 import java.util.HashMap;
@@ -17,9 +14,9 @@ import org.sagacity.sqltoy.plugins.id.macro.impl.SqlLoop;
 /**
  * @project sagacity-sqltoy
  * @description 请在此说明类的功能
- * @author zhong
- * @version v1.0, Date:2020-9-23
- * @modify 2020-9-23,修改说明
+ * @author zhongxuchen
+ * @version v1.0,Date:2020-09-23
+ * @modify Date:2020-09-23 修改说明
  */
 public class MacroUtilsTest {
 	@Test

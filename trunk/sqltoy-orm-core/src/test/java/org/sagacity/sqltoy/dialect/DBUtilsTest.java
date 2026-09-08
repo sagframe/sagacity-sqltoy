@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.dialect;
 
 import java.sql.Connection;
@@ -15,8 +12,8 @@ import org.slf4j.LoggerFactory;
 /**
  * @project sagacity-sqltoy4.0
  * @description 请在此说明类的功能
- * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:DBUtils.java,Revision:v1.0,Date:2017年12月9日
+ * @author zhongxuchen
+ * @version id:DBUtils.java,Revision:v1.0,Date:2017-12-09
  */
 public class DBUtilsTest {
 	/**
@@ -83,7 +80,7 @@ public class DBUtilsTest {
 	}
 
 	/**
-	 * @todo 去除掉sql中的所有对称的select 和 from 中的内容，排除干扰
+	 * 去除掉sql中的所有对称的select 和 from 中的内容，排除干扰
 	 * @param sql
 	 * @return
 	 */

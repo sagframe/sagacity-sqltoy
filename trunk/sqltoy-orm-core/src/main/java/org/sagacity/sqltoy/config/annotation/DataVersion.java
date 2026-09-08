@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.config.annotation;
 
 import static java.lang.annotation.ElementType.FIELD;
@@ -14,8 +11,8 @@ import java.lang.annotation.Target;
  * @project sagacity-sqltoy
  * @description 数据表记录版本注解，控制更新过程，如果当前版本大于更新版本抛出异常
  * @author zhongxuchen
- * @version v1.0, Date:2022年9月15日
- * @modify 2022年9月15日,修改说明
+ * @version v1.0,Date:2022-09-15
+ * @modify Date:2022-09-15,修改说明
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ TYPE, FIELD })

@@ -18,9 +18,6 @@ import org.sagacity.sqltoy.config.annotation.Id;
 @Entity(tableName = "sqltoy_staff_info", pk_constraint = "PRIMARY")
 public abstract class AbstractStaffInfo implements Serializable, java.lang.Cloneable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 3492673222889622055L;
 
 	/**
@@ -520,7 +517,7 @@ public abstract class AbstractStaffInfo implements Serializable, java.lang.Clone
 	}
 
 	/**
-	 * @todo vo columns to String
+	 * vo columns to String
 	 */
 	@Override
 	public String toString() {

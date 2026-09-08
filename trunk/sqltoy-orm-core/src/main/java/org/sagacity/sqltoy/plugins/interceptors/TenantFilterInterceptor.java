@@ -1,10 +1,11 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.plugins.interceptors;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.OperateType;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
@@ -18,13 +19,14 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @project sagacity-sqltoy
  * @description 提供授权租户数据权限过滤
  * @author zhongxuchen
- * @version v1.0, Date:2022年9月21日
- * @modify 2022年9月21日,修改说明
+ * @version v1.0,Date:2022-09-21
+ * @modify Date:2022-09-21,修改说明
  */
 public class TenantFilterInterceptor implements SqlInterceptor {
 
 	/**
-	 * @TODO 对最终执行sql和sql参数进行处理
+	 * 对最终执行sql和sql参数进行处理
+	 * 
 	 * @param sqlToyContext 支持getEntityMeta(tableName)获取表信息
 	 * @param sqlToyConfig  传递原本的sql配置,可以通过获取paramNames判断是否sql中已经有相关参数
 	 * @param operateType   search\page\top\random\count 等，
@@ -66,10 +68,13 @@ public class TenantFilterInterceptor implements SqlInterceptor {
 		String sql = sqlToyResult.getSql();
 		// 保留字处理(实际不会出现保留字用作租户)
 		tenantColumn = ReservedWordsUtil.convertWord(tenantColumn, dbType);
-		int whereIndex = StringUtil.matchIndex(sql, "(?i)\\Wwhere\\W");
+		// 字面量掩码串与原串等长:where定位、"已有租户条件"检查、group by/order by定位均在掩码串上进行,
+		// 规避字面量内的where/tenant_id=文本导致定位错位或误判已过滤而漏加租户条件(fail-open)
+		String maskedSql = SqlConfigParseUtils.maskLiterals(sql, false);
+		int whereIndex = StringUtil.matchIndex(maskedSql, "(?i)\\Wwhere\\W");
 		// sql 在where后面已经有租户条件过滤，无需做处理
 		if (whereIndex > 0
-				&& StringUtil.matches(sql.substring(whereIndex), "(?i)\\W" + tenantColumn + "(\\s*\\=|\\s+in)")) {
+				&& StringUtil.matches(maskedSql.substring(whereIndex), "(?i)\\W" + tenantColumn + "(\\s*\\=|\\s+in)")) {
 			return sqlToyResult;
 		}
 		String where = " where ";
@@ -121,10 +126,10 @@ public class TenantFilterInterceptor implements SqlInterceptor {
 			} else {
 				// 可能是singleTable单表,没有where 条件
 				if (whereIndex < 0) {
-					// \\Wgroup,匹配到位置要往后移1位
-					int groupByIndex = StringUtil.matchIndex(sql, SqlUtil.GROUP_BY_PATTERN);
+					// \\Wgroup,匹配到位置要往后移1位(定位在掩码串上进行,规避字面量内的group by/order by导致注入到字面量内部)
+					int groupByIndex = StringUtil.matchIndex(maskedSql, SqlUtil.GROUP_BY_PATTERN);
 					// \\Worder,匹配到位置要往后移1位
-					int orderByIndex = StringUtil.matchIndex(sql, SqlUtil.ORDER_BY_PATTERN);
+					int orderByIndex = StringUtil.matchIndex(maskedSql, SqlUtil.ORDER_BY_PATTERN);
 					if (groupByIndex < 0) {
 						if (orderByIndex < 0) {
 							sql = sql.concat(sqlPart);
@@ -137,7 +142,11 @@ public class TenantFilterInterceptor implements SqlInterceptor {
 								.concat(sql.substring(groupByIndex + 1));
 					}
 				} else {
-					sql = sql.replaceFirst("(?i)\\swhere\\s", sqlPart);
+					// 按掩码串定位的原位替换where词本身:规避字面量内的where被replaceFirst误替换
+					Matcher whereMatcher = Pattern.compile("(?i)\\Wwhere\\W").matcher(maskedSql);
+					whereMatcher.find();
+					sql = new StringBuilder(sql).replace(whereMatcher.start() + 1, whereMatcher.end() - 1, sqlPart)
+							.toString();
 				}
 				sqlToyResult.setSql(sql);
 			}
@@ -167,7 +176,8 @@ public class TenantFilterInterceptor implements SqlInterceptor {
 	}
 
 	/**
-	 * @TODO 租户值拼入SQL字面量前的转义:'→''(标准SQL转义,主流数据库通用)
+	 * 租户值拼入SQL字面量前的转义:'→''(标准SQL转义,主流数据库通用)
+	 * 
 	 * @param tenant
 	 * @return
 	 */

@@ -18,14 +18,15 @@ import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
  * @author ming
- * @version v1.0, Date:2024年10月25日
+ * @version v1.0,Date:2024-10-25
  * @project sagacity-sqltoy
  * @description 提供gaussdb数据库相关的特殊逻辑处理封装
- * @modify 2024年10月25日, 修改说明
+ * @modify Date:2024-10-25, 修改说明
  */
 public class OpenGaussDialectUtils {
 	/**
-	 * @TODO 主键策略是identity或sequence时，主键值允许不由数据库内部自动产生，可人工赋值
+	 * 主键策略是sequence时，主键值允许不由数据库内部自动产生，可人工赋值
+	 * 
 	 * @param pkStrategy
 	 * @return
 	 */
@@ -37,9 +38,11 @@ public class OpenGaussDialectUtils {
 		if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
 			return true;
 		}
-		// postgresql10+ 支持identity
+		// update 2026-9-6 openGauss(5.0/7.0)无generated as identity列语法,建表用bigserial
+		// (隐式序列默认值),identity策略须省略主键列让默认值生效(实测insert省略id列时自动生成);
+		// 原照搬PG10+返回true会显式含id列插null违反非空(此前openGauss identity被误判不可用)
 		if (pkStrategy.equals(PKStrategy.IDENTITY)) {
-			return true;
+			return false;
 		}
 		return true;
 	}
@@ -71,7 +74,8 @@ public class OpenGaussDialectUtils {
 	}
 
 	/**
-	 * @todo 组织merge into 语句中select 的字段，进行类型转换
+	 * 组织merge into 语句中select 的字段，进行类型转换
+	 * 
 	 * @param sql
 	 * @param columnName
 	 * @param fieldMeta

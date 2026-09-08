@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
  * @description 提供sql查询语句在需要适配的数据库下进行执行校验，检验sql能否在不同数据库下可以正确执行
  *              一般提供给针对多种数据库做产品化项目使用
  * @author zhongxuchen
- * @version v1.0,Date:2022-8-13
+ * @version v1.0,Date:2022-08-13
  */
 public class CrossDbAdapter {
 	/**
@@ -31,7 +31,8 @@ public class CrossDbAdapter {
 	protected final static Logger logger = LoggerFactory.getLogger(CrossDbAdapter.class);
 
 	/**
-	 * @TODO 执行count查询
+	 * 执行count查询
+	 * 
 	 * @param sqlToyContext
 	 * @param dialectFactory
 	 * @param queryExecutor
@@ -44,7 +45,8 @@ public class CrossDbAdapter {
 	}
 
 	/**
-	 * @TODO 执行分页查询
+	 * 执行分页查询
+	 * 
 	 * @param sqlToyContext
 	 * @param dialectFactory
 	 * @param queryExecutor
@@ -64,7 +66,8 @@ public class CrossDbAdapter {
 	}
 
 	/**
-	 * @TODO 执行普通查询
+	 * 执行普通查询
+	 * 
 	 * @param sqlToyContext
 	 * @param dialectFactory
 	 * @param queryExecutor
@@ -77,7 +80,8 @@ public class CrossDbAdapter {
 	}
 
 	/**
-	 * @TODO 执行取top记录查询
+	 * 执行取top记录查询
+	 * 
 	 * @param sqlToyContext
 	 * @param dialectFactory
 	 * @param queryExecutor
@@ -91,7 +95,8 @@ public class CrossDbAdapter {
 	}
 
 	/**
-	 * @TODO 执行取随机记录查询
+	 * 执行取随机记录查询
+	 * 
 	 * @param sqlToyContext
 	 * @param dialectFactory
 	 * @param queryExecutor
@@ -105,7 +110,8 @@ public class CrossDbAdapter {
 	}
 
 	/**
-	 * @TODO 在产品化所需适配的数据库下执行查询，检验sql的适配性
+	 * 在产品化所需适配的数据库下执行查询，检验sql的适配性
+	 * 
 	 * @param sqlToyContext
 	 * @param queryExecutor
 	 * @param dbAdapterHandler
@@ -127,7 +133,8 @@ public class CrossDbAdapter {
 			dataSource = sqlToyContext.getDataSourceSelector().getDataSourceBean(sqlToyContext.getAppContext(),
 					dataSourceName);
 			if (null == dataSource) {
-				throw new IllegalArgumentException("跨库查询适配验证,数据源:" + dataSourceName + " 不存在,请检查配置!");
+				throw new IllegalArgumentException("cross-database adaptation validation failed, dataSource:"
+						+ dataSourceName + " does not exist, please check the configuration!");
 			}
 			dialect = DataSourceUtils.getDialect(sqlToyContext, dataSource);
 			// 获得相关方言的sql(函数自动替换等)

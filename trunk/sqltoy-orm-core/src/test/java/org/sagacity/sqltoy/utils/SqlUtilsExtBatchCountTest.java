@@ -6,7 +6,6 @@ import java.lang.reflect.Proxy;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -62,8 +61,8 @@ public class SqlUtilsExtBatchCountTest {
 	}
 
 	private static Long execute(int[] batchCounts) throws Exception {
-		return SqlUtilsExt.batchUpdateForPOJO(null, "insert into t values(?,?)", threeRows(), null, null, null, 100,
-				null, connectionReturning(batchCounts), null);
+		return SqlUtil.batchUpdateForPOJO(null, "insert into t values(?,?)", threeRows(), null, 100, null,
+				connectionReturning(batchCounts), null);
 	}
 
 	@Test

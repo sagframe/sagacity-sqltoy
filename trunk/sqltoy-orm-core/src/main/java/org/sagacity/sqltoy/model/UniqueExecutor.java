@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
@@ -8,15 +5,12 @@ import java.io.Serializable;
 import javax.sql.DataSource;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 唯一性验证查询模型
  * @author zhongxuchen
- * @version v1.0,Date:2015年3月16日
+ * @version v1.0,Date:2015-03-16
  */
 public class UniqueExecutor implements Serializable {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 4655678022572718682L;
 
 	/**

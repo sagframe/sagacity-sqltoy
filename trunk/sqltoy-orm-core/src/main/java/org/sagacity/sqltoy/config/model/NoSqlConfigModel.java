@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.config.model;
 
 import java.io.Serializable;
@@ -9,13 +6,10 @@ import java.io.Serializable;
  * @project sagacity-sqltoy
  * @description 基于mongo或elasticSearch的配置
  * @author zhongxuchen
- * @version v1.0,Date:2018年1月3日
+ * @version v1.0,Date:2018-01-03
  */
 public class NoSqlConfigModel implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -2126986650751681962L;
 	/**
 	 * mongo的集合

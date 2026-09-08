@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
@@ -11,12 +8,9 @@ import java.util.Map;
  * @project sagacity-sqltoy
  * @description 便于快速构建Map用于传参
  * @author zhongxuchen
- * @version v1.0, Date:2021年11月4日
+ * @version v1.0,Date:2021-11-04
  */
 public class MapKit implements Serializable {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -7326755576648579935L;
 
 	private Map<String, Object> map = new HashMap<String, Object>();
@@ -38,8 +32,8 @@ public class MapKit implements Serializable {
 				}
 			} else {
 				if (keys.length != values.length) {
-					throw new IllegalArgumentException(
-							"构造Map对应的keys长度:" + keys.length + "不等于values长度:" + values.length);
+					throw new IllegalArgumentException("MapKit keys length [" + keys.length
+							+ "] does not equal values length [" + values.length + "]!");
 				}
 				for (int i = 0; i < keys.length; i++) {
 					if (keys[i] != null && values[i] != null) {
@@ -52,7 +46,8 @@ public class MapKit implements Serializable {
 	}
 
 	/**
-	 * @TODO 设置Map的key value
+	 * 设置Map的key value
+	 * 
 	 * @param key
 	 * @param value
 	 * @return
@@ -66,7 +61,8 @@ public class MapKit implements Serializable {
 	}
 
 	/**
-	 * @TODO 设置Map的key value
+	 * 设置Map的key value
+	 * 
 	 * @param key
 	 * @param value
 	 * @return
@@ -95,7 +91,8 @@ public class MapKit implements Serializable {
 	}
 
 	/**
-	 * @TODO 创建一个空Map
+	 * 创建一个空Map
+	 * 
 	 * @return
 	 */
 	public static Map<String, Object> map() {
@@ -103,7 +100,8 @@ public class MapKit implements Serializable {
 	}
 
 	/**
-	 * @TODO 单个key和value场景
+	 * 单个key和value场景
+	 * 
 	 * @param key
 	 * @param value
 	 * @return

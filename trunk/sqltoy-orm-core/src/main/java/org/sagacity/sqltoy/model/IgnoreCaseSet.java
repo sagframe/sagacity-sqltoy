@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.model;
 
 import java.util.ArrayList;
@@ -10,15 +7,12 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 不区分大小写的字符串Set类型扩展
  * @author zhongxuchen
- * @version v1.0,Date:2018-8-1
+ * @version v1.0,Date:2018-08-01
  */
 public class IgnoreCaseSet extends HashSet<String> {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 1L;
 
 	@Override

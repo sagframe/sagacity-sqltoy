@@ -9,7 +9,8 @@ package org.sagacity.sqltoy.plugins.secure;
 public interface FieldsSecureProvider {
 
 	/**
-	 * @TODO 初始化
+	 * 初始化
+	 * 
 	 * @param charset
 	 * @param privateKey
 	 * @param publicKey
@@ -17,14 +18,16 @@ public interface FieldsSecureProvider {
 	public void initialize(String charset, String privateKey, String publicKey) throws Exception;
 
 	/**
-	 * @TODO 加密
+	 * 加密
+	 * 
 	 * @param contents
 	 * @return
 	 */
 	public String encrypt(String contents);
 
 	/**
-	 * @TODO 解密
+	 * 解密
+	 * 
 	 * @param secureContents
 	 * @return
 	 */

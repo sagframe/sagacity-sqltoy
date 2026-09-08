@@ -28,13 +28,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description sqltoy 缓存翻译器(通过缓存存储常用数据,如:数据字典、机构、员工等,从而在数据库查询时可以避免关联查询)
  * @author zhongxuchen
- * @version v1.0,Date:2013年4月8日
- * @modify {Date:2018-1-5,增强缓存更新检测机制}
- * @modify {Date:2022-06-11,支持多个缓存翻译定义文件}
- * @modify {Date:2025-06-05,获取缓存cacheType支持动态传递当前用户的租户Id}
+ * @version v1.0,Date:2013-04-08
+ * @modify Date:2018-01-05 增强缓存更新检测机制
+ * @modify Date:2022-06-11 支持多个缓存翻译定义文件
+ * @modify Date:2025-06-05 获取缓存cacheType支持动态传递当前用户的租户Id
  */
 public class TranslateManager {
 	/**
@@ -92,7 +92,8 @@ public class TranslateManager {
 	}
 
 	/**
-	 * @TODO 初始化缓存管理器
+	 * 初始化缓存管理器
+	 * 
 	 * @param sqlToyContext
 	 * @param cacheManager           自定义的缓存管理器(一般为null)
 	 * @param delayCheckCacheSeconds 延时多久进行更新检测
@@ -108,11 +109,7 @@ public class TranslateManager {
 			this.sqlToyContext = sqlToyContext;
 			initialized = true;
 			String realTranslateConfig = (translateConfig == null) ? defaultTranslateConfig : translateConfig;
-			if (logger.isDebugEnabled()) {
-				logger.debug("开始加载sqltoy的translate缓存翻译配置文件:{}", realTranslateConfig);
-			} else {
-				System.out.println("开始加载sqltoy的translate缓存翻译配置文件:" + realTranslateConfig);
-			}
+			logger.info("start loading the sqltoy translate cache config file: {}", realTranslateConfig);
 			// 加载和解析缓存翻译的配置
 			DefaultConfig defaultConfig = TranslateConfigParse.parseTranslateConfig(sqlToyContext, translateMap,
 					updateCheckers, realTranslateConfig, (translateConfig == null), charset);
@@ -139,24 +136,28 @@ public class TranslateManager {
 					cacheUpdateWatcher = new CacheUpdateWatcher(sqlToyContext, translateCacheManager, translateMap,
 							updateCheckers, delayCheckCacheSeconds, defaultConfig.getDeviationSeconds());
 					cacheUpdateWatcher.start();
-					logger.debug("sqltoy的translate共:{} 个缓存配置加载完成,并且启动:{} 个缓存更新检测!", translateMap.size(),
-							updateCheckers.size());
+					logger.debug(
+							"a total of:{} cache configs of sqltoy translate are loaded, and:{} cache update checkers are started!",
+							translateMap.size(), updateCheckers.size());
 				} else {
-					logger.debug("sqltoy的translate共:{} 个缓存配置加载完成,您没有配置缓存更新检测机制或没有配置缓存,将不做缓存更新检测!", translateMap.size());
+					logger.debug(
+							"a total of:{} cache configs of sqltoy translate are loaded, you have not configured the cache update check mechanism or have no cache, cache update check will not be performed!",
+							translateMap.size());
 				}
 			} else {
 				logger.warn(
-						"translateConfig={} 未找到实际定义文件,请正确定义[以.trans.xml|-translate.xml|-translates.xml结尾],如不使用缓存翻译可忽视此提示!",
+						"translateConfig={} actual definition file is not found, please define it correctly [ending with .trans.xml|-translate.xml|-translates.xml], ignore this message if cache translate is not used!",
 						realTranslateConfig);
 			}
 		} catch (Exception e) {
-			logger.error("加载sqltoy的translate缓存翻译过程发生异常!{}", e.getMessage(), e);
+			logger.error("exception occurred while loading the sqltoy translate cache!{}", e.getMessage(), e);
 			throw e;
 		}
 	}
 
 	/**
-	 * @todo 根据sqltoy sql.xml中的翻译设置获取对应的缓存(多个translate对应的多个缓存结果)
+	 * 根据sqltoy sql.xml中的翻译设置获取对应的缓存(多个translate对应的多个缓存结果)
+	 * 
 	 * @param translates
 	 * @return
 	 */
@@ -206,20 +207,22 @@ public class TranslateManager {
 						if (cache.size() > 0) {
 							cacheEltLength = cache.values().iterator().next().length;
 							if (extend.index >= cacheEltLength) {
-								throw new IllegalArgumentException("缓存取值数组越界:cacheName:" + extend.cache + ", column:"
-										+ extend.column + ",cache-indexs:(" + extend.index + ">=" + cacheEltLength
-										+ ")[缓存内容数组长度],请检查cache-indexs值确保跟缓存数据具体列保持一致!");
+								throw new IllegalArgumentException("cache value array index out of bounds:cacheName:"
+										+ extend.cache + ", column:" + extend.column + ",cache-indexs:(" + extend.index
+										+ ">=" + cacheEltLength
+										+ ")[cache data array length], please check the cache-indexs value to keep it consistent with the cache data columns!");
 							}
 						}
 						cacheAry[i] = cache;
 					} else {
 						cacheAry[i] = new HashMap<String, Object[]>();
-						logger.warn("sqltoy translate:cacheName={},cache-type={},column={}配置不正确,未获取对应cache数据!",
+						logger.warn(
+								"sqltoy translate:cacheName={},cache-type={},column={} is invalid, failed to get the corresponding cache data!",
 								cacheModel.getCache(), realCacheType, extend.column);
 					}
 				} else {
 					cacheAry[i] = new HashMap<String, Object[]>();
-					logger.error("cacheName:{} 没有配置,请检查缓存配置文件!", extend.cache);
+					logger.error("cacheName:{} is not configured, please check the cache config file!", extend.cache);
 				}
 			}
 			fieldTranslateHandler.setCacheArray(cacheAry);
@@ -233,7 +236,8 @@ public class TranslateManager {
 	}
 
 	/**
-	 * @TODO 根据是否存在国际化，重新组织缓存对应实际翻译名称列
+	 * 根据是否存在国际化，重新组织缓存对应实际翻译名称列
+	 * 
 	 * @param translateManager
 	 * @param translateConfig
 	 * @return
@@ -297,7 +301,8 @@ public class TranslateManager {
 	}
 
 	/**
-	 * @todo 根据sqltoy sql.xml中的翻译设置获取对应的缓存
+	 * 根据sqltoy sql.xml中的翻译设置获取对应的缓存
+	 * 
 	 * @param cacheModel
 	 * @param cacheType  一般为null,不为空时一般用于数据字典等同于dictType
 	 * @return
@@ -318,7 +323,8 @@ public class TranslateManager {
 	}
 
 	/**
-	 * @todo 提供对外的访问(如要做增量更新可以对这里的数据进行修改即可达到缓存的更新作用)
+	 * 提供对外的访问(如要做增量更新可以对这里的数据进行修改即可达到缓存的更新作用)
+	 * 
 	 * @param cacheName
 	 * @param cacheType (一般为null,不为空时一般用于数据字典等同于dictType)
 	 * @return
@@ -326,7 +332,7 @@ public class TranslateManager {
 	public HashMap<String, Object[]> getCacheData(String cacheName, String cacheType) {
 		TranslateConfigModel cacheModel = translateMap.get(cacheName);
 		if (cacheModel == null) {
-			logger.error("cacheName:{} 没有配置,请检查缓存配置文件!", cacheName);
+			logger.error("cacheName:{} is not configured, please check the cache config file!", cacheName);
 			return null;
 		}
 		if (cacheModel.isDynamicCache()) {
@@ -344,7 +350,8 @@ public class TranslateManager {
 	}
 
 	/**
-	 * @todo 更新单个缓存的整体数据
+	 * 更新单个缓存的整体数据
+	 * 
 	 * @param cacheName
 	 * @param cacheType  (默认为null，针对诸如数据字典类型的，对应字典类型)
 	 * @param cacheValue
@@ -353,7 +360,7 @@ public class TranslateManager {
 		if (translateCacheManager != null) {
 			TranslateConfigModel cacheModel = translateMap.get(cacheName);
 			if (cacheModel == null) {
-				logger.error("cacheName:{} 没有配置,请检查缓存配置文件!", cacheName);
+				logger.error("cacheName:{} is not configured, please check the cache config file!", cacheName);
 				return;
 			}
 			String realCacheType = TranslateUtils.getRealCacheType(sqlToyContext, cacheType);
@@ -364,12 +371,14 @@ public class TranslateManager {
 				translateCacheManager.put(cacheModel, cacheModel.getCache(), realCacheType, cacheValue);
 			}
 		} else {
-			logger.error("因没有定义缓存翻译的配置文件(可不定义具体缓存)，则没有启用缓存翻译,无法设置缓存数据!");
+			logger.error(
+					"cache translate is not enabled because the cache translate config file is not defined (defining concrete caches is optional), can not put cache data!");
 		}
 	}
 
 	/**
-	 * @todo 清空缓存
+	 * 清空缓存
+	 * 
 	 * @param cacheName
 	 * @param cacheType (默认为null，针对诸如数据字典类型的，对应字典类型)
 	 */
@@ -388,7 +397,8 @@ public class TranslateManager {
 	}
 
 	/**
-	 * @todo 判断cache是否存在
+	 * 判断cache是否存在
+	 * 
 	 * @param cacheName
 	 * @return
 	 */
@@ -401,7 +411,8 @@ public class TranslateManager {
 	}
 
 	/**
-	 * @TODO 动态增加缓存配置(只允许增加和覆盖,不允许删除)
+	 * 动态增加缓存配置(只允许增加和覆盖,不允许删除)
+	 * 
 	 * @param translateConfigModel
 	 */
 	public void putCache(TranslateConfigModel translateConfigModel) {
@@ -409,20 +420,22 @@ public class TranslateManager {
 			return;
 		}
 		if (translateCacheManager == null) {
-			logger.error("因没有定义缓存翻译的配置文件(可不定义具体缓存)，则没有启用缓存翻译,无法动态增加缓存!");
+			logger.error(
+					"cache translate is not enabled because the cache translate config file is not defined (defining concrete caches is optional), can not dynamically add cache!");
 		} else {
 			translateMap.put(translateConfigModel.getCache(), translateConfigModel);
 		}
 	}
 
 	/**
-	 * @TODO 移除某个缓存翻译配置
+	 * 移除某个缓存翻译配置
+	 * 
 	 * @param cacheName
 	 */
 	public void removeCache(String cacheName) {
 		TranslateConfigModel cacheModel = translateMap.get(cacheName);
 		if (cacheModel == null) {
-			logger.error("cacheName:{} 没有配置,请检查缓存配置文件!", cacheName);
+			logger.error("cacheName:{} is not configured, please check the cache config file!", cacheName);
 			return;
 		}
 		translateMap.remove(cacheName);
@@ -442,7 +455,8 @@ public class TranslateManager {
 	}
 
 	/**
-	 * @TODO 移除某个缓存更新检测器
+	 * 移除某个缓存更新检测器
+	 * 
 	 * @param checkerConfigModel
 	 */
 	public void removeCacheUpdater(CheckerConfigModel checkerConfigModel) {
@@ -451,7 +465,8 @@ public class TranslateManager {
 		}
 		if (StringUtil.isNotBlank(checkerConfigModel.getCache())) {
 			if (!translateMap.containsKey(checkerConfigModel.getCache())) {
-				logger.error("cacheName:{} 不存在无需做移除,请检查缓存配置文件!", checkerConfigModel.getCache());
+				logger.error("cacheName:{} does not exist, no need to remove, please check the cache config file!",
+						checkerConfigModel.getCache());
 				return;
 			}
 		}
@@ -466,7 +481,8 @@ public class TranslateManager {
 	}
 
 	/**
-	 * @TODO 动态增加或者更新缓存变更检测器
+	 * 动态增加或者更新缓存变更检测器
+	 * 
 	 * @param checkerConfigModel
 	 */
 	public void putCacheUpdater(CheckerConfigModel checkerConfigModel) {
@@ -476,12 +492,14 @@ public class TranslateManager {
 		// 具体缓存的更新，验证缓存是否存在
 		if (StringUtil.isNotBlank(checkerConfigModel.getCache())) {
 			if (!translateMap.containsKey(checkerConfigModel.getCache())) {
-				logger.error("cacheName:{} 没有配置,请检查缓存配置文件!", checkerConfigModel.getCache());
+				logger.error("cacheName:{} is not configured, please check the cache config file!",
+						checkerConfigModel.getCache());
 				return;
 			}
 		} // 增量模式，必须针对具体的cacheName
 		else if (checkerConfigModel.isIncrement()) {
-			logger.error("缓存增量更新检测必须要指定具体的缓存名称:checkerConfigModel.setCache(cacheName)!");
+			logger.error(
+					"incremental cache update check must specify a concrete cache name:checkerConfigModel.setCache(cacheName)!");
 			return;
 		}
 		// 验证sql\service\rest三种形态必须有一种
@@ -489,7 +507,7 @@ public class TranslateManager {
 				&& (StringUtil.isBlank(checkerConfigModel.getService())
 						|| StringUtil.isBlank(checkerConfigModel.getMethod()))
 				&& StringUtil.isBlank(checkerConfigModel.getUrl())) {
-			logger.error("缓存更新检测必须设定:sql、[service|method]、url(rest) 三种类型中的一种!");
+			logger.error("cache update check must set one of the three types:sql, [service|method], url(rest)!");
 			return;
 		}
 		// 先移除之前同名的
@@ -505,7 +523,8 @@ public class TranslateManager {
 	}
 
 	/**
-	 * @todo 获取所有缓存的名称
+	 * 获取所有缓存的名称
+	 * 
 	 * @return
 	 */
 	public Set<String> getCacheNames() {
@@ -520,7 +539,8 @@ public class TranslateManager {
 	}
 
 	/**
-	 * @TODO 获取全部的缓存翻译配置信息
+	 * 获取全部的缓存翻译配置信息
+	 * 
 	 * @return
 	 */
 	public Collection<TranslateConfigModel> getAllTranslates() {
@@ -549,14 +569,14 @@ public class TranslateManager {
 			}
 		} catch (Exception e) {
 			// 清理失败仅记录(如ehcache磁盘缓存close异常)
-			logger.error("translate缓存管理器销毁过程发生异常!", e);
+			logger.error("exception occurred during the destroy of the translate cache manager!", e);
 		}
 		try {
 			if (cacheUpdateWatcher != null && !cacheUpdateWatcher.isInterrupted()) {
 				cacheUpdateWatcher.interrupt();
 			}
 		} catch (Exception e) {
-			logger.error("translate更新检测线程中断过程发生异常!", e);
+			logger.error("exception occurred while interrupting the translate update checker thread!", e);
 		}
 	}
 }

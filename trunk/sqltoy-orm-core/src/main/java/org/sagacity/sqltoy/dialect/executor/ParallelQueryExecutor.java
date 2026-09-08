@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.dialect.executor;
 
 import java.util.concurrent.Callable;
@@ -20,8 +17,8 @@ import org.sagacity.sqltoy.plugins.CrossDbAdapter;
  * @project sagacity-sqltoy
  * @description 并行查询执行器
  * @author zhongxuchen
- * @version v1.0, Date:2020-8-25
- * @modify 2020-8-25,修改说明
+ * @version v1.0,Date:2020-08-25
+ * @modify Date:2020-08-25 修改说明
  */
 public class ParallelQueryExecutor implements Callable<ParallelQueryResult> {
 

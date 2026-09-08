@@ -1,21 +1,19 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.dialect.utils;
 
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description mysql数据库各类操作的统一函数实现（便于今后mysql版本以及变种数据库统一使用，减少主体代码重复量）
  * @author zhongxuchen
- * @version v1.0,Date:2015年2月13日
+ * @version v1.0,Date:2015-02-13
  */
 public class MySqlDialectUtils {
 
 	/**
-	 * @TODO 主键策略是identity或sequence时，主键值允许不由数据库内部自动产生，可人工赋值
+	 * 主键策略是identity或sequence时，主键值允许不由数据库内部自动产生，可人工赋值
+	 * 
 	 * @param pkStrategy
 	 * @return
 	 */

@@ -48,10 +48,10 @@ import org.sagacity.sqltoy.translate.TranslateHandler;
 import org.springframework.stereotype.Repository;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description SqlToyLazyDao提供的通用Dao逻辑实现
  * @author zhongxuchen
- * @version v1.0,Date:2012-7-15
+ * @version v1.0,Date:2012-07-15
  */
 @SuppressWarnings({ "rawtypes" })
 @Repository("sqlToyLazyDao")
@@ -865,7 +865,7 @@ public class SqlToyLazyDaoImpl extends SpringDaoSupport implements SqlToyLazyDao
 	}
 
 	/**
-	 * @todo 判断缓存是否存在
+	 * 判断缓存是否存在
 	 * @param cacheName
 	 * @return
 	 */
@@ -893,7 +893,7 @@ public class SqlToyLazyDaoImpl extends SpringDaoSupport implements SqlToyLazyDao
 		if (result.size() == 1) {
 			return result.get(0);
 		}
-		throw new IllegalArgumentException("loadEntity查询出:" + result.size() + " 条记录,不符合load查询预期!");
+		throw new IllegalArgumentException("loadEntity expect a single record but found [" + result.size() + "] rows, please check the query conditions!");
 	}
 
 	@Override
@@ -949,7 +949,7 @@ public class SqlToyLazyDaoImpl extends SpringDaoSupport implements SqlToyLazyDao
 	}
 
 	/**
-	 * @TODO 转换分页类型
+	 * 转换分页类型
 	 * @param <T>
 	 * @param sourcePage
 	 * @param resultType

@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.plugins.sharding;
 
 import org.sagacity.sqltoy.SqlToyContext;
@@ -8,14 +5,15 @@ import org.sagacity.sqltoy.config.model.ShardingDBModel;
 import org.sagacity.sqltoy.model.IgnoreCaseLinkedMap;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description sharding 策略接口
  * @author zhongxuchen
- * @version v1.0,Date:2015年3月17日
+ * @version v1.0,Date:2015-03-17
  */
 public interface ShardingStrategy {
 	/**
-	 * @todo 根据条件确定当前sql语句中的表要替换成的具体表名
+	 * 根据条件确定当前sql语句中的表要替换成的具体表名
+	 * 
 	 * @param sqlToyContext
 	 * @param entityClass
 	 * @param baseTableName 传递过来的当前表名
@@ -27,7 +25,8 @@ public interface ShardingStrategy {
 			String decisionType, IgnoreCaseLinkedMap<String, Object> paramsMap);
 
 	/**
-	 * @todo 根据分库策略获取最终执行的数据库信息
+	 * 根据分库策略获取最终执行的数据库信息
+	 * 
 	 * @param sqlToyContext
 	 * @param entityClass
 	 * @param tableOrSql
@@ -39,7 +38,7 @@ public interface ShardingStrategy {
 			String decisionType, IgnoreCaseLinkedMap<String, Object> paramsMap);
 
 	/**
-	 * @TODO 初始化
+	 * 初始化
 	 */
 	public void initialize();
 }

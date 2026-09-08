@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.dialect.impl;
 
 import java.io.Serializable;
@@ -39,8 +36,8 @@ import org.sagacity.sqltoy.utils.SqlUtil;
  * @project sagacity-sqltoy
  * @description 提供一个不能匹配数据库类型的实现，确保通用查询功能可以使用
  * @author zhongxuchen
- * @version v1.0, Date:2020-9-2
- * @modify 2020-9-2,修改说明
+ * @version v1.0,Date:2020-09-02
+ * @modify Date:2020-09-02 修改说明
  */
 @SuppressWarnings({ "rawtypes" })
 public class DefaultDialect implements Dialect {
@@ -227,12 +224,13 @@ public class DefaultDialect implements Dialect {
 				reflectPropsHandler, NVL_FUNCTION, conn, dbType, autoCommit, tableName, true);
 		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
 		if (updateCnt >= entities.size()) {
-			SqlExecuteStat.debug("修改记录", "修改记录量:" + updateCnt + " 条,等于entities集合长度,不再做insert操作!");
+			SqlExecuteStat.debug("update record",
+					"update rows:" + updateCnt + " equals the size of entities collection, skip the insert operation!");
 			return updateCnt;
 		}
 		Long saveCnt = saveAllIgnoreExist(sqlToyContext, entities, batchSize, reflectPropsHandler, conn, dbType,
 				dialect, autoCommit, tableName);
-		SqlExecuteStat.debug("新增记录", "新建记录数量:" + saveCnt + " 条!");
+		SqlExecuteStat.debug("insert record", "insert rows:" + saveCnt + "!");
 		return updateCnt + saveCnt;
 	}
 
@@ -293,7 +291,8 @@ public class DefaultDialect implements Dialect {
 	}
 
 	/**
-	 * @TODO 主键策略是identity或sequence时，主键值允许不由数据库内部自动产生，可人工赋值
+	 * 主键策略是identity或sequence时，主键值允许不由数据库内部自动产生，可人工赋值
+	 * 
 	 * @param pkStrategy
 	 * @return
 	 */

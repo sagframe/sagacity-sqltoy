@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.config.model;
 
 import java.io.Serializable;
@@ -11,13 +8,10 @@ import java.util.Locale;
  * @project sagacity-sqltoy
  * @description 格式化参数模型
  * @author zhongxuchen
- * @version v1.0,Date:2018年6月26日
+ * @version v1.0,Date:2018-06-26
  */
 public class FormatModel implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 8483990404112803642L;
 
 	/**
@@ -45,9 +39,6 @@ public class FormatModel implements Serializable {
 	 */
 	private String currency;
 
-	/**
-	 *
-	 */
 	private RoundingMode roundingMode = null;
 
 	/**

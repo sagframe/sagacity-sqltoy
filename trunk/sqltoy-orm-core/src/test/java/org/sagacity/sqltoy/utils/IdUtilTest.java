@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -41,7 +42,9 @@ public class IdUtilTest {
 	@Test
 	public void testMaxThread() throws Exception {
 		int threadSize = 100;
-		Set<BigDecimal> idset = new HashSet<BigDecimal>();// ConcurrentHashMap.newKeySet();
+		// 并发唯一性压测必须使用线程安全集合:非线程安全HashSet被100线程并发add,
+		// 可能破坏内部桶结构导致任务挂死,awaitTermination(300s)超时误报(原注释即ConcurrentHashMap.newKeySet)
+		Set<BigDecimal> idset = ConcurrentHashMap.newKeySet();
 		ExecutorService pool = Executors.newFixedThreadPool(threadSize);
 		for (int i = 0; i < threadSize; i++) {
 			pool.execute(new GetId(idset, 10000));

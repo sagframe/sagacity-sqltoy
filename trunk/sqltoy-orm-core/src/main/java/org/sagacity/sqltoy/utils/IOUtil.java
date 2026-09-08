@@ -32,7 +32,8 @@ public class IOUtil {
 	}
 
 	/**
-	 * @TODO 转换String为InputStream
+	 * 转换String为InputStream
+	 * 
 	 * @param str
 	 * @param charset
 	 * @return
@@ -47,7 +48,8 @@ public class IOUtil {
 	}
 
 	/**
-	 * @todo 将对象转换成字节数组
+	 * 将对象转换成字节数组
+	 * 
 	 * @param obj
 	 * @return
 	 */
@@ -63,13 +65,14 @@ public class IOUtil {
 			oos.flush();
 			return bos.toByteArray();
 		} catch (Exception e) {
-			logger.error("对象序列化失败: {}", e.getMessage(), e);
+			logger.error("failed to serialize object: {}", e.getMessage(), e);
 			return null;
 		}
 	}
 
 	/**
-	 * @todo 字节数组转换成对象
+	 * 字节数组转换成对象
+	 * 
 	 * @param objBytes
 	 * @return
 	 */
@@ -80,13 +83,14 @@ public class IOUtil {
 		try (ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(objBytes))) {
 			return in.readObject();
 		} catch (Exception e) {
-			logger.error("对象反序列化失败: {}", e.getMessage(), e);
+			logger.error("failed to deserialize object: {}", e.getMessage(), e);
 			return null;
 		}
 	}
 
 	/**
-	 * @todo 字节数组转换成对象,一般用于对象序列化
+	 * 字节数组转换成对象,一般用于对象序列化
+	 * 
 	 * @param is
 	 * @return
 	 */
@@ -97,13 +101,14 @@ public class IOUtil {
 		try (ObjectInputStream in = new ObjectInputStream(is)) {
 			return in.readObject();
 		} catch (Exception e) {
-			logger.error("对象反序列化失败: {}", e.getMessage(), e);
+			logger.error("failed to deserialize object: {}", e.getMessage(), e);
 			return null;
 		}
 	}
 
 	/**
-	 * @todo 将inputStream转换成byte数组
+	 * 将inputStream转换成byte数组
+	 * 
 	 * @param is
 	 * @return
 	 * @throws IOException
@@ -125,7 +130,8 @@ public class IOUtil {
 	}
 
 	/**
-	 * @todo 将inputStream转换成字符串
+	 * 将inputStream转换成字符串
+	 * 
 	 * @param is
 	 * @param encoding
 	 * @return
@@ -134,9 +140,10 @@ public class IOUtil {
 		if (is == null) {
 			return null;
 		}
-		Charset charset = StringUtil.isNotBlank(encoding) ? Charset.forName(encoding) : StandardCharsets.UTF_8;
 		final String lineSep = System.lineSeparator();
-		try (BufferedReader in = new BufferedReader(new InputStreamReader(is, charset))) {
+		// charset解析纳入try块,非法编码名按容错约定返回null
+		try (BufferedReader in = new BufferedReader(new InputStreamReader(is,
+				StringUtil.isNotBlank(encoding) ? Charset.forName(encoding) : StandardCharsets.UTF_8))) {
 			StringBuilder buffer = new StringBuilder();
 			String line;
 			boolean firstLine = true;
@@ -149,13 +156,14 @@ public class IOUtil {
 			}
 			return buffer.toString();
 		} catch (Exception e) {
-			logger.error("读取InputStream失败: {}", e.getMessage(), e);
+			logger.error("failed to read InputStream: {}", e.getMessage(), e);
 			return null;
 		}
 	}
 
 	/**
-	 * @todo 将对象转换成ByteBuffer
+	 * 将对象转换成ByteBuffer
+	 * 
 	 * @param obj
 	 * @return
 	 * @throws IOException
@@ -176,7 +184,8 @@ public class IOUtil {
 	}
 
 	/**
-	 * @TODO 关闭一个或多个流对象
+	 * 关闭一个或多个流对象
+	 * 
 	 * @param closeables 可关闭的流对象列表
 	 * @throws IOException
 	 */
@@ -203,7 +212,8 @@ public class IOUtil {
 	}
 
 	/**
-	 * @TODO 关闭一个或多个流对象
+	 * 关闭一个或多个流对象
+	 * 
 	 * @param closeables 可关闭的流对象列表
 	 */
 	public static void closeQuietly(Closeable... closeables) {

@@ -13,13 +13,41 @@ import org.sagacity.sqltoy.model.SqlInjectionLevel;
 
 import com.alibaba.fastjson2.JSON;
 
+/**
+ * SqlUtil sql处理工具的单元测试
+ */
 public class SqlUtilTest {
 
 	@Test
 	public void testConvertFieldsToCols() {
+		// 显式清空保留字集合建立前置条件:集合为全局静态且put为累加合并,
+		// 其他测试类(如DialectEdgeBatchTest)put的词会残留,导致convertWord对命中列默认[]包裹
+		ReservedWordsUtil.clear();
 		String sql = "staffName,`sexType`,name,bizStaffName from table where #[t.staffName like ?] and sexType=:sexType";
+		sql = SqlUtil.convertFieldsToColumns(buildStaffEntityMeta("staff_info"), sql);
+		assertEquals(
+				"STAFF_NAME,`SEX_TYPE`,name,BIZ_STAFF_NAME from table where #[t.STAFF_NAME like ?] and SEX_TYPE=:sexType",
+				sql.trim());
+	}
+
+	/**
+	 * 反向场景:配置保留字后,convertWord(dbType=null)对命中列默认以[]包裹
+	 * (生产上该占位符由convertSimpleSql按数据库方言二次替换);表名与其他用例不同以规避convertSqlMap缓存key
+	 */
+	@Test
+	public void testConvertFieldsToColsWithReservedWords() {
+		ReservedWordsUtil.clear();
+		ReservedWordsUtil.put("staff_name,sex_type");
+		String sql = "staffName,`sexType`,name,bizStaffName from table where #[t.staffName like ?] and sexType=:sexType";
+		sql = SqlUtil.convertFieldsToColumns(buildStaffEntityMeta("staff_info_wrapped"), sql);
+		assertEquals(
+				"[STAFF_NAME],`SEX_TYPE`,name,BIZ_STAFF_NAME from table where #[t.[STAFF_NAME] like ?] and [SEX_TYPE]=:sexType",
+				sql.trim());
+	}
+
+	private EntityMeta buildStaffEntityMeta(String tableName) {
 		EntityMeta entityMeta = new EntityMeta();
-		entityMeta.setTableName("staff_info");
+		entityMeta.setTableName(tableName);
 		HashMap<String, FieldMeta> fieldsMeta = new HashMap<String, FieldMeta>();
 		FieldMeta staffMeta = new FieldMeta();
 		staffMeta.setFieldName("staffName");
@@ -42,13 +70,11 @@ public class SqlUtilTest {
 		fieldsMeta.put("sextype", sexMeta);
 		entityMeta.setFieldsMeta(fieldsMeta);
 		entityMeta.setFieldsArray(new String[] { "name", "staffName", "bizStaffName", "sexType" });
-		sql = SqlUtil.convertFieldsToColumns(entityMeta, sql);
-		assertEquals(sql.trim(),
-				"STAFF_NAME,`SEX_TYPE`,name,BIZ_STAFF_NAME from table where #[t.STAFF_NAME like ?] and SEX_TYPE=:sexType");
+		return entityMeta;
 	}
 
 	/**
-	 * @TODO 测试vo属性名称转表字段名称
+	 * 测试vo属性名称转表字段名称
 	 */
 	@Test
 	public void testConvertFieldsToCols1() {

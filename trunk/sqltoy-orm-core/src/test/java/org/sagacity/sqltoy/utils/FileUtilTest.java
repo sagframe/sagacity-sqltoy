@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.utils;
 
 import java.io.FileInputStream;
@@ -11,9 +8,9 @@ import org.junit.jupiter.api.Test;
 /**
  * @project sagacity-sqltoy
  * @description 请在此说明类的功能
- * @author zhong
- * @version v1.0, Date:2023年12月6日
- * @modify 2023年12月6日,修改说明
+ * @author zhongxuchen
+ * @version v1.0,Date:2023-12-06
+ * @modify Date:2023-12-06,修改说明
  */
 public class FileUtilTest {
 	@Test

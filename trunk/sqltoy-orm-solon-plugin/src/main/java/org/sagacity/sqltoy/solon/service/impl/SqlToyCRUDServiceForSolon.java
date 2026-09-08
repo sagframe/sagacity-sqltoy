@@ -54,7 +54,7 @@ public class SqlToyCRUDServiceForSolon implements SqlToyCRUDService {
 	@Transaction
 	public Long update(Serializable entity, String... forceUpdateProps) {
 		if (null == entity) {
-			throw new IllegalArgumentException("update 数据对象为null!");
+			throw new IllegalArgumentException("the entity object for update is null!");
 		} else {
 			return this.lightDao.update(entity, forceUpdateProps);
 		}
@@ -63,7 +63,7 @@ public class SqlToyCRUDServiceForSolon implements SqlToyCRUDService {
 	@Transaction
 	public Long updateCascade(Serializable entity, String... forceUpdateProps) {
 		if (null == entity) {
-			throw new IllegalArgumentException("update 数据对象为null!");
+			throw new IllegalArgumentException("the entity object for update is null!");
 		} else {
 			return this.lightDao.updateCascade(entity, forceUpdateProps, (Class[]) null, (HashMap) null);
 		}
@@ -72,7 +72,7 @@ public class SqlToyCRUDServiceForSolon implements SqlToyCRUDService {
 	@Transaction
 	public Long updateDeeply(Serializable entity) {
 		if (null == entity) {
-			throw new IllegalArgumentException("updateDeeply 数据对象为null!");
+			throw new IllegalArgumentException("the entity object for updateDeeply is null!");
 		} else {
 			return this.lightDao.updateDeeply(entity);
 		}
@@ -91,7 +91,7 @@ public class SqlToyCRUDServiceForSolon implements SqlToyCRUDService {
 	@Transaction
 	public Long saveOrUpdate(Serializable entity, String... forceUpdateProps) {
 		if (null == entity) {
-			throw new IllegalArgumentException("saveOrUpdate  数据对象为null!");
+			throw new IllegalArgumentException("the entity object for saveOrUpdate is null!");
 		} else {
 			return this.lightDao.saveOrUpdate(entity, forceUpdateProps);
 		}

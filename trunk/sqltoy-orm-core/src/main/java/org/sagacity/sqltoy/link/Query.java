@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.link;
 
 import java.io.Serializable;
@@ -25,13 +22,10 @@ import org.sagacity.sqltoy.utils.BeanUtil;
  * @project sagacity-sqltoy
  * @description 普通查询
  * @author zhongxuchen
- * @version v1.0,Date:2017年10月9日
+ * @version v1.0,Date:2017-10-09
  */
 public class Query extends BaseLink {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -8128694559008281052L;
 
 	/**
@@ -84,8 +78,8 @@ public class Query extends BaseLink {
 	private int queryTimeout = -1;
 
 	/**
-	 * @param sqlToyContext
-	 * @param dataSource
+	 * @param sqlToyContext sqltoy全局上下文对象
+	 * @param dataSource    查询绑定的数据源，null表示使用默认数据源
 	 */
 	public Query(SqlToyContext sqlToyContext, DataSource dataSource) {
 		super(sqlToyContext, dataSource);
@@ -118,9 +112,10 @@ public class Query extends BaseLink {
 	}
 
 	/**
-	 * @todo 设置sql语句
-	 * @param sql
-	 * @return
+	 * 设置sql语句
+	 * 
+	 * @param sql 具体执行的sql语句或者xml中定义的sqlId
+	 * @return 当前Query对象，支持链式调用
 	 */
 	public Query sql(String sql) {
 		this.sql = sql;
@@ -133,9 +128,10 @@ public class Query extends BaseLink {
 	}
 
 	/**
-	 * @todo sql语句中的参数名称
-	 * @param names
-	 * @return
+	 * sql语句中的参数名称
+	 * 
+	 * @param names sql中:name形式参数对应的参数名称数组
+	 * @return 当前Query对象，支持链式调用
 	 */
 	public Query names(String... names) {
 		this.names = names;
@@ -143,9 +139,10 @@ public class Query extends BaseLink {
 	}
 
 	/**
-	 * @todo sql语句中的参数对应的值
-	 * @param values
-	 * @return
+	 * sql语句中的参数对应的值
+	 * 
+	 * @param values 参数值数组，顺序与names中参数名称一一对应；当传入单个Map时作为命名参数对象整体处理
+	 * @return 当前Query对象，支持链式调用
 	 */
 	public Query values(Object... values) {
 		this.values = values;
@@ -153,9 +150,10 @@ public class Query extends BaseLink {
 	}
 
 	/**
-	 * @todo 通过对象传递参数(对象属性名跟sql中的参数别名对应)
-	 * @param entityVO
-	 * @return
+	 * 通过对象传递参数(对象属性名跟sql中的参数别名对应)
+	 * 
+	 * @param entityVO 作为参数传递的对象，按属性名与sql中参数名称匹配提取值作为查询条件
+	 * @return 当前Query对象，支持链式调用
 	 */
 	public Query entity(Serializable entityVO) {
 		this.params = entityVO;
@@ -174,10 +172,11 @@ public class Query extends BaseLink {
 	}
 
 	/**
-	 * @todo 获取单值
-	 * @param <T>
-	 * @param resultType
-	 * @return
+	 * 获取单值
+	 * 
+	 * @param <T>        单值的目标类型
+	 * @param resultType 单值要转换的目标类型，如：String.class、Long.class
+	 * @return 查询结果第一行第一列的值并转换为指定类型，无记录时返回null
 	 */
 	public <T> T getValue(final Class<T> resultType) {
 		Object result = getValue();
@@ -185,13 +184,14 @@ public class Query extends BaseLink {
 			return (T) BeanUtil.convertType(result, JdbcTypes.OTHER, DataType.getType(resultType),
 					resultType.getTypeName());
 		} catch (Exception e) {
-			throw new DataAccessException("getValue方法获取单个值失败:" + e.getMessage(), e);
+			throw new DataAccessException("getValue failed to get a single value:" + e.getMessage(), e);
 		}
 	}
 
 	/**
-	 * @todo 获取单值
-	 * @return
+	 * 获取单值
+	 * 
+	 * @return 查询结果第一行第一列的值，无记录时返回null，多于一行的查询结果会抛出异常
 	 */
 	public Object getValue() {
 		QueryExecutor queryExecute = new QueryExecutor(sql).names(names).values(values);
@@ -207,12 +207,14 @@ public class Query extends BaseLink {
 		if (rows.size() == 1) {
 			return ((List) rows.get(0)).get(0);
 		}
-		throw new IllegalArgumentException("getValue查询出:" + rows.size() + " 条记录,不符合getValue 单行记录且单值预期!");
+		throw new IllegalArgumentException("getValue expect a single row with a single value but found [" + rows.size()
+				+ "] rows, please check the query conditions!");
 	}
 
 	/**
-	 * @todo 获取一条记录
-	 * @return
+	 * 获取一条记录
+	 * 
+	 * @return 查询结果的第一条记录，无记录时返回null，多于一行的查询结果会抛出异常
 	 */
 	public Object getOne() {
 		QueryExecutor queryExecute = build();
@@ -228,12 +230,14 @@ public class Query extends BaseLink {
 		if (rows.size() == 1) {
 			return rows.get(0);
 		}
-		throw new IllegalArgumentException("getOne查询出:" + rows.size() + " 条记录,不符合getOne查询预期!");
+		throw new IllegalArgumentException("getOne expect a single record but found [" + rows.size()
+				+ "] rows, please check the query conditions!");
 	}
 
 	/**
-	 * @todo 查询记录集的数量
-	 * @return
+	 * 查询记录集的数量
+	 * 
+	 * @return 符合查询条件的记录总数
 	 */
 	public Long count() {
 		QueryExecutor queryExecute = build();
@@ -246,8 +250,9 @@ public class Query extends BaseLink {
 	}
 
 	/**
-	 * @todo 查询结果集合
-	 * @return
+	 * 查询结果集合
+	 * 
+	 * @return 查询结果行集合，设置了resultType时行为其类型实例，否则每行为List结构
 	 */
 	public List<?> find() {
 		QueryExecutor queryExecute = build();
@@ -260,9 +265,10 @@ public class Query extends BaseLink {
 	}
 
 	/**
-	 * @todo 取前多少条记录
-	 * @param topSize
-	 * @return
+	 * 取前多少条记录
+	 * 
+	 * @param topSize 获取最前面的记录数量
+	 * @return 符合条件的前topSize条记录集合
 	 */
 	public List<?> findTop(final double topSize) {
 		QueryExecutor queryExecute = build();
@@ -275,9 +281,10 @@ public class Query extends BaseLink {
 	}
 
 	/**
-	 * @todo 随机取记录
-	 * @param randomSize
-	 * @return
+	 * 随机取记录
+	 * 
+	 * @param randomSize 随机抽取的记录数量
+	 * @return 从符合条件的结果中随机抽取的记录集合
 	 */
 	public List<?> findRandom(final double randomSize) {
 		QueryExecutor queryExecute = build();
@@ -290,9 +297,10 @@ public class Query extends BaseLink {
 	}
 
 	/**
-	 * @TODO 进行分页查询
-	 * @param page
-	 * @return
+	 * 进行分页查询
+	 * 
+	 * @param page 分页模型对象，提供页号(pageNo)、每页记录数(pageSize)等分页参数
+	 * @return 分页查询结果，包含符合条件的记录总数及当页数据
 	 */
 	public Page<?> findPage(final Page page) {
 		QueryExecutor queryExecute = build();

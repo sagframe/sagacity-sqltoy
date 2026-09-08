@@ -25,9 +25,6 @@ import lombok.experimental.Accessors;
 @Entity(tableName = "sqltoy_device_order", pk_constraint = "PRIMARY")
 public class DeviceOrderVO implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 5720676300522791730L;
 	/*---begin-auto-generate-don't-update-this-area--*/
 	/**

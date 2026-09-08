@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
@@ -9,12 +6,9 @@ import java.io.Serializable;
  * @project sagacity-sqltoy
  * @description 树形表结构模型
  * @author zhongxuchen
- * @version v1.0,Date:2010-9-27
+ * @version v1.0,Date:2010-09-27
  */
 public class TreeTableModel implements Serializable {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 6422408233450252053L;
 
 	/**

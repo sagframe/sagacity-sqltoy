@@ -1,10 +1,8 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.plugins.calculator;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import org.sagacity.sqltoy.config.model.LabelIndexModel;
 import org.sagacity.sqltoy.config.model.UnpivotModel;
@@ -15,18 +13,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 对集合进行列转行处理
  * @author zhongxuchen
- * @version v1.0,Date:2020-3-25
- * @modify {Date:2022-05-11 支持多组列转行 }
+ * @version v1.0,Date:2020-03-25
+ * @modify Date:2022-05-11 支持多组列转行
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class UnpivotList {
 	private final static Logger logger = LoggerFactory.getLogger(UnpivotList.class);
 
 	/**
-	 * @TODO 对集合进行单组、多组列转行处理
+	 * 对集合进行单组、多组列转行处理
+	 * 
 	 * @param unpivotModel
 	 * @param resultModel   提供label、labelType 进行重写
 	 * @param labelIndexMap sql查询出来的集合:标题 对应 列的map,通过label定义第几列
@@ -54,7 +53,7 @@ public class UnpivotList {
 				// columnsToRows配置时格式为:colName1:rowValue1,colName2:rowValue2格式
 				// 经过解析每个里面是colName:rowValue格式
 				colsAndIndexValue = unpivotModel.getColumnsToRows()[i].replaceFirst("\\：", ":").split("\\:");
-				colIndex = colsAndIndexValue[0].toLowerCase().trim();
+				colIndex = colsAndIndexValue[0].toLowerCase(Locale.ROOT).trim();
 				if (NumberUtil.isInteger(colIndex)) {
 					unpivotCols[i] = Integer.parseInt(colIndex);
 				} else {
@@ -125,15 +124,16 @@ public class UnpivotList {
 			resultModel.setLabelTypes(newLabelTypes);
 			return newResult;
 		} catch (IndexOutOfBoundsException iot) {
-			logger.error("process 方法执行异常", iot);
+			logger.error("process method execution failed", iot);
 			throw new RuntimeException(
-					"列转行处理出现数组越界,请检查columns-to-rows、new-columns-labels(类似=indexName,indexValue是两个属性)配置是否合法！"
+					"Array index out of bounds in columns-to-rows processing, please check whether the columns-to-rows and new-columns-labels (e.g. =indexName,indexValue are two attributes) configuration is valid!"
 							+ iot.getMessage());
 		}
 	}
 
 	/**
-	 * @TODO 2022-5-11 支持将多组列进行旋转，每组对应一列
+	 * 2022-5-11 支持将多组列进行旋转，每组对应一列
+	 * 
 	 * @param unpivotModel
 	 * @param resultModel
 	 * @param labelIndexMap
@@ -158,12 +158,14 @@ public class UnpivotList {
 			// 剔除分组符号{}
 			groupCols = unpivotModel.getColumnsToRows()[i].replace("{", "").replace("}", "").trim().split("\\,");
 			if (groupCols.length != pivotRows) {
-				throw new IllegalArgumentException("unpivot多组列转行，每组{col1,col2}的长度必须一致,第{" + (i + 1) + "}组旋转列数为:"
-						+ groupCols.length + "!=" + pivotRows + "请检查:columns-to-rows 属性配置正确性!");
+				throw new IllegalArgumentException(
+						"unpivot multiple groups columns-to-rows requires each group {col1,col2} to have the same length, group ["
+								+ (i + 1) + "] has [" + groupCols.length + "] pivot columns but expect [" + pivotRows
+								+ "], please check the columns-to-rows configuration!");
 			}
 			for (int j = 0; j < pivotRows; j++) {
 				colsAndIndexValue = groupCols[j].replaceFirst("\\：", ":").split("\\:");
-				colIndex = colsAndIndexValue[0].toLowerCase().trim();
+				colIndex = colsAndIndexValue[0].toLowerCase(Locale.ROOT).trim();
 				if (NumberUtil.isInteger(colIndex)) {
 					unpivotCols[i][j] = Integer.parseInt(colIndex);
 				} else {
@@ -220,8 +222,10 @@ public class UnpivotList {
 				newColsLabels[1 + i] = "indexValue" + ((i == 0) ? "" : i);
 			}
 		} else if (newColsLabels.length != groupSize + 1) {
-			throw new IllegalArgumentException("unpivot多组列转行new-columns-labels设置错误,1列指标名称+" + groupSize
-					+ "列旋转所得新列,应该设置:" + (1 + groupSize) + " 个列属性名称!格式如:\"季度,最小营业额,最大营业额\"");
+			throw new IllegalArgumentException(
+					"invalid new-columns-labels configuration for unpivot multiple groups columns-to-rows: 1 index name column + "
+							+ groupSize + " pivot columns, expect [" + (1 + groupSize)
+							+ "] column labels! e.g. \"quarter,minTurnover,maxTurnover\"");
 		}
 
 		labelList.add(addIndex, newColsLabels[0]);

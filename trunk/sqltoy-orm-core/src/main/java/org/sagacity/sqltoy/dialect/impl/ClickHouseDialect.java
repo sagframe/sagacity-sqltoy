@@ -29,10 +29,10 @@ import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description clickhouse 19.x版本,clickhouse 不支持updateAll,更多面向查询
  * @author zhongxuchen
- * @version v1.0,Date:2020年1月20日
+ * @version v1.0,Date:2020-01-20
  */
 @SuppressWarnings({ "rawtypes" })
 public class ClickHouseDialect implements Dialect {

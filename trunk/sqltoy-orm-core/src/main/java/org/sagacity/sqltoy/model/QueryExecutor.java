@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
@@ -33,10 +30,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 构造统一的查询条件模型
  * @author zhongxuchen
- * @version v1.0,Date:2012-9-3
+ * @version v1.0,Date:2012-09-03
  */
 public class QueryExecutor implements Serializable {
 	/**
@@ -44,9 +41,6 @@ public class QueryExecutor implements Serializable {
 	 */
 	protected final Logger logger = LoggerFactory.getLogger(QueryExecutor.class);
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -6149173009738072148L;
 
 	/**
@@ -73,14 +67,15 @@ public class QueryExecutor implements Serializable {
 	public QueryExecutor(XMLBinding xmlBinding) {
 		if (StringUtil.isBlank(xmlBinding.getId()) || StringUtil.isBlank(xmlBinding.getXml())) {
 			throw new IllegalArgumentException(
-					"XMLBinding中的xml内容和id不能为空,请正确配置:new XMLBinding().xml(xml).id(id),且id要保持唯一!");
+					"XMLBinding requires both xml content and id to be set, please configure: new XMLBinding().xml(xml).id(id), and the id must be unique!");
 		}
 		innerModel.sql = xmlBinding.getId();
 		innerModel.xmlBinding = xmlBinding;
 	}
 
 	/**
-	 * @TODO sql和以entity对象实体传参模式
+	 * sql和以entity对象实体传参模式
+	 * 
 	 * @param sql
 	 * @param params 查询参数对象（支持任意实现了Serializable的Bean，如VO、DTO、QueryParam等，对象的属性名将与SQL中的命名参数进行匹配）
 	 */
@@ -92,15 +87,20 @@ public class QueryExecutor implements Serializable {
 			innerModel.resultType = BeanUtil.getEntityClass(params.getClass());
 			// 类型检测
 			if (innerModel.resultType.equals("".getClass().getClass())) {
-				throw new IllegalArgumentException("查询参数是要求传递对象的实例,不是传递对象的class类别!你的参数=" + ((Class) params).getName());
+				throw new IllegalArgumentException(
+						"query params require an object instance, not its Class type! your param="
+								+ ((Class) params).getName());
 			}
 		} else {
-			logger.warn("请关注:查询语句sql={} 指定的查询条件参数entity=null,将以ArrayList作为默认类型返回!", sql);
+			logger.warn(
+					"attention:the query condition param entity of sql={} is null, will return ArrayList as the default type!",
+					sql);
 		}
 	}
 
 	/**
-	 * @TODO 动态增加参数过滤,对参数进行转null或其他的加工处理
+	 * 动态增加参数过滤,对参数进行转null或其他的加工处理
+	 * 
 	 * @param filters
 	 * @return
 	 */
@@ -108,13 +108,13 @@ public class QueryExecutor implements Serializable {
 		if (filters != null && filters.length > 0) {
 			for (ParamsFilter filter : filters) {
 				if (StringUtil.isBlank(filter.getType()) || StringUtil.isBlank(filter.getParams())) {
-					throw new IllegalArgumentException("针对QueryExecutor设置条件过滤必须要设置filterParams=[" + filter.getParams()
-							+ "],和filterType=[" + filter.getType() + "]!");
+					throw new IllegalArgumentException("QueryExecutor filters require filterParams=["
+							+ filter.getParams() + "] and filterType=[" + filter.getType() + "], please check!");
 				}
 				if (CollectionUtil.any(filter.getType(), "eq", "neq", "gt", "gte", "lt", "lte", "between")) {
 					if (StringUtil.isBlank(filter.getValue())) {
 						throw new IllegalArgumentException(
-								"针对QueryExecutor设置条件过滤eq、neq、gt、gte、lt、lte、between等类型必须要设置values值!");
+								"QueryExecutor filters with type eq,neq,gt,gte,lt,lte,between require values to be set!");
 					}
 				}
 				// 存在blank 过滤器自动将blank param="*" 关闭
@@ -139,7 +139,8 @@ public class QueryExecutor implements Serializable {
 	}
 
 	/**
-	 * @TODO 设置数据源
+	 * 设置数据源
+	 * 
 	 * @param dataSource
 	 * @return
 	 */
@@ -154,10 +155,11 @@ public class QueryExecutor implements Serializable {
 	}
 
 	/**
-	 * @TODO 设置查询参数的值,包含三种场景
-	 *       <li>1、new QueryExecutor(sql).names("status").values(1)</li>
-	 *       <li>2、new QueryExecutor(sql).values(1),sql中以?模式传参</li>
-	 *       <li>3、new QueryExecutor(sql).values(map.put("status",1)),兼容map传参</li>
+	 * 设置查询参数的值,包含三种场景
+	 * <li>1、new QueryExecutor(sql).names("status").values(1)</li>
+	 * <li>2、new QueryExecutor(sql).values(1),sql中以?模式传参</li>
+	 * <li>3、new QueryExecutor(sql).values(map.put("status",1)),兼容map传参</li>
+	 * 
 	 * @param paramsValue
 	 * @return
 	 */
@@ -167,7 +169,8 @@ public class QueryExecutor implements Serializable {
 	}
 
 	/**
-	 * @TODO 锁记录
+	 * 锁记录
+	 * 
 	 * @param lockMode
 	 * @return
 	 */
@@ -188,7 +191,8 @@ public class QueryExecutor implements Serializable {
 	}
 
 	/**
-	 * @TODO 是否将结果封装成父子对象级联模式
+	 * 是否将结果封装成父子对象级联模式
+	 * 
 	 * @param hiberarchy
 	 * @return
 	 */
@@ -200,9 +204,10 @@ public class QueryExecutor implements Serializable {
 	/**
 	 * 只针对父子对象存在共同属性场景
 	 * 
-	 * @TODO 设置将结果映射到不同类时查询结果的label跟属性名称的映射关系 此方法同时实现了:
-	 *       <li>hiberarchy(Boolean hiberarchy)</li>
-	 *       <li>hiberarchyClasses(Class... hiberarchyClasses)</li>
+	 * 设置将结果映射到不同类时查询结果的label跟属性名称的映射关系 此方法同时实现了:
+	 * <li>hiberarchy(Boolean hiberarchy)</li>
+	 * <li>hiberarchyClasses(Class... hiberarchyClasses)</li>
+	 * 
 	 * @param resultType
 	 * @param fieldsMap
 	 * @return
@@ -236,7 +241,8 @@ public class QueryExecutor implements Serializable {
 	}
 
 	/**
-	 * @TODO 指定需要层次化的级联类(一些表对象关系存在多个oneToMany,但一次查询结果只支持一个oneToMany对象关系)
+	 * 指定需要层次化的级联类(一些表对象关系存在多个oneToMany,但一次查询结果只支持一个oneToMany对象关系)
+	 * 
 	 * @param hiberarchyClasses
 	 * @return
 	 */
@@ -249,7 +255,8 @@ public class QueryExecutor implements Serializable {
 	}
 
 	/**
-	 * @TODO 设置返回结果的类型
+	 * 设置返回结果的类型
+	 * 
 	 * @param resultType
 	 * @return
 	 */
@@ -259,7 +266,8 @@ public class QueryExecutor implements Serializable {
 	}
 
 	/**
-	 * @TODO 设置分库策略
+	 * 设置分库策略
+	 * 
 	 * @param strategy
 	 * @param paramNames
 	 * @return
@@ -274,7 +282,8 @@ public class QueryExecutor implements Serializable {
 	}
 
 	/**
-	 * @TODO 设置分表策略,再复杂场景则推荐用xml的sql中定义
+	 * 设置分表策略,再复杂场景则推荐用xml的sql中定义
+	 * 
 	 * @param strategy
 	 * @param tables
 	 * @param paramNames 分表策略依赖的参数
@@ -291,7 +300,8 @@ public class QueryExecutor implements Serializable {
 	}
 
 	/**
-	 * @TODO 设置jdbc参数，一般无需设置
+	 * 设置jdbc参数，一般无需设置
+	 * 
 	 * @param fetchSize
 	 * @return
 	 */
@@ -301,7 +311,8 @@ public class QueryExecutor implements Serializable {
 	}
 
 	/**
-	 * @TODO 设置最大提取记录数量(一般不用设置)
+	 * 设置最大提取记录数量(一般不用设置)
+	 * 
 	 * @param maxRows
 	 * @return
 	 */
@@ -312,7 +323,8 @@ public class QueryExecutor implements Serializable {
 	}
 
 	/**
-	 * @TODO 针对resultType为Map.class 时，设定map的key是否转为骆驼命名法，默认true
+	 * 针对resultType为Map.class 时，设定map的key是否转为骆驼命名法，默认true
+	 * 
 	 * @param humpMapLabel
 	 * @return
 	 */
@@ -322,7 +334,8 @@ public class QueryExecutor implements Serializable {
 	}
 
 	/**
-	 * @TODO 设置条件过滤空白转null为false，默认true
+	 * 设置条件过滤空白转null为false，默认true
+	 * 
 	 * @return
 	 */
 	public QueryExecutor blankNotNull() {
@@ -331,7 +344,8 @@ public class QueryExecutor implements Serializable {
 	}
 
 	/**
-	 * @TODO 对sql语句指定缓存翻译
+	 * 对sql语句指定缓存翻译
+	 * 
 	 * @param translates
 	 * @return
 	 */
@@ -341,8 +355,8 @@ public class QueryExecutor implements Serializable {
 			for (Translate trans : translates) {
 				extend = trans.getExtend();
 				if (StringUtil.isBlank(extend.cache) || StringUtil.isBlank(extend.column)) {
-					throw new IllegalArgumentException(
-							"给查询增加的缓存翻译时未定义具体的cacheName=[" + extend.cache + "] 或 对应的column=[" + extend.column + "]!");
+					throw new IllegalArgumentException("QueryExecutor translate is missing cacheName=[" + extend.cache
+							+ "] or column=[" + extend.column + "]!");
 				}
 				innerModel.translates.add(trans);
 			}
@@ -357,7 +371,8 @@ public class QueryExecutor implements Serializable {
 	}
 
 	/**
-	 * @TODO 结果日期格式化
+	 * 结果日期格式化
+	 * 
 	 * @param format
 	 * @param columns
 	 * @return
@@ -376,7 +391,8 @@ public class QueryExecutor implements Serializable {
 	}
 
 	/**
-	 * @TODO 对结果的数字进行格式化
+	 * 对结果的数字进行格式化
+	 * 
 	 * @param format
 	 * @param roundingMode
 	 * @param columns
@@ -397,7 +413,8 @@ public class QueryExecutor implements Serializable {
 	}
 
 	/**
-	 * @TODO 对结果字段进行安全脱敏
+	 * 对结果字段进行安全脱敏
+	 * 
 	 * @param maskType
 	 * @param columns
 	 * @return
@@ -430,7 +447,8 @@ public class QueryExecutor implements Serializable {
 	}
 
 	/**
-	 * @TODO 分页优化
+	 * 分页优化
+	 * 
 	 * @param pageOptimize
 	 * @return
 	 */
@@ -442,8 +460,7 @@ public class QueryExecutor implements Serializable {
 	}
 
 	/**
-	 * @see 5.1.9 启动 EntityQuery.create().values(map)模式传参模式
-	 * @TODO 用map形式传参
+	 * @see 5.1.9 启动 EntityQuery.create().values(map)模式传参模式 用map形式传参
 	 * @param paramsMap
 	 * @return
 	 */
@@ -454,7 +471,8 @@ public class QueryExecutor implements Serializable {
 	}
 
 	/**
-	 * @TODO 列转行
+	 * 列转行
+	 * 
 	 * @param unpivotModel
 	 * @return
 	 */
@@ -466,7 +484,8 @@ public class QueryExecutor implements Serializable {
 	}
 
 	/**
-	 * @TODO 行转列
+	 * 行转列
+	 * 
 	 * @param pivotModel
 	 * @return
 	 */
@@ -478,7 +497,8 @@ public class QueryExecutor implements Serializable {
 	}
 
 	/**
-	 * @TODO 设置分页查询countsql(用于极致性能优化，非必须)
+	 * 设置分页查询countsql(用于极致性能优化，非必须)
+	 * 
 	 * @param countSql
 	 * @return
 	 */
@@ -490,7 +510,8 @@ public class QueryExecutor implements Serializable {
 	}
 
 	/**
-	 * @TODO 提供代码层面设置分组拼接字段(排序由sql自身完成)
+	 * 提供代码层面设置分组拼接字段(排序由sql自身完成)
+	 * 
 	 * @param groupConcat
 	 * @return
 	 */
@@ -510,7 +531,8 @@ public class QueryExecutor implements Serializable {
 	}
 
 	/**
-	 * @TODO 提供代码层面对树形结果进行排序、汇总等
+	 * 提供代码层面对树形结果进行排序、汇总等
+	 * 
 	 * @param treeSort
 	 * @return
 	 */
@@ -527,7 +549,7 @@ public class QueryExecutor implements Serializable {
 	}
 
 	/**
-	 * @TODO 行与行之间的环比(推荐基于xml来配置)
+	 * 行与行之间的环比(推荐基于xml来配置)
 	 * 
 	 * @param rowsChainRatio
 	 * @return
@@ -569,7 +591,7 @@ public class QueryExecutor implements Serializable {
 	}
 
 	/**
-	 * @TODO 列与列之间的环比(推荐基于xml来配置)
+	 * 列与列之间的环比(推荐基于xml来配置)
 	 * 
 	 * @param colsChainRatio
 	 * @return
@@ -595,7 +617,8 @@ public class QueryExecutor implements Serializable {
 	}
 
 	/**
-	 * @TODO 定义sqltoy查询结果的处理模式,目前仅提供合计和求平均(推荐基于xml来配置)
+	 * 定义sqltoy查询结果的处理模式,目前仅提供合计和求平均(推荐基于xml来配置)
+	 * 
 	 * @param summary
 	 * @return
 	 */
@@ -639,7 +662,8 @@ public class QueryExecutor implements Serializable {
 	}
 
 	/**
-	 * @TODO 设置执行时是否输出sql日志
+	 * 设置执行时是否输出sql日志
+	 * 
 	 * @param showSql
 	 * @return
 	 */
@@ -649,7 +673,8 @@ public class QueryExecutor implements Serializable {
 	}
 
 	/**
-	 * @TODO 是否是sql片段，即不是单独的一句查询(正常无需使用)
+	 * 是否是sql片段，即不是单独的一句查询(正常无需使用)
+	 * 
 	 * @param sqlSegment
 	 * @return
 	 */
@@ -666,7 +691,8 @@ public class QueryExecutor implements Serializable {
 	}
 
 	/**
-	 * @TODO 设置执行时上下文数据，如：在拦截器中取值用以业务判断
+	 * 设置执行时上下文数据，如：在拦截器中取值用以业务判断
+	 * 
 	 * @param contextData
 	 * @return
 	 */

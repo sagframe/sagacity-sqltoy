@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.dialect.utils;
 
 import java.io.Serializable;
@@ -36,10 +33,10 @@ import org.sagacity.sqltoy.utils.SqlUtilsExt;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 提供postgresql数据库共用的逻辑实现，便于今后postgresql不同版本之间共享共性部分的实现
  * @author zhongxuchen
- * @version v1.0,Date:2015年3月5日
+ * @version v1.0,Date:2015-03-05
  * @modify Date:2020-06-12 修复10+版本对identity主键生成的策略
  */
 public class PostgreSqlDialectUtils {
@@ -49,7 +46,8 @@ public class PostgreSqlDialectUtils {
 	public static final String NVL_FUNCTION = "COALESCE";
 
 	/**
-	 * @todo 提供随机记录查询
+	 * 提供随机记录查询
+	 * 
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param queryExecutor
@@ -111,7 +109,8 @@ public class PostgreSqlDialectUtils {
 	}
 
 	/**
-	 * @todo 保存单条对象记录
+	 * 保存单条对象记录
+	 * 
 	 * @param sqlToyContext
 	 * @param entity
 	 * @param conn
@@ -149,7 +148,8 @@ public class PostgreSqlDialectUtils {
 	}
 
 	/**
-	 * @todo 批量保存对象入数据库
+	 * 批量保存对象入数据库
+	 * 
 	 * @param sqlToyContext
 	 * @param entities
 	 * @param batchSize
@@ -175,7 +175,8 @@ public class PostgreSqlDialectUtils {
 	}
 
 	/**
-	 * @TODO postgresql15 开始支持merge into 语法
+	 * postgresql15 开始支持merge into 语法
+	 * 
 	 * @param sqlToyContext
 	 * @param entities
 	 * @param batchSize
@@ -207,7 +208,8 @@ public class PostgreSqlDialectUtils {
 	}
 
 	/**
-	 * @todo 组织merge into 语句中select 的字段，进行类型转换
+	 * 组织merge into 语句中select 的字段，进行类型转换
+	 * 
 	 * @param sql
 	 * @param columnName
 	 * @param fieldMeta
@@ -271,7 +273,8 @@ public class PostgreSqlDialectUtils {
 	}
 
 	/**
-	 * @TODO 主键策略是identity或sequence时，主键值允许不由数据库内部自动产生，可人工赋值
+	 * 主键策略是identity或sequence时，主键值允许不由数据库内部自动产生，可人工赋值
+	 * 
 	 * @param pkStrategy
 	 * @return
 	 */

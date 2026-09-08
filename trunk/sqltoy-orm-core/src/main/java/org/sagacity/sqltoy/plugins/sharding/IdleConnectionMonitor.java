@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.plugins.sharding;
 
 import java.sql.Connection;
@@ -21,7 +18,7 @@ import org.slf4j.LoggerFactory;
  * @project sagacity-sqltoy
  * @description 检测sharding涉及到的数据库连接状况,动态调整权重
  * @author zhongxuchen
- * @version v1.0, Date:2019年9月10日
+ * @version v1.0,Date:2019-09-10
  */
 public class IdleConnectionMonitor extends Thread {
 	/**
@@ -92,21 +89,22 @@ public class IdleConnectionMonitor extends Thread {
 						weights[i] = 0;
 					}
 				} catch (Exception e) {
-					logger.error("数据源:{}可用性检测失败,权重临时置0!", dataBase[0], e);
+					logger.error("availability check failed for datasource:{}, its weight is temporarily set to 0!",
+							dataBase[0], e);
 					weights[i] = 0;
 				} finally {
 					if (rs != null) {
 						try {
 							rs.close();
 						} catch (SQLException e) {
-							logger.error("close ResultSet 方法执行异常", e);
+							logger.error("close ResultSet method execution failed", e);
 						}
 					}
 					if (pst != null) {
 						try {
 							pst.close();
 						} catch (SQLException e) {
-							logger.error("close PreparedStatement 方法执行异常", e);
+							logger.error("close PreparedStatement method execution failed", e);
 						}
 					}
 					// 只归还本轮实际获取的连接,且用获取它的同一数据源
@@ -125,7 +123,8 @@ public class IdleConnectionMonitor extends Thread {
 					Thread.sleep(1000 * intervalSeconds);
 				}
 			} catch (InterruptedException e) {
-				logger.warn("datasource sharding 可用性检测监测将终止!{}", e.getMessage(), e);
+				logger.warn("datasource sharding availability check error, monitoring will be stopped! {}",
+						e.getMessage(), e);
 				isRun = false;
 			}
 		}

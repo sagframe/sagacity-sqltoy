@@ -459,7 +459,8 @@ public class DateUtilNumberUtilTest {
 		assertEquals(RoundingMode.HALF_EVEN, NumberUtil.parseRoundingMode("HALF_EVEN"));
 		assertEquals(RoundingMode.UP, NumberUtil.parseRoundingMode("up"));
 		assertNull(NumberUtil.parseRoundingMode(null));
-		assertNull(NumberUtil.parseRoundingMode(""));
+		// 契约(092c5e7a6收紧):仅null表示未配置,空串与无法识别的值统一返回HALF_UP
+		assertEquals(RoundingMode.HALF_UP, NumberUtil.parseRoundingMode(""));
 		assertEquals(RoundingMode.HALF_UP, NumberUtil.parseRoundingMode("not-a-mode"));
 		assertTrue(NumberUtil.isInteger("123"));
 		assertTrue(NumberUtil.isInteger("-5"));

@@ -36,11 +36,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 提供适配Tidb数据库方言的实现(类似于mysql,以mysql8为参照版本进行实现)
  * @author zhongxuchen
- * @version v1.0,Date:2020-6-9
- * @modify {Date:2020-6-9,初始创建}
+ * @version v1.0,Date:2020-06-09
+ * @modify Date:2020-06-09 初始创建
  */
 @SuppressWarnings({ "rawtypes" })
 public class TidbDialect implements Dialect {
@@ -179,12 +179,13 @@ public class TidbDialect implements Dialect {
 				reflectPropsHandler, NVL_FUNCTION, conn, dbType, autoCommit, tableName, true);
 		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
 		if (updateCnt >= entities.size()) {
-			SqlExecuteStat.debug("修改记录", "修改记录量:" + updateCnt + " 条,等于entities集合长度,不再做insert操作!");
+			SqlExecuteStat.debug("update record",
+					"update rows:" + updateCnt + " equals the size of entities collection, skip the insert operation!");
 			return updateCnt;
 		}
 		Long saveCnt = saveAllIgnoreExist(sqlToyContext, entities, batchSize, reflectPropsHandler, conn, dbType,
 				dialect, autoCommit, tableName);
-		SqlExecuteStat.debug("新增记录", "新建记录数量:" + saveCnt + " 条!");
+		SqlExecuteStat.debug("insert record", "insert rows:" + saveCnt + "!");
 		return updateCnt + saveCnt;
 	}
 

@@ -6,13 +6,10 @@ import java.io.Serializable;
  * @project sagacity-sqltoy
  * @description 构造存放@if @elseif @else sql中逻辑处理的数据模型
  * @author zhongxuchen
- * @version v1.0, Date:2024年10月1日
- * @modify 2024年10月1日,修改说明
+ * @version v1.0,Date:2024-10-01
+ * @modify Date:2024-10-01,修改说明
  */
 public class IfLogicModel implements Serializable {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -489871910912605304L;
 
 	// 1:if;2:elseif;3:else

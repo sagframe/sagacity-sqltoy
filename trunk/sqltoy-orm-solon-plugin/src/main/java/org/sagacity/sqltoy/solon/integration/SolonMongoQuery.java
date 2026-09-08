@@ -13,6 +13,12 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 
+/**
+ * Solon 环境下的 Mongo 查询实现
+ *
+ * @author noear
+ * @since 5.6
+ */
 public class SolonMongoQuery implements MongoQuery {
     private MongoDatabase db;
 

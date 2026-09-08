@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.utils;
 
 import java.util.ArrayList;
@@ -34,7 +31,7 @@ import org.slf4j.LoggerFactory;
  * @project sagacity-sqltoy
  * @description sqltoy对象集合相关操作、sharding策略分组以及并行提交相关数据库进行执行
  * @author zhongxuchen
- * @version v1.0,Date:2017年11月3日
+ * @version v1.0,Date:2017-11-03
  */
 @SuppressWarnings("rawtypes")
 public class ParallelUtils {
@@ -44,7 +41,8 @@ public class ParallelUtils {
 	}
 
 	/**
-	 * @todo 将集合进行根据sharding字段的值提取sharding策略并按照策略将集合分组，然后并行执行
+	 * 将集合进行根据sharding字段的值提取sharding策略并按照策略将集合分组，然后并行执行
+	 * 
 	 * @param sqlToyContext
 	 * @param entities
 	 * @param wrapIdValue    是否需要事先主动给类似雪花算法、uuid等基于算法的id赋值
@@ -85,8 +83,8 @@ public class ParallelUtils {
 		if (shardingGroups.size() == 1) {
 			return handler.execute(sqlToyContext, shardingGroups.iterator().next());
 		}
-		SqlExecuteStat.debug("开启并行执行", "并行线程数:{},最大等待时长:{}秒", shardingGroups.size(),
-				shardingConfig.getMaxWaitSeconds());
+		SqlExecuteStat.debug("start parallel execution", "parallel threads:{}, max wait time:{} seconds",
+				shardingGroups.size(), shardingConfig.getMaxWaitSeconds());
 		// 开始多线程并行执行
 		List results = new ArrayList();
 		// 并行线程数量
@@ -110,7 +108,9 @@ public class ParallelUtils {
 				: SqlToyConstants.PARALLEL_MAXWAIT_SECONDS;
 		if (!pool.awaitTermination(maxWaitSeconds, TimeUnit.SECONDS)) {
 			pool.shutdownNow();
-			throw new DataAccessException("并行执行等待:{} 秒后超时,已中断未完成的任务!", maxWaitSeconds);
+			throw new DataAccessException(
+					"parallel execution timed out after waiting [{}] seconds, the unfinished tasks have been interrupted!",
+					maxWaitSeconds);
 		}
 		// 提取各个线程返回的结果进行合并
 		try {
@@ -134,7 +134,8 @@ public class ParallelUtils {
 	}
 
 	/**
-	 * @todo 根据并行单个分组的记录量和并行度，切割集合，组织分组数据结构
+	 * 根据并行单个分组的记录量和并行度，切割集合，组织分组数据结构
+	 * 
 	 * @param entityMeta
 	 * @param entities
 	 * @param dataSource

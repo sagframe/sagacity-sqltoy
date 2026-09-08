@@ -1,13 +1,10 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.config.model;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description sql类型(区分查询、插入、修改、删除)
  * @author zhongxuchen
- * @version v1.0,Date:2015年3月21日
+ * @version v1.0,Date:2015-03-21
  */
 public enum SqlType {
 	search("search"),
@@ -34,7 +31,8 @@ public enum SqlType {
 	}
 
 	/**
-	 * @todo 转换给定字符串为枚举主键策略
+	 * 转换给定字符串为枚举主键策略
+	 * 
 	 * @param sqlType
 	 * @return
 	 */

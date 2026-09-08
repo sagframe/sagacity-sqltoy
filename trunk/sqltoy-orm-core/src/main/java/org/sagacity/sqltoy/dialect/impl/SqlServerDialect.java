@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.dialect.impl;
 
 import java.io.Serializable;
@@ -14,6 +11,7 @@ import java.util.regex.Pattern;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DecryptHandler;
+import org.sagacity.sqltoy.callback.GenerateSavePKStrategy;
 import org.sagacity.sqltoy.callback.GenerateSqlHandler;
 import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.callback.UpdateRowCallback;
@@ -27,6 +25,7 @@ import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
 import org.sagacity.sqltoy.dialect.Dialect;
+import org.sagacity.sqltoy.dialect.model.SavePKStrategy;
 import org.sagacity.sqltoy.dialect.utils.DefaultDialectUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectExtUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
@@ -45,11 +44,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description sqlserver2012以及更新版本的数据库操作实现
  * @author zhongxuchen
- * @version v1.0,Date:2013-3-21
- * @modify Date:2020-2-5 废弃对sqlserver2008 的支持,最低版本为2012版
+ * @version v1.0,Date:2013-03-21
+ * @modify Date:2020-02-05 废弃对sqlserver2008 的支持,最低版本为2012版
  */
 @SuppressWarnings({ "rawtypes" })
 public class SqlServerDialect implements Dialect {
@@ -89,8 +88,52 @@ public class SqlServerDialect implements Dialect {
 			QueryExecutor queryExecutor, final DecryptHandler decryptHandler, Long totalCount, Long randomCount,
 			Connection conn, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
 			throws Exception {
-		return SqlServerDialectUtils.getRandomResult(sqlToyContext, sqlToyConfig, queryExecutor, decryptHandler,
-				totalCount, randomCount, conn, dbType, dialect, fetchSize, maxRows);
+		StringBuilder sql = new StringBuilder();
+		// sqlserver 不支持内部order by
+		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
+		if (sqlToyConfig.isHasFast()) {
+			sql.append(sqlToyConfig.getFastPreSql(dialect));
+			if (!sqlToyConfig.isIgnoreBracket()) {
+				sql.append(" (");
+			}
+		}
+		String partSql = " select top " + randomCount + " ";
+		if (sqlToyConfig.isHasWith()) {
+			SqlWithAnalysis sqlWith = new SqlWithAnalysis(innerSql);
+			sql.append(sqlWith.getWithSql());
+			innerSql = sqlWith.getRejectWithSql();
+		}
+		// sql中是否存在排序或union
+		boolean hasOrderOrUnion = DialectUtils.hasOrderByOrUnion(innerSql);
+		// 给原始sql标记上特殊的开始和结尾，便于sql拦截器快速定位到原始sql并进行条件补充
+		innerSql = SqlUtilsExt.markOriginalSql(innerSql);
+		// 存在order 或union 则在sql外包裹一层
+		if (hasOrderOrUnion) {
+			sql.append(partSql);
+			sql.append(" " + SqlToyConstants.INTERMEDIATE_TABLE + ".* from (");
+			sql.append(innerSql);
+			sql.append(") ");
+			sql.append(SqlToyConstants.INTERMEDIATE_TABLE);
+			sql.append(" ");
+		} else {
+			sql.append(innerSql.replaceFirst("(?i)select ", partSql));
+		}
+		sql.append(" order by NEWID() ");
+		if (sqlToyConfig.isHasFast()) {
+			if (!sqlToyConfig.isIgnoreBracket()) {
+				sql.append(") ");
+			}
+			sql.append(sqlToyConfig.getFastTailSql(dialect));
+		}
+		QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		SqlToyResult queryParam = SqlConfigParseUtils.processSql(sql.toString(), extend.getParamsName(),
+				extend.getParamsValue(sqlToyContext, sqlToyConfig), dialect);
+		// 增加sql执行拦截器 update 2022-9-10
+		queryParam = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig,
+				(extend.entityClass == null) ? OperateType.random : OperateType.singleTable, queryParam,
+				extend.entityClass, dbType);
+		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
+				extend, decryptHandler, conn, dbType, 0, fetchSize, maxRows);
 	}
 
 	/*
@@ -137,8 +180,15 @@ public class SqlServerDialect implements Dialect {
 		}
 		// 不存在order by或order by存在于子查询中
 		if (orderByIndex < 0) {
-			// offset fetch语法要求必须有order by,用固定排序占位符,避免NEWID()导致每次分页顺序随机出现重复或丢行
-			sql.append(" order by (select 1) ");
+			// update 2026-9-5 真实库验证:sqlserver对union语句直接追加order by会报
+			// "ORDER BY items must appear in the select list...",需包一层派生表后再挂分页参数
+			if (!sqlToyConfig.isHasFast() && SqlUtil.hasUnion(judgeOrderSql, true)) {
+				sql.insert(0, "select * from (");
+				sql.append(") sag_union_tmp order by (select 1) ");
+			} else {
+				// offset fetch语法要求必须有order by,用固定排序占位符,避免NEWID()导致每次分页顺序随机出现重复或丢行
+				sql.append(" order by (select 1) ");
+			}
 		}
 		// 增加分页语句
 		sql.append(" offset ");
@@ -277,9 +327,31 @@ public class SqlServerDialect implements Dialect {
 			final ReflectPropsHandler reflectPropsHandler, final String[] forceUpdateFields, Connection conn,
 			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
 			throws Exception {
-		// 为什么不共用oracle等merge方法,因为sqlserver不支持timestamp类型的数据进行插入和修改赋值
-		return SqlServerDialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, reflectPropsHandler,
-				forceUpdateFields, conn, dbType, autoCommit, tableName);
+		// update 2026-9-7
+		// merge语句统一由DialectUtils.getSaveOrUpdateSql生成(sqlserver的rowversion列
+		// 排除等特性在其内部按dbType门控);rowversion判据按目标库元数据校准(每实体首次,幂等)
+		SqlServerDialectUtils.ensureRowVersionMeta(sqlToyContext, conn, dbType, tableName, entities.get(0).getClass());
+		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
+		// sqlserver merge into must end with ";" charater
+		// 返回记录变更量
+		return DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta, forceUpdateFields,
+				new GenerateSqlHandler() {
+					@Override
+					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
+						PKStrategy pkStrategy = entityMeta.getIdStrategy();
+						// update 2026-9-7 merge语句统一由DialectUtils.getSaveOrUpdateSql生成
+						// (rowversion排除/vector/json/decimal等sqlserver特性在其内部按dbType门控)
+						String sql = DialectUtils.getSaveOrUpdateSql(sqlToyContext,
+								sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta, entityMeta.getIdStrategy(),
+								forceUpdateFields, null, "isnull", "@mySeqVariable",
+								SqlServerDialectUtils.allowAssignPKValue(pkStrategy), tableName);
+						if (pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE)) {
+							sql = "DECLARE @mySeqVariable as numeric(20)=NEXT VALUE FOR " + entityMeta.getSequence()
+									+ " " + sql;
+						}
+						return sql.concat(";");
+					}
+				}, reflectPropsHandler, conn, dbType, autoCommit);
 	}
 
 	/*
@@ -295,6 +367,8 @@ public class SqlServerDialect implements Dialect {
 			ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType, final String dialect,
 			final Boolean autoCommit, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
+		// update 2026-9-5 rowversion判据按目标库元数据校准(每实体首次,幂等)
+		SqlServerDialectUtils.ensureRowVersionMeta(sqlToyContext, conn, dbType, tableName, entities.get(0).getClass());
 		// sqlserver merge into must end with ";" charater
 		// 返回变更的记录数量
 		return DialectUtils.saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta,
@@ -302,9 +376,11 @@ public class SqlServerDialect implements Dialect {
 					@Override
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
-						String sql = SqlServerDialectUtils.getSaveIgnoreExistSql(sqlToyContext.getUnifyFieldsHandler(),
-								dbType, entityMeta, pkStrategy, tableName, "isnull", "@mySeqVariable",
-								SqlServerDialectUtils.allowAssignPKValue(pkStrategy));
+						// update 2026-9-7 统一由DialectExtUtils.mergeIgnore生成
+						// (rowversion排除等sqlserver特性在其内部按dbType门控)
+						String sql = DialectExtUtils.mergeIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType,
+								entityMeta, pkStrategy, null, "isnull", "@mySeqVariable",
+								SqlServerDialectUtils.allowAssignPKValue(pkStrategy), tableName);
 						// 2012 版本
 						if (pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE)) {
 							sql = "DECLARE @mySeqVariable as numeric(20)=NEXT VALUE FOR " + entityMeta.getSequence()
@@ -359,7 +435,45 @@ public class SqlServerDialect implements Dialect {
 	@Override
 	public Object save(SqlToyContext sqlToyContext, Serializable entity, Connection conn, final Integer dbType,
 			final String dialect, final String tableName) throws Exception {
-		return SqlServerDialectUtils.save(sqlToyContext, entity, conn, dbType, tableName);
+		// update 2026-9-5 rowversion判据按目标库元数据校准(每实体首次,幂等)
+		SqlServerDialectUtils.ensureRowVersionMeta(sqlToyContext, conn, dbType, tableName, entity.getClass());
+		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
+		// save行为根据主键是否赋值情况调整最终的主键策略
+		PKStrategy pkStrategy = DialectUtils.getSavePKStrategy(entityMeta, entity, dbType);
+		boolean isAssignPK = SqlServerDialectUtils.allowAssignPKValue(pkStrategy);
+		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
+				pkStrategy, "isnull", "@mySeqVariable", isAssignPK, tableName);
+		if (pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE)) {
+			// sqlserver的sequence主键通过select
+			// @mySeqVariable结果集回填(DialectUtils.save按dbType分支处理)
+			insertSql = "set nocount on DECLARE @mySeqVariable as numeric(20)=NEXT VALUE FOR "
+					+ entityMeta.getSequence() + " " + insertSql + " select @mySeqVariable ";
+		}
+		// update 2026-9-7 save执行逻辑统一由DialectUtils.save处理(rowversion参数剔除/sqlserver
+		// sequence
+		// 回填在其内部按dbType门控;级联子表通过回调注入sqlserver的insert语句)
+		return DialectUtils.save(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entity,
+				new GenerateSqlHandler() {
+					@Override
+					public String generateSql(EntityMeta subEntityMeta, String[] forceUpdateField) {
+						PKStrategy subPkStrategy = subEntityMeta.getIdStrategy();
+						String subInsertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(),
+								dbType, subEntityMeta, subPkStrategy, "isnull", "@mySeqVariable",
+								SqlServerDialectUtils.allowAssignPKValue(subPkStrategy), null);
+						if (subPkStrategy != null && subPkStrategy.equals(PKStrategy.SEQUENCE)) {
+							subInsertSql = "DECLARE @mySeqVariable as numeric(20)=NEXT VALUE FOR "
+									+ subEntityMeta.getSequence() + " " + subInsertSql;
+						}
+						return subInsertSql;
+					}
+				}, new GenerateSavePKStrategy() {
+					@Override
+					public SavePKStrategy generate(EntityMeta subEntityMeta) {
+						PKStrategy subPkStrategy = subEntityMeta.getIdStrategy();
+						return new SavePKStrategy(subPkStrategy,
+								SqlServerDialectUtils.allowAssignPKValue(subPkStrategy));
+					}
+				}, conn, dbType);
 	}
 
 	/*
@@ -373,8 +487,19 @@ public class SqlServerDialect implements Dialect {
 	public Long saveAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType, final String dialect,
 			final Boolean autoCommit, final String tableName) throws Exception {
-		return SqlServerDialectUtils.saveAll(sqlToyContext, entities, reflectPropsHandler, conn, dbType, autoCommit,
-				tableName);
+		// update 2026-9-5 rowversion判据按目标库元数据校准(每实体首次,幂等)
+		SqlServerDialectUtils.ensureRowVersionMeta(sqlToyContext, conn, dbType, tableName, entities.get(0).getClass());
+		// update 2026-9-7 批量保存统一由DialectUtils.saveAll处理(rowversion参数剔除在其内部按dbType门控)
+		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
+		boolean isAssignPK = SqlServerDialectUtils.allowAssignPKValue(entityMeta.getIdStrategy());
+		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
+				entityMeta.getIdStrategy(), "isnull", "@mySeqVariable", isAssignPK, tableName);
+		if (entityMeta.getIdStrategy() != null && entityMeta.getIdStrategy().equals(PKStrategy.SEQUENCE)) {
+			insertSql = "DECLARE @mySeqVariable as numeric(20)=NEXT VALUE FOR " + entityMeta.getSequence() + " "
+					+ insertSql;
+		}
+		return DialectUtils.saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql,
+				entities, batchSize, reflectPropsHandler, conn, dbType, autoCommit);
 	}
 
 	/*
@@ -389,8 +514,26 @@ public class SqlServerDialect implements Dialect {
 			final boolean cascade, final Class[] forceCascadeClasses,
 			final HashMap<Class, String[]> subTableForceUpdateProps, Connection conn, final Integer dbType,
 			final String dialect, final String tableName) throws Exception {
-		return SqlServerDialectUtils.update(sqlToyContext, entity, forceUpdateFields, cascade, forceCascadeClasses,
-				subTableForceUpdateProps, conn, dbType, tableName);
+		// update 2026-9-5 rowversion判据按目标库元数据校准(每实体首次,幂等)
+		SqlServerDialectUtils.ensureRowVersionMeta(sqlToyContext, conn, dbType, tableName, entity.getClass());
+		// update 2026-9-7 级联修改统一由DialectUtils.update级联重载处理(子表saveOrUpdateAll通过回调注入
+		// sqlserver merge语句;子表rowversion校准在其内部按dbType门控)
+		return DialectUtils.update(sqlToyContext, entity, "isnull", forceUpdateFields, cascade,
+				new GenerateSqlHandler() {
+					@Override
+					public String generateSql(EntityMeta subEntityMeta, String[] forceUpdateField) {
+						PKStrategy subPkStrategy = subEntityMeta.getIdStrategy();
+						String sql = DialectUtils.getSaveOrUpdateSql(sqlToyContext,
+								sqlToyContext.getUnifyFieldsHandler(), dbType, subEntityMeta, subPkStrategy,
+								forceUpdateField, null, "isnull", "@mySeqVariable",
+								SqlServerDialectUtils.allowAssignPKValue(subPkStrategy), null);
+						if (subPkStrategy != null && subPkStrategy.equals(PKStrategy.SEQUENCE)) {
+							sql = "DECLARE @mySeqVariable as numeric(20)=NEXT VALUE FOR " + subEntityMeta.getSequence()
+									+ " " + sql;
+						}
+						return sql.concat(";");
+					}
+				}, forceCascadeClasses, subTableForceUpdateProps, conn, dbType, tableName);
 	}
 
 	/*
@@ -405,6 +548,8 @@ public class SqlServerDialect implements Dialect {
 			final String[] uniqueFields, final String[] forceUpdateFields, ReflectPropsHandler reflectPropsHandler,
 			Connection conn, final Integer dbType, final String dialect, final Boolean autoCommit,
 			final String tableName) throws Exception {
+		// update 2026-9-5 rowversion判据按目标库元数据校准(每实体首次,幂等)
+		SqlServerDialectUtils.ensureRowVersionMeta(sqlToyContext, conn, dbType, tableName, entities.get(0).getClass());
 		return DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropsHandler,
 				NVL_FUNCTION, conn, dbType, autoCommit, tableName, false);
 	}

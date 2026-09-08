@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.utils;
 
 import java.io.OutputStream;
@@ -11,7 +8,6 @@ import java.sql.Blob;
 import java.sql.Clob;
 import java.sql.Connection;
 import java.sql.NClob;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -23,7 +19,7 @@ import java.time.OffsetTime;
 import java.time.ZoneOffset;
 import java.util.Collection;
 import java.util.Date;
-import java.util.List;
+import java.util.Locale;
 
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.config.model.EntityMeta;
@@ -36,10 +32,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 提供针对SqlUtil类的扩展,提供更有针对性的操作,提升性能
  * @author zhongxuchen
- * @version v1.0,Date:2015年4月22日
+ * @version v1.0,Date:2015-04-22
  */
 public class SqlUtilsExt {
 	/**
@@ -51,118 +47,8 @@ public class SqlUtilsExt {
 	}
 
 	/**
-	 * @todo 仅提供对象形式的批量保存、修改、删除相关的最终sql执行
-	 * @param typeHandler
-	 * @param updateSql
-	 * @param rowDatas
-	 * @param fieldsType
-	 * @param fieldsDefaultValue
-	 * @param fieldsNullable
-	 * @param batchSize
-	 * @param autoCommit
-	 * @param conn
-	 * @param dbType
-	 * @return
-	 * @throws Exception
-	 */
-	public static Long batchUpdateForPOJO(TypeHandler typeHandler, final String updateSql,
-			final List<Object[]> rowDatas, final Integer[] fieldsType, final String[] fieldsDefaultValue,
-			final Boolean[] fieldsNullable, final int batchSize, final Boolean autoCommit, final Connection conn,
-			final Integer dbType) throws Exception {
-		if (rowDatas == null || rowDatas.isEmpty()) {
-			logger.warn("batchUpdateForPOJO批量插入或修改数据操作数据为空!");
-			return 0L;
-		}
-		long updateCount = 0;
-		PreparedStatement pst = null;
-		// 判断是否通过default转换方式插入
-		boolean hasDefaultValue = (fieldsDefaultValue != null && fieldsType != null) ? true : false;
-		try {
-			boolean hasSetAutoCommit = false;
-			// 是否自动提交
-			if (autoCommit != null && autoCommit.booleanValue() != conn.getAutoCommit()) {
-				conn.setAutoCommit(autoCommit.booleanValue());
-				hasSetAutoCommit = true;
-			}
-			pst = conn.prepareStatement(updateSql);
-			// 设置全局statementTimeout，默认为null
-			if (SqlToyConstants.defaultStatementTimeout != null && SqlToyConstants.defaultStatementTimeout > 0) {
-				pst.setQueryTimeout(SqlToyConstants.defaultStatementTimeout);
-			}
-			int totalRows = rowDatas.size();
-			// 只有一条记录不采用批量
-			boolean useBatch = (totalRows > 1) ? true : false;
-			Object[] rowData;
-			// 批处理计数器
-			int meter = 0;
-			Object cellValue;
-			int fieldType;
-			boolean hasFieldType = (fieldsType != null);
-			boolean notSqlServer = (dbType == null || dbType.intValue() != DBType.SQLSERVER);
-			int[] updateRows;
-			int index = 0;
-			for (int i = 0; i < totalRows; i++) {
-				rowData = rowDatas.get(i);
-				if (rowData != null) {
-					// 使用对象properties方式传值
-					index = 0;
-					for (int j = 0, n = rowData.length; j < n; j++) {
-						fieldType = hasFieldType ? fieldsType[j] : -1;
-						// sqlserver timestamp 类型不支持赋值和更新
-						if (notSqlServer || fieldType != java.sql.Types.TIMESTAMP) {
-							if (hasDefaultValue) {
-								cellValue = getDefaultValue(rowData[j], fieldsDefaultValue[j], fieldType,
-										fieldsNullable[j]);
-							} else {
-								cellValue = rowData[j];
-							}
-							SqlUtil.setParamValue(typeHandler, conn, dbType, pst, cellValue, fieldType, index + 1);
-							index++;
-						}
-					}
-					meter++;
-					// 批量
-					if (useBatch) {
-						pst.addBatch();
-						// 到达批次量执行批处理
-						if ((meter % batchSize) == 0) {
-							updateRows = pst.executeBatch();
-							updateCount = updateCount + SqlUtil.sumBatchUpdateCounts(updateRows);
-							pst.clearBatch();
-						}
-					} else {
-						updateCount = pst.executeUpdate();
-					}
-				}
-			}
-			// 集合尾部为null的行不会进入循环体内的批次执行判断，未执行的尾部批次需在循环外补齐执行
-			if (useBatch && (meter % batchSize) != 0) {
-				updateRows = pst.executeBatch();
-				updateCount = updateCount + SqlUtil.sumBatchUpdateCounts(updateRows);
-				pst.clearBatch();
-			}
-			// 恢复conn原始autoCommit默认值
-			if (hasSetAutoCommit) {
-				conn.setAutoCommit(!autoCommit);
-			}
-		} catch (Exception e) {
-			logger.error(e.getMessage(), e);
-			throw e;
-		} finally {
-			try {
-				if (pst != null) {
-					pst.close();
-					pst = null;
-				}
-			} catch (SQLException se) {
-				logger.error(se.getMessage(), se);
-			}
-		}
-		return updateCount;
-	}
-
-	/**
-	 * @TODO 获得全部字段的默认值
+	 * 获得全部字段的默认值
+	 * 
 	 * @param entityMeta
 	 * @param excludeGeneratedCols
 	 * @return
@@ -200,14 +86,17 @@ public class SqlUtilsExt {
 				}
 			}
 		} catch (Exception e) {
-			logger.error("处理字段:[" + fieldName + "]默认值[" + defaultValue + "]发生异常,请检查默认值设置,errorMsg=" + e.getMessage());
+			logger.error(
+					"exception occurred while processing field:[{}] default value:[{}], please check the default value setting, errorMsg={}",
+					fieldName, defaultValue, e.getMessage());
 			throw e;
 		}
 		return result;
 	}
 
 	/**
-	 * @TODO 针对默认值进行处理
+	 * 针对默认值进行处理
+	 * 
 	 * @param paramValue
 	 * @param defaultValue
 	 * @param jdbcType
@@ -310,7 +199,7 @@ public class SqlUtilsExt {
 				realValue = Float.valueOf(defaultValue);
 			} else if (jdbcType == java.sql.Types.BIT) {
 				if ("true".equalsIgnoreCase(defaultValue) || "false".equalsIgnoreCase(defaultValue)) {
-					realValue = Boolean.parseBoolean(defaultValue.toLowerCase());
+					realValue = Boolean.parseBoolean(defaultValue.toLowerCase(Locale.ROOT));
 				} else {
 					if (isBlank) {
 						return Integer.parseInt("0");
@@ -329,7 +218,7 @@ public class SqlUtilsExt {
 
 	// 判断默认值是否系统时间或日期
 	public static boolean isCurrentTime(String defaultValue) {
-		String defaultLow = defaultValue.toLowerCase();
+		String defaultLow = defaultValue.toLowerCase(Locale.ROOT);
 		if (defaultLow.contains("sysdate") || defaultLow.contains("now") || defaultLow.contains("current")
 				|| defaultLow.contains("sysdatetime") || defaultLow.contains("systime")
 				|| defaultLow.contains("timestamp") || defaultLow.contains("curdate") || defaultLow.contains("curtime")
@@ -340,7 +229,8 @@ public class SqlUtilsExt {
 	}
 
 	/**
-	 * @TODO 对sql增加签名,便于通过db来追溯sql(目前通过将sql id以注释形式放入sql)
+	 * 对sql增加签名,便于通过db来追溯sql(目前通过将sql id以注释形式放入sql)
+	 * 
 	 * @param sql
 	 * @param dbType       传递过来具体数据库类型,便于对不支持的数据库做区别处理
 	 * @param sqlToyConfig
@@ -361,7 +251,8 @@ public class SqlUtilsExt {
 	}
 
 	/**
-	 * @TODO 给分页、取随机记录sql打上特殊的开始和截止符号，便于后续统一的sql拦截器提取，并进行类似租户过滤条件的补充
+	 * 给分页、取随机记录sql打上特殊的开始和截止符号，便于后续统一的sql拦截器提取，并进行类似租户过滤条件的补充
+	 * 
 	 * @param originalSql
 	 * @return
 	 */
@@ -370,7 +261,8 @@ public class SqlUtilsExt {
 	}
 
 	/**
-	 * @TODO 清除分页、取随机记录等sql中的原始sql位置标记符号
+	 * 清除分页、取随机记录等sql中的原始sql位置标记符号
+	 * 
 	 * @param sql
 	 * @return
 	 */
@@ -379,7 +271,8 @@ public class SqlUtilsExt {
 	}
 
 	/**
-	 * @TODO 插入对象
+	 * 插入对象
+	 * 
 	 * @param conn
 	 * @param rs
 	 * @param fieldMeta
@@ -394,7 +287,8 @@ public class SqlUtilsExt {
 	}
 
 	/**
-	 * @TODO 插入对象
+	 * 插入对象
+	 * 
 	 * @param conn
 	 * @param rs
 	 * @param fieldMeta

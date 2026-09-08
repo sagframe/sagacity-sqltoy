@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -28,8 +29,9 @@ import org.slf4j.LoggerFactory;
  * @project sagacity-sqltoy
  * @description 对QueryExecutor参数进行初始化，避免之前在其内部包含过多逻辑，导致维护和理解困难
  * @author zhongxuchen
- * @version v1.0,Date:2021年10月11日
- * @modify 2023-06-11 {兼容查询:names("xxx").values(new Object[]{}),单个参数名传递的值是数组场景}
+ * @version v1.0,Date:2021-10-11
+ * @modify Date:2023-06-11 兼容查询:names("xxx").values(new
+ *         Object[]{}),单个参数名传递的值是数组场景
  */
 public class QueryExecutorBuilder {
 	/**
@@ -43,7 +45,8 @@ public class QueryExecutorBuilder {
 	}
 
 	/**
-	 * @TODO 统一对QueryExecutor中的设置进行处理，整理最终使用的参数和参数值，便于QueryExecutor直接获取
+	 * 统一对QueryExecutor中的设置进行处理，整理最终使用的参数和参数值，便于QueryExecutor直接获取
+	 * 
 	 * @param sqlToyContext
 	 * @param extend
 	 * @param sqlToyConfig
@@ -86,8 +89,8 @@ public class QueryExecutorBuilder {
 			// update 2023-06-11,兼容查询:names("xxx").values(new Object[]{}),单个参数名，传递的值是数组特殊场景
 			// 校验条件参数合法性(排除参数名称长度为1，数据长度>1)
 			if (paramsNameSize != paramsValueSize && !(paramsNameSize == 1 && paramsValueSize > 1)) {
-				throw new IllegalArgumentException(
-						"参数名称数组长度:" + paramsNameSize + " 和参数值数组长度:" + paramsValueSize + "不一致,请检查!");
+				throw new IllegalArgumentException("param names size [" + paramsNameSize
+						+ "] does not match param values size [" + paramsValueSize + "], please check!");
 			}
 			fullParamValues = new Object[fullParamNames.length];
 			String[] paramNames = extend.paramsName;
@@ -104,10 +107,10 @@ public class QueryExecutorBuilder {
 				}
 				Map<String, Integer> paramIndexMap = new HashMap<String, Integer>();
 				for (int i = 0; i < paramNames.length; i++) {
-					paramIndexMap.put(paramNames[i].toLowerCase(), i);
+					paramIndexMap.put(paramNames[i].toLowerCase(Locale.ROOT), i);
 				}
 				for (int i = 0; i < fullParamNames.length; i++) {
-					paramLow = fullParamNames[i].toLowerCase();
+					paramLow = fullParamNames[i].toLowerCase(Locale.ROOT);
 					if (paramIndexMap.containsKey(paramLow)) {
 						fullParamValues[i] = paramValues[paramIndexMap.get(paramLow)];
 					} else {
@@ -142,7 +145,8 @@ public class QueryExecutorBuilder {
 	}
 
 	/**
-	 * @TODO 统一数据权限条件参数:1、前端没有传则自动填充；2、前端传值，对所传值进行是否超出授权数据范围校验,没有越权则以前端传值为准
+	 * 统一数据权限条件参数:1、前端没有传则自动填充；2、前端传值，对所传值进行是否超出授权数据范围校验,没有越权则以前端传值为准
+	 * 
 	 * @param unifyFieldsHandler
 	 * @param sqlToyConfig
 	 * @param fullParamNames
@@ -167,7 +171,9 @@ public class QueryExecutorBuilder {
 					// 实现统一传参
 					if (dataAuthFilter.getValues() != null) {
 						fullParamValues[i] = dataAuthFilter.getValues();
-						logger.debug("sqlId={} 参数:{} 前端未传值，由平台统一带入授权值!", sqlToyConfig.getId(), paramName);
+						logger.debug(
+								"sqlId={} param:{} is not passed from the front end, the authorized value is filled in by the platform!",
+								sqlToyConfig.getId(), paramName);
 					}
 				} // 数据权限指定了值，则进行值越权校验，超出范围抛出异常
 				else if (dataAuthFilter.getValues() != null && dataAuthFilter.isForcelimit()) {
@@ -203,8 +209,8 @@ public class QueryExecutorBuilder {
 					for (Object paramValue : pointValues) {
 						if (paramValue != null && !authSet
 								.contains(dataAuthFilter.isIgnoreType() ? paramValue.toString() : paramValue)) {
-							throw new DataAccessException("参数:[" + paramName + "]参数对应的值:[" + paramValue
-									+ "] 超出授权范围(数据来源参见spring.sqltoy.unifyFieldsHandler配置的实现),请检查!");
+							throw new DataAccessException("param [" + paramName + "] value [" + paramValue
+									+ "] is beyond the authorized scope (see the implementation configured by spring.sqltoy.unifyFieldsHandler), please check!");
 						}
 					}
 				}
@@ -213,7 +219,8 @@ public class QueryExecutorBuilder {
 	}
 
 	/**
-	 * @TODO 构造sql实际使用到的全部参数名称,包括:cache-args(参数名-->别名，sql中用别名导致原参数名未被包含)、分库分表对应的参数名称
+	 * 构造sql实际使用到的全部参数名称,包括:cache-args(参数名-->别名，sql中用别名导致原参数名未被包含)、分库分表对应的参数名称
+	 * 
 	 * @param paramNames
 	 * @param queryExecutorExtend
 	 * @param sqlToyConfig
@@ -227,7 +234,7 @@ public class QueryExecutorBuilder {
 		// sql中自带的参数
 		if (paramNames != null && paramNames.length > 0) {
 			for (String item : paramNames) {
-				key = item.toLowerCase();
+				key = item.toLowerCase(Locale.ROOT);
 				if (!keys.contains(key)) {
 					keys.add(key);
 					params.add(item);
@@ -244,7 +251,7 @@ public class QueryExecutorBuilder {
 			for (ShardingStrategyConfig shardingStrategy : tableShardings) {
 				if (shardingStrategy.getFields() != null) {
 					for (String item : shardingStrategy.getFields()) {
-						key = item.toLowerCase();
+						key = item.toLowerCase(Locale.ROOT);
 						if (!keys.contains(key)) {
 							keys.add(key);
 							params.add(item);
@@ -260,7 +267,7 @@ public class QueryExecutorBuilder {
 		}
 		if (dbSharding != null && dbSharding.getFields() != null) {
 			for (String item : dbSharding.getFields()) {
-				key = item.toLowerCase();
+				key = item.toLowerCase(Locale.ROOT);
 				if (!keys.contains(key)) {
 					keys.add(key);
 					params.add(item);
@@ -273,13 +280,13 @@ public class QueryExecutorBuilder {
 			for (ParamsFilter filter : queryExecutorExtend.paramFilters) {
 				if ("cache-arg".equals(filter.getType())) {
 					cacheArgName = filter.getParams()[0];
-					key = cacheArgName.toLowerCase();
+					key = cacheArgName.toLowerCase(Locale.ROOT);
 					if (!keys.contains(key)) {
 						keys.add(key);
 						params.add(cacheArgName);
 					}
 					if (filter.getAsName() != null) {
-						key = filter.getAsName().toLowerCase();
+						key = filter.getAsName().toLowerCase(Locale.ROOT);
 						if (!keys.contains(key)) {
 							keys.add(key);
 							params.add(filter.getAsName());
@@ -295,7 +302,8 @@ public class QueryExecutorBuilder {
 	}
 
 	/**
-	 * @TODO 获取分表的参数名称
+	 * 获取分表的参数名称
+	 * 
 	 * @param queryExecutorExtend
 	 * @param sqlToyConfig
 	 * @return
@@ -313,7 +321,7 @@ public class QueryExecutorBuilder {
 			for (ShardingStrategyConfig shardingStrategy : tableShardings) {
 				if (shardingStrategy.getFields() != null) {
 					for (String item : shardingStrategy.getFields()) {
-						key = item.toLowerCase();
+						key = item.toLowerCase(Locale.ROOT);
 						if (!keys.contains(key)) {
 							keys.add(key);
 							params.add(item);
@@ -329,7 +337,8 @@ public class QueryExecutorBuilder {
 	}
 
 	/**
-	 * @TODO 获取分库的参数名称
+	 * 获取分库的参数名称
+	 * 
 	 * @param queryExecutorExtend
 	 * @param sqlToyConfig
 	 * @return
@@ -345,7 +354,7 @@ public class QueryExecutorBuilder {
 		}
 		if (dbSharding != null && dbSharding.getFields() != null) {
 			for (String item : dbSharding.getFields()) {
-				key = item.toLowerCase();
+				key = item.toLowerCase(Locale.ROOT);
 				if (!keys.contains(key)) {
 					keys.add(key);
 					params.add(item);
@@ -359,7 +368,8 @@ public class QueryExecutorBuilder {
 	}
 
 	/**
-	 * @TODO 根据参数名称提取对应的值以数组返回(分库分表的参数名对应的值)
+	 * 根据参数名称提取对应的值以数组返回(分库分表的参数名对应的值)
+	 * 
 	 * @param keyValues
 	 * @param wrapParaNames
 	 * @return
@@ -376,7 +386,8 @@ public class QueryExecutorBuilder {
 	}
 
 	/**
-	 * @TODO 判断是否等于全选标记值
+	 * 判断是否等于全选标记值
+	 * 
 	 * @param paramValue
 	 * @param choiceAllValue
 	 * @return
@@ -401,7 +412,8 @@ public class QueryExecutorBuilder {
 	}
 
 	/**
-	 * @TODO 组织在分页查询时，sql中以?模式传参，统一成:named 模式，便于后面插入分页开始行截止行参数，并使用pst预编译功能
+	 * 组织在分页查询时，sql中以?模式传参，统一成:named 模式，便于后面插入分页开始行截止行参数，并使用pst预编译功能
+	 * 
 	 * @param queryExecutorExtend
 	 * @param sqlToyConfig
 	 * @param wrapNamedArgs
@@ -432,8 +444,9 @@ public class QueryExecutorBuilder {
 			if (wrapNamedArgs) {
 				// 只在分页场景下校验
 				if (argCount != valuesSize) {
-					throw new IllegalArgumentException("参数值数量:" + valuesSize + " 跟sql中的?条件数量" + argCount
-							+ "不匹配,请检查,如是json或sql中存在?特殊字符但无实际条件参数场景，可通过虚构一个条件参数如where #[1=:flag]解决!");
+					throw new IllegalArgumentException("param values size [" + valuesSize
+							+ "] does not match the ? count [" + argCount
+							+ "] in the sql, please check! If a ? is a special character in json or sql without an actual condition param, you can fake a condition param like where #[1=:flag] to solve it!");
 				}
 				String[] paramsName = new String[argCount];
 				for (int i = 0; i < argCount; i++) {
@@ -456,7 +469,8 @@ public class QueryExecutorBuilder {
 	}
 
 	/**
-	 * @TODO 將QueryExecutor中的条件参数构造成单一对象返回(map或entity)
+	 * 將QueryExecutor中的条件参数构造成单一对象返回(map或entity)
+	 * 
 	 * @param queryExecutor
 	 * @return
 	 */

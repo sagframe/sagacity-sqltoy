@@ -3,6 +3,9 @@ package org.sagacity.sqltoy.demo.vo;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+/**
+ * 数据范围演示模型
+ */
 public class DataRange {
 	private LocalDate beginDate;
 	private LocalDate endDate;
