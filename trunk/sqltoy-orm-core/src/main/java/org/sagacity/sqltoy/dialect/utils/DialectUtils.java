@@ -1280,7 +1280,11 @@ public class DialectUtils {
 							// 类型化表达式后nvl两端同型,null不覆盖原值语义完整保持(实库验证);
 							// update 2026-9-8 vastbase借opengauss容器实测同报错,同型纳入cast分派;
 							// og同源内核mogdb/stardb/oscar统一纳入
-							sql.append("cast(? as json)");
+							// update 2026-9-8 JSONB字段cast jsonb(实测jsonb列coalesce(cast(? as
+							// json),col)报"types json and jsonb cannot be matched",json/jsonb为
+							// 不同类型,必须按字段标注区分cast目标)
+							sql.append("cast(? as ").append((fieldMeta.getType() == JdbcTypes.JSONB) ? "jsonb" : "json")
+									.append(")");
 						} else if (dbType == DBType.KINGBASE) {
 							// update 2026-9-7 实测kingbase(PG内核)json/jsonb列的?参数按varchar绑定报
 							// "column jsonb but expression varchar"类型错误,按bytea模式以cast修正
