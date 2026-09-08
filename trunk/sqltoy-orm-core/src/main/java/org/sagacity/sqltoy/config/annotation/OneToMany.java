@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.config.annotation;
 
 import java.lang.annotation.ElementType;
@@ -9,10 +6,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 主键被其他表关联的机制
  * @author zhongxuchen
- * @version v1.0,Date:2012-7-30
+ * @version v1.0,Date:2012-07-30
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)

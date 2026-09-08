@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.dialect;
 
 import java.io.Serializable;
@@ -23,10 +20,10 @@ import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 针对不同数据库进行功能封装实现，使得整个结构更加清晰更易维护
  * @author zhongxuchen
- * @version v1.0,Date:2013-8-29
+ * @version v1.0,Date:2013-08-29
  * @update Date:2017-12-8 {修改接口定义:1、增加为开发者提供自行控制autoCommit机制; 2、增加分库分表的支持}
  * @update Date:2019-09-15 {统一扩展dbType和dialect传递到下层}
  */
@@ -34,7 +31,8 @@ import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 public interface Dialect {
 
 	/**
-	 * @TODO 判断唯一性
+	 * 判断唯一性
+	 * 
 	 * @param sqlToyContext
 	 * @param entity
 	 * @param paramsNamed   对象属性名称(不是数据库表字段名称)
@@ -47,7 +45,8 @@ public interface Dialect {
 			Connection conn, final Integer dbType, final String tableName, final Integer queryTimeout);
 
 	/**
-	 * @todo 获取随机记录
+	 * 获取随机记录
+	 * 
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param queryExecutor
@@ -67,7 +66,8 @@ public interface Dialect {
 			final int fetchSize, final int maxRows) throws Exception;
 
 	/**
-	 * @todo 分页查询
+	 * 分页查询
+	 * 
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param queryExecutor
@@ -87,7 +87,8 @@ public interface Dialect {
 			final int fetchSize, final int maxRows) throws Exception;
 
 	/**
-	 * @todo 取top记录数
+	 * 取top记录数
+	 * 
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param queryExecutor
@@ -106,7 +107,8 @@ public interface Dialect {
 			throws Exception;
 
 	/**
-	 * @todo 普通sql查询
+	 * 普通sql查询
+	 * 
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param sql
@@ -128,7 +130,8 @@ public interface Dialect {
 			final String dialect, final int fetchSize, final int maxRows) throws Exception;
 
 	/**
-	 * @todo 取记录数量
+	 * 取记录数量
+	 * 
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param sql
@@ -145,7 +148,8 @@ public interface Dialect {
 			final Connection conn, final Integer dbType, final String dialect) throws Exception;
 
 	/**
-	 * @todo 获取单个对象
+	 * 获取单个对象
+	 * 
 	 * @param sqlToyContext
 	 * @param entity
 	 * @param onlySubTables
@@ -165,7 +169,8 @@ public interface Dialect {
 			throws Exception;
 
 	/**
-	 * @todo 批量级联查询
+	 * 批量级联查询
+	 * 
 	 * @param sqlToyContext
 	 * @param entities
 	 * @param onlySubTables,
@@ -187,7 +192,8 @@ public interface Dialect {
 			final Integer queryTimeout) throws Exception;
 
 	/**
-	 * @todo 保存单条记录
+	 * 保存单条记录
+	 * 
 	 * @param sqlToyContext
 	 * @param entity
 	 * @param conn
@@ -201,7 +207,8 @@ public interface Dialect {
 			final Integer dbType, final String dialect, final String tableName) throws Exception;
 
 	/**
-	 * @todo 批量保存对象
+	 * 批量保存对象
+	 * 
 	 * @param sqlToyContext
 	 * @param entities
 	 * @param batchSize
@@ -219,7 +226,8 @@ public interface Dialect {
 			final String dialect, final Boolean autoCommit, final String tableName) throws Exception;
 
 	/**
-	 * @todo 修改单个对象
+	 * 修改单个对象
+	 * 
 	 * @param sqlToyContext
 	 * @param entity
 	 * @param forceUpdateFields
@@ -239,7 +247,8 @@ public interface Dialect {
 			final String dialect, final String tableName) throws Exception;
 
 	/**
-	 * @TODO 实现：1、锁查询；2、记录存在则修改；3、记录不存在则执行insert；4、返回修改或插入的记录信息
+	 * 实现：1、锁查询；2、记录存在则修改；3、记录不存在则执行insert；4、返回修改或插入的记录信息
+	 * 
 	 * @param sqlToyContext
 	 * @param entity
 	 * @param updateRowHandler
@@ -261,7 +270,8 @@ public interface Dialect {
 			final Connection conn, final Integer dbType, final String dialect, final String tableName) throws Exception;
 
 	/**
-	 * @todo 批量修改对象
+	 * 批量修改对象
+	 * 
 	 * @param sqlToyContext
 	 * @param entities
 	 * @param batchSize
@@ -282,7 +292,8 @@ public interface Dialect {
 			final String dialect, final Boolean autoCommit, final String tableName) throws Exception;
 
 	/**
-	 * @todo 保存或修改单条记录
+	 * 保存或修改单条记录
+	 * 
 	 * @param sqlToyContext
 	 * @param entity
 	 * @param forceUpdateFields
@@ -299,7 +310,8 @@ public interface Dialect {
 			final Boolean autoCommit, final String tableName) throws Exception;
 
 	/**
-	 * @todo 批量保存或修改记录
+	 * 批量保存或修改记录
+	 * 
 	 * @param sqlToyContext
 	 * @param entities
 	 * @param batchSize
@@ -319,7 +331,8 @@ public interface Dialect {
 			throws Exception;
 
 	/**
-	 * @todo 批量保存,主键冲突的则忽视
+	 * 批量保存,主键冲突的则忽视
+	 * 
 	 * @param sqlToyContext
 	 * @param entities
 	 * @param batchSize
@@ -337,7 +350,8 @@ public interface Dialect {
 			final String dialect, final Boolean autoCommit, final String tableName) throws Exception;
 
 	/**
-	 * @todo 删除单个对象
+	 * 删除单个对象
+	 * 
 	 * @param sqlToyContext
 	 * @param entity
 	 * @param conn
@@ -351,7 +365,8 @@ public interface Dialect {
 			final Integer dbType, final String dialect, final String tableName) throws Exception;
 
 	/**
-	 * @todo 批量删除对象
+	 * 批量删除对象
+	 * 
 	 * @param sqlToyContext
 	 * @param entities
 	 * @param batchSize
@@ -368,7 +383,8 @@ public interface Dialect {
 			final String tableName) throws Exception;
 
 	/**
-	 * @todo lock记录查询，并立即修改查询的结果反写到数据库
+	 * lock记录查询，并立即修改查询的结果反写到数据库
+	 * 
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param sql
@@ -390,7 +406,8 @@ public interface Dialect {
 			final int fetchSize, final int maxRows) throws Exception;
 
 	/**
-	 * @todo 执行存储过程
+	 * 执行存储过程
+	 * 
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param sql
@@ -410,7 +427,8 @@ public interface Dialect {
 			final Integer timeout) throws Exception;
 
 	/**
-	 * @TODO 获得表的字段信息
+	 * 获得表的字段信息
+	 * 
 	 * @param catalog
 	 * @param schema
 	 * @param tableName
@@ -424,7 +442,8 @@ public interface Dialect {
 			final Connection conn, final Integer dbType, final String dialect) throws Exception;
 
 	/**
-	 * @TODO 获得数据库的表信息
+	 * 获得数据库的表信息
+	 * 
 	 * @param catalog
 	 * @param schema
 	 * @param tableName

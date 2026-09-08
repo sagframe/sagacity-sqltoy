@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.link;
 
 import java.io.Serializable;
@@ -27,17 +24,14 @@ import org.slf4j.LoggerFactory;
  * @project sagacity-sqltoy
  * @description 提供基于elasticSearch的查询服务(利用sqltoy组织查询的语句机制的优势提供查询相关功能,增删改暂时不提供)
  * @author zhongxuchen
- * @version v1.0,Date:2018年1月1日
+ * @version v1.0,Date:2018-01-01
  */
 public class Elastic extends BaseLink {
 	private final static Logger logger = LoggerFactory.getLogger(Elastic.class);
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -3963816230256439625L;
 
-	private final String ERROR_MESSAGE = "ES查询请使用<eql></eql>配置!";
+	private final String ERROR_MESSAGE = "elastic query requires <eql></eql> configuration!";
 
 	private String endPoint;
 
@@ -72,8 +66,8 @@ public class Elastic extends BaseLink {
 	private Boolean humpMapLabel;
 
 	/**
-	 * @param sqlToyContext
-	 * @param dataSource
+	 * @param sqlToyContext sqltoy全局上下文对象
+	 * @param dataSource    elastic查询绑定的数据源，null表示使用默认数据源
 	 */
 	public Elastic(SqlToyContext sqlToyContext, DataSource dataSource) {
 		super(sqlToyContext, dataSource);
@@ -115,8 +109,9 @@ public class Elastic extends BaseLink {
 	}
 
 	/**
-	 * @todo 获取单条记录
-	 * @return
+	 * 获取单条记录
+	 * 
+	 * @return 查询结果的第一条记录，无记录时返回null，多于一行的查询结果会抛出异常
 	 */
 	public Object getOne() {
 		List<?> result = find();
@@ -126,12 +121,14 @@ public class Elastic extends BaseLink {
 		if (result.size() == 1) {
 			return result.get(0);
 		}
-		throw new IllegalArgumentException("getOne查询出:" + result.size() + " 条记录,不符合getOne查询预期!");
+		throw new IllegalArgumentException("getOne expect a single record but found [" + result.size()
+				+ "] rows, please check the query conditions!");
 	}
 
 	/**
-	 * @todo 集合记录查询
-	 * @return
+	 * 集合记录查询
+	 * 
+	 * @return 查询结果集合，设置了resultType时行为其类型实例，否则为Map结构
 	 */
 	public List<?> find() {
 		QueryExecutor queryExecutor = build();
@@ -152,15 +149,16 @@ public class Elastic extends BaseLink {
 			}
 			return ElasticSearchPlugin.findTop(sqlToyContext, realSqlConfig, queryExecutor, null);
 		} catch (Exception e) {
-			logger.error("find 方法执行异常", e);
+			logger.error("find method execution failed", e);
 			throw new DataAccessException(e);
 		}
 	}
 
 	/**
-	 * @todo 查询前多少条记录
-	 * @param topSize
-	 * @return
+	 * 查询前多少条记录
+	 * 
+	 * @param topSize 获取最前面的记录数量
+	 * @return 符合条件的前topSize条记录集合
 	 */
 	public List<?> findTop(final int topSize) {
 		QueryExecutor queryExecutor = build();
@@ -181,15 +179,16 @@ public class Elastic extends BaseLink {
 			}
 			return ElasticSearchPlugin.findTop(sqlToyContext, realSqlConfig, queryExecutor, topSize);
 		} catch (Exception e) {
-			logger.error("findTop 方法执行异常", e);
+			logger.error("findTop method execution failed", e);
 			throw new DataAccessException(e);
 		}
 	}
 
 	/**
-	 * @todo 分页查询
-	 * @param pageModel
-	 * @return
+	 * 分页查询
+	 * 
+	 * @param pageModel 分页模型对象，提供页号(pageNo)、每页记录数(pageSize)等分页参数
+	 * @return 分页查询结果，包含符合条件的记录总数及当页数据
 	 */
 	public Page findPage(Page pageModel) {
 		Page pageResult = null;
@@ -239,14 +238,15 @@ public class Elastic extends BaseLink {
 			}
 			return pageResult;
 		} catch (Exception e) {
-			logger.error("findPage 方法执行异常", e);
+			logger.error("findPage method execution failed", e);
 			throw new DataAccessException(e);
 		}
 	}
 
 	/**
-	 * @todo 构造统一的查询条件
-	 * @return
+	 * 构造统一的查询条件
+	 * 
+	 * @return 组装了sql、参数和结果类型的QueryExecutor查询执行对象
 	 */
 	private QueryExecutor build() {
 		QueryExecutor queryExecutor = null;

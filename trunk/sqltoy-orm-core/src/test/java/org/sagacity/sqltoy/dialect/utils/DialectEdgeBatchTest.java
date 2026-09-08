@@ -13,8 +13,9 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 
 /**
- * 回归测试：(9)pkStrategy常量在左的null安全equals;(11)SqlServer generateInsertSql
+ * 回归测试：(9)pkStrategy常量在左的null安全equals;(11)generateInsertSql(dbType=sqlserver)
  * 非主键列保留字转换——保留字列被[]包裹不再裸拼
+ * (update 2026-9-7 sqlserver的insert语句生成统一走DialectExtUtils.generateInsertSql)
  */
 public class DialectEdgeBatchTest {
 
@@ -26,8 +27,8 @@ public class DialectEdgeBatchTest {
 		// 注册staff_name为保留字,验证非主键列(STAFF_NAME)在insert中被[]包裹
 		ReservedWordsUtil.put("staff_name");
 		try {
-			String sql = SqlServerDialectUtils.generateInsertSql(null, DBType.SQLSERVER, meta, null, null, null, null,
-					false);
+			String sql = DialectExtUtils.generateInsertSql(null, DBType.SQLSERVER, meta, null, null, null, false,
+					null);
 			assertNotNull(sql);
 			// 修复前非主键列直接拼fieldMeta.getColumnName()(裸STAFF_NAME),修复后走convertWord被[]包裹
 			assertTrue(sql.contains("[STAFF_NAME]"), "非主键保留字列应被[]包裹,实际:" + sql);
@@ -43,8 +44,7 @@ public class DialectEdgeBatchTest {
 		SqlToyContext context = new SqlToyContext();
 		EntityManager entityManager = new EntityManager();
 		EntityMeta meta = entityManager.parseEntityMeta(context, StaffInfo.class, true, false);
-		String sql = SqlServerDialectUtils.generateInsertSql(null, DBType.SQLSERVER, meta, null, null, null, null,
-				false);
+		String sql = DialectExtUtils.generateInsertSql(null, DBType.SQLSERVER, meta, null, null, null, false, null);
 		assertNotNull(sql);
 		assertTrue(sql.toLowerCase().contains("insert"), "实际:" + sql);
 	}

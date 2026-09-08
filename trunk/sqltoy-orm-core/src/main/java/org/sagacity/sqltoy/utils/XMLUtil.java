@@ -6,6 +6,7 @@ import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Timestamp;
+import java.util.Locale;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -23,7 +24,7 @@ import org.w3c.dom.Node;
  * @project sagacity-sqltoy
  * @description xml处理的工具类,提供xml对应schema validator等功能
  * @author zhongxuchen
- * @version v1.0,Date:2009-4-27
+ * @version v1.0,Date:2009-04-27
  */
 public class XMLUtil {
 	/**
@@ -38,7 +39,8 @@ public class XMLUtil {
 	}
 
 	/**
-	 * @todo 读取xml文件
+	 * 读取xml文件
+	 * 
 	 * @param xmlFile
 	 * @param charset
 	 * @param isValidator
@@ -46,7 +48,8 @@ public class XMLUtil {
 	 * @throws Exception
 	 */
 	/**
-	 * @TODO 加固XML解析器抵御XXE:禁用doctype与外部实体
+	 * 加固XML解析器抵御XXE:禁用doctype与外部实体
+	 * 
 	 * @param factory
 	 */
 	private static void hardenXxe(DocumentBuilderFactory factory) {
@@ -92,7 +95,7 @@ public class XMLUtil {
 				}
 			}
 		} catch (Exception e) {
-			logger.error("解析文件:{}错误:{}!", xmlFile, e.getMessage());
+			logger.error("failed to parse file:{}, error:{}!", xmlFile, e.getMessage());
 			throw e;
 		} finally {
 			if (fileIS != null) {
@@ -103,7 +106,8 @@ public class XMLUtil {
 	}
 
 	/**
-	 * @TODO 将数组2位一组转成map
+	 * 将数组2位一组转成map
+	 * 
 	 * @param keyValues
 	 * @return
 	 */
@@ -119,7 +123,8 @@ public class XMLUtil {
 	}
 
 	/**
-	 * @todo 解析xml元素的属性映射到java对象属性
+	 * 解析xml元素的属性映射到java对象属性
+	 * 
 	 * @param elt
 	 * @param entity
 	 * @param aliasProps 属性映射,长度必须是偶数,如:a对应到a1,{a,a1,b,b1}
@@ -171,7 +176,7 @@ public class XMLUtil {
 				if (method != null) {
 					try {
 						argType = method.getParameterTypes()[0];
-						className = argType.getTypeName().toLowerCase();
+						className = argType.getTypeName().toLowerCase(Locale.ROOT);
 						className = className.substring(className.lastIndexOf(".") + 1);
 						if (argType.isArray()) {
 							// 替换全角为半角
@@ -229,8 +234,8 @@ public class XMLUtil {
 	}
 
 	/**
-	 * @TODO 对xml处理过程中的简单类型转换(2022-10-18
-	 *       从BeanUtil中剥离出来,便于BeanUtil进行getTypeName()针对性优化)
+	 * 对xml处理过程中的简单类型转换(2022-10-18 从BeanUtil中剥离出来,便于BeanUtil进行getTypeName()针对性优化)
+	 * 
 	 * @param value
 	 * @param lowCaseTypeName 类型名称小写
 	 * @return
@@ -304,14 +309,14 @@ public class XMLUtil {
 		}
 		// 字符串转 boolean 型
 		if ("boolean".equals(lowCaseTypeName)) {
-			if ("true".equals(value.toLowerCase()) || "1".equals(value)) {
+			if ("true".equals(value.toLowerCase(Locale.ROOT)) || "1".equals(value)) {
 				return true;
 			}
 			return false;
 		}
 		// 字符串转 boolean 型
 		if ("java.lang.boolean".equals(lowCaseTypeName)) {
-			if ("true".equals(value.toLowerCase()) || "1".equals(value)) {
+			if ("true".equals(value.toLowerCase(Locale.ROOT)) || "1".equals(value)) {
 				return Boolean.TRUE;
 			}
 			return Boolean.FALSE;

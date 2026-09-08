@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.config.model;
 
 import java.io.Serializable;
@@ -9,13 +6,10 @@ import java.io.Serializable;
  * @project sagacity-sqltoy
  * @description 字段安全掩码配置模型,比如手机号、银行卡号等信息脱敏
  * @author zhongxuchen
- * @version v1.0,Date:2017年9月8日
+ * @version v1.0,Date:2017-09-08
  */
 public class SecureMask implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 7967285640261486118L;
 	// <secure-mask column="" type="name" head-size="" tail-size=""
 	// mask-code="*****" mask-rate="50%"/>

@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.plugins.id.impl;
 
 import java.util.Date;
@@ -11,16 +8,17 @@ import org.sagacity.sqltoy.utils.IdUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 格式:13位当前毫秒+6位纳秒+3位主机ID 构成的22位不重复的ID
  * @author zhongxuchen
- * @version v1.0,Date:2012-6-4
+ * @version v1.0,Date:2012-06-04
  */
 public class DefaultIdGenerator implements IdGenerator {
 	private static IdGenerator me = new DefaultIdGenerator();
 
 	/**
-	 * @TODO 获取对象单例
+	 * 获取对象单例
+	 * 
 	 * @return
 	 */
 	public static IdGenerator getInstance() {

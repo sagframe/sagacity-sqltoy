@@ -10,12 +10,9 @@ import org.sagacity.sqltoy.config.model.Translate;
  * @project sagacity-sqltoy
  * @description 用于存放一个查询中哪些字段的翻译是动态捕获数据的缓存，便于后续关闭逐行取数据，而采用批量查询方式
  * @author zhongxuchen
- * @version v1.0,Date:2026年1月23日
+ * @version v1.0,Date:2026-01-23
  */
 public class BatchDynamicCache implements Serializable {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 1117769229612668458L;
 
 	/**

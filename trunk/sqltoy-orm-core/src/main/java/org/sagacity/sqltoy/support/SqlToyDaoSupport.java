@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -107,25 +108,25 @@ import org.slf4j.LoggerFactory;
  * @project sagacity-sqltoy
  * @description sqltoy的对外服务层,基础Dao支持工具类，用于被继承扩展自己的Dao，一般情况下推荐直接使用LightDao(旧项目SqlToyLazyDao)
  * @author zhongxuchen
- * @version v4.0,Date:2012-6-1
- * @modify Date:2012-8-8 {增强对象级联查询、删除、保存操作机制,不支持2层以上级联}
- * @modify Date:2012-8-23 {新增loadAll(List entities) 方法，可以批量通过主键取回详细信息}
- * @modify Date:2014-12-17 {1、增加sharding功能,改进saveOrUpdate功能，2、采用merge
+ * @version v4.0,Date:2012-06-01
+ * @modify Date:2012-08-08 增强对象级联查询、删除、保存操作机制,不支持2层以上级联
+ * @modify Date:2012-08-23 新增loadAll(List entities) 方法，可以批量通过主键取回详细信息
+ * @modify Date:2014-12-17 1、增加sharding功能,改进saveOrUpdate功能，2、采用merge
  *         into策略;3、优化查询 条件和查询结果，变为一个对象，返回结果支持json输出}
- * @modify Date:2016-3-07 {优化存储过程调用,提供常用的执行方式,剔除过往复杂的实现逻辑和不必要的兼容性,让调用过程更加可读 }
+ * @modify Date:2016-03-07 优化存储过程调用,提供常用的执行方式,剔除过往复杂的实现逻辑和不必要的兼容性,让调用过程更加可读
  * @modify Date:2016-11-25
  *         {增加了分页优化功能,缓存相同查询条件的总记录数,在一定周期情况下无需再查询总记录数,从而提升分页查询的整体效率 }
- * @modify Date:2017-7-13 {增加saveAllNotExist功能,批量保存数据时忽视已经存在的,避免重复性数据主键冲突}
- * @modify Date:2017-11-1 {增加对象操作分库分表功能实现,精简和优化代码}
- * @modify Date:2019-3-1 {增加通过缓存获取Key然后作为查询条件cache-arg 功能，从而避免二次查询或like检索}
- * @modify Date:2019-6-25 {将异常统一转化成RuntimeException,不在方法上显式的抛异常}
- * @modify Date:2020-4-5 {分页Page模型中设置skipQueryCount=true跳过查总记录,默认false}
- * @modify Date:2020-8-25 {增加并行查询功能,为极端场景下提升查询效率,为开发者拆解复杂sql做多次查询影响性能提供了解决之道}
- * @modify Date:2020-10-20 {findByQuery 增加lockMode,便于查询并锁定记录}
+ * @modify Date:2017-07-13 增加saveAllNotExist功能,批量保存数据时忽视已经存在的,避免重复性数据主键冲突
+ * @modify Date:2017-11-01 增加对象操作分库分表功能实现,精简和优化代码
+ * @modify Date:2019-03-01 增加通过缓存获取Key然后作为查询条件cache-arg 功能，从而避免二次查询或like检索
+ * @modify Date:2019-06-25 将异常统一转化成RuntimeException,不在方法上显式的抛异常
+ * @modify Date:2020-04-05 分页Page模型中设置skipQueryCount=true跳过查总记录,默认false
+ * @modify Date:2020-08-25 增加并行查询功能,为极端场景下提升查询效率,为开发者拆解复杂sql做多次查询影响性能提供了解决之道
+ * @modify Date:2020-10-20 findByQuery 增加lockMode,便于查询并锁定记录
  * @modify Date:2021-06-25
  *         {剔除linkDaoSupport、BaseDaoSupport,将link功能放入SqlToyDaoSupport}
- * @modify Date:2021-12-23 {优化updateByQuery支持set field=field+1依据字段值进行计算的模式}
- * @modify Date:2023-08-06 {增加executeMoreResultStore存储过程支持多结果返回}
+ * @modify Date:2021-12-23 优化updateByQuery支持set field=field+1依据字段值进行计算的模式
+ * @modify Date:2023-08-06 增加executeMoreResultStore存储过程支持多结果返回
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class SqlToyDaoSupport {
@@ -156,8 +157,9 @@ public class SqlToyDaoSupport {
 	private volatile DistributeIdGenerator distributeIdGenerator = null;
 
 	/**
-	 * @todo 延迟初始化分布式id产生器(double-checked locking保证线程安全)
-	 * @return
+	 * 延迟初始化分布式id产生器(double-checked locking保证线程安全)
+	 * 
+	 * @return 分布式id产生器实例(全局单例,首次调用时反射实例化并初始化)
 	 */
 	private DistributeIdGenerator getDistributeIdGenerator() {
 		if (distributeIdGenerator == null) {
@@ -169,8 +171,9 @@ public class SqlToyDaoSupport {
 								.newInstance();
 						distributeIdGenerator.initialize(sqlToyContext.getAppContext());
 					} catch (Exception e) {
-						logger.error("getDistributeIdGenerator 方法执行异常", e);
-						throw new DataAccessException("实例化分布式id产生器失败:" + e.getMessage());
+						logger.error("getDistributeIdGenerator method execution failed", e);
+						throw new DataAccessException(
+								"failed to instantiate the distributed id generator:" + e.getMessage());
 					}
 				}
 			}
@@ -188,19 +191,21 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @todo 获取数据源,如果参数dataSource为null则返回默认的dataSource
-	 * @param pointDataSource
-	 * @return
+	 * 获取数据源,如果参数dataSource为null则返回默认的dataSource
+	 * 
+	 * @param pointDataSource 调用时显式指定的数据源,可为null
+	 * @return 实际生效的数据源,pointDataSource为null时返回dao默认的dataSource
 	 */
 	protected DataSource getDataSource(DataSource pointDataSource) {
 		return getDataSource(pointDataSource, null);
 	}
 
 	/**
-	 * @TODO 获取sql对应的dataSource
-	 * @param pointDataSource
-	 * @param sqltoyConfig
-	 * @return
+	 * 获取sql对应的dataSource
+	 * 
+	 * @param pointDataSource 调用时显式指定的数据源,优先级最高,可为null
+	 * @param sqltoyConfig    sqlId对应的配置模型,通过其获取sql上配置的datasource(为null时不考虑sql级配置)
+	 * @return 实际生效的数据源,按 显式指定 > sql级配置 > dao注入 > 全局默认 的优先级选取
 	 */
 	private DataSource getDataSource(DataSource pointDataSource, SqlToyConfig sqltoyConfig) {
 		// xml中定义的sql配置了datasource
@@ -212,104 +217,117 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @todo 对象加载操作集合
-	 * @return
+	 * 对象加载操作集合
+	 * 
+	 * @return Load链式操作对象,用于指定实体对象并执行加载
 	 */
 	protected Load load() {
 		return new Load(sqlToyContext, getDataSource(dataSource));
 	}
 
 	/**
-	 * @todo 删除操作集合
-	 * @return
+	 * 删除操作集合
+	 * 
+	 * @return Delete链式操作对象,用于指定实体对象并执行删除
 	 */
 	protected Delete delete() {
 		return new Delete(sqlToyContext, getDataSource(dataSource));
 	}
 
 	/**
-	 * @todo 修改操作集合
-	 * @return
+	 * 修改操作集合
+	 * 
+	 * @return Update链式操作对象,用于指定实体对象并执行修改
 	 */
 	protected Update update() {
 		return new Update(sqlToyContext, getDataSource(dataSource));
 	}
 
 	/**
-	 * @todo 保存操作集合
-	 * @return
+	 * 保存操作集合
+	 * 
+	 * @return Save链式操作对象,用于指定实体对象并执行保存
 	 */
 	protected Save save() {
 		return new Save(sqlToyContext, getDataSource(dataSource));
 	}
 
 	/**
-	 * @todo 查询操作集合
-	 * @return
+	 * 查询操作集合
+	 * 
+	 * @return Query链式操作对象,用于执行基于实体的单表快捷查询
 	 */
 	protected Query query() {
 		return new Query(sqlToyContext, getDataSource(dataSource));
 	}
 
 	/**
-	 * @todo 存储过程操作集合
-	 * @return
+	 * 存储过程操作集合
+	 * 
+	 * @return Store链式操作对象,用于执行存储过程调用
 	 */
 	protected Store store() {
 		return new Store(sqlToyContext, getDataSource(dataSource));
 	}
 
 	/**
-	 * @todo 唯一性验证操作集合
-	 * @return
+	 * 唯一性验证操作集合
+	 * 
+	 * @return Unique链式操作对象,用于执行数据唯一性校验
 	 */
 	protected Unique unique() {
 		return new Unique(sqlToyContext, getDataSource(dataSource));
 	}
 
 	/**
-	 * @todo 树形表结构封装操作集合
-	 * @return
+	 * 树形表结构封装操作集合
+	 * 
+	 * @return TreeTable链式操作对象,用于构造和操作树形表
 	 */
 	protected TreeTable treeTable() {
 		return new TreeTable(sqlToyContext, getDataSource(dataSource));
 	}
 
 	/**
-	 * @todo sql语句直接执行修改数据库操作集合
-	 * @return
+	 * sql语句直接执行修改数据库操作集合
+	 * 
+	 * @return Execute链式操作对象,用于直接执行sql完成修改、删除等操作
 	 */
 	protected Execute execute() {
 		return new Execute(sqlToyContext, getDataSource(dataSource));
 	}
 
 	/**
-	 * @todo 批量执行操作集合
-	 * @return
+	 * 批量执行操作集合
+	 * 
+	 * @return Batch链式操作对象,用于批量执行sql或存储过程
 	 */
 	protected Batch batch() {
 		return new Batch(sqlToyContext, getDataSource(dataSource));
 	}
 
 	/**
-	 * @todo 提供一个获取数据库表信息和操作表信息的TableApi集合
-	 * @return
+	 * 提供一个获取数据库表信息和操作表信息的TableApi集合
+	 * 
+	 * @return TableApi链式操作对象,用于查询表结构、复制表等表级操作
 	 */
 	protected TableApi tableApi() {
 		return new TableApi(sqlToyContext, getDataSource(dataSource));
 	}
 
 	/**
-	 * @todo 提供基于ES的查询(仅针对查询部分)
-	 * @return
+	 * 提供基于ES的查询(仅针对查询部分)
+	 * 
+	 * @return Elastic链式操作对象,用于执行elasticsearch查询
 	 */
 	protected Elastic elastic() {
 		return new Elastic(sqlToyContext, getDataSource(dataSource));
 	}
 
 	/**
-	 * @todo 提供基于mongo的查询(仅针对查询部分)
-	 * @return
+	 * 提供基于mongo的查询(仅针对查询部分)
+	 * 
+	 * @return Mongo链式操作对象,用于执行mongo查询
 	 */
 	protected Mongo mongo() {
 		return new Mongo(sqlToyContext, getDataSource(dataSource));
@@ -330,10 +348,11 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @todo 获取sqlId 在sqltoy中的配置模型
-	 * @param sqlKey
-	 * @param sqlType
-	 * @return
+	 * 获取sqlId 在sqltoy中的配置模型
+	 * 
+	 * @param sqlKey  sql语句或xml中定义的sqlId
+	 * @param sqlType sql类型(查询、修改、删除等),为null时默认按search处理
+	 * @return sqlKey对应的SqlToyConfig配置模型,sqlId不存在时抛出DataAccessException
 	 */
 	protected SqlToyConfig getSqlToyConfig(final String sqlKey, final SqlType sqlType) {
 		return sqlToyContext.getSqlToyConfig(sqlKey, (sqlType == null) ? SqlType.search : sqlType, getDialect(null),
@@ -341,13 +360,13 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @todo 判断数据库中数据是否唯一，true 表示唯一(可以插入)，false表示不唯一(数据库已经存在该数据)，用法
-	 *       isUnique(dictDetailVO,new
-	 *       String[]{"dictTypeCode","dictName"})，将会根据给定的2个参数
-	 *       通过VO取到相应的值，作为组合条件到dictDetailVO对应的表中查询记录是否存在
-	 * @param entity
+	 * 判断数据库中数据是否唯一，true 表示唯一(可以插入)，false表示不唯一(数据库已经存在该数据)，用法
+	 * isUnique(dictDetailVO,new String[]{"dictTypeCode","dictName"})，将会根据给定的2个参数
+	 * 通过VO取到相应的值，作为组合条件到dictDetailVO对应的表中查询记录是否存在
+	 * 
+	 * @param entity      待校验唯一性的实体对象,以对象属性值作为判断条件值
 	 * @param paramsNamed 对象属性名称(不是数据库表字段名称)
-	 * @return
+	 * @return true表示唯一(可以插入),false表示数据库中已存在相同数据
 	 */
 	protected boolean isUnique(final Serializable entity, final String... paramsNamed) {
 		return isUnique(new UniqueExecutor(entity, paramsNamed));
@@ -365,34 +384,37 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @todo 获取数据库查询语句的总记录数
-	 * @param sqlOrSqlId
-	 * @param paramsNamed
-	 * @param paramsValue
-	 * @return Long
+	 * 获取数据库查询语句的总记录数
+	 * 
+	 * @param sqlOrSqlId  sql语句或xml中定义的sqlId
+	 * @param paramsNamed 条件参数名称数组,与sql中的参数一一对应
+	 * @param paramsValue 条件参数值数组,顺序与paramsNamed一一对应
+	 * @return Long 符合条件的总记录数
 	 */
 	protected Long getCountBySql(final String sqlOrSqlId, final String[] paramsNamed, final Object[] paramsValue) {
 		return getCountByQuery(new QueryExecutor(sqlOrSqlId, paramsNamed, paramsValue));
 	}
 
 	/**
-	 * @TODO 通过entity对象来组织count查询语句
-	 * @param entityClass
-	 * @param entityQuery
-	 * @return
+	 * 通过entity对象来组织count查询语句
+	 * 
+	 * @param entityClass 单表对应的实体类
+	 * @param entityQuery 查询条件构造对象(where/values/排序等),可为null表示无条件
+	 * @return 符合条件的总记录数
 	 */
 	protected Long getCountByEntityQuery(Class entityClass, EntityQuery entityQuery) {
 		if (null == entityClass) {
-			throw new IllegalArgumentException("getCountByEntityQuery entityClass值不能为空!");
+			throw new IllegalArgumentException("getCountByEntityQuery entityClass must not be null!");
 		}
 		return (Long) findEntityBase(entityClass, null, (entityQuery == null) ? EntityQuery.create() : entityQuery,
 				entityClass, true);
 	}
 
 	/**
-	 * @todo 指定数据源查询记录数量
-	 * @param queryExecutor
-	 * @return
+	 * 指定数据源查询记录数量
+	 * 
+	 * @param queryExecutor 封装了sql(或sqlId)和条件参数的查询执行对象(可动态设置数据源)
+	 * @return 符合条件的总记录数
 	 */
 	protected Long getCountByQuery(final QueryExecutor queryExecutor) {
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
@@ -415,15 +437,16 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @todo 通用存储过程调用,一般数据库{?=call xxxStore(? in,? in,? out)} 针对oracle数据库只能{call
-	 *       xxxStore(? in,? in,? out)} 同时结果集必须通过OracleTypes.CURSOR out 参数返回
-	 *       目前此方法只能返回一个结果集(集合类数据),可以返回多个非集合类数据，如果有特殊用法，则自行封装调用
+	 * 通用存储过程调用,一般数据库{?=call xxxStore(? in,? in,? out)} 针对oracle数据库只能{call
+	 * xxxStore(? in,? in,? out)} 同时结果集必须通过OracleTypes.CURSOR out 参数返回
+	 * 目前此方法只能返回一个结果集(集合类数据),可以返回多个非集合类数据，如果有特殊用法，则自行封装调用
+	 * 
 	 * @param storeSqlOrKey 可以直接传call storeName (?,?) 也可以传xml中的存储过程sqlId
-	 * @param inParamsValue
+	 * @param inParamsValue 输入参数值数组,顺序与存储过程定义的in参数一致
 	 * @param outParamsType (可以为null)
 	 * @param resultType    VOClass,HashMap或null(表示二维List)
-	 * @param dataSource
-	 * @return
+	 * @param dataSource    显式指定的数据源,为null时使用默认数据源
+	 * @return 存储过程执行结果,包含输出参数值和结果集数据
 	 */
 	protected StoreResult executeStore(final String storeSqlOrKey, final Object[] inParamsValue,
 			final Integer[] outParamsType, final Class resultType, final DataSource dataSource) {
@@ -440,10 +463,10 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @param sqlOrSqlId
-	 * @param paramsNamed
-	 * @param paramsValue
-	 * @return
+	 * @param sqlOrSqlId  sql语句或xml中定义的sqlId
+	 * @param paramsNamed 条件参数名称数组,与sql中的参数一一对应
+	 * @param paramsValue 条件参数值数组,顺序与paramsNamed一一对应
+	 * @return 单行单列的查询值,无数据时返回null
 	 * @see #getSingleValue(String, Map)
 	 */
 	@Deprecated
@@ -463,7 +486,7 @@ public class SqlToyDaoSupport {
 	protected <T> T getSingleValue(final String sqlOrSqlId, final Map<String, Object> paramsMap,
 			final Class<T> resultType) {
 		if (resultType == null) {
-			throw new IllegalArgumentException("getSingleValue resultType 不能为null!");
+			throw new IllegalArgumentException("getSingleValue resultType must not be null!");
 		}
 		Object value = getSingleValue(sqlOrSqlId, paramsMap);
 		if (value == null) {
@@ -473,17 +496,18 @@ public class SqlToyDaoSupport {
 			return (T) BeanUtil.convertType(value, JdbcTypes.OTHER, DataType.getType(resultType),
 					resultType.getTypeName());
 		} catch (Exception e) {
-			throw new DataAccessException("getSingleValue方法获取单个值失败:" + e.getMessage(), e);
+			throw new DataAccessException("getSingleValue failed to get a single value:" + e.getMessage(), e);
 		}
 	}
 
 	/**
-	 * @todo 返回单行单列值，无数据返回null，结果集存在多条数据时抛出IllegalArgumentException
-	 * @param sqlOrSqlId
-	 * @param paramsNamed
-	 * @param paramsValue
-	 * @param dataSource
-	 * @return
+	 * 返回单行单列值，无数据返回null，结果集存在多条数据时抛出IllegalArgumentException
+	 * 
+	 * @param sqlOrSqlId  sql语句或xml中定义的sqlId
+	 * @param paramsNamed 条件参数名称数组,与sql中的参数一一对应
+	 * @param paramsValue 条件参数值数组,顺序与paramsNamed一一对应
+	 * @param dataSource  显式指定的数据源,为null时使用默认数据源
+	 * @return 查询到的单行单列值,无数据时返回null
 	 */
 	protected Object getSingleValue(final String sqlOrSqlId, final String[] paramsNamed, final Object[] paramsValue,
 			final DataSource dataSource) {
@@ -496,9 +520,10 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @todo 根据给定的对象中的主键值获取对象完整信息
-	 * @param entity
-	 * @return
+	 * 根据给定的对象中的主键值获取对象完整信息
+	 * 
+	 * @param entity 只需提供主键值的实体对象,据此查询并回填对象其它属性
+	 * @return 主键对应的完整对象,记录不存在时返回null
 	 */
 	protected <T extends Serializable> T load(final T entity) {
 		if (entity == null) {
@@ -512,32 +537,35 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @todo 提供锁定功能的加载
-	 * @param entity
-	 * @param lockMode
-	 * @return
+	 * 提供锁定功能的加载
+	 * 
+	 * @param entity   只需提供主键值的实体对象
+	 * @param lockMode 加锁模式(如UPGRADE、UPGRADE_NOWAIT),为null时不加锁
+	 * @return 主键对应的完整对象,记录不存在时返回null
 	 */
 	protected <T extends Serializable> T load(final T entity, final LockMode lockMode) {
 		return load(entity, lockMode, null);
 	}
 
 	/**
-	 * @todo <b>根据主键值获取对应的记录信息</b>
-	 * @param entity
-	 * @param lockMode
-	 * @param dataSource
-	 * @return
+	 * 根据主键值获取对应的记录信息
+	 * 
+	 * @param entity     待加载的实体对象,必须提供主键值
+	 * @param lockMode   加锁模式(如UPGRADE、UPGRADE_NOWAIT),为null时不加锁
+	 * @param dataSource 显式指定的数据源,为null时使用默认数据源
+	 * @return 主键对应的完整对象,记录不存在时返回null
 	 */
 	protected <T extends Serializable> T load(final T entity, final LockMode lockMode, final DataSource dataSource) {
 		return dialectFactory.load(sqlToyContext, entity, false, null, lockMode, -1, getDataSource(dataSource), -1);
 	}
 
 	/**
-	 * @todo 指定需要级联加载的类型，通过主对象加载自身和相应的子对象集合
-	 * @param entity
-	 * @param lockMode
-	 * @param cascadeTypes
-	 * @return
+	 * 指定需要级联加载的类型，通过主对象加载自身和相应的子对象集合
+	 * 
+	 * @param entity       待加载的实体对象,必须提供主键值
+	 * @param lockMode     加锁模式(如UPGRADE、UPGRADE_NOWAIT),为null时不加锁
+	 * @param cascadeTypes 指定级联加载的子对象类型,不传则加载实体上配置的全部级联属性
+	 * @return 加载后的主对象,级联的子对象集合一并回填
 	 */
 	protected <T extends Serializable> T loadCascade(T entity, LockMode lockMode, Class... cascadeTypes) {
 		if (entity == null) {
@@ -552,43 +580,46 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @todo 批量根据实体对象的主键获取对象的详细信息
-	 * @param entities
-	 * @param lockMode
-	 * @return
+	 * 批量根据实体对象的主键获取对象的详细信息
+	 * 
+	 * @param entities 待加载的实体对象集合(对象中主键值必须非空)
+	 * @param lockMode 加锁模式(如UPGRADE、UPGRADE_NOWAIT),为null时不加锁
+	 * @return 回填了详细信息后的对象集合
 	 */
 	protected <T extends Serializable> List<T> loadAll(final List<T> entities, final LockMode lockMode) {
 		return dialectFactory.loadAll(sqlToyContext, entities, null, null, lockMode, -1, null, getDataSource(null), -1);
 	}
 
 	/**
-	 * @TODO 根据id集合批量加载对象
+	 * 根据id集合批量加载对象
+	 * 
 	 * @param <T>
-	 * @param entityClass
-	 * @param ids
-	 * @return
+	 * @param entityClass 实体类,必须为单一主键的POJO实体
+	 * @param ids         主键值集合,支持可变参数或单个Collection
+	 * @return 主键对应的对象集合,id无对应记录时不会出现在结果中
 	 */
 	protected <T extends Serializable> List<T> loadByIds(final Class<T> entityClass, Object... ids) {
 		return loadByIds(entityClass, null, ids);
 	}
 
 	/**
-	 * @TODO 通过id集合批量加载对象
+	 * 通过id集合批量加载对象
+	 * 
 	 * @param <T>
-	 * @param entityClass
-	 * @param lockMode
-	 * @param ids
-	 * @return
+	 * @param entityClass 实体类,必须为单一主键的POJO实体
+	 * @param lockMode    加锁模式(如UPGRADE、UPGRADE_NOWAIT),为null时不加锁
+	 * @param ids         主键值集合,支持可变参数或单个Collection
+	 * @return 主键对应的对象集合,id无对应记录时不会出现在结果中
 	 */
 	protected <T extends Serializable> List<T> loadByIds(final Class<T> entityClass, final LockMode lockMode,
 			Object... ids) {
 		if (entityClass == null || ids == null || ids.length == 0 || (ids.length == 1 && ids[0] == null)) {
-			throw new IllegalArgumentException("loadByIds操作:entityClass、主键值数据不能为空!");
+			throw new IllegalArgumentException("loadByIds entityClass and primary key values must not be null!");
 		}
 		EntityMeta entityMeta = getEntityMeta(entityClass);
 		validEntity(entityMeta, entityClass, true);
 		if (entityMeta.getIdArray().length != 1) {
-			throw new IllegalArgumentException("loadByIds操作只支持单主键POJO对象!");
+			throw new IllegalArgumentException("loadByIds only supports POJO entity with a single primary key!");
 		}
 		Object[] realIds;
 		// 单个Collection,将List转为Array数组
@@ -607,13 +638,14 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @todo 批量对象级联加载,指定级联加载的子表
+	 * 批量对象级联加载,指定级联加载的子表
+	 * 
 	 * @param <T>
-	 * @param entities
-	 * @param onlySubTable
-	 * @param lockMode
-	 * @param cascadeTypes
-	 * @return
+	 * @param entities     待加载的实体对象集合(对象中主键值必须非空)
+	 * @param onlySubTable true时跳过主表查询,仅加载级联子表数据;null或false则主表一并加载
+	 * @param lockMode     加锁模式(如UPGRADE、UPGRADE_NOWAIT),为null时不加锁
+	 * @param cascadeTypes 指定级联加载的子对象类型,不传则加载实体上配置的全部级联属性
+	 * @return 完成级联回填后的对象集合
 	 */
 	protected <T extends Serializable> List<T> loadAllCascade(final List<T> entities, final Boolean onlySubTable,
 			final LockMode lockMode, final Class... cascadeTypes) {
@@ -634,12 +666,13 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @todo 根据sql语句查询并返回单个VO对象(可指定自定义对象,sqltoy根据查询label跟对象的属性名称进行匹配映射)
-	 * @param sqlOrSqlId
-	 * @param paramNames
-	 * @param paramValues
-	 * @param resultType
-	 * @return
+	 * 根据sql语句查询并返回单个VO对象(可指定自定义对象,sqltoy根据查询label跟对象的属性名称进行匹配映射)
+	 * 
+	 * @param sqlOrSqlId  sql语句或xml中定义的sqlId
+	 * @param paramNames  条件参数名称数组,与sql中的参数一一对应
+	 * @param paramValues 条件参数值数组,顺序与paramNames一一对应
+	 * @param resultType  返回的单个对象类型(VO、Map等)
+	 * @return 查询到的单条记录对象,无数据时返回null,多条记录时抛出IllegalArgumentException
 	 */
 	protected <T> T loadBySql(final String sqlOrSqlId, final String[] paramNames, final Object[] paramValues,
 			final Class<T> resultType) {
@@ -647,10 +680,11 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @todo 解析sql中:named 属性到params对象获取对应的属性值作为查询条件,并将查询结果以params的class类型返回
-	 * @param sqlOrSqlId
+	 * 解析sql中:named 属性到params对象获取对应的属性值作为查询条件,并将查询结果以params的class类型返回
+	 * 
+	 * @param sqlOrSqlId sql语句或xml中定义的sqlId
 	 * @param params     查询参数对象（支持任意实现了Serializable的Bean，如VO、DTO、QueryParam等，对象的属性名将与SQL中的命名参数进行匹配）
-	 * @return
+	 * @return 查询到的单条记录(类型同params),无数据时返回null,多条记录时抛出IllegalArgumentException
 	 */
 	protected <T extends Serializable> T loadBySql(final String sqlOrSqlId, final T params) {
 		return (T) loadByQuery(new QueryExecutor(sqlOrSqlId, params));
@@ -664,7 +698,8 @@ public class SqlToyDaoSupport {
 		if (result.size() == 1) {
 			return result.get(0);
 		}
-		throw new IllegalArgumentException("loadEntity查询出:" + result.size() + " 条记录,不符合load查询单条记录的预期!");
+		throw new IllegalArgumentException("loadEntity expect a single record but found [" + result.size()
+				+ "] rows, please check the load conditions!");
 	}
 
 	/**
@@ -674,8 +709,8 @@ public class SqlToyDaoSupport {
 	 * QueryExecutor(sql).names(paramNames).values(paramValues).resultType(resultType);
 	 * </li>
 	 * 
-	 * @param queryExecutor
-	 * @return
+	 * @param queryExecutor 封装了sql(或sqlId)、参数、返回类型、数据源等的执行对象
+	 * @return 查询到的单条记录(类型由resultType决定),无数据时返回null,多条记录时抛出IllegalArgumentException
 	 */
 	protected Object loadByQuery(final QueryExecutor queryExecutor) {
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
@@ -692,23 +727,26 @@ public class SqlToyDaoSupport {
 		if (rows.size() == 1) {
 			return rows.get(0);
 		}
-		throw new IllegalArgumentException("loadByQuery查询出:" + rows.size() + " 条记录,不符合load查询单条记录的预期!");
+		throw new IllegalArgumentException("loadByQuery expect a single record but found [" + rows.size()
+				+ "] rows, please check the query conditions!");
 	}
 
 	/**
-	 * @todo 执行无条件的sql语句,一般是一个修改、删除等操作，并返回修改的记录数量
-	 * @param sqlOrSqlId
-	 * @return
+	 * 执行无条件的sql语句,一般是一个修改、删除等操作，并返回修改的记录数量
+	 * 
+	 * @param sqlOrSqlId 不带参数的sql语句或xml中定义的sqlId
+	 * @return 实际修改(插入、删除)的记录数量
 	 */
 	protected Long executeSql(final String sqlOrSqlId) {
 		return executeSql(sqlOrSqlId, null, null, null, null);
 	}
 
 	/**
-	 * @todo 解析sql中的参数名称，以此名称到params中提取对应的值作为查询条件值执行sql
-	 * @param sqlOrSqlId
+	 * 解析sql中的参数名称，以此名称到params中提取对应的值作为查询条件值执行sql
+	 * 
+	 * @param sqlOrSqlId sql语句或xml中定义的sqlId
 	 * @param params     查询参数对象（支持任意实现了Serializable的Bean，如VO、DTO、QueryParam等，对象的属性名将与SQL中的命名参数进行匹配）
-	 * @return
+	 * @return 实际修改(插入、删除)的记录数量
 	 */
 	protected Long executeSql(final String sqlOrSqlId, final Serializable params) {
 		// update 2025-4-29 兼容executeSql(sql,Object...params) 只有一个参数时的场景
@@ -728,24 +766,26 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @todo 执行无返回结果的SQL(返回updateCount)
-	 * @param sqlOrSqlId
-	 * @param paramsNamed
-	 * @param paramsValue
-	 * @return
+	 * 执行无返回结果的SQL(返回updateCount)
+	 * 
+	 * @param sqlOrSqlId  sql语句或xml中定义的sqlId
+	 * @param paramsNamed 条件参数名称数组,与sql中的参数一一对应
+	 * @param paramsValue 条件参数值数组,顺序与paramsNamed一一对应
+	 * @return 实际修改(插入、删除)的记录数量
 	 */
 	protected Long executeSql(final String sqlOrSqlId, final String[] paramsNamed, final Object[] paramsValue) {
 		return executeSql(sqlOrSqlId, paramsNamed, paramsValue, null, null);
 	}
 
 	/**
-	 * @todo 执行无返回结果的SQL(返回updateCount),根据autoCommit设置是否自动提交
-	 * @param sqlOrSqlId
-	 * @param paramsNamed
-	 * @param paramsValue
+	 * 执行无返回结果的SQL(返回updateCount),根据autoCommit设置是否自动提交
+	 * 
+	 * @param sqlOrSqlId  sql语句或xml中定义的sqlId
+	 * @param paramsNamed 条件参数名称数组,与sql中的参数一一对应
+	 * @param paramsValue 条件参数值数组,顺序与paramsNamed一一对应
 	 * @param autoCommit  自动提交，默认可以填null
-	 * @param dataSource
-	 * @return
+	 * @param dataSource  显式指定的数据源,为null时使用默认数据源
+	 * @return 实际修改(插入、删除)的记录数量
 	 */
 	protected Long executeSql(final String sqlOrSqlId, final String[] paramsNamed, final Object[] paramsValue,
 			final Boolean autoCommit, final DataSource dataSource) {
@@ -762,13 +802,14 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @todo 通过jdbc方式批量插入数据，一般提供给数据采集时或插入临时表使用
-	 * @param sqlOrSqlId
+	 * 通过jdbc方式批量插入数据，一般提供给数据采集时或插入临时表使用
+	 * 
+	 * @param sqlOrSqlId 批量操作的sql或xml中定义的sqlId
 	 * @param dataSet    支持List<List>、List<Object[]>(sql中?传参) ;List<VO>、List<Map>
 	 *                   形式(sql中:paramName传参)
-	 * @param batchSize
+	 * @param batchSize  每批提交的记录数量
 	 * @param autoCommit 自动提交，默认可以填null
-	 * @return
+	 * @return 实际批量操作影响的记录总数
 	 */
 	protected Long batchUpdate(final String sqlOrSqlId, final List dataSet, final int batchSize,
 			final Boolean autoCommit) {
@@ -776,14 +817,15 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @todo 批量执行sql修改或删除操作
-	 * @param sqlOrSqlId
+	 * 批量执行sql修改或删除操作
+	 * 
+	 * @param sqlOrSqlId 批量操作的sql或xml中定义的sqlId
 	 * @param dataSet    支持List<List>、List<Object[]>(sql中?传参) ;List<VO>、List<Map>
 	 *                   形式(sql中:paramName传参)
-	 * @param batchSize
-	 * @param autoCommit
-	 * @param dataSource
-	 * @return
+	 * @param batchSize  每批提交的记录数量
+	 * @param autoCommit 自动提交，默认可以填null
+	 * @param dataSource 显式指定的数据源,为null时使用默认数据源
+	 * @return 实际批量操作影响的记录总数
 	 */
 	protected Long batchUpdate(final String sqlOrSqlId, final List dataSet, final int batchSize,
 			final Boolean autoCommit, final DataSource dataSource) {
@@ -798,20 +840,22 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @todo 构造树形表的节点路径、节点层级、节点类别(是否叶子节点)
-	 * @param treeModel
-	 * @param dataSource
-	 * @return
+	 * 构造树形表的节点路径、节点层级、节点类别(是否叶子节点)
+	 * 
+	 * @param treeModel  树形表数据模型(包含表名、节点字段配置及待处理的数据)
+	 * @param dataSource 显式指定的数据源,为null时使用默认数据源
+	 * @return 处理是否成功
 	 */
 	protected boolean wrapTreeTableRoute(final TreeTableModel treeModel, final DataSource dataSource) {
 		return dialectFactory.wrapTreeTableRoute(sqlToyContext, treeModel, this.getDataSource(dataSource));
 	}
 
 	/**
-	 * @todo 以params对象的属性给sql中的:named 传参数，进行查询，并返回params的class类型的集合
-	 * @param sqlOrSqlId
+	 * 以params对象的属性给sql中的:named 传参数，进行查询，并返回params的class类型的集合
+	 * 
+	 * @param sqlOrSqlId sql语句或xml中定义的sqlId
 	 * @param params     查询参数对象（支持任意实现了Serializable的Bean，如VO、DTO、QueryParam等，对象的属性名将与SQL中的命名参数进行匹配）
-	 * @return
+	 * @return 以params同类型对象组成的集合,无数据时为空集合
 	 */
 	protected <T extends Serializable> List<T> findBySql(final String sqlOrSqlId, final T params) {
 		return (List<T>) findByQuery(new QueryExecutor(sqlOrSqlId, params)).getRows();
@@ -825,13 +869,14 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @TODO 查询集合
+	 * 查询集合
+	 * 
 	 * @param <T>
-	 * @param sqlOrSqlId
-	 * @param paramsNamed
-	 * @param paramsValue
+	 * @param sqlOrSqlId  sql语句或xml中定义的sqlId
+	 * @param paramsNamed 条件参数名称数组,与sql中的参数一一对应
+	 * @param paramsValue 条件参数值数组,顺序与paramsNamed一一对应
 	 * @param resultType  分null(返回二维List)、voClass、HashMap.class、LinkedHashMap.class等
-	 * @return
+	 * @return 查询结果集合(元素类型由resultType决定),无数据时为空集合
 	 */
 	protected <T> List<T> findBySql(final String sqlOrSqlId, final String[] paramsNamed, final Object[] paramsValue,
 			final Class<T> resultType) {
@@ -843,9 +888,10 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @TODO 以queryExecutor 封装sql、条件、数据库源等进行集合查询
+	 * 以queryExecutor 封装sql、条件、数据库源等进行集合查询
+	 * 
 	 * @param queryExecutor (可动态设置数据源)
-	 * @return
+	 * @return 查询结果对象,通过getRows()获取行数据
 	 */
 	protected QueryResult findByQuery(final QueryExecutor queryExecutor) {
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search,
@@ -859,9 +905,10 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @TODO 按照流模式活动查询结果数据
-	 * @param queryExecutor
-	 * @param streamResultHandler
+	 * 按照流模式活动查询结果数据
+	 * 
+	 * @param queryExecutor       封装了sql(或sqlId)、参数、数据源等的执行对象
+	 * @param streamResultHandler 流式处理回调,逐行消费查询结果,避免大数据量一次性载入内存
 	 */
 	protected void fetchStream(final QueryExecutor queryExecutor, final StreamResultHandler streamResultHandler) {
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search,
@@ -871,10 +918,11 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @todo 以QueryExecutor 封装sql、参数等条件，实现分页查询
-	 * @param page
+	 * 以QueryExecutor 封装sql、参数等条件，实现分页查询
+	 * 
+	 * @param page          分页模型,提供页码pageNo和每页记录数pageSize(可设置skipQueryCount跳过总记录数查询)
 	 * @param queryExecutor (可动态设置数据源)
-	 * @return
+	 * @return 分页查询结果,通过getPageResult()获取当前页数据
 	 */
 	protected QueryResult findPageByQuery(final Page page, final QueryExecutor queryExecutor) {
 		String dialect = getDialect(queryExecutor.getInnerModel().dataSource);
@@ -907,14 +955,15 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @todo 指定sql和参数名称以及名称对应的值和返回结果的类型(类型可以是java.util.HashMap),进行分页查询
-	 *       sql可以是一个具体的语句也可以是xml中定义的sqlId
-	 * @param page
-	 * @param sqlOrSqlId
-	 * @param paramsNamed
-	 * @param paramsValue
+	 * 指定sql和参数名称以及名称对应的值和返回结果的类型(类型可以是java.util.HashMap),进行分页查询
+	 * sql可以是一个具体的语句也可以是xml中定义的sqlId
+	 * 
+	 * @param page                                                                                      分页模型,提供页码pageNo和每页记录数pageSize
+	 * @param sqlOrSqlId                                                                                sql语句或xml中定义的sqlId
+	 * @param paramsNamed                                                                               条件参数名称数组,与sql中的参数一一对应
+	 * @param paramsValue                                                                               条件参数值数组,顺序与paramsNamed一一对应
 	 * @param resultType(null则返回List<List>二维集合,HashMap.class:则返回List<HashMap<columnLabel,columnValue>>)
-	 * @return
+	 * @return 当前页数据组成的Page对象
 	 */
 	protected <T> Page<T> findPageBySql(final Page page, final String sqlOrSqlId, final String[] paramsNamed,
 			final Object[] paramsValue, Class<T> resultType) {
@@ -944,15 +993,16 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @todo 取符合条件的结果前多少数据,topSize>1 则取整数返回记录数量，topSize<1 则按比例返回结果记录(topSize必须是大于0)
-	 * @param sqlOrSqlId
-	 * @param paramsNamed
-	 * @param paramsValue
+	 * 取符合条件的结果前多少数据,topSize>1 则取整数返回记录数量，topSize<1 则按比例返回结果记录(topSize必须是大于0)
+	 * 
+	 * @param sqlOrSqlId                                                                                sql语句或xml中定义的sqlId
+	 * @param paramsNamed                                                                               条件参数名称数组,与sql中的参数一一对应
+	 * @param paramsValue                                                                               条件参数值数组,顺序与paramsNamed一一对应
 	 * @param resultType(null则返回List<List>二维集合,HashMap.class:则返回List<HashMap<columnLabel,columnValue>>)
 	 * @param topSize                                                                                   >1
 	 *                                                                                                  取整数部分，<1
 	 *                                                                                                  则表示按比例获取
-	 * @return
+	 * @return 取回的前N条(或按比例)记录集合,无数据时为空集合
 	 */
 	protected <T> List<T> findTopBySql(final String sqlOrSqlId, final String[] paramsNamed, final Object[] paramsValue,
 			final Class<T> resultType, final double topSize) {
@@ -966,10 +1016,11 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @TODO 以queryExecutor封装sql、条件参数、数据源等进行取top集合查询
+	 * 以queryExecutor封装sql、条件参数、数据源等进行取top集合查询
+	 * 
 	 * @param queryExecutor (可动态设置数据源)
-	 * @param topSize
-	 * @return
+	 * @param topSize       取前多少条,大于1取整数条,小于1按比例取(必须大于0)
+	 * @return 查询结果对象,通过getRows()获取行数据
 	 */
 	protected QueryResult findTopByQuery(final QueryExecutor queryExecutor, final double topSize) {
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search,
@@ -982,11 +1033,12 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @todo 在符合条件的结果中随机提取多少条记录,randomCount>1 则取整数记录，randomCount<1 则按比例提取随机记录
-	 *       如randomCount=0.05 总记录数为100,则随机取出5条记录
+	 * 在符合条件的结果中随机提取多少条记录,randomCount>1 则取整数记录，randomCount<1 则按比例提取随机记录
+	 * 如randomCount=0.05 总记录数为100,则随机取出5条记录
+	 * 
 	 * @param queryExecutor (可动态设置数据源)
-	 * @param randomCount
-	 * @return
+	 * @param randomCount   随机提取的记录数量,大于1取整数条,小于1按比例提取(如0.05表示随机取总量的5%)
+	 * @return 随机提取的结果对象,通过getRows()获取行数据
 	 */
 	protected QueryResult getRandomResult(final QueryExecutor queryExecutor, final double randomCount) {
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search,
@@ -1022,10 +1074,11 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @todo <b>快速删除表中的数据,autoCommit为null表示按照连接的默认值(如dbcp可以配置默认是否autoCommit)</b>
-	 * @param tableName
-	 * @param autoCommit
-	 * @param dataSource
+	 * 快速删除表中的数据,autoCommit为null表示按照连接的默认值(如dbcp可以配置默认是否autoCommit)
+	 * 
+	 * @param tableName  要清空的表名称
+	 * @param autoCommit 是否自动提交,为null时按连接的默认值
+	 * @param dataSource 显式指定的数据源,为null时使用默认数据源
 	 */
 	protected void truncate(final String tableName, final Boolean autoCommit, final DataSource dataSource) {
 		if (StringUtil.isBlank(tableName)) {
@@ -1035,40 +1088,44 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @todo 保存对象数据(返回插入的主键值),会针对对象的子集进行级联保存
-	 * @param entity
-	 * @return
+	 * 保存对象数据(返回插入的主键值),会针对对象的子集进行级联保存
+	 * 
+	 * @param entity 待保存的实体对象
+	 * @return 插入记录的主键值
 	 */
 	protected Object save(final Serializable entity) {
 		return save(entity, null);
 	}
 
 	/**
-	 * @todo <b>指定数据库插入单个对象并返回主键值,会针对对象的子表集合数据进行级联保存</b>
-	 * @param entity
-	 * @param dataSource
-	 * @return
+	 * 指定数据库插入单个对象并返回主键值,会针对对象的子表集合数据进行级联保存
+	 * 
+	 * @param entity     待保存的实体对象
+	 * @param dataSource 显式指定的数据源,为null时使用默认数据源
+	 * @return 插入记录的主键值
 	 */
 	protected Object save(final Serializable entity, final DataSource dataSource) {
 		return dialectFactory.save(sqlToyContext, entity, getDataSource(dataSource));
 	}
 
 	/**
-	 * @todo 批量插入对象(会自动根据主键策略产生主键值,并填充对象集合),不做级联操作
+	 * 批量插入对象(会自动根据主键策略产生主键值,并填充对象集合),不做级联操作
+	 * 
 	 * @param <T>
-	 * @param entities
-	 * @return
+	 * @param entities 待批量插入的实体对象集合(主键值自动生成并回填到对象中)
+	 * @return 实际插入的记录数量
 	 */
 	protected <T extends Serializable> Long saveAll(final List<T> entities) {
 		return this.saveAll(entities, null);
 	}
 
 	/**
-	 * @todo <b>指定数据库进行批量插入</b>
+	 * 指定数据库进行批量插入
+	 * 
 	 * @param <T>
-	 * @param entities
-	 * @param dataSource
-	 * @return
+	 * @param entities   待批量插入的实体对象集合(主键值自动生成并回填到对象中)
+	 * @param dataSource 显式指定的数据源,为null时使用默认数据源
+	 * @return 实际插入的记录数量
 	 */
 	protected <T extends Serializable> Long saveAll(final List<T> entities, final DataSource dataSource) {
 		return dialectFactory.saveAll(sqlToyContext, entities, sqlToyContext.getBatchSize(), null, null,
@@ -1076,19 +1133,21 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @todo 保存对象数据(返回插入的主键值),忽视已经存在的
-	 * @param entities
-	 * @return
+	 * 保存对象数据(返回插入的主键值),忽视已经存在的
+	 * 
+	 * @param entities 待保存的实体对象集合(数据库中已存在的记录被忽视)
+	 * @return 实际插入的记录数量
 	 */
 	protected <T extends Serializable> Long saveAllIgnoreExist(final List<T> entities) {
 		return saveAllIgnoreExist(entities, null);
 	}
 
 	/**
-	 * @todo 保存对象数据(返回插入的主键值),忽视已经存在的
-	 * @param entities
-	 * @param dataSource
-	 * @return
+	 * 保存对象数据(返回插入的主键值),忽视已经存在的
+	 * 
+	 * @param entities   待保存的实体对象集合(数据库中已存在的记录被忽视)
+	 * @param dataSource 显式指定的数据源,为null时使用默认数据源
+	 * @return 实际插入的记录数量
 	 */
 	protected <T extends Serializable> Long saveAllIgnoreExist(final List<T> entities, final DataSource dataSource) {
 		return dialectFactory.saveAllIgnoreExist(sqlToyContext, entities, sqlToyContext.getBatchSize(), null, null,
@@ -1096,21 +1155,23 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @todo update对象(值为null的属性不修改,通过forceUpdateProps指定要进行强制修改属性)
-	 * @param entity
+	 * update对象(值为null的属性不修改,通过forceUpdateProps指定要进行强制修改属性)
+	 * 
+	 * @param entity           待修改的实体对象(根据主键定位记录)
 	 * @param forceUpdateProps 强制修改的属性
-	 * @return
+	 * @return 实际修改的记录数量
 	 */
 	protected Long update(final Serializable entity, final String... forceUpdateProps) {
 		return this.update(entity, forceUpdateProps, null);
 	}
 
 	/**
-	 * @todo <b>根据传入的对象，通过其主键值查询并修改其它属性的值</b>
-	 * @param entity
-	 * @param forceUpdateProps
-	 * @param dataSource
-	 * @return
+	 * 根据传入的对象，通过其主键值查询并修改其它属性的值
+	 * 
+	 * @param entity           待修改的实体对象(根据主键定位记录,null值属性不修改)
+	 * @param forceUpdateProps 强制修改的属性(null值的属性也会被更新)
+	 * @param dataSource       显式指定的数据源,为null时使用默认数据源
+	 * @return 实际修改的记录数量
 	 */
 	protected Long update(final Serializable entity, final String[] forceUpdateProps, final DataSource dataSource) {
 		if (entity == null) {
@@ -1124,8 +1185,9 @@ public class SqlToyDaoSupport {
 		if (dataVersion != null) {
 			Object version = BeanUtil.getProperty(entity, dataVersion.getField());
 			if (version == null) {
-				throw new IllegalArgumentException("表:" + entityMeta.getTableName() + " 存在版本@DataVersion配置，属性:"
-						+ dataVersion.getField() + " 值不能为空!");
+				throw new IllegalArgumentException(
+						"table [" + entityMeta.getTableName() + "] has @DataVersion configuration, the property ["
+								+ dataVersion.getField() + "] value must not be null, please check!");
 			}
 			String where = "";
 			for (String field : entityMeta.getIdArray()) {
@@ -1137,8 +1199,8 @@ public class SqlToyDaoSupport {
 					.select(entityMeta.getIdArray()).where(where).values(entity).lock(LockMode.UPGRADE_NOWAIT));
 			String verStr = version.toString();
 			if (versionEntity == null) {
-				throw new DataAccessException(
-						"表:" + entityMeta.getTableName() + " 数据版本:" + verStr + " 正在被其他用户修改或已经被更新!");
+				throw new DataAccessException("table [" + entityMeta.getTableName() + "] data version [" + verStr
+						+ "] is being modified by another user or has already been updated!");
 			}
 			// 以日期开头
 			if (dataVersion.isStartDate()) {
@@ -1159,12 +1221,13 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @todo 修改对象,并通过指定级联的子对象做级联修改
-	 * @param entity
-	 * @param forceUpdateProps
+	 * 修改对象,并通过指定级联的子对象做级联修改
+	 * 
+	 * @param entity                   待修改的实体对象(根据主键定位记录)
+	 * @param forceUpdateProps         主表强制修改的属性
 	 * @param forceCascadeClasses      (强制需要修改的子对象,当子集合数据为null,则进行清空或置为无效处理,否则则忽视对存量数据的处理)
-	 * @param subTableForceUpdateProps
-	 * @return
+	 * @param subTableForceUpdateProps 子表对应的强制修改属性,key为级联子对象类型,value为该子表强制修改的属性数组
+	 * @return 实际修改的记录数量
 	 */
 	protected Long updateCascade(final Serializable entity, final String[] forceUpdateProps,
 			final Class[] forceCascadeClasses, final HashMap<Class, String[]> subTableForceUpdateProps) {
@@ -1173,13 +1236,14 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @TODO 适用于库存台账、客户资金账等高并发强事务场景，一次数据库交互实现：1、锁查询；2、记录存在则修改；3、记录不存在则执行insert；4、返回修改或插入的记录信息，尽量不要使用identity、sequence主键
+	 * 适用于库存台账、客户资金账等高并发强事务场景，一次数据库交互实现：1、锁查询；2、记录存在则修改；3、记录不存在则执行insert；4、返回修改或插入的记录信息，尽量不要使用identity、sequence主键
+	 * 
 	 * @param <T>
-	 * @param entity
-	 * @param updateRowHandler
-	 * @param uniqueProps
-	 * @param dataSource
-	 * @return
+	 * @param entity           操作的实体对象(要求主键为业务主键)
+	 * @param updateRowHandler 锁定记录后的修改回调,通过rs更新字段值
+	 * @param uniqueProps      判断记录是否存在的唯一属性,为null时默认使用主键属性
+	 * @param dataSource       显式指定的数据源,为null时使用默认数据源
+	 * @return 修改或插入后的记录信息
 	 */
 	public <T extends Serializable> T updateSaveFetch(final T entity, final UpdateRowHandler updateRowHandler,
 			final int lockWaitTimeout, final String[] uniqueProps, final DataSource dataSource) {
@@ -1203,19 +1267,21 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @todo 深度更新实体对象数据,根据对象的属性值全部更新对应表的字段数据,不涉及级联修改
-	 * @param entity
-	 * @return
+	 * 深度更新实体对象数据,根据对象的属性值全部更新对应表的字段数据,不涉及级联修改
+	 * 
+	 * @param entity 待深度修改的实体对象(根据主键定位记录,属性值为null则更新对应字段为null)
+	 * @return 实际修改的记录数量
 	 */
 	protected Long updateDeeply(final Serializable entity) {
 		return this.updateDeeply(entity, null);
 	}
 
 	/**
-	 * @todo <b>深度修改,即对象所有属性值都映射到数据库中,如果是null则数据库值被改为null</b>
-	 * @param entity
-	 * @param dataSource
-	 * @return
+	 * 深度修改,即对象所有属性值都映射到数据库中,如果是null则数据库值被改为null
+	 * 
+	 * @param entity     待深度修改的实体对象(根据主键定位记录)
+	 * @param dataSource 显式指定的数据源,为null时使用默认数据源
+	 * @return 实际修改的记录数量
 	 */
 	protected Long updateDeeply(final Serializable entity, final DataSource dataSource) {
 		if (entity == null) {
@@ -1228,23 +1294,25 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @todo 批量根据主键更新每条记录,通过forceUpdateProps设置强制要修改的属性
+	 * 批量根据主键更新每条记录,通过forceUpdateProps设置强制要修改的属性
+	 * 
 	 * @param <T>
-	 * @param entities
-	 * @param forceUpdateProps
-	 * @return
+	 * @param entities         待批量修改的实体对象集合(根据各对象主键定位记录)
+	 * @param forceUpdateProps 强制修改的属性
+	 * @return 实际修改的记录总数
 	 */
 	protected <T extends Serializable> Long updateAll(final List<T> entities, final String... forceUpdateProps) {
 		return this.updateAll(entities, forceUpdateProps, null);
 	}
 
 	/**
-	 * @todo <b>指定数据库,通过集合批量修改数据库记录</b>
+	 * 指定数据库,通过集合批量修改数据库记录
+	 * 
 	 * @param <T>
-	 * @param entities
-	 * @param forceUpdateProps
-	 * @param dataSource
-	 * @return
+	 * @param entities         待批量修改的实体对象集合(根据各对象主键定位记录,null值属性不修改)
+	 * @param forceUpdateProps 强制修改的属性(null值的属性也会被更新)
+	 * @param dataSource       显式指定的数据源,为null时使用默认数据源
+	 * @return 实际修改的记录总数
 	 */
 	protected <T extends Serializable> Long updateAll(final List<T> entities, final String[] forceUpdateProps,
 			final DataSource dataSource) {
@@ -1253,21 +1321,23 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @todo 批量深度修改(参见updateDeeply,直接将集合VO中的字段值修改到数据库中,未null则置null)
+	 * 批量深度修改(参见updateDeeply,直接将集合VO中的字段值修改到数据库中,未null则置null)
+	 * 
 	 * @param <T>
-	 * @param entities
-	 * @return
+	 * @param entities 待批量深度修改的实体对象集合(属性值为null则更新对应字段为null)
+	 * @return 实际修改的记录总数
 	 */
 	protected <T extends Serializable> Long updateAllDeeply(final List<T> entities) {
 		return updateAllDeeply(entities, null);
 	}
 
 	/**
-	 * @todo 指定数据源进行批量深度修改(对象属性值为null则设置表对应的字段为null)
+	 * 指定数据源进行批量深度修改(对象属性值为null则设置表对应的字段为null)
+	 * 
 	 * @param <T>
-	 * @param entities
-	 * @param dataSource
-	 * @return
+	 * @param entities   待批量深度修改的实体对象集合(根据各对象主键定位记录)
+	 * @param dataSource 显式指定的数据源,为null时使用默认数据源
+	 * @return 实际修改的记录总数
 	 */
 	protected <T extends Serializable> Long updateAllDeeply(final List<T> entities, final DataSource dataSource) {
 		if (entities == null || entities.isEmpty()) {
@@ -1283,11 +1353,12 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @todo 指定数据库,对对象进行保存或修改，forceUpdateProps:当修改操作时强制修改的属性
-	 * @param entity
-	 * @param forceUpdateProps
-	 * @param dataSource
-	 * @return
+	 * 指定数据库,对对象进行保存或修改，forceUpdateProps:当修改操作时强制修改的属性
+	 * 
+	 * @param entity           待操作的实体对象(主键在数据库中存在对应记录则修改,否则插入)
+	 * @param forceUpdateProps 修改操作时强制修改的属性
+	 * @param dataSource       显式指定的数据源,为null时使用默认数据源
+	 * @return 实际插入或修改的记录数量
 	 */
 	protected Long saveOrUpdate(final Serializable entity, final String[] forceUpdateProps,
 			final DataSource dataSource) {
@@ -1320,23 +1391,25 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @todo 批量保存或修改，并指定强迫修改的字段属性
+	 * 批量保存或修改，并指定强迫修改的字段属性
+	 * 
 	 * @param <T>
-	 * @param entities
-	 * @param forceUpdateProps
-	 * @return
+	 * @param entities         待批量保存或修改的实体对象集合
+	 * @param forceUpdateProps 修改操作时强制修改的属性
+	 * @return 实际插入或修改的记录总数
 	 */
 	protected <T extends Serializable> Long saveOrUpdateAll(final List<T> entities, final String... forceUpdateProps) {
 		return this.saveOrUpdateAll(entities, forceUpdateProps, null);
 	}
 
 	/**
-	 * @todo <b>批量保存或修改</b>
+	 * 批量保存或修改
+	 * 
 	 * @param <T>
-	 * @param entities
-	 * @param forceUpdateProps
-	 * @param dataSource
-	 * @return
+	 * @param entities         待批量保存或修改的实体对象集合(主键存在对应记录则修改,否则插入)
+	 * @param forceUpdateProps 修改操作时强制修改的属性
+	 * @param dataSource       显式指定的数据源,为null时使用默认数据源
+	 * @return 实际插入或修改的记录总数
 	 */
 	protected <T extends Serializable> Long saveOrUpdateAll(final List<T> entities, final String[] forceUpdateProps,
 			final DataSource dataSource) {
@@ -1345,9 +1418,10 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @todo 通过主键删除单条记录(会自动级联删除子表,根据数据库配置)
-	 * @param entity
-	 * @return
+	 * 通过主键删除单条记录(会自动级联删除子表,根据数据库配置)
+	 * 
+	 * @param entity 待删除的实体对象(根据主键定位记录)
+	 * @return 实际删除的记录数量
 	 */
 	protected Long delete(final Serializable entity) {
 		return dialectFactory.delete(sqlToyContext, entity, getDataSource(null));
@@ -1358,25 +1432,27 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @TODO 提供单表简易查询进行删除操作(删除操作filters过滤无效)
-	 * @param entityClass
-	 * @param entityQuery
-	 * @return
+	 * 提供单表简易查询进行删除操作(删除操作filters过滤无效)
+	 * 
+	 * @param entityClass 单表对应的实体类
+	 * @param entityQuery 删除条件构造对象(where/values必须提供精准条件)
+	 * @return 实际删除的记录数量
 	 */
 	protected Long deleteByQuery(Class entityClass, EntityQuery entityQuery) {
 		// 先完成参数判空再取innerModel,参数为null时给出明确提示而非NPE
 		if (null == entityClass || null == entityQuery) {
-			throw new IllegalArgumentException("deleteByQuery entityClass、where、value 值不能为空!");
+			throw new IllegalArgumentException("deleteByQuery entityClass, where, value must not be null!");
 		}
 		EntityQueryExtend innerModel = entityQuery.getInnerModel();
 		if (StringUtil.isBlank(innerModel.where) || StringUtil.isBlank(innerModel.values)) {
-			throw new IllegalArgumentException("deleteByQuery entityClass、where、value 值不能为空!");
+			throw new IllegalArgumentException("deleteByQuery entityClass, where, value must not be null!");
 		}
 		EntityMeta entityMeta = getEntityMeta(entityClass);
 		validEntity(entityMeta, entityClass, false);
 		// 做一个必要提示
 		if (!innerModel.paramFilters.isEmpty()) {
-			logger.warn("删除操作设置动态条件过滤是无效的,数据删除查询条件必须是精准的!");
+			logger.warn(
+					"setting dynamic condition filters on delete operation is invalid, the delete condition must be precise!");
 		}
 		String where = SqlUtil.convertFieldsToColumns(entityMeta, innerModel.where);
 		String sql = "delete from ".concat(entityMeta.getSchemaTable(null, null));
@@ -1412,11 +1488,12 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @todo <b>批量删除数据</b>
+	 * 批量删除数据
+	 * 
 	 * @param <T>
-	 * @param entities
-	 * @param dataSource
-	 * @return
+	 * @param entities   待批量删除的实体对象集合(根据各对象主键定位记录)
+	 * @param dataSource 显式指定的数据源,为null时使用默认数据源
+	 * @return 实际删除的记录总数
 	 */
 	protected <T extends Serializable> Long deleteAll(final List<T> entities, final DataSource dataSource) {
 		return dialectFactory.deleteAll(sqlToyContext, entities, sqlToyContext.getBatchSize(), null,
@@ -1424,14 +1501,15 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @TODO 提供单一主键对象的批量快速删除调用方法
-	 * @param entityClass
-	 * @param ids
-	 * @return
+	 * 提供单一主键对象的批量快速删除调用方法
+	 * 
+	 * @param entityClass 实体类,必须为单一主键的POJO实体
+	 * @param ids         主键值集合,支持可变参数或单个Collection
+	 * @return 实际删除的记录数量
 	 */
 	protected Long deleteByIds(Class entityClass, Object... ids) {
 		if (entityClass == null || ids == null || ids.length == 0 || (ids.length == 1 && ids[0] == null)) {
-			throw new IllegalArgumentException("deleteByIds操作:entityClass参数、主键数据不能为空!");
+			throw new IllegalArgumentException("deleteByIds entityClass and primary key values must not be null!");
 		}
 		EntityMeta entityMeta = getEntityMeta(entityClass);
 		validEntity(entityMeta, entityClass, true);
@@ -1448,10 +1526,11 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @todo 锁定记录查询，并对记录进行修改,最后将结果返回
-	 * @param queryExecutor
-	 * @param updateRowHandler
-	 * @return
+	 * 锁定记录查询，并对记录进行修改,最后将结果返回
+	 * 
+	 * @param queryExecutor    封装了sql(或sqlId)、参数、数据源等的执行对象
+	 * @param updateRowHandler 锁定记录后的修改回调,通过rs直接更新字段值
+	 * @return 修改后回显的记录集合
 	 */
 	protected List updateFetch(final QueryExecutor queryExecutor, final UpdateRowHandler updateRowHandler) {
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search,
@@ -1461,41 +1540,45 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @todo 获取对象信息(对应的表以及字段、主键策略等等的信息)
-	 * @param entityClass
-	 * @return
+	 * 获取对象信息(对应的表以及字段、主键策略等等的信息)
+	 * 
+	 * @param entityClass 实体类
+	 * @return 实体对应的元数据模型(表名、字段、主键及主键策略、缓存配置等)
 	 */
 	protected EntityMeta getEntityMeta(Class entityClass) {
 		return sqlToyContext.getEntityMeta(entityClass);
 	}
 
 	/**
-	 * @todo 获取sqltoy配置的批处理每批记录量(默认为50)
-	 * @return
+	 * 获取sqltoy配置的批处理每批记录量(默认为50)
+	 * 
+	 * @return 每批处理的记录数量
 	 */
 	protected int getBatchSize() {
 		return sqlToyContext.getBatchSize();
 	}
 
 	/**
-	 * @todo 协助完成对对象集合的属性批量赋予相应数值
-	 * @param names
-	 * @return
+	 * 协助完成对对象集合的属性批量赋予相应数值
+	 * 
+	 * @param names 参与批量赋值的对象属性名称数组
+	 * @return BeanWrapper对象,通过values(...)设置对应属性值后调用mappingSet完成批量赋值
 	 */
 	protected BeanWrapper wrapBeanProps(String... names) {
 		return BeanWrapper.create().names(names);
 	}
 
 	/**
-	 * @todo <b>手工提交数据库操作,只提供当前DataSource提交</b>
+	 * 手工提交数据库操作,只提供当前DataSource提交
 	 */
 	protected void flush() {
 		flush(null);
 	}
 
 	/**
-	 * @todo <b>手工提交数据库操作,只提供当前DataSource提交</b>
-	 * @param dataSource
+	 * 手工提交数据库操作,只提供当前DataSource提交
+	 * 
+	 * @param dataSource 显式指定的数据源,为null时使用默认数据源
 	 */
 	protected void flush(DataSource dataSource) {
 		DataSourceUtils.processDataSource(sqlToyContext, getDataSource(dataSource), new DataSourceCallbackHandler() {
@@ -1509,29 +1592,33 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @todo 产生ID(可以指定增量范围，当一个表里面涉及多个业务主键时，sqltoy在配置层面只支持单个，但开发者可以调用此方法自行获取后赋值)
+	 * 产生ID(可以指定增量范围，当一个表里面涉及多个业务主键时，sqltoy在配置层面只支持单个，但开发者可以调用此方法自行获取后赋值)
+	 * 
 	 * @param signature 唯一标识符号
 	 * @param increment 唯一标识符号，默认设置为1
-	 * @return
+	 * @return 产生的分布式id值
 	 */
 	protected long generateBizId(String signature, int increment) {
 		if (StringUtil.isBlank(signature)) {
-			throw new IllegalArgumentException("signature 必须不能为空,请正确指定业务标志符号!");
+			throw new IllegalArgumentException(
+					"signature must not be blank, please specify the correct business signature!");
 		}
 		return getDistributeIdGenerator().generateId(signature, increment,
 				SqlToyConstants.getDistributeIdCacheExpireDate());
 	}
 
 	/**
-	 * @todo 根据实体对象对应的POJO配置的业务主键策略,提取对象的属性值产生业务主键
-	 * @param entity
-	 * @return
+	 * 根据实体对象对应的POJO配置的业务主键策略,提取对象的属性值产生业务主键
+	 * 
+	 * @param entity 属性值作为产生业务主键依据的实体对象
+	 * @return 产生的业务主键值
 	 */
 	protected String generateBizId(Serializable entity) {
 		EntityMeta entityMeta = getEntityMeta(entity.getClass());
 		if (entityMeta == null || !entityMeta.isHasBizIdConfig()) {
-			throw new IllegalArgumentException(
-					StringUtil.fillArgs("对象:{},没有配置业务主键生成策略,请检查POJO 的业务主键配置!", entity.getClass().getName()));
+			throw new IllegalArgumentException(StringUtil.fillArgs(
+					"entity:{}, has no business id generation strategy configured, please check the business id configuration of the POJO!",
+					entity.getClass().getName()));
 		}
 		String businessIdType = entityMeta.getColumnJavaType(entityMeta.getBusinessIdField());
 		Integer[] relatedColumn = entityMeta.getBizIdRelatedColIndex();
@@ -1543,8 +1630,8 @@ public class SqlToyDaoSupport {
 			for (int meter = 0; meter < relatedColumn.length; meter++) {
 				relatedColValue[meter] = fullParamValues[relatedColumn[meter]];
 				if (relatedColValue[meter] == null) {
-					throw new IllegalArgumentException("对象:" + entity.getClass().getName() + " 生成业务主键依赖的关联字段:"
-							+ relatedColumn[meter] + " 值为null!");
+					throw new IllegalArgumentException("generate business id for entity [" + entity.getClass().getName()
+							+ "], the related field [" + relatedColumn[meter] + "] value is null, please check!");
 				}
 			}
 		}
@@ -1556,18 +1643,19 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @TODO 根据指定的表名、业务码，业务码的属性和值map，动态获取业务主键值 例如:generateBizId("sag_test",
-	 *       "HW@case(orderType,SALE,SC,BUY,PO)@day(yyMMdd)",
-	 *       MapKit.map("orderType", "SALE"), null, 12, 2);
-	 * @param tableName
+	 * 根据指定的表名、业务码，业务码的属性和值map，动态获取业务主键值 例如:generateBizId("sag_test",
+	 * "HW@case(orderType,SALE,SC,BUY,PO)@day(yyMMdd)", MapKit.map("orderType",
+	 * "SALE"), null, 12, 2);
+	 * 
+	 * @param tableName    业务表名称(作为id产生的隔离标识之一)
 	 * @param signature    一个表达式字符串，支持@case(name,value1,then1,val2,then2)
 	 *                     和 @day(yyMMdd)或@day(yyyyMMdd)、@substr(name,start,length)
 	 *                     等
-	 * @param keyValues
+	 * @param keyValues    signature中@case、@substr等引用的属性名称和对应的值
 	 * @param bizDate      在signature为空时生效
-	 * @param length
-	 * @param sequenceSize
-	 * @return
+	 * @param length       产生的业务id总长度
+	 * @param sequenceSize id中序列部分的位数
+	 * @return 产生的业务主键值
 	 */
 	protected String generateBizId(String tableName, String signature, Map<String, Object> keyValues, LocalDate bizDate,
 			int length, int sequenceSize) {
@@ -1575,34 +1663,38 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @todo 获取所有缓存的名称
-	 * @return
+	 * 获取所有缓存的名称
+	 * 
+	 * @return 翻译缓存名称集合
 	 */
 	protected Set<String> getCacheNames() {
 		return this.sqlToyContext.getTranslateManager().getCacheNames();
 	}
 
 	/**
-	 * @todo 判断缓存是否存在
-	 * @param cacheName
-	 * @return
+	 * 判断缓存是否存在
+	 * 
+	 * @param cacheName 缓存名称,对应translate配置中的cache属性
+	 * @return 缓存已定义并存在返回true,否则返回false
 	 */
 	protected boolean existCache(String cacheName) {
 		return this.sqlToyContext.getTranslateManager().existCache(cacheName);
 	}
 
 	/**
-	 * @TODO 将缓存数据以对象形式获取
+	 * 将缓存数据以对象形式获取
+	 * 
 	 * @param <T>
-	 * @param cacheName
+	 * @param cacheName  缓存名称,对应translate配置中的cache属性
 	 * @param cacheType  如是数据字典,则传入字典类型否则为null即可
-	 * @param reusltType
-	 * @return
+	 * @param reusltType 返回集合元素的类型,支持VO、HashMap/LinkedHashMap/IgnoreKeyCaseMap等,null则返回缓存原始行数据集合
+	 * @return 缓存数据对应的对象集合
 	 */
 	protected <T> List<T> getTranslateCache(String cacheName, String cacheType, Class<T> reusltType) {
 		TranslateConfigModel translateConfig = sqlToyContext.getTranslateManager().getCacheConfig(cacheName);
 		if (null == translateConfig) {
-			throw new DataAccessException("缓存翻译中对应的缓存:" + cacheName + " 没有定义,请正确检查配置!");
+			throw new DataAccessException(
+					"the cache [" + cacheName + "] used for translate is not defined, please check the configuration!");
 		}
 		HashMap<String, Object[]> cacheData = sqlToyContext.getTranslateManager().getCacheData(cacheName, cacheType);
 		if (cacheData.isEmpty()) {
@@ -1614,7 +1706,8 @@ public class SqlToyDaoSupport {
 		String[] props = translateConfig.getProperties();
 		// 注意直接sql定义的缓存，框架会自动获取label
 		if (props == null || props.length == 0) {
-			throw new DataAccessException("缓存翻译中的缓存:[" + cacheName + "]没有正确定义properties属性,无法映射到VO/POJO/Map对象!");
+			throw new DataAccessException("the cache [" + cacheName
+					+ "] used for translate has no properties defined, unable to map to VO/POJO/Map objects, please check the configuration!");
 		}
 		// 转map类型
 		if (reusltType == Map.class || reusltType == HashMap.class || reusltType == LinkedHashMap.class
@@ -1654,10 +1747,11 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @todo 获取缓存数据
-	 * @param cacheName
-	 * @param cacheType
-	 * @return
+	 * 获取缓存数据
+	 * 
+	 * @param cacheName 缓存名称,对应translate配置中的cache属性
+	 * @param cacheType 缓存分类(如字典分类),非分类型的填null
+	 * @return 缓存数据,key为主键值,value为该行各属性值组成的数组
 	 */
 	protected HashMap<String, Object[]> getTranslateCache(String cacheName, String cacheType) {
 		return sqlToyContext.getTranslateManager().getCacheData(cacheName, cacheType);
@@ -1666,9 +1760,9 @@ public class SqlToyDaoSupport {
 	/**
 	 * @see cacheMatchKeys(CacheMatchFilter cacheMatchFilter, String...
 	 *      matchRegexes)
-	 * @param matchRegex
-	 * @param cacheMatchFilter
-	 * @return
+	 * @param matchRegex       待匹配的名称关键字
+	 * @param cacheMatchFilter 缓存匹配过滤条件,通过CacheMatchFilter.create().cacheName(...)指定缓存
+	 * @return 匹配到的缓存key值集合
 	 */
 	@Deprecated
 	protected String[] cacheMatchKeys(String matchRegex, CacheMatchFilter cacheMatchFilter) {
@@ -1676,24 +1770,25 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @TODO 通过缓存匹配名称并返回key集合(类似数据库中的like)便于后续进行精准匹配
+	 * 通过缓存匹配名称并返回key集合(类似数据库中的like)便于后续进行精准匹配
+	 * 
 	 * @param cacheMatchFilter 例如:
 	 *                         CacheMatchFilter.create().cacheName("staffIdNameCache")
-	 * @param cacheMatchFilter 如: 页面传过来的员工名称、客户名称等，反查对应的员工id和客户id
-	 * @param matchRegexes
-	 * @return
+	 * @param matchRegexes     待匹配的名称集合,如页面传过来的员工名称、客户名称等，反查对应的员工id和客户id
+	 * @return 匹配到的缓存key值集合,最大匹配数量受matchSize限制,未匹配到且设置了unMatchedReturnSelf时原样返回匹配值
 	 */
 	protected String[] cacheMatchKeys(CacheMatchFilter cacheMatchFilter, String... matchRegexes) {
 		if (cacheMatchFilter == null || StringUtil.isBlank(cacheMatchFilter.getCacheFilterArgs().cacheName)
 				|| matchRegexes == null || matchRegexes.length == 0) {
-			throw new IllegalArgumentException("缓存反向名称匹配key必须要提供cacheName和matchRegex值!");
+			throw new IllegalArgumentException(
+					"cache reverse name matching must provide cacheName and matchRegex values!");
 		}
 		CacheMatchExtend extendArgs = cacheMatchFilter.getCacheFilterArgs();
 		// 获取缓存数据
 		HashMap<String, Object[]> cacheDatas = getTranslateCache(extendArgs.cacheName, extendArgs.cacheType);
 		if (cacheDatas == null || cacheDatas.isEmpty()) {
-			logger.error("缓存cacheName={},cacheType={} 没有数据,cacheMatchKeys异常,请检查!", extendArgs.cacheName,
-					extendArgs.cacheType);
+			logger.error("cache cacheName={},cacheType={} has no data, cacheMatchKeys occurs exception, please check!",
+					extendArgs.cacheName, extendArgs.cacheType);
 			return new String[] {};
 		}
 		// 名称匹配在缓存的哪几列(正常1列，但部分场景要求:名称、别名 匹配等)
@@ -1701,7 +1796,7 @@ public class SqlToyDaoSupport {
 		// 将传递匹配条件转小写
 		List<String> matchLowAry = new ArrayList<String>();
 		for (String str : matchRegexes) {
-			matchLowAry.add(str.toLowerCase().trim());
+			matchLowAry.add(str.toLowerCase(Locale.ROOT).trim());
 		}
 		// 缓存key值列
 		int cacheKeyIndex = extendArgs.cacheKeyIndex;
@@ -1727,7 +1822,7 @@ public class SqlToyDaoSupport {
 					include = extendArgs.cacheFilter.doFilter(row);
 				}
 				if (include) {
-					keyLow = keyCode.toLowerCase();
+					keyLow = keyCode.toLowerCase(Locale.ROOT);
 					skipLoop: for (int i = 0; i < matchLowAry.size(); i++) {
 						matchStr = matchLowAry.get(i);
 						// 模糊查询条件直接就跟key 相同
@@ -1740,7 +1835,8 @@ public class SqlToyDaoSupport {
 						// 名称相同
 						for (int index : nameIndexes) {
 							compareValue = row[index];
-							if (compareValue != null && compareValue.toString().toLowerCase().equals(matchStr)) {
+							if (compareValue != null
+									&& compareValue.toString().toLowerCase(Locale.ROOT).equals(matchStr)) {
 								matchedKeys.add(keyCode);
 								// 剔除
 								matchLowAry.remove(i);
@@ -1781,7 +1877,7 @@ public class SqlToyDaoSupport {
 						for (int index : nameIndexes) {
 							compareValue = row[index];
 							if (compareValue != null
-									&& StringUtil.like(compareValue.toString().toLowerCase(), matchWords)) {
+									&& StringUtil.like(compareValue.toString().toLowerCase(Locale.ROOT), matchWords)) {
 								matchedKeys.add(keyCode);
 								break skipLoop;
 							}
@@ -1804,7 +1900,8 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @todo 利用sqltoy的translate缓存，通过显式调用对集合数据的列进行翻译
+	 * 利用sqltoy的translate缓存，通过显式调用对集合数据的列进行翻译
+	 * 
 	 * @param dataSet          要翻译的数据集合
 	 * @param cacheName        缓存名称
 	 * @param cacheType        缓存分类(如字典分类),非分类型的填null
@@ -1819,15 +1916,16 @@ public class SqlToyDaoSupport {
 			return;
 		}
 		if (cacheName == null) {
-			throw new IllegalArgumentException("缓存名称不能为空!");
+			throw new IllegalArgumentException("cacheName must not be null!");
 		}
 		if (translateHandler == null) {
-			throw new IllegalArgumentException("缓存翻译行取key和设置name的反调函数不能为null!");
+			throw new IllegalArgumentException("the translate handler which gets key and sets name must not be null!");
 		}
 		// 获取缓存,框架会自动判断null并实现缓存数据的加载和更新检测
 		TranslateConfigModel cacheModel = sqlToyContext.getTranslateManager().getCacheConfig(cacheName);
 		if (cacheModel == null) {
-			throw new IllegalArgumentException("缓存:{" + cacheName + "} 不存在,请检查缓存定义的配置文件!");
+			throw new IllegalArgumentException(
+					"cache:{" + cacheName + "} does not exist, please check the cache configuration file!");
 		}
 		// 默认名称字段列为1
 		int cacheIndex = (cacheNameIndex == null) ? 1 : cacheNameIndex.intValue();
@@ -1841,7 +1939,7 @@ public class SqlToyDaoSupport {
 			DynamicCacheFetch dynamicCacheFetch = sqlToyContext.getDynamicCacheFetch();
 			if (dynamicCacheFetch == null) {
 				throw new RuntimeException(
-						"缓存为dynamicCache即动态获取缓存数据，未定义DynamicCacheFetch的实现类，请正确配置:spring.sqltoy.dynamicCacheFetch=xxxx.xxx.DynamicCacheFetchImpl");
+						"the cache is dynamicCache which fetches data dynamically, no implementation class of DynamicCacheFetch is defined, please configure: spring.sqltoy.dynamicCacheFetch=xxxx.xxx.DynamicCacheFetchImpl");
 			}
 			HashMap<String, Object[]> cache = sqlToyContext.getDynamicFecthCacheManager().getDynamicCache(cacheModel,
 					cacheType);
@@ -1913,12 +2011,13 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @TODO 提供针对单表简易快捷查询 EntityQuery.where("#[name like ?]#[and status in
-	 *       (?)]").values(new Object[]{xxx,xxx})
+	 * 提供针对单表简易快捷查询 EntityQuery.where("#[name like ?]#[and status in
+	 * (?)]").values(new Object[]{xxx,xxx})
+	 * 
 	 * @param <T>
-	 * @param entityClass
-	 * @param entityQuery
-	 * @return
+	 * @param entityClass 单表对应的实体类
+	 * @param entityQuery 查询条件构造对象(where/values/排序/字段过滤等),可为null表示无条件查询
+	 * @return 符合条件的实体对象集合
 	 */
 	protected <T> List<T> findEntity(Class<T> entityClass, EntityQuery entityQuery) {
 		return (List<T>) findEntity(entityClass, entityQuery, entityClass);
@@ -1926,20 +2025,21 @@ public class SqlToyDaoSupport {
 
 	protected <T> List<T> findEntity(Class entityClass, EntityQuery entityQuery, Class<T> resultType) {
 		if (null == entityClass) {
-			throw new IllegalArgumentException("findEntityList entityClass值不能为空!");
+			throw new IllegalArgumentException("findEntityList entityClass must not be null!");
 		}
 		return (List<T>) findEntityBase(entityClass, null, (entityQuery == null) ? EntityQuery.create() : entityQuery,
 				resultType, false);
 	}
 
 	/**
-	 * @TODO 提供针对单表简易快捷分页查询 EntityQuery.where("#[name like ?]#[and status in
-	 *       (?)]").values(new Object[]{xxx,xxx})
+	 * 提供针对单表简易快捷分页查询 EntityQuery.where("#[name like ?]#[and status in
+	 * (?)]").values(new Object[]{xxx,xxx})
+	 * 
 	 * @param <T>
-	 * @param page
-	 * @param entityClass
-	 * @param entityQuery
-	 * @return
+	 * @param page        分页模型,提供页码pageNo和每页记录数pageSize
+	 * @param entityClass 单表对应的实体类
+	 * @param entityQuery 查询条件构造对象,可为null表示无条件查询
+	 * @return 当前页实体对象组成的Page对象
 	 */
 	protected <T> Page<T> findPageEntity(Page page, Class<T> entityClass, EntityQuery entityQuery) {
 		return (Page<T>) findPageEntity(page, entityClass, entityQuery, entityClass);
@@ -1947,20 +2047,21 @@ public class SqlToyDaoSupport {
 
 	protected <T> Page<T> findPageEntity(Page page, Class entityClass, EntityQuery entityQuery, Class<T> resultType) {
 		if (null == entityClass || null == page) {
-			throw new IllegalArgumentException("findPageEntity entityClass、page值不能为空!");
+			throw new IllegalArgumentException("findPageEntity entityClass and page must not be null!");
 		}
 		return (Page<T>) findEntityBase(entityClass, page, (entityQuery == null) ? EntityQuery.create() : entityQuery,
 				resultType, false);
 	}
 
 	/**
-	 * @TODO 提供findEntity的基础实现，供对外接口包装，额外开放了resultClass的自定义功能
-	 * @param entityClass
+	 * 提供findEntity的基础实现，供对外接口包装，额外开放了resultClass的自定义功能
+	 * 
+	 * @param entityClass 单表对应的实体类
 	 * @param page        如分页查询则需指定，非分页则传null
-	 * @param entityQuery
+	 * @param entityQuery 查询条件构造对象,可为null表示无条件查询
 	 * @param resultClass 指定返回结果类型
-	 * @param isCount
-	 * @return
+	 * @param isCount     true表示执行count查询返回总记录数,false则执行数据查询
+	 * @return isCount为true时返回总记录数(Long),否则返回List或Page形式的结果
 	 */
 	private Object findEntityBase(Class entityClass, Page page, EntityQuery entityQuery, Class resultClass,
 			boolean isCount) {
@@ -1999,7 +2100,7 @@ public class SqlToyDaoSupport {
 		if (notSelect != null) {
 			List<String> selectFields = new ArrayList<String>();
 			for (String field : entityMeta.getFieldsArray(false)) {
-				if (!notSelect.contains(field.toLowerCase())) {
+				if (!notSelect.contains(field.toLowerCase(Locale.ROOT))) {
 					selectFields.add(field);
 				}
 			}
@@ -2024,7 +2125,7 @@ public class SqlToyDaoSupport {
 					if (colName == null) {
 						colName = field;
 						// 非字段名称
-						if (!entityMeta.getColumnFieldMap().containsKey(colName.toLowerCase())) {
+						if (!entityMeta.getColumnFieldMap().containsKey(colName.toLowerCase(Locale.ROOT))) {
 							notAllPureField = true;
 						} else {
 							// 保留字处理
@@ -2207,17 +2308,19 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @TODO 针对单表对象查询进行更新操作(update和delete 操作filters过滤是无效的，必须是精准的条件参数)
-	 * @param entityClass
-	 * @param entityUpdate
+	 * 针对单表对象查询进行更新操作(update和delete 操作filters过滤是无效的，必须是精准的条件参数)
+	 * 
+	 * @param entityClass  单表对应的实体类
+	 * @param entityUpdate 修改构造对象,通过set(property,value)设置修改字段,where/values设置条件
 	 * @update 2021-12-23 支持update table set field=field+1等计算模式
-	 * @return
+	 * @return 实际修改的记录数量
 	 */
 	protected Long updateByQuery(Class entityClass, EntityUpdate entityUpdate) {
 		if (null == entityClass || null == entityUpdate || StringUtil.isBlank(entityUpdate.getInnerModel().where)
 				|| StringUtil.isBlank(entityUpdate.getInnerModel().values)
 				|| entityUpdate.getInnerModel().updateValues.isEmpty()) {
-			throw new IllegalArgumentException("updateByQuery: entityClass、where条件、条件值value、变更值setValues不能为空!");
+			throw new IllegalArgumentException(
+					"updateByQuery: entityClass, where condition, condition values and update values must not be null!");
 		}
 		EntityMeta entityMeta = getEntityMeta(entityClass);
 		validEntity(entityMeta, entityClass, false);
@@ -2234,7 +2337,8 @@ public class SqlToyDaoSupport {
 		if (isName) {
 			// 校验必须是dto、map形式传参数
 			if (values.length > 1) {
-				throw new IllegalArgumentException("updateByQuery: where条件采用:paramName形式传参,values只能传递单个VO或Map对象!");
+				throw new IllegalArgumentException(
+						"updateByQuery: where condition uses :paramName named parameters, values can only pass a single VO or Map object!");
 			}
 			paramNames = SqlConfigParseUtils.getSqlParamsName(where, false);
 			values = BeanUtil.reflectBeanToAry(values[0], paramNames);
@@ -2247,7 +2351,8 @@ public class SqlToyDaoSupport {
 				valueSize = 1;
 			}
 			if (paramCnt != valueSize) {
-				throw new IllegalArgumentException("updateByQuery: where语句中的?数量跟对应values 数组长度不一致,请检查!");
+				throw new IllegalArgumentException(
+						"updateByQuery: the number of ? in the where statement does not match the length of the values array, please check!");
 			}
 		}
 		// 处理where 中写的java 字段名称为数据库表字段名称
@@ -2333,7 +2438,7 @@ public class SqlToyDaoSupport {
 			// entry.getKey() 直接是数据库字段名称
 			if (fieldMeta == null) {
 				// 先通过数据字段名称获得类的属性名称再获取fieldMeta
-				fieldName = entityMeta.getColumnFieldMap().get(fields[0].trim().toLowerCase());
+				fieldName = entityMeta.getColumnFieldMap().get(fields[0].trim().toLowerCase(Locale.ROOT));
 				fieldMeta = entityMeta.getFieldMeta(fieldName);
 			}
 			// 保留字处理
@@ -2419,12 +2524,13 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @TODO 过滤掉无效set的属性
-	 * @param updateValues
-	 * @param entityMeta
-	 * @param entityClass
-	 * @param skipNotExistColumn
-	 * @return
+	 * 过滤掉无效set的属性
+	 * 
+	 * @param updateValues       通过set(property,value)设置的待更新字段和值(支持field=field+?计算模式)
+	 * @param entityMeta         实体对应的元数据模型,用于校验属性是否为表字段
+	 * @param entityClass        实体类,用于异常提示
+	 * @param skipNotExistColumn 属性不是表字段(@Column对应)时是否跳过,false则直接抛出IllegalArgumentException
+	 * @return 过滤后合法的待更新字段和值(保持原有顺序)
 	 */
 	private IgnoreCaseLinkedMap wrapRealUpdateValues(IgnoreCaseLinkedMap updateValues, EntityMeta entityMeta,
 			Class entityClass, boolean skipNotExistColumn) {
@@ -2442,15 +2548,16 @@ public class SqlToyDaoSupport {
 			fieldMeta = entityMeta.getFieldMeta(fields[0].trim());
 			if (fieldMeta == null) {
 				// 先通过数据字段名称获得类的属性名称再获取fieldMeta
-				fieldName = entityMeta.getColumnFieldMap().get(fields[0].trim().toLowerCase());
+				fieldName = entityMeta.getColumnFieldMap().get(fields[0].trim().toLowerCase(Locale.ROOT));
 				if (fieldName != null) {
 					fieldMeta = entityMeta.getFieldMeta(fieldName);
 				}
 			}
 			if (fieldMeta == null) {
 				if (!skipNotExistColumn) {
-					throw new IllegalArgumentException("updateByQuery: 实体对象:" + entityClass.getName() + "属性:"
-							+ fields[0] + " 不是数据库表字段(@Column注解的表示数据库字段),请检查代码!");
+					throw new IllegalArgumentException("updateByQuery: entity [" + entityClass.getName()
+							+ "] property [" + fields[0]
+							+ "] is not a database table field (annotated with @Column), please check the code!");
 				} else {
 					if (skipFields.length() > 0) {
 						skipFields = skipFields.concat(",").concat(fields[0]);
@@ -2463,19 +2570,21 @@ public class SqlToyDaoSupport {
 			}
 		}
 		if (realUpdateValues.isEmpty()) {
-			throw new IllegalArgumentException("updateByQuery: 实体对象:" + entityClass.getName()
-					+ ",set(property,value)过程中，排除无效数据库字段属性:" + skipFields + "后，无有效更新属性(@Column注解的为数据库字段),请检查代码!");
+			throw new IllegalArgumentException("updateByQuery: entity [" + entityClass.getName()
+					+ "], during set(property,value) excluding invalid properties: [" + skipFields
+					+ "], there is no valid property to update (annotated with @Column), please check the code!");
 		}
 		return realUpdateValues;
 	}
 
 	/**
-	 * @TODO 实现POJO和DTO(VO) 之间类型的相互转换和数据复制
+	 * 实现POJO和DTO(VO) 之间类型的相互转换和数据复制
+	 * 
 	 * @param <T>
-	 * @param source
-	 * @param resultType
-	 * @param ignoreProperties
-	 * @return
+	 * @param source           源对象
+	 * @param resultType       转换后的目标类型
+	 * @param ignoreProperties 复制时忽略的属性名称
+	 * @return 转换并复制属性值后的目标类型对象
 	 */
 	protected <T extends Serializable> T convertType(Serializable source, Class<T> resultType,
 			String... ignoreProperties) {
@@ -2483,12 +2592,13 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @TODO 实现POJO和DTO(VO) 集合之间类型的相互转换和数据复制
+	 * 实现POJO和DTO(VO) 集合之间类型的相互转换和数据复制
+	 * 
 	 * @param <T>
-	 * @param sourceList
-	 * @param resultType
-	 * @param ignoreProperties
-	 * @return
+	 * @param sourceList       源对象集合
+	 * @param resultType       转换后的目标类型
+	 * @param ignoreProperties 复制时忽略的属性名称
+	 * @return 转换并复制属性值后的目标类型对象集合
 	 */
 	protected <T extends Serializable> List<T> convertType(List sourceList, Class<T> resultType,
 			String... ignoreProperties) {
@@ -2504,12 +2614,13 @@ public class SqlToyDaoSupport {
 	/**
 	 * -- 避免开发者将全部功能用一个超级sql完成，提供拆解执行的同时确保执行效率，达到了效率和可维护的平衡
 	 * 
-	 * @TODO 并行查询并返回一维List，有几个查询List中就包含几个结果对象，paramNames和paramValues是全部sql的条件参数的合集
+	 * 并行查询并返回一维List，有几个查询List中就包含几个结果对象，paramNames和paramValues是全部sql的条件参数的合集
+	 * 
 	 * @param <T>
-	 * @param parallelQueryList
-	 * @param paramNames
-	 * @param paramValues
-	 * @return
+	 * @param parallelQueryList 并行查询定义集合,每个ParallQuery包含sql(或sqlId)和返回类型
+	 * @param paramNames        全部sql共用的条件参数名称数组
+	 * @param paramValues       条件参数值数组,顺序与paramNames一一对应
+	 * @return 查询结果集合,顺序与parallelQueryList一致,第n个元素对应第n个查询的结果
 	 */
 	protected <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallelQueryList, String[] paramNames,
 			Object[] paramValues) {
@@ -2522,12 +2633,13 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @TODO 获取表的列信息
-	 * @param catalog
-	 * @param schema
-	 * @param tableName
-	 * @param dataSource
-	 * @return
+	 * 获取表的列信息
+	 * 
+	 * @param catalog    目录名称,可为null
+	 * @param schema     数据库模式(schema)名称,可为null
+	 * @param tableName  表名称,支持模糊匹配
+	 * @param dataSource 显式指定的数据源,为null时使用默认数据源
+	 * @return 表的列信息集合(列名、数据类型、长度、精度等)
 	 */
 	protected List<ColumnMeta> getTableColumns(final String catalog, final String schema, String tableName,
 			DataSource dataSource) {
@@ -2535,12 +2647,13 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @TODO 获取数据库的表信息
-	 * @param catalog
-	 * @param schema
-	 * @param tableName
-	 * @param dataSource
-	 * @return
+	 * 获取数据库的表信息
+	 * 
+	 * @param catalog    目录名称,可为null
+	 * @param schema     数据库模式(schema)名称,可为null
+	 * @param tableName  表名称,支持模糊匹配
+	 * @param dataSource 显式指定的数据源,为null时使用默认数据源
+	 * @return 表信息集合(表名、表类型、备注等)
 	 */
 	protected List<TableMeta> getTables(final String catalog, final String schema, String tableName,
 			DataSource dataSource) {
@@ -2548,12 +2661,13 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @TODO 并行查询并返回一维List，有几个查询List中就包含几个结果对象，paramNames和paramValues是全部sql的条件参数的合集
-	 * @param parallelQueryList
-	 * @param paramNames
-	 * @param paramValues
-	 * @param parallelConfig
-	 * @return
+	 * 并行查询并返回一维List，有几个查询List中就包含几个结果对象，paramNames和paramValues是全部sql的条件参数的合集
+	 * 
+	 * @param parallelQueryList 并行查询定义集合,每个ParallQuery包含sql(或sqlId)和返回类型
+	 * @param paramNames        全部sql共用的条件参数名称数组(selfCondition的查询使用各自独立的参数)
+	 * @param paramValues       条件参数值数组,顺序与paramNames一一对应
+	 * @param parallelConfig    并行查询配置(最大线程数、最大等待时长等),为null时采用默认配置
+	 * @return 查询结果集合,顺序与parallelQueryList一致,第n个元素对应第n个查询的结果
 	 */
 	protected <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallelQueryList, String[] paramNames,
 			Object[] paramValues, ParallelConfig parallelConfig) {
@@ -2600,7 +2714,8 @@ public class SqlToyDaoSupport {
 			int maxWaitSeconds = (parallConfig.getMaxWaitSeconds() != null) ? parallConfig.getMaxWaitSeconds()
 					: SqlToyConstants.PARALLEL_MAXWAIT_SECONDS;
 			if (!pool.awaitTermination(maxWaitSeconds, TimeUnit.SECONDS)) {
-				throw new RuntimeException("并行查询等待:" + maxWaitSeconds + " 秒后超时,已中断未完成的任务!");
+				throw new RuntimeException("parallel query timed out after waiting [" + maxWaitSeconds
+						+ "] seconds, the unfinished tasks have been interrupted!");
 			}
 			ParallelQueryResult item;
 			int index = 0;
@@ -2609,13 +2724,14 @@ public class SqlToyDaoSupport {
 				item = result.get();
 				// 存在执行异常则整体抛出
 				if (item != null && !item.isSuccess()) {
-					throw new DataAccessException("第:{} 个sql执行异常:{}!", index, item.getMessage());
+					throw new DataAccessException("the [{}]th sql execution occurs exception:{}!", index,
+							item.getMessage());
 				}
 				results.add(item.getResult());
 			}
 		} catch (Exception e) {
-			logger.error("parallQuery 方法执行异常", e);
-			throw new DataAccessException("并行查询执行错误:" + e.getMessage(), e);
+			logger.error("parallQuery method execution failed", e);
+			throw new DataAccessException("parallel query execution error:" + e.getMessage(), e);
 		} finally {
 			if (pool != null) {
 				pool.shutdownNow();
@@ -2625,9 +2741,10 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @TODO 获取当前数据库方言的名称
-	 * @param dataSource
-	 * @return
+	 * 获取当前数据库方言的名称
+	 * 
+	 * @param dataSource 用于探测方言的数据源,为null时使用默认数据源
+	 * @return 数据库方言名称(如oracle、mysql等),全局配置显式指定了dialect时直接返回配置值
 	 */
 	protected String getDialect(DataSource dataSource) {
 		if (StringUtil.isNotBlank(sqlToyContext.getDialect())) {
@@ -2653,20 +2770,24 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @TODO 验证实体类操作，对应实体对象是否合法
-	 * @param entityMeta
-	 * @param entityClass
-	 * @param validatePK
+	 * 验证实体类操作，对应实体对象是否合法
+	 * 
+	 * @param entityMeta  实体对应的元数据模型
+	 * @param entityClass 实体类,用于异常提示
+	 * @param validatePK  是否校验实体必须存在@Id定义的主键
 	 */
 	private void validEntity(EntityMeta entityMeta, Class entityClass, boolean validatePK) {
 		if (entityMeta == null) {
-			throw new IllegalArgumentException("Class=[" + entityClass.getName() + "]没有@Entity标记为POJO实体对象!");
+			throw new IllegalArgumentException(
+					"Class=[" + entityClass.getName() + "] has no @Entity annotation, it is not a POJO entity object!");
 		}
 		if (entityMeta.getFieldsArray(false) == null || entityMeta.getFieldsArray(false).length == 0) {
-			throw new IllegalArgumentException("Class=[" + entityClass.getName() + "]没有@Column定义具体的字段信息!");
+			throw new IllegalArgumentException("Class=[" + entityClass.getName()
+					+ "] has no @Column annotation to define the concrete field information!");
 		}
 		if (validatePK && (entityMeta.getIdArray() == null || entityMeta.getIdArray().length == 0)) {
-			throw new IllegalArgumentException("Class=[" + entityClass.getName() + "]没有@Id定义主键字段!");
+			throw new IllegalArgumentException(
+					"Class=[" + entityClass.getName() + "] has no @Id annotation to define the primary key field!");
 		}
 	}
 }

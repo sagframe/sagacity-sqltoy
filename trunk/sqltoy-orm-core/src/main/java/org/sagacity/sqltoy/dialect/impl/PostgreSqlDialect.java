@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.dialect.impl;
 
 import java.io.Serializable;
@@ -38,12 +35,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 基于postgresql9.5+版本的方言实现,9.5开始insert into [ON CONFLICT DO
  *              NOTHING/UPDATE]功能生效
  * @author zhongxuchen
- * @version v1.0,Date:2015年8月10日
- * @modify Date:2019-3-12
+ * @version v1.0,Date:2015-08-10
+ * @modify Date:2019-03-12
  *         修复saveOrUpdate的缺陷,改为先update后saveIgnore，因为其跟mysql一样存在bug
  * @modify Date:2020-06-12 修复10+版本对identity主键生成的策略
  */
@@ -313,12 +310,13 @@ public class PostgreSqlDialect implements Dialect {
 					reflectPropsHandler, NVL_FUNCTION, conn, dbType, autoCommit, tableName, true);
 			// 如果修改的记录数量跟总记录数量一致,表示全部是修改
 			if (updateCnt >= entities.size()) {
-				SqlExecuteStat.debug("修改记录", "修改记录量:" + updateCnt + " 条,等于entities集合长度,不再做insert操作!");
+				SqlExecuteStat.debug("update record", "update rows:" + updateCnt
+						+ " equals the size of entities collection, skip the insert operation!");
 				return updateCnt;
 			}
 			Long saveCnt = saveAllIgnoreExist(sqlToyContext, entities, batchSize, reflectPropsHandler, conn, dbType,
 					dialect, autoCommit, tableName);
-			SqlExecuteStat.debug("新增记录", "新建记录数量:" + saveCnt + " 条!");
+			SqlExecuteStat.debug("insert record", "insert rows:" + saveCnt + "!");
 			return updateCnt + saveCnt;
 		}
 		return PostgreSqlDialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, reflectPropsHandler,

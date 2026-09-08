@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import org.sagacity.sqltoy.SqlExecuteStat;
@@ -41,10 +42,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 提供clickhouse数据库通用的操作功能实现,为不同版本提供支持
  * @author zhongxuchen
- * @version v1.0,Date:2020年1月20日
+ * @version v1.0,Date:2020-01-20
  */
 public class ClickHouseDialectUtils {
 	/**
@@ -53,7 +54,8 @@ public class ClickHouseDialectUtils {
 	protected final static Logger logger = LoggerFactory.getLogger(ClickHouseDialectUtils.class);
 
 	/**
-	 * @todo 保存对象
+	 * 保存对象
+	 * 
 	 * @param sqlToyContext
 	 * @param entityMeta
 	 * @param pkStrategy
@@ -99,8 +101,9 @@ public class ClickHouseDialectUtils {
 				for (int meter = 0; meter < relatedColumnSize; meter++) {
 					relatedColValue[meter] = fullParamValues[relatedColumn[meter] - generatedColCnt];
 					if (StringUtil.isBlank(relatedColValue[meter])) {
-						throw new IllegalArgumentException("对象:" + entityMeta.getEntityClass().getName()
-								+ " 生成业务主键依赖的关联字段:" + entityMeta.getBizIdRelatedColumns()[meter] + " 值为null!");
+						throw new IllegalArgumentException("generate business id for entity ["
+								+ entityMeta.getEntityClass().getName() + "], the related field ["
+								+ entityMeta.getBizIdRelatedColumns()[meter] + "] value is null, please check!");
 					}
 				}
 			}
@@ -128,7 +131,7 @@ public class ClickHouseDialectUtils {
 		sqlToyResult = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig, OperateType.insert, sqlToyResult,
 				entity.getClass(), dbType);
 		String realInsertSql = sqlToyResult.getSql();
-		SqlExecuteStat.showSql("执行单记录插入", realInsertSql, null);
+		SqlExecuteStat.showSql("single record insert", realInsertSql, null);
 		final Object[] paramValues = sqlToyResult.getParamsValue();
 		final Integer[] paramsType = entityMeta.getFieldsTypeArray(true);
 		PreparedStatement pst = null;
@@ -179,7 +182,8 @@ public class ClickHouseDialectUtils {
 	}
 
 	/**
-	 * @todo 保存批量对象数据
+	 * 保存批量对象数据
+	 * 
 	 * @param sqlToyContext
 	 * @param entityMeta
 	 * @param insertSql
@@ -236,8 +240,9 @@ public class ClickHouseDialectUtils {
 				for (int meter = 0; meter < relatedColumnSize; meter++) {
 					relatedColValue[meter] = rowData[relatedColumn[meter] - generatedColCnt];
 					if (StringUtil.isBlank(relatedColValue[meter])) {
-						throw new IllegalArgumentException("对象:" + entityMeta.getEntityClass().getName()
-								+ " 生成业务主键依赖的关联字段:" + relatedColumnNames[meter] + " 值为null!");
+						throw new IllegalArgumentException("generate business id for entity ["
+								+ entityMeta.getEntityClass().getName() + "], the related field ["
+								+ relatedColumnNames[meter] + "] value is null, please check!");
 					}
 				}
 			}
@@ -275,14 +280,14 @@ public class ClickHouseDialectUtils {
 			realSql = sqlToyResult.getSql();
 			realParams = CollectionUtil.arrayToList(sqlToyResult.getParamsValue());
 		}
-		SqlExecuteStat.showSql("批量保存[" + realParams.size() + "]条记录", realSql, null);
-		return SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), realSql, realParams,
-				entityMeta.getFieldsTypeArray(true), entityMeta.getFieldsDefaultValue(true),
-				entityMeta.getFieldsNullable(true), batchSize, autoCommit, conn, dbType);
+		SqlExecuteStat.showSql("batch save [" + realParams.size() + "] rows", realSql, null);
+		return SqlUtil.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), realSql, realParams,
+				entityMeta.getFieldsTypeArray(true), batchSize, autoCommit, conn, dbType);
 	}
 
 	/**
-	 * @todo 删除单个对象以及其级联表数据
+	 * 删除单个对象以及其级联表数据
+	 * 
 	 * @param sqlToyContext
 	 * @param entity
 	 * @param conn
@@ -336,11 +341,14 @@ public class ClickHouseDialectUtils {
 		String realTable = entityMeta.getSchemaTable(tableName, dbType);
 		// 无主键
 		if (entityMeta.getIdArray() == null) {
-			throw new IllegalArgumentException("表:" + realTable + " 无主键,不符合update/updateAll规则,请检查表设计是否合理!");
+			throw new IllegalArgumentException("table [" + realTable
+					+ "] has no primary key, does not match the update/updateAll rules, please check the table design!");
 		}
 		// 全部是主键则无需update
 		if (entityMeta.getRejectIdFieldArray(true) == null) {
-			logger.warn("表:" + realTable + " 字段全部是主键不存在更新字段,无需执行更新操作!");
+			logger.warn(
+					"table:{} all fields are primary keys and there is no field to update, skip the update operation!",
+					realTable);
 			return 0L;
 		}
 		// 构造全新的修改记录参数赋值反射(覆盖之前的)
@@ -356,14 +364,16 @@ public class ClickHouseDialectUtils {
 		int pkIndex = end - entityMeta.getIdArray().length;
 		for (int i = pkIndex; i < end; i++) {
 			if (StringUtil.isBlank(fieldsValues[i])) {
-				throw new IllegalArgumentException("通过对象对表:" + realTable + " 进行update操作,主键字段必须要赋值!");
+				throw new IllegalArgumentException("update table [" + realTable
+						+ "] by entity, the primary key fields must be assigned, please check!");
 			}
 		}
 		// 构建update语句
 		String updateSql = generateUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta, nullFunction,
 				forceUpdateFields, realTable);
 		if (updateSql == null) {
-			throw new IllegalArgumentException("update sql is null,引起问题的原因是没有设置需要修改的字段!");
+			throw new IllegalArgumentException(
+					"update sql is null, the reason is that no fields to update are configured, please check!");
 		}
 		SqlToyConfig sqlToyConfig = new SqlToyConfig(Dialect.CLICKHOUSE);
 		sqlToyConfig.setSqlType(SqlType.update);
@@ -379,7 +389,8 @@ public class ClickHouseDialectUtils {
 	}
 
 	/**
-	 * @TODO 批量更新
+	 * 批量更新
+	 * 
 	 * @param sqlToyContext
 	 * @param entities
 	 * @param batchSize
@@ -405,11 +416,14 @@ public class ClickHouseDialectUtils {
 		String realTable = entityMeta.getSchemaTable(tableName, dbType);
 		// 无主键
 		if (entityMeta.getIdArray() == null) {
-			throw new IllegalArgumentException("表:" + realTable + " 无主键,不符合update/updateAll规则,请检查表设计是否合理!");
+			throw new IllegalArgumentException("table [" + realTable
+					+ "] has no primary key, does not match the update/updateAll rules, please check the table design!");
 		}
 		// 全部是主键则无需update
 		if (entityMeta.getRejectIdFieldArray(true) == null) {
-			logger.warn("表:" + realTable + " 字段全部是主键不存在更新字段,无需执行更新操作!");
+			logger.warn(
+					"table:{} all fields are primary keys and there is no field to update, skip the update operation!",
+					realTable);
 			return 0L;
 		}
 		// 构造全新的修改记录参数赋值反射(覆盖之前的)
@@ -439,21 +453,24 @@ public class ClickHouseDialectUtils {
 						iter.remove();
 						break;
 					} else {
-						throw new IllegalArgumentException(
-								"通过对象对表" + realTable + " 进行updateAll操作,主键字段必须要赋值!第:" + index + " 条记录主键为null!");
+						throw new IllegalArgumentException("updateAll table [" + realTable
+								+ "] by entity, the primary key fields must be assigned! row:" + index
+								+ " pk field value is null!");
 					}
 				}
 			}
 			index++;
 		}
 		if (skipCount > 0) {
-			logger.debug("共有:{}行记录因为主键值为空跳过修改操作!", skipCount);
+			logger.debug("a total of:{} rows were skipped for update because their primary key values are null!",
+					skipCount);
 		}
 		// 构建update语句
 		String updateSql = generateUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta, nullFunction,
 				forceUpdateFields, realTable);
 		if (updateSql == null) {
-			throw new IllegalArgumentException("updateAll sql is null,引起问题的原因是没有设置需要修改的字段!");
+			throw new IllegalArgumentException(
+					"updateAll sql is null, the reason is that no fields to update are configured, please check!");
 		}
 		List<Object[]> realParams = paramsValues;
 		String realSql = updateSql;
@@ -468,14 +485,15 @@ public class ClickHouseDialectUtils {
 			realSql = sqlToyResult.getSql();
 			realParams = CollectionUtil.arrayToList(sqlToyResult.getParamsValue());
 		}
-		SqlExecuteStat.showSql("批量修改[" + realParams.size() + "]条记录", realSql, null);
-		return SqlUtilsExt.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), realSql, realParams,
-				getUpdateFieldsTypes(entityMeta), null, null, batchSize, autoCommit, conn, dbType);
+		SqlExecuteStat.showSql("batch update [" + realParams.size() + "] rows", realSql, null);
+		return SqlUtil.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), realSql, realParams,
+				getUpdateFieldsTypes(entityMeta), batchSize, autoCommit, conn, dbType);
 	}
 
 	/**
-	 * @TODO update操作的参数字段:set部分为非分区且非主键字段,where部分为全部主键;
-	 *       主键同时是分区键时也会保留(否则where中的=?会多于参数值导致绑定错位),尾部为主键字段
+	 * update操作的参数字段:set部分为非分区且非主键字段,where部分为全部主键;
+	 * 主键同时是分区键时也会保留(否则where中的=?会多于参数值导致绑定错位),尾部为主键字段
+	 * 
 	 * @param entityMeta
 	 * @return
 	 */
@@ -484,13 +502,13 @@ public class ClickHouseDialectUtils {
 		String[] idArray = entityMeta.getIdArray();
 		HashSet<String> idFields = new HashSet<String>();
 		for (String id : idArray) {
-			idFields.add(id.toLowerCase());
+			idFields.add(id.toLowerCase(Locale.ROOT));
 		}
 		List<String> updateFields = new ArrayList<String>();
 		FieldMeta fieldMeta;
 		for (int i = 0; i < fields.length; i++) {
 			fieldMeta = entityMeta.getFieldMeta(fields[i]);
-			if (idFields.contains(fields[i].toLowerCase()) || !fieldMeta.isPartitionKey()) {
+			if (idFields.contains(fields[i].toLowerCase(Locale.ROOT)) || !fieldMeta.isPartitionKey()) {
 				updateFields.add(fields[i]);
 			}
 		}
@@ -498,7 +516,8 @@ public class ClickHouseDialectUtils {
 	}
 
 	/**
-	 * @TODO update操作参数字段对应的类型(与getUpdateFields的过滤规则一致)
+	 * update操作参数字段对应的类型(与getUpdateFields的过滤规则一致)
+	 * 
 	 * @param entityMeta
 	 * @return
 	 */
@@ -508,13 +527,13 @@ public class ClickHouseDialectUtils {
 		String[] idArray = entityMeta.getIdArray();
 		HashSet<String> idFields = new HashSet<String>();
 		for (String id : idArray) {
-			idFields.add(id.toLowerCase());
+			idFields.add(id.toLowerCase(Locale.ROOT));
 		}
 		List<Integer> fieldTypes = new ArrayList<Integer>();
 		FieldMeta fieldMeta;
 		for (int i = 0; i < fields.length; i++) {
 			fieldMeta = entityMeta.getFieldMeta(fields[i]);
-			if (idFields.contains(fields[i].toLowerCase()) || !fieldMeta.isPartitionKey()) {
+			if (idFields.contains(fields[i].toLowerCase(Locale.ROOT)) || !fieldMeta.isPartitionKey()) {
 				fieldTypes.add(fieldTypesArray[i]);
 			}
 		}
@@ -639,7 +658,8 @@ public class ClickHouseDialectUtils {
 	}
 
 	/**
-	 * @TODO 主键策略是identity或sequence时，主键值允许不由数据库内部自动产生，可人工赋值
+	 * 主键策略是identity或sequence时，主键值允许不由数据库内部自动产生，可人工赋值
+	 * 
 	 * @param pkStrategy
 	 * @return
 	 */
@@ -657,7 +677,8 @@ public class ClickHouseDialectUtils {
 	}
 
 	/**
-	 * @TODO 构造clickhouse的删除或修改语句
+	 * 构造clickhouse的删除或修改语句
+	 * 
 	 * @param entityMeta
 	 * @param sql
 	 * @param sqlType
@@ -672,8 +693,10 @@ public class ClickHouseDialectUtils {
 			int whereIndex = StringUtil.matchIndex(sql, "(?i)\\swhere\\s");
 			// 无where条件的delete(全表删除),matchIndex返回-1时substring(-1)越界,给出明确错误
 			if (whereIndex < 0) {
-				throw new IllegalArgumentException("clickhouse的delete操作必须含有where条件,当前sql无where:" + sql
-						+ ",请检查deleteByQuery的where设置(全表删除请直接执行alter table ... delete)");
+				throw new IllegalArgumentException(
+						"clickhouse delete operation must contain a where condition, the current sql has no where:"
+								+ sql
+								+ ", please check the where setting of deleteByQuery (for full table deletion, execute alter table ... delete directly)!");
 			}
 			sql = startSql.concat(" delete ").concat(sql.substring(whereIndex));
 		} else if (sqlType == SqlType.update) {
@@ -683,7 +706,8 @@ public class ClickHouseDialectUtils {
 			// 无set条件的update,matchIndex返回-1时-1+4=3从错误位置截断生成坏SQL
 			if (setIndex < 0) {
 				throw new IllegalArgumentException(
-						"clickhouse的update操作必须含有set子句,当前sql无set:" + sql + ",请检查updateByQuery的set设置!");
+						"clickhouse update operation must contain a set clause, the current sql has no set:" + sql
+								+ ", please check the set setting of updateByQuery!");
 			}
 			sql = startSql.concat(" update ").concat(sql.substring(setIndex + 4));
 		}

@@ -6,14 +6,11 @@ import java.io.Serializable;
  * @project sagacity-sqltoy
  * @description 列与列环比计算参数模型，供QueryExecutor传参使用
  * @author zhongxuchen
- * @version v1.0, Date:2023年6月22日
- * @modify 2023年6月22日,修改说明
+ * @version v1.0,Date:2023-06-22
+ * @modify Date:2023-06-22,修改说明
  */
 public class ColsChainRatio implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -7423832189571994928L;
 
 	/**

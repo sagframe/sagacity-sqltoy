@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.dialect.impl;
 
 import java.io.Serializable;
@@ -43,8 +40,8 @@ import org.slf4j.LoggerFactory;
  * @project sagacity-sqltoy
  * @description 北大金仓数据库方言支持
  * @author zhongxuchen
- * @version v1.0, Date:2020-11-6
- * @modify 2020-11-6,修改说明
+ * @version v1.0,Date:2020-11-06
+ * @modify Date:2020-11-06 修改说明
  */
 @SuppressWarnings({ "rawtypes" })
 public class KingbaseDialect implements Dialect {

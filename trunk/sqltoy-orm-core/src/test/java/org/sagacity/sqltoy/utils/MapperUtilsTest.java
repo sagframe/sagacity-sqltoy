@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.utils;
 
 import java.math.BigInteger;
@@ -20,9 +17,9 @@ import com.alibaba.fastjson2.JSON;
 /**
  * @project sagacity-sqltoy
  * @description 请在此说明类的功能
- * @author zhong
- * @version v1.0, Date:2020-8-10
- * @modify 2020-8-10,修改说明
+ * @author zhongxuchen
+ * @version v1.0,Date:2020-08-10
+ * @modify Date:2020-08-10 修改说明
  */
 public class MapperUtilsTest {
 	@Test

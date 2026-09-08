@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @project sagacity-sqltoy
  * @description 枚举类型工具
  * @author zhongxuchen
- * @version v1.0,Date:2026-2-6
+ * @version v1.0,Date:2026-02-06
  */
 public class EnumUtil {
 	private static Map<Class, Boolean> withoutCustomFieldEnumMap = new ConcurrentHashMap<>();

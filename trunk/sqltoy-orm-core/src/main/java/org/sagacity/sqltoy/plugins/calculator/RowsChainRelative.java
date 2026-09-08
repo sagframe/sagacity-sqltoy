@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 
 import org.sagacity.sqltoy.config.model.LabelIndexModel;
 import org.sagacity.sqltoy.config.model.RowsChainRelativeModel;
@@ -12,11 +13,11 @@ import org.sagacity.sqltoy.utils.NumberUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 对集合数据以行与行之间的比较(环比计算)
  * @author zhongxuchen
- * @version v1.0,Date:2020-3-25
- * @modify 2024-08-30 divedData.equals(BigDecimal.ZERO) 存在bug
+ * @version v1.0,Date:2020-03-25
+ * @modify Date:2024-08-30 divedData.equals(BigDecimal.ZERO) 存在bug
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class RowsChainRelative {
@@ -35,7 +36,8 @@ public class RowsChainRelative {
 			return;
 		}
 		if (rowsRelative.getRelativeColumns() == null || rowsRelative.getRelativeColumns().length == 0) {
-			throw new IllegalArgumentException("行与行的环比计算[rows-chain-relative]没有设置relative-columns具体的环比列!");
+			throw new IllegalArgumentException(
+					"rows-chain-relative calculation does not specify the relative-columns for the chain comparison, please check!");
 		}
 		int dataSize = result.size();
 		// 5,3-2+0+1
@@ -58,7 +60,7 @@ public class RowsChainRelative {
 			if (NumberUtil.isInteger(rowsRelative.getGroupColumn())) {
 				groupColIndex = Integer.parseInt(rowsRelative.getGroupColumn());
 			} else {
-				groupColIndex = labelIndexMap.get(rowsRelative.getGroupColumn().toLowerCase());
+				groupColIndex = labelIndexMap.get(rowsRelative.getGroupColumn().toLowerCase(Locale.ROOT));
 			}
 			if (groupColIndex >= 0 && groupColIndex < ((List) result.get(0)).size()) {
 				HashSet map = new HashSet();
@@ -83,7 +85,7 @@ public class RowsChainRelative {
 		int addIndex = 0;
 		String relativeCol;
 		for (int i = 0; i < rowsRelative.getRelativeColumns().length; i++) {
-			relativeCol = rowsRelative.getRelativeColumns()[i].toLowerCase();
+			relativeCol = rowsRelative.getRelativeColumns()[i].toLowerCase(Locale.ROOT);
 			if (NumberUtil.isInteger(relativeCol)) {
 				realRelativeCols[i] = Integer.parseInt(relativeCol) + addIndex;
 			} else {

@@ -3,13 +3,13 @@ package org.sagacity.sqltoy.config.model;
 import java.io.Serializable;
 
 /**
- * 
+ * @project sagacity-sqltoy
+ * @description 对象属性类型描述模型，记录属性名称、顺序、类型及泛型类型等元数据
+ * @author zhongxuchen
+ * @version v1.0,Date:2025-08-07
  */
 public class PropertyType implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -5740427227356112255L;
 
 	private String property;

@@ -19,6 +19,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import oracle.sql.TIMESTAMP;
 
+/**
+ * DateUtil 日期处理的单元测试
+ */
 public class DateUtilTest {
 	@Test
 	public void testTimestamp() {

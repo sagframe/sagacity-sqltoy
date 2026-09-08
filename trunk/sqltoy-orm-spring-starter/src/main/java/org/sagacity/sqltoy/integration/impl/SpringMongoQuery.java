@@ -16,8 +16,8 @@ import com.mongodb.client.MongoCollection;
  * @project sagacity-sqltoy
  * @description 基于spring-data的实现
  * @author zhongxuchen
- * @version v1.0, Date:2022年6月14日
- * @modify 2022年6月14日,修改说明
+ * @version v1.0,Date:2022-06-14
+ * @modify Date:2022-06-14,修改说明
  */
 public class SpringMongoQuery implements MongoQuery {
 	/**
@@ -43,7 +43,7 @@ public class SpringMongoQuery implements MongoQuery {
 		if (limit != null && limit > 0) {
 			query.limit(limit.intValue());
 		}
-		logger.debug("findByMongo script=" + query.getQueryObject());
+		logger.debug("findByMongo script={}", query.getQueryObject());
 		return mongoTemplate.find(query, entityClass, collectionName);
 	}
 

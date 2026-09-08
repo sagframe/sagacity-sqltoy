@@ -3,6 +3,9 @@ package org.sagacity.sqltoy.utils;
 import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
 
+/**
+ * with as 语句分析的单元测试
+ */
 public class SqlWithAnalysisTest {
 	@Test
 	public void main() {

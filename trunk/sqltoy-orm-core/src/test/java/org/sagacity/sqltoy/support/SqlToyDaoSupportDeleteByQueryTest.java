@@ -20,14 +20,14 @@ public class SqlToyDaoSupportDeleteByQueryTest {
 				() -> daoSupport.deleteByQuery(String.class, (EntityQuery) null));
 		// 修复前:NullPointerException
 		assertTrue(ex.getMessage().contains("deleteByQuery"));
-		assertTrue(ex.getMessage().contains("不能为空"));
+		assertTrue(ex.getMessage().contains("must not be null"));
 	}
 
 	@Test
 	public void nullEntityClassGivesClearMessage() {
 		IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
 				() -> daoSupport.deleteByQuery(null, EntityQuery.create().where("id=?").values("1")));
-		assertTrue(ex.getMessage().contains("不能为空"));
+		assertTrue(ex.getMessage().contains("must not be null"));
 	}
 
 	@Test
@@ -35,7 +35,7 @@ public class SqlToyDaoSupportDeleteByQueryTest {
 		// where/values缺失时同样给出明确提示(非NPE)
 		IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
 				() -> daoSupport.deleteByQuery(String.class, EntityQuery.create()));
-		assertTrue(ex.getMessage().contains("不能为空"));
+		assertTrue(ex.getMessage().contains("must not be null"));
 		assertEquals(IllegalArgumentException.class, ex.getClass());
 	}
 }

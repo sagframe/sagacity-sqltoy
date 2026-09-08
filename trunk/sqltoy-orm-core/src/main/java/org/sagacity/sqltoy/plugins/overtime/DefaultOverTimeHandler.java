@@ -14,9 +14,10 @@ import org.sagacity.sqltoy.model.PriorityLimitSizeQueue;
 import org.sagacity.sqltoy.plugins.OverTimeSqlHandler;
 
 /**
- * @TODO 提供默认的sql执行超时日志队列，便于应用获取
+ * 提供默认的sql执行超时日志队列，便于应用获取
+ * 
  * @author zhongxuchen
- * @version v1.0, Date:2022-06-29
+ * @version v1.0,Date:2022-06-29
  */
 public class DefaultOverTimeHandler implements OverTimeSqlHandler {
 	/**
@@ -26,7 +27,9 @@ public class DefaultOverTimeHandler implements OverTimeSqlHandler {
 			new Comparator<OverTimeSql>() {
 				@Override
 				public int compare(OverTimeSql o1, OverTimeSql o2) {
-					return Long.valueOf(o1.getTakeTime() - o2.getTakeTime()).intValue();
+					// update 2026-9-8 Long.compare替代long差值截断int(超时差>Integer.MAX时
+					// 违反比较器契约)且免装箱
+					return Long.compare(o1.getTakeTime(), o2.getTakeTime());
 				}
 			});
 	// 所有执行超时且含sqlId的sql语句
@@ -77,7 +80,8 @@ public class DefaultOverTimeHandler implements OverTimeSqlHandler {
 	@Override
 	public synchronized List<OverTimeSql> getSlowest(int size, boolean hasSqlId) {
 		if (size < 1) {
-			throw new IllegalArgumentException("取最慢查询:size 参数必须>=1,如果要获取全部，可使用:Integer.MAX_VALUE");
+			throw new IllegalArgumentException(
+					"size parameter must be >=1 to get the slowest queries, use Integer.MAX_VALUE to get all!");
 		}
 		// 非xml中定义的sql，没有具体的sqlId
 		if (!hasSqlId) {
@@ -103,7 +107,8 @@ public class DefaultOverTimeHandler implements OverTimeSqlHandler {
 	}
 
 	/**
-	 * @TODO 从队列中取出最慢的sql记录
+	 * 从队列中取出最慢的sql记录
+	 * 
 	 * @param size
 	 * @return
 	 */

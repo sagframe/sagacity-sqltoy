@@ -1,6 +1,3 @@
-/**
- *
- */
 package org.sagacity.sqltoy.plugins.function.impl;
 
 import java.util.regex.Pattern;
@@ -9,10 +6,10 @@ import org.sagacity.sqltoy.plugins.function.IFunction;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 不同数据库substr函数的转化
  * @author zhongxuchen
- * @version v1.0, Date:2013-3-21
+ * @version v1.0,Date:2013-03-21
  */
 public class SubStr extends IFunction {
 	private static Pattern regex = Pattern.compile("(?i)\\W(substr|substring)\\(");
@@ -46,6 +43,12 @@ public class SubStr extends IFunction {
 				|| dialect == DBType.SQLSERVER || dialect == DBType.H2 || dialect == DBType.STARDB
 				|| dialect == DBType.OSCAR) {
 			if (dialect == DBType.SQLSERVER && args.length == 2) {
+				// update 2026-9-5 mysql惯用负数起点(substr(s,-2)=末2位):
+				// sqlserver substring负起点语义不同,字面量负数转RIGHT(表达式无法判断,原样处理)
+				String start = args[1].trim();
+				if (start.startsWith("-") && start.substring(1).matches("\\d+")) {
+					return "RIGHT(" + args[0] + "," + start.substring(1) + ")";
+				}
 				return "substring(" + args[0] + "," + args[1] + ",len(" + args[0] + "))";
 			}
 			return wrapArgs("substring", args);

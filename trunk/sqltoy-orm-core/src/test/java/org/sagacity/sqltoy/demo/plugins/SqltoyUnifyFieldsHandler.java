@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.demo.plugins;
 
 import java.sql.Timestamp;
@@ -14,10 +11,10 @@ import org.sagacity.sqltoy.utils.DateUtil;
 
 /**
  * 
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 在sqltoy进行新增和修改操作时，对VO指定属性进行统一赋值操作
  * @author wyl
- * @version Revision:v1.0,Date:2018年1月18日
+ * @version Revision:v1.0,Date:2018-01-18
  * @Modification Date:2018年1月18日
  */
 public class SqltoyUnifyFieldsHandler implements IUnifyFieldsHandler {
@@ -76,7 +73,7 @@ public class SqltoyUnifyFieldsHandler implements IUnifyFieldsHandler {
 	}
 
 	/**
-	 * @todo 获取当前用户Id信息
+	 * 获取当前用户Id信息
 	 * @return
 	 */
 	private String getUserId() {

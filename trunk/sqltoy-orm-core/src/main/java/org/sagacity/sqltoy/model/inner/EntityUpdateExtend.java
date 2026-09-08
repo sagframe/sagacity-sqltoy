@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.model.inner;
 
 import java.io.Serializable;
@@ -13,14 +10,11 @@ import org.sagacity.sqltoy.model.IgnoreCaseLinkedMap;
  * @project sagacity-sqltoy
  * @description EntityUpdate内部扩展类，便于隐藏属性避免暴露过多get方法
  * @author zhongxuchen
- * @version v1.0, Date:2020-8-7
- * @modify 2020-8-7,修改说明
+ * @version v1.0,Date:2020-08-07
+ * @modify Date:2020-08-07 修改说明
  */
 public class EntityUpdateExtend implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -7224627356139617128L;
 
 	/**

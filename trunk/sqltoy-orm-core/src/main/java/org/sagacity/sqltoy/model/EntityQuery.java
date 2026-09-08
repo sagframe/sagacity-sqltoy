@@ -2,6 +2,7 @@ package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -19,13 +20,10 @@ import org.sagacity.sqltoy.utils.StringUtil;
 /**
  * @description 提供给代码中进行查询使用，一般适用于接口服务内部逻辑处理以单表为主体(不用于页面展示)
  * @author zhongxuchen
- * @version v1.0,Date:2020-5-15
+ * @version v1.0,Date:2020-05-15
  */
 public class EntityQuery implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 5223170071884950204L;
 
 	public static EntityQuery create() {
@@ -38,7 +36,8 @@ public class EntityQuery implements Serializable {
 	private EntityQueryExtend innerModel = new EntityQueryExtend();
 
 	/**
-	 * @TODO 设置查询的字段(不设置默认查询全部字段)
+	 * 设置查询的字段(不设置默认查询全部字段)
+	 * 
 	 * @param fields
 	 * @return
 	 */
@@ -56,7 +55,8 @@ public class EntityQuery implements Serializable {
 	}
 
 	/**
-	 * @TODO 设置jdbc参数，一般无需设置
+	 * 设置jdbc参数，一般无需设置
+	 * 
 	 * @param fetchSize
 	 * @return
 	 */
@@ -66,7 +66,8 @@ public class EntityQuery implements Serializable {
 	}
 
 	/**
-	 * @TODO 设置jdbc pst查询最大记录数,一般不会涉及
+	 * 设置jdbc pst查询最大记录数,一般不会涉及
+	 * 
 	 * @param maxRows
 	 * @return
 	 */
@@ -84,7 +85,8 @@ public class EntityQuery implements Serializable {
 	}
 
 	/**
-	 * @TODO 查询时增加distinct
+	 * 查询时增加distinct
+	 * 
 	 * @return
 	 */
 	public EntityQuery distinct() {
@@ -93,7 +95,8 @@ public class EntityQuery implements Serializable {
 	}
 
 	/**
-	 * @TODO 不查询哪些字段(排除的字段)
+	 * 不查询哪些字段(排除的字段)
+	 * 
 	 * @param fields
 	 * @return
 	 */
@@ -107,7 +110,7 @@ public class EntityQuery implements Serializable {
 			}
 			Set<String> notFields = new HashSet<String>();
 			for (String field : realFields) {
-				notFields.add(field.trim().replace("_", "").toLowerCase());
+				notFields.add(field.trim().replace("_", "").toLowerCase(Locale.ROOT));
 			}
 			innerModel.notSelectFields = notFields;
 			// 不能共存
@@ -117,7 +120,8 @@ public class EntityQuery implements Serializable {
 	}
 
 	/**
-	 * @TODO where 条件，例如: "#[name like :name ] #[and status in (:status)]"
+	 * where 条件，例如: "#[name like :name ] #[and status in (:status)]"
+	 * 
 	 * @param where
 	 * @return
 	 */
@@ -127,10 +131,11 @@ public class EntityQuery implements Serializable {
 	}
 
 	/**
-	 * @TODO 设置where中涉及的参数
-	 *       <p>
-	 *       EntityQuery.create().where("status=:status").names("status").values(1)
-	 *       </p>
+	 * 设置where中涉及的参数
+	 * <p>
+	 * EntityQuery.create().where("status=:status").names("status").values(1)
+	 * </p>
+	 * 
 	 * @param names
 	 * @return
 	 */
@@ -163,7 +168,7 @@ public class EntityQuery implements Serializable {
 
 	/**
 	 * @see 5.1.9 启动 EntityQuery.create().values(map)模式传参模式
-	 * @TODO 用map形式传参，EntityQuery.create().values(map) 模式也可以兼容
+	 *      用map形式传参，EntityQuery.create().values(map) 模式也可以兼容
 	 * @param paramsMap
 	 * @return
 	 */
@@ -174,7 +179,8 @@ public class EntityQuery implements Serializable {
 	}
 
 	/**
-	 * @TODO 设置条件过滤空白转null为false
+	 * 设置条件过滤空白转null为false
+	 * 
 	 * @return
 	 */
 	public EntityQuery blankNotNull() {
@@ -183,7 +189,8 @@ public class EntityQuery implements Serializable {
 	}
 
 	/**
-	 * @TODO 设置排序默认为升序，如:EntityQuery.create().orderBy("status")
+	 * 设置排序默认为升序，如:EntityQuery.create().orderBy("status")
+	 * 
 	 * @param fields
 	 * @return
 	 */
@@ -204,7 +211,7 @@ public class EntityQuery implements Serializable {
 				realFields = fields[0].split("\\,");
 			} else if (fields.length == 2) {
 				// 排序为空，默认为asc
-				String sortWay = (fields[1] == null) ? "asc" : fields[1].trim().toLowerCase();
+				String sortWay = (fields[1] == null) ? "asc" : fields[1].trim().toLowerCase(Locale.ROOT);
 				// 排序字段为空当作无效参数
 				if (StringUtil.isBlank(fields[0])) {
 					return this;
@@ -245,7 +252,8 @@ public class EntityQuery implements Serializable {
 	}
 
 	/**
-	 * @TODO 锁记录
+	 * 锁记录
+	 * 
 	 * @param lockMode
 	 * @return
 	 */
@@ -266,7 +274,8 @@ public class EntityQuery implements Serializable {
 	}
 
 	/**
-	 * @TODO 对结果字段进行安全脱敏
+	 * 对结果字段进行安全脱敏
+	 * 
 	 * @param maskType
 	 * @param columns
 	 * @return
@@ -299,7 +308,8 @@ public class EntityQuery implements Serializable {
 	}
 
 	/**
-	 * @TODO 动态增加参数过滤,对参数进行转null或其他的加工处理
+	 * 动态增加参数过滤,对参数进行转null或其他的加工处理
+	 * 
 	 * @param filters
 	 * @return
 	 */
@@ -307,14 +317,14 @@ public class EntityQuery implements Serializable {
 		if (filters != null && filters.length > 0) {
 			for (ParamsFilter filter : filters) {
 				if (StringUtil.isBlank(filter.getType()) || StringUtil.isBlank(filter.getParams())) {
-					throw new IllegalArgumentException("针对EntityQuery设置条件过滤必须要设置filterParams=[" + filter.getParams()
-							+ "],和filterType=[" + filter.getType() + "]!");
+					throw new IllegalArgumentException("EntityQuery filters require filterParams=[" + filter.getParams()
+							+ "] and filterType=[" + filter.getType() + "], please check!");
 				}
 				// 类别是对比型的，需要设置value值进行对比
 				if (CollectionUtil.any(filter.getType(), "eq", "neq", "gt", "gte", "lt", "lte", "between")) {
 					if (StringUtil.isBlank(filter.getValue())) {
 						throw new IllegalArgumentException(
-								"针对EntityQuery设置条件过滤eq、neq、gt、gte、lt、lte、between等类型必须要设置values值!");
+								"EntityQuery filters with type eq,neq,gt,gte,lt,lte,between require values to be set!");
 					}
 				}
 				// 存在blank 过滤器自动将blank param="*" 关闭
@@ -328,7 +338,8 @@ public class EntityQuery implements Serializable {
 	}
 
 	/**
-	 * @TODO 对sql语句指定缓存翻译
+	 * 对sql语句指定缓存翻译
+	 * 
 	 * @param translates
 	 * @return
 	 */
@@ -339,9 +350,9 @@ public class EntityQuery implements Serializable {
 				extend = trans.getExtend();
 				if (StringUtil.isBlank(extend.cache) || StringUtil.isBlank(extend.keyColumn)
 						|| StringUtil.isBlank(extend.column)) {
-					throw new IllegalArgumentException(
-							"针对EntityQuery设置缓存翻译必须要明确:cacheName=[" + extend.cache + "]、keyColumn=[" + extend.keyColumn
-									+ "](作为key的字段列)、 column=[" + extend.column + "](翻译结果映射的列)!");
+					throw new IllegalArgumentException("EntityQuery translate must define: cacheName=[" + extend.cache
+							+ "], keyColumn=[" + extend.keyColumn + "] (the key property column), column=["
+							+ extend.column + "] (the column mapped to the translate result), please check!");
 				}
 				innerModel.translates.add(trans);
 			}
@@ -355,7 +366,8 @@ public class EntityQuery implements Serializable {
 	}
 
 	/**
-	 * @TODO 分页优化
+	 * 分页优化
+	 * 
 	 * @param pageOptimize
 	 * @return
 	 */
@@ -367,13 +379,14 @@ public class EntityQuery implements Serializable {
 	}
 
 	/**
-	 * @TODO 取top记录
+	 * 取top记录
+	 * 
 	 * @param topSize
 	 * @return
 	 */
 	public EntityQuery top(double topSize) {
 		if (topSize <= 0) {
-			throw new IllegalArgumentException("topSize 值必须要大于0!");
+			throw new IllegalArgumentException("topSize must be greater than 0!");
 		}
 		innerModel.pickType = 0;
 		innerModel.pickSize = topSize;
@@ -381,13 +394,14 @@ public class EntityQuery implements Serializable {
 	}
 
 	/**
-	 * @TODO 取随机记录
+	 * 取随机记录
+	 * 
 	 * @param randomSize
 	 * @return
 	 */
 	public EntityQuery random(double randomSize) {
 		if (randomSize <= 0) {
-			throw new IllegalArgumentException("randomSize 值必须要大于0!");
+			throw new IllegalArgumentException("randomSize must be greater than 0!");
 		}
 		innerModel.pickType = 1;
 		innerModel.pickSize = randomSize;
@@ -395,7 +409,8 @@ public class EntityQuery implements Serializable {
 	}
 
 	/**
-	 * @TODO 设置分库策略
+	 * 设置分库策略
+	 * 
 	 * @param strategy
 	 * @param paramNames
 	 * @return
@@ -410,7 +425,8 @@ public class EntityQuery implements Serializable {
 	}
 
 	/**
-	 * @TODO 设置分表策略,再复杂场景则推荐用xml的sql中定义
+	 * 设置分表策略,再复杂场景则推荐用xml的sql中定义
+	 * 
 	 * @param strategy
 	 * @param paramNames 分表策略依赖的参数
 	 * @return
@@ -425,7 +441,8 @@ public class EntityQuery implements Serializable {
 	}
 
 	/**
-	 * @TODO 设置执行时是否输出sql日志
+	 * 设置执行时是否输出sql日志
+	 * 
 	 * @param showSql
 	 * @return
 	 */
@@ -435,7 +452,8 @@ public class EntityQuery implements Serializable {
 	}
 
 	/**
-	 * @TODO 设置执行时上下文数据，如：在拦截器中取值用以业务判断
+	 * 设置执行时上下文数据，如：在拦截器中取值用以业务判断
+	 * 
 	 * @param contextData
 	 * @return
 	 */

@@ -1,39 +1,41 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.plugins.function;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 
 import org.sagacity.sqltoy.SqlToyConstants;
+import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 实现sql不同数据库方言的函数替换
  * @author zhongxuchen
- * @version v1.0, Date:2019年9月15日
- * @modify 2019年9月15日,修改说明
+ * @version v1.0,Date:2019-09-15
+ * @modify Date:2019-09-15,修改说明
  */
 public class FunctionUtils {
 	private final static Logger logger = LoggerFactory.getLogger(FunctionUtils.class);
 
 	private final static String funPackage = "org.sagacity.sqltoy.plugins.function.impl.";
 	// 提供默认函数配置
+	// update 2026-9-6 DateDiff(口径统一:两参=d1-d2天差,三参=年月分量差/自然天/完整单位截断)与
+	// Decode(转case when)经14库真实执行验证后默认注册
 	public final static String[] functions = { funPackage.concat("SubStr"), funPackage.concat("Trim"),
 			funPackage.concat("Instr"), funPackage.concat("Concat"), funPackage.concat("ConcatWs"),
 			funPackage.concat("Nvl"), funPackage.concat("DateFormat"), funPackage.concat("Now"),
 			funPackage.concat("Length"), funPackage.concat("ToChar"), funPackage.concat("If"),
-			funPackage.concat("GroupConcat") };
+			funPackage.concat("GroupConcat"), funPackage.concat("ToNumber"), funPackage.concat("ToDate"),
+			funPackage.concat("DateDiff"), funPackage.concat("Decode") };
 
 	private final static Map<String, String> functionNames = new HashMap<String, String>() {
 		{
@@ -49,6 +51,8 @@ public class FunctionUtils {
 			put("tochar", "ToChar");
 			put("if", "If");
 			put("groupconcat", "GroupConcat");
+			put("tonumber", "ToNumber");
+			put("todate", "ToDate");
 
 		}
 	};
@@ -62,7 +66,8 @@ public class FunctionUtils {
 	}
 
 	/**
-	 * @todo 执行不同数据库函数的转换
+	 * 执行不同数据库函数的转换
+	 * 
 	 * @param dialect
 	 * @param sqlContent
 	 * @return
@@ -71,11 +76,12 @@ public class FunctionUtils {
 		int dbType = DataSourceUtils.getDBType(dialect);
 		IFunction function;
 		String dialectSql = sqlContent;
-		String dialectLow = dialect.toLowerCase();
+		String dialectLow = dialect.toLowerCase(Locale.ROOT);
 		for (int i = 0, n = functionConverts.size(); i < n; i++) {
 			function = functionConverts.get(i);
 			// 方言为null或空白表示适配所有数据库,适配的方言包含当前方言也执行替换
-			if (StringUtil.isBlank(function.dialects()) || function.dialects().toLowerCase().contains(dialectLow)) {
+			if (StringUtil.isBlank(function.dialects())
+					|| function.dialects().toLowerCase(Locale.ROOT).contains(dialectLow)) {
 				dialectSql = replaceFunction(dialectSql, dbType, function);
 			}
 		}
@@ -83,7 +89,8 @@ public class FunctionUtils {
 	}
 
 	/**
-	 * @todo 单个sql函数转换处理
+	 * 单个sql函数转换处理
+	 * 
 	 * @param sqlContent
 	 * @param dbType
 	 * @param function
@@ -91,7 +98,11 @@ public class FunctionUtils {
 	 */
 	private static String replaceFunction(String sqlContent, int dbType, IFunction function) {
 		String dialectSql = sqlContent;
-		Matcher matcher = function.regex().matcher(dialectSql);
+		// update 2026-9-5 函数匹配在字面量掩码串上进行(掩码串与原串等长,位置一致),
+		// 内容截取仍基于原串:规避字面量内的函数文本(如'nvl(a,b)')被误转换破坏字面量
+		String maskSql = SqlConfigParseUtils.maskLiterals(dialectSql,
+				SqlConfigParseUtils.isBackslashEscapeDialect(dbType));
+		Matcher matcher = function.regex().matcher(maskSql);
 		int index = -1;
 		String functionParams;
 		String[] args = null;
@@ -115,7 +126,8 @@ public class FunctionUtils {
 			// 函数(:args) 存在参数
 			if (hasArgs) {
 				functionName = dialectSql.substring(matchedIndex, dialectSql.indexOf("(", matchedIndex));
-				endMarkIndex = StringUtil.getSymMarkIndex("(", ")", dialectSql, matchedIndex);
+				// 引号感知配对:规避函数参数中字面量内的括号(如nvl(remark,'('))被误当参数终结符
+				endMarkIndex = StringUtil.getSymMarkIndexSkipQuoted("(", ")", dialectSql, matchedIndex);
 				functionParams = dialectSql.substring(dialectSql.indexOf("(", matchedIndex) + 1, endMarkIndex);
 				// 参数中包含同样的函数，通过递归替换
 				if (StringUtil.matches(functionParams, function.regex())) {
@@ -139,10 +151,12 @@ public class FunctionUtils {
 			}
 			if (hasArgs) {
 				dialectSql = dialectSql.substring(endMarkIndex + 1);
+				maskSql = maskSql.substring(endMarkIndex + 1);
 			} else {
 				dialectSql = dialectSql.substring(endMarkIndex);
+				maskSql = maskSql.substring(endMarkIndex);
 			}
-			matcher.reset(dialectSql);
+			matcher.reset(maskSql);
 		}
 		result.append(dialectSql);
 		return result.toString();
@@ -189,10 +203,11 @@ public class FunctionUtils {
 				if (functionName.startsWith("org.sagacity.sqltoy")) {
 					functionName = funPackage.concat(functionName.substring(functionName.lastIndexOf(".") + 1));
 				} // trim、nvl等简写模式
-				else if (!functionName.contains(".") && functionNames.containsKey(functionName.toLowerCase())) {
-					functionName = funPackage.concat(functionNames.get(functionName.toLowerCase()));
+				else if (!functionName.contains(".")
+						&& functionNames.containsKey(functionName.toLowerCase(Locale.ROOT))) {
+					functionName = funPackage.concat(functionNames.get(functionName.toLowerCase(Locale.ROOT)));
 				}
-				className = functionName.substring(functionName.lastIndexOf(".") + 1).toLowerCase();
+				className = functionName.substring(functionName.lastIndexOf(".") + 1).toLowerCase(Locale.ROOT);
 				// 名字已经存在的排除
 				if (!nameSet.contains(className)) {
 					converts.add((IFunction) (Class.forName(functionName).getDeclaredConstructor().newInstance()));
@@ -200,7 +215,7 @@ public class FunctionUtils {
 				}
 			}
 		} catch (Exception e) {
-			logger.error("setFunctionConverts 方法执行异常", e);
+			logger.error("setFunctionConverts method execution failed", e);
 			// 某函数类加载失败时保留原有完整转换器列表,不用部分列表覆盖全局,
 			// 避免部分函数的方言转换静默失效
 			return;

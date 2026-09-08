@@ -8,13 +8,10 @@ import java.math.RoundingMode;
  * @project sagacity-sqltoy
  * @description 分组汇总计算列配置模型(2022-2-20 重构)
  * @author zhongxuchen
- * @version v1.0, Date:2022-2-20
+ * @version v1.0,Date:2022-02-20
  */
 public class SummaryColMeta implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -1908959992729333525L;
 
 	/**

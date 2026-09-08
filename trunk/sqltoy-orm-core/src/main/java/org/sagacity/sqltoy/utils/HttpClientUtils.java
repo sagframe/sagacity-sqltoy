@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import org.apache.http.HttpEntity;
@@ -41,7 +42,7 @@ import com.alibaba.fastjson2.JSONObject;
  * @project sagacity-sqltoy
  * @description 提供基于http请求的工具类
  * @author zhongxuchen
- * @version v1.0,Date:2018年1月7日
+ * @version v1.0,Date:2018-01-07
  * @modified 2025-3-17 适配性优化，为切换httpclient5做准备
  */
 public class HttpClientUtils {
@@ -118,7 +119,8 @@ public class HttpClientUtils {
 	}
 
 	/**
-	 * @TODO 执行post请求
+	 * 执行post请求
+	 * 
 	 * @param sqltoyContext
 	 * @param nosqlConfig
 	 * @param esConfig
@@ -129,7 +131,8 @@ public class HttpClientUtils {
 	public static JSONObject doPost(SqlToyContext sqltoyContext, NoSqlConfigModel nosqlConfig, ElasticEndpoint esConfig,
 			Object postValue) throws Exception {
 		if (esConfig.getUrl() == null) {
-			throw new IllegalArgumentException("请正确配置sqltoyContext elasticConfigs 指定es的服务地址!");
+			throw new IllegalArgumentException(
+					"elastic server address is not configured, please check sqltoyContext elasticConfigs!");
 		}
 		String charset = (nosqlConfig.getCharset() == null) ? CHARSET : nosqlConfig.getCharset();
 		HttpEntity httpEntity = null;
@@ -155,8 +158,8 @@ public class HttpClientUtils {
 		if (esConfig.getRestClient() != null) {
 			realUrl = wrapUrl(esConfig, nosqlConfig);
 			if (sqltoyContext.isDebug()) {
-				logger.debug("esRestClient执行:URL=[{}],Path={},执行的JSON=[{}]", esConfig.getUrl(), realUrl,
-						JSON.toJSONString(postValue));
+				logger.debug("esRestClient execution:URL=[{}],Path={}, the posted JSON=[{}]", esConfig.getUrl(),
+						realUrl, JSON.toJSONString(postValue));
 			}
 			// 默认采用post请求
 			RestClient restClient = esConfig.getRestClient();
@@ -172,7 +175,8 @@ public class HttpClientUtils {
 			realUrl = wrapUrl(esConfig, nosqlConfig);
 			HttpPost httpPost = new HttpPost(realUrl);
 			if (sqltoyContext.isDebug()) {
-				logger.debug("httpClient执行URL=[{}],执行的JSON=[{}]", realUrl, JSON.toJSONString(postValue));
+				logger.debug("httpClient execution URL=[{}], the posted JSON=[{}]", realUrl,
+						JSON.toJSONString(postValue));
 			}
 			httpPost.setEntity(httpEntity);
 			// 设置connection是否自动关闭
@@ -216,7 +220,8 @@ public class HttpClientUtils {
 	}
 
 	/**
-	 * @TODO 解析elastic查询结果,存在error时抛出携带错误信息的异常
+	 * 解析elastic查询结果,存在error时抛出携带错误信息的异常
+	 * 
 	 * @param result elastic返回的json字符串
 	 * @return
 	 */
@@ -241,14 +246,15 @@ public class HttpClientUtils {
 			} else {
 				errorMessage = String.valueOf(errorObj);
 			}
-			logger.error("elastic查询失败,错误信息:[{}]", errorMessage);
-			throw new DataAccessException("ElasticSearch查询失败,错误信息:" + errorMessage);
+			logger.error("elastic query failed, error message:[{}]", errorMessage);
+			throw new DataAccessException("ElasticSearch query failed, error message:" + errorMessage);
 		}
 		return json;
 	}
 
 	/**
-	 * @TODO 重新组织url
+	 * 重新组织url
+	 * 
 	 * @param esConfig
 	 * @param nosqlConfig
 	 * @return
@@ -266,7 +272,7 @@ public class HttpClientUtils {
 		// elasticsearch-sql7.5+ /_nlpcn/sql
 		// elasticsearch-sql7.9.3 之后不再维护,启用_opendistro/_sql
 		if (nosqlConfig.isSqlMode()) {
-			if (!url.toLowerCase().contains(sqlPath)) {
+			if (!url.toLowerCase(Locale.ROOT).contains(sqlPath)) {
 				url = url.concat(url.endsWith("/") ? "" : "/").concat(sqlPath);
 			}
 		} else {
@@ -277,7 +283,7 @@ public class HttpClientUtils {
 			if (StringUtil.isNotBlank(nosqlConfig.getType())) {
 				url = url.concat(url.endsWith("/") ? "" : "/").concat(nosqlConfig.getType());
 			}
-			if (!url.toLowerCase().endsWith(SEARCH)) {
+			if (!url.toLowerCase(Locale.ROOT).endsWith(SEARCH)) {
 				url = url.concat(url.endsWith("/") ? "" : "/").concat(SEARCH);
 			}
 		}

@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.IllegalFormatFlagsException;
 import java.util.List;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -26,8 +27,8 @@ import org.slf4j.LoggerFactory;
  * @project sagacity-sqltoy
  * @description 提供针对mongodb、elasticSearch集成的处理函数和逻辑
  * @author zhongxuchen
- * @version v1.0,Date:2017年3月10日
- * @modify {Date:2024-10-2 强化@if功能，增加@elseif 和 @else 的支持,elastic
+ * @version v1.0,Date:2017-03-10
+ * @modify Date:2024-10-02 强化@if功能，增加@elseif 和 @else 的支持,elastic
  *         sql增加field=null改为field is null }
  */
 public class MongoElasticUtils {
@@ -58,7 +59,8 @@ public class MongoElasticUtils {
 	}
 
 	/**
-	 * @TODO 处理elastic sql
+	 * 处理elastic sql
+	 * 
 	 * @param sqlToyConfig
 	 * @param paramNames
 	 * @param paramValues
@@ -86,7 +88,8 @@ public class MongoElasticUtils {
 	}
 
 	/**
-	 * @todo 结合条件组织mongodb 的查询语句
+	 * 结合条件组织mongodb 的查询语句
+	 * 
 	 * @param sqlToyConfig
 	 * @param paramNames
 	 * @param paramValues
@@ -112,7 +115,8 @@ public class MongoElasticUtils {
 	}
 
 	/**
-	 * @todo 结合条件组织elasticSearch最终的执行语句
+	 * 结合条件组织elasticSearch最终的执行语句
+	 * 
 	 * @param sqlToyConfig
 	 * @param paramNames
 	 * @param paramValues
@@ -139,7 +143,8 @@ public class MongoElasticUtils {
 	}
 
 	/**
-	 * @todo 处理sql中的参数过滤逻辑
+	 * 处理sql中的参数过滤逻辑
+	 * 
 	 * @param queryStr
 	 * @param paramValues
 	 * @param sqlMode
@@ -185,8 +190,8 @@ public class MongoElasticUtils {
 					startMark.equals(SQL_PSEUDO_START_MARK) ? SQL_PSEUDO_SYM_START_MARK : startMark, endMark, queryStr,
 					beginMarkIndex);
 			if (endMarkIndex == -1) {
-				throw new IllegalFormatFlagsException(
-						"json查询语句中缺乏:\"" + startMark + "\" 相对称的:\"" + endMark + "\"符号,请检查json查询语句格式!");
+				throw new IllegalFormatFlagsException("missing the matched \"" + endMark + "\" symbol for \""
+						+ startMark + "\" in the json query, please check the json query format!");
 			}
 			// 最后一个#[前的sql
 			preSql = queryStr.substring(0, beginMarkIndex).concat(BLANK);
@@ -205,7 +210,8 @@ public class MongoElasticUtils {
 				int symIfIndex = SqlConfigParseUtils.getStartIfIndex(preSql,
 						startMark.equals(SQL_PSEUDO_START_MARK) ? SQL_PSEUDO_SYM_START_MARK : startMark, endMark);
 				if (symIfIndex == -1) {
-					throw new IllegalFormatFlagsException("编写模式存在错误:@elseif(?==xx) @else 条件判断必须要有对应的@if()形成对称格式!");
+					throw new IllegalFormatFlagsException(
+							"writing pattern error: @elseif(?==xx) @else condition must have a matched @if() to form a symmetric format!");
 				}
 				beginMarkIndex = queryStr.substring(0, symIfIndex).lastIndexOf(startMark);
 				preSql = queryStr.substring(0, beginMarkIndex).concat(BLANK);
@@ -269,7 +275,8 @@ public class MongoElasticUtils {
 	}
 
 	/**
-	 * @TODO 将@blank(:paramName) 设置为" "空白输出,同时在条件数组中剔除:paramName对应位置的条件值
+	 * 将@blank(:paramName) 设置为" "空白输出,同时在条件数组中剔除:paramName对应位置的条件值
+	 * 
 	 * @param sqlToyResult
 	 * @param argNamedPattern
 	 * @param sqlMode
@@ -278,7 +285,7 @@ public class MongoElasticUtils {
 		if (null == sqlToyResult.getParamsValue() || sqlToyResult.getParamsValue().length == 0) {
 			return;
 		}
-		String queryStr = sqlToyResult.getSql().toLowerCase();
+		String queryStr = sqlToyResult.getSql().toLowerCase(Locale.ROOT);
 		Matcher m = BLANK_PATTERN.matcher(queryStr);
 		int index = 0;
 		int paramCnt = 0;
@@ -301,7 +308,8 @@ public class MongoElasticUtils {
 	}
 
 	/**
-	 * @TODO 处理直接显示参数值:#[@value(:paramNamed) sql]
+	 * 处理直接显示参数值:#[@value(:paramNamed) sql]
+	 * 
 	 * @param sqlToyResult
 	 * @param argNamedPattern
 	 * @param sqlMode
@@ -310,7 +318,7 @@ public class MongoElasticUtils {
 		if (null == sqlToyResult.getParamsValue() || sqlToyResult.getParamsValue().length == 0) {
 			return;
 		}
-		String queryStr = sqlToyResult.getSql().toLowerCase();
+		String queryStr = sqlToyResult.getSql().toLowerCase(Locale.ROOT);
 		// @value(:paramName)
 		Matcher m = VALUE_PATTERN.matcher(queryStr);
 		int index = 0;
@@ -340,7 +348,8 @@ public class MongoElasticUtils {
 	}
 
 	/**
-	 * @todo 通过@dot()方式补充sql处理后前后逗号衔接
+	 * 通过@dot()方式补充sql处理后前后逗号衔接
+	 * 
 	 * @param sql
 	 * @return
 	 */
@@ -369,7 +378,8 @@ public class MongoElasticUtils {
 	}
 
 	/**
-	 * @todo 将参数的值带入实际查询语句中
+	 * 将参数的值带入实际查询语句中
+	 * 
 	 * @param sql
 	 * @param paramValues
 	 * @param addSingleQuotation
@@ -394,7 +404,7 @@ public class MongoElasticUtils {
 			groupStr = m.group();
 			realMql.append(sql.substring(start, m.start()));
 			start = m.end();
-			method = groupStr.substring(1, groupStr.indexOf("(")).toLowerCase().trim();
+			method = groupStr.substring(1, groupStr.indexOf("(")).toLowerCase(Locale.ROOT).trim();
 			value = paramValues[index];
 			if ("".equals(method) || "param".equals(method) || "value".equals(method)) {
 				isAry = true;
@@ -434,7 +444,8 @@ public class MongoElasticUtils {
 	}
 
 	/**
-	 * @todo 替换sql模式的查询参数
+	 * 替换sql模式的查询参数
+	 * 
 	 * @param sql
 	 * @param paramValues
 	 * @param addSingleQuotation
@@ -521,7 +532,8 @@ public class MongoElasticUtils {
 	}
 
 	/**
-	 * @todo 去除危险词,如{\[\}\]\"\' $等符号,让json拼接的结果只能是一个对比变量，而无法形成新的语句
+	 * 去除危险词,如{\[\}\]\"\' $等符号,让json拼接的结果只能是一个对比变量，而无法形成新的语句
+	 * 
 	 * @param paramValue
 	 * @return
 	 */
@@ -530,7 +542,8 @@ public class MongoElasticUtils {
 	}
 
 	/**
-	 * @todo 处理缓存翻译
+	 * 处理缓存翻译
+	 * 
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param resultSet
@@ -549,7 +562,8 @@ public class MongoElasticUtils {
 	}
 
 	/**
-	 * @todo 对结果集合进行缓存翻译
+	 * 对结果集合进行缓存翻译
+	 * 
 	 * @param sqlToyContext
 	 * @param translateMap
 	 * @param translateCache
@@ -568,15 +582,16 @@ public class MongoElasticUtils {
 		int fieldCnt = fields.length;
 		int[] realIndex = new int[fieldCnt];
 		for (int i = 0; i < fieldCnt; i++) {
-			colIndexMap.put(fields[i].toLowerCase(), i);
+			colIndexMap.put(fields[i].toLowerCase(Locale.ROOT), i);
 		}
 		// 校验缓存翻译的配置是否正确
 		translateCache.forEach((fieldName, fieldTranslateCacheHolder) -> {
 			for (Translate translate : fieldTranslateCacheHolder.getTranslates()) {
 				if (translate.getExtend().hasLogic) {
 					if (!colIndexMap.containsKey(translate.getExtend().compareColumn)) {
-						throw new IllegalArgumentException(
-								"缓存翻译配置where表达式中的逻辑判断列:[" + translate.getExtend().compareColumn + "]不存在,请检查缓存翻译!");
+						throw new IllegalArgumentException("the logic compare column ["
+								+ translate.getExtend().compareColumn
+								+ "] in the where expression of the translate config does not exist, please check the translate config!");
 					}
 				}
 			}
@@ -585,13 +600,13 @@ public class MongoElasticUtils {
 		String fieldLow;
 		FieldTranslate fieldTranslate;
 		for (int i = 0; i < fieldCnt; i++) {
-			fieldLow = fields[i].toLowerCase();
+			fieldLow = fields[i].toLowerCase(Locale.ROOT);
 			realIndex[i] = i;
 			if (translateMap.containsKey(fieldLow)) {
 				fieldTranslate = translateMap.get(fieldLow);
 				// alias是对应有效列,即原始值列
 				if (fieldTranslate.aliasName != null) {
-					realIndex[i] = colIndexMap.get(fieldTranslate.aliasName.toLowerCase());
+					realIndex[i] = colIndexMap.get(fieldTranslate.aliasName.toLowerCase(Locale.ROOT));
 				}
 			}
 		}
@@ -605,7 +620,7 @@ public class MongoElasticUtils {
 		DynamicCacheFetch dynamicCacheFetch = sqlToyContext.getDynamicCacheFetch();
 		FieldTranslateCacheHolder fieldTranslateHandler;
 		for (int i = 0; i < fieldCnt; i++) {
-			fieldTranslateHandler = translateCache.get(fields[i].toLowerCase());
+			fieldTranslateHandler = translateCache.get(fields[i].toLowerCase(Locale.ROOT));
 			if (fieldTranslateHandler != null) {
 				for (int j = 0; j < size; j++) {
 					rowList = dataSet.get(j);
@@ -624,7 +639,8 @@ public class MongoElasticUtils {
 	}
 
 	/**
-	 * @TODO 统一解析elastic或mongodb 的fields 信息,分解成fieldName 和 aliasName
+	 * 统一解析elastic或mongodb 的fields 信息,分解成fieldName 和 aliasName
+	 * 
 	 * @param fields
 	 * @param fieldMap
 	 * @return

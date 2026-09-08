@@ -48,10 +48,10 @@ import org.sagacity.sqltoy.translate.TranslateHandler;
 import org.springframework.stereotype.Repository;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 提供的更加简洁通用规范的Dao逻辑实现
  * @author zhongxuchen
- * @version v1.0,Date:2023-3-15
+ * @version v1.0,Date:2023-03-15
  */
 @SuppressWarnings({ "rawtypes" })
 @Repository("lightDao")
@@ -367,7 +367,7 @@ public class LightDaoImpl extends SpringDaoSupport implements LightDao {
 		if (result.size() == 1) {
 			return result.get(0);
 		}
-		throw new IllegalArgumentException("loadEntity查询出:" + result.size() + " 条记录,不符合load查询单条记录的预期!");
+		throw new IllegalArgumentException("loadEntity expect a single record but found [" + result.size() + "] rows, please check the query conditions!");
 	}
 
 	@Override
@@ -409,7 +409,7 @@ public class LightDaoImpl extends SpringDaoSupport implements LightDao {
 		if (result.size() == 1) {
 			return result.get(0);
 		}
-		throw new IllegalArgumentException("loadById查询出:" + result.size() + " 条记录,不符合load查询预期!");
+		throw new IllegalArgumentException("loadById expect a single record but found [" + result.size() + "] rows, please check the query conditions!");
 	}
 
 	@Override

@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.dialect.impl;
 
 import java.io.Serializable;
@@ -21,10 +18,10 @@ import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.SqlUtilsExt;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description oracle11g以及以下版本数据库的各类分页、取随机数、saveOrUpdate,lock机制实现
  * @author zhongxuchen
- * @version v1.0,Date:2013-3-21
+ * @version v1.0,Date:2013-03-21
  */
 @SuppressWarnings({ "rawtypes" })
 public class Oracle11gDialect extends OracleDialect {

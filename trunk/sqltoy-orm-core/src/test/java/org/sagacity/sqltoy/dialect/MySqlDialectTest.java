@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.dialect;
 
 import java.sql.Connection;
@@ -16,11 +13,11 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.DateUtil;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 本处测试类仅仅是开发过程中验证不同数据库方言针对sqltoy后台对象操作具体语法实现,实际sqltoy
  *              相关增删改操作全部基于对象完成， 请勿以为实际使用sqltoy需要如此复杂的写sql
- * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:MySqlDialectTest.java,Revision:v1.0,Date:2015年2月13日
+ * @author zhongxuchen
+ * @version id:MySqlDialectTest.java,Revision:v1.0,Date:2015-02-13
  */
 public class MySqlDialectTest {
 	@Test

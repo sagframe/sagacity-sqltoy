@@ -33,6 +33,12 @@ import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.utils.SqlUtil;
 
+/**
+ * @project sagacity-sqltoy
+ * @description 华为OpenGauss数据库方言，整体复用PostgreSQL方言逻辑，差异部分单独处理
+ * @author zhongxuchen
+ * @version v1.0,Date:2024-10-29
+ */
 @SuppressWarnings({ "rawtypes" })
 public class OpenGaussDialect implements Dialect {
 

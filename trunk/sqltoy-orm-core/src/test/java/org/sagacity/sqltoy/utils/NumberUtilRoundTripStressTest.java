@@ -198,14 +198,14 @@ public class NumberUtilRoundTripStressTest {
 		} catch (Exception e) {
 			overCn = "异常:" + e.getMessage();
 		}
-		check("越界契约", "10^64中文", "异常:数字超出支持的转换范围(10^64)", overCn);
+		check("越界契约", "10^64中文", "异常:the number exceeds the supported conversion range (10^64)!", overCn);
 		String overEn = null;
 		try {
 			overEn = NumberUtil.convertToEnglishMoney(new BigDecimal("1" + "0".repeat(36)));
 		} catch (Exception e) {
 			overEn = "异常:" + e.getMessage();
 		}
-		check("越界契约", "10^36英文", "异常:数字超出支持的转换范围(10^36)", overEn);
+		check("越界契约", "10^36英文", "异常:the number exceeds the supported conversion range (10^36)!", overEn);
 
 		System.out.println("\n========== 压测总计:" + (passCnt + failCnt) + "项,通过" + passCnt + "项,失败" + failCnt
 				+ "项 ==========");

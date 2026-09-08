@@ -7,6 +7,9 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+/**
+ * 宏@if逻辑(MacroIfLogic)处理的单元测试
+ */
 public class MacroIfLogicTest {
 
 	@Test

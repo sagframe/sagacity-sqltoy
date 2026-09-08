@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.plugins.id.macro.impl;
 
 import java.util.ArrayList;
@@ -8,6 +5,7 @@ import java.util.HashMap;
 import java.util.IllegalFormatFlagsException;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -27,11 +25,12 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @description 此类不用于主键策略的配置,提供在sql中通过@loop(:args,loopContent,linkSign,start,end)
  *              函数来循环组织sql(借用主键里面的宏工具来完成@loop处理)
  * @author zhongxuchen
- * @version v1.0, Date:2020-9-23
- * @modify 2021-10-14 支持@loop(:args,and args[i].xxx,linkSign,start,end)
+ * @version v1.0,Date:2020-09-23
+ * @modify Date:2021-10-14 支持@loop(:args,and args[i].xxx,linkSign,start,end)
  *         args[i].xxx对象属性模式
- * @modify 2023-05-01 支持loop中的内容体含#[and t.xxx=:xxx] 为null判断和 in (:args) 数组输出
- * @modify 2023-08-31 优化@loop在update语句参数为null的场景,之前缺陷是值为null时被转为field is
+ * @modify Date:2023-05-01 支持loop中的内容体含#[and t.xxx=:xxx] 为null判断和 in (:args)
+ *         数组输出
+ * @modify Date:2023-08-31 优化@loop在update语句参数为null的场景,之前缺陷是值为null时被转为field is
  *         null，正确模式field=null
  */
 public class SqlLoop extends AbstractMacro {
@@ -109,13 +108,13 @@ public class SqlLoop extends AbstractMacro {
 		// 提取循环体内的参数对应的值
 		List<String> keys = new ArrayList<String>();
 		List<Object[]> regParamValues = new ArrayList<Object[]>();
-		String lowContent = loopContent.toLowerCase();
+		String lowContent = loopContent.toLowerCase(Locale.ROOT);
 		String key;
 		Iterator<String> keyEnums = realKeyValuesMap.keySet().iterator();
 		int index = 0;
 		String keyNamePrefix = ":sqlToyLoopAsKey_";
 		while (keyEnums.hasNext()) {
-			key = keyEnums.next().toLowerCase();
+			key = keyEnums.next().toLowerCase(Locale.ROOT);
 			// 统一标准为paramName[i]模式
 			if (lowContent.contains(":" + key + "[i]") || lowContent.contains(":" + key + "[index]")) {
 				keys.add(key);
@@ -196,7 +195,8 @@ public class SqlLoop extends AbstractMacro {
 	}
 
 	/**
-	 * @TODO 处理loop循环sql中存在#[and t.xx=:xxx] 模式
+	 * 处理loop循环sql中存在#[and t.xx=:xxx] 模式
+	 * 
 	 * @param queryStr
 	 * @param loopParamNamesMap
 	 * @return
@@ -217,7 +217,8 @@ public class SqlLoop extends AbstractMacro {
 			endMarkIndex = StringUtil.getSymMarkIndex(SqlConfigParseUtils.SQL_PSEUDO_SYM_START_MARK,
 					SqlConfigParseUtils.SQL_PSEUDO_END_MARK, queryStr, beginMarkIndex);
 			if (endMarkIndex == -1) {
-				throw new IllegalFormatFlagsException("sql语句中缺乏\"#[\" 相对称的\"]\"符号,请检查sql格式!");
+				throw new IllegalFormatFlagsException(
+						"the sql misses the \"]\" symbol matched with \"#[\", please check the sql format!");
 			}
 			// 最后一个#[前的sql
 			preSql = queryStr.substring(0, beginMarkIndex).concat(BLANK);
@@ -258,13 +259,16 @@ public class SqlLoop extends AbstractMacro {
 	}
 
 	/**
-	 * @TODO 替换循环语句中的参数
+	 * 替换循环语句中的参数
+	 * 
 	 * @param queryStr
 	 * @param loopParamNamesMap
 	 * @param fullPreSql
 	 * @return
 	 */
 	private String replaceAllArgs(String queryStr, Map<String, Object> loopParamNamesMap, String fullPreSql) {
+		// 公开API直接调用时preSql可能为null,归一为空串,空串不影响updateSet和where的判断结果
+		String realFullPreSql = (fullPreSql == null) ? "" : fullPreSql;
 		// 首位补充一个空白
 		String matchStr = BLANK.concat(queryStr);
 		Matcher m = SqlToyConstants.SQL_NAMED_PATTERN.matcher(matchStr);
@@ -287,9 +291,9 @@ public class SqlLoop extends AbstractMacro {
 			// 以第一次为判断依据,判断是否是update table set field=? 模式
 			if (meter == 0) {
 				// update table set xxx=? 模式，或前面的sql中没有where关键词(补充了where判断)
-				if (StringUtil.matches(fullPreSql.concat(BLANK).concat(preSql),
+				if (StringUtil.matches(realFullPreSql.concat(BLANK).concat(preSql),
 						SqlConfigParseUtils.UPDATE_EQUAL_PATTERN)
-						|| !StringUtil.matches(fullPreSql.concat(BLANK).concat(preSql).concat(BLANK),
+						|| !StringUtil.matches(realFullPreSql.concat(BLANK).concat(preSql).concat(BLANK),
 								SqlConfigParseUtils.WHERE_PATTERN)) {
 					updateSet = true;
 				}
@@ -326,7 +330,8 @@ public class SqlLoop extends AbstractMacro {
 	}
 
 	/**
-	 * @TODO 将=null 和!=null 转化为 is null 和 is not null
+	 * 将=null 和!=null 转化为 is null 和 is not null
+	 * 
 	 * @param preSql
 	 * @param updateSet
 	 * @return

@@ -17,6 +17,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -31,7 +32,7 @@ import org.slf4j.LoggerFactory;
  * @description 数组集合的公用方法
  * @author zhongxuchen
  * @version v1.0,Date:2008-10-22
- * @modify Date:2011-8-11 {修复了pivotList设置旋转数据的初始值错误}
+ * @modify Date:2011-08-11 修复了pivotList设置旋转数据的初始值错误
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class CollectionUtil {
@@ -48,9 +49,10 @@ public class CollectionUtil {
 	}
 
 	/**
-	 * @todo 转换数组类型数据为对象数组,解决原始类型无法强制转换的问题
-	 * @param obj
-	 * @return
+	 * 转换数组类型数据为对象数组,解决原始类型无法强制转换的问题
+	 * 
+	 * @param obj 数组、集合或单个对象，支持int[]、long[]、double[]等原始类型数组
+	 * @return 对应的Object[]数组，obj为null返回null，非数组对象返回单元素数组
 	 */
 	public static Object[] convertArray(Object obj) {
 		if (obj == null) {
@@ -131,7 +133,8 @@ public class CollectionUtil {
 	}
 
 	/**
-	 * @todo 数组转换为List集合,此转换只适用于一维和二维数组
+	 * 数组转换为List集合,此转换只适用于一维和二维数组
+	 * 
 	 * @param arySource Object
 	 * @return List
 	 */
@@ -170,7 +173,8 @@ public class CollectionUtil {
 	}
 
 	/**
-	 * @todo 此转换只适用于一维数组(建议使用Arrays.asList())
+	 * 此转换只适用于一维数组(建议使用Arrays.asList())
+	 * 
 	 * @param arySource Object
 	 * @return List
 	 */
@@ -191,14 +195,15 @@ public class CollectionUtil {
 				}
 			}
 		} else {
-			logger.warn("arySource is not Array! it type is :" + arySource.getClass());
+			logger.warn("arySource is not Array! it type is :{}", arySource.getClass());
 			resultList.add(arySource);
 		}
 		return resultList;
 	}
 
 	/**
-	 * @todo 对简单对象进行排序(此方法不建议使用，请用Collections中的排序)
+	 * 对简单对象进行排序(此方法不建议使用，请用Collections中的排序)
+	 * 
 	 * @param aryData
 	 * @param descend
 	 */
@@ -259,11 +264,12 @@ public class CollectionUtil {
 	}
 
 	/**
-	 * @todo 处理树形数据，将子节点紧靠父节点排序
-	 * @param treeList
-	 * @param treeIdAndPidGet
-	 * @param pids
-	 * @return
+	 * 处理树形数据，将子节点紧靠父节点排序
+	 * 
+	 * @param treeList        树形数据集合，方法内部会被修改(移除已排序节点)
+	 * @param treeIdAndPidGet 获取节点id和pid的回调接口，[0]为id、[1]为pid
+	 * @param pids            根节点的父id(可多个，支持多根节点)，必须存在于treeList的pid中
+	 * @return 子节点紧靠父节点排列后的新集合，不合规数据(无法挂到树上的节点)不会包含在结果中
 	 */
 	public static <T> List<T> sortTreeList(List<T> treeList, TreeIdAndPidGet<T> treeIdAndPidGet, Object... pids) {
 		if (treeList == null || treeList.isEmpty() || pids == null || pids.length == 0) {
@@ -284,7 +290,8 @@ public class CollectionUtil {
 			}
 		}
 		if (result.isEmpty()) {
-			throw new IllegalArgumentException("排序树形数据集合中没有对应的父ids:" + StringUtil.linkAry(",", false, pids));
+			throw new IllegalArgumentException("the sorted tree collection does not contain the parent ids ["
+					+ StringUtil.linkAry(",", false, pids) + "]!");
 		}
 		int beginIndex = 0;
 		int addCount = 0;
@@ -310,17 +317,18 @@ public class CollectionUtil {
 			}
 		}
 		if (result.size() != totalRecord) {
-			logger.error("sortTreeList操作发现部分数据不符合树形结构规则,请检查!");
+			logger.error("sortTreeList found some data that does not match the tree structure rules, please check!");
 		}
 		return result;
 	}
 
 	/**
-	 * @todo 剔除对象数组中的部分数据,简单采用List remove方式实现
-	 * @param sourceAry
-	 * @param begin
-	 * @param length
-	 * @return
+	 * 剔除对象数组中的部分数据,简单采用List remove方式实现
+	 * 
+	 * @param sourceAry 原始数组，null或空返回null
+	 * @param begin     剔除的起始位置
+	 * @param length    剔除的元素个数，为0或超出数组范围时原数组返回
+	 * @return 剔除指定区段后的新数组
 	 */
 	public static Object[] subtractArray(Object[] sourceAry, int begin, int length) {
 		if (sourceAry == null || sourceAry.length == 0) {
@@ -340,9 +348,10 @@ public class CollectionUtil {
 	}
 
 	/**
-	 * @todo 二维list转换为数组对象
-	 * @param source
-	 * @return
+	 * 二维list转换为数组对象
+	 * 
+	 * @param source 二维集合，元素可为Collection、数组或Map(取values)
+	 * @return 对应的二维数组，source为null或空返回null
 	 */
 	public static Object[][] twoDimenlistToArray(Collection source) {
 		if (source == null || source.isEmpty()) {
@@ -366,9 +375,10 @@ public class CollectionUtil {
 	}
 
 	/**
-	 * @todo 判断list的维度
-	 * @param obj
-	 * @return
+	 * 判断list的维度
+	 * 
+	 * @param obj 待判断的集合、数组或Map
+	 * @return 维度：0表示非集合类型，1表示一维，2表示元素仍是集合/数组/Map的二维；obj为null返回-1
 	 */
 	public static int judgeObjectDimen(Object obj) {
 		int result = 0;
@@ -415,16 +425,17 @@ public class CollectionUtil {
 	}
 
 	/**
-	 * @todo 数据进行旋转
-	 * @param data
-	 * @param categorys
-	 * @param categCol
-	 * @param pkColumn
-	 * @param categCompareCol
-	 * @param startCol
-	 * @param endCol
-	 * @param defaultValue
-	 * @return
+	 * 数据进行旋转
+	 * 
+	 * @param data            源数据集合(二维List，每行为一行记录)
+	 * @param categorys       旋转参照类别值，支持一维或多维(二维)形式
+	 * @param categCol        类别列在参照数据中的序号
+	 * @param pkColumn        主键列序号
+	 * @param categCompareCol 数据中与类别值比对的列序号
+	 * @param startCol        旋转起始列序号(含)
+	 * @param endCol          旋转结束列序号(含)
+	 * @param defaultValue    旋转后无对应数据的单元格默认值，null则留空
+	 * @return 旋转(行转列)后的结果集合
 	 */
 	public static List pivotList(List data, List categorys, int categCol, int pkColumn, int categCompareCol,
 			int startCol, int endCol, Object defaultValue) {
@@ -433,16 +444,17 @@ public class CollectionUtil {
 	}
 
 	/**
-	 * @todo 集合进行数据旋转
-	 * @param data
-	 * @param categorys
-	 * @param categoryCol
-	 * @param pkColumns
-	 * @param categCompareCol
-	 * @param startCol
-	 * @param endCol
-	 * @param defaultValue
-	 * @return
+	 * 集合进行数据旋转
+	 * 
+	 * @param data            源数据集合(二维List，每行为一行记录)
+	 * @param categorys       旋转参照类别值，支持一维或多维(二维)形式
+	 * @param categoryCol     类别列在参照数据中的序号数组，null时按参照数据自然序号
+	 * @param pkColumns       主键列序号数组，用于判定是否同一行记录
+	 * @param categCompareCol 数据中与类别值比对的列序号数组
+	 * @param startCol        旋转起始列序号(含)
+	 * @param endCol          旋转结束列序号(含)
+	 * @param defaultValue    旋转后无对应数据的单元格默认值，null则留空
+	 * @return 旋转(行转列)后的结果集合，data为null或空时原样返回
 	 */
 	public static List pivotList(List data, List categorys, Integer[] categoryCol, Integer[] pkColumns,
 			Integer[] categCompareCol, int startCol, int endCol, Object defaultValue) {
@@ -463,7 +475,8 @@ public class CollectionUtil {
 		// 多维旋转参照数据行数跟参照列的数量要一致
 		if (isTwoDimensionCategory
 				&& (categCompareCol.length > categorys.size() || categCompareCol.length != categCol.length)) {
-			throw new IllegalArgumentException("多维旋转参照数据行数跟参照列的数量要一致,categCol.length == categCompareCol.length!");
+			throw new IllegalArgumentException(
+					"the pivot reference rows must match the number of reference columns, expect categCol.length == categCompareCol.length!");
 		}
 		List result = new ArrayList();
 		// 数据宽度
@@ -587,25 +600,27 @@ public class CollectionUtil {
 	}
 
 	/**
-	 * @todo 将集合数据转成hashMap
-	 * @param data
-	 * @param keyProp
-	 * @param valueProp
+	 * 将集合数据转成hashMap
+	 * 
+	 * @param data      源数据，支持一维/二维的List或数组，元素可为List行或bean
+	 * @param keyProp   作为key的属性名称或列序号(纯数字视为列序号)
+	 * @param valueProp 作为value的属性名称或列序号，null时value取整行数据
 	 * @param keyToStr  将key统一转成字符串
-	 * @return
+	 * @return key为属性值、value为对应属性值或整行数据的HashMap，异常时返回已处理部分的空Map
 	 */
 	public static HashMap hashList(Object data, Object keyProp, Object valueProp, boolean keyToStr) {
 		return hashList(data, keyProp, valueProp, keyToStr, false);
 	}
 
 	/**
-	 * @todo 将集合数据转成hashMap
-	 * @param data
-	 * @param keyProp
-	 * @param valueProp
+	 * 将集合数据转成hashMap
+	 * 
+	 * @param data         源数据，支持一维/二维的List或数组，元素可为List行或bean
+	 * @param keyProp      作为key的属性名称或列序号(纯数字视为列序号)
+	 * @param valueProp    作为value的属性名称或列序号，null时value取整行数据
 	 * @param keyToStr     将key统一转成字符串
 	 * @param isLinkedHash 返回的是否为LinkedHashMap
-	 * @return
+	 * @return key为属性值、value为对应属性值或整行数据的HashMap，异常时返回已处理部分的空Map
 	 */
 	public static HashMap hashList(Object data, Object keyProp, Object valueProp, boolean keyToStr,
 			boolean isLinkedHash) {
@@ -694,13 +709,14 @@ public class CollectionUtil {
 			}
 			}
 		} catch (Exception e) {
-			logger.error("hashList 方法执行异常", e);
+			logger.error("hashList method execution failed", e);
 		}
 		return result;
 	}
 
 	/**
-	 * @todo 将内部的数组转换为list
+	 * 将内部的数组转换为list
+	 * 
 	 * @param source
 	 */
 	public static void innerArrayToList(List source) {
@@ -722,9 +738,10 @@ public class CollectionUtil {
 	}
 
 	/**
-	 * @todo 将内部list转换为数组
-	 * @param source
-	 * @return
+	 * 将内部list转换为数组
+	 * 
+	 * @param source 二维集合，元素须为Collection类型，null或空原样返回
+	 * @return 内部每个子集合转换为数组后的List
 	 */
 	public static List innerListToArray(List source) {
 		if (source == null || source.isEmpty()) {
@@ -741,7 +758,7 @@ public class CollectionUtil {
 			} else if (sonList.getClass().isArray()) {
 				result.add(sonList);
 			} else {
-				logger.error("数据类型必须为Collection");
+				logger.error("the data type must be Collection");
 				break;
 			}
 		}
@@ -749,7 +766,8 @@ public class CollectionUtil {
 	}
 
 	/**
-	 * @TODO 分组汇总计算
+	 * 分组汇总计算
+	 * 
 	 * @param sumData
 	 * @param groupMetas
 	 * @param isReverse
@@ -777,7 +795,7 @@ public class CollectionUtil {
 			}
 			// 转小写
 			if (groupMeta.getSumSite() != null) {
-				groupMeta.setSumSite(groupMeta.getSumSite().toLowerCase());
+				groupMeta.setSumSite(groupMeta.getSumSite().toLowerCase(Locale.ROOT));
 			} else {
 				groupMeta.setSumSite("");
 			}
@@ -805,7 +823,8 @@ public class CollectionUtil {
 	}
 
 	/**
-	 * @TODO 进行汇总计算
+	 * 进行汇总计算
+	 * 
 	 * @param dataSet
 	 * @param groupMetas
 	 * @param linkSign
@@ -867,12 +886,13 @@ public class CollectionUtil {
 	}
 
 	/**
-	 * @TODO 比较分组字段的值是否相等
-	 * @param currentRow
-	 * @param preRow
-	 * @param index
-	 * @param columns
-	 * @return
+	 * 比较分组字段的值是否相等
+	 * 
+	 * @param currentRow 当前行数据
+	 * @param preRow     上一行数据
+	 * @param index      当前行序号，第一行(0)视为相等
+	 * @param columns    参与比较的分组列序号数组，null或空表示全局分组(视为相等)
+	 * @return 所有分组列的值均相等返回true，任一不等返回false
 	 */
 	private static boolean isEquals(List currentRow, List preRow, int index, Integer[] columns) {
 		// 全局分组、第一行数据
@@ -890,9 +910,10 @@ public class CollectionUtil {
 	}
 
 	/**
-	 * @TODO 计算汇总
-	 * @param row
-	 * @param groupMeta
+	 * 计算汇总
+	 * 
+	 * @param row       当前行数据
+	 * @param groupMeta 分组汇总元数据，累加其汇总列的合计值并更新行数、空值计数
 	 */
 	private static void calculateTotal(List row, SummaryGroupMeta groupMeta) {
 		Object cellValue;
@@ -909,11 +930,12 @@ public class CollectionUtil {
 	}
 
 	/**
-	 * @TODO 构造分组汇总行数据
-	 * @param row
-	 * @param groupMeta
-	 * @param linkSign
-	 * @return
+	 * 构造分组汇总行数据
+	 * 
+	 * @param row       参与汇总的最后一行数据，用于补齐分组列前面的数据
+	 * @param groupMeta 分组汇总元数据(汇总/平均标题、小数位、汇总位置等)
+	 * @param linkSign  汇总与平均共一行时的标题连接符号
+	 * @return 汇总行数据集合，汇总和平均分两行时返回两行，共一行时返回一行
 	 */
 	private static List createSummaryRow(List row, SummaryGroupMeta groupMeta, String linkSign) {
 		List<List> result = new ArrayList();
@@ -1025,10 +1047,11 @@ public class CollectionUtil {
 	}
 
 	/**
-	 * @todo <b>列转行</b>
-	 * @param data
+	 * 列转行
+	 * 
+	 * @param data      源数据集合(二维List，每行为一行记录)，null或空原样返回
 	 * @param colIndexs 保留哪些列进行旋转(其它的列数据忽略)
-	 * @return
+	 * @return 以列数据为行、原行数据为列的新集合
 	 */
 	public static List convertColToRow(List data, Integer[] colIndexs) {
 		if (data == null || data.isEmpty()) {
@@ -1065,11 +1088,12 @@ public class CollectionUtil {
 	}
 
 	/**
-	 * @todo 判断字符串是否在给定的数组中
-	 * @param compareStr
-	 * @param compareAry
-	 * @param ignoreCase
-	 * @return
+	 * 判断字符串是否在给定的数组中
+	 * 
+	 * @param compareStr 待比较的字符串，null返回false
+	 * @param compareAry 待比较的字符串数组，null或空返回false
+	 * @param ignoreCase true忽略大小写比较
+	 * @return 数组中存在相等元素返回true，否则返回false
 	 */
 	public static boolean any(String compareStr, String[] compareAry, boolean ignoreCase) {
 		if (compareStr == null || (compareAry == null || compareAry.length == 0)) {
@@ -1088,16 +1112,17 @@ public class CollectionUtil {
 	}
 
 	/**
-	 * @todo 字符串数组按照类型转换
-	 * @param values
-	 * @param argType
-	 * @return
+	 * 字符串数组按照类型转换
+	 * 
+	 * @param values  待转换的字符串数组，null返回null
+	 * @param argType 目标类型名称，如string、int、long、date、boolean、double、float、short、class，大小写不敏感
+	 * @return 转换后的对应类型数组，类型未识别时原样返回字符串数组
 	 */
 	public static Object[] toArray(String[] values, String argType) {
 		if (values == null) {
 			return null;
 		}
-		String type = argType.toLowerCase();
+		String type = argType.toLowerCase(Locale.ROOT);
 		Object[] result = null;
 		if ("string".equals(type)) {
 			result = new String[values.length];
@@ -1155,11 +1180,12 @@ public class CollectionUtil {
 	}
 
 	/**
-	 * @todo 判断字符串或对象数据是否在给定的数组中
-	 * @param value
-	 * @param ignoreCase
-	 * @param compareAry
-	 * @return
+	 * 判断字符串或对象数据是否在给定的数组中
+	 * 
+	 * @param value      待比较的对象，null仅与数组中的null元素匹配
+	 * @param ignoreCase true按字符串忽略大小写比较
+	 * @param compareAry 待比较的对象数组，null或空返回false
+	 * @return 数组中存在相等元素返回true，否则返回false
 	 */
 	public static boolean any(Object value, boolean ignoreCase, Object... compareAry) {
 		if (compareAry == null || compareAry.length == 0) {
@@ -1185,8 +1211,9 @@ public class CollectionUtil {
 	}
 
 	/**
-	 * @TODO 清除集合中的null值
-	 * @param dataSet
+	 * 清除集合中的null值
+	 * 
+	 * @param dataSet 待清理的集合，直接在原集合上移除null元素，null或空不做处理
 	 */
 	public static void removeNull(Collection dataSet) {
 		if (dataSet != null && !dataSet.isEmpty()) {
@@ -1200,11 +1227,12 @@ public class CollectionUtil {
 	}
 
 	/**
-	 * @TODO 分组排序
-	 * @param dataSet
-	 * @param groupIndexes
-	 * @param sortIndex
-	 * @param desc
+	 * 分组排序
+	 * 
+	 * @param dataSet      二维数据集合，分组列值相同的连续行作为一个分组，方法直接在原集合上排序
+	 * @param groupIndexes 分组列的序号数组
+	 * @param sortIndex    组内排序列的序号
+	 * @param desc         true降序，false升序
 	 */
 	public static void groupSort(List<List> dataSet, Integer[] groupIndexes, int sortIndex, boolean desc) {
 		if (dataSet == null || dataSet.size() < 2) {
@@ -1245,10 +1273,11 @@ public class CollectionUtil {
 	}
 
 	/**
-	 * @TODO 提取排序列的具体数据类型
-	 * @param dataSet
-	 * @param sortIndex
-	 * @return
+	 * 提取排序列的具体数据类型
+	 * 
+	 * @param dataSet   二维数据集合
+	 * @param sortIndex 排序列的序号
+	 * @return 数据类型：1字符串、2数字、3Date、4LocalDate、5LocalDateTime、6LocalTime；列值全为null时返回1
 	 */
 	public static int getSortDataType(List<List> dataSet, int sortIndex) {
 		int dataType = 1;
@@ -1276,14 +1305,15 @@ public class CollectionUtil {
 	}
 
 	/**
-	 * @TODO List集合排序
-	 * @param sortList
-	 * @param orderCol
-	 * @param dataType
-	 * @param start
-	 * @param end
-	 * @param ascend
-	 * @return
+	 * List集合排序
+	 * 
+	 * @param sortList 二维数据集合，直接在原集合上排序
+	 * @param orderCol 排序列的序号
+	 * @param dataType 列数据类型：1字符串、2数字、3日期等，参见getSortDataType返回值
+	 * @param start    排序范围起始行序号(含)
+	 * @param end      排序范围结束行序号(含)
+	 * @param ascend   true升序，false降序
+	 * @return 排序后的原集合
 	 */
 	public static List sortList(List<List> sortList, int orderCol, int dataType, int start, int end, boolean ascend) {
 		if (start == end) {
@@ -1300,12 +1330,13 @@ public class CollectionUtil {
 	}
 
 	/**
-	 * @TODO 数据大小比较，用于排序
-	 * @param iData
-	 * @param jData
-	 * @param dataType
-	 * @param ascend
-	 * @return
+	 * 数据大小比较，用于排序
+	 * 
+	 * @param iData    待比较的数据
+	 * @param jData    待比较的数据
+	 * @param dataType 数据类型：1字符串、2数字、3日期等
+	 * @param ascend   true升序，false降序
+	 * @return iData小于jData时升序返回-1、降序返回1，相等返回0，null值排在前面(升序时)
 	 */
 	private static int compareValue(Object iData, Object jData, int dataType, boolean ascend) {
 		// 1:string,2:数字;3:日期
@@ -1357,11 +1388,12 @@ public class CollectionUtil {
 	}
 
 	/**
-	 * @TODO 分组计算
-	 * @param dataSet
-	 * @param groupIndexes
-	 * @param calcuateIndex
-	 * @param isSum
+	 * 分组计算
+	 * 
+	 * @param dataSet       二维数据集合，直接在原集合上修改(每组各行末尾追加计算结果)
+	 * @param groupIndexes  分组列的序号数组
+	 * @param calcuateIndex 参与计算的列序号
+	 * @param isSum         true求和，false求平均值(保留4位小数)
 	 */
 	public static void groupCalculate(List<List> dataSet, Integer[] groupIndexes, int calcuateIndex, boolean isSum) {
 		int groupSize = groupIndexes.length;
@@ -1435,9 +1467,10 @@ public class CollectionUtil {
 	}
 
 	/**
-	 * @todo 去除in中的重复数据
-	 * @param inArgsList
-	 * @return
+	 * 去除in中的重复数据
+	 * 
+	 * @param inArgsList in条件对应的参数值数组集合，null或首行少于2个元素时原样返回
+	 * @return 去除重复参数组合后的新集合(与输入等参数个数，每行为去重后的参数值数组)
 	 */
 	public static List<Object[]> clearRepeat(List<Object[]> inArgsList) {
 		if (inArgsList == null || inArgsList.isEmpty() || inArgsList.get(0).length < 2) {
@@ -1473,8 +1506,8 @@ public class CollectionUtil {
 	/**
 	 * 将Iterator转为Array数组
 	 * 
-	 * @param iterable
-	 * @return
+	 * @param iterable 可迭代对象，null返回null
+	 * @return 包含全部迭代元素的Object数组
 	 */
 	public static Object[] iterableToArray(Iterable iterable) {
 		if (iterable == null) {
@@ -1489,11 +1522,12 @@ public class CollectionUtil {
 	}
 
 	/**
-	 * @todo 切取集合中的某列值组成数组对象返回，一般用于sql in (:values) 条件数组数据提取
-	 * @param dataSet
+	 * 切取集合中的某列值组成数组对象返回，一般用于sql in (:values) 条件数组数据提取
+	 * 
+	 * @param dataSet  源数据集合，元素可为Map、List行或bean，null或空返回null
 	 * @param column   可以是数字也可以是一个字段名称
 	 * @param distinct 是否去除重复
-	 * @return
+	 * @return 指定列的值组成的数组
 	 */
 	public static Object[] sliceColumn(List dataSet, String column, boolean distinct) {
 		if (dataSet == null || dataSet.isEmpty()) {
@@ -1521,17 +1555,18 @@ public class CollectionUtil {
 			List tmpResult = BeanUtil.reflectBeansToList(dataSet, new String[] { column });
 			return sliceColumn(tmpResult, 0, distinct).toArray();
 		} catch (Exception e) {
-			logger.error("sliceColumn 方法执行异常", e);
+			logger.error("sliceColumn method execution failed", e);
 		}
 		return null;
 	}
 
 	/**
-	 * @todo 切取集合的单一列（切片）
-	 * @param source
-	 * @param columnIndex
+	 * 切取集合的单一列（切片）
+	 * 
+	 * @param source      源数据集合，元素为List行或数组，null或空返回null
+	 * @param columnIndex 列序号
 	 * @param distinct    是否去除重复
-	 * @return
+	 * @return 该列的值组成的List
 	 */
 	public static List sliceColumn(List source, int columnIndex, boolean distinct) {
 		if (source == null || source.isEmpty()) {
@@ -1556,9 +1591,9 @@ public class CollectionUtil {
 	/**
 	 * 判断是否存在，不存在则加入
 	 * 
-	 * @param notRepeatSet
-	 * @param value
-	 * @return
+	 * @param notRepeatSet 判重用的Set集合，直接在其上添加元素
+	 * @param value        待判断的值
+	 * @return true表示原集合中不存在且已加入，false表示已存在未加入
 	 */
 	public static boolean notContainsAdd(Set notRepeatSet, Object value) {
 		if (notRepeatSet.contains(value)) {
@@ -1574,9 +1609,10 @@ public class CollectionUtil {
 	}
 
 	/**
-	 * @todo 判断对象是否为null或为空
-	 * @param set
-	 * @return
+	 * 判断对象是否为null或为空
+	 * 
+	 * @param set 待判断的对象，支持Collection、Map、数组和字符串类型
+	 * @return true表示为null、空集合、空Map、长度为0的数组或空白字符串
 	 */
 	public static boolean isEmpty(Object set) {
 		if (null == set) {

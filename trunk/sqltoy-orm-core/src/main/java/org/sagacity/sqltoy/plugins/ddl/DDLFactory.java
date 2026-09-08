@@ -1,12 +1,10 @@
-/**
- *
- */
 package org.sagacity.sqltoy.plugins.ddl;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.sql.DataSource;
@@ -34,8 +32,8 @@ import org.slf4j.LoggerFactory;
  * @project sagacity-sqltoy
  * @description 数据库表脚本创建、更新等操作
  * @author zhongxuchen
- * @version v1.0, Date:2023年7月13日
- * @modify 2023年7月13日, 修改说明
+ * @version v1.0,Date:2023-07-13
+ * @modify Date:2023-07-13, 修改说明
  */
 public class DDLFactory {
 	/**
@@ -95,7 +93,8 @@ public class DDLFactory {
 	}
 
 	/**
-	 * @TODO 提供动态根据POJO产生数据库表创建的脚本文件
+	 * 提供动态根据POJO产生数据库表创建的脚本文件
+	 * 
 	 * @param scanPackages
 	 * @param saveFile
 	 * @param upperOrLower        upper|lower
@@ -111,7 +110,7 @@ public class DDLFactory {
 		entityManager.initialize(null);
 		ConcurrentHashMap<String, EntityMeta> entitysMetaMap = entityManager.getAllEntities();
 		if (entitysMetaMap == null || entitysMetaMap.isEmpty()) {
-			logger.warn("没有扫描到具体的实体对象,请检查scanPackages是否正确!");
+			logger.warn("no entity classes were scanned, please check whether scanPackages is correct!");
 			return;
 		}
 		List<EntityMeta> allTableEntities = DDLUtils.sortTables(entitysMetaMap);
@@ -128,9 +127,9 @@ public class DDLFactory {
 			String splitSign = ";";
 			int index = 0;
 			String tableSql;
-			logger.debug("一共有:[" + tableMetas.size() + "]个实体对象需生成建表语句!");
+			logger.debug("total:[{}] entity objects need to generate create table statements!", tableMetas.size());
 			for (TableMeta tableMeta : tableMetas) {
-				logger.debug("begin generate table:[" + tableMeta.getTableName() + "] ddl sql!");
+				logger.debug("begin generate table:[{}] ddl sql!", tableMeta.getTableName());
 				tableSql = generator.createTableSql(tableMeta, schema, upperOrLower, dbType);
 				if (tableSql != null && !tableSql.equals("")) {
 					if (index > 0) {
@@ -144,7 +143,8 @@ public class DDLFactory {
 	}
 
 	/**
-	 * @TODO 动态向数据库创建表结构
+	 * 动态向数据库创建表结构
+	 * 
 	 * @param sqlToyContext
 	 * @param entitysMetaMap
 	 * @param dataSource
@@ -165,16 +165,18 @@ public class DDLFactory {
 						String tableName = getTable(conn, entityMeta, upperOrLower);
 						// 增加一次判断
 						if (tableName == null && upperOrLower == null) {
-							if (entityMeta.getTableName().toUpperCase().equals(entityMeta.getTableName())) {
+							if (entityMeta.getTableName().toUpperCase(Locale.ROOT).equals(entityMeta.getTableName())) {
 								tableName = getTable(conn, entityMeta, "lower");
-							} else if (entityMeta.getTableName().toLowerCase().equals(entityMeta.getTableName())) {
+							} else if (entityMeta.getTableName().toLowerCase(Locale.ROOT)
+									.equals(entityMeta.getTableName())) {
 								tableName = getTable(conn, entityMeta, "upper");
 							}
 						}
 						// 数据库不存在当前表，则进行创建
 						if (tableName == null) {
 							TableMeta tableMeta = DDLUtils.wrapTableMeta(entityMeta, dbType);
-							logger.debug("开始创建表:[" + tableMeta.getTableName() + "]的表结构!");
+							logger.debug("start creating the table structure for table:[{}]!",
+									tableMeta.getTableName());
 							DialectDDLGenerator dialectDDLGenerator = (sqlToyContext.getDialectDDLGenerator() == null)
 									? getGenerator(dbType)
 									: sqlToyContext.getDialectDDLGenerator();
@@ -185,17 +187,18 @@ public class DDLFactory {
 									SqlUtil.executeSql(null, createSql, null, null, conn, dbType, null, true);
 								}
 							} catch (Exception e) {
-								logger.warn("如:表已经存在错误，可尝试:spring.sqltoy.ddlLowerOrUpper=upper|lower 配置!");
-								logger.error("doConnection 方法执行异常", e);
+								logger.warn(
+										"for example: table already exists error, you can try the config:spring.sqltoy.ddlLowerOrUpper=upper|lower!");
+								logger.error("doConnection method execution failed", e);
 							}
 						} else {
-							logger.debug("表:[" + tableName + "]在数据库中已经存在!");
+							logger.debug("table:[{}] already exists in the database!", tableName);
 						}
 					}
 				});
 			}
 		} catch (Exception e) {
-			logger.error("doConnection 方法执行异常", e);
+			logger.error("doConnection method execution failed", e);
 		}
 	}
 
@@ -213,7 +216,8 @@ public class DDLFactory {
 				break;
 			}
 		} catch (Exception e) {
-			logger.warn("检查表是否存在时发生异常,表可能不存在: {}", e.getMessage());
+			logger.warn("exception occurred while checking table existence, the table may not exist: {}",
+					e.getMessage());
 		} finally {
 			if (rs != null) {
 				rs.close();

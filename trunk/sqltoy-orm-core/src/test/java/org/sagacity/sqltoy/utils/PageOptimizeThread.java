@@ -7,7 +7,7 @@ import org.sagacity.sqltoy.dialect.utils.PageOptimizeUtils;
 /**
  * 模拟单个用户不停的组合查询
  * 
- * @author zhong
+ * @author zhongxuchen
  *
  */
 public class PageOptimizeThread extends Thread {

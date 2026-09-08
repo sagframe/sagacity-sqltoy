@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.model.inner;
 
 import java.io.Serializable;
@@ -20,16 +17,13 @@ import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.ParamsFilter;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 针对EntityQuery构造一个存放参数的内部类，避免EntityQuery使用时带出大量的get方法
  * @author zhongxuchen
- * @version v1.0,Date:2020-8-1
+ * @version v1.0,Date:2020-08-01
  */
 public class EntityQueryExtend implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 5446320176141577000L;
 
 	/**

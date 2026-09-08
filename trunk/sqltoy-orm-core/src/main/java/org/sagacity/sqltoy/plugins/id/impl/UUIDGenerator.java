@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.plugins.id.impl;
 
 import java.util.Date;
@@ -9,16 +6,17 @@ import org.sagacity.sqltoy.plugins.id.IdGenerator;
 import org.sagacity.sqltoy.utils.IdUtil;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 产生32位UUID字符串,基于uuid v7
  * @author zhongxuchen
- * @version v1.0,Date:2012-6-4
+ * @version v1.0,Date:2012-06-04
  */
 public class UUIDGenerator implements IdGenerator {
 	private static IdGenerator me = new UUIDGenerator();
 
 	/**
-	 * @TODO 获取对象单例
+	 * 获取对象单例
+	 * 
 	 * @return
 	 */
 	public static IdGenerator getInstance() {

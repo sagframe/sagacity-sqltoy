@@ -25,10 +25,10 @@ import org.slf4j.LoggerFactory;
  * @project sagacity-sqltoy
  * @description 定时检测缓存是否更新程序
  * @author zhongxuchen
- * @version v1.0,Date:2018年3月11日
- * @modify {Date:2019-1-22,修改检测时间格式为yyyy-MM-dd HH:mm:ss 避免时间对比精度差异}
- * @modify {Date:2019-10-14,增加集群节点的时间差异参数,便于包容性检测缓存更新}
- * @modify {Date:2020-3-26,增加缓存增量更新机制,而不是清除缓存}
+ * @version v1.0,Date:2018-03-11
+ * @modify Date:2019-01-22 修改检测时间格式为yyyy-MM-dd HH:mm:ss 避免时间对比精度差异
+ * @modify Date:2019-10-14 增加集群节点的时间差异参数,便于包容性检测缓存更新
+ * @modify Date:2020-03-26 增加缓存增量更新机制,而不是清除缓存
  */
 public class CacheUpdateWatcher extends Thread {
 	/**
@@ -153,7 +153,8 @@ public class CacheUpdateWatcher extends Thread {
 					Thread.sleep(1000);
 				}
 			} catch (InterruptedException e) {
-				logger.warn("缓存翻译检测缓存变更异常,检测线程将终止!{}", e.getMessage(), e);
+				logger.warn("cache translate change detection error, the detection thread will be stopped! {}",
+						e.getMessage(), e);
 				// 恢复中断标志供上层感知
 				Thread.currentThread().interrupt();
 				isRun = false;
@@ -162,7 +163,8 @@ public class CacheUpdateWatcher extends Thread {
 	}
 
 	/**
-	 * @todo 获取当前时间区间的检测间隔
+	 * 获取当前时间区间的检测间隔
+	 * 
 	 * @param sections
 	 * @param hourMinutes
 	 * @return
@@ -182,7 +184,8 @@ public class CacheUpdateWatcher extends Thread {
 	}
 
 	/**
-	 * @todo 执行检测并更新缓存
+	 * 执行检测并更新缓存
+	 * 
 	 * @param sqlToyContext
 	 * @param checkerConfig
 	 * @param lastCheckTime
@@ -200,7 +203,8 @@ public class CacheUpdateWatcher extends Thread {
 			if (StringUtil.isNotBlank(checkerConfig.getCache())) {
 				translateConfig = translateMap.get(checkerConfig.getCache());
 				if (translateConfig != null) {
-					logger.debug("检测到缓存:{} 发生更新,将清除缓存便于后续缓存全量更新!", translateConfig.getCache());
+					logger.debug("detected cache:{} was updated, clear the cache for a subsequent full cache update!",
+							translateConfig.getCache());
 					if (translateConfig.isDynamicCache()) {
 						dynamicFecthCacheManager.clear(translateConfig.getCache(), null);
 					} else {
@@ -211,8 +215,8 @@ public class CacheUpdateWatcher extends Thread {
 				for (CacheCheckResult result : results) {
 					translateConfig = translateMap.get(result.getCacheName());
 					if (translateConfig != null) {
-						logger.debug("检测到缓存发生更新: cacheName:{} cacheType:{}!", translateConfig.getCache(),
-								(result.getCacheType() == null) ? "无" : result.getCacheType());
+						logger.debug("detected cache update: cacheName:{} cacheType:{}!", translateConfig.getCache(),
+								(result.getCacheType() == null) ? "none" : result.getCacheType());
 						if (translateConfig.isDynamicCache()) {
 							dynamicFecthCacheManager.clear(translateConfig.getCache(), result.getCacheType());
 						} else {
@@ -243,7 +247,7 @@ public class CacheUpdateWatcher extends Thread {
 			if (results == null || results.isEmpty()) {
 				return;
 			}
-			logger.debug("检测到缓存cacheName:{} 发生:{} 条记录更新!", cacheName, results.size());
+			logger.debug("detected cache cacheName:{} has {} records updated!", cacheName, results.size());
 			HashMap<String, Object[]> cacheData;
 			int count = 0;
 			// 按值存储(offheap/disk层副本)的缓存须经put整体替换同步三层,纯heap(by-reference)原地put零拷贝直接生效
@@ -328,17 +332,19 @@ public class CacheUpdateWatcher extends Thread {
 					}
 				}
 			} catch (Exception e) {
-				logger.error("缓存增量更新检测,更新缓存:{} 发生异常:{}", cacheName, e.getMessage());
+				logger.error("cache incremental update detection, updating cache:{} error occurred:{}", cacheName,
+						e.getMessage());
 			}
-			logger.debug("缓存实际完成:{} 条记录更新!", count);
+			logger.debug("the cache actually finished updating {} records!", count);
 		}
 	}
 
 	/**
-	 * @todo 按值存储缓存(offheap/disk副本)的增量更新：复制getCache返回的map → 副本应用全部增量 →
-	 *       经put整体写回同步heap/offheap/disk三层。契约依据:put语义为"存储给定map作为缓存内容"
-	 *       (官方ehcache/caffeine实现均如此);若自定义实现的put是向既有map合并条目,则本方法退化为
-	 *       单次批量合并(竞争窗口从N次收窄为1次,但未完全消除)
+	 * 按值存储缓存(offheap/disk副本)的增量更新：复制getCache返回的map → 副本应用全部增量 →
+	 * 经put整体写回同步heap/offheap/disk三层。契约依据:put语义为"存储给定map作为缓存内容"
+	 * (官方ehcache/caffeine实现均如此);若自定义实现的put是向既有map合并条目,则本方法退化为
+	 * 单次批量合并(竞争窗口从N次收窄为1次,但未完全消除)
+	 * 
 	 * @param tcm       缓存管理器
 	 * @param config    缓存配置
 	 * @param cacheName 缓存名称

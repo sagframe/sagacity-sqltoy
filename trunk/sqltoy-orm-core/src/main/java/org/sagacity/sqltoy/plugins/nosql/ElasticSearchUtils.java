@@ -1,12 +1,10 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.plugins.nosql;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import org.sagacity.sqltoy.SqlToyContext;
@@ -30,7 +28,7 @@ import com.alibaba.fastjson2.JSONObject;
  * @project sagacity-sqltoy
  * @description 提供es执行过程处理的工具方法
  * @author zhongxuchen
- * @version v1.0,Date:2018年1月8日
+ * @version v1.0,Date:2018-01-08
  */
 public class ElasticSearchUtils {
 	/**
@@ -39,7 +37,8 @@ public class ElasticSearchUtils {
 	protected final static Logger logger = LoggerFactory.getLogger(ElasticSearchUtils.class);
 
 	/**
-	 * @todo 执行实际查询处理
+	 * 执行实际查询处理
+	 * 
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param sql
@@ -92,7 +91,8 @@ public class ElasticSearchUtils {
 	}
 
 	/**
-	 * @todo elasticsearch6.3 sql
+	 * elasticsearch6.3 sql
+	 * 
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param json
@@ -124,7 +124,8 @@ public class ElasticSearchUtils {
 	}
 
 	/**
-	 * @todo 从返回的JSON对象中根据字段属性提取数据并以集合形式返回
+	 * 从返回的JSON对象中根据字段属性提取数据并以集合形式返回
+	 * 
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param json
@@ -187,7 +188,8 @@ public class ElasticSearchUtils {
 	}
 
 	/**
-	 * @todo 提取聚合数据
+	 * 提取聚合数据
+	 * 
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param json
@@ -205,14 +207,15 @@ public class ElasticSearchUtils {
 				: sqlToyConfig.getNoSqlConfigModel().getValueRoot();
 		Object root = json;
 		// 确保第一个路径是聚合统一的名词
-		if (!"suggest".equals(rootPath[0].toLowerCase())) {
+		if (!"suggest".equals(rootPath[0].toLowerCase(Locale.ROOT))) {
 			root = ((JSONObject) root).get("suggest");
 		}
 		for (String str : rootPath) {
 			root = ((JSONObject) root).get(str);
 		}
 		if (root == null) {
-			logger.error("请正确配置es聚合查询,包括:fields配置是否匹配等!");
+			logger.error(
+					"please configure the es aggregation query correctly, including whether the fields configuration matches!");
 			return resultModel;
 		}
 		List result = new ArrayList();
@@ -233,7 +236,8 @@ public class ElasticSearchUtils {
 	}
 
 	/**
-	 * @todo 提取聚合数据
+	 * 提取聚合数据
+	 * 
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param json
@@ -252,7 +256,7 @@ public class ElasticSearchUtils {
 				: sqlToyConfig.getNoSqlConfigModel().getValueRoot();
 		Object root = json;
 		// 确保第一个路径是聚合统一的名词
-		if (!"aggregations".equals(rootPath[0].toLowerCase())) {
+		if (!"aggregations".equals(rootPath[0].toLowerCase(Locale.ROOT))) {
 			root = ((JSONObject) root).get("aggregations");
 		}
 		for (String str : rootPath) {
@@ -283,7 +287,8 @@ public class ElasticSearchUtils {
 			}
 		}
 		if (root == null) {
-			logger.error("请正确配置es聚合查询,包括:fields配置是否匹配等!");
+			logger.error(
+					"please configure the es aggregation query correctly, including whether the fields configuration matches!");
 			return resultModel;
 		}
 		List result = new ArrayList();
@@ -304,7 +309,8 @@ public class ElasticSearchUtils {
 	}
 
 	/**
-	 * @TODO 数据集合提取
+	 * 数据集合提取
+	 * 
 	 * @param result
 	 * @param rowJson
 	 * @param realFields
@@ -332,7 +338,8 @@ public class ElasticSearchUtils {
 	}
 
 	/**
-	 * @todo 判断是否包含所有字段
+	 * 判断是否包含所有字段
+	 * 
 	 * @param json
 	 * @param realFields
 	 * @return
@@ -355,7 +362,8 @@ public class ElasticSearchUtils {
 	}
 
 	/**
-	 * @TODO 提取数据加入集合
+	 * 提取数据加入集合
+	 * 
 	 * @param result
 	 * @param rowJson
 	 * @param realFields
@@ -375,7 +383,8 @@ public class ElasticSearchUtils {
 	}
 
 	/**
-	 * @todo 提取实际json对象
+	 * 提取实际json对象
+	 * 
 	 * @param rowJson
 	 * @param realFields
 	 * @param isSuggest
@@ -437,7 +446,8 @@ public class ElasticSearchUtils {
 			if (result instanceof JSONObject) {
 				JSONObject tmp = (JSONObject) result;
 				// {value:xxx} 模式
-				if (tmp.keySet().size() == 1 && "value".equals(tmp.keySet().iterator().next().toLowerCase())) {
+				if (tmp.keySet().size() == 1
+						&& "value".equals(tmp.keySet().iterator().next().toLowerCase(Locale.ROOT))) {
 					return rowJson;
 				}
 				return getRealJSONObject(tmp, realFields, isSuggest);

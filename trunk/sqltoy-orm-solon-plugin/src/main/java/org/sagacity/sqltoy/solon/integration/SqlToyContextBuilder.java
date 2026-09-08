@@ -1,7 +1,5 @@
 package org.sagacity.sqltoy.solon.integration;
 
-import static java.lang.System.err;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -15,6 +13,8 @@ import java.util.stream.Collectors;
 import org.noear.solon.core.util.ClassUtil;
 import org.noear.solon.core.util.ResourceUtil;
 import org.sagacity.sqltoy.SqlToyContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.sagacity.sqltoy.config.SqlScriptLoader;
 import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.integration.AppContext;
@@ -49,6 +49,8 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @since 1.8
  */
 public class SqlToyContextBuilder {
+	private static final Logger logger = LoggerFactory.getLogger(SqlToyContextBuilder.class);
+
 	SqlToyContextProperties properties;
 	AppContext appContext;
 
@@ -81,7 +83,6 @@ public class SqlToyContextBuilder {
 	 * @throws IOException
 	 */
 	private void scanResources(List<String> resList, String dir, String suffix) throws IOException {
-		// dir += (dir.endsWith("/") ? "" : "/") + suffix;
 		// 为今后路径直接支持**/*.sql.xml 模式做准备
 		if (!dir.endsWith(suffix)) {
 			if (dir.endsWith("/**/")) {
@@ -99,9 +100,6 @@ public class SqlToyContextBuilder {
 	public SqlToyContext build() throws Exception {
 		if (StringUtil.isBlank(properties.getSqlResourcesDir())) {
 			properties.setSqlResourcesDir("classpath:sqltoy");
-			// throw new IllegalArgumentException(
-			// "请检查sqltoy配置,是sqltoy作为前缀,而不是spring.sqltoy!\n正确范例:
-			// sqltoy.sqlResourcesDir=classpath:com/sagframe/modules");
 		}
 		// 当aot模式下需要调整配置文件到具体的每个文件
 		if (System.getProperty("org.graalvm.nativeimage.imagecode") != null) {
@@ -143,10 +141,6 @@ public class SqlToyContextBuilder {
 			}
 			// 2.2、重新设置值
 			properties.setTranslateConfig(translateConfigResourceList.stream().collect(Collectors.joining(",")));
-			// 输出日志
-			// System.out.println("a: " +
-			// Arrays.stream(properties.getSqlResources()).collect(Collectors.joining(",")));
-			// System.out.println("b: " + properties.getTranslateConfig());
 		}
 		SqlToyContext sqlToyContext = new SqlToyContext();
 
@@ -313,19 +307,16 @@ public class SqlToyContextBuilder {
 				else if (appContext.containsBean(unifyHandler)) {
 					handler = (IUnifyFieldsHandler) appContext.getBean(unifyHandler);
 					if (handler == null) {
-						throw new ClassNotFoundException("项目中未定义unifyFieldsHandler=" + unifyHandler + " 对应的bean!");
+						throw new ClassNotFoundException("no bean is defined in the project for unifyFieldsHandler [" + unifyHandler + "]!");
 					}
 				}
 				if (handler != null) {
 					sqlToyContext.setUnifyFieldsHandler(handler);
 				}
 			} catch (ClassNotFoundException cne) {
-				err.println("------------------- 错误提示 ------------------------------------------- ");
-				err.println("spring.sqltoy.unifyFieldsHandler=" + unifyHandler + " 对应类不存在,错误原因:");
-				err.println("--1.您可能直接copy了参照项目的配置文件,但没有将具体的类也同步copy过来!");
-				err.println("--2.如您并不需要此功能，请将配置文件中注释掉spring.sqltoy.unifyFieldsHandler");
-				err.println("------------------------------------------------");
-				cne.printStackTrace();
+				logger.error("the class of spring.sqltoy.unifyFieldsHandler={} does not exist, possible reasons: "
+						+ "1.you copied the configuration from another project without copying the class; "
+						+ "2.please comment out this property if the feature is not needed!", unifyHandler, cne);
 				throw cne;
 			}
 		}

@@ -1,11 +1,9 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.plugins.id.macro;
 
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -20,7 +18,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @project sagacity-sqltoy
  * @description 宏处理工具
  * @author zhongxuchen
- * @version v1.0,Date:2018年5月25日
+ * @version v1.0,Date:2018-05-25
  */
 public class MacroUtils {
 	/**
@@ -58,7 +56,8 @@ public class MacroUtils {
 	}
 
 	/**
-	 * @todo 宏替换,默认先执行内部后执行外部
+	 * 宏替换,默认先执行内部后执行外部
+	 * 
 	 * @param hasMacroStr
 	 * @param keyValues
 	 * @return
@@ -68,7 +67,8 @@ public class MacroUtils {
 	}
 
 	/**
-	 * @todo 递归调用解析字符串中的转换器
+	 * 递归调用解析字符串中的转换器
+	 * 
 	 * @param hasMacroStr     含macro宏的字符串
 	 * @param keyValues
 	 * @param paramsValues
@@ -135,7 +135,8 @@ public class MacroUtils {
 	}
 
 	/**
-	 * @todo <b>判断匹配的字符串是否是转换器</b>
+	 * 判断匹配的字符串是否是转换器
+	 * 
 	 * @param macros
 	 * @param matchedStr
 	 * @param isStart
@@ -176,7 +177,8 @@ public class MacroUtils {
 	}
 
 	/**
-	 * @todo 替换变量参数
+	 * 替换变量参数
+	 * 
 	 * @param template
 	 * @param keyValues
 	 * @return
@@ -206,7 +208,8 @@ public class MacroUtils {
 	}
 
 	/**
-	 * @todo 解析模板中的参数
+	 * 解析模板中的参数
+	 * 
 	 * @param paramPattern
 	 * @param template
 	 * @return
@@ -242,7 +245,8 @@ public class MacroUtils {
 	}
 
 	/**
-	 * @todo 解析模板中的参数
+	 * 解析模板中的参数
+	 * 
 	 * @param template
 	 * @return
 	 */
@@ -253,7 +257,7 @@ public class MacroUtils {
 		while (m.find()) {
 			group = m.group();
 			// key as ${name} value:name
-			paramsMap.put(group, group.substring(2, group.length() - 1).trim().toLowerCase());
+			paramsMap.put(group, group.substring(2, group.length() - 1).trim().toLowerCase(Locale.ROOT));
 		}
 		return paramsMap;
 	}

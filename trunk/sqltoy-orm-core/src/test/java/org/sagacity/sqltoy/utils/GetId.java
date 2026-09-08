@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.utils;
 
 import java.math.BigDecimal;
@@ -9,9 +6,9 @@ import java.util.Set;
 /**
  * @project sagacity-sqltoy
  * @description 请在此说明类的功能
- * @author zhong
- * @version v1.0, Date:2022年11月17日
- * @modify 2022年11月17日,修改说明
+ * @author zhongxuchen
+ * @version v1.0,Date:2022-11-17
+ * @modify Date:2022-11-17,修改说明
  */
 public class GetId implements Runnable {
 

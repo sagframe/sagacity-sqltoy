@@ -1,7 +1,5 @@
 package org.sagacity.sqltoy.configure;
 
-import static java.lang.System.err;
-
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -14,6 +12,8 @@ import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
 import org.sagacity.sqltoy.SqlToyContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.sagacity.sqltoy.config.SqlScriptLoader;
 import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.dao.LightDao;
@@ -60,14 +60,16 @@ import com.alibaba.ttl.threadpool.TtlExecutors;
 
 /**
  * @author wolf
- * @version v1.0, Date:2018年12月26日
+ * @version v1.0,Date:2018-12-26
  * @description sqltoy 自动配置类
- * @modify {Date:2020-2-20,完善配置支持es等,实现完整功能}
- * @modify {Date:2024-8-10,修复项目文件路径存在空格等特殊符号场景下无法加载sql.xml文件的问题}
+ * @modify Date:2020-02-20 完善配置支持es等,实现完整功能
+ * @modify Date:2024-08-10 修复项目文件路径存在空格等特殊符号场景下无法加载sql.xml文件的问题
  */
 @AutoConfiguration
 @EnableConfigurationProperties(SqlToyContextProperties.class)
 public class SqltoyAutoConfiguration {
+	private static final Logger logger = LoggerFactory.getLogger(SqltoyAutoConfiguration.class);
+
 	@Autowired
 	private ApplicationContext applicationContext;
 
@@ -121,7 +123,7 @@ public class SqltoyAutoConfiguration {
 		// 用辅助配置来校验是否配置错误
 		if (StringUtil.isBlank(properties.getSqlResourcesDir()) && StringUtil.isNotBlank(sqlResourcesDir)) {
 			throw new IllegalArgumentException(
-					"请检查sqltoy配置,是spring.sqltoy作为前缀,而不是sqltoy!\n正确范例: spring.sqltoy.sqlResourcesDir=classpath:com/sagframe/modules");
+					"please check the sqltoy config, the prefix must be spring.sqltoy instead of sqltoy!\ncorrect example: spring.sqltoy.sqlResourcesDir=classpath:com/sagframe/modules");
 		}
 		SqlToyContext sqlToyContext = new SqlToyContext();
 
@@ -312,12 +314,9 @@ public class SqltoyAutoConfiguration {
 					sqlToyContext.setUnifyFieldsHandler(handler);
 				}
 			} catch (ClassNotFoundException cne) {
-				err.println("------------------- 错误提示 ------------------------------------------- ");
-				err.println("spring.sqltoy.unifyFieldsHandler=" + unifyHandler + " 对应类不存在,错误原因:");
-				err.println("--1.您可能直接copy了参照项目的配置文件,但没有将具体的类也同步copy过来!");
-				err.println("--2.如您并不需要此功能，请将配置文件中注释掉spring.sqltoy.unifyFieldsHandler");
-				err.println("-------------------------------------------------------------------------");
-				cne.printStackTrace();
+				logger.error("the class of spring.sqltoy.unifyFieldsHandler={} does not exist, possible reasons: "
+						+ "1.you copied the configuration from another project without copying the class; "
+						+ "2.please comment out this property if the feature is not needed!", unifyHandler, cne);
 				throw cne;
 			}
 		}

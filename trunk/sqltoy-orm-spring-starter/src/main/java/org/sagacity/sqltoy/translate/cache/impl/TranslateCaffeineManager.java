@@ -19,8 +19,8 @@ import com.github.benmanes.caffeine.cache.Caffeine;
  * @project sagacity-sqltoy
  * @description 提供基于Caffeine缓存实现
  * @author 740202157@qq.com
- * @version v1.0, Date:2021-1-25
- * @modify 2021-1-25,修改说明
+ * @version v1.0,Date:2021-01-25
+ * @modify Date:2021-01-25 修改说明
  */
 public class TranslateCaffeineManager extends TranslateCacheManager {
 	/**
@@ -133,7 +133,7 @@ public class TranslateCaffeineManager extends TranslateCacheManager {
 			return true;
 		}
 		cacheManager = new CaffeineCacheManager();
-		logger.debug("已经启动caffeine 缓存管理器--------------------------------------");
+		logger.debug("started caffeine cache manager--------------------------------------");
 		return true;
 	}
 

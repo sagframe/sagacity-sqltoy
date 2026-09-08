@@ -4,7 +4,7 @@ import org.sagacity.sqltoy.config.model.PageOptimize;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 
 /**
- * @TODO 针对分页优化进行多线程模拟测试
+ * 针对分页优化进行多线程模拟测试
  * @author zhongxuchen
  *
  */

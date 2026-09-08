@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.plugins.nosql;
 
 import java.util.List;
@@ -20,7 +17,7 @@ import org.slf4j.LoggerFactory;
  * @project sagacity-sqltoy
  * @description elasticsearch-sql 或elasticsearch6.3.x 版本支持xpack sql查询
  * @author zhongxuchen
- * @version v1.0,Date:2018年1月3日
+ * @version v1.0,Date:2018-01-03
  */
 public class ElasticSqlPlugin {
 	/**
@@ -29,7 +26,8 @@ public class ElasticSqlPlugin {
 	protected final static Logger logger = LoggerFactory.getLogger(ElasticSqlPlugin.class);
 
 	/**
-	 * @todo 基于es的分页查询
+	 * 基于es的分页查询
+	 * 
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param pageModel
@@ -48,7 +46,7 @@ public class ElasticSqlPlugin {
 		realSql = realSql + " limit " + (pageModel.getPageNo() - 1) * pageModel.getPageSize() + ","
 				+ pageModel.getPageSize();
 		if (sqlToyContext.isDebug()) {
-			logger.debug("findPageByElastic sql=" + realSql);
+			logger.debug("findPageByElastic sql={}", realSql);
 		}
 		Page page = new Page();
 		page.setPageNo(pageModel.getPageNo());
@@ -61,7 +59,8 @@ public class ElasticSqlPlugin {
 	}
 
 	/**
-	 * @todo 提取符合条件的前多少条记录
+	 * 提取符合条件的前多少条记录
+	 * 
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param queryExecutor
@@ -81,7 +80,7 @@ public class ElasticSqlPlugin {
 			realSql = realSql + " limit " + topSize;
 		}
 		if (sqlToyContext.isDebug()) {
-			logger.debug("findTopByElastic sql=" + realSql);
+			logger.debug("findTopByElastic sql={}", realSql);
 		}
 		DataSetResult result = ElasticSearchUtils.executeQuery(sqlToyContext, sqlToyConfig, realSql,
 				(Class) extend.resultType, extend.humpMapLabel);

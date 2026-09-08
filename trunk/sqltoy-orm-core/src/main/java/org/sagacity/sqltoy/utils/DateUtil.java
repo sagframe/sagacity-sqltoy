@@ -41,13 +41,19 @@ import org.slf4j.LoggerFactory;
  * @description 日期处理支持类，提供日常工作中的所有日期的操作处理
  * @author zhongxuchen
  * @version v1.0,Date:2008-12-14
- * @modify data:2012-8-27 {对日期的格式化增加了locale功能}
- * @modify data:2015-8-8 对parseString功能进行了优化,对英文和中文日期进行解析,同时优化了格式判断的逻辑
- * @modify data:2019-10-11 支持LocalDate、LocalTime、LocalDateTime等新的日期类型
- * @modify data:2023-12-05 强化英文日期的解析以及localTime、localDateTime格式化，提升格式化精度
+ * @modify Date:2012-08-27 对日期的格式化增加了locale功能
+ * @modify Date:2015-08-08 对parseString功能进行了优化,对英文和中文日期进行解析,同时优化了格式判断的逻辑
+ * @modify Date:2019-10-11 支持LocalDate、LocalTime、LocalDateTime等新的日期类型
+ * @modify Date:2023-12-05 强化英文日期的解析以及localTime、localDateTime格式化，提升格式化精度
  */
 @SuppressWarnings({ "unused" })
 public class DateUtil {
+
+	// update 2026-9-8 解析热路径正则预编译
+	private static final java.util.regex.Pattern BLANK_NORMALIZE_PATTERN = java.util.regex.Pattern
+			.compile("[\\s\\u00A0\\u202F\\u3000]+");
+
+	private static final java.util.regex.Pattern SPACE_PATTERN = java.util.regex.Pattern.compile("\\s+");
 	/**
 	 * 定义日志
 	 */
@@ -159,10 +165,11 @@ public class DateUtil {
 	}
 
 	/**
-	 * @todo 将日期字符串或时间转换成时间类型 日期字符串中的日期分隔符可是:"/",".","-"， 返回时间具体到秒 只提供常用的日期格式处理
-	 * @param data
-	 * @param format
-	 * @return
+	 * 将日期字符串或时间转换成时间类型 日期字符串中的日期分隔符可是:"/",".","-"， 返回时间具体到秒 只提供常用的日期格式处理
+	 * 
+	 * @param data   日期字符串或日期对象，支持字符串、Date、LocalDate、LocalDateTime以及毫秒数值等类型
+	 * @param format 日期格式，如yyyy-MM-dd；为null时自动识别格式
+	 * @return 解析后的日期时间对象，解析失败返回null
 	 */
 	public static Date parse(Object data, String format) {
 		return parse(data, format, null);
@@ -191,8 +198,8 @@ public class DateUtil {
 	/**
 	 * 去除字符串中的时区信息，避免时间解析错误
 	 * 
-	 * @param dateVar
-	 * @return
+	 * @param dateVar 日期字符串，末尾可带±HH:mm或[时区ID]形式的时区信息
+	 * @return 去除时区部分后的字符串，不含时区信息时原样返回
 	 */
 	private static String removeZoneInfo(String dateVar) {
 		Matcher m = ZONED_TIME_PATTERN.matcher(dateVar);
@@ -203,19 +210,21 @@ public class DateUtil {
 	}
 
 	/**
-	 * @todo 将日期字符串或时间转换成时间类型 日期字符串中的日期分隔符可是:"/",".","-"， 返回时间具体到秒 只提供常用的日期格式处理
-	 * @param dateVar
-	 * @param dateFormat
-	 * @param locale
-	 * @return
+	 * 将日期字符串或时间转换成时间类型 日期字符串中的日期分隔符可是:"/",".","-"， 返回时间具体到秒 只提供常用的日期格式处理
+	 * 
+	 * @param dateVar    日期字符串，支持横杠/点号/斜杠分隔、单位数月日补齐、中英文日期、13位毫秒值等形式
+	 * @param dateFormat 指定的日期格式，如yyyy-MM-dd；为null或空白时自动识别格式
+	 * @param locale     地区信息，为null时使用系统配置的默认区域
+	 * @return 解析后的日期时间对象，dateVar为null、空白或解析失败返回null
 	 */
 	public static Date parseString(String dateVar, String dateFormat, Locale locale) {
 		if (dateVar == null) {
 			return null;
 		}
 		// 空白归一化:各类空白(含全角空格、不间断空格等非标准空白)统一压缩为单空格,容忍复制粘贴产生的不规范空格
-		String dateStr = dateVar.replaceAll("[\\s\\u00A0\\u202F\\u3000]+", " ").trim();
-		if ("".equals(dateStr) || dateStr.toLowerCase().equals("null")) {
+		// update 2026-9-8 正则预编译(原String.replaceAll每次隐式编译)
+		String dateStr = BLANK_NORMALIZE_PATTERN.matcher(dateVar).replaceAll(" ").trim();
+		if ("".equals(dateStr) || dateStr.toLowerCase(Locale.ROOT).equals("null")) {
 			return null;
 		}
 		// 去除时区信息
@@ -240,12 +249,12 @@ public class DateUtil {
 				return null;
 			}
 			int size;
-			boolean hasBlank = (dateStr.indexOf(" ") != -1 || dateStr.toUpperCase().indexOf("T") >= 6);
+			boolean hasBlank = (dateStr.indexOf(" ") != -1 || dateStr.toUpperCase(Locale.ROOT).indexOf("T") >= 6);
 			int splitCount;
 			int startIndex;
 			// 日期和时间的组合
 			if (hasBlank) {
-				dateStr = dateStr.replaceFirst("\\s+", " ").replaceFirst("(?i)T", " ");
+				dateStr = SPACE_PATTERN.matcher(dateStr).replaceFirst(" ").replaceFirst("(?i)T", " ");
 				dateStr = padDateString(dateStr);
 				// 时间段含冒号时逐段补前导零(如"8:5:9"→"08:05:09"):去除分隔符合并后,
 				// 多个单位数时分秒组件仅靠原有的整体补一个零会错位(859→0859被误读成08:59)
@@ -328,11 +337,10 @@ public class DateUtil {
 						realDF = "HH:mm:ss.SSSSSSSSS";
 						isLocalTime = true;
 					} else {
-						if (size == 5) {
-							realDF = "HH:mm";
-						} else {
-							realDF = "HH:mm:ss";
-						}
+						// 按冒号数量判断时分/时分秒格式，用H/m/s兼容单位数小时、分钟、秒(如9:30、9:3:5)；
+						// 冒号是字面锚点、H贪婪读到冒号为止，解析无歧义。本分支走SimpleDateFormat(解析宽度与字母个数无关)，
+						// 与parseLocalDateTime(走DateTimeFormatter，HH/mm/ss严格要求两位)统一采用可变宽度写法
+						realDF = (StringUtil.matchCnt(dateStr, ":") == 1) ? "H:m" : "H:m:s";
 					}
 				} else {
 					dateStr = dateStr.replace("-", "/").replace(".", "/");
@@ -409,9 +417,10 @@ public class DateUtil {
 			}
 			if (result == null) {
 				// 两级解析均失败:带原始值与format输出日志,便于定位(不再静默返回null)
-				logger.warn("日期解析失败:值={},指定的format={},自动格式匹配亦未成功!", dateVar, realDF);
+				logger.warn("date parsing failed:value={}, the specified format={}, auto format matching also failed!",
+						dateVar, realDF);
 				if (hasException) {
-					logger.error("parseString 方法执行异常", ex);
+					logger.error("parseString method execution failed", ex);
 				}
 			}
 		}
@@ -455,8 +464,9 @@ public class DateUtil {
 			return null;
 		}
 		// 空白归一化:各类空白(含全角空格、不间断空格等非标准空白)统一压缩为单空格,容忍复制粘贴产生的不规范空格
-		String dateStr = dateVar.replaceAll("[\\s\\u00A0\\u202F\\u3000]+", " ").trim();
-		if ("".equals(dateStr) || dateStr.toLowerCase().equals("null")) {
+		// update 2026-9-8 正则预编译(原String.replaceAll每次隐式编译)
+		String dateStr = BLANK_NORMALIZE_PATTERN.matcher(dateVar).replaceAll(" ").trim();
+		if ("".equals(dateStr) || dateStr.toLowerCase(Locale.ROOT).equals("null")) {
 			return null;
 		}
 		// 去除时区信息
@@ -480,12 +490,12 @@ public class DateUtil {
 				return null;
 			}
 			int size;
-			boolean hasBlank = (dateStr.indexOf(" ") != -1 || dateStr.toUpperCase().indexOf("T") >= 6);
+			boolean hasBlank = (dateStr.indexOf(" ") != -1 || dateStr.toUpperCase(Locale.ROOT).indexOf("T") >= 6);
 			int splitCount;
 			int startIndex;
 			// 日期和时间的组合
 			if (hasBlank) {
-				dateStr = dateStr.replaceFirst("\\s+", " ").replaceFirst("(?i)T", " ");
+				dateStr = SPACE_PATTERN.matcher(dateStr).replaceFirst(" ").replaceFirst("(?i)T", " ");
 				dateStr = padDateString(dateStr);
 				// 时间段含冒号时逐段补前导零(如"8:5:9"→"08:05:09"):去除分隔符合并后,
 				// 多个单位数时分秒组件仅靠原有的整体补一个零会错位(859→0859被误读成08:59)
@@ -564,11 +574,9 @@ public class DateUtil {
 						dateStr = addZero(dateStr, size, 18);
 						realDF = "HH:mm:ss.SSSSSSSSS";
 					} else {
-						if (size == 5) {
-							realDF = "HH:mm";
-						} else {
-							realDF = "HH:mm:ss";
-						}
+						// 按冒号数量判断时分/时分秒格式，用H/m/s兼容单位数小时、分钟、秒(如9:30、9:3:5，
+						// DateTimeFormatter的HH/mm/ss严格要求两位，SimpleDateFormat路径则两者均可)
+						realDF = (StringUtil.matchCnt(dateStr, ":") == 1) ? "H:m" : "H:m:s";
 					}
 					isTime = true;
 				} else {
@@ -638,7 +646,7 @@ public class DateUtil {
 			}
 			result = LocalDateTime.parse(dateStr, DateTimeFormatter.ofPattern(realDF));
 		} catch (Exception e) {
-			logger.error("按格式[{}]解析日期字符串[{}]失败", realDF, dateStr, e);
+			logger.error("failed to parse the date string:[{}] with the format:[{}]", realDF, dateStr, e);
 		}
 		// 结果为null，格式不为null,通过自动格式匹配模式，进行一次补偿处理
 		if (result == null && hasFmt) {
@@ -654,7 +662,7 @@ public class DateUtil {
 
 	public static LocalDateTime convertLocalDateTime(Object dt) {
 		if (dt == null) {
-			logger.warn("日期不能为空,请正确输入!");
+			logger.warn("the date can not be null, please input correctly!");
 			return null;
 		}
 		LocalDateTime result = null;
@@ -683,15 +691,16 @@ public class DateUtil {
 	}
 
 	/**
-	 * @todo 日期对象类型转换
-	 * @param dt
-	 * @param format
-	 * @param locale
-	 * @return
+	 * 日期对象类型转换
+	 * 
+	 * @param dt     日期对象，支持String、java.util.Date、LocalDate、LocalDateTime、ZonedDateTime、Number(13位视为毫秒值)等类型
+	 * @param format dt为字符串时的日期格式，为null时自动识别
+	 * @param locale 地区信息，为null时使用系统配置的默认区域
+	 * @return 转换后的java.util.Date对象，dt为null时返回null
 	 */
 	public static Date convertDateObject(Object dt, String format, Locale locale) {
 		if (dt == null) {
-			logger.warn("日期不能为空,请正确输入!");
+			logger.warn("the date can not be null, please input correctly!");
 			return null;
 		}
 		Date result = null;
@@ -732,13 +741,27 @@ public class DateUtil {
 	}
 
 	/**
-	 * @todo 格式化日期
-	 * @param dt
-	 * @param format
-	 * @return
+	 * 格式化日期
+	 * 
+	 * @param dt     日期对象或日期字符串，支持Date、LocalDate、LocalDateTime、ZonedDateTime等类型
+	 * @param format 目标格式，如yyyy-MM-dd
+	 *               HH:mm:ss；也支持YY、YYYY、MM、DD等简化格式，为null时抛出IllegalArgumentException
+	 * @return 格式化后的日期字符串，dt为null时返回null
 	 */
 	public static String formatDate(Object dt, String format) {
 		return formatDate(dt, format, null);
+	}
+
+	// update 2026-9-8 DateTimeFormatter不可变线程安全,按format+locale缓存避免每次解析
+	// 格式串(ofPattern解析开销显著,formatDate被SQL日志、格式化列等高频调用)
+	private static final java.util.concurrent.ConcurrentHashMap<String, DateTimeFormatter> FORMATTER_CACHE = new java.util.concurrent.ConcurrentHashMap<>();
+
+	private static DateTimeFormatter getFormatter(String format, Locale locale) {
+		String key = format;
+		if (locale != null) {
+			key = key.concat("|").concat(locale.toString());
+		}
+		return FORMATTER_CACHE.computeIfAbsent(key, k -> DateTimeFormatter.ofPattern(format, locale));
 	}
 
 	public static String formatDate(Object dt, String format, Locale locale) {
@@ -746,9 +769,9 @@ public class DateUtil {
 			return null;
 		}
 		if (format == null) {
-			throw new IllegalArgumentException("格式化日期指定的format 为null,请正确输入参数!");
+			throw new IllegalArgumentException("format for date formatting is null, please check!");
 		}
-		String fmtUpper = format.toUpperCase();
+		String fmtUpper = format.toUpperCase(Locale.ROOT);
 		if ("YY".equals(fmtUpper)) {
 			String year = Integer.toString(getYear(dt));
 			return year.substring(year.length() - 2);
@@ -769,17 +792,17 @@ public class DateUtil {
 		// locale为null时取sqltoy统一配置的默认区域(SqlToyConstants.defaultLocale未设置则跟随JVM默认区域)
 		Locale patternLocale = (locale == null) ? SqlToyConstants.getLocale() : locale;
 		if (dt instanceof LocalDateTime) {
-			return DateTimeFormatter.ofPattern(format, patternLocale).format((LocalDateTime) dt);
+			return getFormatter(format, patternLocale).format((LocalDateTime) dt);
 		} else if (dt instanceof OffsetDateTime) {
-			return DateTimeFormatter.ofPattern(format, patternLocale).format(((OffsetDateTime) dt).toLocalDateTime());
+			return getFormatter(format, patternLocale).format(((OffsetDateTime) dt).toLocalDateTime());
 		} else if (dt instanceof ZonedDateTime) {
-			return DateTimeFormatter.ofPattern(format, patternLocale).format(((ZonedDateTime) dt).toLocalDateTime());
+			return getFormatter(format, patternLocale).format(((ZonedDateTime) dt).toLocalDateTime());
 		} else if (dt instanceof LocalTime) {
-			return DateTimeFormatter.ofPattern(format, patternLocale).format((LocalTime) dt);
+			return getFormatter(format, patternLocale).format((LocalTime) dt);
 		} else if (dt instanceof LocalDate) {
-			return DateTimeFormatter.ofPattern(format, patternLocale).format((LocalDate) dt);
+			return getFormatter(format, patternLocale).format((LocalDate) dt);
 		} else if (dt instanceof Time) {
-			return DateTimeFormatter.ofPattern(format, patternLocale).format(((Time) dt).toLocalTime());
+			return getFormatter(format, patternLocale).format(((Time) dt).toLocalTime());
 		}
 		// 高精度时间用localDateTime、localTime
 		if (locale == null && (fmtUpper.endsWith("SSS") || fmtUpper.endsWith(".S"))) {
@@ -789,9 +812,9 @@ public class DateUtil {
 			}
 			// yyyy-MM-dd HH:mm:ss.SSS
 			if (fmtUpper.startsWith("YY")) {
-				return DateTimeFormatter.ofPattern(format, patternLocale).format(result);
+				return getFormatter(format, patternLocale).format(result);
 			} else if (fmtUpper.startsWith("HH")) {
-				return DateTimeFormatter.ofPattern(format, patternLocale).format(result.toLocalTime());
+				return getFormatter(format, patternLocale).format(result.toLocalTime());
 			}
 		}
 		// 低精度用SimpleDateFormat，兼容性强
@@ -801,12 +824,13 @@ public class DateUtil {
 	}
 
 	/**
-	 * @TODO 通过一个格式解析，再转化为另外一个格式
-	 * @param dt
-	 * @param format
-	 * @param targetFormat
-	 * @param locale
-	 * @return
+	 * 通过一个格式解析，再转化为另外一个格式
+	 * 
+	 * @param dt           日期对象或日期字符串
+	 * @param format       dt所使用的日期格式
+	 * @param targetFormat 转换输出的目标格式
+	 * @param locale       地区信息，为null时使用系统配置的默认区域
+	 * @return 按目标格式输出的日期字符串
 	 */
 	@Deprecated
 	public static String formatDate(Object dt, String format, String targetFormat, Locale locale) {
@@ -815,9 +839,10 @@ public class DateUtil {
 	}
 
 	/**
-	 * @todo 获取当前以sql.date的日期
-	 * @param date
-	 * @return
+	 * 获取当前以sql.date的日期
+	 * 
+	 * @param date 日期对象或日期字符串，为null时取当前日期
+	 * @return 对应的java.sql.Date对象(仅保留年月日)
 	 */
 	public static java.sql.Date getSqlDate(Object date) {
 		if (date == null) {
@@ -855,7 +880,8 @@ public class DateUtil {
 	}
 
 	/**
-	 * @todo 获取当前操作系统的时间
+	 * 获取当前操作系统的时间
+	 * 
 	 * @return 当前操作系统的时间
 	 */
 	public static Date getNowTime() {
@@ -908,7 +934,8 @@ public class DateUtil {
 	public static Date addMilliSecond(Object dt, long millisecond) {
 		Date result = convertDateObject(dt);
 		if (result == null) {
-			throw new IllegalArgumentException("addMilliSecond日期参数无法识别:" + dt + ",请检查日期格式!");
+			throw new IllegalArgumentException(
+					"addMilliSecond: unrecognized date value [" + dt + "], please check the date format!");
 		}
 		if (millisecond != 0) {
 			result.setTime(result.getTime() + millisecond);
@@ -955,7 +982,8 @@ public class DateUtil {
 		}
 		LocalDateTime dateTime = convertLocalDateTime(dateValue);
 		if (dateTime == null) {
-			throw new IllegalArgumentException("getYear日期参数无法识别:" + dateValue + ",请检查日期格式!");
+			throw new IllegalArgumentException(
+					"getYear: unrecognized date value [" + dateValue + "], please check the date format!");
 		}
 		return dateTime.getYear();
 	}
@@ -966,15 +994,16 @@ public class DateUtil {
 		}
 		LocalDateTime dateTime = convertLocalDateTime(dateValue);
 		if (dateTime == null) {
-			throw new IllegalArgumentException("getMonth日期参数无法识别:" + dateValue + ",请检查日期格式!");
+			throw new IllegalArgumentException(
+					"getMonth: unrecognized date value [" + dateValue + "], please check the date format!");
 		}
 		return dateTime.getMonthValue();
 	}
 
 	/**
 	 * @see getDayOfMonth(Object dateValue)
-	 * @param dateValue
-	 * @return
+	 * @param dateValue 日期对象或日期字符串，为null时取当前日期
+	 * @return 当月中的第几天(1~31)
 	 */
 	@Deprecated
 	public static int getDay(Object dateValue) {
@@ -982,9 +1011,10 @@ public class DateUtil {
 	}
 
 	/**
-	 * @TODO 获取当月中的第几天(1~31)
-	 * @param dateValue
-	 * @return
+	 * 获取当月中的第几天(1~31)
+	 * 
+	 * @param dateValue 日期对象或日期字符串，为null时取当前日期
+	 * @return 当月中的第几天，日期无法识别时抛出IllegalArgumentException
 	 */
 	public static int getDayOfMonth(Object dateValue) {
 		if (dateValue == null) {
@@ -992,15 +1022,17 @@ public class DateUtil {
 		}
 		LocalDateTime dateTime = convertLocalDateTime(dateValue);
 		if (dateTime == null) {
-			throw new IllegalArgumentException("getDayOfMonth日期参数无法识别:" + dateValue + ",请检查日期格式!");
+			throw new IllegalArgumentException(
+					"getDayOfMonth: unrecognized date value [" + dateValue + "], please check the date format!");
 		}
 		return dateTime.getDayOfMonth();
 	}
 
 	/**
-	 * @todo 获取指定日期是星期几(from 1 (Monday) to 7 (Sunday))
-	 * @param dateValue
-	 * @return
+	 * 获取指定日期是星期几(from 1 (Monday) to 7 (Sunday))
+	 * 
+	 * @param dateValue 日期对象或日期字符串，为null时取当前日期
+	 * @return 星期几，1表示周一，7表示周日
 	 */
 	public static int getDayOfWeek(Object dateValue) {
 		if (dateValue == null) {
@@ -1008,15 +1040,17 @@ public class DateUtil {
 		}
 		LocalDateTime dateTime = convertLocalDateTime(dateValue);
 		if (dateTime == null) {
-			throw new IllegalArgumentException("getDayOfWeek日期参数无法识别:" + dateValue + ",请检查日期格式!");
+			throw new IllegalArgumentException(
+					"getDayOfWeek: unrecognized date value [" + dateValue + "], please check the date format!");
 		}
 		return dateTime.getDayOfWeek().getValue();
 	}
 
 	/**
-	 * @todo 获取给定日期所在年的第几周(周一为一周第一天，包含1月1日的那一周为第1周，返回值从1开始)
-	 * @param dateValue
-	 * @return
+	 * 获取给定日期所在年的第几周(周一为一周第一天，包含1月1日的那一周为第1周，返回值从1开始)
+	 * 
+	 * @param dateValue 日期对象或日期字符串，为null时取当前日期
+	 * @return 一年中的第几周
 	 */
 	public static int getWeekOfYear(Object dateValue) {
 		// 默认使用当前日期
@@ -1033,10 +1067,11 @@ public class DateUtil {
 	}
 
 	/**
-	 * @todo 获取相隔两个时间的周数
-	 * @param floorDate
-	 * @param goalDate
-	 * @return
+	 * 获取相隔两个时间的周数
+	 * 
+	 * @param floorDate 起始日期
+	 * @param goalDate  目标日期
+	 * @return 相隔的周数，保留1位小数(四舍五入)，goalDate晚于floorDate时为正数
 	 */
 	public static double getIntervalWeeks(Object floorDate, Object goalDate) {
 		BigDecimal result = BigDecimal.valueOf(getIntervalHours(floorDate, goalDate) / (7 * 24));
@@ -1044,42 +1079,45 @@ public class DateUtil {
 	}
 
 	/**
-	 * @todo <b>获取两时间间隔的月数</b>
-	 * @param floorDate
-	 * @param goalDate
-	 * @return
+	 * 获取两时间间隔的月数
+	 * 
+	 * @param floorDate 起始日期
+	 * @param goalDate  目标日期
+	 * @return 相隔的整月数，goalDate晚于floorDate时为正数，日期无法识别时抛出IllegalArgumentException
 	 */
 	public static int getIntervalMonths(Object floorDate, Object goalDate) {
 		LocalDateTime date1 = convertLocalDateTime(goalDate);
 		LocalDateTime date2 = convertLocalDateTime(floorDate);
 		if (date1 == null || date2 == null) {
-			throw new IllegalArgumentException(
-					"getIntervalMonths日期参数无法识别:floorDate=" + floorDate + ",goalDate=" + goalDate + ",请检查日期格式!");
+			throw new IllegalArgumentException("getIntervalMonths: unrecognized date value, floorDate=[" + floorDate
+					+ "], goalDate=[" + goalDate + "], please check the date format!");
 		}
 		return date1.getYear() * 12 + date1.getMonthValue() - date2.getYear() * 12 - date2.getMonthValue();
 	}
 
 	/**
-	 * @todo <b>获取两时间间隔的整数年数</b>
-	 * @param floorDate
-	 * @param goalDate
-	 * @return
+	 * 获取两时间间隔的整数年数
+	 * 
+	 * @param floorDate 起始日期
+	 * @param goalDate  目标日期
+	 * @return 相隔的整数年数，按年份差值计算(不足一年按0计)
 	 */
 	public static int getIntervalYears(Object floorDate, Object goalDate) {
 		LocalDateTime date1 = convertLocalDateTime(goalDate);
 		LocalDateTime date2 = convertLocalDateTime(floorDate);
 		if (date1 == null || date2 == null) {
-			throw new IllegalArgumentException(
-					"getIntervalYears日期参数无法识别:floorDate=" + floorDate + ",goalDate=" + goalDate + ",请检查日期格式!");
+			throw new IllegalArgumentException("getIntervalYears: unrecognized date value, floorDate=[" + floorDate
+					+ "], goalDate=[" + goalDate + "], please check the date format!");
 		}
 		return date1.getYear() - date2.getYear();
 	}
 
 	/**
-	 * @todo 获取两个时间间隔的天数
-	 * @param floorDate
-	 * @param goalDate
-	 * @return
+	 * 获取两个时间间隔的天数
+	 * 
+	 * @param floorDate 起始日期
+	 * @param goalDate  目标日期
+	 * @return 相隔的天数，goalDate晚于floorDate时为正数，任一日期解析失败返回0
 	 */
 	public static int getIntervalDays(Object floorDate, Object goalDate) {
 		LocalDate floor = asLocalDate(convertDateObject(floorDate));
@@ -1091,10 +1129,11 @@ public class DateUtil {
 	}
 
 	/**
-	 * @todo 获取两个时间间隔的小时
-	 * @param floorDate
-	 * @param goalDate
-	 * @return
+	 * 获取两个时间间隔的小时
+	 * 
+	 * @param floorDate 起始日期
+	 * @param goalDate  目标日期
+	 * @return 相隔的小时数，保留1位小数(四舍五入)
 	 */
 	public static double getIntervalHours(Object floorDate, Object goalDate) {
 		BigDecimal result = BigDecimal
@@ -1103,10 +1142,11 @@ public class DateUtil {
 	}
 
 	/**
-	 * @todo 获取两时间的间隔分钟
-	 * @param floorDate
-	 * @param goalDate
-	 * @return
+	 * 获取两时间的间隔分钟
+	 * 
+	 * @param floorDate 起始日期
+	 * @param goalDate  目标日期
+	 * @return 相隔的分钟数，保留1位小数(四舍五入)
 	 */
 	public static double getIntervalMinutes(Object floorDate, Object goalDate) {
 		BigDecimal result = BigDecimal
@@ -1115,35 +1155,38 @@ public class DateUtil {
 	}
 
 	/**
-	 * @todo 获取两时间间隔的秒数
-	 * @param floorDate
-	 * @param goalDate
-	 * @return
+	 * 获取两时间间隔的秒数
+	 * 
+	 * @param floorDate 起始日期
+	 * @param goalDate  目标日期
+	 * @return 相隔的秒数
 	 */
 	public static double getIntervalSeconds(Object floorDate, Object goalDate) {
 		return Double.valueOf(getIntervalMillSeconds(floorDate, goalDate)) / (1000);
 	}
 
 	/**
-	 * @todo 获取两时间间隔的毫秒数
-	 * @param floorDate
-	 * @param goalDate
-	 * @return
+	 * 获取两时间间隔的毫秒数
+	 * 
+	 * @param floorDate 起始日期
+	 * @param goalDate  目标日期
+	 * @return 相隔的毫秒数(goalDate减floorDate)，日期无法识别时抛出IllegalArgumentException
 	 */
 	public static long getIntervalMillSeconds(Object floorDate, Object goalDate) {
 		Date date1 = convertDateObject(goalDate);
 		Date date2 = convertDateObject(floorDate);
 		if (date1 == null || date2 == null) {
-			throw new IllegalArgumentException(
-					"getIntervalMillSeconds日期参数无法识别:floorDate=" + floorDate + ",goalDate=" + goalDate + ",请检查日期格式!");
+			throw new IllegalArgumentException("getIntervalMillSeconds: unrecognized date value, floorDate=["
+					+ floorDate + "], goalDate=[" + goalDate + "], please check the date format!");
 		}
 		return date1.getTime() - date2.getTime();
 	}
 
 	/**
-	 * @todo 将日期转化为中文格式
-	 * @param dateValue
-	 * @return
+	 * 将日期转化为中文格式
+	 * 
+	 * @param dateValue 日期对象或日期字符串，字符串输入时按其精度决定输出粒度(如"2024-01"只输出年月)
+	 * @return 中文格式日期字符串，如"2024年1月5日 10时30分0秒"，dateValue为null时返回null
 	 */
 	public static String format2China(Object dateValue) {
 		Date date = convertDateObject(dateValue);
@@ -1209,10 +1252,11 @@ public class DateUtil {
 	}
 
 	/**
-	 * @todo 转换中文日期为指定格式的英文日期形式
-	 * @param chinaDate
-	 * @param format
-	 * @return
+	 * 转换中文日期为指定格式的英文日期形式
+	 * 
+	 * @param chinaDate 中文日期字符串，如"二〇二四年一月五日"、"二〇二四年一月五日十点三十分"
+	 * @param format    目标日期格式，为null时返回转换后的英文日期字符串(横杠/冒号分隔)
+	 * @return 转换后的英文格式日期字符串，chinaDate为空白时返回null
 	 */
 	public static String parseChinaDate(String chinaDate, String format) {
 		if (StringUtil.isBlank(chinaDate)) {
@@ -1261,18 +1305,20 @@ public class DateUtil {
 	}
 
 	/**
-	 * @todo 转换中文日期为英文格式
-	 * @param chinaDate
-	 * @return
+	 * 转换中文日期为英文格式
+	 * 
+	 * @param chinaDate 中文日期字符串，如"二〇二四年一月五日"
+	 * @return 转换后的yyyy-MM-dd形式日期字符串，chinaDate为空白时返回null
 	 */
 	public static String parseChinaDate(String chinaDate) {
 		return parseChinaDate(chinaDate, null);
 	}
 
 	/**
-	 * @todo 获取月份的第一天
-	 * @param objectDate
-	 * @return
+	 * 获取月份的第一天
+	 * 
+	 * @param objectDate 日期对象或日期字符串
+	 * @return 当月第一天的日期(0时0分0秒)，objectDate为null时返回null
 	 */
 	public static Date firstDayOfMonth(Object objectDate) {
 		Date date = convertDateObject(objectDate);
@@ -1284,9 +1330,10 @@ public class DateUtil {
 	}
 
 	/**
-	 * @todo 获取月份的最后一天
-	 * @param objectDate
-	 * @return
+	 * 获取月份的最后一天
+	 * 
+	 * @param objectDate 日期对象或日期字符串
+	 * @return 当月最后一天的日期(0时0分0秒)，objectDate为null时返回null
 	 */
 	public static Date lastDayOfMonth(Object objectDate) {
 		Date date = convertDateObject(objectDate);
@@ -1358,10 +1405,12 @@ public class DateUtil {
 	}
 
 	/**
-	 * @TODO 处理英文日期字符串，转化为日期类型
-	 * @param dateStr
-	 * @param locale
-	 * @return
+	 * 处理英文日期字符串，转化为日期类型
+	 * 
+	 * @param dateStr 英文日期字符串，如"Aug 18 2026"、"Mon Aug 18 10:30:00 CST
+	 *                2026"、"18-Aug-2026"
+	 * @param locale  地区信息，为null时按Locale.ENGLISH解析
+	 * @return 解析后的日期对象，所有候选格式均解析失败返回null
 	 */
 	private static Date parseEnglishDate(String dateStr, Locale locale) {
 		// 统一格式,替换逗号、点号和横杠为空白(支持18-Aug-2026、Aug-18-2026等横杠分隔形式)
@@ -1463,9 +1512,10 @@ public class DateUtil {
 	}
 
 	/**
-	 * @TODO 判断是否有纳秒，并处理优化实际精度
-	 * @param nanoTime
-	 * @return
+	 * 判断是否有纳秒，并处理优化实际精度
+	 * 
+	 * @param nanoTime 纳秒部分数值(0~999999999)
+	 * @return 以点号开头的小数部分字符串；纳秒为0返回空字符串，后6位为0时保留3位毫秒，后3位为0时保留6位微秒
 	 */
 	public static String processNano(int nanoTime) {
 		// 纳秒为零，则到秒级
@@ -1490,10 +1540,10 @@ public class DateUtil {
 	/**
 	 * 快速补充零
 	 *
-	 * @param timeStr
-	 * @param size
-	 * @param toLength
-	 * @return
+	 * @param timeStr  原始数字字符串
+	 * @param size     当前字符串长度
+	 * @param toLength 目标长度
+	 * @return 末尾补零至目标长度的字符串，长度已不小于目标长度时原样返回
 	 */
 	private static String addZero(String timeStr, int size, int toLength) {
 		int addSize = toLength - size;
@@ -1510,8 +1560,8 @@ public class DateUtil {
 	/**
 	 * 给日期月和日一位数字补零
 	 * 
-	 * @param dateStr
-	 * @return
+	 * @param dateStr 日期时间字符串，日期分隔符可为-、/、.
+	 * @return 月和日补零后的字符串，如"2024/1/5"补为"2024/01/05"
 	 */
 	private static String padDateString(String dateStr) {
 		Matcher matcher = DATE_PATTERN.matcher(dateStr);

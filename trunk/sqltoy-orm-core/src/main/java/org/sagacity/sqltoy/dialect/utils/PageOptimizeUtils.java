@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.dialect.utils;
 
 import java.util.LinkedHashMap;
@@ -19,9 +16,9 @@ import org.sagacity.sqltoy.utils.CollectionUtil;
  * @project sagacity-sqltoy
  * @description 提供分页优化缓存实现，记录相同查询条件的总记录数,采用FIFO算法保留符合活跃时间和记录规模
  * @author zhongxuchen
- * @version v1.0,Date:2016年11月24日
- * @modify 2020-8-4 修改原本只支持xml中必须有id的sql才能缓存的策略,便于今后直接从代码中实现分页优化功能
- * @modify 2020-8-13 修改失效策略，在登记时只控制aliveMax，在获取时判定aliveSeconds清除过期的
+ * @version v1.0,Date:2016-11-24
+ * @modify Date:2020-08-04 修改原本只支持xml中必须有id的sql才能缓存的策略,便于今后直接从代码中实现分页优化功能
+ * @modify Date:2020-08-13 修改失效策略，在登记时只控制aliveMax，在获取时判定aliveSeconds清除过期的
  */
 public class PageOptimizeUtils {
 	private static final int INITIAL_CAPACITY = 128;
@@ -33,7 +30,8 @@ public class PageOptimizeUtils {
 			INITIAL_CAPACITY, LOAD_FACTOR);
 
 	/**
-	 * @todo 根据查询条件组成key
+	 * 根据查询条件组成key
+	 * 
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param queryExecutor
@@ -115,7 +113,8 @@ public class PageOptimizeUtils {
 	}
 
 	/**
-	 * @TODO 从缓存中获取具体sql相应条件的查询总记录数值
+	 * 从缓存中获取具体sql相应条件的查询总记录数值
+	 * 
 	 * @param sqlToyConfig
 	 * @param pageOptimize
 	 * @param conditionsKey
@@ -130,10 +129,11 @@ public class PageOptimizeUtils {
 		}
 		synchronized (map) {
 			// 为null表示条件初次查询或已经全部过期移除
-			if (!map.containsKey(conditionsKey)) {
+			// update 2026-9-8 containsKey+get双查合并为一次get
+			Object[] values = map.get(conditionsKey);
+			if (values == null) {
 				return null;
 			}
-			Object[] values = map.get(conditionsKey);
 			// 失效时间
 			long expireTime = (Long) values[0];
 			// 总记录数
@@ -151,7 +151,8 @@ public class PageOptimizeUtils {
 	}
 
 	/**
-	 * @TODO 将具体条件查询的记录数按照sql id放入缓存
+	 * 将具体条件查询的记录数按照sql id放入缓存
+	 * 
 	 * @param sqlToyConfig
 	 * @param pageOptimize
 	 * @param conditionsKey
@@ -183,7 +184,8 @@ public class PageOptimizeUtils {
 	}
 
 	/**
-	 * @todo 清除掉sql对应的分页count缓存
+	 * 清除掉sql对应的分页count缓存
+	 * 
 	 * @param sqlId
 	 */
 	public static void remove(String sqlId) {

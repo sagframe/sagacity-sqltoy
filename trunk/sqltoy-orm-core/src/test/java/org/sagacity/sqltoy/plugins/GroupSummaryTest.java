@@ -15,6 +15,9 @@ import org.sagacity.sqltoy.utils.StringUtil;
 
 import com.alibaba.fastjson2.JSON;
 
+/**
+ * 分组汇总(Summary)功能的单元测试
+ */
 public class GroupSummaryTest {
 	@Test
 	public void testSummary() {

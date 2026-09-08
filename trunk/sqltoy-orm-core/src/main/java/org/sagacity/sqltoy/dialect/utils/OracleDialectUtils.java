@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.dialect.utils;
 
 import java.io.Serializable;
@@ -11,6 +8,7 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import org.sagacity.sqltoy.SqlToyConstants;
@@ -39,16 +37,17 @@ import org.sagacity.sqltoy.utils.StringUtil;
 import oracle.jdbc.OracleTypes;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 提供基于oracle广泛应用的数据库的一些通用的逻辑处理,避免大量重复代码
  * @author zhongxuchen
- * @version v1.0,Date:2014年12月26日
+ * @version v1.0,Date:2014-12-26
  */
 @SuppressWarnings("rawtypes")
 public class OracleDialectUtils {
 
 	/**
-	 * @todo 加载单个对象
+	 * 加载单个对象
+	 * 
 	 * @param sqlToyContext
 	 * @param entity
 	 * @param cascadeTypes
@@ -74,7 +73,8 @@ public class OracleDialectUtils {
 	}
 
 	/**
-	 * @todo oracle loadAll 实现
+	 * oracle loadAll 实现
+	 * 
 	 * @param sqlToyContext
 	 * @param entities
 	 * @param onlySubTables
@@ -98,7 +98,8 @@ public class OracleDialectUtils {
 	}
 
 	/**
-	 * @TODO 分页查询
+	 * 分页查询
+	 * 
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param queryExecutor
@@ -162,7 +163,8 @@ public class OracleDialectUtils {
 	}
 
 	/**
-	 * @todo 实现top记录查询
+	 * 实现top记录查询
+	 * 
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param queryExecutor
@@ -221,7 +223,8 @@ public class OracleDialectUtils {
 	}
 
 	/**
-	 * @todo 取随机记录
+	 * 取随机记录
+	 * 
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param queryExecutor
@@ -288,8 +291,9 @@ public class OracleDialectUtils {
 	}
 
 	/**
-	 * @todo <b>oracle 存储过程调用，inParam需放在outParam前面(oracle存储过程返回结果必须用out
-	 *       参数返回，返回结果集则out 参数类型必须是OracleTypes.CURSOR,相对其他数据库比较特殊 )</b>
+	 * oracle 存储过程调用，inParam需放在outParam前面(oracle存储过程返回结果必须用out 参数返回，返回结果集则out
+	 * 参数类型必须是OracleTypes.CURSOR,相对其他数据库比较特殊 )</b>
+	 * 
 	 * @param sqlToyConfig
 	 * @param sqlToyContext
 	 * @param storeSql
@@ -448,7 +452,7 @@ public class OracleDialectUtils {
 								comment = rs.getString("COMMENTS");
 								colName = rs.getString("COLUMN_NAME");
 								if (colName != null && comment != null) {
-									colComments.put(colName.toUpperCase(), comment);
+									colComments.put(colName.toUpperCase(Locale.ROOT), comment);
 								}
 							}
 							this.setResult(colComments);
@@ -463,7 +467,7 @@ public class OracleDialectUtils {
 					}
 				});
 		for (ColumnMeta col : tableColumns) {
-			col.setComments(colMap.get(col.getColName().toUpperCase()));
+			col.setComments(colMap.get(col.getColName().toUpperCase(Locale.ROOT)));
 		}
 		return tableColumns;
 	}
@@ -516,7 +520,8 @@ public class OracleDialectUtils {
 	}
 
 	/**
-	 * @TODO 主键策略是identity或sequence时，主键值允许不由数据库内部自动产生，可人工赋值
+	 * 主键策略是identity或sequence时，主键值允许不由数据库内部自动产生，可人工赋值
+	 * 
 	 * @param pkStrategy
 	 * @return
 	 */

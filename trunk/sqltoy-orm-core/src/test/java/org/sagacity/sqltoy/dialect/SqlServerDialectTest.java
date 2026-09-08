@@ -13,6 +13,7 @@ import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.NotGeneratedColMeta;
 import org.sagacity.sqltoy.config.model.PKStrategy;
+import org.sagacity.sqltoy.dialect.utils.DialectExtUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.dialect.utils.SqlServerDialectUtils;
 import org.sagacity.sqltoy.model.JdbcTypes;
@@ -20,6 +21,9 @@ import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.StringUtil;
 
+/**
+ * SqlServer 方言相关逻辑的单元测试
+ */
 public class SqlServerDialectTest {
 	private static final Pattern ORDER_BY = Pattern.compile("(?i)\\Worder\\s*by\\W");
 
@@ -163,12 +167,13 @@ public class SqlServerDialectTest {
 
 	/**
 	 * timestamp(rowversion)列应从merge using select中排除,保证占位符数量与实际绑定参数(绑定时跳过rowversion)一致
+	 * (update 2026-9-7 统一由DialectUtils.getSaveOrUpdateSql生成,rowversion排除按dbType=sqlserver门控)
 	 */
 	@Test
 	public void testSaveOrUpdateSql_rowversionExcluded() {
 		EntityMeta meta = buildEntityMeta("t_foo_rv", true, false, true);
-		String sql = SqlServerDialectUtils.getSaveOrUpdateSql(null, DBType.SQLSERVER, meta, PKStrategy.IDENTITY, null,
-				null, "isnull", "@mySeqVariable", false);
+		String sql = DialectUtils.getSaveOrUpdateSql(null, null, DBType.SQLSERVER, meta, PKStrategy.IDENTITY, null,
+				null, "isnull", "@mySeqVariable", false, null);
 		String lowerSql = sql.toLowerCase();
 		assertTrue(!lowerSql.contains("? as ver"), "rowversion column should be excluded from using select, got: " + sql);
 		// name、id两列参与using select(identity且不允许手工赋值时insert部分省略id列)
@@ -177,13 +182,14 @@ public class SqlServerDialectTest {
 	}
 
 	/**
-	 * geometry/vector类型列在using select子查询中应显式cast,与通用DialectUtils.getSaveOrUpdateSql行为一致
+	 * geometry类型列在using select子查询中应显式cast(update 2026-9-7 统一由DialectUtils.getSaveOrUpdateSql生成);
+	 * vector列按实测结论使用裸?(cast(? as VECTOR)缺维度报错)
 	 */
 	@Test
 	public void testSaveOrUpdateSql_geometryCast() {
 		EntityMeta meta = buildEntityMeta("t_foo_geo", false, true, true);
-		String sql = SqlServerDialectUtils.getSaveOrUpdateSql(null, DBType.SQLSERVER, meta, PKStrategy.ASSIGN, null,
-				null, "isnull", "@mySeqVariable", true);
+		String sql = DialectUtils.getSaveOrUpdateSql(null, null, DBType.SQLSERVER, meta, PKStrategy.ASSIGN, null,
+				null, "isnull", "@mySeqVariable", true, null);
 		String lowerSql = sql.toLowerCase();
 		assertTrue(lowerSql.contains("cast(? as geometry)"), "geometry column should be cast, got: " + sql);
 		assertEquals(3, countPlaceholders(sql), "placeholder count should match bindable params(name,geo,id), got: " + sql);
@@ -191,15 +197,16 @@ public class SqlServerDialectTest {
 	}
 
 	/**
-	 * 无主键实体退化成insert语句,rowversion列不参与(insert语句与绑定参数一致,修复前参数数量多出rowversion导致异常)
+	 * 无主键实体退化成insert语句(update 2026-9-7 统一走DialectExtUtils.generateInsertSql,rowversion排除已下沉),
+	 * rowversion列不参与(insert语句与绑定参数一致,修复前参数数量多出rowversion导致异常)
 	 */
 	@Test
 	public void testSaveOrUpdateSql_noPkRowversionConsistent() {
 		EntityMeta meta = buildEntityMeta("t_foo_nopk", true, false, false);
-		String sql = SqlServerDialectUtils.getSaveOrUpdateSql(null, DBType.SQLSERVER, meta, null, null, null, "isnull",
-				"@mySeqVariable", true);
+		String sql = DialectUtils.getSaveOrUpdateSql(null, null, DBType.SQLSERVER, meta, null, null, null, "isnull",
+				"@mySeqVariable", true, null);
 		String lowerSql = sql.toLowerCase();
-		assertTrue(lowerSql.startsWith(" insert into"), "no-pk entity should degrade to insert sql, got: " + sql);
+		assertTrue(lowerSql.startsWith("insert into"), "no-pk entity should degrade to insert sql, got: " + sql);
 		assertTrue(!lowerSql.contains("ver"), "rowversion column should not appear in insert sql, got: " + sql);
 		assertEquals(1, countPlaceholders(sql), "placeholder count should match bindable params(name), got: " + sql);
 		System.err.println("testSaveOrUpdateSql_noPkRowversionConsistent => " + sql);
@@ -207,12 +214,13 @@ public class SqlServerDialectTest {
 
 	/**
 	 * saveAllIgnoreExist的merge语句同样排除rowversion列并支持geometry cast(绑定走batchUpdateForPOJO本就跳过rowversion参数)
+	 * (update 2026-9-7 统一由DialectExtUtils.mergeIgnore生成)
 	 */
 	@Test
 	public void testSaveIgnoreExistSql_rowversionExcludedAndCast() {
 		EntityMeta meta = buildEntityMeta("t_foo_ig", true, true, true);
-		String sql = SqlServerDialectUtils.getSaveIgnoreExistSql(null, DBType.SQLSERVER, meta, PKStrategy.ASSIGN, null,
-				"isnull", "@mySeqVariable", true);
+		String sql = DialectExtUtils.mergeIgnore(null, DBType.SQLSERVER, meta, PKStrategy.ASSIGN, null, "isnull",
+				"@mySeqVariable", true, null);
 		String lowerSql = sql.toLowerCase();
 		assertTrue(!lowerSql.contains("? as ver"), "rowversion column should be excluded from using select, got: " + sql);
 		assertTrue(lowerSql.contains("cast(? as geometry)"), "geometry column should be cast, got: " + sql);
@@ -241,8 +249,8 @@ public class SqlServerDialectTest {
 		notGenerated.setFieldsArray(fieldsArray);
 		notGenerated.setRejectIdFieldArray(rejectIdFields);
 		meta.setNotGeneratedColMeta(notGenerated);
-		String sql = SqlServerDialectUtils.getSaveIgnoreExistSql(null, DBType.SQLSERVER, meta, PKStrategy.ASSIGN,
-				"t_foo_rvfirst", "isnull", "@mySeqVariable", true);
+		String sql = DialectExtUtils.mergeIgnore(null, DBType.SQLSERVER, meta, PKStrategy.ASSIGN, null, "isnull",
+				"@mySeqVariable", true, "t_foo_rvfirst");
 		String lowerSql = sql.toLowerCase();
 		// 传tableName参数同时避免与其它用例命中同一个静态sql缓存key(缓存key由class+tableName+dbType+策略构成)
 		assertTrue(lowerSql.contains("insert into t_foo_rvfirst") || lowerSql.contains("merge into t_foo_rvfirst"),

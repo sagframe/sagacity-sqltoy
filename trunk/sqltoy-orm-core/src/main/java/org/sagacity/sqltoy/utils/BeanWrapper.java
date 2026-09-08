@@ -10,7 +10,7 @@ import java.util.List;
  * @project sagacity-sqltoy
  * @description 用来批量设置集合中对象的属性值(jdk8 流式操作之后该类意义已经不大)
  * @author zhongxuchen
- * @version v1.0,Date:2012-8-17
+ * @version v1.0,Date:2012-08-17
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class BeanWrapper {
@@ -30,7 +30,8 @@ public class BeanWrapper {
 	}
 
 	/**
-	 * @todo 构造函数传递需要设置的参数名称
+	 * 构造函数传递需要设置的参数名称
+	 * 
 	 * @param names
 	 */
 	public BeanWrapper names(String... names) {
@@ -39,7 +40,8 @@ public class BeanWrapper {
 	}
 
 	/**
-	 * @todo 用于将集合中单个属性值提取出来以数组返回，一般用于sql in 查询提取条件
+	 * 用于将集合中单个属性值提取出来以数组返回，一般用于sql in 查询提取条件
+	 * 
 	 * @param dataSet
 	 * @return
 	 * @throws RuntimeException
@@ -57,7 +59,8 @@ public class BeanWrapper {
 	}
 
 	/**
-	 * @todo 传递参数名称对应的值
+	 * 传递参数名称对应的值
+	 * 
 	 * @param paramsValue
 	 * @return
 	 */
@@ -67,7 +70,8 @@ public class BeanWrapper {
 	}
 
 	/**
-	 * @todo 批量修改集合中对象的属性值
+	 * 批量修改集合中对象的属性值
+	 * 
 	 * @param dataSet
 	 * @return
 	 * @throws RuntimeException
@@ -80,7 +84,8 @@ public class BeanWrapper {
 	}
 
 	/**
-	 * @todo 根据类型按照values长度构造全新的对象集合
+	 * 根据类型按照values长度构造全新的对象集合
+	 * 
 	 * @param type
 	 * @return
 	 * @throws RuntimeException
@@ -99,7 +104,8 @@ public class BeanWrapper {
 	}
 
 	/**
-	 * @todo 设置单个对象属性值
+	 * 设置单个对象属性值
+	 * 
 	 * @param serializable
 	 * @return
 	 * @throws RuntimeException

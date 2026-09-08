@@ -10,6 +10,9 @@ import lombok.experimental.Accessors;
 
 @Data
 @Accessors(chain = true)
+/**
+ * 主子表级联演示实体A2
+ */
 public class A2 implements Serializable {
 	private int intNum;
 	private Integer integerNum;

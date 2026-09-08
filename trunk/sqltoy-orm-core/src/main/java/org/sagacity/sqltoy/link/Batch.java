@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.link;
 
 import java.util.List;
@@ -18,13 +15,10 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @project sagacity-sqltoy
  * @description 批量执行
  * @author zhongxuchen
- * @version v1.0,Date:2017年10月24日
+ * @version v1.0,Date:2017-10-24
  */
 public class Batch extends BaseLink {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -3564526241047940595L;
 
 	/**
@@ -58,8 +52,8 @@ public class Batch extends BaseLink {
 	private ParallelConfig parallelConfig;
 
 	/**
-	 * @param sqlToyContext
-	 * @param dataSource
+	 * @param sqlToyContext sqltoy全局上下文对象
+	 * @param dataSource    批量操作绑定的数据源，null表示使用默认数据源
 	 */
 	public Batch(SqlToyContext sqlToyContext, DataSource dataSource) {
 		super(sqlToyContext, dataSource);
@@ -99,8 +93,8 @@ public class Batch extends BaseLink {
 	/**
 	 * 提供插入记录的反调处理，目前意义不大，极少使用
 	 * 
-	 * @param insertCallhandler
-	 * @return
+	 * @param insertCallhandler 插入记录的回调处理器，批量插入每条记录后通过其回做处理
+	 * @return 当前Batch对象，支持链式调用
 	 */
 	public Batch insertHandler(InsertRowCallbackHandler insertCallhandler) {
 		this.insertCallhandler = insertCallhandler;

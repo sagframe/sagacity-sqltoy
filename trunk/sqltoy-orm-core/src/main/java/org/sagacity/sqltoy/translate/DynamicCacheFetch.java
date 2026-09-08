@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.translate;
 
 import java.util.Map;
@@ -18,8 +15,8 @@ import org.sagacity.sqltoy.integration.AppContext;
  *              keep-alive="3600" dynamic-cache="true" dynamic-cache-maxSize=
  *              "100000"/></li>
  * @author zhongxuchen
- * @version v1.0, Date:2024年1月18日
- * @modify 2024年1月18日,修改说明
+ * @version v1.0,Date:2024-01-18
+ * @modify Date:2024-01-18,修改说明
  */
 public interface DynamicCacheFetch {
 	/**
@@ -53,7 +50,8 @@ public interface DynamicCacheFetch {
 	// 4、参见：org.sagacity.sqltoy.utils.TranslateUtils
 
 	/**
-	 * @TODO 取单个值的缓存数据
+	 * 取单个值的缓存数据
+	 * 
 	 * @param cacheName
 	 * @param cacheType  类似数据字典的分组(使用缓存的地方传递<translate cache="skuDict" cache-type=
 	 *                   "clothes">) 根据情况使用(非分组场景则为null)
@@ -65,7 +63,8 @@ public interface DynamicCacheFetch {
 	public Object[] getCache(String cacheName, String cacheType, String sid, String[] properties, String key);
 
 	/**
-	 * @TODO 获取多个key的数据(5.6.67版本实现，采取批量查询模式，减少io次数)
+	 * 获取多个key的数据(5.6.67版本实现，采取批量查询模式，减少io次数)
+	 * 
 	 * @param cacheName
 	 * @param cacheType  类似数据字典的分组(根据情况使用(非分组场景则为null))
 	 * @param sid        缓存定义中的sid便于给接口实现提供辅助标记(保留标记,一般为null可忽略)

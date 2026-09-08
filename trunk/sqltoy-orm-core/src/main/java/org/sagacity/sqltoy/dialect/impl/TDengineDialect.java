@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.dialect.impl;
 
 import java.io.Serializable;
@@ -26,8 +23,8 @@ import org.slf4j.LoggerFactory;
  * @project sagacity-sqltoy
  * @description TDengine Iot物联网时序数据库支持(待实现)
  * @author zhongxuchen
- * @version v1.0, Date:2022年9月13日
- * @modify 2022年9月13日,修改说明
+ * @version v1.0,Date:2022-09-13
+ * @modify Date:2022-09-13,修改说明
  */
 @SuppressWarnings({ "rawtypes" })
 public class TDengineDialect extends DefaultDialect {

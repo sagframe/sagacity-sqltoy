@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -19,7 +20,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @project sagacity-sqltoy
  * @description SqlLoop增强,采用参数非拼接模式，防止sql注入
  * @author zhongxuchen
- * @version v1.0, Date:2025-5-18
+ * @version v1.0,Date:2025-05-18
  */
 public class SecureSqlLoop extends AbstractMacro {
 	/**
@@ -95,13 +96,13 @@ public class SecureSqlLoop extends AbstractMacro {
 		// 提取循环体内的参数对应的值
 		List<String> keys = new ArrayList<String>();
 		List<Object[]> regParamValues = new ArrayList<Object[]>();
-		String lowContent = loopContent.toLowerCase();
+		String lowContent = loopContent.toLowerCase(Locale.ROOT);
 		String key;
 		Iterator<String> keyEnums = realKeyValuesMap.keySet().iterator();
 		int index = 0;
 		String keyNamePrefix = ":sqlToyLoopAsKey_";
 		while (keyEnums.hasNext()) {
-			key = keyEnums.next().toLowerCase();
+			key = keyEnums.next().toLowerCase(Locale.ROOT);
 			// 统一标准为paramName[i]模式
 			if (lowContent.contains(":" + key + "[i]") || lowContent.contains(":" + key + "[index]")) {
 				keys.add(key);

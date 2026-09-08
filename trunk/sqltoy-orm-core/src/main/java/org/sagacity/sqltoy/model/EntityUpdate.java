@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
@@ -13,13 +10,10 @@ import org.sagacity.sqltoy.model.inner.EntityUpdateExtend;
 /**
  * @description 提供给代码中组织sql进行数据库update操作
  * @author zhongxuchen
- * @version v1.0,Date:2020-5-15
+ * @version v1.0,Date:2020-05-15
  */
 public class EntityUpdate implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -6476698994760985087L;
 
 	public static EntityUpdate create() {
@@ -37,7 +31,8 @@ public class EntityUpdate implements Serializable {
 	}
 
 	/**
-	 * @TODO 设置条件
+	 * 设置条件
+	 * 
 	 * @param where
 	 * @return
 	 */
@@ -47,7 +42,8 @@ public class EntityUpdate implements Serializable {
 	}
 
 	/**
-	 * @TODO 设置参数值为空白是否转null
+	 * 设置参数值为空白是否转null
+	 * 
 	 * @return
 	 */
 	public EntityUpdate blankToNull(Boolean blankToNull) {
@@ -80,7 +76,8 @@ public class EntityUpdate implements Serializable {
 	}
 
 	/**
-	 * @TODO 设置执行时上下文数据，如：在拦截器中取值用以业务判断
+	 * 设置执行时上下文数据，如：在拦截器中取值用以业务判断
+	 * 
 	 * @param contextData
 	 * @return
 	 */

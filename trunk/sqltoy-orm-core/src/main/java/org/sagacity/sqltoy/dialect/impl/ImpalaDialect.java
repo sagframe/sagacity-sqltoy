@@ -38,10 +38,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 提供基于impala对kudu的支持
  * @author zhongxuchen
- * @version v1.0,Date:2021-8-1
+ * @version v1.0,Date:2021-08-01
  */
 @SuppressWarnings({ "rawtypes" })
 public class ImpalaDialect implements Dialect {

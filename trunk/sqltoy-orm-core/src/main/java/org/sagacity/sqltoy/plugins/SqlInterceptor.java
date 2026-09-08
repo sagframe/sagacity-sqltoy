@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.plugins;
 
 import org.sagacity.sqltoy.SqlToyContext;
@@ -13,12 +10,13 @@ import org.sagacity.sqltoy.config.model.SqlToyResult;
  * @project sagacity-sqltoy
  * @description 提供sql拦截器，为一些特殊场景提供自行扩展能力,比如多租户场景下，自动扩展租户过滤条件避免越权
  * @author zhongxuchen
- * @version v1.0, Date:2022年9月8日
- * @modify 2022年9月8日,修改说明
+ * @version v1.0,Date:2022-09-08
+ * @modify Date:2022-09-08,修改说明
  */
 public interface SqlInterceptor {
 	/**
-	 * @TODO 对最终执行sql和sql参数进行处理
+	 * 对最终执行sql和sql参数进行处理
+	 * 
 	 * @param sqlToyContext 支持getEntityMeta(tableName)获取表信息
 	 * @param sqlToyConfig  传递原本的sql配置,可以通过获取paramNames判断是否sql中已经有相关参数
 	 * @param operateType   search\page\top\random\count 等，

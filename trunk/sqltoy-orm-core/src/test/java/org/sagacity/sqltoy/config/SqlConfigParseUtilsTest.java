@@ -31,6 +31,9 @@ import org.w3c.dom.NodeList;
 
 import com.alibaba.fastjson2.JSON;
 
+/**
+ * SqlConfigParseUtils 配置解析工具的单元测试
+ */
 public class SqlConfigParseUtilsTest {
 	private static DocumentBuilderFactory domFactory = DocumentBuilderFactory.newInstance();
 	/**

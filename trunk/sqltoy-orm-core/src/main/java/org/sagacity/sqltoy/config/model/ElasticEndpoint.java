@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.config.model;
 
 import java.io.Serializable;
@@ -10,6 +7,7 @@ import java.nio.charset.Charset;
 import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import javax.net.ssl.SSLContext;
 
@@ -35,14 +33,11 @@ import org.slf4j.LoggerFactory;
  * @project sagacity-sqltoy
  * @description es配置
  * @author zhongxuchen
- * @version v1.0,Date:2018年2月5日
+ * @version v1.0,Date:2018-02-05
  */
 public class ElasticEndpoint implements Serializable {
 	private final static Logger logger = LoggerFactory.getLogger(ElasticEndpoint.class);
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 7850474153384016421L;
 
 	private RestClient restClient;
@@ -60,7 +55,7 @@ public class ElasticEndpoint implements Serializable {
 				this.sqlPath = sqlPath;
 			}
 
-			String sqlLowPath = this.sqlPath.toLowerCase();
+			String sqlLowPath = this.sqlPath.toLowerCase(Locale.ROOT);
 			// elasticsearch原生sql路径为_sql
 			if (sqlLowPath.startsWith("_sql") || sqlLowPath.startsWith("_xpack/sql")) {
 				this.nativeSql = true;
@@ -158,7 +153,7 @@ public class ElasticEndpoint implements Serializable {
 			} else {
 				this.sqlPath = sqlPath;
 			}
-			String sqlLowPath = this.sqlPath.toLowerCase();
+			String sqlLowPath = this.sqlPath.toLowerCase(Locale.ROOT);
 			// elasticsearch原生sql路径为_sql
 			if (sqlLowPath.startsWith("_sql") || sqlLowPath.startsWith("_xpack/sql")) {
 				this.nativeSql = true;
@@ -292,7 +287,7 @@ public class ElasticEndpoint implements Serializable {
 			try {
 				restClient.close();
 			} catch (Exception e) {
-				logger.error("closeRestClient 方法执行异常", e);
+				logger.error("closeRestClient method execution failed", e);
 			}
 			restClient = null;
 		}
@@ -392,7 +387,7 @@ public class ElasticEndpoint implements Serializable {
 						hosts.add(new HttpHost(url.getHost(), url.getPort(), url.getProtocol()));
 					}
 				} catch (MalformedURLException e) {
-					logger.error("initRestClient 方法执行异常", e);
+					logger.error("initRestClient method execution failed", e);
 				}
 			}
 			if (!hosts.isEmpty()) {
@@ -449,7 +444,7 @@ public class ElasticEndpoint implements Serializable {
 					});
 					restClient = builder.build();
 				} catch (Exception e) {
-					logger.error("customizeHttpClient 方法执行异常", e);
+					logger.error("customizeHttpClient method execution failed", e);
 				}
 			}
 		}

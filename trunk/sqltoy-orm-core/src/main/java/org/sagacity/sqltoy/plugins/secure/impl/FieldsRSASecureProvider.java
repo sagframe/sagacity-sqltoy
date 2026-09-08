@@ -6,6 +6,7 @@ import java.security.interfaces.RSAPublicKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
+import java.util.Locale;
 
 import javax.crypto.Cipher;
 
@@ -45,7 +46,8 @@ public class FieldsRSASecureProvider implements FieldsSecureProvider {
 	public void initialize(String charset, String privateKeyStr, String publicKeyStr) throws Exception {
 		this.CHARSET = StringUtil.isBlank(charset) ? "UTF-8" : charset;
 		if (StringUtil.isBlank(privateKeyStr) || StringUtil.isBlank(publicKeyStr)) {
-			throw new IllegalArgumentException("请正确维护RSA的私钥和公钥!spring.sqltoy.securePrivateKey 和 securePublicKey");
+			throw new IllegalArgumentException(
+					"the RSA private key and public key are not correctly configured, please check spring.sqltoy.securePrivateKey and securePublicKey!");
 		}
 		KeyFactory keyFactory = KeyFactory.getInstance(ALGORITHM_RSA);
 		privateKey = (RSAPrivateKey) keyFactory.generatePrivate(getPrivateKeySpec(privateKeyStr));
@@ -53,17 +55,19 @@ public class FieldsRSASecureProvider implements FieldsSecureProvider {
 	}
 
 	/**
-	 * @TODO 获得公钥Key spec
+	 * 获得公钥Key spec
+	 * 
 	 * @param keyStr
 	 * @return
 	 * @throws Exception
 	 */
 	private X509EncodedKeySpec getPublicKeySpec(String keyStr) throws Exception {
 		byte[] keyBytes;
-		if (keyStr.toLowerCase().trim().startsWith("classpath:")) {
+		if (keyStr.toLowerCase(Locale.ROOT).trim().startsWith("classpath:")) {
 			String contents = FileUtil.readFileAsStr(keyStr, CHARSET);
 			if (StringUtil.isBlank(contents)) {
-				throw new Exception("publicKey文件内容读取失败,请检查配置文件是否编译到classes目录下!");
+				throw new Exception(
+						"Failed to read the publicKey file content, please check whether the configuration file is compiled into the classes directory!");
 			}
 			// FileUtil读取时增加了\r\n,这里去除
 			keyBytes = Base64.getDecoder().decode(contents.trim().replaceAll("\r|\n", ""));
@@ -74,17 +78,19 @@ public class FieldsRSASecureProvider implements FieldsSecureProvider {
 	}
 
 	/**
-	 * @TODO 获得私钥Key spec
+	 * 获得私钥Key spec
+	 * 
 	 * @param keyStr
 	 * @return
 	 * @throws Exception
 	 */
 	private PKCS8EncodedKeySpec getPrivateKeySpec(String keyStr) throws Exception {
 		byte[] keyBytes;
-		if (keyStr.toLowerCase().trim().startsWith("classpath:")) {
+		if (keyStr.toLowerCase(Locale.ROOT).trim().startsWith("classpath:")) {
 			String contents = FileUtil.readFileAsStr(keyStr, CHARSET);
 			if (StringUtil.isBlank(contents)) {
-				throw new Exception("privateKey文件内容读取失败,请检查配置文件是否编译到classes目录下!");
+				throw new Exception(
+						"Failed to read the privateKey file content, please check whether the configuration file is compiled into the classes directory!");
 			}
 			// FileUtil读取时增加了\r\n,这里去除
 			keyBytes = Base64.getDecoder().decode(contents.trim().replaceAll("\r|\n", ""));
@@ -104,7 +110,8 @@ public class FieldsRSASecureProvider implements FieldsSecureProvider {
 			return Base64.getEncoder().encodeToString(result);
 		} catch (Exception e) {
 			// 明文内容属于安全字段,只记录长度不可记录内容本身
-			logger.error("RSA字段加密失败(明文长度:{}),原因:{}", (contents == null) ? -1 : contents.length(), e.getMessage(), e);
+			logger.error("rsa field encrypt failed(plain text length:{}), reason:{}",
+					(contents == null) ? -1 : contents.length(), e.getMessage(), e);
 		}
 		return "";
 	}
@@ -117,8 +124,8 @@ public class FieldsRSASecureProvider implements FieldsSecureProvider {
 			byte[] result = cipher.doFinal(Base64.getDecoder().decode(secureContents));
 			return new String(result, CHARSET);
 		} catch (Exception e) {
-			logger.error("RSA字段解密失败(密文长度:{}),原因:{}", (secureContents == null) ? -1 : secureContents.length(),
-					e.getMessage(), e);
+			logger.error("rsa field decrypt failed(cipher text length:{}), reason:{}",
+					(secureContents == null) ? -1 : secureContents.length(), e.getMessage(), e);
 		}
 		return "";
 	}

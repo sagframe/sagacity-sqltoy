@@ -10,7 +10,10 @@ import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
 import org.sagacity.sqltoy.translate.model.TranslateConfigModel;
 
 /**
- * 基于Solon CacheServices做的TranslateCache * @author 夜の孤城 * @since 1.5
+ * 基于Solon CacheServices做的TranslateCache
+ *
+ * @author 夜の孤城
+ * @since 1.5
  */
 public class SolonTranslateCacheManager extends TranslateCacheManager {
 	static final String prefix = "sqltoy.translate:";

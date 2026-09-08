@@ -93,8 +93,8 @@ public class SqlUtilBatchUpdateNullTailTest {
 	@Test
 	public void batchUpdateForPOJOTailNull() throws Exception {
 		cleanTable();
-		Long cnt = SqlUtilsExt.batchUpdateForPOJO(null, INSERT_SQL,
-				rows(new Object[] { 1, "a" }, new Object[] { 2, "b" }, null), null, null, null, 100, null, conn, null);
+		Long cnt = SqlUtil.batchUpdateForPOJO(null, INSERT_SQL,
+				rows(new Object[] { 1, "a" }, new Object[] { 2, "b" }, null), null, 100, null, conn, null);
 		assertEquals(2, countRows());
 		assertEquals(2L, cnt.longValue());
 	}
@@ -102,8 +102,7 @@ public class SqlUtilBatchUpdateNullTailTest {
 	@Test
 	public void batchUpdateForPOJOAllNull() throws Exception {
 		cleanTable();
-		Long cnt = SqlUtilsExt.batchUpdateForPOJO(null, INSERT_SQL, rows(null, null), null, null, null, 100, null, conn,
-				null);
+		Long cnt = SqlUtil.batchUpdateForPOJO(null, INSERT_SQL, rows(null, null), null, 100, null, conn, null);
 		assertEquals(0, countRows());
 		assertEquals(0L, cnt.longValue());
 	}

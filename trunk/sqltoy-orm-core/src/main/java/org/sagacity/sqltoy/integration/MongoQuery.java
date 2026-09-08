@@ -11,19 +11,21 @@ import com.mongodb.client.MongoCollection;
  * @project sagacity-sqltoy
  * @description 提供mongo集成的接口实现，便于spring、solon、nutz等非spring框架扩展
  * @author zhongxuchen
- * @version v1.0, Date:2022年6月14日
- * @modify 2022年6月14日,修改说明
+ * @version v1.0,Date:2022-06-14
+ * @modify Date:2022-06-14,修改说明
  */
 public interface MongoQuery {
 	/**
-	 * @TODO 获取mongo collection (类似表)
+	 * 获取mongo collection (类似表)
+	 * 
 	 * @param collectionName
 	 * @return
 	 */
 	public MongoCollection<Document> getCollection(String collectionName);
 
 	/**
-	 * @TODO mongo json查询
+	 * mongo json查询
+	 * 
 	 * @param <T>
 	 * @param query
 	 * @param entityClass
@@ -35,7 +37,8 @@ public interface MongoQuery {
 	public <T> List<T> find(String query, Class<T> entityClass, String collectionName, Long skip, Integer limit);
 
 	/**
-	 * @TODO 查询记录量
+	 * 查询记录量
+	 * 
 	 * @param query
 	 * @param collectionName
 	 * @return

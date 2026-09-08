@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.config.model;
 
 import java.io.Serializable;
@@ -9,14 +6,11 @@ import java.io.Serializable;
  * @project sagacity-sqltoy
  * @description 分页优化配置
  * @author zhongxuchen
- * @version v1.0, Date:2020-8-4
- * @modify 2020-8-4,修改说明
+ * @version v1.0,Date:2020-08-04
+ * @modify Date:2020-08-04 修改说明
  */
 public class PageOptimize implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -4202934471963179375L;
 
 	/**
@@ -76,7 +70,8 @@ public class PageOptimize implements Serializable {
 	}
 
 	/**
-	 * @TODO 设置并行，即同时查询count和单页记录
+	 * 设置并行，即同时查询count和单页记录
+	 * 
 	 * @param parallel
 	 * @return
 	 */
@@ -119,7 +114,8 @@ public class PageOptimize implements Serializable {
 	}
 
 	/**
-	 * @TODO 设置并行最大等待时长(可以不用设置)
+	 * 设置并行最大等待时长(可以不用设置)
+	 * 
 	 * @param parallelMaxWaitSeconds
 	 * @return
 	 */

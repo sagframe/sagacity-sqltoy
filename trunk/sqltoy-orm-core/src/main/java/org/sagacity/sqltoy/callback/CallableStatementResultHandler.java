@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.callback;
 
 import java.sql.CallableStatement;
@@ -10,7 +7,7 @@ import java.sql.ResultSet;
  * @project sagacity-sqltoy
  * @description 数据库CallableStatement针对存储过程处理反调抽象类,用来处理result
  * @author zhongxuchen
- * @version v1.0,Date:2009-3-20
+ * @version v1.0,Date:2009-03-20
  */
 public abstract class CallableStatementResultHandler {
 	/**
@@ -19,7 +16,8 @@ public abstract class CallableStatementResultHandler {
 	private Object result;
 
 	/**
-	 * @TODO 存储过程执行
+	 * 存储过程执行
+	 * 
 	 * @param rowData 数据集合
 	 * @param pst     数据库pst
 	 * @param rs      ResultSet

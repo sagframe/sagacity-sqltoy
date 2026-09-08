@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.config.model;
 
 import java.io.Serializable;
@@ -9,14 +6,11 @@ import java.io.Serializable;
  * @project sagacity-sqltoy
  * @description 索引模型定义
  * @author zhongxuchen
- * @version v1.0, Date:2023年7月12日
- * @modify 2023年7月12日,修改说明
+ * @version v1.0,Date:2023-07-12
+ * @modify Date:2023-07-12,修改说明
  */
 public class IndexModel implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -5407446766236099957L;
 
 	/**

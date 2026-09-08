@@ -8,8 +8,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
  * @project sagacity-sqltoy
  * @description 提供spring框架下写dao的基类，如StaffInfoDao extends SpringDaoSupport
  * @author zhongxuchen
- * @version v1.0, Date:2022年6月14日
- * @modify 2022年6月14日,修改说明
+ * @version v1.0,Date:2022-06-14
+ * @modify Date:2022-06-14,修改说明
  */
 public class SpringDaoSupport extends SqlToyDaoSupport {
 	/**

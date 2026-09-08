@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.config.model;
 
 import java.io.Serializable;
@@ -9,14 +6,11 @@ import java.io.Serializable;
  * @project sagacity-sqltoy
  * @description sql执行日志模型
  * @author zhongxuchen
- * @version v1.0, Date:2020-9-25
- * @modify 2020-9-25,修改说明
+ * @version v1.0,Date:2020-09-25
+ * @modify Date:2020-09-25 修改说明
  */
 public class SqlExecuteLog implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 9086562500060758958L;
 
 	/**
@@ -39,9 +33,6 @@ public class SqlExecuteLog implements Serializable {
 	 */
 	private Object[] args;
 
-	/**
-	 * 
-	 */
 	public SqlExecuteLog(int type, String topic, String content, Object[] args) {
 		this.type = type;
 		this.topic = topic;

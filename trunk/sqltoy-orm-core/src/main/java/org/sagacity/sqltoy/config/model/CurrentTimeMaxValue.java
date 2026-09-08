@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.config.model;
 
 import java.io.Serializable;
@@ -9,13 +6,10 @@ import java.io.Serializable;
  * @project sagacity-sqltoy
  * @description 封装当前毫秒下的计数
  * @author zhongxuchen
- * @version v1.0,Date:2022-6-23
+ * @version v1.0,Date:2022-06-23
  */
 public class CurrentTimeMaxValue implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -7476828694163555224L;
 
 	/**

@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.plugins.sharding;
 
 import java.io.Serializable;
@@ -36,8 +33,8 @@ import org.slf4j.LoggerFactory;
  * @project sagacity-sqltoy
  * @description 提取sharding对应的表和对应的DataSource
  * @author zhongxuchen
- * @version v1.0,Date:2014年12月7日
- * @modify Date:2016-9-7 {修复matchReplace方法,解决因表名大小写未匹配无法替换表名错误}
+ * @version v1.0,Date:2014-12-07
+ * @modify Date:2016-09-07 修复matchReplace方法,解决因表名大小写未匹配无法替换表名错误
  */
 @SuppressWarnings("rawtypes")
 public class ShardingUtils {
@@ -47,7 +44,8 @@ public class ShardingUtils {
 	protected final static Logger logger = LoggerFactory.getLogger(ShardingUtils.class);
 
 	/**
-	 * @todo 单个对象sharding策略处理,适用于load、save、update、delete单对象操作
+	 * 单个对象sharding策略处理,适用于load、save、update、delete单对象操作
+	 * 
 	 * @param sqlToyContext
 	 * @param entity
 	 * @param wrapIdValue
@@ -77,8 +75,8 @@ public class ShardingUtils {
 			strategyConfig = shardingConfig.getShardingDBStrategy();
 			shardingStrategy = sqlToyContext.getShardingStrategy(strategyConfig.getStrategy());
 			if (shardingStrategy == null) {
-				throw new IllegalArgumentException("POJO 对象:" + entity.getClass().getName() + " Sharding DB Strategy:"
-						+ strategyConfig.getStrategy() + " 未定义,请检查!");
+				throw new IllegalArgumentException("POJO:" + entity.getClass().getName() + " Sharding DB Strategy:"
+						+ strategyConfig.getStrategy() + " is undefined, please check!");
 			}
 			IgnoreCaseLinkedMap<String, Object> valueMap = hashParams(strategyConfig.getAliasNames(),
 					BeanUtil.reflectBeanToAry(entity, strategyConfig.getFields()));
@@ -97,8 +95,8 @@ public class ShardingUtils {
 			strategyConfig = shardingConfig.getShardingTableStrategy();
 			shardingStrategy = sqlToyContext.getShardingStrategy(strategyConfig.getStrategy());
 			if (shardingStrategy == null) {
-				throw new IllegalArgumentException("POJO 对象:" + entity.getClass().getName()
-						+ " Sharding Table Strategy:" + strategyConfig.getStrategy() + " 未定义,请检查!");
+				throw new IllegalArgumentException("POJO:" + entity.getClass().getName() + " Sharding Table Strategy:"
+						+ strategyConfig.getStrategy() + " is undefined, please check!");
 			}
 			IgnoreCaseLinkedMap<String, Object> valueMap = hashParams(strategyConfig.getAliasNames(),
 					BeanUtil.reflectBeanToAry(entity, strategyConfig.getFields()));
@@ -112,7 +110,8 @@ public class ShardingUtils {
 	}
 
 	/**
-	 * @todo 批量sharding策略处理
+	 * 批量sharding策略处理
+	 * 
 	 * @param sqlToyContext
 	 * @param entities
 	 * @param entityMeta
@@ -147,8 +146,8 @@ public class ShardingUtils {
 			hasDB = true;
 			dbStrategy = sqlToyContext.getShardingStrategy(dbConfig.getStrategy());
 			if (dbStrategy == null) {
-				throw new IllegalArgumentException("POJO 对象:" + entityClass.getName() + " Sharding DB Strategy:"
-						+ dbConfig.getStrategy() + " 未定义,请检查!");
+				throw new IllegalArgumentException("POJO:" + entityClass.getName() + " Sharding DB Strategy:"
+						+ dbConfig.getStrategy() + " is undefined, please check!");
 			}
 			shardingDBValues = BeanUtil.reflectBeansToInnerAry(entities, dbConfig.getFields(), null, null);
 		}
@@ -161,8 +160,8 @@ public class ShardingUtils {
 			hasTable = true;
 			tableStrategy = sqlToyContext.getShardingStrategy(tableConfig.getStrategy());
 			if (tableStrategy == null) {
-				throw new IllegalArgumentException("POJO 对象:" + entityClass.getName() + " Sharding Table Strategy:"
-						+ tableConfig.getStrategy() + " 未定义,请检查!");
+				throw new IllegalArgumentException("POJO:" + entityClass.getName() + " Sharding Table Strategy:"
+						+ tableConfig.getStrategy() + " is undefined, please check!");
 			}
 			shardingTableValues = BeanUtil.reflectBeansToInnerAry(entities, tableConfig.getFields(), null, null);
 		}
@@ -227,7 +226,8 @@ public class ShardingUtils {
 	}
 
 	/**
-	 * @todo 根据条件决定获得对应的数据库
+	 * 根据条件决定获得对应的数据库
+	 * 
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param queryExecutor
@@ -263,7 +263,8 @@ public class ShardingUtils {
 	}
 
 	/**
-	 * @todo 根据数据获取sharding对应的DataSource
+	 * 根据数据获取sharding对应的DataSource
+	 * 
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param shardingConfig
@@ -298,7 +299,8 @@ public class ShardingUtils {
 	}
 
 	/**
-	 * @todo 根据查询条件变更sql后同时修改sqltoyConfig(clone后的对象，不会冲掉原配置)
+	 * 根据查询条件变更sql后同时修改sqltoyConfig(clone后的对象，不会冲掉原配置)
+	 * 
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param tableShardings
@@ -344,7 +346,8 @@ public class ShardingUtils {
 	}
 
 	/**
-	 * @todo 替换实际sql中需要查询的表名称(for executeSql方法使用,见DialectFactory.executeSql)
+	 * 替换实际sql中需要查询的表名称(for executeSql方法使用,见DialectFactory.executeSql)
+	 * 
 	 * @param sqlToyContext
 	 * @param sql
 	 * @param tableShardings
@@ -378,7 +381,8 @@ public class ShardingUtils {
 	}
 
 	/**
-	 * @todo 获取sharding对应的表
+	 * 获取sharding对应的表
+	 * 
 	 * @param sqlToyContext
 	 * @param tableShardings
 	 * @param paramNames
@@ -427,7 +431,8 @@ public class ShardingUtils {
 	}
 
 	/**
-	 * @todo 替换sharding table
+	 * 替换sharding table
+	 * 
 	 * @param sql
 	 * @param sourceTable
 	 * @param targetTable
@@ -461,7 +466,8 @@ public class ShardingUtils {
 	}
 
 	/**
-	 * @todo 将sharding决策需要的参数构造成有序map传递给sharding决策器
+	 * 将sharding决策需要的参数构造成有序map传递给sharding决策器
+	 * 
 	 * @param paramNames
 	 * @param paramValues
 	 * @return
@@ -484,7 +490,8 @@ public class ShardingUtils {
 	}
 
 	/**
-	 * @todo 单记录主键赋值
+	 * 单记录主键赋值
+	 * 
 	 * @param sqlToyContext
 	 * @param entityMeta
 	 * @param entity
@@ -498,7 +505,8 @@ public class ShardingUtils {
 	}
 
 	/**
-	 * @todo 批量主键赋值
+	 * 批量主键赋值
+	 * 
 	 * @param sqlToyContext
 	 * @param entityMeta
 	 * @param entities
@@ -537,8 +545,9 @@ public class ShardingUtils {
 						for (int meter = 0; meter < relatedColumnIndex.length; meter++) {
 							relatedColValue[meter] = fullParamValues[relatedColumnIndex[meter]];
 							if (relatedColValue[meter] == null) {
-								throw new IllegalArgumentException("对象:" + entityMeta.getEntityClass().getName()
-										+ " 生成业务主键依赖的关联字段:" + relatedColumnNames[meter] + " 值为null!");
+								throw new IllegalArgumentException("POJO:" + entityMeta.getEntityClass().getName()
+										+ " related field:" + relatedColumnNames[meter]
+										+ " used to generate the business id is null, please check!");
 							}
 						}
 					}
