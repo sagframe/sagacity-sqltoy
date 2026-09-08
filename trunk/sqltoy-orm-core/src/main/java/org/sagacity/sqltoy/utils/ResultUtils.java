@@ -288,6 +288,8 @@ public class ResultUtils {
 		int[] methodTypeValues = null;
 		Class[] genericTypes = null;
 		String[] realProps = null;
+		// update 2026-9-8 VO映射的列jdbcTypes标记(null表示非VO场景,内部回退OTHER)
+		int[] columnJdbcTypes = null;
 		int[] indexs = null;
 		HashMap<String, String> lowKeyLabelNameMap = labelLowKeyMap(labelNames);
 		HashMap<String, FieldTranslateCacheHolder> cacheDatas = null;
@@ -319,6 +321,28 @@ public class ResultUtils {
 				}
 				realProps = convertRealProps(wrapMapFields(labelNames, fieldsMap, resultType), columnFieldMap);
 				realMethods = BeanUtil.matchSetMethods(resultType, realProps);
+				// update 2026-9-8 构建列jdbcTypes标记(字段注解JSON/JSONB标注优先,查询列类型名
+				// 兜底),供reflectRowToBean按JSON等扩展类型做jdbc值到POJO的转换(原固定OTHER导致
+				// json列到对象字段的反序列化不触发)
+				Map<String, Integer> fieldJdbcTypeMap = BeanUtil.getClassFieldMap(resultType, realProps);
+				columnJdbcTypes = new int[columnSize];
+				for (int i = 0; i < columnSize; i++) {
+					String propLow = (realProps[i] == null) ? null : realProps[i].toLowerCase(Locale.ROOT);
+					if (propLow != null && fieldJdbcTypeMap.containsKey(propLow)) {
+						columnJdbcTypes[i] = fieldJdbcTypeMap.get(propLow);
+					} else if (columnTypeNames != null && i < columnTypeNames.length && columnTypeNames[i] != null) {
+						String tn = columnTypeNames[i].toUpperCase(Locale.ROOT);
+						if (tn.equals("JSON")) {
+							columnJdbcTypes[i] = org.sagacity.sqltoy.model.JdbcTypes.JSON;
+						} else if (tn.equals("JSONB")) {
+							columnJdbcTypes[i] = org.sagacity.sqltoy.model.JdbcTypes.JSONB;
+						} else if (tn.equals("GEOMETRY") || GeometryTypeUtil.isGeometryTypeName(tn)) {
+							columnJdbcTypes[i] = org.sagacity.sqltoy.model.JdbcTypes.GEOMETRY;
+						} else if (tn.equals("VECTOR") || tn.equals("FLOATVECTOR")) {
+							columnJdbcTypes[i] = org.sagacity.sqltoy.model.JdbcTypes.VECTOR;
+						}
+					}
+				}
 				methodTypes = new String[columnSize];
 				methodTypeValues = new int[columnSize];
 				genericTypes = new Class[columnSize];
@@ -404,7 +428,8 @@ public class ResultUtils {
 				} // 封装成VO对象形式
 				else {
 					Object bean = BeanUtil.reflectRowToBean(sqlToyContext.getTypeHandler(), realMethods,
-							methodTypeValues, methodTypes, genericTypes, rowTemp, indexs, realProps, resultType);
+							methodTypeValues, methodTypes, genericTypes, rowTemp, indexs, realProps, resultType,
+							columnJdbcTypes);
 					// 有基于注解@Translate的缓存翻译
 					if (cacheDatas != null) {
 						wrapBeanTranslate(dynamicCacheFetch, dynamicCacheHolder, cacheDatas, bean);
@@ -1285,7 +1310,8 @@ public class ResultUtils {
 			DynamicCacheHolder dynamicCacheHolder, ResultSet rs, String[] labelNames,
 			HashMap<String, String> lowKeyLabelNameMap, int size,
 			HashMap<String, FieldTranslateCacheHolder> translateCaches, DecryptHandler decryptHandler,
-			boolean ignoreAllEmptySet, String[] columnTypeNames, int[] columnKinds, int startColIndex) throws Exception {
+			boolean ignoreAllEmptySet, String[] columnTypeNames, int[] columnKinds, int startColIndex)
+			throws Exception {
 		List rowData = new ArrayList();
 		Object fieldValue;
 		// 单行所有字段结果为null

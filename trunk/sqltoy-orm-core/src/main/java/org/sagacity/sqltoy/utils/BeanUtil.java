@@ -2151,9 +2151,27 @@ public class BeanUtil {
 		return resultList;
 	}
 
+	// update 2026-9-8 增加带列jdbcTypes的重载:sql查询映射VO时JSON/JSONB/VECTOR/GEOMETRY列
+	// 需将jdbc值转换为POJO(如json字符串反序列化为对象字段),原硬编码JdbcTypes.OTHER导致
+	// JSON类型标记丢失、反序列化不触发;旧签名委托保持第三方兼容
+	public static <T extends Serializable> T reflectRowToBean(TypeHandler typeHandler, Method[] realMethods,
+			int[] methodTypeValues, String[] methodTypes, Class[] genericTypes, List rowList, int[] indexs,
+			String[] properties, Class<T> voClass, int[] columnJdbcTypes) {
+		return reflectRowToBeanInternal(typeHandler, realMethods, methodTypeValues, methodTypes, genericTypes, rowList,
+				indexs, properties, voClass, columnJdbcTypes);
+	}
+
+	// update 2026-9-8 保留旧9参签名兼容(第三方调用),内部按无列类型信息回退OTHER处理
 	public static <T extends Serializable> T reflectRowToBean(TypeHandler typeHandler, Method[] realMethods,
 			int[] methodTypeValues, String[] methodTypes, Class[] genericTypes, List rowList, int[] indexs,
 			String[] properties, Class<T> voClass) {
+		return reflectRowToBeanInternal(typeHandler, realMethods, methodTypeValues, methodTypes, genericTypes, rowList,
+				indexs, properties, voClass, null);
+	}
+
+	private static <T extends Serializable> T reflectRowToBeanInternal(TypeHandler typeHandler, Method[] realMethods,
+			int[] methodTypeValues, String[] methodTypes, Class[] genericTypes, List rowList, int[] indexs,
+			String[] properties, Class<T> voClass, int[] columnJdbcTypes) {
 		Object cellData = null;
 		String propertyName = null;
 		Object bean = null;
@@ -2169,7 +2187,9 @@ public class BeanUtil {
 						if (cellData.getClass().getTypeName().equals(methodTypes[i])) {
 							realMethods[i].invoke(bean, cellData);
 						} else {
-							realMethods[i].invoke(bean, convertType(typeHandler, cellData, JdbcTypes.OTHER,
+							int columnJdbcType = (columnJdbcTypes != null && i < columnJdbcTypes.length
+									&& columnJdbcTypes[i] != 0) ? columnJdbcTypes[i] : JdbcTypes.OTHER;
+							realMethods[i].invoke(bean, convertType(typeHandler, cellData, columnJdbcType,
 									methodTypeValues[i], methodTypes[i], genericTypes[i]));
 						}
 					}
