@@ -9,9 +9,6 @@ import java.io.Serializable;
  * @version v1.0,Date:2024-12-28
  */
 public class FieldTranslate implements Serializable {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 5834406408680610075L;
 
 	/**

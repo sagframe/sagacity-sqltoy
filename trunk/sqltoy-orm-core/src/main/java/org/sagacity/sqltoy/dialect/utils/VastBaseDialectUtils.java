@@ -41,7 +41,7 @@ public class VastBaseDialectUtils {
 	 * 
 	 * @param pst
 	 * @param paramIndex
-	 * @param vectorStr '[1,2,3]'形式的向量字符串
+	 * @param vectorStr  '[1,2,3]'形式的向量字符串
 	 * @throws SQLException
 	 */
 	public static void setVectorValue(PreparedStatement pst, int paramIndex, String vectorStr) throws SQLException {
@@ -55,7 +55,7 @@ public class VastBaseDialectUtils {
 	 * 
 	 * @param rs
 	 * @param columnName
-	 * @param vectorStr '[1,2,3]'形式的向量字符串
+	 * @param vectorStr  '[1,2,3]'形式的向量字符串
 	 * @throws SQLException
 	 */
 	public static void updateVector(ResultSet rs, String columnName, String vectorStr) throws SQLException {

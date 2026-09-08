@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.dialect.utils;
 
 import java.sql.Types;
@@ -14,12 +11,13 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @project sagacity-sqltoy
  * @description 针对dm数据库提供通用工具类
  * @author zhongxuchen
- * @version v1.0, Date:2020年7月30日
- * @modify 2020年7月30日,修改说明
+ * @version v1.0,Date:2020-07-30
+ * @modify Date:2020-07-30,修改说明
  */
 public class DMDialectUtils {
 	/**
-	 * @TODO 主键策略是identity或sequence时，主键值允许不由数据库内部自动产生，可人工赋值
+	 * 主键策略是identity或sequence时，主键值允许不由数据库内部自动产生，可人工赋值
+	 * 
 	 * @param pkStrategy
 	 * @return
 	 */
@@ -38,7 +36,8 @@ public class DMDialectUtils {
 	}
 
 	/**
-	 * @TODO 针对merge into using(select ...)场景，对字段进行cast(? as type)类型转换
+	 * 针对merge into using(select ...)场景，对字段进行cast(? as type)类型转换
+	 * 
 	 * @param sql
 	 * @param columnName
 	 * @param fieldMeta
@@ -79,6 +78,10 @@ public class DMDialectUtils {
 		} else if (jdbcType == JdbcTypes.JSON || jdbcType == JdbcTypes.JSONB) {
 			// dm数据库json底层以CLOB存储
 			sql.append("cast(? as CLOB)");
+		} else if (jdbcType == JdbcTypes.GEOMETRY) {
+			// update 2026-9-6 实测DM(DMGEO扩展SP_INIT_GEO_SYS初始化后)的ST_Geometry列
+			// 裸?+setString报"类型转换异常",须DMGEO.ST_GeomFromText(wkt,srid)包装
+			sql.append("DMGEO.ST_GeomFromText(?,0)");
 		} else {
 			if (StringUtil.isNotBlank(fieldMeta.getNativeType())) {
 				sql.append("cast(? as ").append(fieldMeta.getNativeType()).append(")");

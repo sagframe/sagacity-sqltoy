@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.dialect.impl;
 
 import java.io.Serializable;
@@ -39,11 +36,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description oracle12c+以及更高版本数据库的各类分页、取随机数、saveOrUpdate,lock机制实现
  * @author zhongxuchen
- * @version v1.0,Date:2013-8-29
- * @modify Date:2017-5-22 修复分页和top在order by 情况下的bug
+ * @version v1.0,Date:2013-08-29
+ * @modify Date:2017-05-22 修复分页和top在order by 情况下的bug
  */
 @SuppressWarnings({ "rawtypes" })
 public class OracleDialect implements Dialect {

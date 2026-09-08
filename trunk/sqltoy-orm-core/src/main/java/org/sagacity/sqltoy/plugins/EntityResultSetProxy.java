@@ -136,7 +136,8 @@ public class EntityResultSetProxy<T> {
 						.method(ElementMatchers.not(ElementMatchers.isDeclaredBy(InterceptorHolder.class)))
 						.intercept(MethodDelegation.to(Delegate.class)).make().load(clazz.getClassLoader()).getLoaded();
 			} catch (Exception e) {
-				throw new IllegalStateException("创建实体结果集代理类失败: " + clazz.getName(), e);
+				throw new IllegalStateException(
+						"Failed to create the entity result set proxy class: " + clazz.getName(), e);
 			}
 		});
 		Object proxy = proxyCls.getDeclaredConstructor().newInstance();

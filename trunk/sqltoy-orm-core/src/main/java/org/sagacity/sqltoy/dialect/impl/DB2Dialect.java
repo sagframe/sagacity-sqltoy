@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.dialect.impl;
 
 import java.io.Serializable;
@@ -19,8 +16,10 @@ import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.callback.UpdateRowCallback;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
+import org.sagacity.sqltoy.config.model.OperateType;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
+import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.dialect.Dialect;
 import org.sagacity.sqltoy.dialect.model.SavePKStrategy;
@@ -36,15 +35,16 @@ import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.utils.SqlUtil;
+import org.sagacity.sqltoy.utils.SqlUtilsExt;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description db2 10.x版本支持limit offset分页机制
  * @author zhongxuchen
- * @version v1.0,Date:2015年2月28日
+ * @version v1.0,Date:2015-02-28
  */
 @SuppressWarnings({ "rawtypes" })
 public class DB2Dialect implements Dialect {
@@ -257,8 +257,46 @@ public class DB2Dialect implements Dialect {
 			QueryExecutor queryExecutor, final DecryptHandler decryptHandler, Long totalCount, Long randomCount,
 			Connection conn, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
 			throws Exception {
-		return DB2DialectUtils.getRandomResult(sqlToyContext, sqlToyConfig, queryExecutor, decryptHandler, totalCount,
-				randomCount, conn, dbType, dialect, fetchSize, maxRows);
+		StringBuilder sql = new StringBuilder();
+		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
+		// sql中是否存在排序或union
+		boolean hasOrderOrUnion = DialectUtils.hasOrderByOrUnion(innerSql);
+		// 给原始sql标记上特殊的开始和结尾，便于sql拦截器快速定位到原始sql并进行条件补充
+		innerSql = SqlUtilsExt.markOriginalSql(innerSql);
+		if (sqlToyConfig.isHasFast()) {
+			sql.append(sqlToyConfig.getFastPreSql(dialect));
+			if (!sqlToyConfig.isIgnoreBracket()) {
+				sql.append(" (");
+			}
+		}
+		// 存在order 或union 则在sql外包裹一层
+		if (hasOrderOrUnion) {
+			sql.append("select " + SqlToyConstants.INTERMEDIATE_TABLE + ".* from (");
+		}
+		sql.append(innerSql);
+		if (hasOrderOrUnion) {
+			sql.append(") ");
+			sql.append(SqlToyConstants.INTERMEDIATE_TABLE);
+			sql.append(" ");
+		}
+		sql.append(" order by rand() fetch first ");
+		sql.append(randomCount);
+		sql.append(" rows only ");
+		if (sqlToyConfig.isHasFast()) {
+			if (!sqlToyConfig.isIgnoreBracket()) {
+				sql.append(") ");
+			}
+			sql.append(sqlToyConfig.getFastTailSql(dialect));
+		}
+		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
+				sql.toString(), null, null, dialect);
+		QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		// 增加sql执行拦截器 update 2022-9-10
+		queryParam = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig,
+				(extend.entityClass == null) ? OperateType.random : OperateType.singleTable, queryParam,
+				extend.entityClass, dbType);
+		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
+				extend, decryptHandler, conn, dbType, 0, fetchSize, maxRows);
 	}
 
 	/*

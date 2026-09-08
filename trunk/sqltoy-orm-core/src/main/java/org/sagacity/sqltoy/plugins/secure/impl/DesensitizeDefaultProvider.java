@@ -21,7 +21,8 @@ public class DesensitizeDefaultProvider implements DesensitizeProvider {
 	}
 
 	/**
-	 * @TODO 实际脱敏处理
+	 * 实际脱敏处理
+	 * 
 	 * @param mask
 	 * @param value
 	 * @return

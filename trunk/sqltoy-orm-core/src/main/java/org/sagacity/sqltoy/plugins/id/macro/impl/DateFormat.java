@@ -1,9 +1,7 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.plugins.id.macro.impl;
 
 import java.util.Date;
+import java.util.Locale;
 import java.util.Map;
 
 import org.sagacity.sqltoy.plugins.id.macro.AbstractMacro;
@@ -14,7 +12,7 @@ import org.sagacity.sqltoy.utils.DateUtil;
  * @project sagacity-sqltoy
  * @description 进行日期格式化,如果想不包含日期@df('')
  * @author zhongxuchen
- * @version v1.0,Date:2018年5月25日
+ * @version v1.0,Date:2018-05-25
  */
 public class DateFormat extends AbstractMacro {
 
@@ -48,7 +46,7 @@ public class DateFormat extends AbstractMacro {
 		}
 		// 提出单引号和双引号
 		String realFmt = fmt.replaceAll("\"", "").replaceAll("\\'", "").trim();
-		if ("".equals(realFmt) || "null".equals(realFmt.toLowerCase())) {
+		if ("".equals(realFmt) || "null".equals(realFmt.toLowerCase(Locale.ROOT))) {
 			return "";
 		}
 		return DateUtil.formatDate(dateValue, realFmt);

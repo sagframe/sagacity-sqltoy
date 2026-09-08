@@ -1,26 +1,21 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.config.model;
 
 import java.io.Serializable;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 
 import org.sagacity.sqltoy.model.SqlInjectionLevel;
 import org.sagacity.sqltoy.model.TimeUnit;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description sqltoy 查询条件参数值过滤加工配制模型
  * @author zhongxuchen
- * @version v1.0,Date:2013-3-22
- * @modify Date:2019-1-15 {增加缓存条件过滤}
+ * @version v1.0,Date:2013-03-22
+ * @modify Date:2019-01-15 增加缓存条件过滤
  */
 public class ParamFilterModel implements Serializable {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 2608369719903008282L;
 
 	public ParamFilterModel() {
@@ -257,7 +252,7 @@ public class ParamFilterModel implements Serializable {
 	 * @param excludeParam the excludesMap to set
 	 */
 	public void addExclude(String excludeParam) {
-		this.excludes.add(excludeParam.toLowerCase());
+		this.excludes.add(excludeParam.toLowerCase(Locale.ROOT));
 	}
 
 	/**

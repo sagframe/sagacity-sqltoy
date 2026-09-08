@@ -1,6 +1,7 @@
 package org.sagacity.sqltoy.translate.cache.impl;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -16,10 +17,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description sqltoy框架提供动态获取缓存数据的缓存管理器实现，基于FIFOMap
  * @author zhongxuchen
- * @version v1.0,Date:2026年1月16日
+ * @version v1.0,Date:2026-01-16
  */
 public class FIFODynamicFetchCacheManager implements DynamicFecthCacheManager {
 	/**
@@ -51,9 +52,9 @@ public class FIFODynamicFetchCacheManager implements DynamicFecthCacheManager {
 
 	@Override
 	public HashMap<String, Object[]> getDynamicCache(TranslateConfigModel cacheModel, String cacheType) {
-		String cacheNameLower = cacheModel.getCache().toLowerCase();
+		String cacheNameLower = cacheModel.getCache().toLowerCase(Locale.ROOT);
 		// 如果没有cacheType则用cacheName作为cacheType形成统一的二层结构
-		String cacheTypeLower = (cacheType == null) ? cacheNameLower : cacheType.toLowerCase();
+		String cacheTypeLower = (cacheType == null) ? cacheNameLower : cacheType.toLowerCase(Locale.ROOT);
 		String cacheKey = (cacheType == null) ? cacheNameLower
 				: cacheNameLower.concat(CACHE_TYPE_JOIN_SIGN).concat(cacheTypeLower);
 		// 通过computeIfAbsent原子性完成get-or-create，替代synchronized(cacheKey.intern())
@@ -83,18 +84,19 @@ public class FIFODynamicFetchCacheManager implements DynamicFecthCacheManager {
 			return;
 		}
 		// 统一转小写
-		String cacheNameLower = cacheName.toLowerCase();
+		String cacheNameLower = cacheName.toLowerCase(Locale.ROOT);
 		if (dynamicFetchCacheMap.containsKey(cacheNameLower)) {
 			if (cacheType == null) {
-				logger.debug("清除动态查询数据缓存cacheName={}!", cacheName);
+				logger.debug("cleared dynamic query data cache cacheName={}!", cacheName);
 				dynamicFetchCacheMap.get(cacheNameLower).clear();
 				// 同步清除该缓存全部cacheType的过期登记,避免不再使用的缓存条目常驻内存
 				cacheInitTime.keySet().removeIf(key -> key.equals(cacheNameLower)
 						|| key.startsWith(cacheNameLower.concat(CACHE_TYPE_JOIN_SIGN)));
 			} else {
-				logger.debug("清除动态查询数据缓存cacheName={},cacheType={}!", cacheName, cacheType);
-				dynamicFetchCacheMap.get(cacheNameLower).remove(cacheType.toLowerCase());
-				cacheInitTime.remove(cacheNameLower.concat(CACHE_TYPE_JOIN_SIGN).concat(cacheType.toLowerCase()));
+				logger.debug("cleared dynamic query data cache cacheName={}, cacheType={}!", cacheName, cacheType);
+				dynamicFetchCacheMap.get(cacheNameLower).remove(cacheType.toLowerCase(Locale.ROOT));
+				cacheInitTime
+						.remove(cacheNameLower.concat(CACHE_TYPE_JOIN_SIGN).concat(cacheType.toLowerCase(Locale.ROOT)));
 			}
 		}
 	}
@@ -104,7 +106,7 @@ public class FIFODynamicFetchCacheManager implements DynamicFecthCacheManager {
 		if (cacheName == null) {
 			return false;
 		}
-		if (registCaches.contains(cacheName.toLowerCase())) {
+		if (registCaches.contains(cacheName.toLowerCase(Locale.ROOT))) {
 			return true;
 		}
 		return false;
@@ -116,7 +118,7 @@ public class FIFODynamicFetchCacheManager implements DynamicFecthCacheManager {
 	}
 
 	/**
-	 * @TODO 启动过期检测定时任务;检测线程为daemon,destroy未被调用时不会阻止JVM退出
+	 * 启动过期检测定时任务;检测线程为daemon,destroy未被调用时不会阻止JVM退出
 	 */
 	private static synchronized void startSchedulerIfNeeded() {
 		if (schedulerStarted && scheduler != null && !scheduler.isTerminated()) {
@@ -161,8 +163,9 @@ public class FIFODynamicFetchCacheManager implements DynamicFecthCacheManager {
 						.remove((cacheTypeLower == null) ? cacheNameLower : cacheTypeLower);
 				// 清除过期缓存使用时间定义
 				cacheInitTime.remove(cacheKey);
-				logger.debug("缓存:cacheName={},cacheType={}数据存放时间超过keepAlive={}秒,自动被清除!", cacheNameLower, cacheTypeLower,
-						initTimeAndKeepAlive[1]);
+				logger.debug(
+						"cache:cacheName={}, cacheType={} data stored longer than keepAlive={} seconds is automatically cleared!",
+						cacheNameLower, cacheTypeLower, initTimeAndKeepAlive[1]);
 			}
 		}
 	}

@@ -1,12 +1,10 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.plugins.ddl;
 
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -24,15 +22,16 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @project sagacity-sqltoy
  * @description 创建表语句的工具类，用于将EntityMeta依旧外键关系排序，转化封装为TableModel
  * @author zhongxuchen
- * @version v1.0, Date:2023年12月17日
- * @modify 2023年12月17日,修改说明
+ * @version v1.0,Date:2023-12-17
+ * @modify Date:2023-12-17,修改说明
  */
 public class DDLUtils {
 	public static String NEWLINE = "\r\n";
 	public static String TAB = "   ";
 
 	/**
-	 * @TODO 因为存在外键关系，首先需要对表进行排序，被依赖的优先创建
+	 * 因为存在外键关系，首先需要对表进行排序，被依赖的优先创建
+	 * 
 	 * @param entitysMetaMap
 	 * @return
 	 */
@@ -89,7 +88,8 @@ public class DDLUtils {
 	}
 
 	/**
-	 * @TODO 判断外键关联表位置是否在当前表的前面
+	 * 判断外键关联表位置是否在当前表的前面
+	 * 
 	 * @param sortTables
 	 * @param foreignTable
 	 * @param nowTable
@@ -116,7 +116,8 @@ public class DDLUtils {
 	}
 
 	/**
-	 * @TODO 将EntityMeta转化为TableMeta 便于输出表结构
+	 * 将EntityMeta转化为TableMeta 便于输出表结构
+	 * 
 	 * @param entityMeta
 	 * @param dbType
 	 * @return
@@ -171,7 +172,8 @@ public class DDLUtils {
 	}
 
 	/**
-	 * @TODO 设置类型
+	 * 设置类型
+	 * 
 	 * @param colMeta
 	 * @param dbType
 	 * @return
@@ -226,8 +228,7 @@ public class DDLUtils {
 			typeName = setLength(typeName, false, colMeta);
 			break;
 		case java.sql.Types.LONGNVARCHAR:
-			if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM
-					|| dbType == DBType.H2) {
+			if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM || dbType == DBType.H2) {
 				typeName = "CLOB";
 			} else {
 				typeName = "TEXT";
@@ -295,8 +296,7 @@ public class DDLUtils {
 			break;
 		case java.sql.Types.CLOB:
 		case java.sql.Types.NCLOB:
-			if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM
-					|| dbType == DBType.H2) {
+			if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM || dbType == DBType.H2) {
 				typeName = "CLOB";
 			} else {
 				typeName = "TEXT";
@@ -314,9 +314,19 @@ public class DDLUtils {
 			}
 			break;
 		case java.sql.Types.DATE:
+			// update 2026-9-5 修复dm/pg按生成DDL建表后时间部分被静默清零的缺陷:实测dm的DATE列类型
+			// 只存日期(与oracle的DATE含时间不同),pg系date列同样只存日期(pg 18.6实测,timestamp
+			// 写入date列静默截断时间);java.util.Date/LocalDateTime这类含时间字段(无论@Column未指定
+			// type自动探测,还是quickvo生成实体显式声明type=DATE)此前均输出DATE列;
+			// 依据字段Java类型(typeName,小写全类名)精化:dm输出DATETIME,pg系输出TIMESTAMP,
+			// 纯日期类型(LocalDate/java.sql.Date)保持DATE语义不变;
+			// update 2026-9-6 原"不得将探测归入Types.TIMESTAMP"的约束已解除:rowversion剔除
+			// 改按目标库元数据校准(ensureRowVersionMeta),与实体JDBC类型解耦,LocalDateTime已归位TIMESTAMP
 			if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.SQLSERVER
 					|| dbType == DBType.DORIS || dbType == DBType.STARROCKS) {
 				typeName = "DATETIME";
+			} else if (isTimeCarryingJavaType(colMeta.getTypeName()) && isDateOnlyDialect(dbType)) {
+				typeName = (dbType == DBType.DM) ? "DATETIME" : "TIMESTAMP";
 			} else {
 				typeName = "DATE";
 			}
@@ -343,7 +353,8 @@ public class DDLUtils {
 			}
 			break;
 		case JdbcTypes.VECTOR: {
-			// 向量类型:gaussdb企业版为floatvector,其余(pgvector/openGauss系/oracle 23ai/mysql heatwave/sqlserver 2025/db2 12.1.2+)为vector
+			// 向量类型:gaussdb企业版为floatvector,其余(pgvector/openGauss系/oracle 23ai/mysql
+			// heatwave/sqlserver 2025/db2 12.1.2+)为vector
 			// 维度通过@Column(length=xxx)指定,mysql heatwave和sqlserver 2025的维度为必填项
 			if (dbType == DBType.H2) {
 				// h2无向量类型,测试场景按varchar存储'[1,2,3]'字符串形式
@@ -363,8 +374,9 @@ public class DDLUtils {
 		}
 		case JdbcTypes.GEOMETRY: {
 			// 空间类型:oracle/dm为SDO_GEOMETRY,其余(postgis系/mysql/sqlserver/h2)为GEOMETRY
-			// 类型精度修饰(如geometry(Point,4326)、geography)通过@Column(nativeType="...")指定
-			if (colMeta.getNativeType() != null) {
+			// 类型精度修饰(如geometry(Point,4326)、geography)通过@Column(nativeType="...")指定;
+			// nativeType未配置时注解默认为空串(非null),须按blank判断,否则生成空列类型导致DDL非法
+			if (StringUtil.isNotBlank(colMeta.getNativeType())) {
 				typeName = colMeta.getNativeType();
 			} else if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
 				typeName = "SDO_GEOMETRY";
@@ -402,7 +414,8 @@ public class DDLUtils {
 			typeName = setLength(typeName, true, colMeta);
 			break;
 		default: {
-			if (colMeta.getNativeType() != null) {
+			// nativeType未配置时注解默认为空串(非null),须按blank判断,否则未知类型会生成空列类型
+			if (StringUtil.isNotBlank(colMeta.getNativeType())) {
 				typeName = colMeta.getNativeType();
 			} else {
 				typeName = "VARCHAR";
@@ -421,7 +434,8 @@ public class DDLUtils {
 	}
 
 	/**
-	 * @TODO 设置类型长度
+	 * 设置类型长度
+	 * 
 	 * @param typeName
 	 * @param isNumber
 	 * @param colMeta
@@ -443,7 +457,8 @@ public class DDLUtils {
 	}
 
 	/**
-	 * @TODO 设置时间类型的精度(只取一位精度,不能带scale)
+	 * 设置时间类型的精度(只取一位精度,不能带scale)
+	 * 
 	 * @param typeName
 	 * @param colMeta
 	 * @return
@@ -456,7 +471,8 @@ public class DDLUtils {
 	}
 
 	/**
-	 * @TODO 包装主键信息
+	 * 包装主键信息
+	 * 
 	 * @param tableMeta
 	 * @param toUpperOrLower
 	 * @param dbType
@@ -483,7 +499,8 @@ public class DDLUtils {
 	}
 
 	/**
-	 * @TODO 组织索引信息
+	 * 组织索引信息
+	 * 
 	 * @param tableMeta
 	 * @param dbType
 	 * @param tableSql
@@ -535,7 +552,8 @@ public class DDLUtils {
 	}
 
 	/**
-	 * @TODO 组织外键信息
+	 * 组织外键信息
+	 * 
 	 * @param tableMeta
 	 * @param lowerOrUpper
 	 * @param dbType
@@ -599,7 +617,8 @@ public class DDLUtils {
 	}
 
 	/**
-	 * @TODO 统一处理表和字段的备注
+	 * 统一处理表和字段的备注
+	 * 
 	 * @param tableMeta
 	 * @param lowerOrUpper
 	 * @param dbType
@@ -629,7 +648,8 @@ public class DDLUtils {
 	}
 
 	/**
-	 * @TODO 判断类型默认值是否需要加单引号
+	 * 判断类型默认值是否需要加单引号
+	 * 
 	 * @param dataType
 	 * @return
 	 */
@@ -658,6 +678,39 @@ public class DDLUtils {
 	}
 
 	/**
+	 * 判断字段Java类型是否为日期+时间类型(update 2026-9-5 供Types.DATE列类型精化使用):
+	 * java.time.LocalDateTime与java.util.Date携带时间部分,LocalDate/java.sql.Date为纯日期;
+	 * typeName取自FieldMeta.fieldType(小写全类名),可能为null(空值按纯日期处理,尊重显式声明)
+	 * 
+	 * @param typeName
+	 * @return
+	 */
+	private static boolean isTimeCarryingJavaType(String typeName) {
+		if (typeName == null) {
+			return false;
+		}
+		String tmp = typeName.toLowerCase(Locale.ROOT);
+		return "java.time.localdatetime".equals(tmp) || "java.util.date".equals(tmp);
+	}
+
+	/**
+	 * 判断数据库的DATE列类型是否为纯日期语义(update 2026-9-5): dm的DATE列只存日期(dm
+	 * 21c实测)、pg及衍生库的date只存日期(pg 18.6实测,timestamp写入静默截断时间);
+	 * oracle的DATE含时间、mysql系无纯DATE列( Types.DATE已统一转DATETIME ),均不在精化范围;
+	 * kingbase/openGauss/MogDB等PG衍生库的date在实例为Oracle兼容模式时含时间(此时TIMESTAMP为无损超型),
+	 * PG模式时只存日期(此时TIMESTAMP修复丢时间),两种模式下输出TIMESTAMP均无损,按安全优先纳入
+	 * 
+	 * @param dbType
+	 * @return
+	 */
+	private static boolean isDateOnlyDialect(int dbType) {
+		return dbType == DBType.DM || dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14
+				|| dbType == DBType.GAUSSDB || dbType == DBType.KINGBASE || dbType == DBType.MOGDB
+				|| dbType == DBType.OPENGAUSS || dbType == DBType.VASTBASE || dbType == DBType.STARDB
+				|| dbType == DBType.OSCAR;
+	}
+
+	/**
 	 * 判断是否是日期函数，对默认值处理时不需要加单引号
 	 * 
 	 * @param defaultValue
@@ -675,9 +728,10 @@ public class DDLUtils {
 	}
 
 	/**
-	 * @TODO 将注释中的单引号转义为标准SQL的''形式(Oracle/PostgreSQL/MySQL等主流库的字符串字面量均支持),
-	 *       表和字段注释统一使用本方法保证转义一致;注释处于单引号字面量内,双引号无需转义,
-	 *       反斜杠在标准SQL中是普通字符(MySQL特有转义由MySqlDDLGenerator输出时单独处理)
+	 * 将注释中的单引号转义为标准SQL的''形式(Oracle/PostgreSQL/MySQL等主流库的字符串字面量均支持),
+	 * 表和字段注释统一使用本方法保证转义一致;注释处于单引号字面量内,双引号无需转义,
+	 * 反斜杠在标准SQL中是普通字符(MySQL特有转义由MySqlDDLGenerator输出时单独处理)
+	 * 
 	 * @param str
 	 * @return
 	 */

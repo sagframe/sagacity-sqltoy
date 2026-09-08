@@ -5,10 +5,10 @@ import java.util.HashMap;
 import org.sagacity.sqltoy.translate.model.TranslateConfigModel;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 动态获取缓存数据的缓存管理器接口定义，以便提供给开发者自行实现，框架提供默认实现
  * @author zhongxuchen
- * @version v1.0,Date:2026年1月16日
+ * @version v1.0,Date:2026-01-16
  */
 public interface DynamicFecthCacheManager {
 	/**

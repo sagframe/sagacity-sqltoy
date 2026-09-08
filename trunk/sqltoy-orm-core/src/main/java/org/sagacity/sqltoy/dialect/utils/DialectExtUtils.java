@@ -1,17 +1,17 @@
-/**
- *
- */
 package org.sagacity.sqltoy.dialect.utils;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.Locale;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.sagacity.sqltoy.SqlToyConstants;
+import org.sagacity.sqltoy.SqlToyThreadDataHolder;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.PKStrategy;
+import org.sagacity.sqltoy.model.DBProfile;
 import org.sagacity.sqltoy.model.IgnoreCaseSet;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.model.JdbcTypes;
@@ -27,9 +27,9 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @project sagacity-sqltoy
  * @description 将原本DialectUtils中的部分功能抽离出来, 从而避免DialectUtils跟一些类之间的互相调用
  * @author zhongxuchen
- * @version v1.0, Date:2020年7月30日
- * @modify 2022-10-19 修改processDefaultValue修复oracle、db2日期类型的支持
- * @modify 2023-10-24 修改了sqlCacheKey，增加pkStrategy作为key的组成,因为gaussdb
+ * @version v1.0,Date:2020-07-30
+ * @modify Date:2022-10-19 修改processDefaultValue修复oracle、db2日期类型的支持
+ * @modify Date:2023-10-24 修改了sqlCacheKey，增加pkStrategy作为key的组成,因为gaussdb
  *         save情况下sequence策略会变成assign，saveAll则保持sequence
  */
 public class DialectExtUtils {
@@ -43,7 +43,8 @@ public class DialectExtUtils {
 	private static ConcurrentHashMap<String, String> insertIgnoreSqlCache = new ConcurrentHashMap<String, String>(256);
 
 	/**
-	 * @todo 产生对象对应的insert sql语句
+	 * 产生对象对应的insert sql语句
+	 * 
 	 * @param unifyFieldsHandler
 	 * @param dbType
 	 * @param entityMeta
@@ -84,6 +85,11 @@ public class DialectExtUtils {
 		for (int i = 0; i < columnSize; i++) {
 			field = fieldsArray[i];
 			fieldMeta = entityMeta.getFieldMeta(field);
+			// update 2026-9-7 sqlserver的timestamp(rowversion)列不可写入,insert语句排除该列
+			// (判据entityMeta.isRowVersionField按目标库元数据校准,非sqlserver库不启用)
+			if (DBType.SQLSERVER == dbType && entityMeta.isRowVersionField(fieldMeta)) {
+				continue;
+			}
 			isString = false;
 			if ("java.lang.string".equals(fieldMeta.getFieldType())) {
 				isString = true;
@@ -131,11 +137,48 @@ public class DialectExtUtils {
 					values.append(",");
 				}
 				sql.append(columnName);
-				// kudu 中文会产生乱码
-				if (dbType == DBType.IMPALA && isString) {
-					values.append("cast(? as string)");
+				if (fieldMeta.getType() == JdbcTypes.GEOMETRY) {
+					if (dbType == DBType.DM) {
+						values.append("DMGEO.ST_GeomFromText(?,0)");
+					} else if (dbType == DBType.DB2) {
+						// update 2026-9-7 实测DB2 12.1内置空间引擎为非限定ST_GeomFromText(?,0),
+						// db2gse schema不复存在;11.5及以下GSE扩展仍为db2gse专属,按连接主版本分派;
+						// update 2026-9-7 实测12.1内置函数第一参数为CLOB,参数化绑定需cast
+						// (setString直绑驱动String→Blob转换失败-4474);11.5 db2gse参数VARCHAR无需cast
+						values.append("db2gse.ST_GeomFromText(?,0)");
+					} else if (dbType == DBType.MYSQL || dbType == DBType.OCEANBASE || dbType == DBType.TIDB
+							|| dbType == DBType.MYSQL57) {
+						values.append("ST_GeomFromText(?,0)");
+					} else if (dbType == DBType.KINGBASE) {
+						// 2026-9-7 实测kes的cast仅支持cast(? as type)标准形态,cast(?,type)逗号形态报语法错误
+						values.append("cast(? as geometry)");
+					} else {
+						values.append("?");
+					}
+				} else if (fieldMeta.getType() == JdbcTypes.VECTOR) {
+					if ((dbType == DBType.MYSQL || dbType == DBType.MYSQL57) && !isOceanBaseAsMysql()) {
+						values.append("string_to_vector(?)");
+					} else if (dbType == DBType.KINGBASE) {
+						values.append("cast(? as vector)");
+					} else {
+						values.append("?");
+					}
+				} else if (fieldMeta.getType() == JdbcTypes.JSON || fieldMeta.getType() == JdbcTypes.JSONB) {
+					if (dbType == DBType.KINGBASE) {
+						values.append(
+								"cast(? as " + ((fieldMeta.getType() == JdbcTypes.JSON) ? "json" : "jsonb") + ")");
+					} else {
+						values.append("?");
+					}
+				} else if (isString) {
+					// kudu 中文会产生乱码
+					if (dbType == DBType.IMPALA) {
+						values.append("cast(? as string)");
+					} else {
+						values.append("?");
+					}
 				} else {
-					// 2023-5-11 新增操作待增加对default值的处理,nvl(?,current_timestamp)
+					// 针对时间类型default默认值的处理,nvl(?,current_timestamp)
 					currentTimeStr = SqlUtil.getDBTime(dbType, fieldMeta, createSqlTimeFields);
 					if (null != currentTimeStr) {
 						values.append(isNullFunction).append("(?,").append(currentTimeStr).append(")");
@@ -151,12 +194,17 @@ public class DialectExtUtils {
 		sql.append(values);
 		sql.append(")");
 		insertSql = sql.toString();
-		insertSqlCache.put(sqlCacheKey, insertSql);
+		// update 2026-9-8 容量守卫:sqlCacheKey含tableName,分表场景(按天/按值动态表名)下
+		// 每张动态表常驻一条SQL文本,上限256防无界增长(超限退化为每次生成)
+		if (insertSqlCache.size() < 256) {
+			insertSqlCache.put(sqlCacheKey, insertSql);
+		}
 		return insertSql;
 	}
 
 	/**
-	 * @todo 统一对表字段默认值进行处理, 主要针对merge into 等sql语句
+	 * 统一对表字段默认值进行处理, 主要针对merge into 等sql语句
+	 * 
 	 * @param sql
 	 * @param dbType
 	 * @param fieldMeta
@@ -177,7 +225,7 @@ public class DialectExtUtils {
 			return;
 		}
 		// 是否是各种数据库的当前时间、日期的字符
-		String defaultLow = defaultValue.toLowerCase();
+		String defaultLow = defaultValue.toLowerCase(Locale.ROOT);
 		boolean isCurrentTime = SqlUtilsExt.isCurrentTime(defaultLow);
 		int dateType = -1;
 		// 时间
@@ -261,7 +309,8 @@ public class DialectExtUtils {
 	}
 
 	/**
-	 * @TODO 组织判断unique的sql(从DialectUtils中抽离避免循环调用)
+	 * 组织判断unique的sql(从DialectUtils中抽离避免循环调用)
+	 * 
 	 * @param entityMeta
 	 * @param realParamNamed
 	 * @param dbType
@@ -293,7 +342,8 @@ public class DialectExtUtils {
 	}
 
 	/**
-	 * @todo 处理加工对象基于dm、oceanbase、oracle数据库的saveIgnoreExist
+	 * 处理加工对象基于dm、oceanbase、oracle数据库的saveIgnoreExist
+	 * 
 	 * @param unifyFieldsHandler
 	 * @param dbType
 	 * @param entityMeta
@@ -311,8 +361,8 @@ public class DialectExtUtils {
 		// 在无主键的情况下产生insert sql语句
 		String realTable = entityMeta.getSchemaTable(tableName, dbType);
 		// postgresql15+ 不支持别名,目标表列限定只能用不带schema的表名(schema.table.col三段式列引用非法)
-		String pgNoSchemaTable = ReservedWordsUtil.convertWord(
-				(StringUtil.isBlank(tableName)) ? entityMeta.getTableName() : tableName, dbType);
+		String pgNoSchemaTable = ReservedWordsUtil
+				.convertWord((StringUtil.isBlank(tableName)) ? entityMeta.getTableName() : tableName, dbType);
 		if (entityMeta.getSchema() != null && pgNoSchemaTable.startsWith(entityMeta.getSchema().concat("."))) {
 			pgNoSchemaTable = pgNoSchemaTable.substring(entityMeta.getSchema().length() + 1);
 		}
@@ -347,10 +397,17 @@ public class DialectExtUtils {
 		}
 		sql.append(" using (select ");
 		FieldMeta fieldMeta;
+		// update 2026-9-7 实际输出列计数:sqlserver的rowversion列跳过输出后,逗号按实际输出列组织
+		int usingCols = 0;
 		for (int i = 0; i < columnSize; i++) {
 			fieldMeta = entityMeta.getFieldMeta(fieldsArray[i]);
+			// update 2026-9-7 sqlserver的timestamp(rowversion)列不可写入,merge各环节整体排除
+			// (判据entityMeta.isRowVersionField按目标库元数据校准,非sqlserver库不启用,自SqlServerDialectUtils迁入)
+			if (DBType.SQLSERVER == dbType && entityMeta.isRowVersionField(fieldMeta)) {
+				continue;
+			}
 			columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
-			if (i > 0) {
+			if (usingCols > 0) {
 				sql.append(",");
 			}
 			// postgresql15+ 需要case(? as type) as column
@@ -366,19 +423,43 @@ public class DialectExtUtils {
 			} else if (DBType.DM == dbType) {
 				DMDialectUtils.wrapSelectFields(sql, columnName, fieldMeta);
 			} else {
-				// sqlserver(2025+)、oracle(23ai)支持vector类型;sqlserver(2008+)支持geometry类型
+				// sqlserver(2008+)、oracle(23ai)支持vector类型;sqlserver(2008+)支持geometry类型
 				// merge into的using select子查询中显式cast保证类型正确
+				// update 2026-9-6 oracle geometry改由驱动层SDO STRUCT绑定(见SqlUtil.setGeometryValue),
+				// SQL层SDO_UTIL.FROM_WKTGEOMETRY包装在null参数时报ORA-29532,故还原为普通?占位
+				// update 2026-9-7 sqlserver VECTOR同样还原为裸?:实测2025版cast(? as VECTOR)缺维度报
+				// "not a defined system type",而字符串到vector为隐式转换(修复历史遗留的错误cast)
 				int extType = fieldMeta.getType();
-				if (extType == JdbcTypes.VECTOR && (DBType.SQLSERVER == dbType || DBType.ORACLE == dbType)) {
-					sql.append("cast(? as VECTOR)");
-				} else if (extType == JdbcTypes.GEOMETRY && DBType.SQLSERVER == dbType) {
-					sql.append("cast(? as geometry)");
+				// 统一模式:先按数据类型分支,再在分支内部按数据库方言处理(与generateInsertSql保持一致)
+				if (extType == JdbcTypes.GEOMETRY) {
+					if (DBType.SQLSERVER == dbType) {
+						sql.append("cast(? as geometry)");
+					} else {
+						// oracle由驱动层SDO STRUCT绑定(见SqlUtil.setGeometryValue),维持裸?
+						sql.append("?");
+					}
+				} else if (extType == JdbcTypes.VECTOR) {
+					// update 2026-9-7 实测sqlserver 2025的cast(? as VECTOR)缺维度报
+					// "not a defined system type",而字符串到vector为隐式转换,维持裸?
+					sql.append("?");
+				} else if (extType == JdbcTypes.JSON || extType == JdbcTypes.JSONB) {
+					if (DBType.SQLSERVER == dbType && isSqlServerNativeJson()) {
+						// update 2026-9-7 实测merge的using子查询中原生json列裸?按nvarchar传递,matched更新
+						// 报"Implicit conversion from data type json to nvarchar is not allowed",
+						// 以convert(json,?)定型;update 2026-9-8 与DialectUtils.merge同款门控:
+						// nvarchar承载列/无json系统类型的库convert报"Type json is not a defined
+						// system type",走裸?
+						sql.append("convert(json, ?)");
+					} else {
+						sql.append("?");
+					}
 				} else {
 					sql.append("?");
 				}
 				sql.append(" as ");
 				sql.append(columnName);
 			}
+			usingCols++;
 		}
 		if (StringUtil.isNotBlank(fromTable)) {
 			sql.append(" from ").append(fromTable);
@@ -416,10 +497,15 @@ public class DialectExtUtils {
 		if (!allIds) {
 			int rejectIdColumnSize = rejectIdFieldArray.length;
 			// update 只针对非主键字段进行修改
+			int insCols = 0;
 			for (int i = 0; i < rejectIdColumnSize; i++) {
 				fieldMeta = entityMeta.getFieldMeta(rejectIdFieldArray[i]);
+				// update 2026-9-7 sqlserver的rowversion列在insert环节同样不参与(自SqlServerDialectUtils迁入)
+				if (DBType.SQLSERVER == dbType && entityMeta.isRowVersionField(fieldMeta)) {
+					continue;
+				}
 				columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
-				if (i > 0) {
+				if (insCols > 0) {
 					insertRejIdCols.append(",");
 					insertRejIdColValues.append(",");
 				}
@@ -438,6 +524,7 @@ public class DialectExtUtils {
 				} else {
 					insertRejIdColValues.append("tv.").append(columnName);
 				}
+				insCols++;
 			}
 		}
 		// 主键未匹配上则进行插入操作
@@ -495,12 +582,15 @@ public class DialectExtUtils {
 		}
 		sql.append(")");
 		mergeIgnoreSql = sql.toString();
-		mergeIgnoreSqlCache.put(sqlCacheKey, mergeIgnoreSql);
+		if (mergeIgnoreSqlCache.size() < 256) {
+			mergeIgnoreSqlCache.put(sqlCacheKey, mergeIgnoreSql);
+		}
 		return mergeIgnoreSql;
 	}
 
 	/**
-	 * @TODO 针对postgresql\kingbase\guassdb\mogdb等数据库
+	 * 针对postgresql\kingbase\guassdb\mogdb等数据库
+	 * 
 	 * @param unifyFieldsHandler
 	 * @param dbType
 	 * @param entityMeta
@@ -607,12 +697,15 @@ public class DialectExtUtils {
 			sql.append(" ) DO NOTHING ");
 		}
 		insertIgnoreSql = sql.toString();
-		insertIgnoreSqlCache.put(sqlCacheKey, insertIgnoreSql);
+		if (insertIgnoreSqlCache.size() < 256) {
+			insertIgnoreSqlCache.put(sqlCacheKey, insertIgnoreSql);
+		}
 		return insertIgnoreSql;
 	}
 
 	/**
-	 * @TODO 解决saveOrUpdate场景对一些记录无法判断是新增导致无法对创建人、创建时间等属性进行统一赋值，从而通过默认值模式来解决
+	 * 解决saveOrUpdate场景对一些记录无法判断是新增导致无法对创建人、创建时间等属性进行统一赋值，从而通过默认值模式来解决
+	 * 
 	 * @param createUnifyFields
 	 * @param dbType
 	 * @param fieldMeta
@@ -667,7 +760,8 @@ public class DialectExtUtils {
 	}
 
 	/**
-	 * @TODO 组织对象操作sql的key
+	 * 组织对象操作sql的key
+	 * 
 	 * @param entityMeta
 	 * @param tableName
 	 * @param dbType
@@ -677,7 +771,44 @@ public class DialectExtUtils {
 	private static String getCacheKey(EntityMeta entityMeta, String tableName, int dbType, PKStrategy pkStrategy) {
 		// update 2023-10-24 增加主键策略作为缓存key的组成，因为gaussdb
 		// save单条保存和saveAll批量机制存在差异，save时sequence策略会提前获取sequence值，然后变成了assign策略
+		// update 2026-9-7 rowversion校准状态参与缓存key:避免校准前后(rowVersionColumns判据不同)生成的
+		// 语句命中同一条缓存(与SqlServerDialectUtils.getCacheKey对齐;非sqlserver库恒为null不影响)
 		return entityMeta.getEntityClass().getName() + "[" + tableName + "]dbType=" + dbType
-				+ ((pkStrategy == null) ? "" : pkStrategy.getValue());
+				+ ((pkStrategy == null) ? "" : pkStrategy.getValue()) + "|rv="
+				+ ((entityMeta.getRowVersionColumns() == null) ? -1 : entityMeta.getRowVersionColumns().hashCode());
+	}
+
+	/**
+	 * update 2026-9-6 oceanbase的mysql模式按mysql方言配置(其专有方言生成oracle式merge
+	 * into,mysql模式不支持),此时dbType为MYSQL但ThreadLocal的actuallyDBType仍为URL判定的
+	 * OCEANBASE(显式dialect时processDataSource会设置),以此区分真mysql与ob mysql模式
+	 * 
+	 * @return true表示当前连接实为oceanbase(仅按mysql方言处理)
+	 */
+	public static boolean isOceanBaseAsMysql() {
+		Integer actualDbType = SqlToyThreadDataHolder.getActuallyDBType();
+		return (actualDbType != null && actualDbType == DBType.OCEANBASE);
+	}
+
+	/**
+	 * update 2026-9-7 实测DB2 12.1起空间能力内置为非限定SYSIBM函数(ST_GeomFromText(?,0)等,
+	 * 需≥8K页表空间),db2gse schema不复存在;11.5及以下GSE扩展为db2gse.ST_GeomFromText专属形态。
+	 * 以processDataSource采集的连接档案(DBProfile.majorVersion)分派,未采集到时默认GSE形态 保持既有行为。
+	 */
+	public static boolean isDB2BuiltInSpatial() {
+		DBProfile profile = SqlToyThreadDataHolder.getDBProfile();
+		return (profile != null && profile.getDbType() == DBType.DB2 && profile.getMajorVersion() >= 12);
+	}
+
+	/**
+	 * update 2026-9-8 当前连接是否存在原生json类型(sqlserver 2025 GA/17.x正式版引入):
+	 * merge的using子查询对原生json列须convert(json,?)定型(裸?按nvarchar传递,matched更新 报"Implicit
+	 * conversion from data type json to nvarchar is not allowed"),对nvarchar
+	 * 承载列convert报"Type json is not a defined system type"(本机17.0.4075预览版实测
+	 * 亦无json系统类型);以DBProfile的convert探针实测结果分派,未采集到档案时保守返回 false(裸?承载形态)
+	 */
+	public static boolean isSqlServerNativeJson() {
+		DBProfile profile = SqlToyThreadDataHolder.getDBProfile();
+		return (profile != null && Boolean.TRUE.equals(profile.getHasJsonType()));
 	}
 }

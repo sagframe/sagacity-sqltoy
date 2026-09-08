@@ -6,8 +6,8 @@ import org.sagacity.sqltoy.config.model.PKStrategy;
  * @project sagacity-sqltoy
  * @description 北大金仓数据库方言支持
  * @author zhongxuchen
- * @version v1.0, Date:2020-11-6
- * @modify 2020-11-6,修改说明
+ * @version v1.0,Date:2020-11-06
+ * @modify Date:2020-11-06 修改说明
  */
 public class KingbaseDialectUtils {
 	/**
@@ -16,7 +16,8 @@ public class KingbaseDialectUtils {
 	public static final String NVL_FUNCTION = "isnull";
 
 	/**
-	 * @TODO 主键策略是identity或sequence时，主键值允许不由数据库内部自动产生，可人工赋值
+	 * 主键策略是identity或sequence时，主键值允许不由数据库内部自动产生，可人工赋值
+	 * 
 	 * @param pkStrategy
 	 * @return
 	 */

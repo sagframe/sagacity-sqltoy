@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -39,7 +40,7 @@ import org.slf4j.LoggerFactory;
  * @project sagacity-sqltoy
  * @description 文件处理工具类
  * @author zhongxuchen
- * @version v1.0,Date:2008-11-7
+ * @version v1.0,Date:2008-11-07
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class FileUtil {
@@ -47,19 +48,20 @@ public class FileUtil {
 	 * 定义全局日志
 	 */
 	private final static Logger logger = LoggerFactory.getLogger(FileUtil.class);
-	private static final boolean IS_WINDOWS = System.getProperty("os.name").toLowerCase().contains("win");
+	private static final boolean IS_WINDOWS = System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win");
 
 	private FileUtil() {
 	}
 
 	/**
-	 * @todo 将文件转到OutputStream
+	 * 将文件转到OutputStream
+	 * 
 	 * @param out
 	 * @param fileName
 	 */
 	public static void putFileInOutStream(OutputStream out, Object fileName) {
 		if (fileName == null || out == null) {
-			throw new IllegalArgumentException("参数不能为空");
+			throw new IllegalArgumentException("fileName and out can not be null!");
 		}
 		File outFile = null;
 		if (fileName instanceof String) {
@@ -67,7 +69,7 @@ public class FileUtil {
 		} else if (fileName instanceof File) {
 			outFile = (File) fileName;
 		} else {
-			throw new IllegalArgumentException("fileName参数类型错误,只提供String and File两个类型!");
+			throw new IllegalArgumentException("illegal fileName argument type, only String and File are supported!");
 		}
 		FileInputStream fileIn = null;
 		if (outFile.exists()) {
@@ -80,7 +82,7 @@ public class FileUtil {
 				}
 				out.flush();
 			} catch (Exception e) {
-				logger.error("putFileInOutStream 方法执行异常", e);
+				logger.error("putFileInOutStream method execution failed", e);
 			} finally {
 				IOUtil.closeQuietly(out, fileIn);
 			}
@@ -88,7 +90,8 @@ public class FileUtil {
 	}
 
 	/**
-	 * @todo 将流保存为文件
+	 * 将流保存为文件
+	 * 
 	 * @param is
 	 * @param fileName
 	 */
@@ -105,14 +108,15 @@ public class FileUtil {
 			}
 			fos.flush();
 		} catch (Exception e) {
-			logger.error("putInputStreamToFile 方法执行异常", e);
+			logger.error("putInputStreamToFile method execution failed", e);
 		} finally {
 			IOUtil.closeQuietly(fos, is);
 		}
 	}
 
 	/**
-	 * @todo 将文件转换为流
+	 * 将文件转换为流
+	 * 
 	 * @param fileName
 	 * @return
 	 * @throws Exception
@@ -122,7 +126,8 @@ public class FileUtil {
 	}
 
 	/**
-	 * @todo 将字节数组保存为文件
+	 * 将字节数组保存为文件
+	 * 
 	 * @param bytes
 	 * @param fileName
 	 */
@@ -135,14 +140,15 @@ public class FileUtil {
 			fos.write(bytes);
 			fos.flush();
 		} catch (Exception e) {
-			logger.error("putBytesToFile 方法执行异常", e);
+			logger.error("putBytesToFile method execution failed", e);
 		} finally {
 			IOUtil.closeQuietly(fos);
 		}
 	}
 
 	/**
-	 * @todo 将文件读到字符串中
+	 * 将文件读到字符串中
+	 * 
 	 * @param file
 	 * @param charset
 	 * @return
@@ -158,7 +164,8 @@ public class FileUtil {
 	}
 
 	/**
-	 * @TODO 读取文件存为字符串
+	 * 读取文件存为字符串
+	 * 
 	 * @param file
 	 * @param charset
 	 * @return
@@ -168,7 +175,8 @@ public class FileUtil {
 	}
 
 	/**
-	 * @TODO 转换InputStream为String
+	 * 转换InputStream为String
+	 * 
 	 * @param is
 	 * @param encoding
 	 * @return
@@ -196,13 +204,14 @@ public class FileUtil {
 			}
 			return result.toString();
 		} catch (Exception e) {
-			logger.error("读取文件失败: {}", e.getMessage(), e);
+			logger.error("failed to read the file: {}", e.getMessage(), e);
 			return null;
 		}
 	}
 
 	/**
-	 * @todo 获得指定路径的文件
+	 * 获得指定路径的文件
+	 * 
 	 * @param file 文件路径like:classpath:xxx.xml或xxx.xml
 	 * @return
 	 */
@@ -241,18 +250,19 @@ public class FileUtil {
 						}
 					}
 				} catch (Exception e) {
-					logger.error("getFileInputStream 方法执行异常", e);
+					logger.error("getFileInputStream method execution failed", e);
 				}
 			}
 			return result;
 		} catch (FileNotFoundException fn) {
-			logger.error("getFileInputStream 方法执行异常", fn);
+			logger.error("getFileInputStream method execution failed", fn);
 		}
 		return null;
 	}
 
 	/**
-	 * @TODO 判断文件是否存在
+	 * 判断文件是否存在
+	 * 
 	 * @param file
 	 * @return
 	 * @throws IOException
@@ -295,7 +305,7 @@ public class FileUtil {
 				return true;
 			}
 		} catch (IOException e) {
-			logger.error("existFile 方法执行异常", e);
+			logger.error("existFile method execution failed", e);
 		} finally {
 			if (result != null) {
 				result.close();
@@ -305,7 +315,8 @@ public class FileUtil {
 	}
 
 	/**
-	 * @TODO 读取文件到二进制数组中
+	 * 读取文件到二进制数组中
+	 * 
 	 * @param file
 	 * @return
 	 */
@@ -316,13 +327,14 @@ public class FileUtil {
 		try (InputStream in = getFileInputStream(file)) {
 			return IOUtil.getBytes(in);
 		} catch (Exception e) {
-			logger.error("读取文件失败: {}", e.getMessage(), e);
+			logger.error("failed to read the file: {}", e.getMessage(), e);
 			return null;
 		}
 	}
 
 	/**
-	 * @TODO <b>将字符串存为文件</b>
+	 * 将字符串存为文件
+	 * 
 	 * @param content
 	 * @param fileName
 	 * @param charset
@@ -352,7 +364,8 @@ public class FileUtil {
 	}
 
 	/**
-	 * @TODO 递归将指定文件夹下面的文件（直到最底层文件夹）放入数组中
+	 * 递归将指定文件夹下面的文件（直到最底层文件夹）放入数组中
+	 * 
 	 * @param parentFile
 	 * @param fileList
 	 * @param filters
@@ -381,7 +394,8 @@ public class FileUtil {
 	}
 
 	/**
-	 * @TODO 获取指定路径下符合条件的文件
+	 * 获取指定路径下符合条件的文件
+	 * 
 	 * @param baseDir
 	 * @param filters
 	 * @return
@@ -402,7 +416,8 @@ public class FileUtil {
 	}
 
 	/**
-	 * @TODO 判断是否跟路径
+	 * 判断是否跟路径
+	 * 
 	 * @param path
 	 * @return
 	 */
@@ -427,7 +442,8 @@ public class FileUtil {
 	}
 
 	/**
-	 * @todo 递归匹配文件名称获取文件
+	 * 递归匹配文件名称获取文件
+	 * 
 	 * @param fileList
 	 * @param file
 	 * @param filters
@@ -446,7 +462,8 @@ public class FileUtil {
 	}
 
 	/**
-	 * @todo 新建目录
+	 * 新建目录
+	 * 
 	 * @param folderPath 目录
 	 * @return 返回目录创建后的路径
 	 */
@@ -457,12 +474,13 @@ public class FileUtil {
 				tmpFile.mkdirs();
 			}
 		} catch (Exception e) {
-			logger.error("创建目录:{}操作出错{}", folderPath, e.getMessage());
+			logger.error("failed to create the folder:{}, error{}", folderPath, e.getMessage());
 		}
 	}
 
 	/**
-	 * @todo 新建文件
+	 * 新建文件
+	 * 
 	 * @param filePathAndName 文本文件完整绝对路径及文件名
 	 * @param fileContent     文本文件内容
 	 * @return
@@ -486,33 +504,34 @@ public class FileUtil {
 				myFile.println(fileContent);
 			}
 		} catch (Exception e) {
-			logger.error("创建文件:{},操作出错{}", filePathAndName, e.getMessage());
+			logger.error("failed to create the file:{}, error{}", filePathAndName, e.getMessage());
 		} finally {
 			IOUtil.closeQuietly(myFile, resultFile);
 		}
 	}
 
 	/**
-	 * @todo 删除文件
+	 * 删除文件
+	 * 
 	 * @param filePathAndName 文本文件完整绝对路径及文件名
-	 * @return Boolean 成功删除返回true遭遇异常返回false
+	 * @return Boolean 成功删除返回true失败或文件不存在返回false
 	 */
 	public static boolean delFile(String filePathAndName) {
-		boolean bea = false;
 		try {
 			File myDelFile = new File(filePathAndName);
 			if (myDelFile.exists()) {
-				myDelFile.delete();
-				bea = true;
+				// 如实返回删除结果,失败(如目录非空、文件被锁定)返回false
+				return myDelFile.delete();
 			}
 		} catch (Exception e) {
-			logger.error("删除文件:{},操作出错{}", filePathAndName, e.getMessage());
+			logger.error("failed to delete the file:{}, error{}", filePathAndName, e.getMessage());
 		}
-		return bea;
+		return false;
 	}
 
 	/**
-	 * @todo 删除文件夹
+	 * 删除文件夹
+	 * 
 	 * @param folderPath 文件夹完整绝对路??
 	 * @return
 	 */
@@ -523,12 +542,13 @@ public class FileUtil {
 			// 删除当前文件夹
 			new File(folderPath).delete();
 		} catch (Exception e) {
-			logger.error("delFolder 方法执行异常", e);
+			logger.error("delFolder method execution failed", e);
 		}
 	}
 
 	/**
-	 * @todo 删除指定文件夹下??有文??
+	 * 删除指定文件夹下??有文??
+	 * 
 	 * @param path 文件夹完整绝对路??
 	 * @return
 	 * @return
@@ -572,7 +592,8 @@ public class FileUtil {
 	}
 
 	/**
-	 * @TODO <b>删除指定路径下，文件名称正则匹配的文件</b>
+	 * 删除指定路径下，文件名称正则匹配的文件
+	 * 
 	 * @param path
 	 * @param regex
 	 * @return
@@ -580,7 +601,7 @@ public class FileUtil {
 	public static boolean deleteMatchedFile(Object path, String[] regex) {
 		List matchedFile = getPathFiles(path, regex);
 		if (matchedFile != null && !matchedFile.isEmpty()) {
-			logger.debug("将删除的文件数量共计:{}个!", matchedFile.size());
+			logger.debug("a total of:{} files will be deleted!", matchedFile.size());
 			Iterator iter = matchedFile.iterator();
 			while (iter.hasNext()) {
 				((File) iter.next()).delete();
@@ -590,7 +611,8 @@ public class FileUtil {
 	}
 
 	/**
-	 * @todo 复制单个文件
+	 * 复制单个文件
+	 * 
 	 * @param oldPathFile 准备复制的文件源
 	 * @param newPathFile 拷贝到新绝对路径带文件名
 	 * @return
@@ -601,7 +623,8 @@ public class FileUtil {
 	}
 
 	/**
-	 * @todo 复制单个文件
+	 * 复制单个文件
+	 * 
 	 * @param oldPathFile 准备复制的文件源
 	 * @param newPathFile 拷贝到新绝对路径带文件名
 	 * @return
@@ -625,10 +648,10 @@ public class FileUtil {
 				fs.flush();
 				return true;
 			}
-			logger.error("文件=" + oldPathFile + "不存在!计划改名对应的文件为=" + newPathFile);
+			logger.error("file={} does not exist! the target file to be renamed={}", oldPathFile, newPathFile);
 			return false;
 		} catch (Exception e) {
-			logger.error("复制文件:" + oldPathFile + " 到目标文件:" + newPathFile + " 操作失败!");
+			logger.error("failed to copy file:{} to the target file:{}!", oldPathFile, newPathFile);
 		} finally {
 			IOUtil.closeQuietly(fs, inStream);
 		}
@@ -636,7 +659,8 @@ public class FileUtil {
 	}
 
 	/**
-	 * @todo 复制整个文件夹的内容
+	 * 复制整个文件夹的内容
+	 * 
 	 * @param oldPath 准备拷贝的目录
 	 * @param newPath 指定绝对路径的新目录
 	 */
@@ -674,12 +698,14 @@ public class FileUtil {
 				}
 			}
 		} catch (Exception e) {
-			logger.error("复制整个文件夹,从文件夹:{} 到文件夹:{},操作出错{}", oldPath, newPath, e.getMessage());
+			logger.error("failed to copy the whole folder, from folder:{} to folder:{}, error{}", oldPath, newPath,
+					e.getMessage());
 		}
 	}
 
 	/**
-	 * @todo 移动文件
+	 * 移动文件
+	 * 
 	 * @param oldPath
 	 * @param newPath
 	 * @param deleteOldFile
@@ -692,7 +718,8 @@ public class FileUtil {
 	}
 
 	/**
-	 * @todo 移动目录
+	 * 移动目录
+	 * 
 	 * @param oldPath
 	 * @param newPath
 	 * @return
@@ -703,7 +730,8 @@ public class FileUtil {
 	}
 
 	/**
-	 * @todo 文件改名
+	 * 文件改名
+	 * 
 	 * @param fileName
 	 * @param distFile
 	 * @return:1 修改成功,0:修改失败,-1:文件不存??
@@ -717,10 +745,10 @@ public class FileUtil {
 		}
 		if (oldFile.exists()) {
 			try {
-				oldFile.renameTo(new File(distFile));
-				return 1;
+				// 如实返回renameTo结果,失败(如Windows下目标文件已存在)返回0
+				return oldFile.renameTo(new File(distFile)) ? 1 : 0;
 			} catch (Exception e) {
-				logger.error("rename 方法执行异常", e);
+				logger.error("rename method execution failed", e);
 				return 0;
 			}
 		} else {
@@ -729,7 +757,8 @@ public class FileUtil {
 	}
 
 	/**
-	 * @todo 获取文件的摘要，一般应用于检查文件是否被修改过（如在网络传输过程中，下载后取其摘要进行对比）
+	 * 获取文件的摘要，一般应用于检查文件是否被修改过（如在网络传输过程中，下载后取其摘要进行对比）
+	 * 
 	 * @param fileName
 	 * @param digestType :like MD5
 	 * @return
@@ -741,9 +770,6 @@ public class FileUtil {
 		try {
 			MessageDigest md = MessageDigest.getInstance(digestType);
 			fin = new FileInputStream(fileName);
-			if (fin.available() == 0) {
-				return "";
-			}
 			din = new DigestInputStream(fin, md);// 构造输入流
 			while ((din.read()) != -1) {
 				;
@@ -757,7 +783,7 @@ public class FileUtil {
 			}
 			result = digest.toString();
 		} catch (Exception e) {
-			logger.error("getFileMessageDigest 方法执行异常", e);
+			logger.error("getFileMessageDigest method execution failed", e);
 		} finally {
 			IOUtil.closeQuietly(din, fin);
 		}
@@ -765,7 +791,8 @@ public class FileUtil {
 	}
 
 	/**
-	 * @todo 文件路径拼接,自动在路径中间处理文件分割符
+	 * 文件路径拼接,自动在路径中间处理文件分割符
+	 * 
 	 * @param topPath
 	 * @param lowPath
 	 * @return
@@ -795,7 +822,8 @@ public class FileUtil {
 	}
 
 	/**
-	 * @todo 文件路径格式成本系统对应的文件格式，unix和window的文件路径区别
+	 * 文件路径格式成本系统对应的文件格式，unix和window的文件路径区别
+	 * 
 	 * @param path
 	 * @return
 	 */
@@ -807,7 +835,8 @@ public class FileUtil {
 	}
 
 	/**
-	 * @todo 根据文件名称获取具体文件
+	 * 根据文件名称获取具体文件
+	 * 
 	 * @param fileName
 	 * @return
 	 */
@@ -817,7 +846,7 @@ public class FileUtil {
 		}
 		String trimmed = fileName.trim();
 		File result = null;
-		if (trimmed.toLowerCase().startsWith("classpath:")) {
+		if (trimmed.toLowerCase(Locale.ROOT).startsWith("classpath:")) {
 			String realPath = trimmed.substring(10).trim();
 			if (!realPath.isEmpty() && realPath.startsWith("/")) {
 				realPath = realPath.substring(1);
@@ -830,7 +859,7 @@ public class FileUtil {
 					// 根据项目日志框架记录
 				}
 			}
-		} else if (trimmed.toLowerCase().startsWith("file:")) {
+		} else if (trimmed.toLowerCase(Locale.ROOT).startsWith("file:")) {
 			result = new File(trimmed.substring(5));
 		} else {
 			result = new File(trimmed);
@@ -839,7 +868,8 @@ public class FileUtil {
 	}
 
 	/**
-	 * @todo 判断路径是package还是file path
+	 * 判断路径是package还是file path
+	 * 
 	 * @param file
 	 * @return
 	 */
@@ -860,7 +890,8 @@ public class FileUtil {
 	}
 
 	/**
-	 * @todo 追加文件：使用FileOutputStream，在构造FileOutputStream时，把第二个参数设为true
+	 * 追加文件：使用FileOutputStream
+	 * 
 	 * @param fileName
 	 * @param content
 	 */
@@ -876,22 +907,25 @@ public class FileUtil {
 			if (!appendFile.exists()) {
 				appendFile.createNewFile();
 			}
-			out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(appendFile, true)));
+			// 显式UTF-8,与框架其他文件读写保持一致,避免依赖平台默认字符集导致中文乱码
+			out = new BufferedWriter(
+					new OutputStreamWriter(new FileOutputStream(appendFile, true), StandardCharsets.UTF_8));
 			out.write(content);
 		} catch (Exception e) {
-			logger.error("appendFileByStream 方法执行异常", e);
+			logger.error("appendFileByStream method execution failed", e);
 		} finally {
 			IOUtil.closeQuietly(out);
 		}
 	}
 
 	/**
-	 * @todo 追加文件：使用FileWriter
+	 * 追加文件：使用FileWriter
+	 * 
 	 * @param fileName
 	 * @param content
 	 */
 	public static void appendFileByWriter(Object fileName, String content) {
-		FileWriter writer = null;
+		OutputStreamWriter writer = null;
 		try {
 			// 打开一个写文件器，构造函数中的第二个参数true表示以追加形式写文件
 			File appendFile = null;
@@ -903,17 +937,19 @@ public class FileUtil {
 			if (!appendFile.exists()) {
 				appendFile.createNewFile();
 			}
-			writer = new FileWriter(appendFile, true);
+			// 显式UTF-8,避免平台默认字符集导致中文乱码
+			writer = new OutputStreamWriter(new FileOutputStream(appendFile, true), StandardCharsets.UTF_8);
 			writer.write(content);
 		} catch (IOException e) {
-			logger.error("appendFileByWriter 方法执行异常", e);
+			logger.error("appendFileByWriter method execution failed", e);
 		} finally {
 			IOUtil.closeQuietly(writer);
 		}
 	}
 
 	/**
-	 * @todo 追加文件：使用RandomAccessFile
+	 * 追加文件：使用RandomAccessFile
+	 * 
 	 * @param fileName 文件名
 	 * @param content  追加的内容
 	 */
@@ -938,18 +974,22 @@ public class FileUtil {
 			// writeBytes(String)只写每个字符的低8位会丢中文,按UTF-8编码写入
 			randomFile.write(content.getBytes(StandardCharsets.UTF_8));
 		} catch (IOException e) {
-			logger.error("appendFileByRandomAccess 方法执行异常", e);
+			logger.error("appendFileByRandomAccess method execution failed", e);
 		} finally {
 			IOUtil.closeQuietly(randomFile);
 		}
 	}
 
 	/**
-	 * @todo 处理文件路径字符串，提取其的父路径
+	 * 处理文件路径字符串，提取其的父路径
+	 * 
 	 * @param fileName
 	 * @return
 	 */
 	public static String getParentPath(String fileName) {
+		if (fileName == null) {
+			return null;
+		}
 		if (fileName.lastIndexOf("/") != -1) {
 			return fileName.substring(0, fileName.lastIndexOf("/"));
 		}
@@ -960,7 +1000,8 @@ public class FileUtil {
 	}
 
 	/**
-	 * @todo <b>跳转路径</b>
+	 * 跳转路径
+	 * 
 	 * @param basePath
 	 * @param skipFile
 	 * @return

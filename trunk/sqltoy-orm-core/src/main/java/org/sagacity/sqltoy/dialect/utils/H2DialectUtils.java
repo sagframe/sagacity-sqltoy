@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.dialect.utils;
 
 import org.sagacity.sqltoy.config.model.FieldMeta;
@@ -12,12 +9,13 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @project sagacity-sqltoy
  * @description 提供h2数据库相关的特殊逻辑处理封装
  * @author zhongxuchen
- * @version v1.0, Date:2023年6月8日
- * @modify 2023年6月8日,修改说明
+ * @version v1.0,Date:2023-06-08
+ * @modify Date:2023-06-08,修改说明
  */
 public class H2DialectUtils {
 	/**
-	 * @TODO 主键策略是identity或sequence时，主键值允许不由数据库内部自动产生，可人工赋值
+	 * 主键策略是identity或sequence时，主键值允许不由数据库内部自动产生，可人工赋值
+	 * 
 	 * @param pkStrategy
 	 * @return
 	 */
@@ -32,7 +30,8 @@ public class H2DialectUtils {
 	}
 
 	/**
-	 * @todo 组织merge into 语句中select 的字段，进行类型转换
+	 * 组织merge into 语句中select 的字段，进行类型转换
+	 * 
 	 * @param sql
 	 * @param columnName
 	 * @param fieldMeta
@@ -84,6 +83,11 @@ public class H2DialectUtils {
 			sql.append("cast(? as BLOB)");
 		} else if (jdbcType == JdbcTypes.JSON || jdbcType == JdbcTypes.JSONB) {
 			sql.append("cast(? as JSON)");
+		} else if (jdbcType == JdbcTypes.GEOMETRY) {
+			// update 2026-9-8 实测h2的merge using select子查询对geometry列裸?报
+			// "Unknown data type"(参数无法定型),以GEOMETRY cast定型(H2的GEOMETRY
+			// 类型接受WKT文本参数)
+			sql.append("cast(? as GEOMETRY)");
 		} else {
 			// 数组、json等特殊类型
 			if (StringUtil.isNotBlank(fieldMeta.getNativeType())) {

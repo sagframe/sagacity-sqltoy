@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.plugins.calculator;
 
 import java.math.BigDecimal;
@@ -20,9 +17,9 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @project sagacity-sqltoy
  * @description 对树型表结构数据进行排序
  * @author zhongxuchen
- * @version v1.0, Date:2022年10月28日
- * @modify 2022年10月28日,修改说明
- * @modify 2023年7月23日 增加level-order-column属性，支持同层级内数据排序
+ * @version v1.0,Date:2022-10-28
+ * @modify Date:2022-10-28,修改说明
+ * @modify Date:2023-07-23 增加level-order-column属性，支持同层级内数据排序
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class TreeDataSort {
@@ -33,7 +30,8 @@ public class TreeDataSort {
 		Integer idColIndex = labelIndexMap.get(treeTableSortModel.getIdColumn());
 		Integer pidColIndex = labelIndexMap.get(treeTableSortModel.getPidColumn());
 		if (idColIndex == null || pidColIndex == null) {
-			throw new RuntimeException("对树形结构数据进行排序,未正确指定id-column和pid-column!");
+			throw new RuntimeException(
+					"sorting tree structure data does not correctly specify id-column and pid-column, please check!");
 		}
 		int dataWidth = ((List) treeList.get(0)).size();
 		// 汇总列
@@ -50,8 +48,9 @@ public class TreeDataSort {
 		if (StringUtil.isNotBlank(treeTableSortModel.getLevelOrderColumn())) {
 			Integer sortColIndex = labelIndexMap.get(treeTableSortModel.getLevelOrderColumn());
 			if (sortColIndex == null) {
-				throw new RuntimeException("对树形结构每层级内部进行排序，未正确指定层级排序依据的列:levelOrderColumn="
-						+ treeTableSortModel.getLevelOrderColumn() + "!");
+				throw new RuntimeException(
+						"sorting inside each level of the tree structure does not correctly specify the level order column:levelOrderColumn="
+								+ treeTableSortModel.getLevelOrderColumn() + ", please check!");
 			}
 			int dataType = CollectionUtil.getSortDataType(treeList, sortColIndex);
 			boolean desc = treeTableSortModel.getOrderWay().equalsIgnoreCase("desc") ? true : false;
@@ -63,7 +62,8 @@ public class TreeDataSort {
 	}
 
 	/**
-	 * @TODO 按照树的父子关系组织顺序
+	 * 按照树的父子关系组织顺序
+	 * 
 	 * @param treeList
 	 * @param idColIndex
 	 * @param pidColIndex
@@ -111,7 +111,8 @@ public class TreeDataSort {
 	}
 
 	/**
-	 * @TODO 提取根节点
+	 * 提取根节点
+	 * 
 	 * @param treeList
 	 * @param idIndex
 	 * @param pidIndex
@@ -136,7 +137,8 @@ public class TreeDataSort {
 	}
 
 	/**
-	 * @TODO 对排序后的树结构数据进行汇总，将子级数据汇总到父级上
+	 * 对排序后的树结构数据进行汇总，将子级数据汇总到父级上
+	 * 
 	 * @param treeTableSortModel
 	 * @param labelIndexMap
 	 * @param treeList

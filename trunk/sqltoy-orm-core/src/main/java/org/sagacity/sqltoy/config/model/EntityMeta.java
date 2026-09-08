@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.config.model;
 
 import java.io.Serializable;
@@ -9,6 +6,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import org.sagacity.sqltoy.model.IgnoreCaseSet;
@@ -18,16 +16,13 @@ import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description sqltoy entity实体对象信息
  * @author zhongxuchen
- * @version v1.0,Date:2012-6-1
+ * @version v1.0,Date:2012-06-01
  */
 @SuppressWarnings({ "rawtypes" })
 public class EntityMeta implements Serializable {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -1723897636996281118L;
 
 	private Class entityClass;
@@ -215,6 +210,14 @@ public class EntityMeta implements Serializable {
 	private IgnoreCaseSet secureColumns;
 
 	/**
+	 * sqlserver目标下经数据库元数据校准的rowversion(timestamp)列集合,元素为列名(update 2026-9-5)
+	 * null表示未校准,isRowVersionField回退实体侧type==TIMESTAMP的历史判据;校准后以目标库元数据
+	 * TYPE_NAME=='timestamp'为准,避免oracle等项目迁移场景(实体显式type=TIMESTAMP,sqlserver表列
+	 * 实为datetime2)被误判为rowversion而静默跳过写入
+	 */
+	private transient IgnoreCaseSet rowVersionColumns;
+
+	/**
 	 * 数据版本配置
 	 */
 	private DataVersionConfig dataVersion;
@@ -328,9 +331,9 @@ public class EntityMeta implements Serializable {
 	}
 
 	public void addFieldMeta(FieldMeta fieldMeta) {
-		fieldsMeta.put(fieldMeta.getFieldName().toLowerCase(), fieldMeta);
+		fieldsMeta.put(fieldMeta.getFieldName().toLowerCase(Locale.ROOT), fieldMeta);
 		// 数据库字段名称对应vo对象属性名称
-		String colName = fieldMeta.getColumnName().toLowerCase();
+		String colName = fieldMeta.getColumnName().toLowerCase(Locale.ROOT);
 		String fieldName = fieldMeta.getFieldName();
 		columnFieldMap.put(colName, fieldName);
 		// 属性名称中不包含"_"
@@ -367,7 +370,7 @@ public class EntityMeta implements Serializable {
 		List<String> fields = new ArrayList<String>();
 		FieldMeta fieldMeta;
 		for (int i = 0; i < fieldsArray.length; i++) {
-			fieldMeta = fieldsMeta.get(fieldsArray[i].toLowerCase());
+			fieldMeta = fieldsMeta.get(fieldsArray[i].toLowerCase(Locale.ROOT));
 			if (!fieldMeta.isPartitionKey() && !(fieldMeta.getGeneratedType() > 0 && excludeGeneratedCol)) {
 				fields.add(fieldsArray[i]);
 			}
@@ -381,13 +384,13 @@ public class EntityMeta implements Serializable {
 	public void setFieldsArray(String[] fieldsArray) {
 		this.fieldsArray = fieldsArray;
 		for (int i = 0; i < fieldsArray.length; i++) {
-			fieldIndexs.put(fieldsArray[i].toLowerCase(), i);
+			fieldIndexs.put(fieldsArray[i].toLowerCase(Locale.ROOT), i);
 		}
 		if (this.bizIdRelatedColumns != null) {
 			this.bizIdRelatedColIndex = new Integer[bizIdRelatedColumns.length];
 			String colName;
 			for (int i = 0; i < bizIdRelatedColumns.length; i++) {
-				colName = bizIdRelatedColumns[i].toLowerCase();
+				colName = bizIdRelatedColumns[i].toLowerCase(Locale.ROOT);
 				if (fieldIndexs.containsKey(colName)) {
 					this.bizIdRelatedColIndex[i] = fieldIndexs.get(colName);
 				} else if (fieldIndexs.containsKey(colName.replace("_", ""))) {
@@ -395,7 +398,8 @@ public class EntityMeta implements Serializable {
 				} else {
 					// add 2024-08-11 增加业务主键关联字段设置错误场景下的提示,便于开发者提前发现问题
 					throw new IllegalArgumentException(entityClass.getName()
-							+ "业务主键@BusinessId()定义的关联字段:relatedColumns,其中:[" + bizIdRelatedColumns[i] + "]属性不存在,请检查!");
+							+ " relatedColumns defined by the @BusinessId() of the business id has a nonexistent property:["
+							+ bizIdRelatedColumns[i] + "], please check!");
 				}
 			}
 		}
@@ -416,7 +420,7 @@ public class EntityMeta implements Serializable {
 	}
 
 	public int getFieldIndex(String fieldName) {
-		return fieldIndexs.get(fieldName.toLowerCase());
+		return fieldIndexs.get(fieldName.toLowerCase(Locale.ROOT));
 	}
 
 	/**
@@ -463,7 +467,7 @@ public class EntityMeta implements Serializable {
 	}
 
 	public String getColumnName(String fieldName) {
-		FieldMeta fieldMeta = fieldsMeta.get(fieldName.toLowerCase());
+		FieldMeta fieldMeta = fieldsMeta.get(fieldName.toLowerCase(Locale.ROOT));
 		if (fieldMeta == null) {
 			return null;
 		}
@@ -471,12 +475,13 @@ public class EntityMeta implements Serializable {
 	}
 
 	/**
-	 * @todo 针对字段采用数据库关键词命名的字段,增加相应的符合兼容
+	 * 针对字段采用数据库关键词命名的字段,增加相应的符合兼容
+	 * 
 	 * @param fieldName
 	 * @return
 	 */
 	public String getColumnOptName(String fieldName) {
-		FieldMeta fieldMeta = fieldsMeta.get(fieldName.toLowerCase());
+		FieldMeta fieldMeta = fieldsMeta.get(fieldName.toLowerCase(Locale.ROOT));
 		if (fieldMeta == null) {
 			return null;
 		}
@@ -484,7 +489,7 @@ public class EntityMeta implements Serializable {
 	}
 
 	public int getColumnJdbcType(String fieldName) {
-		FieldMeta fieldMeta = fieldsMeta.get(fieldName.toLowerCase());
+		FieldMeta fieldMeta = fieldsMeta.get(fieldName.toLowerCase(Locale.ROOT));
 		if (fieldMeta == null) {
 			return -1;
 		}
@@ -492,7 +497,7 @@ public class EntityMeta implements Serializable {
 	}
 
 	public String getColumnJavaType(String fieldName) {
-		FieldMeta fieldMeta = fieldsMeta.get(fieldName.toLowerCase());
+		FieldMeta fieldMeta = fieldsMeta.get(fieldName.toLowerCase(Locale.ROOT));
 		if (fieldMeta == null) {
 			return null;
 		}
@@ -523,7 +528,8 @@ public class EntityMeta implements Serializable {
 	}
 
 	/**
-	 * @TODO 增加级联关系
+	 * 增加级联关系
+	 * 
 	 * @param cascadeModel
 	 */
 	public boolean addCascade(TableCascadeModel cascadeModel) {
@@ -566,7 +572,7 @@ public class EntityMeta implements Serializable {
 		if (field == null) {
 			return null;
 		}
-		return fieldsMeta.get(field.toLowerCase());
+		return fieldsMeta.get(field.toLowerCase(Locale.ROOT));
 	}
 
 	/**
@@ -857,6 +863,26 @@ public class EntityMeta implements Serializable {
 
 	public void setSecureColumns(IgnoreCaseSet secureColumns) {
 		this.secureColumns = secureColumns;
+	}
+
+	public IgnoreCaseSet getRowVersionColumns() {
+		return rowVersionColumns;
+	}
+
+	public void setRowVersionColumns(IgnoreCaseSet rowVersionColumns) {
+		this.rowVersionColumns = rowVersionColumns;
+	}
+
+	/**
+	 * update 2026-9-5 判定字段是否为sqlserver不可写的rowversion(timestamp)列:
+	 * 已校准(rowVersionColumns非null)按目标库元数据TYPE_NAME=='timestamp'的列名精确判定;
+	 * 未校准回退实体侧type==TIMESTAMP的历史判据(第三方直接调用工具类的兼容路径)
+	 */
+	public boolean isRowVersionField(FieldMeta fieldMeta) {
+		if (rowVersionColumns == null) {
+			return fieldMeta.getType() == java.sql.Types.TIMESTAMP;
+		}
+		return rowVersionColumns.contains(fieldMeta.getColumnName());
 	}
 
 	public DataVersionConfig getDataVersion() {

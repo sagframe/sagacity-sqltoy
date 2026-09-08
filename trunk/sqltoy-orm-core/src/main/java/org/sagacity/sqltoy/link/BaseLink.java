@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.link;
 
 import java.io.Serializable;
@@ -18,12 +15,9 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @project sagacity-sqltoy
  * @description 链式基础操作类，提供SqlToyContext、dataSource等必要属性的注入
  * @author zhongxuchen
- * @version v1.0,Date:2017年10月9日
+ * @version v1.0,Date:2017-10-09
  */
 public abstract class BaseLink implements Serializable {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 6032935116286610811L;
 
 	/**
@@ -61,8 +55,9 @@ public abstract class BaseLink implements Serializable {
 	}
 
 	/**
-	 * @TODO 获取当前数据库的方言名称
-	 * @return
+	 * 获取当前数据库的方言名称
+	 * 
+	 * @return 当前连接对应的数据库方言名称，如：mysql、oracle、postgresql等
 	 */
 	public String getDialect() {
 		if (StringUtil.isNotBlank(sqlToyContext.getDialect())) {

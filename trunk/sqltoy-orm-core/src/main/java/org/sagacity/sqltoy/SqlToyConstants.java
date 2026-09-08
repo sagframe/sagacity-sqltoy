@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
  * @project sagacity-sqltoy
  * @description sqlToy的基础常量参数定义
  * @author zhongxuchen
- * @version v1.0,Date:2014年12月26日
+ * @version v1.0,Date:2014-12-26
  */
 public class SqlToyConstants {
 
@@ -38,9 +38,6 @@ public class SqlToyConstants {
 	 * 符号对,用来提取字符串中对称字符的过滤,如:{ name(){} }，第一个{对称的符合}是最后一位
 	 */
 	public static HashMap<String, String> filters = new HashMap<String, String>() {
-		/**
-		 * 
-		 */
 		private static final long serialVersionUID = 1636155921862321269L;
 		{
 			put("(", ")");
@@ -59,9 +56,10 @@ public class SqlToyConstants {
 	public static String UN_MATCH_DIALECT_MESSAGE = "Failed to correctly match the corresponding database dialect!";
 
 	/**
-	 * 判断sql中是否存在union all的表达式
+	 * 判断sql中是否存在union all的表达式 (update 2026-9-4
+	 * 修复\all笔误:\a在正则中为响铃字符,导致默认正则永远无法匹配union all;不区分大小写与UNION_PATTERN保持一致)
 	 */
-	public static String UNION_ALL_REGEX = "\\W+union\\s+\\all\\W+";
+	public static String UNION_ALL_REGEX = "(?i)\\W+union\\s+all\\W+";
 
 	/**
 	 * 判断sql中是否存在union的表达式
@@ -246,7 +244,8 @@ public class SqlToyConstants {
 	public static Locale defaultLocale;
 
 	/**
-	 * @todo 解析模板中的参数
+	 * 解析模板中的参数
+	 * 
 	 * @param template
 	 * @return
 	 */
@@ -263,7 +262,8 @@ public class SqlToyConstants {
 	}
 
 	/**
-	 * @todo 获取常量值
+	 * 获取常量值
+	 * 
 	 * @param key
 	 * @return
 	 */
@@ -303,7 +303,8 @@ public class SqlToyConstants {
 	}
 
 	/**
-	 * @todo 获取默认区域,未配置defaultLocale时取JVM默认区域(用于日期、数字的格式化解析)
+	 * 获取默认区域,未配置defaultLocale时取JVM默认区域(用于日期、数字的格式化解析)
+	 * 
 	 * @return
 	 */
 	public static Locale getLocale() {
@@ -311,8 +312,9 @@ public class SqlToyConstants {
 	}
 
 	/**
-	 * @todo 将locale配置值转化为Locale对象,支持BCP-47格式(如:en-US、zh_CN、fr-FR、en)
-	 *       兼容旧版本取自java.util.Locale常量名的US/UK/CHINA/JAPAN写法
+	 * 将locale配置值转化为Locale对象,支持BCP-47格式(如:en-US、zh_CN、fr-FR、en)
+	 * 兼容旧版本取自java.util.Locale常量名的US/UK/CHINA/JAPAN写法
+	 * 
 	 * @param localeStr
 	 * @return 无法识别时返回null,格式化时按默认区域处理
 	 */
@@ -322,7 +324,7 @@ public class SqlToyConstants {
 		}
 		String locale = localeStr.trim();
 		// 旧版US/UK/CHINA/JAPAN若直接当语言代码解析会得到错误区域(如UK变成乌克兰语)
-		String upperStr = locale.toUpperCase();
+		String upperStr = locale.toUpperCase(Locale.ROOT);
 		if (upperStr.equals("US")) {
 			return Locale.US;
 		}
@@ -337,14 +339,17 @@ public class SqlToyConstants {
 		}
 		Locale result = Locale.forLanguageTag(locale.replace('_', '-'));
 		if (result == null || "und".equals(result.getLanguage())) {
-			logger.warn("locale:{} 不是合法的区域设置,请使用BCP-47格式(如:en-US、zh-CN),格式化将按默认区域处理!", localeStr);
+			logger.warn(
+					"locale:{} is not a valid locale, please use BCP-47 format (e.g. en-US, zh-CN), formatting will fall back to the default locale!",
+					localeStr);
 			return null;
 		}
 		return result;
 	}
 
 	/**
-	 * @todo 获取常量值
+	 * 获取常量值
+	 * 
 	 * @param key
 	 * @param defaultValue
 	 * @return
@@ -361,7 +366,8 @@ public class SqlToyConstants {
 	}
 
 	/**
-	 * @todo db2 是否为查询语句自动补充with ur进行脏读
+	 * db2 是否为查询语句自动补充with ur进行脏读
+	 * 
 	 * @return
 	 */
 	public static boolean db2WithUR() {
@@ -369,7 +375,8 @@ public class SqlToyConstants {
 	}
 
 	/**
-	 * @todo 获取记录提取的警告阀值
+	 * 获取记录提取的警告阀值
+	 * 
 	 * @return
 	 */
 	public static int getWarnThresholds() {
@@ -387,7 +394,8 @@ public class SqlToyConstants {
 	}
 
 	/**
-	 * @todo 获取项目中在代码中编写的sql数量，超过此阈值不纳入缓存
+	 * 获取项目中在代码中编写的sql数量，超过此阈值不纳入缓存
+	 * 
 	 * @return
 	 */
 	public static int getMaxCodeSqlCount() {
@@ -396,7 +404,8 @@ public class SqlToyConstants {
 	}
 
 	/**
-	 * @todo 获取记录提取的最大阀值
+	 * 获取记录提取的最大阀值
+	 * 
 	 * @return
 	 */
 	public static Long getMaxThresholds() {
@@ -405,7 +414,8 @@ public class SqlToyConstants {
 	}
 
 	/**
-	 * @todo oracle分页是否忽视排序导致错乱的问题
+	 * oracle分页是否忽视排序导致错乱的问题
+	 * 
 	 * @return
 	 */
 	public static boolean oraclePageIgnoreOrder() {
@@ -413,7 +423,8 @@ public class SqlToyConstants {
 	}
 
 	/**
-	 * @todo 是否显示数据库信息
+	 * 是否显示数据库信息
+	 * 
 	 * @return
 	 */
 	public static boolean showDatasourceInfo() {
@@ -421,7 +432,8 @@ public class SqlToyConstants {
 	}
 
 	/**
-	 * @todo 获取文件中的常量元素
+	 * 获取文件中的常量元素
+	 * 
 	 * @param propertiesFile
 	 */
 	private static void loadPropertyFile(String propertiesFile) {
@@ -439,20 +451,21 @@ public class SqlToyConstants {
 				fis.close();
 			}
 		} catch (IOException e) {
-			logger.error("loadPropertyFile 方法执行异常", e);
+			logger.error("loadPropertyFile method execution failed", e);
 		} finally {
 			try {
 				if (fis != null) {
 					fis.close();
 				}
 			} catch (Exception e) {
-				logger.error("loadPropertyFile 方法执行异常", e);
+				logger.error("loadPropertyFile method execution failed", e);
 			}
 		}
 	}
 
 	/**
-	 * @todo 加载数据库方言的参数
+	 * 加载数据库方言的参数
+	 * 
 	 * @param keyValues
 	 */
 	public static void loadProperties(Map<String, String> keyValues) {
@@ -464,8 +477,9 @@ public class SqlToyConstants {
 	}
 
 	/**
-	 * @todo 用户可以根据实际数据库方言，通过常量参数转换默认值(如db2 当前时间戳，可以是current
-	 *       timestamp,而在oracle中必须是current_timestamp)
+	 * 用户可以根据实际数据库方言，通过常量参数转换默认值(如db2 当前时间戳，可以是current
+	 * timestamp,而在oracle中必须是current_timestamp)
+	 * 
 	 * @param dbType
 	 * @param defaultValue
 	 * @return
@@ -473,7 +487,7 @@ public class SqlToyConstants {
 	public static String getDefaultValue(Integer dbType, String defaultValue) {
 		String realDefault = getKeyValue(defaultValue);
 		if (realDefault == null) {
-			if ("CURRENT TIMESTAMP".equals(defaultValue.toUpperCase())) {
+			if ("CURRENT TIMESTAMP".equals(defaultValue.toUpperCase(Locale.ROOT))) {
 				return "CURRENT_TIMESTAMP";
 			}
 			return defaultValue;
@@ -482,7 +496,8 @@ public class SqlToyConstants {
 	}
 
 	/**
-	 * @todo 替换模板中${paramName}变量参数,目前仅用于nosql部分的解析
+	 * 替换模板中${paramName}变量参数,目前仅用于nosql部分的解析
+	 * 
 	 * @param template
 	 * @return
 	 */
@@ -507,7 +522,8 @@ public class SqlToyConstants {
 	}
 
 	/**
-	 * @todo 获取loadAll单个批次最大的记录数量,主要是防止sql in ()参数超过1000导致错误
+	 * 获取loadAll单个批次最大的记录数量,主要是防止sql in ()参数超过1000导致错误
+	 * 
 	 * @return
 	 */
 	public static int getLoadAllBatchSize() {
@@ -516,7 +532,8 @@ public class SqlToyConstants {
 	}
 
 	/**
-	 * @TODO 是否打开sql签名
+	 * 是否打开sql签名
+	 * 
 	 * @return
 	 */
 	public static boolean openSqlSign() {
@@ -524,7 +541,8 @@ public class SqlToyConstants {
 	}
 
 	/**
-	 * @TODO 针对主键策略提前设置或计算雪花算法的worker_id,dataCenterId以及22位和26位主键对应的应用id
+	 * 针对主键策略提前设置或计算雪花算法的worker_id,dataCenterId以及22位和26位主键对应的应用id
+	 * 
 	 * @param workerId
 	 * @param dataCenterId
 	 * @param serverId
@@ -576,7 +594,7 @@ public class SqlToyConstants {
 				SERVER_ID = serverNode;
 			}
 		} catch (Exception e) {
-			logger.error("设置workerId和dataCenterId发生错误:{}", e.getMessage());
+			logger.error("failed to set workerId and dataCenterId: {}", e.getMessage());
 		}
 	}
 
@@ -592,7 +610,7 @@ public class SqlToyConstants {
 			return null;
 		}
 		// 规避版本影响
-		String realDialect = dialect.toLowerCase();
+		String realDialect = dialect.toLowerCase(Locale.ROOT);
 		if (realDialect.startsWith("postgresql")) {
 			realDialect = "postgresql";
 		} else if (realDialect.startsWith("oracle")) {
@@ -604,11 +622,11 @@ public class SqlToyConstants {
 		if (result == null) {
 			return tableOrColumnName;
 		}
-		String lowResult = result.toLowerCase();
+		String lowResult = result.toLowerCase(Locale.ROOT);
 		if (lowResult.startsWith("lower")) {
-			return tableOrColumnName.toLowerCase();
+			return tableOrColumnName.toLowerCase(Locale.ROOT);
 		} else if (lowResult.startsWith("upper")) {
-			return tableOrColumnName.toUpperCase();
+			return tableOrColumnName.toUpperCase(Locale.ROOT);
 		}
 		return tableOrColumnName;
 	}

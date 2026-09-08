@@ -11,14 +11,11 @@ import org.sagacity.sqltoy.model.inner.ParallelQueryExtend;
  * @project sagacity-sqltoy
  * @description 并行查询对象模型
  * @author zhongxuchen
- * @version v1.0, Date:2020-8-25
- * @modify 2020-8-25,修改说明
+ * @version v1.0,Date:2020-08-25
+ * @modify Date:2020-08-25 修改说明
  */
 public class ParallQuery implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 1316664483969945064L;
 
 	/**
@@ -35,7 +32,8 @@ public class ParallQuery implements Serializable {
 	}
 
 	/**
-	 * @TODO 设置具体的sql或id
+	 * 设置具体的sql或id
+	 * 
 	 * @param sql
 	 * @return
 	 */
@@ -45,7 +43,8 @@ public class ParallQuery implements Serializable {
 	}
 
 	/**
-	 * @TODO 分页场景
+	 * 分页场景
+	 * 
 	 * @param page
 	 * @return
 	 */
@@ -55,7 +54,8 @@ public class ParallQuery implements Serializable {
 	}
 
 	/**
-	 * @TODO 取top记录
+	 * 取top记录
+	 * 
 	 * @param topSize
 	 * @return
 	 */
@@ -65,7 +65,8 @@ public class ParallQuery implements Serializable {
 	}
 
 	/**
-	 * @TODO 取随机记录
+	 * 取随机记录
+	 * 
 	 * @param randomSize
 	 * @return
 	 */
@@ -75,7 +76,8 @@ public class ParallQuery implements Serializable {
 	}
 
 	/**
-	 * @TODO 设置独立的条件参数
+	 * 设置独立的条件参数
+	 * 
 	 * @param names
 	 * @return
 	 */
@@ -99,7 +101,8 @@ public class ParallQuery implements Serializable {
 	}
 
 	/**
-	 * @TODO 返回类型
+	 * 返回类型
+	 * 
 	 * @param resultType
 	 * @return
 	 */
@@ -119,7 +122,8 @@ public class ParallQuery implements Serializable {
 	}
 
 	/**
-	 * @TODO 设置执行时上下文数据，如：在拦截器中取值用以业务判断
+	 * 设置执行时上下文数据，如：在拦截器中取值用以业务判断
+	 * 
 	 * @param contextData
 	 * @return
 	 */

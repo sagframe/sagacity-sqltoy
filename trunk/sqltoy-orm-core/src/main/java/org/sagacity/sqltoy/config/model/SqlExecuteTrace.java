@@ -1,11 +1,7 @@
-/**
- *
- */
 package org.sagacity.sqltoy.config.model;
 
 import java.io.Serializable;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.sagacity.sqltoy.model.OperateDetailType;
 import org.sagacity.sqltoy.utils.IdUtil;
@@ -14,12 +10,9 @@ import org.sagacity.sqltoy.utils.IdUtil;
  * @project sagacity-sqltoy
  * @description sql执行日志
  * @author zhongxuchen
- * @version v1.0,Date:2018年3月24日
+ * @version v1.0,Date:2018-03-24
  */
 public class SqlExecuteTrace implements Serializable {
-	/**
-	 *
-	 */
 	private static final long serialVersionUID = 6050450953137017285L;
 
 	public SqlExecuteTrace(String id, OperateDetailType operateDetailType, Class resultType, boolean isPrint) {
@@ -101,9 +94,10 @@ public class SqlExecuteTrace implements Serializable {
 	private boolean error = false;
 
 	/**
-	 * 执行的sql和参数
+	 * 执行的sql和参数 update 2026-9-8 惰性创建+ArrayList:该对象随每条SQL在ThreadLocal中创建(单线程访问,
+	 * 无并发场景),CopyOnWriteArrayList每次add全量复制属错配;多数SQL执行不产生过程日志, 惰性创建避免无谓分配
 	 */
-	private List<SqlExecuteLog> executeLogs = new CopyOnWriteArrayList<>();
+	private List<SqlExecuteLog> executeLogs;
 
 	/**
 	 * 上下文信息
@@ -159,8 +153,15 @@ public class SqlExecuteTrace implements Serializable {
 	/**
 	 * @return the sqlToyResults
 	 */
-	public List<SqlExecuteLog> getExecuteLogs() {
+	private List<SqlExecuteLog> lazyLogs() {
+		if (executeLogs == null) {
+			executeLogs = new java.util.ArrayList<>();
+		}
 		return executeLogs;
+	}
+
+	public List<SqlExecuteLog> getExecuteLogs() {
+		return (executeLogs == null) ? java.util.Collections.emptyList() : executeLogs;
 	}
 
 	/**
@@ -169,7 +170,7 @@ public class SqlExecuteTrace implements Serializable {
 	 * @param paramsValue
 	 */
 	public void addSqlLog(String topic, String sql, Object... paramsValue) {
-		executeLogs.add(new SqlExecuteLog(0, topic, sql, paramsValue));
+		lazyLogs().add(new SqlExecuteLog(0, topic, sql, paramsValue));
 	}
 
 	/**
@@ -178,7 +179,7 @@ public class SqlExecuteTrace implements Serializable {
 	 * @param paramsValue
 	 */
 	public void addLog(String topic, String content, Object... paramsValue) {
-		executeLogs.add(new SqlExecuteLog(1, topic, content, paramsValue));
+		lazyLogs().add(new SqlExecuteLog(1, topic, content, paramsValue));
 	}
 
 	/**
@@ -193,7 +194,7 @@ public class SqlExecuteTrace implements Serializable {
 	 */
 	public void setError(String errorMsg) {
 		this.error = true;
-		executeLogs.add(new SqlExecuteLog(1, "错误信息", errorMsg, null));
+		lazyLogs().add(new SqlExecuteLog(1, "错误信息", errorMsg, null));
 	}
 
 	/**

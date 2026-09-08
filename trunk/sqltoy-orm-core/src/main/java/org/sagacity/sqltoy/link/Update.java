@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.link;
 
 import java.io.Serializable;
@@ -8,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import javax.sql.DataSource;
@@ -21,12 +19,9 @@ import org.sagacity.sqltoy.utils.MapperUtils;
  * @project sagacity-sqltoy
  * @description 数据修改操作
  * @author zhongxuchen
- * @version v1.0,Date:2017年10月9日
+ * @version v1.0,Date:2017-10-09
  */
 public class Update extends BaseLink {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 5391575924738181611L;
 
 	/**
@@ -74,8 +69,8 @@ public class Update extends BaseLink {
 	}
 
 	/**
-	 * @param sqlToyContext
-	 * @param dataSource
+	 * @param sqlToyContext sqltoy全局上下文对象
+	 * @param dataSource    修改操作绑定的数据源，null表示使用默认数据源
 	 */
 	public Update(SqlToyContext sqlToyContext, DataSource dataSource) {
 		super(sqlToyContext, dataSource);
@@ -93,9 +88,10 @@ public class Update extends BaseLink {
 	}
 
 	/**
-	 * @todo 设置是否深度修改
-	 * @param deeply
-	 * @return
+	 * 设置是否深度修改
+	 * 
+	 * @param deeply true表示深度修改，将对象所有非主键属性（包括null值属性）都作为update赋值字段
+	 * @return 当前Update对象，支持链式调用
 	 */
 	public Update deeply(boolean deeply) {
 		this.deeply = deeply;
@@ -105,8 +101,8 @@ public class Update extends BaseLink {
 	/**
 	 * 仅仅修改指定字段
 	 * 
-	 * @param updateFields
-	 * @return
+	 * @param updateFields 仅参与修改的属性名称数组，update语句只更新这些字段对应的列
+	 * @return 当前Update对象，支持链式调用
 	 */
 	public Update updateFields(String... updateFields) {
 		this.updateFields = updateFields;
@@ -115,18 +111,11 @@ public class Update extends BaseLink {
 		return this;
 	}
 
-	// 暂时不开放
-//	public Update uniqueFields(String... uniqueFields) {
-//		if (uniqueFields != null && uniqueFields.length > 0) {
-//			this.uniqueFields = uniqueFields;
-//		}
-//		return this;
-//	}
-
 	/**
-	 * @todo 设置每批记录量
-	 * @param batchSize
-	 * @return
+	 * 设置每批记录量
+	 * 
+	 * @param batchSize 批量提交的记录数量，小于等于0时使用sqltoyContext中配置的batchSize
+	 * @return 当前Update对象，支持链式调用
 	 */
 	public Update batchSize(int batchSize) {
 		this.batchSize = batchSize;
@@ -134,9 +123,10 @@ public class Update extends BaseLink {
 	}
 
 	/**
-	 * @todo 级联修改的对象
-	 * @param forceCascadeClasses
-	 * @return
+	 * 级联修改的对象
+	 * 
+	 * @param forceCascadeClasses 需要级联修改的子对象实体类型，子集合数据为null时会清空或置为无效处理
+	 * @return 当前Update对象，支持链式调用
 	 */
 	public Update cascadeClasses(Class... forceCascadeClasses) {
 		this.forceCascadeClasses = forceCascadeClasses;
@@ -144,9 +134,10 @@ public class Update extends BaseLink {
 	}
 
 	/**
-	 * @todo 级联修改对象需要强制修改的属性
-	 * @param subTableForceUpdateProps
-	 * @return
+	 * 级联修改对象需要强制修改的属性
+	 * 
+	 * @param subTableForceUpdateProps 各级联子对象类型对应的强制修改属性数组，属性值为null时也参与更新
+	 * @return 当前Update对象，支持链式调用
 	 */
 	public Update cascadeForceUpdate(HashMap<Class, String[]> subTableForceUpdateFields) {
 		this.subTableForceUpdateFields = subTableForceUpdateFields;
@@ -154,10 +145,9 @@ public class Update extends BaseLink {
 	}
 
 	/**
-	 * @see forceUpdateFields(String... forceUpdateFields)
-	 * @todo 设置强制修改的属性
-	 * @param forceUpdateFields
-	 * @return
+	 * @see forceUpdateFields(String... forceUpdateFields) 设置强制修改的属性
+	 * @param forceUpdateFields 强制修改的属性名称，属性值为null时也作为update赋值字段
+	 * @return 当前Update对象，支持链式调用
 	 */
 	@Deprecated
 	public Update forceUpdateProps(String... forceUpdateProps) {
@@ -171,8 +161,9 @@ public class Update extends BaseLink {
 	}
 
 	/**
-	 * @todo 单个对象修改
-	 * @param entity
+	 * 单个对象修改
+	 * 
+	 * @param entity 待修改的实体对象，以主键值作为更新条件，非空属性参与修改
 	 */
 	public Long one(final Serializable entity) {
 		if (entity == null) {
@@ -214,8 +205,9 @@ public class Update extends BaseLink {
 	}
 
 	/**
-	 * @todo 批量修改(批量不做级联)
-	 * @param entities
+	 * 批量修改(批量不做级联)
+	 * 
+	 * @param entities 待批量修改的实体对象集合，以主键值作为更新条件按批次提交
 	 */
 	public Long many(final List<?> entities) {
 		if (entities == null || entities.isEmpty()) {
@@ -232,7 +224,8 @@ public class Update extends BaseLink {
 				}
 			}
 			if (entity == null) {
-				throw new IllegalArgumentException("updateAll(deeply) 操作entities集合中全部元素为null!");
+				throw new IllegalArgumentException(
+						"updateAll(deeply) all elements in the entities collection are null, please check!");
 			}
 			forceUpdate = sqlToyContext.getEntityMeta(entity.getClass()).getRejectIdFieldArray(true);
 		}
@@ -247,7 +240,8 @@ public class Update extends BaseLink {
 				}
 			}
 			if (resultType == null) {
-				throw new IllegalArgumentException("updateAll(updateFields) 操作entities集合中全部元素为null!");
+				throw new IllegalArgumentException(
+						"updateAll(updateFields) all elements in the entities collection are null, please check!");
 			}
 			String[] copyFields = mergeArray(sqlToyContext.getEntityMeta(resultType).getIdArray(), updateFields);
 			// 复制指定属性形成新的POJO集合
@@ -260,26 +254,27 @@ public class Update extends BaseLink {
 	}
 
 	/**
-	 * @TODO 合并两个数组
-	 * @param sourceAry
-	 * @param targetAry
-	 * @return
+	 * 合并两个数组
+	 * 
+	 * @param sourceAry 第一个待合并的属性数组
+	 * @param targetAry 第二个待合并的属性数组
+	 * @return 合并后忽略大小写去重的属性数组
 	 */
 	public static String[] mergeArray(String[] sourceAry, String[] targetAry) {
 		Set<String> copyFields = new HashSet<>();
 		Set<String> ignoreKeySet = new HashSet<>();
 		if (sourceAry != null) {
 			for (String str : sourceAry) {
-				if (!ignoreKeySet.contains(str.toLowerCase())) {
-					ignoreKeySet.add(str.toLowerCase());
+				if (!ignoreKeySet.contains(str.toLowerCase(Locale.ROOT))) {
+					ignoreKeySet.add(str.toLowerCase(Locale.ROOT));
 					copyFields.add(str);
 				}
 			}
 		}
 		if (targetAry != null) {
 			for (String str : targetAry) {
-				if (!ignoreKeySet.contains(str.toLowerCase())) {
-					ignoreKeySet.add(str.toLowerCase());
+				if (!ignoreKeySet.contains(str.toLowerCase(Locale.ROOT))) {
+					ignoreKeySet.add(str.toLowerCase(Locale.ROOT));
 					copyFields.add(str);
 				}
 			}

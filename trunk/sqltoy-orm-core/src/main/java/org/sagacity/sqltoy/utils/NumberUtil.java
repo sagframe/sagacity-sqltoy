@@ -71,10 +71,11 @@ public class NumberUtil {
 	}
 
 	/**
-	 * @todo 根据给定的模式将数据对象转换成格式化的字符串
-	 * @param target
-	 * @param pattern
-	 * @return
+	 * 根据给定的模式将数据对象转换成格式化的字符串
+	 * 
+	 * @param target  数字对象或数字字符串，为null时返回null
+	 * @param pattern 格式模式，如#,##0.00；也支持capital(大写汉字数字)、capitalmoney/capital-rmb(大写金额)、capital-en/capital-english(英文金额)
+	 * @return 格式化后的字符串，格式非法时返回原始字符串形式
 	 */
 	public static String format(Object target, String pattern) {
 		return format(target, pattern, null, null);
@@ -85,14 +86,15 @@ public class NumberUtil {
 	}
 
 	/**
-	 * @todo 根据给定的模式将数据对象转换成格式化的字符串,currency仅对capital-en/capital-english英文金额格式生效,
-	 *       指定币种(ISO-4217代码如USD,或直接写单位词)时输出SAY开头的票据标准格式,为null输出不带币种的既有格式
-	 * @param target
-	 * @param pattern
-	 * @param roundingMode
-	 * @param locale
-	 * @param currency   币种代码或单位词(如USD、POUNDS STERLING)
-	 * @return
+	 * 根据给定的模式将数据对象转换成格式化的字符串,currency仅对capital-en/capital-english英文金额格式生效,
+	 * 指定币种(ISO-4217代码如USD,或直接写单位词)时输出SAY开头的票据标准格式,为null输出不带币种的既有格式
+	 * 
+	 * @param target       数字对象或数字字符串，为null时返回null
+	 * @param pattern      格式模式，如#,##0.00；也支持capital、capitalmoney、capital-en等大写格式
+	 * @param roundingMode 舍入模式，为null时使用默认舍入规则
+	 * @param locale       地区信息，为null时使用系统配置的默认区域
+	 * @param currency     币种代码或单位词(如USD、POUNDS STERLING)
+	 * @return 格式化后的字符串，格式非法时返回原始字符串形式
 	 */
 	public static String format(Object target, String pattern, RoundingMode roundingMode, Locale locale,
 			String currency) {
@@ -103,12 +105,12 @@ public class NumberUtil {
 			return target.toString();
 		}
 		try {
-			String tmpStr = target.toString().replace(",", "").trim().toLowerCase();
+			String tmpStr = target.toString().replace(",", "").trim().toLowerCase(Locale.ROOT);
 			if ("".equals(tmpStr) || "null".equals(tmpStr) || "nan".equals(tmpStr)) {
 				return "";
 			}
 			BigDecimal tmp = new BigDecimal(tmpStr);
-			String lowPattern = pattern.toLowerCase();
+			String lowPattern = pattern.toLowerCase(Locale.ROOT);
 			// 将数字转换成大写汉字
 			if (lowPattern.equals(Pattern.CAPITAL)) {
 				return numberToChina(tmpStr, false);
@@ -130,17 +132,18 @@ public class NumberUtil {
 			df.applyPattern(pattern);
 			return df.format(tmp);
 		} catch (Exception e) {
-			logger.error("value:" + target + ";pattern=" + pattern + ";" + e.getMessage(), e);
+			logger.error("value:{};pattern={};{}", target, pattern, e.getMessage(), e);
 		}
 		return target.toString();
 	}
 
 	/**
-	 * @todo 格式化不同币种的金额
-	 * @param target
-	 * @param pattern
-	 * @param locale
-	 * @return
+	 * 格式化不同币种的金额
+	 * 
+	 * @param target  金额数值或数字字符串，为null时返回null
+	 * @param pattern 格式模式，如#,##0.00；也支持capitalmoney、capital-en等大写金额格式
+	 * @param locale  地区信息，决定货币符号和小数分隔符，为null时使用系统配置的默认区域
+	 * @return 格式化后的金额字符串，格式非法时返回原始字符串形式
 	 */
 	public static String formatCurrency(Object target, String pattern, Locale locale) {
 		if (target == null) {
@@ -150,11 +153,11 @@ public class NumberUtil {
 			return target.toString();
 		}
 		try {
-			String tmpStr = target.toString().replace(",", "").trim().toLowerCase();
+			String tmpStr = target.toString().replace(",", "").trim().toLowerCase(Locale.ROOT);
 			if ("".equals(tmpStr) || "null".equals(tmpStr) || "nan".equals(tmpStr)) {
 				return "";
 			}
-			String lowPattern = pattern.toLowerCase();
+			String lowPattern = pattern.toLowerCase(Locale.ROOT);
 			BigDecimal tmp = new BigDecimal(tmpStr);
 			if (lowPattern.equals(Pattern.CAPITAL)) {
 				return numberToChina(tmpStr, false);
@@ -172,15 +175,16 @@ public class NumberUtil {
 			df.applyPattern(pattern);
 			return df.format(tmp);
 		} catch (Exception e) {
-			logger.error("value:" + target + ";pattern=" + pattern + ";" + e.getMessage(), e);
+			logger.error("value:{};pattern={};{}", target, pattern, e.getMessage(), e);
 		}
 		return target.toString();
 	}
 
 	/**
-	 * @todo 转换百分数
+	 * 转换百分数
+	 * 
 	 * @param percent :example: 90% return 0.9
-	 * @return
+	 * @return 对应的小数值，如"90%"返回0.9；percent为空白或解析失败返回null
 	 */
 	public static Float parsePercent(String percent) {
 		if (StringUtil.isBlank(percent)) {
@@ -190,17 +194,18 @@ public class NumberUtil {
 		try {
 			return Float.valueOf(nf.parse(percent).floatValue());
 		} catch (ParseException e) {
-			logger.error("解析百分数[{}]失败:{}", percent, e.getMessage());
+			logger.error("failed to parse the percent:[{}]:{}", percent, e.getMessage());
 		}
 		return null;
 	}
 
 	/**
-	 * @todo 解析float 字符串
-	 * @param floatStr
-	 * @param maxIntDigits
-	 * @param maxFractionDigits
-	 * @return
+	 * 解析float 字符串
+	 * 
+	 * @param floatStr          待解析的数字字符串，允许带千分位逗号
+	 * @param maxIntDigits      最大整数位数，null表示不限制，超限时保留低位
+	 * @param maxFractionDigits 最大小数位数，null表示不限制，超限时直接截断
+	 * @return 解析后的Float值，字符串为空白或解析失败返回null
 	 */
 	public static Float parseFloat(String floatStr, Integer maxIntDigits, Integer maxFractionDigits) {
 		Number number = parseStr(floatStr, maxIntDigits, null, maxFractionDigits, null);
@@ -211,11 +216,12 @@ public class NumberUtil {
 	}
 
 	/**
-	 * @todo 解析decimal 字符串
-	 * @param decimalStr
-	 * @param maxIntDigits
-	 * @param maxFractionDigits
-	 * @return
+	 * 解析decimal 字符串
+	 * 
+	 * @param decimalStr        待解析的数字字符串，允许带千分位逗号
+	 * @param maxIntDigits      最大整数位数，null表示不限制，超限时保留低位
+	 * @param maxFractionDigits 最大小数位数，null表示不限制，超限时直接截断
+	 * @return 解析后的BigDecimal值(无精度尾巴)，字符串为空白或解析失败返回null
 	 */
 	public static BigDecimal parseDecimal(String decimalStr, Integer maxIntDigits, Integer maxFractionDigits) {
 		Number number = parseStr(decimalStr, maxIntDigits, null, maxFractionDigits, null);
@@ -227,11 +233,12 @@ public class NumberUtil {
 	}
 
 	/**
-	 * @todo 解析double 字符串
-	 * @param doubleStr
-	 * @param maxIntDigits
-	 * @param maxFractionDigits
-	 * @return
+	 * 解析double 字符串
+	 * 
+	 * @param doubleStr         待解析的数字字符串，允许带千分位逗号
+	 * @param maxIntDigits      最大整数位数，null表示不限制，超限时保留低位
+	 * @param maxFractionDigits 最大小数位数，null表示不限制，超限时直接截断
+	 * @return 解析后的Double值，字符串为空白或解析失败返回null
 	 */
 	public static Double parseDouble(String doubleStr, Integer maxIntDigits, Integer maxFractionDigits) {
 		Number number = parseStr(doubleStr, maxIntDigits, null, maxFractionDigits, null);
@@ -242,11 +249,12 @@ public class NumberUtil {
 	}
 
 	/**
-	 * @todo 将大写中文金额字符串转换成数字,与toCapitalMoney输出范围对称,最大支持到京级(10^63):
-	 *       单位幂值拾=10、佰=100、仟=1000、万=10^4、亿=10^8、兆=10^16、京=10^32,
-	 *       组合单位(万亿=10^12、万兆=10^20、兆京=10^48、万亿兆京=10^60等)按幂相乘解析
-	 * @param capitalMoney
-	 * @return
+	 * 将大写中文金额字符串转换成数字,与toCapitalMoney输出范围对称,最大支持到京级(10^63):
+	 * 单位幂值拾=10、佰=100、仟=1000、万=10^4、亿=10^8、兆=10^16、京=10^32,
+	 * 组合单位(万亿=10^12、万兆=10^20、兆京=10^48、万亿兆京=10^60等)按幂相乘解析
+	 * 
+	 * @param capitalMoney 大写中文金额字符串，如"壹仟贰佰叁拾肆元伍角陆分"，兼容小写中文数字和阿拉伯数字混写
+	 * @return 对应的BigDecimal数值(默认保留3位小数，以"整"结尾保留整数)，capitalMoney为空白或含非法字符返回null
 	 */
 	public static BigDecimal capitalMoneyToNum(String capitalMoney) {
 		if (StringUtil.isBlank(capitalMoney)) {
@@ -291,17 +299,17 @@ public class NumberUtil {
 		BigDecimal groupValue = BigDecimal.ZERO;
 		// 角分厘部分,以毫(千分之一)为单位整数累计避免浮点误差
 		long fractionMilli = 0;
-		// 已读入尚未结合单位的单个数字
-		int lastDigit = 0;
+		// 已读入尚未结合单位的数字;连续阿拉伯数字串按十进制累计(如"123元"→123)
+		long lastDigit = 0;
 		for (int i = 0; i < capitalMoney.length(); i++) {
 			char unitChar = capitalMoney.charAt(i);
-			if (unitChar >= '1' && unitChar <= '9') {
+			if (unitChar >= '0' && unitChar <= '9') {
 				// 新组数字开始:上一组的组合单位链已闭合,提交累加
 				if (groupUnit != null) {
 					total = total.add(groupValue.multiply(groupUnit));
 					groupUnit = null;
 				}
-				lastDigit = unitChar - '0';
+				lastDigit = lastDigit * 10 + (unitChar - '0');
 			} else if (unitChar == '拾' || unitChar == '佰' || unitChar == '仟') {
 				int unitVal = (unitChar == '拾') ? 10 : ((unitChar == '佰') ? 100 : 1000);
 				// 拾/佰/仟前无数字的历史写法按壹拾/壹佰/壹仟解析(如"拾元整"=10)
@@ -342,9 +350,10 @@ public class NumberUtil {
 	}
 
 	/**
-	 * @todo 将数字转换成中文大写金额
-	 * @param money
-	 * @return
+	 * 将数字转换成中文大写金额
+	 * 
+	 * @param money 金额数值，支持负数，小数最多精确到厘(3位)
+	 * @return 大写中文金额字符串，如"壹仟贰佰叁拾肆元伍角陆分"；0返回"零元整"，整数金额以"整"结尾
 	 */
 	public static String toCapitalMoney(BigDecimal money) {
 		// 取绝对值
@@ -406,18 +415,20 @@ public class NumberUtil {
 	}
 
 	/**
-	 * @todo 将多位阿拉伯数字转换成中文显示
-	 * @param sourceInt
-	 * @return
+	 * 将多位阿拉伯数字转换成中文显示
+	 * 
+	 * @param sourceInt 待转换的整数
+	 * @return 中文数字字符串，如1234返回"一千二百三十四"，0返回"零"
 	 */
 	public static String numberToChina(int sourceInt) {
 		return numberToChina(Integer.toString(sourceInt), false);
 	}
 
 	/**
-	 * @todo 求数组中数据的最大值(忽略null元素)
-	 * @param bigArray
-	 * @return
+	 * 求数组中数据的最大值(忽略null元素)
+	 * 
+	 * @param bigArray BigDecimal数组，允许包含null元素，为null时返回null
+	 * @return 数组中的最大值，数组为null或全部元素为null返回null
 	 */
 	public static BigDecimal getMax(BigDecimal[] bigArray) {
 		BigDecimal max = null;
@@ -436,9 +447,10 @@ public class NumberUtil {
 	}
 
 	/**
-	 * @todo 求数组中数据的最小值(忽略null元素)
-	 * @param bigArray
-	 * @return
+	 * 求数组中数据的最小值(忽略null元素)
+	 * 
+	 * @param bigArray BigDecimal数组，允许包含null元素，为null时返回null
+	 * @return 数组中的最小值，数组为null或全部元素为null返回null
 	 */
 	public static BigDecimal getMin(BigDecimal[] bigArray) {
 		BigDecimal min = null;
@@ -461,10 +473,11 @@ public class NumberUtil {
 	}
 
 	/**
-	 * @todo 求数组中数据的平均值
-	 * @param bigDeicmalArray
-	 * @param radixSize
-	 * @return
+	 * 求数组中数据的平均值
+	 * 
+	 * @param bigDeicmalArray BigDecimal数组，允许包含null元素(null参与分母但不参与求和)
+	 * @param radixSize       保留的小数位数
+	 * @return 按指定位数四舍五入的平均值，数组为null或空返回0
 	 */
 	public static BigDecimal getAverage(BigDecimal[] bigDeicmalArray, int radixSize) {
 		return getAverage(bigDeicmalArray, radixSize, RoundingMode.HALF_UP);
@@ -485,9 +498,10 @@ public class NumberUtil {
 	}
 
 	/**
-	 * @todo 求数组中数据的和
-	 * @param bigArray
-	 * @return
+	 * 求数组中数据的和
+	 * 
+	 * @param bigArray BigDecimal数组，忽略null元素
+	 * @return 数组元素之和，数组为null或空返回0
 	 */
 	public static BigDecimal summary(BigDecimal[] bigArray) {
 		BigDecimal sum = BigDecimal.ZERO;
@@ -503,13 +517,14 @@ public class NumberUtil {
 	}
 
 	/**
-	 * @todo 私有方法，为parseDouble,parseFloat等提供统一的处理实现
-	 * @param parseTarget
-	 * @param maxIntDigits
-	 * @param minIntDigits
-	 * @param maxFractionDigits
-	 * @param minFractionDigits
-	 * @return
+	 * 私有方法，为parseDouble,parseFloat等提供统一的处理实现
+	 * 
+	 * @param parseTarget       待解析的数字字符串，允许带千分位逗号
+	 * @param maxIntDigits      最大整数位数，null表示不限制
+	 * @param minIntDigits      最小整数位数，null表示不限制
+	 * @param maxFractionDigits 最大小数位数，null表示不限制
+	 * @param minFractionDigits 最小小数位数，null表示不限制
+	 * @return 解析后的Number对象，字符串为空白或解析失败返回null
 	 */
 	private static Number parseStr(String parseTarget, Integer maxIntDigits, Integer minIntDigits,
 			Integer maxFractionDigits, Integer minFractionDigits) {
@@ -541,19 +556,20 @@ public class NumberUtil {
 			}
 			return number;
 		} catch (ParseException e) {
-			logger.error("value:" + parseTarget + " " + e.getMessage(), e);
+			logger.error("value:{} {}", parseTarget, e.getMessage(), e);
 		}
 		return null;
 	}
 
 	/**
-	 * @todo 应用解析位数限制(补足JDK NumberFormat.parse不遵循位数设置的缺陷):
-	 *       maxIntDigits超限时整数部分保留低位(如1234.56限3位整数得234.56,与NumberFormat格式化语义一致),
-	 *       maxFractionDigits超限时直接截断(非四舍五入,如1.239限2位小数得1.23)
-	 * @param number
-	 * @param maxIntDigits
-	 * @param maxFractionDigits
-	 * @return
+	 * 应用解析位数限制(补足JDK NumberFormat.parse不遵循位数设置的缺陷):
+	 * maxIntDigits超限时整数部分保留低位(如1234.56限3位整数得234.56,与NumberFormat格式化语义一致),
+	 * maxFractionDigits超限时直接截断(非四舍五入,如1.239限2位小数得1.23)
+	 * 
+	 * @param number            待限制位数的数值
+	 * @param maxIntDigits      最大整数位数，null表示不限制，超限时整数部分保留低位
+	 * @param maxFractionDigits 最大小数位数，null表示不限制，超限时直接截断
+	 * @return 应用位数限制后的数值
 	 */
 	private static Number applyDigitLimits(Number number, Integer maxIntDigits, Integer maxFractionDigits) {
 		BigDecimal decimal = new BigDecimal(number.toString());
@@ -575,10 +591,11 @@ public class NumberUtil {
 	private static final String[] GROUP_UNIT_BITS = { "万", "亿", "兆", "京" };
 
 	/**
-	 * @todo 将多位阿拉伯数字转换成中文
-	 * @param sourceInt
-	 * @param isMoney
-	 * @return
+	 * 将多位阿拉伯数字转换成中文
+	 * 
+	 * @param sourceInt 数字字符串，可为负数
+	 * @param isMoney   true按大写金额转换(壹贰叁、拾佰仟，最高位"壹拾"保留)，false按普通中文数字转换(一二三，"一十"省略"一")
+	 * @return 中文数字字符串，如"1234"返回"一千二百三十四"(非金额)或"壹仟贰佰叁拾肆"(金额)；空白返回空串，0返回"零"(金额场景返回空串)
 	 */
 	private static String numberToChina(String sourceInt, boolean isMoney) {
 		if (StringUtil.isBlank(sourceInt)) {
@@ -631,11 +648,12 @@ public class NumberUtil {
 	}
 
 	/**
-	 * @todo 将组内(万以内)数字转换成中文，自动处理组内零(如1001为壹仟零壹)
+	 * 将组内(万以内)数字转换成中文，自动处理组内零(如1001为壹仟零壹)
+	 * 
 	 * @param groupValue 组内数值(0~9999)
 	 * @param chinaNum   数字字符表
 	 * @param realUOM    单位字符表(取仟、佰、拾)
-	 * @return
+	 * @return 组内数字的中文表示，中间零位以"零"补位，全零返回空串
 	 */
 	private static String fourDigitsToChina(int groupValue, String[] chinaNum, String[] realUOM) {
 		int[] digitAry = { groupValue / 1000, groupValue / 100 % 10, groupValue / 10 % 10, groupValue % 10 };
@@ -662,16 +680,17 @@ public class NumberUtil {
 	}
 
 	/**
-	 * @todo 获取组序号对应的组单位，组序号按二进制位组合(万=1组、亿=2组、兆=4组、京=8组)
+	 * 获取组序号对应的组单位，组序号按二进制位组合(万=1组、亿=2组、兆=4组、京=8组)
+	 * 
 	 * @param groupIndex 组序号(0为个位组)
-	 * @return
+	 * @return 组单位字符串，如3返回"万亿"；0返回空串，超过15抛出IllegalArgumentException
 	 */
 	private static String groupUnit(int groupIndex) {
 		if (groupIndex == 0) {
 			return "";
 		}
 		if (groupIndex > 15) {
-			throw new IllegalArgumentException("数字超出支持的转换范围(10^64)");
+			throw new IllegalArgumentException("the number exceeds the supported conversion range (10^64)!");
 		}
 		StringBuilder unit = new StringBuilder();
 		for (int bit = 0; (1 << bit) <= groupIndex; bit++) {
@@ -683,18 +702,20 @@ public class NumberUtil {
 	}
 
 	/**
-	 * @todo 判断字符串是整数
-	 * @param obj
-	 * @return
+	 * 判断字符串是整数
+	 * 
+	 * @param obj 待判断的字符串
+	 * @return true表示是整数(可带正负号)，false表示不是整数或为空白
 	 */
 	public static boolean isInteger(String obj) {
 		return StringUtil.matches(obj, INTEGER_REGEX);
 	}
 
 	/**
-	 * @todo 判断字符串是否为数字
-	 * @param numberStr
-	 * @return
+	 * 判断字符串是否为数字
+	 * 
+	 * @param numberStr 待判断的字符串
+	 * @return true表示是整数或小数(可带正负号)，false表示不是数字或为空白
 	 */
 	public static boolean isNumber(String numberStr) {
 		return StringUtil.matches(numberStr, NUMBER_REGEX);
@@ -706,17 +727,18 @@ public class NumberUtil {
 
 	public static int getRandomNum(int start, int end) {
 		if (start >= end) {
-			throw new IllegalArgumentException("start必须小于end");
+			throw new IllegalArgumentException("start must be less than end!");
 		}
 		// 生成 [start, end) 区间的随机 int
 		return start + SECURE_RANDOM.nextInt(end - start);
 	}
 
 	/**
-	 * @todo 产生随机数数组
+	 * 产生随机数数组
+	 * 
 	 * @param maxValue 随机数的最大值
 	 * @param size     随机数的个数
-	 * @return
+	 * @return size个不重复的随机数([0,maxValue)区间)，size不小于maxValue时返回[0,maxValue)的全量打乱数组
 	 */
 	public static Object[] randomArray(int maxValue, int size) {
 		int realSize = size;
@@ -741,13 +763,17 @@ public class NumberUtil {
 
 	/**
 	 * @按照概率获取对应概率的数据索引，如：A：概率80%，B：10%，C：6%，D：4%，将出现概率放入数组， 按随机规则返回对应概率的索引
-	 * @param probabilities
-	 * @return
+	 * @param probabilities 各索引对应的概率权重数组(非百分比也可，按权重占比计算)
+	 * @return 命中概率权重对应的数组索引，总权重小于等于0时返回0
 	 */
 	public static int getProbabilityIndex(int[] probabilities) {
 		int total = 0;
 		for (int probabilitiy : probabilities) {
 			total = total + probabilitiy;
+		}
+		// 总概率为0(如全0数组或空数组)时nextInt(0)会抛异常，兜底返回首个索引
+		if (total <= 0) {
+			return 0;
 		}
 		int randomData = SECURE_RANDOM.nextInt(total) + 1;
 		int base = 0;
@@ -762,9 +788,11 @@ public class NumberUtil {
 
 	/****************** 数字金额转换为英文格式 Begin ********************************/
 	/**
-	 * @TODO 将数字转换为英文描述
-	 * @param value
-	 * @return
+	 * 将数字转换为英文描述
+	 * 
+	 * @param value 金额数值，小数最多保留2位
+	 * @return 英文金额描述，如1234.56返回"ONE THOUSAND TWO HUNDRED AND THIRTY-FOUR AND CENTS
+	 *         FIFTY-SIX ONLY"；value为null返回空串
 	 */
 	public static String convertToEnglishMoney(BigDecimal value) {
 		if (null == value) {
@@ -781,9 +809,10 @@ public class NumberUtil {
 	}
 
 	/**
-	 * @TODO 将数字转换为英文描述
-	 * @param value
-	 * @return
+	 * 将数字转换为英文描述
+	 * 
+	 * @param value 金额数字字符串，允许负号、千分位逗号和小数点
+	 * @return 英文金额描述(以ONLY结尾)，value为null返回null，超过12组(10^36)抛出IllegalArgumentException
 	 */
 	public static String convertToEnglishMoney(String value) {
 		if (value == null) {
@@ -828,7 +857,7 @@ public class NumberUtil {
 		int loopEnd = lstrrev.length() / 3;
 		// 与parseMore尺度词表对齐(最大DECILLION=10^33,12组),13组及以上给出明确错误而非parseMore数组越界
 		if (loopEnd > 12) {
-			throw new IllegalArgumentException("数字超出支持的转换范围(10^36)");
+			throw new IllegalArgumentException("the number exceeds the supported conversion range (10^36)!");
 		}
 		for (int i = 0; i < loopEnd; i++) {
 			a[i] = reverse(lstrrev.substring(3 * i, 3 * i + 3)); // 截取第一个叁位
@@ -865,46 +894,49 @@ public class NumberUtil {
 	}
 
 	// 票据标准币种单位词(与ISO-4217代码一一对应,RMB为惯用别名),供带币种参数的convertToEnglishMoney使用
-	private final static String[] ISO_CURRENCY_CODES = { "USD", "AUD", "CAD", "HKD", "SGD", "NZD", "GBP", "EUR",
-			"JPY", "CHF", "CNY", "RMB" };
+	private final static String[] ISO_CURRENCY_CODES = { "USD", "AUD", "CAD", "HKD", "SGD", "NZD", "GBP", "EUR", "JPY",
+			"CHF", "CNY", "RMB" };
 	private final static String[] ISO_CURRENCY_WORDS = { "US DOLLARS", "AUSTRALIAN DOLLARS", "CANADIAN DOLLARS",
 			"HONG KONG DOLLARS", "SINGAPORE DOLLARS", "NEW ZEALAND DOLLARS", "BRITISH POUNDS STERLING", "EUROS",
 			"JAPANESE YEN", "SWISS FRANCS", "CHINESE YUAN", "CHINESE YUAN" };
 
 	/**
-	 * @todo 输出票据标准格式的英文金额(SAY+币种单位词开头),如value=1234.56、currency=USD输出:
-	 *       "SAY US DOLLARS ONE THOUSAND TWO HUNDRED AND THIRTY-FOUR AND CENTS FIFTY-SIX ONLY";
-	 *       currency支持ISO-4217代码(如USD、AUD、JPY、RMB,自动映射票据标准单位词),也可直接传单位词
-	 *       (如"POUNDS STERLING");为null或空时输出不带币种的既有格式;单位词统一复数,输出可被englishMoneyToNum还原
+	 * 输出票据标准格式的英文金额(SAY+币种单位词开头),如value=1234.56、currency=USD输出: "SAY US DOLLARS ONE
+	 * THOUSAND TWO HUNDRED AND THIRTY-FOUR AND CENTS FIFTY-SIX ONLY";
+	 * currency支持ISO-4217代码(如USD、AUD、JPY、RMB,自动映射票据标准单位词),也可直接传单位词 (如"POUNDS
+	 * STERLING");为null或空时输出不带币种的既有格式;单位词统一复数,输出可被englishMoneyToNum还原
+	 * 
 	 * @param value    金额数值
 	 * @param currency 币种代码或单位词
-	 * @return
+	 * @return SAY开头的票据标准英文金额，currency为null或空时返回不带币种的既有格式
 	 */
 	public static String convertToEnglishMoney(BigDecimal value, String currency) {
 		return withCurrencyWords(convertToEnglishMoney(value), currency);
 	}
 
 	/**
-	 * @todo 输出票据标准格式的英文金额,参见convertToEnglishMoney(BigDecimal,String)
-	 * @param value
-	 * @param currency
-	 * @return
+	 * 输出票据标准格式的英文金额,参见convertToEnglishMoney(BigDecimal,String)
+	 * 
+	 * @param value    金额数字字符串，允许负号、千分位逗号和小数点
+	 * @param currency 币种代码或单位词，为null或空时输出不带币种的既有格式
+	 * @return SAY开头的票据标准英文金额
 	 */
 	public static String convertToEnglishMoney(String value, String currency) {
 		return withCurrencyWords(convertToEnglishMoney(value), currency);
 	}
 
 	/**
-	 * @todo 为英文金额描述加注SAY和币种单位词前缀,形成票据标准格式
+	 * 为英文金额描述加注SAY和币种单位词前缀,形成票据标准格式
+	 * 
 	 * @param money    既有的英文金额描述
 	 * @param currency 币种代码或单位词
-	 * @return
+	 * @return 加注SAY和币种前缀后的金额描述，currency或money为空白时原样返回
 	 */
 	private static String withCurrencyWords(String money, String currency) {
 		if (StringUtil.isBlank(currency) || StringUtil.isBlank(money)) {
 			return money;
 		}
-		String unit = currency.trim().toUpperCase();
+		String unit = currency.trim().toUpperCase(Locale.ROOT);
 		for (int i = 0; i < ISO_CURRENCY_CODES.length; i++) {
 			if (ISO_CURRENCY_CODES[i].equals(unit)) {
 				unit = ISO_CURRENCY_WORDS[i];
@@ -915,13 +947,14 @@ public class NumberUtil {
 	}
 
 	/**
-	 * @todo 将英文金额描述转换成数字,支持convertToEnglishMoney输出的完整形式 (如"MINUS ONE THOUSAND AND
-	 *       CENTS FIFTY ONLY"),也支持普通英文数字(如"one thousand and thirty-four")和带货币单位词的
-	 *       金额描述(如"one thousand two hundred thirty-four dollars and fifty-six cents"、"FIVE EUROS"),
-	 *       货币单位覆盖美元/日元/英镑/欧元/澳元/加拿大元/港币/人民币等主要货币的英文全称、国别修饰词
-	 *       (如AUSTRALIAN、CANADIAN、JAPANESE)及ISO-4217代码(如USD、JPY、AUD、CAD、HKD);
-	 *       同时兼容银行票据标准写法:SAY/SAY TOTAL抬头、AND NO CENTS、分数式分币(如"AND 56/100 DOLLARS")
-	 * @param englishMoney
+	 * 将英文金额描述转换成数字,支持convertToEnglishMoney输出的完整形式 (如"MINUS ONE THOUSAND AND CENTS
+	 * FIFTY ONLY"),也支持普通英文数字(如"one thousand and thirty-four")和带货币单位词的 金额描述(如"one
+	 * thousand two hundred thirty-four dollars and fifty-six cents"、"FIVE EUROS"),
+	 * 货币单位覆盖美元/日元/英镑/欧元/澳元/加拿大元/港币/人民币等主要货币的英文全称、国别修饰词
+	 * (如AUSTRALIAN、CANADIAN、JAPANESE)及ISO-4217代码(如USD、JPY、AUD、CAD、HKD);
+	 * 同时兼容银行票据标准写法:SAY/SAY TOTAL抬头、AND NO CENTS、分数式分币(如"AND 56/100 DOLLARS")
+	 * 
+	 * @param englishMoney 英文金额或数字描述字符串，大小写不敏感
 	 * @return 无法识别时返回null
 	 */
 	public static BigDecimal englishMoneyToNum(String englishMoney) {
@@ -947,7 +980,7 @@ public class NumberUtil {
 				"FRANC", "FRANCS", "SWISS", "CHF", "RUPEE", "RUPEES", "INDIAN", "INR" };
 		// 归一化:统一大写,逗号和连字符转空白(如TWENTY-FIVE拆成两个词),斜杠周围空白剔除(如"56 / 100"归一为"56/100"),
 		// 各类空白(含制表换行、全角空格、不间断空格等非标准空白)统一压缩为单空格,容忍复制粘贴产生的不规范空格
-		String[] tokens = englishMoney.trim().toUpperCase().replace(",", " ").replace("-", " ")
+		String[] tokens = englishMoney.trim().toUpperCase(Locale.ROOT).replace(",", " ").replace("-", " ")
 				.replaceAll("\\s*/\\s*", "/").replaceAll("[\\s\\u00A0\\u202F\\u3000]+", " ").trim().split("\\s+");
 		boolean negative = false;
 		// CENTS之后的数值属于分币部分,单独累计后按百分位合并
@@ -1050,7 +1083,8 @@ public class NumberUtil {
 				}
 			}
 			if (!isScale) {
-				logger.warn("英文金额:{} 存在无法识别的单词:{},返回null!", englishMoney, token);
+				logger.warn("the english money:{} contains an unrecognized word:{}, returns null!", englishMoney,
+						token);
 				return null;
 			}
 		}
@@ -1132,15 +1166,15 @@ public class NumberUtil {
 	/**
 	 * 将字符串解析成RoundingMode
 	 *
-	 * @param roundingModeStr
-	 * @return
+	 * @param roundingModeStr 舍入模式名称，如UP、DOWN、HALF_UP等，大小写不敏感；null表示未配置
+	 * @return 对应的RoundingMode；为null返回null，空串或无法识别统一返回HALF_UP
 	 */
 	public static RoundingMode parseRoundingMode(String roundingModeStr) {
 		// null表示未配置(对应FormatModel不设置舍入模式);空串或无法识别的值统一返回HALF_UP
 		if (roundingModeStr == null) {
 			return null;
 		}
-		String roundingStr = roundingModeStr.trim().toUpperCase();
+		String roundingStr = roundingModeStr.trim().toUpperCase(Locale.ROOT);
 		if (roundingStr.equals("UP")) {
 			return RoundingMode.UP;
 		} else if (roundingStr.equals("DOWN")) {

@@ -13,9 +13,6 @@ import org.sagacity.sqltoy.model.inner.DataSetResult;
  */
 public class StoreResult<T> extends DataSetResult<T> implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 1936180601122427649L;
 
 	/**

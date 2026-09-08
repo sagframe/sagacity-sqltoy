@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.config.model;
 
 import java.io.Serializable;
@@ -11,14 +8,11 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @project sagacity-sqltoy
  * @description 对树型表结构进行排序
  * @author zhongxuchen
- * @version v1.0, Date:2022年10月28日
- * @modify 2022年10月28日,修改说明
+ * @version v1.0,Date:2022-10-28
+ * @modify Date:2022-10-28,修改说明
  */
 public class TreeSortModel implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 804547027448571388L;
 
 	/**

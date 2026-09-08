@@ -53,7 +53,7 @@ public final class StandardUUIDv7Generator {
 
 	// ==================== 私有构造器（禁止实例化）====================
 	private StandardUUIDv7Generator() {
-		throw new UnsupportedOperationException("该类为工具类，禁止实例化");
+		throw new UnsupportedOperationException("this is a utility class and can not be instantiated");
 	}
 
 	// ==================== 核心生成方法 ====================
@@ -79,7 +79,7 @@ public final class StandardUUIDv7Generator {
 	public static UUID generate(Instant instant) {
 		// 1. 参数校验
 		if (instant == null) {
-			throw new NullPointerException("指定的时间实例（instant）不能为 null");
+			throw new NullPointerException("the instant can not be null");
 		}
 
 		// 2. 获取单调递增时间戳（永不倒退，彻底解决时间戳回拨问题）
@@ -143,7 +143,7 @@ public final class StandardUUIDv7Generator {
 	 */
 	public static boolean isUUIDv7(UUID uuid) {
 		if (uuid == null) {
-			throw new NullPointerException("待验证的 UUID 不能为 null");
+			throw new NullPointerException("the uuid to validate can not be null");
 		}
 		// 提取版本号（mostSignificantBits 右移 12 位后取低 4 位）
 		int version = (int) ((uuid.getMostSignificantBits() >> 12) & 0x000F);
@@ -160,10 +160,10 @@ public final class StandardUUIDv7Generator {
 	 */
 	public static long extractTimestamp(UUID uuid) {
 		if (uuid == null) {
-			throw new NullPointerException("待提取时间戳的 UUID 不能为 null");
+			throw new NullPointerException("the uuid to extract timestamp from can not be null");
 		}
 		if (!isUUIDv7(uuid)) {
-			throw new IllegalArgumentException("传入的 UUID 不是 v7 版本，无法提取时间戳");
+			throw new IllegalArgumentException("the uuid is not a v7 version, can not extract the timestamp!");
 		}
 		// 提取高 48 位时间戳（无符号右移 16 位）
 		return uuid.getMostSignificantBits() >>> 16;
@@ -171,7 +171,7 @@ public final class StandardUUIDv7Generator {
 
 	public static long extractTimestamp(String uuid) {
 		if (uuid == null) {
-			throw new NullPointerException("待提取时间戳的 UUID 不能为 null");
+			throw new NullPointerException("the uuid to extract timestamp from can not be null");
 		}
 		if (uuid.contains("-") && uuid.length() == 36) {
 			return extractTimestamp(UUID.fromString(uuid));
@@ -179,7 +179,8 @@ public final class StandardUUIDv7Generator {
 			return extractTimestamp(UUID.fromString(String.format("%s-%s-%s-%s-%s", uuid.substring(0, 8),
 					uuid.substring(8, 12), uuid.substring(12, 16), uuid.substring(16, 20), uuid.substring(20))));
 		}
-		throw new IllegalArgumentException("传入的 UUID字符串长度不是无-符合的32位以及带-符合的36位!");
+		throw new IllegalArgumentException(
+				"the uuid string length is illegal, expect 32 chars without dash or 36 chars with dash!");
 	}
 
 	// ==================== 内部辅助方法 ====================

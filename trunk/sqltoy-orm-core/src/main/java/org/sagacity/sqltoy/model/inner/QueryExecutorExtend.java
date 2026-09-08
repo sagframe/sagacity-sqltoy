@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.model.inner;
 
 import java.io.Serializable;
@@ -31,16 +28,13 @@ import org.sagacity.sqltoy.model.XMLBinding;
 import org.sagacity.sqltoy.utils.ParamFilterUtils;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 针对QueryExecutor构造一个存放参数的内部类，避免QueryExecutor使用时带出大量的get方法
  * @author zhongxuchen
- * @version v1.0,Date:2020-8-1
+ * @version v1.0,Date:2020-08-01
  */
 public class QueryExecutorExtend implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 5753363607896705740L;
 
 	/**
@@ -236,7 +230,8 @@ public class QueryExecutorExtend implements Serializable {
 	/**
 	 * 为什么不在QueryExecutorBuilder中直接初始化,因为sqltoy中有一个特殊场景:catalog-sql即一个查询过程中会执行2个不同sql
 	 * 
-	 * @todo 获取sql中参数对应的值
+	 * 获取sql中参数对应的值
+	 * 
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @return
@@ -249,7 +244,8 @@ public class QueryExecutorExtend implements Serializable {
 	}
 
 	/**
-	 * @todo 获取分表时传递给分表策略的参数值
+	 * 获取分表时传递给分表策略的参数值
+	 * 
 	 * @return
 	 */
 	public Object[] getTableShardingParamsValue() {
@@ -257,7 +253,8 @@ public class QueryExecutorExtend implements Serializable {
 	}
 
 	/**
-	 * @todo 获取分库时传递给分库策略的参数值(策略会根据值通过逻辑返回具体的库)
+	 * 获取分库时传递给分库策略的参数值(策略会根据值通过逻辑返回具体的库)
+	 * 
 	 * @return
 	 */
 	public Object[] getDataSourceShardingParamsValue() {
@@ -265,7 +262,8 @@ public class QueryExecutorExtend implements Serializable {
 	}
 
 	/**
-	 * @todo 拼换某列,mysql中等同于Broup_concat\oracle 中的WMSWS,HN_CONCAT功能
+	 * 拼换某列,mysql中等同于Broup_concat\oracle 中的WMSWS,HN_CONCAT功能
+	 * 
 	 * @return
 	 */
 	public LinkModel linkModel;

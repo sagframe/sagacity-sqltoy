@@ -7,7 +7,7 @@ import org.sagacity.sqltoy.plugins.secure.FieldsSecureProvider;
  * @project sagacity-sqltoy
  * @description 查询时字段密文解密处理器
  * @author zhongxuchen
- * @version v1.0,Date:2021-11-8
+ * @version v1.0,Date:2021-11-08
  */
 public class DecryptHandler {
 	/**
@@ -26,7 +26,8 @@ public class DecryptHandler {
 	}
 
 	/**
-	 * @TODO 实现解密
+	 * 实现解密
+	 * 
 	 * @param column
 	 * @param value
 	 * @return

@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.dialect.impl;
 
 import java.io.Serializable;
@@ -98,8 +95,8 @@ public class H2Dialect extends PostgreSqlDialect {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = "nextval('" + entityMeta.getSequence() + "')";
 						return DialectUtils.getSaveOrUpdateSql(sqlToyContext, sqlToyContext.getUnifyFieldsHandler(),
-								dbType, entityMeta, pkStrategy, forceUpdateFields, null, NVL_FUNCTION,
-								sequence, H2DialectUtils.allowAssignPKValue(pkStrategy), null);
+								dbType, entityMeta, pkStrategy, forceUpdateFields, null, NVL_FUNCTION, sequence,
+								H2DialectUtils.allowAssignPKValue(pkStrategy), null);
 					}
 				}, forceCascadeClasses, subTableForceUpdateProps, conn, dbType, tableName);
 	}
@@ -169,8 +166,8 @@ public class H2Dialect extends PostgreSqlDialect {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = "nextval('" + entityMeta.getSequence() + "')";
 						return DialectUtils.getSaveOrUpdateSql(sqlToyContext, sqlToyContext.getUnifyFieldsHandler(),
-								dbType, entityMeta, pkStrategy, forceUpdateFields, null, NVL_FUNCTION,
-								sequence, H2DialectUtils.allowAssignPKValue(pkStrategy), tableName);
+								dbType, entityMeta, pkStrategy, forceUpdateFields, null, NVL_FUNCTION, sequence,
+								H2DialectUtils.allowAssignPKValue(pkStrategy), tableName);
 					}
 				}, reflectPropsHandler, conn, dbType, autoCommit);
 	}
@@ -187,8 +184,8 @@ public class H2Dialect extends PostgreSqlDialect {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = "nextval('" + entityMeta.getSequence() + "')";
 						return DialectExtUtils.mergeIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
-								pkStrategy, null, NVL_FUNCTION, sequence,
-								H2DialectUtils.allowAssignPKValue(pkStrategy), tableName);
+								pkStrategy, null, NVL_FUNCTION, sequence, H2DialectUtils.allowAssignPKValue(pkStrategy),
+								tableName);
 					}
 				}, reflectPropsHandler, conn, dbType, autoCommit);
 	}

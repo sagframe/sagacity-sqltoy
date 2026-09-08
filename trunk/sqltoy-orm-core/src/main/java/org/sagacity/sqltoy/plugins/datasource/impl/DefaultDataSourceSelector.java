@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.plugins.datasource.impl;
 
 import java.util.Map;
@@ -15,8 +12,8 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @project sagacity-sqltoy
  * @description 针对数据源选择器提供默认实现
  * @author zhongxuchen
- * @version v1.0, Date:2021-4-15
- * @modify 2021-4-15,修改说明
+ * @version v1.0,Date:2021-04-15
+ * @modify Date:2021-04-15 修改说明
  */
 public class DefaultDataSourceSelector implements DataSourceSelector {
 

@@ -1,6 +1,7 @@
 package org.sagacity.sqltoy.utils;
 
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
@@ -12,7 +13,7 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
  * @project sagacity-sqltoy
  * @description 用来处理sql中的数据库保留字
  * @author zhongxuchen
- * @version v1.0, Date:2020-05-06
+ * @version v1.0,Date:2020-05-06
  */
 public class ReservedWordsUtil {
 	// 保留字集合与组合正则:写侧(多context初始化的put)synchronized + 整体替换后经volatile发布,
@@ -24,8 +25,7 @@ public class ReservedWordsUtil {
 	}
 
 	/**
-	 * @param words
-	 * @TODO 加载保留字, 形成一个正则表达式
+	 * @param words 加载保留字, 形成一个正则表达式
 	 */
 	public static synchronized void put(String words) {
 		if (StringUtil.isBlank(words)) {
@@ -34,7 +34,7 @@ public class ReservedWordsUtil {
 		// 合并此前批次的保留字,保证组合正则与集合内容一致(原实现正则只含当次批次)
 		Set<String> merged = new HashSet<String>(reservedWords);
 		for (String str : words.split("\\,")) {
-			String regex = str.trim().toLowerCase();
+			String regex = str.trim().toLowerCase(Locale.ROOT);
 			if (!"".equals(regex)) {
 				merged.add(regex);
 			}
@@ -52,10 +52,19 @@ public class ReservedWordsUtil {
 	}
 
 	/**
+	 * 清空保留字配置,恢复到未配置状态(put为累加合并语义且集合为全局静态,
+	 * 提供clear用于单元测试间显式建立前置状态;生产配置由SqlToyContext统一加载,正常运行不会调用)
+	 */
+	public static synchronized void clear() {
+		// 与put相同的发布顺序:先集合后正则,读侧按volatile快照消费
+		reservedWords = ConcurrentHashMap.newKeySet();
+		singlePattern = null;
+	}
+
+	/**
 	 * @param sql
 	 * @param dbType
-	 * @return
-	 * @TODO 处理框架基于对象操作生成的简单sql, 对默认[]符号进行数据库转换
+	 * @return 处理框架基于对象操作生成的简单sql, 对默认[]符号进行数据库转换
 	 */
 	public static String convertSimpleSql(String sql, Integer dbType) {
 		if (reservedWords.isEmpty()) {
@@ -84,8 +93,7 @@ public class ReservedWordsUtil {
 	/**
 	 * @param column
 	 * @param dbType
-	 * @return
-	 * @TODO 转换单词
+	 * @return 转换单词
 	 */
 	public static String convertWord(String column, Integer dbType) {
 		if (column == null) {
@@ -96,7 +104,7 @@ public class ReservedWordsUtil {
 			return column;
 		}
 		// 不属于关键词
-		if (!reservedWords.contains(column.toLowerCase())) {
+		if (!reservedWords.contains(column.toLowerCase(Locale.ROOT))) {
 			return column;
 		}
 		// 默认加上[]符合便于后面根据不同数据库类型进行替换,而其他符号则难以替换
@@ -121,7 +129,8 @@ public class ReservedWordsUtil {
 	}
 
 	/**
-	 * @TODO 对整个sql进行保留字处理
+	 * 对整个sql进行保留字处理
+	 * 
 	 * @param sql
 	 * @param dbType
 	 * @return
@@ -183,7 +192,8 @@ public class ReservedWordsUtil {
 	}
 
 	/**
-	 * @TODO 判断列名称是否是关键词
+	 * 判断列名称是否是关键词
+	 * 
 	 * @param column
 	 * @return
 	 */
@@ -191,6 +201,6 @@ public class ReservedWordsUtil {
 		if (column == null) {
 			return false;
 		}
-		return reservedWords.contains(column.toLowerCase());
+		return reservedWords.contains(column.toLowerCase(Locale.ROOT));
 	}
 }

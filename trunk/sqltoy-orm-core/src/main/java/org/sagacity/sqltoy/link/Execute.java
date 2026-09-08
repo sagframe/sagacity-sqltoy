@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.link;
 
 import java.io.Serializable;
@@ -20,12 +17,9 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @project sagacity-sqltoy
  * @description 执行sql
  * @author zhongxuchen
- * @version v1.0,Date:2017年10月24日
+ * @version v1.0,Date:2017-10-24
  */
 public class Execute extends BaseLink {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 6336692505147861983L;
 
 	/**
@@ -54,8 +48,8 @@ public class Execute extends BaseLink {
 	private Object[] paramsValue;
 
 	/**
-	 * @param sqlToyContext
-	 * @param dataSource
+	 * @param sqlToyContext sqltoy全局上下文对象
+	 * @param dataSource    sql执行绑定的数据源，null表示使用默认数据源
 	 */
 	public Execute(SqlToyContext sqlToyContext, DataSource dataSource) {
 		super(sqlToyContext, dataSource);
@@ -101,8 +95,9 @@ public class Execute extends BaseLink {
 	}
 
 	/**
-	 * @todo 执行并返回修改的记录数量
-	 * @return
+	 * 执行并返回修改的记录数量
+	 * 
+	 * @return 实际被修改(插入、更新、删除)的记录数量
 	 */
 	public Long submit() {
 		if (StringUtil.isBlank(sql)) {
@@ -115,9 +110,10 @@ public class Execute extends BaseLink {
 	}
 
 	/**
-	 * @todo 执行insert语句并返回主键字段值
-	 * @param primaryField
-	 * @return
+	 * 执行insert语句并返回主键字段值
+	 * 
+	 * @param primaryField 需要获取值的主键数据库字段名称
+	 * @return 插入记录后产生的主键字段值，参数为非基础类型对象时会同时回填到其对应属性上
 	 */
 	public Object insertReturnPrimaryKey(String primaryField) {
 		if (StringUtil.isBlank(sql)) {

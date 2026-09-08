@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Queue;
 import java.util.Set;
 import java.util.Vector;
@@ -25,12 +26,13 @@ import org.slf4j.LoggerFactory;
  * @project sagacity-sqltoy
  * @description 扫描classes目录以及jar包中的class文件；以及扫描sql.xml文件
  * @author zhongxuchen
- * @version v1.0,Date:2012-6-10
- * @modify {Date:2017-10-28,修改getResourceUrls方法,返回枚举数组,修复maven做单元测试时只检测testClass路径的问题}
- * @modify {Date:2019-09-23,剔除根据方言剔除非本方言sql文件的逻辑,实践证明这个功能价值很低}
- * @modify {Date:2020-03-13,调整sql加载策略,jar包中的优先加载,classes下面的加载顺序在jar后面,便于增量发版覆盖}
- * @modify {Date:2024-08-10,增加了文件路径存在空格等特殊符号的处理}
- * @modify {Date:2026-05-19,增加Ant风格路径匹配支持,支持classpath*:和**通配符}
+ * @version v1.0,Date:2012-06-10
+ * @modify Date:2017-10-28
+ *         修改getResourceUrls方法,返回枚举数组,修复maven做单元测试时只检测testClass路径的问题
+ * @modify Date:2019-09-23 剔除根据方言剔除非本方言sql文件的逻辑,实践证明这个功能价值很低
+ * @modify Date:2020-03-13 调整sql加载策略,jar包中的优先加载,classes下面的加载顺序在jar后面,便于增量发版覆盖
+ * @modify Date:2024-08-10 增加了文件路径存在空格等特殊符号的处理
+ * @modify Date:2026-05-19 增加Ant风格路径匹配支持,支持classpath*:和**通配符
  */
 @SuppressWarnings({ "unchecked", "rawtypes" })
 public class SqlResourceScanner {
@@ -50,14 +52,15 @@ public class SqlResourceScanner {
 	private static final String FILE_FLAG = "file:";
 	private static final String RESOURCE = "resource";
 
-	private static final boolean IS_WINDOWS = System.getProperty("os.name").toLowerCase().contains("win");
+	private static final boolean IS_WINDOWS = System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win");
 
 	// 常见路径中的特殊字符
 	private static final String[][] SPECIALCHARACTERS = new String[][] { { "%20", " " }, { "%25", "%" }, { "%23", "#" },
 			{ "%5B", "[" }, { "%5D", "]" }, { "%2E", "." }, { "%2B", "+" }, { "%5C", "/" } };
 
 	/**
-	 * @todo 获取sqltoy配置的sql文件
+	 * 获取sqltoy配置的sql文件
+	 * 
 	 * @param resourceDir
 	 * @param mappingResources
 	 * @return
@@ -73,13 +76,16 @@ public class SqlResourceScanner {
 			// 规范路径中的名称
 			scanSqlResources(result, clearIrregularChar(resourceDir), globalNotRepeatDirs, classLoader);
 			if (result.isEmpty()) {
-				logger.warn("扫描resourceDir=[" + resourceDir + "]路径未加载到*.sql.xml文件,请参照下面的说明检查配置!\n"
-						+ "resourceDir配置支持AntPath模式的路径匹配:1)**:0~n级路径;2)*:单级路径;3)?:单个字符匹配;4)路径可写可不写*.sql.xml\n"
-						+ "1)默认补充*.sql.xml结尾:classpath:com/company/project等效于classpath:com/company/project/**/*.sql.xml\n"
-						+ "2)多路径(逗号拼接):classpath:com/company/project1/**/sqlMapping,classpath:com/company/project2/modules/*/sqlMapping\n"
-						+ "3)完整路径:classpath:com/company/project/modules\n" + "4)多级匹配:file:/root/project/**/sqlMapping\n"
-						+ "5)单级匹配:classpath:com/company/project/*/sqlMapping\n"
-						+ "6)单字符匹配:file:/root/project/?/sqlMapping");
+				logger.warn(
+						"no *.sql.xml files were loaded under resourceDir=[{}], please check the configuration according to the instructions below!\n"
+								+ "resourceDir supports AntPath style path matching: 1)**:matches 0~n levels of path; 2)*:matches single level path; 3)?:matches a single character; 4)the *.sql.xml suffix can be omitted\n"
+								+ "1)*.sql.xml suffix is appended by default: classpath:com/company/project is equivalent to classpath:com/company/project/**/*.sql.xml\n"
+								+ "2)multiple paths (joined by comma): classpath:com/company/project1/**/sqlMapping,classpath:com/company/project2/modules/*/sqlMapping\n"
+								+ "3)full path: classpath:com/company/project/modules\n"
+								+ "4)multi-level matching: file:/root/project/**/sqlMapping\n"
+								+ "5)single-level matching: classpath:com/company/project/*/sqlMapping\n"
+								+ "6)single character matching: file:/root/project/?/sqlMapping",
+						resourceDir);
 			}
 		}
 		// 完整路线的sql文件
@@ -112,7 +118,7 @@ public class SqlResourceScanner {
 			if (IS_WINDOWS && realRes.startsWith("/")) {
 				realRes = realRes.substring(1);
 			}
-			boolean isClasspathAll = realRes.toLowerCase().startsWith(CLASSPATH_STAR);
+			boolean isClasspathAll = realRes.toLowerCase(Locale.ROOT).startsWith(CLASSPATH_STAR);
 			// 排除classpath*的干扰
 			String tmpResPath = isClasspathAll ? realRes.substring(CLASSPATH_STAR.length()) : realRes;
 			boolean hasWildcard = tmpResPath.contains("*") || tmpResPath.contains("?");
@@ -123,7 +129,7 @@ public class SqlResourceScanner {
 					scanWithAntPattern(result, realRes, globalNotRepeatDirs, classLoader);
 				} else {
 					// 本身路径就是一个完整的sql文件路径,走scanMappingResources
-					if (realRes.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)) {
+					if (realRes.toLowerCase(Locale.ROOT).endsWith(SQLTOY_SQL_FILE_SUFFIX)) {
 						List<String> mappingFile = new ArrayList<>();
 						mappingFile.add(realRes);
 						scanMappingResources(result, mappingFile, globalNotRepeatDirs, classLoader);
@@ -147,9 +153,9 @@ public class SqlResourceScanner {
 		try {
 			boolean isFileSystemPath = FileUtil.isRootPath(pattern);
 			String antPattern = pattern;
-			if (pattern.toLowerCase().startsWith(CLASSPATH_STAR)) {
+			if (pattern.toLowerCase(Locale.ROOT).startsWith(CLASSPATH_STAR)) {
 				antPattern = pattern.substring(CLASSPATH_STAR.length());
-			} else if (pattern.toLowerCase().startsWith(CLASSPATH)) {
+			} else if (pattern.toLowerCase(Locale.ROOT).startsWith(CLASSPATH)) {
 				antPattern = pattern.substring(CLASSPATH.length());
 			}
 			if (antPattern.startsWith("/")) {
@@ -157,7 +163,7 @@ public class SqlResourceScanner {
 			}
 			antPattern = antPattern.replace("\\", "/");
 			// 自动补全后缀匹配规则
-			if (!antPattern.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)) {
+			if (!antPattern.toLowerCase(Locale.ROOT).endsWith(SQLTOY_SQL_FILE_SUFFIX)) {
 				if (!antPattern.endsWith("/")) {
 					antPattern = antPattern + "/";
 				}
@@ -187,7 +193,7 @@ public class SqlResourceScanner {
 		String normalizedRoot = rootPath;
 		File rootDir = getFile(normalizedRoot);
 		if (!rootDir.exists()) {
-			logger.debug("Root path does not exist: " + rootPath);
+			logger.debug("root path does not exist: {}", rootPath);
 			return;
 		}
 		Queue<File> dirQueue = new LinkedList<>();
@@ -204,7 +210,7 @@ public class SqlResourceScanner {
 				} else {
 					if (isFileMatchPattern(rootDir, file, patternParts)) {
 						String filePath = file.getAbsolutePath();
-						if (file.getName().toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)
+						if (file.getName().toLowerCase(Locale.ROOT).endsWith(SQLTOY_SQL_FILE_SUFFIX)
 								&& CollectionUtil.notContainsAdd(notRepeatDirs, filePath)) {
 							result.add(file);
 						}
@@ -244,7 +250,7 @@ public class SqlResourceScanner {
 				scanJarWithPattern(rootUrl, rootPath, patternParts, result, notRepeatDirs);
 			} else if (RESOURCE.equals(protocol)) {
 				String path = new URI(rootUrl.toString()).getPath();
-				if (path != null && path.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)
+				if (path != null && path.toLowerCase(Locale.ROOT).endsWith(SQLTOY_SQL_FILE_SUFFIX)
 						&& CollectionUtil.notContainsAdd(notRepeatDirs, path)) {
 					result.add(0, path);
 				}
@@ -286,7 +292,7 @@ public class SqlResourceScanner {
 				String relativePath = normalizedRoot.isEmpty() ? entryPath
 						: entryPath.substring(normalizedRoot.length());
 				if (matchAntPattern(relativePath, patternParts)) {
-					if (entryPath.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)
+					if (entryPath.toLowerCase(Locale.ROOT).endsWith(SQLTOY_SQL_FILE_SUFFIX)
 							&& CollectionUtil.notContainsAdd(notRepeatDirs, entryPath)) {
 						// JAR资源优先加载
 						result.add(0, entryPath);
@@ -413,13 +419,13 @@ public class SqlResourceScanner {
 			ClassLoader classLoader) throws Exception {
 		String realRes = resourceDir;
 		boolean startClasspath = false;
-		if (realRes.toLowerCase().startsWith(CLASSPATH_STAR)) {
+		if (realRes.toLowerCase(Locale.ROOT).startsWith(CLASSPATH_STAR)) {
 			realRes = realRes.substring(11).trim();
 			if (realRes.startsWith("/")) {
 				realRes = realRes.substring(1);
 			}
 			startClasspath = true;
-		} else if (realRes.toLowerCase().startsWith(CLASSPATH)) {
+		} else if (realRes.toLowerCase(Locale.ROOT).startsWith(CLASSPATH)) {
 			realRes = realRes.substring(10).trim();
 			if (realRes.startsWith("/")) {
 				realRes = realRes.substring(1);
@@ -447,7 +453,7 @@ public class SqlResourceScanner {
 								entry = entries.nextElement();
 								sqlFile = entry.getName();
 								if (sqlFile.startsWith(realRes)
-										&& sqlFile.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)
+										&& sqlFile.toLowerCase(Locale.ROOT).endsWith(SQLTOY_SQL_FILE_SUFFIX)
 										&& !entry.isDirectory()
 										&& CollectionUtil.notContainsAdd(notRepeatDirs, sqlFile)) {
 									result.add(0, sqlFile);
@@ -455,7 +461,7 @@ public class SqlResourceScanner {
 							}
 						}
 					} else if (url.getProtocol().equals(RESOURCE)) {
-						if (realRes.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)
+						if (realRes.toLowerCase(Locale.ROOT).endsWith(SQLTOY_SQL_FILE_SUFFIX)
 								&& CollectionUtil.notContainsAdd(notRepeatDirs, realRes)) {
 							result.add(realRes);
 						}
@@ -472,7 +478,8 @@ public class SqlResourceScanner {
 	}
 
 	/**
-	 * @todo 扫描解析指定的完整路径的sql.xml文件
+	 * 扫描解析指定的完整路径的sql.xml文件
+	 * 
 	 * @param result
 	 * @param mappingResources
 	 * @throws Exception
@@ -491,15 +498,15 @@ public class SqlResourceScanner {
 		for (int i = 0; i < mappingResources.size(); i++) {
 			realRes = mappingResources.get(i).trim();
 			// 必须是以.sql.xml结尾的文件
-			if (realRes.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)) {
+			if (realRes.toLowerCase(Locale.ROOT).endsWith(SQLTOY_SQL_FILE_SUFFIX)) {
 				startClasspath = false;
-				if (realRes.toLowerCase().startsWith(CLASSPATH_STAR)) {
+				if (realRes.toLowerCase(Locale.ROOT).startsWith(CLASSPATH_STAR)) {
 					realRes = realRes.substring(11).trim();
 					if (realRes.startsWith("/")) {
 						realRes = realRes.substring(1);
 					}
 					startClasspath = true;
-				} else if (realRes.toLowerCase().startsWith(CLASSPATH)) {
+				} else if (realRes.toLowerCase(Locale.ROOT).startsWith(CLASSPATH)) {
 					realRes = realRes.substring(10).trim();
 					if (realRes.startsWith("/")) {
 						realRes = realRes.substring(1);
@@ -539,20 +546,20 @@ public class SqlResourceScanner {
 		while (urls.hasMoreElements()) {
 			url = urls.nextElement();
 			if (url.getProtocol().equals(JAR)) {
-				if (normalizedRes.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)
+				if (normalizedRes.toLowerCase(Locale.ROOT).endsWith(SQLTOY_SQL_FILE_SUFFIX)
 						&& CollectionUtil.notContainsAdd(notRepeatResources, normalizedRes)) {
 					// jar中的sql优先加载,从而确保直接放于classes目录下面的sql可以实现对之前的覆盖,便于项目增量发版管理
 					result.add(0, normalizedRes);
 				}
 			} else if (url.getProtocol().equals(RESOURCE)) {
-				if (normalizedRes.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)
+				if (normalizedRes.toLowerCase(Locale.ROOT).endsWith(SQLTOY_SQL_FILE_SUFFIX)
 						&& CollectionUtil.notContainsAdd(notRepeatResources, normalizedRes)) {
 					result.add(normalizedRes);
 				}
 			} else {
 				file = new File(url.toURI());
 				String filePath = file.getAbsolutePath();
-				if (file.getName().toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)
+				if (file.getName().toLowerCase(Locale.ROOT).endsWith(SQLTOY_SQL_FILE_SUFFIX)
 						&& CollectionUtil.notContainsAdd(notRepeatResources, filePath)) {
 					result.add(file);
 				}
@@ -561,7 +568,8 @@ public class SqlResourceScanner {
 	}
 
 	/**
-	 * @todo 获取资源的URL
+	 * 获取资源的URL
+	 * 
 	 * @param resourcePath
 	 * @return
 	 * @throws Exception
@@ -649,7 +657,8 @@ public class SqlResourceScanner {
 	}
 
 	/**
-	 * @todo 递归获取文件夹下面的以sql.xml结尾的sql文件
+	 * 递归获取文件夹下面的以sql.xml结尾的sql文件
+	 * 
 	 * @param parentFile
 	 * @param fileList
 	 * @param notRepeatDirs 用于去重的路径集合
@@ -670,7 +679,7 @@ public class SqlResourceScanner {
 					}
 				}
 			} else {
-				if (curr.getName().toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)) {
+				if (curr.getName().toLowerCase(Locale.ROOT).endsWith(SQLTOY_SQL_FILE_SUFFIX)) {
 					String path = curr.getAbsolutePath();
 					if (CollectionUtil.notContainsAdd(notRepeatDirs, path)) {
 						fileList.add(curr);

@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.config.model;
 
 import java.io.Serializable;
@@ -10,13 +7,10 @@ import java.math.RoundingMode;
  * @project sagacity-sqltoy
  * @description 集合列与列环比计算(一般跟pivot行转列结合使用)
  * @author zhongxuchen
- * @version v1.0,Date:2020年3月24日
+ * @version v1.0,Date:2020-03-24
  */
 public class ColsChainRelativeModel implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -1439243395603428110L;
 
 	/**

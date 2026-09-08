@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.plugins.id;
 
 import java.util.Date;
@@ -8,14 +5,15 @@ import java.util.Date;
 import org.sagacity.sqltoy.SqlToyContext;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 定义主键产生器接口,自定义产生器必须实现getId()方法
  * @author zhongxuchen
- * @version v1.0,Date:2012-6-4
+ * @version v1.0,Date:2012-06-04
  */
 public interface IdGenerator {
 	/**
-	 * @todo <b>返回id</b>
+	 * 返回id
+	 * 
 	 * @param tableName       为特殊的主键生成策略预留表名
 	 * @param signature       识别符号
 	 * @param relatedColValue 关联字段的值

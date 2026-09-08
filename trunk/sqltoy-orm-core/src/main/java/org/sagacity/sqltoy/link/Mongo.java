@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.link;
 
 import java.io.Serializable;
@@ -39,14 +36,11 @@ import com.mongodb.client.AggregateIterable;
  * @project sagacity-sqltoy
  * @description 提供基于mongodb的查询服务(利用sqltoy组织查询的语句机制的优势提供查询相关功能,增删改暂时不提供)
  * @author zhongxuchen
- * @version v1.0,Date:2018年1月1日
- * @modify {Date:2020-05-29,调整mongo的注入方式,剔除之前MongoDbFactory模式,直接使用MongoTemplate}
+ * @version v1.0,Date:2018-01-01
+ * @modify Date:2020-05-29 调整mongo的注入方式,剔除之前MongoDbFactory模式,直接使用MongoTemplate
  */
 public class Mongo extends BaseLink {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -4443964509492022973L;
 
 	/**
@@ -54,7 +48,7 @@ public class Mongo extends BaseLink {
 	 */
 	private final Logger logger = LoggerFactory.getLogger(Mongo.class);
 
-	private final String ERROR_MESSAGE = "mongo查询请使用<mql id=\"\" collection=\"\" fields=\"\"></mql>配置,请确定相关配置正确性!";
+	private final String ERROR_MESSAGE = "mongo query requires <mql id=\"\" collection=\"\" fields=\"\"></mql> configuration, please make sure the configuration is correct!";
 
 	/**
 	 * 基于spring-data的mongo工厂类
@@ -92,8 +86,8 @@ public class Mongo extends BaseLink {
 	private Boolean humpMapLabel;
 
 	/**
-	 * @param sqlToyContext
-	 * @param dataSource
+	 * @param sqlToyContext sqltoy全局上下文对象
+	 * @param dataSource    mongo查询绑定的数据源，null表示使用默认数据源
 	 */
 	public Mongo(SqlToyContext sqlToyContext, DataSource dataSource) {
 		super(sqlToyContext, dataSource);
@@ -130,8 +124,9 @@ public class Mongo extends BaseLink {
 	}
 
 	/**
-	 * @todo 获取单条记录
-	 * @return
+	 * 获取单条记录
+	 * 
+	 * @return 查询结果的第一条记录，无记录时返回null，多于一行的查询结果会抛出异常
 	 */
 	public Object getOne() {
 		List<?> result = find();
@@ -141,12 +136,14 @@ public class Mongo extends BaseLink {
 		if (result.size() == 1) {
 			return result.get(0);
 		}
-		throw new IllegalArgumentException("getOne查询出:" + result.size() + " 条记录,不符合getOne 单条预期!");
+		throw new IllegalArgumentException("getOne expect a single record but found [" + result.size()
+				+ "] rows, please check the query conditions!");
 	}
 
 	/**
-	 * @todo 集合记录查询
-	 * @return
+	 * 集合记录查询
+	 * 
+	 * @return 查询结果集合，设置了resultType时行为其类型实例，否则为Map结构
 	 */
 	public List<?> find() {
 		QueryExecutor queryExecutor = build();
@@ -167,23 +164,20 @@ public class Mongo extends BaseLink {
 				return aggregate(sqlToyConfig, realMql, (Class) extend.resultType, extend.humpMapLabel);
 			}
 			if (sqlToyContext.isDebug()) {
-				if (logger.isDebugEnabled()) {
-					logger.debug("findByMongo script=" + realMql);
-				} else {
-					System.out.println("findByMongo script=" + realMql);
-				}
+				logger.debug("findByMongo script={}", realMql);
 			}
 			return findTop(sqlToyConfig, null, realMql, (Class) extend.resultType, extend.humpMapLabel);
 		} catch (Exception e) {
-			logger.error("find 方法执行异常", e);
+			logger.error("find method execution failed", e);
 			throw new DataAccessException(e);
 		}
 	}
 
 	/**
-	 * @todo 查询前多少条记录
-	 * @param topSize
-	 * @return
+	 * 查询前多少条记录
+	 * 
+	 * @param topSize 获取最前面的记录数量，值小于等于1时表示按总记录数的比例提取
+	 * @return 符合条件的前topSize条记录集合
 	 */
 	public List<?> findTop(final Float topSize) {
 		QueryExecutor queryExecutor = build();
@@ -199,23 +193,20 @@ public class Mongo extends BaseLink {
 			String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, extend.getParamsName(),
 					extend.getParamsValue(sqlToyContext, sqlToyConfig));
 			if (sqlToyContext.isDebug()) {
-				if (logger.isDebugEnabled()) {
-					logger.debug("findTopByMongo script=" + realMql);
-				} else {
-					System.out.println("findTopByMongo script=" + realMql);
-				}
+				logger.debug("findTopByMongo script={}", realMql);
 			}
 			return findTop(sqlToyConfig, topSize, realMql, (Class) extend.resultType, extend.humpMapLabel);
 		} catch (Exception e) {
-			logger.error("findTop 方法执行异常", e);
+			logger.error("findTop method execution failed", e);
 			throw new DataAccessException(e);
 		}
 	}
 
 	/**
-	 * @todo 分页查询
-	 * @param page
-	 * @return
+	 * 分页查询
+	 * 
+	 * @param page 分页模型对象，提供页号(pageNo)、每页记录数(pageSize)等分页参数
+	 * @return 分页查询结果，包含符合条件的记录总数及当页数据
 	 */
 	public Page findPage(Page page) {
 		QueryExecutor queryExecutor = build();
@@ -231,22 +222,19 @@ public class Mongo extends BaseLink {
 			String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, extend.getParamsName(),
 					extend.getParamsValue(sqlToyContext, sqlToyConfig));
 			if (sqlToyContext.isDebug()) {
-				if (logger.isDebugEnabled()) {
-					logger.debug("findPageByMongo script=" + realMql);
-				} else {
-					System.out.println("findPageByMongo script=" + realMql);
-				}
+				logger.debug("findPageByMongo script={}", realMql);
 			}
 			return findPage(sqlToyConfig, page, realMql, (Class) extend.resultType, extend.humpMapLabel);
 		} catch (Exception e) {
-			logger.error("findPage 方法执行异常", e);
+			logger.error("findPage method execution failed", e);
 			throw new DataAccessException(e);
 		}
 	}
 
 	/**
-	 * @todo 构造统一的查询条件
-	 * @return
+	 * 构造统一的查询条件
+	 * 
+	 * @return 组装了sql、参数和结果类型的QueryExecutor查询执行对象
 	 */
 	private QueryExecutor build() {
 		QueryExecutor queryExecutor = null;
@@ -263,13 +251,14 @@ public class Mongo extends BaseLink {
 	}
 
 	/**
-	 * @todo 分页查询
-	 * @param sqlToyConfig
-	 * @param pageModel
-	 * @param mql
-	 * @param resultClass
-	 * @param humpMapLabel
-	 * @return
+	 * 分页查询
+	 * 
+	 * @param sqlToyConfig mongo查询对应的sql配置模型
+	 * @param pageModel    分页模型对象，提供页号、每页记录数、超页是否回到第一页等参数
+	 * @param mql          最终执行的mongo查询语句
+	 * @param resultClass  行记录返回的目标类型，null时返回Map结构
+	 * @param humpMapLabel Map结构行的字段标签是否做驼峰化处理
+	 * @return 分页查询结果，包含符合条件的记录总数及当页数据
 	 * @throws Exception
 	 */
 	private Page findPage(SqlToyConfig sqlToyConfig, Page pageModel, String mql, Class resultClass,
@@ -313,8 +302,9 @@ public class Mongo extends BaseLink {
 		}
 		int maxPageSize = sqlToyContext.getPageFetchSizeLimit();
 		if (maxPageSize > 0 && limit > maxPageSize) {
-			logger.warn("非法分页查询,提取记录总数为:{}>{}上限可设置参数:spring.sqltoy.pageFetchSizeLimit进行调整(-1表示不限制),mql={}", limit,
-					maxPageSize, sqlToyConfig.getIdOrSql());
+			logger.warn(
+					"illegal page query, fetched record count:{} exceeds the:{} limit, adjustable via config:spring.sqltoy.pageFetchSizeLimit (-1 means no limit),mql={}",
+					limit, maxPageSize, sqlToyConfig.getIdOrSql());
 			result.setRecordCount(0L);
 			return result;
 		}
@@ -344,13 +334,14 @@ public class Mongo extends BaseLink {
 	}
 
 	/**
-	 * @todo 取top记录
-	 * @param sqlToyConfig
-	 * @param topSize
-	 * @param mql
-	 * @param resultClass
-	 * @param humpMapLabel
-	 * @return
+	 * 取top记录
+	 * 
+	 * @param sqlToyConfig mongo查询对应的sql配置模型
+	 * @param topSize      限制返回的记录数量，null表示不限制，值小于等于1时按总记录数的比例提取
+	 * @param mql          最终执行的mongo查询语句
+	 * @param resultClass  行记录返回的目标类型，null时返回Map结构
+	 * @param humpMapLabel Map结构行的字段标签是否做驼峰化处理
+	 * @return 查询结果记录集合，无记录时返回空集合
 	 * @throws Exception
 	 */
 	private List<?> findTop(SqlToyConfig sqlToyConfig, Float topSize, String mql, Class resultClass,
@@ -374,12 +365,13 @@ public class Mongo extends BaseLink {
 	}
 
 	/**
-	 * @todo 聚合统计查询
-	 * @param sqlToyConfig
-	 * @param mql
-	 * @param resultClass
-	 * @param humpMapLabel
-	 * @return
+	 * 聚合统计查询
+	 * 
+	 * @param sqlToyConfig mongo聚合查询对应的sql配置模型
+	 * @param mql          mongo聚合管道查询语句
+	 * @param resultClass  行记录返回的目标类型，null时返回Map结构
+	 * @param humpMapLabel Map结构行的字段标签是否做驼峰化处理
+	 * @return 聚合统计结果集合
 	 * @throws Exception
 	 */
 	private List<?> aggregate(SqlToyConfig sqlToyConfig, String mql, Class resultClass, Boolean humpMapLabel)
@@ -392,11 +384,7 @@ public class Mongo extends BaseLink {
 			realMql = realMql.substring(1, realMql.length() - 1);
 		}
 		if (sqlToyContext.isDebug()) {
-			if (logger.isDebugEnabled()) {
-				logger.debug("aggregateByMongo script=" + realMql);
-			} else {
-				System.out.println("aggregateByMongo script=" + realMql);
-			}
+			logger.debug("aggregateByMongo script={}", realMql);
 		}
 		String[] aggregates = StringUtil.splitExcludeSymMark(realMql, ",", SqlToyConstants.filters);
 		List<Bson> dbObjects = new ArrayList<Bson>();
@@ -464,7 +452,7 @@ public class Mongo extends BaseLink {
 	}
 
 	/**
-	 * @return
+	 * @return mongo查询操作对象，尚未初始化时按配置反射创建并完成初始化
 	 * @throws Exception
 	 */
 	private MongoQuery getMongoQuery() throws Exception {

@@ -13,9 +13,6 @@ import org.sagacity.sqltoy.config.model.IndexModel;
  * @version v1.0,Date:2021-09-25
  */
 public class TableMeta implements Serializable {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 4301565874545099339L;
 
 	/**

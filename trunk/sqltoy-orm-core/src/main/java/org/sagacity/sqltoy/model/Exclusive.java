@@ -1,22 +1,17 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
+import java.util.Locale;
 
 /**
  * @project sagacity-sqltoy
  * @description 条件排斥参数模型，即当某个参数值是xx时，设置其他几个参数值为xxx
  * @author zhongxuchen
- * @version v1.0, Date:2023年6月22日
- * @modify 2023年6月22日,修改说明
+ * @version v1.0,Date:2023-06-22
+ * @modify Date:2023-06-22,修改说明
  */
 public class Exclusive implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 3559134410854246004L;
 
 	/**
@@ -49,7 +44,7 @@ public class Exclusive implements Serializable {
 
 	public Exclusive compareType(String compareType) {
 		if (compareType != null) {
-			this.compareType = compareType.toLowerCase();
+			this.compareType = compareType.toLowerCase(Locale.ROOT);
 		}
 		return this;
 	}

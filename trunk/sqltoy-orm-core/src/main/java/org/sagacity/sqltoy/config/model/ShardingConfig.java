@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.config.model;
 
 import java.io.Serializable;
@@ -9,13 +6,10 @@ import java.io.Serializable;
  * @project sagacity-sqltoy
  * @description 对象注解解析后对应的分库分表配置模型
  * @author zhongxuchen
- * @version v1.0,Date:2017年9月12日
+ * @version v1.0,Date:2017-09-12
  */
 public class ShardingConfig implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 3194225565492327232L;
 
 	/**

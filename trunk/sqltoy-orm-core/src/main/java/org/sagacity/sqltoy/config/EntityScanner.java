@@ -11,6 +11,7 @@ import java.nio.file.PathMatcher;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Locale;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Stream;
@@ -28,7 +29,7 @@ import org.slf4j.LoggerFactory;
  */
 public class EntityScanner {
 	protected final static Logger logger = LoggerFactory.getLogger(EntityScanner.class);
-	private static final boolean IS_WINDOWS = System.getProperty("os.name").toLowerCase().contains("win");
+	private static final boolean IS_WINDOWS = System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win");
 
 	/**
 	 * 扫描sqltoy的POJO 类
@@ -90,7 +91,9 @@ public class EntityScanner {
 				}
 			}
 		} catch (Exception e) {
-			logger.error("扫描实体类发生异常,模式:{}!当前返回部分扫描结果,实体可能不完整,请检查!", packagePattern, e);
+			logger.error(
+					"exception occurred while scanning entity classes, pattern:{}! returns partial scan result, entities may be incomplete, please check!",
+					packagePattern, e);
 		}
 		return result;
 	}
@@ -231,7 +234,7 @@ public class EntityScanner {
 	private static String pathToClass(Path root, Path classFile) {
 		String relative = root.relativize(classFile).toString();
 		String className = relative.replace('\\', '.').replace('/', '.');
-		if (className.toLowerCase().endsWith(".class")) {
+		if (className.toLowerCase(Locale.ROOT).endsWith(".class")) {
 			className = className.substring(0, className.length() - 6);
 		}
 		return className;

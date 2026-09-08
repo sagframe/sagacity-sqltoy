@@ -1,6 +1,3 @@
-/**
- *
- */
 package org.sagacity.sqltoy.model;
 
 import java.util.Iterator;
@@ -11,14 +8,11 @@ import java.util.concurrent.ConcurrentHashMap;
  * @project sagacity-sqltoy
  * @description 重构HashMap让key值始终是小写
  * @author zhongxuchen
- * @version v1.0,Date:2017年11月7日
+ * @version v1.0,Date:2017-11-07
  */
 @SuppressWarnings("unchecked")
 public class IgnoreKeyCaseMap<K, V> extends ConcurrentHashMap<K, V> {
 
-	/**
-	 *
-	 */
 	private static final long serialVersionUID = 391326207592902507L;
 
 	public IgnoreKeyCaseMap() {

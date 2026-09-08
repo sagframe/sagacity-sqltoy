@@ -6,6 +6,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -28,13 +29,13 @@ import org.slf4j.LoggerFactory;
  * @description 解析sql配置文件，并放入缓存
  * @author zhongxuchen
  * @version v1.0,Date:2009-12-13
- * @modify Date:2013-6-14 {修改了sql文件搜寻机制，兼容jar目录下面的查询}
+ * @modify Date:2013-06-14 修改了sql文件搜寻机制，兼容jar目录下面的查询
  * @modify Date:2019-08-25 增加独立的文件变更检测程序用于重新加载sql
  * @modify Date:2019-09-15 增加代码中编写的sql缓存机制,避免每次动态解析从而提升性能
  * @modify Date:2020-04-22 增加System.out
  *         对sql文件加载的打印输出,避免有些开发在开发阶段不知道设置日志级别为debug从而看不到输出
- * @modify Date:2023-8-19 增加了@include(:scriptName) 模式
- * @modify Date:2024-5-13 @include(id="sqlId")
+ * @modify Date:2023-08-19 增加了@include(:scriptName) 模式
+ * @modify Date:2024-05-13 @include(id="sqlId")
  *         增强兼容sqlId根据dialect方言找sqlId_dialect模式
  * @modify Date:2024-09-19 增加@fast(@include("sqlId")) 场景
  */
@@ -122,7 +123,8 @@ public class SqlScriptLoader {
 			return;
 		}
 		if (StringUtil.isBlank(sqlResourcesDir)) {
-			logger.warn("\n您的配置:spring.sqltoy.sqlResourcesDir=" + sqlResourcesDir + " 不正确,不能为空!\n");
+			logger.warn("your config:spring.sqltoy.sqlResourcesDir={} is invalid, it can not be empty!",
+					sqlResourcesDir);
 		}
 	}
 
@@ -131,7 +133,8 @@ public class SqlScriptLoader {
 	}
 
 	/**
-	 * @TODO 初始化加载sql文件
+	 * 初始化加载sql文件
+	 * 
 	 * @param debug
 	 * @param delayCheckSeconds
 	 * @param scriptCheckIntervalSeconds 属性:spring.sqltoy.scriptCheckIntervalSeconds
@@ -154,8 +157,9 @@ public class SqlScriptLoader {
 			if (realSqlList != null && !realSqlList.isEmpty()) {
 				// 此处提供大量提示信息,避免开发者配置错误或未将资源文件编译到bin或classes下
 				if (enabledDebug) {
-					logger.debug("总计将加载.sql.xml文件数量为:{}", realSqlList.size());
-					logger.debug("如果.sql.xml文件不在下列清单中,很可能是文件没有在编译路径下(bin、classes等),请仔细检查!");
+					logger.debug("total number of .sql.xml files to be loaded:{}", realSqlList.size());
+					logger.debug(
+							"if a .sql.xml file is not in the following list, it is probably not in the compile path (bin, classes, etc.), please check carefully!");
 				} else {
 					out.println("总计将加载.sql.xml文件数量为:" + realSqlList.size());
 					out.println("如果.sql.xml文件不在下列清单中,很可能是文件没有在编译路径下(bin、classes等),请仔细检查!");
@@ -192,8 +196,10 @@ public class SqlScriptLoader {
 			} else {
 				// 部分开发者经常会因为环境问题,未能将.sql.xml 文件编译到classes路径下，导致无法使用
 				if (enabledDebug) {
-					logger.debug("总计加载*.sql.xml文件数量为:0 !");
-					logger.debug("请检查配置项sqlResourcesDir={}是否正确(如:字母拼写),或文件没有在编译路径下(bin、classes等)!", sqlResourcesDir);
+					logger.debug("total number of loaded *.sql.xml files is:0 !");
+					logger.debug(
+							"please check whether the config item sqlResourcesDir={} is correct (such as spelling), or the files are not in the compile path (bin, classes, etc.)!",
+							sqlResourcesDir);
 				} else {
 					out.println("总计加载*.sql.xml文件数量为:0 !");
 					out.println(
@@ -201,7 +207,7 @@ public class SqlScriptLoader {
 				}
 			}
 		} catch (Exception e) {
-			logger.error("加载和解析以sql.xml结尾的文件过程发生异常!" + e.getMessage(), e);
+			logger.error("exception occurred while loading and parsing *.sql.xml files!{}", e.getMessage(), e);
 			throw e;
 		}
 		// 针对开发环境存在File类型的sql文件，启动文件变更检测便于重新加载sql
@@ -221,7 +227,7 @@ public class SqlScriptLoader {
 			if (sleepSeconds > 0 && sleepSeconds <= maxWait) {
 				if (enabledDebug) {
 					logger.debug(
-							"已经开启sql文件变更检测，会自动间隔:{}秒检测一次,发生变更会自动重新载入(spring.sqltoy.scriptCheckIntervalSeconds=-1可关闭自动检测)!",
+							"sql file modify check is enabled, checks every:{} seconds automatically, changed files will be reloaded automatically (set spring.sqltoy.scriptCheckIntervalSeconds=-1 to disable it)!",
 							sleepSeconds);
 				} else {
 					out.println("已经开启sql文件变更检测，会自动间隔:" + sleepSeconds
@@ -231,7 +237,9 @@ public class SqlScriptLoader {
 						encoding, delayCheckSeconds, sleepSeconds);
 				watcher.start();
 			} else {
-				logger.warn("sql文件更新检测:sleepSeconds={} 小于1秒或大于24小时，表示关闭sql文件变更检测!", sleepSeconds);
+				logger.warn(
+						"sql file modify check:sleepSeconds={} is less than 1 second or greater than 24 hours, which means the sql file modify check is disabled!",
+						sleepSeconds);
 			}
 		}
 		// 全部sql文件解析成功后才置位:失败时initialized保持false,下次initialize可以重试
@@ -240,7 +248,8 @@ public class SqlScriptLoader {
 	}
 
 	/**
-	 * @todo 提供根据sql或sqlId获取sql配置模型
+	 * 提供根据sql或sqlId获取sql配置模型
+	 * 
 	 * @param sqlKey
 	 * @param sqlType
 	 * @param dialect
@@ -254,7 +263,7 @@ public class SqlScriptLoader {
 			throw new IllegalArgumentException("sql or sqlId is null!");
 		}
 		SqlToyConfig result = null;
-		String realDialect = (dialect == null) ? "" : dialect.toLowerCase();
+		String realDialect = (dialect == null) ? "" : dialect.toLowerCase(Locale.ROOT);
 		// UNDEFINE表示未识别数据库方言,等同于未指定,归一化成空串避免sqlId_undefine形式的无效变体查找
 		// (忽略大小写兼容历史大写"UNDEFINE"值以及调用方传入的任意大小写形式)
 		if (Dialect.UNDEFINE.equalsIgnoreCase(realDialect)) {
@@ -305,12 +314,13 @@ public class SqlScriptLoader {
 			if (result == null) {
 				result = sqlCache.get(sqlKey);
 				if (result == null) {
-					throw new DataAccessException("\n发生错误:sqlId=[" + sqlKey + "]无对应的sql配置,请检查对应的sql.xml文件是否被正确加载!\n"
-							+ "/*----------------------错误可能的原因如下---------------------*/\n"
-							+ "/* 1、检查: spring.sqltoy.sqlResourcesDir=[" + sqlResourcesDir
-							+ "]配置(如:字母拼写),会导致sql文件没有被加载;\n"
-							+ "/* 2、sql.xml文件没有被编译到classes目录下面;请检查maven的编译配置                        \n"
-							+ "/* 3、sqlId对应的文件内部错误!版本合并或书写错误会导致单个文件解析错误                          \n"
+					throw new DataAccessException("Error: no sql configuration found for sqlId=[" + sqlKey
+							+ "], please check whether the corresponding sql.xml file is loaded correctly!\n"
+							+ "/*----------------------possible reasons are as follows---------------------*/\n"
+							+ "/* 1. check the spring.sqltoy.sqlResourcesDir=[" + sqlResourcesDir
+							+ "] configuration (such as spelling mistakes), which may cause the sql files not to be loaded;\n"
+							+ "/* 2. the sql.xml files are not compiled into the classes directory; please check the maven compile configuration\n"
+							+ "/* 3. internal error in the file containing the sqlId! version merging or writing errors may cause a single file to fail to parse\n"
 							+ "/* ------------------------------------------------------------*/");
 				}
 			}
@@ -393,8 +403,9 @@ public class SqlScriptLoader {
 	}
 
 	/**
-	 * @todo 判断sql配置实际命中的缓存key(sqlId本身或其方言变体),供@include展开后按原key替换缓存,
-	 *       与getSqlConfig中的查找顺序保持一致
+	 * 判断sql配置实际命中的缓存key(sqlId本身或其方言变体),供@include展开后按原key替换缓存,
+	 * 与getSqlConfig中的查找顺序保持一致
+	 * 
 	 * @param config
 	 * @param sqlKey
 	 * @param realDialect
@@ -446,7 +457,8 @@ public class SqlScriptLoader {
 	}
 
 	/**
-	 * @todo 加入sql 片段解析产生对应的sqlToyConfig 放入缓存
+	 * 加入sql 片段解析产生对应的sqlToyConfig 放入缓存
+	 * 
 	 * @param sqlSegment
 	 * @return
 	 * @throws Exception
@@ -460,7 +472,8 @@ public class SqlScriptLoader {
 	}
 
 	/**
-	 * @TODO 开放sql文件由开发者放入sqltoy统一解析管理
+	 * 开放sql文件由开发者放入sqltoy统一解析管理
+	 * 
 	 * @param sqlFile
 	 * @throws Exception
 	 */
@@ -469,18 +482,19 @@ public class SqlScriptLoader {
 	}
 
 	/**
-	 * @todo 直接构造SqlToyConfig 放入sqltoy 缓存
+	 * 直接构造SqlToyConfig 放入sqltoy 缓存
+	 * 
 	 * @param sqlToyConfig
 	 * @throws Exception
 	 */
 	public void putSqlToyConfig(SqlToyConfig sqlToyConfig) throws Exception {
 		if (sqlToyConfig == null || StringUtil.isBlank(sqlToyConfig.getId())) {
-			logger.warn("sqlToyConfig is null 或者 id 为null!");
+			logger.warn("sqlToyConfig is null or its id is null!");
 			return;
 		}
 		// 判断是否已经存在，存在则清理一下分页优化的缓存
 		if (sqlCache.containsKey(sqlToyConfig.getId())) {
-			logger.warn("发现重复的SQL语句:id={} 将被覆盖!", sqlToyConfig.getId());
+			logger.warn("duplicate sql found:id={} will be overwritten!", sqlToyConfig.getId());
 			// 移除分页优化缓存
 			PageOptimizeUtils.remove(sqlToyConfig.getId());
 		}
@@ -488,7 +502,8 @@ public class SqlScriptLoader {
 	}
 
 	/**
-	 * @TODO 判断sqlId是否存在
+	 * 判断sqlId是否存在
+	 * 
 	 * @param sqlId
 	 * @return
 	 */
@@ -544,7 +559,7 @@ public class SqlScriptLoader {
 				watcher.interrupt();
 			}
 		} catch (Exception e) {
-			logger.warn("sql文件更新检测线程销毁异常!" + e.getMessage());
+			logger.warn("exception occurred while destroying the sql file modify watcher thread!{}", e.getMessage());
 		}
 	}
 }

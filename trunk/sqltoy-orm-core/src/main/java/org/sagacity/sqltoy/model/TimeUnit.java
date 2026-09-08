@@ -1,10 +1,10 @@
 package org.sagacity.sqltoy.model;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 时间单位,主要用于sql中filter中的时间加减计算的单位
  * @author zhongxuchen
- * @version v1.0,Date:2022-3-17
+ * @version v1.0,Date:2022-03-17
  */
 public enum TimeUnit {
 	// 毫秒

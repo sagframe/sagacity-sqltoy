@@ -1,10 +1,14 @@
 package org.sagacity.sqltoy.utils;
 
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
@@ -16,18 +20,19 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.SqlToyThreadDataHolder;
 import org.sagacity.sqltoy.callback.DataSourceCallbackHandler;
 import org.sagacity.sqltoy.config.model.CaseType;
+import org.sagacity.sqltoy.model.DBProfile;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * @author zhongxuchen
- * @version v1.0, Date:2015年3月3日
+ * @version v1.0,Date:2015-03-03
  * @project sagacity-sqltoy
  * @description 提供统一的dataSource管理
- * @modify data:2020-06-10 剔除mssql2008,hana,增加tidb、guassdb、oceanbase、dm数据库方言的支持
- * @modify data:2022-08-29 增加h2数据库的支持
- * @modify data:2022-09-29 getDialect(DataSource)和getDBType(DataSource)
+ * @modify Date:2020-06-10 剔除mssql2008,hana,增加tidb、guassdb、oceanbase、dm数据库方言的支持
+ * @modify Date:2022-08-29 增加h2数据库的支持
+ * @modify Date:2022-09-29 getDialect(DataSource)和getDBType(DataSource)
  *         增加缓存机制，避免获取connection来判断
  */
 public class DataSourceUtils {
@@ -220,14 +225,14 @@ public class DataSourceUtils {
 		DBNameTypeMap.put(Dialect.TIDB, DBType.TIDB);
 		DBNameTypeMap.put(Dialect.TDENGINE, DBType.TDENGINE);
 		DBNameTypeMap.put(Dialect.IMPALA, DBType.IMPALA);
-		
+
 		// 20220829 增加对h2的支持
 		DBNameTypeMap.put(Dialect.H2, DBType.H2);
 		DBNameTypeMap.put(Dialect.OSCAR, DBType.OSCAR);
 		DBNameTypeMap.put(Dialect.VASTBASE, DBType.VASTBASE);
 		DBNameTypeMap.put(Dialect.DORIS, DBType.DORIS);
 		DBNameTypeMap.put(Dialect.STARROCKS, DBType.STARROCKS);
-		
+
 		// 默认设置oscar、vastbase数据库用gaussdb方言来实现
 		// dialectMap.put(Dialect.OSCAR, Dialect.OPENGAUSS);
 		DBNameTypeMap.put(Dialect.UNDEFINE, DBType.UNDEFINE);
@@ -235,8 +240,7 @@ public class DataSourceUtils {
 
 	/**
 	 * @param dbType
-	 * @return
-	 * @todo 获取数据库类型名称
+	 * @return 获取数据库类型名称
 	 */
 	public static String getDialect(Integer dbType) {
 		switch (dbType) {
@@ -329,21 +333,20 @@ public class DataSourceUtils {
 
 	/**
 	 * @param conn
-	 * @return
-	 * @todo <b>获取数据库批量sql语句的分割符号</b>
+	 * @return 获取数据库批量sql语句的分割符号
 	 */
 	public static String getDatabaseSqlSplitSign(Connection conn) {
 		try {
 			int dbType = getDBType(conn);
 			return getDatabaseSqlSplitSign(dbType);
 		} catch (Exception e) {
-			logger.error("getDatabaseSqlSplitSign 方法执行异常", e);
+			logger.error("getDatabaseSqlSplitSign method execution failed", e);
 		}
 		return ";";
 	}
 
 	/**
-	 * @TODO sqlserver批量脚本通过go进行分割(前后带空格)
+	 * sqlserver批量脚本通过go进行分割(前后带空格)
 	 */
 	public static final String SQLSERVER_SPLIT_SIGN = " go ";
 
@@ -358,20 +361,40 @@ public class DataSourceUtils {
 	/**
 	 * @param conn
 	 * @return
-	 * @throws SQLException
-	 * @todo 获取数据库类型
+	 * @throws SQLException 获取数据库类型
 	 */
 	public static String getCurrentDBDialect(final Connection conn) throws SQLException {
+		// update 2026-9-6 委托DBProfile统筹缓存(以URL为key,含dialect/dbType等一次解析),
+		// 原始匹配逻辑(产品名+URL特征+dialectMap映射)提炼为resolveDialectByMeta供
+		// getDBProfile未命中解析时调用,避免委托形成循环;dialectMap运行期修改自此为
+		// 首次解析冻结语义(与getDBType的既有缓存行为一致),需热生效可显式配置dialect
+		return getDBProfile(conn).getDialect();
+	}
+
+	/**
+	 * update 2026-9-6 方言原始匹配(自原getCurrentDBDialect提炼,仅getDBProfile解析链内部使用):
+	 * 产品名匹配+URL特征优先+dialectMap自定义映射,无缓存实时
+	 */
+	private static String resolveDialectByMeta(final Connection conn) throws SQLException {
 		String dilectName = Dialect.UNDEFINE;
 		// 从hashMap中获取
 		if (null != conn) {
-			String productName = conn.getMetaData().getDatabaseProductName();
-			// 个别第三方驱动getDatabaseProductName可能返回null,按未识别处理,避免replaceAll抛NPE
-			if (productName == null) {
-				return dilectName;
+			// update 2026-9-5 URL schema特征优先:openGauss系驱动上报ProductName=PostgreSQL,
+			// 特征命中以识别名替代产品名走后续匹配(识别名恰含方言关键字,自然命中对应分支;
+			// 尾部dialectMap自定义映射对URL识别结果同样生效,尊重用户显式配置)
+			String urlDialect = getDBDialectByUrl(conn);
+			String dbDialect;
+			if (urlDialect != null) {
+				dbDialect = urlDialect;
+			} else {
+				String productName = conn.getMetaData().getDatabaseProductName();
+				// 个别第三方驱动getDatabaseProductName可能返回null,按未识别处理,避免replaceAll抛NPE
+				if (productName == null) {
+					return dilectName;
+				}
+				// 剔除空白
+				dbDialect = productName.replaceAll("\\s+", "");
 			}
-			// 剔除空白
-			String dbDialect = productName.replaceAll("\\s+", "");
 			// oracle
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.ORACLE) != -1) {
 				dilectName = Dialect.ORACLE;
@@ -380,6 +403,9 @@ public class DataSourceUtils {
 					|| StringUtil.indexOfIgnoreCase(dbDialect, Dialect.MARIADB) != -1
 					|| StringUtil.indexOfIgnoreCase(dbDialect, Dialect.INNOSQL) != -1) {
 				dilectName = Dialect.MYSQL;
+				// update 2026-9-6 StarRocks/Doris的current_version()引擎探测已上移至getDBProfile
+				// 统一处理(探测属档案属性解析,随URL_PROFILE_CACHE每URL缓存一次),
+				// 本方法恢复纯产品名+URL特征的实时语义
 			} // doris
 			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.DORIS) != -1) {
 				dilectName = Dialect.DORIS;
@@ -452,7 +478,7 @@ public class DataSourceUtils {
 				dialectEntries.sort((one, two) -> two.getKey().length() - one.getKey().length());
 				for (Map.Entry<String, String> entry : dialectEntries) {
 					if (StringUtil.indexOfIgnoreCase(dbDialect, entry.getKey()) != -1) {
-						dilectName = entry.getValue().toLowerCase();
+						dilectName = entry.getValue().toLowerCase(Locale.ROOT);
 						break;
 					}
 				}
@@ -460,7 +486,7 @@ public class DataSourceUtils {
 		}
 		// 存在数据库方言映射，将类似oscar数据库映射成oracle执行
 		if (dialectMap.containsKey(dilectName)) {
-			dilectName = dialectMap.get(dilectName).toLowerCase();
+			dilectName = dialectMap.get(dilectName).toLowerCase(Locale.ROOT);
 		}
 		return dilectName;
 	}
@@ -468,8 +494,7 @@ public class DataSourceUtils {
 	/**
 	 * @param conn
 	 * @return
-	 * @throws SQLException
-	 * @todo 获取当前数据库的版本
+	 * @throws SQLException 获取当前数据库的版本
 	 */
 	private static int getDBVersion(final Connection conn) throws SQLException {
 		// -1表示版本不确定
@@ -478,113 +503,301 @@ public class DataSourceUtils {
 		try {
 			result = conn.getMetaData().getDatabaseMajorVersion();
 		} catch (Exception e) {
-			// e.printStackTrace();
+			// ignore,部分数据库驱动还不支持此方法
 		}
 		return result;
 	}
 
 	/**
-	 * @param conn
-	 * @return
-	 * @throws SQLException
-	 * @todo <b>获取数据库类型</b>
+	 * update 2026-9-8 sqlserver原生json类型探测(随URL档案每URL一次):merge的using子查询
+	 * 对原生json列须convert(json,?)定型,对nvarchar承载列convert直接报"Type json is not a defined
+	 * system type"(本机17.0.4075预览版实测无json系统类型,16.x亦无);以convert
+	 * 探针实测判定而非版本号推测(预览版/GA行为差异无法靠majorVersion区分);非sqlserver 或探测异常一律Boolean.FALSE
 	 */
-	public static int getDBType(final Connection conn) throws SQLException {
-		// 从hashMap中获取
-		String productName = conn.getMetaData().getDatabaseProductName();
-		int majorVersion = getDBVersion(conn);
-		String dbKey = productName + majorVersion;
-		if (!DBNameTypeMap.containsKey(dbKey)) {
-			String dbDialect = getCurrentDBDialect(conn);
-			int dbType = DBType.UNDEFINE;
-			// oracle12+
-			if (dbDialect.equals(Dialect.ORACLE)) {
-				dbType = DBType.ORACLE;
-				if (majorVersion <= 11) {
-					dbType = DBType.ORACLE11;
-				}
-			} else if (dbDialect.equals(Dialect.ORACLE11)) {
-				dbType = DBType.ORACLE11;
-			} // mysql以及mysql的分支数据库
-			else if (dbDialect.equals(Dialect.MYSQL)) {
-				dbType = DBType.MYSQL;
-				if (majorVersion <= 5) {
-					dbType = DBType.MYSQL57;
-				}
-			} else if (dbDialect.equals(Dialect.MYSQL57)) {
-				dbType = DBType.MYSQL57;
-			} // 9.5以上为标准支持模式
-			else if (dbDialect.equals(Dialect.POSTGRESQL)) {
-				dbType = DBType.POSTGRESQL;
-				if (majorVersion < 15) {
-					dbType = DBType.POSTGRESQL14;
-				}
-			} else if (dbDialect.equals(Dialect.GREENPLUM)) {
-				dbType = DBType.POSTGRESQL;
-			} // sqlserver,只支持2012或以上版本
-			else if (dbDialect.equals(Dialect.SQLSERVER)) {
-				dbType = DBType.SQLSERVER;
-			} // db2 10+版本
-			else if (dbDialect.equals(Dialect.DB2)) {
-				dbType = DBType.DB2;
-			} else if (dbDialect.equals(Dialect.CLICKHOUSE)) {
-				dbType = DBType.CLICKHOUSE;
-			} else if (dbDialect.equals(Dialect.OCEANBASE)) {
-				dbType = DBType.OCEANBASE;
-			} else if (dbDialect.equals(Dialect.OPENGAUSS)) {
-				dbType = DBType.OPENGAUSS;
-			} else if (dbDialect.equals(Dialect.GAUSSDB)) {
-				dbType = DBType.GAUSSDB;
-			} else if (dbDialect.equals(Dialect.MOGDB)) {
-				dbType = DBType.MOGDB;
-			} else if (dbDialect.equals(Dialect.STARDB)) {
-				dbType = DBType.STARDB;
-			} else if (dbDialect.equals(Dialect.SQLITE)) {
-				dbType = DBType.SQLITE;
-			} else if (dbDialect.equals(Dialect.DM)) {
-				dbType = DBType.DM;
-			} else if (dbDialect.equals(Dialect.TIDB)) {
-				dbType = DBType.TIDB;
-			} else if (dbDialect.equals(Dialect.IMPALA)) {
-				dbType = DBType.IMPALA;
-			} else if (dbDialect.equals(Dialect.TDENGINE)) {
-				dbType = DBType.TDENGINE;
-			} else if (dbDialect.equals(Dialect.KINGBASE)) {
-				dbType = DBType.KINGBASE;
-			} else if (dbDialect.equals(Dialect.ES)) {
-				dbType = DBType.ES;
-			} else if (dbDialect.equals(Dialect.H2)) {
-				dbType = DBType.H2;
-			} else if (dbDialect.equals(Dialect.OSCAR)) {
-				dbType = DBType.OSCAR;
-			} else if (dbDialect.equals(Dialect.VASTBASE)) {
-				dbType = DBType.VASTBASE;
-			} else if (dbDialect.equals(Dialect.DORIS)) {
-				dbType = DBType.DORIS;
-			} else if (dbDialect.equals(Dialect.STARROCKS)) {
-				dbType = DBType.STARROCKS;
+	private static Boolean probeSqlServerJsonType(final Connection conn) {
+		try {
+			if (!"Microsoft SQL Server".equalsIgnoreCase(conn.getMetaData().getDatabaseProductName())) {
+				return Boolean.FALSE;
 			}
-			DBNameTypeMap.put(dbKey, dbType);
+		} catch (Exception e) {
+			return Boolean.FALSE;
 		}
-		return DBNameTypeMap.get(dbKey);
+		try (Statement st = conn.createStatement(); ResultSet rs = st.executeQuery("select convert(json, '{}')")) {
+			return Boolean.TRUE;
+		} catch (Exception e) {
+			return Boolean.FALSE;
+		}
 	}
 
 	/**
-	 * @param dialect
+	 * update 2026-9-5 JDBC URL schema特征与方言识别名的映射:openGauss/MOGDB/VASTBASE/STARDB等
+	 * 国产PG系内核的getDatabaseProductName()误报为PostgreSQL(openGauss 5.0.0实测上报
+	 * PostgreSQL/9.2.4),仅靠产品名会被误判为postgresql方言,而其saveOrUpdate生成的 ON
+	 * CONFLICT语法在这些内核默认不解析;JDBC URL的schema段(jdbc:opengauss:等)
+	 * 由驱动忠实保留,特征命中以识别名参与后续方言匹配(含dialectMap自定义映射)
+	 */
+	private static final Map<String, String> URL_SCHEMA_DIALECT = new HashMap<>();
+	static {
+		URL_SCHEMA_DIALECT.put("opengauss", Dialect.OPENGAUSS);
+		URL_SCHEMA_DIALECT.put("mogdb", Dialect.MOGDB);
+		URL_SCHEMA_DIALECT.put("vastbase", Dialect.VASTBASE);
+		URL_SCHEMA_DIALECT.put("stardb", Dialect.STARDB);
+		URL_SCHEMA_DIALECT.put("gaussdb", Dialect.GAUSSDB);
+		// update 2026-9-6 DM驱动compatibleMode=oracle时ProductName伪装成Oracle(实测被误判
+		// 为oracle方言走Oracle11gDialect,identity列生成nvl(?,null)赋值形态报-2723),
+		// URL特征优先纠正(与openGauss伪装PostgreSQL同构场景)
+		URL_SCHEMA_DIALECT.put("dm", Dialect.DM);
+		// update 2026-9-6 oceanbase的ProductName为"MySQL 5.7.25-OceanBase_CE..."(mysql分支
+		// 在产品名判定链中先命中被误判mysql方言,ob4.3无string_to_vector等mysql9函数),
+		// URL特征jdbc:oceanbase://优先纠正
+		URL_SCHEMA_DIALECT.put("oceanbase", Dialect.OCEANBASE);
+	}
+
+	/**
+	 * @param conn
+	 * @return URL schema特征命中的方言识别名,未命中或获取URL失败返回null
+	 */
+	private static String getDBDialectByUrl(final Connection conn) {
+		try {
+			String jdbcUrl = conn.getMetaData().getURL();
+			if (jdbcUrl != null && jdbcUrl.startsWith("jdbc:")) {
+				int schemaEnd = jdbcUrl.indexOf(':', 5);
+				if (schemaEnd > 5) {
+					return URL_SCHEMA_DIALECT.get(jdbcUrl.substring(5, schemaEnd).toLowerCase(Locale.ROOT));
+				}
+			}
+		} catch (Exception e) {
+			// 部分驱动或连接代理场景获取url失败,回退产品名探测
+		}
+		return null;
+	}
+
+	/**
+	 * @param conn
 	 * @return
-	 * @TODO 这里的方言已经在SqlToyContext中已经做了规整(因此不会超出范围)
+	 * @throws SQLException 获取数据库类型
+	 */
+	public static int getDBType(final Connection conn) throws SQLException {
+		// update 2026-9-6
+		// 委托DBProfile统筹缓存(以URL为key,dialect/dbType/productName/majorVersion
+		// 及PG系扩展类型句柄一次解析),取代原DBNameTypeMap键式缓存,外部行为不变
+		return getDBProfile(conn).getDbType();
+	}
+
+	// update 2026-9-6 连接维度特征档案缓存:以JDBC URL为key(同一URL必然指向同一数据库实例),
+	// getDBType/getCurrentDBDialect消费方/SqlUtil的PGobject绑定统一走此档案
+	private static final ConcurrentHashMap<String, DBProfile> URL_PROFILE_CACHE = new ConcurrentHashMap<String, DBProfile>(
+			16);
+
+	/**
+	 * update 2026-9-6 获取连接的数据库特征档案(进程级缓存,以JDBC URL为key):
+	 * 一次解析dialect/productName/majorVersion/dbType及PG系扩展类型PGobject绑定句柄,
+	 * 统筹此前DataSourceUtils与SqlUtil各自独立的解析与缓存。
+	 * 热路径仅一次getMetaData().getURL()(实测均摊0.04us)+缓存查找,productName/majorVersion
+	 * 等重解析仅在缓存未命中时执行(含StarRocks的current_version探测),每URL至多一次。
+	 * 不缓存运行期可变属性(dialectMap自定义映射、backslashEscaping全局开关),保持实时语义。
+	 * 
+	 * @param conn 数据库连接
+	 * @return 特征档案(url获取失败的连接返回实时解析的临时档案,不入缓存)
+	 */
+	public static DBProfile getDBProfile(final Connection conn) throws SQLException {
+		// 仅取URL用于缓存查找(轻量),缓存命中直接返回
+		String connUrl = null;
+		try {
+			connUrl = conn.getMetaData().getURL();
+		} catch (Exception e) {
+			// 部分代理连接获取url失败,走实时解析
+		}
+		// URL可否作为缓存key:非null即可(getURL契约返回合法jdbc URL或null,ConcurrentHashMap
+		// 不允许null key会抛NPE);获取不到url的连接只实时解析不入缓存
+		boolean urlAsCacheKey = (connUrl != null);
+		if (urlAsCacheKey) {
+			DBProfile profile = URL_PROFILE_CACHE.get(connUrl);
+			if (profile != null) {
+				return profile;
+			}
+		}
+		// 缓存未命中(或URL不可得):完整解析(产品名/版本/方言映射/引擎探测/PGobject句柄)
+		String productName = conn.getMetaData().getDatabaseProductName();
+		int majorVersion = getDBVersion(conn);
+		// 解析链:resolveDialectByMeta(产品名+URL特征+dialectMap映射,实时) + StarRocks引擎探测
+		String dialect = resolveDialect(conn, resolveDialectByMeta(conn));
+		DBProfile profile = new DBProfile(connUrl, dialect, dialectToDbType(dialect, majorVersion), productName,
+				majorVersion, resolvePGobjectHolder(connUrl), probeSqlServerJsonType(conn));
+		// URL可标识的连接入缓存(并发竞争时保留先入条目)
+		if (urlAsCacheKey) {
+			DBProfile exist = URL_PROFILE_CACHE.putIfAbsent(connUrl, profile);
+			if (exist != null) {
+				return exist;
+			}
+		}
+		return profile;
+	}
+
+	/**
+	 * update 2026-9-6 方言的引擎探测统一处理:mysql协议方言(mysql系元数据同形)时以current_version()
+	 * 校正StarRocks/Doris——实测其经mysql驱动连接时ProductName/Version/URL三信号全部伪装成MySQL
+	 * (8.0.33/jdbc:mysql)无法靠元数据区分;current_version()为SR/Doris特有函数(mysql报Unknown
+	 * function),返回值须再校验版本串特征(SR如4.1.4-4a9848e含git提交哈希后缀,Doris老版含doris
+	 * 字样),防御其他数据库未来实现同名函数导致误判——特征不符保持mysql方言并warn,可显式配置
+	 * dialect覆盖。命中归STARROCKS方言——DialectFactory中DORIS与STARROCKS共用DorisDialect,
+	 * 两家均正确落方言(本方法仅在getDBProfile解析时调用,随URL缓存每URL探测一次)
+	 */
+	private static String resolveDialect(Connection conn, String dialect) {
+		if (!Dialect.MYSQL.equals(dialect)) {
+			return dialect;
+		}
+		try (java.sql.Statement probe = conn.createStatement();
+				java.sql.ResultSet prs = probe.executeQuery("select current_version()")) {
+			if (prs.next()) {
+				String engineVersion = prs.getString(1);
+				if (engineVersion != null && (engineVersion.matches("(?i).*(starrocks|doris).*")
+						|| engineVersion.matches("\\d+\\.\\d+\\.\\d+-[0-9a-zA-Z]{6,}.*"))) {
+					logger.info("detected starrocks/doris compatible engine by current_version()={}", engineVersion);
+					return Dialect.STARROCKS;
+				}
+				logger.warn(
+						"current_version()={} does not match starrocks/doris version pattern, keep mysql dialect! "
+								+ "if this engine is actually starrocks/doris, please config dialect explicitly!",
+						engineVersion);
+			}
+		} catch (Exception ignore) {
+			// mysql无此函数,保持mysql方言
+		}
+		return Dialect.MYSQL;
+	}
+
+	/**
+	 * 方言名+主版本→dbType(自原getDBType(conn)的判定链提炼,含版本修正)
+	 */
+	private static int dialectToDbType(String dbDialect, int majorVersion) {
+		if (dbDialect.equals(Dialect.ORACLE)) {
+			if (majorVersion <= 11) {
+				return DBType.ORACLE11;
+			}
+			return DBType.ORACLE;
+		} else if (dbDialect.equals(Dialect.ORACLE11)) {
+			return DBType.ORACLE11;
+		} else if (dbDialect.equals(Dialect.MYSQL)) {
+			if (majorVersion <= 5) {
+				return DBType.MYSQL57;
+			}
+			return DBType.MYSQL;
+		} else if (dbDialect.equals(Dialect.MYSQL57)) {
+			return DBType.MYSQL57;
+		} else if (dbDialect.equals(Dialect.POSTGRESQL)) {
+			if (majorVersion < 15) {
+				return DBType.POSTGRESQL14;
+			}
+			return DBType.POSTGRESQL;
+		} else if (dbDialect.equals(Dialect.GREENPLUM)) {
+			return DBType.POSTGRESQL;
+		} else if (dbDialect.equals(Dialect.SQLSERVER)) {
+			return DBType.SQLSERVER;
+		} else if (dbDialect.equals(Dialect.DB2)) {
+			return DBType.DB2;
+		} else if (dbDialect.equals(Dialect.CLICKHOUSE)) {
+			return DBType.CLICKHOUSE;
+		} else if (dbDialect.equals(Dialect.OCEANBASE)) {
+			return DBType.OCEANBASE;
+		} else if (dbDialect.equals(Dialect.OPENGAUSS)) {
+			return DBType.OPENGAUSS;
+		} else if (dbDialect.equals(Dialect.GAUSSDB)) {
+			return DBType.GAUSSDB;
+		} else if (dbDialect.equals(Dialect.MOGDB)) {
+			return DBType.MOGDB;
+		} else if (dbDialect.equals(Dialect.STARDB)) {
+			return DBType.STARDB;
+		} else if (dbDialect.equals(Dialect.SQLITE)) {
+			return DBType.SQLITE;
+		} else if (dbDialect.equals(Dialect.DM)) {
+			return DBType.DM;
+		} else if (dbDialect.equals(Dialect.TIDB)) {
+			return DBType.TIDB;
+		} else if (dbDialect.equals(Dialect.IMPALA)) {
+			return DBType.IMPALA;
+		} else if (dbDialect.equals(Dialect.TDENGINE)) {
+			return DBType.TDENGINE;
+		} else if (dbDialect.equals(Dialect.KINGBASE)) {
+			return DBType.KINGBASE;
+		} else if (dbDialect.equals(Dialect.ES)) {
+			return DBType.ES;
+		} else if (dbDialect.equals(Dialect.H2)) {
+			return DBType.H2;
+		} else if (dbDialect.equals(Dialect.OSCAR)) {
+			return DBType.OSCAR;
+		} else if (dbDialect.equals(Dialect.VASTBASE)) {
+			return DBType.VASTBASE;
+		} else if (dbDialect.equals(Dialect.DORIS)) {
+			return DBType.DORIS;
+		} else if (dbDialect.equals(Dialect.STARROCKS)) {
+			return DBType.STARROCKS;
+		}
+		return DBType.UNDEFINE;
+	}
+
+	/**
+	 * update 2026-9-6 URL scheme→同源驱动PGobject反射句柄(自SqlUtil迁入统筹):
+	 * 实测PGobject不能跨驱动setObject(pg驱动收到org.opengauss的PGobject报Can't infer the SQL
+	 * type,反向同理);按URL的schema段选择同源驱动的PGobject类,对应不上
+	 * classpath中的驱动类时返回constructor为null的哨兵,由调用方回退setObject(str,OTHER)。
+	 * 注意本匹配的对象是"驱动"而非"数据库":用postgresql官方驱动连openGauss/vastbase等
+	 * PG系库时(pom注释中明示的兼容用法),URL必为jdbc:postgresql:从而解析出org.postgresql的
+	 * PGobject,与实际驱动同源,天然正确;实测openGauss默认SCRAM(sha256)认证下PG官方驱动 连接即被拒(Invalid SCRAM
+	 * client initialization),须openGauss侧开启兼容认证方可使用此形态
+	 */
+	private static DBProfile.PGobjectHolder resolvePGobjectHolder(String url) {
+		try {
+			if (url == null || !url.startsWith("jdbc:")) {
+				return NULL_PG_HOLDER;
+			}
+			int schemaEnd = url.indexOf(':', 5);
+			if (schemaEnd <= 5) {
+				return NULL_PG_HOLDER;
+			}
+			String schema = url.substring(5, schemaEnd).toLowerCase(Locale.ROOT);
+			String pgObjectClass;
+			if ("opengauss".equals(schema) || "mogdb".equals(schema)) {
+				pgObjectClass = "org.opengauss.util.PGobject";
+			} else if ("vastbase".equals(schema)) {
+				pgObjectClass = "cn.com.vastbase.util.PGobject";
+			} else if ("gaussdb".equals(schema)) {
+				// update 2026-9-6 GaussDB Kernel JDBC(com.huaweicloud.gaussdb:gaussdbjdbc,
+				// Driver类com.huawei.gaussdb.jdbc.Driver)的PGobject在华为自有包路径
+				pgObjectClass = "com.huawei.gaussdb.jdbc.util.PGobject";
+			} else if ("postgresql".equals(schema)) {
+				pgObjectClass = "org.postgresql.util.PGobject";
+			} else {
+				// stardb等其他PG系驱动:多数兼容postgresql驱动包路径,尝试后失败由调用方回退
+				pgObjectClass = "org.postgresql.util.PGobject";
+			}
+			Class<?> clazz = Class.forName(pgObjectClass);
+			return new DBProfile.PGobjectHolder(clazz.getDeclaredConstructor(),
+					clazz.getMethod("setType", String.class), clazz.getMethod("setValue", String.class));
+		} catch (Throwable e) {
+			return NULL_PG_HOLDER;
+		}
+	}
+
+	// 无法解析URL/驱动的占位句柄(constructor为null)
+	private static final DBProfile.PGobjectHolder NULL_PG_HOLDER = new DBProfile.PGobjectHolder(null, null, null);
+
+	/**
+	 * @param dialect
+	 * @return 这里的方言已经在SqlToyContext中已经做了规整(因此不会超出范围)
 	 */
 	public static int getDBType(String dialect) {
 		if (StringUtil.isBlank(dialect)) {
 			return DBType.UNDEFINE;
 		}
-		String dialectLow = dialect.toLowerCase();
+		String dialectLow = dialect.toLowerCase(Locale.ROOT);
 		// 方言映射
 		if (dialectMap.containsKey(dialectLow)) {
-			dialectLow = dialectMap.get(dialectLow).toLowerCase();
+			dialectLow = dialectMap.get(dialectLow).toLowerCase(Locale.ROOT);
 		}
 		if (!DBNameTypeMap.containsKey(dialectLow)) {
-			logger.warn("sqltoy初始化的方言map中未包含的数据库方言[" + dialectLow + "]");
+			logger.warn("the database dialect:[{}] is not included in the dialect map initialized by sqltoy",
+					dialectLow);
 			return DBType.UNDEFINE;
 		}
 		return DBNameTypeMap.get(dialectLow);
@@ -628,8 +841,7 @@ public class DataSourceUtils {
 	/**
 	 * @param conn
 	 * @return
-	 * @throws Exception
-	 * @todo 获取不同数据库validator语句
+	 * @throws Exception 获取不同数据库validator语句
 	 */
 	public static String getValidateQuery(final Connection conn) throws Exception {
 		int dbType = getDBType(conn);
@@ -640,14 +852,13 @@ public class DataSourceUtils {
 	 * @param sqltoyContext
 	 * @param datasource
 	 * @param handler
-	 * @return
-	 * @todo <b>统一处理DataSource以及对应的Connection，便于跟spring事务集成</b>
+	 * @return 统一处理DataSource以及对应的Connection，便于跟spring事务集成
 	 */
 	public static Object processDataSource(SqlToyContext sqltoyContext, DataSource datasource,
 			DataSourceCallbackHandler handler) {
 		if (datasource == null) {
 			throw new IllegalArgumentException(
-					"dataSource为null,异常原因参考:\n 1、数据库连接池配置错误，根本就没有成功创建DataSource;\n 2、多数据源场景未配置spring.sqltoy.defaultDataSource=xxx 默认数据源;\n 3、dao中指定的dataSource名称不存在!");
+					"dataSource is null, possible causes:\n 1. the connection pool is misconfigured and no DataSource was created;\n 2. in multi-datasource scenario spring.sqltoy.defaultDataSource=xxx is not configured;\n 3. the dataSource name specified in the dao does not exist, please check!");
 		}
 		Connection conn = sqltoyContext.getConnection(datasource);
 		Integer dbType;
@@ -657,12 +868,13 @@ public class DataSourceUtils {
 			if (null != sqltoyContext && StringUtil.isNotBlank(sqltoyContext.getDialect())) {
 				dialect = sqltoyContext.getDialect();
 				dbType = getDBType(dialect);
-				Integer realDBType = getDBType(conn);
-				SqlToyThreadDataHolder.setActuallyDBType(realDBType);
+				// 显式dialect时仍采集连接真实档案(getDBProfile含dbType/主版本等,随URL缓存)
+				SqlToyThreadDataHolder.setDBProfile(getDBProfile(conn));
 			} else {
-				dbType = getDBType(conn);
+				DBProfile connProfile = getDBProfile(conn);
+				dbType = connProfile.getDbType();
 				dialect = getDialect(dbType);
-				SqlToyThreadDataHolder.setActuallyDBType(dbType);
+				SqlToyThreadDataHolder.setDBProfile(connProfile);
 			}
 			// 调试显示数据库信息,便于在多数据库场景下辨别查询对应的数据库
 			if (SqlToyConstants.showDatasourceInfo()) {
@@ -673,12 +885,12 @@ public class DataSourceUtils {
 			// 调用反调，传入conn和数据库类型进行实际业务处理(数据库类型主要便于DialectFactory获取对应方言处理类)
 			handler.doConnection(conn, dbType, dialect);
 		} catch (Exception e) {
-			logger.error("processDataSource 方法执行异常", e);
+			logger.error("processDataSource method execution failed", e);
 			sqltoyContext.releaseConnection(conn, datasource);
 			conn = null;
 			throw new RuntimeException(e);
 		} finally {
-			SqlToyThreadDataHolder.clearActuallyDBType();
+			SqlToyThreadDataHolder.clearDBProfile();
 			// 释放连接,连接池实际是归还连接，未必一定关闭
 			sqltoyContext.releaseConnection(conn, datasource);
 		}
@@ -689,8 +901,7 @@ public class DataSourceUtils {
 	/**
 	 * @param sqltoyContext
 	 * @param datasource
-	 * @return
-	 * @TODO 获取数据库的类型
+	 * @return 获取数据库的类型
 	 */
 	public static int getDBType(SqlToyContext sqltoyContext, DataSource datasource) {
 		if (datasource == null) {
@@ -706,7 +917,7 @@ public class DataSourceUtils {
 			dbType = getDBType(conn);
 			dataSourceDbTypeCache.put(datasource, dbType);
 		} catch (Exception e) {
-			logger.error("getDBType 方法执行异常", e);
+			logger.error("getDBType method execution failed", e);
 			sqltoyContext.releaseConnection(conn, datasource);
 			conn = null;
 			throw new RuntimeException(e);
@@ -737,7 +948,7 @@ public class DataSourceUtils {
 			dialect = getDialect(conn);
 			dataSourceDialectCache.put(datasource, dialect);
 		} catch (Exception e) {
-			logger.error("getDialect 方法执行异常", e);
+			logger.error("getDialect method execution failed", e);
 			sqltoyContext.releaseConnection(conn, datasource);
 			conn = null;
 			throw new RuntimeException(e);
@@ -751,8 +962,7 @@ public class DataSourceUtils {
 	/**
 	 * @param conn
 	 * @return
-	 * @throws Exception
-	 * @TODO 根据连接获取数据库方言
+	 * @throws Exception 根据连接获取数据库方言
 	 */
 	private static String getDialect(Connection conn) throws Exception {
 		if (conn == null) {
@@ -817,8 +1027,7 @@ public class DataSourceUtils {
 
 	/**
 	 * @param dbType
-	 * @return
-	 * @TODO 获取数据库对应的nvl函数
+	 * @return 获取数据库对应的nvl函数
 	 */
 	public static String getNvlFunction(Integer dbType) {
 		switch (dbType) {
@@ -887,7 +1096,8 @@ public class DataSourceUtils {
 	}
 
 	/**
-	 * @TODO 单行记录插入需要返回主键值时,主键字段名称是否需要大小写转换，postgresql要转小写
+	 * 单行记录插入需要返回主键值时,主键字段名称是否需要大小写转换，postgresql要转小写
+	 * 
 	 * @param columnName
 	 * @param dbType
 	 * @return
@@ -895,9 +1105,9 @@ public class DataSourceUtils {
 	public static String getReturnPrimaryKeyColumn(String columnName, Integer dbType) {
 		CaseType caseType = getReturnPrimaryKeyColumnCase(dbType);
 		if (caseType == CaseType.UPPER) {
-			return columnName.toUpperCase();
+			return columnName.toUpperCase(Locale.ROOT);
 		} else if (caseType == CaseType.LOWER) {
-			return columnName.toLowerCase();
+			return columnName.toLowerCase(Locale.ROOT);
 		}
 		return columnName;
 	}

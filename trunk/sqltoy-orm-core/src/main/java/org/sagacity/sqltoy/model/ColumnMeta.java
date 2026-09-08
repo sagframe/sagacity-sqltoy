@@ -10,9 +10,6 @@ import java.io.Serializable;
  */
 public class ColumnMeta implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 3159696936177058511L;
 
 	/**

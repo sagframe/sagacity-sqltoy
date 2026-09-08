@@ -1,10 +1,10 @@
 package org.sagacity.sqltoy.model;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 定义数据库记录锁的类型
  * @author zhongxuchen
- * @version v1.0,Date:2015年3月5日
+ * @version v1.0,Date:2015-03-05
  */
 public enum LockMode {
 	// 锁记录且等待之前的事务完成

@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
@@ -9,13 +6,10 @@ import java.io.Serializable;
  * @project sagacity-sqltoy
  * @description 并行配置
  * @author zhongxuchen
- * @version v1.0, Date:2020-12-14
- * @modify 2020-12-14,修改说明
+ * @version v1.0,Date:2020-12-14
+ * @modify Date:2020-12-14 修改说明
  */
 public class ParallelConfig implements Serializable {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 5130763135305535186L;
 
 	/**

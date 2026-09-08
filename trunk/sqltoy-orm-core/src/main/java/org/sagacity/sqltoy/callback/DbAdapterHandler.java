@@ -12,7 +12,7 @@ import org.sagacity.sqltoy.config.model.SqlToyConfig;
  *              <li>要求在一种数据库下开发，然后查询同时在其他数据库下执行，检验sql的跨数据库适配性</li>
  *              </p>
  * @author zhongxuchen
- * @version v1.0,Date:2022-8-13
+ * @version v1.0,Date:2022-08-13
  */
 @FunctionalInterface
 public interface DbAdapterHandler {

@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.config.model;
 
 import java.io.Serializable;
@@ -11,12 +8,9 @@ import javax.sql.DataSource;
  * @project sagacity-sqltoy
  * @description 单一分库分表模型
  * @author zhongxuchen
- * @version v1.0,Date:2017年11月6日
+ * @version v1.0,Date:2017-11-06
  */
 public class ShardingModel implements Serializable {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 4092467610948600457L;
 
 	/**

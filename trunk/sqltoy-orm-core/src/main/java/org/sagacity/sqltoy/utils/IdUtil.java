@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
  * @project sagacity-sqltoy
  * @description 封装各种生成唯一性ID算法的工具类
  * @author zhongxuchen
- * @version v1.0,Date:2012-4-7
+ * @version v1.0,Date:2012-04-07
  */
 public class IdUtil {
 	/**
@@ -59,14 +59,14 @@ public class IdUtil {
 	 * update 2025-12-24 改为uuidv7版本
 	 */
 	public static String getUUID() {
-		// return UUID.randomUUID().toString().replace("-", "");
 		return StandardUUIDv7Generator.generateString().replace("-", "");
 	}
 
 	/**
-	 * @todo 获取22位有序安全ID,格式:13位当前毫秒+6位计数值+3位主机ID 目前情况下任何一次提取纳秒时间都不会一样
-	 * @param workerId
-	 * @return
+	 * 获取22位有序安全ID,格式:13位当前毫秒+6位计数值+3位主机ID 目前情况下任何一次提取纳秒时间都不会一样
+	 * 
+	 * @param workerId 工作节点标识(最多3位数字字符串)，null时默认取本机IP末3位数字
+	 * @return 22位十进制数字形式的唯一ID
 	 */
 	public static BigDecimal getShortNanoTimeId(String workerId) {
 		return getShortNanoTimeId(SQLTOY_ID_SHORT, workerId);
@@ -90,10 +90,11 @@ public class IdUtil {
 	}
 
 	/**
-	 * @todo 获取26位有序安全ID,格式:15位:yyMMddHHmmssSSS+8位计数+3位主机ID
+	 * 获取26位有序安全ID,格式:15位:yyMMddHHmmssSSS+8位计数+3位主机ID
+	 * 
 	 * @param identityName 一般用表名
-	 * @param workerId
-	 * @return
+	 * @param workerId     工作节点标识(最多3位数字字符串)，null时默认取本机IP末3位数字
+	 * @return 26位十进制数字形式的唯一ID
 	 */
 	public static BigDecimal getNanoTimeId(String identityName, String workerId) {
 		String realIdentityName = StringUtil.isBlank(identityName) ? SQLTOY_ID : identityName;
@@ -110,10 +111,11 @@ public class IdUtil {
 	}
 
 	/**
-	 * @TODO 改用并发map根据表名称存放当前毫秒对应的计数值
-	 * @param identityName
-	 * @param maxValue
-	 * @return
+	 * 改用并发map根据表名称存放当前毫秒对应的计数值
+	 * 
+	 * @param identityName 计数标识名称(一般为表名)，同一名称同一毫秒内递增计数
+	 * @param maxValue     同一毫秒内允许的最大计数值，超出后等待进入下一毫秒重新计数
+	 * @return 长度为2的数组，[0]为当前毫秒时间值，[1]为对应的计数值
 	 */
 	private static long[] getCurrentValue(String identityName, int maxValue) {
 		long[] result = new long[2];
@@ -150,8 +152,9 @@ public class IdUtil {
 	}
 
 	/**
-	 * @TODO 获取debug ID,只需保障单机当天唯一，主要帮助日志分组
-	 * @return
+	 * 获取debug ID,只需保障单机当天唯一，主要帮助日志分组
+	 * 
+	 * @return 形如"HH:mm:ss.xxxxxxx"的debug ID字符串
 	 */
 	public static String getDebugId() {
 		// 当前时间(秒)
@@ -160,10 +163,11 @@ public class IdUtil {
 	}
 
 	/**
-	 * @TODO 组装debugId,nanoTime参数化便于测试负值场景
+	 * 组装debugId,nanoTime参数化便于测试负值场景
+	 * 
 	 * @param nowTime  当前时刻字符串
 	 * @param nanoTime 纳秒计数
-	 * @return
+	 * @return 时刻字符串加点号连接纳秒截取部分(7~9位)的debug ID
 	 */
 	static String buildDebugId(String nowTime, long nanoTime) {
 		// nanoTime原点由JVM任选(契约允许为负,部分平台开机初期为负值),无条件剥离负号再截取
@@ -183,10 +187,11 @@ public class IdUtil {
 	}
 
 	/**
-	 * @todo 获取本机IP地址
-	 * @param hasHostName
-	 * @param hasIPV6
-	 * @return
+	 * 获取本机IP地址
+	 * 
+	 * @param hasHostName true同时返回主机名称
+	 * @param hasIPV6     true包含IPV6地址，false仅返回IPV4地址
+	 * @return 主机名称和IP地址组成的列表(排除回环地址)，获取失败返回空列表
 	 */
 	public static List<String> getLocalAddress(boolean hasHostName, boolean hasIPV6) {
 		List<String> result = new ArrayList<String>();
@@ -209,15 +214,18 @@ public class IdUtil {
 				}
 			}
 		} catch (Exception e) {
-			logger.error("根据ip产生id所依赖的serverId异常，无法获得ip信息:" + e.getMessage());
+			logger.error(
+					"exception occurred on the serverId which the id generation based on ip depends on, failed to get ip info:{}",
+					e.getMessage());
 		}
 		return result;
 	}
 
 	/**
-	 * @todo 获取本机的IP地址，并从末尾截取指定长度的数字
-	 * @param size
-	 * @return
+	 * 获取本机的IP地址，并从末尾截取指定长度的数字
+	 * 
+	 * @param size 需要保留的位数
+	 * @return IP去除分隔符后末尾指定位数的数字字符串(不足左补零)，无网络时返回末位为1的补零字符串
 	 */
 	public static String getLastIp(int size) {
 		// 默认取ipv4地址
@@ -263,15 +271,16 @@ public class IdUtil {
 	}
 
 	/**
-	 * @todo 产生分布式主键
-	 * @param distributeIdGenerator
-	 * @param tableName
-	 * @param signature
-	 * @param keyValues
-	 * @param bizDate
-	 * @param length
-	 * @param sequenceSize
-	 * @return
+	 * 产生分布式主键
+	 * 
+	 * @param distributeIdGenerator 分布式ID生成器实现(如基于redis)
+	 * @param tableName             表名，用于构造分布式计数的key
+	 * @param signature             主键前缀签名，支持@df()、@case()等宏表达式，无宏且长度充足时自动拼接yyMMdd业务日期
+	 * @param keyValues             宏表达式依赖的业务字段值，相关字段值不允许为null
+	 * @param bizDate               业务日期，null时取当前日期
+	 * @param length                主键总长度，小于等于0时由sequenceSize决定流水位数
+	 * @param sequenceSize          流水号位数，大于0时优先于length生效
+	 * @return 前缀+流水号拼成的分布式主键字符串
 	 */
 	public static String getId(DistributeIdGenerator distributeIdGenerator, String tableName, String signature,
 			Map<String, Object> keyValues, LocalDate bizDate, int length, int sequenceSize) {
@@ -281,7 +290,8 @@ public class IdUtil {
 		if (keyValues != null && !keyValues.isEmpty()) {
 			keyValues.forEach((keyStr, value) -> {
 				if (null == value) {
-					throw new RuntimeException("table=" + tableName + " 生成业务主键失败,关联字段:" + keyStr + " 对应的值为null!");
+					throw new RuntimeException("failed to generate business primary key for table [" + tableName
+							+ "], the related field [" + keyStr + "] value is null!");
 				}
 			});
 			keyValueMap.putAll(keyValues);

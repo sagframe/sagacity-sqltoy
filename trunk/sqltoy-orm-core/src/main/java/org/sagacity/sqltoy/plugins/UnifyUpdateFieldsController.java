@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.plugins;
 
 import org.sagacity.sqltoy.SqlToyThreadDataHolder;
@@ -9,8 +6,8 @@ import org.sagacity.sqltoy.SqlToyThreadDataHolder;
  * @project sagacity-sqltoy
  * @description 提供干预统一更新字段的功能开启和关闭，针对一些特殊场景，表中的最后修改人、修改时间不希望通过统一处理
  * @author zhongxuchen
- * @version v1.0, Date:2022年9月10日
- * @modify 2024年12月6日, 统一改为SqlToyThreadDataHolder集中处理
+ * @version v1.0,Date:2022-09-10
+ * @modify Date:2024-12-06, 统一改为SqlToyThreadDataHolder集中处理
  */
 //see SqlToyThreadDataHolder.stopUnifyUpdate();
 @Deprecated
@@ -31,7 +28,8 @@ public class UnifyUpdateFieldsController {
 	}
 
 	/**
-	 * @TODO 判断是否关闭了统一更新字段
+	 * 判断是否关闭了统一更新字段
+	 * 
 	 * @return
 	 */
 	public static boolean useUnifyFields() {

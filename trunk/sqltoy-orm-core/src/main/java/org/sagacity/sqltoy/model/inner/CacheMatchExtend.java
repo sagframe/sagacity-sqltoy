@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.model.inner;
 
 import java.io.Serializable;
@@ -11,14 +8,11 @@ import org.sagacity.sqltoy.callback.CacheFilter;
  * @project sagacity-sqltoy
  * @description cacheMatchFilter的参数容器，避免cacheMatchFilter暴露过多参数
  * @author zhongxuchen
- * @version v1.0, Date:2021-2-24
- * @modify 2021-2-24,修改说明
+ * @version v1.0,Date:2021-02-24
+ * @modify Date:2021-02-24 修改说明
  */
 public class CacheMatchExtend implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 6232890514798490527L;
 
 	/**

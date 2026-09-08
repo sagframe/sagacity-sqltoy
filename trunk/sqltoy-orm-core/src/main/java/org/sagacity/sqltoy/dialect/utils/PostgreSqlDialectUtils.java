@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.dialect.utils;
 
 import java.io.Serializable;
@@ -36,10 +33,10 @@ import org.sagacity.sqltoy.utils.SqlUtilsExt;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 提供postgresql数据库共用的逻辑实现，便于今后postgresql不同版本之间共享共性部分的实现
  * @author zhongxuchen
- * @version v1.0,Date:2015年3月5日
+ * @version v1.0,Date:2015-03-05
  * @modify Date:2020-06-12 修复10+版本对identity主键生成的策略
  */
 public class PostgreSqlDialectUtils {
@@ -49,7 +46,8 @@ public class PostgreSqlDialectUtils {
 	public static final String NVL_FUNCTION = "COALESCE";
 
 	/**
-	 * @todo 提供随机记录查询
+	 * 提供随机记录查询
+	 * 
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param queryExecutor
@@ -111,7 +109,8 @@ public class PostgreSqlDialectUtils {
 	}
 
 	/**
-	 * @todo 保存单条对象记录
+	 * 保存单条对象记录
+	 * 
 	 * @param sqlToyContext
 	 * @param entity
 	 * @param conn
@@ -149,7 +148,8 @@ public class PostgreSqlDialectUtils {
 	}
 
 	/**
-	 * @todo 批量保存对象入数据库
+	 * 批量保存对象入数据库
+	 * 
 	 * @param sqlToyContext
 	 * @param entities
 	 * @param batchSize
@@ -175,7 +175,8 @@ public class PostgreSqlDialectUtils {
 	}
 
 	/**
-	 * @TODO postgresql15 开始支持merge into 语法
+	 * postgresql15 开始支持merge into 语法
+	 * 
 	 * @param sqlToyContext
 	 * @param entities
 	 * @param batchSize
@@ -207,7 +208,8 @@ public class PostgreSqlDialectUtils {
 	}
 
 	/**
-	 * @todo 组织merge into 语句中select 的字段，进行类型转换
+	 * 组织merge into 语句中select 的字段，进行类型转换
+	 * 
 	 * @param sql
 	 * @param columnName
 	 * @param fieldMeta
@@ -271,7 +273,8 @@ public class PostgreSqlDialectUtils {
 	}
 
 	/**
-	 * @TODO 主键策略是identity或sequence时，主键值允许不由数据库内部自动产生，可人工赋值
+	 * 主键策略是identity或sequence时，主键值允许不由数据库内部自动产生，可人工赋值
+	 * 
 	 * @param pkStrategy
 	 * @return
 	 */
@@ -302,32 +305,47 @@ public class PostgreSqlDialectUtils {
 			Integer dbType, String dialect) throws Exception {
 		// v10 支持 AND c.relispartition = false
 		// <v10 用 AND c.oid NOT IN (SELECT inhrelid FROM pg_inherits)
-		StringBuilder sql = new StringBuilder();
-		sql.append("SELECT ");
-		sql.append("	  c.relname AS TABLE_NAME,");
-		sql.append("	  CASE c.relkind ");
-		sql.append("	    WHEN 'r' THEN 'TABLE' ");
-		sql.append("	    WHEN 'p' THEN 'TABLE' ");
-		sql.append("	    WHEN 'v' THEN 'VIEW' ");
-		sql.append("	  END AS TABLE_TYPE, ");
-		sql.append("	  d.description AS COMMENTS ");
-		sql.append(" FROM pg_class c ");
-		sql.append(" 	LEFT JOIN pg_description d ON d.objoid = c.oid AND d.objsubid = 0 ");
-		sql.append(" 	JOIN pg_namespace n ON n.oid = c.relnamespace ");
-		sql.append(" WHERE ");
-		sql.append("   c.relkind IN ('r', 'v', 'p') ");
-		sql.append("   AND c.oid NOT IN (SELECT inhrelid FROM pg_inherits) ");
-		sql.append("   AND c.relname NOT LIKE 'pg_%' ");
-		sql.append("   AND n.nspname NOT LIKE 'pg_%' ");
-		sql.append("   AND n.nspname = ANY (current_schemas(false)) ");
+		StringBuilder sqlBuilder = new StringBuilder();
+		sqlBuilder.append("SELECT ");
+		sqlBuilder.append("  c.relname AS TABLE_NAME,");
+		sqlBuilder.append("  CASE c.relkind ");
+		sqlBuilder.append("    WHEN 'r' THEN 'TABLE' ");
+		sqlBuilder.append("    WHEN 'p' THEN 'TABLE' ");
+		sqlBuilder.append("    WHEN 'v' THEN 'VIEW' ");
+		sqlBuilder.append("  END AS TABLE_TYPE, ");
+		sqlBuilder.append("  d.description AS COMMENTS ");
+		sqlBuilder.append(" FROM pg_class c ");
+		sqlBuilder.append("  LEFT JOIN pg_description d ON d.objoid = c.oid AND d.objsubid = 0 ");
+		sqlBuilder.append("  JOIN pg_namespace n ON n.oid = c.relnamespace ");
+		sqlBuilder.append(" WHERE ");
+		sqlBuilder.append("  c.relkind IN ('r', 'v', 'p') ");
+		sqlBuilder.append("  AND c.oid NOT IN (SELECT inhrelid FROM pg_inherits) ");
+		String sql = sqlBuilder.toString();
+		String realSchema = schema;
+		if (StringUtil.isBlank(realSchema)) {
+			realSchema = catalog;
+		}
+		// schema/表名统一用?绑定,避免拼接被单引号破坏或注入
+		List<Object> paramValues = new ArrayList<Object>();
+		if (StringUtil.isNotBlank(realSchema)) {
+			sql = sql.concat(" AND n.nspname=? ");
+			paramValues.add(realSchema);
+		} else {
+			sql = sql.concat(" AND c.relname NOT LIKE 'pg_%' AND n.nspname NOT LIKE 'pg_%' ");
+		}
 		if (StringUtil.isNotBlank(tableName)) {
 			if (tableName.contains("%")) {
-				sql.append(" and c.relname like '" + tableName + "'");
+				sql = sql.concat(" AND c.relname like ?");
+				paramValues.add(tableName);
 			} else {
-				sql.append(" and c.relname like '%" + tableName + "%'");
+				sql = sql.concat(" AND c.relname like ?");
+				paramValues.add("%" + tableName + "%");
 			}
 		}
-		PreparedStatement pst = conn.prepareStatement(sql.toString());
+		PreparedStatement pst = conn.prepareStatement(sql);
+		for (int i = 0; i < paramValues.size(); i++) {
+			pst.setObject(i + 1, paramValues.get(i));
+		}
 		// 设置全局statementTimeout，默认为null
 		if (SqlToyConstants.defaultStatementTimeout != null && SqlToyConstants.defaultStatementTimeout > 0) {
 			pst.setQueryTimeout(SqlToyConstants.defaultStatementTimeout);

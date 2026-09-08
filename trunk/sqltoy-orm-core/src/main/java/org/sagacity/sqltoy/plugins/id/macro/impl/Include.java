@@ -17,7 +17,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
  *              </p>
  * 
  * @author zhongxuchen
- * @version v1.0,Date:2023年2月1日
+ * @version v1.0,Date:2023-02-01
  */
 public class Include extends AbstractMacro {
 
@@ -62,7 +62,8 @@ public class Include extends AbstractMacro {
 	}
 
 	/**
-	 * @TODO 增加对数据库方言的适配
+	 * 增加对数据库方言的适配
+	 * 
 	 * @param sqlCache
 	 * @param sqlId
 	 * @param dialect

@@ -22,6 +22,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -42,10 +43,10 @@ import org.slf4j.LoggerFactory;
  * @project sagacity-sqltoy
  * @description sql查询参数过滤
  * @author zhongxuchen
- * @version v1.0,Date:2013-3-23
- * @modify Date:2020-7-15 {增加l-like,r-like为参数单边补充%从而不破坏索引,默认是两边}
- * @modify Date:2023-4-18 {增加to-string}
- * @modify Date:2023-05-01 {优化cache-arg,修复priorMatchEqual存在的bug}
+ * @version v1.0,Date:2013-03-23
+ * @modify Date:2020-07-15 增加l-like,r-like为参数单边补充%从而不破坏索引,默认是两边
+ * @modify Date:2023-04-18 增加to-string
+ * @modify Date:2023-05-01 优化cache-arg,修复priorMatchEqual存在的bug
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class ParamFilterUtils {
@@ -61,7 +62,8 @@ public class ParamFilterUtils {
 	}
 
 	/**
-	 * @todo 对查询条件参数进行filter过滤加工处理(如:判断是否为null、日期格式转换等等)
+	 * 对查询条件参数进行filter过滤加工处理(如:判断是否为null、日期格式转换等等)
+	 * 
 	 * @param sqlToyContext
 	 * @param paramArgs
 	 * @param values
@@ -88,7 +90,7 @@ public class ParamFilterUtils {
 		int paramSize = paramsName.length;
 		Object[] paramValues = new Object[paramSize];
 		for (int i = 0; i < paramSize; i++) {
-			paramIndexMap.put(paramsName[i].toLowerCase(), i);
+			paramIndexMap.put(paramsName[i].toLowerCase(Locale.ROOT), i);
 			paramValues[i] = values[i];
 		}
 		String[] filterParams;
@@ -113,20 +115,21 @@ public class ParamFilterUtils {
 			}
 			// 决定性参数不为null时即条件成立时，需要保留的参数(其他的参数全部设置为null)
 			else if ("primary".equals(filterType)) {
-				filterParam = paramFilterModel.getParam().toLowerCase();
+				filterParam = paramFilterModel.getParam().toLowerCase(Locale.ROOT);
 				index = (paramIndexMap.get(filterParam) == null) ? -1 : paramIndexMap.get(filterParam);
 				// 决定性参数值不为null
 				if (index != -1 && paramValues[index] != null) {
 					for (int j = 0; j < paramSize; j++) {
 						// 排除自身
-						if (j != index && !paramFilterModel.getExcludes().contains(paramsName[j].toLowerCase())) {
+						if (j != index
+								&& !paramFilterModel.getExcludes().contains(paramsName[j].toLowerCase(Locale.ROOT))) {
 							paramValues[j] = null;
 						}
 					}
 				}
 			} else {
 				for (int i = 0, n = filterParams.length; i < n; i++) {
-					filterParam = filterParams[i].toLowerCase();
+					filterParam = filterParams[i].toLowerCase(Locale.ROOT);
 					index = (paramIndexMap.get(filterParam) == null) ? -1 : paramIndexMap.get(filterParam);
 					// 2023-6-10 当条件参数值为null时要排除设置default场景(其它参数为null就不做处理)
 					if (index != -1 && (paramValues[index] != null || "default".equals(filterType))) {
@@ -142,7 +145,8 @@ public class ParamFilterUtils {
 	}
 
 	/**
-	 * @todo 从缓存中过滤提取值作为实际查询语句的条件
+	 * 从缓存中过滤提取值作为实际查询语句的条件
+	 * 
 	 * @param sqlToyContext
 	 * @param paramIndexMap
 	 * @param paramFilterModel
@@ -151,7 +155,7 @@ public class ParamFilterUtils {
 	private static void filterCache(SqlToyContext sqlToyContext, HashMap<String, Integer> paramIndexMap,
 			ParamFilterModel paramFilterModel, Object[] paramValues) {
 		try {
-			String paramName = paramFilterModel.getParam().toLowerCase();
+			String paramName = paramFilterModel.getParam().toLowerCase(Locale.ROOT);
 			int index = (paramIndexMap.get(paramName) == null) ? -1 : paramIndexMap.get(paramName);
 			// 需要转化的值,将paramValue统一转化为数组
 			List<String> paramValueAry = new ArrayList<String>();
@@ -176,23 +180,26 @@ public class ParamFilterUtils {
 			// 将传递匹配条件转小写
 			List<String> matchLowAry = new ArrayList<String>();
 			for (String str : paramValueAry) {
-				matchLowAry.add(str.toLowerCase());
+				matchLowAry.add(str.toLowerCase(Locale.ROOT));
 			}
 			// 是否将转化的值按新的条件参数存储
 			String aliasName = paramFilterModel.getAliasName();
 			if (StringUtil.isBlank(aliasName)) {
 				aliasName = paramFilterModel.getParam();
 			}
-			if (!paramIndexMap.containsKey(aliasName.toLowerCase())) {
-				logger.warn("cache-arg 从缓存:{}取实际条件值别名:{}配置错误,其不在于实际sql语句中!", paramFilterModel.getCacheName(),
-						aliasName);
+			if (!paramIndexMap.containsKey(aliasName.toLowerCase(Locale.ROOT))) {
+				logger.warn(
+						"cache-arg config error: the alias:{} for getting the actual condition value from cache:{} does not exist in the actual sql!",
+						paramFilterModel.getCacheName(), aliasName);
 				return;
 			}
 			// 获取缓存数据
 			HashMap<String, Object[]> cacheDataMap = sqlToyContext.getTranslateManager()
 					.getCacheData(paramFilterModel.getCacheName(), paramFilterModel.getCacheType());
 			if (cacheDataMap == null || cacheDataMap.isEmpty()) {
-				logger.warn("缓存:{} 可能不存在,在通过缓存获取查询条件key值时异常,请检查!", paramFilterModel.getCacheName());
+				logger.warn(
+						"cache:{} may not exist, exception occurred while getting the query condition key from the cache, please check!",
+						paramFilterModel.getCacheName());
 				return;
 			}
 			IUnifyFieldsHandler unifyHandler = sqlToyContext.getUnifyFieldsHandler();
@@ -207,7 +214,7 @@ public class ParamFilterUtils {
 				for (int i = 0; i < cacheFilters.length; i++) {
 					cacheFilter = cacheFilters[i];
 					if (cacheFilter.getCompareValues() == null) {
-						cacheValueIndex = paramIndexMap.get(cacheFilter.getCompareParam().toLowerCase());
+						cacheValueIndex = paramIndexMap.get(cacheFilter.getCompareParam().toLowerCase(Locale.ROOT));
 						compareValue = cacheFilter.getCompareParam();
 						// 是参数名称，提取对应值
 						if (cacheValueIndex != null) {
@@ -267,7 +274,7 @@ public class ParamFilterUtils {
 					}
 					// 过滤条件成立，且当前key没有被匹配过，开始匹配
 					if (include) {
-						keyLow = keyCode.toString().toLowerCase();
+						keyLow = keyCode.toString().toLowerCase(Locale.ROOT);
 						skipLoop: for (int i = 0; i < paramValueAry.size(); i++) {
 							// 从转小写集合中取值，避免每次toLowcase
 							matchStr = matchLowAry.get(i);
@@ -284,7 +291,8 @@ public class ParamFilterUtils {
 							for (int matchIndex : matchIndexes) {
 								compareValue = cacheRow[matchIndex];
 								// 名称相同
-								if (compareValue != null && matchStr.equals(compareValue.toString().toLowerCase())) {
+								if (compareValue != null
+										&& matchStr.equals(compareValue.toString().toLowerCase(Locale.ROOT))) {
 									matchedKeys.add(keyCode);
 									// 相等的剔除不再参与后续like匹配
 									matchLowAry.remove(i);
@@ -327,8 +335,8 @@ public class ParamFilterUtils {
 							for (int matchIndex : matchIndexes) {
 								compareValue = cacheRow[matchIndex];
 								// 匹配检索,全部转成小写比较
-								if (compareValue != null
-										&& StringUtil.like(compareValue.toString().toLowerCase(), matchWords)) {
+								if (compareValue != null && StringUtil
+										.like(compareValue.toString().toLowerCase(Locale.ROOT), matchWords)) {
 									matchedKeys.add(keyCode);
 									break skipLoop;
 								}
@@ -358,18 +366,21 @@ public class ParamFilterUtils {
 			}
 			// 存在别名,设置别名对应的值
 			if (StringUtil.isNotBlank(paramFilterModel.getAliasName())) {
-				int aliasIndex = paramIndexMap.get(paramFilterModel.getAliasName().toLowerCase());
+				int aliasIndex = paramIndexMap.get(paramFilterModel.getAliasName().toLowerCase(Locale.ROOT));
 				paramValues[aliasIndex] = realMatched;
 			} else {
 				paramValues[index] = realMatched;
 			}
 		} catch (Exception e) {
-			logger.error("cache-arg过滤处理异常,本次查询条件按未过滤处理(可能造成查询范围扩大),cacheName:{}!", paramFilterModel.getCacheName(), e);
+			logger.error(
+					"exception occurred in cache-arg filter processing, the query condition is processed as unfiltered in this execution (may expand the query range), cacheName:{}!",
+					paramFilterModel.getCacheName(), e);
 		}
 	}
 
 	/**
-	 * @TODO 处理CacheArgs 的过滤逻辑,条件成立include=true
+	 * 处理CacheArgs 的过滤逻辑,条件成立include=true
+	 * 
 	 * @param cacheFilters
 	 * @param cacheRow
 	 * @param filterValues
@@ -397,7 +408,8 @@ public class ParamFilterUtils {
 	}
 
 	/**
-	 * @todo 互斥性参数filter
+	 * 互斥性参数filter
+	 * 
 	 * @param paramIndexMap
 	 * @param paramFilterModel
 	 * @param paramValues
@@ -405,7 +417,7 @@ public class ParamFilterUtils {
 	private static void filterExclusive(HashMap<String, Integer> paramIndexMap, ParamFilterModel paramFilterModel,
 			Object[] paramValues) {
 		boolean isExclusive = false;
-		String filterParam = paramFilterModel.getParam().toLowerCase();
+		String filterParam = paramFilterModel.getParam().toLowerCase(Locale.ROOT);
 		int index = (paramIndexMap.get(filterParam) == null) ? -1 : paramIndexMap.get(filterParam);
 		// 排他性参数中有值为null则排他条件不成立
 		if (index != -1) {
@@ -450,12 +462,12 @@ public class ParamFilterUtils {
 			Object updateObj = null;
 			boolean quotOtherParam = false;
 			// update值引入其他参数的值
-			if (updateValue != null && paramIndexMap.containsKey(updateValue.toLowerCase())) {
+			if (updateValue != null && paramIndexMap.containsKey(updateValue.toLowerCase(Locale.ROOT))) {
 				quotOtherParam = true;
-				updateObj = paramValues[paramIndexMap.get(updateValue.toLowerCase())];
+				updateObj = paramValues[paramIndexMap.get(updateValue.toLowerCase(Locale.ROOT))];
 			}
 			for (int i = 0, n = paramFilterModel.getUpdateParams().length; i < n; i++) {
-				updateParam = paramFilterModel.getUpdateParams()[i].toLowerCase();
+				updateParam = paramFilterModel.getUpdateParams()[i].toLowerCase(Locale.ROOT);
 				index = (paramIndexMap.get(updateParam) == null) ? -1 : paramIndexMap.get(updateParam);
 				// 排他性参数中有值为null则排他条件不成立
 				if (index != -1) {
@@ -500,7 +512,8 @@ public class ParamFilterUtils {
 	}
 
 	/**
-	 * @TODO 将某个参数的值赋给另外一个参数,场景:前端传单日期条件参数，实际查询要组成beginDate,endDate场景
+	 * 将某个参数的值赋给另外一个参数,场景:前端传单日期条件参数，实际查询要组成beginDate,endDate场景
+	 * 
 	 * @param paramIndexMap
 	 * @param paramFilterModel
 	 * @param paramValues
@@ -511,8 +524,8 @@ public class ParamFilterUtils {
 				|| paramFilterModel.getUpdateParams().length != 1) {
 			return;
 		}
-		String filterParam = paramFilterModel.getParam().toLowerCase();
-		String updateParam = paramFilterModel.getUpdateParams()[0].toLowerCase();
+		String filterParam = paramFilterModel.getParam().toLowerCase(Locale.ROOT);
+		String updateParam = paramFilterModel.getUpdateParams()[0].toLowerCase(Locale.ROOT);
 		int paramIndex = (paramIndexMap.get(filterParam) == null) ? -1 : paramIndexMap.get(filterParam);
 		int updateIndex = (paramIndexMap.get(updateParam) == null) ? -1 : paramIndexMap.get(updateParam);
 		// 存在clone的参数属性
@@ -556,7 +569,8 @@ public class ParamFilterUtils {
 	}
 
 	/**
-	 * @todo 过滤加工单个参数的值
+	 * 过滤加工单个参数的值
+	 * 
 	 * @param sqlToyContext
 	 * @param paramValues
 	 * @param paramValue
@@ -630,8 +644,8 @@ public class ParamFilterUtils {
 					if (negate) {
 						incParam = incParam.substring(1);
 					}
-					if (paramIndexMap.containsKey(incParam.toLowerCase())) {
-						Object tmp = paramValues[paramIndexMap.get(incParam.toLowerCase())];
+					if (paramIndexMap.containsKey(incParam.toLowerCase(Locale.ROOT))) {
+						Object tmp = paramValues[paramIndexMap.get(incParam.toLowerCase(Locale.ROOT))];
 						if (tmp != null) {
 							if (tmp instanceof Number) {
 								increaseTime = ((Number) tmp).doubleValue();
@@ -640,7 +654,8 @@ public class ParamFilterUtils {
 									increaseTime = Double.parseDouble(tmp.toString());
 								} catch (NumberFormatException e) {
 									throw new IllegalArgumentException(
-											"to-date过滤器increment-time引用参数:" + incParam + " 的值:" + tmp + " 不是合法数字,请检查!",
+											"to-date filter increment-time referenced param [" + incParam + "] value ["
+													+ tmp + "] is not a valid number, please check!",
 											e);
 								}
 							}
@@ -649,7 +664,9 @@ public class ParamFilterUtils {
 							}
 						}
 					} else {
-						logger.warn("to-date过滤器increment-time引用的参数:{} 不存在(参数名拼写错误或调用时未传参),增量按0处理,请检查!", incParam);
+						logger.warn(
+								"the param:{} referenced by increment-time of the to-date filter does not exist (param name misspelled or not passed in), the increment is treated as 0, please check!",
+								incParam);
 					}
 				}
 			}
@@ -744,29 +761,36 @@ public class ParamFilterUtils {
 				try {
 					result = SqlUtil.combineQueryInStr(paramValue, null, null, paramFilterModel.isSingleQuote());
 				} catch (Exception e) {
-					throw new RuntimeException("sql 参数过滤转换过程将数组转成in (:params) 形式的条件值过程错误:" + e.getMessage());
+					throw new RuntimeException(
+							"error occurred while converting an array to in (:params) condition values during the sql param filter process:"
+									+ e.getMessage());
 				}
 			}
 		} else if ("remove-null".equals(filterType)) {
 			result = removeNull(paramValue, paramFilterModel.isRemoveBlank());
 		} else if ("sql-injection".equals(filterType)) {
 			if (SqlUtil.isSqlInjection(paramFilterModel.getSqlInjectionLevel(), paramValue)) {
-				throw new RuntimeException("属性[" + filterParam + "]对应的值未能通过sql注入校验,校验策略:["
+				throw new RuntimeException("the value of param [" + filterParam
+						+ "] failed the sql injection validation, validation policy: ["
 						+ paramFilterModel.getSqlInjectionLevel().value() + "]!");
 			}
 		} else if ("custom-handler".equals(filterType)) {
 			if (sqlToyContext.getCustomFilterHandler() == null) {
-				throw new RuntimeException("sql中filter使用了custom-handler类型,但spring.sqltoy.customFilterHandler未定义具体实现类!");
+				throw new RuntimeException(
+						"the custom-handler filter is used in the sql, but no implementation class is defined for spring.sqltoy.customFilterHandler!");
 			}
 			result = sqlToyContext.getCustomFilterHandler().process(paramValue, paramFilterModel.getType());
 		} else {
-			logger.warn("sql中filters定义的filterType={} 目前没有对应的实现!", filterType);
+			logger.warn(
+					"the filterType={} defined in filters of the sql has no corresponding implementation currently!",
+					filterType);
 		}
 		return result;
 	}
 
 	/**
-	 * @todo 剔除数组集合中为null的值
+	 * 剔除数组集合中为null的值
+	 * 
 	 * @param paramValue
 	 * @param removeBlank
 	 * @return
@@ -881,7 +905,8 @@ public class ParamFilterUtils {
 	}
 
 	/**
-	 * @todo 对参数进行左边或右补%符号,便于like处理,sqltoy在不做处理情况下会默认左右都补%符合,单独一边补%则可以保留索引
+	 * 对参数进行左边或右补%符号,便于like处理,sqltoy在不做处理情况下会默认左右都补%符合,单独一边补%则可以保留索引
+	 * 
 	 * @param paramValue
 	 * @param isLeft
 	 * @return
@@ -938,7 +963,8 @@ public class ParamFilterUtils {
 	}
 
 	/**
-	 * @TODO 处理默认值
+	 * 处理默认值
+	 * 
 	 * @param paramValues
 	 * @param paramValue
 	 * @param paramFilterModel
@@ -952,8 +978,8 @@ public class ParamFilterUtils {
 		if (null == paramValue && (values != null && values.length > 0 && null != values[0])) {
 			String valueString = values[0].toString();
 			// 默认值直接指定另外一个参数的值
-			if (paramIndexMap.containsKey(valueString.toLowerCase())) {
-				return paramValues[paramIndexMap.get(valueString.toLowerCase())];
+			if (paramIndexMap.containsKey(valueString.toLowerCase(Locale.ROOT))) {
+				return paramValues[paramIndexMap.get(valueString.toLowerCase(Locale.ROOT))];
 			}
 			if (paramFilterModel.getIsArray()) {
 				int arySize = values.length;
@@ -977,7 +1003,8 @@ public class ParamFilterUtils {
 	}
 
 	/**
-	 * @todo 进行字符串替换
+	 * 进行字符串替换
+	 * 
 	 * @param paramValue
 	 * @param regex
 	 * @param valueVar
@@ -1011,7 +1038,8 @@ public class ParamFilterUtils {
 	}
 
 	/**
-	 * @todo 日期格式化
+	 * 日期格式化
+	 * 
 	 * @param paramValue
 	 * @param format
 	 * @return
@@ -1051,7 +1079,8 @@ public class ParamFilterUtils {
 	}
 
 	/**
-	 * @todo 切割字符串变成数组
+	 * 切割字符串变成数组
+	 * 
 	 * @param paramValue
 	 * @param splitSign
 	 * @param dataType
@@ -1097,7 +1126,8 @@ public class ParamFilterUtils {
 	}
 
 	/**
-	 * @TODO 将字符串转成具体类型的值
+	 * 将字符串转成具体类型的值
+	 * 
 	 * @param value
 	 * @param dataType
 	 * @return
@@ -1135,7 +1165,8 @@ public class ParamFilterUtils {
 	}
 
 	/**
-	 * @TODO 将特殊的日期字符转换为具体日期
+	 * 将特殊的日期字符转换为具体日期
+	 * 
 	 * @param dateStr
 	 * @return
 	 */
@@ -1146,26 +1177,26 @@ public class ParamFilterUtils {
 		}
 		String[] tmpAry = null;
 		boolean isAdd = false;
-		String firstString = dateStr.toLowerCase();
+		String firstString = dateStr.toLowerCase(Locale.ROOT);
 		int addValue = 0;
 		// 0:second;1:hour;2:day;3:week;4:month;5:year
 		int addType = 2;
 		if (dateStr.contains("+")) {
 			tmpAry = dateStr.split("\\+");
 			isAdd = true;
-			firstString = tmpAry[0].trim().toLowerCase();
+			firstString = tmpAry[0].trim().toLowerCase(Locale.ROOT);
 		} // sysdate()-2d形式，排除2023-05-20 纯以数字开头的纯日期
 		else if (!StringUtil.matches(dateStr, "^\\d{2,4}") && dateStr.contains("-")) {
 			tmpAry = dateStr.split("\\-");
 			isAdd = false;
-			firstString = tmpAry[0].trim().toLowerCase();
+			firstString = tmpAry[0].trim().toLowerCase(Locale.ROOT);
 		}
 		if (tmpAry != null && tmpAry.length == 2) {
 			String addStr = tmpAry[1].trim();
 			// 增减量必须是纯数字或数字+单位字母(如2d);日期时间本身带时区偏移(如xxx+08:00)时不是增减表达式
 			if (StringUtil.matches(addStr, "^\\d+[a-zA-Z]$")) {
 				// 最后一位字母
-				String addTypeStr = addStr.substring(addStr.length() - 1).toLowerCase();
+				String addTypeStr = addStr.substring(addStr.length() - 1).toLowerCase(Locale.ROOT);
 				if ("s".equals(addTypeStr)) {
 					addType = 0;
 				} else if ("h".equals(addTypeStr)) {
@@ -1185,7 +1216,7 @@ public class ParamFilterUtils {
 			} else {
 				// 非增减表达式,按普通日期时间字符串整体解析,避免Integer.parseInt抛NumberFormatException
 				tmpAry = null;
-				firstString = dateStr.toLowerCase();
+				firstString = dateStr.toLowerCase(Locale.ROOT);
 			}
 			if (!isAdd) {
 				addValue = 0 - addValue;
@@ -1247,7 +1278,8 @@ public class ParamFilterUtils {
 	}
 
 	/**
-	 * @todo 转换数据为字符串
+	 * 转换数据为字符串
+	 * 
 	 * @param paramValue
 	 * @param addQuote   增加引号的类型:none(不增加)、single(单引号)、double(双引号)
 	 * @return
@@ -1321,7 +1353,8 @@ public class ParamFilterUtils {
 	}
 
 	/**
-	 * @todo 转换数据为数组类型
+	 * 转换数据为数组类型
+	 * 
 	 * @param paramValue
 	 * @param dataType
 	 * @return
@@ -1363,7 +1396,8 @@ public class ParamFilterUtils {
 	}
 
 	/**
-	 * @todo 将sql的参数值类型转换为number(页面有时会以字符串进行传输)
+	 * 将sql的参数值类型转换为number(页面有时会以字符串进行传输)
+	 * 
 	 * @param paramValue
 	 * @param dataType
 	 * @return
@@ -1395,7 +1429,8 @@ public class ParamFilterUtils {
 	}
 
 	/**
-	 * @todo 将sql的参数值类型转换为日期类型(页面有时会以字符串进行传输)
+	 * 将sql的参数值类型转换为日期类型(页面有时会以字符串进行传输)
+	 * 
 	 * @param paramValue
 	 * @param paramFilterModel
 	 * @param incrementTime
@@ -1408,7 +1443,7 @@ public class ParamFilterUtils {
 		}
 		Object result;
 		String format = (paramFilterModel.getFormat() == null) ? "" : paramFilterModel.getFormat();
-		String fmtStyle = format.toLowerCase();
+		String fmtStyle = format.toLowerCase(Locale.ROOT);
 		String realFmt = DAY_FORMAT;
 		// 解析时已经转小写
 		String type = paramFilterModel.getType();
@@ -1519,7 +1554,8 @@ public class ParamFilterUtils {
 	}
 
 	/**
-	 * @todo 转换sql参数,将对象数组中的值与给定的参照数值比较， 如果相等则置数组中的值为null
+	 * 转换sql参数,将对象数组中的值与给定的参照数值比较， 如果相等则置数组中的值为null
+	 * 
 	 * @param param
 	 * @param contrasts
 	 * @return
@@ -1575,7 +1611,7 @@ public class ParamFilterUtils {
 								return null;
 							}
 						} else {
-							Date compareDate = "sysdate".equals(contrast.toLowerCase())
+							Date compareDate = "sysdate".equals(contrast.toLowerCase(Locale.ROOT))
 									? DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT)
 									: DateUtil.convertDateObject(contrast);
 							if (compareDate != null && DateUtil.convertDateObject(tmpVar).compareTo(compareDate) == 0) {
@@ -1597,7 +1633,8 @@ public class ParamFilterUtils {
 	}
 
 	/**
-	 * @todo 转换sql参数,将对象数组中的值与给定的参照数值比较， 如果不相等则置数组中的值为null
+	 * 转换sql参数,将对象数组中的值与给定的参照数值比较， 如果不相等则置数组中的值为null
+	 * 
 	 * @param param
 	 * @param contrasts
 	 * @return
@@ -1678,7 +1715,8 @@ public class ParamFilterUtils {
 	}
 
 	/**
-	 * @todo 过滤参数值小于指定值，并返回null
+	 * 过滤参数值小于指定值，并返回null
+	 * 
 	 * @param param
 	 * @param contrastParam
 	 * @return
@@ -1694,7 +1732,7 @@ public class ParamFilterUtils {
 		}
 		if (tmpVar instanceof Date || tmpVar instanceof LocalDate || tmpVar instanceof LocalDateTime) {
 			Date compareDate;
-			if ("sysdate".equals(contrast.toLowerCase())) {
+			if ("sysdate".equals(contrast.toLowerCase(Locale.ROOT))) {
 				compareDate = DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT);
 			} else {
 				compareDate = DateUtil.convertDateObject(contrast);
@@ -1717,7 +1755,8 @@ public class ParamFilterUtils {
 	}
 
 	/**
-	 * @todo 过滤参数值小于等于指定值，并返回null
+	 * 过滤参数值小于等于指定值，并返回null
+	 * 
 	 * @param param
 	 * @param contrastParam
 	 * @return
@@ -1733,7 +1772,7 @@ public class ParamFilterUtils {
 		String contrast = contrastParam.toString();
 		if (tmpVar instanceof Date || tmpVar instanceof LocalDate || tmpVar instanceof LocalDateTime) {
 			Date compareDate;
-			if ("sysdate".equals(contrast.toLowerCase())) {
+			if ("sysdate".equals(contrast.toLowerCase(Locale.ROOT))) {
 				compareDate = DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT);
 			} else {
 				compareDate = DateUtil.convertDateObject(contrast);
@@ -1756,7 +1795,8 @@ public class ParamFilterUtils {
 	}
 
 	/**
-	 * @todo 过滤大于指定参照数据值,否则查询条件为null
+	 * 过滤大于指定参照数据值,否则查询条件为null
+	 * 
 	 * @param param
 	 * @param contrastParam
 	 * @return
@@ -1772,7 +1812,7 @@ public class ParamFilterUtils {
 		String contrast = contrastParam.toString();
 		if (tmpVar instanceof Date || tmpVar instanceof LocalDate || tmpVar instanceof LocalDateTime) {
 			Date compareDate;
-			if ("sysdate".equals(contrast.toLowerCase())) {
+			if ("sysdate".equals(contrast.toLowerCase(Locale.ROOT))) {
 				compareDate = DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT);
 			} else {
 				compareDate = DateUtil.convertDateObject(contrast);
@@ -1795,7 +1835,8 @@ public class ParamFilterUtils {
 	}
 
 	/**
-	 * @todo 过滤大于等于指定参照数据值,否则查询条件为null
+	 * 过滤大于等于指定参照数据值,否则查询条件为null
+	 * 
 	 * @param param
 	 * @param contrastParam
 	 * @return
@@ -1811,7 +1852,7 @@ public class ParamFilterUtils {
 		String contrast = contrastParam.toString();
 		if (tmpVar instanceof Date || tmpVar instanceof LocalDate || tmpVar instanceof LocalDateTime) {
 			Date compareDate;
-			if ("sysdate".equals(contrast.toLowerCase())) {
+			if ("sysdate".equals(contrast.toLowerCase(Locale.ROOT))) {
 				compareDate = DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT);
 			} else {
 				compareDate = DateUtil.convertDateObject(contrast);
@@ -1834,7 +1875,8 @@ public class ParamFilterUtils {
 	}
 
 	/**
-	 * @todo 参数大于等于并小于等于给定的数据范围时表示条件无效，自动置参数值为null
+	 * 参数大于等于并小于等于给定的数据范围时表示条件无效，自动置参数值为null
+	 * 
 	 * @param param
 	 * @param beginValue
 	 * @param endValue
@@ -1873,7 +1915,8 @@ public class ParamFilterUtils {
 	}
 
 	/**
-	 * @TODO 整合sql中定义的filter和代码中自定义的filters
+	 * 整合sql中定义的filter和代码中自定义的filters
+	 * 
 	 * @param filters
 	 * @param extFilters
 	 * @return

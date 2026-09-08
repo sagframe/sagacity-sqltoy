@@ -17,9 +17,9 @@ import java.util.regex.Pattern;
  * @description 字符串处理常用功能
  * @author zhongxuchen
  * @version v1.0,Date:Oct 19, 2007 10:09:42 AM
- * @modify {Date:2020-01-14,优化splitExcludeSymMark 方法,增加对\' 和 \" 符号的排除}
- * @modify {Date:2020-05-18,完整修复splitExcludeSymMark bug}
- * @modify {Date:2023-09-12,修复splitExcludeSymMark，以多字符切割的bug}
+ * @modify Date:2020-01-14 优化splitExcludeSymMark 方法,增加对\' 和 \" 符号的排除
+ * @modify Date:2020-05-18 完整修复splitExcludeSymMark bug
+ * @modify Date:2023-09-12 修复splitExcludeSymMark，以多字符切割的bug
  */
 @SuppressWarnings({ "rawtypes" })
 public class StringUtil {
@@ -41,6 +41,17 @@ public class StringUtil {
 	private static final Pattern twoQuotaPattern = Pattern.compile("(^\")|([^\\\\]\")");
 
 	private static final Pattern twoQuotaChkPattern = Pattern.compile("[^\\\\]\"");
+
+	// 字符串regex重载的编译缓存:调用方(DateUtil日期解析等热路径)传入的均为常量正则,
+	// 避免每次Pattern.compile;超出上限时直接编译,防御极端场景下动态正则撑爆缓存
+	private static final ConcurrentHashMap<String, Pattern> PATTERN_CACHE = new ConcurrentHashMap<String, Pattern>();
+
+	private static Pattern patternOf(String regex) {
+		if (PATTERN_CACHE.size() > 1000) {
+			return Pattern.compile(regex);
+		}
+		return PATTERN_CACHE.computeIfAbsent(regex, Pattern::compile);
+	}
 
 	/**
 	 * private constructor,cann't be instantiated by other class 私有构造函数方法防止被实例化
@@ -94,9 +105,9 @@ public class StringUtil {
 	/**
 	 * 字符串trim后比较是否相等
 	 * 
-	 * @param source
-	 * @param target
-	 * @return
+	 * @param source 源字符串，可为null
+	 * @param target 目标字符串，可为null
+	 * @return trim后相等返回true；任一为null时仅当两者同为null返回true
 	 */
 	public static boolean trimedEquals(String source, String target) {
 		if (source == null || target == null) {
@@ -113,9 +124,10 @@ public class StringUtil {
 	}
 
 	/**
-	 * @todo 将对象转为字符串排除null
-	 * @param obj
-	 * @return
+	 * 将对象转为字符串排除null
+	 * 
+	 * @param obj 任意对象，可为null
+	 * @return 对象的字符串形式，obj为null返回空字符串
 	 */
 	public static String toString(Object obj) {
 		if (null == obj) {
@@ -125,9 +137,10 @@ public class StringUtil {
 	}
 
 	/**
-	 * @todo 判断字符串是空或者空白
-	 * @param str
-	 * @return
+	 * 判断字符串是空或者空白
+	 * 
+	 * @param str 待判断的对象，支持字符串、集合、Map和数组类型
+	 * @return true表示不为空且不为空白；null、空白字符串、空集合、空Map、空数组均返回false
 	 */
 	public static boolean isNotBlank(Object str) {
 		return !isBlank(str);
@@ -154,10 +167,11 @@ public class StringUtil {
 	}
 
 	/**
-	 * @todo 替换换行、回车、tab符号;\r回车 、\t tab符合、\n 换行
-	 * @param source
-	 * @param target
-	 * @return
+	 * 替换换行、回车、tab符号;\r回车 、\t tab符合、\n 换行
+	 * 
+	 * @param source 原始字符串，可为null
+	 * @param target 用于替换\t、\r、\n的字符或字符串
+	 * @return 替换后的字符串，source为null返回null
 	 */
 	public static String clearMistyChars(String source, String target) {
 		if (source == null) {
@@ -167,9 +181,10 @@ public class StringUtil {
 	}
 
 	/**
-	 * @todo 返回第一个字符大写，其余保持不变的字符串
-	 * @param sourceStr
-	 * @return
+	 * 返回第一个字符大写，其余保持不变的字符串
+	 * 
+	 * @param sourceStr 原始字符串，空白时原样返回
+	 * @return 首字符大写后的字符串
 	 */
 	public static String firstToUpperCase(String sourceStr) {
 		if (isBlank(sourceStr)) {
@@ -182,9 +197,10 @@ public class StringUtil {
 	}
 
 	/**
-	 * @todo 返回第一个字符小写，其余保持不变的字符串
-	 * @param sourceStr
-	 * @return
+	 * 返回第一个字符小写，其余保持不变的字符串
+	 * 
+	 * @param sourceStr 原始字符串，空白时原样返回
+	 * @return 首字符小写后的字符串
 	 */
 	public static String firstToLowerCase(String sourceStr) {
 		if (isBlank(sourceStr)) {
@@ -197,9 +213,10 @@ public class StringUtil {
 	}
 
 	/**
-	 * @todo 返回第一个字符大写，其余保持不变的字符串
-	 * @param sourceStr
-	 * @return
+	 * 返回第一个字符大写，其余保持不变的字符串
+	 * 
+	 * @param sourceStr 原始字符串，空白时原样返回
+	 * @return 首字符大写、其余字符全部小写后的字符串
 	 */
 	public static String firstToUpperOtherToLower(String sourceStr) {
 		if (isBlank(sourceStr)) {
@@ -213,30 +230,32 @@ public class StringUtil {
 	}
 
 	/**
-	 * @todo 在不分大小写情况下字符所在位置
-	 * @param source
-	 * @param pattern
-	 * @return
+	 * 在不分大小写情况下字符所在位置
+	 * 
+	 * @param source  原始字符串，可为null
+	 * @param pattern 待查找的字符串
+	 * @return 不区分大小写首次出现的位置，source或pattern为null返回-1
 	 */
 	public static int indexOfIgnoreCase(String source, String pattern) {
 		if (source == null || pattern == null) {
 			return -1;
 		}
-		return source.toLowerCase().indexOf(pattern.toLowerCase());
+		return source.toLowerCase(Locale.ROOT).indexOf(pattern.toLowerCase(Locale.ROOT));
 	}
 
 	public static int indexOfIgnoreCase(String source, String pattern, int start) {
 		if (source == null || pattern == null) {
 			return -1;
 		}
-		return source.toLowerCase().indexOf(pattern.toLowerCase(), start);
+		return source.toLowerCase(Locale.ROOT).indexOf(pattern.toLowerCase(Locale.ROOT), start);
 	}
 
 	/**
-	 * @todo 左补零
-	 * @param source
-	 * @param length
-	 * @return
+	 * 左补零
+	 * 
+	 * @param source 原始字符串，null时原样返回
+	 * @param length 目标长度
+	 * @return 左侧补零至指定长度的字符串，长度已不小于目标长度时原样返回
 	 */
 	public static String addLeftZero2Len(String source, int length) {
 		return addSign2Len(source, length, 0, 0);
@@ -247,21 +266,22 @@ public class StringUtil {
 	}
 
 	/**
-	 * @todo 用空字符给字符串补足不足指定长度部分
-	 * @param source
-	 * @param length
-	 * @return
+	 * 用空字符给字符串补足不足指定长度部分
+	 * 
+	 * @param source 原始字符串，null时原样返回
+	 * @param length 目标长度
+	 * @return 右侧补空格至指定长度的字符串，长度已不小于目标长度时原样返回
 	 */
 	public static String addRightBlank2Len(String source, int length) {
 		return addSign2Len(source, length, 1, 1);
 	}
 
 	/**
-	 * @param source
-	 * @param length
-	 * @param flag
-	 * @param leftOrRight
-	 * @return
+	 * @param source      原始字符串，null或长度已达标时原样返回
+	 * @param length      目标长度
+	 * @param flag        补充字符类型：0补零，1补空格
+	 * @param leftOrRight 补充方向：0左侧补，1右侧补
+	 * @return 补足指定长度后的字符串
 	 */
 	private static String addSign2Len(String source, int length, int flag, int leftOrRight) {
 		if (source == null || source.length() >= length) {
@@ -285,12 +305,13 @@ public class StringUtil {
 	}
 
 	/**
-	 * @todo <b>用特定符号循环拼接指定的字符串</b>
+	 * 用特定符号循环拼接指定的字符串
+	 * 
 	 * @date 2012-7-12 下午10:17:30
-	 * @param source
-	 * @param sign
-	 * @param loopSize
-	 * @return
+	 * @param source   待重复拼接的字符串，null按空字符串处理
+	 * @param sign     各段之间的连接符号
+	 * @param loopSize 重复次数，小于等于0返回空字符串
+	 * @return 如source="a"、sign=","、loopSize=3时返回"a,a,a"
 	 */
 	public static String loopAppendWithSign(String source, String sign, int loopSize) {
 		if (loopSize <= 0) {
@@ -301,7 +322,8 @@ public class StringUtil {
 	}
 
 	/**
-	 * @todo 补字符(限单字符)
+	 * 补字符(限单字符)
+	 * 
 	 * @param source
 	 * @param sign
 	 * @param size
@@ -328,12 +350,13 @@ public class StringUtil {
 	}
 
 	/**
-	 * @todo 查询对称标记符号的位置，startIndex必须是<source.indexOf(beginMarkSign)
-	 * @param beginMarkSign
-	 * @param endMarkSign
-	 * @param source
-	 * @param startIndex
-	 * @return
+	 * 查询对称标记符号的位置，startIndex必须是<source.indexOf(beginMarkSign)
+	 * 
+	 * @param beginMarkSign 开始标记符号，单双引号时自动排除\'和\"转义形式
+	 * @param endMarkSign   结束标记符号
+	 * @param source        原始字符串
+	 * @param startIndex    起始查找位置
+	 * @return 结束标记符号的位置，未找到返回-1
 	 */
 	public static int getSymMarkIndex(String beginMarkSign, String endMarkSign, String source, int startIndex) {
 		if (source == null) {
@@ -374,7 +397,12 @@ public class StringUtil {
 				endIndex = endIndex + 1;
 			} else if (endIndex == beginSignIndex + 1) {
 				if (matchIndex(source, chkPattern, beginSignIndex + 1)[0] == endIndex) {
-					endIndex = endIndex + 1;
+					// begin后紧跟同类引号(''或"")为空字面量的成对终结,终结引号取当前相邻位,
+					// 规避终结点后移导致字面量后的分隔符被误判为字面量内部;
+					// begin后是\转义引号时终结引号后移一位(维持原有\'转义语义)
+					if (beginMarkSign.charAt(0) != source.charAt(beginSignIndex + 1)) {
+						endIndex = endIndex + 1;
+					}
 				}
 			}
 		}
@@ -411,7 +439,10 @@ public class StringUtil {
 					endIndex = endIndex + 1;
 				} else if (endIndex == beginSignIndex + 1) {
 					if (matchIndex(source, chkPattern, beginSignIndex + 1)[0] == endIndex) {
-						endIndex = endIndex + 1;
+						// 同上:begin后紧跟同类引号为空字面量成对终结,取当前相邻位
+						if (beginMarkSign.charAt(0) != source.charAt(beginSignIndex + 1)) {
+							endIndex = endIndex + 1;
+						}
 					}
 				}
 			}
@@ -424,26 +455,83 @@ public class StringUtil {
 	}
 
 	/**
-	 * @todo 查询对称标记符号的位置
-	 * @param beginMarkSign
-	 * @param endMarkSign
-	 * @param source
-	 * @param startIndex
-	 * @return
+	 * 查找对称标记符号的位置，扫描过程跳过'...'字符串字面量(''成对转义): 规避字面量内的括号等符号被误当语法符号参与配对
+	 * 
+	 * @param beginMark 开始标记(单字符，如"(")，需与endMark不同
+	 * @param endMark   结束标记(单字符，如")")
+	 * @param source    原始字符串，null返回-1
+	 * @param fromIndex 从该位置开始查找开始标记
+	 * @return 对称结束标记的位置，未找到开始标记或未配对成功返回-1
 	 */
-	public static int getSymMarkIndexIgnoreCase(String beginMarkSign, String endMarkSign, String source,
-			int startIndex) {
-		return getSymMarkIndex(beginMarkSign.toLowerCase(), endMarkSign.toLowerCase(), source.toLowerCase(),
-				startIndex);
+	public static int getSymMarkIndexSkipQuoted(String beginMark, String endMark, String source, int fromIndex) {
+		if (source == null) {
+			return -1;
+		}
+		char beginChar = beginMark.charAt(0);
+		char endChar = endMark.charAt(0);
+		char[] chars = source.toCharArray();
+		int n = chars.length;
+		boolean inString = false;
+		// -1表示尚未进入开始标记;进入后为当前嵌套深度
+		int depth = -1;
+		int i = Math.max(fromIndex, 0);
+		while (i < n) {
+			char c = chars[i];
+			if (inString) {
+				if (c == '\'') {
+					// ''成对转义为字面量内容
+					if (i + 1 < n && chars[i + 1] == '\'') {
+						i += 2;
+						continue;
+					}
+					inString = false;
+				}
+				i++;
+				continue;
+			}
+			if (c == '\'') {
+				inString = true;
+				i++;
+				continue;
+			}
+			if (c == beginChar) {
+				depth = (depth == -1) ? 1 : depth + 1;
+			} else if (c == endChar) {
+				if (depth > 0) {
+					depth--;
+					if (depth == 0) {
+						return i;
+					}
+				}
+			}
+			i++;
+		}
+		return -1;
 	}
 
 	/**
-	 * @todo 查询对称标记符号的位置
-	 * @param beginMarkSign
-	 * @param endMarkSign
-	 * @param source
-	 * @param startIndex
-	 * @return
+	 * 查询对称标记符号的位置
+	 * 
+	 * @param beginMarkSign 开始标记符号
+	 * @param endMarkSign   结束标记符号
+	 * @param source        原始字符串
+	 * @param startIndex    起始查找位置
+	 * @return 不区分大小写下结束标记符号的位置，未找到返回-1
+	 */
+	public static int getSymMarkIndexIgnoreCase(String beginMarkSign, String endMarkSign, String source,
+			int startIndex) {
+		return getSymMarkIndex(beginMarkSign.toLowerCase(Locale.ROOT), endMarkSign.toLowerCase(Locale.ROOT),
+				source.toLowerCase(Locale.ROOT), startIndex);
+	}
+
+	/**
+	 * 查询对称标记符号的位置
+	 * 
+	 * @param beginMarkSign 开始标记符号的正则表达式
+	 * @param endMarkSign   结束标记符号的正则表达式
+	 * @param source        原始字符串
+	 * @param startIndex    起始查找位置
+	 * @return 结束标记正则匹配的起始位置，未找到返回-1
 	 */
 	public static int getSymMarkMatchIndex(String beginMarkSign, String endMarkSign, String source, int startIndex) {
 		if (source == null) {
@@ -451,8 +539,9 @@ public class StringUtil {
 		}
 		// 判断对称符号是否相等
 		boolean symMarkIsEqual = beginMarkSign.equals(endMarkSign) ? true : false;
-		Pattern startP = Pattern.compile(beginMarkSign);
-		Pattern endP = Pattern.compile(endMarkSign);
+		// update 2026-9-8 复用PATTERN_CACHE(原每次调用现场编译,调用方为SQL处理热路径)
+		Pattern startP = patternOf(beginMarkSign);
+		Pattern endP = patternOf(endMarkSign);
 		int[] beginSignIndex = matchIndex(source, startP, startIndex);
 		if (beginSignIndex[0] == -1) {
 			return matchIndex(source, endP, startIndex)[0];
@@ -478,12 +567,13 @@ public class StringUtil {
 	}
 
 	/**
-	 * @todo 逆向查询对称标记符号的位置
-	 * @param beginMarkSign
-	 * @param endMarkSign
-	 * @param source
+	 * 逆向查询对称标记符号的位置
+	 * 
+	 * @param beginMarkSign 开始标记符号
+	 * @param endMarkSign   结束标记符号
+	 * @param source        原始字符串
 	 * @param endIndex      主要endMarkSign的length,一般lastIndex(sign)+sign.length()
-	 * @return
+	 * @return 从后往前最近的开始标记符号位置，未找到返回-1
 	 */
 	public static int getSymMarkReverseIndex(String beginMarkSign, String endMarkSign, String source, int endIndex) {
 		if (source == null) {
@@ -508,11 +598,12 @@ public class StringUtil {
 	}
 
 	/**
-	 * @todo 剔除字符串中对称符号和中间的内容,便于判断剩余部分内容是否有动态参数,减少干扰
-	 * @param sql
-	 * @param startMark
-	 * @param endMark
-	 * @return
+	 * 剔除字符串中对称符号和中间的内容,便于判断剩余部分内容是否有动态参数,减少干扰
+	 * 
+	 * @param sql       原始字符串(通常是sql语句)
+	 * @param startMark 开始标记符号，如括号
+	 * @param endMark   结束标记符号
+	 * @return 剔除对称符号及其内部内容后的字符串，sql为null返回null
 	 */
 	public static String clearSymMarkContent(String sql, String startMark, String endMark) {
 		if (sql == null) {
@@ -536,10 +627,11 @@ public class StringUtil {
 	}
 
 	/**
-	 * @todo 通过正则表达式判断是否匹配
-	 * @param source
-	 * @param regex
-	 * @return
+	 * 通过正则表达式判断是否匹配
+	 * 
+	 * @param source 待匹配的字符串，空白返回false
+	 * @param regex  正则表达式
+	 * @return 存在匹配片段返回true，否则返回false
 	 */
 	public static boolean matches(String source, String regex) {
 		if (regex == null) {
@@ -548,22 +640,12 @@ public class StringUtil {
 		return matches(source, patternOf(regex));
 	}
 
-	// 字符串regex重载的编译缓存:调用方(DateUtil日期解析等热路径)传入的均为常量正则,
-	// 避免每次Pattern.compile;超出上限时直接编译,防御极端场景下动态正则撑爆缓存
-	private static final ConcurrentHashMap<String, Pattern> PATTERN_CACHE = new ConcurrentHashMap<String, Pattern>();
-
-	private static Pattern patternOf(String regex) {
-		if (PATTERN_CACHE.size() > 1000) {
-			return Pattern.compile(regex);
-		}
-		return PATTERN_CACHE.computeIfAbsent(regex, Pattern::compile);
-	}
-
 	/**
-	 * @todo 通过正则表达式判断是否匹配
-	 * @param source
-	 * @param pattern
-	 * @return
+	 * 通过正则表达式判断是否匹配
+	 * 
+	 * @param source  待匹配的字符串，空白返回false
+	 * @param pattern 编译后的正则表达式对象
+	 * @return 存在匹配片段返回true，否则返回false
 	 */
 	public static boolean matches(String source, Pattern pattern) {
 		if (isBlank(source)) {
@@ -573,10 +655,11 @@ public class StringUtil {
 	}
 
 	/**
-	 * @todo 找到匹配的位置
-	 * @param source
-	 * @param regex
-	 * @return
+	 * 找到匹配的位置
+	 * 
+	 * @param source 原始字符串，null返回-1
+	 * @param regex  正则表达式
+	 * @return 首次匹配的起始位置，未匹配返回-1
 	 */
 	public static int matchIndex(String source, String regex) {
 		return matchIndex(source, patternOf(regex));
@@ -633,31 +716,34 @@ public class StringUtil {
 	}
 
 	/**
-	 * @todo 获取匹配成功的个数
-	 * @param source
-	 * @param regex
-	 * @return
+	 * 获取匹配成功的个数
+	 * 
+	 * @param source 原始字符串，null返回0
+	 * @param regex  正则表达式
+	 * @return 匹配成功的次数
 	 */
 	public static int matchCnt(String source, String regex) {
 		return matchCnt(source, patternOf(regex), 0);
 	}
 
 	/**
-	 * @todo 获取匹配成功的个数
-	 * @param source
-	 * @param pattern
-	 * @return
+	 * 获取匹配成功的个数
+	 * 
+	 * @param source  原始字符串，null返回0
+	 * @param pattern 编译后的正则表达式对象
+	 * @return 匹配成功的次数
 	 */
 	public static int matchCnt(String source, Pattern pattern) {
 		return matchCnt(source, pattern, 0);
 	}
 
 	/**
-	 * @todo 获取匹配成功的个数
-	 * @param source
-	 * @param pattern
-	 * @param offset
-	 * @return
+	 * 获取匹配成功的个数
+	 * 
+	 * @param source  原始字符串，null返回0
+	 * @param pattern 编译后的正则表达式对象
+	 * @param offset  相邻匹配可重叠的字符数量，负数按0处理
+	 * @return 匹配成功的次数
 	 */
 	public static int matchCnt(String source, Pattern pattern, int offset) {
 		if (source == null) {
@@ -675,12 +761,13 @@ public class StringUtil {
 	}
 
 	/**
-	 * @todo 获取匹配成功的个数
-	 * @param source
-	 * @param regex
-	 * @param beginIndex
-	 * @param endIndex
-	 * @return
+	 * 获取匹配成功的个数
+	 * 
+	 * @param source     原始字符串，null返回0
+	 * @param regex      正则表达式
+	 * @param beginIndex 匹配范围的起始位置(含)
+	 * @param endIndex   匹配范围的结束位置(不含)
+	 * @return 指定范围内匹配成功的次数
 	 */
 	public static int matchCnt(String source, String regex, int beginIndex, int endIndex) {
 		if (source == null) {
@@ -697,11 +784,12 @@ public class StringUtil {
 	}
 
 	/**
-	 * @todo 获取字符指定次数的位置
-	 * @param source
-	 * @param regex
-	 * @param order
-	 * @return
+	 * 获取字符指定次数的位置
+	 * 
+	 * @param source 原始字符串，null返回-1
+	 * @param regex  待查找的字符串(字面匹配，非正则)
+	 * @param order  出现的次序，从0开始(0表示第一次出现)
+	 * @return 指定次序出现的位置，不存在返回-1
 	 */
 	public static int indexOrder(String source, String regex, int order) {
 		if (source == null) {
@@ -722,9 +810,10 @@ public class StringUtil {
 	}
 
 	/**
-	 * @todo 字符串转ASCII
-	 * @param str
-	 * @return
+	 * 字符串转ASCII
+	 * 
+	 * @param str 原始字符串，null返回空数组
+	 * @return 每个字符对应ASCII码值的int数组
 	 */
 	public static int[] str2ASCII(String str) {
 		if (str == null) {
@@ -739,11 +828,12 @@ public class StringUtil {
 	}
 
 	/**
-	 * @todo 切割字符串，排除特殊字符对，如a,b,c,dd(a,c),dd(a,c)不能切割
-	 * @param source
+	 * 切割字符串，排除特殊字符对，如a,b,c,dd(a,c),dd(a,c)不能切割
+	 * 
+	 * @param source    原始字符串，null返回null
 	 * @param splitSign 如逗号、分号、冒号或具体字符串,非正则表达式
-	 * @param filterMap
-	 * @return
+	 * @param filterMap 对称符号对(如单引号对、括号对)，位于符号对内部的分隔符不参与切割；null或空时不做排除
+	 * @return 切割后的字符串数组
 	 */
 	public static String[] splitExcludeSymMark(String source, String splitSign, Map<String, String> filterMap) {
 		if (source == null) {
@@ -799,12 +889,13 @@ public class StringUtil {
 	}
 
 	/**
-	 * @TODO 获取对称符号的开始和结束位置
-	 * @param source
-	 * @param filter
-	 * @param skipIndex
-	 * @param splitIndex
-	 * @return
+	 * 获取对称符号的开始和结束位置
+	 * 
+	 * @param source     原始字符串
+	 * @param filter     对称符号对数组，filter[0]为开始符号、filter[1]为结束符号
+	 * @param skipIndex  起始查找位置
+	 * @param splitIndex 分隔符号位置，用于判断对称符号是否覆盖分隔符
+	 * @return 长度为2的数组，[0]为开始位置、[1]为结束位置，未找到时对应元素为-1
 	 */
 	private static int[] getStartEndIndex(String source, String[] filter, int skipIndex, int splitIndex) {
 		int[] result = { -1, -1 };
@@ -862,10 +953,11 @@ public class StringUtil {
 	}
 
 	/**
-	 * @TODO 匹配有效的过滤器
-	 * @param source
-	 * @param filterMap
-	 * @return
+	 * 匹配有效的过滤器
+	 * 
+	 * @param source    原始字符串
+	 * @param filterMap 候选对称符号对，key为开始符号、value为结束符号
+	 * @return 在字符串中开始和结束符号均存在的符号对列表
 	 */
 	public static List<String[]> matchFilters(String source, Map<String, String> filterMap) {
 		List<String[]> result = new ArrayList<String[]>();
@@ -925,11 +1017,12 @@ public class StringUtil {
 	}
 
 	/**
-	 * @todo 将字符串转换成驼峰形式
-	 * @param source
-	 * @param firstIsUpperCase
+	 * 将字符串转换成驼峰形式
+	 * 
+	 * @param source           原始字符串，以下划线或横杠分词，如ORGAN_INFO
+	 * @param firstIsUpperCase 首字母是否大写
 	 * @param removeDealine    是否移除下划线
-	 * @return
+	 * @return 驼峰形式字符串，如ORGAN_INFO在firstIsUpperCase=false时返回organInfo；空白时原样返回
 	 */
 	public static String toHumpStr(String source, boolean firstIsUpperCase, boolean removeDealine) {
 		if (isBlank(source)) {
@@ -959,12 +1052,13 @@ public class StringUtil {
 	}
 
 	/**
-	 * @todo 通过特殊符号对字符进行安全模糊化处理
-	 * @param value
-	 * @param preLength
-	 * @param tailLength
-	 * @param maskStr
-	 * @return
+	 * 通过特殊符号对字符进行安全模糊化处理
+	 * 
+	 * @param value      原始对象，null返回null
+	 * @param preLength  保留明文的头部字符数量
+	 * @param tailLength 保留明文的尾部字符数量
+	 * @param maskStr    掩盖符号，null或空默认为***
+	 * @return 头尾保留、中间以掩盖符号填充的字符串；长度不超过头尾保留之和时原样返回
 	 */
 	public static String secureMask(Object value, int preLength, int tailLength, String maskStr) {
 		if (value == null) {
@@ -981,9 +1075,10 @@ public class StringUtil {
 	}
 
 	/**
-	 * @todo 判断字符串中是否包含中文
-	 * @param str
-	 * @return
+	 * 判断字符串中是否包含中文
+	 * 
+	 * @param str 待判断的字符串，null返回false
+	 * @return true表示包含中文字符
 	 */
 	public static boolean hasChinese(String str) {
 		if (str == null) {
@@ -993,10 +1088,11 @@ public class StringUtil {
 	}
 
 	/**
-	 * @todo 驼峰形式字符用分割符号链接,example:humpToSplitStr("organInfo","_") result:organ_Info
-	 * @param source
-	 * @param split
-	 * @return
+	 * 驼峰形式字符用分割符号链接,example:humpToSplitStr("organInfo","_") result:organ_Info
+	 * 
+	 * @param source 驼峰形式字符串，null返回null
+	 * @param split  分割符号
+	 * @return 在大写字母前插入分割符号后的字符串
 	 */
 	public static String humpToSplitStr(String source, String split) {
 		if (source == null) {
@@ -1023,9 +1119,10 @@ public class StringUtil {
 	}
 
 	/**
-	 * @todo 加工字段名称，将数据库sql查询的columnName转成对应对象的属性名称(去除下划线)
-	 * @param labelNames
-	 * @return
+	 * 加工字段名称，将数据库sql查询的columnName转成对应对象的属性名称(去除下划线)
+	 * 
+	 * @param labelNames 数据库查询结果的列名数组(可带"name:alias"别名形式)，null返回null
+	 * @return 首字母小写的驼峰属性名数组，与输入数组等长且位置对应
 	 */
 	public static String[] humpFieldNames(String[] labelNames) {
 		if (labelNames == null) {
@@ -1049,10 +1146,11 @@ public class StringUtil {
 	}
 
 	/**
-	 * @todo 填充args参数,将字符串中的${}按位置顺序填入具体参数值
-	 * @param template
-	 * @param args
-	 * @return
+	 * 填充args参数,将字符串中的${}按位置顺序填入具体参数值
+	 * 
+	 * @param template 含${}占位符的模板字符串，为null或无参数时原样返回
+	 * @param args     按顺序填充的参数值，null值以"null"填充
+	 * @return 填充后的字符串
 	 */
 	public static String fillArgs(String template, Object... args) {
 		if (template == null || args == null || args.length == 0) {
@@ -1083,11 +1181,12 @@ public class StringUtil {
 	}
 
 	/**
-	 * @TODO 提供偏移替换后字符长度的全量替换
-	 * @param source
-	 * @param template
-	 * @param target
-	 * @return
+	 * 提供偏移替换后字符长度的全量替换
+	 * 
+	 * @param source   原始字符串，null原样返回
+	 * @param template 待替换的字符串
+	 * @param target   替换后的字符串
+	 * @return 全量替换后的字符串
 	 */
 	public static String replaceAllStr(String source, String template, String target) {
 		return replaceAllStr(source, template, target, 0);
@@ -1129,9 +1228,10 @@ public class StringUtil {
 	}
 
 	/**
-	 * @TODO 替换部分全角字符为半角
-	 * @param SBCStr
-	 * @return
+	 * 替换部分全角字符为半角
+	 * 
+	 * @param SBCStr 含全角字符的原始字符串，空白时原样返回
+	 * @return 全角符号(;?.:'"，【】（）＝等)替换为对应半角后的字符串
 	 */
 	public static String toDBC(String SBCStr) {
 		if (isBlank(SBCStr)) {
@@ -1186,11 +1286,12 @@ public class StringUtil {
 	}
 
 	/**
-	 * @TODO 字符连接
-	 * @param sign
-	 * @param skipNull
-	 * @param arys
-	 * @return
+	 * 字符连接
+	 * 
+	 * @param sign     各元素间的连接符号，null默认为逗号
+	 * @param skipNull true跳过null元素，false将null以"null"字符串参与连接
+	 * @param arys     待连接的元素，null或空返回空字符串
+	 * @return 连接后的字符串
 	 */
 	public static String linkAry(String sign, boolean skipNull, Object... arys) {
 		if (arys == null || arys.length == 0) {
@@ -1212,10 +1313,11 @@ public class StringUtil {
 	}
 
 	/**
-	 * @TODO 提供类似于sql中的like功能
-	 * @param source
+	 * 提供类似于sql中的like功能
+	 * 
+	 * @param source   原始字符串，null返回false
 	 * @param keywords 将匹配的字符用空格或者%进行切割并trim变成字符数组进行匹配
-	 * @return
+	 * @return 关键字按顺序在字符串中依次出现(位置递增)返回true，否则返回false
 	 */
 	public static boolean like(String source, String[] keywords) {
 		if (source == null || keywords == null || keywords.length == 0) {
@@ -1241,11 +1343,12 @@ public class StringUtil {
 	}
 
 	/**
-	 * @TODO 将字符串进行正则表达式切割
-	 * @param source
-	 * @param regex
-	 * @param doTrim
-	 * @return
+	 * 将字符串进行正则表达式切割
+	 * 
+	 * @param source 原始字符串，null返回null
+	 * @param regex  正则表达式，常用符号(?,;:.|等)已做转义保护，空白串按连续空白切割
+	 * @param doTrim true对切割后的每段做trim
+	 * @return 切割后的字符串数组
 	 */
 	public static String[] splitRegex(String source, String regex, boolean doTrim) {
 		if (source == null) {
@@ -1282,10 +1385,11 @@ public class StringUtil {
 	}
 
 	/**
-	 * @TODO 用字符串index分割字符串，主要用于动态缓存翻译key,key2,key3形式经过翻译后用特定字符拼接:name1->key2->name3,再用link符号切割开对key2进行翻译形成name1->name2->name3形式
-	 * @param str
-	 * @param delimiter
-	 * @return
+	 * 用字符串index分割字符串，主要用于动态缓存翻译key,key2,key3形式经过翻译后用特定字符拼接:name1->key2->name3,再用link符号切割开对key2进行翻译形成name1->name2->name3形式
+	 * 
+	 * @param str       原始字符串，null或空返回空数组
+	 * @param delimiter 分割符号，null或空返回仅含原字符串的数组
+	 * @return 按字面分割符号(非正则)切割后的字符串数组
 	 */
 	public static String[] splitByIndex(String str, String delimiter) {
 		return splitByIndex(str, delimiter, false);
@@ -1323,10 +1427,11 @@ public class StringUtil {
 	}
 
 	/**
-	 * @TODO 处理空白和null，给与默认值
-	 * @param value
-	 * @param defaultValue
-	 * @return
+	 * 处理空白和null，给与默认值
+	 * 
+	 * @param value        待判断的字符串
+	 * @param defaultValue value为空白或null时返回的默认值
+	 * @return value非空白时返回原值，否则返回defaultValue
 	 */
 	public static String ifBlank(String value, String defaultValue) {
 		if (isBlank(value)) {
@@ -1338,12 +1443,12 @@ public class StringUtil {
 	/**
 	 * 替换正则表达式指定匹配次序的字符
 	 * 
-	 * @param source
-	 * @param pattern
-	 * @param replaceStr
-	 * @param matchCnt
+	 * @param source     原始字符串，null原样返回
+	 * @param pattern    编译后的正则表达式对象
+	 * @param replaceStr 替换后的字符串
+	 * @param matchCnt   目标匹配的次序，从1开始
 	 * @param offset     偏移字符数量
-	 * @return
+	 * @return 第matchCnt次匹配被替换后的字符串，匹配次数不足时原样返回
 	 */
 	public static String replaceRegex(String source, Pattern pattern, String replaceStr, int matchCnt, int offset) {
 		if (source == null) {
@@ -1370,9 +1475,9 @@ public class StringUtil {
 			return source;
 		}
 		if (upperOrLower.equals("upper")) {
-			return source.toUpperCase();
+			return source.toUpperCase(Locale.ROOT);
 		} else if (upperOrLower.equals("lower")) {
-			return source.toLowerCase();
+			return source.toLowerCase(Locale.ROOT);
 		}
 		return source;
 	}
@@ -1380,8 +1485,8 @@ public class StringUtil {
 	/**
 	 * 剔除首位逗号和双引号
 	 * 
-	 * @param str
-	 * @return
+	 * @param str 原始字符串，null或长度小于2原样返回
+	 * @return 去除首尾成对单引号或双引号后的字符串，不成对时原样返回
 	 */
 	public static String removeStartEndQuote(String str) {
 		if (str == null || str.length() < 2) {

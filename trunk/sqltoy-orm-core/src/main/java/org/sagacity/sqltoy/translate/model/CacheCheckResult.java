@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.translate.model;
 
 import java.io.Serializable;
@@ -9,13 +6,10 @@ import java.io.Serializable;
  * @project sagacity-sqltoy
  * @description 缓存刷新结果模型
  * @author zhongxuchen
- * @version v1.0,Date:2018年3月8日
+ * @version v1.0,Date:2018-03-08
  */
 public class CacheCheckResult implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 5068540349332451092L;
 
 	/**

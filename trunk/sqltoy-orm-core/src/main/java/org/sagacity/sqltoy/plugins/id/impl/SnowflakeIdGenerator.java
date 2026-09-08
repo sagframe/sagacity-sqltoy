@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.plugins.id.impl;
 
 import java.util.Date;
@@ -16,8 +13,8 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @project sagacity-sqltoy
  * @description 基于twitter的分布式自增ID生成策略
  * @author zhongxuchen
- * @version v1.0,Date:2017年3月21日
- * @modify 2025-12-22 按照表名创建雪花算法实例
+ * @version v1.0,Date:2017-03-21
+ * @modify Date:2025-12-22 按照表名创建雪花算法实例
  */
 public class SnowflakeIdGenerator implements IdGenerator {
 	private static String DEFAULT_TABLE_NAME = "SQLTOY_SNOWFLAKE_GLOBAL_TABLE_NAME";
@@ -27,7 +24,8 @@ public class SnowflakeIdGenerator implements IdGenerator {
 	private static volatile SnowflakeIdWorker idWorker = null;
 
 	/**
-	 * @TODO 双检锁获取雪花算法worker,避免多线程首次并发时重复创建与可见性问题
+	 * 双检锁获取雪花算法worker,避免多线程首次并发时重复创建与可见性问题
+	 * 
 	 * @return
 	 */
 	private static SnowflakeIdWorker getWorker() {
@@ -42,7 +40,8 @@ public class SnowflakeIdGenerator implements IdGenerator {
 	}
 
 	/**
-	 * @TODO 获取对象单例
+	 * 获取对象单例
+	 * 
 	 * @return
 	 */
 	public static IdGenerator getInstance() {

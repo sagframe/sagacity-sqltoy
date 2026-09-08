@@ -6,15 +6,16 @@ import org.sagacity.sqltoy.config.model.LabelIndexModel;
 import org.sagacity.sqltoy.config.model.ReverseModel;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 对集合数据进行反转
  * @author zhongxuchen
- * @version v1.0,Date:2020-3-25
+ * @version v1.0,Date:2020-03-25
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class ReverseList {
 	/**
-	 * @TODO 集合首尾反转
+	 * 集合首尾反转
+	 * 
 	 * @param reverseModel
 	 * @param labelIndexMap
 	 * @param result
