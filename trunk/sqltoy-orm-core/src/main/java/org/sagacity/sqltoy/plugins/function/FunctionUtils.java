@@ -53,7 +53,9 @@ public class FunctionUtils {
 			put("groupconcat", "GroupConcat");
 			put("tonumber", "ToNumber");
 			put("todate", "ToDate");
-
+			// update 2026-9-9 补齐默认注册列表中缺失的简写映射(原配置datediff/decode简写不生效)
+			put("datediff", "DateDiff");
+			put("decode", "Decode");
 		}
 	};
 	private static volatile List<IFunction> functionConverts = new ArrayList<IFunction>();
@@ -80,12 +82,32 @@ public class FunctionUtils {
 		for (int i = 0, n = functionConverts.size(); i < n; i++) {
 			function = functionConverts.get(i);
 			// 方言为null或空白表示适配所有数据库,适配的方言包含当前方言也执行替换
-			if (StringUtil.isBlank(function.dialects())
-					|| function.dialects().toLowerCase(Locale.ROOT).contains(dialectLow)) {
+			if (matchDialect(function.dialects(), dialectLow)) {
 				dialectSql = replaceFunction(dialectSql, dbType, function);
 			}
 		}
 		return dialectSql;
+	}
+
+	/**
+	 * update 2026-9-9 方言匹配改为按逗号/分号切分后逐项精确比对:原contains子串匹配存在
+	 * 双向偏差(dialects="oracle11"会被当前方言"oracle"误命中;dialects="oracle"又匹配不上
+	 * 方言"oracle11"),自定义函数须显式枚举适配的方言名
+	 * 
+	 * @param dialects   函数声明的适配方言串,null/空白表示适配所有数据库
+	 * @param dialectLow 当前方言(小写)
+	 * @return 是否适配当前方言
+	 */
+	private static boolean matchDialect(String dialects, String dialectLow) {
+		if (StringUtil.isBlank(dialects)) {
+			return true;
+		}
+		for (String item : dialects.toLowerCase(Locale.ROOT).split("\\,|\\;")) {
+			if (item.trim().equals(dialectLow)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

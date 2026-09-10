@@ -82,8 +82,8 @@ public class DateFormat extends IFunction {
 		case DBType.H2: {
 			// update 2026-9-5 date_format语义为日期格式化(date转字符串),
 			// 原parsedatetime是解析(string转date)方向相反,修正为formatdatetime
-			// 日期
-			format = args[1].replace("%Y", "yyyy").replace("%y", "yyyy").replace("%m", "MM").replace("%d", "dd");
+			// 日期(update 2026-9-9 修正%y两位年误映射为yyyy四位年)
+			format = args[1].replace("%Y", "yyyy").replace("%y", "yy").replace("%m", "MM").replace("%d", "dd");
 			// 时间处理
 			format = format.replace("%T", "HH:mm:ss");
 			format = format.replace("%H", "HH").replace("%h", "hh").replace("%i", "mm").replace("%s", "ss");
@@ -103,6 +103,14 @@ public class DateFormat extends IFunction {
 			format = format.replace("%T", "HH24:MI:SS");
 			format = format.replace("%H", "HH24").replace("%h", "HH").replace("%i", "MI").replace("%s", "SS");
 			return "VARCHAR_FORMAT(" + args[0] + "," + format + ")";
+		}
+		case DBType.CLICKHOUSE: {
+			// update 2026-9-9 clickhouse原生支持date_format(formatDateTime的mysql兼容别名,%token同构),
+			// 仅需将java样式token转%形态(原default原样输出,java样式格式串在目标库静默失效)
+			format = args[1].replace("yyyy", "%Y").replace("yy", "%y").replace("MM", "%m").replace("dd", "%d");
+			format = format.replace("hh24", "%H").replace("hh", "%h").replace("HH", "%H").replace("mm", "%i")
+					.replace("mi", "%i").replace("ss", "%s");
+			return "date_format(" + args[0] + "," + format + ")";
 		}
 		case DBType.SQLITE: {
 			// update 2026-9-6 sqlite以strftime实现(格式标识差异:Y m d H M S);

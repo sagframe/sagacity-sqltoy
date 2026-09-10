@@ -197,6 +197,11 @@ public class ParamFilterModel implements Serializable {
 	 */
 	private Boolean isArray = false;
 
+	/**
+	 * 补充字符
+	 */
+	private String appendStr;
+
 	public String getFilterType() {
 		return filterType;
 	}
@@ -609,6 +614,14 @@ public class ParamFilterModel implements Serializable {
 
 	public void setRemoveBlank(boolean removeBlank) {
 		this.removeBlank = removeBlank;
+	}
+
+	public String getAppendStr() {
+		return appendStr;
+	}
+
+	public void setAppendStr(String appendStr) {
+		this.appendStr = appendStr;
 	}
 
 }

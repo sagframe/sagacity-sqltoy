@@ -117,15 +117,29 @@ public class OpenGaussDialectUtils {
 			sql.append("cast(? as bytea)");
 		} else if (jdbcType == java.sql.Types.BLOB) {
 			sql.append("cast(? as bytea)");
-		} else if (jdbcType == JdbcTypes.JSON) {
-			sql.append("cast(? as json)");
-		} else if (jdbcType == JdbcTypes.JSONB) {
-			sql.append("cast(? as jsonb)");
+		} else if (jdbcType == JdbcTypes.JSON || jdbcType == JdbcTypes.JSONB) {
+			// update 2026-9-10 oscar排除cast:传统Oscar(com.oscar.Driver)无json类型(json数据以
+			// CLOB/VARCHAR列承载),cast(? as json)必败,裸?+setString绑定为正确形态
+			// (驱动jar解包实证非og同源内核,详见DialectUtils同日注释)
+			if (dbType != null && dbType == DBType.OSCAR) {
+				sql.append("?");
+			} else {
+				sql.append((jdbcType == JdbcTypes.JSONB) ? "cast(? as jsonb)" : "cast(? as json)");
+			}
 		} else if (jdbcType == JdbcTypes.VECTOR) {
-			// gaussdb企业版向量类型名为floatvector,其余为vector
-			// cast用于兜底setString等字符串参数场景,PGobject包装参数类型已正确
-			sql.append("cast(? as ").append(dbType != null && dbType == DBType.GAUSSDB ? "floatvector" : "vector")
-					.append(")");
+			// update 2026-9-10 oscar排除cast:传统Oscar无vector类型,cast必败,回归裸?+setString
+			if (dbType != null && dbType == DBType.OSCAR) {
+				sql.append("?");
+			} else {
+				// gaussdb企业版向量类型名为floatvector,其余为vector
+				// update 2026-9-10 vastbase G100 3.0实测向量类型名同为floatvector(无vector别名)
+				// cast用于兜底setString等字符串参数场景,PGobject包装参数类型已正确
+				sql.append("cast(? as ")
+						.append(dbType != null && (dbType == DBType.GAUSSDB || dbType == DBType.VASTBASE)
+								? "floatvector"
+								: "vector")
+						.append(")");
+			}
 		} else if (jdbcType == JdbcTypes.GEOMETRY) {
 			// geometry类型参数通过PGobject包装后类型已正确,cast用于兜底setString等字符串参数场景
 			sql.append("cast(? as geometry)");

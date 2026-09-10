@@ -64,11 +64,13 @@ public class ToDate extends IFunction {
 			return "to_date(" + args[0] + ",'yyyy-MM-dd')";
 		}
 		if (dialect == DBType.H2) {
+			// update 2026-9-9 单参原用formatdatetime方向反了:H2的FORMATDATETIME是格式化
+			// (日期→文本,产出VARCHAR),to_date语义为解析(文本→日期),须用PARSEDATETIME,与两参分支一致
 			if (args.length == 1) {
 				if (args[0].length() > 12) {
-					return "formatdatetime(" + args[0] + ",'yyyy-MM-dd HH:mm:ss')";
+					return "parsedatetime(" + args[0] + ",'yyyy-MM-dd HH:mm:ss')";
 				} else {
-					return "formatdatetime(" + args[0] + ",'yyyy-MM-dd')";
+					return "parsedatetime(" + args[0] + ",'yyyy-MM-dd')";
 				}
 			}
 			// 两参解析方向:PARSEDATETIME(str,格式)

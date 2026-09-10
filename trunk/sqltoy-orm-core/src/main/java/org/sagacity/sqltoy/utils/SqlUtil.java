@@ -181,18 +181,6 @@ public class SqlUtil {
 	private SqlUtil() {
 	}
 
-	// ojdbc的OracleTypes.VECTOR常量值(-105,23ai配套ojdbc提供);低版本ojdbc无此常量为null
-	public static final Integer ORACLE_VECTOR_TYPE = initOracleVectorType();
-
-	private static Integer initOracleVectorType() {
-		try {
-			java.lang.reflect.Field f = Class.forName("oracle.jdbc.OracleTypes").getField("VECTOR");
-			return f.getInt(null);
-		} catch (Throwable e) {
-			return null;
-		}
-	}
-
 	/**
 	 * 合成数据库in 查询的条件(不建议使用)
 	 * 
@@ -697,7 +685,10 @@ public class SqlUtil {
 		}
 		// postgresql系需要用PGobject明确指定向量类型,避免因参数按varchar发送导致无法隐式转换
 		// gaussdb企业版向量类型名为floatvector,其余为vector
-		String pgTypeName = (dbType == DBType.GAUSSDB) ? "floatvector" : "vector";
+		// update 2026-9-10 vastbase G100 3.0(Build9)实测向量类型名同为floatvector:无vector别名
+		// (create table vector(3)报type "vector" does not exist,floatvector(3)建表/字符串隐式
+		// 写入/文本读回/'[..]'::floatvector cast+nvl包裹全部实测可行)
+		String pgTypeName = (dbType == DBType.GAUSSDB || dbType == DBType.VASTBASE) ? "floatvector" : "vector";
 		// update 2026-9-6 实测PGobject不能跨驱动setObject(报Can't infer the SQL type),
 		// 按连接URL scheme选择同源驱动的PGobject;无匹配驱动类型对象时回退setObject(str,OTHER)
 		// 由服务器按目标列推断(此前按dbType+classpath静态探测,混合驱动场景会错配)
@@ -712,6 +703,16 @@ public class SqlUtil {
 	}
 
 	/**
+	 * update 2026-9-6 判定是否为PG系内核方言(PGobject类型包装的适用范围):
+	 * 非PG系(mysql/oracle/db2/sqlserver等)直接以字符串绑定,不得构造PGobject
+	 */
+	private static boolean isPGFamily(Integer dbType) {
+		return dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.OPENGAUSS
+				|| dbType == DBType.MOGDB || dbType == DBType.GAUSSDB || dbType == DBType.STARDB
+				|| dbType == DBType.VASTBASE || dbType == DBType.KINGBASE;
+	}
+
+	/**
 	 * update 2026-9-6 按连接实际驱动选择同源PGobject包装json/vector/geometry等PG系扩展类型:
 	 * 实测PGobject不能跨驱动setObject(pg驱动收到org.opengauss的PGobject报Can't infer the SQL
 	 * type, 反向同理);此前按dbType+classpath静态探测的分支在混合驱动场景(如classpath同时有postgresql与
@@ -723,16 +724,6 @@ public class SqlUtil {
 	 * @param value    字符串形式的类型值
 	 * @return 同源驱动的PGobject实例,null表示无匹配驱动类型对象
 	 */
-	/**
-	 * update 2026-9-6 判定是否为PG系内核方言(PGobject类型包装的适用范围):
-	 * 非PG系(mysql/oracle/db2/sqlserver等)直接以字符串绑定,不得构造PGobject
-	 */
-	private static boolean isPGFamily(Integer dbType) {
-		return dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.OPENGAUSS
-				|| dbType == DBType.MOGDB || dbType == DBType.GAUSSDB || dbType == DBType.STARDB
-				|| dbType == DBType.VASTBASE || dbType == DBType.KINGBASE;
-	}
-
 	public static Object getPGobjectByConn(PreparedStatement pst, String typeName, String value) {
 		try {
 			return getPGobjectByConn(pst.getConnection(), typeName, value);
@@ -777,8 +768,10 @@ public class SqlUtil {
 			return;
 		}
 		// gaussdb企业版向量类型名为floatvector,其余为vector
+		// update 2026-9-10 vastbase G100
+		// 3.0实测向量类型名同为floatvector(无vector别名),与setVectorValue同步
 		// update 2026-9-6 按连接URL scheme选择同源驱动PGobject(同setVectorValue,规避跨驱动错配)
-		String pgTypeName = (dbType == DBType.GAUSSDB) ? "floatvector" : "vector";
+		String pgTypeName = (dbType == DBType.GAUSSDB || dbType == DBType.VASTBASE) ? "floatvector" : "vector";
 		Object pgObject = (!isPGFamily(dbType) || rs.getStatement() == null) ? null
 				: getPGobjectByConn(rs.getStatement().getConnection(), pgTypeName, vectorStr);
 		if (pgObject != null) {
@@ -823,7 +816,6 @@ public class SqlUtil {
 	}
 
 	/**
-	 * 将'[1,2,3]'形式向量文本编码为mysql内部格式字节 /**
 	 * 将'[1,2,3]'形式向量文本编码为mysql内部格式字节(维度个float32小端直排,无头部,
 	 * 与getBytes读回形态一致),解析失败返回null
 	 * 
@@ -1007,7 +999,8 @@ public class SqlUtil {
 			// 4字节小端SRID前缀+小端WKB),编码失败回退字符串交由服务器报原始错误;
 			// update 2026-9-8 实测ob同样:rs回写字符串报"Cannot get geometry object",
 			// 内部格式字节updateBytes回写实测落库正确(ST_AsText回读一致),ob纳入本分支
-			byte[] geomBytes = toGeometryBytes(geomStr);
+			// update 2026-9-9 编码下沉JtsGeometryCodec经hasJts门控(本类不得含JTS符号引用)
+			byte[] geomBytes = GeometryTypeUtil.wktToMysqlInternalBytes(geomStr);
 			if (geomBytes != null) {
 				rs.updateBytes(columnName, geomBytes);
 			} else {
@@ -1063,35 +1056,6 @@ public class SqlUtil {
 			Class<?> geoCls = Class.forName("com.microsoft.sqlserver.jdbc.Geometry");
 			Object geom = geoCls.getMethod("parse", String.class).invoke(null, wkt);
 			return (byte[]) geoCls.getMethod("serialize").invoke(geom);
-		} catch (Exception e) {
-			return null;
-		}
-	}
-
-	/**
-	 * 将WKT文本编码为mysql内部格式字节(4字节小端SRID前缀+标准WKB,与getBytes读回形态一致), jts不可用或解析失败返回null
-	 *
-	 * @param wkt WKT文本
-	 * @return 内部格式字节,失败返回null
-	 */
-	private static byte[] toGeometryBytes(String wkt) {
-		try {
-			Object geometry = GeometryTypeUtil.parse(wkt);
-			if (!(geometry instanceof org.locationtech.jts.geom.Geometry)) {
-				return null;
-			}
-			org.locationtech.jts.geom.Geometry geom = (org.locationtech.jts.geom.Geometry) geometry;
-			// mysql内部格式的WKB部分为小端字节序(0x01标记),WKBWriter默认大端会被服务器拒绝
-			byte[] wkb = new org.locationtech.jts.io.WKBWriter(2, org.locationtech.jts.io.ByteOrderValues.LITTLE_ENDIAN)
-					.write(geom);
-			int srid = geom.getSRID();
-			byte[] result = new byte[wkb.length + 4];
-			result[0] = (byte) (srid & 0xFF);
-			result[1] = (byte) ((srid >> 8) & 0xFF);
-			result[2] = (byte) ((srid >> 16) & 0xFF);
-			result[3] = (byte) ((srid >> 24) & 0xFF);
-			System.arraycopy(wkb, 0, result, 4, wkb.length);
-			return result;
 		} catch (Exception e) {
 			return null;
 		}
@@ -1155,6 +1119,7 @@ public class SqlUtil {
 	/**
 	 * 提供数据查询结果集转java对象的反射处理，以java VO集合形式返回
 	 * 
+	 * @param dbType            数据库类型，参见DataSourceUtils.DBType(扩展类型列读取策略分派用)
 	 * @param typeHandler       自定义类型处理器，非null时优先通过其完成列值转换
 	 * @param rs                ResultSet结果集对象
 	 * @param voClass           目标VO对象类型
@@ -1163,8 +1128,9 @@ public class SqlUtil {
 	 * @return VO对象集合
 	 * @throws Exception
 	 */
-	private static List reflectResultToVO(TypeHandler typeHandler, DecryptHandler decryptHandler, ResultSet rs,
-			Class voClass, boolean ignoreAllEmptySet, HashMap<String, String> columnFieldMap) throws Exception {
+	private static List reflectResultToVO(Integer dbType, TypeHandler typeHandler, DecryptHandler decryptHandler,
+			ResultSet rs, Class voClass, boolean ignoreAllEmptySet, HashMap<String, String> columnFieldMap)
+			throws Exception {
 		List resultList = new ArrayList();
 		// 提取数据预警阈值
 		int warnThresholds = SqlToyConstants.getWarnThresholds();
@@ -1181,6 +1147,10 @@ public class SqlUtil {
 		String[][] columnLabelAndTypes = getColumnLabelAndTypes(rs.getMetaData());
 		String[] columnNames = columnLabelAndTypes[0];
 		String[] columnTypes = columnLabelAndTypes[1];
+		// update 2026-9-9 复用Map路径(processResultRow)的列读取策略预分类:oracle的JSON/VECTOR列
+		// getObject直接抛ORA-17004/18722须TEXT_READ文本化读取,sqlserver/mysql系的vector/geometry
+		// 读回byte[]须EXT_BYTE按列类型解码,此前VO直映射路径未接入导致查询失败或byte[]静默乱码
+		int[] columnKinds = ResultUtils.buildColumnKinds(dbType, columnTypes);
 		// 组织vo中对应的属性
 		String[] fields = new String[columnNames.length];
 		// update 2020-12-24 增加映射对象时属性映射关系提取
@@ -1249,8 +1219,9 @@ public class SqlUtil {
 		// 循环通过java reflection将rs中的值映射到VO中
 		Object rowData;
 		while (rs.next()) {
-			rowData = reflectResultRowToVOClass(typeHandler, decryptHandler, rs, columnNames, propertySqlTypes,
-					setMethods, propTypeValues, propTypes, genericTypes, voClass, ignoreAllEmptySet);
+			rowData = reflectResultRowToVOClass(dbType, typeHandler, decryptHandler, rs, columnNames, columnTypes,
+					columnKinds, propertySqlTypes, setMethods, propTypeValues, propTypes, genericTypes, voClass,
+					ignoreAllEmptySet);
 			if (rowData != null) {
 				resultList.add(rowData);
 			}
@@ -1279,10 +1250,13 @@ public class SqlUtil {
 	/**
 	 * 提供数据查询结果集转java对象的反射处理，以java VO集合形式返回
 	 * 
+	 * @param dbType            数据库类型，参见DataSourceUtils.DBType(扩展类型列读取策略与归一化分派用)
 	 * @param typeHandler       自定义类型处理器，非null时优先通过其完成列值转换
 	 * @param decryptHandler    解密
 	 * @param rs                当前行ResultSet结果集(已调用next定位)
 	 * @param columnLabels      结果集列名称数组(原始label未做大小写处理,与rs列下标i+1一一对齐,仅用于解密列判断)
+	 * @param columnTypes       列元数据类型名数组(与columnLabels同下标,EXT_BYTE列解码判定用)
+	 * @param columnKinds       列读取策略标记数组(ResultUtils.buildColumnKinds预分类结果)
 	 * @param propertySqlTypes  jdbcTypes.JSON 等
 	 * @param setMethods        VO属性对应的setter方法数组，与列一一对应
 	 * @param propTypeValues    对应类型int值
@@ -1293,9 +1267,10 @@ public class SqlUtil {
 	 * @return 当前行映射成的VO对象，整行为空且ignoreAllEmptySet为true返回null
 	 * @throws Exception
 	 */
-	private static Object reflectResultRowToVOClass(TypeHandler typeHandler, DecryptHandler decryptHandler,
-			ResultSet rs, String[] columnLabels, int[] propertySqlTypes, Method[] setMethods, int[] propTypeValues,
-			String[] propTypes, Class[] genericTypes, Class voClass, boolean ignoreAllEmptySet) throws Exception {
+	private static Object reflectResultRowToVOClass(Integer dbType, TypeHandler typeHandler,
+			DecryptHandler decryptHandler, ResultSet rs, String[] columnLabels, String[] columnTypes, int[] columnKinds,
+			int[] propertySqlTypes, Method[] setMethods, int[] propTypeValues, String[] propTypes, Class[] genericTypes,
+			Class voClass, boolean ignoreAllEmptySet) throws Exception {
 		// 根据匹配的字段通过java reflection将rs中的值映射到VO中
 		Object bean = voClass.getDeclaredConstructor().newInstance();
 		Object fieldValue;
@@ -1315,8 +1290,13 @@ public class SqlUtil {
 			if (method != null) {
 				// update 2026-9-8 按下标取值(与labelNames同下标,驱动按下标直达,按label需查找)
 				// fieldValue = rs.getObject(label);
-				fieldValue = rs.getObject(i + 1);
+				// update 2026-9-9 TEXT_READ列文本化读取(oracle的JSON/VECTOR列getObject直接抛错),
+				// 取值后统一经扩展类型归一化(byte[]形态按列类型解码),与Map路径processResultRow对齐
+				int kind = (columnKinds == null) ? ResultUtils.COLUMN_NORMAL : columnKinds[i];
+				fieldValue = (kind == ResultUtils.COLUMN_TEXT_READ) ? rs.getString(i + 1) : rs.getObject(i + 1);
 				if (null != fieldValue) {
+					fieldValue = ResultUtils.normalizeExtTypeValue(fieldValue, dbType,
+							(kind == ResultUtils.COLUMN_EXT_BYTE) ? columnTypes[i] : null);
 					if (decryptHandler != null) {
 						fieldValue = decryptHandler.decrypt(label, fieldValue);
 					}
@@ -1765,7 +1745,8 @@ public class SqlUtil {
 		}
 		List result;
 		if (voClass != null) {
-			result = reflectResultToVO(typeHandler, decryptHandler, rs, voClass, ignoreAllEmptySet, colFieldMap);
+			result = reflectResultToVO(dbType, typeHandler, decryptHandler, rs, voClass, ignoreAllEmptySet,
+					colFieldMap);
 		} else if (rowCallbackHandler != null) {
 			while (rs.next()) {
 				rowCallbackHandler.processRow(rs, index);
@@ -2628,26 +2609,39 @@ public class SqlUtil {
 	}
 
 	/**
-	 * 判断是否内包含union 查询,即是否是select * from (select * from t union select * from t2 )
-	 * 形式的查询,将所有()剔除后判定是否有union 存在
-	 * 字面量内容不参与判定:先将'...'字面量内部掩为等长空白,规避字面量内的union、'('、')'误报或干扰括号剔除
+	 * 判断是否内包含union 查询(转义约定经DBProfile/运行上下文自动解析, 配置解析期等已知方言的场景请用带backslashEscape的重载)
 	 * 
 	 * @param sql            sql语句
 	 * @param clearMistyChar true剔除子查询和括号内容后再判断(只判断最外层)，false直接匹配union关键词
 	 * @return true表示存在union查询
 	 */
 	public static boolean hasUnion(String sql, boolean clearMistyChar) {
+		// update 2026-9-10 未显式给定转义约定时统一经DBProfile(真实连接档案)/运行上下文解析
+		return hasUnion(sql, clearMistyChar, SqlConfigParseUtils.isBackslashEscape(null));
+	}
+
+	/**
+	 * 判断是否内包含union 查询,即是否是select * from (select * from t union select * from t2 )
+	 * 形式的查询,将所有()剔除后判定是否有union 存在
+	 * 字面量内容不参与判定:先将'...'字面量内部掩为等长空白,规避字面量内的union、'('、')'误报或干扰括号剔除
+	 * 
+	 * @param sql             sql语句
+	 * @param clearMistyChar  true剔除子查询和括号内容后再判断(只判断最外层)，false直接匹配union关键词
+	 * @param backslashEscape true时字面量内\'不终结字面量(mysql系),掩码须与方言一致否则\'后错位
+	 * @return true表示存在union查询
+	 */
+	public static boolean hasUnion(String sql, boolean clearMistyChar, boolean backslashEscape) {
 		if (!StringUtil.matches(sql, UNION_PATTERN)) {
 			return false;
 		}
 		// 存在with as ，先剔除(hasWith基于字面量掩码串判定,字面量内的with xx as (不触发剔除)
-		if (SqlConfigParseUtils.hasWith(sql)) {
+		if (SqlConfigParseUtils.hasWith(sql, backslashEscape)) {
 			SqlWithAnalysis sqlWith = new SqlWithAnalysis(sql);
 			sql = sqlWith.getRejectWithSql();
 		}
 		String tmpSql = BLANK + (clearMistyChar ? clearMistyChars(sql, BLANK) : sql);
 		// 字面量内容掩为等长空白,掩码串与原串等长,位置偏移不受影响
-		tmpSql = SqlConfigParseUtils.maskLiterals(tmpSql, false);
+		tmpSql = SqlConfigParseUtils.maskLiterals(tmpSql, backslashEscape);
 		StringBuilder lastSql = new StringBuilder(tmpSql);
 		// 找到第一个select 所对称的from位置，排查掉子查询中的内容
 		int fromIndex = StringUtil.getSymMarkMatchIndex(SELECT_REGEX, FROM_REGEX, tmpSql.toLowerCase(Locale.ROOT), 0);
@@ -2685,8 +2679,10 @@ public class SqlUtil {
 		}
 		String key = entityMeta.getTableName() + "_" + sql;
 		// 从缓存中直接获取,避免每次都处理提升效率
-		if (convertSqlMap.containsKey(key)) {
-			return convertSqlMap.get(key);
+		// update 2026-9-9 单次get判空替代containsKey+get双查找
+		String cachedSql = convertSqlMap.get(key);
+		if (cachedSql != null) {
+			return cachedSql;
 		}
 		String[] fields = entityMeta.getFieldsArray(false);
 		StringBuilder sqlBuff = new StringBuilder();

@@ -343,9 +343,10 @@ public class JSONTypeUtil {
 
 	/**
 	 * 剥除JSON字符串标量的外层引号:文本以引号起始且结束(如h2 json列setString绑定
-	 * 产生的"\"[{...}]\""形态)时解析出标量内部文本,否则原样返回
+	 * 产生的"\"[{...}]\""形态)时解析出标量内部文本,否则原样返回 (update 2026-9-9
+	 * 提升为public:ResultUtils的Map行路径h2 json列byte[]归一同款剥引号)
 	 */
-	private static String unwrapJsonStringScalar(String str) {
+	public static String unwrapJsonStringScalar(String str) {
 		if (str.startsWith("\"") && str.endsWith("\"")) {
 			return JSON.parseObject(str, String.class);
 		}

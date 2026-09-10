@@ -127,7 +127,7 @@ public class EntityManager {
 	private static final String IdGeneratorOldPackage_v1 = "org.sagacity.sqltoy.plugins.id.";
 
 	/**
-	 * 扫描的包(意义不大,sqltoy已经改为在使用时自动加载)
+	 * 扫描的包(非必要配置项，sqltoy采取即用即载)
 	 */
 	private String[] packagesToScan;
 
@@ -137,7 +137,7 @@ public class EntityManager {
 	private boolean recursive = true;
 
 	/**
-	 * 指定的entity class(意义不大,sqltoy已经改为用时自动加载)
+	 * 指定的entity class(非必要配置项，sqltoy采取即用即载)
 	 */
 	private String[] annotatedClasses;
 

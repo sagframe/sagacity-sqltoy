@@ -360,8 +360,21 @@ public class DDLUtils {
 				// h2无向量类型,测试场景按varchar存储'[1,2,3]'字符串形式
 				typeName = "VARCHAR";
 				typeName = setLength(typeName, false, colMeta);
+			} else if (dbType == DBType.DB2) {
+				// update 2026-9-10 实测db2 12.1.2.0/12.1.5.0:VECTOR须显式坐标类型双参形态
+				// VECTOR(n, FLOAT32),单参VECTOR(n)报-104语法错误、裸VECTOR报-901
+				// "Unknown vector coordinate type";维度必填(@Column(length=xxx)),
+				// 其他坐标类型(FLOAT64等)经@Column(nativeType=...)覆盖
+				typeName = (colMeta.getColumnSize() > 0) ? ("VECTOR(" + colMeta.getColumnSize() + ", FLOAT32)")
+						: "VECTOR";
+			} else if (dbType == DBType.DORIS) {
+				// update 2026-9-10 实测doris 4.1.3:无VECTOR(n)列类型(解析器类型全集无VECTOR),
+				// 向量以ARRAY<FLOAT>承载(近邻检索配VECTOR索引),字符串'[1,2,3]'绑定隐式转换、
+				// 读回为'[1, 2, 3]'文本均实证可行;维度不进列定义(向量索引声明处约束)
+				typeName = "ARRAY<FLOAT>";
 			} else {
-				if (dbType == DBType.GAUSSDB) {
+				// update 2026-9-10 vastbase G100 3.0实测向量类型名为FLOATVECTOR(无VECTOR别名),同gaussdb企业版
+				if (dbType == DBType.GAUSSDB || dbType == DBType.VASTBASE) {
 					typeName = "FLOATVECTOR";
 				} else {
 					typeName = "VECTOR";

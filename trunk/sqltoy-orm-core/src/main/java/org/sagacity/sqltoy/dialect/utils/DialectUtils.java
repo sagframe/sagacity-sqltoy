@@ -909,16 +909,12 @@ public class DialectUtils {
 					// "not a defined system type",而字符串到vector为隐式转换,维持裸?
 					sql.append("?");
 				} else if (extType == JdbcTypes.JSON || extType == JdbcTypes.JSONB) {
-					if (DBType.SQLSERVER == dbType && DialectExtUtils.isSqlServerNativeJson()) {
-						// update 2026-9-7 实测merge的using子查询中原生json列裸?按nvarchar传递,
-						// matched更新报"Implicit conversion from data type json to nvarchar is
-						// not allowed",以convert(json,?)定型;update 2026-9-8 加isSqlServerNativeJson
-						// 门控(本机17.0.4075预览版无json系统类型,convert报"Type json is not a
-						// defined system type",nvarchar承载列走裸?)
-						sql.append("convert(json, ?)");
-					} else {
-						sql.append("?");
-					}
+					// update 2026-9-10 移除服务器级convert(json,?)门控,统一裸?:2025 GA实测
+					// 裸?(按nvarchar传递)+matched update的coalesce包裹对原生json列与nvarchar
+					// 承载列双形态均成立(见下方update环节分派);convert(json,?)产物为json类型值,
+					// 赋给GA服务器上的存量nvarchar承载列反报"Implicit conversion json to
+					// nvarchar not allowed"(服务器级探测无法区分列级承载形态,门控废弃)
+					sql.append("?");
 				} else {
 					sql.append("?");
 				}
@@ -1007,7 +1003,17 @@ public class DialectUtils {
 						// 以驱动STRUCT绑定(MDSYS.SDO_GEOMETRY)定型后,nvl(tv.g,ta.g)同型可行,
 						// 非null更新生效、null参数保留原值(弹性语义完整),统一纳入nvl包裹
 						// 注意逻辑，nvl(tv.field,ta.field) 不要改变
-						sql.append(isNullFunction);
+						// update 2026-9-10 sqlserver的JSON/JSONB列改coalesce包裹(与getUpdateSql的
+						// SQLSERVER+JSON分派同款):isnull取首参类型(tv侧裸?按nvarchar传递),原生json列
+						// 报"Implicit conversion json to nvarchar not allowed";coalesce按类型优先级
+						// 解析,2025 GA实测裸?+coalesce对原生json列与nvarchar承载列双形态均为
+						// 更新生效、null保留原值
+						if (DBType.SQLSERVER == dbType
+								&& (fieldMeta.getType() == JdbcTypes.JSON || fieldMeta.getType() == JdbcTypes.JSONB)) {
+							sql.append("coalesce");
+						} else {
+							sql.append(isNullFunction);
+						}
 						if (DBType.SQLSERVER == dbType && fieldMeta.getType() == java.sql.Types.DECIMAL) {
 							// update 2026-9-7 sqlserver经isnull赋值会丢decimal小数位,cast定长保精度
 							// (自SqlServerDialectUtils迁入)
@@ -1209,7 +1215,6 @@ public class DialectUtils {
 					// (dm -5403参数不兼容/db2 -408值转换失败/ob 5083 Invalid data type/
 					// sqlserver udt转换不支持),这些库组合以coalesce包裹替代(实测coalesce接受
 					// geometry/json类型对,null不覆盖原值语义完整保持);其余库沿用nullFunction
-					// update 2026-9-8 wrapFunc为null表示无包裹直赋(ob vector场景)
 					String wrapFunc = nullFunction;
 					if (fieldMeta.getType() == JdbcTypes.GEOMETRY
 							&& (dbType == DBType.DM || dbType == DBType.DB2 || dbType == DBType.OCEANBASE
@@ -1220,15 +1225,11 @@ public class DialectUtils {
 						wrapFunc = "coalesce";
 					} else if (fieldMeta.getType() == JdbcTypes.VECTOR
 							&& (dbType == DBType.OCEANBASE || DialectExtUtils.isOceanBaseAsMysql())) {
-						// update 2026-9-8 实测ob的ifnull/coalesce拒绝vector类型对(5083 Invalid
-						// data type),且ob无string_to_vector/cast as vector等类型构造手段,无法
-						// 包裹保持语义,绕过包裹直接赋值(字符串隐式转换赋值语境实测可行;null覆盖
-						// 原值为ob能力边界,saveOrUpdate等场景同此语义)
-						wrapFunc = null;
+						// update 2026-9-10 即使报错，也必须要保持col=nvl(?,col) 逻辑，而非直接变成col=?
+						wrapFunc = "coalesce";
 					}
-					if (wrapFunc != null) {
-						sql.append(wrapFunc).append("(");
-					}
+					// 强调:这里必须要加类似nvl(?,col)模式，逻辑就是弹性修改
+					sql.append(wrapFunc).append("(");
 					// 统一模式:先按数据类型分支,类型内再按数据库分派
 					if (fieldMeta.getType() == JdbcTypes.GEOMETRY) {
 						// geometry: 函数名按库分派;ob的ifnull对geometry类型对拒绝(5083),
@@ -1236,12 +1237,13 @@ public class DialectUtils {
 						if (dbType == DBType.DM) {
 							sql.append("DMGEO.ST_GeomFromText(?,0)");
 						} else if (dbType == DBType.DB2) {
-							sql.append("db2gse.ST_GeomFromText(?,0)");
+							// update 2026-9-10 按GSE探测+nativeType分派(12.1起内置引擎与GSE可并存,
+							// 纯版本分派会在GSE列上误选内置函数报-408),详见db2GeomFromTextWrap
+							sql.append(DialectExtUtils.db2GeomFromTextWrap(fieldMeta));
 						} else if (dbType == DBType.SQLSERVER) {
 							sql.append("geometry::STGeomFromText(?,0)");
 						} else if (dbType == DBType.OCEANBASE) {
 							sql.append("ST_GeomFromText(?,0)");
-							wrapFunc = "coalesce";
 						} else if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.TIDB) {
 							sql.append("ST_GeomFromText(?,0)");
 						} else if (dbType == DBType.KINGBASE) {
@@ -1250,44 +1252,42 @@ public class DialectUtils {
 							sql.append("?");
 						}
 					} else if (fieldMeta.getType() == JdbcTypes.VECTOR) {
-						// update 2026-9-7 实测ob的ifnull/coalesce拒绝vector类型对(5083 Invalid data
-						// type),且ob无string_to_vector/cast as vector等类型构造手段,无法包裹保持语义,
-						// 绕过包裹直接裸?(字符串隐式转换赋值语境实测可行;null覆盖原值为能力边界)
 						if (dbType == DBType.OCEANBASE || DialectExtUtils.isOceanBaseAsMysql()) {
 							sql.append("?");
 						} else if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57) {
 							// update 2026-9-6 实测mysql 9.x的vector列update裸?+setString报
 							// 类型转换错误,以string_to_vector(?)包装
 							sql.append("string_to_vector(?)");
-						} else if (dbType == DBType.KINGBASE || dbType == DBType.OPENGAUSS || dbType == DBType.GAUSSDB
-								|| dbType == DBType.VASTBASE || dbType == DBType.MOGDB || dbType == DBType.STARDB
-								|| dbType == DBType.OSCAR) {
+						} else if (dbType == DBType.GAUSSDB || dbType == DBType.VASTBASE) {
+							// update 2026-9-10 vastbase G100 3.0实测向量类型名为floatvector(无vector
+							// 别名),cast+外层nvl包裹两端同型,null不覆盖原值语义保持
+							// (nvl('[7,8,9]'::floatvector,v)实库验证可行);gaussdb企业版同型floatvector,
+							// 与setVectorValue/OpenGaussDialectUtils既有分派对齐
+							sql.append("cast(? as floatvector)");
+						} else if (dbType == DBType.KINGBASE || dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB
+								|| dbType == DBType.STARDB) {
 							// update 2026-9-7 实测og7内核nvl/coalesce(?,vector)裸?绑定报"could not
 							// convert type vector to text"(unknown参数被内核降解为text),以cast产生
 							// 类型化表达式后nvl两端同型,null不覆盖原值语义完整保持(实库验证null更新
-							// 后原值保留,非null更新生效);kingbase/vastbase(og同源内核)同型;
-							// update 2026-9-8 og同源内核mogdb/stardb/oscar统一纳入该分派
+							// 后原值保留,非null更新生效);kingbase(og同源内核)同型;
+							// update 2026-9-8 og同源内核mogdb/stardb统一纳入该分派
+							// update 2026-9-10 oscar摘除:驱动jar解包实证传统Oscar(com.oscar.Driver)为
+							// 老pgjdbc深度魔改衍生(默认Oracle兼容模式),非og同源内核,无vector类型
+							// 亦无PGobject同构类,cast(? as vector)必败,回归裸?+setString
+							// (神通openGauss版走opengauss驱动识别为OPENGAUSS,不落本分派)
 							sql.append("cast(? as vector)");
 						} else {
 							// 其余数据库裸?绑定(实测隐式转换可行)
 							sql.append("?");
 						}
 					} else if (fieldMeta.getType() == JdbcTypes.JSON || fieldMeta.getType() == JdbcTypes.JSONB) {
+						// update 2026-9-10 oscar摘除:传统Oscar无json类型(json数据以CLOB/VARCHAR列
+						// 承载,社区7.0.8实测),cast(? as json)必败,裸?+setString为正确形态
+						// (驱动jar解包实证非og同源内核,详见上方vector分派注释)
 						if (dbType == DBType.OPENGAUSS || dbType == DBType.GAUSSDB || dbType == DBType.VASTBASE
-								|| dbType == DBType.MOGDB || dbType == DBType.STARDB || dbType == DBType.OSCAR) {
-							// update 2026-9-7 实测og7内核nvl/coalesce(?,json)裸?绑定报"could not
-							// convert type json to text"(unknown参数被内核降解为text),以cast产生
-							// 类型化表达式后nvl两端同型,null不覆盖原值语义完整保持(实库验证);
-							// update 2026-9-8 vastbase借opengauss容器实测同报错,同型纳入cast分派;
-							// og同源内核mogdb/stardb/oscar统一纳入
+								|| dbType == DBType.MOGDB || dbType == DBType.STARDB || dbType == DBType.KINGBASE) {
 							sql.append("cast(? as ").append((fieldMeta.getType() == JdbcTypes.JSONB) ? "jsonb" : "json")
 									.append(")");
-						} else if (dbType == DBType.KINGBASE) {
-							// update 2026-9-7 实测kingbase(PG内核)json/jsonb列的?参数按varchar绑定报
-							// "column jsonb but expression varchar"类型错误,按bytea模式以cast修正
-							// 参数类型,并保留外层nvl包裹的null参数不覆盖原值语义
-							sql.append(
-									"cast(? as " + ((fieldMeta.getType() == JdbcTypes.JSON) ? "json" : "jsonb") + ")");
 						} else {
 							// 其余数据库裸?绑定(json参数经JSONTypeUtil按json类型绑定)
 							sql.append("?");
@@ -1314,9 +1314,8 @@ public class DialectUtils {
 							sql.append("?");
 						}
 					}
-					if (wrapFunc != null) {
-						sql.append(",").append(defaultColName).append(")");
-					}
+					// nvl的收尾
+					sql.append(",").append(defaultColName).append(")");
 				}
 				meter++;
 			}
