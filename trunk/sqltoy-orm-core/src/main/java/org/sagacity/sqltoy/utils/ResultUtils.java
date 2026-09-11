@@ -1665,6 +1665,23 @@ public class ResultUtils {
 			}
 			return value;
 		}
+		// update 2026-9-11 java.sql.Array归一为原生java数组(clickhouse向量承载列Array(Float32)
+		// 与PG系text[]/int[]等数组列,驱动包装对象toString为"Array@hash"垃圾值且泄漏驱动类型):
+		// getArray()得到标准java数组(text[]→String[]、Array(Float32)→Float[]等,保结构、去驱动
+		// 依赖),Map结果直接获得结构化数组(fastjson序列化为JSON数组、可编程访问);目标形态转换
+		// 收敛在BeanUtil.convertType按属性类型分派(String属性→'[a,b]'文本、List/Set/数组→
+		// 元素级转换);getArray()异常时原样返回,由convertType的instanceof Array分支兜底
+		if (value instanceof java.sql.Array) {
+			try {
+				Object arr = ((java.sql.Array) value).getArray();
+				if (arr != null) {
+					return arr;
+				}
+			} catch (Exception e) {
+				logger.warn("normalizeExtTypeValue: java.sql.Array getArray failed!", e);
+			}
+			return value;
+		}
 		// byte[]形态按列元数据类型名精确归一:blob(已提前转byte[])/varbinary等二进制列不受影响
 		if (value instanceof byte[]) {
 			if (columnTypeName != null) {

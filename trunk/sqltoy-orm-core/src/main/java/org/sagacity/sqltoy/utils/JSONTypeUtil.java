@@ -337,6 +337,12 @@ public class JSONTypeUtil {
 			byte[] bytes = blob.getBytes(1, (int) blob.length());
 			return unwrapJsonStringScalar(new String(bytes, java.nio.charset.StandardCharsets.UTF_8));
 		}
+		// update 2026-9-11 clickhouse的JSON类型列getObject返回Map/List(动态JSON类型由驱动
+		// 反序列化,getString则被驱动toString为"{name=x}"非JSON形态致fastjson解析失败,实测),
+		// 重新序列化为标准JSON文本
+		if (jdbcValue instanceof java.util.Map || jdbcValue instanceof java.util.Collection) {
+			return JSON.toJSONString(jdbcValue);
+		}
 		// 其他类型尝试 toString
 		return jdbcValue.toString();
 	}

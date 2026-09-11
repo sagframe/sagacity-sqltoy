@@ -72,6 +72,12 @@ public class GroupConcat extends IFunction {
 			}
 			expr = String.join(joiner, segments);
 		}
+		// update 2026-9-11
+		// clickhouse:无group_concat/string_agg,以arrayStringConcat(groupArray(expr),sep)
+		// 承担;多列拼接expr沿用||连接符(CH原生支持||字符串拼接),group_concat与string_agg两形态同构
+		if (dbType == DBType.CLICKHOUSE) {
+			return " arrayStringConcat(groupArray(" + expr + ")," + sign + ") ";
+		}
 		if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 				|| dbType == DBType.OPENGAUSS || dbType == DBType.OSCAR || dbType == DBType.STARDB
 				|| dbType == DBType.MOGDB || dbType == DBType.VASTBASE) {

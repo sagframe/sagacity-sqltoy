@@ -372,6 +372,11 @@ public class DDLUtils {
 				// 向量以ARRAY<FLOAT>承载(近邻检索配VECTOR索引),字符串'[1,2,3]'绑定隐式转换、
 				// 读回为'[1, 2, 3]'文本均实证可行;维度不进列定义(向量索引声明处约束)
 				typeName = "ARRAY<FLOAT>";
+			} else if (dbType == DBType.CLICKHOUSE) {
+				// update 2026-9-11 实测clickhouse 26.8.2.7:无vector类型族(报Unknown data type
+				// family: vector),向量以Array(Float32)承载(同doris思路):字符串'[1,2,3]'插入
+				// 隐式解析、读回'[1,2,3]'文本、L2Distance(v,[..])距离检索均实证可行
+				typeName = "Array(Float32)";
 			} else {
 				// update 2026-9-10 vastbase G100 3.0实测向量类型名为FLOATVECTOR(无VECTOR别名),同gaussdb企业版
 				if (dbType == DBType.GAUSSDB || dbType == DBType.VASTBASE) {

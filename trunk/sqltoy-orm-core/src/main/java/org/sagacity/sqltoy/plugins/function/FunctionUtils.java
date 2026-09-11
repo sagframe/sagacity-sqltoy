@@ -12,6 +12,7 @@ import java.util.regex.Matcher;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
+import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -243,6 +244,74 @@ public class FunctionUtils {
 			return;
 		}
 		functionConverts = converts;
+	}
+
+	/**
+	 * update 2026-9-10 sqlite日期参数归一为日期文本:JDBC绑定的日期列/参数为毫秒Long
+	 * (strftime/date等日期函数直接作用于毫秒返回null或垃圾值),须datetime(x/1000,
+	 * 'unixepoch','localtime')转本地墙钟文本——不带'localtime'为UTC墙钟,东八区本地午夜
+	 * 毫秒值被推到前一日16:00,自然天差/日期格式化偏1天(sqlite实测);裸字符串字面量
+	 * ('YYYY-MM-DD[...]')与函数调用表达式(含'(',如to_date/date/strftime等转换产物——
+	 * sqlite日期函数均返回文本,且嵌套转换时外层函数先于内层被改写,前缀白名单不可枚举)
+	 * 已是日期文本,原样保留;仅裸列名/占位符(JDBC绑定为毫秒Long)做归一
+	 *
+	 * @param arg 日期参数SQL片段(字面量/列/占位符/表达式)
+	 * @return sqlite日期函数可消费的日期文本表达式
+	 */
+	public static String sqliteDateTextExpr(String arg) {
+		if (arg == null) {
+			return arg;
+		}
+		String tmp = arg.trim();
+		if (tmp.length() > 2 && tmp.startsWith("'") && tmp.endsWith("'") && tmp.indexOf('\'', 1) == tmp.length() - 1) {
+			return tmp;
+		}
+		// 函数调用/表达式形态:sqlite日期与文本函数返回值均为文本,直接透传
+		// (数值表达式传入日期函数本属误用,不做防御)
+		if (tmp.indexOf('(') >= 0) {
+			return tmp;
+		}
+		return "datetime(" + tmp + "/1000,'unixepoch','localtime')";
+	}
+
+	/**
+	 * update 2026-9-10 PG语法系to_char首参为参数占位符时的显式定型:pgjdbc系驱动对日期参数 以UNSPECIFIED
+	 * OID发送,vanilla PG的to_char(unknown,unknown)因timestamp/date/numeric/
+	 * interval多重载报"function is not unique"(postgresql16.15实爆),openGauss/gaussdb误选
+	 * numeric重载报"invalid input syntax for type numeric",og7报"could not determine
+	 * data type",仅vastbase恰好选对——同一SQL四种结局,统一以::timestamp显式定型修复。
+	 * 注意:函数转换发生在命名参数替换为?之前,首参可能是?、:name或#[name]三种占位形态,
+	 * 须保留原token返回(替换为?会破坏参数索引对齐);oracle/dm/oceanbase驱动日期参数定型 发送且无::语法,不在处理范围。
+	 *
+	 * @param dialect              目标方言dbType
+	 * @param firstArg             to_char首参SQL片段
+	 * @param format               转换后的格式模型串(用于数值模型判别)
+	 * @param numericModelPossible 是否可能为数值格式化场景(to_char(numeric,'999.99')):格式模型
+	 *                             含9/0数值占位时不cast——数值参数经setBigDecimal等定型绑定
+	 *                             原生可解重载,强转timestamp反而破坏该场景
+	 * @return 处理后的首参SQL片段
+	 */
+	public static String pgToCharParamCast(int dialect, String firstArg, String format, boolean numericModelPossible) {
+		if (firstArg == null) {
+			return firstArg;
+		}
+		String argTrim = firstArg.trim();
+		// 参数占位符三形态:?(已替换)、:name(命名参数)、#[name](sqltoy中括号命名参数)
+		boolean placeholder = "?".equals(argTrim) || argTrim.matches(":[A-Za-z_][A-Za-z0-9_]*")
+				|| argTrim.matches("#\\[[^\\]]+\\]");
+		if (!placeholder) {
+			return firstArg;
+		}
+		boolean pgSyntax = dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL14 || dialect == DBType.GAUSSDB
+				|| dialect == DBType.MOGDB || dialect == DBType.STARDB || dialect == DBType.OSCAR
+				|| dialect == DBType.OPENGAUSS || dialect == DBType.VASTBASE;
+		if (!pgSyntax) {
+			return firstArg;
+		}
+		if (numericModelPossible && format != null && (format.indexOf('9') >= 0 || format.indexOf('0') >= 0)) {
+			return firstArg;
+		}
+		return "(" + argTrim + "::timestamp)";
 	}
 
 }

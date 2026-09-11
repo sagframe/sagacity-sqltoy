@@ -620,6 +620,15 @@ public class SqlToyConstants {
 		}
 		String result = getKeyValue("sqltoy.table_names.strategy.".concat(realDialect));
 		if (result == null) {
+			// update 2026-9-11 未显式配置时的内建默认:oracle/dm/db2/h2的元数据按大写存储标识符,
+			// 且ojdbc的getTables不像getColumns那样内部将pattern转大写,小写pattern原样传递
+			// 返回空清单(oracle 23ai实测TableApi.getTables空结果,getTableColumns却正常;
+			// h2 2.x实测getTables/getColumns小写pattern均返回空);
+			// 默认按大写对齐存储形态,显式配置sqltoy.table_names.strategy.xxx可覆盖
+			if ("oracle".equals(realDialect) || "dm".equals(realDialect) || "db2".equals(realDialect)
+					|| "h2".equals(realDialect)) {
+				return tableOrColumnName.toUpperCase(Locale.ROOT);
+			}
 			return tableOrColumnName;
 		}
 		String lowResult = result.toLowerCase(Locale.ROOT);

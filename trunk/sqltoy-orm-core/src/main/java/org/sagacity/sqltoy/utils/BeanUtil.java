@@ -8,6 +8,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.sql.Array;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -699,9 +700,15 @@ public class BeanUtil {
 		// 4 非数组类型,但传递的参数值是数组类型且长度为1提取出数组中的单一值
 		if (paramValue.getClass().isArray() && typeValue < DataType.aryCharType) {
 			if (typeValue == DataType.stringType && (paramValue instanceof byte[])) {
-				paramValue = new String((byte[]) paramValue);
+				// update 2026-9-9 显式UTF-8(原平台默认字符集,与工程内其余byte[]转文本处不一致)
+				paramValue = new String((byte[]) paramValue, StandardCharsets.UTF_8);
 			} else if (typeValue == DataType.stringType && (paramValue instanceof char[])) {
 				paramValue = new String((char[]) paramValue);
+			} else if (typeValue == DataType.stringType) {
+				// update 2026-9-11 对象/原始数组整体转'[a,b]'文本(与byte[]/char[]文本化同语义):
+				// 数组列(java.sql.Array经normalizeExtTypeValue归一为String[]/Float[]等)承接为
+				// String属性是vector/数组列的读回契约,多元素不再走单值提取守卫抛异常
+				return buildArrayText(paramValue);
 			} else {
 				Object[] paramAry = CollectionUtil.convertArray(paramValue);
 				if (paramAry.length > 1) {
@@ -732,6 +739,11 @@ public class BeanUtil {
 				return DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss");
 			} else if (paramValue instanceof ZonedDateTime) {
 				return DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss");
+			} else if (paramValue.getClass().isArray()) {
+				// update 2026-9-11 数组值承接为String属性时转'[a,b]'文本(java.sql.Array经
+				// normalizeExtTypeValue已归一为原生数组,其toString为对象地址形态无意义),
+				// 与33/34/35分支的'[...]'文本解析(parseArrayText)形态对称
+				return buildArrayText(paramValue);
 			}
 			return paramValue.toString();
 		}
@@ -1086,10 +1098,22 @@ public class BeanUtil {
 		// update 2023-5-26 支持List 和Object[] 数组之间互转
 		// 33 数组类型
 		if (DataType.aryOtherType == typeValue) {
-			if ((paramValue instanceof Array)) {
+			if (paramValue instanceof Array) {
 				return convertArray(((Array) paramValue).getArray(), typeName);
-			} else if ((paramValue instanceof Collection)) {
+			} else if (paramValue instanceof Collection) {
 				return convertArray(((Collection) paramValue).toArray(), typeName);
+			} else if (paramValue.getClass().isArray()) {
+				// update 2026-9-11 源值已是java数组(如float[]与Float[]、int[]与Integer[]互转)时
+				// 交由convertArray反射统一装箱/拆箱,修复前原样返回导致setter调用argument type mismatch
+				return convertArray(paramValue, typeName);
+			} else if (paramValue instanceof String) {
+				// update 2026-9-11 '[a,b]'文本形态还原:数组列值经读路径归一为文本
+				// (normalizeExtTypeValue的java.sql.Array分支),find(VO)路径列级归一无法感知
+				// 目标属性类型,集合/数组属性在此按括号+逗号解析还原
+				Object[] items = parseArrayText((String) paramValue);
+				if (items != null) {
+					return convertArray(items, typeName);
+				}
 			}
 		}
 		// 34 List类型
@@ -1113,6 +1137,15 @@ public class BeanUtil {
 					return CollectionUtil.arrayToList(convertArray(tmp, genericType.getName().concat("[]")));
 				}
 				return CollectionUtil.arrayToList(tmp);
+			} else if (paramValue instanceof String) {
+				// update 2026-9-11 '[a,b]'文本形态还原(同33数组类型分支注释)
+				Object[] items = parseArrayText((String) paramValue);
+				if (items != null) {
+					if (genericType != null) {
+						return CollectionUtil.arrayToList(convertArray(items, genericType.getName().concat("[]")));
+					}
+					return CollectionUtil.arrayToList(items);
+				}
 			}
 		}
 		// 35 Set类型
@@ -1136,6 +1169,15 @@ public class BeanUtil {
 					return arrayToSet((Object[]) convertArray(tmp, genericType.getName().concat("[]")));
 				}
 				return arrayToSet(tmp);
+			} else if (paramValue instanceof String) {
+				// update 2026-9-11 '[a,b]'文本形态还原(同33数组类型分支注释)
+				Object[] items = parseArrayText((String) paramValue);
+				if (items != null) {
+					if (genericType != null) {
+						return arrayToSet((Object[]) convertArray(items, genericType.getName().concat("[]")));
+					}
+					return arrayToSet(items);
+				}
 			}
 		}
 		// 36 枚举类型
@@ -1170,6 +1212,11 @@ public class BeanUtil {
 		// 先归一为文本再解析
 		if (jdbcValue instanceof java.sql.Clob) {
 			jdbcValue = SqlUtil.clobToString((java.sql.Clob) jdbcValue);
+		}
+		// update 2026-9-11 java.sql.Array经normalizeExtTypeValue归一为原生数组(CH向量承载列
+		// Array(Float32)→Float[]等),其toString为对象地址形态,先显式构建'[e1,e2]'文本再按目标解析
+		if (jdbcValue.getClass().isArray()) {
+			jdbcValue = buildArrayText(jdbcValue);
 		}
 		String typeNameLow = typeName.toLowerCase(Locale.ROOT);
 		boolean isString = typeNameLow.equals("java.lang.string");
@@ -2320,6 +2367,25 @@ public class BeanUtil {
 	 * @throws RuntimeException 属性不存在或赋值失败时抛出
 	 */
 	public static void setProperty(Object bean, String property, Object value) throws RuntimeException {
+		setProperty(bean, property, value, JdbcTypes.OTHER);
+	}
+
+	/**
+	 * 代替PropertyUtil 和BeanUtils的setProperty方法(带列jdbcType语义)
+	 *
+	 * update 2026-9-10 增加jdbcType入参重载:updateSaveFetch等场景回写的行值已经过
+	 * processResultRow归一(json列=String文本、vector/geometry=文本),原固定OTHER类型转换
+	 * 不触发json→POJO/List反序列化与vector/geometry→属性类型转换,String直设对象属性报 argument type
+	 * mismatch(vastbase G100真库json对象列实爆);调用方传FieldMeta.getType()
+	 * (即@Column(type=JdbcTypes.X)注解值,常规列为java.sql.Types码,不命中扩展分支行为不变)
+	 *
+	 * @param bean     目标对象
+	 * @param property 属性名称
+	 * @param value    属性值(自动按属性类型转换)
+	 * @param jdbcType 列的jdbc类型语义(JdbcTypes.JSON/JSONB/VECTOR/GEOMETRY触发扩展类型转换)
+	 * @throws RuntimeException 属性不存在或赋值失败时抛出
+	 */
+	public static void setProperty(Object bean, String property, Object value, int jdbcType) throws RuntimeException {
 		String key = bean.getClass().getName().concat(":set").concat(property);
 		// 利用缓存提升方法匹配效率
 		Method method = setMethods.computeIfAbsent(key, k -> {
@@ -2340,8 +2406,8 @@ public class BeanUtil {
 			}
 		}
 		try {
-			method.invoke(bean, convertType(null, value, JdbcTypes.OTHER,
-					DataType.getType(method.getParameterTypes()[0]), typeName, genericType));
+			method.invoke(bean, convertType(null, value, jdbcType, DataType.getType(method.getParameterTypes()[0]),
+					typeName, genericType));
 		} catch (Exception e) {
 			logger.error("setProperty method execution failed", e);
 			throw new RuntimeException(e.getMessage());
@@ -2504,8 +2570,57 @@ public class BeanUtil {
 	}
 
 	/**
+	 * update 2026-9-11 java数组转'[e1,e2]'文本(元素String.valueOf,与parseArrayText解析
+	 * 形态对称):数组列值承接为String属性时驱动/原生数组的toString为对象地址形态,须显式构建
+	 *
+	 * @param arrayValue java数组(对象数组或原始类型数组)
+	 * @return '[e1,e2]'文本
+	 */
+	private static String buildArrayText(Object arrayValue) {
+		StringBuilder sb = new StringBuilder("[");
+		int len = java.lang.reflect.Array.getLength(arrayValue);
+		for (int i = 0; i < len; i++) {
+			if (i > 0) {
+				sb.append(",");
+			}
+			sb.append(java.lang.reflect.Array.get(arrayValue, i));
+		}
+		return sb.append("]").toString();
+	}
+
+	/**
+	 * update 2026-9-11 解析'[a,b,c]'文本为元素数组(非该形态返回null):数组列值经读路径
+	 * 归一为文本(ResultUtils.normalizeExtTypeValue的java.sql.Array分支——CH向量Array列/
+	 * PG数组列的驱动对象toString为对象地址,必须归一),find(VO)路径的列级归一无法感知目标
+	 * 属性类型,集合/数组属性在convertType的33/34/35分支按本方法还原;元素本身含逗号/中括号
+	 * 时无法无损还原(文本化归一的边界,load系直反射路径保留原始Array对象无此限制)
+	 *
+	 * @param text 待解析文本
+	 * @return 元素字符串数组,'[..]'形态不符时返回null(交回常规转换)
+	 */
+	private static Object[] parseArrayText(String text) {
+		if (text == null) {
+			return null;
+		}
+		String content = text.trim();
+		if (!content.startsWith("[") || !content.endsWith("]")) {
+			return null;
+		}
+		content = content.substring(1, content.length() - 1).trim();
+		if (content.isEmpty()) {
+			return new Object[0];
+		}
+		String[] items = content.split(",");
+		Object[] result = new Object[items.length];
+		for (int i = 0; i < items.length; i++) {
+			result[i] = items[i].trim();
+		}
+		return result;
+	}
+
+	/**
 	 * 对常规类型进行转换，超出部分由自定义类型处理器完成(或配置类型完全一致)
-	 * 
+	 *
 	 * @param values   源数组(支持原始类型数组和对象数组)
 	 * @param typeName 目标数组类型全名，如java.lang.String[]、int[]
 	 * @return 转换后的目标类型数组，类型一致、不在支持范围或非数组时原样返回

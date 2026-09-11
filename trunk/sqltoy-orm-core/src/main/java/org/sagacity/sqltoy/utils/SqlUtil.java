@@ -1295,6 +1295,9 @@ public class SqlUtil {
 				int kind = (columnKinds == null) ? ResultUtils.COLUMN_NORMAL : columnKinds[i];
 				fieldValue = (kind == ResultUtils.COLUMN_TEXT_READ) ? rs.getString(i + 1) : rs.getObject(i + 1);
 				if (null != fieldValue) {
+					// update 2026-9-11 java.sql.Array经normalizeExtTypeValue归一为原生java数组
+					// (保结构),目标形态转换由下方convertType按属性类型分派(String→'[a,b]'文本、
+					// List/Set/数组→元素级转换),此处无需按目标类型区分
 					fieldValue = ResultUtils.normalizeExtTypeValue(fieldValue, dbType,
 							(kind == ResultUtils.COLUMN_EXT_BYTE) ? columnTypes[i] : null);
 					if (decryptHandler != null) {
@@ -2466,8 +2469,35 @@ public class SqlUtil {
 	}
 
 	/**
+	 * update 2026-9-10 truncate语句的方言适配:db2的TRUNCATE TABLE必须携带IMMEDIATE关键字 (裸形态报-104
+	 * END-OF-STATEMENT,12.1.2/12.1.5双版本实测);sqlite无TRUNCATE语法, 改写为delete
+	 * from等价语义(全表删除)。仅处理truncate前缀语句,其余语句原样返回(前缀
+	 * 判断,常规语句零开销);覆盖lightDao.truncate/TableApi.truncate/用户executeSql全部入口
+	 *
+	 * @param sql    待执行语句
+	 * @param dbType 数据库类型
+	 * @return 适配目标库的truncate形态
+	 */
+	static String adaptTruncateSql(String sql, Integer dbType) {
+		if (sql == null || dbType == null) {
+			return sql;
+		}
+		String trimmed = sql.trim();
+		if (!trimmed.toLowerCase(Locale.ROOT).startsWith("truncate")) {
+			return sql;
+		}
+		if (dbType.intValue() == DBType.DB2 && !trimmed.toLowerCase(Locale.ROOT).endsWith("immediate")) {
+			return trimmed.concat(" immediate");
+		}
+		if (dbType.intValue() == DBType.SQLITE) {
+			return trimmed.replaceFirst("(?i)^truncate\\s+table\\s+", "delete from ");
+		}
+		return sql;
+	}
+
+	/**
 	 * 执行Sql语句完成修改操作
-	 * 
+	 *
 	 * @param typeHandler 自定义类型处理器，非null时优先通过其完成参数设置
 	 * @param executeSql  增删改sql语句
 	 * @param params      sql中?对应的参数值数组
@@ -2484,6 +2514,8 @@ public class SqlUtil {
 			boolean processWord) throws Exception {
 		// 对sql进行关键词符号替换
 		String realSql = processWord ? ReservedWordsUtil.convertSql(executeSql, dbType) : executeSql;
+		// update 2026-9-10 truncate语句方言适配(db2须IMMEDIATE/sqlite无truncate语法)
+		realSql = adaptTruncateSql(realSql, dbType);
 		SqlExecuteStat.showSql("execute sql=", realSql, params);
 		boolean hasSetAutoCommit = false;
 		Long updateCounts = null;
@@ -2505,9 +2537,11 @@ public class SqlUtil {
 				// rowversion的排除已上收到语句生成与调用方参数过滤(目标库元数据校准判据),
 				// 语句占位符与参数严格1:1,此层按类型跳过反而造成占位符缺参错位
 				setParamsValue(typeHandler, conn, dbType, pst, params, paramsType, 0);
-				pst.executeUpdate();
 				// 返回update的记录数量
-				this.setResult(Long.valueOf(pst.getUpdateCount()));
+				// update 2026-9-10 改用executeUpdate返回值(JDBC规范即影响行数):sqlite-jdbc
+				// 的getUpdateCount()恒返回0(驱动实现缺陷,update/delete/executeSql计数全部
+				// 失真为0,实测),executeUpdate返回值各驱动均正确
+				this.setResult(Long.valueOf(pst.executeUpdate()));
 			}
 		});
 		if (result != null) {

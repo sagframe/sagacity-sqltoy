@@ -1216,6 +1216,8 @@ public class DialectUtils {
 					// sqlserver udt转换不支持),这些库组合以coalesce包裹替代(实测coalesce接受
 					// geometry/json类型对,null不覆盖原值语义完整保持);其余库沿用nullFunction
 					String wrapFunc = nullFunction;
+					// 直赋形态(不包裹null保持函数):部分库扩展类型无法参与类型合并
+					boolean directAssign = false;
 					if (fieldMeta.getType() == JdbcTypes.GEOMETRY
 							&& (dbType == DBType.DM || dbType == DBType.DB2 || dbType == DBType.OCEANBASE
 									|| DialectExtUtils.isOceanBaseAsMysql() || dbType == DBType.SQLSERVER)) {
@@ -1225,11 +1227,18 @@ public class DialectUtils {
 						wrapFunc = "coalesce";
 					} else if (fieldMeta.getType() == JdbcTypes.VECTOR
 							&& (dbType == DBType.OCEANBASE || DialectExtUtils.isOceanBaseAsMysql())) {
-						// update 2026-9-10 即使报错，也必须要保持col=nvl(?,col) 逻辑，而非直接变成col=?
-						wrapFunc = "coalesce";
+						// update 2026-9-10 ob 4.3.5实测vector列(ob内部为array类型)null保持包裹
+						// 全形态失败:coalesce(?,col)/coalesce(col,?)报"merge array with other type
+						// is not supported"(1235)、ifnull(col,?)报5083 Invalid data type、
+						// case when同报merge array、cast(? as vector)语法不支持——唯一可行形态为
+						// 直赋col=?(null将覆盖原值,ob vector更新的能力边界,与geometry/json的
+						// coalesce可行结论不同)
+						directAssign = true;
 					}
-					// 强调:这里必须要加类似nvl(?,col)模式，逻辑就是弹性修改
-					sql.append(wrapFunc).append("(");
+					// 强调:这里必须要加类似nvl(?,col)模式，逻辑就是弹性修改(directAssign直赋形态除外)
+					if (!directAssign) {
+						sql.append(wrapFunc).append("(");
+					}
 					// 统一模式:先按数据类型分支,类型内再按数据库分派
 					if (fieldMeta.getType() == JdbcTypes.GEOMETRY) {
 						// geometry: 函数名按库分派;ob的ifnull对geometry类型对拒绝(5083),
@@ -1314,8 +1323,10 @@ public class DialectUtils {
 							sql.append("?");
 						}
 					}
-					// nvl的收尾
-					sql.append(",").append(defaultColName).append(")");
+					// nvl的收尾(directAssign直赋形态无包裹无需收尾)
+					if (!directAssign) {
+						sql.append(",").append(defaultColName).append(")");
+					}
 				}
 				meter++;
 			}

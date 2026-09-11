@@ -141,6 +141,16 @@ public class Instr extends IFunction {
 				return result.append(")").toString();
 			}
 		}
+		// update 2026-9-11 clickhouse:无instr函数,position(haystack,needle)逗号形态且参数序
+		// 与instr(str,substr)一致;3/4参的出现次数语义CH无对应,原样保留交目标库响亮报错
+		if (dialect == DBType.CLICKHOUSE) {
+			if ("position".equals(funLow)) {
+				return super.IGNORE;
+			}
+			if (realArgs.length == 2) {
+				return "position(" + realArgs[0] + "," + realArgs[1] + ")";
+			}
+		}
 		return super.IGNORE;
 	}
 }

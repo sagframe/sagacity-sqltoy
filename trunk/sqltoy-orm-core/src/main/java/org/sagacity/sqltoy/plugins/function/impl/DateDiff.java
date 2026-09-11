@@ -3,6 +3,7 @@ package org.sagacity.sqltoy.plugins.function.impl;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
+import org.sagacity.sqltoy.plugins.function.FunctionUtils;
 import org.sagacity.sqltoy.plugins.function.IFunction;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 
@@ -109,7 +110,8 @@ public class DateDiff extends IFunction {
 			}
 			return super.IGNORE;
 		}
-		// update 2026-9-10 vastbase G100 3.0.9(PG兼容模式)实测:date-date返回integer(同vanilla PG),
+		// update 2026-9-10 vastbase G100 3.0.9(PG兼容模式)实测:date-date返回integer(同vanilla
+		// PG),
 		// 与openGauss 5.0返回interval不同,原og系分支的date_part('day',整数)隐式转换后恒为0,
 		// 两参/DAY/WEEK天差全部失真(两参datediff应10得0)——VASTBASE从og系分支归入本PG分支
 		if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.VASTBASE) {
@@ -187,20 +189,25 @@ public class DateDiff extends IFunction {
 			// update 2026-9-6 实测db2 11.5/12.1:无DATEDIFF亦无TIMESTAMPDIFF函数(SQLCODE=-440),
 			// 以DAYS()*86400+MIDNIGHT_SECONDS()组合出epoch总秒数差,除以单位秒数换算;
 			// 两参/日差用DAYS()相减得天数
+			// update 2026-9-10 占位符参数显式定型:DAYS/YEAR/MONTH/MIDNIGHT_SECONDS均为多重载
+			// 函数,裸参数标记无类型信息报-245 ambiguous function(db2 12.1.5实测
+			// datediff(day,:d1,:d2)),占位符参数统一CAST AS TIMESTAMP(字符串/日期绑定均可
+			// 显式定型解析),列/字面量参数自带类型原样保留
+			String d1 = wrapDb2DateExpr((args.length == 2) ? args[1] : realArgs[1]);
+			String d2 = wrapDb2DateExpr((args.length == 2) ? args[0] : realArgs[2]);
 			if (args.length == 2) {
-				return "(DAYS(" + args[0] + ") - DAYS(" + args[1] + "))";
+				return "(DAYS(" + d2 + ") - DAYS(" + d1 + "))";
 			}
 			if (unitType.equals("DAY") || unitType.equals("DD")) {
-				return "(DAYS(" + realArgs[2] + ") - DAYS(" + realArgs[1] + "))";
+				return "(DAYS(" + d2 + ") - DAYS(" + d1 + "))";
 			}
 			if (unitType.equals("MONTH") || unitType.equals("MM")) {
 				// update 2026-9-9 口径统一:年月分量差(原实现仅MONTH分量相减,跨年错误,
 				// 如2024-01→2026-03应为26原返回2,与mysql/oracle/pg等分支契约不一致)
-				return "((YEAR(" + realArgs[2] + ") - YEAR(" + realArgs[1] + "))*12 + MONTH(" + realArgs[2]
-						+ ") - MONTH(" + realArgs[1] + "))";
+				return "((YEAR(" + d2 + ") - YEAR(" + d1 + "))*12 + MONTH(" + d2 + ") - MONTH(" + d1 + "))";
 			}
 			if (unitType.equals("YEAR")) {
-				return "(YEAR(" + realArgs[2] + ") - YEAR(" + realArgs[1] + "))";
+				return "(YEAR(" + d2 + ") - YEAR(" + d1 + "))";
 			}
 			String divisor;
 			if (unitType.equals("WEEK") || unitType.equals("WW")) {
@@ -212,10 +219,11 @@ public class DateDiff extends IFunction {
 			} else {
 				divisor = "1";
 			}
-			return "((DAYS(" + realArgs[2] + ") - DAYS(" + realArgs[1] + "))*86400" + "+(MIDNIGHT_SECONDS("
-					+ realArgs[2] + ") - MIDNIGHT_SECONDS(" + realArgs[1] + ")))/" + divisor;
+			return "((DAYS(" + d2 + ") - DAYS(" + d1 + "))*86400" + "+(MIDNIGHT_SECONDS(" + d2 + ") - MIDNIGHT_SECONDS("
+					+ d1 + ")))/" + divisor;
 		}
-		// update 2026-9-10 VASTBASE已上移归入vanilla PG分支(G100 3.0实测date-date=integer非interval)
+		// update 2026-9-10 VASTBASE已上移归入vanilla PG分支(G100
+		// 3.0实测date-date=integer非interval)
 		if (dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.STARDB
 				|| dbType == DBType.GAUSSDB) {
 			// update 2026-9-5 实测openGauss 5.0.0:date-date相减返回interval(vanilla PG为整数天),
@@ -243,6 +251,41 @@ public class DateDiff extends IFunction {
 				return "trunc(extract(epoch from(" + realArgs[2] + "::timestamp - " + realArgs[1] + "::timestamp))/60)";
 			} else if (unitType.equals("SECOND") || unitType.equals("SS")) {
 				return "round(extract(epoch from(" + realArgs[2] + "::timestamp - " + realArgs[1] + "::timestamp)),0)";
+			}
+			return super.IGNORE;
+		}
+		if (dbType == DBType.CLICKHOUSE) {
+			// update 2026-9-11 clickhouse分支:无datediff(原样透传报Unknown function)。
+			// 天差=toDate相减(日历日差,与pg系口径一致,CH的Date-Date返回整数天);
+			// 年/月=toYear/toMonth分量差(CH原生dateDiff('year')为完整年单位,与契约分量差
+			// 不同值,如2026-06-01→2027-01-01契约=1而dateDiff('year')=0);周=自然天差/7整除
+			// (intDiv);时/分/秒=dateDiff完整单位截断(原生口径即契约);两参=arg0-arg1自然天差;
+			// CH强类型不做String隐式转换,参数统一toDate/toDateTime显式解析(字面量/占位符/列均适用)
+			if (args.length == 2) {
+				return "(toDate(" + args[0] + ") - toDate(" + args[1] + "))";
+			}
+			String d1 = "toDate(" + realArgs[1] + ")";
+			String d2 = "toDate(" + realArgs[2] + ")";
+			if (unitType.equals("YEAR")) {
+				return "(toYear(" + d2 + ") - toYear(" + d1 + "))";
+			}
+			if (unitType.equals("MONTH") || unitType.equals("MM")) {
+				return "((toYear(" + d2 + ") - toYear(" + d1 + "))*12 + toMonth(" + d2 + ") - toMonth(" + d1 + "))";
+			}
+			if (unitType.equals("DAY") || unitType.equals("DD")) {
+				return "(" + d2 + " - " + d1 + ")";
+			}
+			if (unitType.equals("WEEK") || unitType.equals("WW")) {
+				return "intDiv((" + d2 + " - " + d1 + "), 7)";
+			}
+			if (unitType.equals("HOUR") || unitType.equals("HH")) {
+				return "dateDiff('hour',toDateTime(" + realArgs[1] + "),toDateTime(" + realArgs[2] + "))";
+			}
+			if (unitType.equals("MINUTE") || unitType.equals("MI")) {
+				return "dateDiff('minute',toDateTime(" + realArgs[1] + "),toDateTime(" + realArgs[2] + "))";
+			}
+			if (unitType.equals("SECOND") || unitType.equals("SS")) {
+				return "dateDiff('second',toDateTime(" + realArgs[1] + "),toDateTime(" + realArgs[2] + "))";
 			}
 			return super.IGNORE;
 		}
@@ -292,6 +335,23 @@ public class DateDiff extends IFunction {
 	}
 
 	/**
+	 * db2日期参数显式定型(update 2026-9-10):DAYS/YEAR/MONTH/MIDNIGHT_SECONDS均为多重载函数,
+	 * 裸参数标记(?/:name/#[name])无类型信息时报-245 ambiguous function reference (db2
+	 * 12.1.5实测datediff(day,:d1,:d2)),统一CAST AS TIMESTAMP定型(字符串/日期类型绑定
+	 * 均可解析);列/字面量/表达式参数自带类型,原样保留
+	 */
+	private String wrapDb2DateExpr(String expr) {
+		if (expr == null) {
+			return expr;
+		}
+		String argTrim = expr.trim();
+		if ("?".equals(argTrim) || argTrim.matches(":[A-Za-z_][A-Za-z0-9_]*") || argTrim.matches("#\\[[^\\]]+\\]")) {
+			return "CAST(" + argTrim + " AS TIMESTAMP)";
+		}
+		return expr;
+	}
+
+	/**
 	 * sqlite自然日序号表达式(update 2026-9-9):先date()归一到日期文本再取epoch秒整除86400,
 	 * 两日期相减即自然天差,与mysql DATEDIFF的去时间日历日差口径一致。 update 2026-9-10
 	 * 修正:字面量不能带'utc'修饰——'utc'含义为"输入是本地时间,转为UTC", +8时区下清晨时刻(如'2026-01-15
@@ -300,14 +360,9 @@ public class DateDiff extends IFunction {
 	 * 列/表达式(JDBC绑定为毫秒Long)仍经datetime(毫秒/1000,'unixepoch')归一为UTC日期文本
 	 */
 	private String toSqliteDayExpr(String arg) {
-		String tmp = arg.trim();
-		String dateExpr;
-		if (tmp.length() > 2 && tmp.startsWith("'") && tmp.endsWith("'") && tmp.indexOf('\'', 1) == tmp.length() - 1) {
-			dateExpr = tmp;
-		} else {
-			dateExpr = "datetime(" + tmp + "/1000,'unixepoch')";
-		}
-		return "(CAST(strftime('%s',date(" + dateExpr + ")) AS INTEGER)/86400)";
+		// update 2026-9-10 归一逻辑收敛至FunctionUtils.sqliteDateTextExpr(补文本返回函数
+		// 表达式透传+'localtime'本地墙钟口径,与DateFormat/ToChar/ToDate共用)
+		return "(CAST(strftime('%s',date(" + FunctionUtils.sqliteDateTextExpr(arg) + ")) AS INTEGER)/86400)";
 	}
 
 	/**
@@ -316,26 +371,21 @@ public class DateDiff extends IFunction {
 	 * 毫秒列/表达式以datetime(毫秒/1000,'unixepoch')转日期文本
 	 */
 	private String toSqliteDateExpr(String arg) {
-		String tmp = arg.trim();
-		if (tmp.length() > 2 && tmp.startsWith("'") && tmp.endsWith("'") && tmp.indexOf('\'', 1) == tmp.length() - 1) {
-			return tmp;
-		}
-		return "datetime(" + tmp + "/1000,'unixepoch')";
+		return FunctionUtils.sqliteDateTextExpr(arg);
 	}
 
 	/**
-	 * update 2026-9-6 sqlite日期参数归一:裸字符串字面量('YYYY-MM-DD[ HH:MM:SS]')原样
-	 * (strftime('%s','文本','utc')按UTC解析,与毫秒值的unixepoch侧UTC口径一致);
-	 * 其余(列引用/表达式,JDBC绑定值为毫秒Long)须datetime(毫秒/1000,'unixepoch')转UTC日期文本
-	 * (strftime('%s',数字)返回null;不带'utc'的字面量解析按本地时区会与unixepoch侧差一个时区)
+	 * update 2026-9-6 sqlite日期参数归一:裸字符串字面量('YYYY-MM-DD[ HH:MM:SS]')原样;
+	 * 其余(列引用/表达式,JDBC绑定值为毫秒Long)须datetime(毫秒/1000,...)转日期文本
+	 * (strftime('%s',数字)返回null)。 update 2026-9-10
+	 * 口径统一改本地时区:列路径补'localtime'还原本地墙钟(原纯'unixepoch'
+	 * 输出UTC墙钟文本,再经strftime('%s')按本地解析产生双重时区偏移,列与字面量混算时
+	 * HOUR/MINUTE差恒偏一个时区);字面量侧同步摘除'utc'修饰(按本地解析),两侧同为 本地墙钟口径,任意组合差值正确
 	 */
 	private String toSqliteEpochExpr(String arg) {
-		String tmp = arg.trim();
-		if (tmp.length() > 2 && tmp.startsWith("'") && tmp.endsWith("'") && tmp.indexOf('\'', 1) == tmp.length() - 1) {
-			// 字面量须带'utc'修饰保持与unixepoch侧同为UTC口径
-			return tmp + ",'utc'";
-		}
-		return "datetime(" + tmp + "/1000,'unixepoch')";
+		// update 2026-9-10 字面量侧摘除'utc'修饰、列侧补'localtime':两侧统一本地墙钟口径
+		// (原字面量UTC+列unixepoch双重偏移,列与字面量混算HOUR/MINUTE差恒偏一个时区)
+		return FunctionUtils.sqliteDateTextExpr(arg);
 	}
 
 	private String getMatchedType(String unitType, String[][] matchConstract) {
