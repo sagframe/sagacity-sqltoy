@@ -66,12 +66,17 @@ public class DB2DialectUtils {
 			sql.append("?");
 		} else if (jdbcType == JdbcTypes.GEOMETRY) {
 			// update 2026-9-6 实测db2(db2gse扩展,db2se enable_db启用)的ST_Geometry列
-			// 裸?+setString报类型错误,SQL层以db2gse.ST_GeomFromText(wkt,srid)包装,
-			// 参数按VARCHAR绑定(含null实测通过)
-			sql.append("db2gse.ST_GeomFromText(?,0)");
+			// 裸?+setString报类型错误,SQL层以ST_GeomFromText(wkt,srid)包装,参数按VARCHAR绑定(含null实测通过)
+			// update 2026-9-10 按GSE探测+nativeType分派(12.1起内置引擎与GSE可并存,
+			// 纯版本分派会在GSE列上误选内置函数报-408),详见DialectExtUtils.db2GeomFromTextWrap
+			sql.append(DialectExtUtils.db2GeomFromTextWrap(fieldMeta));
 		} else if (jdbcType == JdbcTypes.VECTOR) {
-			// db2 12.1.2+支持vector类型,与应用交互采用'[1,2,3]'字符串形式,cast确保using select子查询列类型正确
-			sql.append("cast(? as VECTOR)");
+			// db2 12.1.2+支持vector类型,与应用交互采用'[1,2,3]'字符串形式
+			// update 2026-9-10 实测12.1.2.0/12.1.5.0双版本:cast(? as VECTOR)与
+			// cast(? as VECTOR(n,FLOAT32))均报错(-20441/-461,参数标记不允许cast到VECTOR),
+			// 裸?+setString全链路通过(update的nvl/coalesce、merge的using+matched update
+			// 及null保留语义、读回getObject为String文本),改用裸?
+			sql.append("?");
 		} else {
 			// 数组、json等特殊类型
 			if (StringUtil.isNotBlank(fieldMeta.getNativeType())) {

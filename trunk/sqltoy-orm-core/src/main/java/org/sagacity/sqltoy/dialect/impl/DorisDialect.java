@@ -35,4 +35,9 @@ public class DorisDialect extends MySqlDialect {
 		return DialectUtils.saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql,
 				entities, batchSize, reflectPropsHandler, conn, dbType, autoCommit);
 	}
+
+	// update 2026-9-10 saveOrUpdateAll无需覆写:父类MySqlDialect的"update计数足额则跳过
+	// insert"判据已豁免oceanbase(其驱动批量计数失真),SR/Doris计数可靠且继承判据——
+	// 其saveAllIgnoreExist为普通insert=PK/UNIQUE模型整行upsert,判据跳过恰为null保持
+	// 语义的正确性所需(无条件insert会把null字段覆盖写回,实测t05 json/vector实爆后收敛)
 }

@@ -28,6 +28,7 @@ import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.model.IgnoreCaseSet;
+import org.sagacity.sqltoy.model.JdbcTypes;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.CollectionUtil;
@@ -576,6 +577,12 @@ public class ClickHouseDialectUtils {
 				sql.append(columnName);
 				sql.append("=");
 				if (fupc.contains(columnName)) {
+					sql.append("?");
+				} else if (fieldMeta.getType() == JdbcTypes.JSON || fieldMeta.getType() == JdbcTypes.JSONB
+						|| fieldMeta.getType() == JdbcTypes.VECTOR) {
+					// update 2026-9-11 JSON/VECTOR列直赋(不包ifnull):CH的JSON为动态类型、
+					// 向量承载为Array(Float32),ifNull(String参数,JSON/Array列)类型合并失败
+					// (同ob vector的merge array类问题),null将覆盖原值为CH更新的能力边界
 					sql.append("?");
 				} else {
 					// 修改时间设置数据库时间nvl(?,current_timestamp)

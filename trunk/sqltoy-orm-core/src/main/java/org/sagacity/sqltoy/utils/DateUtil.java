@@ -390,11 +390,12 @@ public class DateUtil {
 			}
 		}
 		// 针对高精度进行特殊处理
+		// update 2026-9-9 复用FORMATTER_CACHE(原每次ofPattern现场解析格式串,解析路径高频)
 		if (isLocalTime) {
-			LocalTime time = LocalTime.parse(dateStr, DateTimeFormatter.ofPattern(realDF));
+			LocalTime time = LocalTime.parse(dateStr, getFormatter(realDF, locale));
 			return asDate(time);
 		} else if (isLocalDateTime) {
-			LocalDateTime localDateTime = LocalDateTime.parse(dateStr, DateTimeFormatter.ofPattern(realDF));
+			LocalDateTime localDateTime = LocalDateTime.parse(dateStr, getFormatter(realDF, locale));
 			return asDate(localDateTime);
 		}
 		Date result = null;
@@ -637,14 +638,15 @@ public class DateUtil {
 		}
 		LocalDateTime result = null;
 		try {
+			// update 2026-9-9 复用FORMATTER_CACHE(原每次ofPattern现场解析格式串,解析路径高频)
 			if (isTime) {
-				LocalTime timeResult = LocalTime.parse(dateStr, DateTimeFormatter.ofPattern(realDF));
+				LocalTime timeResult = LocalTime.parse(dateStr, getFormatter(realDF, SqlToyConstants.getLocale()));
 				return LocalDateTime.of(LocalDate.now(), timeResult);
 			} else if (isDate) {
 				Date dateResult = new SimpleDateFormat(realDF).parse(dateStr);
 				return asLocalDateTime(dateResult);
 			}
-			result = LocalDateTime.parse(dateStr, DateTimeFormatter.ofPattern(realDF));
+			result = LocalDateTime.parse(dateStr, getFormatter(realDF, SqlToyConstants.getLocale()));
 		} catch (Exception e) {
 			logger.error("failed to parse the date string:[{}] with the format:[{}]", realDF, dateStr, e);
 		}
@@ -757,11 +759,12 @@ public class DateUtil {
 	private static final java.util.concurrent.ConcurrentHashMap<String, DateTimeFormatter> FORMATTER_CACHE = new java.util.concurrent.ConcurrentHashMap<>();
 
 	private static DateTimeFormatter getFormatter(String format, Locale locale) {
-		String key = format;
-		if (locale != null) {
-			key = key.concat("|").concat(locale.toString());
-		}
-		return FORMATTER_CACHE.computeIfAbsent(key, k -> DateTimeFormatter.ofPattern(format, locale));
+		// update 2026-9-9 null
+		// locale兜底为默认Locale:DateTimeFormatter.ofPattern(pattern,null)抛NPE,
+		// 与原各处单参ofPattern(默认Locale)行为保持一致
+		Locale realLocale = (locale == null) ? SqlToyConstants.getLocale() : locale;
+		String key = format.concat("|").concat(realLocale.toString());
+		return FORMATTER_CACHE.computeIfAbsent(key, k -> DateTimeFormatter.ofPattern(format, realLocale));
 	}
 
 	public static String formatDate(Object dt, String format, Locale locale) {

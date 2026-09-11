@@ -8,7 +8,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.postgresql.util.PGobject;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DecryptHandler;
@@ -388,17 +387,27 @@ public class PostgreSqlDialectUtils {
 	 */
 	public static void setJSONValue(PreparedStatement pst, int paramIndex, int jdbcType, String jsonStr)
 			throws SQLException {
-		PGobject pgObject = new PGobject();
-		pgObject.setType(jdbcType == JdbcTypes.JSONB ? "jsonb" : "json");
-		pgObject.setValue(jsonStr);
-		pst.setObject(paramIndex, pgObject);
+		// update 2026-9-9 已废弃:统一走JSONTypeUtil.setJSONValue(按连接URL scheme选择同源驱动
+		// PGobject,规避跨驱动错配),本方法此前已无调用者且使本类硬依赖org.postgresql驱动
+		Object pgObject = SqlUtil.getPGobjectByConn(pst, (jdbcType == JdbcTypes.JSONB) ? "jsonb" : "json", jsonStr);
+		if (pgObject != null) {
+			pst.setObject(paramIndex, pgObject);
+		} else {
+			pst.setObject(paramIndex, jsonStr, java.sql.Types.OTHER);
+		}
 	}
 
 	public static void updateJSON(ResultSet rs, String columnName, int jdbcType, String jsonStr) throws SQLException {
-		PGobject pgObject = new PGobject();
-		pgObject.setType(jdbcType == JdbcTypes.JSONB ? "jsonb" : "json");
-		pgObject.setValue(jsonStr);
-		rs.updateObject(columnName, pgObject);
+		// update 2026-9-9 已废弃:统一走JSONTypeUtil.updateJSONValue,原因同setJSONValue
+		// (此处按同源PGobject委托实现,不传null dbType避免JSONTypeUtil内isPGFamily拆箱NPE)
+		Object pgObject = (rs.getStatement() == null) ? null
+				: SqlUtil.getPGobjectByConn(rs.getStatement().getConnection(),
+						(jdbcType == JdbcTypes.JSONB) ? "jsonb" : "json", jsonStr);
+		if (pgObject != null) {
+			rs.updateObject(columnName, pgObject);
+		} else {
+			rs.updateObject(columnName, jsonStr);
+		}
 	}
 
 	/**
@@ -411,10 +420,13 @@ public class PostgreSqlDialectUtils {
 	 */
 	public static void setVectorValue(PreparedStatement pst, int paramIndex, String pgTypeName, String vectorStr)
 			throws SQLException {
-		PGobject pgObject = new PGobject();
-		pgObject.setType(pgTypeName);
-		pgObject.setValue(vectorStr);
-		pst.setObject(paramIndex, pgObject);
+		// update 2026-9-9 已废弃:统一走SqlUtil按连接URL scheme选择同源驱动PGobject
+		Object pgObject = SqlUtil.getPGobjectByConn(pst, pgTypeName, vectorStr);
+		if (pgObject != null) {
+			pst.setObject(paramIndex, pgObject);
+		} else {
+			pst.setObject(paramIndex, vectorStr, java.sql.Types.OTHER);
+		}
 	}
 
 	/**
@@ -427,10 +439,14 @@ public class PostgreSqlDialectUtils {
 	 */
 	public static void updateVector(ResultSet rs, String columnName, String pgTypeName, String vectorStr)
 			throws SQLException {
-		PGobject pgObject = new PGobject();
-		pgObject.setType(pgTypeName);
-		pgObject.setValue(vectorStr);
-		rs.updateObject(columnName, pgObject);
+		// update 2026-9-9 已废弃:统一走SqlUtil.updateVectorValue,原因同setVectorValue
+		Object pgObject = (rs.getStatement() == null) ? null
+				: SqlUtil.getPGobjectByConn(rs.getStatement().getConnection(), pgTypeName, vectorStr);
+		if (pgObject != null) {
+			rs.updateObject(columnName, pgObject);
+		} else {
+			rs.updateObject(columnName, vectorStr);
+		}
 	}
 
 	/**
@@ -441,10 +457,13 @@ public class PostgreSqlDialectUtils {
 	 * @throws SQLException
 	 */
 	public static void setGeometryValue(PreparedStatement pst, int paramIndex, String geomStr) throws SQLException {
-		PGobject pgObject = new PGobject();
-		pgObject.setType("geometry");
-		pgObject.setValue(geomStr);
-		pst.setObject(paramIndex, pgObject);
+		// update 2026-9-9 已废弃:统一走SqlUtil按连接URL scheme选择同源驱动PGobject
+		Object pgObject = SqlUtil.getPGobjectByConn(pst, "geometry", geomStr);
+		if (pgObject != null) {
+			pst.setObject(paramIndex, pgObject);
+		} else {
+			pst.setObject(paramIndex, geomStr, java.sql.Types.OTHER);
+		}
 	}
 
 	/**
@@ -455,9 +474,13 @@ public class PostgreSqlDialectUtils {
 	 * @throws SQLException
 	 */
 	public static void updateGeometry(ResultSet rs, String columnName, String geomStr) throws SQLException {
-		PGobject pgObject = new PGobject();
-		pgObject.setType("geometry");
-		pgObject.setValue(geomStr);
-		rs.updateObject(columnName, pgObject);
+		// update 2026-9-9 已废弃:统一走SqlUtil.updateGeometryValue,原因同setGeometryValue
+		Object pgObject = (rs.getStatement() == null) ? null
+				: SqlUtil.getPGobjectByConn(rs.getStatement().getConnection(), "geometry", geomStr);
+		if (pgObject != null) {
+			rs.updateObject(columnName, pgObject);
+		} else {
+			rs.updateObject(columnName, geomStr);
+		}
 	}
 }

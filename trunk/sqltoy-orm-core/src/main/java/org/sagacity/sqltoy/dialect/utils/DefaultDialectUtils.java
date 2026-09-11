@@ -28,6 +28,7 @@ import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.DataVersionConfig;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
+import org.sagacity.sqltoy.config.model.GeneratedType;
 import org.sagacity.sqltoy.config.model.OperateType;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
@@ -35,6 +36,7 @@ import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.model.ColumnMeta;
+import org.sagacity.sqltoy.model.JdbcTypes;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
@@ -107,19 +109,16 @@ public class DefaultDialectUtils {
 		}
 		// 给原始sql标记上特殊的开始和结尾，便于sql拦截器快速定位到原始sql并进行条件补充
 		innerSql = SqlUtilsExt.markOriginalSql(innerSql);
+		// update 2026-9-10 移除sag_row_number随机列,改派生表+order by rand():原形态将随机列
+		// 混入结果集(注入形态居首/包裹形态亦含),单值映射(findRandom的resultType=String/Long
+		// 等按第1列取值)读到随机数而非业务列,多列行更触发ArrayList cannot be cast(mysql系
+		// 实测);order by rand() limit n为mysql/clickhouse/impala系取随机行的标准形态,结果集
+		// 与原始sql列完全一致,VO/Map映射也不再混入sag_row_number键;派生表包裹天然中和
+		// 内层order by/union(原hasOrderByOrUnion双分支统一为单一包裹形态)
 		sql.append("select " + SqlToyConstants.INTERMEDIATE_TABLE1 + ".* from (");
-		// sql中是否存在排序或union,存在order 或union 则在sql外包裹一层
-		if (DialectUtils.hasOrderByOrUnion(innerSql)) {
-			sql.append("select rand() as sag_row_number," + SqlToyConstants.INTERMEDIATE_TABLE + ".* from (");
-			sql.append(innerSql);
-			sql.append(") ");
-			sql.append(SqlToyConstants.INTERMEDIATE_TABLE);
-			sql.append(" ");
-		} else {
-			sql.append(innerSql.replaceFirst("(?i)select", "select rand() as sag_row_number,"));
-		}
+		sql.append(innerSql);
 		sql.append(" )  as " + SqlToyConstants.INTERMEDIATE_TABLE1);
-		sql.append(" order by " + SqlToyConstants.INTERMEDIATE_TABLE1 + ".sag_row_number limit ");
+		sql.append(" order by rand() limit ");
 		sql.append(randomCount);
 		if (sqlToyConfig.isHasFast()) {
 			if (!sqlToyConfig.isIgnoreBracket()) {
@@ -617,8 +616,14 @@ public class DefaultDialectUtils {
 		}
 		List rowList = (List) updateResult.get(0);
 		// 覆盖返回值
-		for (int i = 0; i < entityMeta.getFieldsArray(false).length; i++) {
-			BeanUtil.setProperty(entity, entityMeta.getFieldsArray(false)[i], rowList.get(i));
+		// update 2026-9-10 传入字段注解的jdbcType:回读行值已归一为文本形态(json列=String),
+		// 原OTHER类型转换不触发json→POJO/List反序列化,String直设对象属性报argument type
+		// mismatch(vastbase G100真库updateSaveFetch的json对象列实爆,vector/geometry属性同理受益)
+		String[] overrideFields = entityMeta.getFieldsArray(false);
+		for (int i = 0; i < overrideFields.length; i++) {
+			FieldMeta overrideFieldMeta = entityMeta.getFieldMeta(overrideFields[i]);
+			BeanUtil.setProperty(entity, overrideFields[i], rowList.get(i),
+					(overrideFieldMeta == null) ? JdbcTypes.OTHER : overrideFieldMeta.getType());
 		}
 		return entity;
 	}
@@ -777,7 +782,7 @@ public class DefaultDialectUtils {
 							colMeta.setColumnSize(rs.getInt("COLUMN_SIZE"));
 							colMeta.setDecimalDigits(rs.getInt("DECIMAL_DIGITS"));
 							colMeta.setNumPrecRadix(rs.getInt("NUM_PREC_RADIX"));
-							colMeta.setComments(StringUtil.escapeComment(rs.getString("REMARKS")));
+							colMeta.setComments(StringUtil.escapeComment(readRemarks(rs, "REMARKS")));
 							// colMeta.setReadOnly(rs.getBoolean("READ_ONLY"));
 							colMeta.setAutoIncrement(false);
 							// oracle autoincrement 取法不同
@@ -801,6 +806,24 @@ public class DefaultDialectUtils {
 											"failed to read the IS_AUTOINCREMENT column info (the driver may not support it)!",
 											e);
 								}
+							}
+							// update 2026-9-11 计算列(生成列)识别:JDBC4.3可选伪列IS_GENERATEDCOLUMN
+							// (mysql/pg/sqlserver/h2等驱动实测支持),命中置generatedType=STORED——
+							// JDBC元数据无法区分VIRTUAL/STORED,统一按STORED语义(不可参与insert/update
+							// 写链路,与实体注解GeneratedType.STORED的框架处理一致);sqlite-jdbc等
+							// 无此伪列的驱动保持DEFAULT(0),VO侧可用@Column(generatedType=...)显式声明
+							try {
+								String isGenerated = rs.getString("IS_GENERATEDCOLUMN");
+								if (isGenerated != null
+										&& ("true".equalsIgnoreCase(isGenerated) || "YES".equalsIgnoreCase(isGenerated)
+												|| "Y".equalsIgnoreCase(isGenerated) || "1".equals(isGenerated))) {
+									colMeta.setGeneratedType(GeneratedType.STORED.getValue());
+								}
+							} catch (Exception e) {
+								// 部分驱动不支持IS_GENERATEDCOLUMN伪列,保持默认非计算列
+								logger.debug(
+										"failed to read the IS_GENERATEDCOLUMN column info (the driver may not support it)!",
+										e);
 							}
 							if (rs.getInt("NULLABLE") == 1) {
 								colMeta.setNullable(true);
@@ -836,6 +859,35 @@ public class DefaultDialectUtils {
 			}
 		}
 		return tableCols;
+	}
+
+	/**
+	 * update 2026-9-11 备注列容错读取:oceanbase等mariadb系驱动的getTables将REMARKS以byte[]
+	 * 返回(rs.getString被驱动toString为"[B@hash"形态,ob 4.3.5表备注实测),统一按UTF-8归一为文本
+	 *
+	 * @param rs         元数据结果集
+	 * @param columnName 备注列名
+	 * @return 备注文本,null保持null
+	 * @throws SQLException
+	 */
+	static String readRemarks(ResultSet rs, String columnName) throws SQLException {
+		Object raw = rs.getObject(columnName);
+		if (raw == null) {
+			return null;
+		}
+		if (raw instanceof byte[]) {
+			return new String((byte[]) raw, java.nio.charset.StandardCharsets.UTF_8);
+		}
+		String str = raw.toString();
+		// oceanbase驱动实测getObject已将byte[]备注预先toString为"[B@hash"形态,
+		// 按字节重取并UTF-8解码还原(getBytes为字节访问器,不经过驱动的字符串转换)
+		if (str.matches("\\[B@[0-9a-fA-F]+")) {
+			byte[] bytes = rs.getBytes(columnName);
+			if (bytes != null) {
+				return new String(bytes, java.nio.charset.StandardCharsets.UTF_8);
+			}
+		}
+		return str;
 	}
 
 	/**
@@ -997,6 +1049,12 @@ public class DefaultDialectUtils {
 	@SuppressWarnings("unchecked")
 	public static List<TableMeta> getTables(String catalogPattern, String schemaPattern, String tableNamePattern,
 			Connection conn, Integer dbType, String dialect) throws Exception {
+		// update 2026-9-11 oceanbase驱动的getTables元数据构造缺陷:TABLE_COMMENT的byte[]被
+		// 预先toString为"[B@hash"形态写入结果行(getString/getObject/getBytes均取不回原始
+		// 字节,ob 4.3.5中文表备注实测不可恢复),绕行JDBC元数据直查information_schema
+		if (dbType != null && (dbType.intValue() == DBType.OCEANBASE || DialectExtUtils.isOceanBaseAsMysql())) {
+			return getTablesFromInformationSchema(conn, tableNamePattern);
+		}
 		String realCatalogPattern = SqlToyConstants.getDialectLowcaseStrategyName(catalogPattern, dialect);
 		String realSchemaPattern = SqlToyConstants.getDialectLowcaseStrategyName(schemaPattern, dialect);
 		String realTableNamePattern = SqlToyConstants.getDialectLowcaseStrategyName(tableNamePattern, dialect);
@@ -1013,7 +1071,7 @@ public class DefaultDialectUtils {
 					tableMeta.setTableName(rs.getString("TABLE_NAME"));
 					tableMeta.setSchema(rs.getString("TABLE_SCHEM"));
 					tableMeta.setType(rs.getString("TABLE_TYPE"));
-					tableMeta.setRemarks(StringUtil.escapeComment(rs.getString("REMARKS")));
+					tableMeta.setRemarks(StringUtil.escapeComment(readRemarks(rs, "REMARKS")));
 					tables.add(tableMeta);
 				}
 				this.setResult(tables);
@@ -1022,8 +1080,68 @@ public class DefaultDialectUtils {
 	}
 
 	/**
+	 * update 2026-9-11 oceanbase专用:直查information_schema.tables获取表元数据(规避驱动
+	 * getTables将TABLE_COMMENT预先toString为"[B@hash"的构造缺陷),TABLE_TYPE按JDBC惯例 归一(BASE
+	 * TABLE→TABLE);表名匹配语义与默认实现一致(无%时按contains包裹)
+	 *
+	 * @param conn             数据库连接
+	 * @param tableNamePattern 表名匹配串,支持%通配符
+	 * @return 表元数据集合
+	 * @throws Exception
+	 */
+	private static List<TableMeta> getTablesFromInformationSchema(Connection conn, String tableNamePattern)
+			throws Exception {
+		StringBuilder sql = new StringBuilder(
+				"select table_name,table_comment,table_type from information_schema.tables"
+						+ " where table_schema=database()");
+		final String pattern;
+		if (StringUtil.isNotBlank(tableNamePattern)) {
+			sql.append(" and table_name like ?");
+			pattern = tableNamePattern.contains("%") ? tableNamePattern : "%" + tableNamePattern + "%";
+		} else {
+			pattern = null;
+		}
+		PreparedStatement pst = conn.prepareStatement(sql.toString());
+		// 设置全局statementTimeout，默认为null
+		if (SqlToyConstants.defaultStatementTimeout != null && SqlToyConstants.defaultStatementTimeout > 0) {
+			pst.setQueryTimeout(SqlToyConstants.defaultStatementTimeout);
+		}
+		ResultSet rs = null;
+		// 通过preparedStatementProcess反调，第二个参数是pst
+		return (List<TableMeta>) SqlUtil.preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
+			@Override
+			public void execute(Object rowData, PreparedStatement pst, ResultSet rs) throws Exception {
+				try {
+					if (pattern != null) {
+						pst.setString(1, pattern);
+					}
+					rs = pst.executeQuery();
+					List<TableMeta> tables = new ArrayList<TableMeta>();
+					while (rs.next()) {
+						TableMeta tableMeta = new TableMeta();
+						tableMeta.setTableName(rs.getString("table_name"));
+						String tableType = rs.getString("table_type");
+						tableMeta.setType(
+								(tableType != null && tableType.toUpperCase(Locale.ROOT).contains("VIEW")) ? "VIEW"
+										: "TABLE");
+						tableMeta.setRemarks(StringUtil.escapeComment(rs.getString("table_comment")));
+						tables.add(tableMeta);
+					}
+					this.setResult(tables);
+				} catch (Exception e) {
+					throw e;
+				} finally {
+					if (rs != null) {
+						rs.close();
+					}
+				}
+			}
+		});
+	}
+
+	/**
 	 * 设置会话级锁超时
-	 * 
+	 *
 	 * @param dbType
 	 * @param conn
 	 * @param lockMode

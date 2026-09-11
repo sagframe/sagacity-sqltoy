@@ -430,6 +430,8 @@ public class OracleDialectUtils {
 			Integer dbType, String dialect) throws Exception {
 		List<ColumnMeta> tableColumns = DefaultDialectUtils.getTableColumns(catalog, schema, tableName, conn, dbType,
 				dialect);
+		// update 2026-9-11 表名按方言大小写策略转换(oracle大写存储,小写原样绑定查不到列备注)
+		final String realTableName = SqlToyConstants.getDialectLowcaseStrategyName(tableName, dialect);
 		String sql = "SELECT COLUMN_NAME,COMMENTS FROM USER_COL_COMMENTS WHERE TABLE_NAME=?";
 		PreparedStatement pst = conn.prepareStatement(sql);
 		// 设置全局statementTimeout，默认为null
@@ -443,7 +445,7 @@ public class OracleDialectUtils {
 					@Override
 					public void execute(Object rowData, PreparedStatement pst, ResultSet rs) throws Exception {
 						try {
-							pst.setString(1, tableName);
+							pst.setString(1, realTableName);
 							rs = pst.executeQuery();
 							Map<String, String> colComments = new HashMap<String, String>();
 							String comment;
@@ -475,8 +477,11 @@ public class OracleDialectUtils {
 	@SuppressWarnings("unchecked")
 	public static List<TableMeta> getTables(String catalog, String schema, String tableName, Connection conn,
 			Integer dbType, String dialect) throws Exception {
+		// update 2026-9-11 pattern按方言大小写策略转换:oracle元数据大写存储且LIKE大小写敏感,
+		// 小写pattern原样绑定返回空清单(oracle 23ai实测TableApi.getTables空结果)
+		final String realTableName = SqlToyConstants.getDialectLowcaseStrategyName(tableName, dialect);
 		String sql = "select * from user_tab_comments";
-		if (StringUtil.isNotBlank(tableName)) {
+		if (StringUtil.isNotBlank(realTableName)) {
 			sql = sql.concat(" where TABLE_NAME like ?");
 		}
 		PreparedStatement pst = conn.prepareStatement(sql);
@@ -490,11 +495,11 @@ public class OracleDialectUtils {
 			@Override
 			public void execute(Object rowData, PreparedStatement pst, ResultSet rs) throws Exception {
 				try {
-					if (StringUtil.isNotBlank(tableName)) {
-						if (tableName.contains("%")) {
-							pst.setString(1, tableName);
+					if (StringUtil.isNotBlank(realTableName)) {
+						if (realTableName.contains("%")) {
+							pst.setString(1, realTableName);
 						} else {
-							pst.setString(1, "%" + tableName + "%");
+							pst.setString(1, "%" + realTableName + "%");
 						}
 					}
 					rs = pst.executeQuery();

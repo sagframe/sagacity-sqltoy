@@ -487,4 +487,21 @@ public class FunctionConvertMatrixTest {
 		String mysql = convert("select concat_ws('-',name,remark) from t_func where id=1", "mysql");
 		assertTrue(mysql.contains("concat_ws('-'"), "mysql原生concat_ws应保留: " + mysql);
 	}
+
+	// ---------------- 下划线前缀自定义函数防误命中 ----------------
+
+	/**
+	 * update 2026-9-10 锁定保证:base64_decode/my_substr等下划线前缀的自定义函数名不被误改写。
+	 * 机制:函数正则统一\W前缀,Java正则中_属于\w(非\W),xxx_decode(的下划线位构不成匹配;
+	 * 若未来调整正则前缀形态(如改零宽断言),本用例防止该行为回退。
+	 */
+	@Test
+	public void underscorePrefixedCustomFunctionsUntouched() {
+		String sql = "select base64_decode(col,'a','b'),my_substr(col,1,2),xxx_decode(a,b,c),"
+				+ "my_nvl(a,b),x_to_char(d,'yyyy'),my_group_concat(col) from t";
+		for (String dialect : new String[] { "mysql", "oracle", "sqlserver", "h2", "postgresql", "db2", "sqlite",
+				"oceanbase" }) {
+			assertEquals(sql, convert(sql, dialect), dialect + "不应改写下划线前缀自定义函数");
+		}
+	}
 }

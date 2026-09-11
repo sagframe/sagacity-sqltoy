@@ -6,7 +6,9 @@ import java.nio.ByteOrder;
 
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.io.ByteOrderValues;
 import org.locationtech.jts.io.WKBReader;
+import org.locationtech.jts.io.WKBWriter;
 import org.locationtech.jts.io.WKTReader;
 import org.locationtech.jts.io.WKTWriter;
 import org.slf4j.Logger;
@@ -154,6 +156,37 @@ public class JtsGeometryCodec {
 		Geometry geometry = new WKTReader().read(str);
 		geometry.setSRID(srid);
 		return geometry;
+	}
+
+	/**
+	 * 将WKT/EWKT文本解析编码为mysql内部格式字节(4字节小端SRID前缀+标准WKB,与getBytes读回形态一致),
+	 * 供mysql系rs回写等拒绝字符串绑定的场景使用(update 2026-9-9 自SqlUtil.toGeometryBytes下沉:
+	 * SqlUtil为全场景入口类,不得含JTS符号引用,无jts-core环境执行instanceof/new即抛NoClassDefFoundError,
+	 * 且catch(Exception)捕不到Error;本类仅经GeometryTypeUtil.hasJts()门控后被加载)
+	 *
+	 * @param wkt WKT/EWKT文本
+	 * @return mysql内部格式字节,解析失败返回null
+	 */
+	static byte[] wktToMysqlInternalBytes(String wkt) {
+		try {
+			Object geometry = parse(wkt);
+			if (!(geometry instanceof Geometry)) {
+				return null;
+			}
+			// mysql内部格式的WKB部分为小端字节序(0x01标记),WKBWriter默认大端会被服务器拒绝
+			byte[] wkb = new WKBWriter(2, ByteOrderValues.LITTLE_ENDIAN).write((Geometry) geometry);
+			int srid = ((Geometry) geometry).getSRID();
+			byte[] result = new byte[wkb.length + 4];
+			result[0] = (byte) (srid & 0xFF);
+			result[1] = (byte) ((srid >> 8) & 0xFF);
+			result[2] = (byte) ((srid >> 16) & 0xFF);
+			result[3] = (byte) ((srid >> 24) & 0xFF);
+			System.arraycopy(wkb, 0, result, 4, wkb.length);
+			return result;
+		} catch (Exception e) {
+			logger.debug("failed to encode mysql geometry bytes:{}", e.getMessage());
+			return null;
+		}
 	}
 
 	/**
@@ -547,8 +580,8 @@ public class JtsGeometryCodec {
 			}
 			if (etype == 1003) {
 				if (shell != null) {
-					polygons.add(factory.createPolygon(shell,
-							holes.toArray(new org.locationtech.jts.geom.LinearRing[0])));
+					polygons.add(
+							factory.createPolygon(shell, holes.toArray(new org.locationtech.jts.geom.LinearRing[0])));
 				}
 				shell = ring;
 				holes = new java.util.ArrayList<>();

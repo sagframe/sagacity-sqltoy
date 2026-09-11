@@ -168,7 +168,7 @@ public class SqlServerDialectUtils {
 	@SuppressWarnings("unchecked")
 	public static List<TableMeta> getTables(String catalog, String schema, String tableName, Connection conn,
 			Integer dbType, String dialect) throws Exception {
-		String sql = "select d.name TABLE_NAME, cast(isnull(f.value,'') as varchar(1000)) COMMENTS,d.xtype TABLE_TYPE"
+		String sql = "select d.name TABLE_NAME, cast(isnull(f.value,'') as nvarchar(1000)) COMMENTS,d.xtype TABLE_TYPE"
 				+ " from syscolumns a "
 				+ "		 inner join sysobjects d on a.id=d.id and d.xtype in ('U','V') and d.name<>'dtproperties' "
 				+ "		 left join sys.extended_properties f on d.id=f.major_id and f.minor_id=0 "
@@ -199,8 +199,13 @@ public class SqlServerDialectUtils {
 					while (rs.next()) {
 						TableMeta tableMeta = new TableMeta();
 						tableMeta.setTableName(rs.getString("TABLE_NAME"));
-						tableMeta.setType(rs.getString("TABLE_TYPE"));
-						if ("V".equals(tableMeta.getType())) {
+						// update 2026-9-11 sysobjects.xtype为CHAR(2),视图值'V '带尾随空格,
+						// 原"V".equals恒不命中致视图被归为TABLE(sqlserver2022实测),trim后判型
+						String rawType = rs.getString("TABLE_TYPE");
+						if (rawType != null) {
+							rawType = rawType.trim();
+						}
+						if ("V".equals(rawType)) {
 							tableMeta.setType("VIEW");
 						} else {
 							tableMeta.setType("TABLE");
@@ -227,7 +232,7 @@ public class SqlServerDialectUtils {
 		List<ColumnMeta> tableColumns = DefaultDialectUtils.getTableColumns(catalog, schema, tableName, conn, dbType,
 				dialect);
 		String sql = "SELECT a.name COLUMN_NAME,"
-				+ "				 cast(isnull(g.[value],'') as varchar(1000)) as COMMENTS "
+				+ "				 cast(isnull(g.[value],'') as nvarchar(1000)) as COMMENTS "
 				+ "				 FROM syscolumns a  inner join sysobjects d on a.id=d.id "
 				+ "				 and d.xtype='U' and d.name<>'dtproperties' "
 				+ "				 left join syscomments e on a.cdefault=e.id"

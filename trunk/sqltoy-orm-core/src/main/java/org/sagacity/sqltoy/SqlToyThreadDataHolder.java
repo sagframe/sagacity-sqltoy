@@ -74,10 +74,10 @@ public class SqlToyThreadDataHolder {
 		return count;
 	}
 
+	// update 2026-9-9 各clear方法去除remove()后的set(null):set(null)会重新插入null值entry,
+	// 使remove清理失效(池化线程残留entry,TransmittableThreadLocal场景还会向子线程传播null项)
 	public static void clearCounter() {
 		counterThreadLocal.remove();
-		counterThreadLocal.set(null);
-
 	}
 
 	/**
@@ -96,18 +96,15 @@ public class SqlToyThreadDataHolder {
 	// 清除语言
 	public static void clearLanguage() {
 		i18nThreadLocal.remove();
-		i18nThreadLocal.set(null);
 	}
 
 	// 恢复统一更新字段处理
 	public static void resumeUnifyUpdate() {
 		unifyUpdateFields.remove();
-		unifyUpdateFields.set(null);
 	}
 
 	public static void clearFreeScene() {
 		freeSceneThreadLocal.remove();
-		freeSceneThreadLocal.set(null);
 	}
 
 	public static Integer getActuallyDBType() {
@@ -117,7 +114,6 @@ public class SqlToyThreadDataHolder {
 
 	public static void clearActuallyDBType() {
 		dbProfile.remove();
-		dbProfile.set(null);
 	}
 
 	public static void setDBProfile(DBProfile profile) {
@@ -130,7 +126,6 @@ public class SqlToyThreadDataHolder {
 
 	public static void clearDBProfile() {
 		dbProfile.remove();
-		dbProfile.set(null);
 	}
 
 	public static void clearAll() {

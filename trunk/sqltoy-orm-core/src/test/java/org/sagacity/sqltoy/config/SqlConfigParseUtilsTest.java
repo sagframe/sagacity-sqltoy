@@ -647,6 +647,21 @@ public class SqlConfigParseUtilsTest {
 		}
 	}
 
+	@Test
+	public void testMultiSplitDelimiter() {
+		// 多个@split时,前一个的自定义分隔符不能泄漏给后续默认分隔符的@split(?)
+		String sql = "select * from t where a in (@split(:a,';')) and b in (@split(:b))";
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "a", "b" },
+				new Object[] { "1;2;3", "4,5" });
+		System.err.println(result.getSql());
+		// :a按';'切成3个,:b按默认逗号切成2个,in展开后共5个参数
+		assertEquals(5, result.getParamsValue().length);
+		for (Object param : result.getParamsValue()) {
+			// 若分隔符泄漏,"4,5"不会被切开而原样出现在参数中
+			assertFalse("4,5".equals(param));
+		}
+	}
+
 	// 如何解决@loop() 循环中存在in (:ids) ids数据超过1000的问题，用@include(:sqlScript) 来替换loop,
 	@Test
 	public void testDynamicInclude() throws Exception {

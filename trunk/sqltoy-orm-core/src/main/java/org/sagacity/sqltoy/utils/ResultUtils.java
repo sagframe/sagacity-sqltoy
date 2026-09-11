@@ -1417,14 +1417,15 @@ public class ResultUtils {
 	}
 
 	// 列读取策略标记(查询级预分类,processResultRow行循环内仅做int比较)
+	// update 2026-9-9 提升为public:SqlUtil的VO直映射路径(reflectResultRowToVOClass)复用同一套策略
 	/** 常规列:getObject取值,常规类型经归一化入口快速通道直通 */
-	private static final int COLUMN_NORMAL = 0;
+	public static final int COLUMN_NORMAL = 0;
 	/** 文本化读取列:oracle的JSON/VECTOR(getObject直接抛错)与db2(db2gse)的ST_Geometry(驱动混淆对象) */
-	private static final int COLUMN_TEXT_READ = 1;
+	public static final int COLUMN_TEXT_READ = 1;
 	/**
 	 * byte[]扩展列:h2的JSON、sqlserver/mysql系的VECTOR与GEOMETRY(getObject返回byte[]按列类型解码)
 	 */
-	private static final int COLUMN_EXT_BYTE = 2;
+	public static final int COLUMN_EXT_BYTE = 2;
 
 	/**
 	 * update 2026-9-6 按dbType与列元数据类型名对结果集各列预分类(查询级一次,行循环零字符串判定):
@@ -1467,6 +1468,9 @@ public class ResultUtils {
 			if (oracle && ("JSON".equals(t) || "VECTOR".equals(t))) {
 				kinds[i] = COLUMN_TEXT_READ;
 			} else if (db2gse && t.contains("ST_GEOMETRY")) {
+				// update 2026-9-10 已知边界:db2gse的ST_Geometry列getString返回WKT文本,而12.1+
+				// 内置空间引擎的ST_GEOMETRY列getString返回驱动内部格式hex文本(无公开格式文档不做
+				// 客户端解码),内置列读回WKT请在查询侧显式ST_AsText(geom)
 				kinds[i] = COLUMN_TEXT_READ;
 			} else if (h2 && "GEOMETRY".equals(t)) {
 				// update 2026-9-8 h2的geometry列getObject返回JTS Geometry对象(非String),
@@ -1661,13 +1665,33 @@ public class ResultUtils {
 			}
 			return value;
 		}
+		// update 2026-9-11 java.sql.Array归一为原生java数组(clickhouse向量承载列Array(Float32)
+		// 与PG系text[]/int[]等数组列,驱动包装对象toString为"Array@hash"垃圾值且泄漏驱动类型):
+		// getArray()得到标准java数组(text[]→String[]、Array(Float32)→Float[]等,保结构、去驱动
+		// 依赖),Map结果直接获得结构化数组(fastjson序列化为JSON数组、可编程访问);目标形态转换
+		// 收敛在BeanUtil.convertType按属性类型分派(String属性→'[a,b]'文本、List/Set/数组→
+		// 元素级转换);getArray()异常时原样返回,由convertType的instanceof Array分支兜底
+		if (value instanceof java.sql.Array) {
+			try {
+				Object arr = ((java.sql.Array) value).getArray();
+				if (arr != null) {
+					return arr;
+				}
+			} catch (Exception e) {
+				logger.warn("normalizeExtTypeValue: java.sql.Array getArray failed!", e);
+			}
+			return value;
+		}
 		// byte[]形态按列元数据类型名精确归一:blob(已提前转byte[])/varbinary等二进制列不受影响
 		if (value instanceof byte[]) {
 			if (columnTypeName != null) {
 				String colType = columnTypeName.toUpperCase(Locale.ROOT).replace("\"", "");
 				// h2 json列:getObject返回UTF-8 JSON文本byte[]
+				// update 2026-9-9 对称剥除JSON字符串标量外层引号(h2的json列setString绑定会整体包一层
+				// 引号,VO路径经JSONTypeUtil.extractJsonString已剥除,Map路径原样返回导致两路径形态不一致)
 				if ("JSON".equals(colType)) {
-					return new String((byte[]) value, java.nio.charset.StandardCharsets.UTF_8);
+					return JSONTypeUtil.unwrapJsonStringScalar(
+							new String((byte[]) value, java.nio.charset.StandardCharsets.UTF_8));
 				}
 				// vector列读回byte[]的客户端解码:sqlserver 2025+(8字节头+float32小端,
 				// getString/getBytes均报不支持转换);mysql 9.x(float32小端直排无头部)
@@ -1677,6 +1701,15 @@ public class ResultUtils {
 						text = mssqlVectorBytesToText((byte[]) value);
 					} else if (dbType == DataSourceUtils.DBType.MYSQL || dbType == DataSourceUtils.DBType.MYSQL57) {
 						text = mysqlVectorBytesToText((byte[]) value);
+					} else if (dbType == DataSourceUtils.DBType.OCEANBASE || dbType == DataSourceUtils.DBType.TIDB) {
+						// update 2026-9-9 OB/TiDB与mysql同列EXT_BYTE预分类,但读回形态未实库验证:
+						// 文本形态优先(ob的vector为字符串隐式转换承载),否则按mysql内部格式试解码,
+						// 均不匹配原样返回
+						byte[] vecBytes = (byte[]) value;
+						if (vecBytes.length > 0 && vecBytes[0] == '[') {
+							return new String(vecBytes, java.nio.charset.StandardCharsets.UTF_8);
+						}
+						text = mysqlVectorBytesToText(vecBytes);
 					}
 					if (text != null) {
 						return text;

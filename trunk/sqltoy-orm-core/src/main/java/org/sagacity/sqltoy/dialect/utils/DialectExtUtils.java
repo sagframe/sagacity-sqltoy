@@ -141,11 +141,9 @@ public class DialectExtUtils {
 					if (dbType == DBType.DM) {
 						values.append("DMGEO.ST_GeomFromText(?,0)");
 					} else if (dbType == DBType.DB2) {
-						// update 2026-9-7 实测DB2 12.1内置空间引擎为非限定ST_GeomFromText(?,0),
-						// db2gse schema不复存在;11.5及以下GSE扩展仍为db2gse专属,按连接主版本分派;
-						// update 2026-9-7 实测12.1内置函数第一参数为CLOB,参数化绑定需cast
-						// (setString直绑驱动String→Blob转换失败-4474);11.5 db2gse参数VARCHAR无需cast
-						values.append("db2gse.ST_GeomFromText(?,0)");
+						// update 2026-9-10 按GSE探测+nativeType分派(12.1起内置引擎与GSE可并存,
+						// 纯版本分派会在GSE列上误选内置函数报-408),详见db2GeomFromTextWrap
+						values.append(db2GeomFromTextWrap(fieldMeta));
 					} else if (dbType == DBType.MYSQL || dbType == DBType.OCEANBASE || dbType == DBType.TIDB
 							|| dbType == DBType.MYSQL57) {
 						values.append("ST_GeomFromText(?,0)");
@@ -443,16 +441,12 @@ public class DialectExtUtils {
 					// "not a defined system type",而字符串到vector为隐式转换,维持裸?
 					sql.append("?");
 				} else if (extType == JdbcTypes.JSON || extType == JdbcTypes.JSONB) {
-					if (DBType.SQLSERVER == dbType && isSqlServerNativeJson()) {
-						// update 2026-9-7 实测merge的using子查询中原生json列裸?按nvarchar传递,matched更新
-						// 报"Implicit conversion from data type json to nvarchar is not allowed",
-						// 以convert(json,?)定型;update 2026-9-8 与DialectUtils.merge同款门控:
-						// nvarchar承载列/无json系统类型的库convert报"Type json is not a defined
-						// system type",走裸?
-						sql.append("convert(json, ?)");
-					} else {
-						sql.append("?");
-					}
+					// update 2026-9-10 移除服务器级convert(json,?)门控,统一裸?:mergeIgnore无matched
+					// update环节,实测(2025 GA容器)裸?(按nvarchar传递)直插原生json列与nvarchar承载列
+					// 均可行(nvarchar→json方向隐式转换允许);convert(json,?)产物为json类型值,
+					// 赋给存量nvarchar承载列报"Implicit conversion json to nvarchar not allowed",
+					// 服务器级门控无法区分列级承载形态,故废弃
+					sql.append("?");
 				} else {
 					sql.append("?");
 				}
@@ -791,24 +785,37 @@ public class DialectExtUtils {
 	}
 
 	/**
-	 * update 2026-9-7 实测DB2 12.1起空间能力内置为非限定SYSIBM函数(ST_GeomFromText(?,0)等,
-	 * 需≥8K页表空间),db2gse schema不复存在;11.5及以下GSE扩展为db2gse.ST_GeomFromText专属形态。
-	 * 以processDataSource采集的连接档案(DBProfile.majorVersion)分派,未采集到时默认GSE形态 保持既有行为。
+	 * update 2026-9-7 实测DB2 12.1起空间能力可内置为非限定SYSIBM函数(ST_GeomFromText等,
+	 * 需≥8K页表空间);11.5及以下GSE扩展为db2gse.ST_GeomFromText专属形态。 update 2026-9-10 修正为GSE
+	 * schema探测+nativeType分派(取代纯版本分派isDB2BuiltInSpatial):
+	 * 实测12.1.5容器GSE与内置引擎并存,内置ST_GEOMETRY与db2gse.ST_GEOMETRY为不同UDT,
+	 * 纯版本分派在GSE列上误选内置函数报-408(value cannot be assigned); 分派优先级:列nativeType显式声明 >
+	 * 连接档案的DB2GSE schema探测 > 默认GSE形态(保持11.5既有行为); 12.1起首参为CLOB须cast(? as
+	 * CLOB)(setString直绑报-4474,db2gse形态cast亦实测通过),11.5无需cast
+	 *
+	 * @param fieldMeta geometry字段元数据(nativeType含db2gse/st_geometry时显式分派),可为null
+	 * @return geometry参数化包装表达式,如db2gse.ST_GeomFromText(cast(? as CLOB),0)
 	 */
-	public static boolean isDB2BuiltInSpatial() {
+	public static String db2GeomFromTextWrap(FieldMeta fieldMeta) {
 		DBProfile profile = SqlToyThreadDataHolder.getDBProfile();
-		return (profile != null && profile.getDbType() == DBType.DB2 && profile.getMajorVersion() >= 12);
-	}
-
-	/**
-	 * update 2026-9-8 当前连接是否存在原生json类型(sqlserver 2025 GA/17.x正式版引入):
-	 * merge的using子查询对原生json列须convert(json,?)定型(裸?按nvarchar传递,matched更新 报"Implicit
-	 * conversion from data type json to nvarchar is not allowed"),对nvarchar
-	 * 承载列convert报"Type json is not a defined system type"(本机17.0.4075预览版实测
-	 * 亦无json系统类型);以DBProfile的convert探针实测结果分派,未采集到档案时保守返回 false(裸?承载形态)
-	 */
-	public static boolean isSqlServerNativeJson() {
-		DBProfile profile = SqlToyThreadDataHolder.getDBProfile();
-		return (profile != null && Boolean.TRUE.equals(profile.getHasJsonType()));
+		boolean db2Profile = (profile != null && profile.getDbType() == DBType.DB2);
+		boolean db2v12 = (db2Profile && profile.getMajorVersion() >= 12);
+		String nativeType = (fieldMeta == null || fieldMeta.getNativeType() == null) ? ""
+				: fieldMeta.getNativeType().toLowerCase(Locale.ROOT);
+		boolean useGse;
+		if (nativeType.contains("db2gse")) {
+			useGse = true;
+		} else if (nativeType.contains("geometry") && db2v12) {
+			// nativeType显式声明内置ST_GEOMETRY/GEOMETRY形态(仅12.1+存在内置引擎)
+			useGse = false;
+		} else if (db2Profile) {
+			// 按GSE schema探测分派:存在→db2gse形态(12.1.5实测GSE列),不存在→内置形态(12.1.2实测无db2gse)
+			useGse = !Boolean.FALSE.equals(profile.getHasGseSchema());
+		} else {
+			// 未采集到连接档案保持既有db2gse形态
+			useGse = true;
+		}
+		String param = db2v12 ? "cast(? as CLOB)" : "?";
+		return (useGse ? "db2gse.ST_GeomFromText(" : "ST_GeomFromText(") + param + ",0)";
 	}
 }

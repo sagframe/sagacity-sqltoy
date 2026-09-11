@@ -22,6 +22,7 @@ import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
+import org.sagacity.sqltoy.model.DBProfile;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
 import org.sagacity.sqltoy.plugins.id.macro.AbstractMacro;
@@ -219,14 +220,26 @@ public class SqlConfigParseUtils {
 	}
 
 	/**
-	 * 判断是否存在with形式的查询
+	 * 判断是否存在with形式的查询(转义约定经DBProfile/运行上下文自动解析, 配置解析期等已知方言的场景请用带backslashEscape的重载)
 	 * 
 	 * @param sql
 	 * @return
 	 */
 	public static boolean hasWith(String sql) {
+		return hasWith(sql, isBackslashEscape(null));
+	}
+
+	/**
+	 * 判断是否存在with形式的查询
+	 * 
+	 * @param sql
+	 * @param backslashEscape true时字面量内\'不终结字面量(mysql系),掩码须与方言一致,
+	 *                        否则\'后掩码错位:字面量内容泄漏误判存在with,或真实with被幻影字面量吞没漏判
+	 * @return
+	 */
+	public static boolean hasWith(String sql, boolean backslashEscape) {
 		// 字面量内容不参与判定:规避字面量内的with xx as (文本误判为存在with
-		return StringUtil.matches(BLANK + maskLiterals(sql, false), SqlToyConstants.withPattern);
+		return StringUtil.matches(BLANK + maskLiterals(sql, backslashEscape), SqlToyConstants.withPattern);
 	}
 
 	/**
@@ -845,16 +858,20 @@ public class SqlConfigParseUtils {
 		List paramValueList = CollectionUtil.arrayToList(sqlToyResult.getParamsValue());
 		Object paramValue = null;
 		String groupStr;
-		String splitRegex = "\\s*\\,\\s*";
+		String splitRegex;
 		// 转数字
 		boolean toInt = false;
 		while (m.find()) {
 			toInt = false;
+			// update 2026-9-10 修复多个@split时splitRegex未逐轮重置,前一个的自定义分隔符会泄漏给后续默认分隔符的@split(?)
+			splitRegex = "\\s*\\,\\s*";
 			index = m.start();
 			groupStr = m.group();
+			// 表示指定了切割符号
 			if (groupStr.contains(",")) {
+				// 提取逗号后的内容
 				splitRegex = groupStr.substring(groupStr.indexOf(",") + 1, groupStr.length() - 1).trim();
-				// int或integer
+				// int或integer @split(?) 或 @spilt(?,';') 或@split(?,int,',') 等函数的场景
 				if (splitRegex.toLowerCase(Locale.ROOT).startsWith("int") && splitRegex.contains(",")) {
 					splitRegex = splitRegex.substring(splitRegex.indexOf(",") + 1).trim();
 					toInt = true;
@@ -1015,9 +1032,12 @@ public class SqlConfigParseUtils {
 	}
 
 	/**
-	 * 判断当前数据库是否将反斜杠视为转义字符(mysql、vastbase、opengauss系列等),
-	 * 决定'...'字面量内\'是否终结字面量以及like的ESCAPE子句形态; 用户可通过SqlToyContext.backslashEscaping
-	 * 强制定义:true=ESCAPE '\\'; false=ESCAPE '\'
+	 * 判断当前数据库是否将反斜杠视为转义字符(mysql系), 决定'...'字面量内\'是否终结字面量以及like的ESCAPE子句形态;
+	 * 用户可通过SqlToyContext.backslashEscaping 强制定义:true=ESCAPE '\\'; false=ESCAPE '\'
+	 * update 2026-9-10 解析次序:全局开关 > 真实连接档案(DBProfile,经DataSourceUtils统一获取) >
+	 * 传入dbType;
+	 * 真实连接dbType比配置方言更可信,kingbase即使mysql兼容sql_mode依旧单斜杠(原actuallyDBType==KINGBASE
+	 * 单点判断被档案判定涵盖),同时覆盖真实连接为mysql系而传入dbType缺失(UNDEFINE)的场景
 	 * 
 	 * @param dbType
 	 * @return
@@ -1026,19 +1046,30 @@ public class SqlConfigParseUtils {
 		if (SqlToyConstants.backslashEscaping != null) {
 			return SqlToyConstants.backslashEscaping;
 		}
-		Integer actuallyDBType = SqlToyThreadDataHolder.getActuallyDBType();
-		// kingbase特殊，即使sql_mode是mysql依旧单斜杠
-		if (actuallyDBType != null && actuallyDBType == DBType.KINGBASE) {
-			return false;
+		// 存在真实连接档案时统一以DBProfile为准
+		DBProfile profile = DataSourceUtils.getCurrentDBProfile();
+		if (profile != null) {
+			return profile.isBackslashEscape();
 		}
-		// mysql系列字符串字面量默认反斜杠转义(ESCAPE子句须写'\\'表示单反斜杠):
-		// mysql/mysql57/tidb/doris/starrocks/oceanbase
+		// 无连接上下文(如配置解析期)按传入dbType判定,mysql系列字符串字面量默认反斜杠转义
+		// (ESCAPE子句须写'\\'表示单反斜杠):mysql/mysql57/tidb/doris/starrocks/oceanbase
 		// update 2026-9-6 实测openGauss 5.0.0报"invalid escape string"(PG系内核要求ESCAPE为
 		// 单字符,标准一致字符串下'\\'即两个字符),GAUSSDB/VASTBASE/MOGDB/STARDB同属openGauss/
 		// PG内核族按一致处理(vastbase未实测,如个别版本确需'\\'可通过backslashEscaping全局配置覆盖),
 		// PostgreSQL/Oracle/SQLServer/DB2/h2/kingbase等本就用ESCAPE'\'
-		return dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.TIDB || dbType == DBType.DORIS
-				|| dbType == DBType.STARROCKS || dbType == DBType.OCEANBASE;
+		return DataSourceUtils.isBackslashEscapeDbType(dbType);
+	}
+
+	/**
+	 * update 2026-9-10 统一解析字面量反斜杠转义约定:全局开关优先,其次真实连接档案(DBProfile),
+	 * 最后按配置方言回退;dialect为null时自动回退运行上下文(SqlExecuteStat/DBProfile),
+	 * 供hasWith/hasUnion等手头无dbType的调用点使用
+	 * 
+	 * @param dialect 数据库方言,可为null
+	 * @return true表示字面量内反斜杠为转义字符(mysql系)
+	 */
+	public static boolean isBackslashEscape(String dialect) {
+		return isBackslashEscapeDialect(resolveDbType(dialect));
 	}
 
 	/**
@@ -1047,6 +1078,7 @@ public class SqlConfigParseUtils {
 	 * 掩码串与原串长度、偏移完全一致,掩码串上的匹配位置可直接用于原串截取。
 	 * 注意:@loop的循环内容以带引号字符串承载且其中的:param为合法语法,因此掩码只允许用于
 	 * processLoop之后的阶段(processNamedParamsQuery、processLike),不可用于@loop解析自身。
+	 * (getSqlParamsName 方法则必须在loop之前执行)
 	 * 
 	 * @param sql             原始sql
 	 * @param backslashEscape true时\'不终结字面量(mysql系);false时仅''成对转义(标准SQL)
@@ -1201,11 +1233,12 @@ public class SqlConfigParseUtils {
 		StringBuilder sqlBuilder = null;
 		int lastEnd = 0;
 		String escapeClause = isBackslashEscape ? " ESCAPE '\\\\'" : " ESCAPE '\\'";
-		// clickhouse/impala/tdengine/starrocks的LIKE默认转义符就是\,且不支持ESCAPE子句,
+		// clickhouse/impala/tdengine/starrocks/doris的LIKE默认转义符就是\,且不支持ESCAPE子句,
 		// 追加任何ESCAPE都会语法错误(update 2026-9-6 实测starrocks 4.1.4 where子句like后接ESCAPE报
-		// "Unexpected input 'ESCAPE'",其like默认即按\转义,与clickhouse行为一致)
+		// "Unexpected input 'ESCAPE'",其like默认即按\转义,与clickhouse行为一致;
+		// update 2026-9-10 实测doris 2.1.0同样报ParseException,与starrocks同源引擎一并排除)
 		boolean supportEscapeClause = dbType != DBType.CLICKHOUSE && dbType != DBType.IMPALA
-				&& dbType != DBType.TDENGINE && dbType != DBType.STARROCKS;
+				&& dbType != DBType.TDENGINE && dbType != DBType.STARROCKS && dbType != DBType.DORIS;
 		while (m.find()) {
 			paramCnt = StringUtil.matchCnt(maskedSql.substring(0, m.start()), ARG_NAME_PATTERN, 0);
 			likeValStr = (sqlToyResult.getParamsValue()[paramCnt] == null) ? null
@@ -1713,10 +1746,13 @@ public class SqlConfigParseUtils {
 		originalSql = ReservedWordsUtil.convertSql(originalSql, DataSourceUtils.getDBType(dialect));
 		// 将${paramName}或${:paramName}替换为@value(:paramName)
 		originalSql = SqlUtil.replaceEmbedSqlParams(originalSql);
+		// update 2026-9-10 字面量转义约定按方言解析一次,hasWith/hasUnion/参数提取共用
+		// (掩码须与方言一致,否则mysql系\'字面量掩码错位后with/union判定与参数提取互相矛盾)
+		boolean backslashEscape = isBackslashEscape(dialect);
 		// 判定是否有with查询模式
-		sqlToyConfig.setHasWith(hasWith(originalSql));
+		sqlToyConfig.setHasWith(hasWith(originalSql, backslashEscape));
 		// 判定是否有union语句(先验证有union 然后再精确判断union 是否有效,在括号内的局部union 不起作用)
-		sqlToyConfig.setHasUnion(SqlUtil.hasUnion(originalSql, false));
+		sqlToyConfig.setHasUnion(SqlUtil.hasUnion(originalSql, false, backslashEscape));
 		// 只有在查询模式前提下才支持fastPage机制
 		if (SqlType.search.equals(sqlType)) {
 			// 判断是否有快速分页@fast 宏
@@ -1751,8 +1787,7 @@ public class SqlConfigParseUtils {
 		// 提取with fast查询语句
 		processFastWith(sqlToyConfig, dialect);
 		// 提取sql中的参数名称(按方言转义规则掩码,mysql系\'字面量后的真参数不被掩掉)
-		sqlToyConfig.setParamsName(
-				getSqlParamsName(sqlToyConfig.getSql(dialect), true, isBackslashEscapeDialect(resolveDbType(dialect))));
+		sqlToyConfig.setParamsName(getSqlParamsName(sqlToyConfig.getSql(dialect), true, backslashEscape));
 		return sqlToyConfig;
 	}
 

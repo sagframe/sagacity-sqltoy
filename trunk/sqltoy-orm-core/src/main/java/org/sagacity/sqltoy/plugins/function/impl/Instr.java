@@ -74,10 +74,30 @@ public class Instr extends IFunction {
 			}
 			return result.append(")").toString();
 		}
-		if (dialect == DBType.MYSQL || dialect == DBType.ORACLE || dialect == DBType.DB2 || dialect == DBType.OCEANBASE
-				|| dialect == DBType.DM || dialect == DBType.TIDB || dialect == DBType.ORACLE11
-				|| dialect == DBType.MYSQL57 || dialect == DBType.H2 || dialect == DBType.DORIS
-				|| dialect == DBType.STARROCKS) {
+		// update 2026-9-9 Db2 LUW无INSTR函数(LOCATE/POSSTR承担),原分支对instr原样透传会报
+		// 函数不存在;LOCATE(search,source[,start])参数语义与mysql的locate一致,统一转locate
+		if (dialect == DBType.DB2) {
+			if ("position".equals(funLow)) {
+				// position(sub in str):realArgs=[sub,str]
+				return "locate(" + realArgs[0] + "," + realArgs[1] + ")";
+			}
+			if ("charindex".equals(funLow)) {
+				// charindex(sub,str[,start]):参数序与locate一致
+				return wrapArgs("locate", realArgs);
+			}
+			// instr(str,sub[,pos[,occurrence]]):第4参occurrence无locate对应形态,原样保留交由目标库报错
+			if (realArgs.length > 3) {
+				return super.IGNORE;
+			}
+			result.append("locate(").append(realArgs[1]).append(",").append(realArgs[0]);
+			if (realArgs.length > 2) {
+				result.append(",").append(realArgs[2]);
+			}
+			return result.append(")").toString();
+		}
+		if (dialect == DBType.MYSQL || dialect == DBType.ORACLE || dialect == DBType.OCEANBASE || dialect == DBType.DM
+				|| dialect == DBType.TIDB || dialect == DBType.ORACLE11 || dialect == DBType.MYSQL57
+				|| dialect == DBType.H2 || dialect == DBType.DORIS || dialect == DBType.STARROCKS) {
 			if ("instr".equals(funLow)) {
 				// update 2026-9-5 三参instr(str,sub,pos)在mysql无此语法,转locate(sub,str,pos);
 				// 四参(occurrence)mysql的locate同样不支持,原样保留交由目标库报错
@@ -119,6 +139,16 @@ public class Instr extends IFunction {
 					result.append(realArgs[1]).append(" in ").append(realArgs[0]);
 				}
 				return result.append(")").toString();
+			}
+		}
+		// update 2026-9-11 clickhouse:无instr函数,position(haystack,needle)逗号形态且参数序
+		// 与instr(str,substr)一致;3/4参的出现次数语义CH无对应,原样保留交目标库响亮报错
+		if (dialect == DBType.CLICKHOUSE) {
+			if ("position".equals(funLow)) {
+				return super.IGNORE;
+			}
+			if (realArgs.length == 2) {
+				return "position(" + realArgs[0] + "," + realArgs[1] + ")";
 			}
 		}
 		return super.IGNORE;

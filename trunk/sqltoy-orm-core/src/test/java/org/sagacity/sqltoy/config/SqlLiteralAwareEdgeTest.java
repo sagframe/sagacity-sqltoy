@@ -10,7 +10,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
+import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
+import org.sagacity.sqltoy.config.model.SqlType;
+import org.sagacity.sqltoy.utils.SqlUtil;
 
 /**
  * 普通SQL行为等价性测试电池:字面量感知(掩码)修复的前后对照基线。
@@ -197,5 +200,40 @@ public class SqlLiteralAwareEdgeTest {
 		SqlToyResult r = named("select * from t where remark='a\\'b?' and name like :name", values, "mysql");
 		assertArrayEquals(new Object[] { "%ab%" }, r.getParamsValue());
 		assertTrue(r.getSql().contains("'a\\'b?'"), "实际:" + r.getSql());
+	}
+
+	// ---------------- hasWith/hasUnion掩码的方言一致性(2026-9-10 转义约定统一经DBProfile提供) ----------------
+
+	@Test
+	public void hasWithMysqlEscapedQuoteNoFalsePositive() {
+		// mysql约定\'不终结字面量:字面量整体被掩,其中的with xx as (文本不得泄漏误报
+		String sql = "select * from t where remark = 'don\\'t write with t1 as (select 1)' and a=1";
+		assertFalse(SqlConfigParseUtils.hasWith(sql, true), "mysql约定下字面量内with文本不应触发");
+		// 对照基线:标准约定按\'终结字面量,掩码错位导致泄漏文本被误判(此sql本就是mysql写法)
+		assertTrue(SqlConfigParseUtils.hasWith(sql, false), "标准约定下掩码错位应误判(对照基线)");
+	}
+
+	@Test
+	public void hasWithMysqlEscapedQuoteNoFalseNegative() {
+		// \'字面量之后的真实CTE:mysql约定掩码不错位,真实with被正确识别
+		String sql = "select * from t where remark='a\\'b' and id in (with cte as (select 1) select * from cte)";
+		assertTrue(SqlConfigParseUtils.hasWith(sql, true), "mysql约定下真实with应被识别");
+		// 对照基线:标准约定下\'提前终结字面量,后续真实with被幻影字面量吞没漏判
+		assertFalse(SqlConfigParseUtils.hasWith(sql, false), "标准约定下真实with被吞没(对照基线)");
+	}
+
+	@Test
+	public void hasUnionMysqlEscapedQuoteLiteral() {
+		// mysql \'字面量内的union文本:mysql约定下字面量整体被掩不误报
+		String sql = "select a from t1 where remark='it\\'s union all mine'";
+		assertFalse(SqlUtil.hasUnion(sql, false, true), "mysql约定下字面量内union文本不应触发");
+	}
+
+	@Test
+	public void parseConfigMysqlDialectEscapeAwareMask() {
+		// parseSqlToyConfig按mysql方言解析掩码:\'字面量不错位,其中with文本不会误置hasWith
+		String sql = "select * from t where remark = 'don\\'t write with t1 as (select 1)'";
+		SqlToyConfig config = SqlConfigParseUtils.parseSqlToyConfig(sql, "mysql", SqlType.search);
+		assertFalse(config.isHasWith(), "mysql方言下hasWith不应被字面量内with文本误置");
 	}
 }
