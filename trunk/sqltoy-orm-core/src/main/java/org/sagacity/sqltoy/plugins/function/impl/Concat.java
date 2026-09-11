@@ -48,6 +48,9 @@ public class Concat extends IFunction {
 		// update 2026-9-5 sqlite无concat函数、DB2/oracle系(含OCEANBASE,与Nvl/Now等函数的oracle系
 		// 归属保持一致)的concat仅支持两参:超出支持的参数个数统一转||拼接
 		// (sqlite从两参起转,oracle/db2/oceanbase三参起转)
+		// update 2026-9-9 已知边界(同ConcatWs):mysql的concat任一参数为NULL时整体返回NULL,
+		// oracle/db2的||将NULL视为空串、sqlite传播NULL,参数可能为NULL时跨库结果存在差异,
+		// 需严格一致请显式coalesce/ifnull包裹参数
 		if (dialect == DBType.ORACLE || dialect == DBType.ORACLE11 || dialect == DBType.DB2 || dialect == DBType.SQLITE
 				|| dialect == DBType.OCEANBASE) {
 			if (dialect != DBType.SQLITE && args.length < 3) {

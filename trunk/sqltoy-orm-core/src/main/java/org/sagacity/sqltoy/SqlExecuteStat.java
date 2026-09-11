@@ -290,10 +290,10 @@ public class SqlExecuteStat {
 	public static void destroy() {
 		// 执行完成时打印日志
 		destroyLog();
+		// update 2026-9-9 去除remove()后的set(null):set(null)会重新插入null值entry,
+		// 使remove清理失效(池化线程残留entry,TransmittableThreadLocal场景还会重新注册holder并向子线程传播null项)
 		threadLocal.remove();
-		threadLocal.set(null);
 		threadLocalDebug.remove();
-		threadLocalDebug.set(null);
 	}
 
 	/**

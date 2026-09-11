@@ -509,23 +509,22 @@ public class DataSourceUtils {
 	}
 
 	/**
-	 * update 2026-9-8 sqlserver原生json类型探测(随URL档案每URL一次):merge的using子查询
-	 * 对原生json列须convert(json,?)定型,对nvarchar承载列convert直接报"Type json is not a defined
-	 * system type"(本机17.0.4075预览版实测无json系统类型,16.x亦无);以convert
-	 * 探针实测判定而非版本号推测(预览版/GA行为差异无法靠majorVersion区分);非sqlserver 或探测异常一律Boolean.FALSE
+	 * update 2026-9-10 db2的GSE空间扩展schema探测(随URL档案每URL一次):12.1起内置空间引擎与 db2gse
+	 * GSE扩展可并存(实测12.1.5容器GSE仍启用、12.1.2容器仅内置),且内置ST_GEOMETRY与
+	 * db2gse.ST_GEOMETRY为不同UDT(函数产物与列类型错配报-408),geometry参数化包装须按GSE
+	 * 存在性分派db2gse前缀或内置非限定形态;非db2为null,探测异常为TRUE(保持既有db2gse形态)。
+	 * (原probeSqlServerJsonType服务器级json类型探测已于2026-9-10移除:merge/insert-ignore统一
+	 * 裸?+coalesce形态对原生json列与nvarchar承载列双兼容,不再依赖服务器级探测)
 	 */
-	private static Boolean probeSqlServerJsonType(final Connection conn) {
-		try {
-			if (!"Microsoft SQL Server".equalsIgnoreCase(conn.getMetaData().getDatabaseProductName())) {
-				return Boolean.FALSE;
-			}
-		} catch (Exception e) {
-			return Boolean.FALSE;
+	private static Boolean probeDB2GseSchema(final Connection conn, int dbType) {
+		if (dbType != DBType.DB2) {
+			return null;
 		}
-		try (Statement st = conn.createStatement(); ResultSet rs = st.executeQuery("select convert(json, '{}')")) {
-			return Boolean.TRUE;
+		try (Statement st = conn.createStatement();
+				ResultSet rs = st.executeQuery("select 1 from syscat.schemata where schemaname='DB2GSE'")) {
+			return rs.next() ? Boolean.TRUE : Boolean.FALSE;
 		} catch (Exception e) {
-			return Boolean.FALSE;
+			return Boolean.TRUE;
 		}
 	}
 
@@ -622,8 +621,9 @@ public class DataSourceUtils {
 		int majorVersion = getDBVersion(conn);
 		// 解析链:resolveDialectByMeta(产品名+URL特征+dialectMap映射,实时) + StarRocks引擎探测
 		String dialect = resolveDialect(conn, resolveDialectByMeta(conn));
-		DBProfile profile = new DBProfile(connUrl, dialect, dialectToDbType(dialect, majorVersion), productName,
-				majorVersion, resolvePGobjectHolder(connUrl), probeSqlServerJsonType(conn));
+		int dbType = dialectToDbType(dialect, majorVersion);
+		DBProfile profile = new DBProfile(connUrl, dialect, dbType, productName, majorVersion,
+				resolvePGobjectHolder(connUrl), probeDB2GseSchema(conn, dbType), isBackslashEscapeDbType(dbType));
 		// URL可标识的连接入缓存(并发竞争时保留先入条目)
 		if (urlAsCacheKey) {
 			DBProfile exist = URL_PROFILE_CACHE.putIfAbsent(connUrl, profile);
@@ -635,18 +635,80 @@ public class DataSourceUtils {
 	}
 
 	/**
-	 * update 2026-9-6 方言的引擎探测统一处理:mysql协议方言(mysql系元数据同形)时以current_version()
-	 * 校正StarRocks/Doris——实测其经mysql驱动连接时ProductName/Version/URL三信号全部伪装成MySQL
-	 * (8.0.33/jdbc:mysql)无法靠元数据区分;current_version()为SR/Doris特有函数(mysql报Unknown
-	 * function),返回值须再校验版本串特征(SR如4.1.4-4a9848e含git提交哈希后缀,Doris老版含doris
-	 * 字样),防御其他数据库未来实现同名函数导致误判——特征不符保持mysql方言并warn,可显式配置
-	 * dialect覆盖。命中归STARROCKS方言——DialectFactory中DORIS与STARROCKS共用DorisDialect,
-	 * 两家均正确落方言(本方法仅在getDBProfile解析时调用,随URL缓存每URL探测一次)
+	 * update 2026-9-10 获取当前执行上下文的数据库特征档案:连接获取阶段绑定至线程上下文
+	 * (setDBProfile),数据库运行期特征(反斜杠转义约定等)统一经此档案提供,消费方无需直接
+	 * 访问ThreadDataHolder;配置解析期等无连接上下文场景返回null,由调用方回退配置方言
+	 * 
+	 * @return 当前线程上下文的特征档案,无连接上下文时为null
+	 */
+	public static DBProfile getCurrentDBProfile() {
+		return SqlToyThreadDataHolder.getDBProfile();
+	}
+
+	/**
+	 * update 2026-9-10 判断dbType是否属反斜杠转义族(字面量内反斜杠为转义字符,\'不终结字面量):
+	 * mysql/mysql57/tidb/doris/starrocks/oceanbase;PostgreSQL/Oracle/SQLServer/DB2/h2/kingbase等
+	 * 按标准SQL单反斜杠语义(kingbase即使mysql兼容模式亦单斜杠)。
+	 * 构建DBProfile解析出dbType时即完成判定并随档案缓存,运行期经profile.isBackslashEscape()直取
+	 * 
+	 * @param dbType 数据库类型,参见DBType
+	 * @return true表示字面量内反斜杠为转义字符
+	 */
+	public static boolean isBackslashEscapeDbType(int dbType) {
+		return dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.TIDB || dbType == DBType.DORIS
+				|| dbType == DBType.STARROCKS || dbType == DBType.OCEANBASE;
+	}
+
+	/**
+	 * update 2026-9-6 方言的引擎探测统一处理:mysql协议方言(mysql系元数据同形)时校正
+	 * StarRocks/Doris——实测其经mysql驱动连接时ProductName/Version/URL三信号全部伪装成MySQL
+	 * (8.0.33/jdbc:mysql)无法靠元数据区分。 update 2026-9-10
+	 * 探测顺序对调(实测修正):一级@@version_comment(所有mysql协议引擎均支持,
+	 * 零报错风险)命中doris字样归DORIS——原current_version()先行的探测在Doris(无此函数,实测
+	 * 2.1.0/4.1.3均无)报HY000/ErrorCode 1105,命中Hikari对mysql驱动的fatal vendor错误码清单,
+	 * 池连接被标记broken逐出引发后续用例"Connection is closed"雪崩(真mysql报42000非fatal故
+	 * 此前未暴露);二级current_version()兜底StarRocks(SR有该函数探测不报错,返回值校验版本串
+	 * 特征如4.1.4-4a9848e含git哈希后缀,而其@@version_comment无产品名仅"4.1.4-4a9848e"无法
+	 * 一级识别),特征不符保持mysql方言并warn,可显式配置dialect覆盖。
+	 * DialectFactory中DORIS与STARROCKS共用DorisDialect,两家均正确落方言
+	 * (本方法仅在getDBProfile解析时调用,随URL缓存每URL探测一次)
 	 */
 	private static String resolveDialect(Connection conn, String dialect) {
 		if (!Dialect.MYSQL.equals(dialect)) {
 			return dialect;
 		}
+		// 一级:@@version_comment(零报错风险)——Doris返回"Doris version
+		// doris-x.y.z-..."(2.1/4.1实测),
+		// 真mysql返回"MySQL Community Server...",TiDB返回"TiDB Server..."(update 2026-9-10
+		// 实测
+		// TiDB 8.5.1的元数据ProductName已由"TiDB"变为"MySQL"(7.5.1为TiDB),产品名识别链失效致
+		// 误归MYSQL方言生成string_to_vector等mysql9专属语法,此处按version_comment纠正归TIDB),
+		// SR返回纯版本串无产品名(落二级current_version兜底)
+		try (java.sql.Statement probe = conn.createStatement();
+				java.sql.ResultSet prs = probe.executeQuery("select @@version_comment")) {
+			if (prs.next()) {
+				String versionComment = prs.getString(1);
+				if (versionComment != null) {
+					String commentLow = versionComment.toLowerCase(Locale.ROOT);
+					if (commentLow.contains("doris")) {
+						logger.info("detected doris engine by version_comment={}", versionComment);
+						return Dialect.DORIS;
+					}
+					if (commentLow.contains("starrocks")) {
+						logger.info("detected starrocks engine by version_comment={}", versionComment);
+						return Dialect.STARROCKS;
+					}
+					if (commentLow.contains("tidb")) {
+						logger.info("detected tidb engine by version_comment={}", versionComment);
+						return Dialect.TIDB;
+					}
+				}
+			}
+		} catch (Exception ignore) {
+			// 个别引擎不支持@@version_comment查询,落二级探测
+		}
+		// 二级:current_version()为StarRocks特有函数(mysql报Unknown function 42000非fatal),
+		// 返回值须校验版本串特征,防御其他数据库未来实现同名函数导致误判
 		try (java.sql.Statement probe = conn.createStatement();
 				java.sql.ResultSet prs = probe.executeQuery("select current_version()")) {
 			if (prs.next()) {
@@ -654,7 +716,7 @@ public class DataSourceUtils {
 				if (engineVersion != null && (engineVersion.matches("(?i).*(starrocks|doris).*")
 						|| engineVersion.matches("\\d+\\.\\d+\\.\\d+-[0-9a-zA-Z]{6,}.*"))) {
 					logger.info("detected starrocks/doris compatible engine by current_version()={}", engineVersion);
-					return Dialect.STARROCKS;
+					return engineVersion.toLowerCase(Locale.ROOT).contains("doris") ? Dialect.DORIS : Dialect.STARROCKS;
 				}
 				logger.warn(
 						"current_version()={} does not match starrocks/doris version pattern, keep mysql dialect! "
@@ -765,10 +827,19 @@ public class DataSourceUtils {
 				// update 2026-9-6 GaussDB Kernel JDBC(com.huaweicloud.gaussdb:gaussdbjdbc,
 				// Driver类com.huawei.gaussdb.jdbc.Driver)的PGobject在华为自有包路径
 				pgObjectClass = "com.huawei.gaussdb.jdbc.util.PGobject";
+			} else if ("kingbase8".equals(schema) || "kingbase".equals(schema)) {
+				// update 2026-9-10 金仓驱动(jdbc:kingbase8:)整包重定位com.kingbase8,PGobject同构类为
+				// com.kingbase8.util.KBobject(小写o);若走else兜底误构org.postgresql.util.PGobject,
+				// 跨驱动setObject必败(KES V9容器实测KSQLException:Can't infer the SQL type)
+				pgObjectClass = "com.kingbase8.util.KBobject";
 			} else if ("postgresql".equals(schema)) {
 				pgObjectClass = "org.postgresql.util.PGobject";
 			} else {
 				// stardb等其他PG系驱动:多数兼容postgresql驱动包路径,尝试后失败由调用方回退
+				// update 2026-9-10 注意:oscar(神通)驱动jar解包实证无org.postgresql包路径亦无
+				// PGobject同构类(老pgjdbc深度魔改的自有实现),OSCAR不得加入isPGFamily:否则
+				// classpath有pg驱动时holder构造成功但跨驱动setObject必败且无回退
+				// (回退仅在holder为null时触发),其json/vector以setString绑定为正确形态
 				pgObjectClass = "org.postgresql.util.PGobject";
 			}
 			Class<?> clazz = Class.forName(pgObjectClass);

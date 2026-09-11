@@ -990,6 +990,11 @@ public class SqlXMLConfigParse {
 		if (filter.hasAttribute("param")) {
 			filterModel.setParam(filter.getAttribute("param").toLowerCase(Locale.ROOT));
 		}
+
+		// 给r-like/l-like 在拼接%号时补充额外的字符(2026-09-09)
+		if (filter.hasAttribute("append-str")) {
+			filterModel.setAppendStr(filter.getAttribute("append-str"));
+		}
 		// <cache-arg param="" cache-name="" cache-type="" alias-name="">
 		// <filter compare-param="" cache-index=""/>
 		// </cache-arg>

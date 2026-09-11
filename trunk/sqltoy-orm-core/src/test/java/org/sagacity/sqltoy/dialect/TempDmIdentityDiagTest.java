@@ -61,8 +61,9 @@ public class TempDmIdentityDiagTest {
 		System.out.println("[Diag] generateInsertSql=" + insertSql.replaceAll("\\s+", " "));
 		// 真实save链路
 		Class.forName("dm.jdbc.driver.DmDriver");
+		// update 2026-9-10 dm容器已升级20260710构建,新版dminit强制密码复杂度,SYSDBA密码改为Sqltoy@2026
 		try (Connection conn = DriverManager.getConnection("jdbc:dm://localhost:5236?schema=SYSDBA", "SYSDBA",
-				"SYSDBA001"); java.sql.Statement st = conn.createStatement()) {
+				"Sqltoy@2026"); java.sql.Statement st = conn.createStatement()) {
 			st.execute("drop table if exists diag_identity_t");
 			st.execute("create table diag_identity_t (id bigint identity(1,1) primary key, name varchar(50))");
 			DiagVO vo = new DiagVO();

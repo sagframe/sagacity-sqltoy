@@ -337,15 +337,22 @@ public class JSONTypeUtil {
 			byte[] bytes = blob.getBytes(1, (int) blob.length());
 			return unwrapJsonStringScalar(new String(bytes, java.nio.charset.StandardCharsets.UTF_8));
 		}
+		// update 2026-9-11 clickhouse的JSON类型列getObject返回Map/List(动态JSON类型由驱动
+		// 反序列化,getString则被驱动toString为"{name=x}"非JSON形态致fastjson解析失败,实测),
+		// 重新序列化为标准JSON文本
+		if (jdbcValue instanceof java.util.Map || jdbcValue instanceof java.util.Collection) {
+			return JSON.toJSONString(jdbcValue);
+		}
 		// 其他类型尝试 toString
 		return jdbcValue.toString();
 	}
 
 	/**
 	 * 剥除JSON字符串标量的外层引号:文本以引号起始且结束(如h2 json列setString绑定
-	 * 产生的"\"[{...}]\""形态)时解析出标量内部文本,否则原样返回
+	 * 产生的"\"[{...}]\""形态)时解析出标量内部文本,否则原样返回 (update 2026-9-9
+	 * 提升为public:ResultUtils的Map行路径h2 json列byte[]归一同款剥引号)
 	 */
-	private static String unwrapJsonStringScalar(String str) {
+	public static String unwrapJsonStringScalar(String str) {
 		if (str.startsWith("\"") && str.endsWith("\"")) {
 			return JSON.parseObject(str, String.class);
 		}

@@ -47,6 +47,8 @@ import org.slf4j.LoggerFactory;
  * @modify Date:2020-07-15 增加l-like,r-like为参数单边补充%从而不破坏索引,默认是两边
  * @modify Date:2023-04-18 增加to-string
  * @modify Date:2023-05-01 优化cache-arg,修复priorMatchEqual存在的bug
+ * @modify Date:2026-09-09 l-like/r-like支持append-str拼接
+ * @modify Date:2026-09-10 appendStr与参数值一致按转义处理后拼接(%转为字面量\%),通配符统一仅由补充的%提供
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class ParamFilterUtils {
@@ -720,9 +722,9 @@ public class ParamFilterUtils {
 		} else if ("to-array".equals(filterType)) {
 			result = toArray(paramValue, paramFilterModel.getDataType());
 		} else if ("l-like".equals(filterType)) {
-			result = like(paramValue, true);
+			result = like(paramValue, paramFilterModel.getAppendStr(), true);
 		} else if ("r-like".equals(filterType)) {
-			result = like(paramValue, false);
+			result = like(paramValue, paramFilterModel.getAppendStr(), false);
 		} else if ("escapeLike".equals(filterType)) {
 			result = escapeLike(paramValue);
 		}
@@ -906,12 +908,15 @@ public class ParamFilterUtils {
 
 	/**
 	 * 对参数进行左边或右补%符号,便于like处理,sqltoy在不做处理情况下会默认左右都补%符合,单独一边补%则可以保留索引
+	 * appendStr拼接在补充的%和值之间,如r-like配置append-str=","构成xx,%的树形路由前缀匹配; update 2026-9-10
+	 * appendStr与参数值一致按转义处理后拼接:其中的%转为字面量\%,不做去除连续%处理, 通配符统一仅由本方法补充的%提供,天然避免拼接后出现%%
 	 * 
 	 * @param paramValue
+	 * @param appendStr
 	 * @param isLeft
 	 * @return
 	 */
-	private static Object like(Object paramValue, boolean isLeft) {
+	private static Object like(Object paramValue, String appendStr, boolean isLeft) {
 		if (StringUtil.isBlank(paramValue)) {
 			return null;
 		}
@@ -920,19 +925,22 @@ public class ParamFilterUtils {
 		if (SqlExecuteStat.get() != null) {
 			dbType = SqlExecuteStat.get().getDbType();
 		}
+		// appendStr按转义处理后拼接(其中%转为字面量\%),通配符统一仅由本方法补充的%提供,避免拼接后出现%%
+		String escapedAppend = (appendStr == null) ? "" : SqlUtil.escapeLikeValue(appendStr, dbType, true);
 		String escapeStr;
 		if (paramValue instanceof String) {
 			escapeStr = SqlUtil.escapeLikeValue(paramValue.toString(), dbType, true);
 			if (isLeft) {
-				return "%".concat(escapeStr);
+				return "%".concat(escapedAppend).concat(escapeStr);
 			}
-			return escapeStr.concat("%");
+			return escapeStr.concat(escapedAppend).concat("%");
 		} else if (paramValue instanceof String[]) {
 			String[] tmpAry = (String[]) paramValue;
 			for (int i = 0, n = tmpAry.length; i < n; i++) {
 				if (tmpAry[i] != null) {
 					escapeStr = SqlUtil.escapeLikeValue(tmpAry[i], dbType, true);
-					tmpAry[i] = isLeft ? "%".concat(escapeStr) : escapeStr.concat("%");
+					tmpAry[i] = isLeft ? "%".concat(escapedAppend).concat(escapeStr)
+							: escapeStr.concat(escapedAppend).concat("%");
 				}
 			}
 			return tmpAry;
@@ -941,7 +949,8 @@ public class ParamFilterUtils {
 			for (int i = 0, n = tmpList.size(); i < n; i++) {
 				if (tmpList.get(i) != null) {
 					escapeStr = SqlUtil.escapeLikeValue(tmpList.get(i).toString(), dbType, true);
-					tmpList.set(i, isLeft ? "%".concat(escapeStr) : escapeStr.concat("%"));
+					tmpList.set(i, isLeft ? "%".concat(escapedAppend).concat(escapeStr)
+							: escapeStr.concat(escapedAppend).concat("%"));
 				}
 			}
 			return tmpList;
@@ -954,7 +963,8 @@ public class ParamFilterUtils {
 				cell = iter.next();
 				if (cell != null) {
 					escapeStr = SqlUtil.escapeLikeValue(cell.toString(), dbType, true);
-					result.add(isLeft ? "%".concat(escapeStr) : escapeStr.concat("%"));
+					result.add(isLeft ? "%".concat(escapedAppend).concat(escapeStr)
+							: escapeStr.concat(escapedAppend).concat("%"));
 				}
 			}
 			return result;

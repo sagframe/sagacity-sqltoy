@@ -20,7 +20,8 @@ import org.sagacity.sqltoy.config.model.ParamFilterModel;
 /**
  * 回归测试：(a)clone filter对原始类型数组不再CCE且产出独立副本;
  * (b)排他filter的update-value含时区偏移(如+08:00)不再NumberFormatException,增减日期表达式语义不变;
- * (c)not-equals对比值无法解析为日期时跳过对比不再NPE(与filterEquals防护对称)
+ * (c)not-equals对比值无法解析为日期时跳过对比不再NPE(与filterEquals防护对称);
+ * (d)l-like/r-like支持append-str拼接:appendStr经转义处理(其中%转为字面量\)后拼在%和值之间,通配符仅由补充的%提供
  */
 public class ParamFilterUtilsRegressionTest {
 
@@ -205,5 +206,76 @@ public class ParamFilterUtilsRegressionTest {
 		Object[] result = ParamFilterUtils.filterValue(null, new String[] { "d" },
 				new Object[] { "05-03-2024" }, Collections.singletonList(toDateFilter("d", "dd-MM-yyyy", null)));
 		assertEquals(LocalDate.of(2024, 3, 5), result[0]);
+	}
+
+	private static ParamFilterModel likeFilter(String type, String appendStr) {
+		ParamFilterModel filter = new ParamFilterModel();
+		filter.setFilterType(type);
+		filter.setParams(new String[] { "route" });
+		filter.setParam("route");
+		filter.setAppendStr(appendStr);
+		return filter;
+	}
+
+	@Test
+	public void rLikeAppendStrConcatenatesBeforePercent() {
+		// 场景:树形路由 category_route like concat(:oldRoute, ',%'),改为r-like+append-str=","后等价于 like :oldRoute
+		Object[] result = ParamFilterUtils.filterValue(null, new String[] { "route" }, new Object[] { "100" },
+				Collections.singletonList(likeFilter("r-like", ",")));
+		assertEquals("100,%", result[0]);
+	}
+
+	@Test
+	public void rLikeAppendStrTrailingPercentEscaped() {
+		// appendStr按转义处理后拼接:其中%转为字面量\%,不做去除,通配符仅由r-like补充的%提供
+		Object[] result = ParamFilterUtils.filterValue(null, new String[] { "route" }, new Object[] { "100" },
+				Collections.singletonList(likeFilter("r-like", ",%%")));
+		assertEquals("100,\\%\\%%", result[0]);
+	}
+
+	@Test
+	public void rLikeBlankAppendStrKeepsOldBehavior() {
+		Object[] result = ParamFilterUtils.filterValue(null, new String[] { "route" }, new Object[] { "100" },
+				Collections.singletonList(likeFilter("r-like", null)));
+		assertEquals("100%", result[0]);
+		result = ParamFilterUtils.filterValue(null, new String[] { "route" }, new Object[] { "100" },
+				Collections.singletonList(likeFilter("r-like", "")));
+		assertEquals("100%", result[0]);
+	}
+
+	@Test
+	public void lLikeAppendStrConcatenatesAfterPercent() {
+		// 镜像场景:category_route like concat('%,', :newRoute),l-like+append-str=","等价于 like :newRoute
+		Object[] result = ParamFilterUtils.filterValue(null, new String[] { "route" }, new Object[] { "300" },
+				Collections.singletonList(likeFilter("l-like", ",")));
+		assertEquals("%,300", result[0]);
+	}
+
+	@Test
+	public void lLikeAppendStrLeadingPercentEscaped() {
+		// appendStr按转义处理后拼接:其中%转为字面量\%,不做去除,通配符仅由l-like补充的%提供
+		Object[] result = ParamFilterUtils.filterValue(null, new String[] { "route" }, new Object[] { "300" },
+				Collections.singletonList(likeFilter("l-like", "%%,")));
+		assertEquals("%\\%\\%,300", result[0]);
+	}
+
+	@Test
+	public void lLikeBlankAppendStrKeepsOldBehavior() {
+		Object[] result = ParamFilterUtils.filterValue(null, new String[] { "route" }, new Object[] { "300" },
+				Collections.singletonList(likeFilter("l-like", null)));
+		assertEquals("%300", result[0]);
+	}
+
+	@Test
+	@SuppressWarnings("unchecked")
+	public void rLikeAppendStrAppliesToEachCollectionElement() {
+		List<Object> routes = new ArrayList<Object>();
+		routes.add("100");
+		routes.add("200");
+		Object[] result = ParamFilterUtils.filterValue(null, new String[] { "route" }, new Object[] { routes },
+				Collections.singletonList(likeFilter("r-like", ",")));
+		List<Object> processed = (List<Object>) result[0];
+		assertEquals("100,%", processed.get(0));
+		assertEquals("200,%", processed.get(1));
 	}
 }

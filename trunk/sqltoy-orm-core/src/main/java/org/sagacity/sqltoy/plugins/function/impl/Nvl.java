@@ -51,10 +51,11 @@ public class Nvl extends IFunction {
 		if (dialect == DBType.SQLSERVER) {
 			return wrapArgs("isnull", args);
 		}
+		// update 2026-9-9 补CLICKHOUSE(原生coalesce,此前落IGNORE原样输出nvl报函数不存在)
 		if (dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL14 || dialect == DBType.DB2
 				|| dialect == DBType.OPENGAUSS || dialect == DBType.STARDB || dialect == DBType.OSCAR
 				|| dialect == DBType.GAUSSDB || dialect == DBType.MOGDB || dialect == DBType.VASTBASE
-				|| dialect == DBType.H2) {
+				|| dialect == DBType.H2 || dialect == DBType.CLICKHOUSE) {
 			return wrapArgs("coalesce", args);
 		}
 		if (dialect == DBType.MYSQL || dialect == DBType.TIDB || dialect == DBType.MYSQL57 || dialect == DBType.DORIS

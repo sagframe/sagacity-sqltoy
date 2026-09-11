@@ -31,22 +31,30 @@ public class DBProfile {
 	private final PGobjectHolder pgObjectHolder;
 
 	/**
-	 * update 2026-9-8 sqlserver是否存在原生json类型(2025 GA/17.x正式版引入):merge的
-	 * using子查询对原生json列须convert(json,?)定型,对nvarchar承载列convert报 "Type json is not a
-	 * defined system type"(本机17.0.4075预览版实测无json类型);
-	 * 以convert探针实测判定,非sqlserver或探测失败为Boolean.FALSE
+	 * update 2026-9-10 db2的GSE空间扩展schema(DB2GSE)是否存在:12.1起内置空间引擎(非限定
+	 * SYSIBM函数)与GSE扩展可并存(实测12.1.5容器GSE仍启用),且内置ST_GEOMETRY与
+	 * db2gse.ST_GEOMETRY为不同UDT(函数产物与列类型错配报-408),geometry参数化包装须按此
+	 * 探测分派db2gse前缀形态或内置非限定形态;非db2为null,db2探测异常为TRUE(保持既有db2gse形态)
 	 */
-	private final Boolean hasJsonType;
+	private final Boolean hasGseSchema;
+
+	/**
+	 * update 2026-9-10 字符串字面量内反斜杠是否为转义字符(mysql系为true):由DataSourceUtils
+	 * 在构建档案解析出dbType时一并判定,运行期直取,统一供字面量掩码与like ESCAPE子句形态判定;
+	 * 运行期可变的backslashEscaping全局开关不入本档案(实时语义由SqlConfigParseUtils.isBackslashEscapeDialect分层叠加)
+	 */
+	private final boolean backslashEscape;
 
 	public DBProfile(String url, String dialect, int dbType, String productName, int majorVersion,
-			PGobjectHolder pgObjectHolder, Boolean hasJsonType) {
+			PGobjectHolder pgObjectHolder, Boolean hasGseSchema, boolean backslashEscape) {
 		this.url = url;
 		this.dialect = dialect;
 		this.dbType = dbType;
 		this.productName = productName;
 		this.majorVersion = majorVersion;
 		this.pgObjectHolder = pgObjectHolder;
-		this.hasJsonType = hasJsonType;
+		this.hasGseSchema = hasGseSchema;
+		this.backslashEscape = backslashEscape;
 	}
 
 	public String getUrl() {
@@ -73,8 +81,17 @@ public class DBProfile {
 		return pgObjectHolder;
 	}
 
-	public Boolean getHasJsonType() {
-		return hasJsonType;
+	public Boolean getHasGseSchema() {
+		return hasGseSchema;
+	}
+
+	/**
+	 * update 2026-9-10 本库字符串字面量内反斜杠是否为转义字符(mysql系为true,构建档案时已按dbType判定)
+	 * 
+	 * @return true表示字面量内\'不终结字面量(mysql系)
+	 */
+	public boolean isBackslashEscape() {
+		return backslashEscape;
 	}
 
 	/**

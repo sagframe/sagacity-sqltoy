@@ -1,8 +1,5 @@
 package org.sagacity.sqltoy.plugins.interceptors;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
@@ -143,10 +140,10 @@ public class TenantFilterInterceptor implements SqlInterceptor {
 					}
 				} else {
 					// 按掩码串定位的原位替换where词本身:规避字面量内的where被replaceFirst误替换
-					Matcher whereMatcher = Pattern.compile("(?i)\\Wwhere\\W").matcher(maskedSql);
-					whereMatcher.find();
-					sql = new StringBuilder(sql).replace(whereMatcher.start() + 1, whereMatcher.end() - 1, sqlPart)
-							.toString();
+					// update 2026-9-9 复用上方matchIndex已定位的whereIndex(命中串"\Wwhere\W"恒为
+					// 定长7,词本身区间即[start+1,start+6)),消除原实现每查询一次的Pattern.compile
+					// 与未检查的find()(未命中时start()会抛IllegalStateException)
+					sql = new StringBuilder(sql).replace(whereIndex + 1, whereIndex + 6, sqlPart).toString();
 				}
 				sqlToyResult.setSql(sql);
 			}

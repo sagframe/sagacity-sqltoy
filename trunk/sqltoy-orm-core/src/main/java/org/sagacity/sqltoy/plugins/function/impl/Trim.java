@@ -54,10 +54,24 @@ public class Trim extends IFunction {
 		String arg = args[0].trim();
 		String argLow = arg.toLowerCase(Locale.ROOT);
 		boolean modifierForm = argLow.contains(" from ");
-		String keyword = modifierForm
-				? (argLow.startsWith("leading ") ? "leading" : argLow.startsWith("trailing ") ? "trailing" : "both")
-				: "both";
-		String rest = modifierForm ? arg.substring(keyword.length()).trim() : "";
+		// update 2026-9-9 rest按实际前导关键字长度截取:原按keyword.length()定长截取,
+		// 对省略BOTH/LEADING/TRAILING关键字的trim('x' from col)形态会把remstr首部误截掉
+		String keyword = "both";
+		String rest = "";
+		if (modifierForm) {
+			if (argLow.startsWith("leading ")) {
+				keyword = "leading";
+				rest = arg.substring(8).trim();
+			} else if (argLow.startsWith("trailing ")) {
+				keyword = "trailing";
+				rest = arg.substring(9).trim();
+			} else if (argLow.startsWith("both ")) {
+				rest = arg.substring(5).trim();
+			} else {
+				// trim('x' from col)/trim(from col)形态,无关键字前缀,rest保持整体
+				rest = arg;
+			}
+		}
 		int fromIdx = rest.toLowerCase(Locale.ROOT).startsWith("from ") ? 0
 				: rest.toLowerCase(Locale.ROOT).indexOf(" from ");
 		if (dialect == DBType.H2) {

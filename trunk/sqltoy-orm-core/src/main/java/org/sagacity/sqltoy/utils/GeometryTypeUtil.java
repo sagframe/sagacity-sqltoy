@@ -2,8 +2,8 @@ package org.sagacity.sqltoy.utils;
 
 /**
  * @project sagacity-sqltoy
- * @description geometry空间类型处理门面,jts-core为可选依赖
- *              update 2026-9-8 JTS类型引用全部剥离至JtsGeometryCodec,本类字节码不含任何
+ * @description geometry空间类型处理门面,jts-core为可选依赖 update 2026-9-8
+ *              JTS类型引用全部剥离至JtsGeometryCodec,本类字节码不含任何
  *              org.locationtech引用(仅Class.forName字符串探测),任意环境下加载/验证本类
  *              均不依赖jts-core;JtsGeometryCodec仅在hasJts()通过后的转发调用中才被类加载。
  *              此前JTS引用与字符串工具同放在本类,无jts环境调用isGeometryTypeName等纯字符串
@@ -105,6 +105,18 @@ public class GeometryTypeUtil {
 	 */
 	public static String mysqlGeometryBytesToWKT(byte[] bytes) {
 		return HAS_JTS ? JtsGeometryCodec.mysqlGeometryBytesToWKT(bytes) : null;
+	}
+
+	/**
+	 * 将WKT/EWKT文本解析编码为mysql内部格式字节(4字节小端SRID前缀+标准WKB,与getBytes读回形态一致),
+	 * 供mysql系rs回写等拒绝字符串绑定的场景使用(update 2026-9-9 自SqlUtil.toGeometryBytes下沉,
+	 * 保证SqlUtil字节码不含JTS符号引用)
+	 *
+	 * @param wkt WKT/EWKT文本
+	 * @return mysql内部格式字节,jts不可用或编码失败返回null
+	 */
+	public static byte[] wktToMysqlInternalBytes(String wkt) {
+		return HAS_JTS ? JtsGeometryCodec.wktToMysqlInternalBytes(wkt) : null;
 	}
 
 	/**

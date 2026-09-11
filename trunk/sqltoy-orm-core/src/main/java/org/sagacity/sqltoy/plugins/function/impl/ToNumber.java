@@ -58,10 +58,12 @@ public class ToNumber extends IFunction {
 				|| dialect == DBType.STARDB || dialect == DBType.OSCAR) {
 			return "CAST(" + args[0] + " AS numeric)";
 		}
-		// mysql系/sqlserver/H2/DB2:DECIMAL(20,6)精度契约见类注释
+		// mysql系/sqlserver/H2/DB2/sqlite:DECIMAL(20,6)精度契约见类注释
+		// update 2026-9-10 补sqlite(无to_number函数,原样透传报no such function;
+		// CAST AS DECIMAL在sqlite按NUMERIC亲和性解析,实测正确返回数值)
 		if (dialect == DBType.MYSQL || dialect == DBType.TIDB || dialect == DBType.MYSQL57 || dialect == DBType.DORIS
 				|| dialect == DBType.STARROCKS || dialect == DBType.H2 || dialect == DBType.SQLSERVER
-				|| dialect == DBType.DB2) {
+				|| dialect == DBType.DB2 || dialect == DBType.SQLITE || dialect == DBType.CLICKHOUSE) {
 			return "CAST(" + args[0] + " AS DECIMAL(20,6))";
 		}
 		return super.IGNORE;

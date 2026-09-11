@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -42,6 +43,18 @@ public class ShardingUtils {
 	 * 定义日志
 	 */
 	protected final static Logger logger = LoggerFactory.getLogger(ShardingUtils.class);
+
+	// update 2026-9-9 分表名匹配正则缓存:matchReplace为查询执行期热路径(每查询每分表调用),
+	// 原实现每次Pattern.compile;分表名集合有限,设容量上限防御动态表名场景无界增长
+	private static final ConcurrentHashMap<String, Pattern> TABLE_PATTERN_CACHE = new ConcurrentHashMap<String, Pattern>();
+
+	private static Pattern tablePatternOf(String sourceTable) {
+		String regex = "(?i)\\W".concat(sourceTable).concat("\\W");
+		if (TABLE_PATTERN_CACHE.size() > 500) {
+			return Pattern.compile(regex);
+		}
+		return TABLE_PATTERN_CACHE.computeIfAbsent(regex, Pattern::compile);
+	}
 
 	/**
 	 * 单个对象sharding策略处理,适用于load、save、update、delete单对象操作
@@ -444,7 +457,7 @@ public class ShardingUtils {
 		}
 		// 用正则表达式前后各加上非数字好字符的目的就是防止:sql中有字符串包含sourceTable
 		// 如: from biz_notice,biz_notice_item 就出现了包含情况
-		Pattern p = Pattern.compile("(?i)\\W".concat(sourceTable).concat("\\W"));
+		Pattern p = tablePatternOf(sourceTable);
 		// 补充一个空字符，确保匹配正确
 		Matcher m = p.matcher(sql.concat(" "));
 		StringBuilder lastSql = new StringBuilder();
