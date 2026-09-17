@@ -271,6 +271,46 @@ public class SqlServerDialectTest {
 		System.err.println("testSaveIgnoreExistSql_rowversionFirstNoLeadingComma => " + sql);
 	}
 
+	// ======================== offset keyword detection ========================
+
+	/**
+	 * getRandomResult派生表"内层已含offset不追加offset 0 rows"的判定:
+	 * update 2026-9-17 由contains("offset")改为词边界+字面量掩码判定,误判会漏加
+	 * offset 0 rows致mssql报ORDER BY clause is invalid in derived tables错误
+	 */
+	@Test
+	public void testHasOffsetKeyWord() {
+		// 真实offset子句命中(大小写不敏感,@参数相邻不影响词边界)
+		assertTrue(SqlServerDialectUtils.hasOffsetKeyWord("select name from t order by id offset 3 rows", false),
+				"小写offset子句应命中");
+		assertTrue(SqlServerDialectUtils.hasOffsetKeyWord("select name from t ORDER BY id OFFSET 0 ROWS", false),
+				"大写OFFSET子句应命中");
+		assertTrue(SqlServerDialectUtils.hasOffsetKeyWord(
+				"select name from t order by id offset @off rows fetch next 1 rows only", false),
+				"offset后跟@参数应命中");
+		// 标识符子串不算(rowoffset/offsetflag):修复前contains误判为已含offset
+		assertTrue(!SqlServerDialectUtils.hasOffsetKeyWord("select rowoffset, t.offsetflag from t order by id", false),
+				"标识符含offset子串不应命中");
+		// 字面量内的offset不算:掩码后匹配,修复前contains误判
+		assertTrue(!SqlServerDialectUtils.hasOffsetKeyWord("select 'offset' from t order by id", false),
+				"字面量内offset不应命中");
+		assertTrue(!SqlServerDialectUtils.hasOffsetKeyWord("select * from t where remark='offset flag'", false),
+				"条件字面量内offset不应命中");
+		// 真实offset与字面量并存仍命中
+		assertTrue(SqlServerDialectUtils.hasOffsetKeyWord("select 'offset' from t order by id offset 1 rows", false),
+				"字面量与真实offset并存应命中");
+		// backslashEscape差异:规则一致(\'不终结字面量,内容整体掩码)时offset被掩住;
+		// 标准规则(false)下'a\'在反斜杠后终结字面量,offset落在字面量外参与判定(行为记录,
+		// 该输入本身是mysql语法sql,按标准规则解析属垃圾进垃圾出)
+		assertTrue(!SqlServerDialectUtils.hasOffsetKeyWord("select 'a\\'b offset c' from t order by id", true),
+				"mysql规则下\\'不终结字面量,offset应被掩住");
+		assertTrue(SqlServerDialectUtils.hasOffsetKeyWord("select 'a\\'b offset c' from t order by id", false),
+				"标准规则下字面量在\\'后终结,offset参与判定");
+		// 空值安全
+		assertTrue(!SqlServerDialectUtils.hasOffsetKeyWord(null, false), "null sql不应命中");
+		assertTrue(!SqlServerDialectUtils.hasOffsetKeyWord("", false), "空sql不应命中");
+	}
+
 	private EntityMeta buildEntityMeta(String tableName, boolean withRowversion, boolean withGeometry,
 			boolean withId) {
 		EntityMeta meta = new EntityMeta();

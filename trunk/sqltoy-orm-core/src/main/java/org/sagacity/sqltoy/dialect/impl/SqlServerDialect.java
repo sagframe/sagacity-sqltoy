@@ -5,7 +5,6 @@ import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -113,11 +112,11 @@ public class SqlServerDialect implements Dialect {
 			// tables, subqueries..."),内层sql末尾追加offset 0 rows使内层排序合法;
 			// 随机取样的最终行序由外层order by NEWID()决定,内层offset 0不增删行不改变行集;
 			// 内层已含offset的不追加(派生表内带offset的排序本已合法,重复追加反而语法错误)
-			if (innerSql.toLowerCase(Locale.ROOT).contains("offset")) {
-				sql.append(innerSql);
-			} else {
-				sql.append(innerSql).append(" offset 0 rows");
-			}
+			// update 2026-9-17 追加判定收编至SqlServerDialectUtils.legalizeDerivedInnerSql:
+			// contains("offset")子串匹配会被row_offset/offset_id等标识符误判(跳过追加致
+			// 内层order by报语法错误),改word边界正则;追加条件精确到top级order by(字面量
+			// 掩码+括号剔除后判定),union无order by时OFFSET语法必须跟随order by不可追加
+			sql.append(SqlServerDialectUtils.legalizeDerivedInnerSql(innerSql));
 			sql.append(") ");
 			sql.append(SqlToyConstants.INTERMEDIATE_TABLE);
 			sql.append(" ");
@@ -253,7 +252,11 @@ public class SqlServerDialect implements Dialect {
 		if (hasUnion) {
 			sql.append(partSql);
 			sql.append(" " + SqlToyConstants.INTERMEDIATE_TABLE + ".* from (");
-			sql.append(innerSql);
+			// update 2026-9-17 与getRandomResult同源修复:派生表内的order by必须伴随top/offset
+			// (否则报"The ORDER BY clause is invalid in views, inline functions, derived
+			// tables..."),此前带尾部order by的union包派生表直接报语法错误;经legalizeDerivedInnerSql
+			// 判定后追加offset 0 rows(不增删行;无order by的裸union派生表本已合法不可追加)
+			sql.append(SqlServerDialectUtils.legalizeDerivedInnerSql(innerSql));
 			sql.append(") as " + SqlToyConstants.INTERMEDIATE_TABLE + " ");
 		} else {
 			sql.append(innerSql.replaceFirst("(?i)select ", partSql));
