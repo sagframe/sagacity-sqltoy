@@ -54,11 +54,13 @@ import org.sagacity.sqltoy.config.model.TreeSortModel;
 import org.sagacity.sqltoy.config.model.UnpivotModel;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.exception.DataAccessException;
+import org.sagacity.sqltoy.model.DBProfile;
 import org.sagacity.sqltoy.model.IgnoreCaseSet;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.model.JdbcTypes;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
+import org.sagacity.sqltoy.model.ResultColumnMeta;
 import org.sagacity.sqltoy.model.inner.DataSetResult;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.plugins.TypeHandler;
@@ -72,6 +74,7 @@ import org.sagacity.sqltoy.plugins.secure.DesensitizeProvider;
 import org.sagacity.sqltoy.translate.DynamicCacheFetch;
 import org.sagacity.sqltoy.translate.FieldTranslateCacheHolder;
 import org.sagacity.sqltoy.translate.TranslateConfigParse;
+import org.sagacity.sqltoy.translate.TranslateUtils;
 import org.sagacity.sqltoy.translate.model.BatchDynamicCache;
 import org.sagacity.sqltoy.translate.model.DynamicCacheHolder;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
@@ -148,32 +151,26 @@ public class ResultUtils {
 			// 类型转成string的列
 			Set<String> strTypeCols = getStringColumns(sqlToyConfig);
 			boolean hasToStrCols = !strTypeCols.isEmpty();
-			String[] labelNames = new String[columnCnt - startColIndex];
-			String[] labelTypes = new String[columnCnt - startColIndex];
-			// 列真实类型名(与labelNames同下标对齐,供byte[]扩展类型归一判定;
-			// 不受strTypeCols对labelTypes的VARCHAR覆写影响,否则json/空间列会跳过归一)
-			String[] columnTypeNames = new String[columnCnt - startColIndex];
-			HashMap<String, Integer> labelIndexMap = new HashMap<String, Integer>();
-			String labeNameLow;
 			String colLabelUpperOrLower = sqlToyContext.getColumnLabelUpperOrLower();
 			// 元数据提取到循环外,避免每列重复调用getMetaData()
 			java.sql.ResultSetMetaData resultSetMetaData = rs.getMetaData();
-			for (int i = startColIndex; i < columnCnt; i++) {
-				labelNames[index] = resultSetMetaData.getColumnLabel(i + 1);
-				labeNameLow = labelNames[index].toLowerCase(Locale.ROOT);
-				if ("lower".equals(colLabelUpperOrLower)) {
-					labelNames[index] = labelNames[index].toLowerCase(Locale.ROOT);
-				} else if ("upper".equals(colLabelUpperOrLower)) {
-					labelNames[index] = labelNames[index].toUpperCase(Locale.ROOT);
-				}
-				labelIndexMap.put(labeNameLow, index);
-				labelTypes[index] = resultSetMetaData.getColumnTypeName(i + 1);
-				columnTypeNames[index] = labelTypes[index];
-				// 类型因缓存翻译、格式化转为string
-				if (hasToStrCols && strTypeCols.contains(labeNameLow)) {
-					labelTypes[index] = "VARCHAR";
-				}
-				index++;
+			// update 2026-9-12 优化步骤2:列元数据(标签/类型名/读取策略/扩展类型标记)单点
+			// 分类收敛为ResultColumnMeta[],整体向后传递,替代labelNames/labelTypes/
+			// columnTypeNames/columnKinds多条并行数组的同步下标维护
+			ResultColumnMeta[] cols = resolveColumns(resultSetMetaData, startColIndex, columnCnt - startColIndex,
+					colLabelUpperOrLower, hasToStrCols, strTypeCols, dbType);
+			String[] labelNames = new String[cols.length];
+			String[] labelTypes = new String[cols.length];
+			// 列真实类型名(与labelNames同下标对齐,供byte[]扩展类型归一判定;
+			// 不受strTypeCols对labelTypes的VARCHAR覆写影响,否则json/空间列会跳过归一)
+			String[] columnTypeNames = new String[cols.length];
+			HashMap<String, Integer> labelIndexMap = new HashMap<String, Integer>();
+			for (int i = 0; i < cols.length; i++) {
+				labelNames[i] = cols[i].getLabel();
+				labelTypes[i] = cols[i].getLabelType();
+				// lowLabel为原始标签小写(规整前),与原labelIndexMap的key口径一致
+				labelIndexMap.put(cols[i].getLowLabel(), i);
+				columnTypeNames[i] = cols[i].getDataTypeName();
 			}
 			result.setLabelNames(labelNames);
 			result.setLabelTypes(labelTypes);
@@ -181,7 +178,7 @@ public class ResultUtils {
 			try {
 				result.setRows(getResultSet(dbType, queryExecutorExtend, sqlToyConfig, sqlToyContext, conn, rs,
 						updateRowHandler, realDecryptHandler, columnCnt, labelIndexMap, labelNames, startColIndex,
-						columnTypeNames));
+						columnTypeNames, cols));
 			} // update 2019-09-11 此处增加数组溢出异常是因为经常有开发设置缓存cache-indexs时写错误，为了增加错误提示信息的友好性增加此处理
 			catch (Exception oie) {
 				logger.error("sql={} exception occurred while extracting the result:{}!", sqlToyConfig.getId(),
@@ -235,31 +232,24 @@ public class ResultUtils {
 		// 类型转成string的列
 		Set<String> strTypeCols = getStringColumns(sqlToyConfig);
 		boolean hasToStrCols = !strTypeCols.isEmpty();
+		// 字段名称统一转大写或小写,默认为default,即不做任何处理
+		String colLabelUpperOrLower = sqlToyContext.getColumnLabelUpperOrLower();
+		// update 2026-9-12 优化步骤2:列元数据单点分类收敛为ResultColumnMeta[](resolveColumns
+		// 查询级一次构建,行循环零新增分配),labelNames/labelTypes/columnTypeNames为派生数组
+		// (供streamResultHandler与VO映射等既有数组形态消费)
+		ResultColumnMeta[] cols = resolveColumns(resultSetMD, 0, columnSize, colLabelUpperOrLower, hasToStrCols,
+				strTypeCols, dbType);
 		String[] labelNames = new String[columnSize];
 		String[] labelTypes = new String[columnSize];
 		// 列真实类型名(与labelNames同下标对齐,供byte[]扩展类型归一判定;
 		// 不受strTypeCols对labelTypes的VARCHAR覆写影响,否则json/空间列会跳过归一)
 		String[] columnTypeNames = new String[columnSize];
-		String labeNameLow;
-		// 字段名称统一转大写或小写,默认为default,即不做任何处理
-		String colLabelUpperOrLower = sqlToyContext.getColumnLabelUpperOrLower();
-		int index = 0;
 		for (int i = 0; i < columnSize; i++) {
-			labelNames[index] = resultSetMD.getColumnLabel(i + 1);
-			labeNameLow = labelNames[index].toLowerCase(Locale.ROOT);
-			if ("lower".equals(colLabelUpperOrLower)) {
-				labelNames[index] = labelNames[index].toLowerCase(Locale.ROOT);
-			} else if ("upper".equals(colLabelUpperOrLower)) {
-				labelNames[index] = labelNames[index].toUpperCase(Locale.ROOT);
-			}
-			labelTypes[index] = resultSetMD.getColumnTypeName(i + 1);
-			columnTypeNames[index] = labelTypes[index];
-			// 类型因缓存翻译、格式化转为string
-			if (hasToStrCols && strTypeCols.contains(labeNameLow)) {
-				labelTypes[index] = "VARCHAR";
-			}
-			index++;
+			labelNames[i] = cols[i].getLabel();
+			labelTypes[i] = cols[i].getLabelType();
+			columnTypeNames[i] = cols[i].getDataTypeName();
 		}
+		int index = 0;
 		HashMap<String, FieldTranslate> translateMap = sqlToyConfig.getTranslateMap();
 		// 判断是否有缓存翻译器定义
 		boolean hasTranslate = !translateMap.isEmpty();
@@ -324,23 +314,21 @@ public class ResultUtils {
 				// update 2026-9-8 构建列jdbcTypes标记(字段注解JSON/JSONB标注优先,查询列类型名
 				// 兜底),供reflectRowToBean按JSON等扩展类型做jdbc值到POJO的转换(原固定OTHER导致
 				// json列到对象字段的反序列化不触发)
+				// update 2026-9-12 步骤2:双源标记同步收敛到ResultColumnMeta(注解标注覆盖extType,
+				// 类型名派生值已在resolveColumns预置,jdbcType反向映射与原检测链一致)
 				Map<String, Integer> fieldJdbcTypeMap = BeanUtil.getClassFieldMap(resultType, realProps);
 				columnJdbcTypes = new int[columnSize];
 				for (int i = 0; i < columnSize; i++) {
 					String propLow = (realProps[i] == null) ? null : realProps[i].toLowerCase(Locale.ROOT);
 					if (propLow != null && fieldJdbcTypeMap.containsKey(propLow)) {
 						columnJdbcTypes[i] = fieldJdbcTypeMap.get(propLow);
-					} else if (columnTypeNames != null && i < columnTypeNames.length && columnTypeNames[i] != null) {
-						String tn = columnTypeNames[i].toUpperCase(Locale.ROOT);
-						if (tn.equals("JSON")) {
-							columnJdbcTypes[i] = org.sagacity.sqltoy.model.JdbcTypes.JSON;
-						} else if (tn.equals("JSONB")) {
-							columnJdbcTypes[i] = org.sagacity.sqltoy.model.JdbcTypes.JSONB;
-						} else if (tn.equals("GEOMETRY") || GeometryTypeUtil.isGeometryTypeName(tn)) {
-							columnJdbcTypes[i] = org.sagacity.sqltoy.model.JdbcTypes.GEOMETRY;
-						} else if (tn.equals("VECTOR") || tn.equals("FLOATVECTOR")) {
-							columnJdbcTypes[i] = org.sagacity.sqltoy.model.JdbcTypes.VECTOR;
-						}
+						cols[i].applyVoBinding(realProps[i], columnJdbcTypes[i],
+								ResultColumnMeta.extTypeOfJdbc(columnJdbcTypes[i]));
+					} else {
+						// 类型名兜底检测:extType已在resolveColumns按类型名派生,映射为jdbc标记
+						ResultColumnMeta.ExtType typeNameExt = cols[i].getExtType();
+						columnJdbcTypes[i] = ResultColumnMeta.jdbcTypeOf(typeNameExt);
+						cols[i].applyVoBinding(realProps[i], columnJdbcTypes[i], null);
 					}
 				}
 				methodTypes = new String[columnSize];
@@ -378,12 +366,11 @@ public class ResultUtils {
 		// 基于游标流模式的数据查询和翻译必须逐行翻译,所以只需定义一个实例即可
 		DynamicCacheHolder dynamicCacheHolder = new DynamicCacheHolder();
 		boolean doNext = true;
-		// 列读取策略查询级预分类(oracle文本化/db2空间/h2 json/mysql系空间与向量)
-		int[] columnKinds = buildColumnKinds(dbType, columnTypeNames);
+		// 列读取策略已由resolveColumns查询级预分类(oracle文本化/db2空间/h2 json/mysql系
+		// 空间与向量,见cols),原buildColumnKinds在流式路径收编
 		while (rs.next()) {
-			rowTemp = processResultRow(dbType, typeHandler, dynamicCacheFetch, dynamicCacheHolder, rs, labelNames,
-					lowKeyLabelNameMap, columnSize, translateCache, realDecryptHandler, ignoreAllEmpty, columnTypeNames,
-					columnKinds, 0);
+			rowTemp = processResultRow(dbType, typeHandler, dynamicCacheFetch, dynamicCacheHolder, rs,
+					lowKeyLabelNameMap, columnSize, translateCache, realDecryptHandler, ignoreAllEmpty, cols, 0);
 			if (rowTemp != null) {
 				// 字段脱敏
 				if (sqlSecure) {
@@ -418,7 +405,8 @@ public class ResultUtils {
 					} else if (isConMap) {
 						rowMap = new ConcurrentHashMap();
 					} else {
-						rowMap = (Map) resultType.getDeclaredConstructor().newInstance();
+						// update 2026-9-14 走BeanUtil.newBean的构造器缓存(原逐行getDeclaredConstructor)
+						rowMap = (Map) BeanUtil.newBean(resultType);
 					}
 					for (int j = 0; j < columnSize; j++) {
 						rowMap.put(mapLabelNames[j], rowTemp.get(j));
@@ -590,7 +578,7 @@ public class ResultUtils {
 	private static List getResultSet(Integer dbType, QueryExecutorExtend queryExtend, SqlToyConfig sqlToyConfig,
 			SqlToyContext sqlToyContext, Connection conn, ResultSet rs, UpdateRowHandler updateRowHandler,
 			DecryptHandler decryptHandler, int columnCnt, HashMap<String, Integer> labelIndexMap, String[] labelNames,
-			int startColIndex, String[] columnTypeNames) throws Exception {
+			int startColIndex, String[] columnTypeNames, ResultColumnMeta[] cols) throws Exception {
 		// 字段连接(多行数据拼接成一个数据,以一行显示)
 		LinkModel linkModel = sqlToyConfig.getLinkModel();
 		if (queryExtend != null && queryExtend.linkModel != null) {
@@ -615,8 +603,7 @@ public class ResultUtils {
 		}
 		// 单个字段link运算
 		int columnSize = labelNames.length;
-		// 列读取策略查询级预分类(oracle文本化/db2空间/h2 json/mysql系空间与向量)
-		int[] columnKinds = buildColumnKinds(dbType, columnTypeNames);
+		// 列读取策略已由调用方经resolveColumns查询级预分类(见cols,原buildColumnKinds在此收编)
 		int index = 0;
 		// 警告阀值
 		int warnThresholds = SqlToyConstants.getWarnThresholds();
@@ -689,8 +676,8 @@ public class ResultUtils {
 				// 不相等
 				if (!identity.equals(preIdentity)) {
 					itemRow = processResultRow(dbType, typeHandler, dynamicCacheFetch, dynamicCacheHolder, rs,
-							labelNames, lowKeyLabelNameMap, columnSize, fieldTranslateCacheHolders, decryptHandler,
-							ignoreAllEmpty, columnTypeNames, columnKinds, startColIndex);
+							lowKeyLabelNameMap, columnSize, fieldTranslateCacheHolders, decryptHandler, ignoreAllEmpty,
+							cols, startColIndex);
 					if (itemRow != null) {
 						// 只要有过一次不等，避免是第一行记录
 						if (notEqualCnt > 0) {
@@ -789,9 +776,9 @@ public class ResultUtils {
 					updateRowHandler.updateRow(rs, index);
 					rs.updateRow();
 				}
-				itemRow = processResultRow(dbType, typeHandler, dynamicCacheFetch, dynamicCacheHolder, rs, labelNames,
+				itemRow = processResultRow(dbType, typeHandler, dynamicCacheFetch, dynamicCacheHolder, rs,
 						lowKeyLabelNameMap, columnSize, fieldTranslateCacheHolders, decryptHandler, ignoreAllEmpty,
-						columnTypeNames, columnKinds, startColIndex);
+						cols, startColIndex);
 				if (itemRow != null) {
 					items.add(itemRow);
 				}
@@ -1293,58 +1280,50 @@ public class ResultUtils {
 
 	/**
 	 * 处理Result单行数据
-	 * 
+	 *
 	 * @param dynamicCacheFetch  动态缓存数据抓取接口，翻译配置为动态缓存时逐key实时查询
 	 * @param rs                 ResultSet结果集对象(当前行)
-	 * @param labelNames         列名称数组(对应rs第startColIndex+i+1列)，null时无label定位
 	 * @param lowKeyLabelNameMap 列名小写key的对照map(翻译定位用)
 	 * @param size               本行提取的列数
 	 * @param translateCaches    翻译字段缓存配置，null表示无翻译
 	 * @param decryptHandler     字段解密处理器，非null时对指定列做解密处理
 	 * @param ignoreAllEmptySet  true表示整行数据全为空值时返回null
+	 * @param cols               查询结果列元数据(标签/类型名/读取策略/扩展类型标记,查询级
+	 *                           由resolveColumns预构建;USF等无标签场景label为null)
 	 * @param startColIndex      列起始下标(从0开始,oracle11g分页经此跳过包装的page_row_id列)
 	 * @return 单行的值组成的List，整行为空且ignoreAllEmptySet为true返回null
 	 * @throws Exception
 	 */
 	public static List processResultRow(Integer dbType, TypeHandler typeHandler, DynamicCacheFetch dynamicCacheFetch,
-			DynamicCacheHolder dynamicCacheHolder, ResultSet rs, String[] labelNames,
-			HashMap<String, String> lowKeyLabelNameMap, int size,
+			DynamicCacheHolder dynamicCacheHolder, ResultSet rs, HashMap<String, String> lowKeyLabelNameMap, int size,
 			HashMap<String, FieldTranslateCacheHolder> translateCaches, DecryptHandler decryptHandler,
-			boolean ignoreAllEmptySet, String[] columnTypeNames, int[] columnKinds, int startColIndex)
-			throws Exception {
-		List rowData = new ArrayList();
+			boolean ignoreAllEmptySet, ResultColumnMeta[] cols, int startColIndex) throws Exception {
+		// 列数已知:按size预置容量,避免逐行ArrayList在扩容点做数组拷贝
+		List rowData = new ArrayList(size);
 		Object fieldValue;
 		// 单行所有字段结果为null
 		boolean allNull = true;
 		String label = null;
 		int blobSize;
-		boolean isLabel = (labelNames == null) ? false : true;
 		boolean doTranslate = (translateCaches == null) ? false : true;
 		// oracle 的时间戳非标准java类型
 		boolean convertOracleTimestamp = SqlToyConstants.convertOracleTimestamp();
 		FieldTranslateCacheHolder fieldTranslateHandler;
-		// 列读取策略由调用方按dbType+列元数据类型名预分类(columnKinds,查询级一次),
-		// 本循环内零字符串判定:TEXT_READ列直接文本化读取,EXT_BYTE列取值后按列类型归一,
-		// 常规列getObject后经normalizeExtTypeValue的常规类型快速通道零开销直通
-		// update 2026-9-8 列名小写化同步提升到查询级预计算(原每行每列toLowerCase重复分配)
-		String[] lowLabelNames = null;
-		if (isLabel) {
-			lowLabelNames = new String[size];
-			for (int i = 0; i < size; i++) {
-				lowLabelNames[i] = labelNames[i].toLowerCase(Locale.ROOT);
-			}
-		}
+		// 列读取策略/类型名/标签小写均已查询级预构建于cols(ResultColumnMeta),本循环内
+		// 零字符串判定、零toLowerCase分配:TEXT_READ列直接文本化读取,EXT_BYTE列取值后
+		// 按列类型归一,常规列getObject后经normalizeExtTypeValue的快速通道零开销直通
+		// (update 2026-9-12 步骤2:原lowLabelNames[]的每行toLowerCase重复分配随cols预计算消除)
 		for (int i = 0; i < size; i++) {
-			int kind = (columnKinds == null) ? COLUMN_NORMAL : columnKinds[i];
-			if (isLabel) {
-				label = lowLabelNames[i];
+			ResultColumnMeta col = cols[i];
+			if (col != null) {
+				label = col.getLowLabel();
 			}
 			// TEXT_READ:oracle的JSON/VECTOR列getObject直接抛错(ORA-17004/18722)、
 			// db2(db2gse)的ST_Geometry读回驱动内部混淆对象,均改走getString文本化
-			// update 2026-9-8 统一按下标取值,驱动免label查找;列下标须叠加startColIndex:
-			// labelNames[i]/columnTypeNames[i]/columnKinds[i]均对应rs第startColIndex+i+1列
+			// 列下标须叠加startColIndex:cols[i]对应rs第startColIndex+i+1列
 			// (oracle11g分页包装的page_row_id列经startColIndex跳过,直接i+1会整体错位)
-			fieldValue = (kind == COLUMN_TEXT_READ) ? rs.getString(startColIndex + i + 1)
+			fieldValue = (col != null && col.getReadStrategy() == ResultColumnMeta.ReadStrategy.TEXT_READ)
+					? rs.getString(startColIndex + i + 1)
 					: rs.getObject(startColIndex + i + 1);
 			if (null != fieldValue) {
 				if (fieldValue instanceof java.sql.Clob) {
@@ -1367,7 +1346,9 @@ public class ResultUtils {
 					// 快速短路,仅EXT_BYTE列(byte[]形态的json/vector/geometry)与驱动专属
 					// 对象(STRUCT/PGobject等非常规类型)进入识别链
 					fieldValue = normalizeExtTypeValue(fieldValue, dbType,
-							(kind == COLUMN_EXT_BYTE && columnTypeNames != null) ? columnTypeNames[i] : null);
+							(col != null && col.getReadStrategy() == ResultColumnMeta.ReadStrategy.EXT_BYTE)
+									? col.getDataTypeName()
+									: null);
 				}
 				// java 特定类型处理
 				if (typeHandler != null) {
@@ -1378,7 +1359,7 @@ public class ResultUtils {
 					fieldValue = decryptHandler.decrypt(label, fieldValue);
 				}
 				if (doTranslate) {
-					fieldTranslateHandler = translateCaches.get(label);
+					fieldTranslateHandler = (label == null) ? null : translateCaches.get(label);
 					if (fieldTranslateHandler != null) {
 						fieldValue = fieldTranslateHandler.getRSCacheValue(dynamicCacheFetch, dynamicCacheHolder, rs,
 								lowKeyLabelNameMap, fieldValue.toString());
@@ -1394,6 +1375,74 @@ public class ResultUtils {
 			return null;
 		}
 		return rowData;
+	}
+
+	/**
+	 * 处理Result单行数据(旧签名,update 2026-9-12起废弃):并行数组
+	 * (labelNames/columnTypeNames/columnKinds)形态已被ResultColumnMeta[]取代,
+	 * 内部桥接转换后委托新签名;既有调用方(USF锁游标回读、getMoreLinkResultSet) 逐步迁移后移除。
+	 */
+	@Deprecated
+	public static List processResultRow(Integer dbType, TypeHandler typeHandler, DynamicCacheFetch dynamicCacheFetch,
+			DynamicCacheHolder dynamicCacheHolder, ResultSet rs, String[] labelNames,
+			HashMap<String, String> lowKeyLabelNameMap, int size,
+			HashMap<String, FieldTranslateCacheHolder> translateCaches, DecryptHandler decryptHandler,
+			boolean ignoreAllEmptySet, String[] columnTypeNames, int[] columnKinds, int startColIndex)
+			throws Exception {
+		ResultColumnMeta[] cols = new ResultColumnMeta[size];
+		for (int i = 0; i < size; i++) {
+			String label = (labelNames == null) ? null : labelNames[i];
+			String tn = (columnTypeNames == null) ? null : columnTypeNames[i];
+			int kind = (columnKinds == null) ? COLUMN_NORMAL : columnKinds[i];
+			cols[i] = new ResultColumnMeta(label, (label == null) ? null : label.toLowerCase(Locale.ROOT),
+					startColIndex + i + 1, tn, tn, ResultColumnMeta.ReadStrategy.of(kind),
+					ResultColumnMeta.ExtType.of(tn), 0, null);
+		}
+		return processResultRow(dbType, typeHandler, dynamicCacheFetch, dynamicCacheHolder, rs, lowKeyLabelNameMap,
+				size, translateCaches, decryptHandler, ignoreAllEmptySet, cols, startColIndex);
+	}
+
+	/**
+	 * update 2026-9-12 优化步骤2:查询结果列元数据的单点分类工厂——标签(含大小写规整
+	 * 与小写预计算)/类型名(原始与对外呈现双形态)/读取策略(buildColumnKinds收编)/
+	 * 扩展类型标记一次构建,替代processResultSet/consumeResult各自维护的
+	 * labelNames/labelTypes/columnTypeNames/columnKinds多条并行数组。
+	 * 元数据对同一结果集恒定,查询级构建一次,行循环零新增分配。
+	 *
+	 * @param resultSetMD          结果集元数据
+	 * @param columnSize           列数量
+	 * @param colLabelUpperOrLower 标签大小写规整配置(lower/upper/default)
+	 * @param hasToStrCols         是否存在需转为string的列(缓存翻译/格式化)
+	 * @param strTypeCols          转string的列名集合(小写key)
+	 * @param dbType               数据库类型,参见DataSourceUtils.DBType
+	 * @return 列元数据数组(与列下标一一对应)
+	 */
+	private static ResultColumnMeta[] resolveColumns(java.sql.ResultSetMetaData resultSetMD, int startIndex,
+			int columnSize, String colLabelUpperOrLower, boolean hasToStrCols, Set<String> strTypeCols, Integer dbType)
+			throws Exception {
+		ResultColumnMeta[] cols = new ResultColumnMeta[columnSize];
+		String[] typeNames = new String[columnSize];
+		for (int i = 0; i < columnSize; i++) {
+			typeNames[i] = resultSetMD.getColumnTypeName(i + 1 + startIndex);
+		}
+		// 读取策略复用buildColumnKinds整组分类(保证与既有行为逐字一致)
+		int[] kinds = buildColumnKinds(dbType, typeNames);
+		for (int i = 0; i < columnSize; i++) {
+			String rawLabel = resultSetMD.getColumnLabel(i + 1 + startIndex);
+			// lowLabel为原始标签小写(规整前,与原labelIndexMap/翻译定位的key口径一致)
+			String lowLabel = rawLabel.toLowerCase(Locale.ROOT);
+			String label = rawLabel;
+			if ("lower".equals(colLabelUpperOrLower)) {
+				label = lowLabel;
+			} else if ("upper".equals(colLabelUpperOrLower)) {
+				label = rawLabel.toUpperCase(Locale.ROOT);
+			}
+			// 对外呈现类型:缓存翻译、格式化列转为string
+			String labelType = (hasToStrCols && strTypeCols.contains(lowLabel)) ? "VARCHAR" : typeNames[i];
+			cols[i] = new ResultColumnMeta(label, lowLabel, i + 1, typeNames[i], labelType,
+					ResultColumnMeta.ReadStrategy.of(kinds[i]), ResultColumnMeta.ExtType.of(typeNames[i]), 0, null);
+		}
+		return cols;
 	}
 
 	/**
@@ -1453,7 +1502,12 @@ public class ResultUtils {
 		boolean h2 = (dt == DBType.H2);
 		boolean mssql = (dt == DBType.SQLSERVER);
 		boolean mysqlLike = (dt == DBType.MYSQL || dt == DBType.MYSQL57 || dt == DBType.OCEANBASE || dt == DBType.TIDB);
-		if (!(oracle || db2gse || h2 || mssql || mysqlLike)) {
+		// update 2026-9-11 hana的ST_GEOMETRY列getObject返回标准WKB byte[](无mysql的4字节SRID前缀,
+		// 与ST_AsBinary输出同构;getString直接抛"Cannot convert SQL type ST_GEOMETRY to Java
+		// type
+		// String",ngdbc 2.29.11/SPS08实测),归EXT_BYTE经toWKTString通用嗅探解码
+		boolean hana = (dt == DBType.HANA);
+		if (!(oracle || db2gse || h2 || mssql || mysqlLike || hana)) {
 			return kinds;
 		}
 		for (int i = 0; i < kinds.length; i++) {
@@ -1478,7 +1532,8 @@ public class ResultUtils {
 				// (与oracle JSON/VECTOR同策略)
 				kinds[i] = COLUMN_TEXT_READ;
 			} else if ((h2 && "JSON".equals(t))
-					|| ((mssql || mysqlLike) && (GeometryTypeUtil.isGeometryTypeName(t) || "VECTOR".equals(t)))) {
+					|| ((mssql || mysqlLike) && (GeometryTypeUtil.isGeometryTypeName(t) || "VECTOR".equals(t)))
+					|| (hana && GeometryTypeUtil.isGeometryTypeName(t))) {
 				kinds[i] = COLUMN_EXT_BYTE;
 			}
 		}
@@ -1829,8 +1884,12 @@ public class ResultUtils {
 	 * @throws Exception
 	 */
 	public static List getPivotCategory(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			QueryExecutor queryExecutor, Connection conn, final Integer dbType, String dialect) throws Exception {
+			QueryExecutor queryExecutor, Connection conn, DBProfile profile) throws Exception {
 		List resultProcessors = new ArrayList();
+		// update 2026-9-12
+		// DialectUtils层已统一按DBProfile传递,本方法仍以(dbType,dialect)对外,构造最小档案下传
+		// DBProfile profile = new DBProfile(null, dialect, dbType, null, 0, null, null,
+		// false);
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		if (!sqlToyConfig.getResultProcessor().isEmpty()) {
 			resultProcessors.addAll(sqlToyConfig.getResultProcessor());
@@ -1848,7 +1907,7 @@ public class ResultUtils {
 				if (pivotModel.getCategorySql() != null) {
 					SqlToyConfig pivotSqlConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
 							sqlToyContext.getSqlToyConfig(pivotModel.getCategorySql(), SqlType.search, "", null),
-							queryExecutor, dialect, false);
+							queryExecutor, profile, false);
 					Integer queryTimeout = null;
 					if (pivotSqlConfig.getQueryTimeout() != null && pivotSqlConfig.getQueryTimeout() > 0) {
 						queryTimeout = pivotSqlConfig.getQueryTimeout();
@@ -1857,14 +1916,15 @@ public class ResultUtils {
 							&& (extend != null && extend.timeout != null && extend.timeout > 0)) {
 						queryTimeout = extend.timeout;
 					}
-					SqlToyResult pivotSqlToyResult = SqlConfigParseUtils.processSql(pivotSqlConfig.getSql(dialect),
-							extend.getParamsName(), extend.getParamsValue(sqlToyContext, pivotSqlConfig), dialect);
+					SqlToyResult pivotSqlToyResult = SqlConfigParseUtils.processSql(
+							pivotSqlConfig.getSql(profile.getDialect()), extend.getParamsName(),
+							extend.getParamsValue(sqlToyContext, pivotSqlConfig), profile.getDialect());
 					// 增加sql执行拦截器 update 2022-9-10
 					pivotSqlToyResult = DialectUtils.doInterceptors(sqlToyContext, pivotSqlConfig, OperateType.search,
-							pivotSqlToyResult, null, dbType);
+							pivotSqlToyResult, null, profile);
 					List pivotCategory = SqlUtil.findByJdbcQuery(sqlToyContext.getTypeHandler(),
 							pivotSqlToyResult.getSql(), pivotSqlToyResult.getParamsValue(), null, null, null, conn,
-							dbType, sqlToyConfig.isIgnoreEmpty(), null, SqlToyConstants.FETCH_SIZE, -1, queryTimeout);
+							profile, sqlToyConfig.isIgnoreEmpty(), null, SqlToyConstants.FETCH_SIZE, -1, queryTimeout);
 					// 行转列返回
 					return CollectionUtil.convertColToRow(pivotCategory, null);
 				}
@@ -2044,20 +2104,21 @@ public class ResultUtils {
 			if (isHumpLabel) {
 				realLabels = humpFieldNames(labelNames, null);
 			}
-			List result = new ArrayList();
+			List result = new ArrayList(queryResultRows.size());
 			List rowList;
 			boolean isMap = resultType.equals(Map.class);
 			boolean isConMap = resultType.equals(ConcurrentMap.class);
 			for (int i = 0, n = queryResultRows.size(); i < n; i++) {
 				rowList = (List) queryResultRows.get(i);
+				// 键为列标签,列数已知:按列数预置容量避免行内Map扩容重哈希
 				Map rowMap;
 				if (isMap) {
-					rowMap = new HashMap();
+					rowMap = new HashMap(width);
 				} else if (isConMap) {
-					rowMap = new ConcurrentHashMap();
+					rowMap = new ConcurrentHashMap(width);
 				} else {
-					// 这里支持IgnoreKeyCaseMap等类型
-					rowMap = (Map) resultType.getDeclaredConstructor().newInstance();
+					// 这里支持IgnoreKeyCaseMap等类型,构造器经BeanUtil.newBean缓存(原逐行getDeclaredConstructor)
+					rowMap = (Map) BeanUtil.newBean(resultType);
 				}
 				for (int j = 0; j < width; j++) {
 					rowMap.put(realLabels[j], rowList.get(j));

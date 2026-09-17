@@ -2,10 +2,16 @@ package org.sagacity.sqltoy.plugins.ddl;
 
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.sagacity.sqltoy.config.model.EntityMeta;
@@ -17,6 +23,8 @@ import org.sagacity.sqltoy.model.JdbcTypes;
 import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.StringUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @project sagacity-sqltoy
@@ -26,65 +34,102 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @modify Date:2023-12-17,修改说明
  */
 public class DDLUtils {
+	private static final Logger logger = LoggerFactory.getLogger(DDLUtils.class);
+
 	public static String NEWLINE = "\r\n";
 	public static String TAB = "   ";
 
 	/**
 	 * 因为存在外键关系，首先需要对表进行排序，被依赖的优先创建
+	 * <p>
+	 * update 2026-9-15 重写为Kahn拓扑排序:原"贪心单层前置"算法对链式依赖(A←B←C)在
+	 * ConcurrentHashMap不利迭代顺序下产出[B,C,A](处理C时前置B但不考虑B自身的依赖,
+	 * 处理B时A未入队被append到尾部),而外键约束输出对建表顺序硬依赖(mysql/pg内联 FOREIGN KEY于CREATE
+	 * TABLE,oracle/h2/sqlserver的ALTER ADD CONSTRAINT紧跟本表
+	 * CREATE之后),错序即建表失败;且原输出依赖hash序跨环境不可复现、swotTables全量
+	 * 重建最坏O(n²)。新算法O(V+E):零入度集合按表名字典序出队保证脚本可复现,
+	 * 自环(树表自引用外键,内联合法)不参与排序约束,多外键指向同表去重防入度虚增,
+	 * 节点集外的外表引用忽略(与原实现一致),环状残余(互相外键,内联约束下本就无解) 按名序追加+warn提示,不吞表不死循环
 	 * 
 	 * @param entitysMetaMap
-	 * @return
+	 * @return 被依赖表在前的表实体列表
 	 */
 	public static List<EntityMeta> sortTables(ConcurrentHashMap<String, EntityMeta> entitysMetaMap) {
-		// 构建一个暂时存放
-		LinkedHashMap<String, EntityMeta> tmpEntityMeta = new LinkedHashMap<String, EntityMeta>();
-		EntityMeta entityMeta;
-		String tableName;
-		for (Map.Entry<String, EntityMeta> entry : entitysMetaMap.entrySet()) {
-			entityMeta = entry.getValue();
-			tableName = entityMeta.getSchemaTable(null, null);
-			tmpEntityMeta.put(tableName, entityMeta);
+		// 节点归一:schemaTable名->meta(与原实现口径一致)
+		LinkedHashMap<String, EntityMeta> nodes = new LinkedHashMap<String, EntityMeta>();
+		for (EntityMeta entityMeta : entitysMetaMap.values()) {
+			nodes.put(entityMeta.getSchemaTable(null, null), entityMeta);
 		}
-
-		// 组织排序
-		LinkedHashMap<String, EntityMeta> sortTables = new LinkedHashMap<String, EntityMeta>();
-		LinkedHashMap<String, EntityMeta> swotTables = new LinkedHashMap<String, EntityMeta>();
-		for (Map.Entry<String, EntityMeta> entry : entitysMetaMap.entrySet()) {
-			entityMeta = entry.getValue();
-			tableName = entityMeta.getSchemaTable(null, null);
-			// 有外键依赖的表放在前面
-			if (entityMeta.getForeignFields() != null) {
-				String foreignTable;
-				for (Map.Entry<String, ForeignModel> iter : entityMeta.getForeignFields().entrySet()) {
-					foreignTable = iter.getValue().getForeignTable();
-					if (entityMeta.getSchema() != null
-							&& !foreignTable.startsWith(entityMeta.getSchema().concat("."))) {
-						foreignTable = entityMeta.getSchema().concat(".").concat(foreignTable);
-					}
-					EntityMeta foreignMeta = tmpEntityMeta.get(foreignTable);
-					if (foreignMeta != null && !sortTables.containsKey(foreignTable)) {
-						sortTables.put(foreignTable, foreignMeta);
-					} // 外表和当前表都已经在排序队列中
-					else if (foreignMeta != null && sortTables.containsKey(tableName)
-							&& !isBefore(sortTables, foreignTable, tableName)) {
-						swotTables.clear();
-						// 将外键关联的表放第一位置
-						swotTables.put(foreignTable, foreignMeta);
-						// 先移除外键关联表
-						sortTables.remove(foreignTable);
-						swotTables.putAll(sortTables);
-						sortTables.clear();
-						// 完成关联表放首位的调整
-						sortTables.putAll(swotTables);
+		// 建边:foreignTable->依赖表
+		Map<String, Set<String>> successors = new HashMap<String, Set<String>>();
+		Map<String, Integer> inDegree = new HashMap<String, Integer>();
+		for (String name : nodes.keySet()) {
+			inDegree.put(name, 0);
+		}
+		for (Map.Entry<String, EntityMeta> entry : nodes.entrySet()) {
+			String tableName = entry.getKey();
+			EntityMeta entityMeta = entry.getValue();
+			if (entityMeta.getForeignFields() == null) {
+				continue;
+			}
+			// 同表多外键指向同一外表时去重,避免入度虚增导致该表永不出队
+			Set<String> deps = new HashSet<String>();
+			for (Map.Entry<String, ForeignModel> iter : entityMeta.getForeignFields().entrySet()) {
+				String foreignTable = iter.getValue().getForeignTable();
+				if (entityMeta.getSchema() != null && !foreignTable.startsWith(entityMeta.getSchema().concat("."))) {
+					foreignTable = entityMeta.getSchema().concat(".").concat(foreignTable);
+				}
+				// 自环排除:树表自引用外键内联合法,不约束建表顺序;节点集外的外表引用忽略
+				if (!foreignTable.equals(tableName) && nodes.containsKey(foreignTable)) {
+					deps.add(foreignTable);
+				}
+			}
+			for (String dep : deps) {
+				successors.computeIfAbsent(dep, k -> new LinkedHashSet<String>()).add(tableName);
+				inDegree.put(tableName, inDegree.get(tableName) + 1);
+			}
+		}
+		// Kahn:零入度集合按表名字典序出队,同层顺序确定,DDL脚本跨环境可复现
+		TreeSet<String> ready = new TreeSet<String>();
+		for (Map.Entry<String, Integer> entry : inDegree.entrySet()) {
+			if (entry.getValue() == 0) {
+				ready.add(entry.getKey());
+			}
+		}
+		List<EntityMeta> result = new ArrayList<EntityMeta>(nodes.size());
+		Set<String> emitted = new HashSet<String>();
+		while (!ready.isEmpty()) {
+			String name = ready.pollFirst();
+			result.add(nodes.get(name));
+			emitted.add(name);
+			Set<String> nexts = successors.get(name);
+			if (nexts != null) {
+				for (String next : nexts) {
+					int deg = inDegree.get(next) - 1;
+					inDegree.put(next, deg);
+					if (deg == 0) {
+						ready.add(next);
 					}
 				}
 			}
-			// 未被依赖过
-			if (!sortTables.containsKey(tableName)) {
-				sortTables.put(tableName, entityMeta);
+		}
+		// 环状残余(互相外键):内联约束下任何顺序都无法建表,属schema设计问题;
+		// 排序层职责是不吞表不死循环——按名序追加并warn定位
+		if (result.size() < nodes.size()) {
+			List<String> cyclic = new ArrayList<String>();
+			for (String name : nodes.keySet()) {
+				if (!emitted.contains(name)) {
+					cyclic.add(name);
+				}
+			}
+			Collections.sort(cyclic);
+			logger.warn("foreign key cycle detected among tables:{}, appended in name order,"
+					+ " inline FOREIGN KEY constraints may fail, consider ALTER-based constraints!", cyclic);
+			for (String name : cyclic) {
+				result.add(nodes.get(name));
 			}
 		}
-		return new ArrayList<EntityMeta>(sortTables.values());
+		return result;
 	}
 
 	/**
@@ -94,26 +139,29 @@ public class DDLUtils {
 	 * @param foreignTable
 	 * @param nowTable
 	 * @return
+	 * @deprecated update 2026-9-15 sortTables已重写为Kahn拓扑排序,不再依赖本方法;
+	 *             保留仅为公共API兼容,新代码请勿使用
 	 */
-	public static boolean isBefore(LinkedHashMap<String, EntityMeta> sortTables, String foreignTable, String nowTable) {
-		int foreignTableIndex = 0;
-		int nowTableIndex = 0;
-		String tableName;
-		int index = 0;
-		for (Map.Entry<String, EntityMeta> entry : sortTables.entrySet()) {
-			tableName = entry.getKey();
-			if (foreignTable.equals(tableName)) {
-				foreignTableIndex = index;
-			} else if (nowTable.equals(tableName)) {
-				nowTableIndex = index;
-			}
-			index++;
-		}
-		if (foreignTableIndex < nowTableIndex) {
-			return true;
-		}
-		return false;
-	}
+//	@Deprecated
+//	public static boolean isBefore(LinkedHashMap<String, EntityMeta> sortTables, String foreignTable, String nowTable) {
+//		int foreignTableIndex = 0;
+//		int nowTableIndex = 0;
+//		String tableName;
+//		int index = 0;
+//		for (Map.Entry<String, EntityMeta> entry : sortTables.entrySet()) {
+//			tableName = entry.getKey();
+//			if (foreignTable.equals(tableName)) {
+//				foreignTableIndex = index;
+//			} else if (nowTable.equals(tableName)) {
+//				nowTableIndex = index;
+//			}
+//			index++;
+//		}
+//		if (foreignTableIndex < nowTableIndex) {
+//			return true;
+//		}
+//		return false;
+//	}
 
 	/**
 	 * 将EntityMeta转化为TableMeta 便于输出表结构
@@ -181,11 +229,12 @@ public class DDLUtils {
 	public static String convertType(ColumnMeta colMeta, int dbType) {
 		if (colMeta.getNativeType() != null) {
 			if (colMeta.getNativeType().equalsIgnoreCase("JSON")) {
-				return "JSON";
+				// 2026-9-11 hana无原生json列类型(json文档以NCLOB承载,可显式加IS JSON约束)
+				return (dbType == DBType.HANA) ? "NCLOB" : "JSON";
 			} else if (colMeta.getNativeType().equalsIgnoreCase("BSON")) {
 				if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 						|| dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.STARDB
-						|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE) {
+						|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE) {
 					return "BSON";
 				} else {
 					return "JSON";
@@ -219,17 +268,20 @@ public class DDLUtils {
 			break;
 		case java.sql.Types.CHAR:
 		case java.sql.Types.NCHAR:
-			typeName = "CHAR";
+			// hana的CHAR/VARCHAR为ASCII字符集,unicode须NCHAR/NVARCHAR
+			typeName = (dbType == DBType.HANA) ? "NCHAR" : "CHAR";
 			typeName = setLength(typeName, false, colMeta);
 			break;
 		case java.sql.Types.VARCHAR:
 		case java.sql.Types.NVARCHAR:
-			typeName = "VARCHAR";
+			typeName = (dbType == DBType.HANA) ? "NVARCHAR" : "VARCHAR";
 			typeName = setLength(typeName, false, colMeta);
 			break;
 		case java.sql.Types.LONGNVARCHAR:
 			if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM || dbType == DBType.H2) {
 				typeName = "CLOB";
+			} else if (dbType == DBType.HANA) {
+				typeName = "NCLOB";
 			} else {
 				typeName = "TEXT";
 			}
@@ -238,7 +290,8 @@ public class DDLUtils {
 			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 					|| dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.STARDB
 					|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE || dbType == DBType.ORACLE
-					|| dbType == DBType.ORACLE11 || dbType == DBType.DM) {
+					// update 2026-9-14 补KINGBASE(KingbaseES基于PG,类型映射归PG系)
+					|| dbType == DBType.KINGBASE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
 				// 精度需跟在TIMESTAMP之后:TIMESTAMP(6) WITH TIME ZONE
 				typeName = "TIMESTAMP";
 				if (colMeta.getColumnSize() > 0) {
@@ -254,7 +307,7 @@ public class DDLUtils {
 		case java.sql.Types.BLOB:
 			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 					|| dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.STARDB
-					|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE) {
+					|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE) {
 				typeName = "BYTEA";
 			} else if (dbType == DBType.SQLSERVER) {
 				typeName = "VARBINARY(MAX)";
@@ -266,7 +319,7 @@ public class DDLUtils {
 		case java.sql.Types.BINARY:
 			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 					|| dbType == DBType.OPENGAUSS || dbType == DBType.STARDB || dbType == DBType.OSCAR
-					|| dbType == DBType.MOGDB || dbType == DBType.VASTBASE) {
+					|| dbType == DBType.MOGDB || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE) {
 				typeName = "BYTEA";
 			} else if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
 				typeName = "BLOB";
@@ -282,7 +335,7 @@ public class DDLUtils {
 		case java.sql.Types.LONGVARBINARY:
 			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 					|| dbType == DBType.OPENGAUSS || dbType == DBType.STARDB || dbType == DBType.OSCAR
-					|| dbType == DBType.MOGDB || dbType == DBType.VASTBASE) {
+					|| dbType == DBType.MOGDB || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE) {
 				typeName = "BYTEA";
 			} else if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
 				typeName = "BLOB";
@@ -298,6 +351,9 @@ public class DDLUtils {
 		case java.sql.Types.NCLOB:
 			if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM || dbType == DBType.H2) {
 				typeName = "CLOB";
+			} else if (dbType == DBType.HANA) {
+				// hana无TEXT类型,大文本为NCLOB(unicode)
+				typeName = "NCLOB";
 			} else {
 				typeName = "TEXT";
 			}
@@ -377,6 +433,10 @@ public class DDLUtils {
 				// family: vector),向量以Array(Float32)承载(同doris思路):字符串'[1,2,3]'插入
 				// 隐式解析、读回'[1,2,3]'文本、L2Distance(v,[..])距离检索均实证可行
 				typeName = "Array(Float32)";
+			} else if (dbType == DBType.HANA) {
+				// 2026-9-11 hana 2.0 SPS08起提供REAL_VECTOR类型(维度必填,上限65000)
+				typeName = (colMeta.getColumnSize() > 0) ? ("REAL_VECTOR(" + colMeta.getColumnSize() + ")")
+						: "REAL_VECTOR";
 			} else {
 				// update 2026-9-10 vastbase G100 3.0实测向量类型名为FLOATVECTOR(无VECTOR别名),同gaussdb企业版
 				if (dbType == DBType.GAUSSDB || dbType == DBType.VASTBASE) {
@@ -398,6 +458,9 @@ public class DDLUtils {
 				typeName = colMeta.getNativeType();
 			} else if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
 				typeName = "SDO_GEOMETRY";
+			} else if (dbType == DBType.HANA) {
+				// hana空间类型为ST_GEOMETRY(构造函数ST_GeomFromText与mysql系同名同参)
+				typeName = "ST_GEOMETRY";
 			} else {
 				typeName = "GEOMETRY";
 			}
@@ -410,9 +473,10 @@ public class DDLUtils {
 			if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11) {
 				typeName = "BINARY_DOUBLE";
 			} else if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
-					|| dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.STARDB
-					|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE || dbType == DBType.DM
-					|| dbType == DBType.H2) {
+			// update 2026-9-14 补KINGBASE(KingbaseES基于PG,类型映射归PG系)
+					|| dbType == DBType.KINGBASE || dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB
+					|| dbType == DBType.STARDB || dbType == DBType.OSCAR || dbType == DBType.VASTBASE
+					|| dbType == DBType.DM || dbType == DBType.H2) {
 				typeName = "DOUBLE PRECISION";
 			} else if (dbType == DBType.SQLSERVER) {
 				typeName = "FLOAT";
@@ -424,7 +488,8 @@ public class DDLUtils {
 		case java.sql.Types.NUMERIC:
 			if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
 				typeName = "NUMBER";
-			} else if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14) {
+			} else if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.KINGBASE) {
+				// update 2026-9-14 补KINGBASE(KingbaseES基于PG,numeric为任意精度,同vanilla PG)
 				typeName = "NUMERIC";
 			} else {
 				typeName = "DECIMAL";
@@ -444,8 +509,9 @@ public class DDLUtils {
 		// 数组类型
 		if ((dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 				|| dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.STARDB
-				|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE) && colMeta.getTypeName() != null
-				&& colMeta.getTypeName().endsWith("[]") && !isBytes && !typeName.startsWith("_")) {
+				|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE)
+				&& colMeta.getTypeName() != null && colMeta.getTypeName().endsWith("[]") && !isBytes
+				&& !typeName.startsWith("_")) {
 			return "_".concat(typeName);
 		}
 		return typeName;
@@ -725,7 +791,7 @@ public class DDLUtils {
 		return dbType == DBType.DM || dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14
 				|| dbType == DBType.GAUSSDB || dbType == DBType.KINGBASE || dbType == DBType.MOGDB
 				|| dbType == DBType.OPENGAUSS || dbType == DBType.VASTBASE || dbType == DBType.STARDB
-				|| dbType == DBType.OSCAR;
+				|| dbType == DBType.OSCAR || dbType == DBType.HANA;
 	}
 
 	/**

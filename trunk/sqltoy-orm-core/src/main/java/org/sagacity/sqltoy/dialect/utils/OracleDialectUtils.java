@@ -20,15 +20,15 @@ import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.OperateType;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
-import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.model.ColumnMeta;
+import org.sagacity.sqltoy.model.DBProfile;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TableMeta;
-import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
+import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.ResultUtils;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.SqlUtilsExt;
@@ -60,16 +60,17 @@ public class OracleDialectUtils {
 	 * @throws Exception
 	 */
 	public static Serializable load(final SqlToyContext sqlToyContext, Serializable entity, boolean onlySubTables,
-			List<Class> cascadeTypes, LockMode lockMode, int lockWaitTimeout, Connection conn, final Integer dbType,
-			final String dialect, String tableName, final Integer queryTimeout) throws Exception {
+			List<Class> cascadeTypes, LockMode lockMode, int lockWaitTimeout, Connection conn, DBProfile profile,
+			String tableName, final Integer queryTimeout) throws Exception {
+		String dialect = profile.getDialect();
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		// 获取loadsql(loadsql 可以通过@loadSql进行改变，所以需要sqltoyContext重新获取)
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(entityMeta.getLoadSql(tableName), SqlType.search,
 				dialect, null);
 		String loadSql = sqlToyConfig.getSql(dialect);
-		loadSql = loadSql.concat(getLockSql(loadSql, dbType, lockMode, lockWaitTimeout));
+		loadSql = loadSql.concat(getLockSql(loadSql, profile, lockMode, lockWaitTimeout));
 		return (Serializable) DialectUtils.load(sqlToyContext, sqlToyConfig, loadSql, entityMeta, entity, onlySubTables,
-				cascadeTypes, conn, dbType, queryTimeout);
+				cascadeTypes, conn, profile, queryTimeout);
 	}
 
 	/**
@@ -89,11 +90,11 @@ public class OracleDialectUtils {
 	 * @throws Exception
 	 */
 	public static List<?> loadAll(final SqlToyContext sqlToyContext, List<?> entities, boolean onlySubTables,
-			List<Class> cascadeTypes, LockMode lockMode, int lockWaitTimeout, Connection conn, final Integer dbType,
+			List<Class> cascadeTypes, LockMode lockMode, int lockWaitTimeout, Connection conn, DBProfile profile,
 			String tableName, final int fetchSize, final int maxRows, final Integer queryTimeout) throws Exception {
-		return DialectUtils.loadAll(sqlToyContext, entities, onlySubTables, cascadeTypes, lockMode, conn, dbType,
+		return DialectUtils.loadAll(sqlToyContext, entities, onlySubTables, cascadeTypes, lockMode, conn, profile,
 				tableName, (sql, dbTypeValue, lockedMode) -> {
-					return getLockSql(sql, dbTypeValue, lockedMode, lockWaitTimeout);
+					return getLockSql(sql, profile, lockedMode, lockWaitTimeout);
 				}, fetchSize, maxRows, queryTimeout);
 	}
 
@@ -115,21 +116,15 @@ public class OracleDialectUtils {
 	 */
 	public static QueryResult findPageBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, final DecryptHandler decryptHandler, Long pageNo, Integer pageSize,
-			Connection conn, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
-			throws Exception {
-		StringBuilder sql = new StringBuilder();
+			Connection conn, DBProfile profile, final int fetchSize, final int maxRows) throws Exception {
+		String dialect = profile.getDialect();
 		boolean isNamed = sqlToyConfig.isNamedParam();
 		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
 		// 是否有order by,update 2017-5-22
 		boolean hasOrderBy = SqlUtil.hasOrderBy(innerSql, true);
 		// 给原始sql标记上特殊的开始和结尾，便于sql拦截器快速定位到原始sql并进行条件补充
 		innerSql = SqlUtilsExt.markOriginalSql(innerSql);
-		if (sqlToyConfig.isHasFast()) {
-			sql.append(sqlToyConfig.getFastPreSql(dialect));
-			if (!sqlToyConfig.isIgnoreBracket()) {
-				sql.append(" (");
-			}
-		}
+		StringBuilder sql = DialectUtils.openFastWrap(sqlToyConfig, dialect);
 		// order by 外包裹一层,确保查询结果是按排序
 		if (hasOrderBy) {
 			sql.append(" select " + SqlToyConstants.INTERMEDIATE_TABLE + ".* from (");
@@ -145,21 +140,11 @@ public class OracleDialectUtils {
 		sql.append(" rows fetch next ");
 		sql.append(isNamed ? ":" + SqlToyConstants.PAGE_LAST_PARAM_NAME : "?");
 		sql.append(" rows only ");
-		if (sqlToyConfig.isHasFast()) {
-			if (!sqlToyConfig.isIgnoreBracket()) {
-				sql.append(") ");
-			}
-			sql.append(sqlToyConfig.getFastTailSql(dialect));
-		}
-		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
-				sql.toString(), (pageNo - 1) * pageSize, Long.valueOf(pageSize), dialect);
-		QueryExecutorExtend extend = queryExecutor.getInnerModel();
-		// 增加sql执行拦截器 update 2022-9-10
-		queryParam = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig,
-				(extend.entityClass == null) ? OperateType.page : OperateType.singleTable, queryParam,
-				extend.entityClass, dbType);
-		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				extend, decryptHandler, conn, dbType, 0, fetchSize, maxRows);
+		DialectUtils.closeFastWrap(sqlToyConfig, dialect, sql);
+		return DialectUtils.executeWrappedQuery(sqlToyContext, sqlToyConfig, queryExecutor, decryptHandler, conn,
+				profile, sql.toString(), (pageNo - 1) * pageSize, Long.valueOf(pageSize),
+				(queryExecutor.getInnerModel().entityClass == null) ? OperateType.page : OperateType.singleTable,
+				fetchSize, maxRows);
 	}
 
 	/**
@@ -179,19 +164,14 @@ public class OracleDialectUtils {
 	 */
 	public static QueryResult findTopBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, final DecryptHandler decryptHandler, Integer topSize, Connection conn,
-			final Integer dbType, final String dialect, final int fetchSize, final int maxRows) throws Exception {
-		StringBuilder sql = new StringBuilder();
+			DBProfile profile, final int fetchSize, final int maxRows) throws Exception {
+		String dialect = profile.getDialect();
 		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
 		// 是否有order by
 		boolean hasOrderBy = SqlUtil.hasOrderBy(innerSql, true);
 		// 给原始sql标记上特殊的开始和结尾，便于sql拦截器快速定位到原始sql并进行条件补充
 		innerSql = SqlUtilsExt.markOriginalSql(innerSql);
-		if (sqlToyConfig.isHasFast()) {
-			sql.append(sqlToyConfig.getFastPreSql(dialect));
-			if (!sqlToyConfig.isIgnoreBracket()) {
-				sql.append(" (");
-			}
-		}
+		StringBuilder sql = DialectUtils.openFastWrap(sqlToyConfig, dialect);
 		// order by 外包裹一层,确保查询结果是按排序
 		if (hasOrderBy) {
 			sql.append("select " + SqlToyConstants.INTERMEDIATE_TABLE + ".* from (");
@@ -205,21 +185,11 @@ public class OracleDialectUtils {
 		sql.append(" fetch first ");
 		sql.append(topSize);
 		sql.append(" rows only");
-		if (sqlToyConfig.isHasFast()) {
-			if (!sqlToyConfig.isIgnoreBracket()) {
-				sql.append(") ");
-			}
-			sql.append(sqlToyConfig.getFastTailSql(dialect));
-		}
-		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
-				sql.toString(), null, null, dialect);
-		QueryExecutorExtend extend = queryExecutor.getInnerModel();
-		// 增加sql执行拦截器 update 2022-9-10
-		queryParam = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig,
-				(extend.entityClass == null) ? OperateType.top : OperateType.singleTable, queryParam,
-				extend.entityClass, dbType);
-		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				extend, decryptHandler, conn, dbType, 0, fetchSize, maxRows);
+		DialectUtils.closeFastWrap(sqlToyConfig, dialect, sql);
+		return DialectUtils.executeWrappedQuery(sqlToyContext, sqlToyConfig, queryExecutor, decryptHandler, conn,
+				profile, sql.toString(), null, null,
+				(queryExecutor.getInnerModel().entityClass == null) ? OperateType.top : OperateType.singleTable,
+				fetchSize, maxRows);
 	}
 
 	/**
@@ -240,8 +210,8 @@ public class OracleDialectUtils {
 	 */
 	public static QueryResult getRandomResult(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, final DecryptHandler decryptHandler, Long totalCount, Long randomCount,
-			Connection conn, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
-			throws Exception {
+			Connection conn, DBProfile profile, final int fetchSize, final int maxRows) throws Exception {
+		String dialect = profile.getDialect();
 		// 注：dbms_random包需要手工安装，位于$ORACLE_HOME/rdbms/admin/dbmsrand.sql
 		StringBuilder sql = new StringBuilder();
 		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
@@ -273,21 +243,11 @@ public class OracleDialectUtils {
 		sql.append(" where rownum<=");
 		sql.append(randomCount);
 
-		if (sqlToyConfig.isHasFast()) {
-			if (!sqlToyConfig.isIgnoreBracket()) {
-				sql.append(") ");
-			}
-			sql.append(sqlToyConfig.getFastTailSql(dialect));
-		}
-		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
-				sql.toString(), null, null, dialect);
-		QueryExecutorExtend extend = queryExecutor.getInnerModel();
-		// 增加sql执行拦截器 update 2022-9-10
-		queryParam = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig,
-				(extend.entityClass == null) ? OperateType.random : OperateType.singleTable, queryParam,
-				extend.entityClass, dbType);
-		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				extend, decryptHandler, conn, dbType, 0, fetchSize, maxRows);
+		DialectUtils.closeFastWrap(sqlToyConfig, dialect, sql);
+		return DialectUtils.executeWrappedQuery(sqlToyContext, sqlToyConfig, queryExecutor, decryptHandler, conn,
+				profile, sql.toString(), null, null,
+				(queryExecutor.getInnerModel().entityClass == null) ? OperateType.random : OperateType.singleTable,
+				fetchSize, maxRows);
 	}
 
 	/**
@@ -308,8 +268,9 @@ public class OracleDialectUtils {
 	 */
 	public static StoreResult executeStore(final SqlToyConfig sqlToyConfig, final SqlToyContext sqlToyContext,
 			final String storeSql, final Object[] inParamValues, final Integer[] outParamTypes,
-			final boolean moreResult, final Connection conn, final Integer dbType, final int fetchSize,
+			final boolean moreResult, final Connection conn, DBProfile profile, final int fetchSize,
 			final Integer timeout) throws Exception {
+		Integer dbType = profile.getDbType();
 		CallableStatement callStat = null;
 		ResultSet rs = null;
 		return (StoreResult) SqlUtil.callableStatementProcess(null, callStat, rs, new CallableStatementResultHandler() {
@@ -331,7 +292,7 @@ public class OracleDialectUtils {
 							&& SqlToyConstants.defaultStatementTimeout > 0) {
 						callStat.setQueryTimeout(SqlToyConstants.defaultStatementTimeout);
 					}
-					SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, callStat, inParamValues, null,
+					SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, profile, callStat, inParamValues, null,
 							0);
 					int cursorIndex = -1;
 					int cursorCnt = 0;
@@ -427,9 +388,9 @@ public class OracleDialectUtils {
 
 	@SuppressWarnings("unchecked")
 	public static List<ColumnMeta> getTableColumns(String catalog, String schema, String tableName, Connection conn,
-			Integer dbType, String dialect) throws Exception {
-		List<ColumnMeta> tableColumns = DefaultDialectUtils.getTableColumns(catalog, schema, tableName, conn, dbType,
-				dialect);
+			DBProfile profile) throws Exception {
+		String dialect = profile.getDialect();
+		List<ColumnMeta> tableColumns = DefaultDialectUtils.getTableColumns(catalog, schema, tableName, conn, profile);
 		// update 2026-9-11 表名按方言大小写策略转换(oracle大写存储,小写原样绑定查不到列备注)
 		final String realTableName = SqlToyConstants.getDialectLowcaseStrategyName(tableName, dialect);
 		String sql = "SELECT COLUMN_NAME,COMMENTS FROM USER_COL_COMMENTS WHERE TABLE_NAME=?";
@@ -476,7 +437,8 @@ public class OracleDialectUtils {
 
 	@SuppressWarnings("unchecked")
 	public static List<TableMeta> getTables(String catalog, String schema, String tableName, Connection conn,
-			Integer dbType, String dialect) throws Exception {
+			DBProfile profile) throws Exception {
+		String dialect = profile.getDialect();
 		// update 2026-9-11 pattern按方言大小写策略转换:oracle元数据大写存储且LIKE大小写敏感,
 		// 小写pattern原样绑定返回空清单(oracle 23ai实测TableApi.getTables空结果)
 		final String realTableName = SqlToyConstants.getDialectLowcaseStrategyName(tableName, dialect);
@@ -534,17 +496,17 @@ public class OracleDialectUtils {
 		return true;
 	}
 
+	/**
+	 * update 2026-9-12 dbType入径(无连接档案的直调场景):构建最小DBProfile档案后委托核心实现
+	 */
 	public static String getLockSql(String sql, Integer dbType, LockMode lockMode, int lockWaitTimeout) {
-		// 判断是否已经包含for update
-		if (lockMode == null || SqlUtil.hasLock(sql, dbType)) {
-			return "";
-		}
-		if (lockMode == LockMode.UPGRADE_NOWAIT) {
-			return " for update nowait ";
-		}
-		if (lockMode == LockMode.UPGRADE_SKIPLOCK) {
-			return " for update skip locked";
-		}
-		return " for update " + (lockWaitTimeout > 0 ? " wait " + lockWaitTimeout : "");
+		return getLockSql(sql,
+				new DBProfile(null, DataSourceUtils.getDialect(dbType), dbType, null, 0, null, null, false), lockMode,
+				lockWaitTimeout);
+	}
+
+	public static String getLockSql(String sql, DBProfile profile, LockMode lockMode, int lockWaitTimeout) {
+		return DefaultDialectUtils.getLockSql(sql, profile.getDbType(), lockMode, lockWaitTimeout, true,
+				" for update skip locked", true);
 	}
 }

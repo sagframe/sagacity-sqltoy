@@ -1054,9 +1054,9 @@ public interface LightDao {
 	/**
 	 * 提供基于Map传参的并行查询
 	 * 
-	 * @param <T>                            查询结果行的目标类型
-	 * @param parallelQueryList<ParallQuery> ParallQuery中可以单独对本查询设置条件参数
-	 * @param paramsMap                      sql中命名参数对应的参数值Map，key为参数名称
+	 * @param <T>                              查询结果行的目标类型
+	 * @param parallelQueryList<ParallelQuery> ParallelQuery中可以单独对本查询设置条件参数
+	 * @param paramsMap                        sql中命名参数对应的参数值Map，key为参数名称
 	 * @return 各并行查询的结果集合，顺序与parallelQueryList一致
 	 */
 	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallelQueryList, Map<String, Object> paramsMap);
@@ -1064,10 +1064,10 @@ public interface LightDao {
 	/**
 	 * 提供基于Map传参的并行查询,并提供并行线程数、最大等待时长等参数设置
 	 * 
-	 * @param <T>                            查询结果行的目标类型
-	 * @param parallelQueryList<ParallQuery> ParallQuery中可以单独对本查询设置条件参数
-	 * @param paramsMap                      sql中命名参数对应的参数值Map，key为参数名称
-	 * @param parallelConfig                 例如:ParallelConfig.create().maxThreads(20)
+	 * @param <T>                              查询结果行的目标类型
+	 * @param parallelQueryList<ParallelQuery> ParallelQuery中可以单独对本查询设置条件参数
+	 * @param paramsMap                        sql中命名参数对应的参数值Map，key为参数名称
+	 * @param parallelConfig                   例如:ParallelConfig.create().maxThreads(20)
 	 * @return 各并行查询的结果集合，顺序与parallelQueryList一致
 	 */
 	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallelQueryList, Map<String, Object> paramsMap,

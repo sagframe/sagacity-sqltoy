@@ -57,6 +57,21 @@ public class ShardingUtils {
 	}
 
 	/**
+	 * update 2026-9-15 分库数据源名解析统一入口:策略指定的数据源名无法解析时抛出明确异常。
+	 * 原实现getDataSourceBean返回null后静默透传,processDataSource(null)回落默认数据源,
+	 * 配错的分库名会致数据静默写错库且无任何报错;名称为空白表示策略未命中,按约定回落默认数据源
+	 */
+	private static DataSource resolveShardingDataSource(SqlToyContext sqlToyContext, Class entityClass,
+			String dataSourceName) {
+		DataSource result = sqlToyContext.getDataSourceBean(dataSourceName);
+		if (result == null && StringUtil.isNotBlank(dataSourceName)) {
+			throw new IllegalArgumentException("POJO:" + (entityClass == null ? "" : entityClass.getName())
+					+ " sharding db datasource:" + dataSourceName + " is undefined, please check!");
+		}
+		return result;
+	}
+
+	/**
 	 * 单个对象sharding策略处理,适用于load、save、update、delete单对象操作
 	 * 
 	 * @param sqlToyContext
@@ -97,7 +112,8 @@ public class ShardingUtils {
 					entityMeta.getTableName(), strategyConfig.getDecisionType(), valueMap);
 			shardingModel.setDataSourceName(dbModel.getDataSourceName());
 			if (dbModel.getDataSource() == null) {
-				shardingModel.setDataSource(sqlToyContext.getDataSourceBean(dbModel.getDataSourceName()));
+				shardingModel.setDataSource(
+						resolveShardingDataSource(sqlToyContext, entity.getClass(), dbModel.getDataSourceName()));
 			} else {
 				shardingModel.setDataSource(dbModel.getDataSource());
 			}
@@ -218,8 +234,8 @@ public class ShardingUtils {
 				if (hasDB) {
 					shardingModel.setDataSourceName(dataSourceName);
 					if (shardingDBModel.getDataSource() == null) {
-						shardingModel
-								.setDataSource(sqlToyContext.getDataSourceBean(shardingDBModel.getDataSourceName()));
+						shardingModel.setDataSource(resolveShardingDataSource(sqlToyContext, entityClass,
+								shardingDBModel.getDataSourceName()));
 					} else {
 						shardingModel.setDataSource(shardingDBModel.getDataSource());
 					}
@@ -308,7 +324,7 @@ public class ShardingUtils {
 		if (shardingDBModel.getDataSource() != null) {
 			return shardingDBModel.getDataSource();
 		}
-		return sqlToyContext.getDataSourceBean(shardingDBModel.getDataSourceName());
+		return resolveShardingDataSource(sqlToyContext, null, shardingDBModel.getDataSourceName());
 	}
 
 	/**

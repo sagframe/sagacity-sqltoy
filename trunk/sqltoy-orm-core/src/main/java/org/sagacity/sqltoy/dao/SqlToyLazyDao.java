@@ -992,52 +992,52 @@ public interface SqlToyLazyDao {
 	 * defaultRoles,
 	 * GlobalConstants.DEPLOY_ID,SagacityConstants.TempAuthObjType.GROUP }; //
 	 * 使用并行查询同时执行2个sql,条件参数是2个查询的合集 List<QueryResult<TreeModel>> list =
-	 * super.parallQuery( Arrays.asList(
-	 * ParallQuery.create().sql("webframe_searchAllModuleMenus").resultType(TreeModel.class),
-	 * ParallQuery.create().sql("webframe_searchAllUserReports").resultType(TreeModel.class)),
+	 * super.parallelQuery( Arrays.asList(
+	 * ParallelQuery.create().sql("webframe_searchAllModuleMenus").resultType(TreeModel.class),
+	 * ParallelQuery.create().sql("webframe_searchAllUserReports").resultType(TreeModel.class)),
 	 * paramNames, paramValues,);
 	 * </p>
 	 * 
-	 * @param parallQueryList<ParallQuery> ParallQuery中可以单独对本查询设置条件参数
-	 * @param paramNames                   全部sql公共的命名参数名称数组
-	 * @param paramValues                  参数名称对应的参数值数组，顺序与paramNames一致
-	 * @return 各并行查询的结果集合，顺序与parallQueryList一致
+	 * @param parallelQueryList<ParallelQuery> ParallelQuery中可以单独对本查询设置条件参数
+	 * @param paramNames                       全部sql公共的命名参数名称数组
+	 * @param paramValues                      参数名称对应的参数值数组，顺序与paramNames一致
+	 * @return 各并行查询的结果集合，顺序与parallelQueryList一致
 	 */
-	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
+	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallelQueryList, String[] paramNames,
 			Object[] paramValues);
 
 	/**
 	 * 并行查询并返回一维List，有几个查询List中就包含几个结果对象，paramNames和paramValues是全部sql的条件参数的合集
 	 * 
-	 * @param parallQueryList<ParallQuery> ParallQuery中可以单独对本查询设置条件参数
-	 * @param paramNames                   全部sql公共的命名参数名称数组
-	 * @param paramValues                  参数名称对应的参数值数组，顺序与paramNames一致
-	 * @param parallelConfig               设置并行参数:ParallelConfig.create().maxThreads(5).maxWaitSeconds(600)
-	 * @return 各并行查询的结果集合，顺序与parallQueryList一致
+	 * @param parallelQueryList<ParallelQuery> ParallelQuery中可以单独对本查询设置条件参数
+	 * @param paramNames                       全部sql公共的命名参数名称数组
+	 * @param paramValues                      参数名称对应的参数值数组，顺序与paramNames一致
+	 * @param parallelConfig                   设置并行参数:ParallelConfig.create().maxThreads(5).maxWaitSeconds(600)
+	 * @return 各并行查询的结果集合，顺序与parallelQueryList一致
 	 */
-	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
+	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallelQueryList, String[] paramNames,
 			Object[] paramValues, ParallelConfig parallelConfig);
 
 	/**
 	 * 提供基于Map传参的并行查询
 	 * 
-	 * @param <T>                          查询结果行的目标类型
-	 * @param parallQueryList<ParallQuery> ParallQuery中可以单独对本查询设置条件参数
-	 * @param paramsMap                    sql中命名参数对应的参数值Map，key为参数名称
-	 * @return 各并行查询的结果集合，顺序与parallQueryList一致
+	 * @param <T>                              查询结果行的目标类型
+	 * @param parallelQueryList<ParallelQuery> ParallelQuery中可以单独对本查询设置条件参数
+	 * @param paramsMap                        sql中命名参数对应的参数值Map，key为参数名称
+	 * @return 各并行查询的结果集合，顺序与parallelQueryList一致
 	 */
-	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String, Object> paramsMap);
+	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallelQueryList, Map<String, Object> paramsMap);
 
 	/**
 	 * 提供基于Map传参的并行查询,并提供并行线程数、最大等待时长等参数设置
 	 * 
-	 * @param <T>                          查询结果行的目标类型
-	 * @param parallQueryList<ParallQuery> ParallQuery中可以单独对本查询设置条件参数
-	 * @param paramsMap                    sql中命名参数对应的参数值Map，key为参数名称
-	 * @param parallelConfig               例如:ParallelConfig.create().maxThreads(20)
-	 * @return 各并行查询的结果集合，顺序与parallQueryList一致
+	 * @param <T>                              查询结果行的目标类型
+	 * @param parallelQueryList<ParallelQuery> ParallelQuery中可以单独对本查询设置条件参数
+	 * @param paramsMap                        sql中命名参数对应的参数值Map，key为参数名称
+	 * @param parallelConfig                   例如:ParallelConfig.create().maxThreads(20)
+	 * @return 各并行查询的结果集合，顺序与parallelQueryList一致
 	 */
-	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String, Object> paramsMap,
+	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallelQueryList, Map<String, Object> paramsMap,
 			ParallelConfig parallelConfig);
 
 	/**

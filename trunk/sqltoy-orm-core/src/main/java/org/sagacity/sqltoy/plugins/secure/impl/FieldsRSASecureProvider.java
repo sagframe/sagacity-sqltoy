@@ -10,6 +10,7 @@ import java.util.Locale;
 
 import javax.crypto.Cipher;
 
+import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.plugins.secure.FieldsSecureProvider;
 import org.sagacity.sqltoy.utils.FileUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -102,6 +103,7 @@ public class FieldsRSASecureProvider implements FieldsSecureProvider {
 
 	@Override
 	public String encrypt(String contents) {
+		int contentLength = (contents == null) ? -1 : contents.length();
 		try {
 			// Cipher非线程安全,并发查询下共享实例doFinal会产生错乱密文,必须每次调用独立创建
 			Cipher cipher = Cipher.getInstance(ALGORITHM_RSA);
@@ -109,25 +111,42 @@ public class FieldsRSASecureProvider implements FieldsSecureProvider {
 			byte[] result = cipher.doFinal(contents.getBytes(CHARSET));
 			return Base64.getEncoder().encodeToString(result);
 		} catch (Exception e) {
-			// 明文内容属于安全字段,只记录长度不可记录内容本身
-			logger.error("rsa field encrypt failed(plain text length:{}), reason:{}",
-					(contents == null) ? -1 : contents.length(), e.getMessage(), e);
+			// update 2026-9-14 加密失败必须抛异常:原形态返回""会被直接落库,原文永久丢失且调用方无感
+			// (明文超过RSA密钥明文上限时必然触发,如地址/备注类长字段),保存链路须失败以阻断写入
+			// 明文内容属于安全字段,异常与日志只记录长度不可记录内容本身
+			logger.error("rsa field encrypt failed(plain text length:{}), reason:{}", contentLength, e.getMessage(), e);
+			throw new DataAccessException(
+					"rsa field encrypt failed(plain text length:{}, rsa key plain text upper limit is about {} bytes), the operation is blocked to avoid the loss of the original data!",
+					contentLength, getMaxPlainTextLength(), e.getMessage());
 		}
-		return "";
 	}
 
 	@Override
 	public String decrypt(String secureContents) {
+		int cipherLength = (secureContents == null) ? -1 : secureContents.length();
 		try {
 			Cipher cipher = Cipher.getInstance(ALGORITHM_RSA);
 			cipher.init(Cipher.DECRYPT_MODE, privateKey);
 			byte[] result = cipher.doFinal(Base64.getDecoder().decode(secureContents));
 			return new String(result, CHARSET);
 		} catch (Exception e) {
-			logger.error("rsa field decrypt failed(cipher text length:{}), reason:{}",
-					(secureContents == null) ? -1 : secureContents.length(), e.getMessage(), e);
+			// update 2026-9-14 解密失败必须抛异常:原形态返回""使密文损坏、密钥不匹配、未加密的历史明文
+			// 与"字段值本身为空"无法区分,查询结果静默丢值;同样只记录密文长度不记录内容
+			logger.error("rsa field decrypt failed(cipher text length:{}), reason:{}", cipherLength, e.getMessage(), e);
+			throw new DataAccessException(
+					"rsa field decrypt failed(cipher text length:{}, reason:{}), please check whether the field was encrypted with the configured key, or it still holds plain text data!",
+					cipherLength, e.getMessage());
 		}
-		return "";
+	}
+
+	/**
+	 * RSA(PKCS1 padding)单次可加密的明文长度上限=密钥字节数-11,用于加密失败时给出可操作的提示
+	 * 
+	 * @return 明文上限字节数,公钥未初始化时返回-1
+	 */
+	private int getMaxPlainTextLength() {
+		RSAPublicKey key = publicKey;
+		return (key == null) ? -1 : key.getModulus().bitLength() / 8 - 11;
 	}
 
 }

@@ -49,8 +49,12 @@ public class ToChar extends IFunction {
 			// 日期
 			format = args[1].replace("yyyy", "%Y").replace("yy", "%y").replace("MM", "%m").replace("dd", "%d");
 			// 时间处理(update 2026-9-5 补java 24小时制HH→%H与分钟mm→%i;需置于hh24/hh映射之后)
-			format = format.replace("hh24", "%H").replace("hh", "%h").replace("HH", "%H").replace("mm", "%i")
-					.replace("mi", "%i").replace("ss", "%s");
+			// update 2026-9-15 修复HH24大写形态:原仅替换小写hh24,大写HH24先被HH→%H命中
+			// 残留字面"24"(mysql实测'HH24:mi:ss'得'1024:30'),改为HH24/hh24双形态优先替换,
+			// 并补大写MI/SS形态
+			format = format.replace("HH24", "%H").replace("hh24", "%H").replace("HH", "%H").replace("hh", "%h")
+					.replace("mm", "%i").replace("MI", "%i").replace("mi", "%i").replace("SS", "%s")
+					.replace("ss", "%s");
 			return "date_format(" + args[0] + "," + format + ")";
 		}
 		case DBType.POSTGRESQL:
@@ -62,8 +66,12 @@ public class ToChar extends IFunction {
 		case DBType.OSCAR:
 		case DBType.OPENGAUSS:
 		case DBType.VASTBASE:
+			// update 2026-9-14 补KINGBASE(KingbaseES基于PG,TO_CHAR归PG系格式模型)
+		case DBType.KINGBASE:
 		case DBType.OCEANBASE:
 		case DBType.DM:
+			// 2026-9-11 hana的TO_CHAR为oracle兼容格式模型(日期yyyy/MM/dd/hh24/mi/ss与数值9/0双场景)
+		case DBType.HANA:
 		case DBType.ORACLE11: {
 			// 日期
 			format = args[1].replace("%Y", "yyyy").replace("%y", "yy").replace("%m", "MM").replace("%d", "dd");
@@ -92,8 +100,8 @@ public class ToChar extends IFunction {
 			// update 2026-9-9 clickhouse无to_char,以date_format(formatDateTime的mysql兼容别名)承担,
 			// token与mysql分支同构(%i分钟/%s秒)
 			format = args[1].replace("yyyy", "%Y").replace("yy", "%y").replace("MM", "%m").replace("dd", "%d");
-			format = format.replace("hh24", "%H").replace("hh", "%h").replace("HH", "%H").replace("mm", "%i")
-					.replace("mi", "%i").replace("ss", "%s");
+			format = format.replace("HH24", "%H").replace("hh24", "%H").replace("hh", "%h").replace("HH", "%H")
+					.replace("mm", "%i").replace("mi", "%i").replace("ss", "%s");
 			// update 2026-9-11 首参包toDateTime(同DateFormat的CLICKHOUSE分支:驱动日期参数
 			// 以String发送,formatDateTime(String)报Illegal type)
 			return "date_format(toDateTime(" + args[0] + ")," + format + ")";
@@ -111,7 +119,7 @@ public class ToChar extends IFunction {
 				// 数值格式模型:9→0(.NET零占位),FM/S999等oracle前缀修饰不在支持范围
 				format = format.replace("9", "0");
 			} else {
-				format = format.replace("hh24", "HH").replace("mi", "mm");
+				format = format.replace("HH24", "HH").replace("hh24", "HH").replace("mi", "mm");
 			}
 			return "FORMAT(" + args[0] + "," + format + ")";
 		}
@@ -126,7 +134,8 @@ public class ToChar extends IFunction {
 			format = format.replace("%T", "hh24:mi:ss");
 			format = format.replace("%H", "hh24").replace("%h", "hh").replace("%i", "mi").replace("%s", "ss");
 			format = format.replace("yyyy", "%Y").replace("yy", "%y").replace("MM", "%m").replace("dd", "%d");
-			format = format.replace("hh24", "%H").replace("hh", "%I").replace("mi", "%M").replace("ss", "%S");
+			format = format.replace("HH24", "%H").replace("hh24", "%H").replace("hh", "%I").replace("mi", "%M")
+					.replace("ss", "%S");
 			return "strftime(" + format + "," + FunctionUtils.sqliteDateTextExpr(args[0]) + ")";
 		}
 		default:

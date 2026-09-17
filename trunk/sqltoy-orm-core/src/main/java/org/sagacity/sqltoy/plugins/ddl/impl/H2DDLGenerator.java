@@ -62,9 +62,9 @@ public class H2DDLGenerator implements DialectDDLGenerator {
 			}
 			// 列注释
 			if (StringUtil.isNotBlank(colMeta.getComments())) {
+				// update 2026-9-14 反斜杠/引号均为字面量:改String.replace免去每列3次隐式正则编译
 				tableSql.append(" COMMENT '")
-						.append(colMeta.getComments().replaceAll("\\\\", "").replaceAll("\"", "").replaceAll("\'", ""))
-						.append("'");
+						.append(colMeta.getComments().replace("\\", "").replace("\"", "").replace("'", "")).append("'");
 			}
 			index++;
 		}
@@ -77,8 +77,7 @@ public class H2DDLGenerator implements DialectDDLGenerator {
 			tableSql.append(";");
 			tableSql.append(NEWLINE);
 			tableSql.append(" COMMENT ON TABLE ").append(tableName).append(" IS '")
-					.append(tableMeta.getRemarks().replaceAll("\\\\", "").replaceAll("\"", "").replaceAll("\'", ""))
-					.append("'");
+					.append(tableMeta.getRemarks().replace("\\", "").replace("\"", "").replace("'", "")).append("'");
 		}
 		// 索引
 		DDLUtils.wrapTableIndexes(tableMeta, upperOrLower, dbType, tableSql, true);

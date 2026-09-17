@@ -1,4 +1,4 @@
-package org.sagacity.sqltoy.utils;
+package org.sagacity.sqltoy;
 
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
@@ -27,15 +27,19 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 
-import org.sagacity.sqltoy.SqlExecuteStat;
-import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.CacheFilterModel;
 import org.sagacity.sqltoy.config.model.ParamFilterModel;
 import org.sagacity.sqltoy.model.CacheArg;
 import org.sagacity.sqltoy.model.DataAuthFilterConfig;
 import org.sagacity.sqltoy.model.ParamsFilter;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
+import org.sagacity.sqltoy.utils.BeanUtil;
+import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
+import org.sagacity.sqltoy.utils.DateUtil;
+import org.sagacity.sqltoy.utils.NumberUtil;
+import org.sagacity.sqltoy.utils.SqlUtil;
+import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,16 +55,16 @@ import org.slf4j.LoggerFactory;
  * @modify Date:2026-09-10 appendStr与参数值一致按转义处理后拼接(%转为字面量\%),通配符统一仅由补充的%提供
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
-public class ParamFilterUtils {
+public class ParamFilterProcessor {
 	/**
 	 * 定义日志
 	 */
-	protected final static Logger logger = LoggerFactory.getLogger(ParamFilterUtils.class);
+	protected final static Logger logger = LoggerFactory.getLogger(ParamFilterProcessor.class);
 
 	// 默认日期格式
 	private static final String DAY_FORMAT = "yyyy-MM-dd";
 
-	private ParamFilterUtils() {
+	private ParamFilterProcessor() {
 	}
 
 	/**

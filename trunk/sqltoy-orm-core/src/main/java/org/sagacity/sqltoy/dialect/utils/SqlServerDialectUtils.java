@@ -16,9 +16,11 @@ import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.model.ColumnMeta;
+import org.sagacity.sqltoy.model.DBProfile;
 import org.sagacity.sqltoy.model.IgnoreCaseSet;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.TableMeta;
+import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -44,6 +46,16 @@ public class SqlServerDialectUtils {
 			32);
 
 	/**
+	 * update 2026-9-12 dbType入径(无连接档案的直调场景):构建最小DBProfile档案后委托核心实现
+	 */
+	public static void ensureRowVersionMeta(SqlToyContext sqlToyContext, Connection conn, Integer dbType,
+			final String tableName, Class entityClass) {
+		ensureRowVersionMeta(sqlToyContext, conn,
+				new DBProfile(null, DataSourceUtils.getDialect(dbType), dbType, null, 0, null, null, false), tableName,
+				entityClass);
+	}
+
+	/**
 	 * update 2026-9-5 以目标库元数据校准EntityMeta的rowversion列集合:
 	 * sqlserver的timestamp(rowversion)列数据库自动维护不可显式写入,此前按实体侧type==TIMESTAMP判,
 	 * oracle等项目迁移场景(quickvo生成实体带显式type=TIMESTAMP,sqlserver表列实为datetime2)会被
@@ -57,8 +69,9 @@ public class SqlServerDialectUtils {
 	 * @param tableName     实际表名(可含schema)
 	 * @param entityClass   实体类型
 	 */
-	public static void ensureRowVersionMeta(SqlToyContext sqlToyContext, Connection conn, final Integer dbType,
+	public static void ensureRowVersionMeta(SqlToyContext sqlToyContext, Connection conn, DBProfile profile,
 			final String tableName, Class entityClass) {
+		Integer dbType = profile.getDbType();
 		if (conn == null || entityClass == null || dbType == null || dbType.intValue() != DBType.SQLSERVER) {
 			return;
 		}
@@ -167,7 +180,7 @@ public class SqlServerDialectUtils {
 
 	@SuppressWarnings("unchecked")
 	public static List<TableMeta> getTables(String catalog, String schema, String tableName, Connection conn,
-			Integer dbType, String dialect) throws Exception {
+			DBProfile profile) throws Exception {
 		String sql = "select d.name TABLE_NAME, cast(isnull(f.value,'') as nvarchar(1000)) COMMENTS,d.xtype TABLE_TYPE"
 				+ " from syscolumns a "
 				+ "		 inner join sysobjects d on a.id=d.id and d.xtype in ('U','V') and d.name<>'dtproperties' "
@@ -228,9 +241,8 @@ public class SqlServerDialectUtils {
 
 	@SuppressWarnings("unchecked")
 	public static List<ColumnMeta> getTableColumns(String catalog, String schema, String tableName, Connection conn,
-			Integer dbType, String dialect) throws Exception {
-		List<ColumnMeta> tableColumns = DefaultDialectUtils.getTableColumns(catalog, schema, tableName, conn, dbType,
-				dialect);
+			DBProfile profile) throws Exception {
+		List<ColumnMeta> tableColumns = DefaultDialectUtils.getTableColumns(catalog, schema, tableName, conn, profile);
 		String sql = "SELECT a.name COLUMN_NAME,"
 				+ "				 cast(isnull(g.[value],'') as nvarchar(1000)) as COMMENTS "
 				+ "				 FROM syscolumns a  inner join sysobjects d on a.id=d.id "

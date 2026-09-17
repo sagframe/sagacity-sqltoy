@@ -175,12 +175,11 @@ public class EntityManager {
 		if (entitysMetaMap.containsKey(className)) {
 			return true;
 		}
+		// update 2026-9-14 非实体负缓存改由parseEntityMeta在"确定无@Entity注解"时写入:原形态在此处
+		// 无条件写入,而parseEntityMeta解析抛异常时(isWarn=false)同样返回null,导致启动早期bean未就绪
+		// 等瞬时故障被当成"非实体"永久缓存(直到重启都无法纠正)
 		EntityMeta entityMeta = parseEntityMeta(sqlToyContext, entityClass, false, false);
-		if (entityMeta != null) {
-			return true;
-		}
-		notEntityMap.put(className, "1");
-		return false;
+		return entityMeta != null;
 	}
 
 	/**
@@ -442,10 +441,16 @@ public class EntityManager {
 			if (entityMeta != null) {
 				entitysMetaMap.put(className, entityMeta);
 				tableEntityNameMap.put(entityMeta.getTableName().toLowerCase(java.util.Locale.ROOT), className);
-			} else if (isWarn) {
-				logger.warn(
-						"sqltoy entity:{} is not annotated with @Entity, which indicates it is not an entity class, please check!",
-						className);
+			} else {
+				// update 2026-9-14 能走到此处说明解析正常结束、只是类(含父类)没有@Entity注解,属确定性的
+				// "非实体",才落负缓存;解析过程抛异常的场景在catch中直接return null,不得落负缓存,
+				// 否则瞬时故障(如启动早期主键生成器bean未就绪)会被永久判定为非实体
+				notEntityMap.put(className, "1");
+				if (isWarn) {
+					logger.warn(
+							"sqltoy entity:{} is not annotated with @Entity, which indicates it is not an entity class, please check!",
+							className);
+				}
 			}
 		}
 		return entityMeta;

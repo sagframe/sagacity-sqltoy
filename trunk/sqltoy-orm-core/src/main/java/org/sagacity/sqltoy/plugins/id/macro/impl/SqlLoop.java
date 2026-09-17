@@ -11,7 +11,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.sagacity.sqltoy.SqlToyConstants;
+import org.sagacity.sqltoy.SqlToyThreadDataHolder;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
+import org.sagacity.sqltoy.model.DBProfile;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.plugins.id.macro.AbstractMacro;
 import org.sagacity.sqltoy.plugins.id.macro.MacroUtils;
@@ -95,6 +97,11 @@ public class SqlLoop extends AbstractMacro {
 		int end = loopValues.length;
 		if (params.length > 3) {
 			start = Integer.parseInt(params[3].trim());
+			// update 2026-9-14 start为负时按0处理:原来直接用作下标会取loopValues[-1]抛数组越界
+			// (与end越界的钳制处理保持一致)
+			if (start < 0) {
+				start = 0;
+			}
 		}
 		if (start > loopValues.length - 1) {
 			return " @blank(:" + loopParam + ") ";
@@ -165,10 +172,15 @@ public class SqlLoop extends AbstractMacro {
 				for (int j = 0; j < keys.size(); j++) {
 					key = keyNamePrefix + j + "A";
 					loopParamNames = loopParamNamesMap.get(key);
-					// paramName[i] 模式
-					if (loopParamNames.length == 0) {
+					// update 2026-9-14 裸形态(:x[i])与属性形态(:x[i].prop)各自独立登记:parseParams对同一
+					// 标记两者共用一条记录,原来按loopParamNames.length二选一,未被选中的形态在循环体中
+					// 原样残留(内部标记进入最终sql,执行期未绑定参数);
+					// 引用后紧跟名字字符(如 like ':x[i]_%')的形态无法与参数名区分,先给出明确报错
+					MacroUtils.validateRefForm(loopContent, key, keys.get(j));
+					if (MacroUtils.containsRef(loopContent, key)) {
 						loopKeyValueMap.put(key, regParamValues.get(j)[i]);
-					} else {
+					}
+					if (loopParamNames != null && loopParamNames.length > 0) {
 						// paramName[i].xxxx 模式
 						loopParamValues = BeanUtil.reflectBeanToAry(regParamValues.get(j)[i], loopParamNames);
 						for (int k = 0; k < loopParamNames.length; k++) {
@@ -282,6 +294,12 @@ public class SqlLoop extends AbstractMacro {
 		String key;
 		int meter = 0;
 		boolean updateSet = false;
+		// 运行时线程数据源档案(有则日期/时间值按方言包裹转日期函数)
+		Integer loopDbType = null;
+		DBProfile loopProfile = SqlToyThreadDataHolder.getDBProfile();
+		if (loopProfile != null) {
+			loopDbType = loopProfile.getDbType();
+		}
 		while (m.find(start)) {
 			group = m.group();
 			// 剔除\\W\\: 两位字符
@@ -308,7 +326,18 @@ public class SqlLoop extends AbstractMacro {
 			} else if (paramValue == null) {
 				preSql = compareNull(preSql, updateSet);
 			} else {
-				preSql = preSql.concat(SqlUtil.toSqlString(paramValue, addSingleQuotation));
+				// 值按原样内联,本宏不做值转义:调用方可能已按目标方言自行转义,框架再转一次会造成二次转义
+				// (值语义被改),故含单引号/反斜杠的值请走参数化(@secure-loop)或由调用方保证安全
+				// update 2026-9-15 日期/时间值拼接感知方言:oracle等库裸日期字符串依赖会话
+				// NLS_DATE_FORMAT(真库实测ORA-01861/01843),线程dbProfile存在时经toSqlLogStr
+				// 按方言包裹转日期函数(仅比较位置包裹,like引号内形态维持原样);无运行时
+				// 上下文(离线API直调)维持原2参裸形态
+				if (loopDbType != null) {
+					preSql = preSql.concat(SqlUtil.toSqlLogStr(paramValue, preSql, addSingleQuotation,
+							loopDbType.intValue()));
+				} else {
+					preSql = preSql.concat(SqlUtil.toSqlString(paramValue, addSingleQuotation));
+				}
 			}
 			// 参数名称以空白结尾，处理完参数后补全空白
 			if (StringUtil.matches(group, SqlToyConstants.BLANK_END)) {

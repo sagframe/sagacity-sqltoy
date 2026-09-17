@@ -3,6 +3,7 @@ package org.sagacity.sqltoy.callback;
 import java.sql.Connection;
 import java.sql.ResultSet;
 
+import org.sagacity.sqltoy.model.DBProfile;
 import org.sagacity.sqltoy.plugins.TypeHandler;
 
 /**
@@ -17,11 +18,12 @@ public interface UpdateRowCallback {
 	 * 行处理抽象方法接口定义，用于updateFetch
 	 * 
 	 * @param typeHandler
-	 * @param dbType
+	 * @param dbProfile
 	 * @param conn
 	 * @param rs
 	 * @param index
 	 * @throws Exception
 	 */
-	void updateRow(TypeHandler typeHandler, Integer dbType, Connection conn, ResultSet rs, int index) throws Exception;
+	void updateRow(TypeHandler typeHandler, DBProfile profile, Connection conn, ResultSet rs, int index)
+			throws Exception;
 }

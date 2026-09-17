@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,13 +19,12 @@ import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.OperateType;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
-import org.sagacity.sqltoy.config.model.SqlToyResult;
-import org.sagacity.sqltoy.dialect.model.SavePKStrategy;
+import org.sagacity.sqltoy.model.DBProfile;
 import org.sagacity.sqltoy.model.JdbcTypes;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
+import org.sagacity.sqltoy.model.SavePKStrategy;
 import org.sagacity.sqltoy.model.TableMeta;
-import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.SqlUtilsExt;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -63,8 +61,8 @@ public class PostgreSqlDialectUtils {
 	 */
 	public static QueryResult getRandomResult(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, final DecryptHandler decryptHandler, Long totalCount, Long randomCount,
-			Connection conn, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
-			throws Exception {
+			Connection conn, DBProfile profile, final int fetchSize, final int maxRows) throws Exception {
+		String dialect = profile.getDialect();
 		StringBuilder sql = new StringBuilder();
 		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
 		// sql中是否存在排序或union
@@ -90,21 +88,11 @@ public class PostgreSqlDialectUtils {
 		sql.append(" order by random() limit ");
 		sql.append(randomCount);
 
-		if (sqlToyConfig.isHasFast()) {
-			if (!sqlToyConfig.isIgnoreBracket()) {
-				sql.append(") ");
-			}
-			sql.append(sqlToyConfig.getFastTailSql(dialect));
-		}
-		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
-				sql.toString(), null, null, dialect);
-		QueryExecutorExtend extend = queryExecutor.getInnerModel();
-		// 增加sql执行拦截器 update 2022-9-10
-		queryParam = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig,
-				(extend.entityClass == null) ? OperateType.random : OperateType.singleTable, queryParam,
-				extend.entityClass, dbType);
-		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				extend, decryptHandler, conn, dbType, 0, fetchSize, maxRows);
+		DialectUtils.closeFastWrap(sqlToyConfig, dialect, sql);
+		return DialectUtils.executeWrappedQuery(sqlToyContext, sqlToyConfig, queryExecutor, decryptHandler, conn,
+				profile, sql.toString(), null, null,
+				(queryExecutor.getInnerModel().entityClass == null) ? OperateType.random : OperateType.singleTable,
+				fetchSize, maxRows);
 	}
 
 	/**
@@ -118,24 +106,24 @@ public class PostgreSqlDialectUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	public static Object save(SqlToyContext sqlToyContext, Serializable entity, Connection conn, final Integer dbType,
+	public static Object save(SqlToyContext sqlToyContext, Serializable entity, Connection conn, DBProfile profile,
 			String tableName) throws Exception {
 		// 只支持sequence模式
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		String sequence = "nextval('" + entityMeta.getSequence() + "')";
 		// save行为根据主键是否赋值情况调整最终的主键策略
-		PKStrategy pkStrategy = DialectUtils.getSavePKStrategy(entityMeta, entity, dbType);
+		PKStrategy pkStrategy = DialectUtils.getSavePKStrategy(entityMeta, entity, profile);
 		boolean isAssignPK = allowAssignPKValue(pkStrategy);
-		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
-				pkStrategy, NVL_FUNCTION, sequence, isAssignPK, tableName);
+		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), profile, entityMeta,
+				pkStrategy, sequence, isAssignPK, tableName);
 		return DialectUtils.save(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entity,
 				new GenerateSqlHandler() {
 					@Override
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateField) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = "nextval('" + entityMeta.getSequence() + "')";
-						return DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
-								entityMeta, pkStrategy, NVL_FUNCTION, sequence, allowAssignPKValue(pkStrategy), null);
+						return DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), profile,
+								entityMeta, pkStrategy, sequence, allowAssignPKValue(pkStrategy), null);
 					}
 				}, new GenerateSavePKStrategy() {
 					@Override
@@ -143,7 +131,7 @@ public class PostgreSqlDialectUtils {
 						return new SavePKStrategy(entityMeta.getIdStrategy(),
 								allowAssignPKValue(entityMeta.getIdStrategy()));
 					}
-				}, conn, dbType);
+				}, conn, profile);
 	}
 
 	/**
@@ -161,16 +149,16 @@ public class PostgreSqlDialectUtils {
 	 * @throws Exception
 	 */
 	public static Long saveAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType, final Boolean autoCommit,
+			ReflectPropsHandler reflectPropsHandler, Connection conn, DBProfile profile, final Boolean autoCommit,
 			String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		PKStrategy pkStrategy = entityMeta.getIdStrategy();
 		String sequence = "nextval('" + entityMeta.getSequence() + "')";
 		boolean isAssignPK = allowAssignPKValue(pkStrategy);
-		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
-				pkStrategy, NVL_FUNCTION, sequence, isAssignPK, tableName);
+		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), profile, entityMeta,
+				pkStrategy, sequence, isAssignPK, tableName);
 		return DialectUtils.saveAll(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entities, batchSize,
-				reflectPropsHandler, conn, dbType, autoCommit);
+				reflectPropsHandler, conn, profile, autoCommit);
 	}
 
 	/**
@@ -190,8 +178,8 @@ public class PostgreSqlDialectUtils {
 	 * @throws Exception
 	 */
 	public static Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			ReflectPropsHandler reflectPropsHandler, String[] forceUpdateFields, Connection conn, final Integer dbType,
-			final String dialect, final Boolean autoCommit, final String tableName) throws Exception {
+			ReflectPropsHandler reflectPropsHandler, String[] forceUpdateFields, Connection conn, DBProfile profile,
+			final Boolean autoCommit, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		return DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta, forceUpdateFields,
 				new GenerateSqlHandler() {
@@ -200,10 +188,10 @@ public class PostgreSqlDialectUtils {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = "nextval('" + entityMeta.getSequence() + "')";
 						return DialectUtils.getSaveOrUpdateSql(sqlToyContext, sqlToyContext.getUnifyFieldsHandler(),
-								dbType, entityMeta, pkStrategy, forceUpdateFields, null, NVL_FUNCTION, sequence,
+								profile, entityMeta, pkStrategy, forceUpdateFields, null, sequence,
 								allowAssignPKValue(pkStrategy), tableName);
 					}
-				}, reflectPropsHandler, conn, dbType, autoCommit);
+				}, reflectPropsHandler, conn, profile, autoCommit);
 	}
 
 	/**
@@ -301,7 +289,7 @@ public class PostgreSqlDialectUtils {
 	 * @throws Exception
 	 */
 	public static List<TableMeta> getTables(String catalog, String schema, String tableName, Connection conn,
-			Integer dbType, String dialect) throws Exception {
+			DBProfile profile) throws Exception {
 		// v10 支持 AND c.relispartition = false
 		// <v10 用 AND c.oid NOT IN (SELECT inhrelid FROM pg_inherits)
 		String sql = """
@@ -377,110 +365,4 @@ public class PostgreSqlDialectUtils {
 		});
 	}
 
-	/**
-	 * 
-	 * @param pst
-	 * @param paramIndex
-	 * @param jdbcType
-	 * @param jsonStr
-	 * @throws SQLException
-	 */
-	public static void setJSONValue(PreparedStatement pst, int paramIndex, int jdbcType, String jsonStr)
-			throws SQLException {
-		// update 2026-9-9 已废弃:统一走JSONTypeUtil.setJSONValue(按连接URL scheme选择同源驱动
-		// PGobject,规避跨驱动错配),本方法此前已无调用者且使本类硬依赖org.postgresql驱动
-		Object pgObject = SqlUtil.getPGobjectByConn(pst, (jdbcType == JdbcTypes.JSONB) ? "jsonb" : "json", jsonStr);
-		if (pgObject != null) {
-			pst.setObject(paramIndex, pgObject);
-		} else {
-			pst.setObject(paramIndex, jsonStr, java.sql.Types.OTHER);
-		}
-	}
-
-	public static void updateJSON(ResultSet rs, String columnName, int jdbcType, String jsonStr) throws SQLException {
-		// update 2026-9-9 已废弃:统一走JSONTypeUtil.updateJSONValue,原因同setJSONValue
-		// (此处按同源PGobject委托实现,不传null dbType避免JSONTypeUtil内isPGFamily拆箱NPE)
-		Object pgObject = (rs.getStatement() == null) ? null
-				: SqlUtil.getPGobjectByConn(rs.getStatement().getConnection(),
-						(jdbcType == JdbcTypes.JSONB) ? "jsonb" : "json", jsonStr);
-		if (pgObject != null) {
-			rs.updateObject(columnName, pgObject);
-		} else {
-			rs.updateObject(columnName, jsonStr);
-		}
-	}
-
-	/**
-	 *
-	 * @param pst
-	 * @param paramIndex
-	 * @param pgTypeName 数据库端向量类型名(pgvector为vector,gaussdb企业版为floatvector)
-	 * @param vectorStr  '[1,2,3]'形式的向量字符串
-	 * @throws SQLException
-	 */
-	public static void setVectorValue(PreparedStatement pst, int paramIndex, String pgTypeName, String vectorStr)
-			throws SQLException {
-		// update 2026-9-9 已废弃:统一走SqlUtil按连接URL scheme选择同源驱动PGobject
-		Object pgObject = SqlUtil.getPGobjectByConn(pst, pgTypeName, vectorStr);
-		if (pgObject != null) {
-			pst.setObject(paramIndex, pgObject);
-		} else {
-			pst.setObject(paramIndex, vectorStr, java.sql.Types.OTHER);
-		}
-	}
-
-	/**
-	 *
-	 * @param rs
-	 * @param columnName
-	 * @param pgTypeName 数据库端向量类型名(pgvector为vector,gaussdb企业版为floatvector)
-	 * @param vectorStr  '[1,2,3]'形式的向量字符串
-	 * @throws SQLException
-	 */
-	public static void updateVector(ResultSet rs, String columnName, String pgTypeName, String vectorStr)
-			throws SQLException {
-		// update 2026-9-9 已废弃:统一走SqlUtil.updateVectorValue,原因同setVectorValue
-		Object pgObject = (rs.getStatement() == null) ? null
-				: SqlUtil.getPGobjectByConn(rs.getStatement().getConnection(), pgTypeName, vectorStr);
-		if (pgObject != null) {
-			rs.updateObject(columnName, pgObject);
-		} else {
-			rs.updateObject(columnName, vectorStr);
-		}
-	}
-
-	/**
-	 *
-	 * @param pst
-	 * @param paramIndex
-	 * @param geomStr    WKT形式的geometry字符串
-	 * @throws SQLException
-	 */
-	public static void setGeometryValue(PreparedStatement pst, int paramIndex, String geomStr) throws SQLException {
-		// update 2026-9-9 已废弃:统一走SqlUtil按连接URL scheme选择同源驱动PGobject
-		Object pgObject = SqlUtil.getPGobjectByConn(pst, "geometry", geomStr);
-		if (pgObject != null) {
-			pst.setObject(paramIndex, pgObject);
-		} else {
-			pst.setObject(paramIndex, geomStr, java.sql.Types.OTHER);
-		}
-	}
-
-	/**
-	 *
-	 * @param rs
-	 * @param columnName
-	 * @param geomStr    WKT形式的geometry字符串
-	 * @throws SQLException
-	 */
-	public static void updateGeometry(ResultSet rs, String columnName, String geomStr) throws SQLException {
-		// update 2026-9-9 已废弃:统一走SqlUtil.updateGeometryValue,原因同setGeometryValue
-		Object pgObject = (rs.getStatement() == null) ? null
-				: SqlUtil.getPGobjectByConn(rs.getStatement().getConnection(), "geometry", geomStr);
-		if (pgObject != null) {
-			rs.updateObject(columnName, pgObject);
-		} else {
-			rs.updateObject(columnName, geomStr);
-		}
-	}
 }

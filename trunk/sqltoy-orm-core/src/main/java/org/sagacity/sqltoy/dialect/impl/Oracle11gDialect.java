@@ -11,6 +11,7 @@ import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.dialect.utils.DialectExtUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
+import org.sagacity.sqltoy.model.DBProfile;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
@@ -28,12 +29,12 @@ public class Oracle11gDialect extends OracleDialect {
 
 	@Override
 	public boolean isUnique(SqlToyContext sqlToyContext, Serializable entity, String[] paramsNamed, Connection conn,
-			final Integer dbType, String tableName, final Integer queryTimeout) {
-		return DialectUtils.isUnique(sqlToyContext, entity, paramsNamed, conn, dbType, tableName,
+			DBProfile profile, String tableName, final Integer queryTimeout) {
+		return DialectUtils.isUnique(sqlToyContext, entity, paramsNamed, conn, profile, tableName,
 				(entityMeta, realParamNamed, table, topSize) -> {
 					StringBuilder sql = new StringBuilder();
 					sql.append("SELECT sag_uniqueTop.* FROM ( ");
-					sql.append(DialectExtUtils.wrapUniqueSql(entityMeta, realParamNamed, dbType, table));
+					sql.append(DialectExtUtils.wrapUniqueSql(entityMeta, realParamNamed, profile, table));
 					sql.append(") sag_uniqueTop where ROWNUM <=");
 					sql.append(topSize);
 					return sql.toString();
@@ -52,8 +53,8 @@ public class Oracle11gDialect extends OracleDialect {
 	@Override
 	public QueryResult findPageBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, final DecryptHandler decryptHandler, Long pageNo, Integer pageSize,
-			Connection conn, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
-			throws Exception {
+			Connection conn, DBProfile profile, final int fetchSize, final int maxRows) throws Exception {
+		String dialect = profile.getDialect();
 		StringBuilder sql = new StringBuilder();
 		boolean isNamed = sqlToyConfig.isNamedParam();
 		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
@@ -96,14 +97,14 @@ public class Oracle11gDialect extends OracleDialect {
 		}
 
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
-				sql.toString(), pageNo * pageSize, (pageNo - 1) * pageSize, dialect);
+				sql.toString(), pageNo * pageSize, (pageNo - 1) * pageSize, profile);
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		// 增加sql执行拦截器 update 2022-9-10
 		queryParam = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig,
 				(extend.entityClass == null) ? OperateType.page : OperateType.singleTable, queryParam,
-				extend.entityClass, dbType);
+				extend.entityClass, profile);
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				extend, decryptHandler, conn, dbType, startIndex, fetchSize, maxRows);
+				extend, decryptHandler, conn, profile, startIndex, fetchSize, maxRows);
 	}
 
 	/*
@@ -115,8 +116,9 @@ public class Oracle11gDialect extends OracleDialect {
 	 */
 	@Override
 	public QueryResult findTopBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, QueryExecutor queryExecutor,
-			final DecryptHandler decryptHandler, Integer topSize, Connection conn, final Integer dbType,
-			final String dialect, final int fetchSize, final int maxRows) throws Exception {
+			final DecryptHandler decryptHandler, Integer topSize, Connection conn, DBProfile profile,
+			final int fetchSize, final int maxRows) throws Exception {
+		String dialect = profile.getDialect();
 		StringBuilder sql = new StringBuilder();
 		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
 		// 给原始sql标记上特殊的开始和结尾，便于sql拦截器快速定位到原始sql并进行条件补充
@@ -139,13 +141,13 @@ public class Oracle11gDialect extends OracleDialect {
 			sql.append(sqlToyConfig.getFastTailSql(dialect));
 		}
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
-				sql.toString(), null, null, dialect);
+				sql.toString(), null, null, profile);
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		// 增加sql执行拦截器 update 2022-9-10
 		queryParam = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig,
 				(extend.entityClass == null) ? OperateType.top : OperateType.singleTable, queryParam,
-				extend.entityClass, dbType);
+				extend.entityClass, profile);
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				extend, decryptHandler, conn, dbType, 0, fetchSize, maxRows);
+				extend, decryptHandler, conn, profile, 0, fetchSize, maxRows);
 	}
 }

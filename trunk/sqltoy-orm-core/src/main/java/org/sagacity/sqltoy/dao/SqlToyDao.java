@@ -137,9 +137,9 @@ public interface SqlToyDao {
 	public <T extends Serializable> Page<T> convertType(Page sourcePage, Class<T> resultType,
 			String... ignoreProperties);
 
-	public <T> List<QueryResult<T>> parallelQuery(List<ParallQuery> parallelQueryList, Map<String, Object> paramsMap);
+	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallelQueryList, Map<String, Object> paramsMap);
 
-	public <T> List<QueryResult<T>> parallelQuery(List<ParallQuery> parallelQueryList, Map<String, Object> paramsMap,
+	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallelQueryList, Map<String, Object> paramsMap,
 			ParallelConfig parallelConfig);
 
 	// ============================================

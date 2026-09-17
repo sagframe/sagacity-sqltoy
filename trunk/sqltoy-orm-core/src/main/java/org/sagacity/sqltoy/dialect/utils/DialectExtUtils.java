@@ -6,7 +6,6 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyThreadDataHolder;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
@@ -16,6 +15,7 @@ import org.sagacity.sqltoy.model.IgnoreCaseSet;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.model.JdbcTypes;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
+import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.DateUtil;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
@@ -36,11 +36,18 @@ public class DialectExtUtils {
 	// POJO 对应的insert sql语句缓存
 	private static ConcurrentHashMap<String, String> insertSqlCache = new ConcurrentHashMap<String, String>(256);
 
-	// POJO 对应的merge into not match insert语句缓存
-	private static ConcurrentHashMap<String, String> mergeIgnoreSqlCache = new ConcurrentHashMap<String, String>(256);
-
 	// POJO 对应的insert into ON CONFLICT语句缓存
 	private static ConcurrentHashMap<String, String> insertIgnoreSqlCache = new ConcurrentHashMap<String, String>(256);
+
+	/**
+	 * update 2026-9-12 dbType入径(无连接档案的直调场景):构建最小DBProfile档案后委托核心实现
+	 */
+	public static String generateInsertSql(IUnifyFieldsHandler unifyFieldsHandler, Integer dbType,
+			EntityMeta entityMeta, PKStrategy pkStrategy, String sequence, boolean isAssignPK, String tableName) {
+		return generateInsertSql(unifyFieldsHandler,
+				new DBProfile(null, DataSourceUtils.getDialect(dbType), dbType, null, 0, null, null, false), entityMeta,
+				pkStrategy, sequence, isAssignPK, tableName);
+	}
 
 	/**
 	 * 产生对象对应的insert sql语句
@@ -55,9 +62,10 @@ public class DialectExtUtils {
 	 * @param tableName
 	 * @return
 	 */
-	public static String generateInsertSql(IUnifyFieldsHandler unifyFieldsHandler, Integer dbType,
-			EntityMeta entityMeta, PKStrategy pkStrategy, String isNullFunction, String sequence, boolean isAssignPK,
-			String tableName) {
+	public static String generateInsertSql(IUnifyFieldsHandler unifyFieldsHandler, DBProfile profile,
+			EntityMeta entityMeta, PKStrategy pkStrategy, String sequence, boolean isAssignPK, String tableName) {
+		String isNullFunction = profile.getNullFunction();
+		Integer dbType = profile.getDbType();
 		// update 2023-5-13 增加缓存机制，避免每次动态组织insert语句
 		String sqlCacheKey = getCacheKey(entityMeta, tableName, dbType, pkStrategy);
 		String insertSql = insertSqlCache.get(sqlCacheKey);
@@ -147,6 +155,10 @@ public class DialectExtUtils {
 					} else if (dbType == DBType.MYSQL || dbType == DBType.OCEANBASE || dbType == DBType.TIDB
 							|| dbType == DBType.MYSQL57) {
 						values.append("ST_GeomFromText(?,0)");
+					} else if (dbType == DBType.HANA) {
+						// 2026-9-11 hana空间类型为ST_GEOMETRY,构造函数ST_GeomFromText(wkt,srid)与mysql系
+						// 同名同参(srid=0为平面坐标),字符串到ST_GEOMETRY无隐式转换须显式包装
+						values.append("ST_GeomFromText(?,0)");
 					} else if (dbType == DBType.KINGBASE) {
 						// 2026-9-7 实测kes的cast仅支持cast(? as type)标准形态,cast(?,type)逗号形态报语法错误
 						values.append("cast(? as geometry)");
@@ -154,7 +166,7 @@ public class DialectExtUtils {
 						values.append("?");
 					}
 				} else if (fieldMeta.getType() == JdbcTypes.VECTOR) {
-					if ((dbType == DBType.MYSQL || dbType == DBType.MYSQL57) && !isOceanBaseAsMysql()) {
+					if ((dbType == DBType.MYSQL || dbType == DBType.MYSQL57) && !profile.isOceanBase()) {
 						values.append("string_to_vector(?)");
 					} else if (dbType == DBType.KINGBASE) {
 						values.append("cast(? as vector)");
@@ -315,8 +327,9 @@ public class DialectExtUtils {
 	 * @param tableName
 	 * @return
 	 */
-	public static String wrapUniqueSql(EntityMeta entityMeta, String[] realParamNamed, Integer dbType,
+	public static String wrapUniqueSql(EntityMeta entityMeta, String[] realParamNamed, DBProfile profile,
 			String tableName) {
+		Integer dbType = profile.getDbType();
 		// 构造查询语句(固定1避免无主键表导致select from 问题)
 		StringBuilder queryStr = new StringBuilder("select 1 ");
 		// 如果存在主键，则查询主键字段
@@ -340,246 +353,13 @@ public class DialectExtUtils {
 	}
 
 	/**
-	 * 处理加工对象基于dm、oceanbase、oracle数据库的saveIgnoreExist
-	 * 
-	 * @param unifyFieldsHandler
-	 * @param dbType
-	 * @param entityMeta
-	 * @param pkStrategy
-	 * @param fromTable          (不同数据库方言虚表，如dual)
-	 * @param isNullFunction
-	 * @param sequence
-	 * @param isAssignPK
-	 * @param tableName
-	 * @return
+	 * update 2026-9-12 dbType入径(无连接档案的直调场景):构建最小DBProfile档案后委托核心实现
 	 */
-	public static String mergeIgnore(IUnifyFieldsHandler unifyFieldsHandler, Integer dbType, EntityMeta entityMeta,
-			PKStrategy pkStrategy, String fromTable, String isNullFunction, String sequence, boolean isAssignPK,
-			String tableName) {
-		// 在无主键的情况下产生insert sql语句
-		String realTable = entityMeta.getSchemaTable(tableName, dbType);
-		// postgresql15+ 不支持别名,目标表列限定只能用不带schema的表名(schema.table.col三段式列引用非法)
-		String pgNoSchemaTable = ReservedWordsUtil
-				.convertWord((StringUtil.isBlank(tableName)) ? entityMeta.getTableName() : tableName, dbType);
-		if (entityMeta.getSchema() != null && pgNoSchemaTable.startsWith(entityMeta.getSchema().concat("."))) {
-			pgNoSchemaTable = pgNoSchemaTable.substring(entityMeta.getSchema().length() + 1);
-		}
-		if (entityMeta.getIdArray() == null && entityMeta.getUniqueIndex() == null) {
-			return generateInsertSql(unifyFieldsHandler, dbType, entityMeta, pkStrategy, isNullFunction, sequence,
-					isAssignPK, realTable);
-		}
-		// sql 缓存，避免每次重复产生
-		String sqlCacheKey = getCacheKey(entityMeta, tableName, dbType, pkStrategy);
-		String mergeIgnoreSql = mergeIgnoreSqlCache.get(sqlCacheKey);
-		if (null != mergeIgnoreSql) {
-			return mergeIgnoreSql;
-		}
-		// 创建记录时，创建时间、最后修改时间等取数据库时间
-		IgnoreCaseSet createSqlTimeFields = (unifyFieldsHandler == null
-				|| unifyFieldsHandler.createSqlTimeFields() == null) ? new IgnoreCaseSet()
-						: unifyFieldsHandler.createSqlTimeFields();
-		IgnoreCaseSet forceUpdateSqlTimeFields = new IgnoreCaseSet();
-		if (unifyFieldsHandler != null && unifyFieldsHandler.forceUpdateFields() != null) {
-			forceUpdateSqlTimeFields = unifyFieldsHandler.forceUpdateFields();
-		}
-		String currentTimeStr;
-		String[] fieldsArray = entityMeta.getFieldsArray(true);
-		int columnSize = fieldsArray.length;
-		StringBuilder sql = new StringBuilder(columnSize * 30 + 100);
-		String columnName;
-		sql.append("merge into ");
-		sql.append(realTable);
-		// postgresql15+ 不支持别名(pg系列不支持，pg14不走merge)
-		if (DBType.POSTGRESQL != dbType) {
-			sql.append(" ta ");
-		}
-		sql.append(" using (select ");
-		FieldMeta fieldMeta;
-		// update 2026-9-7 实际输出列计数:sqlserver的rowversion列跳过输出后,逗号按实际输出列组织
-		int usingCols = 0;
-		for (int i = 0; i < columnSize; i++) {
-			fieldMeta = entityMeta.getFieldMeta(fieldsArray[i]);
-			// update 2026-9-7 sqlserver的timestamp(rowversion)列不可写入,merge各环节整体排除
-			// (判据entityMeta.isRowVersionField按目标库元数据校准,非sqlserver库不启用,自SqlServerDialectUtils迁入)
-			if (DBType.SQLSERVER == dbType && entityMeta.isRowVersionField(fieldMeta)) {
-				continue;
-			}
-			columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
-			if (usingCols > 0) {
-				sql.append(",");
-			}
-			// postgresql15+ 需要case(? as type) as column
-			if (DBType.POSTGRESQL == dbType || DBType.KINGBASE == dbType) {
-				PostgreSqlDialectUtils.wrapSelectFields(sql, columnName, fieldMeta);
-			} else if (DBType.GAUSSDB == dbType || DBType.OPENGAUSS == dbType || DBType.MOGDB == dbType
-					|| DBType.VASTBASE == dbType || DBType.STARDB == dbType || DBType.OSCAR == dbType) {
-				OpenGaussDialectUtils.wrapSelectFields(sql, columnName, fieldMeta, dbType);
-			} else if (DBType.H2 == dbType) {
-				H2DialectUtils.wrapSelectFields(sql, columnName, fieldMeta);
-			} else if (DBType.DB2 == dbType) {
-				DB2DialectUtils.wrapSelectFields(sql, columnName, fieldMeta);
-			} else if (DBType.DM == dbType) {
-				DMDialectUtils.wrapSelectFields(sql, columnName, fieldMeta);
-			} else {
-				// sqlserver(2008+)、oracle(23ai)支持vector类型;sqlserver(2008+)支持geometry类型
-				// merge into的using select子查询中显式cast保证类型正确
-				// update 2026-9-6 oracle geometry改由驱动层SDO STRUCT绑定(见SqlUtil.setGeometryValue),
-				// SQL层SDO_UTIL.FROM_WKTGEOMETRY包装在null参数时报ORA-29532,故还原为普通?占位
-				// update 2026-9-7 sqlserver VECTOR同样还原为裸?:实测2025版cast(? as VECTOR)缺维度报
-				// "not a defined system type",而字符串到vector为隐式转换(修复历史遗留的错误cast)
-				int extType = fieldMeta.getType();
-				// 统一模式:先按数据类型分支,再在分支内部按数据库方言处理(与generateInsertSql保持一致)
-				if (extType == JdbcTypes.GEOMETRY) {
-					if (DBType.SQLSERVER == dbType) {
-						sql.append("cast(? as geometry)");
-					} else {
-						// oracle由驱动层SDO STRUCT绑定(见SqlUtil.setGeometryValue),维持裸?
-						sql.append("?");
-					}
-				} else if (extType == JdbcTypes.VECTOR) {
-					// update 2026-9-7 实测sqlserver 2025的cast(? as VECTOR)缺维度报
-					// "not a defined system type",而字符串到vector为隐式转换,维持裸?
-					sql.append("?");
-				} else if (extType == JdbcTypes.JSON || extType == JdbcTypes.JSONB) {
-					// update 2026-9-10 移除服务器级convert(json,?)门控,统一裸?:mergeIgnore无matched
-					// update环节,实测(2025 GA容器)裸?(按nvarchar传递)直插原生json列与nvarchar承载列
-					// 均可行(nvarchar→json方向隐式转换允许);convert(json,?)产物为json类型值,
-					// 赋给存量nvarchar承载列报"Implicit conversion json to nvarchar not allowed",
-					// 服务器级门控无法区分列级承载形态,故废弃
-					sql.append("?");
-				} else {
-					sql.append("?");
-				}
-				sql.append(" as ");
-				sql.append(columnName);
-			}
-			usingCols++;
-		}
-		if (StringUtil.isNotBlank(fromTable)) {
-			sql.append(" from ").append(fromTable);
-		}
-		// sql.append(") tv on (");
-		sql.append(SqlToyConstants.MERGE_ALIAS_ON);
-		StringBuilder idColumns = new StringBuilder();
-		boolean hasId = (entityMeta.getIdArray() == null) ? false : true;
-		String[] fields = hasId ? entityMeta.getIdArray() : entityMeta.getUniqueIndex().getColumns();
-		// 组织on部分的主键条件判断(update 2024-10-16 增加无主键场景下,用唯一索引来替代的方式)
-		for (int i = 0, n = fields.length; i < n; i++) {
-			columnName = hasId ? entityMeta.getColumnName(fields[i]) : fields[i];
-			columnName = ReservedWordsUtil.convertWord(columnName, dbType);
-			if (i > 0) {
-				sql.append(" and ");
-				idColumns.append(",");
-			}
-			// postgresql15+ 不支持别名
-			if (DBType.POSTGRESQL == dbType) {
-				sql.append(pgNoSchemaTable + ".");
-			} else {
-				sql.append("ta.");
-			}
-			sql.append(columnName).append("=tv.").append(columnName);
-			idColumns.append("ta.").append(columnName);
-		}
-		sql.append(" ) ");
-		// 排除id的其他字段信息
-		StringBuilder insertRejIdCols = new StringBuilder();
-		StringBuilder insertRejIdColValues = new StringBuilder();
-		// 是否全部是ID,insert 按主键来构造语句
-		String[] rejectIdFieldArray = entityMeta.getRejectIdFieldArray(true);
-		boolean allIds = (rejectIdFieldArray == null);
-		// 部分主键，则按非主键来构造insert字段
-		if (!allIds) {
-			int rejectIdColumnSize = rejectIdFieldArray.length;
-			// update 只针对非主键字段进行修改
-			int insCols = 0;
-			for (int i = 0; i < rejectIdColumnSize; i++) {
-				fieldMeta = entityMeta.getFieldMeta(rejectIdFieldArray[i]);
-				// update 2026-9-7 sqlserver的rowversion列在insert环节同样不参与(自SqlServerDialectUtils迁入)
-				if (DBType.SQLSERVER == dbType && entityMeta.isRowVersionField(fieldMeta)) {
-					continue;
-				}
-				columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
-				if (insCols > 0) {
-					insertRejIdCols.append(",");
-					insertRejIdColValues.append(",");
-				}
-				insertRejIdCols.append(columnName);
-				// 使用数据库时间nvl(tv.field,current_timestamp)
-				currentTimeStr = SqlUtil.getDBTime(dbType, fieldMeta, createSqlTimeFields);
-				if (null != currentTimeStr) {
-					if (forceUpdateSqlTimeFields.contains(fieldMeta.getFieldName())) {
-						insertRejIdColValues.append(currentTimeStr);
-					} else {
-						insertRejIdColValues.append(isNullFunction);
-						insertRejIdColValues.append("(tv.").append(columnName);
-						insertRejIdColValues.append(",").append(currentTimeStr);
-						insertRejIdColValues.append(")");
-					}
-				} else {
-					insertRejIdColValues.append("tv.").append(columnName);
-				}
-				insCols++;
-			}
-		}
-		// 主键未匹配上则进行插入操作
-		sql.append(SqlToyConstants.MERGE_INSERT);
-		sql.append(" (");
-		String idsColumnStr = idColumns.toString();
-		// 不考虑只有一个字段且还是主键的情况
-		if (allIds) {
-			sql.append(idsColumnStr.replace("ta.", ""));
-			sql.append(") values (");
-			sql.append(idsColumnStr.replace("ta.", "tv."));
-		} else {
-			sql.append(insertRejIdCols.toString());
-			// 无主键
-			if (pkStrategy == null) {
-				sql.append(") values (");
-				sql.append(insertRejIdColValues);
-			} else {
-				// sequence方式主键
-				if (PKStrategy.SEQUENCE.equals(pkStrategy)) {
-					columnName = entityMeta.getColumnName(entityMeta.getIdArray()[0]);
-					columnName = ReservedWordsUtil.convertWord(columnName, dbType);
-					sql.append(",");
-					sql.append(columnName);
-					sql.append(") values (");
-					sql.append(insertRejIdColValues).append(",");
-					if (isAssignPK) {
-						sql.append(isNullFunction);
-						sql.append("(tv.").append(columnName).append(",");
-						sql.append(sequence).append(") ");
-					} else {
-						sql.append(sequence);
-					}
-				} else if (PKStrategy.IDENTITY.equals(pkStrategy)) {
-					columnName = entityMeta.getColumnName(entityMeta.getIdArray()[0]);
-					columnName = ReservedWordsUtil.convertWord(columnName, dbType);
-					if (isAssignPK) {
-						sql.append(",");
-						sql.append(columnName);
-					}
-					sql.append(") values (");
-					// identity 模式insert无需写插入该字段语句
-					sql.append(insertRejIdColValues);
-					if (isAssignPK) {
-						sql.append(",").append("tv.").append(columnName);
-					}
-				} else {
-					sql.append(",");
-					sql.append(idsColumnStr.replace("ta.", ""));
-					sql.append(") values (");
-					sql.append(insertRejIdColValues).append(",");
-					sql.append(idsColumnStr.replace("ta.", "tv."));
-				}
-			}
-		}
-		sql.append(")");
-		mergeIgnoreSql = sql.toString();
-		if (mergeIgnoreSqlCache.size() < 256) {
-			mergeIgnoreSqlCache.put(sqlCacheKey, mergeIgnoreSql);
-		}
-		return mergeIgnoreSql;
+	public static String insertIgnore(IUnifyFieldsHandler unifyFieldsHandler, Integer dbType, EntityMeta entityMeta,
+			PKStrategy pkStrategy, String sequence, boolean isAssignPK, String tableName) {
+		return insertIgnore(unifyFieldsHandler,
+				new DBProfile(null, DataSourceUtils.getDialect(dbType), dbType, null, 0, null, null, false), entityMeta,
+				pkStrategy, sequence, isAssignPK, tableName);
 	}
 
 	/**
@@ -595,8 +375,10 @@ public class DialectExtUtils {
 	 * @param tableName
 	 * @return
 	 */
-	public static String insertIgnore(IUnifyFieldsHandler unifyFieldsHandler, Integer dbType, EntityMeta entityMeta,
-			PKStrategy pkStrategy, String isNullFunction, String sequence, boolean isAssignPK, String tableName) {
+	public static String insertIgnore(IUnifyFieldsHandler unifyFieldsHandler, DBProfile profile, EntityMeta entityMeta,
+			PKStrategy pkStrategy, String sequence, boolean isAssignPK, String tableName) {
+		String isNullFunction = profile.getNullFunction();
+		Integer dbType = profile.getDbType();
 		// update 2023-5-13 提供缓存方式快速获取sql
 		String sqlCacheKey = getCacheKey(entityMeta, tableName, dbType, pkStrategy);
 		String insertIgnoreSql = insertIgnoreSqlCache.get(sqlCacheKey);
@@ -705,7 +487,7 @@ public class DialectExtUtils {
 	 * @param fieldMeta
 	 * @return
 	 */
-	public static String getInsertDefaultValue(IgnoreKeyCaseMap<String, Object> createUnifyFields, Integer dbType,
+	public static String getInsertDefaultValue(IgnoreKeyCaseMap<String, Object> createUnifyFields, DBProfile profile,
 			FieldMeta fieldMeta) {
 		if (createUnifyFields == null || createUnifyFields.isEmpty()
 				|| !createUnifyFields.containsKey(fieldMeta.getFieldName())) {
@@ -762,7 +544,7 @@ public class DialectExtUtils {
 	 * @param pkStrategy
 	 * @return
 	 */
-	private static String getCacheKey(EntityMeta entityMeta, String tableName, int dbType, PKStrategy pkStrategy) {
+	static String getCacheKey(EntityMeta entityMeta, String tableName, int dbType, PKStrategy pkStrategy) {
 		// update 2023-10-24 增加主键策略作为缓存key的组成，因为gaussdb
 		// save单条保存和saveAll批量机制存在差异，save时sequence策略会提前获取sequence值，然后变成了assign策略
 		// update 2026-9-7 rowversion校准状态参与缓存key:避免校准前后(rowVersionColumns判据不同)生成的
@@ -772,17 +554,10 @@ public class DialectExtUtils {
 				+ ((entityMeta.getRowVersionColumns() == null) ? -1 : entityMeta.getRowVersionColumns().hashCode());
 	}
 
-	/**
-	 * update 2026-9-6 oceanbase的mysql模式按mysql方言配置(其专有方言生成oracle式merge
-	 * into,mysql模式不支持),此时dbType为MYSQL但ThreadLocal的actuallyDBType仍为URL判定的
-	 * OCEANBASE(显式dialect时processDataSource会设置),以此区分真mysql与ob mysql模式
-	 * 
-	 * @return true表示当前连接实为oceanbase(仅按mysql方言处理)
-	 */
-	public static boolean isOceanBaseAsMysql() {
-		Integer actualDbType = SqlToyThreadDataHolder.getActuallyDBType();
-		return (actualDbType != null && actualDbType == DBType.OCEANBASE);
-	}
+	// update 2026-9-14
+	// 原isOceanBaseAsMysql()(读ThreadLocal的actuallyDBType)已删除:各分派点统一改用
+	// DBProfile.isOceanBase()——按产品名判定、由profile参数显式传递,不再依赖线程隐式全局态
+	// (并行等场景下ThreadLocal缺失会误判为真mysql),语义详见DBProfile.isOceanBase的javadoc
 
 	/**
 	 * update 2026-9-7 实测DB2 12.1起空间能力可内置为非限定SYSIBM函数(ST_GeomFromText等,

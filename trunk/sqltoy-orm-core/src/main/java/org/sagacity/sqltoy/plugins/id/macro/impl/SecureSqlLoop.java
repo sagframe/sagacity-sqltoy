@@ -83,6 +83,10 @@ public class SecureSqlLoop extends AbstractMacro {
 		int end = loopValues.length;
 		if (params.length > 3) {
 			start = Integer.parseInt(params[3].trim());
+			// update 2026-9-14 start为负时按0处理:原来直接用作下标会取loopValues[-1]抛数组越界
+			if (start < 0) {
+				start = 0;
+			}
 		}
 		if (start > loopValues.length - 1) {
 			return " @blank(:" + loopParam + ") ";
@@ -150,20 +154,25 @@ public class SecureSqlLoop extends AbstractMacro {
 				for (int j = 0; j < keys.size(); j++) {
 					key = keyNamePrefix + j + "A";
 					loopParamNames = loopParamNamesMap.get(key);
-					// paramName[i] 模式
-					if (loopParamNames.length == 0) {
-						// 以字母结束,避免数字产生包含关系(S1,S12,S12包含了S1)
+					// update 2026-9-14 裸形态(:x[i])与属性形态(:x[i].prop)改为各自独立处理:parseParams对
+					// 同一标记两者共用一条记录,原来按loopParamNames.length二选一,导致未被选中的形态
+					// 在循环体中原样残留(最终sql里出现内部标记,执行期未绑定参数);
+					// 引用后紧跟名字字符(如 like ':x[i]_%')的形态无法与参数名区分,先给出明确报错
+					MacroUtils.validateRefForm(loopContent, key, keys.get(j));
+					// 裸形态:整体作为参数值
+					if (MacroUtils.containsRef(loopContent, key)) {
 						realKey = realKeyNamePrefix + paramCnt + "B";
-						realLoopContent = realLoopContent.replaceAll(key, ":".concat(realKey));
+						realLoopContent = replaceParamRef(realLoopContent, key, ":".concat(realKey));
 						loopKeyValueMap.put(realKey, regParamValues.get(j)[i]);
 						paramCnt++;
-					} else {
-						// paramName[i].xxxx 模式
+					}
+					// 属性形态:paramName[i].xxxx逐个属性取值
+					if (loopParamNames != null && loopParamNames.length > 0) {
 						loopParamValues = BeanUtil.reflectBeanToAry(regParamValues.get(j)[i], loopParamNames);
 						for (int k = 0; k < loopParamNames.length; k++) {
 							realKey = realKeyNamePrefix + paramCnt + "B";
-							realLoopContent = realLoopContent.replaceAll(key.concat(".").concat(loopParamNames[k]),
-									":".concat(realKey));
+							realLoopContent = replaceParamRef(realLoopContent,
+									key.concat(".").concat(loopParamNames[k]), ":".concat(realKey));
 							loopKeyValueMap.put(realKey, loopParamValues[k]);
 							paramCnt++;
 						}
@@ -178,4 +187,35 @@ public class SecureSqlLoop extends AbstractMacro {
 		return result.toString();
 	}
 
+	/**
+	 * 按字面量替换循环体内的参数引用,并要求引用之后不是参数名/属性链字符。 update 2026-9-14
+	 * 原实现用replaceAll(key+"."+property):其一,行循环内每次替换都隐式编译正则 (元素数×引用数
+	 * 次编译);其二,连接用的"."是正则的任意字符;其三,没有后边界判断—— 属性名或标记互为前缀时会相互截断(:p[i].id 吃掉
+	 * :p[i].idCard 的前缀、标记_1A 吃掉 _10A、 裸引用吃掉属性引用的前缀),被截断的引用会变成一个从未绑定的参数名(执行期直接失败)。
+	 * 字面量匹配消除正则开销与"."通配;后边界(含".")判断使前缀关系不再相互污染。
+	 * 
+	 * @param content     循环体内容
+	 * @param ref         参数引用(如:sqlToyLoopAsKey_0A 或 :sqlToyLoopAsKey_0A.id)
+	 * @param replacement 替换后的参数名引用(如:sqlLoopKey_S1B)
+	 * @return 替换结果
+	 */
+	private static String replaceParamRef(String content, String ref, String replacement) {
+		int index = content.indexOf(ref);
+		if (index == -1) {
+			return content;
+		}
+		StringBuilder result = new StringBuilder(content.length());
+		int from = 0;
+		int after;
+		while (index != -1) {
+			after = index + ref.length();
+			// 引用后紧跟参数名或属性链字符说明这里是更长的名字(如.idCard、a.b、_10A),交给对应的替换处理
+			if (after >= content.length() || !MacroUtils.isParamRefChar(content.charAt(after))) {
+				result.append(content, from, index).append(replacement);
+				from = after;
+			}
+			index = content.indexOf(ref, index + 1);
+		}
+		return result.append(content, from, content.length()).toString();
+	}
 }

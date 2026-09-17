@@ -16,7 +16,9 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @version v1.0,Date:2019-10-21
  */
 public class GroupConcat extends IFunction {
-	private static Pattern regex = Pattern.compile("(?i)\\W(group_concat|string_agg)\\(");
+	// update 2026-9-15 补listagg:原正则不含listagg,写listagg的SQL从不进入本转换
+	// (mysql实测原样透传报FUNCTION listagg does not exist),三别名统一进入分派
+	private static Pattern regex = Pattern.compile("(?i)\\W(group_concat|string_agg|listagg)\\(");
 	private static Pattern separtorPattern = Pattern.compile("\\Wseparator\\W");
 
 	@Override
@@ -37,10 +39,13 @@ public class GroupConcat extends IFunction {
 		// update 2026-9-5 重构参数解析:group_concat与string_agg参数结构不同,分别处理
 		// (string_agg(expr,sep)第二参为分隔符;group_concat为多列concat语义+可选separator关键字),
 		// 修复group_concat多列拼接(a, b [separator '-'])转换时丢失列的问题
-		boolean isStringAgg = "string_agg".equals(functionName.toLowerCase(Locale.ROOT));
+		// update 2026-9-15 listagg(expr,sep)与string_agg同为(表达式,分隔符)两参结构,
+		// 归入两参形态解析(原listagg写法走group_concat多列解析,分隔符被误当拼接列)
+		String funLow = functionName.toLowerCase(Locale.ROOT);
+		boolean twoArgForm = "string_agg".equals(funLow) || "listagg".equals(funLow);
 		String expr;
 		String sign = "','";
-		if (isStringAgg) {
+		if (twoArgForm) {
 			expr = args[0];
 			sign = (args.length > 1) ? args[1] : "','";
 		} else {
@@ -78,38 +83,49 @@ public class GroupConcat extends IFunction {
 		if (dbType == DBType.CLICKHOUSE) {
 			return " arrayStringConcat(groupArray(" + expr + ")," + sign + ") ";
 		}
+		// update 2026-9-14 补KINGBASE(KingbaseES基于PG,函数语法归PG系):此前漏改导致group_concat不转换
+		// 原样透传,目标库报函数不存在
+		// update 2026-9-15 写法与目标库同名时原样透传,反向别名统一转换:
+		// listagg写法→array_to_string(string_agg写法为pg原生透传)
 		if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 				|| dbType == DBType.OPENGAUSS || dbType == DBType.OSCAR || dbType == DBType.STARDB
-				|| dbType == DBType.MOGDB || dbType == DBType.VASTBASE) {
-			if (isStringAgg) {
+				|| dbType == DBType.MOGDB || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE) {
+			if ("string_agg".equals(funLow)) {
 				return super.IGNORE;
 			}
 			// 原则上可以通过string_agg 但如果类型不是字符串就会报错
 			return " array_to_string(ARRAY_AGG(" + expr + ")," + sign + ") ";
 		}
+		// update 2026-9-15 listagg写法统一转group_concat(原IGNORE透传,mysql系无listagg报函数不存在)
 		if (dbType == DBType.MYSQL || dbType == DBType.TIDB || dbType == DBType.MYSQL57 || dbType == DBType.H2
 				|| dbType == DBType.DORIS || dbType == DBType.STARROCKS) {
-			if (!isStringAgg) {
+			if (!twoArgForm) {
 				return super.IGNORE;
 			}
 			return " group_concat(" + expr + " separator " + sign + ") ";
 		}
 		// update 2026-9-5 补充oracle系/DB2/sqlserver的listagg与STRING_AGG转换(此前缺失,原样输出在目标库非法)
+		// update 2026-9-15
+		// string_agg写法统一转listagg(原IGNORE透传,oracle无string_agg报ORA-00904);
+		// listagg写法为oracle系原生,原样透传(保留用户自带的within group子句)
 		if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM || dbType == DBType.OCEANBASE) {
-			if (isStringAgg || "listagg".equals(functionName.toLowerCase(Locale.ROOT))) {
+			if ("listagg".equals(funLow)) {
 				return super.IGNORE;
 			}
 			return " listagg(" + expr + "," + sign + ") within group (order by null) ";
 		}
 		// update 2026-9-5 db2的listagg不接受order by null,直接省略within group子句
 		if (dbType == DBType.DB2) {
-			if (isStringAgg || "listagg".equals(functionName.toLowerCase(Locale.ROOT))) {
+			if ("listagg".equals(funLow)) {
 				return super.IGNORE;
 			}
 			return " listagg(" + expr + "," + sign + ") ";
 		}
-		if (dbType == DBType.SQLSERVER) {
-			if (isStringAgg) {
+		// 2026-9-11 hana 2.0 SPS04+提供STRING_AGG(expr,delimiter)两参形态(与sqlserver同名同构,
+		// null值跳过语义一致;多列拼接expr走||连接符分支,hana原生支持||)
+		// update 2026-9-15 listagg写法统一转string_agg(原IGNORE透传,sqlserver/hana无listagg)
+		if (dbType == DBType.SQLSERVER || dbType == DBType.HANA) {
+			if ("string_agg".equals(funLow)) {
 				return super.IGNORE;
 			}
 			return " string_agg(" + expr + "," + sign + ") ";

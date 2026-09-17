@@ -1,4 +1,4 @@
-package org.sagacity.sqltoy.utils;
+package org.sagacity.sqltoy.translate;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -12,11 +12,10 @@ import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.model.IgnoreCaseSet;
 import org.sagacity.sqltoy.model.inner.TranslateExtend;
-import org.sagacity.sqltoy.translate.DynamicCacheFetch;
-import org.sagacity.sqltoy.translate.FieldTranslateCacheHolder;
-import org.sagacity.sqltoy.translate.TranslateManager;
 import org.sagacity.sqltoy.translate.model.BatchDynamicCache;
 import org.sagacity.sqltoy.translate.model.DynamicCacheHolder;
+import org.sagacity.sqltoy.utils.BeanUtil;
+import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

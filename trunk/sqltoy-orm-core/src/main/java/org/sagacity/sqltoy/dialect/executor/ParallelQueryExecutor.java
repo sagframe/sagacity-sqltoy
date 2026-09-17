@@ -6,12 +6,12 @@ import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
+import org.sagacity.sqltoy.dialect.CrossDbAdapter;
 import org.sagacity.sqltoy.dialect.DialectFactory;
 import org.sagacity.sqltoy.model.ParallQuery;
 import org.sagacity.sqltoy.model.ParallelQueryResult;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.inner.ParallelQueryExtend;
-import org.sagacity.sqltoy.plugins.CrossDbAdapter;
 
 /**
  * @project sagacity-sqltoy

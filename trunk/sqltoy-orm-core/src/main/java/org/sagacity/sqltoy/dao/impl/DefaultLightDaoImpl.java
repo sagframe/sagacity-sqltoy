@@ -664,7 +664,8 @@ public class DefaultLightDaoImpl extends SqlToyDaoSupport implements LightDao {
 	}
 
 	@Override
-	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallelQueryList, Map<String, Object> paramsMap) {
+	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallelQueryList,
+			Map<String, Object> paramsMap) {
 		return super.parallQuery(parallelQueryList, paramsMap, new ParallelConfig());
 	}
 

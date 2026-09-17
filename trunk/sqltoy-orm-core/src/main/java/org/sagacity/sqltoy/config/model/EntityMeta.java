@@ -955,4 +955,26 @@ public class EntityMeta implements Serializable {
 	public void setNotGeneratedColMeta(NotGeneratedColMeta notGeneratedColMeta) {
 		this.notGeneratedColMeta = notGeneratedColMeta;
 	}
+
+	/**
+	 * update 2026-9-13 是否配置了业务ID生成器(收编各方言utils散布的同义样板判断)
+	 */
+	public boolean hasBusinessIdGenerator() {
+		return businessIdGenerator != null;
+	}
+
+	/**
+	 * update 2026-9-13 是否配置了数据版本字段
+	 */
+	public boolean hasDataVersion() {
+		return dataVersion != null;
+	}
+
+	/**
+	 * update 2026-9-13 是否配置了ID生成器
+	 */
+	public boolean hasIdGenerator() {
+		return idGenerator != null;
+	}
+
 }

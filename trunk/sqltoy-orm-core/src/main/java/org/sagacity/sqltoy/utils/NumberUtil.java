@@ -29,6 +29,43 @@ import org.slf4j.LoggerFactory;
  * @version v1.0,Date:Oct 18, 2007 9:19:50 AM
  */
 public class NumberUtil {
+
+	// update 2026-9-14 DecimalFormat非线程安全不能全局共享,且getInstance+applyPattern的
+	// 格式串解析开销显著(格式化列高频路径),按线程缓存(键=pattern|locale|rounding|币种形态,
+	// 键空间=使用中的格式组合,小且有限);线程池场景随线程存续,内存可控
+	private static final ThreadLocal<java.util.HashMap<String, DecimalFormat>> DF_CACHE = new ThreadLocal<java.util.HashMap<String, DecimalFormat>>() {
+		@Override
+		protected java.util.HashMap<String, DecimalFormat> initialValue() {
+			return new java.util.HashMap<String, DecimalFormat>();
+		}
+	};
+
+	/**
+	 * 取线程内缓存的DecimalFormat(DecimalFormat线程不安全,每线程独立实例;pattern已apply,
+	 * 调用方直接format/parse即可)
+	 *
+	 * @param pattern          格式模式
+	 * @param realLocale       已解析的区域(非null)
+	 * @param roundingMode     舍入模式,可为null
+	 * @param currencyInstance true为currency实例(保留币种符号的locale语义,同原getCurrencyInstance)
+	 */
+	private static DecimalFormat getDecimalFormat(String pattern, Locale realLocale,
+			java.math.RoundingMode roundingMode, boolean currencyInstance) {
+		String key = (currencyInstance ? "cur|" : "") + pattern + "|" + realLocale.toString() + "|"
+				+ ((roundingMode == null) ? "-" : roundingMode.name());
+		DecimalFormat df = DF_CACHE.get().get(key);
+		if (df == null) {
+			df = (DecimalFormat) (currencyInstance ? DecimalFormat.getCurrencyInstance(realLocale)
+					: DecimalFormat.getInstance(realLocale));
+			if (roundingMode != null) {
+				df.setRoundingMode(roundingMode);
+			}
+			df.applyPattern(pattern);
+			DF_CACHE.get().put(key, df);
+		}
+		return df;
+	}
+
 	/**
 	 * 定义日志
 	 */
@@ -124,12 +161,10 @@ public class NumberUtil {
 				return convertToEnglishMoney(tmp, currency);
 			}
 			// locale为null时取sqltoy统一配置的默认区域(未设置则跟随JVM默认区域)
-			DecimalFormat df = (DecimalFormat) DecimalFormat
-					.getInstance((locale == null) ? SqlToyConstants.getLocale() : locale);
-			if (roundingMode != null) {
-				df.setRoundingMode(roundingMode);
-			}
-			df.applyPattern(pattern);
+			// update 2026-9-14 DecimalFormat改走线程内缓存(getDecimalFormat),消除逐值
+			// getInstance+applyPattern的格式串解析开销(格式化列高频路径)
+			DecimalFormat df = getDecimalFormat(pattern, (locale == null) ? SqlToyConstants.getLocale() : locale,
+					roundingMode, false);
 			return df.format(tmp);
 		} catch (Exception e) {
 			logger.error("value:{};pattern={};{}", target, pattern, e.getMessage(), e);
@@ -170,9 +205,9 @@ public class NumberUtil {
 				return convertToEnglishMoney(tmp);
 			}
 			// locale为null时取sqltoy统一配置的默认区域(未设置则跟随JVM默认区域)
-			DecimalFormat df = (DecimalFormat) DecimalFormat
-					.getCurrencyInstance((locale == null) ? SqlToyConstants.getLocale() : locale);
-			df.applyPattern(pattern);
+			// update 2026-9-14 DecimalFormat改走线程内缓存(同format路径)
+			DecimalFormat df = getDecimalFormat(pattern, (locale == null) ? SqlToyConstants.getLocale() : locale, null,
+					true);
 			return df.format(tmp);
 		} catch (Exception e) {
 			logger.error("value:{};pattern={};{}", target, pattern, e.getMessage(), e);

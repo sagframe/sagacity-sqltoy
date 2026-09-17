@@ -6,11 +6,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.sagacity.sqltoy.config.MacroIfLogic;
 import org.sagacity.sqltoy.config.model.LabelIndexModel;
 import org.sagacity.sqltoy.config.model.TreeSortModel;
 import org.sagacity.sqltoy.plugins.utils.CalculateUtils;
 import org.sagacity.sqltoy.utils.CollectionUtil;
-import org.sagacity.sqltoy.utils.MacroIfLogic;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
