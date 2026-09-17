@@ -121,7 +121,7 @@ public class SqlUtilTest {
 	@Test
 	public void testValidateSqlInArg() {
 		String argValue = "'alter1 table'";
-		boolean hasSqlKeyWord = StringUtil.matches(" " + argValue, SqlUtil.SQL_INJECT_PATTERN);
+		boolean hasSqlKeyWord = StringUtil.matches(" " + argValue, SqlUtil.SQL_KEYWORD_PATTERN);
 		System.err.println(hasSqlKeyWord);
 		System.err.println(SqlUtil.validateInArg(argValue));
 	}

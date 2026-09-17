@@ -188,7 +188,7 @@ public class SqlCoreChangesDeepTest {
 	private static long executeCount(String sql, Object[] params) throws Exception {
 		try (PreparedStatement pst = conn.prepareStatement(sql)) {
 			if (params != null) {
-				SqlUtil.setParamsValue(context.getTypeHandler(), conn, DataSourceUtils.DBType.H2, pst, params, null, 0);
+				SqlUtil.setParamsValue(context.getTypeHandler(), conn, DataSourceUtils.getDBProfile(conn), pst, params, null, 0);
 			}
 			try (ResultSet rs = pst.executeQuery()) {
 				return rs.next() ? rs.getLong(1) : 0L;

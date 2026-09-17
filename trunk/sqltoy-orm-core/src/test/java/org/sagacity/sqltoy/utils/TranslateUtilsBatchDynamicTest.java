@@ -15,6 +15,7 @@ import org.sagacity.sqltoy.integration.AppContext;
 import org.sagacity.sqltoy.translate.DynamicCacheFetch;
 import org.sagacity.sqltoy.translate.FieldTranslateCacheHolder;
 import org.sagacity.sqltoy.translate.TranslateManager;
+import org.sagacity.sqltoy.translate.TranslateUtils;
 import org.sagacity.sqltoy.translate.model.BatchDynamicCache;
 import org.sagacity.sqltoy.translate.model.DynamicCacheHolder;
 

@@ -61,9 +61,9 @@ public class EntityResultSetProxyTest {
 	public void proxyClassReusedAcrossCalls() throws Exception {
 		// 修复前每次createProxy都make+load一个新类,多行结果集场景Metaspace单调增长直至OOM
 		ResultSet rs = query("hello");
-		Foo first = EntityResultSetProxy.createProxy(null, DataSourceUtils.DBType.H2, conn, rs, Foo.class, entityMeta);
+		Foo first = EntityResultSetProxy.createProxy(null, DataSourceUtils.getDBProfile(conn), conn, rs, Foo.class, entityMeta);
 		for (int i = 0; i < 500; i++) {
-			Foo proxy = EntityResultSetProxy.createProxy(null, DataSourceUtils.DBType.H2, conn, rs, Foo.class,
+			Foo proxy = EntityResultSetProxy.createProxy(null, DataSourceUtils.getDBProfile(conn), conn, rs, Foo.class,
 					entityMeta);
 			assertSame(first.getClass(), proxy.getClass());
 			assertEquals("hello", proxy.getName());
@@ -74,9 +74,9 @@ public class EntityResultSetProxyTest {
 	public void interceptorBoundPerRowWithoutCrossContamination() throws Exception {
 		ResultSet rsA = query("hello");
 		ResultSet rsB = query("world");
-		Foo proxyA = EntityResultSetProxy.createProxy(null, DataSourceUtils.DBType.H2, conn, rsA, Foo.class,
+		Foo proxyA = EntityResultSetProxy.createProxy(null, DataSourceUtils.getDBProfile(conn), conn, rsA, Foo.class,
 				entityMeta);
-		Foo proxyB = EntityResultSetProxy.createProxy(null, DataSourceUtils.DBType.H2, conn, rsB, Foo.class,
+		Foo proxyB = EntityResultSetProxy.createProxy(null, DataSourceUtils.getDBProfile(conn), conn, rsB, Foo.class,
 				entityMeta);
 		assertEquals("hello", proxyA.getName());
 		assertEquals("world", proxyB.getName());
@@ -87,7 +87,7 @@ public class EntityResultSetProxyTest {
 	@Test
 	public void nonPropertyMethodFallsBackToSuper() throws Exception {
 		ResultSet rs = query("hello");
-		Foo proxy = EntityResultSetProxy.createProxy(null, DataSourceUtils.DBType.H2, conn, rs, Foo.class, entityMeta);
+		Foo proxy = EntityResultSetProxy.createProxy(null, DataSourceUtils.getDBProfile(conn), conn, rs, Foo.class, entityMeta);
 		// toString等非get/set方法走原逻辑,不因代理拦截报错
 		assertEquals("hello", proxy.getName());
 		assertEquals(proxy.toString(), proxy.toString());
@@ -130,7 +130,7 @@ public class EntityResultSetProxyTest {
 		int index = 0;
 		while (rs.next()) {
 			// 等价于BeanUtil.toSqlToyHandler的逐行回调
-			OrderRow row = EntityResultSetProxy.createProxy(null, DataSourceUtils.DBType.H2, conn, rs, OrderRow.class,
+			OrderRow row = EntityResultSetProxy.createProxy(null, DataSourceUtils.getDBProfile(conn), conn, rs, OrderRow.class,
 					orderMeta);
 			if (cachedClass == null) {
 				cachedClass = row.getClass();

@@ -130,7 +130,7 @@ public class SqlServerSequencePkSmokeTest {
 		SqlToyContext context = new SqlToyContext();
 		SeqProbeVO vo = new SeqProbeVO();
 		vo.setName("seqadmin");
-		Object result = new SqlServerDialect().save(context, vo, conn, DataSourceUtils.DBType.SQLSERVER, "sqlserver", null);
+		Object result = new SqlServerDialect().save(context, vo, conn, DataSourceUtils.getDBProfile(conn), null);
 		assertNotNull(result, "save应返回主键值");
 		assertTrue(((Number) result).longValue() >= 100, "返回主键应为序列值: " + result);
 		// 验证库中行存在

@@ -23,9 +23,11 @@ import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.model.ColumnMeta;
+import org.sagacity.sqltoy.model.DBProfile;
 import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.plugins.ddl.impl.OracleDDLGenerator;
 import org.sagacity.sqltoy.plugins.ddl.impl.PostgreSqlDDLGenerator;
+import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 
 /**
@@ -39,6 +41,14 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
  * oracle生成器即dm所用生成器(DDLFactory.getGenerator)。
  */
 public class DdlDateFieldTypeTest {
+
+	/**
+	 * dbType直调场景的最小连接档案(DialectExtUtils同款构造),saveOrUpdate生成用
+	 */
+	private static DBProfile sqlServerProfile() {
+		return new DBProfile(null, DataSourceUtils.getDialect(DBType.SQLSERVER), DBType.SQLSERVER, null, 0, null,
+				null, false);
+	}
 
 	@Entity(tableName = "ddl_date_probe")
 	public static class DdlDateProbeEntity {
@@ -200,8 +210,8 @@ public class DdlDateFieldTypeTest {
 		EntityMeta entityMeta = scanProbeEntity();
 		entityMeta.setRowVersionColumns(new org.sagacity.sqltoy.model.IgnoreCaseSet());
 		// update 2026-9-7 统一由DialectUtils.getSaveOrUpdateSql生成(rowversion排除按dbType=sqlserver门控)
-		String sql = DialectUtils.getSaveOrUpdateSql(null, null, DBType.SQLSERVER, entityMeta, PKStrategy.ASSIGN,
-				null, null, "isnull", null, true, "ddl_date_probe");
+		String sql = DialectUtils.getSaveOrUpdateSql(null, null, sqlServerProfile(), entityMeta, PKStrategy.ASSIGN,
+				null, null, null, true, "ddl_date_probe");
 		assertTrue(sql.contains("CREATE_TIME"), "sqlserver merge语句应包含CREATE_TIME: " + sql);
 		assertTrue(sql.contains("UPDATE_TIME"), "sqlserver merge语句应包含UPDATE_TIME: " + sql);
 		assertTrue(sql.contains("BIZ_DATE"), "sqlserver merge语句应包含BIZ_DATE: " + sql);

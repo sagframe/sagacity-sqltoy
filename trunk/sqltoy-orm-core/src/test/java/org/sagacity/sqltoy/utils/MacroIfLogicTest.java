@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
+import org.sagacity.sqltoy.config.MacroIfLogic;
 
 /**
  * 宏@if逻辑(MacroIfLogic)处理的单元测试

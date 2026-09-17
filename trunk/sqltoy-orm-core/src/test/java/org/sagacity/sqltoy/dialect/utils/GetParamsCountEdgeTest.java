@@ -14,30 +14,30 @@ public class GetParamsCountEdgeTest {
 
 	@Test
 	public void positionalCount() {
-		assertEquals(2, DialectUtils.getParamsCount("select * from t where a=? and b=?"));
+		assertEquals(2, DialectUtils.getParamsCount("select * from t where a=? and b=?", false));
 	}
 
 	@Test
 	public void namedCount() {
-		assertEquals(2, DialectUtils.getParamsCount("select * from t where a=:p and b=:q"));
+		assertEquals(2, DialectUtils.getParamsCount("select * from t where a=:p and b=:q", false));
 	}
 
 	@Test
 	public void plainLiteralNoParams() {
 		// 字面量内不含?/:时计数为0
-		assertEquals(0, DialectUtils.getParamsCount("select '有效' from t where a='M'"));
+		assertEquals(0, DialectUtils.getParamsCount("select '有效' from t where a='M'", false));
 	}
 
 	@Test
 	public void blankSql() {
-		assertEquals(0, DialectUtils.getParamsCount(""));
-		assertEquals(0, DialectUtils.getParamsCount(null));
+		assertEquals(0, DialectUtils.getParamsCount("", false));
+		assertEquals(0, DialectUtils.getParamsCount(null, false));
 	}
 
 	@Test
 	public void mixedModeCountsQuestionMark() {
 		// ?与:named混合时按?分支计数(:named不参与),修复前后行为一致
-		assertEquals(1, DialectUtils.getParamsCount("select * from t where a=? and b=:p"));
+		assertEquals(1, DialectUtils.getParamsCount("select * from t where a=? and b=:p", false));
 	}
 
 	// ---------------- 字面量感知 ----------------
@@ -45,25 +45,25 @@ public class GetParamsCountEdgeTest {
 	@Test
 	public void literalQuestionMarkNotCounted() {
 		// 修复前返回2(字面量内的?被计入),修复后正确返回1
-		assertEquals(1, DialectUtils.getParamsCount("select '50?' from t where a=?"));
+		assertEquals(1, DialectUtils.getParamsCount("select '50?' from t where a=?", false));
 	}
 
 	@Test
 	public void doubledQuoteLiteralWithQuestionMarkNotCounted() {
 		// ''转义字面量内的?不应计数
-		assertEquals(1, DialectUtils.getParamsCount("select * from t where remark='it''s ok?' and a=?"));
+		assertEquals(1, DialectUtils.getParamsCount("select * from t where remark='it''s ok?' and a=?", false));
 	}
 
 	@Test
 	public void literalNamedParamNotCounted() {
 		// 纯named模式:字面量内的':tag'(冒号前为空白,命中参数特征)不应被计入参数个数
-		assertEquals(1, DialectUtils.getParamsCount("select '备注 :tag' from t where a=:p"));
+		assertEquals(1, DialectUtils.getParamsCount("select '备注 :tag' from t where a=:p", false));
 	}
 
 	@Test
 	public void wordPrefixColonInLiteralNeverMatched() {
 		// 行为记录:a:b形式的冒号前是字母,本就不命中SQL_NAMED_PATTERN,修复前后均为1
-		assertEquals(1, DialectUtils.getParamsCount("select 'a:b' from t where a=:p"));
+		assertEquals(1, DialectUtils.getParamsCount("select 'a:b' from t where a=:p", false));
 	}
 
 	@Test

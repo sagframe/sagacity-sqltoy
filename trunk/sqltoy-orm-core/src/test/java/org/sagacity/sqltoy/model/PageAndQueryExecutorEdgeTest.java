@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.exception.DataAccessException;
-import org.sagacity.sqltoy.utils.HttpClientUtils;
+import org.sagacity.sqltoy.plugins.nosql.HttpClientUtils;
 
 import com.alibaba.fastjson2.JSONObject;
 

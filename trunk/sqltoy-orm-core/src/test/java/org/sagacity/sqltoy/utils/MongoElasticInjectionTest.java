@@ -8,6 +8,7 @@ import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
+import org.sagacity.sqltoy.plugins.nosql.MongoElasticOperations;
 
 /**
  * 回归测试：(a)@value(:param)值替换经quoteReplacement+removeDangerWords,
@@ -20,7 +21,7 @@ public class MongoElasticInjectionTest {
 
 	private static String processValue(String sql, Object value) throws Exception {
 		SqlToyResult result = new SqlToyResult(sql, new Object[] { value });
-		java.lang.reflect.Method method = MongoElasticUtils.class.getDeclaredMethod("processValue", SqlToyResult.class,
+		java.lang.reflect.Method method = MongoElasticOperations.class.getDeclaredMethod("processValue", SqlToyResult.class,
 				Pattern.class, boolean.class);
 		method.setAccessible(true);
 		method.invoke(null, result, NO_NAMED, false);
@@ -52,7 +53,7 @@ public class MongoElasticInjectionTest {
 	@Test
 	public void esSqlSingleQuoteEscaped() {
 		// 修复前:'it's'直接断裂/逃出字面量;修复后:'it\'s'
-		String result = MongoElasticUtils.replaceSqlParams("select * from t where name=:name", new Object[] { "it's" },
+		String result = MongoElasticOperations.replaceSqlParams("select * from t where name=:name", new Object[] { "it's" },
 				true);
 		assertTrue(result.contains("name='it\\'s'"), "实际:" + result);
 		// 注入载荷被禁锢在字面量内
@@ -61,7 +62,7 @@ public class MongoElasticInjectionTest {
 
 	@Test
 	public void esSqlNormalValueUnchanged() {
-		String result = MongoElasticUtils.replaceSqlParams("select * from t where name=:name and age=:age",
+		String result = MongoElasticOperations.replaceSqlParams("select * from t where name=:name and age=:age",
 				new Object[] { "tom", 18 }, true);
 		assertTrue(result.contains("name='tom'") && result.contains("age=18"), "实际:" + result);
 	}

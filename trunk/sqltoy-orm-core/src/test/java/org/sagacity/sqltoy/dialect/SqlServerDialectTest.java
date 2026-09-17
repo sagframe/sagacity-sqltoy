@@ -16,8 +16,10 @@ import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.dialect.utils.DialectExtUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.dialect.utils.SqlServerDialectUtils;
+import org.sagacity.sqltoy.model.DBProfile;
 import org.sagacity.sqltoy.model.JdbcTypes;
 import org.sagacity.sqltoy.model.LockMode;
+import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.StringUtil;
 
@@ -26,6 +28,14 @@ import org.sagacity.sqltoy.utils.StringUtil;
  */
 public class SqlServerDialectTest {
 	private static final Pattern ORDER_BY = Pattern.compile("(?i)\\Worder\\s*by\\W");
+
+	/**
+	 * dbType直调场景的最小连接档案(DialectExtUtils同款构造),saveOrUpdate/mergeIgnore生成用
+	 */
+	private static DBProfile sqlServerProfile() {
+		return new DBProfile(null, DataSourceUtils.getDialect(DBType.SQLSERVER), DBType.SQLSERVER, null, 0, null,
+				null, false);
+	}
 
 	@Test
 	public void testPageSql() {
@@ -172,8 +182,8 @@ public class SqlServerDialectTest {
 	@Test
 	public void testSaveOrUpdateSql_rowversionExcluded() {
 		EntityMeta meta = buildEntityMeta("t_foo_rv", true, false, true);
-		String sql = DialectUtils.getSaveOrUpdateSql(null, null, DBType.SQLSERVER, meta, PKStrategy.IDENTITY, null,
-				null, "isnull", "@mySeqVariable", false, null);
+		String sql = DialectUtils.getSaveOrUpdateSql(null, null, sqlServerProfile(), meta, PKStrategy.IDENTITY, null,
+				null, "@mySeqVariable", false, null);
 		String lowerSql = sql.toLowerCase();
 		assertTrue(!lowerSql.contains("? as ver"), "rowversion column should be excluded from using select, got: " + sql);
 		// name、id两列参与using select(identity且不允许手工赋值时insert部分省略id列)
@@ -188,8 +198,8 @@ public class SqlServerDialectTest {
 	@Test
 	public void testSaveOrUpdateSql_geometryCast() {
 		EntityMeta meta = buildEntityMeta("t_foo_geo", false, true, true);
-		String sql = DialectUtils.getSaveOrUpdateSql(null, null, DBType.SQLSERVER, meta, PKStrategy.ASSIGN, null,
-				null, "isnull", "@mySeqVariable", true, null);
+		String sql = DialectUtils.getSaveOrUpdateSql(null, null, sqlServerProfile(), meta, PKStrategy.ASSIGN, null,
+				null, "@mySeqVariable", true, null);
 		String lowerSql = sql.toLowerCase();
 		assertTrue(lowerSql.contains("cast(? as geometry)"), "geometry column should be cast, got: " + sql);
 		assertEquals(3, countPlaceholders(sql), "placeholder count should match bindable params(name,geo,id), got: " + sql);
@@ -203,7 +213,7 @@ public class SqlServerDialectTest {
 	@Test
 	public void testSaveOrUpdateSql_noPkRowversionConsistent() {
 		EntityMeta meta = buildEntityMeta("t_foo_nopk", true, false, false);
-		String sql = DialectUtils.getSaveOrUpdateSql(null, null, DBType.SQLSERVER, meta, null, null, null, "isnull",
+		String sql = DialectUtils.getSaveOrUpdateSql(null, null, sqlServerProfile(), meta, null, null, null,
 				"@mySeqVariable", true, null);
 		String lowerSql = sql.toLowerCase();
 		assertTrue(lowerSql.startsWith("insert into"), "no-pk entity should degrade to insert sql, got: " + sql);
@@ -219,7 +229,7 @@ public class SqlServerDialectTest {
 	@Test
 	public void testSaveIgnoreExistSql_rowversionExcludedAndCast() {
 		EntityMeta meta = buildEntityMeta("t_foo_ig", true, true, true);
-		String sql = DialectExtUtils.mergeIgnore(null, DBType.SQLSERVER, meta, PKStrategy.ASSIGN, null, "isnull",
+		String sql = DialectUtils.mergeIgnore(null, sqlServerProfile(), meta, PKStrategy.ASSIGN, null,
 				"@mySeqVariable", true, null);
 		String lowerSql = sql.toLowerCase();
 		assertTrue(!lowerSql.contains("? as ver"), "rowversion column should be excluded from using select, got: " + sql);
@@ -249,7 +259,7 @@ public class SqlServerDialectTest {
 		notGenerated.setFieldsArray(fieldsArray);
 		notGenerated.setRejectIdFieldArray(rejectIdFields);
 		meta.setNotGeneratedColMeta(notGenerated);
-		String sql = DialectExtUtils.mergeIgnore(null, DBType.SQLSERVER, meta, PKStrategy.ASSIGN, null, "isnull",
+		String sql = DialectUtils.mergeIgnore(null, sqlServerProfile(), meta, PKStrategy.ASSIGN, null,
 				"@mySeqVariable", true, "t_foo_rvfirst");
 		String lowerSql = sql.toLowerCase();
 		// 传tableName参数同时避免与其它用例命中同一个静态sql缓存key(缓存key由class+tableName+dbType+策略构成)

@@ -27,8 +27,7 @@ public class DialectEdgeBatchTest {
 		// 注册staff_name为保留字,验证非主键列(STAFF_NAME)在insert中被[]包裹
 		ReservedWordsUtil.put("staff_name");
 		try {
-			String sql = DialectExtUtils.generateInsertSql(null, DBType.SQLSERVER, meta, null, null, null, false,
-					null);
+			String sql = DialectExtUtils.generateInsertSql(null, DBType.SQLSERVER, meta, null, null, false, null);
 			assertNotNull(sql);
 			// 修复前非主键列直接拼fieldMeta.getColumnName()(裸STAFF_NAME),修复后走convertWord被[]包裹
 			assertTrue(sql.contains("[STAFF_NAME]"), "非主键保留字列应被[]包裹,实际:" + sql);
@@ -44,7 +43,7 @@ public class DialectEdgeBatchTest {
 		SqlToyContext context = new SqlToyContext();
 		EntityManager entityManager = new EntityManager();
 		EntityMeta meta = entityManager.parseEntityMeta(context, StaffInfo.class, true, false);
-		String sql = DialectExtUtils.generateInsertSql(null, DBType.SQLSERVER, meta, null, null, null, false, null);
+		String sql = DialectExtUtils.generateInsertSql(null, DBType.SQLSERVER, meta, null, null, false, null);
 		assertNotNull(sql);
 		assertTrue(sql.toLowerCase().contains("insert"), "实际:" + sql);
 	}
