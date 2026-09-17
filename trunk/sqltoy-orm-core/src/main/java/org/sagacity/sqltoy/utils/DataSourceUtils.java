@@ -566,6 +566,11 @@ public class DataSourceUtils {
 		URL_SCHEMA_DIALECT.put("oceanbase", Dialect.OCEANBASE);
 		// update 2026-9-11 SAP HANA的URL schema为jdbc:sap:(产品名HDB不含hana字样,URL特征优先命中)
 		URL_SCHEMA_DIALECT.put("sap", Dialect.HANA);
+		// update 2026-9-17
+		// StarRocks原生驱动(starrocks-connector-j,com.starrocks.jdbc.Driver)的
+		// URL schema为jdbc:starrocks:(FE的9030 MySQL协议端口),产品名依旧伪装MySQL,URL特征优先
+		// 直命中starrocks方言;resolveDialect的引擎探测仅对mysql方言触发,URL命中后自动跳过
+		URL_SCHEMA_DIALECT.put("starrocks", Dialect.STARROCKS);
 	}
 
 	/**
@@ -639,7 +644,8 @@ public class DataSourceUtils {
 		String dialect = resolveDialect(conn, resolveDialectByMeta(conn));
 		int dbType = dialectToDbType(dialect, majorVersion);
 		DBProfile profile = new DBProfile(connUrl, dialect, dbType, productName, majorVersion,
-				resolvePGobjectHolder(connUrl, dbType), probeDB2GseSchema(conn, dbType), isBackslashEscapeDbType(dbType));
+				resolvePGobjectHolder(connUrl, dbType), probeDB2GseSchema(conn, dbType),
+				isBackslashEscapeDbType(dbType));
 		// URL可标识的连接入缓存(并发竞争时保留先入条目)
 		if (urlAsCacheKey) {
 			DBProfile exist = URL_PROFILE_CACHE.putIfAbsent(connUrl, profile);
@@ -824,8 +830,8 @@ public class DataSourceUtils {
 	 * 注意本匹配的对象是"驱动"而非"数据库":用postgresql官方驱动连openGauss/vastbase等
 	 * PG系库时(pom注释中明示的兼容用法),URL必为jdbc:postgresql:从而解析出org.postgresql的
 	 * PGobject,与实际驱动同源,天然正确;实测openGauss默认SCRAM(sha256)认证下PG官方驱动 连接即被拒(Invalid SCRAM
-	 * client initialization),须openGauss侧开启兼容认证方可使用此形态
-	 * update 2026-9-16 增加dbType守卫:URL schema未显式建映射时仅PG系dbType才兜底探测
+	 * client initialization),须openGauss侧开启兼容认证方可使用此形态 update 2026-9-16
+	 * 增加dbType守卫:URL schema未显式建映射时仅PG系dbType才兜底探测
 	 * org.postgresql.util.PGobject,非PG系(mysql/oracle等)直接返回哨兵,避免对optional
 	 * 依赖的无谓Class.forName(纯mysql用户必抛ClassNotFoundException产生误导日志)
 	 */
@@ -977,7 +983,7 @@ public class DataSourceUtils {
 						conn.getMetaData().getUserName());
 			}
 			// 调用反调，传入conn和数据库类型进行实际业务处理(数据库类型主要便于DialectFactory获取对应方言处理类)
-			handler.doConnection(conn, profile.getDbType(),profile.getDialect());
+			handler.doConnection(conn, profile.getDbType(), profile.getDialect());
 		} catch (Exception e) {
 			logger.error("processDataSource method execution failed", e);
 			sqltoyContext.releaseConnection(conn, datasource);
