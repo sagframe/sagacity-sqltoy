@@ -3,7 +3,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sagframe</groupId>
-	<version>5.6.95.RC1</version>
+	<version>5.6.95</version>
 	<name>sagacity-sqltoy</name>
 	<description>sqltoy core code</description>
 	<artifactId>sagacity-sqltoy</artifactId>
@@ -28,7 +28,7 @@
 		<opengauss.version>6.0.3-og</opengauss.version>
 		<jts.version>1.20.0</jts.version>
 		<vastbase.version>2.16v</vastbase.version>
-		<byte-buddy.version>1.18.13</byte-buddy.version>
+		<byte-buddy.version>1.18.14</byte-buddy.version>
 	</properties>
 	<licenses>
 		<license>
