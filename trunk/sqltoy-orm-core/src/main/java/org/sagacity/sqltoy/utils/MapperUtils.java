@@ -617,7 +617,8 @@ public class MapperUtils {
 		for (int i = 0, end = dataSet.size(); i < end; i++) {
 			row = (List) dataSet.get(i);
 			if (row != null) {
-				bean = voClass.getDeclaredConstructor().newInstance();
+				// update 2026-9-14 走BeanUtil.newBean的无参构造器缓存(原逐行getDeclaredConstructor)
+				bean = BeanUtil.newBean(voClass);
 				size = row.size();
 				for (int j = 0; j < size; j++) {
 					cellData = row.get(j);

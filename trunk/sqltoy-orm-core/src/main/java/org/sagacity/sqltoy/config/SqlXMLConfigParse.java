@@ -39,7 +39,7 @@ import org.sagacity.sqltoy.config.model.SummaryModel;
 import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.config.model.TreeSortModel;
 import org.sagacity.sqltoy.config.model.UnpivotModel;
-import org.sagacity.sqltoy.dialect.utils.PageOptimizeUtils;
+import org.sagacity.sqltoy.dialect.PageOptimizeUtils;
 import org.sagacity.sqltoy.model.IgnoreCaseSet;
 import org.sagacity.sqltoy.model.SqlInjectionLevel;
 import org.sagacity.sqltoy.model.TimeUnit;
@@ -139,6 +139,17 @@ public class SqlXMLConfigParse {
 	};
 
 	/**
+	 * 热更新登记表的键:用绝对路径而非文件名,避免不同目录下的同名.sql.xml互相覆盖时间戳
+	 * (parseXML读取与parseSingleFile写入必须都走本函数,保证两侧键一致)
+	 * 
+	 * @param file sql文件
+	 * @return 登记键
+	 */
+	private static String getFileKey(File file) {
+		return file.getAbsolutePath();
+	}
+
+	/**
 	 * 判断文件 是否被修改，修改了则重新解析文件重置缓存
 	 * 
 	 * @param xmlFiles
@@ -166,10 +177,13 @@ public class SqlXMLConfigParse {
 				fileName = sqlFile.getName();
 				lastModified = Long.valueOf(sqlFile.lastModified());
 				// 调试模式，判断文件的最后修改时间，决定是否重新加载sql
-				preModified = filesLastModifyMap.get(fileName);
+				// update 2026-9-14 登记键改用绝对路径:原以文件名(basename)为键,不同目录下的同名
+				// .sql.xml会共用一条时间戳记录,互相覆盖比较基准,导致变更漏检或重复解析
+				preModified = filesLastModifyMap.get(getFileKey(sqlFile));
 				// 最后修改时间比上次修改时间大，重新加载sql文件
 				if (preModified == null || lastModified.longValue() > preModified.longValue()) {
-					filesLastModifyMap.put(fileName, lastModified);
+					// update 2026-9-14 时间戳改由parseSingleFile解析成功后记录:原形态此处先写时间戳再解析,
+					// 解析抛异常时时间戳已前进,watcher下一轮不再触发重试(变更被吞,直到文件再次被修改)
 					if (isDebug) {
 						logger.debug("sql file:{} was modified, start reparsing!", fileName);
 					} else {
@@ -199,12 +213,21 @@ public class SqlXMLConfigParse {
 			throws Exception {
 		InputStream fileIS = null;
 		List<String> repeatSql = new ArrayList<String>();
+		// 文件型资源的最后修改时间:解析成功后才写入filesLastModifyMap,键为绝对路径(见getFileKey)
+		String parsedFileKey = null;
+		Long parsedModified = null;
+		// update 2026-9-14 解析结果先落本地map、文件整体成功后统一提交缓存:原逐条cache.put在解析中途
+		// 失败时会留下同文件"半新半旧"的缓存状态(已解析的id生效、其余仍是旧版本)
+		HashMap<String, SqlToyConfig> parsedConfigs = new HashMap<String, SqlToyConfig>();
 		try {
 			String sqlFile;
 			if (xmlFile instanceof File) {
 				File file = (File) xmlFile;
 				sqlFile = file.getName();
-				filesLastModifyMap.put(sqlFile, Long.valueOf(file.lastModified()));
+				// 登记键与parseXML读取侧必须同一函数(绝对路径),否则同名文件互相覆盖时间戳
+				parsedFileKey = getFileKey(file);
+				// 先取mtime再开流:解析期间文件若再被改动,本次记录的仍是所解析内容对应的版本,下轮会再次触发
+				parsedModified = Long.valueOf(file.lastModified());
 				fileIS = new FileInputStream(file);
 			} else {
 				sqlFile = (String) xmlFile;
@@ -215,32 +238,40 @@ public class SqlXMLConfigParse {
 				DocumentBuilder domBuilder = getDomBuilder();
 				Document doc = domBuilder.parse(fileIS);
 				NodeList sqlElts = doc.getDocumentElement().getChildNodes();
-				if (sqlElts == null || sqlElts.getLength() == 0) {
-					return repeatSql;
-				}
-				// 解析单个sql
-				SqlToyConfig sqlToyConfig;
-				Element sqlElt;
-				Node obj;
-				for (int i = 0; i < sqlElts.getLength(); i++) {
-					obj = sqlElts.item(i);
-					if (obj.getNodeType() == Node.ELEMENT_NODE) {
-						sqlElt = (Element) obj;
-						sqlToyConfig = parseSingleSql(sqlElt, dialect, null);
-						if (sqlToyConfig != null) {
-							// 去除sql中的注释语句并放入缓存
-							if (cache.containsKey(sqlToyConfig.getId())) {
-								repeatSql.add(StringUtil.fillArgs("sql文件:{} 中发现重复的SQL语句id={} 已经被覆盖!", sqlFile,
-										sqlToyConfig.getId()));
-								// 移除分页优化缓存
-								if (isReload) {
-									PageOptimizeUtils.remove(sqlToyConfig.getId());
+				if (sqlElts != null && sqlElts.getLength() > 0) {
+					// 解析单个sql
+					SqlToyConfig sqlToyConfig;
+					Element sqlElt;
+					Node obj;
+					for (int i = 0; i < sqlElts.getLength(); i++) {
+						obj = sqlElts.item(i);
+						if (obj.getNodeType() == Node.ELEMENT_NODE) {
+							sqlElt = (Element) obj;
+							sqlToyConfig = parseSingleSql(sqlElt, dialect, null);
+							if (sqlToyConfig != null) {
+								// 重复id校验需同时看缓存与本次已解析结果(同文件内的重复id同样提示覆盖)
+								if (cache.containsKey(sqlToyConfig.getId())
+										|| parsedConfigs.containsKey(sqlToyConfig.getId())) {
+									repeatSql.add(StringUtil.fillArgs("sql文件:{} 中发现重复的SQL语句id={} 已经被覆盖!", sqlFile,
+											sqlToyConfig.getId()));
+									// 移除分页优化缓存
+									if (isReload) {
+										PageOptimizeUtils.remove(sqlToyConfig.getId());
+									}
 								}
+								parsedConfigs.put(sqlToyConfig.getId(), sqlToyConfig);
 							}
-							cache.put(sqlToyConfig.getId(), sqlToyConfig);
 						}
 					}
 				}
+			}
+			// update 2026-9-14 解析全部成功后才提交:1)缓存统一提交,解析失败时缓存完全不改动(原逐条
+			// cache.put会留下半新半旧状态);2)时间戳提交后记录,失败则保留旧时间戳,watcher下一轮自动重试
+			if (!parsedConfigs.isEmpty()) {
+				cache.putAll(parsedConfigs);
+			}
+			if (parsedFileKey != null) {
+				filesLastModifyMap.put(parsedFileKey, parsedModified);
 			}
 		} catch (Exception e) {
 			logger.error(

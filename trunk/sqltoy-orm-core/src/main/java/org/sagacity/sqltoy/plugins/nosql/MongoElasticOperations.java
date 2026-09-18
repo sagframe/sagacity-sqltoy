@@ -1,4 +1,4 @@
-package org.sagacity.sqltoy.utils;
+package org.sagacity.sqltoy.plugins.nosql;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -18,8 +18,12 @@ import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.translate.DynamicCacheFetch;
 import org.sagacity.sqltoy.translate.FieldTranslateCacheHolder;
+import org.sagacity.sqltoy.translate.TranslateUtils;
 import org.sagacity.sqltoy.translate.model.BatchDynamicCache;
 import org.sagacity.sqltoy.translate.model.DynamicCacheHolder;
+import org.sagacity.sqltoy.utils.CollectionUtil;
+import org.sagacity.sqltoy.utils.SqlUtil;
+import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,11 +35,11 @@ import org.slf4j.LoggerFactory;
  * @modify Date:2024-10-02 强化@if功能，增加@elseif 和 @else 的支持,elastic
  *         sql增加field=null改为field is null }
  */
-public class MongoElasticUtils {
+public class MongoElasticOperations {
 	/**
 	 * 定义全局日志
 	 */
-	protected final static Logger logger = LoggerFactory.getLogger(MongoElasticUtils.class);
+	protected final static Logger logger = LoggerFactory.getLogger(MongoElasticOperations.class);
 
 	/**
 	 * sql伪指令开始标记,#[]符号等于 null==?判断
@@ -55,7 +59,7 @@ public class MongoElasticUtils {
 	public final static String VALUE_REGEX = "(?i)\\@value\\s*\\(\\s*\\:[A-Za-z_0-9\\-]+\\s*\\)";
 	public final static Pattern VALUE_PATTERN = Pattern.compile(VALUE_REGEX);
 
-	private MongoElasticUtils() {
+	private MongoElasticOperations() {
 	}
 
 	/**

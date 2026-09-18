@@ -520,8 +520,19 @@ public class StringUtil {
 	 */
 	public static int getSymMarkIndexIgnoreCase(String beginMarkSign, String endMarkSign, String source,
 			int startIndex) {
+		if (source == null) {
+			return -1;
+		}
+		// update 2026-9-15 不再整串toLowerCase定位:土耳其İ等字符小写后长度会变化(İ→"i"+组合点共2个
+		// 字符,与locale无关),把小写串的下标当原文下标返回会产生漂移;改为按字符做单字符小写
+		// (结果串长度与原文恒等、下标一一对应),配对逻辑仍复用getSymMarkIndex,嵌套/对称行为不变
+		int length = source.length();
+		char[] loweredChars = new char[length];
+		for (int i = 0; i < length; i++) {
+			loweredChars[i] = Character.toLowerCase(source.charAt(i));
+		}
 		return getSymMarkIndex(beginMarkSign.toLowerCase(Locale.ROOT), endMarkSign.toLowerCase(Locale.ROOT),
-				source.toLowerCase(Locale.ROOT), startIndex);
+				new String(loweredChars), startIndex);
 	}
 
 	/**
@@ -684,9 +695,15 @@ public class StringUtil {
 		if (source == null || source.length() <= start) {
 			return new int[] { -1, -1 };
 		}
-		Matcher m = pattern.matcher(source.substring(start));
+		// update 2026-9-14 以Matcher.region替代source.substring(start):原实现每次调用全量拷贝尾部
+		// 字符串,引号/括号配对等循环内推进式调用退化为O(次数×长度);region为视图零拷贝,
+		// 且region下start()/end()本就是相对source的绝对下标。
+		// 边界语义与substring保持一致:锚定边界默认开启(^/$/\A/\Z在区域边界生效),透明边界默认关闭
+		// (\b、前后查找不越界取值),二者组合与"截断出新字符串"完全等价
+		Matcher m = pattern.matcher(source);
+		m.region(start, source.length());
 		if (m.find()) {
-			return new int[] { m.start() + start, m.end() + start };
+			return new int[] { m.start(), m.end() };
 		}
 		return new int[] { -1, -1 };
 	}

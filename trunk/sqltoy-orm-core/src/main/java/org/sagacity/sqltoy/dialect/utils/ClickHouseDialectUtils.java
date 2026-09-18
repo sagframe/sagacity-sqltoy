@@ -27,6 +27,7 @@ import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.model.ColumnMeta;
+import org.sagacity.sqltoy.model.DBProfile;
 import org.sagacity.sqltoy.model.IgnoreCaseSet;
 import org.sagacity.sqltoy.model.JdbcTypes;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
@@ -68,7 +69,8 @@ public class ClickHouseDialectUtils {
 	 * @throws Exception
 	 */
 	public static Object save(SqlToyContext sqlToyContext, final EntityMeta entityMeta, PKStrategy pkStrategy,
-			final String insertSql, Serializable entity, final Connection conn, final Integer dbType) throws Exception {
+			final String insertSql, Serializable entity, final Connection conn, DBProfile profile) throws Exception {
+		Integer dbType = profile.getDbType();
 		final boolean isIdentity = (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY));
 		final boolean isSequence = (pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE));
 		String[] reflectColumns;
@@ -88,10 +90,14 @@ public class ClickHouseDialectUtils {
 		boolean needUpdatePk = false;
 		int generatedColCnt = entityMeta.getGeneratedColsCnt();
 		int pkIndex = entityMeta.getIdIndex() - generatedColCnt;
+		// update 2026-9-14 主键恒在fieldsArray末位(计算列→常规列→主键):identity/sequence且不赋主键时
+		// 值数组已排除主键,此时pkIndex等于值数组长度,按下标回读会越界(save末尾result回退读取必然触发),
+		// 故以"主键是否在值数组范围内"判定可用性
+		boolean pkInParams = (pkIndex >= 0 && pkIndex < reflectColumns.length);
 		// 是否存在业务ID
-		boolean hasBizId = (entityMeta.getBusinessIdGenerator() == null) ? false : true;
+		boolean hasBizId = entityMeta.hasBusinessIdGenerator();
 		int bizIdColIndex = hasBizId ? entityMeta.getFieldIndex(entityMeta.getBusinessIdField()) - generatedColCnt : 0;
-		boolean hasId = (pkStrategy != null && null != entityMeta.getIdGenerator()) ? true : false;
+		boolean hasId = (pkStrategy != null && entityMeta.hasIdGenerator());
 		// 主键、业务主键生成并回写对象
 		if (hasId || hasBizId) {
 			Object[] relatedColValue = null;
@@ -108,7 +114,7 @@ public class ClickHouseDialectUtils {
 					}
 				}
 			}
-			if (hasId && StringUtil.isBlank(fullParamValues[pkIndex])) {
+			if (hasId && pkInParams && StringUtil.isBlank(fullParamValues[pkIndex])) {
 				// id通过generator机制产生，设置generator产生的值
 				fullParamValues[pkIndex] = entityMeta.getIdGenerator().getId(entityMeta.getTableName(),
 						entityMeta.getBizIdSignature(), entityMeta.getBizIdRelatedColumns(), relatedColValue, null,
@@ -130,7 +136,7 @@ public class ClickHouseDialectUtils {
 		sqlToyConfig.setParamsName(reflectColumns);
 		SqlToyResult sqlToyResult = new SqlToyResult(insertSql, fullParamValues);
 		sqlToyResult = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig, OperateType.insert, sqlToyResult,
-				entity.getClass(), dbType);
+				entity.getClass(), profile);
 		String realInsertSql = sqlToyResult.getSql();
 		SqlExecuteStat.showSql("single record insert", realInsertSql, null);
 		final Object[] paramValues = sqlToyResult.getParamsValue();
@@ -149,7 +155,7 @@ public class ClickHouseDialectUtils {
 		Object result = SqlUtil.preparedStatementProcess(null, pst, null, new PreparedStatementResultHandler() {
 			@Override
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
-				SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, pst, paramValues, paramsType, 0);
+				SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, profile, pst, paramValues, paramsType, 0);
 				pst.execute();
 				if (isIdentity || isSequence) {
 					ResultSet keyResult = pst.getGeneratedKeys();
@@ -172,7 +178,8 @@ public class ClickHouseDialectUtils {
 		if (entityMeta.getIdArray() == null) {
 			return null;
 		}
-		if (result == null) {
+		// 值数组中无主键(identity/sequence不赋主键)时无回退值可取,保持null
+		if (result == null && pkInParams) {
 			result = fullParamValues[pkIndex];
 		}
 		// 回置到entity 主键值
@@ -198,8 +205,9 @@ public class ClickHouseDialectUtils {
 	 * @throws Exception
 	 */
 	public static Long saveAll(SqlToyContext sqlToyContext, EntityMeta entityMeta, String insertSql, List<?> entities,
-			final int batchSize, ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType,
+			final int batchSize, ReflectPropsHandler reflectPropsHandler, Connection conn, DBProfile profile,
 			final Boolean autoCommit) throws Exception {
+		Integer dbType = profile.getDbType();
 		PKStrategy pkStrategy = entityMeta.getIdStrategy();
 		boolean isIdentity = pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY);
 		boolean isSequence = pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE);
@@ -219,17 +227,19 @@ public class ClickHouseDialectUtils {
 				SqlUtilsExt.getDefaultValues(entityMeta, true), handler);
 		int generatedColCnt = entityMeta.getGeneratedColsCnt();
 		int pkIndex = entityMeta.getIdIndex() - generatedColCnt;
+		// update 2026-9-14 同save:identity/sequence不赋主键时主键不在值数组中,pkIndex越界不可回读
+		boolean pkInParams = (pkIndex >= 0 && pkIndex < reflectColumns.length);
 		// 是否存在业务ID
-		boolean hasBizId = (entityMeta.getBusinessIdGenerator() == null) ? false : true;
+		boolean hasBizId = entityMeta.hasBusinessIdGenerator();
 		int bizIdColIndex = hasBizId ? entityMeta.getFieldIndex(entityMeta.getBusinessIdField()) - generatedColCnt : 0;
 		Integer[] relatedColumn = entityMeta.getBizIdRelatedColIndex();
 		String[] relatedColumnNames = entityMeta.getBizIdRelatedColumns();
-		boolean hasDataVersion = (entityMeta.getDataVersion() == null) ? false : true;
+		boolean hasDataVersion = entityMeta.hasDataVersion();
 		int dataVerIndex = hasDataVersion
 				? entityMeta.getFieldIndex(entityMeta.getDataVersion().getField()) - generatedColCnt
 				: 0;
 		int relatedColumnSize = (relatedColumn == null) ? 0 : relatedColumn.length;
-		boolean hasId = (pkStrategy != null && null != entityMeta.getIdGenerator()) ? true : false;
+		boolean hasId = (pkStrategy != null && entityMeta.hasIdGenerator());
 		Object[] rowData;
 		Object[] relatedColValue = null;
 		String businessIdType = hasBizId ? entityMeta.getColumnJavaType(entityMeta.getBusinessIdField()) : "";
@@ -248,7 +258,7 @@ public class ClickHouseDialectUtils {
 				}
 			}
 			// 主键
-			if (hasId && StringUtil.isBlank(rowData[pkIndex])) {
+			if (hasId && pkInParams && StringUtil.isBlank(rowData[pkIndex])) {
 				rowData[pkIndex] = entityMeta.getIdGenerator().getId(entityMeta.getTableName(),
 						entityMeta.getBizIdSignature(), relatedColumnNames, relatedColValue, null,
 						entityMeta.getIdType(), entityMeta.getIdLength(), entityMeta.getBizIdSequenceSize());
@@ -277,13 +287,13 @@ public class ClickHouseDialectUtils {
 			sqlToyConfig.setParamsName(reflectColumns);
 			SqlToyResult sqlToyResult = new SqlToyResult(insertSql, paramValues.toArray());
 			sqlToyResult = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig, OperateType.insertAll, sqlToyResult,
-					entities.get(0).getClass(), dbType);
+					entities.get(0).getClass(), profile);
 			realSql = sqlToyResult.getSql();
 			realParams = CollectionUtil.arrayToList(sqlToyResult.getParamsValue());
 		}
 		SqlExecuteStat.showSql("batch save [" + realParams.size() + "] rows", realSql, null);
 		return SqlUtil.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), realSql, realParams,
-				entityMeta.getFieldsTypeArray(true), batchSize, autoCommit, conn, dbType);
+				entityMeta.getFieldsTypeArray(true), batchSize, autoCommit, conn, profile);
 	}
 
 	/**
@@ -297,8 +307,9 @@ public class ClickHouseDialectUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	public static Long delete(SqlToyContext sqlToyContext, Serializable entity, Connection conn, final Integer dbType,
+	public static Long delete(SqlToyContext sqlToyContext, Serializable entity, Connection conn, DBProfile profile,
 			final String tableName) throws Exception {
+		Integer dbType = profile.getDbType();
 		if (entity == null) {
 			return 0L;
 		}
@@ -331,13 +342,14 @@ public class ClickHouseDialectUtils {
 		SqlToyResult sqlToyResult = new SqlToyResult(deleteSql, idValues);
 		// 增加sql执行拦截器 update 2022-9-10
 		sqlToyResult = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig, OperateType.delete, sqlToyResult,
-				entity.getClass(), dbType);
+				entity.getClass(), profile);
 		return SqlUtil.executeSql(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(), sqlToyResult.getParamsValue(),
-				parameterTypes, conn, dbType, null, true);
+				parameterTypes, conn, profile, null, true);
 	}
 
-	public static Long update(SqlToyContext sqlToyContext, Serializable entity, String nullFunction,
-			String[] forceUpdateFields, Connection conn, final Integer dbType, String tableName) throws Exception {
+	public static Long update(SqlToyContext sqlToyContext, Serializable entity, String[] forceUpdateFields,
+			Connection conn, DBProfile profile, String tableName) throws Exception {
+		Integer dbType = profile.getDbType();
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		String realTable = entityMeta.getSchemaTable(tableName, dbType);
 		// 无主键
@@ -370,7 +382,7 @@ public class ClickHouseDialectUtils {
 			}
 		}
 		// 构建update语句
-		String updateSql = generateUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta, nullFunction,
+		String updateSql = generateUpdateSql(sqlToyContext.getUnifyFieldsHandler(), profile, entityMeta,
 				forceUpdateFields, realTable);
 		if (updateSql == null) {
 			throw new IllegalArgumentException(
@@ -383,9 +395,9 @@ public class ClickHouseDialectUtils {
 		SqlToyResult sqlToyResult = new SqlToyResult(updateSql, fieldsValues);
 		// 增加sql执行拦截器 update 2022-9-10
 		sqlToyResult = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig, OperateType.update, sqlToyResult,
-				entity.getClass(), dbType);
+				entity.getClass(), profile);
 		Long updateCnt = SqlUtil.executeSql(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(),
-				sqlToyResult.getParamsValue(), getUpdateFieldsTypes(entityMeta), conn, dbType, null, false);
+				sqlToyResult.getParamsValue(), getUpdateFieldsTypes(entityMeta), conn, profile, null, false);
 		return updateCnt;
 	}
 
@@ -407,9 +419,9 @@ public class ClickHouseDialectUtils {
 	 * @throws Exception
 	 */
 	public static Long updateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			final String[] forceUpdateFields, ReflectPropsHandler reflectPropsHandler, String nullFunction,
-			Connection conn, final Integer dbType, final Boolean autoCommit, String tableName, boolean skipNull)
-			throws Exception {
+			final String[] forceUpdateFields, ReflectPropsHandler reflectPropsHandler, Connection conn,
+			DBProfile profile, final Boolean autoCommit, String tableName, boolean skipNull) throws Exception {
+		Integer dbType = profile.getDbType();
 		if (entities == null || entities.isEmpty()) {
 			return 0L;
 		}
@@ -467,7 +479,7 @@ public class ClickHouseDialectUtils {
 					skipCount);
 		}
 		// 构建update语句
-		String updateSql = generateUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta, nullFunction,
+		String updateSql = generateUpdateSql(sqlToyContext.getUnifyFieldsHandler(), profile, entityMeta,
 				forceUpdateFields, realTable);
 		if (updateSql == null) {
 			throw new IllegalArgumentException(
@@ -482,13 +494,13 @@ public class ClickHouseDialectUtils {
 			sqlToyConfig.setParamsName(fields);
 			SqlToyResult sqlToyResult = new SqlToyResult(updateSql, paramsValues.toArray());
 			sqlToyResult = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig, OperateType.updateAll, sqlToyResult,
-					entities.get(0).getClass(), dbType);
+					entities.get(0).getClass(), profile);
 			realSql = sqlToyResult.getSql();
 			realParams = CollectionUtil.arrayToList(sqlToyResult.getParamsValue());
 		}
 		SqlExecuteStat.showSql("batch update [" + realParams.size() + "] rows", realSql, null);
 		return SqlUtil.batchUpdateForPOJO(sqlToyContext.getTypeHandler(), realSql, realParams,
-				getUpdateFieldsTypes(entityMeta), batchSize, autoCommit, conn, dbType);
+				getUpdateFieldsTypes(entityMeta), batchSize, autoCommit, conn, profile);
 	}
 
 	/**
@@ -541,8 +553,10 @@ public class ClickHouseDialectUtils {
 		return fieldTypes.toArray(new Integer[0]);
 	}
 
-	private static String generateUpdateSql(IUnifyFieldsHandler unifyFieldsHandler, Integer dbType,
-			EntityMeta entityMeta, String nullFunction, String[] forceUpdateFields, String tableName) {
+	private static String generateUpdateSql(IUnifyFieldsHandler unifyFieldsHandler, DBProfile profile,
+			EntityMeta entityMeta, String[] forceUpdateFields, String tableName) {
+		String nullFunction = profile.getNullFunction();
+		Integer dbType = profile.getDbType();
 		if (entityMeta.getIdArray() == null) {
 			return null;
 		}
@@ -614,9 +628,8 @@ public class ClickHouseDialectUtils {
 
 	@SuppressWarnings("unchecked")
 	public static List<ColumnMeta> getTableColumns(String catalog, String schema, String tableName, Connection conn,
-			Integer dbType, String dialect) throws Exception {
-		List<ColumnMeta> tableColumns = DefaultDialectUtils.getTableColumns(catalog, schema, tableName, conn, dbType,
-				dialect);
+			DBProfile profile) throws Exception {
+		List<ColumnMeta> tableColumns = DefaultDialectUtils.getTableColumns(catalog, schema, tableName, conn, profile);
 		String sql = "SELECT name COLUMN_NAME,comment COMMENTS,is_in_primary_key PRIMARY_KEY,is_in_partition_key PARTITION_KEY from system.columns t where t.table=?";
 		PreparedStatement pst = conn.prepareStatement(sql);
 		// 设置全局statementTimeout，默认为null

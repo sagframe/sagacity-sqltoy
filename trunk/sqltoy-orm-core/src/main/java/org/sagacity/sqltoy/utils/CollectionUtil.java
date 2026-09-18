@@ -1538,11 +1538,14 @@ public class CollectionUtil {
 		}
 		if (dataSet.get(0) instanceof Map) {
 			List result = new ArrayList();
+			// update 2026-9-14 distinct判重改LinkedHashSet:原ArrayList.contains为O(n²),万行级
+			// in条件值提取耗时可达秒级;LinkedHashSet保留首次出现顺序、null同样只保留一个,语义不变
+			Set distinctSet = distinct ? new LinkedHashSet() : null;
 			Object value;
 			for (int i = 0; i < dataSet.size(); i++) {
 				value = ((Map) dataSet.get(i)).get(column);
 				if (distinct) {
-					if (!result.contains(value)) {
+					if (distinctSet.add(value)) {
 						result.add(value);
 					}
 				} else {
@@ -1574,11 +1577,14 @@ public class CollectionUtil {
 		}
 		boolean isArray = (source.get(0).getClass().isArray()) ? true : false;
 		List result = new ArrayList();
+		// update 2026-9-14
+		// distinct判重改LinkedHashSet(原ArrayList.contains为O(n²),语义保持首次出现顺序)
+		Set distinctSet = distinct ? new LinkedHashSet() : null;
 		Object cell;
 		for (int i = 0, n = source.size(); i < n; i++) {
 			cell = isArray ? convertArray(source.get(i))[columnIndex] : ((List) source.get(i)).get(columnIndex);
 			if (distinct) {
-				if (!result.contains(cell)) {
+				if (distinctSet.add(cell)) {
 					result.add(cell);
 				}
 			} else {

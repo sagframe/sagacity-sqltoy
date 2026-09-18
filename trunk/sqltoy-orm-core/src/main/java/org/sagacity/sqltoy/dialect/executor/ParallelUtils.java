@@ -1,4 +1,4 @@
-package org.sagacity.sqltoy.utils;
+package org.sagacity.sqltoy.dialect.executor;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -19,7 +19,6 @@ import org.sagacity.sqltoy.config.model.ShardingConfig;
 import org.sagacity.sqltoy.config.model.ShardingGroupModel;
 import org.sagacity.sqltoy.config.model.ShardingModel;
 import org.sagacity.sqltoy.config.model.SqlType;
-import org.sagacity.sqltoy.dialect.executor.DialectExecutor;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.model.ParallelConfig;
 import org.sagacity.sqltoy.model.ShardingResult;

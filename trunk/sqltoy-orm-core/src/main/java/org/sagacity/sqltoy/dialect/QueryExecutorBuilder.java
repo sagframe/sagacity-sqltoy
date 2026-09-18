@@ -1,4 +1,4 @@
-package org.sagacity.sqltoy.utils;
+package org.sagacity.sqltoy.dialect;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -22,6 +22,8 @@ import org.sagacity.sqltoy.model.ParamsFilter;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
+import org.sagacity.sqltoy.utils.BeanUtil;
+import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

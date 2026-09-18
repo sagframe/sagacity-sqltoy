@@ -21,6 +21,7 @@ import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
+import org.sagacity.sqltoy.dialect.QueryExecutorBuilder;
 import org.sagacity.sqltoy.integration.AppContext;
 import org.sagacity.sqltoy.integration.ConnectionFactory;
 import org.sagacity.sqltoy.integration.impl.SimpleConnectionFactory;
@@ -55,7 +56,6 @@ import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils.Dialect;
 import org.sagacity.sqltoy.utils.NumberUtil;
-import org.sagacity.sqltoy.utils.QueryExecutorBuilder;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -383,11 +383,23 @@ public class SqlToyContext {
 
 	/**
 	 * sql 日志输出时LocalDateTime类型的输出格式
+	 * <p>
+	 * update 2026-9-15 决策记录:默认固定格式(截到秒)为有意的向后兼容,initialize时覆写
+	 * SqlToyConstants.localDateTimeFormat(JVM级首个context生效)。固定格式下toSqlLogStr/
+	 * toSqlString/combineArray对nano>0的LocalDateTime输出恒为19字符(dateType=2,小数秒
+	 * 被格式化丢弃),方言的TO_TIMESTAMP FF3/US等小数秒分派不触发;需要日志SQL与@loop/NoSQL
+	 * 拼接值保留小数秒精度(等值条件精确匹配)的场景,应显式配置本属性为"auto"(按值精度
+	 * 自适应追加.123/.123456/.123456789)或含小数位占位符的格式(如yyyy-MM-dd HH:mm:ss.SSS)。
+	 * java.sql.Timestamp路径不受本配置影响(硬编码.SSS格式,恒走小数秒分派)
 	 */
 	private String localDateTimeFormat = "yyyy-MM-dd HH:mm:ss";
 
 	/**
 	 * sql 日志输出时LocalTime类型的输出格式
+	 * <p>
+	 * update 2026-9-15 决策记录:同localDateTimeFormat,默认固定格式(截到秒)为有意向后兼容;
+	 * 固定格式下nano>0的LocalTime输出恒为8字符(dateType=4),方言的毫秒time分派
+	 * (TO_TIMESTAMP FF/CONVERT(time(3))/STR_TO_DATE %f等)不触发,需显式配置"auto"启用
 	 */
 	private String localTimeFormat = "HH:mm:ss";
 
@@ -679,7 +691,7 @@ public class SqlToyContext {
 
 	public SqlToyConfig getSqlToyConfig(String sqlKey, SqlType sqlType, String dialect) {
 		if (StringUtil.isBlank(sqlKey)) {
-			throw new IllegalArgumentException("sql or sqlId is null!");
+			throw new IllegalArgumentException(SqlToyConstants.NULL_SQL_MESSAGE);
 		}
 		return scriptLoader.getSqlConfig(sqlKey, sqlType, dialect, null,
 				SqlType.search.equals(sqlType) ? true : SqlToyConstants.executeSqlBlankToNull);
@@ -696,7 +708,7 @@ public class SqlToyContext {
 	 */
 	public SqlToyConfig getSqlToyConfig(String sqlKey, SqlType sqlType, String dialect, Object paramValues) {
 		if (StringUtil.isBlank(sqlKey)) {
-			throw new IllegalArgumentException("sql or sqlId is null!");
+			throw new IllegalArgumentException(SqlToyConstants.NULL_SQL_MESSAGE);
 		}
 		return scriptLoader.getSqlConfig(sqlKey, sqlType, dialect, paramValues,
 				SqlType.search.equals(sqlType) ? true : SqlToyConstants.executeSqlBlankToNull);
@@ -706,7 +718,7 @@ public class SqlToyContext {
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		String sqlKey = extend.sql;
 		if (StringUtil.isBlank(sqlKey)) {
-			throw new IllegalArgumentException("sql or sqlId is null!");
+			throw new IllegalArgumentException(SqlToyConstants.NULL_SQL_MESSAGE);
 		}
 		boolean skipCompletion = false;
 		// 动态解析xml并绑定id类型的查询
@@ -967,6 +979,8 @@ public class SqlToyContext {
 			this.dialect = Dialect.DORIS;
 		} else if (tmp.startsWith(Dialect.STARROCKS)) {
 			this.dialect = Dialect.STARROCKS;
+		} else if (tmp.startsWith(Dialect.HANA)) {
+			this.dialect = Dialect.HANA;
 		} else {
 			this.dialect = dialect;
 		}

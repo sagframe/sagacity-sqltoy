@@ -314,12 +314,12 @@ public interface SqlToyCRUDService {
 	/**
 	 * 基于map传参的并行查询
 	 *
-	 * @param <T>             泛型标记
-	 * @param parallQueryList 并行查询条件集合，每个ParallQuery对应一个查询
-	 * @param paramsMap       全部查询共享的条件参数
-	 * @param parallelConfig  例如:ParallelConfig.create().maxThreads(20)
-	 * @return 并行查询结果集合，顺序与parallQueryList一一对应
+	 * @param <T>               泛型标记
+	 * @param parallelQueryList 并行查询条件集合，每个ParallelQuery对应一个查询
+	 * @param paramsMap         全部查询共享的条件参数
+	 * @param parallelConfig    例如:ParallelConfig.create().maxThreads(20)
+	 * @return 并行查询结果集合，顺序与parallelQueryList一一对应
 	 */
-	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String, Object> paramsMap,
+	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallelQueryList, Map<String, Object> paramsMap,
 			ParallelConfig parallelConfig);
 }

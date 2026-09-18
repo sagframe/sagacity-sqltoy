@@ -9,6 +9,7 @@ import java.util.regex.Pattern;
 
 import org.sagacity.sqltoy.config.model.SqlExecuteLog;
 import org.sagacity.sqltoy.config.model.SqlExecuteTrace;
+import org.sagacity.sqltoy.model.DBProfile;
 import org.sagacity.sqltoy.model.OperateDetailType;
 import org.sagacity.sqltoy.model.OverTimeSql;
 import org.sagacity.sqltoy.plugins.FirstBizCodeTrace;
@@ -69,7 +70,7 @@ public class SqlExecuteStat {
 	 */
 	private static volatile SqlFormater sqlFormater;
 
-	public static void start(String sqlId, OperateDetailType type, Class resultType, Boolean debugPrint) {
+	public static void start(String sqlId, OperateDetailType type, Class<?> resultType, Boolean debugPrint) {
 		threadLocal.set(
 				new SqlExecuteTrace(sqlId, type, resultType, (debugPrint == null) ? debug : debugPrint.booleanValue()));
 	}
@@ -81,13 +82,13 @@ public class SqlExecuteStat {
 	 * @param type
 	 * @param debugPrint
 	 */
-	public static void start(String sqlId, OperateDetailType type, Class resultType, Boolean debugPrint,
+	public static void start(String sqlId, OperateDetailType type, Class<?> resultType, Boolean debugPrint,
 			Object contextData) {
 		threadLocal.set(new SqlExecuteTrace(sqlId, type, resultType,
 				(debugPrint == null) ? debug : debugPrint.booleanValue(), contextData));
 	}
 
-	public static void start(String sqlId, OperateDetailType type, Class resultType, Long batchSize,
+	public static void start(String sqlId, OperateDetailType type, Class<?> resultType, Long batchSize,
 			Boolean debugPrint) {
 		SqlExecuteTrace sqlExecuteTrace = new SqlExecuteTrace(sqlId, type, resultType,
 				(debugPrint == null) ? debug : debugPrint.booleanValue());
@@ -95,8 +96,8 @@ public class SqlExecuteStat {
 		threadLocal.set(sqlExecuteTrace);
 	}
 
-	public static void start(String sqlId, OperateDetailType type, Class resultType, Long batchSize, Boolean debugPrint,
-			Object contextData) {
+	public static void start(String sqlId, OperateDetailType type, Class<?> resultType, Long batchSize,
+			Boolean debugPrint, Object contextData) {
 		SqlExecuteTrace sqlExecuteTrace = new SqlExecuteTrace(sqlId, type, resultType,
 				(debugPrint == null) ? debug : debugPrint.booleanValue(), contextData);
 		sqlExecuteTrace.setBatchSize(batchSize);
@@ -132,10 +133,10 @@ public class SqlExecuteStat {
 		}
 	}
 
-	public static void setDialect(Integer dbType, String dialect) {
+	public static void setDialect(DBProfile dbProfile) {
 		if (threadLocal.get() != null) {
-			threadLocal.get().setDialect(dialect);
-			threadLocal.get().setDbType(dbType);
+			threadLocal.get().setDialect(dbProfile.getDialect());
+			threadLocal.get().setDbType(dbProfile.getDbType());
 		}
 	}
 

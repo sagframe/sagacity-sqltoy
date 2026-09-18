@@ -1,6 +1,7 @@
 package org.sagacity.sqltoy.utils;
 
 import java.io.Serializable;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -47,6 +48,7 @@ import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.KeyAndIndex;
 import org.sagacity.sqltoy.config.model.TableCascadeModel;
 import org.sagacity.sqltoy.exception.DataAccessException;
+import org.sagacity.sqltoy.model.DBProfile;
 import org.sagacity.sqltoy.model.IgnoreCaseSet;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.model.JdbcTypes;
@@ -97,6 +99,42 @@ public class BeanUtil {
 
 	// 枚举类型取key值的常用方法名称,枚举类中用getValue、getKey、getId等作为取值的都可自动完成映射
 	private static String[] enumKeys = { "value", "key", "code", "id", "status", "level", "type" };
+
+	/**
+	 * update 2026-9-14 属性匹配方法缓存:matchSetMethods/matchGetMethods原每次查询对voClass
+	 * 做getMethods()全量拷贝+逐属性toLowerCase匹配,按(类+有序属性表)缓存匹配结果
+	 * (同一查询反复执行时属性表形态恒定,键空间与查询集同阶);调用方均只读返回数组,可共享
+	 */
+	private static ConcurrentHashMap<String, Method[]> matchSetMethodsCache = new ConcurrentHashMap<>();
+	private static ConcurrentHashMap<String, Method[]> matchGetMethodsCache = new ConcurrentHashMap<>();
+
+	/**
+	 * update 2026-9-14 无参构造器缓存:reflectRowToBean为逐行调用(如ResultUtils.consumeResult),
+	 * 原每行getDeclaredConstructor()做反射成员查找(方法体内无法循环外提升),按voClass缓存
+	 * Constructor实例(Constructor.newInstance线程安全,可跨线程复用); update 2026-9-14
+	 * 提升为public:结果集行循环内逐行反射构造的四处场景统一收编到此缓存
+	 * (SqlUtil.reflectResultRowToVOClass、ResultUtils.consumeResult/wrapQueryResult的自定义
+	 * Map子类、MapperUtils.reflectListToBean),此前均为逐行getDeclaredConstructor()
+	 */
+	private static ConcurrentHashMap<Class, Constructor> noArgConstructors = new ConcurrentHashMap<>();
+
+	/**
+	 * 经缓存的无参构造实例化(反射成员查找仅首次发生),供结果集逐行映射等热路径复用
+	 */
+	public static Object newBean(Class voClass) throws Exception {
+		Constructor constructor = noArgConstructors.get(voClass);
+		if (constructor == null) {
+			constructor = voClass.getDeclaredConstructor();
+			if (!constructor.isAccessible()) {
+				constructor.setAccessible(true);
+			}
+			Constructor prior = noArgConstructors.putIfAbsent(voClass, constructor);
+			if (prior != null) {
+				constructor = prior;
+			}
+		}
+		return constructor.newInstance();
+	}
 
 	private static final Set<Class<?>> BASE_TYPE = ConcurrentHashMap.newKeySet();
 
@@ -245,14 +283,34 @@ public class BeanUtil {
 	 * <li>update 2020-04-09 支持setXXX()并返回对象本身,适配链式操作</li>
 	 * <li>update 2021-03-12 支持property中含下划线跟对象属性进行匹配</li>
 	 * </p>
-	 * 
-	 * 获取指定名称的方法集
-	 * 
+	 *
+	 * 获取指定名称的方法集(update 2026-9-14 结果经(类+有序属性表)缓存,反复查询零重复匹配)
+	 *
 	 * @param voClass 目标对象类型
 	 * @param props   属性名称数组，与返回数组位置一一对应
 	 * @return 与属性对应的set方法数组，未匹配到方法的位置为null
 	 */
 	public static Method[] matchSetMethods(Class voClass, String... props) {
+		String cacheKey = matchCacheKey(voClass, props);
+		Method[] cached = matchSetMethodsCache.get(cacheKey);
+		if (cached != null) {
+			return cached;
+		}
+		Method[] result = matchSetMethodsInternal(voClass, props);
+		matchSetMethodsCache.putIfAbsent(cacheKey, result);
+		return result;
+	}
+
+	/** 缓存键:类名+有序属性表(props元素可为null,以NUL占位区分) */
+	private static String matchCacheKey(Class voClass, String... props) {
+		StringBuilder key = new StringBuilder(voClass.getName()).append('#');
+		for (int i = 0; i < props.length; i++) {
+			key.append(props[i] == null ? "\u0000" : props[i]).append('\u0001');
+		}
+		return key.toString();
+	}
+
+	private static Method[] matchSetMethodsInternal(Class voClass, String... props) {
 		int indexSize = props.length;
 		Method[] result = new Method[indexSize];
 		Method[] methods = voClass.getMethods();
@@ -338,13 +396,24 @@ public class BeanUtil {
 	}
 
 	/**
-	 * 获取指定名称的方法集,不区分大小写
-	 * 
+	 * 获取指定名称的方法集,不区分大小写(update 2026-9-14 结果经(类+有序属性表)缓存)
+	 *
 	 * @param voClass 目标对象类型(支持Record类型)
 	 * @param props   属性名称数组，与返回数组位置一一对应
 	 * @return 与属性对应的get/is方法数组，未匹配到方法的位置为null
 	 */
 	public static Method[] matchGetMethods(Class voClass, String... props) {
+		String cacheKey = matchCacheKey(voClass, props);
+		Method[] cached = matchGetMethodsCache.get(cacheKey);
+		if (cached != null) {
+			return cached;
+		}
+		Method[] result = matchGetMethodsInternal(voClass, props);
+		matchGetMethodsCache.putIfAbsent(cacheKey, result);
+		return result;
+	}
+
+	private static Method[] matchGetMethodsInternal(Class voClass, String... props) {
 		int indexSize = props.length;
 		Method[] result = new Method[indexSize];
 		Method[] methods = voClass.getMethods();
@@ -1977,7 +2046,7 @@ public class BeanUtil {
 			while (iter.hasNext()) {
 				rowObject = iter.next();
 				if (rowObject != null) {
-					bean = voClass.getDeclaredConstructor().newInstance();
+					bean = newBean(voClass);
 					if (notNullRowIndex == 0) {
 						if (rowObject instanceof Object[]) {
 							isArray = true;
@@ -2058,7 +2127,7 @@ public class BeanUtil {
 		String propertyName = null;
 		Object bean = null;
 		try {
-			bean = voClass.getDeclaredConstructor().newInstance();
+			bean = newBean(voClass);
 			int indexSize = indexs.length;
 			int size = rowList.size();
 			for (int i = 0; i < indexSize; i++) {
@@ -2099,7 +2168,7 @@ public class BeanUtil {
 
 	/**
 	 * 批量对集合的属性设置相同的值
-	 * 
+	 *
 	 * @param voList          对象集合，null或空直接返回
 	 * @param properties      待设置的属性名称数组
 	 * @param values          与属性一一对应的值数组
@@ -2108,6 +2177,7 @@ public class BeanUtil {
 	 */
 	public static void batchSetProperties(Collection voList, String[] properties, Object[] values,
 			boolean autoConvertType, boolean forceUpdate) {
+		// 行为记录:集合元素为Map类型时静默跳过(setter匹配不到),与setProperty单对象写入支持map不同
 		if (null == voList || voList.isEmpty()) {
 			return;
 		}
@@ -2187,6 +2257,7 @@ public class BeanUtil {
 
 	public static void mappingSetProperties(Collection voList, String[] properties, List<Object[]> values, int[] index,
 			boolean autoConvertType, boolean forceUpdate) throws RuntimeException {
+		// 行为记录:集合元素为Map类型时静默跳过(setter匹配不到),与setProperty单对象写入支持map不同
 		if (null == voList || voList.isEmpty()) {
 			return;
 		}
@@ -2379,13 +2450,26 @@ public class BeanUtil {
 	 * mismatch(vastbase G100真库json对象列实爆);调用方传FieldMeta.getType()
 	 * (即@Column(type=JdbcTypes.X)注解值,常规列为java.sql.Types码,不命中扩展分支行为不变)
 	 *
-	 * @param bean     目标对象
+	 * update 2026-9-14 增加map类型支持:直接按key写入,与getProperty的读取语义对称
+	 * (此前map入参只匹配setter必然抛does not have the property异常,而读路径支持map, 混合行数据处理时读/写行为不一致)
+	 *
+	 * update 2026-9-14 map类型key支持xxx.xxx级联形式:逐层深入嵌套map后在叶子层写入,
+	 * 中间层key存在且值为map则深入、不存在则创建HashMap挂入;中间层值不是map(如POJO对象)
+	 * 则剩余key转由标准setProperty按setter写入;整串key(含点号)作为字面key已存在时直接覆盖,
+	 * 与读路径reflectBeanToAry字面key优先的级联取值语义对称
+	 *
+	 * @param bean     目标对象(Map类型直接按key写入,支持xxx.xxx嵌套key)
 	 * @param property 属性名称
-	 * @param value    属性值(自动按属性类型转换)
+	 * @param value    属性值(自动按属性类型转换,map类型按key原样写入)
 	 * @param jdbcType 列的jdbc类型语义(JdbcTypes.JSON/JSONB/VECTOR/GEOMETRY触发扩展类型转换)
 	 * @throws RuntimeException 属性不存在或赋值失败时抛出
 	 */
 	public static void setProperty(Object bean, String property, Object value, int jdbcType) throws RuntimeException {
+		// map类型按key写入,与getProperty的读取语义对称
+		if (bean instanceof Map) {
+			setMapPropertyValue((Map) bean, property, value, jdbcType);
+			return;
+		}
 		String key = bean.getClass().getName().concat(":set").concat(property);
 		// 利用缓存提升方法匹配效率
 		Method method = setMethods.computeIfAbsent(key, k -> {
@@ -2411,6 +2495,42 @@ public class BeanUtil {
 		} catch (Exception e) {
 			logger.error("setProperty method execution failed", e);
 			throw new RuntimeException(e.getMessage());
+		}
+	}
+
+	/**
+	 * map按key写入属性值,key为xxx.xxx级联形式时逐层深入嵌套map后在叶子层写入
+	 *
+	 * @param dataMap  目标map,每层使用其自身的get/put语义;自动创建的中间层跟随父层key语义
+	 *                 (IgnoreKeyCaseMap父层生成同样忽略大小写的子层),其余为HashMap
+	 * @param property 属性名称,支持xxx.xxx嵌套形式
+	 * @param value    属性值,原样写入
+	 * @param jdbcType 列的jdbc类型语义,中间层转POJO对象时随剩余key透传给setProperty
+	 */
+	private static void setMapPropertyValue(Map dataMap, String property, Object value, int jdbcType) {
+		// 整串key(含点号)作为字面key已存在时直接覆盖,与读路径字面key优先的语义一致
+		if (dataMap.containsKey(property)) {
+			dataMap.put(property, value);
+			return;
+		}
+		int dotIndex = property.indexOf('.');
+		if (dotIndex < 0) {
+			dataMap.put(property, value);
+			return;
+		}
+		String firstProp = property.substring(0, dotIndex);
+		Object subValue = dataMap.get(firstProp);
+		if (subValue == null) {
+			// 中间层map跟随父层的key语义(IgnoreKeyCaseMap父层创建同样忽略大小写的子层),其余为普通HashMap
+			subValue = (dataMap instanceof IgnoreKeyCaseMap) ? new IgnoreKeyCaseMap<String, Object>()
+					: new HashMap<String, Object>();
+			dataMap.put(firstProp, subValue);
+		}
+		if (subValue instanceof Map) {
+			setMapPropertyValue((Map) subValue, property.substring(dotIndex + 1), value, jdbcType);
+		} else {
+			// 中间层不是map(如POJO对象):剩余key转由标准setProperty按setter写入(含类型转换)
+			setProperty(subValue, property.substring(dotIndex + 1), value, jdbcType);
 		}
 	}
 
@@ -2524,7 +2644,7 @@ public class BeanUtil {
 			for (Object id : ids) {
 				// 去除重复
 				if (id != null && !repeat.contains(id)) {
-					bean = voClass.getDeclaredConstructor().newInstance();
+					bean = (T) newBean(voClass);
 					method.invoke(bean,
 							convertType(typeHandler, id, JdbcTypes.OTHER, typeValue, typeName, genericType));
 					entities.add(bean);
@@ -3017,8 +3137,8 @@ public class BeanUtil {
 	 */
 	public static <T extends Serializable> UpdateRowCallback toSqlToyHandler(EntityMeta entityMeta,
 			Class<? extends T> entityClass, EntityUpdateCallback<T> callback) {
-		return (TypeHandler typeHandler, Integer dbType, Connection conn, ResultSet rs, int index) -> {
-			T proxyEntity = EntityResultSetProxy.createProxy(typeHandler, dbType, conn, rs, entityClass, entityMeta);
+		return (TypeHandler typeHandler, DBProfile profile, Connection conn, ResultSet rs, int index) -> {
+			T proxyEntity = EntityResultSetProxy.createProxy(typeHandler, profile, conn, rs, entityClass, entityMeta);
 			callback.update(proxyEntity, index);
 		};
 	}

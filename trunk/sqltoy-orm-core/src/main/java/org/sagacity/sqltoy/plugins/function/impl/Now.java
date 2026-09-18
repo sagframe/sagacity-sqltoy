@@ -49,10 +49,11 @@ public class Now extends IFunction {
 		}
 		// update 2026-9-5 其余支持now()的库不带fsp参数
 		// (mysql特有的now(6)转到这些库需丢弃参数,否则语法非法)
+		// update 2026-9-14 补KINGBASE(KingbaseES基于PG,函数语法归PG系)
 		if (dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL14 || dialect == DBType.GAUSSDB
 				|| dialect == DBType.OPENGAUSS || dialect == DBType.MOGDB || dialect == DBType.STARDB
 				|| dialect == DBType.OSCAR || dialect == DBType.VASTBASE || dialect == DBType.H2
-				|| dialect == DBType.CLICKHOUSE) {
+				|| dialect == DBType.CLICKHOUSE || dialect == DBType.KINGBASE) {
 			return "now()";
 		}
 		if (dialect == DBType.ORACLE || dialect == DBType.OCEANBASE || dialect == DBType.DM
@@ -61,6 +62,11 @@ public class Now extends IFunction {
 			return "sysdate";
 		}
 		if (dialect == DBType.SQLSERVER) {
+			// update 2026-9-15 getdate()不接受精度参数(now(6)的fsp带过去报"getdate function
+			// requires 0 argument(s)"),sqlserver精度形态用sysdatetime()承担
+			if (args != null && args.length > 0) {
+				return "sysdatetime()";
+			}
 			return wrapArgs("getdate", args);
 		}
 		// update 2026-9-5
@@ -69,6 +75,10 @@ public class Now extends IFunction {
 			return "CURRENT TIMESTAMP";
 		}
 		if (dialect == DBType.SQLITE) {
+			return "CURRENT_TIMESTAMP";
+		}
+		// 2026-9-11 hana无now()/sysdate/getdate函数,取标准CURRENT_TIMESTAMP
+		if (dialect == DBType.HANA) {
 			return "CURRENT_TIMESTAMP";
 		}
 		return super.IGNORE;

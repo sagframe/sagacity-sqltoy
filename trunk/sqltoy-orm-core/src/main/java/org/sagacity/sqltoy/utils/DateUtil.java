@@ -54,6 +54,9 @@ public class DateUtil {
 			.compile("[\\s\\u00A0\\u202F\\u3000]+");
 
 	private static final java.util.regex.Pattern SPACE_PATTERN = java.util.regex.Pattern.compile("\\s+");
+	// update 2026-9-14 ISO日期时间中日期与时间的分隔符T:原dateStr.replaceFirst("(?i)T"," ")每次解析
+	// 隐式编译,ISO日期时间(2026-09-14T10:00:00)是逐行读取的常见形态,预编译为静态Pattern
+	private final static Pattern ISO_T_PATTERN = Pattern.compile("(?i)T");
 	/**
 	 * 定义日志
 	 */
@@ -82,6 +85,22 @@ public class DateUtil {
 	private static final String[] WEEK_ENGLISH_NAKE = { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
 	private final static Pattern WEEK_PATTERN = Pattern.compile("(?i)(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\\s");
 	private final static Pattern DAY_PATTERN = Pattern.compile("(?i)\\s\\d{1,2}(st|th|nd|rd)?\\s");
+	// update 2026-9-14 parseEnglishDate的月/星期名替换预编译:此前按名称动态compile("(?i)"+name)共23次,
+	// 英文日期(如"14 Sep 2026")在文件导入等场景逐行解析时开销显著;各替换保持原有先后次序
+	private static final Pattern[] MONTH_ENGLISH_PATTERNS = compileInsensitive(MONTH_ENGLISH_NAME);
+	private static final Pattern[] WEEK_ENGLISH_PATTERNS = compileInsensitive(WEEK_ENGLISH_NAME);
+	private final static Pattern SEPT_PATTERN = Pattern.compile("(?i)Sept\\s");
+	private final static Pattern THURS_PATTERN = Pattern.compile("(?i)Thurs\\s");
+	private final static Pattern THUR_PATTERN = Pattern.compile("(?i)Thur\\s");
+	private final static Pattern TUES_PATTERN = Pattern.compile("(?i)Tues\\s");
+
+	private static Pattern[] compileInsensitive(String[] names) {
+		Pattern[] patterns = new Pattern[names.length];
+		for (int i = 0; i < names.length; i++) {
+			patterns[i] = Pattern.compile("(?i)" + names[i]);
+		}
+		return patterns;
+	}
 
 	// 超过十的中文，前后数字均可选，覆盖"十五"、"二十"、"二十一"等形式
 	private final static Pattern MORE_TEN_PATTERN = Pattern.compile("([一二三四五六七八九])?\\十([一二三四五六七八九])?");
@@ -254,7 +273,8 @@ public class DateUtil {
 			int startIndex;
 			// 日期和时间的组合
 			if (hasBlank) {
-				dateStr = SPACE_PATTERN.matcher(dateStr).replaceFirst(" ").replaceFirst("(?i)T", " ");
+				dateStr = SPACE_PATTERN.matcher(dateStr).replaceFirst(" ");
+				dateStr = ISO_T_PATTERN.matcher(dateStr).replaceFirst(" ");
 				dateStr = padDateString(dateStr);
 				// 时间段含冒号时逐段补前导零(如"8:5:9"→"08:05:09"):去除分隔符合并后,
 				// 多个单位数时分秒组件仅靠原有的整体补一个零会错位(859→0859被误读成08:59)
@@ -403,8 +423,7 @@ public class DateUtil {
 		Exception ex = null;
 		// 通过异常模式进行一次容错处理
 		try {
-			DateFormat df = new SimpleDateFormat(realDF, (locale == null) ? SqlToyConstants.getLocale() : locale);
-			result = df.parse(dateStr);
+			result = getSdf(realDF, (locale == null) ? SqlToyConstants.getLocale() : locale).parse(dateStr);
 		} catch (ParseException e) {
 			hasException = true;
 			ex = e;
@@ -496,7 +515,8 @@ public class DateUtil {
 			int startIndex;
 			// 日期和时间的组合
 			if (hasBlank) {
-				dateStr = SPACE_PATTERN.matcher(dateStr).replaceFirst(" ").replaceFirst("(?i)T", " ");
+				dateStr = SPACE_PATTERN.matcher(dateStr).replaceFirst(" ");
+				dateStr = ISO_T_PATTERN.matcher(dateStr).replaceFirst(" ");
 				dateStr = padDateString(dateStr);
 				// 时间段含冒号时逐段补前导零(如"8:5:9"→"08:05:09"):去除分隔符合并后,
 				// 多个单位数时分秒组件仅靠原有的整体补一个零会错位(859→0859被误读成08:59)
@@ -643,7 +663,9 @@ public class DateUtil {
 				LocalTime timeResult = LocalTime.parse(dateStr, getFormatter(realDF, SqlToyConstants.getLocale()));
 				return LocalDateTime.of(LocalDate.now(), timeResult);
 			} else if (isDate) {
-				Date dateResult = new SimpleDateFormat(realDF).parse(dateStr);
+				// update 2026-9-14 复用线程内SDF缓存;原new SimpleDateFormat(realDF)用JVM默认
+				// locale,与兄弟分支(:643/:649)的SqlToyConstants.getLocale()分叉,一并对齐
+				Date dateResult = getSdf(realDF, SqlToyConstants.getLocale()).parse(dateStr);
 				return asLocalDateTime(dateResult);
 			}
 			result = LocalDateTime.parse(dateStr, getFormatter(realDF, SqlToyConstants.getLocale()));
@@ -767,6 +789,31 @@ public class DateUtil {
 		return FORMATTER_CACHE.computeIfAbsent(key, k -> DateTimeFormatter.ofPattern(format, realLocale));
 	}
 
+	// update 2026-9-14 SimpleDateFormat非线程安全不能全局缓存(低精度解析/格式化路径
+	// 刻意保留SDF的宽容语义,见formatDate:低精度用SimpleDateFormat兼容性强),改按线程
+	// 缓存:每线程独立HashMap,线程内复用(消除逐次new SimpleDateFormat的格式串解析开销),
+	// 键空间=使用中的格式串+locale组合(小且有限);线程池场景随线程存续,内存可控
+	private static final ThreadLocal<java.util.HashMap<String, DateFormat>> SDF_CACHE = new ThreadLocal<java.util.HashMap<String, DateFormat>>() {
+		@Override
+		protected java.util.HashMap<String, DateFormat> initialValue() {
+			return new java.util.HashMap<String, DateFormat>();
+		}
+	};
+
+	/**
+	 * 取线程内缓存的SimpleDateFormat(locale须已解析非null;SimpleDateFormat线程不安全,
+	 * 每线程独立实例;parse失败会自行clear内部Calendar,复用安全)
+	 */
+	private static DateFormat getSdf(String format, Locale locale) {
+		String key = format.concat("|").concat(locale.toString());
+		DateFormat df = SDF_CACHE.get().get(key);
+		if (df == null) {
+			df = new SimpleDateFormat(format, locale);
+			SDF_CACHE.get().put(key, df);
+		}
+		return df;
+	}
+
 	public static String formatDate(Object dt, String format, Locale locale) {
 		if (dt == null) {
 			return null;
@@ -820,8 +867,8 @@ public class DateUtil {
 				return getFormatter(format, patternLocale).format(result.toLocalTime());
 			}
 		}
-		// 低精度用SimpleDateFormat，兼容性强
-		DateFormat df = new SimpleDateFormat(format, (locale == null) ? SqlToyConstants.getLocale() : locale);
+		// 低精度用SimpleDateFormat，兼容性强(update 2026-9-14 复用线程内SDF缓存)
+		DateFormat df = getSdf(format, (locale == null) ? SqlToyConstants.getLocale() : locale);
 		Date tmp = convertDateObject(dt, null, locale);
 		return (null == tmp) ? null : df.format(tmp);
 	}
@@ -1295,7 +1342,9 @@ public class DateUtil {
 		tmp = tenReplaced.toString();
 
 		for (int i = 0; i < CHINA_DATE_KEYS.length; i++) {
-			tmp = tmp.replaceAll(CHINA_DATE_KEYS[i], CHINA_DATE_KEY_MAP[i]);
+			// CHINA_DATE_KEYS均为字面量:用String.replace避免每次隐式编译正则,
+			// 同时规避替换串中$/\被当特殊字符处理
+			tmp = tmp.replace(CHINA_DATE_KEYS[i], CHINA_DATE_KEY_MAP[i]);
 		}
 		tmp = tmp.replace("整", "").trim();
 		if (tmp.endsWith("-") || tmp.endsWith(":")) {
@@ -1436,16 +1485,17 @@ public class DateUtil {
 			}
 			dateStr = stringBuilder.toString();
 		}
-		for (int i = 0; i < 12; i++) {
-			dateStr = dateStr.replaceFirst("(?i)" + MONTH_ENGLISH_NAME[i], MONTH_ENGLISH_NAKE[i]);
+		for (int i = 0; i < MONTH_ENGLISH_PATTERNS.length; i++) {
+			dateStr = MONTH_ENGLISH_PATTERNS[i].matcher(dateStr).replaceFirst(MONTH_ENGLISH_NAKE[i]);
 		}
 		// 统一九月的英文
-		dateStr = dateStr.replaceFirst("(?i)Sept\\s", "Sep ");
+		dateStr = SEPT_PATTERN.matcher(dateStr).replaceFirst("Sep ");
 		// 统一星期2、星期4的英文(Thurs优先于Thur，否则Thurs无法命中)
-		dateStr = dateStr.replaceFirst("(?i)Thurs\\s", "Thu ").replaceFirst("(?i)Thur\\s", "Thu ")
-				.replaceFirst("(?i)Tues\\s", "Tue ");
-		for (int i = 0; i < 7; i++) {
-			dateStr = dateStr.replaceFirst("(?i)" + WEEK_ENGLISH_NAME[i], WEEK_ENGLISH_NAKE[i]);
+		dateStr = THURS_PATTERN.matcher(dateStr).replaceFirst("Thu ");
+		dateStr = THUR_PATTERN.matcher(dateStr).replaceFirst("Thu ");
+		dateStr = TUES_PATTERN.matcher(dateStr).replaceFirst("Tue ");
+		for (int i = 0; i < WEEK_ENGLISH_PATTERNS.length; i++) {
+			dateStr = WEEK_ENGLISH_PATTERNS[i].matcher(dateStr).replaceFirst(WEEK_ENGLISH_NAKE[i]);
 		}
 		// 首位补空格，便于匹配
 		dateStr = " ".concat(dateStr);
@@ -1479,7 +1529,6 @@ public class DateUtil {
 		// 是否存在week
 		boolean hasWeek = StringUtil.matches(dateStr, WEEK_PATTERN);
 		dateStr = dateStr.trim();
-		SimpleDateFormat dateParser = null;
 		Iterator<String> formatIter;
 		if (StringUtil.matches(dateStr, TIME_PATTERN)) {
 			if (hasWeek) {
@@ -1496,15 +1545,13 @@ public class DateUtil {
 		}
 		Date result = null;
 		String format;
+		// update 2026-9-14 复用线程内SDF缓存(原每次调用new一个parser实例+applyPattern轮换,
+		// 现按格式串取缓存实例);ENGLISH默认保持(自动匹配面向标准数字格式,不受配置locale影响)
+		Locale realLocale = (locale == null) ? Locale.ENGLISH : locale;
 		while (formatIter.hasNext()) {
-			format = (String) formatIter.next();
-			if (dateParser == null) {
-				dateParser = new SimpleDateFormat(format, (locale == null) ? Locale.ENGLISH : locale);
-			} else {
-				dateParser.applyPattern(format);
-			}
+			format = formatIter.next();
 			try {
-				result = dateParser.parse(dateStr);
+				result = getSdf(format, realLocale).parse(dateStr);
 				if (result != null) {
 					break;
 				}

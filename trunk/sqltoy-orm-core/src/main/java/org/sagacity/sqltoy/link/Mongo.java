@@ -17,14 +17,14 @@ import org.sagacity.sqltoy.config.model.NoSqlConfigModel;
 import org.sagacity.sqltoy.config.model.NoSqlFieldsModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
+import org.sagacity.sqltoy.dialect.QueryExecutorBuilder;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.integration.MongoQuery;
 import org.sagacity.sqltoy.model.Page;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.inner.DataSetResult;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
-import org.sagacity.sqltoy.utils.MongoElasticUtils;
-import org.sagacity.sqltoy.utils.QueryExecutorBuilder;
+import org.sagacity.sqltoy.plugins.nosql.MongoElasticOperations;
 import org.sagacity.sqltoy.utils.ResultUtils;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
@@ -157,7 +157,7 @@ public class Mongo extends BaseLink {
 			// update 2022-6-16 补全参数统一构造处理
 			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
 			// 最后的执行语句
-			String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, extend.getParamsName(),
+			String realMql = MongoElasticOperations.wrapMql(sqlToyConfig, extend.getParamsName(),
 					extend.getParamsValue(sqlToyContext, sqlToyConfig));
 			// 聚合查询
 			if (noSqlModel.isHasAggs()) {
@@ -190,7 +190,7 @@ public class Mongo extends BaseLink {
 			QueryExecutorExtend extend = queryExecutor.getInnerModel();
 			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
 			// 最后的执行语句
-			String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, extend.getParamsName(),
+			String realMql = MongoElasticOperations.wrapMql(sqlToyConfig, extend.getParamsName(),
 					extend.getParamsValue(sqlToyContext, sqlToyConfig));
 			if (sqlToyContext.isDebug()) {
 				logger.debug("findTopByMongo script={}", realMql);
@@ -219,7 +219,7 @@ public class Mongo extends BaseLink {
 			QueryExecutorExtend extend = queryExecutor.getInnerModel();
 			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
 			// 最后的执行语句
-			String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, extend.getParamsName(),
+			String realMql = MongoElasticOperations.wrapMql(sqlToyConfig, extend.getParamsName(),
 					extend.getParamsValue(sqlToyContext, sqlToyConfig));
 			if (sqlToyContext.isDebug()) {
 				logger.debug("findPageByMongo script={}", realMql);
@@ -406,8 +406,8 @@ public class Mongo extends BaseLink {
 		List resultSet = new ArrayList();
 		Document row;
 		HashMap<String, String[]> linkMap = new HashMap<String, String[]>();
-		NoSqlFieldsModel fieldModel = MongoElasticUtils.processFields(sqlToyConfig.getNoSqlConfigModel().getFields(),
-				linkMap);
+		NoSqlFieldsModel fieldModel = MongoElasticOperations
+				.processFields(sqlToyConfig.getNoSqlConfigModel().getFields(), linkMap);
 		// 解决field采用id.name:aliasName 或 id.name 形式
 		String[] realFields = fieldModel.getFields();
 		String[] translateFields = fieldModel.getAliasLabels();
@@ -440,7 +440,7 @@ public class Mongo extends BaseLink {
 			}
 			resultSet.add(rowData);
 		}
-		MongoElasticUtils.processTranslate(sqlToyContext, sqlToyConfig, resultSet, translateFields);
+		MongoElasticOperations.processTranslate(sqlToyContext, sqlToyConfig, resultSet, translateFields);
 		DataSetResult dataSetResult = new DataSetResult();
 		dataSetResult.setRows(resultSet);
 		dataSetResult.setLabelNames(translateFields);

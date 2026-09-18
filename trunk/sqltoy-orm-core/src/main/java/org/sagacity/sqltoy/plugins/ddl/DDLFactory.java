@@ -13,6 +13,7 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DataSourceCallbackHandler;
 import org.sagacity.sqltoy.config.EntityManager;
 import org.sagacity.sqltoy.config.model.EntityMeta;
+import org.sagacity.sqltoy.model.DBProfile;
 import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.plugins.ddl.impl.DefaultDDLGenerator;
 import org.sagacity.sqltoy.plugins.ddl.impl.H2DDLGenerator;
@@ -62,6 +63,9 @@ public class DDLFactory {
 		case DBType.STARDB:
 		case DBType.OPENGAUSS:
 		case DBType.VASTBASE:
+			// update 2026-9-14 补KINGBASE(KingbaseES基于PG):原落入default的DefaultDDLGenerator,
+			// 任何DDL生成调用直接抛"DDL generation is not implemented for this dialect"
+		case DBType.KINGBASE:
 		case DBType.POSTGRESQL:
 		case DBType.POSTGRESQL14: {
 			generator = new PostgreSqlDDLGenerator();
@@ -184,7 +188,8 @@ public class DDLFactory {
 									upperOrLower, dbType);
 							try {
 								if (createSql != null && !createSql.equals("")) {
-									SqlUtil.executeSql(null, createSql, null, null, conn, dbType, null, true);
+									DBProfile profile=DataSourceUtils.getDBProfile(conn);
+									SqlUtil.executeSql(null, createSql, null, null, conn, profile, null, true);
 								}
 							} catch (Exception e) {
 								logger.warn(

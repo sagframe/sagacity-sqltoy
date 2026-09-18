@@ -49,6 +49,11 @@ public class DateDiff extends IFunction {
 		}
 		// 去除掉单引号、双引号
 		String unitType = realArgs[0].toUpperCase(Locale.ROOT).replace("'", "").replace("\"", "");
+		// update 2026-9-15 单位缩写归一化前置:YY/MM/DD/WW/HH/MI/SS统一映射标准单位。
+		// 原各分支仅识别标准名,YY等缩写未归一化漏掉YEAR分量差转换,走原生timestampdiff(yy)
+		// 得完整日历年语义(mysql实测2026-06-01→2027-01-01得0,契约分量差应为1)。
+		// 归一化幂等,各分支既有的"XX||缩写"双条件不受影响
+		unitType = getMatchedType(unitType, UNIT_CONSTRACTS);
 		// update 2026-9-10 补TIDB:TiDB原生兼容mysql的datediff两参/timestampdiff三参/YEAR/MONTH/
 		// TRUNCATE函数族(8.5.1实测),此前TIDB落IGNORE致三参形态原样透传,单位词被解析为列名报
 		// "Unknown column 'day' in 'field list'"
@@ -89,6 +94,11 @@ public class DateDiff extends IFunction {
 			// 三参:d2-d1(oracle日期相减得天数数值,乘系数可表达更小单位)
 			String d1 = wrapOracleDateExpr(realArgs[1]);
 			String d2 = wrapOracleDateExpr(realArgs[2]);
+			// update 2026-9-15 补DM时/分/秒cast差异:DM的CAST(AS DATE)截断时间部分(真库实测
+			// 同日不同时刻hour差得0),但timestamp相减与oracle DATE相减同为数值天数
+			// (0.4375形态,非interval),故DM用CAST AS TIMESTAMP保留时间;oracle维持CAST AS DATE
+			// (timestamp列直接相减返回INTERVAL,乘系数仍为interval非数值)
+			String castType = (dbType == DBType.DM) ? "TIMESTAMP" : "DATE";
 			// update 2026-9-5 口径统一:年/月为年月分量差(原MONTHS_BETWEEN保留1位小数含日权重,跨库不同值)
 			if (unitType.equals("YEAR")) {
 				return "(EXTRACT(YEAR FROM " + d2 + ") - EXTRACT(YEAR FROM " + d1 + "))";
@@ -102,15 +112,15 @@ public class DateDiff extends IFunction {
 			} else if (unitType.equals("HOUR") || unitType.equals("HH")) {
 				// update 2026-9-5 Spring全栈真实验证:timestamp列直接相减返回INTERVAL(interval乘除系数
 				// 仍是interval,java侧拿到非数值),统一CAST AS DATE后相减得天数数值(DATE列原样兼容)
-				return "TRUNC((CAST(" + d2 + " AS DATE) - CAST(" + d1 + " AS DATE))*24)";
+				return "TRUNC((CAST(" + d2 + " AS " + castType + ") - CAST(" + d1 + " AS " + castType + "))*24)";
 			} else if (unitType.equals("MINUTE") || unitType.equals("MI")) {
-				return "TRUNC((CAST(" + d2 + " AS DATE) - CAST(" + d1 + " AS DATE))*1440)";
+				return "TRUNC((CAST(" + d2 + " AS " + castType + ") - CAST(" + d1 + " AS " + castType + "))*1440)";
 			} else if (unitType.equals("SECOND") || unitType.equals("SS")) {
-				return "ROUND((CAST(" + d2 + " AS DATE) - CAST(" + d1 + " AS DATE))*86400)";
+				return "ROUND((CAST(" + d2 + " AS " + castType + ") - CAST(" + d1 + " AS " + castType + "))*86400)";
 			}
 			return super.IGNORE;
 		}
-		// update 2026-9-10 vastbase G100 3.0.9(PG兼容模式)实测:date-date返回integer(同vanilla
+		// update 2026-9-14 vastbase G100 3.0.9(PG兼容模式)实测:date-date返回integer(同vanilla
 		// PG),
 		// 与openGauss 5.0返回interval不同,原og系分支的date_part('day',整数)隐式转换后恒为0,
 		// 两参/DAY/WEEK天差全部失真(两参datediff应10得0)——VASTBASE从og系分支归入本PG分支
@@ -136,6 +146,37 @@ public class DateDiff extends IFunction {
 				return "(" + realArgs[2] + "::date - " + realArgs[1] + "::date)";
 			} else if (unitType.equals("HOUR") || unitType.equals("HH")) {
 				// update 2026-9-5 口径统一:完整单位截断(原保留1位小数与mysql整数口径不同值)
+				return "trunc(extract(epoch from(" + realArgs[2] + "::timestamp - " + realArgs[1]
+						+ "::timestamp))/3600)";
+			} else if (unitType.equals("MINUTE") || unitType.equals("MI")) {
+				return "trunc(extract(epoch from(" + realArgs[2] + "::timestamp - " + realArgs[1] + "::timestamp))/60)";
+			} else if (unitType.equals("SECOND") || unitType.equals("SS")) {
+				return "round(extract(epoch from(" + realArgs[2] + "::timestamp - " + realArgs[1] + "::timestamp)),0)";
+			}
+			return super.IGNORE;
+		}
+		// update 2026-9-14 KingbaseES V9(V009R001C010,默认oracle兼容模式)真库实测:date类型
+		// 含时间部分(::date不截断时间,与oracle DATE同语义),date-date返回含小数的天数
+		// (1天12小时=1.5),与V8(PG12原生语义,date-date为整数天)不同;天差统一trunc向零截断
+		// 即为自然天差(V8整数结果trunc幂等;含时间差值落在(n,n+1)开区间,trunc恒等于去时间的
+		// 日历日差,负向同理);周=trunc(小数天差/7)与"自然天差/7"恒等;年月date_part与
+		// 时分秒epoch路径行为与PG一致,复用同形态表达式
+		if (dbType == DBType.KINGBASE) {
+			if (args.length == 2) {
+				return "trunc(" + args[0] + "::date - " + args[1] + "::date)";
+			}
+			if (unitType.equals("YEAR")) {
+				return "(date_part('year'," + realArgs[2] + "::timestamp)-date_part('year'," + realArgs[1]
+						+ "::timestamp))";
+			} else if (unitType.equals("MONTH")) {
+				return "((date_part('year'," + realArgs[2] + "::timestamp)-date_part('year'," + realArgs[1]
+						+ "::timestamp))*12+date_part('month'," + realArgs[2] + "::timestamp)-date_part('month',"
+						+ realArgs[1] + "::timestamp))";
+			} else if (unitType.equals("WEEK") || unitType.equals("WW")) {
+				return "trunc(((" + realArgs[2] + "::date - " + realArgs[1] + "::date)/7))";
+			} else if (unitType.equals("DAY") || unitType.equals("DD")) {
+				return "trunc(" + realArgs[2] + "::date - " + realArgs[1] + "::date)";
+			} else if (unitType.equals("HOUR") || unitType.equals("HH")) {
 				return "trunc(extract(epoch from(" + realArgs[2] + "::timestamp - " + realArgs[1]
 						+ "::timestamp))/3600)";
 			} else if (unitType.equals("MINUTE") || unitType.equals("MI")) {
@@ -330,6 +371,45 @@ public class DateDiff extends IFunction {
 				divisor = "1";
 			}
 			return "round((strftime('%s'," + d2 + ") - strftime('%s'," + d1 + "))/" + divisor + ")";
+		}
+		if (dbType == DBType.HANA) {
+			// update 2026-9-11 hana分支:无datediff/timestampdiff函数(原样透传报invalid function
+			// name),
+			// 以DAYS_BETWEEN/SECONDS_BETWEEN承担(BETWEEN族参数语义为d2-d1,与三参契约天然同向;
+			// 两参契约d1-d2须交换参数);天差先CAST AS DATE去时间(自然天口径,与mysql DATEDIFF对齐),
+			// 周=自然天差/7截断(hana无TRUNC函数且整数/整数得decimal,以ROUND(x,0,ROUND_DOWN)
+			// 向零截断,SPS08实测9/7→1、-9/7→-1),时/分=完整秒差/3600,/60同法截断,
+			// 年/月=YEAR/MONTH分量差(契约同mysql分支);
+			// 参数统一CAST定型(字符串字面量/占位符/列三形态均可解析,与H2分支同思路)
+			if (args.length == 2) {
+				return "DAYS_BETWEEN(CAST(" + args[1] + " AS DATE),CAST(" + args[0] + " AS DATE))";
+			}
+			String hd1 = "CAST(" + realArgs[1] + " AS DATE)";
+			String hd2 = "CAST(" + realArgs[2] + " AS DATE)";
+			if (unitType.equals("YEAR")) {
+				return "(YEAR(" + hd2 + ") - YEAR(" + hd1 + "))";
+			}
+			if (unitType.equals("MONTH") || unitType.equals("MM")) {
+				return "((YEAR(" + hd2 + ") - YEAR(" + hd1 + "))*12 + MONTH(" + hd2 + ") - MONTH(" + hd1 + "))";
+			}
+			if (unitType.equals("DAY") || unitType.equals("DD")) {
+				return "DAYS_BETWEEN(" + hd1 + "," + hd2 + ")";
+			}
+			if (unitType.equals("WEEK") || unitType.equals("WW")) {
+				return "ROUND(DAYS_BETWEEN(" + hd1 + "," + hd2 + ")/7,0,ROUND_DOWN)";
+			}
+			if (unitType.equals("HOUR") || unitType.equals("HH")) {
+				return "ROUND(SECONDS_BETWEEN(CAST(" + realArgs[1] + " AS TIMESTAMP),CAST(" + realArgs[2]
+						+ " AS TIMESTAMP))/3600,0,ROUND_DOWN)";
+			}
+			if (unitType.equals("MINUTE") || unitType.equals("MI")) {
+				return "ROUND(SECONDS_BETWEEN(CAST(" + realArgs[1] + " AS TIMESTAMP),CAST(" + realArgs[2]
+						+ " AS TIMESTAMP))/60,0,ROUND_DOWN)";
+			}
+			if (unitType.equals("SECOND") || unitType.equals("SS")) {
+				return "SECONDS_BETWEEN(CAST(" + realArgs[1] + " AS TIMESTAMP),CAST(" + realArgs[2] + " AS TIMESTAMP))";
+			}
+			return super.IGNORE;
 		}
 		return super.IGNORE;
 	}

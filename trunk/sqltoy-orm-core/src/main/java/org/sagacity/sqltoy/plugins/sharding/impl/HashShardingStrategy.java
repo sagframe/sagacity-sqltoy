@@ -47,6 +47,9 @@ public class HashShardingStrategy implements ShardingStrategy {
 		}
 		// 单值hash取模
 		Object shardingValue = paramsMap.values().iterator().next();
+		// update 2026-9-15 分片值为null时抛出可定位的异常(原裸NPE无法定位是哪个字段;
+		// 常见诱因:查询条件参数别名与策略fields字段名不一致、分片字段值本身为null)
+		checkShardingValue(paramsMap, shardingValue);
 		int hashCode = shardingValue.hashCode();
 		// hashCode可能为负,负数直接%会得到负key,取不到分表导致数据回落基准表
 		String modeKey = Integer.toString(Math.floorMod(hashCode, tableMode));
@@ -71,6 +74,7 @@ public class HashShardingStrategy implements ShardingStrategy {
 		}
 		// 单值hash取模
 		Object shardingValue = paramsMap.values().iterator().next();
+		checkShardingValue(paramsMap, shardingValue);
 		int hashCode = shardingValue.hashCode();
 		// hashCode可能为负,负数直接%会得到负key,取不到数据源导致回落默认库
 		String modeKey = Integer.toString(Math.floorMod(hashCode, dataSourceMode));
@@ -78,6 +82,22 @@ public class HashShardingStrategy implements ShardingStrategy {
 		logger.debug("datasource sharding got modeKey:{}, dataSourceName:{}", modeKey,
 				shardingModel.getDataSourceName());
 		return shardingModel;
+	}
+
+	/**
+	 * update 2026-9-15 分片值判空:为null时抛出带字段键信息的IllegalArgumentException
+	 * (原直接hashCode()裸NPE,无法定位是哪个分片字段缺失)
+	 */
+	private void checkShardingValue(IgnoreCaseLinkedMap<String, Object> paramsMap, Object shardingValue) {
+		if (shardingValue == null) {
+			String key = null;
+			java.util.Iterator<String> kit = paramsMap.keySet().iterator();
+			if (kit.hasNext()) {
+				key = kit.next();
+			}
+			throw new IllegalArgumentException("HashShardingStrategy sharding value is null, field/key:" + key
+					+ ", can not route, please check the sharding field value or the query param name!");
+		}
 	}
 
 	/*

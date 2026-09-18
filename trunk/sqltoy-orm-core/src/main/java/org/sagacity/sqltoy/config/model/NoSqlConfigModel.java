@@ -8,7 +8,7 @@ import java.io.Serializable;
  * @author zhongxuchen
  * @version v1.0,Date:2018-01-03
  */
-public class NoSqlConfigModel implements Serializable {
+public class NoSqlConfigModel implements Serializable, Cloneable {
 
 	private static final long serialVersionUID = -2126986650751681962L;
 	/**
@@ -236,6 +236,27 @@ public class NoSqlConfigModel implements Serializable {
 	 */
 	public void setSocketTimeout(int socketTimeout) {
 		this.socketTimeout = socketTimeout;
+	}
+
+	/**
+	 * 配置副本，数组属性一并复制避免引用共享
+	 * 
+	 * @return NoSqlConfigModel副本
+	 */
+	@Override
+	public NoSqlConfigModel clone() {
+		try {
+			NoSqlConfigModel cloned = (NoSqlConfigModel) super.clone();
+			if (this.valueRoot != null) {
+				cloned.valueRoot = this.valueRoot.clone();
+			}
+			if (this.fields != null) {
+				cloned.fields = this.fields.clone();
+			}
+			return cloned;
+		} catch (CloneNotSupportedException e) {
+			return null;
+		}
 	}
 
 }

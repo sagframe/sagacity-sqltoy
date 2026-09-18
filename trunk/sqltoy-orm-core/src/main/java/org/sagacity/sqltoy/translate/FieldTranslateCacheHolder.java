@@ -10,7 +10,6 @@ import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.model.inner.TranslateExtend;
 import org.sagacity.sqltoy.translate.model.DynamicCacheHolder;
 import org.sagacity.sqltoy.utils.BeanUtil;
-import org.sagacity.sqltoy.utils.TranslateUtils;
 
 /**
  * @project sagacity-sqltoy

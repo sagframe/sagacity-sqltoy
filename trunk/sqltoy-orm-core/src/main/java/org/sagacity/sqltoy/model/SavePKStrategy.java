@@ -1,4 +1,4 @@
-package org.sagacity.sqltoy.dialect.model;
+package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
 

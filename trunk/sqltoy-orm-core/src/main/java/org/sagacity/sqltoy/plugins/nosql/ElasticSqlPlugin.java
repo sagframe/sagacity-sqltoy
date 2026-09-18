@@ -4,12 +4,11 @@ import java.util.List;
 
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
+import org.sagacity.sqltoy.dialect.QueryExecutorBuilder;
 import org.sagacity.sqltoy.model.Page;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.inner.DataSetResult;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
-import org.sagacity.sqltoy.utils.MongoElasticUtils;
-import org.sagacity.sqltoy.utils.QueryExecutorBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,7 +38,7 @@ public class ElasticSqlPlugin {
 			QueryExecutor queryExecutor) throws Exception {
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
-		String realSql = MongoElasticUtils
+		String realSql = MongoElasticOperations
 				.wrapES(sqlToyConfig, extend.getParamsName(), extend.getParamsValue(sqlToyContext, sqlToyConfig))
 				.trim();
 		// sql模式
@@ -72,7 +71,7 @@ public class ElasticSqlPlugin {
 			Integer topSize) throws Exception {
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
-		String realSql = MongoElasticUtils
+		String realSql = MongoElasticOperations
 				.wrapES(sqlToyConfig, extend.getParamsName(), extend.getParamsValue(sqlToyContext, sqlToyConfig))
 				.trim();
 		// sql模式

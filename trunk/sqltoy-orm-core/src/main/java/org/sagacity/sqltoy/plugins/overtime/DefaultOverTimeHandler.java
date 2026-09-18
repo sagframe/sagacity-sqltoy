@@ -32,6 +32,19 @@ public class DefaultOverTimeHandler implements OverTimeSqlHandler {
 					return Long.compare(o1.getTakeTime(), o2.getTakeTime());
 				}
 			});
+
+	/**
+	 * 由慢到快排序(取最慢N条用):update 2026-9-14 由hasSqlId分支的内联比较器提为常量,避免两处排序
+	 * 方向与契约修复再次漂移(历史上曾出现同族比较器漏改)。Long.compare避免long差值截断int
+	 * (超时差>Integer.MAX时违反比较器契约,TimSort会抛Comparison method violates its general
+	 * contract)
+	 */
+	private static final Comparator<OverTimeSql> SLOW_FIRST = new Comparator<OverTimeSql>() {
+		@Override
+		public int compare(OverTimeSql o1, OverTimeSql o2) {
+			return Long.compare(o2.getTakeTime(), o1.getTakeTime());
+		}
+	};
 	// 所有执行超时且含sqlId的sql语句
 	private HashMap<String, OverTimeSql> slowSqlMap = new HashMap<String, OverTimeSql>();
 
@@ -92,13 +105,8 @@ public class DefaultOverTimeHandler implements OverTimeSqlHandler {
 			while (iter.hasNext()) {
 				result.add(iter.next());
 			}
-			// 按照执行时长从大到小排序
-			Collections.sort(result, new Comparator<OverTimeSql>() {
-				@Override
-				public int compare(OverTimeSql o1, OverTimeSql o2) {
-					return Long.valueOf(o2.getTakeTime() - o1.getTakeTime()).intValue();
-				}
-			});
+			// 按照执行时长从大到小排序(与queues队列取最慢N条同一判据常量)
+			Collections.sort(result, SLOW_FIRST);
 			if (size >= result.size()) {
 				return result;
 			}
@@ -113,22 +121,15 @@ public class DefaultOverTimeHandler implements OverTimeSqlHandler {
 	 * @return
 	 */
 	private List<OverTimeSql> getSlowest(int size) {
-		List<OverTimeSql> result = new ArrayList<OverTimeSql>();
-		Iterator<OverTimeSql> iter = queues.iterator();
-		int index = 0;
-		int start = queues.size() - size;
-		if (start < 0) {
-			start = 0;
+		// update 2026-9-14 PriorityQueue.iterator()返回堆数组层序而非排序序,原实现取"迭代的最后size个"
+		// 得到的是任意子集而非最慢N条(且add(0,...)头插为O(n²));改为整体排序后取最慢的size条,
+		// 排序方向与hasSqlId分支统一走SLOW_FIRST
+		List<OverTimeSql> all = new ArrayList<OverTimeSql>(queues);
+		Collections.sort(all, SLOW_FIRST);
+		if (all.size() <= size) {
+			return all;
 		}
-		OverTimeSql nextVal;
-		while (iter.hasNext()) {
-			nextVal = iter.next();
-			if (index >= start) {
-				result.add(0, nextVal);
-			}
-			index++;
-		}
-		return result;
+		return new ArrayList<OverTimeSql>(all.subList(0, size));
 	}
 
 }

@@ -129,6 +129,8 @@ public class DataSourceUtils {
 		public final static String VASTBASE = "vastbase";
 		public final static String OPENGAUSS = "opengauss";
 		public final static String STARDB = "stardb";
+		// SAP HANA 2.0(驱动产品名上报HDB,URL schema为jdbc:sap:)
+		public final static String HANA = "hana";
 		public final static String UNDEFINE = "undefine";
 	}
 
@@ -185,6 +187,8 @@ public class DataSourceUtils {
 		public final static int VASTBASE = 200;
 		public final static int OPENGAUSS = 210;
 		public final static int STARDB = 220;
+		// SAP HANA 2.0
+		public final static int HANA = 230;
 	}
 
 	static {
@@ -232,6 +236,8 @@ public class DataSourceUtils {
 		DBNameTypeMap.put(Dialect.VASTBASE, DBType.VASTBASE);
 		DBNameTypeMap.put(Dialect.DORIS, DBType.DORIS);
 		DBNameTypeMap.put(Dialect.STARROCKS, DBType.STARROCKS);
+		// 2026-9-11 增加对SAP HANA的支持
+		DBNameTypeMap.put(Dialect.HANA, DBType.HANA);
 
 		// 默认设置oscar、vastbase数据库用gaussdb方言来实现
 		// dialectMap.put(Dialect.OSCAR, Dialect.OPENGAUSS);
@@ -325,6 +331,9 @@ public class DataSourceUtils {
 		}
 		case DBType.STARROCKS: {
 			return Dialect.STARROCKS;
+		}
+		case DBType.HANA: {
+			return Dialect.HANA;
 		}
 		default:
 			return Dialect.UNDEFINE;
@@ -469,6 +478,11 @@ public class DataSourceUtils {
 				dilectName = Dialect.OSCAR;
 			} else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.VASTBASE) != -1) {
 				dilectName = Dialect.VASTBASE;
+			} // SAP HANA 2.2026-9-11 驱动getDatabaseProductName()上报"HDB"(不含hana字样),
+				// URL特征jdbc:sap:已在getDBDialectByUrl优先命中,此处按产品名兜底
+			else if (StringUtil.indexOfIgnoreCase(dbDialect, "hdb") != -1
+					|| StringUtil.indexOfIgnoreCase(dbDialect, Dialect.HANA) != -1) {
+				dilectName = Dialect.HANA;
 			} else if (!dialectMap.isEmpty()) {
 				// 针对框架未支持的数据库，通过dialectMap的key进行匹配;
 				// IgnoreKeyCaseMap基于ConcurrentHashMap,entrySet迭代顺序不确定,
@@ -550,6 +564,13 @@ public class DataSourceUtils {
 		// 在产品名判定链中先命中被误判mysql方言,ob4.3无string_to_vector等mysql9函数),
 		// URL特征jdbc:oceanbase://优先纠正
 		URL_SCHEMA_DIALECT.put("oceanbase", Dialect.OCEANBASE);
+		// update 2026-9-11 SAP HANA的URL schema为jdbc:sap:(产品名HDB不含hana字样,URL特征优先命中)
+		URL_SCHEMA_DIALECT.put("sap", Dialect.HANA);
+		// update 2026-9-17
+		// StarRocks原生驱动(starrocks-connector-j,com.starrocks.jdbc.Driver)的
+		// URL schema为jdbc:starrocks:(FE的9030 MySQL协议端口),产品名依旧伪装MySQL,URL特征优先
+		// 直命中starrocks方言;resolveDialect的引擎探测仅对mysql方言触发,URL命中后自动跳过
+		URL_SCHEMA_DIALECT.put("starrocks", Dialect.STARROCKS);
 	}
 
 	/**
@@ -623,7 +644,8 @@ public class DataSourceUtils {
 		String dialect = resolveDialect(conn, resolveDialectByMeta(conn));
 		int dbType = dialectToDbType(dialect, majorVersion);
 		DBProfile profile = new DBProfile(connUrl, dialect, dbType, productName, majorVersion,
-				resolvePGobjectHolder(connUrl), probeDB2GseSchema(conn, dbType), isBackslashEscapeDbType(dbType));
+				resolvePGobjectHolder(connUrl, dbType), probeDB2GseSchema(conn, dbType),
+				isBackslashEscapeDbType(dbType));
 		// URL可标识的连接入缓存(并发竞争时保留先入条目)
 		if (urlAsCacheKey) {
 			DBProfile exist = URL_PROFILE_CACHE.putIfAbsent(connUrl, profile);
@@ -794,6 +816,8 @@ public class DataSourceUtils {
 			return DBType.DORIS;
 		} else if (dbDialect.equals(Dialect.STARROCKS)) {
 			return DBType.STARROCKS;
+		} else if (dbDialect.equals(Dialect.HANA)) {
+			return DBType.HANA;
 		}
 		return DBType.UNDEFINE;
 	}
@@ -806,9 +830,12 @@ public class DataSourceUtils {
 	 * 注意本匹配的对象是"驱动"而非"数据库":用postgresql官方驱动连openGauss/vastbase等
 	 * PG系库时(pom注释中明示的兼容用法),URL必为jdbc:postgresql:从而解析出org.postgresql的
 	 * PGobject,与实际驱动同源,天然正确;实测openGauss默认SCRAM(sha256)认证下PG官方驱动 连接即被拒(Invalid SCRAM
-	 * client initialization),须openGauss侧开启兼容认证方可使用此形态
+	 * client initialization),须openGauss侧开启兼容认证方可使用此形态 update 2026-9-16
+	 * 增加dbType守卫:URL schema未显式建映射时仅PG系dbType才兜底探测
+	 * org.postgresql.util.PGobject,非PG系(mysql/oracle等)直接返回哨兵,避免对optional
+	 * 依赖的无谓Class.forName(纯mysql用户必抛ClassNotFoundException产生误导日志)
 	 */
-	private static DBProfile.PGobjectHolder resolvePGobjectHolder(String url) {
+	private static DBProfile.PGobjectHolder resolvePGobjectHolder(String url, int dbType) {
 		try {
 			if (url == null || !url.startsWith("jdbc:")) {
 				return NULL_PG_HOLDER;
@@ -834,18 +861,25 @@ public class DataSourceUtils {
 				pgObjectClass = "com.kingbase8.util.KBobject";
 			} else if ("postgresql".equals(schema)) {
 				pgObjectClass = "org.postgresql.util.PGobject";
-			} else {
+			} else if (DBProfile.isPGFamily(dbType)) {
 				// stardb等其他PG系驱动:多数兼容postgresql驱动包路径,尝试后失败由调用方回退
-				// update 2026-9-10 注意:oscar(神通)驱动jar解包实证无org.postgresql包路径亦无
-				// PGobject同构类(老pgjdbc深度魔改的自有实现),OSCAR不得加入isPGFamily:否则
-				// classpath有pg驱动时holder构造成功但跨驱动setObject必败且无回退
-				// (回退仅在holder为null时触发),其json/vector以setString绑定为正确形态
 				pgObjectClass = "org.postgresql.util.PGobject";
+			} else {
+				// update 2026-9-16 兜底探测以PG系dbType为守卫:mysql/oracle/sqlserver/h2等非PG系库
+				// 直接返回哨兵,不再盲探org.postgresql.util.PGobject——postgresql驱动为optional依赖,
+				// 纯mysql等用户classpath无此类,盲探必抛ClassNotFoundException产生误导性debug日志
+				// (消费方SqlUtil/JSONTypeUtil本就有isPGFamily守卫,非PG系holder从不被消费,行为不变);
+				// oscar(神通)不在isPGFamily白名单(老pgjdbc深度魔改,无PGobject同构类,跨驱动setObject
+				// 必败),守卫后天然走此分支,其json/vector以setString绑定为正确形态
+				return NULL_PG_HOLDER;
 			}
 			Class<?> clazz = Class.forName(pgObjectClass);
 			return new DBProfile.PGobjectHolder(clazz.getDeclaredConstructor(),
 					clazz.getMethod("setType", String.class), clazz.getMethod("setValue", String.class));
 		} catch (Throwable e) {
+			// update 2026-9-14 补debug日志:原完全静默,占位句柄回退后json/vector统一以setString绑定,
+			// 一旦探测在特定驱动上持续失败,问题现场无任何线索(回退行为本身是设计预期,故只记debug)
+			logger.debug("failed to probe PGobject class by url:{}, json/vector will be bound as string!", url, e);
 			return NULL_PG_HOLDER;
 		}
 	}
@@ -932,29 +966,24 @@ public class DataSourceUtils {
 					"dataSource is null, possible causes:\n 1. the connection pool is misconfigured and no DataSource was created;\n 2. in multi-datasource scenario spring.sqltoy.defaultDataSource=xxx is not configured;\n 3. the dataSource name specified in the dao does not exist, please check!");
 		}
 		Connection conn = sqltoyContext.getConnection(datasource);
-		Integer dbType;
-		String dialect;
 		try {
-			// 统一提取数据库方言类型
-			if (null != sqltoyContext && StringUtil.isNotBlank(sqltoyContext.getDialect())) {
-				dialect = sqltoyContext.getDialect();
-				dbType = getDBType(dialect);
-				// 显式dialect时仍采集连接真实档案(getDBProfile含dbType/主版本等,随URL缓存)
-				SqlToyThreadDataHolder.setDBProfile(getDBProfile(conn));
-			} else {
-				DBProfile connProfile = getDBProfile(conn);
-				dbType = connProfile.getDbType();
-				dialect = getDialect(dbType);
-				SqlToyThreadDataHolder.setDBProfile(connProfile);
-			}
+			// 统一提取数据库方言类型(update 2026-9-12 步骤3:构建有效执行档案整体传递)
+			DBProfile connProfile = getDBProfile(conn);
+			// update 2026-9-15 优化:显式dialect时走asEffective产出有效执行档案
+			// (dbType/dialect=配置覆盖,realDBType/realDialect=连接探测事实);
+			// ThreadLocal统一存effective profile(一个对象承载两层语义),消费方按需取
+			DBProfile profile = (StringUtil.isNotBlank(sqltoyContext.getDialect()))
+					? connProfile.asEffective(getDBType(sqltoyContext.getDialect()), sqltoyContext.getDialect())
+					: connProfile;
+			SqlToyThreadDataHolder.setDBProfile(profile);
 			// 调试显示数据库信息,便于在多数据库场景下辨别查询对应的数据库
 			if (SqlToyConstants.showDatasourceInfo()) {
-				logger.debug("db.dialect={};conn.url={};schema={};catalog={};username={}", dialect,
+				logger.debug("db.dialect={};conn.url={};schema={};catalog={};username={}", profile.getDialect(),
 						conn.getMetaData().getURL(), conn.getSchema(), conn.getCatalog(),
 						conn.getMetaData().getUserName());
 			}
 			// 调用反调，传入conn和数据库类型进行实际业务处理(数据库类型主要便于DialectFactory获取对应方言处理类)
-			handler.doConnection(conn, dbType, dialect);
+			handler.doConnection(conn, profile.getDbType(), profile.getDialect());
 		} catch (Exception e) {
 			logger.error("processDataSource method execution failed", e);
 			sqltoyContext.releaseConnection(conn, datasource);
@@ -1100,49 +1129,19 @@ public class DataSourceUtils {
 	 * @param dbType
 	 * @return 获取数据库对应的nvl函数
 	 */
+	/**
+	 * update 2026-9-14 按SQL标准(ANSI COALESCE)统一空值判定函数:
+	 * 既有各库方言(nvl/ifnull/isnull/NVL)全部原生支持COALESCE,不再按库分派; COALESCE为短路求值,较oracle
+	 * NVL的全参数求值更优。保留方法供dbType-only 场景(无DBProfile档案)获取空值函数
+	 */
 	public static String getNvlFunction(Integer dbType) {
-		switch (dbType) {
-		case DBType.DB2:
-			return "nvl";
-		case DBType.ORACLE:
-		case DBType.ORACLE11:
-			return "nvl";
-		case DBType.POSTGRESQL:
-		case DBType.POSTGRESQL14:
-			return "COALESCE";
-		case DBType.MYSQL:
-		case DBType.MYSQL57:
-		case DBType.DORIS:
-		case DBType.STARROCKS:
-			return "ifnull";
-		case DBType.SQLSERVER:
-			return "isnull";
-		case DBType.SQLITE:
-			return "ifnull";
-		case DBType.CLICKHOUSE:
-			return "ifnull";
-		case DBType.TIDB:
-			return "ifnull";
-		case DBType.OCEANBASE:
-			return "nvl";
-		case DBType.DM:
-			return "nvl";
-		case DBType.GAUSSDB:
-		case DBType.OPENGAUSS:
-		case DBType.MOGDB:
-		case DBType.STARDB:
-		case DBType.OSCAR:
-		case DBType.VASTBASE:
-			return "nvl";
-		case DBType.KINGBASE:
-			return "nvl";
-		case DBType.IMPALA:
-			return "ifnull";
-		case DBType.H2:
-			return "COALESCE";
-		default:
+		// oracle 23ai实测:COALESCE中对绑定变量按CHAR推断类型,与VECTOR/SDO_GEOMETRY
+		// 等扩展类型列不兼容(ORA-00932),而NVL会从列侧推断绑定类型——oracle族保留NVL;
+		// 其余库COALESCE为ANSI标准函数,已真库验证
+		if (dbType != null && (dbType == DBType.ORACLE || dbType == DBType.ORACLE11)) {
 			return "nvl";
 		}
+		return "COALESCE";
 	}
 
 	/**

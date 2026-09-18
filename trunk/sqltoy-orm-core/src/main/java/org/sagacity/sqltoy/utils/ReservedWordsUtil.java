@@ -70,24 +70,34 @@ public class ReservedWordsUtil {
 		if (reservedWords.isEmpty()) {
 			return sql;
 		}
-		if (dbType == DBType.MYSQL || dbType == DBType.TIDB || dbType == DBType.MYSQL57 || dbType == DBType.TDENGINE
-				|| dbType == DBType.DORIS || dbType == DBType.STARROCKS) {
-			return sql.replaceAll("\\[", "`").replaceAll("\\]", "`");
-		}
-		if (dbType == DBType.ORACLE || dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14
-				|| dbType == DBType.DB2 || dbType == DBType.DM || dbType == DBType.GAUSSDB || dbType == DBType.MOGDB
-				|| dbType == DBType.STARDB || dbType == DBType.OSCAR || dbType == DBType.OPENGAUSS
-				|| dbType == DBType.VASTBASE || dbType == DBType.OCEANBASE || dbType == DBType.ORACLE11) {
-			return sql.replaceAll("\\[", "\"").replaceAll("\\]", "\"");
-		}
-		if (dbType == DBType.H2) {
-			return sql.replaceAll("\\[", "\"").replaceAll("\\]", "\"");
-		}
+		// update 2026-9-15 null防护前置:原null判断位于末尾sqlserver/sqlite分支,而前面的
+		// dbType==DBType.XXX比较已触发Integer拆箱,null入参在到达判断前即NPE
+		// (convertWord/convertSql均为null在条件首位短路,本方法对齐该契约:null原样返回)
 		if (dbType == null || dbType == DBType.SQLSERVER || dbType == DBType.SQLITE) {
 			return sql;
 		}
+		// update 2026-9-14 方括号为字面量:改用String.replace,免去每次调用隐式编译正则(每sql 2~4次正则编译)
+		// update 2026-9-15 合并:clickhouse/impala标识符引用为反引号(ch文档明确),远端已补;
+		// 本地把OCEANBASE从双引号族移入反引号族(mysql模式双引号是字符串字面量)
+		if (dbType == DBType.MYSQL || dbType == DBType.TIDB || dbType == DBType.MYSQL57 || dbType == DBType.TDENGINE
+				|| dbType == DBType.DORIS || dbType == DBType.STARROCKS || dbType == DBType.CLICKHOUSE
+				|| dbType == DBType.IMPALA || dbType == DBType.OCEANBASE) {
+			return sql.replace("[", "`").replace("]", "`");
+		}
+		// update 2026-9-14 补KINGBASE(KingbaseES基于PG,标识符用双引号):原形态落入末尾else被剔除括号,
+		// 保留字字段(如[desc])会变成裸标识符导致语法错误
+		if (dbType == DBType.ORACLE || dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14
+				|| dbType == DBType.DB2 || dbType == DBType.DM || dbType == DBType.GAUSSDB || dbType == DBType.MOGDB
+				|| dbType == DBType.STARDB || dbType == DBType.OSCAR || dbType == DBType.OPENGAUSS
+				|| dbType == DBType.VASTBASE || dbType == DBType.ORACLE11
+				|| dbType == DBType.HANA || dbType == DBType.KINGBASE) {
+			return sql.replace("[", "\"").replace("]", "\"");
+		}
+		if (dbType == DBType.H2) {
+			return sql.replace("[", "\"").replace("]", "\"");
+		}
 		// 剔除保留字符号
-		return sql.replaceAll("\\[", "").replaceAll("\\]", "");
+		return sql.replace("[", "").replace("]", "");
 	}
 
 	/**
@@ -111,8 +121,10 @@ public class ReservedWordsUtil {
 		if (dbType == null || dbType == DBType.SQLSERVER || dbType == DBType.SQLITE) {
 			return "[".concat(column).concat("]");
 		}
+		// update 2026-9-15 补clickhouse/impala(反引号引用标识符),原落末尾else返回裸标识符
 		if (dbType == DBType.MYSQL || dbType == DBType.TIDB || dbType == DBType.MYSQL57 || dbType == DBType.TDENGINE
-				|| dbType == DBType.DORIS || dbType == DBType.STARROCKS) {
+				|| dbType == DBType.DORIS || dbType == DBType.STARROCKS || dbType == DBType.CLICKHOUSE
+				|| dbType == DBType.IMPALA || dbType == DBType.OCEANBASE) {
 			return "`".concat(column).concat("`");
 		}
 		if (dbType == DBType.H2) {
@@ -122,7 +134,7 @@ public class ReservedWordsUtil {
 				|| dbType == DBType.KINGBASE || dbType == DBType.DB2 || dbType == DBType.GAUSSDB
 				|| dbType == DBType.MOGDB || dbType == DBType.OPENGAUSS || dbType == DBType.VASTBASE
 				|| dbType == DBType.STARDB || dbType == DBType.OSCAR || dbType == DBType.DM
-				|| dbType == DBType.OCEANBASE || dbType == DBType.ORACLE11) {
+				|| dbType == DBType.ORACLE11 || dbType == DBType.HANA) {
 			return "\"".concat(column).concat("\"");
 		}
 		return column;
@@ -147,41 +159,34 @@ public class ReservedWordsUtil {
 		StringBuilder sqlBuff = new StringBuilder();
 		Matcher matcher;
 		int start = 0;
-		int end = 0;
 		String keyWord;
 		matcher = pattern.matcher(sql);
-		int subSize = 0;
 		while (matcher.find()) {
-			subSize = 0;
-			end = matcher.start() + 1;
-			keyWord = matcher.group().substring(1);
-			if (keyWord.startsWith("`") || keyWord.startsWith("\"") || keyWord.startsWith("[")
-					|| keyWord.startsWith("'")) {
-				keyWord = keyWord.substring(1);
-			}
-			sqlBuff.append(sql.substring(start, end));
-			keyWord = keyWord.substring(0, keyWord.length() - 1);
-			if (keyWord.endsWith("`") || keyWord.endsWith("\"") || keyWord.endsWith("]") || keyWord.endsWith("'")) {
-				keyWord = keyWord.substring(0, keyWord.length() - 1);
-				subSize = 1;
-			}
+			// update 2026-9-14 改按关键字组(第3组)位置定位:原实现用matcher.start()+1、match.substring(1)
+			// 与subSize的定长边界算术,隐含"首尾边界各消费1个字符"的假定,边界为空匹配时(sql以[col]收尾,
+			// 或[col]紧邻单词字符)会把引用符号与相邻字符错位并丢空白,输出被改坏的sql
+			// 关键字组前后各恰好一个单字符引用符号(第2、4组),故替换区间取组前后各一个字符,
+			// 边界是否命中不再影响定位
+			keyWord = matcher.group(3);
+			sqlBuff.append(sql, start, matcher.start(3) - 1);
 			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.ORACLE
 					|| dbType == DBType.DB2 || dbType == DBType.KINGBASE || dbType == DBType.GAUSSDB
 					|| dbType == DBType.MOGDB || dbType == DBType.OPENGAUSS || dbType == DBType.VASTBASE
-					|| dbType == DBType.DM || dbType == DBType.OCEANBASE || dbType == DBType.ORACLE11
-					|| dbType == DBType.STARDB || dbType == DBType.OSCAR) {
+					|| dbType == DBType.DM || dbType == DBType.ORACLE11
+					|| dbType == DBType.STARDB || dbType == DBType.OSCAR || dbType == DBType.HANA) {
 				sqlBuff.append("\"").append(keyWord).append("\"");
 			} else if (dbType == DBType.SQLSERVER || dbType == DBType.SQLITE) {
 				sqlBuff.append("[").append(keyWord).append("]");
 			} else if (dbType == DBType.MYSQL || dbType == DBType.TIDB || dbType == DBType.MYSQL57
-					|| dbType == DBType.TDENGINE || dbType == DBType.DORIS || dbType == DBType.STARROCKS) {
+					|| dbType == DBType.TDENGINE || dbType == DBType.DORIS || dbType == DBType.STARROCKS
+					|| dbType == DBType.CLICKHOUSE || dbType == DBType.IMPALA || dbType == DBType.OCEANBASE) {
 				sqlBuff.append("`").append(keyWord).append("`");
 			} else if (dbType == DBType.H2) {
 				sqlBuff.append("\"").append(keyWord).append("\"");
 			} else {
 				sqlBuff.append(keyWord);
 			}
-			start = matcher.end() - subSize;
+			start = matcher.end(3) + 1;
 		}
 
 		if (start > 0) {

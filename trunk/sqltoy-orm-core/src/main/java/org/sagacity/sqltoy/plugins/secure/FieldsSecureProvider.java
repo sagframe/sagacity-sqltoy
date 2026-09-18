@@ -20,16 +20,16 @@ public interface FieldsSecureProvider {
 	/**
 	 * 加密
 	 * 
-	 * @param contents
-	 * @return
+	 * @param contents 明文
+	 * @return 密文(加密失败必须抛出运行时异常,不可返回空串——空串会被直接落库导致原文永久丢失)
 	 */
 	public String encrypt(String contents);
 
 	/**
 	 * 解密
 	 * 
-	 * @param secureContents
-	 * @return
+	 * @param secureContents 密文
+	 * @return 明文(解密失败必须抛出运行时异常,不可返回空串——空串与"字段值本身为空"无法区分)
 	 */
 	public String decrypt(String secureContents);
 }
