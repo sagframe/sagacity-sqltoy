@@ -1,11 +1,9 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.plugins.utils;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import org.sagacity.sqltoy.config.model.LabelIndexModel;
 import org.sagacity.sqltoy.utils.ExpressionUtil;
@@ -16,12 +14,13 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @project sagacity-sqltoy
  * @description 提供计算扩展的一些工具
  * @author zhongxuchen
- * @version v1.0, Date:2022年11月18日
- * @modify 2022年11月18日,修改说明
+ * @version v1.0,Date:2022-11-18
+ * @modify Date:2022-11-18,修改说明
  */
 public class CalculateUtils {
 	/**
-	 * @TODO 将columns字符串解析成具体列的数组
+	 * 将columns字符串解析成具体列的数组
+	 * 
 	 * @param labelIndexMap
 	 * @param columns
 	 * @param dataWidth
@@ -40,7 +39,7 @@ public class CalculateUtils {
 		int step;
 		int stepIndex;
 		for (int i = 0; i < colsAry.length; i++) {
-			column = colsAry[i].toLowerCase();
+			column = colsAry[i].toLowerCase(Locale.ROOT);
 			// like {1..20?2} ?step 用于数据间隔性汇总
 			if (column.indexOf("..") != -1) {
 				step = 1;
@@ -53,6 +52,11 @@ public class CalculateUtils {
 					begin = labelIndexMap.get(beginToEnd[0]);
 				} else {
 					begin = (new BigDecimal(ExpressionUtil.calculate(beginToEnd[0]).toString())).intValue();
+				}
+				// 当输入类似 5..（有 .. 但后面没有结束值）时："5..".split("\\.\\.") → ["5"] // Java 默认删除尾部空字符串
+				// split 结果长度为 1，但紧接着的 beginToEnd[1] 会报错，故此处要判断长度
+				if (beginToEnd.length < 2) {
+					continue;
 				}
 				endColumnStr = beginToEnd[1];
 				if (NumberUtil.isInteger(endColumnStr)) {
@@ -74,6 +78,9 @@ public class CalculateUtils {
 					} else {
 						end = (new BigDecimal(ExpressionUtil.calculate(endColumnStr).toString())).intValue();
 					}
+				}
+				if (step <= 0) {
+					step = 1;
 				}
 				for (int j = begin; j <= end; j += step) {
 					if (!result.contains(j)) {

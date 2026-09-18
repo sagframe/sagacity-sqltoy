@@ -1,14 +1,11 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.config.model;
 
 /**
  * @project sagacity-sqltoy
  * @description 外键关联模型
  * @author zhongxuchen
- * @version v1.0, Date:2023年12月20日
- * @modify 2023年12月20日,修改说明
+ * @version v1.0,Date:2023-12-20
+ * @modify Date:2023-12-20,修改说明
  */
 public class ForeignModel {
 	/**

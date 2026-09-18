@@ -6,14 +6,11 @@ import java.io.Serializable;
  * @project sagacity-sqltoy
  * @description 提供基于QueryExecutor的树排序api模型
  * @author zhongxuchen
- * @version v1.0, Date:2023年6月21日
- * @modify 2023年6月21日,修改说明
+ * @version v1.0,Date:2023-06-21
+ * @modify Date:2023-06-21,修改说明
  */
 public class TreeSort implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -6451807102929254951L;
 
 	/**

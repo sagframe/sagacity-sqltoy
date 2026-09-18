@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.config.annotation;
 
 import java.lang.annotation.ElementType;
@@ -12,8 +9,8 @@ import java.lang.annotation.Target;
  * @project sagacity-sqltoy
  * @description 提供one to one 的关联
  * @author zhongxuchen
- * @version v1.0, Date:2021-2-24
- * @modify 2021-2-24,修改说明
+ * @version v1.0,Date:2021-02-24
+ * @modify Date:2021-02-24 修改说明
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)

@@ -69,7 +69,8 @@ public class DataType {
 	}
 
 	/**
-	 * @TODO 获取类型
+	 * 获取类型
+	 * 
 	 * @param typeClass
 	 * @param typeName
 	 * @return

@@ -1,0 +1,2010 @@
+package org.sagacity.sqltoy;
+
+import java.lang.reflect.Array;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.sql.Time;
+import java.sql.Timestamp;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.OffsetDateTime;
+import java.time.OffsetTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.temporal.TemporalAdjusters;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
+
+import org.sagacity.sqltoy.config.model.CacheFilterModel;
+import org.sagacity.sqltoy.config.model.ParamFilterModel;
+import org.sagacity.sqltoy.model.CacheArg;
+import org.sagacity.sqltoy.model.DataAuthFilterConfig;
+import org.sagacity.sqltoy.model.ParamsFilter;
+import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
+import org.sagacity.sqltoy.utils.BeanUtil;
+import org.sagacity.sqltoy.utils.CollectionUtil;
+import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
+import org.sagacity.sqltoy.utils.DateUtil;
+import org.sagacity.sqltoy.utils.NumberUtil;
+import org.sagacity.sqltoy.utils.SqlUtil;
+import org.sagacity.sqltoy.utils.StringUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
+ * @project sagacity-sqltoy
+ * @description sql查询参数过滤
+ * @author zhongxuchen
+ * @version v1.0,Date:2013-03-23
+ * @modify Date:2020-07-15 增加l-like,r-like为参数单边补充%从而不破坏索引,默认是两边
+ * @modify Date:2023-04-18 增加to-string
+ * @modify Date:2023-05-01 优化cache-arg,修复priorMatchEqual存在的bug
+ * @modify Date:2026-09-09 l-like/r-like支持append-str拼接
+ * @modify Date:2026-09-10 appendStr与参数值一致按转义处理后拼接(%转为字面量\%),通配符统一仅由补充的%提供
+ */
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public class ParamFilterProcessor {
+	/**
+	 * 定义日志
+	 */
+	protected final static Logger logger = LoggerFactory.getLogger(ParamFilterProcessor.class);
+
+	// 默认日期格式
+	private static final String DAY_FORMAT = "yyyy-MM-dd";
+
+	private ParamFilterProcessor() {
+	}
+
+	/**
+	 * 对查询条件参数进行filter过滤加工处理(如:判断是否为null、日期格式转换等等)
+	 * 
+	 * @param sqlToyContext
+	 * @param paramArgs
+	 * @param values
+	 * @param filters
+	 * @return
+	 */
+	public static Object[] filterValue(SqlToyContext sqlToyContext, String[] paramArgs, Object[] values,
+			List<ParamFilterModel> filters) {
+		if ((filters == null || filters.size() == 0) || values == null || values.length == 0) {
+			return values;
+		}
+		// update 2020-09-08 当全是?模式传参时，在非分页等场景下paramNames会为null导致正常params="*" 的blank过滤无效
+		// 构造出参数便于统一处理
+		String[] paramsName;
+		if ((paramArgs == null || paramArgs.length == 0)) {
+			paramsName = new String[values.length];
+			for (int i = 0; i < values.length; i++) {
+				paramsName[i] = "param_" + i;
+			}
+		} else {
+			paramsName = paramArgs;
+		}
+		HashMap<String, Integer> paramIndexMap = new HashMap<String, Integer>();
+		int paramSize = paramsName.length;
+		Object[] paramValues = new Object[paramSize];
+		for (int i = 0; i < paramSize; i++) {
+			paramIndexMap.put(paramsName[i].toLowerCase(Locale.ROOT), i);
+			paramValues[i] = values[i];
+		}
+		String[] filterParams;
+		int index;
+		String filterParam;
+		String filterType;
+		for (ParamFilterModel paramFilterModel : filters) {
+			filterParams = paramFilterModel.getParams();
+			filterType = paramFilterModel.getFilterType();
+			// 通配符表示针对所有参数
+			if (filterParams.length == 1 && "*".equals(filterParams[0])) {
+				filterParams = paramsName;
+			}
+			// 排他性参数(当某些参数值都不为null,则设置其他参数值为null)
+			if ("exclusive".equals(filterType) && paramFilterModel.getUpdateParams() != null) {
+				filterExclusive(paramIndexMap, paramFilterModel, paramValues);
+			} // 缓存中提取精准查询参数作为sql查询条件值
+			else if ("cache-arg".equals(filterType)) {
+				filterCache(sqlToyContext, paramIndexMap, paramFilterModel, paramValues);
+			} else if ("clone".equals(filterType)) {
+				filterClone(paramIndexMap, paramFilterModel, paramValues);
+			}
+			// 决定性参数不为null时即条件成立时，需要保留的参数(其他的参数全部设置为null)
+			else if ("primary".equals(filterType)) {
+				filterParam = paramFilterModel.getParam().toLowerCase(Locale.ROOT);
+				index = (paramIndexMap.get(filterParam) == null) ? -1 : paramIndexMap.get(filterParam);
+				// 决定性参数值不为null
+				if (index != -1 && paramValues[index] != null) {
+					for (int j = 0; j < paramSize; j++) {
+						// 排除自身
+						if (j != index
+								&& !paramFilterModel.getExcludes().contains(paramsName[j].toLowerCase(Locale.ROOT))) {
+							paramValues[j] = null;
+						}
+					}
+				}
+			} else {
+				for (int i = 0, n = filterParams.length; i < n; i++) {
+					filterParam = filterParams[i].toLowerCase(Locale.ROOT);
+					index = (paramIndexMap.get(filterParam) == null) ? -1 : paramIndexMap.get(filterParam);
+					// 2023-6-10 当条件参数值为null时要排除设置default场景(其它参数为null就不做处理)
+					if (index != -1 && (paramValues[index] != null || "default".equals(filterType))) {
+						if (!paramFilterModel.getExcludes().contains(filterParam)) {
+							paramValues[index] = filterSingleParam(sqlToyContext, paramValues, paramValues[index],
+									paramFilterModel, filterParam, paramIndexMap);
+						}
+					}
+				}
+			}
+		}
+		return paramValues;
+	}
+
+	/**
+	 * 从缓存中过滤提取值作为实际查询语句的条件
+	 * 
+	 * @param sqlToyContext
+	 * @param paramIndexMap
+	 * @param paramFilterModel
+	 * @param paramValues
+	 */
+	private static void filterCache(SqlToyContext sqlToyContext, HashMap<String, Integer> paramIndexMap,
+			ParamFilterModel paramFilterModel, Object[] paramValues) {
+		try {
+			String paramName = paramFilterModel.getParam().toLowerCase(Locale.ROOT);
+			int index = (paramIndexMap.get(paramName) == null) ? -1 : paramIndexMap.get(paramName);
+			// 需要转化的值,将paramValue统一转化为数组
+			List<String> paramValueAry = new ArrayList<String>();
+			if (index >= 0 && paramValues[index] != null) {
+				if (paramValues[index] instanceof Collection) {
+					Object[] tmp = ((Collection) paramValues[index]).toArray();
+					for (Object obj : tmp) {
+						paramValueAry.add((obj == null) ? null : obj.toString().trim());
+					}
+				} else if (paramValues[index] instanceof Object[]) {
+					Object[] tmp = (Object[]) paramValues[index];
+					for (Object obj : tmp) {
+						paramValueAry.add((obj == null) ? null : obj.toString().trim());
+					}
+				} else {
+					paramValueAry.add(paramValues[index].toString().trim());
+				}
+			}
+			if (paramValueAry.isEmpty()) {
+				return;
+			}
+			// 将传递匹配条件转小写
+			List<String> matchLowAry = new ArrayList<String>();
+			for (String str : paramValueAry) {
+				matchLowAry.add(str.toLowerCase(Locale.ROOT));
+			}
+			// 是否将转化的值按新的条件参数存储
+			String aliasName = paramFilterModel.getAliasName();
+			if (StringUtil.isBlank(aliasName)) {
+				aliasName = paramFilterModel.getParam();
+			}
+			if (!paramIndexMap.containsKey(aliasName.toLowerCase(Locale.ROOT))) {
+				logger.warn(
+						"cache-arg config error: the alias:{} for getting the actual condition value from cache:{} does not exist in the actual sql!",
+						paramFilterModel.getCacheName(), aliasName);
+				return;
+			}
+			// 获取缓存数据
+			HashMap<String, Object[]> cacheDataMap = sqlToyContext.getTranslateManager()
+					.getCacheData(paramFilterModel.getCacheName(), paramFilterModel.getCacheType());
+			if (cacheDataMap == null || cacheDataMap.isEmpty()) {
+				logger.warn(
+						"cache:{} may not exist, exception occurred while getting the query condition key from the cache, please check!",
+						paramFilterModel.getCacheName());
+				return;
+			}
+			IUnifyFieldsHandler unifyHandler = sqlToyContext.getUnifyFieldsHandler();
+			CacheFilterModel[] cacheFilters = paramFilterModel.getCacheFilters();
+			CacheFilterModel cacheFilter;
+			// 是否存在对缓存进行条件过滤，如过滤缓存中的状态，取状态为:1、2、3的缓存值
+			boolean hasFilter = (cacheFilters == null) ? false : true;
+			List<Map<String, String>> filterValues = new ArrayList<Map<String, String>>();
+			if (hasFilter) {
+				Integer cacheValueIndex;
+				Object compareValue;
+				for (int i = 0; i < cacheFilters.length; i++) {
+					cacheFilter = cacheFilters[i];
+					if (cacheFilter.getCompareValues() == null) {
+						cacheValueIndex = paramIndexMap.get(cacheFilter.getCompareParam().toLowerCase(Locale.ROOT));
+						compareValue = cacheFilter.getCompareParam();
+						// 是参数名称，提取对应值
+						if (cacheValueIndex != null) {
+							compareValue = paramValues[cacheValueIndex.intValue()];
+						} else if (unifyHandler != null && unifyHandler.dataAuthFilters() != null) {
+							// 通过统一传参，获取数据权限中的数据，如租户、授权机构等
+							DataAuthFilterConfig dataAuthConfig = unifyHandler.dataAuthFilters()
+									.get(cacheFilter.getCompareParam());
+							if (dataAuthConfig != null && dataAuthConfig.getValues() != null) {
+								compareValue = dataAuthConfig.getValues();
+							}
+						}
+					} else {
+						compareValue = cacheFilter.getCompareValues();
+					}
+					Map<String, String> tmp = new HashMap<String, String>();
+					if (compareValue.getClass().isArray()) {
+						Object[] ary = (Object[]) compareValue;
+						for (Object obj : ary) {
+							tmp.put(obj.toString(), "1");
+						}
+					} else if (compareValue instanceof Collection) {
+						for (Iterator iter = ((Collection) compareValue).iterator(); iter.hasNext();) {
+							tmp.put(iter.next().toString(), "1");
+						}
+					} else {
+						tmp.put(compareValue.toString(), "1");
+					}
+					filterValues.add(tmp);
+				}
+			}
+			// 对比的缓存列(缓存数据以数组形式存储)
+			int[] matchIndexes = paramFilterModel.getCacheMappingIndexes();
+			// 最大允许匹配数量,缓存匹配一般用于in (?,?)形式的查询,in 参数有数量限制
+			int maxLimit = paramFilterModel.getCacheMappingMax();
+			// 匹配的缓存key结果集合
+			Set<Object> matchedKeys = new HashSet<Object>();
+			int cacheKeyIndex = paramFilterModel.getCacheKeyIndex();
+			boolean include = true;
+			// 是否优先判断相等
+			boolean priorMatchEqual = paramFilterModel.isPriorMatchEqual();
+			// 将条件参数值转小写进行统一比较
+			String matchStr;
+			String[] matchWords;
+			// key 值
+			Object keyCode;
+			Object compareValue;
+			// 优先匹配查询参数跟缓存名称等直接相等，精准匹配
+			if (priorMatchEqual) {
+				String keyLow;
+				for (Object[] cacheRow : cacheDataMap.values()) {
+					keyCode = cacheRow[cacheKeyIndex];
+					include = true;
+					// 对缓存进行过滤(比如过滤本人授权访问机构下面的员工或当期状态为生效的员工)
+					if (hasFilter) {
+						include = doCacheFilter(cacheFilters, cacheRow, filterValues);
+					}
+					// 过滤条件成立，且当前key没有被匹配过，开始匹配
+					if (include) {
+						keyLow = keyCode.toString().toLowerCase(Locale.ROOT);
+						skipLoop: for (int i = 0; i < paramValueAry.size(); i++) {
+							// 从转小写集合中取值，避免每次toLowcase
+							matchStr = matchLowAry.get(i);
+							// 直接等于key
+							if (matchStr.equals(keyLow)) {
+								matchedKeys.add(keyCode);
+								// 相等的剔除不再参与后续like匹配
+								matchLowAry.remove(i);
+								paramValueAry.remove(i);
+								// 进入下一个key循环
+								break;
+							}
+							// 名称跟比较列的值相同
+							for (int matchIndex : matchIndexes) {
+								compareValue = cacheRow[matchIndex];
+								// 名称相同
+								if (compareValue != null
+										&& matchStr.equals(compareValue.toString().toLowerCase(Locale.ROOT))) {
+									matchedKeys.add(keyCode);
+									// 相等的剔除不再参与后续like匹配
+									matchLowAry.remove(i);
+									paramValueAry.remove(i);
+									// 进入下一个key循环
+									break skipLoop;
+								}
+							}
+						}
+						// 超出阈值、或者全部匹配到相等后跳出
+						if (paramValueAry.isEmpty() || matchedKeys.size() >= maxLimit) {
+							break;
+						}
+					}
+				}
+			}
+			// 存在未完全相等的条件参数且匹配数量小于最大匹配量，继续进行like匹配
+			if (!matchLowAry.isEmpty() && matchedKeys.size() < maxLimit) {
+				// 将匹配参数切割成分词数组
+				int likeArgSize = matchLowAry.size();
+				List<String[]> paramsMatchWords = new ArrayList<String[]>();
+				for (int i = 0; i < likeArgSize; i++) {
+					paramsMatchWords.add(matchLowAry.get(i).split("\\s+"));
+				}
+				for (Object[] cacheRow : cacheDataMap.values()) {
+					keyCode = cacheRow[cacheKeyIndex];
+					include = true;
+					// 已经存在无需再比较
+					if (matchedKeys.contains(keyCode)) {
+						include = false;
+					}
+					// 对缓存进行过滤(比如过滤本人授权访问机构下面的员工或当期状态为生效的员工)
+					if (hasFilter && include) {
+						include = doCacheFilter(cacheFilters, cacheRow, filterValues);
+					}
+					// 过滤条件成立，且当前key没有被匹配过，开始匹配
+					if (include) {
+						skipLoop: for (int i = 0; i < likeArgSize; i++) {
+							matchWords = paramsMatchWords.get(i);
+							for (int matchIndex : matchIndexes) {
+								compareValue = cacheRow[matchIndex];
+								// 匹配检索,全部转成小写比较
+								if (compareValue != null && StringUtil
+										.like(compareValue.toString().toLowerCase(Locale.ROOT), matchWords)) {
+									matchedKeys.add(keyCode);
+									break skipLoop;
+								}
+							}
+						}
+						// 超出阈值跳出
+						if (matchedKeys.size() >= maxLimit) {
+							break;
+						}
+					}
+				}
+			}
+			Object[] realMatched = null;
+			// 没有通过缓存匹配到具体key，代入默认值
+			if (matchedKeys.isEmpty()) {
+				if (paramFilterModel.getCacheNotMatchedValue() != null) {
+					realMatched = new Object[] { paramFilterModel.getCacheNotMatchedValue() };
+				} else if (paramFilterModel.isCacheNotMatchedReturnSelf()) {
+					realMatched = new String[paramValueAry.size()];
+					paramValueAry.toArray(realMatched);
+				} else {
+					realMatched = new Object[0];
+				}
+			} else {
+				realMatched = new Object[matchedKeys.size()];
+				matchedKeys.toArray(realMatched);
+			}
+			// 存在别名,设置别名对应的值
+			if (StringUtil.isNotBlank(paramFilterModel.getAliasName())) {
+				int aliasIndex = paramIndexMap.get(paramFilterModel.getAliasName().toLowerCase(Locale.ROOT));
+				paramValues[aliasIndex] = realMatched;
+			} else {
+				paramValues[index] = realMatched;
+			}
+		} catch (Exception e) {
+			logger.error(
+					"exception occurred in cache-arg filter processing, the query condition is processed as unfiltered in this execution (may expand the query range), cacheName:{}!",
+					paramFilterModel.getCacheName(), e);
+		}
+	}
+
+	/**
+	 * 处理CacheArgs 的过滤逻辑,条件成立include=true
+	 * 
+	 * @param cacheFilters
+	 * @param cacheRow
+	 * @param filterValues
+	 * @return
+	 */
+	private static boolean doCacheFilter(CacheFilterModel[] cacheFilters, Object[] cacheRow,
+			List<Map<String, String>> filterValues) {
+		CacheFilterModel cacheFilter;
+		boolean isEqual;
+		for (int i = 0; i < cacheFilters.length; i++) {
+			cacheFilter = cacheFilters[i];
+			// 过滤条件是否相等
+			if (cacheRow[cacheFilter.getCacheIndex()] == null) {
+				isEqual = false;
+			} else {
+				isEqual = filterValues.get(i).containsKey(cacheRow[cacheFilter.getCacheIndex()].toString());
+			}
+			// 条件不成立则过滤掉
+			if (("eq".equals(cacheFilter.getCompareType()) && !isEqual)
+					|| ("neq".equals(cacheFilter.getCompareType()) && isEqual)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * 互斥性参数filter
+	 * 
+	 * @param paramIndexMap
+	 * @param paramFilterModel
+	 * @param paramValues
+	 */
+	private static void filterExclusive(HashMap<String, Integer> paramIndexMap, ParamFilterModel paramFilterModel,
+			Object[] paramValues) {
+		boolean isExclusive = false;
+		String filterParam = paramFilterModel.getParam().toLowerCase(Locale.ROOT);
+		int index = (paramIndexMap.get(filterParam) == null) ? -1 : paramIndexMap.get(filterParam);
+		// 排他性参数中有值为null则排他条件不成立
+		if (index != -1) {
+			Object paramValue = paramValues[index];
+			String compareType = paramFilterModel.getCompareType();
+			String[] compareValues = paramFilterModel.getCompareValues();
+			if ("==".equals(compareType)) {
+				if (null == paramValue && (null == compareValues || "null".equals(compareValues[0]))) {
+					isExclusive = true;
+				} else if (null != paramValue && null != compareValues) {
+					// 返回null表示条件成立
+					if (null == filterEquals(paramValue, compareValues)) {
+						isExclusive = true;
+					}
+				}
+			} else if (null != paramValue && null != compareValues) {
+				Object result = paramValue;
+				if (">=".equals(compareType)) {
+					result = filterMoreEquals(paramValue, compareValues[0]);
+				} else if (">".equals(compareType)) {
+					result = filterMore(paramValue, compareValues[0]);
+				} else if ("<=".equals(compareType)) {
+					result = filterLessEquals(paramValue, compareValues[0]);
+				} else if ("<".equals(compareType)) {
+					result = filterLess(paramValue, compareValues[0]);
+				} else if ("<>".equals(compareType)) {
+					result = filterNotEquals(paramValue, compareValues);
+				} else if ("between".equals(compareType)) {
+					result = filterBetween(paramValue, compareValues[0], compareValues[compareValues.length - 1]);
+				} else if ("in".equals(compareType)) {
+					result = filterEquals(paramValue, compareValues);
+				}
+				if (null == result) {
+					isExclusive = true;
+				}
+			}
+		}
+		// 将排斥的参数设置为null
+		if (isExclusive) {
+			String updateParam;
+			String updateValue = paramFilterModel.getUpdateValue();
+			Object updateObj = null;
+			boolean quotOtherParam = false;
+			// update值引入其他参数的值
+			if (updateValue != null && paramIndexMap.containsKey(updateValue.toLowerCase(Locale.ROOT))) {
+				quotOtherParam = true;
+				updateObj = paramValues[paramIndexMap.get(updateValue.toLowerCase(Locale.ROOT))];
+			}
+			for (int i = 0, n = paramFilterModel.getUpdateParams().length; i < n; i++) {
+				updateParam = paramFilterModel.getUpdateParams()[i].toLowerCase(Locale.ROOT);
+				index = (paramIndexMap.get(updateParam) == null) ? -1 : paramIndexMap.get(updateParam);
+				// 排他性参数中有值为null则排他条件不成立
+				if (index != -1) {
+					if (quotOtherParam) {
+						paramValues[index] = updateObj;
+					} else {
+						if (null == updateValue) {
+							paramValues[index] = null;
+						} else if (null == paramValues[index]) {
+							paramValues[index] = updateValue;
+						} else if (paramValues[index] instanceof LocalDate) {
+							paramValues[index] = DateUtil.asLocalDate(parseDateStr(updateValue));
+						} else if (paramValues[index] instanceof LocalDateTime) {
+							paramValues[index] = DateUtil.asLocalDateTime(parseDateStr(updateValue));
+						} else if (paramValues[index] instanceof LocalTime) {
+							paramValues[index] = DateUtil.asLocalTime(parseDateStr(updateValue));
+						} else if (paramValues[index] instanceof Timestamp) {
+							paramValues[index] = DateUtil.getTimestamp(parseDateStr(updateValue));
+						} else if (paramValues[index] instanceof Time) {
+							paramValues[index] = new Time(parseDateStr(updateValue).getTime());
+						} else if (paramValues[index] instanceof Date) {
+							paramValues[index] = parseDateStr(updateValue);
+						} else if (paramValues[index] instanceof BigDecimal) {
+							paramValues[index] = new BigDecimal(updateValue);
+						} else if (paramValues[index] instanceof Long) {
+							paramValues[index] = Long.valueOf(updateValue);
+						} else if (paramValues[index] instanceof Integer) {
+							paramValues[index] = Integer.valueOf(updateValue);
+						} else if (paramValues[index] instanceof Double) {
+							paramValues[index] = Double.valueOf(updateValue);
+						} else if (paramValues[index] instanceof Float) {
+							paramValues[index] = Float.valueOf(updateValue);
+						} else if (paramValues[index] instanceof BigInteger) {
+							paramValues[index] = new BigInteger(updateValue);
+						} else {
+							paramValues[index] = updateValue;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * 将某个参数的值赋给另外一个参数,场景:前端传单日期条件参数，实际查询要组成beginDate,endDate场景
+	 * 
+	 * @param paramIndexMap
+	 * @param paramFilterModel
+	 * @param paramValues
+	 */
+	private static void filterClone(HashMap<String, Integer> paramIndexMap, ParamFilterModel paramFilterModel,
+			Object[] paramValues) {
+		if (paramFilterModel.getParam() == null || paramFilterModel.getUpdateParams() == null
+				|| paramFilterModel.getUpdateParams().length != 1) {
+			return;
+		}
+		String filterParam = paramFilterModel.getParam().toLowerCase(Locale.ROOT);
+		String updateParam = paramFilterModel.getUpdateParams()[0].toLowerCase(Locale.ROOT);
+		int paramIndex = (paramIndexMap.get(filterParam) == null) ? -1 : paramIndexMap.get(filterParam);
+		int updateIndex = (paramIndexMap.get(updateParam) == null) ? -1 : paramIndexMap.get(updateParam);
+		// 存在clone的参数属性
+		if (paramIndex != -1 && updateIndex != -1) {
+			Object paramValue = paramValues[paramIndex];
+			if (paramValue == null) {
+				return;
+			}
+			Object cloneValue = null;
+			if (paramValue instanceof String) {
+				cloneValue = paramValue.toString();
+			} else if (paramValue instanceof Timestamp) {
+				cloneValue = ((Timestamp) paramValue).clone();
+			} else if (paramValue instanceof Date) {
+				cloneValue = ((Date) paramValue).clone();
+			} else if (paramValue instanceof LocalDate) {
+				LocalDate date = (LocalDate) paramValue;
+				cloneValue = LocalDate.of(date.getYear(), date.getMonthValue(), date.getDayOfMonth());
+			} else if (paramValue instanceof LocalDateTime) {
+				LocalDateTime date = (LocalDateTime) paramValue;
+				cloneValue = LocalDateTime.of(date.getYear(), date.getMonthValue(), date.getDayOfMonth(),
+						date.getHour(), date.getMinute(), date.getSecond());
+			} else if (paramValue instanceof LocalTime) {
+				LocalTime date = (LocalTime) paramValue;
+				cloneValue = LocalTime.of(date.getHour(), date.getMinute(), date.getSecond());
+			} else if (paramValue.getClass().isArray()) {
+				// 原始类型数组(int[]等)不能直接强转Object[],经convertArray统一装箱后再拷贝,
+				// 保证clone产物是独立副本,后续过滤原地修改不影响调用方原值
+				cloneValue = CollectionUtil.convertArray(paramValue).clone();
+			} else if (paramValue instanceof ArrayList) {
+				cloneValue = ((ArrayList) paramValue).clone();
+			} else if (paramValue instanceof HashSet) {
+				cloneValue = ((HashSet) paramValue).clone();
+			} else {
+				cloneValue = paramValue;
+			}
+			if (cloneValue != null) {
+				paramValues[updateIndex] = cloneValue;
+			}
+		}
+	}
+
+	/**
+	 * 过滤加工单个参数的值
+	 * 
+	 * @param sqlToyContext
+	 * @param paramValues
+	 * @param paramValue
+	 * @param paramFilterModel
+	 * @param filterParam
+	 * @param paramIndexMap
+	 * @return
+	 */
+	private static Object filterSingleParam(SqlToyContext sqlToyContext, Object[] paramValues, Object paramValue,
+			ParamFilterModel paramFilterModel, String filterParam, HashMap<String, Integer> paramIndexMap) {
+		String filterType = paramFilterModel.getFilterType();
+		// null或者非设置default默认值(这里属于冗余校验，上面调用前已经校验是否为null或default)
+		if (null == paramValue && !"default".equals(filterType)) {
+			return null;
+		}
+		Object result = paramValue;
+		if ("blank".equals(filterType)) {
+			result = paramValue;
+			if (paramValue instanceof CharSequence) {
+				if ("".equals(paramValue.toString().trim())) {
+					result = null;
+				}
+			} else if (paramValue instanceof Collection) {
+				if (((Collection) paramValue).isEmpty()) {
+					result = null;
+				}
+			} else if (paramValue instanceof Map) {
+				if (((Map) paramValue).isEmpty()) {
+					result = null;
+				}
+			} else if (paramValue.getClass().isArray()) {
+				if (Array.getLength(paramValue) == 0) {
+					result = null;
+				}
+			}
+		} else if ("default".equals(filterType)) {
+			result = filterDefault(paramValues, paramValue, paramFilterModel, paramIndexMap);
+		} else if ("eq".equals(filterType)) {
+			result = filterEquals(paramValue, paramFilterModel.getValues());
+		} else if ("gt".equals(filterType)) {
+			result = filterMore(paramValue, paramFilterModel.getValues()[0]);
+		} else if ("gte".equals(filterType)) {
+			result = filterMoreEquals(paramValue, paramFilterModel.getValues()[0]);
+		} else if ("lt".equals(filterType)) {
+			result = filterLess(paramValue, paramFilterModel.getValues()[0]);
+		} else if ("lte".equals(filterType)) {
+			result = filterLessEquals(paramValue, paramFilterModel.getValues()[0]);
+		} else if ("between".equals(filterType)) {
+			result = filterBetween(paramValue, paramFilterModel.getValues()[0],
+					paramFilterModel.getValues()[paramFilterModel.getValues().length - 1]);
+		} else if ("replace".equals(filterType)) {
+			result = replace(paramValue, paramFilterModel.getRegex(), paramFilterModel.getValues()[0],
+					paramFilterModel.isFirst());
+		} else if ("split".equals(filterType)) {
+			result = splitToArray(paramValue, (null == paramFilterModel.getSplit()) ? "," : paramFilterModel.getSplit(),
+					paramFilterModel.getDataType());
+		} else if ("date-format".equals(filterType)) {
+			result = dateFormat(paramValue, paramFilterModel.getFormat());
+		} else if ("neq".equals(filterType)) {
+			result = filterNotEquals(paramValue, paramFilterModel.getValues());
+		} else if ("to-date".equals(filterType)) {
+			Double increaseTime = 0d;
+			String increaseTimeStr = paramFilterModel.getIncrementTime();
+			if (StringUtil.isNotBlank(increaseTimeStr)) {
+				if (NumberUtil.isNumber(increaseTimeStr)) {
+					increaseTime = Double.parseDouble(increaseTimeStr);
+				} else {
+					// -paramName为负数引用(解析层由-${paramName}规整而来),取参数值后按负号取反
+					String incParam = increaseTimeStr;
+					boolean negate = incParam.startsWith("-");
+					if (negate) {
+						incParam = incParam.substring(1);
+					}
+					if (paramIndexMap.containsKey(incParam.toLowerCase(Locale.ROOT))) {
+						Object tmp = paramValues[paramIndexMap.get(incParam.toLowerCase(Locale.ROOT))];
+						if (tmp != null) {
+							if (tmp instanceof Number) {
+								increaseTime = ((Number) tmp).doubleValue();
+							} else {
+								try {
+									increaseTime = Double.parseDouble(tmp.toString());
+								} catch (NumberFormatException e) {
+									throw new IllegalArgumentException(
+											"to-date filter increment-time referenced param [" + incParam + "] value ["
+													+ tmp + "] is not a valid number, please check!",
+											e);
+								}
+							}
+							if (negate) {
+								increaseTime = -increaseTime;
+							}
+						}
+					} else {
+						logger.warn(
+								"the param:{} referenced by increment-time of the to-date filter does not exist (param name misspelled or not passed in), the increment is treated as 0, please check!",
+								incParam);
+					}
+				}
+			}
+			if (paramValue.getClass().isArray()) {
+				Object[] arrays = CollectionUtil.convertArray(paramValue);
+				for (int i = 0, n = arrays.length; i < n; i++) {
+					arrays[i] = toDate(arrays[i], paramFilterModel, increaseTime);
+				}
+				result = arrays;
+			} else if (paramValue instanceof List) {
+				List valueList = (List) paramValue;
+				for (int i = 0, n = valueList.size(); i < n; i++) {
+					valueList.set(i, toDate(valueList.get(i), paramFilterModel, increaseTime));
+				}
+				result = valueList;
+			} else if (paramValue instanceof Set) {
+				Set tmpSet = (paramValue instanceof LinkedHashSet) ? new LinkedHashSet() : new HashSet<>();
+				Iterator iter = ((Set) paramValue).iterator();
+				while (iter.hasNext()) {
+					tmpSet.add(toDate(iter.next(), paramFilterModel, increaseTime));
+				}
+				result = tmpSet;
+			} else {
+				result = toDate(paramValue, paramFilterModel, increaseTime);
+			}
+		} else if ("to-number".equals(filterType)) {
+			if (paramValue.getClass().isArray()) {
+				Object[] arrays = CollectionUtil.convertArray(paramValue);
+				for (int i = 0, n = arrays.length; i < n; i++) {
+					arrays[i] = toNumber(arrays[i], paramFilterModel.getDataType());
+				}
+				result = arrays;
+			} else if (paramValue instanceof List) {
+				List valueList = (List) paramValue;
+				for (int i = 0, n = valueList.size(); i < n; i++) {
+					valueList.set(i, toNumber(valueList.get(i), paramFilterModel.getDataType()));
+				}
+				result = valueList;
+			} else if (paramValue instanceof Set) {
+				Set tmpSet = (paramValue instanceof LinkedHashSet) ? new LinkedHashSet() : new HashSet<>();
+				Iterator iter = ((Set) paramValue).iterator();
+				while (iter.hasNext()) {
+					tmpSet.add(toNumber(iter.next(), paramFilterModel.getDataType()));
+				}
+				result = tmpSet;
+			} else {
+				result = toNumber(paramValue, paramFilterModel.getDataType());
+			}
+		} else if ("to-string".equals(filterType)) {
+			result = toString(paramValue, paramFilterModel.getAddQuote());
+		} else if ("to-array".equals(filterType)) {
+			result = toArray(paramValue, paramFilterModel.getDataType());
+		} else if ("l-like".equals(filterType)) {
+			result = like(paramValue, paramFilterModel.getAppendStr(), true);
+		} else if ("r-like".equals(filterType)) {
+			result = like(paramValue, paramFilterModel.getAppendStr(), false);
+		} else if ("escapeLike".equals(filterType)) {
+			result = escapeLike(paramValue);
+		}
+		// 增加将数组条件组合成in () 查询条件参数'x1','x2'的形式 ，add 2019-1-4
+		else if ("to-in-arg".equals(filterType)) {
+			if (paramValue instanceof CharSequence) {
+				String inArg = paramValue.toString();
+				if (!paramFilterModel.isSingleQuote()) {
+					result = inArg;
+				} else if (inArg.startsWith("'") && inArg.endsWith("'")) {
+					result = inArg;
+				} else {
+					String[] args = inArg.split("\\,");
+					StringBuilder inStr = new StringBuilder();
+					String tmp;
+					int cnt = 0;
+					for (String arg : args) {
+						tmp = arg.trim();
+						if (!"".equals(tmp)) {
+							if (cnt > 0) {
+								inStr.append(",");
+							}
+							if (!tmp.startsWith("'")) {
+								inStr.append("'");
+							}
+							inStr.append(tmp);
+							if (!tmp.endsWith("'")) {
+								inStr.append("'");
+							}
+							cnt++;
+						}
+					}
+					result = inStr.toString();
+				}
+			} else {
+				try {
+					result = SqlUtil.combineQueryInStr(paramValue, null, null, paramFilterModel.isSingleQuote());
+				} catch (Exception e) {
+					throw new RuntimeException(
+							"error occurred while converting an array to in (:params) condition values during the sql param filter process:"
+									+ e.getMessage());
+				}
+			}
+		} else if ("remove-null".equals(filterType)) {
+			result = removeNull(paramValue, paramFilterModel.isRemoveBlank());
+		} else if ("sql-injection".equals(filterType)) {
+			if (SqlUtil.isSqlInjection(paramFilterModel.getSqlInjectionLevel(), paramValue)) {
+				throw new RuntimeException("the value of param [" + filterParam
+						+ "] failed the sql injection validation, validation policy: ["
+						+ paramFilterModel.getSqlInjectionLevel().value() + "]!");
+			}
+		} else if ("custom-handler".equals(filterType)) {
+			if (sqlToyContext.getCustomFilterHandler() == null) {
+				throw new RuntimeException(
+						"the custom-handler filter is used in the sql, but no implementation class is defined for spring.sqltoy.customFilterHandler!");
+			}
+			result = sqlToyContext.getCustomFilterHandler().process(paramValue, paramFilterModel.getType());
+		} else {
+			logger.warn(
+					"the filterType={} defined in filters of the sql has no corresponding implementation currently!",
+					filterType);
+		}
+		return result;
+	}
+
+	/**
+	 * 剔除数组集合中为null的值
+	 * 
+	 * @param paramValue
+	 * @param removeBlank
+	 * @return
+	 */
+	private static Object removeNull(Object paramValue, boolean removeBlank) {
+		if (StringUtil.isBlank(paramValue)) {
+			return null;
+		}
+		if (paramValue instanceof Object[]) {
+			List result = new ArrayList();
+			Object[] tmpAry = (Object[]) paramValue;
+			for (Object cell : tmpAry) {
+				if (removeBlank) {
+					if (StringUtil.isNotBlank(cell)) {
+						result.add(cell);
+					}
+				} else if (cell != null) {
+					result.add(cell);
+				}
+			}
+			if (result.isEmpty()) {
+				return null;
+			}
+			return result.toArray();
+		} else if (paramValue instanceof List) {
+			List result = new ArrayList();
+			Iterator iter = ((List) paramValue).iterator();
+			Object cell;
+			while (iter.hasNext()) {
+				cell = iter.next();
+				if (removeBlank) {
+					if (StringUtil.isNotBlank(cell)) {
+						result.add(cell);
+					}
+				} else if (cell != null) {
+					result.add(cell);
+				}
+			}
+			if (result.isEmpty()) {
+				return null;
+			}
+			return result;
+		} else if (paramValue instanceof Set) {
+			Set result = (paramValue instanceof LinkedHashSet) ? new LinkedHashSet() : new HashSet();
+			Iterator iter = ((Set) paramValue).iterator();
+			Object cell;
+			while (iter.hasNext()) {
+				cell = iter.next();
+				if (removeBlank) {
+					if (StringUtil.isNotBlank(cell)) {
+						result.add(cell);
+					}
+				} else if (cell != null) {
+					result.add(cell);
+				}
+			}
+			if (result.isEmpty()) {
+				return null;
+			}
+			return result;
+		}
+		return paramValue;
+	}
+
+	/**
+	 * 对参数值进行like特殊字符转义处理，避免like查询时出现异常
+	 * 
+	 * @param paramValue
+	 * @return
+	 */
+	private static Object escapeLike(Object paramValue) {
+		if (StringUtil.isBlank(paramValue)) {
+			return null;
+		}
+		int dbType = DBType.UNDEFINE;
+		// dialect为null时,尝试从运行时上下文获取数据库类型
+		if (SqlExecuteStat.get() != null) {
+			dbType = SqlExecuteStat.get().getDbType();
+		}
+		if (paramValue instanceof String) {
+			return SqlUtil.escapeLikeValue(paramValue.toString(), dbType, true);
+		} else if (paramValue instanceof String[]) {
+			String[] tmpAry = (String[]) paramValue;
+			for (int i = 0, n = tmpAry.length; i < n; i++) {
+				if (tmpAry[i] != null) {
+					tmpAry[i] = SqlUtil.escapeLikeValue(tmpAry[i].toString(), dbType, true);
+				}
+			}
+			return tmpAry;
+		} else if (paramValue instanceof List) {
+			List tmpList = (List) paramValue;
+			for (int i = 0, n = tmpList.size(); i < n; i++) {
+				if (tmpList.get(i) != null) {
+					tmpList.set(i, SqlUtil.escapeLikeValue(tmpList.get(i).toString(), dbType, true));
+				}
+			}
+			return tmpList;
+		} else if (paramValue instanceof Set) {
+			Set tmpSet = (Set) paramValue;
+			Set result = (paramValue instanceof LinkedHashSet) ? new LinkedHashSet() : new HashSet();
+			Iterator iter = tmpSet.iterator();
+			Object cell;
+			while (iter.hasNext()) {
+				cell = iter.next();
+				if (cell != null) {
+					result.add(SqlUtil.escapeLikeValue(cell.toString(), dbType, true));
+				}
+			}
+			return result;
+		}
+		return paramValue;
+	}
+
+	/**
+	 * 对参数进行左边或右补%符号,便于like处理,sqltoy在不做处理情况下会默认左右都补%符合,单独一边补%则可以保留索引
+	 * appendStr拼接在补充的%和值之间,如r-like配置append-str=","构成xx,%的树形路由前缀匹配; update 2026-9-10
+	 * appendStr与参数值一致按转义处理后拼接:其中的%转为字面量\%,不做去除连续%处理, 通配符统一仅由本方法补充的%提供,天然避免拼接后出现%%
+	 * 
+	 * @param paramValue
+	 * @param appendStr
+	 * @param isLeft
+	 * @return
+	 */
+	private static Object like(Object paramValue, String appendStr, boolean isLeft) {
+		if (StringUtil.isBlank(paramValue)) {
+			return null;
+		}
+		int dbType = DBType.UNDEFINE;
+		// dialect为null时,尝试从运行时上下文获取数据库类型
+		if (SqlExecuteStat.get() != null) {
+			dbType = SqlExecuteStat.get().getDbType();
+		}
+		// appendStr按转义处理后拼接(其中%转为字面量\%),通配符统一仅由本方法补充的%提供,避免拼接后出现%%
+		String escapedAppend = (appendStr == null) ? "" : SqlUtil.escapeLikeValue(appendStr, dbType, true);
+		String escapeStr;
+		if (paramValue instanceof String) {
+			escapeStr = SqlUtil.escapeLikeValue(paramValue.toString(), dbType, true);
+			if (isLeft) {
+				return "%".concat(escapedAppend).concat(escapeStr);
+			}
+			return escapeStr.concat(escapedAppend).concat("%");
+		} else if (paramValue instanceof String[]) {
+			String[] tmpAry = (String[]) paramValue;
+			for (int i = 0, n = tmpAry.length; i < n; i++) {
+				if (tmpAry[i] != null) {
+					escapeStr = SqlUtil.escapeLikeValue(tmpAry[i], dbType, true);
+					tmpAry[i] = isLeft ? "%".concat(escapedAppend).concat(escapeStr)
+							: escapeStr.concat(escapedAppend).concat("%");
+				}
+			}
+			return tmpAry;
+		} else if (paramValue instanceof List) {
+			List tmpList = (List) paramValue;
+			for (int i = 0, n = tmpList.size(); i < n; i++) {
+				if (tmpList.get(i) != null) {
+					escapeStr = SqlUtil.escapeLikeValue(tmpList.get(i).toString(), dbType, true);
+					tmpList.set(i, isLeft ? "%".concat(escapedAppend).concat(escapeStr)
+							: escapeStr.concat(escapedAppend).concat("%"));
+				}
+			}
+			return tmpList;
+		} else if (paramValue instanceof Set) {
+			Set tmpSet = (Set) paramValue;
+			Set result = (paramValue instanceof LinkedHashSet) ? new LinkedHashSet() : new HashSet();
+			Iterator iter = tmpSet.iterator();
+			Object cell;
+			while (iter.hasNext()) {
+				cell = iter.next();
+				if (cell != null) {
+					escapeStr = SqlUtil.escapeLikeValue(cell.toString(), dbType, true);
+					result.add(isLeft ? "%".concat(escapedAppend).concat(escapeStr)
+							: escapeStr.concat(escapedAppend).concat("%"));
+				}
+			}
+			return result;
+		}
+		return paramValue;
+	}
+
+	/**
+	 * 处理默认值
+	 * 
+	 * @param paramValues
+	 * @param paramValue
+	 * @param paramFilterModel
+	 * @param paramIndexMap
+	 * @return
+	 */
+	private static Object filterDefault(Object[] paramValues, Object paramValue, ParamFilterModel paramFilterModel,
+			HashMap<String, Integer> paramIndexMap) {
+		Object[] values = paramFilterModel.getValues();
+		// 当前值为null，默认值不为null
+		if (null == paramValue && (values != null && values.length > 0 && null != values[0])) {
+			String valueString = values[0].toString();
+			// 默认值直接指定另外一个参数的值
+			if (paramIndexMap.containsKey(valueString.toLowerCase(Locale.ROOT))) {
+				return paramValues[paramIndexMap.get(valueString.toLowerCase(Locale.ROOT))];
+			}
+			if (paramFilterModel.getIsArray()) {
+				int arySize = values.length;
+				String splitSign = (null == paramFilterModel.getSplit()) ? "," : paramFilterModel.getSplit();
+				// 默认用逗号做了切割
+				if (arySize > 1 && (",".equals(splitSign) || "\\,".equals(splitSign))) {
+					Object[] result = new Object[arySize];
+					for (int i = 0, n = arySize; i < n; i++) {
+						if (null != values[i]) {
+							result[i] = convertType(values[i].toString(), paramFilterModel.getDataType());
+						}
+					}
+					return result;
+				}
+				return splitToArray(valueString, splitSign, paramFilterModel.getDataType());
+			}
+			return convertType(valueString, paramFilterModel.getDataType());
+		} else {
+			return paramValue;
+		}
+	}
+
+	/**
+	 * 进行字符串替换
+	 * 
+	 * @param paramValue
+	 * @param regex
+	 * @param valueVar
+	 * @param isFirst
+	 * @return
+	 */
+	private static Object replace(Object paramValue, String regex, Object valueVar, boolean isFirst) {
+		if (paramValue == null || regex == null || valueVar == null) {
+			return null;
+		}
+		String value = valueVar.toString();
+		if (paramValue instanceof String) {
+			value = Matcher.quoteReplacement(value);
+			if (isFirst) {
+				return paramValue.toString().replaceFirst(regex, value);
+			}
+			return paramValue.toString().replaceAll(regex, value);
+		} else if (paramValue instanceof String[]) {
+			String[] result = (String[]) paramValue;
+			value = Matcher.quoteReplacement(value);
+			for (int i = 0; i < result.length; i++) {
+				if (isFirst) {
+					result[i] = result[i].replaceFirst(regex, value);
+				} else {
+					result[i] = result[i].replaceAll(regex, value);
+				}
+			}
+			return result;
+		}
+		return paramValue;
+	}
+
+	/**
+	 * 日期格式化
+	 * 
+	 * @param paramValue
+	 * @param format
+	 * @return
+	 */
+	private static Object dateFormat(Object paramValue, String format) {
+		if (paramValue == null) {
+			return null;
+		}
+		if (format == null) {
+			return paramValue;
+		}
+		Object result;
+		if (paramValue.getClass().isArray()) {
+			Object[] arrays = CollectionUtil.convertArray(paramValue);
+			for (int i = 0, n = arrays.length; i < n; i++) {
+				arrays[i] = DateUtil.formatDate(arrays[i], format);
+			}
+			result = arrays;
+		} else if (paramValue instanceof List) {
+			List valueList = (List) paramValue;
+			for (int i = 0, n = valueList.size(); i < n; i++) {
+				valueList.set(i, DateUtil.formatDate(valueList.get(i), format));
+			}
+			result = valueList;
+		} else if (paramValue instanceof Set) {
+			Set valueSet = (Set) paramValue;
+			Set tmpSet = (paramValue instanceof LinkedHashSet) ? new LinkedHashSet() : new HashSet();
+			Iterator iter = valueSet.iterator();
+			while (iter.hasNext()) {
+				tmpSet.add(DateUtil.formatDate(iter.next(), format));
+			}
+			result = tmpSet;
+		} else {
+			result = DateUtil.formatDate(paramValue, format);
+		}
+		return result;
+	}
+
+	/**
+	 * 切割字符串变成数组
+	 * 
+	 * @param paramValue
+	 * @param splitSign
+	 * @param dataType
+	 * @return
+	 */
+	private static Object[] splitToArray(Object paramValue, String splitSign, String dataType) {
+		if (paramValue == null) {
+			return null;
+		}
+		Object[] result = null;
+		// 原本就是数组
+		if (paramValue.getClass().isArray() || paramValue instanceof Collection) {
+			result = CollectionUtil.convertArray(paramValue);
+			if (dataType == null) {
+				return result;
+			}
+		} else {
+			String[] arrays = null;
+			String split = (splitSign == null) ? "," : splitSign.trim();
+			if (",".equals(split)) {
+				arrays = paramValue.toString().split("\\,");
+			} else if (";".equals(split)) {
+				arrays = paramValue.toString().split("\\;");
+			} else if (":".equals(split)) {
+				arrays = paramValue.toString().split("\\:");
+			} else if ("".equals(split) && splitSign.length() > 0) {
+				arrays = paramValue.toString().split("\\s+");
+			} else {
+				arrays = paramValue.toString().split(splitSign);
+			}
+			if (dataType == null || "string".equals(dataType)) {
+				return arrays;
+			}
+			result = new Object[arrays.length];
+			System.arraycopy(arrays, 0, result, 0, arrays.length);
+		}
+		for (int i = 0, n = result.length; i < n; i++) {
+			if (null != result[i]) {
+				result[i] = convertType(result[i].toString(), dataType);
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * 将字符串转成具体类型的值
+	 * 
+	 * @param value
+	 * @param dataType
+	 * @return
+	 */
+	private static Object convertType(String value, String dataType) {
+		if (value == null) {
+			return value;
+		}
+		if ("integer".equals(dataType) || "int".equals(dataType)) {
+			return Integer.valueOf(value);
+		} else if ("long".equals(dataType)) {
+			return Long.valueOf(value);
+		} else if ("float".equals(dataType)) {
+			return Float.valueOf(value);
+		} else if ("double".equals(dataType)) {
+			return Double.valueOf(value);
+		} else if ("decimal".equals(dataType) || "number".equals(dataType)) {
+			return new BigDecimal(value);
+		} else if ("localdate".equals(dataType)) {
+			return DateUtil.asLocalDate(parseDateStr(value));
+		} else if ("localdatetime".equals(dataType)) {
+			return DateUtil.asLocalDateTime(parseDateStr(value));
+		} else if ("localtime".equals(dataType)) {
+			return DateUtil.asLocalTime(parseDateStr(value));
+		} else if ("time".equals(dataType)) {
+			return new Time(parseDateStr(value).getTime());
+		} else if ("timestamp".equals(dataType)) {
+			return DateUtil.getTimestamp(parseDateStr(value));
+		} else if ("date".equals(dataType)) {
+			return parseDateStr(value);
+		} else if ("biginteger".equals(dataType)) {
+			return new BigInteger(value);
+		}
+		return value;
+	}
+
+	/**
+	 * 将特殊的日期字符转换为具体日期
+	 * 
+	 * @param dateStr
+	 * @return
+	 */
+	private static Date parseDateStr(String dateStr) {
+		if ("sysdate()".equals(dateStr) || "now()".equals(dateStr) || "curtime()".equals(dateStr)
+				|| "systime()".equals(dateStr) || "currenttime()".equals(dateStr)) {
+			return DateUtil.getNowTime();
+		}
+		String[] tmpAry = null;
+		boolean isAdd = false;
+		String firstString = dateStr.toLowerCase(Locale.ROOT);
+		int addValue = 0;
+		// 0:second;1:hour;2:day;3:week;4:month;5:year
+		int addType = 2;
+		if (dateStr.contains("+")) {
+			tmpAry = dateStr.split("\\+");
+			isAdd = true;
+			firstString = tmpAry[0].trim().toLowerCase(Locale.ROOT);
+		} // sysdate()-2d形式，排除2023-05-20 纯以数字开头的纯日期
+		else if (!StringUtil.matches(dateStr, "^\\d{2,4}") && dateStr.contains("-")) {
+			tmpAry = dateStr.split("\\-");
+			isAdd = false;
+			firstString = tmpAry[0].trim().toLowerCase(Locale.ROOT);
+		}
+		if (tmpAry != null && tmpAry.length == 2) {
+			String addStr = tmpAry[1].trim();
+			// 增减量必须是纯数字或数字+单位字母(如2d);日期时间本身带时区偏移(如xxx+08:00)时不是增减表达式
+			if (StringUtil.matches(addStr, "^\\d+[a-zA-Z]$")) {
+				// 最后一位字母
+				String addTypeStr = addStr.substring(addStr.length() - 1).toLowerCase(Locale.ROOT);
+				if ("s".equals(addTypeStr)) {
+					addType = 0;
+				} else if ("h".equals(addTypeStr)) {
+					addType = 1;
+				} else if ("d".equals(addTypeStr)) {
+					addType = 2;
+				} else if ("w".equals(addTypeStr)) {
+					addType = 3;
+				} else if ("m".equals(addTypeStr)) {
+					addType = 4;
+				} else if ("y".equals(addTypeStr)) {
+					addType = 5;
+				}
+				addValue = Integer.parseInt(addStr.substring(0, addStr.length() - 1));
+			} else if (StringUtil.matches(addStr, "^\\d+$")) {
+				addValue = Integer.parseInt(addStr);
+			} else {
+				// 非增减表达式,按普通日期时间字符串整体解析,避免Integer.parseInt抛NumberFormatException
+				tmpAry = null;
+				firstString = dateStr.toLowerCase(Locale.ROOT);
+			}
+			if (!isAdd) {
+				addValue = 0 - addValue;
+			}
+		}
+		Date startDate;
+		// '2019-12-13' 形式
+		if (firstString.startsWith("'") && firstString.endsWith("'")) {
+			firstString = firstString.substring(1, firstString.length() - 1);
+		}
+		if ("sysdate()".equals(firstString) || "now()".equals(firstString)) {
+			startDate = DateUtil.getNowTime();
+		} else if ("first_of_month".equals(firstString)) {
+			startDate = DateUtil.firstDayOfMonth(DateUtil.getNowTime());
+		} else if ("first_of_year".equals(firstString)) {
+			startDate = DateUtil.parse((DateUtil.getYear(DateUtil.getNowTime()) + "-01-01"), "yyyy-MM-dd");
+		} else if ("last_of_month".equals(firstString)) {
+			startDate = DateUtil.lastDayOfMonth(DateUtil.getNowTime());
+		} else if ("last_of_year".equals(firstString)) {
+			startDate = DateUtil.parse((DateUtil.getYear(DateUtil.getNowTime()) + "-12-31"), "yyyy-MM-dd");
+		} else if ("first_of_week".equals(firstString)) {
+			LocalDate firstOfWeek = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+			startDate = Date.from(firstOfWeek.atStartOfDay(ZoneId.systemDefault()).toInstant());
+		} else if ("last_of_week".equals(firstString)) {
+			LocalDate lastOfWeek = LocalDate.now().with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
+			// 本周最后一天（周日）
+			startDate = Date.from(lastOfWeek.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant());
+		} else {
+			startDate = DateUtil.parseString(firstString);
+		}
+		if (addValue == 0) {
+			return startDate;
+		}
+		// 秒
+		if (addType == 0) {
+			return DateUtil.addSecond(startDate, addValue);
+		}
+		// 小时
+		if (addType == 1) {
+			return DateUtil.addSecond(startDate, addValue * 3600);
+		}
+		// 天
+		if (addType == 2) {
+			return DateUtil.addDay(startDate, addValue);
+		}
+		// 周
+		if (addType == 3) {
+			return DateUtil.addDay(startDate, addValue * 7);
+		}
+		// 月
+		if (addType == 4) {
+			return DateUtil.addMonth(startDate, addValue);
+		}
+		// 年
+		if (addType == 5) {
+			return DateUtil.addYear(startDate, addValue);
+		}
+		return startDate;
+	}
+
+	/**
+	 * 转换数据为字符串
+	 * 
+	 * @param paramValue
+	 * @param addQuote   增加引号的类型:none(不增加)、single(单引号)、double(双引号)
+	 * @return
+	 */
+	private static Object toString(Object paramValue, String addQuote) {
+		if (paramValue == null) {
+			return null;
+		}
+		// 数组
+		if (paramValue.getClass().isArray()) {
+			List<String> result = new ArrayList<String>();
+			Object[] arrays = CollectionUtil.convertArray(paramValue);
+			for (int i = 0, n = arrays.length; i < n; i++) {
+				result.add(dataToString(arrays[i], addQuote));
+			}
+			String[] resultAry = new String[result.size()];
+			result.toArray(resultAry);
+			return resultAry;
+		} // 集合
+		else if (paramValue instanceof Collection) {
+			List<String> result = new ArrayList<String>();
+			Iterator iter = ((Collection) paramValue).iterator();
+			while (iter.hasNext()) {
+				result.add(dataToString(iter.next(), addQuote));
+			}
+			return result;
+		} else {
+			return dataToString(paramValue, addQuote);
+		}
+	}
+
+	// for toString方法
+	private static String dataToString(Object paramValue, String addQuote) {
+		if (paramValue == null) {
+			return null;
+		}
+		String result;
+		if (paramValue instanceof BigDecimal) {
+			result = ((BigDecimal) paramValue).toPlainString();
+		} else if ((paramValue instanceof LocalTime) || (paramValue instanceof OffsetTime)) {
+			result = DateUtil.formatDate(paramValue, "HH:mm:ss");
+		} else if (paramValue instanceof LocalDate) {
+			result = DateUtil.formatDate(paramValue, "yyyy-MM-dd");
+		} else if ((paramValue instanceof LocalDateTime) || (paramValue instanceof Date)
+				|| (paramValue instanceof OffsetDateTime) || (paramValue instanceof ZonedDateTime)) {
+			result = DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss");
+		} else if (paramValue instanceof Enum) {
+			result = BeanUtil.getEnumValue(paramValue).toString();
+		} else {
+			result = paramValue.toString();
+		}
+
+		if (addQuote == null) {
+			return result;
+		}
+		if ("single".equals(addQuote)) {
+			// 已经加了单引号不再重复增加
+			if (result.startsWith("'") && result.endsWith("'")) {
+				return result;
+			}
+			return "'".concat(result).concat("'");
+		}
+		if ("double".equals(addQuote)) {
+			// 已经加了双引号不再重复增加
+			if (result.startsWith("\"") && result.endsWith("\"")) {
+				return result;
+			}
+			return "\"".concat(result).concat("\"");
+		}
+		return result;
+	}
+
+	/**
+	 * 转换数据为数组类型
+	 * 
+	 * @param paramValue
+	 * @param dataType
+	 * @return
+	 */
+	private static Object[] toArray(Object paramValue, String dataType) {
+		if (paramValue == null) {
+			return null;
+		}
+		Object[] result = CollectionUtil.convertArray(paramValue);
+		if (dataType == null) {
+			return result;
+		}
+		String value;
+		for (int i = 0, n = result.length; i < n; i++) {
+			if (result[i] != null) {
+				if (result[i] instanceof Enum) {
+					value = BeanUtil.getEnumValue(result[i]).toString();
+				} else {
+					value = result[i].toString();
+				}
+				if ("integer".equals(dataType) || "int".equals(dataType)) {
+					result[i] = Integer.valueOf(value);
+				} else if ("long".equals(dataType)) {
+					result[i] = Long.valueOf(value);
+				} else if ("float".equals(dataType)) {
+					result[i] = Float.valueOf(value);
+				} else if ("double".equals(dataType)) {
+					result[i] = Double.valueOf(value);
+				} else if ("decimal".equals(dataType) || "number".equals(dataType)) {
+					result[i] = new BigDecimal(value);
+				} else if ("string".equals(dataType)) {
+					result[i] = value;
+				} else if ("biginteger".equals(dataType)) {
+					result[i] = new BigInteger(value);
+				}
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * 将sql的参数值类型转换为number(页面有时会以字符串进行传输)
+	 * 
+	 * @param paramValue
+	 * @param dataType
+	 * @return
+	 */
+	private static Object toNumber(Object paramValue, String dataType) {
+		Object result;
+		Object tmpVar = paramValue;
+		if (tmpVar instanceof Enum) {
+			tmpVar = BeanUtil.getEnumValue(tmpVar);
+		}
+		// 默认转decimal
+		BigDecimal value = new BigDecimal(tmpVar.toString().replace(",", ""));
+		if (dataType == null) {
+			result = value;
+		} else if ("integer".equals(dataType) || "int".equals(dataType)) {
+			result = Integer.valueOf(value.intValue());
+		} else if ("long".equals(dataType)) {
+			result = Long.valueOf(value.longValue());
+		} else if ("float".equals(dataType)) {
+			result = Float.valueOf(value.floatValue());
+		} else if ("double".equals(dataType)) {
+			result = Double.valueOf(value.doubleValue());
+		} else if ("biginteger".equals(dataType)) {
+			result = value.toBigInteger();
+		} else {
+			result = value;
+		}
+		return result;
+	}
+
+	/**
+	 * 将sql的参数值类型转换为日期类型(页面有时会以字符串进行传输)
+	 * 
+	 * @param paramValue
+	 * @param paramFilterModel
+	 * @param incrementTime
+	 * @return
+	 */
+	private static Object toDate(Object paramValue, ParamFilterModel paramFilterModel, Double incrementTime) {
+		// 集合中的元素可能为null,统一跳过加工返回null,避免星期计算和增量计算环节NPE
+		if (paramValue == null) {
+			return null;
+		}
+		Object result;
+		String format = (paramFilterModel.getFormat() == null) ? "" : paramFilterModel.getFormat();
+		String fmtStyle = format.toLowerCase(Locale.ROOT);
+		String realFmt = DAY_FORMAT;
+		// 解析时已经转小写
+		String type = paramFilterModel.getType();
+		if (StringUtil.isBlank(type)) {
+			// 默认为日期格式
+			type = "localdate";
+			if (fmtStyle.contains("hhmmss") || fmtStyle.contains("hh:mm:ss")) {
+				if ("hhmmss".equals(fmtStyle) || "hh:mm:ss".equals(fmtStyle)) {
+					type = "localtime";
+				} else {
+					type = "localdatetime";
+				}
+			}
+		}
+		// 取当前月份的第一天
+		if ("first_of_month".equals(fmtStyle)) {
+			result = DateUtil.firstDayOfMonth(paramValue);
+		} // 年的第一天
+		else if ("first_of_year".equals(fmtStyle)) {
+			result = DateUtil.asDate(LocalDate.of(DateUtil.getYear(paramValue), 1, 1));
+		} // 取当前月份的最后一天
+		else if ("last_of_month".equals(fmtStyle)) {
+			result = DateUtil.lastDayOfMonth(paramValue);
+		} // 年的最后一天
+		else if ("last_of_year".equals(fmtStyle)) {
+			result = DateUtil.asDate(LocalDate.of(DateUtil.getYear(paramValue), 12, 31));
+		} // 取指定日期的星期一的日期
+		else if ("first_of_week".equals(fmtStyle)) {
+			LocalDate firstOfWeek = DateUtil.asLocalDate(DateUtil.parse(paramValue, DAY_FORMAT))
+					.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+			result = Date.from(firstOfWeek.atStartOfDay(ZoneId.systemDefault()).toInstant());
+		} // 取指定日期的星期天的日期
+		else if ("last_of_week".equals(fmtStyle)) {
+			LocalDate lastOfWeek = DateUtil.asLocalDate(DateUtil.parse(paramValue, DAY_FORMAT))
+					.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
+			// 本周最后一天（周日）
+			result = Date.from(lastOfWeek.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant());
+		} else {
+			// format参与首次解析:歧义字符串(如05-03-2024)按声明的格式解析,而非依赖自动识别猜测;
+			// format与实际字符串不符时parseString内部会回退自动识别,不会因format差异导致解析失败
+			result = DateUtil.convertDateObject(paramValue, format, null);
+			if (StringUtil.isNotBlank(format)) {
+				realFmt = format;
+			} else {
+				realFmt = null;
+			}
+		}
+		if (incrementTime != null && incrementTime != 0) {
+			switch (paramFilterModel.getTimeUnit()) {
+			// 天优先
+			case DAYS: {
+				result = DateUtil.addDay(result, incrementTime);
+				break;
+			}
+			case SECONDS: {
+				result = DateUtil.addSecond(result, incrementTime);
+				break;
+			}
+			case MILLISECONDS: {
+				result = DateUtil.addMilliSecond(result, incrementTime.longValue());
+				break;
+			}
+			case MINUTES: {
+				result = DateUtil.addSecond(result, 60 * incrementTime);
+				break;
+			}
+			case HOURS: {
+				result = DateUtil.addSecond(result, 3600 * incrementTime);
+				break;
+			}
+			case MONTHS: {
+				result = DateUtil.addMonth(result, incrementTime.intValue());
+				break;
+			}
+			case YEARS: {
+				result = DateUtil.addYear(result, incrementTime.intValue());
+				break;
+			}
+			default: {
+				result = DateUtil.addDay(result, incrementTime);
+				break;
+			}
+			}
+		}
+		// 按realFmt精度做format->parse往返归一,不可省略:
+		// (1)Date等对象输入时convertDateObject忽略format,此处是format截断的唯一生效点;
+		// (2)增量计算可能产生比format更细的时间成分(如小时级增量),此处截回声明精度;
+		// (3)关键字分支(如last_of_month)realFmt固定为DAY_FORMAT,保障结果始终归到当天零点
+		if (realFmt != null) {
+			result = DateUtil.parse(result, realFmt);
+		}
+		if ("localdate".equals(type)) {
+			return DateUtil.asLocalDate((Date) result);
+		}
+		if ("localdatetime".equals(type)) {
+			return DateUtil.asLocalDateTime((Date) result);
+		}
+		if ("timestamp".equals(type)) {
+			return java.sql.Timestamp.valueOf(DateUtil.asLocalDateTime((Date) result));
+		}
+		if ("localtime".equals(type)) {
+			return DateUtil.asLocalTime((Date) result);
+		}
+		if ("time".equals(type)) {
+			return java.sql.Time.valueOf(DateUtil.asLocalTime((Date) result));
+		}
+		return result;
+	}
+
+	/**
+	 * 转换sql参数,将对象数组中的值与给定的参照数值比较， 如果相等则置数组中的值为null
+	 * 
+	 * @param param
+	 * @param contrasts
+	 * @return
+	 */
+	private static Object filterEquals(Object param, Object[] contrasts) {
+		if (null == param || contrasts == null || contrasts.length == 0) {
+			return null;
+		}
+		// 条件参数是数组，则等价于in 处理,即对比值在条件值数组中，就表示成立，将条件值转为null
+		// 这个属于极端少量的场景
+		if (param.getClass().isArray() && contrasts.length == 1) {
+			Object[] ary = CollectionUtil.convertArray(param);
+			String contrast = (contrasts[0] == null) ? null : contrasts[0].toString();
+			for (Object item : ary) {
+				if (item != null) {
+					if (item instanceof Enum) {
+						item = BeanUtil.getEnumValue(item);
+					}
+					if (item.toString().equals(contrast)) {
+						return null;
+					}
+				} // 即param==contrast,返回null
+				else if (contrast == null) {
+					return null;
+				}
+			}
+			return param;
+		}
+		Object tmpVar = param;
+		if (tmpVar instanceof Enum) {
+			tmpVar = BeanUtil.getEnumValue(tmpVar);
+		}
+		int type = 0;
+		if (tmpVar instanceof Date || tmpVar instanceof LocalDate || tmpVar instanceof LocalTime
+				|| tmpVar instanceof LocalDateTime) {
+			type = 1;
+		} else if (tmpVar instanceof Number) {
+			type = 2;
+		}
+
+		// 只要有一个对比值相等表示成立，返回null
+		String contrast;
+		for (Object tmp : contrasts) {
+			// tmp==null,则tmp！=param
+			if (tmp != null) {
+				contrast = tmp.toString();
+				// 日期
+				if (type == 1) {
+					// 长度小于6不够成日期、时间类型格式
+					if (contrast.length() >= 6) {
+						if (tmpVar instanceof LocalTime) {
+							if (((LocalTime) tmpVar).compareTo(LocalTime.parse(contrast)) == 0) {
+								return null;
+							}
+						} else {
+							Date compareDate = "sysdate".equals(contrast.toLowerCase(Locale.ROOT))
+									? DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT)
+									: DateUtil.convertDateObject(contrast);
+							if (compareDate != null && DateUtil.convertDateObject(tmpVar).compareTo(compareDate) == 0) {
+								return null;
+							}
+						}
+					}
+				} else if (type == 2) {
+					if (NumberUtil.isNumber(contrast)
+							&& (new BigDecimal(tmpVar.toString()).compareTo(new BigDecimal(contrast)) == 0)) {
+						return null;
+					}
+				} else if (tmpVar.toString().compareTo(contrast) == 0) {
+					return null;
+				}
+			}
+		}
+		return param;
+	}
+
+	/**
+	 * 转换sql参数,将对象数组中的值与给定的参照数值比较， 如果不相等则置数组中的值为null
+	 * 
+	 * @param param
+	 * @param contrasts
+	 * @return
+	 */
+	private static Object filterNotEquals(Object param, Object[] contrasts) {
+		if (null == param) {
+			return null;
+		}
+		if (contrasts == null || contrasts.length == 0) {
+			return param;
+		}
+		// 条件参数是数组，则等价于做not in 处理,即对比值不在条件值数组中，就表示成立，将条件值转为null
+		// 这个属于极端少量的场景
+		if (param.getClass().isArray() && contrasts.length == 1) {
+			Object[] ary = CollectionUtil.convertArray(param);
+			String contrast = (contrasts[0] == null) ? null : contrasts[0].toString();
+			for (Object item : ary) {
+				if (item != null) {
+					if (item instanceof Enum) {
+						item = BeanUtil.getEnumValue(item);
+					}
+					// 相等则表示存在，not equals则不成立
+					if (item.toString().equals(contrast)) {
+						return param;
+					}
+				} // contrast==param,条件不成立，返回自身
+				else if (contrast == null) {
+					return param;
+				}
+			}
+			return null;
+		}
+		Object tmpVar = param;
+		if (tmpVar instanceof Enum) {
+			tmpVar = BeanUtil.getEnumValue(tmpVar);
+		}
+		int type = 0;
+		if (tmpVar instanceof Date || tmpVar instanceof LocalDate || tmpVar instanceof LocalTime
+				|| tmpVar instanceof LocalDateTime) {
+			type = 1;
+		} else if (tmpVar instanceof Number) {
+			type = 2;
+		}
+		// 只要有一个对比值相等表示不成立，返回参数本身的值
+		String contrast;
+		for (Object tmp : contrasts) {
+			// 为null，则不等于
+			if (tmp != null) {
+				contrast = tmp.toString();
+				if (type == 1) {
+					// 长度小于6不够成日期、时间类型格式
+					if (contrast.length() >= 6) {
+						if (tmpVar instanceof LocalTime) {
+							if (((LocalTime) tmpVar).compareTo(LocalTime.parse(contrast)) == 0) {
+								return param;
+							}
+						} else {
+							Date compareDate = "sysdate".equalsIgnoreCase(contrast)
+									? DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT)
+									: DateUtil.convertDateObject(contrast);
+							// 参照值无法解析为日期时跳过该对比(与filterEquals防护对称)
+							if (compareDate != null && DateUtil.convertDateObject(tmpVar).compareTo(compareDate) == 0) {
+								return param;
+							}
+						}
+					}
+				} else if (type == 2) {
+					if (NumberUtil.isNumber(contrast)
+							&& (new BigDecimal(tmpVar.toString()).compareTo(new BigDecimal(contrast)) == 0)) {
+						return param;
+					}
+				} else if (tmpVar.toString().compareTo(contrast) == 0) {
+					return param;
+				}
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * 过滤参数值小于指定值，并返回null
+	 * 
+	 * @param param
+	 * @param contrastParam
+	 * @return
+	 */
+	private static Object filterLess(Object param, Object contrastParam) {
+		if (null == param) {
+			return null;
+		}
+		String contrast = contrastParam.toString();
+		Object tmpVar = param;
+		if (tmpVar instanceof Enum) {
+			tmpVar = BeanUtil.getEnumValue(tmpVar);
+		}
+		if (tmpVar instanceof Date || tmpVar instanceof LocalDate || tmpVar instanceof LocalDateTime) {
+			Date compareDate;
+			if ("sysdate".equals(contrast.toLowerCase(Locale.ROOT))) {
+				compareDate = DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT);
+			} else {
+				compareDate = DateUtil.convertDateObject(contrast);
+			}
+			if (DateUtil.convertDateObject(tmpVar).before(compareDate)) {
+				return null;
+			}
+		} else if (tmpVar instanceof LocalTime) {
+			if (((LocalTime) tmpVar).isBefore(LocalTime.parse(contrast))) {
+				return null;
+			}
+		} else if (tmpVar instanceof Number) {
+			if (new BigDecimal(tmpVar.toString()).compareTo(new BigDecimal(contrast)) < 0) {
+				return null;
+			}
+		} else if (tmpVar.toString().compareTo(contrast) < 0) {
+			return null;
+		}
+		return param;
+	}
+
+	/**
+	 * 过滤参数值小于等于指定值，并返回null
+	 * 
+	 * @param param
+	 * @param contrastParam
+	 * @return
+	 */
+	private static Object filterLessEquals(Object param, Object contrastParam) {
+		if (null == param) {
+			return null;
+		}
+		Object tmpVar = param;
+		if (tmpVar instanceof Enum) {
+			tmpVar = BeanUtil.getEnumValue(tmpVar);
+		}
+		String contrast = contrastParam.toString();
+		if (tmpVar instanceof Date || tmpVar instanceof LocalDate || tmpVar instanceof LocalDateTime) {
+			Date compareDate;
+			if ("sysdate".equals(contrast.toLowerCase(Locale.ROOT))) {
+				compareDate = DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT);
+			} else {
+				compareDate = DateUtil.convertDateObject(contrast);
+			}
+			if (DateUtil.convertDateObject(tmpVar).compareTo(compareDate) <= 0) {
+				return null;
+			}
+		} else if (tmpVar instanceof LocalTime) {
+			if (((LocalTime) tmpVar).compareTo(LocalTime.parse(contrast)) <= 0) {
+				return null;
+			}
+		} else if (tmpVar instanceof Number) {
+			if (new BigDecimal(tmpVar.toString()).compareTo(new BigDecimal(contrast)) <= 0) {
+				return null;
+			}
+		} else if (tmpVar.toString().compareTo(contrast) <= 0) {
+			return null;
+		}
+		return param;
+	}
+
+	/**
+	 * 过滤大于指定参照数据值,否则查询条件为null
+	 * 
+	 * @param param
+	 * @param contrastParam
+	 * @return
+	 */
+	private static Object filterMore(Object param, Object contrastParam) {
+		if (null == param) {
+			return null;
+		}
+		Object tmpVar = param;
+		if (tmpVar instanceof Enum) {
+			tmpVar = BeanUtil.getEnumValue(tmpVar);
+		}
+		String contrast = contrastParam.toString();
+		if (tmpVar instanceof Date || tmpVar instanceof LocalDate || tmpVar instanceof LocalDateTime) {
+			Date compareDate;
+			if ("sysdate".equals(contrast.toLowerCase(Locale.ROOT))) {
+				compareDate = DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT);
+			} else {
+				compareDate = DateUtil.convertDateObject(contrast);
+			}
+			if (DateUtil.convertDateObject(tmpVar).compareTo(compareDate) > 0) {
+				return null;
+			}
+		} else if (tmpVar instanceof LocalTime) {
+			if (((LocalTime) tmpVar).compareTo(LocalTime.parse(contrast)) > 0) {
+				return null;
+			}
+		} else if (tmpVar instanceof Number) {
+			if (new BigDecimal(tmpVar.toString()).compareTo(new BigDecimal(contrast)) > 0) {
+				return null;
+			}
+		} else if (tmpVar.toString().compareTo(contrast) > 0) {
+			return null;
+		}
+		return param;
+	}
+
+	/**
+	 * 过滤大于等于指定参照数据值,否则查询条件为null
+	 * 
+	 * @param param
+	 * @param contrastParam
+	 * @return
+	 */
+	private static Object filterMoreEquals(Object param, Object contrastParam) {
+		if (null == param) {
+			return null;
+		}
+		Object tmpVar = param;
+		if (tmpVar instanceof Enum) {
+			tmpVar = BeanUtil.getEnumValue(tmpVar);
+		}
+		String contrast = contrastParam.toString();
+		if (tmpVar instanceof Date || tmpVar instanceof LocalDate || tmpVar instanceof LocalDateTime) {
+			Date compareDate;
+			if ("sysdate".equals(contrast.toLowerCase(Locale.ROOT))) {
+				compareDate = DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT);
+			} else {
+				compareDate = DateUtil.convertDateObject(contrast);
+			}
+			if (DateUtil.convertDateObject(tmpVar).compareTo(compareDate) >= 0) {
+				return null;
+			}
+		} else if (tmpVar instanceof LocalTime) {
+			if (((LocalTime) tmpVar).compareTo(LocalTime.parse(contrast)) >= 0) {
+				return null;
+			}
+		} else if (tmpVar instanceof Number) {
+			if (new BigDecimal(tmpVar.toString()).compareTo(new BigDecimal(contrast)) >= 0) {
+				return null;
+			}
+		} else if (tmpVar.toString().compareTo(contrast) >= 0) {
+			return null;
+		}
+		return param;
+	}
+
+	/**
+	 * 参数大于等于并小于等于给定的数据范围时表示条件无效，自动置参数值为null
+	 * 
+	 * @param param
+	 * @param beginValue
+	 * @param endValue
+	 * @return
+	 */
+	private static Object filterBetween(Object param, Object beginValue, Object endValue) {
+		if (null == param) {
+			return null;
+		}
+		Object tmpVar = param;
+		if (tmpVar instanceof Enum) {
+			tmpVar = BeanUtil.getEnumValue(tmpVar);
+		}
+		String beginContrast = beginValue.toString();
+		String endContrast = endValue.toString();
+		if (tmpVar instanceof Date || tmpVar instanceof LocalDate || tmpVar instanceof LocalDateTime) {
+			Date dateVar = DateUtil.convertDateObject(tmpVar);
+			if (dateVar.compareTo(DateUtil.convertDateObject(beginContrast)) >= 0
+					&& dateVar.compareTo(DateUtil.convertDateObject(endContrast)) <= 0) {
+				return null;
+			}
+		} else if (tmpVar instanceof LocalTime) {
+			if (((LocalTime) tmpVar).compareTo(LocalTime.parse(beginContrast)) >= 0
+					&& ((LocalTime) tmpVar).compareTo(LocalTime.parse(endContrast)) <= 0) {
+				return null;
+			}
+		} else if (tmpVar instanceof Number) {
+			if ((new BigDecimal(tmpVar.toString()).compareTo(new BigDecimal(beginContrast)) >= 0)
+					&& (new BigDecimal(tmpVar.toString()).compareTo(new BigDecimal(endContrast)) <= 0)) {
+				return null;
+			}
+		} else if (tmpVar.toString().compareTo(beginContrast) >= 0 && tmpVar.toString().compareTo(endContrast) <= 0) {
+			return null;
+		}
+		return param;
+	}
+
+	/**
+	 * 整合sql中定义的filter和代码中自定义的filters
+	 * 
+	 * @param filters
+	 * @param extFilters
+	 * @return
+	 */
+	public static List<ParamFilterModel> combineFilters(List<ParamFilterModel> filters, List<ParamsFilter> extFilters) {
+		if (extFilters == null || extFilters.isEmpty()) {
+			return filters;
+		}
+		List<ParamFilterModel> result = new ArrayList<ParamFilterModel>();
+		if (filters != null && !filters.isEmpty()) {
+			result.addAll(filters);
+		}
+		for (ParamsFilter filter : extFilters) {
+			ParamFilterModel paramFilter = new ParamFilterModel();
+			// 公共属性
+			paramFilter.setFilterType(filter.getType());
+			paramFilter.setParams(filter.getParams());
+			if (filter.getParams().length == 1) {
+				paramFilter.setParam(filter.getParams()[0]);
+			}
+			if (filter.getExcludes() != null) {
+				for (String s : filter.getExcludes()) {
+					paramFilter.addExclude(s);
+				}
+			}
+			// to-date
+			paramFilter.setFormat(filter.getDateType());
+
+			paramFilter.setValues(filter.getValue());
+			// for clone
+			paramFilter.setAliasName(filter.getAsName());
+			// to-number、default
+			paramFilter.setDataType(filter.getDataType());
+			// exclusive
+			paramFilter.setCompareType(filter.getCompareType());
+			paramFilter.setCompareValues(filter.getCompareValues());
+			paramFilter.setUpdateParams(filter.getAssignParams());
+			paramFilter.setUpdateValue(filter.getAssignValue());
+			// for to-string
+			paramFilter.setAddQuote(filter.getAddQueto());
+			// split
+			paramFilter.setSplit(filter.getSplitSign());
+			// 加减天数
+			paramFilter.setIncrementTime(Integer.toString(filter.getIncrease()));
+			paramFilter.setTimeUnit(filter.getTimeUnit());
+			paramFilter.setSqlInjectionLevel(filter.getSqlInjectionLevel());
+			// 反向缓存
+			if (filter.getCacheArg() != null && filter.getCacheArg().getCacheName() != null) {
+				CacheArg cacheArg = filter.getCacheArg();
+				paramFilter.setCacheName(cacheArg.getCacheName());
+				paramFilter.setCacheType(cacheArg.getCacheType());
+				paramFilter.setAliasName(cacheArg.getAliasName());
+				paramFilter.setPriorMatchEqual(cacheArg.isPriorMatchEqual());
+				paramFilter.setCacheKeyIndex(cacheArg.getCacheKeyIndex());
+				if (cacheArg.getMatchMax() != null) {
+					paramFilter.setCacheMappingMax(cacheArg.getMatchMax());
+				}
+				// 匹配名称列
+				paramFilter.setCacheMappingIndexes(
+						(cacheArg.getMatchIndexs() == null) ? new int[] { 1 } : cacheArg.getMatchIndexs());
+				// 缓存过滤字段(-1 默认值)
+				if (cacheArg.getFilterIndex() != -1 && cacheArg.getFilterValues() != null) {
+					CacheFilterModel cacheFilter = new CacheFilterModel();
+					cacheFilter.setCacheIndex(cacheArg.getFilterIndex());
+					cacheFilter.setCompareValues(cacheArg.getFilterValues());
+					cacheFilter.setCompareType(cacheArg.getFilterType());
+					paramFilter.setCacheFilters(new CacheFilterModel[] { cacheFilter });
+				}
+				if (cacheArg.getNotMatchReturnSelf() != null) {
+					paramFilter.setCacheNotMatchedReturnSelf(cacheArg.getNotMatchReturnSelf());
+				}
+			}
+			result.add(paramFilter);
+		}
+		return result;
+	}
+}

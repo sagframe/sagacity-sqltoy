@@ -1,10 +1,8 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.plugins.sharding.impl;
 
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -29,7 +27,7 @@ import org.springframework.context.ApplicationContextAware;
  * @project sagacity-sqltoy
  * @description 提供默认的数据库sharding策略
  * @author zhongxuchen
- * @version v1.0,Date: 2017年1月3日
+ * @version v1.0,Date: 2017-01-03
  */
 public class DefaultShardingStrategy implements ShardingStrategy, ApplicationContextAware {
 	private final static Logger logger = LoggerFactory.getLogger(DefaultShardingStrategy.class);
@@ -120,11 +118,11 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 		if (paramsMap == null || baseTableName == null || tableNamesMap == null) {
 			return null;
 		}
-		if (tableNamesMap.get(baseTableName.toUpperCase()) == null) {
+		if (tableNamesMap.get(baseTableName.toUpperCase(Locale.ROOT)) == null) {
 			return null;
 		}
 		Object bizDate = null;
-		String[] shardingTable = tableNamesMap.get(baseTableName.toUpperCase()).split("\\,");
+		String[] shardingTable = tableNamesMap.get(baseTableName.toUpperCase(Locale.ROOT)).split("\\,");
 		// 单一参数，表示直接传递参数值
 		if (paramsMap.size() == 1) {
 			bizDate = paramsMap.values().iterator().next();
@@ -138,7 +136,7 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 			}
 		}
 		if (bizDate == null) {
-			logger.error("分表操作对应的参数值为null,导致无法分表,请检查参数配置!");
+			logger.error("the parameter value for table sharding is null, table sharding cannot be performed, please check the parameter configuration!");
 			return null;
 		}
 		// 间隔多少天
@@ -152,7 +150,7 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 		}
 		// 返回null,表示使用原表
 		if (index == -1) {
-			logger.debug("日期间隔:{} 天,小于最小分表区间则使用当前sql中的表!", intervalDays);
+			logger.debug("date interval:{} days, less than the minimum sharding interval, the table in the current sql will be used!", intervalDays);
 			return null;
 		}
 		String tableName;
@@ -161,7 +159,7 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 		} else {
 			tableName = shardingTable[index].trim();
 		}
-		logger.debug("分表实际取得表名:{}", tableName);
+		logger.debug("the actual table name obtained by table sharding:{}", tableName);
 		return tableName;
 	}
 
@@ -184,7 +182,7 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 	}
 
 	/**
-	 * @TODO 根据权重配置分配数据库
+	 * 根据权重配置分配数据库
 	 * @return
 	 */
 	private ShardingDBModel getDataSource() {
@@ -195,7 +193,7 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 			index = NumberUtil.getProbabilityIndex(weights);
 		}
 		chooseDataSource = dataSourceWeightConfig[index][0].toString();
-		logger.debug("分库取得的数据库为:{},index={}", chooseDataSource, index);
+		logger.debug("the datasource obtained by datasource sharding:{}, index={}", chooseDataSource, index);
 		ShardingDBModel shardingModel = new ShardingDBModel();
 		shardingModel.setDataSourceName(chooseDataSource);
 		shardingModel.setDataSource((DataSource) applicationContext.getBean(chooseDataSource));
@@ -225,7 +223,7 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 		while (iter.hasNext()) {
 			entry = iter.next();
 			// key大写转化,避免匹配错误
-			this.tableNamesMap.put(entry.getKey().toUpperCase(), entry.getValue());
+			this.tableNamesMap.put(entry.getKey().toUpperCase(Locale.ROOT), entry.getValue());
 		}
 	}
 
@@ -244,7 +242,7 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 	 * @param dateParams the dateParams to set
 	 */
 	public void setDateParams(String dateParams) {
-		this.dateParams = dateParams.toLowerCase().split("\\,");
+		this.dateParams = dateParams.toLowerCase(Locale.ROOT).split("\\,");
 	}
 
 }

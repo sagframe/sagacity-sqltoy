@@ -12,9 +12,6 @@ import java.time.LocalDateTime;
  */
 public class OverTimeSql implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -3149678048950643843L;
 
 	/**

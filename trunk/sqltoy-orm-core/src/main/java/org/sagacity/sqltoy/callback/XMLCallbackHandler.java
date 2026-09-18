@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.callback;
 
 import org.w3c.dom.Document;
@@ -15,7 +12,8 @@ import org.w3c.dom.Element;
 @FunctionalInterface
 public interface XMLCallbackHandler {
 	/**
-	 * @todo 处理xml document对象，用于sqltoy xml文件解析
+	 * 处理xml document对象，用于sqltoy xml文件解析
+	 * 
 	 * @param doc
 	 * @param root
 	 * @return

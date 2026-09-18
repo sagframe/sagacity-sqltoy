@@ -1,21 +1,15 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.config.model;
 
 import java.io.Serializable;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 旋转定义模型
  * @author zhongxuchen
- * @version v1.0,Date:2013-5-17
- * @modify Date:2013-5-17 {填写修改说明}
+ * @version v1.0,Date:2013-05-17
+ * @modify Date:2013-05-17 填写修改说明
  */
 public class PivotModel implements Serializable {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -6583560999494073747L;
 
 	/**

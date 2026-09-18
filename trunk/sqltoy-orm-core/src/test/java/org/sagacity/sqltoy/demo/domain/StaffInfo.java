@@ -19,9 +19,6 @@ import org.sagacity.sqltoy.demo.domain.base.AbstractStaffInfo;
 @Indexes(indexes = { @Index(isUnique = true, name = "", columns = {}, sortTypes = {}),
 		@Index(isUnique = true, name = "", columns = {}, sortTypes = {}) })
 public class StaffInfo extends AbstractStaffInfo {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 8872936239782687517L;
 
 	/** default constructor */
@@ -52,7 +49,7 @@ public class StaffInfo extends AbstractStaffInfo {
 	private String sexTypeName;
 
 	/**
-	 * @todo vo columns to String
+	 * vo columns to String
 	 */
 	@Override
 	public String toString() {

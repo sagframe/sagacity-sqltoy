@@ -1,10 +1,7 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.dialect;
 
 /**
- * @author zhong
+ * @author zhongxuchen
  *
  */
 public class ClickHouseDialectTest {

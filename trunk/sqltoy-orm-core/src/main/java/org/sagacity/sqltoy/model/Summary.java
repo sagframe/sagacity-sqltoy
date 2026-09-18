@@ -8,14 +8,11 @@ import org.sagacity.sqltoy.utils.StringUtil;
 /**
  * 针对QueryExecutor 开放的汇总计算模型
  * 
- * @author zhong
- * @version v1.0,Date:2023-6-19
+ * @author zhongxuchen
+ * @version v1.0,Date:2023-06-19
  */
 public class Summary implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 5109122454024427584L;
 
 	/**

@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.config.model;
 
 import java.io.Serializable;
@@ -9,13 +6,10 @@ import java.io.Serializable;
  * @project sagacity-sqltoy
  * @description 基于缓存条件筛选的配置模型
  * @author zhongxuchen
- * @version v1.0,Date:2019年1月13日
+ * @version v1.0,Date:2019-01-13
  */
 public class CacheFilterModel implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 6777628067078118834L;
 
 	/**

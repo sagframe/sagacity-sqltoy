@@ -7,7 +7,7 @@ import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 /**
  * 增加对带问号查询转命名参数模式的校验测试
  * 
- * @author zhong
+ * @author zhongxuchen
  *
  */
 public class DialectUtilsTest {

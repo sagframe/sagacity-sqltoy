@@ -1,11 +1,10 @@
 package org.sagacity.sqltoy.configure;
 
-import static java.lang.System.err;
-
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -13,6 +12,8 @@ import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
 import org.sagacity.sqltoy.SqlToyContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.sagacity.sqltoy.config.SqlScriptLoader;
 import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.dao.LightDao;
@@ -59,14 +60,16 @@ import com.alibaba.ttl.threadpool.TtlExecutors;
 
 /**
  * @author wolf
- * @version v1.0, Date:2018年12月26日
+ * @version v1.0,Date:2018-12-26
  * @description sqltoy 自动配置类
- * @modify {Date:2020-2-20,完善配置支持es等,实现完整功能}
- * @modify {Date:2024-8-10,修复项目文件路径存在空格等特殊符号场景下无法加载sql.xml文件的问题}
+ * @modify Date:2020-02-20 完善配置支持es等,实现完整功能
+ * @modify Date:2024-08-10 修复项目文件路径存在空格等特殊符号场景下无法加载sql.xml文件的问题
  */
 @AutoConfiguration
 @EnableConfigurationProperties(SqlToyContextProperties.class)
 public class SqltoyAutoConfiguration {
+	private static final Logger logger = LoggerFactory.getLogger(SqltoyAutoConfiguration.class);
+
 	@Autowired
 	private ApplicationContext applicationContext;
 
@@ -120,7 +123,7 @@ public class SqltoyAutoConfiguration {
 		// 用辅助配置来校验是否配置错误
 		if (StringUtil.isBlank(properties.getSqlResourcesDir()) && StringUtil.isNotBlank(sqlResourcesDir)) {
 			throw new IllegalArgumentException(
-					"请检查sqltoy配置,是spring.sqltoy作为前缀,而不是sqltoy!\n正确范例: spring.sqltoy.sqlResourcesDir=classpath:com/sagframe/modules");
+					"please check the sqltoy config, the prefix must be spring.sqltoy instead of sqltoy!\ncorrect example: spring.sqltoy.sqlResourcesDir=classpath:com/sagframe/modules");
 		}
 		SqlToyContext sqlToyContext = new SqlToyContext();
 
@@ -155,6 +158,9 @@ public class SqltoyAutoConfiguration {
 		sqlToyContext.setLocalDateTimeFormat(properties.getLocalDateTimeFormat());
 		sqlToyContext.setLocalTimeFormat(properties.getLocalTimeFormat());
 		sqlToyContext.setDistributeIdCacheExpireDays(properties.getDistributeIdCacheExpireDays());
+		sqlToyContext.setBackslashEscaping(properties.getBackslashEscaping());
+		// 默认区域设置,影响日期、数字格式化解析(为null则使用JVM默认区域)
+		sqlToyContext.setDefaultLocale(properties.getDefaultLocale());
 		// map 类型结果label是否自动转驼峰处理
 		if (properties.getHumpMapResultTypeLabel() != null) {
 			sqlToyContext.setHumpMapResultTypeLabel(properties.getHumpMapResultTypeLabel());
@@ -274,7 +280,7 @@ public class SqltoyAutoConfiguration {
 		sqlToyContext.setSplitMergeInto(properties.isSplitMergeInto());
 		// getMetaData().getColumnLabel(i) 结果做大小写处理策略
 		if (null != properties.getColumnLabelUpperOrLower()) {
-			sqlToyContext.setColumnLabelUpperOrLower(properties.getColumnLabelUpperOrLower().toLowerCase());
+			sqlToyContext.setColumnLabelUpperOrLower(properties.getColumnLabelUpperOrLower().toLowerCase(Locale.ROOT));
 		}
 		sqlToyContext.setSecurePrivateKey(properties.getSecurePrivateKey());
 		sqlToyContext.setSecurePublicKey(properties.getSecurePublicKey());
@@ -293,30 +299,24 @@ public class SqltoyAutoConfiguration {
 			sqlToyContext.setDefaultStatementTimeout(properties.getDefaultStatementTimeout());
 		}
 		// 设置公共统一属性的处理器
-		String unfiyHandler = properties.getUnifyFieldsHandler();
-		if (StringUtil.isNotBlank(unfiyHandler)) {
+		String unifyHandler = properties.getUnifyFieldsHandler();
+		if (StringUtil.isNotBlank(unifyHandler)) {
 			try {
 				IUnifyFieldsHandler handler = null;
 				// 类
-				if (unfiyHandler.contains(".")) {
-					handler = (IUnifyFieldsHandler) Class.forName(unfiyHandler).getDeclaredConstructor().newInstance();
-				} // spring bean名称
-				else if (appContext.containsBean(unfiyHandler)) {
-					handler = (IUnifyFieldsHandler) appContext.getBean(unfiyHandler);
-					if (handler == null) {
-						throw new ClassNotFoundException("项目中未定义unifyFieldsHandler=" + unfiyHandler + " 对应的bean!");
-					}
+				if (unifyHandler.contains(".")) {
+					handler = (IUnifyFieldsHandler) Class.forName(unifyHandler).getDeclaredConstructor().newInstance();
+				} // spring bean名称(getBean不会返回null,bean不存在会直接抛异常)
+				else if (appContext.containsBean(unifyHandler)) {
+					handler = (IUnifyFieldsHandler) appContext.getBean(unifyHandler);
 				}
 				if (handler != null) {
 					sqlToyContext.setUnifyFieldsHandler(handler);
 				}
 			} catch (ClassNotFoundException cne) {
-				err.println("------------------- 错误提示 ------------------------------------------- ");
-				err.println("spring.sqltoy.unifyFieldsHandler=" + unfiyHandler + " 对应类不存在,错误原因:");
-				err.println("--1.您可能直接copy了参照项目的配置文件,但没有将具体的类也同步copy过来!");
-				err.println("--2.如您并不需要此功能，请将配置文件中注释掉spring.sqltoy.unifyFieldsHandler");
-				err.println("-------------------------------------------------------------------------");
-				cne.printStackTrace();
+				logger.error("the class of spring.sqltoy.unifyFieldsHandler={} does not exist, possible reasons: "
+						+ "1.you copied the configuration from another project without copying the class; "
+						+ "2.please comment out this property if the feature is not needed!", unifyHandler, cne);
 				throw cne;
 			}
 		}

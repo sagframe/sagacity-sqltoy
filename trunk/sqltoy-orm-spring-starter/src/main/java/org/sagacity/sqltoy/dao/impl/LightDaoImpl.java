@@ -11,6 +11,7 @@ import java.util.Set;
 import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.callback.EntityUpdateCallback;
 import org.sagacity.sqltoy.callback.StreamResultHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
@@ -36,7 +37,7 @@ import org.sagacity.sqltoy.model.EntityUpdate;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.MapKit;
 import org.sagacity.sqltoy.model.Page;
-import org.sagacity.sqltoy.model.ParallQuery;
+import org.sagacity.sqltoy.model.ParallelQuery;
 import org.sagacity.sqltoy.model.ParallelConfig;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
@@ -46,10 +47,10 @@ import org.sagacity.sqltoy.support.SpringDaoSupport;
 import org.sagacity.sqltoy.translate.TranslateHandler;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 提供的更加简洁通用规范的Dao逻辑实现
  * @author zhongxuchen
- * @version v1.0,Date:2023-3-15
+ * @version v1.0,Date:2023-03-15
  */
 @SuppressWarnings({ "rawtypes" })
 //@Repository("lightDao")
@@ -250,7 +251,19 @@ public class LightDaoImpl extends SpringDaoSupport implements LightDao {
 	@Override
 	public <T extends Serializable> T updateSaveFetch(T entity, UpdateRowHandler updateRowHandler,
 			String... uniqueProps) {
-		return super.updateSaveFetch(entity, updateRowHandler, uniqueProps, dataSource);
+		return super.updateSaveFetch(entity, updateRowHandler, -1, uniqueProps, dataSource);
+	}
+
+	@Override
+	public <T extends Serializable> T updateSaveFetch(T entity, EntityUpdateCallback<T> callback,
+			String... uniqueProps) {
+		return super.updateSaveFetch(entity, callback, -1, uniqueProps, dataSource);
+	}
+
+	@Override
+	public <T extends Serializable> T updateSaveFetch(T entity, EntityUpdateCallback<T> callback, int lockWaitTimeout,
+			String... uniqueProps) {
+		return super.updateSaveFetch(entity, callback, lockWaitTimeout, uniqueProps, dataSource);
 	}
 
 	@Override
@@ -353,7 +366,7 @@ public class LightDaoImpl extends SpringDaoSupport implements LightDao {
 		if (result.size() == 1) {
 			return result.get(0);
 		}
-		throw new IllegalArgumentException("loadEntity查询出:" + result.size() + " 条记录,不符合load查询单条记录的预期!");
+		throw new IllegalArgumentException("loadEntity expect a single record but found [" + result.size() + "] rows, please check the query conditions!");
 	}
 
 	@Override
@@ -395,7 +408,7 @@ public class LightDaoImpl extends SpringDaoSupport implements LightDao {
 		if (result.size() == 1) {
 			return result.get(0);
 		}
-		throw new IllegalArgumentException("loadById查询出:" + result.size() + " 条记录,不符合load查询预期!");
+		throw new IllegalArgumentException("loadById expect a single record but found [" + result.size() + "] rows, please check the query conditions!");
 	}
 
 	@Override
@@ -638,13 +651,13 @@ public class LightDaoImpl extends SpringDaoSupport implements LightDao {
 	}
 
 	@Override
-	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String, Object> paramsMap) {
-		return super.parallQuery(parallQueryList, paramsMap, new ParallelConfig());
+	public <T> List<QueryResult<T>> parallelQuery(List<ParallelQuery> parallelQueryList, Map<String, Object> paramsMap) {
+		return super.parallelQuery(parallelQueryList, paramsMap, new ParallelConfig());
 	}
 
 	@Override
-	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String, Object> paramsMap,
+	public <T> List<QueryResult<T>> parallelQuery(List<ParallelQuery> parallelQueryList, Map<String, Object> paramsMap,
 			ParallelConfig parallelConfig) {
-		return super.parallQuery(parallQueryList, paramsMap, parallelConfig);
+		return super.parallelQuery(parallelQueryList, paramsMap, parallelConfig);
 	}
 }

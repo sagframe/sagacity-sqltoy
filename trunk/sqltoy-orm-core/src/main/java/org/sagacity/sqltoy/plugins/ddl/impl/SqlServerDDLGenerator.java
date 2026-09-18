@@ -1,7 +1,6 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.plugins.ddl.impl;
+
+import java.util.Locale;
 
 import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.model.TableMeta;
@@ -13,8 +12,8 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @project sagacity-sqltoy
  * @description sqlserver数据库
  * @author zhongxuchen
- * @version v1.0, Date:2023年12月27日
- * @modify 2023年12月27日,修改说明
+ * @version v1.0,Date:2023-12-27
+ * @modify Date:2023-12-27,修改说明
  */
 public class SqlServerDDLGenerator implements DialectDDLGenerator {
 	private String NEWLINE = "\r\n";
@@ -59,7 +58,7 @@ public class SqlServerDDLGenerator implements DialectDDLGenerator {
 				if (DDLUtils.isNotChar(colMeta.getDataType())) {
 					tableSql.append(colMeta.getDefaultValue());
 				} else if (DDLUtils.isDate(colMeta.getDataType())
-						&& DDLUtils.isDateFunction(colMeta.getDefaultValue().toUpperCase())) {
+						&& DDLUtils.isDateFunction(colMeta.getDefaultValue().toUpperCase(Locale.ROOT))) {
 					tableSql.append(colMeta.getDefaultValue());
 				} else {
 					tableSql.append("'").append(colMeta.getDefaultValue()).append("'");

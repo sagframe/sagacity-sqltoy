@@ -1,12 +1,14 @@
 package org.sagacity.sqltoy;
 
+import org.sagacity.sqltoy.model.DBProfile;
+
 import com.alibaba.ttl.TransmittableThreadLocal;
 
 /**
  * @project sagacity-sqltoy
  * @description sqltoy全局的线程值持有者(整合I18nThreadHolder和UnifyUpdateFieldsController)
  * @author zhongxuchen
- * @version v1.0, Date:2024-12-06
+ * @version v1.0,Date:2024-12-06
  */
 public class SqlToyThreadDataHolder {
 	/**
@@ -22,6 +24,17 @@ public class SqlToyThreadDataHolder {
 	// 是否启用统一字段处理中修改行为(一些业务数据不需要强制对修改人、修改时间做强制覆盖)
 	private static ThreadLocal<Boolean> unifyUpdateFields = new TransmittableThreadLocal<Boolean>();
 
+	/**
+	 * 自由场景(预留)
+	 */
+	private static ThreadLocal<Integer> freeSceneThreadLocal = new TransmittableThreadLocal<Integer>();
+
+	/**
+	 * 当前连接的数据库特征档案(processDataSource探测时设置,含dbType/主版本/dialect),
+	 * 供运行期按数据库版本及特征分派的场景读取(如DB2 11.5 GSE与12.1+内置空间引擎分派)
+	 */
+	private static ThreadLocal<DBProfile> dbProfile = new TransmittableThreadLocal<DBProfile>();
+
 	// 放入当前用户语言方言
 	public static void setLanguage(String locale) {
 		if (locale != null) {
@@ -31,6 +44,14 @@ public class SqlToyThreadDataHolder {
 
 	public static String getLanguage() {
 		return i18nThreadLocal.get();
+	}
+
+	public static void setFreeScene(Integer scene) {
+		freeSceneThreadLocal.set(scene == null ? 0 : scene);
+	}
+
+	public static Integer getFreeScene() {
+		return freeSceneThreadLocal.get();
 	}
 
 	/**
@@ -45,6 +66,16 @@ public class SqlToyThreadDataHolder {
 		counterThreadLocal.set(counter == null ? 0 : counter);
 	}
 
+	/**
+	 * 取当前计数器(null表示未初始化)。供需要"保存-恢复"计数器的嵌套场景使用:
+	 * 内层直接clear会让外层正在进行的计数失效(@secure-loop读到null无法确定参数名序号)
+	 * 
+	 * @return
+	 */
+	public static Integer getCounter() {
+		return counterThreadLocal.get();
+	}
+
 	public static Integer incrementCounterAndGet() {
 		Integer count = counterThreadLocal.get();
 		if (count != null) {
@@ -53,13 +84,15 @@ public class SqlToyThreadDataHolder {
 		return count;
 	}
 
+	// update 2026-9-9 各clear方法去除remove()后的set(null):set(null)会重新插入null值entry,
+	// 使remove清理失效(池化线程残留entry,TransmittableThreadLocal场景还会向子线程传播null项)
 	public static void clearCounter() {
 		counterThreadLocal.remove();
-		counterThreadLocal.set(null);
 	}
 
 	/**
-	 * @TODO 判断是否关闭了统一更新字段
+	 * 判断是否关闭了统一更新字段
+	 * 
 	 * @return
 	 */
 	public static boolean useUnifyFields() {
@@ -73,17 +106,43 @@ public class SqlToyThreadDataHolder {
 	// 清除语言
 	public static void clearLanguage() {
 		i18nThreadLocal.remove();
-		i18nThreadLocal.set(null);
 	}
 
 	// 恢复统一更新字段处理
 	public static void resumeUnifyUpdate() {
 		unifyUpdateFields.remove();
-		unifyUpdateFields.set(null);
+	}
+
+	public static void clearFreeScene() {
+		freeSceneThreadLocal.remove();
+	}
+
+	public static Integer getActuallyDBType() {
+		DBProfile profile = dbProfile.get();
+		return (profile == null) ? null : profile.getDbType();
+	}
+
+	public static void clearActuallyDBType() {
+		dbProfile.remove();
+	}
+
+	public static void setDBProfile(DBProfile profile) {
+		dbProfile.set(profile);
+	}
+
+	public static DBProfile getDBProfile() {
+		return dbProfile.get();
+	}
+
+	public static void clearDBProfile() {
+		dbProfile.remove();
 	}
 
 	public static void clearAll() {
 		clearLanguage();
+		clearCounter();
 		resumeUnifyUpdate();
+		clearFreeScene();
+		clearDBProfile();
 	}
 }

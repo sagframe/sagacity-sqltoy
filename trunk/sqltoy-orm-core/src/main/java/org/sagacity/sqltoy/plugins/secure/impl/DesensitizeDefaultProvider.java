@@ -21,7 +21,8 @@ public class DesensitizeDefaultProvider implements DesensitizeProvider {
 	}
 
 	/**
-	 * @TODO 实际脱敏处理
+	 * 实际脱敏处理
+	 * 
 	 * @param mask
 	 * @param value
 	 * @return
@@ -44,6 +45,12 @@ public class DesensitizeDefaultProvider implements DesensitizeProvider {
 		}
 		// 按比例模糊(百分比)
 		if (mask.getMaskRate() > 0) {
+			// 离散 comment: 2026-07-27: add discrete-rate type, which means the mask rate is
+			// fixed and not related to the length of the string
+			if ("discrete-rate".equals(type)) {
+				return StringUtil.maskByRate(realStr, StringUtil.isBlank(maskCode) ? "*" : maskCode,
+						mask.getMaskRate());
+			}
 			int maskSize = Double.valueOf(size * mask.getMaskRate() * 1.00 / 100).intValue();
 			if (maskSize < 1) {
 				maskSize = 1;
@@ -52,7 +59,7 @@ public class DesensitizeDefaultProvider implements DesensitizeProvider {
 			}
 			tailSize = (size - maskSize) / 2;
 			headSize = size - maskSize - tailSize;
-			if (maskCode == null) {
+			if (StringUtil.isBlank(maskCode)) {
 				maskCode = "*";
 				if (maskSize > 3) {
 					maskCode = "***";
@@ -73,7 +80,12 @@ public class DesensitizeDefaultProvider implements DesensitizeProvider {
 		// 邮件(首字符@gmail.com 形式)
 		if ("email".equals(type)) {
 			String maskStr = StringUtil.ifBlank(maskCode, "***");
-			return realStr.substring(0, 1).concat(maskStr).concat(realStr.substring(realStr.indexOf("@")));
+			int atIndex = realStr.indexOf("@");
+			// 脏数据无@时indexOf返回-1会substring(-1)越界,中断整批结果脱敏,退化为首字符+掩码
+			if (atIndex == -1) {
+				return realStr.substring(0, 1).concat(maskStr);
+			}
+			return realStr.substring(0, 1).concat(maskStr).concat(realStr.substring(atIndex));
 		}
 		// 身份证
 		if ("id-card".equals(type)) {

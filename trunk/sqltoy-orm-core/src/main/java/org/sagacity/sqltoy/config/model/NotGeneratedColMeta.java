@@ -9,9 +9,6 @@ import java.io.Serializable;
  */
 public class NotGeneratedColMeta implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 1620110176932995976L;
 
 	/**

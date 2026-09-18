@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.model;
 
 import java.util.LinkedHashMap;
@@ -9,13 +6,10 @@ import java.util.LinkedHashMap;
  * @project sagacity-sqltoy
  * @description 先进先出Map
  * @author zhongxuchen
- * @version v1.0, Date:2024年1月19日
- * @modify 2024年1月19日,修改说明
+ * @version v1.0,Date:2024-01-19
+ * @modify Date:2024-01-19,修改说明
  */
 public class FIFOMap<K, V> extends LinkedHashMap<K, V> {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -3684763841533693522L;
 	private int maxCapacity;
 	// 最小初始化为1条
@@ -73,6 +67,35 @@ public class FIFOMap<K, V> extends LinkedHashMap<K, V> {
 	@Override
 	protected boolean removeEldestEntry(java.util.Map.Entry<K, V> eldest) {
 		return size() > maxCapacity;
+	}
+
+	// update 2026-9-8 增加线程安全:该Map用于缓存翻译的动态缓存(见FIFODynamicFetchCacheManager),
+	// 被结果集翻译热路径多线程并发get/put;accessOrder=true时get也会将节点移到尾部(结构性修改),
+	// LinkedHashMap非线程安全,并发读写可致条目丢失、链表损坏甚至死循环。put内部回调的
+	// removeEldestEntry/size为synchronized可重入调用,无死锁风险
+	@Override
+	public synchronized V get(Object key) {
+		return super.get(key);
+	}
+
+	@Override
+	public synchronized V put(K key, V value) {
+		return super.put(key, value);
+	}
+
+	@Override
+	public synchronized V remove(Object key) {
+		return super.remove(key);
+	}
+
+	@Override
+	public synchronized int size() {
+		return super.size();
+	}
+
+	@Override
+	public synchronized void clear() {
+		super.clear();
 	}
 
 	// 新增：暴露最大容量，方便使用者获取

@@ -6,9 +6,9 @@ import org.sagacity.sqltoy.plugins.function.IFunction;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 将在mysql中使用的if函数转换成case when 通用模式
- * @author renfei.chen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2019-10-21
  */
 public class If extends IFunction {
@@ -27,7 +27,8 @@ public class If extends IFunction {
 	@Override
 	public String wrap(int dbType, String functionName, boolean hasArgs, String... args) {
 		if (dbType == DBType.MYSQL || dbType == DBType.TIDB || dbType == DBType.MYSQL57 || dbType == DBType.DORIS
-				|| dbType == DBType.STARROCKS) {
+				|| dbType == DBType.STARROCKS || dbType == DBType.CLICKHOUSE) {
+			// update 2026-9-5 clickhouse原生支持if(cond,a,b),原样保留
 			return super.IGNORE;
 		}
 		if (args == null || args.length < 3) {

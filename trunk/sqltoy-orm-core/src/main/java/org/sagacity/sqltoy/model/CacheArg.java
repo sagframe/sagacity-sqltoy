@@ -6,14 +6,11 @@ import java.io.Serializable;
  * @project sagacity-sqltoy
  * @description 提供基于QueryExecutor进行反向缓存匹配模型，代替like
  * @author zhongxuchen
- * @version v1.0, Date:2023年6月21日
- * @modify 2023年6月21日,修改说明
+ * @version v1.0,Date:2023-06-21
+ * @modify Date:2023-06-21,修改说明
  */
 public class CacheArg implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -3657685200766661259L;
 
 	/**

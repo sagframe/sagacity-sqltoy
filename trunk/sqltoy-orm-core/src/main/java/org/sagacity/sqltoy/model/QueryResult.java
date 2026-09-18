@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
@@ -11,13 +8,10 @@ import org.sagacity.sqltoy.model.inner.DataSetResult;
  * @project sagacity-sqltoy
  * @description 所有查询的结果形态模型
  * @author zhongxuchen
- * @version v1.0,Date:2014年12月14日
+ * @version v1.0,Date:2014-12-14
  */
 public class QueryResult<T> extends DataSetResult<T> implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 525226255944594283L;
 
 	/**
@@ -72,7 +66,8 @@ public class QueryResult<T> extends DataSetResult<T> implements Serializable {
 	}
 
 	/**
-	 * @todo 获取分页结果模型
+	 * 获取分页结果模型
+	 * 
 	 * @return
 	 */
 	public Page getPageResult() {

@@ -10,6 +10,9 @@ import org.noear.solon.core.Props;
 import javax.sql.DataSource;
 
 @Configuration
+/**
+ * Solon 演示应用配置
+ */
 public class Config {
     @Bean
     public DataSource db(@Inject("${datasource}") HikariDataSource ds) {

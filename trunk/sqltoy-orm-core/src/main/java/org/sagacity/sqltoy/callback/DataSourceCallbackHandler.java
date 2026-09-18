@@ -1,15 +1,14 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.callback;
 
 import java.sql.Connection;
+
+import org.sagacity.sqltoy.model.DBProfile;
 
 /**
  * @project sagacity-sqltoy
  * @description 数据库连接反调,通过反调传递connection,并通过Result进行数据交互
  * @author zhongxuchen
- * @version v1.0,Date:2012-6-10
+ * @version v1.0,Date:2012-06-10
  */
 public abstract class DataSourceCallbackHandler {
 	/**
@@ -18,13 +17,13 @@ public abstract class DataSourceCallbackHandler {
 	private Object result = null;
 
 	/**
-	 * @todo 基于给定的连接需要实现的方法
+	 * 基于给定的连接需要实现的方法
+	 * 
 	 * @param conn    数据库连接
-	 * @param dbType  数据库类型
-	 * @param dialect 数据方言
+	 * @param profile 有效执行数据库档案(含dbType/dialect及真实连接事实)
 	 * @throws Exception 异常
 	 */
-	public abstract void doConnection(Connection conn, Integer dbType, String dialect) throws Exception;
+	public abstract void doConnection(Connection conn, DBProfile profile) throws Exception;
 
 	/**
 	 * @return the result

@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.translate.model;
 
 import java.io.Serializable;
@@ -9,13 +6,10 @@ import java.io.Serializable;
  * @project sagacity-sqltoy
  * @description 默认本地缓存配置参数
  * @author zhongxuchen
- * @version v1.0,Date:2018年3月11日
+ * @version v1.0,Date:2018-03-11
  */
 public class DefaultConfig implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 7793069400942116219L;
 
 	/**

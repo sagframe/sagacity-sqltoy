@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.config.model;
 
 import java.io.Serializable;
@@ -8,15 +5,12 @@ import java.io.Serializable;
 import org.sagacity.sqltoy.SqlToyConstants;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 数据库表字段的描述信息
  * @author zhongxuchen
- * @version v1.0,Date:2012-6-1
+ * @version v1.0,Date:2012-06-01
  */
 public class FieldMeta implements Serializable {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -6717053365757314662L;
 
 	public FieldMeta() {
@@ -175,7 +169,8 @@ public class FieldMeta implements Serializable {
 	}
 
 	/**
-	 * @todo 获取属于关键词字段的名称
+	 * 获取属于关键词字段的名称
+	 * 
 	 * @return
 	 */
 	public String getColumnOptName() {

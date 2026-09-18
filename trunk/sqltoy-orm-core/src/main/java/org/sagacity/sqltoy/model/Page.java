@@ -10,7 +10,7 @@ import org.sagacity.sqltoy.SqlToyConstants;
  * @project sagacity-sqltoy
  * @description 分页数据模型
  * @author zhongxuchen
- * @version v1.0,Date:2011-2-25
+ * @version v1.0,Date:2011-02-25
  */
 public class Page<T> implements Serializable {
 	private static final long serialVersionUID = -7117473828519846708L;
@@ -181,9 +181,12 @@ public class Page<T> implements Serializable {
 	}
 
 	/**
-	 * @return 最后一页
+	 * @return 最后一页(recordCount=0时无最后一页,返回0与getTotalPage()一致)
 	 */
 	public long getLastPage() {
+		if (recordCount < 1) {
+			return 0;
+		}
 		return (recordCount - 1) / getPageSize() + 1;
 	}
 

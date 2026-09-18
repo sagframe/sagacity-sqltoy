@@ -10,8 +10,10 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -44,9 +46,9 @@ import org.w3c.dom.NodeList;
  * @project sagacity-sqltoy
  * @description 用于解析缓存翻译的配置
  * @author zhongxuchen
- * @version v1.0,Date:2018年3月8日
- * @modify {Date:2022-06-11,支持多个缓存翻译定义文件}
- * @modify {Date:2022-10-05,支持i18n多语言翻译，由fightForYou反馈}
+ * @version v1.0,Date:2018-03-08
+ * @modify Date:2022-06-11 支持多个缓存翻译定义文件
+ * @modify Date:2022-10-05 支持i18n多语言翻译，由fightForYou反馈
  */
 public class TranslateConfigParse {
 	/**
@@ -65,13 +67,15 @@ public class TranslateConfigParse {
 			"service", "rest", "rest-increment" };
 
 	// 存放类包含缓存翻译注解配置
-	private final static HashMap<String, HashMap<String, FieldTranslate>> classTranslateConfigMap = new HashMap<String, HashMap<String, FieldTranslate>>();
+	private final static ConcurrentHashMap<String, HashMap<String, FieldTranslate>> classTranslateConfigMap = new ConcurrentHashMap<>();
 
-	// 缓存更新检测器,用于辨别是否重复定义
-	private final static HashSet<String> cacheCheckers = new HashSet<String>();
+	// 缓存更新检测器,用于辨别同一批配置文件内是否重复定义;
+	// 并发安全set,且每次parseTranslateConfig入口清空(按"本次解析会话"去重,二次上下文重新解析不误报)
+	private final static Set<String> cacheCheckers = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
 	/**
-	 * @todo 解析translate配置文件
+	 * 解析translate配置文件
+	 * 
 	 * @param sqlToyContext
 	 * @param translateMap    最终缓存配置，构建一个空map，在解析过程中填充
 	 * @param checker         更新检测配置
@@ -87,6 +91,8 @@ public class TranslateConfigParse {
 			throws Exception {
 		// 获取全部缓存翻译定义文件
 		List translateFiles = getTranslateFiles(translateConfig);
+		// 检测器去重按本次解析会话计算,清除上一个上下文遗留的登记,避免二次初始化误报"已经存在"
+		cacheCheckers.clear();
 		Object translateFile;
 		DefaultConfig result = new DefaultConfig();
 		DefaultConfig defaultConfig = null;
@@ -109,13 +115,15 @@ public class TranslateConfigParse {
 				}
 				// 判断缓存翻译的配置文件是否存在
 				if (!isDefault && !fileExist) {
-					logger.warn("缓存翻译配置文件:{}无法加载,请检查配路径正确性,如不使用缓存翻译可忽略此提示!", translateFlieStr);
+					logger.warn(
+							"the cache translate config file:{} failed to load, please check the correctness of the path, ignore this message if cache translate is not used!",
+							translateFlieStr);
 					translateMap.clear();
 					return result;
 				}
 				// 文件存在
 				if (fileExist) {
-					logger.debug("开始解析缓存配置文件:{}", translateFlieStr);
+					logger.debug("start parsing the cache config file:{}", translateFlieStr);
 					// 解析单个缓存翻译定义文件
 					defaultConfig = parseTranslate(sqlToyContext, translateMap, checker, index + 1, translateFile,
 							charset);
@@ -142,7 +150,8 @@ public class TranslateConfigParse {
 	}
 
 	/**
-	 * @TODO 解析单个缓存配置文件
+	 * 解析单个缓存配置文件
+	 * 
 	 * @param sqlToyContext
 	 * @param translateMap
 	 * @param checker
@@ -239,12 +248,14 @@ public class TranslateConfigParse {
 								}
 							}
 							if (translateMap.containsKey(translateCacheModel.getCache())) {
-								throw new RuntimeException("缓存翻译配置中缓存:[" + translateCacheModel.getCache()
-										+ "] 的定义已经存在!请检查配置文件:" + translateFileStr);
+								throw new RuntimeException("duplicate cache:[" + translateCacheModel.getCache()
+										+ "] definition in cache translate configuration, please check the configuration file:"
+										+ translateFileStr);
 							}
 							translateMap.put(translateCacheModel.getCache(), translateCacheModel);
-							logger.debug("已经加载缓存翻译:cache={},type={}",
-									(translateCacheModel.getCache() == null) ? "[非增量]" : translateCacheModel.getCache(),
+							logger.debug("loaded the cache translate:cache={},type={}",
+									(translateCacheModel.getCache() == null) ? "[non-incremental]"
+											: translateCacheModel.getCache(),
 									translateType);
 						}
 					}
@@ -259,7 +270,8 @@ public class TranslateConfigParse {
 				if (node.hasAttribute("cluster-time-deviation")) {
 					defaultConfig.setDeviationSeconds(Integer.parseInt(node.getAttribute("cluster-time-deviation")));
 					if (Math.abs(defaultConfig.getDeviationSeconds()) > 60) {
-						logger.debug("您设置的集群节点时间差异参数cluster-time-deviation={} 秒>60秒,将设置为60秒!",
+						logger.debug(
+								"the cluster node time deviation param cluster-time-deviation={} seconds you set is greater than 60 seconds, will be set to 60 seconds!",
 								defaultConfig.getDeviationSeconds());
 						defaultConfig.setDeviationSeconds(-60);
 					} else {
@@ -312,8 +324,9 @@ public class TranslateConfigParse {
 									if (sqlToyConfig.getParamsName() != null
 											&& sqlToyConfig.getParamsName().length > 1) {
 										throw new IllegalArgumentException(
-												"请检查缓存更新检测sql语句中的参数名称,所有参数名称要保持一致为lastUpdateTime!当前有:"
-														+ sqlToyConfig.getParamsName().length + " 个不同条件参数名!请检查配置文件:"
+												"invalid parameter names in the cache update detection sql, all parameter names must be lastUpdateTime! currently there are:"
+														+ sqlToyConfig.getParamsName().length
+														+ " different parameter names! please check the configuration file:"
 														+ translateFileStr);
 									}
 									sqlToyContext.putSqlToyConfig(sqlToyConfig);
@@ -323,14 +336,16 @@ public class TranslateConfigParse {
 							}
 							checker.add(checherConfigModel);
 							if (StringUtil.isNotBlank(checherConfigModel.getCache())) {
-								if (cacheCheckers.contains(checherConfigModel.getCache())) {
-									throw new RuntimeException("缓存翻译配置针对缓存:[" + checherConfigModel.getCache()
-											+ "]的更新检测器已经存在!请检查文件:" + translateFileStr);
-								} else {
-									cacheCheckers.add(checherConfigModel.getCache());
+								// add原子性兼具存在性判断,消除contains+add两步之间的并发窗口
+								if (!cacheCheckers.add(checherConfigModel.getCache())) {
+									throw new RuntimeException(
+											"duplicate update checker for cache:[" + checherConfigModel.getCache()
+													+ "] in cache translate configuration, please check the file:"
+													+ translateFileStr);
 								}
 							}
-							logger.debug("已经加载针对缓存:{} 更新的检测器,type={}", checherConfigModel.getCache(), translateType);
+							logger.debug("loaded the update checker for cache:{}, type={}",
+									checherConfigModel.getCache(), translateType);
 						}
 					}
 				}
@@ -340,7 +355,8 @@ public class TranslateConfigParse {
 	}
 
 	/**
-	 * @TODO 获取DTO或POJO中的@translate注解
+	 * 获取DTO或POJO中的@translate注解
+	 * 
 	 * @param classType
 	 * @return
 	 */
@@ -352,8 +368,9 @@ public class TranslateConfigParse {
 		}
 		String className = classType.getName();
 		// 利用Map对类中的缓存翻译配置进行缓存，规避每次都解析
-		if (classTranslateConfigMap.containsKey(className)) {
-			return classTranslateConfigMap.get(className);
+		HashMap<String, FieldTranslate> cached = classTranslateConfigMap.get(className);
+		if (cached != null) {
+			return cached;
 		}
 		HashMap<String, FieldTranslate> translateConfig = new HashMap<String, FieldTranslate>();
 		Class classVar = classType;
@@ -371,7 +388,7 @@ public class TranslateConfigParse {
 				}
 				if (annotaTranslateAry != null && annotaTranslateAry.length > 0) {
 					FieldTranslate fieldTranslate = new FieldTranslate();
-					String fieldLow = field.getName().toLowerCase();
+					String fieldLow = field.getName().toLowerCase(Locale.ROOT);
 					fieldTranslate.colName = fieldLow;
 					Translate[] translates = new Translate[annotaTranslateAry.length];
 					for (int i = 0; i < annotaTranslateAry.length; i++) {
@@ -386,12 +403,14 @@ public class TranslateConfigParse {
 			// 向父类递归
 			classVar = classVar.getSuperclass();
 		}
-		classTranslateConfigMap.put(className, translateConfig);
-		return translateConfig;
+		// putIfAbsent保证原子性，避免并发重复计算覆盖
+		HashMap<String, FieldTranslate> existing = classTranslateConfigMap.putIfAbsent(className, translateConfig);
+		return (existing != null) ? existing : translateConfig;
 	}
 
 	/**
-	 * @TODO 解析注解Translate配置
+	 * 解析注解Translate配置
+	 * 
 	 * @param fieldName
 	 * @param annotTranslate
 	 * @return
@@ -428,7 +447,8 @@ public class TranslateConfigParse {
 	}
 
 	/**
-	 * @TODO 获取缓存配置文件集合
+	 * 获取缓存配置文件集合
+	 * 
 	 * @param translateConfig
 	 * @return
 	 * @throws Exception
@@ -445,7 +465,6 @@ public class TranslateConfigParse {
 		boolean startClasspath;
 		Enumeration<URL> urls;
 		URL url;
-		JarFile jar;
 		Enumeration<JarEntry> entries;
 		JarEntry entry;
 		String transConfigFile;
@@ -454,7 +473,7 @@ public class TranslateConfigParse {
 		for (String translate : translateCfgs) {
 			realRes = translate.trim();
 			startClasspath = false;
-			if (realRes.toLowerCase().startsWith(CLASSPATH)) {
+			if (realRes.toLowerCase(Locale.ROOT).startsWith(CLASSPATH)) {
 				realRes = realRes.substring(10).trim();
 				startClasspath = true;
 			}
@@ -467,15 +486,17 @@ public class TranslateConfigParse {
 						if (!realRes.isEmpty() && realRes.startsWith("/")) {
 							realRes = realRes.substring(1);
 						}
-						jar = ((JarURLConnection) url.openConnection()).getJarFile();
-						entries = jar.entries();
-						while (entries.hasMoreElements()) {
-							// 获取jar里的一个实体 可以是目录 和一些jar包里的其他文件 如META-INF等文件
-							entry = entries.nextElement();
-							transConfigFile = entry.getName();
-							if (transConfigFile.startsWith(realRes) && isTranslateConfig(transConfigFile)
-									&& !entry.isDirectory()) {
-								result.add(transConfigFile);
+						// try-with-resources关闭JarFile,避免文件句柄泄漏(Windows下会锁定jar阻碍热部署)
+						try (JarFile jar = ((JarURLConnection) url.openConnection()).getJarFile()) {
+							entries = jar.entries();
+							while (entries.hasMoreElements()) {
+								// 获取jar里的一个实体 可以是目录 和一些jar包里的其他文件 如META-INF等文件
+								entry = entries.nextElement();
+								transConfigFile = entry.getName();
+								if (transConfigFile.startsWith(realRes) && isTranslateConfig(transConfigFile)
+										&& !entry.isDirectory()) {
+									result.add(transConfigFile);
+								}
 							}
 						}
 					} else if (url.getProtocol().equals(RESOURCE)) {
@@ -507,12 +528,13 @@ public class TranslateConfigParse {
 	}
 
 	/**
-	 * @TODO 判断文件是否是缓存配置的xml文件，原则上建议.trans.xml格式命名
+	 * 判断文件是否是缓存配置的xml文件，原则上建议.trans.xml格式命名
+	 * 
 	 * @param fileName
 	 * @return
 	 */
 	private static boolean isTranslateConfig(String fileName) {
-		String lowFile = fileName.toLowerCase();
+		String lowFile = fileName.toLowerCase(Locale.ROOT);
 		if (lowFile.endsWith("-translate.xml") || lowFile.endsWith("-translates.xml") || lowFile.endsWith(".trans.xml")
 				|| lowFile.endsWith(".translate.xml") || lowFile.endsWith(".translates.xml")) {
 			return true;

@@ -2,12 +2,12 @@ package org.sagacity.sqltoy.utils;
 
 import org.sagacity.sqltoy.config.model.PageOptimize;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
-import org.sagacity.sqltoy.dialect.utils.PageOptimizeUtils;
+import org.sagacity.sqltoy.dialect.PageOptimizeUtils;
 
 /**
  * 模拟单个用户不停的组合查询
  * 
- * @author zhong
+ * @author zhongxuchen
  *
  */
 public class PageOptimizeThread extends Thread {

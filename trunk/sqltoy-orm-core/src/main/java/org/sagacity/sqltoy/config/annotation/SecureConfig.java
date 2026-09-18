@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.config.annotation;
 
 import java.lang.annotation.ElementType;

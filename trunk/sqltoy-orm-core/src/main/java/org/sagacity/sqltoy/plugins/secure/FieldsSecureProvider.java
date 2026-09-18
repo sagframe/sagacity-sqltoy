@@ -9,7 +9,8 @@ package org.sagacity.sqltoy.plugins.secure;
 public interface FieldsSecureProvider {
 
 	/**
-	 * @TODO 初始化
+	 * 初始化
+	 * 
 	 * @param charset
 	 * @param privateKey
 	 * @param publicKey
@@ -17,16 +18,18 @@ public interface FieldsSecureProvider {
 	public void initialize(String charset, String privateKey, String publicKey) throws Exception;
 
 	/**
-	 * @TODO 加密
-	 * @param contents
-	 * @return
+	 * 加密
+	 * 
+	 * @param contents 明文
+	 * @return 密文(加密失败必须抛出运行时异常,不可返回空串——空串会被直接落库导致原文永久丢失)
 	 */
 	public String encrypt(String contents);
 
 	/**
-	 * @TODO 解密
-	 * @param secureContents
-	 * @return
+	 * 解密
+	 * 
+	 * @param secureContents 密文
+	 * @return 明文(解密失败必须抛出运行时异常,不可返回空串——空串与"字段值本身为空"无法区分)
 	 */
 	public String decrypt(String secureContents);
 }

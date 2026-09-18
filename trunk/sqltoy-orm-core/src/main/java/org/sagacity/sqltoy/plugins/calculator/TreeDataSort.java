@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.plugins.calculator;
 
 import java.math.BigDecimal;
@@ -9,20 +6,20 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.sagacity.sqltoy.config.MacroIfLogic;
 import org.sagacity.sqltoy.config.model.LabelIndexModel;
 import org.sagacity.sqltoy.config.model.TreeSortModel;
 import org.sagacity.sqltoy.plugins.utils.CalculateUtils;
 import org.sagacity.sqltoy.utils.CollectionUtil;
-import org.sagacity.sqltoy.utils.MacroIfLogic;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
  * @project sagacity-sqltoy
  * @description 对树型表结构数据进行排序
  * @author zhongxuchen
- * @version v1.0, Date:2022年10月28日
- * @modify 2022年10月28日,修改说明
- * @modify 2023年7月23日 增加level-order-column属性，支持同层级内数据排序
+ * @version v1.0,Date:2022-10-28
+ * @modify Date:2022-10-28,修改说明
+ * @modify Date:2023-07-23 增加level-order-column属性，支持同层级内数据排序
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class TreeDataSort {
@@ -33,7 +30,8 @@ public class TreeDataSort {
 		Integer idColIndex = labelIndexMap.get(treeTableSortModel.getIdColumn());
 		Integer pidColIndex = labelIndexMap.get(treeTableSortModel.getPidColumn());
 		if (idColIndex == null || pidColIndex == null) {
-			throw new RuntimeException("对树形结构数据进行排序,未正确指定id-column和pid-column!");
+			throw new RuntimeException(
+					"sorting tree structure data does not correctly specify id-column and pid-column, please check!");
 		}
 		int dataWidth = ((List) treeList.get(0)).size();
 		// 汇总列
@@ -43,16 +41,16 @@ public class TreeDataSort {
 		sortTree(treeList, idColIndex, pidColIndex);
 		// 树结构从底层往上级汇总
 		if (!sumColList.isEmpty()) {
-			//Integer[] sumIndexes = new Integer[sumColList.size()];
-			Integer[] sumIndexes=sumColList.toArray(new Integer[0]);
+			Integer[] sumIndexes = sumColList.toArray(new Integer[0]);
 			summaryTreeList(treeTableSortModel, labelIndexMap, treeList, sumIndexes, idColIndex, pidColIndex);
 		}
 		// 对每层的数据进行排序
 		if (StringUtil.isNotBlank(treeTableSortModel.getLevelOrderColumn())) {
 			Integer sortColIndex = labelIndexMap.get(treeTableSortModel.getLevelOrderColumn());
 			if (sortColIndex == null) {
-				throw new RuntimeException("对树形结构每层级内部进行排序，未正确指定层级排序依据的列:levelOrderColumn="
-						+ treeTableSortModel.getLevelOrderColumn() + "!");
+				throw new RuntimeException(
+						"sorting inside each level of the tree structure does not correctly specify the level order column:levelOrderColumn="
+								+ treeTableSortModel.getLevelOrderColumn() + ", please check!");
 			}
 			int dataType = CollectionUtil.getSortDataType(treeList, sortColIndex);
 			boolean desc = treeTableSortModel.getOrderWay().equalsIgnoreCase("desc") ? true : false;
@@ -64,7 +62,8 @@ public class TreeDataSort {
 	}
 
 	/**
-	 * @TODO 按照树的父子关系组织顺序
+	 * 按照树的父子关系组织顺序
+	 * 
 	 * @param treeList
 	 * @param idColIndex
 	 * @param pidColIndex
@@ -112,7 +111,8 @@ public class TreeDataSort {
 	}
 
 	/**
-	 * @TODO 提取根节点
+	 * 提取根节点
+	 * 
 	 * @param treeList
 	 * @param idIndex
 	 * @param pidIndex
@@ -137,7 +137,8 @@ public class TreeDataSort {
 	}
 
 	/**
-	 * @TODO 对排序后的树结构数据进行汇总，将子级数据汇总到父级上
+	 * 对排序后的树结构数据进行汇总，将子级数据汇总到父级上
+	 * 
 	 * @param treeTableSortModel
 	 * @param labelIndexMap
 	 * @param treeList
@@ -168,7 +169,7 @@ public class TreeDataSort {
 			if (hasFilter) {
 				filterValue = idRow.get(labelIndexMap.get(treeTableSortModel.getFilterColumn()));
 				doSum = MacroIfLogic.compare(filterValue, treeTableSortModel.getCompareType(),
-						treeTableSortModel.getCompareValues());
+						treeTableSortModel.getCompareValues(), null);
 			}
 			// 上一行开始寻找父节点
 			if (doSum) {

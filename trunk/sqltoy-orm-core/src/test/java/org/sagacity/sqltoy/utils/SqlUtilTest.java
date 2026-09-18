@@ -13,13 +13,41 @@ import org.sagacity.sqltoy.model.SqlInjectionLevel;
 
 import com.alibaba.fastjson2.JSON;
 
+/**
+ * SqlUtil sql处理工具的单元测试
+ */
 public class SqlUtilTest {
 
 	@Test
 	public void testConvertFieldsToCols() {
+		// 显式清空保留字集合建立前置条件:集合为全局静态且put为累加合并,
+		// 其他测试类(如DialectEdgeBatchTest)put的词会残留,导致convertWord对命中列默认[]包裹
+		ReservedWordsUtil.clear();
 		String sql = "staffName,`sexType`,name,bizStaffName from table where #[t.staffName like ?] and sexType=:sexType";
+		sql = SqlUtil.convertFieldsToColumns(buildStaffEntityMeta("staff_info"), sql);
+		assertEquals(
+				"STAFF_NAME,`SEX_TYPE`,name,BIZ_STAFF_NAME from table where #[t.STAFF_NAME like ?] and SEX_TYPE=:sexType",
+				sql.trim());
+	}
+
+	/**
+	 * 反向场景:配置保留字后,convertWord(dbType=null)对命中列默认以[]包裹
+	 * (生产上该占位符由convertSimpleSql按数据库方言二次替换);表名与其他用例不同以规避convertSqlMap缓存key
+	 */
+	@Test
+	public void testConvertFieldsToColsWithReservedWords() {
+		ReservedWordsUtil.clear();
+		ReservedWordsUtil.put("staff_name,sex_type");
+		String sql = "staffName,`sexType`,name,bizStaffName from table where #[t.staffName like ?] and sexType=:sexType";
+		sql = SqlUtil.convertFieldsToColumns(buildStaffEntityMeta("staff_info_wrapped"), sql);
+		assertEquals(
+				"[STAFF_NAME],`SEX_TYPE`,name,BIZ_STAFF_NAME from table where #[t.[STAFF_NAME] like ?] and [SEX_TYPE]=:sexType",
+				sql.trim());
+	}
+
+	private EntityMeta buildStaffEntityMeta(String tableName) {
 		EntityMeta entityMeta = new EntityMeta();
-		entityMeta.setTableName("staff_info");
+		entityMeta.setTableName(tableName);
 		HashMap<String, FieldMeta> fieldsMeta = new HashMap<String, FieldMeta>();
 		FieldMeta staffMeta = new FieldMeta();
 		staffMeta.setFieldName("staffName");
@@ -42,13 +70,11 @@ public class SqlUtilTest {
 		fieldsMeta.put("sextype", sexMeta);
 		entityMeta.setFieldsMeta(fieldsMeta);
 		entityMeta.setFieldsArray(new String[] { "name", "staffName", "bizStaffName", "sexType" });
-		sql = SqlUtil.convertFieldsToColumns(entityMeta, sql);
-		assertEquals(sql.trim(),
-				"STAFF_NAME,`SEX_TYPE`,name,BIZ_STAFF_NAME from table where #[t.STAFF_NAME like ?] and SEX_TYPE=:sexType");
+		return entityMeta;
 	}
 
 	/**
-	 * @TODO 测试vo属性名称转表字段名称
+	 * 测试vo属性名称转表字段名称
 	 */
 	@Test
 	public void testConvertFieldsToCols1() {
@@ -92,11 +118,172 @@ public class SqlUtilTest {
 		System.err.println(sql);
 	}
 
+	// ======================== convertFieldsToColumns 边界用例(update 2026-9-15) ========================
+	// 说明:convertSqlMap为全局静态缓存(key=tableName+"_"+sql),以下用例统一使用独立表名
+	// (staff_edge/staff_kw/staff_kw2等)规避与既有用例及其它测试类的缓存串扰;
+	// 涉及convertWord的用例开头显式clear()建立保留字前置条件(与既有用例同款约定)
+
+	/**
+	 * 大小写不敏感匹配:sql中属性名任意大小写形态均应转换为列名
+	 */
+	@Test
+	public void testConvertFieldsToCols_caseInsensitive() {
+		ReservedWordsUtil.clear();
+		EntityMeta entityMeta = buildStaffEntityMeta("staff_edge");
+		assertEquals("STAFF_NAME like ? and STAFF_NAME is not null",
+				SqlUtil.convertFieldsToColumns(entityMeta, "STAFFNAME like ? and StaffName is not null").trim());
+	}
+
+	/**
+	 * 词边界:字母、数字、下划线紧邻粘连的形态均不得转换(避免误伤标识符片段)
+	 */
+	@Test
+	public void testConvertFieldsToCols_wordBoundary() {
+		ReservedWordsUtil.clear();
+		EntityMeta entityMeta = buildStaffEntityMeta("staff_edge");
+		String sql = "staffNameX=1,xstaffName=2,staffName2=3,_staffName=4,staffName_=5";
+		assertEquals(sql, SqlUtil.convertFieldsToColumns(entityMeta, sql).trim());
+	}
+
+	/**
+	 * 命名参数保护::field与: field(冒号+空白)形态均不转换,普通位置正常转换
+	 */
+	@Test
+	public void testConvertFieldsToCols_namedParamGuard() {
+		ReservedWordsUtil.clear();
+		EntityMeta entityMeta = buildStaffEntityMeta("staff_edge");
+		assertEquals("STAFF_NAME=:staffName",
+				SqlUtil.convertFieldsToColumns(entityMeta, "staffName=:staffName").trim());
+		assertEquals(": staffName=1", SqlUtil.convertFieldsToColumns(entityMeta, ": staffName=1").trim());
+	}
+
+	/**
+	 * 括号语义:field(形态视为函数名不转换;count(field)括号内参数正常转换
+	 */
+	@Test
+	public void testConvertFieldsToCols_functionAndParen() {
+		ReservedWordsUtil.clear();
+		EntityMeta entityMeta = buildStaffEntityMeta("staff_edge");
+		assertEquals("count(STAFF_NAME)+staffName(x)",
+				SqlUtil.convertFieldsToColumns(entityMeta, "count(staffName)+staffName(x)").trim());
+	}
+
+	/**
+	 * 行尾字段:方法内部末尾补一位空白使tailChar判定不越界,精确断言返回值含该尾随空白(既有约定,调用方trim)
+	 */
+	@Test
+	public void testConvertFieldsToCols_endOfString() {
+		ReservedWordsUtil.clear();
+		EntityMeta entityMeta = buildStaffEntityMeta("staff_edge");
+		assertEquals("where STAFF_NAME ", SqlUtil.convertFieldsToColumns(entityMeta, "where staffName"));
+	}
+
+	/**
+	 * 同一字段多次出现:非参数形态全部转换,命名参数形态保留
+	 */
+	@Test
+	public void testConvertFieldsToCols_multipleOccurrences() {
+		ReservedWordsUtil.clear();
+		EntityMeta entityMeta = buildStaffEntityMeta("staff_edge");
+		assertEquals("STAFF_NAME is null or STAFF_NAME like :staffName",
+				SqlUtil.convertFieldsToColumns(entityMeta, "staffName is null or staffName like :staffName").trim());
+	}
+
+	/**
+	 * 标识符引号前缀([、`、")直接拼接原始列名,绕过convertWord保留字包裹;裸字段仍按保留字包裹
+	 */
+	@Test
+	public void testConvertFieldsToCols_quotedIdentifierBypassKeyword() {
+		ReservedWordsUtil.clear();
+		ReservedWordsUtil.put("staff_name");
+		try {
+			EntityMeta entityMeta = buildStaffEntityMeta("staff_kw");
+			assertEquals("[STAFF_NAME]=1 and [STAFF_NAME]=2 and `STAFF_NAME`=3", SqlUtil
+					.convertFieldsToColumns(entityMeta, "[staffName]=1 and staffName=2 and `staffName`=3").trim());
+		} finally {
+			// 清理本用例put的保留字,避免残留影响后续测试类(全局静态集合)
+			ReservedWordsUtil.clear();
+		}
+	}
+
+	/**
+	 * 字段名与列名一致但列名为保留字时仍需处理(convertWord包裹),非保留字同名列则跳过
+	 */
+	@Test
+	public void testConvertFieldsToCols_keywordSameNameField() {
+		ReservedWordsUtil.clear();
+		ReservedWordsUtil.put("name");
+		try {
+			EntityMeta entityMeta = buildStaffEntityMeta("staff_kw2");
+			assertEquals("[NAME]=1 and SEX_TYPE=2",
+					SqlUtil.convertFieldsToColumns(entityMeta, "name=1 and sexType=2").trim());
+		} finally {
+			ReservedWordsUtil.clear();
+		}
+	}
+
+	/**
+	 * 空白sql原样返回(null/空串/纯空白),不进入转换与缓存
+	 */
+	@Test
+	public void testConvertFieldsToCols_blankSql() {
+		EntityMeta entityMeta = buildStaffEntityMeta("staff_edge");
+		assertEquals(null, SqlUtil.convertFieldsToColumns(entityMeta, null));
+		assertEquals("", SqlUtil.convertFieldsToColumns(entityMeta, ""));
+		assertEquals("   ", SqlUtil.convertFieldsToColumns(entityMeta, "   "));
+	}
+
+	/**
+	 * 单引号字符串字面量内的字段名不转换(2026-9-15修复:检索改在maskLiterals等长掩码串上进行);
+	 * 字面量外的字段名正常转换,含''成对转义与like字面量场景
+	 */
+	@Test
+	public void testConvertFieldsToCols_stringLiteralNotConverted() {
+		ReservedWordsUtil.clear();
+		EntityMeta entityMeta = buildStaffEntityMeta("staff_edge");
+		// 字面量内容恰为字段名:保持原样
+		assertEquals("remark='staffName'",
+				SqlUtil.convertFieldsToColumns(entityMeta, "remark='staffName'").trim());
+		// 字面量内外同字段:仅外部转换
+		assertEquals("STAFF_NAME='staffName'",
+				SqlUtil.convertFieldsToColumns(entityMeta, "staffName='staffName'").trim());
+		// ''成对转义:整个字面量(含转义段)内的字段名均不转换
+		assertEquals("remark='it''s staffName' and STAFF_NAME=1",
+				SqlUtil.convertFieldsToColumns(entityMeta, "remark='it''s staffName' and staffName=1").trim());
+		// like字面量:通配串内的字段名不转换
+		assertEquals("STAFF_NAME like '%staffName%'",
+				SqlUtil.convertFieldsToColumns(entityMeta, "staffName like '%staffName%'").trim());
+		// 字面量收尾后的字段正常转换(终结引号后回到sql正文)
+		assertEquals("remark='x' and STAFF_NAME=1",
+				SqlUtil.convertFieldsToColumns(entityMeta, "remark='x' and staffName=1").trim());
+		// 字面量夹在两个转换字段之间:多轮字段替换下掩码串与原串平行拼接保持偏移对齐
+		assertEquals("STAFF_NAME='lit' and SEX_TYPE=2",
+				SqlUtil.convertFieldsToColumns(entityMeta, "staffName='lit' and sexType=2").trim());
+	}
+
+	/**
+	 * 缓存key跨表碰撞回归(2026-9-15修复:key分隔符由"_"改为\u0000)——
+	 * 表"staff"+sql"info_sexType=1"与表"staff_info"+sql"sexType=1"不再产生相同key,
+	 * 后调用者按自身元数据正确转换,不再命中前者缓存
+	 */
+	@Test
+	public void testConvertFieldsToCols_cacheKeyNoCollision() {
+		ReservedWordsUtil.clear();
+		EntityMeta metaA = buildStaffEntityMeta("staff");
+		EntityMeta metaB = buildStaffEntityMeta("staff_info");
+		// 先调用A:info_前缀下划线边界,sexType不转换,原样返回
+		String resultA = SqlUtil.convertFieldsToColumns(metaA, "info_sexType=1");
+		assertEquals("info_sexType=1", resultA.trim());
+		// 后调用B:key不再碰撞,按B的元数据正常转换
+		String resultB = SqlUtil.convertFieldsToColumns(metaB, "sexType=1");
+		assertEquals("SEX_TYPE=1", resultB.trim());
+		// 再次调用A:命中自身缓存仍返回正确结果
+		assertEquals("info_sexType=1", SqlUtil.convertFieldsToColumns(metaA, "info_sexType=1").trim());
+	}
+
 	@Test
 	public void testValidateSqlInArg() {
 		String argValue = "'alter1 table'";
-		boolean hasSqlKeyWord = StringUtil.matches(" " + argValue, SqlUtil.SQL_INJECT_PATTERN);
-		System.err.println(hasSqlKeyWord);
 		System.err.println(SqlUtil.validateInArg(argValue));
 	}
 

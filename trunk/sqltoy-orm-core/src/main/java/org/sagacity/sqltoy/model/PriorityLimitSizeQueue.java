@@ -84,7 +84,8 @@ public class PriorityLimitSizeQueue<T> implements Queue<T> {
 	@Override
 	public boolean addAll(Collection<? extends T> c) {
 		if (c == null || c.isEmpty()) {
-			return true;
+			// 未发生变更,按Collection契约返回false(原实现恒返回true违反契约)
+			return false;
 		}
 		Iterator<?> iter = c.iterator();
 		while (iter.hasNext()) {

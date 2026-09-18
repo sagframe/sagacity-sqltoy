@@ -1,10 +1,8 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.plugins.interceptors;
 
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.OperateType;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
@@ -18,13 +16,14 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @project sagacity-sqltoy
  * @description 提供授权租户数据权限过滤
  * @author zhongxuchen
- * @version v1.0, Date:2022年9月21日
- * @modify 2022年9月21日,修改说明
+ * @version v1.0,Date:2022-09-21
+ * @modify Date:2022-09-21,修改说明
  */
 public class TenantFilterInterceptor implements SqlInterceptor {
 
 	/**
-	 * @TODO 对最终执行sql和sql参数进行处理
+	 * 对最终执行sql和sql参数进行处理
+	 * 
 	 * @param sqlToyContext 支持getEntityMeta(tableName)获取表信息
 	 * @param sqlToyConfig  传递原本的sql配置,可以通过获取paramNames判断是否sql中已经有相关参数
 	 * @param operateType   search\page\top\random\count 等，
@@ -66,20 +65,32 @@ public class TenantFilterInterceptor implements SqlInterceptor {
 		String sql = sqlToyResult.getSql();
 		// 保留字处理(实际不会出现保留字用作租户)
 		tenantColumn = ReservedWordsUtil.convertWord(tenantColumn, dbType);
-		int whereIndex = StringUtil.matchIndex(sql, "(?i)\\Wwhere\\W");
+		// 字面量掩码串与原串等长:where定位、"已有租户条件"检查、group by/order by定位均在掩码串上进行,
+		// 规避字面量内的where/tenant_id=文本导致定位错位或误判已过滤而漏加租户条件(fail-open)
+		String maskedSql = SqlConfigParseUtils.maskLiterals(sql, false);
+		int whereIndex = StringUtil.matchIndex(maskedSql, "(?i)\\Wwhere\\W");
 		// sql 在where后面已经有租户条件过滤，无需做处理
 		if (whereIndex > 0
-				&& StringUtil.matches(sql.substring(whereIndex), "(?i)\\W" + tenantColumn + "(\\s*\\=|\\s+in)")) {
+				&& StringUtil.matches(maskedSql.substring(whereIndex), "(?i)\\W" + tenantColumn + "(\\s*\\=|\\s+in)")) {
 			return sqlToyResult;
 		}
 		String where = " where ";
 		String sqlPart = where;
+		// 租户id来自应用实现的IUnifyFieldsHandler回调,值可能源自外部系统编码/迁移数据等不受框架控制的来源,
+		// 拼入SQL字面量前必须将'转义为''(标准SQL转义,MySQL/PG/Oracle等通用),防止逃出字面量破坏租户隔离
 		if (tenants.length == 1) {
-			sqlPart = sqlPart.concat(tenantColumn).concat("='").concat(tenants[0])
+			sqlPart = sqlPart.concat(tenantColumn).concat("='").concat(escapeQuote(tenants[0]))
 					.concat(whereIndex > 0 ? "' and " : "' ");
 		} else {
-			sqlPart = sqlPart.concat(tenantColumn).concat("in (").concat(
-					SqlUtil.combineQueryInStr(tenants, null, null, true).concat(whereIndex > 0 ? ") and " : ") "));
+			StringBuilder tenantValues = new StringBuilder();
+			for (String tenant : tenants) {
+				if (tenantValues.length() > 0) {
+					tenantValues.append(",");
+				}
+				tenantValues.append("'").append(escapeQuote(tenant)).append("'");
+			}
+			sqlPart = sqlPart.concat(tenantColumn).concat(" in (").concat(tenantValues.toString())
+					.concat(whereIndex > 0 ? ") and " : ") ");
 		}
 
 		// 更精细的操作行为可以通过
@@ -97,9 +108,9 @@ public class TenantFilterInterceptor implements SqlInterceptor {
 			// 从where开始替换，避免select a,b from table where id=? for update 场景拼接在最后面是有错误的
 			// 对象操作sql由框架生成，where前后是空白
 			if (operateType.equals(OperateType.saveOrUpdate) && sql.indexOf(SqlToyConstants.MERGE_UPDATE) > 0) {
-				// 截取merge int xxxx (select ?,? from dual) as tv on (alias.field=tv.xxx)
+				// 截取merge into xxxx (select ?,? from dual) as tv on (alias.field=tv.xxx)
 				// 中的具体alias
-				// 构造成:merge int xxxx (select ?,? from dual) as tv on (alias.tenant_id=xxx and
+				// 构造成:merge into xxxx (select ?,? from dual) as tv on (alias.tenant_id=xxx and
 				// alias.field=tv.xxx)
 				int onTenantIndex = sql.indexOf(SqlToyConstants.MERGE_ALIAS_ON);
 				int end = onTenantIndex + SqlToyConstants.MERGE_ALIAS_ON.length();
@@ -112,10 +123,10 @@ public class TenantFilterInterceptor implements SqlInterceptor {
 			} else {
 				// 可能是singleTable单表,没有where 条件
 				if (whereIndex < 0) {
-					// \\Wgroup,匹配到位置要往后移1位
-					int groupByIndex = StringUtil.matchIndex(sql, SqlUtil.GROUP_BY_PATTERN);
+					// \\Wgroup,匹配到位置要往后移1位(定位在掩码串上进行,规避字面量内的group by/order by导致注入到字面量内部)
+					int groupByIndex = StringUtil.matchIndex(maskedSql, SqlUtil.GROUP_BY_PATTERN);
 					// \\Worder,匹配到位置要往后移1位
-					int orderByIndex = StringUtil.matchIndex(sql, SqlUtil.ORDER_BY_PATTERN);
+					int orderByIndex = StringUtil.matchIndex(maskedSql, SqlUtil.ORDER_BY_PATTERN);
 					if (groupByIndex < 0) {
 						if (orderByIndex < 0) {
 							sql = sql.concat(sqlPart);
@@ -128,7 +139,11 @@ public class TenantFilterInterceptor implements SqlInterceptor {
 								.concat(sql.substring(groupByIndex + 1));
 					}
 				} else {
-					sql = sql.replaceFirst("(?i)\\swhere\\s", sqlPart);
+					// 按掩码串定位的原位替换where词本身:规避字面量内的where被replaceFirst误替换
+					// update 2026-9-9 复用上方matchIndex已定位的whereIndex(命中串"\Wwhere\W"恒为
+					// 定长7,词本身区间即[start+1,start+6)),消除原实现每查询一次的Pattern.compile
+					// 与未检查的find()(未命中时start()会抛IllegalStateException)
+					sql = new StringBuilder(sql).replace(whereIndex + 1, whereIndex + 6, sqlPart).toString();
 				}
 				sqlToyResult.setSql(sql);
 			}
@@ -155,5 +170,15 @@ public class TenantFilterInterceptor implements SqlInterceptor {
 			return new String[] { entityMeta.getTenantField() };
 		}
 		return null;
+	}
+
+	/**
+	 * 租户值拼入SQL字面量前的转义:'→''(标准SQL转义,主流数据库通用)
+	 * 
+	 * @param tenant
+	 * @return
+	 */
+	private static String escapeQuote(String tenant) {
+		return (tenant == null) ? "" : tenant.replace("'", "''");
 	}
 }

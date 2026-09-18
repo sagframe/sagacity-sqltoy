@@ -1,7 +1,6 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.plugins.ddl.impl;
+
+import java.util.Locale;
 
 import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.model.TableMeta;
@@ -13,8 +12,8 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @project sagacity-sqltoy
  * @description postgresql数据库表创建
  * @author zhongxuchen
- * @version v1.0, Date:2023年12月21日
- * @modify 2023年12月21日,修改说明
+ * @version v1.0,Date:2023-12-21
+ * @modify Date:2023-12-21,修改说明
  */
 public class PostgreSqlDDLGenerator implements DialectDDLGenerator {
 
@@ -57,7 +56,7 @@ public class PostgreSqlDDLGenerator implements DialectDDLGenerator {
 				if (DDLUtils.isNotChar(colMeta.getDataType())) {
 					tableSql.append(colMeta.getDefaultValue());
 				} else if (DDLUtils.isDate(colMeta.getDataType())
-						&& DDLUtils.isDateFunction(colMeta.getDefaultValue().toUpperCase())) {
+						&& DDLUtils.isDateFunction(colMeta.getDefaultValue().toUpperCase(Locale.ROOT))) {
 					tableSql.append(colMeta.getDefaultValue());
 				} else {
 					tableSql.append("'").append(colMeta.getDefaultValue()).append("'");
@@ -67,12 +66,12 @@ public class PostgreSqlDDLGenerator implements DialectDDLGenerator {
 		}
 		// 主键
 		DDLUtils.wrapTablePrimaryKeys(tableMeta, upperOrLower, dbType, tableSql);
-		// 索引
-		DDLUtils.wrapTableIndexes(tableMeta, upperOrLower, dbType, tableSql, false);
 		// 外键
 		DDLUtils.wrapForeignKeys(tableMeta, upperOrLower, dbType, tableSql, false);
 		tableSql.append(NEWLINE);
 		tableSql.append(")");
+		// 索引(postgresql不支持create table内key语法,需闭括号后单独create index)
+		DDLUtils.wrapTableIndexes(tableMeta, upperOrLower, dbType, tableSql, true);
 		// 表和字段的备注
 		DDLUtils.wrapTableAndColumnsComment(tableMeta, upperOrLower, dbType, tableSql);
 		return tableSql.toString();

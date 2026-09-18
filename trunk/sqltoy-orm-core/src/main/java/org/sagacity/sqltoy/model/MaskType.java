@@ -4,8 +4,8 @@ package org.sagacity.sqltoy.model;
  * @project sagacity-sqltoy
  * @description ParamFilters里面对查询结果值进行脱敏的类型
  * @author zhongxuchen
- * @version v1.0, Date:2020-10-21
- * @modify 2020-10-21,修改说明
+ * @version v1.0,Date:2020-10-21
+ * @modify Date:2020-10-21 修改说明
  */
 public enum MaskType {
 	// 电话,TEL("tel"),或TEL("tel","电话号码"),
@@ -21,7 +21,11 @@ public enum MaskType {
 	// 身份证
 	ID("id-card"),
 	// 银行对公账号
-	PUBLIC_ACCOUNT("public-account");
+	PUBLIC_ACCOUNT("public-account"),
+	// 按比例离散分布
+	DISCRETE_RATE("discrete-rate"),
+	// 其它
+	OTHER("other");
 
 	private final String type;
 

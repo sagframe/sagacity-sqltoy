@@ -1,48 +1,43 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.config.model;
 
+import java.io.InputStream;
 import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.charset.Charset;
 import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import javax.net.ssl.SSLContext;
 
-import org.apache.http.HttpHost;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.config.ConnectionConfig;
-import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
-import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
-import org.apache.http.ssl.SSLContextBuilder;
-import org.apache.http.ssl.SSLContexts;
-import org.elasticsearch.client.RestClient;
-import org.elasticsearch.client.RestClientBuilder;
+import org.apache.hc.client5.http.auth.AuthScope;
+import org.apache.hc.client5.http.auth.UsernamePasswordCredentials;
+import org.apache.hc.client5.http.impl.auth.BasicCredentialsProvider;
+import org.apache.hc.core5.http.HttpHost;
+import org.apache.hc.core5.ssl.SSLContextBuilder;
+import org.apache.hc.core5.ssl.SSLContexts;
+import org.apache.hc.core5.util.Timeout;
 import org.sagacity.sqltoy.utils.FileUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import co.elastic.clients.transport.rest5_client.low_level.Rest5Client;
+import co.elastic.clients.transport.rest5_client.low_level.Rest5ClientBuilder;
 
 /**
  * @project sagacity-sqltoy
  * @description es配置
  * @author zhongxuchen
- * @version v1.0,Date:2018年2月5日
+ * @version v1.0,Date:2018-02-05
  */
 public class ElasticEndpoint implements Serializable {
+	private final static Logger logger = LoggerFactory.getLogger(ElasticEndpoint.class);
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 7850474153384016421L;
 
-	private RestClient restClient;
+	private Rest5Client restClient;
 
 	public ElasticEndpoint(String url) {
 		this.url = url;
@@ -57,7 +52,7 @@ public class ElasticEndpoint implements Serializable {
 				this.sqlPath = sqlPath;
 			}
 
-			String sqlLowPath = this.sqlPath.toLowerCase();
+			String sqlLowPath = this.sqlPath.toLowerCase(Locale.ROOT);
 			// elasticsearch原生sql路径为_sql
 			if (sqlLowPath.startsWith("_sql") || sqlLowPath.startsWith("_xpack/sql")) {
 				this.nativeSql = true;
@@ -155,7 +150,7 @@ public class ElasticEndpoint implements Serializable {
 			} else {
 				this.sqlPath = sqlPath;
 			}
-			String sqlLowPath = this.sqlPath.toLowerCase();
+			String sqlLowPath = this.sqlPath.toLowerCase(Locale.ROOT);
 			// elasticsearch原生sql路径为_sql
 			if (sqlLowPath.startsWith("_sql") || sqlLowPath.startsWith("_xpack/sql")) {
 				this.nativeSql = true;
@@ -280,8 +275,19 @@ public class ElasticEndpoint implements Serializable {
 	/**
 	 * @return the restClient
 	 */
-	public RestClient getRestClient() {
+	public Rest5Client getRestClient() {
 		return restClient;
+	}
+
+	public void closeRestClient() {
+		if (restClient != null) {
+			try {
+				restClient.close();
+			} catch (Exception e) {
+				logger.error("closeRestClient method execution failed", e);
+			}
+			restClient = null;
+		}
 	}
 
 	public boolean isNativeSql() {
@@ -375,30 +381,28 @@ public class ElasticEndpoint implements Serializable {
 				try {
 					if (StringUtil.isNotBlank(urlStr)) {
 						URL url = new java.net.URL(urlStr.trim());
-						hosts.add(new HttpHost(url.getHost(), url.getPort(), url.getProtocol()));
+						// httpclient5的HttpHost构造参数顺序为(scheme, hostname, port)
+						hosts.add(new HttpHost(url.getProtocol(), url.getHost(), url.getPort()));
 					}
 				} catch (MalformedURLException e) {
-					e.printStackTrace();
+					logger.error("initRestClient method execution failed", e);
 				}
 			}
 			if (!hosts.isEmpty()) {
 				HttpHost[] hostAry = new HttpHost[hosts.size()];
 				hosts.toArray(hostAry);
-				RestClientBuilder builder = RestClient.builder(hostAry);
-				final ConnectionConfig connectionConfig = ConnectionConfig.custom()
-						.setCharset(Charset.forName(this.charset == null ? "UTF-8" : this.charset)).build();
-				RequestConfig requestConfig = RequestConfig.custom().setConnectionRequestTimeout(this.requestTimeout)
-						.setConnectTimeout(this.connectTimeout).setSocketTimeout(this.socketTimeout).build();
-				final CredentialsProvider credsProvider = new BasicCredentialsProvider();
+				Rest5ClientBuilder builder = Rest5Client.builder(hostAry);
+				// 凭据提供器(AuthScope在httpclient5.6中移除了ANY常量,null/-1即为任意host/port)
+				final BasicCredentialsProvider credsProvider = new BasicCredentialsProvider();
 				final boolean hasCrede = (StringUtil.isNotBlank(this.getUsername())
 						&& StringUtil.isNotBlank(getPassword())) ? true : false;
 				// 是否ssl证书模式
 				final boolean hasSsl = StringUtil.isNotBlank(this.keyStore);
-				// 凭据提供器
+				// 凭据提供器(AuthScope在httpclient5.6中移除了ANY常量,null/-1即为任意host/port)
 				if (hasCrede) {
-					credsProvider.setCredentials(AuthScope.ANY,
+					credsProvider.setCredentials(new AuthScope(null, -1),
 							// 认证用户名和密码
-							new UsernamePasswordCredentials(getUsername(), getPassword()));
+							new UsernamePasswordCredentials(getUsername(), getPassword().toCharArray()));
 				}
 
 				SSLContextBuilder sslBuilder = null;
@@ -406,36 +410,45 @@ public class ElasticEndpoint implements Serializable {
 					if (hasSsl) {
 						KeyStore truststore = KeyStore.getInstance(
 								StringUtil.isBlank(keyStoreType) ? KeyStore.getDefaultType() : keyStoreType);
-						truststore.load(FileUtil.getFileInputStream(keyStore),
-								(keyStorePass == null) ? null : keyStorePass.toCharArray());
+						// KeyStore.load(null)不抛错而是初始化为空keystore,静默导致SSL握手失败难以定位
+						try (InputStream keyStoreStream = FileUtil.getFileInputStream(keyStore)) {
+							if (keyStoreStream == null) {
+								throw new IllegalArgumentException(
+										"elastic keystore file not found:[" + keyStore + "]");
+							}
+							truststore.load(keyStoreStream, (keyStorePass == null) ? null : keyStorePass.toCharArray());
+						}
+						// keyStoreSelfSign=true时信任自签名证书:TrustSelfSignedStrategy已被废弃,
+						// 等价实现为信任单张证书链
 						sslBuilder = SSLContexts.custom().loadTrustMaterial(truststore,
-								keyStoreSelfSign ? new TrustSelfSignedStrategy() : null);
+								keyStoreSelfSign ? (certs, authType) -> certs.length == 1 : null);
 					}
 					final SSLContext sslContext = (sslBuilder == null) ? null : sslBuilder.build();
 					final boolean disableAuthCaching = !authCaching;
-					builder.setHttpClientConfigCallback(new RestClientBuilder.HttpClientConfigCallback() {
-						@Override
-						public HttpAsyncClientBuilder customizeHttpClient(HttpAsyncClientBuilder httpClientBuilder) {
-							httpClientBuilder.setDefaultConnectionConfig(connectionConfig)
-									.setDefaultRequestConfig(requestConfig);
-							// 禁用抢占式身份验证
-							if (disableAuthCaching) {
-								httpClientBuilder.disableAuthCaching();
-							}
-							// 用户名密码
-							if (hasCrede) {
-								httpClientBuilder.setDefaultCredentialsProvider(credsProvider);
-							}
-							// 证书
-							if (hasSsl) {
-								httpClientBuilder.setSSLContext(sslContext);
-							}
-							return httpClientBuilder;
+					// 请求超时配置(socketTimeout对应httpclient5的响应超时)
+					// RequestConfig.setConnectTimeout已废弃,连接超时由ConnectionConfig配置
+					builder.setRequestConfigCallback(requestConfig -> requestConfig
+							.setConnectionRequestTimeout(Timeout.ofMilliseconds(this.requestTimeout))
+							.setResponseTimeout(Timeout.ofMilliseconds(this.socketTimeout)));
+					builder.setConnectionConfigCallback(connectionConfig -> connectionConfig
+							.setConnectTimeout(Timeout.ofMilliseconds(this.connectTimeout)));
+					builder.setHttpClientConfigCallback(httpClientBuilder -> {
+						// 禁用抢占式身份验证
+						if (disableAuthCaching) {
+							httpClientBuilder.disableAuthCaching();
+						}
+						// 用户名密码
+						if (hasCrede) {
+							httpClientBuilder.setDefaultCredentialsProvider(credsProvider);
 						}
 					});
+					// 证书
+					if (hasSsl) {
+						builder.setSSLContext(sslContext);
+					}
 					restClient = builder.build();
 				} catch (Exception e) {
-					e.printStackTrace();
+					logger.error("customizeHttpClient method execution failed", e);
 				}
 			}
 		}

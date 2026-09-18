@@ -2,12 +2,13 @@ package org.sagacity.sqltoy.callback;
 
 import org.sagacity.sqltoy.model.IgnoreCaseSet;
 import org.sagacity.sqltoy.plugins.secure.FieldsSecureProvider;
+import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
  * @project sagacity-sqltoy
  * @description 查询时字段密文解密处理器
  * @author zhongxuchen
- * @version v1.0,Date:2021-11-8
+ * @version v1.0,Date:2021-11-08
  */
 public class DecryptHandler {
 	/**
@@ -26,7 +27,8 @@ public class DecryptHandler {
 	}
 
 	/**
-	 * @TODO 实现解密
+	 * 实现解密
+	 * 
 	 * @param column
 	 * @param value
 	 * @return
@@ -42,7 +44,10 @@ public class DecryptHandler {
 		}
 		if (exists) {
 			String content = value.toString();
-			if ("".equals(content.trim())) {
+			// update 2026-9-14
+			// 与写入侧DialectUtils.getSecureReflectHandler统一判据(同用StringUtil.isBlank):
+			// 空白(含纯空格)不进入解密,原值返回
+			if (StringUtil.isBlank(content)) {
 				return value;
 			}
 			return fieldsSecureProvider.decrypt(content);

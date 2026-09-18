@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.config.model;
 
 import java.io.Serializable;
@@ -10,12 +7,9 @@ import java.math.RoundingMode;
  * @project sagacity-sqltoy
  * @description 集合行与行之间环比计算
  * @author zhongxuchen
- * @version v1.0,Date:2020年3月24日
+ * @version v1.0,Date:2020-03-24
  */
 public class RowsChainRelativeModel implements Serializable {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -8741662714912669143L;
 
 	/**

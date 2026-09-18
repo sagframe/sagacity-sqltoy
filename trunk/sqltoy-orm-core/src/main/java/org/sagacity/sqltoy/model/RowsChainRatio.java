@@ -5,15 +5,12 @@ import java.io.Serializable;
 /**
  * @project sagacity-sqltoy
  * @description 行与行环比计算参数模型
- * @author zhong
- * @version v1.0, Date:2023年6月22日
- * @modify 2023年6月22日,修改说明
+ * @author zhongxuchen
+ * @version v1.0,Date:2023-06-22
+ * @modify Date:2023-06-22,修改说明
  */
 public class RowsChainRatio implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 7946896698723423990L;
 
 	/**

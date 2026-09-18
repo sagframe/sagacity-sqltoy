@@ -1,5 +1,7 @@
 package org.sagacity.sqltoy.plugins.ddl.impl;
 
+import java.util.Locale;
+
 import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.plugins.ddl.DDLUtils;
@@ -10,8 +12,8 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @project sagacity-sqltoy
  * @description h2数据库通过POJO生成创建表结构的ddl语句
  * @author zhongxuchen
- * @version v1.0, Date:2024年4月30日
- * @modify 2024年4月30日,修改说明
+ * @version v1.0,Date:2024-04-30
+ * @modify Date:2024-04-30,修改说明
  */
 public class H2DDLGenerator implements DialectDDLGenerator {
 	private String NEWLINE = "\r\n";
@@ -52,7 +54,7 @@ public class H2DDLGenerator implements DialectDDLGenerator {
 				if (DDLUtils.isNotChar(colMeta.getDataType())) {
 					tableSql.append(colMeta.getDefaultValue());
 				} else if (DDLUtils.isDate(colMeta.getDataType())
-						&& DDLUtils.isDateFunction(colMeta.getDefaultValue().toUpperCase())) {
+						&& DDLUtils.isDateFunction(colMeta.getDefaultValue().toUpperCase(Locale.ROOT))) {
 					tableSql.append(colMeta.getDefaultValue());
 				} else {
 					tableSql.append("'").append(colMeta.getDefaultValue()).append("'");
@@ -60,9 +62,9 @@ public class H2DDLGenerator implements DialectDDLGenerator {
 			}
 			// 列注释
 			if (StringUtil.isNotBlank(colMeta.getComments())) {
+				// update 2026-9-14 反斜杠/引号均为字面量:改String.replace免去每列3次隐式正则编译
 				tableSql.append(" COMMENT '")
-						.append(colMeta.getComments().replaceAll("\\\\", "").replaceAll("\"", "").replaceAll("\'", ""))
-						.append("'");
+						.append(colMeta.getComments().replace("\\", "").replace("\"", "").replace("'", "")).append("'");
 			}
 			index++;
 		}
@@ -75,8 +77,7 @@ public class H2DDLGenerator implements DialectDDLGenerator {
 			tableSql.append(";");
 			tableSql.append(NEWLINE);
 			tableSql.append(" COMMENT ON TABLE ").append(tableName).append(" IS '")
-					.append(tableMeta.getRemarks().replaceAll("\\\\", "").replaceAll("\"", "").replaceAll("\'", ""))
-					.append("'");
+					.append(tableMeta.getRemarks().replace("\\", "").replace("\"", "").replace("'", "")).append("'");
 		}
 		// 索引
 		DDLUtils.wrapTableIndexes(tableMeta, upperOrLower, dbType, tableSql, true);

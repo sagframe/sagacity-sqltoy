@@ -1,13 +1,17 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.plugins.ddl;
 
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.sagacity.sqltoy.config.model.EntityMeta;
@@ -15,105 +19,153 @@ import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.ForeignModel;
 import org.sagacity.sqltoy.config.model.IndexModel;
 import org.sagacity.sqltoy.model.ColumnMeta;
+import org.sagacity.sqltoy.model.JdbcTypes;
 import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.StringUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @project sagacity-sqltoy
  * @description 创建表语句的工具类，用于将EntityMeta依旧外键关系排序，转化封装为TableModel
  * @author zhongxuchen
- * @version v1.0, Date:2023年12月17日
- * @modify 2023年12月17日,修改说明
+ * @version v1.0,Date:2023-12-17
+ * @modify Date:2023-12-17,修改说明
  */
 public class DDLUtils {
+	private static final Logger logger = LoggerFactory.getLogger(DDLUtils.class);
+
 	public static String NEWLINE = "\r\n";
 	public static String TAB = "   ";
 
 	/**
-	 * @TODO 因为存在外键关系，首先需要对表进行排序，被依赖的优先创建
+	 * 因为存在外键关系，首先需要对表进行排序，被依赖的优先创建
+	 * <p>
+	 * update 2026-9-15 重写为Kahn拓扑排序:原"贪心单层前置"算法对链式依赖(A←B←C)在
+	 * ConcurrentHashMap不利迭代顺序下产出[B,C,A](处理C时前置B但不考虑B自身的依赖,
+	 * 处理B时A未入队被append到尾部),而外键约束输出对建表顺序硬依赖(mysql/pg内联 FOREIGN KEY于CREATE
+	 * TABLE,oracle/h2/sqlserver的ALTER ADD CONSTRAINT紧跟本表
+	 * CREATE之后),错序即建表失败;且原输出依赖hash序跨环境不可复现、swotTables全量
+	 * 重建最坏O(n²)。新算法O(V+E):零入度集合按表名字典序出队保证脚本可复现,
+	 * 自环(树表自引用外键,内联合法)不参与排序约束,多外键指向同表去重防入度虚增,
+	 * 节点集外的外表引用忽略(与原实现一致),环状残余(互相外键,内联约束下本就无解) 按名序追加+warn提示,不吞表不死循环
+	 * 
 	 * @param entitysMetaMap
-	 * @return
+	 * @return 被依赖表在前的表实体列表
 	 */
 	public static List<EntityMeta> sortTables(ConcurrentHashMap<String, EntityMeta> entitysMetaMap) {
-		// 构建一个暂时存放
-		LinkedHashMap<String, EntityMeta> tmpEntityMeta = new LinkedHashMap<String, EntityMeta>();
-		EntityMeta entityMeta;
-		String tableName;
-		for (Map.Entry<String, EntityMeta> entry : entitysMetaMap.entrySet()) {
-			entityMeta = entry.getValue();
-			tableName = entityMeta.getSchemaTable(null, null);
-			tmpEntityMeta.put(tableName, entityMeta);
+		// 节点归一:schemaTable名->meta(与原实现口径一致)
+		LinkedHashMap<String, EntityMeta> nodes = new LinkedHashMap<String, EntityMeta>();
+		for (EntityMeta entityMeta : entitysMetaMap.values()) {
+			nodes.put(entityMeta.getSchemaTable(null, null), entityMeta);
 		}
-
-		// 组织排序
-		LinkedHashMap<String, EntityMeta> sortTables = new LinkedHashMap<String, EntityMeta>();
-		LinkedHashMap<String, EntityMeta> swotTables = new LinkedHashMap<String, EntityMeta>();
-		for (Map.Entry<String, EntityMeta> entry : entitysMetaMap.entrySet()) {
-			entityMeta = entry.getValue();
-			tableName = entityMeta.getSchemaTable(null, null);
-			// 有外键依赖的表放在前面
-			if (entityMeta.getForeignFields() != null) {
-				String foreignTable;
-				for (Map.Entry<String, ForeignModel> iter : entityMeta.getForeignFields().entrySet()) {
-					foreignTable = iter.getValue().getForeignTable();
-					if (entityMeta.getSchema() != null
-							&& !foreignTable.startsWith(entityMeta.getSchema().concat("."))) {
-						foreignTable = entityMeta.getSchema().concat(".").concat(foreignTable);
-					}
-					if (!sortTables.containsKey(foreignTable)) {
-						sortTables.put(foreignTable, tmpEntityMeta.get(foreignTable));
-					} // 外表和当前表都已经在排序队列中
-					else if (sortTables.containsKey(tableName) && !isBefore(sortTables, foreignTable, tableName)) {
-						swotTables.clear();
-						// 将外键关联的表放第一位置
-						swotTables.put(foreignTable, tmpEntityMeta.get(foreignTable));
-						// 先移除外键关联表
-						sortTables.remove(foreignTable);
-						swotTables.putAll(sortTables);
-						sortTables.clear();
-						// 完成关联表放首位的调整
-						sortTables.putAll(swotTables);
+		// 建边:foreignTable->依赖表
+		Map<String, Set<String>> successors = new HashMap<String, Set<String>>();
+		Map<String, Integer> inDegree = new HashMap<String, Integer>();
+		for (String name : nodes.keySet()) {
+			inDegree.put(name, 0);
+		}
+		for (Map.Entry<String, EntityMeta> entry : nodes.entrySet()) {
+			String tableName = entry.getKey();
+			EntityMeta entityMeta = entry.getValue();
+			if (entityMeta.getForeignFields() == null) {
+				continue;
+			}
+			// 同表多外键指向同一外表时去重,避免入度虚增导致该表永不出队
+			Set<String> deps = new HashSet<String>();
+			for (Map.Entry<String, ForeignModel> iter : entityMeta.getForeignFields().entrySet()) {
+				String foreignTable = iter.getValue().getForeignTable();
+				if (entityMeta.getSchema() != null && !foreignTable.startsWith(entityMeta.getSchema().concat("."))) {
+					foreignTable = entityMeta.getSchema().concat(".").concat(foreignTable);
+				}
+				// 自环排除:树表自引用外键内联合法,不约束建表顺序;节点集外的外表引用忽略
+				if (!foreignTable.equals(tableName) && nodes.containsKey(foreignTable)) {
+					deps.add(foreignTable);
+				}
+			}
+			for (String dep : deps) {
+				successors.computeIfAbsent(dep, k -> new LinkedHashSet<String>()).add(tableName);
+				inDegree.put(tableName, inDegree.get(tableName) + 1);
+			}
+		}
+		// Kahn:零入度集合按表名字典序出队,同层顺序确定,DDL脚本跨环境可复现
+		TreeSet<String> ready = new TreeSet<String>();
+		for (Map.Entry<String, Integer> entry : inDegree.entrySet()) {
+			if (entry.getValue() == 0) {
+				ready.add(entry.getKey());
+			}
+		}
+		List<EntityMeta> result = new ArrayList<EntityMeta>(nodes.size());
+		Set<String> emitted = new HashSet<String>();
+		while (!ready.isEmpty()) {
+			String name = ready.pollFirst();
+			result.add(nodes.get(name));
+			emitted.add(name);
+			Set<String> nexts = successors.get(name);
+			if (nexts != null) {
+				for (String next : nexts) {
+					int deg = inDegree.get(next) - 1;
+					inDegree.put(next, deg);
+					if (deg == 0) {
+						ready.add(next);
 					}
 				}
 			}
-			// 未被依赖过
-			if (!sortTables.containsKey(tableName)) {
-				sortTables.put(tableName, entityMeta);
+		}
+		// 环状残余(互相外键):内联约束下任何顺序都无法建表,属schema设计问题;
+		// 排序层职责是不吞表不死循环——按名序追加并warn定位
+		if (result.size() < nodes.size()) {
+			List<String> cyclic = new ArrayList<String>();
+			for (String name : nodes.keySet()) {
+				if (!emitted.contains(name)) {
+					cyclic.add(name);
+				}
+			}
+			Collections.sort(cyclic);
+			logger.warn("foreign key cycle detected among tables:{}, appended in name order,"
+					+ " inline FOREIGN KEY constraints may fail, consider ALTER-based constraints!", cyclic);
+			for (String name : cyclic) {
+				result.add(nodes.get(name));
 			}
 		}
-		return new ArrayList<EntityMeta>(sortTables.values());
+		return result;
 	}
 
 	/**
-	 * @TODO 判断外键关联表位置是否在当前表的前面
+	 * 判断外键关联表位置是否在当前表的前面
+	 * 
 	 * @param sortTables
 	 * @param foreignTable
 	 * @param nowTable
 	 * @return
+	 * @deprecated update 2026-9-15 sortTables已重写为Kahn拓扑排序,不再依赖本方法;
+	 *             保留仅为公共API兼容,新代码请勿使用
 	 */
-	public static boolean isBefore(LinkedHashMap<String, EntityMeta> sortTables, String foreignTable, String nowTable) {
-		int foreignTableIndex = 0;
-		int nowTableIndex = 0;
-		String tableName;
-		int index = 0;
-		for (Map.Entry<String, EntityMeta> entry : sortTables.entrySet()) {
-			tableName = entry.getKey();
-			if (foreignTable.equals(tableName)) {
-				foreignTableIndex = index;
-			} else if (nowTable.equals(tableName)) {
-				nowTableIndex = index;
-			}
-			index++;
-		}
-		if (foreignTableIndex < nowTableIndex) {
-			return true;
-		}
-		return false;
-	}
+//	@Deprecated
+//	public static boolean isBefore(LinkedHashMap<String, EntityMeta> sortTables, String foreignTable, String nowTable) {
+//		int foreignTableIndex = 0;
+//		int nowTableIndex = 0;
+//		String tableName;
+//		int index = 0;
+//		for (Map.Entry<String, EntityMeta> entry : sortTables.entrySet()) {
+//			tableName = entry.getKey();
+//			if (foreignTable.equals(tableName)) {
+//				foreignTableIndex = index;
+//			} else if (nowTable.equals(tableName)) {
+//				nowTableIndex = index;
+//			}
+//			index++;
+//		}
+//		if (foreignTableIndex < nowTableIndex) {
+//			return true;
+//		}
+//		return false;
+//	}
 
 	/**
-	 * @TODO 将EntityMeta转化为TableMeta 便于输出表结构
+	 * 将EntityMeta转化为TableMeta 便于输出表结构
+	 * 
 	 * @param entityMeta
 	 * @param dbType
 	 * @return
@@ -121,7 +173,7 @@ public class DDLUtils {
 	public static TableMeta wrapTableMeta(EntityMeta entityMeta, Integer dbType) {
 		TableMeta tableMeta = new TableMeta();
 		tableMeta.setTableName(entityMeta.getTableName());
-		tableMeta.setRemarks(StringUtil.escapeComment(entityMeta.getTableComment()));
+		tableMeta.setRemarks(escapeCommentForDdl(entityMeta.getTableComment()));
 		tableMeta.setSchema(entityMeta.getSchema());
 		tableMeta.setPkConstraint(entityMeta.getPkConstraint());
 		// 索引信息
@@ -148,7 +200,7 @@ public class DDLUtils {
 			fieldMeta = entry.getValue();
 			ColumnMeta columnMeta = new ColumnMeta();
 			columnMeta.setColName(fieldMeta.getColumnName());
-			columnMeta.setComments(translateSpecialSymbols(fieldMeta.getComments()));
+			columnMeta.setComments(escapeCommentForDdl(fieldMeta.getComments()));
 			columnMeta.setAutoIncrement(fieldMeta.isAutoIncrement());
 			columnMeta.setColumnSize(fieldMeta.getLength());
 			columnMeta.setPartitionKey(fieldMeta.isPartitionKey());
@@ -168,7 +220,8 @@ public class DDLUtils {
 	}
 
 	/**
-	 * @TODO 设置类型
+	 * 设置类型
+	 * 
 	 * @param colMeta
 	 * @param dbType
 	 * @return
@@ -176,11 +229,12 @@ public class DDLUtils {
 	public static String convertType(ColumnMeta colMeta, int dbType) {
 		if (colMeta.getNativeType() != null) {
 			if (colMeta.getNativeType().equalsIgnoreCase("JSON")) {
-				return "JSON";
+				// 2026-9-11 hana无原生json列类型(json文档以NCLOB承载,可显式加IS JSON约束)
+				return (dbType == DBType.HANA) ? "NCLOB" : "JSON";
 			} else if (colMeta.getNativeType().equalsIgnoreCase("BSON")) {
-				if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB
+				if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 						|| dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.STARDB
-						|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE) {
+						|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE) {
 					return "BSON";
 				} else {
 					return "JSON";
@@ -214,53 +268,63 @@ public class DDLUtils {
 			break;
 		case java.sql.Types.CHAR:
 		case java.sql.Types.NCHAR:
-			typeName = "CHAR";
+			// hana的CHAR/VARCHAR为ASCII字符集,unicode须NCHAR/NVARCHAR
+			typeName = (dbType == DBType.HANA) ? "NCHAR" : "CHAR";
 			typeName = setLength(typeName, false, colMeta);
 			break;
 		case java.sql.Types.VARCHAR:
 		case java.sql.Types.NVARCHAR:
-			typeName = "VARCHAR";
+			typeName = (dbType == DBType.HANA) ? "NVARCHAR" : "VARCHAR";
 			typeName = setLength(typeName, false, colMeta);
 			break;
 		case java.sql.Types.LONGNVARCHAR:
-			if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
+			if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM || dbType == DBType.H2) {
 				typeName = "CLOB";
+			} else if (dbType == DBType.HANA) {
+				typeName = "NCLOB";
 			} else {
 				typeName = "TEXT";
 			}
 			break;
 		case java.sql.Types.TIMESTAMP_WITH_TIMEZONE:
-			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB
+			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 					|| dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.STARDB
-					|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE || dbType == DBType.ORACLE) {
-				typeName = setLength("TIMESTAMP WITH TIME ZONE", true, colMeta);
+					|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE || dbType == DBType.ORACLE
+					// update 2026-9-14 补KINGBASE(KingbaseES基于PG,类型映射归PG系)
+					|| dbType == DBType.KINGBASE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
+				// 精度需跟在TIMESTAMP之后:TIMESTAMP(6) WITH TIME ZONE
+				typeName = "TIMESTAMP";
+				if (colMeta.getColumnSize() > 0) {
+					typeName = typeName + "(" + colMeta.getColumnSize() + ")";
+				}
+				typeName = typeName + " WITH TIME ZONE";
 			} else if (dbType == DBType.SQLSERVER) {
-				typeName = setLength("DATETIMEOFFSET", true, colMeta);
+				typeName = setTimePrecision("DATETIMEOFFSET", colMeta);
 			} else {
 				typeName = "TIMESTAMP";
 			}
 			break;
 		case java.sql.Types.BLOB:
-			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB
+			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 					|| dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.STARDB
-					|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE) {
+					|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE) {
 				typeName = "BYTEA";
 			} else if (dbType == DBType.SQLSERVER) {
-				typeName = "IMAGE";
+				typeName = "VARBINARY(MAX)";
 			} else {
 				typeName = "BLOB";
 			}
 			isBytes = true;
 			break;
 		case java.sql.Types.BINARY:
-			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB
+			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 					|| dbType == DBType.OPENGAUSS || dbType == DBType.STARDB || dbType == DBType.OSCAR
-					|| dbType == DBType.MOGDB || dbType == DBType.VASTBASE) {
+					|| dbType == DBType.MOGDB || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE) {
 				typeName = "BYTEA";
 			} else if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
 				typeName = "BLOB";
 			} else if (dbType == DBType.SQLSERVER) {
-				typeName = "IMAGE";
+				typeName = "VARBINARY(MAX)";
 			} else {
 				typeName = "BINARY";
 				typeName = setLength(typeName, false, colMeta);
@@ -269,14 +333,14 @@ public class DDLUtils {
 			break;
 		case java.sql.Types.VARBINARY:
 		case java.sql.Types.LONGVARBINARY:
-			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB
+			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 					|| dbType == DBType.OPENGAUSS || dbType == DBType.STARDB || dbType == DBType.OSCAR
-					|| dbType == DBType.MOGDB || dbType == DBType.VASTBASE) {
+					|| dbType == DBType.MOGDB || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE) {
 				typeName = "BYTEA";
 			} else if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
 				typeName = "BLOB";
 			} else if (dbType == DBType.SQLSERVER) {
-				typeName = "IMAGE";
+				typeName = "VARBINARY(MAX)";
 			} else {
 				typeName = "VARBINARY";
 				typeName = setLength(typeName, false, colMeta);
@@ -285,8 +349,11 @@ public class DDLUtils {
 			break;
 		case java.sql.Types.CLOB:
 		case java.sql.Types.NCLOB:
-			if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
+			if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM || dbType == DBType.H2) {
 				typeName = "CLOB";
+			} else if (dbType == DBType.HANA) {
+				// hana无TEXT类型,大文本为NCLOB(unicode)
+				typeName = "NCLOB";
 			} else {
 				typeName = "TEXT";
 			}
@@ -295,18 +362,33 @@ public class DDLUtils {
 			typeName = "TIME";
 			break;
 		case java.sql.Types.TIMESTAMP:
-			typeName = "TIMESTAMP";
+			// sqlserver的TIMESTAMP是行版本戳(rowversion),不是日期时间类型
+			if (dbType == DBType.SQLSERVER) {
+				typeName = "DATETIME2";
+			} else {
+				typeName = "TIMESTAMP";
+			}
 			break;
 		case java.sql.Types.DATE:
+			// update 2026-9-5 修复dm/pg按生成DDL建表后时间部分被静默清零的缺陷:实测dm的DATE列类型
+			// 只存日期(与oracle的DATE含时间不同),pg系date列同样只存日期(pg 18.6实测,timestamp
+			// 写入date列静默截断时间);java.util.Date/LocalDateTime这类含时间字段(无论@Column未指定
+			// type自动探测,还是quickvo生成实体显式声明type=DATE)此前均输出DATE列;
+			// 依据字段Java类型(typeName,小写全类名)精化:dm输出DATETIME,pg系输出TIMESTAMP,
+			// 纯日期类型(LocalDate/java.sql.Date)保持DATE语义不变;
+			// update 2026-9-6 原"不得将探测归入Types.TIMESTAMP"的约束已解除:rowversion剔除
+			// 改按目标库元数据校准(ensureRowVersionMeta),与实体JDBC类型解耦,LocalDateTime已归位TIMESTAMP
 			if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.SQLSERVER
 					|| dbType == DBType.DORIS || dbType == DBType.STARROCKS) {
 				typeName = "DATETIME";
+			} else if (isTimeCarryingJavaType(colMeta.getTypeName()) && isDateOnlyDialect(dbType)) {
+				typeName = (dbType == DBType.DM) ? "DATETIME" : "TIMESTAMP";
 			} else {
 				typeName = "DATE";
 			}
 			break;
 		case java.sql.Types.BOOLEAN:
-			if (colMeta.getTypeName().equals("string")) {
+			if ("string".equals(colMeta.getTypeName())) {
 				if (colMeta.getColumnSize() > 0) {
 					typeName = "VARCHAR";
 					typeName = setLength(typeName, false, colMeta);
@@ -315,21 +397,99 @@ public class DDLUtils {
 				}
 			} else if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
 				typeName = "INTEGER";
-			} else {
+			} else if (dbType == DBType.SQLSERVER) {
+				// sqlserver无boolean类型,bit为0/1
+				typeName = "BIT";
+			} else if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.DORIS
+					|| dbType == DBType.STARROCKS) {
 				typeName = "TINYINT(1)";
+			} else {
+				// postgresql/openGauss/H2等原生支持boolean
+				typeName = "BOOLEAN";
 			}
 			break;
+		case JdbcTypes.VECTOR: {
+			// 向量类型:gaussdb企业版为floatvector,其余(pgvector/openGauss系/oracle 23ai/mysql
+			// heatwave/sqlserver 2025/db2 12.1.2+)为vector
+			// 维度通过@Column(length=xxx)指定,mysql heatwave和sqlserver 2025的维度为必填项
+			if (dbType == DBType.H2) {
+				// h2无向量类型,测试场景按varchar存储'[1,2,3]'字符串形式
+				typeName = "VARCHAR";
+				typeName = setLength(typeName, false, colMeta);
+			} else if (dbType == DBType.DB2) {
+				// update 2026-9-10 实测db2 12.1.2.0/12.1.5.0:VECTOR须显式坐标类型双参形态
+				// VECTOR(n, FLOAT32),单参VECTOR(n)报-104语法错误、裸VECTOR报-901
+				// "Unknown vector coordinate type";维度必填(@Column(length=xxx)),
+				// 其他坐标类型(FLOAT64等)经@Column(nativeType=...)覆盖
+				typeName = (colMeta.getColumnSize() > 0) ? ("VECTOR(" + colMeta.getColumnSize() + ", FLOAT32)")
+						: "VECTOR";
+			} else if (dbType == DBType.DORIS) {
+				// update 2026-9-10 实测doris 4.1.3:无VECTOR(n)列类型(解析器类型全集无VECTOR),
+				// 向量以ARRAY<FLOAT>承载(近邻检索配VECTOR索引),字符串'[1,2,3]'绑定隐式转换、
+				// 读回为'[1, 2, 3]'文本均实证可行;维度不进列定义(向量索引声明处约束)
+				typeName = "ARRAY<FLOAT>";
+			} else if (dbType == DBType.CLICKHOUSE) {
+				// update 2026-9-11 实测clickhouse 26.8.2.7:无vector类型族(报Unknown data type
+				// family: vector),向量以Array(Float32)承载(同doris思路):字符串'[1,2,3]'插入
+				// 隐式解析、读回'[1,2,3]'文本、L2Distance(v,[..])距离检索均实证可行
+				typeName = "Array(Float32)";
+			} else if (dbType == DBType.HANA) {
+				// 2026-9-11 hana 2.0 SPS08起提供REAL_VECTOR类型(维度必填,上限65000)
+				typeName = (colMeta.getColumnSize() > 0) ? ("REAL_VECTOR(" + colMeta.getColumnSize() + ")")
+						: "REAL_VECTOR";
+			} else {
+				// update 2026-9-10 vastbase G100 3.0实测向量类型名为FLOATVECTOR(无VECTOR别名),同gaussdb企业版
+				if (dbType == DBType.GAUSSDB || dbType == DBType.VASTBASE) {
+					typeName = "FLOATVECTOR";
+				} else {
+					typeName = "VECTOR";
+				}
+				if (colMeta.getColumnSize() > 0) {
+					typeName = typeName + "(" + colMeta.getColumnSize() + ")";
+				}
+			}
+			break;
+		}
+		case JdbcTypes.GEOMETRY: {
+			// 空间类型:oracle/dm为SDO_GEOMETRY,其余(postgis系/mysql/sqlserver/h2)为GEOMETRY
+			// 类型精度修饰(如geometry(Point,4326)、geography)通过@Column(nativeType="...")指定;
+			// nativeType未配置时注解默认为空串(非null),须按blank判断,否则生成空列类型导致DDL非法
+			if (StringUtil.isNotBlank(colMeta.getNativeType())) {
+				typeName = colMeta.getNativeType();
+			} else if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
+				typeName = "SDO_GEOMETRY";
+			} else if (dbType == DBType.HANA) {
+				// hana空间类型为ST_GEOMETRY(构造函数ST_GeomFromText与mysql系同名同参)
+				typeName = "ST_GEOMETRY";
+			} else {
+				typeName = "GEOMETRY";
+			}
+			break;
+		}
 		case java.sql.Types.FLOAT:
 			typeName = "FLOAT";
 			break;
 		case java.sql.Types.DOUBLE:
-			typeName = "DOUBLE";
+			if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11) {
+				typeName = "BINARY_DOUBLE";
+			} else if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
+			// update 2026-9-14 补KINGBASE(KingbaseES基于PG,类型映射归PG系)
+					|| dbType == DBType.KINGBASE || dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB
+					|| dbType == DBType.STARDB || dbType == DBType.OSCAR || dbType == DBType.VASTBASE
+					|| dbType == DBType.DM || dbType == DBType.H2) {
+				typeName = "DOUBLE PRECISION";
+			} else if (dbType == DBType.SQLSERVER) {
+				typeName = "FLOAT";
+			} else {
+				typeName = "DOUBLE";
+			}
 			break;
 		case java.sql.Types.DECIMAL:
 		case java.sql.Types.NUMERIC:
 			if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
 				typeName = "NUMBER";
-			} else if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15) {
+			} else if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.KINGBASE) {
+				// update 2026-9-14 补KINGBASE(KingbaseES基于PG,numeric为任意精度,同vanilla PG)
 				typeName = "NUMERIC";
 			} else {
 				typeName = "DECIMAL";
@@ -337,7 +497,8 @@ public class DDLUtils {
 			typeName = setLength(typeName, true, colMeta);
 			break;
 		default: {
-			if (colMeta.getNativeType() != null) {
+			// nativeType未配置时注解默认为空串(非null),须按blank判断,否则未知类型会生成空列类型
+			if (StringUtil.isNotBlank(colMeta.getNativeType())) {
 				typeName = colMeta.getNativeType();
 			} else {
 				typeName = "VARCHAR";
@@ -346,17 +507,19 @@ public class DDLUtils {
 		}
 		}
 		// 数组类型
-		if ((dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB
+		if ((dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 				|| dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.STARDB
-				|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE) && colMeta.getTypeName().endsWith("[]")
-				&& !isBytes && !typeName.startsWith("_")) {
+				|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE)
+				&& colMeta.getTypeName() != null && colMeta.getTypeName().endsWith("[]") && !isBytes
+				&& !typeName.startsWith("_")) {
 			return "_".concat(typeName);
 		}
 		return typeName;
 	}
 
 	/**
-	 * @TODO 设置类型长度
+	 * 设置类型长度
+	 * 
 	 * @param typeName
 	 * @param isNumber
 	 * @param colMeta
@@ -378,7 +541,22 @@ public class DDLUtils {
 	}
 
 	/**
-	 * @TODO 包装主键信息
+	 * 设置时间类型的精度(只取一位精度,不能带scale)
+	 * 
+	 * @param typeName
+	 * @param colMeta
+	 * @return
+	 */
+	public static String setTimePrecision(String typeName, ColumnMeta colMeta) {
+		if (colMeta.getColumnSize() > 0) {
+			return typeName + "(" + colMeta.getColumnSize() + ")";
+		}
+		return typeName;
+	}
+
+	/**
+	 * 包装主键信息
+	 * 
 	 * @param tableMeta
 	 * @param toUpperOrLower
 	 * @param dbType
@@ -405,7 +583,8 @@ public class DDLUtils {
 	}
 
 	/**
-	 * @TODO 组织索引信息
+	 * 组织索引信息
+	 * 
 	 * @param tableMeta
 	 * @param dbType
 	 * @param tableSql
@@ -457,7 +636,8 @@ public class DDLUtils {
 	}
 
 	/**
-	 * @TODO 组织外键信息
+	 * 组织外键信息
+	 * 
 	 * @param tableMeta
 	 * @param lowerOrUpper
 	 * @param dbType
@@ -521,7 +701,8 @@ public class DDLUtils {
 	}
 
 	/**
-	 * @TODO 统一处理表和字段的备注
+	 * 统一处理表和字段的备注
+	 * 
 	 * @param tableMeta
 	 * @param lowerOrUpper
 	 * @param dbType
@@ -551,7 +732,8 @@ public class DDLUtils {
 	}
 
 	/**
-	 * @TODO 判断类型默认值是否需要加单引号
+	 * 判断类型默认值是否需要加单引号
+	 * 
 	 * @param dataType
 	 * @return
 	 */
@@ -580,6 +762,39 @@ public class DDLUtils {
 	}
 
 	/**
+	 * 判断字段Java类型是否为日期+时间类型(update 2026-9-5 供Types.DATE列类型精化使用):
+	 * java.time.LocalDateTime与java.util.Date携带时间部分,LocalDate/java.sql.Date为纯日期;
+	 * typeName取自FieldMeta.fieldType(小写全类名),可能为null(空值按纯日期处理,尊重显式声明)
+	 * 
+	 * @param typeName
+	 * @return
+	 */
+	private static boolean isTimeCarryingJavaType(String typeName) {
+		if (typeName == null) {
+			return false;
+		}
+		String tmp = typeName.toLowerCase(Locale.ROOT);
+		return "java.time.localdatetime".equals(tmp) || "java.util.date".equals(tmp);
+	}
+
+	/**
+	 * 判断数据库的DATE列类型是否为纯日期语义(update 2026-9-5): dm的DATE列只存日期(dm
+	 * 21c实测)、pg及衍生库的date只存日期(pg 18.6实测,timestamp写入静默截断时间);
+	 * oracle的DATE含时间、mysql系无纯DATE列( Types.DATE已统一转DATETIME ),均不在精化范围;
+	 * kingbase/openGauss/MogDB等PG衍生库的date在实例为Oracle兼容模式时含时间(此时TIMESTAMP为无损超型),
+	 * PG模式时只存日期(此时TIMESTAMP修复丢时间),两种模式下输出TIMESTAMP均无损,按安全优先纳入
+	 * 
+	 * @param dbType
+	 * @return
+	 */
+	private static boolean isDateOnlyDialect(int dbType) {
+		return dbType == DBType.DM || dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14
+				|| dbType == DBType.GAUSSDB || dbType == DBType.KINGBASE || dbType == DBType.MOGDB
+				|| dbType == DBType.OPENGAUSS || dbType == DBType.VASTBASE || dbType == DBType.STARDB
+				|| dbType == DBType.OSCAR || dbType == DBType.HANA;
+	}
+
+	/**
 	 * 判断是否是日期函数，对默认值处理时不需要加单引号
 	 * 
 	 * @param defaultValue
@@ -597,14 +812,17 @@ public class DDLUtils {
 	}
 
 	/**
-	 * @TODO 转化单引号、双引号
+	 * 将注释中的单引号转义为标准SQL的''形式(Oracle/PostgreSQL/MySQL等主流库的字符串字面量均支持),
+	 * 表和字段注释统一使用本方法保证转义一致;注释处于单引号字面量内,双引号无需转义,
+	 * 反斜杠在标准SQL中是普通字符(MySQL特有转义由MySqlDDLGenerator输出时单独处理)
+	 * 
 	 * @param str
 	 * @return
 	 */
-	private static String translateSpecialSymbols(String str) {
-		if (str == null) {
+	private static String escapeCommentForDdl(String str) {
+		if (str == null || str.isEmpty()) {
 			return str;
 		}
-		return str.replaceAll("\'", "\\\\\'").replaceAll("\"", "\\\\\"");
+		return str.replace("'", "''");
 	}
 }

@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.config.model;
 
 import java.io.Serializable;
@@ -9,13 +6,10 @@ import java.io.Serializable;
  * @project sagacity-sqltoy
  * @description 分库分表策略配置
  * @author zhongxuchen
- * @version v1.0,Date:2017年11月5日
+ * @version v1.0,Date:2017-11-05
  */
 public class ShardingStrategyConfig implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -1424263873061119413L;
 
 	public ShardingStrategyConfig(int type) {

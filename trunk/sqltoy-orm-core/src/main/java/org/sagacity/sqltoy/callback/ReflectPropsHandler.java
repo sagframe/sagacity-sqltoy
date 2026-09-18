@@ -1,16 +1,14 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.callback;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * @project sagacity-sqltoy
  * @description 反射对象提取数据时，提供对数据的判断和修改(已经很少使用)
  * @author zhongxuchen
- * @version v1.0,Date:2012-7-14
+ * @version v1.0,Date:2012-07-14
  */
 @SuppressWarnings("rawtypes")
 public abstract class ReflectPropsHandler {
@@ -42,13 +40,14 @@ public abstract class ReflectPropsHandler {
 	public abstract void process();
 
 	/**
-	 * @todo 提供process实现中设置具体属性的值
+	 * 提供process实现中设置具体属性的值
+	 * 
 	 * @param property
 	 * @param value
 	 */
 	@SuppressWarnings("unchecked")
 	public void setValue(String property, Object value) {
-		String key = property.toLowerCase();
+		String key = property.toLowerCase(Locale.ROOT);
 		if (propertyIndexMap.containsKey(key)) {
 			if (isArray) {
 				rowData[propertyIndexMap.get(key)] = value;
@@ -59,12 +58,13 @@ public abstract class ReflectPropsHandler {
 	}
 
 	/**
-	 * @todo 获取属性的值
+	 * 获取属性的值
+	 * 
 	 * @param property
 	 * @return
 	 */
 	public Object getValue(String property) {
-		String key = property.toLowerCase();
+		String key = property.toLowerCase(Locale.ROOT);
 		if (propertyIndexMap.containsKey(key)) {
 			if (isArray) {
 				return rowData[propertyIndexMap.get(key)];
@@ -106,7 +106,8 @@ public abstract class ReflectPropsHandler {
 	}
 
 	/**
-	 * @TODO 取回结果
+	 * 取回结果
+	 * 
 	 * @return
 	 */
 	public Object[] getRowData() {
@@ -114,7 +115,8 @@ public abstract class ReflectPropsHandler {
 	}
 
 	/**
-	 * @TODO 反射过程中调用，提供交互数据
+	 * 反射过程中调用，提供交互数据
+	 * 
 	 * @param rowData
 	 */
 	public void setRowData(Object[] rowData) {
@@ -138,7 +140,8 @@ public abstract class ReflectPropsHandler {
 	}
 
 	/**
-	 * @todo 当特定属性的值为一个给定值时，将反射的属性值设置为null
+	 * 当特定属性的值为一个给定值时，将反射的属性值设置为null
+	 * 
 	 * @param value
 	 * @param properties
 	 */

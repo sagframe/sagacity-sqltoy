@@ -6,13 +6,10 @@ import java.io.Serializable;
  * @project sagacity-sqltoy
  * @description NoSql 字段模型
  * @author zhongxuchen
- * @version v1.0,Date:2018年1月3日
+ * @version v1.0,Date:2018-01-03
  */
 public class NoSqlFieldsModel implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -7811757019736292394L;
 	private String[] fields;
 

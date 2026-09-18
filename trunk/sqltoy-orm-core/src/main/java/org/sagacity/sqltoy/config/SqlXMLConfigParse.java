@@ -10,11 +10,13 @@ import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.config.model.CacheFilterModel;
@@ -37,7 +39,7 @@ import org.sagacity.sqltoy.config.model.SummaryModel;
 import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.config.model.TreeSortModel;
 import org.sagacity.sqltoy.config.model.UnpivotModel;
-import org.sagacity.sqltoy.dialect.utils.PageOptimizeUtils;
+import org.sagacity.sqltoy.dialect.PageOptimizeUtils;
 import org.sagacity.sqltoy.model.IgnoreCaseSet;
 import org.sagacity.sqltoy.model.SqlInjectionLevel;
 import org.sagacity.sqltoy.model.TimeUnit;
@@ -60,12 +62,12 @@ import org.w3c.dom.NodeList;
  * @description 解析sql配置文件
  * @author zhongxuchen
  * @version v1.0,Date:2009-12-14
- * @modify Date:2011-8-30 {增加sql文件设置数据库类别功能，优化解决跨数据库sql文件的配置方式}
- * @modify Date:2018-1-1 {增加对es和mongo的查询配置解析支持}
- * @modify Date:2019-1-15 {增加cache-arg 和 to-in-arg 过滤器}
- * @modify Date:2020-3-27 {增加rows-chain-relative 和 cols-chain-relative
+ * @modify Date:2011-08-30 增加sql文件设置数据库类别功能，优化解决跨数据库sql文件的配置方式
+ * @modify Date:2018-01-01 增加对es和mongo的查询配置解析支持
+ * @modify Date:2019-01-15 增加cache-arg 和 to-in-arg 过滤器
+ * @modify Date:2020-03-27 增加rows-chain-relative 和 cols-chain-relative
  *         环比计算功能,并优化unpivot解析改用XMLUtil类}
- * @modify Date:2020-7-2 {支持外部集成命名空间前缀适配解析,如报表集成定义了前缀s:filters等}
+ * @modify Date:2020-07-02 支持外部集成命名空间前缀适配解析,如报表集成定义了前缀s:filters等
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class SqlXMLConfigParse {
@@ -85,7 +87,43 @@ public class SqlXMLConfigParse {
 
 	private final static Pattern GROUP_BY_PATTERN = Pattern.compile("(?i)\\Wgroup\\s+by\\W");
 
+	// DocumentBuilderFactory与DocumentBuilder均非线程安全:工厂的setFeature/newDocumentBuilder加锁执行,
+	// builder经ThreadLocal每线程独立持有并reset复用,消除watcher线程与业务线程的并发解析竞争
+	private static final Object DOM_FACTORY_LOCK = new Object();
 	private static DocumentBuilderFactory domFactory = DocumentBuilderFactory.newInstance();
+	private static volatile boolean domFeatureConfigured = false;
+	private static final ThreadLocal<DocumentBuilder> DOM_BUILDERS = new ThreadLocal<DocumentBuilder>() {
+		@Override
+		protected DocumentBuilder initialValue() {
+			try {
+				synchronized (DOM_FACTORY_LOCK) {
+					return domFactory.newDocumentBuilder();
+				}
+			} catch (ParserConfigurationException e) {
+				throw new IllegalStateException("Failed to create DocumentBuilder!", e);
+			}
+		}
+	};
+
+	/**
+	 * 获取当前线程专属的DocumentBuilder(复用前reset清空上次解析状态)
+	 * 
+	 * @return
+	 * @throws ParserConfigurationException
+	 */
+	private static DocumentBuilder getDomBuilder() throws ParserConfigurationException {
+		if (!domFeatureConfigured) {
+			synchronized (DOM_FACTORY_LOCK) {
+				if (!domFeatureConfigured) {
+					domFactory.setFeature(SqlToyConstants.XML_FETURE, false);
+					domFeatureConfigured = true;
+				}
+			}
+		}
+		DocumentBuilder builder = DOM_BUILDERS.get();
+		builder.reset();
+		return builder;
+	}
 
 	private static String[] WHERE_COMPARE = { "!=", "==", "=", " in ", " out ", " neq ", " eq " };
 	private static String[] WHERE_COMPARE_TYPES = { "neq", "eq", "eq", "in", "out", "neq", "eq" };
@@ -93,9 +131,6 @@ public class SqlXMLConfigParse {
 	private static String[] WHERE_SPLIT_REGEX = { "\\!\\=", "\\=\\=", "\\=", "\\s+in\\s+", "\\s+out\\s+", "\\s+neq\\s+",
 			"\\s+eq\\s+" };
 	public static HashMap<String, String> filters = new HashMap<String, String>() {
-		/**
-		 * 
-		 */
 		private static final long serialVersionUID = 1636155921862321269L;
 		{
 			put("[", "]");
@@ -104,7 +139,19 @@ public class SqlXMLConfigParse {
 	};
 
 	/**
-	 * @todo 判断文件 是否被修改，修改了则重新解析文件重置缓存
+	 * 热更新登记表的键:用绝对路径而非文件名,避免不同目录下的同名.sql.xml互相覆盖时间戳
+	 * (parseXML读取与parseSingleFile写入必须都走本函数,保证两侧键一致)
+	 * 
+	 * @param file sql文件
+	 * @return 登记键
+	 */
+	private static String getFileKey(File file) {
+		return file.getAbsolutePath();
+	}
+
+	/**
+	 * 判断文件 是否被修改，修改了则重新解析文件重置缓存
+	 * 
 	 * @param xmlFiles
 	 * @param filesLastModifyMap
 	 * @param cache
@@ -130,12 +177,15 @@ public class SqlXMLConfigParse {
 				fileName = sqlFile.getName();
 				lastModified = Long.valueOf(sqlFile.lastModified());
 				// 调试模式，判断文件的最后修改时间，决定是否重新加载sql
-				preModified = filesLastModifyMap.get(fileName);
+				// update 2026-9-14 登记键改用绝对路径:原以文件名(basename)为键,不同目录下的同名
+				// .sql.xml会共用一条时间戳记录,互相覆盖比较基准,导致变更漏检或重复解析
+				preModified = filesLastModifyMap.get(getFileKey(sqlFile));
 				// 最后修改时间比上次修改时间大，重新加载sql文件
 				if (preModified == null || lastModified.longValue() > preModified.longValue()) {
-					filesLastModifyMap.put(fileName, lastModified);
+					// update 2026-9-14 时间戳改由parseSingleFile解析成功后记录:原形态此处先写时间戳再解析,
+					// 解析抛异常时时间戳已前进,watcher下一轮不再触发重试(变更被吞,直到文件再次被修改)
 					if (isDebug) {
-						logger.debug("sql文件:{}已经被修改,进行重新解析!", fileName);
+						logger.debug("sql file:{} was modified, start reparsing!", fileName);
 					} else {
 						out.println("sql文件:" + fileName + " 已经被修改,进行重新解析!");
 					}
@@ -146,7 +196,8 @@ public class SqlXMLConfigParse {
 	}
 
 	/**
-	 * @todo <b>解析单个sql对应的xml文件</b>
+	 * 解析单个sql对应的xml文件
+	 * 
 	 * @param xmlFile
 	 * @param filesLastModifyMap
 	 * @param cache
@@ -162,54 +213,69 @@ public class SqlXMLConfigParse {
 			throws Exception {
 		InputStream fileIS = null;
 		List<String> repeatSql = new ArrayList<String>();
+		// 文件型资源的最后修改时间:解析成功后才写入filesLastModifyMap,键为绝对路径(见getFileKey)
+		String parsedFileKey = null;
+		Long parsedModified = null;
+		// update 2026-9-14 解析结果先落本地map、文件整体成功后统一提交缓存:原逐条cache.put在解析中途
+		// 失败时会留下同文件"半新半旧"的缓存状态(已解析的id生效、其余仍是旧版本)
+		HashMap<String, SqlToyConfig> parsedConfigs = new HashMap<String, SqlToyConfig>();
 		try {
 			String sqlFile;
 			if (xmlFile instanceof File) {
 				File file = (File) xmlFile;
 				sqlFile = file.getName();
-				filesLastModifyMap.put(sqlFile, Long.valueOf(file.lastModified()));
+				// 登记键与parseXML读取侧必须同一函数(绝对路径),否则同名文件互相覆盖时间戳
+				parsedFileKey = getFileKey(file);
+				// 先取mtime再开流:解析期间文件若再被改动,本次记录的仍是所解析内容对应的版本,下轮会再次触发
+				parsedModified = Long.valueOf(file.lastModified());
 				fileIS = new FileInputStream(file);
 			} else {
 				sqlFile = (String) xmlFile;
 				fileIS = getResourceAsStream(sqlFile);
 			}
-			logger.debug("正在解析".concat((index != -1) ? "第:[" + index + "]个" : "").concat("sql文件:").concat(sqlFile));
+			logger.debug("start parsing{} sql file:{}", (index != -1) ? " no:[" + index + "]" : "", sqlFile);
 			if (fileIS != null) {
-				domFactory.setFeature(SqlToyConstants.XML_FETURE, false);
-				DocumentBuilder domBuilder = domFactory.newDocumentBuilder();
+				DocumentBuilder domBuilder = getDomBuilder();
 				Document doc = domBuilder.parse(fileIS);
 				NodeList sqlElts = doc.getDocumentElement().getChildNodes();
-				if (sqlElts == null || sqlElts.getLength() == 0) {
-					return repeatSql;
-				}
-				// 解析单个sql
-				SqlToyConfig sqlToyConfig;
-				Element sqlElt;
-				Node obj;
-				for (int i = 0; i < sqlElts.getLength(); i++) {
-					obj = sqlElts.item(i);
-					if (obj.getNodeType() == Node.ELEMENT_NODE) {
-						sqlElt = (Element) obj;
-						sqlToyConfig = parseSingleSql(sqlElt, dialect, null);
-						if (sqlToyConfig != null) {
-							// 去除sql中的注释语句并放入缓存
-							if (cache.containsKey(sqlToyConfig.getId())) {
-								repeatSql.add(StringUtil.fillArgs("sql文件:{} 中发现重复的SQL语句id={} 已经被覆盖!", sqlFile,
-										sqlToyConfig.getId()));
-								// 移除分页优化缓存
-								if (isReload) {
-									PageOptimizeUtils.remove(sqlToyConfig.getId());
+				if (sqlElts != null && sqlElts.getLength() > 0) {
+					// 解析单个sql
+					SqlToyConfig sqlToyConfig;
+					Element sqlElt;
+					Node obj;
+					for (int i = 0; i < sqlElts.getLength(); i++) {
+						obj = sqlElts.item(i);
+						if (obj.getNodeType() == Node.ELEMENT_NODE) {
+							sqlElt = (Element) obj;
+							sqlToyConfig = parseSingleSql(sqlElt, dialect, null);
+							if (sqlToyConfig != null) {
+								// 重复id校验需同时看缓存与本次已解析结果(同文件内的重复id同样提示覆盖)
+								if (cache.containsKey(sqlToyConfig.getId())
+										|| parsedConfigs.containsKey(sqlToyConfig.getId())) {
+									repeatSql.add(StringUtil.fillArgs("sql文件:{} 中发现重复的SQL语句id={} 已经被覆盖!", sqlFile,
+											sqlToyConfig.getId()));
+									// 移除分页优化缓存
+									if (isReload) {
+										PageOptimizeUtils.remove(sqlToyConfig.getId());
+									}
 								}
+								parsedConfigs.put(sqlToyConfig.getId(), sqlToyConfig);
 							}
-							cache.put(sqlToyConfig.getId(), sqlToyConfig);
 						}
 					}
 				}
 			}
+			// update 2026-9-14 解析全部成功后才提交:1)缓存统一提交,解析失败时缓存完全不改动(原逐条
+			// cache.put会留下半新半旧状态);2)时间戳提交后记录,失败则保留旧时间戳,watcher下一轮自动重试
+			if (!parsedConfigs.isEmpty()) {
+				cache.putAll(parsedConfigs);
+			}
+			if (parsedFileKey != null) {
+				filesLastModifyMap.put(parsedFileKey, parsedModified);
+			}
 		} catch (Exception e) {
-			e.printStackTrace();
 			logger.error(
-					"解析xml中对应的sql失败,对应文件={},正确的配置为<sql|mql|eql id=\"\"><![CDATA[]]></sql|mql|eql>或<sql|mql|eql id=\"\"><desc></desc><value><![CDATA[]]></value></sql|mql|eql>",
+					"failed to parse the sql in xml, file={}, correct config is <sql|mql|eql id=\"\"><![CDATA[]]></sql|mql|eql> or <sql|mql|eql id=\"\"><desc></desc><value><![CDATA[]]></value></sql|mql|eql>",
 					xmlFile, e);
 			throw e;
 		} finally {
@@ -225,7 +291,8 @@ public class SqlXMLConfigParse {
 	}
 
 	/**
-	 * @todo 解析单个sql片段
+	 * 解析单个sql片段
+	 * 
 	 * @param sqlSegment
 	 * @param encoding
 	 * @param dialect
@@ -237,21 +304,22 @@ public class SqlXMLConfigParse {
 			throws Exception {
 		Element elt = null;
 		if (sqlSegment instanceof String) {
-			Document doc = domFactory.newDocumentBuilder().parse(
+			Document doc = getDomBuilder().parse(
 					new ByteArrayInputStream(((String) sqlSegment).getBytes(encoding == null ? "UTF-8" : encoding)));
 			elt = doc.getDocumentElement();
 		} else if (sqlSegment instanceof Element) {
 			elt = (Element) sqlSegment;
 		}
 		if (elt == null) {
-			logger.error("sqlSegment type must is String or org.w3c.dom.Element!");
-			throw new IllegalArgumentException("sqlSegment type must is String or org.w3c.dom.Element!");
+			logger.error("sqlSegment type must be String or org.w3c.dom.Element!");
+			throw new IllegalArgumentException("sqlSegment type must be String or org.w3c.dom.Element!");
 		}
 		return parseSingleSql(elt, dialect, sqlId);
 	}
 
 	/**
-	 * @TODO 获取sql xml element的namespace前缀
+	 * 获取sql xml element的namespace前缀
+	 * 
 	 * @param sqlElement
 	 * @return
 	 */
@@ -281,7 +349,8 @@ public class SqlXMLConfigParse {
 	}
 
 	/**
-	 * @todo 解析单个sql element元素,update 2020-7-2 支持外部集成命名空间前缀适配
+	 * 解析单个sql element元素,update 2020-7-2 支持外部集成命名空间前缀适配
+	 * 
 	 * @param sqlElt
 	 * @param dialect
 	 * @param sqlId
@@ -290,7 +359,7 @@ public class SqlXMLConfigParse {
 	 */
 	public static SqlToyConfig parseSingleSql(Element sqlElt, String dialect, String sqlId) throws Exception {
 		String realDialect = dialect;
-		String nodeName = sqlElt.getNodeName().toLowerCase();
+		String nodeName = sqlElt.getNodeName().toLowerCase(Locale.ROOT);
 		// 剔除前缀
 		int prefixIndex = nodeName.indexOf(":");
 		if (prefixIndex > 0) {
@@ -301,10 +370,10 @@ public class SqlXMLConfigParse {
 			return null;
 		}
 		String id = sqlElt.getAttribute("id");
-		if (id == null) {
+		if (StringUtil.isBlank(id)) {
 			id = sqlId;
 			if (id == null) {
-				throw new RuntimeException("请检查sql配置,没有给定sql对应的 id值!");
+				throw new RuntimeException("sql configuration has no id value, please check the sql xml file!");
 			}
 		}
 		// 获取元素的namespace前缀
@@ -319,7 +388,8 @@ public class SqlXMLConfigParse {
 			sqlContent = StringUtil.trim(sqlElt.getTextContent());
 		}
 		if (StringUtil.isBlank(sqlContent)) {
-			throw new RuntimeException("请检查<sql id='" + id + "'> 的配置,没有正确填写sql内容!");
+			throw new RuntimeException(
+					"the sql content of <sql id='" + id + "'> is empty, please check the sql xml file!");
 		}
 		nodeList = sqlElt.getElementsByTagName(local.concat("count-sql"));
 		String countSql = null;
@@ -450,7 +520,8 @@ public class SqlXMLConfigParse {
 	}
 
 	/**
-	 * @todo 解析nosql的相关配置
+	 * 解析nosql的相关配置
+	 * 
 	 * @param sqlToyConfig
 	 * @param sqlElt
 	 * @param local
@@ -511,7 +582,7 @@ public class SqlXMLConfigParse {
 		} else if (sqlElt.hasAttribute("value-path")) {
 			noSqlConfig.setValueRoot(StringUtil.trimArray(sqlElt.getAttribute("value-path").split("\\,")));
 		}
-		String nodeName = sqlElt.getNodeName().toLowerCase();
+		String nodeName = sqlElt.getNodeName().toLowerCase(Locale.ROOT);
 		// 是否有聚合查询
 		if ("eql".equals(nodeName)) {
 			String sql = sqlToyConfig.getSql(null);
@@ -547,7 +618,8 @@ public class SqlXMLConfigParse {
 	}
 
 	/**
-	 * @TODO 解析解密字段
+	 * 解析解密字段
+	 * 
 	 * @param sqlToyConfig
 	 * @param decryptElts
 	 */
@@ -557,7 +629,8 @@ public class SqlXMLConfigParse {
 		}
 		Element decryptElt = (Element) decryptElts.item(0);
 		if (decryptElt.hasAttribute("columns")) {
-			String[] columns = StringUtil.trimArray(decryptElt.getAttribute("columns").toLowerCase().split("\\,"));
+			String[] columns = StringUtil
+					.trimArray(decryptElt.getAttribute("columns").toLowerCase(Locale.ROOT).split("\\,"));
 			IgnoreCaseSet decryptColumns = new IgnoreCaseSet();
 			for (String col : columns) {
 				decryptColumns.add(col);
@@ -567,7 +640,8 @@ public class SqlXMLConfigParse {
 	}
 
 	/**
-	 * @todo 解析安全脱敏配置
+	 * 解析安全脱敏配置
+	 * 
 	 * @param sqlToyConfig
 	 * @param maskElts
 	 */
@@ -587,8 +661,9 @@ public class SqlXMLConfigParse {
 			if (tmp == null) {
 				tmp = getAttrValue(elt, "column");
 			}
-			String[] columns = StringUtil.trimArray(tmp.toLowerCase().split("\\,"));
-			String type = getAttrValue(elt, "type").toLowerCase();
+			String[] columns = StringUtil.trimArray(tmp.toLowerCase(Locale.ROOT).split("\\,"));
+			String type = getAttrValue(elt, "type");
+			type = (type == null) ? "" : type.toLowerCase(Locale.ROOT);
 			String maskCode = getAttrValue(elt, "mask-code");
 			String headSize = getAttrValue(elt, "head-size");
 			String tailSize = getAttrValue(elt, "tail-size");
@@ -636,7 +711,8 @@ public class SqlXMLConfigParse {
 	}
 
 	/**
-	 * @TODO 获取xml元素的属性值
+	 * 获取xml元素的属性值
+	 * 
 	 * @param elt
 	 * @param attrName
 	 * @return
@@ -649,7 +725,8 @@ public class SqlXMLConfigParse {
 	}
 
 	/**
-	 * @todo 解析dataSource的sharding
+	 * 解析dataSource的sharding
+	 * 
 	 * @param sqlToyConfig
 	 * @param shardingDBNode
 	 */
@@ -670,7 +747,8 @@ public class SqlXMLConfigParse {
 		// 全部参数
 		List<String> params = new ArrayList<String>();
 		if (shardingDataSource.hasAttribute("params")) {
-			String[] fields = shardingDataSource.getAttribute("params").replace(";", ",").toLowerCase().split("\\,");
+			String[] fields = shardingDataSource.getAttribute("params").replace(";", ",").toLowerCase(Locale.ROOT)
+					.split("\\,");
 			int size = fields.length;
 			String[] paramsAlias = new String[size];
 			String[] paramName;
@@ -695,7 +773,8 @@ public class SqlXMLConfigParse {
 	}
 
 	/**
-	 * @todo 解析table的sharding
+	 * 解析table的sharding
+	 * 
 	 * @param sqlToyConfig
 	 * @param shardingTables
 	 */
@@ -717,7 +796,7 @@ public class SqlXMLConfigParse {
 				shardingModel.setTables(StringUtil.trimArray(elt.getAttribute("tables").split("\\,")));
 				String[] fields;
 				if (elt.hasAttribute("params")) {
-					fields = elt.getAttribute("params").replace(";", ",").toLowerCase().split("\\,");
+					fields = elt.getAttribute("params").replace(";", ",").toLowerCase(Locale.ROOT).split("\\,");
 					// params="a:a1,b:b1";params为{a:a1, b:b1}
 					size = fields.length;
 					paramsAlias = new String[size];
@@ -753,7 +832,8 @@ public class SqlXMLConfigParse {
 	}
 
 	/**
-	 * @todo 解析3.0版本 filters xml元素
+	 * 解析3.0版本 filters xml元素
+	 * 
 	 * @param sqlToyConfig
 	 * @param filterSet
 	 * @param blankToNull
@@ -810,6 +890,8 @@ public class SqlXMLConfigParse {
 							filterType = "sql-injection";
 						} else if ("sql-injection".equalsIgnoreCase(filterType)) {
 							filterType = "sql-injection";
+						} else if ("escapeLike".equalsIgnoreCase(filterType)) {
+							filterType = "escapeLike";
 						}
 						filterModel.setFilterType(filterType);
 						parseFilterElt(sqlToyConfig, filterModel, filter, local);
@@ -829,7 +911,8 @@ public class SqlXMLConfigParse {
 	}
 
 	/**
-	 * @todo 解析filter
+	 * 解析filter
+	 * 
 	 * @param sqlToyConfig
 	 * @param filterModel
 	 * @param filter
@@ -841,7 +924,8 @@ public class SqlXMLConfigParse {
 		if (!filter.hasAttribute("params")) {
 			filterModel.setParams(new String[] { "*" });
 		} else {
-			filterModel.setParams(StringUtil.trimArray(filter.getAttribute("params").toLowerCase().split("\\,")));
+			filterModel.setParams(
+					StringUtil.trimArray(filter.getAttribute("params").toLowerCase(Locale.ROOT).split("\\,")));
 		}
 		// equals\any\not-any等类型
 		if (filter.hasAttribute("value")) {
@@ -853,13 +937,13 @@ public class SqlXMLConfigParse {
 		}
 		// 解析to-date 的加减操作
 		if (filter.hasAttribute("increment-time")) {
-			filterModel.setIncrementTime(Double.valueOf(filter.getAttribute("increment-time")));
+			filterModel.setIncrementTime(clearParamSign(filter.getAttribute("increment-time")));
 		} // 兼容老版本
 		else if (filter.hasAttribute("increment-days")) {
-			filterModel.setIncrementTime(Double.valueOf(filter.getAttribute("increment-days")));
+			filterModel.setIncrementTime(clearParamSign(filter.getAttribute("increment-days")));
 		}
 		if (filter.hasAttribute("increment-unit")) {
-			String timeUnit = filter.getAttribute("increment-unit").toUpperCase();
+			String timeUnit = filter.getAttribute("increment-unit").toUpperCase(Locale.ROOT);
 			if ("DAYS".equals(timeUnit) || "DAY".equals(timeUnit)) {
 				filterModel.setTimeUnit(TimeUnit.DAYS);
 			} else if ("HOURS".equals(timeUnit) || "HOUR".equals(timeUnit)) {
@@ -898,7 +982,7 @@ public class SqlXMLConfigParse {
 		}
 		// to-date 中设置type类型
 		if (filter.hasAttribute("type")) {
-			filterModel.setType(filter.getAttribute("type").toLowerCase());
+			filterModel.setType(filter.getAttribute("type").toLowerCase(Locale.ROOT));
 		}
 		// remove-null 中设置remove-blank
 		if (filter.hasAttribute("remove-blank")) {
@@ -918,7 +1002,7 @@ public class SqlXMLConfigParse {
 		}
 		// 用于to-string
 		if (filter.hasAttribute("add-quote")) {
-			filterModel.setAddQuote(filter.getAttribute("add-quote").toLowerCase());
+			filterModel.setAddQuote(filter.getAttribute("add-quote").toLowerCase(Locale.ROOT));
 		}
 		// 分割符号
 		if (filter.hasAttribute("split-sign")) {
@@ -928,14 +1012,19 @@ public class SqlXMLConfigParse {
 		}
 		// 互斥型和决定性(primary)filter的参数
 		if (filter.hasAttribute("excludes")) {
-			String[] excludeParams = filter.getAttribute("excludes").toLowerCase().split("\\,");
+			String[] excludeParams = filter.getAttribute("excludes").toLowerCase(Locale.ROOT).split("\\,");
 			for (String excludeParam : excludeParams) {
 				filterModel.addExclude(excludeParam.trim());
 			}
 		}
 		// exclusive 和primary filter、cache-arg 专用参数
 		if (filter.hasAttribute("param")) {
-			filterModel.setParam(filter.getAttribute("param").toLowerCase());
+			filterModel.setParam(filter.getAttribute("param").toLowerCase(Locale.ROOT));
+		}
+
+		// 给r-like/l-like 在拼接%号时补充额外的字符(2026-09-09)
+		if (filter.hasAttribute("append-str")) {
+			filterModel.setAppendStr(filter.getAttribute("append-str"));
 		}
 		// <cache-arg param="" cache-name="" cache-type="" alias-name="">
 		// <filter compare-param="" cache-index=""/>
@@ -969,7 +1058,7 @@ public class SqlXMLConfigParse {
 				filterModel.setCacheMappingIndexes(mappingIndexes);
 			}
 			if (filter.hasAttribute("alias-name")) {
-				filterModel.setAliasName(filter.getAttribute("alias-name").toLowerCase());
+				filterModel.setAliasName(filter.getAttribute("alias-name").toLowerCase(Locale.ROOT));
 				sqlToyConfig.addCacheArgParam(filterModel.getAliasName());
 			}
 			// 缓存过滤未匹配上赋予的默认值
@@ -994,7 +1083,7 @@ public class SqlXMLConfigParse {
 					// 对比列
 					cacheFilterModel.setCacheIndex(Integer.parseInt(cacheFilter.getAttribute("cache-index")));
 					// 对比条件参数(有可能本身就是一个值)
-					compareParam = cacheFilter.getAttribute("compare-param").toLowerCase();
+					compareParam = cacheFilter.getAttribute("compare-param").toLowerCase(Locale.ROOT);
 					// 纯粹的一个数值集合
 					if (cacheFilter.hasAttribute("split-sign")) {
 						split = cacheFilter.getAttribute("split-sign");
@@ -1011,7 +1100,8 @@ public class SqlXMLConfigParse {
 						}
 					}
 					if (cacheFilter.hasAttribute("compare-type")) {
-						cacheFilterModel.setCompareType(cacheFilter.getAttribute("compare-type").toLowerCase());
+						cacheFilterModel
+								.setCompareType(cacheFilter.getAttribute("compare-type").toLowerCase(Locale.ROOT));
 					}
 					cacheFilterModels[i] = cacheFilterModel;
 				}
@@ -1021,10 +1111,10 @@ public class SqlXMLConfigParse {
 		// exclusive 排他性filter 当条件成立时需要修改的参数(即排斥的参数)
 		if (filter.hasAttribute("set-params")) {
 			filterModel.setUpdateParams(
-					StringUtil.trimArray(filter.getAttribute("set-params").toLowerCase().split("\\,")));
+					StringUtil.trimArray(filter.getAttribute("set-params").toLowerCase(Locale.ROOT).split("\\,")));
 		} else if (filter.hasAttribute("exclusive-params")) {
-			filterModel.setUpdateParams(
-					StringUtil.trimArray(filter.getAttribute("exclusive-params").toLowerCase().split("\\,")));
+			filterModel.setUpdateParams(StringUtil
+					.trimArray(filter.getAttribute("exclusive-params").toLowerCase(Locale.ROOT).split("\\,")));
 		}
 		// exclusive 排他性filter 对排斥的参数设置的值(默认置为null)
 		if (filter.hasAttribute("set-value")) {
@@ -1068,7 +1158,7 @@ public class SqlXMLConfigParse {
 		}
 		// 数据类型
 		if (filter.hasAttribute("data-type")) {
-			filterModel.setDataType(filter.getAttribute("data-type").toLowerCase());
+			filterModel.setDataType(filter.getAttribute("data-type").toLowerCase(Locale.ROOT));
 		}
 		// default 功能中设置数组
 		if (filter.hasAttribute("is-array")) {
@@ -1077,13 +1167,15 @@ public class SqlXMLConfigParse {
 		// sql注入验证等级
 		if (filter.hasAttribute("level")) {
 			if (filterModel.getFilterType().equals("sql-injection")) {
-				filterModel.setSqlInjectionLevel(SqlInjectionLevel.valueOf(filter.getAttribute("level").toUpperCase()));
+				filterModel.setSqlInjectionLevel(
+						SqlInjectionLevel.valueOf(filter.getAttribute("level").toUpperCase(Locale.ROOT)));
 			}
 		}
 	}
 
 	/**
-	 * @todo 解析翻译器
+	 * 解析翻译器
+	 * 
 	 * @param sqlToyConfig
 	 * @param translates
 	 */
@@ -1121,7 +1213,7 @@ public class SqlXMLConfigParse {
 				cacheType = null;
 			}
 			// 已经小写
-			columns = StringUtil.trimArray(translate.getAttribute("columns").toLowerCase().split("\\,"));
+			columns = StringUtil.trimArray(translate.getAttribute("columns").toLowerCase(Locale.ROOT).split("\\,"));
 			aliasNames = null;
 			uncachedTemplate = null;
 			if (translate.hasAttribute("undefine-template")) {
@@ -1136,6 +1228,10 @@ public class SqlXMLConfigParse {
 				where = translate.getAttribute("where");
 			}
 			splitSign = null;
+			// 每个translate元素独立判定split配置:不重置会继承上一个元素的残留,
+			// 导致后续无split配置的translate被错误地按分隔符拆分翻译
+			splitRegex = null;
+			linkSign = ",";
 			if (translate.hasAttribute("split-sign")) {
 				splitSign = "split-sign";
 			} else if (translate.hasAttribute("split-regex")) {
@@ -1168,10 +1264,11 @@ public class SqlXMLConfigParse {
 			}
 			// 使用alias时只能针对单列处理
 			if (translate.hasAttribute("alias-name")) {
-				aliasNames = StringUtil.trimArray(translate.getAttribute("alias-name").toLowerCase().split("\\,"));
+				aliasNames = StringUtil
+						.trimArray(translate.getAttribute("alias-name").toLowerCase(Locale.ROOT).split("\\,"));
 			} else if (translate.hasAttribute("original-columns")) {
 				aliasNames = StringUtil
-						.trimArray(translate.getAttribute("original-columns").toLowerCase().split("\\,"));
+						.trimArray(translate.getAttribute("original-columns").toLowerCase(Locale.ROOT).split("\\,"));
 			}
 			// 翻译key对应value的在缓存数组中对应的列
 			cacheIndexs = null;
@@ -1189,12 +1286,17 @@ public class SqlXMLConfigParse {
 					cacheIndexs[i] = Integer.parseInt(cacheIndexStr[i]);
 				}
 			}
+			// cache-indexs配置为1等同于未配置(TranslateExtend默认index=1,即默认取缓存第2列),归一为null
+			if (cacheIndexs != null && cacheIndexs.length == 1 && cacheIndexs[0] == 1) {
+				cacheIndexs = null;
+			}
 			if (cacheIndexs == null || cacheIndexs.length == columns.length) {
 				for (int i = 0; i < columns.length; i++) {
 					Translate translateModel = new Translate(cacheName);
 					// 小写
 					translateModel.setColumn(columns[i]);
-					translateModel.setAlias(aliasNames == null ? columns[i] : aliasNames[i]);
+					translateModel
+							.setAlias((aliasNames == null || aliasNames.length <= i) ? columns[i] : aliasNames[i]);
 					translateModel.setCacheType(cacheType);
 					translateModel.setSplitRegex(splitRegex);
 					translateModel.setLinkSign(linkSign);
@@ -1224,15 +1326,17 @@ public class SqlXMLConfigParse {
 					}
 				}
 			} else if (cacheIndexs != null && cacheIndexs.length != columns.length) {
-				logger.warn("sqlId:{} 对应的cache translate columns suggest config with cache-indexs!",
-						sqlToyConfig.getId());
+				logger.warn(
+						"translate config exception for sqlId:{} cache:{}: the count of columns({}) does not match the count of cache-indexs({}), they must be the same!",
+						sqlToyConfig.getId(), cacheName, columns.length, cacheIndexs.length);
 			}
 		}
 		sqlToyConfig.setTranslateMap(translateMap);
 	}
 
 	/**
-	 * @TODO 解析translate中的where表达式(field==xx 或 field in (A,B) 形式)
+	 * 解析translate中的where表达式(field==xx 或 field in (A,B) 形式)
+	 * 
 	 * @param translate
 	 * @param whereStr
 	 */
@@ -1240,7 +1344,7 @@ public class SqlXMLConfigParse {
 		if (StringUtil.isBlank(whereStr)) {
 			return;
 		}
-		String where = whereStr.trim().toLowerCase();
+		String where = whereStr.trim().toLowerCase(Locale.ROOT);
 		// 规范一下in 和 out的格式，统一分割方式
 		where = where.replace(" in(", " in (").replace(" out(", " out (");
 		// 对比列
@@ -1269,7 +1373,8 @@ public class SqlXMLConfigParse {
 	}
 
 	/**
-	 * @todo 解析Link 查询
+	 * 解析Link 查询
+	 * 
 	 * @param sqlToyConfig
 	 * @param linkNode
 	 * @param local
@@ -1314,7 +1419,7 @@ public class SqlXMLConfigParse {
 		if (nodeList.getLength() > 0) {
 			Element decorateElt = (Element) nodeList.item(0);
 			if (decorateElt.hasAttribute("align")) {
-				linkModel.setDecorateAlign(decorateElt.getAttribute("align").toLowerCase());
+				linkModel.setDecorateAlign(decorateElt.getAttribute("align").toLowerCase(Locale.ROOT));
 			}
 			linkModel.setDecorateAppendChar(decorateElt.getAttribute("char"));
 			linkModel.setDecorateSize(Integer.parseInt(decorateElt.getAttribute("size")));
@@ -1323,7 +1428,8 @@ public class SqlXMLConfigParse {
 	}
 
 	/**
-	 * @todo 解析对结果字段类型为日期、数字格式化处理配置
+	 * 解析对结果字段类型为日期、数字格式化处理配置
+	 * 
 	 * @param sqlToyConfig
 	 * @param dfElts
 	 * @param nfElts
@@ -1334,15 +1440,22 @@ public class SqlXMLConfigParse {
 			Element df;
 			for (int i = 0; i < dfElts.getLength(); i++) {
 				df = (Element) dfElts.item(i);
-				String[] columns = StringUtil.trimArray(df.getAttribute("columns").toLowerCase().split("\\,"));
+				String[] columns = StringUtil
+						.trimArray(df.getAttribute("columns").toLowerCase(Locale.ROOT).split("\\,"));
 				String format = df.hasAttribute("format") ? df.getAttribute("format") : "yyyy-MM-dd";
 				String locale = df.hasAttribute("locale") ? df.getAttribute("locale") : null;
+				// 含英文月份/星期符号(MMM、EEE系列)的格式在locale缺失时默认英文区域,
+				// 避免默认区域(如中文)将"MMM d, yyyy"输出成"8月 18, 2026"
+				if (locale == null && (format.toUpperCase(Locale.ROOT).contains("MMM")
+						|| format.toUpperCase(Locale.ROOT).contains("EEE"))) {
+					locale = "en";
+				}
 				for (String col : columns) {
 					FormatModel formatModel = new FormatModel();
 					formatModel.setColumn(col);
 					formatModel.setType(1);
 					formatModel.setFormat(format);
-					formatModel.setLocale(locale);
+					formatModel.setLocale(SqlToyConstants.convertLocale(locale));
 					formatModels.add(formatModel);
 				}
 			}
@@ -1351,15 +1464,19 @@ public class SqlXMLConfigParse {
 			Element nf;
 			for (int i = 0; i < nfElts.getLength(); i++) {
 				nf = (Element) nfElts.item(i);
-				String[] columns = StringUtil.trimArray(nf.getAttribute("columns").toLowerCase().split("\\,"));
+				String[] columns = StringUtil
+						.trimArray(nf.getAttribute("columns").toLowerCase(Locale.ROOT).split("\\,"));
 				String format = nf.hasAttribute("format") ? nf.getAttribute("format") : "capital";
-				String roundStr = nf.hasAttribute("roundingMode") ? nf.getAttribute("roundingMode").toUpperCase()
+				String roundStr = nf.hasAttribute("roundingMode")
+						? nf.getAttribute("roundingMode").toUpperCase(Locale.ROOT)
 						: null;
 				// update 2026-4-30 兼容新的参数名称
 				if (nf.hasAttribute("rounding-mode")) {
-					roundStr = nf.getAttribute("rounding-mode").toUpperCase();
+					roundStr = nf.getAttribute("rounding-mode").toUpperCase(Locale.ROOT);
 				}
 				String locale = nf.hasAttribute("locale") ? nf.getAttribute("locale") : null;
+				// 币种单位,仅对capital-en等英文金额格式生效,输出票据标准格式(如:SAY US DOLLARS ONE THOUSAND ONLY)
+				String currency = nf.hasAttribute("currency") ? nf.getAttribute("currency") : null;
 				RoundingMode roundMode = convertRoundingMode(roundStr);
 				for (String col : columns) {
 					FormatModel formatModel = new FormatModel();
@@ -1367,7 +1484,8 @@ public class SqlXMLConfigParse {
 					formatModel.setRoundingMode(roundMode);
 					formatModel.setType(2);
 					formatModel.setFormat(format);
-					formatModel.setLocale(locale);
+					formatModel.setLocale(SqlToyConstants.convertLocale(locale));
+					formatModel.setCurrency(currency);
 					formatModels.add(formatModel);
 				}
 			}
@@ -1376,7 +1494,8 @@ public class SqlXMLConfigParse {
 	}
 
 	/**
-	 * @todo 解析对sqltoy查询结果的计算处理逻辑定义(包含:旋转、汇总等)
+	 * 解析对sqltoy查询结果的计算处理逻辑定义(包含:旋转、汇总等)
+	 * 
 	 * @param sqlToyConfig
 	 * @param sqlElt
 	 * @param local
@@ -1395,27 +1514,27 @@ public class SqlXMLConfigParse {
 				if (eltName.equals(local.concat("pivot"))) {
 					PivotModel pivotModel = new PivotModel();
 					if (elt.hasAttribute("group-columns")) {
-						pivotModel.setGroupCols(
-								StringUtil.trimArray(elt.getAttribute("group-columns").toLowerCase().split("\\,")));
+						pivotModel.setGroupCols(StringUtil
+								.trimArray(elt.getAttribute("group-columns").toLowerCase(Locale.ROOT).split("\\,")));
 					}
 					if (elt.hasAttribute("category-columns")) {
-						pivotModel.setCategoryCols(
-								StringUtil.trimArray(elt.getAttribute("category-columns").toLowerCase().split("\\,")));
+						pivotModel.setCategoryCols(StringUtil
+								.trimArray(elt.getAttribute("category-columns").toLowerCase(Locale.ROOT).split("\\,")));
 					}
 					if (elt.hasAttribute("category-sql")) {
 						pivotModel.setCategorySql(elt.getAttribute("category-sql"));
 					}
 					String[] startEndCols = new String[2];
-					startEndCols[0] = elt.getAttribute("start-column").toLowerCase();
+					startEndCols[0] = elt.getAttribute("start-column").toLowerCase(Locale.ROOT);
 					if (elt.hasAttribute("end-column")) {
-						startEndCols[1] = elt.getAttribute("end-column").toLowerCase();
+						startEndCols[1] = elt.getAttribute("end-column").toLowerCase(Locale.ROOT);
 					} else {
 						startEndCols[1] = startEndCols[0];
 					}
 					if (elt.hasAttribute("default-value")) {
 						String defaultValue = elt.getAttribute("default-value");
 						if (elt.hasAttribute("default-type")) {
-							String defaultType = elt.getAttribute("default-type").toLowerCase();
+							String defaultType = elt.getAttribute("default-type").toLowerCase(Locale.ROOT);
 							pivotModel.setDefaultValue(XMLUtil.convertType(defaultValue, defaultType));
 						} else {
 							pivotModel.setDefaultValue(defaultValue);
@@ -1456,13 +1575,13 @@ public class SqlXMLConfigParse {
 					}
 					// 汇总合计涉及的列
 					if (elt.hasAttribute("sum-columns")) {
-						summaryModel.setSumColumns(elt.getAttribute("sum-columns").toLowerCase());
+						summaryModel.setSumColumns(elt.getAttribute("sum-columns").toLowerCase(Locale.ROOT));
 					} else if (elt.hasAttribute("columns")) {
-						summaryModel.setSumColumns(elt.getAttribute("columns").toLowerCase());
+						summaryModel.setSumColumns(elt.getAttribute("columns").toLowerCase(Locale.ROOT));
 					}
 					// 计算平均值的列
 					if (elt.hasAttribute("average-columns")) {
-						summaryModel.setAveColumns(elt.getAttribute("average-columns").toLowerCase());
+						summaryModel.setAveColumns(elt.getAttribute("average-columns").toLowerCase(Locale.ROOT));
 					}
 					// 保留小数点位数(2022-2-23 扩展成数组，便于给不同平均值列设置不同的小数位)
 					if (elt.hasAttribute("average-radix-sizes")) {
@@ -1472,8 +1591,8 @@ public class SqlXMLConfigParse {
 						summaryModel.setRadixSize(trimParamsToInt(elt.getAttribute("radix-size").split("\\,")));
 					}
 					if (elt.hasAttribute("average-rounding-modes")) {
-						String[] roundingModeAry = StringUtil
-								.trimArray(elt.getAttribute("average-rounding-modes").toUpperCase().split("\\,"));
+						String[] roundingModeAry = StringUtil.trimArray(
+								elt.getAttribute("average-rounding-modes").toUpperCase(Locale.ROOT).split("\\,"));
 						RoundingMode[] roudingModes = new RoundingMode[roundingModeAry.length];
 						for (int k = 0; k < roundingModeAry.length; k++) {
 							roudingModes[k] = convertRoundingMode(roundingModeAry[k]);
@@ -1503,14 +1622,16 @@ public class SqlXMLConfigParse {
 						SummaryGroupMeta globalMeta = new SummaryGroupMeta();
 						Element globalSummary = (Element) nodeList.item(0);
 						if (globalSummary.hasAttribute("label-column")) {
-							globalMeta.setLabelColumn(globalSummary.getAttribute("label-column").toLowerCase());
+							globalMeta.setLabelColumn(
+									globalSummary.getAttribute("label-column").toLowerCase(Locale.ROOT));
 						}
 						if (globalSummary.hasAttribute("average-label")) {
 							globalMeta.setAverageTitle(globalSummary.getAttribute("average-label"));
 						}
 						// 汇总分组列
 						if (globalSummary.hasAttribute("group-column")) {
-							globalMeta.setGroupColumn(globalSummary.getAttribute("group-column").toLowerCase());
+							globalMeta.setGroupColumn(
+									globalSummary.getAttribute("group-column").toLowerCase(Locale.ROOT));
 						}
 						if (globalSummary.hasAttribute("sum-label")) {
 							globalMeta.setSumTitle(globalSummary.getAttribute("sum-label"));
@@ -1530,7 +1651,7 @@ public class SqlXMLConfigParse {
 						for (int j = 0; j < nodeList.getLength(); j++) {
 							groupElt = (Element) nodeList.item(j);
 							SummaryGroupMeta groupMeta = new SummaryGroupMeta();
-							groupMeta.setGroupColumn(groupElt.getAttribute("group-column").toLowerCase());
+							groupMeta.setGroupColumn(groupElt.getAttribute("group-column").toLowerCase(Locale.ROOT));
 							if (groupElt.hasAttribute("average-label")) {
 								groupMeta.setAverageTitle(groupElt.getAttribute("average-label"));
 							}
@@ -1623,7 +1744,8 @@ public class SqlXMLConfigParse {
 	}
 
 	/**
-	 * @todo 获取Resource
+	 * 获取Resource
+	 * 
 	 * @param resource
 	 * @return
 	 */
@@ -1645,8 +1767,9 @@ public class SqlXMLConfigParse {
 	}
 
 	/**
-	 * @TODO 切割nosql 定义的fields,让其符合预期格式,格式为id[col1,col2:aliasName],col3,col4
-	 *       将其按逗号分隔成 id.col1,id.cols2:aliasName,col3,col4
+	 * 切割nosql 定义的fields,让其符合预期格式,格式为id[col1,col2:aliasName],col3,col4 将其按逗号分隔成
+	 * id.col1,id.cols2:aliasName,col3,col4
+	 * 
 	 * @param fields
 	 * @return
 	 */
@@ -1675,25 +1798,27 @@ public class SqlXMLConfigParse {
 	}
 
 	private static RoundingMode convertRoundingMode(String roundingModeStr) {
-		if (StringUtil.isBlank(roundingModeStr)) {
-			return null;
+		// 收敛到NumberUtil统一实现:null表示未配置,空串或无法识别的值统一返回HALF_UP
+		return NumberUtil.parseRoundingMode(roundingModeStr);
+	}
+
+	/**
+	 * check是否是参数占位符,如果是则去掉${}符号,否则原样返回;支持-${paramName}负数引用,
+	 * 统一成-paramName形式(负数字面量如-7保持原样)
+	 *
+	 * @param incrementTime
+	 * @return
+	 */
+	private static String clearParamSign(String incrementTime) {
+		if (StringUtil.isBlank(incrementTime)) {
+			return incrementTime;
 		}
-		String roundingStr = roundingModeStr.toUpperCase();
-		if (roundingStr.equals("UP")) {
-			return RoundingMode.UP;
-		} else if (roundingStr.equals("DOWN")) {
-			return RoundingMode.DOWN;
-		} else if (roundingStr.equals("FLOOR")) {
-			return RoundingMode.FLOOR;
-		} else if (roundingStr.equals("HALF_UP")) {
-			return RoundingMode.HALF_UP;
-		} else if (roundingStr.equals("HALF_DOWN")) {
-			return RoundingMode.HALF_DOWN;
-		} else if (roundingStr.equals("HALF_EVEN")) {
-			return RoundingMode.HALF_EVEN;
-		} else if (roundingStr.equals("CEILING")) {
-			return RoundingMode.CEILING;
+		String trimIncrementTime = incrementTime.trim();
+		boolean negate = trimIncrementTime.startsWith("-");
+		String value = negate ? trimIncrementTime.substring(1).trim() : trimIncrementTime;
+		if (value.startsWith("${") && value.endsWith("}")) {
+			value = value.substring(2, value.length() - 1).trim();
 		}
-		return RoundingMode.HALF_UP;
+		return negate ? "-".concat(value) : value;
 	}
 }

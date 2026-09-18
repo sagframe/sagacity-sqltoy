@@ -12,9 +12,6 @@ import java.time.LocalDateTime;
  */
 public class LoginLogVO implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 1680910188658079021L;
 
 	/*---begin-auto-generate-don't-update-this-area--*/

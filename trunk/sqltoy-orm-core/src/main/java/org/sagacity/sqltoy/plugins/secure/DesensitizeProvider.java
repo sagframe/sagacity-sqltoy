@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.plugins.secure;
 
 import org.sagacity.sqltoy.config.model.SecureMask;
@@ -13,7 +10,8 @@ import org.sagacity.sqltoy.config.model.SecureMask;
  */
 public interface DesensitizeProvider {
 	/**
-	 * @TODO 对字符串进行脱敏
+	 * 对字符串进行脱敏
+	 * 
 	 * @param content
 	 * @param maskType
 	 * @return

@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.dialect.impl;
 
 import java.io.Serializable;
@@ -14,6 +11,7 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DecryptHandler;
 import org.sagacity.sqltoy.callback.GenerateSqlHandler;
 import org.sagacity.sqltoy.callback.ReflectPropsHandler;
+import org.sagacity.sqltoy.callback.UpdateRowCallback;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.PKStrategy;
@@ -25,6 +23,7 @@ import org.sagacity.sqltoy.dialect.utils.DialectExtUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.dialect.utils.PostgreSqlDialectUtils;
 import org.sagacity.sqltoy.model.ColumnMeta;
+import org.sagacity.sqltoy.model.DBProfile;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
@@ -32,17 +31,16 @@ import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
-import org.sagacity.sqltoy.utils.SqlUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 基于postgresql9.5+版本的方言实现,9.5开始insert into [ON CONFLICT DO
  *              NOTHING/UPDATE]功能生效
  * @author zhongxuchen
- * @version v1.0,Date:2015年8月10日
- * @modify Date:2019-3-12
+ * @version v1.0,Date:2015-08-10
+ * @modify Date:2019-03-12
  *         修复saveOrUpdate的缺陷,改为先update后saveIgnore，因为其跟mysql一样存在bug
  * @modify Date:2020-06-12 修复10+版本对identity主键生成的策略
  */
@@ -53,19 +51,14 @@ public class PostgreSqlDialect implements Dialect {
 	 */
 	protected final Logger logger = LoggerFactory.getLogger(PostgreSqlDialect.class);
 
-	/**
-	 * 判定为null的函数
-	 */
-	public static final String NVL_FUNCTION = "COALESCE";
-
 	@Override
 	public boolean isUnique(SqlToyContext sqlToyContext, Serializable entity, String[] paramsNamed, Connection conn,
-			final Integer dbType, String tableName) {
-		return DialectUtils.isUnique(sqlToyContext, entity, paramsNamed, conn, dbType, tableName,
+			DBProfile profile, String tableName, final Integer queryTimeout) {
+		return DialectUtils.isUnique(sqlToyContext, entity, paramsNamed, conn, profile, tableName,
 				(entityMeta, realParamNamed, table, topSize) -> {
-					String queryStr = DialectExtUtils.wrapUniqueSql(entityMeta, realParamNamed, dbType, table);
+					String queryStr = DialectExtUtils.wrapUniqueSql(entityMeta, realParamNamed, profile, table);
 					return queryStr + " limit " + topSize;
-				});
+				}, queryTimeout);
 	}
 
 	/*
@@ -79,10 +72,9 @@ public class PostgreSqlDialect implements Dialect {
 	@Override
 	public QueryResult getRandomResult(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, final DecryptHandler decryptHandler, Long totalCount, Long randomCount,
-			Connection conn, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
-			throws Exception {
+			Connection conn, DBProfile profile, final int fetchSize, final int maxRows) throws Exception {
 		return PostgreSqlDialectUtils.getRandomResult(sqlToyContext, sqlToyConfig, queryExecutor, decryptHandler,
-				totalCount, randomCount, conn, dbType, dialect, fetchSize, maxRows);
+				totalCount, randomCount, conn, profile, fetchSize, maxRows);
 	}
 
 	/*
@@ -96,10 +88,9 @@ public class PostgreSqlDialect implements Dialect {
 	@Override
 	public QueryResult findPageBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, final DecryptHandler decryptHandler, Long pageNo, Integer pageSize,
-			Connection conn, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
-			throws Exception {
+			Connection conn, DBProfile profile, final int fetchSize, final int maxRows) throws Exception {
 		return DefaultDialectUtils.findPageBySql(sqlToyContext, sqlToyConfig, queryExecutor, decryptHandler, pageNo,
-				pageSize, conn, dbType, dialect, fetchSize, maxRows);
+				pageSize, conn, profile, fetchSize, maxRows);
 	}
 
 	/*
@@ -111,10 +102,10 @@ public class PostgreSqlDialect implements Dialect {
 	 */
 	@Override
 	public QueryResult findTopBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, QueryExecutor queryExecutor,
-			final DecryptHandler decryptHandler, Integer topSize, Connection conn, final Integer dbType,
-			final String dialect, final int fetchSize, final int maxRows) throws Exception {
+			final DecryptHandler decryptHandler, Integer topSize, Connection conn, DBProfile profile,
+			final int fetchSize, final int maxRows) throws Exception {
 		return DefaultDialectUtils.findTopBySql(sqlToyContext, sqlToyConfig, queryExecutor, decryptHandler, topSize,
-				conn, dbType, dialect, fetchSize, maxRows);
+				conn, profile, fetchSize, maxRows);
 	}
 
 	/*
@@ -128,11 +119,12 @@ public class PostgreSqlDialect implements Dialect {
 	@Override
 	public QueryResult findBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, QueryExecutorExtend queryExecutorExtend, final DecryptHandler decryptHandler,
-			final Connection conn, final LockMode lockMode, final Integer dbType, final String dialect,
-			final int fetchSize, final int maxRows) throws Exception {
-		String realSql = sql.concat(getLockSql(sql, dbType, lockMode));
+			final Connection conn, final LockMode lockMode, DBProfile profile, final int fetchSize, final int maxRows)
+			throws Exception {
+		Integer dbType = profile.getDbType();
+		String realSql = sql.concat(getLockSql(sql, dbType, lockMode, queryExecutorExtend.lockWaitTimeout));
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, queryExecutorExtend,
-				decryptHandler, conn, dbType, 0, fetchSize, maxRows);
+				decryptHandler, conn, profile, 0, fetchSize, maxRows);
 	}
 
 	/*
@@ -145,9 +137,9 @@ public class PostgreSqlDialect implements Dialect {
 	@Override
 	public Long getCountBySql(SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, boolean isLastSql, final QueryExecutorExtend extend, Connection conn,
-			final Integer dbType, final String dialect) throws Exception {
+			DBProfile profile) throws Exception {
 		return DialectUtils.getCountBySql(sqlToyContext, sqlToyConfig, sql, paramsValue, isLastSql, extend, conn,
-				dbType);
+				profile);
 	}
 
 	/*
@@ -159,16 +151,18 @@ public class PostgreSqlDialect implements Dialect {
 	 */
 	@Override
 	public Serializable load(SqlToyContext sqlToyContext, Serializable entity, boolean onlySubTables,
-			List<Class> cascadeTypes, LockMode lockMode, Connection conn, final Integer dbType, final String dialect,
-			final String tableName) throws Exception {
+			List<Class> cascadeTypes, LockMode lockMode, int lockWaitTimeout, Connection conn, DBProfile profile,
+			final String tableName, final Integer queryTimeout) throws Exception {
+		Integer dbType = profile.getDbType();
+		String dialect = profile.getDialect();
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		// 获取loadsql(loadsql 可以通过@loadSql进行改变，所以需要sqltoyContext重新获取)
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(entityMeta.getLoadSql(tableName), SqlType.search,
 				dialect, null);
 		String loadSql = sqlToyConfig.getSql(dialect);
-		loadSql = loadSql.concat(getLockSql(loadSql, dbType, lockMode));
+		loadSql = loadSql.concat(getLockSql(loadSql, dbType, lockMode, lockWaitTimeout));
 		return (Serializable) DialectUtils.load(sqlToyContext, sqlToyConfig, loadSql, entityMeta, entity, onlySubTables,
-				cascadeTypes, conn, dbType);
+				cascadeTypes, conn, profile, queryTimeout);
 	}
 
 	/*
@@ -180,12 +174,13 @@ public class PostgreSqlDialect implements Dialect {
 	 */
 	@Override
 	public List<?> loadAll(SqlToyContext sqlToyContext, List<?> entities, boolean onlySubTables,
-			List<Class> cascadeTypes, LockMode lockMode, Connection conn, final Integer dbType, final String dialect,
-			final String tableName, final int fetchSize, final int maxRows) throws Exception {
-		return DialectUtils.loadAll(sqlToyContext, entities, onlySubTables, cascadeTypes, lockMode, conn, dbType,
+			List<Class> cascadeTypes, LockMode lockMode, final int lockWaitTimeout, Connection conn, DBProfile profile,
+			final String tableName, final int fetchSize, final int maxRows, final Integer queryTimeout)
+			throws Exception {
+		return DialectUtils.loadAll(sqlToyContext, entities, onlySubTables, cascadeTypes, lockMode, conn, profile,
 				tableName, (sql, dbTypeValue, lockedMode) -> {
-					return getLockSql(sql, dbTypeValue, lockedMode);
-				}, fetchSize, maxRows);
+					return getLockSql(sql, dbTypeValue, lockedMode, lockWaitTimeout);
+				}, fetchSize, maxRows, queryTimeout);
 	}
 
 	/*
@@ -195,9 +190,9 @@ public class PostgreSqlDialect implements Dialect {
 	 * SqlToyContext, java.io.Serializable, java.sql.Connection)
 	 */
 	@Override
-	public Object save(SqlToyContext sqlToyContext, Serializable entity, Connection conn, final Integer dbType,
-			final String dialect, final String tableName) throws Exception {
-		return PostgreSqlDialectUtils.save(sqlToyContext, entity, conn, dbType, tableName);
+	public Object save(SqlToyContext sqlToyContext, Serializable entity, Connection conn, DBProfile profile,
+			final String tableName) throws Exception {
+		return PostgreSqlDialectUtils.save(sqlToyContext, entity, conn, profile, tableName);
 	}
 
 	/*
@@ -209,9 +204,9 @@ public class PostgreSqlDialect implements Dialect {
 	 */
 	@Override
 	public Long saveAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType, final String dialect,
-			final Boolean autoCommit, final String tableName) throws Exception {
-		return PostgreSqlDialectUtils.saveAll(sqlToyContext, entities, batchSize, reflectPropsHandler, conn, dbType,
+			ReflectPropsHandler reflectPropsHandler, Connection conn, DBProfile profile, final Boolean autoCommit,
+			final String tableName) throws Exception {
+		return PostgreSqlDialectUtils.saveAll(sqlToyContext, entities, batchSize, reflectPropsHandler, conn, profile,
 				autoCommit, tableName);
 	}
 
@@ -225,8 +220,8 @@ public class PostgreSqlDialect implements Dialect {
 	@Override
 	public Long update(SqlToyContext sqlToyContext, Serializable entity, String[] forceUpdateFields, boolean cascade,
 			Class[] forceCascadeClasses, HashMap<Class, String[]> subTableForceUpdateProps, Connection conn,
-			final Integer dbType, final String dialect, final String tableName) throws Exception {
-		return DialectUtils.update(sqlToyContext, entity, NVL_FUNCTION, forceUpdateFields, cascade,
+			DBProfile profile, final String tableName) throws Exception {
+		return DialectUtils.update(sqlToyContext, entity, forceUpdateFields, cascade,
 				(cascade == false) ? null : new GenerateSqlHandler() {
 					@Override
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
@@ -235,10 +230,9 @@ public class PostgreSqlDialect implements Dialect {
 						boolean isAssignPK = PostgreSqlDialectUtils.allowAssignPKValue(pkStrategy);
 						// update 级联操作过程中会自动判断postgresql15，而采用不同策略(这里统一按15的规则提供，14之前版本并不用到)
 						return DialectUtils.getSaveOrUpdateSql(sqlToyContext, sqlToyContext.getUnifyFieldsHandler(),
-								dbType, entityMeta, pkStrategy, forceUpdateFields, null, NVL_FUNCTION, sequence,
-								isAssignPK, null);
+								profile, entityMeta, pkStrategy, forceUpdateFields, null, sequence, isAssignPK, null);
 					}
-				}, forceCascadeClasses, subTableForceUpdateProps, conn, dbType, tableName);
+				}, forceCascadeClasses, subTableForceUpdateProps, conn, profile, tableName);
 	}
 
 	/*
@@ -251,18 +245,24 @@ public class PostgreSqlDialect implements Dialect {
 	@Override
 	public Long updateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			final String[] uniqueFields, String[] forceUpdateFields, ReflectPropsHandler reflectPropsHandler,
-			Connection conn, final Integer dbType, final String dialect, final Boolean autoCommit,
-			final String tableName) throws Exception {
-		return DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropsHandler,
-				NVL_FUNCTION, conn, dbType, autoCommit, tableName, false);
+			Connection conn, DBProfile profile, final Boolean autoCommit, final String tableName) throws Exception {
+		return DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropsHandler, conn,
+				profile, autoCommit, tableName, false);
 	}
 
 	@Override
 	public Serializable updateSaveFetch(SqlToyContext sqlToyContext, Serializable entity,
-			UpdateRowHandler updateRowHandler, String[] uniqueProps, Connection conn, Integer dbType, String dialect,
-			String tableName) throws Exception {
-		return DefaultDialectUtils.updateSaveFetch(sqlToyContext, entity, updateRowHandler, uniqueProps, conn, dbType,
-				dialect, tableName);
+			UpdateRowHandler updateRowHandler, int lockWaitTimeout, String[] uniqueProps, Connection conn,
+			DBProfile profile, String tableName) throws Exception {
+		return DefaultDialectUtils.updateSaveFetch(sqlToyContext, entity, updateRowHandler, uniqueProps, conn, profile,
+				tableName, lockWaitTimeout);
+	}
+
+	public Serializable updateSaveFetch(SqlToyContext sqlToyContext, Serializable entity,
+			UpdateRowCallback updateRowCallback, int lockWaitTimeout, String[] uniqueProps, Connection conn,
+			DBProfile profile, String tableName) throws Exception {
+		return DefaultDialectUtils.updateSaveFetch(sqlToyContext, entity, updateRowCallback, uniqueProps, conn, profile,
+				tableName, lockWaitTimeout);
 	}
 
 	// postgres的ON CONFLICT ON CONSTRAINT() DO UPDATE SET特性跟mysql一样存在bug
@@ -275,12 +275,11 @@ public class PostgreSqlDialect implements Dialect {
 	 */
 	@Override
 	public Long saveOrUpdate(SqlToyContext sqlToyContext, Serializable entity, String[] forceUpdateFields,
-			Connection conn, final Integer dbType, final String dialect, final Boolean autoCommit,
-			final String tableName) throws Exception {
+			Connection conn, DBProfile profile, final Boolean autoCommit, final String tableName) throws Exception {
 		List<Serializable> entities = new ArrayList<Serializable>();
 		entities.add(entity);
 		return saveOrUpdateAll(sqlToyContext, entities, sqlToyContext.getBatchSize(), null, forceUpdateFields, conn,
-				dbType, dialect, autoCommit, tableName);
+				profile, autoCommit, tableName);
 	}
 
 	/*
@@ -293,26 +292,29 @@ public class PostgreSqlDialect implements Dialect {
 	 */
 	@Override
 	public Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			ReflectPropsHandler reflectPropsHandler, String[] forceUpdateFields, Connection conn, final Integer dbType,
-			final String dialect, final Boolean autoCommit, final String tableName) throws Exception {
+			ReflectPropsHandler reflectPropsHandler, String[] forceUpdateFields, Connection conn, DBProfile profile,
+			final Boolean autoCommit, final String tableName) throws Exception {
+		Integer dbType = profile.getDbType();
 		// 暂时不开放，postgresql类型太多,merge 语句中需要case(? as type) as columnName
 		// 目前type类型无法完整适配支持
 		// postgresql15 支持merge into
-		if (dbType.equals(DBType.POSTGRESQL15)) {
-			return PostgreSqlDialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, reflectPropsHandler,
-					forceUpdateFields, conn, dbType, dialect, autoCommit, tableName);
+		if (dbType.equals(DBType.POSTGRESQL14)) {
+			// DBType.POSTGRESQL14
+			Long updateCnt = DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields,
+					reflectPropsHandler, conn, profile, autoCommit, tableName, true);
+			// 如果修改的记录数量跟总记录数量一致,表示全部是修改
+			if (updateCnt >= entities.size()) {
+				SqlExecuteStat.debug("update record", "update rows:" + updateCnt
+						+ " equals the size of entities collection, skip the insert operation!");
+				return updateCnt;
+			}
+			Long saveCnt = saveAllIgnoreExist(sqlToyContext, entities, batchSize, reflectPropsHandler, conn, profile,
+					autoCommit, tableName);
+			SqlExecuteStat.debug("insert record", "insert rows:" + saveCnt + "!");
+			return updateCnt + saveCnt;
 		}
-		Long updateCnt = DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields,
-				reflectPropsHandler, NVL_FUNCTION, conn, dbType, autoCommit, tableName, true);
-		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
-		if (updateCnt >= entities.size()) {
-			SqlExecuteStat.debug("修改记录", "修改记录量:" + updateCnt + " 条,等于entities集合长度,不再做insert操作!");
-			return updateCnt;
-		}
-		Long saveCnt = saveAllIgnoreExist(sqlToyContext, entities, batchSize, reflectPropsHandler, conn, dbType,
-				dialect, autoCommit, tableName);
-		SqlExecuteStat.debug("新增记录", "新建记录数量:" + saveCnt + " 条!");
-		return updateCnt + saveCnt;
+		return PostgreSqlDialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, reflectPropsHandler,
+				forceUpdateFields, conn, profile, autoCommit, tableName);
 	}
 
 	/*
@@ -325,9 +327,22 @@ public class PostgreSqlDialect implements Dialect {
 	 */
 	@Override
 	public Long saveAllIgnoreExist(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType, final String dialect,
-			final Boolean autoCommit, final String tableName) throws Exception {
+			ReflectPropsHandler reflectPropsHandler, Connection conn, DBProfile profile, final Boolean autoCommit,
+			final String tableName) throws Exception {
+		Integer dbType = profile.getDbType();
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
+		// pg14通过on conflict do nothing实现saveAllIgnoreExist语义,改走saveAll:
+		// identity主键按rejectId反射,与insertIgnore省略主键列的sql保持占位符与参数对齐
+		// (原走saveAllIgnoreExist按全字段反射,identity时参数比?多一个导致绑定越界;
+		// 且伪造成sequence+DEFAULT会产生COALESCE(?,DEFAULT)非法sql,pg的DEFAULT只能裸用于VALUES项)
+		if (dbType != null && dbType.intValue() == DBType.POSTGRESQL14) {
+			PKStrategy pkStrategy = entityMeta.getIdStrategy();
+			boolean isAssignPK = PostgreSqlDialectUtils.allowAssignPKValue(pkStrategy);
+			String insertSql = DialectExtUtils.insertIgnore(sqlToyContext.getUnifyFieldsHandler(), profile, entityMeta,
+					pkStrategy, "nextval('" + entityMeta.getSequence() + "')", isAssignPK, tableName);
+			return DialectUtils.saveAll(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entities,
+					batchSize, reflectPropsHandler, conn, profile, autoCommit);
+		}
 		return DialectUtils.saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta,
 				new GenerateSqlHandler() {
 					@Override
@@ -335,14 +350,10 @@ public class PostgreSqlDialect implements Dialect {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = "nextval('" + entityMeta.getSequence() + "')";
 						boolean isAssignPK = PostgreSqlDialectUtils.allowAssignPKValue(pkStrategy);
-						if (dbType == DBType.POSTGRESQL15) {
-							return DialectExtUtils.mergeIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType,
-									entityMeta, pkStrategy, null, NVL_FUNCTION, sequence, isAssignPK, tableName);
-						}
-						return DialectExtUtils.insertIgnore(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
-								pkStrategy, NVL_FUNCTION, sequence, isAssignPK, tableName);
+						return DialectUtils.mergeIgnore(sqlToyContext.getUnifyFieldsHandler(), profile, entityMeta,
+								pkStrategy, null, sequence, isAssignPK, tableName);
 					}
-				}, reflectPropsHandler, conn, dbType, autoCommit);
+				}, reflectPropsHandler, conn, profile, autoCommit);
 	}
 
 	/*
@@ -352,9 +363,9 @@ public class PostgreSqlDialect implements Dialect {
 	 * SqlToyContext, java.io.Serializable, java.sql.Connection)
 	 */
 	@Override
-	public Long delete(SqlToyContext sqlToyContext, Serializable entity, Connection conn, final Integer dbType,
-			final String dialect, final String tableName) throws Exception {
-		return DialectUtils.delete(sqlToyContext, entity, conn, dbType, tableName);
+	public Long delete(SqlToyContext sqlToyContext, Serializable entity, Connection conn, DBProfile profile,
+			final String tableName) throws Exception {
+		return DialectUtils.delete(sqlToyContext, entity, conn, profile, tableName);
 	}
 
 	/*
@@ -365,9 +376,8 @@ public class PostgreSqlDialect implements Dialect {
 	 */
 	@Override
 	public Long deleteAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize, Connection conn,
-			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
-			throws Exception {
-		return DialectUtils.deleteAll(sqlToyContext, entities, batchSize, conn, dbType, autoCommit, tableName);
+			DBProfile profile, final Boolean autoCommit, final String tableName) throws Exception {
+		return DialectUtils.deleteAll(sqlToyContext, entities, batchSize, conn, profile, autoCommit, tableName);
 	}
 
 	/*
@@ -380,45 +390,40 @@ public class PostgreSqlDialect implements Dialect {
 	 */
 	@Override
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramValues, UpdateRowHandler updateRowHandler, Connection conn, final Integer dbType,
-			final String dialect, final LockMode lockMode, final int fetchSize, final int maxRows) throws Exception {
-		String realSql = sql.concat(getLockSql(sql, dbType, (lockMode == null) ? LockMode.UPGRADE : lockMode));
+			Object[] paramValues, UpdateRowHandler updateRowHandler, Connection conn, DBProfile profile,
+			final LockMode lockMode, int lockWaitTimeout, final int fetchSize, final int maxRows) throws Exception {
+		Integer dbType = profile.getDbType();
+		String realSql = sql
+				.concat(getLockSql(sql, dbType, (lockMode == null) ? LockMode.UPGRADE : lockMode, lockWaitTimeout));
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramValues, updateRowHandler, conn,
-				dbType, 0, fetchSize, maxRows);
+				profile, 0, fetchSize, maxRows);
 	}
 
 	@Override
 	public StoreResult executeStore(SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
 			final Object[] inParamsValue, final Integer[] outParamsType, final boolean moreResult,
-			final Connection conn, final Integer dbType, final String dialect, final int fetchSize,
-			final Integer timeout) throws Exception {
+			final Connection conn, DBProfile profile, final int fetchSize, final Integer timeout) throws Exception {
 		return DialectUtils.executeStore(sqlToyConfig, sqlToyContext, sql, inParamsValue, outParamsType, moreResult,
-				conn, dbType, fetchSize, timeout);
+				conn, profile, fetchSize, timeout);
 	}
 
 	@Override
 	public List<ColumnMeta> getTableColumns(String catalog, String schema, String tableName, Connection conn,
-			Integer dbType, String dialect) throws Exception {
-		return DefaultDialectUtils.getTableColumns(catalog, schema, tableName, conn, dbType, dialect);
+			DBProfile profile) throws Exception {
+		return DefaultDialectUtils.getTableColumns(catalog, schema, tableName, conn, profile);
 	}
 
 	@Override
-	public List<TableMeta> getTables(String catalog, String schema, String tableName, Connection conn, Integer dbType,
-			String dialect) throws Exception {
-		return PostgreSqlDialectUtils.getTables(catalog, schema, tableName, conn, dbType, dialect);
+	public List<TableMeta> getTables(String catalog, String schema, String tableName, Connection conn,
+			DBProfile profile) throws Exception {
+		return PostgreSqlDialectUtils.getTables(catalog, schema, tableName, conn, profile);
 	}
 
-	private String getLockSql(String sql, Integer dbType, LockMode lockMode) {
-		// 判断是否已经包含for update
-		if (lockMode == null || SqlUtil.hasLock(sql, dbType)) {
-			return "";
-		}
-		if (lockMode == LockMode.UPGRADE_NOWAIT) {
-			return " for update nowait ";
-		}
-		if (lockMode == LockMode.UPGRADE_SKIPLOCK) {
-			return " for update skip locked";
-		}
-		return " for update ";
+	/**
+	 * update 2026-9-13 private改protected:子类(Kingbase)覆写wait N形态时,本类findBySql/load等
+	 * 继承方法的调用须经虚分派命中子类实现
+	 */
+	protected String getLockSql(String sql, Integer dbType, LockMode lockMode, int lockWaitTimeout) {
+		return DefaultDialectUtils.getLockSql(sql, dbType, lockMode, 0, true, " for update skip locked", false);
 	}
 }

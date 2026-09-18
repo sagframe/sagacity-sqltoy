@@ -1,6 +1,3 @@
-/**
- *
- */
 package org.sagacity.sqltoy.model;
 
 import java.util.Iterator;
@@ -11,14 +8,11 @@ import java.util.concurrent.ConcurrentHashMap;
  * @project sagacity-sqltoy
  * @description 重构HashMap让key值始终是小写
  * @author zhongxuchen
- * @version v1.0,Date:2017年11月7日
+ * @version v1.0,Date:2017-11-07
  */
 @SuppressWarnings("unchecked")
 public class IgnoreKeyCaseMap<K, V> extends ConcurrentHashMap<K, V> {
 
-	/**
-	 *
-	 */
 	private static final long serialVersionUID = 391326207592902507L;
 
 	public IgnoreKeyCaseMap() {
@@ -44,7 +38,7 @@ public class IgnoreKeyCaseMap<K, V> extends ConcurrentHashMap<K, V> {
 	 * @return
 	 */
 	private Object toLowCaseKey(Object key) {
-		return (key != null && key instanceof String) ? key.toString().toLowerCase() : key;
+		return (key != null && key instanceof String) ? key.toString().toLowerCase(java.util.Locale.ROOT) : key;
 	}
 
 	/*
@@ -67,8 +61,9 @@ public class IgnoreKeyCaseMap<K, V> extends ConcurrentHashMap<K, V> {
 	 */
 	@Override
 	public V put(K key, V value) {
+		// null key/value均不存储,无先前映射,按Map契约返回null
 		if (key == null || value == null) {
-			return value;
+			return null;
 		}
 		return super.put((K) toLowCaseKey(key), value);
 	}
@@ -113,6 +108,9 @@ public class IgnoreKeyCaseMap<K, V> extends ConcurrentHashMap<K, V> {
 	 */
 	@Override
 	public V putIfAbsent(K key, V value) {
+		if (key == null || value == null) {
+			return null;
+		}
 		return super.putIfAbsent((K) toLowCaseKey(key), value);
 	}
 
@@ -124,6 +122,9 @@ public class IgnoreKeyCaseMap<K, V> extends ConcurrentHashMap<K, V> {
 	 */
 	@Override
 	public boolean replace(K key, V value1, V value2) {
+		if (key == null) {
+			return false;
+		}
 		return super.replace((K) toLowCaseKey(key), value1, value2);
 	}
 
@@ -134,6 +135,9 @@ public class IgnoreKeyCaseMap<K, V> extends ConcurrentHashMap<K, V> {
 	 */
 	@Override
 	public V replace(K key, V value) {
+		if (key == null) {
+			return null;
+		}
 		return super.replace((K) toLowCaseKey(key), value);
 	}
 
@@ -144,6 +148,10 @@ public class IgnoreKeyCaseMap<K, V> extends ConcurrentHashMap<K, V> {
 	 */
 	@Override
 	public boolean containsKey(Object key) {
+		// ConcurrentHashMap不支持null key会抛NPE,与get/put/remove的判空语义对齐
+		if (key == null) {
+			return false;
+		}
 		return super.containsKey(toLowCaseKey(key));
 	}
 }

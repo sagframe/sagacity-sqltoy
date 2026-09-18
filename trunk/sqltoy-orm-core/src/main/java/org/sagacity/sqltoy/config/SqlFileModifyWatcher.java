@@ -8,11 +8,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 用于检测sql文件内容发生变化,如果发生变化则重新加载文件
  * @author zhongxuchen
- * @version v1.0, Date:2012年8月26日
- * @modify 2019年8月26日,将原本调用sql时检测sql文件更新改为一个独立的后台程序进行检测
+ * @version v1.0,Date:2012-08-26
+ * @modify Date:2019-08-26,将原本调用sql时检测sql文件更新改为一个独立的后台程序进行检测
  */
 @SuppressWarnings("rawtypes")
 public class SqlFileModifyWatcher extends Thread {
@@ -57,6 +57,9 @@ public class SqlFileModifyWatcher extends Thread {
 		this.filesLastModifyMap = filesLastModifyMap;
 		this.delayCheckSeconds = delayCheckSeconds;
 		this.sleepSeconds = (sleepSeconds >= 1) ? sleepSeconds : 1;
+		// daemon:destroy未被调用时不能阻止JVM退出(此线程仅服务于开发模式热加载)
+		setDaemon(true);
+		setName("sqltoy-sql-file-watcher");
 	}
 
 	@Override
@@ -68,14 +71,15 @@ public class SqlFileModifyWatcher extends Thread {
 				Thread.sleep(1000 * delayCheckSeconds);
 			}
 		} catch (InterruptedException e) {
+			// 恢复中断标志,让上层调用者(线程池/关闭钩子)能够感知中断状态
+			Thread.currentThread().interrupt();
 			isRun = false;
 		}
 		while (isRun) {
 			try {
 				SqlXMLConfigParse.parseXML(realSqlList, filesLastModifyMap, sqlCache, encoding, dialect);
 			} catch (Exception e) {
-				e.printStackTrace();
-				logger.error("重新解析SQL对应的xml文件错误!{}", e.getMessage(), e);
+				logger.error("failed to reparse the xml file of the modified sql! {}", e.getMessage(), e);
 			}
 			try {
 				if (Thread.currentThread().isInterrupted()) {
@@ -85,7 +89,9 @@ public class SqlFileModifyWatcher extends Thread {
 					Thread.sleep(1000 * sleepSeconds);
 				}
 			} catch (InterruptedException e) {
-				logger.warn("sql文件变更监测程序进程异常,监测将终止!{}", e.getMessage(), e);
+				logger.warn("sql file modify watcher thread error, watching will be stopped! {}", e.getMessage(), e);
+				// 恢复中断标志,让上层调用者能够感知中断状态
+				Thread.currentThread().interrupt();
 				isRun = false;
 			}
 		}

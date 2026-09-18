@@ -10,6 +10,11 @@ import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @project sagacity-sqltoy
@@ -18,26 +23,33 @@ import java.nio.ByteBuffer;
  * @version v1.0,Date:2008-12-14
  */
 public class IOUtil {
+	/**
+	 * 定义日志
+	 */
+	protected final static Logger logger = LoggerFactory.getLogger(IOUtil.class);
 
 	private IOUtil() {
 	}
 
 	/**
-	 * @TODO 转换String为InputStream
+	 * 转换String为InputStream
+	 * 
 	 * @param str
 	 * @param charset
 	 * @return
 	 * @throws Exception
 	 */
 	public static InputStream strToInputStream(String str, String charset) throws Exception {
-		if (charset != null) {
-			return new ByteArrayInputStream(str.getBytes(charset));
+		if (str == null) {
+			return null;
 		}
-		return new ByteArrayInputStream(str.getBytes());
+		Charset cs = StringUtil.isNotBlank(charset) ? Charset.forName(charset) : StandardCharsets.UTF_8;
+		return new ByteArrayInputStream(str.getBytes(cs));
 	}
 
 	/**
-	 * @todo 将对象转换成字节数组
+	 * 将对象转换成字节数组
+	 * 
 	 * @param obj
 	 * @return
 	 */
@@ -45,24 +57,22 @@ public class IOUtil {
 		if (obj == null) {
 			return null;
 		}
-		ByteArrayOutputStream out = null;
-		ObjectOutputStream outputStream = null;
-		try {
-			out = new ByteArrayOutputStream();
-			outputStream = new ObjectOutputStream(out);
-			outputStream.writeObject(obj);
-			outputStream.flush();
-			return out.toByteArray();
+		// 预分配缓冲区，减少扩容
+		try (ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
+				ObjectOutputStream oos = new ObjectOutputStream(bos)) {
+			oos.writeObject(obj);
+			// 主动刷出缓冲区
+			oos.flush();
+			return bos.toByteArray();
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("failed to serialize object: {}", e.getMessage(), e);
 			return null;
-		} finally {
-			closeQuietly(outputStream, out);
 		}
 	}
 
 	/**
-	 * @todo 字节数组转换成对象
+	 * 字节数组转换成对象
+	 * 
 	 * @param objBytes
 	 * @return
 	 */
@@ -70,21 +80,17 @@ public class IOUtil {
 		if (objBytes == null || objBytes.length == 0) {
 			return null;
 		}
-		Object obj = null;
-		ObjectInputStream in = null;
-		try {
-			in = new ObjectInputStream(new ByteArrayInputStream(objBytes));
-			obj = in.readObject();
+		try (ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(objBytes))) {
+			return in.readObject();
 		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			closeQuietly(in);
+			logger.error("failed to deserialize object: {}", e.getMessage(), e);
+			return null;
 		}
-		return obj;
 	}
 
 	/**
-	 * @todo 字节数组转换成对象,一般用于对象序列化
+	 * 字节数组转换成对象,一般用于对象序列化
+	 * 
 	 * @param is
 	 * @return
 	 */
@@ -92,100 +98,122 @@ public class IOUtil {
 		if (is == null) {
 			return null;
 		}
-		Object obj = null;
-		ObjectInputStream in = null;
-		try {
-			in = new ObjectInputStream(is);
-			obj = in.readObject();
+		try (ObjectInputStream in = new ObjectInputStream(is)) {
+			return in.readObject();
 		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			closeQuietly(in);
+			logger.error("failed to deserialize object: {}", e.getMessage(), e);
+			return null;
 		}
-		return obj;
 	}
 
 	/**
-	 * @todo 将inputStream转换成byte数组
+	 * 将inputStream转换成byte数组
+	 * 
 	 * @param is
 	 * @return
-	 * @throws Exception
+	 * @throws IOException
 	 */
 	public static byte[] getBytes(InputStream is) throws IOException {
 		if (is == null) {
 			return null;
 		}
-		// 无需关闭
-		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-		byte[] buffer = new byte[1024];
-		int len;
-		while ((len = is.read(buffer)) != -1) {
-			outputStream.write(buffer, 0, len);
-		}
-		return outputStream.toByteArray();
-	}
-
-	public static String inputStreamToStr(InputStream is, String encoding) {
-		if (null == is) {
-			return null;
-		}
-		StringBuilder buffer = new StringBuilder();
-		BufferedReader in = null;
-		try {
-			if (StringUtil.isNotBlank(encoding)) {
-				in = new BufferedReader(new InputStreamReader(is, encoding));
-			} else {
-				in = new BufferedReader(new InputStreamReader(is));
+		try (InputStream stream = is) {
+			// 8KB 缓冲区
+			byte[] buffer = new byte[1024 * 8];
+			ByteArrayOutputStream bos = new ByteArrayOutputStream();
+			int len;
+			while ((len = stream.read(buffer)) != -1) {
+				bos.write(buffer, 0, len);
 			}
-			String line = "";
-			while ((line = in.readLine()) != null) {
-				buffer.append(line);
-				buffer.append("\r\n");
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			closeQuietly(in);
-		}
-		return buffer.toString();
-	}
-	
-	public static ByteBuffer getByteBuffer(Object obj) throws IOException {
-		if (obj == null) {
-			return null;
-		}
-		ByteArrayOutputStream bOut = null;
-		ObjectOutputStream out = null;
-		try {
-			bOut = new ByteArrayOutputStream();
-			out = new ObjectOutputStream(bOut);
-			out.writeObject(obj);
-			out.flush();
-			return ByteBuffer.wrap(bOut.toByteArray());
-		} catch (IOException ie) {
-			throw ie;
-		} finally {
-			closeQuietly(out, bOut);
+			return bos.toByteArray();
 		}
 	}
 
 	/**
-	 * @TODO 关闭一个或多个流对象
+	 * 将inputStream转换成字符串
+	 * 
+	 * @param is
+	 * @param encoding
+	 * @return
+	 */
+	public static String inputStreamToStr(InputStream is, String encoding) {
+		if (is == null) {
+			return null;
+		}
+		final String lineSep = System.lineSeparator();
+		// charset解析纳入try块,非法编码名按容错约定返回null
+		try (BufferedReader in = new BufferedReader(new InputStreamReader(is,
+				StringUtil.isNotBlank(encoding) ? Charset.forName(encoding) : StandardCharsets.UTF_8))) {
+			StringBuilder buffer = new StringBuilder();
+			String line;
+			boolean firstLine = true;
+			while ((line = in.readLine()) != null) {
+				if (!firstLine) {
+					buffer.append(lineSep);
+				}
+				buffer.append(line);
+				firstLine = false;
+			}
+			return buffer.toString();
+		} catch (Exception e) {
+			logger.error("failed to read InputStream: {}", e.getMessage(), e);
+			return null;
+		}
+	}
+
+	/**
+	 * 将对象转换成ByteBuffer
+	 * 
+	 * @param obj
+	 * @return
+	 * @throws IOException
+	 */
+	public static ByteBuffer getByteBuffer(Object obj) throws IOException {
+		if (obj == null) {
+			return null;
+		}
+		try (ByteArrayOutputStream bOut = new ByteArrayOutputStream(1024);
+				ObjectOutputStream out = new ObjectOutputStream(bOut)) {
+			out.writeObject(obj);
+			out.flush();
+			// 直接使用内部数组，不再二次拷贝（慎用：BAOS 内部数组会随操作变化）
+			// 稳妥写法：wrap(toByteArray())，追求极致性能用下面注释行
+			// return ByteBuffer.wrap(bOut.buf, 0, bOut.count);
+			return ByteBuffer.wrap(bOut.toByteArray());
+		}
+	}
+
+	/**
+	 * 关闭一个或多个流对象
+	 * 
 	 * @param closeables 可关闭的流对象列表
 	 * @throws IOException
 	 */
 	public static void close(Closeable... closeables) throws IOException {
 		if (closeables != null) {
+			IOException firstException = null;
 			for (Closeable closeable : closeables) {
 				if (closeable != null) {
-					closeable.close();
+					try {
+						closeable.close();
+					} catch (IOException e) {
+						if (firstException == null) {
+							firstException = e;
+						} else {
+							firstException.addSuppressed(e);
+						}
+					}
 				}
+			}
+			if (firstException != null) {
+				throw firstException;
 			}
 		}
 	}
 
 	/**
-	 * @TODO 关闭一个或多个流对象
+	 * 关闭一个或多个流对象
+	 * 
 	 * @param closeables 可关闭的流对象列表
 	 */
 	public static void closeQuietly(Closeable... closeables) {

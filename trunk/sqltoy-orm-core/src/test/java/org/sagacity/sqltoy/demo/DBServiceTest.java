@@ -15,9 +15,13 @@ import org.sagacity.sqltoy.utils.DBTransUtils;
 
 import com.alibaba.druid.pool.DruidDataSourceFactory;
 
+/**
+ * 数据库CRUD服务(DBService)的集成演示测试
+ */
 public class DBServiceTest {
 	public void doDB() {
 		try {
+			// 构建sqlToyContext
 			SqlToyContext sqlToyContext = new SqlToyContext();
 			sqlToyContext.setSqlResourcesDir("classpath:sqltoy/demo.sql.xml");
 			sqlToyContext.initialize();

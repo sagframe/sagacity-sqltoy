@@ -26,7 +26,8 @@ public enum CaseType {
 	}
 
 	/**
-	 * @todo 转换给定字符串为枚举主键策略
+	 * 转换给定字符串为枚举主键策略
+	 * 
 	 * @param caseType
 	 * @return
 	 */

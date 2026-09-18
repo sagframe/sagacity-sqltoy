@@ -11,6 +11,7 @@ import java.util.Set;
 import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.callback.EntityUpdateCallback;
 import org.sagacity.sqltoy.callback.StreamResultHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
@@ -35,8 +36,8 @@ import org.sagacity.sqltoy.model.EntityQuery;
 import org.sagacity.sqltoy.model.EntityUpdate;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.Page;
-import org.sagacity.sqltoy.model.ParallQuery;
 import org.sagacity.sqltoy.model.ParallelConfig;
+import org.sagacity.sqltoy.model.ParallelQuery;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
@@ -45,9 +46,9 @@ import org.sagacity.sqltoy.support.SqlToyDaoSupport;
 import org.sagacity.sqltoy.translate.TranslateHandler;
 
 /**
- * @project sqltoy-orm
- * @description SqlToyDao 的默认实现类，直接继承 SqlToyDaoSupport，
- *              不依赖 LightDao/DefaultLightDaoImpl，实现完整规范命名的查询方法
+ * @project sagacity-sqltoy
+ * @description SqlToyDao 的默认实现类，直接继承 SqlToyDaoSupport， 不依赖
+ *              LightDao/DefaultLightDaoImpl，实现完整规范命名的查询方法
  * @author zhongxuchen
  * @version v1.0,Date:2025年
  */
@@ -242,14 +243,15 @@ public class DefaultSqlToyDaoImpl extends SqlToyDaoSupport implements SqlToyDao 
 	}
 
 	@Override
-	public <T> List<QueryResult<T>> parallelQuery(List<ParallQuery> parallelQueryList, Map<String, Object> paramsMap) {
-		return super.parallQuery(parallelQueryList, paramsMap, new ParallelConfig());
+	public <T> List<QueryResult<T>> parallelQuery(List<ParallelQuery> parallelQueryList,
+			Map<String, Object> paramsMap) {
+		return super.parallelQuery(parallelQueryList, paramsMap, new ParallelConfig());
 	}
 
 	@Override
-	public <T> List<QueryResult<T>> parallelQuery(List<ParallQuery> parallelQueryList, Map<String, Object> paramsMap,
+	public <T> List<QueryResult<T>> parallelQuery(List<ParallelQuery> parallelQueryList, Map<String, Object> paramsMap,
 			ParallelConfig parallelConfig) {
-		return super.parallQuery(parallelQueryList, paramsMap, parallelConfig);
+		return super.parallelQuery(parallelQueryList, paramsMap, parallelConfig);
 	}
 
 	// ============================================
@@ -315,7 +317,19 @@ public class DefaultSqlToyDaoImpl extends SqlToyDaoSupport implements SqlToyDao 
 	@Override
 	public <T extends Serializable> T updateSaveFetch(T entity, UpdateRowHandler updateRowHandler,
 			String... uniqueProps) {
-		return super.updateSaveFetch(entity, updateRowHandler, uniqueProps, dataSource);
+		return super.updateSaveFetch(entity, updateRowHandler, -1, uniqueProps, dataSource);
+	}
+
+	@Override
+	public <T extends Serializable> T updateSaveFetch(T entity, EntityUpdateCallback<T> callback,
+			String... uniqueProps) {
+		return super.updateSaveFetch(entity, callback, -1, uniqueProps, dataSource);
+	}
+
+	@Override
+	public <T extends Serializable> T updateSaveFetch(T entity, EntityUpdateCallback<T> callback, int lockWaitTimeout,
+			String... uniqueProps) {
+		return super.updateSaveFetch(entity, callback, lockWaitTimeout, uniqueProps, dataSource);
 	}
 
 	@Override
@@ -401,6 +415,11 @@ public class DefaultSqlToyDaoImpl extends SqlToyDaoSupport implements SqlToyDao 
 
 	@Override
 	public Long executeSql(String sqlOrSqlId, Object... paramsValue) {
+		SqlToyConfig sqlToyConfig = this.getSqlToyConfig(sqlOrSqlId, SqlType.update);
+		if (sqlToyConfig.isNamedParam()) {
+			throw new IllegalArgumentException(
+					"executeSql(sqlOrSqlId, Object... paramsValue) does not support named parameter sql, please use executeSql(sqlOrSqlId, Map<String,Object> paramsMap) method!");
+		}
 		return super.executeSql(sqlOrSqlId, null, paramsValue);
 	}
 
@@ -412,7 +431,7 @@ public class DefaultSqlToyDaoImpl extends SqlToyDaoSupport implements SqlToyDao 
 	// ============================================
 	// 按主键查询 - findOneById / findAllByIds
 	// ============================================
-	
+
 	@Override
 	public <T extends Serializable> T findOneById(Class<T> entityClass, Object id) {
 		List<T> result = super.loadByIds(entityClass, id);
@@ -422,9 +441,10 @@ public class DefaultSqlToyDaoImpl extends SqlToyDaoSupport implements SqlToyDao 
 		if (result.size() == 1) {
 			return result.get(0);
 		}
-		throw new IllegalArgumentException("findOneById 查询出:" + result.size() + " 条记录，不符合查询单条记录的预期!");
+		throw new IllegalArgumentException("findOneById expect a single record but found [" + result.size()
+				+ "] rows, please check the query conditions!");
 	}
-	
+
 	@Override
 	public <T extends Serializable> T findOneById(Class<T> entityClass, Object id, LockMode lockMode) {
 		List<T> result = super.loadByIds(entityClass, lockMode, id);
@@ -434,14 +454,15 @@ public class DefaultSqlToyDaoImpl extends SqlToyDaoSupport implements SqlToyDao 
 		if (result.size() == 1) {
 			return result.get(0);
 		}
-		throw new IllegalArgumentException("findOneById 查询出:" + result.size() + " 条记录，不符合查询单条记录的预期!");
+		throw new IllegalArgumentException("findOneById expect a single record but found [" + result.size()
+				+ "] rows, please check the query conditions!");
 	}
-	
+
 	@Override
 	public <T extends Serializable> List<T> findAllByIds(Class<T> entityClass, Object... ids) {
 		return super.loadByIds(entityClass, ids);
 	}
-	
+
 	@Override
 	public <T extends Serializable> List<T> findAllByIds(Class<T> entityClass, LockMode lockMode, Object... ids) {
 		return super.loadByIds(entityClass, lockMode, ids);
@@ -491,8 +512,7 @@ public class DefaultSqlToyDaoImpl extends SqlToyDaoSupport implements SqlToyDao 
 	}
 
 	@Override
-	public <T extends Serializable> List<T> findAllCascade(List<T> entities, LockMode lockMode,
-			Class... cascadeTypes) {
+	public <T extends Serializable> List<T> findAllCascade(List<T> entities, LockMode lockMode, Class... cascadeTypes) {
 		return super.loadAllCascade(entities, lockMode, cascadeTypes);
 	}
 
@@ -529,7 +549,8 @@ public class DefaultSqlToyDaoImpl extends SqlToyDaoSupport implements SqlToyDao 
 		if (result.size() == 1) {
 			return result.get(0);
 		}
-		throw new IllegalArgumentException("findOne查询出:" + result.size() + " 条记录,不符合查询单条记录的预期!");
+		throw new IllegalArgumentException("findOne expect a single record but found [" + result.size()
+				+ "] rows, please check the query conditions!");
 	}
 
 	// ============================================

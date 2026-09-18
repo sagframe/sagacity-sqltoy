@@ -1,22 +1,16 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.config.model;
 
 import java.io.Serializable;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 根据分组字段，将其它字段值进行连接的配置模型
  * @author zhongxuchen
- * @version v1.0,Date:2013-4-8
- * @modify Date:2013-4-8 {填写修改说明}
+ * @version v1.0,Date:2013-04-08
+ * @modify Date:2013-04-08 填写修改说明
  */
 public class LinkModel implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 6336313366096191304L;
 
 	/**

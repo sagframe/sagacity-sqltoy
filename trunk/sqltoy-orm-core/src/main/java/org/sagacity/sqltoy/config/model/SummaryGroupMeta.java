@@ -1,20 +1,19 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.config.model;
 
 import java.io.Serializable;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description SummaryModel 的分组子模型
  * @author zhongxuchen
- * @version v1.0,Date:2015年3月3日
+ * @version v1.0,Date:2015-03-03
  */
 public class SummaryGroupMeta implements Serializable, java.lang.Cloneable {
-	/**
-	 * 
-	 */
+	private final static Logger logger = LoggerFactory.getLogger(SummaryGroupMeta.class);
+
 	private static final long serialVersionUID = -1682139154905127196L;
 
 	/**
@@ -202,7 +201,7 @@ public class SummaryGroupMeta implements Serializable, java.lang.Cloneable {
 		try {
 			return (SummaryGroupMeta) super.clone();
 		} catch (CloneNotSupportedException e) {
-			e.printStackTrace();
+			logger.error("clone method execution failed", e);
 		}
 		return null;
 	}

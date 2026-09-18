@@ -5,15 +5,12 @@ import java.io.Serializable;
 /**
  * @project sagacity-sqltoy
  * @description 提供基于QueryExecutor进行汇总计算的api对象模型
- * @author zhong
- * @version v1.0, Date:2023年6月21日
- * @modify 2023年6月21日,修改说明
+ * @author zhongxuchen
+ * @version v1.0,Date:2023-06-21
+ * @modify Date:2023-06-21,修改说明
  */
 public class SummaryGroup implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 7367450544020667310L;
 
 	/**

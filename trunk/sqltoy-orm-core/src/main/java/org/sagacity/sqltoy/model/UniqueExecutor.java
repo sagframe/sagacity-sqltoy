@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
@@ -8,15 +5,12 @@ import java.io.Serializable;
 import javax.sql.DataSource;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 唯一性验证查询模型
  * @author zhongxuchen
- * @version v1.0,Date:2015年3月16日
+ * @version v1.0,Date:2015-03-16
  */
 public class UniqueExecutor implements Serializable {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 4655678022572718682L;
 
 	/**
@@ -39,6 +33,8 @@ public class UniqueExecutor implements Serializable {
 	 */
 	private Object contextData;
 
+	private int timeout = -1;
+
 	public UniqueExecutor entity(Serializable entity) {
 		this.entity = entity;
 		return this;
@@ -55,6 +51,11 @@ public class UniqueExecutor implements Serializable {
 
 	public UniqueExecutor dataSource(DataSource dataSource) {
 		this.dataSource = dataSource;
+		return this;
+	}
+
+	public UniqueExecutor queryTimeout(Integer timeout) {
+		this.timeout = timeout;
 		return this;
 	}
 
@@ -79,8 +80,12 @@ public class UniqueExecutor implements Serializable {
 		return dataSource;
 	}
 
+	public int getTimeout() {
+		return timeout;
+	}
+
 	public <T> T getContextData() {
-		return (T)contextData;
+		return (T) contextData;
 	}
 
 	public UniqueExecutor setContextData(Object contextData) {

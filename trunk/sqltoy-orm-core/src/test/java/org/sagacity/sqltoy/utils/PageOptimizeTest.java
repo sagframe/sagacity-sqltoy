@@ -4,7 +4,7 @@ import org.sagacity.sqltoy.config.model.PageOptimize;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 
 /**
- * @TODO 针对分页优化进行多线程模拟测试
+ * 针对分页优化进行多线程模拟测试
  * @author zhongxuchen
  *
  */
@@ -19,7 +19,7 @@ public class PageOptimizeTest {
 		pageOptimize.aliveMax(200);
 		// 模仿60个用户
 		for (int i = 0; i < 60; i++) {
-			PageOptimizeThread thread = new PageOptimizeThread(sqlToyConfig, pageOptimize,i);
+			PageOptimizeThread thread = new PageOptimizeThread(sqlToyConfig, pageOptimize, i);
 			thread.start();
 		}
 

@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.dialect.executor;
 
 import java.util.concurrent.Callable;
@@ -9,19 +6,19 @@ import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
+import org.sagacity.sqltoy.dialect.CrossDbAdapter;
 import org.sagacity.sqltoy.dialect.DialectFactory;
-import org.sagacity.sqltoy.model.ParallQuery;
+import org.sagacity.sqltoy.model.ParallelQuery;
 import org.sagacity.sqltoy.model.ParallelQueryResult;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.inner.ParallelQueryExtend;
-import org.sagacity.sqltoy.plugins.CrossDbAdapter;
 
 /**
  * @project sagacity-sqltoy
  * @description 并行查询执行器
  * @author zhongxuchen
- * @version v1.0, Date:2020-8-25
- * @modify 2020-8-25,修改说明
+ * @version v1.0,Date:2020-08-25
+ * @modify Date:2020-08-25 修改说明
  */
 public class ParallelQueryExecutor implements Callable<ParallelQueryResult> {
 
@@ -33,14 +30,14 @@ public class ParallelQueryExecutor implements Callable<ParallelQueryResult> {
 	private DialectFactory dialectFactory;
 
 	private DataSource dataSource;
-	private ParallQuery parallelQuery;
+	private ParallelQuery parallelQuery;
 	private SqlToyConfig sqlToyConfig;
 	private String[] paramNames;
 
 	private Object[] paramValues;
 
 	public ParallelQueryExecutor(SqlToyContext sqlToyContext, DialectFactory dialectFactory, SqlToyConfig sqlToyConfig,
-			ParallQuery parallelQuery, String[] paramNames, Object[] paramValues, DataSource dataSource) {
+			ParallelQuery parallelQuery, String[] paramNames, Object[] paramValues, DataSource dataSource) {
 		this.sqlToyContext = sqlToyContext;
 		this.dialectFactory = dialectFactory;
 		this.sqlToyConfig = sqlToyConfig;

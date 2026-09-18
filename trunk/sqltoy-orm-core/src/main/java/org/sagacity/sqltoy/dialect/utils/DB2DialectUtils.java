@@ -1,94 +1,22 @@
 package org.sagacity.sqltoy.dialect.utils;
 
-import java.sql.Connection;
-
-import org.sagacity.sqltoy.SqlToyConstants;
-import org.sagacity.sqltoy.SqlToyContext;
-import org.sagacity.sqltoy.callback.DecryptHandler;
 import org.sagacity.sqltoy.config.model.FieldMeta;
-import org.sagacity.sqltoy.config.model.OperateType;
 import org.sagacity.sqltoy.config.model.PKStrategy;
-import org.sagacity.sqltoy.config.model.SqlToyConfig;
-import org.sagacity.sqltoy.config.model.SqlToyResult;
-import org.sagacity.sqltoy.model.QueryExecutor;
-import org.sagacity.sqltoy.model.QueryResult;
-import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
-import org.sagacity.sqltoy.utils.SqlUtilsExt;
+import org.sagacity.sqltoy.model.JdbcTypes;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 提供db2数据库通用的操作功能实现,为不同版本提供支持
  * @author zhongxuchen
- * @version v1.0,Date:2015年2月28日
+ * @version v1.0,Date:2015-02-28
  */
 public class DB2DialectUtils {
 
-	/**
-	 * @todo 提供随机记录查询
-	 * @param sqlToyContext
-	 * @param sqlToyConfig
-	 * @param queryExecutor
-	 * @param decryptHandler
-	 * @param totalCount
-	 * @param randomCount
-	 * @param conn
-	 * @param dbType
-	 * @param dialect
-	 * @param fetchSize
-	 * @param maxRows
-	 * @return
-	 * @throws Exception
-	 */
-	public static QueryResult getRandomResult(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			QueryExecutor queryExecutor, final DecryptHandler decryptHandler, Long totalCount, Long randomCount,
-			Connection conn, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
-			throws Exception {
-		StringBuilder sql = new StringBuilder();
-		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
-		// sql中是否存在排序或union
-		boolean hasOrderOrUnion = DialectUtils.hasOrderByOrUnion(innerSql);
-		// 给原始sql标记上特殊的开始和结尾，便于sql拦截器快速定位到原始sql并进行条件补充
-		innerSql = SqlUtilsExt.markOriginalSql(innerSql);
-		if (sqlToyConfig.isHasFast()) {
-			sql.append(sqlToyConfig.getFastPreSql(dialect));
-			if (!sqlToyConfig.isIgnoreBracket()) {
-				sql.append(" (");
-			}
-		}
-		// 存在order 或union 则在sql外包裹一层
-		if (hasOrderOrUnion) {
-			sql.append("select " + SqlToyConstants.INTERMEDIATE_TABLE + ".* from (");
-		}
-		sql.append(innerSql);
-		if (hasOrderOrUnion) {
-			sql.append(") ");
-			sql.append(SqlToyConstants.INTERMEDIATE_TABLE);
-			sql.append(" ");
-		}
-		sql.append(" order by rand() fetch first ");
-		sql.append(randomCount);
-		sql.append(" rows only ");
-		if (sqlToyConfig.isHasFast()) {
-			if (!sqlToyConfig.isIgnoreBracket()) {
-				sql.append(") ");
-			}
-			sql.append(sqlToyConfig.getFastTailSql(dialect));
-		}
-		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
-				sql.toString(), null, null, dialect);
-		QueryExecutorExtend extend = queryExecutor.getInnerModel();
-		// 增加sql执行拦截器 update 2022-9-10
-		queryParam = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig,
-				(extend.entityClass == null) ? OperateType.random : OperateType.singleTable, queryParam,
-				extend.entityClass, dbType);
-		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				extend, decryptHandler, conn, dbType, 0, fetchSize, maxRows);
-	}
-
 	// 新的驱动级别无需转换(目前保留2023-06-09)
 	/**
-	 * @todo 组织merge into 语句中select 的字段，进行类型转换
+	 * 组织merge into 语句中select 的字段，进行类型转换
+	 * 
 	 * @param sql
 	 * @param columnName
 	 * @param fieldMeta
@@ -96,21 +24,26 @@ public class DB2DialectUtils {
 	public static void wrapSelectFields(StringBuilder sql, String columnName, FieldMeta fieldMeta) {
 		int jdbcType = fieldMeta.getType();
 		int length = fieldMeta.getLength();
-		if (jdbcType == java.sql.Types.VARCHAR) {
+		if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NVARCHAR
+				|| jdbcType == java.sql.Types.LONGVARCHAR || jdbcType == java.sql.Types.LONGNVARCHAR) {
 			sql.append("?");
-			// sql.append("cast(? as VARCHAR(" + length + "))");
-		} else if (jdbcType == java.sql.Types.CHAR) {
+		} else if (jdbcType == java.sql.Types.CHAR || jdbcType == java.sql.Types.NCHAR) {
 			sql.append("?");
-			// sql.append("cast(? as CHAR(" + length + "))");
 		} else if (jdbcType == java.sql.Types.DATE) {
 			sql.append("cast(? as DATE)");
-		} else if (jdbcType == java.sql.Types.NUMERIC) {
-			sql.append("cast(? as DECIMAL)");
-		} else if (jdbcType == java.sql.Types.DECIMAL) {
-			sql.append("cast(? as DECIMAL)");
+		} else if (jdbcType == java.sql.Types.NUMERIC || jdbcType == java.sql.Types.DECIMAL) {
+			// update 2026-9-14 修复:裸cast(? as DECIMAL)在db2默认DECIMAL(5,0),小数部分
+			// 被截断(saveOrUpdateAll真库实测88.88截为88致更新值失真);精度/标度已知按列
+			// 定义cast(quickvo形态),未知时用大标度兜底(db2最大precision=31)
+			if (fieldMeta.getPrecision() > 0) {
+				sql.append("cast(? as DECIMAL(" + fieldMeta.getPrecision() + "," + fieldMeta.getScale() + "))");
+			} else {
+				sql.append("cast(? as DECIMAL(31,6))");
+			}
 		} else if (jdbcType == java.sql.Types.BIGINT) {
 			sql.append("cast(? as BIGINT)");
-		} else if (jdbcType == java.sql.Types.INTEGER || jdbcType == java.sql.Types.TINYINT) {
+		} else if (jdbcType == java.sql.Types.INTEGER || jdbcType == java.sql.Types.TINYINT
+				|| jdbcType == java.sql.Types.SMALLINT) {
 			sql.append("cast(? as INTEGER)");
 		} else if (jdbcType == java.sql.Types.TIMESTAMP) {
 			sql.append("cast(? as TIMESTAMP)");
@@ -118,6 +51,8 @@ public class DB2DialectUtils {
 			sql.append("cast(? as DOUBLE)");
 		} else if (jdbcType == java.sql.Types.FLOAT) {
 			sql.append("cast(? as DOUBLE)");
+		} else if (jdbcType == java.sql.Types.REAL) {
+			sql.append("cast(? as REAL)");
 		} else if (jdbcType == java.sql.Types.TIME) {
 			sql.append("cast(? as TIME)");
 		} else if (jdbcType == java.sql.Types.CLOB) {
@@ -130,6 +65,23 @@ public class DB2DialectUtils {
 		} else if (jdbcType == java.sql.Types.BLOB) {
 			sql.append("?");
 			// sql.append("cast(? as BLOB(" + length + "))");
+		} else if (jdbcType == JdbcTypes.JSON || jdbcType == JdbcTypes.JSONB) {
+			// update 2026-9-6 实测db2 11.5无JSON类型(cast as JSON报SQLCODE=-204 JSON未定义),
+			// JSON以字符列承载直接绑定参数(db2 12的JSON列亦接受字符串隐式转换)
+			sql.append("?");
+		} else if (jdbcType == JdbcTypes.GEOMETRY) {
+			// update 2026-9-6 实测db2(db2gse扩展,db2se enable_db启用)的ST_Geometry列
+			// 裸?+setString报类型错误,SQL层以ST_GeomFromText(wkt,srid)包装,参数按VARCHAR绑定(含null实测通过)
+			// update 2026-9-10 按GSE探测+nativeType分派(12.1起内置引擎与GSE可并存,
+			// 纯版本分派会在GSE列上误选内置函数报-408),详见DialectExtUtils.db2GeomFromTextWrap
+			sql.append(DialectExtUtils.db2GeomFromTextWrap(fieldMeta));
+		} else if (jdbcType == JdbcTypes.VECTOR) {
+			// db2 12.1.2+支持vector类型,与应用交互采用'[1,2,3]'字符串形式
+			// update 2026-9-10 实测12.1.2.0/12.1.5.0双版本:cast(? as VECTOR)与
+			// cast(? as VECTOR(n,FLOAT32))均报错(-20441/-461,参数标记不允许cast到VECTOR),
+			// 裸?+setString全链路通过(update的nvl/coalesce、merge的using+matched update
+			// 及null保留语义、读回getObject为String文本),改用裸?
+			sql.append("?");
 		} else {
 			// 数组、json等特殊类型
 			if (StringUtil.isNotBlank(fieldMeta.getNativeType())) {
@@ -143,7 +95,8 @@ public class DB2DialectUtils {
 	}
 
 	/**
-	 * @TODO 主键策略是identity或sequence时，主键值允许不由数据库内部自动产生，可人工赋值
+	 * 主键策略是identity或sequence时，主键值允许不由数据库内部自动产生，可人工赋值
+	 * 
 	 * @param pkStrategy
 	 * @return
 	 */

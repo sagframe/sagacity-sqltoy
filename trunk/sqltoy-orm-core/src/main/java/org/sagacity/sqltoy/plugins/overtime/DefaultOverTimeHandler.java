@@ -14,9 +14,10 @@ import org.sagacity.sqltoy.model.PriorityLimitSizeQueue;
 import org.sagacity.sqltoy.plugins.OverTimeSqlHandler;
 
 /**
- * @TODO 提供默认的sql执行超时日志队列，便于应用获取
+ * 提供默认的sql执行超时日志队列，便于应用获取
+ * 
  * @author zhongxuchen
- * @version v1.0, Date:2022-06-29
+ * @version v1.0,Date:2022-06-29
  */
 public class DefaultOverTimeHandler implements OverTimeSqlHandler {
 	/**
@@ -26,14 +27,33 @@ public class DefaultOverTimeHandler implements OverTimeSqlHandler {
 			new Comparator<OverTimeSql>() {
 				@Override
 				public int compare(OverTimeSql o1, OverTimeSql o2) {
-					return Long.valueOf(o1.getTakeTime() - o2.getTakeTime()).intValue();
+					// update 2026-9-8 Long.compare替代long差值截断int(超时差>Integer.MAX时
+					// 违反比较器契约)且免装箱
+					return Long.compare(o1.getTakeTime(), o2.getTakeTime());
 				}
 			});
+
+	/**
+	 * 由慢到快排序(取最慢N条用):update 2026-9-14 由hasSqlId分支的内联比较器提为常量,避免两处排序
+	 * 方向与契约修复再次漂移(历史上曾出现同族比较器漏改)。Long.compare避免long差值截断int
+	 * (超时差>Integer.MAX时违反比较器契约,TimSort会抛Comparison method violates its general
+	 * contract)
+	 */
+	private static final Comparator<OverTimeSql> SLOW_FIRST = new Comparator<OverTimeSql>() {
+		@Override
+		public int compare(OverTimeSql o1, OverTimeSql o2) {
+			return Long.compare(o2.getTakeTime(), o1.getTakeTime());
+		}
+	};
 	// 所有执行超时且含sqlId的sql语句
 	private HashMap<String, OverTimeSql> slowSqlMap = new HashMap<String, OverTimeSql>();
 
+	/**
+	 * log由所有sql执行线程并发调用,对slowSqlMap/queues是读改写复合操作,
+	 * getSlowest遍历时也必须与写互斥;超时sql属低频事件,方法级互斥已足够
+	 */
 	@Override
-	public void log(OverTimeSql overTimeSql) {
+	public synchronized void log(OverTimeSql overTimeSql) {
 		String sqlId = overTimeSql.getId();
 		if (null != sqlId && !"".equals(sqlId.trim())) {
 			OverTimeSql preSql = slowSqlMap.get(sqlId);
@@ -71,9 +91,10 @@ public class DefaultOverTimeHandler implements OverTimeSqlHandler {
 	 * 获取最慢的sql
 	 */
 	@Override
-	public List<OverTimeSql> getSlowest(int size, boolean hasSqlId) {
+	public synchronized List<OverTimeSql> getSlowest(int size, boolean hasSqlId) {
 		if (size < 1) {
-			throw new IllegalArgumentException("取最慢查询:size 参数必须>=1,如果要获取全部，可使用:Integer.MAX_VALUE");
+			throw new IllegalArgumentException(
+					"size parameter must be >=1 to get the slowest queries, use Integer.MAX_VALUE to get all!");
 		}
 		// 非xml中定义的sql，没有具体的sqlId
 		if (!hasSqlId) {
@@ -84,42 +105,31 @@ public class DefaultOverTimeHandler implements OverTimeSqlHandler {
 			while (iter.hasNext()) {
 				result.add(iter.next());
 			}
-			// 按照执行时长从大到小排序
-			Collections.sort(result, new Comparator<OverTimeSql>() {
-				@Override
-				public int compare(OverTimeSql o1, OverTimeSql o2) {
-					return Long.valueOf(o2.getTakeTime() - o1.getTakeTime()).intValue();
-				}
-			});
+			// 按照执行时长从大到小排序(与queues队列取最慢N条同一判据常量)
+			Collections.sort(result, SLOW_FIRST);
 			if (size >= result.size()) {
 				return result;
 			}
-			return result.subList(0, size - 1);
+			return result.subList(0, size);
 		}
 	}
 
 	/**
-	 * @TODO 从队列中取出最慢的sql记录
+	 * 从队列中取出最慢的sql记录
+	 * 
 	 * @param size
 	 * @return
 	 */
 	private List<OverTimeSql> getSlowest(int size) {
-		List<OverTimeSql> result = new ArrayList<OverTimeSql>();
-		Iterator<OverTimeSql> iter = queues.iterator();
-		int index = 0;
-		int start = queues.size() - size;
-		if (start < 0) {
-			start = 0;
+		// update 2026-9-14 PriorityQueue.iterator()返回堆数组层序而非排序序,原实现取"迭代的最后size个"
+		// 得到的是任意子集而非最慢N条(且add(0,...)头插为O(n²));改为整体排序后取最慢的size条,
+		// 排序方向与hasSqlId分支统一走SLOW_FIRST
+		List<OverTimeSql> all = new ArrayList<OverTimeSql>(queues);
+		Collections.sort(all, SLOW_FIRST);
+		if (all.size() <= size) {
+			return all;
 		}
-		OverTimeSql nextVal;
-		while (iter.hasNext()) {
-			nextVal = iter.next();
-			if (index >= start) {
-				result.add(0, nextVal);
-			}
-			index++;
-		}
-		return result;
+		return new ArrayList<OverTimeSql>(all.subList(0, size));
 	}
 
 }

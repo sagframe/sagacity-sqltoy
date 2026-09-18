@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.translate.model;
 
 import java.io.Serializable;
@@ -9,13 +6,10 @@ import java.io.Serializable;
  * @project sagacity-sqltoy
  * @description 时间区间模型
  * @author zhongxuchen
- * @version v1.0,Date:2018年3月12日
+ * @version v1.0,Date:2018-03-12
  */
 public class TimeSection implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -159160743683268503L;
 
 	/**

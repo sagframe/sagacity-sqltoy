@@ -7,14 +7,14 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 针对pojo对象属性提供缓存翻译注解配置
  * @author zhongxuchen
  * @version v1.0,Date:2021-11-15
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-@Repeatable(value=Translates.class)
+@Repeatable(value = Translates.class)
 public @interface Translate {
 	// 缓存名称
 	String cacheName();

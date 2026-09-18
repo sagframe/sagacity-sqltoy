@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
  * @project sagacity-sqltoy
  * @description 基于ehcache缓存实现translate 提取缓存数据和存放缓存
  * @author zhongxuchen
- * @version v1.0,Date:2013-4-14
+ * @version v1.0,Date:2013-04-14
  */
 @SuppressWarnings("unchecked")
 public class TranslateEhcacheManager extends TranslateCacheManager {
@@ -63,6 +63,10 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 
 	@Override
 	public boolean hasCache(String cacheName) {
+		// init未执行或destroy后cacheManager为null,与getCache/put/clear的判空防护对称
+		if (cacheManager == null) {
+			return false;
+		}
 		Cache<String, HashMap> cache = cacheManager.getCache(cacheName, String.class, HashMap.class);
 		if (null == cache) {
 			return false;
@@ -84,11 +88,11 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 				// 堆内内存大小(默认10000条)
 				resBuilder = resBuilder.heap((cacheConfig.getHeap() < 1) ? 1000 : cacheConfig.getHeap(),
 						EntryUnit.ENTRIES);
-				//offHeap 堆外内存
+				// offHeap 堆外内存
 				if (cacheConfig.getOffHeap() > 0) {
 					resBuilder = resBuilder.offheap(cacheConfig.getOffHeap(), MemoryUnit.MB);
 				}
-				//disk 
+				// disk
 				if (cacheConfig.getDiskSize() > 0) {
 					resBuilder = resBuilder.disk(cacheConfig.getDiskSize(), MemoryUnit.MB, true);
 				}
@@ -149,7 +153,7 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 		if (cacheManager != null) {
 			return true;
 		}
-		logger.debug("启动ehcache 缓存管理器--------------------------------------");
+		logger.debug("started ehcache cache manager--------------------------------------");
 		// 未定义持久化文件,则由ehcache自行默认创建
 		if (StringUtil.isBlank(diskStorePath)) {
 			cacheManager = CacheManagerBuilder.newCacheManagerBuilder().build(true);

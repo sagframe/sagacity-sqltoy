@@ -1,4 +1,10 @@
-﻿# v5.6.43 2025-04-10
+﻿# v5.6.94.RC6 2026-09-05
+1、树表封装wrapTreeTableRoute支持统一更新字段：配置了unifyFieldsHandler时,自动将updateUnifyFields()(如最后修改人、最后修改时间)按实体属性名转列名后附加到路由级联、叶子标记重建的全部update语句并绑定参数,与updateByQuery等更新流程的统一字段语义保持一致;仅模型指定实体时生效,实体中不存在的字段自动忽略,无实体模型不处理公共更新字段
+2、修复oracle目标下datediff函数转换对裸字符串字面量参数生成非法sql的缺陷:两参/三参转换中的字面量参数(如datediff('2026-01-20','2026-01-15'))自动包装to_date(长度启发式同to_date单参,含时间部分补'yyyy-MM-dd hh24:mi:ss'),规避TRUNC('...')等写法在默认NLS_DATE_FORMAT(DD-MON-RR)会话下报ORA-01722/ORA-01861(oracle 21c实测);列、表达式及to_date等已有函数参数不受影响
+3、修复dm/pg系数据库DDL生成丢失时间部分的缺陷(实测dm的DATE列类型只存日期,与oracle的DATE含时间不同;pg系date同样只存日期,pg 18.6实测timestamp写入date列静默截断时间,按生成DDL建表后时间被静默清零):DDL字段类型转换依据字段Java类型精化,java.util.Date/LocalDateTime等含时间类型的列在dm输出DATETIME、pg及衍生库(openGauss/MogDB/Vastbase/GaussDB/StarDB/Oscar/Kingbase)输出TIMESTAMP(覆盖@Column未指定type自动探测与quickvo生成实体显式声明type=DATE两种场景;衍生库Oracle兼容模式DATE本含时间,TIMESTAMP为无损超型),LocalDate/java.sql.Date纯日期类型保持DATE不变;字段JDBC类型探测保持原状不调整,避免影响sqlserver等对Types.TIMESTAMP有特殊语义(行版本戳rowversion,运行时从merge/insert/update中剔除)的逻辑
+4、新增oracle/dm真实库函数转换冒烟测试(OracleRealDbSmokeTest/DmRealDbSmokeTest):覆盖nvl/to_char/date_format/to_date/concat/concat_ws/substr/instr/length/datediff/if/decode/group_concat转listagg/字面量安全/union-all-count在真实库上的转换与执行,连接配置走target下probe.properties不入库,环境不可用自动跳过;dm测试驱动DmJdbcDriver18以test scope引入
+
+# v5.6.43 2025-04-10
 1、getTables方法优化了postgresql分区表的过滤，保留基础分区表，过滤掉子分区表
 2、增强@if(:param1<>A && :boolParam) 含boolean类型参数不完整表达式[完整模式:booleanParam==true]的兼容处理
 
@@ -683,3 +689,6 @@ public void findEntityByVO() {
 ```xml
 <page-optimize alive-max="100" alive-seconds="900"/>
 ```
+# v5.6.94 2026-09-02
+1、优化BeanUtil.reflectBeansToList、reflectBeanToAry方法对Map类型数据的属性值提取：优先通过containsKey按key精确取值(尊重Map自身实现的get语义，如自定义归一化键的Map子类FieldKeyMap等)，未命中时保持原有大小写兼容遍历逻辑
+2、精确取值为O(1)快速路径，避免批量场景下每个属性都O(n)遍历entrySet比对，同时保持行为完全向后兼容

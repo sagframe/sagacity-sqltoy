@@ -44,8 +44,6 @@ public final class StandardUUIDv7Generator {
 	// ==================== 全局单例与缓存 ====================
 	// 安全随机数生成器（全局单例，保证安全性和性能）
 	private static final SecureRandom SECURE_RANDOM = new SecureRandom();
-	// 8 字节缓冲区（缓存复用，减少对象创建）
-	private static final ByteBuffer RANDOM_BYTE_BUFFER = ByteBuffer.allocate(8);
 	// 单调递增时间戳（保证永不倒退，解决时间戳回拨问题）
 	private static final AtomicLong MONOTONIC_TIMESTAMP = new AtomicLong(0);
 	// 毫秒内序列计数器（原子类保证线程安全，用于去重）
@@ -53,7 +51,7 @@ public final class StandardUUIDv7Generator {
 
 	// ==================== 私有构造器（禁止实例化）====================
 	private StandardUUIDv7Generator() {
-		throw new UnsupportedOperationException("该类为工具类，禁止实例化");
+		throw new UnsupportedOperationException("this is a utility class and can not be instantiated");
 	}
 
 	// ==================== 核心生成方法 ====================
@@ -67,7 +65,10 @@ public final class StandardUUIDv7Generator {
 	}
 
 	/**
-	 * 生成指定时间的 UUID v7 实例（支持数据迁移、时间回溯等场景）
+	 * 生成指定时间的 UUID v7 实例
+	 * <p>
+	 * 注意：内部时间戳经单调化处理（早于上次生成时间的历史 instant 会被抬升到上次时间+1），
+	 * 因此传入历史时间不会体现在生成结果中，仅供时间参数化调用，不实际支持时间回溯落盘。
 	 * 
 	 * @param instant 指定时间（不可为 null）
 	 * @return 符合 RFC 9562 标准的 UUID v7
@@ -76,7 +77,7 @@ public final class StandardUUIDv7Generator {
 	public static UUID generate(Instant instant) {
 		// 1. 参数校验
 		if (instant == null) {
-			throw new NullPointerException("指定的时间实例（instant）不能为 null");
+			throw new NullPointerException("the instant can not be null");
 		}
 
 		// 2. 获取单调递增时间戳（永不倒退，彻底解决时间戳回拨问题）
@@ -140,7 +141,7 @@ public final class StandardUUIDv7Generator {
 	 */
 	public static boolean isUUIDv7(UUID uuid) {
 		if (uuid == null) {
-			throw new NullPointerException("待验证的 UUID 不能为 null");
+			throw new NullPointerException("the uuid to validate can not be null");
 		}
 		// 提取版本号（mostSignificantBits 右移 12 位后取低 4 位）
 		int version = (int) ((uuid.getMostSignificantBits() >> 12) & 0x000F);
@@ -157,10 +158,10 @@ public final class StandardUUIDv7Generator {
 	 */
 	public static long extractTimestamp(UUID uuid) {
 		if (uuid == null) {
-			throw new NullPointerException("待提取时间戳的 UUID 不能为 null");
+			throw new NullPointerException("the uuid to extract timestamp from can not be null");
 		}
 		if (!isUUIDv7(uuid)) {
-			throw new IllegalArgumentException("传入的 UUID 不是 v7 版本，无法提取时间戳");
+			throw new IllegalArgumentException("the uuid is not a v7 version, can not extract the timestamp!");
 		}
 		// 提取高 48 位时间戳（无符号右移 16 位）
 		return uuid.getMostSignificantBits() >>> 16;
@@ -168,7 +169,7 @@ public final class StandardUUIDv7Generator {
 
 	public static long extractTimestamp(String uuid) {
 		if (uuid == null) {
-			throw new NullPointerException("待提取时间戳的 UUID 不能为 null");
+			throw new NullPointerException("the uuid to extract timestamp from can not be null");
 		}
 		if (uuid.contains("-") && uuid.length() == 36) {
 			return extractTimestamp(UUID.fromString(uuid));
@@ -176,7 +177,8 @@ public final class StandardUUIDv7Generator {
 			return extractTimestamp(UUID.fromString(String.format("%s-%s-%s-%s-%s", uuid.substring(0, 8),
 					uuid.substring(8, 12), uuid.substring(12, 16), uuid.substring(16, 20), uuid.substring(20))));
 		}
-		throw new IllegalArgumentException("传入的 UUID字符串长度不是无-符合的32位以及带-符合的36位!");
+		throw new IllegalArgumentException(
+				"the uuid string length is illegal, expect 32 chars without dash or 36 chars with dash!");
 	}
 
 	// ==================== 内部辅助方法 ====================
@@ -217,24 +219,28 @@ public final class StandardUUIDv7Generator {
 	/**
 	 * 生成 64 位安全随机数
 	 * 
+	 * update 2026-9-14 原实现共用静态ByteBuffer并以synchronized(RANDOM_BYTE_BUFFER)串行化:
+	 * 该锁覆盖"写入+读取"整段,是所有线程产生ID时的全局串行点;改为方法内局部byte[8],
+	 * 去掉对外层锁与共享可变缓冲区的依赖(SecureRandom.nextBytes本身线程安全)
+	 * 
 	 * @return 64 位随机数
 	 */
 	private static long generateRandom64Bits() {
-		synchronized (RANDOM_BYTE_BUFFER) { // 保证缓冲区线程安全
-			SECURE_RANDOM.nextBytes(RANDOM_BYTE_BUFFER.array());
-			RANDOM_BYTE_BUFFER.rewind();
-			return RANDOM_BYTE_BUFFER.getLong();
-		}
+		byte[] randomBytes = new byte[Long.BYTES];
+		SECURE_RANDOM.nextBytes(randomBytes);
+		return ByteBuffer.wrap(randomBytes).getLong();
 	}
 
 	/**
-	 * 获取毫秒内序列值（线程安全）
+	 * 获取序列值（线程安全）
+	 * <p>
+	 * 实现为全局递增计数器按 2^20 取模（时间戳正常推进时计数器持续增长并回绕）， 替换随机数低 20 位以降低同毫秒碰撞概率；唯一性由 48 位时间戳 +
+	 * 随机高位共同保证。
 	 * 
-	 * @param currentTimestamp 当前单调时间戳
+	 * @param currentTimestamp 当前单调时间戳（回拨已由单调时钟保证，本实现不依赖该参数）
 	 * @return 20 位序列值
 	 */
 	private static long getSequence(long currentTimestamp) {
-		// 此处无需处理时间戳回拨（已由单调时间戳保证），仅需维护毫秒内序列
 		return SEQUENCE_COUNTER.incrementAndGet() & SEQUENCE_MASK;
 	}
 

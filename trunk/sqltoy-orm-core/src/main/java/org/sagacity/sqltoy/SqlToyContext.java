@@ -5,7 +5,9 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ForkJoinPool;
 import java.util.regex.Pattern;
@@ -19,6 +21,7 @@ import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
+import org.sagacity.sqltoy.dialect.QueryExecutorBuilder;
 import org.sagacity.sqltoy.integration.AppContext;
 import org.sagacity.sqltoy.integration.ConnectionFactory;
 import org.sagacity.sqltoy.integration.impl.SimpleConnectionFactory;
@@ -52,7 +55,7 @@ import org.sagacity.sqltoy.translate.cache.impl.FIFODynamicFetchCacheManager;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils.Dialect;
-import org.sagacity.sqltoy.utils.QueryExecutorBuilder;
+import org.sagacity.sqltoy.utils.NumberUtil;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -85,11 +88,12 @@ import com.alibaba.ttl.threadpool.TtlExecutors;
  * @description sqltoy 工具的上下文容器，提供对应的sql获取以及相关参数设置
  * @author zhongxuchen
  * @version v1.0,Date:2009-12-11
- * @modify {Date:2018-1-5,增加对redis缓存翻译的支持}
- * @modify {Date:2019-09-15,将跨数据库函数FunctionConverts统一提取到FunctionUtils中,实现不同数据库函数替换后的语句放入缓存,避免每次执行函数替换}
- * @modify {Date:2020-05-29,调整mongo的注入方式,剔除之前MongoDbFactory模式,直接使用MongoTemplate}
- * @modify {Date:2022-06-11,支持多个缓存翻译定义文件}
- * @modify {Date:2022-10-14,增加humpMapResultTypeLabel设置结果为Map时是否驼峰化处理属性}
+ * @modify Date:2018-01-05 增加对redis缓存翻译的支持
+ * @modify Date:2019-09-15
+ *         将跨数据库函数FunctionConverts统一提取到FunctionUtils中,实现不同数据库函数替换后的语句放入缓存,避免每次执行函数替换
+ * @modify Date:2020-05-29 调整mongo的注入方式,剔除之前MongoDbFactory模式,直接使用MongoTemplate
+ * @modify Date:2022-06-11 支持多个缓存翻译定义文件
+ * @modify Date:2022-10-14 增加humpMapResultTypeLabel设置结果为Map时是否驼峰化处理属性
  */
 public class SqlToyContext {
 	/**
@@ -174,7 +178,7 @@ public class SqlToyContext {
 	/**
 	 * sharding策略
 	 */
-	private HashMap<String, ShardingStrategy> shardingStrategys = new HashMap<String, ShardingStrategy>();
+	private ConcurrentHashMap<String, ShardingStrategy> shardingStrategys = new ConcurrentHashMap<String, ShardingStrategy>();
 
 	/**
 	 * es的地址配置
@@ -379,11 +383,23 @@ public class SqlToyContext {
 
 	/**
 	 * sql 日志输出时LocalDateTime类型的输出格式
+	 * <p>
+	 * update 2026-9-15 决策记录:默认固定格式(截到秒)为有意的向后兼容,initialize时覆写
+	 * SqlToyConstants.localDateTimeFormat(JVM级首个context生效)。固定格式下toSqlLogStr/
+	 * toSqlString/combineArray对nano>0的LocalDateTime输出恒为19字符(dateType=2,小数秒
+	 * 被格式化丢弃),方言的TO_TIMESTAMP FF3/US等小数秒分派不触发;需要日志SQL与@loop/NoSQL
+	 * 拼接值保留小数秒精度(等值条件精确匹配)的场景,应显式配置本属性为"auto"(按值精度
+	 * 自适应追加.123/.123456/.123456789)或含小数位占位符的格式(如yyyy-MM-dd HH:mm:ss.SSS)。
+	 * java.sql.Timestamp路径不受本配置影响(硬编码.SSS格式,恒走小数秒分派)
 	 */
 	private String localDateTimeFormat = "yyyy-MM-dd HH:mm:ss";
 
 	/**
 	 * sql 日志输出时LocalTime类型的输出格式
+	 * <p>
+	 * update 2026-9-15 决策记录:同localDateTimeFormat,默认固定格式(截到秒)为有意向后兼容;
+	 * 固定格式下nano>0的LocalTime输出恒为8字符(dateType=4),方言的毫秒time分派 (TO_TIMESTAMP
+	 * FF/CONVERT(time(3))/STR_TO_DATE %f等)不触发,需显式配置"auto"启用
 	 */
 	private String localTimeFormat = "HH:mm:ss";
 
@@ -447,30 +463,72 @@ public class SqlToyContext {
 	private Integer defaultStatementTimeout;
 
 	/**
-	 * @todo 初始化
+	 * like查询ESCAPE子句是否使用双反斜杠(true=ESCAPE '\\',false=ESCAPE '\',null=按数据库方言自动判断)
+	 */
+	private Boolean backslashEscaping;
+
+	/**
+	 * 默认区域设置(如:zh_CN、en-US),影响日期和数字格式化解析的区域符号,为null则使用JVM默认区域
+	 */
+	private String defaultLocale;
+
+	/**
+	 * 初始化
+	 * 
 	 * @throws Exception
 	 */
+	// JVM级静态配置的首个生效标记:多个SqlToyContext(多spring上下文/热部署/测试上下文)共存时,
+	// 后初始化context对静态全局状态的覆写会破坏先初始化context的行为,其中SQL_INJECTION_KEY_WORDS
+	// 被覆写属安全问题,故采取首个生效策略,后续context的同名配置被忽略并告警;destroy不还原(持有者销毁后静态值保持)
+	private static final java.util.Set<String> STATIC_STATE_OWNERS = java.util.concurrent.ConcurrentHashMap.newKeySet();
+	private static final Logger STATIC_LOGGER = LoggerFactory.getLogger(SqlToyContext.class);
+
+	/**
+	 * 认领JVM级静态配置项:首个认领者生效,后来者被忽略并告警
+	 * 
+	 * @param key         配置项标识
+	 * @param hasNewValue 当前context是否实际携带该配置(为false时不产生告警噪音)
+	 * @return true表示当前context获得该配置的设置权
+	 */
+	static boolean claimStaticState(String key, boolean hasNewValue) {
+		if (STATIC_STATE_OWNERS.add(key)) {
+			return true;
+		}
+		if (hasNewValue) {
+			STATIC_LOGGER.warn("JVM级静态配置[{}]已由先初始化的SqlToyContext设置,当前SqlToyContext的同名配置被忽略!", key);
+		}
+		return false;
+	}
+
 	public void initialize() throws Exception {
 		logger.debug("start init sqltoy ..............................");
 		// 加载sqltoy的各类参数,如db2是否要增加with
 		// ur等,详见org/sagacity/sqltoy/sqltoy-default.properties
-		SqlToyConstants.loadProperties(dialectConfig);
+		if (claimStaticState("dialectConfig", dialectConfig != null && !dialectConfig.isEmpty())) {
+			SqlToyConstants.loadProperties(dialectConfig);
+		}
 		// 设置分布式id缓存时效天数
-		if (distributeIdCacheExpireDays != null) {
+		if (distributeIdCacheExpireDays != null && claimStaticState("distributeIdCacheExpireDays", true)) {
 			SqlToyConstants.distributeIdCacheExpireDays = distributeIdCacheExpireDays;
 		}
+		// 设置默认区域(影响日期、数字格式化解析的区域符号)
+		if (StringUtil.isNotBlank(defaultLocale) && claimStaticState("defaultLocale", true)) {
+			SqlToyConstants.defaultLocale = SqlToyConstants.convertLocale(defaultLocale);
+		}
 		// 设置保留字
-		ReservedWordsUtil.put(reservedWords);
+		if (claimStaticState("reservedWords", reservedWords != null && !reservedWords.isEmpty())) {
+			ReservedWordsUtil.put(reservedWords);
+		}
 		// 初始化方言对应的类别代码，避免线程安全
 		DataSourceUtils.initialize();
-		if (firstBizCodeTrace != null) {
+		if (firstBizCodeTrace != null && claimStaticState("firstBizCodeTrace", true)) {
 			SqlExecuteStat.firstBizCodeTrace = firstBizCodeTrace;
 		}
 		// 设置方言映射(默认OSCAR==>gaussdb)
-		if (dialectMap != null && !dialectMap.isEmpty()) {
+		if (dialectMap != null && !dialectMap.isEmpty() && claimStaticState("dialectMap", true)) {
 			DataSourceUtils.dialectMap = dialectMap;
 		}
-		if (dialectReturnPrimaryColumnCase != null) {
+		if (dialectReturnPrimaryColumnCase != null && claimStaticState("dialectReturnPrimaryColumnCase", true)) {
 			SqlToyConstants.dialectReturnPrimaryColumnCase = dialectReturnPrimaryColumnCase;
 		}
 		if (dynamicFecthCacheManager == null) {
@@ -481,8 +539,9 @@ public class SqlToyContext {
 		if (appContext == null && connectionFactory == null) {
 			connectionFactory = new SimpleConnectionFactory();
 		}
-		// 设置sql注入关键词
-		if (sqlInjectionRegexes != null && sqlInjectionRegexes.length > 0) {
+		// 设置sql注入关键词(不可被后初始化的context覆写削弱,安全攸关)
+		if (sqlInjectionRegexes != null && sqlInjectionRegexes.length > 0
+				&& claimStaticState("sqlInjectionRegexes", true)) {
 			Pattern[] patterns = new Pattern[sqlInjectionRegexes.length];
 			int index = 0;
 			for (String regex : sqlInjectionRegexes) {
@@ -493,8 +552,10 @@ public class SqlToyContext {
 		}
 		// 初始化默认dataSource
 		initDefaultDataSource();
-		// 设置workerId和dataCenterId,为使用snowflake主键ID产生算法服务
-		SqlToyConstants.setWorkerAndDataCenterId(workerId, dataCenterId, serverId);
+		// 设置workerId和dataCenterId,为使用snowflake主键ID产生算法服务(workerId被后续context覆写会导致ID重复,首个生效)
+		if (claimStaticState("workerAndDataCenterId", workerId != null || dataCenterId != null || serverId != null)) {
+			SqlToyConstants.setWorkerAndDataCenterId(workerId, dataCenterId, serverId);
+		}
 		// 初始化脚本加载器
 		scriptLoader.initialize(this.debug, delayCheckSeconds, scriptCheckIntervalSeconds, breakWhenSqlRepeat);
 		// 初始化翻译器,update 2021-1-23 增加caffeine缓存支持
@@ -510,19 +571,23 @@ public class SqlToyContext {
 		}
 		// 初始化实体对象管理器(此功能已经无实际意义,已经改为即用即加载而非提前加载)
 		entityManager.initialize(this);
-		// 设置默认fetchSize
-		SqlToyConstants.FETCH_SIZE = this.fetchSize;
-		SqlToyConstants.executeSqlBlankToNull = this.executeSqlBlankToNull;
-		SqlToyConstants.DEFAULT_PAGE_SIZE = this.defaultPageSize;
-		SqlToyConstants.localDateTimeFormat = this.localDateTimeFormat;
-		SqlToyConstants.localTimeFormat = this.localTimeFormat;
-		SqlToyConstants.defaultStatementTimeout = this.defaultStatementTimeout;
-		// 初始化sql执行统计的基本参数
-		SqlExecuteStat.setDebug(this.debug);
-		SqlExecuteStat.setOverTimeSqlHandler(overTimeSqlHandler);
-		SqlExecuteStat.setPrintSqlTimeoutMillis(this.printSqlTimeoutMillis);
-		// sql格式化
-		SqlExecuteStat.setSqlFormater(this.sqlFormater);
+		// 以下JVM级运行参数整体首个生效,后续context覆写会破坏先初始化context的行为
+		if (claimStaticState("runtimeConstants", true)) {
+			// 设置默认fetchSize
+			SqlToyConstants.FETCH_SIZE = this.fetchSize;
+			SqlToyConstants.executeSqlBlankToNull = this.executeSqlBlankToNull;
+			SqlToyConstants.DEFAULT_PAGE_SIZE = this.defaultPageSize;
+			SqlToyConstants.localDateTimeFormat = this.localDateTimeFormat;
+			SqlToyConstants.localTimeFormat = this.localTimeFormat;
+			SqlToyConstants.defaultStatementTimeout = this.defaultStatementTimeout;
+			SqlToyConstants.backslashEscaping = this.backslashEscaping;
+			// 初始化sql执行统计的基本参数
+			SqlExecuteStat.setDebug(this.debug);
+			SqlExecuteStat.setOverTimeSqlHandler(overTimeSqlHandler);
+			SqlExecuteStat.setPrintSqlTimeoutMillis(this.printSqlTimeoutMillis);
+			// sql格式化
+			SqlExecuteStat.setSqlFormater(this.sqlFormater);
+		}
 		// 字段加解密实现类初始化
 		if (null != fieldsSecureProvider) {
 			fieldsSecureProvider.initialize(this.encoding, securePrivateKey, securePublicKey);
@@ -550,7 +615,8 @@ public class SqlToyContext {
 	}
 
 	/**
-	 * @todo 获取service并调用其指定方法获取报表数据
+	 * 获取service并调用其指定方法获取报表数据
+	 * 
 	 * @param beanName
 	 * @param method
 	 * @param args
@@ -571,13 +637,14 @@ public class SqlToyContext {
 			}
 			return BeanUtil.invokeMethod(beanDefine, method, args);
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("getServiceData method execution failed", e);
 		}
 		return null;
 	}
 
 	/**
-	 * @todo 获取bean
+	 * 获取bean
+	 * 
 	 * @param beanName
 	 * @return
 	 */
@@ -588,14 +655,14 @@ public class SqlToyContext {
 			}
 			return appContext.getBean((Class) beanName);
 		} catch (Exception e) {
-			e.printStackTrace();
-			logger.error("从springContext中获取Bean:{} 错误!{}", e.getMessage());
+			logger.error("failed to get bean:{} from springContext!{}", e.getMessage());
 		}
 		return null;
 	}
 
 	/**
-	 * @todo 获取数据源
+	 * 获取数据源
+	 * 
 	 * @param dataSourceName
 	 * @return
 	 */
@@ -613,7 +680,8 @@ public class SqlToyContext {
 	}
 
 	/**
-	 * @TODO 保留一个获取查询的sql(针对报表平台)
+	 * 保留一个获取查询的sql(针对报表平台)
+	 * 
 	 * @param sqlKey
 	 * @return
 	 */
@@ -623,14 +691,15 @@ public class SqlToyContext {
 
 	public SqlToyConfig getSqlToyConfig(String sqlKey, SqlType sqlType, String dialect) {
 		if (StringUtil.isBlank(sqlKey)) {
-			throw new IllegalArgumentException("sql or sqlId is null!");
+			throw new IllegalArgumentException(SqlToyConstants.NULL_SQL_MESSAGE);
 		}
 		return scriptLoader.getSqlConfig(sqlKey, sqlType, dialect, null,
 				SqlType.search.equals(sqlType) ? true : SqlToyConstants.executeSqlBlankToNull);
 	}
 
 	/**
-	 * @todo 获取sql对应的配置模型(请阅读scriptLoader,硬code的sql对应模型也利用了内存来存放非每次都动态构造对象)
+	 * 获取sql对应的配置模型(请阅读scriptLoader,硬code的sql对应模型也利用了内存来存放非每次都动态构造对象)
+	 * 
 	 * @param sqlKey
 	 * @param sqlType
 	 * @param dialect
@@ -639,7 +708,7 @@ public class SqlToyContext {
 	 */
 	public SqlToyConfig getSqlToyConfig(String sqlKey, SqlType sqlType, String dialect, Object paramValues) {
 		if (StringUtil.isBlank(sqlKey)) {
-			throw new IllegalArgumentException("sql or sqlId is null!");
+			throw new IllegalArgumentException(SqlToyConstants.NULL_SQL_MESSAGE);
 		}
 		return scriptLoader.getSqlConfig(sqlKey, sqlType, dialect, paramValues,
 				SqlType.search.equals(sqlType) ? true : SqlToyConstants.executeSqlBlankToNull);
@@ -649,7 +718,7 @@ public class SqlToyContext {
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		String sqlKey = extend.sql;
 		if (StringUtil.isBlank(sqlKey)) {
-			throw new IllegalArgumentException("sql or sqlId is null!");
+			throw new IllegalArgumentException(SqlToyConstants.NULL_SQL_MESSAGE);
 		}
 		boolean skipCompletion = false;
 		// 动态解析xml并绑定id类型的查询
@@ -662,21 +731,27 @@ public class SqlToyContext {
 							&& lastUpdateTime.isAfter(sqlToyConfig.getLastUpdateTime()))
 					|| (lastUpdateTime != null && sqlToyConfig.getLastUpdateTime() == null)) {
 				try {
-					logger.debug("sqlKey={}初始调用或修改时间发生变化，重新解析xml!", sqlKey);
+					logger.debug("sqlKey={} is first invoked or its last modified time changed, reparse the xml!",
+							sqlKey);
 					sqlToyConfig = scriptLoader.parseSqlSagment(extend.xmlBinding.getXml(), sqlKey);
 					// 覆盖id
 					sqlToyConfig.setId(sqlKey);
 					sqlToyConfig.setLastUpdateTime(lastUpdateTime);
-					sqlToyConfig.setDialect(dialect);
+					// 不可用查询方言覆盖dialect标签:base是按全局方言(解析方言)渲染的形态,
+					// getDialectSql靠标签判断是否早退,标签改成查询方言会让错误形态的sql跳过适配直发当前库
+					// sqlToyConfig.setDialect(dialect);
 					sqlToyConfig.setSqlType(sqlType);
 					// 放入缓存
 					scriptLoader.putSqlToyConfig(sqlToyConfig);
 				} catch (Exception e) {
-					e.printStackTrace();
-					throw new IllegalArgumentException("动态传入的sql xml内容或格式存在错误!" + e.getMessage());
+					logger.error("getSqlToyConfig method execution failed", e);
+					throw new IllegalArgumentException(
+							"The dynamically passed sql xml content or format is invalid!" + e.getMessage());
 				}
 			} else {
-				logger.debug("缓存中:sqlKey={}已经存在,修改时间也未发生变化，直接从缓存获取配置!", sqlKey);
+				logger.debug(
+						"sqlKey={} already exists in cache and its last modified time is unchanged, get config from cache directly!",
+						sqlKey);
 			}
 		}
 		// 查询语句补全select * from table,避免一些sql直接从from 开始
@@ -685,7 +760,7 @@ public class SqlToyContext {
 				sqlKey = SqlUtil.completionSql(this, (Class) queryExecutor.getInnerModel().resultType, sqlKey);
 			} // update 2021-12-7 sql 类似 from table where xxxx 形式，补全select *
 			else if (!SqlConfigParseUtils.isNamedQuery(sqlKey)
-					&& StringUtil.matches(sqlKey.toLowerCase().trim(), "^from\\W")) {
+					&& StringUtil.matches(sqlKey.toLowerCase(Locale.ROOT).trim(), "^from\\W")) {
 				sqlKey = "select * ".concat(sqlKey);
 			}
 		}
@@ -739,27 +814,23 @@ public class SqlToyContext {
 	}
 
 	/**
-	 * @todo 返回sharding策略实例
+	 * 返回sharding策略实例
+	 * 
 	 * @param strategyName
 	 * @return
 	 */
 	public ShardingStrategy getShardingStrategy(String strategyName) {
-		// hashMap可以事先不赋值,直接定义spring的bean
-		if (shardingStrategys.containsKey(strategyName)) {
-			return shardingStrategys.get(strategyName);
-		}
-		ShardingStrategy shardingStrategy = (ShardingStrategy) appContext.getBean(strategyName);
-		if (shardingStrategy != null) {
-			shardingStrategys.put(strategyName, shardingStrategy);
-		}
-		return shardingStrategy;
+		return shardingStrategys.computeIfAbsent(strategyName, key -> {
+			ShardingStrategy strategy = (ShardingStrategy) appContext.getBean(key);
+			return strategy != null ? strategy : null;
+		});
 	}
 
 	/**
 	 * @param shardingStrategys the shardingStrategys to set
 	 */
-	public void setShardingStrategys(HashMap<String, ShardingStrategy> shardingStrategys) {
-		this.shardingStrategys = shardingStrategys;
+	public void setShardingStrategys(Map<String, ShardingStrategy> shardingStrategys) {
+		this.shardingStrategys = new ConcurrentHashMap<>(shardingStrategys);
 	}
 
 	/**
@@ -774,8 +845,8 @@ public class SqlToyContext {
 	}
 
 	/**
-	 * @TODO 根据表名获取实体对象的信息(需要配置:spring.sqltoy.packagesToScan 提前加载pojo,sqltoy
-	 *       默认是无需配置即用即载)
+	 * 根据表名获取实体对象的信息(需要配置:spring.sqltoy.packagesToScan 提前加载pojo,sqltoy 默认是无需配置即用即载)
+	 * 
 	 * @param tableName
 	 * @return
 	 */
@@ -784,7 +855,8 @@ public class SqlToyContext {
 	}
 
 	/**
-	 * @TODO 判断是否是实体bean
+	 * 判断是否是实体bean
+	 * 
 	 * @param entityClass
 	 * @return
 	 */
@@ -799,7 +871,8 @@ public class SqlToyContext {
 	 * <li>3、putSqlToyConfig(SqlToyConfig sqlToyConfig) 放入交由sqltoy统一管理</li>
 	 * </p>
 	 * 
-	 * @todo 提供可以动态增加解析sql片段配置的接口,完成SqltoyConfig模型的构造(用于第三方平台集成，如报表平台等)，
+	 * 提供可以动态增加解析sql片段配置的接口,完成SqltoyConfig模型的构造(用于第三方平台集成，如报表平台等)，
+	 * 
 	 * @param sqlSegment
 	 * @return
 	 * @throws Exception
@@ -809,7 +882,8 @@ public class SqlToyContext {
 	}
 
 	/**
-	 * @todo 将构造好的SqlToyConfig放入交给sqltoy统一托管(在托管前可以对id进行重新组合确保id的唯一性,比如报表平台，将rptId+sqlId组合成一个全局唯一的id)
+	 * 将构造好的SqlToyConfig放入交给sqltoy统一托管(在托管前可以对id进行重新组合确保id的唯一性,比如报表平台，将rptId+sqlId组合成一个全局唯一的id)
+	 * 
 	 * @param sqlToyConfig
 	 * @throws Exception
 	 */
@@ -822,7 +896,8 @@ public class SqlToyContext {
 	}
 
 	/**
-	 * @TODO 开放sql文件动态交由开发者挂载
+	 * 开放sql文件动态交由开发者挂载
+	 * 
 	 * @param sqlFile
 	 * @throws Exception
 	 */
@@ -838,7 +913,8 @@ public class SqlToyContext {
 	}
 
 	/**
-	 * @TODO 规整方言定义，避免设置的名称跟系统定义不一致(一般无需设置)
+	 * 规整方言定义，避免设置的名称跟系统定义不一致(一般无需设置)
+	 * 
 	 * @param dialect the dialect to set
 	 */
 	public void setDialect(String dialect) {
@@ -846,7 +922,7 @@ public class SqlToyContext {
 			return;
 		}
 		// 规范数据库方言命名(避免方言和版本一起定义)
-		String tmp = dialect.toLowerCase();
+		String tmp = dialect.toLowerCase(Locale.ROOT);
 		if (tmp.startsWith(Dialect.MYSQL)) {
 			this.dialect = Dialect.MYSQL;
 		} else if (tmp.startsWith(Dialect.ORACLE11)) {
@@ -855,11 +931,15 @@ public class SqlToyContext {
 			this.dialect = Dialect.ORACLE;
 		} else if (tmp.startsWith(Dialect.POSTGRESQL)) {
 			this.dialect = Dialect.POSTGRESQL;
+			String version = tmp.replace(Dialect.POSTGRESQL, "");
+			if (NumberUtil.isInteger(version) && Integer.parseInt(version) < 15) {
+				this.dialect = Dialect.POSTGRESQL14;
+			}
 		} else if (tmp.startsWith(Dialect.GREENPLUM)) {
 			this.dialect = Dialect.POSTGRESQL;
 		} else if (tmp.startsWith(Dialect.DB2)) {
 			this.dialect = Dialect.DB2;
-		} else if (tmp.startsWith(Dialect.SQLSERVER)) {
+		} else if (tmp.startsWith(Dialect.SQLSERVER) || tmp.startsWith(Dialect.MSSQL)) {
 			this.dialect = Dialect.SQLSERVER;
 		} else if (tmp.startsWith(Dialect.SQLITE)) {
 			this.dialect = Dialect.SQLITE;
@@ -899,6 +979,8 @@ public class SqlToyContext {
 			this.dialect = Dialect.DORIS;
 		} else if (tmp.startsWith(Dialect.STARROCKS)) {
 			this.dialect = Dialect.STARROCKS;
+		} else if (tmp.startsWith(Dialect.HANA)) {
+			this.dialect = Dialect.HANA;
 		} else {
 			this.dialect = dialect;
 		}
@@ -1027,19 +1109,20 @@ public class SqlToyContext {
 		if (elasticEndpointList == null || elasticEndpointList.isEmpty()) {
 			return;
 		}
-		// 第一个作为默认值
-		if (StringUtil.isBlank(defaultElastic)) {
+		// 第一个作为默认值(defaultElastic初始值为"default"哨兵,未显式配置时用第一个endpoint)
+		if (StringUtil.isBlank(defaultElastic) || "default".equals(defaultElastic)) {
 			defaultElastic = elasticEndpointList.get(0).getId();
 		}
 		for (ElasticEndpoint config : elasticEndpointList) {
 			// 初始化restClient
 			config.initRestClient();
-			elasticEndpoints.put(config.getId().toLowerCase(), config);
+			elasticEndpoints.put(config.getId().toLowerCase(Locale.ROOT), config);
 		}
 	}
 
 	public ElasticEndpoint getElasticEndpoint(String id) {
-		ElasticEndpoint result = elasticEndpoints.get(StringUtil.isBlank(id) ? defaultElastic : id.toLowerCase());
+		ElasticEndpoint result = elasticEndpoints
+				.get(StringUtil.isBlank(id) ? defaultElastic : id.toLowerCase(Locale.ROOT));
 		// 取不到,则可能sql中自定义url地址,自行构建模型，按指定的url进行查询
 		if (result == null) {
 			return new ElasticEndpoint(id);
@@ -1119,6 +1202,10 @@ public class SqlToyContext {
 		this.cacheType = cacheType;
 	}
 
+	/**
+	 * 销毁context持有的资源;JVM级静态配置(dialectMap、注入关键词、workerId等)按首个生效策略
+	 * 不随本方法还原——持有者销毁后静态值保持,后续新context的同名配置依旧被忽略,直至JVM重启
+	 */
 	public void destroy() {
 		try {
 			scriptLoader.destroy();
@@ -1128,8 +1215,15 @@ public class SqlToyContext {
 			if (dynamicFecthCacheManager != null) {
 				dynamicFecthCacheManager.destroy();
 			}
+			// 关闭ElasticSearch RestClient
+			if (elasticEndpoints != null) {
+				for (ElasticEndpoint endpoint : elasticEndpoints.values()) {
+					endpoint.closeRestClient();
+				}
+			}
 		} catch (Exception e) {
-
+			// 清理失败仅记录,不能中断其余资源的销毁
+			logger.error("exception occurred during sqltoy context resource destroy!", e);
 		}
 	}
 
@@ -1246,7 +1340,8 @@ public class SqlToyContext {
 	}
 
 	/**
-	 * @TODO 获取执行最慢的sql
+	 * 获取执行最慢的sql
+	 * 
 	 * @param size     提取记录数量
 	 * @param hasSqlId 是否是xml中定义含id的sql(另外一种就是代码中直接写的sql)
 	 * @return
@@ -1473,5 +1568,30 @@ public class SqlToyContext {
 
 	public void setDefaultStatementTimeout(Integer defaultStatementTimeout) {
 		this.defaultStatementTimeout = defaultStatementTimeout;
+	}
+
+	public Boolean getBackslashEscaping() {
+		return backslashEscaping;
+	}
+
+	public void setBackslashEscaping(Boolean backslashEscaping) {
+		this.backslashEscaping = backslashEscaping;
+	}
+
+	/**
+	 * @return the defaultLocale
+	 */
+	public String getDefaultLocale() {
+		return defaultLocale;
+	}
+
+	/**
+	 * @param defaultLocale the defaultLocale to set,如:zh_CN、en-US,为空保持默认null
+	 */
+	public void setDefaultLocale(String defaultLocale) {
+		if (StringUtil.isBlank(defaultLocale)) {
+			return;
+		}
+		this.defaultLocale = defaultLocale.trim();
 	}
 }

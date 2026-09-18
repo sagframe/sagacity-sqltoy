@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.config.annotation;
 
 import java.lang.annotation.ElementType;
@@ -9,10 +6,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 主键被其他表关联的机制
  * @author zhongxuchen
- * @version v1.0,Date:2012-7-30
+ * @version v1.0,Date:2012-07-30
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
@@ -24,7 +21,7 @@ public @interface OneToMany {
 	String[] mappedFields();
 
 	// 加载自定义sql,如: enable=1 或者是一个完整的sql
-	// 完整sql必须要包含外键条件字段select * from table where fkField=:fkField 
+	// 完整sql必须要包含外键条件字段select * from table where fkField=:fkField
 	// 批量级联select * from table where fkField in (:fkField)
 	String load() default "";
 

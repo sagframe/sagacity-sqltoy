@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.plugins.id.impl;
 
 import java.time.LocalDate;
@@ -20,8 +17,8 @@ import org.slf4j.LoggerFactory;
  * @project sagacity-sqltoy
  * @description 基于redis的集中式主键生成策略
  * @author zhongxuchen
- * @version v1.0,Date:2018年1月30日
- * @modify Date:2019-1-24 {key命名策略改为SQLTOY_GL_ID:tableName:xxx 便于redis检索}
+ * @version v1.0,Date:2018-01-30
+ * @modify Date:2019-01-24 key命名策略改为SQLTOY_GL_ID:tableName:xxx 便于redis检索
  */
 public class RedisIdGenerator implements IdGenerator {
 	/**

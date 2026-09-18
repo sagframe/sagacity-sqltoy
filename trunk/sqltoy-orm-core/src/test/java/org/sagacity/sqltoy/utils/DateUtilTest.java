@@ -15,9 +15,13 @@ import java.util.Date;
 import java.util.Locale;
 
 import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 import oracle.sql.TIMESTAMP;
 
+/**
+ * DateUtil 日期处理的单元测试
+ */
 public class DateUtilTest {
 	@Test
 	public void testTimestamp() {
@@ -116,7 +120,7 @@ public class DateUtilTest {
 		System.err.println(DateUtil.parseString("20231130112031033456"));
 		System.err.println(DateUtil.parseString("20231130112031033"));
 		System.err.println(DateUtil.parseString("202311301120311"));
-		System.err.println(DateUtil.parseString("2023-11-22 12:22:11"));
+		System.err.println(DateUtil.parseString("2023-1-22 12:22:11"));
 		LocalDateTime dateValue = LocalDateTime.parse("2023-11-29T20:23:23.123456");
 		System.err.println(DateUtil.formatDate(dateValue, "yyyy-MM-dd HH:mm:ss.SSSSSSSSS"));
 
@@ -318,5 +322,65 @@ public class DateUtilTest {
 		// 本周最后一天（周日）
 		Date result = Date.from(lastOfWeek.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant());
 		System.err.println(result);
+	}
+
+	@Test
+	public void testGetWeekOfYear1Based() {
+		// 2024-01-01 is Monday, should be week 1 (1-based, not 0-based)
+		assertEquals(1, DateUtil.getWeekOfYear("2024-01-01"));
+	}
+
+	@Test
+	public void testGetWeekOfYearNullSafe() {
+		// Unparseable input should not throw NPE, falls back to current date
+		int week = DateUtil.getWeekOfYear("abc");
+		assertTrue(week >= 0, "Should not throw NPE on unparseable input");
+	}
+
+	@Test
+	public void testGetIntervalDays() {
+		assertEquals(0, DateUtil.getIntervalDays("2023-10-05", "2023-10-05"));
+		assertEquals(1, DateUtil.getIntervalDays("2023-10-05", "2023-10-06"));
+		assertEquals(31, DateUtil.getIntervalDays("2023-01-01", "2023-02-01"));
+		assertEquals(-1, DateUtil.getIntervalDays("2023-10-06", "2023-10-05"));
+		assertEquals(365, DateUtil.getIntervalDays("2023-01-01", "2024-01-01"));
+	}
+
+	@Test
+	public void testParseEnglishDateThursday() {
+		// Regression test: WEEK_ENGLISH_NAME[3] was misspelled "Thurday",
+		// causing full "Thursday" to not normalize to "Thu" and parse to fail
+		Date result = DateUtil.parseString("Thursday October 5 2023", null, Locale.ENGLISH);
+		assertNotNull(result, "Full 'Thursday' date string should parse successfully");
+		LocalDate parsed = DateUtil.asLocalDate(result);
+		assertEquals(LocalDate.of(2023, 10, 5), parsed);
+	}
+
+	@Test
+	public void testAsSqlDate() {
+		LocalDate localDate = LocalDate.of(2023, 10, 5);
+		java.sql.Date sqlDate = DateUtil.asSqlDate(localDate);
+		assertNotNull(sqlDate);
+		assertEquals(java.sql.Date.valueOf("2023-10-05"), sqlDate);
+		assertNull(DateUtil.asSqlDate(null));
+	}
+
+	@Test
+	public void testParseTextDate() {
+		String lastUpdateTime = "2024-11-07 10:52:36.12345";
+		DateUtil.parseLocalDateTime(lastUpdateTime, "yyyy-MM-dd HH:mm:ss.SSSSS");
+	}
+
+	@Test
+	public void testParseChinaDate() {
+		assertEquals("2026-8-30", DateUtil.parseChinaDate("二〇二六年八月三十日"));
+		// 整十日期:二十曾被逐字替换成210,静默解析成错误日期
+		assertEquals("2024-5-20", DateUtil.parseChinaDate("二〇二四年五月二十日"));
+		// 十一月/十二日:个位与整十混合,前缀懒惰匹配优先将十后面的数字作为个位
+		assertEquals("2024-11-12", DateUtil.parseChinaDate("二〇二四年十一月十二日"));
+		assertEquals("2024-12-31", DateUtil.parseChinaDate("二〇二四年十二月三十一日"));
+		// 单独的十
+		assertEquals("2026-8-10", DateUtil.parseChinaDate("二〇二六年八月十日"));
+		assertEquals("2026-10-25 10:15:30", DateUtil.parseChinaDate("二〇二六年十月二十五日十时十五分三十秒"));
 	}
 }

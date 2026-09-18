@@ -11,6 +11,7 @@ import java.util.Set;
 import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.callback.EntityUpdateCallback;
 import org.sagacity.sqltoy.callback.StreamResultHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
@@ -34,8 +35,8 @@ import org.sagacity.sqltoy.model.EntityQuery;
 import org.sagacity.sqltoy.model.EntityUpdate;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.Page;
-import org.sagacity.sqltoy.model.ParallQuery;
 import org.sagacity.sqltoy.model.ParallelConfig;
+import org.sagacity.sqltoy.model.ParallelQuery;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
@@ -43,16 +44,13 @@ import org.sagacity.sqltoy.model.TreeTableModel;
 import org.sagacity.sqltoy.translate.TranslateHandler;
 
 /**
- * @project sqltoy-orm
- * @description 独立DAO接口，不继承LightDao，提供完整的规范命名方法体系。
- *              查询方法统一命名规范：
- *              - findOneById / findAllByIds: 按主键查询
- *              - findOneByEntity: 按实体主键查询单条
- *              - findAllByEntities: 按实体集合批量加载
- *              - findOneCascade / findAllCascade: 级联加载
- *              - findOne: 按条件/SQL/QueryExecutor查询单条
- *              - findList: 按条件/SQL/QueryExecutor查询多条
- *              - findTop / findRandom / findPage: Top/随机/分页查询
+ * @project sagacity-sqltoy
+ * @description 独立DAO接口，不继承LightDao，提供完整的规范命名方法体系。 查询方法统一命名规范： - findOneById /
+ *              findAllByIds: 按主键查询 - findOneByEntity: 按实体主键查询单条 -
+ *              findAllByEntities: 按实体集合批量加载 - findOneCascade / findAllCascade:
+ *              级联加载 - findOne: 按条件/SQL/QueryExecutor查询单条 - findList:
+ *              按条件/SQL/QueryExecutor查询多条 - findTop / findRandom / findPage:
+ *              Top/随机/分页查询
  * @author zhongxuchen
  * @version v1.0,Date:2025年
  */
@@ -131,8 +129,7 @@ public interface SqlToyDao {
 
 	public Set<String> getCacheNames();
 
-	public <T extends Serializable> T convertType(Serializable source, Class<T> resultType,
-			String... ignoreProperties);
+	public <T extends Serializable> T convertType(Serializable source, Class<T> resultType, String... ignoreProperties);
 
 	public <T extends Serializable> List<T> convertType(List sourceList, Class<T> resultType,
 			String... ignoreProperties);
@@ -140,9 +137,9 @@ public interface SqlToyDao {
 	public <T extends Serializable> Page<T> convertType(Page sourcePage, Class<T> resultType,
 			String... ignoreProperties);
 
-	public <T> List<QueryResult<T>> parallelQuery(List<ParallQuery> parallelQueryList, Map<String, Object> paramsMap);
+	public <T> List<QueryResult<T>> parallelQuery(List<ParallelQuery> parallelQueryList, Map<String, Object> paramsMap);
 
-	public <T> List<QueryResult<T>> parallelQuery(List<ParallQuery> parallelQueryList, Map<String, Object> paramsMap,
+	public <T> List<QueryResult<T>> parallelQuery(List<ParallelQuery> parallelQueryList, Map<String, Object> paramsMap,
 			ParallelConfig parallelConfig);
 
 	// ============================================
@@ -177,6 +174,12 @@ public interface SqlToyDao {
 
 	public <T extends Serializable> T updateSaveFetch(T entity, UpdateRowHandler updateRowHandler,
 			String... uniqueProps);
+
+	public <T extends Serializable> T updateSaveFetch(T entity, EntityUpdateCallback<T> callback,
+			String... uniqueProps);
+
+	public <T extends Serializable> T updateSaveFetch(final T entity, final EntityUpdateCallback<T> callback,
+			final int lockWaitTimeout, final String... uniqueProps);
 
 	public Long updateByQuery(Class entityClass, EntityUpdate entityUpdate);
 
@@ -220,8 +223,9 @@ public interface SqlToyDao {
 	// ============================================
 
 	/**
-	 * @TODO 根据主键加载单个实体对象
-	 * @param <T>
+	 * 根据主键加载单个实体对象
+	 * 
+	 * @param <T>         实体对象的类型
 	 * @param entityClass 实体类
 	 * @param id          主键值
 	 * @return 单个实体对象
@@ -229,8 +233,9 @@ public interface SqlToyDao {
 	<T extends Serializable> T findOneById(Class<T> entityClass, Object id);
 
 	/**
-	 * @TODO 根据主键加载单个实体对象（带锁）
-	 * @param <T>
+	 * 根据主键加载单个实体对象（带锁）
+	 * 
+	 * @param <T>         实体对象的类型
 	 * @param entityClass 实体类
 	 * @param id          主键值
 	 * @param lockMode    锁模式
@@ -239,8 +244,9 @@ public interface SqlToyDao {
 	<T extends Serializable> T findOneById(Class<T> entityClass, Object id, LockMode lockMode);
 
 	/**
-	 * @TODO 根据主键集合批量加载对象
-	 * @param <T>
+	 * 根据主键集合批量加载对象
+	 * 
+	 * @param <T>         实体对象的类型
 	 * @param entityClass 实体类
 	 * @param ids         主键值数组
 	 * @return 对象列表
@@ -248,8 +254,9 @@ public interface SqlToyDao {
 	<T extends Serializable> List<T> findAllByIds(Class<T> entityClass, Object... ids);
 
 	/**
-	 * @TODO 根据主键集合批量加载对象（带锁）
-	 * @param <T>
+	 * 根据主键集合批量加载对象（带锁）
+	 * 
+	 * @param <T>         实体对象的类型
 	 * @param entityClass 实体类
 	 * @param lockMode    锁模式
 	 * @param ids         主键值数组
@@ -262,16 +269,18 @@ public interface SqlToyDao {
 	// ============================================
 
 	/**
-	 * @TODO 根据实体主键加载单个对象
-	 * @param <T>
+	 * 根据实体主键加载单个对象
+	 * 
+	 * @param <T>    实体对象的类型
 	 * @param entity 包含主键值的实体对象
 	 * @return 单个实体对象
 	 */
 	<T extends Serializable> T findOneByEntity(T entity);
 
 	/**
-	 * @TODO 根据实体主键加载单个对象（带锁）
-	 * @param <T>
+	 * 根据实体主键加载单个对象（带锁）
+	 * 
+	 * @param <T>      实体对象的类型
 	 * @param entity   包含主键值的实体对象
 	 * @param lockMode 锁模式
 	 * @return 单个实体对象
@@ -279,16 +288,18 @@ public interface SqlToyDao {
 	<T extends Serializable> T findOneByEntity(T entity, LockMode lockMode);
 
 	/**
-	 * @TODO 根据实体集合按主键批量加载对象
-	 * @param <T>
+	 * 根据实体集合按主键批量加载对象
+	 * 
+	 * @param <T>      实体对象的类型
 	 * @param entities 包含主键值的实体集合
 	 * @return 对象列表
 	 */
 	<T extends Serializable> List<T> findAllByEntities(List<T> entities);
 
 	/**
-	 * @TODO 根据实体集合按主键批量加载对象（带锁）
-	 * @param <T>
+	 * 根据实体集合按主键批量加载对象（带锁）
+	 * 
+	 * @param <T>      实体对象的类型
 	 * @param entities 包含主键值的实体集合
 	 * @param lockMode 锁模式
 	 * @return 对象列表
@@ -300,8 +311,9 @@ public interface SqlToyDao {
 	// ============================================
 
 	/**
-	 * @TODO 加载单个对象并级联加载子对象
-	 * @param <T>
+	 * 加载单个对象并级联加载子对象
+	 * 
+	 * @param <T>          实体对象的类型
 	 * @param entity       包含主键值的实体对象
 	 * @param cascadeTypes 需要级联加载的子类类型
 	 * @return 含级联数据的实体对象
@@ -309,8 +321,9 @@ public interface SqlToyDao {
 	<T extends Serializable> T findOneCascade(T entity, Class... cascadeTypes);
 
 	/**
-	 * @TODO 加载单个对象并级联加载子对象（带锁）
-	 * @param <T>
+	 * 加载单个对象并级联加载子对象（带锁）
+	 * 
+	 * @param <T>          实体对象的类型
 	 * @param entity       包含主键值的实体对象
 	 * @param lockMode     锁模式
 	 * @param cascadeTypes 需要级联加载的子类类型
@@ -319,8 +332,9 @@ public interface SqlToyDao {
 	<T extends Serializable> T findOneCascade(T entity, LockMode lockMode, Class... cascadeTypes);
 
 	/**
-	 * @TODO 批量加载对象并级联加载子对象
-	 * @param <T>
+	 * 批量加载对象并级联加载子对象
+	 * 
+	 * @param <T>          实体对象的类型
 	 * @param entities     包含主键值的实体集合
 	 * @param cascadeTypes 需要级联加载的子类类型
 	 * @return 含级联数据的实体列表
@@ -328,8 +342,9 @@ public interface SqlToyDao {
 	<T extends Serializable> List<T> findAllCascade(List<T> entities, Class... cascadeTypes);
 
 	/**
-	 * @TODO 批量加载对象并级联加载子对象（带锁）
-	 * @param <T>
+	 * 批量加载对象并级联加载子对象（带锁）
+	 * 
+	 * @param <T>          实体对象的类型
 	 * @param entities     包含主键值的实体集合
 	 * @param lockMode     锁模式
 	 * @param cascadeTypes 需要级联加载的子类类型
@@ -342,8 +357,9 @@ public interface SqlToyDao {
 	// ============================================
 
 	/**
-	 * @TODO 通过Map传参查询单个对象
-	 * @param <T>
+	 * 通过Map传参查询单个对象
+	 * 
+	 * @param <T>        查询结果行的目标类型
 	 * @param sqlOrSqlId SQL语句或SQL ID
 	 * @param paramsMap  参数Map
 	 * @param resultType 返回结果类型
@@ -352,8 +368,9 @@ public interface SqlToyDao {
 	<T> T findOne(String sqlOrSqlId, Map<String, Object> paramsMap, Class<T> resultType);
 
 	/**
-	 * @TODO 通过对象传参查询单个对象
-	 * @param <T>
+	 * 通过对象传参查询单个对象
+	 * 
+	 * @param <T>        查询结果行的目标类型
 	 * @param sqlOrSqlId SQL语句或SQL ID
 	 * @param params     参数对象
 	 * @param resultType 返回结果类型
@@ -362,15 +379,17 @@ public interface SqlToyDao {
 	<T> T findOne(String sqlOrSqlId, Serializable params, Class<T> resultType);
 
 	/**
-	 * @TODO 通过QueryExecutor查询单个对象
+	 * 通过QueryExecutor查询单个对象
+	 * 
 	 * @param queryExecutor 查询执行器
 	 * @return 单个对象
 	 */
 	Object findOne(QueryExecutor queryExecutor);
 
 	/**
-	 * @TODO 通过EntityQuery条件查询单个对象
-	 * @param <T>
+	 * 通过EntityQuery条件查询单个对象
+	 * 
+	 * @param <T>         实体对象的类型
 	 * @param entityClass 实体类
 	 * @param entityQuery 查询条件
 	 * @return 单个实体对象
@@ -378,8 +397,9 @@ public interface SqlToyDao {
 	<T extends Serializable> T findOne(Class<T> entityClass, EntityQuery entityQuery);
 
 	/**
-	 * @TODO 通过EntityQuery条件查询单个对象（指定返回类型）
-	 * @param <T>
+	 * 通过EntityQuery条件查询单个对象（指定返回类型）
+	 * 
+	 * @param <T>         查询结果行的目标类型
 	 * @param entityClass 实体类
 	 * @param entityQuery 查询条件
 	 * @param resultType  返回结果类型
@@ -392,8 +412,9 @@ public interface SqlToyDao {
 	// ============================================
 
 	/**
-	 * @TODO 通过SQL查询对象列表（Map传参）
-	 * @param <T>
+	 * 通过SQL查询对象列表（Map传参）
+	 * 
+	 * @param <T>        查询结果行的目标类型
 	 * @param sqlOrSqlId SQL语句或SQL ID
 	 * @param paramsMap  参数Map
 	 * @param resultType 返回结果类型
@@ -402,7 +423,8 @@ public interface SqlToyDao {
 	<T> List<T> findList(String sqlOrSqlId, Map<String, Object> paramsMap, Class<T> resultType);
 
 	/**
-	 * @TODO 通过SQL查询对象列表（Map传参，无指定类型）
+	 * 通过SQL查询对象列表（Map传参，无指定类型）
+	 * 
 	 * @param sqlOrSqlId SQL语句或SQL ID
 	 * @param paramsMap  参数Map
 	 * @return 对象列表
@@ -410,8 +432,9 @@ public interface SqlToyDao {
 	List findList(String sqlOrSqlId, Map<String, Object> paramsMap);
 
 	/**
-	 * @TODO 通过SQL查询对象列表（对象传参）
-	 * @param <T>
+	 * 通过SQL查询对象列表（对象传参）
+	 * 
+	 * @param <T>        查询结果行的目标类型
 	 * @param sqlOrSqlId SQL语句或SQL ID
 	 * @param params     参数对象
 	 * @param resultType 返回结果类型
@@ -420,15 +443,17 @@ public interface SqlToyDao {
 	<T> List<T> findList(String sqlOrSqlId, Serializable params, Class<T> resultType);
 
 	/**
-	 * @TODO 通过QueryExecutor查询对象列表
+	 * 通过QueryExecutor查询对象列表
+	 * 
 	 * @param queryExecutor 查询执行器
 	 * @return QueryResult 包含对象列表
 	 */
 	QueryResult findList(QueryExecutor queryExecutor);
 
 	/**
-	 * @TODO 通过EntityQuery条件查询对象列表
-	 * @param <T>
+	 * 通过EntityQuery条件查询对象列表
+	 * 
+	 * @param <T>         实体对象的类型
 	 * @param entityClass 实体类
 	 * @param entityQuery 查询条件
 	 * @return 对象列表
@@ -436,8 +461,9 @@ public interface SqlToyDao {
 	<T> List<T> findList(Class<T> entityClass, EntityQuery entityQuery);
 
 	/**
-	 * @TODO 通过EntityQuery条件查询对象列表（指定返回类型）
-	 * @param <T>
+	 * 通过EntityQuery条件查询对象列表（指定返回类型）
+	 * 
+	 * @param <T>         查询结果行的目标类型
 	 * @param entityClass 实体类
 	 * @param entityQuery 查询条件
 	 * @param resultType  返回结果类型
@@ -450,8 +476,9 @@ public interface SqlToyDao {
 	// ============================================
 
 	/**
-	 * @TODO 查询前N条记录（Map传参）
-	 * @param <T>
+	 * 查询前N条记录（Map传参）
+	 * 
+	 * @param <T>        查询结果行的目标类型
 	 * @param sqlOrSqlId SQL语句或SQL ID
 	 * @param paramsMap  参数Map
 	 * @param resultType 返回结果类型
@@ -461,8 +488,9 @@ public interface SqlToyDao {
 	<T> List<T> findTop(String sqlOrSqlId, Map<String, Object> paramsMap, Class<T> resultType, double topSize);
 
 	/**
-	 * @TODO 查询前N条记录（对象传参）
-	 * @param <T>
+	 * 查询前N条记录（对象传参）
+	 * 
+	 * @param <T>        查询结果行的目标类型
 	 * @param sqlOrSqlId SQL语句或SQL ID
 	 * @param params     参数对象
 	 * @param resultType 返回结果类型
@@ -472,7 +500,8 @@ public interface SqlToyDao {
 	<T> List<T> findTop(String sqlOrSqlId, Serializable params, Class<T> resultType, double topSize);
 
 	/**
-	 * @TODO 查询前N条记录（QueryExecutor模式）
+	 * 查询前N条记录（QueryExecutor模式）
+	 * 
 	 * @param queryExecutor 查询执行器
 	 * @param topSize       前N条（大于1为固定数量，小于1为比例）
 	 * @return QueryResult 包含对象列表
@@ -480,8 +509,9 @@ public interface SqlToyDao {
 	QueryResult findTop(QueryExecutor queryExecutor, double topSize);
 
 	/**
-	 * @TODO 随机查询记录（对象传参）
-	 * @param <T>
+	 * 随机查询记录（对象传参）
+	 * 
+	 * @param <T>         查询结果行的目标类型
 	 * @param sqlOrSqlId  SQL语句或SQL ID
 	 * @param params      参数对象
 	 * @param resultType  返回结果类型
@@ -491,8 +521,9 @@ public interface SqlToyDao {
 	<T> List<T> findRandom(String sqlOrSqlId, Serializable params, Class<T> resultType, double randomCount);
 
 	/**
-	 * @TODO 随机查询记录（Map传参）
-	 * @param <T>
+	 * 随机查询记录（Map传参）
+	 * 
+	 * @param <T>         查询结果行的目标类型
 	 * @param sqlOrSqlId  SQL语句或SQL ID
 	 * @param paramsMap   参数Map
 	 * @param resultType  返回结果类型
@@ -502,7 +533,8 @@ public interface SqlToyDao {
 	<T> List<T> findRandom(String sqlOrSqlId, Map<String, Object> paramsMap, Class<T> resultType, double randomCount);
 
 	/**
-	 * @TODO 随机查询记录（QueryExecutor模式）
+	 * 随机查询记录（QueryExecutor模式）
+	 * 
 	 * @param queryExecutor 查询执行器
 	 * @param randomCount   随机数量（大于1为固定数量，小于1为比例）
 	 * @return QueryResult 包含对象列表
@@ -510,7 +542,8 @@ public interface SqlToyDao {
 	QueryResult findRandom(QueryExecutor queryExecutor, double randomCount);
 
 	/**
-	 * @TODO 分页查询（Map传参，无指定类型）
+	 * 分页查询（Map传参，无指定类型）
+	 * 
 	 * @param page       分页对象
 	 * @param sqlOrSqlId SQL语句或SQL ID
 	 * @param paramsMap  参数Map
@@ -519,8 +552,9 @@ public interface SqlToyDao {
 	Page findPage(Page page, String sqlOrSqlId, Map<String, Object> paramsMap);
 
 	/**
-	 * @TODO 分页查询（Map传参）
-	 * @param <T>
+	 * 分页查询（Map传参）
+	 * 
+	 * @param <T>        查询结果行的目标类型
 	 * @param page       分页对象
 	 * @param sqlOrSqlId SQL语句或SQL ID
 	 * @param paramsMap  参数Map
@@ -530,8 +564,9 @@ public interface SqlToyDao {
 	<T> Page<T> findPage(Page page, String sqlOrSqlId, Map<String, Object> paramsMap, Class<T> resultType);
 
 	/**
-	 * @TODO 分页查询（对象传参）
-	 * @param <T>
+	 * 分页查询（对象传参）
+	 * 
+	 * @param <T>        查询结果行的目标类型
 	 * @param page       分页对象
 	 * @param sqlOrSqlId SQL语句或SQL ID
 	 * @param params     参数对象
@@ -541,7 +576,8 @@ public interface SqlToyDao {
 	<T> Page<T> findPage(Page page, String sqlOrSqlId, Serializable params, Class<T> resultType);
 
 	/**
-	 * @TODO 分页查询（QueryExecutor模式）
+	 * 分页查询（QueryExecutor模式）
+	 * 
 	 * @param page          分页对象
 	 * @param queryExecutor 查询执行器
 	 * @return QueryResult 包含分页结果
@@ -549,8 +585,9 @@ public interface SqlToyDao {
 	QueryResult findPage(Page page, QueryExecutor queryExecutor);
 
 	/**
-	 * @TODO 通过EntityQuery进行分页查询
-	 * @param <T>
+	 * 通过EntityQuery进行分页查询
+	 * 
+	 * @param <T>         实体对象的类型
 	 * @param page        分页对象
 	 * @param entityClass 实体类
 	 * @param entityQuery 查询条件
@@ -559,8 +596,9 @@ public interface SqlToyDao {
 	<T> Page<T> findPage(Page page, Class<T> entityClass, EntityQuery entityQuery);
 
 	/**
-	 * @TODO 通过EntityQuery进行分页查询（指定返回类型）
-	 * @param <T>
+	 * 通过EntityQuery进行分页查询（指定返回类型）
+	 * 
+	 * @param <T>         查询结果行的目标类型
 	 * @param page        分页对象
 	 * @param entityClass 实体类
 	 * @param entityQuery 查询条件

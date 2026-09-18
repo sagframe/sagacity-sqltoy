@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.config.model;
 
 import java.io.Serializable;
@@ -9,6 +6,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -16,22 +15,24 @@ import org.sagacity.sqltoy.model.IgnoreCaseSet;
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils.Dialect;
+import org.sagacity.sqltoy.utils.NumberUtil;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 单个sql被解析后的模型
  * @author zhongxuchen
- * @version v1.0,Date:2014年12月9日
- * @modify Date:2020-8-2 1、修改secureMasks、formatModels类型为List并实例化空集合
+ * @version v1.0,Date:2014-12-09
+ * @modify Date:2020-08-02 1、修改secureMasks、formatModels类型为List并实例化空集合
  *         2、translateMap也实例化,便于后续处理 3、resultProcessor 也实例化非空集合
  */
 @SuppressWarnings({ "rawtypes" })
 public class SqlToyConfig implements Serializable, java.lang.Cloneable {
-	/**
-	 * 
-	 */
+	private final static Logger logger = LoggerFactory.getLogger(SqlToyConfig.class);
+
 	private static final long serialVersionUID = 3168222164418634488L;
 
 	/**
@@ -460,7 +461,8 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	}
 
 	/**
-	 * @todo 判定sql是否以:name形式传递参数还是直接=?模式
+	 * 判定sql是否以:name形式传递参数还是直接=?模式
+	 * 
 	 * @return
 	 */
 	public boolean isNamedParam() {
@@ -587,30 +589,57 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 		try {
 			SqlToyConfig cloned = (SqlToyConfig) super.clone();
 			// dialectSqlMap必须要深度clone，避免还是对象引用关系(在一些场景下会改变dialectSqlMap)
-			// 其他属性则无需进行深度clone，因为不会去改变
+			// 其他属性则无需进行深度clone，因为不会去改变(noSqlConfigModel除外)
 			if (this.dialectSqlMap != null) {
 				cloned.dialectSqlMap = new ConcurrentHashMap<>(this.dialectSqlMap);
+			}
+			// noSqlConfigModel需clone:Elastic.endPoint()会改写endpoint,共享引用会污染缓存中的配置
+			if (this.noSqlConfigModel != null) {
+				cloned.noSqlConfigModel = this.noSqlConfigModel.clone();
 			}
 			// 克隆paramsName(冗余性，本质此参数不会被修改)
 			if (this.paramsName != null) {
 				cloned.paramsName = this.paramsName.clone();
 			}
+			// update 2026-9-14 translateMap必须深度clone:DialectUtils.getUnifyParamsNamedConfig
+			// 会对
+			// clone后的translateMap就地put动态translate并改写FieldTranslate的translates数组,浅共享会把
+			// 本次查询的动态翻译永久写入sqlCache中的配置实例(后续同sqlId查询被污染)且并发下写非线程安全
+			// HashMap;此处按"实际会被改写的字段"同步补齐深拷贝(translates数组复制,Translate保留共享引用)
+			// 注意:原配置无xml翻译声明(空map)时同样必须换成新实例——动态translate查询正是往这个空map里put
+			if (this.translateMap != null) {
+				HashMap<String, FieldTranslate> clonedTranslateMap = new HashMap<String, FieldTranslate>(
+						this.translateMap.size() * 2);
+				FieldTranslate clonedFieldTranslate;
+				for (Map.Entry<String, FieldTranslate> entry : this.translateMap.entrySet()) {
+					clonedFieldTranslate = new FieldTranslate();
+					clonedFieldTranslate.colName = entry.getValue().colName;
+					clonedFieldTranslate.keyField = entry.getValue().keyField;
+					clonedFieldTranslate.aliasName = entry.getValue().aliasName;
+					if (entry.getValue().translates != null) {
+						clonedFieldTranslate.translates = entry.getValue().translates.clone();
+					}
+					clonedTranslateMap.put(entry.getKey(), clonedFieldTranslate);
+				}
+				cloned.translateMap = clonedTranslateMap;
+			}
 			return cloned;
 		} catch (CloneNotSupportedException e) {
-			e.printStackTrace();
+			logger.error("clone method execution failed", e);
 		}
 		return null;
 	}
 
 	/**
-	 * @TODO 已经包含aliasName,解析过程已经增加
+	 * 已经包含aliasName,解析过程已经增加
+	 * 
 	 * @param name
 	 */
 	public void addCacheArgParam(String name) {
-		String nameLow = name.toLowerCase();
+		String nameLow = name.toLowerCase(Locale.ROOT);
 		boolean exists = false;
 		for (String argName : cacheArgNames) {
-			if (argName.toLowerCase().equals(nameLow)) {
+			if (argName.toLowerCase(Locale.ROOT).equals(nameLow)) {
 				exists = true;
 				break;
 			}
@@ -624,8 +653,31 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 		return this.cacheArgNames;
 	}
 
+	/**
+	 * 包含 sqltoyConfig中paramsName、cacheArgNames、filters中所有参数名称的合集
+	 * 
+	 * @return
+	 */
 	public String[] getFullParamNames() {
-		if (cacheArgNames == null || cacheArgNames.isEmpty()) {
+		// filters中存在动态增量参数(increment-time="${paramName}")时,被引用的参数必须参与合并,
+		// 否则参数值会在QueryExecutorBuilder按参数名装配时被丢弃,导致增量静默失效
+		boolean hasDynIncrementParam = false;
+		// clone型filter的param是取值来源,允许不出现在sql中,必须参与参数名合并
+		boolean hasCloneSourceParam = false;
+		if (filters != null && !filters.isEmpty()) {
+			for (ParamFilterModel filter : filters) {
+				if (filter.getIncrementTime() != null && !NumberUtil.isNumber(filter.getIncrementTime())) {
+					hasDynIncrementParam = true;
+				}
+				if ("clone".equals(filter.getFilterType()) && StringUtil.isNotBlank(filter.getParam())) {
+					hasCloneSourceParam = true;
+				}
+				if (hasDynIncrementParam && hasCloneSourceParam) {
+					break;
+				}
+			}
+		}
+		if ((cacheArgNames == null || cacheArgNames.isEmpty()) && !hasDynIncrementParam && !hasCloneSourceParam) {
 			return this.paramsName;
 		}
 		Set<String> keys = new HashSet<String>();
@@ -633,7 +685,7 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 		String key;
 		if (this.paramsName != null && this.paramsName.length > 0) {
 			for (String item : this.paramsName) {
-				key = item.toLowerCase();
+				key = item.toLowerCase(Locale.ROOT);
 				if (!keys.contains(key)) {
 					keys.add(key);
 					params.add(item);
@@ -641,18 +693,48 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 			}
 		}
 		// 增加cacheArgs中存在的参数名称
-		for (String item : this.cacheArgNames) {
-			key = item.toLowerCase();
-			if (!keys.contains(key)) {
-				keys.add(key);
-				params.add(item);
+		if (cacheArgNames != null) {
+			for (String item : cacheArgNames) {
+				key = item.toLowerCase(Locale.ROOT);
+				if (!keys.contains(key)) {
+					keys.add(key);
+					params.add(item);
+				}
+			}
+		}
+		// 增加filters中存在的参数名称
+		if (filters != null && !filters.isEmpty()) {
+			String incrementTime;
+			String paramName;
+			for (ParamFilterModel filter : filters) {
+				incrementTime = filter.getIncrementTime();
+				// to-date 增加时间为动态参数${incrementDays},解析时已经去除${};
+				// -incrementDays为负数引用,剥离前导负号取真实参数名
+				if (StringUtil.isNotBlank(incrementTime) && !NumberUtil.isNumber(incrementTime)) {
+					paramName = incrementTime.startsWith("-") ? incrementTime.substring(1) : incrementTime;
+					key = paramName.toLowerCase(Locale.ROOT);
+					if (!keys.contains(key)) {
+						keys.add(key);
+						params.add(paramName);
+					}
+				}
+				// clone型filter的param是取值来源,允许不出现在sql中(如前端传单日期克隆给as-param的区间参数)
+				// 不合并则传值被装配丢弃,导致clone静默失效
+				if ("clone".equals(filter.getFilterType()) && StringUtil.isNotBlank(filter.getParam())) {
+					key = filter.getParam().toLowerCase(Locale.ROOT);
+					if (!"*".equals(key) && !keys.contains(key)) {
+						keys.add(key);
+						params.add(filter.getParam());
+					}
+				}
 			}
 		}
 		return params.toArray(new String[0]);
 	}
 
 	/**
-	 * @TODO 根据方言生成不同的sql语句
+	 * 根据方言生成不同的sql语句
+	 * 
 	 * @param type       如:sql、fastPage等
 	 * @param sqlContent
 	 * @param dialect
@@ -666,17 +748,17 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 			return sqlContent;
 		}
 		String key = dialect.concat(".").concat(type);
-		if (!dialectSqlMap.containsKey(key)) {
+		// update 2026-9-8 containsKey+get+put三次查找合并为computeIfAbsent(并发首查免重复计算)
+		return dialectSqlMap.computeIfAbsent(key, k -> {
 			String dialectSql = FunctionUtils.getDialectSql(sqlContent, dialect);
 			// 保留字处理
-			dialectSql = ReservedWordsUtil.convertSql(dialectSql, DataSourceUtils.getDBType(dialect));
-			dialectSqlMap.put(key, dialectSql);
-		}
-		return dialectSqlMap.get(key);
+			return ReservedWordsUtil.convertSql(dialectSql, DataSourceUtils.getDBType(dialect));
+		});
 	}
 
 	/**
-	 * @todo 获取sqlId或sql内容
+	 * 获取sqlId或sql内容
+	 * 
 	 * @return
 	 */
 	public String getIdOrSql() {
@@ -684,6 +766,10 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 			return this.sql;
 		}
 		return this.id;
+	}
+
+	public String getDialect() {
+		return dialect;
 	}
 
 	public void setDialect(String dialect) {

@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.config.model;
 
 import java.io.Serializable;
@@ -9,13 +6,10 @@ import java.io.Serializable;
  * @project sagacity-sqltoy
  * @description 列传行配置模型
  * @author zhongxuchen
- * @version v1.0,Date:2015年12月20日
+ * @version v1.0,Date:2015-12-20
  */
 public class UnpivotModel implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 5423610793788395709L;
 
 	/**

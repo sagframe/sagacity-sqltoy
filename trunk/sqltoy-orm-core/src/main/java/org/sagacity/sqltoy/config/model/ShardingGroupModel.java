@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.config.model;
 
 import java.io.Serializable;
@@ -10,12 +7,9 @@ import java.util.List;
  * @project sagacity-sqltoy
  * @description 批量数据操作分组分库分表模型
  * @author zhongxuchen
- * @version v1.0,Date:2017年11月3日
+ * @version v1.0,Date:2017-11-03
  */
 public class ShardingGroupModel implements Serializable {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -1188114638866564391L;
 
 	/**

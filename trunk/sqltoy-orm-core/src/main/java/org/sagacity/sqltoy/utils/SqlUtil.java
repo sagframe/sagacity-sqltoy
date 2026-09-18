@@ -1,7 +1,5 @@
 package org.sagacity.sqltoy.utils;
 
-import java.io.ByteArrayInputStream;
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Reader;
@@ -35,6 +33,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
@@ -54,7 +53,9 @@ import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
 import org.sagacity.sqltoy.exception.DataAccessException;
+import org.sagacity.sqltoy.model.DBProfile;
 import org.sagacity.sqltoy.model.IgnoreCaseSet;
+import org.sagacity.sqltoy.model.JdbcTypes;
 import org.sagacity.sqltoy.model.SqlInjectionLevel;
 import org.sagacity.sqltoy.model.TreeTableModel;
 import org.sagacity.sqltoy.plugins.TypeHandler;
@@ -64,18 +65,18 @@ import org.slf4j.LoggerFactory;
 
 /**
  * @author zhongxuchen
- * @version v1.3, Date:Apr 14, 2009 11:52:31 PM
+ * @version v1.3,Date:2009-04-14
  * @project sagacity-sqltoy
  * @description 数据库sql相关的处理工具
- * @modify Date:2011-8-18
+ * @modify Date:2011-08-18
  *         {移植BaseDaoSupport中分页移植到SqlUtil中，将数据库表、外键、主键等库和表信息移植到DBUtil中 }
- * @modify Date:2011-8-22 {修复getJdbcRecordCount中因group分组查询导致的错误， 如select
+ * @modify Date:2011-08-22 修复getJdbcRecordCount中因group分组查询导致的错误， 如select
  *         name,count(*) from table group by name}
  * @modify Date:2012-11-21
  *         {完善分页查询语句中存在union的处理机制,框架自动判断是否存在union,有union则自动实现外层包裹}
- * @modify Date:2017-6-5 {剔除注释时用空白填补,防止出现类似原本:select xxx from 变成select xxxfrom }
- * @modify Date:2017-6-14 {修复针对阿里的druid数据库datasource针对clob类型处理的错误}
- * @modify Date:2019-7-5 剔除对druid clob bug的支持(druid 1.1.10 已经修复)
+ * @modify Date:2017-06-05 剔除注释时用空白填补,防止出现类似原本:select xxx from 变成select xxxfrom
+ * @modify Date:2017-06-14 修复针对阿里的druid数据库datasource针对clob类型处理的错误
+ * @modify Date:2019-07-05 剔除对druid clob bug的支持(druid 1.1.10 已经修复)
  * @modify Date:2020-06-18 用BeanUtil代替BeanInfo中getWriteMethod,完成对象属性赋值
  * @modify Date:2024-07-12 优化sql注释剔除的处理,兼容sql中存在/* 但没有对应收尾--*\/符号的场景
  */
@@ -101,8 +102,9 @@ public class SqlUtil {
 	// 判断sql是否是merge into 开头
 	public static final Pattern MERGE_INTO_PATTERN = Pattern.compile("^merge\\s+into\\s+");
 
-	public static Pattern SQL_INJECT_PATTERN = Pattern.compile(
-			"(?i)\\W((delete\\s+from)|update|(truncate\\s+table)|(alter\\s+table)|modify|(insert\\s+into)|(sleep\\s*\\(\\s*\\d+\\s*\\))|select|set|create|drop|(merge\\s+into))\\s+");
+	// update 2026-9-14
+	// validateInArg去除in参数中的空白:原每次replaceAll("\\s+","")隐式编译,改静态Pattern
+	private static final Pattern WHITESPACE_PATTERN = Pattern.compile("\\s+");
 
 	// 只针对比较符号、和(的日期字符加函数
 	public static final Pattern COMPARE_PATTERN = Pattern
@@ -163,8 +165,11 @@ public class SqlUtil {
 	 */
 	private static ConcurrentHashMap<String, String> convertSqlMap = new ConcurrentHashMap<String, String>();
 
-	// sql 注释过滤器
-	private static HashMap sqlCommentfilters = new HashMap();
+	// convertSqlMap的key含updateByQuery等动态sql,必须有容量上限防止无界内存增长
+	private static final int CONVERT_SQL_CACHE_MAX_SIZE = 2000;
+
+	// sql 注释过滤器(update 2026-9-13 ConcurrentHashMap,与convertSqlMap同并发策略)
+	private static final ConcurrentHashMap<String, String> sqlCommentfilters = new ConcurrentHashMap<>();
 
 	static {
 		// 排除表字段说明（注释）中的";"符号
@@ -173,11 +178,50 @@ public class SqlUtil {
 		sqlCommentfilters.put("{", "}");
 	}
 
+	// update 2026-9-13 mssql-jdbc Geometry反射句柄缓存(同ResultUtils.MSSQL_GEO_*模式):
+	// 驱动不在classpath时句柄为null整体回退,避免rs逐行回写时重复Class.forName/getMethod
+	private static final java.lang.reflect.Method MSSQL_GEOMETRY_PARSE;
+	private static final java.lang.reflect.Method MSSQL_GEOMETRY_SERIALIZE;
+
+	static {
+		java.lang.reflect.Method parse = null;
+		java.lang.reflect.Method serialize = null;
+		try {
+			Class<?> geoCls = Class.forName("com.microsoft.sqlserver.jdbc.Geometry");
+			parse = geoCls.getMethod("parse", String.class);
+			serialize = geoCls.getMethod("serialize");
+		} catch (Throwable ignore) {
+			// mssql-jdbc不在classpath时geometry回退字符串绑定
+		}
+		MSSQL_GEOMETRY_PARSE = parse;
+		MSSQL_GEOMETRY_SERIALIZE = serialize;
+	}
+
+	// update 2026-9-13 microsoft.sql.Vector反射句柄缓存(12.x驱动无此类时为null回退)
+	private static final java.lang.reflect.Constructor<?> MSSQL_VECTOR_CONSTRUCTOR;
+	private static final Object MSSQL_VECTOR_FLOAT32;
+
+	static {
+		java.lang.reflect.Constructor<?> constructor = null;
+		Object float32 = null;
+		try {
+			Class<?> vecCls = Class.forName("microsoft.sql.Vector");
+			Class<?> dimTypeCls = Class.forName("microsoft.sql.Vector$VectorDimensionType");
+			float32 = Enum.valueOf((Class<? extends Enum>) dimTypeCls, "FLOAT32");
+			constructor = vecCls.getConstructor(int.class, dimTypeCls, Object[].class);
+		} catch (Throwable ignore) {
+			// 驱动不支持vector时回退
+		}
+		MSSQL_VECTOR_CONSTRUCTOR = constructor;
+		MSSQL_VECTOR_FLOAT32 = float32;
+	}
+
 	private SqlUtil() {
 	}
 
 	/**
-	 * @todo 合成数据库in 查询的条件(不建议使用)
+	 * 合成数据库in 查询的条件(不建议使用)
+	 * 
 	 * @param conditions :数据库in条件的数据集合，可以是POJO List或Object[]
 	 * @param colIndex   :二维数组对应列编号
 	 * @param property   :POJO property
@@ -252,18 +296,19 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @todo 自动进行类型转换, 设置sql中的参数条件的值
-	 * @param typeHandler
-	 * @param conn
-	 * @param dbType
-	 * @param pst
-	 * @param params
-	 * @param paramsType
-	 * @param fromIndex
+	 * 自动进行类型转换, 设置sql中的参数条件的值
+	 * 
+	 * @param typeHandler 自定义类型处理器，非null时优先通过其完成参数设置
+	 * @param conn        数据库连接对象
+	 * @param dbType      数据库类型，参见DataSourceUtils.DBType
+	 * @param pst         PreparedStatement预编译语句对象
+	 * @param params      参数值数组
+	 * @param paramsType  参数对应的java.sql.Types类型数组，null时按参数值自动判断类型
+	 * @param fromIndex   参数起始下标偏移，存储过程调用从1开始时传1，一般为0
 	 * @throws SQLException
 	 * @throws IOException
 	 */
-	public static void setParamsValue(TypeHandler typeHandler, Connection conn, final Integer dbType,
+	public static void setParamsValue(TypeHandler typeHandler, Connection conn, final DBProfile profile,
 			PreparedStatement pst, Object[] params, Integer[] paramsType, int fromIndex)
 			throws SQLException, IOException {
 		// fromIndex 针对存储过程调用存在从1开始,如:{?=call xxStore()}
@@ -274,106 +319,148 @@ public class SqlUtil {
 			if (null == paramsType || paramsType.length == 0) {
 				// paramsType=-1 表示按照参数值来判断类型
 				for (int i = 0; i < n; i++) {
-					setParamValue(typeHandler, conn, dbType, pst, params[i], -1, startIndex + i);
+					setParamValue(typeHandler, conn, profile, pst, params[i], JdbcTypes.OTHER, startIndex + i);
 				}
 			} else {
+				int typeLen = paramsType.length - 1;
 				for (int i = 0; i < n; i++) {
-					setParamValue(typeHandler, conn, dbType, pst, params[i], paramsType[i], startIndex + i);
+					setParamValue(typeHandler, conn, profile, pst, params[i],
+							(i > typeLen) ? JdbcTypes.OTHER : paramsType[i], startIndex + i);
 				}
 			}
 		}
 	}
 
 	/**
-	 * @TODO 针对sqlserver提供特殊处理(避免干扰其他代码)
-	 * @param typeHandler
-	 * @param conn
-	 * @param dbType
-	 * @param pst
-	 * @param params
-	 * @param paramsType
-	 * @param fromIndex
+	 * 设置sql中的参数条件的值
+	 * 
+	 * @param typeHandler 自定义类型处理器，非null时优先通过其完成参数设置
+	 * @param conn        数据库连接对象(clob、blob等类型创建需要)
+	 * @param dbType      数据库类型，参见DataSourceUtils.DBType
+	 * @param pst         PreparedStatement预编译语句对象
+	 * @param paramValue  参数值，null时按jdbcType设置null
+	 * @param jdbcType    java.sql.Types定义的JDBC类型，-1表示按参数值自动判断
+	 * @param paramIndex  参数位置下标(从1开始)
 	 * @throws SQLException
 	 * @throws IOException
 	 */
-	private static void setSqlServerParamsValue(TypeHandler typeHandler, Connection conn, final Integer dbType,
-			PreparedStatement pst, Object[] params, Integer[] paramsType, int fromIndex)
-			throws SQLException, IOException {
-		// fromIndex 针对存储过程调用存在从1开始,如:{?=call xxStore()}
-		// 一般情况fromIndex 都是0
-		if (null != params && params.length > 0) {
-			int n = params.length;
-			int startIndex = fromIndex + 1;
-			if (null == paramsType || paramsType.length == 0) {
-				// paramsType=-1 表示按照参数值来判断类型
-				for (int i = 0; i < n; i++) {
-					setParamValue(typeHandler, conn, dbType, pst, params[i], -1, startIndex + i);
-				}
-			} else {
-				int meter = 0;
-				for (int i = 0; i < n; i++) {
-					if (paramsType[i] != java.sql.Types.TIMESTAMP) {
-						setParamValue(typeHandler, conn, dbType, pst, params[i], paramsType[i], startIndex + meter);
-						meter++;
-					}
-				}
-			}
-		}
-	}
-
-	/**
-	 * @todo 设置sql中的参数条件的值
-	 * @param typeHandler
-	 * @param conn
-	 * @param dbType
-	 * @param pst
-	 * @param paramValue
-	 * @param jdbcType
-	 * @param paramIndex
-	 * @throws SQLException
-	 * @throws IOException
-	 */
-	public static void setParamValue(TypeHandler typeHandler, Connection conn, final Integer dbType,
+	public static void setParamValue(TypeHandler typeHandler, Connection conn, final DBProfile dbProfile,
 			PreparedStatement pst, Object paramValue, int jdbcType, int paramIndex) throws SQLException, IOException {
+		int dbType = dbProfile.getDbType();
 		// jdbc部分数据库赋null值时必须要指定数据类型
 		if (null == paramValue) {
-			if (jdbcType != java.sql.Types.NULL) {
-				if (typeHandler != null && typeHandler.setNull(dbType, pst, paramIndex, jdbcType)) {
-					return;
-				}
-				// postgresql bytea类型需要统一处理成BINARY
-				if (jdbcType == java.sql.Types.BLOB) {
-					if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15) {
-						pst.setNull(paramIndex, java.sql.Types.BINARY);
-					} else {
-						pst.setNull(paramIndex, jdbcType);
-					}
-				} else if (jdbcType == java.sql.Types.CLOB) {
-					if (DBType.ORACLE == dbType || DBType.DB2 == dbType || DBType.OCEANBASE == dbType
-							|| DBType.ORACLE11 == dbType || DBType.DM == dbType) {
-						pst.setNull(paramIndex, jdbcType);
-					} else {
-						pst.setNull(paramIndex, java.sql.Types.VARCHAR);
-					}
-				} else if (jdbcType == java.sql.Types.NCLOB) {
-					if (DBType.ORACLE == dbType || DBType.DB2 == dbType || DBType.OCEANBASE == dbType
-							|| DBType.ORACLE11 == dbType || DBType.DM == dbType) {
-						pst.setNull(paramIndex, jdbcType);
-					} else {
-						pst.setNull(paramIndex, java.sql.Types.NVARCHAR);
-					}
-				} else {
-					pst.setNull(paramIndex, jdbcType);
-				}
-			} else {
-				pst.setNull(paramIndex, java.sql.Types.NULL);
-			}
+			setNullParam(typeHandler, dbProfile, dbType, pst, jdbcType, paramIndex);
 			return;
 		}
 		// 自定义类型处理器，完成setValue处理
 		if (typeHandler != null && typeHandler.setValue(dbType, pst, paramIndex, jdbcType, paramValue)) {
 			return;
 		}
+		if (jdbcType == JdbcTypes.JSON || jdbcType == JdbcTypes.JSONB) {
+			JSONTypeUtil.setJSONValue(dbProfile, dbType, pst, paramIndex, jdbcType, paramValue);
+			return;
+		}
+		// vector向量类型,pgvector、oracle 23ai、mysql heatwave等均接受'[1,2,3]'字符串形式
+		if (jdbcType == JdbcTypes.VECTOR) {
+			setVectorValue(dbProfile, pst, paramIndex, paramValue);
+			return;
+		}
+		// geometry空间类型,统一以WKT字符串为媒介
+		if (jdbcType == JdbcTypes.GEOMETRY) {
+			setGeometryValue(dbProfile, pst, paramIndex, paramValue);
+			return;
+		}
+		// update 2026-9-14 按参数值类型分派到类型组处理方法:组间调用序与组内instanceof
+		// 链序逐一保持原链原序。顺序敏感警告:util.Date家族须维持sql.Timestamp在
+		// util.Date之前、sql.Date/sql.Time在util.Date之后的现状(后两者为既有死分支,
+		// 重排会激活它们并改变非CLICKHOUSE库上sql.Date/sql.Time参数的绑定行为)
+		if (setTextParam(conn, dbProfile, dbType, pst, jdbcType, paramIndex, paramValue)) {
+			return;
+		}
+		if (setNumberParam(dbProfile, pst, jdbcType, paramIndex, paramValue)) {
+			return;
+		}
+		if (setDateTimeParam(dbProfile, dbType, pst, jdbcType, paramIndex, paramValue)) {
+			return;
+		}
+		setBinaryAndOtherParam(conn, dbProfile, dbType, pst, jdbcType, paramIndex, paramValue);
+	}
+
+	/**
+	 * update 2026-9-14 null值参数赋值:jdbc部分数据库赋null值时必须要指定数据类型
+	 * (BLOB/CLOB/NCLOB/JSON/VECTOR/GEOMETRY按数据库分派setNull形态)
+	 */
+	private static void setNullParam(TypeHandler typeHandler, DBProfile profile, final Integer dbType,
+			PreparedStatement pst, int jdbcType, int paramIndex) throws SQLException {
+		if (jdbcType != java.sql.Types.NULL) {
+			if (typeHandler != null && typeHandler.setNull(dbType, pst, paramIndex, jdbcType)) {
+				return;
+			}
+			// postgresql bytea类型需要统一处理成BINARY
+			if (jdbcType == java.sql.Types.BLOB) {
+				if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14) {
+					pst.setNull(paramIndex, java.sql.Types.BINARY);
+				} else {
+					pst.setNull(paramIndex, jdbcType);
+				}
+			} else if (jdbcType == java.sql.Types.CLOB) {
+				if (DBType.ORACLE == dbType || DBType.DB2 == dbType || DBType.OCEANBASE == dbType
+						|| DBType.ORACLE11 == dbType || DBType.DM == dbType) {
+					pst.setNull(paramIndex, jdbcType);
+				} else {
+					pst.setNull(paramIndex, java.sql.Types.VARCHAR);
+				}
+			} else if (jdbcType == java.sql.Types.NCLOB) {
+				if (DBType.ORACLE == dbType || DBType.DB2 == dbType || DBType.OCEANBASE == dbType
+						|| DBType.ORACLE11 == dbType || DBType.DM == dbType) {
+					pst.setNull(paramIndex, jdbcType);
+				} else {
+					pst.setNull(paramIndex, java.sql.Types.NVARCHAR);
+				}
+			} else if (jdbcType == JdbcTypes.JSON || jdbcType == JdbcTypes.JSONB) {
+				JSONTypeUtil.setNull(dbType, pst, paramIndex, jdbcType);
+			} else if (jdbcType == JdbcTypes.VECTOR) {
+				// vector属于数据库扩展类型,sqlserver用NVARCHAR、mysql系用VARCHAR设置null,其余按OTHER
+				if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11) {
+					// update 2026-9-8 实测oracle 23ai的vector列null绑定:二参OTHER报ORA-17004,
+					// setNull(VARCHAR)/setString(null)/setNull(2016)均可行,取VARCHAR形态
+					pst.setNull(paramIndex, java.sql.Types.VARCHAR);
+				} else if (dbType == DBType.SQLSERVER) {
+					pst.setNull(paramIndex, java.sql.Types.NVARCHAR);
+				} else if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.OCEANBASE
+						|| dbType == DBType.TIDB || dbType == DBType.DORIS || dbType == DBType.STARROCKS) {
+					pst.setNull(paramIndex, java.sql.Types.VARCHAR);
+				} else {
+					pst.setNull(paramIndex, java.sql.Types.OTHER);
+				}
+			} else if (jdbcType == JdbcTypes.GEOMETRY) {
+				// geometry空间类型null值设置:oracle的SDO_GEOMETRY为UDT,须三参setNull带类型名
+				// (实测二参OTHER/STRUCT/NULL分别报ORA-17004/ORA-17068/ORA-00932),其余策略与vector一致
+				if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11) {
+					OracleSdoUtil.setNull(pst, paramIndex);
+				} else if (dbType == DBType.SQLSERVER) {
+					pst.setNull(paramIndex, java.sql.Types.NVARCHAR);
+				} else if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.OCEANBASE
+						|| dbType == DBType.TIDB || dbType == DBType.DORIS || dbType == DBType.STARROCKS
+						|| dbType == DBType.DB2) {
+					// mysql系与db2(db2gse的ST_GeomFromText参数为VARCHAR)均按VARCHAR置null
+					pst.setNull(paramIndex, java.sql.Types.VARCHAR);
+				} else {
+					pst.setNull(paramIndex, java.sql.Types.OTHER);
+				}
+			} else {
+				pst.setNull(paramIndex, jdbcType);
+			}
+		} else {
+			pst.setNull(paramIndex, java.sql.Types.NULL);
+		}
+	}
+
+	/**
+	 * update 2026-9-14 字符串与字符类型参数赋值(String/sql.Clob/Character)
+	 */
+	private static boolean setTextParam(Connection conn, DBProfile profile, final Integer dbType, PreparedStatement pst,
+			int jdbcType, int paramIndex, Object paramValue) throws SQLException {
 		String tmpStr;
 		if (paramValue instanceof java.lang.String) {
 			tmpStr = (String) paramValue;
@@ -418,7 +505,29 @@ public class SqlUtil {
 					pst.setString(paramIndex, tmpStr);
 				}
 			}
-		} else if (paramValue instanceof java.lang.Integer) {
+			return true;
+		}
+		// clob实参(以String形态绑定)
+		if (paramValue instanceof java.sql.Clob) {
+			tmpStr = clobToString((java.sql.Clob) paramValue);
+			pst.setString(paramIndex, tmpStr);
+			return true;
+		}
+		if (paramValue instanceof java.lang.Character) {
+			tmpStr = ((Character) paramValue).toString();
+			pst.setString(paramIndex, tmpStr);
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * update 2026-9-14
+	 * 数值类型参数赋值(Integer/BigDecimal/BigInteger/Double/Long/Float/Short/Byte)
+	 */
+	private static boolean setNumberParam(DBProfile profile, PreparedStatement pst, int jdbcType, int paramIndex,
+			Object paramValue) throws SQLException {
+		if (paramValue instanceof java.lang.Integer) {
 			// update 2023-6-2 兼容前端int对应数据库是boolean场景
 			Integer paramInt = (Integer) paramValue;
 			if (jdbcType == java.sql.Types.BOOLEAN) {
@@ -433,7 +542,78 @@ public class SqlUtil {
 			} else {
 				pst.setInt(paramIndex, paramInt);
 			}
-		} else if (paramValue instanceof java.time.LocalDateTime) {
+			return true;
+		}
+		if (paramValue instanceof java.math.BigDecimal) {
+			if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NCHAR
+					|| jdbcType == java.sql.Types.NVARCHAR) {
+				pst.setString(paramIndex, ((BigDecimal) paramValue).toPlainString());
+			} else {
+				pst.setBigDecimal(paramIndex, (BigDecimal) paramValue);
+			}
+			return true;
+		}
+		if (paramValue instanceof java.math.BigInteger) {
+			if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NCHAR
+					|| jdbcType == java.sql.Types.NVARCHAR) {
+				pst.setString(paramIndex, paramValue.toString());
+			} else {
+				pst.setBigDecimal(paramIndex, new BigDecimal(((BigInteger) paramValue)));
+			}
+			return true;
+		}
+		if (paramValue instanceof java.lang.Double) {
+			if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NCHAR
+					|| jdbcType == java.sql.Types.NVARCHAR) {
+				pst.setString(paramIndex, paramValue.toString());
+			} else {
+				pst.setDouble(paramIndex, ((Double) paramValue));
+			}
+			return true;
+		}
+		if (paramValue instanceof java.lang.Long) {
+			if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NCHAR
+					|| jdbcType == java.sql.Types.NVARCHAR) {
+				pst.setString(paramIndex, paramValue.toString());
+			} else {
+				pst.setLong(paramIndex, ((Long) paramValue));
+			}
+			return true;
+		}
+		if (paramValue instanceof java.lang.Float) {
+			if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NCHAR
+					|| jdbcType == java.sql.Types.NVARCHAR) {
+				pst.setString(paramIndex, paramValue.toString());
+			} else {
+				pst.setFloat(paramIndex, ((Float) paramValue));
+			}
+			return true;
+		}
+		if (paramValue instanceof java.lang.Short) {
+			if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NCHAR
+					|| jdbcType == java.sql.Types.NVARCHAR) {
+				pst.setString(paramIndex, paramValue.toString());
+			} else {
+				pst.setShort(paramIndex, (java.lang.Short) paramValue);
+			}
+			return true;
+		}
+		if (paramValue instanceof java.lang.Byte) {
+			pst.setByte(paramIndex, (Byte) paramValue);
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * update 2026-9-14 日期时间类型参数赋值(LocalDateTime/OffsetDateTime/ZonedDateTime/
+	 * LocalDate/sql.Timestamp/util.Date/sql.Date/LocalTime/sql.Time)。
+	 * 顺序敏感:sql.Timestamp必须在util.Date之前(子类),sql.Date与sql.Time分支位于
+	 * util.Date之后为既有现状(实际不可达的死分支),勿调整
+	 */
+	private static boolean setDateTimeParam(DBProfile profile, final Integer dbType, PreparedStatement pst,
+			int jdbcType, int paramIndex, Object paramValue) throws SQLException {
+		if (paramValue instanceof java.time.LocalDateTime) {
 			// 带时区的日期类型
 			if (jdbcType == java.sql.Types.TIMESTAMP_WITH_TIMEZONE) {
 				pst.setObject(paramIndex,
@@ -444,14 +624,18 @@ public class SqlUtil {
 			} else {
 				pst.setTimestamp(paramIndex, Timestamp.valueOf((LocalDateTime) paramValue));
 			}
-		} else if (paramValue instanceof OffsetDateTime) {
+			return true;
+		}
+		if (paramValue instanceof OffsetDateTime) {
 			if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NCHAR
 					|| jdbcType == java.sql.Types.NVARCHAR) {
 				pst.setString(paramIndex, ((OffsetDateTime) paramValue).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
 			} else {
 				pst.setObject(paramIndex, (OffsetDateTime) paramValue);
 			}
-		} else if (paramValue instanceof ZonedDateTime) {
+			return true;
+		}
+		if (paramValue instanceof ZonedDateTime) {
 			if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NCHAR
 					|| jdbcType == java.sql.Types.NVARCHAR) {
 				pst.setString(paramIndex, (((ZonedDateTime) paramValue).toOffsetDateTime())
@@ -459,21 +643,18 @@ public class SqlUtil {
 			} else {
 				pst.setObject(paramIndex, ((ZonedDateTime) paramValue).toOffsetDateTime());
 			}
-		} else if (paramValue instanceof BigDecimal) {
-			if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NCHAR
-					|| jdbcType == java.sql.Types.NVARCHAR) {
-				pst.setString(paramIndex, ((BigDecimal) paramValue).toPlainString());
-			} else {
-				pst.setBigDecimal(paramIndex, (BigDecimal) paramValue);
-			}
-		} else if (paramValue instanceof java.time.LocalDate) {
+			return true;
+		}
+		if (paramValue instanceof java.time.LocalDate) {
 			if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NCHAR
 					|| jdbcType == java.sql.Types.NVARCHAR) {
 				pst.setString(paramIndex, ((LocalDate) paramValue).format(DateTimeFormatter.ISO_LOCAL_DATE));
 			} else {
 				pst.setDate(paramIndex, java.sql.Date.valueOf((LocalDate) paramValue));
 			}
-		} else if (paramValue instanceof java.sql.Timestamp) {
+			return true;
+		}
+		if (paramValue instanceof java.sql.Timestamp) {
 			// 带时区的日期类型
 			if (jdbcType == java.sql.Types.TIMESTAMP_WITH_TIMEZONE) {
 				pst.setObject(paramIndex, (DateUtil.asLocalDateTime((java.sql.Timestamp) paramValue))
@@ -484,7 +665,9 @@ public class SqlUtil {
 			} else {
 				pst.setTimestamp(paramIndex, (java.sql.Timestamp) paramValue);
 			}
-		} else if (paramValue instanceof java.util.Date) {
+			return true;
+		}
+		if (paramValue instanceof java.util.Date) {
 			// 带时区的日期类型
 			if (jdbcType == java.sql.Types.TIMESTAMP_WITH_TIMEZONE) {
 				pst.setObject(paramIndex, (DateUtil.asLocalDateTime((Date) paramValue))
@@ -499,35 +682,57 @@ public class SqlUtil {
 					pst.setTimestamp(paramIndex, new Timestamp(((java.util.Date) paramValue).getTime()));
 				}
 			}
-		} else if (paramValue instanceof java.math.BigInteger) {
+			return true;
+		}
+		// 顺序敏感警告(见方法注释):sql.Date/sql.Time为util.Date之后的既有死分支,勿前移
+		if (paramValue instanceof java.sql.Date) {
 			if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NCHAR
 					|| jdbcType == java.sql.Types.NVARCHAR) {
-				pst.setString(paramIndex, paramValue.toString());
+				pst.setString(paramIndex, DateUtil.formatDate(paramValue, DateUtil.FORMAT.DATETIME_HORIZONTAL));
 			} else {
-				pst.setBigDecimal(paramIndex, new BigDecimal(((BigInteger) paramValue)));
+				pst.setDate(paramIndex, (java.sql.Date) paramValue);
 			}
-		} else if (paramValue instanceof java.lang.Double) {
+			return true;
+		}
+		if (paramValue instanceof java.time.LocalTime) {
 			if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NCHAR
 					|| jdbcType == java.sql.Types.NVARCHAR) {
-				pst.setString(paramIndex, paramValue.toString());
+				pst.setString(paramIndex, ((LocalTime) paramValue).format(DateTimeFormatter.ISO_LOCAL_TIME));
 			} else {
-				pst.setDouble(paramIndex, ((Double) paramValue));
+				pst.setTime(paramIndex, java.sql.Time.valueOf((LocalTime) paramValue));
 			}
-		} else if (paramValue instanceof java.lang.Long) {
+			return true;
+		}
+		if (paramValue instanceof java.sql.Time) {
 			if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NCHAR
 					|| jdbcType == java.sql.Types.NVARCHAR) {
-				pst.setString(paramIndex, paramValue.toString());
+				pst.setString(paramIndex, DateUtil.formatDate(paramValue, "HH:mm:ss"));
 			} else {
-				pst.setLong(paramIndex, ((Long) paramValue));
+				pst.setTime(paramIndex, (java.sql.Time) paramValue);
 			}
-		} else if (paramValue instanceof java.sql.Clob) {
-			tmpStr = clobToString((java.sql.Clob) paramValue);
-			pst.setString(paramIndex, tmpStr);
-		} else if (paramValue instanceof byte[]) {
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * update 2026-9-14 二进制与其余类型参数赋值
+	 * (byte[]/sql.Blob/Boolean/Object[]/Enum/Collection及未识别类型的setObject兜底)
+	 */
+	private static void setBinaryAndOtherParam(Connection conn, DBProfile profile, final Integer dbType,
+			PreparedStatement pst, int jdbcType, int paramIndex, Object paramValue) throws SQLException, IOException {
+		if (paramValue instanceof byte[]) {
 			if (jdbcType == java.sql.Types.BLOB) {
-				if (dbType == DBType.MOGDB || dbType == DBType.VASTBASE || dbType == DBType.OPENGAUSS
-						|| dbType == DBType.STARDB) {
-					pst.setBlob(paramIndex, new ByteArrayInputStream((byte[]) paramValue));
+				// update 2026-9-6
+				// 实测PG系:pgjdbc的createBlob抛SQLFeatureNotSupportedException(SQLSTATE 0A000),
+				// Hikari等连接池按SQLSTATE黑名单将连接标记为broken并关闭物理连接,导致"catch后setBytes兜底"
+				// 在已死连接上执行报"This connection has been closed.";openGauss系驱动的setBlob亦发送
+				// 大对象oid与bytea列不匹配。PG系bytea列原生接受setBytes,直接绑定不走createBlob/setBlob
+				// (gaussdb:真GaussDB Kernel JDBC驱动连openGauss实测同样bytea类型不匹配,2026-9-6补入)
+				if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.MOGDB
+						|| dbType == DBType.VASTBASE || dbType == DBType.OPENGAUSS || dbType == DBType.STARDB
+						|| dbType == DBType.GAUSSDB) {
+					pst.setBytes(paramIndex, (byte[]) paramValue);
 				} else {
 					Blob blob = null;
 					try {
@@ -544,14 +749,9 @@ public class SqlUtil {
 			} else {
 				pst.setBytes(paramIndex, (byte[]) paramValue);
 			}
-		} else if (paramValue instanceof java.lang.Float) {
-			if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NCHAR
-					|| jdbcType == java.sql.Types.NVARCHAR) {
-				pst.setString(paramIndex, paramValue.toString());
-			} else {
-				pst.setFloat(paramIndex, ((Float) paramValue));
-			}
-		} else if (paramValue instanceof java.sql.Blob) {
+			return;
+		}
+		if (paramValue instanceof java.sql.Blob) {
 			Blob blob = (java.sql.Blob) paramValue;
 			int size = (int) blob.length();
 			if (size > 0) {
@@ -559,14 +759,9 @@ public class SqlUtil {
 			} else {
 				pst.setBytes(paramIndex, new byte[0]);
 			}
-		} else if (paramValue instanceof java.sql.Date) {
-			if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NCHAR
-					|| jdbcType == java.sql.Types.NVARCHAR) {
-				pst.setString(paramIndex, DateUtil.formatDate(paramValue, DateUtil.FORMAT.DATETIME_HORIZONTAL));
-			} else {
-				pst.setDate(paramIndex, (java.sql.Date) paramValue);
-			}
-		} else if (paramValue instanceof java.lang.Boolean) {
+			return;
+		}
+		if (paramValue instanceof java.lang.Boolean) {
 			// update 2023-10-16 增强特殊情况下的兼容
 			if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.CHAR) {
 				pst.setString(paramIndex, ((Boolean) paramValue) ? "1" : "0");
@@ -576,45 +771,20 @@ public class SqlUtil {
 			} else {
 				pst.setBoolean(paramIndex, (Boolean) paramValue);
 			}
-		} else if (paramValue instanceof java.time.LocalTime) {
-			if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NCHAR
-					|| jdbcType == java.sql.Types.NVARCHAR) {
-				pst.setString(paramIndex, ((LocalTime) paramValue).format(DateTimeFormatter.ISO_LOCAL_TIME));
-			} else {
-				pst.setTime(paramIndex, java.sql.Time.valueOf((LocalTime) paramValue));
-			}
-		} else if (paramValue instanceof java.sql.Time) {
-			if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NCHAR
-					|| jdbcType == java.sql.Types.NVARCHAR) {
-				pst.setString(paramIndex, DateUtil.formatDate(paramValue, "HH:mm:ss"));
-			} else {
-				pst.setTime(paramIndex, (java.sql.Time) paramValue);
-			}
-		} else if (paramValue instanceof java.lang.Character) {
-			tmpStr = ((Character) paramValue).toString();
-			pst.setString(paramIndex, tmpStr);
-		} else if (paramValue instanceof java.lang.Short) {
-			if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NCHAR
-					|| jdbcType == java.sql.Types.NVARCHAR) {
-				pst.setString(paramIndex, paramValue.toString());
-			} else {
-				pst.setShort(paramIndex, (java.lang.Short) paramValue);
-			}
-		} else if (paramValue instanceof java.lang.Byte) {
-			pst.setByte(paramIndex, (Byte) paramValue);
-		} else if (paramValue instanceof Object[]) {
-			setArray(dbType, conn, pst, paramIndex, paramValue);
-		} // update 2023-08-02 增加默认的枚举类型处理
-		else if (paramValue instanceof Enum) {
+			return;
+		}
+		// update 2023-08-02 增加默认的枚举类型处理
+		if (paramValue instanceof Enum) {
 			if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NCHAR
 					|| jdbcType == java.sql.Types.NVARCHAR) {
 				pst.setString(paramIndex, BeanUtil.getEnumValue(paramValue).toString());
 			} else {
 				pst.setObject(paramIndex, BeanUtil.getEnumValue(paramValue));
 			}
+			return;
 		}
 		// update 2023-5-26 增加集合类型场景支持(对应数据库Array)
-		else if (paramValue instanceof Collection) {
+		if (paramValue instanceof Collection) {
 			Object[] values = ((Collection) paramValue).toArray();
 			// 集合为空，无法判断具体类型，设置为null
 			if (values.length == 0) {
@@ -634,22 +804,433 @@ public class SqlUtil {
 					pst.setNull(paramIndex, java.sql.Types.ARRAY);
 				}
 			}
+			return;
+		}
+		if (jdbcType != java.sql.Types.NULL) {
+			pst.setObject(paramIndex, paramValue, jdbcType);
 		} else {
-			if (jdbcType != java.sql.Types.NULL) {
-				pst.setObject(paramIndex, paramValue, jdbcType);
-			} else {
-				pst.setObject(paramIndex, paramValue);
-			}
+			pst.setObject(paramIndex, paramValue);
 		}
 	}
 
 	/**
-	 * @TODO setArray gaussdb 必须要通过conn构造Array
-	 * @param dbType
-	 * @param conn
-	 * @param pst
-	 * @param paramIndex
-	 * @param paramValue
+	 * vector向量类型参数赋值,统一转为'[1,2,3]'字符串形式(pgvector、oracle 23ai、mysql heatwave等均支持)
+	 * 
+	 * @param dbType     数据库类型，参见DataSourceUtils.DBType
+	 * @param pst        PreparedStatement预编译语句对象
+	 * @param paramIndex 参数位置下标(从1开始)
+	 * @param value      向量值，支持字符串、数组、集合或驱动专属向量对象
+	 * @throws SQLException
+	 */
+	private static void setVectorValue(DBProfile profile, PreparedStatement pst, int paramIndex, Object value)
+			throws SQLException {
+		int dbType = profile.getDbType();
+		String vectorStr = toVectorString(value);
+		// org.pgvector.PGvector、oracle.sql.VECTOR、PGobject等驱动专属对象直接交由驱动解析
+		if (vectorStr == null) {
+			pst.setObject(paramIndex, value);
+			return;
+		}
+		// postgresql系需要用PGobject明确指定向量类型,避免因参数按varchar发送导致无法隐式转换
+		// gaussdb企业版向量类型名为floatvector,其余为vector
+		// update 2026-9-10 vastbase G100 3.0(Build9)实测向量类型名同为floatvector:无vector别名
+		// (create table vector(3)报type "vector" does not exist,floatvector(3)建表/字符串隐式
+		// 写入/文本读回/'[..]'::floatvector cast+nvl包裹全部实测可行)
+		String pgTypeName = (profile.getDbType() == DBType.GAUSSDB || profile.getDbType() == DBType.VASTBASE)
+				? "floatvector"
+				: "vector";
+		// update 2026-9-6 实测PGobject不能跨驱动setObject(报Can't infer the SQL type),
+		// 按连接URL scheme选择同源驱动的PGobject;无匹配驱动类型对象时回退setObject(str,OTHER)
+		// 由服务器按目标列推断(此前按dbType+classpath静态探测,混合驱动场景会错配)
+		Object pgObject = profile.isPGFamily() ? getPGobjectByConn(pst, pgTypeName, vectorStr) : null;
+		if (pgObject != null) {
+			pst.setObject(paramIndex, pgObject);
+		} else if (profile.isPGFamily()) {
+			pst.setObject(paramIndex, vectorStr, java.sql.Types.OTHER);
+		} else {
+			pst.setString(paramIndex, vectorStr);
+		}
+	}
+
+	/**
+	 * update 2026-9-6 判定是否为PG系内核方言(PGobject类型包装的适用范围):
+	 * 非PG系(mysql/oracle/db2/sqlserver等)直接以字符串绑定,不得构造PGobject update 2026-9-16
+	 * 委托DBProfile.isPGFamily静态白名单(单一事实源,消除逐字拷贝)
+	 */
+	private static boolean isPGFamily(Integer dbType) {
+		return DBProfile.isPGFamily(dbType);
+	}
+
+	/**
+	 * update 2026-9-6 按连接实际驱动选择同源PGobject包装json/vector/geometry等PG系扩展类型:
+	 * 实测PGobject不能跨驱动setObject(pg驱动收到org.opengauss的PGobject报Can't infer the SQL
+	 * type, 反向同理);此前按dbType+classpath静态探测的分支在混合驱动场景(如classpath同时有postgresql与
+	 * opengauss-jdbc,连接走其一)会错配。以连接JDBC URL的scheme段为准(穿透Hikari等连接池代理),
+	 * 对应不上classpath中的驱动类时返回null,由调用方回退setObject(str,Types.OTHER)交服务器按列推断。
+	 * 
+	 * @param pst      预编译语句(取其连接的JDBC URL判定驱动来源)
+	 * @param typeName PG扩展类型名(json/jsonb/vector/geometry等)
+	 * @param value    字符串形式的类型值
+	 * @return 同源驱动的PGobject实例,null表示无匹配驱动类型对象
+	 */
+	public static Object getPGobjectByConn(PreparedStatement pst, String typeName, String value) {
+		try {
+			return getPGobjectByConn(pst.getConnection(), typeName, value);
+		} catch (Throwable e) {
+			return null;
+		}
+	}
+
+	/**
+	 * update 2026-9-6 统筹至DataSourceUtils.getDBProfile(以JDBC URL为key的进程级特征档案,
+	 * 含PGobjectHolder反射句柄缓存):取代本类此前独立的URL→holder缓存与解析,解析逻辑 (URL
+	 * scheme→同源驱动PGobject类)已迁DataSourceUtils.resolvePGobjectHolder,
+	 * PGobjectHolder类提升为DBProfile嵌套类
+	 */
+	public static Object getPGobjectByConn(Connection conn, String typeName, String value) {
+		try {
+			DBProfile dbProfile = DataSourceUtils.getDBProfile(conn);
+			if (dbProfile == null || dbProfile.getPgObjectHolder() == null) {
+				return null;
+			}
+			// PGobject实例不可跨参数复用(驱动持有引用至execute,批量addBatch复用会串值),每参数新建
+			return dbProfile.getPgObjectHolder().create(typeName, value);
+		} catch (Throwable e) {
+			return null;
+		}
+	}
+
+	/**
+	 * vector向量列回写(upsert等场景通过ResultSet回写)
+	 * 
+	 * @param dbType     数据库类型，参见DataSourceUtils.DBType
+	 * @param rs         ResultSet结果集对象
+	 * @param columnName 列名称
+	 * @param value      向量值，支持字符串、数组、集合或驱动专属向量对象
+	 * @throws SQLException
+	 */
+	public static void updateVectorValue(DBProfile profile, ResultSet rs, String columnName, Object value)
+			throws SQLException {
+		int dbType = profile.getDbType();
+		String vectorStr = toVectorString(value);
+		if (vectorStr == null) {
+			rs.updateObject(columnName, value);
+			return;
+		}
+		// gaussdb企业版向量类型名为floatvector,其余为vector
+		// update 2026-9-10 vastbase G100
+		// 3.0实测向量类型名同为floatvector(无vector别名),与setVectorValue同步
+		// update 2026-9-6 按连接URL scheme选择同源驱动PGobject(同setVectorValue,规避跨驱动错配)
+		String pgTypeName = (profile.getDbType() == DBType.GAUSSDB || profile.getDbType() == DBType.VASTBASE)
+				? "floatvector"
+				: "vector";
+		Object pgObject = (!profile.isPGFamily() || rs.getStatement() == null) ? null
+				: getPGobjectByConn(rs.getStatement().getConnection(), pgTypeName, vectorStr);
+		if (pgObject != null) {
+			rs.updateObject(columnName, pgObject);
+		} else if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11) {
+			// update 2026-9-8 实测oracle的rs回写updateObject(string)报ORA-17004,
+			// updateString可行(读回为科学计数法文本形态,与读链路一致)
+			rs.updateString(columnName, vectorStr);
+		} else if (dbType == DBType.SQLSERVER) {
+			// update 2026-9-8 实测sqlserver的vector rs回写:12.x驱动字符串报"未使用有效的
+			// 十六进制格式"、bytes报"BINARY到vector"均被拒(12.x驱动setter无vector类型
+			// 支持);13.4+驱动提供microsoft.sql.Vector类型,以反射构造Vector对象回写
+			// (维度数+FLOAT32+浮点数组);构造不可用(旧驱动)时回退字符串交由服务器报原始错误
+			Object mssqlVector = buildMssqlVector(vectorStr);
+			if (mssqlVector != null) {
+				rs.updateObject(columnName, mssqlVector);
+			} else {
+				rs.updateObject(columnName, vectorStr);
+			}
+		} else if ((dbType == DBType.MYSQL || dbType == DBType.MYSQL57) && !profile.isOceanBase()) {
+			// update 2026-9-7 实测mysql9的rs回写拒绝字符串(vector仅收内部格式:
+			// 维度个float32小端直排无头部),updateObject字符串报"cannot be converted";
+			// ob的mysql模式排除(vector为字符串隐式转换,updateObject文本直接可用)
+			byte[] vectorBytes = toVectorBytes(vectorStr);
+			if (vectorBytes != null) {
+				rs.updateBytes(columnName, vectorBytes);
+			} else {
+				rs.updateObject(columnName, vectorStr);
+			}
+		} else {
+			rs.updateObject(columnName, vectorStr);
+		}
+	}
+
+	/**
+	 * 将'[1,2,3]'形式向量文本编码为mysql内部格式字节(维度个float32小端直排,无头部,
+	 * 与getBytes读回形态一致),解析失败返回null
+	 * 
+	 * @param vectorStr 向量文本
+	 * @return 内部格式字节,格式不符返回null
+	 */
+	private static byte[] toVectorBytes(String vectorStr) {
+		try {
+			String str = vectorStr.trim();
+			if (!str.startsWith("[") || !str.endsWith("]")) {
+				return null;
+			}
+			String[] parts = str.substring(1, str.length() - 1).split(",");
+			java.nio.ByteBuffer buf = java.nio.ByteBuffer.allocate(parts.length * 4)
+					.order(java.nio.ByteOrder.LITTLE_ENDIAN);
+			for (String part : parts) {
+				buf.putFloat(Float.parseFloat(part.trim()));
+			}
+			return buf.array();
+		} catch (Exception e) {
+			return null;
+		}
+	}
+
+	/**
+	 * 将vector向量值转为'[1,2,3]'形式的字符串
+	 * 
+	 * @param value 向量值，支持字符串、数组、集合类型
+	 * @return 返回null表示属于驱动专属向量对象(如org.pgvector.PGvector、oracle.sql.VECTOR),应直接setObject透传
+	 */
+	private static String toVectorString(Object value) {
+		if (value instanceof String) {
+			return (String) value;
+		}
+		StringBuilder buf = new StringBuilder("[");
+		boolean hasElement = false;
+		if (value instanceof Collection) {
+			for (Object item : (Collection) value) {
+				bufAppendVectorElement(buf, hasElement, item);
+				hasElement = true;
+			}
+		} else if (value != null && value.getClass().isArray()) {
+			int size = java.lang.reflect.Array.getLength(value);
+			for (int i = 0; i < size; i++) {
+				bufAppendVectorElement(buf, hasElement, java.lang.reflect.Array.get(value, i));
+				hasElement = true;
+			}
+		} else {
+			return null;
+		}
+		buf.append("]");
+		return buf.toString();
+	}
+
+	/**
+	 * 向字符串缓冲中追加vector单个元素(浮点数避免科学计数法表示)
+	 * 
+	 * @param buf        字符串缓冲区
+	 * @param hasElement 是否已有前置元素(决定是否先追加逗号分隔符)
+	 * @param item       向量的单个元素值，null抛出IllegalArgumentException
+	 */
+	private static void bufAppendVectorElement(StringBuilder buf, boolean hasElement, Object item) {
+		if (item == null) {
+			throw new IllegalArgumentException("the vector type value contains null elements, please check!");
+		}
+		if (hasElement) {
+			buf.append(",");
+		}
+		if (item instanceof Float) {
+			// 通过Float.toString取最短精度表示(避免float提升为double产生精度尾巴),再转为非科学计数法
+			buf.append(new BigDecimal(Float.toString((Float) item)).toPlainString());
+		} else if (item instanceof Double) {
+			buf.append(new BigDecimal(Double.toString((Double) item)).toPlainString());
+		} else if (item instanceof BigDecimal) {
+			buf.append(((BigDecimal) item).toPlainString());
+		} else {
+			buf.append(item.toString());
+		}
+	}
+
+	/**
+	 * geometry空间类型参数赋值,统一以WKT字符串为媒介:postgresql系通过PGobject包装,
+	 * mysql、h2等setString隐式转换;oracle由驱动层构造SDO_GEOMETRY STRUCT绑定
+	 * (SQL层SDO_UTIL.FROM_WKTGEOMETRY遇null参数报ORA-29532且无法覆盖insert/update,
+	 * 2026-9-6起废弃SQL层包装,insert/update/merge共用本绑定逻辑), sqlserver需SQL层cast(? as
+	 * geometry)配合
+	 *
+	 * @param dbType     数据库类型，参见DataSourceUtils.DBType
+	 * @param pst        PreparedStatement预编译语句对象
+	 * @param paramIndex 参数位置下标(从1开始)
+	 * @param value      空间类型值，支持WKT字符串、JTS Geometry或驱动专属对象
+	 * @throws SQLException
+	 */
+	private static void setGeometryValue(DBProfile profile, PreparedStatement pst, int paramIndex, Object value)
+			throws SQLException {
+		int dbType = profile.getDbType();
+		String geomStr = toGeometryString(value);
+		// PGgeometry等驱动专属对象直接透传
+		if (geomStr == null) {
+			pst.setObject(paramIndex, value);
+			return;
+		}
+		// update 2026-9-6 按连接URL scheme选择同源驱动PGobject(同setVectorValue,规避跨驱动错配)
+		Object pgObject = profile.isPGFamily() ? getPGobjectByConn(pst, "geometry", geomStr) : null;
+		if (pgObject != null) {
+			pst.setObject(paramIndex, pgObject);
+		} else if (profile.isPGFamily()) {
+			pst.setObject(paramIndex, geomStr, java.sql.Types.OTHER);
+		} else if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11) {
+			// SDO_GEOMETRY不接受VARCHAR隐式转换(实测ORA-00932),以WKT解析编码后构造驱动STRUCT绑定
+			Object sdoValue = buildOracleSdo(pst.getConnection(), geomStr);
+			if (sdoValue != null) {
+				pst.setObject(paramIndex, sdoValue);
+			} else {
+				// 无ojdbc/jts或无法识别为空间值时回退setString,交由数据库暴露原始错误
+				pst.setString(paramIndex, geomStr);
+			}
+		} else {
+			pst.setString(paramIndex, geomStr);
+		}
+	}
+
+	/**
+	 * 将WKT字符串解析编码为oracle.sql.STRUCT(SDO_GEOMETRY)
+	 *
+	 * @param conn    数据库连接
+	 * @param geomStr WKT/EWKT字符串
+	 * @return STRUCT实例,解析或构造失败返回null
+	 */
+	private static Object buildOracleSdo(Connection conn, String geomStr) {
+		Object[] sdoArgs = GeometryTypeUtil.toSdoAttributes(geomStr);
+		if (sdoArgs == null) {
+			return null;
+		}
+		return OracleSdoUtil.buildSdoGeometry(conn, (Integer) sdoArgs[0], (Integer) sdoArgs[1], (int[]) sdoArgs[2],
+				(double[]) sdoArgs[3]);
+	}
+
+	/**
+	 * geometry空间列回写(upsert等场景通过ResultSet回写)
+	 * 
+	 * @param dbType     数据库类型，参见DataSourceUtils.DBType
+	 * @param rs         ResultSet结果集对象
+	 * @param columnName 列名称
+	 * @param value      空间类型值，支持WKT字符串、JTS Geometry或驱动专属对象
+	 * @throws SQLException
+	 */
+	public static void updateGeometryValue(DBProfile profile, ResultSet rs, String columnName, Object value)
+			throws SQLException {
+		int dbType = profile.getDbType();
+		String geomStr = toGeometryString(value);
+		if (geomStr == null) {
+			rs.updateObject(columnName, value);
+			return;
+		}
+		// update 2026-9-6 按连接URL scheme选择同源驱动PGobject(同setVectorValue,规避跨驱动错配)
+		Object pgObject = profile.isPGFamily()
+				? getPGobjectByConn(rs.getStatement().getConnection(), "geometry", geomStr)
+				: null;
+		if (pgObject != null) {
+			rs.updateObject(columnName, pgObject);
+		} else if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11) {
+			// 同setGeometryValue,oracle以驱动层STRUCT绑定,string直写会报ORA-00932
+			Object sdoValue = buildOracleSdo(rs.getStatement().getConnection(), geomStr);
+			if (sdoValue != null) {
+				rs.updateObject(columnName, sdoValue);
+			} else {
+				rs.updateObject(columnName, geomStr);
+			}
+		} else if (dbType == DBType.SQLSERVER) {
+			// update 2026-9-8 实测rs回写:字符串报"未使用有效的十六进制格式";驱动内部
+			// Geometry对象updateObject报"GEOMETRY到udt"转换不被setter识别;以
+			// Geometry.parse(wkt).serialize()产内部格式字节经updateBytes回写(实测
+			// updateRow落库STAsText正确);序列化不可用时回退字符串交由服务器报原始错误
+			byte[] mssqlGeomBytes = buildMssqlGeometryBytes(geomStr);
+			if (mssqlGeomBytes != null) {
+				rs.updateBytes(columnName, mssqlGeomBytes);
+			} else {
+				rs.updateObject(columnName, geomStr);
+			}
+		} else if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.OCEANBASE
+				|| profile.isOceanBase()) {
+			// update 2026-9-7 实测mysql9的rs回写拒绝字符串(geometry仅收内部格式:
+			// 4字节小端SRID前缀+小端WKB),编码失败回退字符串交由服务器报原始错误;
+			// update 2026-9-8 实测ob同样:rs回写字符串报"Cannot get geometry object",
+			// 内部格式字节updateBytes回写实测落库正确(ST_AsText回读一致),ob纳入本分支
+			// update 2026-9-9 编码下沉JtsGeometryCodec经hasJts门控(本类不得含JTS符号引用)
+			byte[] geomBytes = GeometryTypeUtil.wktToMysqlInternalBytes(geomStr);
+			if (geomBytes != null) {
+				rs.updateBytes(columnName, geomBytes);
+			} else {
+				rs.updateObject(columnName, geomStr);
+			}
+		} else {
+			rs.updateObject(columnName, geomStr);
+		}
+	}
+
+	/**
+	 * 以mssql-jdbc 13.4+内置的microsoft.sql.Vector构造类型化向量对象(rs回写用):
+	 * Vector(dimensionCount, VectorDimensionType.FLOAT32, Float[]);12.x驱动无此类
+	 * (setter对字符串/字节均拒vector列),反射构造失败返回null由调用方回退
+	 *
+	 * @param vectorStr 向量文本形如[1,2,3]
+	 * @return microsoft.sql.Vector实例,驱动不支持或解析失败返回null
+	 */
+	private static Object buildMssqlVector(String vectorStr) {
+		try {
+			if (MSSQL_VECTOR_CONSTRUCTOR == null) {
+				return null;
+			}
+			String body = vectorStr.trim();
+			if (body.startsWith("[")) {
+				body = body.substring(1);
+			}
+			if (body.endsWith("]")) {
+				body = body.substring(0, body.length() - 1);
+			}
+			String[] parts = body.split(",");
+			int n = parts.length;
+			Float[] data = new Float[n];
+			for (int i = 0; i < n; i++) {
+				data[i] = Float.parseFloat(parts[i].trim());
+			}
+			return MSSQL_VECTOR_CONSTRUCTOR.newInstance(n, MSSQL_VECTOR_FLOAT32, data);
+		} catch (Exception e) {
+			return null;
+		}
+	}
+
+	/**
+	 * 以mssql-jdbc内置的com.microsoft.sqlserver.jdbc.Geometry.parse将WKT文本构造为
+	 * 内部格式字节(rs回写用),Geometry对象直接updateObject报"GEOMETRY到udt"不被setter
+	 * 识别,须serialize()产字节经updateBytes回写;驱动不在classpath或解析失败返回null
+	 *
+	 * @param wkt WKT文本
+	 * @return 内部格式字节,失败返回null
+	 */
+	private static byte[] buildMssqlGeometryBytes(String wkt) {
+		try {
+			if (MSSQL_GEOMETRY_PARSE == null || MSSQL_GEOMETRY_SERIALIZE == null) {
+				return null;
+			}
+			Object geom = MSSQL_GEOMETRY_PARSE.invoke(null, wkt);
+			return (byte[]) MSSQL_GEOMETRY_SERIALIZE.invoke(geom);
+		} catch (Exception e) {
+			return null;
+		}
+	}
+
+	/**
+	 * 提取geometry值的WKT字符串:字符串原样透传,JTS Geometry对象转WKT
+	 * (jts-core为可选依赖,无JTS或非Geometry对象返回null交由驱动透传)
+	 * 
+	 * @param value 空间类型值，可为WKT字符串、JTS Geometry或驱动专属对象
+	 * @return WKT字符串，无法转换时返回null
+	 */
+	private static String toGeometryString(Object value) {
+		if (value instanceof String) {
+			return (String) value;
+		}
+		return GeometryTypeUtil.toWKT(value);
+	}
+
+	/**
+	 * setArray gaussdb 必须要通过conn构造Array
+	 * 
+	 * @param dbType     数据库类型，参见DataSourceUtils.DBType
+	 * @param conn       数据库连接对象(gaussdb系构造Array必须)
+	 * @param pst        PreparedStatement预编译语句对象
+	 * @param paramIndex 参数位置下标(从1开始)
+	 * @param paramValue 数组类型参数值(如Integer[]、String[])
 	 * @throws SQLException
 	 */
 	private static void setArray(Integer dbType, Connection conn, PreparedStatement pst, int paramIndex,
@@ -684,17 +1265,20 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @todo <b>提供数据查询结果集转java对象的反射处理，以java VO集合形式返回</b>
-	 * @param typeHandler
-	 * @param rs
-	 * @param voClass
-	 * @param ignoreAllEmptySet
-	 * @param columnFieldMap
-	 * @return
+	 * 提供数据查询结果集转java对象的反射处理，以java VO集合形式返回
+	 * 
+	 * @param dbType            数据库类型，参见DataSourceUtils.DBType(扩展类型列读取策略分派用)
+	 * @param typeHandler       自定义类型处理器，非null时优先通过其完成列值转换
+	 * @param rs                ResultSet结果集对象
+	 * @param voClass           目标VO对象类型
+	 * @param ignoreAllEmptySet true表示整行数据全为空值时跳过不构造VO对象
+	 * @param columnFieldMap    数据库列名与对象属性的对照映射，null或空时按列名去除下划线映射
+	 * @return VO对象集合
 	 * @throws Exception
 	 */
-	private static List reflectResultToVO(TypeHandler typeHandler, DecryptHandler decryptHandler, ResultSet rs,
-			Class voClass, boolean ignoreAllEmptySet, HashMap<String, String> columnFieldMap) throws Exception {
+	private static List reflectResultToVO(Integer dbType, TypeHandler typeHandler, DecryptHandler decryptHandler,
+			ResultSet rs, Class voClass, boolean ignoreAllEmptySet, HashMap<String, String> columnFieldMap)
+			throws Exception {
 		List resultList = new ArrayList();
 		// 提取数据预警阈值
 		int warnThresholds = SqlToyConstants.getWarnThresholds();
@@ -708,14 +1292,20 @@ public class SqlUtil {
 			maxThresholds = warnThresholds;
 		}
 		// rs 中的列名称
-		String[] columnNames = getColumnLabels(rs.getMetaData());
+		String[][] columnLabelAndTypes = getColumnLabelAndTypes(rs.getMetaData());
+		String[] columnNames = columnLabelAndTypes[0];
+		String[] columnTypes = columnLabelAndTypes[1];
+		// update 2026-9-9 复用Map路径(processResultRow)的列读取策略预分类:oracle的JSON/VECTOR列
+		// getObject直接抛ORA-17004/18722须TEXT_READ文本化读取,sqlserver/mysql系的vector/geometry
+		// 读回byte[]须EXT_BYTE按列类型解码,此前VO直映射路径未接入导致查询失败或byte[]静默乱码
+		int[] columnKinds = ResultUtils.buildColumnKinds(dbType, columnTypes);
 		// 组织vo中对应的属性
 		String[] fields = new String[columnNames.length];
 		// update 2020-12-24 增加映射对象时属性映射关系提取
 		boolean hasMap = (columnFieldMap == null || columnFieldMap.isEmpty()) ? false : true;
 		// 剔除下划线
 		for (int i = 0; i < fields.length; i++) {
-			fields[i] = columnNames[i].toLowerCase();
+			fields[i] = columnNames[i].toLowerCase(Locale.ROOT);
 			// 存在pojo中属性跟数据库字段名称有对照映射关系的
 			if (hasMap) {
 				if (columnFieldMap.containsKey(fields[i])) {
@@ -732,14 +1322,41 @@ public class SqlUtil {
 		// set方法对应参数的类型,并全部转为小写
 		String[] propTypes = new String[setMethods.length];
 		int[] propTypeValues = new int[setMethods.length];
+		int[] propertySqlTypes = new int[setMethods.length];
 		Class[] genericTypes = new Class[setMethods.length];
+		Map<String, Integer> fieldTypeMap = BeanUtil.getClassFieldMap(voClass, fields);
 		Type[] types;
 		Class methodType;
+		String tmpStr;
 		for (int i = 0; i < propTypes.length; i++) {
+			propertySqlTypes[i] = java.sql.Types.OTHER;
 			if (setMethods[i] != null) {
 				methodType = setMethods[i].getParameterTypes()[0];
 				propTypes[i] = methodType.getTypeName();
 				propTypeValues[i] = DataType.getType(methodType);
+				if (fields[i] != null) {
+					tmpStr = fields[i].toLowerCase(Locale.ROOT);
+					if (fieldTypeMap.containsKey(tmpStr)) {
+						propertySqlTypes[i] = fieldTypeMap.get(tmpStr);
+					} else if (columnTypes[i] != null) {
+						tmpStr = columnTypes[i].toUpperCase(Locale.ROOT);
+						if (tmpStr.equals("JSON")) {
+							propertySqlTypes[i] = JdbcTypes.JSON;
+						} else if (tmpStr.equals("JSONB")) {
+							propertySqlTypes[i] = JdbcTypes.JSONB;
+						} else if (tmpStr.equals("GEOMETRY")) {
+							propertySqlTypes[i] = JdbcTypes.GEOMETRY;
+						} else if (tmpStr.equals("UUID")) {
+							propertySqlTypes[i] = JdbcTypes.UUID;
+						} else if (tmpStr.equals("VECTOR") || tmpStr.equals("FLOATVECTOR")) {
+							// floatvector为gaussdb企业版的向量类型名
+							propertySqlTypes[i] = JdbcTypes.VECTOR;
+						} else if (GeometryTypeUtil.isGeometryTypeName(tmpStr)) {
+							// geometry空间类型(含mysql的POINT等子类型名)
+							propertySqlTypes[i] = JdbcTypes.GEOMETRY;
+						}
+					}
+				}
 				types = setMethods[i].getGenericParameterTypes();
 				if (types.length > 0 && (types[0] instanceof ParameterizedType)) {
 					genericTypes[i] = (Class) ((ParameterizedType) types[0]).getActualTypeArguments()[0];
@@ -750,8 +1367,9 @@ public class SqlUtil {
 		// 循环通过java reflection将rs中的值映射到VO中
 		Object rowData;
 		while (rs.next()) {
-			rowData = reflectResultRowToVOClass(typeHandler, decryptHandler, rs, columnNames, setMethods,
-					propTypeValues, propTypes, genericTypes, voClass, ignoreAllEmptySet);
+			rowData = reflectResultRowToVOClass(dbType, typeHandler, decryptHandler, rs, columnNames, columnTypes,
+					columnKinds, propertySqlTypes, setMethods, propTypeValues, propTypes, genericTypes, voClass,
+					ignoreAllEmptySet);
 			if (rowData != null) {
 				resultList.add(rowData);
 			}
@@ -768,35 +1386,42 @@ public class SqlUtil {
 		}
 		// 提醒实际提取数量
 		if (warnLimit) {
-			logger.warn("Large Result:class={},total:{}>={}" + index, voClass.getName(), index, warnThresholds);
+			logger.warn("Large Result:class={},total={}>={}", voClass.getName(), index, warnThresholds);
 		}
 		// 提醒实际提取数量
 		if (maxLimit) {
-			logger.warn("Large Result:class={},total:{}>={}" + index, voClass.getName(), index, maxThresholds);
+			logger.warn("Large Result:class={},total:{}>={}", voClass.getName(), index, maxThresholds);
 		}
 		return resultList;
 	}
 
 	/**
-	 * @todo 提供数据查询结果集转java对象的反射处理，以java VO集合形式返回
-	 * @param typeHandler
+	 * 提供数据查询结果集转java对象的反射处理，以java VO集合形式返回
+	 * 
+	 * @param dbType            数据库类型，参见DataSourceUtils.DBType(扩展类型列读取策略与归一化分派用)
+	 * @param typeHandler       自定义类型处理器，非null时优先通过其完成列值转换
 	 * @param decryptHandler    解密
-	 * @param rs
-	 * @param columnLabels
-	 * @param setMethods
+	 * @param rs                当前行ResultSet结果集(已调用next定位)
+	 * @param columnLabels      结果集列名称数组(原始label未做大小写处理,与rs列下标i+1一一对齐,仅用于解密列判断)
+	 * @param columnTypes       列元数据类型名数组(与columnLabels同下标,EXT_BYTE列解码判定用)
+	 * @param columnKinds       列读取策略标记数组(ResultUtils.buildColumnKinds预分类结果)
+	 * @param propertySqlTypes  jdbcTypes.JSON 等
+	 * @param setMethods        VO属性对应的setter方法数组，与列一一对应
 	 * @param propTypeValues    对应类型int值
 	 * @param propTypes         没有做大小写处理
-	 * @param genericTypes
-	 * @param voClass
-	 * @param ignoreAllEmptySet
-	 * @return
+	 * @param genericTypes      setter参数的泛型实际类型数组(如List<String>的String)
+	 * @param voClass           目标VO对象类型
+	 * @param ignoreAllEmptySet true表示整行数据全为空值时返回null不构造VO对象
+	 * @return 当前行映射成的VO对象，整行为空且ignoreAllEmptySet为true返回null
 	 * @throws Exception
 	 */
-	private static Object reflectResultRowToVOClass(TypeHandler typeHandler, DecryptHandler decryptHandler,
-			ResultSet rs, String[] columnLabels, Method[] setMethods, int[] propTypeValues, String[] propTypes,
-			Class[] genericTypes, Class voClass, boolean ignoreAllEmptySet) throws Exception {
+	private static Object reflectResultRowToVOClass(Integer dbType, TypeHandler typeHandler,
+			DecryptHandler decryptHandler, ResultSet rs, String[] columnLabels, String[] columnTypes, int[] columnKinds,
+			int[] propertySqlTypes, Method[] setMethods, int[] propTypeValues, String[] propTypes, Class[] genericTypes,
+			Class voClass, boolean ignoreAllEmptySet) throws Exception {
 		// 根据匹配的字段通过java reflection将rs中的值映射到VO中
-		Object bean = voClass.getDeclaredConstructor().newInstance();
+		// update 2026-9-14 走BeanUtil.newBean的无参构造器缓存(原逐行getDeclaredConstructor做反射成员查找)
+		Object bean = BeanUtil.newBean(voClass);
 		Object fieldValue;
 		boolean allNull = true;
 		Method method;
@@ -804,20 +1429,32 @@ public class SqlUtil {
 		String typeName;
 		String label;
 		int typeValue;
+		int columnJdbcType;
 		for (int i = 0, n = columnLabels.length; i < n; i++) {
 			label = columnLabels[i];
+			columnJdbcType = propertySqlTypes[i];
 			method = setMethods[i];
 			typeName = propTypes[i];
 			typeValue = propTypeValues[i];
 			if (method != null) {
-				fieldValue = rs.getObject(label);
+				// update 2026-9-8 按下标取值(与labelNames同下标,驱动按下标直达,按label需查找)
+				// fieldValue = rs.getObject(label);
+				// update 2026-9-9 TEXT_READ列文本化读取(oracle的JSON/VECTOR列getObject直接抛错),
+				// 取值后统一经扩展类型归一化(byte[]形态按列类型解码),与Map路径processResultRow对齐
+				int kind = (columnKinds == null) ? ResultUtils.COLUMN_NORMAL : columnKinds[i];
+				fieldValue = (kind == ResultUtils.COLUMN_TEXT_READ) ? rs.getString(i + 1) : rs.getObject(i + 1);
 				if (null != fieldValue) {
+					// update 2026-9-11 java.sql.Array经normalizeExtTypeValue归一为原生java数组
+					// (保结构),目标形态转换由下方convertType按属性类型分派(String→'[a,b]'文本、
+					// List/Set/数组→元素级转换),此处无需按目标类型区分
+					fieldValue = ResultUtils.normalizeExtTypeValue(fieldValue, dbType,
+							(kind == ResultUtils.COLUMN_EXT_BYTE) ? columnTypes[i] : null);
 					if (decryptHandler != null) {
 						fieldValue = decryptHandler.decrypt(label, fieldValue);
 					}
 					allNull = false;
-					method.invoke(bean,
-							BeanUtil.convertType(typeHandler, fieldValue, typeValue, typeName, genericTypes[i]));
+					method.invoke(bean, BeanUtil.convertType(typeHandler, fieldValue, columnJdbcType, typeValue,
+							typeName, genericTypes[i]));
 				}
 			}
 		}
@@ -828,27 +1465,30 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @TODO 获取ResultSet 里面的列名称
-	 * @param rsmd
-	 * @return
+	 * 获取ResultSet 里面的列名称和类型
+	 * 
+	 * @param rsmd 结果集元数据对象
+	 * @return 二维数组，[0]为列名称数组，[1]为列类型名称数组
 	 * @throws SQLException
 	 */
-	private static String[] getColumnLabels(ResultSetMetaData rsmd) throws SQLException {
+	private static String[][] getColumnLabelAndTypes(ResultSetMetaData rsmd) throws SQLException {
 		int fieldCnt = rsmd.getColumnCount();
-		String[] columnNames = new String[fieldCnt];
+		String[][] columnLabelAndTypes = new String[2][fieldCnt];
 		for (int i = 1; i < fieldCnt + 1; i++) {
-			columnNames[i - 1] = rsmd.getColumnLabel(i);
+			columnLabelAndTypes[0][i - 1] = rsmd.getColumnLabel(i);
+			columnLabelAndTypes[1][i - 1] = rsmd.getColumnTypeName(i);
 		}
-		return columnNames;
+		return columnLabelAndTypes;
 	}
 
 	/**
-	 * @todo 提供统一的ResultSet, PreparedStatemenet 关闭功能
-	 * @param userData
-	 * @param pst
-	 * @param rs
-	 * @param preparedStatementResultHandler
-	 * @return
+	 * 提供统一的ResultSet, PreparedStatemenet 关闭功能
+	 * 
+	 * @param userData                       传给回调处理器的输入数据
+	 * @param pst                            PreparedStatement预编译语句对象，执行完毕后关闭
+	 * @param rs                             ResultSet结果集对象，执行完毕后关闭
+	 * @param preparedStatementResultHandler 结果处理回调接口，执行具体业务并返回结果
+	 * @return 回调处理器返回的处理结果
 	 * @throws Exception
 	 */
 	public static Object preparedStatementProcess(Object userData, PreparedStatement pst, ResultSet rs,
@@ -856,33 +1496,39 @@ public class SqlUtil {
 		try {
 			preparedStatementResultHandler.execute(userData, pst, rs);
 		} catch (Exception se) {
-			se.printStackTrace();
 			logger.error(se.getMessage(), se);
 			throw se;
 		} finally {
+			// update 2026-9-14 rs与pst关闭拆为独立try-catch:原合并形态下rs.close()抛SQLException会跳过
+			// pst.close(),statement未释放直至连接归还(同文件getSequenceValue已是独立关闭范式)
 			try {
 				if (rs != null) {
 					rs.close();
 					rs = null;
 				}
+			} catch (SQLException se) {
+				logger.error("failed to close the resultSet in preparedStatementProcess!", se);
+			}
+			try {
 				if (pst != null) {
 					pst.close();
 					pst = null;
 				}
 			} catch (SQLException se) {
-				se.printStackTrace();
+				logger.error("preparedStatementProcess method execution failed", se);
 			}
 		}
 		return preparedStatementResultHandler.getResult();
 	}
 
 	/**
-	 * @todo 提供统一的ResultSet, callableStatement 关闭功能
-	 * @param userData
-	 * @param pst
-	 * @param rs
-	 * @param callableStatementResultHandler
-	 * @return
+	 * 提供统一的ResultSet, callableStatement 关闭功能
+	 * 
+	 * @param userData                       传给回调处理器的输入数据
+	 * @param pst                            CallableStatement存储过程调用语句对象，执行完毕后关闭
+	 * @param rs                             ResultSet结果集对象，执行完毕后关闭
+	 * @param callableStatementResultHandler 结果处理回调接口，执行具体业务并返回结果
+	 * @return 回调处理器返回的处理结果
 	 * @throws Exception
 	 */
 	public static Object callableStatementProcess(Object userData, CallableStatement pst, ResultSet rs,
@@ -890,30 +1536,36 @@ public class SqlUtil {
 		try {
 			callableStatementResultHandler.execute(userData, pst, rs);
 		} catch (Exception se) {
-			se.printStackTrace();
 			logger.error(se.getMessage(), se);
 			throw se;
 		} finally {
+			// update 2026-9-14 与preparedStatementProcess同步:rs与pst关闭拆为独立try-catch,原合并形态下
+			// rs.close()抛SQLException会跳过pst.close(),statement未释放直至连接归还
 			try {
 				if (rs != null) {
 					rs.close();
 					rs = null;
 				}
+			} catch (SQLException se) {
+				logger.error("failed to close the resultSet in callableStatementProcess!", se);
+			}
+			try {
 				if (pst != null) {
 					pst.close();
 					pst = null;
 				}
 			} catch (SQLException se) {
-				se.printStackTrace();
+				logger.error("callableStatementProcess method execution failed", se);
 			}
 		}
 		return callableStatementResultHandler.getResult();
 	}
 
 	/**
-	 * @todo 剔除sql中的注释(提供三种形态的注释剔除)
-	 * @param sql
-	 * @return
+	 * 剔除sql中的注释(提供三种形态的注释剔除)
+	 * 
+	 * @param sql 原始sql语句，空白时原样返回
+	 * @return 剔除<!-- -->、斜杠星注释和--三种注释(保留oracle hint)并去除末尾分号后的sql语句
 	 */
 	public static String clearMark(String sql) {
 		if (StringUtil.isBlank(sql)) {
@@ -996,10 +1648,11 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @TODO 找到行注释的开始位置
-	 * @param sql
-	 * @param lineMaskIndex
-	 * @return
+	 * 找到行注释的开始位置
+	 * 
+	 * @param sql           单行sql内容
+	 * @param lineMaskIndex --注释符号的位置
+	 * @return 行注释的有效开始位置(排除引号和hint注释内部的--)，位于引号内时返回实际注释起始下标
 	 */
 	private static int findStartLineMask(String sql, int lineMaskIndex) {
 		// 单引号、双引号、hint注释结尾 的最后位置
@@ -1014,7 +1667,7 @@ public class SqlUtil {
 		while (start != -1) {
 			symMarkEnd = StringUtil.getSymMarkIndex("'", "'", sql, start);
 			if (symMarkEnd != -1) {
-				sql = sql.substring(0, start).concat(loopBlank(symMarkEnd - start + 1))
+				sql = sql.substring(0, start).concat(repeatBlank(symMarkEnd - start + 1))
 						.concat(sql.substring(symMarkEnd + 1));
 				start = StringUtil.matchIndex(sql, "\'");
 			} else {
@@ -1026,7 +1679,7 @@ public class SqlUtil {
 		while (start != -1) {
 			symMarkEnd = StringUtil.getSymMarkIndex("\"", "\"", sql, start);
 			if (symMarkEnd != -1) {
-				sql = sql.substring(0, start).concat(loopBlank(symMarkEnd - start + 1))
+				sql = sql.substring(0, start).concat(repeatBlank(symMarkEnd - start + 1))
 						.concat(sql.substring(symMarkEnd + 1));
 				start = StringUtil.matchIndex(sql, "\"");
 			} else {
@@ -1038,7 +1691,7 @@ public class SqlUtil {
 		while (start != -1) {
 			symMarkEnd = StringUtil.getSymMarkIndex("/*", "*/", sql, start);
 			if (symMarkEnd != -1) {
-				sql = sql.substring(0, start).concat(loopBlank(symMarkEnd - start + 2))
+				sql = sql.substring(0, start).concat(repeatBlank(symMarkEnd - start + 2))
 						.concat(sql.substring(symMarkEnd + 2));
 				start = sql.indexOf("/*");
 			} else {
@@ -1048,40 +1701,45 @@ public class SqlUtil {
 		return sql.indexOf("--");
 	}
 
-	private static String loopBlank(int size) {
-		if (size == 0) {
+	/**
+	 * 将剔除掉n的字符串替换为等长度的空白字符串，避免对sql解析造成影响
+	 * 
+	 * @param size 需要生成的空白字符个数
+	 * @return 指定个数的空白字符串，size小于等于0返回空字符串
+	 */
+	private static String repeatBlank(int size) {
+		if (size <= 0) {
 			return "";
 		}
-		StringBuilder result = new StringBuilder();
-		for (int i = 0; i < size; i++) {
-			result.append(BLANK);
-		}
-		return result.toString();
+		// Java 11+
+		return BLANK.repeat(size);
 	}
 
 	/**
-	 * @todo <b>获取单条记录</b>
-	 * @param typeHandler
-	 * @param queryStr
-	 * @param params
-	 * @param voClass
-	 * @param rowCallbackHandler
-	 * @param conn
-	 * @param dbType
-	 * @param ignoreAllEmptySet
-	 * @param colFieldMap
-	 * @return
+	 * 获取单条记录
+	 * 
+	 * @param typeHandler        自定义类型处理器，非null时优先通过其完成列值转换
+	 * @param queryStr           查询sql语句
+	 * @param params             sql中?对应的参数值数组
+	 * @param voClass            目标VO对象类型
+	 * @param rowCallbackHandler 行数据处理回调接口，非null时逐行回调处理
+	 * @param conn               数据库连接对象
+	 * @param dbType             数据库类型，参见DataSourceUtils.DBType
+	 * @param ignoreAllEmptySet  true表示整行数据全为空值时跳过不构造对象
+	 * @param colFieldMap        数据库列名与对象属性的对照映射，null时按列名去除下划线映射
+	 * @return 单条记录对应的VO对象，无数据返回null，结果多于一条抛出IllegalAccessException
 	 * @throws Exception
 	 */
 	public static Object loadByJdbcQuery(TypeHandler typeHandler, final String queryStr, final Object[] params,
 			final Class voClass, final RowCallbackHandler rowCallbackHandler, final Connection conn,
-			final Integer dbType, final boolean ignoreAllEmptySet, final HashMap<String, String> colFieldMap)
-			throws Exception {
-		List result = findByJdbcQuery(typeHandler, queryStr, params, voClass, rowCallbackHandler, null, conn, dbType,
-				ignoreAllEmptySet, colFieldMap, -1, -1);
+			final DBProfile profile, final boolean ignoreAllEmptySet, final HashMap<String, String> colFieldMap,
+			final Integer queryTimeout) throws Exception {
+		List result = findByJdbcQuery(typeHandler, queryStr, params, voClass, rowCallbackHandler, null, conn, profile,
+				ignoreAllEmptySet, colFieldMap, -1, -1, queryTimeout);
 		if (result != null && !result.isEmpty()) {
 			if (result.size() > 1) {
-				throw new IllegalAccessException("查询结果不唯一,loadByJdbcQuery 方法只针对单条结果的数据查询!");
+				throw new IllegalAccessException(
+						"the query result is not unique, loadByJdbcQuery only supports a single row query!");
 			}
 			return result.get(0);
 		}
@@ -1089,16 +1747,17 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @TODO 提供独立的获取sequence下一个值的方法
-	 * @param conn
-	 * @param sequence
-	 * @param dbType
-	 * @return
+	 * 提供独立的获取sequence下一个值的方法
+	 * 
+	 * @param conn     数据库连接对象
+	 * @param sequence sequence名称
+	 * @param dbType   数据库类型，参见DataSourceUtils.DBType
+	 * @return sequence的下一个值，获取失败抛出DataAccessException
 	 * @throws DataAccessException
 	 */
 	public static Object getSequenceValue(Connection conn, String sequence, Integer dbType) throws DataAccessException {
 		String sql = "";
-		if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.KINGBASE
+		if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.KINGBASE
 				|| dbType == DBType.H2) {
 			sql = "select nextval('" + sequence + "')";
 		} else if (dbType == DBType.SQLSERVER) {
@@ -1115,7 +1774,7 @@ public class SqlUtil {
 		ResultSet rs = null;
 		Object id = null;
 		try {
-			SqlExecuteStat.showSql("获取sequence下一个值", sql, null);
+			SqlExecuteStat.showSql("get next sequence value", sql, null);
 			pst = conn.prepareStatement(sql);
 			// 设置全局statementTimeout，默认为null
 			if (SqlToyConstants.defaultStatementTimeout != null && SqlToyConstants.defaultStatementTimeout > 0) {
@@ -1127,8 +1786,9 @@ public class SqlUtil {
 				break;
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
-			throw new DataAccessException("获取sequence={} 值失败!错误信息:{}", sequence, e.getMessage());
+			logger.error("getSequenceValue method execution failed", e);
+			throw new DataAccessException(
+					"failed to get the value of sequence [" + sequence + "]! error message:" + e.getMessage(), e);
 		} finally {
 			if (rs != null) {
 				try {
@@ -1151,26 +1811,28 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @todo <b>sql 查询并返回List集合结果</b>
-	 * @param typeHandler
-	 * @param queryStr
-	 * @param params
-	 * @param voClass
-	 * @param rowCallbackHandler
-	 * @param decryptHandler
-	 * @param conn
-	 * @param dbType
-	 * @param ignoreAllEmptySet
-	 * @param colFieldMap
-	 * @param fetchSize
-	 * @param maxRows
-	 * @return
+	 * sql 查询并返回List集合结果
+	 * 
+	 * @param typeHandler        自定义类型处理器，非null时优先通过其完成列值转换
+	 * @param queryStr           查询sql语句
+	 * @param params             sql中?对应的参数值数组
+	 * @param voClass            目标VO对象类型，null时按行List数组返回
+	 * @param rowCallbackHandler 行数据处理回调接口，非null时逐行回调处理
+	 * @param decryptHandler     字段解密处理器，非null时对列值做解密处理
+	 * @param conn               数据库连接对象
+	 * @param dbType             数据库类型，参见DataSourceUtils.DBType
+	 * @param ignoreAllEmptySet  true表示整行数据全为空值时跳过
+	 * @param colFieldMap        数据库列名与对象属性的对照映射，null时按列名去除下划线映射
+	 * @param fetchSize          批量提取行数，小于等于0不设置
+	 * @param maxRows            最大提取行数，小于等于0不设置
+	 * @return 查询结果List集合，无数据返回空集合
 	 * @throws Exception
 	 */
 	public static List findByJdbcQuery(TypeHandler typeHandler, final String queryStr, final Object[] params,
 			final Class voClass, final RowCallbackHandler rowCallbackHandler, final DecryptHandler decryptHandler,
-			final Connection conn, final Integer dbType, final boolean ignoreAllEmptySet,
-			final HashMap<String, String> colFieldMap, final int fetchSize, final int maxRows) throws Exception {
+			final Connection conn, DBProfile profile, final boolean ignoreAllEmptySet,
+			final HashMap<String, String> colFieldMap, final int fetchSize, final int maxRows,
+			final Integer queryTimeout) throws Exception {
 		ResultSet rs = null;
 		PreparedStatement pst = conn.prepareStatement(queryStr, ResultSet.TYPE_FORWARD_ONLY,
 				ResultSet.CONCUR_READ_ONLY);
@@ -1180,15 +1842,19 @@ public class SqlUtil {
 		if (maxRows > 0) {
 			pst.setMaxRows(maxRows);
 		}
+		if (queryTimeout != null && queryTimeout > 0) {
+			pst.setQueryTimeout(queryTimeout);
+		}
 		// 设置全局statementTimeout，默认为null
-		if (SqlToyConstants.defaultStatementTimeout != null && SqlToyConstants.defaultStatementTimeout > 0) {
+		else if (SqlToyConstants.defaultStatementTimeout != null && SqlToyConstants.defaultStatementTimeout > 0) {
 			pst.setQueryTimeout(SqlToyConstants.defaultStatementTimeout);
 		}
+		Integer dbType = profile.getDbType();
 		List result = (List) preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
 			@Override
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws Exception {
 				try {
-					setParamsValue(typeHandler, conn, dbType, pst, params, null, 0);
+					setParamsValue(typeHandler, conn, profile, pst, params, null, 0);
 					rs = pst.executeQuery();
 					this.setResult(processResultSet(dbType, typeHandler, rs, voClass, rowCallbackHandler,
 							decryptHandler, 0, ignoreAllEmptySet, colFieldMap));
@@ -1210,16 +1876,17 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @todo 处理sql查询时的结果集, 当没有反调或voClass反射处理时以数组方式返回resultSet的数据
-	 * @param typeHandler
-	 * @param rs
-	 * @param voClass
-	 * @param rowCallbackHandler
-	 * @param decryptHandler
-	 * @param startColIndex
-	 * @param ignoreAllEmptySet
-	 * @param colFieldMap
-	 * @return
+	 * 处理sql查询时的结果集, 当没有反调或voClass反射处理时以数组方式返回resultSet的数据
+	 * 
+	 * @param typeHandler        自定义类型处理器，非null时优先通过其完成列值转换
+	 * @param rs                 ResultSet结果集对象
+	 * @param voClass            目标VO对象类型，null时优先走rowCallbackHandler或行数组返回
+	 * @param rowCallbackHandler 行数据处理回调接口，非null时逐行回调处理
+	 * @param decryptHandler     字段解密处理器，非null时对列值做解密处理
+	 * @param startColIndex      起始提取列下标(从0开始，按行数组返回时生效)
+	 * @param ignoreAllEmptySet  true表示整行数据全为空值时跳过
+	 * @param colFieldMap        数据库列名与对象属性的对照映射，null时按列名去除下划线映射
+	 * @return 查询结果集合(VO集合、回调结果或二维List数组)，超出最大提取阀值时中断提取
 	 * @throws Exception
 	 */
 	public static List processResultSet(Integer dbType, TypeHandler typeHandler, ResultSet rs, Class voClass,
@@ -1240,7 +1907,8 @@ public class SqlUtil {
 		}
 		List result;
 		if (voClass != null) {
-			result = reflectResultToVO(typeHandler, decryptHandler, rs, voClass, ignoreAllEmptySet, colFieldMap);
+			result = reflectResultToVO(dbType, typeHandler, decryptHandler, rs, voClass, ignoreAllEmptySet,
+					colFieldMap);
 		} else if (rowCallbackHandler != null) {
 			while (rs.next()) {
 				rowCallbackHandler.processRow(rs, index);
@@ -1321,34 +1989,71 @@ public class SqlUtil {
 		return result;
 	}
 
+	// 仅提供对象形式的批量保存、修改、删除相关的最终sql执行
+	public static Long batchUpdateForPOJO(TypeHandler typeHandler, final String updateSql,
+			final List<Object[]> rowDatas, final Integer[] fieldsType, final int batchSize, final Boolean autoCommit,
+			final Connection conn, final DBProfile profile) throws Exception {
+		// update 2026-9-6 原实现与SqlUtil.batchUpdateByJdbc的批量执行骨架(prepare/分批executeBatch/
+		// 尾部批次补齐/autoCommit恢复/close)完全同构,属复制演化产物,骨架级改动需双处同步极易漏改;
+		// 收敛为薄包装:数组逐位绑定封装为InsertRowCallbackHandler闭包,批量骨架统一由batchUpdateByJdbc承载;
+		// 原fieldsDefaultValue/fieldsNullable参数剔除:数据取值阶段(reflectBeansToInnerAry配合
+		// getDefaultValues)已完成null单元格的默认值填充,绑定层二次填充属冗余
+		return batchUpdateByJdbc(typeHandler, updateSql, rowDatas, batchSize,
+				new org.sagacity.sqltoy.callback.InsertRowCallbackHandler() {
+					@Override
+					public void process(PreparedStatement pst, int rowIndex, Object rowData) throws SQLException {
+						Object[] row = (Object[]) rowData;
+						int fieldType;
+						for (int j = 0, n = row.length; j < n; j++) {
+							fieldType = (fieldsType == null) ? -1 : fieldsType[j];
+							try {
+								SqlUtil.setParamValue(typeHandler, conn, profile, pst, row[j], fieldType, j + 1);
+							} catch (java.io.IOException e) {
+								// 接口仅声明SQLException,blob等流式写值的IOException包装上抛
+								throw new SQLException("batchUpdateForPOJO bind parameter failed!", e);
+							}
+						}
+					}
+				}, fieldsType, autoCommit, conn, profile);
+	}
+
 	/**
-	 * @todo 通过jdbc方式批量插入数据，一般提供给数据采集时或插入临时表使用，一般采用hibernate 方式插入
-	 * @param typeHandler
-	 * @param updateSql
-	 * @param rowDatas
-	 * @param batchSize
-	 * @param insertCallhandler
-	 * @param updateTypes
-	 * @param autoCommit
-	 * @param conn
-	 * @param dbType
-	 * @return
+	 * 通过jdbc方式批量插入数据，一般提供给数据采集时或插入临时表使用，一般采用hibernate 方式插入 <br/>
+	 * 返回值为影响行数统计:本方法按行执行(每次addBatch绑定一行数据),对Oracle等驱动
+	 * executeBatch返回SUCCESS_NO_INFO(-2,语句成功但行数未知)的语句按1行计,
+	 * 对单行语句(insert、按主键update/delete)结果精确;若传入一条语句影响多行的sql则为估算值
+	 * 
+	 * @param typeHandler       自定义类型处理器，非null时优先通过其完成参数设置
+	 * @param updateSql         增删改sql语句，?参数与数据行字段一一对应
+	 * @param rowDatas          待处理的数据集合，元素可为数组、集合或bean(配合insertCallhandler)
+	 * @param batchSize         批处理提交大小
+	 * @param insertCallhandler 行数据参数绑定回调接口，null时按数组/集合方式绑定参数
+	 * @param updateTypes       各参数对应的java.sql.Types类型数组，null时按参数值自动判断
+	 * @param autoCommit        是否自动提交，null时保持连接原有提交方式
+	 * @param conn              数据库连接对象
+	 * @param dbType            数据库类型，参见DataSourceUtils.DBType
+	 * @return 实际影响的行数统计
 	 * @throws Exception
 	 */
 	public static Long batchUpdateByJdbc(TypeHandler typeHandler, final String updateSql, final Collection rowDatas,
 			final int batchSize, final InsertRowCallbackHandler insertCallhandler, final Integer[] updateTypes,
-			final Boolean autoCommit, final Connection conn, final Integer dbType) throws Exception {
+			final Boolean autoCommit, final Connection conn, final DBProfile profile) throws Exception {
 		if (rowDatas == null || rowDatas.isEmpty()) {
-			logger.error("执行batchUpdateByJdbc 数据为空，sql={}", updateSql);
+			// update 2026-9-6 空数据返回0属正常业务场景(如saveAll空集合),由error降为warn
+			logger.warn("batchUpdateByJdbc: the data is empty, sql={}", updateSql);
 			return 0L;
 		}
+		// update 2026-9-14 防御外部传入batchSize<1(saveOrUpdateAll/saveAllIgnoreExist公开API
+		// 直通用户值):0会触发meter%batchSize除零,负数使addBatch永不整批执行
+		int realBatchSize = Math.max(1, batchSize);
 		// sql中?参数数量
 		int argsCnt = StringUtil.matchCnt(SqlConfigParseUtils.clearDblQuestMark(updateSql),
 				SqlConfigParseUtils.ARG_REGEX);
 		PreparedStatement pst = null;
 		long updateCount = 0;
+		// 提升到try外:finally中的autoCommit恢复需要读取
+		boolean hasSetAutoCommit = false;
 		try {
-			boolean hasSetAutoCommit = false;
 			boolean useCallHandler = true;
 			// 是否使用反调方式
 			if (insertCallhandler == null) {
@@ -1385,11 +2090,12 @@ public class SqlUtil {
 							paramCnt = tmp.length;
 							// 第一次做长度校验
 							if (meter == 0 && argsCnt != paramCnt) {
-								throw new IllegalArgumentException(
-										"batchUpdate sql中的?参数数量:" + argsCnt + " 跟实际传参数量:" + paramCnt + " 不等,请检查!");
+								throw new IllegalArgumentException("the ? param count [" + argsCnt
+										+ "] in the batchUpdate sql does not equal the actual param count [" + paramCnt
+										+ "], please check!");
 							}
 							for (int i = 0; i < paramCnt; i++) {
-								setParamValue(typeHandler, conn, dbType, pst, tmp[i],
+								setParamValue(typeHandler, conn, profile, pst, tmp[i],
 										updateTypes == null ? -1 : updateTypes[i], i + 1);
 							}
 						} else if (rowData instanceof Collection) {
@@ -1397,12 +2103,13 @@ public class SqlUtil {
 							paramCnt = tmp.size();
 							// 第一次做长度校验
 							if (meter == 0 && argsCnt != paramCnt) {
-								throw new IllegalArgumentException(
-										"batchUpdate sql中的?参数数量:" + argsCnt + " 跟实际传参数量:" + paramCnt + " 不等,请检查!");
+								throw new IllegalArgumentException("the ? param count [" + argsCnt
+										+ "] in the batchUpdate sql does not equal the actual param count [" + paramCnt
+										+ "], please check!");
 							}
 							int tmpIndex = 0;
 							for (Iterator tmpIter = tmp.iterator(); tmpIter.hasNext();) {
-								setParamValue(typeHandler, conn, dbType, pst, tmpIter.next(),
+								setParamValue(typeHandler, conn, profile, pst, tmpIter.next(),
 										updateTypes == null ? -1 : updateTypes[tmpIndex], tmpIndex + 1);
 								tmpIndex++;
 							}
@@ -1412,11 +2119,9 @@ public class SqlUtil {
 					// 批量执行
 					if (useBatch) {
 						pst.addBatch();
-						if ((meter % batchSize) == 0 || index == totalRows) {
+						if ((meter % realBatchSize) == 0) {
 							int[] updateRows = pst.executeBatch();
-							for (int t : updateRows) {
-								updateCount = updateCount + ((t > 0) ? t : 0);
-							}
+							updateCount = updateCount + sumBatchUpdateCounts(updateRows);
 							pst.clearBatch();
 						}
 					} // 单条执行
@@ -1425,14 +2130,35 @@ public class SqlUtil {
 					}
 				}
 			}
-			if (hasSetAutoCommit) {
-				conn.setAutoCommit(!autoCommit);
+			// 集合尾部为null的行不会进入循环体内的批次执行判断，未执行的尾部批次需在循环外补齐执行
+			if (useBatch && (meter % realBatchSize) != 0) {
+				int[] updateRows = pst.executeBatch();
+				updateCount = updateCount + sumBatchUpdateCounts(updateRows);
+				pst.clearBatch();
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			// update 2026-9-14 与executeBatchSql同步:已切换为手动提交的场景失败必须回滚——否则finally中
+			// 恢复autoCommit(true)按JDBC规范会提交当前事务,已执行的批次被静默部分提交(调用方收到异常
+			// 却已有数据落库);autoCommit=true分支无需回滚,其批次在执行时即已提交
+			if (hasSetAutoCommit && !autoCommit.booleanValue()) {
+				try {
+					conn.rollback();
+				} catch (SQLException re) {
+					logger.error("batchUpdateByJdbc rollback failed!", re);
+				}
+			}
 			logger.error(e.getMessage(), e);
 			throw e;
 		} finally {
+			// update 2026-9-14 autoCommit恢复移入finally:原仅在成功路径恢复,异常时连接带着
+			// 被改写的提交方式归还池化连接(池复位不保证)
+			if (hasSetAutoCommit) {
+				try {
+					conn.setAutoCommit(!autoCommit);
+				} catch (SQLException se) {
+					logger.error(se.getMessage(), se);
+				}
+			}
 			try {
 				if (pst != null) {
 					pst.close();
@@ -1446,21 +2172,76 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @todo 计算树形结构表中的:节点层级、节点对应所有上级节点的路径、是否叶子节点
-	 * @param typeHandler
-	 * @param treeTableModel
-	 * @param conn
-	 * @param dbType
-	 * @return
+	 * 统计批量执行影响行数
+	 * 
+	 * @description 框架批量链路均为按行执行(每次addBatch绑定一行数据):
+	 *              SUCCESS_NO_INFO(-2)表示语句执行成功但驱动不提供行数(如Oracle批量、 MySQL
+	 *              rewriteBatchedStatements),按1计才能得到真实行数; EXECUTE_FAILED(-3)按0计
+	 * @param updateRows executeBatch返回的各语句影响行数数组
+	 * @return 累加后的总影响行数，SUCCESS_NO_INFO(-2)按1计，EXECUTE_FAILED(-3)按0计
+	 */
+	static long sumBatchUpdateCounts(int[] updateRows) {
+		long total = 0;
+		for (int t : updateRows) {
+			if (t > 0) {
+				total += t;
+			} else if (t == java.sql.Statement.SUCCESS_NO_INFO) {
+				total += 1;
+			}
+		}
+		return total;
+	}
+
+	/**
+	 * 计算树形结构表中的:节点层级、节点对应所有上级节点的路径、是否叶子节点
+	 * 
+	 * @param typeHandler    自定义类型处理器，非null时优先通过其完成参数设置
+	 * @param treeTableModel 树形表模型(表名、id/pid字段、层级字段、路径字段、叶子字段等)
+	 * @param conn           数据库连接对象
+	 * @param dbType         数据库类型，参见DataSourceUtils.DBType
+	 * @return 处理成功返回true，模型必填字段缺失抛出IllegalArgumentException
 	 * @throws Exception
 	 */
 	public static boolean wrapTreeTableRoute(TypeHandler typeHandler, final TreeTableModel treeTableModel,
-			Connection conn, final Integer dbType) throws Exception {
+			Connection conn, final DBProfile profile, final Integer queryTimeout) throws Exception {
+		return wrapTreeTableRoute(typeHandler, treeTableModel, conn, profile, queryTimeout, null);
+	}
+
+	/**
+	 * 构造树形表的节点路径、节点层级、节点类别(是否叶子节点)
+	 * 
+	 * @param typeHandler       自定义类型处理器，非null时优先通过其完成参数设置
+	 * @param treeTableModel    树形表模型(表名、id/pid字段、层级字段、路径字段、叶子字段等)
+	 * @param conn              数据库连接对象
+	 * @param dbType            数据库类型，参见DataSourceUtils.DBType
+	 * @param queryTimeout      查询超时时间(秒)，null时使用默认值
+	 * @param unifyUpdateFields 公共更新字段(数据库列名->值,如最后修改人、最后修改时间),
+	 *                          非null时附加到全部路由update语句的set子句并绑定参数
+	 * @return 处理成功返回true，模型必填字段缺失抛出IllegalArgumentException
+	 * @throws Exception
+	 */
+	public static boolean wrapTreeTableRoute(TypeHandler typeHandler, final TreeTableModel treeTableModel,
+			Connection conn, final DBProfile profile, final Integer queryTimeout,
+			final Map<String, Object> unifyUpdateFields) throws Exception {
 		if (StringUtil.isBlank(treeTableModel.getTableName()) || StringUtil.isBlank(treeTableModel.getIdField())
 				|| StringUtil.isBlank(treeTableModel.getPidField())
 				|| StringUtil.isBlank(treeTableModel.getPidValue())) {
-			logger.error("请设置树形表的table名称、id字段名称、pid字段名称、pidValue值!");
-			throw new IllegalArgumentException("没有对应的table名称、id字段名称、pid字段名称、pidValue值");
+			logger.error("please set the table name, id field name, pid field name and pidValue of the tree table!");
+			throw new IllegalArgumentException("tableName, idField, pidField and pidValue must all be provided!");
+		}
+		Integer dbType = profile.getDbType();
+		// 公共更新字段转数组,便于sql拼接与参数绑定
+		String[] unifyColumns = null;
+		Object[] unifyValues = null;
+		if (unifyUpdateFields != null && !unifyUpdateFields.isEmpty()) {
+			unifyColumns = new String[unifyUpdateFields.size()];
+			unifyValues = new Object[unifyUpdateFields.size()];
+			int unifyIndex = 0;
+			for (Map.Entry<String, Object> entry : unifyUpdateFields.entrySet()) {
+				unifyColumns[unifyIndex] = ReservedWordsUtil.convertWord(entry.getKey(), dbType);
+				unifyValues[unifyIndex] = entry.getValue();
+				unifyIndex++;
+			}
 		}
 		String flag = "";
 		// 判断是否字符串类型
@@ -1487,26 +2268,34 @@ public class SqlUtil {
 				idInfoSql = idInfoSql.concat(" and ").concat(conditions);
 			}
 			// 获取层次等级
-			List idInfo = findByJdbcQuery(typeHandler, idInfoSql, null, null, null, null, conn, dbType, false, null,
-					SqlToyConstants.FETCH_SIZE, -1);
+			List idInfo = findByJdbcQuery(typeHandler, idInfoSql, null, null, null, null, conn, profile, false, null,
+					SqlToyConstants.FETCH_SIZE, -1, queryTimeout);
 			// 设置第一层level
 			int nodeLevel = 0;
 			String nodeRoute = "";
 			if (idInfo != null && !idInfo.isEmpty()) {
 				if (((List) idInfo.get(0)).get(0) == null) {
-					throw new DataAccessException("表中id=" + treeTableModel.getPidValue() + "对应的节点等级字段:" + nodeLevelField
-							+ "值为null,不要越层调用wrapTreeTableRoute!");
+					throw new DataAccessException("the node level field [" + nodeLevelField + "] of the row with id ["
+							+ treeTableModel.getPidValue()
+							+ "] is null, do not call wrapTreeTableRoute across levels!");
 				}
 				if (((List) idInfo.get(0)).get(1) == null) {
-					throw new DataAccessException("表中id=" + treeTableModel.getPidValue() + "对应的节点路径字段:" + nodeRouteField
-							+ "值为null,不要越层调用wrapTreeTableRoute!");
+					throw new DataAccessException("the node route field [" + nodeRouteField + "] of the row with id ["
+							+ treeTableModel.getPidValue()
+							+ "] is null, do not call wrapTreeTableRoute across levels!");
 				}
 				nodeLevel = Integer.parseInt(((List) idInfo.get(0)).get(0).toString());
 				nodeRoute = ((List) idInfo.get(0)).get(1).toString();
 			}
 			StringBuilder updateLevelAndRoute = new StringBuilder("update ").append(tableName).append(" set ")
-					.append(nodeLevelField).append("=?,").append(nodeRouteField).append("=? ").append(" where ")
-					.append(idField).append("=?");
+					.append(nodeLevelField).append("=?,").append(nodeRouteField).append("=? ");
+			// 附加公共更新字段(如最后修改人、最后修改时间)
+			if (unifyColumns != null) {
+				for (String unifyColumn : unifyColumns) {
+					updateLevelAndRoute.append(",").append(unifyColumn).append("=?");
+				}
+			}
+			updateLevelAndRoute.append(" where ").append(idField).append("=?");
 			// 附加条件
 			if (StringUtil.isNotBlank(conditions)) {
 				nextNodeQueryStr.append(" and ").append(conditions);
@@ -1525,17 +2314,18 @@ public class SqlUtil {
 					firstNextNodeQuery.append(" and ").append(conditions);
 				}
 				ids = findByJdbcQuery(typeHandler, firstNextNodeQuery.toString(),
-						new Object[] { treeTableModel.getIdValue() }, null, null, null, conn, dbType, false, null,
-						SqlToyConstants.FETCH_SIZE, -1);
+						new Object[] { treeTableModel.getIdValue() }, null, null, null, conn, profile, false, null,
+						SqlToyConstants.FETCH_SIZE, -1, queryTimeout);
 			} else {
 				ids = findByJdbcQuery(typeHandler,
 						nextNodeQueryStr.toString().replaceFirst("\\$\\{inStr\\}",
 								flag + treeTableModel.getPidValue() + flag),
-						null, null, null, null, conn, dbType, false, null, SqlToyConstants.FETCH_SIZE, -1);
+						null, null, null, null, conn, profile, false, null, SqlToyConstants.FETCH_SIZE, -1,
+						queryTimeout);
 			}
 			if (ids != null && !ids.isEmpty()) {
 				processNextLevel(typeHandler, updateLevelAndRoute.toString(), nextNodeQueryStr.toString(),
-						treeTableModel, pidsMap, ids, nodeLevel + 1, conn, dbType);
+						treeTableModel, pidsMap, ids, nodeLevel + 1, conn, profile, queryTimeout, unifyValues);
 			}
 		}
 		// 设置节点是否为叶子节点，（mysql不支持update table where in 机制）
@@ -1544,12 +2334,18 @@ public class SqlUtil {
 			StringBuilder updateLeafSql = new StringBuilder();
 			updateLeafSql.append("update ").append(tableName);
 			updateLeafSql.append(" set ").append(leafField).append("=1");
+			// 附加公共更新字段(如最后修改人、最后修改时间)
+			if (unifyColumns != null) {
+				for (String unifyColumn : unifyColumns) {
+					updateLeafSql.append(",").append(unifyColumn).append("=?");
+				}
+			}
 			// 附加条件(保留)
 			if (StringUtil.isNotBlank(conditions)) {
 				updateLeafSql.append(" where ").append(conditions);
 			}
 			// 先将所有节点设置为叶子
-			executeSql(typeHandler, updateLeafSql.toString(), null, null, conn, dbType, null, true);
+			executeSql(typeHandler, updateLeafSql.toString(), unifyValues, null, conn, profile, null, true);
 			// 再设置父节点的记录为非叶子节点(isLeaf=0)
 			StringBuilder updateTrunkLeafSql = new StringBuilder();
 			updateTrunkLeafSql.append("update ").append(tableName);
@@ -1571,6 +2367,11 @@ public class SqlUtil {
 				updateTrunkLeafSql.append(idField).append("=t_wrapLeaf.").append(pidField);
 				updateTrunkLeafSql.append(" set ");
 				updateTrunkLeafSql.append(leafField).append("=0");
+				if (unifyColumns != null) {
+					for (String unifyColumn : unifyColumns) {
+						updateTrunkLeafSql.append(",").append(unifyColumn).append("=?");
+					}
+				}
 				if (StringUtil.isNotBlank(conditions)) {
 					updateTrunkLeafSql.append(" where ").append(conditions);
 				}
@@ -1579,6 +2380,11 @@ public class SqlUtil {
 				// where organ_id in (select organ_pid from organ_info)
 				updateTrunkLeafSql.append(" set ");
 				updateTrunkLeafSql.append(leafField).append("=0");
+				if (unifyColumns != null) {
+					for (String unifyColumn : unifyColumns) {
+						updateTrunkLeafSql.append(",").append(unifyColumn).append("=?");
+					}
+				}
 				updateTrunkLeafSql.append(" where ").append(idField);
 				updateTrunkLeafSql.append(" in (select ").append(pidField);
 				updateTrunkLeafSql.append(" from ").append(tableName);
@@ -1590,27 +2396,32 @@ public class SqlUtil {
 					updateTrunkLeafSql.append(" and ").append(conditions);
 				}
 			}
-			executeSql(typeHandler, updateTrunkLeafSql.toString(), null, null, conn, dbType, null, false);
+			executeSql(typeHandler, updateTrunkLeafSql.toString(), unifyValues, null, conn, profile, null, false);
 		}
 		return true;
 	}
 
 	/**
-	 * @todo TreeTableRoute中处理下一层级的递归方法，逐层计算下一级节点的节点层次和路径
-	 * @param typeHandler
-	 * @param updateLevelAndRoute
-	 * @param nextNodeQueryStr
-	 * @param treeTableModel
-	 * @param pidsMap
-	 * @param ids
-	 * @param nodeLevel
-	 * @param conn
-	 * @param dbType
+	 * TreeTableRoute中处理下一层级的递归方法，逐层计算下一级节点的节点层次和路径
+	 * 
+	 * @param typeHandler         自定义类型处理器，非null时优先通过其完成参数设置
+	 * @param updateLevelAndRoute 更新节点层级和路径的sql语句
+	 * @param nextNodeQueryStr    查询下一层级节点的sql语句(含${inStr}占位)
+	 * @param treeTableModel      树形表模型
+	 * @param pidsMap             父节点id与父节点路径的映射
+	 * @param ids                 下一层级待处理的节点数据(id、路径、pid)
+	 * @param nodeLevel           当前处理的节点层级
+	 * @param conn                数据库连接对象
+	 * @param dbType              数据库类型，参见DataSourceUtils.DBType
+	 * @param queryTimeout        查询超时时间(秒)
+	 * @param unifyValues         公共更新字段对应的参数值数组，null时不绑定
 	 * @throws Exception
 	 */
 	private static void processNextLevel(TypeHandler typeHandler, final String updateLevelAndRoute,
 			final String nextNodeQueryStr, final TreeTableModel treeTableModel, final HashMap pidsMap, List ids,
-			final int nodeLevel, Connection conn, final int dbType) throws Exception {
+			final int nodeLevel, Connection conn, final DBProfile profile, final Integer queryTimeout,
+			final Object[] unifyValues) throws Exception {
+		int dbType = profile.getDbType();
 		// 修改节点level和节点路径
 		batchUpdateByJdbc(typeHandler, updateLevelAndRoute, ids, 500, new InsertRowCallbackHandler() {
 			@Override
@@ -1651,13 +2462,21 @@ public class SqlUtil {
 				pst.setInt(1, nodeLevel);
 				// 节点路径(当节点路径长度不做补充统一长度操作,则末尾自动加上一个分割符)
 				pst.setString(2, nodeRoute + ((size < 2) ? treeTableModel.getSplitSign() : ""));
+				// 公共更新字段参数(位置在level、route之后)
+				int unifySize = (unifyValues == null) ? 0 : unifyValues.length;
+				if (unifyValues != null) {
+					for (int i = 0; i < unifySize; i++) {
+						pst.setObject(3 + i, unifyValues[i]);
+					}
+				}
+				// id参数位置在公共更新字段之后
 				if (treeTableModel.isChar()) {
-					pst.setString(3, id);
+					pst.setString(3 + unifySize, id);
 				} else {
-					pst.setLong(3, Long.parseLong(id));
+					pst.setLong(3 + unifySize, Long.parseLong(id));
 				}
 			}
-		}, null, null, conn, dbType);
+		}, null, null, conn, profile);
 		// 处理节点的下一层次
 		int size = ids.size();
 		int fromIndex = 0;
@@ -1683,11 +2502,12 @@ public class SqlUtil {
 			inStrs = combineQueryInStr(subIds, 0, null, treeTableModel.isChar());
 			// 获取下一层节点
 			nextIds = findByJdbcQuery(typeHandler, nextNodeQueryStr.replaceFirst("\\$\\{inStr\\}", inStrs), null, null,
-					null, null, conn, dbType, false, null, SqlToyConstants.FETCH_SIZE, -1);
+					null, null, conn, profile, false, null, SqlToyConstants.FETCH_SIZE, -1, queryTimeout);
 			// 递归处理下一层
 			if (nextIds != null && !nextIds.isEmpty()) {
 				processNextLevel(typeHandler, updateLevelAndRoute, nextNodeQueryStr, treeTableModel,
-						CollectionUtil.hashList(subIds, 0, 1, true), nextIds, nodeLevel + 1, conn, dbType);
+						CollectionUtil.hashList(subIds, 0, 1, true), nextIds, nodeLevel + 1, conn, profile,
+						queryTimeout, unifyValues);
 			}
 			if (exist) {
 				break;
@@ -1696,11 +2516,12 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @todo <b>sql文件自动创建到数据库</b>
-	 * @param conn
-	 * @param sqlContent
-	 * @param batchSize
-	 * @param autoCommit
+	 * sql文件自动创建到数据库
+	 * 
+	 * @param conn       数据库连接对象
+	 * @param sqlContent sql文件内容，支持以分隔符号分割的多条语句
+	 * @param batchSize  批处理提交大小，null或小于等于1时默认为100
+	 * @param autoCommit 是否自动提交，null时保持连接原有提交方式，执行完毕后恢复
 	 * @throws Exception
 	 */
 	public static void executeBatchSql(Connection conn, String sqlContent, Integer batchSize, Boolean autoCommit)
@@ -1708,7 +2529,7 @@ public class SqlUtil {
 		String splitSign = DataSourceUtils.getDatabaseSqlSplitSign(conn);
 		// 剔除sql中的注释
 		sqlContent = SqlUtil.clearMark(sqlContent);
-		if (splitSign.indexOf("go") != -1) {
+		if (DataSourceUtils.SQLSERVER_SPLIT_SIGN.equals(splitSign)) {
 			sqlContent = clearMistyChars(sqlContent, BLANK);
 		}
 		// 分割成多个子语句
@@ -1722,55 +2543,80 @@ public class SqlUtil {
 		Statement stat = null;
 		try {
 			stat = conn.createStatement();
+			// 设置全局statementTimeout，默认为null
+			if (SqlToyConstants.defaultStatementTimeout != null && SqlToyConstants.defaultStatementTimeout > 0) {
+				stat.setQueryTimeout(SqlToyConstants.defaultStatementTimeout);
+			}
 			int meter = 0;
-			int realBatch = (batchSize == null || batchSize.intValue() > 1) ? batchSize.intValue() : 100;
+			// int realBatch = (batchSize == null || batchSize.intValue() > 1) ?
+			// batchSize.intValue() : 100;
+			int realBatch = (batchSize == null || batchSize.intValue() <= 1) ? 100 : batchSize.intValue();
 			int totalRows = statments.length;
 			int i = 0;
 			for (String sql : statments) {
 				if (StringUtil.isNotBlank(sql)) {
 					meter++;
-					logger.debug("正在批量执行的sql:{}", sql);
+					logger.debug("the sql being batch executed:{}", sql);
 					stat.addBatch(sql);
 				}
-				if ((meter % realBatch) == 0 || i + 1 == totalRows) {
+				if (meter > 0 && ((meter % realBatch) == 0 || i + 1 == totalRows)) {
 					stat.executeBatch();
 					stat.clearBatch();
 				}
 				i++;
 			}
 		} catch (SQLException e) {
-			e.printStackTrace();
+			// 已切换为手动提交的场景失败必须回滚,避免悬挂事务被后续连接复用者意外提交
+			if (hasSetAutoCommit && !autoCommit.booleanValue()) {
+				try {
+					conn.rollback();
+				} catch (SQLException re) {
+					logger.error("executeBatchSql rollback failed!", re);
+				}
+			}
 			throw e;
 		} finally {
-			if (stat != null) {
-				stat.close();
-				stat = null;
+			try {
+				if (stat != null) {
+					stat.close();
+					stat = null;
+				}
+			} catch (SQLException se) {
+				logger.error(se.getMessage(), se);
 			}
-		}
-		// 恢复conn原始autoCommit默认值
-		if (hasSetAutoCommit) {
-			conn.setAutoCommit(!autoCommit);
+			// 恢复conn原始autoCommit默认值
+			if (hasSetAutoCommit) {
+				try {
+					conn.setAutoCommit(!autoCommit);
+				} catch (SQLException se) {
+					logger.error("executeBatchSql failed to restore autoCommit!", se);
+				}
+			}
 		}
 	}
 
 	/**
-	 * @todo <b>判断sql语句中是否有order by排序</b>
-	 * @param sql
-	 * @param judgeUpcase
-	 * @return
+	 * 判断sql语句中是否有order by排序
+	 * 
+	 * @param sql         sql语句
+	 * @param judgeUpcase true时检查ORder大写标记(代表分页时是否外层包裹)，存在则视为无order by
+	 * @return 最外层存在order by返回true，否则返回false
 	 */
 	public static boolean hasOrderBy(String sql, boolean judgeUpcase) {
+		// 字面量掩码串与原串等长:order by与收括号定位在掩码串上进行,
+		// 规避字面量内的)/order by被误判为最外层排序
+		String maskedSql = SqlConfigParseUtils.maskLiterals(sql, false);
 		// 最后的收括号位置
-		int lastBracketIndex = sql.lastIndexOf(")");
+		int lastBracketIndex = maskedSql.lastIndexOf(")");
 		boolean result = false;
-		int orderByIndex = StringUtil.matchLastIndex(sql, ORDER_BY_PATTERN, 1);
+		int orderByIndex = StringUtil.matchLastIndex(maskedSql, ORDER_BY_PATTERN, 1);
 		// 存在order by
 		if (orderByIndex > lastBracketIndex) {
 			result = true;
 		}
 		// 特殊处理 order by，通过ORder这种非常规写法代表分页时是否进行外层包裹(建议废弃使用)
 		if (judgeUpcase) {
-			int upcaseOrderBy = StringUtil.matchLastIndex(sql, UPCASE_ORDER_PATTERN, 1);
+			int upcaseOrderBy = StringUtil.matchLastIndex(maskedSql, UPCASE_ORDER_PATTERN, 1);
 			if (upcaseOrderBy > lastBracketIndex) {
 				result = false;
 			}
@@ -1779,52 +2625,79 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @todo clob转换成字符串
-	 * @param clob
-	 * @return
+	 * clob转换成字符串
+	 *
+	 * @param clob java.sql.Clob对象，null返回null
+	 * @return clob对应的字符串内容，读取失败返回null
 	 */
 	public static String clobToString(Clob clob) {
 		if (clob == null) {
 			return null;
 		}
-		StringBuffer sb = new StringBuffer(1024 * 8);// 8K
-		Reader clobStream = null;
-		try {
-			clobStream = clob.getCharacterStream();
-			char[] b = new char[1024];// 每次获取1K
-			int i = 0;
-			while ((i = clobStream.read(b)) != -1) {
-				sb.append(b, 0, i);
+		// 8K
+		StringBuilder sb = new StringBuilder(1024 * 8);
+		char[] buf = new char[1024];
+		int len;
+		try (Reader r = clob.getCharacterStream()) {
+			while ((len = r.read(buf)) != -1) {
+				sb.append(buf, 0, len);
 			}
-		} catch (Exception ex) {
-			sb = null;
-		} finally {
-			closeQuietly(clobStream);
-		}
-		if (sb == null) {
+		} catch (Exception e) {
+			logger.error("failed to read the Clob: {}", e.getMessage(), e);
 			return null;
 		}
 		return sb.toString();
 	}
 
 	/**
-	 * @todo 执行Sql语句完成修改操作
-	 * @param typeHandler
-	 * @param executeSql
-	 * @param params
-	 * @param paramsType
-	 * @param conn
-	 * @param dbType
-	 * @param autoCommit
-	 * @param processWord
-	 * @return
+	 * update 2026-9-10 truncate语句的方言适配:db2的TRUNCATE TABLE必须携带IMMEDIATE关键字 (裸形态报-104
+	 * END-OF-STATEMENT,12.1.2/12.1.5双版本实测);sqlite无TRUNCATE语法, 改写为delete
+	 * from等价语义(全表删除)。仅处理truncate前缀语句,其余语句原样返回(前缀
+	 * 判断,常规语句零开销);覆盖lightDao.truncate/TableApi.truncate/用户executeSql全部入口
+	 *
+	 * @param sql    待执行语句
+	 * @param dbType 数据库类型
+	 * @return 适配目标库的truncate形态
+	 */
+	static String adaptTruncateSql(String sql, Integer dbType) {
+		if (sql == null || dbType == null) {
+			return sql;
+		}
+		String trimmed = sql.trim();
+		if (!trimmed.toLowerCase(Locale.ROOT).startsWith("truncate")) {
+			return sql;
+		}
+		if (dbType.intValue() == DBType.DB2 && !trimmed.toLowerCase(Locale.ROOT).endsWith("immediate")) {
+			return trimmed.concat(" immediate");
+		}
+		if (dbType.intValue() == DBType.SQLITE) {
+			return trimmed.replaceFirst("(?i)^truncate\\s+table\\s+", "delete from ");
+		}
+		return sql;
+	}
+
+	/**
+	 * 执行Sql语句完成修改操作
+	 *
+	 * @param typeHandler 自定义类型处理器，非null时优先通过其完成参数设置
+	 * @param executeSql  增删改sql语句
+	 * @param params      sql中?对应的参数值数组
+	 * @param paramsType  参数对应的java.sql.Types类型数组，null时按参数值自动判断类型
+	 * @param conn        数据库连接对象
+	 * @param dbType      数据库类型，参见DataSourceUtils.DBType
+	 * @param autoCommit  是否自动提交，null时保持连接原有提交方式，执行完毕后恢复
+	 * @param processWord true对sql中的关键词做保留字转义处理
+	 * @return 实际影响的记录行数
 	 * @throws Exception
 	 */
 	public static Long executeSql(TypeHandler typeHandler, final String executeSql, final Object[] params,
-			final Integer[] paramsType, final Connection conn, final Integer dbType, final Boolean autoCommit,
+			final Integer[] paramsType, final Connection conn, final DBProfile profile, final Boolean autoCommit,
 			boolean processWord) throws Exception {
+		int dbType = profile.getDbType();
 		// 对sql进行关键词符号替换
 		String realSql = processWord ? ReservedWordsUtil.convertSql(executeSql, dbType) : executeSql;
+		// update 2026-9-10 truncate语句方言适配(db2须IMMEDIATE/sqlite无truncate语法)
+		realSql = adaptTruncateSql(realSql, dbType);
 		SqlExecuteStat.showSql("execute sql=", realSql, params);
 		boolean hasSetAutoCommit = false;
 		Long updateCounts = null;
@@ -1842,15 +2715,15 @@ public class SqlUtil {
 		Object result = preparedStatementProcess(null, pst, null, new PreparedStatementResultHandler() {
 			@Override
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
-				// sqlserver 存在timestamp不能赋值问题,通过对象完成的修改、插入忽视掉timestamp列
-				if (dbType == DBType.SQLSERVER && paramsType != null) {
-					setSqlServerParamsValue(typeHandler, conn, dbType, pst, params, paramsType, 0);
-				} else {
-					setParamsValue(typeHandler, conn, dbType, pst, params, paramsType, 0);
-				}
-				pst.executeUpdate();
+				// update 2026-9-5 移除按paramsType==TIMESTAMP跳过绑定的sqlserver分支:
+				// rowversion的排除已上收到语句生成与调用方参数过滤(目标库元数据校准判据),
+				// 语句占位符与参数严格1:1,此层按类型跳过反而造成占位符缺参错位
+				setParamsValue(typeHandler, conn, profile, pst, params, paramsType, 0);
 				// 返回update的记录数量
-				this.setResult(Long.valueOf(pst.getUpdateCount()));
+				// update 2026-9-10 改用executeUpdate返回值(JDBC规范即影响行数):sqlite-jdbc
+				// 的getUpdateCount()恒返回0(驱动实现缺陷,update/delete/executeSql计数全部
+				// 失真为0,实测),executeUpdate返回值各驱动均正确
+				this.setResult(Long.valueOf(pst.executeUpdate()));
 			}
 		});
 		if (result != null) {
@@ -1863,8 +2736,9 @@ public class SqlUtil {
 	}
 
 	public static Object insertReturnPrimaryKey(TypeHandler typeHandler, final String executeSql, final Object[] params,
-			final Integer[] paramsType, final String primaryField, final Connection conn, final Integer dbType,
+			final Integer[] paramsType, final String primaryField, final Connection conn, final DBProfile profile,
 			final Boolean autoCommit, boolean processWord) throws Exception {
+		int dbType = profile.getDbType();
 		// 对sql进行关键词符号替换
 		String realSql = processWord ? ReservedWordsUtil.convertSql(executeSql, dbType) : executeSql;
 		SqlExecuteStat.showSql("execute sql=", realSql, params);
@@ -1884,12 +2758,9 @@ public class SqlUtil {
 		Object result = preparedStatementProcess(null, pst, null, new PreparedStatementResultHandler() {
 			@Override
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
-				// sqlserver 存在timestamp不能赋值问题,通过对象完成的修改、插入忽视掉timestamp列
-				if (dbType == DBType.SQLSERVER && paramsType != null) {
-					setSqlServerParamsValue(typeHandler, conn, dbType, pst, params, paramsType, 0);
-				} else {
-					setParamsValue(typeHandler, conn, dbType, pst, params, paramsType, 0);
-				}
+				// update 2026-9-5 移除按paramsType==TIMESTAMP跳过绑定的sqlserver分支(同executeSql,
+				// rowversion排除已上收到语句生成与调用方参数过滤,占位符与参数严格1:1)
+				setParamsValue(typeHandler, conn, profile, pst, params, paramsType, 0);
 				pst.execute();
 				ResultSet keyResult = pst.getGeneratedKeys();
 				if (keyResult != null) {
@@ -1899,7 +2770,8 @@ public class SqlUtil {
 					keyResult.close();
 				}
 				// 返回update的记录数量
-				SqlExecuteStat.debug("执行结果", "insertReturnPrimaryKey操作影响记录量:{} 条!", Long.valueOf(pst.getUpdateCount()));
+				SqlExecuteStat.debug("execution result", "insertReturnPrimaryKey affected rows: {}!",
+						Long.valueOf(pst.getUpdateCount()));
 			}
 		});
 		if (hasSetAutoCommit && autoCommit != null) {
@@ -1909,10 +2781,11 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @todo 转换主键数据类型(主键生成只支持数字和字符串类型)
-	 * @param idValue
-	 * @param idType
-	 * @return
+	 * 转换主键数据类型(主键生成只支持数字和字符串类型)
+	 * 
+	 * @param idValue 原始主键值，null返回null
+	 * @param idType  目标类型全名或简称，如java.lang.String、long、int等；空白时原值返回
+	 * @return 转换后的主键值，类型无法识别时原值返回
 	 */
 	public static Object convertIdValueType(Object idValue, String idType) {
 		if (idValue == null) {
@@ -1953,52 +2826,42 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @todo 关闭一个或多个流对象
-	 * @param closeables 可关闭的流对象列表
-	 * @throws IOException
-	 */
-	public static void close(Closeable... closeables) throws IOException {
-		if (closeables != null) {
-			for (Closeable closeable : closeables) {
-				if (closeable != null) {
-					closeable.close();
-				}
-			}
-		}
-	}
-
-	/**
-	 * @todo 关闭一个或多个流对象
-	 * @param closeables 可关闭的流对象列表
-	 */
-	public static void closeQuietly(Closeable... closeables) {
-		try {
-			close(closeables);
-		} catch (IOException e) {
-			// do nothing
-		}
-	}
-
-	/**
-	 * @todo 判断是否内包含union 查询,即是否是select * from (select * from t union select * from
-	 *       t2 ) 形式的查询,将所有()剔除后判定是否有union 存在
-	 * @param sql
-	 * @param clearMistyChar
-	 * @return
+	 * 判断是否内包含union 查询(转义约定经DBProfile/运行上下文自动解析, 配置解析期等已知方言的场景请用带backslashEscape的重载)
+	 * 
+	 * @param sql            sql语句
+	 * @param clearMistyChar true剔除子查询和括号内容后再判断(只判断最外层)，false直接匹配union关键词
+	 * @return true表示存在union查询
 	 */
 	public static boolean hasUnion(String sql, boolean clearMistyChar) {
+		// update 2026-9-10 未显式给定转义约定时统一经DBProfile(真实连接档案)/运行上下文解析
+		return hasUnion(sql, clearMistyChar, SqlConfigParseUtils.isBackslashEscape(null));
+	}
+
+	/**
+	 * 判断是否内包含union 查询,即是否是select * from (select * from t union select * from t2 )
+	 * 形式的查询,将所有()剔除后判定是否有union 存在
+	 * 字面量内容不参与判定:先将'...'字面量内部掩为等长空白,规避字面量内的union、'('、')'误报或干扰括号剔除
+	 * 
+	 * @param sql             sql语句
+	 * @param clearMistyChar  true剔除子查询和括号内容后再判断(只判断最外层)，false直接匹配union关键词
+	 * @param backslashEscape true时字面量内\'不终结字面量(mysql系),掩码须与方言一致否则\'后错位
+	 * @return true表示存在union查询
+	 */
+	public static boolean hasUnion(String sql, boolean clearMistyChar, boolean backslashEscape) {
 		if (!StringUtil.matches(sql, UNION_PATTERN)) {
 			return false;
 		}
-		// 存在with as ，先剔除
-		if (StringUtil.matches(BLANK + sql, SqlToyConstants.withPattern)) {
+		// 存在with as ，先剔除(hasWith基于字面量掩码串判定,字面量内的with xx as (不触发剔除)
+		if (SqlConfigParseUtils.hasWith(sql, backslashEscape)) {
 			SqlWithAnalysis sqlWith = new SqlWithAnalysis(sql);
 			sql = sqlWith.getRejectWithSql();
 		}
 		String tmpSql = BLANK + (clearMistyChar ? clearMistyChars(sql, BLANK) : sql);
+		// 字面量内容掩为等长空白,掩码串与原串等长,位置偏移不受影响
+		tmpSql = SqlConfigParseUtils.maskLiterals(tmpSql, backslashEscape);
 		StringBuilder lastSql = new StringBuilder(tmpSql);
 		// 找到第一个select 所对称的from位置，排查掉子查询中的内容
-		int fromIndex = StringUtil.getSymMarkMatchIndex(SELECT_REGEX, FROM_REGEX, tmpSql.toLowerCase(), 0);
+		int fromIndex = StringUtil.getSymMarkMatchIndex(SELECT_REGEX, FROM_REGEX, tmpSql.toLowerCase(Locale.ROOT), 0);
 		if (fromIndex != -1) {
 			lastSql.delete(0, fromIndex);
 		}
@@ -2021,24 +2884,42 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @TODO 转化对象字段名称为数据库字段名称
-	 * @param entityMeta
-	 * @param sql
-	 * @return
+	 * 转化对象字段名称为数据库字段名称
+	 * 
+	 * @param entityMeta 实体对象元数据(含属性与数据库列名对照)
+	 * @param sql        含对象属性名称的sql语句
+	 * @return 属性名称替换为数据库列名后的sql语句，sql空白时原样返回
 	 */
 	public static String convertFieldsToColumns(EntityMeta entityMeta, String sql) {
 		if (StringUtil.isBlank(sql)) {
 			return sql;
 		}
-		String key = entityMeta.getTableName() + "_" + sql;
+		// update 2026-9-15 修复缓存key跨表碰撞:原tableName+"_"+sql为可歧义拼接(表"staff"+sql
+		// "info_x"与表"staff_info"+sql "x"产生相同key,后调用者命中前者缓存得到错误转换结果),
+		// 改用表名与sql中均不可能出现的\u0000作分隔符
+		String key = entityMeta.getTableName() + "\u0000" + sql;
 		// 从缓存中直接获取,避免每次都处理提升效率
-		if (convertSqlMap.containsKey(key)) {
-			return convertSqlMap.get(key);
+		// update 2026-9-9 单次get判空替代containsKey+get双查找
+		String cachedSql = convertSqlMap.get(key);
+		if (cachedSql != null) {
+			return cachedSql;
 		}
 		String[] fields = entityMeta.getFieldsArray(false);
 		StringBuilder sqlBuff = new StringBuilder();
 		// 末尾补齐一位空白,便于后续取index时避免越界
 		String realSql = sql.concat(BLANK);
+		// update 2026-9-15 修复字面量未掩码:'...'字符串字面量内的字段名不应被转换
+		// (如remark='staffName'此前被误转为remark='STAFF_NAME')。检索定位在maskLiterals
+		// 等长掩码串上进行(字面量内容置空白后不再命中,偏移与原串一致,截取拼接仍用原串,
+		// 输出无需"还原"环节);backslashEscape取值与hasUnion同款约定(全局开关>真实连接
+		// 档案>运行时上下文dbType,无上下文按标准SQL语义)
+		boolean backslashEscape = SqlConfigParseUtils.isBackslashEscape(null);
+		String maskedSql = SqlConfigParseUtils.maskLiterals(realSql, backslashEscape);
+		// maskLiterals无单引号快速通道返回原引用,据此判定是否存在字面量:无字面量时检索
+		// 直接落在realSql上,不维护平行掩码串;有字面量时掩码串随替换同步拼接(两串等长且
+		// 偏移一致,替换段在两串中同位置同内容,字面量掩码段随片段原样平移),整个方法
+		// 仅在入口调用一次maskLiterals,免除每轮替换后重扫
+		StringBuilder maskedBuff = (maskedSql != realSql) ? new StringBuilder() : null;
 		int start = 0;
 		int index;
 		String preSql;
@@ -2054,7 +2935,7 @@ public class SqlUtil {
 					&& (!columnName.equalsIgnoreCase(field) || ReservedWordsUtil.isKeyWord(columnName))) {
 				start = 0;
 				// 定位匹配到field,判断匹配的前一位和后一位字符,前一位是:的属于条件,且都不能是字符和数字以及下划线
-				index = StringUtil.indexOfIgnoreCase(realSql, field, start);
+				index = StringUtil.indexOfIgnoreCase(maskedSql, field, start);
 				while (index != -1) {
 					preSql = realSql.substring(start, index);
 					isBlank = false;
@@ -2074,32 +2955,46 @@ public class SqlUtil {
 							|| (preChar > 90 && preChar < 97 && preChar != 95) || preChar < 48 || preChar > 122)
 							&& ((tailChar > 58 && tailChar < 65) || (tailChar > 90 && tailChar < 97 && tailChar != 95)
 									|| (tailChar < 48 && tailChar != 40) || tailChar > 122)) {
-						// 含关键词处理
-						if (preSql.endsWith("[") || preSql.endsWith("`") || preSql.endsWith("\"")) {
-							sqlBuff.append(preSql).append(columnName);
-						} else {
-							sqlBuff.append(preSql).append(ReservedWordsUtil.convertWord(columnName, null));
+						// 含关键词处理(引号类标识符前缀直接拼接原始列名,其余按保留字包裹)
+						String convertedCol = (preSql.endsWith("[") || preSql.endsWith("`") || preSql.endsWith("\""))
+								? columnName
+								: ReservedWordsUtil.convertWord(columnName, null);
+						sqlBuff.append(preSql).append(convertedCol);
+						// 掩码串同步拼接:同偏移片段+同列名文本,保持两串等长对齐
+						if (maskedBuff != null) {
+							maskedBuff.append(maskedSql, start, index).append(convertedCol);
 						}
 						start = index + field.length();
 					}
-					index = StringUtil.indexOfIgnoreCase(realSql, field, index + field.length());
+					index = StringUtil.indexOfIgnoreCase(maskedSql, field, index + field.length());
 				}
 				if (start > 0) {
 					sqlBuff.append(realSql.substring(start));
 					realSql = sqlBuff.toString();
 					sqlBuff.delete(0, sqlBuff.length());
+					if (maskedBuff != null) {
+						maskedBuff.append(maskedSql.substring(start));
+						maskedSql = maskedBuff.toString();
+						maskedBuff.delete(0, maskedBuff.length());
+					} else {
+						// 无字面量时掩码串即原串(同一引用),重建后同步指向新串防止检索陈旧内容
+						maskedSql = realSql;
+					}
 				}
 			}
 		}
-		// 放入缓存
-		convertSqlMap.put(key, realSql);
+		// 放入缓存(key含动态拼接的sql条件,设置容量上限防止无界增长,超限后不再缓存直接计算)
+		if (convertSqlMap.size() < CONVERT_SQL_CACHE_MAX_SIZE) {
+			convertSqlMap.put(key, realSql);
+		}
 		return realSql;
 	}
 
 	/**
-	 * @TODO 组合动态条件
-	 * @param entityMeta
-	 * @return
+	 * 组合动态条件
+	 * 
+	 * @param entityMeta 实体对象元数据
+	 * @return 形如" 1=1 #[and col=:field]..."的动态条件串(未赋值的条件执行时自动剔除)
 	 */
 	public static String wrapWhere(EntityMeta entityMeta) {
 		String[] fields = entityMeta.getFieldsArray(false);
@@ -2113,17 +3008,18 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @TODO 针对对象查询补全sql中的select * from table 部分,适度让代码中的sql简短一些(并不推荐)
-	 * @param sqlToyContext
-	 * @param entityClass
-	 * @param sql
-	 * @return
+	 * 针对对象查询补全sql中的select * from table 部分,适度让代码中的sql简短一些(并不推荐)
+	 * 
+	 * @param sqlToyContext sqltoy上下文，用于获取实体元数据
+	 * @param entityClass   实体对象类型
+	 * @param sql           简写形式的sql语句(如from table、where、and xxx等)
+	 * @return 补全后的完整sql语句，已含select/with/call开头或非实体类型时原样返回
 	 */
 	public static String completionSql(SqlToyContext sqlToyContext, Class entityClass, String sql) {
 		if (null == entityClass || SqlConfigParseUtils.isNamedQuery(sql)) {
 			return sql;
 		}
-		String sqlLow = sql.toLowerCase().trim();
+		String sqlLow = sql.toLowerCase(Locale.ROOT).trim();
 		// 包含了select 或with as、show、desc 模式开头直接返回
 		if (StringUtil.matches(sqlLow, "^(select|with|show|desc)\\W")) {
 			return sql;
@@ -2163,21 +3059,24 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @todo 判断sql中是否存在lock锁
-	 * @param sql
-	 * @param dbType
-	 * @return
+	 * 判断sql中是否存在lock锁
+	 * 
+	 * @param sql    sql语句，null返回false
+	 * @param dbType 数据库类型，sqlserver需判断with(rowlock)等形式，参见DataSourceUtils.DBType
+	 * @return true表示存在for update或对应的锁标记
 	 */
 	public static boolean hasLock(String sql, Integer dbType) {
 		if (sql == null) {
 			return false;
 		}
-		if (StringUtil.matches(sql, "(?i)\\s+for\\s+update")) {
+		// 字面量内容不参与判定:规避字面量内的for update/with(rowlock...)文本误判为已存在锁而跳过加锁
+		String maskedSql = SqlConfigParseUtils.maskLiterals(sql, false);
+		if (StringUtil.matches(maskedSql, "(?i)\\s+for\\s+update")) {
 			return true;
 		}
 		// sqlserver
 		if (dbType != null && dbType.intValue() == DBType.SQLSERVER) {
-			if (StringUtil.matches(sql,
+			if (StringUtil.matches(maskedSql,
 					"(?i)with\\s*\\(\\s*(rowlock|xlock|updlock|holdlock|nolock|readpast)?\\,?\\s*(rowlock|xlock|updlock|holdlock|nolock|readpast)\\s*\\)")) {
 				return true;
 			}
@@ -2186,19 +3085,21 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @todo 处理sqlserver default值为((value))问题
-	 * @param defaultValue
-	 * @return
+	 * 处理sqlserver default值为((value))问题
+	 * 
+	 * @param defaultValue 数据库元数据中的字段默认值表达式
+	 * @return 去除外层括号、引号和::text等类型转换后的默认值，NULL::类型转换返回null，null输入返回null
 	 */
 	public static String clearDefaultValue(String defaultValue) {
 		if (defaultValue == null) {
 			return null;
 		}
+		// 按原默认值返回
 		if ("".equals(defaultValue.trim())) {
-			return "";
+			return defaultValue;
 		}
 		String result = defaultValue.trim();
-		if (result.toUpperCase().startsWith("NULL::") && StringUtil.matches(result, PG_CAST_PATTERN)) {
+		if (result.toUpperCase(Locale.ROOT).startsWith("NULL::") && StringUtil.matches(result, PG_CAST_PATTERN)) {
 			return null;
 		}
 		// 先去除最外层的::text等,比如(x)::text
@@ -2219,10 +3120,11 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @todo 替换换行、回车、tab符号;\r 换行、\t tab符合、\n 回车
-	 * @param source
-	 * @param target
-	 * @return
+	 * 替换换行、回车、tab符号;\r 换行、\t tab符合、\n 回车
+	 * 
+	 * @param source 原始字符串，null返回null
+	 * @param target 用于替换的字符或字符串
+	 * @return 替换后的字符串(回车换行前后空白一并剔除)
 	 */
 	public static String clearMistyChars(String source, String target) {
 		if (source == null) {
@@ -2233,17 +3135,24 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @TODO 获取数据库时间字符串
-	 * @param dbType
-	 * @param fieldMeta
-	 * @param createSqlTimeFields
-	 * @return
+	 * 获取数据库时间字符串
+	 * 
+	 * @param dbType              数据库类型，参见DataSourceUtils.DBType
+	 * @param fieldMeta           字段元数据(含字段名称和类型)
+	 * @param createSqlTimeFields 需要通过数据库时间填充的字段名称集合
+	 * @return 对应数据库的当前时间函数表达式(如current_timestamp)，字段不在集合内或非时间类型返回null
 	 */
 	public static String getDBTime(Integer dbType, FieldMeta fieldMeta, IgnoreCaseSet createSqlTimeFields) {
 		if (fieldMeta == null || createSqlTimeFields == null || createSqlTimeFields.isEmpty()) {
 			return null;
 		}
 		int fieldType = fieldMeta.getType();
+		// 统一需要处理的字段
+		// update 2026-9-15 fieldType字符串比较忽略大小写:实际VO的fieldType为驼峰
+		// (java.time.LocalTime/LocalDate),原全小写常量比较永远不成立,时间字段携带
+		// 驼峰fieldType时分支失灵(实测localdate形态落到current_timestamp)
+		String realFieldType = (fieldMeta.getFieldType() == null) ? ""
+				: fieldMeta.getFieldType().toLowerCase(java.util.Locale.ROOT);
 		// 统一需要处理的字段、且是日期、时间类型
 		if (createSqlTimeFields.contains(fieldMeta.getFieldName()) && (fieldType == java.sql.Types.DATE
 				|| fieldType == java.sql.Types.TIME || fieldType == java.sql.Types.TIME_WITH_TIMEZONE
@@ -2254,11 +3163,10 @@ public class SqlUtil {
 			}
 			// time
 			if (fieldType == java.sql.Types.TIME || fieldType == java.sql.Types.TIME_WITH_TIMEZONE
-					|| "java.time.localtime".equals(fieldMeta.getFieldType())
-					|| "java.sql.time".equals(fieldMeta.getFieldType())) {
+					|| "java.time.localtime".equals(realFieldType) || "java.sql.time".equals(realFieldType)) {
 				if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.TIDB
 						|| dbType == DBType.SQLITE || dbType == DBType.H2 || dbType == DBType.POSTGRESQL
-						|| dbType == DBType.POSTGRESQL15 || dbType == DBType.KINGBASE || dbType == DBType.DB2
+						|| dbType == DBType.POSTGRESQL14 || dbType == DBType.KINGBASE || dbType == DBType.DB2
 						|| dbType == DBType.OCEANBASE || dbType == DBType.DORIS || dbType == DBType.STARROCKS) {
 					return "current_time";
 				} else if (dbType == DBType.GAUSSDB || dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB
@@ -2270,7 +3178,7 @@ public class SqlUtil {
 					return "current_timestamp";
 				}
 			} // timestamp
-			else if ("java.time.localdate".equals(fieldMeta.getFieldType())) {
+			else if ("java.time.localdate".equals(realFieldType)) {
 				if (dbType == DBType.SQLSERVER) {
 					return "getdate()";
 				}
@@ -2283,14 +3191,13 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @TODO 验证sql in的参数,要么是''形式的字符，要么是数字
-	 * @param argValue
-	 * @return
+	 * 验证sql in的参数,要么是''形式的字符，要么是数字
+	 * 
+	 * @param argValue 待验证的in参数内容(如'1','2'或1,2)
+	 * @return true表示格式合法可直接拼入in子句，单个数字等不合规场景返回false(回退参数化)
 	 */
 	public static boolean validateInArg(String argValue) {
-		// 判断是否有关键词
-		boolean hasSqlKeyWord = StringUtil.matches(BLANK + argValue, SQL_INJECT_PATTERN);
-		String argTrim = argValue.replaceAll("\\s+", "");
+		String argTrim = WHITESPACE_PATTERN.matcher(argValue).replaceAll("");
 		String[] args = null;
 		// 判断是否有逗号分割
 		if (argTrim.indexOf(",") != -1) {
@@ -2320,16 +3227,17 @@ public class SqlUtil {
 				if (!item.startsWith("'") || !item.endsWith("'")) {
 					return false;
 				}
-				// 有关键词时，校验是否多个单引号，避免:''+(select field from table)+''模式
-				if (hasSqlKeyWord && StringUtil.matchCnt(item, ONE_QUOTA, 0) > 2) {
+				// 引号包裹项必须恰好一对引号且不含反斜杠:多于一对引号意味着值内拼接了额外字面量
+				// ('a' or sleep(5)--'形式),反斜杠在MySQL等方言会转义收尾引号提前闭合字面量,一律回退参数化
+				if (item.indexOf('\\') != -1 || StringUtil.matchCnt(item, ONE_QUOTA, 0) != 2) {
 					return false;
 				}
 			} else if (argType == 2) {
 				if (!item.startsWith("\"") || !item.endsWith("\"")) {
 					return false;
 				}
-				// 有关键词时，校验是否多个双引号，避免:""+(select field from table)+""模式
-				if (hasSqlKeyWord && StringUtil.matchCnt(item, DOUBLE_QUOTA, 0) > 2) {
+				// 双引号同理,\"转义可提前闭合(MySQL ANSI_QUOTES等场景),多余引号即拼接,回退参数化
+				if (item.indexOf('\\') != -1 || StringUtil.matchCnt(item, DOUBLE_QUOTA, 0) != 2) {
 					return false;
 				}
 			} else if (!NumberUtil.isNumber(item)) {
@@ -2340,10 +3248,11 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @TODO 将参数值转成字符传
-	 * @param sqlArgValue
+	 * 将参数值转成字符传
+	 * 
+	 * @param sqlArgValue        待转换的参数值，null返回"null"
 	 * @param addSingleQuotation 是否加单引号
-	 * @return
+	 * @return 参数值对应的字符串形式(字符和日期时间类型按需加单引号，数组集合转逗号分隔)
 	 */
 	public static String toSqlString(Object sqlArgValue, boolean addSingleQuotation) {
 		if (sqlArgValue == null) {
@@ -2406,12 +3315,13 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @TODO 将参数值转成字符传
-	 * @param sqlArgValue
+	 * 将参数值转成字符传
+	 * 
+	 * @param sqlArgValue        待转换的参数值，null返回"null"
 	 * @param preSql             前面的sql片段
 	 * @param addSingleQuotation 是否加单引号
 	 * @param dbType             数据库方言
-	 * @return
+	 * @return 参数值对应的字符串形式，日期时间类型且需要引号时按数据库方言包上转日期函数
 	 */
 	public static String toSqlLogStr(Object sqlArgValue, String preSql, boolean addSingleQuotation, int dbType) {
 		if (sqlArgValue == null) {
@@ -2438,6 +3348,12 @@ public class SqlUtil {
 		} else if (paramValue instanceof LocalDateTime) {
 			nanoValue = ((LocalDateTime) paramValue).getNano();
 			if (nanoValue > 0) {
+				// update 2026-9-15 决策记录:生产默认配置下(SqlToyContext.initialize覆写常量为
+				// "yyyy-MM-dd HH:mm:ss",有意向后兼容)走上方固定格式分支,输出恒19字符→dateType
+				// 恒为2,小数秒被格式化丢弃,下方dateType=3的方言分派(TO_TIMESTAMP FF3/FF、pg
+				// MS/US、mysql %f等)仅对java.sql.Timestamp(硬编码.SSS)或显式配置"auto"可达,
+				// 属预期行为勿"修复";LocalTime分支及toSqlString/combineArray同款门控同此语义
+				// (详见SqlToyConstants.localDateTimeFormat处决策注释)
 				if (SqlToyConstants.localDateTimeFormat != null
 						&& !SqlToyConstants.localDateTimeFormat.equals("auto")) {
 					timeStr = DateUtil.formatDate(paramValue, SqlToyConstants.localDateTimeFormat);
@@ -2482,9 +3398,12 @@ public class SqlUtil {
 			valueStr = sign + DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss") + sign;
 			dateType = 2;
 		} else if (paramValue instanceof Object[]) {
-			valueStr = combineArray((Object[]) paramValue);
+			// update 2026-9-15 数组/IN参数的日期元素同样按比较位置包裹方言日期函数(与标量路径
+			// 同款门控),保证IN条件日志SQL可copy到客户端直接执行(此前仅加单引号,oracle依赖
+			// 会话NLS_DATE_FORMAT,默认NLS下报ORA-01861);addSingleQuotation=false时preSql传null不包裹
+			valueStr = combineArray((Object[]) paramValue, addSingleQuotation ? preSql : null, dbType);
 		} else if (paramValue instanceof Collection) {
-			valueStr = combineArray(((Collection) paramValue).toArray());
+			valueStr = combineArray(((Collection) paramValue).toArray(), addSingleQuotation ? preSql : null, dbType);
 		} else {
 			valueStr = "" + paramValue;
 		}
@@ -2498,11 +3417,11 @@ public class SqlUtil {
 	/**
 	 * add 2025-04-01 sql日志日期、时间类型条件参数增加转日期函数输出
 	 * 
-	 * @param dateStr
-	 * @param preSql
-	 * @param type
-	 * @param dbType
-	 * @return
+	 * @param dateStr 带引号的日期时间字符串
+	 * @param preSql  参数前面的sql片段，用于判断是否为条件比较位置
+	 * @param type    日期类型：1日期、2日期时间、3时间戳、4时间、5毫秒时间
+	 * @param dbType  数据库方言
+	 * @return 包裹数据库转日期函数后的字符串，前置片段非比较条件或方言无对应函数时原样返回
 	 */
 	private static String addDateFunction(String dateStr, String preSql, int type, int dbType) {
 		// 前置sql片段不以<,=,<,between,and 作为结尾则不增加函数
@@ -2510,8 +3429,10 @@ public class SqlUtil {
 			return dateStr;
 		}
 		int dateLength = dateStr.length() - 2;
-		// oracle 和dm
-		if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM || dbType == DBType.OCEANBASE) {
+		// update 2026-9-8 oceanbase移出oracle分支:ob主流为mysql模式,实测TO_DATE不存在
+		// ("FUNCTION TO_DATE does not exist"),应走mysql系STR_TO_DATE;oracle与dm拆分time形态:
+		// 实测oracle无独立TIME类型(CAST(as TIME)报ORA-00932),dm支持CAST(as TIME)且结果正确
+		if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
 			// day
 			if (type == 1) {
 				return "TO_DATE(" + dateStr + ",'YYYY-MM-DD')";
@@ -2528,17 +3449,24 @@ public class SqlUtil {
 					return "TO_TIMESTAMP(" + dateStr + ",'YYYY-MM-DD HH24:MI:SS.FF3')";
 				}
 			}
-			// time
-			if (type == 4) {
-				return "CAST(TO_DATE(" + dateStr + ",'HH24:MI:SS') as TIME)";
-			}
-			// 毫秒time
-			if (type == 5) {
-				if (dateLength > 12) {
-					return "CAST(TO_DATE(" + dateStr + ",'HH24:MI:SS.FF') as TIME)";
-				} else {
-					return "CAST(TO_DATE(" + dateStr + ",'HH24:MI:SS.FF3') as TIME)";
+			// time:dm有独立TIME类型,CAST(as TIME)实测正确输出时间部分;oracle无TIME类型
+			// (实测CAST(as TIME)报ORA-00932),以TO_DATE(补当月首日时间部分)作为日志可执行
+			// 形态的近似输出,LocalTime与DATE/TIMESTAMP列比较的精确语义以驱动参数绑定为准
+			if (type == 4 || type == 5) {
+				// update 2026-9-15 type5(带小数秒)改TO_TIMESTAMP:TO_DATE不支持FF格式符
+				// (oracle报ORA-01821),且原dateLength==12的毫秒形态落入'HH24:MI:SS'格式会因
+				// 输入多出小数尾巴报ORA-01830;FF接受1-9位小数无需再按长度区分;dm兼容oracle
+				// 其TO_DATE带FF同此问题,改TO_TIMESTAMP后外层CAST(as TIME)保持
+				if (type == 5) {
+					if (dbType == DBType.DM) {
+						return "CAST(TO_TIMESTAMP(" + dateStr + ",'HH24:MI:SS.FF') as TIME)";
+					}
+					return "TO_TIMESTAMP(" + dateStr + ",'HH24:MI:SS.FF')";
 				}
+				if (dbType == DBType.DM) {
+					return "CAST(TO_DATE(" + dateStr + ",'HH24:MI:SS') as TIME)";
+				}
+				return "TO_DATE(" + dateStr + ",'HH24:MI:SS')";
 			}
 		}
 		if (dbType == DBType.SQLSERVER) {
@@ -2563,9 +3491,10 @@ public class SqlUtil {
 				return "CONVERT(time(3)," + dateStr + ")";
 			}
 		}
-		// mysql和tidb
+		// mysql和tidb;update 2026-9-8 oceanbase主流为mysql模式纳入本分支(实测STR_TO_DATE可用,
+		// 而TO_DATE报"FUNCTION TO_DATE does not exist")
 		if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.TIDB || dbType == DBType.DORIS
-				|| dbType == DBType.STARROCKS) {
+				|| dbType == DBType.STARROCKS || dbType == DBType.OCEANBASE) {
 			// day
 			if (type == 1) {
 				return "STR_TO_DATE(" + dateStr + ",'%Y-%m-%d')";
@@ -2588,7 +3517,7 @@ public class SqlUtil {
 			}
 		}
 		// postgresql系列
-		if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB
+		if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 				|| dbType == DBType.STARDB || dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB
 				|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE) {
 			// day
@@ -2622,8 +3551,10 @@ public class SqlUtil {
 				return "TO_DATE(" + dateStr + ",'YYYY-MM-DD')";
 			}
 			// datetime
+			// update 2026-9-15 改TO_TIMESTAMP:KES的PG兼容模式下to_date返回纯DATE会静默截断
+			// 时间部分(日志SQL可执行但比较结果错误),TO_TIMESTAMP在PG/oracle两种模式下均保留时间
 			if (type == 2) {
-				return "TO_DATE(" + dateStr + ",'YYYY-MM-DD HH24:MI:SS')";
+				return "TO_TIMESTAMP(" + dateStr + ",'YYYY-MM-DD HH24:MI:SS')";
 			}
 			// timestamp
 			if (type == 3) {
@@ -2633,17 +3564,12 @@ public class SqlUtil {
 					return "TO_TIMESTAMP(" + dateStr + ",'YYYY-MM-DD HH24:MI:SS.MS')";
 				}
 			}
-			// time
-			if (type == 4) {
-				return "TIME(TO_TIMESTAMP(" + dateStr + ",'YYYY-MM-DD HH24:MI:SS'))";
-			}
-			// 毫秒time
-			if (type == 5) {
-				if (dateLength > 12) {
-					return "TIME(TO_TIMESTAMP(" + dateStr + ",'YYYY-MM-DD HH24:MI:SS.US'))";
-				} else {
-					return "TIME(TO_TIMESTAMP(" + dateStr + ",'YYYY-MM-DD HH24:MI:SS.MS'))";
-				}
+			// time/毫秒time
+			// update 2026-9-15 原TIME(TO_TIMESTAMP(纯时间串,'YYYY-MM-DD HH24:MI:SS...'))格式与
+			// 输入不匹配必报错(PG模式报invalid value for MM,oracle模式报ORA-01861同类),KES为
+			// PG内核,改与PG分支同款::TIME cast(小数秒由内核自动截断到微秒,无需按长度区分)
+			if (type == 4 || type == 5) {
+				return "" + dateStr + "::TIME";
 			}
 		}
 		// clickhouse
@@ -2664,17 +3590,12 @@ public class SqlUtil {
 					return "toDateTime64(" + dateStr + ",3)";
 				}
 			}
-			// time
-			if (type == 4) {
-				return "formatDateTime(toDateTime(" + dateStr + "), '%H:%M:%S')";
-			}
-			// 毫秒time
-			if (type == 5) {
-				if (dateLength > 12) {
-					return "formatDateTime(toDateTime64(" + dateStr + ",6), '%H:%M:%S.%f')";
-				} else {
-					return "formatDateTime(toDateTime64(" + dateStr + ",3), '%H:%M:%S.%f')";
-				}
+			// time/毫秒time
+			// update 2026-9-15 原formatDateTime(toDateTime(纯时间串))中CH无法解析纯时间串
+			// (报Cannot parse datetime),且CH无TIME类型,formatDateTime产出的仍是同一字符串
+			// 属无意义包装,直接返回裸串(字符串比较是CH时间值的唯一可行形态)
+			if (type == 4 || type == 5) {
+				return dateStr;
 			}
 		}
 		// db2
@@ -2696,8 +3617,10 @@ public class SqlUtil {
 				}
 			}
 			// time
+			// update 2026-9-15 原'YYYY-MM-DD HH24:MI:SS'格式与纯时间串输入不匹配(误复制自
+			// type2分支),改为与type5一致的纯时间格式
 			if (type == 4) {
-				return "TIME(TO_TIMESTAMP(" + dateStr + ",'YYYY-MM-DD HH24:MI:SS'))";
+				return "TIME(TO_TIMESTAMP(" + dateStr + ",'HH24:MI:SS'))";
 			}
 			// 毫秒time
 			if (type == 5) {
@@ -2708,15 +3631,61 @@ public class SqlUtil {
 				}
 			}
 		}
+		// update 2026-9-15 增加hana分支(此前落裸串兜底,与hana已在insert/update等环节
+		// 专门分派的支持程度不匹配):统一用CAST+ISO字符串形态,不依赖TO_DATE/TO_TIMESTAMP
+		// 格式符的方言差异;hana的TIMESTAMP最高精度7位(100ns),9位纳秒输入截断到6位小数
+		// 保证可解析;TIME类型无小数秒,type5截断到整秒(日志可执行形态,真实精度以驱动绑定为准)
+		if (dbType == DBType.HANA) {
+			// day
+			if (type == 1) {
+				return "CAST(" + dateStr + " AS DATE)";
+			}
+			// datetime
+			if (type == 2) {
+				return "CAST(" + dateStr + " AS TIMESTAMP)";
+			}
+			// timestamp(小数超6位截断:dateStr形如'yyyy-MM-dd HH:mm:ss.fffffffff',
+			// substring(0,27)保留引号+19位日期时间+小数点+6位小数,再补尾引号)
+			if (type == 3) {
+				if (dateLength > 26) {
+					return "CAST(" + dateStr.substring(0, 27) + "' AS TIMESTAMP)";
+				}
+				return "CAST(" + dateStr + " AS TIMESTAMP)";
+			}
+			// time
+			if (type == 4) {
+				return "CAST(" + dateStr + " AS TIME)";
+			}
+			// 毫秒time(hana的TIME无小数秒,substring(0,9)保留引号+HH:mm:ss再补尾引号)
+			if (type == 5) {
+				return "CAST(" + dateStr.substring(0, 9) + "' AS TIME)";
+			}
+		}
 		return dateStr;
 	}
 
 	/**
-	 * @TODO 组合in参数
-	 * @param array
-	 * @return
+	 * 组合in参数
+	 *
+	 * @param array 参数值数组，null或空返回"null"
+	 * @return 逗号连接的参数串(字符和日期时间类型加单引号，支持枚举)，可直接拼入in子句
 	 */
 	public static String combineArray(Object[] array) {
+		return combineArray(array, null, -1);
+	}
+
+	/**
+	 * update 2026-9-15 组合in参数(支持日期函数包裹):preSql非null时日期元素经addDateFunction
+	 * 按比较位置包裹方言日期函数(如oracle产出TO_DATE('2020-01-01','YYYY-MM-DD')),规避IN列表
+	 * 裸串在oracle等库依赖会话NLS_DATE_FORMAT导致copy到客户端报ORA-01861的问题;
+	 * preSql为null保持原裸引号串形态(旧签名委托及非日志场景)
+	 *
+	 * @param array  参数值数组，null或空返回"null"
+	 * @param preSql 参数前面的sql片段(用于判断是否为条件比较位置)，null不包裹
+	 * @param dbType 数据库方言
+	 * @return 逗号连接的参数串(字符和日期时间类型加单引号，支持枚举)，可直接拼入in子句
+	 */
+	public static String combineArray(Object[] array, String preSql, int dbType) {
 		if (array == null || array.length == 0) {
 			return "null";
 		}
@@ -2724,11 +3693,15 @@ public class SqlUtil {
 		Object value;
 		int nanoValue;
 		String timeStr;
+		// 日期元素类型(与toSqlLogStr同约定:1日期、2日期时间、3时间戳、4时间、5毫秒时间),-1非日期
+		int dateType;
 		for (int i = 0; i < array.length; i++) {
 			if (i > 0) {
 				result.append(",");
 			}
 			value = array[i];
+			dateType = -1;
+			timeStr = null;
 			if (value == null) {
 				result.append("null");
 			} else {
@@ -2739,7 +3712,8 @@ public class SqlUtil {
 				if (value instanceof CharSequence) {
 					result.append("'" + value + "'");
 				} else if (value instanceof Timestamp) {
-					result.append("'" + DateUtil.formatDate(value, "yyyy-MM-dd HH:mm:ss.SSS") + "'");
+					timeStr = DateUtil.formatDate(value, "yyyy-MM-dd HH:mm:ss.SSS");
+					dateType = 3;
 				} else if (value instanceof LocalDateTime) {
 					nanoValue = ((LocalDateTime) value).getNano();
 					if (nanoValue > 0) {
@@ -2750,12 +3724,14 @@ public class SqlUtil {
 							timeStr = DateUtil.formatDate(value, "yyyy-MM-dd HH:mm:ss")
 									+ DateUtil.processNano(nanoValue);
 						}
+						dateType = (timeStr.length() > 19) ? 3 : 2;
 					} else {
 						timeStr = DateUtil.formatDate(value, "yyyy-MM-dd HH:mm:ss");
+						dateType = 2;
 					}
-					result.append("'" + timeStr + "'");
 				} else if (value instanceof LocalDate) {
-					result.append("'" + DateUtil.formatDate(value, "yyyy-MM-dd") + "'");
+					timeStr = DateUtil.formatDate(value, "yyyy-MM-dd");
+					dateType = 1;
 				} else if (value instanceof LocalTime) {
 					nanoValue = ((LocalTime) value).getNano();
 					if (nanoValue > 0) {
@@ -2765,16 +3741,27 @@ public class SqlUtil {
 						} else {
 							timeStr = DateUtil.formatDate(value, "HH:mm:ss") + DateUtil.processNano(nanoValue);
 						}
+						dateType = (timeStr.length() > 8) ? 5 : 4;
 					} else {
 						timeStr = DateUtil.formatDate(value, "HH:mm:ss");
+						dateType = 4;
 					}
-					result.append("'" + timeStr + "'");
 				} else if (value instanceof Time) {
-					result.append("'" + DateUtil.formatDate(value, "HH:mm:ss") + "'");
+					timeStr = DateUtil.formatDate(value, "HH:mm:ss");
+					dateType = 4;
 				} else if (value instanceof Date) {
-					result.append("'" + DateUtil.formatDate(value, "yyyy-MM-dd HH:mm:ss") + "'");
+					timeStr = DateUtil.formatDate(value, "yyyy-MM-dd HH:mm:ss");
+					dateType = 2;
 				} else {
 					result.append("" + value);
+				}
+				// 日期元素统一收尾:加单引号,preSql非null时按比较位置包裹方言日期函数
+				if (dateType != -1) {
+					timeStr = "'" + timeStr + "'";
+					if (preSql != null) {
+						timeStr = addDateFunction(timeStr, preSql, dateType, dbType);
+					}
+					result.append(timeStr);
 				}
 			}
 		}
@@ -2784,12 +3771,12 @@ public class SqlUtil {
 	/**
 	 * merge into sql特定数据库下需要补充;符号(sql加工成SqlToyConfig 时统一清理掉了分号)
 	 * 
-	 * @param sql
-	 * @param dbType
-	 * @return
+	 * @param sql    sql语句
+	 * @param dbType 数据库类型，参见DataSourceUtils.DBType
+	 * @return 按数据库方言调整分号后的sql语句，非merge into语句原样返回
 	 */
 	public static String adjustMergeIntoSql(String sql, Integer dbType) {
-		String sqlTrimLow = sql.toLowerCase().trim();
+		String sqlTrimLow = sql.toLowerCase(Locale.ROOT).trim();
 		// 非merge into 不做任何处理
 		if (!StringUtil.matches(sqlTrimLow, MERGE_INTO_PATTERN)) {
 			return sql;
@@ -2813,24 +3800,26 @@ public class SqlUtil {
 	 * <li>2、判断是否复杂查询(分页是否select count(1) from (sql))，获取from 对称的where的位置</li>
 	 * <li>非分页:sqlserver 锁查询，提取from位置,此场景sql简单,不会产生问题</li>
 	 * </p>
+	 * <p>
+	 * 字面量内容不参与判定:先将'...'字面量内部掩为等长空白再分析,
+	 * 规避字面量内的from/select/where以及'('、')'等字符干扰关键词定位与括号配对 (掩码串与原串等长,返回位置可直接用于原串截取)
+	 * </p>
 	 * 
-	 * @param sql
-	 * @param startRegex
-	 * @param endRegex
-	 * @param startIndex
-	 * @return
+	 * @param sql        sql语句
+	 * @param startRegex 起始关键词正则表达式，如select
+	 * @param endRegex   结束关键词正则表达式，如from
+	 * @param startIndex 起始查找位置
+	 * @return 与startRegex对称匹配的endRegex位置，未找到返回-1
 	 */
 	public static int getSymMarkIndexExcludeKeyWords(String sql, String startRegex, String endRegex, int startIndex) {
-		Pattern endPattern = Pattern.compile(endRegex);
-		String sqlLow = sql.toLowerCase();
+		String sqlLow = SqlConfigParseUtils.maskLiterals(sql.toLowerCase(Locale.ROOT), false);
 		int startRegexIndex = StringUtil.matchIndex(sqlLow, startRegex, startIndex)[0];
 		int endRegIndex = StringUtil.getSymMarkMatchIndex(startRegex, endRegex, sqlLow, startIndex);
 		// 就一个endPattern直接返回
 		if (endRegIndex > 0
-				&& StringUtil.matchCnt(startIndex == 0 ? sqlLow : sqlLow.substring(startIndex), endPattern) == 1) {
+				&& StringUtil.matchCnt(startIndex == 0 ? sqlLow : sqlLow.substring(startIndex), endRegex) == 1) {
 			return endRegIndex;
 		}
-		// 如果有select concat(a,'(') from 判断就可能有问题
 		String startMark = "(", endMark = ")";
 		int startBreaket = sqlLow.indexOf(startMark, startRegexIndex);
 		// 在select 和from之间有()符号，要排除select (day from()) from 场景
@@ -2847,7 +3836,7 @@ public class SqlUtil {
 					sqlLow = sqlLow.substring(0, start) + sqlLow.substring(start, symMarkEnd).replace("from", "AAAA")
 							.replace("select", "AAAAAA").replace("where", "AAAAA") + tail;
 					// 后续sql中没有endPattern则停止处理
-					if (!StringUtil.matches(tail, endPattern)) {
+					if (!StringUtil.matches(tail, endRegex)) {
 						break;
 					}
 					start = sqlLow.indexOf(startMark, symMarkEnd);
@@ -2867,8 +3856,8 @@ public class SqlUtil {
 	/**
 	 * 统一将sql中@fast的位置标识注释符号转化为@fast，目的是便于sql调试
 	 * 
-	 * @param sql
-	 * @return
+	 * @param sql 含@fast_start/@fast_end注释标记的sql语句
+	 * @return 标记还原为@fast后的sql语句，无标记时原样返回
 	 */
 	public static String uniformFastMarks(String sql) {
 		int startRegexIndex = 0;
@@ -2906,9 +3895,10 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @TODO 校验参数是否存在sql注入(即sql片段)
-	 * @param sqlInjectionLevel
-	 * @param paramValue
+	 * 校验参数是否存在sql注入(即sql片段)
+	 * 
+	 * @param sqlInjectionLevel 注入校验级别，决定采用何种匹配策略
+	 * @param paramValue        待校验的参数值，支持字符串、字符串数组和集合类型
 	 * @throws IllegalArgumentException
 	 */
 	public static boolean isSqlInjection(SqlInjectionLevel sqlInjectionLevel, Object paramValue) {
@@ -2951,8 +3941,8 @@ public class SqlUtil {
 	/**
 	 * sql注入校验的参数，将字符类型的转成List<String>供统一处理，非字符类型返回空集合(无需验证)
 	 * 
-	 * @param paramValue
-	 * @return
+	 * @param paramValue 待处理的参数值，支持String、String[]和全为字符串的Iterable
+	 * @return 字符串值组成的List，混合类型集合从首个非字符串处截断，非字符类型返回空List
 	 */
 	private static List<String> toList(Object paramValue) {
 		List<String> result = new ArrayList<>();
@@ -3008,5 +3998,47 @@ public class SqlUtil {
 		}
 		matcher.appendTail(sb);
 		return sb.toString();
+	}
+
+	/**
+	 * 转义LIKE查询值中的特殊字符,避免用户输入的_和%被数据库当作通配符 PreparedStatement参数值必须使用\转义(配合ESCAPE
+	 * '\'子句),
+	 * 
+	 * @param value         原始值
+	 * @param dbType        数据库类型(保留用于向后兼容,所有数据库统一使用\转义)
+	 * @param escapePercent 是否转义%符号(true:将%作为字面量转义;false:保留%作为通配符)
+	 * @return 转义后的值(统一使用\转义,需配合ESCAPE '\'子句使用)
+	 */
+	public static String escapeLikeValue(String value, int dbType, boolean escapePercent) {
+		if (value == null || value.isEmpty()) {
+			return value;
+		}
+		// update 2026-9-6 实测sqlserver的LIKE中方括号是字符类通配符([abc]匹配单字符a/b/c),
+		// 需转义为字面量(ESCAPE'\'子句下\[即字面量[);其他库[为普通字符不转义
+		boolean escapeBracket = (dbType == DBType.SQLSERVER);
+		// 先去除已有转义,确保多次调用幂等,避免二次转义
+		// 用占位符保护\\避免与\_、\%产生交叉干扰
+		String result = value.replace("\\\\", "\u0000").replace("\\_", "_");
+		if (escapeBracket) {
+			result = result.replace("\\[", "[");
+		}
+		if (escapePercent) {
+			result = result.replace("\\%", "%");
+		} else {
+			// escapePercent=false时保护已转义的\%,避免被后续\\转义步骤破坏
+			result = result.replace("\\%", "\u0001");
+		}
+		result = result.replace("\u0000", "\\");
+		// 重新转义
+		result = result.replace("\\", "\\\\").replace("_", "\\_");
+		if (escapeBracket) {
+			result = result.replace("[", "\\[");
+		}
+		if (escapePercent) {
+			result = result.replace("%", "\\%");
+		} else {
+			result = result.replace("\u0001", "\\%");
+		}
+		return result;
 	}
 }

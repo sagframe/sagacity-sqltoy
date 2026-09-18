@@ -6,13 +6,10 @@ import java.io.Serializable;
  * @project sagacity-sqltoy
  * @description 提供QueryExecutor中构造实现行字段分组连接的模型
  * @author zhongxuchen
- * @version v1.0, Date:2023年8月9日
- * @modify 2023年8月9日,修改说明
+ * @version v1.0,Date:2023-08-09
+ * @modify Date:2023-08-09,修改说明
  */
 public class GroupConcat implements Serializable {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 6903223049853812595L;
 
 	/**

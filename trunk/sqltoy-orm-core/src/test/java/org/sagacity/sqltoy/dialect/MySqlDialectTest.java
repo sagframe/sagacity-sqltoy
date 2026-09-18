@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.dialect;
 
 import java.sql.Connection;
@@ -14,13 +11,14 @@ import org.sagacity.sqltoy.dialect.impl.MySqlDialect;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.DateUtil;
+import org.sagacity.sqltoy.model.DBProfile;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 本处测试类仅仅是开发过程中验证不同数据库方言针对sqltoy后台对象操作具体语法实现,实际sqltoy
  *              相关增删改操作全部基于对象完成， 请勿以为实际使用sqltoy需要如此复杂的写sql
- * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:MySqlDialectTest.java,Revision:v1.0,Date:2015年2月13日
+ * @author zhongxuchen
+ * @version id:MySqlDialectTest.java,Revision:v1.0,Date:2015-02-13
  */
 public class MySqlDialectTest {
 	@Test
@@ -77,7 +75,7 @@ public class MySqlDialectTest {
 		MySqlDialect dialect = new MySqlDialect();
 		try {
 			Long count = dialect.getCountBySql(null, null, query.toString(), paramValues, false,
-					new QueryExecutorExtend(), conn, DBType.MYSQL, "mysql");
+					new QueryExecutorExtend(), conn, profile());
 			System.err.println(count);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -150,5 +148,10 @@ public class MySqlDialectTest {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	/** 最小DBProfile连接档案:仅承载dbType/dialect,满足直调方言方法的用例构造 */
+	private static DBProfile profile() {
+		return new DBProfile(null, "mysql", DBType.MYSQL, null, 0, null, null, false);
 	}
 }

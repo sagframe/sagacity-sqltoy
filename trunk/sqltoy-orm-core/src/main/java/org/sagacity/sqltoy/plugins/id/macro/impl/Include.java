@@ -17,7 +17,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
  *              </p>
  * 
  * @author zhongxuchen
- * @version v1.0,Date:2023年2月1日
+ * @version v1.0,Date:2023-02-01
  */
 public class Include extends AbstractMacro {
 
@@ -62,7 +62,8 @@ public class Include extends AbstractMacro {
 	}
 
 	/**
-	 * @TODO 增加对数据库方言的适配
+	 * 增加对数据库方言的适配
+	 * 
 	 * @param sqlCache
 	 * @param sqlId
 	 * @param dialect
@@ -88,6 +89,24 @@ public class Include extends AbstractMacro {
 				result = (SqlToyConfig) sqlCache.get(sqlId.concat("_postgres"));
 				if (result == null) {
 					result = (SqlToyConfig) sqlCache.get("postgres_".concat(sqlId));
+				}
+			} // 兼容oracle11版本方言,获取不到用oracle命名的sql再次获取
+			if (result == null && dialect.equals(Dialect.ORACLE11)) {
+				result = (SqlToyConfig) sqlCache.get(sqlId.concat("_").concat(Dialect.ORACLE));
+				if (result == null) {
+					result = (SqlToyConfig) sqlCache.get(Dialect.ORACLE.concat("_").concat(sqlId));
+				}
+			} // 兼容postgresql14版本方言,获取不到用postgresql命名的sql再次获取
+			if (result == null && dialect.equals(Dialect.POSTGRESQL14)) {
+				result = (SqlToyConfig) sqlCache.get(sqlId.concat("_").concat(Dialect.POSTGRESQL));
+				if (result == null) {
+					result = (SqlToyConfig) sqlCache.get(Dialect.POSTGRESQL.concat("_").concat(sqlId));
+				}
+			} // 兼容mysql57版本方言,获取不到用mysql命名的sql再次获取
+			if (result == null && dialect.equals(Dialect.MYSQL57)) {
+				result = (SqlToyConfig) sqlCache.get(sqlId.concat("_").concat(Dialect.MYSQL));
+				if (result == null) {
+					result = (SqlToyConfig) sqlCache.get(Dialect.MYSQL.concat("_").concat(sqlId));
 				}
 			}
 		}

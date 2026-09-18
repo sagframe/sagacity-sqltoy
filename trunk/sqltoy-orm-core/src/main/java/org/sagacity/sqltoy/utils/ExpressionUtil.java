@@ -1,5 +1,6 @@
 package org.sagacity.sqltoy.utils;
 
+import java.util.Locale;
 import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -11,7 +12,7 @@ import org.slf4j.LoggerFactory;
  * @project sagacity-sqltoy
  * @description 科学表达式运算（来源于网络）
  * @author zhongxuchen
- * @version v1.0,Date:2009-5-20
+ * @version v1.0,Date:2009-05-20
  */
 @SuppressWarnings("rawtypes")
 public class ExpressionUtil {
@@ -97,8 +98,8 @@ public class ExpressionUtil {
 			}
 			return Values.pop();
 		} catch (Exception e) {
-			e.printStackTrace();
-			logger.error(e.getMessage());
+			// 计算失败返回原表达式字符串是既有契约(调用方容错),补带表达式内容的日志便于定位
+			logger.error("failed to calculate the expression:{}, returns it as is!", expression, e);
 		}
 		return expression;
 	}
@@ -137,7 +138,7 @@ public class ExpressionUtil {
 		} else if (")".equals(opt)) {
 			return -1000;
 		}
-		throw new RuntimeException("运算符号" + opt + "非法!");
+		throw new RuntimeException("illegal operator [" + opt + "]!");
 	}
 
 	protected static int getOptPriorityIn(String opt) throws Exception {
@@ -174,7 +175,7 @@ public class ExpressionUtil {
 		} else if ("#".equals(opt)) {
 			return 0;
 		}
-		throw new RuntimeException("运算符号:" + opt + "非法!");
+		throw new RuntimeException("illegal operator [" + opt + "]!");
 	}
 
 	protected static String getOPTS() {
@@ -256,16 +257,18 @@ public class ExpressionUtil {
 				}
 			}
 		} catch (Exception e) {
-			throw new RuntimeException("参数:" + value1 + "和:" + value2 + "在进行:" + opt + "运算时非法!");
+			throw new RuntimeException(
+					"illegal values [" + value1 + "] and [" + value2 + "] for the [" + opt + "] operation!");
 		}
-		throw new RuntimeException("运算符号:" + opt + "非法!");
+		throw new RuntimeException("illegal operator [" + opt + "]!");
 	}
 
+	// 函数表达式(如abs(x))提取的正则,常量提取避免每次调用重复编译
+	private final static Pattern FUNCTION_PATTERN = Pattern.compile("^([a-zA-Z0-9_]+)\\(([a-zA-Z0-9_.()]+)\\)$");
+
 	protected static String getValue(String oldValue) throws Exception {
-		String reg = "^([a-zA-Z0-9_]+)\\(([a-zA-Z0-9_.()]+)\\)$";
 		if (isFunctionCal(oldValue)) {
-			Pattern p = Pattern.compile(reg);
-			Matcher m = p.matcher(oldValue);
+			Matcher m = FUNCTION_PATTERN.matcher(oldValue);
 			m.find();
 			return calFunction(m.group(1), m.group(2));
 		}
@@ -273,12 +276,11 @@ public class ExpressionUtil {
 	}
 
 	protected static boolean isFunctionCal(String value) {
-		String reg = "^([a-zA-Z0-9_]+)\\(([a-zA-Z0-9_.()]+)\\)$";
-		return value.matches(reg);
+		return FUNCTION_PATTERN.matcher(value).matches();
 	}
 
 	protected static String calFunction(String function, String value) throws Exception {
-		String lowerFun = function.toLowerCase();
+		String lowerFun = function.toLowerCase(Locale.ROOT);
 		double db = 0;
 		try {
 			db = Double.valueOf(getValue(value)).doubleValue();
@@ -304,9 +306,9 @@ public class ExpressionUtil {
 				return String.valueOf(Math.exp(db));
 			}
 		} catch (Exception e) {
-			throw new RuntimeException("函数" + function + "参数:" + value + "非法!");
+			throw new RuntimeException("function [" + function + "] has an illegal argument [" + value + "]!");
 		}
 
-		throw new RuntimeException("函数" + function + "不支持！");
+		throw new RuntimeException("function [" + function + "] is not supported!");
 	}
 }

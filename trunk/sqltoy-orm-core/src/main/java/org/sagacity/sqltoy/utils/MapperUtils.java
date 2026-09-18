@@ -8,13 +8,16 @@ import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.sagacity.sqltoy.config.annotation.SqlToyFieldAlias;
 import org.sagacity.sqltoy.config.model.DTOEntityMapModel;
 import org.sagacity.sqltoy.config.model.DataType;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
+import org.sagacity.sqltoy.model.JdbcTypes;
 import org.sagacity.sqltoy.model.Page;
 import org.sagacity.sqltoy.model.PropsMapperConfig;
 import org.slf4j.Logger;
@@ -24,12 +27,12 @@ import org.slf4j.LoggerFactory;
  * @project sagacity-sqltoy
  * @description 提供针对sqltoy的DTO到POJO、POJO到DTO的映射工具
  * @author zhongxuchen
- * @version v1.0,Date:2020-8-8
- * @modify 2020-09-04 支持VO<->VO,DTO<->DTO,VO<->DTO 的互转
- * @modify 2022-10-19 支持对象的多级父类属性的映射
- * @modify 2023-05-01 支持多级子对象映射，代码全面改造完全工具类化，无需再依赖SqlToyContext
- * @modify 2024-03-15 支持DTO<-->POJO 双向映射中@SqlToyFieldAlias，由gleam反馈
- * @modify 2024-05-10 进一步强化对象间映射，增加指定属性映射fieldsMap参数
+ * @version v1.0,Date:2020-08-08
+ * @modify Date:2020-09-04 支持VO<->VO,DTO<->DTO,VO<->DTO 的互转
+ * @modify Date:2022-10-19 支持对象的多级父类属性的映射
+ * @modify Date:2023-05-01 支持多级子对象映射，代码全面改造完全工具类化，无需再依赖SqlToyContext
+ * @modify Date:2024-03-15 支持DTO<-->POJO 双向映射中@SqlToyFieldAlias，由gleam反馈
+ * @modify Date:2024-05-10 进一步强化对象间映射，增加指定属性映射fieldsMap参数
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class MapperUtils {
@@ -41,7 +44,7 @@ public class MapperUtils {
 	/**
 	 * 利用缓存来提升匹配效率
 	 */
-	private static ConcurrentHashMap<String, DTOEntityMapModel> dtoEntityMapperCache = new ConcurrentHashMap<String, DTOEntityMapModel>();
+	private static ConcurrentHashMap<String, DTOEntityMapModel> dtoEntityMapperCache = new ConcurrentHashMap<>();
 
 	private static ConcurrentHashMap<String, HashMap<String, String>> classHasAliasMap = new ConcurrentHashMap<>();
 
@@ -52,7 +55,8 @@ public class MapperUtils {
 	}
 
 	/**
-	 * @TODO DTO<-->POJO 双向映射
+	 * DTO<-->POJO 双向映射
+	 * 
 	 * @param <T>
 	 * @param source
 	 * @param resultType
@@ -67,7 +71,8 @@ public class MapperUtils {
 	}
 
 	/**
-	 * @TODO DTO<-->POJO 双向映射
+	 * DTO<-->POJO 双向映射
+	 * 
 	 * @param <T>
 	 * @param source
 	 * @param resultType
@@ -81,7 +86,7 @@ public class MapperUtils {
 			return null;
 		}
 		if (resultType == null || BeanUtil.isBaseDataType(resultType)) {
-			throw new IllegalArgumentException("resultType 不能为null,且resultType不能为基本类型!");
+			throw new IllegalArgumentException("resultType can not be null and can not be a base data type!");
 		}
 		return map(source, resultType, 0, propsMapperConfig);
 	}
@@ -93,7 +98,8 @@ public class MapperUtils {
 	}
 
 	/**
-	 * @TODO List<DTO> <--> List<POJO> 互相映射
+	 * List<DTO> <--> List<POJO> 互相映射
+	 * 
 	 * @param <T>
 	 * @param sourceList
 	 * @param resultType
@@ -107,20 +113,22 @@ public class MapperUtils {
 			return null;
 		}
 		if (resultType == null || BeanUtil.isBaseDataType(resultType)) {
-			throw new IllegalArgumentException("resultType 不能为null,且resultType不能为基本类型!");
+			throw new IllegalArgumentException("resultType can not be null and can not be a base data type!");
 		}
 		// resultType不能是接口和抽象类
 		if (Modifier.isAbstract(resultType.getModifiers()) || Modifier.isInterface(resultType.getModifiers())) {
-			throw new IllegalArgumentException("resultType:" + resultType.getName() + " 是抽象类或接口,非法参数!");
+			throw new IllegalArgumentException(
+					"resultType [" + resultType.getName() + "] is an abstract class or interface, illegal argument!");
 		}
 		if (sourceList.isEmpty()) {
-			return new ArrayList<T>();
+			return new ArrayList<>();
 		}
 		return mapList(sourceList, resultType, 0, propsMapperConfig);
 	}
 
 	/**
-	 * @TODO 分页映射
+	 * 分页映射
+	 * 
 	 * @param <T>
 	 * @param sourcePage
 	 * @param resultType
@@ -134,7 +142,8 @@ public class MapperUtils {
 	}
 
 	/**
-	 * @TODO 分页映射
+	 * 分页映射
+	 * 
 	 * @param <T>
 	 * @param sourcePage
 	 * @param resultType
@@ -147,9 +156,9 @@ public class MapperUtils {
 			return null;
 		}
 		if (resultType == null || BeanUtil.isBaseDataType(resultType)) {
-			throw new IllegalArgumentException("resultType 不能为null,且resultType不能为基本类型!");
+			throw new IllegalArgumentException("resultType can not be null and can not be a base data type!");
 		}
-		Page result = new Page();
+		Page<T> result = new Page<>();
 		result.setPageNo(sourcePage.getPageNo());
 		result.setPageSize(sourcePage.getPageSize());
 		result.setRecordCount(sourcePage.getRecordCount());
@@ -162,7 +171,8 @@ public class MapperUtils {
 	}
 
 	/**
-	 * @TODO 两个实体对象属性值复制
+	 * 两个实体对象属性值复制
+	 * 
 	 * @param source
 	 * @param target
 	 * @param ignoreProperties 忽略的不参与复制的属性
@@ -175,7 +185,8 @@ public class MapperUtils {
 	}
 
 	/**
-	 * @TODO 两个实体对象属性值复制
+	 * 两个实体对象属性值复制
+	 * 
 	 * @param source
 	 * @param target
 	 * @param propsMapperConfig new
@@ -189,7 +200,8 @@ public class MapperUtils {
 			return;
 		}
 		if (BeanUtil.isBaseDataType(source.getClass()) || BeanUtil.isBaseDataType(target.getClass())) {
-			throw new IllegalArgumentException("copyProperties<DTO>不支持基本类型对象的属性值映射!");
+			throw new IllegalArgumentException(
+					"copyProperties<DTO> does not support property mapping for base type objects!");
 		}
 		List<Serializable> sourceList = new ArrayList<Serializable>();
 		sourceList.add(source);
@@ -199,7 +211,8 @@ public class MapperUtils {
 	}
 
 	/**
-	 * @TODO List集合属性映射
+	 * List集合属性映射
+	 * 
 	 * @param sourceList
 	 * @param targetList
 	 * @param copyPropsConfig
@@ -208,19 +221,25 @@ public class MapperUtils {
 	public static void copyProperties(List sourceList, List targetList, PropsMapperConfig propsMapperConfig)
 			throws RuntimeException {
 		if (sourceList == null || sourceList.isEmpty()) {
-			throw new RuntimeException("copyProperties<List>操作sourceList为空对象");
+			throw new RuntimeException("copyProperties<List> sourceList is a null or empty object");
 		}
 		if (targetList == null || targetList.isEmpty()) {
-			throw new RuntimeException("copyProperties<List>操作targetList为空对象");
+			throw new RuntimeException("copyProperties<List> targetList is a null or empty object");
 		}
 		if (sourceList.size() != targetList.size()) {
-			throw new RuntimeException("copyProperties<List>操作sourceList和targetList集合数据记录:" + sourceList.size() + "!="
-					+ targetList.size() + "不相同!");
+			throw new RuntimeException("copyProperties<List> sourceList size does not equal targetList size, expect ["
+					+ sourceList.size() + "] but found [" + targetList.size() + "]!");
 		}
-		Class sourceClass = sourceList.get(0).getClass();
-		Class targetClass = targetList.get(0).getClass();
+		// 容忍null行,提取首个非null元素的类型
+		Class sourceClass = getFirstNotNullClass(sourceList);
+		Class targetClass = getFirstNotNullClass(targetList);
+		if (sourceClass == null || targetClass == null) {
+			// 存在一侧全部为null行,无属性可复制
+			return;
+		}
 		if (BeanUtil.isBaseDataType(sourceClass) || BeanUtil.isBaseDataType(targetClass)) {
-			throw new IllegalArgumentException("copyProperties<List>不支持基本类型对象的属性值映射!");
+			throw new IllegalArgumentException(
+					"copyProperties<List> does not support property mapping for base type objects!");
 		}
 		PropsMapperConfig propConfig = (propsMapperConfig == null) ? new PropsMapperConfig() : propsMapperConfig;
 		Method[] getMethods;
@@ -248,11 +267,10 @@ public class MapperUtils {
 		}
 		try {
 			List dataSets = invokeGetValues(sourceList, getMethods);
-			listToList(dataSets, targetList, setMethods, propsMapperConfig.getSkipNull());
+			listToList(dataSets, targetList, setMethods, propConfig.getSkipNull());
 		} catch (Exception e) {
-			e.printStackTrace();
-			throw new RuntimeException("copyProperties<List>类型:[" + sourceClass.getName() + "-->"
-					+ targetClass.getName() + "]映射操作失败:" + e.getMessage());
+			throw new RuntimeException("copyProperties<List> mapping [" + sourceClass.getName() + "-->"
+					+ targetClass.getName() + "] failed:" + e.getMessage());
 		}
 	}
 
@@ -263,7 +281,8 @@ public class MapperUtils {
 	}
 
 	/**
-	 * @TODO 实现POJO和VO单个对象之间的相互转换和赋值
+	 * 实现POJO和VO单个对象之间的相互转换和赋值
+	 * 
 	 * @param <T>
 	 * @param source
 	 * @param resultType
@@ -285,7 +304,8 @@ public class MapperUtils {
 	}
 
 	/**
-	 * @TODO 实现POJO和VO对象集合之间的相互转换和赋值
+	 * 实现POJO和VO对象集合之间的相互转换和赋值
+	 * 
 	 * @param <T>
 	 * @param sqlToyContext
 	 * @param sourceList
@@ -297,7 +317,22 @@ public class MapperUtils {
 	 */
 	public static <T extends Serializable> List<T> mapList(List sourceList, Class<T> targetClass, int recursionLevel,
 			PropsMapperConfig propsMapperConfig) throws RuntimeException {
-		Class sourceClass = sourceList.iterator().next().getClass();
+		if (sourceList == null) {
+			return null;
+		}
+		if (sourceList.isEmpty()) {
+			return new ArrayList<T>();
+		}
+		// 容忍null行,提取首个非null元素的类型
+		Class sourceClass = getFirstNotNullClass(sourceList);
+		if (sourceClass == null) {
+			// 全部为null行,返回等长null列表保持下标对齐
+			List<T> nullResult = new ArrayList<>(sourceList.size());
+			for (int i = 0, n = sourceList.size(); i < n; i++) {
+				nullResult.add(null);
+			}
+			return nullResult;
+		}
 		Method[] getMethods;
 		Method[] setMethods;
 		PropsMapperConfig propConfig = (propsMapperConfig == null) ? new PropsMapperConfig() : propsMapperConfig;
@@ -326,14 +361,31 @@ public class MapperUtils {
 			List dataSets = invokeGetValues(sourceList, getMethods);
 			return reflectListToBean(dataSets, targetClass, setMethods, recursionLevel);
 		} catch (Exception e) {
-			e.printStackTrace();
-			throw new RuntimeException("map/mapList,类型:[" + sourceClass.getName() + "-->" + targetClass.getName()
-					+ "]映射操作失败:" + e.getMessage());
+			logger.error("map/mapList, type:[{}-->{}] mapping operation failed", sourceClass.getName(),
+					targetClass.getName(), e);
+			throw new RuntimeException("map/mapList mapping [" + sourceClass.getName() + "-->" + targetClass.getName()
+					+ "] failed:" + e.getMessage());
 		}
 	}
 
 	/**
-	 * @TODO 通过映射关系，提取最终的映射属性名称
+	 * 容忍null行,提取集合中首个非null元素的类型(与invokeGetValues的null行占位约定一致)
+	 * 
+	 * @param list 对象集合
+	 * @return 首个非null元素的Class，集合元素全为null时返回null
+	 */
+	private static Class getFirstNotNullClass(List list) {
+		for (Object item : list) {
+			if (item != null) {
+				return item.getClass();
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * 通过映射关系，提取最终的映射属性名称
+	 * 
 	 * @param sourceProps
 	 * @param sourceTargetMap
 	 * @return
@@ -358,7 +410,8 @@ public class MapperUtils {
 	}
 
 	/**
-	 * @TODO 通过get方法获取对象的值放入List中
+	 * 通过get方法获取对象的值放入List中
+	 * 
 	 * @param sourceList
 	 * @param getMethods
 	 * @return
@@ -379,13 +432,17 @@ public class MapperUtils {
 					}
 				}
 				result.add(rowData);
+			} else {
+				// null行必须占位,保持结果与sourceList下标对齐,否则后续行的属性值会拷贝到错误的目标对象上
+				result.add(null);
 			}
 		}
 		return result;
 	}
 
 	/**
-	 * @TODO 组织构造dto和pojo的映射模型放入缓存，并通过get和set方法调用完成复制过程(比BeanUtils.copyProperties效率高)
+	 * 组织构造dto和pojo的映射模型放入缓存，并通过get和set方法调用完成复制过程(比BeanUtils.copyProperties效率高)
+	 * 
 	 * @param sourceClass
 	 * @param resultType
 	 * @param fieldsNameMap
@@ -395,20 +452,24 @@ public class MapperUtils {
 			Map<String, String> fieldsNameMap) {
 		String sourceKey = sourceClass.getName();
 		String resultKey = resultType.getName();
-		String mapKey = (fieldsNameMap == null || fieldsNameMap.isEmpty()) ? "" : fieldsNameMap.toString();
+		// 使用TreeMap保证toString()的确定性，避免HashMap因hash桶分布不同导致缓存key不一致
+		String mapKey = (fieldsNameMap == null || fieldsNameMap.isEmpty()) ? ""
+				: new TreeMap<>(fieldsNameMap).toString();
 		String key = "fromClass=".concat(sourceKey).concat(";toClass=").concat(resultKey).concat(";mapKey=")
 				.concat(mapKey);
-		// 通过缓存获取
-		if (dtoEntityMapperCache.containsKey(key)) {
-			return dtoEntityMapperCache.get(key);
+		DTOEntityMapModel result = dtoEntityMapperCache.get(key);
+		if (result == null) {
+			result = sourceMapTarget(sourceClass, resultType, fieldsNameMap);
+			if (result != null) {
+				dtoEntityMapperCache.putIfAbsent(key, result);
+			}
 		}
-		DTOEntityMapModel result = sourceMapTarget(sourceClass, resultType, fieldsNameMap);
-		dtoEntityMapperCache.put(key, result);
 		return result;
 	}
 
 	/**
-	 * @TODO 解析2个类之间属性名称相同的方法，建立getXXX 和 setXXX 的映射关系
+	 * 解析2个类之间属性名称相同的方法，建立getXXX 和 setXXX 的映射关系
+	 * 
 	 * @param fromClass
 	 * @param targetClass
 	 * @return
@@ -420,7 +481,7 @@ public class MapperUtils {
 			return null;
 		}
 		// 是否要匹配别名(两个不同对象之间，属性名称不一致，通过注解提供别名模式进行映射)
-		boolean checkAlias = fromClass.equals(targetClass) ? false : true;
+		boolean checkAlias = !fromClass.equals(targetClass);
 		DTOEntityMapModel result = new DTOEntityMapModel();
 		String fieldName;
 		SqlToyFieldAlias alias;
@@ -494,7 +555,8 @@ public class MapperUtils {
 
 	// 提取映射对应的methods
 	/**
-	 * @todo 利用java.lang.reflect并结合页面的property， 从对象中取出对应方法的值，组成一个List
+	 * 利用java.lang.reflect并结合页面的property， 从对象中取出对应方法的值，组成一个List
+	 * 
 	 * @param dataSet
 	 * @param voClass
 	 * @param realMethods
@@ -555,7 +617,8 @@ public class MapperUtils {
 		for (int i = 0, end = dataSet.size(); i < end; i++) {
 			row = (List) dataSet.get(i);
 			if (row != null) {
-				bean = voClass.getDeclaredConstructor().newInstance();
+				// update 2026-9-14 走BeanUtil.newBean的无参构造器缓存(原逐行getDeclaredConstructor)
+				bean = BeanUtil.newBean(voClass);
 				size = row.size();
 				for (int j = 0; j < size; j++) {
 					cellData = row.get(j);
@@ -563,8 +626,8 @@ public class MapperUtils {
 						// 基本类型
 						if (methodTypeValues[j] != DataType.objectType && methodTypeValues[j] != DataType.listType
 								&& methodTypeValues[j] != DataType.setType) {
-							realMethods[j].invoke(bean,
-									BeanUtil.convertType(cellData, methodTypeValues[j], methodTypes[j]));
+							realMethods[j].invoke(bean, BeanUtil.convertType(cellData, JdbcTypes.OTHER,
+									methodTypeValues[j], methodTypes[j]));
 						} // List<DTO>
 						else if (methodGenTypes[j] != null && (cellData instanceof List) && isList[j]) {
 							cellList = (List) cellData;
@@ -598,13 +661,17 @@ public class MapperUtils {
 					}
 				}
 				result.add(bean);
+			} else {
+				// null行占位,保持结果与sourceList下标对齐(与invokeGetValues约定一致)
+				result.add(null);
 			}
 		}
 		return result;
 	}
 
 	/**
-	 * @TODO List和List属性映射，只支持基本类型和类型相同的属性映射
+	 * List和List属性映射，只支持基本类型和类型相同的属性映射
+	 * 
 	 * @param dataSet
 	 * @param targetList
 	 * @param realMethods
@@ -641,15 +708,15 @@ public class MapperUtils {
 							// 基本类型
 							if (methodTypeValues[j] != DataType.objectType && methodTypeValues[j] != DataType.listType
 									&& methodTypeValues[j] != DataType.setType) {
-								realMethods[j].invoke(bean,
-										BeanUtil.convertType(cellData, methodTypeValues[j], methodTypes[j]));
+								realMethods[j].invoke(bean, BeanUtil.convertType(cellData, JdbcTypes.OTHER,
+										methodTypeValues[j], methodTypes[j]));
 							} // 类型相同直接赋值
 							else if (cellData.getClass().getTypeName().equals(methodTypes[j])) {
 								realMethods[j].invoke(bean, cellData);
 							}
 						} else if (!skipNull) {
-							realMethods[j].invoke(bean,
-									BeanUtil.convertType(cellData, methodTypeValues[j], methodTypes[j]));
+							realMethods[j].invoke(bean, BeanUtil.convertType(cellData, JdbcTypes.OTHER,
+									methodTypeValues[j], methodTypes[j]));
 						}
 					}
 				}
@@ -658,7 +725,8 @@ public class MapperUtils {
 	}
 
 	/**
-	 * @TODO 两个类属性匹配，获取对应的getMehtod和setMethod
+	 * 两个类属性匹配，获取对应的getMehtod和setMethod
+	 * 
 	 * @param sourceClass
 	 * @param targetClass
 	 * @param fieldsNameMap
@@ -698,12 +766,12 @@ public class MapperUtils {
 			boolean skip;
 			List<String> ignoreProps = new ArrayList<String>();
 			for (String ignoreProp : ignoreProperties) {
-				ignoreProps.add(ignoreProp.toLowerCase());
+				ignoreProps.add(ignoreProp.toLowerCase(Locale.ROOT));
 			}
 			// 以set方法为映射主体
 			for (int i = 0, n = setMethods.length; i < n; i++) {
 				if (setMethods[i] != null) {
-					methodName = setMethods[i].getName().toLowerCase();
+					methodName = setMethods[i].getName().toLowerCase(Locale.ROOT);
 					paramType = setMethods[i].getParameterTypes()[0];
 					skip = false;
 					for (int j = 0; j < ignoreProps.size(); j++) {
@@ -726,7 +794,8 @@ public class MapperUtils {
 				}
 			}
 			if (setRealMethods.size() == 0) {
-				logger.warn("最终映射对应的属性数量为零,请检查ignoreProperties是否正确,过滤了全部匹配属性!");
+				logger.warn(
+						"the count of finally mapped properties is zero, all matched properties are filtered, please check whether ignoreProperties is correct!");
 				return null;
 			}
 			getMethods = new Method[setRealMethods.size()];
@@ -741,7 +810,8 @@ public class MapperUtils {
 	}
 
 	/**
-	 * @TODO 提取对象中@SqlToyFieldAlias 属性跟其他对象映射关系
+	 * 提取对象中@SqlToyFieldAlias 属性跟其他对象映射关系
+	 * 
 	 * @param targetClass
 	 * @param doFrom
 	 * @return
@@ -769,7 +839,7 @@ public class MapperUtils {
 				}
 				parentClass = parentClass.getSuperclass();
 			}
-			classHasAliasMap.put(mapKey, aliasMap);
+			classHasAliasMap.putIfAbsent(mapKey, aliasMap);
 		}
 		return aliasMap;
 	}

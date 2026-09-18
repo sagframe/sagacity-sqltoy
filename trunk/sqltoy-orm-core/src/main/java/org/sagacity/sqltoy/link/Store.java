@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.link;
 
 import javax.sql.DataSource;
@@ -14,13 +11,10 @@ import org.sagacity.sqltoy.model.StoreResult;
  * @project sagacity-sqltoy
  * @description 存储过程操作
  * @author zhongxuchen
- * @version v1.0,Date:2017年10月9日
+ * @version v1.0,Date:2017-10-09
  */
 public class Store extends BaseLink {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 8055671388714803899L;
 
 	/**
@@ -54,17 +48,18 @@ public class Store extends BaseLink {
 	private Integer timeout;
 
 	/**
-	 * @param sqlToyContext
-	 * @param dataSource
+	 * @param sqlToyContext sqltoy全局上下文对象
+	 * @param dataSource    存储过程调用绑定的数据源，null表示使用默认数据源
 	 */
 	public Store(SqlToyContext sqlToyContext, DataSource dataSource) {
 		super(sqlToyContext, dataSource);
 	}
 
 	/**
-	 * @todo 设置数据源
-	 * @param dataSource
-	 * @return
+	 * 设置数据源
+	 * 
+	 * @param dataSource 当前存储过程调用绑定的数据源
+	 * @return 当前Store对象，支持链式调用
 	 */
 	public Store dataSource(DataSource dataSource) {
 		this.dataSource = dataSource;
@@ -90,8 +85,8 @@ public class Store extends BaseLink {
 	/**
 	 * 设置返回多个结果集合
 	 * 
-	 * @param moreResult
-	 * @return
+	 * @param moreResult true表示存储过程返回多个结果集，false表示单个结果集
+	 * @return 当前Store对象，支持链式调用
 	 */
 	public Store moreResult(boolean moreResult) {
 		this.moreResult = moreResult;
@@ -119,7 +114,7 @@ public class Store extends BaseLink {
 	}
 
 	/**
-	 * @return
+	 * @return 存储过程执行结果对象，包含出参值、返回值以及查询结果集
 	 */
 	public StoreResult submit() {
 		if (sql == null) {

@@ -10,14 +10,11 @@ import org.sagacity.sqltoy.model.Page;
  * @project sagacity-sqltoy
  * @description 提供并行查询内部扩展参数类
  * @author zhongxuchen
- * @version v1.0, Date:2020-8-25
- * @modify 2020-8-25,修改说明
+ * @version v1.0,Date:2020-08-25
+ * @modify Date:2020-08-25 修改说明
  */
 public class ParallelQueryExtend implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -988511746842317697L;
 
 	/**

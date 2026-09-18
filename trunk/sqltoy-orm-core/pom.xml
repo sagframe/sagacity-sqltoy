@@ -3,28 +3,33 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sagframe</groupId>
-	<version>5.6.75</version>
+	<version>6.0.1</version>
 	<name>sagacity-sqltoy</name>
 	<description>sqltoy core code</description>
 	<artifactId>sagacity-sqltoy</artifactId>
 	<url>https://github.com/sagframe/sagacity-sqltoy</url>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<ojdbc11.version>23.26.1.0.0</ojdbc11.version>
+		<ojdbc11.version>23.26.3.0.0</ojdbc11.version>
 		<ehcache.version>3.12.0</ehcache.version>
-		<httpclient.version>4.5.14</httpclient.version>
-		<httpclient-core.version>4.4.16</httpclient-core.version>
-		<elastic-rest-client.version>9.4.1</elastic-rest-client.version>
-		<fastjson.version>2.0.62</fastjson.version>
-		<mongo.version>5.7.0</mongo.version>
-		<junit-jupiter.version>6.1.0</junit-jupiter.version>
-		<junit-platform.version>6.1.0</junit-platform.version>
-		<slf4j.version>2.0.18</slf4j.version>
-		<h2.version>2.4.240</h2.version>
-		<lombok.version>1.18.46</lombok.version>
+		<httpclient5.version>5.6.4</httpclient5.version>
+		<elastic-rest5-client.version>9.5.4</elastic-rest5-client.version>
+		<fastjson.version>2.0.65</fastjson.version>
+		<mongo.version>5.11.1</mongo.version>
+		<junit-jupiter.version>6.1.3</junit-jupiter.version>
+		<junit-platform.version>6.1.3</junit-platform.version>
+		<slf4j.version>2.0.19</slf4j.version>
+		<h2.version>2.5.250</h2.version>
+		<lombok.version>1.18.48</lombok.version>
 		<druid.version>1.2.28</druid.version>
 		<transmittable-thread-local>2.14.5</transmittable-thread-local>
 		<ulid-creator.version>5.2.4</ulid-creator.version>
+		<postgresql.version>42.7.13</postgresql.version>
+		<opengauss.version>6.0.3-og</opengauss.version>
+		<jts.version>1.20.0</jts.version>
+		<vastbase.version>2.16v</vastbase.version>
+		<starrocks.version>1.1.2</starrocks.version>
+		<byte-buddy.version>1.18.14</byte-buddy.version>
 	</properties>
 	<licenses>
 		<license>
@@ -62,6 +67,48 @@
 			<groupId>com.github.f4b6a3</groupId>
 			<artifactId>ulid-creator</artifactId>
 			<version>${ulid-creator.version}</version>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>net.bytebuddy</groupId>
+			<artifactId>byte-buddy</artifactId>
+			<version>${byte-buddy.version}</version>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>cn.com.vastdata</groupId>
+			<artifactId>vastbase-jdbc</artifactId>
+			<version>${vastbase.version}</version>
+			<optional>true</optional>
+		</dependency>
+		<!-- Source:
+		https://mvnrepository.com/artifact/org.postgresql/postgresql -->
+		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+			<version>${postgresql.version}</version>
+			<optional>true</optional>
+		</dependency>
+		<!-- openGauss系新包路径驱动(org.opengauss.util.PGobject),兼容包路径场景直接用postgresql驱动 -->
+		<dependency>
+			<groupId>org.opengauss</groupId>
+			<artifactId>opengauss-jdbc</artifactId>
+			<version>${opengauss.version}</version>
+			<optional>true</optional>
+		</dependency>
+		<!-- StarRocks原生驱动(com.starrocks.jdbc.Driver,jdbc:starrocks://FE的9030端口),
+		URL识别见DataSourceUtils.URL_SCHEMA_DIALECT的starrocks条目 -->
+		<dependency>
+			<groupId>com.starrocks</groupId>
+			<artifactId>starrocks-connector-j</artifactId>
+			<version>${starrocks.version}</version>
+			<optional>true</optional>
+		</dependency>
+		<!-- JTS拓扑库,geometry空间类型的Java侧几何模型,可选依赖(动态探测) -->
+		<dependency>
+			<groupId>org.locationtech.jts</groupId>
+			<artifactId>jts-core</artifactId>
+			<version>${jts.version}</version>
 			<optional>true</optional>
 		</dependency>
 		<dependency>
@@ -129,29 +176,9 @@
 			<optional>true</optional>
 		</dependency>
 		<dependency>
-			<groupId>org.apache.httpcomponents</groupId>
-			<artifactId>httpclient</artifactId>
-			<version>${httpclient.version}</version>
-			<scope>provided</scope>
-			<optional>true</optional>
-			<exclusions>
-				<exclusion>
-					<groupId>commons-logging</groupId>
-					<artifactId>commons-logging</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.httpcomponents</groupId>
-			<artifactId>httpmime</artifactId>
-			<version>${httpclient.version}</version>
-			<scope>provided</scope>
-			<optional>true</optional>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.httpcomponents</groupId>
-			<artifactId>httpcore</artifactId>
-			<version>${httpclient-core.version}</version>
+			<groupId>org.apache.httpcomponents.client5</groupId>
+			<artifactId>httpclient5</artifactId>
+			<version>${httpclient5.version}</version>
 			<scope>provided</scope>
 			<optional>true</optional>
 		</dependency>
@@ -163,17 +190,11 @@
 			<optional>true</optional>
 		</dependency>
 		<dependency>
-			<groupId>org.elasticsearch.client</groupId>
-			<artifactId>elasticsearch-rest-client</artifactId>
-			<version>${elastic-rest-client.version}</version>
+			<groupId>co.elastic.clients</groupId>
+			<artifactId>elasticsearch-rest5-client</artifactId>
+			<version>${elastic-rest5-client.version}</version>
 			<scope>provided</scope>
 			<optional>true</optional>
-			<exclusions>
-				<exclusion>
-					<groupId>commons-logging</groupId>
-					<artifactId>commons-logging</artifactId>
-				</exclusion>
-			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
@@ -185,6 +206,54 @@
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
 			<version>${h2.version}</version>
+			<scope>test</scope>
+			<optional>true</optional>
+		</dependency>
+		<!-- 20260905 mysql真实库冒烟测试驱动(test scope,不进入发布产物;不需要可移除) -->
+		<dependency>
+			<groupId>com.mysql</groupId>
+			<artifactId>mysql-connector-j</artifactId>
+			<version>8.0.33</version>
+			<scope>test</scope>
+			<optional>true</optional>
+		</dependency>
+		<!-- 20260905 sqlserver/db2真实库冒烟测试驱动(test scope,不进入发布产物;不需要可移除) -->
+		<dependency>
+			<groupId>com.microsoft.sqlserver</groupId>
+			<artifactId>mssql-jdbc</artifactId>
+			<version>13.4.0.jre11</version>
+			<scope>test</scope>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>com.ibm.db2</groupId>
+			<artifactId>jcc</artifactId>
+			<version>12.1.5.0</version>
+			<scope>test</scope>
+			<optional>true</optional>
+		</dependency>
+		<!-- 20260905 sqlite真实库冒烟测试驱动(内嵌库无需服务端,test scope;不需要可移除) -->
+		<dependency>
+			<groupId>org.xerial</groupId>
+			<artifactId>sqlite-jdbc</artifactId>
+			<version>3.53.4.0</version>
+			<scope>test</scope>
+			<optional>true</optional>
+		</dependency>
+
+		<!-- 20260905 clickhouse真实库冒烟测试驱动(test scope,不进入发布产物;不需要可移除) -->
+		<dependency>
+			<groupId>com.clickhouse</groupId>
+			<artifactId>clickhouse-jdbc</artifactId>
+			<version>0.10.0</version>
+			<scope>test</scope>
+			<classifier>all</classifier>
+		</dependency>
+		<!-- 20260905 dm真实库冒烟测试驱动(test scope,不进入发布产物;不需要可移除) -->
+		<dependency>
+			<groupId>com.dameng</groupId>
+			<artifactId>DmJdbcDriver18</artifactId>
+			<version>8.1.3.140</version>
 			<scope>test</scope>
 			<optional>true</optional>
 		</dependency>
@@ -263,7 +332,7 @@
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>3.5.5</version>
 				<configuration>
-					<skip>true</skip>
+					<skip>false</skip>
 				</configuration>
 			</plugin>
 			<plugin>

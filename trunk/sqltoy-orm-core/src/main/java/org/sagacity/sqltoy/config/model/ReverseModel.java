@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.config.model;
 
 import java.io.Serializable;
@@ -9,13 +6,10 @@ import java.io.Serializable;
  * @project sagacity-sqltoy
  * @description 集合反转
  * @author zhongxuchen
- * @version v1.0,Date:2020年3月24日
+ * @version v1.0,Date:2020-03-24
  */
 public class ReverseModel implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 2770052243575868466L;
 
 	/**

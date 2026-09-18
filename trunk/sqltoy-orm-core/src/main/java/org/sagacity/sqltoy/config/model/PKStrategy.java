@@ -1,14 +1,11 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.config.model;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 通过枚举方式定义数据库主键实现的四种机制
  * @author zhongxuchen
- * @version v1.0,Date:2013-6-10
- * @modify Date:2013-6-10 {填写修改说明}
+ * @version v1.0,Date:2013-06-10
+ * @modify Date:2013-06-10 填写修改说明
  */
 public enum PKStrategy {
 	// 手工赋值
@@ -39,7 +36,8 @@ public enum PKStrategy {
 	}
 
 	/**
-	 * @todo 转换给定字符串为枚举主键策略
+	 * 转换给定字符串为枚举主键策略
+	 * 
 	 * @param strategy
 	 * @return
 	 */

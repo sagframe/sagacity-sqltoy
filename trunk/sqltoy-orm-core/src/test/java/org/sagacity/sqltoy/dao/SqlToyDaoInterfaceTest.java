@@ -17,8 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.dao.impl.DefaultSqlToyDaoImpl;
 
 /**
- * SqlToyDao 接口与 DefaultSqlToyDaoImpl 实现完整性测试
- * 无需数据库连接，纯反射验证接口方法全部被实现，命名分组符合规范
+ * SqlToyDao 接口与 DefaultSqlToyDaoImpl 实现完整性测试 无需数据库连接，纯反射验证接口方法全部被实现，命名分组符合规范
  */
 public class SqlToyDaoInterfaceTest {
 
@@ -53,8 +52,7 @@ public class SqlToyDaoInterfaceTest {
 	@DisplayName("DefaultSqlToyDaoImpl 不能是抽象类")
 	public void testImplClassIsNotAbstract() {
 		int modifiers = DefaultSqlToyDaoImpl.class.getModifiers();
-		assertTrue(!Modifier.isAbstract(modifiers),
-				"DefaultSqlToyDaoImpl 不应是抽象类");
+		assertTrue(!Modifier.isAbstract(modifiers), "DefaultSqlToyDaoImpl 不应是抽象类");
 	}
 
 	// ============================================================
@@ -171,9 +169,10 @@ public class SqlToyDaoInterfaceTest {
 	public void testFindPageOverloads() {
 		Method[] methods = SqlToyDao.class.getMethods();
 		long count = countMethodOverloads(methods, "findPage");
-		assertEquals(6, count, "findPage 应有6个重载: (Page,String,Map) / (Page,String,Map,Class) / "
-				+ "(Page,String,Serializable,Class) / (Page,QueryExecutor) / (Page,Class,EntityQuery) / "
-				+ "(Page,Class,EntityQuery,Class)");
+		assertEquals(6, count,
+				"findPage 应有6个重载: (Page,String,Map) / (Page,String,Map,Class) / "
+						+ "(Page,String,Serializable,Class) / (Page,QueryExecutor) / (Page,Class,EntityQuery) / "
+						+ "(Page,Class,EntityQuery,Class)");
 	}
 
 	// ============================================================
@@ -201,8 +200,8 @@ public class SqlToyDaoInterfaceTest {
 			methodNames.add(m.getName());
 		}
 
-		String[] chainMethods = { "elastic", "mongo", "delete", "update", "store",
-				"save", "query", "load", "unique", "treeTable", "execute", "batch", "tableApi" };
+		String[] chainMethods = { "elastic", "mongo", "delete", "update", "store", "save", "query", "load", "unique",
+				"treeTable", "execute", "batch", "tableApi" };
 		for (String name : chainMethods) {
 			assertTrue(methodNames.contains(name), "缺少链式操作入口: " + name + "()");
 		}
@@ -220,12 +219,10 @@ public class SqlToyDaoInterfaceTest {
 			methodNames.add(m.getName());
 		}
 
-		String[] crudMethods = { "save", "saveAll", "saveAllIgnoreExist",
-				"update", "updateDeeply", "updateFetch", "updateSaveFetch",
-				"updateByQuery", "updateCascade", "updateAll", "updateAllDeeply",
-				"saveOrUpdate", "saveOrUpdateAll",
-				"delete", "deleteAll", "deleteByIds", "deleteByQuery", "truncate",
-				"batchExecute", "insertReturnPrimaryKey", "executeSql" };
+		String[] crudMethods = { "save", "saveAll", "saveAllIgnoreExist", "update", "updateDeeply", "updateFetch",
+				"updateSaveFetch", "updateByQuery", "updateCascade", "updateAll", "updateAllDeeply", "saveOrUpdate",
+				"saveOrUpdateAll", "delete", "deleteAll", "deleteByIds", "deleteByQuery", "truncate", "batchExecute",
+				"insertReturnPrimaryKey", "executeSql" };
 		for (String name : crudMethods) {
 			assertTrue(methodNames.contains(name), "缺少增删改方法: " + name);
 		}
@@ -239,8 +236,7 @@ public class SqlToyDaoInterfaceTest {
 	public void testSqlToyDaoNotExtendLightDao() {
 		Class<?>[] interfaces = SqlToyDao.class.getInterfaces();
 		for (Class<?> iface : interfaces) {
-			assertTrue(!iface.equals(LightDao.class),
-					"SqlToyDao 不应继承 LightDao，应保持接口独立");
+			assertTrue(!iface.equals(LightDao.class), "SqlToyDao 不应继承 LightDao，应保持接口独立");
 		}
 	}
 
@@ -254,8 +250,7 @@ public class SqlToyDaoInterfaceTest {
 		// SqlToyDao 中的 find 方法只允许是链式操作 find()，不能是旧的 find(String,...)
 		for (Method m : methods) {
 			if ("find".equals(m.getName()) && m.getParameterCount() > 0) {
-				fail("SqlToyDao 中不应存在旧命名的 find(String,...) 方法: " + m.toGenericString()
-						+ "，应使用 findList 替代");
+				fail("SqlToyDao 中不应存在旧命名的 find(String,...) 方法: " + m.toGenericString() + "，应使用 findList 替代");
 			}
 		}
 	}

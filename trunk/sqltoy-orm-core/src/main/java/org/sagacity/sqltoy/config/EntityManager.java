@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -67,15 +68,15 @@ import org.slf4j.LoggerFactory;
  * @project sagacity-sqltoy
  * @description 通过注解解析实体对象,得到其跟数据库表的对应关系,并形成相应表增删改查的语句
  * @author zhongxuchen
- * @version v1.0,Date:2012-6-1
- * @modify {Date:2017-10-13,分解之前的parseEntityMeta大方法,进行代码优化}
- * @modify {Date:2018-1-22,增加业务主键配置策略}
- * @modify {Date:2018-9-6,优化增强业务主键配置策略}
- * @modify {Date:2019-8-10,优化字段的解析,避免在子类中定义属性覆盖了父类导致数据库字段失效现象,同时优化部分代码}
- * @modify {Date:2020-07-29,修复OneToMany解析时编写错误,由智客软件反馈 }
- * @modify {Date:2022-09-23,增加@DataVersion数据版本功能 }
- * @modify {Date:2022-10-12,修复cascade解析存在的两个对象相互级联死循环问题以及支持一个对象级联多次相同对象，由俊华反馈 }
- * @modify {Date:2024-07-18,增加对4.x早期版本主键策略被修改包路径的兼容处理 }
+ * @version v1.0,Date:2012-06-01
+ * @modify Date:2017-10-13 分解之前的parseEntityMeta大方法,进行代码优化
+ * @modify Date:2018-01-22 增加业务主键配置策略
+ * @modify Date:2018-09-06 优化增强业务主键配置策略
+ * @modify Date:2019-08-10 优化字段的解析,避免在子类中定义属性覆盖了父类导致数据库字段失效现象,同时优化部分代码
+ * @modify Date:2020-07-29 修复OneToMany解析时编写错误,由智客软件反馈
+ * @modify Date:2022-09-23 增加@DataVersion数据版本功能
+ * @modify Date:2022-10-12 修复cascade解析存在的两个对象相互级联死循环问题以及支持一个对象级联多次相同对象，由俊华反馈
+ * @modify Date:2024-07-18 增加对4.x早期版本主键策略被修改包路径的兼容处理
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class EntityManager {
@@ -93,9 +94,6 @@ public class EntityManager {
 	 * 定义常用的主键生成方式类名称
 	 */
 	private static HashMap<String, String> IdGeneratorsMap = new HashMap<String, String>() {
-		/**
-		 * 
-		 */
 		private static final long serialVersionUID = 3964534243191167226L;
 		{
 			// 13位当前毫秒+6位纳秒+3位主机ID 构成的22位不重复且有序的ID
@@ -129,7 +127,7 @@ public class EntityManager {
 	private static final String IdGeneratorOldPackage_v1 = "org.sagacity.sqltoy.plugins.id.";
 
 	/**
-	 * 扫描的包(意义不大,sqltoy已经改为在使用时自动加载)
+	 * 扫描的包(非必要配置项，sqltoy采取即用即载)
 	 */
 	private String[] packagesToScan;
 
@@ -139,7 +137,7 @@ public class EntityManager {
 	private boolean recursive = true;
 
 	/**
-	 * 指定的entity class(意义不大,sqltoy已经改为用时自动加载)
+	 * 指定的entity class(非必要配置项，sqltoy采取即用即载)
 	 */
 	private String[] annotatedClasses;
 
@@ -156,10 +154,11 @@ public class EntityManager {
 	/**
 	 * 非sqltoy entity类,一般指仅用于查询作为返回结果的VO
 	 */
-	private ConcurrentHashMap<String, String> unEntityMap = new ConcurrentHashMap<String, String>();
+	private ConcurrentHashMap<String, String> notEntityMap = new ConcurrentHashMap<String, String>();
 
 	/**
-	 * @TODO 判断是否是实体对象
+	 * 判断是否是实体对象
+	 * 
 	 * @param sqlToyContext
 	 * @param voClass
 	 * @return
@@ -170,22 +169,22 @@ public class EntityManager {
 		}
 		Class entityClass = BeanUtil.getEntityClass(voClass);
 		String className = entityClass.getName();
-		if (unEntityMap.containsKey(className)) {
+		if (notEntityMap.containsKey(className)) {
 			return false;
 		}
 		if (entitysMetaMap.containsKey(className)) {
 			return true;
 		}
+		// update 2026-9-14 非实体负缓存改由parseEntityMeta在"确定无@Entity注解"时写入:原形态在此处
+		// 无条件写入,而parseEntityMeta解析抛异常时(isWarn=false)同样返回null,导致启动早期bean未就绪
+		// 等瞬时故障被当成"非实体"永久缓存(直到重启都无法纠正)
 		EntityMeta entityMeta = parseEntityMeta(sqlToyContext, entityClass, false, false);
-		if (entityMeta != null) {
-			return true;
-		}
-		unEntityMap.put(className, "1");
-		return false;
+		return entityMeta != null;
 	}
 
 	/**
-	 * @todo <b>获取Entity类的对应数据库表信息，如：查询、修改、插入sql、对象属性跟表字段之间的关系等信息</b>
+	 * 获取Entity类的对应数据库表信息，如：查询、修改、插入sql、对象属性跟表字段之间的关系等信息
+	 * 
 	 * @param sqlToyContext
 	 * @param voClass
 	 * @return
@@ -202,19 +201,20 @@ public class EntityManager {
 		if (entityMeta == null) {
 			entityMeta = parseEntityMeta(sqlToyContext, entityClass, true, false);
 			if (entityMeta == null) {
-				throw new IllegalArgumentException("您传入的对象:[".concat(className)
-						.concat(" ]不是一个@Entity实体POJO对象,sqltoy实体对象必须使用 @Entity/@Id 等注解来标识!"));
+				throw new IllegalArgumentException("The object:[".concat(className).concat(
+						" ] is not an @Entity entity POJO, sqltoy entity must be annotated with @Entity/@Id, please check!"));
 			} // update 2022-10-24 加强提示，避免一些手工编写pojo情景遇到问题不知所措(手工编写是因为根本不了解quickvo的特性)
 			else if (entityMeta.getFieldsArray(false) == null || entityMeta.getFieldsArray(false).length == 0) {
-				throw new RuntimeException(
-						"您传入的对象:[".concat(className).concat(" ] 没有@column等配置,无法获得POJO属性映射数据库字段的关系,请用quickvo自动生成POJO!"));
+				throw new RuntimeException("The object:[".concat(className).concat(
+						" ] has no @Column configuration, unable to map POJO fields to database columns, please generate the POJO with quickvo!"));
 			}
 		}
 		return entityMeta;
 	}
 
 	/**
-	 * @todo 初始化加载扫描entity类，解析实体类跟数据库之间的关系，并生成相应的数据库操作信息
+	 * 初始化加载扫描entity类，解析实体类跟数据库之间的关系，并生成相应的数据库操作信息
+	 * 
 	 * @param sqlToyContext
 	 * @throws Exception
 	 */
@@ -227,7 +227,9 @@ public class EntityManager {
 				if (entitys != null && !entitys.isEmpty()) {
 					entities.addAll(entitys);
 				} else {
-					logger.warn("sqltoy扫描加载POJO路径:{} 未匹配到含@Entity或@SqlToyEntity注解的实体类!", pkg);
+					logger.warn(
+							"no entity classes annotated with @Entity or @SqlToyEntity were matched in the sqltoy pojo scan path:{}!",
+							pkg);
 				}
 			}
 		}
@@ -241,8 +243,7 @@ public class EntityManager {
 						entities.add(entityClass);
 					}
 				} catch (ClassNotFoundException e) {
-					// log.error("添加用户自定义实体POJO类错误 找不到此类的.class文件");
-					e.printStackTrace();
+					logger.error("initialize method execution failed", e);
 				}
 			}
 		}
@@ -253,7 +254,8 @@ public class EntityManager {
 	}
 
 	/**
-	 * @todo <b>解析sqltoy entity对象获取其跟数据库相关的配置信息</b>
+	 * 解析sqltoy entity对象获取其跟数据库相关的配置信息
+	 * 
 	 * @param sqlToyContext
 	 * @param entityClass
 	 * @param isWarn        当不是entity实体bean时是否进行日志提示
@@ -392,21 +394,21 @@ public class EntityManager {
 					if (fieldMeta != null) {
 						DataVersionConfig dataVersionConfig = new DataVersionConfig();
 						dataVersionConfig.setField(dataVersionField);
-						// 202209181至少9位数字
+						// 202209181至少9位数字(yyyyMMdd+流水号)才能作为数据版本号)
 						if (dataVersion.startDate() && fieldMeta.getLength() > 8) {
 							dataVersionConfig.setStartDate(true);
 						}
 						entityMeta.setDataVersion(dataVersionConfig);
 					} else {
-						throw new RuntimeException(
-								"@DataVersion(field=" + dataVersionField + ") 在POJO类:" + className + " 中没有对应的属性!");
+						throw new RuntimeException("@DataVersion(field=" + dataVersionField
+								+ ") has no corresponding property in POJO class:" + className + ", please check!");
 					}
 				}
 				// 校验@Tenant(field="fieldName") 配置的正确性
 				if (entityMeta.getTenantField() != null
 						&& entityMeta.getFieldMeta(entityMeta.getTenantField()) == null) {
-					throw new RuntimeException(
-							"@Tenant(field=" + entityMeta.getTenantField() + ") 在POJO类:" + className + " 中没有对应的属性!");
+					throw new RuntimeException("@Tenant(field=" + entityMeta.getTenantField()
+							+ ") has no corresponding property in POJO class:" + className + ", please check!");
 				}
 				// 判断是否为级联解析,级联解析无需再进行下级级联解析
 				if (!forCascade) {
@@ -426,7 +428,9 @@ public class EntityManager {
 			}
 		} catch (Exception e) {
 			if (isWarn) {
-				logger.error("Sqltoy 解析Entity对象:[{}]发生错误,请检查对象注解是否正确!" + e.getMessage(), className);
+				logger.error(
+						"error occurred while parsing entity:[{}], please check whether its annotations are correct! error message:{}",
+						className, e.getMessage(), e);
 				throw e;
 			} else {
 				return null;
@@ -436,16 +440,25 @@ public class EntityManager {
 		if (!forCascade) {
 			if (entityMeta != null) {
 				entitysMetaMap.put(className, entityMeta);
-				tableEntityNameMap.put(entityMeta.getTableName().toLowerCase(), className);
-			} else if (isWarn) {
-				logger.warn("SqlToy Entity:{}没有使用@Entity注解，表明不是一个实体类,请检查!", className);
+				tableEntityNameMap.put(entityMeta.getTableName().toLowerCase(java.util.Locale.ROOT), className);
+			} else {
+				// update 2026-9-14 能走到此处说明解析正常结束、只是类(含父类)没有@Entity注解,属确定性的
+				// "非实体",才落负缓存;解析过程抛异常的场景在catch中直接return null,不得落负缓存,
+				// 否则瞬时故障(如启动早期主键生成器bean未就绪)会被永久判定为非实体
+				notEntityMap.put(className, "1");
+				if (isWarn) {
+					logger.warn(
+							"sqltoy entity:{} is not annotated with @Entity, which indicates it is not an entity class, please check!",
+							className);
+				}
 			}
 		}
 		return entityMeta;
 	}
 
 	/**
-	 * @todo 解析分库分表策略
+	 * 解析分库分表策略
+	 * 
 	 * @param entityMeta
 	 * @param entityClass
 	 */
@@ -503,7 +516,7 @@ public class EntityManager {
 			}
 			config.setTables(new String[] { entityMeta.getTableName() });
 			config.setAliasNames(aliasNames);
-			config.setDecisionType(shardingDB.decisionType());
+			config.setDecisionType(shardingTable.decisionType());
 			config.setStrategy(strategy);
 			shardingConfig.setShardingTableStrategy(config);
 		}
@@ -514,7 +527,8 @@ public class EntityManager {
 	}
 
 	/**
-	 * @todo 解析加解密配置
+	 * 解析加解密配置
+	 * 
 	 * @param entityMeta
 	 * @param entityClass
 	 */
@@ -563,7 +577,8 @@ public class EntityManager {
 	}
 
 	/**
-	 * @todo 解析表索引信息
+	 * 解析表索引信息
+	 * 
 	 * @param entityMeta
 	 * @param entityClass
 	 */
@@ -593,7 +608,8 @@ public class EntityManager {
 	}
 
 	/**
-	 * @todo 解析主键字段
+	 * 解析主键字段
+	 * 
 	 * @param idList
 	 * @param allFields
 	 */
@@ -610,7 +626,8 @@ public class EntityManager {
 	}
 
 	/**
-	 * @TODO 解析获取entity对象的全部字段属性
+	 * 解析获取entity对象的全部字段属性
+	 * 
 	 * @param entityClass
 	 * @return
 	 */
@@ -621,7 +638,7 @@ public class EntityManager {
 		String fieldName;
 		while (classType != null && !classType.equals(Object.class)) {
 			for (Field field : classType.getDeclaredFields()) {
-				fieldName = field.getName().toLowerCase();
+				fieldName = field.getName().toLowerCase(Locale.ROOT);
 				if (!fieldSet.contains(fieldName)
 						&& (field.getAnnotation(Column.class) != null || field.getAnnotation(OneToMany.class) != null
 								|| field.getAnnotation(OneToOne.class) != null)) {
@@ -636,7 +653,8 @@ public class EntityManager {
 	}
 
 	/**
-	 * @todo 解析对象属性跟数据库表字段的信息
+	 * 解析对象属性跟数据库表字段的信息
+	 * 
 	 * @param sqlToyContext
 	 * @param entityMeta
 	 * @param field
@@ -652,11 +670,8 @@ public class EntityManager {
 		if (column == null) {
 			return;
 		}
-		// 空白场景处理
-		String defaultValue = StringUtil.isBlank(column.defaultValue()) ? SqlToyConstants.DEFAULT_NULL
-				: column.defaultValue().trim();
 		// 清理defaultValue的一些不符合最终使用的字符，如(x)、((x))、x::text等
-		defaultValue = SqlUtil.clearDefaultValue(defaultValue);
+		String defaultValue = SqlUtil.clearDefaultValue(column.defaultValue());
 		// 字段的详细配置信息,字段名称，字段对应数据库表字段，字段默认值，字段类型
 		FieldMeta fieldMeta = new FieldMeta(field.getName(), column.name(),
 				(SqlToyConstants.DEFAULT_NULL.equals(defaultValue)) ? null : defaultValue, column.nativeType(),
@@ -678,7 +693,7 @@ public class EntityManager {
 		// 字段是否自增
 		fieldMeta.setAutoIncrement(column.autoIncrement());
 		// 设置type类型，并转小写便于后续对比的统一
-		fieldMeta.setFieldType(field.getType().getTypeName().toLowerCase());
+		fieldMeta.setFieldType(field.getType().getTypeName().toLowerCase(Locale.ROOT));
 		fieldMeta.setComments(StringUtil.isBlank(column.comment()) ? null : column.comment().trim());
 		// 设置是否分区字段
 		if (field.getAnnotation(PartitionKey.class) != null) {
@@ -723,8 +738,14 @@ public class EntityManager {
 			Class fieldType = field.getType();
 			if (fieldType.equals(String.class)) {
 				fieldMeta.setType(java.sql.Types.VARCHAR);
+			} else if (fieldType.equals(LocalDateTime.class)) {
+				// update 2026-9-6 含时间类型归位TIMESTAMP:此前防御性映射DATE的唯一动机是旧rowversion
+				// 判据按type==TIMESTAMP剔除(sqlserver会把业务时间列误判为rowversion静默跳过);
+				// 现rowversion判据已改为目标库元数据校准(ensureRowVersionMeta按TYPE_NAME=='timestamp'
+				// 精确识别),实体侧TIMESTAMP不再触发剔除,防御解除、类型语义归位
+				fieldMeta.setType(java.sql.Types.TIMESTAMP);
 			} else if (fieldType.equals(Date.class) || fieldType.equals(java.sql.Date.class)
-					|| fieldType.equals(LocalDate.class) || fieldType.equals(LocalDateTime.class)) {
+					|| fieldType.equals(LocalDate.class)) {
 				fieldMeta.setType(java.sql.Types.DATE);
 			} else if (fieldType.equals(Timestamp.class)) {
 				fieldMeta.setType(java.sql.Types.TIMESTAMP);
@@ -747,7 +768,7 @@ public class EntityManager {
 				fieldMeta.setType(java.sql.Types.DOUBLE);
 			} else if (fieldType.equals(Float.class) || fieldType.equals(float.class)) {
 				fieldMeta.setType(java.sql.Types.FLOAT);
-			} else if (fieldType.equals(Byte.class) && fieldType.isArray()) {
+			} else if (fieldType.equals(byte[].class)) {
 				fieldMeta.setType(java.sql.Types.BINARY);
 			}
 		}
@@ -763,7 +784,7 @@ public class EntityManager {
 			fieldMeta.setPK(true);
 			// 主键生成策略
 			if (StringUtil.isNotBlank(id.strategy())) {
-				entityMeta.setIdStrategy(PKStrategy.getPKStrategy(id.strategy().toLowerCase()));
+				entityMeta.setIdStrategy(PKStrategy.getPKStrategy(id.strategy().toLowerCase(Locale.ROOT)));
 			}
 			entityMeta.setSequence(id.sequence());
 			String idGenerator = id.generator();
@@ -820,7 +841,8 @@ public class EntityManager {
 	}
 
 	/**
-	 * @todo 处理id生成器
+	 * 处理id生成器
+	 * 
 	 * @param sqlToyContext
 	 * @param entityMeta
 	 * @param idGenerator
@@ -831,12 +853,12 @@ public class EntityManager {
 			return;
 		}
 		// 自定义springbean 模式，用法在quickvo中配置@bean(beanName)
-		if (idGenerator.toLowerCase().startsWith("@bean(")) {
+		if (idGenerator.toLowerCase(Locale.ROOT).startsWith("@bean(")) {
 			String beanName = idGenerator.substring(idGenerator.indexOf("(") + 1, idGenerator.indexOf(")"))
 					.replaceAll("\"|\'", "").trim();
 			IdGeneratorsInstance.put(idGenerator, (IdGenerator) sqlToyContext.getBean(beanName));
 		} else {
-			String generator = IdGeneratorsMap.get(idGenerator.toLowerCase());
+			String generator = IdGeneratorsMap.get(idGenerator.toLowerCase(Locale.ROOT));
 			generator = (generator != null) ? IdGeneratorPackage.concat(generator) : idGenerator;
 			// 针对历史id策略包路径提供兼容处理:update 2024-07-16
 			if (generator.startsWith(IdGeneratorOldPackage)
@@ -850,13 +872,15 @@ public class EntityManager {
 				idGeneratorBean.initialize(sqlToyContext);
 				IdGeneratorsInstance.put(idGenerator, idGeneratorBean);
 			} catch (Exception e) {
-				throw new RuntimeException("实例化主键生成策略失败:className=" + generator + ",错误信息:" + e.getMessage());
+				throw new RuntimeException("Failed to instantiate the primary key generator:className=" + generator
+						+ ",error message:" + e.getMessage());
 			}
 		}
 	}
 
 	/**
-	 * @todo 解析主键关联的子表信息配置(外键关联)
+	 * 解析主键关联的子表信息配置(外键关联)
+	 * 
 	 * @param sqlToyContext
 	 * @param entityMeta
 	 * @param field
@@ -905,11 +929,18 @@ public class EntityManager {
 		// update 2022-10-1
 		// 获取子表的信息(forCascade=true 避免循环解析，只解析一级)
 		EntityMeta subTableMeta = parseEntityMeta(sqlToyContext, cascadeModel.getMappedType(), false, true);
+		// 子表类型不是@Entity实体(如普通VO)时parseEntityMeta静默返回null,给出明确配置错误而非裸NPE
+		if (subTableMeta == null) {
+			throw new IllegalArgumentException(StringUtil.fillArgs(
+					"main table:{} cascade property:{} mapped type:{} is not an @Entity entity, unable to parse table metadata, please check!",
+					entityMeta.getTableName(), cascadeModel.getProperty(), cascadeModel.getMappedType().getName()));
+		}
 		if ((fields == null || fields.length == 0) && idList.size() == 1) {
 			fields = entityMeta.getIdArray();
 		}
 		if (fields == null || fields.length != mappedFields.length) {
-			throw new IllegalArgumentException(StringUtil.fillArgs("主表:{}的fields 跟子表:{} mappedFields 长度不一致,请检查!",
+			throw new IllegalArgumentException(StringUtil.fillArgs(
+					"main table:{} fields and sub table:{} mappedFields have different lengths, please check!",
 					entityMeta.getTableName(), subTableMeta.getTableName()));
 		}
 		String[] mappedColumns = new String[fields.length];
@@ -922,11 +953,13 @@ public class EntityManager {
 			// 检查属性名称配置是否正确
 			if (entityMeta.getFieldMeta(fields[i]) == null) {
 				throw new IllegalArgumentException(
-						StringUtil.fillArgs("表级联配置对应主表:{}的field属性:{} 并不存在,请检查!", entityMeta.getTableName(), fields[i]));
+						StringUtil.fillArgs("main table:{} cascade config field:{} does not exist, please check!",
+								entityMeta.getTableName(), fields[i]));
 			}
 			if (subTableMeta.getFieldMeta(mappedFields[i]) == null) {
-				throw new IllegalArgumentException(StringUtil.fillArgs("表级联配置对应子表:{}的field属性:{} 并不存在,请检查!",
-						subTableMeta.getTableName(), mappedFields[i]));
+				throw new IllegalArgumentException(
+						StringUtil.fillArgs("sub table:{} cascade config field:{} does not exist, please check!",
+								subTableMeta.getTableName(), mappedFields[i]));
 			}
 			// 提取子表属性对应的数据库字段名称，并进行关键词处理
 			mappedColumns[i] = ReservedWordsUtil.convertWord(subTableMeta.getColumnName(mappedFields[i]), null);
@@ -969,7 +1002,7 @@ public class EntityManager {
 		boolean matchedWhere = false;
 		// 自定义load sql
 		if (StringUtil.isNotBlank(load)) {
-			String loadLow = load.toLowerCase();
+			String loadLow = load.toLowerCase(Locale.ROOT);
 			// 是否是:xxx形式的引入主键条件(原则上不允许这么操作)
 			boolean isNamedSql = SqlConfigParseUtils.isNamedQuery(load);
 			if (isNamedSql && !StringUtil.matches(loadLow, "(\\>|\\<)|(\\=)|(\\<\\>)|(\\>\\=|\\<\\=|\\Win\\s*\\()")) {
@@ -1022,13 +1055,16 @@ public class EntityManager {
 		// 是否完成了覆盖
 		boolean isRepeat = entityMeta.addCascade(cascadeModel);
 		if (isRepeat) {
-			logger.warn("表:{} 级联操作子表:{} 出现重复关联,后续:{}关联类型覆盖前面的关联", entityMeta.getTableName(),
-					subTableMeta.getTableName(), (cascadeModel.getCascadeType() == 1) ? "oneToMany" : "oneToOne");
+			logger.warn(
+					"duplicate cascade association found for table:{} cascade sub table:{}, the later:{} association type overrides the previous one",
+					entityMeta.getTableName(), subTableMeta.getTableName(),
+					(cascadeModel.getCascadeType() == 1) ? "oneToMany" : "oneToOne");
 		}
 	}
 
 	/**
-	 * @todo 设置字段类型和默认值
+	 * 设置字段类型和默认值
+	 * 
 	 * @param entityMeta
 	 */
 	private void parseFieldTypeAndDefault(EntityMeta entityMeta) {
@@ -1082,10 +1118,16 @@ public class EntityManager {
 			String[] fieldsArray = new String[length];
 			System.arraycopy(entityMeta.getFieldsArray(false), startIndex, fieldsArray, 0, length);
 			notGeneratedColMeta.setFieldsArray(fieldsArray);
-			// fieldsDefaultValue
-			String[] fieldDefaultValue = new String[length];
-			System.arraycopy(entityMeta.getFieldsDefaultValue(false), startIndex, fieldDefaultValue, 0, length);
-			notGeneratedColMeta.setFieldsDefaultValue(fieldDefaultValue);
+			// fieldsDefaultValue:实体无任何字段配置defaultValue时为null(下游getFieldsDefaultValue消费方已判空),
+			// arraycopy(null,...)会在解析期抛NPE导致实体不可用
+			String[] srcDefaultValues = entityMeta.getFieldsDefaultValue(false);
+			if (srcDefaultValues == null) {
+				notGeneratedColMeta.setFieldsDefaultValue(null);
+			} else {
+				String[] fieldDefaultValue = new String[length];
+				System.arraycopy(srcDefaultValues, startIndex, fieldDefaultValue, 0, length);
+				notGeneratedColMeta.setFieldsDefaultValue(fieldDefaultValue);
+			}
 			// fieldsNullable
 			Boolean[] fieldsNullable = new Boolean[length];
 			System.arraycopy(entityMeta.getFieldsNullable(false), startIndex, fieldsNullable, 0, length);
@@ -1143,7 +1185,7 @@ public class EntityManager {
 	}
 
 	public EntityMeta getEntityMeta(String tableName) {
-		String className = tableEntityNameMap.get(tableName.toLowerCase());
+		String className = tableEntityNameMap.get(tableName.toLowerCase(java.util.Locale.ROOT));
 		if (className == null) {
 			return null;
 		}

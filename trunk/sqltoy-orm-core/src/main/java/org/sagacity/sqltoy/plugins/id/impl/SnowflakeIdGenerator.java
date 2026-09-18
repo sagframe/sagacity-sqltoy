@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.plugins.id.impl;
 
 import java.util.Date;
@@ -16,18 +13,35 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @project sagacity-sqltoy
  * @description 基于twitter的分布式自增ID生成策略
  * @author zhongxuchen
- * @version v1.0,Date:2017年3月21日
- * @modify 2025-12-22 按照表名创建雪花算法实例
+ * @version v1.0,Date:2017-03-21
+ * @modify Date:2025-12-22 按照表名创建雪花算法实例
  */
 public class SnowflakeIdGenerator implements IdGenerator {
 	private static String DEFAULT_TABLE_NAME = "SQLTOY_SNOWFLAKE_GLOBAL_TABLE_NAME";
 
 	private static IdGenerator me = new SnowflakeIdGenerator();
 
-	private static SnowflakeIdWorker idWorker = null;
+	private static volatile SnowflakeIdWorker idWorker = null;
 
 	/**
-	 * @TODO 获取对象单例
+	 * 双检锁获取雪花算法worker,避免多线程首次并发时重复创建与可见性问题
+	 * 
+	 * @return
+	 */
+	private static SnowflakeIdWorker getWorker() {
+		if (null == idWorker) {
+			synchronized (SnowflakeIdGenerator.class) {
+				if (null == idWorker) {
+					idWorker = new SnowflakeIdWorker(SqlToyConstants.WORKER_ID, SqlToyConstants.DATA_CENTER_ID);
+				}
+			}
+		}
+		return idWorker;
+	}
+
+	/**
+	 * 获取对象单例
+	 * 
 	 * @return
 	 */
 	public static IdGenerator getInstance() {
@@ -47,19 +61,14 @@ public class SnowflakeIdGenerator implements IdGenerator {
 		// <32
 		// java -Dsqltoy.snowflake.workerId=11
 		// java -Dsqltoy.snowflake.dataCenterId=20
-		if (null == idWorker) {
-			idWorker = new SnowflakeIdWorker(SqlToyConstants.WORKER_ID, SqlToyConstants.DATA_CENTER_ID);
-		}
 		String realTableName = StringUtil.ifBlank(tableName, DEFAULT_TABLE_NAME);
-		return SqlUtil.convertIdValueType(idWorker.nextId(realTableName), idJavaType);
+		return SqlUtil.convertIdValueType(getWorker().nextId(realTableName), idJavaType);
 	}
 
 	// 实例化时增加初始化，避免多线程并发问题
 	@Override
 	public void initialize(SqlToyContext sqlToyContext) throws Exception {
-		if (null == idWorker) {
-			idWorker = new SnowflakeIdWorker(SqlToyConstants.WORKER_ID, SqlToyConstants.DATA_CENTER_ID);
-		}
+		getWorker();
 	}
 
 }

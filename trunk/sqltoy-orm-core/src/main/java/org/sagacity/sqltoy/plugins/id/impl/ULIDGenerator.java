@@ -8,7 +8,7 @@ import com.github.f4b6a3.ulid.Ulid;
 import com.github.f4b6a3.ulid.UlidCreator;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 产生26位ULID字符串
  * @author zhongxuchen
  * @version v1.0,Date:2025-12-23
@@ -17,7 +17,8 @@ public class ULIDGenerator implements IdGenerator {
 	private static IdGenerator me = new ULIDGenerator();
 
 	/**
-	 * @TODO 获取对象单例
+	 * 获取对象单例
+	 * 
 	 * @return
 	 */
 	public static IdGenerator getInstance() {

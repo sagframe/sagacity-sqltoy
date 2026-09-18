@@ -1,26 +1,21 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.config.model;
 
 import java.io.Serializable;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 
 import org.sagacity.sqltoy.model.SqlInjectionLevel;
 import org.sagacity.sqltoy.model.TimeUnit;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description sqltoy 查询条件参数值过滤加工配制模型
  * @author zhongxuchen
- * @version v1.0,Date:2013-3-22
- * @modify Date:2019-1-15 {增加缓存条件过滤}
+ * @version v1.0,Date:2013-03-22
+ * @modify Date:2019-01-15 增加缓存条件过滤
  */
 public class ParamFilterModel implements Serializable {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 2608369719903008282L;
 
 	public ParamFilterModel() {
@@ -145,7 +140,7 @@ public class ParamFilterModel implements Serializable {
 	/**
 	 * 增加的时间
 	 */
-	private Double incrementTime = 0d;
+	private String incrementTime = "0";
 
 	/**
 	 * 增减时间的单位
@@ -202,6 +197,11 @@ public class ParamFilterModel implements Serializable {
 	 */
 	private Boolean isArray = false;
 
+	/**
+	 * 补充字符
+	 */
+	private String appendStr;
+
 	public String getFilterType() {
 		return filterType;
 	}
@@ -257,20 +257,20 @@ public class ParamFilterModel implements Serializable {
 	 * @param excludeParam the excludesMap to set
 	 */
 	public void addExclude(String excludeParam) {
-		this.excludes.add(excludeParam.toLowerCase());
+		this.excludes.add(excludeParam.toLowerCase(Locale.ROOT));
 	}
 
 	/**
 	 * @return the incrementTime
 	 */
-	public Double getIncrementTime() {
+	public String getIncrementTime() {
 		return incrementTime;
 	}
 
 	/**
 	 * @param incrementTime the incrementTime to set
 	 */
-	public void setIncrementTime(Double incrementTime) {
+	public void setIncrementTime(String incrementTime) {
 		this.incrementTime = incrementTime;
 	}
 
@@ -614,6 +614,14 @@ public class ParamFilterModel implements Serializable {
 
 	public void setRemoveBlank(boolean removeBlank) {
 		this.removeBlank = removeBlank;
+	}
+
+	public String getAppendStr() {
+		return appendStr;
+	}
+
+	public void setAppendStr(String appendStr) {
+		this.appendStr = appendStr;
 	}
 
 }

@@ -9,6 +9,7 @@ import java.util.regex.Pattern;
 
 import org.sagacity.sqltoy.config.model.SqlExecuteLog;
 import org.sagacity.sqltoy.config.model.SqlExecuteTrace;
+import org.sagacity.sqltoy.model.DBProfile;
 import org.sagacity.sqltoy.model.OperateDetailType;
 import org.sagacity.sqltoy.model.OverTimeSql;
 import org.sagacity.sqltoy.plugins.FirstBizCodeTrace;
@@ -26,10 +27,10 @@ import com.alibaba.ttl.TransmittableThreadLocal;
  * @project sagacity-sqltoy
  * @description 提供sql执行超时统计和基本的sql输出功能
  * @author zhongxuchen
- * @version v1.0,Date:2015年6月12日
- * @modify {Date:2020-06-15,改进sql日志输出,将条件参数带入到sql中输出，便于开发调试}
- * @modify {Date:2020-08-12,为日志输出增加统一uid,便于辨别同一组执行语句}
- * @modify {Date:2024-07-18,强化对首个业务代码位置的定位,支持aop场景}
+ * @version v1.0,Date:2015-06-12
+ * @modify Date:2020-06-15 改进sql日志输出,将条件参数带入到sql中输出，便于开发调试
+ * @modify Date:2020-08-12 为日志输出增加统一uid,便于辨别同一组执行语句
+ * @modify Date:2024-07-18 强化对首个业务代码位置的定位,支持aop场景
  */
 public class SqlExecuteStat {
 	/**
@@ -40,12 +41,12 @@ public class SqlExecuteStat {
 	/**
 	 * 是否调试阶段
 	 */
-	private static boolean debug = false;
+	private static volatile boolean debug = false;
 
 	/**
 	 * 打印慢sql(单位毫秒,默认超过8秒)
 	 */
-	private static int printSqlTimeoutMillis = 8000;
+	private static volatile int printSqlTimeoutMillis = 8000;
 
 	// 用于拟合sql中的条件值表达式(前后都以非字符和数字为依据目的是最大幅度的避免参数值里面存在问号,实际执行过程中这个问题已经被规避,但调试打印参数带入无法规避)
 	private final static Pattern ARG_PATTERN = Pattern.compile("\\W\\?\\W");
@@ -57,43 +58,45 @@ public class SqlExecuteStat {
 	private static ThreadLocal<Boolean> threadLocalDebug = new TransmittableThreadLocal<>();
 
 	// sql执行超时处理器
-	public static OverTimeSqlHandler overTimeSqlHandler;
+	public static volatile OverTimeSqlHandler overTimeSqlHandler;
 
 	/**
 	 * 获取业务代码调用位置的实现类
 	 */
-	public static FirstBizCodeTrace firstBizCodeTrace;
+	public static volatile FirstBizCodeTrace firstBizCodeTrace;
 
 	/**
 	 * sql格式化输出器(用于debug sql输出)
 	 */
-	private static SqlFormater sqlFormater;
+	private static volatile SqlFormater sqlFormater;
 
-	public static void start(String sqlId, OperateDetailType type, Class resultType, Boolean debugPrint) {
+	public static void start(String sqlId, OperateDetailType type, Class<?> resultType, Boolean debugPrint) {
 		threadLocal.set(
-			new SqlExecuteTrace(sqlId, type, resultType, (debugPrint == null) ? debug : debugPrint.booleanValue()));
+				new SqlExecuteTrace(sqlId, type, resultType, (debugPrint == null) ? debug : debugPrint.booleanValue()));
 	}
 
 	/**
-	 * @todo 登记开始执行
+	 * 登记开始执行
+	 * 
 	 * @param sqlId
 	 * @param type
 	 * @param debugPrint
 	 */
-	public static void start(String sqlId, OperateDetailType type, Class resultType, Boolean debugPrint, Object contextData) {
-		threadLocal.set(
-				new SqlExecuteTrace(sqlId, type, resultType, (debugPrint == null) ? debug : debugPrint.booleanValue(), contextData));
+	public static void start(String sqlId, OperateDetailType type, Class<?> resultType, Boolean debugPrint,
+			Object contextData) {
+		threadLocal.set(new SqlExecuteTrace(sqlId, type, resultType,
+				(debugPrint == null) ? debug : debugPrint.booleanValue(), contextData));
 	}
 
-	public static void start(String sqlId, OperateDetailType type, Class resultType, Long batchSize,
-		Boolean debugPrint) {
+	public static void start(String sqlId, OperateDetailType type, Class<?> resultType, Long batchSize,
+			Boolean debugPrint) {
 		SqlExecuteTrace sqlExecuteTrace = new SqlExecuteTrace(sqlId, type, resultType,
-			(debugPrint == null) ? debug : debugPrint.booleanValue());
+				(debugPrint == null) ? debug : debugPrint.booleanValue());
 		sqlExecuteTrace.setBatchSize(batchSize);
 		threadLocal.set(sqlExecuteTrace);
 	}
 
-	public static void start(String sqlId, OperateDetailType type, Class resultType, Long batchSize,
+	public static void start(String sqlId, OperateDetailType type, Class<?> resultType, Long batchSize,
 			Boolean debugPrint, Object contextData) {
 		SqlExecuteTrace sqlExecuteTrace = new SqlExecuteTrace(sqlId, type, resultType,
 				(debugPrint == null) ? debug : debugPrint.booleanValue(), contextData);
@@ -102,7 +105,8 @@ public class SqlExecuteStat {
 	}
 
 	/**
-	 * @todo 向线程中登记发生了异常,便于在finally里面明确是错误并打印相关sql
+	 * 向线程中登记发生了异常,便于在finally里面明确是错误并打印相关sql
+	 * 
 	 * @param exception
 	 */
 	public static void error(Exception exception) {
@@ -112,7 +116,8 @@ public class SqlExecuteStat {
 	}
 
 	/**
-	 * @todo 在debug模式下,在console端输出sql,便于开发人员查看
+	 * 在debug模式下,在console端输出sql,便于开发人员查看
+	 * 
 	 * @param topic
 	 * @param sql
 	 * @param paramValues
@@ -128,14 +133,16 @@ public class SqlExecuteStat {
 		}
 	}
 
-	public static void setDialect(String dialect) {
+	public static void setDialect(DBProfile dbProfile) {
 		if (threadLocal.get() != null) {
-			threadLocal.get().setDialect(dialect);
+			threadLocal.get().setDialect(dbProfile.getDialect());
+			threadLocal.get().setDbType(dbProfile.getDbType());
 		}
 	}
 
 	/**
-	 * @TODO 提供中间日志输出
+	 * 提供中间日志输出
+	 * 
 	 * @param topic
 	 * @param message
 	 * @param args
@@ -176,7 +183,8 @@ public class SqlExecuteStat {
 	}
 
 	/**
-	 * @TODO 输出日志
+	 * 输出日志
+	 * 
 	 * @param sqlTrace
 	 */
 	private static void printLogs(SqlExecuteTrace sqlTrace) {
@@ -283,10 +291,10 @@ public class SqlExecuteStat {
 	public static void destroy() {
 		// 执行完成时打印日志
 		destroyLog();
+		// update 2026-9-9 去除remove()后的set(null):set(null)会重新插入null值entry,
+		// 使remove清理失效(池化线程残留entry,TransmittableThreadLocal场景还会重新注册holder并向子线程传播null项)
 		threadLocal.remove();
-		threadLocal.set(null);
 		threadLocalDebug.remove();
-		threadLocalDebug.set(null);
 	}
 
 	/**
@@ -312,7 +320,8 @@ public class SqlExecuteStat {
 	}
 
 	/**
-	 * @TODO 将参数值拟合到sql中作为debug输出,便于开发进行调试(2020-06-15)
+	 * 将参数值拟合到sql中作为debug输出,便于开发进行调试(2020-06-15)
+	 * 
 	 * @param sql
 	 * @param params
 	 * @param dbType
@@ -348,7 +357,8 @@ public class SqlExecuteStat {
 	}
 
 	/**
-	 * @TODO 定位第一个调用sqltoy的代码位置
+	 * 定位第一个调用sqltoy的代码位置
+	 * 
 	 * @return
 	 */
 	public static String getFirstTrace() {
@@ -392,7 +402,8 @@ public class SqlExecuteStat {
 	}
 
 	/**
-	 * @TODO 获取执行总时长
+	 * 获取执行总时长
+	 * 
 	 * @return
 	 */
 	public static Long getExecuteTime() {

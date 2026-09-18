@@ -1,35 +1,42 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.plugins.function;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 
 import org.sagacity.sqltoy.SqlToyConstants;
+import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
+import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.StringUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 实现sql不同数据库方言的函数替换
  * @author zhongxuchen
- * @version v1.0, Date:2019年9月15日
- * @modify 2019年9月15日,修改说明
+ * @version v1.0,Date:2019-09-15
+ * @modify Date:2019-09-15,修改说明
  */
 public class FunctionUtils {
+	private final static Logger logger = LoggerFactory.getLogger(FunctionUtils.class);
+
 	private final static String funPackage = "org.sagacity.sqltoy.plugins.function.impl.";
 	// 提供默认函数配置
+	// update 2026-9-6 DateDiff(口径统一:两参=d1-d2天差,三参=年月分量差/自然天/完整单位截断)与
+	// Decode(转case when)经14库真实执行验证后默认注册
 	public final static String[] functions = { funPackage.concat("SubStr"), funPackage.concat("Trim"),
 			funPackage.concat("Instr"), funPackage.concat("Concat"), funPackage.concat("ConcatWs"),
 			funPackage.concat("Nvl"), funPackage.concat("DateFormat"), funPackage.concat("Now"),
 			funPackage.concat("Length"), funPackage.concat("ToChar"), funPackage.concat("If"),
-			funPackage.concat("GroupConcat") };
+			funPackage.concat("GroupConcat"), funPackage.concat("ToNumber"), funPackage.concat("ToDate"),
+			funPackage.concat("DateDiff"), funPackage.concat("Decode") };
 
 	private final static Map<String, String> functionNames = new HashMap<String, String>() {
 		{
@@ -45,10 +52,14 @@ public class FunctionUtils {
 			put("tochar", "ToChar");
 			put("if", "If");
 			put("groupconcat", "GroupConcat");
-
+			put("tonumber", "ToNumber");
+			put("todate", "ToDate");
+			// update 2026-9-9 补齐默认注册列表中缺失的简写映射(原配置datediff/decode简写不生效)
+			put("datediff", "DateDiff");
+			put("decode", "Decode");
 		}
 	};
-	private static List<IFunction> functionConverts = new ArrayList<IFunction>();
+	private static volatile List<IFunction> functionConverts = new ArrayList<IFunction>();
 
 	public static String getDialectSql(String sql, String dialect) {
 		if (functionConverts.isEmpty() || StringUtil.isBlank(dialect) || StringUtil.isBlank(sql)) {
@@ -58,7 +69,8 @@ public class FunctionUtils {
 	}
 
 	/**
-	 * @todo 执行不同数据库函数的转换
+	 * 执行不同数据库函数的转换
+	 * 
 	 * @param dialect
 	 * @param sqlContent
 	 * @return
@@ -67,11 +79,30 @@ public class FunctionUtils {
 		int dbType = DataSourceUtils.getDBType(dialect);
 		IFunction function;
 		String dialectSql = sqlContent;
-		String dialectLow = dialect.toLowerCase();
+		String dialectLow = dialect.toLowerCase(Locale.ROOT);
+		// update 2026-9-14 预检加速(检测不改写,无耦合):常态SQL不含任何可转换函数,原循环
+		// 对每个适配函数各做一次全SQL maskLiterals拷贝(注册函数最多16次);预检在原串的
+		// 单次掩码上做只读正则探测,无任何命中直接返回原串(仅1次拷贝);有命中才进入改写
+		// 循环(结构与原形态一致,改写会变更串长,循环内掩码仍按原逻辑每函数各自重算)
+		String preCheckMask = null;
+		boolean hasMatch = false;
+		for (int i = 0, n = functionConverts.size(); i < n && !hasMatch; i++) {
+			function = functionConverts.get(i);
+			if (matchDialect(function.dialects(), dialectLow)) {
+				if (preCheckMask == null) {
+					preCheckMask = SqlConfigParseUtils.maskLiterals(sqlContent,
+							SqlConfigParseUtils.isBackslashEscapeDialect(dbType));
+				}
+				hasMatch = function.regex().matcher(preCheckMask).find();
+			}
+		}
+		if (!hasMatch) {
+			return sqlContent;
+		}
 		for (int i = 0, n = functionConverts.size(); i < n; i++) {
 			function = functionConverts.get(i);
 			// 方言为null或空白表示适配所有数据库,适配的方言包含当前方言也执行替换
-			if (StringUtil.isBlank(function.dialects()) || function.dialects().toLowerCase().contains(dialectLow)) {
+			if (matchDialect(function.dialects(), dialectLow)) {
 				dialectSql = replaceFunction(dialectSql, dbType, function);
 			}
 		}
@@ -79,7 +110,29 @@ public class FunctionUtils {
 	}
 
 	/**
-	 * @todo 单个sql函数转换处理
+	 * update 2026-9-9 方言匹配改为按逗号/分号切分后逐项精确比对:原contains子串匹配存在
+	 * 双向偏差(dialects="oracle11"会被当前方言"oracle"误命中;dialects="oracle"又匹配不上
+	 * 方言"oracle11"),自定义函数须显式枚举适配的方言名
+	 * 
+	 * @param dialects   函数声明的适配方言串,null/空白表示适配所有数据库
+	 * @param dialectLow 当前方言(小写)
+	 * @return 是否适配当前方言
+	 */
+	private static boolean matchDialect(String dialects, String dialectLow) {
+		if (StringUtil.isBlank(dialects)) {
+			return true;
+		}
+		for (String item : dialects.toLowerCase(Locale.ROOT).split("\\,|\\;")) {
+			if (item.trim().equals(dialectLow)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * 单个sql函数转换处理
+	 *
 	 * @param sqlContent
 	 * @param dbType
 	 * @param function
@@ -87,7 +140,11 @@ public class FunctionUtils {
 	 */
 	private static String replaceFunction(String sqlContent, int dbType, IFunction function) {
 		String dialectSql = sqlContent;
-		Matcher matcher = function.regex().matcher(dialectSql);
+		// update 2026-9-5 函数匹配在字面量掩码串上进行(掩码串与原串等长,位置一致),
+		// 内容截取仍基于原串:规避字面量内的函数文本(如'nvl(a,b)')被误转换破坏字面量
+		String maskSql = SqlConfigParseUtils.maskLiterals(dialectSql,
+				SqlConfigParseUtils.isBackslashEscapeDialect(dbType));
+		Matcher matcher = function.regex().matcher(maskSql);
 		int index = -1;
 		String functionParams;
 		String[] args = null;
@@ -111,7 +168,8 @@ public class FunctionUtils {
 			// 函数(:args) 存在参数
 			if (hasArgs) {
 				functionName = dialectSql.substring(matchedIndex, dialectSql.indexOf("(", matchedIndex));
-				endMarkIndex = StringUtil.getSymMarkIndex("(", ")", dialectSql, matchedIndex);
+				// 引号感知配对:规避函数参数中字面量内的括号(如nvl(remark,'('))被误当参数终结符
+				endMarkIndex = StringUtil.getSymMarkIndexSkipQuoted("(", ")", dialectSql, matchedIndex);
 				functionParams = dialectSql.substring(dialectSql.indexOf("(", matchedIndex) + 1, endMarkIndex);
 				// 参数中包含同样的函数，通过递归替换
 				if (StringUtil.matches(functionParams, function.regex())) {
@@ -135,10 +193,12 @@ public class FunctionUtils {
 			}
 			if (hasArgs) {
 				dialectSql = dialectSql.substring(endMarkIndex + 1);
+				maskSql = maskSql.substring(endMarkIndex + 1);
 			} else {
 				dialectSql = dialectSql.substring(endMarkIndex);
+				maskSql = maskSql.substring(endMarkIndex);
 			}
-			matcher.reset(dialectSql);
+			matcher.reset(maskSql);
 		}
 		result.append(dialectSql);
 		return result.toString();
@@ -185,10 +245,11 @@ public class FunctionUtils {
 				if (functionName.startsWith("org.sagacity.sqltoy")) {
 					functionName = funPackage.concat(functionName.substring(functionName.lastIndexOf(".") + 1));
 				} // trim、nvl等简写模式
-				else if (!functionName.contains(".") && functionNames.containsKey(functionName.toLowerCase())) {
-					functionName = funPackage.concat(functionNames.get(functionName.toLowerCase()));
+				else if (!functionName.contains(".")
+						&& functionNames.containsKey(functionName.toLowerCase(Locale.ROOT))) {
+					functionName = funPackage.concat(functionNames.get(functionName.toLowerCase(Locale.ROOT)));
 				}
-				className = functionName.substring(functionName.lastIndexOf(".") + 1).toLowerCase();
+				className = functionName.substring(functionName.lastIndexOf(".") + 1).toLowerCase(Locale.ROOT);
 				// 名字已经存在的排除
 				if (!nameSet.contains(className)) {
 					converts.add((IFunction) (Class.forName(functionName).getDeclaredConstructor().newInstance()));
@@ -196,9 +257,82 @@ public class FunctionUtils {
 				}
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("setFunctionConverts method execution failed", e);
+			// 某函数类加载失败时保留原有完整转换器列表,不用部分列表覆盖全局,
+			// 避免部分函数的方言转换静默失效
+			return;
 		}
 		functionConverts = converts;
+	}
+
+	/**
+	 * update 2026-9-10 sqlite日期参数归一为日期文本:JDBC绑定的日期列/参数为毫秒Long
+	 * (strftime/date等日期函数直接作用于毫秒返回null或垃圾值),须datetime(x/1000,
+	 * 'unixepoch','localtime')转本地墙钟文本——不带'localtime'为UTC墙钟,东八区本地午夜
+	 * 毫秒值被推到前一日16:00,自然天差/日期格式化偏1天(sqlite实测);裸字符串字面量
+	 * ('YYYY-MM-DD[...]')与函数调用表达式(含'(',如to_date/date/strftime等转换产物——
+	 * sqlite日期函数均返回文本,且嵌套转换时外层函数先于内层被改写,前缀白名单不可枚举)
+	 * 已是日期文本,原样保留;仅裸列名/占位符(JDBC绑定为毫秒Long)做归一
+	 *
+	 * @param arg 日期参数SQL片段(字面量/列/占位符/表达式)
+	 * @return sqlite日期函数可消费的日期文本表达式
+	 */
+	public static String sqliteDateTextExpr(String arg) {
+		if (arg == null) {
+			return arg;
+		}
+		String tmp = arg.trim();
+		if (tmp.length() > 2 && tmp.startsWith("'") && tmp.endsWith("'") && tmp.indexOf('\'', 1) == tmp.length() - 1) {
+			return tmp;
+		}
+		// 函数调用/表达式形态:sqlite日期与文本函数返回值均为文本,直接透传
+		// (数值表达式传入日期函数本属误用,不做防御)
+		if (tmp.indexOf('(') >= 0) {
+			return tmp;
+		}
+		return "datetime(" + tmp + "/1000,'unixepoch','localtime')";
+	}
+
+	/**
+	 * update 2026-9-10 PG语法系to_char首参为参数占位符时的显式定型:pgjdbc系驱动对日期参数 以UNSPECIFIED
+	 * OID发送,vanilla PG的to_char(unknown,unknown)因timestamp/date/numeric/
+	 * interval多重载报"function is not unique"(postgresql16.15实爆),openGauss/gaussdb误选
+	 * numeric重载报"invalid input syntax for type numeric",og7报"could not determine
+	 * data type",仅vastbase恰好选对——同一SQL四种结局,统一以::timestamp显式定型修复。
+	 * 注意:函数转换发生在命名参数替换为?之前,首参可能是?、:name或#[name]三种占位形态,
+	 * 须保留原token返回(替换为?会破坏参数索引对齐);oracle/dm/oceanbase驱动日期参数定型 发送且无::语法,不在处理范围。
+	 *
+	 * @param dialect              目标方言dbType
+	 * @param firstArg             to_char首参SQL片段
+	 * @param format               转换后的格式模型串(用于数值模型判别)
+	 * @param numericModelPossible 是否可能为数值格式化场景(to_char(numeric,'999.99')):格式模型
+	 *                             含9/0数值占位时不cast——数值参数经setBigDecimal等定型绑定
+	 *                             原生可解重载,强转timestamp反而破坏该场景
+	 * @return 处理后的首参SQL片段
+	 */
+	public static String pgToCharParamCast(int dialect, String firstArg, String format, boolean numericModelPossible) {
+		if (firstArg == null) {
+			return firstArg;
+		}
+		String argTrim = firstArg.trim();
+		// 参数占位符三形态:?(已替换)、:name(命名参数)、#[name](sqltoy中括号命名参数)
+		boolean placeholder = "?".equals(argTrim) || argTrim.matches(":[A-Za-z_][A-Za-z0-9_]*")
+				|| argTrim.matches("#\\[[^\\]]+\\]");
+		if (!placeholder) {
+			return firstArg;
+		}
+		// update 2026-9-14
+		// 补KINGBASE(KingbaseES基于PG,占位符参数同样存在to_char(unknown,unknown)重载歧义)
+		boolean pgSyntax = dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL14 || dialect == DBType.GAUSSDB
+				|| dialect == DBType.MOGDB || dialect == DBType.STARDB || dialect == DBType.OSCAR
+				|| dialect == DBType.OPENGAUSS || dialect == DBType.VASTBASE || dialect == DBType.KINGBASE;
+		if (!pgSyntax) {
+			return firstArg;
+		}
+		if (numericModelPossible && format != null && (format.indexOf('9') >= 0 || format.indexOf('0') >= 0)) {
+			return firstArg;
+		}
+		return "(" + argTrim + "::timestamp)";
 	}
 
 }

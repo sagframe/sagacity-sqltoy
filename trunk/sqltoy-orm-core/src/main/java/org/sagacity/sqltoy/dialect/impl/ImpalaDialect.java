@@ -14,6 +14,7 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DecryptHandler;
 import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
 import org.sagacity.sqltoy.callback.ReflectPropsHandler;
+import org.sagacity.sqltoy.callback.UpdateRowCallback;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.PKStrategy;
@@ -24,6 +25,7 @@ import org.sagacity.sqltoy.dialect.utils.DefaultDialectUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectExtUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.model.ColumnMeta;
+import org.sagacity.sqltoy.model.DBProfile;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
@@ -37,10 +39,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 提供基于impala对kudu的支持
  * @author zhongxuchen
- * @version v1.0,Date:2021-8-1
+ * @version v1.0,Date:2021-08-01
  */
 @SuppressWarnings({ "rawtypes" })
 public class ImpalaDialect implements Dialect {
@@ -49,20 +51,16 @@ public class ImpalaDialect implements Dialect {
 	 */
 	protected final Logger logger = LoggerFactory.getLogger(ImpalaDialect.class);
 
-	/**
-	 * 判定为null的函数
-	 */
-	public static final String NVL_FUNCTION = "ifnull";
 	public static final String NEXT_VAL = "NEXTVAL FOR ";
 
 	@Override
 	public boolean isUnique(final SqlToyContext sqlToyContext, Serializable entity, String[] paramsNamed,
-			Connection conn, final Integer dbType, final String tableName) {
-		return DialectUtils.isUnique(sqlToyContext, entity, paramsNamed, conn, dbType, tableName,
+			Connection conn, DBProfile profile, final String tableName, final Integer queryTimeout) {
+		return DialectUtils.isUnique(sqlToyContext, entity, paramsNamed, conn, profile, tableName,
 				(entityMeta, realParamNamed, table, topSize) -> {
-					String queryStr = DialectExtUtils.wrapUniqueSql(entityMeta, realParamNamed, dbType, table);
+					String queryStr = DialectExtUtils.wrapUniqueSql(entityMeta, realParamNamed, profile, table);
 					return queryStr + " limit " + topSize;
-				});
+				}, queryTimeout);
 	}
 
 	/*
@@ -76,10 +74,9 @@ public class ImpalaDialect implements Dialect {
 	@Override
 	public QueryResult getRandomResult(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, final DecryptHandler decryptHandler, Long totalCount, Long randomCount,
-			Connection conn, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
-			throws Exception {
+			Connection conn, DBProfile profile, final int fetchSize, final int maxRows) throws Exception {
 		return DefaultDialectUtils.getRandomResult(sqlToyContext, sqlToyConfig, queryExecutor, decryptHandler,
-				totalCount, randomCount, conn, dbType, dialect, fetchSize, maxRows);
+				totalCount, randomCount, conn, profile, fetchSize, maxRows);
 	}
 
 	/*
@@ -94,10 +91,9 @@ public class ImpalaDialect implements Dialect {
 	@Override
 	public QueryResult findPageBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, final DecryptHandler decryptHandler, Long pageNo, Integer pageSize,
-			Connection conn, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
-			throws Exception {
+			Connection conn, DBProfile profile, final int fetchSize, final int maxRows) throws Exception {
 		return DefaultDialectUtils.findPageBySql(sqlToyContext, sqlToyConfig, queryExecutor, decryptHandler, pageNo,
-				pageSize, conn, dbType, dialect, fetchSize, maxRows);
+				pageSize, conn, profile, fetchSize, maxRows);
 	}
 
 	/*
@@ -109,10 +105,10 @@ public class ImpalaDialect implements Dialect {
 	 */
 	@Override
 	public QueryResult findTopBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, QueryExecutor queryExecutor,
-			final DecryptHandler decryptHandler, Integer topSize, Connection conn, final Integer dbType,
-			final String dialect, final int fetchSize, final int maxRows) throws Exception {
+			final DecryptHandler decryptHandler, Integer topSize, Connection conn, DBProfile profile,
+			final int fetchSize, final int maxRows) throws Exception {
 		return DefaultDialectUtils.findTopBySql(sqlToyContext, sqlToyConfig, queryExecutor, decryptHandler, topSize,
-				conn, dbType, dialect, fetchSize, maxRows);
+				conn, profile, fetchSize, maxRows);
 	}
 
 	/*
@@ -126,10 +122,10 @@ public class ImpalaDialect implements Dialect {
 	@Override
 	public QueryResult findBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
 			final Object[] paramsValue, final QueryExecutorExtend queryExecutorExtend,
-			final DecryptHandler decryptHandler, final Connection conn, final LockMode lockMode, final Integer dbType,
-			final String dialect, final int fetchSize, final int maxRows) throws Exception {
+			final DecryptHandler decryptHandler, final Connection conn, final LockMode lockMode, DBProfile profile,
+			final int fetchSize, final int maxRows) throws Exception {
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, sql, paramsValue, queryExecutorExtend,
-				decryptHandler, conn, dbType, 0, fetchSize, maxRows);
+				decryptHandler, conn, profile, 0, fetchSize, maxRows);
 	}
 
 	/*
@@ -141,9 +137,9 @@ public class ImpalaDialect implements Dialect {
 	@Override
 	public Long getCountBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, boolean isLastSql, final QueryExecutorExtend extend, final Connection conn,
-			final Integer dbType, final String dialect) throws Exception {
+			DBProfile profile) throws Exception {
 		return DialectUtils.getCountBySql(sqlToyContext, sqlToyConfig, sql, paramsValue, isLastSql, extend, conn,
-				dbType);
+				profile);
 	}
 
 	/*
@@ -154,12 +150,11 @@ public class ImpalaDialect implements Dialect {
 	 */
 	@Override
 	public Long saveOrUpdate(SqlToyContext sqlToyContext, Serializable entity, final String[] forceUpdateFields,
-			Connection conn, final Integer dbType, final String dialect, final Boolean autoCommit,
-			final String tableName) throws Exception {
+			Connection conn, DBProfile profile, final Boolean autoCommit, final String tableName) throws Exception {
 		List<Serializable> entities = new ArrayList<Serializable>();
 		entities.add(entity);
 		return saveOrUpdateAll(sqlToyContext, entities, sqlToyContext.getBatchSize(), null, forceUpdateFields, conn,
-				dbType, dialect, autoCommit, tableName);
+				profile, autoCommit, tableName);
 	}
 
 	/*
@@ -171,15 +166,15 @@ public class ImpalaDialect implements Dialect {
 	@Override
 	public Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			ReflectPropsHandler reflectPropsHandler, final String[] forceUpdateFields, Connection conn,
-			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
-			throws Exception {
+			DBProfile profile, final Boolean autoCommit, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		boolean isAssignPK = allowAssignPKValue(entityMeta.getIdStrategy());
-		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
-				entityMeta.getIdStrategy(), NVL_FUNCTION, NEXT_VAL + entityMeta.getSequence(), isAssignPK, tableName)
+		String insertSql = DialectExtUtils
+				.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), profile, entityMeta,
+						entityMeta.getIdStrategy(), NEXT_VAL + entityMeta.getSequence(), isAssignPK, tableName)
 				.replaceFirst("(?i)insert ", "upsert ");
 		return DialectUtils.saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql,
-				entities, batchSize, reflectPropsHandler, conn, dbType, autoCommit);
+				entities, batchSize, reflectPropsHandler, conn, profile, autoCommit);
 	}
 
 	/*
@@ -192,14 +187,14 @@ public class ImpalaDialect implements Dialect {
 	 */
 	@Override
 	public Long saveAllIgnoreExist(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType, final String dialect,
-			final Boolean autoCommit, final String tableName) throws Exception {
+			ReflectPropsHandler reflectPropsHandler, Connection conn, DBProfile profile, final Boolean autoCommit,
+			final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		boolean isAssignPK = allowAssignPKValue(entityMeta.getIdStrategy());
-		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
-				entityMeta.getIdStrategy(), NVL_FUNCTION, NEXT_VAL + entityMeta.getSequence(), isAssignPK, tableName);
+		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), profile, entityMeta,
+				entityMeta.getIdStrategy(), NEXT_VAL + entityMeta.getSequence(), isAssignPK, tableName);
 		return DialectUtils.saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql,
-				entities, batchSize, reflectPropsHandler, conn, dbType, autoCommit);
+				entities, batchSize, reflectPropsHandler, conn, profile, autoCommit);
 	}
 
 	/*
@@ -210,15 +205,16 @@ public class ImpalaDialect implements Dialect {
 	 */
 	@Override
 	public Serializable load(final SqlToyContext sqlToyContext, Serializable entity, boolean onlySubTables,
-			List<Class> cascadeTypes, LockMode lockMode, Connection conn, final Integer dbType, final String dialect,
-			final String tableName) throws Exception {
+			List<Class> cascadeTypes, LockMode lockMode, int lockWaitTimeout, Connection conn, DBProfile profile,
+			final String tableName, final Integer queryTimeout) throws Exception {
+		String dialect = profile.getDialect();
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		// 获取loadsql(loadsql 可以通过@loadSql进行改变，所以需要sqltoyContext重新获取)
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(entityMeta.getLoadSql(tableName), SqlType.search,
 				dialect, null);
 		String loadSql = sqlToyConfig.getSql(dialect);
 		return (Serializable) DialectUtils.load(sqlToyContext, sqlToyConfig, loadSql, entityMeta, entity, onlySubTables,
-				cascadeTypes, conn, dbType);
+				cascadeTypes, conn, profile, queryTimeout);
 	}
 
 	/*
@@ -229,10 +225,11 @@ public class ImpalaDialect implements Dialect {
 	 */
 	@Override
 	public List<?> loadAll(final SqlToyContext sqlToyContext, List<?> entities, boolean onlySubTables,
-			List<Class> cascadeTypes, LockMode lockMode, Connection conn, final Integer dbType, final String dialect,
-			final String tableName, final int fetchSize, final int maxRows) throws Exception {
-		return DialectUtils.loadAll(sqlToyContext, entities, onlySubTables, cascadeTypes, lockMode, conn, dbType,
-				tableName, null, fetchSize, maxRows);
+			List<Class> cascadeTypes, LockMode lockMode, final int lockWaitTimeout, Connection conn, DBProfile profile,
+			final String tableName, final int fetchSize, final int maxRows, final Integer queryTimeout)
+			throws Exception {
+		return DialectUtils.loadAll(sqlToyContext, entities, onlySubTables, cascadeTypes, lockMode, conn, profile,
+				tableName, null, fetchSize, maxRows, queryTimeout);
 	}
 
 	/*
@@ -242,8 +239,8 @@ public class ImpalaDialect implements Dialect {
 	 * SqlToyContext , java.io.Serializable, java.util.List, java.sql.Connection)
 	 */
 	@Override
-	public Object save(SqlToyContext sqlToyContext, Serializable entity, Connection conn, final Integer dbType,
-			final String dialect, final String tableName) throws Exception {
+	public Object save(SqlToyContext sqlToyContext, Serializable entity, Connection conn, DBProfile profile,
+			final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		PKStrategy pkStrategy = entityMeta.getIdStrategy();
 		// 主键值已经存在，则主键策略改为assign，避免跳号
@@ -254,10 +251,11 @@ public class ImpalaDialect implements Dialect {
 			}
 		}
 		boolean isAssignPK = allowAssignPKValue(pkStrategy);
-		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
-				pkStrategy, NVL_FUNCTION, NEXT_VAL + entityMeta.getSequence(), isAssignPK, tableName);
+		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), profile, entityMeta,
+				pkStrategy, NEXT_VAL + entityMeta.getSequence(), isAssignPK, tableName);
+		// impala不提供级联子表保存支持
 		return DialectUtils.save(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entity, null, null, conn,
-				dbType);
+				profile);
 	}
 
 	/*
@@ -269,14 +267,14 @@ public class ImpalaDialect implements Dialect {
 	 */
 	@Override
 	public Long saveAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType, final String dialect,
-			final Boolean autoCommit, final String tableName) throws Exception {
+			ReflectPropsHandler reflectPropsHandler, Connection conn, DBProfile profile, final Boolean autoCommit,
+			final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		boolean isAssignPK = allowAssignPKValue(entityMeta.getIdStrategy());
-		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
-				entityMeta.getIdStrategy(), NVL_FUNCTION, NEXT_VAL + entityMeta.getSequence(), isAssignPK, tableName);
+		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), profile, entityMeta,
+				entityMeta.getIdStrategy(), NEXT_VAL + entityMeta.getSequence(), isAssignPK, tableName);
 		return DialectUtils.saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql,
-				entities, batchSize, reflectPropsHandler, conn, dbType, autoCommit);
+				entities, batchSize, reflectPropsHandler, conn, profile, autoCommit);
 	}
 
 	/*
@@ -289,9 +287,9 @@ public class ImpalaDialect implements Dialect {
 	@Override
 	public Long update(SqlToyContext sqlToyContext, Serializable entity, String[] forceUpdateFields,
 			final boolean cascade, final Class[] forceCascadeClasses,
-			final HashMap<Class, String[]> subTableForceUpdateProps, Connection conn, final Integer dbType,
-			final String dialect, final String tableName) throws Exception {
-		return saveOrUpdate(sqlToyContext, entity, forceUpdateFields, conn, dbType, dialect, null, tableName);
+			final HashMap<Class, String[]> subTableForceUpdateProps, Connection conn, DBProfile profile,
+			final String tableName) throws Exception {
+		return saveOrUpdate(sqlToyContext, entity, forceUpdateFields, conn, profile, null, tableName);
 	}
 
 	/*
@@ -304,16 +302,15 @@ public class ImpalaDialect implements Dialect {
 	@Override
 	public Long updateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			final String[] uniqueFields, final String[] forceUpdateFields, ReflectPropsHandler reflectPropsHandler,
-			Connection conn, final Integer dbType, final String dialect, final Boolean autoCommit,
-			final String tableName) throws Exception {
+			Connection conn, DBProfile profile, final Boolean autoCommit, final String tableName) throws Exception {
 		return this.saveOrUpdateAll(sqlToyContext, entities, batchSize, reflectPropsHandler, forceUpdateFields, conn,
-				dbType, dialect, autoCommit, tableName);
+				profile, autoCommit, tableName);
 	}
 
 	@Override
 	public Serializable updateSaveFetch(SqlToyContext sqlToyContext, Serializable entity,
-			UpdateRowHandler updateRowHandler, String[] uniqueProps, Connection conn, Integer dbType, String dialect,
-			String tableName) throws Exception {
+			UpdateRowHandler updateRowHandler, int lockWaitTimeout, String[] uniqueProps, Connection conn,
+			DBProfile profile, String tableName) throws Exception {
 		// 不支持
 		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
 	}
@@ -325,9 +322,9 @@ public class ImpalaDialect implements Dialect {
 	 * SqlToyContext , java.io.Serializable, java.sql.Connection)
 	 */
 	@Override
-	public Long delete(SqlToyContext sqlToyContext, Serializable entity, Connection conn, final Integer dbType,
-			final String dialect, final String tableName) throws Exception {
-		return DialectUtils.delete(sqlToyContext, entity, conn, dbType, tableName);
+	public Long delete(SqlToyContext sqlToyContext, Serializable entity, Connection conn, DBProfile profile,
+			final String tableName) throws Exception {
+		return DialectUtils.delete(sqlToyContext, entity, conn, profile, tableName);
 	}
 
 	/*
@@ -338,9 +335,8 @@ public class ImpalaDialect implements Dialect {
 	 */
 	@Override
 	public Long deleteAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize, Connection conn,
-			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
-			throws Exception {
-		return DefaultDialectUtils.deleteAll(sqlToyContext, entities, batchSize, conn, dbType, autoCommit, tableName);
+			DBProfile profile, final Boolean autoCommit, final String tableName) throws Exception {
+		return DefaultDialectUtils.deleteAll(sqlToyContext, entities, batchSize, conn, profile, autoCommit, tableName);
 	}
 
 	/*
@@ -353,8 +349,15 @@ public class ImpalaDialect implements Dialect {
 	 */
 	@Override
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramsValue, UpdateRowHandler updateRowHandler, Connection conn, final Integer dbType,
-			final String dialect, final LockMode lockMode, final int fetchSize, final int maxRows) throws Exception {
+			Object[] paramsValue, UpdateRowHandler updateRowHandler, Connection conn, DBProfile profile,
+			final LockMode lockMode, int lockWaitTimeout, final int fetchSize, final int maxRows) throws Exception {
+		// 不支持
+		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
+	}
+
+	public Serializable updateSaveFetch(SqlToyContext sqlToyContext, Serializable entity,
+			UpdateRowCallback updateRowCallback, int lockWaitTimeout, String[] uniqueProps, Connection conn,
+			DBProfile profile, String tableName) throws Exception {
 		// 不支持
 		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
 	}
@@ -362,18 +365,16 @@ public class ImpalaDialect implements Dialect {
 	@Override
 	public StoreResult executeStore(SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
 			final Object[] inParamsValue, final Integer[] outParamsType, final boolean moreResult,
-			final Connection conn, final Integer dbType, final String dialect, final int fetchSize,
-			final Integer timeout) throws Exception {
+			final Connection conn, DBProfile profile, final int fetchSize, final Integer timeout) throws Exception {
 		return DialectUtils.executeStore(sqlToyConfig, sqlToyContext, sql, inParamsValue, outParamsType, moreResult,
-				conn, dbType, fetchSize, timeout);
+				conn, profile, fetchSize, timeout);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public List<ColumnMeta> getTableColumns(String catalog, String schema, String tableName, Connection conn,
-			Integer dbType, String dialect) throws Exception {
-		List<ColumnMeta> tableCols = DefaultDialectUtils.getTableColumns(catalog, schema, tableName, conn, dbType,
-				dialect);
+			DBProfile profile) throws Exception {
+		List<ColumnMeta> tableCols = DefaultDialectUtils.getTableColumns(catalog, schema, tableName, conn, profile);
 		// 获取主键信息
 		PreparedStatement pst = conn.prepareStatement("DESCRIBE " + tableName);
 		// 设置全局statementTimeout，默认为null
@@ -406,9 +407,9 @@ public class ImpalaDialect implements Dialect {
 	}
 
 	@Override
-	public List<TableMeta> getTables(String catalog, String schema, String tableName, Connection conn, Integer dbType,
-			String dialect) throws Exception {
-		return DefaultDialectUtils.getTables(catalog, schema, tableName, conn, dbType, dialect);
+	public List<TableMeta> getTables(String catalog, String schema, String tableName, Connection conn,
+			DBProfile profile) throws Exception {
+		return DefaultDialectUtils.getTables(catalog, schema, tableName, conn, profile);
 	}
 
 	public static boolean allowAssignPKValue(PKStrategy pkStrategy) {

@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.configure;
 
 import java.io.Serializable;
@@ -9,13 +6,10 @@ import java.util.List;
 /**
  * @description 提供es基于http连接的配置，2021年开始有大量基于jdbc的模式，可不再使用
  * @author zhongxuchen
- * @version v1.0,Date:2020年2月20日
+ * @version v1.0,Date:2020-02-20
  */
 public class Elastic implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -7130685535362259100L;
 
 	/**

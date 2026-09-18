@@ -1,22 +1,16 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.config.model;
 
 import java.io.Serializable;
 import java.math.RoundingMode;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 定义sqltoy查询结果的处理模式,目前仅提供合计和求平均
  * @author zhongxuchen
- * @version v1.0,Date:2013-5-17
- * @modify Date:2022-2-23 重构了summary算法,使得逻辑更加清晰同时可以适应未来更加灵活的诉求
+ * @version v1.0,Date:2013-05-17
+ * @modify Date:2022-02-23 重构了summary算法,使得逻辑更加清晰同时可以适应未来更加灵活的诉求
  */
 public class SummaryModel implements Serializable {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -2510246189482255234L;
 
 	/**

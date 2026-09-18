@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.model.inner;
 
 import java.io.Serializable;
@@ -14,7 +11,7 @@ import org.sagacity.sqltoy.utils.CollectionUtil;
  * @project sagacity-sqltoy
  * @description 提供一个基础的数据集对象模型
  * @author zhongxuchen
- * @version v1.0,Date:2016年3月8日
+ * @version v1.0,Date:2016-03-08
  */
 @SuppressWarnings("rawtypes")
 public class DataSetResult<T> implements Serializable {
@@ -101,7 +98,8 @@ public class DataSetResult<T> implements Serializable {
 	}
 
 	/**
-	 * @todo 返回含标题的结果集
+	 * 返回含标题的结果集
+	 * 
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
@@ -117,7 +115,8 @@ public class DataSetResult<T> implements Serializable {
 	}
 
 	/**
-	 * @TODO 提供查询单列场景下直接返回一维集合
+	 * 提供查询单列场景下直接返回一维集合
+	 * 
 	 * @param distinct 是否去重
 	 * @return
 	 */
@@ -167,7 +166,8 @@ public class DataSetResult<T> implements Serializable {
 			}
 			return result;
 		}
-		throw new DataAccessException("切取集合的单列值的前提是返回结果是List<List> 和List<Object[]>类型场景!");
+		throw new DataAccessException(
+				"extracting a single column requires the rows to be List<List> or List<Object[]> type!");
 	}
 
 	/**

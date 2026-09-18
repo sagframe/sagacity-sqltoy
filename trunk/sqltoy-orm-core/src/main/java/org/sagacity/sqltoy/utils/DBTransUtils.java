@@ -21,7 +21,8 @@ public class DBTransUtils {
 	private static ThreadLocal<Connection> threadLocal = new TransmittableThreadLocal<Connection>();
 
 	/**
-	 * @TODO 执行事务
+	 * 执行事务
+	 * 
 	 * @param dataSource
 	 * @param transactionHandler
 	 * @return

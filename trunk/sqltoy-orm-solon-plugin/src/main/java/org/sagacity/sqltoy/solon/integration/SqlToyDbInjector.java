@@ -19,8 +19,8 @@ import org.sagacity.sqltoy.solon.annotation.Db;
  * @since 1.5
  * */
 public class SqlToyDbInjector implements BeanInjector<Db> {
-    private static Map<DataSource, SqlToyLazyDao> daoMap = new ConcurrentHashMap();
-    private static Map<DataSource, SqlToyCRUDService> serviceMap = new ConcurrentHashMap();
+    private static Map<DataSource, SqlToyLazyDao> daoMap = new ConcurrentHashMap<>();
+    private static Map<DataSource, SqlToyCRUDService> serviceMap = new ConcurrentHashMap<>();
 
     @Override
     public void doInject(VarHolder varH, Db anno) {

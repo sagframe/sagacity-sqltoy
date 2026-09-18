@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.plugins.sharding;
 
 import java.io.Serializable;
@@ -10,6 +7,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -36,8 +34,8 @@ import org.slf4j.LoggerFactory;
  * @project sagacity-sqltoy
  * @description 提取sharding对应的表和对应的DataSource
  * @author zhongxuchen
- * @version v1.0,Date:2014年12月7日
- * @modify Date:2016-9-7 {修复matchReplace方法,解决因表名大小写未匹配无法替换表名错误}
+ * @version v1.0,Date:2014-12-07
+ * @modify Date:2016-09-07 修复matchReplace方法,解决因表名大小写未匹配无法替换表名错误
  */
 @SuppressWarnings("rawtypes")
 public class ShardingUtils {
@@ -46,8 +44,36 @@ public class ShardingUtils {
 	 */
 	protected final static Logger logger = LoggerFactory.getLogger(ShardingUtils.class);
 
+	// update 2026-9-9 分表名匹配正则缓存:matchReplace为查询执行期热路径(每查询每分表调用),
+	// 原实现每次Pattern.compile;分表名集合有限,设容量上限防御动态表名场景无界增长
+	private static final ConcurrentHashMap<String, Pattern> TABLE_PATTERN_CACHE = new ConcurrentHashMap<String, Pattern>();
+
+	private static Pattern tablePatternOf(String sourceTable) {
+		String regex = "(?i)\\W".concat(sourceTable).concat("\\W");
+		if (TABLE_PATTERN_CACHE.size() > 500) {
+			return Pattern.compile(regex);
+		}
+		return TABLE_PATTERN_CACHE.computeIfAbsent(regex, Pattern::compile);
+	}
+
 	/**
-	 * @todo 单个对象sharding策略处理,适用于load、save、update、delete单对象操作
+	 * update 2026-9-15 分库数据源名解析统一入口:策略指定的数据源名无法解析时抛出明确异常。
+	 * 原实现getDataSourceBean返回null后静默透传,processDataSource(null)回落默认数据源,
+	 * 配错的分库名会致数据静默写错库且无任何报错;名称为空白表示策略未命中,按约定回落默认数据源
+	 */
+	private static DataSource resolveShardingDataSource(SqlToyContext sqlToyContext, Class entityClass,
+			String dataSourceName) {
+		DataSource result = sqlToyContext.getDataSourceBean(dataSourceName);
+		if (result == null && StringUtil.isNotBlank(dataSourceName)) {
+			throw new IllegalArgumentException("POJO:" + (entityClass == null ? "" : entityClass.getName())
+					+ " sharding db datasource:" + dataSourceName + " is undefined, please check!");
+		}
+		return result;
+	}
+
+	/**
+	 * 单个对象sharding策略处理,适用于load、save、update、delete单对象操作
+	 * 
 	 * @param sqlToyContext
 	 * @param entity
 	 * @param wrapIdValue
@@ -77,8 +103,8 @@ public class ShardingUtils {
 			strategyConfig = shardingConfig.getShardingDBStrategy();
 			shardingStrategy = sqlToyContext.getShardingStrategy(strategyConfig.getStrategy());
 			if (shardingStrategy == null) {
-				throw new IllegalArgumentException("POJO 对象:" + entity.getClass().getName() + " Sharding DB Strategy:"
-						+ strategyConfig.getStrategy() + " 未定义,请检查!");
+				throw new IllegalArgumentException("POJO:" + entity.getClass().getName() + " Sharding DB Strategy:"
+						+ strategyConfig.getStrategy() + " is undefined, please check!");
 			}
 			IgnoreCaseLinkedMap<String, Object> valueMap = hashParams(strategyConfig.getAliasNames(),
 					BeanUtil.reflectBeanToAry(entity, strategyConfig.getFields()));
@@ -86,7 +112,8 @@ public class ShardingUtils {
 					entityMeta.getTableName(), strategyConfig.getDecisionType(), valueMap);
 			shardingModel.setDataSourceName(dbModel.getDataSourceName());
 			if (dbModel.getDataSource() == null) {
-				shardingModel.setDataSource(sqlToyContext.getDataSourceBean(dbModel.getDataSourceName()));
+				shardingModel.setDataSource(
+						resolveShardingDataSource(sqlToyContext, entity.getClass(), dbModel.getDataSourceName()));
 			} else {
 				shardingModel.setDataSource(dbModel.getDataSource());
 			}
@@ -97,8 +124,8 @@ public class ShardingUtils {
 			strategyConfig = shardingConfig.getShardingTableStrategy();
 			shardingStrategy = sqlToyContext.getShardingStrategy(strategyConfig.getStrategy());
 			if (shardingStrategy == null) {
-				throw new IllegalArgumentException("POJO 对象:" + entity.getClass().getName()
-						+ " Sharding Table Strategy:" + strategyConfig.getStrategy() + " 未定义,请检查!");
+				throw new IllegalArgumentException("POJO:" + entity.getClass().getName() + " Sharding Table Strategy:"
+						+ strategyConfig.getStrategy() + " is undefined, please check!");
 			}
 			IgnoreCaseLinkedMap<String, Object> valueMap = hashParams(strategyConfig.getAliasNames(),
 					BeanUtil.reflectBeanToAry(entity, strategyConfig.getFields()));
@@ -112,7 +139,8 @@ public class ShardingUtils {
 	}
 
 	/**
-	 * @todo 批量sharding策略处理
+	 * 批量sharding策略处理
+	 * 
 	 * @param sqlToyContext
 	 * @param entities
 	 * @param entityMeta
@@ -147,8 +175,8 @@ public class ShardingUtils {
 			hasDB = true;
 			dbStrategy = sqlToyContext.getShardingStrategy(dbConfig.getStrategy());
 			if (dbStrategy == null) {
-				throw new IllegalArgumentException("POJO 对象:" + entityClass.getName() + " Sharding DB Strategy:"
-						+ dbConfig.getStrategy() + " 未定义,请检查!");
+				throw new IllegalArgumentException("POJO:" + entityClass.getName() + " Sharding DB Strategy:"
+						+ dbConfig.getStrategy() + " is undefined, please check!");
 			}
 			shardingDBValues = BeanUtil.reflectBeansToInnerAry(entities, dbConfig.getFields(), null, null);
 		}
@@ -161,8 +189,8 @@ public class ShardingUtils {
 			hasTable = true;
 			tableStrategy = sqlToyContext.getShardingStrategy(tableConfig.getStrategy());
 			if (tableStrategy == null) {
-				throw new IllegalArgumentException("POJO 对象:" + entityClass.getName() + " Sharding Table Strategy:"
-						+ tableConfig.getStrategy() + " 未定义,请检查!");
+				throw new IllegalArgumentException("POJO:" + entityClass.getName() + " Sharding Table Strategy:"
+						+ tableConfig.getStrategy() + " is undefined, please check!");
 			}
 			shardingTableValues = BeanUtil.reflectBeansToInnerAry(entities, tableConfig.getFields(), null, null);
 		}
@@ -206,15 +234,16 @@ public class ShardingUtils {
 				if (hasDB) {
 					shardingModel.setDataSourceName(dataSourceName);
 					if (shardingDBModel.getDataSource() == null) {
-						shardingModel
-								.setDataSource(sqlToyContext.getDataSourceBean(shardingDBModel.getDataSourceName()));
+						shardingModel.setDataSource(resolveShardingDataSource(sqlToyContext, entityClass,
+								shardingDBModel.getDataSourceName()));
 					} else {
 						shardingModel.setDataSource(shardingDBModel.getDataSource());
 					}
 				} else {
 					shardingModel.setDataSource(dataSource);
 				}
-				// 分表,设置表名
+				// 默认表名,分表策略时覆盖
+				shardingModel.setTableName(entityTable);
 				if (hasTable && StringUtil.isNotBlank(tableName)) {
 					shardingModel.setTableName(tableName);
 				}
@@ -226,7 +255,8 @@ public class ShardingUtils {
 	}
 
 	/**
-	 * @todo 根据条件决定获得对应的数据库
+	 * 根据条件决定获得对应的数据库
+	 * 
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param queryExecutor
@@ -262,7 +292,8 @@ public class ShardingUtils {
 	}
 
 	/**
-	 * @todo 根据数据获取sharding对应的DataSource
+	 * 根据数据获取sharding对应的DataSource
+	 * 
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param shardingConfig
@@ -293,11 +324,12 @@ public class ShardingUtils {
 		if (shardingDBModel.getDataSource() != null) {
 			return shardingDBModel.getDataSource();
 		}
-		return sqlToyContext.getDataSourceBean(shardingDBModel.getDataSourceName());
+		return resolveShardingDataSource(sqlToyContext, null, shardingDBModel.getDataSourceName());
 	}
 
 	/**
-	 * @todo 根据查询条件变更sql后同时修改sqltoyConfig(clone后的对象，不会冲掉原配置)
+	 * 根据查询条件变更sql后同时修改sqltoyConfig(clone后的对象，不会冲掉原配置)
+	 * 
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param tableShardings
@@ -343,7 +375,8 @@ public class ShardingUtils {
 	}
 
 	/**
-	 * @todo 替换实际sql中需要查询的表名称(for executeSql方法使用,见DialectFactory.executeSql)
+	 * 替换实际sql中需要查询的表名称(for executeSql方法使用,见DialectFactory.executeSql)
+	 * 
 	 * @param sqlToyContext
 	 * @param sql
 	 * @param tableShardings
@@ -377,7 +410,8 @@ public class ShardingUtils {
 	}
 
 	/**
-	 * @todo 获取sharding对应的表
+	 * 获取sharding对应的表
+	 * 
 	 * @param sqlToyContext
 	 * @param tableShardings
 	 * @param paramNames
@@ -426,7 +460,8 @@ public class ShardingUtils {
 	}
 
 	/**
-	 * @todo 替换sharding table
+	 * 替换sharding table
+	 * 
 	 * @param sql
 	 * @param sourceTable
 	 * @param targetTable
@@ -438,7 +473,7 @@ public class ShardingUtils {
 		}
 		// 用正则表达式前后各加上非数字好字符的目的就是防止:sql中有字符串包含sourceTable
 		// 如: from biz_notice,biz_notice_item 就出现了包含情况
-		Pattern p = Pattern.compile("(?i)\\W".concat(sourceTable).concat("\\W"));
+		Pattern p = tablePatternOf(sourceTable);
 		// 补充一个空字符，确保匹配正确
 		Matcher m = p.matcher(sql.concat(" "));
 		StringBuilder lastSql = new StringBuilder();
@@ -460,7 +495,8 @@ public class ShardingUtils {
 	}
 
 	/**
-	 * @todo 将sharding决策需要的参数构造成有序map传递给sharding决策器
+	 * 将sharding决策需要的参数构造成有序map传递给sharding决策器
+	 * 
 	 * @param paramNames
 	 * @param paramValues
 	 * @return
@@ -483,7 +519,8 @@ public class ShardingUtils {
 	}
 
 	/**
-	 * @todo 单记录主键赋值
+	 * 单记录主键赋值
+	 * 
 	 * @param sqlToyContext
 	 * @param entityMeta
 	 * @param entity
@@ -497,7 +534,8 @@ public class ShardingUtils {
 	}
 
 	/**
-	 * @todo 批量主键赋值
+	 * 批量主键赋值
+	 * 
 	 * @param sqlToyContext
 	 * @param entityMeta
 	 * @param entities
@@ -536,8 +574,9 @@ public class ShardingUtils {
 						for (int meter = 0; meter < relatedColumnIndex.length; meter++) {
 							relatedColValue[meter] = fullParamValues[relatedColumnIndex[meter]];
 							if (relatedColValue[meter] == null) {
-								throw new IllegalArgumentException("对象:" + entityMeta.getEntityClass().getName()
-										+ " 生成业务主键依赖的关联字段:" + relatedColumnNames[meter] + " 值为null!");
+								throw new IllegalArgumentException("POJO:" + entityMeta.getEntityClass().getName()
+										+ " related field:" + relatedColumnNames[meter]
+										+ " used to generate the business id is null, please check!");
 							}
 						}
 					}

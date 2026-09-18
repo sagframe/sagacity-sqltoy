@@ -1,22 +1,21 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.dialect.utils;
 
 import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.PKStrategy;
+import org.sagacity.sqltoy.model.JdbcTypes;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
  * @project sagacity-sqltoy
  * @description 提供h2数据库相关的特殊逻辑处理封装
  * @author zhongxuchen
- * @version v1.0, Date:2023年6月8日
- * @modify 2023年6月8日,修改说明
+ * @version v1.0,Date:2023-06-08
+ * @modify Date:2023-06-08,修改说明
  */
 public class H2DialectUtils {
 	/**
-	 * @TODO 主键策略是identity或sequence时，主键值允许不由数据库内部自动产生，可人工赋值
+	 * 主键策略是identity或sequence时，主键值允许不由数据库内部自动产生，可人工赋值
+	 * 
 	 * @param pkStrategy
 	 * @return
 	 */
@@ -31,7 +30,8 @@ public class H2DialectUtils {
 	}
 
 	/**
-	 * @todo 组织merge into 语句中select 的字段，进行类型转换
+	 * 组织merge into 语句中select 的字段，进行类型转换
+	 * 
 	 * @param sql
 	 * @param columnName
 	 * @param fieldMeta
@@ -39,36 +39,44 @@ public class H2DialectUtils {
 	public static void wrapSelectFields(StringBuilder sql, String columnName, FieldMeta fieldMeta) {
 		int jdbcType = fieldMeta.getType();
 		int length = fieldMeta.getLength();
-		if (jdbcType == java.sql.Types.VARCHAR) {
+		if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NVARCHAR
+				|| jdbcType == java.sql.Types.LONGVARCHAR || jdbcType == java.sql.Types.LONGNVARCHAR) {
 			if (length > 0) {
-				sql.append("cast(? as varchar(" + length + "))");
+				sql.append("cast(? as VARCHAR(" + length + "))");
 			} else {
-				sql.append("cast(? as varchar)");
+				sql.append("cast(? as VARCHAR)");
 			}
-		} else if (jdbcType == java.sql.Types.CHAR) {
+		} else if (jdbcType == java.sql.Types.CHAR || jdbcType == java.sql.Types.NCHAR) {
 			if (length > 0) {
-				sql.append("cast(? as char(" + length + "))");
+				sql.append("cast(? as CHAR(" + length + "))");
 			} else {
-				sql.append("cast(? as char)");
+				sql.append("cast(? as CHAR)");
 			}
 		} else if (jdbcType == java.sql.Types.DATE) {
-			sql.append("cast(? as date)");
-		} else if (jdbcType == java.sql.Types.NUMERIC) {
-			sql.append("cast(? as DECIMAL)");
-		} else if (jdbcType == java.sql.Types.DECIMAL) {
-			sql.append("cast(? as DECIMAL)");
+			sql.append("cast(? as DATE)");
+		} else if (jdbcType == java.sql.Types.NUMERIC || jdbcType == java.sql.Types.DECIMAL) {
+			// update 2026-9-14 修复:裸cast(? as DECIMAL)默认标度为0,小数值被取整
+			// (h2真库实测88.88四舍五入为89);精度/标度已知按列定义cast,未知时大标度兜底
+			if (fieldMeta.getPrecision() > 0) {
+				sql.append("cast(? as DECIMAL(" + fieldMeta.getPrecision() + "," + fieldMeta.getScale() + "))");
+			} else {
+				sql.append("cast(? as DECIMAL(31,6))");
+			}
 		} else if (jdbcType == java.sql.Types.BIGINT) {
-			sql.append("cast(? as bigint)");
-		} else if (jdbcType == java.sql.Types.INTEGER || jdbcType == java.sql.Types.TINYINT) {
+			sql.append("cast(? as BIGINT)");
+		} else if (jdbcType == java.sql.Types.INTEGER || jdbcType == java.sql.Types.TINYINT
+				|| jdbcType == java.sql.Types.SMALLINT) {
 			sql.append("cast(? as INT)");
 		} else if (jdbcType == java.sql.Types.TIMESTAMP) {
-			sql.append("cast(? as timestamp)");
+			sql.append("cast(? as TIMESTAMP)");
 		} else if (jdbcType == java.sql.Types.DOUBLE) {
-			sql.append("cast(? as double)");
+			sql.append("cast(? as DOUBLE PRECISION)");
 		} else if (jdbcType == java.sql.Types.FLOAT) {
-			sql.append("cast(? as DOUBLE)");
+			sql.append("cast(? as DOUBLE PRECISION)");
+		} else if (jdbcType == java.sql.Types.REAL) {
+			sql.append("cast(? as REAL)");
 		} else if (jdbcType == java.sql.Types.TIME) {
-			sql.append("cast(? as time)");
+			sql.append("cast(? as TIME)");
 		} else if (jdbcType == java.sql.Types.CLOB) {
 			sql.append("cast(? as CLOB)");
 		} else if (jdbcType == java.sql.Types.BOOLEAN) {
@@ -77,6 +85,13 @@ public class H2DialectUtils {
 			sql.append("cast(? as BINARY)");
 		} else if (jdbcType == java.sql.Types.BLOB) {
 			sql.append("cast(? as BLOB)");
+		} else if (jdbcType == JdbcTypes.JSON || jdbcType == JdbcTypes.JSONB) {
+			sql.append("cast(? as JSON)");
+		} else if (jdbcType == JdbcTypes.GEOMETRY) {
+			// update 2026-9-8 实测h2的merge using select子查询对geometry列裸?报
+			// "Unknown data type"(参数无法定型),以GEOMETRY cast定型(H2的GEOMETRY
+			// 类型接受WKT文本参数)
+			sql.append("cast(? as GEOMETRY)");
 		} else {
 			// 数组、json等特殊类型
 			if (StringUtil.isNotBlank(fieldMeta.getNativeType())) {

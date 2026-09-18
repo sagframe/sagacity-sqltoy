@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.model;
 
 import java.util.HashMap;
@@ -10,8 +7,8 @@ import java.util.Map;
  * @project sagacity-sqltoy
  * @description 复制对象属性的配置
  * @author zhongxuchen
- * @version v1.0, Date:2023年11月30日
- * @modify 2023年11月30日,修改说明
+ * @version v1.0,Date:2023-11-30
+ * @modify Date:2023-11-30,修改说明
  */
 public class PropsMapperConfig {
 	// 复制或忽略的属性，当为null时，表示复制全部属性
@@ -87,9 +84,6 @@ public class PropsMapperConfig {
 		return ignore;
 	}
 
-	/**
-	 * 
-	 */
 	public boolean getSkipNull() {
 		return skipNull;
 	}

@@ -1,5 +1,8 @@
 package org.sagacity.sqltoy.utils;
 
+/**
+ * EnumUtil 枚举工具的单元测试
+ */
 public class EnumUtilTest {
 	// 测试示例
 	public static void main(String[] args) {

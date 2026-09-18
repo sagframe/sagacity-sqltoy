@@ -1,12 +1,10 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.plugins.nosql;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import org.sagacity.sqltoy.SqlToyContext;
@@ -16,8 +14,6 @@ import org.sagacity.sqltoy.config.model.NoSqlFieldsModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.model.inner.DataSetResult;
 import org.sagacity.sqltoy.utils.BeanUtil;
-import org.sagacity.sqltoy.utils.HttpClientUtils;
-import org.sagacity.sqltoy.utils.MongoElasticUtils;
 import org.sagacity.sqltoy.utils.ResultUtils;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
@@ -30,7 +26,7 @@ import com.alibaba.fastjson2.JSONObject;
  * @project sagacity-sqltoy
  * @description 提供es执行过程处理的工具方法
  * @author zhongxuchen
- * @version v1.0,Date:2018年1月8日
+ * @version v1.0,Date:2018-01-08
  */
 public class ElasticSearchUtils {
 	/**
@@ -39,7 +35,8 @@ public class ElasticSearchUtils {
 	protected final static Logger logger = LoggerFactory.getLogger(ElasticSearchUtils.class);
 
 	/**
-	 * @todo 执行实际查询处理
+	 * 执行实际查询处理
+	 * 
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param sql
@@ -52,13 +49,31 @@ public class ElasticSearchUtils {
 			Class resultClass, Boolean humpMapLabel) throws Exception {
 		NoSqlConfigModel noSqlModel = sqlToyConfig.getNoSqlConfigModel();
 		ElasticEndpoint esConfig = sqlToyContext.getElasticEndpoint(noSqlModel.getEndpoint());
-		// 原生sql支持(7.5.1 还未支持分页)
-		boolean nativeSql = (esConfig.isNativeSql() && noSqlModel.isSqlMode());
 		// 执行请求并返回json结果
 		JSONObject json = HttpClientUtils.doPost(sqlToyContext, noSqlModel, esConfig, sql);
 		if (json == null || json.isEmpty()) {
 			return new DataSetResult();
 		}
+		return executeQuery(sqlToyContext, sqlToyConfig, json, resultClass, humpMapLabel);
+	}
+
+	/**
+	 * 执行实际查询处理(请求已发出的json结果映射重载,供es原生sql游标分页等场景复用)
+	 *
+	 * @param sqlToyContext
+	 * @param sqlToyConfig
+	 * @param json          es返回的json结果
+	 * @param resultClass
+	 * @param humpMapLabel
+	 * @return
+	 * @throws Exception
+	 */
+	public static DataSetResult executeQuery(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, JSONObject json,
+			Class resultClass, Boolean humpMapLabel) throws Exception {
+		NoSqlConfigModel noSqlModel = sqlToyConfig.getNoSqlConfigModel();
+		ElasticEndpoint esConfig = sqlToyContext.getElasticEndpoint(noSqlModel.getEndpoint());
+		// 原生sql支持(7.5.1 还未支持分页)
+		boolean nativeSql = (esConfig.isNativeSql() && noSqlModel.isSqlMode());
 		String[] fields = noSqlModel.getFields();
 		if (fields == null) {
 			if (json.containsKey("columns")) {
@@ -80,19 +95,21 @@ public class ElasticSearchUtils {
 		} else {
 			resultSet = extractFieldValue(sqlToyContext, sqlToyConfig, json, fields);
 		}
-		MongoElasticUtils.processTranslate(sqlToyContext, sqlToyConfig, resultSet.getRows(), resultSet.getLabelNames());
+		MongoElasticOperations.processTranslate(sqlToyContext, sqlToyConfig, resultSet.getRows(),
+				resultSet.getLabelNames());
 		// 不支持指定查询集合的行列转换
 		boolean changedCols = ResultUtils.calculate(sqlToyContext.getDesensitizeProvider(), sqlToyConfig, resultSet,
 				null, null);
 		// 将结果数据映射到具体对象类型中
 		resultSet.setRows(ResultUtils.wrapQueryResult(sqlToyContext, resultSet.getRows(),
-				StringUtil.humpFieldNames(resultSet.getLabelNames()), resultClass, changedCols, humpMapLabel, false,
-				null, null));
+				StringUtil.humpFieldNames(resultSet.getLabelNames()), resultSet.getLabelTypes(), resultClass,
+				changedCols, humpMapLabel, false, null, null));
 		return resultSet;
 	}
 
 	/**
-	 * @todo elasticsearch6.3 sql
+	 * elasticsearch6.3 sql
+	 * 
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param json
@@ -106,7 +123,7 @@ public class ElasticSearchUtils {
 		if (realRoot == null) {
 			return resultModel;
 		}
-		NoSqlFieldsModel fieldModel = MongoElasticUtils.processFields(fields, null);
+		NoSqlFieldsModel fieldModel = MongoElasticOperations.processFields(fields, null);
 		JSONArray rows = (JSONArray) realRoot;
 		JSONArray item;
 		List<List<Object>> resultSet = new ArrayList<List<Object>>();
@@ -124,7 +141,8 @@ public class ElasticSearchUtils {
 	}
 
 	/**
-	 * @todo 从返回的JSON对象中根据字段属性提取数据并以集合形式返回
+	 * 从返回的JSON对象中根据字段属性提取数据并以集合形式返回
+	 * 
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param json
@@ -163,11 +181,15 @@ public class ElasticSearchUtils {
 				return resultModel;
 			}
 		}
+		// 路径中间节点缺失时getJSONObject返回null,循环内null检查只覆盖下一轮
+		if (root == null) {
+			return resultModel;
+		}
 		Object realRoot = root.get(lastKey);
 		if (realRoot == null) {
 			return resultModel;
 		}
-		NoSqlFieldsModel fieldModel = MongoElasticUtils.processFields(fields, null);
+		NoSqlFieldsModel fieldModel = MongoElasticOperations.processFields(fields, null);
 		String[] realFields = fieldModel.getFields();
 		JSONObject rowJson, sourceData;
 		if (realRoot instanceof JSONArray) {
@@ -187,7 +209,8 @@ public class ElasticSearchUtils {
 	}
 
 	/**
-	 * @todo 提取聚合数据
+	 * 提取聚合数据
+	 * 
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param json
@@ -198,21 +221,28 @@ public class ElasticSearchUtils {
 			JSONObject json, String[] fields) {
 		DataSetResult resultModel = new DataSetResult();
 		// 切取实际字段{field:aliasName}模式,冒号前面的实际字段
-		NoSqlFieldsModel fieldModel = MongoElasticUtils.processFields(fields, null);
+		NoSqlFieldsModel fieldModel = MongoElasticOperations.processFields(fields, null);
 		String[] realFields = fieldModel.getFields();
 		// 获取json对象的根
 		String[] rootPath = (sqlToyConfig.getNoSqlConfigModel().getValueRoot() == null) ? new String[] { "suggest" }
 				: sqlToyConfig.getNoSqlConfigModel().getValueRoot();
 		Object root = json;
 		// 确保第一个路径是聚合统一的名词
-		if (!"suggest".equals(rootPath[0].toLowerCase())) {
+		if (!"suggest".equals(rootPath[0].toLowerCase(Locale.ROOT))) {
 			root = ((JSONObject) root).get("suggest");
 		}
 		for (String str : rootPath) {
 			root = ((JSONObject) root).get(str);
+			// update 2026-9-14 中间节点缺失时循环内即退出:原实现只在循环结束后判空,
+			// 路径中间缺失时下一轮会对null做get(NPE),非对象节点则ClassCastException,
+			// 都无法走到下面给出配置错误提示的分支
+			if (root == null) {
+				break;
+			}
 		}
 		if (root == null) {
-			logger.error("请正确配置es聚合查询,包括:fields配置是否匹配等!");
+			logger.error(
+					"please configure the es aggregation query correctly, including whether the fields configuration matches!");
 			return resultModel;
 		}
 		List result = new ArrayList();
@@ -233,7 +263,8 @@ public class ElasticSearchUtils {
 	}
 
 	/**
-	 * @todo 提取聚合数据
+	 * 提取聚合数据
+	 * 
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param json
@@ -244,7 +275,7 @@ public class ElasticSearchUtils {
 			JSONObject json, String[] fields) {
 		DataSetResult resultModel = new DataSetResult();
 		// 切取实际字段{field:aliasName}模式,冒号前面的实际字段
-		NoSqlFieldsModel fieldModel = MongoElasticUtils.processFields(fields, null);
+		NoSqlFieldsModel fieldModel = MongoElasticOperations.processFields(fields, null);
 		String[] realFields = fieldModel.getFields();
 		// 获取json对象的根
 		String[] rootPath = (sqlToyConfig.getNoSqlConfigModel().getValueRoot() == null)
@@ -252,11 +283,16 @@ public class ElasticSearchUtils {
 				: sqlToyConfig.getNoSqlConfigModel().getValueRoot();
 		Object root = json;
 		// 确保第一个路径是聚合统一的名词
-		if (!"aggregations".equals(rootPath[0].toLowerCase())) {
+		if (!"aggregations".equals(rootPath[0].toLowerCase(Locale.ROOT))) {
 			root = ((JSONObject) root).get("aggregations");
 		}
 		for (String str : rootPath) {
 			root = ((JSONObject) root).get(str);
+			// update 2026-9-14 与extractSuggestFieldValue同步:中间节点缺失时循环内退出,
+			// 否则下一轮对null做get直接NPE,走不到下面root==null的配置错误提示分支
+			if (root == null) {
+				break;
+			}
 		}
 		// 循环取根
 		while (root != null && (root instanceof JSONObject)) {
@@ -283,7 +319,8 @@ public class ElasticSearchUtils {
 			}
 		}
 		if (root == null) {
-			logger.error("请正确配置es聚合查询,包括:fields配置是否匹配等!");
+			logger.error(
+					"please configure the es aggregation query correctly, including whether the fields configuration matches!");
 			return resultModel;
 		}
 		List result = new ArrayList();
@@ -304,7 +341,8 @@ public class ElasticSearchUtils {
 	}
 
 	/**
-	 * @TODO 数据集合提取
+	 * 数据集合提取
+	 * 
 	 * @param result
 	 * @param rowJson
 	 * @param realFields
@@ -332,7 +370,8 @@ public class ElasticSearchUtils {
 	}
 
 	/**
-	 * @todo 判断是否包含所有字段
+	 * 判断是否包含所有字段
+	 * 
 	 * @param json
 	 * @param realFields
 	 * @return
@@ -355,7 +394,8 @@ public class ElasticSearchUtils {
 	}
 
 	/**
-	 * @TODO 提取数据加入集合
+	 * 提取数据加入集合
+	 * 
 	 * @param result
 	 * @param rowJson
 	 * @param realFields
@@ -375,7 +415,8 @@ public class ElasticSearchUtils {
 	}
 
 	/**
-	 * @todo 提取实际json对象
+	 * 提取实际json对象
+	 * 
 	 * @param rowJson
 	 * @param realFields
 	 * @param isSuggest
@@ -437,7 +478,8 @@ public class ElasticSearchUtils {
 			if (result instanceof JSONObject) {
 				JSONObject tmp = (JSONObject) result;
 				// {value:xxx} 模式
-				if (tmp.keySet().size() == 1 && "value".equals(tmp.keySet().iterator().next().toLowerCase())) {
+				if (tmp.keySet().size() == 1
+						&& "value".equals(tmp.keySet().iterator().next().toLowerCase(Locale.ROOT))) {
 					return rowJson;
 				}
 				return getRealJSONObject(tmp, realFields, isSuggest);

@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.dialect;
 
 import java.sql.Connection;
@@ -15,8 +12,8 @@ import org.slf4j.LoggerFactory;
 /**
  * @project sagacity-sqltoy4.0
  * @description 请在此说明类的功能
- * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:DBUtils.java,Revision:v1.0,Date:2017年12月9日
+ * @author zhongxuchen
+ * @version id:DBUtils.java,Revision:v1.0,Date:2017-12-09
  */
 public class DBUtilsTest {
 	/**
@@ -53,10 +50,10 @@ public class DBUtilsTest {
 	 */
 	public final static String DRIVER_POSTGRESQL = "org.postgresql.Driver";
 
-    /**
-     * url like:jdbc:h2:file:/database
-     */
-    public final static String DRIVER_H2 = "org.h2.Driver";
+	/**
+	 * url like:jdbc:h2:file:/database
+	 */
+	public final static String DRIVER_H2 = "org.h2.Driver";
 
 	/**
 	 * 获取数据库连接
@@ -83,7 +80,7 @@ public class DBUtilsTest {
 	}
 
 	/**
-	 * @todo 去除掉sql中的所有对称的select 和 from 中的内容，排除干扰
+	 * 去除掉sql中的所有对称的select 和 from 中的内容，排除干扰
 	 * @param sql
 	 * @return
 	 */
@@ -122,9 +119,11 @@ public class DBUtilsTest {
 		int selectIndex = StringUtil.matchIndex(sql, SELECT_REGEX);
 		String selectFields = (sql_from_index < 1) ? "" : sql.substring(selectIndex + 6, sql_from_index).toLowerCase();
 		System.err.println("1=" + clearSymSelectFromSql(selectFields));
-		
-		//Connection conn=getConnection("com.cloudera.impala.jdbc.Driver","jdbc:impala://192.168.10.141:21050/sqltoy",null,null);
-		Connection conn=getConnection("com.taosdata.jdbc.rs.RestfulDriver","jdbc:TAOS-RS://192.168.56.101:6041/sqltoy","sqltoy","sqltoy");
+
+		// Connection
+		// conn=getConnection("com.cloudera.impala.jdbc.Driver","jdbc:impala://192.168.10.141:21050/sqltoy",null,null);
+		Connection conn = getConnection("com.taosdata.jdbc.rs.RestfulDriver",
+				"jdbc:TAOS-RS://192.168.56.101:6041/sqltoy", "sqltoy", "sqltoy");
 		try {
 			System.err.println(conn.getMetaData().getDatabaseProductName());
 			System.err.println(conn.getMetaData().getDatabaseProductVersion());

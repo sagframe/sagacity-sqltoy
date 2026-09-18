@@ -18,9 +18,6 @@ import java.math.BigDecimal;
 @Entity(tableName="sqltoy_fruit_order",pk_constraint="PRIMARY")
 public abstract class AbstractFruitOrderVO implements Serializable {
 
-	/**
-	 *
-	 */
 	private static final long serialVersionUID = 4830427150508828666L;
 
 	/**
@@ -146,7 +143,7 @@ public abstract class AbstractFruitOrderVO implements Serializable {
 
 
 	/**
-     * @todo vo columns to String
+     * vo columns to String
      */
     @Override
 	public String toString() {

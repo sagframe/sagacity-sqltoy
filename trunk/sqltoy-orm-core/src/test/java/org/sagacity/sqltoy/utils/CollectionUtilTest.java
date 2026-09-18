@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.utils;
 
 import java.util.ArrayList;
@@ -13,6 +10,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.model.OverTimeSql;
 import org.sagacity.sqltoy.model.PriorityLimitSizeQueue;
@@ -22,9 +21,9 @@ import com.alibaba.fastjson2.JSON;
 /**
  * @project sagacity-sqltoy
  * @description 请在此说明类的功能
- * @author zhong
- * @version v1.0, Date:2020-9-27
- * @modify 2020-9-27,修改说明
+ * @author zhongxuchen
+ * @version v1.0,Date:2020-09-27
+ * @modify Date:2020-09-27 修改说明
  */
 public class CollectionUtilTest {
 	@Test
@@ -179,12 +178,25 @@ public class CollectionUtilTest {
 		dataSet = CollectionUtil.clearRepeat(dataSet);
 		System.err.println(JSON.toJSONString(dataSet));
 	}
-	
+
 	@Test
 	public void testBean() {
-		String[] tmp=new String[] {"1","2","3"};
-		Object result=Arrays.stream(tmp);
+		String[] tmp = new String[] { "1", "2", "3" };
+		Object result = Arrays.stream(tmp);
 	}
-	
-	
+
+	// 排序列存在null单元格时不应抛NPE,双null视为相等,null排在有值记录前
+	@Test
+	public void testSortListWithNullCells() {
+		List<List> rows = new ArrayList<List>();
+		rows.add(new ArrayList<>(Arrays.asList("b", null)));
+		rows.add(new ArrayList<>(Arrays.asList("a", 2)));
+		rows.add(new ArrayList<>(Arrays.asList("c", null)));
+		List result = CollectionUtil.sortList(rows, 1, 2, 0, rows.size() - 1, true);
+		assertEquals("b", ((List) result.get(0)).get(0));
+		assertEquals("c", ((List) result.get(1)).get(0));
+		assertEquals("a", ((List) result.get(2)).get(0));
+		assertEquals(2, ((List) result.get(2)).get(1));
+	}
+
 }

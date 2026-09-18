@@ -1,11 +1,9 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.translate.model;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import org.sagacity.sqltoy.utils.NumberUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -14,13 +12,10 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @project sagacity-sqltoy
  * @description 自动检测任务配置模型
  * @author zhongxuchen
- * @version v1.0,Date:2018年3月8日
+ * @version v1.0,Date:2018-03-08
  */
 public class CheckerConfigModel implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -8328516221738636079L;
 
 	private String id;
@@ -126,7 +121,7 @@ public class CheckerConfigModel implements Serializable {
 	 */
 	public CheckerConfigModel setType(String type) {
 		if (type != null) {
-			this.type = type.toLowerCase();
+			this.type = type.toLowerCase(Locale.ROOT);
 		}
 		return this;
 	}

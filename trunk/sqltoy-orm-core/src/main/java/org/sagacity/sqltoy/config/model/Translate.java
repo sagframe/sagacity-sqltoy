@@ -1,25 +1,20 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.config.model;
 
 import java.io.Serializable;
+import java.util.Locale;
 
 import org.sagacity.sqltoy.model.inner.TranslateExtend;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description sqltoy sql.xml中定义的翻译器参数模型
  * @author zhongxuchen
- * @version v1.0,Date:2013-4-8
- * @modify Date:2013-4-8 {填写修改说明}
+ * @version v1.0,Date:2013-04-08
+ * @modify Date:2013-04-08 填写修改说明
  */
 public class Translate implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 6616462798500953675L;
 
 	// 构造一个内部类将属性全部定义到其中，避免Translate对象上暴露太多get方法
@@ -35,7 +30,7 @@ public class Translate implements Serializable {
 	 */
 	public Translate setColumn(String column) {
 		// 转小写,便于后续过程比较
-		extend.column = column.toLowerCase();
+		extend.column = column.toLowerCase(Locale.ROOT);
 		return this;
 	}
 
@@ -102,7 +97,7 @@ public class Translate implements Serializable {
 	 */
 	public Translate setCompareColumn(String compareColumn) {
 		if (compareColumn != null && !compareColumn.trim().equals("")) {
-			extend.compareColumn = compareColumn.toLowerCase();
+			extend.compareColumn = compareColumn.toLowerCase(Locale.ROOT);
 			extend.hasLogic = true;
 		}
 		return this;
@@ -113,7 +108,7 @@ public class Translate implements Serializable {
 	 */
 	public Translate setCompareType(String compareType) {
 		if (compareType != null) {
-			String lowCompareType = compareType.toLowerCase();
+			String lowCompareType = compareType.toLowerCase(Locale.ROOT);
 			if (lowCompareType.equals("!=") || lowCompareType.equals("<>")) {
 				lowCompareType = "neq";
 			} else if (lowCompareType.equals("==") || lowCompareType.equals("=")) {
@@ -121,7 +116,8 @@ public class Translate implements Serializable {
 			}
 			if (!lowCompareType.equals("eq") && !lowCompareType.equals("neq") && !lowCompareType.equals("in")
 					&& !lowCompareType.equals("out")) {
-				throw new IllegalArgumentException("缓存翻译中逻辑判断:compareType只支持eq、neq、in、out四种类型!");
+				throw new IllegalArgumentException(
+						"invalid compareType in cache translate logical compare: only eq, neq, in, out types are supported!");
 			}
 			extend.compareType = lowCompareType;
 		}

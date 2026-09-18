@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.config.annotation;
 
 import java.lang.annotation.ElementType;
@@ -12,10 +9,10 @@ import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.config.model.GeneratedType;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description sqltoy entity 对象字段注解定义
  * @author zhongxuchen
- * @version v1.0,Date:2012-5-25
+ * @version v1.0,Date:2012-05-25
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)

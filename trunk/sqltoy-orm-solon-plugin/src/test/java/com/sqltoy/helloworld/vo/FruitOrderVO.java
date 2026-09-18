@@ -14,9 +14,6 @@ import org.sagacity.sqltoy.config.annotation.SqlToyEntity;
  */
 @SqlToyEntity
 public class FruitOrderVO extends AbstractFruitOrderVO {
-	/**
-	 *
-	 */
 	private static final long serialVersionUID = 5063892117644384071L;
 
 	/** default constructor */
@@ -34,7 +31,7 @@ public class FruitOrderVO extends AbstractFruitOrderVO {
 	/*---end-constructor-area---don't-update-this-area--*/
 
 	/**
-     * @todo vo columns to String
+     * vo columns to String
      */
     @Override
 	public String toString() {

@@ -4,21 +4,26 @@ import java.io.Serializable;
 import java.sql.Connection;
 
 import org.sagacity.sqltoy.config.model.EntityMeta;
+import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.PKStrategy;
+import org.sagacity.sqltoy.model.DBProfile;
+import org.sagacity.sqltoy.model.JdbcTypes;
 import org.sagacity.sqltoy.utils.BeanUtil;
+import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
  * @author ming
- * @version v1.0, Date:2024年10月25日
+ * @version v1.0,Date:2024-10-25
  * @project sagacity-sqltoy
  * @description 提供gaussdb数据库相关的特殊逻辑处理封装
- * @modify 2024年10月25日, 修改说明
+ * @modify Date:2024-10-25, 修改说明
  */
 public class OpenGaussDialectUtils {
 	/**
-	 * @TODO 主键策略是identity或sequence时，主键值允许不由数据库内部自动产生，可人工赋值
+	 * 主键策略是sequence时，主键值允许不由数据库内部自动产生，可人工赋值
+	 * 
 	 * @param pkStrategy
 	 * @return
 	 */
@@ -30,9 +35,11 @@ public class OpenGaussDialectUtils {
 		if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
 			return true;
 		}
-		// postgresql10+ 支持identity
+		// update 2026-9-6 openGauss(5.0/7.0)无generated as identity列语法,建表用bigserial
+		// (隐式序列默认值),identity策略须省略主键列让默认值生效(实测insert省略id列时自动生成);
+		// 原照搬PG10+返回true会显式含id列插null违反非空(此前openGauss identity被误判不可用)
 		if (pkStrategy.equals(PKStrategy.IDENTITY)) {
-			return true;
+			return false;
 		}
 		return true;
 	}
@@ -46,8 +53,9 @@ public class OpenGaussDialectUtils {
 	 * @param conn
 	 * @return
 	 */
-	public static PKStrategy getSavePkStrategy(EntityMeta entityMeta, Serializable entity, Integer dbType,
+	public static PKStrategy getSavePkStrategy(EntityMeta entityMeta, Serializable entity, DBProfile profile,
 			Connection conn) {
+		Integer dbType = profile.getDbType();
 		PKStrategy pkStrategy = entityMeta.getIdStrategy();
 		// gaussdb\mogdb\vastbase\opengauss 主键策略是sequence模式需要先获取主键值
 		if (pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE)) {
@@ -61,5 +69,88 @@ public class OpenGaussDialectUtils {
 			pkStrategy = PKStrategy.ASSIGN;
 		}
 		return pkStrategy;
+	}
+
+	/**
+	 * 组织merge into 语句中select 的字段，进行类型转换
+	 * 
+	 * @param sql
+	 * @param columnName
+	 * @param fieldMeta
+	 * @param dbType
+	 */
+	public static void wrapSelectFields(StringBuilder sql, String columnName, FieldMeta fieldMeta, DBProfile profile) {
+		Integer dbType = profile.getDbType();
+		int jdbcType = fieldMeta.getType();
+		if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NVARCHAR
+				|| jdbcType == java.sql.Types.LONGVARCHAR || jdbcType == java.sql.Types.LONGNVARCHAR) {
+			sql.append("?");
+		} else if (jdbcType == java.sql.Types.CHAR || jdbcType == java.sql.Types.NCHAR) {
+			sql.append("?");
+		} else if (jdbcType == java.sql.Types.DATE) {
+			sql.append("cast(? as date)");
+		} else if (jdbcType == java.sql.Types.NUMERIC) {
+			sql.append("cast(? as numeric)");
+		} else if (jdbcType == java.sql.Types.DECIMAL) {
+			sql.append("cast(? as decimal)");
+		} else if (jdbcType == java.sql.Types.BIGINT) {
+			sql.append("cast(? as bigint)");
+		} else if (jdbcType == java.sql.Types.INTEGER || jdbcType == java.sql.Types.TINYINT
+				|| jdbcType == java.sql.Types.SMALLINT) {
+			sql.append("cast(? as integer)");
+		} else if (jdbcType == java.sql.Types.TIMESTAMP) {
+			sql.append("cast(? as timestamp)");
+		} else if (jdbcType == java.sql.Types.DOUBLE) {
+			sql.append("cast(? as double precision)");
+		} else if (jdbcType == java.sql.Types.FLOAT) {
+			sql.append("cast(? as double precision)");
+		} else if (jdbcType == java.sql.Types.REAL) {
+			sql.append("cast(? as real)");
+		} else if (jdbcType == java.sql.Types.TIME) {
+			sql.append("cast(? as time)");
+		} else if (jdbcType == java.sql.Types.CLOB) {
+			sql.append("cast(? as text)");
+		} else if (jdbcType == java.sql.Types.BOOLEAN) {
+			sql.append("cast(? as boolean)");
+		} else if (jdbcType == java.sql.Types.BINARY) {
+			sql.append("cast(? as bytea)");
+		} else if (jdbcType == java.sql.Types.BLOB) {
+			sql.append("cast(? as bytea)");
+		} else if (jdbcType == JdbcTypes.JSON || jdbcType == JdbcTypes.JSONB) {
+			// update 2026-9-10 oscar排除cast:传统Oscar(com.oscar.Driver)无json类型(json数据以
+			// CLOB/VARCHAR列承载),cast(? as json)必败,裸?+setString绑定为正确形态
+			// (驱动jar解包实证非og同源内核,详见DialectUtils同日注释)
+			if (dbType != null && dbType == DBType.OSCAR) {
+				sql.append("?");
+			} else {
+				sql.append((jdbcType == JdbcTypes.JSONB) ? "cast(? as jsonb)" : "cast(? as json)");
+			}
+		} else if (jdbcType == JdbcTypes.VECTOR) {
+			// update 2026-9-10 oscar排除cast:传统Oscar无vector类型,cast必败,回归裸?+setString
+			if (dbType != null && dbType == DBType.OSCAR) {
+				sql.append("?");
+			} else {
+				// gaussdb企业版向量类型名为floatvector,其余为vector
+				// update 2026-9-10 vastbase G100 3.0实测向量类型名同为floatvector(无vector别名)
+				// cast用于兜底setString等字符串参数场景,PGobject包装参数类型已正确
+				sql.append("cast(? as ")
+						.append(dbType != null && (dbType == DBType.GAUSSDB || dbType == DBType.VASTBASE)
+								? "floatvector"
+								: "vector")
+						.append(")");
+			}
+		} else if (jdbcType == JdbcTypes.GEOMETRY) {
+			// geometry类型参数通过PGobject包装后类型已正确,cast用于兜底setString等字符串参数场景
+			sql.append("cast(? as geometry)");
+		} else {
+			// 数组、json等特殊类型
+			if (StringUtil.isNotBlank(fieldMeta.getNativeType())) {
+				sql.append("cast(? as " + fieldMeta.getNativeType() + ")");
+			} else {
+				sql.append("?");
+			}
+		}
+		sql.append(" as ");
+		sql.append(columnName);
 	}
 }

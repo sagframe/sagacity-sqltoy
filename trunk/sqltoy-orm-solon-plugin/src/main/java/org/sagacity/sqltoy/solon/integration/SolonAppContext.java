@@ -5,6 +5,12 @@ import java.util.Map;
 
 import org.noear.solon.core.AppContext;
 
+/**
+ * 基于 Solon AppContext 实现的 sqltoy IoC 集成上下文，为 sqltoy 提供Bean的查找与获取能力
+ *
+ * @author noear
+ * @since 5.6
+ */
 public class SolonAppContext implements org.sagacity.sqltoy.integration.AppContext {
     AppContext context;
 

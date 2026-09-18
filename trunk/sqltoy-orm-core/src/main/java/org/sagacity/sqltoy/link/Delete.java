@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.link;
 
 import java.io.Serializable;
@@ -15,13 +12,10 @@ import org.sagacity.sqltoy.model.ParallelConfig;
  * @project sagacity-sqltoy
  * @description 删除操作
  * @author zhongxuchen
- * @version v1.0,Date:2017年10月9日
+ * @version v1.0,Date:2017-10-09
  */
 public class Delete extends BaseLink {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 3342119854878262119L;
 
 	/**
@@ -42,17 +36,18 @@ public class Delete extends BaseLink {
 	}
 
 	/**
-	 * @param sqlToyContext
-	 * @param dataSource
+	 * @param sqlToyContext sqltoy全局上下文对象
+	 * @param dataSource    删除操作绑定的数据源，null表示使用默认数据源
 	 */
 	public Delete(SqlToyContext sqlToyContext, DataSource dataSource) {
 		super(sqlToyContext, dataSource);
 	}
 
 	/**
-	 * @todo 设置数据源
-	 * @param dataSource
-	 * @return
+	 * 设置数据源
+	 * 
+	 * @param dataSource 当前删除操作绑定的数据源
+	 * @return 当前Delete对象，支持链式调用
 	 */
 	public Delete dataSource(DataSource dataSource) {
 		this.dataSource = dataSource;
@@ -71,8 +66,9 @@ public class Delete extends BaseLink {
 	}
 
 	/**
-	 * @todo 删除单条对象记录
-	 * @param entity
+	 * 删除单条对象记录
+	 * 
+	 * @param entity 待删除的实体对象，以主键值作为删除条件
 	 */
 	public Long one(final Serializable entity) {
 		if (entity == null) {
@@ -82,8 +78,9 @@ public class Delete extends BaseLink {
 	}
 
 	/**
-	 * @todo 批量删除对象记录
-	 * @param entities
+	 * 批量删除对象记录
+	 * 
+	 * @param entities 待批量删除的实体对象集合，按主键值分批提交删除
 	 */
 	public <T extends Serializable> Long many(final List<T> entities) {
 		if (entities == null || entities.isEmpty()) {

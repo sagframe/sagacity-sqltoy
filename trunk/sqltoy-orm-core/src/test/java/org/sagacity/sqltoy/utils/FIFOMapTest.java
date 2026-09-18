@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.utils;
 
 import org.junit.jupiter.api.Test;
@@ -10,8 +7,8 @@ import org.sagacity.sqltoy.model.FIFOMap;
  * @project sagacity-sqltoy
  * @description 测试先进先出队列
  * @author zhongxuchen
- * @version v1.0, Date:2024年1月19日
- * @modify 2024年1月19日,修改说明
+ * @version v1.0,Date:2024-01-19
+ * @modify Date:2024-01-19,修改说明
  */
 public class FIFOMapTest {
 	@Test

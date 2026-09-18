@@ -18,13 +18,13 @@ import org.sagacity.sqltoy.dialect.DialectFactory;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
+import org.sagacity.sqltoy.plugins.nosql.HttpClientUtils;
 import org.sagacity.sqltoy.translate.model.CacheCheckResult;
 import org.sagacity.sqltoy.translate.model.CheckerConfigModel;
 import org.sagacity.sqltoy.translate.model.TranslateConfigModel;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.DateUtil;
-import org.sagacity.sqltoy.utils.HttpClientUtils;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +37,7 @@ import com.alibaba.fastjson2.JSONObject;
  * @project sagacity-sqltoy
  * @description 缓存刷新检测接口定义
  * @author zhongxuchen
- * @version v1.0,Date:2018年3月8日
+ * @version v1.0,Date:2018-03-08
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class TranslateFactory {
@@ -47,7 +47,8 @@ public class TranslateFactory {
 	protected final static Logger logger = LoggerFactory.getLogger(TranslateFactory.class);
 
 	/**
-	 * @todo 执行检测,返回缓存相关数据最后修改时间,便于比较是否发生变化
+	 * 执行检测,返回缓存相关数据最后修改时间,便于比较是否发生变化
+	 * 
 	 * @param sqlToyContext
 	 * @param checkerConfig
 	 * @param preCheckTime
@@ -69,8 +70,7 @@ public class TranslateFactory {
 			}
 			// local模式由应用自行管理
 		} catch (Exception e) {
-			e.printStackTrace();
-			logger.error("执行缓存变更检测发生错误,错误信息:{}", e.getMessage());
+			logger.error("error occurred while detecting cache changes, error message:{}", e.getMessage());
 		}
 
 		// 增量更新模式
@@ -82,7 +82,8 @@ public class TranslateFactory {
 	}
 
 	/**
-	 * @todo 执行sql检测
+	 * 执行sql检测
+	 * 
 	 * @param sqlToyContext
 	 * @param checkerConfig
 	 * @param preCheckTime
@@ -106,7 +107,8 @@ public class TranslateFactory {
 	}
 
 	/**
-	 * @todo 执行基于service调用的检测
+	 * 执行基于service调用的检测
+	 * 
 	 * @param sqlToyContext
 	 * @param checkerConfig 缓存更新检测配置
 	 * @param preCheckTime  上次检测时间
@@ -120,7 +122,8 @@ public class TranslateFactory {
 	}
 
 	/**
-	 * @todo 执行基于rest请求模式的缓存更新检测
+	 * 执行基于rest请求模式的缓存更新检测
+	 * 
 	 * @param sqlToyContext
 	 * @param checkerConfig 缓存更新检测配置
 	 * @param preCheckTime  上次检测时间
@@ -152,13 +155,15 @@ public class TranslateFactory {
 			}
 		}
 		if (fatal) {
-			logger.warn("rest模式检测缓存是否更新数据格式转换异常,数据格式是数组或CacheCheckResult对象类型的数组!");
+			logger.warn(
+					"rest mode cache update check data format conversion error, the data format should be an array or an array of CacheCheckResult objects!");
 		}
 		return result;
 	}
 
 	/**
-	 * @todo 包装检测结果为统一的对象集合
+	 * 包装检测结果为统一的对象集合
+	 * 
 	 * @param result
 	 * @param checkerConfig
 	 * @return
@@ -197,7 +202,8 @@ public class TranslateFactory {
 	}
 
 	/**
-	 * @todo 包装检测结果为统一的对象集合
+	 * 包装检测结果为统一的对象集合
+	 * 
 	 * @param result
 	 * @param checkerConfig
 	 * @return
@@ -246,7 +252,8 @@ public class TranslateFactory {
 	}
 
 	/**
-	 * @todo 重新查询获取缓存数据
+	 * 重新查询获取缓存数据
+	 * 
 	 * @param sqlToyContext
 	 * @param cacheModel
 	 * @param cacheType
@@ -264,20 +271,23 @@ public class TranslateFactory {
 				result = getRestCacheData(sqlToyContext, cacheModel, cacheType);
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
-			logger.error("获取缓存数据失败,返回结果应该是List<List> 或List<Object[]> 或 Map<String,Object[]> 类型,错误信息:{}",
+			logger.error(
+					"failed to get cache data, the result should be List<List> or List<Object[]> or Map<String,Object[]> type, error message:{}",
 					e.getMessage());
 		}
 		HashMap<String, Object[]> cacheData = wrapCacheResult(result, cacheModel);
 		// 增加错误日志提醒
 		if (cacheData == null || cacheData.isEmpty()) {
-			logger.warn("缓存cacheName={} 数据集为空,请检查对应的配置和查询逻辑是否正确!", cacheModel.getCache());
+			logger.warn(
+					"cache cacheName={} dataset is empty, please check whether the corresponding configuration and query logic are correct!",
+					cacheModel.getCache());
 		}
 		return cacheData;
 	}
 
 	/**
-	 * @todo 通过sql查询获取缓存数据
+	 * 通过sql查询获取缓存数据
+	 * 
 	 * @param sqlToyContext
 	 * @param cacheModel
 	 * @param cacheType
@@ -308,7 +318,8 @@ public class TranslateFactory {
 	}
 
 	/**
-	 * @todo 基于service bean 调用方式获取缓存数据
+	 * 基于service bean 调用方式获取缓存数据
+	 * 
 	 * @param sqlToyContext
 	 * @param cacheModel
 	 * @param cacheType
@@ -323,7 +334,8 @@ public class TranslateFactory {
 	}
 
 	/**
-	 * @todo 基于rest http 请求获取缓存数据
+	 * 基于rest http 请求获取缓存数据
+	 * 
 	 * @param sqlToyContext
 	 * @param cacheModel
 	 * @param cacheType
@@ -366,7 +378,8 @@ public class TranslateFactory {
 	}
 
 	/**
-	 * @todo 包装结果，转化为统一的格式
+	 * 包装结果，转化为统一的格式
+	 * 
 	 * @param target
 	 * @param cacheModel
 	 * @return
@@ -414,12 +427,25 @@ public class TranslateFactory {
 						row = (List) tempList.get(i);
 						rowAry = new Object[row.size()];
 						row.toArray(rowAry);
+						// key列(null)脏数据跳过并告警,不再NPE穿透查询链路
+						if (rowAry[cacheIndex] == null) {
+							logger.warn(
+									"cache:{} has null value in key column (column index:{}), the row data is skipped!",
+									cacheModel.getCache(), cacheIndex);
+							continue;
+						}
 						result.put(rowAry[cacheIndex].toString(), rowAry);
 					}
 				} else if (tempList.get(0) instanceof Object[]) {
 					Object[] row;
 					for (int i = 0, n = tempList.size(); i < n; i++) {
 						row = (Object[]) tempList.get(i);
+						if (row[cacheIndex] == null) {
+							logger.warn(
+									"cache:{} has null value in key column (column index:{}), the row data is skipped!",
+									cacheModel.getCache(), cacheIndex);
+							continue;
+						}
 						result.put(row[cacheIndex].toString(), row);
 					}
 				} // 对象数组，利用反射提取属性值
@@ -427,6 +453,12 @@ public class TranslateFactory {
 					List<Object[]> dataSet = BeanUtil.reflectBeansToInnerAry(tempList, cacheModel.getProperties(), null,
 							null);
 					for (Object[] row : dataSet) {
+						if (row[cacheIndex] == null) {
+							logger.warn(
+									"cache:{} has null value in key column (column index:{}), the row data is skipped!",
+									cacheModel.getCache(), cacheIndex);
+							continue;
+						}
 						result.put(row[cacheIndex].toString(), row);
 					}
 				}

@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.link;
 
 import java.io.Serializable;
@@ -17,13 +14,10 @@ import org.sagacity.sqltoy.model.SaveMode;
  * @project sagacity-sqltoy
  * @description 对象保存操作
  * @author zhongxuchen
- * @version v1.0,Date:2017年10月9日
+ * @version v1.0,Date:2017-10-09
  */
 public class Save extends BaseLink {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 3086927739096637361L;
 
 	/**
@@ -64,17 +58,18 @@ public class Save extends BaseLink {
 	}
 
 	/**
-	 * @param sqlToyContext
-	 * @param dataSource
+	 * @param sqlToyContext sqltoy全局上下文对象
+	 * @param dataSource    保存操作绑定的数据源，null表示使用默认数据源
 	 */
 	public Save(SqlToyContext sqlToyContext, DataSource dataSource) {
 		super(sqlToyContext, dataSource);
 	}
 
 	/**
-	 * @todo 设置强制修改的属性
-	 * @param forceUpdateProps
-	 * @return
+	 * 设置强制修改的属性
+	 * 
+	 * @param forceUpdateProps 强制修改的实体属性名称，属性值为null时也作为update语句的赋值字段
+	 * @return 当前Save对象，支持链式调用
 	 */
 	public Save forceUpdateProps(String... forceUpdateProps) {
 		this.forceUpdateProps = forceUpdateProps;
@@ -82,9 +77,10 @@ public class Save extends BaseLink {
 	}
 
 	/**
-	 * @todo 设置数据源
-	 * @param dataSource
-	 * @return
+	 * 设置数据源
+	 * 
+	 * @param dataSource 当前保存操作绑定的数据源
+	 * @return 当前Save对象，支持链式调用
 	 */
 	public Save dataSource(DataSource dataSource) {
 		this.dataSource = dataSource;
@@ -98,9 +94,10 @@ public class Save extends BaseLink {
 	}
 
 	/**
-	 * @todo 保存时遇到已经存在时的三种模式(append:依然追加/update:修改/ignore:忽视)
-	 * @param saveMode
-	 * @return
+	 * 保存时遇到已经存在时的三种模式(append:依然追加/update:修改/ignore:忽视)
+	 * 
+	 * @param saveMode 记录已存在时的处理模式，APPEND继续追加、UPDATE转为修改、IGNORE跳过不处理
+	 * @return 当前Save对象，支持链式调用
 	 */
 	public Save saveMode(SaveMode saveMode) {
 		this.saveMode = saveMode;
@@ -108,9 +105,10 @@ public class Save extends BaseLink {
 	}
 
 	/**
-	 * @todo 批量值
-	 * @param batchSize
-	 * @return
+	 * 批量值
+	 * 
+	 * @param batchSize 批量提交的记录数量，小于等于0时使用sqltoyContext中配置的batchSize
+	 * @return 当前Save对象，支持链式调用
 	 */
 	public Save batchSize(int batchSize) {
 		this.batchSize = batchSize;
@@ -118,9 +116,10 @@ public class Save extends BaseLink {
 	}
 
 	/**
-	 * @todo 保存单条记录
-	 * @param entity
-	 * @return
+	 * 保存单条记录
+	 * 
+	 * @param entity 待保存的实体对象，主键值为空时按主键生成策略自动产生
+	 * @return 保存成功后的实体对象，操作失败返回null
 	 */
 	public Object one(final Serializable entity) {
 		if (entity == null) {
@@ -144,10 +143,11 @@ public class Save extends BaseLink {
 	}
 
 	/**
-	 * @todo 批量保存
-	 * @param <T>
-	 * @param entities
-	 * @return
+	 * 批量保存
+	 * 
+	 * @param <T>      实体对象的类型，须为Serializable的子类
+	 * @param entities 待批量保存的实体对象集合，主键值为空时按主键生成策略自动产生
+	 * @return 实际成功保存的记录数量
 	 */
 	public <T extends Serializable> Long many(final List<T> entities) {
 		if (entities == null || entities.isEmpty()) {

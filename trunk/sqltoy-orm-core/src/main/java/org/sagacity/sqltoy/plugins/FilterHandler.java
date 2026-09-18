@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.plugins;
 
 /**
@@ -11,11 +8,12 @@ package org.sagacity.sqltoy.plugins;
  *              <custom-handler params="" type=""/>让开发自定义参数处理
  *              </p>
  * @author zhongxuchen
- * @version v1.0, Date:2022-04-26
+ * @version v1.0,Date:2022-04-26
  */
 public interface FilterHandler {
 	/**
-	 * @TODO 提供sql xml中的filters自定义处理
+	 * 提供sql xml中的filters自定义处理
+	 * 
 	 * @param value
 	 * @param type  用来标识区别逻辑
 	 * @return

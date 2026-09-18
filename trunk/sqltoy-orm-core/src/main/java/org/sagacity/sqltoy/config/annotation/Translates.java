@@ -6,10 +6,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 针对pojo对象属性提供缓存翻译多注解配置
  * @author zhongxuchen
- * @version v1.0,Date:2025-1-2
+ * @version v1.0,Date:2025-01-02
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)

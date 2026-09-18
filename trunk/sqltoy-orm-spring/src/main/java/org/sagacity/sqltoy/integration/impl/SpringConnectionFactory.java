@@ -11,8 +11,8 @@ import org.springframework.jdbc.datasource.DataSourceUtils;
  * @project sagacity-sqltoy
  * @description 提供基于spring的connection获取和释放实现
  * @author zhongxuchen
- * @version v1.0, Date:2022年6月14日
- * @modify 2022年6月14日,修改说明
+ * @version v1.0,Date:2022-06-14
+ * @modify Date:2022-06-14,修改说明
  */
 public class SpringConnectionFactory implements ConnectionFactory {
 	/**

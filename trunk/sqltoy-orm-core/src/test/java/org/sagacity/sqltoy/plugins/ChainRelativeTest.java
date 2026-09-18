@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.plugins;
 
 import java.util.List;
@@ -18,7 +15,7 @@ import com.alibaba.fastjson2.JSON;
 /**
  * 测试环比计算的正确性
  * 
- * @author zhong
+ * @author zhongxuchen
  */
 public class ChainRelativeTest {
 

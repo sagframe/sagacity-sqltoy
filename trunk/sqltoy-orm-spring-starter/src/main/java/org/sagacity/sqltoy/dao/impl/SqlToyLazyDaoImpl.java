@@ -11,6 +11,7 @@ import java.util.Set;
 import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.callback.EntityUpdateCallback;
 import org.sagacity.sqltoy.callback.StreamResultHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
@@ -35,7 +36,7 @@ import org.sagacity.sqltoy.model.EntityQuery;
 import org.sagacity.sqltoy.model.EntityUpdate;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.Page;
-import org.sagacity.sqltoy.model.ParallQuery;
+import org.sagacity.sqltoy.model.ParallelQuery;
 import org.sagacity.sqltoy.model.ParallelConfig;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
@@ -46,10 +47,10 @@ import org.sagacity.sqltoy.support.SpringDaoSupport;
 import org.sagacity.sqltoy.translate.TranslateHandler;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description SqlToyLazyDao提供的通用Dao逻辑实现
  * @author zhongxuchen
- * @version v1.0,Date:2012-7-15
+ * @version v1.0,Date:2012-07-15
  */
 @SuppressWarnings({ "rawtypes" })
 //@Repository("sqlToyLazyDao")
@@ -390,7 +391,19 @@ public class SqlToyLazyDaoImpl extends SpringDaoSupport implements SqlToyLazyDao
 	@Override
 	public <T extends Serializable> T updateSaveFetch(T entity, UpdateRowHandler updateRowHandler,
 			String... uniqueProps) {
-		return super.updateSaveFetch(entity, updateRowHandler, uniqueProps, null);
+		return super.updateSaveFetch(entity, updateRowHandler, -1, uniqueProps, null);
+	}
+
+	@Override
+	public <T extends Serializable> T updateSaveFetch(T entity, EntityUpdateCallback<T> callback,
+			String... uniqueProps) {
+		return super.updateSaveFetch(entity, callback, -1, uniqueProps, null);
+	}
+
+	@Override
+	public <T extends Serializable> T updateSaveFetch(T entity, EntityUpdateCallback<T> callback, int lockWaitTimeout,
+			String... uniqueProps) {
+		return super.updateSaveFetch(entity, callback, lockWaitTimeout, uniqueProps, dataSource);
 	}
 
 	/*
@@ -815,7 +828,7 @@ public class SqlToyLazyDaoImpl extends SpringDaoSupport implements SqlToyLazyDao
 			int length, int sequenceSize) {
 		return super.generateBizId(tableName, signature, keyValues, bizDate, length, sequenceSize);
 	}
-	
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -851,7 +864,7 @@ public class SqlToyLazyDaoImpl extends SpringDaoSupport implements SqlToyLazyDao
 	}
 
 	/**
-	 * @todo 判断缓存是否存在
+	 * 判断缓存是否存在
 	 * @param cacheName
 	 * @return
 	 */
@@ -879,7 +892,7 @@ public class SqlToyLazyDaoImpl extends SpringDaoSupport implements SqlToyLazyDao
 		if (result.size() == 1) {
 			return result.get(0);
 		}
-		throw new IllegalArgumentException("loadEntity查询出:" + result.size() + " 条记录,不符合load查询预期!");
+		throw new IllegalArgumentException("loadEntity expect a single record but found [" + result.size() + "] rows, please check the query conditions!");
 	}
 
 	@Override
@@ -935,7 +948,7 @@ public class SqlToyLazyDaoImpl extends SpringDaoSupport implements SqlToyLazyDao
 	}
 
 	/**
-	 * @TODO 转换分页类型
+	 * 转换分页类型
 	 * @param <T>
 	 * @param sourcePage
 	 * @param resultType
@@ -949,26 +962,26 @@ public class SqlToyLazyDaoImpl extends SpringDaoSupport implements SqlToyLazyDao
 	}
 
 	@Override
-	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
+	public <T> List<QueryResult<T>> parallelQuery(List<ParallelQuery> parallelQueryList, String[] paramNames,
 			Object[] paramValues) {
-		return super.parallQuery(parallQueryList, paramNames, paramValues, null);
+		return super.parallelQuery(parallelQueryList, paramNames, paramValues, null);
 	}
 
 	@Override
-	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
+	public <T> List<QueryResult<T>> parallelQuery(List<ParallelQuery> parallelQueryList, String[] paramNames,
 			Object[] paramValues, ParallelConfig parallelConfig) {
-		return super.parallQuery(parallQueryList, paramNames, paramValues, parallelConfig);
+		return super.parallelQuery(parallelQueryList, paramNames, paramValues, parallelConfig);
 	}
 
 	@Override
-	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String, Object> paramsMap) {
-		return super.parallQuery(parallQueryList, paramsMap, null);
+	public <T> List<QueryResult<T>> parallelQuery(List<ParallelQuery> parallelQueryList, Map<String, Object> paramsMap) {
+		return super.parallelQuery(parallelQueryList, paramsMap, null);
 	}
 
 	@Override
-	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String, Object> paramsMap,
+	public <T> List<QueryResult<T>> parallelQuery(List<ParallelQuery> parallelQueryList, Map<String, Object> paramsMap,
 			ParallelConfig parallelConfig) {
-		return super.parallQuery(parallQueryList, paramsMap, parallelConfig);
+		return super.parallelQuery(parallelQueryList, paramsMap, parallelConfig);
 	}
 
 	@Override
