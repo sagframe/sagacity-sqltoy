@@ -298,7 +298,7 @@ public class DialectFactory {
 		return DataSourceUtils.processDataSource(ctx, ds, new DataSourceCallbackHandler() {
 			@Override
 			public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
-				DBProfile profile=DataSourceUtils.getDBProfile(conn);
+				DBProfile profile = DataSourceUtils.getDBProfile(conn);
 				SqlExecuteStat.setDialect(profile);
 				this.setResult(action.run(conn, profile));
 			}
@@ -344,8 +344,9 @@ public class DialectFactory {
 						Long updateCnt = (Long) DataSourceUtils.processDataSource(context,
 								shardingModel.getDataSource(), new DataSourceCallbackHandler() {
 									@Override
-									public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
-										DBProfile profile=DataSourceUtils.getDBProfile(conn);
+									public void doConnection(Connection conn, Integer dbType, String dialect)
+											throws Exception {
+										DBProfile profile = DataSourceUtils.getDBProfile(conn);
 										SqlExecuteStat.setDialect(profile);
 										String realSql = sqlToyConfig.getSql(dialect);
 										Integer[] fieldTypes = null;
@@ -435,7 +436,7 @@ public class DialectFactory {
 					new DataSourceCallbackHandler() {
 						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
-							DBProfile profile=DataSourceUtils.getDBProfile(conn);
+							DBProfile profile = DataSourceUtils.getDBProfile(conn);
 							SqlExecuteStat.setDialect(profile);
 							// 进行sharding table替换
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
@@ -502,7 +503,7 @@ public class DialectFactory {
 					new DataSourceCallbackHandler() {
 						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
-							DBProfile profile=DataSourceUtils.getDBProfile(conn);
+							DBProfile profile = DataSourceUtils.getDBProfile(conn);
 							SqlExecuteStat.setDialect(profile);
 							// 进行sharding table替换
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
@@ -598,7 +599,7 @@ public class DialectFactory {
 					new DataSourceCallbackHandler() {
 						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
-							DBProfile profile=DataSourceUtils.getDBProfile(conn);
+							DBProfile profile = DataSourceUtils.getDBProfile(conn);
 							SqlExecuteStat.setDialect(profile);
 							// 处理sql中的?为统一的:named形式，并进行sharding table替换
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
@@ -888,8 +889,8 @@ public class DialectFactory {
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
 						@Override
-						public void doConnection(Connection conn,Integer dbType, String dialect) throws Exception {
-							DBProfile profile=DataSourceUtils.getDBProfile(conn);
+						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+							DBProfile profile = DataSourceUtils.getDBProfile(conn);
 							SqlExecuteStat.setDialect(profile);
 							// 处理sql中的?为统一的:named形式，并进行sharding table替换
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
@@ -967,7 +968,7 @@ public class DialectFactory {
 					new DataSourceCallbackHandler() {
 						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
-							DBProfile profile=DataSourceUtils.getDBProfile(conn);
+							DBProfile profile = DataSourceUtils.getDBProfile(conn);
 							boolean isOverPageToFirst = false;
 							// 使用全局默认值
 							if (sqlToyContext.getOverPageToFirst() != null) {
@@ -1202,7 +1203,8 @@ public class DialectFactory {
 					// 重新通过dataSource获取conn，避免conn竞争
 					DataSourceUtils.processDataSource(sqlToyContext, dataSource, new DataSourceCallbackHandler() {
 						@Override
-						public void doConnection(Connection countConn, Integer dbType, String dialect) throws Exception {
+						public void doConnection(Connection countConn, Integer dbType, String dialect)
+								throws Exception {
 							queryResult.setRecordCount(
 									getCountBySql(sqlToyContext, sqlToyConfig, queryExecutor, countConn, profile));
 						}
@@ -1332,7 +1334,7 @@ public class DialectFactory {
 					new DataSourceCallbackHandler() {
 						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
-							DBProfile profile=DataSourceUtils.getDBProfile(conn);
+							DBProfile profile = DataSourceUtils.getDBProfile(conn);
 							SqlExecuteStat.setDialect(profile);
 							// 处理sql中的?为统一的:named形式，并进行sharding table替换
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
@@ -1423,7 +1425,7 @@ public class DialectFactory {
 					new DataSourceCallbackHandler() {
 						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
-							DBProfile profile=DataSourceUtils.getDBProfile(conn);
+							DBProfile profile = DataSourceUtils.getDBProfile(conn);
 							SqlExecuteStat.setDialect(profile);
 							// 处理sql中的?为统一的:named形式，并进行sharding table替换
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
@@ -1501,7 +1503,7 @@ public class DialectFactory {
 					new DataSourceCallbackHandler() {
 						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
-							DBProfile profile=DataSourceUtils.getDBProfile(conn);
+							DBProfile profile = DataSourceUtils.getDBProfile(conn);
 							SqlExecuteStat.setDialect(profile);
 							// 处理sql中的?为统一的:named形式，并进行sharding table替换
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
@@ -1877,8 +1879,9 @@ public class DialectFactory {
 						return (List) DataSourceUtils.processDataSource(context, shardingModel.getDataSource(),
 								new DataSourceCallbackHandler() {
 									@Override
-									public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
-										DBProfile profile=DataSourceUtils.getDBProfile(conn);
+									public void doConnection(Connection conn, Integer dbType, String dialect)
+											throws Exception {
+										DBProfile profile = DataSourceUtils.getDBProfile(conn);
 										DefaultDialectUtils.setSessionLockWait(profile, conn, lockMode,
 												lockWaitTimeout);
 										List parallelEntities = batchModel.getEntities();
@@ -2285,7 +2288,7 @@ public class DialectFactory {
 					new DataSourceCallbackHandler() {
 						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
-							DBProfile profile=DataSourceUtils.getDBProfile(conn);
+							DBProfile profile = DataSourceUtils.getDBProfile(conn);
 							SqlExecuteStat.setDialect(profile);
 							// 处理sql中的?为统一的:named形式
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
@@ -2349,7 +2352,7 @@ public class DialectFactory {
 					new DataSourceCallbackHandler() {
 						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
-							DBProfile profile=DataSourceUtils.getDBProfile(conn);
+							DBProfile profile = DataSourceUtils.getDBProfile(conn);
 							SqlExecuteStat.setDialect(profile);
 							String dialectSql = sqlToyConfig.getSql(dialect);
 							int inCount = (inParamsValue == null) ? 0 : inParamsValue.length;
@@ -2475,7 +2478,7 @@ public class DialectFactory {
 					new DataSourceCallbackHandler() {
 						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
-							DBProfile profile=DataSourceUtils.getDBProfile(conn);
+							DBProfile profile = DataSourceUtils.getDBProfile(conn);
 							SqlExecuteStat.setDialect(profile);
 							// 处理sql中的?为统一的:named形式，并进行sharding table替换
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,

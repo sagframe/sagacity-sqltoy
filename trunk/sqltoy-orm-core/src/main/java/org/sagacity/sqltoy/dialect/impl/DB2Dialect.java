@@ -19,7 +19,6 @@ import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.OperateType;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
-import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.dialect.Dialect;
 import org.sagacity.sqltoy.dialect.utils.DB2DialectUtils;
@@ -253,46 +252,30 @@ public class DB2Dialect implements Dialect {
 			QueryExecutor queryExecutor, final DecryptHandler decryptHandler, Long totalCount, Long randomCount,
 			Connection conn, DBProfile profile, final int fetchSize, final int maxRows) throws Exception {
 		String dialect = profile.getDialect();
-		StringBuilder sql = new StringBuilder();
 		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
 		// sql中是否存在排序或union
 		boolean hasOrderOrUnion = DialectUtils.hasOrderByOrUnion(innerSql);
-		// 给原始sql标记上特殊的开始和结尾，便于sql拦截器快速定位到原始sql并进行条件补充
-		innerSql = SqlUtilsExt.markOriginalSql(innerSql);
-		if (sqlToyConfig.isHasFast()) {
-			sql.append(sqlToyConfig.getFastPreSql(dialect));
-			if (!sqlToyConfig.isIgnoreBracket()) {
-				sql.append(" (");
-			}
-		}
-		// 存在order 或union 则在sql外包裹一层
+		StringBuilder sql = DialectUtils.openFastWrap(sqlToyConfig, dialect);
+		// 给原始sql标记上特殊的开始和结尾，便于sql拦截器快速定位原始sql并进行条件补充
+		String markedSql = SqlUtilsExt.markOriginalSql(innerSql);
+		// 存在order 或union 则在sql外包裹一层派生表(order by rand()须作用于整集)
 		if (hasOrderOrUnion) {
 			sql.append("select " + SqlToyConstants.INTERMEDIATE_TABLE + ".* from (");
-		}
-		sql.append(innerSql);
-		if (hasOrderOrUnion) {
+			sql.append(markedSql);
 			sql.append(") ");
 			sql.append(SqlToyConstants.INTERMEDIATE_TABLE);
 			sql.append(" ");
+		} else {
+			sql.append(markedSql);
 		}
 		sql.append(" order by rand() fetch first ");
 		sql.append(randomCount);
 		sql.append(" rows only ");
-		if (sqlToyConfig.isHasFast()) {
-			if (!sqlToyConfig.isIgnoreBracket()) {
-				sql.append(") ");
-			}
-			sql.append(sqlToyConfig.getFastTailSql(dialect));
-		}
-		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
-				sql.toString(), null, null, profile);
-		QueryExecutorExtend extend = queryExecutor.getInnerModel();
-		// 增加sql执行拦截器 update 2022-9-10
-		queryParam = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig,
-				(extend.entityClass == null) ? OperateType.random : OperateType.singleTable, queryParam,
-				extend.entityClass, profile);
-		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				extend, decryptHandler, conn, profile, 0, fetchSize, maxRows);
+		DialectUtils.closeFastWrap(sqlToyConfig, dialect, sql);
+		return DialectUtils.executeWrappedQuery(sqlToyContext, sqlToyConfig, queryExecutor, decryptHandler, conn,
+				profile, sql.toString(), null, null,
+				(queryExecutor.getInnerModel().entityClass == null) ? OperateType.random : OperateType.singleTable,
+				fetchSize, maxRows);
 	}
 
 	/*

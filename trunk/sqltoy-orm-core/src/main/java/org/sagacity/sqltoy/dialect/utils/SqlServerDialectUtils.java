@@ -56,21 +56,19 @@ public class SqlServerDialectUtils {
 
 	/**
 	 * update 2026-9-17 派生表内层SQL合法性处理:mssql要求派生表(子查询)内的order by必须伴随
-	 * top/offset,否则报"The ORDER BY clause is invalid in views, inline functions, derived
-	 * tables, subqueries...";内层存在top级order by且自身无offset分页时,末尾追加offset 0 rows
-	 * (offset 0不增删行,随机取数等场景最终行序由外层order by决定);已有offset时不可重复追加
+	 * top/offset,否则报"The ORDER BY clause is invalid in views, inline functions,
+	 * derived tables, subqueries...";内层存在top级order by且自身无offset分页时,末尾追加offset 0
+	 * rows (offset 0不增删行,随机取数等场景最终行序由外层order by决定);已有offset时不可重复追加
 	 * (双offset语法错误);无order by的裸union派生表本已合法,且OFFSET语法必须跟随order by,
-	 * 同样不可追加。判定经clearDisturbSql掩码字面量并剔除括号内容,规避字面量内'order by'/
-	 * 'offset'及子查询内order by的干扰;offset判定使用word边界正则,避免row_offset/offset_id
-	 * 等标识符子串误判为已有分页
+	 * 同样不可追加。判定经clearDisturbSql掩码字面量并剔除括号内容,规避字面量内'order by'/ 'offset'及子查询内order
+	 * by的干扰;offset判定使用word边界正则,避免row_offset/offset_id 等标识符子串误判为已有分页
 	 *
 	 * @param innerSql 待放入派生表的内层sql
 	 * @return 合法化后的内层sql(需追加时末尾带" offset 0 rows")
 	 */
 	public static String legalizeDerivedInnerSql(String innerSql) {
 		String unDisturbSql = DialectUtils.clearDisturbSql(innerSql);
-		if (StringUtil.matches(unDisturbSql, ORDER_BY_PATTERN)
-				&& !OFFSET_PATTERN.matcher(unDisturbSql).find()) {
+		if (StringUtil.matches(unDisturbSql, ORDER_BY_PATTERN) && !OFFSET_PATTERN.matcher(unDisturbSql).find()) {
 			return innerSql + " offset 0 rows";
 		}
 		return innerSql;

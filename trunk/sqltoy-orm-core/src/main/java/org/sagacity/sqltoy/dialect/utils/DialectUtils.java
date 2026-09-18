@@ -289,13 +289,27 @@ public class DialectUtils {
 			QueryExecutor queryExecutor, final DecryptHandler decryptHandler, final Connection conn, DBProfile profile,
 			String wrappedSql, Object startIndex, Object endIndex, OperateType operateType, final int fetchSize,
 			final int maxRows) throws Exception {
+		return executeWrappedQuery(sqlToyContext, sqlToyConfig, queryExecutor, decryptHandler, conn, profile,
+				wrappedSql, startIndex, endIndex, operateType, 0, fetchSize, maxRows);
+	}
+
+	/**
+	 * 带结果集列跳过数的执行管线(oracle11g的rownum分页派生层会暴露page_row_id伪列,
+	 * 无@fast包裹时须跳过第1列,@fast外层select只取引用列则无需跳过)
+	 *
+	 * @param columnSkip 结果集需跳过的辅助列数(仅findBySql的列下标偏移,常规为0)
+	 */
+	public static QueryResult executeWrappedQuery(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
+			QueryExecutor queryExecutor, final DecryptHandler decryptHandler, final Connection conn, DBProfile profile,
+			String wrappedSql, Object startIndex, Object endIndex, OperateType operateType, final int columnSkip,
+			final int fetchSize, final int maxRows) throws Exception {
 		SqlToyResult queryParam = wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor, wrappedSql, startIndex,
 				endIndex, profile);
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		// 增加sql执行拦截器 update 2022-9-10
 		queryParam = doInterceptors(sqlToyContext, sqlToyConfig, operateType, queryParam, extend.entityClass, profile);
 		return findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(), extend,
-				decryptHandler, conn, profile, 0, fetchSize, maxRows);
+				decryptHandler, conn, profile, columnSkip, fetchSize, maxRows);
 	}
 
 	/**
@@ -1859,7 +1873,8 @@ public class DialectUtils {
 				}
 				// 组织loadAll sql语句
 				String sql = wrapLoadAll(entityMeta, idValues.length, tableName, lockSqlHandler, lockMode, profile);
-				sqlToyResult = SqlConfigParseUtils.processSql(sql, null, new Object[] { idValues }, profile.getDialect());
+				sqlToyResult = SqlConfigParseUtils.processSql(sql, null, new Object[] { idValues },
+						profile.getDialect());
 			} // 复合主键
 			else {
 				List<Object[]> idValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getIdArray(), null,
