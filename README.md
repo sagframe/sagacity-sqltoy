@@ -847,7 +847,7 @@ spring.sqltoy.unifyFieldsHandler=com.sqltoy.plugins.SqlToyUnifyFieldsHandler
 <sagacity
 	xmlns="https://www.sagframe.com/schema/sqltoy-translate"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="https://www.sagframe.com/schema/sqltoy-translate https://www.sagframe.com/schema/sqltoy/sqltoy-translate.xsd">
+	xsi:schemaLocation="https://www.sagframe.com/schema/sqltoy-translate https://sagframe.github.io/schema/sqltoy-translate.xsd">
 	<!-- Caches have a default expiration time of 1 hour, so only the more frequently used caches need timely change detection -->
 	<cache-translates>
 		<!-- Load the cache via a direct SQL query -->

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <sqltoy xmlns="http://www.sagframe.com/schema/sqltoy"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="http://www.sagframe.com/schema/sqltoy http://www.sagframe.com/schema/sqltoy/sqltoy.xsd">
+        xsi:schemaLocation="http://www.sagframe.com/schema/sqltoy https://sagframe.github.io/schema/sqltoy.xsd">
 
     <!-- 注意transType:transTypeName 表示将transType 查询值另起别名 transTypeName 存放,便于后面缓存翻译映射 -->
     <mql id="sqltoy_mongo_find"
