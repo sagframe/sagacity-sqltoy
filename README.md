@@ -1,4 +1,5 @@
 <p align="center">
+    <img src="https://img.shields.io/badge/SqlToy-6.0.1-blue" alt="version">
     <a target="_blank" href="LICENSE"><img src="https://img.shields.io/:license-Apache%202.0-blue.svg"></a>
     <a target="_blank" href="https://github.com/sagframe/sagacity-sqltoy"><img src="https://img.shields.io/github/stars/sagframe/sagacity-sqltoy.svg?style=social"/></a>
     <a target="_blank" href="https://gitee.com/sagacity/sagacity-sqltoy"><img src="https://gitee.com/sagacity/sagacity-sqltoy/badge/star.svg?theme=white" /></a>
@@ -8,66 +9,66 @@
     </a>
 </p>
 
-# WORD版详细文档(完整)
-## 请见:docs/睿智平台SqlToy5.6 使用手册.doc
-# [在线文档(持续完善中)](https://sagframe.github.io/sqltoy-docs/)
-## xml中sql查询完整配置 
-https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
+# SqlToy ORM
 
-# [gitee地址](https://gitee.com/sagacity/sagacity-sqltoy) 
-# [gitcode地址](https://gitcode.com/sqltoy/sagacity-sqltoy) 
-# [sqltoy Lambda](https://gitee.com/gzghde/sqltoy-plus) 
-# [sqltoy管理系统脚手架](https://github.com/CoCoTeaNet/CyreneAdmin)
-# [sqltoy idea 插件](https://github.com/imyuyu/sqltoy-idea-plugin) 
+SqlToy是JPA和超强查询的融合体，是简单业务、大型SaaS化多租户ERP、大数据分析等多种类型项目实践过程的总结和分享。以最佳的动态sql编写模式为起点，首创了缓存翻译、分页优化、快速分页、sql函数跨数据库自适配等高价值特性！
 
-# 范例演示项目
-## 快速集成演示项目
-* https://gitee.com/sagacity/sqltoy-helloworld
-* 阅读其readme.md学习
+## 📚 文档与资源
 
-## 快速上手功能演示项目
-* https://github.com/sagframe/sqltoy-quickstart 
-* 阅读其readme.md学习 
+| 资源 | 地址 |
+| --- | --- |
+| 📖 在线文档（推荐） | <https://sagframe.github.io/sqltoy-docs/> |
+| 📄 xml中sql查询完整配置 | [在线文档·动态SQL规范](https://sagframe.github.io/sqltoy-docs/#/query/dynamic_sql) |
+| 📄 WORD版详细手册 | `docs/睿智平台SqlToy5.6 使用手册.doc`（6.0 变更见[升级指南](https://sagframe.github.io/sqltoy-docs/#/introduction/upgrade_6.0)） |
+| 🚀 快速集成演示 | <https://gitee.com/sagacity/sqltoy-helloworld> |
+| 🚀 功能演示(quickstart) | <https://github.com/sagframe/sqltoy-quickstart> |
+| 🚀 Solon 演示 | <https://github.com/CoCoTeaNet/sqltoy-solon-demo> |
+| 🚀 POJO/DTO 严格分层演示 | <https://github.com/sagframe/sqltoy-strict> |
+| 🚀 分库分表演示 | <https://github.com/sagframe/sqltoy-showcase/tree/master/trunk/sqltoy-sharding> |
+| 🚀 多数据源演示 | <https://gitee.com/sagacity/sqltoy-showcase/tree/master/trunk/sqltoy-dynamic-datasource> |
+| 🚀 NoSQL演示(mongo/es) | <https://github.com/sagframe/sqltoy-showcase/tree/master/trunk/sqltoy-nosql> |
+| 🚀 xml配置演示 | <https://github.com/sagframe/sqltoy-showcase/tree/master/trunk/sqltoy-showcase> |
+| 🔌 sqltoy-plus(Lambda增强) | <https://gitee.com/gzghde/sqltoy-plus> |
+| 🔌 管理系统脚手架 | <https://github.com/CoCoTeaNet/CyreneAdmin> |
+| 🔌 IDEA 插件 | <https://github.com/imyuyu/sqltoy-idea-plugin> |
 
-## solon 项目演示
-* https://github.com/CoCoTeaNet/sqltoy-solon-demo
+## 💬 交流
 
-## POJO和DTO 严格分层演示项目
-* https://github.com/sagframe/sqltoy-strict
+QQ交流群：**531812227** ｜ [Gitee](https://gitee.com/sagacity/sagacity-sqltoy) ｜ [GitCode](https://gitcode.com/sqltoy/sagacity-sqltoy)
 
-## sharding分库分表演示
-* https://github.com/sagframe/sqltoy-showcase/tree/master/trunk/sqltoy-sharding
+## 📦 最新版本 6.0.1
 
-## dynamic-datasource多数据源范例
-* https://gitee.com/sagacity/sqltoy-showcase/tree/master/trunk/sqltoy-dynamic-datasource
-
-## nosql演示(mongo和elasticsearch)
-* https://github.com/sagframe/sqltoy-showcase/tree/master/trunk/sqltoy-nosql
-
-## sqltoy基于xml配置演示
-* https://github.com/sagframe/sqltoy-showcase/tree/master/trunk/sqltoy-showcase
-
-# QQ 交流群:531812227
-# 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
-
-# 最新版本 
-* 6.0.1 LTS (jdk17+/springboot3/springboot4)    发版日期: 2026-9-18
 ```xml
 <dependency>
 	<groupId>com.sagframe</groupId>
 	<artifactId>sagacity-sqltoy-spring-starter</artifactId>
 	<!-- solon 适配版本 <artifactId>sagacity-sqltoy-solon-plugin</artifactId> -->
-        <!-- 传统spring项目 <artifactId>sagacity-sqltoy-spring</artifactId> -->
-        <!-- 单纯sqltoy <artifactId>sagacity-sqltoy</artifactId> -->
-        <!-- jdk8 对应的版本号为：5.6.95.jre8 -->
+	<!-- 传统spring项目 <artifactId>sagacity-sqltoy-spring</artifactId> -->
+	<!-- 单纯sqltoy <artifactId>sagacity-sqltoy</artifactId> -->
+	<!-- jdk8 对应的版本号为：5.6.95.jre8（最终版本） -->
 	<version>6.0.1</version>
 </dependency>
 ```
 
-# 1. 前言
-## 1.1 sqltoy-orm是什么
-   sqltoy-orm是JPA和超强查询的融合体，是简单业务、大型SaaS化多租户ERP、大数据分析多种类型项目实践过程的总结和分享。
- ### JPA部分
+> [!NOTE]
+> 从 5.6.x 升级到 6.0.x 的变更点（`parallQuery→parallelQuery` 更名、连接反调 `DBProfile` 签名、包结构调整等）请参阅[《6.0 升级指南》](https://sagframe.github.io/sqltoy-docs/#/introduction/upgrade_6.0)。
+
+## ✨ 功能特性
+
+| 类别 | 核心能力 |
+| --- | --- |
+| 对象操作 | JPA 风格 CRUD、弹性更新、updateFetch / updateSaveFetch、级联、查询层次封装、树形表路由 |
+| SQL 查询 | 动态 SQL（`#[]` + filters）、缓存翻译、最强分页（count 优化 / 缓存 / 快速 / 并行）、并行查询、存储过程、流式查询 |
+| 数据分析 | 行转列 / 列转行、分组汇总、同比环比、树形排序汇总、分组拼接、日期数字格式化 |
+| 跨数据库 | 24 种方言（含 SAP HANA）、函数自动替换、多方言 sqlId、多库适配验证 |
+| 企业级 | 分库分表、多租户、数据权限与越权校验、脱敏加解密、数据版本控制、SQL 拦截、慢 SQL 处理 |
+| NoSQL | Elasticsearch（sql / json 双模式）、MongoDB（查询 / 聚合 + 缓存翻译） |
+| 工程化 | quickvo 代码生成、autoDDL 自动建表、debug 热加载、GraalVM AOT、Spring Boot / Spring / Solon / 纯 Java |
+
+<details>
+<summary><b>展开功能明细</b></summary>
+
+### JPA部分
 * 类似JPA的对象化CRUD、对象级联加载和新增、更新
 * 支持通过POJO生成DDL以及直接向数据库创建表
 * 强化update操作，提供弹性字段修改能力，不同于hibernate先load后修改，而是一次数据库交互完成修改，确保了高并发场景下数据的准确性
@@ -79,7 +80,7 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 * 提供了多租户统一过滤和赋值、提供了数据权限参数带入和越权校验
 
 ### 查询部分
-* 极为直观的sql编写方式，便于从客户端<-->代码 双向快速迁移，便于后期变更维护
+* 极为直观的sql编写方式，便于从客户端与代码双向快速迁移，便于后期变更维护
 * 支持缓存翻译、反向缓存匹配key代替like模糊查询
 * 提供了跨数据库支持能力：不同数据库的函数自动转换适配，多方言sql根据实际环境自动匹配、多数据库同步测试，大幅提升了产品化能力
 * 提供了取top记录、随机记录等特殊场景的查询功能
@@ -89,67 +90,75 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 * 提供了基于查询的层次化数据结构封装
 * 提供了大量辅助功能:数据脱敏、格式化、条件参数预处理等
 
-### 支持多种数据库
-* 常规的mysql、oracle、db2、postgresql、 sqlserver、dm、kingbase、sqlite、h2、 oceanBase、polardb、gaussdb、tidb、oscar(神通)、瀚高、mogdb、vastbase、stardb
-* 支持分布式olap数据库: clickhouse、doris、StarRocks、greenplum、impala(kudu)
+</details>
+
+### 支持的数据库
+* 常规的mysql、oracle、db2、postgresql、 sqlserver、dm、kingbase、hana、sqlite、h2、 oceanBase、polardb、gaussdb、tidb、oscar(神通)、瀚高、mogdb、vastbase、stardb
+* 支持分布式olap数据库: clickhouse、doris、StarRocks、greenplum、impala(kudu)、TDengine
 * 支持elasticsearch、mongodb
 * 所有基于sql和jdbc 各类数据库查询
 
-   
-## 1.2 sqltoy-orm 发展轨迹
-* 2007~2008年，做农行的一个管理类项目，因查询统计较多，且查询条件多而且经常要增加条件，就不停想如何快速适应这种变化，一个比较偶然的灵感发现了比mybatis强无数倍的动态sql写法，并作为hibernate jpa 查询方面的补充，收到了极为震撼的开发体验。可以看写于2009年的一篇博文: https://blog.csdn.net/iteye_2252/article/details/81683940
-* 2008~2012年，因一直做金融类企业项目，所面对的数据规模基本上是千万级别的，因此sqltoy一直围绕jpa进行sql查询增强，期间已经集成了缓存翻译、快速分页、行列旋转等比其他框架更具特色的查询特性。
-* 2013~2014年，因为了避免让开发者在项目中同时使用两种技术，因此在sqltoy中实现了基于对象的crud功能，形成了完整的sqltoy-orm框架。
-* 2014~2017年, 在负责拉卡拉大数据平台过程中，对sqltoy进行了大幅重构，实现了底层结构的合理化，在拉卡拉CRM和日均千万累计达百亿级别的大数据平台上得到了强化和检验。
-* 2018~至今,  在建设SaaS化多租户ERP复杂场景下和flink-cdc结合MPP数据库的实时数仓过程中得到了充分锤炼，sqltoy已经非常完善可靠，开始开源跟大家一起分享和共建！
+## 🚀 快速上手
 
-# 2. 快速特点说明
-## 2.1 对象操作跟jpa类似并有针对性加强(包括级联)
-* 通过quickvo工具从数据库生成对应的POJO，注入sqltoy自带的LightDao完成全部操作
+三步曲：**1、quickvo 生成 POJO；2、完成 yml 配置；3、Service 中注入 LightDao（无需自定义各种 Dao）**
 
 ```java
-   //三步曲：1、quickvo生成pojo，2、完成yml配置；3、service中注入dao(无需自定义各种dao)
-   @Autowired
-   LightDao lightDao;
+@Autowired
+LightDao lightDao;
 
-   StaffInfoVO staffInfo = new StaffInfoVO(); 
-   //保存
-   lightDao.save(staffInfo);
-   //删除
-   lightDao.delete(new StaffInfoVO("S2007"));
-
-   //public Long update(Serializable entity, String... forceUpdateProps);
-   // 这里对photo 属性进行强制修改，其他为null自动会跳过
-   lightDao.update(staffInfo, "photo");
-   //只更新指定字段
-   lightDao.update().updateFields("name","status").one(entity);
-   lightDao.update().updateFields("name","status").many(entities);
-   //深度修改,不管是否null全部字段修改
-   lightDao.updateDeeply(staffInfo);
-   //批量保存或修改
-   lightDao.saveOrUpdateAll(staffList);
-   //批量保存
-   lightDao.saveAll(staffList);
-   //并行保存
-   lightDao.save().parallelConfig(ParallelConfig.create().groupSize(5000).maxThreads(10)).many(entities)
-   ...............
-   lightDao.loadByIds(StaffInfoVO.class,"S2007")
-   //唯一性验证
-   lightDao.isUnique(staffInfo, "staffCode");
+StaffInfoVO staffInfo = new StaffInfoVO();
+// 保存
+lightDao.save(staffInfo);
+// 更新(弹性：null字段自动跳过)
+lightDao.update(staffInfo, "photo");
+// 删除
+lightDao.delete(new StaffInfoVO("S2007"));
 ```
-## 2.2 支持代码中对象查询
-* sqltoy 中统一的规则是代码中可以直接传sql也可以是对应xml文件中的sqlId
+
+推荐从 [sqltoy-helloworld](https://gitee.com/sagacity/sqltoy-helloworld) 或 [sqltoy-quickstart](https://github.com/sagframe/sqltoy-quickstart) 开始，阅读其 readme.md 学习。
+
+## 🔍 特性详解
+
+### 1. 对象操作跟JPA类似并有针对性加强(包括级联)
+
+```java
+// 通过quickvo工具从数据库生成对应的POJO，注入sqltoy自带的LightDao完成全部操作
+@Autowired
+LightDao lightDao;
+
+// 唯一性验证
+lightDao.isUnique(staffInfo, "staffCode");
+// 强制修改photo属性，其他为null的自动跳过
+lightDao.update(staffInfo, "photo");
+// 只更新指定字段
+lightDao.update().updateFields("name","status").one(entity);
+lightDao.update().updateFields("name","status").many(entities);
+// 深度修改,不管是否null全部字段修改
+lightDao.updateDeeply(staffInfo);
+// 批量保存或修改
+lightDao.saveOrUpdateAll(staffList);
+// 批量保存
+lightDao.saveAll(staffList);
+// 并行保存
+lightDao.save().parallelConfig(ParallelConfig.create().groupSize(5000).maxThreads(10)).many(entities);
+// 按主键批量加载
+lightDao.loadByIds(StaffInfoVO.class,"S2007");
+```
+
+### 2. 支持代码中对象查询
+
+sqltoy中统一的规则是代码中可以直接传sql也可以是对应xml文件中的sqlId
+
 ```java
 /**
  * @todo 通过对象传参数,简化paramName[],paramValue[] 模式传参
- * @param <T>
- * @param sqlOrNamedSql 可以是具体sql也可以是对应xml中的sqlId
- * @param entity        通过对象传参数,并按对象类型返回结果
  */
- public <T extends Serializable> List<T> findBySql(final String sqlOrNamedSql, final T entity);
+public <T extends Serializable> List<T> findBySql(final String sqlOrNamedSql, final T entity);
 ```
-* 基于对象单表查询，并带缓存翻译
-```java  
+
+基于对象单表查询，并带缓存翻译：
+
+```java
 public Page<StaffInfoVO> findStaff(Page<StaffInfoVO> pageModel, StaffInfoVO staffInfoVO) {
      // sql可以直接在代码中编写,复杂sql建议在xml中定义
      // 单表entity查询场景下sql字段可以写成java类的属性名称
@@ -163,28 +172,33 @@ public Page<StaffInfoVO> findStaff(Page<StaffInfoVO> pageModel, StaffInfoVO staf
 	.translates(new Translate("organIdName").setColumn("organName").setKeyColumn("organId")));
 }
 ```
-* 对象式查询后修改或删除
+
+对象式查询后修改或删除：
+
 ```java
-//演示代码中非直接sql模式设置条件模式进行记录修改
+// 条件模式进行记录修改
 public Long updateByQuery() {
      return lightDao.updateByQuery(StaffInfoVO.class,
 		EntityUpdate.create().set("createBy", "S0001")
                      .where("staffName like ?").values("张"));
 }
 
-//代码中非直接sql模式设置条件模式进行记录删除
+// 条件模式进行记录删除
 lightDao.deleteByQuery(StaffInfoVO.class, EntityQuery.create().where("status=?").values(0));
 ```
-## 2.2 极致朴素的sql编写方式(本质规律的发现和抽象)
+
+### 3. 极致朴素的sql编写方式(本质规律的发现和抽象)
 
 * sqltoy 的写法(一眼就看明白sql的本意,后面变更调整也非常便捷,copy到数据库客户端里稍作调整即可执行)
-* sqltoy条件组织原理很简单: 如 #[order_id=:orderId] 等于if(:orderId<>null) sql.append(order_id=:orderId);#[]内只要有一个参数为null即剔除
-* 支持多层嵌套:如 #[and t.order_id=:orderId #[and t.order_type=:orderType]] 
-* 条件判断保留#[@if(:param>=xx ||:param<=xx1) sql语句] 这种@if()高度灵活模式,为特殊复杂场景下提供万能钥匙
+* sqltoy条件组织原理很简单: 如 `#[order_id=:orderId]` 等于if(:orderId<>null) sql.append(order_id=:orderId);`#[]`内只要有一个参数为null即剔除
+* 支持多层嵌套:如 `#[and t.order_id=:orderId #[and t.order_type=:orderType]]`
+* 条件判断保留 `#[@if(:param>=xx ||:param<=xx1) sql语句]` 这种@if()高度灵活模式,为特殊复杂场景下提供万能钥匙
+
+sqltoy 的写法：
 
 ```xml
-//1、 条件值处理跟具体sql分离
-//2、 将条件值前置通过filters 定义的通用方法加工规整(大多数是不需要额外处理的)
+<!-- 1、条件值处理跟具体sql分离 -->
+<!-- 2、将条件值前置通过filters 定义的通用方法加工规整(大多数是不需要额外处理的) -->
 <sql id="show_case">
 <filters>
    <!-- 参数statusAry只要包含-1(代表全部)则将statusAry设置为null不参与条件检索 -->
@@ -203,7 +217,9 @@ lightDao.deleteByQuery(StaffInfoVO.class, EntityQuery.create().where("status=?")
 </value>
 </sql>
 ```
-* mybatis同样的功能的写法
+
+MyBatis 同样功能的写法（对比）：
+
 ```xml
 <select id="show_case" resultMap="BaseResultMap">
  select *
@@ -239,9 +255,10 @@ lightDao.deleteByQuery(StaffInfoVO.class, EntityQuery.create().where("status=?")
 </where>
 </select>
 ```
-## 2.3 天然防止sql注入,执行过程:
 
-```xml
+### 4. 天然防止sql注入,执行过程
+
+```text
 假设sql语句如下
 select 	*
 from sqltoy_device_order_info t 
@@ -261,19 +278,21 @@ where t.ORDER_ID=?
 
 然后通过: pst.set(index,value) 设置条件值，不存在将条件直接作为字符串拼接为sql的一部分
 ```
- 
-## 2.4 最强大的分页查询
-### 2.4.1 分页特点说明
-* 1、快速分页:@fast() 实现先取单页数据然后再关联查询，极大提升速度。
+
+### 5. 最强大的分页查询
+
+**分页特点说明**
+
+* 1、快速分页:`@fast()` 实现先取单页数据然后再关联查询，极大提升速度。
 * 2、分页优化器:page-optimize 让分页查询由两次变成1.3~1.5次(用缓存实现相同查询条件的总记录数量在一定周期内无需重复查询)
-* 3、sqltoy的分页取总记录的过程不是简单的select count(1) from (原始sql)；而是智能判断是否变成:select count(1) from 'from后语句'，
-并自动剔除最外层的order by
+* 3、sqltoy的分页取总记录的过程不是简单的select count(1) from (原始sql)；而是智能判断是否变成:select count(1) from 'from后语句'，并自动剔除最外层的order by
 * 4、sqltoy支持并行查询：parallel="true"，同时查询总记录数和单页数据,大幅提升性能
 * 5、在极特殊情况下sqltoy分页考虑是最优化的，如:with t1 as (),t2 as @fast(select * from table1) select * from xxx
 这种复杂查询的分页的处理，sqltoy的count查询会是:with t1 as () select count(1) from table1,
 如果是:with t1 as @fast(select * from table1) select * from t1 ,count sql 就是：select count(1) from table1
 
-### 2.4.2 分页sql示例
+**分页sql示例**
+
 ```xml
 <!-- 快速分页和分页优化演示 -->
 <sql id="sqltoy_fastPage">
@@ -297,7 +316,8 @@ where t.ORDER_ID=?
 	<!-- <count-sql></count-sql> -->
 </sql>
 ```
-### 2.4.3 分页java代码调用
+
+**分页java代码调用**
 
 ```java
 /**
@@ -318,12 +338,13 @@ public void findPageByEntity() {
 	result = lightDao.findPage(pageModel, "sqltoy_fastPage", staffVO);
 	System.err.println(JSON.toJSONString(result));
 }
-	
 ```
 
-## 2.5 最巧妙的缓存应用，减少表关联查询
-* 1、 通过缓存翻译:<translate> 将代码转化为名称，避免关联查询，极大简化sql并提升查询效率 
-* 2、 通过缓存名称模糊匹配:<cache-arg> 获取精准的编码作为条件，避免关联like 模糊查询
+### 6. 最巧妙的缓存应用，减少表关联查询
+
+* 1、 通过缓存翻译:`<translate>` 将代码转化为名称，避免关联查询，极大简化sql并提升查询效率 
+* 2、 通过缓存名称模糊匹配:`<cache-arg>` 获取精准的编码作为条件，避免关联like 模糊查询
+
 ```java
 //支持对象属性注解模式进行缓存翻译
 @Translate(cacheName = "dictKeyName", cacheType = "DEVICE_TYPE", keyField = "deviceType")
@@ -332,6 +353,7 @@ private String deviceTypeName;
 @Translate(cacheName = "staffIdName", keyField = "staffId")
 private String staffName;
 ```		
+
 ```xml
 <sql id="sqltoy_order_search">
 	<!-- 缓存翻译设备类型
@@ -365,47 +387,52 @@ private String staffName;
 	</value>
 </sql>
 ```
-## 2.6 并行查询
 
-* 接口规范
+### 7. 并行查询
 
 ```java
-// parallQuery 面向查询(不要用于事务操作过程中),sqltoy提供强大的方法，但是否恰当使用需要使用者做合理的判断
 /**
-  * @TODO 并行查询并返回一维List，有几个查询List中就包含几个结果对象，paramNames和paramValues是全部sql的条件参数的合集
-  * @param parallQueryList
-  * @param paramNames
-  * @param paramValues
-  */
-public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
-			Object[] paramValues);
+ * @TODO 并行查询并返回结果集合，有几个查询List中就包含几个结果对象
+ *       paramsMap 是全部sql条件参数的合集，每个ParallelQuery也可单独设置自己的条件参数
+ * @param parallelQueryList ParallelQuery 集合，通过 .page(page) 设置即为分页查询
+ * @param paramsMap         sql中命名参数对应的参数值Map
+ */
+public <T> List<QueryResult<T>> parallelQuery(List<ParallelQuery> parallelQueryList, Map<String, Object> paramsMap);
+
+// 可通过 ParallelConfig 设置并行线程数、最大等待时长
+public <T> List<QueryResult<T>> parallelQuery(List<ParallelQuery> parallelQueryList, Map<String, Object> paramsMap,
+		ParallelConfig parallelConfig);
 ```
-* 使用范例
+
+使用范例：
 
 ```java
-//定义参数
-String[] paramNames = new String[] { "userId", "defaultRoles", "deployId", "authObjType" };
-Object[] paramValues = new Object[] { userId, defaultRoles, GlobalConstants.DEPLOY_ID,
-		SagacityConstants.TempAuthObjType.GROUP };
 // 使用并行查询同时执行2个sql,条件参数是2个查询的合集
-List<QueryResult<TreeModel>> list = super.parallQuery(
+List<QueryResult<TreeModel>> list = lightDao.parallelQuery(
 		Arrays.asList(
-		        ParallQuery.create().sql("webframe_searchAllModuleMenus").resultType(TreeModel.class),
-				ParallQuery.create().sql("webframe_searchAllUserReports").resultType(TreeModel.class)),
-		paramNames, paramValues);
-		
+		        ParallelQuery.create().sql("webframe_searchAllModuleMenus").resultType(TreeModel.class),
+				ParallelQuery.create().sql("webframe_searchAllUserReports").resultType(TreeModel.class)),
+		MapKit.keys("userId", "defaultRoles", "deployId", "authObjType")
+		      .values(userId, defaultRoles, GlobalConstants.DEPLOY_ID,
+					SagacityConstants.TempAuthObjType.GROUP));
+
+// 也可通过 ParallelConfig 设置并行线程数与最大等待时长
+List<QueryResult<TreeModel>> list2 = lightDao.parallelQuery(queries, paramsMap,
+		ParallelConfig.create().maxThreads(20).maxWaitSeconds(60));
 ```
 
-## 2.7 最跨数据库
+> 注意：并行查询面向查询场景(**不要用于事务操作过程中**)，是否恰当使用需要使用者根据实际场景做合理判断。
+> 6.0 更名说明：5.6.x 中的 `parallQuery`/`ParallQuery` 在 6.0 起更名为 `parallelQuery`/`ParallelQuery`。
+
+### 8. 最强的跨数据库能力
+
 * 1、提供类似hibernate性质的对象操作，自动生成相应数据库的方言。
 * 2、提供了最常用的:分页、取top、取随机记录等查询，避免了各自不同数据库不同的写法。
 * 3、提供了树形结构表的标准钻取查询方式，代替以往的递归查询，一种方式适配所有数据库。
-* 4、sqltoy提供了大量基于算法的辅助实现，最大程度上用算法代替了以往的sql，实现了跨数据库
+* 4、sqltoy提供了大量基于算法的辅助实现，最大程度上用算法代替了以往的sql，实现了跨数据库。
 * 5、sqltoy提供了函数替换功能，比如可以让oracle的语句在mysql或sqlserver上执行(sql加载时将函数替换成了mysql的函数),最大程度上实现了代码的产品化。
-    <property name="functionConverts" value="default" /> 
-    default:SubStr\Trim\Instr\Concat\Nvl 函数；可以参见org.sagacity.sqltoy.plugins.function.Nvl 代码实现
-    
- ```properties
+
+```properties
 # 开启sqltoy默认的函数自适配转换函数
 spring.sqltoy.functionConverts=default
 # 如在mysql场景下同时测试其他类型数据库，验证sql适配不同数据库，主要用于产品化软件
@@ -417,9 +444,11 @@ spring.sqltoy.redoDataSources[0]=pgdb
 # 启用自定义Nvl、Instr
 # spring.sqltoy.functionConverts=com.yourpackage.Nvl,com.yourpackage.Instr
 ```
+
 * 6、通过sqlId+dialect模式，可针对特定数据库写sql,sqltoy根据数据库类型获取实际执行sql,顺序为:
     dialect_sqlId->sqlId_dialect->sqlId，
 	如数据库为mysql,调用sqlId:sqltoy_showcase,则实际执行:sqltoy_showcase_mysql
+
 ```xml
 <sql id="sqltoy_showcase">
 	<value>
@@ -439,8 +468,8 @@ spring.sqltoy.redoDataSources[0]=pgdb
 	</value>
 </sql>
 ```
-  
-## 2.8 提供行列转换、分组汇总、同比环比、树排序汇总等
+
+### 9. 提供行列转换、分组汇总、同比环比、树排序汇总等
 
 * 水果销售记录表
 
@@ -453,7 +482,7 @@ spring.sqltoy.redoDataSources[0]=pgdb
 香蕉|2019年4月|12 | 2400|2700
 香蕉|2019年3月|13 | 2300|2700
 
-### 2.8.1 行转列(列转行也支持)
+#### 9.1 行转列(列转行也支持)
 
 ```xml
 <!-- 行转列 -->
@@ -469,6 +498,7 @@ spring.sqltoy.redoDataSources[0]=pgdb
 	<pivot start-column="sale_count" end-column="total_amt"	group-columns="fruit_name" category-columns="order_month" />
 </sql>
 ```
+
 * 效果
 
 <table>
@@ -498,7 +528,7 @@ spring.sqltoy.redoDataSources[0]=pgdb
 		<td>2000</td>
 		<td>2000</td>
 	</tr>
-		<tr>
+	<tr>
 		<td>苹果</td>
 		<td>13</td>
 		<td>2000</td>
@@ -513,8 +543,8 @@ spring.sqltoy.redoDataSources[0]=pgdb
 	</tbody>
 </table>
 
+#### 9.2 分组汇总、求平均(可任意层级)
 
-### 2.8.2 分组汇总、求平均(可任意层级)
 ```xml
 <sql id="group_summary_case">
 	<value>
@@ -525,7 +555,7 @@ spring.sqltoy.redoDataSources[0]=pgdb
 	]]>
 	</value>
 	<!-- reverse 是否反向 -->	
-	<summary columns="sale_count,sale_quantity,total_amt" reverse="true">
+	<summary sum-columns="sale_count,sale_quantity,total_amt" reverse="true">
 		<!-- 层级顺序保持从高到低 -->
 		<global sum-label="总计" label-column="fruit_name" />
 		 <!-- order-column: 分组排序列(对同分组进行排序)，order-with-sum:默认为true，order-way:desc/asc -->
@@ -533,6 +563,7 @@ spring.sqltoy.redoDataSources[0]=pgdb
 	</summary>
 </sql>
 ```
+
 * 效果
 
 品类|销售月份|销售笔数|销售数量(吨)|销售金额(万元)
@@ -547,7 +578,7 @@ spring.sqltoy.redoDataSources[0]=pgdb
 香蕉|2019年4月|12 | 2400|2700
 香蕉|2019年3月|13 | 2300|2700
 
-### 2.8.3 先行转列再环比计算
+#### 9.3 先行转列再环比计算
 
 ```xml
 <!-- 列与列环比演示 -->
@@ -565,6 +596,7 @@ spring.sqltoy.redoDataSources[0]=pgdb
 	<cols-chain-relative group-size="3" relative-indexs="1,2" start-column="1" format="#.00%" />
 </sql>
 ```
+
 * 效果
 
 <table>
@@ -621,7 +653,8 @@ spring.sqltoy.redoDataSources[0]=pgdb
 	</tbody>
 </table>
 
-### 2.8.4 树排序汇总
+#### 9.4 树排序汇总
+
 ```xml
 <!-- 树排序、汇总 -->
 <sql id="treeTable_sort_sum">
@@ -634,6 +667,7 @@ spring.sqltoy.redoDataSources[0]=pgdb
 	<tree-sort id-column="area_code" pid-column="pid_area"	sum-columns="sale_cnt" level-order-column="sale_cnt" order-way="desc"/>
 </sql>
 ```
+
 * 效果
 
 <table>
@@ -688,8 +722,10 @@ spring.sqltoy.redoDataSources[0]=pgdb
 </tbody>
 </table>
 
-## 2.9 分库分表
-### 2.9.1 查询分库分表（分库和分表策略可以同时使用）
+### 10. 分库分表
+
+#### 10.1 查询分库分表（分库和分表策略可以同时使用）
+
 ```xml
 sql参见quickstart项目:com/sqltoy/quickstart/sqltoy-quickstart.sql.xml 文件
 <!-- 演示分库 -->
@@ -716,10 +752,9 @@ sql参见quickstart项目:com/sqltoy/quickstart/sqltoy-quickstart.sql.xml 文件
 	]]>
 	</value>
 </sql>
-        
 ```
-   
-### 2.9.2 操作分库分表(vo对象由quickvo工具自动根据数据库生成，且自定义的注解不会被覆盖)
+
+#### 10.2 操作分库分表（vo对象由quickvo工具自动根据数据库生成，且自定义的注解不会被覆盖）
 
 @Sharding 在对象上通过注解来实现分库分表的策略配置
 
@@ -728,19 +763,14 @@ sql参见quickstart项目:com/sqltoy/quickstart/sqltoy-quickstart.sql.xml 文件
 ```java
 package com.sqltoy.showcase.vo;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-
 import org.sagacity.sqltoy.config.annotation.Sharding;
 import org.sagacity.sqltoy.config.annotation.SqlToyEntity;
 import org.sagacity.sqltoy.config.annotation.Strategy;
 
-import com.sagframe.sqltoy.showcase.vo.base.AbstractUserLogVO;
-
 /**
- * @project sqltoy-showcase
- * @author zhongxuchen
- * @version 1.0.0 Table: sqltoy_user_log,Remark:用户日志表
+ * db则是分库策略配置,table 则是分表策略配置，可以同时配置也可以独立配置
+ * 策略name要跟spring中的bean定义name一致,fields表示要以对象的哪几个字段值作为判断依据,可以一个或多个字段
+ * maxConcurrents:可选配置，表示最大并行数 maxWaitSeconds:可选配置，表示最大等待秒数
  */
 /*
  * db则是分库策略配置,table 则是分表策略配置，可以同时配置也可以独立配置
@@ -752,24 +782,17 @@ import com.sagframe.sqltoy.showcase.vo.base.AbstractUserLogVO;
 		maxConcurrents = 10, maxWaitSeconds = 1800)
 @SqlToyEntity
 public class UserLogVO extends AbstractUserLogVO {
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1296922598783858512L;
-
 	/** default constructor */
 	public UserLogVO() {
 		super();
 	}
 }
-
-
 ```
 
-# 3.集成说明
+# 集成说明
 
-## 3.1 参见trunk 下面的quickstart,并阅读readme.md进行上手
-  
+## 参见trunk 下面的quickstart,并阅读readme.md进行上手
+
 ```java
 package com.sqltoy.quickstart;
 
@@ -800,7 +823,7 @@ public class SqlToyApplication {
 
 ```
 
-## 3.2 application.properties sqltoy部分配置
+## application.properties sqltoy部分配置
 
 ```properties
 # sqltoy config
@@ -815,7 +838,7 @@ spring.sqltoy.unifyFieldsHandler=com.sqltoy.plugins.SqlToyUnifyFieldsHandler
 
 ```
 
-## 3.3 缓存翻译的配置文件sqltoy-translate.xml 
+## 缓存翻译的配置文件sqltoy-translate.xml 
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -855,6 +878,7 @@ spring.sqltoy.unifyFieldsHandler=com.sqltoy.plugins.SqlToyUnifyFieldsHandler
 </sagacity>
 
 ```
+
 * 实际业务开发使用，直接利用SqlToyCRUDService 就可以进行常规的操作，避免简单的对象操作自己写service，
 另外针对复杂逻辑则自己写service直接通过调用sqltoy提供的：LightDao 完成数据库交互操作！
 
@@ -886,9 +910,10 @@ public class CrudCaseServiceTest {
  }
 ```
 
-# 4. sqltoy关键代码说明
+# sqltoy关键代码说明
 
-## 4.1 sqltoy-orm 主要分以下几个部分：
+## sqltoy-orm 主要分以下几个部分：
+
   - SqlToyDaoSupport:提供给开发者Dao继承的基本Dao,集成了所有对数据库操作的方法。
   - LightDao:提供给开发者快捷使用的Dao,让开发者只关注写Service业务逻辑代码，在service中直接调用lightDao
   - DialectFactory:数据库方言工厂类，sqltoy根据当前连接的方言调用不同数据库的实现封装。
@@ -897,14 +922,21 @@ public class CrudCaseServiceTest {
   - ScriptLoader:sql配置文件加载解析器,封装于SqlToyContext中。sql文件严格按照*.sql.xml规则命名。
   - TranslateManager:缓存翻译管理器,用于加载缓存翻译的xml配置文件和缓存实现类，sqltoy提供了接口并提供了默认基于ehcache的本地缓存实现，这样效率是最高的，而redis这种分布式缓存IO开销太大，缓存翻译是一个高频度的调用，一般会缓存注入员工、机构、数据字典、产品品类、地区等相对变化不频繁的稳定数据。
   - ShardingStragety:分库分表策略管理器，4.x版本之后策略管理器并不需要显式定义，只有通过spring定义，sqltoy会在使用时动态管理。
-  
 
-## 4.2 快速阅读理解sqltoy:
+## 快速阅读理解sqltoy:
 
   - 从LightDao作为入口，了解sqltoy提供的所有功能
   - SqlToyDaoSupport 是LightDao 具体功能实现。
-  - 从DialectFactory会进入不同数据库方言的实现入口。可以跟踪看到具体数据库的实现逻辑。你会看到oracle、mysql等分页、取随机记录、快速分页的封装等。
+  - DialectFactory会进入不同数据库方言的实现入口，可以跟踪看到具体数据库的实现逻辑，你会看到oracle、mysql等分页、取随机记录、快速分页的封装等。
   - EntityManager:你会找到如何扫描POJO并构造成模型，知道通过POJO操作数据库实质会变成相应的sql进行交互。
-  - ParallelUtils:对象分库分表并行执行器，通过这个类你会看到分库分表批量操作时如何将集合分组到不同的库不同的表并进行并行调度的。
+  - ParallelUtils(位于dialect.executor包):对象分库分表并行执行器，通过这个类你会看到分库分表批量操作时如何将集合分组到不同的库不同的表并进行并行调度的。
   - SqlToyContext:sqltoy配置的上下文,通过这个类可以看到sqltoy全貌。
-  - PageOptimizeUtils:可以看到分页优化默认实现原理。
+  - PageOptimizeUtils(位于dialect包):可以看到分页优化默认实现原理。
+
+## 发展历程
+
+* 2007~2008年，做农行的一个管理类项目，因查询统计较多，且查询条件多而且经常要增加条件，就不停想如何快速适应这种变化，一个比较偶然的灵感发现了比mybatis强无数倍的动态sql写法，并作为hibernate jpa 查询方面的补充，收到了极为震撼的开发体验。可以看写于2009年的一篇博文: https://blog.csdn.net/iteye_2252/article/details/81683940
+* 2008~2012年，因一直做金融类企业项目，所面对的数据规模基本上是千万级别的，因此sqltoy一直围绕jpa进行sql查询增强，期间已经集成了缓存翻译、快速分页、行列旋转等比其他框架更具特色的查询特性。
+* 2013~2014年，因为了避免让开发者在一个项目中同时使用两种技术，因此在sqltoy中实现了基于对象的crud功能，形成了完整的sqltoy-orm框架。
+* 2014~2017年, 在负责拉卡拉大数据平台过程中，对sqltoy进行了大幅重构，实现了底层结构的合理化，在拉卡拉CRM和日均千万累计达百亿级别的大数据平台上得到了强化和检验。
+* 2018~至今,  在建设SaaS化多租户ERP复杂场景下和flink-cdc结合MPP数据库的实时数仓过程中得到了充分锤炼，sqltoy已经非常完善可靠，开始开源跟大家一起分享和共建！
