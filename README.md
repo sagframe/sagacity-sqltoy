@@ -149,11 +149,14 @@ lightDao.loadByIds(StaffInfoVO.class,"S2007");
 
 sqltoy中统一的规则是代码中可以直接传sql也可以是对应xml文件中的sqlId
 
+> [!NOTE]
+> `findBySql` 系列方法属于 `SqlToyLazyDao` 接口；`LightDao` 对应形态为 `find(sql, entity, resultType)`。
+
 ```java
 /**
- * @todo 通过对象传参数,简化paramName[],paramValue[] 模式传参
+ * @todo 通过对象传参数,简化paramName[],paramValue[] 模式传参（SqlToyLazyDao 接口；LightDao 对应形态为 find(sql, entity, resultType)）
  */
-public <T extends Serializable> List<T> findBySql(final String sqlOrNamedSql, final T entity);
+public <T extends Serializable> List<T> findBySql(final String sqlOrSqlId, final T entity);
 ```
 
 基于对象单表查询，并带缓存翻译：
@@ -330,12 +333,12 @@ public void findPageByEntity() {
 	staffVO.setStaffName("陈");
 	// 使用了分页优化器
 	// 第一次调用:执行count 和 取记录两次查询
-	Page result = lightDao.findPage(pageModel, "sqltoy_fastPage", staffVO);
+	Page result = lightDao.findPage(pageModel, "sqltoy_fastPage", staffVO, StaffInfoVO.class);
 	System.err.println(JSON.toJSONString(result));
 	// 第二次调用:过滤条件一致，则不会再次执行count查询
 	//设置为第二页
 	pageModel.setPageNo(2);
-	result = lightDao.findPage(pageModel, "sqltoy_fastPage", staffVO);
+	result = lightDao.findPage(pageModel, "sqltoy_fastPage", staffVO, StaffInfoVO.class);
 	System.err.println(JSON.toJSONString(result));
 }
 ```
