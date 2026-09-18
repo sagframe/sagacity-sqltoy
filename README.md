@@ -36,7 +36,7 @@ SqlToy is a fusion of JPA and ultra-powerful querying — the distilled and shar
 
 ## 💬 Community
 
-QQ group: **531812227** | [Gitee](https://gitee.com/sagacity/sagacity-sqltoy) | [GitCode](https://gitcode.com/sqltoy/sagacity-sqltoy)
+QQ group: **531812227** | [Gitee](https://gitee.com/sagacity/sagacity-sqltoy) | [GitHub](https://github.com/sagframe/sagacity-sqltoy) | [GitCode](https://gitcode.com/sqltoy/sagacity-sqltoy)
 
 ## 📦 Latest Version 6.0.1
 

@@ -36,7 +36,7 @@ SqlToy是JPA和超强查询的融合体，是简单业务、大型SaaS化多租�
 
 ## 💬 交流
 
-QQ交流群：**531812227** ｜ [Gitee](https://gitee.com/sagacity/sagacity-sqltoy) ｜ [GitCode](https://gitcode.com/sqltoy/sagacity-sqltoy)
+QQ交流群：**531812227** ｜ [Gitee](https://gitee.com/sagacity/sagacity-sqltoy) ｜ [GitHub](https://github.com/sagframe/sagacity-sqltoy) ｜ [GitCode](https://gitcode.com/sqltoy/sagacity-sqltoy)
 
 ## 📦 最新版本 6.0.1
 
