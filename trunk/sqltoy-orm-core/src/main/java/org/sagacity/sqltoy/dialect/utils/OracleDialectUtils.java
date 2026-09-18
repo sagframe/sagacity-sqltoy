@@ -213,18 +213,12 @@ public class OracleDialectUtils {
 			Connection conn, DBProfile profile, final int fetchSize, final int maxRows) throws Exception {
 		String dialect = profile.getDialect();
 		// 注：dbms_random包需要手工安装，位于$ORACLE_HOME/rdbms/admin/dbmsrand.sql
-		StringBuilder sql = new StringBuilder();
+		StringBuilder sql = DialectUtils.openFastWrap(sqlToyConfig, dialect);
 		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
 		// sql中是否存在排序或union
 		boolean hasOrderOrUnion = DialectUtils.hasOrderByOrUnion(innerSql);
 		// 给原始sql标记上特殊的开始和结尾，便于sql拦截器快速定位到原始sql并进行条件补充
 		innerSql = SqlUtilsExt.markOriginalSql(innerSql);
-		if (sqlToyConfig.isHasFast()) {
-			sql.append(sqlToyConfig.getFastPreSql(dialect));
-			if (!sqlToyConfig.isIgnoreBracket()) {
-				sql.append(" (");
-			}
-		}
 		// 存在order 或union 则在sql外包裹一层
 		if (hasOrderOrUnion) {
 			sql.append("select * from (");
