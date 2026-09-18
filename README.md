@@ -19,7 +19,7 @@ SqlToy是JPA和超强查询的融合体，是简单业务、大型SaaS化多租�
 | --- | --- |
 | 📖 在线文档（推荐） | <https://sagframe.github.io/sqltoy-docs/> |
 | 📄 xml中sql查询完整配置 | [在线文档·动态SQL规范](https://sagframe.github.io/sqltoy-docs/#/query/dynamic_sql) |
-| 📄 WORD版详细手册 | `docs/睿智平台SqlToy5.6 使用手册.doc`（6.0 变更见[升级指南](https://sagframe.github.io/sqltoy-docs/#/introduction/upgrade_6.0)） |
+| 📄 WORD版详细手册 | `docs/睿智平台SqlToy5.6使用手册.doc`（6.0 变更见[升级指南](https://sagframe.github.io/sqltoy-docs/#/introduction/upgrade_6.0)） |
 | 🚀 快速集成演示 | <https://gitee.com/sagacity/sqltoy-helloworld> |
 | 🚀 功能演示(quickstart) | <https://github.com/sagframe/sqltoy-quickstart> |
 | 🚀 Solon 演示 | <https://github.com/CoCoTeaNet/sqltoy-solon-demo> |
@@ -58,7 +58,7 @@ QQ交流群：**531812227** ｜ [Gitee](https://gitee.com/sagacity/sagacity-sqlt
 | 类别 | 核心能力 |
 | --- | --- |
 | 对象操作 | JPA 风格 CRUD、弹性更新、updateFetch / updateSaveFetch、级联、查询层次封装、树形表路由 |
-| SQL 查询 | 动态 SQL（`#[]` + filters）、缓存翻译、最强分页（count 优化 / 缓存 / 快速 / 并行）、并行查询、存储过程、流式查询 |
+| SQL 查询 | 动态 SQL（`#[]` + filters）、缓存翻译（含超大规模 FIFO 动态缓存）、最强分页（count 优化 / 缓存 / 快速 / 并行）、并行查询、存储过程、流式查询 |
 | 数据分析 | 行转列 / 列转行、分组汇总、同比环比、树形排序汇总、分组拼接、日期数字格式化 |
 | 跨数据库 | 24 种方言（含 SAP HANA）、函数自动替换、多方言 sqlId、多库适配验证 |
 | 企业级 | 分库分表、多租户、数据权限与越权校验、脱敏加解密、数据版本控制、SQL 拦截、慢 SQL 处理 |
@@ -347,6 +347,7 @@ public void findPageByEntity() {
 
 * 1、 通过缓存翻译:`<translate>` 将代码转化为名称，避免关联查询，极大简化sql并提升查询效率 
 * 2、 通过缓存名称模糊匹配:`<cache-arg>` 获取精准的编码作为条件，避免关联like 模糊查询
+* 3、 超大规模数据场景(如平台型电商SKU，百万级以上):FIFO动态缓存，缓存不做全量加载，未命中的key动态批量获取，本地仅保留最常用的数据（参见[在线文档·超大规模主数据缓存](https://sagframe.github.io/sqltoy-docs/#/translate/sqltoy_FIFO_translate)）
 
 ```java
 //支持对象属性注解模式进行缓存翻译
@@ -370,8 +371,8 @@ private String staffName;
 	<!-- 员工名称翻译,如果同一个缓存则可以同时对几个字段进行翻译 -->
 	<translate cache="staffIdName" columns="staffName,createName" />
 	<filters>
-		<!-- 反向利用缓存通过名称匹配出id用于精确查询 -->
-		<cache-arg cache-name="staffIdNameCache" param="staffName" alias-name="staffIds"/>
+			<!-- 反向利用缓存通过名称匹配出id用于精确查询 -->
+			<cache-arg cache-name="staffIdName" param="staffName" alias-name="staffIds"/>
 	</filters>
 	<value>
 	<![CDATA[
@@ -761,32 +762,33 @@ sql参见quickstart项目:com/sqltoy/quickstart/sqltoy-quickstart.sql.xml 文件
 
 @Sharding 在对象上通过注解来实现分库分表的策略配置
 
-参见:com.sqltoy.quickstart.ShardingSearchTest 进行演示
+完整演示参见演示项目 [sqltoy-showcase](https://github.com/sagframe/sqltoy-showcase) 的 sqltoy-sharding 子项目（策略 bean 定义见其 spring-sqltoy-sharding.xml）
 
 ```java
-package com.sqltoy.showcase.vo;
+package com.sagframe.sqltoy.showcase.vo;
 
 import org.sagacity.sqltoy.config.annotation.Sharding;
 import org.sagacity.sqltoy.config.annotation.SqlToyEntity;
 import org.sagacity.sqltoy.config.annotation.Strategy;
+
+import com.sagframe.sqltoy.showcase.vo.base.AbstractStaffInfoVO;
 
 /**
  * db则是分库策略配置,table 则是分表策略配置，可以同时配置也可以独立配置
  * 策略name要跟spring中的bean定义name一致,fields表示要以对象的哪几个字段值作为判断依据,可以一个或多个字段
  * maxConcurrents:可选配置，表示最大并行数 maxWaitSeconds:可选配置，表示最大等待秒数
  */
-/*
- * db则是分库策略配置,table 则是分表策略配置，可以同时配置也可以独立配置
- * 策略name要跟spring中的bean定义name一致,fields表示要以对象的哪几个字段值作为判断依据,可以一个或多个字段
- * maxConcurrents:可选配置，表示最大并行数 maxWaitSeconds:可选配置，表示最大等待秒数
- */
-@Sharding(db = @Strategy(name = "hashBalanceDBSharding", fields = { "userId" }),
-		// table = @Strategy(name = "hashBalanceSharding", fields = {"userId" }),
-		maxConcurrents = 10, maxWaitSeconds = 1800)
 @SqlToyEntity
-public class UserLogVO extends AbstractUserLogVO {
+@Sharding(db = @Strategy(name = "hashBalanceDBSharding", fields = { "staffId" })
+//分表跟分库类似
+//,table = @Strategy(name = "hashBalanceDBSharding", fields = { "staffId" })
+)
+public class StaffInfoVO extends AbstractStaffInfoVO {
+
+	private static final long serialVersionUID = 4609820466201465046L;
+
 	/** default constructor */
-	public UserLogVO() {
+	public StaffInfoVO() {
 		super();
 	}
 }
@@ -801,7 +803,7 @@ package com.sqltoy.quickstart;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.ImportResource;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 /**
@@ -809,21 +811,16 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
  * @project sqltoy-quickstart
  * @description quickstart 主程序入口
  * @author zhongxuchen
- * @version v1.0, Date:2020年7月17日
- * @modify 2020年7月17日,修改说明
  */
 @SpringBootApplication
-@ComponentScan(basePackages = { "com.sqltoy.config", "com.sqltoy.quickstart" })
+@ImportResource("classpath:spring-context.xml")
 @EnableTransactionManagement
 public class SqlToyApplication {
-	/**
-	 * @param args
-	 */
+
 	public static void main(String[] args) {
 		SpringApplication.run(SqlToyApplication.class, args);
 	}
 }
-
 ```
 
 ## application.properties sqltoy部分配置
@@ -846,9 +843,9 @@ spring.sqltoy.unifyFieldsHandler=com.sqltoy.plugins.SqlToyUnifyFieldsHandler
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <sagacity
-	xmlns="http://www.sagframe.com/schema/sqltoy-translate"
+	xmlns="https://www.sagframe.com/schema/sqltoy-translate"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://www.sagframe.com/schema/sqltoy-translate http://www.sagframe.com/schema/sqltoy/sqltoy-translate.xsd">
+	xsi:schemaLocation="https://www.sagframe.com/schema/sqltoy-translate https://www.sagframe.com/schema/sqltoy/sqltoy-translate.xsd">
 	<!-- 缓存有默认失效时间，默认为1小时,因此只有较为频繁的缓存才需要及时检测 -->
 	<cache-translates>
 		<!-- 基于sql直接查询的方式获取缓存 -->
@@ -886,7 +883,7 @@ spring.sqltoy.unifyFieldsHandler=com.sqltoy.plugins.SqlToyUnifyFieldsHandler
 另外针对复杂逻辑则自己写service直接通过调用sqltoy提供的：LightDao 完成数据库交互操作！
 
 ```java
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = SqlToyApplication.class)
 public class CrudCaseServiceTest {
 	@Autowired
@@ -924,7 +921,7 @@ public class CrudCaseServiceTest {
   - EntityManager:封装于SqlToyContext，用于托管POJO对象，建立对象跟数据库表的关系。sqltoy通过SqlToyEntity注解扫描加载对象。
   - ScriptLoader:sql配置文件加载解析器,封装于SqlToyContext中。sql文件严格按照*.sql.xml规则命名。
   - TranslateManager:缓存翻译管理器,用于加载缓存翻译的xml配置文件和缓存实现类，sqltoy提供了接口并提供了默认基于ehcache的本地缓存实现，这样效率是最高的，而redis这种分布式缓存IO开销太大，缓存翻译是一个高频度的调用，一般会缓存注入员工、机构、数据字典、产品品类、地区等相对变化不频繁的稳定数据。
-  - ShardingStragety:分库分表策略管理器，4.x版本之后策略管理器并不需要显式定义，只有通过spring定义，sqltoy会在使用时动态管理。
+  - ShardingStrategy:分库分表策略管理器，4.x版本之后策略管理器并不需要显式定义，只有通过spring定义，sqltoy会在使用时动态管理。
 
 ## 快速阅读理解sqltoy:
 
