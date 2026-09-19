@@ -30,6 +30,7 @@ SqlToy is a fusion of JPA and ultra-powerful querying — the distilled and shar
 | 🚀 Multi-datasource demo | <https://gitee.com/sagacity/sqltoy-showcase/tree/master/trunk/sqltoy-dynamic-datasource> |
 | 🚀 NoSQL demo (mongo/es) | <https://github.com/sagframe/sqltoy-showcase/tree/master/trunk/sqltoy-nosql> |
 | 🚀 xml configuration demo | <https://github.com/sagframe/sqltoy-showcase/tree/master/trunk/sqltoy-showcase> |
+| 🔌 quickvo code generator (official) | <https://gitee.com/sagacity/maven-quickvo-plugin> |
 | 🔌 sqltoy-plus (Lambda enhancements) | <https://gitee.com/gzghde/sqltoy-plus> |
 | 🔌 Admin system scaffold | <https://github.com/CoCoTeaNet/CyreneAdmin> |
 | 🔌 IDEA plugin | <https://github.com/imyuyu/sqltoy-idea-plugin> |
@@ -102,7 +103,7 @@ QQ group: **531812227** | [Gitee](https://gitee.com/sagacity/sagacity-sqltoy) | 
 
 ## 🚀 Quick Start
 
-Three steps: **1. Generate POJOs with quickvo; 2. Complete the yml configuration; 3. Inject LightDao in your Service (no need to write custom Dao classes)**
+Three steps: **1. Generate POJOs with [quickvo](https://gitee.com/sagacity/maven-quickvo-plugin); 2. Complete the yml configuration; 3. Inject LightDao in your Service (no need to write custom Dao classes)**
 
 ```java
 @Autowired

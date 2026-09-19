@@ -30,6 +30,7 @@ SqlToy是JPA和超强查询的融合体，是简单业务、大型SaaS化多租�
 | 🚀 多数据源演示 | <https://gitee.com/sagacity/sqltoy-showcase/tree/master/trunk/sqltoy-dynamic-datasource> |
 | 🚀 NoSQL演示(mongo/es) | <https://github.com/sagframe/sqltoy-showcase/tree/master/trunk/sqltoy-nosql> |
 | 🚀 xml配置演示 | <https://github.com/sagframe/sqltoy-showcase/tree/master/trunk/sqltoy-showcase> |
+| 🔌 quickvo 代码生成工具(官方) | <https://gitee.com/sagacity/maven-quickvo-plugin> |
 | 🔌 sqltoy-plus(Lambda增强) | <https://gitee.com/gzghde/sqltoy-plus> |
 | 🔌 管理系统脚手架 | <https://github.com/CoCoTeaNet/CyreneAdmin> |
 | 🔌 IDEA 插件 | <https://github.com/imyuyu/sqltoy-idea-plugin> |
@@ -102,7 +103,7 @@ QQ交流群：**531812227** ｜ [Gitee](https://gitee.com/sagacity/sagacity-sqlt
 
 ## 🚀 快速上手
 
-三步曲：**1、quickvo 生成 POJO；2、完成 yml 配置；3、Service 中注入 LightDao（无需自定义各种 Dao）**
+三步曲：**1、[quickvo](https://gitee.com/sagacity/maven-quickvo-plugin) 生成 POJO；2、完成 yml 配置；3、Service 中注入 LightDao（无需自定义各种 Dao）**
 
 ```java
 @Autowired
