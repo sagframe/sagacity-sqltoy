@@ -233,6 +233,16 @@ public class EntityMeta implements Serializable {
 	private IndexModel[] indexModels;
 
 	/**
+	 * 表分区元数据(分区策略和分区键)
+	 */
+	private PartitionMeta partitionMeta;
+
+	/**
+	 * MPP分析库表引擎元数据(ClickHouse/Doris/StarRocks)
+	 */
+	private MppTableMeta mppTableMeta;
+
+	/**
 	 * 计算列数量
 	 */
 	private int generatedColsCnt = 0;
@@ -909,6 +919,14 @@ public class EntityMeta implements Serializable {
 		this.indexModels = indexModels;
 	}
 
+	public PartitionMeta getPartitionMeta() {
+		return partitionMeta;
+	}
+
+	public void setPartitionMeta(PartitionMeta partitionMeta) {
+		this.partitionMeta = partitionMeta;
+	}
+
 	public Map<String, ForeignModel> getForeignFields() {
 		return foreignFields;
 	}
@@ -954,5 +972,34 @@ public class EntityMeta implements Serializable {
 
 	public void setNotGeneratedColMeta(NotGeneratedColMeta notGeneratedColMeta) {
 		this.notGeneratedColMeta = notGeneratedColMeta;
+	}
+
+	/**
+	 * update 2026-9-13 是否配置了业务ID生成器(收编各方言utils散布的同义样板判断)
+	 */
+	public boolean hasBusinessIdGenerator() {
+		return businessIdGenerator != null;
+	}
+
+	/**
+	 * update 2026-9-13 是否配置了数据版本字段
+	 */
+	public boolean hasDataVersion() {
+		return dataVersion != null;
+	}
+
+	/**
+	 * update 2026-9-13 是否配置了ID生成器
+	 */
+	public boolean hasIdGenerator() {
+		return idGenerator != null;
+	}
+
+	public MppTableMeta getMppTableMeta() {
+		return mppTableMeta;
+	}
+
+	public void setMppTableMeta(MppTableMeta mppTableMeta) {
+		this.mppTableMeta = mppTableMeta;
 	}
 }

@@ -80,6 +80,25 @@ public class FunctionUtils {
 		IFunction function;
 		String dialectSql = sqlContent;
 		String dialectLow = dialect.toLowerCase(Locale.ROOT);
+		// update 2026-9-14 预检加速(检测不改写,无耦合):常态SQL不含任何可转换函数,原循环
+		// 对每个适配函数各做一次全SQL maskLiterals拷贝(注册函数最多16次);预检在原串的
+		// 单次掩码上做只读正则探测,无任何命中直接返回原串(仅1次拷贝);有命中才进入改写
+		// 循环(结构与原形态一致,改写会变更串长,循环内掩码仍按原逻辑每函数各自重算)
+		String preCheckMask = null;
+		boolean hasMatch = false;
+		for (int i = 0, n = functionConverts.size(); i < n && !hasMatch; i++) {
+			function = functionConverts.get(i);
+			if (matchDialect(function.dialects(), dialectLow)) {
+				if (preCheckMask == null) {
+					preCheckMask = SqlConfigParseUtils.maskLiterals(sqlContent,
+							SqlConfigParseUtils.isBackslashEscapeDialect(dbType));
+				}
+				hasMatch = function.regex().matcher(preCheckMask).find();
+			}
+		}
+		if (!hasMatch) {
+			return sqlContent;
+		}
 		for (int i = 0, n = functionConverts.size(); i < n; i++) {
 			function = functionConverts.get(i);
 			// 方言为null或空白表示适配所有数据库,适配的方言包含当前方言也执行替换
@@ -113,7 +132,7 @@ public class FunctionUtils {
 
 	/**
 	 * 单个sql函数转换处理
-	 * 
+	 *
 	 * @param sqlContent
 	 * @param dbType
 	 * @param function
@@ -302,9 +321,11 @@ public class FunctionUtils {
 		if (!placeholder) {
 			return firstArg;
 		}
+		// update 2026-9-14
+		// 补KINGBASE(KingbaseES基于PG,占位符参数同样存在to_char(unknown,unknown)重载歧义)
 		boolean pgSyntax = dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL14 || dialect == DBType.GAUSSDB
 				|| dialect == DBType.MOGDB || dialect == DBType.STARDB || dialect == DBType.OSCAR
-				|| dialect == DBType.OPENGAUSS || dialect == DBType.VASTBASE;
+				|| dialect == DBType.OPENGAUSS || dialect == DBType.VASTBASE || dialect == DBType.KINGBASE;
 		if (!pgSyntax) {
 			return firstArg;
 		}

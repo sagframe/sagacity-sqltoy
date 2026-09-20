@@ -10,6 +10,7 @@ import java.util.Map;
 
 import javax.sql.DataSource;
 
+import org.sagacity.sqltoy.ParamFilterProcessor;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.config.model.FormatModel;
@@ -25,7 +26,6 @@ import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.ParamsFilter;
 import org.sagacity.sqltoy.model.XMLBinding;
-import org.sagacity.sqltoy.utils.ParamFilterUtils;
 
 /**
  * @project sagacity-sqltoy
@@ -238,9 +238,9 @@ public class QueryExecutorExtend implements Serializable {
 	 */
 	public Object[] getParamsValue(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig) {
 		// 整合sql中定义的filters和代码中扩展的filters
-		List<ParamFilterModel> filters = ParamFilterUtils.combineFilters(sqlToyConfig.getFilters(), paramFilters);
+		List<ParamFilterModel> filters = ParamFilterProcessor.combineFilters(sqlToyConfig.getFilters(), paramFilters);
 		// 调用sql配置的filter对最终参与查询的值进行处理，设置相应值为null实现部分条件sql不参与执行
-		return ParamFilterUtils.filterValue(sqlToyContext, paramsName, paramsValue, filters);
+		return ParamFilterProcessor.filterValue(sqlToyContext, paramsName, paramsValue, filters);
 	}
 
 	/**

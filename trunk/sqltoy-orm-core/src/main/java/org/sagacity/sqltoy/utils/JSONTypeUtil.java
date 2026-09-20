@@ -33,28 +33,10 @@ public class JSONTypeUtil {
 	 * 定义日志
 	 */
 	protected final static Logger logger = LoggerFactory.getLogger(JSONTypeUtil.class);
-	// PGobject 是否可用(静态一次性检测)
-	private static final boolean HAS_PG_OBJECT;
-	private static final boolean HAS_VB_OBJECT;
-	static {
-		boolean pgFound;
-		try {
-			Class.forName("org.postgresql.util.PGobject");
-			pgFound = true;
-		} catch (ClassNotFoundException e) {
-			pgFound = false;
-		}
-		HAS_PG_OBJECT = pgFound;
-
-		boolean vbFound;
-		try {
-			Class.forName("cn.com.vastbase.util.PGobject");
-			vbFound = true;
-		} catch (ClassNotFoundException e) {
-			vbFound = false;
-		}
-		HAS_VB_OBJECT = vbFound;
-	}
+	// update 2026-9-16 删除遗留死代码HAS_PG_OBJECT/HAS_VB_OBJECT静态探测块:2026-9-6重构后
+	// PGobject解析已统筹至DataSourceUtils.resolvePGobjectHolder(按URL
+	// scheme选同源驱动+dbType守卫),
+	// 两个布尔量全文件无任何读取,类加载期的无条件Class.forName探测徒增非PG系项目的类加载开销
 
 	// JSON 相关类型名称缓存
 	private static final String JSON_OBJECT = "jsonobject";
@@ -109,8 +91,8 @@ public class JSONTypeUtil {
 	 * <li>返回true表示类型匹配上，并完成了setValue赋值</li>
 	 * <li>返回false 表示常规类型,交回框架自行处理</li>
 	 */
-	public static void setJSONValue(Integer dbType, PreparedStatement pst, int paramIndex, int jdbcType, Object value)
-			throws SQLException {
+	public static void setJSONValue(DBProfile profile, Integer dbType, PreparedStatement pst, int paramIndex,
+			int jdbcType, Object value) throws SQLException {
 		// toJSONString对String直接透传(实测sqlserver 2025原生json列拒收二次序列化的
 		// 字符串标量形态""{...}"",报JSON text is not properly formatted),对象才做序列化
 		String jsonStr = toJSONString(value);
@@ -137,8 +119,8 @@ public class JSONTypeUtil {
 		}
 	}
 
-	public static void updateJSONValue(Integer dbType, ResultSet rs, String columnName, int jdbcType, Object value)
-			throws SQLException {
+	public static void updateJSONValue(DBProfile profile, Integer dbType, ResultSet rs, String columnName, int jdbcType,
+			Object value) throws SQLException {
 		// 同setJSONValue:String直接透传,对象才做序列化
 		String jsonStr = toJSONString(value);
 		if (isPGFamily(dbType)) {
@@ -158,12 +140,11 @@ public class JSONTypeUtil {
 	}
 
 	/**
-	 * update 2026-9-6 判定是否为PG系内核方言(PGobject类型包装的适用范围),与SqlUtil.isPGFamily一致
+	 * update 2026-9-6 判定是否为PG系内核方言(PGobject类型包装的适用范围),与SqlUtil.isPGFamily一致 update
+	 * 2026-9-16 委托DBProfile.isPGFamily静态白名单(单一事实源,消除逐字拷贝)
 	 */
 	private static boolean isPGFamily(Integer dbType) {
-		return dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.OPENGAUSS
-				|| dbType == DBType.MOGDB || dbType == DBType.GAUSSDB || dbType == DBType.STARDB
-				|| dbType == DBType.VASTBASE || dbType == DBType.KINGBASE;
+		return DBProfile.isPGFamily(dbType);
 	}
 
 	/*

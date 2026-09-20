@@ -2,21 +2,30 @@ package org.sagacity.sqltoy.plugins.ddl;
 
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.ForeignModel;
 import org.sagacity.sqltoy.config.model.IndexModel;
+import org.sagacity.sqltoy.config.model.ReferentialAction;
 import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.model.JdbcTypes;
 import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.StringUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @project sagacity-sqltoy
@@ -26,93 +35,111 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @modify Date:2023-12-17,修改说明
  */
 public class DDLUtils {
+	private static final Logger logger = LoggerFactory.getLogger(DDLUtils.class);
+
 	public static String NEWLINE = "\r\n";
 	public static String TAB = "   ";
 
 	/**
 	 * 因为存在外键关系，首先需要对表进行排序，被依赖的优先创建
+	 * <p>
+	 * update 2026-9-15 重写为Kahn拓扑排序:原"贪心单层前置"算法对链式依赖(A←B←C)在
+	 * ConcurrentHashMap不利迭代顺序下产出[B,C,A](处理C时前置B但不考虑B自身的依赖,
+	 * 处理B时A未入队被append到尾部),而外键约束输出对建表顺序硬依赖(mysql/pg内联 FOREIGN KEY于CREATE
+	 * TABLE,oracle/h2/sqlserver的ALTER ADD CONSTRAINT紧跟本表
+	 * CREATE之后),错序即建表失败;且原输出依赖hash序跨环境不可复现、swotTables全量
+	 * 重建最坏O(n²)。新算法O(V+E):零入度集合按表名字典序出队保证脚本可复现,
+	 * 自环(树表自引用外键,内联合法)不参与排序约束,多外键指向同表去重防入度虚增,
+	 * 节点集外的外表引用忽略(与原实现一致),环状残余(互相外键,内联约束下本就无解) 按名序追加+warn提示,不吞表不死循环
 	 * 
 	 * @param entitysMetaMap
-	 * @return
+	 * @return 被依赖表在前的表实体列表
 	 */
 	public static List<EntityMeta> sortTables(ConcurrentHashMap<String, EntityMeta> entitysMetaMap) {
-		// 构建一个暂时存放
-		LinkedHashMap<String, EntityMeta> tmpEntityMeta = new LinkedHashMap<String, EntityMeta>();
-		EntityMeta entityMeta;
-		String tableName;
-		for (Map.Entry<String, EntityMeta> entry : entitysMetaMap.entrySet()) {
-			entityMeta = entry.getValue();
-			tableName = entityMeta.getSchemaTable(null, null);
-			tmpEntityMeta.put(tableName, entityMeta);
+		// 节点归一:schemaTable名->meta(与原实现口径一致)
+		LinkedHashMap<String, EntityMeta> nodes = new LinkedHashMap<String, EntityMeta>();
+		// 大小写不敏感索引(quickvo等工具@Foreign表名可与@Entity tableName大小写不一致)
+		LinkedHashMap<String, String> lowerKeyMap = new LinkedHashMap<String, String>();
+		for (EntityMeta entityMeta : entitysMetaMap.values()) {
+			String key = entityMeta.getSchemaTable(null, null);
+			nodes.put(key, entityMeta);
+			lowerKeyMap.put(key.toLowerCase(), key);
 		}
-
-		// 组织排序
-		LinkedHashMap<String, EntityMeta> sortTables = new LinkedHashMap<String, EntityMeta>();
-		LinkedHashMap<String, EntityMeta> swotTables = new LinkedHashMap<String, EntityMeta>();
-		for (Map.Entry<String, EntityMeta> entry : entitysMetaMap.entrySet()) {
-			entityMeta = entry.getValue();
-			tableName = entityMeta.getSchemaTable(null, null);
-			// 有外键依赖的表放在前面
-			if (entityMeta.getForeignFields() != null) {
-				String foreignTable;
-				for (Map.Entry<String, ForeignModel> iter : entityMeta.getForeignFields().entrySet()) {
-					foreignTable = iter.getValue().getForeignTable();
-					if (entityMeta.getSchema() != null
-							&& !foreignTable.startsWith(entityMeta.getSchema().concat("."))) {
-						foreignTable = entityMeta.getSchema().concat(".").concat(foreignTable);
-					}
-					EntityMeta foreignMeta = tmpEntityMeta.get(foreignTable);
-					if (foreignMeta != null && !sortTables.containsKey(foreignTable)) {
-						sortTables.put(foreignTable, foreignMeta);
-					} // 外表和当前表都已经在排序队列中
-					else if (foreignMeta != null && sortTables.containsKey(tableName)
-							&& !isBefore(sortTables, foreignTable, tableName)) {
-						swotTables.clear();
-						// 将外键关联的表放第一位置
-						swotTables.put(foreignTable, foreignMeta);
-						// 先移除外键关联表
-						sortTables.remove(foreignTable);
-						swotTables.putAll(sortTables);
-						sortTables.clear();
-						// 完成关联表放首位的调整
-						sortTables.putAll(swotTables);
+		// 建边:foreignTable->依赖表
+		Map<String, Set<String>> successors = new HashMap<String, Set<String>>();
+		Map<String, Integer> inDegree = new HashMap<String, Integer>();
+		for (String name : nodes.keySet()) {
+			inDegree.put(name, 0);
+		}
+		for (Map.Entry<String, EntityMeta> entry : nodes.entrySet()) {
+			String tableName = entry.getKey();
+			EntityMeta entityMeta = entry.getValue();
+			if (entityMeta.getForeignFields() == null) {
+				continue;
+			}
+			// 同表多外键指向同一外表时去重,避免入度虚增导致该表永不出队
+			Set<String> deps = new HashSet<String>();
+			for (Map.Entry<String, ForeignModel> iter : entityMeta.getForeignFields().entrySet()) {
+				String foreignTable = iter.getValue().getForeignTable();
+				if (entityMeta.getSchema() != null && !foreignTable.startsWith(entityMeta.getSchema().concat("."))) {
+					foreignTable = entityMeta.getSchema().concat(".").concat(foreignTable);
+				}
+				// 大小写不敏感:@Foreign(table="QS_STAFF")与@Entity(tableName="qs_staff")等场景
+				String realKey = lowerKeyMap.get(foreignTable.toLowerCase());
+				if (realKey == null) {
+					realKey = foreignTable;
+				}
+				// 自环排除:树表自引用外键内联合法,不约束建表顺序;节点集外的外表引用忽略
+				if (!realKey.equals(tableName) && nodes.containsKey(realKey)) {
+					deps.add(realKey);
+				}
+			}
+			for (String dep : deps) {
+				successors.computeIfAbsent(dep, k -> new LinkedHashSet<String>()).add(tableName);
+				inDegree.put(tableName, inDegree.get(tableName) + 1);
+			}
+		}
+		// Kahn:零入度集合按表名字典序出队,同层顺序确定,DDL脚本跨环境可复现
+		TreeSet<String> ready = new TreeSet<String>();
+		for (Map.Entry<String, Integer> entry : inDegree.entrySet()) {
+			if (entry.getValue() == 0) {
+				ready.add(entry.getKey());
+			}
+		}
+		List<EntityMeta> result = new ArrayList<EntityMeta>(nodes.size());
+		Set<String> emitted = new HashSet<String>();
+		while (!ready.isEmpty()) {
+			String name = ready.pollFirst();
+			result.add(nodes.get(name));
+			emitted.add(name);
+			Set<String> nexts = successors.get(name);
+			if (nexts != null) {
+				for (String next : nexts) {
+					int deg = inDegree.get(next) - 1;
+					inDegree.put(next, deg);
+					if (deg == 0) {
+						ready.add(next);
 					}
 				}
 			}
-			// 未被依赖过
-			if (!sortTables.containsKey(tableName)) {
-				sortTables.put(tableName, entityMeta);
+		}
+		// 环状残余(互相外键):内联约束下任何顺序都无法建表,属schema设计问题;
+		// 排序层职责是不吞表不死循环——按名序追加并warn定位
+		if (result.size() < nodes.size()) {
+			List<String> cyclic = new ArrayList<String>();
+			for (String name : nodes.keySet()) {
+				if (!emitted.contains(name)) {
+					cyclic.add(name);
+				}
+			}
+			Collections.sort(cyclic);
+			logger.warn("foreign key cycle detected among tables:{}, appended in name order,"
+					+ " inline FOREIGN KEY constraints may fail, consider ALTER-based constraints!", cyclic);
+			for (String name : cyclic) {
+				result.add(nodes.get(name));
 			}
 		}
-		return new ArrayList<EntityMeta>(sortTables.values());
-	}
-
-	/**
-	 * 判断外键关联表位置是否在当前表的前面
-	 * 
-	 * @param sortTables
-	 * @param foreignTable
-	 * @param nowTable
-	 * @return
-	 */
-	public static boolean isBefore(LinkedHashMap<String, EntityMeta> sortTables, String foreignTable, String nowTable) {
-		int foreignTableIndex = 0;
-		int nowTableIndex = 0;
-		String tableName;
-		int index = 0;
-		for (Map.Entry<String, EntityMeta> entry : sortTables.entrySet()) {
-			tableName = entry.getKey();
-			if (foreignTable.equals(tableName)) {
-				foreignTableIndex = index;
-			} else if (nowTable.equals(tableName)) {
-				nowTableIndex = index;
-			}
-			index++;
-		}
-		if (foreignTableIndex < nowTableIndex) {
-			return true;
-		}
-		return false;
+		return result;
 	}
 
 	/**
@@ -128,6 +155,14 @@ public class DDLUtils {
 		tableMeta.setRemarks(escapeCommentForDdl(entityMeta.getTableComment()));
 		tableMeta.setSchema(entityMeta.getSchema());
 		tableMeta.setPkConstraint(entityMeta.getPkConstraint());
+		// 分区元数据
+		if (entityMeta.getPartitionMeta() != null) {
+			tableMeta.setPartitionMeta(entityMeta.getPartitionMeta());
+		}
+		// MPP表引擎元数据
+		if (entityMeta.getMppTableMeta() != null) {
+			tableMeta.setMppTableMeta(entityMeta.getMppTableMeta());
+		}
 		// 索引信息
 		if (entityMeta.getIndexModels() != null) {
 			List<IndexModel> indexModels = new ArrayList<>();
@@ -172,6 +207,23 @@ public class DDLUtils {
 	}
 
 	/**
+	 * JSON文档承载类型:无原生JSON列类型的库降级承载,避免生成非法的"col JSON"。
+	 * hana→NCLOB,sqlserver→NVARCHAR(MAX),db2/oracle11→CLOB;oracle21c+/mysql/pg/doris等原生支持→JSON
+	 */
+	private static String jsonCarrierType(int dbType) {
+		if (dbType == DBType.HANA) {
+			return "NCLOB";
+		}
+		if (dbType == DBType.SQLSERVER) {
+			return "NVARCHAR(MAX)";
+		}
+		if (dbType == DBType.DB2 || dbType == DBType.ORACLE11) {
+			return "CLOB";
+		}
+		return "JSON";
+	}
+
+	/**
 	 * 设置类型
 	 * 
 	 * @param colMeta
@@ -181,14 +233,14 @@ public class DDLUtils {
 	public static String convertType(ColumnMeta colMeta, int dbType) {
 		if (colMeta.getNativeType() != null) {
 			if (colMeta.getNativeType().equalsIgnoreCase("JSON")) {
-				return "JSON";
+				return jsonCarrierType(dbType);
 			} else if (colMeta.getNativeType().equalsIgnoreCase("BSON")) {
 				if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 						|| dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.STARDB
-						|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE) {
+						|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE) {
 					return "BSON";
 				} else {
-					return "JSON";
+					return jsonCarrierType(dbType);
 				}
 			}
 		}
@@ -219,17 +271,20 @@ public class DDLUtils {
 			break;
 		case java.sql.Types.CHAR:
 		case java.sql.Types.NCHAR:
-			typeName = "CHAR";
+			// hana的CHAR/VARCHAR为ASCII字符集,unicode须NCHAR/NVARCHAR
+			typeName = (dbType == DBType.HANA) ? "NCHAR" : "CHAR";
 			typeName = setLength(typeName, false, colMeta);
 			break;
 		case java.sql.Types.VARCHAR:
 		case java.sql.Types.NVARCHAR:
-			typeName = "VARCHAR";
+			typeName = (dbType == DBType.HANA) ? "NVARCHAR" : "VARCHAR";
 			typeName = setLength(typeName, false, colMeta);
 			break;
 		case java.sql.Types.LONGNVARCHAR:
 			if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM || dbType == DBType.H2) {
 				typeName = "CLOB";
+			} else if (dbType == DBType.HANA) {
+				typeName = "NCLOB";
 			} else {
 				typeName = "TEXT";
 			}
@@ -238,7 +293,8 @@ public class DDLUtils {
 			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 					|| dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.STARDB
 					|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE || dbType == DBType.ORACLE
-					|| dbType == DBType.ORACLE11 || dbType == DBType.DM) {
+					// update 2026-9-14 补KINGBASE(KingbaseES基于PG,类型映射归PG系)
+					|| dbType == DBType.KINGBASE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
 				// 精度需跟在TIMESTAMP之后:TIMESTAMP(6) WITH TIME ZONE
 				typeName = "TIMESTAMP";
 				if (colMeta.getColumnSize() > 0) {
@@ -254,7 +310,7 @@ public class DDLUtils {
 		case java.sql.Types.BLOB:
 			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 					|| dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.STARDB
-					|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE) {
+					|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE) {
 				typeName = "BYTEA";
 			} else if (dbType == DBType.SQLSERVER) {
 				typeName = "VARBINARY(MAX)";
@@ -266,7 +322,7 @@ public class DDLUtils {
 		case java.sql.Types.BINARY:
 			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 					|| dbType == DBType.OPENGAUSS || dbType == DBType.STARDB || dbType == DBType.OSCAR
-					|| dbType == DBType.MOGDB || dbType == DBType.VASTBASE) {
+					|| dbType == DBType.MOGDB || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE) {
 				typeName = "BYTEA";
 			} else if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
 				typeName = "BLOB";
@@ -282,7 +338,7 @@ public class DDLUtils {
 		case java.sql.Types.LONGVARBINARY:
 			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 					|| dbType == DBType.OPENGAUSS || dbType == DBType.STARDB || dbType == DBType.OSCAR
-					|| dbType == DBType.MOGDB || dbType == DBType.VASTBASE) {
+					|| dbType == DBType.MOGDB || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE) {
 				typeName = "BYTEA";
 			} else if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
 				typeName = "BLOB";
@@ -296,8 +352,12 @@ public class DDLUtils {
 			break;
 		case java.sql.Types.CLOB:
 		case java.sql.Types.NCLOB:
-			if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM || dbType == DBType.H2) {
+			if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM || dbType == DBType.H2
+					|| dbType == DBType.DB2) {
 				typeName = "CLOB";
+			} else if (dbType == DBType.HANA) {
+				// hana无TEXT类型,大文本为NCLOB(unicode)
+				typeName = "NCLOB";
 			} else {
 				typeName = "TEXT";
 			}
@@ -377,6 +437,10 @@ public class DDLUtils {
 				// family: vector),向量以Array(Float32)承载(同doris思路):字符串'[1,2,3]'插入
 				// 隐式解析、读回'[1,2,3]'文本、L2Distance(v,[..])距离检索均实证可行
 				typeName = "Array(Float32)";
+			} else if (dbType == DBType.HANA) {
+				// 2026-9-11 hana 2.0 SPS08起提供REAL_VECTOR类型(维度必填,上限65000)
+				typeName = (colMeta.getColumnSize() > 0) ? ("REAL_VECTOR(" + colMeta.getColumnSize() + ")")
+						: "REAL_VECTOR";
 			} else {
 				// update 2026-9-10 vastbase G100 3.0实测向量类型名为FLOATVECTOR(无VECTOR别名),同gaussdb企业版
 				if (dbType == DBType.GAUSSDB || dbType == DBType.VASTBASE) {
@@ -384,8 +448,11 @@ public class DDLUtils {
 				} else {
 					typeName = "VECTOR";
 				}
-				if (colMeta.getColumnSize() > 0) {
-					typeName = typeName + "(" + colMeta.getColumnSize() + ")";
+				// 维度有效时才带(n):pgvector经JDBC取到的COLUMN_SIZE为Integer.MAX_VALUE(无界哨兵),
+				// 直接渲染vector(2147483647)会超pgvector上限16000被拒,故无界时渲染裸vector(pgvector允许无界向量)
+				int vecDim = colMeta.getColumnSize();
+				if (vecDim > 0 && vecDim < Integer.MAX_VALUE) {
+					typeName = typeName + "(" + vecDim + ")";
 				}
 			}
 			break;
@@ -398,6 +465,9 @@ public class DDLUtils {
 				typeName = colMeta.getNativeType();
 			} else if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
 				typeName = "SDO_GEOMETRY";
+			} else if (dbType == DBType.HANA) {
+				// hana空间类型为ST_GEOMETRY(构造函数ST_GeomFromText与mysql系同名同参)
+				typeName = "ST_GEOMETRY";
 			} else {
 				typeName = "GEOMETRY";
 			}
@@ -410,9 +480,10 @@ public class DDLUtils {
 			if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11) {
 				typeName = "BINARY_DOUBLE";
 			} else if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
-					|| dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.STARDB
-					|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE || dbType == DBType.DM
-					|| dbType == DBType.H2) {
+			// update 2026-9-14 补KINGBASE(KingbaseES基于PG,类型映射归PG系)
+					|| dbType == DBType.KINGBASE || dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB
+					|| dbType == DBType.STARDB || dbType == DBType.OSCAR || dbType == DBType.VASTBASE
+					|| dbType == DBType.DM || dbType == DBType.H2) {
 				typeName = "DOUBLE PRECISION";
 			} else if (dbType == DBType.SQLSERVER) {
 				typeName = "FLOAT";
@@ -424,7 +495,8 @@ public class DDLUtils {
 		case java.sql.Types.NUMERIC:
 			if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
 				typeName = "NUMBER";
-			} else if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14) {
+			} else if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.KINGBASE) {
+				// update 2026-9-14 补KINGBASE(KingbaseES基于PG,numeric为任意精度,同vanilla PG)
 				typeName = "NUMERIC";
 			} else {
 				typeName = "DECIMAL";
@@ -441,10 +513,12 @@ public class DDLUtils {
 			}
 		}
 		}
-		// 数组类型
+		// 数组类型(pg系:typeName以[]结尾时渲染为下划线前缀的数组类型);
+		// VECTOR除外:pgvector的vector本身即向量类型(非"向量的数组"),加_前缀会变成_vector数组类型导致建表失败
 		if ((dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 				|| dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.STARDB
-				|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE) && colMeta.getTypeName() != null
+				|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE)
+				&& colMeta.getDataType() != JdbcTypes.VECTOR && colMeta.getTypeName() != null
 				&& colMeta.getTypeName().endsWith("[]") && !isBytes && !typeName.startsWith("_")) {
 			return "_".concat(typeName);
 		}
@@ -496,6 +570,180 @@ public class DDLUtils {
 	 * @param dbType
 	 * @param tableSql
 	 */
+	/**
+	 * 生成表分区子句(依据@Partition元数据,闭括号后附加):
+	 * expression为数据库原生分区表达式时直接使用(如postgresql的"RANGE (trade_date)"),
+	 * 否则按strategy+columns(或expression)拼接;分区明细定义以注释形式附加
+	 * 
+	 * @param tableMeta
+	 * @param upperOrLower
+	 * @param tableSql
+	 * @return 是否产生了分区子句
+	 */
+	public static boolean wrapTablePartition(TableMeta tableMeta, String upperOrLower, int dbType,
+			StringBuilder tableSql) {
+		org.sagacity.sqltoy.config.model.PartitionMeta partitionMeta = tableMeta.getPartitionMeta();
+		if (partitionMeta == null || StringUtil.isBlank(partitionMeta.getStrategy())) {
+			return false;
+		}
+		String strategy = partitionMeta.getStrategy().toUpperCase(Locale.ROOT);
+		// 逻辑策略token转SQL语法:RANGE_COLUMNS/LIST_COLUMNS(下划线,见@Partition定义)渲染为"RANGE
+		// COLUMNS"/"LIST COLUMNS"
+		// (mysql/oceanbase等要求空格分隔,下划线形式非法)
+		String sqlStrategy = strategy.replace("RANGE_COLUMNS", "RANGE COLUMNS").replace("LIST_COLUMNS", "LIST COLUMNS");
+		// 反引号/双引号剔除:quickvo从SHOW CREATE提取的表达式可能带mysql引号,Doris/SR的PARTITION BY不接受
+		String expression = (partitionMeta.getExpression() == null) ? null
+				: partitionMeta.getExpression().replace("`", "").replace("\"", "");
+		// 原生表达式已含策略(如"RANGE (trade_date)"):直接使用(列名跟随大小写策略)
+		String upperExpression = (expression == null) ? null : expression.trim().toUpperCase(Locale.ROOT);
+		if (StringUtil.isNotBlank(expression)
+				&& (upperExpression.startsWith(strategy) || upperExpression.startsWith(sqlStrategy))) {
+			tableSql.append(" PARTITION BY ").append(StringUtil.toLowerOrUpper(expression.trim(), upperOrLower));
+		} else {
+			// 按策略+分区键(或函数表达式)拼接
+			String columns = StringUtil.isNotBlank(expression)
+					? StringUtil.toLowerOrUpper(expression.trim(), upperOrLower)
+					: joinPartitionColumns(partitionMeta.getColumns(), upperOrLower);
+			tableSql.append(" PARTITION BY ").append(sqlStrategy).append(" (").append(columns).append(")");
+		}
+		wrapPartitionDefs(partitionMeta, strategy, dbType, tableSql);
+		return true;
+	}
+
+	/**
+	 * 分区明细渲染:mysql/doris/starrocks等要求RANGE/LIST显式给出分区清单才能建表, 有明细时渲染真实子句(PARTITION
+	 * xx VALUES LESS THAN (v),..);HASH/KEY渲染PARTITIONS n;
+	 * 无明细(pg/oracle等策略型分区,子分区独立建表)维持注释形式。 LIST语法按方言区分:oracle/DM为"VALUES
+	 * (v)",mysql系为"VALUES IN (v)"
+	 */
+	private static void wrapPartitionDefs(org.sagacity.sqltoy.config.model.PartitionMeta partitionMeta, String strategy,
+			int dbType, StringBuilder tableSql) {
+		String[] names = partitionMeta.getPartitionNames();
+		if (names == null || names.length == 0) {
+			return;
+		}
+		String[] values = partitionMeta.getPartitionValues();
+		boolean rangeStyle = strategy.startsWith("RANGE") || strategy.startsWith("LIST");
+		if (!rangeStyle) {
+			// HASH/KEY:分区数量
+			tableSql.append(" PARTITIONS ").append(names.length);
+			return;
+		}
+		boolean lessThan = strategy.startsWith("RANGE");
+		// RANGE分区明细必须按上界升序渲染(doris/mysql等拒绝非升序的VALUES LESS THAN);
+		// 提取顺序可能非升序(如doris经SHOW PARTITIONS返回pmax在前),此处按值稳定排序,MAXVALUE/空值恒排最后
+		if (lessThan && values != null) {
+			Integer[] order = new Integer[names.length];
+			for (int i = 0; i < order.length; i++) {
+				order[i] = i;
+			}
+			final String[] vals = values;
+			java.util.Arrays.sort(order, (x, y) -> comparePartitionBound((x < vals.length) ? vals[x] : null,
+					(y < vals.length) ? vals[y] : null));
+			String[] sortedNames = new String[names.length];
+			String[] sortedValues = new String[names.length];
+			for (int i = 0; i < names.length; i++) {
+				sortedNames[i] = names[order[i]];
+				sortedValues[i] = (order[i] < vals.length) ? vals[order[i]] : null;
+			}
+			names = sortedNames;
+			values = sortedValues;
+		}
+		tableSql.append(NEWLINE).append("(");
+		for (int i = 0; i < names.length; i++) {
+			if (i > 0) {
+				tableSql.append(",");
+			}
+			tableSql.append(NEWLINE).append(TAB).append("PARTITION ").append(names[i]);
+			String value = (values != null && i < values.length) ? values[i] : null;
+			if (lessThan) {
+				// RANGE:MAXVALUE仅最后一个分区合法;中间分区缺值时无法合成合法上界,
+				// 以/* value missing */显式标记(该语句建表会失败,提示补全分区值,优于静默生成错误边界)
+				if (StringUtil.isBlank(value)) {
+					if (i == names.length - 1) {
+						tableSql.append(" VALUES LESS THAN (MAXVALUE)");
+					} else {
+						tableSql.append(" /* value missing */");
+					}
+				} else {
+					tableSql.append(" VALUES LESS THAN (").append(quotePartitionValue(value)).append(")");
+				}
+			} else {
+				// LIST:不支持MAXVALUE;缺值时以/* value missing */显式标记(建表会失败,提示补全);
+				// oracle/DM语法为"VALUES (v)",mysql系为"VALUES IN (v)"
+				if (StringUtil.isBlank(value)) {
+					tableSql.append(" /* value missing */");
+				} else {
+					boolean oracleFamily = dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM;
+					tableSql.append(oracleFamily ? " VALUES (" : " VALUES IN (").append(quotePartitionValue(value))
+							.append(")");
+				}
+			}
+		}
+		tableSql.append(NEWLINE).append(")");
+	}
+
+	/**
+	 * RANGE分区上界比较(用于按升序排序分区明细):MAXVALUE/空值恒排最后;
+	 * 数值边界按数值大小(避免'10'<'9'的字典序错误),其余按字典序(同一表内格式一致,ISO日期字典序即时间序)
+	 */
+	private static int comparePartitionBound(String v1, String v2) {
+		boolean m1 = isMaxOrBlankBound(v1);
+		boolean m2 = isMaxOrBlankBound(v2);
+		if (m1 != m2) {
+			return m1 ? 1 : -1;
+		}
+		if (m1) {
+			return 0;
+		}
+		String s1 = v1.trim();
+		String s2 = v2.trim();
+		try {
+			return Double.compare(Double.parseDouble(unquoteBound(s1)), Double.parseDouble(unquoteBound(s2)));
+		} catch (NumberFormatException e) {
+			return s1.compareTo(s2);
+		}
+	}
+
+	private static boolean isMaxOrBlankBound(String v) {
+		return StringUtil.isBlank(v) || v.trim().equalsIgnoreCase("MAXVALUE");
+	}
+
+	private static String unquoteBound(String v) {
+		String s = v.trim();
+		if (s.length() >= 2 && s.startsWith("'") && s.endsWith("'")) {
+			s = s.substring(1, s.length() - 1).trim();
+		}
+		return s;
+	}
+
+	/** 分区值:日期形态加引号(2026-02-01裸值会被解析为算术2023);数字/MAXVALUE/函数调用不加 */
+	private static String quotePartitionValue(String value) {
+		String v = value.trim();
+		if (v.startsWith("'") || v.equalsIgnoreCase("MAXVALUE") || v.matches("\\d+") || v.contains("(")) {
+			return v;
+		}
+		if (v.matches("\\d{4}-\\d{2}-\\d{2}.*")) {
+			return "'" + v + "'";
+		}
+		return v;
+	}
+
+	/** 分区键列名按输出大小写策略转换后拼接 */
+	private static String joinPartitionColumns(String[] columns, String upperOrLower) {
+		if (columns == null || columns.length == 0) {
+			return "";
+		}
+		StringBuilder result = new StringBuilder();
+		for (int i = 0; i < columns.length; i++) {
+			if (i > 0) {
+				result.append(",");
+			}
+			result.append(StringUtil.toLowerOrUpper(columns[i], upperOrLower));
+		}
+		return result.toString();
+	}
+
 	public static void wrapTablePrimaryKeys(TableMeta tableMeta, String toUpperOrLower, int dbType,
 			StringBuilder tableSql) {
 		String primaryKeys = "";
@@ -583,10 +831,14 @@ public class DDLUtils {
 		if (tableMeta.getForeigns() == null || tableMeta.getForeigns().isEmpty()) {
 			return;
 		}
-		boolean isOracle = false;
+		// oracle/DM不支持ON UPDATE子句;oracle(非DM)不接受NO ACTION关键字(ORA-02000),
+		// oracle/DM(ORA-03001)与mysql系(InnoDB)均不支持SET DEFAULT,须跳过以免生成非法FK
+		boolean isOracle = (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM);
+		boolean isOracleStrict = (dbType == DBType.ORACLE || dbType == DBType.ORACLE11);
+		boolean isMySqlFamily = (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.TIDB
+				|| dbType == DBType.OCEANBASE || dbType == DBType.DORIS || dbType == DBType.STARROCKS);
 		String splitSign = ";";
 		for (ForeignModel foreign : tableMeta.getForeigns()) {
-			isOracle = (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM);
 			if (outerTable) {
 				tableSql.append(splitSign).append(NEWLINE);
 				tableSql.append("ALTER TABLE ")
@@ -605,30 +857,39 @@ public class DDLUtils {
 			tableSql.append(StringUtil.toLowerOrUpper(StringUtil.linkAry(",", true, foreign.getForeignColumns()),
 					lowerOrUpper));
 			tableSql.append(")");
-			if (foreign.getDeleteRestict() == 1) {
+			if (foreign.getDeleteRestict() == ReferentialAction.RESTRICT) {
 				if (!isOracle) {
 					tableSql.append(" ON DELETE RESTRICT");
 				}
-			} else if (foreign.getDeleteRestict() == 0) {
+			} else if (foreign.getDeleteRestict() == ReferentialAction.CASCADE) {
 				tableSql.append(" ON DELETE CASCADE");
-			} else if (foreign.getDeleteRestict() == 2) {
+			} else if (foreign.getDeleteRestict() == ReferentialAction.SET_NULL) {
 				tableSql.append(" ON DELETE SET NULL");
-			} else if (foreign.getDeleteRestict() == 3) {
-				tableSql.append(" ON DELETE NO ACTION");
-			} else if (foreign.getDeleteRestict() == 4) {
-				tableSql.append(" ON DELETE SET DEFAULT");
+			} else if (foreign.getDeleteRestict() == ReferentialAction.NO_ACTION) {
+				// oracle不接受NO ACTION关键字(ORA-02000,其默认行为即NO ACTION),跳过;DM/mysql/pg等支持
+				if (!isOracleStrict) {
+					tableSql.append(" ON DELETE NO ACTION");
+				}
+			} else if (foreign.getDeleteRestict() == ReferentialAction.SET_DEFAULT) {
+				// oracle/DM(ORA-03001)与mysql系(InnoDB)不支持SET DEFAULT,跳过(退化为默认NO ACTION行为)
+				if (!isOracle && !isMySqlFamily) {
+					tableSql.append(" ON DELETE SET DEFAULT");
+				}
 			}
 			if (!isOracle) {
-				if (foreign.getUpdateRestict() == 1) {
+				if (foreign.getUpdateRestict() == ReferentialAction.RESTRICT) {
 					tableSql.append(" ON UPDATE RESTRICT");
-				} else if (foreign.getUpdateRestict() == 0) {
+				} else if (foreign.getUpdateRestict() == ReferentialAction.CASCADE) {
 					tableSql.append(" ON UPDATE CASCADE");
-				} else if (foreign.getUpdateRestict() == 2) {
+				} else if (foreign.getUpdateRestict() == ReferentialAction.SET_NULL) {
 					tableSql.append(" ON UPDATE SET NULL");
-				} else if (foreign.getUpdateRestict() == 3) {
+				} else if (foreign.getUpdateRestict() == ReferentialAction.NO_ACTION) {
 					tableSql.append(" ON UPDATE NO ACTION");
-				} else if (foreign.getUpdateRestict() == 4) {
-					tableSql.append(" ON UPDATE SET DEFAULT");
+				} else if (foreign.getUpdateRestict() == ReferentialAction.SET_DEFAULT) {
+					// mysql系(InnoDB)不支持ON UPDATE SET DEFAULT
+					if (!isMySqlFamily) {
+						tableSql.append(" ON UPDATE SET DEFAULT");
+					}
 				}
 			}
 		}
@@ -725,7 +986,7 @@ public class DDLUtils {
 		return dbType == DBType.DM || dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14
 				|| dbType == DBType.GAUSSDB || dbType == DBType.KINGBASE || dbType == DBType.MOGDB
 				|| dbType == DBType.OPENGAUSS || dbType == DBType.VASTBASE || dbType == DBType.STARDB
-				|| dbType == DBType.OSCAR;
+				|| dbType == DBType.OSCAR || dbType == DBType.HANA;
 	}
 
 	/**
@@ -739,10 +1000,13 @@ public class DDLUtils {
 				|| defaultValue.equals("GETDATE()") || defaultValue.equals("CURRENT_TIMESTAMP()")
 				|| defaultValue.equals("CURRENT_TIMESTAMP") || defaultValue.equals("CURRENT_DATE")
 				|| defaultValue.equals("CURDATE()") || defaultValue.equals("CURTIME()")
-				|| defaultValue.equals("LOCALTIMESTAMP")) {
+				|| defaultValue.equals("LOCALTIMESTAMP") || defaultValue.equals("SYSTIMESTAMP")
+				|| defaultValue.equals("SYSDATETIME()") || defaultValue.equals("sysdatetime()")
+				|| defaultValue.equals("LOCALTIME") || defaultValue.equals("TODAY")) {
 			return true;
 		}
-		return false;
+		// 带精度形态:CURRENT_TIMESTAMP(3)/NOW(6)等(mysql/mariadb合法时间函数默认值)
+		return defaultValue.matches("(?i)(CURRENT_TIMESTAMP|NOW|LOCALTIMESTAMP)\\s*\\(\\s*\\d+\\s*\\)");
 	}
 
 	/**

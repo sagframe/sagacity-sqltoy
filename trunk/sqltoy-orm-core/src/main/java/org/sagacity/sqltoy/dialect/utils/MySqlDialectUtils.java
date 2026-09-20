@@ -1,6 +1,7 @@
 package org.sagacity.sqltoy.dialect.utils;
 
 import org.sagacity.sqltoy.config.model.PKStrategy;
+import org.sagacity.sqltoy.model.DBProfile;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 
 /**
@@ -17,7 +18,8 @@ public class MySqlDialectUtils {
 	 * @param pkStrategy
 	 * @return
 	 */
-	public static boolean allowAssignPKValue(PKStrategy pkStrategy, Integer dbType) {
+	public static boolean allowAssignPKValue(PKStrategy pkStrategy, DBProfile profile) {
+		Integer dbType = profile.getDbType();
 		if (pkStrategy == null) {
 			return true;
 		}

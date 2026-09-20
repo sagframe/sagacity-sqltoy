@@ -9,6 +9,7 @@ import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.dialect.utils.DialectExtUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.dialect.utils.MySqlDialectUtils;
+import org.sagacity.sqltoy.model.DBProfile;
 
 /**
  * @project sagacity-sqltoy
@@ -25,15 +26,15 @@ public class DorisDialect extends MySqlDialect {
 
 	@Override
 	public Long saveAllIgnoreExist(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType, final String dialect,
-			final Boolean autoCommit, final String tableName) throws Exception {
+			ReflectPropsHandler reflectPropsHandler, Connection conn, DBProfile profile, final Boolean autoCommit,
+			final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-		boolean isAssignPK = MySqlDialectUtils.allowAssignPKValue(entityMeta.getIdStrategy(), dbType);
+		boolean isAssignPK = MySqlDialectUtils.allowAssignPKValue(entityMeta.getIdStrategy(), profile);
 		// 无insert ignore前缀:PK/UNIQUE模型insert即主键upsert,天然幂等
-		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta,
-				entityMeta.getIdStrategy(), NVL_FUNCTION, NEXT_VAL + entityMeta.getSequence(), isAssignPK, tableName);
+		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), profile, entityMeta,
+				entityMeta.getIdStrategy(), NEXT_VAL + entityMeta.getSequence(), isAssignPK, tableName);
 		return DialectUtils.saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql,
-				entities, batchSize, reflectPropsHandler, conn, dbType, autoCommit);
+				entities, batchSize, reflectPropsHandler, conn, profile, autoCommit);
 	}
 
 	// update 2026-9-10 saveOrUpdateAll无需覆写:父类MySqlDialect的"update计数足额则跳过

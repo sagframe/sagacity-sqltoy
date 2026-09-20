@@ -54,10 +54,14 @@ public class H2DialectUtils {
 			}
 		} else if (jdbcType == java.sql.Types.DATE) {
 			sql.append("cast(? as DATE)");
-		} else if (jdbcType == java.sql.Types.NUMERIC) {
-			sql.append("cast(? as DECIMAL)");
-		} else if (jdbcType == java.sql.Types.DECIMAL) {
-			sql.append("cast(? as DECIMAL)");
+		} else if (jdbcType == java.sql.Types.NUMERIC || jdbcType == java.sql.Types.DECIMAL) {
+			// update 2026-9-14 修复:裸cast(? as DECIMAL)默认标度为0,小数值被取整
+			// (h2真库实测88.88四舍五入为89);精度/标度已知按列定义cast,未知时大标度兜底
+			if (fieldMeta.getPrecision() > 0) {
+				sql.append("cast(? as DECIMAL(" + fieldMeta.getPrecision() + "," + fieldMeta.getScale() + "))");
+			} else {
+				sql.append("cast(? as DECIMAL(31,6))");
+			}
 		} else if (jdbcType == java.sql.Types.BIGINT) {
 			sql.append("cast(? as BIGINT)");
 		} else if (jdbcType == java.sql.Types.INTEGER || jdbcType == java.sql.Types.TINYINT

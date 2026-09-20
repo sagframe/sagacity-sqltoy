@@ -14,7 +14,7 @@ import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.config.model.ParamFilterModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
-import org.sagacity.sqltoy.dialect.utils.PageOptimizeUtils;
+import org.sagacity.sqltoy.dialect.PageOptimizeUtils;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.plugins.id.macro.AbstractMacro;
 import org.sagacity.sqltoy.plugins.id.macro.MacroUtils;
@@ -260,7 +260,7 @@ public class SqlScriptLoader {
 	public SqlToyConfig getSqlConfig(String sqlKey, SqlType sqlType, String dialect, Object paramValues,
 			boolean blankToNull) {
 		if (StringUtil.isBlank(sqlKey)) {
-			throw new IllegalArgumentException("sql or sqlId is null!");
+			throw new IllegalArgumentException(SqlToyConstants.NULL_SQL_MESSAGE);
 		}
 		SqlToyConfig result = null;
 		String realDialect = (dialect == null) ? "" : dialect.toLowerCase(Locale.ROOT);

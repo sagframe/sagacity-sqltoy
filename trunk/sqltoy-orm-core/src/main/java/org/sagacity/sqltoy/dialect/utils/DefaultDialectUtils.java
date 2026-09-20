@@ -36,12 +36,12 @@ import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.model.ColumnMeta;
+import org.sagacity.sqltoy.model.DBProfile;
 import org.sagacity.sqltoy.model.JdbcTypes;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.TableMeta;
-import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.sagacity.sqltoy.translate.DynamicCacheFetch;
@@ -89,18 +89,12 @@ public class DefaultDialectUtils {
 	 */
 	public static QueryResult getRandomResult(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, final DecryptHandler decryptHandler, Long totalCount, Long randomCount,
-			Connection conn, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
-			throws Exception {
+			Connection conn, DBProfile profile, final int fetchSize, final int maxRows) throws Exception {
+		String dialect = profile.getDialect();
 		// select * from table order by rand() limit :randomCount 性能比较差,通过产生rand()
 		// row_number 再排序方式性能稍好 同时也可以保证通用性
-		StringBuilder sql = new StringBuilder();
+		StringBuilder sql = DialectUtils.openFastWrap(sqlToyConfig, dialect);
 		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
-		if (sqlToyConfig.isHasFast()) {
-			sql.append(sqlToyConfig.getFastPreSql(dialect));
-			if (!sqlToyConfig.isIgnoreBracket()) {
-				sql.append(" (");
-			}
-		}
 		// 存在with语句,将with部分剥离置前,避免replaceFirst将随机列误插入with定义内部
 		if (sqlToyConfig.isHasWith()) {
 			SqlWithAnalysis sqlWith = new SqlWithAnalysis(innerSql);
@@ -120,21 +114,11 @@ public class DefaultDialectUtils {
 		sql.append(" )  as " + SqlToyConstants.INTERMEDIATE_TABLE1);
 		sql.append(" order by rand() limit ");
 		sql.append(randomCount);
-		if (sqlToyConfig.isHasFast()) {
-			if (!sqlToyConfig.isIgnoreBracket()) {
-				sql.append(") ");
-			}
-			sql.append(sqlToyConfig.getFastTailSql(dialect));
-		}
-		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
-				sql.toString(), null, null, dialect);
-		QueryExecutorExtend extend = queryExecutor.getInnerModel();
-		// 增加sql执行拦截器 update 2022-9-10
-		queryParam = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig,
-				(extend.entityClass == null) ? OperateType.random : OperateType.singleTable, queryParam,
-				extend.entityClass, dbType);
-		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				extend, decryptHandler, conn, dbType, 0, fetchSize, maxRows);
+		DialectUtils.closeFastWrap(sqlToyConfig, dialect, sql);
+		return DialectUtils.executeWrappedQuery(sqlToyContext, sqlToyConfig, queryExecutor, decryptHandler, conn,
+				profile, sql.toString(), null, null,
+				(queryExecutor.getInnerModel().entityClass == null) ? OperateType.random : OperateType.singleTable,
+				fetchSize, maxRows);
 	}
 
 	/**
@@ -155,61 +139,36 @@ public class DefaultDialectUtils {
 	 */
 	public static QueryResult findPageBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, final DecryptHandler decryptHandler, Long pageNo, Integer pageSize,
-			Connection conn, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
-			throws Exception {
-		StringBuilder sql = new StringBuilder();
-		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
-		// 给原始sql标记上特殊的开始和结尾，便于sql拦截器快速定位到原始sql并进行条件补充
-		innerSql = SqlUtilsExt.markOriginalSql(innerSql);
+			Connection conn, DBProfile profile, final int fetchSize, final int maxRows) throws Exception {
+		Integer dbType = profile.getDbType();
+		String dialect = profile.getDialect();
 		boolean isNamed = sqlToyConfig.isNamedParam();
-		if (sqlToyConfig.isHasFast()) {
-			sql.append(sqlToyConfig.getFastPreSql(dialect));
-			if (!sqlToyConfig.isIgnoreBracket()) {
-				sql.append(" (");
-			}
-		}
-		sql.append(innerSql);
-		sql.append(" limit ");
-		sql.append(isNamed ? ":" + SqlToyConstants.PAGE_FIRST_PARAM_NAME : "?");
+		String innerSql = DialectUtils.markInnerSql(sqlToyConfig, dialect);
 		boolean useDefault = true;
 		// 未匹配数据库类型
 		if (dbType == DBType.UNDEFINE && !sqlToyContext.isDefaultPageOffset()) {
 			useDefault = false;
 		}
-		if (useDefault) {
-			sql.append(" offset ");
-		} else {
-			sql.append(" , ");
-		}
+		StringBuilder sql = DialectUtils.openFastWrap(sqlToyConfig, dialect);
+		sql.append(innerSql);
+		sql.append(" limit ");
+		sql.append(isNamed ? ":" + SqlToyConstants.PAGE_FIRST_PARAM_NAME : "?");
+		sql.append(useDefault ? " offset " : " , ");
 		sql.append(isNamed ? ":" + SqlToyConstants.PAGE_LAST_PARAM_NAME : "?");
-		if (sqlToyConfig.isHasFast()) {
-			if (!sqlToyConfig.isIgnoreBracket()) {
-				sql.append(") ");
-			}
-			sql.append(sqlToyConfig.getFastTailSql(dialect));
-		}
-		SqlToyResult queryParam;
+		DialectUtils.closeFastWrap(sqlToyConfig, dialect, sql);
 		// 将Long类型尽量转Integer，避免部分数据库setLong不支持(hive)
 		Long startIndex = (pageNo - 1) * pageSize;
 		Object start = startIndex.intValue();
 		if (startIndex > Integer.MAX_VALUE) {
 			start = startIndex;
 		}
-		// limit ? offset ?模式
-		if (useDefault) {
-			queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor, sql.toString(),
-					pageSize, start, dialect);
-		} else {
-			queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor, sql.toString(),
-					start, pageSize, dialect);
-		}
-		QueryExecutorExtend extend = queryExecutor.getInnerModel();
-		// 增加sql执行拦截器 update 2022-9-10
-		queryParam = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig,
-				(extend.entityClass == null) ? OperateType.page : OperateType.singleTable, queryParam,
-				extend.entityClass, dbType);
-		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				extend, decryptHandler, conn, dbType, 0, fetchSize, maxRows);
+		// limit ? offset ?模式:useDefault时limit参数为pageSize,兼容低版本的limit start,size模式相反
+		Object firstParam = useDefault ? pageSize : start;
+		Object lastParam = useDefault ? start : pageSize;
+		return DialectUtils.executeWrappedQuery(sqlToyContext, sqlToyConfig, queryExecutor, decryptHandler, conn,
+				profile, sql.toString(), firstParam, lastParam,
+				(queryExecutor.getInnerModel().entityClass == null) ? OperateType.page : OperateType.singleTable,
+				fetchSize, maxRows);
 	}
 
 	/**
@@ -229,35 +188,18 @@ public class DefaultDialectUtils {
 	 */
 	public static QueryResult findTopBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, final DecryptHandler decryptHandler, Integer topSize, Connection conn,
-			final Integer dbType, final String dialect, final int fetchSize, final int maxRows) throws Exception {
-		StringBuilder sql = new StringBuilder();
-		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
-		// 给原始sql标记上特殊的开始和结尾，便于sql拦截器快速定位到原始sql并进行条件补充
-		innerSql = SqlUtilsExt.markOriginalSql(innerSql);
-		if (sqlToyConfig.isHasFast()) {
-			sql.append(sqlToyConfig.getFastPreSql(dialect));
-			if (!sqlToyConfig.isIgnoreBracket()) {
-				sql.append(" (");
-			}
-		}
+			DBProfile profile, final int fetchSize, final int maxRows) throws Exception {
+		String dialect = profile.getDialect();
+		String innerSql = DialectUtils.markInnerSql(sqlToyConfig, dialect);
+		StringBuilder sql = DialectUtils.openFastWrap(sqlToyConfig, dialect);
 		sql.append(innerSql);
 		sql.append(" limit ");
 		sql.append(topSize);
-		if (sqlToyConfig.isHasFast()) {
-			if (!sqlToyConfig.isIgnoreBracket()) {
-				sql.append(") ");
-			}
-			sql.append(sqlToyConfig.getFastTailSql(dialect));
-		}
-		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
-				sql.toString(), null, null, dialect);
-		QueryExecutorExtend extend = queryExecutor.getInnerModel();
-		// 增加sql执行拦截器 update 2022-9-10
-		queryParam = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig,
-				(extend.entityClass == null) ? OperateType.top : OperateType.singleTable, queryParam,
-				extend.entityClass, dbType);
-		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				extend, decryptHandler, conn, dbType, 0, fetchSize, maxRows);
+		DialectUtils.closeFastWrap(sqlToyConfig, dialect, sql);
+		return DialectUtils.executeWrappedQuery(sqlToyContext, sqlToyConfig, queryExecutor, decryptHandler, conn,
+				profile, sql.toString(), null, null,
+				(queryExecutor.getInnerModel().entityClass == null) ? OperateType.top : OperateType.singleTable,
+				fetchSize, maxRows);
 	}
 
 	/**
@@ -274,7 +216,8 @@ public class DefaultDialectUtils {
 	 * @throws Exception
 	 */
 	public static Long deleteAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize, Connection conn,
-			final Integer dbType, final Boolean autoCommit, final String tableName) throws Exception {
+			DBProfile profile, final Boolean autoCommit, final String tableName) throws Exception {
+		Integer dbType = profile.getDbType();
 		if (null == entities || entities.isEmpty()) {
 			return 0L;
 		}
@@ -311,7 +254,8 @@ public class DefaultDialectUtils {
 			colName = ReservedWordsUtil.convertWord(entityMeta.getColumnName(field), dbType);
 			deleteSql.append(colName);
 			deleteSql.append(" in (?) ");
-			sqlToyResult = SqlConfigParseUtils.processSql(deleteSql.toString(), null, new Object[] { idValues }, null);
+			sqlToyResult = SqlConfigParseUtils.processSql(deleteSql.toString(), null, new Object[] { idValues },
+					profile.getDialect());
 		} else {
 			List<Object[]> idValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getIdArray(), null, null);
 			int dataSize = idValues.size();
@@ -351,30 +295,30 @@ public class DefaultDialectUtils {
 				}
 				deleteSql.append(condition);
 			}
-			sqlToyResult = SqlConfigParseUtils.processSql(deleteSql.toString(), null, realValues, null);
+			sqlToyResult = SqlConfigParseUtils.processSql(deleteSql.toString(), null, realValues, profile.getDialect());
 		}
 		// 增加sql执行拦截器 update 2022-9-10
 		SqlToyConfig sqlToyConfig = new SqlToyConfig(DataSourceUtils.getDialect(dbType));
 		sqlToyConfig.setSqlType(SqlType.delete);
 		sqlToyConfig.setSql(sqlToyResult.getSql());
 		sqlToyResult = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig, OperateType.execute, sqlToyResult,
-				entities.get(0).getClass(), dbType);
+				entities.get(0).getClass(), profile);
 		return SqlUtil.executeSql(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(), sqlToyResult.getParamsValue(),
-				null, conn, dbType, autoCommit, false);
+				null, conn, profile, autoCommit, false);
 	}
 
 	public static Serializable updateSaveFetch(final SqlToyContext sqlToyContext, final Serializable entity,
-			final UpdateRowHandler updateRowHandler, String[] uniqueProps, final Connection conn, final Integer dbType,
-			String dialect, String tableName, int lockWaitTimeout) throws Exception {
-		return updateSaveFetch(sqlToyContext, entity, updateRowHandler, null, uniqueProps, conn, dbType, dialect,
-				tableName, lockWaitTimeout);
+			final UpdateRowHandler updateRowHandler, String[] uniqueProps, final Connection conn, DBProfile profile,
+			String tableName, int lockWaitTimeout) throws Exception {
+		return updateSaveFetch(sqlToyContext, entity, updateRowHandler, null, uniqueProps, conn, profile, tableName,
+				lockWaitTimeout);
 	}
 
 	public static Serializable updateSaveFetch(final SqlToyContext sqlToyContext, final Serializable entity,
-			final UpdateRowCallback updateRowCallback, String[] uniqueProps, final Connection conn,
-			final Integer dbType, String dialect, String tableName, int lockWaitTimeout) throws Exception {
-		return updateSaveFetch(sqlToyContext, entity, null, updateRowCallback, uniqueProps, conn, dbType, dialect,
-				tableName, lockWaitTimeout);
+			final UpdateRowCallback updateRowCallback, String[] uniqueProps, final Connection conn, DBProfile profile,
+			String tableName, int lockWaitTimeout) throws Exception {
+		return updateSaveFetch(sqlToyContext, entity, null, updateRowCallback, uniqueProps, conn, profile, tableName,
+				lockWaitTimeout);
 	}
 
 	/**
@@ -393,8 +337,8 @@ public class DefaultDialectUtils {
 	 */
 	public static Serializable updateSaveFetch(final SqlToyContext sqlToyContext, final Serializable entity,
 			final UpdateRowHandler updateRowHandler, final UpdateRowCallback updateRowCallback, String[] uniqueProps,
-			final Connection conn, final Integer dbType, String dialect, String tableName, int lockWaitTimeout)
-			throws Exception {
+			final Connection conn, DBProfile profile, String tableName, int lockWaitTimeout) throws Exception {
+		Integer dbType = profile.getDbType();
 		final EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		// 条件字段
 		String[] whereFields = uniqueProps;
@@ -433,15 +377,42 @@ public class DefaultDialectUtils {
 		TypeHandler typeHandler = sqlToyContext.getTypeHandler();
 		final boolean hasUpdateRow = (updateRowHandler == null && updateRowCallback == null) ? false : true;
 		// 组织select * from table for update 语句
-		SqlToyResult queryParam = wrapFetchSql(entityMeta, dbType, whereFields, whereParamValues, tableName,
+		SqlToyResult queryParam = wrapFetchSql(entityMeta, profile, whereFields, whereParamValues, tableName,
 				lockWaitTimeout);
 		// 增加sql执行拦截器 update 2022-9-10
 		queryParam = DialectUtils.doInterceptors(sqlToyContext, null, OperateType.singleTable, queryParam,
-				entity.getClass(), dbType);
+				entity.getClass(), profile);
 		SqlExecuteStat.showSql("execute lock records query", queryParam.getSql(), queryParam.getParamsValue());
+		// update 2026-9-14 oracle系(ojdbc)autocommit=false时updateRow后当前行缓存不反映本次修改
+		// (真库实测标签/序号update均陈旧,refreshRow亦无效),回读值为旧值致返回实体失真;
+		// 以独立语句重查回读(同事务可见自身修改,for update重复执行为重入加锁故省略);
+		// 重查定位列优先主键(回调可能修改uniqueProps对应列致原条件失配),无主键退回条件列
+		String[] usfLocatorProps = (entityMeta.getIdArray() != null && entityMeta.getIdArray().length > 0)
+				? entityMeta.getIdArray()
+				: whereFields;
+		StringBuilder reReadSqlB = new StringBuilder("select ");
+		String[] usfFields = entityMeta.getFieldsArray(false);
+		for (int i = 0; i < usfFields.length; i++) {
+			if (i > 0) {
+				reReadSqlB.append(",");
+			}
+			reReadSqlB.append(ReservedWordsUtil.convertWord(entityMeta.getColumnName(usfFields[i]), dbType));
+		}
+		reReadSqlB.append(" from ").append(entityMeta.getSchemaTable(tableName, dbType)).append(" where ");
+		for (int i = 0; i < usfLocatorProps.length; i++) {
+			if (i > 0) {
+				reReadSqlB.append(" and ");
+			}
+			reReadSqlB.append(ReservedWordsUtil.convertWord(entityMeta.getColumnName(usfLocatorProps[i]), dbType))
+					.append(" = ?");
+		}
+		final String usfReReadSql = reReadSqlB.toString();
+		final String[] usfReReadProps = usfLocatorProps;
 		// 可编辑结果集
-		PreparedStatement pst = conn.prepareStatement(queryParam.getSql(), ResultSet.TYPE_FORWARD_ONLY,
-				ResultSet.CONCUR_UPDATABLE);
+		// update 2026-9-14 DM驱动FORWARD_ONLY+UPDATABLE组合prepare即报-2123无效cursor
+		// name(真库实测),SCROLL_INSENSITIVE+UPDATABLE可用(updateRow正常落库);其余库维持FORWARD_ONLY
+		int usfRsType = (dbType == DBType.DM) ? ResultSet.TYPE_SCROLL_INSENSITIVE : ResultSet.TYPE_FORWARD_ONLY;
+		PreparedStatement pst = conn.prepareStatement(queryParam.getSql(), usfRsType, ResultSet.CONCUR_UPDATABLE);
 		// 设置全局statementTimeout，默认为null
 		if (SqlToyConstants.defaultStatementTimeout != null && SqlToyConstants.defaultStatementTimeout > 0) {
 			pst.setQueryTimeout(SqlToyConstants.defaultStatementTimeout);
@@ -452,7 +423,7 @@ public class DefaultDialectUtils {
 				new PreparedStatementResultHandler() {
 					@Override
 					public void execute(Object rowData, PreparedStatement pst, ResultSet rs) throws Exception {
-						SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, pst, (Object[]) rowData,
+						SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, profile, pst, (Object[]) rowData,
 								null, 0);
 						// 执行类似 select xxx from table for update(sqlserver语法有差异)
 						ResultSet finalRs = pst.executeQuery();
@@ -474,7 +445,7 @@ public class DefaultDialectUtils {
 													.ifPresent(fieldMeta -> {
 														try {
 															SqlUtilsExt.resultUpdate(typeHandler, conn, finalRs,
-																	fieldMeta, fieldValue, dbType, false,
+																	fieldMeta, fieldValue, profile, dbType, false,
 																	(forcedFieldNames != null && Arrays
 																			.stream(forcedFieldNames)
 																			.anyMatch(x -> fieldName != null
@@ -489,6 +460,16 @@ public class DefaultDialectUtils {
 								if (index > 0) {
 									throw new DataAccessException(
 											"updateSaveFetch can only operate on a single record, please check the uniqueProps setting!");
+								}
+								// update 2026-9-14 oracle系重查回读的行定位值:须在回调执行前提取
+								// (回调可能修改uniqueProps对应列,主键值则稳定)
+								Object[] locatorVals = null;
+								if (hasUpdateRow && (dbType == DBType.ORACLE || dbType == DBType.ORACLE11
+										|| dbType == DBType.DM)) {
+									locatorVals = new Object[usfReReadProps.length];
+									for (int i = 0; i < usfReReadProps.length; i++) {
+										locatorVals[i] = finalRs.getObject(entityMeta.getColumnName(usfReReadProps[i]));
+									}
 								}
 								// 存在修改记录
 								if (hasUpdateRow) {
@@ -526,7 +507,8 @@ public class DefaultDialectUtils {
 										}
 										// 修改数据版本
 										SqlUtilsExt.resultUpdate(typeHandler, conn, finalRs,
-												entityMeta.getFieldMeta(dataVersionField), nowVersion, dbType, false);
+												entityMeta.getFieldMeta(dataVersionField), nowVersion, profile, dbType,
+												false);
 									}
 									// 执行update反调，实现锁定行记录值的修改
 									if (updateRowHandler != null) {
@@ -539,7 +521,7 @@ public class DefaultDialectUtils {
 													setValConsumer.accept(fieldName, forcedFieldNames, fieldValue);
 												});
 									} else if (updateRowCallback != null) {
-										updateRowCallback.updateRow(typeHandler, dbType, conn, finalRs, index);
+										updateRowCallback.updateRow(typeHandler, profile, conn, finalRs, index);
 									}
 									// 考虑公共字段修改
 									if (unifyFieldsHandler != null && unifyFieldsHandler.updateUnifyFields() != null) {
@@ -557,7 +539,7 @@ public class DefaultDialectUtils {
 												if (unifyFieldsHandler.forceUpdateFields() != null
 														&& unifyFieldsHandler.forceUpdateFields().contains(field)) {
 													SqlUtilsExt.resultUpdate(typeHandler, conn, finalRs, fieldMeta,
-															fieldValue, dbType, false);
+															fieldValue, profile, dbType, false);
 												} else {
 													// 反射对象属性取值
 													Object pojoFieldValue = BeanUtil.getProperty(entity, field);
@@ -566,7 +548,7 @@ public class DefaultDialectUtils {
 														fieldValue = pojoFieldValue;
 													}
 													SqlUtilsExt.resultUpdate(typeHandler, conn, finalRs, fieldMeta,
-															fieldValue, dbType, false);
+															fieldValue, profile, dbType, false);
 												}
 											}
 										}
@@ -575,10 +557,33 @@ public class DefaultDialectUtils {
 									finalRs.updateRow();
 								}
 								index++;
-								// 重新获得修改后的值(列类型名与读取策略已在循环前查询级预计算)
-								result.add(ResultUtils.processResultRow(dbType, typeHandler, dynamicCacheFetch,
-										dynamicCacheHolder, finalRs, null, null, rowCnt, null, null, false,
-										usfTypeNames, usfKinds, 0));
+								// update 2026-9-14 oracle系(ojdbc)/DM真库实测:autocommit=false时updateRow后
+								// 当前行缓存不反映本次修改(标签/序号update均陈旧,refreshRow/滚动集亦无效),
+								// 直接回读当前行得到旧值致返回实体失真;以独立语句重查回读(行锁已由本事务
+								// 持有,同事务可见自身修改);其余库驱动updateRow后当前行即新值,维持原形态
+								ResultSet readRs = finalRs;
+								PreparedStatement reReadPst = null;
+								if (hasUpdateRow && (dbType == DBType.ORACLE || dbType == DBType.ORACLE11
+										|| dbType == DBType.DM)) {
+									reReadPst = conn.prepareStatement(usfReReadSql);
+									SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, profile, reReadPst,
+											locatorVals, null, 0);
+									ResultSet rrs = reReadPst.executeQuery();
+									rrs.next();
+									readRs = rrs;
+								}
+								try {
+									// 重新获得修改后的值(列类型名与读取策略已在循环前查询级预计算,重查
+									// select列清单与锁查询完全一致,类型名/序号一一对应)
+									result.add(ResultUtils.processResultRow(dbType, typeHandler, dynamicCacheFetch,
+											dynamicCacheHolder, readRs, null, null, rowCnt, null, null, false,
+											usfTypeNames, usfKinds, 0));
+								} finally {
+									if (reReadPst != null) {
+										// close语句连带关闭其结果集
+										reReadPst.close();
+									}
+								}
 							}
 							// 没有查询到记录，表示是需要首次插入
 							if (index == 0) {
@@ -592,10 +597,10 @@ public class DefaultDialectUtils {
 										? processFieldValues(sqlToyContext, entityMeta, entity, false)
 										: fieldValues;
 								String[] fieldsArray = entityMeta.getFieldsArray(false);
-								for (int i = 0; i < fieldsArray.length; i++) {
+								for (int i = 0, n = fieldsArray.length; i < n; i++) {
 									fieldMeta = entityMeta.getFieldMeta(fieldsArray[i]);
 									SqlUtilsExt.resultUpdate(typeHandler, conn, finalRs, fieldMeta, fullFieldvalues[i],
-											dbType, true);
+											profile, dbType, true);
 								}
 								// 执行插入
 								finalRs.insertRow();
@@ -639,8 +644,9 @@ public class DefaultDialectUtils {
 	 * @param lockWaitTimeout
 	 * @return
 	 */
-	private static SqlToyResult wrapFetchSql(EntityMeta entityMeta, Integer dbType, String[] uniqueProps,
+	private static SqlToyResult wrapFetchSql(EntityMeta entityMeta, DBProfile profile, String[] uniqueProps,
 			Object[] whereParamValues, String tableName, int lockWaitTimeout) {
+		Integer dbType = profile.getDbType();
 		String realTable = entityMeta.getSchemaTable(tableName, dbType);
 		StringBuilder sql = new StringBuilder("select ");
 		String columnName;
@@ -710,9 +716,9 @@ public class DefaultDialectUtils {
 		Object[] fullParamValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getFieldsArray(excludeGeneratedCols),
 				null, handler);
 		// 主键采用assign方式赋予，则调用generator产生id并赋予其值
-		boolean hasId = (entityMeta.getIdStrategy() != null && null != entityMeta.getIdGenerator()) ? true : false;
+		boolean hasId = (entityMeta.getIdStrategy() != null && entityMeta.hasIdGenerator());
 		// 是否存在业务ID
-		boolean hasBizId = (entityMeta.getBusinessIdGenerator() == null) ? false : true;
+		boolean hasBizId = entityMeta.hasBusinessIdGenerator();
 		int bizIdColIndex = hasBizId ? entityMeta.getFieldIndex(entityMeta.getBusinessIdField()) - generatedColCnt : 0;
 		// 主键、业务主键生成并回写对象
 		if (hasId || hasBizId) {
@@ -761,7 +767,9 @@ public class DefaultDialectUtils {
 
 	@SuppressWarnings("unchecked")
 	public static List<ColumnMeta> getTableColumns(String catalog, String schema, String tableName, Connection conn,
-			Integer dbType, String dialect) throws Exception {
+			DBProfile profile) throws Exception {
+		Integer dbType = profile.getDbType();
+		String dialect = profile.getDialect();
 		String realCatalog = SqlToyConstants.getDialectLowcaseStrategyName(catalog, dialect);
 		String realSchema = SqlToyConstants.getDialectLowcaseStrategyName(schema, dialect);
 		String realTableName = SqlToyConstants.getDialectLowcaseStrategyName(tableName, dialect);
@@ -837,7 +845,7 @@ public class DefaultDialectUtils {
 				});
 		ColumnMeta mapMeta;
 		// 获取主键信息
-		Map<String, ColumnMeta> pkMap = getTablePrimaryKeys(catalog, schema, tableName, conn, dbType, dialect);
+		Map<String, ColumnMeta> pkMap = getTablePrimaryKeys(catalog, schema, tableName, conn, profile);
 		if (pkMap != null && !pkMap.isEmpty()) {
 			for (ColumnMeta colMeta : tableCols) {
 				mapMeta = pkMap.get(colMeta.getColName());
@@ -847,7 +855,7 @@ public class DefaultDialectUtils {
 			}
 		}
 		// 获取索引信息
-		Map<String, ColumnMeta> indexsMap = getTableIndexes(catalog, schema, tableName, conn, dbType, dialect);
+		Map<String, ColumnMeta> indexsMap = getTableIndexes(catalog, schema, tableName, conn, profile);
 		if (indexsMap != null && !indexsMap.isEmpty()) {
 			for (ColumnMeta colMeta : tableCols) {
 				mapMeta = indexsMap.get(colMeta.getColName());
@@ -904,12 +912,14 @@ public class DefaultDialectUtils {
 	 */
 	@SuppressWarnings("unchecked")
 	public static Map<String, ColumnMeta> getTableIndexes(String catalog, String schema, String tableName,
-			Connection conn, final Integer dbType, String dialect) throws Exception {
+			Connection conn, DBProfile profile) throws Exception {
+		Integer dbType = profile.getDbType();
+		String dialect = profile.getDialect();
 		String realCatalog = SqlToyConstants.getDialectLowcaseStrategyName(catalog, dialect);
 		String realSchema = SqlToyConstants.getDialectLowcaseStrategyName(schema, dialect);
 		String realTableName = SqlToyConstants.getDialectLowcaseStrategyName(tableName, dialect);
 		if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11) {
-			return getOracleTableIndexes(realCatalog, realSchema, realTableName, conn, dbType, dialect);
+			return getOracleTableIndexes(realCatalog, realSchema, realTableName, conn, profile);
 		}
 		Map<String, ColumnMeta> result = new HashMap<>();
 		boolean[] uniqueAndNotUnique = { false, true };
@@ -943,7 +953,7 @@ public class DefaultDialectUtils {
 
 	@SuppressWarnings("unchecked")
 	private static Map<String, ColumnMeta> getOracleTableIndexes(String catalog, String schema, String tableName,
-			Connection conn, final Integer dbType, String dialect) throws Exception {
+			Connection conn, DBProfile profile) throws Exception {
 		String tableNameUp = tableName.toUpperCase(Locale.ROOT);
 		// 表名经?参数绑定,避免直接拼接形成注入面(同文件其他元数据查询一致)
 		String sql = "SELECT t1.INDEX_NAME,t1.COLUMN_NAME,t0.UNIQUENESS FROM USER_IND_COLUMNS t1 LEFT JOIN "
@@ -987,7 +997,9 @@ public class DefaultDialectUtils {
 	 */
 	@SuppressWarnings("unchecked")
 	public static Map<String, ColumnMeta> getTablePrimaryKeys(String catalog, String schema, String tableName,
-			Connection conn, final Integer dbType, String dialect) throws Exception {
+			Connection conn, DBProfile profile) throws Exception {
+		Integer dbType = profile.getDbType();
+		String dialect = profile.getDialect();
 		String realCatalog = SqlToyConstants.getDialectLowcaseStrategyName(catalog, dialect);
 		String realSchema = SqlToyConstants.getDialectLowcaseStrategyName(schema, dialect);
 		String realTableName = SqlToyConstants.getDialectLowcaseStrategyName(tableName, dialect);
@@ -1048,11 +1060,13 @@ public class DefaultDialectUtils {
 
 	@SuppressWarnings("unchecked")
 	public static List<TableMeta> getTables(String catalogPattern, String schemaPattern, String tableNamePattern,
-			Connection conn, Integer dbType, String dialect) throws Exception {
+			Connection conn, DBProfile profile) throws Exception {
+		Integer dbType = profile.getDbType();
+		String dialect = profile.getDialect();
 		// update 2026-9-11 oceanbase驱动的getTables元数据构造缺陷:TABLE_COMMENT的byte[]被
 		// 预先toString为"[B@hash"形态写入结果行(getString/getObject/getBytes均取不回原始
 		// 字节,ob 4.3.5中文表备注实测不可恢复),绕行JDBC元数据直查information_schema
-		if (dbType != null && (dbType.intValue() == DBType.OCEANBASE || DialectExtUtils.isOceanBaseAsMysql())) {
+		if (dbType != null && (dbType.intValue() == DBType.OCEANBASE || profile.isOceanBase())) {
 			return getTablesFromInformationSchema(conn, tableNamePattern);
 		}
 		String realCatalogPattern = SqlToyConstants.getDialectLowcaseStrategyName(catalogPattern, dialect);
@@ -1140,6 +1154,34 @@ public class DefaultDialectUtils {
 	}
 
 	/**
+	 * update 2026-9-13 行级锁for update语句模板(收编各方言类私有的getLockSql拷贝): 差异点参数化——是否含skip
+	 * locked分支、skip locked的方言形态、UPGRADE是否追加wait N
+	 *
+	 * @param sql               原sql
+	 * @param dbType            数据库类型
+	 * @param lockMode          锁模式
+	 * @param lockWaitTimeout   锁等待秒数(仅appendWaitSeconds=true时参与拼装)
+	 * @param supportSkipLocked 是否支持skip locked分支(h2不支持)
+	 * @param skipLockedSuffix  skip locked分支的方言形态(skip locked/SKIP LOCKED /ignore )
+	 * @param appendWaitSeconds UPGRADE模式是否追加 wait N(DM/Kingbase/Oracle/Hana系)
+	 * @return 锁后缀,无需加锁或sql已含for update返回空串
+	 */
+	public static String getLockSql(String sql, Integer dbType, LockMode lockMode, int lockWaitTimeout,
+			boolean supportSkipLocked, String skipLockedSuffix, boolean appendWaitSeconds) {
+		// 判断是否已经包含for update
+		if (lockMode == null || SqlUtil.hasLock(sql, dbType)) {
+			return "";
+		}
+		if (lockMode == LockMode.UPGRADE_NOWAIT) {
+			return " for update nowait ";
+		}
+		if (supportSkipLocked && lockMode == LockMode.UPGRADE_SKIPLOCK) {
+			return skipLockedSuffix;
+		}
+		return " for update " + (appendWaitSeconds && lockWaitTimeout > 0 ? " wait " + lockWaitTimeout : "");
+	}
+
+	/**
 	 * 设置会话级锁超时
 	 *
 	 * @param dbType
@@ -1148,8 +1190,9 @@ public class DefaultDialectUtils {
 	 * @param lockWaitTimeout 单位秒
 	 * @throws Exception
 	 */
-	public static void setSessionLockWait(Integer dbType, Connection conn, LockMode lockMode, int lockWaitTimeout)
+	public static void setSessionLockWait(DBProfile profile, Connection conn, LockMode lockMode, int lockWaitTimeout)
 			throws Exception {
+		Integer dbType = profile.getDbType();
 		if (lockWaitTimeout < 1 || lockMode == null || lockMode != LockMode.UPGRADE) {
 			return;
 		}

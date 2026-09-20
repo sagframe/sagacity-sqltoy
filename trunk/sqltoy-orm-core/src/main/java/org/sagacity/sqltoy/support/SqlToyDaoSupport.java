@@ -40,7 +40,9 @@ import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.config.model.Translate;
+import org.sagacity.sqltoy.dialect.CrossDbAdapter;
 import org.sagacity.sqltoy.dialect.DialectFactory;
+import org.sagacity.sqltoy.dialect.QueryExecutorBuilder;
 import org.sagacity.sqltoy.dialect.executor.ParallelQueryExecutor;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.exception.DataAccessException;
@@ -72,6 +74,7 @@ import org.sagacity.sqltoy.model.Page;
 import org.sagacity.sqltoy.model.ParallQuery;
 import org.sagacity.sqltoy.model.ParallelConfig;
 import org.sagacity.sqltoy.model.ParallelQueryResult;
+import org.sagacity.sqltoy.model.PropsMapperConfig;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.SaveMode;
@@ -84,7 +87,6 @@ import org.sagacity.sqltoy.model.inner.EntityQueryExtend;
 import org.sagacity.sqltoy.model.inner.EntityUpdateExtend;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.inner.TranslateExtend;
-import org.sagacity.sqltoy.plugins.CrossDbAdapter;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
 import org.sagacity.sqltoy.plugins.id.IdGenerator;
@@ -97,7 +99,6 @@ import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.DateUtil;
 import org.sagacity.sqltoy.utils.IdUtil;
 import org.sagacity.sqltoy.utils.MapperUtils;
-import org.sagacity.sqltoy.utils.QueryExecutorBuilder;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -2203,14 +2204,16 @@ public class SqlToyDaoSupport {
 					(innerModel.values == null || innerModel.values.length == 0) ? null
 							: (Serializable) innerModel.values[0])
 					.resultType(resultType).dataSource(getDataSource(innerModel.dataSource))
-					.fetchSize(innerModel.fetchSize).maxRows(innerModel.maxRows);
+					.fetchSize(innerModel.fetchSize);
 		} else {
 			queryExecutor = new QueryExecutor(sql).names(innerModel.names).values(innerModel.values)
 					.resultType(resultType).dataSource(getDataSource(innerModel.dataSource))
-					.fetchSize(innerModel.fetchSize).maxRows(innerModel.maxRows);
+					.fetchSize(innerModel.fetchSize);
 		}
 		// 查询超时时长
 		queryExecutor.getInnerModel().timeout = innerModel.timeout;
+		// QueryExecutor.maxRows(int)已废弃,直接写入内部模型
+		queryExecutor.getInnerModel().maxRows = innerModel.maxRows;
 		// 设置是否空白转null
 		queryExecutor.getInnerModel().blankToNull = innerModel.blankToNull;
 		// 为后续租户过滤提供判断依据(单表简单sql和对应的实体对象)
@@ -2345,7 +2348,7 @@ public class SqlToyDaoSupport {
 			// 重新设置值数组的长度
 			valueSize = values.length;
 		} else {
-			int paramCnt = DialectUtils.getParamsCount(where);
+			int paramCnt = DialectUtils.getParamsCount(where, false);
 			if (paramCnt == 1 && StringUtil.matches(where, SqlConfigParseUtils.IN_PATTERN) && valueSize > 1) {
 				values = new Object[] { values };
 				valueSize = 1;
@@ -2588,7 +2591,7 @@ public class SqlToyDaoSupport {
 	 */
 	protected <T extends Serializable> T convertType(Serializable source, Class<T> resultType,
 			String... ignoreProperties) {
-		return MapperUtils.map(source, resultType, ignoreProperties);
+		return MapperUtils.map(source, resultType, new PropsMapperConfig(ignoreProperties).isIgnore(true));
 	}
 
 	/**
@@ -2602,22 +2605,22 @@ public class SqlToyDaoSupport {
 	 */
 	protected <T extends Serializable> List<T> convertType(List sourceList, Class<T> resultType,
 			String... ignoreProperties) {
-		return MapperUtils.mapList(sourceList, resultType, ignoreProperties);
+		return MapperUtils.mapList(sourceList, resultType, new PropsMapperConfig(ignoreProperties).isIgnore(true));
 	}
 
 	protected <T extends Serializable> Page<T> convertType(Page sourcePage, Class<T> resultType,
 			String... ignoreProperties) {
-		return MapperUtils.map(sourcePage, resultType, ignoreProperties);
+		return MapperUtils.map(sourcePage, resultType, new PropsMapperConfig(ignoreProperties).isIgnore(true));
 	}
 
-	// parallQuery 面向查询(不要用于事务操作过程中),sqltoy提供强大的方法，但是否恰当使用需要使用者做合理的判断
+	// parallelQuery 面向查询(不要用于事务操作过程中),sqltoy提供强大的方法，但是否恰当使用需要使用者做合理的判断
 	/**
 	 * -- 避免开发者将全部功能用一个超级sql完成，提供拆解执行的同时确保执行效率，达到了效率和可维护的平衡
 	 * 
 	 * 并行查询并返回一维List，有几个查询List中就包含几个结果对象，paramNames和paramValues是全部sql的条件参数的合集
 	 * 
 	 * @param <T>
-	 * @param parallelQueryList 并行查询定义集合,每个ParallQuery包含sql(或sqlId)和返回类型
+	 * @param parallelQueryList 并行查询定义集合,每个ParallelQuery包含sql(或sqlId)和返回类型
 	 * @param paramNames        全部sql共用的条件参数名称数组
 	 * @param paramValues       条件参数值数组,顺序与paramNames一一对应
 	 * @return 查询结果集合,顺序与parallelQueryList一致,第n个元素对应第n个查询的结果
@@ -2663,7 +2666,7 @@ public class SqlToyDaoSupport {
 	/**
 	 * 并行查询并返回一维List，有几个查询List中就包含几个结果对象，paramNames和paramValues是全部sql的条件参数的合集
 	 * 
-	 * @param parallelQueryList 并行查询定义集合,每个ParallQuery包含sql(或sqlId)和返回类型
+	 * @param parallelQueryList 并行查询定义集合,每个ParallelQuery包含sql(或sqlId)和返回类型
 	 * @param paramNames        全部sql共用的条件参数名称数组(selfCondition的查询使用各自独立的参数)
 	 * @param paramValues       条件参数值数组,顺序与paramNames一一对应
 	 * @param parallelConfig    并行查询配置(最大线程数、最大等待时长等),为null时采用默认配置
@@ -2674,15 +2677,14 @@ public class SqlToyDaoSupport {
 		if (parallelQueryList == null || parallelQueryList.isEmpty()) {
 			return null;
 		}
-		ParallelConfig parallConfig = parallelConfig;
-		if (parallConfig == null) {
-			parallConfig = new ParallelConfig();
+		if (parallelConfig == null) {
+			parallelConfig = new ParallelConfig();
 		}
 		// 并行线程数量(默认最大十个)
-		if (parallConfig.getMaxThreads() == null) {
-			parallConfig.maxThreads(10);
+		if (parallelConfig.getMaxThreads() == null) {
+			parallelConfig.maxThreads(10);
 		}
-		int thread = parallConfig.getMaxThreads();
+		int thread = parallelConfig.getMaxThreads();
 		if (parallelQueryList.size() < thread) {
 			thread = parallelQueryList.size();
 		}
@@ -2711,7 +2713,7 @@ public class SqlToyDaoSupport {
 			pool.shutdown();
 			// 最大等待时长,超时则抛出(由finally统一shutdownNow中断未完成任务),
 			// 避免调用线程在后续result.get()上无限期阻塞,maxWaitSeconds形同虚设
-			int maxWaitSeconds = (parallConfig.getMaxWaitSeconds() != null) ? parallConfig.getMaxWaitSeconds()
+			int maxWaitSeconds = (parallelConfig.getMaxWaitSeconds() != null) ? parallelConfig.getMaxWaitSeconds()
 					: SqlToyConstants.PARALLEL_MAXWAIT_SECONDS;
 			if (!pool.awaitTermination(maxWaitSeconds, TimeUnit.SECONDS)) {
 				throw new RuntimeException("parallel query timed out after waiting [" + maxWaitSeconds
@@ -2730,7 +2732,7 @@ public class SqlToyDaoSupport {
 				results.add(item.getResult());
 			}
 		} catch (Exception e) {
-			logger.error("parallQuery method execution failed", e);
+			logger.error("parallelQuery method execution failed", e);
 			throw new DataAccessException("parallel query execution error:" + e.getMessage(), e);
 		} finally {
 			if (pool != null) {

@@ -1,4 +1,4 @@
-package org.sagacity.sqltoy.plugins;
+package org.sagacity.sqltoy.dialect;
 
 import javax.sql.DataSource;
 
@@ -7,12 +7,10 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DbAdapterHandler;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
-import org.sagacity.sqltoy.dialect.DialectFactory;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.model.Page;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
-import org.sagacity.sqltoy.utils.QueryExecutorBuilder;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

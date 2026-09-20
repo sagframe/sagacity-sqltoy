@@ -9,13 +9,13 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.DataType;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
+import org.sagacity.sqltoy.dialect.CrossDbAdapter;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.model.JdbcTypes;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.Page;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
-import org.sagacity.sqltoy.plugins.CrossDbAdapter;
 import org.sagacity.sqltoy.utils.BeanUtil;
 
 /**
@@ -331,7 +331,8 @@ public class Query extends BaseLink {
 		queryExecutor.humpMapLabel(humpMapLabel);
 		queryExecutor.timeout(queryTimeout);
 		queryExecutor.lockWaitTimeout(lockWaitTimeout);
-		queryExecutor.maxRows(maxRows);
+		// QueryExecutor.maxRows(int)已废弃,直接写入内部模型
+		queryExecutor.getInnerModel().maxRows = maxRows;
 		queryExecutor.fetchSize(fetchSize);
 		return queryExecutor;
 	}

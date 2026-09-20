@@ -98,7 +98,7 @@ public class SqlLiteralChainImpactTest {
 	// ---------------- 3.租户拦截器 -> doInterceptors链路 ----------------
 
 	@Test
-	public void tenantInterceptorChainViaDoInterceptors() {
+	public void tenantInterceptorChainViaDoInterceptors() throws Exception {
 		SqlToyContext ctx = new SqlToyContext();
 		ctx.setUnifyFieldsHandler(new org.sagacity.sqltoy.plugins.IUnifyFieldsHandler() {
 			@Override
@@ -111,12 +111,12 @@ public class SqlLiteralChainImpactTest {
 		String sql = "select * from t_tenant_probe where remark='select * from orders where tenant_id=88' and id=1";
 		SqlToyResult result = DialectUtils.doInterceptors(ctx, new SqlToyConfig(null), OperateType.singleTable,
 				new SqlToyResult(sql, new Object[] {}), SqlLiteralBlindSpotFixTest.TenantProbeVO.class,
-				DataSourceUtils.DBType.H2);
+				DataSourceUtils.getDBProfile(conn));
 		assertTrue(result.getSql().contains("tenant_id='T1'"), "拦截器链路必须注入租户条件: " + result.getSql());
 		// 已有真实租户条件:链路不重复注入
 		SqlToyResult untouched = DialectUtils.doInterceptors(ctx, new SqlToyConfig(null), OperateType.singleTable,
 				new SqlToyResult("select * from t_tenant_probe where tenant_id='T9' and id=1", new Object[] {}),
-				SqlLiteralBlindSpotFixTest.TenantProbeVO.class, DataSourceUtils.DBType.H2);
+				SqlLiteralBlindSpotFixTest.TenantProbeVO.class, DataSourceUtils.getDBProfile(conn));
 		assertEquals("select * from t_tenant_probe where tenant_id='T9' and id=1", untouched.getSql(),
 				"已有真实租户条件时不应重复注入");
 	}

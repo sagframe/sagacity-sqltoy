@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.sagacity.sqltoy.dialect.utils.DefaultDialectUtils;
 import org.sagacity.sqltoy.model.ColumnMeta;
+import org.sagacity.sqltoy.model.DBProfile;
 
 /**
  * @project sagacity-sqltoy
@@ -17,8 +18,8 @@ public class GaussDBDialect extends OpenGaussDialect {
 
 	@Override
 	public List<ColumnMeta> getTableColumns(String catalog, String schema, String tableName, Connection conn,
-			Integer dbType, String dialect) throws Exception {
+			DBProfile profile) throws Exception {
 		// gaussdb tableName无需转小写
-		return DefaultDialectUtils.getTableColumns(catalog, schema, tableName, conn, dbType, dialect);
+		return DefaultDialectUtils.getTableColumns(catalog, schema, tableName, conn, profile);
 	}
 }

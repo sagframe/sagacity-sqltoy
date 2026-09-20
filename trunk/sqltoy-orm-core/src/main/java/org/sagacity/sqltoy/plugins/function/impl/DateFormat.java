@@ -58,8 +58,12 @@ public class DateFormat extends IFunction {
 		case DBType.OSCAR:
 		case DBType.OPENGAUSS:
 		case DBType.VASTBASE:
+			// update 2026-9-14 补KINGBASE(KingbaseES基于PG,date_format归to_char+PG格式模型)
+		case DBType.KINGBASE:
 		case DBType.OCEANBASE:
 		case DBType.DM:
+			// 2026-9-11 hana无date_format,TO_CHAR为oracle兼容格式模型(非PG系,pgToCharParamCast原样透传)
+		case DBType.HANA:
 		case DBType.ORACLE11: {
 			// 日期
 			format = args[1].replace("%Y", "yyyy").replace("%y", "yy").replace("%m", "MM").replace("%d", "dd");
@@ -78,8 +82,8 @@ public class DateFormat extends IFunction {
 			// 日期
 			format = args[1].replace("yyyy", "%Y").replace("yy", "%y").replace("MM", "%m").replace("dd", "%d");
 			// 时间处理(update 2026-9-5 补java 24小时制HH→%H;需置于hh24/hh映射之后)
-			format = format.replace("hh24", "%H").replace("hh", "%h").replace("HH", "%H").replace("mm", "%i")
-					.replace("mi", "%i").replace("ss", "%s");
+			format = format.replace("HH24", "%H").replace("hh24", "%H").replace("hh", "%h").replace("HH", "%H")
+					.replace("mm", "%i").replace("mi", "%i").replace("ss", "%s");
 			return "date_format(" + args[0] + "," + format + ")";
 		}
 		case DBType.H2: {
@@ -111,8 +115,8 @@ public class DateFormat extends IFunction {
 			// update 2026-9-9 clickhouse原生支持date_format(formatDateTime的mysql兼容别名,%token同构),
 			// 仅需将java样式token转%形态(原default原样输出,java样式格式串在目标库静默失效)
 			format = args[1].replace("yyyy", "%Y").replace("yy", "%y").replace("MM", "%m").replace("dd", "%d");
-			format = format.replace("hh24", "%H").replace("hh", "%h").replace("HH", "%H").replace("mm", "%i")
-					.replace("mi", "%i").replace("ss", "%s");
+			format = format.replace("HH24", "%H").replace("hh24", "%H").replace("hh", "%h").replace("HH", "%H")
+					.replace("mm", "%i").replace("mi", "%i").replace("ss", "%s");
 			// update 2026-9-11 首参包toDateTime:clickhouse-jdbc将日期参数以String发送,
 			// formatDateTime(String)报Illegal type(26.8实测);toDateTime对Date/DateTime列与
 			// ISO文本参数均兼容(幂等转换)

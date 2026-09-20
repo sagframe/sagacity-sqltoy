@@ -14,7 +14,7 @@ import java.util.Locale;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.exception.DataAccessException;
-import org.sagacity.sqltoy.utils.TranslateUtils;
+import org.sagacity.sqltoy.translate.TranslateUtils;
 
 /**
  * 语义/契约批次回归：Map.put null key返回值契约、Set.toArray(null)/containsAll(null)、

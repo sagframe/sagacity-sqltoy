@@ -44,8 +44,6 @@ public final class StandardUUIDv7Generator {
 	// ==================== 全局单例与缓存 ====================
 	// 安全随机数生成器（全局单例，保证安全性和性能）
 	private static final SecureRandom SECURE_RANDOM = new SecureRandom();
-	// 8 字节缓冲区（缓存复用，减少对象创建）
-	private static final ByteBuffer RANDOM_BYTE_BUFFER = ByteBuffer.allocate(8);
 	// 单调递增时间戳（保证永不倒退，解决时间戳回拨问题）
 	private static final AtomicLong MONOTONIC_TIMESTAMP = new AtomicLong(0);
 	// 毫秒内序列计数器（原子类保证线程安全，用于去重）
@@ -221,14 +219,16 @@ public final class StandardUUIDv7Generator {
 	/**
 	 * 生成 64 位安全随机数
 	 * 
+	 * update 2026-9-14 原实现共用静态ByteBuffer并以synchronized(RANDOM_BYTE_BUFFER)串行化:
+	 * 该锁覆盖"写入+读取"整段,是所有线程产生ID时的全局串行点;改为方法内局部byte[8],
+	 * 去掉对外层锁与共享可变缓冲区的依赖(SecureRandom.nextBytes本身线程安全)
+	 * 
 	 * @return 64 位随机数
 	 */
 	private static long generateRandom64Bits() {
-		synchronized (RANDOM_BYTE_BUFFER) { // 保证缓冲区线程安全
-			SECURE_RANDOM.nextBytes(RANDOM_BYTE_BUFFER.array());
-			RANDOM_BYTE_BUFFER.rewind();
-			return RANDOM_BYTE_BUFFER.getLong();
-		}
+		byte[] randomBytes = new byte[Long.BYTES];
+		SECURE_RANDOM.nextBytes(randomBytes);
+		return ByteBuffer.wrap(randomBytes).getLong();
 	}
 
 	/**

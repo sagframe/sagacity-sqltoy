@@ -16,8 +16,10 @@ import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.dialect.utils.DialectExtUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.dialect.utils.SqlServerDialectUtils;
+import org.sagacity.sqltoy.model.DBProfile;
 import org.sagacity.sqltoy.model.JdbcTypes;
 import org.sagacity.sqltoy.model.LockMode;
+import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.StringUtil;
 
@@ -26,6 +28,14 @@ import org.sagacity.sqltoy.utils.StringUtil;
  */
 public class SqlServerDialectTest {
 	private static final Pattern ORDER_BY = Pattern.compile("(?i)\\Worder\\s*by\\W");
+
+	/**
+	 * dbType直调场景的最小连接档案(DialectExtUtils同款构造),saveOrUpdate/mergeIgnore生成用
+	 */
+	private static DBProfile sqlServerProfile() {
+		return new DBProfile(null, DataSourceUtils.getDialect(DBType.SQLSERVER), DBType.SQLSERVER, null, 0, null,
+				null, false);
+	}
 
 	@Test
 	public void testPageSql() {
@@ -172,8 +182,8 @@ public class SqlServerDialectTest {
 	@Test
 	public void testSaveOrUpdateSql_rowversionExcluded() {
 		EntityMeta meta = buildEntityMeta("t_foo_rv", true, false, true);
-		String sql = DialectUtils.getSaveOrUpdateSql(null, null, DBType.SQLSERVER, meta, PKStrategy.IDENTITY, null,
-				null, "isnull", "@mySeqVariable", false, null);
+		String sql = DialectUtils.getSaveOrUpdateSql(null, null, sqlServerProfile(), meta, PKStrategy.IDENTITY, null,
+				null, "@mySeqVariable", false, null);
 		String lowerSql = sql.toLowerCase();
 		assertTrue(!lowerSql.contains("? as ver"), "rowversion column should be excluded from using select, got: " + sql);
 		// name、id两列参与using select(identity且不允许手工赋值时insert部分省略id列)
@@ -188,8 +198,8 @@ public class SqlServerDialectTest {
 	@Test
 	public void testSaveOrUpdateSql_geometryCast() {
 		EntityMeta meta = buildEntityMeta("t_foo_geo", false, true, true);
-		String sql = DialectUtils.getSaveOrUpdateSql(null, null, DBType.SQLSERVER, meta, PKStrategy.ASSIGN, null,
-				null, "isnull", "@mySeqVariable", true, null);
+		String sql = DialectUtils.getSaveOrUpdateSql(null, null, sqlServerProfile(), meta, PKStrategy.ASSIGN, null,
+				null, "@mySeqVariable", true, null);
 		String lowerSql = sql.toLowerCase();
 		assertTrue(lowerSql.contains("cast(? as geometry)"), "geometry column should be cast, got: " + sql);
 		assertEquals(3, countPlaceholders(sql), "placeholder count should match bindable params(name,geo,id), got: " + sql);
@@ -203,7 +213,7 @@ public class SqlServerDialectTest {
 	@Test
 	public void testSaveOrUpdateSql_noPkRowversionConsistent() {
 		EntityMeta meta = buildEntityMeta("t_foo_nopk", true, false, false);
-		String sql = DialectUtils.getSaveOrUpdateSql(null, null, DBType.SQLSERVER, meta, null, null, null, "isnull",
+		String sql = DialectUtils.getSaveOrUpdateSql(null, null, sqlServerProfile(), meta, null, null, null,
 				"@mySeqVariable", true, null);
 		String lowerSql = sql.toLowerCase();
 		assertTrue(lowerSql.startsWith("insert into"), "no-pk entity should degrade to insert sql, got: " + sql);
@@ -219,7 +229,7 @@ public class SqlServerDialectTest {
 	@Test
 	public void testSaveIgnoreExistSql_rowversionExcludedAndCast() {
 		EntityMeta meta = buildEntityMeta("t_foo_ig", true, true, true);
-		String sql = DialectExtUtils.mergeIgnore(null, DBType.SQLSERVER, meta, PKStrategy.ASSIGN, null, "isnull",
+		String sql = DialectUtils.mergeIgnore(null, sqlServerProfile(), meta, PKStrategy.ASSIGN, null,
 				"@mySeqVariable", true, null);
 		String lowerSql = sql.toLowerCase();
 		assertTrue(!lowerSql.contains("? as ver"), "rowversion column should be excluded from using select, got: " + sql);
@@ -249,7 +259,7 @@ public class SqlServerDialectTest {
 		notGenerated.setFieldsArray(fieldsArray);
 		notGenerated.setRejectIdFieldArray(rejectIdFields);
 		meta.setNotGeneratedColMeta(notGenerated);
-		String sql = DialectExtUtils.mergeIgnore(null, DBType.SQLSERVER, meta, PKStrategy.ASSIGN, null, "isnull",
+		String sql = DialectUtils.mergeIgnore(null, sqlServerProfile(), meta, PKStrategy.ASSIGN, null,
 				"@mySeqVariable", true, "t_foo_rvfirst");
 		String lowerSql = sql.toLowerCase();
 		// 传tableName参数同时避免与其它用例命中同一个静态sql缓存key(缓存key由class+tableName+dbType+策略构成)
@@ -259,6 +269,46 @@ public class SqlServerDialectTest {
 		assertTrue(!lowerSql.contains("(,") && !lowerSql.contains(",)"),
 				"no leading/trailing comma in column lists, got: " + sql);
 		System.err.println("testSaveIgnoreExistSql_rowversionFirstNoLeadingComma => " + sql);
+	}
+
+	// ======================== offset keyword detection ========================
+
+	/**
+	 * getRandomResult派生表"内层已含offset不追加offset 0 rows"的判定:
+	 * update 2026-9-17 由contains("offset")改为词边界+字面量掩码判定,误判会漏加
+	 * offset 0 rows致mssql报ORDER BY clause is invalid in derived tables错误
+	 */
+	@Test
+	public void testHasOffsetKeyWord() {
+		// 真实offset子句命中(大小写不敏感,@参数相邻不影响词边界)
+		assertTrue(SqlServerDialectUtils.hasOffsetKeyWord("select name from t order by id offset 3 rows", false),
+				"小写offset子句应命中");
+		assertTrue(SqlServerDialectUtils.hasOffsetKeyWord("select name from t ORDER BY id OFFSET 0 ROWS", false),
+				"大写OFFSET子句应命中");
+		assertTrue(SqlServerDialectUtils.hasOffsetKeyWord(
+				"select name from t order by id offset @off rows fetch next 1 rows only", false),
+				"offset后跟@参数应命中");
+		// 标识符子串不算(rowoffset/offsetflag):修复前contains误判为已含offset
+		assertTrue(!SqlServerDialectUtils.hasOffsetKeyWord("select rowoffset, t.offsetflag from t order by id", false),
+				"标识符含offset子串不应命中");
+		// 字面量内的offset不算:掩码后匹配,修复前contains误判
+		assertTrue(!SqlServerDialectUtils.hasOffsetKeyWord("select 'offset' from t order by id", false),
+				"字面量内offset不应命中");
+		assertTrue(!SqlServerDialectUtils.hasOffsetKeyWord("select * from t where remark='offset flag'", false),
+				"条件字面量内offset不应命中");
+		// 真实offset与字面量并存仍命中
+		assertTrue(SqlServerDialectUtils.hasOffsetKeyWord("select 'offset' from t order by id offset 1 rows", false),
+				"字面量与真实offset并存应命中");
+		// backslashEscape差异:规则一致(\'不终结字面量,内容整体掩码)时offset被掩住;
+		// 标准规则(false)下'a\'在反斜杠后终结字面量,offset落在字面量外参与判定(行为记录,
+		// 该输入本身是mysql语法sql,按标准规则解析属垃圾进垃圾出)
+		assertTrue(!SqlServerDialectUtils.hasOffsetKeyWord("select 'a\\'b offset c' from t order by id", true),
+				"mysql规则下\\'不终结字面量,offset应被掩住");
+		assertTrue(SqlServerDialectUtils.hasOffsetKeyWord("select 'a\\'b offset c' from t order by id", false),
+				"标准规则下字面量在\\'后终结,offset参与判定");
+		// 空值安全
+		assertTrue(!SqlServerDialectUtils.hasOffsetKeyWord(null, false), "null sql不应命中");
+		assertTrue(!SqlServerDialectUtils.hasOffsetKeyWord("", false), "空sql不应命中");
 	}
 
 	private EntityMeta buildEntityMeta(String tableName, boolean withRowversion, boolean withGeometry,

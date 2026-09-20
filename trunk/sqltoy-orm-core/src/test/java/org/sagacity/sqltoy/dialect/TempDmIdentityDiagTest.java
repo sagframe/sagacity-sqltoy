@@ -14,6 +14,8 @@ import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.dialect.impl.DMDialect;
 import org.sagacity.sqltoy.dialect.utils.DialectExtUtils;
 import org.sagacity.sqltoy.dialect.utils.DMDialectUtils;
+import org.sagacity.sqltoy.model.DBProfile;
+import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 
 /** 临时诊断:DM identity的insert生成链逐环节输出 */
@@ -52,12 +54,12 @@ public class TempDmIdentityDiagTest {
 		System.out.println("[Diag] idStrategy=" + meta.getIdStrategy()
 				+ " sequence=[" + meta.getSequence() + "]");
 		PKStrategy pk = org.sagacity.sqltoy.dialect.utils.DialectUtils.getSavePKStrategy(meta, new DiagVO(),
-				DBType.DM);
+				dmProfile());
 		boolean isAssign = DMDialectUtils.allowAssignPKValue(pk);
 		System.out.println("[Diag] afterGetSavePKStrategy=" + pk + " isAssignPK=" + isAssign);
 		String seq = meta.getSequence() + ".nextval";
 		// 与DMDialect.save完全同参的生成调用
-		String insertSql = DialectExtUtils.generateInsertSql(null, DBType.DM, meta, pk, "nvl", seq, isAssign, null);
+		String insertSql = DialectExtUtils.generateInsertSql(null, DBType.DM, meta, pk, seq, isAssign, null);
 		System.out.println("[Diag] generateInsertSql=" + insertSql.replaceAll("\\s+", " "));
 		// 真实save链路
 		Class.forName("dm.jdbc.driver.DmDriver");
@@ -70,12 +72,17 @@ public class TempDmIdentityDiagTest {
 			vo.setName("diag");
 			DMDialect dm = new DMDialect();
 			try {
-				Object r = dm.save(new SqlToyContext(), vo, conn, DBType.DM, "dm", null);
+				Object r = dm.save(new SqlToyContext(), vo, conn, DataSourceUtils.getDBProfile(conn), null);
 				System.out.println("[Diag] save OK pk=" + r + " voId=" + vo.getId());
 			} catch (Exception e) {
 				System.out.println("[Diag] save FAIL: " + e.getMessage());
 			}
 			st.execute("drop table if exists diag_identity_t");
 		}
+	}
+
+	/** 与主代码一致的dbType直调最小档案(DialectExtUtils同款构造) */
+	private static DBProfile dmProfile() {
+		return new DBProfile(null, DataSourceUtils.getDialect(DBType.DM), DBType.DM, null, 0, null, null, false);
 	}
 }

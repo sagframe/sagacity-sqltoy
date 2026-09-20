@@ -269,7 +269,7 @@ public class SqlServerRowVersionSmokeTest {
 		vo.setId(1001L);
 		vo.setName("mig");
 		vo.setVerTime(LocalDateTime.of(2026, 2, 1, 8, 0, 0));
-		new SqlServerDialect().save(context, vo, conn, DataSourceUtils.DBType.SQLSERVER, "sqlserver", null);
+		new SqlServerDialect().save(context, vo, conn, DataSourceUtils.getDBProfile(conn), null);
 		try (PreparedStatement pst = conn.prepareStatement("select ver_time from sqltoy_probe_rv_mig where id=1001")) {
 			ResultSet rs = pst.executeQuery();
 			rs.next();
@@ -278,8 +278,7 @@ public class SqlServerRowVersionSmokeTest {
 		}
 		// update路径同样不误伤
 		vo.setName("mig2");
-		new SqlServerDialect().update(context, vo, null, false, null, null, conn,
-				DataSourceUtils.DBType.SQLSERVER, "sqlserver", null);
+		new SqlServerDialect().update(context, vo, null, false, null, null, conn, DataSourceUtils.getDBProfile(conn), null);
 		try (PreparedStatement pst = conn.prepareStatement(
 				"select name,ver_time from sqltoy_probe_rv_mig where id=1001")) {
 			ResultSet rs = pst.executeQuery();
@@ -299,14 +298,14 @@ public class SqlServerRowVersionSmokeTest {
 		vo.setId(2001L);
 		vo.setName("rv");
 		// save:insert排除rv列(显式插入rowversion会报错)
-		dialect.save(context, vo, conn, DataSourceUtils.DBType.SQLSERVER, "sqlserver", null);
+		dialect.save(context, vo, conn, DataSourceUtils.getDBProfile(conn), null);
 		// update:set排除rv列,绑定参数对齐
 		vo.setName("rv2");
-		dialect.update(context, vo, null, false, null, null, conn, DataSourceUtils.DBType.SQLSERVER, "sqlserver",
+		dialect.update(context, vo, null, false, null, null, conn, DataSourceUtils.getDBProfile(conn),
 				null);
 		// saveOrUpdateAll:merge排除rv列
 		dialect.saveOrUpdateAll(context, java.util.Arrays.asList(vo), 10, null, null, conn,
-				DataSourceUtils.DBType.SQLSERVER, "sqlserver", null, null);
+				DataSourceUtils.getDBProfile(conn), null, null);
 		try (PreparedStatement pst = conn.prepareStatement("select name,rv from sqltoy_probe_rv_t where id=2001")) {
 			ResultSet rs = pst.executeQuery();
 			rs.next();
@@ -321,7 +320,7 @@ public class SqlServerRowVersionSmokeTest {
 		fresh.setId(2002L);
 		fresh.setName("rv3");
 		dialect.saveAllIgnoreExist(context, java.util.Arrays.asList(exist, fresh), 10, null, conn,
-				DataSourceUtils.DBType.SQLSERVER, "sqlserver", null, null);
+				DataSourceUtils.getDBProfile(conn), null, null);
 		try (PreparedStatement pst = conn.prepareStatement(
 				"select name from sqltoy_probe_rv_t where id in (2001,2002) order by id")) {
 			ResultSet rs = pst.executeQuery();
@@ -372,7 +371,7 @@ public class SqlServerRowVersionSmokeTest {
 		sub.setVerTime(LocalDateTime.of(2026, 3, 1, 9, 0, 0));
 		main.setSubs(java.util.Arrays.asList(sub));
 		// 级联save:主表插入+子表批量保存
-		dialect.save(context, main, conn, DataSourceUtils.DBType.SQLSERVER, "sqlserver", null);
+		dialect.save(context, main, conn, DataSourceUtils.getDBProfile(conn), null);
 		try (PreparedStatement pst = conn.prepareStatement(
 				"select main_id,ver_time from sqltoy_probe_rv_sub where id=6101")) {
 			ResultSet rs = pst.executeQuery();
@@ -382,7 +381,7 @@ public class SqlServerRowVersionSmokeTest {
 		}
 		// 级联update(cascade=true):主表update+子表saveOrUpdate(update路径的子表级联)
 		sub.setName("sub2");
-		dialect.update(context, main, null, true, null, null, conn, DataSourceUtils.DBType.SQLSERVER, "sqlserver",
+		dialect.update(context, main, null, true, null, null, conn, DataSourceUtils.getDBProfile(conn),
 				null);
 		try (PreparedStatement pst = conn.prepareStatement(
 				"select name,ver_time from sqltoy_probe_rv_sub where id=6101")) {
@@ -409,7 +408,7 @@ public class SqlServerRowVersionSmokeTest {
 		m2.setName("m2");
 		m2.setVerTime(LocalDateTime.of(2026, 4, 2, 11, 0, 0));
 		dialect.saveAll(context, java.util.Arrays.asList(m1, m2), 10, null, conn,
-				DataSourceUtils.DBType.SQLSERVER, "sqlserver", null, null);
+				DataSourceUtils.getDBProfile(conn), null, null);
 		try (PreparedStatement pst = conn.prepareStatement(
 				"select count(1) from sqltoy_probe_rv_mig where id in (7001,7002) and ver_time is not null")) {
 			ResultSet rs = pst.executeQuery();
@@ -424,7 +423,7 @@ public class SqlServerRowVersionSmokeTest {
 		r2.setId(7102L);
 		r2.setName("r2");
 		dialect.saveAll(context, java.util.Arrays.asList(r1, r2), 10, null, conn,
-				DataSourceUtils.DBType.SQLSERVER, "sqlserver", null, null);
+				DataSourceUtils.getDBProfile(conn), null, null);
 		try (PreparedStatement pst = conn.prepareStatement(
 				"select count(1) from sqltoy_probe_rv_t where id in (7101,7102) and rv is not null")) {
 			ResultSet rs = pst.executeQuery();

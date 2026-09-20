@@ -13,6 +13,7 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DataSourceCallbackHandler;
 import org.sagacity.sqltoy.config.EntityManager;
 import org.sagacity.sqltoy.config.model.EntityMeta;
+import org.sagacity.sqltoy.model.DBProfile;
 import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.plugins.ddl.impl.DefaultDDLGenerator;
 import org.sagacity.sqltoy.plugins.ddl.impl.H2DDLGenerator;
@@ -50,10 +51,20 @@ public class DDLFactory {
 		DialectDDLGenerator generator = null;
 		switch (dbType) {
 		case DBType.MYSQL:
-		case DBType.MYSQL57:
-		case DBType.DORIS:
-		case DBType.STARROCKS: {
+		case DBType.MYSQL57: {
 			generator = new MySqlDDLGenerator();
+			break;
+		}
+		case DBType.DORIS: {
+			generator = new org.sagacity.sqltoy.plugins.ddl.impl.DorisDDLGenerator();
+			break;
+		}
+		case DBType.STARROCKS: {
+			generator = new org.sagacity.sqltoy.plugins.ddl.impl.StarRocksDDLGenerator();
+			break;
+		}
+		case DBType.CLICKHOUSE: {
+			generator = new org.sagacity.sqltoy.plugins.ddl.impl.ClickHouseDDLGenerator();
 			break;
 		}
 		case DBType.GAUSSDB:
@@ -62,6 +73,9 @@ public class DDLFactory {
 		case DBType.STARDB:
 		case DBType.OPENGAUSS:
 		case DBType.VASTBASE:
+			// update 2026-9-14 补KINGBASE(KingbaseES基于PG):原落入default的DefaultDDLGenerator,
+			// 任何DDL生成调用直接抛"DDL generation is not implemented for this dialect"
+		case DBType.KINGBASE:
 		case DBType.POSTGRESQL:
 		case DBType.POSTGRESQL14: {
 			generator = new PostgreSqlDDLGenerator();
@@ -79,6 +93,18 @@ public class DDLFactory {
 		}
 		case DBType.H2: {
 			generator = new H2DDLGenerator();
+			break;
+		}
+		case DBType.DB2: {
+			generator = new org.sagacity.sqltoy.plugins.ddl.impl.DB2DDLGenerator();
+			break;
+		}
+		case DBType.HANA: {
+			generator = new org.sagacity.sqltoy.plugins.ddl.impl.HanaDDLGenerator();
+			break;
+		}
+		case DBType.SQLITE: {
+			generator = new org.sagacity.sqltoy.plugins.ddl.impl.SQLiteDDLGenerator();
 			break;
 		}
 		default:
@@ -161,6 +187,7 @@ public class DDLFactory {
 				DataSourceUtils.processDataSource(sqlToyContext, dataSource, new DataSourceCallbackHandler() {
 					@Override
 					public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+						DBProfile profile = DataSourceUtils.getDBProfile(conn);
 						// 判断表是否已经存在
 						String tableName = getTable(conn, entityMeta, upperOrLower);
 						// 增加一次判断
@@ -184,7 +211,7 @@ public class DDLFactory {
 									upperOrLower, dbType);
 							try {
 								if (createSql != null && !createSql.equals("")) {
-									SqlUtil.executeSql(null, createSql, null, null, conn, dbType, null, true);
+									SqlUtil.executeSql(null, createSql, null, null, conn, profile, null, true);
 								}
 							} catch (Exception e) {
 								logger.warn(

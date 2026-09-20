@@ -94,8 +94,11 @@ public class FileUtil {
 	 * 
 	 * @param is
 	 * @param fileName
+	 * @return true表示写入成功;false表示失败(磁盘/权限/目录等异常,已记录日志) update 2026-9-14
+	 *         原返回void,写入失败仅记日志,调用方无从得知数据未落盘(磁盘满静默丢数据);
+	 *         改为返回boolean,与同类的delFile/copyFile返回语义一致,且不改变"不抛异常"的既有契约
 	 */
-	public static void putInputStreamToFile(InputStream is, String fileName) {
+	public static boolean putInputStreamToFile(InputStream is, String fileName) {
 		FileOutputStream fos = null;
 		try {
 			File writeFile = new File(fileName);
@@ -107,8 +110,10 @@ public class FileUtil {
 				fos.write(buffer, 0, length);
 			}
 			fos.flush();
+			return true;
 		} catch (Exception e) {
 			logger.error("putInputStreamToFile method execution failed", e);
+			return false;
 		} finally {
 			IOUtil.closeQuietly(fos, is);
 		}
@@ -130,8 +135,9 @@ public class FileUtil {
 	 * 
 	 * @param bytes
 	 * @param fileName
+	 * @return true表示写入成功;false表示失败(已记录日志),语义同putInputStreamToFile
 	 */
-	public static void putBytesToFile(byte[] bytes, String fileName) {
+	public static boolean putBytesToFile(byte[] bytes, String fileName) {
 		FileOutputStream fos = null;
 		try {
 			File writeFile = new File(fileName);
@@ -139,8 +145,10 @@ public class FileUtil {
 			fos = new FileOutputStream(writeFile);
 			fos.write(bytes);
 			fos.flush();
+			return true;
 		} catch (Exception e) {
 			logger.error("putBytesToFile method execution failed", e);
+			return false;
 		} finally {
 			IOUtil.closeQuietly(fos);
 		}

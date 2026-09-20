@@ -37,10 +37,9 @@ public class H2DDLGenerator implements DialectDDLGenerator {
 			tableSql.append(TAB).append(StringUtil.toLowerOrUpper(colMeta.getColName(), upperOrLower));
 			// 类型
 			tableSql.append(" ").append(DDLUtils.convertType(colMeta, dbType));
-			// 计算列
+			// 计算列(H2语法:col [type] GENERATED ALWAYS AS (expr),不支持VIRTUAL/STORED修饰符,附加会语法报错)
 			if (colMeta.getGeneratedType() > 0 && StringUtil.isNotBlank(colMeta.getDefaultValue())) {
 				tableSql.append(" GENERATED ALWAYS AS (").append(colMeta.getDefaultValue()).append(") ");
-				tableSql.append(colMeta.getGeneratedType() == 1 ? " VIRTUAL " : " STORED ");
 			}
 			// 是否为null
 			if (!colMeta.isNullable()) {
@@ -62,9 +61,9 @@ public class H2DDLGenerator implements DialectDDLGenerator {
 			}
 			// 列注释
 			if (StringUtil.isNotBlank(colMeta.getComments())) {
+				// update 2026-9-14 反斜杠/引号均为字面量:改String.replace免去每列3次隐式正则编译
 				tableSql.append(" COMMENT '")
-						.append(colMeta.getComments().replaceAll("\\\\", "").replaceAll("\"", "").replaceAll("\'", ""))
-						.append("'");
+						.append(colMeta.getComments().replace("\\", "").replace("\"", "").replace("'", "")).append("'");
 			}
 			index++;
 		}
@@ -77,8 +76,7 @@ public class H2DDLGenerator implements DialectDDLGenerator {
 			tableSql.append(";");
 			tableSql.append(NEWLINE);
 			tableSql.append(" COMMENT ON TABLE ").append(tableName).append(" IS '")
-					.append(tableMeta.getRemarks().replaceAll("\\\\", "").replaceAll("\"", "").replaceAll("\'", ""))
-					.append("'");
+					.append(tableMeta.getRemarks().replace("\\", "").replace("\"", "").replace("'", "")).append("'");
 		}
 		// 索引
 		DDLUtils.wrapTableIndexes(tableMeta, upperOrLower, dbType, tableSql, true);

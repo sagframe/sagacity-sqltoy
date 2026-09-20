@@ -33,7 +33,6 @@ import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
-import org.sagacity.sqltoy.utils.MacroIfLogic;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -1006,13 +1005,21 @@ public class SqlConfigParseUtils {
 	 * @return
 	 */
 	private static String processLoop(String queryStr, Map<String, Object> keyValues) {
+		// update 2026-9-14 计数器由"清空"改为"保存-恢复":本方法对每个带命名参数的sql都会执行,
+		// 若在展开期间发生嵌套解析(内层同样走本方法),原实现的finally clear会清掉外层的计数器,
+		// 外层后续@secure-loop读取到null直接NPE(无法确定参数名序号)
+		Integer previousCounter = SqlToyThreadDataHolder.getCounter();
 		try {
 			// 2025-5-17 增加threadLocal计数器，记录存在多少个@loop调用
 			SqlToyThreadDataHolder.setCounter(0);
 			// 这里是借用业务主键生成里面的宏处理模式来解决
 			return MacroUtils.replaceMacros(queryStr, keyValues, null, false, macros, null);
 		} finally {
-			SqlToyThreadDataHolder.clearCounter();
+			if (previousCounter == null) {
+				SqlToyThreadDataHolder.clearCounter();
+			} else {
+				SqlToyThreadDataHolder.setCounter(previousCounter);
+			}
 		}
 	}
 
@@ -1051,12 +1058,6 @@ public class SqlConfigParseUtils {
 		if (profile != null) {
 			return profile.isBackslashEscape();
 		}
-		// 无连接上下文(如配置解析期)按传入dbType判定,mysql系列字符串字面量默认反斜杠转义
-		// (ESCAPE子句须写'\\'表示单反斜杠):mysql/mysql57/tidb/doris/starrocks/oceanbase
-		// update 2026-9-6 实测openGauss 5.0.0报"invalid escape string"(PG系内核要求ESCAPE为
-		// 单字符,标准一致字符串下'\\'即两个字符),GAUSSDB/VASTBASE/MOGDB/STARDB同属openGauss/
-		// PG内核族按一致处理(vastbase未实测,如个别版本确需'\\'可通过backslashEscaping全局配置覆盖),
-		// PostgreSQL/Oracle/SQLServer/DB2/h2/kingbase等本就用ESCAPE'\'
 		return DataSourceUtils.isBackslashEscapeDbType(dbType);
 	}
 
@@ -1222,6 +1223,13 @@ public class SqlConfigParseUtils {
 			return;
 		}
 		int dbType = resolveDbType(dialect);
+		// update 2026-9-15 like转义行为判定优先取realDBType:配置dialect覆盖场景
+		// (如kingbase配postgresql)时,like转义按连接探测的真实库能力判定而非配置方言;
+		// 无运行时上下文或未配置dialect时realDBType=dbType,行为不变
+		DBProfile threadProfile = SqlToyThreadDataHolder.getDBProfile();
+		if (threadProfile != null) {
+			dbType = threadProfile.getRealDBType();
+		}
 		String queryStr = sqlToyResult.getSql();
 		boolean isBackslashEscape = isBackslashEscapeDialect(dbType);
 		// like ?的匹配与参数计数在字面量掩码串上执行(与原串等长,偏移可直接用于原串截取),

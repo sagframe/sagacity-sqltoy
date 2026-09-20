@@ -66,6 +66,16 @@ public class SqlToyThreadDataHolder {
 		counterThreadLocal.set(counter == null ? 0 : counter);
 	}
 
+	/**
+	 * 取当前计数器(null表示未初始化)。供需要"保存-恢复"计数器的嵌套场景使用:
+	 * 内层直接clear会让外层正在进行的计数失效(@secure-loop读到null无法确定参数名序号)
+	 * 
+	 * @return
+	 */
+	public static Integer getCounter() {
+		return counterThreadLocal.get();
+	}
+
 	public static Integer incrementCounterAndGet() {
 		Integer count = counterThreadLocal.get();
 		if (count != null) {
@@ -130,7 +140,9 @@ public class SqlToyThreadDataHolder {
 
 	public static void clearAll() {
 		clearLanguage();
+		clearCounter();
 		resumeUnifyUpdate();
 		clearFreeScene();
+		clearDBProfile();
 	}
 }

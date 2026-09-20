@@ -31,10 +31,15 @@ public class DB2DialectUtils {
 			sql.append("?");
 		} else if (jdbcType == java.sql.Types.DATE) {
 			sql.append("cast(? as DATE)");
-		} else if (jdbcType == java.sql.Types.NUMERIC) {
-			sql.append("cast(? as DECIMAL)");
-		} else if (jdbcType == java.sql.Types.DECIMAL) {
-			sql.append("cast(? as DECIMAL)");
+		} else if (jdbcType == java.sql.Types.NUMERIC || jdbcType == java.sql.Types.DECIMAL) {
+			// update 2026-9-14 修复:裸cast(? as DECIMAL)在db2默认DECIMAL(5,0),小数部分
+			// 被截断(saveOrUpdateAll真库实测88.88截为88致更新值失真);精度/标度已知按列
+			// 定义cast(quickvo形态),未知时用大标度兜底(db2最大precision=31)
+			if (fieldMeta.getPrecision() > 0) {
+				sql.append("cast(? as DECIMAL(" + fieldMeta.getPrecision() + "," + fieldMeta.getScale() + "))");
+			} else {
+				sql.append("cast(? as DECIMAL(31,6))");
+			}
 		} else if (jdbcType == java.sql.Types.BIGINT) {
 			sql.append("cast(? as BIGINT)");
 		} else if (jdbcType == java.sql.Types.INTEGER || jdbcType == java.sql.Types.TINYINT

@@ -129,8 +129,15 @@ public class FIFODynamicFetchCacheManager implements DynamicFecthCacheManager {
 			thread.setDaemon(true);
 			return thread;
 		});
-		newScheduler.scheduleAtFixedRate(FIFODynamicFetchCacheManager::checkAndRemoveTimeoutData, 0, CHECK_INTERVAL,
-				TimeUnit.SECONDS);
+		newScheduler.scheduleAtFixedRate(() -> {
+			try {
+				checkAndRemoveTimeoutData();
+			} catch (Throwable t) {
+				// update 2026-9-14 兜底:scheduleAtFixedRate的任务一旦抛出未捕获异常,后续执行会被永久取消
+				// (所有动态缓存的keepAlive检测静默失效,且不再有任何日志),此处必须吞掉并记录
+				logger.error("checkAndRemoveTimeoutData failed, the keepAlive check schedule will continue!", t);
+			}
+		}, 0, CHECK_INTERVAL, TimeUnit.SECONDS);
 		scheduler = newScheduler;
 		schedulerStarted = true;
 	}
@@ -149,23 +156,34 @@ public class FIFODynamicFetchCacheManager implements DynamicFecthCacheManager {
 		Long[] initTimeAndKeepAlive;
 		String[] keySplit;
 		String cacheKey;
+		// update 2026-9-14 逐条目隔离:任何单条登记数据的异常(值缺失、cacheKey形态异常、缓存已被移除等)
+		// 不得中断整轮清理,更不能让定时任务因异常被永久取消
 		for (Map.Entry<String, Long[]> entry : cacheInitTime.entrySet()) {
-			cacheKey = entry.getKey();
-			keySplit = StringUtil.splitByIndex(cacheKey, CACHE_TYPE_JOIN_SIGN);
-			cacheNameLower = keySplit[0];
-			cacheTypeLower = null;
-			if (keySplit.length == 2) {
-				cacheTypeLower = keySplit[1];
-			}
-			initTimeAndKeepAlive = entry.getValue();
-			if (System.currentTimeMillis() > initTimeAndKeepAlive[0] + initTimeAndKeepAlive[1] * 1000) {
-				dynamicFetchCacheMap.get(cacheNameLower)
-						.remove((cacheTypeLower == null) ? cacheNameLower : cacheTypeLower);
-				// 清除过期缓存使用时间定义
-				cacheInitTime.remove(cacheKey);
-				logger.debug(
-						"cache:cacheName={}, cacheType={} data stored longer than keepAlive={} seconds is automatically cleared!",
-						cacheNameLower, cacheTypeLower, initTimeAndKeepAlive[1]);
+			try {
+				cacheKey = entry.getKey();
+				keySplit = StringUtil.splitByIndex(cacheKey, CACHE_TYPE_JOIN_SIGN);
+				cacheNameLower = keySplit[0];
+				cacheTypeLower = null;
+				if (keySplit.length == 2) {
+					cacheTypeLower = keySplit[1];
+				}
+				initTimeAndKeepAlive = entry.getValue();
+				if (initTimeAndKeepAlive != null && initTimeAndKeepAlive[0] != null && initTimeAndKeepAlive[1] != null
+						&& System.currentTimeMillis() > initTimeAndKeepAlive[0] + initTimeAndKeepAlive[1] * 1000) {
+					ConcurrentHashMap<String, FIFOMap<String, Object[]>> cacheElements = dynamicFetchCacheMap
+							.get(cacheNameLower);
+					// 缓存可能已不存在(如clear后被清理),此时仅需清理过期登记
+					if (cacheElements != null) {
+						cacheElements.remove((cacheTypeLower == null) ? cacheNameLower : cacheTypeLower);
+					}
+					// 清除过期缓存使用时间定义
+					cacheInitTime.remove(cacheKey);
+					logger.debug(
+							"cache:cacheName={}, cacheType={} data stored longer than keepAlive={} seconds is automatically cleared!",
+							cacheNameLower, cacheTypeLower, initTimeAndKeepAlive[1]);
+				}
+			} catch (Exception e) {
+				logger.error("failed to check the timeout data of the dynamic cache, cacheKey:{}", entry.getKey(), e);
 			}
 		}
 	}

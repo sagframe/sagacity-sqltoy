@@ -51,8 +51,14 @@ public class Concat extends IFunction {
 		// update 2026-9-9 已知边界(同ConcatWs):mysql的concat任一参数为NULL时整体返回NULL,
 		// oracle/db2的||将NULL视为空串、sqlite传播NULL,参数可能为NULL时跨库结果存在差异,
 		// 需严格一致请显式coalesce/ifnull包裹参数
+		// update 2026-9-11 补hana:CONCAT仅两参(SPS08实测三参报wrong number of arguments),
+		// 三参起转||拼接(||原生支持且null按空串处理同oracle系)
+		// update 2026-9-14 补kingbase:KingbaseES V9(默认oracle兼容模式)真库实测sys.concat
+		// (text,text)两参遮蔽pg_catalog.concat(VARIADIC "any"),三参起报"function
+		// sys.concat(text, unknown, varchar) does not exist"(concat_ws因sys无同名函数不受影响);
+		// 三参起转||拼接(||实测将null按空串处理,与concat跳过null语义一致)
 		if (dialect == DBType.ORACLE || dialect == DBType.ORACLE11 || dialect == DBType.DB2 || dialect == DBType.SQLITE
-				|| dialect == DBType.OCEANBASE) {
+				|| dialect == DBType.OCEANBASE || dialect == DBType.HANA || dialect == DBType.KINGBASE) {
 			if (dialect != DBType.SQLITE && args.length < 3) {
 				return super.IGNORE;
 			}

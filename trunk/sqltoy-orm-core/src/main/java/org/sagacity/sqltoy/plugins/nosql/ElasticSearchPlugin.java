@@ -10,14 +10,12 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.config.model.NoSqlConfigModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
+import org.sagacity.sqltoy.dialect.QueryExecutorBuilder;
 import org.sagacity.sqltoy.model.Page;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.inner.DataSetResult;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.utils.BeanUtil;
-import org.sagacity.sqltoy.utils.HttpClientUtils;
-import org.sagacity.sqltoy.utils.MongoElasticUtils;
-import org.sagacity.sqltoy.utils.QueryExecutorBuilder;
 import org.sagacity.sqltoy.utils.ResultUtils;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
@@ -58,7 +56,7 @@ public class ElasticSearchPlugin {
 		// update 2022-6-16 补全参数统一构造处理
 		QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
 		try {
-			realMql = MongoElasticUtils
+			realMql = MongoElasticOperations
 					.wrapES(sqlToyConfig, extend.getParamsName(), extend.getParamsValue(sqlToyContext, sqlToyConfig))
 					.trim();
 			jsonQuery = JSON.parseObject(realMql);
@@ -103,7 +101,7 @@ public class ElasticSearchPlugin {
 		// update 2022-6-16 补全参数统一构造处理
 		QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
 		try {
-			realMql = MongoElasticUtils
+			realMql = MongoElasticOperations
 					.wrapES(sqlToyConfig, extend.getParamsName(), extend.getParamsValue(sqlToyContext, sqlToyConfig))
 					.trim();
 			jsonQuery = JSON.parseObject(realMql);
@@ -187,7 +185,8 @@ public class ElasticSearchPlugin {
 			return new DataSetResult();
 		}
 		DataSetResult resultSet = ElasticSearchUtils.extractFieldValue(sqlToyContext, sqlToyConfig, json, fields);
-		MongoElasticUtils.processTranslate(sqlToyContext, sqlToyConfig, resultSet.getRows(), resultSet.getLabelNames());
+		MongoElasticOperations.processTranslate(sqlToyContext, sqlToyConfig, resultSet.getRows(),
+				resultSet.getLabelNames());
 
 		// 不支持指定查询集合的行列转换
 		boolean changedCols = ResultUtils.calculate(sqlToyContext.getDesensitizeProvider(), sqlToyConfig, resultSet,

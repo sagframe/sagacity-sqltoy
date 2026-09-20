@@ -72,7 +72,7 @@ public class WrapTreeTableRouteUnifyFieldsTest {
 		Map<String, Object> unify = new LinkedHashMap<>();
 		unify.put("last_modify_by", "admin");
 		unify.put("last_modify_time", Timestamp.valueOf("2026-09-04 10:00:00"));
-		SqlUtil.wrapTreeTableRoute(null, model, conn, DataSourceUtils.DBType.H2, -1, unify);
+		SqlUtil.wrapTreeTableRoute(null, model, conn, DataSourceUtils.getDBProfile(conn), -1, unify);
 		// 直属节点
 		Object[] row2 = queryRow(2);
 		assertEquals("admin", row2[0], "直属节点最后修改人应被更新");

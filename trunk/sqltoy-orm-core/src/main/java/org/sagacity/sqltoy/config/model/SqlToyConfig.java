@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -588,13 +589,39 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 		try {
 			SqlToyConfig cloned = (SqlToyConfig) super.clone();
 			// dialectSqlMap必须要深度clone，避免还是对象引用关系(在一些场景下会改变dialectSqlMap)
-			// 其他属性则无需进行深度clone，因为不会去改变
+			// 其他属性则无需进行深度clone，因为不会去改变(noSqlConfigModel除外)
 			if (this.dialectSqlMap != null) {
 				cloned.dialectSqlMap = new ConcurrentHashMap<>(this.dialectSqlMap);
+			}
+			// noSqlConfigModel需clone:Elastic.endPoint()会改写endpoint,共享引用会污染缓存中的配置
+			if (this.noSqlConfigModel != null) {
+				cloned.noSqlConfigModel = this.noSqlConfigModel.clone();
 			}
 			// 克隆paramsName(冗余性，本质此参数不会被修改)
 			if (this.paramsName != null) {
 				cloned.paramsName = this.paramsName.clone();
+			}
+			// update 2026-9-14 translateMap必须深度clone:DialectUtils.getUnifyParamsNamedConfig
+			// 会对
+			// clone后的translateMap就地put动态translate并改写FieldTranslate的translates数组,浅共享会把
+			// 本次查询的动态翻译永久写入sqlCache中的配置实例(后续同sqlId查询被污染)且并发下写非线程安全
+			// HashMap;此处按"实际会被改写的字段"同步补齐深拷贝(translates数组复制,Translate保留共享引用)
+			// 注意:原配置无xml翻译声明(空map)时同样必须换成新实例——动态translate查询正是往这个空map里put
+			if (this.translateMap != null) {
+				HashMap<String, FieldTranslate> clonedTranslateMap = new HashMap<String, FieldTranslate>(
+						this.translateMap.size() * 2);
+				FieldTranslate clonedFieldTranslate;
+				for (Map.Entry<String, FieldTranslate> entry : this.translateMap.entrySet()) {
+					clonedFieldTranslate = new FieldTranslate();
+					clonedFieldTranslate.colName = entry.getValue().colName;
+					clonedFieldTranslate.keyField = entry.getValue().keyField;
+					clonedFieldTranslate.aliasName = entry.getValue().aliasName;
+					if (entry.getValue().translates != null) {
+						clonedFieldTranslate.translates = entry.getValue().translates.clone();
+					}
+					clonedTranslateMap.put(entry.getKey(), clonedFieldTranslate);
+				}
+				cloned.translateMap = clonedTranslateMap;
 			}
 			return cloned;
 		} catch (CloneNotSupportedException e) {

@@ -1,4 +1,4 @@
-package org.sagacity.sqltoy.dialect.utils;
+package org.sagacity.sqltoy.dialect;
 
 import java.util.LinkedHashMap;
 import java.util.List;

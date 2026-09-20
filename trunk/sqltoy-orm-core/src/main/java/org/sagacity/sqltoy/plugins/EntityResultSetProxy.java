@@ -11,8 +11,8 @@ import java.util.concurrent.Callable;
 import org.sagacity.sqltoy.config.model.DataType;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
+import org.sagacity.sqltoy.model.DBProfile;
 import org.sagacity.sqltoy.utils.BeanUtil;
-import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.SqlUtilsExt;
 
 import net.bytebuddy.ByteBuddy;
@@ -36,16 +36,18 @@ import net.bytebuddy.matcher.ElementMatchers;
  */
 public class EntityResultSetProxy<T> {
 	private TypeHandler typeHandler;
+	private DBProfile profile;
 	private int dbType;
 	private Connection conn;
 	private final ResultSet rs;
 	private EntityMeta entityMeta;
 
-	public EntityResultSetProxy(TypeHandler typeHandler, Integer dbType, Connection conn, ResultSet rs,
+	public EntityResultSetProxy(TypeHandler typeHandler, DBProfile profile, Connection conn, ResultSet rs,
 			EntityMeta entityMeta) {
 		this.typeHandler = typeHandler;
+		this.profile = profile;
 		// dbType为Integer,直接赋值给int字段在null时拆箱NPE
-		this.dbType = (dbType == null) ? DataSourceUtils.DBType.UNDEFINE : dbType.intValue();
+		this.dbType = profile.getDbType();
 		this.conn = conn;
 		this.rs = rs;
 		this.entityMeta = entityMeta;
@@ -97,7 +99,7 @@ public class EntityResultSetProxy<T> {
 			if (fieldMeta == null) {
 				return superCall.call();
 			}
-			SqlUtilsExt.resultUpdate(typeHandler, conn, rs, fieldMeta, args[0], dbType, false, true);
+			SqlUtilsExt.resultUpdate(typeHandler, conn, rs, fieldMeta, args[0], profile, dbType, false, true);
 			return null;
 		}
 		// toString/equals等原生方法直接执行
@@ -124,9 +126,9 @@ public class EntityResultSetProxy<T> {
 	 * 创建实体代理对象
 	 */
 	@SuppressWarnings("unchecked")
-	public static <T> T createProxy(TypeHandler typeHandler, Integer dbType, Connection conn, ResultSet rs,
+	public static <T> T createProxy(TypeHandler typeHandler, DBProfile profile, Connection conn, ResultSet rs,
 			Class<T> clazz, EntityMeta entityMeta) throws Exception {
-		EntityResultSetProxy<T> interceptor = new EntityResultSetProxy<>(typeHandler, dbType, conn, rs, entityMeta);
+		EntityResultSetProxy<T> interceptor = new EntityResultSetProxy<>(typeHandler, profile, conn, rs, entityMeta);
 		// 动态生成子类:实体方法委托到静态intercept,经实例字段找到行拦截器;代理类按实体类缓存
 		Class<?> proxyCls = PROXY_CLASS_CACHE.findOrInsert(clazz.getClassLoader(), clazz.getName(), () -> {
 			try {

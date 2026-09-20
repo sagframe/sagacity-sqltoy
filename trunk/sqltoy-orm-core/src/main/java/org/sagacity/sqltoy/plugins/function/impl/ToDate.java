@@ -79,6 +79,18 @@ public class ToDate extends IFunction {
 			}
 			return "to_date(" + args[0] + ",'yyyy-MM-dd')";
 		}
+		// update 2026-9-15 补db2:db2的TO_DATE必须两参(单参真库实测报SQLCODE=-20448
+		// cannot be interpreted),单参按长度启发式补格式模型(db2支持oracle风格format model,
+		// 与oracle单参同法);两参原样透传
+		if (dialect == DBType.DB2) {
+			if (args.length > 1) {
+				return wrapArgs("to_date", args);
+			}
+			if (args[0].length() > 12) {
+				return "to_date(" + args[0] + ",'yyyy-MM-dd HH24:mi:ss')";
+			}
+			return "to_date(" + args[0] + ",'yyyy-MM-dd')";
+		}
 		if (dialect == DBType.H2) {
 			// update 2026-9-9 单参原用formatdatetime方向反了:H2的FORMATDATETIME是格式化
 			// (日期→文本,产出VARCHAR),to_date语义为解析(文本→日期),须用PARSEDATETIME,与两参分支一致
@@ -90,11 +102,15 @@ public class ToDate extends IFunction {
 				}
 			}
 			// 两参解析方向:PARSEDATETIME(str,格式)
-			return "parsedatetime(" + args[0] + "," + args[1] + ")";
+			// update 2026-9-15 补oracle风格令牌映射:入参'hh24:mi:ss'的hh24/mi为oracle模型,
+			// h2 PARSEDATETIME用java令牌(HH=24小时,mm=分钟),原样透传真库实测报Error parsing
+			String fmt = args[1].replace("HH24", "HH").replace("hh24", "HH").replace("MI", "mm").replace("mi", "mm");
+			return "parsedatetime(" + args[0] + "," + fmt + ")";
 		}
+		// update 2026-9-14 补KINGBASE(KingbaseES基于PG,函数语法归PG系)
 		if (dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL14 || dialect == DBType.GAUSSDB
 				|| dialect == DBType.MOGDB || dialect == DBType.OPENGAUSS || dialect == DBType.VASTBASE
-				|| dialect == DBType.STARDB || dialect == DBType.OSCAR) {
+				|| dialect == DBType.STARDB || dialect == DBType.OSCAR || dialect == DBType.KINGBASE) {
 			// pg系2参to_date(text,text)原生支持,原样保留;1参转CAST AS date
 			if (args.length > 1) {
 				return super.IGNORE;
@@ -104,12 +120,16 @@ public class ToDate extends IFunction {
 		if (dialect == DBType.MYSQL || dialect == DBType.TIDB || dialect == DBType.MYSQL57 || dialect == DBType.DORIS
 				|| dialect == DBType.STARROCKS) {
 			// 补充mysql映射:1参DATE()取日期;
-			// 2参STR_TO_DATE,格式token互换与DateFormat一致(yyyy↔%Y、MM↔%m、dd↔%d、HH24↔%H、mi↔%i、ss↔%s)
+			// 2参STR_TO_DATE,格式token互换与DateFormat一致(yyyy↔%Y、MM↔%m、dd↔%d、HH24↔%H、
+			// HH↔%H、mm↔%i、mi↔%i、ss↔%s)
+			// update 2026-9-14 补java风格HH(24小时)→%H与mm(分钟)→%i:原链缺这两个token,
+			// to_date(x,'yyyy-MM-dd HH:mm:ss')在串中残留字面HH/mm致STR_TO_DATE解析错值
 			if (args.length == 1) {
 				return "DATE(" + args[0] + ")";
 			}
 			String format = args[1].replace("yyyy", "%Y").replace("yy", "%y").replace("MM", "%m").replace("dd", "%d");
-			format = format.replace("hh24", "%H").replace("hh", "%h").replace("mi", "%i").replace("ss", "%s");
+			format = format.replace("HH24", "%H").replace("hh24", "%H").replace("hh", "%h").replace("HH", "%H")
+					.replace("mm", "%i").replace("mi", "%i").replace("ss", "%s");
 			return "STR_TO_DATE(" + args[0] + "," + format + ")";
 		}
 		if (dialect == DBType.CLICKHOUSE) {

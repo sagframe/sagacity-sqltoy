@@ -972,26 +972,27 @@ public class DefaultLazyDaoImpl extends SqlToyDaoSupport implements SqlToyLazyDa
 	}
 
 	@Override
-	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
+	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallelQueryList, String[] paramNames,
 			Object[] paramValues) {
-		return super.parallQuery(parallQueryList, paramNames, paramValues, null);
+		return super.parallQuery(parallelQueryList, paramNames, paramValues, null);
 	}
 
 	@Override
-	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
+	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallelQueryList, String[] paramNames,
 			Object[] paramValues, ParallelConfig parallelConfig) {
-		return super.parallQuery(parallQueryList, paramNames, paramValues, parallelConfig);
+		return super.parallQuery(parallelQueryList, paramNames, paramValues, parallelConfig);
 	}
 
 	@Override
-	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String, Object> paramsMap) {
-		return super.parallQuery(parallQueryList, paramsMap, null);
+	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallelQueryList,
+			Map<String, Object> paramsMap) {
+		return super.parallQuery(parallelQueryList, paramsMap, null);
 	}
 
 	@Override
-	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String, Object> paramsMap,
+	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallelQueryList, Map<String, Object> paramsMap,
 			ParallelConfig parallelConfig) {
-		return super.parallQuery(parallQueryList, paramsMap, parallelConfig);
+		return super.parallQuery(parallelQueryList, paramsMap, parallelConfig);
 	}
 
 	@Override

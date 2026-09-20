@@ -89,7 +89,7 @@ public class DialectDefectsFixTest {
 	@Test
 	public void insertIgnoreIdentityOnPg14() {
 		EntityMeta meta = buildEntityMeta();
-		String sql = DialectExtUtils.insertIgnore(null, DBType.POSTGRESQL14, meta, PKStrategy.IDENTITY, "COALESCE",
+		String sql = DialectExtUtils.insertIgnore(null, DBType.POSTGRESQL14, meta, PKStrategy.IDENTITY,
 				"nextval('seq')", false, null);
 		String lowerSql = sql.toLowerCase();
 		// identity主键列整体省略,由数据库生成;且不能出现非法的COALESCE(?,DEFAULT)形态
@@ -104,7 +104,7 @@ public class DialectDefectsFixTest {
 	@Test
 	public void insertIgnoreSequenceOnPg14() {
 		EntityMeta meta = buildEntityMeta();
-		String sql = DialectExtUtils.insertIgnore(null, DBType.POSTGRESQL14, meta, PKStrategy.SEQUENCE, "COALESCE",
+		String sql = DialectExtUtils.insertIgnore(null, DBType.POSTGRESQL14, meta, PKStrategy.SEQUENCE,
 				"nextval('seq')", true, null);
 		String lowerSql = sql.toLowerCase();
 		assertTrue(lowerSql.contains("coalesce(?,nextval('seq'))"), "sequence pk should render COALESCE(?,nextval), got: " + sql);

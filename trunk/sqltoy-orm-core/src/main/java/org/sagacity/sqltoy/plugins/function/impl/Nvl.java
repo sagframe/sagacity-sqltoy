@@ -52,10 +52,11 @@ public class Nvl extends IFunction {
 			return wrapArgs("isnull", args);
 		}
 		// update 2026-9-9 补CLICKHOUSE(原生coalesce,此前落IGNORE原样输出nvl报函数不存在)
+		// update 2026-9-14 补KINGBASE(KingbaseES基于PG,函数语法归PG系)
 		if (dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL14 || dialect == DBType.DB2
 				|| dialect == DBType.OPENGAUSS || dialect == DBType.STARDB || dialect == DBType.OSCAR
 				|| dialect == DBType.GAUSSDB || dialect == DBType.MOGDB || dialect == DBType.VASTBASE
-				|| dialect == DBType.H2 || dialect == DBType.CLICKHOUSE) {
+				|| dialect == DBType.H2 || dialect == DBType.CLICKHOUSE || dialect == DBType.KINGBASE) {
 			return wrapArgs("coalesce", args);
 		}
 		if (dialect == DBType.MYSQL || dialect == DBType.TIDB || dialect == DBType.MYSQL57 || dialect == DBType.DORIS
@@ -65,7 +66,9 @@ public class Nvl extends IFunction {
 			}
 			return wrapArgs("ifnull", args);
 		}
-		if (dialect == DBType.SQLITE) {
+		// update 2026-9-11 补hana(SPS08实测无NVL函数,报invalid name of function or procedure:
+		// NVL;IFNULL/COALESCE原生支持,ifnull对geometry类型对同样可行)
+		if (dialect == DBType.SQLITE || dialect == DBType.HANA) {
 			return wrapArgs("ifnull", args);
 		}
 		if (dialect == DBType.ORACLE || dialect == DBType.DM || dialect == DBType.OCEANBASE

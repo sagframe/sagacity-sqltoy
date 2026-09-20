@@ -33,8 +33,11 @@ import org.sagacity.sqltoy.config.annotation.Foreign;
 import org.sagacity.sqltoy.config.annotation.Id;
 import org.sagacity.sqltoy.config.annotation.Index;
 import org.sagacity.sqltoy.config.annotation.Indexes;
+import org.sagacity.sqltoy.config.annotation.MppTable;
 import org.sagacity.sqltoy.config.annotation.OneToMany;
 import org.sagacity.sqltoy.config.annotation.OneToOne;
+import org.sagacity.sqltoy.config.annotation.Partition;
+import org.sagacity.sqltoy.config.annotation.PartitionDef;
 import org.sagacity.sqltoy.config.annotation.PartitionKey;
 import org.sagacity.sqltoy.config.annotation.Secure;
 import org.sagacity.sqltoy.config.annotation.SecureConfig;
@@ -48,8 +51,10 @@ import org.sagacity.sqltoy.config.model.FieldSecureConfig;
 import org.sagacity.sqltoy.config.model.ForeignModel;
 import org.sagacity.sqltoy.config.model.GeneratedType;
 import org.sagacity.sqltoy.config.model.IndexModel;
+import org.sagacity.sqltoy.config.model.MppTableMeta;
 import org.sagacity.sqltoy.config.model.NotGeneratedColMeta;
 import org.sagacity.sqltoy.config.model.PKStrategy;
+import org.sagacity.sqltoy.config.model.PartitionMeta;
 import org.sagacity.sqltoy.config.model.ShardingConfig;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.config.model.TableCascadeModel;
@@ -175,12 +180,11 @@ public class EntityManager {
 		if (entitysMetaMap.containsKey(className)) {
 			return true;
 		}
+		// update 2026-9-14 非实体负缓存改由parseEntityMeta在"确定无@Entity注解"时写入:原形态在此处
+		// 无条件写入,而parseEntityMeta解析抛异常时(isWarn=false)同样返回null,导致启动早期bean未就绪
+		// 等瞬时故障被当成"非实体"永久缓存(直到重启都无法纠正)
 		EntityMeta entityMeta = parseEntityMeta(sqlToyContext, entityClass, false, false);
-		if (entityMeta != null) {
-			return true;
-		}
-		notEntityMap.put(className, "1");
-		return false;
+		return entityMeta != null;
 	}
 
 	/**
@@ -384,6 +388,10 @@ public class EntityManager {
 				parseSecureConfig(entityMeta, entityClass);
 				// 解析索引
 				parseIndexes(entityMeta, entityClass);
+				// 解析分区策略
+				parsePartition(entityMeta, entityClass);
+				// 解析MPP表引擎元数据
+				parseMppTable(entityMeta, entityClass);
 				// 过滤计算列 add 2026-4-30
 				processNotGeneratedColMeta(entityMeta);
 				// 数据版本
@@ -442,10 +450,16 @@ public class EntityManager {
 			if (entityMeta != null) {
 				entitysMetaMap.put(className, entityMeta);
 				tableEntityNameMap.put(entityMeta.getTableName().toLowerCase(java.util.Locale.ROOT), className);
-			} else if (isWarn) {
-				logger.warn(
-						"sqltoy entity:{} is not annotated with @Entity, which indicates it is not an entity class, please check!",
-						className);
+			} else {
+				// update 2026-9-14 能走到此处说明解析正常结束、只是类(含父类)没有@Entity注解,属确定性的
+				// "非实体",才落负缓存;解析过程抛异常的场景在catch中直接return null,不得落负缓存,
+				// 否则瞬时故障(如启动早期主键生成器bean未就绪)会被永久判定为非实体
+				notEntityMap.put(className, "1");
+				if (isWarn) {
+					logger.warn(
+							"sqltoy entity:{} is not annotated with @Entity, which indicates it is not an entity class, please check!",
+							className);
+				}
 			}
 		}
 		return entityMeta;
@@ -577,6 +591,96 @@ public class EntityManager {
 	 * @param entityMeta
 	 * @param entityClass
 	 */
+	/**
+	 * 解析MPP分析库表引擎元数据(@MppTable,quickvo依据ClickHouse/Doris/StarRocks表定义自动生成)
+	 *
+	 * @param entityMeta
+	 * @param entityClass
+	 */
+	private void parseMppTable(EntityMeta entityMeta, Class entityClass) {
+		Class classType = entityClass;
+		MppTable mppTable = null;
+		// 增加递归对父类检测
+		while (classType != null && !classType.equals(Object.class)) {
+			mppTable = (MppTable) classType.getAnnotation(MppTable.class);
+			if (mppTable != null) {
+				break;
+			}
+			classType = classType.getSuperclass();
+		}
+		if (mppTable == null || StringUtil.isBlank(mppTable.engine())) {
+			return;
+		}
+		entityMeta.setMppTableMeta(new MppTableMeta(mppTable.engine(), mppTable.engineArgs(), mppTable.keyModel(),
+				mppTable.orderBy(), mppTable.distributedBy(), mppTable.buckets(), mppTable.properties()));
+	}
+
+	/**
+	 * 解析表分区策略(@Partition,quickvo依据数据库分区定义自动生成)
+	 *
+	 * @param entityMeta
+	 * @param entityClass
+	 */
+	private void parsePartition(EntityMeta entityMeta, Class entityClass) {
+		Class classType = entityClass;
+		Partition partition = null;
+		// 增加递归对父类检测
+		while (classType != null && !classType.equals(Object.class)) {
+			partition = (Partition) classType.getAnnotation(Partition.class);
+			if (partition != null) {
+				break;
+			}
+			classType = classType.getSuperclass();
+		}
+		if (partition == null) {
+			return;
+		}
+		// 与字段级@PartitionKey双向联动:
+		// 1)@Partition.columns反向标记对应字段的partitionKey(类注解自足,ClickHouse/StarRocks
+		//   等依赖字段级标记的DML逻辑无需额外配置);
+		// 2)@Partition.columns未配置时自动收集@PartitionKey标记的字段(字段注解自足)
+		java.util.List<String> partitionColumns = new java.util.ArrayList<>(
+				java.util.Arrays.asList(partition.columns()));
+		java.util.List<String> markedFields = new java.util.ArrayList<>();
+		if (entityMeta.getFieldsMeta() != null) {
+			for (java.util.Map.Entry<String, FieldMeta> entry : entityMeta.getFieldsMeta().entrySet()) {
+				if (entry.getValue().isPartitionKey()) {
+					markedFields.add(entry.getKey());
+				}
+			}
+		}
+		if (partitionColumns.isEmpty()) {
+			partitionColumns.addAll(markedFields);
+		} else {
+			for (String column : partitionColumns) {
+				FieldMeta fieldMeta = entityMeta.getFieldMeta(column);
+				if (fieldMeta != null && !fieldMeta.isPartitionKey()) {
+					fieldMeta.setPartitionKey(true);
+				}
+			}
+			for (String marked : markedFields) {
+				if (!partitionColumns.contains(marked)) {
+					logger.warn("实体类{}: 字段{}标记了@PartitionKey但不在@Partition的columns中,请检查配置一致性!",
+							entityClass.getName(), marked);
+				}
+			}
+		}
+		PartitionDef[] defs = partition.partitions();
+		PartitionMeta partitionMeta = new PartitionMeta(partition.strategy(),
+				partitionColumns.toArray(new String[0]), partition.expression());
+		if (defs != null && defs.length > 0) {
+			String[] names = new String[defs.length];
+			String[] values = new String[defs.length];
+			for (int i = 0; i < defs.length; i++) {
+				names[i] = defs[i].name();
+				values[i] = defs[i].value();
+			}
+			partitionMeta.setPartitionNames(names);
+			partitionMeta.setPartitionValues(values);
+		}
+		entityMeta.setPartitionMeta(partitionMeta);
+	}
+
 	private void parseIndexes(EntityMeta entityMeta, Class entityClass) {
 		Class classType = entityClass;
 		Indexes indexes = null;

@@ -243,7 +243,8 @@ public class DefaultSqlToyDaoImpl extends SqlToyDaoSupport implements SqlToyDao 
 	}
 
 	@Override
-	public <T> List<QueryResult<T>> parallelQuery(List<ParallQuery> parallelQueryList, Map<String, Object> paramsMap) {
+	public <T> List<QueryResult<T>> parallelQuery(List<ParallQuery> parallelQueryList,
+			Map<String, Object> paramsMap) {
 		return super.parallQuery(parallelQueryList, paramsMap, new ParallelConfig());
 	}
 

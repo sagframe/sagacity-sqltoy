@@ -104,10 +104,10 @@ public class SqlServerFeatureSmokeTest {
 		config.setSql(sql);
 		QueryExecutor queryExecutor = new QueryExecutor(sql);
 		QueryResult page1 = dialect.findPageBySql(context, config, queryExecutor, null, 1L, 1, conn,
-				DataSourceUtils.DBType.SQLSERVER, "sqlserver", 500, -1);
+				DataSourceUtils.getDBProfile(conn), 500, -1);
 		assertEquals(1, ((java.util.List<?>) page1.getRows()).size(), "第一页应1行");
 		QueryResult page2 = dialect.findPageBySql(context, config, queryExecutor, null, 2L, 1, conn,
-				DataSourceUtils.DBType.SQLSERVER, "sqlserver", 500, -1);
+				DataSourceUtils.getDBProfile(conn), 500, -1);
 		assertEquals(1, ((java.util.List<?>) page2.getRows()).size(), "第二页应1行");
 	}
 
@@ -121,7 +121,7 @@ public class SqlServerFeatureSmokeTest {
 		config.setSql(sql);
 		QueryExecutor queryExecutor = new QueryExecutor(sql);
 		QueryResult top = dialect.findTopBySql(context, config, queryExecutor, null, 1, conn,
-				DataSourceUtils.DBType.SQLSERVER, "sqlserver", 500, -1);
+				DataSourceUtils.getDBProfile(conn), 500, -1);
 		assertEquals(1, ((java.util.List<?>) top.getRows()).size(), "top 1应只返回1行");
 	}
 
@@ -135,7 +135,7 @@ public class SqlServerFeatureSmokeTest {
 		config.setSql(sql);
 		QueryExecutor queryExecutor = new QueryExecutor(sql);
 		QueryResult random = dialect.getRandomResult(context, config, queryExecutor, null, 2L, 1L, conn,
-				DataSourceUtils.DBType.SQLSERVER, "sqlserver", 500, -1);
+				DataSourceUtils.getDBProfile(conn), 500, -1);
 		assertEquals(1, ((java.util.List<?>) random.getRows()).size(), "随机应返回1行");
 	}
 
@@ -169,7 +169,7 @@ public class SqlServerFeatureSmokeTest {
 		TreeTableModel model = new TreeTableModel().table("sqltoy_probe_tree").idField("id").pidField("pid")
 				.nodeRouteField("node_route").nodeLevelField("node_level").isLeafField("is_leaf")
 				.pidValue(1L).idLength(3).idTypeIsChar(false);
-		SqlUtil.wrapTreeTableRoute(null, model, conn, DataSourceUtils.DBType.SQLSERVER, -1);
+		SqlUtil.wrapTreeTableRoute(null, model, conn, DataSourceUtils.getDBProfile(conn), -1);
 		// 子树路由重算后:level=2 route=001002;叶子标志:全表置1后主干(有子节点)置0
 		try (PreparedStatement pst = conn.prepareStatement(
 				"select node_level, node_route, is_leaf from sqltoy_probe_tree where id=?")) {

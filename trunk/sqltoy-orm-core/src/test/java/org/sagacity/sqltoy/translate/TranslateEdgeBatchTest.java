@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.translate.cache.impl.TranslateEhcacheManager;
 import org.sagacity.sqltoy.exception.DataAccessException;
-import org.sagacity.sqltoy.utils.TranslateUtils;
 
 /**
  * 回归测试批次：(37)hasCache对未init的cacheManager判空返回false;

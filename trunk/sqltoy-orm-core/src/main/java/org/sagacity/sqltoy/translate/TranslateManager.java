@@ -23,7 +23,6 @@ import org.sagacity.sqltoy.translate.model.CheckerConfigModel;
 import org.sagacity.sqltoy.translate.model.DefaultConfig;
 import org.sagacity.sqltoy.translate.model.TranslateConfigModel;
 import org.sagacity.sqltoy.utils.StringUtil;
-import org.sagacity.sqltoy.utils.TranslateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -14,8 +14,6 @@ import org.sagacity.sqltoy.config.model.NoSqlFieldsModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.model.inner.DataSetResult;
 import org.sagacity.sqltoy.utils.BeanUtil;
-import org.sagacity.sqltoy.utils.HttpClientUtils;
-import org.sagacity.sqltoy.utils.MongoElasticUtils;
 import org.sagacity.sqltoy.utils.ResultUtils;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
@@ -51,13 +49,31 @@ public class ElasticSearchUtils {
 			Class resultClass, Boolean humpMapLabel) throws Exception {
 		NoSqlConfigModel noSqlModel = sqlToyConfig.getNoSqlConfigModel();
 		ElasticEndpoint esConfig = sqlToyContext.getElasticEndpoint(noSqlModel.getEndpoint());
-		// 原生sql支持(7.5.1 还未支持分页)
-		boolean nativeSql = (esConfig.isNativeSql() && noSqlModel.isSqlMode());
 		// 执行请求并返回json结果
 		JSONObject json = HttpClientUtils.doPost(sqlToyContext, noSqlModel, esConfig, sql);
 		if (json == null || json.isEmpty()) {
 			return new DataSetResult();
 		}
+		return executeQuery(sqlToyContext, sqlToyConfig, json, resultClass, humpMapLabel);
+	}
+
+	/**
+	 * 执行实际查询处理(请求已发出的json结果映射重载,供es原生sql游标分页等场景复用)
+	 *
+	 * @param sqlToyContext
+	 * @param sqlToyConfig
+	 * @param json          es返回的json结果
+	 * @param resultClass
+	 * @param humpMapLabel
+	 * @return
+	 * @throws Exception
+	 */
+	public static DataSetResult executeQuery(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, JSONObject json,
+			Class resultClass, Boolean humpMapLabel) throws Exception {
+		NoSqlConfigModel noSqlModel = sqlToyConfig.getNoSqlConfigModel();
+		ElasticEndpoint esConfig = sqlToyContext.getElasticEndpoint(noSqlModel.getEndpoint());
+		// 原生sql支持(7.5.1 还未支持分页)
+		boolean nativeSql = (esConfig.isNativeSql() && noSqlModel.isSqlMode());
 		String[] fields = noSqlModel.getFields();
 		if (fields == null) {
 			if (json.containsKey("columns")) {
@@ -79,7 +95,8 @@ public class ElasticSearchUtils {
 		} else {
 			resultSet = extractFieldValue(sqlToyContext, sqlToyConfig, json, fields);
 		}
-		MongoElasticUtils.processTranslate(sqlToyContext, sqlToyConfig, resultSet.getRows(), resultSet.getLabelNames());
+		MongoElasticOperations.processTranslate(sqlToyContext, sqlToyConfig, resultSet.getRows(),
+				resultSet.getLabelNames());
 		// 不支持指定查询集合的行列转换
 		boolean changedCols = ResultUtils.calculate(sqlToyContext.getDesensitizeProvider(), sqlToyConfig, resultSet,
 				null, null);
@@ -106,7 +123,7 @@ public class ElasticSearchUtils {
 		if (realRoot == null) {
 			return resultModel;
 		}
-		NoSqlFieldsModel fieldModel = MongoElasticUtils.processFields(fields, null);
+		NoSqlFieldsModel fieldModel = MongoElasticOperations.processFields(fields, null);
 		JSONArray rows = (JSONArray) realRoot;
 		JSONArray item;
 		List<List<Object>> resultSet = new ArrayList<List<Object>>();
@@ -164,11 +181,15 @@ public class ElasticSearchUtils {
 				return resultModel;
 			}
 		}
+		// 路径中间节点缺失时getJSONObject返回null,循环内null检查只覆盖下一轮
+		if (root == null) {
+			return resultModel;
+		}
 		Object realRoot = root.get(lastKey);
 		if (realRoot == null) {
 			return resultModel;
 		}
-		NoSqlFieldsModel fieldModel = MongoElasticUtils.processFields(fields, null);
+		NoSqlFieldsModel fieldModel = MongoElasticOperations.processFields(fields, null);
 		String[] realFields = fieldModel.getFields();
 		JSONObject rowJson, sourceData;
 		if (realRoot instanceof JSONArray) {
@@ -200,7 +221,7 @@ public class ElasticSearchUtils {
 			JSONObject json, String[] fields) {
 		DataSetResult resultModel = new DataSetResult();
 		// 切取实际字段{field:aliasName}模式,冒号前面的实际字段
-		NoSqlFieldsModel fieldModel = MongoElasticUtils.processFields(fields, null);
+		NoSqlFieldsModel fieldModel = MongoElasticOperations.processFields(fields, null);
 		String[] realFields = fieldModel.getFields();
 		// 获取json对象的根
 		String[] rootPath = (sqlToyConfig.getNoSqlConfigModel().getValueRoot() == null) ? new String[] { "suggest" }
@@ -212,6 +233,12 @@ public class ElasticSearchUtils {
 		}
 		for (String str : rootPath) {
 			root = ((JSONObject) root).get(str);
+			// update 2026-9-14 中间节点缺失时循环内即退出:原实现只在循环结束后判空,
+			// 路径中间缺失时下一轮会对null做get(NPE),非对象节点则ClassCastException,
+			// 都无法走到下面给出配置错误提示的分支
+			if (root == null) {
+				break;
+			}
 		}
 		if (root == null) {
 			logger.error(
@@ -248,7 +275,7 @@ public class ElasticSearchUtils {
 			JSONObject json, String[] fields) {
 		DataSetResult resultModel = new DataSetResult();
 		// 切取实际字段{field:aliasName}模式,冒号前面的实际字段
-		NoSqlFieldsModel fieldModel = MongoElasticUtils.processFields(fields, null);
+		NoSqlFieldsModel fieldModel = MongoElasticOperations.processFields(fields, null);
 		String[] realFields = fieldModel.getFields();
 		// 获取json对象的根
 		String[] rootPath = (sqlToyConfig.getNoSqlConfigModel().getValueRoot() == null)
@@ -261,6 +288,11 @@ public class ElasticSearchUtils {
 		}
 		for (String str : rootPath) {
 			root = ((JSONObject) root).get(str);
+			// update 2026-9-14 与extractSuggestFieldValue同步:中间节点缺失时循环内退出,
+			// 否则下一轮对null做get直接NPE,走不到下面root==null的配置错误提示分支
+			if (root == null) {
+				break;
+			}
 		}
 		// 循环取根
 		while (root != null && (root instanceof JSONObject)) {

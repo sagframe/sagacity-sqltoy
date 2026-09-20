@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.Collections;
 
 import org.junit.jupiter.api.Test;
+import org.sagacity.sqltoy.ParamFilterProcessor;
 import org.sagacity.sqltoy.config.SqlXMLConfigParse;
 import org.sagacity.sqltoy.config.model.ParamFilterModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
@@ -67,7 +68,7 @@ public class ToDataDynIncrementTest {
 		cloneFilter.setUpdateParams(new String[] { "startDate" });
 
 		// 参数名数组模拟修复后fullParamNames装配结果(包含被引用的incrementDaysBefore)
-		Object[] result = ParamFilterUtils.filterValue(null,
+		Object[] result = ParamFilterProcessor.filterValue(null,
 				new String[] { "startDate", "endDate", "incrementDaysBefore" },
 				new Object[] { null, "20260826", -7 },
 				Arrays.asList(cloneFilter, toDateFilter("startDate", "incrementDaysBefore"),
@@ -81,7 +82,7 @@ public class ToDataDynIncrementTest {
 
 	@Test
 	public void numericIncrementStillWorks() {
-		Object[] result = ParamFilterUtils.filterValue(null, new String[] { "startDate", "endDate" },
+		Object[] result = ParamFilterProcessor.filterValue(null, new String[] { "startDate", "endDate" },
 				new Object[] { null, "20260826" },
 				Arrays.asList(cloneEndToStart(), toDateFilter("startDate", "1"), toDateFilter("endDate", "1")));
 		assertEquals(LocalDate.of(2026, 8, 27), result[0]);
@@ -100,7 +101,7 @@ public class ToDataDynIncrementTest {
 	@Test
 	public void stringReferencedParamValueParsed() {
 		// 引用参数值是字符串数字(如页面传参"-7")也应正确解析
-		Object[] result = ParamFilterUtils.filterValue(null,
+		Object[] result = ParamFilterProcessor.filterValue(null,
 				new String[] { "endDate", "incrementDays" }, new Object[] { "20260826", "-7" },
 				Collections.singletonList(toDateFilter("endDate", "incrementDays")));
 		assertEquals(LocalDate.of(2026, 8, 19), result[0]);
@@ -109,13 +110,13 @@ public class ToDataDynIncrementTest {
 	@Test
 	public void negativeReferencedParamEndToEnd() {
 		// -incrementDaysBefore为负数引用(解析层由-${incrementDaysBefore}规整而来):参数传正数7,增量取反为-7天
-		Object[] result = ParamFilterUtils.filterValue(null,
+		Object[] result = ParamFilterProcessor.filterValue(null,
 				new String[] { "endDate", "incrementDaysBefore" }, new Object[] { "20260826", 7 },
 				Collections.singletonList(toDateFilter("endDate", "-incrementDaysBefore")));
 		assertEquals(LocalDate.of(2026, 8, 19), result[0]);
 
 		// 参数值为负数-7时遵循数学符号规则:-(-7)=+7天
-		result = ParamFilterUtils.filterValue(null,
+		result = ParamFilterProcessor.filterValue(null,
 				new String[] { "endDate", "incrementDaysBefore" }, new Object[] { "20260826", -7 },
 				Collections.singletonList(toDateFilter("endDate", "-incrementDaysBefore")));
 		assertEquals(LocalDate.of(2026, 9, 2), result[0]);
@@ -186,7 +187,7 @@ public class ToDataDynIncrementTest {
 		cloneFilter.setParams(new String[] { "queryDate" });
 		cloneFilter.setParam("queryDate");
 		cloneFilter.setUpdateParams(new String[] { "startDate" });
-		Object[] result = ParamFilterUtils.filterValue(null,
+		Object[] result = ParamFilterProcessor.filterValue(null,
 				new String[] { "startDate", "endDate", "queryDate" },
 				new Object[] { null, null, "2026-09-01" },
 				Collections.singletonList(cloneFilter));
