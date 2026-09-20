@@ -1,7 +1,7 @@
 English | [简体中文](README.zh-CN.md)
 
 <p align="center">
-    <img src="https://img.shields.io/badge/SqlToy-6.0.1-blue" alt="version">
+    <img src="https://img.shields.io/badge/SqlToy-6.0.2-blue" alt="version">
     <a target="_blank" href="LICENSE"><img src="https://img.shields.io/:license-Apache%202.0-blue.svg"></a>
     <a target="_blank" href="https://github.com/sagframe/sagacity-sqltoy"><img src="https://img.shields.io/github/stars/sagframe/sagacity-sqltoy.svg?style=social"/></a>
     <a target="_blank" href="https://gitee.com/sagacity/sagacity-sqltoy"><img src="https://gitee.com/sagacity/sagacity-sqltoy/badge/star.svg?theme=white" /></a>
@@ -39,7 +39,7 @@ SqlToy is a fusion of JPA and ultra-powerful querying — the distilled and shar
 
 QQ group: **531812227** | [Gitee](https://gitee.com/sagacity/sagacity-sqltoy) | [GitHub](https://github.com/sagframe/sagacity-sqltoy) | [GitCode](https://gitcode.com/sqltoy/sagacity-sqltoy)
 
-## 📦 Latest Version 6.0.1
+## 📦 Latest Version 6.0.2
 
 ```xml
 <dependency>
@@ -49,7 +49,7 @@ QQ group: **531812227** | [Gitee](https://gitee.com/sagacity/sagacity-sqltoy) | 
 	<!-- traditional Spring project <artifactId>sagacity-sqltoy-spring</artifactId> -->
 	<!-- plain sqltoy only <artifactId>sagacity-sqltoy</artifactId> -->
 	<!-- for jdk8 the corresponding version is: 5.6.95.jre8 (final version) -->
-	<version>6.0.1</version>
+	<version>6.0.2</version>
 </dependency>
 ```
 

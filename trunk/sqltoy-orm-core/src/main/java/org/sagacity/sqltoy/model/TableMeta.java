@@ -5,6 +5,8 @@ import java.util.List;
 
 import org.sagacity.sqltoy.config.model.ForeignModel;
 import org.sagacity.sqltoy.config.model.IndexModel;
+import org.sagacity.sqltoy.config.model.MppTableMeta;
+import org.sagacity.sqltoy.config.model.PartitionMeta;
 
 /**
  * @project sagacity-sqltoy
@@ -54,6 +56,16 @@ public class TableMeta implements Serializable {
 	 * 主键约束名称
 	 */
 	private String pkConstraint;
+
+	/**
+	 * 表分区元数据(分区策略和分区键)
+	 */
+	private PartitionMeta partitionMeta;
+
+	/**
+	 * MPP分析库表引擎元数据
+	 */
+	private MppTableMeta mppTableMeta;
 
 	public String getTableName() {
 		return tableName;
@@ -125,4 +137,18 @@ public class TableMeta implements Serializable {
 		this.pkConstraint = pkConstraint;
 	}
 
+	public PartitionMeta getPartitionMeta() {
+		return partitionMeta;
+	}
+
+	public void setPartitionMeta(PartitionMeta partitionMeta) {
+		this.partitionMeta = partitionMeta;
+	}
+	public MppTableMeta getMppTableMeta() {
+		return mppTableMeta;
+	}
+
+	public void setMppTableMeta(MppTableMeta mppTableMeta) {
+		this.mppTableMeta = mppTableMeta;
+	}
 }

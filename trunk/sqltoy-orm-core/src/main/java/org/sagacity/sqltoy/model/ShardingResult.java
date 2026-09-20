@@ -28,6 +28,11 @@ public class ShardingResult implements java.io.Serializable {
 	private String message;
 
 	/**
+	 * 失败时的原始异常,便于调用方获取根因堆栈
+	 */
+	private Exception cause;
+
+	/**
 	 * @return the rows
 	 */
 	public List<?> getRows() {
@@ -67,6 +72,20 @@ public class ShardingResult implements java.io.Serializable {
 	 */
 	public void setMessage(String message) {
 		this.message = message;
+	}
+
+	/**
+	 * @return the cause
+	 */
+	public Exception getCause() {
+		return cause;
+	}
+
+	/**
+	 * @param cause the cause to set
+	 */
+	public void setCause(Exception cause) {
+		this.cause = cause;
 	}
 
 }

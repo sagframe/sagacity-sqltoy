@@ -51,10 +51,20 @@ public class DDLFactory {
 		DialectDDLGenerator generator = null;
 		switch (dbType) {
 		case DBType.MYSQL:
-		case DBType.MYSQL57:
-		case DBType.DORIS:
-		case DBType.STARROCKS: {
+		case DBType.MYSQL57: {
 			generator = new MySqlDDLGenerator();
+			break;
+		}
+		case DBType.DORIS: {
+			generator = new org.sagacity.sqltoy.plugins.ddl.impl.DorisDDLGenerator();
+			break;
+		}
+		case DBType.STARROCKS: {
+			generator = new org.sagacity.sqltoy.plugins.ddl.impl.StarRocksDDLGenerator();
+			break;
+		}
+		case DBType.CLICKHOUSE: {
+			generator = new org.sagacity.sqltoy.plugins.ddl.impl.ClickHouseDDLGenerator();
 			break;
 		}
 		case DBType.GAUSSDB:
@@ -83,6 +93,18 @@ public class DDLFactory {
 		}
 		case DBType.H2: {
 			generator = new H2DDLGenerator();
+			break;
+		}
+		case DBType.DB2: {
+			generator = new org.sagacity.sqltoy.plugins.ddl.impl.DB2DDLGenerator();
+			break;
+		}
+		case DBType.HANA: {
+			generator = new org.sagacity.sqltoy.plugins.ddl.impl.HanaDDLGenerator();
+			break;
+		}
+		case DBType.SQLITE: {
+			generator = new org.sagacity.sqltoy.plugins.ddl.impl.SQLiteDDLGenerator();
 			break;
 		}
 		default:

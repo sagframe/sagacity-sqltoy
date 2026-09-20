@@ -141,13 +141,21 @@ public class SqlServerDialect implements Dialect {
 		boolean isNamed = sqlToyConfig.isNamedParam();
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
+		// 存在@fast() 快速分页
+		StringBuilder sql = DialectUtils.openFastWrap(sqlToyConfig, dialect);
+		// update 2026-9-18 与getRandomResult/findTopBySql同源修复:WITH部分剥离置前(T-SQL的WITH
+		// 必须位于语句最外层,原实现CTE+union无顶层order by时整条SQL被insert(0)包进派生表,
+		// 真库报Msg 319 "Incorrect syntax near the keyword 'with'");order/union判定基于剥离后
+		// 主体,CTE体内order by不再依赖clearDisturbSql剔除
+		if (sqlToyConfig.isHasWith()) {
+			SqlWithAnalysis sqlWith = new SqlWithAnalysis(innerSql);
+			sql.append(sqlWith.getWithSql());
+			innerSql = sqlWith.getRejectWithSql();
+		}
 		// update 2021-10-20 提前试算一下实际sql,便于判断最终sql中是否包含order by
 		String judgeOrderSql = innerSql;
 		// 给原始sql标记上特殊的开始和结尾，便于sql拦截器快速定位到原始sql并进行条件补充
 		innerSql = SqlUtilsExt.markOriginalSql(innerSql);
-		// 存在@fast() 快速分页
-		StringBuilder sql = DialectUtils.openFastWrap(sqlToyConfig, dialect);
-		sql.append(innerSql);
 		// 避免条件用?模式,导致实际参数位置不匹配,因此只针对:name模式进行处理
 		if (isNamed) {
 			SqlToyResult tmpResult = SqlConfigParseUtils.processSql(judgeOrderSql, extend.getParamsName(),
@@ -161,14 +169,20 @@ public class SqlServerDialect implements Dialect {
 			// 剔除select 和from 之间内容，剔除sql中所有()之间的内容,即剔除所有子查询，再判断是否有order by
 			orderByIndex = StringUtil.matchIndex(DialectUtils.clearDisturbSql(judgeOrderSql), ORDER_BY);
 		}
-		// 不存在order by或order by存在于子查询中
-		if (orderByIndex < 0) {
+		// update 2026-9-18 union派生表包裹改顺序拼装(废弃insert(0)):原实现insert(0)在@fast场景
+		// 会插到fastPreSql之前破坏结构,故以!isHasFast守卫排除,导致@fast+union落入else分支把
+		// order by (select 1)直接追加在union之后(真库Msg 104 "ORDER BY items must appear in
+		// the select list...");顺序拼装对fast前缀天然无影响,两场景统一合法
+		if (orderByIndex < 0 && SqlUtil.hasUnion(judgeOrderSql, true)) {
 			// update 2026-9-5 真实库验证:sqlserver对union语句直接追加order by会报
 			// "ORDER BY items must appear in the select list...",需包一层派生表后再挂分页参数
-			if (!sqlToyConfig.isHasFast() && SqlUtil.hasUnion(judgeOrderSql, true)) {
-				sql.insert(0, "select * from (");
-				sql.append(") sag_union_tmp order by (select 1) ");
-			} else {
+			sql.append("select * from (");
+			sql.append(innerSql);
+			sql.append(") sag_union_tmp order by (select 1) ");
+		} else {
+			sql.append(innerSql);
+			// 不存在order by或order by存在于子查询中
+			if (orderByIndex < 0) {
 				// offset fetch语法要求必须有order by,用固定排序占位符,避免NEWID()导致每次分页顺序随机出现重复或丢行
 				sql.append(" order by (select 1) ");
 			}

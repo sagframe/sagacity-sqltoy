@@ -2421,7 +2421,6 @@ public class SqlUtil {
 			final String nextNodeQueryStr, final TreeTableModel treeTableModel, final HashMap pidsMap, List ids,
 			final int nodeLevel, Connection conn, final DBProfile profile, final Integer queryTimeout,
 			final Object[] unifyValues) throws Exception {
-		int dbType = profile.getDbType();
 		// 修改节点level和节点路径
 		batchUpdateByJdbc(typeHandler, updateLevelAndRoute, ids, 500, new InsertRowCallbackHandler() {
 			@Override
@@ -2707,32 +2706,52 @@ public class SqlUtil {
 				hasSetAutoCommit = true;
 			}
 		}
-		PreparedStatement pst = conn.prepareStatement(realSql);
-		// 设置全局statementTimeout，默认为null
-		if (SqlToyConstants.defaultStatementTimeout != null && SqlToyConstants.defaultStatementTimeout > 0) {
-			pst.setQueryTimeout(SqlToyConstants.defaultStatementTimeout);
-		}
-		Object result = preparedStatementProcess(null, pst, null, new PreparedStatementResultHandler() {
-			@Override
-			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
-				// update 2026-9-5 移除按paramsType==TIMESTAMP跳过绑定的sqlserver分支:
-				// rowversion的排除已上收到语句生成与调用方参数过滤(目标库元数据校准判据),
-				// 语句占位符与参数严格1:1,此层按类型跳过反而造成占位符缺参错位
-				setParamsValue(typeHandler, conn, profile, pst, params, paramsType, 0);
-				// 返回update的记录数量
-				// update 2026-9-10 改用executeUpdate返回值(JDBC规范即影响行数):sqlite-jdbc
-				// 的getUpdateCount()恒返回0(驱动实现缺陷,update/delete/executeSql计数全部
-				// 失真为0,实测),executeUpdate返回值各驱动均正确
-				this.setResult(Long.valueOf(pst.executeUpdate()));
+		try {
+			PreparedStatement pst = conn.prepareStatement(realSql);
+			// 设置全局statementTimeout，默认为null
+			if (SqlToyConstants.defaultStatementTimeout != null && SqlToyConstants.defaultStatementTimeout > 0) {
+				pst.setQueryTimeout(SqlToyConstants.defaultStatementTimeout);
 			}
-		});
-		if (result != null) {
-			updateCounts = (Long) result;
+			Object result = preparedStatementProcess(null, pst, null, new PreparedStatementResultHandler() {
+				@Override
+				public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
+					// update 2026-9-5 移除按paramsType==TIMESTAMP跳过绑定的sqlserver分支:
+					// rowversion的排除已上收到语句生成与调用方参数过滤(目标库元数据校准判据),
+					// 语句占位符与参数严格1:1,此层按类型跳过反而造成占位符缺参错位
+					setParamsValue(typeHandler, conn, profile, pst, params, paramsType, 0);
+					// 返回update的记录数量
+					// update 2026-9-10 改用executeUpdate返回值(JDBC规范即影响行数):sqlite-jdbc
+					// 的getUpdateCount()恒返回0(驱动实现缺陷,update/delete/executeSql计数全部
+					// 失真为0,实测),executeUpdate返回值各驱动均正确
+					this.setResult(Long.valueOf(pst.executeUpdate()));
+				}
+			});
+			if (result != null) {
+				updateCounts = (Long) result;
+			}
+			return updateCounts;
+		} catch (Exception e) {
+			// update 2026-9-18 与batchUpdateByJdbc范式对齐:已切换为手动提交的场景失败必须回滚——
+			// 否则finally中恢复autoCommit(true)按JDBC规范会提交当前事务,调用方收到异常却已有数据落库
+			if (hasSetAutoCommit && !autoCommit.booleanValue()) {
+				try {
+					conn.rollback();
+				} catch (SQLException re) {
+					logger.error("executeSql rollback failed!", re);
+				}
+			}
+			throw e;
+		} finally {
+			// update 2026-9-18 autoCommit恢复移入finally:原仅在成功路径恢复,异常时连接带着
+			// 被改写的提交方式归还池化连接(池复位不保证),污染后续无关请求
+			if (hasSetAutoCommit) {
+				try {
+					conn.setAutoCommit(!autoCommit);
+				} catch (SQLException se) {
+					logger.error(se.getMessage(), se);
+				}
+			}
 		}
-		if (hasSetAutoCommit && autoCommit != null) {
-			conn.setAutoCommit(!autoCommit);
-		}
-		return updateCounts;
 	}
 
 	public static Object insertReturnPrimaryKey(TypeHandler typeHandler, final String executeSql, final Object[] params,
@@ -2749,35 +2768,54 @@ public class SqlUtil {
 				hasSetAutoCommit = true;
 			}
 		}
-		PreparedStatement pst = conn.prepareStatement(realSql,
-				new String[] { DataSourceUtils.getReturnPrimaryKeyColumn(primaryField, dbType) });
-		// 设置全局statementTimeout，默认为null
-		if (SqlToyConstants.defaultStatementTimeout != null && SqlToyConstants.defaultStatementTimeout > 0) {
-			pst.setQueryTimeout(SqlToyConstants.defaultStatementTimeout);
-		}
-		Object result = preparedStatementProcess(null, pst, null, new PreparedStatementResultHandler() {
-			@Override
-			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
-				// update 2026-9-5 移除按paramsType==TIMESTAMP跳过绑定的sqlserver分支(同executeSql,
-				// rowversion排除已上收到语句生成与调用方参数过滤,占位符与参数严格1:1)
-				setParamsValue(typeHandler, conn, profile, pst, params, paramsType, 0);
-				pst.execute();
-				ResultSet keyResult = pst.getGeneratedKeys();
-				if (keyResult != null) {
-					while (keyResult.next()) {
-						this.setResult(keyResult.getObject(1));
-					}
-					keyResult.close();
-				}
-				// 返回update的记录数量
-				SqlExecuteStat.debug("execution result", "insertReturnPrimaryKey affected rows: {}!",
-						Long.valueOf(pst.getUpdateCount()));
+		try {
+			PreparedStatement pst = conn.prepareStatement(realSql,
+					new String[] { DataSourceUtils.getReturnPrimaryKeyColumn(primaryField, dbType) });
+			// 设置全局statementTimeout，默认为null
+			if (SqlToyConstants.defaultStatementTimeout != null && SqlToyConstants.defaultStatementTimeout > 0) {
+				pst.setQueryTimeout(SqlToyConstants.defaultStatementTimeout);
 			}
-		});
-		if (hasSetAutoCommit && autoCommit != null) {
-			conn.setAutoCommit(!autoCommit);
+			Object result = preparedStatementProcess(null, pst, null, new PreparedStatementResultHandler() {
+				@Override
+				public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
+					// update 2026-9-5 移除按paramsType==TIMESTAMP跳过绑定的sqlserver分支(同executeSql,
+					// rowversion排除已上收到语句生成与调用方参数过滤,占位符与参数严格1:1)
+					setParamsValue(typeHandler, conn, profile, pst, params, paramsType, 0);
+					pst.execute();
+					ResultSet keyResult = pst.getGeneratedKeys();
+					if (keyResult != null) {
+						while (keyResult.next()) {
+							this.setResult(keyResult.getObject(1));
+						}
+						keyResult.close();
+					}
+					// 返回update的记录数量
+					SqlExecuteStat.debug("execution result", "insertReturnPrimaryKey affected rows: {}!",
+							Long.valueOf(pst.getUpdateCount()));
+				}
+			});
+			return result;
+		} catch (Exception e) {
+			// update 2026-9-18 与executeSql/batchUpdateByJdbc范式对齐:手动提交场景失败必须回滚,
+			// 避免finally恢复autoCommit(true)时按JDBC规范隐式提交当前事务
+			if (hasSetAutoCommit && !autoCommit.booleanValue()) {
+				try {
+					conn.rollback();
+				} catch (SQLException re) {
+					logger.error("insertReturnPrimaryKey rollback failed!", re);
+				}
+			}
+			throw e;
+		} finally {
+			// update 2026-9-18 autoCommit恢复移入finally:异常路径连接不再带被改写的提交方式归还池
+			if (hasSetAutoCommit) {
+				try {
+					conn.setAutoCommit(!autoCommit);
+				} catch (SQLException se) {
+					logger.error(se.getMessage(), se);
+				}
+			}
 		}
-		return result;
 	}
 
 	/**
