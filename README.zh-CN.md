@@ -48,7 +48,7 @@ QQ交流群：**531812227** ｜ [Gitee](https://gitee.com/sagacity/sagacity-sqlt
 	<!-- solon 适配版本 <artifactId>sagacity-sqltoy-solon-plugin</artifactId> -->
 	<!-- 传统spring项目 <artifactId>sagacity-sqltoy-spring</artifactId> -->
 	<!-- 单纯sqltoy <artifactId>sagacity-sqltoy</artifactId> -->
-	<!-- jdk8 对应的版本号为：5.6.95.jre8（最终版本） -->
+	<!-- jdk8 对应的版本号为：5.6.96.jre8（jre8 最终版本，同样支持 quickvo-maven-plugin 插件） -->
 	<version>6.0.2</version>
 </dependency>
 ```

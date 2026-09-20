@@ -48,7 +48,7 @@ QQ group: **531812227** | [Gitee](https://gitee.com/sagacity/sagacity-sqltoy) | 
 	<!-- solon adapter version <artifactId>sagacity-sqltoy-solon-plugin</artifactId> -->
 	<!-- traditional Spring project <artifactId>sagacity-sqltoy-spring</artifactId> -->
 	<!-- plain sqltoy only <artifactId>sagacity-sqltoy</artifactId> -->
-	<!-- for jdk8 the corresponding version is: 5.6.95.jre8 (final version) -->
+	<!-- for jdk8 the corresponding version is: 5.6.96.jre8 (final version, also works with the quickvo-maven-plugin) -->
 	<version>6.0.2</version>
 </dependency>
 ```
