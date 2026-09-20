@@ -333,8 +333,8 @@ public class SqlLoop extends AbstractMacro {
 				// 按方言包裹转日期函数(仅比较位置包裹,like引号内形态维持原样);无运行时
 				// 上下文(离线API直调)维持原2参裸形态
 				if (loopDbType != null) {
-					preSql = preSql.concat(SqlUtil.toSqlLogStr(paramValue, preSql, addSingleQuotation,
-							loopDbType.intValue()));
+					preSql = preSql
+							.concat(SqlUtil.toSqlLogStr(paramValue, preSql, addSingleQuotation, loopDbType.intValue()));
 				} else {
 					preSql = preSql.concat(SqlUtil.toSqlString(paramValue, addSingleQuotation));
 				}

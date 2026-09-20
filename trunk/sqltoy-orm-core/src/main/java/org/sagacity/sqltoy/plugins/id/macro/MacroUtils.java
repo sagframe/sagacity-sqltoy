@@ -24,10 +24,8 @@ import org.sagacity.sqltoy.utils.StringUtil;
  */
 public class MacroUtils {
 	/**
-	 * 转换器的格式
-	 * update 2026-9-15 修复宏名多连字符不分发:原正则[\-]?仅允许单个连字符,@secure-loop-full
-	 * (两个连字符)永远匹配不上宏模式,宏体从不被执行(真库实测原样透传,循环参数被先行
-	 * 名参转换破坏);改为允许多段"连字符+字母数字"组合
+	 * 转换器的格式 update 2026-9-15 修复宏名多连字符不分发:原正则[\-]?仅允许单个连字符,@secure-loop-full
+	 * (两个连字符)永远匹配不上宏模式,宏体从不被执行(真库实测原样透传,循环参数被先行 名参转换破坏);改为允许多段"连字符+字母数字"组合
 	 */
 	private static Pattern macroPattern = Pattern.compile("@[a-zA-Z]+[0-9]*(?:\\-[a-zA-Z0-9]+)*\\([\\w\\W]*\\)");
 

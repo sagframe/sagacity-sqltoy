@@ -13,7 +13,6 @@ import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.model.DBProfile;
 import org.sagacity.sqltoy.utils.BeanUtil;
-import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.SqlUtilsExt;
 
 import net.bytebuddy.ByteBuddy;

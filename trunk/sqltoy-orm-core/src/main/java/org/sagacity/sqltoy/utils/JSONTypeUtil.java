@@ -34,7 +34,8 @@ public class JSONTypeUtil {
 	 */
 	protected final static Logger logger = LoggerFactory.getLogger(JSONTypeUtil.class);
 	// update 2026-9-16 删除遗留死代码HAS_PG_OBJECT/HAS_VB_OBJECT静态探测块:2026-9-6重构后
-	// PGobject解析已统筹至DataSourceUtils.resolvePGobjectHolder(按URL scheme选同源驱动+dbType守卫),
+	// PGobject解析已统筹至DataSourceUtils.resolvePGobjectHolder(按URL
+	// scheme选同源驱动+dbType守卫),
 	// 两个布尔量全文件无任何读取,类加载期的无条件Class.forName探测徒增非PG系项目的类加载开销
 
 	// JSON 相关类型名称缓存
@@ -139,8 +140,8 @@ public class JSONTypeUtil {
 	}
 
 	/**
-	 * update 2026-9-6 判定是否为PG系内核方言(PGobject类型包装的适用范围),与SqlUtil.isPGFamily一致
-	 * update 2026-9-16 委托DBProfile.isPGFamily静态白名单(单一事实源,消除逐字拷贝)
+	 * update 2026-9-6 判定是否为PG系内核方言(PGobject类型包装的适用范围),与SqlUtil.isPGFamily一致 update
+	 * 2026-9-16 委托DBProfile.isPGFamily静态白名单(单一事实源,消除逐字拷贝)
 	 */
 	private static boolean isPGFamily(Integer dbType) {
 		return DBProfile.isPGFamily(dbType);

@@ -89,8 +89,8 @@ public class ReservedWordsUtil {
 		if (dbType == DBType.ORACLE || dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14
 				|| dbType == DBType.DB2 || dbType == DBType.DM || dbType == DBType.GAUSSDB || dbType == DBType.MOGDB
 				|| dbType == DBType.STARDB || dbType == DBType.OSCAR || dbType == DBType.OPENGAUSS
-				|| dbType == DBType.VASTBASE || dbType == DBType.ORACLE11
-				|| dbType == DBType.HANA || dbType == DBType.KINGBASE) {
+				|| dbType == DBType.VASTBASE || dbType == DBType.ORACLE11 || dbType == DBType.HANA
+				|| dbType == DBType.KINGBASE) {
 			return sql.replace("[", "\"").replace("]", "\"");
 		}
 		if (dbType == DBType.H2) {
@@ -133,8 +133,8 @@ public class ReservedWordsUtil {
 		if (dbType == DBType.ORACLE || dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14
 				|| dbType == DBType.KINGBASE || dbType == DBType.DB2 || dbType == DBType.GAUSSDB
 				|| dbType == DBType.MOGDB || dbType == DBType.OPENGAUSS || dbType == DBType.VASTBASE
-				|| dbType == DBType.STARDB || dbType == DBType.OSCAR || dbType == DBType.DM
-				|| dbType == DBType.ORACLE11 || dbType == DBType.HANA) {
+				|| dbType == DBType.STARDB || dbType == DBType.OSCAR || dbType == DBType.DM || dbType == DBType.ORACLE11
+				|| dbType == DBType.HANA) {
 			return "\"".concat(column).concat("\"");
 		}
 		return column;
@@ -172,8 +172,8 @@ public class ReservedWordsUtil {
 			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.ORACLE
 					|| dbType == DBType.DB2 || dbType == DBType.KINGBASE || dbType == DBType.GAUSSDB
 					|| dbType == DBType.MOGDB || dbType == DBType.OPENGAUSS || dbType == DBType.VASTBASE
-					|| dbType == DBType.DM || dbType == DBType.ORACLE11
-					|| dbType == DBType.STARDB || dbType == DBType.OSCAR || dbType == DBType.HANA) {
+					|| dbType == DBType.DM || dbType == DBType.ORACLE11 || dbType == DBType.STARDB
+					|| dbType == DBType.OSCAR || dbType == DBType.HANA) {
 				sqlBuff.append("\"").append(keyWord).append("\"");
 			} else if (dbType == DBType.SQLSERVER || dbType == DBType.SQLITE) {
 				sqlBuff.append("[").append(keyWord).append("]");

@@ -90,8 +90,8 @@ public class ParallelUtils {
 		int threads = shardingGroups.size();
 		// 是否全局异常回滚
 		boolean globalRollback = shardingConfig.isGlobalRollback();
-		// 如果额外策略配置了线程数量,则按照指定的线程数量执行
-		if (threads > shardingConfig.getMaxConcurrents() && shardingConfig.getMaxConcurrents() > 1) {
+		// 如果额外策略配置了线程数量,则按照指定的线程数量执行(0表示不限制,1表示串行)
+		if (shardingConfig.getMaxConcurrents() > 0 && threads > shardingConfig.getMaxConcurrents()) {
 			threads = shardingConfig.getMaxConcurrents();
 		}
 		ExecutorService pool = Executors.newFixedThreadPool(threads);
@@ -118,7 +118,7 @@ public class ParallelUtils {
 				item = futureResult.get();
 				// 全局异常则抛出,让事务进行全部回滚。
 				if (item != null && !item.isSuccess() && globalRollback) {
-					throw new RuntimeException(item.getMessage());
+					throw new DataAccessException(item.getMessage(), item.getCause());
 				}
 				if (item != null && item.getRows() != null && !item.getRows().isEmpty()) {
 					results.addAll(item.getRows());

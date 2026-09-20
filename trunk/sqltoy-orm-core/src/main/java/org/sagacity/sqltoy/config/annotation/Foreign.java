@@ -25,9 +25,9 @@ public @interface Foreign {
 	// 外键表的字段
 	String field();
 
-	// 删除级联
+	// 删除参照动作,取值见ReferentialAction常量:0:CASCADE,1:RESTRICT(默认),2:SET_NULL,3:NO_ACTION,4:SET_DEFAULT
 	int deleteRestict() default 1;
 
-	// 修改级联约束
+	// 修改参照动作,取值同deleteRestict,见ReferentialAction常量
 	int updateRestict() default 1;
 }

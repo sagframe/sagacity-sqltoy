@@ -2630,8 +2630,8 @@ public class SqlToyDaoSupport {
 		return parallQuery(parallelQueryList, paramNames, paramValues, null);
 	}
 
-	protected <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallelQueryList,
-			Map<String, Object> paramsMap, ParallelConfig parallelConfig) {
+	protected <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallelQueryList, Map<String, Object> paramsMap,
+			ParallelConfig parallelConfig) {
 		return parallQuery(parallelQueryList, null, new Object[] { new IgnoreKeyCaseMap(paramsMap) }, parallelConfig);
 	}
 

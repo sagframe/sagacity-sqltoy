@@ -63,6 +63,8 @@ public class DialectExecutor implements Callable<ShardingResult> {
 			result.setSuccess(false);
 			result.setMessage("execute sharding, DataSource node:" + dataSourceName + ",table=" + tableName
 					+ " occurred exception:" + e.getMessage());
+			// 保留原始异常,便于调用方获取根因堆栈
+			result.setCause(e);
 			logger.error("execute sharding, dataSource node:{}, table={} error occurred:{}", dataSourceName, tableName,
 					e.getMessage());
 		} finally {
