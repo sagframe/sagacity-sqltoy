@@ -10,12 +10,12 @@ import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
  * @project sagacity-sqltoy
- * @description h2数据库通过POJO生成创建表结构的ddl语句
+ * @description IBM DB2数据库建表DDL: identity用GENERATED ALWAYS AS IDENTITY,
+ *              注释走独立COMMENT ON语句,时间默认值CURRENT TIMESTAMP
  * @author zhongxuchen
- * @version v1.0,Date:2024-04-30
- * @modify Date:2024-04-30,修改说明
+ * @version v1.0,Date:2026-09-19
  */
-public class H2DDLGenerator implements DialectDDLGenerator {
+public class DB2DDLGenerator implements DialectDDLGenerator {
 	private String NEWLINE = "\r\n";
 	private String TAB = "   ";
 
@@ -26,6 +26,9 @@ public class H2DDLGenerator implements DialectDDLGenerator {
 		}
 		StringBuilder tableSql = new StringBuilder();
 		String tableName = StringUtil.toLowerOrUpper(tableMeta.getTableName(), upperOrLower);
+		if (StringUtil.isNotBlank(schema)) {
+			tableName = schema + "." + tableName;
+		}
 		tableSql.append("CREATE TABLE ").append(tableName).append(NEWLINE);
 		tableSql.append("(").append(NEWLINE);
 		int index = 0;
@@ -33,56 +36,46 @@ public class H2DDLGenerator implements DialectDDLGenerator {
 			if (index > 0) {
 				tableSql.append(",").append(NEWLINE);
 			}
-			// 字段名
 			tableSql.append(TAB).append(StringUtil.toLowerOrUpper(colMeta.getColName(), upperOrLower));
-			// 类型
 			tableSql.append(" ").append(DDLUtils.convertType(colMeta, dbType));
-			// 计算列(H2语法:col [type] GENERATED ALWAYS AS (expr),不支持VIRTUAL/STORED修饰符,附加会语法报错)
+			// 计算列:DB2用GENERATED ALWAYS AS (expression)
 			if (colMeta.getGeneratedType() > 0 && StringUtil.isNotBlank(colMeta.getDefaultValue())) {
-				tableSql.append(" GENERATED ALWAYS AS (").append(colMeta.getDefaultValue()).append(") ");
+				tableSql.append(" GENERATED ALWAYS AS (").append(colMeta.getDefaultValue()).append(")");
 			}
-			// 是否为null
-			if (!colMeta.isNullable()) {
-				tableSql.append(" NOT NULL");
-			}
-			// 自增
-			if (colMeta.isAutoIncrement()) {
-				tableSql.append(" AUTO_INCREMENT");
+			// 自增:DB2 identity语法(START WITH/INCREMENT BY)
+			else if (colMeta.isAutoIncrement()) {
+				tableSql.append(" GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1)");
 			} else if (colMeta.getGeneratedType() == 0 && StringUtil.isNotBlank(colMeta.getDefaultValue())) {
 				tableSql.append(" DEFAULT ");
 				if (DDLUtils.isNotChar(colMeta.getDataType())) {
 					tableSql.append(colMeta.getDefaultValue());
 				} else if (DDLUtils.isDate(colMeta.getDataType())
-						&& DDLUtils.isDateFunction(colMeta.getDefaultValue().toUpperCase(Locale.ROOT))) {
-					tableSql.append(colMeta.getDefaultValue());
+						&& DDLUtils.isDateFunction(
+								// DB2 JDBC返回CURRENT TIMESTAMP(空格形态),归一为下划线后再判
+								colMeta.getDefaultValue().toUpperCase(Locale.ROOT).replace(" ", "_"))) {
+					// DB2时间函数形态: CURRENT TIMESTAMP(带空格)
+					tableSql.append(colMeta.getDefaultValue().toUpperCase(Locale.ROOT).replace("CURRENT_TIMESTAMP",
+							"CURRENT TIMESTAMP"));
 				} else {
 					tableSql.append("'").append(colMeta.getDefaultValue()).append("'");
 				}
 			}
-			// 列注释
-			if (StringUtil.isNotBlank(colMeta.getComments())) {
-				// update 2026-9-14 反斜杠/引号均为字面量:改String.replace免去每列3次隐式正则编译
-				tableSql.append(" COMMENT '")
-						.append(colMeta.getComments().replace("\\", "").replace("\"", "").replace("'", "")).append("'");
+			if (!colMeta.isNullable()) {
+				tableSql.append(" NOT NULL");
 			}
 			index++;
 		}
 		// 主键
 		DDLUtils.wrapTablePrimaryKeys(tableMeta, upperOrLower, dbType, tableSql);
-		tableSql.append(NEWLINE);
-		tableSql.append(")");
-		// 表备注
-		if (StringUtil.isNotBlank(tableMeta.getRemarks())) {
-			tableSql.append(";");
-			tableSql.append(NEWLINE);
-			tableSql.append(" COMMENT ON TABLE ").append(tableName).append(" IS '")
-					.append(tableMeta.getRemarks().replace("\\", "").replace("\"", "").replace("'", "")).append("'");
-		}
+		tableSql.append(NEWLINE).append(")");
+		// 分区(DB2需ORGANIZE BY,分区明细以注释形式)
+		DDLUtils.wrapTablePartition(tableMeta, upperOrLower, dbType, tableSql);
+		// 表和字段注释:DB2走独立COMMENT ON语句
+		DDLUtils.wrapTableAndColumnsComment(tableMeta, upperOrLower, dbType, tableSql);
 		// 索引
 		DDLUtils.wrapTableIndexes(tableMeta, upperOrLower, dbType, tableSql, true);
 		// 外键
 		DDLUtils.wrapForeignKeys(tableMeta, upperOrLower, dbType, tableSql, true);
 		return tableSql.toString();
 	}
-
 }

@@ -233,6 +233,16 @@ public class EntityMeta implements Serializable {
 	private IndexModel[] indexModels;
 
 	/**
+	 * 表分区元数据(分区策略和分区键)
+	 */
+	private PartitionMeta partitionMeta;
+
+	/**
+	 * MPP分析库表引擎元数据(ClickHouse/Doris/StarRocks)
+	 */
+	private MppTableMeta mppTableMeta;
+
+	/**
 	 * 计算列数量
 	 */
 	private int generatedColsCnt = 0;
@@ -909,6 +919,14 @@ public class EntityMeta implements Serializable {
 		this.indexModels = indexModels;
 	}
 
+	public PartitionMeta getPartitionMeta() {
+		return partitionMeta;
+	}
+
+	public void setPartitionMeta(PartitionMeta partitionMeta) {
+		this.partitionMeta = partitionMeta;
+	}
+
 	public Map<String, ForeignModel> getForeignFields() {
 		return foreignFields;
 	}
@@ -977,4 +995,11 @@ public class EntityMeta implements Serializable {
 		return idGenerator != null;
 	}
 
+	public MppTableMeta getMppTableMeta() {
+		return mppTableMeta;
+	}
+
+	public void setMppTableMeta(MppTableMeta mppTableMeta) {
+		this.mppTableMeta = mppTableMeta;
+	}
 }

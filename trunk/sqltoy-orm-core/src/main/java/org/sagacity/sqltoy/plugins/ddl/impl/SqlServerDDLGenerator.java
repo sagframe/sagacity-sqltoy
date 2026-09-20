@@ -39,12 +39,31 @@ public class SqlServerDDLGenerator implements DialectDDLGenerator {
 			}
 			// 字段名
 			tableSql.append(TAB).append(StringUtil.toLowerOrUpper(colMeta.getColName(), upperOrLower));
-			// 类型
-			tableSql.append(" ").append(DDLUtils.convertType(colMeta, dbType));
-			// 计算列
+			// 类型:SQLServer VARCHAR上限8000,超长降级VARCHAR(MAX);VECTOR降级VARBINARY(MAX)
+			String colType = DDLUtils.convertType(colMeta, dbType);
+			if (colType.startsWith("VARCHAR") || colType.startsWith("NVARCHAR")) {
+				int open = colType.indexOf('(');
+				int close = colType.indexOf(')', open);
+				if (open > 0 && close > open) {
+					try {
+						int len = Integer.parseInt(colType.substring(open + 1, close).trim());
+						if (len > 8000) {
+							colType = colType.substring(0, open) + "(MAX)";
+						}
+					} catch (NumberFormatException ignore) {
+					}
+				}
+			}
+			// SQLServer无原生VECTOR类型(2025预览版才有),降级VARBINARY(MAX)
+			if (colType.startsWith("VECTOR")) {
+				colType = "VARBINARY(MAX)";
+			}
+			// 计算列:SQLServer语法为 col AS (expr) [PERSISTED],不带数据类型(带类型会让AS变成语法错误)
 			if (colMeta.getGeneratedType() > 0 && StringUtil.isNotBlank(colMeta.getDefaultValue())) {
 				tableSql.append(" AS (").append(colMeta.getDefaultValue()).append(") ");
 				tableSql.append(colMeta.getGeneratedType() == 1 ? "" : " PERSISTED ");
+			} else {
+				tableSql.append(" ").append(colType);
 			}
 			// 是否为null
 			if (!colMeta.isNullable()) {
