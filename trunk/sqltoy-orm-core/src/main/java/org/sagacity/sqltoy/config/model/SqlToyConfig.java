@@ -11,6 +11,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.sagacity.sqltoy.SqlToyConstants;
+import org.sagacity.sqltoy.SqlToyThreadDataHolder;
+import org.sagacity.sqltoy.model.DBProfile;
 import org.sagacity.sqltoy.model.IgnoreCaseSet;
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
@@ -39,6 +42,15 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	 * 数据库方言
 	 */
 	private String dialect;
+
+	/**
+	 * update 2026-9-23 realDialectFirst变体匹配标记:sql经realDialect变体匹配选中时置位
+	 * (SqlToyContext.resolveRealDialectVariant与SqlScriptLoader.getSqlConfig线程分支),
+	 * 仅带此标记的sql在getDialectSql收口点按真实方言做函数/保留字转换,未命中变体回退
+	 * base的sql保持配置方言行为。变体实例只可能经对应方言的匹配路径到达(直接以变体id
+	 * 查询除外),标记为实例固有属性,super.clone自动携带
+	 */
+	private boolean realDialectMatched = false;
 
 	/**
 	 * 查询参数条件过滤器
@@ -733,8 +745,14 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	}
 
 	/**
-	 * 根据方言生成不同的sql语句
-	 * 
+	 * update 2026-9-23 realDialectFirst补齐函数替换遗漏:6个片段getter(sql/countSql/fastSql/
+	 * fastPreSql/fastTailSql/fastWithSql)全部汇聚本私有方法,惰性转换的目标方言在此换算为
+	 * 连接探测的真实方言(线程档案由processDataSource按连接绑定)。**仅限经realDialectFirst
+	 * 变体匹配选中的sql**(realDialectMatched标记,未命中变体回退base的sql保持配置方言行为),
+	 * 且仅作用于sql形态转换层(函数与保留字),分页等执行策略的dbType分派不受影响;真实方言
+	 * 与查询方言一致、线程无档案(连接外解析)或开关关闭时行为零变化;换算后与解析方言标签
+	 * 不相等从而走转换路径,dialectSqlMap按真实方言缓存仍只转换一次
+	 *
 	 * @param type       如:sql、fastPage等
 	 * @param sqlContent
 	 * @param dialect
@@ -744,15 +762,27 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 		if (StringUtil.isBlank(sqlContent)) {
 			return sqlContent;
 		}
-		if (dialect == null || dialect.equals("") || dialect.equals(Dialect.UNDEFINE) || dialect.equals(this.dialect)) {
+		// 换算方言用final局部变量承载(下方lambda捕获要求,if/else两分支各赋值一次)
+		final String convertDialect;
+		if (SqlToyConstants.realDialectFirst && realDialectMatched) {
+			DBProfile profile = SqlToyThreadDataHolder.getDBProfile();
+			String realDialect = (profile == null) ? null : profile.getRealDialect();
+			convertDialect = (StringUtil.isNotBlank(realDialect) && !realDialect.equalsIgnoreCase(dialect))
+					? realDialect.toLowerCase(Locale.ROOT)
+					: dialect;
+		} else {
+			convertDialect = dialect;
+		}
+		if (convertDialect == null || convertDialect.equals("") || convertDialect.equals(Dialect.UNDEFINE)
+				|| convertDialect.equals(this.dialect)) {
 			return sqlContent;
 		}
-		String key = dialect.concat(".").concat(type);
+		String key = convertDialect.concat(".").concat(type);
 		// update 2026-9-8 containsKey+get+put三次查找合并为computeIfAbsent(并发首查免重复计算)
 		return dialectSqlMap.computeIfAbsent(key, k -> {
-			String dialectSql = FunctionUtils.getDialectSql(sqlContent, dialect);
+			String dialectSql = FunctionUtils.getDialectSql(sqlContent, convertDialect);
 			// 保留字处理
-			return ReservedWordsUtil.convertSql(dialectSql, DataSourceUtils.getDBType(dialect));
+			return ReservedWordsUtil.convertSql(dialectSql, DataSourceUtils.getDBType(convertDialect));
 		});
 	}
 
@@ -778,6 +808,20 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 
 	public void clearDialectSql() {
 		this.dialectSqlMap.clear();
+	}
+
+	/**
+	 * update 2026-9-23 标记本sql经realDialectFirst变体匹配选中(函数替换方言跟随真实方言的前提)
+	 */
+	public void markRealDialectMatched() {
+		this.realDialectMatched = true;
+	}
+
+	/**
+	 * @return 是否经realDialectFirst变体匹配选中
+	 */
+	public boolean isRealDialectMatched() {
+		return realDialectMatched;
 	}
 
 	/**

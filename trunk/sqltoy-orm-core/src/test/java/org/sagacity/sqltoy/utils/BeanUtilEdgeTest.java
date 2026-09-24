@@ -307,6 +307,27 @@ public class BeanUtilEdgeTest {
 		assertEquals(Integer.valueOf(0), BeanUtil.convertType("False", 0, DataType.wrapIntegerType, "java.lang.Integer"));
 	}
 
+	/**
+	 * 回归测试:千分位分组数字(number-format等格式化产物"8,888.0000")转数值属性
+	 * 不再抛"Character , is neither a decimal digit number..."
+	 */
+	@Test
+	public void convertTypeGroupingNumber() throws Exception {
+		assertEquals(new BigDecimal("8888.0000"),
+				BeanUtil.convertType("8,888.0000", 0, DataType.wrapBigDecimalType, "java.math.BigDecimal"));
+		assertEquals(new BigDecimal("-12345678.9"),
+				BeanUtil.convertType("-12,345,678.9", 0, DataType.wrapBigDecimalType, "java.math.BigDecimal"));
+		assertEquals(Integer.valueOf(8888),
+				BeanUtil.convertType("8,888", 0, DataType.wrapIntegerType, "java.lang.Integer"));
+		assertEquals(Long.valueOf(12345678L),
+				BeanUtil.convertType("12,345,678.90", 0, DataType.wrapLongType, "java.lang.Long"));
+		assertEquals(Double.valueOf(-1234.5d),
+				BeanUtil.convertType("-1,234.50", 0, DataType.wrapDoubleType, "java.lang.Double"));
+		// 非法分组形态不剥离,保持原解析报错行为
+		assertThrows(NumberFormatException.class,
+				() -> BeanUtil.convertType("1,23", 0, DataType.wrapBigDecimalType, "java.math.BigDecimal"));
+	}
+
 	@Test
 	public void convertTypeDateString() throws Exception {
 		java.util.Date date = (java.util.Date) BeanUtil.convertType("2024-05-01 10:30:00", 0, DataType.dateType,
@@ -343,6 +364,12 @@ public class BeanUtilEdgeTest {
 		assertEquals("1", BeanUtil.convertBoolean("true"));
 		assertEquals("0", BeanUtil.convertBoolean("false"));
 		assertEquals("abc", BeanUtil.convertBoolean("abc"));
+		// 千分位分组逗号剥离:合法分组形态剥,非法分组形态原样返回
+		assertEquals("8888.0000", BeanUtil.convertBoolean("8,888.0000"));
+		assertEquals("1234", BeanUtil.convertBoolean("1,234"));
+		assertEquals("1,23", BeanUtil.convertBoolean("1,23"));
+		// 不含逗号的常规值原样返回
+		assertEquals("8888.0000", BeanUtil.convertBoolean("8888.0000"));
 	}
 
 	@Test

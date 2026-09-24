@@ -1878,7 +1878,7 @@ public class ResultUtils {
 	 * @param sqlToyConfig  sql配置信息
 	 * @param queryExecutor 查询执行器(含参数和扩展计算配置)
 	 * @param conn          数据库连接对象
-	 * @param dbType        数据库类型，参见DataSourceUtils.DBType
+	 * @param profile        数据库类型，参见DataSourceUtils.DBType
 	 * @param dialect       数据库方言
 	 * @return 旋转参照类别数据(已行转列)，无pivot配置或未定义category-sql返回null
 	 * @throws Exception

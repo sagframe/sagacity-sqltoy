@@ -52,7 +52,7 @@ public class PostgreSqlDialectUtils {
 	 * @param totalCount
 	 * @param randomCount
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param dialect
 	 * @param fetchSize
 	 * @param maxRows
@@ -95,7 +95,7 @@ public class PostgreSqlDialectUtils {
 	 * @param sqlToyContext
 	 * @param entity
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param tableName
 	 * @return
 	 * @throws Exception
@@ -136,7 +136,7 @@ public class PostgreSqlDialectUtils {
 	 * @param batchSize
 	 * @param reflectPropsHandler
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param autoCommit
 	 * @param tableName
 	 * @return
@@ -164,7 +164,7 @@ public class PostgreSqlDialectUtils {
 	 * @param reflectPropsHandler
 	 * @param forceUpdateFields
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param dialect
 	 * @param autoCommit
 	 * @param tableName
@@ -277,7 +277,7 @@ public class PostgreSqlDialectUtils {
 	 * @param schema
 	 * @param tableName
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param dialect
 	 * @return
 	 * @throws Exception

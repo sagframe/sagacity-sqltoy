@@ -64,7 +64,7 @@ public class ClickHouseDialectUtils {
 	 * @param insertSql
 	 * @param entity
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @return
 	 * @throws Exception
 	 */
@@ -199,7 +199,7 @@ public class ClickHouseDialectUtils {
 	 * @param batchSize
 	 * @param reflectPropsHandler
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param autoCommit
 	 * @return
 	 * @throws Exception
@@ -302,7 +302,7 @@ public class ClickHouseDialectUtils {
 	 * @param sqlToyContext
 	 * @param entity
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param tableName
 	 * @return
 	 * @throws Exception
@@ -409,9 +409,8 @@ public class ClickHouseDialectUtils {
 	 * @param batchSize
 	 * @param forceUpdateFields
 	 * @param reflectPropsHandler
-	 * @param nullFunction
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param autoCommit
 	 * @param tableName
 	 * @param skipNull

@@ -49,7 +49,7 @@ public class OpenGaussDialectUtils {
 	 * 
 	 * @param entityMeta
 	 * @param entity
-	 * @param dbType
+	 * @param profile
 	 * @param conn
 	 * @return
 	 */
@@ -77,7 +77,7 @@ public class OpenGaussDialectUtils {
 	 * @param sql
 	 * @param columnName
 	 * @param fieldMeta
-	 * @param dbType
+	 * @param profile
 	 */
 	public static void wrapSelectFields(StringBuilder sql, String columnName, FieldMeta fieldMeta, DBProfile profile) {
 		Integer dbType = profile.getDbType();

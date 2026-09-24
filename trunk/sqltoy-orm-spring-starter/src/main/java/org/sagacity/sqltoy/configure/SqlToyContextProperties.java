@@ -226,6 +226,12 @@ public class SqlToyContextProperties implements Serializable {
 	private boolean executeSqlBlankToNull = true;
 
 	/**
+	 * sqlId方言变体查找优先按连接探测的真实方言(如OB按mysql方言配置而真实库为oceanbase),
+	 * 真实方言变体不存在时回退配置方言查找链,真实方言与配置方言一致时行为不变
+	 */
+	private boolean realDialectFirst = false;
+
+	/**
 	 * 跳转超出数据页范围回到第一页
 	 */
 	private Boolean overPageToFirst;
@@ -706,6 +712,14 @@ public class SqlToyContextProperties implements Serializable {
 
 	public void setExecuteSqlBlankToNull(boolean executeSqlBlankToNull) {
 		this.executeSqlBlankToNull = executeSqlBlankToNull;
+	}
+
+	public boolean isRealDialectFirst() {
+		return realDialectFirst;
+	}
+
+	public void setRealDialectFirst(boolean realDialectFirst) {
+		this.realDialectFirst = realDialectFirst;
 	}
 
 	public Boolean getOverPageToFirst() {

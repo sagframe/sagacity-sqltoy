@@ -320,7 +320,7 @@ public class DialectUtils {
 	 * @param extend
 	 * @param decryptHandler 解密
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param startIndex
 	 * @param fetchSize
 	 * @param maxRows
@@ -388,7 +388,7 @@ public class DialectUtils {
 	 * @param paramsValue
 	 * @param updateRowHandler
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param startIndex
 	 * @param fetchSize
 	 * @param maxRows
@@ -461,7 +461,7 @@ public class DialectUtils {
 	 * @param paramsValue
 	 * @param isLastSql
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @return
 	 * @throws Exception
 	 */
@@ -635,6 +635,10 @@ public class DialectUtils {
 			QueryExecutor queryExecutor, DBProfile profile, boolean wrapNamed) throws Exception {
 		String dialect = profile.getDialect();
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		// update 2026-9-23 realDialectFirst:顶层查询的sqlId变体在连接外按配置方言解析完成
+		// (线程档案未绑定),此处连接档案在手,按真实方言重解析变体(真实方言变体不存在时
+		// 保持原config,配置方言变体不降级为base)
+		sqlToyConfig = sqlToyContext.resolveRealDialectVariant(extend.sql, sqlToyConfig, profile);
 		// 本身就是:named参数形式或sql中没有任何参数
 		boolean isNamed = false;
 		// 在QueryExecutorBuilder中已经对wrappedParamNames做了判断赋值
@@ -773,7 +777,7 @@ public class DialectUtils {
 	 * @param generateSqlHandler
 	 * @param reflectPropsHandler
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param autoCommit
 	 * @return
 	 * @throws Exception
@@ -901,7 +905,7 @@ public class DialectUtils {
 	 * 
 	 * @param sqlToyContext
 	 * @param unifyFieldsHandler
-	 * @param dbType
+	 * @param profile
 	 * @param entityMeta
 	 * @param pkStrategy
 	 * @param forceUpdateFields
@@ -1495,9 +1499,8 @@ public class DialectUtils {
 	 * 产生对象update的语句
 	 * 
 	 * @param unifyFieldsHandler
-	 * @param dbType
+	 * @param profile
 	 * @param entityMeta
-	 * @param nullFunction
 	 * @param forceUpdateFields
 	 * @param tableName          已经增加了schema
 	 * @return
@@ -1698,7 +1701,7 @@ public class DialectUtils {
 	 * @param entity
 	 * @param cascadeTypes
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @return
 	 * @throws Exception
 	 */
@@ -1815,7 +1818,7 @@ public class DialectUtils {
 	 * @param cascadeTypes
 	 * @param lockMode
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param tableName
 	 * @param lockSqlHandler
 	 * @param fetchSize
@@ -2144,7 +2147,7 @@ public class DialectUtils {
 	 * @param tableName
 	 * @param lockSqlHandler
 	 * @param lockMode
-	 * @param dbType
+	 * @param profile
 	 * @return 组织loadAll sql语句
 	 */
 	private static String wrapLoadAll(EntityMeta entityMeta, int dataSize, String tableName,
@@ -2261,7 +2264,7 @@ public class DialectUtils {
 	 * @param generateSqlHandler
 	 * @param generateSavePKStrategy
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @return
 	 * @throws Exception 保存对象
 	 */
@@ -2512,7 +2515,7 @@ public class DialectUtils {
 	 * @param batchSize
 	 * @param reflectPropsHandler
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param autoCommit
 	 * @return
 	 * @throws Exception 保存批量对象数据
@@ -2651,7 +2654,7 @@ public class DialectUtils {
 	 * @param generateSqlHandler
 	 * @param reflectPropsHandler
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param autoCommit
 	 * @return
 	 * @throws Exception 执行批量保存或修改操作
@@ -2775,10 +2778,9 @@ public class DialectUtils {
 	 * @param sqlToyContext
 	 * @param entity
 	 * @param entityMeta
-	 * @param nullFunction
 	 * @param forceUpdateFields
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param tableName
 	 * @return
 	 * @throws Exception 单笔记录修改
@@ -2861,14 +2863,13 @@ public class DialectUtils {
 	/**
 	 * @param sqlToyContext
 	 * @param entity
-	 * @param nullFunction
 	 * @param forceUpdateFields
 	 * @param cascade
 	 * @param generateSqlHandler
 	 * @param forceCascadeClasses
 	 * @param subTableForceUpdateProps
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param tableName
 	 * @throws Exception 单个对象修改，包含接连修改
 	 */
@@ -3117,9 +3118,8 @@ public class DialectUtils {
 	 * @param batchSize
 	 * @param forceUpdateFields
 	 * @param reflectPropsHandler
-	 * @param nullFunction
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param autoCommit
 	 * @param tableName
 	 * @param skipNull
@@ -3254,7 +3254,7 @@ public class DialectUtils {
 	 * @param sqlToyContext
 	 * @param entity
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param tableName
 	 * @return
 	 * @throws Exception 删除单个对象以及其级联表数据
@@ -3341,7 +3341,7 @@ public class DialectUtils {
 	 * @param entities
 	 * @param batchSize
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param autoCommit
 	 * @param tableName
 	 * @return
@@ -3469,7 +3469,7 @@ public class DialectUtils {
 	 * @param fields
 	 * @param mappedFields
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param autoCommit
 	 * @param tableName
 	 * @param entities
@@ -3533,7 +3533,7 @@ public class DialectUtils {
 	 * @param entity
 	 * @param paramsNamed
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param tableName
 	 * @param uniqueSqlHandler
 	 * @return 进行唯一性查询判定
@@ -3752,7 +3752,7 @@ public class DialectUtils {
 	 * @param outParamTypes
 	 * @param moreResult
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param fetchSize
 	 * @return
 	 * @throws Exception 通用的存储过程调用，inParam需放在outParam前面
@@ -4180,7 +4180,7 @@ public class DialectUtils {
 	 * @param operateType
 	 * @param sqlToyResult
 	 * @param entityClass
-	 * @param dbType
+	 * @param profile
 	 * @return 执行自定义sql拦截器, 对sql进行二次加工，比如加入租户过滤等
 	 */
 	public static SqlToyResult doInterceptors(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
@@ -4201,7 +4201,7 @@ public class DialectUtils {
 	 * 
 	 * @param entityMeta
 	 * @param entity
-	 * @param dbType
+	 * @param profile
 	 * @return
 	 */
 	public static PKStrategy getSavePKStrategy(EntityMeta entityMeta, Serializable entity, DBProfile profile) {

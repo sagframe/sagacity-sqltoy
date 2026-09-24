@@ -11,11 +11,13 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.sagacity.sqltoy.SqlToyConstants;
+import org.sagacity.sqltoy.SqlToyThreadDataHolder;
 import org.sagacity.sqltoy.config.model.ParamFilterModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.dialect.PageOptimizeUtils;
 import org.sagacity.sqltoy.exception.DataAccessException;
+import org.sagacity.sqltoy.model.DBProfile;
 import org.sagacity.sqltoy.plugins.id.macro.AbstractMacro;
 import org.sagacity.sqltoy.plugins.id.macro.MacroUtils;
 import org.sagacity.sqltoy.plugins.id.macro.impl.Include;
@@ -66,6 +68,13 @@ public class SqlScriptLoader {
 	 * 数据库类型
 	 */
 	private String dialect;
+
+	/**
+	 * update 2026-9-23 realDialect优先(sqltoyContext.realDialectFirst推送):开启后线程上
+	 * 存在连接档案且真实方言不同于查询方言时,sqlId变体查找优先真实方言(真实方言变体
+	 * 不存在时回退原有配置方言查找链);主要覆盖连接回调内的嵌套解析场景
+	 */
+	private boolean realDialectFirst = false;
 
 	/**
 	 * xml解析格式
@@ -271,45 +280,27 @@ public class SqlScriptLoader {
 		}
 		// sqlId形式
 		if (SqlConfigParseUtils.isNamedQuery(sqlKey)) {
-			if (!"".equals(realDialect)) {
-				// sqlId_dialect
-				result = sqlCache.get(sqlKey.concat("_").concat(realDialect));
-				// dialect_sqlId
-				if (result == null) {
-					result = sqlCache.get(realDialect.concat("_").concat(sqlKey));
-				}
-				// 兼容oracle11 sql获取不到，用oracle再次获取
-				if (result == null && realDialect.equals(Dialect.ORACLE11)) {
-					result = sqlCache.get(sqlKey.concat("_oracle"));
-					if (result == null) {
-						result = sqlCache.get("oracle_".concat(sqlKey));
+			// update 2026-9-23 realDialectFirst:线程上存在连接档案且真实方言不同于查询方言时,
+			// 优先按真实方言取sqlId变体(取不到回退原有配置方言查找链);此机制覆盖连接回调内
+			// 的嵌套解析,顶层查询在连接外解析、线程档案未绑定,由DialectUtils查询管线统一
+			// 预处理入口经resolveRealDialectVariant按profile显式重解析补齐
+			if (realDialectFirst) {
+				DBProfile profile = SqlToyThreadDataHolder.getDBProfile();
+				String profileDialect = (profile == null) ? null : profile.getRealDialect();
+				if (StringUtil.isNotBlank(profileDialect) && !profileDialect.equalsIgnoreCase(dialect)
+						&& !Dialect.UNDEFINE.equalsIgnoreCase(profileDialect)) {
+					profileDialect = profileDialect.toLowerCase(Locale.ROOT);
+					result = getDialectVariant(sqlKey, profileDialect);
+					// 命中真实方言变体后同步切换后续include展开命中key计算的查找方言
+					if (result != null) {
+						// update 2026-9-23 标记经realDialect变体匹配选中:其函数/保留字替换方言跟随真实方言
+						result.markRealDialectMatched();
+						realDialect = profileDialect;
 					}
 				}
-				// 兼容一下sqlserver的命名
-				if (result == null && realDialect.equals(Dialect.SQLSERVER)) {
-					result = sqlCache.get(sqlKey.concat("_mssql"));
-					if (result == null) {
-						result = sqlCache.get("mssql_".concat(sqlKey));
-					}
-				} // 兼容一下postgres的命名
-				if (result == null && realDialect.equals(Dialect.POSTGRESQL)) {
-					result = sqlCache.get(sqlKey.concat("_postgres"));
-					if (result == null) {
-						result = sqlCache.get("postgres_".concat(sqlKey));
-					}
-				} // 兼容postgresql14版本方言,获取不到用postgresql命名的sql再次获取
-				if (result == null && realDialect.equals(Dialect.POSTGRESQL14)) {
-					result = sqlCache.get(sqlKey.concat("_").concat(Dialect.POSTGRESQL));
-					if (result == null) {
-						result = sqlCache.get(Dialect.POSTGRESQL.concat("_").concat(sqlKey));
-					}
-				} // 兼容mysql57版本方言,获取不到用mysql命名的sql再次获取
-				if (result == null && realDialect.equals(Dialect.MYSQL57)) {
-					result = sqlCache.get(sqlKey.concat("_").concat(Dialect.MYSQL));
-					if (result == null) {
-						result = sqlCache.get(Dialect.MYSQL.concat("_").concat(sqlKey));
-					}
-				}
+			}
+			if (result == null && !"".equals(realDialect)) {
+				result = getDialectVariant(sqlKey, realDialect);
 			}
 			if (result == null) {
 				result = sqlCache.get(sqlKey);
@@ -403,9 +394,63 @@ public class SqlScriptLoader {
 	}
 
 	/**
+	 * update 2026-9-23 自getSqlConfig抽取:按指定方言查找sqlId方言变体,含版本化方言的
+	 * 家族命名回退链(oracle11→oracle、sqlserver→mssql、postgresql→postgres、
+	 * postgresql14→postgresql、mysql57→mysql),无变体返回null
+	 *
+	 * @param sqlKey  sqlId
+	 * @param dialect 已小写规整的方言识别名
+	 * @return 命中的方言变体配置,不存在返回null
+	 */
+	public SqlToyConfig getDialectVariant(String sqlKey, String dialect) {
+		if (StringUtil.isBlank(dialect)) {
+			return null;
+		}
+		// sqlId_dialect
+		SqlToyConfig result = sqlCache.get(sqlKey.concat("_").concat(dialect));
+		// dialect_sqlId
+		if (result == null) {
+			result = sqlCache.get(dialect.concat("_").concat(sqlKey));
+		}
+		// 兼容oracle11 sql获取不到，用oracle再次获取
+		if (result == null && dialect.equals(Dialect.ORACLE11)) {
+			result = sqlCache.get(sqlKey.concat("_oracle"));
+			if (result == null) {
+				result = sqlCache.get("oracle_".concat(sqlKey));
+			}
+		}
+		// 兼容一下sqlserver的命名
+		if (result == null && dialect.equals(Dialect.SQLSERVER)) {
+			result = sqlCache.get(sqlKey.concat("_mssql"));
+			if (result == null) {
+				result = sqlCache.get("mssql_".concat(sqlKey));
+			}
+		} // 兼容一下postgres的命名
+		if (result == null && dialect.equals(Dialect.POSTGRESQL)) {
+			result = sqlCache.get(sqlKey.concat("_postgres"));
+			if (result == null) {
+				result = sqlCache.get("postgres_".concat(sqlKey));
+			}
+		} // 兼容postgresql14版本方言,获取不到用postgresql命名的sql再次获取
+		if (result == null && dialect.equals(Dialect.POSTGRESQL14)) {
+			result = sqlCache.get(sqlKey.concat("_").concat(Dialect.POSTGRESQL));
+			if (result == null) {
+				result = sqlCache.get(Dialect.POSTGRESQL.concat("_").concat(sqlKey));
+			}
+		} // 兼容mysql57版本方言,获取不到用mysql命名的sql再次获取
+		if (result == null && dialect.equals(Dialect.MYSQL57)) {
+			result = sqlCache.get(sqlKey.concat("_").concat(Dialect.MYSQL));
+			if (result == null) {
+				result = sqlCache.get(Dialect.MYSQL.concat("_").concat(sqlKey));
+			}
+		}
+		return result;
+	}
+
+	/**
 	 * 判断sql配置实际命中的缓存key(sqlId本身或其方言变体),供@include展开后按原key替换缓存,
 	 * 与getSqlConfig中的查找顺序保持一致
-	 * 
+	 *
 	 * @param config
 	 * @param sqlKey
 	 * @param realDialect
@@ -548,6 +593,22 @@ public class SqlScriptLoader {
 	 */
 	public String getDialect() {
 		return dialect;
+	}
+
+	/**
+	 * update 2026-9-23 realDialect优先(sqltoyContext.realDialectFirst推送)
+	 * 
+	 * @param realDialectFirst true表示线程档案的真实方言优先参与sqlId变体查找
+	 */
+	public void setRealDialectFirst(boolean realDialectFirst) {
+		this.realDialectFirst = realDialectFirst;
+	}
+
+	/**
+	 * @return the realDialectFirst
+	 */
+	public boolean isRealDialectFirst() {
+		return realDialectFirst;
 	}
 
 	/**

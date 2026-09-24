@@ -94,7 +94,7 @@ public class SqlServerDialectUtils {
 	 * 
 	 * @param sqlToyContext 上下文
 	 * @param conn          数据库连接
-	 * @param dbType        数据库类型(仅sqlserver校准)
+	 * @param profile        数据库类型(仅sqlserver校准)
 	 * @param tableName     实际表名(可含schema)
 	 * @param entityClass   实体类型
 	 */

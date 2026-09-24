@@ -53,7 +53,7 @@ public class OracleDialectUtils {
 	 * @param cascadeTypes
 	 * @param lockMode
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param dialect
 	 * @param tableName
 	 * @return
@@ -82,7 +82,7 @@ public class OracleDialectUtils {
 	 * @param cascadeTypes
 	 * @param lockMode
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param tableName
 	 * @param fetchSize
 	 * @param maxRows
@@ -107,7 +107,7 @@ public class OracleDialectUtils {
 	 * @param pageNo
 	 * @param pageSize
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param dialect
 	 * @param fetchSize
 	 * @param maxRows
@@ -155,7 +155,7 @@ public class OracleDialectUtils {
 	 * @param queryExecutor
 	 * @param topSize
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param dialect
 	 * @param fetchSize
 	 * @param maxRows
@@ -201,7 +201,7 @@ public class OracleDialectUtils {
 	 * @param totalCount
 	 * @param randomCount
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param dialect
 	 * @param fetchSize
 	 * @param maxRows
@@ -255,7 +255,7 @@ public class OracleDialectUtils {
 	 * @param outParamTypes
 	 * @param moreResult
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param fetchSize
 	 * @return
 	 * @throws Exception

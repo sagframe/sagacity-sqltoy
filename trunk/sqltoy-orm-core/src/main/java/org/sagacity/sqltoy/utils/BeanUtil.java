@@ -73,7 +73,8 @@ import org.slf4j.LoggerFactory;
  * @modify Date:2022-10-19
  *         convertType类型匹配改成int类型的匹配,通过DataType将TypeName转化为int，批量时效率大幅提升
  * @modify Date:2023-08-06 增加对枚举类型的处理
- */
+ * @modify Date:2026-09-22 convertType数字分支解析前剥离千分位分组逗号(如number-format格式化产物"8,888.0000")
+	 */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class BeanUtil {
 	/**
@@ -82,6 +83,12 @@ public class BeanUtil {
 	protected final static Logger logger = LoggerFactory.getLogger(BeanUtil.class);
 
 	public final static Pattern ARRAY_PATTERN = Pattern.compile("\\[\\d+\\]$");
+
+	/**
+	 * 千分位分组数字形态(number-format等格式化产物,如"8,888.0000"、"-12,345,678.9"),
+	 * convertBoolean仅对完整匹配该形态的值剥离分组逗号,避免误伤"1,23"或含逗号普通文本
+	 */
+	private final static Pattern GROUPING_NUMBER_PATTERN = Pattern.compile("^[+-]?\\d{1,3}(,\\d{3})+(\\.\\d+)?$");
 
 	/**
 	 * 保存set方法
@@ -1453,6 +1460,12 @@ public class BeanUtil {
 		}
 		if ("false".equalsIgnoreCase(boolVar)) {
 			return "0";
+		}
+		// update 2026-9-22 剥离千分位分组逗号:sql中number-format格式化后的"8,888.0000"再映射
+		// 数值属性时,new BigDecimal等解析抛"Character , is neither a decimal digit number...";
+		// 常规值不含逗号,indexOf快速短路保持热路径零正则开销
+		if (boolVar.indexOf(',') >= 0 && StringUtil.matches(boolVar, GROUPING_NUMBER_PATTERN)) {
+			return boolVar.replace(",", "");
 		}
 		return boolVar;
 	}

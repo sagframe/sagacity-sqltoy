@@ -150,6 +150,13 @@ public class SqlToyConstants {
 	public static boolean executeSqlBlankToNull = true;
 
 	/**
+	 * update 2026-9-23 realDialect优先(SqlToyContext.initialize时写入,JVM级首个context生效):
+	 * 开启后sqlId方言变体查找优先按连接探测的真实方言(DBProfile.realDialect),
+	 * 供无context实例引用的后续环节随时获取
+	 */
+	public static boolean realDialectFirst = false;
+
+	/**
 	 * 分页中间表名称
 	 */
 	public static String INTERMEDIATE_TABLE = "SAG_INTERMEDIATE_TABLE";

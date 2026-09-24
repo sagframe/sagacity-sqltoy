@@ -80,7 +80,7 @@ public class DefaultDialectUtils {
 	 * @param totalCount
 	 * @param randomCount
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param dialect
 	 * @param fetchSize
 	 * @param maxRows
@@ -130,7 +130,7 @@ public class DefaultDialectUtils {
 	 * @param pageNo
 	 * @param pageSize
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param dialect
 	 * @param fetchSize
 	 * @param maxRows
@@ -179,7 +179,7 @@ public class DefaultDialectUtils {
 	 * @param queryExecutor
 	 * @param topSize
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param dialect
 	 * @param fetchSize
 	 * @param maxRows
@@ -209,7 +209,7 @@ public class DefaultDialectUtils {
 	 * @param entities
 	 * @param batchSize
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param autoCommit
 	 * @param tableName
 	 * @return
@@ -329,7 +329,7 @@ public class DefaultDialectUtils {
 	 * @param updateRowHandler
 	 * @param uniqueProps
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param dialect
 	 * @param tableName
 	 * @return
@@ -637,7 +637,7 @@ public class DefaultDialectUtils {
 	 * 组织updateSaveFetch的锁查询sql
 	 * 
 	 * @param entityMeta
-	 * @param dbType
+	 * @param profile
 	 * @param uniqueProps
 	 * @param whereParamValues
 	 * @param tableName
@@ -905,7 +905,7 @@ public class DefaultDialectUtils {
 	 * @param schema
 	 * @param tableName
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param dialect
 	 * @return
 	 * @throws Exception
@@ -990,7 +990,7 @@ public class DefaultDialectUtils {
 	 * @param schema
 	 * @param tableName
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param dialect
 	 * @return
 	 * @throws Exception
@@ -1184,7 +1184,7 @@ public class DefaultDialectUtils {
 	/**
 	 * 设置会话级锁超时
 	 *
-	 * @param dbType
+	 * @param profile
 	 * @param conn
 	 * @param lockMode
 	 * @param lockWaitTimeout 单位秒

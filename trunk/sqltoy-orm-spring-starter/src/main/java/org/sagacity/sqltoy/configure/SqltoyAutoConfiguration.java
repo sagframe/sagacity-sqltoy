@@ -147,6 +147,8 @@ public class SqltoyAutoConfiguration {
 
 		// 当发现有重复sqlId时是否抛出异常，终止程序执行
 		sqlToyContext.setBreakWhenSqlRepeat(properties.isBreakWhenSqlRepeat());
+		// sqlId方言变体查找优先按连接探测的真实方言(如OB按mysql方言配置而真实库为oceanbase)
+		sqlToyContext.setRealDialectFirst(properties.isRealDialectFirst());
 		// 是否自动创建或更新表
 		sqlToyContext.setAutoDDL(properties.getAutoDDL());
 		sqlToyContext.setDdlLowerOrUpper(properties.getDdlLowerOrUpper());

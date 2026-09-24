@@ -300,7 +300,7 @@ public class SqlUtil {
 	 * 
 	 * @param typeHandler 自定义类型处理器，非null时优先通过其完成参数设置
 	 * @param conn        数据库连接对象
-	 * @param dbType      数据库类型，参见DataSourceUtils.DBType
+	 * @param profile      数据库类型，参见DataSourceUtils.DBType
 	 * @param pst         PreparedStatement预编译语句对象
 	 * @param params      参数值数组
 	 * @param paramsType  参数对应的java.sql.Types类型数组，null时按参数值自动判断类型
@@ -336,7 +336,7 @@ public class SqlUtil {
 	 * 
 	 * @param typeHandler 自定义类型处理器，非null时优先通过其完成参数设置
 	 * @param conn        数据库连接对象(clob、blob等类型创建需要)
-	 * @param dbType      数据库类型，参见DataSourceUtils.DBType
+	 * @param dbProfile      数据库类型，参见DataSourceUtils.DBType
 	 * @param pst         PreparedStatement预编译语句对象
 	 * @param paramValue  参数值，null时按jdbcType设置null
 	 * @param jdbcType    java.sql.Types定义的JDBC类型，-1表示按参数值自动判断
@@ -816,7 +816,7 @@ public class SqlUtil {
 	/**
 	 * vector向量类型参数赋值,统一转为'[1,2,3]'字符串形式(pgvector、oracle 23ai、mysql heatwave等均支持)
 	 * 
-	 * @param dbType     数据库类型，参见DataSourceUtils.DBType
+	 * @param profile     数据库类型，参见DataSourceUtils.DBType
 	 * @param pst        PreparedStatement预编译语句对象
 	 * @param paramIndex 参数位置下标(从1开始)
 	 * @param value      向量值，支持字符串、数组、集合或驱动专属向量对象
@@ -903,7 +903,7 @@ public class SqlUtil {
 	/**
 	 * vector向量列回写(upsert等场景通过ResultSet回写)
 	 * 
-	 * @param dbType     数据库类型，参见DataSourceUtils.DBType
+	 * @param profile     数据库类型，参见DataSourceUtils.DBType
 	 * @param rs         ResultSet结果集对象
 	 * @param columnName 列名称
 	 * @param value      向量值，支持字符串、数组、集合或驱动专属向量对象
@@ -1046,7 +1046,7 @@ public class SqlUtil {
 	 * 2026-9-6起废弃SQL层包装,insert/update/merge共用本绑定逻辑), sqlserver需SQL层cast(? as
 	 * geometry)配合
 	 *
-	 * @param dbType     数据库类型，参见DataSourceUtils.DBType
+	 * @param profile     数据库类型，参见DataSourceUtils.DBType
 	 * @param pst        PreparedStatement预编译语句对象
 	 * @param paramIndex 参数位置下标(从1开始)
 	 * @param value      空间类型值，支持WKT字符串、JTS Geometry或驱动专属对象
@@ -1100,7 +1100,7 @@ public class SqlUtil {
 	/**
 	 * geometry空间列回写(upsert等场景通过ResultSet回写)
 	 * 
-	 * @param dbType     数据库类型，参见DataSourceUtils.DBType
+	 * @param profile     数据库类型，参见DataSourceUtils.DBType
 	 * @param rs         ResultSet结果集对象
 	 * @param columnName 列名称
 	 * @param value      空间类型值，支持WKT字符串、JTS Geometry或驱动专属对象
@@ -1724,7 +1724,7 @@ public class SqlUtil {
 	 * @param voClass            目标VO对象类型
 	 * @param rowCallbackHandler 行数据处理回调接口，非null时逐行回调处理
 	 * @param conn               数据库连接对象
-	 * @param dbType             数据库类型，参见DataSourceUtils.DBType
+	 * @param profile             数据库类型，参见DataSourceUtils.DBType
 	 * @param ignoreAllEmptySet  true表示整行数据全为空值时跳过不构造对象
 	 * @param colFieldMap        数据库列名与对象属性的对照映射，null时按列名去除下划线映射
 	 * @return 单条记录对应的VO对象，无数据返回null，结果多于一条抛出IllegalAccessException
@@ -1820,7 +1820,7 @@ public class SqlUtil {
 	 * @param rowCallbackHandler 行数据处理回调接口，非null时逐行回调处理
 	 * @param decryptHandler     字段解密处理器，非null时对列值做解密处理
 	 * @param conn               数据库连接对象
-	 * @param dbType             数据库类型，参见DataSourceUtils.DBType
+	 * @param profile             数据库类型，参见DataSourceUtils.DBType
 	 * @param ignoreAllEmptySet  true表示整行数据全为空值时跳过
 	 * @param colFieldMap        数据库列名与对象属性的对照映射，null时按列名去除下划线映射
 	 * @param fetchSize          批量提取行数，小于等于0不设置
@@ -2031,7 +2031,7 @@ public class SqlUtil {
 	 * @param updateTypes       各参数对应的java.sql.Types类型数组，null时按参数值自动判断
 	 * @param autoCommit        是否自动提交，null时保持连接原有提交方式
 	 * @param conn              数据库连接对象
-	 * @param dbType            数据库类型，参见DataSourceUtils.DBType
+	 * @param profile            数据库类型，参见DataSourceUtils.DBType
 	 * @return 实际影响的行数统计
 	 * @throws Exception
 	 */
@@ -2198,7 +2198,7 @@ public class SqlUtil {
 	 * @param typeHandler    自定义类型处理器，非null时优先通过其完成参数设置
 	 * @param treeTableModel 树形表模型(表名、id/pid字段、层级字段、路径字段、叶子字段等)
 	 * @param conn           数据库连接对象
-	 * @param dbType         数据库类型，参见DataSourceUtils.DBType
+	 * @param profile         数据库类型，参见DataSourceUtils.DBType
 	 * @return 处理成功返回true，模型必填字段缺失抛出IllegalArgumentException
 	 * @throws Exception
 	 */
@@ -2213,7 +2213,7 @@ public class SqlUtil {
 	 * @param typeHandler       自定义类型处理器，非null时优先通过其完成参数设置
 	 * @param treeTableModel    树形表模型(表名、id/pid字段、层级字段、路径字段、叶子字段等)
 	 * @param conn              数据库连接对象
-	 * @param dbType            数据库类型，参见DataSourceUtils.DBType
+	 * @param profile            数据库类型，参见DataSourceUtils.DBType
 	 * @param queryTimeout      查询超时时间(秒)，null时使用默认值
 	 * @param unifyUpdateFields 公共更新字段(数据库列名->值,如最后修改人、最后修改时间),
 	 *                          非null时附加到全部路由update语句的set子句并绑定参数
@@ -2412,7 +2412,7 @@ public class SqlUtil {
 	 * @param ids                 下一层级待处理的节点数据(id、路径、pid)
 	 * @param nodeLevel           当前处理的节点层级
 	 * @param conn                数据库连接对象
-	 * @param dbType              数据库类型，参见DataSourceUtils.DBType
+	 * @param profile              数据库类型，参见DataSourceUtils.DBType
 	 * @param queryTimeout        查询超时时间(秒)
 	 * @param unifyValues         公共更新字段对应的参数值数组，null时不绑定
 	 * @throws Exception
@@ -2683,7 +2683,7 @@ public class SqlUtil {
 	 * @param params      sql中?对应的参数值数组
 	 * @param paramsType  参数对应的java.sql.Types类型数组，null时按参数值自动判断类型
 	 * @param conn        数据库连接对象
-	 * @param dbType      数据库类型，参见DataSourceUtils.DBType
+	 * @param profile      数据库类型，参见DataSourceUtils.DBType
 	 * @param autoCommit  是否自动提交，null时保持连接原有提交方式，执行完毕后恢复
 	 * @param processWord true对sql中的关键词做保留字转义处理
 	 * @return 实际影响的记录行数

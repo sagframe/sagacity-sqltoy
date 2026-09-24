@@ -413,6 +413,21 @@ public class SqlXMLConfigParse {
 			}
 			isNoSql = true;
 		}
+		// update 2026-9-24 <sql dialect="xxx">声明本条sql按指定方言形态解析固化:
+		// 加载时按该方言做一次函数/保留字转换,config解析标签=该方言,执行期当前库方言
+		// 与声明一致时getDialectSql按既有早退机制跳过函数替换,异方言查询走既有惰性
+		// 转换+dialectSqlMap缓存反向适配;mql/eql上方强制mongo/es不受影响
+		else if (sqlElt.hasAttribute("dialect")) {
+			String specDialect = sqlElt.getAttribute("dialect").trim().toLowerCase(Locale.ROOT);
+			if (StringUtil.isNotBlank(specDialect)) {
+				if (DataSourceUtils.getDBType(specDialect) == DataSourceUtils.DBType.UNDEFINE) {
+					logger.warn("sql id={} 的dialect属性[{}]未在sqltoy方言清单中,按全局方言[{}]解析!", id, specDialect,
+							realDialect);
+				} else {
+					realDialect = specDialect;
+				}
+			}
+		}
 		SqlToyConfig sqlToyConfig = SqlConfigParseUtils.parseSqlToyConfig(sqlContent, realDialect, sqlType);
 		// 判断是否存在@include(sqlId)
 		if (StringUtil.matches(sqlContent, SqlToyConstants.INCLUDE_PATTERN)) {
@@ -436,8 +451,9 @@ public class SqlXMLConfigParse {
 		if (countSql != null) {
 			// 清理sql中的一些注释、以及特殊的符号
 			countSql = SqlUtil.clearMistyChars(SqlUtil.clearMark(countSql), " ").concat(" ");
-			countSql = FunctionUtils.getDialectSql(countSql, dialect);
-			countSql = ReservedWordsUtil.convertSql(countSql, DataSourceUtils.getDBType(dialect));
+			// update 2026-9-24 count-sql与主sql使用同一生效方言(元素dialect属性覆盖后须一致,否则形态错配)
+			countSql = FunctionUtils.getDialectSql(countSql, realDialect);
+			countSql = ReservedWordsUtil.convertSql(countSql, DataSourceUtils.getDBType(realDialect));
 			// 将${paramName}或${:paramName}替换为@value(:paramName)
 			countSql = SqlUtil.replaceEmbedSqlParams(countSql);
 			sqlToyConfig.setCountSql(countSql);

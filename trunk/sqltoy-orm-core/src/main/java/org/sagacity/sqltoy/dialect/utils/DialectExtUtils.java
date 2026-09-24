@@ -53,7 +53,7 @@ public class DialectExtUtils {
 	 * 产生对象对应的insert sql语句
 	 * 
 	 * @param unifyFieldsHandler
-	 * @param dbType
+	 * @param profile
 	 * @param entityMeta
 	 * @param pkStrategy
 	 * @param isNullFunction
@@ -323,7 +323,7 @@ public class DialectExtUtils {
 	 * 
 	 * @param entityMeta
 	 * @param realParamNamed
-	 * @param dbType
+	 * @param profile
 	 * @param tableName
 	 * @return
 	 */
@@ -366,7 +366,7 @@ public class DialectExtUtils {
 	 * 针对postgresql\kingbase\guassdb\mogdb等数据库
 	 * 
 	 * @param unifyFieldsHandler
-	 * @param dbType
+	 * @param profile
 	 * @param entityMeta
 	 * @param pkStrategy
 	 * @param isNullFunction
@@ -483,7 +483,7 @@ public class DialectExtUtils {
 	 * 解决saveOrUpdate场景对一些记录无法判断是新增导致无法对创建人、创建时间等属性进行统一赋值，从而通过默认值模式来解决
 	 * 
 	 * @param createUnifyFields
-	 * @param dbType
+	 * @param profile
 	 * @param fieldMeta
 	 * @return
 	 */
