@@ -69,6 +69,9 @@ public class FunctionConvertMatrixTest {
 		// instr
 		assertEquals(2, ((Number) querySingle(convert("select instr(name,'dmi') from t_func where id=1", "h2")))
 				.intValue());
+		// strpos(pg系写法):h2无strpos,转instr执行,语义一致
+		assertEquals(2, ((Number) querySingle(convert("select strpos(name,'dmi') from t_func where id=1", "h2")))
+				.intValue());
 		// if -> case when
 		assertEquals("high",
 				querySingle(convert("select if(score > 80, 'high', 'low') from t_func where id=1", "h2")));
@@ -149,6 +152,109 @@ public class FunctionConvertMatrixTest {
 	}
 
 	@Test
+	public void strposConversions() {
+		// strpos(str,sub)为pg系原生写法:pg系原生透传
+		String pg = convert("select strpos(remark,'a') from t", "postgresql");
+		assertEquals("select strpos(remark,'a') from t", pg, "pg系strpos原生应原样透传");
+		// mysql/oracle系:strpos与instr参数序一致,直接换名
+		String toMysql = convert("select strpos(remark,'a') from t", "mysql");
+		assertTrue(toMysql.contains("instr(remark,'a')"), "strpos应转instr(源串,子串): " + toMysql);
+		// sqlserver:charindex参数序相反,须对调
+		String toSqlserver = convert("select strpos(remark,'a') from t", "sqlserver");
+		assertTrue(toSqlserver.contains("charindex('a',remark)"), "strpos应转charindex(子串,源串): " + toSqlserver);
+		// db2与hana都转locate,但两者参数序相反
+		String toDb2 = convert("select strpos(remark,'a') from t", "db2");
+		assertTrue(toDb2.contains("locate('a',remark)"), "db2的strpos应转locate(子串,源串): " + toDb2);
+		String toHana = convert("select strpos(remark,'a') from t", "hana");
+		assertTrue(toHana.contains("locate(remark,'a')"), "hana的strpos应转locate(源串,子串): " + toHana);
+		// 三参为CH的start_pos扩展,其余库无对应形态:原样保留交由目标库报错
+		String threeArg = convert("select strpos(remark,'a',2) from t", "mysql");
+		assertEquals("select strpos(remark,'a',2) from t", threeArg, "三参strpos应原样保留");
+	}
+
+	@Test
+	public void substrNegativeStartConversions() throws Exception {
+		// update 2026-10-4 负起点字面量:mysql惯用substr(s,-n)取末n位,原仅sqlserver两参转RIGHT,
+		// pg系substring(s,-n)按"串首之前偏移"返回整串静默错值、db2报SQL0138
+		String pg = convert("select substr(name,-2) from t", "postgresql");
+		assertTrue(pg.contains("RIGHT(name,2)"), "pg两参负起点应转RIGHT: " + pg);
+		String db2 = convert("select substr(name,-2) from t", "db2");
+		assertTrue(db2.contains("RIGHT(name,2)"), "db2两参负起点应转RIGHT: " + db2);
+		String mssql = convert("select substr(name,-3) from t", "sqlserver");
+		assertTrue(mssql.contains("RIGHT(name,3)"), "sqlserver两参负起点应转RIGHT: " + mssql);
+		// 三参负起点转case守卫形态(start=串长-n+1,串长不足n取1,mysql语义)
+		String threeArg = convert("select substr(name,-2,1) from t", "postgresql");
+		assertTrue(threeArg.contains("case when length(name)<2 then substring(name,1,1) else substring(name,length(name)-2+1,1) end"),
+				"三参负起点应转case守卫形态: " + threeArg);
+		// H2端到端:两参取末2位、三参起点为串长-n+1
+		assertEquals("in", querySingle(convert("select substr(name,-2) from t_func where id=1", "h2")));
+		assertEquals("i", querySingle(convert("select substr(name,-2,1) from t_func where id=1", "h2")));
+	}
+
+	@Test
+	public void nullCheckGapsConversions() throws Exception {
+		// update 2026-10-4 单参isnull判空语义(mysql返回0/1):原映射nvl(x)/coalesce(x)
+		// (均要求>=2参)目标库报参数个数错
+		assertEquals("select case when name is null then 1 else 0 end from t",
+				convert("select isnull(name) from t", "oracle"));
+		assertEquals("select case when name is null then 1 else 0 end from t",
+				convert("select isnull(name) from t", "postgresql"));
+		// nvl2(oracle源):非oracle系转case when判非空,oracle系原生透传
+		String nvl2Mysql = convert("select nvl2(name,'y','n') from t", "mysql");
+		assertTrue(nvl2Mysql.contains("case when name is not null then 'y' else 'n' end"),
+				"nvl2应转case when: " + nvl2Mysql);
+		assertEquals("select nvl2(name,'y','n') from t", convert("select nvl2(name,'y','n') from t", "oracle"),
+				"oracle系nvl2应原生透传");
+		// H2端到端
+		assertEquals(0, ((Number) querySingle(convert("select isnull(name) from t_func where id=1", "h2")))
+				.intValue());
+		assertEquals("y", querySingle(convert("select nvl2(name,'y','n') from t_func where id=1", "h2")));
+	}
+
+	@Test
+	public void nowAndLengthMiscGaps() throws Exception {
+		// update 2026-10-4 sqlite的now取本地墙钟(CURRENT_TIMESTAMP为UTC,东八区差8小时)
+		assertEquals("select datetime('now','localtime') from t", convert("select now() from t", "sqlite"));
+		// systimestamp(oracle源):非oracle系按now路径分派,oracle系原生透传
+		assertTrue(convert("select systimestamp from t", "mysql").contains("now()"), "systimestamp应转now");
+		assertEquals("select systimestamp from t", convert("select systimestamp from t", "oracle"),
+				"oracle系systimestamp应透传");
+		// hana目标now转CURRENT_TIMESTAMP(真库执行见HanaRealDbSmokeTest)
+		assertEquals("select CURRENT_TIMESTAMP from t", convert("select now() from t", "hana"));
+		// systimestamp带精度参数:mysql系转now(fsp)保留
+		assertEquals("select now(6) from t", convert("select systimestamp(6) from t", "mysql"));
+		// len为字符语义(sqlserver len按字符数):mysql目标转char_length(原转length按字节,非ASCII错值)
+		String len = convert("select len(name) from t", "mysql");
+		assertTrue(len.contains("char_length(name)"), "len应转char_length: " + len);
+		// %T token:CH目标转%H:%i:%s(原残留字面%T)
+		String pctT = convert("select to_char(create_time,'%T') from t", "clickhouse");
+		assertTrue(pctT.contains("%H:%i:%s"), "%T应转%H:%i:%s: " + pctT);
+		// H2端到端:len字符长度、lengthb字节长度(octet_length承接)
+		assertEquals(5, ((Number) querySingle(convert("select len(name) from t_func where id=1", "h2"))).intValue());
+		assertEquals(5, ((Number) querySingle(convert("select lengthb(name) from t_func where id=1", "h2")))
+				.intValue());
+		// update 2026-10-4 大写oracle惯用格式模型:.NET FORMAT token大小写敏感,YYYY/DD/MI/SS须映射
+		assertEquals("select FORMAT(create_time,'yyyy-MM-dd HH:mm:ss') from t",
+				convert("select to_char(create_time,'YYYY-MM-DD HH24:MI:SS') from t", "sqlserver"),
+				"to_char大写oracle模型应映射为.NET token");
+		assertEquals("select FORMAT(create_time,'yyyy-MM-dd HH:mm:ss') from t",
+				convert("select date_format(create_time,'YYYY-MM-DD HH24:MI:SS') from t", "sqlserver"),
+				"date_format大写oracle模型应映射为.NET token");
+		// 小写与%token形态回归:小写oracle模型中mm(月)须归一为大写MM,.NET才识别为月份
+		// (mi转出的分钟mm与月份mm占位符隔离,不误改)
+		assertEquals("select FORMAT(create_time,'yyyy-MM-dd HH:mm:ss') from t",
+				convert("select to_char(create_time,'yyyy-mm-dd hh24:mi:ss') from t", "sqlserver"),
+				"小写oracle模型月/分应分别映射MM/mm");
+		assertEquals("select FORMAT(create_time,'yyyy-MM-dd') from t",
+				convert("select to_char(create_time,'yyyy-mm-dd') from t", "sqlserver"),
+				"全小写模型的mm应识别为月份");
+		// %token(java/mysql样式)形态回归:行为不变
+		assertEquals("select FORMAT(create_time,'yyyy-MM-dd HH:mm:ss') from t",
+				convert("select date_format(create_time,'%Y-%m-%d %H:%i:%s') from t", "sqlserver"),
+				"%token样式应保持原有映射");
+	}
+
+	@Test
 	public void lengthAndNowEdgeCases() {
 		// PG系lengthb转octet_length
 		String pgLengthb = convert("select lengthb(name) from t", "postgresql");
@@ -198,9 +304,10 @@ public class FunctionConvertMatrixTest {
 				"sqlite leading应转ltrim(col,'x'): " + sqliteLeading);
 		// sqlite普通trim原生保留
 		assertEquals("select trim(name) from t", convert("select trim(name) from t", "sqlite"), "sqlite普通trim应保留");
-		// sqlite now -> CURRENT_TIMESTAMP
-		assertTrue(convert("select now() from t", "sqlite").contains("CURRENT_TIMESTAMP"),
-				"sqlite now应转CURRENT_TIMESTAMP");
+		// sqlite now -> datetime('now','localtime')(update 2026-10-4:原CURRENT_TIMESTAMP为
+		// UTC墙钟,东八区差8小时)
+		assertTrue(convert("select now() from t", "sqlite").contains("datetime('now','localtime')"),
+				"sqlite now应转本地墙钟");
 	}
 
 	// ---------------- group_concat多目标转换与多列拼接 ----------------

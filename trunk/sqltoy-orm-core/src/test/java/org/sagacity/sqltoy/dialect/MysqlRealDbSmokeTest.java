@@ -206,6 +206,9 @@ public class MysqlRealDbSmokeTest {
 		// instr三参转locate
 		assertEquals(2, ((Number) querySingle(convert("select instr(name,'dmi',1) from sqltoy_probe_t1 where id=1",
 				"mysql"))).intValue());
+		// strpos(pg系写法)转instr(参数序一致)
+		assertEquals(2, ((Number) querySingle(convert("select strpos(name,'dmi') from sqltoy_probe_t1 where id=1",
+				"mysql"))).intValue());
 		// sysdate/now(fsp)转now()并正确执行
 		assertNotNullNow(convert("select sysdate from dual", "mysql"));
 		assertNotNullNow(convert("select now(6) from dual", "mysql"));

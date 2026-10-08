@@ -47,7 +47,8 @@ public class ConcatWs extends IFunction {
 			return super.IGNORE;
 		}
 		// update 2026-9-5 补充OCEANBASE(oracle模式无concat_ws)/DB2/sqlite的||拼接转换
-		// (此前仅oracle系处理,这些库原样输出concat_ws非法);
+		// (此前仅oracle系处理,这些库原样输出concat_ws非法;sqlite 3.44+虽已原生提供,
+		// ||拼接仍保留以统一跳过null语义);
 		// update 2026-9-11 补hana(SPS08实测无CONCAT_WS函数,||拼接原生支持且null按空串处理同oracle系)
 		// update 2026-9-15 修复null参数语义:原a||sep||b朴素拼接,参数为null时留下悬挂分隔符
 		// (oracle真库实测concat_ws('-',name,nul_col)得'abcdef-'而非'abcdef');改为逐段case when

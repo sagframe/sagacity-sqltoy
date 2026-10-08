@@ -158,6 +158,9 @@ public class SqlServerRealDbSmokeTest {
 		// instr两参转charindex(转换后的sql在sqlserver执行正确)
 		assertEquals(2, ((Number) querySingle(convert(
 				"select charindex('dmi',name) from sqltoy_probe_t1 where id=1", "sqlserver"))).intValue());
+		// strpos(pg系写法)转charindex(参数序对调)
+		assertEquals(2, ((Number) querySingle(convert(
+				"select strpos(name,'dmi') from sqltoy_probe_t1 where id=1", "sqlserver"))).intValue());
 		// 字面量安全
 		String literal = convert("select name from sqltoy_probe_t1 where name='nvl(a,b)'", "sqlserver");
 		assertEquals("select name from sqltoy_probe_t1 where name='nvl(a,b)'", literal, "字面量不得被转换");

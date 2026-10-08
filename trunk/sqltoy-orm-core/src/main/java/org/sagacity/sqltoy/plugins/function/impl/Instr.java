@@ -13,7 +13,7 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
  * @version v1.0,Date:2013-03-21
  */
 public class Instr extends IFunction {
-	private static Pattern regex = Pattern.compile("(?i)\\W(instr|charindex|position)\\(");
+	private static Pattern regex = Pattern.compile("(?i)\\W(instr|charindex|position|strpos)\\(");
 
 	/*
 	 * (non-Javadoc)
@@ -52,6 +52,32 @@ public class Instr extends IFunction {
 			realArgs = args[0].split("(?i)\\sin\\s");
 		} else {
 			realArgs = args;
+		}
+		// update 2026-10-4 补strpos源函数:strpos(str,sub)为pg系原生写法,参数序与instr一致
+		// (haystack在前),pg系/clickhouse原生支持直接透传;其余库无strpos(instr可原生透传而
+		// strpos不能,须显式转换),2参形态按instr同序映射:charindex与db2的locate须对调参数,
+		// hana的locate同序,其余instr系库直接换名;>2参为CH的start_pos/occurrence扩展,
+		// 其余库无对应形态,原样保留交由目标库报错
+		if ("strpos".equals(funLow)) {
+			if (dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL14 || dialect == DBType.GAUSSDB
+					|| dialect == DBType.OPENGAUSS || dialect == DBType.OSCAR || dialect == DBType.STARDB
+					|| dialect == DBType.MOGDB || dialect == DBType.VASTBASE || dialect == DBType.KINGBASE
+					|| dialect == DBType.CLICKHOUSE) {
+				return super.IGNORE;
+			}
+			if (realArgs.length > 2) {
+				return super.IGNORE;
+			}
+			if (dialect == DBType.SQLSERVER) {
+				return "charindex(" + realArgs[1] + "," + realArgs[0] + ")";
+			}
+			if (dialect == DBType.DB2) {
+				return "locate(" + realArgs[1] + "," + realArgs[0] + ")";
+			}
+			if (dialect == DBType.HANA) {
+				return "locate(" + realArgs[0] + "," + realArgs[1] + ")";
+			}
+			return "instr(" + realArgs[0] + "," + realArgs[1] + ")";
 		}
 		StringBuilder result = new StringBuilder();
 		if (dialect == DBType.SQLSERVER) {

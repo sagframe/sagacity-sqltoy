@@ -55,6 +55,8 @@ import co.elastic.clients.transport.rest5_client.low_level.Rest5Client;
  * @modified 2025-3-17 适配性优化，为切换httpclient5做准备
  * @modified 2026-9-12 升级httpclient至5.x,elastic rest
  *           client切换为官方基于httpclient5的rest5-client
+ * @modified 2026-10-02 rest请求认证增加jwt token模式(配合HttpAuthConfig\JwtTokenManager),
+ *           401时强制失效token并重试一次,兼容既有basic认证
  */
 public class HttpClientUtils {
 	/**
@@ -88,17 +90,39 @@ public class HttpClientUtils {
 
 	public static String doPost(SqlToyContext sqltoyContext, final String url, String username, String password,
 			String[] paramName, String[] paramValue) throws Exception {
+		return doPost(sqltoyContext, url, HttpAuthConfig.basic(username, password), paramName, paramValue);
+	}
+
+	/**
+	 * 执行post请求(支持basic与jwt两种认证模式)
+	 * 
+	 * @param sqltoyContext
+	 * @param url           请求地址
+	 * @param authConfig    认证配置:basic模式走凭据提供器,jwt模式携带Authorization请求头
+	 * @param paramName     表单参数名称数组
+	 * @param paramValue    表单参数值数组
+	 * @return
+	 * @throws Exception
+	 */
+	public static String doPost(SqlToyContext sqltoyContext, final String url, HttpAuthConfig authConfig,
+			String[] paramName, String[] paramValue) throws Exception {
 		HttpPost httpPost = new HttpPost(url);
 		// 设置connection是否自动关闭
 		httpPost.setHeader("Connection", "close");
+		// jwt token认证模式:解析token头值(静态token或登录缓存token)及携带token的请求头名称
+		final boolean jwtMode = (authConfig != null && authConfig.isJwt());
+		final String tokenHeader = jwtMode ? JwtTokenManager.resolveTokenHeader(authConfig) : null;
+		String authorization = jwtMode ? JwtTokenManager.resolveTokenValue(sqltoyContext, authConfig) : null;
 		CloseableHttpClient client = null;
 		try {
-			if (StringUtil.isNotBlank(username) && StringUtil.isNotBlank(password)) {
+			if (!jwtMode && authConfig != null && StringUtil.isNotBlank(authConfig.getUsername())
+					&& StringUtil.isNotBlank(authConfig.getPassword())) {
 				// 凭据提供器(AuthScope在httpclient5.6中移除了ANY常量,null/-1即为任意host/port)
 				BasicCredentialsProvider credsProvider = new BasicCredentialsProvider();
 				credsProvider.setCredentials(new AuthScope(null, -1),
 						// 认证用户名和密码
-						new UsernamePasswordCredentials(username, password.toCharArray()));
+						new UsernamePasswordCredentials(authConfig.getUsername(),
+								authConfig.getPassword().toCharArray()));
 				client = createHttpClient(requestConfig, connectionConfig, credsProvider);
 			} else {
 				client = createHttpClient(requestConfig, connectionConfig, null);
@@ -118,17 +142,36 @@ public class HttpClientUtils {
 				HttpEntity httpEntity = new UrlEncodedFormEntity(nvps, Charset.forName(CHARSET));
 				httpPost.setEntity(httpEntity);
 			}
-			return client.execute(httpPost, new HttpClientResponseHandler<String>() {
-				@Override
-				public String handleResponse(ClassicHttpResponse response) throws HttpException, IOException {
-					// 返回结果
-					HttpEntity reponseEntity = response.getEntity();
-					if (reponseEntity != null) {
-						return EntityUtils.toString(reponseEntity, CHARSET);
-					}
-					return null;
+			// jwt模式token被服务端拒绝(401)时强制失效重登并重试一次
+			final int[] responseCode = new int[1];
+			int maxAttempts = jwtMode ? 2 : 1;
+			for (int attempt = 0; attempt < maxAttempts; attempt++) {
+				if (attempt > 0) {
+					JwtTokenManager.invalidate(authConfig);
+					authorization = JwtTokenManager.resolveTokenValue(sqltoyContext, authConfig);
 				}
-			});
+				if (jwtMode) {
+					httpPost.setHeader(tokenHeader, authorization);
+				}
+				String body = client.execute(httpPost, new HttpClientResponseHandler<String>() {
+					@Override
+					public String handleResponse(ClassicHttpResponse response) throws HttpException, IOException {
+						responseCode[0] = response.getCode();
+						// 返回结果
+						HttpEntity reponseEntity = response.getEntity();
+						if (reponseEntity != null) {
+							return EntityUtils.toString(reponseEntity, CHARSET);
+						}
+						return null;
+					}
+				});
+				// token过期被拒:失效缓存后重试(仅一次),再次401则交由调用方按返回内容处理
+				if (jwtMode && responseCode[0] == 401 && attempt < maxAttempts - 1) {
+					continue;
+				}
+				return body;
+			}
+			return null;
 		} catch (Exception e) {
 			throw e;
 		} finally {

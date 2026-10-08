@@ -100,9 +100,27 @@ public class DateFormat extends IFunction {
 			// update 2026-9-6 补sqlserver分支(此前落default原样输出date_format报"不是可识别的内置函数名"):
 			// format串映射到CONVERT的style精度有限,以FORMAT函数(sqlserver 2012+)实现,支持java样式
 			format = args[1].replace("%Y", "yyyy").replace("%y", "yy").replace("%m", "MM").replace("%d", "dd");
-			format = format.replace("%T", "HH:mm:ss");
-			format = format.replace("%H", "HH").replace("%h", "hh").replace("%i", "mm").replace("%s", "ss");
-			return "FORMAT(" + args[0] + ",'" + format.replace("'", "") + "')";
+			// %i/%T的分钟以@M1@承载:update 2026-10-4 %i原直转mm会被下方月份归一mm→MM误改
+			format = format.replace("%T", "HH:@M1@:ss");
+			format = format.replace("%H", "HH").replace("%h", "hh").replace("%i", "@M1@").replace("%s", "ss");
+			// update 2026-10-4 补oracle格式模型映射与大写形态(原仅识别%token,oracle惯用
+			// 'YYYY-MM-DD HH24:MI:SS'整体透传,.NET token大小写敏感错值);oracle的mm(月)/
+			// mi(分)常全小写书写,月归一须先于分钟摘取(此时分钟尚为mi/MI无歧义),占位符
+			// @M1@不含mi/MI/mm子串,避免替换互相击中(MM/dd/hh/HH与.NET同义无需映射,
+			// 顺序须先YYYY后YY避免子串误替换)
+			format = format.replace("HH24", "HH").replace("hh24", "HH");
+			format = format.replace("mm", "MM");
+			format = format.replace("MI", "@M1@");
+			format = format.replace("mi", "@M1@");
+			format = format.replace("@M1@", "mm").replace("SS", "ss")
+					.replace("YYYY", "yyyy").replace("YY", "yy").replace("DD", "dd");
+			// update 2026-10-4 引号归一:带引号的格式串原样保留(oracle的"字面量"双引号转义与
+			// 内嵌单引号字面量不被破坏,原一律剥单引号会丢失内嵌字面量),裸格式才补包裹引号
+			String fmtArg = format.trim();
+			if (!(fmtArg.length() > 1 && fmtArg.startsWith("'") && fmtArg.endsWith("'"))) {
+				fmtArg = "'" + fmtArg.replace("'", "") + "'";
+			}
+			return "FORMAT(" + args[0] + "," + fmtArg + ")";
 		}
 		case DBType.DB2: {
 			// db2以VARCHAR_FORMAT(等价TO_CHAR)实现
@@ -117,6 +135,8 @@ public class DateFormat extends IFunction {
 			format = args[1].replace("yyyy", "%Y").replace("yy", "%y").replace("MM", "%m").replace("dd", "%d");
 			format = format.replace("HH24", "%H").replace("hh24", "%H").replace("hh", "%h").replace("HH", "%H")
 					.replace("mm", "%i").replace("mi", "%i").replace("ss", "%s");
+			// update 2026-10-4 补%T(mysql源原生token,时:分:秒),原残留字面%T
+			format = format.replace("%T", "%H:%i:%s");
 			// update 2026-9-11 首参包toDateTime:clickhouse-jdbc将日期参数以String发送,
 			// formatDateTime(String)报Illegal type(26.8实测);toDateTime对Date/DateTime列与
 			// ISO文本参数均兼容(幂等转换)

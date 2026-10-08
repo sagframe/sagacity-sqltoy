@@ -217,9 +217,13 @@ public class DmRealDbSmokeTest {
 				"group_concat应转listagg并正确执行,实际:" + aggResult);
 		assertEquals("admin1", querySingle(convert("select group_concat(name,id separator '-') from sqltoy_probe_t1 "
 				+ "where id=1", "dm")).toString(), "group_concat多列拼接两列均应参与");
-		// string_agg在dm非法,响亮保留原样(不执行,仅断言转换不误改)
-		assertEquals("select string_agg(name,'-') from sqltoy_probe_t1",
-				convert("select string_agg(name,'-') from sqltoy_probe_t1", "dm"), "string_agg应原样保留");
+		// string_agg转listagg within group (order by null)(update 2026-10-4 断言方向修正:
+		// 9-15起string_agg写法在oracle系统一转listagg,原"dm非法透传"断言随之过期;
+		// order by null不保证行序,两种拼接顺序均正确)
+		Object strAgg = querySingle(convert("select string_agg(name,'-') from sqltoy_probe_t1", "dm"));
+		org.junit.jupiter.api.Assertions.assertTrue(
+				"admin-user".equals(strAgg.toString()) || "user-admin".equals(strAgg.toString()),
+				"string_agg应转listagg并正确执行,实际:" + strAgg);
 		// concat在dm原生支持多参,不转||:两参与三参均原样保留并正确执行
 		assertEquals("select concat(name,'-') from sqltoy_probe_t1 where id=1",
 				convert("select concat(name,'-') from sqltoy_probe_t1 where id=1", "dm"), "两参concat应原样保留");
@@ -285,19 +289,23 @@ public class DmRealDbSmokeTest {
 	}
 
 	@Test
-	public void datediffKeptNativeOnDm() throws Exception {
+	public void datediffUnifiedContractOnDm() throws Exception {
 		org.junit.jupiter.api.Assumptions.assumeTrue(available, "dm探针环境不可用,跳过");
-		// datediff对dm不转换:三参dm原生支持且语义d2-d1,恰与统一契约一致
-		assertEquals("select datediff(day, to_date('2026-01-15','yyyy-MM-dd'), "
-				+ "to_date('2026-01-20','yyyy-MM-dd')) from dual",
+		// update 2026-10-4 断言方向修正:9-6口径统一改造后dm并入oracle分支,三参转TRUNC算术
+		// (自然天/完整单位截断的跨库统一口径,含dm专属CAST AS TIMESTAMP时/分/秒差异处理),
+		// 两参转d1-d2天差;原"dm原生datediff透传"断言(改造前形态)随之过期
+		assertEquals("select (TRUNC( to_date('2026-01-20','yyyy-MM-dd')) - TRUNC( to_date('2026-01-15','yyyy-MM-dd'))) from dual",
 				convert("select datediff(day, to_date('2026-01-15','yyyy-MM-dd'), "
-						+ "to_date('2026-01-20','yyyy-MM-dd')) from dual", "dm"), "datediff应原样保留");
+						+ "to_date('2026-01-20','yyyy-MM-dd')) from dual", "dm"), "三参datediff应转TRUNC(d2)-TRUNC(d1)");
 		assertEquals(5, ((Number) querySingle(convert("select datediff(day, to_date('2026-01-15','yyyy-MM-dd'), "
-				+ "to_date('2026-01-20','yyyy-MM-dd')) from dual", "dm"))).intValue(), "三参datediff原生执行=d2-d1");
-		// 两参datediff在dm非法,响亮保留原样(不执行,交由目标库报错)
-		assertEquals("select datediff(create_time, create_time) from sqltoy_probe_t1",
-				convert("select datediff(create_time, create_time) from sqltoy_probe_t1", "dm"),
-				"两参datediff应原样保留");
+				+ "to_date('2026-01-20','yyyy-MM-dd')) from dual", "dm"))).intValue(), "三参datediff转换后执行=d2-d1");
+		// 两参:d1-d2天差,转换后真库执行=0(参数逗号切分带空格,断言做去空白比较)
+		org.junit.jupiter.api.Assertions.assertTrue(
+				convert("select datediff(create_time, create_time) from sqltoy_probe_t1", "dm")
+						.replaceAll("\\s+", "").contains("(TRUNC(create_time)-TRUNC(create_time))"),
+				"两参datediff应转d1-d2天差");
+		assertEquals(0, ((Number) querySingle(convert("select datediff(create_time, create_time) from sqltoy_probe_t1",
+				"dm"))).intValue(), "两参datediff转换后执行=0");
 	}
 
 	private void assertNotNullNow(String sql) throws Exception {

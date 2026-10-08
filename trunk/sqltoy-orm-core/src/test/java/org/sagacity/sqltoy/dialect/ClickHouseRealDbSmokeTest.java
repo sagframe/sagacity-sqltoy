@@ -116,13 +116,15 @@ public class ClickHouseRealDbSmokeTest {
 				"select if(score > 80, 'high', 'low') from sqltoy_probe_t1 where id=1", "clickhouse")).toString());
 	}
 
-	/** 已知文档化缺口:nvl/date_format/group_concat在CH目标为IGNORE原样(非法),仅断言不破坏原语句 */
+	/** update 2026-10-4 nvl/group_concat在CH目标的转换已补齐(Nvl 9-9/GroupConcat 9-11),
+	 * 原"文档化缺口"断言随之过期,此处锁定当前转换形态 */
 	@Test
 	public void chDocumentedGaps() throws Exception {
 		org.junit.jupiter.api.Assumptions.assumeTrue(available, "clickhouse探针环境不可用,跳过");
 		String nvl = convert("select nvl(name,'none') from sqltoy_probe_t1 where id=1", "clickhouse");
-		assertTrue(nvl.contains("nvl("), "nvl在CH目标应为IGNORE原样(文档化缺口)");
+		assertTrue(nvl.contains("coalesce(name,'none')"), "nvl在CH目标应转coalesce: " + nvl);
 		String gf = convert("select group_concat(name) from sqltoy_probe_t1", "clickhouse");
-		assertTrue(gf.contains("group_concat("), "group_concat在CH目标应为IGNORE原样(文档化缺口)");
+		assertTrue(gf.contains("arrayStringConcat(groupArray(name)"),
+				"group_concat在CH目标应转arrayStringConcat(groupArray): " + gf);
 	}
 }

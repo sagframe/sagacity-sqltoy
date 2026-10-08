@@ -102,6 +102,8 @@ public class ToChar extends IFunction {
 			format = args[1].replace("yyyy", "%Y").replace("yy", "%y").replace("MM", "%m").replace("dd", "%d");
 			format = format.replace("HH24", "%H").replace("hh24", "%H").replace("hh", "%h").replace("HH", "%H")
 					.replace("mm", "%i").replace("mi", "%i").replace("ss", "%s");
+			// update 2026-10-4 补%T(mysql源原生token,时:分:秒),原残留字面%T
+			format = format.replace("%T", "%H:%i:%s");
 			// update 2026-9-11 首参包toDateTime(同DateFormat的CLICKHOUSE分支:驱动日期参数
 			// 以String发送,formatDateTime(String)报Illegal type)
 			return "date_format(toDateTime(" + args[0] + ")," + format + ")";
@@ -119,9 +121,25 @@ public class ToChar extends IFunction {
 				// 数值格式模型:9→0(.NET零占位),FM/S999等oracle前缀修饰不在支持范围
 				format = format.replace("9", "0");
 			} else {
-				format = format.replace("HH24", "HH").replace("hh24", "HH").replace("mi", "mm");
+				// update 2026-10-4 补大写oracle惯用形态与月/分token歧义:.NET FORMAT的token
+				// 大小写敏感(yyyy年/MM月/dd日/HH时/mm分/ss秒),原仅映射小写hh24/mi,大写
+				// 'YYYY-MM-DD HH24:MI:SS'的YYYY/DD/MI/SS错值;且oracle的mm(月)/mi(分)常全
+				// 小写书写,月归一须先于分钟摘取(此时分钟尚为mi/MI无歧义),占位符@M1@不含
+				// mi/MI/mm子串,避免替换互相击中
+				format = format.replace("HH24", "HH").replace("hh24", "HH");
+				format = format.replace("mm", "MM");
+				format = format.replace("MI", "@M1@");
+				format = format.replace("mi", "@M1@");
+				format = format.replace("@M1@", "mm").replace("SS", "ss")
+						.replace("YYYY", "yyyy").replace("YY", "yy").replace("DD", "dd");
 			}
-			return "FORMAT(" + args[0] + "," + format + ")";
+			// update 2026-10-4 引号归一:带引号的格式串原样保留(内嵌"字面量"转义不被破坏),
+			// 裸格式才补包裹引号(原裸格式直接输出FORMAT第二参不带引号报语法错)
+			String fmtArg = format.trim();
+			if (!(fmtArg.length() > 1 && fmtArg.startsWith("'") && fmtArg.endsWith("'"))) {
+				fmtArg = "'" + fmtArg.replace("'", "") + "'";
+			}
+			return "FORMAT(" + args[0] + "," + fmtArg + ")";
 		}
 		case DBType.SQLITE: {
 			// update 2026-9-10 sqlite无to_char,以strftime承担(token映射:yyyy→%Y、MM→%m、

@@ -102,8 +102,15 @@ public class Length extends IFunction {
 		}
 		if (dialect == DBType.MYSQL || dialect == DBType.TIDB || dialect == DBType.MYSQL57 || dialect == DBType.H2
 				|| dialect == DBType.DORIS || dialect == DBType.STARROCKS) {
-			if ("char_length".equals(funLow)) {
-				return wrapArgs(functionName, args);
+			// update 2026-10-4 len为字符语义(sqlserver的len按字符数),原统一映射length
+			// (mysql的length为字节数)非ASCII静默错值,与char_length一并转char_length;
+			// update 2026-10-4 H2的length为字符数且原生提供OCTET_LENGTH,lengthb/datalength
+			// 转 octet_length(原映射length字节语义降级为字符数)
+			if ("char_length".equals(funLow) || "len".equals(funLow)) {
+				return wrapArgs("char_length", args);
+			}
+			if (dialect == DBType.H2 && ("lengthb".equals(funLow) || "datalength".equals(funLow))) {
+				return wrapArgs("octet_length", args);
 			}
 			return wrapArgs("length", args);
 		}

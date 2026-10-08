@@ -160,6 +160,9 @@ public class PgRealDbSmokeTest {
 		// instr两参 -> position
 		assertEquals(2, ((Number) querySingle(convert(
 				"select instr(name,'dmi') from sqltoy_probe_t1 where id=1", "postgresql"))).intValue());
+		// strpos为pg原生写法(参数序与instr一致):原样透传执行
+		assertEquals(2, ((Number) querySingle(convert(
+				"select strpos(name,'dmi') from sqltoy_probe_t1 where id=1", "postgresql"))).intValue());
 		// trim普通与修饰符形态(pg原生标准FROM形态,原样保留)
 		assertEquals("admin", querySingle(
 				convert("select trim(' admin ') from sqltoy_probe_t1 where id=1", "postgresql")).toString());

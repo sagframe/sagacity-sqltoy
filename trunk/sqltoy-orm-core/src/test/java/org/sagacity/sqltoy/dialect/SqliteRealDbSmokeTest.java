@@ -62,10 +62,14 @@ public class SqliteRealDbSmokeTest {
 
 	@Test
 	public void concatAndNow() throws Exception {
-		// concat转||拼接(sqlite无concat函数)
+		// concat转||拼接(sqlite原生||;3.44+的concat原生提供,转换仍保留统一语义)
 		assertEquals("abc", queryStr(convert("select concat('a','b','c') from t")));
-		// now转CURRENT_TIMESTAMP并可执行
-		Object v = queryStr(convert("select CURRENT_TIMESTAMP from t"));
+		// update 2026-10-4 now转datetime('now','localtime')并可执行(原CURRENT_TIMESTAMP为UTC
+		// 墙钟,东八区差8小时),返回本地墙钟文本
+		String nowSql = convert("select now() from t");
+		org.junit.jupiter.api.Assertions.assertTrue(nowSql.contains("datetime('now','localtime')"),
+				"sqlite now应转本地墙钟: " + nowSql);
+		String v = queryStr(nowSql);
 		org.junit.jupiter.api.Assertions.assertNotNull(v);
 	}
 }

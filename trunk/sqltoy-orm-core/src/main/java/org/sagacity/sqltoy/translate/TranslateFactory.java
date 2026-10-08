@@ -18,6 +18,7 @@ import org.sagacity.sqltoy.dialect.DialectFactory;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
+import org.sagacity.sqltoy.plugins.nosql.HttpAuthConfig;
 import org.sagacity.sqltoy.plugins.nosql.HttpClientUtils;
 import org.sagacity.sqltoy.translate.model.CacheCheckResult;
 import org.sagacity.sqltoy.translate.model.CheckerConfigModel;
@@ -134,8 +135,16 @@ public class TranslateFactory {
 			Timestamp preCheckTime) throws Exception {
 		String[] paramNames = { "lastUpdateTime" };
 		String[] paramValues = { DateUtil.formatDate(preCheckTime, "yyyy-MM-dd HH:mm:ss.SSS") };
-		String jsonStr = HttpClientUtils.doPost(sqlToyContext, checkerConfig.getUrl(), checkerConfig.getUsername(),
-				checkerConfig.getPassword(), paramNames, paramValues);
+		String jsonStr = HttpClientUtils.doPost(sqlToyContext, checkerConfig.getUrl(),
+				new HttpAuthConfig().authType(checkerConfig.getAuthType())
+						.username(checkerConfig.getUsername()).password(checkerConfig.getPassword())
+						.tokenUrl(checkerConfig.getTokenUrl()).tokenPath(checkerConfig.getTokenPath())
+						.tokenPrefix(checkerConfig.getTokenPrefix()).tokenHeader(checkerConfig.getTokenHeader())
+						.tokenExpire(checkerConfig.getTokenExpire())
+						.tokenSecureKey(checkerConfig.getTokenSecureKey())
+						.signAlgorithm(checkerConfig.getSignAlgorithm())
+						.authorization(checkerConfig.getAuthorization()),
+				paramNames, paramValues);
 		if (jsonStr == null) {
 			return null;
 		}
@@ -350,8 +359,15 @@ public class TranslateFactory {
 		if (StringUtil.isNotBlank(cacheType)) {
 			paramValues = new String[] { cacheType.trim(), cacheType.trim() };
 		}
-		String jsonStr = HttpClientUtils.doPost(sqlToyContext, cacheModel.getUrl(), cacheModel.getUsername(),
-				cacheModel.getPassword(), paramNames, paramValues);
+		String jsonStr = HttpClientUtils.doPost(sqlToyContext, cacheModel.getUrl(),
+				new HttpAuthConfig().authType(cacheModel.getAuthType()).username(cacheModel.getUsername())
+						.password(cacheModel.getPassword()).tokenUrl(cacheModel.getTokenUrl())
+						.tokenPath(cacheModel.getTokenPath()).tokenPrefix(cacheModel.getTokenPrefix())
+						.tokenHeader(cacheModel.getTokenHeader()).tokenExpire(cacheModel.getTokenExpire())
+						.tokenSecureKey(cacheModel.getTokenSecureKey())
+						.signAlgorithm(cacheModel.getSignAlgorithm())
+						.authorization(cacheModel.getAuthorization()),
+				paramNames, paramValues);
 		if (jsonStr == null) {
 			return null;
 		}

@@ -3,7 +3,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sagframe</groupId>
-	<version>6.0.3</version>
+	<version>6.0.4.RC1</version>
 	<name>sagacity-sqltoy</name>
 	<description>sqltoy core code</description>
 	<artifactId>sagacity-sqltoy</artifactId>
@@ -13,7 +13,7 @@
 		<ojdbc11.version>23.26.3.0.0</ojdbc11.version>
 		<ehcache.version>3.12.0</ehcache.version>
 		<httpclient5.version>5.6.4</httpclient5.version>
-		<elastic-rest5-client.version>9.5.4</elastic-rest5-client.version>
+		<elastic-rest5-client.version>9.5.5</elastic-rest5-client.version>
 		<fastjson.version>2.0.65</fastjson.version>
 		<mongo.version>5.13.0</mongo.version>
 		<junit-jupiter.version>6.1.3</junit-jupiter.version>
@@ -254,6 +254,15 @@
 			<groupId>com.dameng</groupId>
 			<artifactId>DmJdbcDriver18</artifactId>
 			<version>8.1.3.140</version>
+			<scope>test</scope>
+			<optional>true</optional>
+		</dependency>
+		<!-- 20261004 hana真实库冒烟测试驱动(test scope,不进入发布产物;不需要可移除;
+		     与sqltoy-verify验证工程同版本,连HXE租户库端口39041) -->
+		<dependency>
+			<groupId>com.sap.cloud.db.jdbc</groupId>
+			<artifactId>ngdbc</artifactId>
+			<version>2.29.11</version>
 			<scope>test</scope>
 			<optional>true</optional>
 		</dependency>

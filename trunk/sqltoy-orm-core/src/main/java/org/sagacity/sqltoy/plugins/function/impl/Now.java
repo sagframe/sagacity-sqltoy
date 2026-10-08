@@ -12,7 +12,8 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
  * @version v1.0,Date:2013-03-25
  */
 public class Now extends IFunction {
-	private static Pattern regex = Pattern.compile("(?i)\\W(((now|getdate|sysdate)\\()|(sysdate\\W))");
+	private static Pattern regex = Pattern
+			.compile("(?i)\\W(((now|getdate|sysdate|systimestamp)\\()|(sysdate\\W)|(systimestamp\\W))");
 
 	/*
 	 * (non-Javadoc)
@@ -42,6 +43,14 @@ public class Now extends IFunction {
 	 */
 	@Override
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
+		String funLow = functionName.toLowerCase(java.util.Locale.ROOT);
+		// update 2026-10-4 补oracle源形态systimestamp(带小数秒,可带精度参数):oracle系原生透传
+		// (返回sysdate会丢精度;裸形态正则带\W后缀,IGNORE会重复其空白字符,须返回同名文本);
+		// 其余库走下方now()同路径分派(fsp/精度参数mysql系保留,其余库不带)
+		if ("systimestamp".equals(funLow) && (dialect == DBType.ORACLE || dialect == DBType.OCEANBASE
+				|| dialect == DBType.DM || dialect == DBType.ORACLE11)) {
+			return functionName;
+		}
 		// mysql系now(fsp)支持小数秒精度参数,保留
 		if (dialect == DBType.MYSQL || dialect == DBType.TIDB || dialect == DBType.MYSQL57 || dialect == DBType.DORIS
 				|| dialect == DBType.STARROCKS) {
@@ -75,7 +84,9 @@ public class Now extends IFunction {
 			return "CURRENT TIMESTAMP";
 		}
 		if (dialect == DBType.SQLITE) {
-			return "CURRENT_TIMESTAMP";
+			// update 2026-10-4 CURRENT_TIMESTAMP为UTC墙钟(东八区差8小时),与sqliteDateTextExpr
+			// 已确立的'localtime'策略统一,取本地墙钟
+			return "datetime('now','localtime')";
 		}
 		// 2026-9-11 hana无now()/sysdate/getdate函数,取标准CURRENT_TIMESTAMP
 		if (dialect == DBType.HANA) {

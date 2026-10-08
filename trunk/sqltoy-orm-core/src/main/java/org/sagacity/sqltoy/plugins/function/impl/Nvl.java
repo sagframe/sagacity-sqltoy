@@ -1,5 +1,6 @@
 package org.sagacity.sqltoy.plugins.function.impl;
 
+import java.util.Locale;
 import java.util.regex.Pattern;
 
 import org.sagacity.sqltoy.plugins.function.IFunction;
@@ -14,7 +15,7 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
  */
 public class Nvl extends IFunction {
 
-	private static Pattern regex = Pattern.compile("(?i)\\W(nvl|isnull|ifnull)\\(");
+	private static Pattern regex = Pattern.compile("(?i)\\W(nvl2|nvl|isnull|ifnull)\\(");
 
 	/*
 	 * (non-Javadoc)
@@ -47,7 +48,24 @@ public class Nvl extends IFunction {
 		if (args == null || args.length == 0) {
 			return super.IGNORE;
 		}
-		// String funLow = functionName.toLowerCase(Locale.ROOT);
+		String funLow = functionName.toLowerCase(Locale.ROOT);
+		// update 2026-10-4 补oracle源nvl2(a,b,c):非oracle系目标转case when判非空取b否则c
+		// (语义无损);oracle系原生透传;参数个数非3属误用,原样保留响亮报错
+		if ("nvl2".equals(funLow)) {
+			if (args.length != 3) {
+				return super.IGNORE;
+			}
+			if (dialect == DBType.ORACLE || dialect == DBType.DM || dialect == DBType.OCEANBASE
+					|| dialect == DBType.ORACLE11) {
+				return super.IGNORE;
+			}
+			return "case when " + args[0] + " is not null then " + args[1] + " else " + args[2] + " end";
+		}
+		// update 2026-10-4 单参判空:mysql的isnull(expr)为判空语义返回0/1(唯一合法的单参形态),
+		// 原逻辑落到各库映射生成nvl(x)/coalesce(x)/ifnull(x)(均要求>=2参)目标库报参数个数错
+		if (args.length == 1) {
+			return "case when " + args[0] + " is null then 1 else 0 end";
+		}
 		if (dialect == DBType.SQLSERVER) {
 			return wrapArgs("isnull", args);
 		}
@@ -61,9 +79,7 @@ public class Nvl extends IFunction {
 		}
 		if (dialect == DBType.MYSQL || dialect == DBType.TIDB || dialect == DBType.MYSQL57 || dialect == DBType.DORIS
 				|| dialect == DBType.STARROCKS) {
-			if (args.length == 1) {
-				return wrapArgs("isnull", args);
-			}
+			// (单参已在上方统一判空处理,此处恒为2参)
 			return wrapArgs("ifnull", args);
 		}
 		// update 2026-9-11 补hana(SPS08实测无NVL函数,报invalid name of function or procedure:
