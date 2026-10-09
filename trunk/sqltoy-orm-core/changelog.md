@@ -1,4 +1,8 @@
-﻿# v5.6.94.RC6 2026-09-05
+﻿# v6.0.4.RC1 2026-10-08
+1、缓存翻译rest模式认证增强,rest-translate与rest-checker新增auth-type认证模式:basic(默认,兼容既有username/password)与jwt;jwt获取token三种方式三选一(同配按优先级生效):token-url登录接口表单提交username/password获取token(响应json按token-path提取,支持data.token点路径)并缓存、token-secure-key本地自签名jwt(claims含sub/iat/exp,无需登录接口,支持HS256/HS384/HS512共享密钥与RS256/RS384/RS512的PKCS#8私钥)、authorization直接配置静态长效token;配套token-header(默认Authorization)、token-prefix(默认Bearer,设为none发裸token)、token-expire(默认1800秒,响应含expires_in时以响应为准);token缓存复用、临近过期自动刷新、请求遇401自动失效重登(或重新签名)并重试一次
+2、函数适配完善:新增nvl2(a,b,c)源函数支持,非oracle系数据库自动转换为case when判空逻辑;新增sys_timestamp源形态支持,oracle系原生透传,其余数据库转换为对应的当前时间函数;新增strpos(str,sub)源函数支持,pg系/clickhouse原生透传,其余数据库转换为对应的instr实现;substr(s,-n)负起点(取末尾N位)写法跨库统一处理
+
+# v5.6.94.RC6 2026-09-05
 1、树表封装wrapTreeTableRoute支持统一更新字段：配置了unifyFieldsHandler时,自动将updateUnifyFields()(如最后修改人、最后修改时间)按实体属性名转列名后附加到路由级联、叶子标记重建的全部update语句并绑定参数,与updateByQuery等更新流程的统一字段语义保持一致;仅模型指定实体时生效,实体中不存在的字段自动忽略,无实体模型不处理公共更新字段
 2、修复oracle目标下datediff函数转换对裸字符串字面量参数生成非法sql的缺陷:两参/三参转换中的字面量参数(如datediff('2026-01-20','2026-01-15'))自动包装to_date(长度启发式同to_date单参,含时间部分补'yyyy-MM-dd hh24:mi:ss'),规避TRUNC('...')等写法在默认NLS_DATE_FORMAT(DD-MON-RR)会话下报ORA-01722/ORA-01861(oracle 21c实测);列、表达式及to_date等已有函数参数不受影响
 3、修复dm/pg系数据库DDL生成丢失时间部分的缺陷(实测dm的DATE列类型只存日期,与oracle的DATE含时间不同;pg系date同样只存日期,pg 18.6实测timestamp写入date列静默截断时间,按生成DDL建表后时间被静默清零):DDL字段类型转换依据字段Java类型精化,java.util.Date/LocalDateTime等含时间类型的列在dm输出DATETIME、pg及衍生库(openGauss/MogDB/Vastbase/GaussDB/StarDB/Oscar/Kingbase)输出TIMESTAMP(覆盖@Column未指定type自动探测与quickvo生成实体显式声明type=DATE两种场景;衍生库Oracle兼容模式DATE本含时间,TIMESTAMP为无损超型),LocalDate/java.sql.Date纯日期类型保持DATE不变;字段JDBC类型探测保持原状不调整,避免影响sqlserver等对Types.TIMESTAMP有特殊语义(行版本戳rowversion,运行时从merge/insert/update中剔除)的逻辑

@@ -89,6 +89,10 @@ public class Db2RealDbSmokeTest {
 		assertNotNull(querySingle(convert("select now() from sqltoy_probe_t1 where id=1", "db2")), "now应转CURRENT TIMESTAMP");
 		assertNotNull(querySingle(convert("select sysdate from sqltoy_probe_t1 where id=1", "db2")), "sysdate应转CURRENT TIMESTAMP");
 		assertNotNull(querySingle(convert("select getdate() from sqltoy_probe_t1 where id=1", "db2")), "getdate应转CURRENT TIMESTAMP");
+		// update 2026-10-4 curdate转CURRENT DATE执行返回今天日期
+		String db2Curdate = querySingle(convert("select curdate() from sysibm.sysdummy1", "db2")).toString();
+		org.junit.jupiter.api.Assertions.assertTrue(db2Curdate.matches("\\d{4}-\\d{2}-\\d{2}"),
+				"curdate应转CURRENT DATE并返回今天日期: " + db2Curdate);
 	}
 
 	/** group_concat转listagg within group(本轮GroupConcat补的db2映射) */

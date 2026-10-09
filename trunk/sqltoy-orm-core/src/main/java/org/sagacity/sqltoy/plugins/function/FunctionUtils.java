@@ -34,7 +34,9 @@ public class FunctionUtils {
 	public final static String[] functions = { funPackage.concat("SubStr"), funPackage.concat("Trim"),
 			funPackage.concat("Instr"), funPackage.concat("Concat"), funPackage.concat("ConcatWs"),
 			funPackage.concat("Nvl"), funPackage.concat("DateFormat"), funPackage.concat("Now"),
-			funPackage.concat("Length"), funPackage.concat("ToChar"), funPackage.concat("If"),
+			// update 2026-10-4 CurrentDate(当前日期不带时间,curdate/CURRENT_DATE双形态)
+			funPackage.concat("CurrentDate"), funPackage.concat("Length"), funPackage.concat("ToChar"),
+			funPackage.concat("If"),
 			funPackage.concat("GroupConcat"), funPackage.concat("ToNumber"), funPackage.concat("ToDate"),
 			funPackage.concat("DateDiff"), funPackage.concat("Decode") };
 
@@ -48,6 +50,7 @@ public class FunctionUtils {
 			put("nvl", "Nvl");
 			put("dateformat", "DateFormat");
 			put("now", "Now");
+			put("currentdate", "CurrentDate");
 			put("length", "Length");
 			put("tochar", "ToChar");
 			put("if", "If");
@@ -185,13 +188,37 @@ public class FunctionUtils {
 				endMarkIndex = matcher.end() - 1;
 				functionName = dialectSql.substring(matchedIndex, endMarkIndex);
 			}
-			wrapResult = function.wrap(dbType, functionName, hasArgs, args);
+			// update 2026-10-4 尾部子句钩子:在字面量掩码串上探测(掩码与原串等长同位,防字面量内
+			// within group等文本误伤),命中后在原串按平衡括号消费整个子句(防order by f(x)内嵌
+			// 括号截断),suffix原文交由wrapWithSuffix处理;endMarkIndex延伸后,IGNORE/替换两条
+			// 路径与maskSql裁剪自然连带消费suffix,无需平行逻辑
+			String suffix = null;
+			if (hasArgs && function.suffixPattern() != null) {
+				Matcher suffixMatcher = function.suffixPattern().matcher(maskSql);
+				suffixMatcher.region(endMarkIndex + 1, maskSql.length());
+				if (suffixMatcher.lookingAt()) {
+					// pattern以\(结尾,region为绝对偏移,开括号位置即end()-1
+					int openIdx = suffixMatcher.end() - 1;
+					int closeIdx = StringUtil.getSymMarkIndexSkipQuoted("(", ")", dialectSql, openIdx);
+					if (closeIdx > openIdx) {
+						suffix = dialectSql.substring(endMarkIndex + 1, closeIdx + 1);
+						endMarkIndex = closeIdx;
+					}
+				}
+			}
+			wrapResult = (suffix == null) ? function.wrap(dbType, functionName, hasArgs, args)
+					: function.wrapWithSuffix(dbType, functionName, suffix, args);
 			if (null == wrapResult) {
 				result.append(dialectSql.substring(0, endMarkIndex + 1));
 			} else {
 				result.append(dialectSql.substring(0, matchedIndex)).append(wrapResult);
 			}
 			if (hasArgs) {
+				dialectSql = dialectSql.substring(endMarkIndex + 1);
+				maskSql = maskSql.substring(endMarkIndex + 1);
+			} else if (null == wrapResult) {
+				// update 2026-10-4 修复裸形态IGNORE分隔符重复:IGNORE分支已append至endMarkIndex+1
+				// (含\W分隔符),此处仍从endMarkIndex续接导致分隔符输出两次(sysdate,,name)
 				dialectSql = dialectSql.substring(endMarkIndex + 1);
 				maskSql = maskSql.substring(endMarkIndex + 1);
 			} else {

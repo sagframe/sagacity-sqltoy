@@ -94,6 +94,10 @@ public class HanaRealDbSmokeTest {
 		// systimestamp为oracle源形态,hana目标按CURRENT_TIMESTAMP承接(2026-10-4)
 		assertNotNull(querySingle(convert("select systimestamp from sqltoy_probe_t1 where id=1", "hana")),
 				"systimestamp应转CURRENT_TIMESTAMP");
+		// update 2026-10-4 current_date原生透传执行返回今天日期
+		String hanaCurdate = querySingle(convert("select current_date from dummy", "hana")).toString();
+		org.junit.jupiter.api.Assertions.assertTrue(hanaCurdate.matches("\\d{4}-\\d{2}-\\d{2}"),
+				"current_date应返回今天日期: " + hanaCurdate);
 	}
 
 	/** strpos/instr/charindex→locate(str,sub[,start]),注意与db2/mysql的locate(needle,haystack)参数序相反 */

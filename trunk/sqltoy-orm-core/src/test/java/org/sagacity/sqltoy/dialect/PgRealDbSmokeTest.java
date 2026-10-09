@@ -163,6 +163,10 @@ public class PgRealDbSmokeTest {
 		// strpos为pg原生写法(参数序与instr一致):原样透传执行
 		assertEquals(2, ((Number) querySingle(convert(
 				"select strpos(name,'dmi') from sqltoy_probe_t1 where id=1", "postgresql"))).intValue());
+		// update 2026-10-4 current_date原生透传执行返回今天日期
+		String pgCurdate = querySingle(convert("select current_date", "postgresql")).toString();
+		org.junit.jupiter.api.Assertions.assertTrue(pgCurdate.matches("\\d{4}-\\d{2}-\\d{2}"),
+				"current_date应返回今天日期: " + pgCurdate);
 		// trim普通与修饰符形态(pg原生标准FROM形态,原样保留)
 		assertEquals("admin", querySingle(
 				convert("select trim(' admin ') from sqltoy_probe_t1 where id=1", "postgresql")).toString());

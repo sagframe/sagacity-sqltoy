@@ -161,6 +161,10 @@ public class SqlServerRealDbSmokeTest {
 		// strpos(pg系写法)转charindex(参数序对调)
 		assertEquals(2, ((Number) querySingle(convert(
 				"select strpos(name,'dmi') from sqltoy_probe_t1 where id=1", "sqlserver"))).intValue());
+		// update 2026-10-4 current_date转CAST(GETDATE() AS date)执行返回今天日期
+		String mssqlCurdate = querySingle(convert("select current_date", "sqlserver")).toString();
+		org.junit.jupiter.api.Assertions.assertTrue(mssqlCurdate.matches("\\d{4}-\\d{2}-\\d{2}"),
+				"current_date应转CAST并返回今天日期: " + mssqlCurdate);
 		// 字面量安全
 		String literal = convert("select name from sqltoy_probe_t1 where name='nvl(a,b)'", "sqlserver");
 		assertEquals("select name from sqltoy_probe_t1 where name='nvl(a,b)'", literal, "字面量不得被转换");

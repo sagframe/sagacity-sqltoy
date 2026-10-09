@@ -103,6 +103,9 @@ public class DateDiff extends IFunction {
 			if (unitType.equals("YEAR")) {
 				return "(EXTRACT(YEAR FROM " + d2 + ") - EXTRACT(YEAR FROM " + d1 + "))";
 			} else if (unitType.equals("MONTH") || unitType.equals("MM")) {
+				// update 2026-10-8 跨库月差边界:MONTHS_BETWEEN原生的oracle小数口径(日差按31天月
+				// 折算)与各库语义分歧,不作为源函数注册转换;跨库月差统一用本类datediff(month,…)的
+				// 年月分量差契约(此处TRUNC到月初即分量差形态)
 				return "MONTHS_BETWEEN(TRUNC(" + d2 + ",'MM'),TRUNC(" + d1 + ",'MM'))";
 			} else if (unitType.equals("DAY") || unitType.equals("DD")) {
 				return "(TRUNC(" + d2 + ") - TRUNC(" + d1 + "))";

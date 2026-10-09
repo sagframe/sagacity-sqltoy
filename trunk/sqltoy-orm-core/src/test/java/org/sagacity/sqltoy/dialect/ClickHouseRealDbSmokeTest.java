@@ -114,6 +114,11 @@ public class ClickHouseRealDbSmokeTest {
 				"clickhouse")).toString());
 		assertEquals("high", querySingle(convert(
 				"select if(score > 80, 'high', 'low') from sqltoy_probe_t1 where id=1", "clickhouse")).toString());
+		// update 2026-10-4 curdate转today()执行返回今天日期
+		String chCurdate = querySingle(convert("select curdate() from sqltoy_probe_t1 where id=1", "clickhouse"))
+				.toString();
+		org.junit.jupiter.api.Assertions.assertTrue(chCurdate.matches("\\d{4}-\\d{2}-\\d{2}"),
+				"curdate应转today()并返回今天日期: " + chCurdate);
 	}
 
 	/** update 2026-10-4 nvl/group_concat在CH目标的转换已补齐(Nvl 9-9/GroupConcat 9-11),

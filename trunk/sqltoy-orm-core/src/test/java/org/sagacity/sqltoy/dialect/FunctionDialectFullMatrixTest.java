@@ -232,6 +232,37 @@ public class FunctionDialectFullMatrixTest {
 				{ "systimestamp dm透传", "select systimestamp from t", "dm", EXACT, "select systimestamp from t" },
 				{ "systimestamp带精度mysql转now(fsp)", "select systimestamp(6) from t", "mysql", EXACT,
 						"select now(6) from t" },
+				// ---------------- CurrentDate(update 2026-10-4 新增:当前日期不带时间) ----------------
+				{ "curdate mysql透传", "select curdate() from t", "mysql", EXACT, "select curdate() from t" },
+				{ "current_date mysql透传", "select current_date from t", "mysql", EXACT,
+						"select current_date from t" },
+				{ "curdate pg转CURRENT_DATE", "select curdate() from t", "postgresql", EXACT,
+						"select CURRENT_DATE from t" },
+				{ "current_date pg透传", "select current_date from t", "postgresql", EXACT,
+						"select current_date from t" },
+				{ "curdate h2转CURRENT_DATE", "select curdate() from t", "h2", EXACT,
+						"select CURRENT_DATE from t" },
+				{ "curdate oracle转TRUNC(CURRENT_DATE)", "select curdate() from t", "oracle", EXACT,
+						"select TRUNC(CURRENT_DATE) from t" },
+				{ "current_date oracle转TRUNC(CURRENT_DATE)", "select current_date from t", "oracle", EXACT,
+						"select TRUNC(CURRENT_DATE) from t" },
+				{ "curdate dm转TRUNC(CURRENT_DATE)", "select curdate() from t", "dm", EXACT,
+						"select TRUNC(CURRENT_DATE) from t" },
+				{ "curdate sqlserver转CAST", "select curdate() from t", "sqlserver", EXACT,
+						"select CAST(GETDATE() AS date) from t" },
+				{ "current_date sqlserver转CAST", "select current_date from t", "sqlserver", EXACT,
+						"select CAST(GETDATE() AS date) from t" },
+				{ "current_date db2透传", "select current_date from t", "db2", EXACT,
+						"select current_date from t" },
+				{ "curdate db2转CURRENT DATE", "select curdate() from t", "db2", EXACT,
+						"select CURRENT DATE from t" },
+				{ "current_date sqlite本地墙钟", "select current_date from t", "sqlite", EXACT,
+						"select date('now','localtime') from t" },
+				{ "curdate ch转today", "select curdate() from t", "clickhouse", EXACT, "select today() from t" },
+				{ "current_date ch透传", "select current_date from t", "clickhouse", EXACT,
+						"select current_date from t" },
+				{ "current_date hana透传", "select current_date from t", "hana", EXACT,
+						"select current_date from t" },
 				// ---------------- Length ----------------
 				{ "len sqlserver原生透传", "select len(name) from t", "sqlserver", EXACT, "select len(name) from t" },
 				{ "lengthb sqlserver转datalength", "select lengthb(name) from t", "sqlserver", EXACT,
@@ -318,6 +349,55 @@ public class FunctionDialectFullMatrixTest {
 						"select  arrayStringConcat(groupArray(name),',')  from t" },
 				{ "group_concat sqlite转二参", "select group_concat(name) from t", "sqlite", EXACT,
 						"select  group_concat(name,',')  from t" },
+				// update 2026-10-4 聚合排序子句跨库(三种源形态×目标方言)
+				{ "listagg within group mysql转ORDER BY…SEPARATOR",
+						"select listagg(name,'-') within group (order by id) from t", "mysql", EXACT,
+						"select  group_concat(name ORDER BY id SEPARATOR '-')  from t" },
+				{ "listagg within group pg转ARRAY_AGG内嵌排序",
+						"select listagg(name,'-') within group (order by id) from t", "postgresql", EXACT,
+						"select  array_to_string(ARRAY_AGG(name ORDER BY id),'-')  from t" },
+				{ "listagg within group oracle原生透传",
+						"select listagg(name,'-') within group (order by id) from t", "oracle", EXACT,
+						"select listagg(name,'-') within group (order by id) from t" },
+				{ "listagg within group sqlserver转string_agg within group",
+						"select listagg(name,'-') within group (order by id) from t", "sqlserver", EXACT,
+						"select  string_agg(name,'-') within group (order by id)  from t" },
+				{ "string_agg括号内嵌order by mysql转ORDER BY…SEPARATOR",
+						"select string_agg(name,'-' order by id) from t", "mysql", EXACT,
+						"select  group_concat(name ORDER BY id SEPARATOR '-')  from t" },
+				{ "string_agg括号内嵌order by oracle转listagg within group",
+						"select string_agg(name,'-' order by id) from t", "oracle", EXACT,
+						"select  listagg(name,'-') within group (order by id)  from t" },
+				{ "string_agg括号内嵌order by pg原生透传",
+						"select string_agg(name,'-' order by id) from t", "postgresql", EXACT,
+						"select string_agg(name,'-' order by id) from t" },
+				{ "group_concat残段order by pg转ARRAY_AGG内嵌排序",
+						"select group_concat(name order by id separator '-') from t", "postgresql", EXACT,
+						"select  array_to_string(ARRAY_AGG(name ORDER BY id),'-')  from t" },
+				{ "group_concat残段order by oracle转listagg within group",
+						"select group_concat(name order by id separator '-') from t", "oracle", EXACT,
+						"select  listagg(name,'-') within group (order by id)  from t" },
+				{ "group_concat残段order by mysql原生透传",
+						"select group_concat(name order by id separator '-') from t", "mysql", EXACT,
+						"select group_concat(name order by id separator '-') from t" },
+				{ "group_concat DISTINCT ch响亮保留", "select group_concat(DISTINCT name) from t", "clickhouse",
+						EXACT, "select group_concat(DISTINCT name) from t" },
+				// update 2026-10-8 歧义形态响亮保留与字面量感知(实测原实现静默错值/劈开字面量)
+				{ "order by多键逗号两参响亮保留(排序键不得静默丢弃)",
+						"select string_agg(name,'-' order by id desc,age) from t", "mysql", EXACT,
+						"select string_agg(name,'-' order by id desc,age) from t" },
+				{ "order by多键逗号多参响亮保留(排序键不得变拼接列)",
+						"select group_concat(name order by id,age separator '-') from t", "postgresql", EXACT,
+						"select group_concat(name order by id,age separator '-') from t" },
+				{ "分隔符字面量含order by不作排序子句",
+						"select group_concat(name separator 'a order by b') from t", "postgresql", EXACT,
+						"select  array_to_string(ARRAY_AGG(name),'a order by b')  from t" },
+				{ "expr字面量含order by原样保留(不得劈开)",
+						"select group_concat('a order by b') from t", "oracle", EXACT,
+						"select  listagg('a order by b',',') within group (order by null)  from t" },
+				{ "within group多键排序完整保留(平衡括号整段搬运)",
+						"select listagg(name,'-') within group (order by id desc,age) from t", "mysql", EXACT,
+						"select  group_concat(name ORDER BY id desc,age SEPARATOR '-')  from t" },
 				// ---------------- ToNumber ----------------
 				{ "to_number oracle原生透传", "select to_number(score) from t", "oracle", EXACT,
 						"select to_number(score) from t" },
@@ -429,6 +509,11 @@ public class FunctionDialectFullMatrixTest {
 		assertNotNull(queryOne(h2, convert("select group_concat(name separator '-') from t_func", "h2")));
 		// trim普通形态归一执行
 		assertEquals("admin", queryOne(h2, convert("select trim(' admin ') from t_func where id=1", "h2")).toString());
+		// update 2026-10-4 current_date透传/curdate转CURRENT_DATE执行=今天
+		assertEquals(java.time.LocalDate.now().toString(),
+				queryOne(h2, convert("select current_date from t_func where id=1", "h2")).toString());
+		assertEquals(java.time.LocalDate.now().toString(),
+				queryOne(h2, convert("select curdate() from t_func where id=1", "h2")).toString());
 	}
 
 	/** SQLite端到端:sqlite目标转换链全函数真实执行(内嵌库,毫秒时间戳形态与生产绑定一致) */
@@ -482,5 +567,8 @@ public class FunctionDialectFullMatrixTest {
 		// datediff两参自然天差
 		assertEquals(0, ((Number) queryOne(sqlite,
 				convert("select datediff(create_time, create_time) from t_func where id=1", "sqlite"))).intValue());
+		// update 2026-10-4 current_date转本地墙钟执行=今天(sqlite内嵌库与JVM同时区)
+		assertEquals(java.time.LocalDate.now().toString(),
+				queryOne(sqlite, convert("select current_date from t_func where id=1", "sqlite")).toString());
 	}
 }

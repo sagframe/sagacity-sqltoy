@@ -186,6 +186,18 @@ public class MysqlRealDbSmokeTest {
 				convert("select group_concat(name separator '-') from sqltoy_probe_t1", "mysql")).toString());
 		assertEquals("admin-user", querySingle(
 				convert("select string_agg(name,'-') from sqltoy_probe_t1", "mysql")).toString());
+			// update 2026-10-4 聚合排序子句跨库:listagg within group转ORDER BY…SEPARATOR并按id序拼接
+			assertEquals("admin-user", querySingle(convert(
+					"select listagg(name,'-') within group (order by id) from sqltoy_probe_t1", "mysql")).toString(),
+					"listagg排序子句应转ORDER BY…SEPARATOR并按id序拼接");
+			// update 2026-10-8 降序排序子句按id降序拼接(真库锁定ORDER BY方向语义)
+			assertEquals("user-admin", querySingle(convert(
+					"select listagg(name,'-') within group (order by id desc) from sqltoy_probe_t1", "mysql"))
+					.toString(), "listagg降序排序子句应按id降序拼接");
+		// update 2026-10-4 curdate/current_date原生透传并执行,返回今天日期
+		String mysqlCurdate = querySingle(convert("select curdate() from dual", "mysql")).toString();
+		org.junit.jupiter.api.Assertions.assertTrue(mysqlCurdate.matches("\\d{4}-\\d{2}-\\d{2}"),
+				"curdate应返回今天日期: " + mysqlCurdate);
 		// concat三参原生;concat_ws原生
 		assertEquals("admin-x", querySingle(
 				convert("select concat(name,'-','x') from sqltoy_probe_t1 where id=1", "mysql")).toString());

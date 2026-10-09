@@ -280,6 +280,10 @@ public class DmRealDbSmokeTest {
 		assertEquals("select sysdate from dual", convert("select now() from dual", "dm"), "now()应转sysdate");
 		assertNotNullNow(convert("select now() from dual", "dm"));
 		assertNotNullNow(convert("select getdate() from dual", "dm"));
+		// update 2026-10-4 curdate转TRUNC(CURRENT_DATE)执行返回今天日期
+		String dmCurdate = querySingle(convert("select curdate() from dual", "dm")).toString();
+		org.junit.jupiter.api.Assertions.assertTrue(dmCurdate.matches("\\d{4}-\\d{2}-\\d{2}"),
+				"curdate应转TRUNC(CURRENT_DATE)并返回今天日期: " + dmCurdate);
 		// if转case when(dm虽原生支持if,转换后语义一致)
 		assertEquals("high", querySingle(
 				convert("select if(score > 80, 'high', 'low') from sqltoy_probe_t1 where id=1", "dm")).toString(),

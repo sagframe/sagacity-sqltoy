@@ -51,20 +51,15 @@ public class DefectReproTest {
 
 	// ============ B4: FunctionUtils.replaceFunction 无参函数IGNORE分支off-by-one ============
 
-	/** B4 裸sysdate在Now.wrap返回IGNORE的方言(impala)下,分隔符被输出两次 */
+	/** B4 裸sysdate在Now.wrap返回IGNORE的方言(impala)下,分隔符被输出两次
+	 * (update 2026-10-4 缺陷已修:IGNORE分支无参形态续接改从endMarkIndex+1起,精确锁定原样) */
 	@Test
 	public void b4_bareSysdateDuplicateSeparator() {
 		FunctionUtils.setFunctionConverts(java.util.Arrays.asList("default"));
 		String sql = "select sysdate,name from t";
 		String result = FunctionUtils.getDialectSql(sql, "impala");
 		System.out.println("[B4] " + result);
-		// 缺陷形态: "select sysdate,,name"(逗号重复); 正确形态应保持原样或单分隔符
-		assertTrue(result.contains("sysdate,,") || result.equals(sql) || result.contains("sysdate, name")
-				|| result.contains("sysdate,name"),
-				"锚点:观察off-by-one是否复现, result=" + result);
-		if (result.contains("sysdate,,")) {
-			System.out.println("[B4] 缺陷复现:分隔符重复");
-		}
+		assertEquals(sql, result, "裸形态IGNORE应原样保留(分隔符不得重复)");
 	}
 
 	// ============ B1: #[...] 闭合定位不感知字面量,条件内不成对]截断真条件 ============
