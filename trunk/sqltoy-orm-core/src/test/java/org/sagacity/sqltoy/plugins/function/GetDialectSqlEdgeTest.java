@@ -9,9 +9,9 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 /**
- * getDialectSql裸函数名边界场景锁定:适配函数正则为 \W(函数名)\( 形态,要求函数名前存在
- * 非单词字符以保证token独立性;裸函数表达式(函数名位于串首,前面无任何字符)不参与转换,
- * 生产SQL(以select/insert等开头或函数前有空格/括号)不受影响。
+ * getDialectSql边界场景锁定:update 2026-10-9 串首裸函数行为翻转——整条sql即函数表达式
+ * (如sql片段include的碎片形态)此前因\W前置条件恒不命中而漏转换,引擎入口空格哨兵补偿后
+ * 正常参与转换;常规SQL以select/insert等开头,行为不变。
  */
 public class GetDialectSqlEdgeTest {
 
@@ -21,10 +21,10 @@ public class GetDialectSqlEdgeTest {
 	}
 
 	@Test
-	public void bareLeadingFunctionStaysUntouched() {
-		// 函数名位于串首(前面无\W字符):正则不命中,原样返回
+	public void bareLeadingFunctionIsTransformed() {
+		// update 2026-10-9 串首裸函数名(前面无\W字符)经入口哨兵补偿后正常转换:nvl→ifnull(mysql)
 		String bare = FunctionUtils.getDialectSql("nvl(score, 0)", "mysql");
-		assertEquals("nvl(score, 0)", bare, "串首裸函数名不满足\\W前置条件,原样返回");
+		assertEquals("ifnull(score, 0)", bare, "串首裸函数名应参与转换");
 	}
 
 	@Test

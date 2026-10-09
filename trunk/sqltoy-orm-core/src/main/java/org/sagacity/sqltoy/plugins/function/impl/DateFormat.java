@@ -70,6 +70,12 @@ public class DateFormat extends IFunction {
 			// 时间处理
 			format = format.replace("%T", "hh24:mi:ss");
 			format = format.replace("%H", "hh24").replace("%h", "hh").replace("%i", "mi").replace("%s", "ss");
+			// update 2026-10-9 补java风格时间token归一:java的HH=24小时/mm=分钟,oracle模型HH=12小时
+			// /mm=月,原样透传在pg/oracle系静默错值;仅归一冒号邻接的HH:mm/hh:mm形态(HH24等oracle
+			// token不含该子串不受影响,纯日期'yyyy-mm-dd'的裸mm(oracle月)保持)
+			// update 2026-10-9 补独立HH(小时分桶格式'yyyy-MM-dd HH'等无分钟形态,冒号归一不命中):
+			// \b词边界保证不伤oracle原生HH24(H与2间无词边界),HH:mm已被上步消费不会重复命中
+			format = format.replace("HH:mm", "hh24:mi").replace("hh:mm", "hh:mi").replaceAll("\\bHH\\b", "hh24");
 			// update 2026-9-10 PG语法系裸?首参补::timestamp(date_format恒为日期语义,无数值模型
 			// 场景,numericModelPossible=false):vanilla PG对to_char(unknown,unknown)报重载歧义
 			return "to_char(" + FunctionUtils.pgToCharParamCast(dialect, args[0], format, false) + "," + format + ")";
@@ -80,10 +86,14 @@ public class DateFormat extends IFunction {
 		case DBType.TIDB:
 		case DBType.MYSQL57: {
 			// 日期
-			format = args[1].replace("yyyy", "%Y").replace("yy", "%y").replace("MM", "%m").replace("dd", "%d");
+			// update 2026-10-9 补大写oracle惯用形态YYYY/YY/DD/MI/SS(与sqlserver分支口径一致,
+			// 原大写日期token残留字面量致目标库静默输出垃圾文本)
+			format = args[1].replace("yyyy", "%Y").replace("YYYY", "%Y").replace("yy", "%y").replace("YY", "%y")
+					.replace("MM", "%m").replace("dd", "%d").replace("DD", "%d");
 			// 时间处理(update 2026-9-5 补java 24小时制HH→%H;需置于hh24/hh映射之后)
 			format = format.replace("HH24", "%H").replace("hh24", "%H").replace("hh", "%h").replace("HH", "%H")
-					.replace("mm", "%i").replace("mi", "%i").replace("ss", "%s");
+					.replace("mm", "%i").replace("mi", "%i").replace("MI", "%i").replace("ss", "%s")
+					.replace("SS", "%s");
 			return "date_format(" + args[0] + "," + format + ")";
 		}
 		case DBType.H2: {
@@ -132,9 +142,12 @@ public class DateFormat extends IFunction {
 		case DBType.CLICKHOUSE: {
 			// update 2026-9-9 clickhouse原生支持date_format(formatDateTime的mysql兼容别名,%token同构),
 			// 仅需将java样式token转%形态(原default原样输出,java样式格式串在目标库静默失效)
-			format = args[1].replace("yyyy", "%Y").replace("yy", "%y").replace("MM", "%m").replace("dd", "%d");
+			// update 2026-10-9 补大写oracle形态YYYY/YY/DD/MI/SS(同mysql分支)
+			format = args[1].replace("yyyy", "%Y").replace("YYYY", "%Y").replace("yy", "%y").replace("YY", "%y")
+					.replace("MM", "%m").replace("dd", "%d").replace("DD", "%d");
 			format = format.replace("HH24", "%H").replace("hh24", "%H").replace("hh", "%h").replace("HH", "%H")
-					.replace("mm", "%i").replace("mi", "%i").replace("ss", "%s");
+					.replace("mm", "%i").replace("mi", "%i").replace("MI", "%i").replace("ss", "%s")
+					.replace("SS", "%s");
 			// update 2026-10-4 补%T(mysql源原生token,时:分:秒),原残留字面%T
 			format = format.replace("%T", "%H:%i:%s");
 			// update 2026-9-11 首参包toDateTime:clickhouse-jdbc将日期参数以String发送,

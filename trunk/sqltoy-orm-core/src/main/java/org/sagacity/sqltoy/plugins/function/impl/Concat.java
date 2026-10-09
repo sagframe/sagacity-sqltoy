@@ -47,6 +47,9 @@ public class Concat extends IFunction {
 		}
 		// update 2026-9-5 sqlite无concat函数、DB2/oracle系(含OCEANBASE,与Nvl/Now等函数的oracle系
 		// 归属保持一致)的concat仅支持两参:超出支持的参数个数统一转||拼接
+		// update 2026-10-9 OB边界实测:||产物适用于OB oracle模式租户;OB CE mysql模式租户把||当
+		// 逻辑或求值,'a'||'-'||'b'静默返回0(比报错更危险),mysql模式租户应配dialect=mysql走
+		// mysql转换链(concat原生多参),verify工程即此配置
 		// (sqlite从两参起转,oracle/db2/oceanbase三参起转)
 		// update 2026-10-4 事实修正:sqlite 3.44+已原生提供concat(此前注释"sqlite无concat"过时),
 		// ||转换仍保留——两参以上统一拼接形态与null传播语义(sqlite的||传播null)不变,注释仅作澄清

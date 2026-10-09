@@ -126,8 +126,10 @@ public class DateUtil {
 	private final static Pattern DAYTH_PATTERN = Pattern.compile("(?i)\\s\\d{1,2}(st|th|nd|rd)\\s");
 	private final static Pattern TIME_PATTERN = Pattern.compile("\\d{1,2}\\:\\d{1,2}");
 	private final static Pattern TIME_DOT_PATTERN = Pattern.compile("\\d\\.\\d");
+	// 末尾时区信息：±HH:mm(可带[时区ID]) 或 ISO-8601 的 UTC 标识 Z；
+	// 裸 Z 若不剥离会残留在符号剥离后的数字串里，被补零成"Z00000"导致解析失败
 	private final static Pattern ZONED_TIME_PATTERN = Pattern
-			.compile("(\\+|\\-)\\d{1,2}\\:\\d{2}(\\[[a-z|A-Z|\\/|\\_]+\\])?$");
+			.compile("((\\+|\\-)\\d{1,2}\\:\\d{2}(\\[[a-z|A-Z|\\/|\\_]+\\])?|[Zz])$");
 
 	// 日期分隔符(-、/、.)后跟单位数月或日(如2024/1/5、2024.1.5)时用于补零，时间部分的:和小数秒不受影响
 	private final static Pattern DATE_PATTERN = Pattern.compile("(\\d{2,4})[-/.](\\d)(?=[-/.])|[-/.](\\d)(?=\\s)");
@@ -460,7 +462,9 @@ public class DateUtil {
 				return null;
 			}
 			// 提取偏差hour
-			String timeZone = m.group();
+			// update 2026-10-9 小写z归一为大写Z:ZONED_TIME_PATTERN的[Zz]放行小写z,
+			// 而ZoneOffset.of仅认大写Z,原样传入抛DateTimeException(实测)
+			String timeZone = m.group().replace("z", "Z");
 			if (timeZone.contains("[") && timeZone.contains("]")) {
 				// 时区，如Asia/Shanghai
 				timeZone = timeZone.substring(timeZone.indexOf("[") + 1, timeZone.indexOf("]"));

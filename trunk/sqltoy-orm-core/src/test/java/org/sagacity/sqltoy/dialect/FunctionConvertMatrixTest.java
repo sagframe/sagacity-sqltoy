@@ -120,6 +120,24 @@ public class FunctionConvertMatrixTest {
 				"mysql格式应转oracle to_char格式(格式模型大小写敏感): " + converted);
 	}
 
+	/**
+	 * update 2026-10-9 java风格独立HH(小时分桶等无分钟形态)归一:冒号邻接归一(HH:mm)不命中,
+	 * 原样透传时pg/oracle系的HH=12小时制静默错值;\b词边界不得误伤oracle原生HH24
+	 */
+	@Test
+	public void dateFormatJavaStandaloneHour() {
+		String pg = convert("select date_format(create_time,'yyyy-MM-dd HH') from t", "postgresql");
+		assertTrue(pg.contains("'yyyy-MM-dd hh24'"), "独立HH应归一为hh24(24小时制): " + pg);
+		String kingbase = convert("select to_char(create_time,'yyyy-MM-dd HH') from t", "kingbase");
+		assertTrue(kingbase.contains("'yyyy-MM-dd hh24'"), "to_char独立HH应归一为hh24: " + kingbase);
+		// HH24为oracle原生token,\bHH\b不得误伤(H与2间无词边界,保持原样大写)
+		String hh24 = convert("select date_format(create_time,'HH24:mi:ss') from t", "postgresql");
+		assertTrue(hh24.contains("'HH24:mi:ss'"), "oracle原生HH24应保持: " + hh24);
+		// 冒号邻接形态既有归一不受影响
+		String colon = convert("select date_format(create_time,'yyyy-MM-dd HH:mm:ss') from t", "postgresql");
+		assertTrue(colon.contains("'yyyy-MM-dd hh24:mi:ss'"), "HH:mm:ss冒号邻接归一保持: " + colon);
+	}
+
 	@Test
 	public void dateFormatToH2() throws Exception {
 		String converted = convert("select date_format(create_time,'%Y-%m-%d') from t_func", "h2");
@@ -177,15 +195,19 @@ public class FunctionConvertMatrixTest {
 		// update 2026-10-4 负起点字面量:mysql惯用substr(s,-n)取末n位,原仅sqlserver两参转RIGHT,
 		// pg系substring(s,-n)按"串首之前偏移"返回整串静默错值、db2报SQL0138
 		String pg = convert("select substr(name,-2) from t", "postgresql");
-		assertTrue(pg.contains("RIGHT(name,2)"), "pg两参负起点应转RIGHT: " + pg);
+		assertTrue(pg.contains("RIGHT(name,2)") && pg.contains("else '' end"),
+				"pg两参负起点应转RIGHT且短串(|n|>串长)返回空串(mysql契约): " + pg);
 		String db2 = convert("select substr(name,-2) from t", "db2");
-		assertTrue(db2.contains("RIGHT(name,2)"), "db2两参负起点应转RIGHT: " + db2);
+		assertTrue(db2.contains("RIGHT(name,2)") && db2.contains("else '' end"),
+				"db2两参负起点应转RIGHT且短串返回空串: " + db2);
 		String mssql = convert("select substr(name,-3) from t", "sqlserver");
-		assertTrue(mssql.contains("RIGHT(name,3)"), "sqlserver两参负起点应转RIGHT: " + mssql);
-		// 三参负起点转case守卫形态(start=串长-n+1,串长不足n取1,mysql语义)
+		assertTrue(mssql.contains("RIGHT(name,3)") && mssql.contains("else '' end"),
+				"sqlserver两参负起点应转RIGHT且短串返回空串: " + mssql);
+		// 三参负起点转case守卫形态(update 2026-10-9 短串分支对齐mysql返回空串,
+		// 原substring(name,1,1)在串长不足n时与mysql的''偏离)
 		String threeArg = convert("select substr(name,-2,1) from t", "postgresql");
-		assertTrue(threeArg.contains("case when length(name)<2 then substring(name,1,1) else substring(name,length(name)-2+1,1) end"),
-				"三参负起点应转case守卫形态: " + threeArg);
+		assertTrue(threeArg.contains("case when length(name)<2 then '' else substring(name,length(name)-2+1,1) end"),
+				"三参负起点应转case守卫形态且短串返回空串: " + threeArg);
 		// H2端到端:两参取末2位、三参起点为串长-n+1
 		assertEquals("in", querySingle(convert("select substr(name,-2) from t_func where id=1", "h2")));
 		assertEquals("i", querySingle(convert("select substr(name,-2,1) from t_func where id=1", "h2")));

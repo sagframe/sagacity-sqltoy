@@ -146,6 +146,12 @@ public class MysqlRealDbSmokeTest {
 				convert("select to_date(create_time) from sqltoy_probe_t1 where id=1", "mysql")).toString());
 		assertEquals("2024-01-01", querySingle(
 				convert("select to_date('2024-01-01','yyyy-MM-dd') from dual", "mysql")).toString());
+		// update 2026-10-9 大写oracle惯用形态(今日补YYYY/DD/MI/SS映射):转换后真库执行取值正确,
+		// 修复前残留字面量致STR_TO_DATE错值(驱动以LocalDateTime返回,toString为ISO的T分隔形态)
+		String mysqlUpToDate = querySingle(convert(
+				"select to_date('2024-01-01 08:30:00','YYYY-MM-DD HH24:MI:SS') from dual", "mysql")).toString();
+		org.junit.jupiter.api.Assertions.assertTrue(mysqlUpToDate.matches("2024-01-01[T ]08:30(:00)?"),
+				"大写oracle形态应正确转STR_TO_DATE执行: " + mysqlUpToDate);
 		// date_format原生;to_char转date_format
 		assertEquals("2026-01-15", querySingle(
 				convert("select date_format(create_time,'%Y-%m-%d') from sqltoy_probe_t1 where id=1", "mysql"))

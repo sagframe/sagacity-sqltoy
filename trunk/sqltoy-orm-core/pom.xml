@@ -3,7 +3,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sagframe</groupId>
-	<version>6.0.4.RC1</version>
+	<version>6.0.4</version>
 	<name>sagacity-sqltoy</name>
 	<description>sqltoy core code</description>
 	<artifactId>sagacity-sqltoy</artifactId>
@@ -263,6 +263,24 @@
 			<groupId>com.sap.cloud.db.jdbc</groupId>
 			<artifactId>ngdbc</artifactId>
 			<version>2.29.11</version>
+			<scope>test</scope>
+			<optional>true</optional>
+		</dependency>
+		<!-- 20261009 kingbase真实库冒烟测试驱动(test scope,不进入发布产物;不需要可移除;
+		     与sqltoy-verify验证工程同版本,V9默认oracle兼容模式) -->
+		<dependency>
+			<groupId>cn.com.kingbase</groupId>
+			<artifactId>kingbase8</artifactId>
+			<version>9.0.0</version>
+			<scope>test</scope>
+			<optional>true</optional>
+		</dependency>
+		<!-- 20261009 oceanbase真实库冒烟测试驱动(test scope,不进入发布产物;不需要可移除;
+		     与sqltoy-verify验证工程同版本,CE容器mysql模式租户2881端口) -->
+		<dependency>
+			<groupId>com.oceanbase</groupId>
+			<artifactId>oceanbase-client</artifactId>
+			<version>2.4.12</version>
 			<scope>test</scope>
 			<optional>true</optional>
 		</dependency>

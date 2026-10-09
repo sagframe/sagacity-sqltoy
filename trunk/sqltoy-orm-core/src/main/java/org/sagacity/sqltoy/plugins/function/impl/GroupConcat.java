@@ -134,13 +134,20 @@ public class GroupConcat extends IFunction {
 		} else {
 			for (int i = 0; i < args.length; i++) {
 				String tmp = args[i];
-				int matchIndex = StringUtil.matchIndex(tmp.toLowerCase(Locale.ROOT), separtorPattern);
-				if (matchIndex > 0) {
-					// "\\Wseparator\\W" 表达式长度11
-					sign = tmp.substring(matchIndex + 11).trim();
-					// separator之前的残留表达式一并纳入拼接
-					if (tmp.substring(0, matchIndex).trim().length() > 0) {
-						segments.add(tmp.substring(0, matchIndex));
+				// update 2026-10-9 修复separator紧贴参数首位(group_concat(a,separator '-')的
+				// 第二参整段即separator开头)探测不命中:正则\Wseparator\W要求前导字符,首位无字符
+				// 恒不命中致separator整段被当拼接列(listagg(a||separator '-',...)),加空格哨兵探测;
+				// 以matcher取命中区间换算原串坐标(哨兵充当前导\W时消耗separator+后导\W共10字符,
+				// 原生前导\W时共11字符,统一按sm.start()/sm.end()-1换算,规避indexOf子串误定位)
+				java.util.regex.Matcher sm = separtorPattern.matcher(" ".concat(tmp.toLowerCase(Locale.ROOT)));
+				if (sm.find()) {
+					int sepIdx = sm.start();
+					sign = tmp.substring(sm.end() - 1).trim();
+					// separator之前的残留表达式一并纳入拼接(切割点取关键字前导\W之前,与原实现
+					// 逐字节一致;哨兵充当\W时首段为空)
+					int headEnd = (sepIdx > 0) ? sepIdx - 1 : 0;
+					if (tmp.substring(0, headEnd).trim().length() > 0) {
+						segments.add(tmp.substring(0, headEnd));
 					}
 				} else {
 					segments.add(tmp);
@@ -234,6 +241,8 @@ public class GroupConcat extends IFunction {
 		// update 2026-9-15
 		// string_agg写法统一转listagg(原IGNORE透传,oracle无string_agg报ORA-00904);
 		// listagg写法为oracle系原生,原样透传(保留用户自带的within group子句)
+		// update 2026-10-9 OB边界实测:listagg产物适用于OB oracle模式租户;OB CE mysql模式租户
+		// 无listagg(语法报错),mysql模式租户应配dialect=mysql(group_concat原生),verify工程即此配置
 		if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM || dbType == DBType.OCEANBASE) {
 			if ("listagg".equals(funLow)) {
 				return super.IGNORE;

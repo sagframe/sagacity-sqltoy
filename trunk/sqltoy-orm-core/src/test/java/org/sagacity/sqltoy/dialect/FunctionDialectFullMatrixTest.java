@@ -112,16 +112,19 @@ public class FunctionDialectFullMatrixTest {
 						"select substring(name,2,len(name)) from t" },
 				{ "substr三参sqlserver转substring", "select substr(name,2,3) from t", "sqlserver", EXACT,
 						"select substring(name,2,3) from t" },
-				{ "substr负起点两参pg转RIGHT", "select substr(name,-2) from t", "postgresql", EXACT,
-						"select RIGHT(name,2) from t" },
+				// update 2026-10-9 负起点短串(|n|>串长)对齐mysql空串契约:两参RIGHT加长度守卫、
+				// 三参守卫短串分支返回''(db2守卫的length经Length适配器链式归一为char_length)
+				{ "substr负起点两参pg转RIGHT守卫", "select substr(name,-2) from t", "postgresql", EXACT,
+						"select case when length(name)>=2 then RIGHT(name,2) else '' end from t" },
 				{ "substr负起点三参pg转case守卫", "select substr(name,-2,1) from t", "postgresql", CONTAINS,
-						"case when length(name)<2 then substring(name,1,1) else substring(name,length(name)-2+1,1) end" },
-				{ "substr负起点db2转RIGHT", "select substr(name,-2) from t", "db2", EXACT, "select RIGHT(name,2) from t" },
+						"case when length(name)<2 then '' else substring(name,length(name)-2+1,1) end" },
+				{ "substr负起点db2转RIGHT守卫", "select substr(name,-2) from t", "db2", EXACT,
+						"select case when char_length(name)>=2 then RIGHT(name,2) else '' end from t" },
 			{ "substr三参db2长度守卫", "select substr(name,3,100) from t", "db2", CONTAINS,
 					// 守卫生成的length()会被Length类按db2字节/字符归一二次转为char_length(链式正确)
 					"least(100,char_length(name)-(3)+1)" },
-				{ "substr负起点hana转RIGHT(实测pg语义)", "select substr(name,-2) from t", "hana", EXACT,
-						"select RIGHT(name,2) from t" },
+				{ "substr负起点hana转RIGHT守卫(实测pg语义)", "select substr(name,-2) from t", "hana", EXACT,
+						"select case when length(name)>=2 then RIGHT(name,2) else '' end from t" },
 				{ "substr非负hana原生透传", "select substr(name,1,3) from t", "hana", EXACT,
 						"select substr(name,1,3) from t" },
 				{ "substr mysql原生透传", "select substr(name,2,3) from t", "mysql", EXACT,
@@ -168,6 +171,15 @@ public class FunctionDialectFullMatrixTest {
 						"select name||'-'||'x' from t" },
 				{ "concat三参oceanbase转拼接", "select concat(name,'-','x') from t", "oceanbase", EXACT,
 						"select name||'-'||'x' from t" },
+				// update 2026-10-9 oceanbase方言形态锁定(oracle系产物,适用于oracle模式租户;
+				// CE mysql模式边界见OceanbaseRealDbSmokeTest类注释)
+				{ "nvl oceanbase透传", "select nvl(name,'x') from t", "oceanbase", EXACT,
+						"select nvl(name,'x') from t" },
+				{ "group_concat oceanbase转listagg", "select group_concat(name separator '-') from t", "oceanbase",
+						EXACT, "select  listagg(name,'-') within group (order by null)  from t" },
+				{ "now oceanbase转sysdate", "select now() from t", "oceanbase", EXACT, "select sysdate from t" },
+				{ "to_date oceanbase透传", "select to_date(create_time,'yyyy-MM-dd') from t", "oceanbase", EXACT,
+						"select to_date(create_time,'yyyy-MM-dd') from t" },
 				{ "concat两参sqlite即转拼接", "select concat(name,'-') from t", "sqlite", EXACT,
 						"select name||'-' from t" },
 				{ "concat多参sqlserver原生透传", "select concat(name,'-','x') from t", "sqlserver", EXACT,
@@ -418,6 +430,11 @@ public class FunctionDialectFullMatrixTest {
 						"select DATE('2026-01-15') from t" },
 				{ "to_date mysql两参转STR_TO_DATE", "select to_date(create_time,'yyyy-MM-dd') from t", "mysql", EXACT,
 						"select STR_TO_DATE(create_time,'%Y-%m-%d') from t" },
+				// update 2026-10-9 大写oracle惯用形态(YYYY/DD/MI/SS残留字面量致STR_TO_DATE错值,今日补)
+				{ "to_date大写oracle形态mysql日期", "select to_date(create_time,'YYYY-MM-DD') from t", "mysql", EXACT,
+						"select STR_TO_DATE(create_time,'%Y-%m-%d') from t" },
+				{ "to_date大写oracle形态mysql日期时间", "select to_date(create_time,'YYYY-MM-DD HH24:MI:SS') from t",
+						"mysql", EXACT, "select STR_TO_DATE(create_time,'%Y-%m-%d %H:%i:%s') from t" },
 				{ "to_date pg单参转CAST", "select to_date('2026-01-15') from t", "postgresql", EXACT,
 						"select CAST('2026-01-15' AS date) from t" },
 				{ "to_date pg两参透传", "select to_date(create_time,'yyyy-MM-dd') from t", "postgresql", EXACT,
@@ -465,6 +482,14 @@ public class FunctionDialectFullMatrixTest {
 		assertEquals("dmi", queryOne(h2, convert("select substr(name,2,3) from t_func where id=1", "h2")).toString());
 		// 负起点取末2位
 		assertEquals("in", queryOne(h2, convert("select substr(name,-2) from t_func where id=1", "h2")).toString());
+		// update 2026-10-9 超串长守卫(今日契约修正):|n|>串长时mysql语义返回空串('admin'长5)
+		assertEquals("", queryOne(h2, convert("select substr(name,-6) from t_func where id=1", "h2")).toString(),
+				"两参超串长应返回空串");
+		assertEquals("", queryOne(h2, convert("select substr(name,-6,2) from t_func where id=1", "h2")).toString(),
+				"三参超串长应返回空串");
+		// 边界:n=串长时恰返回整串(守卫条件>=)
+		assertEquals("admin", queryOne(h2, convert("select substr(name,-5) from t_func where id=1", "h2")).toString(),
+				"n=串长应返回整串");
 		assertEquals(2, ((Number) queryOne(h2, convert("select instr(name,'dmi') from t_func where id=1", "h2")))
 				.intValue());
 		assertEquals(2, ((Number) queryOne(h2, convert("select strpos(name,'dmi') from t_func where id=1", "h2")))

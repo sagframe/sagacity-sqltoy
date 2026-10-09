@@ -52,12 +52,15 @@ public class SubStr extends IFunction {
 				String n = start.substring(1);
 				// sqlserver无length函数(为len),pg系/h2为length
 				String lenFn = (dialect == DBType.SQLSERVER) ? "len" : "length";
+				// update 2026-10-9 对齐mysql负起点契约:|n|超过串长时起点<1返回空串(原两参
+				// RIGHT短串返回整串、三参守卫短串分支返回substring(s,1,len),均与mysql的''
+				// 偏离且静默错值)
 				if (args.length == 2) {
-					return "RIGHT(" + args[0] + "," + n + ")";
+					return "case when " + lenFn + "(" + args[0] + ")>=" + n + " then RIGHT(" + args[0] + "," + n
+							+ ") else '' end";
 				}
-				return "case when " + lenFn + "(" + args[0] + ")<" + n + " then substring(" + args[0] + ",1,"
-						+ args[2] + ") else substring(" + args[0] + "," + lenFn + "(" + args[0] + ")-" + n + "+1,"
-						+ args[2] + ") end";
+				return "case when " + lenFn + "(" + args[0] + ")<" + n + " then '' else substring(" + args[0] + ","
+						+ lenFn + "(" + args[0] + ")-" + n + "+1," + args[2] + ") end";
 			}
 			if (dialect == DBType.SQLSERVER && args.length == 2) {
 				// update 2026-9-5 mysql惯用负数起点(substr(s,-2)=末2位):
@@ -71,7 +74,9 @@ public class SubStr extends IFunction {
 			// 三参负起点走下方守卫仍为响亮报错,不静默错值
 			String start = args[1].trim();
 			if (args.length == 2 && start.startsWith("-") && start.substring(1).matches("\\d+")) {
-				return "RIGHT(" + args[0] + "," + start.substring(1) + ")";
+				// update 2026-10-9 同pg系:|n|超串长时mysql返回空串,RIGHT短串返回整串须守卫
+				String n = start.substring(1);
+				return "case when length(" + args[0] + ")>=" + n + " then RIGHT(" + args[0] + "," + n + ") else '' end";
 			}
 			// update 2026-9-15 db2的substr长度越界直接报SQL0138(真库实测:substr('abcdef',3,100)、
 			// substr('abcdef',10,1)均报错;长度0合法),与mysql/oracle的越界截断''语义不兼容;
@@ -98,11 +103,13 @@ public class SubStr extends IFunction {
 			String start = args[1].trim();
 			if (start.startsWith("-") && start.substring(1).matches("\\d+")) {
 				String n = start.substring(1);
+				// update 2026-10-9 同pg系:|n|超串长时mysql返回空串,守卫短串分支
 				if (args.length == 2) {
-					return "RIGHT(" + args[0] + "," + n + ")";
+					return "case when length(" + args[0] + ")>=" + n + " then RIGHT(" + args[0] + "," + n
+							+ ") else '' end";
 				}
-				return "case when length(" + args[0] + ")<" + n + " then substring(" + args[0] + ",1," + args[2]
-						+ ") else substring(" + args[0] + ",length(" + args[0] + ")-" + n + "+1," + args[2] + ") end";
+				return "case when length(" + args[0] + ")<" + n + " then '' else substring(" + args[0]
+						+ ",length(" + args[0] + ")-" + n + "+1," + args[2] + ") end";
 			}
 			return super.IGNORE;
 		}

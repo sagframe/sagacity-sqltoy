@@ -127,9 +127,13 @@ public class ToDate extends IFunction {
 			if (args.length == 1) {
 				return "DATE(" + args[0] + ")";
 			}
-			String format = args[1].replace("yyyy", "%Y").replace("yy", "%y").replace("MM", "%m").replace("dd", "%d");
+			// update 2026-10-9 补大写oracle惯用形态YYYY/YY/DD/MI/SS(oracle模型大小写不敏感,
+			// 原'YYYY-MM-DD HH24:MI:SS'的YYYY/DD/MI/SS残留字面量,STR_TO_DATE报格式错值)
+			String format = args[1].replace("yyyy", "%Y").replace("YYYY", "%Y").replace("yy", "%y")
+					.replace("YY", "%y").replace("MM", "%m").replace("dd", "%d").replace("DD", "%d");
 			format = format.replace("HH24", "%H").replace("hh24", "%H").replace("hh", "%h").replace("HH", "%H")
-					.replace("mm", "%i").replace("mi", "%i").replace("ss", "%s");
+					.replace("mm", "%i").replace("mi", "%i").replace("MI", "%i").replace("ss", "%s")
+					.replace("SS", "%s");
 			return "STR_TO_DATE(" + args[0] + "," + format + ")";
 		}
 		if (dialect == DBType.CLICKHOUSE) {

@@ -81,8 +81,12 @@ public class FunctionUtils {
 	private static String convertFunctions(String dialect, String sqlContent) {
 		int dbType = DataSourceUtils.getDBType(dialect);
 		IFunction function;
-		String dialectSql = sqlContent;
 		String dialectLow = dialect.toLowerCase(Locale.ROOT);
+		// update 2026-10-9 修复串首裸函数永不转换:整条sql即函数表达式(如sql片段include的碎片形态)
+		// 时函数名前无任何字符,适配正则\W(函数名)\(恒不命中;入口加空格哨兵使串首函数获得\W
+		// 前缀参与探测与转换(内部全部绝对偏移随哨兵统一平移,无需逐处适配),返回前精确剥离;
+		// 常规SQL以select/insert等关键字开头,行为不变
+		String dialectSql = " ".concat(sqlContent);
 		// update 2026-9-14 预检加速(检测不改写,无耦合):常态SQL不含任何可转换函数,原循环
 		// 对每个适配函数各做一次全SQL maskLiterals拷贝(注册函数最多16次);预检在原串的
 		// 单次掩码上做只读正则探测,无任何命中直接返回原串(仅1次拷贝);有命中才进入改写
@@ -93,7 +97,7 @@ public class FunctionUtils {
 			function = functionConverts.get(i);
 			if (matchDialect(function.dialects(), dialectLow)) {
 				if (preCheckMask == null) {
-					preCheckMask = SqlConfigParseUtils.maskLiterals(sqlContent,
+					preCheckMask = SqlConfigParseUtils.maskLiterals(dialectSql,
 							SqlConfigParseUtils.isBackslashEscapeDialect(dbType));
 				}
 				hasMatch = function.regex().matcher(preCheckMask).find();
@@ -109,7 +113,8 @@ public class FunctionUtils {
 				dialectSql = replaceFunction(dialectSql, dbType, function);
 			}
 		}
-		return dialectSql;
+		// 剥离入口哨兵(replaceFunction的result恒自串首0位构造,首字符必为哨兵)
+		return dialectSql.substring(1);
 	}
 
 	/**
@@ -174,9 +179,12 @@ public class FunctionUtils {
 				// 引号感知配对:规避函数参数中字面量内的括号(如nvl(remark,'('))被误当参数终结符
 				endMarkIndex = StringUtil.getSymMarkIndexSkipQuoted("(", ")", dialectSql, matchedIndex);
 				functionParams = dialectSql.substring(dialectSql.indexOf("(", matchedIndex) + 1, endMarkIndex);
-				// 参数中包含同样的函数，通过递归替换
-				if (StringUtil.matches(functionParams, function.regex())) {
-					functionParams = replaceFunction(functionParams, dbType, function);
+				// 参数中包含同样的函数，通过递归替换;update 2026-10-9 修复参数串首位的嵌套函数
+				// (如nvl(nvl(a,b),c)、nvl(ifnull(a,b),c)的内层)无前导\W字符正则无法命中而漏转换,
+				// 加空格哨兵参与探测与递归后精确剥离(replaceFunction保持串首字符,substring(1)恰好去除哨兵)
+				String recursionParams = " ".concat(functionParams);
+				if (StringUtil.matches(recursionParams, function.regex())) {
+					functionParams = replaceFunction(recursionParams, dbType, function).substring(1);
 				}
 				if (functionParams == null || functionParams.trim().equals("")) {
 					args = null;
