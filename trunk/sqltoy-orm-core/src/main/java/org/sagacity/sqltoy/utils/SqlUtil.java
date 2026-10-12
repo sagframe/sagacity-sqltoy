@@ -300,7 +300,7 @@ public class SqlUtil {
 	 * 
 	 * @param typeHandler 自定义类型处理器，非null时优先通过其完成参数设置
 	 * @param conn        数据库连接对象
-	 * @param profile      数据库类型，参见DataSourceUtils.DBType
+	 * @param profile     数据库类型，参见DataSourceUtils.DBType
 	 * @param pst         PreparedStatement预编译语句对象
 	 * @param params      参数值数组
 	 * @param paramsType  参数对应的java.sql.Types类型数组，null时按参数值自动判断类型
@@ -336,7 +336,7 @@ public class SqlUtil {
 	 * 
 	 * @param typeHandler 自定义类型处理器，非null时优先通过其完成参数设置
 	 * @param conn        数据库连接对象(clob、blob等类型创建需要)
-	 * @param dbProfile      数据库类型，参见DataSourceUtils.DBType
+	 * @param dbProfile   数据库类型，参见DataSourceUtils.DBType
 	 * @param pst         PreparedStatement预编译语句对象
 	 * @param paramValue  参数值，null时按jdbcType设置null
 	 * @param jdbcType    java.sql.Types定义的JDBC类型，-1表示按参数值自动判断
@@ -548,6 +548,13 @@ public class SqlUtil {
 			if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NCHAR
 					|| jdbcType == java.sql.Types.NVARCHAR) {
 				pst.setString(paramIndex, ((BigDecimal) paramValue).toPlainString());
+			} else if (profile != null && profile.getDbType() == DBType.GBASE8S) {
+				// update 2026-10-12 GBase 8s驱动(3.70)对BigDecimal绑定在协议层声明高精度
+				// decimal,merge using select/insert场景报"Decimal or money value exceeds
+				// maximum precision"(真库实测,SQL cast无法纠正绑定标记);转setDouble承担
+				// (double 15-16位有效数字,decimal(32,9)内业务值无损;更高精度诉求走字符串
+				// 承载列)——该驱动缺陷的方言级规避
+				pst.setDouble(paramIndex, ((BigDecimal) paramValue).doubleValue());
 			} else {
 				pst.setBigDecimal(paramIndex, (BigDecimal) paramValue);
 			}
@@ -816,7 +823,7 @@ public class SqlUtil {
 	/**
 	 * vector向量类型参数赋值,统一转为'[1,2,3]'字符串形式(pgvector、oracle 23ai、mysql heatwave等均支持)
 	 * 
-	 * @param profile     数据库类型，参见DataSourceUtils.DBType
+	 * @param profile    数据库类型，参见DataSourceUtils.DBType
 	 * @param pst        PreparedStatement预编译语句对象
 	 * @param paramIndex 参数位置下标(从1开始)
 	 * @param value      向量值，支持字符串、数组、集合或驱动专属向量对象
@@ -903,7 +910,7 @@ public class SqlUtil {
 	/**
 	 * vector向量列回写(upsert等场景通过ResultSet回写)
 	 * 
-	 * @param profile     数据库类型，参见DataSourceUtils.DBType
+	 * @param profile    数据库类型，参见DataSourceUtils.DBType
 	 * @param rs         ResultSet结果集对象
 	 * @param columnName 列名称
 	 * @param value      向量值，支持字符串、数组、集合或驱动专属向量对象
@@ -1046,7 +1053,7 @@ public class SqlUtil {
 	 * 2026-9-6起废弃SQL层包装,insert/update/merge共用本绑定逻辑), sqlserver需SQL层cast(? as
 	 * geometry)配合
 	 *
-	 * @param profile     数据库类型，参见DataSourceUtils.DBType
+	 * @param profile    数据库类型，参见DataSourceUtils.DBType
 	 * @param pst        PreparedStatement预编译语句对象
 	 * @param paramIndex 参数位置下标(从1开始)
 	 * @param value      空间类型值，支持WKT字符串、JTS Geometry或驱动专属对象
@@ -1100,7 +1107,7 @@ public class SqlUtil {
 	/**
 	 * geometry空间列回写(upsert等场景通过ResultSet回写)
 	 * 
-	 * @param profile     数据库类型，参见DataSourceUtils.DBType
+	 * @param profile    数据库类型，参见DataSourceUtils.DBType
 	 * @param rs         ResultSet结果集对象
 	 * @param columnName 列名称
 	 * @param value      空间类型值，支持WKT字符串、JTS Geometry或驱动专属对象
@@ -1440,9 +1447,17 @@ public class SqlUtil {
 				// update 2026-9-8 按下标取值(与labelNames同下标,驱动按下标直达,按label需查找)
 				// fieldValue = rs.getObject(label);
 				// update 2026-9-9 TEXT_READ列文本化读取(oracle的JSON/VECTOR列getObject直接抛错),
-				// 取值后统一经扩展类型归一化(byte[]形态按列类型解码),与Map路径processResultRow对齐
+				// update 2026-10-12 BYTES_TEXT列按字节读取后UTF-8解码(gbase8s的JSON不透明类型,
+				// getObject/getString均不可用而getBytes即文本),取值后统一经扩展类型归一化
+				// (byte[]形态按列类型解码),与Map路径processResultRow对齐
 				int kind = (columnKinds == null) ? ResultUtils.COLUMN_NORMAL : columnKinds[i];
-				fieldValue = (kind == ResultUtils.COLUMN_TEXT_READ) ? rs.getString(i + 1) : rs.getObject(i + 1);
+				if (kind == ResultUtils.COLUMN_TEXT_READ) {
+					fieldValue = rs.getString(i + 1);
+				} else if (kind == ResultUtils.COLUMN_BYTES_TEXT) {
+					fieldValue = ResultUtils.bytesToTrimmedText(rs.getBytes(i + 1));
+				} else {
+					fieldValue = rs.getObject(i + 1);
+				}
 				if (null != fieldValue) {
 					// update 2026-9-11 java.sql.Array经normalizeExtTypeValue归一为原生java数组
 					// (保结构),目标形态转换由下方convertType按属性类型分派(String→'[a,b]'文本、
@@ -1724,7 +1739,7 @@ public class SqlUtil {
 	 * @param voClass            目标VO对象类型
 	 * @param rowCallbackHandler 行数据处理回调接口，非null时逐行回调处理
 	 * @param conn               数据库连接对象
-	 * @param profile             数据库类型，参见DataSourceUtils.DBType
+	 * @param profile            数据库类型，参见DataSourceUtils.DBType
 	 * @param ignoreAllEmptySet  true表示整行数据全为空值时跳过不构造对象
 	 * @param colFieldMap        数据库列名与对象属性的对照映射，null时按列名去除下划线映射
 	 * @return 单条记录对应的VO对象，无数据返回null，结果多于一条抛出IllegalAccessException
@@ -1820,7 +1835,7 @@ public class SqlUtil {
 	 * @param rowCallbackHandler 行数据处理回调接口，非null时逐行回调处理
 	 * @param decryptHandler     字段解密处理器，非null时对列值做解密处理
 	 * @param conn               数据库连接对象
-	 * @param profile             数据库类型，参见DataSourceUtils.DBType
+	 * @param profile            数据库类型，参见DataSourceUtils.DBType
 	 * @param ignoreAllEmptySet  true表示整行数据全为空值时跳过
 	 * @param colFieldMap        数据库列名与对象属性的对照映射，null时按列名去除下划线映射
 	 * @param fetchSize          批量提取行数，小于等于0不设置
@@ -1927,6 +1942,12 @@ public class SqlUtil {
 		} else {
 			// 取得字段列数,在没有rowCallbackHandler用数组返回
 			int rowCnt = rs.getMetaData().getColumnCount();
+			// update 2026-10-10 列读取策略预分类(与reflectResultToVO/ResultUtils.processResultRow
+			// 同口径):oracle的JSON/VECTOR列getObject直接抛ORA-17004/18722须TEXT_READ文本化读取,
+			// h2 json与mysql系geometry/vector等EXT_BYTE列读回byte[]须按列类型解码;此前裸List
+			// 路径遗漏预分类与归一,ext类型列以byte[]/PGobject驱动专属形态静默进入结果行
+			String[] columnTypes = ResultUtils.readColumnTypeNames(rs, rowCnt);
+			int[] columnKinds = ResultUtils.buildColumnKinds(dbType, columnTypes);
 			List items = new ArrayList();
 			Object fieldValue = null;
 			boolean allNull = true;
@@ -1937,8 +1958,16 @@ public class SqlUtil {
 				allNull = true;
 				List rowData = new ArrayList();
 				for (int i = startColIndex; i < rowCnt; i++) {
-					// 处理clob
-					fieldValue = rs.getObject(i + 1);
+					// 处理clob;TEXT_READ列(oracle JSON/VECTOR、db2gse空间列)改文本化读取;
+					// update 2026-10-12 BYTES_TEXT列(gbase8s的json不透明类型,getObject/getString
+					// 均不可用)按字节读取后UTF-8解码去尾空白,与processResultRow/VO路径三策略同口径
+					if (columnKinds[i] == ResultUtils.COLUMN_TEXT_READ) {
+						fieldValue = rs.getString(i + 1);
+					} else if (columnKinds[i] == ResultUtils.COLUMN_BYTES_TEXT) {
+						fieldValue = ResultUtils.bytesToTrimmedText(rs.getBytes(i + 1));
+					} else {
+						fieldValue = rs.getObject(i + 1);
+					}
 					if (fieldValue != null) {
 						allNull = false;
 						if (fieldValue instanceof java.sql.Clob) {
@@ -1951,9 +1980,15 @@ public class SqlUtil {
 							} else {
 								fieldValue = new byte[0];
 							}
-						} else if (convertOracleTimestamp
-								&& fieldValue.getClass().getTypeName().equals("oracle.sql.TIMESTAMP")) {
-							fieldValue = BeanUtil.oracleTimeStampConvert(fieldValue);
+						} else {
+							if (convertOracleTimestamp
+									&& fieldValue.getClass().getTypeName().equals("oracle.sql.TIMESTAMP")) {
+								fieldValue = BeanUtil.oracleTimeStampConvert(fieldValue);
+							}
+							// update 2026-10-10 ext类型归一:pg系json/vector/geometry的PGobject、
+							// EXT_BYTE列的byte[]等驱动专属形态归一为文本/原生数组(与Map/VO路径同口径)
+							fieldValue = ResultUtils.normalizeExtTypeValue(fieldValue, dbType,
+									(columnKinds[i] == ResultUtils.COLUMN_EXT_BYTE) ? columnTypes[i] : null);
 						}
 						// java 特定类型处理
 						if (typeHandler != null) {
@@ -2031,7 +2066,7 @@ public class SqlUtil {
 	 * @param updateTypes       各参数对应的java.sql.Types类型数组，null时按参数值自动判断
 	 * @param autoCommit        是否自动提交，null时保持连接原有提交方式
 	 * @param conn              数据库连接对象
-	 * @param profile            数据库类型，参见DataSourceUtils.DBType
+	 * @param profile           数据库类型，参见DataSourceUtils.DBType
 	 * @return 实际影响的行数统计
 	 * @throws Exception
 	 */
@@ -2198,7 +2233,7 @@ public class SqlUtil {
 	 * @param typeHandler    自定义类型处理器，非null时优先通过其完成参数设置
 	 * @param treeTableModel 树形表模型(表名、id/pid字段、层级字段、路径字段、叶子字段等)
 	 * @param conn           数据库连接对象
-	 * @param profile         数据库类型，参见DataSourceUtils.DBType
+	 * @param profile        数据库类型，参见DataSourceUtils.DBType
 	 * @return 处理成功返回true，模型必填字段缺失抛出IllegalArgumentException
 	 * @throws Exception
 	 */
@@ -2213,7 +2248,7 @@ public class SqlUtil {
 	 * @param typeHandler       自定义类型处理器，非null时优先通过其完成参数设置
 	 * @param treeTableModel    树形表模型(表名、id/pid字段、层级字段、路径字段、叶子字段等)
 	 * @param conn              数据库连接对象
-	 * @param profile            数据库类型，参见DataSourceUtils.DBType
+	 * @param profile           数据库类型，参见DataSourceUtils.DBType
 	 * @param queryTimeout      查询超时时间(秒)，null时使用默认值
 	 * @param unifyUpdateFields 公共更新字段(数据库列名->值,如最后修改人、最后修改时间),
 	 *                          非null时附加到全部路由update语句的set子句并绑定参数
@@ -2412,7 +2447,7 @@ public class SqlUtil {
 	 * @param ids                 下一层级待处理的节点数据(id、路径、pid)
 	 * @param nodeLevel           当前处理的节点层级
 	 * @param conn                数据库连接对象
-	 * @param profile              数据库类型，参见DataSourceUtils.DBType
+	 * @param profile             数据库类型，参见DataSourceUtils.DBType
 	 * @param queryTimeout        查询超时时间(秒)
 	 * @param unifyValues         公共更新字段对应的参数值数组，null时不绑定
 	 * @throws Exception
@@ -2683,7 +2718,7 @@ public class SqlUtil {
 	 * @param params      sql中?对应的参数值数组
 	 * @param paramsType  参数对应的java.sql.Types类型数组，null时按参数值自动判断类型
 	 * @param conn        数据库连接对象
-	 * @param profile      数据库类型，参见DataSourceUtils.DBType
+	 * @param profile     数据库类型，参见DataSourceUtils.DBType
 	 * @param autoCommit  是否自动提交，null时保持连接原有提交方式，执行完毕后恢复
 	 * @param processWord true对sql中的关键词做保留字转义处理
 	 * @return 实际影响的记录行数
@@ -3555,9 +3590,11 @@ public class SqlUtil {
 			}
 		}
 		// postgresql系列
+		// update 2026-10-12 补HIGHGO(PG系全形态真库实测:TO_DATE/TO_TIMESTAMP(含.MS/.US)
+		// 与::TIME均可用;::TIME带小数被引擎截到整秒,日志形态可接受)
 		if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 				|| dbType == DBType.STARDB || dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB
-				|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE) {
+				|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE || dbType == DBType.HIGHGO) {
 			// day
 			if (type == 1) {
 				return "TO_DATE(" + dateStr + ",'YYYY-MM-DD')";
@@ -3697,6 +3734,65 @@ public class SqlUtil {
 			// 毫秒time(hana的TIME无小数秒,substring(0,9)保留引号+HH:mm:ss再补尾引号)
 			if (type == 5) {
 				return "CAST(" + dateStr.substring(0, 9) + "' AS TIME)";
+			}
+		}
+		// update 2026-10-12 补GBASE8S(Informix的DATETIME cast族,真库探针定界:
+		// FRACTION(n)的n为最大接受精度且上限5,小数位≤n均可(短小数OK),超n位报
+		// Extra characters须截断输入;FRACTION(6)语法错)
+		if (dbType == DBType.GBASE8S) {
+			// day
+			if (type == 1) {
+				return "CAST(" + dateStr + " AS DATE)";
+			}
+			// datetime
+			if (type == 2) {
+				return "CAST(" + dateStr + " AS DATETIME YEAR TO SECOND)";
+			}
+			// timestamp:有小数截到最多5位再FRACTION(5)(19位日期时间+1点+5位=25位内容)
+			if (type == 3) {
+				if (dateLength > 25) {
+					return "CAST(" + dateStr.substring(0, 26) + "' AS DATETIME YEAR TO FRACTION(5))";
+				}
+				if (dateLength > 19) {
+					return "CAST(" + dateStr + " AS DATETIME YEAR TO FRACTION(5))";
+				}
+				return "CAST(" + dateStr + " AS DATETIME YEAR TO SECOND)";
+			}
+			// time
+			if (type == 4) {
+				return "CAST(" + dateStr + " AS DATETIME HOUR TO SECOND)";
+			}
+			// 毫秒time(HOUR TO FRACTION(5),超5位截断:引号+8位时间+1点+5位=15字符)
+			if (type == 5) {
+				if (dateLength > 14) {
+					return "CAST(" + dateStr.substring(0, 15) + "' AS DATETIME HOUR TO FRACTION(5))";
+				}
+				return "CAST(" + dateStr + " AS DATETIME HOUR TO FRACTION(5))";
+			}
+		}
+		// update 2026-10-12 补H2(2.x无TO_DATE函数,真库实测报Function not found;
+		// CAST族形态可用,与hana同构)
+		if (dbType == DBType.H2) {
+			if (type == 1) {
+				return "CAST(" + dateStr + " AS DATE)";
+			}
+			if (type == 2 || type == 3) {
+				return "CAST(" + dateStr + " AS TIMESTAMP)";
+			}
+			if (type == 4 || type == 5) {
+				return "CAST(" + dateStr + " AS TIME)";
+			}
+		}
+		// update 2026-10-12 补SQLITE(date/datetime/time修饰函数,真库实测可用)
+		if (dbType == DBType.SQLITE) {
+			if (type == 1) {
+				return "date(" + dateStr + ")";
+			}
+			if (type == 2 || type == 3) {
+				return "datetime(" + dateStr + ")";
+			}
+			if (type == 4 || type == 5) {
+				return "time(" + dateStr + ")";
 			}
 		}
 		return dateStr;

@@ -47,8 +47,7 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	 * update 2026-9-23 realDialectFirst变体匹配标记:sql经realDialect变体匹配选中时置位
 	 * (SqlToyContext.resolveRealDialectVariant与SqlScriptLoader.getSqlConfig线程分支),
 	 * 仅带此标记的sql在getDialectSql收口点按真实方言做函数/保留字转换,未命中变体回退
-	 * base的sql保持配置方言行为。变体实例只可能经对应方言的匹配路径到达(直接以变体id
-	 * 查询除外),标记为实例固有属性,super.clone自动携带
+	 * base的sql保持配置方言行为。变体实例只可能经对应方言的匹配路径到达(直接以变体id 查询除外),标记为实例固有属性,super.clone自动携带
 	 */
 	private boolean realDialectMatched = false;
 

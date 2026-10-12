@@ -19,8 +19,8 @@ public class ToChar extends IFunction {
 	private static Pattern regex = Pattern.compile("(?i)\\Wto_char\\(");
 
 	/**
-	 * update 2026-10-9 日期模型标记:格式串含任一标记恒为日期模型(用于数值/日期模型判别)。
-	 * 刻意不含mi:纯分钟格式' mi '不含9/0不进判别,而数值模型的MI后缀('999MI')不得误判为日期
+	 * update 2026-10-9 日期模型标记:格式串含任一标记恒为日期模型(用于数值/日期模型判别)。 刻意不含mi:纯分钟格式' mi
+	 * '不含9/0不进判别,而数值模型的MI后缀('999MI')不得误判为日期
 	 */
 	private static final Pattern DATE_MODEL_PATTERN = Pattern
 			.compile("(?i)(yyyy|yy|mm|dd|hh|ss|mon|month|day|year|am|pm)|:|%[ymdhis]");
@@ -82,11 +82,16 @@ public class ToChar extends IFunction {
 		case DBType.VASTBASE:
 			// update 2026-9-14 补KINGBASE(KingbaseES基于PG,TO_CHAR归PG系格式模型)
 		case DBType.KINGBASE:
+		case DBType.HIGHGO:
 		case DBType.OCEANBASE:
 		case DBType.DM:
 			// 2026-9-11 hana的TO_CHAR为oracle兼容格式模型(日期yyyy/MM/dd/hh24/mi/ss与数值9/0双场景)
 		case DBType.HANA:
-		case DBType.ORACLE11: {
+		case DBType.ORACLE11:
+			// update 2026-10-12 补GBASE8S(Informix的to_char为oracle兼容格式模型,真库实测
+			// 'yyyy-MM-dd'可用);其返回varchar经该容器驱动读回空串,外层包::lvarchar定型
+			// (真库实测cast后lvarchar读回正常)
+		case DBType.GBASE8S: {
 			// 日期
 			format = args[1].replace("%Y", "yyyy").replace("%y", "yy").replace("%m", "MM").replace("%d", "dd");
 			// 时间处理
@@ -100,7 +105,10 @@ public class ToChar extends IFunction {
 			// update 2026-9-10 PG语法系裸?首参补::timestamp:vanilla PG对to_char(unknown,unknown)
 			// 报重载歧义(pgjdbc日期参数UNSPECIFIED OID);to_char兼有数值格式化场景,格式模型含
 			// 9/0数值占位时不cast(numericModelPossible=true,数值参数定型绑定原生可解重载)
-			return "to_char(" + FunctionUtils.pgToCharParamCast(dialect, args[0], format, true) + "," + format + ")";
+			String toCharInner = "to_char(" + FunctionUtils.pgToCharParamCast(dialect, args[0], format, true) + ","
+					+ format + ")";
+			// update 2026-10-12 g8的to_char返回varchar读回空串,包::lvarchar(见case声明注释)
+			return (dialect == DBType.GBASE8S) ? toCharInner + "::lvarchar" : toCharInner;
 		}
 		case DBType.H2: {
 			// H2原生支持to_char(oracle兼容格式模型,端到端实测验证);
@@ -153,8 +161,8 @@ public class ToChar extends IFunction {
 				format = format.replace("mm", "MM");
 				format = format.replace("MI", "@M1@");
 				format = format.replace("mi", "@M1@");
-				format = format.replace("@M1@", "mm").replace("SS", "ss")
-						.replace("YYYY", "yyyy").replace("YY", "yy").replace("DD", "dd");
+				format = format.replace("@M1@", "mm").replace("SS", "ss").replace("YYYY", "yyyy").replace("YY", "yy")
+						.replace("DD", "dd");
 			}
 			// update 2026-10-4 引号归一:带引号的格式串原样保留(内嵌"字面量"转义不被破坏),
 			// 裸格式才补包裹引号(原裸格式直接输出FORMAT第二参不带引号报语法错)

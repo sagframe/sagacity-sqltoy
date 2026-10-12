@@ -637,7 +637,7 @@ public class EntityManager {
 		}
 		// 与字段级@PartitionKey双向联动:
 		// 1)@Partition.columns反向标记对应字段的partitionKey(类注解自足,ClickHouse/StarRocks
-		//   等依赖字段级标记的DML逻辑无需额外配置);
+		// 等依赖字段级标记的DML逻辑无需额外配置);
 		// 2)@Partition.columns未配置时自动收集@PartitionKey标记的字段(字段注解自足)
 		java.util.List<String> partitionColumns = new java.util.ArrayList<>(
 				java.util.Arrays.asList(partition.columns()));
@@ -660,14 +660,14 @@ public class EntityManager {
 			}
 			for (String marked : markedFields) {
 				if (!partitionColumns.contains(marked)) {
-					logger.warn("实体类{}: 字段{}标记了@PartitionKey但不在@Partition的columns中,请检查配置一致性!",
-							entityClass.getName(), marked);
+					logger.warn("实体类{}: 字段{}标记了@PartitionKey但不在@Partition的columns中,请检查配置一致性!", entityClass.getName(),
+							marked);
 				}
 			}
 		}
 		PartitionDef[] defs = partition.partitions();
-		PartitionMeta partitionMeta = new PartitionMeta(partition.strategy(),
-				partitionColumns.toArray(new String[0]), partition.expression());
+		PartitionMeta partitionMeta = new PartitionMeta(partition.strategy(), partitionColumns.toArray(new String[0]),
+				partition.expression());
 		if (defs != null && defs.length > 0) {
 			String[] names = new String[defs.length];
 			String[] values = new String[defs.length];

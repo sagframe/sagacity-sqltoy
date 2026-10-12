@@ -298,7 +298,9 @@ public class PostgreSqlDialect implements Dialect {
 		// 暂时不开放，postgresql类型太多,merge 语句中需要case(? as type) as columnName
 		// 目前type类型无法完整适配支持
 		// postgresql15 支持merge into
-		if (dbType.equals(DBType.POSTGRESQL14)) {
+		// update 2026-10-12 瀚高(PG12内核,真库实测syntax error at or near "merge")
+		// 与pg14同为无merge内核,走先update后saveIgnore兜底
+		if (dbType.equals(DBType.POSTGRESQL14) || dbType.equals(DBType.HIGHGO)) {
 			// DBType.POSTGRESQL14
 			Long updateCnt = DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields,
 					reflectPropsHandler, conn, profile, autoCommit, tableName, true);
@@ -335,7 +337,8 @@ public class PostgreSqlDialect implements Dialect {
 		// identity主键按rejectId反射,与insertIgnore省略主键列的sql保持占位符与参数对齐
 		// (原走saveAllIgnoreExist按全字段反射,identity时参数比?多一个导致绑定越界;
 		// 且伪造成sequence+DEFAULT会产生COALESCE(?,DEFAULT)非法sql,pg的DEFAULT只能裸用于VALUES项)
-		if (dbType != null && dbType.intValue() == DBType.POSTGRESQL14) {
+		// update 2026-10-12 瀚高同pg14:on conflict do nothing走saveAll形态
+		if (dbType != null && (dbType.intValue() == DBType.POSTGRESQL14 || dbType.intValue() == DBType.HIGHGO)) {
 			PKStrategy pkStrategy = entityMeta.getIdStrategy();
 			boolean isAssignPK = PostgreSqlDialectUtils.allowAssignPKValue(pkStrategy);
 			String insertSql = DialectExtUtils.insertIgnore(sqlToyContext.getUnifyFieldsHandler(), profile, entityMeta,

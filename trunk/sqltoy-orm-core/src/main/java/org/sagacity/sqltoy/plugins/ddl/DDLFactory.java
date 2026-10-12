@@ -76,6 +76,7 @@ public class DDLFactory {
 			// update 2026-9-14 补KINGBASE(KingbaseES基于PG):原落入default的DefaultDDLGenerator,
 			// 任何DDL生成调用直接抛"DDL generation is not implemented for this dialect"
 		case DBType.KINGBASE:
+		case DBType.HIGHGO:
 		case DBType.POSTGRESQL:
 		case DBType.POSTGRESQL14: {
 			generator = new PostgreSqlDDLGenerator();
@@ -83,7 +84,11 @@ public class DDLFactory {
 		}
 		case DBType.ORACLE:
 		case DBType.ORACLE11:
-		case DBType.DM: {
+		case DBType.DM:
+			// update 2026-10-12 补GBASE8S(Informix内核DDL同oracle形态结构,自增由
+			// SERIAL类型族在DDLUtils类型映射承担):原落default的DefaultDDLGenerator,
+			// 任何DDL生成调用直接抛"DDL generation is not implemented"
+		case DBType.GBASE8S: {
 			generator = new OracleDDLGenerator();
 			break;
 		}

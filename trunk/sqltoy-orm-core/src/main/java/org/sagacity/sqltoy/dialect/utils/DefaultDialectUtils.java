@@ -426,7 +426,22 @@ public class DefaultDialectUtils {
 						SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, profile, pst, (Object[]) rowData,
 								null, 0);
 						// 执行类似 select xxx from table for update(sqlserver语法有差异)
-						ResultSet finalRs = pst.executeQuery();
+						ResultSet executeRs = pst.executeQuery();
+						// update 2026-10-12 GBase 8s:CONCUR_UPDATABLE的updateRow/insertRow驱动
+						// SQL组装缺陷(真库实测updateRow报"Found a quote for which there is no
+						// matching quote"),以GBase8sRsProxy代理承接(updateXxx收集变更、
+						// updateRow/insertRow转独立update/insert语句、行内读可见性);行定位键
+						// 取usfReReadProps(优先主键)的列名,代理在next()时捕获其原始值;
+						// 其余流程(dataVersion/公共字段/insert分支/回读组装)对代理透明不变
+						if (dbType == DBType.GBASE8S) {
+							String[] usfKeyCols = new String[usfReReadProps.length];
+							for (int k = 0; k < usfReReadProps.length; k++) {
+								usfKeyCols[k] = entityMeta.getColumnName(usfReReadProps[k]);
+							}
+							executeRs = GBase8sRsProxy.wrap(executeRs, conn,
+									entityMeta.getSchemaTable(tableName, dbType), usfKeyCols);
+						}
+						final ResultSet finalRs = executeRs;
 						try {
 							int rowCnt = finalRs.getMetaData().getColumnCount();
 							// 列类型名与读取策略查询级一次预计算(结果集元数据恒定,置于行循环外;
@@ -1173,7 +1188,9 @@ public class DefaultDialectUtils {
 			return "";
 		}
 		if (lockMode == LockMode.UPGRADE_NOWAIT) {
-			return " for update nowait ";
+			// update 2026-10-12 GBase 8s无语句级nowait子句(实测语法错),降级为普通
+			// for update(如需立即失败语义由会话级set lock mode to not wait承担)
+			return (dbType != null && dbType.intValue() == DBType.GBASE8S) ? " for update " : " for update nowait ";
 		}
 		if (supportSkipLocked && lockMode == LockMode.UPGRADE_SKIPLOCK) {
 			return skipLockedSuffix;
@@ -1210,9 +1227,15 @@ public class DefaultDialectUtils {
 			}
 		} else if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 				|| dbType == DBType.OPENGAUSS || dbType == DBType.STARDB || dbType == DBType.VASTBASE
-				|| dbType == DBType.OSCAR || dbType == DBType.MOGDB) {
+				|| dbType == DBType.OSCAR || dbType == DBType.MOGDB || dbType == DBType.HIGHGO) {
+			// update 2026-10-12 瀚高归PG系(lock_timeout)
 			try (Statement setLockStmt = conn.createStatement()) {
 				setLockStmt.execute("SET lock_timeout='" + 1000 * lockWaitTimeout + "ms'");
+			}
+		} else if (dbType == DBType.GBASE8S) {
+			// update 2026-10-12 GBase 8s(informix系):set lock mode to wait n
+			try (Statement setLockStmt = conn.createStatement()) {
+				setLockStmt.execute("set lock mode to wait " + lockWaitTimeout);
 			}
 		}
 	}

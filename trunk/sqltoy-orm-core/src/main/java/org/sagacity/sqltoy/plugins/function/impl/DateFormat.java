@@ -60,11 +60,15 @@ public class DateFormat extends IFunction {
 		case DBType.VASTBASE:
 			// update 2026-9-14 补KINGBASE(KingbaseES基于PG,date_format归to_char+PG格式模型)
 		case DBType.KINGBASE:
+		case DBType.HIGHGO:
 		case DBType.OCEANBASE:
 		case DBType.DM:
 			// 2026-9-11 hana无date_format,TO_CHAR为oracle兼容格式模型(非PG系,pgToCharParamCast原样透传)
 		case DBType.HANA:
-		case DBType.ORACLE11: {
+		case DBType.ORACLE11:
+			// update 2026-10-12 补GBASE8S(Informix无date_format,转to_char+oracle格式模型;
+			// to_char返回varchar经该容器驱动读回空串,外层包::lvarchar定型,真库实测)
+		case DBType.GBASE8S: {
 			// 日期
 			format = args[1].replace("%Y", "yyyy").replace("%y", "yy").replace("%m", "MM").replace("%d", "dd");
 			// 时间处理
@@ -78,7 +82,9 @@ public class DateFormat extends IFunction {
 			format = format.replace("HH:mm", "hh24:mi").replace("hh:mm", "hh:mi").replaceAll("\\bHH\\b", "hh24");
 			// update 2026-9-10 PG语法系裸?首参补::timestamp(date_format恒为日期语义,无数值模型
 			// 场景,numericModelPossible=false):vanilla PG对to_char(unknown,unknown)报重载歧义
-			return "to_char(" + FunctionUtils.pgToCharParamCast(dialect, args[0], format, false) + "," + format + ")";
+			String dfInner = "to_char(" + FunctionUtils.pgToCharParamCast(dialect, args[0], format, false) + ","
+					+ format + ")";
+			return (dialect == DBType.GBASE8S) ? dfInner + "::lvarchar" : dfInner;
 		}
 		case DBType.MYSQL:
 		case DBType.DORIS:
@@ -122,8 +128,8 @@ public class DateFormat extends IFunction {
 			format = format.replace("mm", "MM");
 			format = format.replace("MI", "@M1@");
 			format = format.replace("mi", "@M1@");
-			format = format.replace("@M1@", "mm").replace("SS", "ss")
-					.replace("YYYY", "yyyy").replace("YY", "yy").replace("DD", "dd");
+			format = format.replace("@M1@", "mm").replace("SS", "ss").replace("YYYY", "yyyy").replace("YY", "yy")
+					.replace("DD", "dd");
 			// update 2026-10-4 引号归一:带引号的格式串原样保留(oracle的"字面量"双引号转义与
 			// 内嵌单引号字面量不被破坏,原一律剥单引号会丢失内嵌字面量),裸格式才补包裹引号
 			String fmtArg = format.trim();

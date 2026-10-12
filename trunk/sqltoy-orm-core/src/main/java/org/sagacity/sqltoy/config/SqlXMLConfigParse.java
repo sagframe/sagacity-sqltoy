@@ -421,8 +421,7 @@ public class SqlXMLConfigParse {
 			String specDialect = sqlElt.getAttribute("dialect").trim().toLowerCase(Locale.ROOT);
 			if (StringUtil.isNotBlank(specDialect)) {
 				if (DataSourceUtils.getDBType(specDialect) == DataSourceUtils.DBType.UNDEFINE) {
-					logger.warn("sql id={} 的dialect属性[{}]未在sqltoy方言清单中,按全局方言[{}]解析!", id, specDialect,
-							realDialect);
+					logger.warn("sql id={} 的dialect属性[{}]未在sqltoy方言清单中,按全局方言[{}]解析!", id, specDialect, realDialect);
 				} else {
 					realDialect = specDialect;
 				}

@@ -73,8 +73,9 @@ import org.slf4j.LoggerFactory;
  * @modify Date:2022-10-19
  *         convertType类型匹配改成int类型的匹配,通过DataType将TypeName转化为int，批量时效率大幅提升
  * @modify Date:2023-08-06 增加对枚举类型的处理
- * @modify Date:2026-09-22 convertType数字分支解析前剥离千分位分组逗号(如number-format格式化产物"8,888.0000")
-	 */
+ * @modify Date:2026-09-22
+ *         convertType数字分支解析前剥离千分位分组逗号(如number-format格式化产物"8,888.0000")
+ */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class BeanUtil {
 	/**

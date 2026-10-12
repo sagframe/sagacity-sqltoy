@@ -90,12 +90,15 @@ public class ReservedWordsUtil {
 				|| dbType == DBType.DB2 || dbType == DBType.DM || dbType == DBType.GAUSSDB || dbType == DBType.MOGDB
 				|| dbType == DBType.STARDB || dbType == DBType.OSCAR || dbType == DBType.OPENGAUSS
 				|| dbType == DBType.VASTBASE || dbType == DBType.ORACLE11 || dbType == DBType.HANA
-				|| dbType == DBType.KINGBASE) {
+				|| dbType == DBType.KINGBASE || dbType == DBType.HIGHGO) {
 			return sql.replace("[", "\"").replace("]", "\"");
 		}
 		if (dbType == DBType.H2) {
 			return sql.replace("[", "\"").replace("]", "\"");
 		}
+		// update 2026-10-12 GBase 8s(Informix内核)归剔除族:双引号定界标识符需
+		// DELIMIDENT环境变量(容器未设,真库实测create table ("name"...)报语法错),保留字列
+		// 在目标库响亮报错由用户改名规避
 		// 剔除保留字符号
 		return sql.replace("[", "").replace("]", "");
 	}
@@ -134,7 +137,7 @@ public class ReservedWordsUtil {
 				|| dbType == DBType.KINGBASE || dbType == DBType.DB2 || dbType == DBType.GAUSSDB
 				|| dbType == DBType.MOGDB || dbType == DBType.OPENGAUSS || dbType == DBType.VASTBASE
 				|| dbType == DBType.STARDB || dbType == DBType.OSCAR || dbType == DBType.DM || dbType == DBType.ORACLE11
-				|| dbType == DBType.HANA) {
+				|| dbType == DBType.HANA || dbType == DBType.HIGHGO) {
 			return "\"".concat(column).concat("\"");
 		}
 		return column;
@@ -173,7 +176,7 @@ public class ReservedWordsUtil {
 					|| dbType == DBType.DB2 || dbType == DBType.KINGBASE || dbType == DBType.GAUSSDB
 					|| dbType == DBType.MOGDB || dbType == DBType.OPENGAUSS || dbType == DBType.VASTBASE
 					|| dbType == DBType.DM || dbType == DBType.ORACLE11 || dbType == DBType.STARDB
-					|| dbType == DBType.OSCAR || dbType == DBType.HANA) {
+					|| dbType == DBType.OSCAR || dbType == DBType.HANA || dbType == DBType.HIGHGO) {
 				sqlBuff.append("\"").append(keyWord).append("\"");
 			} else if (dbType == DBType.SQLSERVER || dbType == DBType.SQLITE) {
 				sqlBuff.append("[").append(keyWord).append("]");

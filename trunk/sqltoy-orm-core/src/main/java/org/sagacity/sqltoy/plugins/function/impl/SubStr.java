@@ -12,7 +12,8 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
  * @version v1.0,Date:2013-03-21
  */
 public class SubStr extends IFunction {
-	private static Pattern regex = Pattern.compile("(?i)\\W(substr|substring)\\(");
+	// update 2026-10-11 补mid源拼写(mysql的同义词写法,语义与substring完全一致)
+	private static Pattern regex = Pattern.compile("(?i)\\W(substr|substring|mid)\\(");
 
 	/**
 	 * 本身就支持substr的数据库
@@ -38,11 +39,13 @@ public class SubStr extends IFunction {
 		if (args == null || args.length == 0) {
 			return super.IGNORE;
 		}
+		// update 2026-10-12 GBASE8S移出本PG系分支(原误归):Informix无SUBSTRING函数
+		// (真库实测语法错),归下方substr族(原生SUBSTR)
 		// update 2026-9-14 补KINGBASE(KingbaseES基于PG,函数语法归PG系)
 		if (dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL14 || dialect == DBType.GAUSSDB
 				|| dialect == DBType.OPENGAUSS || dialect == DBType.MOGDB || dialect == DBType.VASTBASE
 				|| dialect == DBType.SQLSERVER || dialect == DBType.H2 || dialect == DBType.STARDB
-				|| dialect == DBType.OSCAR || dialect == DBType.KINGBASE) {
+				|| dialect == DBType.OSCAR || dialect == DBType.KINGBASE || dialect == DBType.HIGHGO) {
 			// update 2026-10-4 负起点字面量(mysql惯用substr(s,-n)取末n位)统一处理:
 			// 两参转RIGHT(s,n);三参转case守卫形态(start=串长-n+1,串长不足n时取1,mysql语义)。
 			// 原仅sqlserver两参做了RIGHT,pg系substring(s,-n)按"串首之前偏移"返回整串静默错值。
@@ -91,7 +94,8 @@ public class SubStr extends IFunction {
 		}
 		if (dialect == DBType.MYSQL || dialect == DBType.ORACLE || dialect == DBType.TIDB || dialect == DBType.DM
 				|| dialect == DBType.OCEANBASE || dialect == DBType.ORACLE11 || dialect == DBType.DORIS
-				|| dialect == DBType.STARROCKS) {
+				// update 2026-10-12 补GBASE8S(Informix原生SUBSTR,无SUBSTRING)
+				|| dialect == DBType.GBASE8S || dialect == DBType.STARROCKS) {
 			return wrapArgs("substr", args);
 		}
 		// 表示不做修改
@@ -108,8 +112,13 @@ public class SubStr extends IFunction {
 					return "case when length(" + args[0] + ")>=" + n + " then RIGHT(" + args[0] + "," + n
 							+ ") else '' end";
 				}
-				return "case when length(" + args[0] + ")<" + n + " then '' else substring(" + args[0]
-						+ ",length(" + args[0] + ")-" + n + "+1," + args[2] + ") end";
+				return "case when length(" + args[0] + ")<" + n + " then '' else substring(" + args[0] + ",length("
+						+ args[0] + ")-" + n + "+1," + args[2] + ") end";
+			}
+			// update 2026-10-11 hana原生形态为substr/substring,无mid():非substr拼写换名为substr
+			// (mid/substring写法透传会报函数不存在)
+			if (!"substr".equals(functionName.toLowerCase(java.util.Locale.ROOT))) {
+				return wrapArgs("substr", args);
 			}
 			return super.IGNORE;
 		}

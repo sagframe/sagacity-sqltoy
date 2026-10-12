@@ -12,8 +12,10 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
  * @version v1.0,Date:2013-03-25
  */
 public class Now extends IFunction {
-	private static Pattern regex = Pattern
-			.compile("(?i)\\W(((now|getdate|sysdate|systimestamp)\\()|(sysdate\\W)|(systimestamp\\W))");
+	// update 2026-10-11 补current_timestamp关键字源拼写(标准SQL写法,pg/oracle/hana/db2用户惯用),
+	// 带括号fsp形态与裸关键字双形态;sqlite的CURRENT_TIMESTAMP为UTC墙钟(东八区差8小时)须转本地
+	private static Pattern regex = Pattern.compile(
+			"(?i)\\W(((now|getdate|sysdate|systimestamp|current_timestamp)\\()|(sysdate|systimestamp|current_timestamp)\\W)");
 
 	/*
 	 * (non-Javadoc)
@@ -44,6 +46,18 @@ public class Now extends IFunction {
 	@Override
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
 		String funLow = functionName.toLowerCase(java.util.Locale.ROOT);
+		// update 2026-10-11
+		// current_timestamp在sqlite为UTC墙钟,与datetime(now)的localtime策略统一转本地;
+		// 其余库走下方既有分支(mysql系now()等价改名/oracle系sysdate等价/pg的now()/db2的CURRENT
+		// TIMESTAMP等均为该库原生等价物)
+		if ("current_timestamp".equals(funLow) && dialect == DBType.SQLITE) {
+			return "datetime('now','localtime')";
+		}
+		// update 2026-10-12 GBase 8s(Informix内核):无now()/sysdate/getdate,
+		// CURRENT关键字承担(无括号形态,真库探针2026-10-12)
+		if (dialect == DBType.GBASE8S) {
+			return "CURRENT";
+		}
 		// update 2026-10-4 补oracle源形态systimestamp(带小数秒,可带精度参数):oracle系原生透传
 		// (返回sysdate会丢精度;裸形态正则带\W后缀,IGNORE会重复其空白字符,须返回同名文本);
 		// 其余库走下方now()同路径分派(fsp/精度参数mysql系保留,其余库不带)
@@ -62,7 +76,7 @@ public class Now extends IFunction {
 		if (dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL14 || dialect == DBType.GAUSSDB
 				|| dialect == DBType.OPENGAUSS || dialect == DBType.MOGDB || dialect == DBType.STARDB
 				|| dialect == DBType.OSCAR || dialect == DBType.VASTBASE || dialect == DBType.H2
-				|| dialect == DBType.CLICKHOUSE || dialect == DBType.KINGBASE) {
+				|| dialect == DBType.CLICKHOUSE || dialect == DBType.KINGBASE || dialect == DBType.HIGHGO) {
 			return "now()";
 		}
 		if (dialect == DBType.ORACLE || dialect == DBType.OCEANBASE || dialect == DBType.DM

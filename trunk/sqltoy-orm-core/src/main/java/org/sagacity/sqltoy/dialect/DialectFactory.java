@@ -49,9 +49,11 @@ import org.sagacity.sqltoy.dialect.impl.DB2Dialect;
 import org.sagacity.sqltoy.dialect.impl.DMDialect;
 import org.sagacity.sqltoy.dialect.impl.DefaultDialect;
 import org.sagacity.sqltoy.dialect.impl.DorisDialect;
+import org.sagacity.sqltoy.dialect.impl.GBase8sDialect;
 import org.sagacity.sqltoy.dialect.impl.GaussDBDialect;
 import org.sagacity.sqltoy.dialect.impl.H2Dialect;
 import org.sagacity.sqltoy.dialect.impl.HanaDialect;
+import org.sagacity.sqltoy.dialect.impl.HighgoDialect;
 import org.sagacity.sqltoy.dialect.impl.ImpalaDialect;
 import org.sagacity.sqltoy.dialect.impl.KingbaseDialect;
 import org.sagacity.sqltoy.dialect.impl.MogDBDialect;
@@ -236,6 +238,16 @@ public class DialectFactory {
 			// vastbase 海量数据库
 			case DBType.VASTBASE: {
 				dialectSqlWrapper = new VastbaseDialect();
+				break;
+			}
+			// highgo 瀚高数据库(PG12内核,SQL生成复用PG系)
+			case DBType.HIGHGO: {
+				dialectSqlWrapper = new HighgoDialect();
+				break;
+			}
+			// gbase8s 南大通用(Informix 12.10内核,复用Oracle系)
+			case DBType.GBASE8S: {
+				dialectSqlWrapper = new GBase8sDialect();
 				break;
 			}
 			case DBType.IMPALA: {

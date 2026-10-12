@@ -306,9 +306,9 @@ public class DialectExtUtils {
 						|| dbType == DBType.POSTGRESQL14 || dbType == DBType.DM || dbType == DBType.GAUSSDB
 						|| dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.STARDB
 						|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE || dbType == DBType.OCEANBASE
-						|| dbType == DBType.SQLITE || dbType == DBType.KINGBASE || dbType == DBType.SQLSERVER
-						|| dbType == DBType.TIDB || dbType == DBType.H2 || dbType == DBType.DORIS
-						|| dbType == DBType.STARROCKS) {
+						|| dbType == DBType.SQLITE || dbType == DBType.KINGBASE || dbType == DBType.HIGHGO
+						|| dbType == DBType.SQLSERVER || dbType == DBType.TIDB || dbType == DBType.H2
+						|| dbType == DBType.DORIS || dbType == DBType.STARROCKS) {
 					if (isCurrentTime) {
 						result = "CURRENT_TIMESTAMP";
 					}

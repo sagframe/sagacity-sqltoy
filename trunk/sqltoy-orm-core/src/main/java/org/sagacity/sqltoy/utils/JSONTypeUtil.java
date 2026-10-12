@@ -82,6 +82,10 @@ public class JSONTypeUtil {
 			pst.setNull(paramIndex, java.sql.Types.VARCHAR);
 		} else if (dbType == DBType.KINGBASE) {
 			pst.setNull(paramIndex, java.sql.Types.OTHER);
+		} else if (dbType == DBType.GBASE8S) {
+			// update 2026-10-12 GBase 8s的json列null绑定用VARCHAR形态(真库实测merge using
+			// select位置可用,配合update set的nvl(tv,ta::lvarchar)保持null不覆盖语义)
+			pst.setNull(paramIndex, java.sql.Types.VARCHAR);
 		} else {
 			pst.setNull(paramIndex, java.sql.Types.OTHER);
 		}

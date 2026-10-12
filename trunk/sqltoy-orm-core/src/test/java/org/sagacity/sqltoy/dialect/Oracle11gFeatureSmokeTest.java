@@ -36,6 +36,8 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
  * <li>top:rownum&lt;=N的截取与超量请求行为</li>
  * <li>随机:dbms_random.random排序+rownum截取,返回行数与行集归属</li>
  * 连接配置从target/oracle-probe.properties读取(不入库);探针表测完即删。
+ * update 2026-10-11 无专用11g真库,与oracle归为一类:探针指向任意oracle实例(如23c FREE),
+ * 特性用例经Oracle11gDialect方言分支真库执行(11g语法为23c子集);仅版本探测断言条件生效。
  * 11g XE默认已安装dbms_random包。
  */
 public class Oracle11gFeatureSmokeTest {
@@ -58,6 +60,7 @@ public class Oracle11gFeatureSmokeTest {
 		}
 		Class.forName("oracle.jdbc.driver.OracleDriver");
 		conn = DriverManager.getConnection(p.getProperty("url"), p.getProperty("username"), p.getProperty("password"));
+
 		try (Statement st = conn.createStatement()) {
 			// 11g不支持drop table if exists,首跑表不存在时忽略
 			try {
@@ -268,6 +271,10 @@ public class Oracle11gFeatureSmokeTest {
 	 */
 	@Test
 	public void profileDetectsOracle11() throws Exception {
+		// update 2026-10-11 无专用11g真库(与oracle归为一类):探针指向任意oracle实例,
+		// 特性用例经Oracle11gDialect分支照常真库执行;本版本探测断言仅在真11g时生效
+		org.junit.jupiter.api.Assumptions.assumeTrue(conn.getMetaData().getDatabaseMajorVersion() == 11,
+				"probe非11g实例(当前" + conn.getMetaData().getDatabaseMajorVersion() + "c),探测断言跳过");
 		org.junit.jupiter.api.Assumptions.assumeTrue(available, "oracle探针环境不可用,跳过");
 		DBProfile profile = DataSourceUtils.getDBProfile(conn);
 		assertEquals("oracle", profile.getDialect(), "产品名oracle");

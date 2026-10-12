@@ -136,11 +136,10 @@ public class TranslateFactory {
 		String[] paramNames = { "lastUpdateTime" };
 		String[] paramValues = { DateUtil.formatDate(preCheckTime, "yyyy-MM-dd HH:mm:ss.SSS") };
 		String jsonStr = HttpClientUtils.doPost(sqlToyContext, checkerConfig.getUrl(),
-				new HttpAuthConfig().authType(checkerConfig.getAuthType())
-						.username(checkerConfig.getUsername()).password(checkerConfig.getPassword())
-						.tokenUrl(checkerConfig.getTokenUrl()).tokenPath(checkerConfig.getTokenPath())
-						.tokenPrefix(checkerConfig.getTokenPrefix()).tokenHeader(checkerConfig.getTokenHeader())
-						.tokenExpire(checkerConfig.getTokenExpire())
+				new HttpAuthConfig().authType(checkerConfig.getAuthType()).username(checkerConfig.getUsername())
+						.password(checkerConfig.getPassword()).tokenUrl(checkerConfig.getTokenUrl())
+						.tokenPath(checkerConfig.getTokenPath()).tokenPrefix(checkerConfig.getTokenPrefix())
+						.tokenHeader(checkerConfig.getTokenHeader()).tokenExpire(checkerConfig.getTokenExpire())
 						.tokenSecureKey(checkerConfig.getTokenSecureKey())
 						.signAlgorithm(checkerConfig.getSignAlgorithm())
 						.authorization(checkerConfig.getAuthorization()),
@@ -364,8 +363,7 @@ public class TranslateFactory {
 						.password(cacheModel.getPassword()).tokenUrl(cacheModel.getTokenUrl())
 						.tokenPath(cacheModel.getTokenPath()).tokenPrefix(cacheModel.getTokenPrefix())
 						.tokenHeader(cacheModel.getTokenHeader()).tokenExpire(cacheModel.getTokenExpire())
-						.tokenSecureKey(cacheModel.getTokenSecureKey())
-						.signAlgorithm(cacheModel.getSignAlgorithm())
+						.tokenSecureKey(cacheModel.getTokenSecureKey()).signAlgorithm(cacheModel.getSignAlgorithm())
 						.authorization(cacheModel.getAuthorization()),
 				paramNames, paramValues);
 		if (jsonStr == null) {

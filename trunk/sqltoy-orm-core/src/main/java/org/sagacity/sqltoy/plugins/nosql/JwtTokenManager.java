@@ -101,8 +101,7 @@ public class JwtTokenManager {
 	 * @return 形如:Bearer xxx-token 的token头值
 	 * @throws Exception
 	 */
-	public static String resolveTokenValue(SqlToyContext sqltoyContext, HttpAuthConfig authConfig)
-			throws Exception {
+	public static String resolveTokenValue(SqlToyContext sqltoyContext, HttpAuthConfig authConfig) throws Exception {
 		String tokenPrefix = resolveTokenPrefix(authConfig);
 		// 三种token来源均未配置,给出明确错误
 		if (StringUtil.isBlank(authConfig.getTokenUrl()) && StringUtil.isBlank(authConfig.getTokenSecureKey())
@@ -229,10 +228,9 @@ public class JwtTokenManager {
 			token = parent.get(paths[i].trim());
 		}
 		if (token == null || StringUtil.isBlank(token.toString())) {
-			throw new IllegalArgumentException(
-					"jwt token parse failed, cannot extract token by key:[".concat(realKey)
-							.concat("] from token-url response, please check token-path config! response:")
-							.concat(json.length() > 200 ? json.substring(0, 200) : json));
+			throw new IllegalArgumentException("jwt token parse failed, cannot extract token by key:[".concat(realKey)
+					.concat("] from token-url response, please check token-path config! response:")
+					.concat(json.length() > 200 ? json.substring(0, 200) : json));
 		}
 		// 有效期:响应优先(单位秒),限定在(0,30天]内规避异常值
 		long expireSeconds = defaultExpireSeconds;
@@ -300,7 +298,7 @@ public class JwtTokenManager {
 	 * HS256\HS384\HS512为HMAC对称签名(token-secure-key为共享密钥),
 	 * RS256\RS384\RS512为RSA非对称签名(token-secure-key为PKCS#8格式私钥,服务端以公钥验签)
 	 * 
-	 * @param algorithm  签名算法
+	 * @param algorithm   签名算法
 	 * @param payloadJson jwt载体json(claims)
 	 * @param secureKey   共享密钥或PKCS#8私钥(PEM文本或裸base64密钥体)
 	 * @return

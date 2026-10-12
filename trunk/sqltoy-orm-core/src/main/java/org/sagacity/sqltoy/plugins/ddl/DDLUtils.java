@@ -209,6 +209,8 @@ public class DDLUtils {
 	/**
 	 * JSON文档承载类型:无原生JSON列类型的库降级承载,避免生成非法的"col JSON"。
 	 * hana→NCLOB,sqlserver→NVARCHAR(MAX),db2/oracle11→CLOB;oracle21c+/mysql/pg/doris等原生支持→JSON
+	 * update 2026-10-12 GBase 8s保留原生JSON:读回经ResultUtils的BYTES_TEXT策略
+	 * (getBytes即UTF-8文本,getObject/getString该驱动不可用)框架级承接,无需降级承载
 	 */
 	private static String jsonCarrierType(int dbType) {
 		if (dbType == DBType.HANA) {
@@ -237,7 +239,8 @@ public class DDLUtils {
 			} else if (colMeta.getNativeType().equalsIgnoreCase("BSON")) {
 				if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 						|| dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.STARDB
-						|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE) {
+						|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE
+						|| dbType == DBType.HIGHGO) {
 					return "BSON";
 				} else {
 					return jsonCarrierType(dbType);
@@ -251,12 +254,16 @@ public class DDLUtils {
 			if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
 				typeName = "NUMBER";
 				typeName = setLength(typeName, true, colMeta);
+			} else if (dbType == DBType.GBASE8S && colMeta.isAutoIncrement()) {
+				// update 2026-10-12 GBase 8s自增列用SERIAL类型族承载(int8自增形态SERIAL8)
+				typeName = "SERIAL8";
 			} else {
 				typeName = "BIGINT";
 			}
 			break;
 		case java.sql.Types.INTEGER:
-			typeName = "INTEGER";
+			// update 2026-10-12 GBase 8s自增列用SERIAL类型族承载(Informix无内联identity子句)
+			typeName = (dbType == DBType.GBASE8S && colMeta.isAutoIncrement()) ? "SERIAL" : "INTEGER";
 			break;
 		case java.sql.Types.TINYINT:
 			if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
@@ -277,7 +284,7 @@ public class DDLUtils {
 			break;
 		case java.sql.Types.VARCHAR:
 		case java.sql.Types.NVARCHAR:
-			typeName = (dbType == DBType.HANA) ? "NVARCHAR" : "VARCHAR";
+			typeName = (dbType == DBType.GBASE8S) ? "lvarchar" : (dbType == DBType.HANA) ? "NVARCHAR" : "VARCHAR";
 			typeName = setLength(typeName, false, colMeta);
 			break;
 		case java.sql.Types.LONGNVARCHAR:
@@ -294,7 +301,8 @@ public class DDLUtils {
 					|| dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.STARDB
 					|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE || dbType == DBType.ORACLE
 					// update 2026-9-14 补KINGBASE(KingbaseES基于PG,类型映射归PG系)
-					|| dbType == DBType.KINGBASE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
+					|| dbType == DBType.KINGBASE || dbType == DBType.HIGHGO || dbType == DBType.ORACLE11
+					|| dbType == DBType.DM) {
 				// 精度需跟在TIMESTAMP之后:TIMESTAMP(6) WITH TIME ZONE
 				typeName = "TIMESTAMP";
 				if (colMeta.getColumnSize() > 0) {
@@ -308,9 +316,13 @@ public class DDLUtils {
 			}
 			break;
 		case java.sql.Types.BLOB:
-			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
+			// update 2026-10-12 GBASE8S:Informix二进制大对象为byte
+			if (dbType == DBType.GBASE8S) {
+				typeName = "byte";
+			} else if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 					|| dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.STARDB
-					|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE) {
+					|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE
+					|| dbType == DBType.HIGHGO) {
 				typeName = "BYTEA";
 			} else if (dbType == DBType.SQLSERVER) {
 				typeName = "VARBINARY(MAX)";
@@ -322,7 +334,8 @@ public class DDLUtils {
 		case java.sql.Types.BINARY:
 			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 					|| dbType == DBType.OPENGAUSS || dbType == DBType.STARDB || dbType == DBType.OSCAR
-					|| dbType == DBType.MOGDB || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE) {
+					|| dbType == DBType.MOGDB || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE
+					|| dbType == DBType.HIGHGO) {
 				typeName = "BYTEA";
 			} else if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
 				typeName = "BLOB";
@@ -338,7 +351,8 @@ public class DDLUtils {
 		case java.sql.Types.LONGVARBINARY:
 			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 					|| dbType == DBType.OPENGAUSS || dbType == DBType.STARDB || dbType == DBType.OSCAR
-					|| dbType == DBType.MOGDB || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE) {
+					|| dbType == DBType.MOGDB || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE
+					|| dbType == DBType.HIGHGO) {
 				typeName = "BYTEA";
 			} else if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
 				typeName = "BLOB";
@@ -369,6 +383,9 @@ public class DDLUtils {
 			// sqlserver的TIMESTAMP是行版本戳(rowversion),不是日期时间类型
 			if (dbType == DBType.SQLSERVER) {
 				typeName = "DATETIME2";
+			} else if (dbType == DBType.GBASE8S) {
+				// update 2026-10-12 Informix的datetime year to second(真库建表实测形态)
+				typeName = "datetime year to second";
 			} else {
 				typeName = "TIMESTAMP";
 			}
@@ -416,6 +433,10 @@ public class DDLUtils {
 			// 向量类型:gaussdb企业版为floatvector,其余(pgvector/openGauss系/oracle 23ai/mysql
 			// heatwave/sqlserver 2025/db2 12.1.2+)为vector
 			// 维度通过@Column(length=xxx)指定,mysql heatwave和sqlserver 2025的维度为必填项
+			// update 2026-10-12 GBASE8S渲染裸vector:社区镜像(liaosnet/gbase8s,Informix 12.10
+			// 内核)实测"Type (vector) not found",商业版V8.8提供向量能力,类型名以@Column
+			// (nativeType)覆盖为准;HIGHGO同pgvector(需库内create extension vector,社区镜像
+			// 未预装,可源码编译pgvector 0.7.4后安装,实测vector(3)建表/绑定/读回/近邻均可用)
 			if (dbType == DBType.H2) {
 				// h2无向量类型,测试场景按varchar存储'[1,2,3]'字符串形式
 				typeName = "VARCHAR";
@@ -461,6 +482,9 @@ public class DDLUtils {
 			// 空间类型:oracle/dm为SDO_GEOMETRY,其余(postgis系/mysql/sqlserver/h2)为GEOMETRY
 			// 类型精度修饰(如geometry(Point,4326)、geography)通过@Column(nativeType="...")指定;
 			// nativeType未配置时注解默认为空串(非null),须按blank判断,否则生成空列类型导致DDL非法
+			// update 2026-10-12 GBASE8S/HIGHGO空间边界:两库容器镜像实测均无geometry类型
+			// (gbase8s报Type not found,空间能力为商业版datablade;highgo社区镜像无postgis
+			// 扩展且依赖GEOS/PROJ无法容器内源码编译),nativeType覆盖为唯一路径
 			if (StringUtil.isNotBlank(colMeta.getNativeType())) {
 				typeName = colMeta.getNativeType();
 			} else if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
@@ -481,9 +505,9 @@ public class DDLUtils {
 				typeName = "BINARY_DOUBLE";
 			} else if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 			// update 2026-9-14 补KINGBASE(KingbaseES基于PG,类型映射归PG系)
-					|| dbType == DBType.KINGBASE || dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB
-					|| dbType == DBType.STARDB || dbType == DBType.OSCAR || dbType == DBType.VASTBASE
-					|| dbType == DBType.DM || dbType == DBType.H2) {
+					|| dbType == DBType.KINGBASE || dbType == DBType.HIGHGO || dbType == DBType.OPENGAUSS
+					|| dbType == DBType.MOGDB || dbType == DBType.STARDB || dbType == DBType.OSCAR
+					|| dbType == DBType.VASTBASE || dbType == DBType.DM || dbType == DBType.H2) {
 				typeName = "DOUBLE PRECISION";
 			} else if (dbType == DBType.SQLSERVER) {
 				typeName = "FLOAT";
@@ -495,7 +519,8 @@ public class DDLUtils {
 		case java.sql.Types.NUMERIC:
 			if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
 				typeName = "NUMBER";
-			} else if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.KINGBASE) {
+			} else if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.KINGBASE
+					|| dbType == DBType.HIGHGO) {
 				// update 2026-9-14 补KINGBASE(KingbaseES基于PG,numeric为任意精度,同vanilla PG)
 				typeName = "NUMERIC";
 			} else {
@@ -517,9 +542,10 @@ public class DDLUtils {
 		// VECTOR除外:pgvector的vector本身即向量类型(非"向量的数组"),加_前缀会变成_vector数组类型导致建表失败
 		if ((dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 				|| dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.STARDB
-				|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE)
-				&& colMeta.getDataType() != JdbcTypes.VECTOR && colMeta.getTypeName() != null
-				&& colMeta.getTypeName().endsWith("[]") && !isBytes && !typeName.startsWith("_")) {
+				|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE
+				|| dbType == DBType.HIGHGO) && colMeta.getDataType() != JdbcTypes.VECTOR
+				&& colMeta.getTypeName() != null && colMeta.getTypeName().endsWith("[]") && !isBytes
+				&& !typeName.startsWith("_")) {
 			return "_".concat(typeName);
 		}
 		return typeName;
@@ -984,9 +1010,9 @@ public class DDLUtils {
 	 */
 	private static boolean isDateOnlyDialect(int dbType) {
 		return dbType == DBType.DM || dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14
-				|| dbType == DBType.GAUSSDB || dbType == DBType.KINGBASE || dbType == DBType.MOGDB
-				|| dbType == DBType.OPENGAUSS || dbType == DBType.VASTBASE || dbType == DBType.STARDB
-				|| dbType == DBType.OSCAR || dbType == DBType.HANA;
+				|| dbType == DBType.GAUSSDB || dbType == DBType.KINGBASE || dbType == DBType.HIGHGO
+				|| dbType == DBType.MOGDB || dbType == DBType.OPENGAUSS || dbType == DBType.VASTBASE
+				|| dbType == DBType.STARDB || dbType == DBType.OSCAR || dbType == DBType.HANA;
 	}
 
 	/**

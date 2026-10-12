@@ -178,7 +178,7 @@ public class DBProfile {
 	public static boolean isPGFamily(int dbType) {
 		return dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.OPENGAUSS
 				|| dbType == DBType.MOGDB || dbType == DBType.GAUSSDB || dbType == DBType.STARDB
-				|| dbType == DBType.VASTBASE || dbType == DBType.KINGBASE;
+				|| dbType == DBType.VASTBASE || dbType == DBType.KINGBASE || dbType == DBType.HIGHGO;
 	}
 
 	/**
@@ -206,7 +206,10 @@ public class DBProfile {
 	public String getNullFunction() {
 		// oracle族保留NVL(扩展类型VECTOR/SDO_GEOMETRY对COALESCE的绑定变量推断
 		// 不兼容,实测ORA-00932);其余库统一ANSI标准COALESCE
-		if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11) {
+		if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11
+		// update 2026-10-12 GBase 8s:COALESCE被informix按CASE实现,merge update
+		// set的coalesce(tv.裸参列,ta.表列)类型推断报错(真库实测),NVL原生通过
+				|| dbType == DBType.GBASE8S) {
 			return "nvl";
 		}
 		return "COALESCE";

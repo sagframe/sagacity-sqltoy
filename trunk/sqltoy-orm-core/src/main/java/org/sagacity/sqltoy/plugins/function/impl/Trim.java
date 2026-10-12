@@ -81,7 +81,9 @@ public class Trim extends IFunction {
 			}
 			return "trim(both ' ' from " + arg + ")";
 		}
-		if (dialect == DBType.SQLITE) {
+		// update 2026-10-11 starrocks同样不支持trim(both..from..)关键字语法(真库实测语法
+		// 报错),但支持二参字符集形态trim/ltrim/rtrim(s,col)(真库实测),与sqlite同法
+		if (dialect == DBType.SQLITE || dialect == DBType.STARROCKS) {
 			// sqlite无FROM形态:转trim/ltrim/rtrim,剔除字符集语义与标准一致(无剔除字符为空格)
 			if (!modifierForm) {
 				return super.IGNORE;
@@ -120,6 +122,21 @@ public class Trim extends IFunction {
 				return "rtrim(" + col + ")";
 			}
 			return "rtrim(ltrim(" + col + "))";
+		}
+		// update 2026-10-12 GBase 8s:trim/ltrim/rtrim语法原生但返回varchar,该容器驱动对
+		// varchar结果读回一律空串(真库实测getString/getBytes均空),外层包::lvarchar定型
+		// (真库实测cast后读回正常);单参与both..from形态均适用
+		if (dialect == DBType.GBASE8S) {
+			if (modifierForm) {
+				if (fromIdx == -1) {
+					return super.IGNORE;
+				}
+				String chars = (fromIdx > 0) ? rest.substring(0, fromIdx).trim() : "";
+				String col = (fromIdx == 0) ? rest.substring(5).trim() : rest.substring(fromIdx + 6).trim();
+				String fn = "leading".equals(keyword) ? "ltrim" : ("trailing".equals(keyword) ? "rtrim" : "trim");
+				return fn + "(" + chars + " from " + col + ")::lvarchar";
+			}
+			return "trim(" + arg + ")::lvarchar";
 		}
 		return super.IGNORE;
 	}

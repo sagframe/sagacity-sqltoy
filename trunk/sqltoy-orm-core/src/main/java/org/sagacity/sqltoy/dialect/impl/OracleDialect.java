@@ -263,7 +263,11 @@ public class OracleDialect implements Dialect {
 		PKStrategy pkStrategy = entityMeta.getIdStrategy();
 		String sequence = entityMeta.getSequence() + NEXTVAL;
 		// oracle identity本质是用sequence模拟(主键策略尽量少用跟数据库相关的)
-		if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
+		// update 2026-10-12 GBase 8s的identity(serial)保持IDENTITY由库自增:oracle系
+		// 转化依赖字段defaultValue序列表达式,g8的serial无对应物(真库实测显式null插入
+		// 报null key value,省略主键列由serial自增+getGeneratedKeys回取可行)
+		if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)
+				&& profile.getDbType() != org.sagacity.sqltoy.utils.DataSourceUtils.DBType.GBASE8S) {
 			pkStrategy = PKStrategy.SEQUENCE;
 			sequence = entityMeta.getFieldMeta(entityMeta.getIdArray()[0]).getDefaultValue();
 		}
@@ -274,7 +278,10 @@ public class OracleDialect implements Dialect {
 				pkStrategy = PKStrategy.ASSIGN;
 			}
 		}
-		boolean isAssignPK = OracleDialectUtils.allowAssignPKValue(pkStrategy);
+		// update 2026-10-12 带库类型分派:GBase 8s的identity(serial)显式null插入报
+		// "null key value"(真库实测),IDENTITY时省略主键列由serial自增+列提示
+		// getGeneratedKeys回取(实测可行,见OracleDialectUtils.allowAssignPKValue)
+		boolean isAssignPK = OracleDialectUtils.allowAssignPKValue(pkStrategy, profile.getDbType());
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), profile, entityMeta,
 				pkStrategy, sequence, isAssignPK, tableName);
 		return DialectUtils.save(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entity,
@@ -317,12 +324,17 @@ public class OracleDialect implements Dialect {
 		// oracle12c 开始支持identity机制
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		PKStrategy pkStrategy = entityMeta.getIdStrategy();
-		boolean isAssignPK = OracleDialectUtils.allowAssignPKValue(pkStrategy);
 		String sequence = entityMeta.getSequence() + NEXTVAL;
-		if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
+		// update 2026-10-12 GBase 8s的identity(serial)保持IDENTITY且由库自增:oracle系的
+		// identity→sequence转化依赖字段defaultValue序列表达式,g8的serial无对应物
+		// (真库实测显式null插入报null key value);allowAssignPKValue按GBASE8S分派
+		// 为false,insert省略主键列由serial自增
+		if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)
+				&& profile.getDbType() != org.sagacity.sqltoy.utils.DataSourceUtils.DBType.GBASE8S) {
 			pkStrategy = PKStrategy.SEQUENCE;
 			sequence = entityMeta.getFieldMeta(entityMeta.getIdArray()[0]).getDefaultValue();
 		}
+		boolean isAssignPK = OracleDialectUtils.allowAssignPKValue(pkStrategy, profile.getDbType());
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), profile, entityMeta,
 				pkStrategy, sequence, isAssignPK, tableName);
 		return DialectUtils.saveAll(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entities, batchSize,

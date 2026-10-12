@@ -131,6 +131,10 @@ public class DataSourceUtils {
 		public final static String STARDB = "stardb";
 		// SAP HANA 2.0(驱动产品名上报HDB,URL schema为jdbc:sap:)
 		public final static String HANA = "hana";
+		// update 2026-10-11 瀚高数据库(PG12内核+oracle兼容层)
+		public final static String HIGHGO = "highgo";
+		// update 2026-10-12 GBase 8s(南大通用,Informix 12.10内核)
+		public final static String GBASE8S = "gbase8s";
 		public final static String UNDEFINE = "undefine";
 	}
 
@@ -189,6 +193,8 @@ public class DataSourceUtils {
 		public final static int STARDB = 220;
 		// SAP HANA 2.0
 		public final static int HANA = 230;
+		public final static int HIGHGO = 240;
+		public final static int GBASE8S = 250;
 	}
 
 	static {
@@ -238,6 +244,9 @@ public class DataSourceUtils {
 		DBNameTypeMap.put(Dialect.STARROCKS, DBType.STARROCKS);
 		// 2026-9-11 增加对SAP HANA的支持
 		DBNameTypeMap.put(Dialect.HANA, DBType.HANA);
+		// update 2026-10-11 瀚高数据库
+		DBNameTypeMap.put(Dialect.HIGHGO, DBType.HIGHGO);
+		DBNameTypeMap.put(Dialect.GBASE8S, DBType.GBASE8S);
 
 		// 默认设置oscar、vastbase数据库用gaussdb方言来实现
 		// dialectMap.put(Dialect.OSCAR, Dialect.OPENGAUSS);
@@ -334,6 +343,12 @@ public class DataSourceUtils {
 		}
 		case DBType.HANA: {
 			return Dialect.HANA;
+		}
+		case DBType.HIGHGO: {
+			return Dialect.HIGHGO;
+		}
+		case DBType.GBASE8S: {
+			return Dialect.GBASE8S;
 		}
 		default:
 			return Dialect.UNDEFINE;
@@ -480,6 +495,14 @@ public class DataSourceUtils {
 				dilectName = Dialect.VASTBASE;
 			} // SAP HANA 2.2026-9-11 驱动getDatabaseProductName()上报"HDB"(不含hana字样),
 				// URL特征jdbc:sap:已在getDBDialectByUrl优先命中,此处按产品名兜底
+			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.HIGHGO) != -1) {
+				dilectName = Dialect.HIGHGO;
+			} else if (StringUtil.indexOfIgnoreCase(dbDialect, "GBASE") != -1
+					|| StringUtil.indexOfIgnoreCase(dbDialect, "INFORMIX") != -1) {
+				// update 2026-10-12 GBase 8s驱动上报产品名"GBase Server"
+				dilectName = Dialect.GBASE8S;
+			} // SAP HANA 2.2026-9-11 驱动getDatabaseProductName()上报"HDB"(不含hana字样),
+				// URL特征jdbc:sap:已在getDBDialectByUrl优先命中,此处按产品名兜底
 			else if (StringUtil.indexOfIgnoreCase(dbDialect, "hdb") != -1
 					|| StringUtil.indexOfIgnoreCase(dbDialect, Dialect.HANA) != -1) {
 				dilectName = Dialect.HANA;
@@ -556,6 +579,10 @@ public class DataSourceUtils {
 		URL_SCHEMA_DIALECT.put("vastbase", Dialect.VASTBASE);
 		URL_SCHEMA_DIALECT.put("stardb", Dialect.STARDB);
 		URL_SCHEMA_DIALECT.put("gaussdb", Dialect.GAUSSDB);
+		// update 2026-10-11 瀚高官方驱动URL形态jdbc:highgo://
+		URL_SCHEMA_DIALECT.put("highgo", Dialect.HIGHGO);
+		// update 2026-10-12 GBase 8s驱动URL形态jdbc:gbasedbt-sqli://
+		URL_SCHEMA_DIALECT.put("gbasedbt", Dialect.GBASE8S);
 		// update 2026-9-6 DM驱动compatibleMode=oracle时ProductName伪装成Oracle(实测被误判
 		// 为oracle方言走Oracle11gDialect,identity列生成nvl(?,null)赋值形态报-2723),
 		// URL特征优先纠正(与openGauss伪装PostgreSQL同构场景)
@@ -695,7 +722,44 @@ public class DataSourceUtils {
 	 * DialectFactory中DORIS与STARROCKS共用DorisDialect,两家均正确落方言
 	 * (本方法仅在getDBProfile解析时调用,随URL缓存每URL探测一次)
 	 */
+	/**
+	 * update 2026-10-12 PG系引擎探测(仅getDBProfile解析链调用,随URL缓存每URL一次):
+	 * 瀚高oracle兼容层的系统目录硬指纹——oracle_catalog schema与sys_guid函数, vanilla
+	 * PostgreSQL与orafce扩展均无此两者(真库对比实测:highgo有/vanilla无,
+	 * orafce提供add_months/last_day/nvl但不提供sys_guid、不建oracle_catalog),
+	 * 任一命中即校正为highgo方言;探测异常或无指纹保持postgresql
+	 * (显式dialectMap映射结果非postgresql时本方法不会被调用,显式配置不受影响)
+	 */
+	private static String resolvePgEngine(Connection conn) {
+		try (java.sql.Statement probe = conn.createStatement()) {
+			try (java.sql.ResultSet rs = probe
+					.executeQuery("select count(*) from pg_catalog.pg_namespace where nspname='oracle_catalog'")) {
+				if (rs.next() && rs.getInt(1) > 0) {
+					logger.info("detected highgo engine by oracle_catalog schema!");
+					return Dialect.HIGHGO;
+				}
+			}
+			try (java.sql.ResultSet rs = probe
+					.executeQuery("select count(*) from pg_catalog.pg_proc where proname='sys_guid'")) {
+				if (rs.next() && rs.getInt(1) > 0) {
+					logger.info("detected highgo engine by sys_guid function!");
+					return Dialect.HIGHGO;
+				}
+			}
+		} catch (Exception e) {
+			logger.debug("failed to probe highgo fingerprint, keep postgresql dialect!", e);
+		}
+		return Dialect.POSTGRESQL;
+	}
+
 	private static String resolveDialect(Connection conn, String dialect) {
+		// update 2026-10-12 PG系内核引擎探测:瀚高(vanilla pg驱动场景)的version()与
+		// 驱动ProductName完全伪装成vanilla PostgreSQL(实测12.3无任何HighGo标记),但
+		// 其oracle兼容层在系统目录留有硬指纹(见resolvePgEngine);误归postgresql会走
+		// pg15+的merge into路径(PG12内核无merge)直接语法错,故须校正
+		if (Dialect.POSTGRESQL.equals(dialect)) {
+			return resolvePgEngine(conn);
+		}
 		if (!Dialect.MYSQL.equals(dialect)) {
 			return dialect;
 		}
@@ -818,6 +882,10 @@ public class DataSourceUtils {
 			return DBType.STARROCKS;
 		} else if (dbDialect.equals(Dialect.HANA)) {
 			return DBType.HANA;
+		} else if (dbDialect.equals(Dialect.HIGHGO)) {
+			return DBType.HIGHGO;
+		} else if (dbDialect.equals(Dialect.GBASE8S)) {
+			return DBType.GBASE8S;
 		}
 		return DBType.UNDEFINE;
 	}
@@ -1159,7 +1227,16 @@ public class DataSourceUtils {
 			}
 		}
 		// postgresql系列数据库默认转小写
-		if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14) {
+		// update 2026-10-12 对齐注释与代码并补齐pg折叠家族(原仅POSTGRESQL/POSTGRESQL14):
+		// 15库真库矩阵核实——getGeneratedKeys列提示在pg折叠内核上大小写敏感(opengauss/
+		// og7/vastbase/highgo的"ID"/"Id"报column does not exist,kingbase混合大小写"Id"
+		// 报错而全大写可过,转小写对全家族安全),mysql系/tidb/ob/sqlserver/db2/dm/oracle/
+		// gbase8s三形态全过(驱动忽略提示或折叠一致,维持DEFAULT);GAUSSDB/MOGDB/STARDB/
+		// OSCAR无docker环境未实测,按opengauss同内核系谱与原注释声明一并纳入
+		if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.OPENGAUSS
+				|| dbType == DBType.GAUSSDB || dbType == DBType.MOGDB || dbType == DBType.VASTBASE
+				|| dbType == DBType.STARDB || dbType == DBType.OSCAR || dbType == DBType.KINGBASE
+				|| dbType == DBType.HIGHGO) {
 			return CaseType.LOWER;
 		}
 		return CaseType.DEFAULT;

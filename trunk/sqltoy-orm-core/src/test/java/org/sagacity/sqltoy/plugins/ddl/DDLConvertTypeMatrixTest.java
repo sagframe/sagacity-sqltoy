@@ -48,6 +48,9 @@ public class DDLConvertTypeMatrixTest {
 		assertEquals("JSON", DDLUtils.convertType(colNative(Types.VARCHAR, "JSON"), DBType.MYSQL), "mysql json");
 		assertEquals("NCLOB", DDLUtils.convertType(colNative(Types.VARCHAR, "JSON"), DBType.HANA),
 				"hana无原生json列,降级NCLOB");
+		// update 2026-10-12 gbase8s保留原生json(读回经BYTES_TEXT策略框架级承接,不再降级承载)
+		assertEquals("JSON", DDLUtils.convertType(colNative(Types.VARCHAR, "JSON"), DBType.GBASE8S),
+				"gbase8s原生json,读回走BYTES_TEXT策略");
 	}
 
 	@Test

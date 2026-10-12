@@ -9,8 +9,8 @@ import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
  * @project sagacity-sqltoy
- * @description ClickHouse数据库通过POJO生成创建表结构的ddl语句:
- *              ENGINE=xxx[(args)] ORDER BY(...) PARTITION BY ... SETTINGS k=v
+ * @description ClickHouse数据库通过POJO生成创建表结构的ddl语句: ENGINE=xxx[(args)] ORDER
+ *              BY(...) PARTITION BY ... SETTINGS k=v
  * @author zhongxuchen
  * @version v1.0,Date:2026-09-19
  * @modify Date:2026-09-19,修改说明
@@ -24,7 +24,8 @@ public class ClickHouseDDLGenerator implements DialectDDLGenerator {
 		if (tableMeta == null) {
 			return null;
 		}
-		// ClickHouse不允许CREATE TABLE ... ENGINE=View(视图需CREATE VIEW,实体元数据无select定义无法还原),跳过
+		// ClickHouse不允许CREATE TABLE ... ENGINE=View(视图需CREATE
+		// VIEW,实体元数据无select定义无法还原),跳过
 		if (tableMeta.getMppTableMeta() != null && "View".equalsIgnoreCase(tableMeta.getMppTableMeta().getEngine())) {
 			return null;
 		}

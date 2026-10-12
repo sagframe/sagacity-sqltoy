@@ -791,14 +791,13 @@ public class SqlToyContext {
 	 * 在连接回调内profile在手,由此补齐重解析时机;真实方言与配置方言一致、非sqlId形式
 	 * 或真实方言变体不存在时返回原config(配置方言变体不降级为base)
 	 * 
-	 * @param sqlKey      dao层原始传入的sqlId(或sql内容)
+	 * @param sqlKey       dao层原始传入的sqlId(或sql内容)
 	 * @param sqlToyConfig 连接外已解析的sql配置模型
-	 * @param profile     当前连接的数据库特征档案(含真实方言)
+	 * @param profile      当前连接的数据库特征档案(含真实方言)
 	 * @return 真实方言变体存在时为变体config,否则为原config
 	 */
 	public SqlToyConfig resolveRealDialectVariant(String sqlKey, SqlToyConfig sqlToyConfig, DBProfile profile) {
-		if (!realDialectFirst || sqlToyConfig == null || profile == null
-				|| !SqlConfigParseUtils.isNamedQuery(sqlKey)) {
+		if (!realDialectFirst || sqlToyConfig == null || profile == null || !SqlConfigParseUtils.isNamedQuery(sqlKey)) {
 			return sqlToyConfig;
 		}
 		String realDialect = profile.getRealDialect();
@@ -1014,6 +1013,10 @@ public class SqlToyContext {
 			this.dialect = Dialect.TIDB;
 		} else if (tmp.startsWith(Dialect.KINGBASE)) {
 			this.dialect = Dialect.KINGBASE;
+		} else if (tmp.startsWith(Dialect.HIGHGO)) {
+			this.dialect = Dialect.HIGHGO;
+		} else if (tmp.startsWith(Dialect.GBASE8S)) {
+			this.dialect = Dialect.GBASE8S;
 		} else if (tmp.startsWith(Dialect.IMPALA) || tmp.contains("kudu")) {
 			this.dialect = Dialect.IMPALA;
 		} else if (tmp.startsWith(Dialect.TDENGINE)) {

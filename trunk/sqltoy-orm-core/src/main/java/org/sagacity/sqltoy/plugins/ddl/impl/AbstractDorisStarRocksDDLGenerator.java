@@ -9,9 +9,9 @@ import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
  * @project sagacity-sqltoy
- * @description Doris/StarRocks建表语句基类(语法同源):
- *              ENGINE=OLAP {UNIQUE|PRIMARY|DUPLICATE|AGGREGATE} KEY(...)
- *              DISTRIBUTED BY HASH(...) [BUCKETS n] PROPERTIES("k"="v")
+ * @description Doris/StarRocks建表语句基类(语法同源): ENGINE=OLAP
+ *              {UNIQUE|PRIMARY|DUPLICATE|AGGREGATE} KEY(...) DISTRIBUTED BY
+ *              HASH(...) [BUCKETS n] PROPERTIES("k"="v")
  *              COMMENT引号风格由子类决定(Doris单引号,StarRocks双引号)
  * @author zhongxuchen
  * @version v1.0,Date:2026-09-19
@@ -70,7 +70,8 @@ public abstract class AbstractDorisStarRocksDDLGenerator implements DialectDDLGe
 				tableSql.append(" DEFAULT ");
 				// 仅日期函数默认值(CURRENT_TIMESTAMP/NOW()等)不加引号:加引号会变成字符串字面量被拒为非法datetime默认值。
 				// 数值/字符串/日期字面量仍按方言引号包裹——StarRocks要求数值/日期列默认值为字符串字面量形式,
-				// 裸IntLiteral(如DEFAULT 0)会报"Unsupported expr IntLiteral for default value"(doris两者都接受,故统一加引号)
+				// 裸IntLiteral(如DEFAULT 0)会报"Unsupported expr IntLiteral for default
+				// value"(doris两者都接受,故统一加引号)
 				if (DDLUtils.isDate(colMeta.getDataType())
 						&& DDLUtils.isDateFunction(colMeta.getDefaultValue().toUpperCase(java.util.Locale.ROOT))) {
 					tableSql.append(colMeta.getDefaultValue());

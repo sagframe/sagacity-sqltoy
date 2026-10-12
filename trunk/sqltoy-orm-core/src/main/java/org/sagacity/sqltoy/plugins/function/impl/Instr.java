@@ -13,7 +13,7 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
  * @version v1.0,Date:2013-03-21
  */
 public class Instr extends IFunction {
-	private static Pattern regex = Pattern.compile("(?i)\\W(instr|charindex|position|strpos)\\(");
+	private static Pattern regex = Pattern.compile("(?i)\\W(instr|charindex|position|strpos|locate|posstr)\\(");
 
 	/*
 	 * (non-Javadoc)
@@ -58,11 +58,60 @@ public class Instr extends IFunction {
 		// strpos不能,须显式转换),2参形态按instr同序映射:charindex与db2的locate须对调参数,
 		// hana的locate同序,其余instr系库直接换名;>2参为CH的start_pos/occurrence扩展,
 		// 其余库无对应形态,原样保留交由目标库报错
+		// update 2026-10-12 GBase 8s:instr(str,sub[,pos])原生同序(真库探针=2),透传
+		if (dialect == DBType.GBASE8S && "instr".equals(funLow)) {
+			return super.IGNORE;
+		}
+		// update 2026-10-11 补locate/posstr源函数(mysql与db2用户写法,全量拼写审计):
+		// 两者均为needle-first参数序(needle,haystack[,pos])。mysql系与db2原生同名同序透传;
+		// hana的locate虽原生但参数序相反(haystack在前),同名异序无法辨源,按本框架mysql源惯例统一按mysql序转换(类注释已声明);
+		// 三参仅sqlserver/oracle系/hana支持,pg/sqlite/ch无对应形态响亮保留
+		if ("locate".equals(funLow) || "posstr".equals(funLow)) {
+			if (dialect == DBType.MYSQL || dialect == DBType.MYSQL57 || dialect == DBType.TIDB
+					|| dialect == DBType.DORIS || dialect == DBType.STARROCKS || dialect == DBType.DB2) {
+				return super.IGNORE;
+			}
+			if (realArgs.length > 3) {
+				return super.IGNORE;
+			}
+			// needle-first源:sub=realArgs[0], str=realArgs[1], pos=realArgs[2]
+			if (dialect == DBType.SQLSERVER) {
+				return "charindex(" + realArgs[0] + "," + realArgs[1] + ((realArgs.length > 2) ? "," + realArgs[2] : "")
+						+ ")";
+			}
+			if (dialect == DBType.ORACLE || dialect == DBType.ORACLE11 || dialect == DBType.DM
+					|| dialect == DBType.OCEANBASE) {
+				return "instr(" + realArgs[1] + "," + realArgs[0] + ((realArgs.length > 2) ? "," + realArgs[2] : "")
+						+ ")";
+			}
+			if (dialect == DBType.HANA) {
+				if (realArgs.length > 2) {
+					return "locate(" + realArgs[1] + "," + realArgs[0] + "," + realArgs[2] + ")";
+				}
+				return "locate(" + realArgs[1] + "," + realArgs[0] + ")";
+			}
+			if (dialect == DBType.SQLITE && realArgs.length == 2) {
+				return "instr(" + realArgs[1] + "," + realArgs[0] + ")";
+			}
+			if (dialect == DBType.CLICKHOUSE && realArgs.length == 2) {
+				return "position(" + realArgs[1] + "," + realArgs[0] + ")";
+			}
+			// pg系2参:position(needle in haystack);3参无对应形态响亮保留
+			if ((dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL14 || dialect == DBType.GAUSSDB
+					|| dialect == DBType.OPENGAUSS || dialect == DBType.OSCAR || dialect == DBType.STARDB
+					|| dialect == DBType.MOGDB || dialect == DBType.VASTBASE || dialect == DBType.KINGBASE
+					|| dialect == DBType.HIGHGO) && realArgs.length == 2) {
+				return "position(" + realArgs[0] + " in " + realArgs[1] + ")";
+			}
+			return super.IGNORE;
+		}
 		if ("strpos".equals(funLow)) {
+			// update 2026-10-11 总扫真库实测:CH无strpos函数(Function strpos does not
+			// exist),从透传列表移除,走下方position(haystack,needle)同序转换
 			if (dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL14 || dialect == DBType.GAUSSDB
 					|| dialect == DBType.OPENGAUSS || dialect == DBType.OSCAR || dialect == DBType.STARDB
 					|| dialect == DBType.MOGDB || dialect == DBType.VASTBASE || dialect == DBType.KINGBASE
-					|| dialect == DBType.CLICKHOUSE) {
+					|| dialect == DBType.HIGHGO) {
 				return super.IGNORE;
 			}
 			if (realArgs.length > 2) {
@@ -159,7 +208,8 @@ public class Instr extends IFunction {
 		// update 2026-9-14 补KINGBASE(KingbaseES基于PG,函数语法归PG系)
 		if (dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL14 || dialect == DBType.GAUSSDB
 				|| dialect == DBType.OPENGAUSS || dialect == DBType.OSCAR || dialect == DBType.STARDB
-				|| dialect == DBType.MOGDB || dialect == DBType.VASTBASE || dialect == DBType.KINGBASE) {
+				|| dialect == DBType.MOGDB || dialect == DBType.VASTBASE || dialect == DBType.KINGBASE
+				|| dialect == DBType.HIGHGO) {
 			if ("position".equals(funLow)) {
 				return super.IGNORE;
 			}

@@ -8,18 +8,17 @@ import java.util.regex.Pattern;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.plugins.function.IFunction;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
-import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
  * @project sagacity-sqltoy
  * @description 转换group_concat 分组拼接函数 在不同数据库中的实现
  * @author zhongxuchen
  * @version v1.0,Date:2019-10-21
- * @modify Date:2026-10-4 支持聚合排序子句跨库:三种源形态(listagg/string_agg的
- *         within group (order by …)尾部子句、pg源string_agg(a,'-' order by b)括号内嵌、
+ * @modify Date:2026-10-4 支持聚合排序子句跨库:三种源形态(listagg/string_agg的 within group
+ *         (order by …)尾部子句、pg源string_agg(a,'-' order by b)括号内嵌、
  *         mysql源group_concat(x order by y separator '-')残段内嵌)统一解析为
- *         (segments,sign,orderBy)三元组后按目标方言渲染;同名原生写法连同子句原样透传。
- *         DISTINCT前缀显式识别:pg ARRAY_AGG/mysql group_concat/oracle19c+ listagg/db2原生
+ *         (segments,sign,orderBy)三元组后按目标方言渲染;同名原生写法连同子句原样透传。 DISTINCT前缀显式识别:pg
+ *         ARRAY_AGG/mysql group_concat/oracle19c+ listagg/db2原生
  *         支持随expr保留;sqlserver/hana/ch无对应,响亮保留交由目标库报错
  */
 public class GroupConcat extends IFunction {
@@ -53,6 +52,8 @@ public class GroupConcat extends IFunction {
 		return withinGroupPattern;
 	}
 
+	// update 2026-10-12 GBASE8S(Informix 12.10)无group_concat/string_agg/listagg聚合
+	// (真库实测语法错),不设分派走末尾IGNORE原样输出由引擎响亮报错
 	@Override
 	public String wrap(int dbType, String functionName, boolean hasArgs, String... args) {
 		if (args == null || args.length == 0) {
@@ -106,13 +107,12 @@ public class GroupConcat extends IFunction {
 	}
 
 	/**
-	 * update 2026-10-4 统一参数解析:两参(string_agg/listagg的表达式+分隔符,分隔符可内嵌
-	 * order by)与多参(group_concat的concat语义+可选separator关键字,残段可内嵌order by)
-	 * 统一产出[segments, sign, orderBy(可null)];order by原混入expr/pg碰巧合法而
-	 * oracle系产生非法SQL,显式拆出。
-	 * update 2026-10-8 歧义形态响亮保留(返回null):两参顶层参数>2(order by多键的逗号被
-	 * 切参,原实现静默丢弃第3参起;亦是string_agg/listagg本就不存在的非法形态);多参的
-	 * order by段非最后segment(排序键含逗号时,mysql语法order by本位于表达式列表之后,
+	 * update 2026-10-4 统一参数解析:两参(string_agg/listagg的表达式+分隔符,分隔符可内嵌 order
+	 * by)与多参(group_concat的concat语义+可选separator关键字,残段可内嵌order by) 统一产出[segments,
+	 * sign, orderBy(可null)];order by原混入expr/pg碰巧合法而 oracle系产生非法SQL,显式拆出。 update
+	 * 2026-10-8 歧义形态响亮保留(返回null):两参顶层参数>2(order by多键的逗号被
+	 * 切参,原实现静默丢弃第3参起;亦是string_agg/listagg本就不存在的非法形态);多参的 order
+	 * by段非最后segment(排序键含逗号时,mysql语法order by本位于表达式列表之后,
 	 * 后续残段无法与拼接列区分,原实现将排序键静默变成拼接列)——响亮报错优于静默错值
 	 */
 	private Object[] parseArgs(boolean twoArgForm, String... args) {
@@ -176,9 +176,9 @@ public class GroupConcat extends IFunction {
 	}
 
 	/**
-	 * update 2026-10-4 统一渲染:orderBy为空时产物与既有实现逐字节一致;非空时按目标方言的
-	 * 聚合排序形态生成(mysql的ORDER BY在SEPARATOR之前;pg为ARRAY_AGG内嵌order by;
-	 * oracle/db2/sqlserver/hana走within group (order by …);sqlite 3.44+二参内嵌order by;
+	 * update 2026-10-4 统一渲染:orderBy为空时产物与既有实现逐字节一致;非空时按目标方言的 聚合排序形态生成(mysql的ORDER
+	 * BY在SEPARATOR之前;pg为ARRAY_AGG内嵌order by; oracle/db2/sqlserver/hana走within group
+	 * (order by …);sqlite 3.44+二参内嵌order by;
 	 * ch的groupArray不支持DISTINCT与排序,响亮保留交由目标库报错)
 	 */
 	private String render(int dbType, String funLow, boolean twoArgForm, List<String> segments, String sign,
@@ -200,7 +200,8 @@ public class GroupConcat extends IFunction {
 			}
 			expr = String.join(joiner, segments);
 		}
-		// update 2026-9-11 clickhouse:无group_concat/string_agg,以arrayStringConcat(groupArray(expr),sep)
+		// update 2026-9-11
+		// clickhouse:无group_concat/string_agg,以arrayStringConcat(groupArray(expr),sep)
 		// 承担;多列拼接expr沿用||连接符(CH原生支持||字符串拼接),group_concat与string_agg两形态同构
 		if (dbType == DBType.CLICKHOUSE) {
 			// update 2026-10-4 ch的groupArray不支持DISTINCT与排序,显式响亮保留(与原生成非法SQL同为响亮)
@@ -215,7 +216,8 @@ public class GroupConcat extends IFunction {
 		// listagg写法→array_to_string(string_agg写法为pg原生透传)
 		if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 				|| dbType == DBType.OPENGAUSS || dbType == DBType.OSCAR || dbType == DBType.STARDB
-				|| dbType == DBType.MOGDB || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE) {
+				|| dbType == DBType.MOGDB || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE
+				|| dbType == DBType.HIGHGO) {
 			if ("string_agg".equals(funLow)) {
 				return super.IGNORE;
 			}
@@ -265,13 +267,25 @@ public class GroupConcat extends IFunction {
 		}
 		// 2026-9-11 hana 2.0 SPS04+提供STRING_AGG(expr,delimiter)两参形态(与sqlserver同名同构,
 		// null值跳过语义一致;多列拼接expr走||连接符分支,hana原生支持||)
-		// update 2026-9-15 listagg写法统一转string_agg(原IGNORE透传,sqlserver/hana无listagg)
-		if (dbType == DBType.SQLSERVER || dbType == DBType.HANA) {
+		// update 2026-9-15 listagg写法统一转string_agg(原IGNORE透传,sqlserver/hana无listagg);
+		// update 2026-10-11 总扫真库实测:HANA不支持within group子句(语法报错),排序用
+		// 括号内order by形态string_agg(x,sep order by …)(hana原生支持);sqlserver维持
+		// WITHIN GROUP(2012+官方形态),两库拆分渲染
+		if (dbType == DBType.SQLSERVER) {
 			if ("string_agg".equals(funLow)) {
 				return super.IGNORE;
 			}
 			if (orderBy != null) {
 				return " string_agg(" + expr + "," + sign + ") within group (order by " + orderBy + ") ";
+			}
+			return " string_agg(" + expr + "," + sign + ") ";
+		}
+		if (dbType == DBType.HANA) {
+			if ("string_agg".equals(funLow)) {
+				return super.IGNORE;
+			}
+			if (orderBy != null) {
+				return " string_agg(" + expr + "," + sign + " order by " + orderBy + ") ";
 			}
 			return " string_agg(" + expr + "," + sign + ") ";
 		}
@@ -294,14 +308,16 @@ public class GroupConcat extends IFunction {
 					|| dbType == DBType.OCEANBASE || dbType == DBType.DB2;
 		}
 		if ("string_agg".equals(funLow)) {
+			// update 2026-10-11 hana移出:within group子句hana不支持(实测),带该子句的源
+			// 须经wrapWithSuffix转换;括号内order by的无suffix形态在wrap里仍透传
 			return dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 					|| dbType == DBType.OPENGAUSS || dbType == DBType.OSCAR || dbType == DBType.STARDB
 					|| dbType == DBType.MOGDB || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE
-					|| dbType == DBType.SQLSERVER || dbType == DBType.HANA;
+					|| dbType == DBType.HIGHGO || dbType == DBType.SQLSERVER;
 		}
 		if ("group_concat".equals(funLow)) {
-			return dbType == DBType.MYSQL || dbType == DBType.TIDB || dbType == DBType.MYSQL57
-					|| dbType == DBType.H2 || dbType == DBType.DORIS || dbType == DBType.STARROCKS;
+			return dbType == DBType.MYSQL || dbType == DBType.TIDB || dbType == DBType.MYSQL57 || dbType == DBType.H2
+					|| dbType == DBType.DORIS || dbType == DBType.STARROCKS;
 		}
 		return false;
 	}

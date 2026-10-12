@@ -68,6 +68,11 @@ public class OracleDialectUtils {
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(entityMeta.getLoadSql(tableName), SqlType.search,
 				dialect, null);
 		String loadSql = sqlToyConfig.getSql(dialect);
+		// update 2026-10-12 GBase 8s无语句级wait n/nowait子句(实测语法错),锁等待经会话级
+		// set lock mode to wait n承担(语句仅追加裸for update,见getLockSql)
+		if (lockMode != null && lockWaitTimeout > 0 && profile.getDbType() == DataSourceUtils.DBType.GBASE8S) {
+			DefaultDialectUtils.setSessionLockWait(profile, conn, lockMode, lockWaitTimeout);
+		}
 		loadSql = loadSql.concat(getLockSql(loadSql, profile, lockMode, lockWaitTimeout));
 		return (Serializable) DialectUtils.load(sqlToyContext, sqlToyConfig, loadSql, entityMeta, entity, onlySubTables,
 				cascadeTypes, conn, profile, queryTimeout);
@@ -482,11 +487,33 @@ public class OracleDialectUtils {
 
 	/**
 	 * 主键策略是identity或sequence时，主键值允许不由数据库内部自动产生，可人工赋值
-	 * 
+	 *
 	 * @param pkStrategy
 	 * @return
 	 */
 	public static boolean allowAssignPKValue(PKStrategy pkStrategy) {
+		return allowAssignPKValue(pkStrategy, null);
+	}
+
+	/**
+	 * update 2026-10-12 带库类型的赋值判定:GBase 8s的identity(serial列)对显式null插入报 "Primary key
+	 * ... has a field with a null key value"(oracle 12c的by-default identity
+	 * 插null会触发生成,g8的serial不接受null,真库实测),identity改由数据库自增(列提示
+	 * getGeneratedKeys回取实测可行),IDENTITY时不允许人工赋值(与postgresql系同口径);
+	 * 其余库维持恒true(oracle的identity在merge路径先经identity→sequence转化,不受影响)
+	 *
+	 * @param pkStrategy 主键策略
+	 * @param dbType     数据库类型,参见DataSourceUtils.DBType,null按原恒true行为
+	 * @return true表示允许insert语句携带主键列
+	 */
+	public static boolean allowAssignPKValue(PKStrategy pkStrategy, Integer dbType) {
+		if (pkStrategy == null) {
+			return true;
+		}
+		if (pkStrategy.equals(PKStrategy.IDENTITY) && dbType != null
+				&& dbType.intValue() == DataSourceUtils.DBType.GBASE8S) {
+			return false;
+		}
 		return true;
 	}
 
@@ -500,7 +527,11 @@ public class OracleDialectUtils {
 	}
 
 	public static String getLockSql(String sql, DBProfile profile, LockMode lockMode, int lockWaitTimeout) {
-		return DefaultDialectUtils.getLockSql(sql, profile.getDbType(), lockMode, lockWaitTimeout, true,
-				" for update skip locked", true);
+		// update 2026-10-12 GBase 8s无语句级wait n/nowait/skip locked子句(informix实测
+		// 均语法错),不追加wait(skip locked降级普通for update;锁等待由load路径的会话级
+		// set lock mode to wait n承担)
+		boolean g8 = profile.getDbType() == DataSourceUtils.DBType.GBASE8S;
+		return DefaultDialectUtils.getLockSql(sql, profile.getDbType(), lockMode, lockWaitTimeout, !g8,
+				" for update skip locked", !g8);
 	}
 }

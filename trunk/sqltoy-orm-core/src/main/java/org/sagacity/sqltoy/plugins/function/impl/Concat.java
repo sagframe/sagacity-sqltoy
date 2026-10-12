@@ -62,9 +62,13 @@ public class Concat extends IFunction {
 		// (text,text)两参遮蔽pg_catalog.concat(VARIADIC "any"),三参起报"function
 		// sys.concat(text, unknown, varchar) does not exist"(concat_ws因sys无同名函数不受影响);
 		// 三参起转||拼接(||实测将null按空串处理,与concat跳过null语义一致)
+		// update 2026-10-12 补GBASE8S:该驱动对concat的混参(lvarchar列+常量)结果读回触发
+		// 内部错误(真库实测concat(name,'-','x')报System or internal error),||拼接原生
+		// 且返回lvarchar读回正常(实测name||'-x'='admin-x'),两参起转(混参两参同样触发)
 		if (dialect == DBType.ORACLE || dialect == DBType.ORACLE11 || dialect == DBType.DB2 || dialect == DBType.SQLITE
-				|| dialect == DBType.OCEANBASE || dialect == DBType.HANA || dialect == DBType.KINGBASE) {
-			if (dialect != DBType.SQLITE && args.length < 3) {
+				|| dialect == DBType.OCEANBASE || dialect == DBType.HANA || dialect == DBType.KINGBASE
+				|| dialect == DBType.GBASE8S) {
+			if (dialect != DBType.SQLITE && dialect != DBType.GBASE8S && args.length < 3) {
 				return super.IGNORE;
 			}
 			StringBuilder result = new StringBuilder();

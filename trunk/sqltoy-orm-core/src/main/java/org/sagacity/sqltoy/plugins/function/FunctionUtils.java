@@ -36,9 +36,20 @@ public class FunctionUtils {
 			funPackage.concat("Nvl"), funPackage.concat("DateFormat"), funPackage.concat("Now"),
 			// update 2026-10-4 CurrentDate(当前日期不带时间,curdate/CURRENT_DATE双形态)
 			funPackage.concat("CurrentDate"), funPackage.concat("Length"), funPackage.concat("ToChar"),
-			funPackage.concat("If"),
-			funPackage.concat("GroupConcat"), funPackage.concat("ToNumber"), funPackage.concat("ToDate"),
-			funPackage.concat("DateDiff"), funPackage.concat("Decode") };
+			funPackage.concat("If"), funPackage.concat("GroupConcat"), funPackage.concat("ToNumber"),
+			funPackage.concat("ToDate"), funPackage.concat("DateDiff"), funPackage.concat("Decode"),
+			// update 2026-10-11 补FindInSet(MySQL系原生,其余库以"补逗号+精确子串定位"改写)
+			funPackage.concat("FindInSet"),
+			// update 2026-10-11 常用函数补齐:uuid/year-month-day分量提取/last_day/add_months
+			funPackage.concat("Uuid"), funPackage.concat("YearMonthDay"), funPackage.concat("LastDay"),
+			funPackage.concat("AddMonths"),
+			// update 2026-10-11 日期区间加减族:date_add/date_sub/dateadd/adddate/subdate
+			funPackage.concat("DateAdd"),
+			// update 2026-10-11 A方案:left/right、lpad/rpad、EXTRACT/date_part源、日期截断族
+			funPackage.concat("LeftRight"), funPackage.concat("Pad"), funPackage.concat("Extract"),
+			funPackage.concat("DateTrunc"),
+			// update 2026-10-11 mod取模(18环境仅sqlserver无mod函数,转%运算符)
+			funPackage.concat("Mod") };
 
 	private final static Map<String, String> functionNames = new HashMap<String, String>() {
 		{
@@ -60,6 +71,24 @@ public class FunctionUtils {
 			// update 2026-9-9 补齐默认注册列表中缺失的简写映射(原配置datediff/decode简写不生效)
 			put("datediff", "DateDiff");
 			put("decode", "Decode");
+			// update 2026-10-11 常用函数补齐的简写映射
+			put("uuid", "Uuid");
+			put("year", "YearMonthDay");
+			put("month", "YearMonthDay");
+			put("day", "YearMonthDay");
+			put("lastday", "LastDay");
+			put("addmonths", "AddMonths");
+			put("dateadd", "DateAdd");
+			put("left", "LeftRight");
+			put("right", "LeftRight");
+			put("lpad", "Pad");
+			put("rpad", "Pad");
+			put("extract", "Extract");
+			put("datepart", "Extract");
+			put("trunc", "DateTrunc");
+			put("datetrunc", "DateTrunc");
+			put("mod", "Mod");
+			put("findinset", "FindInSet");
 		}
 	};
 	private static volatile List<IFunction> functionConverts = new ArrayList<IFunction>();
@@ -205,12 +234,20 @@ public class FunctionUtils {
 				Matcher suffixMatcher = function.suffixPattern().matcher(maskSql);
 				suffixMatcher.region(endMarkIndex + 1, maskSql.length());
 				if (suffixMatcher.lookingAt()) {
-					// pattern以\(结尾,region为绝对偏移,开括号位置即end()-1
-					int openIdx = suffixMatcher.end() - 1;
-					int closeIdx = StringUtil.getSymMarkIndexSkipQuoted("(", ")", dialectSql, openIdx);
-					if (closeIdx > openIdx) {
-						suffix = dialectSql.substring(endMarkIndex + 1, closeIdx + 1);
-						endMarkIndex = closeIdx;
+					if (function.suffixNeedsParen()) {
+						// pattern以\(结尾,region为绝对偏移,开括号位置即end()-1
+						int openIdx = suffixMatcher.end() - 1;
+						int closeIdx = StringUtil.getSymMarkIndexSkipQuoted("(", ")", dialectSql, openIdx);
+						if (closeIdx > openIdx) {
+							suffix = dialectSql.substring(endMarkIndex + 1, closeIdx + 1);
+							endMarkIndex = closeIdx;
+						}
+					} else {
+						// update 2026-10-11 裸操作符子句(如find_in_set后的">0"):无括号外壳,
+						// 按pattern命中长度消费;matcher以region起点(endMarkIndex+1)为基准,
+						// end()为绝对终点,消费至end()-1与括号形态的closeIdx口径对齐
+						suffix = dialectSql.substring(endMarkIndex + 1, suffixMatcher.end());
+						endMarkIndex = suffixMatcher.end() - 1;
 					}
 				}
 			}
@@ -312,6 +349,67 @@ public class FunctionUtils {
 	 * @param arg 日期参数SQL片段(字面量/列/占位符/表达式)
 	 * @return sqlite日期函数可消费的日期文本表达式
 	 */
+	/**
+	 * update 2026-10-11 oracle系日期函数的字面量参数包裹:裸字符串字面量按长度启发式包
+	 * to_date(规避oracle默认NLS格式不认ISO串,真库实测ORA-01861);列/表达式原样返回
+	 *
+	 * @param arg 日期参数SQL片段
+	 * @return oracle系可直接消费的日期表达式
+	 */
+	public static String oracleDateLiteralExpr(String arg) {
+		if (arg == null) {
+			return arg;
+		}
+		String tmp = arg.trim();
+		if (tmp.length() > 2 && tmp.startsWith("'") && tmp.endsWith("'")
+				&& tmp.indexOf((char) 39, 1) == tmp.length() - 1) {
+			if (tmp.length() > 12) {
+				return "to_date(" + tmp + ",'yyyy-MM-dd hh24:mi:ss')";
+			}
+			return "to_date(" + tmp + ",'yyyy-MM-dd')";
+		}
+		return arg;
+	}
+
+	/**
+	 * update 2026-10-11 pg系日期运算的字面量参数定型:裸字符串字面量包::timestamp
+	 * (og7/vastbase真库实测,unknown字面量+interval会按interval解析报错);列/表达式原样返回
+	 *
+	 * @param arg 日期参数SQL片段
+	 * @return pg系可直接参与interval运算的表达式
+	 */
+	/**
+	 * update 2026-10-11 日期函数字面量参数的cast定型(瀚高形态):裸字符串字面量包 cast(x as
+	 * date)(瀚高真库实测:last_day/add_months对裸串报类型推断歧义,cast可用;
+	 * 瀚高to_date未验证故不用oracle包裹形态);列/表达式原样返回
+	 *
+	 * @param arg 日期参数SQL片段
+	 * @return 可直接参与日期函数的表达式
+	 */
+	public static String castLiteralDate(String arg) {
+		if (arg == null) {
+			return arg;
+		}
+		String tmp = arg.trim();
+		if (tmp.length() > 2 && tmp.startsWith("'") && tmp.endsWith("'")
+				&& tmp.indexOf((char) 39, 1) == tmp.length() - 1) {
+			return "cast(" + tmp + " as date)";
+		}
+		return arg;
+	}
+
+	public static String castLiteralTimestamp(String arg) {
+		if (arg == null) {
+			return arg;
+		}
+		String tmp = arg.trim();
+		if (tmp.length() > 2 && tmp.startsWith("'") && tmp.endsWith("'")
+				&& tmp.indexOf((char) 39, 1) == tmp.length() - 1) {
+			return "(" + tmp + ")::timestamp";
+		}
+		return arg;
+	}
+
 	public static String sqliteDateTextExpr(String arg) {
 		if (arg == null) {
 			return arg;
@@ -358,9 +456,11 @@ public class FunctionUtils {
 		}
 		// update 2026-9-14
 		// 补KINGBASE(KingbaseES基于PG,占位符参数同样存在to_char(unknown,unknown)重载歧义)
+		// update 2026-10-11 补HIGHGO(瀚高PG12内核,同vanilla PG的to_char重载歧义)
 		boolean pgSyntax = dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL14 || dialect == DBType.GAUSSDB
 				|| dialect == DBType.MOGDB || dialect == DBType.STARDB || dialect == DBType.OSCAR
-				|| dialect == DBType.OPENGAUSS || dialect == DBType.VASTBASE || dialect == DBType.KINGBASE;
+				|| dialect == DBType.OPENGAUSS || dialect == DBType.VASTBASE || dialect == DBType.KINGBASE
+				|| dialect == DBType.HIGHGO;
 		if (!pgSyntax) {
 			return firstArg;
 		}

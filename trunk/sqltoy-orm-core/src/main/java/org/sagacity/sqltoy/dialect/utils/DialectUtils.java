@@ -995,7 +995,7 @@ public class DialectUtils {
 			}
 			// postgresql15+ 需要case(? as type) as column
 			// postgresql14 不走merge into
-			if (DBType.POSTGRESQL == dbType || DBType.KINGBASE == dbType) {
+			if (DBType.POSTGRESQL == dbType || DBType.KINGBASE == dbType || DBType.HIGHGO == dbType) {
 				PostgreSqlDialectUtils.wrapSelectFields(sql, columnName, fieldMeta);
 			} else if (DBType.GAUSSDB == dbType || DBType.OPENGAUSS == dbType || DBType.MOGDB == dbType
 					|| DBType.VASTBASE == dbType || DBType.STARDB == dbType || DBType.OSCAR == dbType) {
@@ -1046,8 +1046,29 @@ public class DialectUtils {
 			usingCols++;
 		}
 		if (StringUtil.isNotBlank(fromTable)) {
-			sql.append(" from ").append(fromTable);
+			// update 2026-10-12 GBase 8s:informix无dual表,oracle系传入的dual伪表替换为
+			// systables单行伪表(from systables where tabid=1,等价from dual)
+			if (dbType == DBType.GBASE8S && "dual".equalsIgnoreCase(fromTable)) {
+				sql.append(" from systables where tabid=1");
+			} else {
+				sql.append(" from ").append(fromTable);
+			}
 		}
+	}
+
+	/**
+	 * update 2026-10-12 GBase 8s merge的insert values环节tv列引用:decimal/numeric列
+	 * 须按列定义cast定型(裸?按BigDecimal绑定声明为高精度decimal,直接插入精度超限,
+	 * 真库BatchUpdateException实测),其余库/其余类型为原tv.col引用
+	 */
+	private static String g8CastTv(Integer dbType, FieldMeta fieldMeta, String columnName) {
+		if (dbType == DBType.GBASE8S
+				&& (fieldMeta.getType() == java.sql.Types.DECIMAL || fieldMeta.getType() == java.sql.Types.NUMERIC)) {
+			int dl = (fieldMeta.getLength() > 32) ? fieldMeta.getLength() : 32;
+			int ds = (fieldMeta.getScale() > 9) ? fieldMeta.getScale() : 9;
+			return "cast(tv." + columnName + " as decimal(" + dl + "," + ds + "))";
+		}
+		return "tv." + columnName;
 	}
 
 	/**
@@ -1058,7 +1079,9 @@ public class DialectUtils {
 		Integer dbType = profile.getDbType();
 		StringBuilder sql = ctx.sql;
 		String columnName;
-		sql.append(SqlToyConstants.MERGE_ALIAS_ON);
+		// update 2026-10-12 GBase 8s:on子句不支持括号包裹(on (ta.id=tv.id)报语法错,
+		// 真库实测无括号on ta.id=tv.id通过;伪表见appendMergeIntoUsingSelect的fromTable分支)
+		sql.append(dbType == DBType.GBASE8S ? ") tv on " : SqlToyConstants.MERGE_ALIAS_ON);
 		// 组织on部分的主键(或无主键时的唯一索引列)条件判断
 		for (int i = 0, n = onFields.length; i < n; i++) {
 			columnName = fieldNames ? entityMeta.getColumnName(onFields[i]) : onFields[i];
@@ -1076,7 +1099,8 @@ public class DialectUtils {
 			sql.append(columnName).append("=tv.").append(columnName);
 			ctx.idColumns.append("ta.").append(columnName);
 		}
-		sql.append(" ) ");
+		// update 2026-10-12 GBase 8s的on无括号,闭括号同样不追加
+		sql.append(dbType == DBType.GBASE8S ? " " : " ) ");
 	}
 
 	/**
@@ -1150,6 +1174,16 @@ public class DialectUtils {
 						sql.append(currentTimeStr);
 					} else if (fupc.contains(columnName)) {
 						sql.append("tv.").append(columnName);
+					} else if (dbType == DBType.GBASE8S
+							&& (fieldMeta.getType() == JdbcTypes.JSON || fieldMeta.getType() == JdbcTypes.JSONB)) {
+						// update 2026-10-12 GBase 8s的json为不透明类型,类型系统无cast通路
+						// (真库实测nvl(json,json)/case/cast(? as json)全部报"No cast from json
+						// to json"等),但json→lvarchar方向cast可用、lvarchar→json在赋值位置
+						// 隐式转换:两参归lvarchar域保持"null不覆盖原值"弹性(真库实测null
+						// 绑定保留原值/值绑定更新生效/insert新行双形态均通过);null参数经
+						// JSONTypeUtil以VARCHAR形态绑定(同因保持char域定型)
+						sql.append(isNullFunction).append("(tv.").append(columnName).append(",ta.").append(columnName)
+								.append("::lvarchar)");
 					} else {
 						// update 2026-9-8 oracle的SDO_GEOMETRY换full镜像实测:using select裸?
 						// 以驱动STRUCT绑定(MDSYS.SDO_GEOMETRY)定型后,nvl(tv.g,ta.g)同型可行,
@@ -1166,6 +1200,11 @@ public class DialectUtils {
 						} else {
 							sql.append(isNullFunction);
 						}
+						// update 2026-10-12 GBase 8s:merge using select的裸?按BigDecimal绑定时
+						// 驱动声明为高精度decimal(BatchUpdateException精度超限,真库实测),
+						// update set的nvl内对tv列按列定义cast定型(同sqlserver decimal模式)
+						boolean g8Decimal = dbType == DBType.GBASE8S && (fieldMeta.getType() == java.sql.Types.DECIMAL
+								|| fieldMeta.getType() == java.sql.Types.NUMERIC);
 						if (DBType.SQLSERVER == dbType && fieldMeta.getType() == java.sql.Types.DECIMAL) {
 							// update 2026-9-7 sqlserver经isnull赋值会丢decimal小数位,cast定长保精度
 							// (自SqlServerDialectUtils迁入)
@@ -1173,6 +1212,11 @@ public class DialectUtils {
 							int decimalScale = (fieldMeta.getScale() > 5) ? fieldMeta.getScale() : 5;
 							sql.append("(cast(tv.").append(columnName)
 									.append(" as decimal(" + decimalLength + "," + decimalScale + "))");
+						} else if (g8Decimal) {
+							int dl = (fieldMeta.getLength() > 32) ? fieldMeta.getLength() : 32;
+							int ds = (fieldMeta.getScale() > 9) ? fieldMeta.getScale() : 9;
+							sql.append("(cast(tv.").append(columnName).append(" as decimal(").append(dl).append(",")
+									.append(ds).append("))");
 						} else {
 							sql.append("(tv.").append(columnName);
 						}
@@ -1208,17 +1252,18 @@ public class DialectUtils {
 					// 存在默认值
 					if (null != defaultValue) {
 						insertRejIdColValues.append(isNullFunction);
-						insertRejIdColValues.append("(tv.").append(columnName).append(",");
+						insertRejIdColValues.append("(").append(g8CastTv(dbType, fieldMeta, columnName)).append(",");
 						DialectExtUtils.processDefaultValue(insertRejIdColValues, dbType, fieldMeta, defaultValue);
 						insertRejIdColValues.append(")");
 					} else {
 						if (null != currentTimeStr) {
 							insertRejIdColValues.append(isNullFunction);
-							insertRejIdColValues.append("(tv.").append(columnName).append(",");
+							insertRejIdColValues.append("(").append(g8CastTv(dbType, fieldMeta, columnName))
+									.append(",");
 							insertRejIdColValues.append(currentTimeStr);
 							insertRejIdColValues.append(")");
 						} else {
-							insertRejIdColValues.append("tv.").append(columnName);
+							insertRejIdColValues.append(g8CastTv(dbType, fieldMeta, columnName));
 						}
 					}
 				}
@@ -1532,7 +1577,7 @@ public class DialectUtils {
 		}
 		// kingbase/gaussdb同为pg内核,bytea未定型参数同样需要cast(2023-06-11误删,现恢复)
 		boolean convertBlob = (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
-				|| dbType == DBType.KINGBASE);
+				|| dbType == DBType.KINGBASE || dbType == DBType.HIGHGO);
 		boolean isMSsql = (dbType == DBType.SQLSERVER);
 		int meter = 0;
 		int decimalLength;
@@ -2380,6 +2425,11 @@ public class DialectUtils {
 		// @mySeqVariable结果集回填,不能走getGeneratedKeys
 		// (自SqlServerDialectUtils.save迁入)
 		final boolean isMsSequence = (isSequence && dbType != null && dbType.intValue() == DBType.SQLSERVER);
+		// update 2026-10-12 GBase 8s:sequence的insert语句带nvl(?,seq.nextval)包装,该驱动
+		// 对列提示形态prepareStatement即报"Error In Specifying Automatically (Server)
+		// Generated Keys"(serial裸列省略id的列提示取键可用、nvl包装不可用,真库实测),
+		// sequence改会话级currval回取(同hana模式:select seq.currval,同连接同会话可靠)
+		final boolean isG8Sequence = (isSequence && dbType != null && dbType.intValue() == DBType.GBASE8S);
 		// update 2026-9-11 hana:ngdbc拒绝一切generated-keys
 		// prepare形态(RETURN_GENERATED_KEYS与
 		// String[]列名数组均实测报not supported),identity/sequence主键回填改会话级取值:
@@ -2387,7 +2437,7 @@ public class DialectUtils {
 		// (当前会话最近nextval值),同连接同会话内取值可靠(SPS08实测)
 		final boolean isHana = (dbType != null && dbType.intValue() == DBType.HANA);
 		PreparedStatement pst = null;
-		if ((isIdentity || (isSequence && !isMsSequence)) && !isHana) {
+		if ((isIdentity || (isSequence && !isMsSequence && !isG8Sequence)) && !isHana) {
 			// RETURN_GENERATED_KEYS 适合auto_increment,不适合sequence
 			// pst = conn.prepareStatement(realInsertSql, Statement.RETURN_GENERATED_KEYS);
 			pst = conn.prepareStatement(realInsertSql, new String[] { DataSourceUtils
@@ -2426,6 +2476,16 @@ public class DialectUtils {
 							ResultSet hanaKeyResult = keyPst.executeQuery()) {
 						while (hanaKeyResult.next()) {
 							this.setResult(hanaKeyResult.getObject(1));
+						}
+					}
+				} else if (isG8Sequence) {
+					// update 2026-10-12 g8会话级主键回填:nvl包装的sequence插入列提示
+					// prepare即炸(见isG8Sequence声明处注释),currval同会话取最近nextval值
+					try (PreparedStatement keyPst = conn.prepareStatement(
+							"select " + entityMeta.getSequence() + ".currval from systables where tabid=1");
+							ResultSet g8KeyResult = keyPst.executeQuery()) {
+						while (g8KeyResult.next()) {
+							this.setResult(g8KeyResult.getObject(1));
 						}
 					}
 				} else if (isIdentity || isSequence) {
@@ -2962,9 +3022,23 @@ public class DialectUtils {
 						|| dbType == DBType.DORIS || dbType == DBType.STARROCKS) {
 					mysqlSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, null, forceUpdateProps, conn,
 							profile);
-				} else if (dbType == DBType.POSTGRESQL14) {
+				} else if (dbType == DBType.POSTGRESQL14 || dbType == DBType.HIGHGO) {
+					// update 2026-10-12 补HIGHGO:PG12内核无merge(级联子表merge真库报
+					// syntax error at or near "merge"),走pg14形态update+saveIgnore兜底
+					// (与PostgreSqlDialect.saveOrUpdateAll的HIGHGO兜底同因;此静态调用
+					// 不经方言虚分派,须在此显式分派)
 					postgres14SaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, null, forceUpdateProps,
 							conn, profile);
+				} else if (dbType == DBType.GBASE8S) {
+					// update 2026-10-12 GBase 8s:驱动batch模式多元素merge参数错位(真库
+					// 实测级联子表存量修改被旧值覆盖),此静态调用不经GBase8sDialect的
+					// 逐条覆写分派,逐条单元素执行(同因同策)
+					for (Object one : subTableData) {
+						List<java.io.Serializable> single = new ArrayList<java.io.Serializable>();
+						single.add((java.io.Serializable) one);
+						saveOrUpdateAll(sqlToyContext, single, 1, subTableEntityMeta, forceUpdateProps,
+								generateSqlHandler, null, conn, profile, null);
+					}
 				} else if (dbType == DBType.OCEANBASE) {
 					oceanBaseSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, null, forceUpdateProps,
 							conn, profile);

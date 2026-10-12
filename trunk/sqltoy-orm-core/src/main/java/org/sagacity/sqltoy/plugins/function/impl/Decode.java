@@ -44,6 +44,13 @@ public class Decode extends IFunction {
 		 * wrapArgs("ELT", args); } else
 		 */
 		// oracle支持decode
+		// update 2026-10-12 GBASE8S移出透传:该引擎decode对列参与场景返回varchar,此容器
+		// 驱动对varchar结果读回一律空串(真库实测decode(lvarchar列,...)读空、常量参与正常),
+		// 以case when重写并包::lvarchar定型(case原生、cast后读回正常,真库验证)
+		if (dialect == DBType.GBASE8S) {
+			String g8 = buildCaseWhen(args);
+			return g8 == null ? super.IGNORE : g8 + "::lvarchar";
+		}
 		if (dialect == DBType.ORACLE || dialect == DBType.DM || dialect == DBType.OCEANBASE
 				|| dialect == DBType.ORACLE11 || dialect == DBType.H2) {
 			return super.IGNORE;
@@ -61,6 +68,22 @@ public class Decode extends IFunction {
 		// 不生成else子句(oracle decode无匹配返回null,不再将最后一个结果值误当默认值)。
 		// 固有边界:case when param=search不匹配NULL(oracle decode中null=null视为匹配),
 		// 以及参数类型的隐式转换差异,跨库使用时请注意
+		if (args.length % 2 == 0) {
+			sql.append(" else ").append(args[args.length - 1]);
+		}
+		sql.append(" end ");
+		return sql.toString();
+	}
+
+	/** update 2026-10-12 g8分支用:与主转换逻辑同构的case when重写(含默认值规则) */
+	private String buildCaseWhen(String[] args) {
+		String param = args[0];
+		StringBuilder sql = new StringBuilder(" case ");
+		int loopSize = (args.length - 1) / 2;
+		for (int i = 0; i < loopSize; i++) {
+			sql.append(" when ").append(param).append("=").append(args[1 + i * 2]).append(" then ")
+					.append(args[1 + i * 2 + 1]);
+		}
 		if (args.length % 2 == 0) {
 			sql.append(" else ").append(args[args.length - 1]);
 		}

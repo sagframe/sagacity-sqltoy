@@ -4,6 +4,7 @@
 3、修复SubStr负起点映射与mysql契约偏离的静默错值:|n|超过串长时mysql的substr(s,-n[,len])起点算出<1返回空串,原两参RIGHT短串返回整串、三参case守卫短串分支返回substring(s,1,len)均与之偏离(pg系/sqlserver/h2/db2/hana共四处);统一加长度守卫、短串分支返回空串(db2的守卫长度函数经Length适配器细化为char_length,字节/字符语义对齐);正起点与mysql/oracle原生透传路径不变,FunctionConvertMatrixTest断言同步更新
 4、修复java风格独立HH时间token在oracle模型目标库的静默错值:小时分桶等无分钟格式(如'yyyy-MM-dd HH')不含冒号邻接的HH:mm,既有归一不命中,pg/oracle系将HH按12小时制解释致分桶边界错乱;DateFormat/ToChar的pg/oracle系分支在冒号归一后补\bHH\b→hh24词边界归一(\b保证不伤oracle原生HH24,HH:mm已被前步消费不重复命中);mysql/H2/CH/sqlserver分支的映射链本就正确不受影响;FunctionConvertMatrixTest新增独立HH用例并锁HH24不误伤回归
 5、配套的quickvo-maven-plugin升级至2.0.2(项目地址:https://gitee.com/sagacity/maven-quickvo-plugin,完整功能与配置说明参见其README)
+6、补齐SqlUtil.processResultSet裸List路径(findByJdbcQuery/loadByJdbcQuery等直接jdbc查询API)的ext类型处理遗漏:此前该路径无列读取策略预分类与normalizeExtTypeValue归一(Map/VO路径与ResultUtils管线早已接入),oracle的JSON/VECTOR列getObject直接抛ORA-17004/18722、h2 json与mysql系geometry/vector等EXT_BYTE列以byte[]、pg系以PGobject等驱动专属形态静默进入结果行;现于行循环外做查询级预分类(readColumnTypeNames+buildColumnKinds),行循环内按TEXT_READ策略文本化读取并经normalizeExtTypeValue归一,与ResultUtils.processResultRow/reflectResultToVO同口径;解密按定位不在裸路径补齐;新增SqlUtilExtTypeRawPathTest以H2 JSON列端到端锁定归一链路
 
 # v5.6.94.RC6 2026-09-05
 1、树表封装wrapTreeTableRoute支持统一更新字段：配置了unifyFieldsHandler时,自动将updateUnifyFields()(如最后修改人、最后修改时间)按实体属性名转列名后附加到路由级联、叶子标记重建的全部update语句并绑定参数,与updateByQuery等更新流程的统一字段语义保持一致;仅模型指定实体时生效,实体中不存在的字段自动忽略,无实体模型不处理公共更新字段

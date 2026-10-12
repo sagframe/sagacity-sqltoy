@@ -82,6 +82,33 @@ public class DateDiff extends IFunction {
 			realArgs[0] = getMatchedType(unitType, UNIT_CONSTRACTS);
 			return wrapArgs("timestampdiff", realArgs);
 		}
+		// update 2026-10-12 GBASE8S独立分支(原误并入oracle系,真库探针定界):两参
+		// datediff为该引擎原生(真库实测datediff('..10:30:00',col)=10返回数值,字面量
+		// 隐式转换可用),直接透传;三参不支持(unit被解析为列名),DAY/WEEK用DATE cast
+		// 相减(DATE-DATE=integer天数,语义同oracle TRUNC相减)、YEAR/MONTH用extract
+		// 年月分量差;HOUR/MINUTE/SECOND无数值化路径(interval不可extract、无epoch
+		// 函数),保持原样响亮报错而非静默错值
+		if (dbType == DBType.GBASE8S) {
+			if (args.length == 2) {
+				return super.IGNORE;
+			}
+			String g1 = g8DateExpr(realArgs[1]);
+			String g2 = g8DateExpr(realArgs[2]);
+			if (unitType.equals("DAY") || unitType.equals("DD")) {
+				return "(" + g2 + " - " + g1 + ")";
+			}
+			if (unitType.equals("WEEK") || unitType.equals("WW")) {
+				return "TRUNC(((" + g2 + " - " + g1 + ")/7))";
+			}
+			if (unitType.equals("YEAR")) {
+				return "(EXTRACT(YEAR FROM " + g2 + ") - EXTRACT(YEAR FROM " + g1 + "))";
+			}
+			if (unitType.equals("MONTH") || unitType.equals("MM")) {
+				return "((EXTRACT(YEAR FROM " + g2 + ") - EXTRACT(YEAR FROM " + g1 + "))*12 + (EXTRACT(MONTH FROM " + g2
+						+ ") - EXTRACT(MONTH FROM " + g1 + ")))";
+			}
+			return super.IGNORE;
+		}
 		// update 2026-9-6 dm与oracle同为oracle系(实测DM也无两参datediff,报-2007),并入oracle分支
 		if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
 			// update 2026-9-5 裸字符串字面量参数包to_date(长度启发式同ToDate单参),
@@ -127,7 +154,8 @@ public class DateDiff extends IFunction {
 		// PG),
 		// 与openGauss 5.0返回interval不同,原og系分支的date_part('day',整数)隐式转换后恒为0,
 		// 两参/DAY/WEEK天差全部失真(两参datediff应10得0)——VASTBASE从og系分支归入本PG分支
-		if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.VASTBASE) {
+		if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.VASTBASE
+				|| dbType == DBType.HIGHGO) {
 			// vanilla PG:date-date为整数天,原形态可用
 			if (args.length == 2) {
 				return "(" + args[0] + "::date - " + args[1] + "::date)";
@@ -492,5 +520,22 @@ public class DateDiff extends IFunction {
 			return "to_date(" + tmp + ",'yyyy-MM-dd')";
 		}
 		return arg;
+	}
+
+	/**
+	 * update 2026-10-12 g8(Informix)下日期参数定型:裸字符串字面量按长度分流(同oracle
+	 * 启发式)——>12含时间部分包cast as datetime year to second再::date(直接cast as date 报String
+	 * to date conversion error,真库实测),否则cast as date;列/表达式统一
+	 * ::date定型(datetime列直接相减产生interval非数值,DATE-DATE=整数天)
+	 */
+	private static String g8DateExpr(String arg) {
+		String tmp = arg.trim();
+		if (tmp.length() > 2 && tmp.startsWith("'") && tmp.endsWith("'") && tmp.indexOf('\'', 1) == tmp.length() - 1) {
+			if (tmp.length() > 12) {
+				return "(CAST(" + tmp + " AS DATETIME YEAR TO SECOND))::date";
+			}
+			return "CAST(" + tmp + " AS DATE)";
+		}
+		return "(" + arg + ")::date";
 	}
 }

@@ -60,10 +60,13 @@ public class DateUtilNumberUtilFullCoverageTest {
 
 	@Test
 	public void getTimeNow() {
-		LocalTime before = LocalTime.now().minusMinutes(1);
-		LocalTime now = DateUtil.getTime();
-		LocalTime after = LocalTime.now().plusMinutes(1);
-		assertTrue(!now.isBefore(before) && !now.isAfter(after), "getTime()取当前时刻");
+		// update 2026-10-12 改绝对毫秒窗口比较:LocalTime的环形语义在跨午夜时刻
+		// (如00:01 vs 前一日23:59)翻转导致断言偶发失败
+		long before = System.currentTimeMillis() - 60000L;
+		long now = DateUtil.getTime().atDate(java.time.LocalDate.now()).atZone(java.time.ZoneId.systemDefault())
+				.toInstant().toEpochMilli();
+		long after = System.currentTimeMillis() + 60000L;
+		assertTrue(now >= before && now <= after, "getTime()取当前时刻");
 	}
 
 	@Test

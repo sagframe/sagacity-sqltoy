@@ -71,8 +71,7 @@ public class SqlScriptLoader {
 
 	/**
 	 * update 2026-9-23 realDialect优先(sqltoyContext.realDialectFirst推送):开启后线程上
-	 * 存在连接档案且真实方言不同于查询方言时,sqlId变体查找优先真实方言(真实方言变体
-	 * 不存在时回退原有配置方言查找链);主要覆盖连接回调内的嵌套解析场景
+	 * 存在连接档案且真实方言不同于查询方言时,sqlId变体查找优先真实方言(真实方言变体 不存在时回退原有配置方言查找链);主要覆盖连接回调内的嵌套解析场景
 	 */
 	private boolean realDialectFirst = false;
 

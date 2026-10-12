@@ -17,7 +17,9 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
  *         1参按长度启发式猜测是否含时间,占位符/表达式参数不适用
  */
 public class ToDate extends IFunction {
-	private static Pattern regex = Pattern.compile("(?i)\\Wto_date\\(");
+	// update 2026-10-11 补str_to_date源拼写(mysql用户写法):mysql系原生透传,其余库将%token
+	// 反转为oracle风格格式模型后按to_date两参路径转换
+	private static Pattern regex = Pattern.compile("(?i)\\W(to_date|str_to_date)\\(");
 
 	/*
 	 * (non-Javadoc)
@@ -43,6 +45,21 @@ public class ToDate extends IFunction {
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
 		if (args == null || args.length == 0) {
 			return super.IGNORE;
+		}
+		String funLow = functionName.toLowerCase(java.util.Locale.ROOT);
+		// update 2026-10-11 str_to_date源:mysql系原生透传;其余库%token反转为oracle风格后
+		// 按to_date路径走(分支内不再区分源拼写,pg两参透传处以wrapArgs换名保持语义)
+		boolean mysqlSrc = "str_to_date".equals(funLow);
+		if (mysqlSrc) {
+			if (dialect == DBType.MYSQL || dialect == DBType.MYSQL57 || dialect == DBType.TIDB
+					|| dialect == DBType.DORIS || dialect == DBType.STARROCKS) {
+				return super.IGNORE;
+			}
+			if (args.length > 1) {
+				args[1] = args[1].replace("%T", "hh24:mi:ss").replace("%Y", "yyyy").replace("%y", "yy")
+						.replace("%m", "MM").replace("%d", "dd").replace("%H", "hh24").replace("%h", "hh")
+						.replace("%i", "mi").replace("%s", "ss");
+			}
 		}
 		if (dialect == DBType.SQLSERVER) {
 			if (args.length == 1) {
@@ -110,10 +127,12 @@ public class ToDate extends IFunction {
 		// update 2026-9-14 补KINGBASE(KingbaseES基于PG,函数语法归PG系)
 		if (dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL14 || dialect == DBType.GAUSSDB
 				|| dialect == DBType.MOGDB || dialect == DBType.OPENGAUSS || dialect == DBType.VASTBASE
-				|| dialect == DBType.STARDB || dialect == DBType.OSCAR || dialect == DBType.KINGBASE) {
+				|| dialect == DBType.STARDB || dialect == DBType.OSCAR || dialect == DBType.KINGBASE
+				|| dialect == DBType.GBASE8S || dialect == DBType.HIGHGO) {
 			// pg系2参to_date(text,text)原生支持,原样保留;1参转CAST AS date
+			// (str_to_date源换名to_date,pg无str_to_date)
 			if (args.length > 1) {
-				return super.IGNORE;
+				return mysqlSrc ? wrapArgs("to_date", args) : super.IGNORE;
 			}
 			return "CAST(" + args[0] + " AS date)";
 		}
@@ -129,8 +148,8 @@ public class ToDate extends IFunction {
 			}
 			// update 2026-10-9 补大写oracle惯用形态YYYY/YY/DD/MI/SS(oracle模型大小写不敏感,
 			// 原'YYYY-MM-DD HH24:MI:SS'的YYYY/DD/MI/SS残留字面量,STR_TO_DATE报格式错值)
-			String format = args[1].replace("yyyy", "%Y").replace("YYYY", "%Y").replace("yy", "%y")
-					.replace("YY", "%y").replace("MM", "%m").replace("dd", "%d").replace("DD", "%d");
+			String format = args[1].replace("yyyy", "%Y").replace("YYYY", "%Y").replace("yy", "%y").replace("YY", "%y")
+					.replace("MM", "%m").replace("dd", "%d").replace("DD", "%d");
 			format = format.replace("HH24", "%H").replace("hh24", "%H").replace("hh", "%h").replace("HH", "%H")
 					.replace("mm", "%i").replace("mi", "%i").replace("MI", "%i").replace("ss", "%s")
 					.replace("SS", "%s");
