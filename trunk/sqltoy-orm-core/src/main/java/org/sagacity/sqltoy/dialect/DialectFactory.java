@@ -49,7 +49,6 @@ import org.sagacity.sqltoy.dialect.impl.DB2Dialect;
 import org.sagacity.sqltoy.dialect.impl.DMDialect;
 import org.sagacity.sqltoy.dialect.impl.DefaultDialect;
 import org.sagacity.sqltoy.dialect.impl.DorisDialect;
-import org.sagacity.sqltoy.dialect.impl.GBase8sDialect;
 import org.sagacity.sqltoy.dialect.impl.GaussDBDialect;
 import org.sagacity.sqltoy.dialect.impl.H2Dialect;
 import org.sagacity.sqltoy.dialect.impl.HanaDialect;
@@ -243,11 +242,6 @@ public class DialectFactory {
 			// highgo 瀚高数据库(PG12内核,SQL生成复用PG系)
 			case DBType.HIGHGO: {
 				dialectSqlWrapper = new HighgoDialect();
-				break;
-			}
-			// gbase8s 南大通用(Informix 12.10内核,复用Oracle系)
-			case DBType.GBASE8S: {
-				dialectSqlWrapper = new GBase8sDialect();
 				break;
 			}
 			case DBType.IMPALA: {
@@ -651,7 +645,6 @@ public class DialectFactory {
 						// 处理sql中的?为统一的:named形式，并进行sharding table替换
 						SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
 								sqlToyConfig, queryExecutor, profile, false);
-						// 判断数据库是否支持取随机记录(只有informix和sybase不支持)
 						Long totalCount = null;
 						Long randomCnt;
 						// 记录数量大于1表示取随机记录数量

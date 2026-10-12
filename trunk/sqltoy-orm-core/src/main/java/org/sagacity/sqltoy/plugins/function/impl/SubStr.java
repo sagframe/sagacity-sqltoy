@@ -39,7 +39,6 @@ public class SubStr extends IFunction {
 		if (args == null || args.length == 0) {
 			return super.IGNORE;
 		}
-		// update 2026-10-12 GBASE8S移出本PG系分支(原误归):Informix无SUBSTRING函数
 		// (真库实测语法错),归下方substr族(原生SUBSTR)
 		// update 2026-9-14 补KINGBASE(KingbaseES基于PG,函数语法归PG系)
 		if (dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL14 || dialect == DBType.GAUSSDB
@@ -94,8 +93,7 @@ public class SubStr extends IFunction {
 		}
 		if (dialect == DBType.MYSQL || dialect == DBType.ORACLE || dialect == DBType.TIDB || dialect == DBType.DM
 				|| dialect == DBType.OCEANBASE || dialect == DBType.ORACLE11 || dialect == DBType.DORIS
-				// update 2026-10-12 补GBASE8S(Informix原生SUBSTR,无SUBSTRING)
-				|| dialect == DBType.GBASE8S || dialect == DBType.STARROCKS) {
+				|| dialect == DBType.STARROCKS) {
 			return wrapArgs("substr", args);
 		}
 		// 表示不做修改

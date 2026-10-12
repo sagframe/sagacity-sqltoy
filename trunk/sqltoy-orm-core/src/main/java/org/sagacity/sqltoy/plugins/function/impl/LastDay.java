@@ -45,7 +45,7 @@ public class LastDay extends IFunction {
 				|| dialect == DBType.HANA || dialect == DBType.DB2 || dialect == DBType.H2
 				|| dialect == DBType.OPENGAUSS || dialect == DBType.GAUSSDB || dialect == DBType.MOGDB
 				|| dialect == DBType.VASTBASE || dialect == DBType.OSCAR || dialect == DBType.STARDB
-				|| dialect == DBType.KINGBASE || dialect == DBType.GBASE8S || dialect == DBType.HIGHGO;
+				|| dialect == DBType.KINGBASE || dialect == DBType.HIGHGO;
 		if (lastDaySpelling && lastDayNative) {
 			// update 2026-10-11 瀚高:last_day对裸字符串字面量报类型推断歧义(真库实测),
 			// 字面量包cast(x as date)(瀚高to_date未验证);列/表达式保持原生透传
@@ -55,7 +55,7 @@ public class LastDay extends IFunction {
 			// update 2026-10-11 oracle系(含dm/kingbase)对裸字符串字面量按NLS解析报ORA-01861,
 			// 字面量参数包to_date渲染(真库实测);列/表达式保持原生透传
 			if ((dialect == DBType.ORACLE || dialect == DBType.ORACLE11 || dialect == DBType.DM
-					|| dialect == DBType.KINGBASE || dialect == DBType.GBASE8S || dialect == DBType.HIGHGO)
+					|| dialect == DBType.KINGBASE || dialect == DBType.HIGHGO)
 					&& !args[0].trim().equals(FunctionUtils.oracleDateLiteralExpr(args[0]).trim())) {
 				return "LAST_DAY(" + FunctionUtils.oracleDateLiteralExpr(args[0]) + ")";
 			}

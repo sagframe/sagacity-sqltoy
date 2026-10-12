@@ -69,10 +69,6 @@ public class OracleDialectUtils {
 				dialect, null);
 		String loadSql = sqlToyConfig.getSql(dialect);
 		// update 2026-10-12 GBase 8s无语句级wait n/nowait子句(实测语法错),锁等待经会话级
-		// set lock mode to wait n承担(语句仅追加裸for update,见getLockSql)
-		if (lockMode != null && lockWaitTimeout > 0 && profile.getDbType() == DataSourceUtils.DBType.GBASE8S) {
-			DefaultDialectUtils.setSessionLockWait(profile, conn, lockMode, lockWaitTimeout);
-		}
 		loadSql = loadSql.concat(getLockSql(loadSql, profile, lockMode, lockWaitTimeout));
 		return (Serializable) DialectUtils.load(sqlToyContext, sqlToyConfig, loadSql, entityMeta, entity, onlySubTables,
 				cascadeTypes, conn, profile, queryTimeout);
@@ -390,6 +386,9 @@ public class OracleDialectUtils {
 			DBProfile profile) throws Exception {
 		String dialect = profile.getDialect();
 		List<ColumnMeta> tableColumns = DefaultDialectUtils.getTableColumns(catalog, schema, tableName, conn, profile);
+		// update 2026-10-13 GBase 8s无oracle的USER_COL_COMMENTS目录,但列备注存于GBase扩展目录表
+		// syscolcomms(表备注在syscomms),改查syscolcomms补齐(此前直接返回致列备注全丢);
+		// 系统目录varchar列经驱动读取须::char CAST(老驱动3.70直读返回空串,官方驱动3.6.5亦兼容)
 		// update 2026-9-11 表名按方言大小写策略转换(oracle大写存储,小写原样绑定查不到列备注)
 		final String realTableName = SqlToyConstants.getDialectLowcaseStrategyName(tableName, dialect);
 		String sql = "SELECT COLUMN_NAME,COMMENTS FROM USER_COL_COMMENTS WHERE TABLE_NAME=?";
@@ -510,10 +509,6 @@ public class OracleDialectUtils {
 		if (pkStrategy == null) {
 			return true;
 		}
-		if (pkStrategy.equals(PKStrategy.IDENTITY) && dbType != null
-				&& dbType.intValue() == DataSourceUtils.DBType.GBASE8S) {
-			return false;
-		}
 		return true;
 	}
 
@@ -527,11 +522,7 @@ public class OracleDialectUtils {
 	}
 
 	public static String getLockSql(String sql, DBProfile profile, LockMode lockMode, int lockWaitTimeout) {
-		// update 2026-10-12 GBase 8s无语句级wait n/nowait/skip locked子句(informix实测
-		// 均语法错),不追加wait(skip locked降级普通for update;锁等待由load路径的会话级
-		// set lock mode to wait n承担)
-		boolean g8 = profile.getDbType() == DataSourceUtils.DBType.GBASE8S;
-		return DefaultDialectUtils.getLockSql(sql, profile.getDbType(), lockMode, lockWaitTimeout, !g8,
-				" for update skip locked", !g8);
+		return DefaultDialectUtils.getLockSql(sql, profile.getDbType(), lockMode, lockWaitTimeout, true,
+				" for update skip locked", true);
 	}
 }

@@ -44,13 +44,9 @@ public class Decode extends IFunction {
 		 * wrapArgs("ELT", args); } else
 		 */
 		// oracle支持decode
-		// update 2026-10-12 GBASE8S移出透传:该引擎decode对列参与场景返回varchar,此容器
 		// 驱动对varchar结果读回一律空串(真库实测decode(lvarchar列,...)读空、常量参与正常),
 		// 以case when重写并包::lvarchar定型(case原生、cast后读回正常,真库验证)
-		if (dialect == DBType.GBASE8S) {
-			String g8 = buildCaseWhen(args);
-			return g8 == null ? super.IGNORE : g8 + "::lvarchar";
-		}
+
 		if (dialect == DBType.ORACLE || dialect == DBType.DM || dialect == DBType.OCEANBASE
 				|| dialect == DBType.ORACLE11 || dialect == DBType.H2) {
 			return super.IGNORE;

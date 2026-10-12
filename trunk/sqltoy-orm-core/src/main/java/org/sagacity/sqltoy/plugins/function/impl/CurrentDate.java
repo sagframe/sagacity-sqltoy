@@ -47,11 +47,6 @@ public class CurrentDate extends IFunction {
 		if (dialect == DBType.SQLSERVER) {
 			return "CAST(GETDATE() AS date)";
 		}
-		// update 2026-10-12 GBase 8s无CURRENT_DATE关键字(真库报Column not found),
-		// Informix的TODAY为零点日期(真库实测type=date),与curdate口径一致
-		if (dialect == DBType.GBASE8S) {
-			return "TODAY";
-		}
 		// update 2026-10-4 db2对CURRENT_DATE注册专名透传即可;mysql习惯的curdate转db2惯用的
 		// 带空格关键字形态CURRENT DATE
 		if (dialect == DBType.DB2) {

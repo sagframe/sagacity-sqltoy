@@ -73,15 +73,14 @@ public class Length extends IFunction {
 				|| dialect == DBType.DB2 || dialect == DBType.GAUSSDB || dialect == DBType.MOGDB
 				|| dialect == DBType.VASTBASE || dialect == DBType.OPENGAUSS || dialect == DBType.STARDB
 				|| dialect == DBType.OSCAR || dialect == DBType.OCEANBASE || dialect == DBType.DM
-				|| dialect == DBType.ORACLE11 || dialect == DBType.KINGBASE || dialect == DBType.GBASE8S
-				|| dialect == DBType.HIGHGO) {
+				|| dialect == DBType.ORACLE11 || dialect == DBType.KINGBASE || dialect == DBType.HIGHGO) {
 			// update 2026-9-9 按字节/字符语义拆分:原实现将datalength/char_length/len统一映射length,
 			// oracle系的LENGTH为字符数,datalength(字节数)被静默转为字符数;Db2的LENGTH为字节数、
 			// CHAR_LENGTH为字符数,与oracle/pg惯例相反,length/char_length原样透传会得到字节数
 			boolean pgFamily = (dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL14
 					|| dialect == DBType.GAUSSDB || dialect == DBType.MOGDB || dialect == DBType.VASTBASE
 					|| dialect == DBType.OPENGAUSS || dialect == DBType.STARDB || dialect == DBType.KINGBASE
-					|| dialect == DBType.GBASE8S || dialect == DBType.HIGHGO);
+					|| dialect == DBType.HIGHGO);
 			if (dialect == DBType.DB2) {
 				// Db2:LENGTH/OCTET_LENGTH=字节数,CHAR_LENGTH=字符数
 				if ("datalength".equals(funLow) || "lengthb".equals(funLow)) {

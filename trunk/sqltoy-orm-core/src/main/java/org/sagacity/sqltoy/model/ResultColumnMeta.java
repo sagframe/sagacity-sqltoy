@@ -55,12 +55,11 @@ public class ResultColumnMeta {
 	 * NORMAL常规getObject;TEXT_READ文本化读取(oracle的JSON/VECTOR列getObject直接抛
 	 * ORA-17004/18722、db2gse的ST_Geometry读回驱动混淆对象,getString规避);
 	 * EXT_BYTE取值后按列类型归一(sqlserver/mysql系的vector与geometry byte[]内部格式、 h2的json
-	 * byte[]、hana的ST_GEOMETRY标准WKB byte[]);
-	 * BYTES_TEXT按字节读取后按UTF-8解码为文本(gbase8s的JSON为不透明类型,getObject/getString
-	 * 均不可用而getBytes返回的即UTF-8 JSON文本,真库实测中英文与::lvarchar完全一致)。
+	 * byte[]、hana的ST_GEOMETRY标准WKB byte[]); 均不可用而getBytes返回的即UTF-8
+	 * JSON文本,真库实测中英文与::lvarchar完全一致)。
 	 */
 	public enum ReadStrategy {
-		NORMAL, TEXT_READ, EXT_BYTE, BYTES_TEXT;
+		NORMAL, TEXT_READ, EXT_BYTE;
 
 		/**
 		 * 由原int常量(ResultUtils.COLUMN_NORMAL/COLUMN_TEXT_READ/COLUMN_EXT_BYTE,
@@ -72,9 +71,6 @@ public class ResultColumnMeta {
 			}
 			if (kind == 2) {
 				return EXT_BYTE;
-			}
-			if (kind == 3) {
-				return BYTES_TEXT;
 			}
 			return NORMAL;
 		}

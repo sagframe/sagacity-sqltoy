@@ -53,11 +53,8 @@ public class Now extends IFunction {
 		if ("current_timestamp".equals(funLow) && dialect == DBType.SQLITE) {
 			return "datetime('now','localtime')";
 		}
-		// update 2026-10-12 GBase 8s(Informix内核):无now()/sysdate/getdate,
 		// CURRENT关键字承担(无括号形态,真库探针2026-10-12)
-		if (dialect == DBType.GBASE8S) {
-			return "CURRENT";
-		}
+
 		// update 2026-10-4 补oracle源形态systimestamp(带小数秒,可带精度参数):oracle系原生透传
 		// (返回sysdate会丢精度;裸形态正则带\W后缀,IGNORE会重复其空白字符,须返回同名文本);
 		// 其余库走下方now()同路径分派(fsp/精度参数mysql系保留,其余库不带)

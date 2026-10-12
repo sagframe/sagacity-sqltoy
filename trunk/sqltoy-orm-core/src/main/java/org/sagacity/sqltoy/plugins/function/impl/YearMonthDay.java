@@ -45,9 +45,9 @@ public class YearMonthDay extends IFunction {
 		// mysql系(含OB)全部分量原生;db2/h2/ch全部分量原生(YEAR/MONTH/DAY/DAYOFMONTH/
 		// HOUR/MINUTE/SECOND均原生);dm的year/month/day原生(10-11真库实测dm.year)
 		// update 2026-10-12 GBase 8s:year()/month()/day()原生(真库探针)
-		if (dialect == DBType.GBASE8S || dialect == DBType.MYSQL || dialect == DBType.MYSQL57 || dialect == DBType.TIDB
-				|| dialect == DBType.DORIS || dialect == DBType.STARROCKS || dialect == DBType.OCEANBASE
-				|| dialect == DBType.DB2 || dialect == DBType.H2 || dialect == DBType.CLICKHOUSE) {
+		if (dialect == DBType.MYSQL || dialect == DBType.MYSQL57 || dialect == DBType.TIDB || dialect == DBType.DORIS
+				|| dialect == DBType.STARROCKS || dialect == DBType.OCEANBASE || dialect == DBType.DB2
+				|| dialect == DBType.H2 || dialect == DBType.CLICKHOUSE) {
 			return super.IGNORE;
 		}
 		// dayofmonth在mysql/db2/h2原生,其余库换名为该库的day形态

@@ -123,21 +123,9 @@ public class Trim extends IFunction {
 			}
 			return "rtrim(ltrim(" + col + "))";
 		}
-		// update 2026-10-12 GBase 8s:trim/ltrim/rtrim语法原生但返回varchar,该容器驱动对
 		// varchar结果读回一律空串(真库实测getString/getBytes均空),外层包::lvarchar定型
 		// (真库实测cast后读回正常);单参与both..from形态均适用
-		if (dialect == DBType.GBASE8S) {
-			if (modifierForm) {
-				if (fromIdx == -1) {
-					return super.IGNORE;
-				}
-				String chars = (fromIdx > 0) ? rest.substring(0, fromIdx).trim() : "";
-				String col = (fromIdx == 0) ? rest.substring(5).trim() : rest.substring(fromIdx + 6).trim();
-				String fn = "leading".equals(keyword) ? "ltrim" : ("trailing".equals(keyword) ? "rtrim" : "trim");
-				return fn + "(" + chars + " from " + col + ")::lvarchar";
-			}
-			return "trim(" + arg + ")::lvarchar";
-		}
+
 		return super.IGNORE;
 	}
 }

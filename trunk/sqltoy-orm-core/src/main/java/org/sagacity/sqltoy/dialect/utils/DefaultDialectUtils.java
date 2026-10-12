@@ -427,20 +427,11 @@ public class DefaultDialectUtils {
 								null, 0);
 						// 执行类似 select xxx from table for update(sqlserver语法有差异)
 						ResultSet executeRs = pst.executeQuery();
-						// update 2026-10-12 GBase 8s:CONCUR_UPDATABLE的updateRow/insertRow驱动
 						// SQL组装缺陷(真库实测updateRow报"Found a quote for which there is no
-						// matching quote"),以GBase8sRsProxy代理承接(updateXxx收集变更、
 						// updateRow/insertRow转独立update/insert语句、行内读可见性);行定位键
 						// 取usfReReadProps(优先主键)的列名,代理在next()时捕获其原始值;
 						// 其余流程(dataVersion/公共字段/insert分支/回读组装)对代理透明不变
-						if (dbType == DBType.GBASE8S) {
-							String[] usfKeyCols = new String[usfReReadProps.length];
-							for (int k = 0; k < usfReReadProps.length; k++) {
-								usfKeyCols[k] = entityMeta.getColumnName(usfReReadProps[k]);
-							}
-							executeRs = GBase8sRsProxy.wrap(executeRs, conn,
-									entityMeta.getSchemaTable(tableName, dbType), usfKeyCols);
-						}
+
 						final ResultSet finalRs = executeRs;
 						try {
 							int rowCnt = finalRs.getMetaData().getColumnCount();
@@ -575,7 +566,8 @@ public class DefaultDialectUtils {
 								// update 2026-9-14 oracle系(ojdbc)/DM真库实测:autocommit=false时updateRow后
 								// 当前行缓存不反映本次修改(标签/序号update均陈旧,refreshRow/滚动集亦无效),
 								// 直接回读当前行得到旧值致返回实体失真;以独立语句重查回读(行锁已由本事务
-								// 持有,同事务可见自身修改);其余库驱动updateRow后当前行即新值,维持原形态
+								// 持有,同事务可见自身修改);其余库驱动updateRow后当前行即新值,维持原形态;
+								// g8的updateRow经代理转独立UPDATE,当前行同样陈旧,纳入本重查回读
 								ResultSet readRs = finalRs;
 								PreparedStatement reReadPst = null;
 								if (hasUpdateRow && (dbType == DBType.ORACLE || dbType == DBType.ORACLE11
@@ -1188,9 +1180,8 @@ public class DefaultDialectUtils {
 			return "";
 		}
 		if (lockMode == LockMode.UPGRADE_NOWAIT) {
-			// update 2026-10-12 GBase 8s无语句级nowait子句(实测语法错),降级为普通
 			// for update(如需立即失败语义由会话级set lock mode to not wait承担)
-			return (dbType != null && dbType.intValue() == DBType.GBASE8S) ? " for update " : " for update nowait ";
+			return " for update nowait ";
 		}
 		if (supportSkipLocked && lockMode == LockMode.UPGRADE_SKIPLOCK) {
 			return skipLockedSuffix;
@@ -1231,11 +1222,6 @@ public class DefaultDialectUtils {
 			// update 2026-10-12 瀚高归PG系(lock_timeout)
 			try (Statement setLockStmt = conn.createStatement()) {
 				setLockStmt.execute("SET lock_timeout='" + 1000 * lockWaitTimeout + "ms'");
-			}
-		} else if (dbType == DBType.GBASE8S) {
-			// update 2026-10-12 GBase 8s(informix系):set lock mode to wait n
-			try (Statement setLockStmt = conn.createStatement()) {
-				setLockStmt.execute("set lock mode to wait " + lockWaitTimeout);
 			}
 		}
 	}

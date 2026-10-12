@@ -548,13 +548,6 @@ public class SqlUtil {
 			if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NCHAR
 					|| jdbcType == java.sql.Types.NVARCHAR) {
 				pst.setString(paramIndex, ((BigDecimal) paramValue).toPlainString());
-			} else if (profile != null && profile.getDbType() == DBType.GBASE8S) {
-				// update 2026-10-12 GBase 8s驱动(3.70)对BigDecimal绑定在协议层声明高精度
-				// decimal,merge using select/insert场景报"Decimal or money value exceeds
-				// maximum precision"(真库实测,SQL cast无法纠正绑定标记);转setDouble承担
-				// (double 15-16位有效数字,decimal(32,9)内业务值无损;更高精度诉求走字符串
-				// 承载列)——该驱动缺陷的方言级规避
-				pst.setDouble(paramIndex, ((BigDecimal) paramValue).doubleValue());
 			} else {
 				pst.setBigDecimal(paramIndex, (BigDecimal) paramValue);
 			}
@@ -1447,14 +1440,11 @@ public class SqlUtil {
 				// update 2026-9-8 按下标取值(与labelNames同下标,驱动按下标直达,按label需查找)
 				// fieldValue = rs.getObject(label);
 				// update 2026-9-9 TEXT_READ列文本化读取(oracle的JSON/VECTOR列getObject直接抛错),
-				// update 2026-10-12 BYTES_TEXT列按字节读取后UTF-8解码(gbase8s的JSON不透明类型,
 				// getObject/getString均不可用而getBytes即文本),取值后统一经扩展类型归一化
 				// (byte[]形态按列类型解码),与Map路径processResultRow对齐
 				int kind = (columnKinds == null) ? ResultUtils.COLUMN_NORMAL : columnKinds[i];
 				if (kind == ResultUtils.COLUMN_TEXT_READ) {
 					fieldValue = rs.getString(i + 1);
-				} else if (kind == ResultUtils.COLUMN_BYTES_TEXT) {
-					fieldValue = ResultUtils.bytesToTrimmedText(rs.getBytes(i + 1));
 				} else {
 					fieldValue = rs.getObject(i + 1);
 				}
@@ -1959,12 +1949,9 @@ public class SqlUtil {
 				List rowData = new ArrayList();
 				for (int i = startColIndex; i < rowCnt; i++) {
 					// 处理clob;TEXT_READ列(oracle JSON/VECTOR、db2gse空间列)改文本化读取;
-					// update 2026-10-12 BYTES_TEXT列(gbase8s的json不透明类型,getObject/getString
 					// 均不可用)按字节读取后UTF-8解码去尾空白,与processResultRow/VO路径三策略同口径
 					if (columnKinds[i] == ResultUtils.COLUMN_TEXT_READ) {
 						fieldValue = rs.getString(i + 1);
-					} else if (columnKinds[i] == ResultUtils.COLUMN_BYTES_TEXT) {
-						fieldValue = ResultUtils.bytesToTrimmedText(rs.getBytes(i + 1));
 					} else {
 						fieldValue = rs.getObject(i + 1);
 					}
@@ -3734,40 +3721,6 @@ public class SqlUtil {
 			// 毫秒time(hana的TIME无小数秒,substring(0,9)保留引号+HH:mm:ss再补尾引号)
 			if (type == 5) {
 				return "CAST(" + dateStr.substring(0, 9) + "' AS TIME)";
-			}
-		}
-		// update 2026-10-12 补GBASE8S(Informix的DATETIME cast族,真库探针定界:
-		// FRACTION(n)的n为最大接受精度且上限5,小数位≤n均可(短小数OK),超n位报
-		// Extra characters须截断输入;FRACTION(6)语法错)
-		if (dbType == DBType.GBASE8S) {
-			// day
-			if (type == 1) {
-				return "CAST(" + dateStr + " AS DATE)";
-			}
-			// datetime
-			if (type == 2) {
-				return "CAST(" + dateStr + " AS DATETIME YEAR TO SECOND)";
-			}
-			// timestamp:有小数截到最多5位再FRACTION(5)(19位日期时间+1点+5位=25位内容)
-			if (type == 3) {
-				if (dateLength > 25) {
-					return "CAST(" + dateStr.substring(0, 26) + "' AS DATETIME YEAR TO FRACTION(5))";
-				}
-				if (dateLength > 19) {
-					return "CAST(" + dateStr + " AS DATETIME YEAR TO FRACTION(5))";
-				}
-				return "CAST(" + dateStr + " AS DATETIME YEAR TO SECOND)";
-			}
-			// time
-			if (type == 4) {
-				return "CAST(" + dateStr + " AS DATETIME HOUR TO SECOND)";
-			}
-			// 毫秒time(HOUR TO FRACTION(5),超5位截断:引号+8位时间+1点+5位=15字符)
-			if (type == 5) {
-				if (dateLength > 14) {
-					return "CAST(" + dateStr.substring(0, 15) + "' AS DATETIME HOUR TO FRACTION(5))";
-				}
-				return "CAST(" + dateStr + " AS DATETIME HOUR TO FRACTION(5))";
 			}
 		}
 		// update 2026-10-12 补H2(2.x无TO_DATE函数,真库实测报Function not found;

@@ -87,11 +87,9 @@ public class ToChar extends IFunction {
 		case DBType.DM:
 			// 2026-9-11 hana的TO_CHAR为oracle兼容格式模型(日期yyyy/MM/dd/hh24/mi/ss与数值9/0双场景)
 		case DBType.HANA:
-		case DBType.ORACLE11:
-			// update 2026-10-12 补GBASE8S(Informix的to_char为oracle兼容格式模型,真库实测
+		case DBType.ORACLE11: {
 			// 'yyyy-MM-dd'可用);其返回varchar经该容器驱动读回空串,外层包::lvarchar定型
 			// (真库实测cast后lvarchar读回正常)
-		case DBType.GBASE8S: {
 			// 日期
 			format = args[1].replace("%Y", "yyyy").replace("%y", "yy").replace("%m", "MM").replace("%d", "dd");
 			// 时间处理
@@ -108,7 +106,7 @@ public class ToChar extends IFunction {
 			String toCharInner = "to_char(" + FunctionUtils.pgToCharParamCast(dialect, args[0], format, true) + ","
 					+ format + ")";
 			// update 2026-10-12 g8的to_char返回varchar读回空串,包::lvarchar(见case声明注释)
-			return (dialect == DBType.GBASE8S) ? toCharInner + "::lvarchar" : toCharInner;
+			return toCharInner;
 		}
 		case DBType.H2: {
 			// H2原生支持to_char(oracle兼容格式模型,端到端实测验证);

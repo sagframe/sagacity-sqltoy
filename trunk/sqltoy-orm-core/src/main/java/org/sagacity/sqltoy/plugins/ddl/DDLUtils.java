@@ -209,7 +209,6 @@ public class DDLUtils {
 	/**
 	 * JSON文档承载类型:无原生JSON列类型的库降级承载,避免生成非法的"col JSON"。
 	 * hana→NCLOB,sqlserver→NVARCHAR(MAX),db2/oracle11→CLOB;oracle21c+/mysql/pg/doris等原生支持→JSON
-	 * update 2026-10-12 GBase 8s保留原生JSON:读回经ResultUtils的BYTES_TEXT策略
 	 * (getBytes即UTF-8文本,getObject/getString该驱动不可用)框架级承接,无需降级承载
 	 */
 	private static String jsonCarrierType(int dbType) {
@@ -254,16 +253,12 @@ public class DDLUtils {
 			if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
 				typeName = "NUMBER";
 				typeName = setLength(typeName, true, colMeta);
-			} else if (dbType == DBType.GBASE8S && colMeta.isAutoIncrement()) {
-				// update 2026-10-12 GBase 8s自增列用SERIAL类型族承载(int8自增形态SERIAL8)
-				typeName = "SERIAL8";
 			} else {
 				typeName = "BIGINT";
 			}
 			break;
 		case java.sql.Types.INTEGER:
-			// update 2026-10-12 GBase 8s自增列用SERIAL类型族承载(Informix无内联identity子句)
-			typeName = (dbType == DBType.GBASE8S && colMeta.isAutoIncrement()) ? "SERIAL" : "INTEGER";
+			typeName = "INTEGER";
 			break;
 		case java.sql.Types.TINYINT:
 			if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
@@ -283,9 +278,10 @@ public class DDLUtils {
 			typeName = setLength(typeName, false, colMeta);
 			break;
 		case java.sql.Types.VARCHAR:
-		case java.sql.Types.NVARCHAR:
-			typeName = (dbType == DBType.GBASE8S) ? "lvarchar" : (dbType == DBType.HANA) ? "NVARCHAR" : "VARCHAR";
+		case java.sql.Types.NVARCHAR: {
+			typeName = (dbType == DBType.HANA) ? "NVARCHAR" : "VARCHAR";
 			typeName = setLength(typeName, false, colMeta);
+		}
 			break;
 		case java.sql.Types.LONGNVARCHAR:
 			if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM || dbType == DBType.H2) {
@@ -316,10 +312,7 @@ public class DDLUtils {
 			}
 			break;
 		case java.sql.Types.BLOB:
-			// update 2026-10-12 GBASE8S:Informix二进制大对象为byte
-			if (dbType == DBType.GBASE8S) {
-				typeName = "byte";
-			} else if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
+			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 					|| dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.STARDB
 					|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE
 					|| dbType == DBType.HIGHGO) {
@@ -383,9 +376,6 @@ public class DDLUtils {
 			// sqlserver的TIMESTAMP是行版本戳(rowversion),不是日期时间类型
 			if (dbType == DBType.SQLSERVER) {
 				typeName = "DATETIME2";
-			} else if (dbType == DBType.GBASE8S) {
-				// update 2026-10-12 Informix的datetime year to second(真库建表实测形态)
-				typeName = "datetime year to second";
 			} else {
 				typeName = "TIMESTAMP";
 			}
@@ -433,7 +423,6 @@ public class DDLUtils {
 			// 向量类型:gaussdb企业版为floatvector,其余(pgvector/openGauss系/oracle 23ai/mysql
 			// heatwave/sqlserver 2025/db2 12.1.2+)为vector
 			// 维度通过@Column(length=xxx)指定,mysql heatwave和sqlserver 2025的维度为必填项
-			// update 2026-10-12 GBASE8S渲染裸vector:社区镜像(liaosnet/gbase8s,Informix 12.10
 			// 内核)实测"Type (vector) not found",商业版V8.8提供向量能力,类型名以@Column
 			// (nativeType)覆盖为准;HIGHGO同pgvector(需库内create extension vector,社区镜像
 			// 未预装,可源码编译pgvector 0.7.4后安装,实测vector(3)建表/绑定/读回/近邻均可用)
@@ -482,8 +471,6 @@ public class DDLUtils {
 			// 空间类型:oracle/dm为SDO_GEOMETRY,其余(postgis系/mysql/sqlserver/h2)为GEOMETRY
 			// 类型精度修饰(如geometry(Point,4326)、geography)通过@Column(nativeType="...")指定;
 			// nativeType未配置时注解默认为空串(非null),须按blank判断,否则生成空列类型导致DDL非法
-			// update 2026-10-12 GBASE8S/HIGHGO空间边界:两库容器镜像实测均无geometry类型
-			// (gbase8s报Type not found,空间能力为商业版datablade;highgo社区镜像无postgis
 			// 扩展且依赖GEOS/PROJ无法容器内源码编译),nativeType覆盖为唯一路径
 			if (StringUtil.isNotBlank(colMeta.getNativeType())) {
 				typeName = colMeta.getNativeType();
@@ -865,6 +852,10 @@ public class DDLUtils {
 				|| dbType == DBType.OCEANBASE || dbType == DBType.DORIS || dbType == DBType.STARROCKS);
 		String splitSign = ";";
 		for (ForeignModel foreign : tableMeta.getForeigns()) {
+			// ALTER形态整体括号包裹(ADD CONSTRAINT (FOREIGN KEY ... CONSTRAINT name)),
+			// 不支持ON UPDATE子句,ON DELETE仅CASCADE/SET NULL(RESTRICT/NO ACTION为默认须省略,
+			// 真库实测ON DELETE RESTRICT与命名前置的ADD CONSTRAINT name FOREIGN KEY均语法错)
+
 			if (outerTable) {
 				tableSql.append(splitSign).append(NEWLINE);
 				tableSql.append("ALTER TABLE ")
@@ -1028,11 +1019,14 @@ public class DDLUtils {
 				|| defaultValue.equals("CURDATE()") || defaultValue.equals("CURTIME()")
 				|| defaultValue.equals("LOCALTIMESTAMP") || defaultValue.equals("SYSTIMESTAMP")
 				|| defaultValue.equals("SYSDATETIME()") || defaultValue.equals("sysdatetime()")
-				|| defaultValue.equals("LOCALTIME") || defaultValue.equals("TODAY")) {
+				|| defaultValue.equals("LOCALTIME")) {
 			return true;
 		}
 		// 带精度形态:CURRENT_TIMESTAMP(3)/NOW(6)等(mysql/mariadb合法时间函数默认值)
-		return defaultValue.matches("(?i)(CURRENT_TIMESTAMP|NOW|LOCALTIMESTAMP)\\s*\\(\\s*\\d+\\s*\\)");
+		if (defaultValue.matches("(?i)(CURRENT_TIMESTAMP|NOW|LOCALTIMESTAMP)\\s*\\(\\s*\\d+\\s*\\)")) {
+			return true;
+		}
+		return false;
 	}
 
 	/**

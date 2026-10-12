@@ -241,9 +241,7 @@ public class SqlUtilsExt {
 				|| defaultLow.contains("timestamp") || defaultLow.contains("curdate") || defaultLow.contains("curtime")
 				|| defaultLow.contains("getdate") || defaultLow.contains("getutcdate")
 				// PostgreSQL/MySQL的TIME列 DEFAULT LOCALTIME(不含timestamp,需单独覆盖)
-				|| defaultLow.contains("localtime")
-				// Informix的当日日期
-				|| defaultLow.contains("today")) {
+				|| defaultLow.contains("localtime")) {
 			return true;
 		}
 		return false;

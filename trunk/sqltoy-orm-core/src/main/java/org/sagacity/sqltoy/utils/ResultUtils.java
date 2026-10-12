@@ -1320,14 +1320,11 @@ public class ResultUtils {
 			}
 			// TEXT_READ:oracle的JSON/VECTOR列getObject直接抛错(ORA-17004/18722)、
 			// db2gse的ST_Geometry读回驱动混淆对象,均改走getString文本化;
-			// BYTES_TEXT:gbase8s的JSON不透明类型列getBytes返回的即UTF-8文本
 			// 列下标须叠加startColIndex:cols[i]对应rs第startColIndex+i+1列
 			// (oracle11g分页包装的page_row_id列经startColIndex跳过,直接i+1会整体错位)
 			ResultColumnMeta.ReadStrategy colStrategy = (col == null) ? null : col.getReadStrategy();
 			if (colStrategy == ResultColumnMeta.ReadStrategy.TEXT_READ) {
 				fieldValue = rs.getString(startColIndex + i + 1);
-			} else if (colStrategy == ResultColumnMeta.ReadStrategy.BYTES_TEXT) {
-				fieldValue = bytesToTrimmedText(rs.getBytes(startColIndex + i + 1));
 			} else {
 				fieldValue = rs.getObject(startColIndex + i + 1);
 			}
@@ -1477,7 +1474,6 @@ public class ResultUtils {
 	public static final int COLUMN_NORMAL = 0;
 
 	/**
-	 * update 2026-10-12 BYTES_TEXT列的字节→文本解码:gbase8s json不透明类型的getBytes 返回UTF-8
 	 * JSON文本,但驱动按固定宽度缓冲回送,较短的文档尾部有空白填充(真库实测
 	 * 中英文对照::lvarchar一致,仅多尾部空格,同该驱动lvarchar读回padding怪癖),JSON 文档尾部空白无语义,统一去除尾部空白
 	 *
@@ -1502,13 +1498,12 @@ public class ResultUtils {
 	 * byte[]扩展列:h2的JSON、sqlserver/mysql系的VECTOR与GEOMETRY(getObject返回byte[]按列类型解码)
 	 */
 	public static final int COLUMN_EXT_BYTE = 2;
+
 	/**
-	 * update 2026-10-12 字节化文本读取列:gbase8s的JSON(不透明类型,元数据columnType=STRUCT/
 	 * 类型名json):getObject报"A customized type map required"(驱动要求SQLData类型映射,
 	 * String映射报ClassCastException)、getString为IfxUDT.toString垃圾值,而getBytes返回的 即UTF-8
 	 * JSON文本(真库实测中英文与::lvarchar完全一致),按字节读取后UTF-8解码
 	 */
-	public static final int COLUMN_BYTES_TEXT = 3;
 
 	/**
 	 * update 2026-9-6 按dbType与列元数据类型名对结果集各列预分类(查询级一次,行循环零字符串判定):
@@ -1541,10 +1536,8 @@ public class ResultUtils {
 		// type
 		// String",ngdbc 2.29.11/SPS08实测),归EXT_BYTE经toWKTString通用嗅探解码
 		boolean hana = (dt == DBType.HANA);
-		// update 2026-10-12 gbase8s的json为不透明类型:getObject报"customized type map
 		// required"、getString为IfxUDT.toString垃圾值,getBytes返回的即UTF-8 JSON文本
-		boolean gbase8s = (dt == DBType.GBASE8S);
-		if (!(oracle || db2gse || h2 || mssql || mysqlLike || hana || gbase8s)) {
+		if (!(oracle || db2gse || h2 || mssql || mysqlLike || hana)) {
 			return kinds;
 		}
 		for (int i = 0; i < kinds.length; i++) {
@@ -1558,8 +1551,6 @@ public class ResultUtils {
 			}
 			if (oracle && ("JSON".equals(t) || "VECTOR".equals(t))) {
 				kinds[i] = COLUMN_TEXT_READ;
-			} else if (gbase8s && "JSON".equals(t)) {
-				kinds[i] = COLUMN_BYTES_TEXT;
 			} else if (db2gse && t.contains("ST_GEOMETRY")) {
 				// update 2026-9-10 已知边界:db2gse的ST_Geometry列getString返回WKT文本,而12.1+
 				// 内置空间引擎的ST_GEOMETRY列getString返回驱动内部格式hex文本(无公开格式文档不做

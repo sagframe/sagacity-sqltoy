@@ -116,7 +116,15 @@ public class DateAdd extends IFunction {
 		// db2:x +/- n UNITs(复数单位)
 		if (dialect == DBType.DB2) {
 			if ("WEEK".equals(unit)) {
-				return "(" + base + (sub ? " - " : " + ") + stripNeg(nn) + "*7 DAYS)";
+				// update 2026-10-12 DB2的+n DAYS要求n为整数字面量,不接受算术表达式
+				// (1*7报SQLCODE=-182)也不接受带括号的(1)(报-206),原始n预乘7;
+				// 非纯数字(表达式/参数)响亮保留
+				try {
+					int n7 = Integer.parseInt(n.trim()) * 7;
+					return "(" + base + (sub ? " - " : " + ") + n7 + " DAYS)";
+				} catch (NumberFormatException e) {
+					return super.IGNORE;
+				}
 			}
 			return "(" + base + (sub ? " - " : " + ") + stripNeg(nn) + " " + unit + "S)";
 		}
@@ -124,6 +132,10 @@ public class DateAdd extends IFunction {
 		if (dialect == DBType.HANA) {
 			if ("DAY".equals(unit)) {
 				return "ADD_DAYS(" + base + "," + nn + ")";
+			}
+			// update 2026-10-12 hana无ADD_WEEKS,WEEK按7天转ADD_DAYS
+			if ("WEEK".equals(unit)) {
+				return "ADD_DAYS(" + base + "," + nn + "*7)";
 			}
 			if ("MONTH".equals(unit)) {
 				return "ADD_MONTHS(" + base + "," + nn + ")";
@@ -141,8 +153,8 @@ public class DateAdd extends IFunction {
 		}
 		// oracle系(oracle/oracle11/dm)与kingbase:月走add_months,其余算术;
 		// 裸字符串字面量按NLS解析报错(真库实测),base经oracleDateLiteralExpr包裹
-		if (dialect == DBType.ORACLE || dialect == DBType.ORACLE11 || dialect == DBType.DM || dialect == DBType.KINGBASE
-				|| dialect == DBType.GBASE8S) {
+		if (dialect == DBType.ORACLE || dialect == DBType.ORACLE11 || dialect == DBType.DM
+				|| dialect == DBType.KINGBASE) {
 			String ob = FunctionUtils.oracleDateLiteralExpr(base);
 			if ("MONTH".equals(unit)) {
 				return "add_months(" + ob + "," + nn + ")";

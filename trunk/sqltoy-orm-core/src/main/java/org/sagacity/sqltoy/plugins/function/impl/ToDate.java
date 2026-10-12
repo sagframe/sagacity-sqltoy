@@ -128,7 +128,7 @@ public class ToDate extends IFunction {
 		if (dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL14 || dialect == DBType.GAUSSDB
 				|| dialect == DBType.MOGDB || dialect == DBType.OPENGAUSS || dialect == DBType.VASTBASE
 				|| dialect == DBType.STARDB || dialect == DBType.OSCAR || dialect == DBType.KINGBASE
-				|| dialect == DBType.GBASE8S || dialect == DBType.HIGHGO) {
+				|| dialect == DBType.HIGHGO) {
 			// pg系2参to_date(text,text)原生支持,原样保留;1参转CAST AS date
 			// (str_to_date源换名to_date,pg无str_to_date)
 			if (args.length > 1) {

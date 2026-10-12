@@ -65,10 +65,8 @@ public class DateFormat extends IFunction {
 		case DBType.DM:
 			// 2026-9-11 hana无date_format,TO_CHAR为oracle兼容格式模型(非PG系,pgToCharParamCast原样透传)
 		case DBType.HANA:
-		case DBType.ORACLE11:
-			// update 2026-10-12 补GBASE8S(Informix无date_format,转to_char+oracle格式模型;
+		case DBType.ORACLE11: {
 			// to_char返回varchar经该容器驱动读回空串,外层包::lvarchar定型,真库实测)
-		case DBType.GBASE8S: {
 			// 日期
 			format = args[1].replace("%Y", "yyyy").replace("%y", "yy").replace("%m", "MM").replace("%d", "dd");
 			// 时间处理
@@ -84,7 +82,7 @@ public class DateFormat extends IFunction {
 			// 场景,numericModelPossible=false):vanilla PG对to_char(unknown,unknown)报重载歧义
 			String dfInner = "to_char(" + FunctionUtils.pgToCharParamCast(dialect, args[0], format, false) + ","
 					+ format + ")";
-			return (dialect == DBType.GBASE8S) ? dfInner + "::lvarchar" : dfInner;
+			return dfInner;
 		}
 		case DBType.MYSQL:
 		case DBType.DORIS:

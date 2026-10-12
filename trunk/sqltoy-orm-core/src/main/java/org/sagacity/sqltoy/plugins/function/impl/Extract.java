@@ -71,7 +71,7 @@ public class Extract extends IFunction {
 				|| dialect == DBType.OPENGAUSS || dialect == DBType.MOGDB || dialect == DBType.VASTBASE
 				|| dialect == DBType.OSCAR || dialect == DBType.STARDB || dialect == DBType.KINGBASE
 				|| dialect == DBType.HIGHGO || dialect == DBType.CLICKHOUSE || dialect == DBType.HANA
-				|| dialect == DBType.H2 || dialect == DBType.GBASE8S;
+				|| dialect == DBType.H2;
 		if (extractNative) {
 			// 基参定型按家族:pg系::timestamp;hana包to_date;mysql系/ch/h2裸参原生可解析
 			String typed = typedBase(dialect, base);
@@ -94,9 +94,9 @@ public class Extract extends IFunction {
 			String fmt = fmtOf(part);
 			return "cast(strftime('" + fmt + "'," + FunctionUtils.sqliteDateTextExpr(base) + ") as integer)";
 		}
-		// oracle/oracle11:年月日原生;QUARTER不被EXTRACT支持(实测)转to_char('Q');
-		// 时分秒须timestamp定型包CAST(DATE列直接EXTRACT报错)
-		if (dialect == DBType.ORACLE || dialect == DBType.ORACLE11) {
+		// oracle/oracle11/dm:年月日原生;QUARTER不被EXTRACT支持(实测oracle ORA-00907/
+		// dm报参数非法)转to_char('Q');时分秒须timestamp定型包CAST(DATE列直接EXTRACT报错)
+		if (dialect == DBType.ORACLE || dialect == DBType.ORACLE11 || dialect == DBType.DM) {
 			String ob = FunctionUtils.oracleDateLiteralExpr(base);
 			if ("QUARTER".equals(part)) {
 				return "to_number(to_char(" + ob + ",'Q'))";

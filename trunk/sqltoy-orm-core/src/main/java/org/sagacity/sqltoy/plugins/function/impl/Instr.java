@@ -58,10 +58,7 @@ public class Instr extends IFunction {
 		// strpos不能,须显式转换),2参形态按instr同序映射:charindex与db2的locate须对调参数,
 		// hana的locate同序,其余instr系库直接换名;>2参为CH的start_pos/occurrence扩展,
 		// 其余库无对应形态,原样保留交由目标库报错
-		// update 2026-10-12 GBase 8s:instr(str,sub[,pos])原生同序(真库探针=2),透传
-		if (dialect == DBType.GBASE8S && "instr".equals(funLow)) {
-			return super.IGNORE;
-		}
+
 		// update 2026-10-11 补locate/posstr源函数(mysql与db2用户写法,全量拼写审计):
 		// 两者均为needle-first参数序(needle,haystack[,pos])。mysql系与db2原生同名同序透传;
 		// hana的locate虽原生但参数序相反(haystack在前),同名异序无法辨源,按本框架mysql源惯例统一按mysql序转换(类注释已声明);

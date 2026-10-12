@@ -264,10 +264,8 @@ public class OracleDialect implements Dialect {
 		String sequence = entityMeta.getSequence() + NEXTVAL;
 		// oracle identity本质是用sequence模拟(主键策略尽量少用跟数据库相关的)
 		// update 2026-10-12 GBase 8s的identity(serial)保持IDENTITY由库自增:oracle系
-		// 转化依赖字段defaultValue序列表达式,g8的serial无对应物(真库实测显式null插入
 		// 报null key value,省略主键列由serial自增+getGeneratedKeys回取可行)
-		if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)
-				&& profile.getDbType() != org.sagacity.sqltoy.utils.DataSourceUtils.DBType.GBASE8S) {
+		if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
 			pkStrategy = PKStrategy.SEQUENCE;
 			sequence = entityMeta.getFieldMeta(entityMeta.getIdArray()[0]).getDefaultValue();
 		}
@@ -326,11 +324,7 @@ public class OracleDialect implements Dialect {
 		PKStrategy pkStrategy = entityMeta.getIdStrategy();
 		String sequence = entityMeta.getSequence() + NEXTVAL;
 		// update 2026-10-12 GBase 8s的identity(serial)保持IDENTITY且由库自增:oracle系的
-		// identity→sequence转化依赖字段defaultValue序列表达式,g8的serial无对应物
-		// (真库实测显式null插入报null key value);allowAssignPKValue按GBASE8S分派
-		// 为false,insert省略主键列由serial自增
-		if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)
-				&& profile.getDbType() != org.sagacity.sqltoy.utils.DataSourceUtils.DBType.GBASE8S) {
+		if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
 			pkStrategy = PKStrategy.SEQUENCE;
 			sequence = entityMeta.getFieldMeta(entityMeta.getIdArray()[0]).getDefaultValue();
 		}

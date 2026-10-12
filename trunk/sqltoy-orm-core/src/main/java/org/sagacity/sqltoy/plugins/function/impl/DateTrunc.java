@@ -37,7 +37,6 @@ public class DateTrunc extends IFunction {
 	}
 
 	@Override
-	// update 2026-10-12 GBASE8S:Informix无trunc/date_trunc日期截断(真库探针),
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
 		String funLow = functionName.toLowerCase(Locale.ROOT);
 		// 1参trunc(x):全库透传(oracle的日截断原生;亦保护数值trunc用法)
@@ -61,12 +60,11 @@ public class DateTrunc extends IFunction {
 			return super.IGNORE;
 		}
 		// ---- 原生透传族 ----
-		// update 2026-10-12 补GBASE8S:Informix的trunc(x,'code')原生(MM/Q/IW真库探针均验,
 		// oracle兼容格式模型;无date_trunc函数由下方转换族承担)
 		boolean truncNative = dialect == DBType.ORACLE || dialect == DBType.ORACLE11 || dialect == DBType.DM
 				|| dialect == DBType.DB2 || dialect == DBType.OPENGAUSS || dialect == DBType.GAUSSDB
 				|| dialect == DBType.MOGDB || dialect == DBType.OSCAR || dialect == DBType.STARDB
-				|| dialect == DBType.VASTBASE || dialect == DBType.KINGBASE || dialect == DBType.GBASE8S;
+				|| dialect == DBType.VASTBASE || dialect == DBType.KINGBASE;
 		// trunc(x,'code')原生:oracle/oracle11/dm/db2/og系/kingbase/vastbase(真库探针);
 		// 例外:WEEK单位在og内核族(og5实测不认IW码,与og7同方言名无法按方言区分)统一
 		// 走下方date_trunc('week')转换,该形态og5/og7/kb/vb真库均验证
@@ -98,10 +96,7 @@ public class DateTrunc extends IFunction {
 				return "date_trunc('week'," + FunctionUtils.castLiteralTimestamp(base) + ")";
 			}
 			// date_trunc/trunc_timestamp源转oracle码形态TRUNC(x,'code')
-			// update 2026-10-12 g8无to_date,字面量日期用cast(x as date)定型(informix
-			// 实测可用,同DateDiff的g8DateExpr形态);列/表达式原样
-			String baseExpr = (dialect == DBType.GBASE8S) ? FunctionUtils.castLiteralDate(base)
-					: FunctionUtils.oracleDateLiteralExpr(base);
+			String baseExpr = FunctionUtils.oracleDateLiteralExpr(base);
 			return "TRUNC(" + baseExpr + ",'" + oracleCode(unit) + "')";
 		}
 		if (dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL14 || dialect == DBType.CLICKHOUSE

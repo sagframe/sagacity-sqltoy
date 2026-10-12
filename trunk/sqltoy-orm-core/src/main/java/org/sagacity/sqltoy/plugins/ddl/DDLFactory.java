@@ -84,11 +84,7 @@ public class DDLFactory {
 		}
 		case DBType.ORACLE:
 		case DBType.ORACLE11:
-		case DBType.DM:
-			// update 2026-10-12 补GBASE8S(Informix内核DDL同oracle形态结构,自增由
-			// SERIAL类型族在DDLUtils类型映射承担):原落default的DefaultDDLGenerator,
-			// 任何DDL生成调用直接抛"DDL generation is not implemented"
-		case DBType.GBASE8S: {
+		case DBType.DM: {
 			generator = new OracleDDLGenerator();
 			break;
 		}

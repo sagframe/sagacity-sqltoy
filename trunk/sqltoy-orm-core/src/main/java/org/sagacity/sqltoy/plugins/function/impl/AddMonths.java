@@ -42,7 +42,7 @@ public class AddMonths extends IFunction {
 		if (dialect == DBType.ORACLE || dialect == DBType.ORACLE11 || dialect == DBType.DM || dialect == DBType.HANA
 				|| dialect == DBType.OPENGAUSS || dialect == DBType.GAUSSDB || dialect == DBType.MOGDB
 				|| dialect == DBType.VASTBASE || dialect == DBType.OSCAR || dialect == DBType.STARDB
-				|| dialect == DBType.KINGBASE || dialect == DBType.GBASE8S || dialect == DBType.HIGHGO) {
+				|| dialect == DBType.KINGBASE || dialect == DBType.HIGHGO) {
 			// update 2026-10-11 瀚高:add_months对裸字符串字面量报interval解析错(真库实测),
 			// 字面量包cast(x as date);列/表达式保持原生透传
 			if (dialect == DBType.HIGHGO && !args[0].trim().equals(FunctionUtils.castLiteralDate(args[0]).trim())) {
@@ -51,7 +51,7 @@ public class AddMonths extends IFunction {
 			// update 2026-10-11 oracle系(含dm/kingbase)对裸字符串字面量按NLS解析报ORA-01861,
 			// 字面量参数包to_date渲染(真库实测);列/表达式保持原生透传
 			if ((dialect == DBType.ORACLE || dialect == DBType.ORACLE11 || dialect == DBType.DM
-					|| dialect == DBType.KINGBASE || dialect == DBType.GBASE8S || dialect == DBType.HIGHGO)
+					|| dialect == DBType.KINGBASE || dialect == DBType.HIGHGO)
 					&& !args[0].trim().equals(FunctionUtils.oracleDateLiteralExpr(args[0]).trim())) {
 				return "add_months(" + FunctionUtils.oracleDateLiteralExpr(args[0]) + "," + args[1] + ")";
 			}

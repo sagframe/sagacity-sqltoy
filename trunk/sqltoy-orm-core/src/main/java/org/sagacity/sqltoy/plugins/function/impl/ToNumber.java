@@ -57,7 +57,7 @@ public class ToNumber extends IFunction {
 		if (dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL14 || dialect == DBType.GAUSSDB
 				|| dialect == DBType.MOGDB || dialect == DBType.OPENGAUSS || dialect == DBType.VASTBASE
 				|| dialect == DBType.STARDB || dialect == DBType.OSCAR || dialect == DBType.KINGBASE
-				|| dialect == DBType.GBASE8S || dialect == DBType.HIGHGO) {
+				|| dialect == DBType.HIGHGO) {
 			return "CAST(" + args[0] + " AS numeric)";
 		}
 		// mysql系/sqlserver/H2/DB2/sqlite:DECIMAL(20,6)精度契约见类注释

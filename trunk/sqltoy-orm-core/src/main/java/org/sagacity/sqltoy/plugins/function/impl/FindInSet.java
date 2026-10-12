@@ -100,11 +100,8 @@ public class FindInSet extends IFunction {
 				|| dialect == DBType.HIGHGO) {
 			return "(strpos(','||" + list + "||',', ','||" + str + "||',')" + cmp + ")";
 		}
-		// update 2026-10-12 GBASE8S:Informix无strpos,以原生instr(str,sub)同序承担
-		// (真库探针instr('admin','dmi')=2);||拼接原生;多参Informix无对应形态原样保留响亮
-		if (dialect == DBType.GBASE8S) {
-			return "(instr(','||" + list + "||',', ','||" + str + "||',')" + cmp + ")";
-		}
+		// 原生可用(乌龙排查实证instr('admin','d',1)=2,原注释"多参无对应"系误判,透传即生效)
+
 		// MySQL语法系但无find_in_set的库(h2/doris/starrocks):concat包裹+instr精确子串
 		// (instr(str,sub)在此三库的原生形态,见Instr适配器);||在MySQL语法系是OR,必须用concat
 		if (dialect == DBType.H2 || dialect == DBType.DORIS || dialect == DBType.STARROCKS) {

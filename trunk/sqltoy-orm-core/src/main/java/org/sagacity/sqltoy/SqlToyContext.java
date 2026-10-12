@@ -1015,8 +1015,6 @@ public class SqlToyContext {
 			this.dialect = Dialect.KINGBASE;
 		} else if (tmp.startsWith(Dialect.HIGHGO)) {
 			this.dialect = Dialect.HIGHGO;
-		} else if (tmp.startsWith(Dialect.GBASE8S)) {
-			this.dialect = Dialect.GBASE8S;
 		} else if (tmp.startsWith(Dialect.IMPALA) || tmp.contains("kudu")) {
 			this.dialect = Dialect.IMPALA;
 		} else if (tmp.startsWith(Dialect.TDENGINE)) {

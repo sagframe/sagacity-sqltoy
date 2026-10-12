@@ -96,10 +96,6 @@ public class ReservedWordsUtil {
 		if (dbType == DBType.H2) {
 			return sql.replace("[", "\"").replace("]", "\"");
 		}
-		// update 2026-10-12 GBase 8s(Informix内核)归剔除族:双引号定界标识符需
-		// DELIMIDENT环境变量(容器未设,真库实测create table ("name"...)报语法错),保留字列
-		// 在目标库响亮报错由用户改名规避
-		// 剔除保留字符号
 		return sql.replace("[", "").replace("]", "");
 	}
 
