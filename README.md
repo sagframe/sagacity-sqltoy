@@ -1,7 +1,7 @@
 English | [简体中文](README.zh-CN.md)
 
 <p align="center">
-    <img src="https://img.shields.io/badge/SqlToy-6.0.4-blue" alt="version">
+    <img src="https://img.shields.io/badge/SqlToy-6.0.5-blue" alt="version">
     <a target="_blank" href="LICENSE"><img src="https://img.shields.io/:license-Apache%202.0-blue.svg"></a>
     <a target="_blank" href="https://github.com/sagframe/sagacity-sqltoy"><img src="https://img.shields.io/github/stars/sagframe/sagacity-sqltoy.svg?style=social"/></a>
     <a target="_blank" href="https://gitee.com/sagacity/sagacity-sqltoy"><img src="https://gitee.com/sagacity/sagacity-sqltoy/badge/star.svg?theme=white" /></a>
@@ -39,7 +39,7 @@ SqlToy is a fusion of JPA and ultra-powerful querying — the distilled and shar
 
 QQ group: **531812227** | [Gitee](https://gitee.com/sagacity/sagacity-sqltoy) | [GitHub](https://github.com/sagframe/sagacity-sqltoy) | [GitCode](https://gitcode.com/sqltoy/sagacity-sqltoy)
 
-## 📦 Latest Version 6.0.4
+## 📦 Latest Version 6.0.5
 
 ```xml
 <dependency>
@@ -49,7 +49,7 @@ QQ group: **531812227** | [Gitee](https://gitee.com/sagacity/sagacity-sqltoy) | 
 	<!-- traditional Spring project <artifactId>sagacity-sqltoy-spring</artifactId> -->
 	<!-- plain sqltoy only <artifactId>sagacity-sqltoy</artifactId> -->
 	<!-- for jdk8 the corresponding version is: 5.6.96.jre8 (final version, also works with the quickvo-maven-plugin) -->
-	<version>6.0.4</version>
+	<version>6.0.5</version>
 </dependency>
 ```
 
@@ -63,7 +63,7 @@ QQ group: **531812227** | [Gitee](https://gitee.com/sagacity/sagacity-sqltoy) | 
 | Object operations | JPA-style CRUD, elastic update, updateFetch / updateSaveFetch, cascades, query hierarchy packaging, tree-table routing |
 | SQL query | Dynamic SQL (`#[]` + filters), Cache Translate (incl. extra-large FIFO dynamic cache), the most powerful pagination (count optimization / cached / fast / parallel), parallel query, stored procedures, streaming query |
 | Data analysis | Row-to-column / column-to-row pivot, grouped totals, year-over-year / period-over-period comparison, tree-sorted aggregation, group concatenation, date and number formatting |
-| Cross-database | 24 dialects (incl. SAP HANA), automatic function replacement, multi-dialect sqlId, multi-database adaptation verification |
+| Cross-database | 25 dialects (incl. SAP HANA, HighGo), automatic function replacement, multi-dialect sqlId, multi-database adaptation verification |
 | Enterprise-grade | Database & table sharding, multi-tenancy, data permission and privilege-escalation validation, data masking with encryption/decryption, data version control, SQL interception, slow SQL handling |
 | NoSQL | Elasticsearch (sql / json dual mode), MongoDB (query / aggregation + Cache Translate) |
 | Engineering | quickvo code generation, autoDDL automatic table creation, debug hot reload, GraalVM AOT, Spring Boot / Spring / Solon / plain Java |
