@@ -4,6 +4,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.Locale;
 
+import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 
 /**
@@ -220,6 +221,18 @@ public class DBProfile {
 	 */
 	public boolean supportsUpdatableResultSet() {
 		return dbType != DBType.CLICKHOUSE && dbType != DBType.HANA;
+	}
+
+	/**
+	 * update 2026-10-13 声明型事实:该库select常量行所需的虚表(伪表)名。
+	 * 单一事实源为DataSourceUtils.getVirtualTable(Integer),本getter为连接档案持有者的
+	 * 快速获取通道(零新存储字段)。返回空串表示该库原生支持无from select(mysql系/pg系/
+	 * sqlserver等),非空表示需要挂伪表(如oracle系返回"dual"、db2返回"SYSIBM.SYSDUMMY1")。
+	 * 与@virtualTable()宏展开(SqlConfigParseUtils.expandVirtualTable)及各方言Dialect的
+	 * VIRTUAL_TABLE常量同源
+	 */
+	public String getVirtualTable() {
+		return DataSourceUtils.getVirtualTable(dbType);
 	}
 
 	/**

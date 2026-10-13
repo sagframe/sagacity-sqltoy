@@ -76,6 +76,9 @@ import org.slf4j.LoggerFactory;
  *         参数都为null时自动补全双括号(t.id,t.type) in ((null,null))}
  * @modify Date:2024-10-02 强化@if功能，增加@elseif 和 @else 的支持
  * @modify Date:2024-11-19 对in条件查询参数做去除重复处理
+ * @modify Date:2026-10-13 增加虚表宏@virtualTable()(兼容别名@dual/@dummyTable,忽略大小写),
+ *         select常量行伪表按方言展开(oracle系→from dual、db2→from sysibm.sysdummy1、
+ *         hana→from dummy、其余库剔除),免除手写/删除from dual的两难
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class SqlConfigParseUtils {
@@ -117,6 +120,12 @@ public class SqlConfigParseUtils {
 	public final static Pattern BLANK_START_PATTERN = Pattern.compile(BLANK_START_REGEX);
 	public final static String VALUE_REGEX = "(?i)\\@value\\s*\\(\\s*(\\?|null)\\s*\\)";
 	public final static Pattern VALUE_PATTERN = Pattern.compile(VALUE_REGEX);
+	// update 2026-10-13 虚表宏:select常量行无from场景按方言展开伪表(oracle系→from dual、db2→from
+	// sysibm.sysdummy1、支持无from select的库→剔除宏),实现"select 常量行 union 真实查询"类sql跨库;
+	// 正式名@virtualTable(与各Dialect的VIRTUAL_TABLE常量同词),@dual/@dummyTable为兼容别名
+	// (Oracle方言直觉/官方dummy table术语直觉),三名共用同一展开逻辑且均忽略大小写
+	public final static String VIRTUAL_TABLE_REGEX = "(?i)\\@(virtualTable|dual|dummyTable)\\s*\\(\\s*\\)";
+	public final static Pattern VIRTUAL_TABLE_PATTERN = Pattern.compile(VIRTUAL_TABLE_REGEX);
 	public final static Pattern IF_PATTERN = Pattern.compile("(?i)\\@if\\s*\\(");
 	public final static Pattern START_IF_PATTERN = Pattern.compile("(?i)^\\s*\\@if\\s*\\(");
 	public final static Pattern ELSEIF_PATTERN = Pattern.compile("(?i)\\@elseif\\s*\\(");
@@ -1748,6 +1757,10 @@ public class SqlConfigParseUtils {
 		// 清理sql中的一些注释、以及特殊的符号
 		String originalSql = SqlUtil.clearMistyChars(SqlUtil.clearMark(SqlUtil.uniformFastMarks(querySql)), BLANK)
 				.concat(BLANK);
+		// update 2026-10-13 虚表宏@virtualTable()按方言展开为伪表或剔除(须在函数/保留字转换前,
+		// 展开后的from dual参与后续统一处理;解析期随SqlToyConfig固化,realDialectFirst惰性层
+		// 只做函数/保留字形态转换不还原宏,宏形态仅在解析方言下生效)
+		originalSql = expandVirtualTable(originalSql, dialect);
 		// 对sql中的函数进行特定数据库方言转换
 		originalSql = FunctionUtils.getDialectSql(originalSql, dialect);
 		// 对关键词根据数据库类型进行转换,比如mysql的 ``变成mssql时变为[]
@@ -1797,6 +1810,48 @@ public class SqlConfigParseUtils {
 		// 提取sql中的参数名称(按方言转义规则掩码,mysql系\'字面量后的真参数不被掩掉)
 		sqlToyConfig.setParamsName(getSqlParamsName(sqlToyConfig.getSql(dialect), true, backslashEscape));
 		return sqlToyConfig;
+	}
+
+	/**
+	 * update 2026-10-13 虚表宏@virtualTable()按方言展开(兼容别名@dual()/@dummyTable(),三名共用
+	 * 同一展开逻辑,均忽略大小写)
+	 * <p>
+	 * 场景:"select 常量行 union 真实查询"的sql(如字典缓存兜底行 select '0' id,'全局' name union
+	 * select id,name from t)在oracle/db2/hana必须挂伪表,而pg/mysql/sqlserver等支持无from的
+	 * select。统一写法:select '0' id,'全局' name @virtualTable() union select id,name from t,
+	 * 由本方法按解析方言展开,不再需要手写from dual(在pg/sqlserver上报语法错)或删掉dual
+	 * (在oracle上报ORA-00923)二选一。
+	 * <p>
+	 * 伪表映射对齐各Dialect实现自身生成merge语句所用伪表(OracleDialect/DB2Dialect/HanaDialect
+	 * 的VIRTUAL_TABLE常量):oracle系(oracle/oracle11/dm/oceanbase)→dual;db2→sysibm.sysdummy1;
+	 * hana→dummy。其余方言(mysql/mysql57/tidb/doris/starrocks、postgresql/postgresql14/gaussdb/
+	 * mogdb/opengauss/stardb/vastbase/oscar/kingbase/highgo、sqlserver、sqlite、h2、clickhouse、
+	 * impala、tdengine)的merge生成sql本身即无伪表——原生支持无from select,剔除宏输出空白;
+	 * mongo/es非sql方言、undefine未识别,同样剔除。展开发生在解析期随SqlToyConfig固化(同函数/
+	 * 保留字转换时机),realDialectFirst运行期惰性层不感知宏(仅做函数/保留字形态转换),跨方言多
+	 * 数据源场景以解析方言的展开结果执行;新增DBType若未纳入下方分支,default剔除并经由
+	 * VirtualTableMacroTest.allDbTypesCovered反射穷举断言暴露
+	 * 
+	 * @param sql
+	 * @param dialect
+	 * @return
+	 */
+	public static String expandVirtualTable(String sql, String dialect) {
+		if (StringUtil.isBlank(sql) || !sql.contains("@")) {
+			return sql;
+		}
+		Matcher matcher = VIRTUAL_TABLE_PATTERN.matcher(sql);
+		if (!matcher.find()) {
+			return sql;
+		}
+		// update 2026-10-13 虚表判定收敛到DataSourceUtils.getVirtualTable单一事实源,
+		// DBProfile.getVirtualTable为本方法的档案持有者快速通道(零重复映射)
+		String virtualTable = DataSourceUtils.getVirtualTable(DataSourceUtils.getDBType(dialect));
+		// 无虚表的方言返回空串,展开为空白(剔除宏);有虚表的展开为" from xxx "
+		if (StringUtil.isBlank(virtualTable)) {
+			return matcher.replaceAll(BLANK);
+		}
+		return matcher.replaceAll(" from " + virtualTable + " ");
 	}
 
 	/**
