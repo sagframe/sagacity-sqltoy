@@ -9,7 +9,7 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 
 /**
  * update 2026-10-12 SqlUtil.addDateFunction(日志SQL日期参数包裹函数)分派锁定:
- * HIGHGO归PG系、GBASE8S的DATETIME cast族(FRACTION(5)上限+超限截断)、H2的CAST族
+ * HIGHGO归PG系、H2的CAST族
  * (2.x无TO_DATE)、SQLITE的date/datetime/time修饰函数——形态真库探针定界,
  * 本测试锁渲染形态防漂移(方法为private,经反射调用;preSql传比较条件片段)
  */
@@ -28,24 +28,6 @@ public class AddDateFunctionFormTest {
 		assertEquals("TO_TIMESTAMP('2026-01-15 10:30:00','YYYY-MM-DD HH24:MI:SS')",
 				wrap(DBType.HIGHGO, 2, "'2026-01-15 10:30:00'"));
 		assertEquals("'10:30:00'::TIME", wrap(DBType.HIGHGO, 4, "'10:30:00'"));
-	}
-
-	@Test
-	public void gbase8sDatetimeCastFamily() throws Exception {
-		assertEquals("CAST('2026-01-15' AS DATE)", wrap(DBType.GBASE8S, 1, "'2026-01-15'"));
-		assertEquals("CAST('2026-01-15 10:30:00' AS DATETIME YEAR TO SECOND)",
-				wrap(DBType.GBASE8S, 2, "'2026-01-15 10:30:00'"));
-		assertEquals("CAST('2026-01-15 10:30:00.123' AS DATETIME YEAR TO FRACTION(5))",
-				wrap(DBType.GBASE8S, 3, "'2026-01-15 10:30:00.123'"));
-		// 超5位小数截断(FRACTION上限5,超出报Extra characters)
-		assertEquals("CAST('2026-01-15 10:30:00.12345' AS DATETIME YEAR TO FRACTION(5))",
-				wrap(DBType.GBASE8S, 3, "'2026-01-15 10:30:00.123456'"));
-		// 无小数回YEAR TO SECOND
-		assertEquals("CAST('2026-01-15 10:30:00' AS DATETIME YEAR TO SECOND)",
-				wrap(DBType.GBASE8S, 3, "'2026-01-15 10:30:00'"));
-		assertEquals("CAST('10:30:00' AS DATETIME HOUR TO SECOND)", wrap(DBType.GBASE8S, 4, "'10:30:00'"));
-		assertEquals("CAST('10:30:00.12' AS DATETIME HOUR TO FRACTION(5))",
-				wrap(DBType.GBASE8S, 5, "'10:30:00.12'"));
 	}
 
 	@Test

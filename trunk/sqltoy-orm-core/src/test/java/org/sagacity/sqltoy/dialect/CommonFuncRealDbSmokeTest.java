@@ -400,12 +400,9 @@ public class CommonFuncRealDbSmokeTest {
 	private void verifyQueries(String label, Connection conn, String dialect, List<String> failures) {
 		String[] funcs = { "year", "month", "day", "last_day", "add_months", "uuid" };
 		for (String f : funcs) {
-			// openGauss系(og/og7)/db2的uuid为响亮放弃形态,断言其真库确无此函数(而非执行)
-			if ("uuid".equals(f) && ("opengauss".equals(label) || "og7".equals(label) || "db2".equals(label))) {
-				runCase(label, conn, dialect, "uuid-loud", failures);
-			} else {
-				runCase(label, conn, dialect, f, failures);
-			}
+			// update 2026-10-12 uuid三级策略后og系(合成v4形态)/db2(generate_uuid)均真库可执行,
+			// 原uuid-loud响亮断言随策略废弃,全部走统一形态断言(36带连字符或32hex)
+			runCase(label, conn, dialect, f, failures);
 		}
 	}
 
@@ -437,19 +434,6 @@ public class CommonFuncRealDbSmokeTest {
 			sql = c("select uuid() from sqltoy_cf_t where id=1", dialect);
 			expectDesc = "uuid";
 			break;
-		case "uuid-loud":
-			// openGauss系:适配器响亮放弃(无原生uuid),断言真库确报函数不存在
-			sql = c("select uuid() from sqltoy_cf_t where id=1", dialect);
-			expectDesc = "uuid-loud";
-			break;
-		}
-		if ("uuid-loud".equals(expectDesc)) {
-			try (PreparedStatement pst = conn.prepareStatement(sql); ResultSet rs = pst.executeQuery()) {
-				failures.add(label + " uuid应响亮失败但真库可执行: " + sql);
-			} catch (Exception e) {
-				// 期望路径:真库报函数不存在,证明响亮放弃设计正确
-			}
-			return;
 		}
 		try {
 			String actual;

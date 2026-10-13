@@ -3,7 +3,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sagframe</groupId>
-	<version>6.0.5.RC2</version>
+	<version>6.0.5</version>
 	<name>sagacity-sqltoy</name>
 	<description>sqltoy core code</description>
 	<artifactId>sagacity-sqltoy</artifactId>
@@ -275,15 +275,6 @@
 			<scope>test</scope>
 			<optional>true</optional>
 		</dependency>
-		<!-- 20261012 GBase 8s真实库冒烟测试驱动(test scope;jar从社区镜像容器内提取,
-		     com.gbasedbt.jdbc.IfmxDriver;不在中央仓库,本地仓库手工安装) -->
-		<!--<dependency>
-			<groupId>com.gbasedbt</groupId>
-			<artifactId>gbasedbt-jdbc</artifactId>
-			<version>3.70.1.61</version>
-			<scope>test</scope>
-			<optional>true</optional>
-		</dependency>-->
 		<!-- 20261009 oceanbase真实库冒烟测试驱动(test scope,不进入发布产物;不需要可移除;
 		     与sqltoy-verify验证工程同版本,CE容器mysql模式租户2881端口) -->
 		<dependency>

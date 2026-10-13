@@ -135,10 +135,12 @@ public class Uuid extends IFunction {
 
 		// openGauss系之PG内核成员(og/gaussdb/mogdb):无uuid族函数但有random()/md5()/
 		// clock_timestamp(),降级合成(策略2):uuid族→v4形态36位,sys_guid/guid→32hex md5;
-		// uuid_generate_v4/v7为uuid-ossp标准拼写透传(策略3:运维CREATE EXTENSION后原生
-		// 生效,未部署响亮报错)
+		// uuid_generate_v4/v7为uuid-ossp标准拼写、gen_random_uuid为pgcrypto标准拼写,
+		// 均透传(策略3:运维CREATE EXTENSION后原生生效,未部署响亮报错;
+		// gen_random_uuid透传使部署pgcrypto的环境走原生CSPRNG而非md5降级)
 		if (dialect == DBType.OPENGAUSS || dialect == DBType.GAUSSDB || dialect == DBType.MOGDB) {
-			if ("uuid_generate_v4".equals(funLow) || "uuid_generate_v7".equals(funLow)) {
+			if ("uuid_generate_v4".equals(funLow) || "uuid_generate_v7".equals(funLow)
+					|| "gen_random_uuid".equals(funLow)) {
 				return super.IGNORE;
 			}
 			return ("sys_guid".equals(funLow) || "guid".equals(funLow)) ? OG_MD5 : OG_V4;

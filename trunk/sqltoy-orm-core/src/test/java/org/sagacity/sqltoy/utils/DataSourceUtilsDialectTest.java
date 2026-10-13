@@ -107,10 +107,10 @@ public class DataSourceUtilsDialectTest {
 		IgnoreKeyCaseMap<String, String> backup = new IgnoreKeyCaseMap<String, String>(DataSourceUtils.dialectMap);
 		try {
 			DataSourceUtils.dialectMap.clear();
-			// 产品名"GBase 8s"同时含两个key,最长key优先且结果稳定(不依赖ConcurrentHashMap迭代顺序)
-			DataSourceUtils.dialectMap.put("gbase", "mysql");
-			DataSourceUtils.dialectMap.put("gbase8s", "sqlserver");
-			assertEquals("sqlserver", DataSourceUtils.getCurrentDBDialect(mockConnection("GBase 8s")));
+			// 产品名同时含两个key,最长key优先且结果稳定(不依赖ConcurrentHashMap迭代顺序)
+			DataSourceUtils.dialectMap.put("acme", "mysql");
+			DataSourceUtils.dialectMap.put("acmedb", "sqlserver");
+			assertEquals("sqlserver", DataSourceUtils.getCurrentDBDialect(mockConnection("AcmeDB Server")));
 		} finally {
 			DataSourceUtils.dialectMap.clear();
 			DataSourceUtils.dialectMap.putAll(backup);

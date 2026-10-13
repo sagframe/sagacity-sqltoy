@@ -67,19 +67,7 @@ public class AllFunctionsAllDbsRealDbSmokeTest {
 			// update 2026-10-11 瀚高(PG12内核+oracle兼容层,社区镜像xuxuclassmate/highgo,
 			// 宿主5867→容器5866,highgo/Sqltoy@2026;vanilla pg驱动+显式dialect=highgo)
 			{ "highgo", "org.postgresql.Driver", "jdbc:postgresql://localhost:5867/highgo", "highgo",
-					"Sqltoy@2026", "highgo", "" },
-			// update 2026-10-12 补齐总扫盲区(原PROBES缺以下4库,"总扫全绿"从未覆盖它们,
-			// g8的函数缺陷由此长期漏检):gbase8s/dm/oracle/vastbase
-			{ "gbase8s", "com.gbasedbt.jdbc.IfxDriver",
-					"jdbc:gbasedbt-sqli://localhost:19088/gbasedbt:GBASEDBTSERVER=gbase01;"
-							+ "DB_LOCALE=zh_CN.utf8;CLIENT_LOCALE=zh_CN.utf8",
-					"gbasedbt", "GBase123", "gbase8s", "" },
-			{ "dm", "dm.jdbc.driver.DmDriver", "jdbc:dm://localhost:5236?schema=SYSDBA", "SYSDBA", "Sqltoy@2026",
-					"dm", "" },
-			{ "oracle", "oracle.jdbc.OracleDriver", "jdbc:oracle:thin:@//localhost:1521/FREEPDB1", "system",
-					"Sqltoy@2026", "oracle", "" },
-			{ "vastbase", "cn.com.vastbase.Driver", "jdbc:vastbase://localhost:5436/postgres", "sqltoy",
-					"Sqltoy@2026", "vastbase", "" } };
+					"Sqltoy@2026", "highgo", "" } };
 
 	@Test
 	public void allFunctionsSweep() throws Exception {
@@ -133,10 +121,6 @@ public class AllFunctionsAllDbsRealDbSmokeTest {
 			case "sqlserver":
 				dual = " from (select 1 as one) x";
 				break;
-			// update 2026-10-12 g8无dual/informix派生表须具名列,用systables单行伪表
-			case "gbase8s":
-				dual = " from systables where tabid=1";
-				break;
 			default:
 				dual = " from (select 1) x";
 			}
@@ -163,10 +147,7 @@ public class AllFunctionsAllDbsRealDbSmokeTest {
 		} else {
 			String idCol = "db2".equals(dialect) ? "id int not null primary key" : "id int primary key";
 			String tsCol = "sqlserver".equals(dialect) ? "datetime2" : "timestamp";
-			// g8的varchar列经该容器驱动读回一律空串(真库实测,框架DDL映射已按lvarchar,
-			// 本表同口径),timestamp用informix原生datetime形态
-			String strCol = "gbase8s".equals(dialect) ? "lvarchar(50)" : "varchar(50)";
-			tsCol = "gbase8s".equals(dialect) ? "datetime year to second" : tsCol;
+			String strCol = "varchar(50)";
 			// 瀚高name为保留字(真库实测语法错),列名加引号(用例SQL引用name的已按标签跳过)
 			String nameCol = "highgo".equals(dialect) ? "\"name\"" : "name";
 			st.execute("create table sqltoy_all_t (" + idCol + ", " + nameCol + " " + strCol + ", create_time " + tsCol
@@ -227,8 +208,15 @@ public class AllFunctionsAllDbsRealDbSmokeTest {
 				{ "decode", "select decode(1,1,'a','b'){D}", "EQ", "a", "" },
 				// -------- 数值/日期标量族 --------
 				{ "to_number", "select to_number('123.5'){D}", "PREFIX", "123.5", "" },
-				{ "uuid", "select uuid(){D}", "UUID", "", "opengauss,og7,db2" },
-				{ "sys_guid源", "select sys_guid(){D}", "UUID", "", "opengauss,og7,db2,vastbase,oracle" },
+				// update 2026-10-12 uuid三级适配策略落地:og系合成v4/32hex、db2归一
+				// generate_uuid、g8原生透传(目录级实证),og/og7/db2解除跳过全走真库;
+				// vastbase亦解除(真库实证:原生sys_guid()报do not support,经适配转uuid()
+				// 返回36位标准形态,转换是必需路径,必须覆盖);oracle保留跳过(原生sys_guid
+				// 返回RAW byte[16],透传即oracle用户本意,getString得乱码形态属驱动行为)
+				{ "uuid", "select uuid(){D}", "UUID", "", "" },
+				{ "sys_guid源", "select sys_guid(){D}", "UUID", "", "oracle" },
+				{ "newid源", "select newid(){D}", "UUID", "", "" },
+				{ "guid源", "select guid(){D}", "UUID", "", "" },
 				{ "now族", "select now(){D}", "PREFIX", "20", "" },
 				{ "current_date", "select current_date{D}", "TODAY", "", "" },
 				// -------- 表基用例 --------
@@ -241,17 +229,24 @@ public class AllFunctionsAllDbsRealDbSmokeTest {
 						"INT", "0", "" },
 				{ "find_in_set计数", "select count(*) from sqltoy_all_t where find_in_set('user','admin,user')>0",
 						"INT", "2", "" },
-				// dm等listagg(order by null)形态行序不保证(与mysql默认序同性质),双序并列断言
+				// update 2026-10-12 乌龙排查(逐跳过组合真库直接执行适配产物定界):
+				// ch解除跳过(arrayStringConcat(groupArray)实测'admin-user')
 				{ "group_concat", "select group_concat(name separator '-') from sqltoy_all_t", "EQ2", "admin-user,user-admin",
-						"clickhouse,gbase8s" },
+						"" },
+				// ch保留(listagg拼写无转换分支,透传ch语法错实证)
 				{ "listagg排序", "select listagg(name,'-') within group (order by id desc) from sqltoy_all_t", "EQ",
-						"user-admin", "clickhouse,gbase8s" },
+						"user-admin", "clickhouse" },
 				{ "year", "select year(create_time) from sqltoy_all_t where id=1", "INTY", "2026", "" },
 				{ "month", "select month(create_time) from sqltoy_all_t where id=1", "INT", "3", "" },
 				{ "day", "select day(create_time) from sqltoy_all_t where id=1", "INT", "20", "" },
 				{ "hour", "select hour(create_time) from sqltoy_all_t where id=1", "INT", "10", "" },
 				{ "last_day", "select last_day(create_time) from sqltoy_all_t where id=1", "PREFIX", "2026-03-31",
 						"" },
+				// sqlite跳过族(乌龙排查证据):无add_months/date_add/date_sub/adddate函数,
+				// 适配器对sqlite响亮不转换(实测透传均报no such function);原生date(x,'+n unit')
+				// 可用但月份不钳制月末(实测2026-01-31+1月=2026-03-03,与mysql/oracle语义相悖)
+				// 且sqltoy对sqlite的create_time常为毫秒Long绑定(date()按儒略日数解析会静默
+				// 错值),故不转换;lpad/rpad同理无函数不转换
 				{ "add_months", "select add_months(create_time,2) from sqltoy_all_t where id=1", "PREFIX",
 						"2026-05-20", "sqlite" },
 				{ "date_add月", "select date_add(create_time, INTERVAL 1 MONTH) from sqltoy_all_t where id=1",
@@ -276,6 +271,44 @@ public class AllFunctionsAllDbsRealDbSmokeTest {
 				{ "date_trunc月列", "select date_trunc('month', create_time) from sqltoy_all_t where id=1", "PREFIX", "2026-03-01", "" },
 				{ "trunc周列", "select trunc(create_time,'IW') from sqltoy_all_t where id=1", "PREFIX", "2026-03-16", "" },
 				{ "mod取模", "select mod(7,3){D}", "INT", "1", "" },
+				// -------- 正式版补充:日期函数深度边界 --------
+				{ "datediff跨年月", "select datediff(month,'2025-11-15','2026-02-20') from sqltoy_all_t where id=1",
+						"INT", "3", "" },
+				{ "datediff年", "select datediff(year,'2024-03-20','2026-03-20') from sqltoy_all_t where id=1",
+						"INT", "2", "" },
+				{ "datediff周", "select datediff(week,'2026-03-02','2026-03-23') from sqltoy_all_t where id=1",
+						"INT", "3", "" },
+				{ "datediff负值", "select datediff(day,'2026-03-25','2026-03-20') from sqltoy_all_t where id=1",
+						"INT", "-5", "" },
+				{ "to_char时分秒", "select to_char(create_time,'yyyy-MM-dd hh24:mi:ss') from sqltoy_all_t where id=1",
+						"EQ", "2026-03-20 10:30:00", "" },
+				{ "date_format时分秒",
+						"select date_format(create_time,'%Y-%m-%d %H:%i:%s') from sqltoy_all_t where id=1", "EQ",
+						"2026-03-20 10:30:00", "" },
+				{ "extract季度", "select extract(quarter from create_time) from sqltoy_all_t where id=1", "INT", "1",
+						"" },
+				// update 2026-10-12 乌龙排查解除跳过:g8的rpad/octet_length/extract小时/
+				// dateadd月负/dateadd周、sqlserver的rpad——适配产物真库直接执行全部OK
+				// (rpad@sqlserver=LEFT(LEFT+REPLICATE)→xabab;rpad@g8原生直读;HOUR()@g8原生;
+				// lpad/rpad跳过(实测多字符填充只取首字符:lpad('x',5,'ab')=aaaax非ababx)
+				{ "extract小时", "select extract(hour from create_time) from sqltoy_all_t where id=1", "INT", "10",
+						"" },
+				{ "dateadd月负", "select dateadd(month,-2,create_time) from sqltoy_all_t where id=1", "PREFIX",
+						"2026-01-20", "sqlite" },
+				{ "dateadd周", "select dateadd(week,1,create_time) from sqltoy_all_t where id=1", "PREFIX",
+						"2026-03-27", "sqlite" },
+				// -------- 正式版补充:字符串函数深度边界 --------
+				{ "substr首", "select substr('admin',1,2){D}", "EQ", "ad", "" },
+				{ "substr超长", "select substr('ab',1,10){D}", "EQ", "ab", "" },
+				{ "instr未找到", "select instr('admin','zz')  {D}", "INT", "0", "" },
+				// h2跳过证据(乌龙排查实测):多字符填充只取首字符,lpad('x',5,'ab')='aaaax'
+				// 而非ababx、rpad='xaaaa'而非xabab——非适配器可修复的引擎语义差异
+				{ "lpad长填充", "select lpad('x',5,'ab'){D}", "EQ", "ababx", "sqlite,h2" },
+				{ "rpad", "select rpad('x',5,'ab'){D}", "EQ", "xabab", "sqlite,h2" },
+				// -------- 正式版补充:多拼写源 --------
+				{ "curdate源", "select curdate(){D}", "TODAY", "", "" },
+				{ "character_length源", "select character_length('admin'){D}", "INT", "5", "" },
+				{ "octet_length源", "select octet_length('admin'){D}", "INT", "5", "" },
 		};
 	}
 

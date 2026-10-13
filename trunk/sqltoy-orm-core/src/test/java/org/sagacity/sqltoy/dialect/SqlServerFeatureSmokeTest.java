@@ -197,6 +197,63 @@ public class SqlServerFeatureSmokeTest {
 		return FunctionUtils.getDialectSql(sql, dialect);
 	}
 
+	// ======================== CTE/union 分页(Msg 319/104回归锁定) ========================
+
+	/**
+	 * update 2026-10-12 补齐CTE+union真库用例(2026-9-18修复此前仅人工验证):WITH必须留在
+	 * 语句最外层,无顶层order by时union体包派生表挂分页;原实现insert(0)整条包派生表导致
+	 * mssql报Msg 319 "Incorrect syntax near the keyword 'with'"
+	 */
+	@Test
+	public void paginationCteUnionNoOrder() throws Exception {
+		org.junit.jupiter.api.Assumptions.assumeTrue(available, "sqlserver探针环境不可用,跳过");
+		SqlServerDialect dialect = new SqlServerDialect();
+		SqlToyConfig config = new SqlToyConfig("sqlserver");
+		String sql = "with cte as (select id,name from sqltoy_probe_t1 where id=1) "
+				+ "select id,name from cte union select id,name from sqltoy_probe_t1 where id=2";
+		config.setSql(sql);
+		config.setHasWith(true);
+		QueryExecutor queryExecutor = new QueryExecutor(sql);
+		QueryResult page = dialect.findPageBySql(context, config, queryExecutor, null, 1L, 2, conn, profile(), 500,
+				-1);
+		assertEquals(2, ((java.util.List<?>) page.getRows()).size(), "CTE+union无序:应2行(修复前Msg 319)");
+	}
+
+	/** CTE+union+顶层order by:排序属于union整体,分页参数直接追加 */
+	@Test
+	public void paginationCteUnionWithOrder() throws Exception {
+		org.junit.jupiter.api.Assumptions.assumeTrue(available, "sqlserver探针环境不可用,跳过");
+		SqlServerDialect dialect = new SqlServerDialect();
+		SqlToyConfig config = new SqlToyConfig("sqlserver");
+		String sql = "with cte as (select id,name from sqltoy_probe_t1) "
+				+ "select id,name from cte union select id,name from sqltoy_probe_t1 where id=2 order by id desc";
+		config.setSql(sql);
+		config.setHasWith(true);
+		QueryExecutor queryExecutor = new QueryExecutor(sql);
+		QueryResult page = dialect.findPageBySql(context, config, queryExecutor, null, 1L, 2, conn, profile(), 500,
+				-1);
+		java.util.List<?> rows = (java.util.List<?>) page.getRows();
+		assertEquals(2, rows.size(), "CTE+union有序:去重后应2行");
+		Object firstId = (rows.get(0) instanceof Object[]) ? ((Object[]) rows.get(0))[0]
+				: ((java.util.List<?>) rows.get(0)).get(0);
+		assertEquals(2, ((Number) firstId).intValue(), "order by id desc:首行应为id=2");
+	}
+
+	/** 裸union无order by:union直接追加order by会报Msg 104,须包派生表(2026-9-5修复回归锁) */
+	@Test
+	public void paginationBareUnionNoOrder() throws Exception {
+		org.junit.jupiter.api.Assumptions.assumeTrue(available, "sqlserver探针环境不可用,跳过");
+		SqlServerDialect dialect = new SqlServerDialect();
+		SqlToyConfig config = new SqlToyConfig("sqlserver");
+		String sql = "select id,name from sqltoy_probe_t1 where id=1 "
+				+ "union select id,name from sqltoy_probe_t1 where id=2";
+		config.setSql(sql);
+		QueryExecutor queryExecutor = new QueryExecutor(sql);
+		QueryResult page = dialect.findPageBySql(context, config, queryExecutor, null, 1L, 2, conn, profile(), 500,
+				-1);
+		assertEquals(2, ((java.util.List<?>) page.getRows()).size(), "裸union:应2行(修复前Msg 104)");
+	}
+
 	private Object querySingle(String sql) throws Exception {
 		try (PreparedStatement pst = conn.prepareStatement(sql); ResultSet rs = pst.executeQuery()) {
 			rs.next();

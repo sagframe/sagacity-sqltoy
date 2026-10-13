@@ -276,6 +276,75 @@ public class HighgoDialectFeatureSmokeTest {
 	}
 
 	/**
+	 * geometry类型CRUD(postgis 3.0):DDL映射GEOMETRY与实体存取全链路。社区镜像未预装
+	 * postgis(容器内源码编译不可行——需要GEOS/PROJ),本机容器已通过PGDG yum安装
+	 * postgis30_12(3.0.7)并将扩展so/control/sql拷入HighGo目录后create extension,
+	 * 无扩展环境自动跳过。绑定走SqlUtil的PG系PGobject路径(isPGFamily含HIGHGO),
+	 * 读回PGobject(type=geometry)经normalizeExtTypeValue转WKT文本
+	 */
+	@Test
+	public void geometryCrud() throws Exception {
+		Assumptions.assumeTrue(available, "瀚高探针环境不可用,跳过");
+		try (Statement st = conn.createStatement()) {
+			st.execute("create extension if not exists postgis");
+		} catch (Exception e) {
+			Assumptions.assumeTrue(false, "瀚高无postgis扩展,跳过geometry用例: " + e.getMessage());
+		}
+		// DDL映射:GEOMETRY类型(HIGHGO同postgis)
+		org.sagacity.sqltoy.model.ColumnMeta gm = new org.sagacity.sqltoy.model.ColumnMeta();
+		gm.setDataType(org.sagacity.sqltoy.model.JdbcTypes.GEOMETRY);
+		assertEquals("GEOMETRY", org.sagacity.sqltoy.plugins.ddl.DDLUtils.convertType(gm, DBType.HIGHGO),
+				"geometry类型渲染");
+		try (Statement st = conn.createStatement()) {
+			st.execute("drop table if exists sqltoy_hg_geo");
+			st.execute("create table sqltoy_hg_geo (id int primary key, g geometry)");
+		}
+		HighgoDialect dialect = new HighgoDialect();
+		// save:实体String字段(WKT)→PGobject(type=geometry)绑定
+		GeoVO vo = new GeoVO();
+		vo.setId(1L);
+		vo.setG("POINT(1 2)");
+		dialect.save(context, vo, conn, profile(), null);
+		String stored = String.valueOf(
+				querySingle("select st_astext(g) from sqltoy_hg_geo where id=1"));
+		assertEquals("POINT(1 2)", stored, "geometry存入读回WKT");
+		// load:PGobject经归一化为WKT文本
+		GeoVO loaded = (GeoVO) dialect.load(context, new GeoVO(1L), false, null, null, 0, conn, profile(), null, 0);
+		assertNotNull(loaded, "load返回实体");
+		String loadG = loaded.getG();
+		assertNotNull(loadG, "geometry列读回非null(PGobject归一)");
+		assertTrue(loadG.toUpperCase().contains("POINT"), "实体load读回WKT含POINT: " + loadG);
+		// saveOrUpdate更新分支
+		vo.setG("LINESTRING(0 0,1 1,2 2)");
+		dialect.saveOrUpdate(context, vo, null, conn, profile(), null, null);
+		String stored2 = String.valueOf(
+				querySingle("select st_astext(g) from sqltoy_hg_geo where id=1"));
+		assertEquals("LINESTRING(0 0,1 1,2 2)", stored2, "geometry经saveOrUpdate更新");
+		// saveOrUpdate插入分支(merge的when not matched insert,using select裸?+
+		// PGobject绑定——pg系geometry在DialectExtUtils走裸?分支)
+		GeoVO vo2 = new GeoVO();
+		vo2.setId(2L);
+		vo2.setG("POLYGON((0 0,1 0,1 1,0 1,0 0))");
+		dialect.saveOrUpdate(context, vo2, null, conn, profile(), null, null);
+		String stored3 = String.valueOf(
+				querySingle("select st_astext(g) from sqltoy_hg_geo where id=2"));
+		assertTrue(stored3.toUpperCase().contains("POLYGON"), "merge插入geometry新行: " + stored3);
+		// 空间函数真库执行(st_contains/st_area等postgis原生)
+		Object area = querySingle("select st_area(st_geomfromtext('POLYGON((0 0,1 0,1 1,0 1,0 0))'))");
+		assertEquals(1.0, ((Number) area).doubleValue(), 1e-9, "postgis空间函数可用");
+		// queryAll路径:数组行读回WKT
+		List<?> rows = (List<?>) dialect.findBySql(context,
+				new org.sagacity.sqltoy.config.model.SqlToyConfig("highgo"),
+				"select id, g from sqltoy_hg_geo where id=1", null,
+				new org.sagacity.sqltoy.model.inner.QueryExecutorExtend(), null, conn, null, profile(), 500, -1).getRows();
+		String rowG = String.valueOf(((List<?>) rows.get(0)).get(1));
+		assertTrue(rowG.toUpperCase().contains("LINESTRING"), "数组行读回WKT含LINESTRING: " + rowG);
+		try (Statement st = conn.createStatement()) {
+			st.execute("drop table if exists sqltoy_hg_geo");
+		}
+	}
+
+	/**
 	 * vector类型CRUD(pgvector):DDL映射VECTOR(n)与实体存取全链路。社区镜像未预装
 	 * pgvector(无vector.control),本机容器已源码编译pgvector 0.7.4安装并create
 	 * extension,无扩展环境自动跳过。绑定走SqlUtil的PG系PGobject路径(isPGFamily含
@@ -816,6 +885,40 @@ public class HighgoDialectFeatureSmokeTest {
 
 		public void setNm(String nm) {
 			this.nm = nm;
+		}
+	}
+
+	@Entity(tableName = "sqltoy_hg_geo")
+	public static class GeoVO implements java.io.Serializable {
+		@Id()
+		@Column(name = "id")
+		private Long id;
+
+		// WKT文本经PGobject(type=geometry)绑定(postgis路径)
+		@Column(name = "g", type = org.sagacity.sqltoy.model.JdbcTypes.GEOMETRY)
+		private String g;
+
+		public GeoVO() {
+		}
+
+		public GeoVO(Long id) {
+			this.id = id;
+		}
+
+		public Long getId() {
+			return id;
+		}
+
+		public void setId(Long id) {
+			this.id = id;
+		}
+
+		public String getG() {
+			return g;
+		}
+
+		public void setG(String g) {
+			this.g = g;
 		}
 	}
 

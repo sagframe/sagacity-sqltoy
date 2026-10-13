@@ -40,9 +40,28 @@ public class CommonFuncDialectTest {
 		String lite = c("select uuid() from t", "sqlite");
 		assertEquals(true, lite.contains("randomblob(4)") && lite.contains("'-4'")
 				&& lite.startsWith("select lower(hex("), "sqlite应组合v4形态并整体小写");
-		// 响亮放弃:openGauss系/db2
-		assertEquals("select uuid() from t", c("select uuid() from t", "opengauss"));
-		assertEquals("select uuid() from t", c("select uuid() from t", "db2"));
+		// og系(PG内核)降级合成:uuid族→v4形态36位(版本4+variant位),sys_guid族→32hex md5
+		// update 2026-10-12 作者要求逐成员核实:PG内核三成员(og/gaussdb/mogdb)同走合成,
+		// oscar/stardb内核非PG系谱未证实走透传——成员级分派全部锁定
+		String ogv = c("select uuid() from t", "opengauss");
+		assertEquals(true, ogv.startsWith("select substr(md5(random()::text)")
+				&& ogv.contains("'-4'") && ogv.contains("'89ab'"), "og应合成v4形态");
+		for (String og : new String[] { "gaussdb", "mogdb" }) {
+			assertEquals(ogv, c("select uuid() from t", og), og + "应与opengauss同走PG内核合成");
+			assertEquals("select md5(random()::text || clock_timestamp()::text) from t",
+					c("select sys_guid() from t", og), og + " sys_guid应合成32hex md5");
+		}
+		assertEquals("select md5(random()::text || clock_timestamp()::text) from t",
+				c("select sys_guid() from t", "opengauss"), "og sys_guid应合成32hex md5");
+		// uuid-ossp标准拼写透传(运维部署扩展后原生生效)
+		assertEquals("select uuid_generate_v4() from t", c("select uuid_generate_v4() from t", "opengauss"));
+		// oscar/stardb内核未证实,维持透传响亮
+		assertEquals("select uuid() from t", c("select uuid() from t", "oscar"));
+		// db2(12.1.3+内建GENERATE_UUID,归一generate_uuid拼写)
+		assertEquals("select generate_uuid() from t", c("select uuid() from t", "db2"));
+		assertEquals("select generate_uuid() from t", c("select newid() from t", "db2"));
+		// db2原生拼写透传
+		assertEquals("select generate_uuid() from t", c("select generate_uuid() from t", "db2"));
 		// generateUUIDv4(ch写法)现为受支持源拼写:pg目标转核心函数(旧"不误命中"断言随之过时)
 		assertEquals("select gen_random_uuid() from t", c("select generateUUIDv4() from t", "postgresql"));
 		assertEquals("select uuid_short() from t", c("select uuid_short() from t", "mysql"));
@@ -297,8 +316,9 @@ public class CommonFuncDialectTest {
 		assertEquals("select gen_random_uuid() from t", c("select uuid_generate_v4() from t", "postgresql"));
 		assertEquals("select generateUUIDv4() from t", c("select generateUUIDv4() from t", "clickhouse"));
 		assertEquals("select uuid() from t", c("select generateUUIDv4() from t", "mysql"));
-		// og系响亮放弃对新拼写同样生效
-		assertEquals("select random_uuid() from t", c("select random_uuid() from t", "opengauss"));
+		// og系对新拼写走合成降级(uuid族→v4形态,不再透传响亮)
+		assertEquals(true, c("select random_uuid() from t", "opengauss").startsWith("select substr(md5(random()::text)"),
+				"og random_uuid应合成v4形态");
 		// update 2026-10-11 第三轮:uuid_generate_v7(uuid-ossp)与pg18原生uuidv7/uuidv4
 		assertEquals("select uuid_generate_v7() from t", c("select uuid_generate_v7() from t", "postgresql"));
 		assertEquals("select uuidv7() from t", c("select uuidv7() from t", "postgresql"));
