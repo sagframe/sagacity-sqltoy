@@ -143,7 +143,7 @@ spring.sqltoy.redoDataSources[1]=kingbasedb
 
 多库适配解决"能跑"，性能解决"跑得快"。SqlToy 的性能答案不是堆缓存，而是**减少交互次数、把计算下推**。
 
-### 1. 业界最强分页：一行调用，四层加速
+### 1. 四层加速的分页：一行调用
 
 ```java
 Page<StaffVO> page = lightDao.findPage(new Page(10, 1), "queryStaff", params, StaffVO.class);
@@ -252,4 +252,4 @@ private String organName;
 - Gitee：<https://gitee.com/sagacity/sagacity-sqltoy>
 - QQ 交流群：**531812227**
 
-> SqlToy——JPA 式对象操作与极致原生 SQL 查询的融合体，让每一次换库迁移，都从容不迫。
+> SqlToy——JPA 式对象操作与原生 SQL 查询的融合体，让每一次换库迁移，都从容不迫。

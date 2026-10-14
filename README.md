@@ -13,7 +13,7 @@ English | [简体中文](README.zh-CN.md)
 
 # SqlToy ORM
 
-SqlToy is a fusion of JPA and ultra-powerful querying — the distilled and shared experience of real-world projects of many kinds: simple business apps, large SaaS-based multi-tenant ERPs, and big data analytics. Starting from the best dynamic SQL authoring model, it pioneered high-value features such as Cache Translate, Pagination Optimize, Fast Pagination, and cross-database SQL function auto-adaptation!
+SqlToy is a fusion of JPA-style object operations and SQL-first querying — the distilled and shared experience of real-world projects of many kinds: simple business apps, large SaaS-based multi-tenant ERPs, and big data analytics. Starting from an intuitive dynamic-SQL authoring model, it provides features such as Cache Translate, Pagination Optimize, Fast Pagination, and cross-database SQL function auto-adaptation!
 
 ## 📚 Documentation & Resources
 
@@ -62,7 +62,7 @@ QQ group: **531812227** | [Gitee](https://gitee.com/sagacity/sagacity-sqltoy) | 
 | Category | Core Capabilities |
 | --- | --- |
 | Object operations | JPA-style CRUD, elastic update, updateFetch / updateSaveFetch, cascades, query hierarchy packaging, tree-table routing |
-| SQL query | Dynamic SQL (`#[]` + filters), Cache Translate (incl. extra-large FIFO dynamic cache), the most powerful pagination (count optimization / cached / fast / parallel), parallel query, stored procedures, streaming query |
+| SQL query | Dynamic SQL (`#[]` + filters), Cache Translate (incl. extra-large FIFO dynamic cache), four-layer pagination (count optimization / cached / fast / parallel), parallel query, stored procedures, streaming query |
 | Data analysis | Row-to-column / column-to-row pivot, grouped totals, year-over-year / period-over-period comparison, tree-sorted aggregation, group concatenation, date and number formatting |
 | Cross-database | 25 dialects (incl. SAP HANA, HighGo), automatic function replacement, virtual-table macro @virtualTable(), multi-dialect sqlId, multi-database adaptation verification |
 | Enterprise-grade | Database & table sharding, multi-tenancy, data permission and privilege-escalation validation, data masking with encryption/decryption, data version control, SQL interception, slow SQL handling |
@@ -84,11 +84,11 @@ QQ group: **531812227** | [Gitee](https://gitee.com/sagacity/sagacity-sqltoy) | 
 * Provides unified multi-tenant filtering and assignment, plus data-permission parameter injection and privilege-escalation validation
 
 ### Query part
-* Extremely intuitive sql authoring: easy to migrate in both directions between database clients and code, and easy to change and maintain later
+* Intuitive sql authoring: easy to migrate in both directions between database clients and code, and easy to change and maintain later
 * Supports Cache Translate and reverse cache matching by key as a replacement for like fuzzy queries
 * Provides cross-database support: automatic conversion and adaptation of functions across different databases, multi-dialect sql automatically matched to the actual environment, and synchronized testing across multiple databases — greatly improving productization
 * Provides query functions for special scenarios such as fetching top records and random records
-* Provides the most powerful pagination mechanism: 1) automatic optimization of the count statement; 2) cache-based Pagination Optimize that avoids executing the count query every time; 3) the distinctive Fast Pagination (@fast); 4) parallel pagination
+* Provides a four-layer pagination mechanism: 1) automatic optimization of the count statement; 2) cache-based Pagination Optimize that avoids executing the count query every time; 3) Fast Pagination (@fast); 4) parallel pagination
 * Provides database & table sharding
 * Provides algorithms of great value in management-style projects, naturally integrated: grouped totals, row/column pivot (row-to-column, column-to-row), year-over-year / period-over-period comparison, tree sorting, and tree aggregation
 * Provides query-based hierarchy packaging of data structures
@@ -286,7 +286,7 @@ where t.ORDER_ID=?
 Then condition values are set via: pst.set(index,value); there is no concatenating condition values directly into the sql as string fragments
 ```
 
-### 5. The Most Powerful Pagination
+### 5. Four-Layer Optimized Pagination
 
 **Pagination highlights**
 
@@ -347,7 +347,7 @@ public void findPageByEntity() {
 }
 ```
 
-### 6. The Cleverest Cache Usage — Eliminating Table JOINs
+### 6. Cache Translation — Eliminating Table JOINs
 
 * 1. Cache translate via `<translate>`: converts codes into names, avoiding JOIN queries, greatly simplifying SQL and improving query efficiency
 * 2. Fuzzy matching against cache names via `<cache-arg>`: obtains the exact codes as query criteria, avoiding JOIN and LIKE fuzzy queries
@@ -432,7 +432,7 @@ List<QueryResult<TreeModel>> list2 = lightDao.parallelQuery(queries, paramsMap,
 > Note: Parallel query targets query scenarios (**do not use it in the middle of transactional operations**); whether it is appropriate to use must be reasonably judged by the user based on the actual scenario.
 > 6.0 rename note: `parallQuery`/`ParallQuery` in 5.6.x are renamed to `parallelQuery`/`ParallelQuery` starting from 6.0.
 
-### 8. The Strongest Cross-Database Capability
+### 8. Cross-Database Capability
 
 * 1. Provides hibernate-like object operations, automatically generating the dialect of the corresponding database.
 * 2. Provides the most common queries: pagination, top-N, random records, etc., avoiding the different syntax of different databases.
@@ -938,7 +938,7 @@ public class CrudCaseServiceTest {
 
 ## Project History
 
-* 2007~2008: while building a management system project for the Agricultural Bank of China, there were many query and statistics needs, with numerous query conditions that kept being added, so I kept thinking about how to adapt quickly to such changes. From a rather accidental flash of inspiration I discovered a way of writing dynamic sql vastly more powerful than mybatis, which served as a complement to hibernate jpa queries and delivered an extremely striking development experience. See a blog post written in 2009: https://blog.csdn.net/iteye_2252/article/details/81683940
+* 2007~2008: while building a management system project for the Agricultural Bank of China, there were many query and statistics needs, with numerous query conditions that kept being added, so I kept thinking about how to adapt quickly to such changes. From a rather accidental flash of inspiration I discovered a way of writing dynamic sql more concise than mybatis, which served as a complement to hibernate jpa queries and visibly improved development efficiency. See a blog post written in 2009: https://blog.csdn.net/iteye_2252/article/details/81683940
 * 2008~2012: since I kept working on financial enterprise projects, the data volumes were basically in the tens of millions of rows, so sqltoy continuously focused on enhancing sql queries around jpa. During this period it already integrated cache translation, fast pagination, pivot (row/column rotation), and other query features more distinctive than those of other frameworks.
 * 2013~2014: to avoid making developers use two technologies side by side in one project, sqltoy implemented object-based crud functionality, forming the complete sqltoy-orm framework.
 * 2014~2017: while leading the Lakala big data platform, sqltoy underwent a substantial refactor that rationalized its underlying structure, and it was strengthened and validated on the Lakala CRM and a big data platform with a daily average in the tens of millions, accumulating to the tens-of-billions level.
