@@ -1,10 +1,10 @@
-# 一套 SQL，跑遍 25 种数据库：信创换库，凭什么首选 SqlToy？
+# 一套 SQL，跑遍 25 种数据库：换库迁移，凭什么首选 SqlToy？
 
 > 一个 ORM，25 种数据库方言。从 Oracle 到达梦、金仓、瀚高、神通，一套 SQL 全库运行；从 count 优化到缓存翻译，把每一次数据库交互都榨出性能。
 
-## 一、信创替换的真痛点：不是换数据库，是换"每一条 SQL"
+## 一、换库迁移的真痛点：不是换数据库，是换"每一条 SQL"
 
-一个在 Oracle 上稳定跑了十年的政务/金融系统，信创要求限期迁移到达梦、金仓或瀚高。真正让团队崩溃的从来不是装库，而是：
+一个在 Oracle 上稳定跑了十年的政务/金融系统，被要求限期迁移到达梦、金仓或瀚高。真正让团队崩溃的从来不是装库，而是：
 
 - 上千条 SQL 里的 `nvl`、`to_char`、`sysdate`、`decode`、`from dual`……每一个 Oracle 习惯，在国产库上都是一个报错；
 - 同一个产品要交付不同客户：甲方用 Oracle、乙方用达梦、丙方用金仓——难道维护 N 套 SQL？
@@ -37,18 +37,18 @@ List<StaffVO> staffs = lightDao.find("queryStaff", params, StaffVO.class);
 
 `#[...]` 是 SqlToy 的动态条件：传了 `orgId` 就带上该条件，没传整段消失——不拼字符串、不写一堆把 SQL 割裂的 `<if>` 标签。再给 VO 加个 `@Translate` 注解，`org_id`、`status` 查询后在内存里由码值翻译成名称，**当场省掉一次 JOIN**。这就是 SqlToy 的日常：SQL 还是那个 SQL，但更短、更快、更好维护。
 
-## 三、信创首选：全覆盖的国产数据库方言矩阵
+## 三、换库首选：全覆盖的国产数据库方言矩阵
 
-SqlToy 内置 25 种数据库方言，对国产信创库全部原生深度适配：
+SqlToy 内置 25 种数据库方言，对国产数据库全部原生深度适配：
 
-- **国产/信创**：达梦（DM）、人大金仓（Kingbase）、神通（Oscar）、瀚高（HighGo）、MogDB、Vastbase、StarDB、GaussDB、OpenGauss；
+- **国产数据库**：达梦（DM）、人大金仓（Kingbase）、神通（Oscar）、瀚高（HighGo）、MogDB、Vastbase、StarDB、GaussDB、OpenGauss；
 - **主流关系型**：MySQL、Oracle、PostgreSQL、SQL Server、DB2、SAP HANA、H2、SQLite、TiDB、OceanBase、PolarDB；
 - **分布式 OLAP**：ClickHouse、Doris、StarRocks、Greenplum、Impala（Kudu）、TDengine；
 - **NoSQL**：Elasticsearch、MongoDB。
 
 更关键的是，这不是"名义支持"：每种方言的分页、锁、merge、sequence、函数转换都经过**真库探针逐项验证**，并由反射穷举断言锁定覆盖完整性——新增数据库类型时漏登记任何一项适配，测试直接失败。
 
-对尚未单独列出的国产新库，`dialectMap` 一行配置即可别名到最接近的方言，信创生态再出新库也不慌：
+对尚未单独列出的国产新库，`dialectMap` 一行配置即可别名到最接近的方言，国产数据库生态再出新库也不慌：
 
 ```properties
 spring.sqltoy.dialectMap.kingbase=mysql
@@ -228,9 +228,9 @@ private String organName;
 
 ## 六、为什么是"首选"？因为它把适配从"项目"变成"配置"
 
-回顾 SqlToy 的设计哲学，一条主线贯穿始终：**产品化**——一套软件产品同时面对 Oracle、MySQL、达梦、金仓、瀚高交付不同客户，代码不分支。这恰是信创替换的核心命题：
+回顾 SqlToy 的设计哲学，一条主线贯穿始终：**产品化**——一套软件产品同时面对 Oracle、MySQL、达梦、金仓、瀚高交付不同客户，代码不分支。这恰是换库迁移的核心命题：
 
-- **信创投标**：方言矩阵与真库验证记录，就是技术应答书；
+- **投标选型**：方言矩阵与真库验证记录，就是技术应答书；
 - **迁移实施**：函数自适配 + 方言 sqlId + 虚表宏，就是施工工具；
 - **长期运维**：redoDataSources + 慢 SQL 处理 + 缓存翻译，就是运维底座。
 
@@ -247,9 +247,9 @@ private String organName;
 ```
 
 - 在线文档：<https://sagframe.github.io/sqltoy-docs/>
-- 信创替换适配指引：<https://sagframe.github.io/sqltoy-docs/#/introduction/xinchuang>
+- 换库迁移适配指引：<https://sagframe.github.io/sqltoy-docs/#/introduction/xinchuang>
 - GitHub：<https://github.com/sagframe/sagacity-sqltoy>
 - Gitee：<https://gitee.com/sagacity/sagacity-sqltoy>
 - QQ 交流群：**531812227**
 
-> SqlToy——JPA 式对象操作与极致原生 SQL 查询的融合体，让每一次信创替换，都从容不迫。
+> SqlToy——JPA 式对象操作与极致原生 SQL 查询的融合体，让每一次换库迁移，都从容不迫。
