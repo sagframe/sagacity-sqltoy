@@ -1,7 +1,7 @@
 [English](README.md) | 简体中文
 
 <p align="center">
-    <img src="https://img.shields.io/badge/SqlToy-6.0.5-blue" alt="version">
+    <img src="https://img.shields.io/badge/SqlToy-6.0.6-blue" alt="version">
     <a target="_blank" href="LICENSE"><img src="https://img.shields.io/:license-Apache%202.0-blue.svg"></a>
     <a target="_blank" href="https://github.com/sagframe/sagacity-sqltoy"><img src="https://img.shields.io/github/stars/sagframe/sagacity-sqltoy.svg?style=social"/></a>
     <a target="_blank" href="https://gitee.com/sagacity/sagacity-sqltoy"><img src="https://gitee.com/sagacity/sagacity-sqltoy/badge/star.svg?theme=white" /></a>
@@ -39,7 +39,7 @@ SqlToy是JPA和超强查询的融合体，是简单业务、大型SaaS化多租�
 
 QQ交流群：**531812227** ｜ [Gitee](https://gitee.com/sagacity/sagacity-sqltoy) ｜ [GitHub](https://github.com/sagframe/sagacity-sqltoy) ｜ [GitCode](https://gitcode.com/sqltoy/sagacity-sqltoy)
 
-## 📦 最新版本 6.0.5
+## 📦 最新版本 6.0.6
 
 ```xml
 <dependency>
@@ -49,7 +49,7 @@ QQ交流群：**531812227** ｜ [Gitee](https://gitee.com/sagacity/sagacity-sqlt
 	<!-- 传统spring项目 <artifactId>sagacity-sqltoy-spring</artifactId> -->
 	<!-- 单纯sqltoy <artifactId>sagacity-sqltoy</artifactId> -->
 	<!-- jdk8 对应的版本号为：5.6.96.jre8（jre8 最终版本，同样支持 quickvo-maven-plugin 插件） -->
-	<version>6.0.5</version>
+	<version>6.0.6</version>
 </dependency>
 ```
 
@@ -63,7 +63,7 @@ QQ交流群：**531812227** ｜ [Gitee](https://gitee.com/sagacity/sagacity-sqlt
 | 对象操作 | JPA 风格 CRUD、弹性更新、updateFetch / updateSaveFetch、级联、查询层次封装、树形表路由 |
 | SQL 查询 | 动态 SQL（`#[]` + filters）、缓存翻译（含超大规模 FIFO 动态缓存）、最强分页（count 优化 / 缓存 / 快速 / 并行）、并行查询、存储过程、流式查询 |
 | 数据分析 | 行转列 / 列转行、分组汇总、同比环比、树形排序汇总、分组拼接、日期数字格式化 |
-| 跨数据库 | 25 种方言（含 SAP HANA、瀚高 HighGo）、函数自动替换、多方言 sqlId、多库适配验证 |
+| 跨数据库 | 25 种方言（含 SAP HANA、瀚高 HighGo）、函数自动替换、虚表宏 @virtualTable()、多方言 sqlId、多库适配验证 |
 | 企业级 | 分库分表、多租户、数据权限与越权校验、脱敏加解密、数据版本控制、SQL 拦截、慢 SQL 处理 |
 | NoSQL | Elasticsearch（sql / json 双模式）、MongoDB（查询 / 聚合 + 缓存翻译） |
 | 工程化 | quickvo 代码生成、autoDDL 自动建表、debug 热加载、GraalVM AOT、Spring Boot / Spring / Solon / 纯 Java |
