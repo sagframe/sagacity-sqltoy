@@ -119,7 +119,7 @@ lightDao.update(staffInfo, "photo");
 lightDao.delete(new StaffInfoVO("S2007"));
 ```
 
-推荐从 [sqltoy-helloworld](https://gitee.com/sagacity/sqltoy-helloworld) 或 [sqltoy-quickstart](https://github.com/sagframe/sqltoy-quickstart) 开始，阅读其 readme.md 学习。
+推荐从 [sqltoy-quickstart 的 5 节课程](https://github.com/sagframe/sqltoy-quickstart) 开始（clone 后 `mvn test` 即可运行：内置 H2 内存库 + 嵌入式 Redis，覆盖 CRUD 与 Redis 业务主键、动态条件、分页优化、缓存翻译、跨库 SQL 适配），或从 [sqltoy-helloworld](https://gitee.com/sagacity/sqltoy-helloworld) 集成入门。
 
 ## 🔍 特性详解
 
