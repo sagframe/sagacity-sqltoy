@@ -247,6 +247,7 @@ private String organName;
 ```
 
 - 在线文档：<https://sagframe.github.io/sqltoy-docs/>
+- 信创替换适配指引：<https://sagframe.github.io/sqltoy-docs/#/introduction/xinchuang>
 - GitHub：<https://github.com/sagframe/sagacity-sqltoy>
 - Gitee：<https://gitee.com/sagacity/sagacity-sqltoy>
 - QQ 交流群：**531812227**
