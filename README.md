@@ -20,6 +20,7 @@ SqlToy is a fusion of JPA and ultra-powerful querying — the distilled and shar
 | Resource | Link |
 | --- | --- |
 | 📖 Online documentation (recommended) | <https://sagframe.github.io/sqltoy-docs/> |
+| 📰 Xinchuang replacement article (Chinese) | [One SQL across 25 databases: why SqlToy is the first choice for domestic-DB replacement?](docs/xinchuang-sqltoy.md) |
 | 📄 Complete configuration of sql queries in xml | [Online docs · Dynamic SQL specification](https://sagframe.github.io/sqltoy-docs/#/query/dynamic_sql) |
 | 📄 Detailed manual (Word) | `docs/睿智平台SqlToy5.6使用手册.doc` (Word manual, in Chinese; for 6.0 changes see the [Upgrade Guide](https://sagframe.github.io/sqltoy-docs/#/introduction/upgrade_6.0)) |
 | 🚀 Quick integration demo | <https://gitee.com/sagacity/sqltoy-helloworld> |
