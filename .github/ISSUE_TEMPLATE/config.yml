@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions & use cases
+    url: https://github.com/sagframe/sagacity-sqltoy/discussions
+    about: Ask questions and share use cases in Discussions before opening an issue.
+  - name: Documentation
+    url: https://sagframe.github.io/sqltoy-docs/#/en/
+    about: The full documentation (English / 中文).

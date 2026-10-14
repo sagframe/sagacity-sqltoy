@@ -1,0 +1,20 @@
+name: Feature request
+description: Suggest an idea or improvement
+labels: [ enhancement ]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem you are trying to solve
+      description: What makes the current behavior inconvenient? A use case matters more than the proposed solution.
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Suggested solution
+      description: What would the ideal behavior look like?
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you have considered
