@@ -389,8 +389,11 @@ public class DDLUtils {
 			// 纯日期类型(LocalDate/java.sql.Date)保持DATE语义不变;
 			// update 2026-9-6 原"不得将探测归入Types.TIMESTAMP"的约束已解除:rowversion剔除
 			// 改按目标库元数据校准(ensureRowVersionMeta),与实体JDBC类型解耦,LocalDateTime已归位TIMESTAMP
+			// update 2026-10-13 补TIDB:tidb为mysql协议同构,Types.DATE须与mysql一致转DATETIME,
+			// 否则quickvo实体(type=DATE,nativeType=DATETIME,LocalDateTime)生成裸DATE列,
+			// 与DEFAULT CURRENT_TIMESTAMP(3)冲突报"Invalid default value"(真库实测)
 			if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.SQLSERVER
-					|| dbType == DBType.DORIS || dbType == DBType.STARROCKS) {
+					|| dbType == DBType.DORIS || dbType == DBType.STARROCKS || dbType == DBType.TIDB) {
 				typeName = "DATETIME";
 			} else if (isTimeCarryingJavaType(colMeta.getTypeName()) && isDateOnlyDialect(dbType)) {
 				typeName = (dbType == DBType.DM) ? "DATETIME" : "TIMESTAMP";
@@ -412,7 +415,7 @@ public class DDLUtils {
 				// sqlserver无boolean类型,bit为0/1
 				typeName = "BIT";
 			} else if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.DORIS
-					|| dbType == DBType.STARROCKS) {
+					|| dbType == DBType.STARROCKS || dbType == DBType.TIDB) {
 				typeName = "TINYINT(1)";
 			} else {
 				// postgresql/openGauss/H2等原生支持boolean
@@ -642,6 +645,35 @@ public class DDLUtils {
 			tableSql.append(" PARTITIONS ").append(names.length);
 			return;
 		}
+		// update 2026-10-13 DB2表分区为STARTING..ENDING双边界区间语法(非mysql系VALUES LESS THAN):
+		// PARTITION <name> STARTING (<low>) ENDING (<high>)[EXCLUSIVE];
+		// MINVALUE/MAXVALUE为DB2关键字不带括号;上界缺失以/* end value missing */显式标记(建表会失败,
+		// 提示补全,优于静默生成错误边界);明细按目录SEQNO序原样渲染(DB2无升序强制,不做值排序)
+		if (dbType == DBType.DB2) {
+			String[] endValues = partitionMeta.getPartitionEndValues();
+			boolean[] endInclusives = partitionMeta.getPartitionEndInclusives();
+			tableSql.append(NEWLINE).append("(");
+			for (int i = 0; i < names.length; i++) {
+				if (i > 0) {
+					tableSql.append(",");
+				}
+				tableSql.append(NEWLINE).append(TAB).append("PARTITION ").append(names[i]);
+				String low = (values != null && i < values.length) ? values[i] : null;
+				String high = (endValues != null && i < endValues.length) ? endValues[i] : null;
+				if (StringUtil.isBlank(low) || StringUtil.isBlank(high)) {
+					tableSql.append(" /* bound value missing */");
+					continue;
+				}
+				tableSql.append(" STARTING ").append(db2Bound(low, "MINVALUE"));
+				tableSql.append(" ENDING ").append(db2Bound(high, "MAXVALUE"));
+				// ENDING默认INCLUSIVE,显式EXCLUSIVE须带关键字(endInclusives缺省按true=INCLUSIVE)
+				if (endInclusives != null && i < endInclusives.length && !endInclusives[i]) {
+					tableSql.append(" EXCLUSIVE");
+				}
+			}
+			tableSql.append(NEWLINE).append(")");
+			return;
+		}
 		boolean lessThan = strategy.startsWith("RANGE");
 		// RANGE分区明细必须按上界升序渲染(doris/mysql等拒绝非升序的VALUES LESS THAN);
 		// 提取顺序可能非升序(如doris经SHOW PARTITIONS返回pmax在前),此处按值稳定排序,MAXVALUE/空值恒排最后
@@ -731,7 +763,7 @@ public class DDLUtils {
 	}
 
 	/** 分区值:日期形态加引号(2026-02-01裸值会被解析为算术2023);数字/MAXVALUE/函数调用不加 */
-	private static String quotePartitionValue(String value) {
+	public static String quotePartitionValue(String value) {
 		String v = value.trim();
 		if (v.startsWith("'") || v.equalsIgnoreCase("MAXVALUE") || v.matches("\\d+") || v.contains("(")) {
 			return v;
@@ -740,6 +772,18 @@ public class DDLUtils {
 			return "'" + v + "'";
 		}
 		return v;
+	}
+
+	/**
+	 * update 2026-10-13 DB2分区边界渲染:MINVALUE/MAXVALUE为DB2关键字不带括号,
+	 * 其余按字面量括号包裹(值引号规则同quotePartitionValue)
+	 */
+	private static String db2Bound(String value, String keyword) {
+		String v = value.trim();
+		if (v.equalsIgnoreCase(keyword)) {
+			return keyword;
+		}
+		return "(" + quotePartitionValue(v) + ")";
 	}
 
 	/** 分区键列名按输出大小写策略转换后拼接 */

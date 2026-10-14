@@ -38,6 +38,18 @@ public class PartitionMeta implements Serializable {
 	 */
 	private String[] partitionValues;
 
+	/**
+	 * update 2026-10-13 分区上界(与partitionNames对应;DB2表分区为STARTING..ENDING双边界区间,
+	 * partitionValues为下界);单边界库(mysql系/pg系/oracle等)为null
+	 */
+	private String[] partitionEndValues;
+
+	/**
+	 * update 2026-10-13 上界是否包含(与partitionEndValues对应;DB2的ENDING默认INCLUSIVE,
+	 * EXCLUSIVE为false);partitionEndValues为null时无意义
+	 */
+	private boolean[] partitionEndInclusives;
+
 	public PartitionMeta(String strategy, String[] columns, String expression) {
 		this.strategy = strategy;
 		this.columns = columns;
@@ -82,5 +94,21 @@ public class PartitionMeta implements Serializable {
 
 	public void setPartitionValues(String[] partitionValues) {
 		this.partitionValues = partitionValues;
+	}
+
+	public String[] getPartitionEndValues() {
+		return partitionEndValues;
+	}
+
+	public void setPartitionEndValues(String[] partitionEndValues) {
+		this.partitionEndValues = partitionEndValues;
+	}
+
+	public boolean[] getPartitionEndInclusives() {
+		return partitionEndInclusives;
+	}
+
+	public void setPartitionEndInclusives(boolean[] partitionEndInclusives) {
+		this.partitionEndInclusives = partitionEndInclusives;
 	}
 }

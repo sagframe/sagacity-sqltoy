@@ -671,12 +671,25 @@ public class EntityManager {
 		if (defs != null && defs.length > 0) {
 			String[] names = new String[defs.length];
 			String[] values = new String[defs.length];
+			// update 2026-10-13 DB2表分区为STARTING..ENDING双边界区间,补充上界与包含性解析
+			String[] endValues = new String[defs.length];
+			boolean[] endInclusives = new boolean[defs.length];
+			boolean hasEndValue = false;
 			for (int i = 0; i < defs.length; i++) {
 				names[i] = defs[i].name();
 				values[i] = defs[i].value();
+				endValues[i] = defs[i].endValue();
+				endInclusives[i] = defs[i].endInclusive();
+				if (StringUtil.isNotBlank(endValues[i])) {
+					hasEndValue = true;
+				}
 			}
 			partitionMeta.setPartitionNames(names);
 			partitionMeta.setPartitionValues(values);
+			if (hasEndValue) {
+				partitionMeta.setPartitionEndValues(endValues);
+				partitionMeta.setPartitionEndInclusives(endInclusives);
+			}
 		}
 		entityMeta.setPartitionMeta(partitionMeta);
 	}

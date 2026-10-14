@@ -1200,12 +1200,10 @@ public class DataSourceUtils {
 	/**
 	 * update 2026-10-13 虚表(伪表)名称的单一事实源:select常量行伪表按方言获取,
 	 * 供@virtualTable()宏展开(SqlConfigParseUtils.expandVirtualTable)、DBProfile
-	 * 派生getter及各方言Dialect的VIRTUAL_TABLE常量统一引用。
-	 * 映射与各方言Dialect实现自身生成merge语句所用伪表同源:
+	 * 派生getter及各方言Dialect的VIRTUAL_TABLE常量统一引用。 映射与各方言Dialect实现自身生成merge语句所用伪表同源:
 	 * oracle系(oracle/oracle11/dm/oceanbase)→dual;db2→SYSIBM.SYSDUMMY1;hana→dummy;
-	 * 其余方言(mysql系/pg系/sqlserver/sqlite/h2/clickhouse/impala/tdengine等)
-	 * 原生支持无from select,返回空串。
-	 * 新增DBType若未纳入分支,返回空串(经由VirtualTableMacroTest.allDbTypesCovered
+	 * 其余方言(mysql系/pg系/sqlserver/sqlite/h2/clickhouse/impala/tdengine等) 原生支持无from
+	 * select,返回空串。 新增DBType若未纳入分支,返回空串(经由VirtualTableMacroTest.allDbTypesCovered
 	 * 反射穷举断言暴露),不会产生错误伪表
 	 *
 	 * @param dbType 数据库类型,参见DBType

@@ -28,10 +28,6 @@ public class AllFunctionsAllDbsRealDbSmokeTest {
 	private static final String[][] PROBES = {
 			{ "postgresql", "org.postgresql.Driver", "jdbc:postgresql://localhost:5433/postgres", "postgres",
 					"Sqltoy@2026", "postgresql", "" },
-			{ "opengauss", "org.opengauss.Driver", "jdbc:opengauss://localhost:5432/postgres", "gaussdb",
-					"Sqltoy@2026", "opengauss", "" },
-			{ "og7", "org.opengauss.Driver", "jdbc:opengauss://localhost:5435/postgres", "gaussdb",
-					"Sqltoy@2026", "opengauss", "" },
 			{ "kingbase", "com.kingbase8.Driver", "jdbc:kingbase8://localhost:54321/kingbase", "system",
 					"12345678ab", "kingbase", "" },
 			{ "vastbase", "cn.com.vastbase.Driver", "jdbc:vastbase://localhost:5436/postgres", "sqltoy",

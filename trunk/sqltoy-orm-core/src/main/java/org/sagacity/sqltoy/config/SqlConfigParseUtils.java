@@ -1816,10 +1816,10 @@ public class SqlConfigParseUtils {
 	 * update 2026-10-13 虚表宏@virtualTable()按方言展开(兼容别名@dual()/@dummyTable(),三名共用
 	 * 同一展开逻辑,均忽略大小写)
 	 * <p>
-	 * 场景:"select 常量行 union 真实查询"的sql(如字典缓存兜底行 select '0' id,'全局' name union
-	 * select id,name from t)在oracle/db2/hana必须挂伪表,而pg/mysql/sqlserver等支持无from的
-	 * select。统一写法:select '0' id,'全局' name @virtualTable() union select id,name from t,
-	 * 由本方法按解析方言展开,不再需要手写from dual(在pg/sqlserver上报语法错)或删掉dual
+	 * 场景:"select 常量行 union 真实查询"的sql(如字典缓存兜底行 select '0' id,'全局' name union select
+	 * id,name from t)在oracle/db2/hana必须挂伪表,而pg/mysql/sqlserver等支持无from的
+	 * select。统一写法:select '0' id,'全局' name @virtualTable() union select id,name from
+	 * t, 由本方法按解析方言展开,不再需要手写from dual(在pg/sqlserver上报语法错)或删掉dual
 	 * (在oracle上报ORA-00923)二选一。
 	 * <p>
 	 * 伪表映射对齐各Dialect实现自身生成merge语句所用伪表(OracleDialect/DB2Dialect/HanaDialect

@@ -51,7 +51,11 @@ public class DDLFactory {
 		DialectDDLGenerator generator = null;
 		switch (dbType) {
 		case DBType.MYSQL:
-		case DBType.MYSQL57: {
+		case DBType.MYSQL57:
+			// update 2026-10-13 补TIDB(mysql协议,DDL语法与mysql同构;真库实测mysql-full.sql
+			// 全兼容含TO_DAYS分区):原落default的DefaultDDLGenerator,任何DDL生成调用直接抛
+			// "DDL generation is not implemented for this dialect"
+		case DBType.TIDB: {
 			generator = new MySqlDDLGenerator();
 			break;
 		}

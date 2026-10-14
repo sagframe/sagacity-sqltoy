@@ -3,7 +3,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sagframe</groupId>
-	<version>6.0.6.RC1</version>
+	<version>6.0.6</version>
 	<name>sagacity-sqltoy</name>
 	<description>sqltoy core code</description>
 	<artifactId>sagacity-sqltoy</artifactId>
@@ -12,7 +12,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<ojdbc11.version>23.26.3.0.0</ojdbc11.version>
 		<ehcache.version>3.12.0</ehcache.version>
-		<httpclient5.version>5.6.4</httpclient5.version>
+		<httpclient5.version>5.6.5</httpclient5.version>
 		<elastic-rest5-client.version>9.5.5</elastic-rest5-client.version>
 		<fastjson.version>2.0.65</fastjson.version>
 		<mongo.version>5.13.0</mongo.version>
@@ -24,8 +24,8 @@
 		<druid.version>1.2.28</druid.version>
 		<transmittable-thread-local>2.14.5</transmittable-thread-local>
 		<ulid-creator.version>5.2.4</ulid-creator.version>
-		<postgresql.version>42.7.13</postgresql.version>
-		<opengauss.version>6.0.3-og</opengauss.version>
+		<postgresql.version>42.7.14</postgresql.version>
+		<opengauss.version>7.0.0-og</opengauss.version>
 		<jts.version>1.20.0</jts.version>
 		<vastbase.version>2.16.1v</vastbase.version>
 		<starrocks.version>1.1.2</starrocks.version>
@@ -213,7 +213,7 @@
 		<dependency>
 			<groupId>com.mysql</groupId>
 			<artifactId>mysql-connector-j</artifactId>
-			<version>8.0.33</version>
+			<version>9.7.0</version>
 			<scope>test</scope>
 			<optional>true</optional>
 		</dependency>
@@ -262,7 +262,7 @@
 		<dependency>
 			<groupId>com.sap.cloud.db.jdbc</groupId>
 			<artifactId>ngdbc</artifactId>
-			<version>2.29.11</version>
+			<version>2.30.11</version>
 			<scope>test</scope>
 			<optional>true</optional>
 		</dependency>
@@ -271,7 +271,7 @@
 		<dependency>
 			<groupId>cn.com.kingbase</groupId>
 			<artifactId>kingbase8</artifactId>
-			<version>9.0.0</version>
+			<version>9.0.1</version>
 			<scope>test</scope>
 			<optional>true</optional>
 		</dependency>
@@ -280,7 +280,7 @@
 		<dependency>
 			<groupId>com.oceanbase</groupId>
 			<artifactId>oceanbase-client</artifactId>
-			<version>2.4.12</version>
+			<version>2.4.19</version>
 			<scope>test</scope>
 			<optional>true</optional>
 		</dependency>
