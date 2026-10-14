@@ -7,6 +7,7 @@ English | [简体中文](README.zh-CN.md)
     <a href="https://mvnrepository.com/artifact/com.sagframe/sagacity-sqltoy">
         <img alt="maven" src="https://img.shields.io/maven-central/v/com.sagframe/sagacity-sqltoy?style=flat-square">
     </a>
+    <a target="_blank" href="https://github.com/sagframe/sagacity-sqltoy/actions/workflows/ci.yml"><img src="https://github.com/sagframe/sagacity-sqltoy/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
     <img src="https://img.shields.io/badge/Java-17%2B-blue" alt="java">
     <a target="_blank" href="https://github.com/sagframe/sagacity-sqltoy"><img src="https://img.shields.io/github/stars/sagframe/sagacity-sqltoy.svg?style=social"/></a>
     <a target="_blank" href="https://gitee.com/sagacity/sagacity-sqltoy"><img src="https://gitee.com/sagacity/sagacity-sqltoy/badge/star.svg?theme=white" /></a>

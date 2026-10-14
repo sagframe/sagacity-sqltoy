@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [ 6.0 ]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java: [ 17, 21 ]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+          cache: maven
+      # the modules have standalone poms (no aggregator): build in dependency order.
+      # compile-level first — dialect tests need live databases and will join CI
+      # later together with the sagacity-db-diversity probe suite.
+      - name: Build sqltoy-orm-core
+        run: mvn -B -f trunk/sqltoy-orm-core/pom.xml install -DskipTests -Dgpg.skip=true -Dmaven.javadoc.skip=true
+      - name: Build sqltoy-orm-spring
+        run: mvn -B -f trunk/sqltoy-orm-spring/pom.xml install -DskipTests -Dgpg.skip=true -Dmaven.javadoc.skip=true
+      - name: Build sqltoy-orm-spring-starter
+        run: mvn -B -f trunk/sqltoy-orm-spring-starter/pom.xml package -DskipTests -Dgpg.skip=true -Dmaven.javadoc.skip=true

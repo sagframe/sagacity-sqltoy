@@ -2178,6 +2178,13 @@ public class ResultUtils {
 		List result = null;
 		// 非层次结构
 		if (!hasCascade) {
+			// update 2026-10-15 hiberarchy=true但结果类型上无@OneToMany集合属性时给出告警:
+			// 此前会静默返回平铺结果(父行重复),手写实体容易漏配注解导致显式请求被无声忽略
+			if (hiberarchy) {
+				logger.warn(
+						"hiberarchy packaging was requested, but no @OneToMany cascade collection was found on resultType [{}]; returning flat results. Mark the collection field with @OneToMany(fields=..., mappedFields=...) to enable hierarchy packaging.",
+						resultType.getName());
+			}
 			// 封装成VO对象形式
 			result = BeanUtil.reflectListToBean(sqlToyContext.getTypeHandler(), queryResultRows,
 					convertRealProps(wrapMapFields(labelNames, fieldsMap, resultType), columnFieldMap), columnTypes,

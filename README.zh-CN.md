@@ -1,6 +1,7 @@
 [English](README.md) | 简体中文
 
 <p align="center">
+    <a target="_blank" href="https://github.com/sagframe/sagacity-sqltoy/actions/workflows/ci.yml"><img src="https://github.com/sagframe/sagacity-sqltoy/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
     <img src="https://img.shields.io/badge/SqlToy-6.0.6-blue" alt="version">
     <a target="_blank" href="LICENSE"><img src="https://img.shields.io/:license-Apache%202.0-blue.svg"></a>
     <a target="_blank" href="https://github.com/sagframe/sagacity-sqltoy"><img src="https://img.shields.io/github/stars/sagframe/sagacity-sqltoy.svg?style=social"/></a>
