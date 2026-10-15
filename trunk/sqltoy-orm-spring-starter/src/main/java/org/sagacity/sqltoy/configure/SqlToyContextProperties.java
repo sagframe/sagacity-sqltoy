@@ -109,9 +109,14 @@ public class SqlToyContextProperties implements Serializable {
 	private String encoding;
 
 	/**
-	 * 统一字段处理器
+	 * JSON 处理实现类(org.sagacity.sqltoy.plugins.json.JsonProvider 的实现),
+	 * 不配置则按 classpath 自动探测:fastjson2 -> jackson3 -> jackson2
 	 */
 	private String jsonProvider;
+
+	/**
+	 * 统一字段处理器
+	 */
 	private String unifyFieldsHandler;
 
 	/**

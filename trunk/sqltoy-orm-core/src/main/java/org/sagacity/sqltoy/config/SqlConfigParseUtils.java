@@ -27,6 +27,7 @@ import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
 import org.sagacity.sqltoy.plugins.id.macro.AbstractMacro;
 import org.sagacity.sqltoy.plugins.id.macro.MacroUtils;
+import org.sagacity.sqltoy.plugins.id.macro.impl.JoinFields;
 import org.sagacity.sqltoy.plugins.id.macro.impl.SecureSqlLoop;
 import org.sagacity.sqltoy.plugins.id.macro.impl.SqlLoop;
 import org.sagacity.sqltoy.utils.BeanUtil;
@@ -120,6 +121,10 @@ public class SqlConfigParseUtils {
 	public final static Pattern BLANK_START_PATTERN = Pattern.compile(BLANK_START_REGEX);
 	public final static String VALUE_REGEX = "(?i)\\@value\\s*\\(\\s*(\\?|null)\\s*\\)";
 	public final static Pattern VALUE_PATTERN = Pattern.compile(VALUE_REGEX);
+	// update 2026-10-15 @joinFields 宏名定位:与@value同位置处理(命名参数已转成?之后),
+	// 括号内参数用 MacroUtils.splitMacroArgs 按配对符号切分,故此处只定位宏名与起始括号,
+	// 不用正则整体匹配——default 里可能含括号(如 sum(t.amount)),正则会提前截断
+	public final static Pattern JOIN_FIELDS_PATTERN = Pattern.compile("(?i)\\@joinFields\\s*\\(");
 	// update 2026-10-13 虚表宏:select常量行无from场景按方言展开伪表(oracle系→from dual、db2→from
 	// sysibm.sysdummy1、支持无from select的库→剔除宏),实现"select 常量行 union 真实查询"类sql跨库;
 	// 正式名@virtualTable(与各Dialect的VIRTUAL_TABLE常量同词),@dual/@dummyTable为兼容别名
@@ -361,6 +366,9 @@ public class SqlConfigParseUtils {
 		processLike(sqlToyResult, dialect);
 		// add update 2024-12-12 将@value(?) 参数值中不含?的提前完成处理
 		processValue(sqlToyResult, dialect, true);
+		// update 2026-10-15 @joinFields 与@value同位置处理:必须在processSplit/processIn/replaceNull之前,
+		// 否则它占用的那个?会被这些环节误当作in参数或null参数处理,导致参数错位
+		processJoinFields(sqlToyResult, dialect);
 		processSplit(sqlToyResult);
 		// in 处理策略2012-7-10 进行了修改，提供参数preparedStatement.setObject()机制，并同时兼容
 		// 用具体数据替换 in (?)中问号的处理机制
@@ -998,6 +1006,102 @@ public class SqlConfigParseUtils {
 			}
 		}
 		if (atValueCnt > 0) {
+			sqlToyResult.setParamsValue(paramValueList.toArray());
+		}
+	}
+
+	/**
+	 * update 2026-10-15 处理 @joinFields(?,default) / @joinFields(null,default):把运行期传入的字段名
+	 * 列表拼成 SQL 标识符串,用于页面配置化的报表与接口服务(由配置决定 select、group by、order by 的列)。
+	 * <li>与 @value 处于同一处理位置、同一套记账方式:命名参数已转成 ?,故按宏之前出现的 ? 个数定位参数值,
+	 * 以已消费宏数 atJoinFieldsCnt 作偏移,消费后从参数集合中剔除,使剩余的 ? 与参数值保持一一对应。
+	 * sql 里写 @joinFields(:fields,default) 经命名参数转换后即为 @joinFields(?,default),
+	 * 与直接书写位置参数形态完全等价</li>
+	 * <li>default 可能含括号(如 sum(t.amount)),故不用正则整体匹配宏,而是用 getSymMarkIndex 定位配对右括号;
+	 * 替换区间收集完毕后自后向前一次性拼接,避免边扫边改导致下标失效</li>
+	 * <li>字段名的白名单校验与按方言加引用符见 JoinFields;default 取自 sql 文本(可信)原样输出</li>
+	 * 
+	 * @param sqlToyResult
+	 * @param dialect
+	 */
+	private static void processJoinFields(SqlToyResult sqlToyResult, String dialect) {
+		String queryStr = sqlToyResult.getSql();
+		if (StringUtil.isBlank(queryStr)) {
+			return;
+		}
+		Matcher m = JOIN_FIELDS_PATTERN.matcher(queryStr);
+		// 绝大多数sql不含该宏,提前退出
+		if (!m.find()) {
+			return;
+		}
+		int dbType = resolveDbType(dialect);
+		Object[] paramsValue = sqlToyResult.getParamsValue();
+		List paramValueList = (paramsValue == null) ? new ArrayList() : CollectionUtil.arrayToList(paramsValue);
+		// 已消费的宏数量,作为位置索引的偏移(与 processValue 的 atValueCnt 同一套记账)
+		int atJoinFieldsCnt = 0;
+		int index = 0;
+		int paramCnt = 0;
+		int parenEnd = 0;
+		Object paramValue = null;
+		String firstArg;
+		String defaultExpr;
+		String joined;
+		// 替换区间与替换内容,循环结束后自后向前一次性拼接
+		List<int[]> spans = new ArrayList<int[]>();
+		List<String> replacements = new ArrayList<String>();
+		m.reset();
+		while (m.find()) {
+			index = m.start();
+			// 定位与宏名后那个左括号配对的右括号:default 可能含括号,正则整体匹配会提前截断
+			parenEnd = StringUtil.getSymMarkIndex("(", ")", queryStr, index);
+			if (parenEnd < 0) {
+				throw new IllegalArgumentException("@joinFields missing the matched ')',the sql:" + queryStr);
+			}
+			String[] args = MacroUtils.splitMacroArgs(queryStr.substring(queryStr.indexOf("(", m.end() - 1) + 1, parenEnd));
+			if (args == null || args.length == 0 || StringUtil.isBlank(args[0])) {
+				throw new IllegalArgumentException(
+						"@joinFields requires a field-list parameter,the sql:" + queryStr);
+			}
+			firstArg = MacroUtils.unwrapMacroArg(args[0]);
+			defaultExpr = (args.length > 1) ? MacroUtils.unwrapMacroArg(args[1]) : "";
+			// 是否消费了一个位置参数(null 字面量与字面量字段列表都不消费)
+			boolean consumeParam = ARG_NAME.equals(firstArg);
+			if (consumeParam) {
+				// 位置参数形态:按宏之前出现的 ? 个数定位,减去已消费的宏数
+				paramCnt = StringUtil.matchCnt(queryStr.substring(0, index), ARG_NAME_PATTERN, 0);
+				if (paramCnt - atJoinFieldsCnt >= paramValueList.size()) {
+					throw new IllegalArgumentException("@joinFields can not find the parameter at index:"
+							+ (paramCnt - atJoinFieldsCnt) + ",please check the sql and the parameter count,the sql:"
+							+ queryStr);
+				}
+				paramValue = paramValueList.get(paramCnt - atJoinFieldsCnt);
+			} else if ("null".equalsIgnoreCase(firstArg)) {
+				// 参数为null时已被replaceNull替换成null字面量,不再有对应的?需要剔除
+				paramValue = null;
+			} else {
+				// 字面量字段列表形态:@joinFields({a,b,c})
+				paramValue = firstArg;
+			}
+			joined = JoinFields.join(paramValue, defaultExpr, dbType);
+			// 输出里若含?会破坏剩余参数与占位符的对齐,直接拒绝而不是静默错位
+			if (joined.indexOf('?') >= 0) {
+				throw new IllegalArgumentException("@joinFields result can not contain '?',it would break the"
+						+ " parameter alignment,the default:[" + defaultExpr + "],the sql:" + queryStr);
+			}
+			spans.add(new int[] { index, parenEnd + 1 });
+			replacements.add(joined);
+			if (consumeParam) {
+				paramValueList.remove(paramCnt - atJoinFieldsCnt);
+				atJoinFieldsCnt++;
+			}
+		}
+		// 自后向前拼接,前面的下标不受影响;不经正则替换,避免替换串中的 $ 与 \ 被当作分组引用处理
+		StringBuilder result = new StringBuilder(queryStr);
+		for (int i = spans.size() - 1; i >= 0; i--) {
+			result.replace(spans.get(i)[0], spans.get(i)[1], replacements.get(i));
+		}
+		sqlToyResult.setSql(result.toString());
+		if (atJoinFieldsCnt > 0) {
 			sqlToyResult.setParamsValue(paramValueList.toArray());
 		}
 	}

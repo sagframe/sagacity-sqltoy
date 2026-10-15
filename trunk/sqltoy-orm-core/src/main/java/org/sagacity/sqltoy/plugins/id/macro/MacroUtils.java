@@ -59,6 +59,37 @@ public class MacroUtils {
 	}
 
 	/**
+	 * 按宏参数约定切分:跳过 ()、''、""、[]、{} 成对包裹内的分隔符,因此参数本身含逗号时
+	 * 用上述任一符号包裹即可(如 @joinFields(?,{a.id,a.name}))。
+	 * 供与 @value 同位置处理、不经 replaceMacros 分发的宏(如 @joinFields)复用同一套切分约定,
+	 * 避免各处重复定义包裹符号表
+	 * 
+	 * @param macroParam 宏括号内的参数串
+	 * @return 切分后的参数数组
+	 */
+	public static String[] splitMacroArgs(String macroParam) {
+		return StringUtil.splitExcludeSymMark(macroParam, ",", filters);
+	}
+
+	/**
+	 * 剔除为规避宏参数切割而附加的包裹符号(''、""、{}),与 SqlLoop/SecureSqlLoop 同一约定
+	 * 
+	 * @param macroArg 单个宏参数
+	 * @return 剥离包裹后的参数
+	 */
+	public static String unwrapMacroArg(String macroArg) {
+		if (macroArg == null) {
+			return null;
+		}
+		String varStr = macroArg.trim();
+		if ((varStr.startsWith("'") && varStr.endsWith("'")) || (varStr.startsWith("\"") && varStr.endsWith("\""))
+				|| (varStr.startsWith("{") && varStr.endsWith("}"))) {
+			return varStr.substring(1, varStr.length() - 1);
+		}
+		return varStr;
+	}
+
+	/**
 	 * 宏替换,默认先执行内部后执行外部
 	 * 
 	 * @param hasMacroStr
