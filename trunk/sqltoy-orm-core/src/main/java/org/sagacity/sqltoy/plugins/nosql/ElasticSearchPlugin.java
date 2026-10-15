@@ -6,6 +6,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import org.sagacity.sqltoy.plugins.json.JsonArray;
+import org.sagacity.sqltoy.plugins.json.JsonObject;
+import org.sagacity.sqltoy.plugins.json.JsonProviders;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.config.model.NoSqlConfigModel;
@@ -21,9 +24,6 @@ import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.alibaba.fastjson2.JSON;
-import com.alibaba.fastjson2.JSONArray;
-import com.alibaba.fastjson2.JSONObject;
 
 /**
  * @project sagacity-sqltoy
@@ -51,7 +51,7 @@ public class ElasticSearchPlugin {
 	public static Page findPage(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, Page pageModel,
 			QueryExecutor queryExecutor) throws Exception {
 		String realMql = "";
-		JSONObject jsonQuery = null;
+		JsonObject jsonQuery = null;
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		// update 2022-6-16 补全参数统一构造处理
 		QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
@@ -59,7 +59,7 @@ public class ElasticSearchPlugin {
 			realMql = MongoElasticOperations
 					.wrapES(sqlToyConfig, extend.getParamsName(), extend.getParamsValue(sqlToyContext, sqlToyConfig))
 					.trim();
-			jsonQuery = JSON.parseObject(realMql);
+			jsonQuery = JsonProviders.get().object(realMql);
 			jsonQuery.remove("from");
 			jsonQuery.remove("FROM");
 			jsonQuery.remove("size");
@@ -96,7 +96,7 @@ public class ElasticSearchPlugin {
 	public static List<?> findTop(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, QueryExecutor queryExecutor,
 			Integer topSize) throws Exception {
 		String realMql = "";
-		JSONObject jsonQuery = null;
+		JsonObject jsonQuery = null;
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		// update 2022-6-16 补全参数统一构造处理
 		QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
@@ -104,7 +104,7 @@ public class ElasticSearchPlugin {
 			realMql = MongoElasticOperations
 					.wrapES(sqlToyConfig, extend.getParamsName(), extend.getParamsValue(sqlToyContext, sqlToyConfig))
 					.trim();
-			jsonQuery = JSON.parseObject(realMql);
+			jsonQuery = JsonProviders.get().object(realMql);
 			if (topSize != null) {
 				jsonQuery.remove("from");
 				jsonQuery.remove("FROM");
@@ -136,7 +136,7 @@ public class ElasticSearchPlugin {
 	 * @throws Exception
 	 */
 	private static DataSetResult executeQuery(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			JSONObject jsonQuery, Class resultClass, Boolean humpMapLabel) throws Exception {
+			JsonObject jsonQuery, Class resultClass, Boolean humpMapLabel) throws Exception {
 		NoSqlConfigModel noSqlModel = sqlToyConfig.getNoSqlConfigModel();
 		ElasticEndpoint esConfig = sqlToyContext.getElasticEndpoint(noSqlModel.getEndpoint());
 		String source = "_source";
@@ -153,7 +153,7 @@ public class ElasticSearchPlugin {
 			fields = noSqlModel.getFields();
 			// 没有设置显示字段,且是非聚合查询时将配置的fields设置到查询json中
 			if (!hasFields && !noSqlModel.isHasAggs()) {
-				JSONArray array = new JSONArray();
+				JsonArray array = new JsonArray();
 				int aliasIndex;
 				for (String field : fields) {
 					aliasIndex = field.indexOf(":");
@@ -180,7 +180,7 @@ public class ElasticSearchPlugin {
 		}
 
 		// 执行请求
-		JSONObject json = HttpClientUtils.doPost(sqlToyContext, noSqlModel, esConfig, jsonQuery);
+		JsonObject json = HttpClientUtils.doPost(sqlToyContext, noSqlModel, esConfig, jsonQuery);
 		if (json == null || json.isEmpty()) {
 			return new DataSetResult();
 		}

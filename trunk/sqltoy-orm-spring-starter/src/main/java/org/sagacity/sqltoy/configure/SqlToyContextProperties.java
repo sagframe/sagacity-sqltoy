@@ -111,6 +111,7 @@ public class SqlToyContextProperties implements Serializable {
 	/**
 	 * 统一字段处理器
 	 */
+	private String jsonProvider;
 	private String unifyFieldsHandler;
 
 	/**
@@ -917,5 +918,13 @@ public class SqlToyContextProperties implements Serializable {
 	 */
 	public void setDefaultLocale(String defaultLocale) {
 		this.defaultLocale = defaultLocale;
+	}
+
+	public String getJsonProvider() {
+		return jsonProvider;
+	}
+
+	public void setJsonProvider(String jsonProvider) {
+		this.jsonProvider = jsonProvider;
 	}
 }

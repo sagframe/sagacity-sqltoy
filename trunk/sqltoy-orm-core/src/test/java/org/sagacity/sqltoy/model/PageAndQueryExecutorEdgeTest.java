@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.plugins.nosql.HttpClientUtils;
 
-import com.alibaba.fastjson2.JSONObject;
+import org.sagacity.sqltoy.plugins.json.JsonObject;
 
 /**
  * 回归测试批次：(30)Page空结果时getLastPage与getTotalPage一致返回0;
@@ -83,7 +83,7 @@ public class PageAndQueryExecutorEdgeTest {
 
 	@Test
 	public void elasticNormalResultParsed() {
-		JSONObject json = HttpClientUtils.parseElasticResult("{\"hits\":{\"total\":3}}");
+		JsonObject json = HttpClientUtils.parseElasticResult("{\"hits\":{\"total\":3}}");
 		assertEquals(3, json.getJSONObject("hits").getIntValue("total"));
 	}
 

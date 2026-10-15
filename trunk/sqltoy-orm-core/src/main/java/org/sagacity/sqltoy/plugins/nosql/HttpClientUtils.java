@@ -30,6 +30,9 @@ import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.apache.hc.core5.http.message.BasicNameValuePair;
 import org.apache.hc.core5.util.Timeout;
+import org.sagacity.sqltoy.plugins.json.JsonArray;
+import org.sagacity.sqltoy.plugins.json.JsonObject;
+import org.sagacity.sqltoy.plugins.json.JsonProviders;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.config.model.NoSqlConfigModel;
@@ -39,9 +42,6 @@ import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.alibaba.fastjson2.JSON;
-import com.alibaba.fastjson2.JSONArray;
-import com.alibaba.fastjson2.JSONObject;
 
 import co.elastic.clients.transport.rest5_client.low_level.Request;
 import co.elastic.clients.transport.rest5_client.low_level.Response;
@@ -189,7 +189,7 @@ public class HttpClientUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	public static JSONObject doPost(SqlToyContext sqltoyContext, NoSqlConfigModel nosqlConfig, ElasticEndpoint esConfig,
+	public static JsonObject doPost(SqlToyContext sqltoyContext, NoSqlConfigModel nosqlConfig, ElasticEndpoint esConfig,
 			Object postValue) throws Exception {
 		if (esConfig.getUrl() == null) {
 			throw new IllegalArgumentException(
@@ -205,12 +205,12 @@ public class HttpClientUtils {
 			if (esConfig.isNativeSql()) {
 				Map<String, String> map = new HashMap<String, String>();
 				map.put("query", postValue.toString());
-				httpEntity = new StringEntity(JSON.toJSONString(map), contentType);
+				httpEntity = new StringEntity(JsonProviders.get().toJSONString(map), contentType);
 			} else {
 				httpEntity = new StringEntity(postValue.toString(), contentType);
 			}
 		} else {
-			httpEntity = new StringEntity(JSON.toJSONString(postValue), contentType);
+			httpEntity = new StringEntity(JsonProviders.get().toJSONString(postValue), contentType);
 		}
 		return doPostEntity(sqltoyContext, nosqlConfig, esConfig, httpEntity);
 	}
@@ -225,7 +225,7 @@ public class HttpClientUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	public static JSONObject doPostBody(SqlToyContext sqltoyContext, NoSqlConfigModel nosqlConfig,
+	public static JsonObject doPostBody(SqlToyContext sqltoyContext, NoSqlConfigModel nosqlConfig,
 			ElasticEndpoint esConfig, Object bodyObject) throws Exception {
 		if (esConfig.getUrl() == null) {
 			throw new IllegalArgumentException(
@@ -233,7 +233,7 @@ public class HttpClientUtils {
 		}
 		String charset = (nosqlConfig.getCharset() == null) ? CHARSET : nosqlConfig.getCharset();
 		ContentType contentType = ContentType.create(CONTENT_TYPE, Charset.forName(charset));
-		HttpEntity httpEntity = new StringEntity(JSON.toJSONString(bodyObject), contentType);
+		HttpEntity httpEntity = new StringEntity(JsonProviders.get().toJSONString(bodyObject), contentType);
 		return doPostEntity(sqltoyContext, nosqlConfig, esConfig, httpEntity);
 	}
 
@@ -247,7 +247,7 @@ public class HttpClientUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	private static JSONObject doPostEntity(SqlToyContext sqltoyContext, NoSqlConfigModel nosqlConfig,
+	private static JsonObject doPostEntity(SqlToyContext sqltoyContext, NoSqlConfigModel nosqlConfig,
 			ElasticEndpoint esConfig, HttpEntity httpEntity) throws Exception {
 		String realUrl;
 		// 返回结果
@@ -323,23 +323,23 @@ public class HttpClientUtils {
 	 * @param result elastic返回的json字符串
 	 * @return
 	 */
-	public static JSONObject parseElasticResult(String result) {
+	public static JsonObject parseElasticResult(String result) {
 		// 将结果转换为JSON对象
-		JSONObject json = JSON.parseObject(result);
+		JsonObject json = JsonProviders.get().object(result);
 		// 存在错误:error结构随版本/异常类型变化,root_cause可能缺失,error本身可能是字符串,
 		// 防御式提取避免NPE掩盖真实错误信息
 		if (json.containsKey("error")) {
 			Object errorObj = json.get("error");
 			String errorMessage;
-			if (errorObj instanceof JSONObject) {
-				JSONObject errorJson = (JSONObject) errorObj;
-				JSONArray rootCause = errorJson.getJSONArray("root_cause");
+			if (errorObj instanceof java.util.Map) {
+				JsonObject errorJson = JsonObject.of(errorObj);
+				JsonArray rootCause = errorJson.getJSONArray("root_cause");
 				if (rootCause != null && !rootCause.isEmpty()) {
-					errorMessage = JSON.toJSONString(rootCause.get(0));
+					errorMessage = JsonProviders.get().toJSONString(rootCause.get(0));
 				} else if (errorJson.getString("reason") != null) {
 					errorMessage = errorJson.getString("reason");
 				} else {
-					errorMessage = JSON.toJSONString(errorJson);
+					errorMessage = JsonProviders.get().toJSONString(errorJson);
 				}
 			} else {
 				errorMessage = String.valueOf(errorObj);

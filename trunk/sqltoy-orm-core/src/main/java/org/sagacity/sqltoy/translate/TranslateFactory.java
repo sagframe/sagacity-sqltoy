@@ -11,6 +11,9 @@ import java.util.Map;
 
 import javax.sql.DataSource;
 
+import org.sagacity.sqltoy.plugins.json.JsonArray;
+import org.sagacity.sqltoy.plugins.json.JsonObject;
+import org.sagacity.sqltoy.plugins.json.JsonProviders;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
@@ -30,9 +33,6 @@ import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.alibaba.fastjson2.JSON;
-import com.alibaba.fastjson2.JSONArray;
-import com.alibaba.fastjson2.JSONObject;
 
 /**
  * @project sagacity-sqltoy
@@ -150,13 +150,13 @@ public class TranslateFactory {
 		List result = null;
 		boolean fatal = false;
 		try {
-			result = JSON.parseArray(jsonStr, CacheCheckResult.class);
+			result = JsonProviders.get().parseArray(jsonStr, CacheCheckResult.class);
 		} catch (Exception e) {
 			fatal = true;
 		}
 		if (fatal) {
 			try {
-				result = JSON.parseArray(jsonStr, Object[].class);
+				result = JsonProviders.get().parseArray(jsonStr, Object[].class);
 				fatal = false;
 			} catch (Exception e) {
 				fatal = true;
@@ -370,18 +370,18 @@ public class TranslateFactory {
 			return null;
 		}
 		if (cacheModel.getProperties() == null || cacheModel.getProperties().length == 0) {
-			return JSON.parseArray(jsonStr, Object[].class);
+			return JsonProviders.get().parseArray(jsonStr, Object[].class);
 		}
-		JSONArray jsonSet = JSON.parseArray(jsonStr);
+		JsonArray jsonSet = JsonProviders.get().array(jsonStr);
 		if (jsonSet.isEmpty()) {
 			return null;
 		}
 		List<Object[]> result = new ArrayList<Object[]>();
 		int size = cacheModel.getProperties().length;
-		JSONObject jsonObj;
+		JsonObject jsonObj;
 		Object[] row;
 		for (Object obj : jsonSet) {
-			jsonObj = (JSONObject) obj;
+			jsonObj = JsonObject.of(obj);
 			row = new Object[size];
 			for (int i = 0; i < size; i++) {
 				row[i] = jsonObj.get(cacheModel.getProperties()[i]);

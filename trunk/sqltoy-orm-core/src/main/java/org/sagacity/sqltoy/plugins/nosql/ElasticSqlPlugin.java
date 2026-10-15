@@ -3,6 +3,9 @@ package org.sagacity.sqltoy.plugins.nosql;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.sagacity.sqltoy.plugins.json.JsonArray;
+import org.sagacity.sqltoy.plugins.json.JsonObject;
+import org.sagacity.sqltoy.plugins.json.JsonProviders;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.config.model.NoSqlConfigModel;
@@ -16,7 +19,6 @@ import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.alibaba.fastjson2.JSONObject;
 
 /**
  * @project sagacity-sqltoy
@@ -101,7 +103,7 @@ public class ElasticSqlPlugin {
 			exhausted.finished = true;
 			return exhausted;
 		}
-		JSONObject body = new JSONObject();
+		JsonObject body = new JsonObject();
 		body.put("fetch_size", pageModel.getPageSize());
 		if (StringUtil.isNotBlank(cursor)) {
 			// 取下一页
@@ -117,7 +119,7 @@ public class ElasticSqlPlugin {
 		}
 		NoSqlConfigModel noSqlConfig = sqlToyConfig.getNoSqlConfigModel();
 		ElasticEndpoint esConfig = sqlToyContext.getElasticEndpoint(noSqlConfig.getEndpoint());
-		JSONObject json = HttpClientUtils.doPostBody(sqlToyContext, noSqlConfig, esConfig, body);
+		JsonObject json = HttpClientUtils.doPostBody(sqlToyContext, noSqlConfig, esConfig, body);
 		ElasticPage page = new ElasticPage();
 		page.setPageNo(pageModel.getPageNo());
 		page.setPageSize(pageModel.getPageSize());

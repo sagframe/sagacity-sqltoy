@@ -137,6 +137,9 @@ public class SqltoyAutoConfiguration {
 
 		// 分布式id产生器实现类(不设置也会自动默认)
 		sqlToyContext.setDistributeIdGeneratorClass("org.sagacity.sqltoy.integration.impl.SpringRedisIdGenerator");
+		if (properties.getJsonProvider() != null) {
+			sqlToyContext.setJsonProvider(properties.getJsonProvider());
+		}
 
 		// 针对Caffeine缓存指定实现类型(不设置也会自动默认)
 		sqlToyContext

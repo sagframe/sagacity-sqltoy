@@ -14,12 +14,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
+import org.sagacity.sqltoy.plugins.json.JsonArray;
+import org.sagacity.sqltoy.plugins.json.JsonObject;
+import org.sagacity.sqltoy.plugins.json.JsonProviders;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.alibaba.fastjson2.JSONObject;
 
 /**
  * @project sagacity-sqltoy
@@ -215,16 +217,16 @@ public class JwtTokenManager {
 	 */
 	static TokenEntry parseTokenResponse(String json, String tokenPath, int defaultExpireSeconds) {
 		String realKey = StringUtil.isBlank(tokenPath) ? DEFAULT_TOKEN_PATH : tokenPath.trim();
-		JSONObject parent = JSONObject.parseObject(json);
+		JsonObject parent = JsonProviders.get().object(json);
 		Object token = parent;
 		// 点路径逐级下探(如data.token),parent记录token的直接容器用于识别有效期字段
 		String[] paths = realKey.split("\\.");
 		for (int i = 0; i < paths.length; i++) {
-			if (!(token instanceof JSONObject)) {
+			if (!(token instanceof java.util.Map)) {
 				token = null;
 				break;
 			}
-			parent = (JSONObject) token;
+			parent = JsonObject.of(token);
 			token = parent.get(paths[i].trim());
 		}
 		if (token == null || StringUtil.isBlank(token.toString())) {
@@ -265,7 +267,7 @@ public class JwtTokenManager {
 		long now = System.currentTimeMillis();
 		int expireSeconds = authConfig.getTokenExpire() > 0 ? authConfig.getTokenExpire() : DEFAULT_EXPIRE_SECONDS;
 		String algorithm = resolveSignAlgorithm(authConfig);
-		JSONObject claims = new JSONObject();
+		JsonObject claims = new JsonObject();
 		if (StringUtil.isNotBlank(authConfig.getUsername())) {
 			claims.put("sub", authConfig.getUsername().trim());
 		}

@@ -305,6 +305,9 @@ public class SqlToyContext {
 	 */
 	private String distributeIdGeneratorClass = "org.sagacity.sqltoy.integration.impl.SpringRedisIdGenerator";
 
+	// 自定义 JSON provider 实现类(可选);缺省按 classpath 探测:fastjson2 -> jackson3 -> jackson2
+	private String jsonProvider;
+
 	/**
 	 * 获取bean的上下文容器
 	 */
@@ -509,6 +512,9 @@ public class SqlToyContext {
 	}
 
 	public void initialize() throws Exception {
+		// JSON provider: attempt initialization at startup (explicit config wins over
+		// classpath detection; a missing JSON library only warns, it does not block startup)
+		org.sagacity.sqltoy.plugins.json.JsonProviders.initAtStartup(jsonProvider);
 		logger.debug("start init sqltoy ..............................");
 		// 加载sqltoy的各类参数,如db2是否要增加with
 		// ur等,详见org/sagacity/sqltoy/sqltoy-default.properties
@@ -1381,6 +1387,14 @@ public class SqlToyContext {
 
 	public String getMongoQueryClass() {
 		return mongoQueryClass;
+	}
+
+	public String getJsonProvider() {
+		return jsonProvider;
+	}
+
+	public void setJsonProvider(String jsonProvider) {
+		this.jsonProvider = jsonProvider;
 	}
 
 	public void setMongoQueryClass(String mongoQueryClass) {

@@ -7,6 +7,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import org.sagacity.sqltoy.plugins.json.JsonArray;
+import org.sagacity.sqltoy.plugins.json.JsonObject;
+import org.sagacity.sqltoy.plugins.json.JsonProviders;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.config.model.NoSqlConfigModel;
@@ -19,8 +22,6 @@ import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.alibaba.fastjson2.JSONArray;
-import com.alibaba.fastjson2.JSONObject;
 
 /**
  * @project sagacity-sqltoy
@@ -50,7 +51,7 @@ public class ElasticSearchUtils {
 		NoSqlConfigModel noSqlModel = sqlToyConfig.getNoSqlConfigModel();
 		ElasticEndpoint esConfig = sqlToyContext.getElasticEndpoint(noSqlModel.getEndpoint());
 		// 执行请求并返回json结果
-		JSONObject json = HttpClientUtils.doPost(sqlToyContext, noSqlModel, esConfig, sql);
+		JsonObject json = HttpClientUtils.doPost(sqlToyContext, noSqlModel, esConfig, sql);
 		if (json == null || json.isEmpty()) {
 			return new DataSetResult();
 		}
@@ -68,7 +69,7 @@ public class ElasticSearchUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	public static DataSetResult executeQuery(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, JSONObject json,
+	public static DataSetResult executeQuery(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, JsonObject json,
 			Class resultClass, Boolean humpMapLabel) throws Exception {
 		NoSqlConfigModel noSqlModel = sqlToyConfig.getNoSqlConfigModel();
 		ElasticEndpoint esConfig = sqlToyContext.getElasticEndpoint(noSqlModel.getEndpoint());
@@ -77,11 +78,11 @@ public class ElasticSearchUtils {
 		String[] fields = noSqlModel.getFields();
 		if (fields == null) {
 			if (json.containsKey("columns")) {
-				JSONArray cols = json.getJSONArray("columns");
+				JsonArray cols = json.getJSONArray("columns");
 				fields = new String[cols.size()];
 				int index = 0;
 				for (Object col : cols) {
-					fields[index] = ((JSONObject) col).getString("name");
+					fields[index] = (JsonObject.of(col)).getString("name");
 					index++;
 				}
 			} else if (resultClass != null && !Array.class.isAssignableFrom(resultClass)
@@ -117,18 +118,18 @@ public class ElasticSearchUtils {
 	 * @return
 	 */
 	private static DataSetResult extractSqlFieldValue(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			JSONObject json, String[] fields) {
+			JsonObject json, String[] fields) {
 		DataSetResult resultModel = new DataSetResult();
 		Object realRoot = json.get("rows");
 		if (realRoot == null) {
 			return resultModel;
 		}
 		NoSqlFieldsModel fieldModel = MongoElasticOperations.processFields(fields, null);
-		JSONArray rows = (JSONArray) realRoot;
-		JSONArray item;
+		JsonArray rows = JsonArray.of(realRoot);
+		JsonArray item;
 		List<List<Object>> resultSet = new ArrayList<List<Object>>();
 		for (Object row : rows) {
-			item = (JSONArray) row;
+			item = JsonArray.of(row);
 			List<Object> result = new ArrayList<Object>();
 			for (Object cel : item) {
 				result.add(cel);
@@ -150,7 +151,7 @@ public class ElasticSearchUtils {
 	 * @return
 	 */
 	public static DataSetResult extractFieldValue(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			JSONObject json, String[] fields) {
+			JsonObject json, String[] fields) {
 		// 聚合数据提取
 		if (sqlToyConfig.getNoSqlConfigModel().isHasAggs() || json.getJSONObject("aggregations") != null) {
 			return extractAggsFieldValue(sqlToyContext, sqlToyConfig, json, fields);
@@ -159,11 +160,11 @@ public class ElasticSearchUtils {
 		}
 		DataSetResult resultModel = new DataSetResult();
 		// 设置总记录数量
-		JSONObject hits = json.getJSONObject("hits");
+		JsonObject hits = json.getJSONObject("hits");
 		if (hits != null && hits.containsKey("total")) {
 			Object total = hits.get("total");
-			if (total instanceof JSONObject) {
-				resultModel.setRecordCount(((JSONObject) total).getLong("value"));
+			if (total instanceof java.util.Map) {
+				resultModel.setRecordCount((JsonObject.of(total)).getLong("value"));
 			} else {
 				resultModel.setRecordCount(Long.parseLong(total.toString()));
 			}
@@ -172,7 +173,7 @@ public class ElasticSearchUtils {
 		List result = new ArrayList();
 		String[] valuePath = (nosqlConfig.getValueRoot() == null) ? new String[] { "hits", "hits" }
 				: nosqlConfig.getValueRoot();
-		JSONObject root = json;
+		JsonObject root = json;
 		String lastKey = valuePath[valuePath.length - 1];
 		for (int i = 0; i < valuePath.length - 1; i++) {
 			if (root != null) {
@@ -191,17 +192,17 @@ public class ElasticSearchUtils {
 		}
 		NoSqlFieldsModel fieldModel = MongoElasticOperations.processFields(fields, null);
 		String[] realFields = fieldModel.getFields();
-		JSONObject rowJson, sourceData;
-		if (realRoot instanceof JSONArray) {
-			JSONArray array = (JSONArray) realRoot;
+		JsonObject rowJson, sourceData;
+		if (realRoot instanceof java.util.List) {
+			JsonArray array = JsonArray.of(realRoot);
 			for (int i = 0; i < array.size(); i++) {
-				rowJson = (JSONObject) array.get(i);
+				rowJson = array.getJSONObject(i);
 				// 非聚合,数据取_source
 				sourceData = rowJson.getJSONObject("_source");
 				addRow(result, sourceData, realFields);
 			}
-		} else if (realRoot instanceof JSONObject) {
-			addRow(result, (JSONObject) realRoot, realFields);
+		} else if (realRoot instanceof java.util.Map) {
+			addRow(result, JsonObject.of(realRoot), realFields);
 		}
 		resultModel.setRows(result);
 		resultModel.setLabelNames(fieldModel.getAliasLabels());
@@ -218,7 +219,7 @@ public class ElasticSearchUtils {
 	 * @return
 	 */
 	private static DataSetResult extractSuggestFieldValue(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			JSONObject json, String[] fields) {
+			JsonObject json, String[] fields) {
 		DataSetResult resultModel = new DataSetResult();
 		// 切取实际字段{field:aliasName}模式,冒号前面的实际字段
 		NoSqlFieldsModel fieldModel = MongoElasticOperations.processFields(fields, null);
@@ -229,10 +230,10 @@ public class ElasticSearchUtils {
 		Object root = json;
 		// 确保第一个路径是聚合统一的名词
 		if (!"suggest".equals(rootPath[0].toLowerCase(Locale.ROOT))) {
-			root = ((JSONObject) root).get("suggest");
+			root = (JsonObject.of(root)).get("suggest");
 		}
 		for (String str : rootPath) {
-			root = ((JSONObject) root).get(str);
+			root = (JsonObject.of(root)).get(str);
 			// update 2026-9-14 中间节点缺失时循环内即退出:原实现只在循环结束后判空,
 			// 路径中间缺失时下一轮会对null做get(NPE),非对象节点则ClassCastException,
 			// 都无法走到下面给出配置错误提示的分支
@@ -246,12 +247,12 @@ public class ElasticSearchUtils {
 			return resultModel;
 		}
 		List result = new ArrayList();
-		if (root instanceof JSONObject) {
-			processRow(result, (JSONObject) root, realFields, true);
-		} else if (root instanceof JSONArray) {
-			JSONArray array = (JSONArray) root;
+		if (root instanceof java.util.Map) {
+			processRow(result, JsonObject.of(root), realFields, true);
+		} else if (root instanceof java.util.List) {
+			JsonArray array = JsonArray.of(root);
 			for (Object tmp : array) {
-				processRow(result, (JSONObject) tmp, realFields, true);
+				processRow(result, JsonObject.of(tmp), realFields, true);
 			}
 		}
 		if (result != null) {
@@ -272,7 +273,7 @@ public class ElasticSearchUtils {
 	 * @return
 	 */
 	public static DataSetResult extractAggsFieldValue(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			JSONObject json, String[] fields) {
+			JsonObject json, String[] fields) {
 		DataSetResult resultModel = new DataSetResult();
 		// 切取实际字段{field:aliasName}模式,冒号前面的实际字段
 		NoSqlFieldsModel fieldModel = MongoElasticOperations.processFields(fields, null);
@@ -284,10 +285,10 @@ public class ElasticSearchUtils {
 		Object root = json;
 		// 确保第一个路径是聚合统一的名词
 		if (!"aggregations".equals(rootPath[0].toLowerCase(Locale.ROOT))) {
-			root = ((JSONObject) root).get("aggregations");
+			root = (JsonObject.of(root)).get("aggregations");
 		}
 		for (String str : rootPath) {
-			root = ((JSONObject) root).get(str);
+			root = (JsonObject.of(root)).get(str);
 			// update 2026-9-14 与extractSuggestFieldValue同步:中间节点缺失时循环内退出,
 			// 否则下一轮对null做get直接NPE,走不到下面root==null的配置错误提示分支
 			if (root == null) {
@@ -295,8 +296,8 @@ public class ElasticSearchUtils {
 			}
 		}
 		// 循环取根
-		while (root != null && (root instanceof JSONObject)) {
-			JSONObject tmp = (JSONObject) root;
+		while (root != null && (root instanceof java.util.Map)) {
+			JsonObject tmp = JsonObject.of(root);
 			if (tmp.containsKey("buckets")) {
 				root = tmp.get("buckets");
 				break;
@@ -324,12 +325,12 @@ public class ElasticSearchUtils {
 			return resultModel;
 		}
 		List result = new ArrayList();
-		if (root instanceof JSONObject) {
-			processRow(result, (JSONObject) root, realFields, false);
-		} else if (root instanceof JSONArray) {
-			JSONArray array = (JSONArray) root;
+		if (root instanceof java.util.Map) {
+			processRow(result, JsonObject.of(root), realFields, false);
+		} else if (root instanceof java.util.List) {
+			JsonArray array = JsonArray.of(root);
 			for (Object tmp : array) {
-				processRow(result, (JSONObject) tmp, realFields, false);
+				processRow(result, JsonObject.of(tmp), realFields, false);
 			}
 		}
 		if (result != null) {
@@ -348,10 +349,10 @@ public class ElasticSearchUtils {
 	 * @param realFields
 	 * @param isSuggest
 	 */
-	private static void processRow(List result, JSONObject rowJson, String[] realFields, boolean isSuggest) {
+	private static void processRow(List result, JsonObject rowJson, String[] realFields, boolean isSuggest) {
 		Object root = getRealJSONObject(rowJson, realFields, isSuggest);
-		if (root instanceof JSONObject) {
-			JSONObject json = (JSONObject) root;
+		if (root instanceof java.util.Map) {
+			JsonObject json = JsonObject.of(root);
 			if ((json.containsKey("key") && json.containsKey("doc_count"))) {
 				if (isRoot(json, realFields)) {
 					addRow(result, json, realFields);
@@ -361,10 +362,10 @@ public class ElasticSearchUtils {
 			} else {
 				addRow(result, json, realFields);
 			}
-		} else if (root instanceof JSONArray) {
-			JSONArray array = (JSONArray) root;
+		} else if (root instanceof java.util.List) {
+			JsonArray array = JsonArray.of(root);
 			for (Object tmp : array) {
-				processRow(result, (JSONObject) tmp, realFields, isSuggest);
+				processRow(result, JsonObject.of(tmp), realFields, isSuggest);
 			}
 		}
 	}
@@ -376,7 +377,7 @@ public class ElasticSearchUtils {
 	 * @param realFields
 	 * @return
 	 */
-	private static boolean isRoot(JSONObject json, String[] realFields) {
+	private static boolean isRoot(JsonObject json, String[] realFields) {
 		int mapCnt = 0;
 		for (String key : realFields) {
 			if (json.containsKey(key)) {
@@ -400,13 +401,13 @@ public class ElasticSearchUtils {
 	 * @param rowJson
 	 * @param realFields
 	 */
-	private static void addRow(List result, JSONObject rowJson, String[] realFields) {
+	private static void addRow(List result, JsonObject rowJson, String[] realFields) {
 		Object cell;
 		List row = new ArrayList();
 		for (String str : realFields) {
 			cell = rowJson.get(str);
-			if (cell instanceof JSONObject) {
-				row.add(((JSONObject) cell).get("value"));
+			if (cell instanceof java.util.Map) {
+				row.add((JsonObject.of(cell)).get("value"));
 			} else {
 				row.add(cell);
 			}
@@ -422,25 +423,25 @@ public class ElasticSearchUtils {
 	 * @param isSuggest
 	 * @return
 	 */
-	private static Object getRealJSONObject(JSONObject rowJson, String[] realFields, boolean isSuggest) {
+	private static Object getRealJSONObject(JsonObject rowJson, String[] realFields, boolean isSuggest) {
 		Object result = rowJson.get("_source");
-		if (result != null && result instanceof JSONObject) {
+		if (result != null && result instanceof java.util.Map) {
 			return result;
 		}
 		result = rowJson.get("buckets");
 		if (result != null) {
-			if (result instanceof JSONArray) {
+			if (result instanceof java.util.List) {
 				return result;
-			} else if (result instanceof JSONObject) {
-				return getRealJSONObject((JSONObject) result, realFields, isSuggest);
+			} else if (result instanceof java.util.Map) {
+				return getRealJSONObject(JsonObject.of(result), realFields, isSuggest);
 			}
 		}
 		result = rowJson.get("hits");
 		if (result != null) {
-			if (result instanceof JSONArray) {
+			if (result instanceof java.util.List) {
 				return result;
-			} else if (result instanceof JSONObject) {
-				return getRealJSONObject((JSONObject) result, realFields, isSuggest);
+			} else if (result instanceof java.util.Map) {
+				return getRealJSONObject(JsonObject.of(result), realFields, isSuggest);
 			}
 		}
 
@@ -448,10 +449,10 @@ public class ElasticSearchUtils {
 		if (isSuggest) {
 			result = rowJson.get("options");
 			if (result != null) {
-				if (result instanceof JSONArray) {
+				if (result instanceof java.util.List) {
 					return result;
-				} else if (result instanceof JSONObject) {
-					return getRealJSONObject((JSONObject) result, realFields, isSuggest);
+				} else if (result instanceof java.util.Map) {
+					return getRealJSONObject(JsonObject.of(result), realFields, isSuggest);
 				}
 			}
 		}
@@ -463,8 +464,8 @@ public class ElasticSearchUtils {
 			for (Object key : keys) {
 				if (!"key".equals(key) && !"doc_count".equals(key)) {
 					result = rowJson.get(key.toString());
-					if (result instanceof JSONObject) {
-						return getRealJSONObject((JSONObject) result, realFields, isSuggest);
+					if (result instanceof java.util.Map) {
+						return getRealJSONObject(JsonObject.of(result), realFields, isSuggest);
 					}
 					return result;
 				}
@@ -475,15 +476,15 @@ public class ElasticSearchUtils {
 				return rowJson;
 			}
 			result = rowJson.values().iterator().next();
-			if (result instanceof JSONObject) {
-				JSONObject tmp = (JSONObject) result;
+			if (result instanceof java.util.Map) {
+				JsonObject tmp = JsonObject.of(result);
 				// {value:xxx} 模式
 				if (tmp.keySet().size() == 1
 						&& "value".equals(tmp.keySet().iterator().next().toLowerCase(Locale.ROOT))) {
 					return rowJson;
 				}
 				return getRealJSONObject(tmp, realFields, isSuggest);
-			} else if (result instanceof JSONArray) {
+			} else if (result instanceof java.util.List) {
 				return result;
 			}
 		}

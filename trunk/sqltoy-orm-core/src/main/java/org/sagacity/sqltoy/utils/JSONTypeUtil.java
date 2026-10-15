@@ -6,6 +6,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.List;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -16,12 +18,10 @@ import java.util.TreeSet;
 import org.sagacity.sqltoy.model.DBProfile;
 import org.sagacity.sqltoy.model.JdbcTypes;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
+import org.sagacity.sqltoy.plugins.json.JsonProviders;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.alibaba.fastjson2.JSON;
-import com.alibaba.fastjson2.JSONArray;
-import com.alibaba.fastjson2.JSONObject;
 
 /**
  * 提供一个通用的json类型处理工具
@@ -168,17 +168,17 @@ public class JSONTypeUtil {
 		}
 		// 3. 处理 JSONObject 类型
 		if (javaTypeNameLow.endsWith(".jsonobject") || javaTypeNameLow.equals(JSON_OBJECT)) {
-			return JSON.parseObject(jsonStr);
+			return JsonProviders.get().parseObjectNative(jsonStr);
 		}
 		// 4. 处理 JSONArray 类型
 		if (javaTypeNameLow.endsWith(".jsonarray") || javaTypeNameLow.equals(JSON_ARRAY)) {
-			return JSON.parseArray(jsonStr);
+			return JsonProviders.get().parseArrayNative(jsonStr);
 		}
 		// 5. 处理 Map 类型
 		if (javaTypeNameLow.equals(MAP_TYPE) || javaTypeNameLow.startsWith("java.util.hashmap")
 				|| javaTypeNameLow.startsWith("java.util.linkedhashmap")
 				|| javaTypeNameLow.startsWith("java.util.treemap")) {
-			JSONObject jsonObj = JSON.parseObject(jsonStr);
+			Map<String, Object> jsonObj = JsonProviders.get().parseObjectMap(jsonStr);
 			if (javaTypeNameLow.startsWith("java.util.linkedhashmap")) {
 				return new LinkedHashMap<>(jsonObj);
 			}
@@ -192,24 +192,24 @@ public class JSONTypeUtil {
 		if (javaTypeNameLow.equals(LIST_TYPE) || javaTypeNameLow.startsWith("java.util.arraylist")
 				|| javaTypeNameLow.startsWith("java.util.linkedlist")) {
 			if (genericType != null) {
-				return JSONArray.parseArray(jsonStr, genericType);
+				return JsonProviders.get().parseArray(jsonStr, genericType);
 			}
-			return JSONArray.parseArray(jsonStr);
+			return JsonProviders.get().parseArray(jsonStr);
 		}
 		// 7. 处理 Set 类型
 		if (javaTypeNameLow.equals(SET_TYPE) || javaTypeNameLow.startsWith("java.util.hashset")
 				|| javaTypeNameLow.startsWith("java.util.linkedhashset")
 				|| javaTypeNameLow.startsWith("java.util.treeset")) {
-			JSONArray jsonArray = JSONArray.parseArray(jsonStr);
+			List<Object> jsonArray = JsonProviders.get().parseArray(jsonStr);
 			if (jsonArray != null) {
 				if (genericType != null) {
 					if (javaTypeNameLow.startsWith("java.util.linkedhashset")) {
-						return new LinkedHashSet<>(jsonArray.toJavaList(genericType));
+						return new LinkedHashSet<>(JsonProviders.get().parseArray(jsonStr, genericType));
 					}
 					if (javaTypeNameLow.startsWith("java.util.treeset")) {
-						return new TreeSet<>(jsonArray.toJavaList(genericType));
+						return new TreeSet<>(JsonProviders.get().parseArray(jsonStr, genericType));
 					}
-					return new HashSet<>(jsonArray.toJavaList(genericType));
+					return new HashSet<>(JsonProviders.get().parseArray(jsonStr, genericType));
 				}
 				if (javaTypeNameLow.startsWith("java.util.linkedhashset")) {
 					return new LinkedHashSet<>(jsonArray);
@@ -224,9 +224,9 @@ public class JSONTypeUtil {
 		// 8. 处理 Collection 类型
 		if (javaTypeNameLow.equals(COLLECTION_TYPE)) {
 			if (genericType != null) {
-				return JSONArray.parseArray(jsonStr, genericType);
+				return JsonProviders.get().parseArray(jsonStr, genericType);
 			}
-			return JSONArray.parseArray(jsonStr);
+			return JsonProviders.get().parseArray(jsonStr);
 		}
 		// 9. 加载目标类
 		Class<?> classType;
@@ -242,7 +242,7 @@ public class JSONTypeUtil {
 		}
 		// 11. 处理自定义对象类型
 		if (!BeanUtil.isBaseDataType(classType)) {
-			return JSON.parseObject(jsonStr, classType);
+			return JsonProviders.get().parseObject(jsonStr, classType);
 		}
 		// 其他场景表示非json返回null交框架自行处理
 		return null;
@@ -253,7 +253,7 @@ public class JSONTypeUtil {
 	 */
 	private static Object parseJsonArray(String jsonStr, Class<?> arrayType) {
 		Class<?> componentType = arrayType.getComponentType();
-		JSONArray jsonArray = JSONArray.parseArray(jsonStr);
+		List<Object> jsonArray = JsonProviders.get().parseArray(jsonStr);
 		if (jsonArray == null || jsonArray.isEmpty()) {
 			return Array.newInstance(componentType, 0);
 		}
@@ -270,14 +270,15 @@ public class JSONTypeUtil {
 		if (componentType == boolean.class) {
 			boolean[] arr = new boolean[jsonArray.size()];
 			for (int i = 0; i < arr.length; i++) {
-				arr[i] = jsonArray.getBooleanValue(i);
+				Object flag = jsonArray.get(i);
+					arr[i] = (flag instanceof Boolean) ? (Boolean) flag : ((Number) flag).intValue() != 0;
 			}
 			return arr;
 		}
 		// 对象数组
 		Object array = Array.newInstance(componentType, jsonArray.size());
 		for (int i = 0; i < jsonArray.size(); i++) {
-			Array.set(array, i, jsonArray.getObject(i, componentType));
+			Array.set(array, i, JsonProviders.get().convert(jsonArray.get(i), componentType));
 		}
 		return array;
 	}
@@ -322,7 +323,7 @@ public class JSONTypeUtil {
 		// 反序列化,getString则被驱动toString为"{name=x}"非JSON形态致fastjson解析失败,实测),
 		// 重新序列化为标准JSON文本
 		if (jdbcValue instanceof java.util.Map || jdbcValue instanceof java.util.Collection) {
-			return JSON.toJSONString(jdbcValue);
+			return JsonProviders.get().toJSONString(jdbcValue);
 		}
 		// 其他类型尝试 toString
 		return jdbcValue.toString();
@@ -335,7 +336,7 @@ public class JSONTypeUtil {
 	 */
 	public static String unwrapJsonStringScalar(String str) {
 		if (str.startsWith("\"") && str.endsWith("\"")) {
-			return JSON.parseObject(str, String.class);
+			return JsonProviders.get().parseObject(str, String.class);
 		}
 		return str;
 	}
@@ -353,7 +354,7 @@ public class JSONTypeUtil {
 		if (value instanceof String) {
 			return (String) value;
 		}
-		return JSON.toJSONString(value);
+		return JsonProviders.get().toJSONString(value);
 	}
 
 	// oracle的JSON类型码(OracleTypes.JSON=2016,ojdbc 21c+提供;null表示驱动不可用)
