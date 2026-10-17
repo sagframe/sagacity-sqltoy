@@ -194,7 +194,7 @@ public class SqlToyConstants {
 	public final static Pattern BLANK_END = Pattern.compile("\\s$");
 
 	// 以and 或 or结尾
-	public final static Pattern AND_OR_END = Pattern.compile("(?i)\\W(and|or)\\s*$");
+	public final static Pattern AND_OR_END = Pattern.compile("(?i)\\b(and|or)\\s*$");
 
 	/**
 	 * 不输出sql的表达式
