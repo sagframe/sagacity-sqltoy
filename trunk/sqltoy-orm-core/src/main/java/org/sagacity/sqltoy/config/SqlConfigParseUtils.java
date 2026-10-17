@@ -723,6 +723,33 @@ public class SqlConfigParseUtils {
 	}
 
 	/**
+	 * update 2026-10-17 清理括号组内悬挂的 and/or 连接符:#[...] 片段剔除后,括号组内可能残留
+	 * 悬挂的 and/or(如 and ( or t.b=:b ) 或 and ( t.a=:a or ))。规则:
+	 * <li>左括号( 之后为 trim 空白后的 and/or 时剔除该连接符;右括号 ) 之前同理</li>
+	 * <li>and|or 之后的 \\s+ 保证 ( order by ... ) 这类以 or 开头的合法关键字不会被误清
+	 * (order 中 r 后是 d,无词边界,or 无法命中)</li>
+	 * <li>每轮只做删减、长度单调递减,循环必然收敛;未配对括号不处理</li>
+	 * 
+	 * @param sql
+	 * @return 清理后的 sql
+	 */
+	private static String cleanDanglingConnectorInParens(String sql) {
+		if (StringUtil.isBlank(sql)) {
+			return sql;
+		}
+		String result = sql;
+		while (true) {
+			String cleaned = result.replaceAll("(?i)\\(\\s*(and|or)\\b", "(")
+					.replaceAll("(?i)\\b(and|or)\\s*\\)", ")");
+			if (cleaned.equals(result)) {
+				break;
+			}
+			result = cleaned;
+		}
+		return result;
+	}
+
+	/**
 	 * 判断sql中是否存在#[] 表示sql是动态语句
 	 * 
 	 * @param sql
@@ -1709,7 +1736,17 @@ public class SqlConfigParseUtils {
 	 * @param tailSql
 	 * @return
 	 */
+	/**
+	 * update 2026-10-17 拼接完成后追加括号组内悬挂 and/or 连接符清理:
+	 * #[...] 片段剔除后,括号组内可能残留悬挂的 and/or(如 and ( or t.b=:b )),统一在此收口。
+	 */
 	public static String processWhereLinkAnd(String preSql, String markContentSql, boolean isEndWithAndOr,
+			String tailSql) {
+		return cleanDanglingConnectorInParens(
+				processWhereLinkAndInternal(preSql, markContentSql, isEndWithAndOr, tailSql));
+	}
+
+	private static String processWhereLinkAndInternal(String preSql, String markContentSql, boolean isEndWithAndOr,
 			String tailSql) {
 		String subStr = markContentSql.concat(tailSql);
 		String tmp = subStr.trim();
