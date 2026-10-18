@@ -69,9 +69,8 @@ public class EntityResultSetProxy<T> {
 	private Object doIntercept(Object proxy, Method method, Object[] args, Callable<?> superCall) throws Exception {
 		String methodName = method.getName();
 		// getter: getAmt → 截取Amt → amt属性
-		if ((methodName.startsWith("get") || methodName.startsWith("is")) && args.length == 0) {
-			int subSize = methodName.startsWith("get") ? 3 : 2;
-			String propName = methodName.substring(subSize);
+		if (BeanUtil.isGetter(methodName) && args.length == 0) {
+			String propName = BeanUtil.methodToProperty(methodName);
 			FieldMeta fieldMeta = entityMeta.getFieldMeta(propName);
 			if (fieldMeta == null) {
 				return superCall.call();

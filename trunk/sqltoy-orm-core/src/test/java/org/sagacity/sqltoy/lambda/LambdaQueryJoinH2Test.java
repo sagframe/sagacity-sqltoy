@@ -1,0 +1,445 @@
+package org.sagacity.sqltoy.lambda;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.io.Serializable;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.Statement;
+import java.util.List;
+
+import org.h2.jdbcx.JdbcDataSource;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
+import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.config.annotation.Column;
+import org.sagacity.sqltoy.config.annotation.Entity;
+import org.sagacity.sqltoy.config.annotation.Id;
+import org.sagacity.sqltoy.dao.LightDao;
+import org.sagacity.sqltoy.dao.impl.DefaultLightDaoImpl;
+import org.sagacity.sqltoy.exception.DataAccessException;
+import org.sagacity.sqltoy.lambda.join.ExcludeCols;
+import org.sagacity.sqltoy.lambda.join.JoinCol;
+import org.sagacity.sqltoy.lambda.LambdaQuery;
+import org.sagacity.sqltoy.lambda.LambdaDelete;
+import org.sagacity.sqltoy.lambda.LambdaUpdate;
+import org.sagacity.sqltoy.model.Page;
+
+/**
+ * @description 多表join查询/更新/删除端到端测试,H2内存库;join查询执行验证,
+ *              join更新/删除为MySQL风格方言,做sql文本断言(H2不支持多表update/delete语法)
+ * @author zhongxuchen
+ */
+@DisplayName("lambda join多表操作测试")
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+public class LambdaQueryJoinH2Test {
+
+	private static final String URL = "jdbc:h2:mem:lambdajoin;DB_CLOSE_DELAY=-1";
+	private static JdbcDataSource dataSource;
+	private static SqlToyContext context;
+	private static LightDao lightDao;
+
+	@Entity(tableName = "lambda_join_user")
+	public static class JoinUser implements Serializable {
+
+		private static final long serialVersionUID = 1L;
+
+		@Id
+		@Column(name = "ID")
+		private Integer id;
+
+		@Column(name = "STAFF_NAME")
+		private String staffName;
+
+		@Column(name = "DEPT_ID")
+		private Integer deptId;
+
+		@Column(name = "STATUS")
+		private Integer status;
+
+		public Integer getId() {
+			return id;
+		}
+
+		public void setId(Integer id) {
+			this.id = id;
+		}
+
+		public String getStaffName() {
+			return staffName;
+		}
+
+		public void setStaffName(String staffName) {
+			this.staffName = staffName;
+		}
+
+		public Integer getDeptId() {
+			return deptId;
+		}
+
+		public void setDeptId(Integer deptId) {
+			this.deptId = deptId;
+		}
+
+		public Integer getStatus() {
+			return status;
+		}
+
+		public void setStatus(Integer status) {
+			this.status = status;
+		}
+	}
+
+	@Entity(tableName = "lambda_join_dept")
+	public static class JoinDept implements Serializable {
+
+		private static final long serialVersionUID = 1L;
+
+		@Id
+		@Column(name = "DEPT_ID")
+		private Integer deptId;
+
+		@Column(name = "DEPT_NAME")
+		private String deptName;
+
+		@Column(name = "STATUS")
+		private Integer status;
+
+		public Integer getDeptId() {
+			return deptId;
+		}
+
+		public void setDeptId(Integer deptId) {
+			this.deptId = deptId;
+		}
+
+		public String getDeptName() {
+			return deptName;
+		}
+
+		public void setDeptName(String deptName) {
+			this.deptName = deptName;
+		}
+
+		public Integer getStatus() {
+			return status;
+		}
+
+		public void setStatus(Integer status) {
+			this.status = status;
+		}
+	}
+
+	/**
+	 * 查询结果VO,无注解,按select别名映射
+	 */
+	public static class JoinUserVO {
+
+		private Integer id;
+		private String staffName;
+		private String deptName;
+
+		public Integer getId() {
+			return id;
+		}
+
+		public void setId(Integer id) {
+			this.id = id;
+		}
+
+		public String getStaffName() {
+			return staffName;
+		}
+
+		public void setStaffName(String staffName) {
+			this.staffName = staffName;
+		}
+
+		public String getDeptName() {
+			return deptName;
+		}
+
+		public void setDeptName(String deptName) {
+			this.deptName = deptName;
+		}
+	}
+
+	@BeforeAll
+	public static void init() throws Exception {
+		try (Connection conn = DriverManager.getConnection(URL, "sa", ""); Statement st = conn.createStatement()) {
+			st.execute("drop table if exists lambda_join_user");
+			st.execute("drop table if exists lambda_join_dept");
+			st.execute(
+					"create table lambda_join_user (id int primary key, staff_name varchar(50), dept_id int, status int)");
+			st.execute("create table lambda_join_dept (dept_id int primary key, dept_name varchar(50), status int)");
+			st.execute("insert into lambda_join_dept values (10,'研发部',1)");
+			st.execute("insert into lambda_join_dept values (20,'市场部',1)");
+			st.execute("insert into lambda_join_user values (1,'张三',10,1)");
+			st.execute("insert into lambda_join_user values (2,'李四',20,1)");
+			st.execute("insert into lambda_join_user values (3,'王五',10,0)");
+			st.execute("insert into lambda_join_user values (4,'赵六',null,1)");
+		}
+		dataSource = new JdbcDataSource();
+		dataSource.setURL(URL);
+		dataSource.setUser("sa");
+		context = new SqlToyContext();
+		context.setDefaultDataSource(dataSource);
+		context.initialize();
+		lightDao = new DefaultLightDaoImpl(context);
+	}
+
+	private static String normalized(String sql) {
+		return sql == null ? "" : sql.replaceAll("\\s+", " ").trim();
+	}
+
+	@Test
+	@Order(1)
+	@DisplayName("缺省select查询主表全部字段")
+	public void testDefaultSelect() {
+		List<JoinUser> users = lightDao.lambdaQuery(JoinUser.class).leftJoin(JoinDept.class)
+				.on(JoinUser::getDeptId, JoinDept::getDeptId).eq(JoinUser::getStatus, 1)
+				.orderByAsc(JoinUser::getId).find();
+		assertEquals(3, users.size());
+		assertEquals("张三", users.get(0).getStaffName());
+		// 赵六无部门,LEFT JOIN不丢行
+		assertEquals(4, users.get(2).getId().intValue());
+	}
+
+	@Test
+	@Order(2)
+	@DisplayName("select别名映射到VO")
+	public void testSelectAliasToVo() {
+		List<JoinUserVO> rows = lightDao.lambdaQuery(JoinUserVO.class)
+				.select(JoinCol.of(JoinUser::getId).as("id"), JoinCol.of(JoinUser::getStaffName).as("staffName"),
+						JoinCol.of(JoinDept::getDeptName).as("deptName"))
+				.from(JoinUser.class).leftJoin(JoinDept.class).on(JoinUser::getDeptId, JoinDept::getDeptId)
+				.eq(JoinUser::getStatus, 1).orderByAsc(JoinUser::getId).find();
+		assertEquals(3, rows.size());
+		assertEquals("研发部", rows.get(0).getDeptName());
+		// 赵六无部门,左连接deptName为null
+		assertNull(rows.get(2).getDeptName());
+		assertNotNull(rows.get(2).getStaffName());
+	}
+
+	@Test
+	@Order(3)
+	@DisplayName("join条件与count")
+	public void testJoinCount() {
+		assertEquals(3L, lightDao.lambdaQuery(JoinUser.class).leftJoin(JoinDept.class)
+				.on(JoinUser::getDeptId, JoinDept::getDeptId).eq(JoinUser::getStatus, 1).count());
+		assertEquals(2L, lightDao.lambdaQuery(JoinUser.class).leftJoin(JoinDept.class)
+				.on(JoinUser::getDeptId, JoinDept::getDeptId).eq(JoinDept::getDeptName, "研发部").count());
+		assertTrue(lightDao.lambdaQuery(JoinUser.class).leftJoin(JoinDept.class)
+				.on(JoinUser::getDeptId, JoinDept::getDeptId).eq(JoinDept::getDeptName, "市场部").exists());
+	}
+
+	@Test
+	@Order(4)
+	@DisplayName("join分页查询")
+	public void testJoinFindPage() {
+		Page<JoinUser> page = lightDao.lambdaQuery(JoinUser.class).leftJoin(JoinDept.class)
+				.on(JoinUser::getDeptId, JoinDept::getDeptId).eq(JoinUser::getStatus, 1)
+				.orderByAsc(JoinUser::getId).findPage(new Page(2, 1));
+		assertEquals(3L, page.getRecordCount());
+		assertEquals(2, page.getRows().size());
+		assertEquals(1, ((JoinUser) page.getRows().get(0)).getId().intValue());
+	}
+
+	@Test
+	@Order(5)
+	@DisplayName("getOne与嵌套or条件")
+	public void testGetOneWithNested() {
+		JoinUser user = lightDao.lambdaQuery(JoinUser.class).leftJoin(JoinDept.class)
+				.on(JoinUser::getDeptId, JoinDept::getDeptId)
+				.eq(JoinUser::getStatus, 0)
+				.or(nested -> nested.eq(JoinDept::getDeptName, "研发部").eq(JoinUser::getId, 3))
+				.getOne();
+		assertNotNull(user);
+		assertEquals(3, user.getId().intValue());
+	}
+
+	@Test
+	@Order(6)
+	@DisplayName("select列与排序的sql文本")
+	public void testQuerySqlText() {
+		LambdaQuery<JoinUserVO> join = LambdaQuery.create(JoinUserVO.class)
+				.select(JoinCol.of(JoinUser::getStaffName).as("staffName"),
+						JoinCol.count(JoinDept::getDeptId).as("deptCount"))
+				.from(JoinUser.class).leftJoin(JoinDept.class).on(JoinUser::getDeptId, JoinDept::getDeptId)
+				.eq(JoinUser::getStatus, 1).groupBy(JoinUser::getId).orderByDesc(JoinUser::getId);
+		join.assemble(context::getEntityMeta);
+		assertEquals(
+				"SELECT j1.STAFF_NAME AS staffName, COUNT(j2.DEPT_ID) AS deptCount FROM lambda_join_user j1 "
+						+ "LEFT JOIN lambda_join_dept j2 ON j1.DEPT_ID = j2.DEPT_ID "
+						+ "WHERE j1.STATUS = :p1 GROUP BY j1.ID ORDER BY j1.ID DESC",
+				normalized(join.getSql()));
+	}
+
+	@Test
+	@Order(7)
+	@DisplayName("同一join多个on等值条件自动AND")
+	public void testMultiOnSqlText() {
+		LambdaQuery<JoinUser> join = LambdaQuery.create(JoinUser.class).from(JoinUser.class)
+				.leftJoin(JoinDept.class)
+				.on(JoinUser::getDeptId, JoinDept::getDeptId, JoinUser::getStatus, JoinDept::getStatus)
+				.eq(JoinUser::getId, 1);
+		join.assemble(context::getEntityMeta);
+		assertEquals(
+				"SELECT j1.STAFF_NAME AS staffName, j1.DEPT_ID AS deptId, j1.STATUS AS status, j1.ID AS id "
+						+ "FROM lambda_join_user j1 LEFT JOIN lambda_join_dept j2 "
+						+ "ON j1.DEPT_ID = j2.DEPT_ID AND j1.STATUS = j2.STATUS WHERE j1.ID = :p1",
+				normalized(join.getSql()));
+	}
+
+	@Test
+	@Order(8)
+	@DisplayName("join更新sql文本(MySQL方言)")
+	public void testJoinUpdateSqlText() {
+		LambdaUpdate<JoinUser> update = lightDao.lambdaUpdate(JoinUser.class).leftJoin(JoinDept.class)
+				.on(JoinUser::getDeptId, JoinDept::getDeptId).set(JoinUser::getStatus, 5)
+				.eq(JoinDept::getDeptName, "研发部");
+		update.assemble(context::getEntityMeta);
+		assertEquals(
+				"UPDATE lambda_join_user j1 LEFT JOIN lambda_join_dept j2 ON j1.DEPT_ID = j2.DEPT_ID "
+						+ "SET j1.STATUS = :p1 WHERE j2.DEPT_NAME = :p2",
+				normalized(update.getSql()));
+	}
+
+	@Test
+	@Order(9)
+	@DisplayName("join删除sql文本(MySQL方言)")
+	public void testJoinDeleteSqlText() {
+		LambdaDelete<JoinUser> delete = lightDao.lambdaDelete(JoinUser.class).leftJoin(JoinDept.class)
+				.on(JoinUser::getDeptId, JoinDept::getDeptId).eq(JoinDept::getDeptName, "市场部");
+		delete.assemble(context::getEntityMeta);
+		assertEquals(
+				"DELETE j1 FROM lambda_join_user j1 LEFT JOIN lambda_join_dept j2 ON j1.DEPT_ID = j2.DEPT_ID "
+						+ "WHERE j2.DEPT_NAME = :p1",
+				normalized(delete.getSql()));
+	}
+
+	@Test
+	@Order(10)
+	@DisplayName("join完整性校验:缺on/未参与join的实体")
+	public void testJoinValidation() {
+		// 缺on:发起join后未调用on关联
+		LambdaQuery<JoinUser> noOn = LambdaQuery.create(JoinUser.class).from(JoinUser.class);
+		noOn.leftJoin(JoinDept.class);
+		assertThrows(DataAccessException.class, () -> noOn.assemble(context::getEntityMeta));
+		// join更新缺on同样快速失败
+		LambdaUpdate<JoinUser> noOnUpdate = lightDao.lambdaUpdate(JoinUser.class);
+		noOnUpdate.leftJoin(JoinDept.class);
+		assertThrows(DataAccessException.class, () -> noOnUpdate.assemble(context::getEntityMeta));
+		// 条件字段实体未参与join
+		assertThrows(DataAccessException.class,
+				() -> lightDao.lambdaQuery(JoinUser.class).from(JoinUser.class).eq(JoinDept::getDeptName, "研发部")
+						.find());
+	}
+
+	@Test
+	@Order(11)
+	@DisplayName("join更新/删除无条件防护")
+	public void testJoinWriteGuard() {
+		LambdaUpdate<JoinUser> update = lightDao.lambdaUpdate(JoinUser.class).leftJoin(JoinDept.class)
+				.on(JoinUser::getDeptId, JoinDept::getDeptId).set(JoinUser::getStatus, 9);
+		update.assemble(context::getEntityMeta);
+		assertThrows(DataAccessException.class, () -> update.requireCondition("update"));
+
+		LambdaDelete<JoinUser> delete = lightDao.lambdaDelete(JoinUser.class).leftJoin(JoinDept.class)
+				.on(JoinUser::getDeptId, JoinDept::getDeptId);
+		delete.assemble(context::getEntityMeta);
+		assertThrows(DataAccessException.class, () -> delete.requireCondition("delete"));
+	}
+
+	@Test
+	@Order(15)
+	@DisplayName("join通道findTop取前N条")
+	public void testJoinFindTop() {
+		List<JoinUser> top = lightDao.lambdaQuery(JoinUser.class)
+				.leftJoin(JoinDept.class).on(JoinUser::getDeptId, JoinDept::getDeptId)
+				.eq(JoinUser::getStatus, 1).orderByAsc(JoinUser::getId).findTop(2);
+		assertEquals(2, top.size());
+		assertEquals(1, top.get(0).getId().intValue());
+	}
+
+	@Test
+	@Order(14)
+	@DisplayName("selectAll支持排除单个或多个字段")
+	public void testSelectAllExclude() {
+		LambdaQuery<JoinUserVO> query = lightDao.lambdaQuery(JoinUserVO.class)
+				.selectAll(ExcludeCols.of(JoinUser::getStatus)).from(JoinUser.class)
+				.leftJoin(JoinDept.class).on(JoinUser::getDeptId, JoinDept::getDeptId)
+				.select(JoinCol.of(JoinDept::getDeptName).as("deptName"))
+				.eq(JoinUser::getStatus, 1);
+		query.assemble(context::getEntityMeta);
+		// STATUS被排除,主表其余字段在前,JoinCol额外列在后
+		assertEquals(
+				"SELECT j1.STAFF_NAME AS staffName, j1.DEPT_ID AS deptId, j1.ID AS id, "
+						+ "j2.DEPT_NAME AS deptName FROM lambda_join_user j1 LEFT JOIN lambda_join_dept j2 "
+						+ "ON j1.DEPT_ID = j2.DEPT_ID WHERE j1.STATUS = :p1",
+				normalized(query.getSql()));
+		assertEquals(3, query.find().size());
+
+		// 多字段排除:varargs传入多个方法引用
+		LambdaQuery<JoinUserVO> multi = lightDao.lambdaQuery(JoinUserVO.class)
+				.selectAll(ExcludeCols.of(JoinUser::getStatus, JoinUser::getDeptId)).from(JoinUser.class)
+				.leftJoin(JoinDept.class).on(JoinUser::getDeptId, JoinDept::getDeptId)
+				.select(JoinCol.of(JoinDept::getDeptName).as("deptName"))
+				.eq(JoinUser::getStatus, 1);
+		multi.assemble(context::getEntityMeta);
+		assertEquals(
+				"SELECT j1.STAFF_NAME AS staffName, j1.ID AS id, "
+						+ "j2.DEPT_NAME AS deptName FROM lambda_join_user j1 LEFT JOIN lambda_join_dept j2 "
+						+ "ON j1.DEPT_ID = j2.DEPT_ID WHERE j1.STATUS = :p1",
+				normalized(multi.getSql()));
+		assertEquals(3, multi.find().size());
+	}
+
+	@Test
+	@Order(13)
+	@DisplayName("selectAll缺省主表全部字段并叠加join表字段")
+	public void testSelectAllWithJoinColumns() {
+		LambdaQuery<JoinUserVO> query = lightDao.lambdaQuery(JoinUserVO.class)
+				.selectAll().from(JoinUser.class)
+				.leftJoin(JoinDept.class).on(JoinUser::getDeptId, JoinDept::getDeptId)
+				.select(JoinCol.of(JoinDept::getDeptName).as("deptName"))
+				.eq(JoinUser::getStatus, 1).orderByAsc(JoinUser::getId);
+		query.assemble(context::getEntityMeta);
+		// 主表全部字段在前(属性别名),JoinCol额外列在后
+		assertEquals(
+				"SELECT j1.STAFF_NAME AS staffName, j1.DEPT_ID AS deptId, j1.STATUS AS status, j1.ID AS id, "
+						+ "j2.DEPT_NAME AS deptName FROM lambda_join_user j1 LEFT JOIN lambda_join_dept j2 "
+						+ "ON j1.DEPT_ID = j2.DEPT_ID WHERE j1.STATUS = :p1 ORDER BY j1.ID ASC",
+				normalized(query.getSql()));
+		List<JoinUserVO> rows = query.find();
+		assertEquals(3, rows.size());
+		assertEquals("张三", rows.get(0).getStaffName());
+		assertEquals("研发部", rows.get(0).getDeptName());
+		// 赵六无部门,LEFT JOIN下deptName为null
+		assertNull(rows.get(2).getDeptName());
+		assertNotNull(rows.get(2).getStaffName());
+	}
+
+	@Test
+	@Order(12)
+	@DisplayName("join getOne匹配多条视为条件缺陷抛出异常")
+	public void testJoinGetOneStrict() {
+		// 此时id=1、id=2两条记录status均为1
+		assertThrows(DataAccessException.class,
+				() -> lightDao.lambdaQuery(JoinUser.class).leftJoin(JoinDept.class)
+						.on(JoinUser::getDeptId, JoinDept::getDeptId).eq(JoinUser::getStatus, 1).getOne());
+		// 唯一匹配仍正常返回
+		JoinUser user = lightDao.lambdaQuery(JoinUser.class).leftJoin(JoinDept.class)
+				.on(JoinUser::getDeptId, JoinDept::getDeptId).eq(JoinUser::getId, 1).getOne();
+		assertNotNull(user);
+		assertEquals("张三", user.getStaffName());
+	}
+}

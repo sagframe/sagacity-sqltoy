@@ -17,6 +17,10 @@ import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
+import org.sagacity.sqltoy.exception.DataAccessException;
+import org.sagacity.sqltoy.lambda.LambdaDelete;
+import org.sagacity.sqltoy.lambda.LambdaQuery;
+import org.sagacity.sqltoy.lambda.LambdaUpdate;
 import org.sagacity.sqltoy.link.Batch;
 import org.sagacity.sqltoy.link.Delete;
 import org.sagacity.sqltoy.link.Elastic;
@@ -1072,4 +1076,66 @@ public interface LightDao {
 	 */
 	public <T> List<QueryResult<T>> parallelQuery(List<ParallelQuery> parallelQueryList, Map<String, Object> paramsMap,
 			ParallelConfig parallelConfig);
+
+	/**
+	 * ====================lambda条件操作:基于实体属性引用的lambda查询、删除、修改====================
+	 */
+
+	/**
+	 * 创建lambda查询条件构建器,已绑定当前dao,执行全部通过构建器终端完成:find/getOne/findPage/findTop/findRandom/count/exists(与link.Query终端同名同语义);
+	 * 单表与多表join统一入口:不调用join步骤即单表(实体查询通道),调用leftJoin/rightJoin/innerJoin
+	 * 即切换为join查询(拼装完整sql,结果类型可与主表不同,主表不同时用from(entityClass)指定)
+	 * <p>
+	 * 单表示例: lightDao.lambdaQuery(StaffInfo.class).eq(StaffInfo::getStatus, 1)
+	 * .like(StaffInfo::getStaffName, "张").orderByDesc(StaffInfo::getEntryTime).find();
+	 * </p>
+	 * <p>
+	 * join示例: lightDao.lambdaQuery(StaffInfo.class).leftJoin(OrganInfo.class)
+	 * .on(StaffInfo::getOrganId, OrganInfo::getOrganId).eq(StaffInfo::getStatus, 1).find();
+	 * </p>
+	 *
+	 * @param entityClass 实体类(join场景兼作结果类型与缺省主表)
+	 * @return lambda查询条件构建器
+	 */
+	default <T> LambdaQuery<T> lambdaQuery(Class<T> entityClass) {
+		return LambdaQuery.create(entityClass).bind(this);
+	}
+
+	/**
+	 * 创建lambda更新条件构建器,已绑定当前dao,可链式调用update/update(entity)执行
+	 * <p>
+	 * 示例: lightDao.lambdaUpdate(StaffInfo.class).set(StaffInfo::getStatus, 2)
+	 * .eq(StaffInfo::getStaffId, id).update();
+	 * </p>
+	 *
+	 * @param entityClass 实体类
+	 * @return lambda更新条件构建器
+	 */
+	default <T> LambdaUpdate<T> lambdaUpdate(Class<T> entityClass) {
+		return LambdaUpdate.create(entityClass).bind(this);
+	}
+
+	/**
+	 * 创建lambda删除条件构建器,已绑定当前dao,执行通过构建器终端delete()完成
+	 * <p>
+	 * 示例: lightDao.lambdaDelete(StaffInfo.class).eq(StaffInfo::getStatus, 0).delete();
+	 * </p>
+	 *
+	 * @param entityClass 实体类
+	 * @return lambda删除条件构建器
+	 */
+	default <T> LambdaDelete<T> lambdaDelete(Class<T> entityClass) {
+		return LambdaDelete.create(entityClass).bind(this);
+	}
+
+
+
+
+
+
+
+
+
+
+
 }

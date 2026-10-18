@@ -78,6 +78,20 @@ import org.slf4j.LoggerFactory;
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class BeanUtil {
+
+	/**
+	 * 系统classloader,类加载链的兜底
+	 */
+	private static ClassLoader systemClassLoader;
+
+	static {
+		try {
+			systemClassLoader = ClassLoader.getSystemClassLoader();
+		} catch (SecurityException ignored) {
+			// 受限环境(如Google App Engine)无法获取系统classloader
+		}
+	}
+
 	/**
 	 * 定义日志
 	 */
@@ -3319,5 +3333,83 @@ public class BeanUtil {
 			T proxyEntity = EntityResultSetProxy.createProxy(typeHandler, profile, conn, rs, entityClass, entityMeta);
 			callback.update(proxyEntity, index);
 		};
+	}
+
+	/**
+	 * 按类名称加载Class,依次尝试优先classloader、线程上下文classloader、BeanUtil自身classloader与系统classloader;
+	 * lambda元信息解析(SerializedLambda的instantiatedMethodType)等"类必然存在"的场景使用
+	 * 
+	 * @param className   类名称
+	 * @param classLoader 优先尝试的classloader,可为null
+	 * @return 对应的Class
+	 */
+	public static Class<?> loadClass(String className, ClassLoader classLoader) {
+		ClassLoader[] classLoaders = new ClassLoader[] { classLoader, Thread.currentThread().getContextClassLoader(),
+				BeanUtil.class.getClassLoader(), systemClassLoader };
+		for (ClassLoader loader : classLoaders) {
+			if (loader != null) {
+				try {
+					return Class.forName(className, true, loader);
+				} catch (ClassNotFoundException e) {
+					// ignore 尝试下一个classloader
+				}
+			}
+		}
+		throw new DataAccessException("failed to load class [" + className
+				+ "], only call loadClass when the class is guaranteed to exist!");
+	}
+
+	/**
+	 * getter/setter方法名转属性名,如getStaffName/isDeleted/setStaffName→staffName/deleted/staffName;
+	 * 单字母属性或第二字母非大写时首字母转小写,getURL这类连续大写保持URL形态。
+	 * 源头为MyBatis的org.apache.ibatis.reflection.PropertyNamer(Apache-2.0),MyBatis-Plus同形转载,
+	 * 经sqltoy-plus移植后于6.2.0并入BeanUtil
+	 *
+	 * @param name getter/setter方法名
+	 * @return 属性名
+	 */
+	public static String methodToProperty(String name) {
+		if (name.startsWith("is")) {
+			name = name.substring(2);
+		} else if (name.startsWith("get") || name.startsWith("set")) {
+			name = name.substring(3);
+		} else {
+			throw new DataAccessException(
+					"Error parsing property name '" + name + "'.  Didn't start with 'is', 'get' or 'set'.");
+		}
+		if (name.length() == 1 || (name.length() > 1 && !Character.isUpperCase(name.charAt(1)))) {
+			name = name.substring(0, 1).toLowerCase(Locale.ENGLISH) + name.substring(1);
+		}
+		return name;
+	}
+
+	/**
+	 * 判断方法名是否为getter(getXxx无参语义层面由调用方校验参数个数)
+	 *
+	 * @param name 方法名
+	 * @return true表示getter
+	 */
+	public static boolean isGetter(String name) {
+		return (name.startsWith("get") && name.length() > 3) || (name.startsWith("is") && name.length() > 2);
+	}
+
+	/**
+	 * 判断方法名是否为setter
+	 *
+	 * @param name 方法名
+	 * @return true表示setter
+	 */
+	public static boolean isSetter(String name) {
+		return name.startsWith("set") && name.length() > 3;
+	}
+
+	/**
+	 * 判断方法名是否为getter或setter
+	 *
+	 * @param name 方法名
+	 * @return true表示属性访问方法
+	 */
+	public static boolean isProperty(String name) {
+		return isGetter(name) || isSetter(name);
 	}
 }

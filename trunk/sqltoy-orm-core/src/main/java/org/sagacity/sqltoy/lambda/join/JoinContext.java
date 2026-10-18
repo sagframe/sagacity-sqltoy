@@ -1,0 +1,537 @@
+package org.sagacity.sqltoy.lambda.join;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import org.sagacity.sqltoy.config.model.EntityMeta;
+import org.sagacity.sqltoy.exception.DataAccessException;
+import org.sagacity.sqltoy.lambda.LambdaFn;
+import org.sagacity.sqltoy.lambda.LambdaUtils;
+import org.sagacity.sqltoy.lambda.toolkit.FieldNature;
+
+/**
+ * @description 多表join的sql总装上下文:注册期收集实体别名、join步骤、select/set/删除表定义,
+ *              assemble注入实体元信息后按SELECT/UPDATE/DELETE三种形态组装完整sql,内部使用
+ * @author zhongxuchen
+ */
+public class JoinContext {
+
+	public enum Operate {
+		SELECT, UPDATE, DELETE
+	}
+
+	/**
+	 * 表步骤:from主表、join连接、on关联条件
+	 */
+	private abstract static class TableStep {
+	}
+
+	private static final class FromStep extends TableStep {
+		final Class<?> entity;
+
+		FromStep(Class<?> entity) {
+			this.entity = entity;
+		}
+	}
+
+	private static final class JoinStep extends TableStep {
+		final String joinKeyword;
+		final Class<?> entity;
+
+		JoinStep(String joinKeyword, Class<?> entity) {
+			this.joinKeyword = joinKeyword;
+			this.entity = entity;
+		}
+	}
+
+	private static final class OnStep extends TableStep {
+		final FieldNature columnA;
+		final FieldNature columnB;
+
+		OnStep(FieldNature columnA, FieldNature columnB) {
+			this.columnA = columnA;
+			this.columnB = columnB;
+		}
+	}
+
+	/**
+	 * update的set字段定义:常规形态为"列 = :pN",表达式形态为"列 = 表达式原文"(可含?pN绑定)
+	 */
+	private static final class SetItem {
+		final FieldNature column;
+		final String paramName;
+		final Object value;
+		final String rawExpression;
+
+		SetItem(FieldNature column, String paramName, Object value, String rawExpression) {
+			this.column = column;
+			this.paramName = paramName;
+			this.value = value;
+			this.rawExpression = rawExpression;
+		}
+	}
+
+	private final Operate operate;
+
+	/**
+	 * 查询结果类型,update/delete为null
+	 */
+	private final Class<?> resultClass;
+
+	/**
+	 * 实体类与别名的映射,保持join声明顺序
+	 */
+	private final LinkedHashMap<Class<?>, String> aliasMap = new LinkedHashMap<>();
+
+	/**
+	 * 表步骤序列:FROM、JOIN、ON按声明顺序排列
+	 */
+	private final List<TableStep> tableSteps = new ArrayList<>();
+
+	/**
+	 * select列定义
+	 */
+	private final List<JoinCol> selectColumns = new ArrayList<>();
+
+	/**
+	 * 以属性名形式指定的select列(单表查询的select在join模式下渲染为 别名.列 AS 属性)
+	 */
+	private final List<String> plainSelectColumns = new ArrayList<>();
+
+	/**
+	 * selectAll标记:true时主表全部字段以"别名.列 AS 属性"输出,与显式select列并存(主表字段在前)
+	 */
+	private boolean selectAll;
+
+	/**
+	 * distinct去重标记:渲染SELECT DISTINCT
+	 */
+	private boolean distinct;
+
+	/**
+	 * selectAll的字段排除定义,可为null
+	 */
+	private ExcludeCols<?> selectAllExclude;
+
+	/**
+	 * update的set字段定义
+	 */
+	private final List<SetItem> setItems = new ArrayList<>();
+
+	/**
+	 * delete目标实体,缺省为主表
+	 */
+	private final List<Class<?>> deleteClasses = new ArrayList<>();
+
+	/**
+	 * 参数序号,条件与set共享,保证参数名全局唯一
+	 */
+	final AtomicInteger paramSeq = new AtomicInteger(0);
+
+	/**
+	 * 别名序号
+	 */
+	private final AtomicInteger aliasSeq = new AtomicInteger(0);
+
+	/**
+	 * 主表实体
+	 */
+	private Class<?> fromClass;
+
+	/**
+	 * 等待on关联的join实体,null表示无待关联的join
+	 */
+	private String pendingJoinKeyword;
+
+	/**
+	 * 实体元信息加载器,assemble时由执行侧注入
+	 */
+	private Function<Class<?>, EntityMeta> metaLoader;
+
+	public JoinContext(Operate operate, Class<?> resultClass) {
+		this.operate = operate;
+		this.resultClass = resultClass;
+	}
+
+	/**
+	 * @description 注入实体元信息加载器并做完整性校验
+	 */
+	public void assemble(Function<Class<?>, EntityMeta> metaLoader) {
+		// 查询场景未显式from时,缺省以结果类型作为主表
+		if (fromClass == null && resultClass != null) {
+			registerFrom(resultClass);
+		}
+		if (fromClass == null) {
+			throw new DataAccessException("Lambda join requires a from entity; call from(entityClass) first");
+		}
+		if (pendingJoinKeyword != null) {
+			throw new DataAccessException("Lambda join has joined tables without on() association");
+		}
+		// 校验set/删除目标/select列所属实体均已参与join
+		for (SetItem setItem : setItems) {
+			requireJoined(setItem.column.entityClass());
+		}
+		for (Class<?> deleteClass : deleteClasses) {
+			requireJoined(deleteClass);
+		}
+		for (JoinCol selectColumn : selectColumns) {
+			requireJoined(LambdaUtils.extractNature(selectColumn.getColumn()).entityClass());
+		}
+		this.metaLoader = metaLoader;
+	}
+
+	/**
+	 * @return 下一个命名参数名
+	 */
+	public String nextParamName() {
+		return "p" + paramSeq.incrementAndGet();
+	}
+
+	/**
+	 * @description 注册主表,必须第一个调用
+	 */
+	public void registerFrom(Class<?> entityClass) {
+		if (fromClass != null) {
+			throw new DataAccessException("Lambda join from entity can only be set once");
+		}
+		registerAlias(entityClass);
+		tableSteps.add(new FromStep(entityClass));
+		this.fromClass = entityClass;
+	}
+
+	/**
+	 * @description 注册join表,等待on关联;查询场景未显式from时缺省以结果类型作为主表
+	 */
+	public void registerJoin(String joinKeyword, Class<?> entityClass) {
+		if (fromClass == null && resultClass != null) {
+			registerFrom(resultClass);
+		}
+		if (fromClass == null) {
+			throw new DataAccessException("Lambda join requires the from entity to be registered before joining");
+		}
+		if (pendingJoinKeyword != null) {
+			throw new DataAccessException("Previous join is missing on(); call on() before adding another join");
+		}
+		registerAlias(entityClass);
+		tableSteps.add(new JoinStep(joinKeyword, entityClass));
+		this.pendingJoinKeyword = joinKeyword;
+	}
+
+	/**
+	 * @description 登记on等值关联:别名a.字段a = 别名b.字段b,字段对依次成对传入,
+	 *              同一join的多个关联条件自动以AND连接
+	 */
+	public void registerOn(LambdaFn<?, ?>... columnPairs) {
+		if (pendingJoinKeyword == null) {
+			throw new DataAccessException("on() must be called right after leftJoin/rightJoin/innerJoin");
+		}
+		if (columnPairs == null || columnPairs.length == 0 || columnPairs.length % 2 != 0) {
+			throw new DataAccessException("on() arguments must be paired join columns (even count)");
+		}
+		for (int i = 0; i < columnPairs.length; i += 2) {
+			FieldNature natureA = LambdaUtils.extractNature(columnPairs[i]);
+			FieldNature natureB = LambdaUtils.extractNature(columnPairs[i + 1]);
+			if (!aliasMap.containsKey(natureA.entityClass()) || !aliasMap.containsKey(natureB.entityClass())) {
+				throw new DataAccessException("on() columns belong to entities not registered by from/join");
+			}
+			tableSteps.add(new OnStep(natureA, natureB));
+		}
+		pendingJoinKeyword = null;
+	}
+
+	/**
+	 * @description 注册select列
+	 */
+	public void addSelectColumn(JoinCol joinColumn) {
+		checkOperate(Operate.SELECT, "select");
+		selectColumns.add(joinColumn);
+	}
+
+	/**
+	 * @description 注册属性名形式的select列(来自单表select方法)
+	 */
+	public void addPlainSelectColumn(String fieldName) {
+		checkOperate(Operate.SELECT, "select");
+		plainSelectColumns.add(fieldName);
+	}
+
+	/**
+	 * @description 标记查询结果去重
+	 */
+	public void markDistinct() {
+		checkOperate(Operate.SELECT, "distinct");
+		this.distinct = true;
+	}
+
+	/**
+	 * @description 标记输出主表全部字段(可与显式select列并存)
+	 */
+	public void markSelectAll() {
+		checkOperate(Operate.SELECT, "selectAll");
+		this.selectAll = true;
+	}
+
+	/**
+	 * @description 标记输出主表全部字段并排除指定字段(可与显式select列并存)
+	 */
+	public void markSelectAll(ExcludeCols<?> excludeColumns) {
+		checkOperate(Operate.SELECT, "selectAll");
+		this.selectAll = true;
+		this.selectAllExclude = excludeColumns;
+	}
+
+	/**
+	 * @return 是否已注册join关联表
+	 */
+	public boolean hasJoin() {
+		for (TableStep step : tableSteps) {
+			if (step instanceof JoinStep) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * @return 是否已注册select列定义
+	 */
+	public boolean hasSelectColumns() {
+		return !selectColumns.isEmpty() || !plainSelectColumns.isEmpty();
+	}
+
+	/**
+	 * @description 注册update的set字段,字段所属实体须参与join(assemble时校验)
+	 */
+	public <E, R> void addSetColumn(LambdaFn<E, R> column, Object value) {
+		checkOperate(Operate.UPDATE, "set");
+		setItems.add(new SetItem(LambdaUtils.extractNature(column), nextParamName(), value, null));
+	}
+
+	/**
+	 * @description 注册update的set表达式(基于当前值计算,如<code>status = status + 1</code>),
+	 *              表达式原文输出,其中单个<code>?</code>替换为命名参数并绑定value
+	 */
+	public <E, R> void addSetExpression(LambdaFn<E, R> column, String expression, Object value) {
+		checkOperate(Operate.UPDATE, "setExpr");
+		if (value != null && expression.indexOf('?') >= 0) {
+			String paramName = nextParamName();
+			setItems.add(new SetItem(LambdaUtils.extractNature(column), paramName, value,
+					expression.replace("?", ":" + paramName)));
+		} else {
+			setItems.add(new SetItem(LambdaUtils.extractNature(column), null, null, expression));
+		}
+	}
+
+	/**
+	 * @description 注册delete目标表,缺省为主表,所属实体须参与join(assemble时校验)
+	 */
+	public void addDeleteClass(Class<?> entityClass) {
+		checkOperate(Operate.DELETE, "deleteTables");
+		deleteClasses.add(entityClass);
+	}
+
+	/**
+	 * @description 解析实体属性对应的别名限定列名,实体未参与join时抛出异常
+	 */
+	public String columnName(Class<?> entityClass, String fieldName) {
+		requireJoined(entityClass);
+		return aliasMap.get(entityClass) + "." + metaLoader.apply(entityClass).getColumnName(fieldName);
+	}
+
+	private void requireJoined(Class<?> entityClass) {
+		if (!aliasMap.containsKey(entityClass)) {
+			throw new DataAccessException("Entity [" + entityClass.getSimpleName()
+					+ "] does not participate in the join; join fields must come from the from or joined entities");
+		}
+	}
+
+	/**
+	 * @description 解析selectAll的排除属性名集合,排除字段须属于主表实体
+	 */
+	private java.util.Set<String> resolveExcludeFields(Class<?> fromClass) {
+		if (selectAllExclude == null) {
+			return java.util.Collections.emptySet();
+		}
+		java.util.Set<String> fields = new java.util.HashSet<>();
+		for (org.sagacity.sqltoy.lambda.LambdaFn<?, ?> column : selectAllExclude.getColumns()) {
+			FieldNature nature = LambdaUtils.extractNature(column);
+			if (!fromClass.equals(nature.entityClass())) {
+				throw new DataAccessException("ExcludeCols columns must belong to the from entity ["
+						+ fromClass.getSimpleName() + "]");
+			}
+			fields.add(nature.fieldName());
+		}
+		return fields;
+	}
+
+	private void checkOperate(Operate expected, String operation) {
+		if (operate != expected) {
+			throw new DataAccessException("Join " + operation + "() is only supported in " + expected + " mode");
+		}
+	}
+
+	private void registerAlias(Class<?> entityClass) {
+		if (!aliasMap.containsKey(entityClass)) {
+			aliasMap.put(entityClass, Character.toLowerCase(entityClass.getSimpleName().charAt(0))
+					+ String.valueOf(aliasSeq.incrementAndGet()));
+		}
+	}
+
+	/**
+	 * @description 组装完整sql,conditionSql为where条件文本,无条件时以1 = 1补齐
+	 */
+	public String getSql(String conditionSql) {
+		if (metaLoader == null) {
+			throw new DataAccessException("Lambda join has not been assembled; getSql() is not available yet");
+		}
+		String whereSql = (conditionSql == null || conditionSql.isEmpty()) ? "1 = 1" : conditionSql;
+		StringBuilder sql = new StringBuilder();
+		switch (operate) {
+			case SELECT:
+				sql.append("SELECT ").append(distinct ? "DISTINCT " : "").append(buildSelectSql())
+						.append(" FROM ").append(buildTableSql());
+				break;
+			case UPDATE:
+				if (setItems.isEmpty()) {
+					throw new DataAccessException("Lambda join update requires at least one field set via set()");
+				}
+				sql.append("UPDATE ").append(buildTableSql()).append(" SET ").append(buildSetSql());
+				break;
+			case DELETE:
+				sql.append("DELETE ").append(buildDeleteSql()).append(" FROM ").append(buildTableSql());
+				break;
+			default:
+				throw new DataAccessException("Unsupported lambda join operate type");
+		}
+		sql.append(" WHERE ").append(whereSql);
+		return sql.toString();
+	}
+
+	/**
+	 * @return 组装的全部参数集合(set参数+条件参数由wrapper合并)
+	 */
+	public Map<String, Object> getSetParams() {
+		Map<String, Object> params = new LinkedHashMap<>();
+		for (SetItem setItem : setItems) {
+			if (setItem.paramName != null) {
+				params.put(setItem.paramName, setItem.value);
+			}
+		}
+		return params;
+	}
+
+	/**
+	 * @description 组装表关联sql:主表 别名 [JOIN 表 别名 ON 条件[ AND 条件]...]...
+	 */
+	private String buildTableSql() {
+		StringBuilder tableSql = new StringBuilder();
+		boolean pendingOn = false;
+		for (TableStep step : tableSteps) {
+			if (step instanceof FromStep) {
+				tableSql.append(tableName(((FromStep) step).entity)).append(" ")
+						.append(aliasMap.get(((FromStep) step).entity));
+			} else if (step instanceof JoinStep) {
+				JoinStep joinStep = (JoinStep) step;
+				tableSql.append(" ").append(joinStep.joinKeyword).append(" ").append(tableName(joinStep.entity))
+						.append(" ").append(aliasMap.get(joinStep.entity));
+				pendingOn = true;
+			} else if (step instanceof OnStep) {
+				OnStep onStep = (OnStep) step;
+				tableSql.append(pendingOn ? " ON " : " AND ")
+						.append(columnName(onStep.columnA.entityClass(), onStep.columnA.fieldName()))
+						.append(" = ")
+						.append(columnName(onStep.columnB.entityClass(), onStep.columnB.fieldName()));
+				pendingOn = false;
+			}
+		}
+		return tableSql.toString();
+	}
+
+	private String tableName(Class<?> entityClass) {
+		return metaLoader.apply(entityClass).getTableName();
+	}
+
+	/**
+	 * @description 组装select列sql,未指定时:结果类型为主表则查询主表全部字段(带属性别名),否则*
+	 */
+	private String buildSelectSql() {
+		List<String> columns = new ArrayList<>();
+		// selectAll:主表全部字段在前(可排除指定字段),与显式select列并存
+		if (selectAll && fromClass != null) {
+			EntityMeta fromMeta = metaLoader.apply(fromClass);
+			String fromAlias = aliasMap.get(fromClass);
+			for (String fieldName : fromMeta.getFieldsArray(false)) {
+				if (!resolveExcludeFields(fromClass).contains(fieldName)) {
+					columns.add(fromAlias + "." + fromMeta.getColumnName(fieldName) + " AS " + fieldName);
+				}
+			}
+		}
+		if (!plainSelectColumns.isEmpty()) {
+			EntityMeta entityMeta = metaLoader.apply(resultClass);
+			String alias = aliasMap.get(resultClass);
+			for (String fieldName : plainSelectColumns) {
+				columns.add(alias + "." + entityMeta.getColumnName(fieldName) + " AS " + fieldName);
+			}
+		}
+		for (JoinCol joinColumn : selectColumns) {
+			columns.add(buildSelectColumn(joinColumn));
+		}
+		if (!columns.isEmpty()) {
+			return String.join(", ", columns);
+		}
+		if (selectAll) {
+			throw new DataAccessException(
+					"Lambda query selectAll excludes all fields of the from entity; keep at least one field");
+		}
+		if (aliasMap.containsKey(resultClass)) {
+			EntityMeta entityMeta = metaLoader.apply(resultClass);
+			String alias = aliasMap.get(resultClass);
+			return Arrays.stream(entityMeta.getFieldsArray(false))
+					.map(field -> alias + "." + entityMeta.getColumnName(field) + " AS " + field)
+					.collect(Collectors.joining(", "));
+		}
+		return "*";
+	}
+
+	private String buildSelectColumn(JoinCol joinColumn) {
+		FieldNature nature = LambdaUtils.extractNature(joinColumn.getColumn());
+		String columnName = columnName(nature.entityClass(), nature.fieldName());
+		String columnSql = joinColumn.getFunction() != null ? joinColumn.getFunction().getSqlSegment(columnName)
+				: columnName;
+		return joinColumn.getAlias() != null ? columnSql + " AS " + joinColumn.getAlias() : columnSql;
+	}
+
+	private String buildSetSql() {
+		return setItems.stream().map(setItem -> {
+			String left = columnName(setItem.column.entityClass(), setItem.column.fieldName());
+			return (setItem.rawExpression != null) ? left + " = " + setItem.rawExpression
+					: left + " = :" + setItem.paramName;
+		}).collect(Collectors.joining(", "));
+	}
+
+	private String buildDeleteSql() {
+		if (deleteClasses.isEmpty()) {
+			// 未指定删除目标表时默认为主表
+			return aliasMap.get(fromClass);
+		}
+		return deleteClasses.stream().map(aliasMap::get).collect(Collectors.joining(","));
+	}
+
+	public Class<?> getFromClass() {
+		return fromClass;
+	}
+
+	public Operate getOperate() {
+		return operate;
+	}
+
+	public Class<?> getResultClass() {
+		return resultClass;
+	}
+}
