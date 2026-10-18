@@ -9,6 +9,7 @@ import java.util.function.Function;
 
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.PageOptimize;
+import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
 import org.sagacity.sqltoy.dao.LightDao;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.lambda.engine.AbstractWhere;
@@ -213,7 +214,7 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	}
 
 	/**
-	 * @description 注册CTE并指定PG物化hint(materialized仅PostgreSQL生效:AS MATERIALIZED/AS NOT MATERIALIZED,其他库忽略)
+	 * @description 注册CTE并指定物化hint(materialized仅PG12+及openGauss/金仓/Vastbase/瀚高等同内核库生效:AS MATERIALIZED/AS NOT MATERIALIZED,其余库忽略不渲染,详见SqlWithAnalysis.supportsCteMaterialized)
 	 */
 	public LambdaQuery<T> with(String name, LambdaQuery<?> cteQuery, Boolean materialized) {
 		// CTE体必须是完整SELECT..FROM,强制内层走join/SQL通道
@@ -310,8 +311,9 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 		StringBuilder sb = new StringBuilder();
 		if (!ctes.isEmpty()) {
 			int dbType = resolveDbType();
-			// SQLServer的WITH惯例前置分号;Oracle/SQLServer递归CTE不带RECURSIVE关键字
-			sb.append(dbType == DBType.SQLSERVER ? ";WITH " : "WITH ");
+			// WITH必须位于语句位置0:sqltoy靠SqlWithAnalysis/hasWith从文本检测WITH以在count/分页时把WITH剥离到包裹外,
+			// 前导分号会破坏该检测;SQLServer单条语句以WITH开头本就不需要前置分号(分号要求仅针对WITH前尚有未结束语句的批处理)
+			sb.append("WITH ");
 			boolean anyRecursive = ctes.stream().anyMatch(c -> c.recursive);
 			if (anyRecursive && dbType != DBType.ORACLE && dbType != DBType.ORACLE11 && dbType != DBType.SQLSERVER) {
 				sb.append("RECURSIVE ");
@@ -322,7 +324,9 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 					sb.append(", ");
 				}
 				sb.append(cte.name).append(" AS ");
-				if (cte.materialized != null && (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14)) {
+				// update 2026-10-18 物化hint门禁与SqlWithAnalysis白名单单一事实源对齐:PG12+及
+				// openGauss/金仓/Vastbase/瀚高(真库实测支持)才渲染MATERIALIZED,其余库忽略(不渲染即不报错)
+				if (cte.materialized != null && SqlWithAnalysis.supportsCteMaterialized(dbType)) {
 					sb.append(cte.materialized ? "MATERIALIZED " : "NOT MATERIALIZED ");
 				}
 				sb.append("(").append(cte.query.getSql()).append(")");
@@ -333,10 +337,11 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 		if (unions.isEmpty()) {
 			sb.append(mainSql);
 		} else {
-			// union各分支包括号,保证与CTE前缀/分页包裹组合时优先级正确
-			sb.append("(").append(mainSql).append(")");
+			// union分支不加括号:(SELECT..)UNION(SELECT..)在SQLServer非法(T-SQL不允许set操作数带括号);
+			// 整体被sqltoy包成派生表做count/分页时的外层括号由方言分页机制负责,各库均合法
+			sb.append(mainSql);
 			for (Object[] u : unions) {
-				sb.append(" ").append(u[0]).append(" (").append(((LambdaQuery<?>) u[1]).getSql()).append(")");
+				sb.append(" ").append(u[0]).append(" ").append(((LambdaQuery<?>) u[1]).getSql());
 			}
 		}
 		return sb.toString();

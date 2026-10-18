@@ -772,16 +772,24 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 		} else {
 			convertDialect = dialect;
 		}
-		if (convertDialect == null || convertDialect.equals("") || convertDialect.equals(Dialect.UNDEFINE)
-				|| convertDialect.equals(this.dialect)) {
+		if (convertDialect == null || convertDialect.equals("") || convertDialect.equals(Dialect.UNDEFINE)) {
 			return sqlContent;
+		}
+		// update 2026-10-18 CTE物化hint按目标dbType保留/剔除:AS [NOT] MATERIALIZED仅PG12+及
+		// 同内核衍生库(openGauss/金仓/Vastbase/瀚高,真库实测)支持,其余库混入即报语法错误,对不支持
+		// 库剔除(仅失物化优化、不改查询语义)。方言匹配时跳过函数/保留字转换(原零变化行为)但仍适配
+		// 物化hint,且直接返回不入缓存(规避setSql后读到陈旧缓存);方言不一致走转换缓存路径
+		int convertDbType = DataSourceUtils.getDBType(convertDialect);
+		if (convertDialect.equals(this.dialect)) {
+			return SqlWithAnalysis.adaptCteMaterialized(sqlContent, convertDbType);
 		}
 		String key = convertDialect.concat(".").concat(type);
 		// update 2026-9-8 containsKey+get+put三次查找合并为computeIfAbsent(并发首查免重复计算)
 		return dialectSqlMap.computeIfAbsent(key, k -> {
 			String dialectSql = FunctionUtils.getDialectSql(sqlContent, convertDialect);
 			// 保留字处理
-			return ReservedWordsUtil.convertSql(dialectSql, DataSourceUtils.getDBType(convertDialect));
+			dialectSql = ReservedWordsUtil.convertSql(dialectSql, convertDbType);
+			return SqlWithAnalysis.adaptCteMaterialized(dialectSql, convertDbType);
 		});
 	}
 

@@ -139,7 +139,7 @@ public class LambdaCompositionH2Test {
 		q1.unionAll(q2);
 		q1.assemble(context::getEntityMeta);
 		String sql = norm(q1.getSql());
-		assertTrue(sql.contains(") UNION ALL (SELECT"), sql);
+		assertTrue(sql.contains(" UNION ALL SELECT"), sql);
 		// 执行:dept10(张三,李四)+dept20(王五)=3
 		List<CteUser> rows = q1.find();
 		assertEquals(3, rows.size());

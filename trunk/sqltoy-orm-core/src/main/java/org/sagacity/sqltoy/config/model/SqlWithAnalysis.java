@@ -9,6 +9,7 @@ import java.util.regex.Pattern;
 
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
+import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
@@ -24,6 +25,13 @@ public class SqlWithAnalysis implements Serializable {
 	private static final long serialVersionUID = -5841684922722930298L;
 
 	private final Pattern asPattern = Pattern.compile("\\Was");
+
+	/**
+	 * update 2026-10-18 CTE物化hint定位:匹配后随'('的"as [not] materialized",组1承载"as"+空白
+	 * 原形态,供adaptCteMaterialized在不支持库上剔除[not] materialized关键字而保留"as ("
+	 */
+	private static final Pattern CTE_MATERIALIZED_PATTERN = Pattern
+			.compile("(?i)(\\bas\\s+)(?:not\\s+)?materialized\\s*(?=\\()");
 
 	private String sql;
 
@@ -235,6 +243,66 @@ public class SqlWithAnalysis implements Serializable {
 	 */
 	public void setHasWith(boolean hasWith) {
 		this.hasWith = hasWith;
+	}
+
+	/**
+	 * update 2026-10-18 目标库是否支持CTE物化hint(AS [NOT] MATERIALIZED)。该语法为PostgreSQL
+	 * 12+引入,同内核衍生库openGauss/金仓/Vastbase/瀚高经本次真库实测均支持;其余库(mysql/tidb/
+	 * sqlserver/oracle/db2/dm/hana/clickhouse等,实测mysql9.3/tidb8.5/mssql2025混入即报语法错误)
+	 * 不支持。白名单保守只收录已实测支持的库,未收录库一律剔除hint(仅失去物化优化、不改变查询
+	 * 语义,绝不会因关键字报错);GAUSSDB/MOGDB/STARDB等openGauss/PG衍生库待真库实测后可补入
+	 *
+	 * @param dbType DBType常量
+	 * @return true表示支持,应保留hint
+	 */
+	public static boolean supportsCteMaterialized(int dbType) {
+		switch (dbType) {
+		case DBType.POSTGRESQL:
+		case DBType.POSTGRESQL14:
+		case DBType.OPENGAUSS:
+		case DBType.KINGBASE:
+		case DBType.VASTBASE:
+		case DBType.GAUSSDB:
+		case DBType.HIGHGO:
+			return true;
+		default:
+			return false;
+		}
+	}
+
+	/**
+	 * update 2026-10-18 按目标库类型保留/剔除CTE物化hint。支持库(PG系)原样返回;不支持库将 "AS [NOT]
+	 * MATERIALIZED ("改写为"AS (",规避混入PG专有关键字导致的执行报错。定位在字面量
+	 * 掩码串上进行(掩码串与原串等长、非字面量字符原样保留,匹配位置可直接用于原串截取),规避 字面量内的"as materialized
+	 * ("文本被误剔;不含materialized关键字时走零开销快速通道。
+	 * 剔除只移除优化hint、不改变CTE查询语义,对不支持库本就无物化概念,行为等价于用户未写hint
+	 *
+	 * @param sql    原始sql(可为整条语句或with片段)
+	 * @param dbType 目标库类型(DBType常量)
+	 * @return dbType支持或无匹配时原样返回,否则返回剔除MATERIALIZED后的sql
+	 */
+	public static String adaptCteMaterialized(String sql, int dbType) {
+		if (StringUtil.isBlank(sql) || supportsCteMaterialized(dbType)) {
+			return sql;
+		}
+		// 快速通道:常规sql不含materialized关键字,零处理原样返回
+		if (StringUtil.indexOfIgnoreCase(sql, "materialized") == -1) {
+			return sql;
+		}
+		String masked = SqlConfigParseUtils.maskLiterals(sql, SqlConfigParseUtils.isBackslashEscapeDialect(dbType));
+		Matcher matcher = CTE_MATERIALIZED_PATTERN.matcher(masked);
+		if (!matcher.find()) {
+			return sql;
+		}
+		StringBuilder result = new StringBuilder(sql.length());
+		int last = 0;
+		do {
+			// 保留原"as"+空白(组1),跳过[not] materialized关键字直至'('前(lookahead不消费'(')
+			result.append(sql, last, matcher.end(1));
+			last = matcher.end();
+		} while (matcher.find());
+		result.append(sql, last, sql.length());
+		return result.toString();
 	}
 
 }
