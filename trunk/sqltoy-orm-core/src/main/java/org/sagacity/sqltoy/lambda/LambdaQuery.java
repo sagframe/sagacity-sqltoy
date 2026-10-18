@@ -58,6 +58,11 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	 */
 	private boolean aliasOrderUsed;
 
+	/**
+	 * 单表通道排除字段名(ExcludeCols在单表通道转EntityQuery.unselect)
+	 */
+	private final List<String> excludeFields = new ArrayList<>();
+
 	private LambdaQuery(Class<T> entityClass, AtomicInteger paramSeq, JoinContext joinContext) {
 		super(entityClass, paramSeq, joinContext);
 	}
@@ -184,9 +189,10 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 		if (alias == null || !alias.matches("[A-Za-z_][A-Za-z0-9_]*")) {
 			throw new DataAccessException("Order-by alias must be a plain identifier but got: " + alias);
 		}
-		appendSqlSegments(SqlKeyword.ORDER_BY, () -> alias, isAsc ? SqlKeyword.ASC : SqlKeyword.DESC);
 		aliasOrderUsed = true;
-		return this;
+		// 延迟装配,保证与lambda orderBy的调用顺序一致
+		return addAssembler(resolver -> appendSqlSegments(SqlKeyword.ORDER_BY, () -> alias,
+				isAsc ? SqlKeyword.ASC : SqlKeyword.DESC));
 	}
 
 	/**
@@ -198,6 +204,9 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	public final LambdaQuery<T> select(LambdaFn<T, ?>... columns) {
 		if (columns != null) {
 			for (LambdaFn<T, ?> column : columns) {
+				if (column == null) {
+					throw new DataAccessException("select columns must not contain null elements");
+				}
 				selectFields.add(LambdaUtils.extractProperty(column));
 			}
 		}
@@ -235,7 +244,19 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	 */
 	public LambdaQuery<T> selectAll(ExcludeCols<?> excludeColumns) {
 		joinContext.markSelectAll(excludeColumns);
+		if (excludeColumns != null) {
+			for (LambdaFn<?, ?> column : excludeColumns.getColumns()) {
+				excludeFields.add(LambdaUtils.extractProperty(column));
+			}
+		}
 		return this;
+	}
+
+	/**
+	 * @return 排除字段名列表(单表通道转unselect)
+	 */
+	public List<String> getExcludeFields() {
+		return excludeFields;
 	}
 
 	/**

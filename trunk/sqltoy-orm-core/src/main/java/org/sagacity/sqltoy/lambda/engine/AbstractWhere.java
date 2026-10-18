@@ -131,7 +131,12 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 				throw new DataAccessException("Entity [" + entity.getSimpleName()
 						+ "] does not participate in the current single-table query; condition fields must belong to the query entity. Use leftJoin for multi-table queries");
 			}
-			return metaLoader.apply(entityClass).getColumnName(fieldName);
+			String columnName = metaLoader.apply(entityClass).getColumnName(fieldName);
+			if (columnName == null) {
+				throw new DataAccessException("Property [" + fieldName + "] of entity [" + entityClass.getSimpleName()
+						+ "] is not a mapped database column (@Column); lambda conditions only accept mapped properties");
+			}
+			return columnName;
 		};
 	}
 
@@ -299,7 +304,7 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 		if (columns == null || columns.isEmpty() || values == null || values.isEmpty()) {
 			return typedThis;
 		}
-		return addAssembler(resolver -> addBatchInCondition(resolver, condition, columns, values));
+		return addAssembler(resolver -> maybeDo(condition, () -> addBatchInCondition(resolver, columns, values)));
 	}
 
 	@Override
@@ -327,10 +332,10 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 
 	@Override
 	public <E, R> Self groupBy(boolean condition, LambdaFn<E, R> column) {
-		return addAssembler(resolver -> {
+		return addAssembler(resolver -> maybeDo(condition, () -> {
 			String columnName = resolveColumn(resolver, column);
-			maybeDo(condition, () -> appendSqlSegments(SqlKeyword.GROUP_BY, () -> columnName));
-		});
+			appendSqlSegments(SqlKeyword.GROUP_BY, () -> columnName);
+		}));
 	}
 
 	@Override
@@ -344,11 +349,10 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 
 	@Override
 	public <E, R> Self orderBy(boolean condition, boolean isAsc, LambdaFn<E, R> column) {
-		return addAssembler(resolver -> {
+		return addAssembler(resolver -> maybeDo(condition, () -> {
 			String columnName = resolveColumn(resolver, column);
-			maybeDo(condition, () -> appendSqlSegments(SqlKeyword.ORDER_BY, () -> columnName,
-					isAsc ? SqlKeyword.ASC : SqlKeyword.DESC));
-		});
+			appendSqlSegments(SqlKeyword.ORDER_BY, () -> columnName, isAsc ? SqlKeyword.ASC : SqlKeyword.DESC);
+		}));
 	}
 
 	@Override
@@ -448,7 +452,7 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 	 * @return 组装后的完整sql(单表模式即条件sql,join模式为完整语句);assemble之后调用
 	 */
 	public String getSql() {
-		if (joinContext != null) {
+		if (joinContext != null && joinContext.isJoinChannel()) {
 			return joinContext.getSql(expression.getSqlSegment());
 		}
 		return getSqlSegment();
@@ -562,7 +566,7 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 	 * @description 多字段元组in条件,按行展开占位符:(col1,col2...) in ((:p1,:p2),(:p3,:p4)...),
 	 *              每个元组值独立绑定命名参数(内核参数绑定不支持把List绑到元组位置的单个命名参数)
 	 */
-	private <E> void addBatchInCondition(ColumnResolver resolver, boolean condition, Collection<LambdaFn<E, ?>> columns,
+	private <E> void addBatchInCondition(ColumnResolver resolver, Collection<LambdaFn<E, ?>> columns,
 			Collection<Object[]> values) {
 		List<String> columnNames = new ArrayList<>();
 		for (LambdaFn<E, ?> column : columns) {
@@ -585,7 +589,7 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 			rowTuples.add("(" + String.join(",", tupleParams) + ")");
 		}
 		String sql = "(" + String.join(",", columnNames) + ") IN (" + String.join(",", rowTuples) + ")";
-		maybeDo(condition, () -> appendSqlSegments(rawSegment(sql, params)));
+		appendSqlSegments(rawSegment(sql, params));
 	}
 
 	/**

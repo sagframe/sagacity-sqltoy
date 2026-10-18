@@ -24,7 +24,7 @@ public class MergeSegments implements SqlSegment {
 	public String getSqlSegment() {
 		String sql = null;
 		if (normal.isEmpty()) {
-			if (!groupBy.isEmpty() || !orderBy.isEmpty()) {
+			if (!groupBy.isEmpty() || !orderBy.isEmpty() || !having.isEmpty()) {
 				sql = "1 = 1 " + groupBy.getSqlSegment() + having.getSqlSegment() + orderBy.getSqlSegment();
 			}
 		} else {
@@ -62,6 +62,13 @@ public class MergeSegments implements SqlSegment {
 	 */
 	public boolean hasCondition() {
 		return !normal.isEmpty();
+	}
+
+	/**
+	 * @return 是否存在分组/聚合/排序分区(更新删除构建器不支持)
+	 */
+	public boolean hasAggregatePartitions() {
+		return !groupBy.isEmpty() || !having.isEmpty() || !orderBy.isEmpty();
 	}
 
 	public void setLastSql(String lastSql) {

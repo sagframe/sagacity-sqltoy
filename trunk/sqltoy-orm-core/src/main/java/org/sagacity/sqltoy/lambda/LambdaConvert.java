@@ -37,6 +37,9 @@ public final class LambdaConvert {
 		if (!query.getSelectFields().isEmpty()) {
 			entityQuery.select(query.getSelectFields().toArray(new String[0]));
 		}
+		if (!query.getExcludeFields().isEmpty()) {
+			entityQuery.unselect(query.getExcludeFields().toArray(new String[0]));
+		}
 		if (query.isDistinct()) {
 			entityQuery.distinct();
 		}
@@ -49,12 +52,15 @@ public final class LambdaConvert {
 	public static EntityQuery toDeleteQuery(AbstractWhere<?, ?> where) {
 		where.requireCondition("delete");
 		EntityQuery entityQuery = EntityQuery.create();
-		if (StringUtil.isNotBlank(where.getSqlSegment())) {
-			entityQuery.where(where.getSqlSegment());
+		String whereSql = where.getSqlSegment();
+		Map<String, Object> params = where.getParams();
+		if (params.isEmpty()) {
+			// where无命名参数时补齐参数个数(deleteByQuery对where/values空值直接拒绝),与更新通道同口径
+			whereSql = StringUtil.isBlank(whereSql) ? "1=:DEFAULT_VALUE " : "1=:DEFAULT_VALUE AND " + whereSql;
+			params.put("DEFAULT_VALUE", 1);
 		}
-		if (!where.getParams().isEmpty()) {
-			entityQuery.values(where.getParams());
-		}
+		entityQuery.where(whereSql);
+		entityQuery.values(params);
 		return entityQuery;
 	}
 

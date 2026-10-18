@@ -98,9 +98,11 @@ public final class LambdaUpdate<T> extends AbstractWhere<T, LambdaUpdate<T>> {
 
 	@Override
 	public void assemble(Function<Class<?>, EntityMeta> metaLoader) {
+		if (expression.hasAggregatePartitions()) {
+			throw new DataAccessException("groupBy/having/orderBy are only supported by LambdaQuery, not by update");
+		}
 		if (isJoinMode()) {
-			// 初始化join上下文(缺on校验与元信息注入)
-			joinContext.assemble(metaLoader);
+			// 先物化set再装配上下文,使set字段所属实体的join校验生效
 			for (SetOp setOp : setOps) {
 				if (setOp.expression == null) {
 					joinContext.addSetColumn(setOp.column, setOp.value);
@@ -108,6 +110,7 @@ public final class LambdaUpdate<T> extends AbstractWhere<T, LambdaUpdate<T>> {
 					joinContext.addSetExpression(setOp.column, setOp.expression, setOp.value);
 				}
 			}
+			joinContext.assemble(metaLoader);
 		} else {
 			for (SetOp setOp : setOps) {
 				if (setOp.expression == null) {

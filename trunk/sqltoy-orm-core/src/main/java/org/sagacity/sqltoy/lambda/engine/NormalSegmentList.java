@@ -43,13 +43,16 @@ public class NormalSegmentList extends SegmentList {
 		}
 		SqlSegment firstSegment = sqlSegments.get(0);
 		SqlSegment lastSegment = segments.get(segments.size() - 1);
-		// 只有and()/or()/not()以及嵌套的not()不加自动连接符
-		if (!MatchSegment.NOT.match(firstSegment) && !MatchSegment.AND_OR.match(firstSegment)) {
-			boolean lastIsConnector = MatchSegment.AND_OR.match(lastSegment) || MatchSegment.NOT.match(lastSegment);
-			if (!lastIsConnector) {
-				add(SqlKeyword.AND);
-			}
+		// and()/or()开头不补;末尾是连接符或NOT时不补
+		if (MatchSegment.AND_OR.match(firstSegment)) {
+			return;
 		}
+		boolean lastIsConnector = MatchSegment.AND_OR.match(lastSegment) || MatchSegment.NOT.match(lastSegment);
+		if (lastIsConnector) {
+			return;
+		}
+		// NOT开头批次:前面已有普通条件时补AND(a NOT (b)非法,应为a AND NOT (b));列表首位置不补
+		add(SqlKeyword.AND);
 	}
 
 	/**

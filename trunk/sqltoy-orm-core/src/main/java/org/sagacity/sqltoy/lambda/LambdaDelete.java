@@ -62,6 +62,9 @@ public final class LambdaDelete<T> extends AbstractWhere<T, LambdaDelete<T>> {
 
 	@Override
 	public void assemble(Function<Class<?>, EntityMeta> metaLoader) {
+		if (expression.hasAggregatePartitions()) {
+			throw new DataAccessException("groupBy/having/orderBy are only supported by LambdaQuery, not by delete");
+		}
 		if (isJoinMode()) {
 			// 初始化join上下文(缺on校验与元信息注入)
 			joinContext.assemble(metaLoader);

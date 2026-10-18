@@ -204,6 +204,9 @@ public class JoinContext {
 	 * @description 注册主表,必须第一个调用
 	 */
 	public void registerFrom(Class<?> entityClass) {
+		if (isAssembled()) {
+			throw new DataAccessException("Join structure cannot be modified after assemble; build joins before execution");
+		}
 		if (fromClass != null) {
 			throw new DataAccessException("Lambda join from entity can only be set once");
 		}
@@ -216,6 +219,9 @@ public class JoinContext {
 	 * @description 注册join表,等待on关联;查询场景未显式from时缺省以结果类型作为主表
 	 */
 	public void registerJoin(String joinKeyword, Class<?> entityClass) {
+		if (isAssembled()) {
+			throw new DataAccessException("Join structure cannot be modified after assemble; build joins before execution");
+		}
 		if (fromClass == null && resultClass != null) {
 			registerFrom(resultClass);
 		}
@@ -269,7 +275,9 @@ public class JoinContext {
 	 */
 	public void addPlainSelectColumn(String fieldName) {
 		checkOperate(Operate.SELECT, "select");
-		plainSelectColumns.add(fieldName);
+		if (!plainSelectColumns.contains(fieldName)) {
+			plainSelectColumns.add(fieldName);
+		}
 	}
 
 	/**
@@ -325,6 +333,20 @@ public class JoinContext {
 	}
 
 	/**
+	 * @return 是否处于join通道(注册了join或select列定义)
+	 */
+	public boolean isJoinChannel() {
+		return hasJoin() || hasSelectColumns();
+	}
+
+	/**
+	 * @return 是否已完成装配(装配后不允许再变更join结构)
+	 */
+	public boolean isAssembled() {
+		return metaLoader != null;
+	}
+
+	/**
 	 * @description 注册update的set字段,字段所属实体须参与join(assemble时校验)
 	 */
 	public <E, R> void addSetColumn(LambdaFn<E, R> column, Object value) {
@@ -360,7 +382,12 @@ public class JoinContext {
 	 */
 	public String columnName(Class<?> entityClass, String fieldName) {
 		requireJoined(entityClass);
-		return aliasMap.get(entityClass) + "." + metaLoader.apply(entityClass).getColumnName(fieldName);
+		String columnName = metaLoader.apply(entityClass).getColumnName(fieldName);
+		if (columnName == null) {
+			throw new DataAccessException("Property [" + fieldName + "] of entity [" + entityClass.getSimpleName()
+					+ "] is not a mapped database column (@Column); lambda conditions only accept mapped properties");
+		}
+		return aliasMap.get(entityClass) + "." + columnName;
 	}
 
 	private void requireJoined(Class<?> entityClass) {
@@ -473,7 +500,8 @@ public class JoinContext {
 	}
 
 	private String tableName(Class<?> entityClass) {
-		return metaLoader.apply(entityClass).getTableName();
+		// getSchemaTable携带schema配置,与实体通道口径一致
+		return metaLoader.apply(entityClass).getSchemaTable(null, null);
 	}
 
 	/**
