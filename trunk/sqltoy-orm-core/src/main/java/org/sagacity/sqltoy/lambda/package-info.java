@@ -2,6 +2,7 @@
  * @project sagacity-sqltoy
  * @description lambda条件体系:以实体属性方法引用组织查询/更新/删除条件,单表与多表join统一入口
  *              (不调join步骤即单表,走EntityQuery/EntityUpdate实体链路;调用join即拼装完整sql)。
+ *              构建器为单次使用、非线程安全对象(一次组装对应一次执行,并发场景每请求新建);
  *              条件动态化以IfPresent语法糖(eqIfPresent/likeIfPresent/inIfPresent/betweenIfPresent等,
  *              null/空白/空集合自动跳过)为推荐惯用法,辅以各条件方法的condition开关与accept/nested组合;
  *              复杂动态场景(多分支条件组合、方言差异、大段可选条件、报表类配置化sql)应使用sqltoy的SQL模式——

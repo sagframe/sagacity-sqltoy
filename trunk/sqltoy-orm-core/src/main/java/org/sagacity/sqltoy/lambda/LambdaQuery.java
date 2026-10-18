@@ -216,6 +216,18 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	}
 
 	/**
+	 * @description 将某个被join实体的全部字段以"别名.列 AS 属性"并入select(补sqltoy-plus
+	 *              select(mappingClass,...)的能力),可与selectAll()/select(JoinCol...)叠加;
+	 *              该实体须参与join(装配期校验),与主表重复时自动跳过避免重复列
+	 * @param entityClass 被join的实体
+	 * @return 自身
+	 */
+	public LambdaQuery<T> selectAll(Class<?> entityClass) {
+		joinContext.markSelectAll(entityClass);
+		return this;
+	}
+
+	/**
 	 * @description 缺省输出主表全部字段并排除指定字段(别名.列 AS 属性),可与select(JoinCol...)额外列并存;
 	 *              排除字段引用须属于主表实体(结果类型与主表不同时,排除的是主表字段,装配期校验)
 	 * @param excludeColumns 需要排除的字段定义

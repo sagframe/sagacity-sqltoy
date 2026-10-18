@@ -2,9 +2,11 @@ package org.sagacity.sqltoy.lambda.join;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -108,6 +110,11 @@ public class JoinContext {
 	 * selectAll标记:true时主表全部字段以"别名.列 AS 属性"输出,与显式select列并存(主表字段在前)
 	 */
 	private boolean selectAll;
+
+	/**
+	 * selectAll(Class)指定的被join实体,其全部字段以"别名.列 AS 属性"并入select
+	 */
+	private final List<Class<?>> selectAllClasses = new ArrayList<>();
 
 	/**
 	 * distinct去重标记:渲染SELECT DISTINCT
@@ -218,6 +225,10 @@ public class JoinContext {
 		if (pendingJoinKeyword != null) {
 			throw new DataAccessException("Previous join is missing on(); call on() before adding another join");
 		}
+		if (aliasMap.containsKey(entityClass)) {
+			throw new DataAccessException("Self-join is not supported: entity [" + entityClass.getSimpleName()
+					+ "] is already registered; lambda join cannot alias the same entity twice");
+		}
 		registerAlias(entityClass);
 		tableSteps.add(new JoinStep(joinKeyword, entityClass));
 		this.pendingJoinKeyword = joinKeyword;
@@ -270,6 +281,14 @@ public class JoinContext {
 	}
 
 	/**
+	 * @description 标记输出某个被join实体的全部字段(别名.列 AS 属性),补sqltoy-plus select(mappingClass,...)能力
+	 */
+	public void markSelectAll(Class<?> entityClass) {
+		checkOperate(Operate.SELECT, "selectAll");
+		selectAllClasses.add(entityClass);
+	}
+
+	/**
 	 * @description 标记输出主表全部字段(可与显式select列并存)
 	 */
 	public void markSelectAll() {
@@ -302,7 +321,7 @@ public class JoinContext {
 	 * @return 是否已注册select列定义
 	 */
 	public boolean hasSelectColumns() {
-		return !selectColumns.isEmpty() || !plainSelectColumns.isEmpty();
+		return !selectColumns.isEmpty() || !plainSelectColumns.isEmpty() || !selectAllClasses.isEmpty();
 	}
 
 	/**
@@ -462,25 +481,47 @@ public class JoinContext {
 	 */
 	private String buildSelectSql() {
 		List<String> columns = new ArrayList<>();
+		Set<String> aliasNames = new HashSet<>();
 		// selectAll:主表全部字段在前(可排除指定字段),与显式select列并存
+		Set<Class<?>> dumped = new java.util.HashSet<>();
 		if (selectAll && fromClass != null) {
+			dumped.add(fromClass);
 			EntityMeta fromMeta = metaLoader.apply(fromClass);
 			String fromAlias = aliasMap.get(fromClass);
 			for (String fieldName : fromMeta.getFieldsArray(false)) {
-				if (!resolveExcludeFields(fromClass).contains(fieldName)) {
+				if (!resolveExcludeFields(fromClass).contains(fieldName)
+						&& checkAlias(aliasNames, fieldName, false)) {
 					columns.add(fromAlias + "." + fromMeta.getColumnName(fieldName) + " AS " + fieldName);
 				}
 			}
 		}
+		// selectAll(Class):被join实体全部字段并入(与主表重复的实体跳过,避免重复列)
+		for (Class<?> entityClass : selectAllClasses) {
+			if (!dumped.add(entityClass)) {
+				continue;
+			}
+			requireJoined(entityClass);
+			EntityMeta entityMeta = metaLoader.apply(entityClass);
+			String alias = aliasMap.get(entityClass);
+			for (String fieldName : entityMeta.getFieldsArray(false)) {
+				// 与主表dump同名的列跳过(主表优先),避免结果映射歧义
+				if (checkAlias(aliasNames, fieldName, false)) {
+					columns.add(alias + "." + entityMeta.getColumnName(fieldName) + " AS " + fieldName);
+				}
+			}
+		}
 		if (!plainSelectColumns.isEmpty()) {
+			// 属性名形式的select列归属结果类型,结果类型未参与join时无法限定别名,快速失败
+			requireJoined(resultClass);
 			EntityMeta entityMeta = metaLoader.apply(resultClass);
 			String alias = aliasMap.get(resultClass);
 			for (String fieldName : plainSelectColumns) {
+				checkAlias(aliasNames, fieldName, true);
 				columns.add(alias + "." + entityMeta.getColumnName(fieldName) + " AS " + fieldName);
 			}
 		}
 		for (JoinCol joinColumn : selectColumns) {
-			columns.add(buildSelectColumn(joinColumn));
+			columns.add(buildSelectColumn(joinColumn, aliasNames));
 		}
 		if (!columns.isEmpty()) {
 			return String.join(", ", columns);
@@ -499,12 +540,31 @@ public class JoinContext {
 		return "*";
 	}
 
-	private String buildSelectColumn(JoinCol joinColumn) {
+	/**
+	 * @description 别名查重:loud=true时重复即抛异常(用户显式命名的别名重复属使用错误);
+	 *              loud=false时重复返回false由调用方跳过(框架dump的同名列冲突按声明顺序主表优先)
+	 */
+	private boolean checkAlias(Set<String> aliasNames, String alias, boolean loud) {
+		if (!aliasNames.add(alias)) {
+			if (loud) {
+				throw new DataAccessException("Duplicate select alias [" + alias
+						+ "]; duplicated aliases make result mapping ambiguous, rename via JoinCol.as()");
+			}
+			return false;
+		}
+		return true;
+	}
+
+	private String buildSelectColumn(JoinCol joinColumn, Set<String> aliasNames) {
 		FieldNature nature = LambdaUtils.extractNature(joinColumn.getColumn());
 		String columnName = columnName(nature.entityClass(), nature.fieldName());
 		String columnSql = joinColumn.getFunction() != null ? joinColumn.getFunction().getSqlSegment(columnName)
 				: columnName;
-		return joinColumn.getAlias() != null ? columnSql + " AS " + joinColumn.getAlias() : columnSql;
+		if (joinColumn.getAlias() != null) {
+			checkAlias(aliasNames, joinColumn.getAlias(), true);
+			return columnSql + " AS " + joinColumn.getAlias();
+		}
+		return columnSql;
 	}
 
 	private String buildSetSql() {

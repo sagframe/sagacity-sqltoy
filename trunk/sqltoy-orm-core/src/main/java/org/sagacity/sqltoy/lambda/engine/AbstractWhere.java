@@ -287,6 +287,7 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 		if (StringUtil.isBlank(subSql)) {
 			return typedThis;
 		}
+		checkExternalParamNames(paramMap);
 		return addAssembler(resolver -> maybeDo(condition, () -> {
 			String columnName = resolveColumn(resolver, column);
 			appendSqlSegments(rawSegment(SqlCompare.IN_SUBSQL.getMetaSql(columnName, subSql), paramMap));
@@ -360,8 +361,24 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 
 	@Override
 	public Self having(boolean condition, String sqlHaving, Map<String, Object> paramMap) {
+		checkExternalParamNames(paramMap);
 		return addAssembler(resolver -> maybeDo(condition,
 				() -> appendSqlSegments(SqlKeyword.HAVING, rawSegment(sqlHaving, paramMap))));
+	}
+
+	/**
+	 * @description 外部参数名不得占用内部条件参数命名空间(p加纯数字),否则合并时静默错绑
+	 */
+	private void checkExternalParamNames(Map<String, Object> paramMap) {
+		if (paramMap == null) {
+			return;
+		}
+		for (String key : paramMap.keySet()) {
+			if (key != null && key.matches("p\\d+")) {
+				throw new DataAccessException("External parameter name [" + key
+						+ "] collides with internal condition parameters (p followed by digits); rename it");
+			}
+		}
 	}
 
 	@Override

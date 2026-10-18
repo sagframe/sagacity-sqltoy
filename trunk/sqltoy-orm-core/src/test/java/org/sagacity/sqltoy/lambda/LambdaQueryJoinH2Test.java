@@ -196,6 +196,45 @@ public class LambdaQueryJoinH2Test {
 		lightDao = new DefaultLightDaoImpl(context);
 	}
 
+	@Test
+	@Order(16)
+	@DisplayName("selectAll(Class)dump被join实体全部字段")
+	public void testSelectAllJoinedEntity() {
+		LambdaQuery<JoinUserVO> query = lightDao.lambdaQuery(JoinUserVO.class)
+				.selectAll(JoinDept.class)
+				.from(JoinUser.class).leftJoin(JoinDept.class).on(JoinUser::getDeptId, JoinDept::getDeptId)
+				.eq(JoinUser::getStatus, 1).orderByAsc(JoinUser::getId);
+		query.assemble(context::getEntityMeta);
+		assertEquals(
+				"SELECT j2.DEPT_NAME AS deptName, j2.STATUS AS status, j2.DEPT_ID AS deptId "
+						+ "FROM lambda_join_user j1 LEFT JOIN lambda_join_dept j2 ON j1.DEPT_ID = j2.DEPT_ID "
+						+ "WHERE j1.STATUS = :p1 ORDER BY j1.ID ASC",
+				normalized(query.getSql()));
+		List<JoinUserVO> rows = query.find();
+		assertEquals(3, rows.size());
+		assertEquals("研发部", rows.get(0).getDeptName());
+		// 未select主表字段,VO对应属性为null
+		assertNull(rows.get(0).getStaffName());
+		// 赵六无部门,LEFT JOIN下dump列全为null
+		assertNull(rows.get(2).getDeptName());
+
+		// 与主表重复的实体自动跳过,不产生重复列
+		LambdaQuery<JoinUser> dedupe = lightDao.lambdaQuery(JoinUser.class).selectAll()
+				.selectAll(JoinUser.class).selectAll(JoinDept.class)
+				.from(JoinUser.class).leftJoin(JoinDept.class).on(JoinUser::getDeptId, JoinDept::getDeptId);
+		dedupe.assemble(context::getEntityMeta);
+		String sql = normalized(dedupe.getSql());
+		// 主表dump一次;关联表dump与主表同名的列(deptId/status)跳过,仅deptName并入
+		assertEquals(sql.indexOf("AS staffName"), sql.lastIndexOf("AS staffName"));
+		assertEquals(sql.indexOf("AS deptId"), sql.lastIndexOf("AS deptId"));
+		assertTrue(sql.contains("j2.DEPT_NAME AS deptName"));
+		assertTrue(!sql.contains("j2.STATUS AS status"));
+
+		// 未参与join的实体dump快速失败
+		assertThrows(DataAccessException.class, () -> lightDao.lambdaQuery(JoinUserVO.class)
+				.selectAll(JoinDept.class).from(JoinUser.class).find());
+	}
+
 	private static String normalized(String sql) {
 		return sql == null ? "" : sql.replaceAll("\\s+", " ").trim();
 	}

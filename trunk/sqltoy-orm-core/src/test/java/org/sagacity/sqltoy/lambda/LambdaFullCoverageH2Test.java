@@ -30,6 +30,7 @@ import org.sagacity.sqltoy.config.annotation.Id;
 import org.sagacity.sqltoy.dao.LightDao;
 import org.sagacity.sqltoy.dao.impl.DefaultLightDaoImpl;
 import org.sagacity.sqltoy.exception.DataAccessException;
+import org.sagacity.sqltoy.lambda.LambdaFn;
 import org.sagacity.sqltoy.lambda.join.ExcludeCols;
 import org.sagacity.sqltoy.lambda.join.JoinCol;
 import org.sagacity.sqltoy.model.Page;
@@ -769,6 +770,76 @@ public class LambdaFullCoverageH2Test {
 		assertEquals("UPDATE ff_user f1 LEFT JOIN ff_dept f2 ON f1.DEPT_ID = f2.DEPT_ID "
 				+ "SET f1.SALARY = :p1 WHERE f2.DEPT_NAME = :p2", normalized(update.getSql()));
 		assertNull(update.getParams().get("p1"));
+	}
+
+	@Test
+	@Order(31)
+	@DisplayName("防卫:join自关联/重复select别名/外部参数名碰撞/VO结果误用属性select")
+	public void testDefensiveGuards() {
+		// G1 自关联:同一实体注册两次快速失败
+		assertThrows(DataAccessException.class, () -> lightDao.lambdaQuery(FfUser.class)
+				.from(FfUser.class).leftJoin(FfUser.class));
+		// G2 重复别名:selectAll dump的status与JoinCol.as("status")重名,装配期快速失败
+		assertThrows(DataAccessException.class, () -> lightDao.lambdaQuery(FfUserVO.class)
+				.selectAll().from(FfUser.class).leftJoin(FfDept.class)
+				.on(FfUser::getDeptId, FfDept::getDeptId)
+				.select(JoinCol.of(FfDept::getStatus).as("status")).find());
+		// G3 外部参数名占用内部p数字命名空间:having与inSql调用时快速失败
+		Map<String, Object> badParams = new HashMap<>();
+		badParams.put("p1", 2);
+		assertThrows(DataAccessException.class, () -> lightDao.lambdaQuery(FfUser.class)
+				.having("count(*) > :p1", badParams));
+		assertThrows(DataAccessException.class, () -> lightDao.lambdaQuery(FfUser.class)
+				.inSql(FfUser::getId, "select id from ff_user where status = :p1", badParams));
+		// 合法外部参数名不受影响:minCount=2即count(*)>2,仅研发部(3人,含变更行)满足,同时验证参数真实绑定
+		Map<String, Object> goodParams = new HashMap<>();
+		goodParams.put("minCount", 2);
+		assertEquals(1, lightDao.lambdaQuery(FfDeptStatVO.class)
+				.select(JoinCol.of(FfDept::getDeptName).as("deptName"),
+						JoinCol.count(FfUser::getId).as("userCount"))
+				.from(FfUser.class).leftJoin(FfDept.class).on(FfUser::getDeptId, FfDept::getDeptId)
+				.groupBy(FfDept::getDeptName).having("count(*) > :minCount", goodParams).find().size());
+		assertEquals("研发部", lightDao.lambdaQuery(FfDeptStatVO.class)
+				.select(JoinCol.of(FfDept::getDeptName).as("deptName"),
+						JoinCol.count(FfUser::getId).as("userCount"))
+				.from(FfUser.class).leftJoin(FfDept.class).on(FfUser::getDeptId, FfDept::getDeptId)
+				.groupBy(FfDept::getDeptName).having("count(*) > :minCount", goodParams).find().get(0)
+				.getDeptName());
+		// G8 结果类型为VO(未参与join)时误用属性形式select(VO自身属性)快速失败
+		assertThrows(DataAccessException.class, () -> lightDao.lambdaQuery(FfUserVO.class)
+				.select(FfUserVO::getStaffName).from(FfUser.class)
+				.leftJoin(FfDept.class).on(FfUser::getDeptId, FfDept::getDeptId).find());
+	}
+
+	@Test
+	@Order(32)
+	@DisplayName("组合场景:setNull不受valueFilter影响/distinct+selectAll/单列元组in/多表删除目标")
+	public void testComboScenarios() {
+		// 自定义valueFilter放行null也不影响setNull语义,setNull独立于过滤策略
+		lightDao.lambdaUpdate(FfUser.class).valueFilter(v -> true)
+				.set(FfUser::getSalary, null).eq(FfUser::getId, 91L).update();
+		assertNull(lightDao.lambdaQuery(FfUser.class).eq(FfUser::getId, 91L).getOne().getSalary());
+		lightDao.lambdaUpdate(FfUser.class).setNull(FfUser::getSalary).eq(FfUser::getId, 91L).update();
+		assertNull(lightDao.lambdaQuery(FfUser.class).eq(FfUser::getId, 91L).getOne().getSalary());
+
+		// distinct对select列去重(不带selectAll,否则主键列使去重无效)
+		assertEquals(2, lightDao.lambdaQuery(FfUserVO.class).distinct()
+				.select(JoinCol.of(FfDept::getDeptName).as("deptName"))
+				.from(FfUser.class).leftJoin(FfDept.class).on(FfUser::getDeptId, FfDept::getDeptId)
+				.in(FfUser::getId, Arrays.asList(1L, 2L, 3L, 6L)).find().size());
+
+		// 单列元组in
+		assertEquals(2, lightDao.lambdaQuery(FfUser.class)
+				.inb(Arrays.<LambdaFn<FfUser, ?>>asList(FfUser::getId),
+						Arrays.asList(new Object[] { 1L }, new Object[] { 2L }))
+				.find().size());
+
+		// 多删除目标表sql文本
+		LambdaDelete<FfUser> multiDelete = lightDao.lambdaDelete(FfUser.class)
+				.leftJoin(FfDept.class).on(FfUser::getDeptId, FfDept::getDeptId)
+				.deleteTables(FfUser.class, FfDept.class).eq(FfUser::getId, 1L);
+		multiDelete.assemble(context::getEntityMeta);
+		assertTrue(normalized(multiDelete.getSql()).startsWith("DELETE f1,f2 FROM ff_user f1"));
 	}
 
 	private static String normalized(String sql) {
