@@ -8,8 +8,6 @@ import java.util.Set;
 
 import org.sagacity.sqltoy.config.EntityScanner;
 import org.sagacity.sqltoy.configure.SqlToyContextProperties;
-import org.sagacity.sqltoy.plugins.json.JsonProvider;
-import org.sagacity.sqltoy.plugins.json.JsonProviders;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -218,12 +216,13 @@ class SqltoyBeanFactoryInitializationAotProcessor implements BeanFactoryInitiali
 	}
 
 	/**
-	 * 条件注册集成实现类:caffeine 翻译缓存管理器在 cacheType=caffeine 时于启动期反射实例化;
-	 * mongo/redis 集成实现在使用时反射实例化,仅在对应依赖在 classpath 上时注册,
-	 * 避免依赖缺失时 native 构建因类型不可解析而失败
+	 * 条件注册集成实现类:翻译缓存管理器与 mongo/redis 集成实体的注册跟随 classpath 而非构建期配置——
+	 * cacheType/jsonProvider 均支持运行期参数切换,native 镜像构建期冻结,按构建期配置注册会让
+	 * "运行期切到另一实现"因未注册而 Class.forName 失败(ehcache 管理器为运行期直接 new,静态引用恒可达无需注册);
+	 * 依赖不在 classpath 时不注册,避免 native 构建因类型不可解析而失败
 	 */
 	private void registerIntegrationClasses(RuntimeHints hints, SqlToyContextProperties properties) {
-		if ("caffeine".equalsIgnoreCase(properties.getCacheType())) {
+		if (present("com.github.benmanes.caffeine.cache.Caffeine")) {
 			registerClassByName(hints, "org.sagacity.sqltoy.translate.cache.impl.TranslateCaffeineManager");
 		}
 		if (present("com.mongodb.client.MongoClient")) {
@@ -241,19 +240,25 @@ class SqltoyBeanFactoryInitializationAotProcessor implements BeanFactoryInitiali
 	}
 
 	/**
-	 * 注册实际生效的 JsonProvider 实现类:走与 SqlToyContext.initialize 相同的 initAtStartup 解析路径
-	 * (显式配置的别名/类名优先,否则 classpath 探测),使实现类及其引用的 JSON 库进入镜像,
-	 * native 运行期的 Class.forName 探测/实例化才可用;classpath 无可用 JSON 库时跳过(JSON 特性本就不可用)
+	 * JsonProvider 注册跟随 classpath:三个内置实现凡对应 JSON 库 marker 在 classpath 即全部注册
+	 * (marker 与 JsonProviders.CANDIDATES 一致),显式配置的自定义实现类按类名注册——
+	 * jsonProvider 支持运行期参数切换与探测降级,只注册"构建期生效者"会让切换/降级目标未注册;
+	 * 注册使实现类及其引用的 JSON 库进入镜像,native 运行期的 Class.forName 探测/实例化才可用
 	 */
 	private void registerJsonProvider(RuntimeHints hints, SqlToyContextProperties properties) {
-		try {
-			JsonProvider provider = JsonProviders.initAtStartup(properties.getJsonProvider());
-			if (provider != null) {
-				hints.reflection().registerType(provider.getClass(), MemberCategory.values());
-			}
-		} catch (Throwable e) {
-			logger.warn("sqltoy aot: json provider [{}] can not be resolved, its reflection hints are not registered!",
-					properties.getJsonProvider());
+		String configured = properties.getJsonProvider();
+		// 显式配置的自定义实现类(含"."视为类名,约定同其他扩展点;别名对应的内置实现由 marker 循环覆盖)
+		if (StringUtil.isNotBlank(configured) && configured.contains(".")) {
+			registerClassByName(hints, configured.trim());
+		}
+		if (present("com.alibaba.fastjson2.JSON")) {
+			registerClassByName(hints, "org.sagacity.sqltoy.plugins.json.FastjsonJsonProvider");
+		}
+		if (present("tools.jackson.databind.ObjectMapper")) {
+			registerClassByName(hints, "org.sagacity.sqltoy.plugins.json.Jackson3JsonProvider");
+		}
+		if (present("com.fasterxml.jackson.databind.ObjectMapper")) {
+			registerClassByName(hints, "org.sagacity.sqltoy.plugins.json.Jackson2JsonProvider");
 		}
 	}
 

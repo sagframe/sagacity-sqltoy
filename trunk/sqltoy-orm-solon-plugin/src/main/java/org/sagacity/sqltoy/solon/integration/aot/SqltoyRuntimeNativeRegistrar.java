@@ -21,8 +21,6 @@ import org.sagacity.sqltoy.plugins.id.impl.NanoTimeIdGenerator;
 import org.sagacity.sqltoy.plugins.id.impl.RedisIdGenerator;
 import org.sagacity.sqltoy.plugins.id.impl.SnowflakeIdGenerator;
 import org.sagacity.sqltoy.plugins.id.impl.UUIDGenerator;
-import org.sagacity.sqltoy.plugins.json.JsonProvider;
-import org.sagacity.sqltoy.plugins.json.JsonProviders;
 import org.sagacity.sqltoy.solon.configure.SqlToyContextProperties;
 import org.sagacity.sqltoy.solon.configure.SqlToyContextTaskPoolProperties;
 import org.sagacity.sqltoy.translate.model.CheckerConfigModel;
@@ -96,14 +94,13 @@ public class SqltoyRuntimeNativeRegistrar implements RuntimeNativeRegistrar {
             bean.getEntityManager().getAllEntities().entrySet().forEach(entry -> {
                 metadata.registerReflection(entry.getValue().getEntityClass(), MemberCategory.values());
             });
-            //SqlToyContext 初始化后 JsonProviders 已完成显式配置或 classpath 探测,注册实际生效的实现类
-            registerJsonProvider(metadata);
         });
         //按实际配置动态注册资源pattern与扩展类反射
         context.getBeanAsync(SqlToyContextProperties.class, properties -> {
             registerConfiguredResources(metadata, properties);
             registerExtensionClasses(metadata, properties);
             registerIntegrationClasses(metadata, properties);
+            registerJsonProvider(metadata);
         });
     }
 
@@ -196,14 +193,14 @@ public class SqltoyRuntimeNativeRegistrar implements RuntimeNativeRegistrar {
     }
 
     /**
-     * 条件注册集成实现类:caffeine 翻译缓存管理器在 cacheType=caffeine 时于启动期反射实例化;
-     * mongo/redis 集成实现在使用时反射实例化,仅在对应依赖在 classpath 上时注册,
+     * 条件注册集成实现类:注册跟随 classpath 而非构建期配置——cacheType/jsonProvider 均支持运行期切换,
+     * native 镜像构建期冻结,按构建期配置注册会让"运行期切到另一实现"因未注册而 Class.forName 失败;
+     * SolonTranslateCacheManager 为本插件类且 solon-data 恒在 classpath(有无参构造供 cacheType=caffeine
+     * 路径反射实例化),无条件注册;mongo/redis 集成实现在对应依赖在 classpath 上时注册,
      * 避免依赖缺失时 native 构建因类型不可解析而失败
      */
     private void registerIntegrationClasses(RuntimeNativeMetadata metadata, SqlToyContextProperties properties) {
-        if ("caffeine".equalsIgnoreCase(properties.getCacheType())) {
-            registerClassByName(metadata, "org.sagacity.sqltoy.solon.translate.cache.impl.SolonTranslateCacheManager");
-        }
+        registerClassByName(metadata, "org.sagacity.sqltoy.solon.translate.cache.impl.SolonTranslateCacheManager");
         if (present("com.mongodb.client.MongoClient")) {
             registerClassByName(metadata, "org.sagacity.sqltoy.solon.integration.SolonMongoQuery");
         }
@@ -219,17 +216,19 @@ public class SqltoyRuntimeNativeRegistrar implements RuntimeNativeRegistrar {
     }
 
     /**
-     * 注册实际生效的 JsonProvider 实现类:使实现类及其引用的 JSON 库进入镜像,
-     * native 运行期的 Class.forName 探测/实例化才可用;classpath 无可用 JSON 库时跳过
+     * JsonProvider 注册跟随 classpath:三个内置实现凡对应 JSON 库 marker 在 classpath 即全部注册
+     * (marker 与 JsonProviders.CANDIDATES 一致)——solon 侧无 jsonProvider 配置项,运行期纯靠探测,
+     * 探测/降级目标必须已注册;注册使实现类及其引用的 JSON 库进入镜像,native 运行期 Class.forName 才可用
      */
     private void registerJsonProvider(RuntimeNativeMetadata metadata) {
-        try {
-            JsonProvider provider = JsonProviders.get();
-            if (provider != null) {
-                metadata.registerReflection(provider.getClass(), MemberCategory.values());
-            }
-        } catch (Throwable e) {
-            logger.debug("sqltoy aot: no usable json provider, skip its reflection hints registration");
+        if (present("com.alibaba.fastjson2.JSON")) {
+            registerClassByName(metadata, "org.sagacity.sqltoy.plugins.json.FastjsonJsonProvider");
+        }
+        if (present("tools.jackson.databind.ObjectMapper")) {
+            registerClassByName(metadata, "org.sagacity.sqltoy.plugins.json.Jackson3JsonProvider");
+        }
+        if (present("com.fasterxml.jackson.databind.ObjectMapper")) {
+            registerClassByName(metadata, "org.sagacity.sqltoy.plugins.json.Jackson2JsonProvider");
         }
     }
 

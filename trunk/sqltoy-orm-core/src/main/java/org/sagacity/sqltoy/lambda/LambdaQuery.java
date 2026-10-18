@@ -2,7 +2,9 @@ package org.sagacity.sqltoy.lambda;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 import org.sagacity.sqltoy.config.model.EntityMeta;
@@ -19,6 +21,8 @@ import org.sagacity.sqltoy.link.Query;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.model.Page;
 import org.sagacity.sqltoy.model.QueryExecutor;
+import org.sagacity.sqltoy.utils.DataSourceUtils;
+import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 
 /**
  * @description lambda查询构建器,单表与多表join统一入口:单表只是join的退化形态,是否join由是否
@@ -71,6 +75,11 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	 */
 	private PageOptimize pageOptimize;
 
+	/**
+	 * 自定义精简count SQL(仅join/SQL通道的findPage生效,经QueryExecutor.countSql);比@fast内层count更精简的极特殊场景用
+	 */
+	private String countSql;
+
 	private LambdaQuery(Class<T> entityClass, JoinContext joinContext) {
 		super(entityClass, joinContext);
 	}
@@ -104,6 +113,23 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 
 	@Override
 	public void assemble(Function<Class<?>, EntityMeta> metaLoader) {
+		// 组合模式:先装配CTE/@fast内层(各自独立paramSeq),按序续号,保证组合后参数名全局唯一不撞号
+		int seq = 0;
+		for (CteDef cte : ctes) {
+			cte.query.joinContext.getParamSeq().set(seq);
+			cte.query.assemble(metaLoader);
+			seq = cte.query.joinContext.getParamSeq().get();
+		}
+		if (fastInner != null) {
+			fastInner.joinContext.getParamSeq().set(seq);
+			fastInner.assemble(metaLoader);
+			seq = fastInner.joinContext.getParamSeq().get();
+			// @fast派生表:FROM @fast(内层sql),别名由registerFrom(entity,alias)提供
+			joinContext.setFromRawSource("@fast(" + fastInner.getSql() + ")");
+		}
+		if (seq > 0) {
+			joinContext.getParamSeq().set(Math.max(joinContext.getParamSeq().get(), seq));
+		}
 		joinContext.markAssembled();
 		if (!isJoinMode() && aliasOrderUsed) {
 			throw new DataAccessException(
@@ -121,13 +147,21 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 			}
 		}
 		super.assemble(metaLoader);
+		// union各分支在外层之后续号装配
+		int unionSeq = joinContext.getParamSeq().get();
+		for (Object[] u : unions) {
+			LambdaQuery<?> unionQuery = (LambdaQuery<?>) u[1];
+			unionQuery.joinContext.getParamSeq().set(unionSeq);
+			unionQuery.assemble(metaLoader);
+			unionSeq = unionQuery.joinContext.getParamSeq().get();
+		}
 	}
 
 	/**
 	 * @return 是否走join通道:注册了join关联表,或使用了聚合/别名列定义
 	 */
 	public boolean isJoinMode() {
-		return joinContext.hasJoin() || joinContext.hasSelectColumns();
+		return composed || joinContext.isJoinChannel();
 	}
 
 	/**
@@ -138,6 +172,184 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	public LambdaQuery<T> from(Class<?> entityClass) {
 		joinContext.registerFrom(entityClass);
 		return this;
+	}
+
+	/**
+	 * CTE定义:name+内层查询+recursive+PG物化hint
+	 */
+	private static final class CteDef {
+		final String name;
+		final LambdaQuery<?> query;
+		final boolean recursive;
+		final Boolean materialized;
+
+		CteDef(String name, LambdaQuery<?> query, boolean recursive, Boolean materialized) {
+			this.name = name;
+			this.query = query;
+			this.recursive = recursive;
+			this.materialized = materialized;
+		}
+	}
+
+	private final List<CteDef> ctes = new ArrayList<>();
+
+	/**
+	 * union组合:[连接符UNION/UNION ALL, 另一查询]
+	 */
+	private final List<Object[]> unions = new ArrayList<>();
+
+	private LambdaQuery<?> fastInner;
+
+	private boolean composed;
+
+	/**
+	 * @description 注册CTE:WITH name AS (内层查询)。内层为独立lambdaQuery(组合时共享参数序号,先装配内层再续号外层),
+	 *              外层经fromCte(name)引用;多CTE以逗号串联,CTE可再引用在先CTE
+	 * @param name     CTE名称
+	 * @param cteQuery 内层查询(不直接执行,仅贡献SQL)
+	 */
+	public LambdaQuery<T> with(String name, LambdaQuery<?> cteQuery) {
+		return with(name, cteQuery, null);
+	}
+
+	/**
+	 * @description 注册CTE并指定PG物化hint(materialized仅PostgreSQL生效:AS MATERIALIZED/AS NOT MATERIALIZED,其他库忽略)
+	 */
+	public LambdaQuery<T> with(String name, LambdaQuery<?> cteQuery, Boolean materialized) {
+		// CTE体必须是完整SELECT..FROM,强制内层走join/SQL通道
+		cteQuery.joinContext.forceJoinChannel();
+		ctes.add(new CteDef(name, cteQuery, false, materialized));
+		composed = true;
+		return this;
+	}
+
+	/**
+	 * @description 注册递归CTE:WITH RECURSIVE name AS (...)(Oracle/SQLServer递归不带RECURSIVE关键字,按dbType适配)
+	 */
+	public LambdaQuery<T> withRecursive(String name, LambdaQuery<?> cteQuery) {
+		cteQuery.joinContext.forceJoinChannel();
+		ctes.add(new CteDef(name, cteQuery, true, null));
+		composed = true;
+		return this;
+	}
+
+	/**
+	 * @description 外层FROM引用CTE(旁路实体表名,列解析走结果类型VO的EntityMeta);触发join/SQL通道
+	 */
+	public LambdaQuery<T> fromCte(String name) {
+		joinContext.registerFrom(getEntityClass());
+		joinContext.setFromRawSource(name);
+		joinContext.forceJoinChannel();
+		composed = true;
+		return this;
+	}
+
+	/**
+	 * @description @fast分页下推派生表:FROM @fast(内层sql) 别名——内层先分页取pageSize条再被外层join,
+	 *              复用sqltoy既有@fast机制(分页下推+count用内层简化SQL);内层为独立lambdaQuery(过滤+排序),
+	 *              外层列/关联经结果类型VO字段引用派生表列
+	 * @param inner 内层查询(被分页下推)
+	 * @param alias 派生表别名
+	 */
+	public LambdaQuery<T> fromFast(LambdaQuery<?> inner, String alias) {
+		// @fast内层必须是完整SELECT..FROM(被分页下推的子查询),强制走join/SQL通道
+		inner.joinContext.forceJoinChannel();
+		this.fastInner = inner;
+		joinContext.registerFrom(getEntityClass(), alias);
+		joinContext.forceJoinChannel();
+		composed = true;
+		return this;
+	}
+
+	/**
+	 * @description UNION组合(去重):(本查询) UNION (other);两侧须映射同一结果类型,参数序号组合时统一续号
+	 */
+	public LambdaQuery<T> union(LambdaQuery<?> other) {
+		unions.add(new Object[] { "UNION", other });
+		composed = true;
+		return this;
+	}
+
+	/**
+	 * @description UNION ALL组合(不去重,更快);count可复用sqltoy的union-all-count优化
+	 */
+	public LambdaQuery<T> unionAll(LambdaQuery<?> other) {
+		unions.add(new Object[] { "UNION ALL", other });
+		composed = true;
+		return this;
+	}
+
+	@Override
+	public String getSql() {
+		return composed ? composeSql() : super.getSql();
+	}
+
+	@Override
+	public Map<String, Object> getParams() {
+		if (!composed) {
+			return super.getParams();
+		}
+		Map<String, Object> merged = new LinkedHashMap<>();
+		for (CteDef cte : ctes) {
+			merged.putAll(cte.query.getParams());
+		}
+		if (fastInner != null) {
+			merged.putAll(fastInner.getParams());
+		}
+		merged.putAll(super.getParams());
+		for (Object[] u : unions) {
+			merged.putAll(((LambdaQuery<?>) u[1]).getParams());
+		}
+		return merged;
+	}
+
+	/**
+	 * @description 组合SQL:[WITH name AS [MATERIALIZED] (inner)... ] mainSql [ UNION [ALL] (other)...]
+	 */
+	private String composeSql() {
+		StringBuilder sb = new StringBuilder();
+		if (!ctes.isEmpty()) {
+			int dbType = resolveDbType();
+			// SQLServer的WITH惯例前置分号;Oracle/SQLServer递归CTE不带RECURSIVE关键字
+			sb.append(dbType == DBType.SQLSERVER ? ";WITH " : "WITH ");
+			boolean anyRecursive = ctes.stream().anyMatch(c -> c.recursive);
+			if (anyRecursive && dbType != DBType.ORACLE && dbType != DBType.ORACLE11 && dbType != DBType.SQLSERVER) {
+				sb.append("RECURSIVE ");
+			}
+			for (int i = 0; i < ctes.size(); i++) {
+				CteDef cte = ctes.get(i);
+				if (i > 0) {
+					sb.append(", ");
+				}
+				sb.append(cte.name).append(" AS ");
+				if (cte.materialized != null && (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14)) {
+					sb.append(cte.materialized ? "MATERIALIZED " : "NOT MATERIALIZED ");
+				}
+				sb.append("(").append(cte.query.getSql()).append(")");
+			}
+			sb.append(" ");
+		}
+		String mainSql = super.getSql();
+		if (unions.isEmpty()) {
+			sb.append(mainSql);
+		} else {
+			// union各分支包括号,保证与CTE前缀/分页包裹组合时优先级正确
+			sb.append("(").append(mainSql).append(")");
+			for (Object[] u : unions) {
+				sb.append(" ").append(u[0]).append(" (").append(((LambdaQuery<?>) u[1]).getSql()).append(")");
+			}
+		}
+		return sb.toString();
+	}
+
+	/**
+	 * @return 执行库类型(未绑定dao时-1,WITH按通用形态渲染)
+	 */
+	private int resolveDbType() {
+		if (dao == null) {
+			return -1;
+		}
+		return DataSourceUtils.getDBType(dao.getSqlToyContext(), dao.getDataSource());
 	}
 
 	/**
@@ -188,6 +400,17 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 
 	public PageOptimize getPageOptimize() {
 		return pageOptimize;
+	}
+
+	/**
+	 * @description 设置自定义精简count SQL(仅join/SQL通道的findPage生效):分页算总数时用它替代包裹整条查询SQL的自动count,
+	 *              对应sqltoy的count-sql配置;比@fast内层count仍不够精简的极特殊场景使用
+	 * @param countSql 精简的count SQL,如 select count(1) from table_a where status=:p1
+	 * @return 自身
+	 */
+	public LambdaQuery<T> countSql(String countSql) {
+		this.countSql = countSql;
+		return this;
 	}
 
 	/**
@@ -344,7 +567,7 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 			// (link Query构建器无pageOptimize);pageOptimize为null时回退全局SqlToyConfig配置,行为与未设置一致
 			return (Page<T>) dao
 					.findPageByQuery(page, new QueryExecutor(getSql(), getParams()).resultType(getEntityClass())
-							.dataSource(getDataSource()).pageOptimize(pageOptimize))
+							.dataSource(getDataSource()).pageOptimize(pageOptimize).countSql(countSql))
 					.getPageResult();
 		}
 		return dao.findPageEntity(page, getEntityClass(), LambdaConvert.toEntityQuery(this));

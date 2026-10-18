@@ -10,8 +10,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
-import org.sagacity.sqltoy.plugins.json.JsonProvider;
-import org.sagacity.sqltoy.plugins.json.JsonProviders;
 import org.springframework.aot.generate.GeneratedClasses;
 import org.springframework.aot.generate.GeneratedFiles;
 import org.springframework.aot.generate.GenerationContext;
@@ -52,20 +50,21 @@ public class SqltoyAotHintsTest {
 		props.put("spring.sqltoy.sqlFormater", "default");
 		// 不存在的类:warn 跳过而非中断 AOT 构建
 		props.put("spring.sqltoy.sqlInterceptors[0]", "com.sqltoy.NotExistSqlInterceptor");
-		props.put("spring.sqltoy.cacheType", "caffeine");
 
 		RuntimeHints hints = applyProcessor(aotLikeBeanFactory(props));
 
 		// 实体:按 packagesToScan 扫描注册,不依赖 SqlToyContext bean 实例化
 		assertTrue(reflectionRegistered(hints, "org.sagacity.sqltoy.integration.aot.entity.AotTestEntity"),
 				"packagesToScan entity reflection hints missing");
-		// 扩展类:按类名配置 + sqlFormater 别名展开 + cacheType=caffeine 的启动期反射集成类
+		// 扩展类:按类名配置 + sqlFormater 别名展开
 		assertTrue(reflectionRegistered(hints, AotTestFieldsHandler.class.getName()),
 				"class-name configured extension missing");
 		assertTrue(reflectionRegistered(hints, "org.sagacity.sqltoy.plugins.formater.impl.DefaultSqlFormater"),
 				"sqlFormater default alias expansion missing");
+		// 集成类注册跟随 classpath 而非 cacheType 配置:caffeine 在本模块测试 classpath(provided),
+		// 未配置 cacheType 也应注册翻译缓存管理器(支持运行期切换)
 		assertTrue(reflectionRegistered(hints, "org.sagacity.sqltoy.translate.cache.impl.TranslateCaffeineManager"),
-				"caffeine translate cache manager missing");
+				"caffeine translate cache manager missing (marker-based registration)");
 		// 不存在的拦截器类跳过,不影响其他注册
 		assertFalse(reflectionRegistered(hints, "com.sqltoy.NotExistSqlInterceptor"));
 
@@ -87,13 +86,33 @@ public class SqltoyAotHintsTest {
 	}
 
 	@Test
-	void registersEffectiveJsonProvider() {
-		// 与处理器相同的解析路径:classpath 无可用 JSON 库时返回 null,无需注册
-		JsonProvider provider = JsonProviders.initAtStartup(null);
+	void registersJsonProvidersByClasspathMarker() {
+		// JsonProvider 注册跟随 classpath marker(与 JsonProviders.CANDIDATES 一致),
+		// 覆盖运行期切换与探测降级;本模块测试 classpath 无 JSON 库(core 中为 provided+optional 不传递),
+		// 故按 marker 存在性双向断言
 		RuntimeHints hints = applyProcessor(aotLikeBeanFactory(new HashMap<>()));
-		if (provider != null) {
-			assertTrue(reflectionRegistered(hints, provider.getClass().getName()),
-					"effective json provider reflection hints missing");
+		assertProviderRegistration(hints, "com.alibaba.fastjson2.JSON",
+				"org.sagacity.sqltoy.plugins.json.FastjsonJsonProvider");
+		assertProviderRegistration(hints, "tools.jackson.databind.ObjectMapper",
+				"org.sagacity.sqltoy.plugins.json.Jackson3JsonProvider");
+		assertProviderRegistration(hints, "com.fasterxml.jackson.databind.ObjectMapper",
+				"org.sagacity.sqltoy.plugins.json.Jackson2JsonProvider");
+	}
+
+	private void assertProviderRegistration(RuntimeHints hints, String markerClass, String providerClass) {
+		boolean markerPresent;
+		try {
+			Class.forName(markerClass);
+			markerPresent = true;
+		} catch (Throwable e) {
+			markerPresent = false;
+		}
+		if (markerPresent) {
+			assertTrue(reflectionRegistered(hints, providerClass),
+					providerClass + " should be registered (marker " + markerClass + " present)");
+		} else {
+			assertFalse(reflectionRegistered(hints, providerClass),
+					providerClass + " should not be registered (marker " + markerClass + " absent)");
 		}
 	}
 

@@ -379,7 +379,16 @@ public class JoinContext {
 	 * @return 是否处于join通道(注册了join或select列定义)
 	 */
 	public boolean isJoinChannel() {
-		return hasJoin() || hasSelectColumns();
+		return forcedJoinChannel || hasJoin() || hasSelectColumns();
+	}
+
+	/**
+	 * fromCte/fromFast等组合场景强制走join/SQL通道(FROM为CTE名或@fast派生表,非实体表,必须渲染完整SELECT..FROM)
+	 */
+	private boolean forcedJoinChannel;
+
+	public void forceJoinChannel() {
+		this.forcedJoinChannel = true;
 	}
 
 	/**
@@ -573,8 +582,24 @@ public class JoinContext {
 	}
 
 	private String tableName(Class<?> entityClass) {
+		// fromCte/fromFast:主表FROM用原始源(CTE名或@fast派生表)替代实体表名,列解析仍走外层结果类型EntityMeta
+		if (fromRawSource != null && fromClass != null && fromClass.equals(entityClass)) {
+			return fromRawSource;
+		}
 		// getSchemaTable携带schema配置,与实体通道口径一致
 		return metaLoader.apply(entityClass).getSchemaTable(null, null);
+	}
+
+	/**
+	 * 主表FROM的原始源覆盖(CTE名或@fast(...)派生表),为null时用实体表名
+	 */
+	private String fromRawSource;
+
+	/**
+	 * @description 设置主表FROM原始源(fromCte/fromFast),旁路实体表名解析
+	 */
+	public void setFromRawSource(String fromRawSource) {
+		this.fromRawSource = fromRawSource;
 	}
 
 	/**
