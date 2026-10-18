@@ -10,8 +10,17 @@ import java.util.stream.Collectors;
  */
 public class OrderBySegmentList extends SegmentList {
 
+	/**
+	 * 合并为破坏性改写,仅可执行一次(getSqlSegment可能被多次调用)
+	 */
+	private boolean merged;
+
 	@Override
 	public void merge() {
+		if (merged) {
+			return;
+		}
+		merged = true;
 		int count = 0;
 		List<SqlSegment[]> mergeSegments = new ArrayList<>();
 		List<Integer> deleteIndexes = new ArrayList<>();

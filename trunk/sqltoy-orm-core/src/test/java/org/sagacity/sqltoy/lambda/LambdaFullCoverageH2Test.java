@@ -403,10 +403,8 @@ public class LambdaFullCoverageH2Test {
 
 	@Test
 	@Order(9)
-	@DisplayName("last追加与accept消费函数")
+	@DisplayName("accept消费函数;单表last改为响亮失败(见order33)")
 	public void testLastAndAccept() {
-		assertEquals(2, lightDao.lambdaQuery(FfUser.class).eq(FfUser::getStatus, 1)
-				.lt(FfUser::getId, 90).last("limit 2").find().size());
 		assertEquals(Arrays.asList(6), ids(lightDao.lambdaQuery(FfUser.class).eq(FfUser::getStatus, 1)
 				.accept(q -> q.eq(FfUser::getDeptId, 20)).find()));
 	}
@@ -859,7 +857,18 @@ public class LambdaFullCoverageH2Test {
 	public void testProxyLambdaGracefulFailure() {
 		LambdaFn<FfUser, ?> proxied = (LambdaFn<FfUser, ?>) java.lang.reflect.Proxy.newProxyInstance(
 				LambdaFn.class.getClassLoader(), new Class<?>[] { LambdaFn.class },
-				(proxy, method, args) -> null);
+				(proxy, method, args) -> {
+					switch (method.getName()) {
+					case "hashCode":
+						return System.identityHashCode(proxy);
+					case "equals":
+						return proxy == args[0];
+					case "toString":
+						return "proxy-lambda";
+					default:
+						return null;
+					}
+				});
 		assertThrows(DataAccessException.class, () -> LambdaUtils.extractProperty(proxied));
 	}
 
