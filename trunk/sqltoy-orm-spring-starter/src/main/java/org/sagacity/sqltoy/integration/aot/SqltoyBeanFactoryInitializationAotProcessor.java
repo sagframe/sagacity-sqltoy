@@ -48,6 +48,22 @@ class SqltoyBeanFactoryInitializationAotProcessor implements BeanFactoryInitiali
 	/** 与 SqltoyAutoConfiguration.strSplitTrim 保持一致:多目录配置支持中英文逗号、分号分隔 */
 	private static final String DIR_SPLIT_REGEX = "[,;，；]";
 
+	/**
+	 * 扩展类型(json/jsonb/vector/geometry等)经反射访问的驱动专属类,仅在对应驱动位于classpath时注册:
+	 * PG系PGobject同构类5个(写路径DataSourceUtils.resolvePGobjectHolder按URL scheme反射构造+读路径
+	 * ResultUtils.extObjectPgType反射getType,PGobject不能跨驱动setObject故每驱动一个同构类):
+	 * postgresql及stardb等PG系兜底/opengauss与mogdb/vastbase/gaussdb/kingbase(KBobject小写o);
+	 * mssql-jdbc的Geometry(parse/serialize/deserialize/STAsText句柄)与13.x的Vector;
+	 * oracle的OracleTypes类型常量。
+	 * 无需注册:oracle.sql.TIMESTAMP(BeanUtil直接强转调用timestampValue/dateValue)、
+	 * oracle与mssql的vector/json对象(按类名识别后走toString)、JTS(静态引用可达)、
+	 * postgis-jdbc的PGgeometry(JtsGeometryCodec全程instanceof/toString无反射)
+	 */
+	private static final String[] EXT_TYPE_DRIVER_CLASSES = { "org.postgresql.util.PGobject",
+			"org.opengauss.util.PGobject", "cn.com.vastbase.util.PGobject", "com.huawei.gaussdb.jdbc.util.PGobject",
+			"com.kingbase8.util.KBobject", "com.microsoft.sqlserver.jdbc.Geometry", "microsoft.sql.Vector",
+			"microsoft.sql.Vector$VectorDimensionType", "oracle.jdbc.OracleTypes" };
+
 	@Override
 	public BeanFactoryInitializationAotContribution processAheadOfTime(ConfigurableListableBeanFactory beanFactory) {
 		return (context, code) -> {
@@ -216,9 +232,11 @@ class SqltoyBeanFactoryInitializationAotProcessor implements BeanFactoryInitiali
 		if (present("org.springframework.data.redis.core.RedisTemplate")) {
 			registerClassByName(hints, "org.sagacity.sqltoy.integration.impl.SpringRedisIdGenerator");
 		}
-		// PG 系扩展类型(json/jsonb/vector/geometry)经 DBProfile.PGobjectHolder 反射构造与读写 PGobject
-		if (present("org.postgresql.util.PGobject")) {
-			registerClassByName(hints, "org.postgresql.util.PGobject");
+		// 扩展类型反射访问的驱动专属类(PG系含vastbase/opengauss/mogdb/gaussdb/kingbase衍生品,非仅org.postgresql)
+		for (String driverClass : EXT_TYPE_DRIVER_CLASSES) {
+			if (present(driverClass)) {
+				registerClassByName(hints, driverClass);
+			}
 		}
 	}
 

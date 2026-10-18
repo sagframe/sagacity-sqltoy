@@ -46,6 +46,17 @@ public class SqltoyRuntimeNativeRegistrar implements RuntimeNativeRegistrar {
     /** 与 SqlToyContextBuilder.strSplitTrim 保持一致:多目录配置支持中英文逗号、分号分隔 */
     private static final String DIR_SPLIT_REGEX = "[,;，；]";
 
+    /**
+     * 扩展类型(json/jsonb/vector/geometry等)经反射访问的驱动专属类,仅在对应驱动位于classpath时注册,
+     * 清单与spring侧SqltoyBeanFactoryInitializationAotProcessor.EXT_TYPE_DRIVER_CLASSES一致:
+     * PG系PGobject同构类5个(postgresql及stardb等兜底/opengauss与mogdb/vastbase/gaussdb/kingbase KBobject)、
+     * mssql-jdbc的Geometry与13.x Vector、oracle的OracleTypes
+     */
+    private static final String[] EXT_TYPE_DRIVER_CLASSES = { "org.postgresql.util.PGobject",
+            "org.opengauss.util.PGobject", "cn.com.vastbase.util.PGobject", "com.huawei.gaussdb.jdbc.util.PGobject",
+            "com.kingbase8.util.KBobject", "com.microsoft.sqlserver.jdbc.Geometry", "microsoft.sql.Vector",
+            "microsoft.sql.Vector$VectorDimensionType", "oracle.jdbc.OracleTypes" };
+
     @Override
     public void register(AppContext context, RuntimeNativeMetadata metadata) {
         //静态资源
@@ -199,9 +210,11 @@ public class SqltoyRuntimeNativeRegistrar implements RuntimeNativeRegistrar {
         if (present("org.noear.redisx.RedisClient")) {
             registerClassByName(metadata, "org.sagacity.sqltoy.solon.integration.SolonRedisIdGenerator");
         }
-        // PG 系扩展类型(json/jsonb/vector/geometry)经 DBProfile.PGobjectHolder 反射构造与读写 PGobject
-        if (present("org.postgresql.util.PGobject")) {
-            registerClassByName(metadata, "org.postgresql.util.PGobject");
+        // 扩展类型反射访问的驱动专属类(PG系含vastbase/opengauss/mogdb/gaussdb/kingbase衍生品,非仅org.postgresql)
+        for (String driverClass : EXT_TYPE_DRIVER_CLASSES) {
+            if (present(driverClass)) {
+                registerClassByName(metadata, driverClass);
+            }
         }
     }
 
