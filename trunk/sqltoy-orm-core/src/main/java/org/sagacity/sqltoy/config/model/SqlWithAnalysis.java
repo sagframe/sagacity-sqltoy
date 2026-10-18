@@ -26,16 +26,6 @@ public class SqlWithAnalysis implements Serializable {
 
 	private final Pattern asPattern = Pattern.compile("\\Was");
 
-	/**
-	 * update 2026-10-18 CTE物化hint定位:匹配后随'('的"as [not] materialized",组1承载"as"+空白
-	 * 原形态,供adaptCteMaterialized在不支持库上剔除[not] materialized关键字而保留"as ("。
-	 * '('后须紧跟查询体关键字(select/with/values/table)或嵌套'('方视为CTE物化hint——以此与
-	 * 派生表别名恰为materialized且带列清单的形态(如 FROM (..) AS materialized (x),其后'('跟的是
-	 * 列名标识符而非查询体)区分,规避上下文无关匹配误剔别名导致SQL破损
-	 */
-	private static final Pattern CTE_MATERIALIZED_PATTERN = Pattern.compile(
-			"(?i)(\\bas\\s+)(?:not\\s+)?materialized\\s*(?=\\(\\s*(?:select\\b|with\\b|values\\b|table\\b|\\())");
-
 	private String sql;
 
 	private String withSql = "";
@@ -65,8 +55,36 @@ public class SqlWithAnalysis implements Serializable {
 	 */
 	private List<String[]> withSqlSet = null;
 
+	/**
+	 * update 2026-10-19 dbType感知剔除开关:经SqlWithAnalysis(sql,dbType)构造且目标库不支持CTE
+	 * 物化hint时置位,parse()对各CTE的ext区域(as与'('之间文本)做位置级剔除;单参构造恒为false,
+	 * 解析行为与历史版本完全一致
+	 */
+	private final boolean stripMaterialized;
+
+	/**
+	 * update 2026-10-19 位置级剔除后的完整sql:headSql+各CTE定义(ext剔除后)+最终tailSql恰为
+	 * " "+原sql的完整拼接,去掉首部补位空格即得;未启用剔除或无with时为null,getAdaptedSql回退原sql
+	 */
+	private String adaptedSql;
+
 	public SqlWithAnalysis(String sql) {
 		this.sql = sql;
+		this.stripMaterialized = false;
+		this.parse();
+	}
+
+	/**
+	 * update 2026-10-19 dbType感知构造:目标库不支持CTE物化hint(AS [NOT] MATERIALIZED)时,parse()
+	 * 按其已精确识别的ext起止位置做位置级剔除,getAdaptedSql()返回剔除后的完整sql,
+	 * getWithSql()/getWithSqlSet()同步产出干净结果;支持库(PG系)行为与单参构造完全一致
+	 *
+	 * @param sql    原始sql
+	 * @param dbType 目标库类型(DBType常量)
+	 */
+	public SqlWithAnalysis(String sql, int dbType) {
+		this.sql = sql;
+		this.stripMaterialized = !supportsCteMaterialized(dbType);
 		this.parse();
 	}
 
@@ -99,6 +117,16 @@ public class SqlWithAnalysis implements Serializable {
 	}
 
 	/**
+	 * update 2026-10-19 按目标dbType位置级剔除后的完整sql;未启用剔除(单参构造)、目标库支持、
+	 * 无with或ext不含materialized时返回原sql
+	 *
+	 * @return 剔除后的完整sql或原sql
+	 */
+	public String getAdaptedSql() {
+		return adaptedSql != null ? adaptedSql : sql;
+	}
+
+	/**
 	 * @return the preSql
 	 */
 	public String getPreSql() {
@@ -126,8 +154,13 @@ public class SqlWithAnalysis implements Serializable {
 		String aliasTable;
 		int endWith;
 		int asIndex;
+		int parenIdx;
 		String ext;
+		String cteDef;
 		StringBuilder withSqlBuffer = null;
+		// update 2026-10-19 dbType感知位置级剔除载体:收集headSql+各CTE定义(ext剔除后),与最终
+		// tailSql拼出剔除后的完整sql;未启用剔除时为null,解析走原路径零变化
+		StringBuilder adaptedBuffer = stripMaterialized ? new StringBuilder() : null;
 		// 单个with
 		Matcher withAsMatcher = SqlToyConstants.withPattern.matcher(maskedTailSql);
 		String groupStr;
@@ -164,12 +197,26 @@ public class SqlWithAnalysis implements Serializable {
 			if (params.length > 1) {
 				withAfter = params[0];
 			}
-			ext = groupStr.substring(asIndex + 2, groupStr.indexOf("(", asIndex));
+			parenIdx = groupStr.indexOf("(", asIndex);
+			ext = groupStr.substring(asIndex + 2, parenIdx);
 			// update 2026-9-3 findBodyEnd替代
 			// endWith = StringUtil.getSymMarkIndex("(", ")", tailSql, withAsMatcher.start()
 			// + asIndex);
 			endWith = findBodyEnd(tailSql, withAsMatcher.start() + asIndex);
-			withSqlBuffer.append(tailSql.substring(withAsMatcher.start() + 1, endWith + 1));
+			cteDef = tailSql.substring(withAsMatcher.start() + 1, endWith + 1);
+			// update 2026-10-19 ext位置级剔除:cteDef较groupStr超前1字符(跳过匹配前导\W),ext在
+			// cteDef内起止为[asIndex+1,parenIdx-1);ext确含materialized才整段换单空格(withPattern
+			// 仅允许as与'('间0~2个单词以承载[not] materialized,ext即物化hint唯一合法位置,
+			// 派生表别名/字面量文本不在ext内,绝无误伤),withSqlSet同步存剔除后ext
+			if (adaptedBuffer != null) {
+				adaptedBuffer.append(headSql);
+				if (StringUtil.indexOfIgnoreCase(ext, "materialized") != -1) {
+					ext = " ";
+					cteDef = cteDef.substring(0, asIndex + 1).concat(" ").concat(cteDef.substring(parenIdx - 1));
+				}
+				adaptedBuffer.append(cteDef);
+			}
+			withSqlBuffer.append(cteDef);
 			withSqlSet.add(new String[] { aliasTable, ext, tailSql.substring(withAsMatcher.end(), endWith), withAfter,
 					aliasParams });
 			tailSql = tailSql.substring(endWith + 1);
@@ -203,12 +250,23 @@ public class SqlWithAnalysis implements Serializable {
 			if (params.length > 1) {
 				withAfter = params[0];
 			}
-			ext = groupStr.substring(asIndex + 2, groupStr.indexOf("(", asIndex));
+			parenIdx = groupStr.indexOf("(", asIndex);
+			ext = groupStr.substring(asIndex + 2, parenIdx);
 			// update 2026-9-3 findBodyEnd替代
 			// endWith = StringUtil.getSymMarkIndex("(", ")", tailSql, otherMatcher.start()
 			// + asIndex);
 			endWith = findBodyEnd(tailSql, otherMatcher.start() + asIndex);
-			withSqlBuffer.append(tailSql.substring(0, endWith + 1));
+			cteDef = tailSql.substring(0, endWith + 1);
+			// update 2026-10-19 ext位置级剔除:循环CTE的groupStr与cteDef同以0起(otherMatcher.start()
+			// 恒为0,否则已break),ext在cteDef内起止无偏移:[asIndex+2,parenIdx)
+			if (adaptedBuffer != null) {
+				if (StringUtil.indexOfIgnoreCase(ext, "materialized") != -1) {
+					ext = " ";
+					cteDef = cteDef.substring(0, asIndex + 2).concat(" ").concat(cteDef.substring(parenIdx));
+				}
+				adaptedBuffer.append(cteDef);
+			}
+			withSqlBuffer.append(cteDef);
 			withSqlSet.add(new String[] { aliasTable, ext, tailSql.substring(otherMatcher.end(), endWith), withAfter,
 					aliasParams });
 			tailSql = tailSql.substring(endWith + 1);
@@ -219,6 +277,10 @@ public class SqlWithAnalysis implements Serializable {
 		this.footSql = tailSql.trim();
 		this.rejectWithSql = headSql.concat(" ").concat(tailSql);
 		this.withSql = withSqlBuffer.append(" ").toString();
+		if (adaptedBuffer != null) {
+			// headSql+各CTE定义+最终tailSql恰为" "+原sql的完整拼接,去掉首部补位空格即剔除后完整sql
+			this.adaptedSql = adaptedBuffer.append(tailSql).toString().substring(1);
+		}
 	}
 
 	/**
@@ -275,13 +337,13 @@ public class SqlWithAnalysis implements Serializable {
 	}
 
 	/**
-	 * update 2026-10-18 按目标库类型保留/剔除CTE物化hint。支持库(PG系)原样返回;不支持库将 "AS [NOT]
-	 * MATERIALIZED ("改写为"AS (",规避混入PG专有关键字导致的执行报错。两层防护确保只动真正的CTE
-	 * 物化hint、绝不误伤:①解析器门禁——先经SqlWithAnalysis确认sql确含with as CTE,非CTE上下文(如
-	 * 派生表别名恰为materialized)一律原样返回;②字面量掩码+查询体lookahead——定位在掩码串上进行
-	 * (掩码串与原串等长、非字面量字符原样保留,匹配位置可直接用于原串截取),且要求materialized后的
-	 * '('紧跟查询体(select/with/values/table/嵌套'('),与派生表别名列清单形态区分。不含materialized
-	 * 关键字时走零开销快速通道。剔除只移除优化hint、不改变CTE查询语义,对不支持库本就无物化概念, 行为等价于用户未写hint
+	 * update 2026-10-18(2026-10-19改解析器位置级剔除) 按目标库类型保留/剔除CTE物化hint。
+	 * 支持库(PG系)原样返回;不支持库将 "AS [NOT] MATERIALIZED ("改写为"AS (",规避混入PG专有关键字
+	 * 导致的执行报错。剔除复用parse()的CTE精确定位:ext(as与'('之间文本,withPattern仅允许其承载
+	 * 0~2个单词即[not] materialized)是物化hint的唯一合法位置,仅当ext确含materialized才做位置级
+	 * 替换——派生表别名(非CTE,不进withSqlSet)、字面量文本(findBodyEnd括号配对已规避)绝不会被
+	 * 误剔,无正则启发式。不含materialized关键字时走零开销快速通道。剔除只移除优化hint、不改变
+	 * CTE查询语义,对不支持库本就无物化概念,行为等价于用户未写hint
 	 *
 	 * @param sql    原始sql(可为整条语句或with片段)
 	 * @param dbType 目标库类型(DBType常量)
@@ -295,24 +357,8 @@ public class SqlWithAnalysis implements Serializable {
 		if (StringUtil.indexOfIgnoreCase(sql, "materialized") == -1) {
 			return sql;
 		}
-		// 门禁①:仅处理真正含with as CTE的sql,非CTE上下文的materialized文本(如派生表别名)一律不动
-		if (!new SqlWithAnalysis(sql).isHasWith()) {
-			return sql;
-		}
-		String masked = SqlConfigParseUtils.maskLiterals(sql, SqlConfigParseUtils.isBackslashEscapeDialect(dbType));
-		Matcher matcher = CTE_MATERIALIZED_PATTERN.matcher(masked);
-		if (!matcher.find()) {
-			return sql;
-		}
-		StringBuilder result = new StringBuilder(sql.length());
-		int last = 0;
-		do {
-			// 保留原"as"+空白(组1),跳过[not] materialized关键字直至'('前(lookahead不消费'(')
-			result.append(sql, last, matcher.end(1));
-			last = matcher.end();
-		} while (matcher.find());
-		result.append(sql, last, sql.length());
-		return result.toString();
+		// dbType感知解析:无with或ext不含materialized时getAdaptedSql回退原sql
+		return new SqlWithAnalysis(sql, dbType).getAdaptedSql();
 	}
 
 }
