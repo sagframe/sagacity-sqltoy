@@ -3,6 +3,7 @@ package org.sagacity.sqltoy.lambda;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -21,10 +22,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
+import org.sagacity.sqltoy.config.model.PageOptimize;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.lambda.engine.AbstractWhere;
 import org.sagacity.sqltoy.lambda.join.JoinCol;
 import org.sagacity.sqltoy.lambda.toolkit.ValueFilter;
+import org.sagacity.sqltoy.model.EntityQuery;
 
 /**
  * @description 单表lambda条件sql组装单元测试,无需数据库,采用恒等解析(属性名即字段名)
@@ -525,5 +528,19 @@ public class LambdaQuerySqlTest {
 				.or(nested -> nested.like(User::getName, "").eq(User::getId, 2));
 		query.assemble(IDENTITY);
 		assertEquals("status = :p1 OR (id = :p2)", normalized(query));
+	}
+
+	@Test
+	@DisplayName("pageOptimize透传到EntityQuery(单表分页优化:并行count+keep-alive缓存)")
+	public void testPageOptimizeThreading() {
+		PageOptimize po = new PageOptimize().parallel(true).aliveSeconds(120);
+		LambdaQuery<User> query = LambdaQuery.create(User.class).eq(User::getStatus, 1).pageOptimize(po);
+		query.assemble(IDENTITY);
+		// 单表通道:pageOptimize经LambdaConvert落到EntityQuery,再由findEntityBase透传到内部QueryExecutor
+		assertSame(po, LambdaConvert.toEntityQuery(query).getInnerModel().pageOptimize);
+		// 未设置时为null(执行侧回退全局SqlToyConfig.pageOptimize)
+		LambdaQuery<User> plain = LambdaQuery.create(User.class).eq(User::getStatus, 1);
+		plain.assemble(IDENTITY);
+		assertNull(LambdaConvert.toEntityQuery(plain).getInnerModel().pageOptimize);
 	}
 }

@@ -483,4 +483,35 @@ public class LambdaQueryJoinH2Test {
 		assertNotNull(user);
 		assertEquals("张三", user.getStaffName());
 	}
+
+	@Test
+	@Order(17)
+	@DisplayName("select原生片段(JoinCol.raw)的sql文本:窗口函数原样拼入+别名")
+	public void testSelectRawSqlText() {
+		LambdaQuery<JoinUserVO> join = LambdaQuery.create(JoinUserVO.class)
+				.select(JoinCol.of(JoinUser::getStaffName).as("staffName"),
+						JoinCol.raw("ROW_NUMBER() OVER(ORDER BY j1.ID)").as("rn"))
+				.from(JoinUser.class).eq(JoinUser::getStatus, 1);
+		join.assemble(context::getEntityMeta);
+		// 原生片段原样拼入SELECT,与类型化列共存;raw列触发join/SQL通道
+		assertEquals("SELECT j1.STAFF_NAME AS staffName, ROW_NUMBER() OVER(ORDER BY j1.ID) AS rn "
+				+ "FROM lambda_join_user j1 WHERE j1.STATUS = :p1", normalized(join.getSql()));
+	}
+
+	@Test
+	@Order(18)
+	@DisplayName("select原生片段(JoinCol.raw)执行:窗口函数ROW_NUMBER映射到VO字段")
+	public void testSelectRawExecution() {
+		// 原生窗口函数片段映射到VO的id字段,与类型化列staffName共存
+		List<JoinUserVO> rows = lightDao.lambdaQuery(JoinUserVO.class)
+				.select(JoinCol.raw("ROW_NUMBER() OVER(ORDER BY j1.ID)").as("id"),
+						JoinCol.of(JoinUser::getStaffName).as("staffName"))
+				.from(JoinUser.class).eq(JoinUser::getStatus, 1).orderByAsc(JoinUser::getId).find();
+		// status=1 → 张三(id1)/李四(id2)/赵六(id4),按id排序,ROW_NUMBER=1/2/3
+		assertEquals(3, rows.size());
+		assertEquals(1, rows.get(0).getId().intValue());
+		assertEquals("张三", rows.get(0).getStaffName());
+		assertEquals(3, rows.get(2).getId().intValue());
+		assertEquals("赵六", rows.get(2).getStaffName());
+	}
 }

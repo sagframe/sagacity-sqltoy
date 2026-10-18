@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.function.Function;
 
 import org.sagacity.sqltoy.config.model.EntityMeta;
+import org.sagacity.sqltoy.config.model.PageOptimize;
 import org.sagacity.sqltoy.dao.LightDao;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.lambda.engine.AbstractWhere;
@@ -17,6 +18,7 @@ import org.sagacity.sqltoy.lambda.join.JoinContext.Operate;
 import org.sagacity.sqltoy.link.Query;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.model.Page;
+import org.sagacity.sqltoy.model.QueryExecutor;
 
 /**
  * @description lambda查询构建器,单表与多表join统一入口:单表只是join的退化形态,是否join由是否
@@ -63,6 +65,11 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	 * 单表通道排除字段名(ExcludeCols在单表通道转EntityQuery.unselect)
 	 */
 	private final List<String> excludeFields = new ArrayList<>();
+
+	/**
+	 * 分页优化配置(并行count、count缓存keep-alive等),仅对findPage生效;为null时用全局SqlToyConfig.pageOptimize
+	 */
+	private PageOptimize pageOptimize;
 
 	private LambdaQuery(Class<T> entityClass, JoinContext joinContext) {
 		super(entityClass, joinContext);
@@ -165,6 +172,22 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 
 	public boolean isDistinct() {
 		return distinct;
+	}
+
+	/**
+	 * @description 设置分页优化配置(仅对findPage生效):并行count、count缓存keep-alive(aliveSeconds)、
+	 *              缓存容量(aliveMax)、零计数跳过(skipZeroCount)等,复用sqltoy既有{@link PageOptimize};
+	 *              不设置时用全局SqlToyConfig.pageOptimize。单表通道经EntityQuery透传、join通道经QueryExecutor透传
+	 * @param pageOptimize 分页优化配置,如 new PageOptimize().parallel(true).aliveSeconds(120)
+	 * @return 自身
+	 */
+	public LambdaQuery<T> pageOptimize(PageOptimize pageOptimize) {
+		this.pageOptimize = pageOptimize;
+		return this;
+	}
+
+	public PageOptimize getPageOptimize() {
+		return pageOptimize;
 	}
 
 	/**
@@ -317,7 +340,12 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 		requireDao();
 		assemble(dao::getEntityMeta);
 		if (isJoinMode()) {
-			return (Page<T>) joinQuery().findPage(page);
+			// join分页走findPageByQuery(QueryExecutor):QueryExecutor可同时携带dataSource与pageOptimize
+			// (link Query构建器无pageOptimize);pageOptimize为null时回退全局SqlToyConfig配置,行为与未设置一致
+			return (Page<T>) dao
+					.findPageByQuery(page, new QueryExecutor(getSql(), getParams()).resultType(getEntityClass())
+							.dataSource(getDataSource()).pageOptimize(pageOptimize))
+					.getPageResult();
 		}
 		return dao.findPageEntity(page, getEntityClass(), LambdaConvert.toEntityQuery(this));
 	}

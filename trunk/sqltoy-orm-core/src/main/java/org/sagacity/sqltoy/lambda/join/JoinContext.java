@@ -210,7 +210,10 @@ public class JoinContext {
 			requireJoined(deleteClass);
 		}
 		for (JoinCol selectColumn : selectColumns) {
-			requireJoined(LambdaUtils.extractNature(selectColumn.getColumn()).entityClass());
+			// 原生片段列(JoinCol.raw)无所属实体,跳过join参与校验
+			if (selectColumn.getColumn() != null) {
+				requireJoined(LambdaUtils.extractNature(selectColumn.getColumn()).entityClass());
+			}
 		}
 		this.metaLoader = metaLoader;
 	}
@@ -654,10 +657,16 @@ public class JoinContext {
 	}
 
 	private String buildSelectColumn(JoinCol joinColumn, Set<String> aliasNames) {
-		FieldNature nature = LambdaUtils.extractNature(joinColumn.getColumn());
-		String columnName = columnName(nature.entityClass(), nature.fieldName());
-		String columnSql = joinColumn.getFunction() != null ? joinColumn.getFunction().getSqlSegment(columnName)
-				: columnName;
+		String columnSql;
+		if (joinColumn.getRawSql() != null) {
+			// 原生片段列:原样输出(别名可在片段内联,或经as()追加)
+			columnSql = joinColumn.getRawSql();
+		} else {
+			FieldNature nature = LambdaUtils.extractNature(joinColumn.getColumn());
+			String columnName = columnName(nature.entityClass(), nature.fieldName());
+			columnSql = joinColumn.getFunction() != null ? joinColumn.getFunction().getSqlSegment(columnName)
+					: columnName;
+		}
 		if (joinColumn.getAlias() != null) {
 			checkAlias(aliasNames, joinColumn.getAlias(), true);
 			return columnSql + " AS " + joinColumn.getAlias();

@@ -1,5 +1,6 @@
 package org.sagacity.sqltoy.solon.integration.aot;
 
+import java.lang.invoke.SerializedLambda;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -74,6 +75,11 @@ public class SqltoyRuntimeNativeRegistrar implements RuntimeNativeRegistrar {
                 TranslateConfigModel.class,
                 CheckerConfigModel.class
         ).forEach(x -> metadata.registerReflection(x, MemberCategory.values()));
+        //lambda 条件体系(6.0.8)经 writeReplace/SerializedLambda 序列化镜像提取属性元数据,
+        //native 下 SerializedLambda 需要 java 序列化注册,否则 lambdaQuery/lambdaUpdate 全部不可用;
+        //镜像类 org.sagacity.sqltoy.lambda.toolkit.SerializedLambda 是反序列化(resolveClass 重定向)的目标,同样需注册
+        metadata.registerSerialization(SerializedLambda.class);
+        metadata.registerSerialization(org.sagacity.sqltoy.lambda.toolkit.SerializedLambda.class);
         //sqltoy entity集合
         context.getBeanAsync(SqlToyContext.class, bean -> {
             bean.getEntityManager().getAllEntities().entrySet().forEach(entry -> {
@@ -192,6 +198,10 @@ public class SqltoyRuntimeNativeRegistrar implements RuntimeNativeRegistrar {
         }
         if (present("org.noear.redisx.RedisClient")) {
             registerClassByName(metadata, "org.sagacity.sqltoy.solon.integration.SolonRedisIdGenerator");
+        }
+        // PG 系扩展类型(json/jsonb/vector/geometry)经 DBProfile.PGobjectHolder 反射构造与读写 PGobject
+        if (present("org.postgresql.util.PGobject")) {
+            registerClassByName(metadata, "org.postgresql.util.PGobject");
         }
     }
 

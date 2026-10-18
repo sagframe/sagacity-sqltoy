@@ -216,6 +216,10 @@ class SqltoyBeanFactoryInitializationAotProcessor implements BeanFactoryInitiali
 		if (present("org.springframework.data.redis.core.RedisTemplate")) {
 			registerClassByName(hints, "org.sagacity.sqltoy.integration.impl.SpringRedisIdGenerator");
 		}
+		// PG 系扩展类型(json/jsonb/vector/geometry)经 DBProfile.PGobjectHolder 反射构造与读写 PGobject
+		if (present("org.postgresql.util.PGobject")) {
+			registerClassByName(hints, "org.postgresql.util.PGobject");
+		}
 	}
 
 	/**

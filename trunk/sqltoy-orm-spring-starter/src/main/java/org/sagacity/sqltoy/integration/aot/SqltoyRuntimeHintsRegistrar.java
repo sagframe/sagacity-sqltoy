@@ -1,5 +1,6 @@
 package org.sagacity.sqltoy.integration.aot;
 
+import java.lang.invoke.SerializedLambda;
 import java.util.stream.Stream;
 
 import org.sagacity.sqltoy.config.model.ColsChainRelativeModel;
@@ -59,5 +60,10 @@ class SqltoyRuntimeHintsRegistrar implements RuntimeHintsRegistrar {
                 TranslateConfigModel.class,
                 CheckerConfigModel.class
         ).forEach(x -> hints.reflection().registerType(x, MemberCategory.values()));
+        // lambda 条件体系(6.0.8)经 writeReplace/SerializedLambda 序列化镜像提取属性元数据,
+        // native 下 SerializedLambda 需要 java 序列化注册,否则 lambdaQuery/lambdaUpdate 全部不可用;
+        // 镜像类 org.sagacity.sqltoy.lambda.toolkit.SerializedLambda 是反序列化(resolveClass 重定向)的目标,同样需注册
+        hints.serialization().registerType(SerializedLambda.class);
+        hints.serialization().registerType(org.sagacity.sqltoy.lambda.toolkit.SerializedLambda.class);
     }
 }

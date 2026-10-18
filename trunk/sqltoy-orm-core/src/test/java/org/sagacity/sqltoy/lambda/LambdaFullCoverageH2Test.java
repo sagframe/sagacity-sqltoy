@@ -27,6 +27,7 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.annotation.Column;
 import org.sagacity.sqltoy.config.annotation.Entity;
 import org.sagacity.sqltoy.config.annotation.Id;
+import org.sagacity.sqltoy.config.model.PageOptimize;
 import org.sagacity.sqltoy.dao.LightDao;
 import org.sagacity.sqltoy.dao.impl.DefaultLightDaoImpl;
 import org.sagacity.sqltoy.exception.DataAccessException;
@@ -1082,6 +1083,33 @@ public class LambdaFullCoverageH2Test {
 		assertNotNull(lightDao.lambdaQuery(FfUser.class).eq(FfUser::getId, 97).getOne());
 		// 清理探针行
 		lightDao.lambdaDelete(FfUser.class).ge(FfUser::getId, 95).delete();
+	}
+
+	@Test
+	@Order(45)
+	@DisplayName("分页优化pageOptimize:单表与join的findPage(parallel+keep-alive)执行级")
+	public void testPageOptimize() throws Exception {
+		// 自包含数据(order43已清空ff_user);dept_id=10,join用leftJoin不过滤dept→行数恒等于ff_user数
+		try (Connection conn = DriverManager.getConnection(URL, "sa", ""); Statement st = conn.createStatement()) {
+			for (int i = 1; i <= 5; i++) {
+				st.execute("insert into ff_user values (" + i + ",'po" + i + "',10,1,100,0)");
+			}
+		}
+		PageOptimize po = new PageOptimize().parallel(true).aliveSeconds(60);
+		// 单表分页带优化:5条,pageSize=2 → recordCount=5、首页2条、共3页
+		Page<FfUser> single = lightDao.lambdaQuery(FfUser.class).orderByAsc(FfUser::getId).pageOptimize(po)
+				.findPage(new Page(2, 1));
+		assertEquals(5L, single.getRecordCount());
+		assertEquals(2, single.getRows().size());
+		assertEquals(3L, single.getTotalPage());
+		// join分页带优化:走findPageByQuery(QueryExecutor.pageOptimize),leftJoin不过滤→仍5条
+		Page<FfUser> join = lightDao.lambdaQuery(FfUser.class).leftJoin(FfDept.class)
+				.on(FfUser::getDeptId, FfDept::getDeptId).orderByAsc(FfUser::getId).pageOptimize(po)
+				.findPage(new Page(2, 1));
+		assertEquals(5L, join.getRecordCount());
+		assertEquals(2, join.getRows().size());
+		// 清理
+		lightDao.lambdaDelete(FfUser.class).matchAll().delete();
 	}
 
 	private static String normalized(String sql) {

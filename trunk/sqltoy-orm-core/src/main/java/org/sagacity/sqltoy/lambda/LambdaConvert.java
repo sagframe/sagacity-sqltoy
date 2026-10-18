@@ -46,6 +46,9 @@ public final class LambdaConvert {
 		if (query.getDataSource() != null) {
 			entityQuery.dataSource(query.getDataSource());
 		}
+		if (query.getPageOptimize() != null) {
+			entityQuery.pageOptimize(query.getPageOptimize());
+		}
 		return entityQuery;
 	}
 
