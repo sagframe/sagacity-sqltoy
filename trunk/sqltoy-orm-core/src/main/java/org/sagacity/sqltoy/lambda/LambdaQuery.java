@@ -364,7 +364,8 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	 * @return 是否存在符合条件的记录
 	 */
 	public boolean exists() {
-		return count() > 0;
+		// top-1命中即停,避免count全量聚合
+		return !findTop(1).isEmpty();
 	}
 
 

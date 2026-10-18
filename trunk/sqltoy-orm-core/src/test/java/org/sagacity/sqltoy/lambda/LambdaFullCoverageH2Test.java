@@ -32,6 +32,7 @@ import org.sagacity.sqltoy.dao.impl.DefaultLightDaoImpl;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.lambda.LambdaFn;
 import org.sagacity.sqltoy.lambda.join.ExcludeCols;
+import org.sagacity.sqltoy.lambda.OuterRef;
 import org.sagacity.sqltoy.lambda.join.JoinCol;
 import org.sagacity.sqltoy.model.Page;
 
@@ -643,8 +644,9 @@ public class LambdaFullCoverageH2Test {
 				.on(FfUser::getDeptId, FfDept::getDeptId).set(FfUser::getStatus, 5)
 				.eq(FfDept::getDeptName, "研发部");
 		update.assemble(context::getEntityMeta);
-		assertEquals("UPDATE ff_user f1 LEFT JOIN ff_dept f2 ON f1.DEPT_ID = f2.DEPT_ID "
-				+ "SET f1.STATUS = :p1 WHERE f2.DEPT_NAME = :p2", normalized(update.getSql()));
+		assertEquals("UPDATE ff_user SET STATUS = :p1 WHERE EXISTS (SELECT 1 FROM (SELECT f1.ID AS LPK1 "
+				+ "FROM ff_user f1 LEFT JOIN ff_dept f2 ON f1.DEPT_ID = f2.DEPT_ID WHERE f2.DEPT_NAME = :p2) sqd "
+				+ "WHERE sqd.LPK1 = ff_user.ID)", normalized(update.getSql()));
 		assertThrows(DataAccessException.class, () -> lightDao.lambdaUpdate(FfUser.class)
 				.leftJoin(FfDept.class).on(FfUser::getDeptId, FfDept::getDeptId)
 				.set(FfUser::getStatus, 5).update());
@@ -653,8 +655,9 @@ public class LambdaFullCoverageH2Test {
 				.on(FfUser::getDeptId, FfDept::getDeptId).deleteTables(FfUser.class)
 				.eq(FfDept::getDeptName, "市场部");
 		delete.assemble(context::getEntityMeta);
-		assertEquals("DELETE f1 FROM ff_user f1 LEFT JOIN ff_dept f2 ON f1.DEPT_ID = f2.DEPT_ID "
-				+ "WHERE f2.DEPT_NAME = :p1", normalized(delete.getSql()));
+		assertEquals("DELETE FROM ff_user WHERE EXISTS (SELECT 1 FROM (SELECT f1.ID AS LPK1 "
+				+ "FROM ff_user f1 LEFT JOIN ff_dept f2 ON f1.DEPT_ID = f2.DEPT_ID WHERE f2.DEPT_NAME = :p1) sqd "
+				+ "WHERE sqd.LPK1 = ff_user.ID)", normalized(delete.getSql()));
 		assertThrows(DataAccessException.class, () -> lightDao.lambdaDelete(FfUser.class)
 				.leftJoin(FfDept.class).on(FfUser::getDeptId, FfDept::getDeptId).delete());
 	}
@@ -778,8 +781,9 @@ public class LambdaFullCoverageH2Test {
 				.on(FfUser::getDeptId, FfDept::getDeptId).setNull(FfUser::getSalary)
 				.eq(FfDept::getDeptName, "研发部");
 		update.assemble(context::getEntityMeta);
-		assertEquals("UPDATE ff_user f1 LEFT JOIN ff_dept f2 ON f1.DEPT_ID = f2.DEPT_ID "
-				+ "SET f1.SALARY = :p1 WHERE f2.DEPT_NAME = :p2", normalized(update.getSql()));
+		assertEquals("UPDATE ff_user SET SALARY = :p1 WHERE EXISTS (SELECT 1 FROM (SELECT f1.ID AS LPK1 "
+				+ "FROM ff_user f1 LEFT JOIN ff_dept f2 ON f1.DEPT_ID = f2.DEPT_ID "
+				+ "WHERE f2.DEPT_NAME = :p2) sqd WHERE sqd.LPK1 = ff_user.ID)", normalized(update.getSql()));
 		assertNull(update.getParams().get("p1"));
 	}
 
@@ -850,7 +854,7 @@ public class LambdaFullCoverageH2Test {
 				.leftJoin(FfDept.class).on(FfUser::getDeptId, FfDept::getDeptId)
 				.deleteTables(FfUser.class, FfDept.class).eq(FfUser::getId, 1L);
 		multiDelete.assemble(context::getEntityMeta);
-		assertTrue(normalized(multiDelete.getSql()).startsWith("DELETE f1,f2 FROM ff_user f1"));
+		assertTrue(normalized(multiDelete.getSql()).startsWith("DELETE FROM ff_user WHERE EXISTS"));
 	}
 
 	@Test
@@ -932,20 +936,91 @@ public class LambdaFullCoverageH2Test {
 
 	@Test
 	@Order(39)
-	@DisplayName("删除通道无命名参数where兜底执行")
-	public void testDeleteParamlessWhere() {
-		// salary为null的有id=5与id=91两行
-		long deleted = lightDao.lambdaDelete(FfUser.class).isNull(FfUser::getSalary).delete();
-		assertEquals(2L, deleted);
-		assertNull(lightDao.lambdaQuery(FfUser.class).eq(FfUser::getId, 91L).getOne());
+	@DisplayName("exists/notExists关联子查询单表通道执行与sql文本")
+	public void testExistsSingleTable() {
+		LambdaQuery<FfUser> query = lightDao.lambdaQuery(FfUser.class)
+				.exists(FfDept.class, sub -> sub.eq(FfDept::getStatus, 1)
+						.eq(FfDept::getDeptId, OuterRef.of(FfUser::getDeptId)))
+				.lt(FfUser::getId, 90);
+		query.assemble(context::getEntityMeta);
+		String sql = normalized(query.getSql());
+		assertTrue(sql.contains("EXISTS (SELECT 1 FROM ff_dept sq"));
+		assertTrue(sql.contains(".DEPT_ID = ff_user.DEPT_ID"));
+		assertEquals(Arrays.asList(1, 2, 3, 6), ids(query.find()));
+
+		assertEquals(Arrays.asList(4, 5), ids(lightDao.lambdaQuery(FfUser.class)
+				.notExists(FfDept.class, sub -> sub.eq(FfDept::getStatus, 1)
+						.eq(FfDept::getDeptId, OuterRef.of(FfUser::getDeptId)))
+				.lt(FfUser::getId, 90).find()));
+
+		// exists终端top-1语义
+		assertTrue(lightDao.lambdaQuery(FfUser.class).eq(FfUser::getStatus, 1).exists());
+		assertTrue(!lightDao.lambdaQuery(FfUser.class).eq(FfUser::getId, 999L).exists());
 	}
 
 	@Test
 	@Order(40)
+	@DisplayName("join通道关联子查询与OuterRef误用守卫")
+	public void testExistsJoinAndGuards() {
+		List<FfUserVO> rows = lightDao.lambdaQuery(FfUserVO.class).selectAll()
+				.select(JoinCol.of(FfDept::getDeptName).as("deptName"))
+				.from(FfUser.class).leftJoin(FfDept.class).on(FfUser::getDeptId, FfDept::getDeptId)
+				.exists(FfDept.class, sub -> sub.eq(FfDept::getStatus, 1)
+						.eq(FfDept::getDeptId, OuterRef.of(FfUser::getDeptId)))
+				.lt(FfUser::getId, 90).orderByAsc(FfUser::getId).find();
+		assertEquals(4, rows.size());
+		assertEquals("研发部", rows.get(0).getDeptName());
+
+		// OuterRef用在子查询之外快速失败
+		assertThrows(DataAccessException.class, () -> lightDao.lambdaQuery(FfUser.class)
+				.eq(FfUser::getStatus, OuterRef.of(FfUser::getId)).find());
+		// between不接受OuterRef
+		assertThrows(DataAccessException.class, () -> lightDao.lambdaQuery(FfUser.class)
+				.between(FfUser::getSalary, 1, OuterRef.of(FfUser::getSalary)));
+		// 子查询内引用非子查询实体快速失败
+		assertThrows(DataAccessException.class, () -> lightDao.lambdaQuery(FfUser.class)
+				.exists(FfDept.class, sub -> sub.eq(FfUser::getId, 1L)).find());
+	}
+
+	@Test
+	@Order(41)
+	@DisplayName("join更新/删除可移植改写真实执行(含LEFT JOIN语义)")
+	public void testJoinUpdateDeleteExecution() {
+		long updated = lightDao.lambdaUpdate(FfUser.class).leftJoin(FfDept.class)
+				.on(FfUser::getDeptId, FfDept::getDeptId).set(FfUser::getStatus, 4)
+				.eq(FfDept::getDeptName, "研发部").lt(FfUser::getId, 90).update();
+		assertEquals(2L, updated);
+		assertEquals(2L, lightDao.lambdaQuery(FfUser.class).eq(FfUser::getStatus, 4).count());
+		// 还原
+		lightDao.lambdaUpdate(FfUser.class).leftJoin(FfDept.class)
+				.on(FfUser::getDeptId, FfDept::getDeptId).set(FfUser::getStatus, 1)
+				.eq(FfDept::getDeptName, "研发部").lt(FfUser::getId, 90).update();
+		// join删除:市场部两行
+		long deleted = lightDao.lambdaDelete(FfUser.class).leftJoin(FfDept.class)
+				.on(FfUser::getDeptId, FfDept::getDeptId).eq(FfDept::getDeptName, "市场部")
+				.lt(FfUser::getId, 90).delete();
+		assertEquals(2L, deleted);
+		assertTrue(!lightDao.lambdaQuery(FfUser.class).in(FfUser::getId, Arrays.asList(3L, 6L)).exists());
+	}
+
+	@Test
+	@Order(42)
+	@DisplayName("删除通道无命名参数where兜底执行")
+	public void testDeleteParamlessWhere() {
+		long nullSalaryCount = lightDao.lambdaQuery(FfUser.class).isNull(FfUser::getSalary).count();
+		assertTrue(nullSalaryCount >= 1);
+		long deleted = lightDao.lambdaDelete(FfUser.class).isNull(FfUser::getSalary).delete();
+		assertEquals(nullSalaryCount, deleted);
+		assertNull(lightDao.lambdaQuery(FfUser.class).eq(FfUser::getId, 91L).getOne());
+	}
+
+	@Test
+	@Order(43)
 	@DisplayName("matchAll删除清空表(最后执行)")
 	public void testMatchAllDelete() {
+		long before = lightDao.lambdaQuery(FfUser.class).count();
 		long deleted = lightDao.lambdaDelete(FfUser.class).matchAll().delete();
-		assertEquals(5L, deleted);
+		assertEquals(before, deleted);
 		assertEquals(0L, lightDao.lambdaQuery(FfUser.class).count());
 	}
 

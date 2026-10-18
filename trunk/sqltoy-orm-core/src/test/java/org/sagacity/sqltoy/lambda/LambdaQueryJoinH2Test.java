@@ -347,8 +347,9 @@ public class LambdaQueryJoinH2Test {
 				.eq(JoinDept::getDeptName, "研发部");
 		update.assemble(context::getEntityMeta);
 		assertEquals(
-				"UPDATE lambda_join_user j1 LEFT JOIN lambda_join_dept j2 ON j1.DEPT_ID = j2.DEPT_ID "
-						+ "SET j1.STATUS = :p1 WHERE j2.DEPT_NAME = :p2",
+				"UPDATE lambda_join_user SET STATUS = :p1 WHERE EXISTS (SELECT 1 FROM (SELECT j1.ID AS LPK1 "
+						+ "FROM lambda_join_user j1 LEFT JOIN lambda_join_dept j2 ON j1.DEPT_ID = j2.DEPT_ID "
+						+ "WHERE j2.DEPT_NAME = :p2) sqd WHERE sqd.LPK1 = lambda_join_user.ID)",
 				normalized(update.getSql()));
 	}
 
@@ -360,8 +361,9 @@ public class LambdaQueryJoinH2Test {
 				.on(JoinUser::getDeptId, JoinDept::getDeptId).eq(JoinDept::getDeptName, "市场部");
 		delete.assemble(context::getEntityMeta);
 		assertEquals(
-				"DELETE j1 FROM lambda_join_user j1 LEFT JOIN lambda_join_dept j2 ON j1.DEPT_ID = j2.DEPT_ID "
-						+ "WHERE j2.DEPT_NAME = :p1",
+				"DELETE FROM lambda_join_user WHERE EXISTS (SELECT 1 FROM (SELECT j1.ID AS LPK1 "
+						+ "FROM lambda_join_user j1 LEFT JOIN lambda_join_dept j2 ON j1.DEPT_ID = j2.DEPT_ID "
+						+ "WHERE j2.DEPT_NAME = :p1) sqd WHERE sqd.LPK1 = lambda_join_user.ID)",
 				normalized(delete.getSql()));
 	}
 

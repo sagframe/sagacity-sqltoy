@@ -45,4 +45,13 @@ public enum SqlCompare {
 		return String.format(sqlContent, (Object[]) names);
 	}
 
+	/**
+	 * @description 值位置内联(不做参数绑定)的模板渲染,用于exists子查询中的外层列引用
+	 * @param columnName  列名
+	 * @param inlineValue 内联sql文本
+	 * @return 对应的sql片段
+	 */
+	public String getInlineMetaSql(String columnName, String inlineValue) {
+		return String.format(sqlContent.replace(":%s", "%s"), columnName, inlineValue);
+	}
 }

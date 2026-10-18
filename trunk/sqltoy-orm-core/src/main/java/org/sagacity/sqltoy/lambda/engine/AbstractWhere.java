@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -14,7 +15,9 @@ import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.lambda.ColumnResolver;
 import org.sagacity.sqltoy.lambda.LambdaFn;
+import org.sagacity.sqltoy.lambda.LambdaSubQuery;
 import org.sagacity.sqltoy.lambda.LambdaUtils;
+import org.sagacity.sqltoy.lambda.OuterRef;
 import org.sagacity.sqltoy.lambda.condition.Aggregate;
 import org.sagacity.sqltoy.lambda.condition.Compare;
 import org.sagacity.sqltoy.lambda.condition.Logic;
@@ -68,6 +71,16 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 	private final List<Consumer<ColumnResolver>> assemblers = new ArrayList<>();
 
 	/**
+	 * 当前装配的元信息加载器,供exists子查询等嵌套装配复用
+	 */
+	protected Function<Class<?>, EntityMeta> currentMetaLoader;
+
+	/**
+	 * exists子查询别名序号,保证同一语句内sq别名唯一
+	 */
+	private static final AtomicInteger SUB_SEQ = new AtomicInteger(0);
+
+	/**
 	 * 无条件匹配全部的显式放行标记,仅对按条件删除/更新操作生效
 	 */
 	private boolean matchAll;
@@ -98,6 +111,7 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 	 * @param metaLoader 实体元信息加载器
 	 */
 	public void assemble(Function<Class<?>, EntityMeta> metaLoader) {
+		this.currentMetaLoader = metaLoader;
 		if (assemblers.isEmpty()) {
 			return;
 		}
@@ -179,6 +193,9 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 
 	@Override
 	public <E, R> Self between(boolean condition, LambdaFn<E, R> column, Object val1, Object val2) {
+		if (val1 instanceof OuterRef || val2 instanceof OuterRef) {
+			throw new DataAccessException("Outer.ref is only supported by eq/ne/gt/ge/lt/le comparisons");
+		}
 		if (!valueFilter.test(val1) || !valueFilter.test(val2)) {
 			return typedThis;
 		}
@@ -195,6 +212,9 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 
 	@Override
 	public <E, R> Self notBetween(boolean condition, LambdaFn<E, R> column, Object val1, Object val2) {
+		if (val1 instanceof OuterRef || val2 instanceof OuterRef) {
+			throw new DataAccessException("Outer.ref is only supported by eq/ne/gt/ge/lt/le comparisons");
+		}
 		if (!valueFilter.test(val1) || !valueFilter.test(val2)) {
 			return typedThis;
 		}
@@ -544,7 +564,82 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 	private <E, R> Self addCompareSegment(boolean condition, LambdaFn<E, R> column, SqlCompare compare, Object val) {
 		return addAssembler(resolver -> maybeDo(condition, () -> {
 			String columnName = resolveColumn(resolver, column);
+			if (val instanceof OuterRef) {
+				// 外层列引用内联渲染,不做参数绑定
+				appendSqlSegments(rawSegment(compare.getInlineMetaSql(columnName, outerRefSql((OuterRef<?>) val)),
+						null));
+				return;
+			}
 			appendSqlSegments(new SegmentMeta(compare, columnName, nextParamName(), val));
+		}));
+	}
+
+	/**
+	 * @description 外层列引用的sql渲染,仅exists子查询构建器支持
+	 */
+	protected String outerRefSql(OuterRef<?> ref) {
+		throw new DataAccessException("Outer.ref(...) is only supported inside exists/notExists sub-queries");
+	}
+
+	/**
+	 * @description 外层查询的限定列解析器:join通道为别名限定,单表通道为表名限定(子查询内关联外层列须限定,避免与子查询同名列歧义)
+	 */
+	protected ColumnResolver qualifiedResolverFor(Function<Class<?>, EntityMeta> metaLoader) {
+		if (joinContext != null && joinContext.hasJoin()) {
+			return (entity, fieldName) -> joinContext.columnName(entity, fieldName);
+		}
+		return (entity, fieldName) -> {
+			if (entityClass == null || !entityClass.equals(entity)) {
+				throw new DataAccessException("Entity [" + entity.getSimpleName()
+						+ "] does not participate in the current single-table query; Outer.ref must reference the query entity");
+			}
+			EntityMeta meta = metaLoader.apply(entityClass);
+			return meta.getSchemaTable(null, null) + "." + meta.getColumnName(fieldName);
+		};
+	}
+
+	/**
+	 * ignore
+	 */
+	public <E> Self exists(Class<E> subEntity, Function<LambdaSubQuery<E>, LambdaSubQuery<E>> subFn) {
+		return exists(true, subEntity, subFn);
+	}
+
+	/**
+	 * @description EXISTS子查询条件,子查询内可通过OuterRef引用外层查询的列
+	 * @param condition 执行条件
+	 * @param subEntity 子查询实体
+	 * @param subFn     子查询条件组装函数
+	 * @return 自身
+	 */
+	public <E> Self exists(boolean condition, Class<E> subEntity, Function<LambdaSubQuery<E>, LambdaSubQuery<E>> subFn) {
+		return addExistsSegment(condition, subEntity, subFn, false);
+	}
+
+	/**
+	 * ignore
+	 */
+	public <E> Self notExists(Class<E> subEntity, Function<LambdaSubQuery<E>, LambdaSubQuery<E>> subFn) {
+		return notExists(true, subEntity, subFn);
+	}
+
+	/**
+	 * @description NOT EXISTS子查询条件,见{@link #exists(boolean, Class, Function)}
+	 */
+	public <E> Self notExists(boolean condition, Class<E> subEntity,
+			Function<LambdaSubQuery<E>, LambdaSubQuery<E>> subFn) {
+		return addExistsSegment(condition, subEntity, subFn, true);
+	}
+
+	private <E> Self addExistsSegment(boolean condition, Class<E> subEntity,
+			Function<LambdaSubQuery<E>, LambdaSubQuery<E>> subFn, boolean negate) {
+		return addAssembler(resolver -> maybeDo(condition, () -> {
+			LambdaSubQuery<E> subQuery = new LambdaSubQuery<>(subEntity, "sq" + SUB_SEQ.incrementAndGet(),
+					joinContext, qualifiedResolverFor(currentMetaLoader));
+			subFn.apply(subQuery);
+			subQuery.assemble(currentMetaLoader);
+			String keyword = negate ? SqlKeyword.NOT_EXISTS.getSqlSegment() : SqlKeyword.EXISTS.getSqlSegment();
+			appendSqlSegments(rawSegment(keyword + " (" + subQuery.existsSql() + ")", subQuery.getParams()));
 		}));
 	}
 
@@ -559,22 +654,29 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 			columnNames.add(resolveColumn(resolver, column));
 		}
 		int columnCount = columnNames.size();
-		List<String> rowTuples = new ArrayList<>();
+		List<String> rowConditions = new ArrayList<>();
+		List<String> singleColumnParams = new ArrayList<>();
 		Map<String, Object> params = new HashMap<>();
 		for (Object[] row : values) {
 			if (row == null || row.length != columnCount) {
 				throw new DataAccessException("Lambda inb tuple value length must equal the column count "
 						+ columnCount + " but got " + (row == null ? 0 : row.length));
 			}
-			List<String> tupleParams = new ArrayList<>();
-			for (Object rowValue : row) {
+			List<String> columnConditions = new ArrayList<>();
+			for (int i = 0; i < columnCount; i++) {
 				String paramName = nextParamName();
-				params.put(paramName, rowValue);
-				tupleParams.add(":" + paramName);
+				params.put(paramName, row[i]);
+				columnConditions.add(columnNames.get(i) + " = :" + paramName);
+				if (columnCount == 1) {
+					singleColumnParams.add(":" + paramName);
+				}
 			}
-			rowTuples.add("(" + String.join(",", tupleParams) + ")");
+			rowConditions.add("(" + String.join(" AND ", columnConditions) + ")");
 		}
-		String sql = "(" + String.join(",", columnNames) + ") IN (" + String.join(",", rowTuples) + ")";
+		// 单列退化为普通IN;多列用OR-of-ANDs展开,规避行值IN在SQLServer/DB2等库的方言差异
+		String sql = (columnCount == 1)
+				? columnNames.get(0) + " IN (" + String.join(",", singleColumnParams) + ")"
+				: "(" + String.join(" OR ", rowConditions) + ")";
 		appendSqlSegments(rawSegment(sql, params));
 	}
 

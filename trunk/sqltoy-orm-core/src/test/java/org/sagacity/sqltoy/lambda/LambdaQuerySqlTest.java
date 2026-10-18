@@ -249,7 +249,7 @@ public class LambdaQuerySqlTest {
 				.inb(User::getId, User::getName, Arrays.asList(new Object[] { 1, "张" },
 						new Object[] { 2, "李" }));
 		query.assemble(IDENTITY);
-		assertEquals("(id,name) IN ((:p1,:p2),(:p3,:p4))", normalized(query));
+		assertEquals("((id = :p1 AND name = :p2) OR (id = :p3 AND name = :p4))", normalized(query));
 		assertEquals(1, query.getParams().get("p1"));
 		assertEquals("张", query.getParams().get("p2"));
 		assertEquals(2, query.getParams().get("p3"));

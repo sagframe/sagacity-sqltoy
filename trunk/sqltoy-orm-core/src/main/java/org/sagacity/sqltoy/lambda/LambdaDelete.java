@@ -1,11 +1,13 @@
 package org.sagacity.sqltoy.lambda;
 
+import java.util.List;
 import java.util.function.Function;
 
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.dao.LightDao;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.lambda.engine.AbstractWhere;
+import org.sagacity.sqltoy.utils.DBTransUtils;
 import org.sagacity.sqltoy.lambda.engine.SqlKeyword;
 import org.sagacity.sqltoy.lambda.join.JoinContext;
 import org.sagacity.sqltoy.lambda.join.JoinContext.Operate;
@@ -125,9 +127,28 @@ public final class LambdaDelete<T> extends AbstractWhere<T, LambdaDelete<T>> {
 		assemble(dao::getEntityMeta);
 		if (isJoinMode()) {
 			requireCondition("delete");
-			return dao.executeSql(getSql(), getParams());
+			List<String> deleteSqls = getDeleteSqls();
+			if (deleteSqls.size() == 1) {
+				return dao.executeSql(deleteSqls.get(0), getParams());
+			}
+			// 多删除目标:逐表删除置于同一事务,保证原子性
+			Object total = DBTransUtils.doTrans(dao.getDataSource(), () -> {
+				long sum = 0;
+				for (String deleteSql : deleteSqls) {
+					sum += dao.executeSql(deleteSql, getParams());
+				}
+				return sum;
+			});
+			return ((Number) total).longValue();
 		}
 		return dao.deleteByQuery(getEntityClass(), LambdaConvert.toDeleteQuery(this));
+	}
+
+	/**
+	 * @return 可移植join删除语句列表(多删除目标时每表一条)
+	 */
+	public List<String> getDeleteSqls() {
+		return joinContext.getDeleteSqls(getSqlSegment());
 	}
 
 	/**

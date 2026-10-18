@@ -140,14 +140,19 @@ public class JoinContext {
 	private final List<Class<?>> deleteClasses = new ArrayList<>();
 
 	/**
-	 * 参数序号,条件与set共享,保证参数名全局唯一
+	 * 参数序号,条件与set共享,保证参数名全局唯一;exists子查询与外层共享同一句柄
 	 */
-	final AtomicInteger paramSeq = new AtomicInteger(0);
+	final AtomicInteger paramSeq;
 
 	/**
 	 * 别名序号
 	 */
 	private final AtomicInteger aliasSeq = new AtomicInteger(0);
+
+	/**
+	 * 别名前缀,exists子查询用sq前缀避免与外层单字母别名碰撞,null为类名首字母方案
+	 */
+	private final String aliasPrefix;
 
 	/**
 	 * 主表实体
@@ -170,8 +175,18 @@ public class JoinContext {
 	private boolean assembled;
 
 	public JoinContext(Operate operate, Class<?> resultClass) {
+		this(operate, resultClass, null, null);
+	}
+
+	/**
+	 * @param aliasPrefix    别名前缀(exists子查询用sq前缀避免与外层单字母别名碰撞),null为类名首字母方案
+	 * @param sharedParamSeq 共享参数序号(exists子查询与外层共用,保证参数名全局唯一),null为自建
+	 */
+	public JoinContext(Operate operate, Class<?> resultClass, String aliasPrefix, AtomicInteger sharedParamSeq) {
 		this.operate = operate;
 		this.resultClass = resultClass;
+		this.aliasPrefix = aliasPrefix;
+		this.paramSeq = (sharedParamSeq != null) ? sharedParamSeq : new AtomicInteger(0);
 	}
 
 	/**
@@ -223,6 +238,20 @@ public class JoinContext {
 			throw new DataAccessException("Lambda join from entity can only be set once");
 		}
 		registerAlias(entityClass);
+		tableSteps.add(new FromStep(entityClass));
+		this.fromClass = entityClass;
+	}
+
+	/**
+	 * @description 注册主表并指定别名(exists子查询使用sq前缀别名)
+	 */
+	public void registerFrom(Class<?> entityClass, String alias) {
+		if (fromClass != null) {
+			throw new DataAccessException("Lambda join from entity can only be set once");
+		}
+		if (!aliasMap.containsKey(entityClass)) {
+			aliasMap.put(entityClass, alias);
+		}
 		tableSteps.add(new FromStep(entityClass));
 		this.fromClass = entityClass;
 	}
@@ -443,8 +472,10 @@ public class JoinContext {
 
 	private void registerAlias(Class<?> entityClass) {
 		if (!aliasMap.containsKey(entityClass)) {
-			aliasMap.put(entityClass, Character.toLowerCase(entityClass.getSimpleName().charAt(0))
-					+ String.valueOf(aliasSeq.incrementAndGet()));
+			String alias = (aliasPrefix != null) ? aliasPrefix + aliasSeq.incrementAndGet()
+					: Character.toLowerCase(entityClass.getSimpleName().charAt(0))
+							+ String.valueOf(aliasSeq.incrementAndGet());
+			aliasMap.put(entityClass, alias);
 		}
 	}
 
@@ -467,13 +498,14 @@ public class JoinContext {
 				if (setItems.isEmpty()) {
 					throw new DataAccessException("Lambda join update requires at least one field set via set()");
 				}
-				sql.append(SqlKeyword.UPDATE.getSqlSegment()).append(" ").append(buildTableSql()).append(" ")
-						.append(SqlKeyword.SET.getSqlSegment()).append(" ").append(buildSetSql());
-				break;
+				sql.append(SqlKeyword.UPDATE.getSqlSegment()).append(" ")
+						.append(metaLoader.apply(fromClass).getSchemaTable(null, null)).append(" ")
+						.append(SqlKeyword.SET.getSqlSegment()).append(" ").append(buildSetSql()).append(" ")
+						.append(SqlKeyword.WHERE.getSqlSegment()).append(" ")
+						.append(buildExistsRewrite(fromClass, conditionSql));
+				return sql.toString();
 			case DELETE:
-				sql.append(SqlKeyword.DELETE.getSqlSegment()).append(" ").append(buildDeleteSql()).append(" ")
-						.append(SqlKeyword.FROM.getSqlSegment()).append(" ").append(buildTableSql());
-				break;
+				return getDeleteSqls(conditionSql).get(0);
 			default:
 				throw new DataAccessException("Unsupported lambda join operate type");
 		}
@@ -492,6 +524,23 @@ public class JoinContext {
 			}
 		}
 		return params;
+	}
+
+	/**
+	 * @return 参数序号句柄,供exists子查询共享保证参数名全局唯一
+	 */
+	public AtomicInteger getParamSeq() {
+		return paramSeq;
+	}
+
+	/**
+	 * @return 表关联sql片段(含别名),供exists子查询拼装 SELECT 1 FROM ...
+	 */
+	public String getFromSql() {
+		if (metaLoader == null) {
+			throw new DataAccessException("Lambda join has not been assembled; getFromSql() is not available yet");
+		}
+		return buildTableSql();
 	}
 
 	/**
@@ -619,19 +668,64 @@ public class JoinContext {
 
 	private String buildSetSql() {
 		return setItems.stream().map(setItem -> {
-			String left = columnName(setItem.column.entityClass(), setItem.column.fieldName());
+			// 可移植UPDATE的目标表不带别名,SET列名非限定(单目标表内无歧义)
+			String left = metaLoader.apply(setItem.column.entityClass()).getColumnName(setItem.column.fieldName());
 			return (setItem.rawExpression != null) ? left + " = " + setItem.rawExpression
 					: left + " = :" + setItem.paramName;
 		}).collect(Collectors.joining(", "));
 	}
 
-	private String buildDeleteSql() {
-		if (deleteClasses.isEmpty()) {
-			// 未指定删除目标表时默认为主表
-			return aliasMap.get(fromClass);
+	/**
+	 * @description 可移植的join更新/删除改写:UPDATE/DELETE 目标表不带别名,以
+	 *              WHERE EXISTS (SELECT 1 FROM (join查询派生表) sqd WHERE sqd.LPKn = 目标表.主键列) 限定行,
+	 *              保留join(含LEFT JOIN)的完整语义,覆盖Oracle等无多表DML语法的全部关系型数据库
+	 * @param targetClass  更新/删除目标实体
+	 * @param conditionSql where条件文本
+	 * @return EXISTS改写片段
+	 */
+	private String buildExistsRewrite(Class<?> targetClass, String conditionSql) {
+		EntityMeta targetMeta = metaLoader.apply(targetClass);
+		String[] idFields = targetMeta.getIdArray();
+		if (idFields == null || idFields.length == 0) {
+			throw new DataAccessException("Join update/delete requires @Id primary key on entity ["
+					+ targetClass.getSimpleName() + "] for the portable EXISTS rewrite");
 		}
-		return deleteClasses.stream().map(aliasMap::get).collect(Collectors.joining(","));
+		String targetAlias = aliasMap.get(targetClass);
+		String schemaTable = targetMeta.getSchemaTable(null, null);
+		List<String> pkSelects = new ArrayList<>();
+		List<String> correlations = new ArrayList<>();
+		for (int i = 0; i < idFields.length; i++) {
+			String pkColumn = targetMeta.getColumnName(idFields[i]);
+			String lpkAlias = "LPK" + (i + 1);
+			pkSelects.add(targetAlias + "." + pkColumn + " AS " + lpkAlias);
+			correlations.add("sqd." + lpkAlias + " = " + schemaTable + "." + pkColumn);
+		}
+		String whereText = (conditionSql == null) ? "" : conditionSql.trim();
+		String derived = "SELECT " + String.join(", ", pkSelects) + " FROM " + buildTableSql() + " WHERE "
+				+ (whereText.isEmpty() ? "1 = 1" : whereText);
+		return SqlKeyword.EXISTS.getSqlSegment() + " (SELECT 1 FROM (" + derived + ") sqd WHERE "
+				+ String.join(" AND ", correlations) + ")";
 	}
+
+	/**
+	 * @description 可移植join删除语句列表(多删除目标时每表一条,由执行侧置于同一事务)
+	 * @param conditionSql where条件文本
+	 * @return 删除语句列表
+	 */
+	public List<String> getDeleteSqls(String conditionSql) {
+		if (metaLoader == null) {
+			throw new DataAccessException("Lambda join has not been assembled; getDeleteSqls() is not available yet");
+		}
+		List<Class<?>> targets = deleteClasses.isEmpty() ? java.util.Collections.singletonList(fromClass)
+				: deleteClasses;
+		List<String> sqls = new ArrayList<>();
+		for (Class<?> target : targets) {
+			sqls.add(SqlKeyword.DELETE.getSqlSegment() + " FROM " + metaLoader.apply(target).getSchemaTable(null, null)
+					+ " WHERE " + buildExistsRewrite(target, conditionSql));
+		}
+		return sqls;
+	}
+
 
 	public Class<?> getFromClass() {
 		return fromClass;
