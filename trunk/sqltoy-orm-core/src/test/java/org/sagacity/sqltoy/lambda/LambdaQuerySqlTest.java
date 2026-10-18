@@ -377,6 +377,63 @@ public class LambdaQuerySqlTest {
 	}
 
 	@Test
+	@DisplayName("orderBy多列重复读取getSqlSegment不崩溃且幂等")
+	public void testOrderByRepeatRead() {
+		LambdaQuery<User> query = LambdaQuery.create(User.class).eq(User::getStatus, 1)
+				.orderByAsc(User::getId).orderByDesc(User::getName);
+		query.assemble(IDENTITY);
+		String first = normalized(query);
+		assertEquals(first, normalized(query));
+		assertEquals("status = :p1 ORDER BY id ASC,name DESC", first);
+	}
+
+	@Test
+	@DisplayName("空not()不留悬挂NOT")
+	public void testEmptyNotNoDangling() {
+		LambdaQuery<User> query = LambdaQuery.create(User.class).eq(User::getStatus, 1)
+				.not(n -> n.eq(false, User::getId, 1));
+		query.assemble(IDENTITY);
+		assertEquals("status = :p1", normalized(query));
+	}
+
+	@Test
+	@DisplayName("两个inSql共用参数名且值不同快速失败,值相同允许共享")
+	public void testDuplicateExternalParam() {
+		Map<String, Object> paramsA = new HashMap<>();
+		paramsA.put("v", 1);
+		Map<String, Object> paramsB = new HashMap<>();
+		paramsB.put("v", 2);
+		LambdaQuery<User> conflict = LambdaQuery.create(User.class)
+				.inSql(User::getId, "select id from a where x = :v", paramsA)
+				.inSql(User::getName, "select name from b where y = :v", paramsB);
+		query_assemble:
+		conflict.assemble(IDENTITY);
+		assertThrows(DataAccessException.class, () -> conflict.getParams());
+
+		Map<String, Object> shared1 = new HashMap<>();
+		shared1.put("v", 7);
+		Map<String, Object> shared2 = new HashMap<>();
+		shared2.put("v", 7);
+		LambdaQuery<User> shared = LambdaQuery.create(User.class)
+				.inSql(User::getId, "select id from a where x = :v", shared1)
+				.inSql(User::getName, "select name from b where y = :v", shared2);
+		shared.assemble(IDENTITY);
+		assertEquals(7, shared.getParams().get("v"));
+	}
+
+	@Test
+	@DisplayName("having参数值为null不抛NPE")
+	public void testHavingNullParamValue() {
+		Map<String, Object> params = new HashMap<>();
+		params.put("v", null);
+		LambdaQuery<User> query = LambdaQuery.create(User.class).groupBy(User::getStatus)
+				.having("count(*) > :v", params);
+		query.assemble(IDENTITY);
+		assertTrue(query.getParams().containsKey("v"));
+		assertNull(query.getParams().get("v"));
+	}
+
+	@Test
 	@DisplayName("likeLeft与likeRight")
 	public void testLikeLeftRight() {
 		LambdaQuery<User> query = LambdaQuery.create(User.class).likeLeft(User::getName, "张")

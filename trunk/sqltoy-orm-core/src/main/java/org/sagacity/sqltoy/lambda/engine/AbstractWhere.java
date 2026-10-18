@@ -455,6 +455,13 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 	}
 
 	/**
+	 * @return 是否设置了last原始sql片段
+	 */
+	public boolean hasLastSql() {
+		return expression.hasLastSql();
+	}
+
+	/**
 	 * @return 是否存在where条件
 	 */
 	public boolean hasCondition() {

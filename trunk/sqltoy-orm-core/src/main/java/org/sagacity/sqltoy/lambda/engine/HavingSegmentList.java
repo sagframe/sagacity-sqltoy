@@ -2,6 +2,7 @@ package org.sagacity.sqltoy.lambda.engine;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -42,9 +43,13 @@ public class HavingSegmentList extends SegmentList {
 
 				@Override
 				public Map<String, Object> getParams() {
-					return mergeSegments.stream().map(SqlSegment::getParams).filter(Objects::nonNull)
-							.flatMap(params -> params.entrySet().stream())
-							.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (p1, p2) -> p1));
+					Map<String, Object> merged = new HashMap<>();
+					for (SqlSegment segment : mergeSegments) {
+						if (segment.getParams() != null) {
+							merged.putAll(segment.getParams());
+						}
+					}
+					return merged;
 				}
 			});
 		}

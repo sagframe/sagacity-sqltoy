@@ -23,6 +23,10 @@ public final class LambdaConvert {
 	 * @param query 查询条件,须已完成assemble
 	 */
 	public static <T> EntityQuery toEntityQuery(LambdaQuery<T> query) {
+		if (query.hasLastSql()) {
+			throw new DataAccessException(
+					"last() raw sql append is not supported in the single-table channel (EntityQuery where cannot carry trailing raw sql); use findTop/findPage or the join channel");
+		}
 		EntityQuery entityQuery = EntityQuery.create();
 		if (StringUtil.isNotBlank(query.getSqlSegment())) {
 			entityQuery.where(query.getSqlSegment());

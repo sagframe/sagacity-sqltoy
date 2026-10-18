@@ -19,6 +19,8 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.sagacity.sqltoy.exception.DataAccessException;
+
 import org.sagacity.sqltoy.lambda.toolkit.FieldNature;
 import org.sagacity.sqltoy.lambda.toolkit.IdeaProxyLambdaMeta;
 import org.sagacity.sqltoy.lambda.toolkit.LambdaMeta;
@@ -50,10 +52,38 @@ public final class LambdaUtils {
 		return CACHE.computeIfAbsent(func, LambdaUtils::doExtract);
 	}
 
+	/**
+	 * @description 元信息有效性校验:代理/序列化路径可能产出空元信息,统一转为明确异常
+	 */
+	private static LambdaMeta validate(LambdaMeta meta) {
+		String implMethodName;
+		try {
+			implMethodName = (meta == null) ? null : meta.getImplMethodName();
+		} catch (Throwable e) {
+			implMethodName = null;
+		}
+		if (implMethodName == null) {
+			throw new DataAccessException(
+					"Unable to resolve proxied lambda (IDEA evaluate/Mockito mock); use a method reference instead");
+		}
+		return meta;
+	}
+
 	private static LambdaMeta doExtract(LambdaFn<?, ?> func) {
-		// 1.IDEA调试窗口中lambda表达式是一个代理
+		// 1.IDEA调试窗口或mock框架中lambda表达式是一个代理,代理元信息不可用时回退序列化路径
 		if (func instanceof Proxy) {
-			return new IdeaProxyLambdaMeta((Proxy) func);
+			try {
+				return validate(new IdeaProxyLambdaMeta((Proxy) func));
+			} catch (Throwable ideaError) {
+				// 代理元信息不可用时回退序列化路径,两者都失败给出明确指引
+				try {
+					return validate(new ShadowLambdaMeta(SerializedLambda.extract(func)));
+				} catch (Throwable shadowError) {
+					throw new DataAccessException(
+							"Unable to resolve proxied lambda (IDEA evaluate/Mockito mock); use a method reference instead",
+							shadowError);
+				}
+			}
 		}
 		// 2.反射读取writeReplace
 		try {

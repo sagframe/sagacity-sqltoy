@@ -51,10 +51,26 @@ public abstract class SegmentList implements SqlSegment {
 		Map<String, Object> allParams = new HashMap<>();
 		for (SqlSegment sqlSegment : segments) {
 			if (sqlSegment.getParams() != null) {
-				allParams.putAll(sqlSegment.getParams());
+				mergeParams(allParams, sqlSegment.getParams());
 			}
 		}
 		return allParams;
+	}
+
+	/**
+	 * @description 参数合并:null值容忍;同名参数值不同说明两个inSql/having共用了参数名却各绑各值,
+	 *              静默覆盖会产生错误结果,响亮失败
+	 */
+	static void mergeParams(Map<String, Object> target, Map<String, Object> source) {
+		for (Map.Entry<String, Object> entry : source.entrySet()) {
+			Object existing = target.get(entry.getKey());
+			if (existing != null && entry.getValue() != null && !existing.equals(entry.getValue())) {
+				throw new org.sagacity.sqltoy.exception.DataAccessException("Duplicate named parameter ["
+						+ entry.getKey()
+						+ "] with different values across condition segments (two inSql/having sharing one param name); use distinct names");
+			}
+			target.put(entry.getKey(), entry.getValue());
+		}
 	}
 
 	/**

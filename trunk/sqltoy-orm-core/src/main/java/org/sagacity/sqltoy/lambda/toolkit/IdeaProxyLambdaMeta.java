@@ -33,24 +33,34 @@ public class IdeaProxyLambdaMeta implements LambdaMeta {
 	private static final Field FIELD_MEMBER_NAME_NAME;
 
 	static {
+		Field memberName = null;
+		Field memberClazz = null;
+		Field memberNameName = null;
 		try {
 			Class<?> classDirectMethodHandle = Class.forName("java.lang.invoke.DirectMethodHandle");
-			FIELD_MEMBER_NAME = classDirectMethodHandle.getDeclaredField("member");
-			FIELD_MEMBER_NAME.setAccessible(true);
+			memberName = classDirectMethodHandle.getDeclaredField("member");
+			memberName.setAccessible(true);
 			Class<?> classMemberName = Class.forName("java.lang.invoke.MemberName");
-			FIELD_MEMBER_NAME_CLAZZ = classMemberName.getDeclaredField("clazz");
-			FIELD_MEMBER_NAME_CLAZZ.setAccessible(true);
-			FIELD_MEMBER_NAME_NAME = classMemberName.getDeclaredField("name");
-			FIELD_MEMBER_NAME_NAME.setAccessible(true);
-		} catch (ClassNotFoundException | NoSuchFieldException e) {
-			throw new DataAccessException(e.getMessage());
+			memberClazz = classMemberName.getDeclaredField("clazz");
+			memberClazz.setAccessible(true);
+			memberNameName = classMemberName.getDeclaredField("name");
+			memberNameName.setAccessible(true);
+		} catch (Throwable e) {
+			// JDK模块强封装(InaccessibleObjectException等)下降级:字段置null,构造时给出明确指引
 		}
+		FIELD_MEMBER_NAME = memberName;
+		FIELD_MEMBER_NAME_CLAZZ = memberClazz;
+		FIELD_MEMBER_NAME_NAME = memberNameName;
 	}
 
 	private final Class<?> clazz;
 	private final String name;
 
 	public IdeaProxyLambdaMeta(Proxy func) {
+		if (FIELD_MEMBER_NAME == null) {
+			throw new DataAccessException(
+					"Unable to resolve proxied lambda meta on this JVM (module encapsulation); add --add-opens java.base/java.lang.invoke=ALL-UNNAMED or use a method reference instead of a mocked/evaluated lambda");
+		}
 		InvocationHandler handler = Proxy.getInvocationHandler(func);
 		try {
 			Field targetField = handler.getClass().getDeclaredField("val$target");

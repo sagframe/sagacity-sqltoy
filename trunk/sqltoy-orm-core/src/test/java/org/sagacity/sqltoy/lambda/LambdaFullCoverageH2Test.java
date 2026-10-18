@@ -842,6 +842,27 @@ public class LambdaFullCoverageH2Test {
 		assertTrue(normalized(multiDelete.getSql()).startsWith("DELETE f1,f2 FROM ff_user f1"));
 	}
 
+	@Test
+	@Order(33)
+	@DisplayName("last():单表通道响亮失败,join通道真实执行")
+	public void testLastChannelBehavior() {
+		assertThrows(DataAccessException.class, () -> lightDao.lambdaQuery(FfUser.class)
+				.eq(FfUser::getStatus, 1).last("limit 1").find());
+		assertEquals(1, lightDao.lambdaQuery(FfUser.class).leftJoin(FfDept.class)
+				.on(FfUser::getDeptId, FfDept::getDeptId).eq(FfUser::getStatus, 1)
+				.last("limit 1").find().size());
+	}
+
+	@Test
+	@Order(34)
+	@DisplayName("代理lambda(动态代理)解析优雅失败而非类初始化错误")
+	public void testProxyLambdaGracefulFailure() {
+		LambdaFn<FfUser, ?> proxied = (LambdaFn<FfUser, ?>) java.lang.reflect.Proxy.newProxyInstance(
+				LambdaFn.class.getClassLoader(), new Class<?>[] { LambdaFn.class },
+				(proxy, method, args) -> null);
+		assertThrows(DataAccessException.class, () -> LambdaUtils.extractProperty(proxied));
+	}
+
 	private static String normalized(String sql) {
 		return sql == null ? "" : sql.replaceAll("\\s+", " ").trim();
 	}

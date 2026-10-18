@@ -32,9 +32,9 @@ public class NormalSegmentList extends SegmentList {
 			}
 		}
 		deleteByIndexes(deleteIndexes);
-		// 剔除首尾多余的and/or连接符
+		// 剔除首尾多余的and/or连接符;尾部悬挂NOT(空not()留下)剔除,首部NOT合法(NOT (...) AND x)保留
 		filterFirst(MatchSegment.AND_OR::match);
-		filterLast(MatchSegment.AND_OR::match);
+		filterLast(segment -> MatchSegment.AND_OR.match(segment) || MatchSegment.NOT.match(segment));
 	}
 
 	private void autoAddAnd(List<SqlSegment> sqlSegments) {

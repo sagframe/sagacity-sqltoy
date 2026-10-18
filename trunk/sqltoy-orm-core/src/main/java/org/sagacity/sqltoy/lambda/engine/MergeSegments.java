@@ -2,10 +2,9 @@ package org.sagacity.sqltoy.lambda.engine;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -31,18 +30,31 @@ public class MergeSegments implements SqlSegment {
 		} else {
 			sql = normal.getSqlSegment() + groupBy.getSqlSegment() + having.getSqlSegment() + orderBy.getSqlSegment();
 		}
-		// 拼接最后的sql
-		if (sql != null && lastSql != null && !lastSql.isEmpty()) {
-			sql = sql + " " + lastSql;
+		// 拼接最后的sql;无任何条件时以1=1承载last,避免last被静默丢弃
+		if (lastSql != null && !lastSql.isEmpty()) {
+			sql = (sql == null ? "1 = 1 " : sql + " ") + lastSql;
 		}
 		return sql;
 	}
 
 	@Override
 	public Map<String, Object> getParams() {
-		return Stream.of(normal.getParams(), groupBy.getParams(), having.getParams(), orderBy.getParams())
-				.filter(Objects::nonNull).flatMap(params -> params.entrySet().stream())
-				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (p1, p2) -> p1));
+		Map<String, Object> merged = new HashMap<>();
+		for (Map<String, Object> part : Arrays.asList(normal.getParams(), groupBy.getParams(), having.getParams(),
+				orderBy.getParams())) {
+			if (part == null) {
+				continue;
+			}
+			SegmentList.mergeParams(merged, part);
+		}
+		return merged;
+	}
+
+	/**
+	 * @return 是否设置了last原始sql片段
+	 */
+	public boolean hasLastSql() {
+		return lastSql != null && !lastSql.isEmpty();
 	}
 
 	/**
