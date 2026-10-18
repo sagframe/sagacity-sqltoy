@@ -114,7 +114,7 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 	 */
 	@Override
 	public String getShardingTable(SqlToyContext sqlToyContext, Class entityClass, String baseTableName,
-								   String decisionType, IgnoreCaseLinkedMap<String, Object> paramsMap) {
+			String decisionType, IgnoreCaseLinkedMap<String, Object> paramsMap) {
 		if (paramsMap == null || baseTableName == null || tableNamesMap == null) {
 			return null;
 		}
@@ -136,7 +136,8 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 			}
 		}
 		if (bizDate == null) {
-			logger.error("the parameter value for table sharding is null, table sharding cannot be performed, please check the parameter configuration!");
+			logger.error(
+					"the parameter value for table sharding is null, table sharding cannot be performed, please check the parameter configuration!");
 			return null;
 		}
 		// 间隔多少天
@@ -150,7 +151,9 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 		}
 		// 返回null,表示使用原表
 		if (index == -1) {
-			logger.debug("date interval:{} days, less than the minimum sharding interval, the table in the current sql will be used!", intervalDays);
+			logger.debug(
+					"date interval:{} days, less than the minimum sharding interval, the table in the current sql will be used!",
+					intervalDays);
 			return null;
 		}
 		String tableName;
@@ -183,6 +186,7 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 
 	/**
 	 * 根据权重配置分配数据库
+	 * 
 	 * @return
 	 */
 	private ShardingDBModel getDataSource() {

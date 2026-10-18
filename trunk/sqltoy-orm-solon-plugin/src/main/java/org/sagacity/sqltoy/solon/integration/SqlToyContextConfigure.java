@@ -20,52 +20,49 @@ import org.sagacity.sqltoy.solon.translate.cache.impl.SolonTranslateCacheManager
  */
 @Configuration
 public class SqlToyContextConfigure {
-    @Bean
-    public SqlToyContextProperties properties(AppContext context) {
-        SqlToyContextProperties properties = context.cfg().toBean("solon.sqltoy", SqlToyContextProperties.class);
-        if (properties == null) {
-            //old:
-            properties = context.cfg().toBean("sqltoy", SqlToyContextProperties.class);
-        }
-        if (properties == null) {
-            //def:
-            properties = new SqlToyContextProperties();
-        }
+	@Bean
+	public SqlToyContextProperties properties(AppContext context) {
+		SqlToyContextProperties properties = context.cfg().toBean("solon.sqltoy", SqlToyContextProperties.class);
+		if (properties == null) {
+			// old:
+			properties = context.cfg().toBean("sqltoy", SqlToyContextProperties.class);
+		}
+		if (properties == null) {
+			// def:
+			properties = new SqlToyContextProperties();
+		}
 
-        if (Solon.cfg().isDebugMode()) {
-            properties.setDebug(true);
-        }
+		if (Solon.cfg().isDebugMode()) {
+			properties.setDebug(true);
+		}
 
-        return properties;
-    }
+		return properties;
+	}
 
-    @Condition(onBean = CacheService.class)
-    @Bean
-    public void cacheService(SolonTranslateCacheManager cacheManager,
-                             CacheService cacheService) {
-        cacheManager.setCacheService(cacheService);
-    }
+	@Condition(onBean = CacheService.class)
+	@Bean
+	public void cacheService(SolonTranslateCacheManager cacheManager, CacheService cacheService) {
+		cacheManager.setCacheService(cacheService);
+	}
 
-    @Bean
-    public SolonTranslateCacheManager solonTranslateCacheManager() {
-        return new SolonTranslateCacheManager(new LocalCacheService());
-    }
+	@Bean
+	public SolonTranslateCacheManager solonTranslateCacheManager() {
+		return new SolonTranslateCacheManager(new LocalCacheService());
+	}
 
-    @Bean
-    public SqlToyContext sqlToyContext(
-            AppContext appContext,
-            SqlToyContextProperties properties,
-            SolonTranslateCacheManager solonTranslateCacheManager) throws Exception {
+	@Bean
+	public SqlToyContext sqlToyContext(AppContext appContext, SqlToyContextProperties properties,
+			SolonTranslateCacheManager solonTranslateCacheManager) throws Exception {
 
-        SolonAppContext solonAppContext = new SolonAppContext(appContext);
-        final SqlToyContext sqlToyContext = new SqlToyContextBuilder(properties, solonAppContext).build();
+		SolonAppContext solonAppContext = new SolonAppContext(appContext);
+		final SqlToyContext sqlToyContext = new SqlToyContextBuilder(properties, solonAppContext).build();
 
-        if ("solon".equals(properties.getCacheType())) {
-            sqlToyContext.setTranslateCacheManager(solonTranslateCacheManager);
-        }
-        DbManager.setContext(sqlToyContext);
-        sqlToyContext.initialize();
+		if ("solon".equals(properties.getCacheType())) {
+			sqlToyContext.setTranslateCacheManager(solonTranslateCacheManager);
+		}
+		DbManager.setContext(sqlToyContext);
+		sqlToyContext.initialize();
 
-        return sqlToyContext;
-    }
+		return sqlToyContext;
+	}
 }

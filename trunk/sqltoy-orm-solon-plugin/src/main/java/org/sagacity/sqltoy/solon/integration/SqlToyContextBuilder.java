@@ -158,7 +158,8 @@ public class SqlToyContextBuilder {
 
 		// 针对Caffeine缓存指定实现类型
 		// sqlToyContext.setTranslateCaffeineManagerClass("org.sagacity.sqltoy.translate.cache.impl.TranslateCaffeineManager");
-		// caffeine 缓存转由solon cache代理(核心默认的TranslateCaffeineManager在spring模块中,solon环境不存在)
+		// caffeine 缓存转由solon
+		// cache代理(核心默认的TranslateCaffeineManager在spring模块中,solon环境不存在)
 		sqlToyContext.setTranslateCaffeineManagerClass(
 				"org.sagacity.sqltoy.solon.translate.cache.impl.SolonTranslateCacheManager");
 		// 注入spring的默认mongoQuery实现类
@@ -309,16 +310,19 @@ public class SqlToyContextBuilder {
 				else if (appContext.containsBean(unifyHandler)) {
 					handler = (IUnifyFieldsHandler) appContext.getBean(unifyHandler);
 					if (handler == null) {
-						throw new ClassNotFoundException("no bean is defined in the project for unifyFieldsHandler [" + unifyHandler + "]!");
+						throw new ClassNotFoundException(
+								"no bean is defined in the project for unifyFieldsHandler [" + unifyHandler + "]!");
 					}
 				}
 				if (handler != null) {
 					sqlToyContext.setUnifyFieldsHandler(handler);
 				}
 			} catch (ClassNotFoundException cne) {
-				logger.error("the class of spring.sqltoy.unifyFieldsHandler={} does not exist, possible reasons: "
-						+ "1.you copied the configuration from another project without copying the class; "
-						+ "2.please comment out this property if the feature is not needed!", unifyHandler, cne);
+				logger.error(
+						"the class of spring.sqltoy.unifyFieldsHandler={} does not exist, possible reasons: "
+								+ "1.you copied the configuration from another project without copying the class; "
+								+ "2.please comment out this property if the feature is not needed!",
+						unifyHandler, cne);
 				throw cne;
 			}
 		}

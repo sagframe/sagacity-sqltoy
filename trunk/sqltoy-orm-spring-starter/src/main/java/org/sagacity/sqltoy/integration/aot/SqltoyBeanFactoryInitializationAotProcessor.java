@@ -24,17 +24,17 @@ import org.springframework.core.env.Environment;
 /**
  * Spring AOT 处理器：构建期注册 sqltoy 运行所需的反射与资源 hints，保障 GraalVM Native Image 下 ORM 可用
  * <p>
- * update 2026-10-18 重写(6.0.8)：AOT 构建(refreshForAotProcessing)期间容器不注册 BeanPostProcessor、
- * 不预实例化单例，此阶段 getBean 得到的 @ConfigurationProperties bean 是未绑定的空实例，SqlToyContext
- * 也会以空配置被初始化——原先依赖 getAllEntities() 快照的实现因此注册不到任何实体 hints。
- * 现改为从 Environment(prepareBeanFactory 阶段已注册为单例)直接绑定配置，并按配置扫描实体：
- * 1.实体反射 hints(与 EntityManager.initialize 的启动扫描语义一致;实体为即用即加载，native 场景必须
- * 配置 spring.sqltoy.packagesToScan 或 annotatedClasses)；
- * 2.按配置动态注册 sql 文件、缓存翻译配置、加解密密钥的 classpath 资源 pattern(SqltoyRuntimeHintsRegistrar
- * 内置的固定 pattern 只覆盖 sqltoy/**、translates/** 等约定目录，而 native 运行期 sql 文件按资源列表加载，
- * 文件必须先进镜像)；
- * 3.为按类名配置的扩展类注册反射 hints(unifyFieldsHandler、typeHandler、sqlInterceptors 等运行期经
- * Class.forName 反射实例化，约定同 SqltoyAutoConfiguration:含"."视为类名，否则为 bean 名称由 Spring AOT 覆盖)；
+ * update 2026-10-18 重写(6.0.8)：AOT 构建(refreshForAotProcessing)期间容器不注册
+ * BeanPostProcessor、 不预实例化单例，此阶段 getBean 得到的 @ConfigurationProperties bean
+ * 是未绑定的空实例，SqlToyContext 也会以空配置被初始化——原先依赖 getAllEntities() 快照的实现因此注册不到任何实体
+ * hints。 现改为从 Environment(prepareBeanFactory 阶段已注册为单例)直接绑定配置，并按配置扫描实体： 1.实体反射
+ * hints(与 EntityManager.initialize 的启动扫描语义一致;实体为即用即加载，native 场景必须 配置
+ * spring.sqltoy.packagesToScan 或 annotatedClasses)； 2.按配置动态注册 sql
+ * 文件、缓存翻译配置、加解密密钥的 classpath 资源 pattern(SqltoyRuntimeHintsRegistrar 内置的固定
+ * pattern 只覆盖 sqltoy/**、translates/** 等约定目录，而 native 运行期 sql 文件按资源列表加载，
+ * 文件必须先进镜像)； 3.为按类名配置的扩展类注册反射
+ * hints(unifyFieldsHandler、typeHandler、sqlInterceptors 等运行期经 Class.forName
+ * 反射实例化，约定同 SqltoyAutoConfiguration:含"."视为类名，否则为 bean 名称由 Spring AOT 覆盖)；
  * 4.条件注册运行期反射实例化的集成实现类(caffeine 翻译缓存管理器、mongo 查询、redis 分布式 ID)，
  * 并按与运行期相同的解析路径注册实际生效的 JsonProvider 实现类。
  *
@@ -89,8 +89,8 @@ class SqltoyBeanFactoryInitializationAotProcessor implements BeanFactoryInitiali
 	}
 
 	/**
-	 * 实体反射 hints:与 EntityManager.initialize 的扫描语义一致;实体为即用即加载，
-	 * native 场景需配置 spring.sqltoy.packagesToScan(或 annotatedClasses)供构建期扫描
+	 * 实体反射 hints:与 EntityManager.initialize 的扫描语义一致;实体为即用即加载， native 场景需配置
+	 * spring.sqltoy.packagesToScan(或 annotatedClasses)供构建期扫描
 	 */
 	private void registerEntities(RuntimeHints hints, SqlToyContextProperties properties) {
 		Set<Class<?>> entities = new LinkedHashSet<>();
@@ -105,8 +105,7 @@ class SqltoyBeanFactoryInitializationAotProcessor implements BeanFactoryInitiali
 						entities.addAll(scanned);
 					}
 				} catch (Throwable e) {
-					logger.warn("sqltoy aot: entity scan failed for package [{}], entities may be incomplete!", pkg,
-							e);
+					logger.warn("sqltoy aot: entity scan failed for package [{}], entities may be incomplete!", pkg, e);
 				}
 			}
 		}
@@ -155,8 +154,8 @@ class SqltoyBeanFactoryInitializationAotProcessor implements BeanFactoryInitiali
 	}
 
 	/**
-	 * 只登记 classpath 资源:剥离 classpath: 前缀,目录补 /** 通配;
-	 * 文件系统路径在 native 运行期可直接读取、无需进镜像,跳过
+	 * 只登记 classpath 资源:剥离 classpath: 前缀,目录补 /** 通配; 文件系统路径在 native
+	 * 运行期可直接读取、无需进镜像,跳过
 	 */
 	private void registerClasspathResource(ResourceHints resources, String path, boolean directory) {
 		if (StringUtil.isBlank(path)) {
@@ -225,9 +224,9 @@ class SqltoyBeanFactoryInitializationAotProcessor implements BeanFactoryInitiali
 
 	/**
 	 * 条件注册集成实现类:翻译缓存管理器与 mongo/redis 集成实体的注册跟随 classpath 而非构建期配置——
-	 * cacheType/jsonProvider 均支持运行期参数切换,native 镜像构建期冻结,按构建期配置注册会让
-	 * "运行期切到另一实现"因未注册而 Class.forName 失败(ehcache 管理器为运行期直接 new,静态引用恒可达无需注册);
-	 * 依赖不在 classpath 时不注册,避免 native 构建因类型不可解析而失败
+	 * cacheType/jsonProvider 均支持运行期参数切换,native 镜像构建期冻结,按构建期配置注册会让 "运行期切到另一实现"因未注册而
+	 * Class.forName 失败(ehcache 管理器为运行期直接 new,静态引用恒可达无需注册); 依赖不在 classpath 时不注册,避免
+	 * native 构建因类型不可解析而失败
 	 */
 	private void registerIntegrationClasses(RuntimeHints hints, SqlToyContextProperties properties) {
 		if (present("com.github.benmanes.caffeine.cache.Caffeine")) {
@@ -248,10 +247,10 @@ class SqltoyBeanFactoryInitializationAotProcessor implements BeanFactoryInitiali
 	}
 
 	/**
-	 * JsonProvider 注册跟随 classpath:三个内置实现凡对应 JSON 库 marker 在 classpath 即全部注册
-	 * (marker 与 JsonProviders.CANDIDATES 一致),显式配置的自定义实现类按类名注册——
-	 * jsonProvider 支持运行期参数切换与探测降级,只注册"构建期生效者"会让切换/降级目标未注册;
-	 * 注册使实现类及其引用的 JSON 库进入镜像,native 运行期的 Class.forName 探测/实例化才可用
+	 * JsonProvider 注册跟随 classpath:三个内置实现凡对应 JSON 库 marker 在 classpath 即全部注册 (marker
+	 * 与 JsonProviders.CANDIDATES 一致),显式配置的自定义实现类按类名注册—— jsonProvider
+	 * 支持运行期参数切换与探测降级,只注册"构建期生效者"会让切换/降级目标未注册; 注册使实现类及其引用的 JSON 库进入镜像,native 运行期的
+	 * Class.forName 探测/实例化才可用
 	 */
 	private void registerJsonProvider(RuntimeHints hints, SqlToyContextProperties properties) {
 		String configured = properties.getJsonProvider();

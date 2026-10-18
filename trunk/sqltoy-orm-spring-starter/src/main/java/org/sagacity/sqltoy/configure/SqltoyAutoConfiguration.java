@@ -319,9 +319,11 @@ public class SqltoyAutoConfiguration {
 					sqlToyContext.setUnifyFieldsHandler(handler);
 				}
 			} catch (ClassNotFoundException cne) {
-				logger.error("the class of spring.sqltoy.unifyFieldsHandler={} does not exist, possible reasons: "
-						+ "1.you copied the configuration from another project without copying the class; "
-						+ "2.please comment out this property if the feature is not needed!", unifyHandler, cne);
+				logger.error(
+						"the class of spring.sqltoy.unifyFieldsHandler={} does not exist, possible reasons: "
+								+ "1.you copied the configuration from another project without copying the class; "
+								+ "2.please comment out this property if the feature is not needed!",
+						unifyHandler, cne);
 				throw cne;
 			}
 		}
@@ -601,8 +603,10 @@ public class SqltoyAutoConfiguration {
 		return set;
 	}
 
-	// update 2026-10-18 (6.0.8) dao/service bean 返回类型改为具体实现类:Spring AOT 按声明类型预判 bean 类型,
-	// 声明为接口时事务 CGLIB 代理不会在构建期预生成,native 运行期报"CGLIB runtime enhancement not supported";
+	// update 2026-10-18 (6.0.8) dao/service bean 返回类型改为具体实现类:Spring AOT 按声明类型预判
+	// bean 类型,
+	// 声明为接口时事务 CGLIB 代理不会在构建期预生成,native 运行期报"CGLIB runtime enhancement not
+	// supported";
 	// @ConditionalOnMissingBean 显式指定接口类型,保持原有"存在任意该接口实现即退让"的语义不变
 	@Bean(name = "sqlToyLazyDao")
 	@ConditionalOnMissingBean(SqlToyLazyDao.class)

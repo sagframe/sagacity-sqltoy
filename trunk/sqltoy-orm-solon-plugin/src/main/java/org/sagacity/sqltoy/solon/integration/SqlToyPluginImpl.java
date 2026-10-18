@@ -18,26 +18,26 @@ import org.sagacity.sqltoy.solon.integration.aot.SqltoyRuntimeNativeRegistrar;
  * @since 1.8
  */
 public class SqlToyPluginImpl implements Plugin {
-    private AppContext context;
+	private AppContext context;
 
-    @Override
-    public void start(AppContext context) throws Throwable {
-        // aot
-        if (NativeDetector.isAotRuntime() && ClassUtil.hasClass(() -> RuntimeNativeRegistrar.class)) {
-            context.wrapAndPut(SqltoyRuntimeNativeRegistrar.class);
-        }
-        this.context = context;
+	@Override
+	public void start(AppContext context) throws Throwable {
+		// aot
+		if (NativeDetector.isAotRuntime() && ClassUtil.hasClass(() -> RuntimeNativeRegistrar.class)) {
+			context.wrapAndPut(SqltoyRuntimeNativeRegistrar.class);
+		}
+		this.context = context;
 
-        context.beanMake(SqlToyContextConfigure.class);
-        context.beanInjectorAdd(Db.class, new SqlToyDbInjector());
-    }
+		context.beanMake(SqlToyContextConfigure.class);
+		context.beanInjectorAdd(Db.class, new SqlToyDbInjector());
+	}
 
-    @Override
-    public void stop() throws Throwable {
-        SqlToyContext sqlToyContext = context.getBean(SqlToyContext.class);
+	@Override
+	public void stop() throws Throwable {
+		SqlToyContext sqlToyContext = context.getBean(SqlToyContext.class);
 
-        if (sqlToyContext != null) {
-            sqlToyContext.destroy();
-        }
-    }
+		if (sqlToyContext != null) {
+			sqlToyContext.destroy();
+		}
+	}
 }

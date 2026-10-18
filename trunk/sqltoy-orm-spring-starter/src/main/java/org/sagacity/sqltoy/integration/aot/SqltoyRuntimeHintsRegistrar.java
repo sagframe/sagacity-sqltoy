@@ -33,37 +33,22 @@ import org.springframework.aot.hint.RuntimeHintsRegistrar;
  */
 class SqltoyRuntimeHintsRegistrar implements RuntimeHintsRegistrar {
 
-    @Override
-    public void registerHints(RuntimeHints hints, ClassLoader classLoader) {
-        Stream.of(
-                "sqltoy-translate.xml",
-                "translates/**",
-                "sqltoy/**"
-        ).forEach(x -> hints.resources().registerPattern(x));
-        Stream.of(
-                SqlToyContextProperties.class,
-                SqlToyContextTaskPoolProperties.class,
-                DefaultIdGenerator.class,
-                NanoTimeIdGenerator.class,
-                RedisIdGenerator.class,
-                SnowflakeIdGenerator.class,
-                UUIDGenerator.class
-        ).forEach(x -> hints.reflection().registerType(x, MemberCategory.values()));
-        // XMLUtil.setAttributes 反射赋值的 xml 解析模型类(sql 结果处理器 + 缓存翻译配置)
-        Stream.of(
-                UnpivotModel.class,
-                ColsChainRelativeModel.class,
-                RowsChainRelativeModel.class,
-                ReverseModel.class,
-                TreeSortModel.class,
-                DefaultConfig.class,
-                TranslateConfigModel.class,
-                CheckerConfigModel.class
-        ).forEach(x -> hints.reflection().registerType(x, MemberCategory.values()));
-        // lambda 条件体系(6.0.8)经 writeReplace/SerializedLambda 序列化镜像提取属性元数据,
-        // native 下 SerializedLambda 需要 java 序列化注册,否则 lambdaQuery/lambdaUpdate 全部不可用;
-        // 镜像类 org.sagacity.sqltoy.lambda.toolkit.SerializedLambda 是反序列化(resolveClass 重定向)的目标,同样需注册
-        hints.serialization().registerType(SerializedLambda.class);
-        hints.serialization().registerType(org.sagacity.sqltoy.lambda.toolkit.SerializedLambda.class);
-    }
+	@Override
+	public void registerHints(RuntimeHints hints, ClassLoader classLoader) {
+		Stream.of("sqltoy-translate.xml", "translates/**", "sqltoy/**")
+				.forEach(x -> hints.resources().registerPattern(x));
+		Stream.of(SqlToyContextProperties.class, SqlToyContextTaskPoolProperties.class, DefaultIdGenerator.class,
+				NanoTimeIdGenerator.class, RedisIdGenerator.class, SnowflakeIdGenerator.class, UUIDGenerator.class)
+				.forEach(x -> hints.reflection().registerType(x, MemberCategory.values()));
+		// XMLUtil.setAttributes 反射赋值的 xml 解析模型类(sql 结果处理器 + 缓存翻译配置)
+		Stream.of(UnpivotModel.class, ColsChainRelativeModel.class, RowsChainRelativeModel.class, ReverseModel.class,
+				TreeSortModel.class, DefaultConfig.class, TranslateConfigModel.class, CheckerConfigModel.class)
+				.forEach(x -> hints.reflection().registerType(x, MemberCategory.values()));
+		// lambda 条件体系(6.0.8)经 writeReplace/SerializedLambda 序列化镜像提取属性元数据,
+		// native 下 SerializedLambda 需要 java 序列化注册,否则 lambdaQuery/lambdaUpdate 全部不可用;
+		// 镜像类 org.sagacity.sqltoy.lambda.toolkit.SerializedLambda 是反序列化(resolveClass
+		// 重定向)的目标,同样需注册
+		hints.serialization().registerType(SerializedLambda.class);
+		hints.serialization().registerType(org.sagacity.sqltoy.lambda.toolkit.SerializedLambda.class);
+	}
 }

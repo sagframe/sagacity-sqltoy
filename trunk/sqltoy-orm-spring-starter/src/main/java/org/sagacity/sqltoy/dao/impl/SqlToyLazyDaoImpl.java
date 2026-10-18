@@ -865,6 +865,7 @@ public class SqlToyLazyDaoImpl extends SpringDaoSupport implements SqlToyLazyDao
 
 	/**
 	 * 判断缓存是否存在
+	 * 
 	 * @param cacheName
 	 * @return
 	 */
@@ -892,7 +893,8 @@ public class SqlToyLazyDaoImpl extends SpringDaoSupport implements SqlToyLazyDao
 		if (result.size() == 1) {
 			return result.get(0);
 		}
-		throw new IllegalArgumentException("loadEntity expect a single record but found [" + result.size() + "] rows, please check the query conditions!");
+		throw new IllegalArgumentException("loadEntity expect a single record but found [" + result.size()
+				+ "] rows, please check the query conditions!");
 	}
 
 	@Override
@@ -949,6 +951,7 @@ public class SqlToyLazyDaoImpl extends SpringDaoSupport implements SqlToyLazyDao
 
 	/**
 	 * 转换分页类型
+	 * 
 	 * @param <T>
 	 * @param sourcePage
 	 * @param resultType
@@ -974,7 +977,8 @@ public class SqlToyLazyDaoImpl extends SpringDaoSupport implements SqlToyLazyDao
 	}
 
 	@Override
-	public <T> List<QueryResult<T>> parallelQuery(List<ParallelQuery> parallelQueryList, Map<String, Object> paramsMap) {
+	public <T> List<QueryResult<T>> parallelQuery(List<ParallelQuery> parallelQueryList,
+			Map<String, Object> paramsMap) {
 		return super.parallelQuery(parallelQueryList, paramsMap, null);
 	}
 

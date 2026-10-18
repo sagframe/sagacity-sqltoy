@@ -35,11 +35,11 @@ public class ElasticConfig implements Serializable {
 	 * 相对路径
 	 */
 	private String sqlPath;
-	
+
 	/**
 	 * 是否禁止抢占式身份认证
 	 */
-	private boolean authCaching=true;
+	private boolean authCaching = true;
 
 	/**
 	 * 证书类型

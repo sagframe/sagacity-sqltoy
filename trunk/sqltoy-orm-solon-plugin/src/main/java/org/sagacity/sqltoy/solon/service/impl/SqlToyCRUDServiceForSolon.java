@@ -166,7 +166,8 @@ public class SqlToyCRUDServiceForSolon implements SqlToyCRUDService {
 
 	public <T> List<QueryResult<T>> parallelQuery(List<ParallelQuery> parallelQueryList, String[] paramNames,
 			Object[] paramValues, ParallelConfig parallelConfig) {
-		return this.lightDao.parallelQuery(parallelQueryList, MapKit.keys(paramNames).values(paramValues), parallelConfig);
+		return this.lightDao.parallelQuery(parallelQueryList, MapKit.keys(paramNames).values(paramValues),
+				parallelConfig);
 	}
 
 	public <T> List<QueryResult<T>> parallelQuery(List<ParallelQuery> parallelQueryList, Map<String, Object> paramsMap,

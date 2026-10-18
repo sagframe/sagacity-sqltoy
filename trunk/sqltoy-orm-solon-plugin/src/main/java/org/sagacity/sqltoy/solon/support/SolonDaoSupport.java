@@ -11,12 +11,12 @@ import org.sagacity.sqltoy.support.SqlToyDaoSupport;
  * @modify Date:2024-03-21, 修改说明
  */
 public class SolonDaoSupport extends SqlToyDaoSupport {
-    
-    /**
-     * 针对solon提供sqlToyContext注入(差异点)
-     */
-    @Override
-    public void setSqlToyContext(SqlToyContext sqlToyContext) {
-        super.setSqlToyContext(sqlToyContext);
-    }
+
+	/**
+	 * 针对solon提供sqlToyContext注入(差异点)
+	 */
+	@Override
+	public void setSqlToyContext(SqlToyContext sqlToyContext) {
+		super.setSqlToyContext(sqlToyContext);
+	}
 }

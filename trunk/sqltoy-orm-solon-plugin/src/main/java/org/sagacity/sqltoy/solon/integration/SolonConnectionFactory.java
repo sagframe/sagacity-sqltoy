@@ -17,25 +17,25 @@ import org.slf4j.LoggerFactory;
  * @since 5.6
  */
 public class SolonConnectionFactory implements ConnectionFactory {
-    private static final Logger logger = LoggerFactory.getLogger(SolonConnectionFactory.class);
+	private static final Logger logger = LoggerFactory.getLogger(SolonConnectionFactory.class);
 
-    @Override
-    public Connection getConnection(DataSource dataSource) {
-        try {
-            return TranUtils.getConnectionProxy(dataSource);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-    }
+	@Override
+	public Connection getConnection(DataSource dataSource) {
+		try {
+			return TranUtils.getConnectionProxy(dataSource);
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+	}
 
-    @Override
-    public void releaseConnection(Connection connection, DataSource dataSource) {
-        try {
-            if (connection != null) {
-                connection.close();
-            }
-        } catch (SQLException e) {
-            logger.error("release connection failed!", e);
-        }
-    }
+	@Override
+	public void releaseConnection(Connection connection, DataSource dataSource) {
+		try {
+			if (connection != null) {
+				connection.close();
+			}
+		} catch (SQLException e) {
+			logger.error("release connection failed!", e);
+		}
+	}
 }

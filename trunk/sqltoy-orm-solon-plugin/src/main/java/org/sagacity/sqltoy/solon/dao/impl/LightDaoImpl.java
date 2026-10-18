@@ -365,7 +365,8 @@ public class LightDaoImpl extends SolonDaoSupport implements LightDao {
 		if (result.size() == 1) {
 			return result.get(0);
 		}
-		throw new IllegalArgumentException("loadEntity expect a single record but found [" + result.size() + "] rows, please check the query conditions!");
+		throw new IllegalArgumentException("loadEntity expect a single record but found [" + result.size()
+				+ "] rows, please check the query conditions!");
 	}
 
 	@Override
@@ -407,7 +408,8 @@ public class LightDaoImpl extends SolonDaoSupport implements LightDao {
 		if (result.size() == 1) {
 			return result.get(0);
 		}
-		throw new IllegalArgumentException("loadById expect a single record but found [" + result.size() + "] rows, please check the query conditions!");
+		throw new IllegalArgumentException("loadById expect a single record but found [" + result.size()
+				+ "] rows, please check the query conditions!");
 	}
 
 	@Override
@@ -650,7 +652,8 @@ public class LightDaoImpl extends SolonDaoSupport implements LightDao {
 	}
 
 	@Override
-	public <T> List<QueryResult<T>> parallelQuery(List<ParallelQuery> parallelQueryList, Map<String, Object> paramsMap) {
+	public <T> List<QueryResult<T>> parallelQuery(List<ParallelQuery> parallelQueryList,
+			Map<String, Object> paramsMap) {
 		return super.parallelQuery(parallelQueryList, paramsMap, new ParallelConfig());
 	}
 

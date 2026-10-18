@@ -27,8 +27,8 @@ public class SqlToyContextProperties implements Serializable {
 	private String translateConfig;
 
 	/**
-	 * 针对不同数据库函数进行转换,非必须属性,close 表示关闭
-	 * (update 2026-9-5:Object类型无法绑定yml数组/列表写法,会静默为null导致配置失效,改为List;
+	 * 针对不同数据库函数进行转换,非必须属性,close 表示关闭 (update
+	 * 2026-9-5:Object类型无法绑定yml数组/列表写法,会静默为null导致配置失效,改为List;
 	 * yml的数组写法与逗号分隔字符串写法均自动转换,兼容原逗号串配置形式)
 	 */
 	private List<String> functionConverts;
@@ -109,8 +109,8 @@ public class SqlToyContextProperties implements Serializable {
 	private String encoding;
 
 	/**
-	 * JSON 处理实现类(org.sagacity.sqltoy.plugins.json.JsonProvider 的实现),
-	 * 不配置则按 classpath 自动探测:fastjson2 -> jackson3 -> jackson2
+	 * JSON 处理实现类(org.sagacity.sqltoy.plugins.json.JsonProvider 的实现), 不配置则按
+	 * classpath 自动探测:fastjson2 -> jackson3 -> jackson2
 	 */
 	private String jsonProvider;
 
@@ -304,22 +304,22 @@ public class SqlToyContextProperties implements Serializable {
 	 * sql注入表达式
 	 */
 	private String sqlInjectionRegexes[];
-	
+
 	/**
 	 * 分布式id key的缓存天数(一般基于redis，避免长期储存占用空间)，多少天失效
 	 */
 	private Integer distributeIdCacheExpireDays;
-	
+
 	/**
 	 * 动态捕获缓存的缓存管理器，框架提供了默认实现
 	 */
 	private String dynamicFecthCacheManager;
-	
+
 	/**
 	 * 默认查询超时时长(秒)
 	 */
-	private Integer defaultStatementTimeout; 
-	
+	private Integer defaultStatementTimeout;
+
 	/**
 	 * like查询ESCAPE子句是否使用双反斜杠(true=ESCAPE '\\',false=ESCAPE '\',null=按数据库方言自动判断)
 	 */

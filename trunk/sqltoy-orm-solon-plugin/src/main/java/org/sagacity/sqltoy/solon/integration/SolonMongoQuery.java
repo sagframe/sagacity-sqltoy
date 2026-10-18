@@ -20,24 +20,24 @@ import com.mongodb.client.MongoDatabase;
  * @since 5.6
  */
 public class SolonMongoQuery implements MongoQuery {
-    private MongoDatabase db;
+	private MongoDatabase db;
 
-    @Override
-    public MongoCollection<Document> getCollection(String collectionName) {
-        return db.getCollection(collectionName);
-    }
+	@Override
+	public MongoCollection<Document> getCollection(String collectionName) {
+		return db.getCollection(collectionName);
+	}
 
-    @Override
-    public <T> List<T> find(String query, Class<T> entityClass, String collectionName, Long skip, Integer limit) {
-        MongoCollection<Document> collection = getCollection(collectionName);
-        FindIterable<T> findIterable = collection.find(BsonDocument.parse(query), entityClass);
+	@Override
+	public <T> List<T> find(String query, Class<T> entityClass, String collectionName, Long skip, Integer limit) {
+		MongoCollection<Document> collection = getCollection(collectionName);
+		FindIterable<T> findIterable = collection.find(BsonDocument.parse(query), entityClass);
 
-        if (skip != null) {
-            findIterable.skip(skip.intValue());
-        }
-        if (limit != null) {
-            findIterable.limit(limit);
-        }
+		if (skip != null) {
+			findIterable.skip(skip.intValue());
+		}
+		if (limit != null) {
+			findIterable.limit(limit);
+		}
 
 		List<T> data = new ArrayList<>();
 
@@ -56,8 +56,8 @@ public class SolonMongoQuery implements MongoQuery {
 		return collection.countDocuments(BsonDocument.parse(query));
 	}
 
-    @Override
-    public void initialize(SqlToyContext sqlToyContext) {
-        db = sqlToyContext.getAppContext().getBean(MongoDatabase.class);
-    }
+	@Override
+	public void initialize(SqlToyContext sqlToyContext) {
+		db = sqlToyContext.getAppContext().getBean(MongoDatabase.class);
+	}
 }
