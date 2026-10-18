@@ -187,12 +187,14 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 		final LambdaQuery<?> query;
 		final boolean recursive;
 		final Boolean materialized;
+		final String[] columns;
 
-		CteDef(String name, LambdaQuery<?> query, boolean recursive, Boolean materialized) {
+		CteDef(String name, LambdaQuery<?> query, boolean recursive, Boolean materialized, String[] columns) {
 			this.name = name;
 			this.query = query;
 			this.recursive = recursive;
 			this.materialized = materialized;
+			this.columns = columns;
 		}
 	}
 
@@ -226,18 +228,23 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	public LambdaQuery<T> with(String name, LambdaQuery<?> cteQuery, Boolean materialized) {
 		// CTE体必须是完整SELECT..FROM,强制内层走join/SQL通道
 		cteQuery.joinContext.forceJoinChannel();
-		ctes.add(new CteDef(name, cteQuery, false, materialized));
+		ctes.add(new CteDef(name, cteQuery, false, materialized, null));
 		composed = true;
 		return this;
 	}
 
 	/**
-	 * @description 注册递归CTE:WITH RECURSIVE name AS
-	 *              (...)(Oracle/SQLServer递归不带RECURSIVE关键字,按dbType适配)
+	 * @description 注册递归CTE:WITH RECURSIVE name (列清单) AS
+	 *              (...)(Oracle/SQLServer递归不带RECURSIVE关键字,按dbType适配)。
+	 *              <p>columns为CTE列清单:H2等库的递归CTE强制要求列清单(WITH RECURSIVE t(a,b) AS),
+	 *              PG/MySQL/SQLServer亦标准支持,故递归CTE应显式给出列名(与内层select别名顺序一致)</p>
+	 * @param name     CTE名称
+	 * @param cteQuery 内层查询(base UNION ALL recursive)
+	 * @param columns  CTE列清单,如 "id","pid","name"
 	 */
-	public LambdaQuery<T> withRecursive(String name, LambdaQuery<?> cteQuery) {
+	public LambdaQuery<T> withRecursive(String name, LambdaQuery<?> cteQuery, String... columns) {
 		cteQuery.joinContext.forceJoinChannel();
-		ctes.add(new CteDef(name, cteQuery, true, null));
+		ctes.add(new CteDef(name, cteQuery, true, null, columns));
 		composed = true;
 		return this;
 	}
@@ -332,7 +339,12 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 				if (i > 0) {
 					sb.append(", ");
 				}
-				sb.append(cte.name).append(" AS ");
+				sb.append(cte.name);
+				// 递归CTE列清单(H2等强制):WITH RECURSIVE t(a,b) AS
+				if (cte.columns != null && cte.columns.length > 0) {
+					sb.append(" (").append(String.join(", ", cte.columns)).append(")");
+				}
+				sb.append(" AS ");
 				// update 2026-10-18 物化hint门禁与SqlWithAnalysis白名单单一事实源对齐:PG12+及
 				// openGauss/金仓/Vastbase/瀚高(真库实测支持)才渲染MATERIALIZED,其余库忽略(不渲染即不报错)
 				if (cte.materialized != null && SqlWithAnalysis.supportsCteMaterialized(dbType)) {
