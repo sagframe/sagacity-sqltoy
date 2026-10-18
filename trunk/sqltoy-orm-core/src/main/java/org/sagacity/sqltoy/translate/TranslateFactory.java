@@ -11,9 +11,6 @@ import java.util.Map;
 
 import javax.sql.DataSource;
 
-import org.sagacity.sqltoy.plugins.json.JsonArray;
-import org.sagacity.sqltoy.plugins.json.JsonObject;
-import org.sagacity.sqltoy.plugins.json.JsonProviders;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
@@ -21,6 +18,9 @@ import org.sagacity.sqltoy.dialect.DialectFactory;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
+import org.sagacity.sqltoy.plugins.json.JsonArray;
+import org.sagacity.sqltoy.plugins.json.JsonObject;
+import org.sagacity.sqltoy.plugins.json.JsonProviders;
 import org.sagacity.sqltoy.plugins.nosql.HttpAuthConfig;
 import org.sagacity.sqltoy.plugins.nosql.HttpClientUtils;
 import org.sagacity.sqltoy.translate.model.CacheCheckResult;

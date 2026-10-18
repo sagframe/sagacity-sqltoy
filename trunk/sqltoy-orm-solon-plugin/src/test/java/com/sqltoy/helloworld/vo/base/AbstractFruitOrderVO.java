@@ -3,12 +3,12 @@
  */
 package com.sqltoy.helloworld.vo.base;
 
+import java.io.Serializable;
+import java.math.BigDecimal;
+
 import org.sagacity.sqltoy.config.annotation.Column;
 import org.sagacity.sqltoy.config.annotation.Entity;
 import org.sagacity.sqltoy.config.annotation.Id;
-
-import java.io.Serializable;
-import java.math.BigDecimal;
 
 /**
  * @project sqltoy-helloworld

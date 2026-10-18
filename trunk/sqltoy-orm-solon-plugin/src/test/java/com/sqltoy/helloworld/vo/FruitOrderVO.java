@@ -3,8 +3,9 @@
  */
 package com.sqltoy.helloworld.vo;
 
-import com.sqltoy.helloworld.vo.base.AbstractFruitOrderVO;
 import org.sagacity.sqltoy.config.annotation.SqlToyEntity;
+
+import com.sqltoy.helloworld.vo.base.AbstractFruitOrderVO;
 
 /**
  * @project sqltoy-helloworld

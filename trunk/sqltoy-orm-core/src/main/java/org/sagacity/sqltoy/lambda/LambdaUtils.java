@@ -20,7 +20,6 @@ import java.lang.reflect.Proxy;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.sagacity.sqltoy.exception.DataAccessException;
-
 import org.sagacity.sqltoy.lambda.toolkit.FieldNature;
 import org.sagacity.sqltoy.lambda.toolkit.IdeaProxyLambdaMeta;
 import org.sagacity.sqltoy.lambda.toolkit.LambdaMeta;

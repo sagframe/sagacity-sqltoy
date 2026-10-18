@@ -23,9 +23,9 @@ import org.sagacity.sqltoy.lambda.OuterRef;
 import org.sagacity.sqltoy.lambda.condition.Aggregate;
 import org.sagacity.sqltoy.lambda.condition.Compare;
 import org.sagacity.sqltoy.lambda.condition.Logic;
+import org.sagacity.sqltoy.lambda.join.JoinContext;
 import org.sagacity.sqltoy.lambda.toolkit.FieldNature;
 import org.sagacity.sqltoy.lambda.toolkit.ValueFilter;
-import org.sagacity.sqltoy.lambda.join.JoinContext;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**

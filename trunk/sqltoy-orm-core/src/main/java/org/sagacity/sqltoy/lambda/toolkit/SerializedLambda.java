@@ -15,9 +15,9 @@
  */
 package org.sagacity.sqltoy.lambda.toolkit;
 
-import org.sagacity.sqltoy.exception.DataAccessException;
-
 import java.io.Serializable;
+
+import org.sagacity.sqltoy.exception.DataAccessException;
 
 /**
  * @description {@link java.lang.invoke.SerializedLambda}的镜像类,反射读取writeReplace失败时

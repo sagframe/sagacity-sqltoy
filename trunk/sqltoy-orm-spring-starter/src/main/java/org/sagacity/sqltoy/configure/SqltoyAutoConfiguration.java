@@ -12,8 +12,6 @@ import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
 import org.sagacity.sqltoy.SqlToyContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.sagacity.sqltoy.config.SqlScriptLoader;
 import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.dao.LightDao;
@@ -43,6 +41,8 @@ import org.sagacity.sqltoy.translate.DynamicCacheFetch;
 import org.sagacity.sqltoy.translate.cache.DynamicFecthCacheManager;
 import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
 import org.sagacity.sqltoy.utils.StringUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;

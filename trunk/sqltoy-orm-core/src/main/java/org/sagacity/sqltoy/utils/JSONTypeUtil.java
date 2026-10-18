@@ -6,19 +6,19 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
-import java.util.Map;
-import java.util.List;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
 import org.sagacity.sqltoy.model.DBProfile;
 import org.sagacity.sqltoy.model.JdbcTypes;
-import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.plugins.json.JsonProviders;
+import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

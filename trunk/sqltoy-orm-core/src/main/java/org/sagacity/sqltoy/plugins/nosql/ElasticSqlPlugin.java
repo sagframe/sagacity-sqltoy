@@ -3,9 +3,6 @@ package org.sagacity.sqltoy.plugins.nosql;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.sagacity.sqltoy.plugins.json.JsonArray;
-import org.sagacity.sqltoy.plugins.json.JsonObject;
-import org.sagacity.sqltoy.plugins.json.JsonProviders;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.config.model.NoSqlConfigModel;
@@ -15,6 +12,7 @@ import org.sagacity.sqltoy.model.Page;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.inner.DataSetResult;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
+import org.sagacity.sqltoy.plugins.json.JsonObject;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

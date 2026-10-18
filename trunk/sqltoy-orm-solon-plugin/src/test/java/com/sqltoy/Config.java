@@ -1,13 +1,14 @@
 package com.sqltoy;
 
-import com.mongodb.client.MongoDatabase;
-import com.zaxxer.hikari.HikariDataSource;
+import javax.sql.DataSource;
+
 import org.noear.solon.annotation.Bean;
 import org.noear.solon.annotation.Configuration;
 import org.noear.solon.annotation.Inject;
 import org.noear.solon.core.Props;
 
-import javax.sql.DataSource;
+import com.mongodb.client.MongoDatabase;
+import com.zaxxer.hikari.HikariDataSource;
 
 @Configuration
 /**

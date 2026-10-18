@@ -1,7 +1,5 @@
 package org.sagacity.sqltoy.lambda.engine;
 
-import org.sagacity.sqltoy.exception.DataAccessException;
-
 /**
  * @description 比较条件枚举,内置各类比较操作的sql模板,参数统一采用sqltoy的<code>:param</code>命名参数形式
  * @author zhongxuchen

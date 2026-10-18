@@ -13,8 +13,6 @@ import java.util.stream.Collectors;
 import org.noear.solon.core.util.ClassUtil;
 import org.noear.solon.core.util.ResourceUtil;
 import org.sagacity.sqltoy.SqlToyContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.sagacity.sqltoy.config.SqlScriptLoader;
 import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.integration.AppContext;
@@ -40,6 +38,8 @@ import org.sagacity.sqltoy.translate.TranslateManager;
 import org.sagacity.sqltoy.translate.cache.DynamicFecthCacheManager;
 import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
 import org.sagacity.sqltoy.utils.StringUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * SqlToyContext 构建器（用于拆分 XPluginImp 类）
