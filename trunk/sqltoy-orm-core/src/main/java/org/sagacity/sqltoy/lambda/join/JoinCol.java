@@ -6,8 +6,11 @@ import org.sagacity.sqltoy.lambda.engine.SqlFunction;
 
 /**
  * @description 多表join查询的select列定义,支持聚合函数(count/sum/avg/min/max)、别名与原生sql片段,别名用于结果对象属性映射
- * <p>例: JoinCol.of(User::getStaffName).as("staffName")、JoinCol.count(Role::getId).as("roleCount")、
- * JoinCol.raw("ROW_NUMBER() OVER(ORDER BY id)").as("rn")</p>
+ *              <p>
+ *              例:
+ *              JoinCol.of(User::getStaffName).as("staffName")、JoinCol.count(Role::getId).as("roleCount")、
+ *              JoinCol.raw("ROW_NUMBER() OVER(ORDER BY id)").as("rn")
+ *              </p>
  * @author zhongxuchen
  */
 public final class JoinCol {
@@ -67,8 +70,11 @@ public final class JoinCol {
 	 * @description 原生sql片段列:用于类型化select表达不了的形态(窗口函数ROW_NUMBER() OVER(..)、数据库特有函数、
 	 *              CASE WHEN、算术表达式等)。别名可经as()设置,或直接在片段内写"... AS rn";片段原样拼入SELECT,
 	 *              会触发join/SQL通道(结果须映射到含该别名字段的VO)。
-	 *              <p>安全:与last(sql)同为原始SQL逃逸口,不做注入筛查,禁止拼入终端用户输入</p>
-	 * @param sqlFragment 原生sql片段,如 "ROW_NUMBER() OVER(ORDER BY id)" 或 "ROW_NUMBER() OVER(ORDER BY id) AS rn"
+	 *              <p>
+	 *              安全:与last(sql)同为原始SQL逃逸口,不做注入筛查,禁止拼入终端用户输入
+	 *              </p>
+	 * @param sqlFragment 原生sql片段,如 "ROW_NUMBER() OVER(ORDER BY id)" 或 "ROW_NUMBER()
+	 *                    OVER(ORDER BY id) AS rn"
 	 * @return raw列
 	 */
 	public static JoinCol raw(String sqlFragment) {

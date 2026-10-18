@@ -29,6 +29,8 @@ public class SqlWithAnalysisMaterializedTest {
 		assertTrue(SqlWithAnalysis.supportsCteMaterialized(DBType.KINGBASE));
 		assertTrue(SqlWithAnalysis.supportsCteMaterialized(DBType.VASTBASE));
 		assertTrue(SqlWithAnalysis.supportsCteMaterialized(DBType.HIGHGO));
+		// GAUSSDB与openGauss同内核(verify矩阵gaussdb档案即连opengauss容器),随openGauss实测支持
+		assertTrue(SqlWithAnalysis.supportsCteMaterialized(DBType.GAUSSDB));
 	}
 
 	@Test
@@ -121,6 +123,25 @@ public class SqlWithAnalysisMaterializedTest {
 		// 字面量内的"as materialized ("文本不应被剔(掩码定位)
 		String sql = "with t as (select 'as materialized (' as mark) select * from t";
 		assertEquals(sql, SqlWithAnalysis.adaptCteMaterialized(sql, DBType.MYSQL), "字面量内文本应受掩码保护");
+	}
+
+	// ---------- 误伤防护:派生表别名恰为materialized(用户指出的上下文无关匹配风险) ----------
+
+	@Test
+	public void derivedTableAliasNamedMaterializedNotStripped() {
+		// 派生表别名恰为materialized且带列清单:AS materialized (x) 的'('后是列名标识符而非查询体,
+		// 非CTE物化hint,绝不可剔(剔掉会丢失别名致SQL破损)
+		String sql = "select * from (select 1 as a) as materialized (x)";
+		assertEquals(sql, SqlWithAnalysis.adaptCteMaterialized(sql, DBType.MYSQL), "派生表别名materialized不应被剔");
+	}
+
+	@Test
+	public void cteHintStrippedButInnerDerivedAliasPreserved() {
+		// 真CTE物化hint与内层派生表别名materialized共存:只剔hint(其后'('跟SELECT查询体),
+		// 保留别名(其后'('跟列名x),证明lookahead精确区分二者
+		String sql = "with t as materialized (select * from (select 1 as a) as materialized (x)) select * from t";
+		assertEquals("with t as (select * from (select 1 as a) as materialized (x)) select * from t",
+				SqlWithAnalysis.adaptCteMaterialized(sql, DBType.MYSQL));
 	}
 
 	@Test

@@ -618,8 +618,8 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 			String columnName = resolveColumn(resolver, column);
 			if (val instanceof OuterRef) {
 				// 外层列引用内联渲染,不做参数绑定
-				appendSqlSegments(rawSegment(compare.getInlineMetaSql(columnName, outerRefSql((OuterRef<?>) val)),
-						null));
+				appendSqlSegments(
+						rawSegment(compare.getInlineMetaSql(columnName, outerRefSql((OuterRef<?>) val)), null));
 				return;
 			}
 			appendSqlSegments(new SegmentMeta(compare, columnName, nextParamName(), val));
@@ -664,7 +664,8 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 	 * @param subFn     子查询条件组装函数
 	 * @return 自身
 	 */
-	public <E> Self exists(boolean condition, Class<E> subEntity, Function<LambdaSubQuery<E>, LambdaSubQuery<E>> subFn) {
+	public <E> Self exists(boolean condition, Class<E> subEntity,
+			Function<LambdaSubQuery<E>, LambdaSubQuery<E>> subFn) {
 		return addExistsSegment(condition, subEntity, subFn, false);
 	}
 
@@ -686,8 +687,8 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 	private <E> Self addExistsSegment(boolean condition, Class<E> subEntity,
 			Function<LambdaSubQuery<E>, LambdaSubQuery<E>> subFn, boolean negate) {
 		return addAssembler(resolver -> maybeDo(condition, () -> {
-			LambdaSubQuery<E> subQuery = new LambdaSubQuery<>(subEntity, "sq" + SUB_SEQ.incrementAndGet(),
-					joinContext, qualifiedResolverFor(currentMetaLoader));
+			LambdaSubQuery<E> subQuery = new LambdaSubQuery<>(subEntity, "sq" + SUB_SEQ.incrementAndGet(), joinContext,
+					qualifiedResolverFor(currentMetaLoader));
 			subFn.apply(subQuery);
 			subQuery.assemble(currentMetaLoader);
 			String keyword = negate ? SqlKeyword.NOT_EXISTS.getSqlSegment() : SqlKeyword.EXISTS.getSqlSegment();
@@ -711,8 +712,8 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 		Map<String, Object> params = new HashMap<>();
 		for (Object[] row : values) {
 			if (row == null || row.length != columnCount) {
-				throw new DataAccessException("Lambda inb tuple value length must equal the column count "
-						+ columnCount + " but got " + (row == null ? 0 : row.length));
+				throw new DataAccessException("Lambda inb tuple value length must equal the column count " + columnCount
+						+ " but got " + (row == null ? 0 : row.length));
 			}
 			List<String> columnConditions = new ArrayList<>();
 			for (int i = 0; i < columnCount; i++) {
@@ -726,8 +727,7 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 			rowConditions.add("(" + String.join(" AND ", columnConditions) + ")");
 		}
 		// 单列退化为普通IN;多列用OR-of-ANDs展开,规避行值IN在SQLServer/DB2等库的方言差异
-		String sql = (columnCount == 1)
-				? columnNames.get(0) + " IN (" + String.join(",", singleColumnParams) + ")"
+		String sql = (columnCount == 1) ? columnNames.get(0) + " IN (" + String.join(",", singleColumnParams) + ")"
 				: "(" + String.join(" OR ", rowConditions) + ")";
 		appendSqlSegments(rawSegment(sql, params));
 	}

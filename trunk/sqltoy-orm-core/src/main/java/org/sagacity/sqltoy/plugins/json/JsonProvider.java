@@ -5,9 +5,9 @@ import java.util.Map;
 
 /**
  * @project sagacity-sqltoy
- * @description JSON 处理的抽象层:sqltoy 的 JSON/JSONB 列支持不绑定任何具体 JSON 库。
- *              默认按 classpath 探测(fastjson2 优先以兼容存量项目,其次 jackson),
- *              也可通过 spring.sqltoy.jsonProvider 显式指定实现类。
+ * @description JSON 处理的抽象层:sqltoy 的 JSON/JSONB 列支持不绑定任何具体 JSON 库。 默认按 classpath
+ *              探测(fastjson2 优先以兼容存量项目,其次 jackson), 也可通过
+ *              spring.sqltoy.jsonProvider 显式指定实现类。
  * @author zhongxuchen
  * @version v1.0, Date:2026-10-15
  */

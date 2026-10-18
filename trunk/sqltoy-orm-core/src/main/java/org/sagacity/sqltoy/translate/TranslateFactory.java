@@ -33,7 +33,6 @@ import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 /**
  * @project sagacity-sqltoy
  * @description 缓存刷新检测接口定义

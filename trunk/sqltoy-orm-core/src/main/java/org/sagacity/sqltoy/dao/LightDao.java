@@ -1087,11 +1087,13 @@ public interface LightDao {
 	 * 即切换为join查询(拼装完整sql,结果类型可与主表不同,主表不同时用from(entityClass)指定)
 	 * <p>
 	 * 单表示例: lightDao.lambdaQuery(StaffInfo.class).eq(StaffInfo::getStatus, 1)
-	 * .like(StaffInfo::getStaffName, "张").orderByDesc(StaffInfo::getEntryTime).find();
+	 * .like(StaffInfo::getStaffName,
+	 * "张").orderByDesc(StaffInfo::getEntryTime).find();
 	 * </p>
 	 * <p>
 	 * join示例: lightDao.lambdaQuery(StaffInfo.class).leftJoin(OrganInfo.class)
-	 * .on(StaffInfo::getOrganId, OrganInfo::getOrganId).eq(StaffInfo::getStatus, 1).find();
+	 * .on(StaffInfo::getOrganId, OrganInfo::getOrganId).eq(StaffInfo::getStatus,
+	 * 1).find();
 	 * </p>
 	 *
 	 * @param entityClass 实体类(join场景兼作结果类型与缺省主表)
@@ -1124,7 +1126,8 @@ public interface LightDao {
 	/**
 	 * 创建lambda删除条件构建器,已绑定当前dao,执行通过构建器终端delete()完成
 	 * <p>
-	 * 示例: lightDao.lambdaDelete(StaffInfo.class).eq(StaffInfo::getStatus, 0).delete();
+	 * 示例: lightDao.lambdaDelete(StaffInfo.class).eq(StaffInfo::getStatus,
+	 * 0).delete();
 	 * </p>
 	 *
 	 * @param entityClass 实体类
@@ -1136,15 +1139,5 @@ public interface LightDao {
 		}
 		return LambdaDelete.create(entityClass).bind(this);
 	}
-
-
-
-
-
-
-
-
-
-
 
 }

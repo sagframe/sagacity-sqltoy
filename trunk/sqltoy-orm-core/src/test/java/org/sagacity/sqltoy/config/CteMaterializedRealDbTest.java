@@ -113,7 +113,9 @@ public class CteMaterializedRealDbTest {
 				}
 			} catch (Exception e) {
 				// 连接不上(容器未启动)优雅跳过,不致测试红
-				skipped.add(name + "(" + e.getClass().getSimpleName() + ")");
+				String msg = e.getMessage();
+				skipped.add(name + "(" + e.getClass().getSimpleName() + ": "
+						+ (msg == null ? "" : msg.substring(0, Math.min(120, msg.length()))) + ")");
 			}
 		}
 		System.out.println("[CteMaterializedRealDb] 已验证支持库=" + verifiedSupported + " 不支持库=" + verifiedUnsupported

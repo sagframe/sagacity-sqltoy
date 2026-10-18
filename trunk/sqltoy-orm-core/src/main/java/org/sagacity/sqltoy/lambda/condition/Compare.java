@@ -313,7 +313,7 @@ public interface Compare<Children> {
 	 */
 	<E, R> Children notIn(boolean condition, LambdaFn<E, R> column, Object... values);
 
-	/*******************************语法糖:值为空时条件自动跳过*******************************/
+	/******************************* 语法糖:值为空时条件自动跳过 *******************************/
 
 	default <E, R> Children eqIfPresent(LambdaFn<E, R> column, Object val) {
 		return eq(val != null, column, val);

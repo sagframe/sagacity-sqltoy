@@ -29,8 +29,7 @@ import org.sagacity.sqltoy.lambda.toolkit.ShadowLambdaMeta;
 import org.sagacity.sqltoy.utils.BeanUtil;
 
 /**
- * @description lambda解析工具类,提取方法引用对应的属性名和实体类,内部对解析结果做了缓存,
- *              基于MyBatis-Plus同名实现改写
+ * @description lambda解析工具类,提取方法引用对应的属性名和实体类,内部对解析结果做了缓存, 基于MyBatis-Plus同名实现改写
  * @author zhongxuchen
  */
 public final class LambdaUtils {

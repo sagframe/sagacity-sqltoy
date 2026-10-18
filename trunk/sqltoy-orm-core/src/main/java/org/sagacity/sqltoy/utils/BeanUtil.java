@@ -3355,8 +3355,8 @@ public class BeanUtil {
 				}
 			}
 		}
-		throw new DataAccessException("failed to load class [" + className
-				+ "], only call loadClass when the class is guaranteed to exist!");
+		throw new DataAccessException(
+				"failed to load class [" + className + "], only call loadClass when the class is guaranteed to exist!");
 	}
 
 	/**

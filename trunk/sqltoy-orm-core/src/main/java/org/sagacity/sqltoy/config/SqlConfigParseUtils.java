@@ -366,7 +366,8 @@ public class SqlConfigParseUtils {
 		processLike(sqlToyResult, dialect);
 		// add update 2024-12-12 将@value(?) 参数值中不含?的提前完成处理
 		processValue(sqlToyResult, dialect, true);
-		// update 2026-10-15 @joinFields 与@value同位置处理:必须在processSplit/processIn/replaceNull之前,
+		// update 2026-10-15 @joinFields
+		// 与@value同位置处理:必须在processSplit/processIn/replaceNull之前,
 		// 否则它占用的那个?会被这些环节误当作in参数或null参数处理,导致参数错位
 		processJoinFields(sqlToyResult, dialect);
 		processSplit(sqlToyResult);
@@ -723,11 +724,11 @@ public class SqlConfigParseUtils {
 	}
 
 	/**
-	 * update 2026-10-17 清理括号组内悬挂的 and/or 连接符:#[...] 片段剔除后,括号组内可能残留
-	 * 悬挂的 and/or(如 and ( or t.b=:b ) 或 and ( t.a=:a or ))。规则:
+	 * update 2026-10-17 清理括号组内悬挂的 and/or 连接符:#[...] 片段剔除后,括号组内可能残留 悬挂的 and/or(如 and
+	 * ( or t.b=:b ) 或 and ( t.a=:a or ))。规则:
 	 * <li>左括号( 之后为 trim 空白后的 and/or 时剔除该连接符;右括号 ) 之前同理</li>
-	 * <li>and|or 之后的 \\s+ 保证 ( order by ... ) 这类以 or 开头的合法关键字不会被误清
-	 * (order 中 r 后是 d,无词边界,or 无法命中)</li>
+	 * <li>and|or 之后的 \\s+ 保证 ( order by ... ) 这类以 or 开头的合法关键字不会被误清 (order 中 r 后是
+	 * d,无词边界,or 无法命中)</li>
 	 * <li>每轮只做删减、长度单调递减,循环必然收敛;未配对括号不处理</li>
 	 * 
 	 * @param sql
@@ -739,8 +740,7 @@ public class SqlConfigParseUtils {
 		}
 		String result = sql;
 		while (true) {
-			String cleaned = result.replaceAll("(?i)\\(\\s*(and|or)\\b", "(")
-					.replaceAll("(?i)\\b(and|or)\\s*\\)", ")");
+			String cleaned = result.replaceAll("(?i)\\(\\s*(and|or)\\b", "(").replaceAll("(?i)\\b(and|or)\\s*\\)", ")");
 			if (cleaned.equals(result)) {
 				break;
 			}
@@ -1038,11 +1038,12 @@ public class SqlConfigParseUtils {
 	}
 
 	/**
-	 * update 2026-10-15 处理 @joinFields(?,default) / @joinFields(null,default):把运行期传入的字段名
-	 * 列表拼成 SQL 标识符串,用于页面配置化的报表与接口服务(由配置决定 select、group by、order by 的列)。
-	 * <li>与 @value 处于同一处理位置、同一套记账方式:命名参数已转成 ?,故按宏之前出现的 ? 个数定位参数值,
-	 * 以已消费宏数 atJoinFieldsCnt 作偏移,消费后从参数集合中剔除,使剩余的 ? 与参数值保持一一对应。
-	 * sql 里写 @joinFields(:fields,default) 经命名参数转换后即为 @joinFields(?,default),
+	 * update 2026-10-15 处理 @joinFields(?,default)
+	 * / @joinFields(null,default):把运行期传入的字段名 列表拼成 SQL 标识符串,用于页面配置化的报表与接口服务(由配置决定
+	 * select、group by、order by 的列)。
+	 * <li>与 @value 处于同一处理位置、同一套记账方式:命名参数已转成 ?,故按宏之前出现的 ? 个数定位参数值, 以已消费宏数
+	 * atJoinFieldsCnt 作偏移,消费后从参数集合中剔除,使剩余的 ? 与参数值保持一一对应。 sql
+	 * 里写 @joinFields(:fields,default) 经命名参数转换后即为 @joinFields(?,default),
 	 * 与直接书写位置参数形态完全等价</li>
 	 * <li>default 可能含括号(如 sum(t.amount)),故不用正则整体匹配宏,而是用 getSymMarkIndex 定位配对右括号;
 	 * 替换区间收集完毕后自后向前一次性拼接,避免边扫边改导致下标失效</li>
@@ -1084,10 +1085,10 @@ public class SqlConfigParseUtils {
 			if (parenEnd < 0) {
 				throw new IllegalArgumentException("@joinFields missing the matched ')',the sql:" + queryStr);
 			}
-			String[] args = MacroUtils.splitMacroArgs(queryStr.substring(queryStr.indexOf("(", m.end() - 1) + 1, parenEnd));
+			String[] args = MacroUtils
+					.splitMacroArgs(queryStr.substring(queryStr.indexOf("(", m.end() - 1) + 1, parenEnd));
 			if (args == null || args.length == 0 || StringUtil.isBlank(args[0])) {
-				throw new IllegalArgumentException(
-						"@joinFields requires a field-list parameter,the sql:" + queryStr);
+				throw new IllegalArgumentException("@joinFields requires a field-list parameter,the sql:" + queryStr);
 			}
 			firstArg = MacroUtils.unwrapMacroArg(args[0]);
 			defaultExpr = (args.length > 1) ? MacroUtils.unwrapMacroArg(args[1]) : "";
@@ -1097,9 +1098,9 @@ public class SqlConfigParseUtils {
 				// 位置参数形态:按宏之前出现的 ? 个数定位,减去已消费的宏数
 				paramCnt = StringUtil.matchCnt(queryStr.substring(0, index), ARG_NAME_PATTERN, 0);
 				if (paramCnt - atJoinFieldsCnt >= paramValueList.size()) {
-					throw new IllegalArgumentException("@joinFields can not find the parameter at index:"
-							+ (paramCnt - atJoinFieldsCnt) + ",please check the sql and the parameter count,the sql:"
-							+ queryStr);
+					throw new IllegalArgumentException(
+							"@joinFields can not find the parameter at index:" + (paramCnt - atJoinFieldsCnt)
+									+ ",please check the sql and the parameter count,the sql:" + queryStr);
 				}
 				paramValue = paramValueList.get(paramCnt - atJoinFieldsCnt);
 			} else if ("null".equalsIgnoreCase(firstArg)) {
@@ -1737,8 +1738,8 @@ public class SqlConfigParseUtils {
 	 * @return
 	 */
 	/**
-	 * update 2026-10-17 拼接完成后追加括号组内悬挂 and/or 连接符清理:
-	 * #[...] 片段剔除后,括号组内可能残留悬挂的 and/or(如 and ( or t.b=:b )),统一在此收口。
+	 * update 2026-10-17 拼接完成后追加括号组内悬挂 and/or 连接符清理: #[...] 片段剔除后,括号组内可能残留悬挂的
+	 * and/or(如 and ( or t.b=:b )),统一在此收口。
 	 */
 	public static String processWhereLinkAnd(String preSql, String markContentSql, boolean isEndWithAndOr,
 			String tailSql) {

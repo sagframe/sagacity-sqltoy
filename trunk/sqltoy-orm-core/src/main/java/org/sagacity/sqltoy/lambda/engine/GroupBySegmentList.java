@@ -6,7 +6,8 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
- * @description group by片段列表:多次groupBy合并为一个子句,列以逗号连接;源自MyBatis-Plus的GroupBySegmentList(Apache-2.0)经sqltoy-plus移植
+ * @description group
+ *              by片段列表:多次groupBy合并为一个子句,列以逗号连接;源自MyBatis-Plus的GroupBySegmentList(Apache-2.0)经sqltoy-plus移植
  * @author zhongxuchen
  */
 public class GroupBySegmentList extends SegmentList {

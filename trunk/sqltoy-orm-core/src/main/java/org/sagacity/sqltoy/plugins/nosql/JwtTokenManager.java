@@ -21,7 +21,6 @@ import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 /**
  * @project sagacity-sqltoy
  * @description jwt token认证管理器:负责rest请求token的获取、缓存、过期主动刷新与401失效重试,

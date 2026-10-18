@@ -64,8 +64,7 @@ public class Jackson2JsonProvider implements JsonProvider {
 	@Override
 	public <T> List<T> parseArray(String json, Class<T> elementType) {
 		try {
-			return MAPPER.readValue(json,
-					MAPPER.getTypeFactory().constructCollectionType(List.class, elementType));
+			return MAPPER.readValue(json, MAPPER.getTypeFactory().constructCollectionType(List.class, elementType));
 		} catch (Exception e) {
 			throw new IllegalArgumentException("jackson parseArray(elementType) failed: " + e.getMessage(), e);
 		}

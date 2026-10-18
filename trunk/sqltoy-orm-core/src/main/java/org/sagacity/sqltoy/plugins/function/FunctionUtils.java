@@ -285,48 +285,8 @@ public class FunctionUtils {
 		}
 		List<IFunction> converts = new ArrayList<IFunction>();
 		try {
-			List<String> realConverts = new ArrayList<String>();
-			boolean hasDefault = false;
-			for (String convert : functionAry) {
-				String[] ary = convert.split("\\,|\\;");
-				for (String tmp : ary) {
-					if (StringUtil.isNotBlank(tmp)) {
-						if ("default".equals(tmp) || "defaults".equals(tmp)) {
-							hasDefault = true;
-						} else if (!realConverts.contains(tmp)) {
-							realConverts.add(tmp);
-						}
-					}
-				}
-			}
-			// 包含默认的函数,将默认的在后面加载
-			if (hasDefault) {
-				for (String convert : functions) {
-					if (!realConverts.contains(convert)) {
-						realConverts.add(convert);
-					}
-				}
-			}
-			String functionName = null;
-			// 排除重复,让自定义同名函数生效
-			Set<String> nameSet = new HashSet<String>();
-			String className;
-			for (int i = 0, n = realConverts.size(); i < n; i++) {
-				functionName = realConverts.get(i).trim();
-				// sql函数包名变更,修正调整后的包路径,保持兼容
-				if (functionName.startsWith("org.sagacity.sqltoy")) {
-					functionName = funPackage.concat(functionName.substring(functionName.lastIndexOf(".") + 1));
-				} // trim、nvl等简写模式
-				else if (!functionName.contains(".")
-						&& functionNames.containsKey(functionName.toLowerCase(Locale.ROOT))) {
-					functionName = funPackage.concat(functionNames.get(functionName.toLowerCase(Locale.ROOT)));
-				}
-				className = functionName.substring(functionName.lastIndexOf(".") + 1).toLowerCase(Locale.ROOT);
-				// 名字已经存在的排除
-				if (!nameSet.contains(className)) {
-					converts.add((IFunction) (Class.forName(functionName).getDeclaredConstructor().newInstance()));
-					nameSet.add(className);
-				}
+			for (String functionName : resolveFunctionClassNames(functionAry)) {
+				converts.add((IFunction) (Class.forName(functionName).getDeclaredConstructor().newInstance()));
 			}
 		} catch (Exception e) {
 			logger.error("setFunctionConverts method execution failed", e);
@@ -335,6 +295,64 @@ public class FunctionUtils {
 			return;
 		}
 		functionConverts = converts;
+	}
+
+	/**
+	 * update 2026-10-18 (6.0.8) 自 setFunctionConverts 抽出的函数类名解析逻辑并公开:
+	 * default/defaults 关键字展开为内置默认集、org.sagacity.sqltoy 旧包路径修正、trim/nvl 等简写展开、
+	 * 按小写类名去重(让自定义同名函数生效),与运行期实例化语义逐字一致; AOT 处理器在构建期经此取得将被 Class.forName
+	 * 实例化的类名清单注册反射 (native 下未注册类无法 Class.forName,配置了 functionConverts 的应用会启动即失败)
+	 *
+	 * @param functionAry 原始配置值(可含 default/defaults 关键字、简写、逗号/分号分隔条目)
+	 * @return 解析后的函数实现类全限定名清单(实例化顺序)
+	 */
+	public static List<String> resolveFunctionClassNames(List<String> functionAry) {
+		List<String> resolved = new ArrayList<String>();
+		if (functionAry == null || functionAry.isEmpty()) {
+			return resolved;
+		}
+		List<String> realConverts = new ArrayList<String>();
+		boolean hasDefault = false;
+		for (String convert : functionAry) {
+			String[] ary = convert.split("\\,|\\;");
+			for (String tmp : ary) {
+				if (StringUtil.isNotBlank(tmp)) {
+					if ("default".equals(tmp) || "defaults".equals(tmp)) {
+						hasDefault = true;
+					} else if (!realConverts.contains(tmp)) {
+						realConverts.add(tmp);
+					}
+				}
+			}
+		}
+		// 包含默认的函数,将默认的在后面加载
+		if (hasDefault) {
+			for (String convert : functions) {
+				if (!realConverts.contains(convert)) {
+					realConverts.add(convert);
+				}
+			}
+		}
+		// 排除重复,让自定义同名函数生效
+		Set<String> nameSet = new HashSet<String>();
+		String className;
+		for (int i = 0, n = realConverts.size(); i < n; i++) {
+			String functionName = realConverts.get(i).trim();
+			// sql函数包名变更,修正调整后的包路径,保持兼容
+			if (functionName.startsWith("org.sagacity.sqltoy")) {
+				functionName = funPackage.concat(functionName.substring(functionName.lastIndexOf(".") + 1));
+			} // trim、nvl等简写模式
+			else if (!functionName.contains(".") && functionNames.containsKey(functionName.toLowerCase(Locale.ROOT))) {
+				functionName = funPackage.concat(functionNames.get(functionName.toLowerCase(Locale.ROOT)));
+			}
+			className = functionName.substring(functionName.lastIndexOf(".") + 1).toLowerCase(Locale.ROOT);
+			// 名字已经存在的排除
+			if (!nameSet.contains(className)) {
+				nameSet.add(className);
+				resolved.add(functionName);
+			}
+		}
+		return resolved;
 	}
 
 	/**

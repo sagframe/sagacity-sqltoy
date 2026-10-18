@@ -17,7 +17,6 @@ import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 /**
  * @project sagacity-sqltoy
  * @description elasticsearch-sql 或elasticsearch6.3.x 版本支持xpack sql查询

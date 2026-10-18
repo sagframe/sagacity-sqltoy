@@ -22,7 +22,6 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 /**
  * 提供一个通用的json类型处理工具
  * 
@@ -271,7 +270,7 @@ public class JSONTypeUtil {
 			boolean[] arr = new boolean[jsonArray.size()];
 			for (int i = 0; i < arr.length; i++) {
 				Object flag = jsonArray.get(i);
-					arr[i] = (flag instanceof Boolean) ? (Boolean) flag : ((Number) flag).intValue() != 0;
+				arr[i] = (flag instanceof Boolean) ? (Boolean) flag : ((Number) flag).intValue() != 0;
 			}
 			return arr;
 		}

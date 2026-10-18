@@ -33,14 +33,17 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
  *              注意在单表查询上追加join会切换执行通道,实体级增强不再生效;
  *              条件动态化推荐IfPresent语法糖(eqIfPresent/likeIfPresent/inIfPresent等),
  *              复杂动态场景请使用sqltoy的SQL模式(sqlId加#[...]动态段与@if宏,见包说明)
- * <p>
- * 单表示例: lightDao.lambdaQuery(User.class).eq(User::getStatus, 1)
- * .like(User::getStaffName, "张").orderByDesc(User::getCreateTime).find();
- * </p>
- * <p>
- * join示例: lightDao.lambdaQuery(StaffInfo.class).leftJoin(OrganInfo.class)
- * .on(StaffInfo::getOrganId, OrganInfo::getOrganId).eq(StaffInfo::getStatus, 1).find();
- * </p>
+ *              <p>
+ *              单表示例: lightDao.lambdaQuery(User.class).eq(User::getStatus, 1)
+ *              .like(User::getStaffName,
+ *              "张").orderByDesc(User::getCreateTime).find();
+ *              </p>
+ *              <p>
+ *              join示例:
+ *              lightDao.lambdaQuery(StaffInfo.class).leftJoin(OrganInfo.class)
+ *              .on(StaffInfo::getOrganId,
+ *              OrganInfo::getOrganId).eq(StaffInfo::getStatus, 1).find();
+ *              </p>
  * @param <T> 查询结果类型:单表即查询实体;join时缺省作为主表与结果类型,主表不同时通过from(entityClass)指定
  * @author zhongxuchen
  */
@@ -77,7 +80,8 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	private PageOptimize pageOptimize;
 
 	/**
-	 * 自定义精简count SQL(仅join/SQL通道的findPage生效,经QueryExecutor.countSql);比@fast内层count更精简的极特殊场景用
+	 * 自定义精简count
+	 * SQL(仅join/SQL通道的findPage生效,经QueryExecutor.countSql);比@fast内层count更精简的极特殊场景用
 	 */
 	private String countSql;
 
@@ -204,7 +208,8 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	private boolean composed;
 
 	/**
-	 * @description 注册CTE:WITH name AS (内层查询)。内层为独立lambdaQuery(组合时共享参数序号,先装配内层再续号外层),
+	 * @description 注册CTE:WITH name AS
+	 *              (内层查询)。内层为独立lambdaQuery(组合时共享参数序号,先装配内层再续号外层),
 	 *              外层经fromCte(name)引用;多CTE以逗号串联,CTE可再引用在先CTE
 	 * @param name     CTE名称
 	 * @param cteQuery 内层查询(不直接执行,仅贡献SQL)
@@ -214,7 +219,9 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	}
 
 	/**
-	 * @description 注册CTE并指定物化hint(materialized仅PG12+及openGauss/金仓/Vastbase/瀚高等同内核库生效:AS MATERIALIZED/AS NOT MATERIALIZED,其余库忽略不渲染,详见SqlWithAnalysis.supportsCteMaterialized)
+	 * @description 注册CTE并指定物化hint(materialized仅PG12+及openGauss/金仓/Vastbase/瀚高等同内核库生效:AS
+	 *              MATERIALIZED/AS NOT
+	 *              MATERIALIZED,其余库忽略不渲染,详见SqlWithAnalysis.supportsCteMaterialized)
 	 */
 	public LambdaQuery<T> with(String name, LambdaQuery<?> cteQuery, Boolean materialized) {
 		// CTE体必须是完整SELECT..FROM,强制内层走join/SQL通道
@@ -225,7 +232,8 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	}
 
 	/**
-	 * @description 注册递归CTE:WITH RECURSIVE name AS (...)(Oracle/SQLServer递归不带RECURSIVE关键字,按dbType适配)
+	 * @description 注册递归CTE:WITH RECURSIVE name AS
+	 *              (...)(Oracle/SQLServer递归不带RECURSIVE关键字,按dbType适配)
 	 */
 	public LambdaQuery<T> withRecursive(String name, LambdaQuery<?> cteQuery) {
 		cteQuery.joinContext.forceJoinChannel();
@@ -305,7 +313,8 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	}
 
 	/**
-	 * @description 组合SQL:[WITH name AS [MATERIALIZED] (inner)... ] mainSql [ UNION [ALL] (other)...]
+	 * @description 组合SQL:[WITH name AS [MATERIALIZED] (inner)... ] mainSql [ UNION
+	 *              [ALL] (other)...]
 	 */
 	private String composeSql() {
 		StringBuilder sb = new StringBuilder();
@@ -395,7 +404,8 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	 * @description 设置分页优化配置(仅对findPage生效):并行count、count缓存keep-alive(aliveSeconds)、
 	 *              缓存容量(aliveMax)、零计数跳过(skipZeroCount)等,复用sqltoy既有{@link PageOptimize};
 	 *              不设置时用全局SqlToyConfig.pageOptimize。单表通道经EntityQuery透传、join通道经QueryExecutor透传
-	 * @param pageOptimize 分页优化配置,如 new PageOptimize().parallel(true).aliveSeconds(120)
+	 * @param pageOptimize 分页优化配置,如 new
+	 *                     PageOptimize().parallel(true).aliveSeconds(120)
 	 * @return 自身
 	 */
 	public LambdaQuery<T> pageOptimize(PageOptimize pageOptimize) {
@@ -408,7 +418,8 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	}
 
 	/**
-	 * @description 设置自定义精简count SQL(仅join/SQL通道的findPage生效):分页算总数时用它替代包裹整条查询SQL的自动count,
+	 * @description 设置自定义精简count
+	 *              SQL(仅join/SQL通道的findPage生效):分页算总数时用它替代包裹整条查询SQL的自动count,
 	 *              对应sqltoy的count-sql配置;比@fast内层count仍不够精简的极特殊场景使用
 	 * @param countSql 精简的count SQL,如 select count(1) from table_a where status=:p1
 	 * @return 自身
@@ -467,8 +478,7 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 
 	/**
 	 * @description 缺省输出主表全部字段(别名.列 AS 属性),可与select(JoinCol...)的额外列并存
-	 *              (主表字段在前,额外列在后);不调用本方法且未指定select时,结果类型参与join
-	 *              同样缺省查其全部字段
+	 *              (主表字段在前,额外列在后);不调用本方法且未指定select时,结果类型参与join 同样缺省查其全部字段
 	 * @return 自身
 	 */
 	public LambdaQuery<T> selectAll() {
@@ -571,8 +581,9 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 			// join分页走findPageByQuery(QueryExecutor):QueryExecutor可同时携带dataSource与pageOptimize
 			// (link Query构建器无pageOptimize);pageOptimize为null时回退全局SqlToyConfig配置,行为与未设置一致
 			return (Page<T>) dao
-					.findPageByQuery(page, new QueryExecutor(getSql(), getParams()).resultType(getEntityClass())
-							.dataSource(getDataSource()).pageOptimize(pageOptimize).countSql(countSql))
+					.findPageByQuery(page,
+							new QueryExecutor(getSql(), getParams()).resultType(getEntityClass())
+									.dataSource(getDataSource()).pageOptimize(pageOptimize).countSql(countSql))
 					.getPageResult();
 		}
 		return dao.findPageEntity(page, getEntityClass(), LambdaConvert.toEntityQuery(this));
@@ -622,7 +633,8 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	/**
 	 * @description 构建join通道的查询执行器:走sqltoy既有的query()链式构建器(原生sql+命名参数+结果类型),
 	 *              并经dataSource(ds)透传显式数据源(null时回退dao默认数据源,行为与未指定完全一致);
-	 *              query()构建器内部即new QueryExecutor(sql,params).resultType(..),与既有find(sql,map,resultType)同源,
+	 *              query()构建器内部即new
+	 *              QueryExecutor(sql,params).resultType(..),与既有find(sql,map,resultType)同源,
 	 *              故无需给LightDao新增任何方法即可支持find/findPage/findTop/findRandom/count全终端的数据源路由
 	 */
 	private Query joinQuery() {
@@ -637,7 +649,6 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 		// top-1命中即停,避免count全量聚合
 		return !findTop(1).isEmpty();
 	}
-
 
 	private void requireDao() {
 		if (dao == null) {
@@ -669,8 +680,8 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 		/**
 		 * @description 登记同一join的两个on等值关联字段对(自动AND),完成后返回查询构建器
 		 */
-		public <A, B, C, D> LambdaQuery<T> on(LambdaFn<A, ?> columnA1, LambdaFn<B, ?> columnB1,
-				LambdaFn<C, ?> columnA2, LambdaFn<D, ?> columnB2) {
+		public <A, B, C, D> LambdaQuery<T> on(LambdaFn<A, ?> columnA1, LambdaFn<B, ?> columnB1, LambdaFn<C, ?> columnA2,
+				LambdaFn<D, ?> columnB2) {
 			joinContext.registerOn(columnA1, columnB1, columnA2, columnB2);
 			return LambdaQuery.this;
 		}

@@ -44,7 +44,9 @@ public interface Logic<Children> {
 
 	/**
 	 * AND 嵌套
-	 * <p>例: and(n -&gt; n.eq(User::getStatus, 1).eq(User::getType, 2))</p>
+	 * <p>
+	 * 例: and(n -&gt; n.eq(User::getStatus, 1).eq(User::getType, 2))
+	 * </p>
 	 */
 	Children and(boolean condition, Function<Children, Children> function);
 
@@ -57,7 +59,9 @@ public interface Logic<Children> {
 
 	/**
 	 * OR 嵌套
-	 * <p>例: or(n -&gt; n.eq(User::getStatus, 1).eq(User::getType, 2))</p>
+	 * <p>
+	 * 例: or(n -&gt; n.eq(User::getStatus, 1).eq(User::getType, 2))
+	 * </p>
 	 */
 	Children or(boolean condition, Function<Children, Children> function);
 
@@ -70,7 +74,9 @@ public interface Logic<Children> {
 
 	/**
 	 * 正常嵌套,不带AND或OR连接符
-	 * <p>例: nested(n -&gt; n.eq(User::getStatus, 1).or().eq(User::getType, 2))</p>
+	 * <p>
+	 * 例: nested(n -&gt; n.eq(User::getStatus, 1).or().eq(User::getType, 2))
+	 * </p>
 	 */
 	Children nested(boolean condition, Function<Children, Children> function);
 
@@ -95,8 +101,12 @@ public interface Logic<Children> {
 
 	/**
 	 * 无视优化规则直接拼接到sql的最后(有sql注入风险,请谨慎使用)
-	 * <p>例: last("limit 10")</p>
-	 * <p>注意只能调用一次,多次调用以最后一次为准</p>
+	 * <p>
+	 * 例: last("limit 10")
+	 * </p>
+	 * <p>
+	 * 注意只能调用一次,多次调用以最后一次为准
+	 * </p>
 	 */
 	Children last(boolean condition, String lastSql);
 
@@ -109,7 +119,9 @@ public interface Logic<Children> {
 
 	/**
 	 * 条件消费函数,用于复用一段条件组装逻辑
-	 * <p>例: .accept(n -&gt; { if (...) n.eq(User::getStatus, 1); })</p>
+	 * <p>
+	 * 例: .accept(n -&gt; { if (...) n.eq(User::getStatus, 1); })
+	 * </p>
 	 */
 	Children accept(boolean condition, Consumer<Children> consumer);
 }

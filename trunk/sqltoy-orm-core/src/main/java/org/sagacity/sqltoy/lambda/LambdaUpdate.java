@@ -125,7 +125,6 @@ public final class LambdaUpdate<T> extends AbstractWhere<T, LambdaUpdate<T>> {
 		super.assemble(metaLoader);
 	}
 
-
 	/**
 	 * @return 是否走join通道:注册了join关联表
 	 */
@@ -244,7 +243,6 @@ public final class LambdaUpdate<T> extends AbstractWhere<T, LambdaUpdate<T>> {
 		setOps.add(new SetOp(column, value, trimmed));
 		return this;
 	}
-
 
 	/**
 	 * @return 单表通道set的字段与值(assemble之后有效)

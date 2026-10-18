@@ -28,10 +28,13 @@ public class SqlWithAnalysis implements Serializable {
 
 	/**
 	 * update 2026-10-18 CTE物化hint定位:匹配后随'('的"as [not] materialized",组1承载"as"+空白
-	 * 原形态,供adaptCteMaterialized在不支持库上剔除[not] materialized关键字而保留"as ("
+	 * 原形态,供adaptCteMaterialized在不支持库上剔除[not] materialized关键字而保留"as ("。
+	 * '('后须紧跟查询体关键字(select/with/values/table)或嵌套'('方视为CTE物化hint——以此与
+	 * 派生表别名恰为materialized且带列清单的形态(如 FROM (..) AS materialized (x),其后'('跟的是
+	 * 列名标识符而非查询体)区分,规避上下文无关匹配误剔别名导致SQL破损
 	 */
-	private static final Pattern CTE_MATERIALIZED_PATTERN = Pattern
-			.compile("(?i)(\\bas\\s+)(?:not\\s+)?materialized\\s*(?=\\()");
+	private static final Pattern CTE_MATERIALIZED_PATTERN = Pattern.compile(
+			"(?i)(\\bas\\s+)(?:not\\s+)?materialized\\s*(?=\\(\\s*(?:select\\b|with\\b|values\\b|table\\b|\\())");
 
 	private String sql;
 
@@ -247,10 +250,11 @@ public class SqlWithAnalysis implements Serializable {
 
 	/**
 	 * update 2026-10-18 目标库是否支持CTE物化hint(AS [NOT] MATERIALIZED)。该语法为PostgreSQL
-	 * 12+引入,同内核衍生库openGauss/金仓/Vastbase/瀚高经本次真库实测均支持;其余库(mysql/tidb/
-	 * sqlserver/oracle/db2/dm/hana/clickhouse等,实测mysql9.3/tidb8.5/mssql2025混入即报语法错误)
-	 * 不支持。白名单保守只收录已实测支持的库,未收录库一律剔除hint(仅失去物化优化、不改变查询
-	 * 语义,绝不会因关键字报错);GAUSSDB/MOGDB/STARDB等openGauss/PG衍生库待真库实测后可补入
+	 * 12+引入,同内核衍生库openGauss/金仓/Vastbase/瀚高经本次docker真库实测均支持;GAUSSDB与
+	 * openGauss同内核(verify矩阵gaussdb档案即连opengauss容器),随openGauss实测一并收录。其余库
+	 * (mysql/tidb/sqlserver/oracle/db2/dm/hana/clickhouse等,实测mysql9.3/tidb8.5/mssql2025混入
+	 * 即报语法错误)不支持。白名单保守只收录已实测(或同内核已实测)支持的库,未收录库一律剔除hint
+	 * (仅失去物化优化、不改变查询语义,绝不会因关键字报错);MOGDB/STARDB等openGauss/PG衍生库待 真库实测后可补入
 	 *
 	 * @param dbType DBType常量
 	 * @return true表示支持,应保留hint
@@ -272,10 +276,12 @@ public class SqlWithAnalysis implements Serializable {
 
 	/**
 	 * update 2026-10-18 按目标库类型保留/剔除CTE物化hint。支持库(PG系)原样返回;不支持库将 "AS [NOT]
-	 * MATERIALIZED ("改写为"AS (",规避混入PG专有关键字导致的执行报错。定位在字面量
-	 * 掩码串上进行(掩码串与原串等长、非字面量字符原样保留,匹配位置可直接用于原串截取),规避 字面量内的"as materialized
-	 * ("文本被误剔;不含materialized关键字时走零开销快速通道。
-	 * 剔除只移除优化hint、不改变CTE查询语义,对不支持库本就无物化概念,行为等价于用户未写hint
+	 * MATERIALIZED ("改写为"AS (",规避混入PG专有关键字导致的执行报错。两层防护确保只动真正的CTE
+	 * 物化hint、绝不误伤:①解析器门禁——先经SqlWithAnalysis确认sql确含with as CTE,非CTE上下文(如
+	 * 派生表别名恰为materialized)一律原样返回;②字面量掩码+查询体lookahead——定位在掩码串上进行
+	 * (掩码串与原串等长、非字面量字符原样保留,匹配位置可直接用于原串截取),且要求materialized后的
+	 * '('紧跟查询体(select/with/values/table/嵌套'('),与派生表别名列清单形态区分。不含materialized
+	 * 关键字时走零开销快速通道。剔除只移除优化hint、不改变CTE查询语义,对不支持库本就无物化概念, 行为等价于用户未写hint
 	 *
 	 * @param sql    原始sql(可为整条语句或with片段)
 	 * @param dbType 目标库类型(DBType常量)
@@ -287,6 +293,10 @@ public class SqlWithAnalysis implements Serializable {
 		}
 		// 快速通道:常规sql不含materialized关键字,零处理原样返回
 		if (StringUtil.indexOfIgnoreCase(sql, "materialized") == -1) {
+			return sql;
+		}
+		// 门禁①:仅处理真正含with as CTE的sql,非CTE上下文的materialized文本(如派生表别名)一律不动
+		if (!new SqlWithAnalysis(sql).isHasWith()) {
 			return sql;
 		}
 		String masked = SqlConfigParseUtils.maskLiterals(sql, SqlConfigParseUtils.isBackslashEscapeDialect(dbType));

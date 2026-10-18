@@ -513,7 +513,8 @@ public class SqlToyContext {
 
 	public void initialize() throws Exception {
 		// JSON provider: attempt initialization at startup (explicit config wins over
-		// classpath detection; a missing JSON library only warns, it does not block startup)
+		// classpath detection; a missing JSON library only warns, it does not block
+		// startup)
 		org.sagacity.sqltoy.plugins.json.JsonProviders.initAtStartup(jsonProvider);
 		logger.debug("start init sqltoy ..............................");
 		// 加载sqltoy的各类参数,如db2是否要增加with

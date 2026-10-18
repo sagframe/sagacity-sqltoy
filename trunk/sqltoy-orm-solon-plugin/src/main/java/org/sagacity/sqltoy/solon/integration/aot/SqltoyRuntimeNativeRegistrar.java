@@ -21,6 +21,7 @@ import org.sagacity.sqltoy.plugins.id.impl.NanoTimeIdGenerator;
 import org.sagacity.sqltoy.plugins.id.impl.RedisIdGenerator;
 import org.sagacity.sqltoy.plugins.id.impl.SnowflakeIdGenerator;
 import org.sagacity.sqltoy.plugins.id.impl.UUIDGenerator;
+import org.sagacity.sqltoy.plugins.function.FunctionUtils;
 import org.sagacity.sqltoy.solon.configure.SqlToyContextProperties;
 import org.sagacity.sqltoy.solon.configure.SqlToyContextTaskPoolProperties;
 import org.sagacity.sqltoy.translate.model.CheckerConfigModel;
@@ -188,6 +189,13 @@ public class SqltoyRuntimeNativeRegistrar implements RuntimeNativeRegistrar {
             // 运行期约定:含"."才视为类名反射实例化,否则为 bean 名称(由 solon aot 自行保障)
             if (StringUtil.isNotBlank(candidate) && candidate.contains(".")) {
                 registerClassByName(metadata, candidate.trim());
+            }
+        }
+        // functionConverts:bean 创建期 FunctionUtils 对解析出的每个函数类(含 default 展开的内置集)
+        // Class.forName 实例化,与运行期同语义解析后逐个注册,否则配置了 functionConverts 的应用 native 启动即失败
+        if (properties.getFunctionConverts() != null) {
+            for (String functionName : FunctionUtils.resolveFunctionClassNames(properties.getFunctionConverts())) {
+                registerClassByName(metadata, functionName);
             }
         }
     }

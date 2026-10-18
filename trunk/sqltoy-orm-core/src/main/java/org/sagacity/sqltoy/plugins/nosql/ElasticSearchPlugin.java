@@ -24,7 +24,6 @@ import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 /**
  * @project sagacity-sqltoy
  * @description elasticSearch的插件

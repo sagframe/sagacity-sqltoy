@@ -52,8 +52,7 @@ public class Jackson3JsonProvider implements JsonProvider {
 
 	@Override
 	public <T> List<T> parseArray(String json, Class<T> elementType) {
-		return MAPPER.readValue(json,
-				MAPPER.getTypeFactory().constructCollectionType(List.class, elementType));
+		return MAPPER.readValue(json, MAPPER.getTypeFactory().constructCollectionType(List.class, elementType));
 	}
 
 	@Override

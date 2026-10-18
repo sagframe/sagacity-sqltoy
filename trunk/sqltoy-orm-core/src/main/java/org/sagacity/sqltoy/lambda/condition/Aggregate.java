@@ -98,7 +98,9 @@ public interface Aggregate<Children> {
 
 	/**
 	 * HAVING 聚合过滤条件,sql中的sqltoy命名参数通过paramMap提供
-	 * <p>例: having("count(*) > :count", map)</p>
+	 * <p>
+	 * 例: having("count(*) > :count", map)
+	 * </p>
 	 */
 	Children having(boolean condition, String sqlHaving, Map<String, Object> paramMap);
 }

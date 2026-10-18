@@ -5,7 +5,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * @description order by片段列表:多次orderBy合并为一个子句,列以逗号连接;源自MyBatis-Plus的OrderBySegmentList(Apache-2.0)经sqltoy-plus移植
+ * @description order
+ *              by片段列表:多次orderBy合并为一个子句,列以逗号连接;源自MyBatis-Plus的OrderBySegmentList(Apache-2.0)经sqltoy-plus移植
  * @author zhongxuchen
  */
 public class OrderBySegmentList extends SegmentList {
@@ -42,8 +43,7 @@ public class OrderBySegmentList extends SegmentList {
 			// 删除原有片段,合并为一个order by子句
 			// 合并后 -> ORDER BY col1 ASC,col2 ASC,col3 ASC
 			deleteByIndexes(deleteIndexes);
-			add(() -> mergeSegments.stream()
-					.map(s -> s[0].getSqlSegment() + " " + s[1].getSqlSegment())
+			add(() -> mergeSegments.stream().map(s -> s[0].getSqlSegment() + " " + s[1].getSqlSegment())
 					.collect(Collectors.joining(",")));
 		}
 	}

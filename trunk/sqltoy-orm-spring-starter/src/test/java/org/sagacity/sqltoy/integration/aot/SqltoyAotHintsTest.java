@@ -50,6 +50,8 @@ public class SqltoyAotHintsTest {
 		props.put("spring.sqltoy.sqlFormater", "default");
 		// 不存在的类:warn 跳过而非中断 AOT 构建
 		props.put("spring.sqltoy.sqlInterceptors[0]", "com.sqltoy.NotExistSqlInterceptor");
+		// functionConverts:default 展开为内置函数集,构建期按运行期同语义解析注册
+		props.put("spring.sqltoy.functionConverts[0]", "default");
 
 		RuntimeHints hints = applyProcessor(aotLikeBeanFactory(props));
 
@@ -67,6 +69,9 @@ public class SqltoyAotHintsTest {
 				"caffeine translate cache manager missing (marker-based registration)");
 		// 不存在的拦截器类跳过,不影响其他注册
 		assertFalse(reflectionRegistered(hints, "com.sqltoy.NotExistSqlInterceptor"));
+		// functionConverts default 展开的内置函数集已注册
+		assertTrue(reflectionRegistered(hints, "org.sagacity.sqltoy.plugins.function.impl.Trim"),
+				"functionConverts default set registration missing");
 
 		// 动态资源 pattern:目录补 /** 通配、显式文件与密钥按原路径登记
 		Set<String> patterns = resourcePatterns(hints);

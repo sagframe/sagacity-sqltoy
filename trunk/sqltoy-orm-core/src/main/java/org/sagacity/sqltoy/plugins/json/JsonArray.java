@@ -5,8 +5,8 @@ import java.util.List;
 
 /**
  * @project sagacity-sqltoy
- * @description provider 中立的 JSON 数组视图。底层是 List:fastjson 的 JSONArray 本身
- *              实现 List,jackson 解析结果也是 List,因此同一套访问器对两种 provider 成立。
+ * @description provider 中立的 JSON 数组视图。底层是 List:fastjson 的 JSONArray 本身 实现
+ *              List,jackson 解析结果也是 List,因此同一套访问器对两种 provider 成立。
  * @author zhongxuchen
  * @version v1.0, Date:2026-10-15
  */

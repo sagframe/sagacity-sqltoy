@@ -8,13 +8,12 @@ import org.slf4j.LoggerFactory;
 
 /**
  * @project sagacity-sqltoy
- * @description JsonProvider 的解析与持有:
- *              1) spring.sqltoy.jsonProvider 显式配置的实现类优先;
+ * @description JsonProvider 的解析与持有: 1) spring.sqltoy.jsonProvider 显式配置的实现类优先;
  *              2) 否则按 classpath 探测:fastjson2(兼容存量项目) -> jackson3 -> jackson2;
- *              3) 候选必须通过冒烟解析才会被采纳:库在 classpath 上并不等于可用(例如 jackson3 的
- *                 databind 需要 jackson-annotations 2.20+,与 jackson2 共存时可能被仲裁成更旧的版本,
- *                 运行期抛 NoSuchFieldError),此时记 WARN 并降级到下一个候选;
- *              4) 没有任何可用实现时,触及 JSON 列才抛出带明确指引的异常(而非 NoClassDefFoundError)。
+ *              3) 候选必须通过冒烟解析才会被采纳:库在 classpath 上并不等于可用(例如 jackson3 的 databind
+ *              需要 jackson-annotations 2.20+,与 jackson2 共存时可能被仲裁成更旧的版本, 运行期抛
+ *              NoSuchFieldError),此时记 WARN 并降级到下一个候选; 4) 没有任何可用实现时,触及 JSON
+ *              列才抛出带明确指引的异常(而非 NoClassDefFoundError)。
  * @author zhongxuchen
  * @version v1.0, Date:2026-10-15
  */
@@ -30,9 +29,8 @@ public final class JsonProviders {
 	private static final String JACKSON2_IMPL = "org.sagacity.sqltoy.plugins.json.Jackson2JsonProvider";
 
 	/**
-	 * 探测候选:{marker 类名, 实现类名}。顺序即优先级:fastjson2 优先,因为 provider 抽象出现之前
-	 * 就把 JSON 列跑起来的项目 classpath 上一定有 fastjson2,保持它们的行为完全不变;
-	 * 其后 jackson3(Spring Boot 4 默认)、jackson2。
+	 * 探测候选:{marker 类名, 实现类名}。顺序即优先级:fastjson2 优先,因为 provider 抽象出现之前 就把 JSON 列跑起来的项目
+	 * classpath 上一定有 fastjson2,保持它们的行为完全不变; 其后 jackson3(Spring Boot 4 默认)、jackson2。
 	 * 全部用字符串:引用 Xxx.class 或 Xxx::new 都会在类加载/初始化阶段就要求对应的 JSON 库存在
 	 */
 	private static final String[][] CANDIDATES = { { "com.alibaba.fastjson2.JSON", FASTJSON_IMPL },
@@ -40,9 +38,9 @@ public final class JsonProviders {
 			{ "com.fasterxml.jackson.databind.ObjectMapper", JACKSON2_IMPL } };
 
 	/**
-	 * 内置实现的简写别名(小写比较),配置时无需写全限定类名;自定义实现仍写全限定类名。
-	 * 一律用字符串而非 Xxx.class.getName():本类会在只装了部分 JSON 库的项目里被加载,
-	 * 任何对具体实现类的静态引用都可能触发其类初始化并抛 NoClassDefFoundError
+	 * 内置实现的简写别名(小写比较),配置时无需写全限定类名;自定义实现仍写全限定类名。 一律用字符串而非
+	 * Xxx.class.getName():本类会在只装了部分 JSON 库的项目里被加载, 任何对具体实现类的静态引用都可能触发其类初始化并抛
+	 * NoClassDefFoundError
 	 */
 	private static final Map<String, String> ALIASES = Map.of("fastjson", FASTJSON_IMPL, "fastjson2", FASTJSON_IMPL,
 			"jackson2", JACKSON2_IMPL, "jackson-2", JACKSON2_IMPL, "jackson3", JACKSON3_IMPL, "jackson-3",
@@ -56,10 +54,8 @@ public final class JsonProviders {
 
 	/**
 	 * 由 SqlToyContext 初始化时调用(配置项 spring.sqltoy.jsonProvider)。
-	 * 取值支持两种写法:内置实现的简写别名(fastjson2 / jackson3 / jackson2),
-	 * 或任意 JsonProvider 实现的全限定类名。
-	 * 显式配置代表使用者的明确意图,因此不可用时直接失败并带上根因,
-	 * 而不是静默回落到探测结果(那会让配置形同虚设且难以排查)。
+	 * 取值支持两种写法:内置实现的简写别名(fastjson2 / jackson3 / jackson2), 或任意 JsonProvider
+	 * 实现的全限定类名。 显式配置代表使用者的明确意图,因此不可用时直接失败并带上根因, 而不是静默回落到探测结果(那会让配置形同虚设且难以排查)。
 	 */
 	public static void configure(String providerClass) {
 		if (providerClass == null || providerClass.trim().isEmpty()) {
@@ -94,8 +90,8 @@ public final class JsonProviders {
 	}
 
 	/**
-	 * 启动期调用(SqlToyContext.initialize):显式配置非法时快速失败;
-	 * 仅缺可用 JSON 库时记 WARN 不阻断启动(不用 JSON/ES 特性的项目无需任何 JSON 库)
+	 * 启动期调用(SqlToyContext.initialize):显式配置非法时快速失败; 仅缺可用 JSON 库时记 WARN 不阻断启动(不用
+	 * JSON/ES 特性的项目无需任何 JSON 库)
 	 */
 	public static JsonProvider initAtStartup(String configuredClass) {
 		configure(configuredClass);
@@ -139,9 +135,8 @@ public final class JsonProviders {
 	}
 
 	/**
-	 * 库存在且能真正解析 JSON 才算可用;不可用时记 WARN 交回调用方降级。
-	 * marker 类不存在时静默跳过——项目只装一个 JSON 库是常态,不该为此刷 WARN。
-	 * 实现类在 try 内部反射加载:这样即使它的静态初始化因缺库而抛 NoClassDefFoundError,
+	 * 库存在且能真正解析 JSON 才算可用;不可用时记 WARN 交回调用方降级。 marker 类不存在时静默跳过——项目只装一个 JSON
+	 * 库是常态,不该为此刷 WARN。 实现类在 try 内部反射加载:这样即使它的静态初始化因缺库而抛 NoClassDefFoundError,
 	 * 也只是降级到下一个候选,而不是让整个 SqlToyContext 启动失败
 	 */
 	private static JsonProvider probe(String markerClass, String providerClass) {
@@ -154,8 +149,9 @@ public final class JsonProviders {
 			logger.info("sqltoy json provider detected from classpath: {}", provider.name());
 			return provider;
 		} catch (Throwable e) {
-			logger.warn("JSON library [{}] is on the classpath but its sqltoy provider [{}] can not parse JSON ({}),"
-					+ " trying the next candidate; please check the version compatibility of the JSON library",
+			logger.warn(
+					"JSON library [{}] is on the classpath but its sqltoy provider [{}] can not parse JSON ({}),"
+							+ " trying the next candidate; please check the version compatibility of the JSON library",
 					markerClass, providerClass, e.toString());
 			return null;
 		}

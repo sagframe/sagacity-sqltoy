@@ -75,7 +75,7 @@ public final class LambdaConvert {
 
 	/**
 	 * @description lambda更新条件转换为EntityUpdate,set/merge字段即更新字段,并做无条件防护;
-	 *               where中无命名参数时补齐参数个数,规避updateByQuery的参数计数校验异常
+	 *              where中无命名参数时补齐参数个数,规避updateByQuery的参数计数校验异常
 	 */
 	public static <T> EntityUpdate toEntityUpdate(LambdaUpdate<T> update) {
 		if (update.getSetFields().isEmpty()) {

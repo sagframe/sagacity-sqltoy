@@ -8,7 +8,9 @@
  *              复杂动态场景(多分支条件组合、方言差异、大段可选条件、报表类配置化sql)应使用sqltoy的SQL模式——
  *              sqlId加sql文本或xml中的#[...]动态段与@if等宏,由SqlScriptLoader统一管理,支持方言变体与热更新;
  *              lambda层不复制字符串条件DSL(单表字符串条件由EntityQuery/EntityUpdate承担)。
- *              <p>代码溯源(Apache-2.0兼容,均为派生而非复制粘贴):</p>
+ *              <p>
+ *              代码溯源(Apache-2.0兼容,均为派生而非复制粘贴):
+ *              </p>
  *              <li>直接派生自MyBatis-Plus(保留其版权头):LambdaUtils、SqlKeyword、MatchSegment,
  *              以及lambda元信息四件套SerializedLambda/ReflectLambdaMeta/ShadowLambdaMeta/IdeaProxyLambdaMeta
  *              (sqltoy-plus移植时剥离了版权头,本次恢复);PropertyNamer(源头MyBatis)已于6.0.8并入BeanUtil.methodToProperty;</li>

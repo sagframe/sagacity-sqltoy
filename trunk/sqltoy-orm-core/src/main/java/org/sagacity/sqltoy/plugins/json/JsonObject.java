@@ -6,9 +6,9 @@ import java.util.Set;
 
 /**
  * @project sagacity-sqltoy
- * @description provider 中立的 JSON 对象视图。底层是 Map:fastjson 的 JSONObject 本身
- *              实现 Map,jackson 解析结果也是 Map,因此同一套访问器语义对两种 provider 成立。
- *              取值做宽松类型转换(与 fastjson 的历史行为对齐):数字可转字符串、字符串数字可转 Long 等。
+ * @description provider 中立的 JSON 对象视图。底层是 Map:fastjson 的 JSONObject 本身 实现
+ *              Map,jackson 解析结果也是 Map,因此同一套访问器语义对两种 provider 成立。 取值做宽松类型转换(与
+ *              fastjson 的历史行为对齐):数字可转字符串、字符串数字可转 Long 等。
  * @author zhongxuchen
  * @version v1.0, Date:2026-10-15
  */

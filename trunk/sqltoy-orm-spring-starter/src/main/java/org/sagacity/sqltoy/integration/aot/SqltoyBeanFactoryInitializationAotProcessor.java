@@ -8,6 +8,7 @@ import java.util.Set;
 
 import org.sagacity.sqltoy.config.EntityScanner;
 import org.sagacity.sqltoy.configure.SqlToyContextProperties;
+import org.sagacity.sqltoy.plugins.function.FunctionUtils;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -211,6 +212,13 @@ class SqltoyBeanFactoryInitializationAotProcessor implements BeanFactoryInitiali
 			// 运行期约定:含"."才视为类名反射实例化,否则为 spring bean 名称(由 Spring AOT 自行保障)
 			if (StringUtil.isNotBlank(candidate) && candidate.contains(".")) {
 				registerClassByName(hints, candidate.trim());
+			}
+		}
+		// functionConverts:bean 创建期 FunctionUtils 对解析出的每个函数类(含 default 展开的内置集)
+		// Class.forName 实例化,与运行期同语义解析后逐个注册,否则配置了 functionConverts 的应用 native 启动即失败
+		if (properties.getFunctionConverts() != null) {
+			for (String functionName : FunctionUtils.resolveFunctionClassNames(properties.getFunctionConverts())) {
+				registerClassByName(hints, functionName);
 			}
 		}
 	}

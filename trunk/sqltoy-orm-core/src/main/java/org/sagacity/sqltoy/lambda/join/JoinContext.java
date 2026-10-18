@@ -230,7 +230,8 @@ public class JoinContext {
 	 */
 	public void registerFrom(Class<?> entityClass) {
 		if (isAssembled()) {
-			throw new DataAccessException("Join structure cannot be modified after assemble; build joins before execution");
+			throw new DataAccessException(
+					"Join structure cannot be modified after assemble; build joins before execution");
 		}
 		doRegisterFrom(entityClass);
 	}
@@ -263,7 +264,8 @@ public class JoinContext {
 	 */
 	public void registerJoin(SqlKeyword joinKeyword, Class<?> entityClass) {
 		if (isAssembled()) {
-			throw new DataAccessException("Join structure cannot be modified after assemble; build joins before execution");
+			throw new DataAccessException(
+					"Join structure cannot be modified after assemble; build joins before execution");
 		}
 		if (fromClass == null && resultClass != null) {
 			registerFrom(resultClass);
@@ -284,8 +286,7 @@ public class JoinContext {
 	}
 
 	/**
-	 * @description 登记on等值关联:别名a.字段a = 别名b.字段b,字段对依次成对传入,
-	 *              同一join的多个关联条件自动以AND连接
+	 * @description 登记on等值关联:别名a.字段a = 别名b.字段b,字段对依次成对传入, 同一join的多个关联条件自动以AND连接
 	 */
 	public void registerOn(LambdaFn<?, ?>... columnPairs) {
 		if (pendingJoinKeyword == null) {
@@ -332,7 +333,8 @@ public class JoinContext {
 	}
 
 	/**
-	 * @description 标记输出某个被join实体的全部字段(别名.列 AS 属性),补sqltoy-plus select(mappingClass,...)能力
+	 * @description 标记输出某个被join实体的全部字段(别名.列 AS 属性),补sqltoy-plus
+	 *              select(mappingClass,...)能力
 	 */
 	public void markSelectAll(Class<?> entityClass) {
 		checkOperate(Operate.SELECT, "selectAll");
@@ -467,8 +469,8 @@ public class JoinContext {
 		for (LambdaFn<?, ?> column : selectAllExclude.getColumns()) {
 			FieldNature nature = LambdaUtils.extractNature(column);
 			if (!fromClass.equals(nature.entityClass())) {
-				throw new DataAccessException("ExcludeCols columns must belong to the from entity ["
-						+ fromClass.getSimpleName() + "]");
+				throw new DataAccessException(
+						"ExcludeCols columns must belong to the from entity [" + fromClass.getSimpleName() + "]");
 			}
 			fields.add(nature.fieldName());
 		}
@@ -500,25 +502,25 @@ public class JoinContext {
 		String whereSql = (conditionSql == null || conditionSql.isEmpty()) ? "1 = 1" : conditionSql;
 		StringBuilder sql = new StringBuilder();
 		switch (operate) {
-			case SELECT:
-				sql.append(SqlKeyword.SELECT.getSqlSegment()).append(" ").append(distinct ? "DISTINCT " : "")
-						.append(buildSelectSql()).append(" ").append(SqlKeyword.FROM.getSqlSegment()).append(" ")
-						.append(buildTableSql());
-				break;
-			case UPDATE:
-				if (setItems.isEmpty()) {
-					throw new DataAccessException("Lambda join update requires at least one field set via set()");
-				}
-				sql.append(SqlKeyword.UPDATE.getSqlSegment()).append(" ")
-						.append(metaLoader.apply(fromClass).getSchemaTable(null, null)).append(" ")
-						.append(SqlKeyword.SET.getSqlSegment()).append(" ").append(buildSetSql()).append(" ")
-						.append(SqlKeyword.WHERE.getSqlSegment()).append(" ")
-						.append(buildExistsRewrite(fromClass, conditionSql));
-				return sql.toString();
-			case DELETE:
-				return getDeleteSqls(conditionSql).get(0);
-			default:
-				throw new DataAccessException("Unsupported lambda join operate type");
+		case SELECT:
+			sql.append(SqlKeyword.SELECT.getSqlSegment()).append(" ").append(distinct ? "DISTINCT " : "")
+					.append(buildSelectSql()).append(" ").append(SqlKeyword.FROM.getSqlSegment()).append(" ")
+					.append(buildTableSql());
+			break;
+		case UPDATE:
+			if (setItems.isEmpty()) {
+				throw new DataAccessException("Lambda join update requires at least one field set via set()");
+			}
+			sql.append(SqlKeyword.UPDATE.getSqlSegment()).append(" ")
+					.append(metaLoader.apply(fromClass).getSchemaTable(null, null)).append(" ")
+					.append(SqlKeyword.SET.getSqlSegment()).append(" ").append(buildSetSql()).append(" ")
+					.append(SqlKeyword.WHERE.getSqlSegment()).append(" ")
+					.append(buildExistsRewrite(fromClass, conditionSql));
+			return sql.toString();
+		case DELETE:
+			return getDeleteSqls(conditionSql).get(0);
+		default:
+			throw new DataAccessException("Unsupported lambda join operate type");
 		}
 		sql.append(" ").append(SqlKeyword.WHERE.getSqlSegment()).append(" ").append(whereSql);
 		return sql.toString();
@@ -566,14 +568,13 @@ public class JoinContext {
 						.append(aliasMap.get(((FromStep) step).entity));
 			} else if (step instanceof JoinStep) {
 				JoinStep joinStep = (JoinStep) step;
-				tableSql.append(" ").append(joinStep.joinKeyword.getSqlSegment()).append(" ").append(tableName(joinStep.entity))
-						.append(" ").append(aliasMap.get(joinStep.entity));
+				tableSql.append(" ").append(joinStep.joinKeyword.getSqlSegment()).append(" ")
+						.append(tableName(joinStep.entity)).append(" ").append(aliasMap.get(joinStep.entity));
 				pendingOn = true;
 			} else if (step instanceof OnStep) {
 				OnStep onStep = (OnStep) step;
 				tableSql.append(" ").append(pendingOn ? SqlKeyword.ON : SqlKeyword.AND).append(" ")
-						.append(columnName(onStep.columnA.entityClass(), onStep.columnA.fieldName()))
-						.append(" = ")
+						.append(columnName(onStep.columnA.entityClass(), onStep.columnA.fieldName())).append(" = ")
 						.append(columnName(onStep.columnB.entityClass(), onStep.columnB.fieldName()));
 				pendingOn = false;
 			}
@@ -615,8 +616,7 @@ public class JoinContext {
 			EntityMeta fromMeta = metaLoader.apply(fromClass);
 			String fromAlias = aliasMap.get(fromClass);
 			for (String fieldName : fromMeta.getFieldsArray(false)) {
-				if (!resolveExcludeFields(fromClass).contains(fieldName)
-						&& checkAlias(aliasNames, fieldName, false)) {
+				if (!resolveExcludeFields(fromClass).contains(fieldName) && checkAlias(aliasNames, fieldName, false)) {
 					columns.add(fromAlias + "." + fromMeta.getColumnName(fieldName) + " AS " + fieldName);
 				}
 			}
@@ -709,9 +709,9 @@ public class JoinContext {
 	}
 
 	/**
-	 * @description 可移植的join更新/删除改写:UPDATE/DELETE 目标表不带别名,以
-	 *              WHERE EXISTS (SELECT 1 FROM (join查询派生表) sqd WHERE sqd.LPKn = 目标表.主键列) 限定行,
-	 *              保留join(含LEFT JOIN)的完整语义,覆盖Oracle等无多表DML语法的全部关系型数据库
+	 * @description 可移植的join更新/删除改写:UPDATE/DELETE 目标表不带别名,以 WHERE EXISTS (SELECT 1
+	 *              FROM (join查询派生表) sqd WHERE sqd.LPKn = 目标表.主键列) 限定行, 保留join(含LEFT
+	 *              JOIN)的完整语义,覆盖Oracle等无多表DML语法的全部关系型数据库
 	 * @param targetClass  更新/删除目标实体
 	 * @param conditionSql where条件文本
 	 * @return EXISTS改写片段
@@ -758,7 +758,6 @@ public class JoinContext {
 		}
 		return sqls;
 	}
-
 
 	public Class<?> getFromClass() {
 		return fromClass;
