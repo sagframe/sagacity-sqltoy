@@ -217,6 +217,26 @@ public class SqlWithAnalysisScenarioTest {
 		assertSame(sql, new SqlWithAnalysis(sql, DBType.MYSQL).getAdaptedSql());
 	}
 
+	@Test
+	public void twoArgUnsupportedNestedWithInBodyStripped() {
+		// 顶层CTE物化hint剔除,CTE体内嵌套with(body不透明,findBodyEnd按括号配对定位外层')')原样保留;
+		// 嵌套with不被误当顶层CTE(截断后tailSql无逗号前缀,循环不触发)
+		SqlWithAnalysis w = new SqlWithAnalysis(
+				"with t as materialized (with u as (select 1) select * from u) select * from t", DBType.MYSQL);
+		assertEquals("with t as (with u as (select 1) select * from u) select * from t", w.getAdaptedSql());
+		// 仅一个顶层CTE,ext剔除为" ",body含嵌套with原文
+		assertEquals(1, w.getWithSqlSet().size());
+		assertEquals(" ", w.getWithSqlSet().get(0)[1]);
+		assertEquals("with u as (select 1) select * from u", w.getWithSqlSet().get(0)[2]);
+	}
+
+	@Test
+	public void twoArgUnsupportedNewlineTabExtStripped() {
+		// ext含换行/制表符:ext区域(as后空白+materialized+'('前空白)整段替换为单空格,与空白形态无关
+		SqlWithAnalysis w = new SqlWithAnalysis("with t as\n\tmaterialized\n(select 1) select * from t", DBType.MYSQL);
+		assertEquals("with t as (select 1) select * from t", w.getAdaptedSql());
+	}
+
 	// ========== adaptCteMaterialized静态入口与双参构造等价 ==========
 
 	@Test
