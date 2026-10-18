@@ -151,7 +151,9 @@
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>3.2.2</version>
 				<configuration>
-					<skip>true</skip>
+					<!-- 6.0.8 起本模块有真实单测(SqltoyRuntimeNativeRegistrarTest);
+					     test 目录下的 helloworld 演示类不匹配 surefire 的 *Test 命名约定,不会被执行 -->
+					<skip>false</skip>
 				</configuration>
 			</plugin>
 			<plugin>

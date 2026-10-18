@@ -11,7 +11,7 @@
  *              <p>代码溯源(Apache-2.0兼容,均为派生而非复制粘贴):</p>
  *              <li>直接派生自MyBatis-Plus(保留其版权头):LambdaUtils、SqlKeyword、MatchSegment,
  *              以及lambda元信息四件套SerializedLambda/ReflectLambdaMeta/ShadowLambdaMeta/IdeaProxyLambdaMeta
- *              (sqltoy-plus移植时剥离了版权头,本次恢复);PropertyNamer(源头MyBatis)已于6.2.0并入BeanUtil.methodToProperty;</li>
+ *              (sqltoy-plus移植时剥离了版权头,本次恢复);PropertyNamer(源头MyBatis)已于6.0.8并入BeanUtil.methodToProperty;</li>
  *              <li>形状派生自MyBatis-Plus、经sqltoy-plus移植、本次重度改写(仅留来源说明不留版权头):
  *              segments合并引擎族(SegmentList/NormalSegmentList/GroupBySegmentList/HavingSegmentList/
  *              OrderBySegmentList/MergeSegments)、Compare方法族、Aggregate(源自Func)、Logic(源自Join+Nested)、

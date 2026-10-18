@@ -33,7 +33,7 @@
 		<jts.version>1.20.0</jts.version>
 		<vastbase.version>2.16.1v</vastbase.version>
 		<starrocks.version>1.1.2</starrocks.version>
-		<byte-buddy.version>1.18.14</byte-buddy.version>
+		<byte-buddy.version>1.18.15</byte-buddy.version>
 	</properties>
 	<licenses>
 		<license>
@@ -251,7 +251,7 @@
 		<dependency>
 			<groupId>com.microsoft.sqlserver</groupId>
 			<artifactId>mssql-jdbc</artifactId>
-			<version>13.6.0.jre11</version>
+			<version>13.6.1.jre11</version>
 			<scope>test</scope>
 			<optional>true</optional>
 		</dependency>

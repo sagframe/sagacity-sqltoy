@@ -3363,7 +3363,7 @@ public class BeanUtil {
 	 * getter/setter方法名转属性名,如getStaffName/isDeleted/setStaffName→staffName/deleted/staffName;
 	 * 单字母属性或第二字母非大写时首字母转小写,getURL这类连续大写保持URL形态。
 	 * 源头为MyBatis的org.apache.ibatis.reflection.PropertyNamer(Apache-2.0),MyBatis-Plus同形转载,
-	 * 经sqltoy-plus移植后于6.2.0并入BeanUtil
+	 * 经sqltoy-plus移植后于6.0.8并入BeanUtil
 	 *
 	 * @param name getter/setter方法名
 	 * @return 属性名
