@@ -6,7 +6,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -30,7 +29,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
  *              再以延迟组装器形式记录,执行前通过{@link #assemble(Function)}按当前模式解析列名——
  *              无join为单表(属性名直转字段名,字段实体须为查询实体),有join为别名限定列名(字段实体须参与join);
  *              单表只是join的退化形态,是否join由是否调用join步骤自动判定
- * @param <T>    查询实体类型(join更新/删除场景可为null)
+ * @param <T>    查询/更新/删除的实体类型(join更新/删除场景兼作隐式主表)
  * @param <Self> 具体构建类型
  * @author zhongxuchen
  */
@@ -47,11 +46,6 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 	 * 条件片段总装容器
 	 */
 	protected final MergeSegments expression;
-
-	/**
-	 * 参数序号,嵌套条件与join上下文共享,保证参数名全局唯一
-	 */
-	protected final AtomicInteger paramSeq;
 
 	/**
 	 * 查询实体类型,join更新/删除场景为null
@@ -79,12 +73,7 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 	private boolean matchAll;
 
 	protected AbstractWhere(Class<T> entityClass, JoinContext joinContext) {
-		this(entityClass, new AtomicInteger(0), joinContext);
-	}
-
-	protected AbstractWhere(Class<T> entityClass, AtomicInteger paramSeq, JoinContext joinContext) {
 		this.entityClass = entityClass;
-		this.paramSeq = paramSeq;
 		this.joinContext = joinContext;
 		this.expression = new MergeSegments();
 	}
@@ -522,10 +511,7 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 	 *              join模式下由join上下文统一取号,保证set与where参数名全局唯一
 	 */
 	protected String nextParamName() {
-		if (joinContext != null) {
-			return joinContext.nextParamName();
-		}
-		return "p" + paramSeq.incrementAndGet();
+		return joinContext.nextParamName();
 	}
 
 	/**

@@ -1,6 +1,8 @@
 package org.sagacity.sqltoy.lambda.join;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -15,6 +17,7 @@ import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.lambda.LambdaFn;
 import org.sagacity.sqltoy.lambda.LambdaUtils;
+import org.sagacity.sqltoy.lambda.engine.SqlKeyword;
 import org.sagacity.sqltoy.lambda.toolkit.FieldNature;
 
 /**
@@ -43,10 +46,10 @@ public class JoinContext {
 	}
 
 	private static final class JoinStep extends TableStep {
-		final String joinKeyword;
+		final SqlKeyword joinKeyword;
 		final Class<?> entity;
 
-		JoinStep(String joinKeyword, Class<?> entity) {
+		JoinStep(SqlKeyword joinKeyword, Class<?> entity) {
 			this.joinKeyword = joinKeyword;
 			this.entity = entity;
 		}
@@ -154,12 +157,17 @@ public class JoinContext {
 	/**
 	 * 等待on关联的join实体,null表示无待关联的join
 	 */
-	private String pendingJoinKeyword;
+	private SqlKeyword pendingJoinKeyword;
 
 	/**
 	 * 实体元信息加载器,assemble时由执行侧注入
 	 */
 	private Function<Class<?>, EntityMeta> metaLoader;
+
+	/**
+	 * 是否已完成装配
+	 */
+	private boolean assembled;
 
 	public JoinContext(Operate operate, Class<?> resultClass) {
 		this.operate = operate;
@@ -170,9 +178,9 @@ public class JoinContext {
 	 * @description 注入实体元信息加载器并做完整性校验
 	 */
 	public void assemble(Function<Class<?>, EntityMeta> metaLoader) {
-		// 查询场景未显式from时,缺省以结果类型作为主表
+		// 查询场景未显式from时,缺省以结果类型作为主表(内部注册,不受装配后守卫约束)
 		if (fromClass == null && resultClass != null) {
-			registerFrom(resultClass);
+			doRegisterFrom(resultClass);
 		}
 		if (fromClass == null) {
 			throw new DataAccessException("Lambda join requires a from entity; call from(entityClass) first");
@@ -207,6 +215,10 @@ public class JoinContext {
 		if (isAssembled()) {
 			throw new DataAccessException("Join structure cannot be modified after assemble; build joins before execution");
 		}
+		doRegisterFrom(entityClass);
+	}
+
+	private void doRegisterFrom(Class<?> entityClass) {
 		if (fromClass != null) {
 			throw new DataAccessException("Lambda join from entity can only be set once");
 		}
@@ -218,7 +230,7 @@ public class JoinContext {
 	/**
 	 * @description 注册join表,等待on关联;查询场景未显式from时缺省以结果类型作为主表
 	 */
-	public void registerJoin(String joinKeyword, Class<?> entityClass) {
+	public void registerJoin(SqlKeyword joinKeyword, Class<?> entityClass) {
 		if (isAssembled()) {
 			throw new DataAccessException("Join structure cannot be modified after assemble; build joins before execution");
 		}
@@ -340,10 +352,17 @@ public class JoinContext {
 	}
 
 	/**
+	 * @description 标记已完成装配(单表与join通道均标记),装配后不允许再变更join结构
+	 */
+	public void markAssembled() {
+		this.assembled = true;
+	}
+
+	/**
 	 * @return 是否已完成装配(装配后不允许再变更join结构)
 	 */
 	public boolean isAssembled() {
-		return metaLoader != null;
+		return assembled;
 	}
 
 	/**
@@ -400,12 +419,12 @@ public class JoinContext {
 	/**
 	 * @description 解析selectAll的排除属性名集合,排除字段须属于主表实体
 	 */
-	private java.util.Set<String> resolveExcludeFields(Class<?> fromClass) {
+	private Set<String> resolveExcludeFields(Class<?> fromClass) {
 		if (selectAllExclude == null) {
-			return java.util.Collections.emptySet();
+			return Collections.emptySet();
 		}
-		java.util.Set<String> fields = new java.util.HashSet<>();
-		for (org.sagacity.sqltoy.lambda.LambdaFn<?, ?> column : selectAllExclude.getColumns()) {
+		Set<String> fields = new HashSet<>();
+		for (LambdaFn<?, ?> column : selectAllExclude.getColumns()) {
 			FieldNature nature = LambdaUtils.extractNature(column);
 			if (!fromClass.equals(nature.entityClass())) {
 				throw new DataAccessException("ExcludeCols columns must belong to the from entity ["
@@ -440,22 +459,25 @@ public class JoinContext {
 		StringBuilder sql = new StringBuilder();
 		switch (operate) {
 			case SELECT:
-				sql.append("SELECT ").append(distinct ? "DISTINCT " : "").append(buildSelectSql())
-						.append(" FROM ").append(buildTableSql());
+				sql.append(SqlKeyword.SELECT.getSqlSegment()).append(" ").append(distinct ? "DISTINCT " : "")
+						.append(buildSelectSql()).append(" ").append(SqlKeyword.FROM.getSqlSegment()).append(" ")
+						.append(buildTableSql());
 				break;
 			case UPDATE:
 				if (setItems.isEmpty()) {
 					throw new DataAccessException("Lambda join update requires at least one field set via set()");
 				}
-				sql.append("UPDATE ").append(buildTableSql()).append(" SET ").append(buildSetSql());
+				sql.append(SqlKeyword.UPDATE.getSqlSegment()).append(" ").append(buildTableSql()).append(" ")
+						.append(SqlKeyword.SET.getSqlSegment()).append(" ").append(buildSetSql());
 				break;
 			case DELETE:
-				sql.append("DELETE ").append(buildDeleteSql()).append(" FROM ").append(buildTableSql());
+				sql.append(SqlKeyword.DELETE.getSqlSegment()).append(" ").append(buildDeleteSql()).append(" ")
+						.append(SqlKeyword.FROM.getSqlSegment()).append(" ").append(buildTableSql());
 				break;
 			default:
 				throw new DataAccessException("Unsupported lambda join operate type");
 		}
-		sql.append(" WHERE ").append(whereSql);
+		sql.append(" ").append(SqlKeyword.WHERE.getSqlSegment()).append(" ").append(whereSql);
 		return sql.toString();
 	}
 
@@ -484,12 +506,12 @@ public class JoinContext {
 						.append(aliasMap.get(((FromStep) step).entity));
 			} else if (step instanceof JoinStep) {
 				JoinStep joinStep = (JoinStep) step;
-				tableSql.append(" ").append(joinStep.joinKeyword).append(" ").append(tableName(joinStep.entity))
+				tableSql.append(" ").append(joinStep.joinKeyword.getSqlSegment()).append(" ").append(tableName(joinStep.entity))
 						.append(" ").append(aliasMap.get(joinStep.entity));
 				pendingOn = true;
 			} else if (step instanceof OnStep) {
 				OnStep onStep = (OnStep) step;
-				tableSql.append(pendingOn ? " ON " : " AND ")
+				tableSql.append(" ").append(pendingOn ? SqlKeyword.ON : SqlKeyword.AND).append(" ")
 						.append(columnName(onStep.columnA.entityClass(), onStep.columnA.fieldName()))
 						.append(" = ")
 						.append(columnName(onStep.columnB.entityClass(), onStep.columnB.fieldName()));
@@ -511,7 +533,7 @@ public class JoinContext {
 		List<String> columns = new ArrayList<>();
 		Set<String> aliasNames = new HashSet<>();
 		// selectAll:主表全部字段在前(可排除指定字段),与显式select列并存
-		Set<Class<?>> dumped = new java.util.HashSet<>();
+		Set<Class<?>> dumped = new HashSet<>();
 		if (selectAll && fromClass != null) {
 			dumped.add(fromClass);
 			EntityMeta fromMeta = metaLoader.apply(fromClass);

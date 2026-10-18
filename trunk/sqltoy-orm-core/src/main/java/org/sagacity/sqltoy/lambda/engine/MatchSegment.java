@@ -23,7 +23,6 @@ import java.util.function.Predicate;
  */
 public enum MatchSegment {
 	GROUP_BY(i -> i == SqlKeyword.GROUP_BY), ORDER_BY(i -> i == SqlKeyword.ORDER_BY), NOT(i -> i == SqlKeyword.NOT),
-	AND(i -> i == SqlKeyword.AND), OR(i -> i == SqlKeyword.OR),
 	AND_OR(i -> i == SqlKeyword.AND || i == SqlKeyword.OR), HAVING(i -> i == SqlKeyword.HAVING);
 
 	private final Predicate<SqlSegment> predicate;
@@ -36,7 +35,4 @@ public enum MatchSegment {
 		return predicate.test(segment);
 	}
 
-	public Predicate<SqlSegment> getPredicate() {
-		return predicate;
-	}
 }

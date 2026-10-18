@@ -45,15 +45,4 @@ public class SegmentMeta implements SqlSegment {
 		return params;
 	}
 
-	public String getColumnName() {
-		return columnName;
-	}
-
-	public String getParamName() {
-		return paramName;
-	}
-
-	public SqlCompare getCompare() {
-		return compare;
-	}
 }

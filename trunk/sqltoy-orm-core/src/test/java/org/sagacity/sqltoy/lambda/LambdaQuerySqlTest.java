@@ -23,6 +23,7 @@ import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.lambda.engine.AbstractWhere;
+import org.sagacity.sqltoy.lambda.join.JoinCol;
 import org.sagacity.sqltoy.lambda.toolkit.ValueFilter;
 
 /**
@@ -37,6 +38,7 @@ public class LambdaQuerySqlTest {
 	 */
 	private static final Function<Class<?>, EntityMeta> IDENTITY = entityClass -> {
 		EntityMeta entityMeta = new EntityMeta();
+		entityMeta.setTableName(entityClass.getSimpleName().toLowerCase(Locale.ROOT));
 		HashMap<String, FieldMeta> fieldsMeta = new HashMap<>();
 		for (Field field : entityClass.getDeclaredFields()) {
 			if (Modifier.isStatic(field.getModifiers())) {
@@ -100,7 +102,10 @@ public class LambdaQuerySqlTest {
 	}
 
 	private static String normalized(AbstractWhere<?, ?> where) {
-		String sql = where.getSqlSegment();
+		return normalized(where.getSqlSegment());
+	}
+
+	private static String normalized(String sql) {
 		return sql == null ? "" : sql.replaceAll("\\s+", " ").trim();
 	}
 
@@ -147,7 +152,7 @@ public class LambdaQuerySqlTest {
 		LambdaQuery<User> query = LambdaQuery.create(User.class).eq(User::getStatus, 1)
 				.not(nested -> nested.eq(User::getType, 2));
 		query.assemble(IDENTITY);
-		assertEquals("status = :p1 NOT (type = :p2)", normalized(query));
+		assertEquals("status = :p1 AND NOT (type = :p2)", normalized(query));
 	}
 
 	@Test
@@ -431,6 +436,33 @@ public class LambdaQuerySqlTest {
 		query.assemble(IDENTITY);
 		assertTrue(query.getParams().containsKey("v"));
 		assertNull(query.getParams().get("v"));
+	}
+
+	@Test
+	@DisplayName("仅having时以1=1承载不丢条件")
+	public void testHavingOnly() {
+		LambdaQuery<User> query = LambdaQuery.create(User.class).having("count(*) > 1");
+		query.assemble(IDENTITY);
+		assertEquals("1 = 1 HAVING count(*) > 1", normalized(query));
+	}
+
+	@Test
+	@DisplayName("别名排序与lambda排序保持调用顺序(join通道)")
+	public void testAliasOrderKeepsCallOrder() {
+		LambdaQuery<User> query = LambdaQuery.create(User.class)
+				.select(JoinCol.count(User::getId).as("total"))
+				.orderByAsc(User::getName).orderByDesc("total");
+		query.assemble(IDENTITY);
+		assertEquals("SELECT COUNT(u1.id) AS total FROM user u1 WHERE 1 = 1 "
+				+ "ORDER BY u1.name ASC,total DESC", normalized(query.getSql()));
+	}
+
+	@Test
+	@DisplayName("单表通道getSql返回条件sql")
+	public void testSingleChannelGetSql() {
+		LambdaQuery<User> query = LambdaQuery.create(User.class).eq(User::getId, 1);
+		query.assemble(IDENTITY);
+		assertEquals("id = :p1", normalized(query.getSql()));
 	}
 
 	@Test

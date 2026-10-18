@@ -264,7 +264,7 @@ public interface Compare<Children> {
 	 * 多字段元组in:(字段1,字段2...) IN ((值1,值2...), (值3,值4...)...)
 	 *
 	 * @param condition 执行条件
-	 * @param columns   字段引用集合(须属于同一实体)
+	 * @param columns   字段引用集合(单表须属于查询实体,join模式可跨已join实体)
 	 * @param values    每行一个Object[]的元组值集合
 	 * @return children
 	 */
@@ -369,7 +369,7 @@ public interface Compare<Children> {
 	}
 
 	/**
-	 * @see #betweenIfPresent(Object, Object, Object)
+	 * @see #betweenIfPresent(LambdaFn, Object, Object)
 	 */
 	default <E, R> Children betweenIfPresent(LambdaFn<E, R> column, Object[] values) {
 		if (values == null || values.length == 0) {

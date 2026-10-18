@@ -32,9 +32,13 @@ public class NormalSegmentList extends SegmentList {
 			}
 		}
 		deleteByIndexes(deleteIndexes);
-		// 剔除首尾多余的and/or连接符;尾部悬挂NOT(空not()留下)剔除,首部NOT合法(NOT (...) AND x)保留
-		filterFirst(MatchSegment.AND_OR::match);
-		filterLast(segment -> MatchSegment.AND_OR.match(segment) || MatchSegment.NOT.match(segment));
+		// 剔除首尾多余的and/or连接符;尾部悬挂NOT(空not()留下)剔除,首部NOT合法(NOT (...) AND x)保留;
+		// 循环至稳定:剔除NOT后可能暴露新的尾部连接符
+		boolean changed = true;
+		while (changed) {
+			changed = filterFirst(MatchSegment.AND_OR::match);
+			changed |= filterLast(segment -> MatchSegment.AND_OR.match(segment) || MatchSegment.NOT.match(segment));
+		}
 	}
 
 	private void autoAddAnd(List<SqlSegment> sqlSegments) {
@@ -58,18 +62,22 @@ public class NormalSegmentList extends SegmentList {
 	/**
 	 * @description 剔除首个满足条件的片段
 	 */
-	private void filterFirst(Predicate<SqlSegment> predicate) {
+	private boolean filterFirst(Predicate<SqlSegment> predicate) {
 		if (!segments.isEmpty() && predicate.test(segments.get(0))) {
 			segments.remove(0);
+			return true;
 		}
+		return false;
 	}
 
 	/**
 	 * @description 剔除末尾满足条件的片段
 	 */
-	private void filterLast(Predicate<SqlSegment> predicate) {
+	private boolean filterLast(Predicate<SqlSegment> predicate) {
 		if (!segments.isEmpty() && predicate.test(segments.get(segments.size() - 1))) {
 			segments.remove(segments.size() - 1);
+			return true;
 		}
+		return false;
 	}
 }

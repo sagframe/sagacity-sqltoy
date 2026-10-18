@@ -30,12 +30,9 @@ public enum SqlCompare {
 	// 用于join的on等值关联:别名.字段 = 别名.字段
 	LINK_EQ(SqlKeyword.EQ, "%s = %s");
 
-	private final SqlKeyword sqlKeyword;
-
 	private final String sqlContent;
 
 	SqlCompare(SqlKeyword sqlKeyword, String sqlContent) {
-		this.sqlKeyword = sqlKeyword;
 		this.sqlContent = sqlContent;
 	}
 
@@ -48,15 +45,4 @@ public enum SqlCompare {
 		return String.format(sqlContent, (Object[]) names);
 	}
 
-	public String getSymbol() {
-		return sqlKeyword.getSqlSegment();
-	}
-
-	public String getSqlContent() {
-		return sqlContent;
-	}
-
-	public SqlKeyword getSqlKeyword() {
-		return sqlKeyword;
-	}
 }

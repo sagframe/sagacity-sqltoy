@@ -49,7 +49,12 @@ public final class LambdaUtils {
 	 * @return 解析后的元信息
 	 */
 	public static <T, R> LambdaMeta extract(LambdaFn<T, R> func) {
-		return CACHE.computeIfAbsent(func, LambdaUtils::doExtract);
+		LambdaMeta meta = CACHE.computeIfAbsent(func, LambdaUtils::doExtract);
+		// 捕获型lambda每次求值产生新实例,缓存设上限避免无界增长(方法引用为jvm单例,不受影响)
+		if (CACHE.size() > 8192) {
+			CACHE.clear();
+		}
+		return meta;
 	}
 
 	/**

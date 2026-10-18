@@ -2,13 +2,11 @@ package org.sagacity.sqltoy.lambda;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.dao.LightDao;
 import org.sagacity.sqltoy.exception.DataAccessException;
-import org.sagacity.sqltoy.lambda.ColumnResolver;
 import org.sagacity.sqltoy.lambda.engine.AbstractWhere;
 import org.sagacity.sqltoy.lambda.engine.SqlKeyword;
 import org.sagacity.sqltoy.lambda.join.ExcludeCols;
@@ -63,13 +61,12 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	 */
 	private final List<String> excludeFields = new ArrayList<>();
 
-	private LambdaQuery(Class<T> entityClass, AtomicInteger paramSeq, JoinContext joinContext) {
-		super(entityClass, paramSeq, joinContext);
+	private LambdaQuery(Class<T> entityClass, JoinContext joinContext) {
+		super(entityClass, joinContext);
 	}
 
 	public static <T> LambdaQuery<T> create(Class<T> entityClass) {
-		return new LambdaQuery<>(entityClass, new AtomicInteger(0),
-				new JoinContext(Operate.SELECT, entityClass));
+		return new LambdaQuery<>(entityClass, new JoinContext(Operate.SELECT, entityClass));
 	}
 
 	/**
@@ -83,7 +80,7 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	@Override
 	protected LambdaQuery<T> instance() {
 		// 嵌套条件与当前对象共享参数序号与join上下文
-		return new LambdaQuery<>(entityClass, paramSeq, joinContext);
+		return new LambdaQuery<>(entityClass, joinContext);
 	}
 
 	@Override
@@ -97,6 +94,7 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 
 	@Override
 	public void assemble(Function<Class<?>, EntityMeta> metaLoader) {
+		joinContext.markAssembled();
 		if (!isJoinMode() && aliasOrderUsed) {
 			throw new DataAccessException(
 					"Ordering by select alias requires the join channel; single-table queries have no column aliases");
@@ -136,21 +134,21 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	 * @description 左连接,须紧跟on()完成关联;首次调用即切换为join通道
 	 */
 	public JoinOn leftJoin(Class<?> entityClass) {
-		return new JoinOn("LEFT JOIN", entityClass);
+		return new JoinOn(SqlKeyword.LEFT_JOIN, entityClass);
 	}
 
 	/**
 	 * @description 右连接,须紧跟on()完成关联
 	 */
 	public JoinOn rightJoin(Class<?> entityClass) {
-		return new JoinOn("RIGHT JOIN", entityClass);
+		return new JoinOn(SqlKeyword.RIGHT_JOIN, entityClass);
 	}
 
 	/**
 	 * @description 内连接,须紧跟on()完成关联
 	 */
 	public JoinOn innerJoin(Class<?> entityClass) {
-		return new JoinOn("INNER JOIN", entityClass);
+		return new JoinOn(SqlKeyword.INNER_JOIN, entityClass);
 	}
 
 	/**
@@ -382,7 +380,7 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	 */
 	public final class JoinOn {
 
-		private JoinOn(String joinKeyword, Class<?> entityClass) {
+		private JoinOn(SqlKeyword joinKeyword, Class<?> entityClass) {
 			joinContext.registerJoin(joinKeyword, entityClass);
 		}
 

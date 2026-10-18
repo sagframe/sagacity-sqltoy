@@ -1098,11 +1098,14 @@ public interface LightDao {
 	 * @return lambda查询条件构建器
 	 */
 	default <T> LambdaQuery<T> lambdaQuery(Class<T> entityClass) {
+		if (entityClass == null) {
+			throw new DataAccessException("lambdaQuery requires a non-null entity class");
+		}
 		return LambdaQuery.create(entityClass).bind(this);
 	}
 
 	/**
-	 * 创建lambda更新条件构建器,已绑定当前dao,可链式调用update/update(entity)执行
+	 * 创建lambda更新条件构建器,已绑定当前dao,可链式调用update()执行(set/setExpr指定更新字段)
 	 * <p>
 	 * 示例: lightDao.lambdaUpdate(StaffInfo.class).set(StaffInfo::getStatus, 2)
 	 * .eq(StaffInfo::getStaffId, id).update();
@@ -1112,6 +1115,9 @@ public interface LightDao {
 	 * @return lambda更新条件构建器
 	 */
 	default <T> LambdaUpdate<T> lambdaUpdate(Class<T> entityClass) {
+		if (entityClass == null) {
+			throw new DataAccessException("lambdaUpdate requires a non-null entity class");
+		}
 		return LambdaUpdate.create(entityClass).bind(this);
 	}
 
@@ -1125,6 +1131,9 @@ public interface LightDao {
 	 * @return lambda删除条件构建器
 	 */
 	default <T> LambdaDelete<T> lambdaDelete(Class<T> entityClass) {
+		if (entityClass == null) {
+			throw new DataAccessException("lambdaDelete requires a non-null entity class");
+		}
 		return LambdaDelete.create(entityClass).bind(this);
 	}
 

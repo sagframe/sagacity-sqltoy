@@ -270,6 +270,18 @@ public class LambdaExecuteH2Test {
 	}
 
 	@Test
+	@Order(19)
+	@DisplayName("删除通道无命名参数where兜底与matchAll清空(末尾执行)")
+	public void testDeleteParamlessAndMatchAll() {
+		long one = lightDao.lambdaDelete(User.class)
+				.inSql(User::getId, "select id from lambda_user where id = 1").delete();
+		assertEquals(1L, one);
+		long all = lightDao.lambdaDelete(User.class).matchAll().delete();
+		assertEquals(1L, all);
+		assertEquals(0L, lightDao.lambdaQuery(User.class).count());
+	}
+
+	@Test
 	@Order(15)
 	@DisplayName("findTop取前N条与按比例取")
 	public void testFindTop() {

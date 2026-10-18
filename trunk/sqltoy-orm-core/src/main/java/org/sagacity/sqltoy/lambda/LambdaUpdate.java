@@ -4,15 +4,13 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.dao.LightDao;
 import org.sagacity.sqltoy.exception.DataAccessException;
-import org.sagacity.sqltoy.lambda.ColumnResolver;
-import org.sagacity.sqltoy.lambda.LambdaConvert;
 import org.sagacity.sqltoy.lambda.engine.AbstractWhere;
+import org.sagacity.sqltoy.lambda.engine.SqlKeyword;
 import org.sagacity.sqltoy.lambda.join.JoinContext;
 import org.sagacity.sqltoy.lambda.join.JoinContext.Operate;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -65,12 +63,12 @@ public final class LambdaUpdate<T> extends AbstractWhere<T, LambdaUpdate<T>> {
 		}
 	}
 
-	private LambdaUpdate(Class<T> entityClass, AtomicInteger paramSeq, JoinContext joinContext) {
-		super(entityClass, paramSeq, joinContext);
+	private LambdaUpdate(Class<T> entityClass, JoinContext joinContext) {
+		super(entityClass, joinContext);
 	}
 
 	public static <T> LambdaUpdate<T> create(Class<T> entityClass) {
-		return new LambdaUpdate<>(entityClass, new AtomicInteger(0), new JoinContext(Operate.UPDATE, null));
+		return new LambdaUpdate<>(entityClass, new JoinContext(Operate.UPDATE, null));
 	}
 
 	/**
@@ -84,7 +82,7 @@ public final class LambdaUpdate<T> extends AbstractWhere<T, LambdaUpdate<T>> {
 	@Override
 	protected LambdaUpdate<T> instance() {
 		// 嵌套条件与当前对象共享参数序号与join上下文(set操作仅根构建器持有)
-		return new LambdaUpdate<>(entityClass, paramSeq, joinContext);
+		return new LambdaUpdate<>(entityClass, joinContext);
 	}
 
 	@Override
@@ -98,6 +96,7 @@ public final class LambdaUpdate<T> extends AbstractWhere<T, LambdaUpdate<T>> {
 
 	@Override
 	public void assemble(Function<Class<?>, EntityMeta> metaLoader) {
+		joinContext.markAssembled();
 		if (expression.hasAggregatePartitions()) {
 			throw new DataAccessException("groupBy/having/orderBy are only supported by LambdaQuery, not by update");
 		}
@@ -136,21 +135,21 @@ public final class LambdaUpdate<T> extends AbstractWhere<T, LambdaUpdate<T>> {
 	 * @description 左连接,须紧跟on()完成关联;首次调用即切换为join更新通道,主表隐式为查询实体
 	 */
 	public JoinOn leftJoin(Class<?> entityClass) {
-		return new JoinOn("LEFT JOIN", entityClass);
+		return new JoinOn(SqlKeyword.LEFT_JOIN, entityClass);
 	}
 
 	/**
 	 * @description 右连接,须紧跟on()完成关联
 	 */
 	public JoinOn rightJoin(Class<?> entityClass) {
-		return new JoinOn("RIGHT JOIN", entityClass);
+		return new JoinOn(SqlKeyword.RIGHT_JOIN, entityClass);
 	}
 
 	/**
 	 * @description 内连接,须紧跟on()完成关联
 	 */
 	public JoinOn innerJoin(Class<?> entityClass) {
-		return new JoinOn("INNER JOIN", entityClass);
+		return new JoinOn(SqlKeyword.INNER_JOIN, entityClass);
 	}
 
 	/**
@@ -281,7 +280,7 @@ public final class LambdaUpdate<T> extends AbstractWhere<T, LambdaUpdate<T>> {
 	 */
 	public final class JoinOn {
 
-		private JoinOn(String joinKeyword, Class<?> entityClass) {
+		private JoinOn(SqlKeyword joinKeyword, Class<?> entityClass) {
 			// join更新的主表隐式为查询实体
 			if (joinContext.getFromClass() == null) {
 				joinContext.registerFrom(getEntityClass());

@@ -74,6 +74,11 @@ public class LambdaFullCoverageH2Test {
 		@Column(name = "LOGIN_COUNT")
 		private Integer loginCount;
 
+		/**
+		 * 非映射属性(无@Column),用于列名解析守卫测试
+		 */
+		private String helper;
+
 		public Integer getId() {
 			return id;
 		}
@@ -120,6 +125,14 @@ public class LambdaFullCoverageH2Test {
 
 		public void setLoginCount(Integer loginCount) {
 			this.loginCount = loginCount;
+		}
+
+		public String getHelper() {
+			return helper;
+		}
+
+		public void setHelper(String helper) {
+			this.helper = helper;
 		}
 	}
 
@@ -870,6 +883,70 @@ public class LambdaFullCoverageH2Test {
 					}
 				});
 		assertThrows(DataAccessException.class, () -> LambdaUtils.extractProperty(proxied));
+	}
+
+	@Test
+	@Order(35)
+	@DisplayName("非映射属性(无@Column)条件快速失败")
+	public void testUnmappedPropertyGuard() {
+		assertThrows(DataAccessException.class, () -> lightDao.lambdaQuery(FfUser.class)
+				.eq(FfUser::getHelper, "x").find());
+	}
+
+	@Test
+	@Order(36)
+	@DisplayName("单表通道selectAll(ExcludeCols)转unselect生效")
+	public void testSingleTableExclude() {
+		List<FfUser> users = lightDao.lambdaQuery(FfUser.class)
+				.selectAll(ExcludeCols.of(FfUser::getSalary)).eq(FfUser::getId, 1L).find();
+		assertEquals(1, users.size());
+		assertNotNull(users.get(0).getStaffName());
+		assertNull(users.get(0).getSalary());
+	}
+
+	@Test
+	@Order(37)
+	@DisplayName("join查询重复终端调用不触发别名重复")
+	public void testRepeatTerminalIdempotent() {
+		LambdaQuery<FfUser> query = lightDao.lambdaQuery(FfUser.class)
+				.select(FfUser::getStaffName)
+				.leftJoin(FfDept.class).on(FfUser::getDeptId, FfDept::getDeptId)
+				.eq(FfUser::getStatus, 1).lt(FfUser::getId, 90);
+		assertEquals(5, query.find().size());
+		assertEquals(5L, query.count());
+	}
+
+	@Test
+	@Order(38)
+	@DisplayName("更新删除构建器拒绝分组排序/装配后变更join/空入参守卫")
+	public void testBuilderGuards() {
+		assertThrows(DataAccessException.class, () -> lightDao.lambdaDelete(FfUser.class)
+				.eq(FfUser::getStatus, 1).groupBy(FfUser::getDeptId).delete());
+		LambdaQuery<FfUser> assembled = lightDao.lambdaQuery(FfUser.class).eq(FfUser::getStatus, 1);
+		assembled.find();
+		assertThrows(DataAccessException.class, () -> assembled.leftJoin(FfDept.class));
+		assertThrows(DataAccessException.class, () -> lightDao.lambdaQuery(null));
+		assertThrows(DataAccessException.class,
+				() -> lightDao.lambdaQuery(FfUser.class).select((LambdaFn<FfUser, ?>) null));
+	}
+
+	@Test
+	@Order(39)
+	@DisplayName("删除通道无命名参数where兜底执行")
+	public void testDeleteParamlessWhere() {
+		// salary为null的有id=5与id=91两行
+		long deleted = lightDao.lambdaDelete(FfUser.class).isNull(FfUser::getSalary).delete();
+		assertEquals(2L, deleted);
+		assertNull(lightDao.lambdaQuery(FfUser.class).eq(FfUser::getId, 91L).getOne());
+	}
+
+	@Test
+	@Order(40)
+	@DisplayName("matchAll删除清空表(最后执行)")
+	public void testMatchAllDelete() {
+		long deleted = lightDao.lambdaDelete(FfUser.class).matchAll().delete();
+		assertEquals(5L, deleted);
+		assertEquals(0L, lightDao.lambdaQuery(FfUser.class).count());
 	}
 
 	private static String normalized(String sql) {
