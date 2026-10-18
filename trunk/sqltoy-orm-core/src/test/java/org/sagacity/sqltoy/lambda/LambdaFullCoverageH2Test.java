@@ -411,7 +411,7 @@ public class LambdaFullCoverageH2Test {
 
 	@Test
 	@Order(8)
-	@DisplayName("逻辑组合:or/and嵌套/not嵌套")
+	@DisplayName("逻辑组合:or/and嵌套/not嵌套/二层嵌套/空组丢弃")
 	public void testLogicCombos() {
 		assertEquals(6, lightDao.lambdaQuery(FfUser.class).eq(FfUser::getStatus, 1).or()
 				.eq(FfUser::getStatus, 0).lt(FfUser::getId, 90).find().size());
@@ -420,6 +420,16 @@ public class LambdaFullCoverageH2Test {
 		// dept为null的行在NOT(dept=10)下因SQL三值逻辑被排除
 		assertEquals(Arrays.asList(3, 5, 6), ids(lightDao.lambdaQuery(FfUser.class)
 				.not(n -> n.eq(FfUser::getDeptId, 10)).lt(FfUser::getId, 90).find()));
+		// 二层嵌套:((dept=10 OR dept=20) AND status=1) AND id<90 → 张三/李四(dept10,status1)、周八(dept20,status1)
+		assertEquals(Arrays.asList(1, 2, 6), ids(lightDao.lambdaQuery(FfUser.class)
+				.nested(outer -> outer
+						.nested(inner -> inner.eq(FfUser::getDeptId, 10).or().eq(FfUser::getDeptId, 20))
+						.eq(FfUser::getStatus, 1))
+				.lt(FfUser::getId, 90).find()));
+		// 动态空组:组内condition=false全被跳过→整组消失(不产 () 也不留悬挂AND),外层条件照常 → status=1 AND id<90
+		assertEquals(Arrays.asList(1, 2, 4, 5, 6), ids(lightDao.lambdaQuery(FfUser.class)
+				.eq(FfUser::getStatus, 1).and(n -> n.eq(false, FfUser::getDeptId, 10)).lt(FfUser::getId, 90)
+				.find()));
 	}
 
 	@Test
@@ -531,10 +541,19 @@ public class LambdaFullCoverageH2Test {
 
 	@Test
 	@Order(16)
-	@DisplayName("更新安全边界:无条件守卫/matchAll/无命名参数兜底")
+	@DisplayName("更新安全边界:无条件守卫/无set守卫/matchAll/无命名参数兜底")
 	public void testUpdateGuards() {
 		assertThrows(DataAccessException.class,
 				() -> lightDao.lambdaUpdate(FfUser.class).set(FfUser::getStatus, 1).update());
+		// 无set字段:快速失败(守卫在assemble与join/单表分支之前,单表与join两通道均覆盖)
+		assertThrows(DataAccessException.class,
+				() -> lightDao.lambdaUpdate(FfUser.class).eq(FfUser::getId, 91).update());
+		assertThrows(DataAccessException.class, () -> lightDao.lambdaUpdate(FfUser.class)
+				.leftJoin(FfDept.class).on(FfUser::getDeptId, FfDept::getDeptId)
+				.eq(FfDept::getDeptName, "研发部").update());
+		// condition=false的set被跳过,等价于无set,同样快速失败
+		assertThrows(DataAccessException.class, () -> lightDao.lambdaUpdate(FfUser.class)
+				.set(false, FfUser::getStatus, 1).eq(FfUser::getId, 91).update());
 		long updated = lightDao.lambdaUpdate(FfUser.class).set(FfUser::getStatus, 8).matchAll()
 				.eq(FfUser::getId, 91).or().eq(FfUser::getId, 92).update();
 		assertEquals(2L, updated);

@@ -267,7 +267,8 @@ public final class LambdaUpdate<T> extends AbstractWhere<T, LambdaUpdate<T>> {
 					"LambdaUpdate is not bound to a dao; create it via lightDao.lambdaUpdate(entityClass) or execute with lightDao.lambdaUpdate(update)");
 		}
 		if (setOps.isEmpty()) {
-			throw new DataAccessException("Lambda update requires at least one field set via set() or setExpr()");
+			throw new DataAccessException(
+					"Lambda update requires at least one field set via set(), setNull() or setExpr()");
 		}
 		assemble(dao::getEntityMeta);
 		if (isJoinMode()) {

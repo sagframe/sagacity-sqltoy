@@ -158,6 +158,41 @@ public class LambdaQuerySqlTest {
 	}
 
 	@Test
+	@DisplayName("二层嵌套分组(逐层包括号,参数序号跨层连续)")
+	public void testNestedTwoLevel() {
+		LambdaQuery<User> query = LambdaQuery.create(User.class)
+				.nested(outer -> outer.nested(inner -> inner.eq(User::getType, 2).or().eq(User::getType, 3))
+						.eq(User::getStatus, 1))
+				.or().eq(User::getId, 9);
+		query.assemble(IDENTITY);
+		assertEquals("((type = :p1 OR type = :p2) AND status = :p3) OR id = :p4", normalized(query));
+	}
+
+	@Test
+	@DisplayName("空分组自动丢弃(不渲染()、不留悬挂AND)")
+	public void testNestedEmptyGroupDropped() {
+		// 组内条件condition=false被跳过→整组空白→丢弃,and()的连接符恰作前后条件的AND
+		LambdaQuery<User> query = LambdaQuery.create(User.class).eq(User::getStatus, 1)
+				.and(n -> n.eq(false, User::getType, 2)).eq(User::getId, 4);
+		query.assemble(IDENTITY);
+		assertEquals("status = :p1 AND id = :p2", normalized(query));
+	}
+
+	@Test
+	@DisplayName("accept(inline无括号)与nested(独立分组有括号)对比")
+	public void testAcceptVsNested() {
+		LambdaQuery<User> acceptQuery = LambdaQuery.create(User.class).eq(User::getType, 9)
+				.accept(q -> q.eq(User::getStatus, 1).eq(User::getAge, 5));
+		acceptQuery.assemble(IDENTITY);
+		assertEquals("type = :p1 AND status = :p2 AND age = :p3", normalized(acceptQuery));
+
+		LambdaQuery<User> nestedQuery = LambdaQuery.create(User.class).eq(User::getType, 9)
+				.nested(q -> q.eq(User::getStatus, 1).eq(User::getAge, 5));
+		nestedQuery.assemble(IDENTITY);
+		assertEquals("type = :p1 AND (status = :p2 AND age = :p3)", normalized(nestedQuery));
+	}
+
+	@Test
 	@DisplayName("相邻连接符合并保留最后一个")
 	public void testConnectorDeduplicate() {
 		LambdaQuery<User> query = LambdaQuery.create(User.class).eq(User::getStatus, 1).and().or()

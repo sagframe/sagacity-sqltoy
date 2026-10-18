@@ -77,7 +77,7 @@ public final class LambdaConvert {
 	public static <T> EntityUpdate toEntityUpdate(LambdaUpdate<T> update) {
 		if (update.getSetFields().isEmpty()) {
 			throw new DataAccessException(
-					"Lambda update requires at least one field set via set() or setExpr()");
+					"Lambda update requires at least one field set via set(), setNull() or setExpr()");
 		}
 		update.requireCondition("update");
 		EntityUpdate entityUpdate = EntityUpdate.create();
