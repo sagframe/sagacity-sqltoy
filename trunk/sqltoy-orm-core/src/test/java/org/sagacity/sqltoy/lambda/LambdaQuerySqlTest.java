@@ -125,7 +125,9 @@ public class LambdaQuerySqlTest {
 		LambdaQuery<User> query = LambdaQuery.create(User.class).eq(User::getStatus, 1)
 				.like(User::getName, "张").orderByDesc(User::getId);
 		query.assemble(IDENTITY);
-		assertEquals("status = :p1 AND name LIKE CONCAT('%',CONCAT(:p2,'%')) ORDER BY id DESC", normalized(query));
+		assertEquals("status = :p1 AND name LIKE :p2 ORDER BY id DESC", normalized(query));
+		// like为包含匹配:通配符由lambda层补入参数值(纯 LIKE :param 形态,数据库无关)
+		assertEquals("%张%", query.getParams().get("p2"));
 	}
 
 	@Test
@@ -261,7 +263,8 @@ public class LambdaQuerySqlTest {
 	public void testValueFilter() {
 		LambdaQuery<User> query = LambdaQuery.create(User.class).eq(User::getStatus, null).like(User::getName, "张");
 		query.assemble(IDENTITY);
-		assertEquals("name LIKE CONCAT('%',CONCAT(:p1,'%'))", normalized(query));
+		assertEquals("name LIKE :p1", normalized(query));
+		assertEquals("%张%", query.getParams().get("p1"));
 
 		LambdaQuery<User> blankFiltered = LambdaQuery.create(User.class)
 				.valueFilter(value -> value != null && !"".equals(value)).eq(User::getStatus, 1)
@@ -295,7 +298,8 @@ public class LambdaQuerySqlTest {
 		LambdaQuery<User> query = LambdaQuery.create(User.class).eqIfPresent(User::getStatus, null)
 				.likeIfPresent(User::getName, "张").betweenIfPresent(User::getAge, new Object[] { 18 });
 		query.assemble(IDENTITY);
-		assertEquals("name LIKE CONCAT('%',CONCAT(:p1,'%')) AND age >= :p2", normalized(query));
+		assertEquals("name LIKE :p1 AND age >= :p2", normalized(query));
+		assertEquals("%张%", query.getParams().get("p1"));
 	}
 
 	@Test
@@ -471,7 +475,10 @@ public class LambdaQuerySqlTest {
 		LambdaQuery<User> query = LambdaQuery.create(User.class).likeLeft(User::getName, "张")
 				.likeRight(User::getName, "三");
 		query.assemble(IDENTITY);
-		assertEquals("name LIKE CONCAT('%',:p1) AND name LIKE CONCAT(:p2,'%')", normalized(query));
+		assertEquals("name LIKE :p1 AND name LIKE :p2", normalized(query));
+		// likeLeft补左侧%(后缀匹配),likeRight补右侧%(前缀匹配),等价sqltoy原生ParamsFilter.llike/rlike
+		assertEquals("%张", query.getParams().get("p1"));
+		assertEquals("三%", query.getParams().get("p2"));
 	}
 
 	@Test

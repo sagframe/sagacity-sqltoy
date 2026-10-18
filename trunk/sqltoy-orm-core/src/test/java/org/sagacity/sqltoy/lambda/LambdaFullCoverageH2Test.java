@@ -342,6 +342,13 @@ public class LambdaFullCoverageH2Test {
 				.likeRight(FfUser::getStaffName, "李").lt(FfUser::getId, 90).find()));
 		assertEquals(Arrays.asList(2, 3, 4, 5, 6), ids(lightDao.lambdaQuery(FfUser.class)
 				.notLike(FfUser::getStaffName, "张").lt(FfUser::getId, 90).find()));
+		// 方向语义锁定:likeRight=前缀(值%)、likeLeft=后缀(%值),须与包含匹配(%值%)可区分——
+		// "三"仅出现在张三尾部、"李"仅出现在李四头部,故前缀查"三"、后缀查"李"均应为空;
+		// 若方向退化为包含匹配(如sqlite曾出现的CONCAT→||触发processLike二次补%缺陷)会误命中张三/李四
+		assertTrue(ids(lightDao.lambdaQuery(FfUser.class)
+				.likeRight(FfUser::getStaffName, "三").lt(FfUser::getId, 90).find()).isEmpty());
+		assertTrue(ids(lightDao.lambdaQuery(FfUser.class)
+				.likeLeft(FfUser::getStaffName, "李").lt(FfUser::getId, 90).find()).isEmpty());
 	}
 
 	@Test
@@ -1022,6 +1029,40 @@ public class LambdaFullCoverageH2Test {
 		long deleted = lightDao.lambdaDelete(FfUser.class).matchAll().delete();
 		assertEquals(before, deleted);
 		assertEquals(0L, lightDao.lambdaQuery(FfUser.class).count());
+	}
+
+	@Test
+	@Order(44)
+	@DisplayName("update/delete的WHERE方向like(rlike前缀/llike后缀)执行级验证")
+	public void testLikeInUpdateDeleteWhere() throws Exception {
+		// 专用探针行:模式甲(前缀含"模式")、甲模式(后缀含"模式")、甲模式乙(中间含"模式")——三者都"包含"模式,
+		// 但前缀匹配仅命中模式甲、后缀匹配仅命中甲模式,可区分方向like与包含like;order43已清空表,此处独立插入零干扰。
+		// 验证like修复(纯LIKE :param+按方向补值,等价原生rlike/llike)在update/delete的WHERE中与query同样正确
+		// (LambdaUpdate/LambdaDelete继承AbstractWhere同一份like代码,其WHERE同样流经中央解析链processLike)
+		try (Connection conn = DriverManager.getConnection(URL, "sa", ""); Statement st = conn.createStatement()) {
+			st.execute("insert into ff_user values (95,'模式甲',10,1,100,0)");
+			st.execute("insert into ff_user values (96,'甲模式',10,1,200,0)");
+			st.execute("insert into ff_user values (97,'甲模式乙',10,1,300,0)");
+		}
+		// 基准:包含匹配三条全中
+		assertEquals(Arrays.asList(95, 96, 97), ids(lightDao.lambdaQuery(FfUser.class)
+				.like(FfUser::getStaffName, "模式").ge(FfUser::getId, 95).find()));
+		// UPDATE WHERE likeRight(前缀"模式%"):仅模式甲(95)命中;若退化为包含匹配会误伤96/97
+		long updated = lightDao.lambdaUpdate(FfUser.class).set(FfUser::getStatus, 99)
+				.likeRight(FfUser::getStaffName, "模式").ge(FfUser::getId, 95).update();
+		assertEquals(1L, updated);
+		assertEquals(99, lightDao.lambdaQuery(FfUser.class).eq(FfUser::getId, 95).getOne().getStatus().intValue());
+		assertEquals(1, lightDao.lambdaQuery(FfUser.class).eq(FfUser::getId, 96).getOne().getStatus().intValue());
+		assertEquals(1, lightDao.lambdaQuery(FfUser.class).eq(FfUser::getId, 97).getOne().getStatus().intValue());
+		// DELETE WHERE likeLeft(后缀"%模式"):仅甲模式(96)命中;若退化为包含匹配会误删95/97
+		long deleted = lightDao.lambdaDelete(FfUser.class).likeLeft(FfUser::getStaffName, "模式")
+				.ge(FfUser::getId, 95).delete();
+		assertEquals(1L, deleted);
+		assertNull(lightDao.lambdaQuery(FfUser.class).eq(FfUser::getId, 96).getOne());
+		assertNotNull(lightDao.lambdaQuery(FfUser.class).eq(FfUser::getId, 95).getOne());
+		assertNotNull(lightDao.lambdaQuery(FfUser.class).eq(FfUser::getId, 97).getOne());
+		// 清理探针行
+		lightDao.lambdaDelete(FfUser.class).ge(FfUser::getId, 95).delete();
 	}
 
 	private static String normalized(String sql) {

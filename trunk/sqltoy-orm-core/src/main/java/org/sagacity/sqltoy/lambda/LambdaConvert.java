@@ -43,6 +43,9 @@ public final class LambdaConvert {
 		if (query.isDistinct()) {
 			entityQuery.distinct();
 		}
+		if (query.getDataSource() != null) {
+			entityQuery.dataSource(query.getDataSource());
+		}
 		return entityQuery;
 	}
 
@@ -61,6 +64,9 @@ public final class LambdaConvert {
 		}
 		entityQuery.where(whereSql);
 		entityQuery.values(params);
+		if (where.getDataSource() != null) {
+			entityQuery.dataSource(where.getDataSource());
+		}
 		return entityQuery;
 	}
 
@@ -82,6 +88,9 @@ public final class LambdaConvert {
 			// where中无命名参数时补齐参数个数,规避updateByQuery对where与values数量的校验异常
 			whereSql = StringUtil.isBlank(whereSql) ? "1=:DEFAULT_VALUE " : "1=:DEFAULT_VALUE AND " + whereSql;
 			params.put("DEFAULT_VALUE", 1);
+		}
+		if (update.getDataSource() != null) {
+			entityUpdate.dataSource(update.getDataSource());
 		}
 		return entityUpdate.where(whereSql).values(params);
 	}

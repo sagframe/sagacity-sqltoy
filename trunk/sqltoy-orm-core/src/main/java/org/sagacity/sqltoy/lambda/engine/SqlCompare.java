@@ -14,11 +14,13 @@ public enum SqlCompare {
 	GE(SqlKeyword.GE, "%s >= :%s"),
 	LT(SqlKeyword.LT, "%s < :%s"),
 	LE(SqlKeyword.LE, "%s <= :%s"),
-	// like采用数据库无关的concat写法,%%为String.format转义
-	LIKE(SqlKeyword.LIKE, "%s LIKE CONCAT('%%',CONCAT(:%s,'%%'))"),
-	LIKE_LEFT(SqlKeyword.LIKE, "%s LIKE CONCAT('%%',:%s)"),
-	LIKE_RIGHT(SqlKeyword.LIKE, "%s LIKE CONCAT(:%s,'%%')"),
-	NOT_LIKE(SqlKeyword.NOT_LIKE, "%s NOT LIKE CONCAT('%%',CONCAT(:%s,'%%'))"),
+	// like采用纯 LIKE :param 形态:通配符%由lambda层按方向补入参数值(等价sqltoy原生ParamsFilter.llike/rlike),
+	// 不用CONCAT拼接——CONCAT在sqlite等库会被改写为 value||'%' 使?紧跟LIKE,触发processLike对裸值二次补%导致前缀匹配退化为包含匹配;
+	// 值已含%时processLike只做_和\转义不再二次包装,数据库无关且转义统一
+	LIKE(SqlKeyword.LIKE, "%s LIKE :%s"),
+	LIKE_LEFT(SqlKeyword.LIKE, "%s LIKE :%s"),
+	LIKE_RIGHT(SqlKeyword.LIKE, "%s LIKE :%s"),
+	NOT_LIKE(SqlKeyword.NOT_LIKE, "%s NOT LIKE :%s"),
 	IN(SqlKeyword.IN, "%s IN (:%s)"),
 	// 子查询in,sql文本原样拼接
 	IN_SUBSQL(SqlKeyword.IN, "%s IN (%s)"),

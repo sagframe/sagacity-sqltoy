@@ -1,5 +1,6 @@
 package org.sagacity.sqltoy.lambda;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
@@ -13,6 +14,8 @@ import org.sagacity.sqltoy.lambda.join.ExcludeCols;
 import org.sagacity.sqltoy.lambda.join.JoinCol;
 import org.sagacity.sqltoy.lambda.join.JoinContext;
 import org.sagacity.sqltoy.lambda.join.JoinContext.Operate;
+import org.sagacity.sqltoy.link.Query;
+import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.model.Page;
 
 /**
@@ -286,7 +289,7 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 		requireDao();
 		assemble(dao::getEntityMeta);
 		if (isJoinMode()) {
-			return dao.find(getSql(), getParams(), getEntityClass());
+			return (List<T>) joinQuery().find();
 		}
 		return dao.findEntity(getEntityClass(), LambdaConvert.toEntityQuery(this));
 	}
@@ -314,7 +317,7 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 		requireDao();
 		assemble(dao::getEntityMeta);
 		if (isJoinMode()) {
-			return dao.findPage(page, getSql(), getParams(), getEntityClass());
+			return (Page<T>) joinQuery().findPage(page);
 		}
 		return dao.findPageEntity(page, getEntityClass(), LambdaConvert.toEntityQuery(this));
 	}
@@ -329,7 +332,7 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 		requireDao();
 		assemble(dao::getEntityMeta);
 		if (isJoinMode()) {
-			return dao.findTop(getSql(), getParams(), getEntityClass(), topSize);
+			return (List<T>) joinQuery().findTop(topSize);
 		}
 		return dao.findEntity(getEntityClass(), LambdaConvert.toEntityQuery(this).top(topSize));
 	}
@@ -343,7 +346,7 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 		requireDao();
 		assemble(dao::getEntityMeta);
 		if (isJoinMode()) {
-			return dao.findRandom(getSql(), getParams(), getEntityClass(), randomSize);
+			return (List<T>) joinQuery().findRandom(randomSize);
 		}
 		return dao.findEntity(getEntityClass(), LambdaConvert.toEntityQuery(this).random(randomSize));
 	}
@@ -355,9 +358,20 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 		requireDao();
 		assemble(dao::getEntityMeta);
 		if (isJoinMode()) {
-			return dao.getCount(getSql(), getParams());
+			return joinQuery().count();
 		}
 		return dao.getCount(getEntityClass(), LambdaConvert.toEntityQuery(this));
+	}
+
+	/**
+	 * @description 构建join通道的查询执行器:走sqltoy既有的query()链式构建器(原生sql+命名参数+结果类型),
+	 *              并经dataSource(ds)透传显式数据源(null时回退dao默认数据源,行为与未指定完全一致);
+	 *              query()构建器内部即new QueryExecutor(sql,params).resultType(..),与既有find(sql,map,resultType)同源,
+	 *              故无需给LightDao新增任何方法即可支持find/findPage/findTop/findRandom/count全终端的数据源路由
+	 */
+	private Query joinQuery() {
+		return dao.query().dataSource(getDataSource()).sql(getSql())
+				.entity((Serializable) new IgnoreKeyCaseMap(getParams())).resultType(getEntityClass());
 	}
 
 	/**

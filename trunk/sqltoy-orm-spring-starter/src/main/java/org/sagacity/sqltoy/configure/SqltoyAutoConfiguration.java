@@ -601,25 +601,28 @@ public class SqltoyAutoConfiguration {
 		return set;
 	}
 
+	// update 2026-10-18 (6.0.8) dao/service bean 返回类型改为具体实现类:Spring AOT 按声明类型预判 bean 类型,
+	// 声明为接口时事务 CGLIB 代理不会在构建期预生成,native 运行期报"CGLIB runtime enhancement not supported";
+	// @ConditionalOnMissingBean 显式指定接口类型,保持原有"存在任意该接口实现即退让"的语义不变
 	@Bean(name = "sqlToyLazyDao")
-	@ConditionalOnMissingBean
-	public SqlToyLazyDao sqlToyLazyDao(SqlToyContext sqlToyContext) {
+	@ConditionalOnMissingBean(SqlToyLazyDao.class)
+	public SqlToyLazyDaoImpl sqlToyLazyDao(SqlToyContext sqlToyContext) {
 		SqlToyLazyDaoImpl lazyDao = new SqlToyLazyDaoImpl();
 		lazyDao.setSqlToyContext(sqlToyContext);
 		return lazyDao;
 	}
 
 	@Bean(name = "sqlToyDao")
-	@ConditionalOnMissingBean
-	public SqlToyDao sqlToyDao(SqlToyContext sqlToyContext) {
+	@ConditionalOnMissingBean(SqlToyDao.class)
+	public SqlToyDaoImpl sqlToyDao(SqlToyContext sqlToyContext) {
 		SqlToyDaoImpl sqlToyDao = new SqlToyDaoImpl();
 		sqlToyDao.setSqlToyContext(sqlToyContext);
 		return sqlToyDao;
 	}
 
 	@Bean(name = "lightDao")
-	@ConditionalOnMissingBean
-	public LightDao lightDao(SqlToyContext sqlToyContext) {
+	@ConditionalOnMissingBean(LightDao.class)
+	public LightDaoImpl lightDao(SqlToyContext sqlToyContext) {
 		LightDaoImpl lightDao = new LightDaoImpl();
 		lightDao.setSqlToyContext(sqlToyContext);
 		return lightDao;
@@ -631,8 +634,8 @@ public class SqltoyAutoConfiguration {
 	 * @return 返回预定义的通用CRUD service实例
 	 */
 	@Bean(name = "sqlToyCRUDService")
-	@ConditionalOnMissingBean
-	public SqlToyCRUDService sqlToyCRUDService(LightDao lightDao) {
+	@ConditionalOnMissingBean(SqlToyCRUDService.class)
+	public SqlToyCRUDServiceImpl sqlToyCRUDService(LightDao lightDao) {
 		SqlToyCRUDServiceImpl sqlToyCRUDService = new SqlToyCRUDServiceImpl();
 		sqlToyCRUDService.setLightDao(lightDao);
 		return sqlToyCRUDService;

@@ -11,6 +11,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import javax.sql.DataSource;
+
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.lambda.ColumnResolver;
@@ -64,6 +66,11 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 	 * 条件值过滤策略,实例级配置,默认过滤null值
 	 */
 	protected ValueFilter valueFilter = ValueFilter.NON_NULL;
+
+	/**
+	 * 显式指定的数据源,为null时使用dao默认数据源;单表通道经EntityQuery/EntityUpdate透传,join通道经QueryExecutor/executeSql透传
+	 */
+	protected DataSource dataSource;
 
 	/**
 	 * 延迟组装器列表,assemble时按序执行
@@ -235,7 +242,7 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 		if (!valueFilter.test(val)) {
 			return typedThis;
 		}
-		return addCompareSegment(condition, column, SqlCompare.LIKE, val);
+		return addCompareSegment(condition, column, SqlCompare.LIKE, wrapLike(val, true, true));
 	}
 
 	@Override
@@ -243,7 +250,7 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 		if (!valueFilter.test(val)) {
 			return typedThis;
 		}
-		return addCompareSegment(condition, column, SqlCompare.NOT_LIKE, val);
+		return addCompareSegment(condition, column, SqlCompare.NOT_LIKE, wrapLike(val, true, true));
 	}
 
 	@Override
@@ -251,7 +258,7 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 		if (!valueFilter.test(val)) {
 			return typedThis;
 		}
-		return addCompareSegment(condition, column, SqlCompare.LIKE_LEFT, val);
+		return addCompareSegment(condition, column, SqlCompare.LIKE_LEFT, wrapLike(val, true, false));
 	}
 
 	@Override
@@ -259,7 +266,33 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 		if (!valueFilter.test(val)) {
 			return typedThis;
 		}
-		return addCompareSegment(condition, column, SqlCompare.LIKE_RIGHT, val);
+		return addCompareSegment(condition, column, SqlCompare.LIKE_RIGHT, wrapLike(val, false, true));
+	}
+
+	/**
+	 * @description like值按方向补通配符%,与sqltoy原生ParamsFilter.llike()/rlike()及中央解析链processLike
+	 *              "值已含%则不再二次包装、仅转义_和\等特殊字符"的约定对齐:采用纯 LIKE :param 形态(数据库无关,
+	 *              不依赖CONCAT,规避sqlite等库CONCAT改写为 value||'%' 使?紧跟LIKE而触发对裸值二次补%的缺陷)。
+	 *              OuterRef为外层列引用(内联渲染非字面量),不补通配符。
+	 * @param val   原始值
+	 * @param left  是否左侧补%
+	 * @param right 是否右侧补%
+	 * @return 补通配符后的值(OuterRef原样返回)
+	 */
+	private static Object wrapLike(Object val, boolean left, boolean right) {
+		if (val instanceof OuterRef) {
+			return val;
+		}
+		String str = String.valueOf(val);
+		StringBuilder sb = new StringBuilder(str.length() + 2);
+		if (left) {
+			sb.append('%');
+		}
+		sb.append(str);
+		if (right) {
+			sb.append('%');
+		}
+		return sb.toString();
 	}
 
 	@Override
@@ -505,6 +538,25 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 	public Self valueFilter(ValueFilter valueFilter) {
 		this.valueFilter = valueFilter;
 		return typedThis;
+	}
+
+	/**
+	 * @description 显式指定本次操作使用的数据源(多数据源场景),为null时用dao默认数据源;
+	 *              与sqltoy既有惯例一致(EntityQuery/QueryExecutor/lightDao.update()均有dataSource(...)),
+	 *              单表通道经EntityQuery/EntityUpdate透传、join通道经QueryExecutor/executeSql透传,查询/更新/删除/count全终端生效
+	 * @param dataSource 目标数据源
+	 * @return 自身
+	 */
+	public Self dataSource(DataSource dataSource) {
+		this.dataSource = dataSource;
+		return typedThis;
+	}
+
+	/**
+	 * @return 显式指定的数据源,未指定返回null(执行侧回退dao默认数据源)
+	 */
+	public DataSource getDataSource() {
+		return dataSource;
 	}
 
 	/**

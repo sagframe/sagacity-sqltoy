@@ -1,5 +1,6 @@
 package org.sagacity.sqltoy.lambda;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -13,6 +14,7 @@ import org.sagacity.sqltoy.lambda.engine.AbstractWhere;
 import org.sagacity.sqltoy.lambda.engine.SqlKeyword;
 import org.sagacity.sqltoy.lambda.join.JoinContext;
 import org.sagacity.sqltoy.lambda.join.JoinContext.Operate;
+import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
@@ -270,7 +272,9 @@ public final class LambdaUpdate<T> extends AbstractWhere<T, LambdaUpdate<T>> {
 		assemble(dao::getEntityMeta);
 		if (isJoinMode()) {
 			requireCondition("update");
-			return dao.executeSql(getSql(), getParams());
+			// join更新走sqltoy既有execute()链式构建器(原生sql+命名参数),经dataSource(ds)透传显式数据源,无需给LightDao新增方法
+			return dao.execute().dataSource(getDataSource()).sql(getSql())
+					.entity((Serializable) new IgnoreKeyCaseMap(getParams())).submit();
 		}
 		return dao.updateByQuery(getEntityClass(), LambdaConvert.toEntityUpdate(this));
 	}

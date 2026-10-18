@@ -1,7 +1,10 @@
 package org.sagacity.sqltoy.lambda;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.function.Function;
+
+import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.dao.LightDao;
@@ -11,6 +14,7 @@ import org.sagacity.sqltoy.utils.DBTransUtils;
 import org.sagacity.sqltoy.lambda.engine.SqlKeyword;
 import org.sagacity.sqltoy.lambda.join.JoinContext;
 import org.sagacity.sqltoy.lambda.join.JoinContext.Operate;
+import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 
 /**
  * @description lambda删除条件构建器,单表与多表join统一入口:不调用join步骤即单表
@@ -129,19 +133,29 @@ public final class LambdaDelete<T> extends AbstractWhere<T, LambdaDelete<T>> {
 			requireCondition("delete");
 			List<String> deleteSqls = getDeleteSqls();
 			if (deleteSqls.size() == 1) {
-				return dao.executeSql(deleteSqls.get(0), getParams());
+				return executeJoinDelete(deleteSqls.get(0));
 			}
-			// 多删除目标:逐表删除置于同一事务,保证原子性
-			Object total = DBTransUtils.doTrans(dao.getDataSource(), () -> {
+			// 多删除目标:逐表删除置于同一事务,保证原子性;事务数据源与删除一致(显式指定优先,否则dao默认)
+			DataSource transDataSource = (getDataSource() != null) ? getDataSource() : dao.getDataSource();
+			Object total = DBTransUtils.doTrans(transDataSource, () -> {
 				long sum = 0;
 				for (String deleteSql : deleteSqls) {
-					sum += dao.executeSql(deleteSql, getParams());
+					sum += executeJoinDelete(deleteSql);
 				}
 				return sum;
 			});
 			return ((Number) total).longValue();
 		}
 		return dao.deleteByQuery(getEntityClass(), LambdaConvert.toDeleteQuery(this));
+	}
+
+	/**
+	 * @description 执行单条join删除:走sqltoy既有execute()链式构建器(原生sql+命名参数),
+	 *              经dataSource(ds)透传显式数据源(null时回退dao默认),无需给LightDao新增方法
+	 */
+	private long executeJoinDelete(String deleteSql) {
+		return dao.execute().dataSource(getDataSource()).sql(deleteSql)
+				.entity((Serializable) new IgnoreKeyCaseMap(getParams())).submit();
 	}
 
 	/**
