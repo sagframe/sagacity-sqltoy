@@ -20,9 +20,10 @@ import org.sagacity.sqltoy.utils.StringUtil;
 /**
  * @description lambda更新条件构建器,核心职责是带条件的更新:set/setExpr指定更新字段,条件限定更新范围;
  *              单表与多表join统一入口:不调用join步骤即单表(条件转EntityUpdate复用updateByQuery链路),
- *              调用leftJoin/rightJoin/innerJoin即切换为join更新(生成MySQL风格方言
- *              <code>UPDATE 主表 别名 JOIN ... SET 别名.字段 = :p WHERE ...</code>经executeSql执行,
- *              主表隐式为查询实体,无需from);整对象更新(按主键)请直接使用lightDao.update(entity);
+ *              调用leftJoin/rightJoin/innerJoin即切换为join更新(生成可移植的
+ *              <code>UPDATE 目标表 SET 列 = :pN WHERE EXISTS (SELECT 1 FROM (join派生表) sqd WHERE ...)</code>,
+ *              经executeSql执行,不依赖MySQL多表UPDATE语法;主表隐式为更新实体,无需from);
+ *              整对象更新(按主键)请直接使用lightDao.update(entity);
  *              通过<code>lightDao.lambdaUpdate(entityClass)</code>创建时已绑定执行dao,可直接调用update终端方法
  * @param <T> 实体类型
  * @author zhongxuchen
@@ -262,9 +263,10 @@ public final class LambdaUpdate<T> extends AbstractWhere<T, LambdaUpdate<T>> {
 	private long updateInternal() {
 		if (dao == null) {
 			throw new DataAccessException(
-					"LambdaUpdate is not bound to a dao; create it via lightDao.lambdaUpdate(entityClass) or execute with lightDao.lambdaUpdate(update)");
+					"LambdaUpdate is not bound to a dao; create it via lightDao.lambdaUpdate(entityClass) or bind a dao with bind(dao) before executing");
 		}
-		if (setOps.isEmpty()) {
+		// assemble会把setOps物化到setFields/joinContext,重复执行时以已物化的set字段判断
+		if (setOps.isEmpty() && setFields.isEmpty() && !joinContext.hasSetItems()) {
 			throw new DataAccessException(
 					"Lambda update requires at least one field set via set(), setNull() or setExpr()");
 		}

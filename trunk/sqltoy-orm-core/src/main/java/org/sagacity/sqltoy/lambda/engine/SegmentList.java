@@ -58,16 +58,16 @@ public abstract class SegmentList implements SqlSegment {
 	}
 
 	/**
-	 * @description 参数合并:null值容忍;同名参数值不同说明两个inSql/having共用了参数名却各绑各值,
+	 * @description 参数合并:null值容忍;同名参数值不同说明两个inSql/having/cte共用了参数名却各绑各值,
 	 *              静默覆盖会产生错误结果,响亮失败
 	 */
-	static void mergeParams(Map<String, Object> target, Map<String, Object> source) {
+	public static void mergeParams(Map<String, Object> target, Map<String, Object> source) {
 		for (Map.Entry<String, Object> entry : source.entrySet()) {
-			Object existing = target.get(entry.getKey());
-			if (existing != null && entry.getValue() != null && !existing.equals(entry.getValue())) {
+			if (target.containsKey(entry.getKey())
+					&& !Objects.equals(target.get(entry.getKey()), entry.getValue())) {
 				throw new org.sagacity.sqltoy.exception.DataAccessException("Duplicate named parameter ["
 						+ entry.getKey()
-						+ "] with different values across condition segments (two inSql/having sharing one param name); use distinct names");
+						+ "] with different values across condition segments (two inSql/having/cte sharing one param name); use distinct names");
 			}
 			target.put(entry.getKey(), entry.getValue());
 		}
@@ -93,5 +93,19 @@ public abstract class SegmentList implements SqlSegment {
 
 	public boolean isEmpty() {
 		return segments.isEmpty();
+	}
+
+	/**
+	 * @description 是否包含有效条件片段:排除AND/OR/NOT连接符。用于按条件更新/删除的无条件守卫,
+	 *              避免"组内条件全被值过滤、只剩连接符"时被误判为存在条件
+	 * @return true表示存在至少一个真实条件片段
+	 */
+	public boolean hasEffectiveSegment() {
+		for (SqlSegment segment : segments) {
+			if (segment != null && !MatchSegment.AND_OR.match(segment) && !MatchSegment.NOT.match(segment)) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

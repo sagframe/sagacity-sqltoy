@@ -7,12 +7,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
+import javax.sql.DataSource;
+
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.PageOptimize;
 import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
 import org.sagacity.sqltoy.dao.LightDao;
+import org.sagacity.sqltoy.dialect.utils.SqlServerDialectUtils;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.lambda.engine.AbstractWhere;
+import org.sagacity.sqltoy.lambda.engine.SegmentList;
 import org.sagacity.sqltoy.lambda.engine.SqlKeyword;
 import org.sagacity.sqltoy.lambda.join.ExcludeCols;
 import org.sagacity.sqltoy.lambda.join.JoinCol;
@@ -117,16 +121,35 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	}
 
 	@Override
+	protected String orderByColumn(ColumnResolver resolver, LambdaFn<?, ?> column) {
+		if (!unions.isEmpty()) {
+			// union结果只暴露输出列(select别名=属性名),不能再用分支内的表别名限定,否则union根排序非法
+			return LambdaUtils.extractProperty(column);
+		}
+		return super.orderByColumn(resolver, column);
+	}
+
+	/**
+	 * @return 是否使用了CTE(分支若含WITH,在SQLServer的union派生表包裹中不合法)
+	 */
+	public boolean hasCte() {
+		return !ctes.isEmpty();
+	}
+
+	@Override
 	public void assemble(Function<Class<?>, EntityMeta> metaLoader) {
-		// 组合模式:先装配CTE/@fast内层(各自独立paramSeq),按序续号,保证组合后参数名全局唯一不撞号
+		// 组合模式:先装配CTE/@fast内层(各自独立paramSeq),按序续号,保证组合后参数名全局唯一不撞号;
+		// 已装配过的内层不把序号回退,避免重复执行/继续追加条件时重新从p1起号
 		int seq = 0;
 		for (CteDef cte : ctes) {
-			cte.query.joinContext.getParamSeq().set(seq);
+			cte.query.joinContext.getParamSeq()
+					.set(Math.max(cte.query.joinContext.getParamSeq().get(), seq));
 			cte.query.assemble(metaLoader);
 			seq = cte.query.joinContext.getParamSeq().get();
 		}
 		if (fastInner != null) {
-			fastInner.joinContext.getParamSeq().set(seq);
+			fastInner.joinContext.getParamSeq()
+					.set(Math.max(fastInner.joinContext.getParamSeq().get(), seq));
 			fastInner.assemble(metaLoader);
 			seq = fastInner.joinContext.getParamSeq().get();
 			// @fast派生表:FROM @fast(内层sql),别名由registerFrom(entity,alias)提供
@@ -156,10 +179,13 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 		int unionSeq = joinContext.getParamSeq().get();
 		for (Object[] u : unions) {
 			LambdaQuery<?> unionQuery = (LambdaQuery<?>) u[1];
-			unionQuery.joinContext.getParamSeq().set(unionSeq);
+			unionQuery.joinContext.getParamSeq()
+					.set(Math.max(unionQuery.joinContext.getParamSeq().get(), unionSeq));
 			unionQuery.assemble(metaLoader);
 			unionSeq = unionQuery.joinContext.getParamSeq().get();
 		}
+		// 分支(含分支自身的union嵌套)占用到的最新序号必须回写外层,否则后续追加的条件会与分支撞号
+		joinContext.getParamSeq().set(Math.max(joinContext.getParamSeq().get(), unionSeq));
 	}
 
 	/**
@@ -226,8 +252,18 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	 *              MATERIALIZED,其余库忽略不渲染,详见SqlWithAnalysis.supportsCteMaterialized)
 	 */
 	public LambdaQuery<T> with(String name, LambdaQuery<?> cteQuery, Boolean materialized) {
-		// CTE体必须是完整SELECT..FROM,强制内层走join/SQL通道
+		requireIdentifier(name, "CTE name");
+		if (cteQuery == null) {
+			throw new DataAccessException("CTE [" + name + "] requires a non-null inner query");
+		}
+		for (CteDef existing : ctes) {
+			if (existing.name.equalsIgnoreCase(name)) {
+				throw new DataAccessException("Duplicate CTE name [" + name + "]");
+			}
+		}
+		// CTE体必须是完整SELECT..FROM,强制内层与当前查询都走join/SQL通道
 		cteQuery.joinContext.forceJoinChannel();
+		joinContext.forceJoinChannel();
 		ctes.add(new CteDef(name, cteQuery, false, materialized, null));
 		composed = true;
 		return this;
@@ -243,7 +279,22 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	 * @param columns  CTE列清单,如 "id","pid","name"
 	 */
 	public LambdaQuery<T> withRecursive(String name, LambdaQuery<?> cteQuery, String... columns) {
+		requireIdentifier(name, "CTE name");
+		if (cteQuery == null) {
+			throw new DataAccessException("Recursive CTE [" + name + "] requires a non-null inner query");
+		}
+		for (CteDef existing : ctes) {
+			if (existing.name.equalsIgnoreCase(name)) {
+				throw new DataAccessException("Duplicate CTE name [" + name + "]");
+			}
+		}
+		if (columns != null) {
+			for (String column : columns) {
+				requireIdentifier(column, "CTE column");
+			}
+		}
 		cteQuery.joinContext.forceJoinChannel();
+		joinContext.forceJoinChannel();
 		ctes.add(new CteDef(name, cteQuery, true, null, columns));
 		composed = true;
 		return this;
@@ -253,6 +304,7 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	 * @description 外层FROM引用CTE(旁路实体表名,列解析走结果类型VO的EntityMeta);触发join/SQL通道
 	 */
 	public LambdaQuery<T> fromCte(String name) {
+		requireIdentifier(name, "CTE name");
 		joinContext.registerFrom(getEntityClass());
 		joinContext.setFromRawSource(name);
 		joinContext.forceJoinChannel();
@@ -268,6 +320,10 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	 * @param alias 派生表别名
 	 */
 	public LambdaQuery<T> fromFast(LambdaQuery<?> inner, String alias) {
+		if (inner == null) {
+			throw new DataAccessException("fromFast requires a non-null inner query");
+		}
+		requireIdentifier(alias, "fromFast alias");
 		// @fast内层必须是完整SELECT..FROM(被分页下推的子查询),强制走join/SQL通道
 		inner.joinContext.forceJoinChannel();
 		this.fastInner = inner;
@@ -278,21 +334,45 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	}
 
 	/**
-	 * @description UNION组合(去重):(本查询) UNION (other);两侧须映射同一结果类型,参数序号组合时统一续号
+	 * @description UNION组合(去重):(本查询) UNION (other);两侧须映射同一结果类型,参数序号组合时统一续号;
+	 *              union要求两侧都是完整SELECT,故同时把当前查询与分支强制切换到join/SQL通道。
+	 *              注意:根构建器上的orderBy/last作用于整个union结果(追加在union之后);
+	 *              分支构建器上的orderBy/last作用于该分支(SQLServer用派生表包裹)
 	 */
 	public LambdaQuery<T> union(LambdaQuery<?> other) {
-		unions.add(new Object[] { "UNION", other });
+		return addUnion("UNION", other);
+	}
+
+	/**
+	 * @description UNION ALL组合(不去重,更快);count可复用sqltoy的union-all-count优化,排序/limit语义同union
+	 */
+	public LambdaQuery<T> unionAll(LambdaQuery<?> other) {
+		return addUnion("UNION ALL", other);
+	}
+
+	private LambdaQuery<T> addUnion(String connector, LambdaQuery<?> other) {
+		if (other == null) {
+			throw new DataAccessException("union requires a non-null other query");
+		}
+		if (other == this) {
+			throw new DataAccessException("union cannot combine a query with itself");
+		}
+		// union两侧都必须是完整SELECT..FROM,否则组合后的SQL不合法
+		joinContext.forceJoinChannel();
+		other.joinContext.forceJoinChannel();
+		unions.add(new Object[] { connector, other });
 		composed = true;
 		return this;
 	}
 
 	/**
-	 * @description UNION ALL组合(不去重,更快);count可复用sqltoy的union-all-count优化
+	 * @description CTE名称/派生表别名必须是普通标识符,避免原始文本拼入SQL造成注入或语法错误
 	 */
-	public LambdaQuery<T> unionAll(LambdaQuery<?> other) {
-		unions.add(new Object[] { "UNION ALL", other });
-		composed = true;
-		return this;
+	private static String requireIdentifier(String value, String what) {
+		if (value == null || !value.matches("[A-Za-z_][A-Za-z0-9_]*")) {
+			throw new DataAccessException(what + " must be a plain identifier but got: " + value);
+		}
+		return value;
 	}
 
 	@Override
@@ -307,26 +387,27 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 		}
 		Map<String, Object> merged = new LinkedHashMap<>();
 		for (CteDef cte : ctes) {
-			merged.putAll(cte.query.getParams());
+			SegmentList.mergeParams(merged, cte.query.getParams());
 		}
 		if (fastInner != null) {
-			merged.putAll(fastInner.getParams());
+			SegmentList.mergeParams(merged, fastInner.getParams());
 		}
-		merged.putAll(super.getParams());
+		SegmentList.mergeParams(merged, super.getParams());
 		for (Object[] u : unions) {
-			merged.putAll(((LambdaQuery<?>) u[1]).getParams());
+			SegmentList.mergeParams(merged, ((LambdaQuery<?>) u[1]).getParams());
 		}
 		return merged;
 	}
 
 	/**
 	 * @description 组合SQL:[WITH name AS [MATERIALIZED] (inner)... ] mainSql [ UNION
-	 *              [ALL] (other)...]
+	 *              [ALL] (other)...][ORDER BY ...][last]。union根的排序/limit必须位于整个union之后,
+	 *              且只能引用输出列(不使用分支表别名);分支自带排序/limit时按方言包裹成完整的查询表达式
 	 */
 	private String composeSql() {
+		int dbType = resolveDbType();
 		StringBuilder sb = new StringBuilder();
 		if (!ctes.isEmpty()) {
-			int dbType = resolveDbType();
 			// WITH必须位于语句位置0:sqltoy靠SqlWithAnalysis/hasWith从文本检测WITH以在count/分页时把WITH剥离到包裹外,
 			// 前导分号会破坏该检测;SQLServer单条语句以WITH开头本就不需要前置分号(分号要求仅针对WITH前尚有未结束语句的批处理)
 			sb.append("WITH ");
@@ -354,18 +435,43 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 			}
 			sb.append(" ");
 		}
-		String mainSql = super.getSql();
 		if (unions.isEmpty()) {
-			sb.append(mainSql);
-		} else {
-			// union分支不加括号:(SELECT..)UNION(SELECT..)在SQLServer非法(T-SQL不允许set操作数带括号);
-			// 整体被sqltoy包成派生表做count/分页时的外层括号由方言分页机制负责,各库均合法
-			sb.append(mainSql);
-			for (Object[] u : unions) {
-				sb.append(" ").append(u[0]).append(" ").append(((LambdaQuery<?>) u[1]).getSql());
+			sb.append(super.getSql());
+			return sb.toString();
+		}
+		// union根排序/limit:从首分支剥离,统一追加到union之后,交给sqltoy的count/分页二次包装处理
+		boolean hasTail = hasOrderByOrLastSql();
+		sb.append(hasTail ? joinContext.getSql(getSqlSegmentWithoutOrderBy()) : super.getSql());
+		int branchIndex = 0;
+		for (Object[] u : unions) {
+			branchIndex++;
+			LambdaQuery<?> unionQuery = (LambdaQuery<?>) u[1];
+			String branchSql = unionQuery.getSql();
+			// 分支自带order/last时必须包裹成完整查询表达式;分支自含CTE时也需包裹(CTE不能直接跟在union后)
+			if (unionQuery.hasOrderByOrLastSql() || unionQuery.hasCte()) {
+				branchSql = wrapUnionBranch(unionQuery, branchSql, branchIndex, dbType);
 			}
+			sb.append(" ").append(u[0]).append(" ").append(branchSql);
+		}
+		if (hasTail) {
+			sb.append(" ").append(getOrderByTailSql());
 		}
 		return sb.toString();
+	}
+
+	/**
+	 * @description union分支包裹:普通库用括号;SQLServer不允许set操作数直接带括号且派生表内order by
+	 *              必须伴随TOP/OFFSET,故用派生表包裹并复用sqltoy的legalizeDerivedInnerSql补齐offset 0
+	 */
+	private String wrapUnionBranch(LambdaQuery<?> branch, String branchSql, int branchIndex, int dbType) {
+		if (dbType != DBType.SQLSERVER) {
+			return "(" + branchSql + ")";
+		}
+		if (branch.hasCte()) {
+			throw new DataAccessException("SQL Server does not allow a CTE inside a union branch; "
+					+ "move the WITH definition to the outer query or execute the branch separately");
+		}
+		return "SELECT * FROM (" + SqlServerDialectUtils.legalizeDerivedInnerSql(branchSql) + ") ub" + branchIndex;
 	}
 
 	/**
@@ -375,7 +481,9 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 		if (dao == null) {
 			return -1;
 		}
-		return DataSourceUtils.getDBType(dao.getSqlToyContext(), dao.getDataSource());
+		// 显式dataSource优先:多数据源/异构库场景下WITH RECURSIVE与MATERIALIZED的门禁必须按实际执行库判断
+		DataSource target = (dataSource != null) ? dataSource : dao.getDataSource();
+		return DataSourceUtils.getDBType(dao.getSqlToyContext(), target);
 	}
 
 	/**
@@ -432,7 +540,8 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	/**
 	 * @description 设置自定义精简count
 	 *              SQL(仅join/SQL通道的findPage生效):分页算总数时用它替代包裹整条查询SQL的自动count,
-	 *              对应sqltoy的count-sql配置;比@fast内层count仍不够精简的极特殊场景使用
+	 *              对应sqltoy的count-sql配置;比@fast内层count仍不够精简的极特殊场景使用。
+	 *              单表通道走EntityQuery的实体count,无法承载自定义count SQL,设置后在单表findPage会快速失败
 	 * @param countSql 精简的count SQL,如 select count(1) from table_a where status=:p1
 	 * @return 自身
 	 */
@@ -506,6 +615,9 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	 * @return 自身
 	 */
 	public LambdaQuery<T> selectAll(Class<?> entityClass) {
+		if (entityClass == null) {
+			throw new DataAccessException("selectAll entityClass must not be null");
+		}
 		joinContext.markSelectAll(entityClass);
 		return this;
 	}
@@ -517,11 +629,12 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	 * @return 自身
 	 */
 	public LambdaQuery<T> selectAll(ExcludeCols<?> excludeColumns) {
+		if (excludeColumns == null) {
+			throw new DataAccessException("selectAll(ExcludeCols) requires non-null exclude columns");
+		}
 		joinContext.markSelectAll(excludeColumns);
-		if (excludeColumns != null) {
-			for (LambdaFn<?, ?> column : excludeColumns.getColumns()) {
-				excludeFields.add(LambdaUtils.extractProperty(column));
-			}
+		for (LambdaFn<?, ?> column : excludeColumns.getColumns()) {
+			excludeFields.add(LambdaUtils.extractProperty(column));
 		}
 		return this;
 	}
@@ -542,6 +655,9 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	public LambdaQuery<T> select(JoinCol... columns) {
 		if (columns != null) {
 			for (JoinCol column : columns) {
+				if (column == null) {
+					throw new DataAccessException("select columns must not contain null elements");
+				}
 				joinContext.addSelectColumn(column);
 			}
 		}
@@ -597,6 +713,10 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 							new QueryExecutor(getSql(), getParams()).resultType(getEntityClass())
 									.dataSource(getDataSource()).pageOptimize(pageOptimize).countSql(countSql))
 					.getPageResult();
+		}
+		if (countSql != null) {
+			throw new DataAccessException(
+					"countSql is only supported by the join/SQL channel; the single-table channel uses EntityQuery's entity count and cannot accept a custom count sql");
 		}
 		return dao.findPageEntity(page, getEntityClass(), LambdaConvert.toEntityQuery(this));
 	}
@@ -665,7 +785,7 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	private void requireDao() {
 		if (dao == null) {
 			throw new DataAccessException(
-					"LambdaQuery is not bound to a dao; create it via lightDao.lambdaQuery(entityClass) or execute with lightDao.find(query)");
+					"LambdaQuery is not bound to a dao; create it via lightDao.lambdaQuery(entityClass) or bind a dao with bind(dao) before executing");
 		}
 	}
 

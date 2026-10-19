@@ -144,6 +144,12 @@ public class JoinContext {
 	final AtomicInteger paramSeq;
 
 	/**
+	 * exists子查询别名序号:按语句独立计数(嵌套子查询共享),保证同一语句内唯一,
+	 * 同时让结构相同的查询生成完全一致的SQL文本以复用缓存
+	 */
+	private final AtomicInteger subQuerySeq;
+
+	/**
 	 * 别名序号
 	 */
 	private final AtomicInteger aliasSeq = new AtomicInteger(0);
@@ -182,10 +188,21 @@ public class JoinContext {
 	 * @param sharedParamSeq 共享参数序号(exists子查询与外层共用,保证参数名全局唯一),null为自建
 	 */
 	public JoinContext(Operate operate, Class<?> resultClass, String aliasPrefix, AtomicInteger sharedParamSeq) {
+		this(operate, resultClass, aliasPrefix, sharedParamSeq, null);
+	}
+
+	/**
+	 * @param aliasPrefix       别名前缀(exists子查询用sq前缀避免与外层单字母别名碰撞),null为类名首字母方案
+	 * @param sharedParamSeq    共享参数序号(exists子查询与外层共用),null为自建
+	 * @param sharedSubQuerySeq 共享exists别名序号(嵌套子查询与外层共用),null为自建
+	 */
+	public JoinContext(Operate operate, Class<?> resultClass, String aliasPrefix, AtomicInteger sharedParamSeq,
+			AtomicInteger sharedSubQuerySeq) {
 		this.operate = operate;
 		this.resultClass = resultClass;
 		this.aliasPrefix = aliasPrefix;
 		this.paramSeq = (sharedParamSeq != null) ? sharedParamSeq : new AtomicInteger(0);
+		this.subQuerySeq = (sharedSubQuerySeq != null) ? sharedSubQuerySeq : new AtomicInteger(0);
 	}
 
 	/**
@@ -540,10 +557,38 @@ public class JoinContext {
 	}
 
 	/**
+	 * @return 是否已登记set字段(装配后用于重复执行时的set完整性判断)
+	 */
+	public boolean hasSetItems() {
+		return !setItems.isEmpty();
+	}
+
+	/**
 	 * @return 参数序号句柄,供exists子查询共享保证参数名全局唯一
 	 */
 	public AtomicInteger getParamSeq() {
 		return paramSeq;
+	}
+
+	/**
+	 * @return exists子查询别名序号句柄,供嵌套子查询共享保证同一语句内别名唯一
+	 */
+	public AtomicInteger getSubQuerySeq() {
+		return subQuerySeq;
+	}
+
+	/**
+	 * @return 下一个exists子查询别名(sq1、sq2...):按语句独立计数,结构相同的查询SQL文本稳定
+	 */
+	public String nextSubQueryAlias() {
+		return "sq" + subQuerySeq.incrementAndGet();
+	}
+
+	/**
+	 * @return 主表别名(未注册时返回null),供union根排序的派生表包裹复用同一别名
+	 */
+	public String getFromAlias() {
+		return (fromClass == null) ? null : aliasMap.get(fromClass);
 	}
 
 	/**

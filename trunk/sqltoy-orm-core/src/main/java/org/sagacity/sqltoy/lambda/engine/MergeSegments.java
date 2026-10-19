@@ -57,10 +57,53 @@ public class MergeSegments implements SqlSegment {
 	}
 
 	/**
-	 * @return 是否存在where条件片段
+	 * @return last()原始sql片段(未设置返回null)
+	 */
+	public String getLastSql() {
+		return lastSql;
+	}
+
+	/**
+	 * @return 是否存在orderBy排序分区
+	 */
+	public boolean hasOrderBy() {
+		return !orderBy.isEmpty();
+	}
+
+	/**
+	 * @description 不含orderBy/last的where+groupBy+having片段;供union根排序拆分为
+	 *              "分支SQL"与"union之后的orderBy/last"两部分
+	 * @return sql片段,无where/groupBy/having时返回null
+	 */
+	public String getSqlSegmentWithoutOrderBy() {
+		String sql = null;
+		if (normal.isEmpty()) {
+			if (!groupBy.isEmpty() || !having.isEmpty()) {
+				sql = "1 = 1 " + groupBy.getSqlSegment() + having.getSqlSegment();
+			}
+		} else {
+			sql = normal.getSqlSegment() + groupBy.getSqlSegment() + having.getSqlSegment();
+		}
+		return sql;
+	}
+
+	/**
+	 * @description orderBy+last尾部片段(union根排序/限制须位于整个union之后)
+	 * @return 尾部片段,均为空时返回空串
+	 */
+	public String getOrderByTailSql() {
+		String orderSql = orderBy.getSqlSegment();
+		if (!hasLastSql()) {
+			return orderSql;
+		}
+		return orderSql.isEmpty() ? lastSql : orderSql + " " + lastSql;
+	}
+
+	/**
+	 * @return 是否存在有效where条件片段(排除只有AND/OR/NOT连接符的情况)
 	 */
 	public boolean hasCondition() {
-		return !normal.isEmpty();
+		return normal.hasEffectiveSegment();
 	}
 
 	/**

@@ -19,8 +19,9 @@ import org.sagacity.sqltoy.utils.DBTransUtils;
 /**
  * @description lambda删除条件构建器,单表与多表join统一入口:不调用join步骤即单表
  *              (条件转EntityQuery复用deleteByQuery链路),调用leftJoin/rightJoin/innerJoin即切换为
- *              join删除(生成MySQL风格方言<code>DELETE 别名[,...] FROM 主表 别名 JOIN ... WHERE ...</code>
- *              经executeSql执行,主表隐式为查询实体,无需from,deleteTables指定删除目标缺省主表);
+ *              join删除(生成可移植的<code>DELETE FROM 目标表 WHERE EXISTS
+ *              (SELECT 1 FROM (join派生表) sqd WHERE ...)</code>经executeSql执行,
+ *              不依赖MySQL多表DELETE语法;主表隐式为查询实体,无需from,deleteTables指定删除目标缺省主表);
  *              通过<code>lightDao.lambdaDelete(entityClass)</code>创建时已绑定执行dao,
  *              可直接调用delete终端方法
  * @param <T> 实体类型
@@ -126,7 +127,7 @@ public final class LambdaDelete<T> extends AbstractWhere<T, LambdaDelete<T>> {
 	public long delete() {
 		if (dao == null) {
 			throw new DataAccessException(
-					"LambdaDelete is not bound to a dao; create it via lightDao.lambdaDelete(entityClass) or execute with lightDao.lambdaDelete(delete)");
+					"LambdaDelete is not bound to a dao; create it via lightDao.lambdaDelete(entityClass) or bind a dao with bind(dao) before executing");
 		}
 		assemble(dao::getEntityMeta);
 		if (isJoinMode()) {
@@ -159,9 +160,10 @@ public final class LambdaDelete<T> extends AbstractWhere<T, LambdaDelete<T>> {
 	}
 
 	/**
-	 * @return 可移植join删除语句列表(多删除目标时每表一条)
+	 * @return 可移植join删除语句列表(多删除目标时每表一条);空条件会先被拒绝,避免生成1=1的全表删除
 	 */
 	public List<String> getDeleteSqls() {
+		requireCondition("delete");
 		return joinContext.getDeleteSqls(getSqlSegment());
 	}
 

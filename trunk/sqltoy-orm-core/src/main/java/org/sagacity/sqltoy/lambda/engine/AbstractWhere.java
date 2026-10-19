@@ -6,7 +6,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -81,11 +80,6 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 	 * 当前装配的元信息加载器,供exists子查询等嵌套装配复用
 	 */
 	protected Function<Class<?>, EntityMeta> currentMetaLoader;
-
-	/**
-	 * exists子查询别名序号,保证同一语句内sq别名唯一
-	 */
-	private static final AtomicInteger SUB_SEQ = new AtomicInteger(0);
 
 	/**
 	 * 无条件匹配全部的显式放行标记,仅对按条件删除/更新操作生效
@@ -284,6 +278,10 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 			return val;
 		}
 		String str = String.valueOf(val);
+		// 与processLike约定一致:值已含%说明调用方自带通配符,不再二次包装
+		if (str.indexOf('%') >= 0) {
+			return str;
+		}
 		StringBuilder sb = new StringBuilder(str.length() + 2);
 		if (left) {
 			sb.append('%');
@@ -392,7 +390,7 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 	@Override
 	public <E, R> Self orderBy(boolean condition, boolean isAsc, LambdaFn<E, R> column) {
 		return addAssembler(resolver -> maybeDo(condition, () -> {
-			String columnName = resolveColumn(resolver, column);
+			String columnName = orderByColumn(resolver, column);
 			appendSqlSegments(SqlKeyword.ORDER_BY, () -> columnName, isAsc ? SqlKeyword.ASC : SqlKeyword.DESC);
 		}));
 	}
@@ -400,9 +398,16 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 	@Override
 	public <E> Self orderBy(boolean condition, boolean isAsc, Collection<LambdaFn<E, ?>> columns) {
 		return addAssembler(resolver -> maybeDo(condition, () -> columns.forEach(column -> {
-			String columnName = resolveColumn(resolver, column);
+			String columnName = orderByColumn(resolver, column);
 			appendSqlSegments(SqlKeyword.ORDER_BY, () -> columnName, isAsc ? SqlKeyword.ASC : SqlKeyword.DESC);
 		})));
+	}
+
+	/**
+	 * @description 排序字段的sql渲染;子类可覆盖以适配特殊场景(如union根排序只能用结果输出列)
+	 */
+	protected String orderByColumn(ColumnResolver resolver, LambdaFn<?, ?> column) {
+		return resolveColumn(resolver, column);
 	}
 
 	@Override
@@ -512,6 +517,41 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 	 */
 	public boolean hasCondition() {
 		return expression.hasCondition();
+	}
+
+	/**
+	 * @return 是否存在orderBy排序分区
+	 */
+	public boolean hasOrderBy() {
+		return expression.hasOrderBy();
+	}
+
+	/**
+	 * @return 是否存在orderBy或last尾部片段(union根排序/限制需要移动到union之后)
+	 */
+	public boolean hasOrderByOrLastSql() {
+		return expression.hasOrderBy() || expression.hasLastSql();
+	}
+
+	/**
+	 * @return last()原始sql片段(未设置返回null)
+	 */
+	public String getLastSql() {
+		return expression.getLastSql();
+	}
+
+	/**
+	 * @return 不含orderBy/last的where/groupBy/having片段,供union根排序拆分使用
+	 */
+	protected String getSqlSegmentWithoutOrderBy() {
+		return expression.getSqlSegmentWithoutOrderBy();
+	}
+
+	/**
+	 * @return orderBy+last尾部片段,供union根排序/限制在union之后追加
+	 */
+	protected String getOrderByTailSql() {
+		return expression.getOrderByTailSql();
 	}
 
 	public Class<T> getEntityClass() {
@@ -634,10 +674,13 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 	}
 
 	/**
-	 * @description 外层查询的限定列解析器:join通道为别名限定,单表通道为表名限定(子查询内关联外层列须限定,避免与子查询同名列歧义)
+	 * @description 外层查询的限定列解析器:join/SQL通道为别名限定,纯单表实体通道为表名限定
+	 *              (子查询内关联外层列须限定,避免与子查询同名列歧义)
 	 */
 	protected ColumnResolver qualifiedResolverFor(Function<Class<?>, EntityMeta> metaLoader) {
-		if (joinContext != null && joinContext.hasJoin()) {
+		// 走join/SQL通道时FROM已带别名(即使没有实际join,如select(JoinCol)/fromCte/fromFast),
+		// 此时必须用别名限定;只有纯单表实体通道才使用原表名
+		if (joinContext != null && joinContext.isJoinChannel()) {
 			return (entity, fieldName) -> joinContext.columnName(entity, fieldName);
 		}
 		return (entity, fieldName) -> {
@@ -646,7 +689,12 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 						+ "] does not participate in the current single-table query; Outer.ref must reference the query entity");
 			}
 			EntityMeta meta = metaLoader.apply(entityClass);
-			return meta.getSchemaTable(null, null) + "." + meta.getColumnName(fieldName);
+			String columnName = meta.getColumnName(fieldName);
+			if (columnName == null) {
+				throw new DataAccessException("Property [" + fieldName + "] of entity [" + entityClass.getSimpleName()
+						+ "] is not a mapped database column (@Column); lambda conditions only accept mapped properties");
+			}
+			return meta.getSchemaTable(null, null) + "." + columnName;
 		};
 	}
 
@@ -687,7 +735,7 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 	private <E> Self addExistsSegment(boolean condition, Class<E> subEntity,
 			Function<LambdaSubQuery<E>, LambdaSubQuery<E>> subFn, boolean negate) {
 		return addAssembler(resolver -> maybeDo(condition, () -> {
-			LambdaSubQuery<E> subQuery = new LambdaSubQuery<>(subEntity, "sq" + SUB_SEQ.incrementAndGet(), joinContext,
+			LambdaSubQuery<E> subQuery = new LambdaSubQuery<>(subEntity, joinContext.nextSubQueryAlias(), joinContext,
 					qualifiedResolverFor(currentMetaLoader));
 			subFn.apply(subQuery);
 			subQuery.assemble(currentMetaLoader);
@@ -739,6 +787,8 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 		return maybeDo(condition, () -> {
 			Self nested = instance();
 			nested.valueFilter = this.valueFilter;
+			// exists/notExists等嵌套装配需要元信息加载器,必须随嵌套实例一起传递
+			nested.currentMetaLoader = this.currentMetaLoader;
 			Self result = function.apply(nested);
 			result.assembleInternal(resolver);
 			String sql = result.getSqlSegment();
@@ -757,6 +807,11 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 			assemblers.get(i).accept(resolver);
 		}
 		assemblers.clear();
+		// 括号内是where条件,分组/聚合/排序在此处无SQL语义(会生成非法的"(.. GROUP BY ..)")
+		if (expression.hasAggregatePartitions()) {
+			throw new DataAccessException(
+					"groupBy/having/orderBy are not supported inside nested conditions; add them on the query root instead");
+		}
 	}
 
 	/**

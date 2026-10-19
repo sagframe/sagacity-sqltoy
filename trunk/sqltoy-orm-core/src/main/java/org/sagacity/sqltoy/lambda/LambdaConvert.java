@@ -57,12 +57,24 @@ public final class LambdaConvert {
 	 */
 	public static EntityQuery toDeleteQuery(AbstractWhere<?, ?> where) {
 		where.requireCondition("delete");
+		if (where.hasLastSql()) {
+			throw new DataAccessException(
+					"last() raw sql append is not supported in the single-table delete channel (EntityQuery where cannot carry trailing raw sql); use explicit conditions or the join channel");
+		}
 		EntityQuery entityQuery = EntityQuery.create();
 		String whereSql = where.getSqlSegment();
 		Map<String, Object> params = where.getParams();
-		if (params.isEmpty()) {
+		if (StringUtil.isBlank(whereSql)) {
+			// 兜底防护:只有显式matchAll()才允许无条件删除
+			if (!where.isMatchAll()) {
+				throw new DataAccessException(
+						"Lambda conditional delete requires where conditions; call matchAll() explicitly to match all records");
+			}
+			whereSql = "1=:DEFAULT_VALUE ";
+			params.put("DEFAULT_VALUE", 1);
+		} else if (params.isEmpty()) {
 			// where无命名参数时补齐参数个数(deleteByQuery对where/values空值直接拒绝),与更新通道同口径
-			whereSql = StringUtil.isBlank(whereSql) ? "1=:DEFAULT_VALUE " : "1=:DEFAULT_VALUE AND " + whereSql;
+			whereSql = "1=:DEFAULT_VALUE AND " + whereSql;
 			params.put("DEFAULT_VALUE", 1);
 		}
 		entityQuery.where(whereSql);
@@ -83,13 +95,25 @@ public final class LambdaConvert {
 					"Lambda update requires at least one field set via set(), setNull() or setExpr()");
 		}
 		update.requireCondition("update");
+		if (update.hasLastSql()) {
+			throw new DataAccessException(
+					"last() raw sql append is not supported in the single-table update channel (EntityUpdate where cannot carry trailing raw sql); use explicit conditions or the join channel");
+		}
 		EntityUpdate entityUpdate = EntityUpdate.create();
 		update.getSetFields().forEach(entityUpdate::set);
 		String whereSql = update.getSqlSegment();
 		Map<String, Object> params = update.getParams();
-		if (params.isEmpty()) {
+		if (StringUtil.isBlank(whereSql)) {
+			// 兜底防护:只有显式matchAll()才允许无条件更新
+			if (!update.isMatchAll()) {
+				throw new DataAccessException(
+						"Lambda conditional update requires where conditions; call matchAll() explicitly to match all records");
+			}
+			whereSql = "1=:DEFAULT_VALUE ";
+			params.put("DEFAULT_VALUE", 1);
+		} else if (params.isEmpty()) {
 			// where中无命名参数时补齐参数个数,规避updateByQuery对where与values数量的校验异常
-			whereSql = StringUtil.isBlank(whereSql) ? "1=:DEFAULT_VALUE " : "1=:DEFAULT_VALUE AND " + whereSql;
+			whereSql = "1=:DEFAULT_VALUE AND " + whereSql;
 			params.put("DEFAULT_VALUE", 1);
 		}
 		if (update.getDataSource() != null) {

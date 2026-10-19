@@ -33,10 +33,13 @@ public final class LambdaSubQuery<E> extends AbstractWhere<E, LambdaSubQuery<E>>
 	 * @description 由AbstractWhere.exists/notExists创建,不直接对外使用
 	 */
 	public LambdaSubQuery(Class<E> subEntity, String alias, JoinContext outerContext, ColumnResolver outerResolver) {
-		super(subEntity, new JoinContext(Operate.SELECT, null, null, outerContext.getParamSeq()));
+		super(subEntity, new JoinContext(Operate.SELECT, null, null, outerContext.getParamSeq(),
+				outerContext.getSubQuerySeq()));
 		this.alias = alias;
 		this.outerResolver = outerResolver;
 		joinContext.registerFrom(subEntity, alias);
+		// 子查询FROM始终带别名,强制走SQL通道,使嵌套exists的OuterRef按别名限定
+		joinContext.forceJoinChannel();
 	}
 
 	@Override
@@ -60,7 +63,12 @@ public final class LambdaSubQuery<E> extends AbstractWhere<E, LambdaSubQuery<E>>
 				throw new DataAccessException("Entity [" + entity.getSimpleName()
 						+ "] does not belong to the exists sub-query entity [" + entityClass.getSimpleName() + "]");
 			}
-			return alias + "." + metaLoader.apply(entity).getColumnName(fieldName);
+			String columnName = metaLoader.apply(entity).getColumnName(fieldName);
+			if (columnName == null) {
+				throw new DataAccessException("Property [" + fieldName + "] of entity [" + entityClass.getSimpleName()
+						+ "] is not a mapped database column (@Column); lambda conditions only accept mapped properties");
+			}
+			return alias + "." + columnName;
 		};
 	}
 
