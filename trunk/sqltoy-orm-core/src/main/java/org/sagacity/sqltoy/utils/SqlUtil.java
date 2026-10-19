@@ -1573,151 +1573,200 @@ public class SqlUtil {
 	 * @return 剔除<!-- -->、斜杠星注释和--三种注释(保留oracle hint)并去除末尾分号后的sql语句
 	 */
 	public static String clearMark(String sql) {
+		return clearMark(sql, false);
+	}
+
+	/**
+	 * @description 剔除sql注释(单引号字符串/双引号及反引号标识符/方括号标识符内部不识别注释),
+	 *              保留 oracle hint 与 mysql 可执行注释形式的块注释,未闭合注释原样保留交数据库报错;
+	 *              末尾分号/逗号及空白按原逻辑剔除
+	 * @param sql             原始sql
+	 * @param backslashEscape true时单引号内的\'为转义(mysql系)
+	 * @return 剔除注释后的sql
+	 */
+	public static String clearMark(String sql, boolean backslashEscape) {
 		if (StringUtil.isBlank(sql)) {
 			return sql;
 		}
-		int endMarkIndex;
-		// 剔除<!-- -->形式的多行注释
-		int markIndex = sql.indexOf("<!--");
-		while (markIndex != -1) {
-			endMarkIndex = sql.indexOf("-->", markIndex);
-			// update 2024-7-8 兼容sql中存在<!-- 但没有-->收尾的情况
-			if (endMarkIndex == -1) {
-				break;
-			} else if (endMarkIndex == sql.length() - 3) {
-				sql = sql.substring(0, markIndex);
-				break;
-			} else {
-				sql = sql.substring(0, markIndex).concat(BLANK).concat(sql.substring(endMarkIndex + 3));
+		StringBuilder out = new StringBuilder(sql.length());
+		int n = sql.length();
+		int i = 0;
+		while (i < n) {
+			char c = sql.charAt(i);
+			// PostgreSQL E'...'转义字符串:反斜杠转义优先于方言开关
+			if ((c == 'E' || c == 'e') && i + 1 < n && sql.charAt(i + 1) == '\'') {
+				int end = findQuotedEnd(sql, i + 1, '\'', true, false);
+				out.append(sql, i, end);
+				i = end;
+				continue;
 			}
-			markIndex = sql.indexOf("<!--");
-		}
-		// 剔除/* */形式的多行注释(如果是/*+ALL_ROWS*/ 或 /*! ALL_ROWS*/形式的诸如oracle hint的用法不看作是注释)
-		markIndex = StringUtil.matchIndex(sql, maskPattern);
-		while (markIndex != -1) {
-			endMarkIndex = sql.indexOf("*/", markIndex);
-			// update 2024-7-8 兼容sql中存在/* 但没有*/收尾的情况
-			if (endMarkIndex == -1) {
-				break;
-			} else if (endMarkIndex == sql.length() - 2) {
-				sql = sql.substring(0, markIndex);
-				break;
-			} else {
-				sql = sql.substring(0, markIndex).concat(BLANK).concat(sql.substring(endMarkIndex + 2));
-			}
-			markIndex = StringUtil.matchIndex(sql, maskPattern);
-		}
-		// 单行注释，必须要放在最后处理，避免跟<!-- --> 这类冲突
-		if (sql.contains("--")) {
-			String[] sqlAry = sql.split("\n");
-			StringBuilder sqlBuffer = new StringBuilder();
-			int startMask;
-			int lineMaskIndex;
-			String lineStr;
-			int meter = 0;
-			for (String line : sqlAry) {
-				lineStr = line.trim();
-				// 排除掉-- 开头和空行
-				if (!"".equals(lineStr) && !lineStr.startsWith("--")) {
-					// 不包含-- 直接拼接
-					lineMaskIndex = line.indexOf("--");
-					if (meter > 0) {
-						sqlBuffer.append("\n");
-					}
-					// 增加一个空白
-					sqlBuffer.append(BLANK);
-					if (lineMaskIndex == -1) {
-						sqlBuffer.append(line);
-					} else {
-						// 找到-- 单行注释开始位置(排除在'',""中间的场景)
-						startMask = findStartLineMask(line, lineMaskIndex);
-						if (startMask > 0) {
-							sqlBuffer.append(line.substring(0, startMask));
-						} else {
-							sqlBuffer.append(line);
-						}
-					}
-					meter++;
+			// PostgreSQL $tag$...$tag$ 美元引用字符串
+			if (c == '$') {
+				int end = findDollarQuoteEnd(sql, i);
+				if (end > i) {
+					out.append(sql, i, end);
+					i = end;
+					continue;
 				}
 			}
-			sql = sqlBuffer.toString();
+			// Oracle q'[...]' / q'{...}' / q'(...)' / q'<...>' / q'!...!' 引用字符串
+			if ((c == 'q' || c == 'Q') && i + 1 < n && sql.charAt(i + 1) == '\'') {
+				int end = findQQuoteEnd(sql, i);
+				if (end > i) {
+					out.append(sql, i, end);
+					i = end;
+					continue;
+				}
+			}
+			// 字符串/标识符整体原样保留,内部注释标记不参与注释剔除
+			if (c == '\'' || c == '"' || c == '`') {
+				int end = findQuotedEnd(sql, i, c, backslashEscape, false);
+				out.append(sql, i, end);
+				i = end;
+				continue;
+			}
+			if (c == '[') {
+				int end = findQuotedEnd(sql, i, ']', false, true);
+				out.append(sql, i, end);
+				i = end;
+				continue;
+			}
+			// -- 行注释:替换为空白,保留换行以便后续按行处理
+			if (c == '-' && i + 1 < n && sql.charAt(i + 1) == '-') {
+				out.append(BLANK);
+				i += 2;
+				while (i < n && sql.charAt(i) != '\n' && sql.charAt(i) != '\r') {
+					i++;
+				}
+				continue;
+			}
+			// /*+*&#47;与/*!*&#47;为oracle hint/mysql可执行注释,保留
+			if (c == '/' && i + 1 < n && sql.charAt(i + 1) == '*') {
+				if (i + 2 < n && (sql.charAt(i + 2) == '+' || sql.charAt(i + 2) == '!')) {
+					int end = sql.indexOf("*/", i + 2);
+					if (end == -1) {
+						out.append(sql, i, n);
+						break;
+					}
+					out.append(sql, i, end + 2);
+					i = end + 2;
+					continue;
+				}
+				int end = sql.indexOf("*/", i + 2);
+				if (end == -1) {
+					// 未闭合块注释不静默删除,保留原样交数据库报错
+					out.append(sql, i, n);
+					break;
+				}
+				out.append(BLANK);
+				i = end + 2;
+				continue;
+			}
+			// 框架历史<!-- -->注释
+			if (c == '<' && i + 3 < n && sql.charAt(i + 1) == '!' && sql.charAt(i + 2) == '-'
+					&& sql.charAt(i + 3) == '-') {
+				int end = sql.indexOf("-->", i + 4);
+				if (end == -1) {
+					out.append(sql, i, n);
+					break;
+				}
+				out.append(BLANK);
+				i = end + 3;
+				continue;
+			}
+			out.append(c);
+			i++;
 		}
-		// 剔除sql末尾的分号逗号(开发过程中容易忽视)
-		if (sql.endsWith(";") || sql.endsWith(",")) {
-			sql = sql.substring(0, sql.length() - 1);
+		// 剔除末尾空白与分号/逗号(保持原行为)
+		int end = out.length();
+		while (end > 0 && Character.isWhitespace(out.charAt(end - 1))) {
+			end--;
 		}
-		// 剔除全角(update 2023-10-24 框架不做干涉)
-		// sql = sql.replaceAll("\\：", ":").replaceAll("\\＝", "=").replaceAll("\\．",
-		// ".");
-		return sql;
+		if (end > 0 && (out.charAt(end - 1) == ';' || out.charAt(end - 1) == ',')) {
+			end--;
+		}
+		return out.substring(0, end);
 	}
 
 	/**
-	 * 找到行注释的开始位置
-	 * 
-	 * @param sql           单行sql内容
-	 * @param lineMaskIndex --注释符号的位置
-	 * @return 行注释的有效开始位置(排除引号和hint注释内部的--)，位于引号内时返回实际注释起始下标
+	 * @description 从start处的引号开始找闭合位置,支持''、""、``双写转义及[]的]]转义;
+	 *              mysql系backslashEscape=true时\'不终结字符串
+	 * @return 闭合引号后的下标,未闭合返回sql长度
 	 */
-	private static int findStartLineMask(String sql, int lineMaskIndex) {
-		// 单引号、双引号、hint注释结尾 的最后位置
-		int lastIndex = StringUtil.matchLastIndex(sql, "\'|\"|\\*\\/");
-		// 行注释的位置在单引号等最后位置后面,直接返回
-		if (lineMaskIndex > lastIndex) {
-			return lineMaskIndex;
-		}
-		// 单引号之间
-		int start = StringUtil.matchIndex(sql, "\'");
-		int symMarkEnd;
-		while (start != -1) {
-			symMarkEnd = StringUtil.getSymMarkIndex("'", "'", sql, start);
-			if (symMarkEnd != -1) {
-				sql = sql.substring(0, start).concat(repeatBlank(symMarkEnd - start + 1))
-						.concat(sql.substring(symMarkEnd + 1));
-				start = StringUtil.matchIndex(sql, "\'");
-			} else {
-				break;
+	private static int findQuotedEnd(String sql, int start, char quote, boolean backslashEscape, boolean bracket) {
+		int i = start + 1;
+		int n = sql.length();
+		while (i < n) {
+			char c = sql.charAt(i);
+			if (!bracket && backslashEscape && c == '\\' && i + 1 < n) {
+				i += 2;
+				continue;
 			}
-		}
-		// 双引号之间
-		start = StringUtil.matchIndex(sql, "\"");
-		while (start != -1) {
-			symMarkEnd = StringUtil.getSymMarkIndex("\"", "\"", sql, start);
-			if (symMarkEnd != -1) {
-				sql = sql.substring(0, start).concat(repeatBlank(symMarkEnd - start + 1))
-						.concat(sql.substring(symMarkEnd + 1));
-				start = StringUtil.matchIndex(sql, "\"");
-			} else {
-				break;
+			if (c == quote) {
+				if (i + 1 < n && sql.charAt(i + 1) == quote) {
+					i += 2;
+					continue;
+				}
+				return i + 1;
 			}
+			i++;
 		}
-		// hint /*+ all */ 或 /*! all*/ 注释
-		start = sql.indexOf("/*");
-		while (start != -1) {
-			symMarkEnd = StringUtil.getSymMarkIndex("/*", "*/", sql, start);
-			if (symMarkEnd != -1) {
-				sql = sql.substring(0, start).concat(repeatBlank(symMarkEnd - start + 2))
-						.concat(sql.substring(symMarkEnd + 2));
-				start = sql.indexOf("/*");
-			} else {
-				break;
-			}
-		}
-		return sql.indexOf("--");
+		return n;
 	}
 
 	/**
-	 * 将剔除掉n的字符串替换为等长度的空白字符串，避免对sql解析造成影响
-	 * 
-	 * @param size 需要生成的空白字符个数
-	 * @return 指定个数的空白字符串，size小于等于0返回空字符串
+	 * @description 定位PostgreSQL美元引用字符串($tag$...$tag$)闭合位置
+	 * @return 闭合分隔符后的下标,非美元引用或未闭合返回-1
 	 */
-	private static String repeatBlank(int size) {
-		if (size <= 0) {
-			return "";
+	private static int findDollarQuoteEnd(String sql, int start) {
+		int n = sql.length();
+		int j = start + 1;
+		// tag可为空或由字母/下划线开头,后续字母数字/下划线
+		if (j < n && (Character.isLetter(sql.charAt(j)) || sql.charAt(j) == '_')) {
+			j++;
+			while (j < n && (Character.isLetterOrDigit(sql.charAt(j)) || sql.charAt(j) == '_')) {
+				j++;
+			}
 		}
-		// Java 11+
-		return BLANK.repeat(size);
+		if (j >= n || sql.charAt(j) != '$') {
+			return -1;
+		}
+		String delimiter = sql.substring(start, j + 1);
+		int close = sql.indexOf(delimiter, j + 1);
+		return close < 0 ? -1 : close + delimiter.length();
+	}
+
+	/**
+	 * @description 定位Oracle q-quote(q'[...]'/q'{...}'/q'(...)'/q'&lt;...&gt;'/q'!...!')
+	 *              的闭合位置
+	 * @return 闭合位置后的下标,非q-quote或未闭合返回-1
+	 */
+	private static int findQQuoteEnd(String sql, int start) {
+		int n = sql.length();
+		if (start + 2 >= n) {
+			return -1;
+		}
+		char open = sql.charAt(start + 2);
+		char close;
+		switch (open) {
+		case '[':
+			close = ']';
+			break;
+		case '{':
+			close = '}';
+			break;
+		case '(':
+			close = ')';
+			break;
+		case '<':
+			close = '>';
+			break;
+		default:
+			close = open;
+			break;
+		}
+		int end = sql.indexOf(close + "'", start + 3);
+		return end < 0 ? -1 : end + 2;
 	}
 
 	/**
@@ -3187,11 +3236,105 @@ public class SqlUtil {
 	 * @return 替换后的字符串(回车换行前后空白一并剔除)
 	 */
 	public static String clearMistyChars(String source, String target) {
+		return clearMistyChars(source, target, false);
+	}
+
+	/**
+	 * @description 压缩sql结构空白:换行前后空白与制表符替换为target,字符串/标识符内部原样保留
+	 *              (原实现全串replaceAll,多行字面量的换行、缩进、Tab会被静默改写)
+	 * @param source          原始sql
+	 * @param target          替换字符
+	 * @param backslashEscape true时单引号内的\'为转义(mysql系)
+	 * @return 压缩后的sql
+	 */
+	public static String clearMistyChars(String source, String target, boolean backslashEscape) {
 		if (source == null) {
 			return null;
 		}
-		// 回车换行前后的空白也剔除
-		return source.replaceAll("\\s*(\r|\n)\\s*", target).replaceAll("\t", target);
+		String replacement = (target == null) ? "" : target;
+		boolean targetBlank = !replacement.isEmpty() && Character.isWhitespace(replacement.charAt(0));
+		StringBuilder out = new StringBuilder(source.length());
+		int n = source.length();
+		int i = 0;
+		// 记录输出末尾连续的结构空白起点,换行时需连同换行前空白一起替换
+		int outsideWsStart = -1;
+		while (i < n) {
+			char c = source.charAt(i);
+			// PostgreSQL E'...'转义字符串
+			if ((c == 'E' || c == 'e') && i + 1 < n && source.charAt(i + 1) == '\'') {
+				int end = findQuotedEnd(source, i + 1, '\'', true, false);
+				out.append(source, i, end);
+				i = end;
+				outsideWsStart = -1;
+				continue;
+			}
+			// PostgreSQL $tag$...$tag$
+			if (c == '$') {
+				int end = findDollarQuoteEnd(source, i);
+				if (end > i) {
+					out.append(source, i, end);
+					i = end;
+					outsideWsStart = -1;
+					continue;
+				}
+			}
+			// Oracle q'[...]'等q-quote
+			if ((c == 'q' || c == 'Q') && i + 1 < n && source.charAt(i + 1) == '\'') {
+				int end = findQQuoteEnd(source, i);
+				if (end > i) {
+					out.append(source, i, end);
+					i = end;
+					outsideWsStart = -1;
+					continue;
+				}
+			}
+			if (c == '\'' || c == '"' || c == '`') {
+				int end = findQuotedEnd(source, i, c, backslashEscape, false);
+				out.append(source, i, end);
+				i = end;
+				outsideWsStart = -1;
+				continue;
+			}
+			if (c == '[') {
+				int end = findQuotedEnd(source, i, ']', false, true);
+				out.append(source, i, end);
+				i = end;
+				outsideWsStart = -1;
+				continue;
+			}
+			if (c == '\r' || c == '\n') {
+				// 等价于 \s*(\r|\n)\s* -> target,但只作用于字面量外部
+				if (outsideWsStart >= 0) {
+					out.setLength(outsideWsStart);
+				}
+				i++;
+				while (i < n && Character.isWhitespace(source.charAt(i))) {
+					i++;
+				}
+				out.append(replacement);
+				outsideWsStart = targetBlank ? out.length() - replacement.length() : -1;
+				continue;
+			}
+			if (c == '\t') {
+				// 与旧实现一致:每个tab替换为target;字面量内已在上面整体复制
+				out.append(replacement);
+				outsideWsStart = targetBlank ? out.length() - replacement.length() : -1;
+				i++;
+				continue;
+			}
+			if (Character.isWhitespace(c)) {
+				if (outsideWsStart < 0) {
+					outsideWsStart = out.length();
+				}
+				out.append(c);
+				i++;
+				continue;
+			}
+			out.append(c);
+			outsideWsStart = -1;
+			i++;
+		}
+		return out.toString();
 	}
 
 	/**

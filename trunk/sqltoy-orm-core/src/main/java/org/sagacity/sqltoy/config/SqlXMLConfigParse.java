@@ -448,8 +448,10 @@ public class SqlXMLConfigParse {
 			sqlToyConfig.setDataSource(sqlElt.getAttribute("datasource"));
 		}
 		if (countSql != null) {
-			// 清理sql中的一些注释、以及特殊的符号
-			countSql = SqlUtil.clearMistyChars(SqlUtil.clearMark(countSql), " ").concat(" ");
+			// 清理sql中的一些注释、以及特殊的符号(字面量内保持原样)
+			boolean countBackslashEscape = SqlConfigParseUtils.isBackslashEscape(realDialect);
+			countSql = SqlUtil.clearMistyChars(SqlUtil.clearMark(countSql, countBackslashEscape), " ",
+					countBackslashEscape).concat(" ");
 			// update 2026-9-24 count-sql与主sql使用同一生效方言(元素dialect属性覆盖后须一致,否则形态错配)
 			countSql = FunctionUtils.getDialectSql(countSql, realDialect);
 			countSql = ReservedWordsUtil.convertSql(countSql, DataSourceUtils.getDBType(realDialect));

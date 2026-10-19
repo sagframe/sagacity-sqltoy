@@ -1896,8 +1896,11 @@ public class SqlConfigParseUtils {
 		// 是否忽视空记录
 		sqlToyConfig.setIgnoreEmpty(StringUtil.matches(querySql, SqlToyConstants.IGNORE_EMPTY_REGEX));
 		// 2025-2-3 增加SqlUtil.uniformFastMarks逻辑,通过/*@fast_start*/注释方式代替@fast便于sql调试
-		// 清理sql中的一些注释、以及特殊的符号
-		String originalSql = SqlUtil.clearMistyChars(SqlUtil.clearMark(SqlUtil.uniformFastMarks(querySql)), BLANK)
+		// 清理sql中的一些注释、以及特殊的符号;字面量转义约定须在clearMark/clearMistyChars前解析,
+		// 避免mysql系\'字面量内的注释标记/换行被误处理
+		boolean backslashEscape = isBackslashEscape(dialect);
+		String originalSql = SqlUtil.clearMistyChars(
+				SqlUtil.clearMark(SqlUtil.uniformFastMarks(querySql), backslashEscape), BLANK, backslashEscape)
 				.concat(BLANK);
 		// update 2026-10-13 虚表宏@virtualTable()按方言展开为伪表或剔除(须在函数/保留字转换前,
 		// 展开后的from dual参与后续统一处理;解析期随SqlToyConfig固化,realDialectFirst惰性层
@@ -1911,7 +1914,6 @@ public class SqlConfigParseUtils {
 		originalSql = SqlUtil.replaceEmbedSqlParams(originalSql);
 		// update 2026-9-10 字面量转义约定按方言解析一次,hasWith/hasUnion/参数提取共用
 		// (掩码须与方言一致,否则mysql系\'字面量掩码错位后with/union判定与参数提取互相矛盾)
-		boolean backslashEscape = isBackslashEscape(dialect);
 		// 判定是否有with查询模式
 		sqlToyConfig.setHasWith(hasWith(originalSql, backslashEscape));
 		// 判定是否有union语句(先验证有union 然后再精确判断union 是否有效,在括号内的局部union 不起作用)
