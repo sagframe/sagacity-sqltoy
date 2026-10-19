@@ -81,7 +81,9 @@ public class DDLUtils {
 			Set<String> deps = new HashSet<String>();
 			for (Map.Entry<String, ForeignModel> iter : entityMeta.getForeignFields().entrySet()) {
 				String foreignTable = iter.getValue().getForeignTable();
-				if (entityMeta.getSchema() != null && !foreignTable.startsWith(entityMeta.getSchema().concat("."))) {
+				if (entityMeta.getSchema() != null
+						&& !foreignTable.toLowerCase(Locale.ROOT)
+								.startsWith(entityMeta.getSchema().toLowerCase(Locale.ROOT).concat("."))) {
 					foreignTable = entityMeta.getSchema().concat(".").concat(foreignTable);
 				}
 				// 大小写不敏感:@Foreign(table="QS_STAFF")与@Entity(tableName="qs_staff")等场景
@@ -250,7 +252,7 @@ public class DDLUtils {
 		String typeName = "VARCHAR";
 		switch (colMeta.getDataType()) {
 		case java.sql.Types.BIGINT:
-			if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
+			if (isOracleFamily(dbType)) {
 				typeName = "NUMBER";
 				typeName = setLength(typeName, true, colMeta);
 			} else {
@@ -261,7 +263,7 @@ public class DDLUtils {
 			typeName = "INTEGER";
 			break;
 		case java.sql.Types.TINYINT:
-			if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
+			if (isOracleFamily(dbType)) {
 				typeName = "INTEGER";
 			} else {
 				typeName = "TINYINT";
@@ -284,7 +286,7 @@ public class DDLUtils {
 		}
 			break;
 		case java.sql.Types.LONGNVARCHAR:
-			if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM || dbType == DBType.H2) {
+			if (isOracleFamily(dbType) || dbType == DBType.H2) {
 				typeName = "CLOB";
 			} else if (dbType == DBType.HANA) {
 				typeName = "NCLOB";
@@ -298,7 +300,7 @@ public class DDLUtils {
 					|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE || dbType == DBType.ORACLE
 					// update 2026-9-14 补KINGBASE(KingbaseES基于PG,类型映射归PG系)
 					|| dbType == DBType.KINGBASE || dbType == DBType.HIGHGO || dbType == DBType.ORACLE11
-					|| dbType == DBType.DM) {
+					|| dbType == DBType.DM || dbType == DBType.OCEANBASE) {
 				// 精度需跟在TIMESTAMP之后:TIMESTAMP(6) WITH TIME ZONE
 				typeName = "TIMESTAMP";
 				if (colMeta.getColumnSize() > 0) {
@@ -330,7 +332,7 @@ public class DDLUtils {
 					|| dbType == DBType.MOGDB || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE
 					|| dbType == DBType.HIGHGO) {
 				typeName = "BYTEA";
-			} else if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
+			} else if (isOracleFamily(dbType)) {
 				typeName = "BLOB";
 			} else if (dbType == DBType.SQLSERVER) {
 				typeName = "VARBINARY(MAX)";
@@ -347,7 +349,7 @@ public class DDLUtils {
 					|| dbType == DBType.MOGDB || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE
 					|| dbType == DBType.HIGHGO) {
 				typeName = "BYTEA";
-			} else if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
+			} else if (isOracleFamily(dbType)) {
 				typeName = "BLOB";
 			} else if (dbType == DBType.SQLSERVER) {
 				typeName = "VARBINARY(MAX)";
@@ -359,7 +361,7 @@ public class DDLUtils {
 			break;
 		case java.sql.Types.CLOB:
 		case java.sql.Types.NCLOB:
-			if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM || dbType == DBType.H2
+			if (isOracleFamily(dbType) || dbType == DBType.H2
 					|| dbType == DBType.DB2) {
 				typeName = "CLOB";
 			} else if (dbType == DBType.HANA) {
@@ -409,7 +411,7 @@ public class DDLUtils {
 				} else {
 					typeName = "CHAR(1)";
 				}
-			} else if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
+			} else if (isOracleFamily(dbType)) {
 				typeName = "INTEGER";
 			} else if (dbType == DBType.SQLSERVER) {
 				// sqlserver无boolean类型,bit为0/1
@@ -477,7 +479,7 @@ public class DDLUtils {
 			// 扩展且依赖GEOS/PROJ无法容器内源码编译),nativeType覆盖为唯一路径
 			if (StringUtil.isNotBlank(colMeta.getNativeType())) {
 				typeName = colMeta.getNativeType();
-			} else if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
+			} else if (isOracleFamily(dbType)) {
 				typeName = "SDO_GEOMETRY";
 			} else if (dbType == DBType.HANA) {
 				// hana空间类型为ST_GEOMETRY(构造函数ST_GeomFromText与mysql系同名同参)
@@ -491,7 +493,7 @@ public class DDLUtils {
 			typeName = "FLOAT";
 			break;
 		case java.sql.Types.DOUBLE:
-			if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11) {
+			if (isOracleStrictDialect(dbType)) {
 				typeName = "BINARY_DOUBLE";
 			} else if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 			// update 2026-9-14 补KINGBASE(KingbaseES基于PG,类型映射归PG系)
@@ -507,7 +509,7 @@ public class DDLUtils {
 			break;
 		case java.sql.Types.DECIMAL:
 		case java.sql.Types.NUMERIC:
-			if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
+			if (isOracleFamily(dbType)) {
 				typeName = "NUMBER";
 			} else if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.KINGBASE
 					|| dbType == DBType.HIGHGO) {
@@ -719,7 +721,7 @@ public class DDLUtils {
 				if (StringUtil.isBlank(value)) {
 					tableSql.append(" /* value missing */");
 				} else {
-					boolean oracleFamily = dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM;
+					boolean oracleFamily = isOracleFamily(dbType);
 					tableSql.append(oracleFamily ? " VALUES (" : " VALUES IN (").append(quotePartitionValue(value))
 							.append(")");
 				}
@@ -890,8 +892,8 @@ public class DDLUtils {
 		}
 		// oracle/DM不支持ON UPDATE子句;oracle(非DM)不接受NO ACTION关键字(ORA-02000),
 		// oracle/DM(ORA-03001)与mysql系(InnoDB)均不支持SET DEFAULT,须跳过以免生成非法FK
-		boolean isOracle = (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM);
-		boolean isOracleStrict = (dbType == DBType.ORACLE || dbType == DBType.ORACLE11);
+		boolean isOracle = (isOracleFamily(dbType));
+		boolean isOracleStrict = (isOracleStrictDialect(dbType));
 		boolean isMySqlFamily = (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.TIDB
 				|| dbType == DBType.OCEANBASE || dbType == DBType.DORIS || dbType == DBType.STARROCKS);
 		String splitSign = ";";
@@ -1043,6 +1045,21 @@ public class DDLUtils {
 	 * @param dbType
 	 * @return
 	 */
+	/**
+	 * Oracle 兼容家族(含 OceanBase 的 oceanbase 方言):类型名/标识符/DDL 语法按 Oracle 处理
+	 */
+	private static boolean isOracleFamily(int dbType) {
+		return dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM
+				|| dbType == DBType.OCEANBASE;
+	}
+
+	/**
+	 * Oracle 原生语义(不含 DM 的差异化类型;OceanBase 按 Oracle 兼容处理)
+	 */
+	private static boolean isOracleStrictDialect(int dbType) {
+		return dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.OCEANBASE;
+	}
+
 	private static boolean isDateOnlyDialect(int dbType) {
 		return dbType == DBType.DM || dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14
 				|| dbType == DBType.GAUSSDB || dbType == DBType.KINGBASE || dbType == DBType.HIGHGO

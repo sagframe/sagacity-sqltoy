@@ -31,6 +31,8 @@ public class DDLConvertTypeMatrixTest {
 	public void bigintMapping() {
 		assertEquals("NUMBER", DDLUtils.convertType(col(Types.BIGINT), DBType.ORACLE), "oracle bigint→NUMBER");
 		assertEquals("NUMBER", DDLUtils.convertType(col(Types.BIGINT), DBType.DM), "dm bigint→NUMBER");
+		assertEquals("NUMBER", DDLUtils.convertType(col(Types.BIGINT), DBType.OCEANBASE),
+				"oceanbase(oracle 模式) bigint→NUMBER");
 		assertEquals("BIGINT", DDLUtils.convertType(col(Types.BIGINT), DBType.MYSQL), "mysql bigint→BIGINT");
 		assertEquals("BIGINT", DDLUtils.convertType(col(Types.BIGINT), DBType.POSTGRESQL), "pg bigint→BIGINT");
 	}
@@ -73,5 +75,15 @@ public class DDLConvertTypeMatrixTest {
 		String mysqlText = DDLUtils.convertType(col(Types.CLOB), DBType.MYSQL);
 		assertTrue(mysqlText.toUpperCase().contains("TEXT") || mysqlText.toUpperCase().contains("LONGTEXT"),
 				"mysql clob→TEXT族: " + mysqlText);
+	}
+
+	@Test
+	public void oceanBaseFollowsOracleDdlTypes() {
+		assertEquals("INTEGER", DDLUtils.convertType(col(Types.BOOLEAN), DBType.OCEANBASE),
+				"oceanbase(oracle 模式) boolean→INTEGER");
+		assertEquals("BINARY_DOUBLE", DDLUtils.convertType(col(Types.DOUBLE), DBType.OCEANBASE),
+				"oceanbase(oracle 模式) double→BINARY_DOUBLE");
+		assertEquals("CLOB", DDLUtils.convertType(col(Types.CLOB), DBType.OCEANBASE),
+				"oceanbase(oracle 模式) clob→CLOB");
 	}
 }

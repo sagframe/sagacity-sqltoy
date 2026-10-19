@@ -33,4 +33,13 @@ public class EntityScannerRepeatScanTest {
 			assertEquals(first.size(), EntityScanner.scanEntityClasses(PATTERN, true, "UTF-8").size());
 		}
 	}
+
+	@Test
+	public void nonRecursiveScanExcludesSubPackages() throws Exception {
+		List<Class<?>> recursive = EntityScanner.scanEntityClasses("org.sagacity.sqltoy.demo", true, "UTF-8");
+		assertTrue(recursive.stream().anyMatch(c -> "StaffInfo".equals(c.getSimpleName())),
+				"递归扫描应包含 domain 子包实体,实际:" + recursive);
+		List<Class<?>> nonRecursive = EntityScanner.scanEntityClasses("org.sagacity.sqltoy.demo", false, "UTF-8");
+		assertTrue(nonRecursive.isEmpty(), "非递归扫描不应包含 domain/vo 子包实体,实际:" + nonRecursive);
+	}
 }

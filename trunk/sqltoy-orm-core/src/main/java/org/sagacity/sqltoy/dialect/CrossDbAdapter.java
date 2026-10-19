@@ -137,6 +137,8 @@ public class CrossDbAdapter {
 			dialect = DataSourceUtils.getDialect(sqlToyContext, dataSource);
 			// 获得相关方言的sql(函数自动替换等)
 			sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search, dialect);
+			// countSql是按适配数据源方言重新解析的,不能直接改写sqlCache中的共享实例(会污染后续查询)
+			sqlToyConfig = sqlToyConfig.clone();
 			// 自定义countsql
 			String countSql = queryExecutor.getInnerModel().countSql;
 			if (StringUtil.isNotBlank(countSql)) {

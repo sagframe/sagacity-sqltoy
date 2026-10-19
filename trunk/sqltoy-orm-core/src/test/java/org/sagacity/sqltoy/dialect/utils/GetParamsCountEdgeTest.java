@@ -61,6 +61,12 @@ public class GetParamsCountEdgeTest {
 	}
 
 	@Test
+	public void literalQuestionMarkDoesNotSwitchNamedMode() {
+		// 字面量内的?不能把named模式误判为positional模式(修复前返回0)
+		assertEquals(1, DialectUtils.getParamsCount("select 'what?' from t where a=:p", false));
+	}
+
+	@Test
 	public void wordPrefixColonInLiteralNeverMatched() {
 		// 行为记录:a:b形式的冒号前是字母,本就不命中SQL_NAMED_PATTERN,修复前后均为1
 		assertEquals(1, DialectUtils.getParamsCount("select 'a:b' from t where a=:p", false));

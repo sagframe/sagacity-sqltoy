@@ -93,7 +93,7 @@ public class SqlScriptLoader {
 	/**
 	 * 是否初始化过
 	 */
-	private boolean initialized = false;
+	private volatile boolean initialized = false;
 
 	/**
 	 * sql文件变更监测器
@@ -108,7 +108,7 @@ public class SqlScriptLoader {
 	/**
 	 * 是否将sqlResourcesDir下的sql文件解析成具体的文件resourceList
 	 */
-	private static boolean SQLRESOURCESDIRTOLIST = false;
+	private static volatile boolean SQLRESOURCESDIRTOLIST = false;
 
 	/**
 	 * 文件最后修改时间
@@ -150,7 +150,7 @@ public class SqlScriptLoader {
 	 * @param breakWhenSqlRepeat
 	 * @throws Exception
 	 */
-	public void initialize(boolean debug, int delayCheckSeconds, Integer scriptCheckIntervalSeconds,
+	public synchronized void initialize(boolean debug, int delayCheckSeconds, Integer scriptCheckIntervalSeconds,
 			boolean breakWhenSqlRepeat) throws Exception {
 		// 增加路径验证提示,最易配错导致无法加载sql文件
 		checkSqlResourcesDir(sqlResourcesDir);
@@ -613,7 +613,7 @@ public class SqlScriptLoader {
 	/**
 	 * 进程销毁
 	 */
-	public void destroy() {
+	public synchronized void destroy() {
 		try {
 			if (watcher != null && !watcher.isInterrupted()) {
 				watcher.interrupt();

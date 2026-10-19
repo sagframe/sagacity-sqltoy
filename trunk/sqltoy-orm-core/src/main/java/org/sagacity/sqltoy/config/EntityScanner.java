@@ -102,11 +102,11 @@ public class EntityScanner {
 						}
 						File dir = new File(filePath);
 						if (dir.exists() && dir.isDirectory()) {
-							scanDirectory(dir, basePackage, relativePattern, result, classLoader, entityOnly);
+							scanDirectory(dir, basePackage, relativePattern, result, classLoader, entityOnly, recursive);
 						}
 					}
 				} else if ("jar".equals(protocol)) {
-					scanJar(url, packagePattern, result, charset, classLoader, entityOnly);
+					scanJar(url, packagePattern, result, charset, classLoader, entityOnly, recursive);
 				}
 			}
 		} catch (Exception e) {
@@ -127,7 +127,7 @@ public class EntityScanner {
 	 * @param classLoader
 	 */
 	private static void scanDirectory(File dir, String basePackage, String relativePattern, List<Class<?>> result,
-			ClassLoader classLoader, boolean entityOnly) {
+			ClassLoader classLoader, boolean entityOnly, boolean recursive) {
 		Path root = dir.toPath();
 		// 构建匹配相对路径的 glob 模式
 		// 只替换包分隔符的 .，保留通配符中的 . 不被替换
@@ -142,12 +142,12 @@ public class EntityScanner {
 		if (!globPattern.isEmpty() && !globPattern.endsWith("/")) {
 			globPattern = globPattern + "/";
 		}
-		// 使用 {*.class,**/*.class} 同时匹配当前目录和子目录中的class文件
-		globPattern = globPattern + "{*.class,**/*.class}";
+		// 递归时匹配当前目录和子目录;非递归只匹配当前目录,与 recursive 参数语义一致
+		globPattern = globPattern + (recursive ? "{*.class,**/*.class}" : "*.class");
 		PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:" + globPattern);
 		// 基础包名前缀（用于拼接完整类名）
 		String packagePrefix = basePackage.isEmpty() ? "" : basePackage + ".";
-		try (Stream<Path> paths = Files.walk(root)) {
+		try (Stream<Path> paths = Files.walk(root, recursive ? Integer.MAX_VALUE : 1)) {
 			// Files.walk的Stream持有目录句柄,必须关闭避免泄漏
 			paths.filter(Files::isRegularFile).forEach(path -> {
 				try {
@@ -179,9 +179,9 @@ public class EntityScanner {
 	 * @throws Exception
 	 */
 	private static void scanJar(URL jarUrl, String pattern, List<Class<?>> result, String charset,
-			ClassLoader classLoader, boolean entityOnly) throws Exception {
+			ClassLoader classLoader, boolean entityOnly, boolean recursive) throws Exception {
 		String jarPath = FileUtil.getJarPath(jarUrl);
-		String antPattern = pattern.replace('.', '/') + "/**/*.class";
+		String antPattern = pattern.replace('.', '/') + (recursive ? "/**/*.class" : "/*.class");
 		try (JarFile jarFile = new JarFile(jarPath)) {
 			Enumeration<JarEntry> entries = jarFile.entries();
 			JarEntry entry;

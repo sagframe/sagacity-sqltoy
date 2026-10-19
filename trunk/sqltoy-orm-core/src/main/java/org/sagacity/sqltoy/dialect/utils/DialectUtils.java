@@ -4141,7 +4141,8 @@ public class DialectUtils {
 		// 字面量内容掩码(与原串等长),规避字面量内的参数形态干扰计数
 		String maskedSql = SqlConfigParseUtils.maskLiterals(sql, backslashEscape);
 		// 判断sql中参数模式，?或:named 模式，两种模式不可以混合使用
-		if (sql.indexOf(SqlConfigParseUtils.ARG_NAME) == -1) {
+		// 用掩码后的sql判断:字面量内的?不能把named模式误判为positional模式
+		if (maskedSql.indexOf(SqlConfigParseUtils.ARG_NAME) == -1) {
 			return StringUtil.matchCnt(maskedSql, SqlToyConstants.SQL_NAMED_PATTERN, 1);
 		}
 		return StringUtil.matchCnt(maskedSql, SqlConfigParseUtils.ARG_REGEX);

@@ -137,4 +137,15 @@ public class SortTablesTopologicalTest {
 		List<EntityMeta> result = DDLUtils.sortTables(mapOf(table("delta"), table("alpha"), table("charlie")));
 		assertEquals(Arrays.asList("alpha", "charlie", "delta"), names(result), "同层字典序");
 	}
+
+	@Test
+	public void schemaQualifiedForeignKeyIsCaseInsensitive() {
+		// @Foreign(table="schema.A") 与 @Entity(schema="SCHEMA") 大小写不一致时,不能重复拼 schema
+		EntityMeta a = table("A");
+		a.setSchema("SCHEMA");
+		EntityMeta b = tableWithFk("B", "schema.A");
+		b.setSchema("SCHEMA");
+		List<EntityMeta> result = DDLUtils.sortTables(mapOf(a, b));
+		assertEquals(Arrays.asList("A", "B"), names(result), "schema 限定外键应识别为同 schema 的 A 表");
+	}
 }

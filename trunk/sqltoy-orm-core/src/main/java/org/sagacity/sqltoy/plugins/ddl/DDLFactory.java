@@ -44,7 +44,7 @@ public class DDLFactory {
 
 	private static String NEWLINE = "\r\n";
 
-	private static DialectDDLGenerator getGenerator(Integer dbType) {
+	static DialectDDLGenerator getGenerator(Integer dbType) {
 		if (dbType == null) {
 			return new DefaultDDLGenerator();
 		}
@@ -88,7 +88,9 @@ public class DDLFactory {
 		}
 		case DBType.ORACLE:
 		case DBType.ORACLE11:
-		case DBType.DM: {
+		case DBType.DM:
+		// OceanBase 的 oceanbase 方言继承 OracleDialect,DDL 走 Oracle 生成器
+		case DBType.OCEANBASE: {
 			generator = new OracleDDLGenerator();
 			break;
 		}
