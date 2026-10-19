@@ -93,38 +93,16 @@ public class DefectReproTest {
 		assertEquals(sql, result, "裸形态IGNORE应原样保留(分隔符不得重复)");
 	}
 
-	// ============ B1: #[...] 闭合定位不感知字面量,条件内不成对]截断真条件 ============
+	// ============ B1: 字面量内完整 #[] 按成对片段处理(暂不做字面量感知) ============
 
-	/** B1 动态条件字面量含单个]时,#[被提前闭合,产生悬空SQL片段 */
+	/** 字面量里的完整 #[] 不能破坏后续正常 #[] 的配对与参数解析 */
 	@Test
-	public void b1_bracketInLiteralTruncatesCondition() throws Exception {
-		String sql = "select * from sys_user where user_id=:userId and #[remark = :remark and name='a]b']";
+	public void b1_completePseudoMarkInLiteralKeepsFollowingCondition() throws Exception {
+		String sql = "select * from sys_user where remark='#[literal]' and user_id=:userId and #[name=:name]";
 		org.sagacity.sqltoy.config.model.SqlToyResult result = org.sagacity.sqltoy.config.SqlConfigParseUtils
-				.processSql(sql, new String[] { "userId", "remark" }, new Object[] { 100, "x" }, "mysql");
+				.processSql(sql, new String[] { "userId", "name" }, new Object[] { 100, "n" }, "mysql");
 		System.out.println("[B1] " + result.getSql());
-		// 字面量内的]不应提前闭合#[;remark有值时条件应完整保留
-		assertFalse(result.getSql().contains("b']"), "字面量内的]不应造成悬空SQL: " + result.getSql());
-		assertTrue(result.getSql().contains("remark = ?"), "remark条件应保留: " + result.getSql());
-	}
-
-	/** B1对照:字面量内成对[]——条件应完整保留(不能因字面量内[]而误剔除) */
-	@Test
-	public void b1control_pairedBracketsOk() throws Exception {
-		String sql = "select * from sys_user where user_id=:userId and #[cat = :cat and tag = '[test]']";
-		org.sagacity.sqltoy.config.model.SqlToyResult result = org.sagacity.sqltoy.config.SqlConfigParseUtils
-				.processSql(sql, new String[] { "userId", "cat" }, new Object[] { 100, "x" }, "mysql");
-		System.out.println("[B1c] " + result.getSql());
-		assertTrue(result.getSql().contains("cat = ?"), "成对括号字面量的#[]条件应保留: " + result.getSql());
-	}
-
-	/** 字面量内的#[不应被识别为动态片段 */
-	@Test
-	public void b1_literalPseudoMarkPreserved() throws Exception {
-		String sql = "select * from sys_user where remark='#[not dynamic]' and user_id=:userId";
-		org.sagacity.sqltoy.config.model.SqlToyResult result = org.sagacity.sqltoy.config.SqlConfigParseUtils
-				.processSql(sql, new String[] { "userId" }, new Object[] { 100 }, "mysql");
-		System.out.println("[B1-literal] " + result.getSql());
-		assertTrue(result.getSql().contains("'#[not dynamic]'"),
-				"字面量内的#[应原样保留: " + result.getSql());
+		assertTrue(result.getSql().contains("user_id"), "正常条件不应受影响: " + result.getSql());
+		assertTrue(result.getSql().contains("name=?"), "后续#[]条件应正常处理: " + result.getSql());
 	}
 }

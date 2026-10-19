@@ -159,7 +159,7 @@ public class SqlWriteStyleMatrixTest {
 
 	@Test
 	public void multipleLiteralsWithMarkersPreserved() {
-		// 注:字面量内的'#[x]'已按字面量掩码保留(见DefectReproTest),此处用[x]验证普通方括号字面量保真
+		// 注:字面量里的完整'#[x]'仍按成对片段处理(暂不做字面量感知),此处用[x]验证普通方括号字面量保真
 		Map<String, Object> values = new HashMap<>();
 		values.put("a", 1);
 		SqlToyResult r = named(
