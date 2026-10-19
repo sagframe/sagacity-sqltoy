@@ -105,4 +105,15 @@ public class DefectReproTest {
 		assertTrue(result.getSql().contains("user_id"), "正常条件不应受影响: " + result.getSql());
 		assertTrue(result.getSql().contains("name=?"), "后续#[]条件应正常处理: " + result.getSql());
 	}
+
+	/** 字面量内成对[]属于常规场景,嵌套层级配对正常,不应误删条件 */
+	@Test
+	public void b1_pairedBracketsInLiteralWithinCondition() throws Exception {
+		String sql = "select * from sys_user where user_id=:userId and #[cat=:cat and tag='[test]']";
+		org.sagacity.sqltoy.config.model.SqlToyResult result = org.sagacity.sqltoy.config.SqlConfigParseUtils
+				.processSql(sql, new String[] { "userId", "cat" }, new Object[] { 100, "x" }, "mysql");
+		System.out.println("[B1-paired] " + result.getSql());
+		assertTrue(result.getSql().contains("cat=?"), "成对[]字面量不应影响条件: " + result.getSql());
+		assertTrue(result.getSql().contains("'[test]'"), "成对[]字面量应原样保留: " + result.getSql());
+	}
 }
