@@ -1,4 +1,4 @@
-package org.sagacity.sqltoy.solon.integration.aot;
+﻿package org.sagacity.sqltoy.solon.integration.aot;
 
 import java.lang.invoke.SerializedLambda;
 import java.util.ArrayList;
@@ -257,7 +257,7 @@ public class SqltoyRuntimeNativeRegistrar implements RuntimeNativeRegistrar {
 	}
 
 	/**
-	 * 非 @Entity 的反射类包路径:VO/DTO 较多时按包批量扫描,包下全部可实例化类注册
+	 * 非 @Entity 的反射类包路径:VO/DTO 较多时按包批量扫描,包下全部类注册
 	 * MemberCategory.values(),避免 native 运行期反射字段/方法时 MissingReflectionRegistrationError
 	 */
 	private void registerNativeReflectionPackages(RuntimeNativeMetadata metadata, SqlToyContextProperties properties) {

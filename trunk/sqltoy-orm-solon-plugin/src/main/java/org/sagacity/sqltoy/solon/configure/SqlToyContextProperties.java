@@ -1,4 +1,4 @@
-package org.sagacity.sqltoy.solon.configure;
+﻿package org.sagacity.sqltoy.solon.configure;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -53,7 +53,7 @@ public class SqlToyContextProperties implements Serializable {
 	private String[] nativeReflectionClasses;
 
 	/**
-	 * GraalVM native 构建期需要批量注册反射的包路径(VO/DTO 较多时使用);包下全部可实例化类注册
+	 * GraalVM native 构建期需要批量注册反射的包路径(VO/DTO 较多时使用);包下全部类注册
 	 */
 	private String[] nativeReflectionPackages;
 
