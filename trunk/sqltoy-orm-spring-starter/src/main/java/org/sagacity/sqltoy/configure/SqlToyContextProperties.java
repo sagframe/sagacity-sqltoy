@@ -1,4 +1,4 @@
-﻿package org.sagacity.sqltoy.configure;
+package org.sagacity.sqltoy.configure;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -58,6 +58,13 @@ public class SqlToyContextProperties implements Serializable {
 	 * GraalVM native 构建期需要批量注册反射的包路径(VO/DTO 较多时使用);包下全部类注册
 	 */
 	private String[] nativeReflectionPackages;
+
+	/**
+	 * GraalVM native 构建期为其预生成 EntityResultSetProxy 子类的实体类全名列表;
+	 * 仅使用 updateSaveFetch(entity, EntityUpdateCallback, ...) 的实体需要配置,
+	 * 构建期生成 &lt;实体&gt;$$SqltoyEntityProxy 并打入镜像,运行期直接加载
+	 */
+	private String[] nativeEntityProxies;
 
 	/**
 	 * 具体的sql.xml 文件资源
@@ -487,6 +494,14 @@ public class SqlToyContextProperties implements Serializable {
 
 	public void setNativeReflectionPackages(String[] nativeReflectionPackages) {
 		this.nativeReflectionPackages = nativeReflectionPackages;
+	}
+
+	public String[] getNativeEntityProxies() {
+		return nativeEntityProxies;
+	}
+
+	public void setNativeEntityProxies(String[] nativeEntityProxies) {
+		this.nativeEntityProxies = nativeEntityProxies;
 	}
 
 	public String getEncoding() {

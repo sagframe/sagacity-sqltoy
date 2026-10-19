@@ -1,21 +1,26 @@
-﻿package org.sagacity.sqltoy.integration.aot;
+package org.sagacity.sqltoy.integration.aot;
 
+import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.sagacity.sqltoy.config.EntityManager;
 import org.sagacity.sqltoy.config.EntityScanner;
 import org.sagacity.sqltoy.configure.SqlToyContextProperties;
+import org.sagacity.sqltoy.plugins.EntityResultSetProxy;
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.aot.generate.GeneratedFiles;
 import org.springframework.aot.hint.MemberCategory;
 import org.springframework.aot.hint.ResourceHints;
 import org.springframework.aot.hint.RuntimeHints;
+import org.springframework.aot.hint.TypeReference;
 import org.springframework.beans.factory.aot.BeanFactoryInitializationAotContribution;
 import org.springframework.beans.factory.aot.BeanFactoryInitializationAotProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
@@ -72,6 +77,7 @@ class SqltoyBeanFactoryInitializationAotProcessor implements BeanFactoryInitiali
 			registerEntities(hints, properties);
 			registerNativeReflectionClasses(hints, properties);
 			registerNativeReflectionPackages(hints, properties);
+			registerNativeEntityProxies(hints, context.getGeneratedFiles(), properties);
 			registerConfiguredResources(hints.resources(), properties);
 			registerExtensionClasses(hints, properties);
 			registerIntegrationClasses(hints, properties);
@@ -176,6 +182,44 @@ class SqltoyBeanFactoryInitializationAotProcessor implements BeanFactoryInitiali
 			} catch (Throwable e) {
 				logger.warn("sqltoy aot: native reflection package scan failed for [{}], classes may be incomplete!",
 						pkg, e);
+			}
+		}
+	}
+
+	/**
+	 * native-entity-proxies:为使用 updateSaveFetch(EntityUpdateCallback) 的实体在构建期预生成
+	 * EntityResultSetProxy 子类,写入镜像并注册反射;运行期 EntityResultSetProxy 直接按类名加载,
+	 * 不再做 ByteBuddy 动态类生成
+	 */
+	private void registerNativeEntityProxies(RuntimeHints hints, GeneratedFiles code,
+			SqlToyContextProperties properties) {
+		if (properties.getNativeEntityProxies() == null || code == null) {
+			return;
+		}
+		if (!present("net.bytebuddy.ByteBuddy")) {
+			logger.warn("sqltoy aot: native-entity-proxies is configured but ByteBuddy is not on the build classpath; "
+					+ "add net.bytebuddy:byte-buddy if updateSaveFetch(EntityUpdateCallback) is used, "
+					+ "otherwise no entity proxy will be generated");
+			return;
+		}
+		for (String className : properties.getNativeEntityProxies()) {
+			if (StringUtil.isBlank(className)) {
+				continue;
+			}
+			try {
+				Class<?> entityClass = Class.forName(className.trim());
+				Map<String, byte[]> proxyTypes = EntityResultSetProxy.buildProxyTypes(entityClass);
+				for (Map.Entry<String, byte[]> entry : proxyTypes.entrySet()) {
+					String proxyName = entry.getKey();
+					byte[] proxyBytes = entry.getValue();
+					String path = proxyName.replace('.', '/') + ".class";
+					code.addClassFile(path, () -> new ByteArrayInputStream(proxyBytes));
+					hints.reflection().registerType(TypeReference.of(proxyName), MemberCategory.values());
+				}
+			} catch (Throwable e) {
+				logger.warn("sqltoy aot: failed to generate EntityResultSetProxy for [{}], native updateSaveFetch "
+						+ "callback for this entity will not work; check final/constructor/byte-buddy dependency!", className,
+						e);
 			}
 		}
 	}

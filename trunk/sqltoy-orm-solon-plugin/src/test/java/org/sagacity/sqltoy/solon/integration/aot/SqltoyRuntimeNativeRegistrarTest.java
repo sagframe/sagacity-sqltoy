@@ -107,6 +107,7 @@ public class SqltoyRuntimeNativeRegistrarTest {
 		properties.setNativeReflectionClasses(new String[] { SolonAotTestDto.class.getName() });
 		properties.setNativeReflectionPackages(
 				new String[] { "org.sagacity.sqltoy.solon.integration.aot.dto" });
+		properties.setNativeEntityProxies(new String[] { SolonAotTestEntity.class.getName() });
 		context.wrapAndPut(SqlToyContextProperties.class, properties);
 
 		SqlToyContext sqlToyContext = new SqlToyContext();
@@ -143,6 +144,8 @@ public class SqltoyRuntimeNativeRegistrarTest {
 				"nativeReflectionClasses DTO reflection missing: " + reflection);
 		assertTrue(reflection.contains("org.sagacity.sqltoy.solon.integration.aot.dto.SolonAotOrderVO"),
 				"nativeReflectionPackages VO reflection missing: " + reflection);
+		assertTrue(reflection.contains(SolonAotTestEntity.class.getName() + "$$SqltoyEntityProxy"),
+				"nativeEntityProxies generated proxy reflection missing: " + reflection);
 		assertTrue(reflection.contains(SolonAotTestHandler.class.getName()),
 				"class-name configured extension missing");
 		assertTrue(reflection.contains("org.sagacity.sqltoy.plugins.formater.impl.DefaultSqlFormater"),

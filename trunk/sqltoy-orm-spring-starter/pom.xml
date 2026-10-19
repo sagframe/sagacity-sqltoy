@@ -127,6 +127,13 @@
 			<artifactId>junit-jupiter-api</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<!-- native-entity-proxies AOT 预生成与 updateSaveFetch 代理需要 ByteBuddy;optional 不传递,使用该特性时由应用显式引入 -->
+		<dependency>
+			<groupId>net.bytebuddy</groupId>
+			<artifactId>byte-buddy</artifactId>
+			<version>1.18.15</version>
+			<optional>true</optional>
+		</dependency>
 		<dependency>
 			<groupId>org.junit.platform</groupId>
 			<artifactId>junit-platform-launcher</artifactId>

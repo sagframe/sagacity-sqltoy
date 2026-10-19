@@ -215,6 +215,12 @@
       "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties"
     },
     {
+      "name": "solon.sqltoy.native-entity-proxies",
+      "type": "java.lang.String[]",
+      "description": "GraalVM native 构建期预生成 EntityResultSetProxy 子类的实体类全名(updateSaveFetch EntityUpdateCallback 使用)",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties"
+    },
+    {
       "name": "solon.sqltoy.page-fetch-size-limit",
       "type": "java.lang.Integer",
       "description": "分页最大单页数据量(默认是5万)",

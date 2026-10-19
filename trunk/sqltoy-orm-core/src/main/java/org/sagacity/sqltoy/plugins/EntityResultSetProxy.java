@@ -6,6 +6,8 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 import org.sagacity.sqltoy.config.model.DataType;
@@ -17,6 +19,7 @@ import org.sagacity.sqltoy.utils.SqlUtilsExt;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.TypeCache;
+import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.implementation.FieldAccessor;
 import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.bind.annotation.AllArguments;
@@ -121,27 +124,82 @@ public class EntityResultSetProxy<T> {
 
 	private final static String INTERCEPTOR_FIELD = "sqltoy$interceptor";
 
+	/** 预生成代理类名后缀:AOT 构建期写入镜像,运行期按此名加载 */
+	private static final String PROXY_SUFFIX = "$$SqltoyEntityProxy";
+
+	private static final boolean IS_NATIVE = System.getProperty("org.graalvm.nativeimage.imagecode") != null;
+
 	/**
-	 * 创建实体代理对象
+	 * @param clazz 实体类
+	 * @return 预生成代理类的全限定类名
+	 */
+	public static String proxyClassName(Class<?> clazz) {
+		return clazz.getName() + PROXY_SUFFIX;
+	}
+
+	/**
+	 * AOT 构建期生成代理子类及其 auxiliary 类的全部字节码(不 load,由调用方写入镜像)
+	 * 
+	 * @param clazz 实体类
+	 * @return 类名 -&gt; 字节码
+	 * @throws Exception 生成失败
+	 */
+	public static Map<String, byte[]> buildProxyTypes(Class<?> clazz) throws Exception {
+		Map<String, byte[]> types = new LinkedHashMap<>();
+		newProxyBuilder(clazz).make().getAllTypes().forEach((type, bytes) -> types.put(type.getName(), bytes));
+		return types;
+	}
+
+	/**
+	 * AOT 构建期生成代理主类字节码
+	 * 
+	 * @param clazz 实体类
+	 * @return 代理类字节码
+	 * @throws Exception 生成失败
+	 */
+	public static byte[] buildProxyBytes(Class<?> clazz) throws Exception {
+		return buildProxyTypes(clazz).get(proxyClassName(clazz));
+	}
+
+	private static DynamicType.Builder<?> newProxyBuilder(Class<?> clazz) {
+		return new ByteBuddy().subclass(clazz).name(proxyClassName(clazz))
+				.defineField(INTERCEPTOR_FIELD, EntityResultSetProxy.class, Modifier.PRIVATE)
+				.implement(InterceptorHolder.class).intercept(FieldAccessor.ofField(INTERCEPTOR_FIELD))
+				.method(ElementMatchers.not(ElementMatchers.isDeclaredBy(InterceptorHolder.class)))
+				.intercept(MethodDelegation.to(Delegate.class));
+	}
+
+	/**
+	 * 创建实体代理对象:优先加载 AOT 预生成类;JVM 下未预生成时回退 ByteBuddy 动态生成
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T> T createProxy(TypeHandler typeHandler, DBProfile profile, Connection conn, ResultSet rs,
 			Class<T> clazz, EntityMeta entityMeta) throws Exception {
 		EntityResultSetProxy<T> interceptor = new EntityResultSetProxy<>(typeHandler, profile, conn, rs, entityMeta);
-		// 动态生成子类:实体方法委托到静态intercept,经实例字段找到行拦截器;代理类按实体类缓存
-		Class<?> proxyCls = PROXY_CLASS_CACHE.findOrInsert(clazz.getClassLoader(), clazz.getName(), () -> {
-			try {
-				return new ByteBuddy().subclass(clazz)
-						.defineField(INTERCEPTOR_FIELD, EntityResultSetProxy.class, Modifier.PRIVATE)
-						.implement(InterceptorHolder.class).intercept(FieldAccessor.ofField(INTERCEPTOR_FIELD))
-						.method(ElementMatchers.not(ElementMatchers.isDeclaredBy(InterceptorHolder.class)))
-						.intercept(MethodDelegation.to(Delegate.class)).make().load(clazz.getClassLoader()).getLoaded();
-			} catch (Exception e) {
-				throw new IllegalStateException(
-						"Failed to create the entity result set proxy class: " + clazz.getName(), e);
+		String proxyName = proxyClassName(clazz);
+		Class<?> proxyCls;
+		try {
+			// native 镜像中 AOT 已把预生成类写入 classpath,这里只加载,不再定义新类
+			proxyCls = Class.forName(proxyName, true, clazz.getClassLoader());
+		} catch (ClassNotFoundException e) {
+			if (IS_NATIVE) {
+				throw new IllegalStateException("EntityResultSetProxy for [" + clazz.getName()
+						+ "] is not pre-generated in the native image; add the entity class to "
+						+ "spring.sqltoy.native-entity-proxies or solon.sqltoy.native-entity-proxies", e);
 			}
-		});
-		Object proxy = proxyCls.getDeclaredConstructor().newInstance();
+			// JVM: 保留原有动态生成能力
+			proxyCls = PROXY_CLASS_CACHE.findOrInsert(clazz.getClassLoader(), proxyName, () -> {
+				try {
+					return newProxyBuilder(clazz).make().load(clazz.getClassLoader()).getLoaded();
+				} catch (Exception ex) {
+					throw new IllegalStateException(
+							"Failed to create the entity result set proxy class: " + clazz.getName(), ex);
+				}
+			});
+		}
+		java.lang.reflect.Constructor<?> constructor = proxyCls.getDeclaredConstructor();
+		constructor.setAccessible(true);
+		Object proxy = constructor.newInstance();
 		((InterceptorHolder) proxy).$sqltoy$setInterceptor(interceptor);
 		return (T) proxy;
 	}

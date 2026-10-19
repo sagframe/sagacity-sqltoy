@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.aot.generate.GeneratedClasses;
 import org.springframework.aot.generate.GeneratedFiles;
 import org.springframework.aot.generate.GenerationContext;
+import org.springframework.aot.generate.InMemoryGeneratedFiles;
 import org.springframework.aot.hint.RuntimeHints;
 import org.springframework.aot.hint.TypeHint;
 import org.springframework.beans.factory.aot.BeanFactoryInitializationAotContribution;
@@ -57,6 +58,9 @@ public class SqltoyAotHintsTest {
 				"org.sagacity.sqltoy.integration.aot.entity.AotTestDto");
 		// VO/DTO 较多时按包批量登记
 		props.put("spring.sqltoy.nativeReflectionPackages[0]", "org.sagacity.sqltoy.integration.aot.dto");
+		// updateSaveFetch(EntityUpdateCallback) 用实体:构建期预生成 EntityResultSetProxy 子类
+		props.put("spring.sqltoy.nativeEntityProxies[0]",
+				"org.sagacity.sqltoy.integration.aot.entity.AotTestEntity");
 
 		RuntimeHints hints = applyProcessor(aotLikeBeanFactory(props));
 
@@ -74,6 +78,9 @@ public class SqltoyAotHintsTest {
 				"nativeReflectionPackages VO reflection hints missing");
 		assertTrue(reflectionRegistered(hints, "org.sagacity.sqltoy.integration.aot.dto.AotTestUserDTO"),
 				"nativeReflectionPackages DTO reflection hints missing");
+		assertTrue(reflectionRegistered(hints,
+				"org.sagacity.sqltoy.integration.aot.entity.AotTestEntity$$SqltoyEntityProxy"),
+				"nativeEntityProxies generated proxy reflection hints missing");
 		// 扩展类:按类名配置 + sqlFormater 别名展开
 		assertTrue(reflectionRegistered(hints, AotTestFieldsHandler.class.getName()),
 				"class-name configured extension missing");
@@ -153,16 +160,18 @@ public class SqltoyAotHintsTest {
 		BeanFactoryInitializationAotContribution contribution = processor.processAheadOfTime(beanFactory);
 		assertNotNull(contribution, "aot contribution should always be returned");
 		RuntimeHints hints = new RuntimeHints();
-		// 贡献只消费 GenerationContext.getRuntimeHints(),代码生成设施在本测试中不使用
-		contribution.applyTo(new StubGenerationContext(hints), null);
+		GeneratedFiles generatedFiles = new InMemoryGeneratedFiles();
+		contribution.applyTo(new StubGenerationContext(hints, generatedFiles), null);
 		return hints;
 	}
 
 	private static class StubGenerationContext implements GenerationContext {
 		private final RuntimeHints hints;
+		private final GeneratedFiles generatedFiles;
 
-		StubGenerationContext(RuntimeHints hints) {
+		StubGenerationContext(RuntimeHints hints, GeneratedFiles generatedFiles) {
 			this.hints = hints;
+			this.generatedFiles = generatedFiles;
 		}
 
 		@Override
@@ -172,7 +181,7 @@ public class SqltoyAotHintsTest {
 
 		@Override
 		public GeneratedFiles getGeneratedFiles() {
-			throw new UnsupportedOperationException("not used by sqltoy aot contribution");
+			return generatedFiles;
 		}
 
 		@Override

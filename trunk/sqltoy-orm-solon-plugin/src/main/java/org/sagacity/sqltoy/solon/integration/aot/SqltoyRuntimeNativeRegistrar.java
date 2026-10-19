@@ -1,15 +1,20 @@
-﻿package org.sagacity.sqltoy.solon.integration.aot;
+package org.sagacity.sqltoy.solon.integration.aot;
 
 import java.lang.invoke.SerializedLambda;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import org.noear.solon.aot.RuntimeNativeMetadata;
 import org.noear.solon.aot.RuntimeNativeRegistrar;
 import org.noear.solon.aot.hint.MemberCategory;
 import org.noear.solon.core.AppContext;
+import org.noear.solon.extend.impl.RuntimeServiceExt;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.EntityManager;
 import org.sagacity.sqltoy.config.EntityScanner;
@@ -18,6 +23,7 @@ import org.sagacity.sqltoy.config.model.ReverseModel;
 import org.sagacity.sqltoy.config.model.RowsChainRelativeModel;
 import org.sagacity.sqltoy.config.model.TreeSortModel;
 import org.sagacity.sqltoy.config.model.UnpivotModel;
+import org.sagacity.sqltoy.plugins.EntityResultSetProxy;
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
 import org.sagacity.sqltoy.plugins.id.impl.DefaultIdGenerator;
 import org.sagacity.sqltoy.plugins.id.impl.NanoTimeIdGenerator;
@@ -101,6 +107,7 @@ public class SqltoyRuntimeNativeRegistrar implements RuntimeNativeRegistrar {
 			registerJsonProvider(metadata);
 			registerNativeReflectionClasses(metadata, properties);
 			registerNativeReflectionPackages(metadata, properties);
+			registerNativeEntityProxies(metadata, properties);
 		});
 	}
 
@@ -278,6 +285,44 @@ public class SqltoyRuntimeNativeRegistrar implements RuntimeNativeRegistrar {
 			} catch (Throwable e) {
 				logger.warn("sqltoy aot: native reflection package scan failed for [{}], classes may be incomplete!",
 						pkg, e);
+			}
+		}
+	}
+
+	/**
+	 * native-entity-proxies:为使用 updateSaveFetch(EntityUpdateCallback) 的实体在构建期预生成
+	 * EntityResultSetProxy 子类并写入 Solon AOT class output;运行期只加载,不再动态生成类
+	 */
+	private void registerNativeEntityProxies(RuntimeNativeMetadata metadata, SqlToyContextProperties properties) {
+		if (properties.getNativeEntityProxies() == null) {
+			return;
+		}
+		if (!present("net.bytebuddy.ByteBuddy")) {
+			logger.warn("sqltoy aot: native-entity-proxies is configured but ByteBuddy is not on the build classpath; "
+					+ "add net.bytebuddy:byte-buddy if updateSaveFetch(EntityUpdateCallback) is used, "
+					+ "otherwise no entity proxy will be generated");
+			return;
+		}
+		Path classOutput = (RuntimeServiceExt.settings != null ? RuntimeServiceExt.settings.getClassOutput()
+				: Paths.get("target", "classes"));
+		for (String className : properties.getNativeEntityProxies()) {
+			if (StringUtil.isBlank(className)) {
+				continue;
+			}
+			try {
+				Class<?> entityClass = Class.forName(className.trim());
+				Map<String, byte[]> proxyTypes = EntityResultSetProxy.buildProxyTypes(entityClass);
+				for (Map.Entry<String, byte[]> entry : proxyTypes.entrySet()) {
+					String proxyName = entry.getKey();
+					Path classFile = classOutput.resolve(proxyName.replace('.', '/') + ".class");
+					Files.createDirectories(classFile.getParent());
+					Files.write(classFile, entry.getValue());
+					metadata.registerReflection(proxyName, MemberCategory.values());
+				}
+			} catch (Throwable e) {
+				logger.warn("sqltoy aot: failed to generate EntityResultSetProxy for [{}], native updateSaveFetch "
+						+ "callback for this entity will not work; check final/constructor/byte-buddy dependency!", className,
+						e);
 			}
 		}
 	}
