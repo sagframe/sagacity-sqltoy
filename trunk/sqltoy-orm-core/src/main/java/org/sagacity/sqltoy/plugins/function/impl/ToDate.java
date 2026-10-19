@@ -125,12 +125,11 @@ public class ToDate extends IFunction {
 			// 两参解析方向:PARSEDATETIME(str,格式)
 			// update 2026-9-15 补oracle风格令牌映射:入参'hh24:mi:ss'的hh24/mi为oracle模型,
 			// h2 PARSEDATETIME用java令牌(HH=24小时,mm=分钟),原样透传真库实测报Error parsing
-			// update 2026-10-19 区分Oracle的mm(月)/mi(分)与HH(12小时)/HH24(24小时):
-			// 24小时token先用占位符保护,裸HH才映射为java的hh,最后还原24小时
+			// update 2026-10-19 口径修正:裸HH保持H2的java HH(24小时),小写hh为12小时;
+			// 24小时token先占位、最后还原,MI/mi归一到java分钟mm
 			String fmt = args[1].replace("HH24", "@H24@").replace("hh24", "@H24@");
 			fmt = fmt.replace("mm", "MM");
 			fmt = fmt.replace("MI", "@M1@").replace("mi", "@M1@");
-			fmt = fmt.replace("HH", "hh");
 			fmt = fmt.replace("@H24@", "HH").replace("@M1@", "mm").replace("SS", "ss");
 			return "parsedatetime(" + args[0] + "," + fmt + ")";
 		}
@@ -160,7 +159,8 @@ public class ToDate extends IFunction {
 			// 原'YYYY-MM-DD HH24:MI:SS'的YYYY/DD/MI/SS残留字面量,STR_TO_DATE报格式错值)
 			String format = args[1].replace("yyyy", "%Y").replace("YYYY", "%Y").replace("yy", "%y").replace("YY", "%y")
 					.replace("MM", "%m").replace("dd", "%d").replace("DD", "%d");
-			format = format.replace("HH24", "%H").replace("hh24", "%H").replace("HH", "%h").replace("hh", "%h")
+			// update 2026-10-19 口径修正:裸HH为24小时制(%H),小写hh才为12小时(%h)
+			format = format.replace("HH24", "%H").replace("hh24", "%H").replace("HH", "%H").replace("hh", "%h")
 					.replace("mm", "%m").replace("mi", "%i").replace("MI", "%i").replace("ss", "%s")
 					.replace("SS", "%s");
 			return "STR_TO_DATE(" + args[0] + "," + format + ")";

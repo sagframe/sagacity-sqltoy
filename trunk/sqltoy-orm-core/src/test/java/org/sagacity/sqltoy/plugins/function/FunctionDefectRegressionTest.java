@@ -50,12 +50,27 @@ public class FunctionDefectRegressionTest {
 	}
 
 	@Test
-	@DisplayName("Oracle HH为12小时制,HH24为24小时制")
-	public void oracleTwelveHour() {
-		assertEquals("select date_format(t,'%h:%i') from t", n(c("select to_char(t,'HH:MI') from t", "mysql")));
-		assertEquals("select strftime('%I:%M',datetime(t/1000,'unixepoch','localtime')) from t",
+	@DisplayName("HH默认24小时制,hh为12小时制,HH24恒为24小时")
+	public void hhTwelveHour() {
+		// 裸HH按框架约定=24小时(与DateFormat/Oracle/PG分支一致)
+		assertEquals("select date_format(t,'%H:%i') from t", n(c("select to_char(t,'HH:MI') from t", "mysql")));
+		assertEquals("select strftime('%H:%M',datetime(t/1000,'unixepoch','localtime')) from t",
 				n(c("select to_char(t,'HH:MI') from t", "sqlite")));
-		assertEquals("select STR_TO_DATE(t,'%h:%i') from t", n(c("select to_date(t,'HH:MI') from t", "mysql")));
+		assertEquals("select STR_TO_DATE(t,'%H:%i') from t", n(c("select to_date(t,'HH:MI') from t", "mysql")));
+		// 小写hh为12小时制
+		assertEquals("select date_format(t,'%h:%i') from t", n(c("select to_char(t,'hh:MI') from t", "mysql")));
+		assertEquals("select strftime('%I:%M',datetime(t/1000,'unixepoch','localtime')) from t",
+				n(c("select to_char(t,'hh:MI') from t", "sqlite")));
+		assertEquals("select STR_TO_DATE(t,'%h:%i') from t", n(c("select to_date(t,'hh:MI') from t", "mysql")));
+		// SQLServer:.NET的HH=24小时,hh=12小时,裸HH不再降级为12小时
+		assertEquals("select FORMAT(t,'HH:mm') from t", n(c("select to_char(t,'HH:MI') from t", "sqlserver")));
+		assertEquals("select FORMAT(t,'hh:mm') from t", n(c("select to_char(t,'hh:MI') from t", "sqlserver")));
+		// H2的to_char原生HH为12小时,裸HH须归一为HH24
+		assertEquals("select to_char(t,'HH24:MI') from t", n(c("select to_char(t,'HH:MI') from t", "h2")));
+		assertEquals("select to_char(t,'hh:MI') from t", n(c("select to_char(t,'hh:MI') from t", "h2")));
+		// H2 PARSEDATETIME取Java令牌:HH=24小时,hh=12小时
+		assertEquals("select parsedatetime(t,'HH:mm') from t", n(c("select to_date(t,'HH:MI') from t", "h2")));
+		assertEquals("select parsedatetime(t,'hh:mm') from t", n(c("select to_date(t,'hh:MI') from t", "h2")));
 	}
 
 	@Test
@@ -69,6 +84,17 @@ public class FunctionDefectRegressionTest {
 				n(c("select date_format(t,'yyyy-MM-dd HH:mm:ss') from t", "db2")));
 		assertEquals("select FORMAT(t,'yyyy-MM-dd HH:mm:ss') from t",
 				n(c("select to_char(t,'yyyy-MM-dd HH:mm:ss') from t", "sqlserver")));
+		// update 2026-10-19 sqlserver 2025真库实测:FORMAT不接受varchar首参,字面量须CAST定型
+		assertEquals("select FORMAT(CAST('2026-03-20 14:30:45' AS datetime),'yyyy-MM-dd HH:mm:ss') from t",
+				n(c("select date_format('2026-03-20 14:30:45','yyyy-MM-dd HH:mm:ss') from t", "sqlserver")));
+	}
+
+	@Test
+	@DisplayName("OceanBase的datediff按oracle系生成(与OceanBaseDialect一致)")
+	public void oceanbaseDateDiff() {
+		String sql = n(c("select datediff(day,'2026-03-01','2026-03-20') from dual", "oceanbase"));
+		assertEquals("select (TRUNC(to_date('2026-03-20','yyyy-MM-dd')) - TRUNC(to_date('2026-03-01','yyyy-MM-dd'))) from dual",
+				sql);
 	}
 
 	@Test
@@ -95,6 +121,11 @@ public class FunctionDefectRegressionTest {
 		assertEquals("select trim(both ' ' from name) from t", n(c("select trim(from name) from t", "h2")));
 		assertEquals("select rtrim(ltrim(name)) from t", n(c("select trim(from name) from t", "sqlserver")));
 		assertEquals("select trim(name) from t", n(c("select trim(from name) from t", "sqlite")));
+		// update 2026-10-19 真库实测:mysql/oracle不接受省略剔除字符的trim(from x)
+		// (mysql 1064/oracle ORA-30000),须改写为等价单参trim
+		assertEquals("select trim(name) from t", n(c("select trim(from name) from t", "mysql")));
+		assertEquals("select trim(name) from t", n(c("select trim(from name) from t", "oracle")));
+		assertEquals("select ltrim(name) from t", n(c("select trim(leading from name) from t", "mysql")));
 	}
 
 	@Test
@@ -145,6 +176,11 @@ public class FunctionDefectRegressionTest {
 			assertEquals("x", query(st, c("select trim(from '  x  ') from (select 1) x", "h2")));
 			assertTrue(query(st, c("select to_date('2026-03-20','yyyy-mm-dd') from (select 1) x", "h2"))
 					.startsWith("2026-03-20"));
+			// HH默认24小时、hh为12小时的真执行锁定
+			assertEquals("14:30",
+					query(st, c("select to_char(timestamp '2026-03-20 14:30:45','HH:MI') from (select 1) x", "h2")));
+			assertEquals("02:30",
+					query(st, c("select to_char(timestamp '2026-03-20 14:30:45','hh:MI') from (select 1) x", "h2")));
 		}
 		try (Connection conn = DriverManager.getConnection("jdbc:sqlite::memory:");
 				Statement st = conn.createStatement()) {
@@ -152,6 +188,10 @@ public class FunctionDefectRegressionTest {
 			assertEquals("2026-03-20 10:30:45",
 					query(st, c("select date_format('2026-03-20 10:30:45','yyyy-MM-dd HH:mm:ss') from (select 1) x", "sqlite")));
 			assertEquals("x", query(st, c("select trim(from '  x  ') from (select 1) x", "sqlite")));
+			assertEquals("14:30",
+					query(st, c("select to_char('2026-03-20 14:30:45','HH:MI') from (select 1) x", "sqlite")));
+			assertEquals("02:30",
+					query(st, c("select to_char('2026-03-20 14:30:45','hh:MI') from (select 1) x", "sqlite")));
 		}
 	}
 

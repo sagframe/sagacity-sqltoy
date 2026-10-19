@@ -68,7 +68,9 @@ public class ToChar extends IFunction {
 			// update 2026-9-15 修复HH24大写形态:原仅替换小写hh24,大写HH24先被HH→%H命中
 			// 残留字面"24"(mysql实测'HH24:mi:ss'得'1024:30'),改为HH24/hh24双形态优先替换,
 			// 并补大写MI/SS形态
-			format = format.replace("HH24", "%H").replace("hh24", "%H").replace("HH", "%h").replace("hh", "%h")
+			// update 2026-10-19 口径修正:裸HH按框架约定为24小时制(与DateFormat及Oracle/PG分支一致),
+			// 小写hh才是12小时制;HH24/hh24仍恒为24小时
+			format = format.replace("HH24", "%H").replace("hh24", "%H").replace("HH", "%H").replace("hh", "%h")
 					.replace("mm", "%m").replace("MI", "%i").replace("mi", "%i").replace("SS", "%s")
 					.replace("ss", "%s");
 			return "date_format(" + args[0] + "," + format + ")";
@@ -110,6 +112,14 @@ public class ToChar extends IFunction {
 			// update 2026-10-12 g8的to_char返回varchar读回空串,包::lvarchar(见case声明注释)
 			return toCharInner;
 		}
+		case DBType.DB2: {
+			// update 2026-10-19 DB2 12.1.5实测:to_char的HH为12小时、HH24为24小时;
+			// 按框架约定裸HH=24小时,仅调整HH token,其余格式模型原样交由DB2解析
+			// (保留原token大小写,避免影响既有断言)
+			format = args[1].replace("HH24", "@H24U@").replace("hh24", "@H24L@");
+			format = format.replace("HH", "HH24").replace("@H24U@", "HH24").replace("@H24L@", "hh24");
+			return "to_char(" + args[0] + "," + format + ")";
+		}
 		case DBType.H2: {
 			// H2原生支持to_char(oracle兼容格式模型,端到端实测验证);
 			// update 2026-9-9 修正%y(两位年)误映射为yyyy(四位年)
@@ -117,6 +127,10 @@ public class ToChar extends IFunction {
 			// 时间处理(update 2026-9-5 H2 to_char为oracle兼容格式模型,%H应为HH24 24小时制,原hh为12小时制)
 			format = format.replace("%T", "hh24:mi:ss");
 			format = format.replace("%H", "hh24").replace("%h", "hh").replace("%i", "mi").replace("%s", "ss");
+			// update 2026-10-19 H2 2.4实测:to_char的HH/hh均输出12小时,HH24才输出24小时;
+			// 按框架约定裸HH=24小时,须归一为HH24,小写hh保留12小时(保留原token大小写)
+			format = format.replace("HH24", "@H24U@").replace("hh24", "@H24L@");
+			format = format.replace("HH", "HH24").replace("@H24U@", "HH24").replace("@H24L@", "hh24");
 			return "to_char(" + args[0] + "," + format + ")";
 		}
 		case DBType.CLICKHOUSE: {
@@ -130,7 +144,8 @@ public class ToChar extends IFunction {
 			// update 2026-10-9 补大写oracle形态YYYY/YY/DD/MI/SS(同mysql分支,原残留字面量)
 			format = args[1].replace("yyyy", "%Y").replace("YYYY", "%Y").replace("yy", "%y").replace("YY", "%y")
 					.replace("MM", "%m").replace("dd", "%d").replace("DD", "%d");
-			format = format.replace("HH24", "%H").replace("hh24", "%H").replace("hh", "%h").replace("HH", "%h")
+			// update 2026-10-19 口径修正:裸HH为24小时制(%H),小写hh才映射12小时(%h)
+			format = format.replace("HH24", "%H").replace("hh24", "%H").replace("hh", "%h").replace("HH", "%H")
 					.replace("mm", "%m").replace("mi", "%i").replace("MI", "%i").replace("ss", "%s")
 					.replace("SS", "%s");
 			// update 2026-10-4 补%T(mysql源原生token,时:分:秒),原残留字面%T
@@ -148,7 +163,8 @@ public class ToChar extends IFunction {
 			format = args[1].replace("%Y", "yyyy").replace("%y", "yy").replace("%m", "MM").replace("%d", "dd");
 			format = format.replace("%T", "hh24:mi:ss");
 			format = format.replace("%H", "hh24").replace("%h", "hh").replace("%i", "mi").replace("%s", "ss");
-			if (isNumericModel(format)) {
+			boolean numericModel = isNumericModel(format);
+			if (numericModel) {
 				// 数值格式模型:9→0(.NET零占位),FM/S999等oracle前缀修饰不在支持范围
 				format = format.replace("9", "0");
 			} else {
@@ -160,8 +176,8 @@ public class ToChar extends IFunction {
 				format = format.replace("HH24", "@H24@").replace("hh24", "@H24@");
 				format = format.replace("mm", "MM");
 				format = format.replace("MI", "@M1@").replace("mi", "@M1@");
-				// 裸HH为Oracle 12小时制,.NET用hh;24小时token已由@H24@占位,最后再还原为HH
-				format = format.replace("HH", "hh");
+				// update 2026-10-19 口径修正:裸HH按框架约定为24小时制(.NET的HH),不再转12小时的hh;
+				// 小写hh保留12小时语义,24小时token已由@H24@占位,最后还原为HH
 				format = format.replace("@H24@", "HH").replace("@M1@", "mm").replace("SS", "ss")
 						.replace("YYYY", "yyyy").replace("YY", "yy").replace("DD", "dd");
 			}
@@ -171,7 +187,10 @@ public class ToChar extends IFunction {
 			if (!(fmtArg.length() > 1 && fmtArg.startsWith("'") && fmtArg.endsWith("'"))) {
 				fmtArg = "'" + fmtArg.replace("'", "") + "'";
 			}
-			return "FORMAT(" + args[0] + "," + fmtArg + ")";
+			// 日期格式化时字符串字面量须定型为datetime(FORMAT不接受varchar首参,2025真库实测);
+			// 数值模型保持原参数类型
+			String formatArg = numericModel ? args[0] : FunctionUtils.wrapSqlServerDateFormatArg(args[0]);
+			return "FORMAT(" + formatArg + "," + fmtArg + ")";
 		}
 		case DBType.SQLITE: {
 			// update 2026-9-10 sqlite无to_char,以strftime承担(token映射:yyyy→%Y、MM→%m、
@@ -189,7 +208,8 @@ public class ToChar extends IFunction {
 			format = format.replace("yyyy", "%Y").replace("YYYY", "%Y").replace("yy", "%y").replace("YY", "%y")
 					.replace("MM", "%m").replace("dd", "%d").replace("DD", "%d");
 			// update 2026-10-9 补大写MI/SS形态(原'HH24:MI:SS'的MI/SS残留字面量,strftime静默输出垃圾文本)
-			format = format.replace("HH24", "%H").replace("hh24", "%H").replace("HH", "%I").replace("hh", "%I")
+			// update 2026-10-19 口径修正:裸HH为24小时制(%H),小写hh才映射12小时(%I)
+			format = format.replace("HH24", "%H").replace("hh24", "%H").replace("HH", "%H").replace("hh", "%I")
 					.replace("mm", "%m").replace("mi", "%M").replace("MI", "%M").replace("ss", "%S")
 					.replace("SS", "%S");
 			return "strftime(" + format + "," + FunctionUtils.sqliteDateTextExpr(args[0]) + ")";

@@ -75,6 +75,23 @@ public class Trim extends IFunction {
 		}
 		int fromIdx = rest.toLowerCase(Locale.ROOT).startsWith("from ") ? 0
 				: rest.toLowerCase(Locale.ROOT).indexOf(" from ");
+		// update 2026-10-19 真库实测:标准组中 mysql 9.3 对 trim(from x) 报1064语法错、
+		// oracle 23ai 报ORA-30000(两者均要求省略剔除字符时不能保留FROM);省略字符的
+		// from形态语义即"默认空格",统一改写成单参trim/单向ltrim/rtrim(标准组原生产物,
+		// 与trim(both ' ' from x)等价)。H2/SQLServer/SQLite/StarRocks已有专门分支,不在此处理
+		if (modifierForm && fromIdx == 0 && dialect != DBType.H2 && dialect != DBType.SQLSERVER
+				&& dialect != DBType.SQLITE && dialect != DBType.STARROCKS) {
+			String col = rest.substring(5).trim();
+			if (!col.isEmpty()) {
+				if ("leading".equals(keyword)) {
+					return "ltrim(" + col + ")";
+				}
+				if ("trailing".equals(keyword)) {
+					return "rtrim(" + col + ")";
+				}
+				return "trim(" + col + ")";
+			}
+		}
 		if (dialect == DBType.H2) {
 			// H2原生支持标准修饰符形态;trim(from col)显式归一为both空格形态
 			if (modifierForm) {

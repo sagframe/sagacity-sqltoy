@@ -408,6 +408,21 @@ public class FunctionUtils {
 	}
 
 	/**
+	 * @description SQLServer的FORMAT(2012+)要求首参为date/time/numeric,字符串字面量直接
+	 *              传入报"Argument data type varchar is invalid for argument 1 of format function"
+	 *              (2025真库实测);日期格式化场景对单引号字面量显式CAST AS datetime定型,
+	 *              列/表达式保持原类型(避免datetime2/datetimeoffset精度或时区信息被降级)
+	 * @param arg 日期参数SQL片段
+	 * @return 可被FORMAT消费的日期参数
+	 */
+	public static String wrapSqlServerDateFormatArg(String arg) {
+		if (isQuotedLiteral(arg)) {
+			return "CAST(" + arg.trim() + " AS datetime)";
+		}
+		return arg;
+	}
+
+	/**
 	 * @description 将Oracle/Java风格格式模型转换为MySQL % 风格token,供DateFormat(源为mysql date_format)
 	 *              在非%写法时统一走既有%分派。Oracle的mm=月/mi=分钟;java的HH:mm=24小时/分钟;
 	 *              裸HH按Java习惯作24小时,裸hh作12小时;双引号字面量片段原样保留

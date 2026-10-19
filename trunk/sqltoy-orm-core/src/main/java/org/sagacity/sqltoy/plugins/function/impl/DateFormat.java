@@ -137,7 +137,7 @@ public class DateFormat extends IFunction {
 			if (!(fmtArg.length() > 1 && fmtArg.startsWith("'") && fmtArg.endsWith("'"))) {
 				fmtArg = "'" + fmtArg.replace("'", "") + "'";
 			}
-			return "FORMAT(" + args[0] + "," + fmtArg + ")";
+			return "FORMAT(" + FunctionUtils.wrapSqlServerDateFormatArg(args[0]) + "," + fmtArg + ")";
 		}
 		case DBType.DB2: {
 			// db2以VARCHAR_FORMAT(等价TO_CHAR)实现
