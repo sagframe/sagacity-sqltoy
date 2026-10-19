@@ -157,7 +157,7 @@ public class CrossDbAdapter {
 				errMsg = "查询语句:" + sqlToyConfig.getId() + " 不适配:" + dialect + " 的数据源:" + dataSourceName + ";errorMsg="
 						+ e.getMessage();
 				logger.error(errMsg);
-				throw new DataAccessException(errMsg);
+				throw new DataAccessException(errMsg, e);
 			}
 		}
 	}

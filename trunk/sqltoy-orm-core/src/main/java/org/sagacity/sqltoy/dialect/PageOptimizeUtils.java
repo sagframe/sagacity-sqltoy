@@ -2,6 +2,7 @@ package org.sagacity.sqltoy.dialect;
 
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.sagacity.sqltoy.SqlToyContext;
@@ -11,6 +12,7 @@ import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.utils.CollectionUtil;
+import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
  * @project sagacity-sqltoy
@@ -122,8 +124,13 @@ public class PageOptimizeUtils {
 	 */
 	public static Long getPageTotalCount(final SqlToyConfig sqlToyConfig, PageOptimize pageOptimize,
 			String conditionsKey) {
+		return getPageTotalCount(sqlToyConfig, pageOptimize, conditionsKey, sqlToyConfig.getDialect());
+	}
+
+	public static Long getPageTotalCount(final SqlToyConfig sqlToyConfig, PageOptimize pageOptimize,
+			String conditionsKey, String dialect) {
 		// sql初次执行查询
-		LinkedHashMap<String, Object[]> map = pageOptimizeCache.get(sqlToyConfig.getIdOrSql());
+		LinkedHashMap<String, Object[]> map = pageOptimizeCache.get(cacheKey(sqlToyConfig, dialect));
 		if (map == null) {
 			return null;
 		}
@@ -160,13 +167,18 @@ public class PageOptimizeUtils {
 	 */
 	public static void registPageTotalCount(final SqlToyConfig sqlToyConfig, PageOptimize pageOptimize,
 			String conditionsKey, Long totalCount) {
+		registPageTotalCount(sqlToyConfig, pageOptimize, conditionsKey, totalCount, sqlToyConfig.getDialect());
+	}
+
+	public static void registPageTotalCount(final SqlToyConfig sqlToyConfig, PageOptimize pageOptimize,
+			String conditionsKey, Long totalCount, String dialect) {
 		long nowTime = System.currentTimeMillis();
 		// 当前时间
 		long expireTime = nowTime + pageOptimize.getAliveSeconds() * 1000;
 		// 同一个分页查询sql保留的不同查询条件记录数量
 		int aliveMax = pageOptimize.getAliveMax();
-		// sql id或sql内容
-		String id = sqlToyConfig.getIdOrSql();
+		// sql id或sql内容 + 方言:同一sql在不同方言下分别缓存,避免count互相串用
+		String id = cacheKey(sqlToyConfig, dialect);
 		LinkedHashMap<String, Object[]> map = pageOptimizeCache.computeIfAbsent(id,
 				k -> new LinkedHashMap<String, Object[]>(aliveMax));
 		synchronized (map) {
@@ -183,12 +195,24 @@ public class PageOptimizeUtils {
 		}
 	}
 
+	private static String cacheKey(SqlToyConfig sqlToyConfig, String dialect) {
+		String id = sqlToyConfig.getIdOrSql();
+		if (StringUtil.isBlank(dialect)) {
+			return id;
+		}
+		return id.concat("@").concat(dialect.toLowerCase(Locale.ROOT));
+	}
+
 	/**
-	 * 清除掉sql对应的分页count缓存
+	 * 清除掉sql对应的分页count缓存(含该sql的所有方言缓存)
 	 * 
 	 * @param sqlId
 	 */
 	public static void remove(String sqlId) {
+		if (sqlId == null) {
+			return;
+		}
 		pageOptimizeCache.remove(sqlId);
+		pageOptimizeCache.keySet().removeIf(key -> key.startsWith(sqlId.concat("@")));
 	}
 }
