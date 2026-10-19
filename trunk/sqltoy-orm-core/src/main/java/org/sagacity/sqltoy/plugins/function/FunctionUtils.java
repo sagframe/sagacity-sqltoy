@@ -172,6 +172,56 @@ public class FunctionUtils {
 	}
 
 	/**
+	 * @description 判断函数是否处于投影/值上下文(select列表、then/else、order/group by、
+	 *              逗号或运算符之后),用于find_in_set等需要区分"返回位置"与"返回布尔"的适配器;
+	 *              条件上下文(where/having/when/on/and/or/not)返回false。基于字面量掩码串向前
+	 *              扫描最近的顶层token,列名/函数名等未知token继续向前找上下文关键字。
+	 * @param maskedSql 字面量掩码后的SQL(与原串等长)
+	 * @param endExclusive 函数名起始位置(不含)
+	 * @return true=投影/值上下文,false=条件上下文
+	 */
+	private static boolean isProjectionContext(String maskedSql, int endExclusive) {
+		int i = endExclusive - 1;
+		while (i >= 0) {
+			char c = maskedSql.charAt(i);
+			if (Character.isWhitespace(c) || c == '(' || c == ')') {
+				i--;
+				continue;
+			}
+			if (Character.isLetterOrDigit(c) || c == '_' || c == '$') {
+				int end = i + 1;
+				while (i >= 0) {
+					char w = maskedSql.charAt(i);
+					if (Character.isLetterOrDigit(w) || w == '_' || w == '$') {
+						i--;
+					} else {
+						break;
+					}
+				}
+				String word = maskedSql.substring(i + 1, end).toLowerCase(Locale.ROOT);
+				if ("select".equals(word) || "then".equals(word) || "else".equals(word)
+						|| "returning".equals(word) || "values".equals(word) || "by".equals(word)
+						|| "distinct".equals(word) || "as".equals(word)) {
+					return true;
+				}
+				if ("where".equals(word) || "having".equals(word) || "when".equals(word) || "on".equals(word)
+						|| "and".equals(word) || "or".equals(word) || "not".equals(word) || "case".equals(word)) {
+					return false;
+				}
+				// 列名/函数名/表名等未知token:继续向前找上下文关键字
+				continue;
+			}
+			if (c == ',' || c == '=' || c == '>' || c == '<' || c == '+' || c == '-' || c == '*' || c == '/'
+					|| c == '%' || c == '|') {
+				return true;
+			}
+			i--;
+		}
+		// 无法判定时按条件上下文(保持既有boolean产物)
+		return false;
+	}
+
+	/**
 	 * 单个sql函数转换处理
 	 *
 	 * @param sqlContent
@@ -255,7 +305,8 @@ public class FunctionUtils {
 					}
 				}
 			}
-			wrapResult = (suffix == null) ? function.wrap(dbType, functionName, hasArgs, args)
+			boolean projection = isProjectionContext(maskSql, matchedIndex);
+			wrapResult = (suffix == null) ? function.wrap(dbType, functionName, hasArgs, projection, args)
 					: function.wrapWithSuffix(dbType, functionName, suffix, args);
 			if (null == wrapResult) {
 				result.append(dialectSql.substring(0, endMarkIndex + 1));
@@ -376,13 +427,47 @@ public class FunctionUtils {
 	 * @param value 原始参数
 	 * @return true表示可安全做格式模型改写
 	 */
-	private static boolean isQuotedLiteral(String value) {
+	public static boolean isQuotedLiteral(String value) {
 		if (value == null) {
 			return false;
 		}
 		String tmp = value.trim();
 		return tmp.length() > 1 && tmp.startsWith("'") && tmp.endsWith("'")
 				&& tmp.indexOf('\'', 1) == tmp.length() - 1;
+	}
+
+	/**
+	 * @description 判断格式模型是否含时间部分(token:HH/HH24/MI/SS或%H/%i/%s)。
+	 *              供to_date在PG/HANA/CH/SQLite等"date-only解析函数"上决定改用
+	 *              to_timestamp/toDateTime/datetime,避免时间被静默截断
+	 * @param format SQL格式参数(可含引号)
+	 * @return true表示含时间token
+	 */
+	public static boolean hasTimeToken(String format) {
+		if (format == null || format.isEmpty()) {
+			return false;
+		}
+		return java.util.regex.Pattern.compile("(?i)(hh24|hh|mi|ss|%[his])").matcher(format).find();
+	}
+
+	/**
+	 * 日期模型标记(与ToChar的DATE_MODEL_PATTERN同口径):格式含任一标记即日期格式化,
+	 * 即使含0/9也按日期处理(如'yyyy-MM-dd 00:00:00')
+	 */
+	private static final java.util.regex.Pattern DATE_MODEL_PATTERN = java.util.regex.Pattern
+			.compile("(?i)(yyyy|yy|mm|dd|hh|ss|mon|month|day|year|am|pm)|:|%[ymdhis]");
+
+	/**
+	 * @description 判断to_char格式是否数值模型:含9/0且无任何日期模型标记才是数值;
+	 *              日期格式中的字面数字(00:00:00)不得误判为数值模型
+	 * @param format 格式参数
+	 * @return true表示数值格式模型
+	 */
+	public static boolean isNumericFormat(String format) {
+		if (format == null || (format.indexOf('9') < 0 && format.indexOf('0') < 0)) {
+			return false;
+		}
+		return !DATE_MODEL_PATTERN.matcher(format).find();
 	}
 
 	/**
@@ -418,6 +503,20 @@ public class FunctionUtils {
 	public static String wrapSqlServerDateFormatArg(String arg) {
 		if (isQuotedLiteral(arg)) {
 			return "CAST(" + arg.trim() + " AS datetime)";
+		}
+		return arg;
+	}
+
+	/**
+	 * @description H2的to_char/formatdatetime首参须为日期时间类型,字符串字面量直接传入报
+	 *              "Invalid value for parameter dateTime"(H2 2.4真库实测);字面量CAST定型,
+	 *              列/表达式保持原类型
+	 * @param arg 日期参数SQL片段
+	 * @return 可被H2日期格式化函数消费的参数
+	 */
+	public static String h2DateFormatArg(String arg) {
+		if (isQuotedLiteral(arg)) {
+			return "CAST(" + arg.trim() + " AS TIMESTAMP)";
 		}
 		return arg;
 	}
@@ -632,7 +731,11 @@ public class FunctionUtils {
 		// 参数占位符三形态:?(已替换)、:name(命名参数)、#[name](sqltoy中括号命名参数)
 		boolean placeholder = "?".equals(argTrim) || argTrim.matches(":[A-Za-z_][A-Za-z0-9_]*")
 				|| argTrim.matches("#\\[[^\\]]+\\]");
-		if (!placeholder) {
+		// update 2026-10-20 字符串日期字面量同样须定型:oracle的to_char('2026-..','hh24:mi:ss')
+		// 按数字隐式转换报ORA-01722,pg的to_char(unknown,unknown)报重载歧义(真库实测);
+		// 仅日期模型处理,数值格式模型(to_char(x,'999.99'))保持原类型
+		boolean dateLiteral = isQuotedLiteral(argTrim);
+		if (!placeholder && !dateLiteral) {
 			return firstArg;
 		}
 		// update 2026-9-14
@@ -642,10 +745,20 @@ public class FunctionUtils {
 				|| dialect == DBType.MOGDB || dialect == DBType.STARDB || dialect == DBType.OSCAR
 				|| dialect == DBType.OPENGAUSS || dialect == DBType.VASTBASE || dialect == DBType.KINGBASE
 				|| dialect == DBType.HIGHGO;
-		if (!pgSyntax) {
+		if (numericModelPossible && isNumericFormat(format)) {
 			return firstArg;
 		}
-		if (numericModelPossible && format != null && (format.indexOf('9') >= 0 || format.indexOf('0') >= 0)) {
+		if (dateLiteral) {
+			if (pgSyntax) {
+				return "(" + argTrim + "::timestamp)";
+			}
+			// oracle/to_char要求日期或数字,字面量按长度启发式包to_date(与ToDate单参同法)
+			if (dialect == DBType.ORACLE || dialect == DBType.ORACLE11) {
+				return oracleDateLiteralExpr(argTrim);
+			}
+			return firstArg;
+		}
+		if (!pgSyntax) {
 			return firstArg;
 		}
 		return "(" + argTrim + "::timestamp)";

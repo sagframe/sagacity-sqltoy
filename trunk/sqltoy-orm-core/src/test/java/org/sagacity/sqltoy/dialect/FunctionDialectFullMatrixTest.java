@@ -160,8 +160,8 @@ public class FunctionDialectFullMatrixTest {
 						"select instr(name,'a') from t" },
 				{ "strpos两参gauss透传", "select strpos(name,'a') from t", "gaussdb", EXACT,
 						"select strpos(name,'a') from t" },
-				{ "instr四参响亮保留", "select instr(name,'a',1,2) from t", "sqlserver", EXACT,
-						"select instr(name,'a',1,2) from t" },
+				{ "instr四参套用REGEXP_INSTR", "select instr(name,'a',1,2) from t", "sqlserver", EXACT,
+						"select REGEXP_INSTR(name,'a',1,2) from t" },
 				// ---------------- Concat ----------------
 				{ "concat两参oracle原生透传", "select concat(name,'-') from t", "oracle", EXACT,
 						"select concat(name,'-') from t" },

@@ -14,8 +14,8 @@ import org.junit.jupiter.api.Test;
  * MySQL语法系原生透传;其余库以"首尾补逗号+精确子串定位"的boolean形态表达完整元素相等。
  * 语义护栏:①产物必须boolean(pg系where不接受"非零整数即真",裸真值惯用法须直接可用);
  * ②禁用LIKE形态(元素含_/%%通配符会误命中,如NODE_11误命中NODE_1,节点清单恰以下划线
- * +数字命名);③函数后的">0/>=1/!=0/<>0"与"=0"比较符由suffix钩子连带消费,
- * 显式比较惯用法与裸真值惯用法双兼容;"=1"(首个元素)无法等价还原,不消费交目标库响亮报错。
+ * +数字命名);③函数后的">0/&gt;=1/!=0/&lt;&gt;0"与"=0"比较符由suffix钩子连带消费,
+ * 显式比较惯用法与裸真值惯用法双兼容;"=1/=2/&gt;1/&lt;3"等位置比较按整数元素序号还原。
  */
 public class FindInSetDialectTest {
 
@@ -116,10 +116,29 @@ public class FindInSetDialectTest {
 	}
 
 	@Test
-	public void equalsOneSuffixNotConsumedForLoudFailure() {
-		// "=1"(首个元素)无等价还原:比较符不消费,boolean改写+未消费的"=1"交目标库响亮报错
-		String sql = FunctionUtils.getDialectSql("select * from t where find_in_set('a',nodes)=1", "postgresql");
-		assertTrue(sql.contains("strpos(") && sql.endsWith("=1"), "'=1'不做口径反转,原样保留响亮报错:" + sql);
+	public void positionComparisonSuffixSupported() {
+		// update 2026-10-20 =1/=2等位置比较按整数位置表达式改写(原=1不消费/响亮失败)
+		String equalsOne = FunctionUtils.getDialectSql("select * from t where find_in_set('a',nodes)=1",
+				"postgresql");
+		assertTrue(equalsOne.contains("case when strpos('a', ',') > 0 then 0 else case when (strpos(")
+				&& equalsOne.endsWith(") = 1)"), "'=1'应改写为位置比较: " + equalsOne);
+		String equalsTwo = FunctionUtils.getDialectSql("select * from t where find_in_set('a',nodes) = 2",
+				"postgresql");
+		assertTrue(equalsTwo.endsWith(") = 2)"), "'=2'应改写为位置比较: " + equalsTwo);
+	}
+
+	@Test
+	public void projectionReturnsIntegerPosition() {
+		// 投影上下文必须返回整数元素序号,不能是boolean(SQLServer/HANA/DM的SELECT列表不接受boolean)
+		String pg = FunctionUtils.getDialectSql("select find_in_set('a',nodes) from t", "postgresql");
+		assertTrue(pg.startsWith("select (case when strpos('a', ',') > 0 then 0 else case when ("),
+				"投影应返回带逗号守卫的整数序号: " + pg);
+		String sqlserver = FunctionUtils.getDialectSql("select find_in_set('a',nodes) from t", "sqlserver");
+		assertTrue(sqlserver.contains("case when charindex(',', 'a') > 0 then 0 else case when ("),
+				"SQLServer投影不得生成boolean比较: " + sqlserver);
+		// MySQL原生即返回位置,保持透传
+		assertEquals("select find_in_set('a',nodes) from t",
+				FunctionUtils.getDialectSql("select find_in_set('a',nodes) from t", "mysql"));
 	}
 
 	@Test
@@ -147,5 +166,18 @@ public class FindInSetDialectTest {
 		// 字面量内的函数文本不受转换破坏
 		String sql = "select 'find_in_set(a,b)' from t";
 		assertEquals(sql, FunctionUtils.getDialectSql(sql, "postgresql"), "字面量内的find_in_set文本不应被改写");
+	}
+
+	@Test
+	public void literalWithCommaIsNotAnElement() {
+		// update 2026-10-20 mysql实测find_in_set('a,b','a,b')=0(首参含逗号不是完整元素),
+		// 改写形态不得把',a,b,'整段误判为命中
+		assertEquals("select * from t where (0>0)",
+				FunctionUtils.getDialectSql("select * from t where find_in_set('a,b','a,b')", "postgresql"));
+		assertEquals("select * from t where (0=0)",
+				FunctionUtils.getDialectSql("select * from t where find_in_set('a,b','a,b') = 0", "postgresql"));
+		// MySQL原生语义正确,原样透传
+		assertEquals("select * from t where find_in_set('a,b','a,b')",
+				FunctionUtils.getDialectSql("select * from t where find_in_set('a,b','a,b')", "mysql"));
 	}
 }

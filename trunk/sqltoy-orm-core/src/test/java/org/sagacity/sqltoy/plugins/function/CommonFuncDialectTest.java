@@ -247,7 +247,8 @@ public class CommonFuncDialectTest {
 		// 其余库:%token反转为oracle风格后按to_date两参路径
 		assertEquals("select to_date('2026-01-15','yyyy-MM-dd') from t",
 				c("select str_to_date('2026-01-15','%Y-%m-%d') from t", "oracle"));
-		assertEquals("select to_date('2026-01-15 10:30:00','yyyy-MM-dd hh24:mi:ss') from t",
+		// update 2026-10-20 pg的to_date只返回date,含时间token时改to_timestamp(真库实测保留时分秒)
+		assertEquals("select to_timestamp('2026-01-15 10:30:00','yyyy-MM-dd hh24:mi:ss') from t",
 				c("select str_to_date('2026-01-15 10:30:00','%Y-%m-%d %H:%i:%s') from t", "postgresql"));
 		assertEquals("select parsedatetime('2026-01-15','yyyy-MM-dd') from t",
 				c("select str_to_date('2026-01-15','%Y-%m-%d') from t", "h2"));

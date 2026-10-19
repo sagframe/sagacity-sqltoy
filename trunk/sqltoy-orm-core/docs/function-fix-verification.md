@@ -266,3 +266,68 @@ ClickHouse 的两种大小写已在 `FunctionFixRealDbVerificationTest` 真库�
 - Kingbase、Vastbase、HighGo、TiDB、StarRocks、Doris 容器本轮未启动；这些方言的
   回归由 SQL 文本矩阵覆盖（89 用例全绿）。
 - OceanBase oracle 模式租户未部署，F15 仅做产物形态断言。
+
+## 七、2026-10-20 function / lambda 补充审计
+
+### 1. 本轮新修复
+
+| 编号 | 缺陷（真库/单测复现） | 修复 |
+|---|---|---|
+| F16 | `date_format`/`to_char` 首参为字符串日期字面量时：Oracle 报 ORA-01722（按数字隐式转换）、PG 报 `to_char(unknown,unknown) is not unique`、H2 报 `Invalid value for parameter dateTime` | 字面量显式定型：Oracle 包 `to_date`、PG 加 `::timestamp`、H2 `CAST(... AS TIMESTAMP)`；数值格式模型（`999.99`）不受影响 |
+| F17 | `left/right(str,0)` 与负数长度：Oracle 的 `substr(x,-0)` 返回整串、`substr(x,1,0)` 返回 NULL，SQLite `substr(x,-0)` 返回整串；MySQL 返回空串 | 长度字面量 `<=0` 统一转 `substr(x,1,0)`（SQLite 得空串、Oracle 得空值，至少不返回整串） |
+| F18 | `mid(...)` 到 SQLite 报 `no such function: mid` | SQLite 上非 `substr` 拼写统一换名为 `substr` |
+| F19 | `to_date(str,'...hh24:mi:ss')` 在 PG/HANA/CH/SQLite 只返回日期，时分秒被静默截断 | 格式含时间 token 时改用 `to_timestamp`（PG/HANA）、`toDateTime`（CH；字符串字面量按 `SqlToyConstants.getZoneId()` 解析）、`datetime`（SQLite） |
+| F20 | `substr(str,0,n)` 各库 0 语义不同：MySQL 空串、Oracle 当 1、PG/SQLServer 少取 1 个、DB2 报 SQL0138 | 按“0=从开头截取”统一：字面量 0 归一为目标库首位（当前接管的方言首位均为 1），全库 `substr(x,0,n)` 等价 `substr(x,1,n)` |
+| F21 | `find_in_set('a,b','a,b')`：MySQL 返回 0（首参含逗号不是完整元素），改写形态却命中 | 字面量首参含逗号时直接按未命中返回 `(0>0)`/`(0=0)`；列/占位符运行时含逗号仍属 MySQL 文档标注的不可用用法 |
+| F22 | `find_in_set` 在投影/位置比较场景：改写只返回 boolean，SQLServer/HANA/DM 的 SELECT 列表报语法错，`=2` 等位置比较不被 suffix 消费 | 增加投影上下文识别：投影返回整数元素序号（补逗号定位→逗号计数还原），`=1/=2/>1/<3` 等按序号比较；条件裸用法仍返回 boolean |
+| F23 | `instr(str,sub,pos,occurrence)` 四参在 SQLServer/MySQL/OB/PG/openGauss 等报参数个数错误 | 两档适配：① Oracle/DM/DB2/H2/HANA 原生四参透传；② SQLServer 2025/MySQL 8+/OceanBase/PG 15+/openGauss/GaussDB 套用 `REGEXP_INSTR`；其余（MySQL57/TiDB/Doris/StarRocks/PG14/SQLite/ClickHouse/Kingbase 等）原样输出交目标库报错 |
+| L1 | `groupBy(空集合)` 生成 `GROUP BY ` 非法片段 | 空集合直接跳过 |
+| L2 | `having("")` 生成 `HAVING ` 非法片段 | `condition=true` 且 SQL 空白时快速失败 |
+
+回归断言：`FunctionDefectRegressionTest#dateLiteralTyping/leftRightNonPositive/midOnSqlite/toDatePreservesTime/substrZeroStart/instrFourArg`、
+`FunctionFixRealDbVerificationTest#substrZeroStartUnified`（全库 `substr(...,0,2)` 均得 `ab`）及
+`#findInSetProjectionOrdinal`（全库元素序号 1/2/0 与 `=2` 命中）、`#instrFourArg`（全库四参返回 4）、`#db2Matrix`、
+`FindInSetDialectTest#literalWithCommaIsNotAnElement/positionComparisonSuffixSupported/projectionReturnsIntegerPosition`、
+`LambdaDefectRegressionTest#p3EmptyGroupBy/p3BlankHaving/p2LikeUnderscoreEscapedByFramework`。
+
+`find_in_set` 的投影/条件判定按函数左侧最近的顶层关键字：`select/then/else/order|group by`、
+逗号或运算符 → 投影（返回整数元素序号）；`where/having/when/on/and/or/not` → 条件（返回
+boolean）；无法判定时按条件处理，保持既有 boolean 产物。投影序号由“补逗号子串的字符位置”
+经逗号计数还原（`a,b` 中 `b` 的字符位置 3 → 元素序号 2），并支持 `=1/=2/>1/<3` 等位置比较。
+
+`instr` 四参第二档的 `REGEXP_INSTR` 第二参按目标库正则解释：字面量含 `. * + ? ( ) [ ] { } ^ $ | \`
+时需自行转义（SQLServer/MySQL 也可用 `\Q...\E`，PG/openGauss 用 `\.` 等）；负起点不在第二档支持范围。
+
+ClickHouse `to_date` 含时间时，字符串字面量生成 `toDateTime(literal, '<zoneId>')`，时区取
+`SqlToyConstants.getZoneId()`，不再依赖服务端 UTC 与 JDBC `use_time_zone` 是否一致；列/占位符
+仍生成 `toDateTime(x)`，避免对已有 DateTime 值做二次转换。
+
+### 2. 复测结果
+
+- function 文本矩阵：**97 tests, 0 failures**
+- function 真库专项：**15 tests, 0 failures**（Oracle/PG/HANA 的字面量日期格式化与含时间 `to_date` 已加入真库断言）
+- 既有 9 库真库冒烟：**38 tests, 0 failures**
+- lambda 全部套件：**172 tests, 0 failures**
+
+关于 lambda `like` 的下划线：lambda 层只负责补 `%` 通配符（绑定值为 `%a_b%`），执行期
+`SqlConfigParseUtils.processLike` 会把 `_` 转义为 `\_` 并按方言追加 `ESCAPE`；H2 真执行
+验证 `like(name,'a_b')` 只命中 `a_b`、不命中 `axb`（见 `LambdaDefectRegressionTest#p2LikeUnderscoreEscapedByFramework`）。
+
+### 3. 仍存在的边界（本轮未改，按使用场景选择）
+
+| 项 | 现象 | 说明 |
+|---|---|---|
+| `find_in_set` 首参含逗号（非字面量） | 字面量形态已由 F21 按 0 处理；列/占位符运行时含逗号仍按“补逗号+子串定位”，可能误命中 | MySQL 文档明确该用法不可用；业务侧应保证首参不含逗号 |
+| `instr` 四参在不支持的库 | MySQL57/TiDB/Doris/StarRocks/PG14/SQLite/ClickHouse/Kingbase 等既无原生四参、也无 `REGEXP_INSTR` | 原样输出交目标库报错；需要时用嵌套 `CHARINDEX`/`LOCATE`/`strpos` 或 CTE/UDF |
+| `length('abc ')` | SQLServer `LEN` 忽略尾随空格（3），MySQL/Oracle/PG 为 4 | 需要严格字符数请改用 `datalength` 或业务侧处理 |
+| OceanBase `oceanbase` 方言 | CE mysql 模式下 `to_date`/`datediff` 等 oracle 系产物报函数不存在 | 沿用既有约定：mysql 模式租户显式配 `dialect=mysql`（verify 工程即此配置） |
+
+补充注意：
+
+- `find_in_set` 的投影/条件判定基于函数左侧最近的顶层关键字，属于启发式；像
+  `where coalesce(find_in_set(...),0)` 这类嵌套在值表达式里的场景无法完全判定，默认按条件
+  （boolean）处理。确定是投影时建议外层显式写 `select (find_in_set(...) + 0)` 或独立子查询。
+- `find_in_set` 的投影序号表达式包含 `substr/replace/length/coalesce`，列表很长时比原生
+  `find_in_set` 重；WHERE 布尔用法仍走轻量定位。
+- lambda `setExpr` 表达式内不允许出现 `=`（框架负责赋值等号）；`in(空集合)` 按文档不参与组装，
+  查询会退化为无该条件，更新/删除则仍受无条件守卫保护。

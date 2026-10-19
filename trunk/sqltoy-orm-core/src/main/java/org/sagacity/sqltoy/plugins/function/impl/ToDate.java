@@ -2,6 +2,7 @@ package org.sagacity.sqltoy.plugins.function.impl;
 
 import java.util.regex.Pattern;
 
+import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
 import org.sagacity.sqltoy.plugins.function.IFunction;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
@@ -141,9 +142,21 @@ public class ToDate extends IFunction {
 			// pg系2参to_date(text,text)原生支持,原样保留;1参转CAST AS date
 			// (str_to_date源换名to_date,pg无str_to_date)
 			if (args.length > 1) {
+				// update 2026-10-20 pg的to_date只返回date,时间部分被静默截断;
+				// 格式含时间token时改to_timestamp(真库实测14:30:45可保留)
+				if (FunctionUtils.hasTimeToken(args[1])) {
+					return wrapArgs("to_timestamp", args);
+				}
 				return mysqlSrc ? wrapArgs("to_date", args) : super.IGNORE;
 			}
 			return "CAST(" + args[0] + " AS date)";
+		}
+		// update 2026-10-20 补HANA:to_date只返回date,格式含时间token时改to_timestamp
+		if (dialect == DBType.HANA) {
+			if (args.length > 1 && FunctionUtils.hasTimeToken(args[1])) {
+				return wrapArgs("to_timestamp", args);
+			}
+			return super.IGNORE;
 		}
 		if (dialect == DBType.MYSQL || dialect == DBType.TIDB || dialect == DBType.MYSQL57 || dialect == DBType.DORIS
 				|| dialect == DBType.STARROCKS) {
@@ -169,6 +182,16 @@ public class ToDate extends IFunction {
 			// update 2026-9-11 clickhouse无to_date(原样透传报Unknown function):toDate承担解析
 			// 语义(ISO文本/日期时间类型自动转换);两参形态的格式模型被忽略(CH按ISO及常见格式
 			// 自动解析,其他格式请直用parseDateTimeBestEffort),与sqlite分支同为文本日期体系
+			// update 2026-10-20 格式含时间token时改toDateTime,避免时间被toDate截断;
+			// 字符串字面量按框架时区(SqlToyConstants.getZoneId())解析,避免CH服务端UTC与
+			// JDBC use_time_zone不一致导致读回偏移(列/表达式保持原类型,不做二次转换)
+			if (args.length > 1 && FunctionUtils.hasTimeToken(args[1])) {
+				if (FunctionUtils.isQuotedLiteral(args[0])) {
+					String zoneId = SqlToyConstants.getZoneId().getId().replace("'", "''");
+					return "toDateTime(" + args[0] + ", '" + zoneId + "')";
+				}
+				return "toDateTime(" + args[0] + ")";
+			}
 			return "toDate(" + args[0] + ")";
 		}
 		if (dialect == DBType.SQLITE) {
@@ -178,7 +201,9 @@ public class ToDate extends IFunction {
 			String arg0 = args[0].trim();
 			boolean placeholder = "?".equals(arg0) || arg0.matches(":[A-Za-z_][A-Za-z0-9_]*")
 					|| arg0.matches("#\\[[^\\]]+\\]");
-			return "date(" + (placeholder ? arg0 : FunctionUtils.sqliteDateTextExpr(args[0])) + ")";
+			// update 2026-10-20 格式含时间token时用datetime保留时分秒
+			String dateFn = (args.length > 1 && FunctionUtils.hasTimeToken(args[1])) ? "datetime" : "date";
+			return dateFn + "(" + (placeholder ? arg0 : FunctionUtils.sqliteDateTextExpr(args[0])) + ")";
 		}
 		// 表示不做修改
 		return super.IGNORE;

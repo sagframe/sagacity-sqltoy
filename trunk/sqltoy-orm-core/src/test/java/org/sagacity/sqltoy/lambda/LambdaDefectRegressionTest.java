@@ -14,6 +14,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -443,6 +444,23 @@ public class LambdaDefectRegressionTest {
 				"值已包含通配符%时按约定应原样使用、不再二次包装,实际绑定值=" + query.getParams().get("p1"));
 	}
 
+	@Test
+	@DisplayName("P2-5 like下划线由框架在SQL解析期自动ESCAPE")
+	public void p2LikeUnderscoreEscapedByFramework() throws Exception {
+		try (Connection conn = DriverManager.getConnection(URL, "sa", ""); Statement st = conn.createStatement()) {
+			st.execute("delete from reg_guard_user");
+			st.execute("insert into reg_guard_user values (1,'a_b',1)");
+			st.execute("insert into reg_guard_user values (2,'axb',1)");
+		}
+		try {
+			List<RegUser> rows = defectDao.lambdaQuery(RegUser.class).like(RegUser::getName, "a_b").find();
+			assertEquals(1, rows.size(), "like值中的_应被框架转义为字面量,不能把axb也匹配出来");
+			assertEquals("a_b", rows.get(0).getName());
+		} finally {
+			resetGuardRows();
+		}
+	}
+
 	// ==================== P3 一致性与输入校验 ====================
 
 	@Test
@@ -584,5 +602,25 @@ public class LambdaDefectRegressionTest {
 				.countSql("select count(1) from reg_guard_user");
 		assertThrows(DataAccessException.class, () -> query.findPage(new Page(2, 1)),
 				"单表通道无法承载countSql,应快速失败而不是静默忽略");
+	}
+
+	@Test
+	@DisplayName("P3-9 groupBy空集合不得生成GROUP BY空片段")
+	public void p3EmptyGroupBy() {
+		LambdaQuery<DefUser> query = LambdaQuery.create(DefUser.class)
+				.groupBy(Collections.<LambdaFn<DefUser, ?>>emptyList());
+		query.assemble(META);
+		assertTrue(query.getSqlSegment() == null || query.getSqlSegment().trim().isEmpty(),
+				"空集合groupBy不得生成非法GROUP BY片段: " + query.getSqlSegment());
+	}
+
+	@Test
+	@DisplayName("P3-10 having空SQL必须快速失败")
+	public void p3BlankHaving() {
+		assertThrows(DataAccessException.class,
+				() -> LambdaQuery.create(DefUser.class).having(true, "  ", null),
+				"空having不得生成HAVING空片段");
+		// condition=false时不参与组装,允许空sql
+		assertDoesNotThrow(() -> LambdaQuery.create(DefUser.class).having(false, "  ", null));
 	}
 }

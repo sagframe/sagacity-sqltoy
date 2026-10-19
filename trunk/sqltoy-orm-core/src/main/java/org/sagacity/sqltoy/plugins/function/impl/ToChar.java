@@ -131,7 +131,7 @@ public class ToChar extends IFunction {
 			// 按框架约定裸HH=24小时,须归一为HH24,小写hh保留12小时(保留原token大小写)
 			format = format.replace("HH24", "@H24U@").replace("hh24", "@H24L@");
 			format = format.replace("HH", "HH24").replace("@H24U@", "HH24").replace("@H24L@", "hh24");
-			return "to_char(" + args[0] + "," + format + ")";
+			return "to_char(" + FunctionUtils.h2DateFormatArg(args[0]) + "," + format + ")";
 		}
 		case DBType.CLICKHOUSE: {
 			// update 2026-9-11 数值格式模型分流(同mysql分支:toDateTime包裹数值会按epoch秒误析)

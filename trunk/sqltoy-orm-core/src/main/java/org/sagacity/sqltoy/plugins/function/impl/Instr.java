@@ -58,6 +58,22 @@ public class Instr extends IFunction {
 		} else {
 			realArgs = args;
 		}
+		// update 2026-10-20 四参instr(str,sub,pos,occurrence):
+		// ①原生四参库(oracle/dm/db2/h2/hana)透传,由下方既有分支处理;
+		// ②有REGEXP_INSTR的库直接套用(sqlserver2025/mysql8+/oceanbase/pg15+/opengauss/gaussdb),
+		//   注意第二参按目标库正则表达式解释;
+		// ③其余无简单四参等价物的库(mysql57/tidb/doris/starrocks/pg14/sqlite/clickhouse/kingbase等)
+		//   原样输出,交目标库响亮报错,不静默错值
+		if ("instr".equals(funLow) && realArgs.length == 4) {
+			if (dialect == DBType.SQLSERVER || dialect == DBType.MYSQL || dialect == DBType.OCEANBASE) {
+				return "REGEXP_INSTR(" + realArgs[0] + "," + realArgs[1] + "," + realArgs[2] + "," + realArgs[3]
+						+ ")";
+			}
+			if (dialect == DBType.POSTGRESQL || dialect == DBType.OPENGAUSS || dialect == DBType.GAUSSDB) {
+				return "regexp_instr(" + realArgs[0] + "," + realArgs[1] + "," + realArgs[2] + "," + realArgs[3]
+						+ ")";
+			}
+		}
 		// update 2026-10-4 补strpos源函数:strpos(str,sub)为pg系原生写法,参数序与instr一致
 		// (haystack在前),pg系/clickhouse原生支持直接透传;其余库无strpos(instr可原生透传而
 		// strpos不能,须显式转换),2参形态按instr同序映射:charindex与db2的locate须对调参数,

@@ -111,7 +111,7 @@ public class DateFormat extends IFunction {
 			// 时间处理
 			format = format.replace("%T", "HH:mm:ss");
 			format = format.replace("%H", "HH").replace("%h", "hh").replace("%i", "mm").replace("%s", "ss");
-			return "formatdatetime(" + args[0] + "," + format + ")";
+			return "formatdatetime(" + FunctionUtils.h2DateFormatArg(args[0]) + "," + format + ")";
 		}
 		case DBType.SQLSERVER: {
 			// update 2026-9-6 补sqlserver分支(此前落default原样输出date_format报"不是可识别的内置函数名"):

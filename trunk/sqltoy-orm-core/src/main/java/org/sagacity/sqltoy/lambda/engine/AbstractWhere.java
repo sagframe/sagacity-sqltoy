@@ -380,6 +380,10 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 
 	@Override
 	public <E> Self groupBy(boolean condition, Collection<LambdaFn<E, ?>> columns) {
+		// update 2026-10-20 空集合原会生成"GROUP BY "非法片段;无列可分组时直接跳过
+		if (columns == null || columns.isEmpty()) {
+			return typedThis;
+		}
 		return addAssembler(resolver -> maybeDo(condition, () -> {
 			String columnNames = columns.stream().map(column -> resolveColumn(resolver, column))
 					.collect(Collectors.joining(","));
@@ -412,6 +416,10 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 
 	@Override
 	public Self having(boolean condition, String sqlHaving, Map<String, Object> paramMap) {
+		// update 2026-10-20 空having原会生成"HAVING "非法片段;条件为真且sql为空时快速失败
+		if (condition && StringUtil.isBlank(sqlHaving)) {
+			throw new DataAccessException("Lambda having sql must not be blank");
+		}
 		checkExternalParamNames(paramMap);
 		return addAssembler(resolver -> maybeDo(condition,
 				() -> appendSqlSegments(SqlKeyword.HAVING, rawSegment(sqlHaving, paramMap))));

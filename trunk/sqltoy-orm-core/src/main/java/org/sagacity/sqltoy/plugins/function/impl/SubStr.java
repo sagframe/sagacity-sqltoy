@@ -41,6 +41,17 @@ public class SubStr extends IFunction {
 		if (args == null || args.length < 2) {
 			return super.IGNORE;
 		}
+		// update 2026-10-20 起点0按"从开头截取"统一:当前接管的SQL方言substr首位均为1
+		// (mysql的0是空串特例/oracle的0当1/pg与sqlserver的0少取1个/db2的0非法),
+		// 字面量0(含+0/-0/00)统一归一为1;未来若接入真正的0-based方言,在首位映射处调整
+		boolean zeroStart = false;
+		if (args.length > 1) {
+			String zeroStartArg = args[1].trim();
+			if (zeroStartArg.matches("[+-]?0+(\\.0+)?")) {
+				args[1] = "1";
+				zeroStart = true;
+			}
+		}
 		// (真库实测语法错),归下方substr族(原生SUBSTR)
 		// update 2026-9-14 补KINGBASE(KingbaseES基于PG,函数语法归PG系)
 		if (dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL14 || dialect == DBType.GAUSSDB
@@ -76,6 +87,7 @@ public class SubStr extends IFunction {
 		if (dialect == DBType.DB2) {
 			// update 2026-10-4 两参负起点字面量转RIGHT(db2 substr起点须>=1,负起点报SQL0138);
 			// 三参负起点走下方守卫仍为响亮报错,不静默错值
+			// 起点0已由入口统一归一为1(见wrap开头),DB2不会再收到0
 			String start = args[1].trim();
 			if (args.length == 2 && start.startsWith("-") && start.substring(1).matches("\\d+")) {
 				// update 2026-10-9 同pg系:|n|超串长时mysql返回空串,RIGHT短串返回整串须守卫
@@ -117,10 +129,22 @@ public class SubStr extends IFunction {
 			}
 			// update 2026-10-11 hana原生形态为substr/substring,无mid():非substr拼写换名为substr
 			// (mid/substring写法透传会报函数不存在)
-			if (!"substr".equals(functionName.toLowerCase(java.util.Locale.ROOT))) {
+			if (zeroStart || !"substr".equals(functionName.toLowerCase(java.util.Locale.ROOT))) {
 				return wrapArgs("substr", args);
 			}
 			return super.IGNORE;
+		}
+		// update 2026-10-20 sqlite原生substr无mid别名(真库实测no such function: mid),
+		// 非substr拼写统一换名为substr(负起点/substring三参语义与mysql一致)
+		if (dialect == DBType.SQLITE) {
+			if (zeroStart || !"substr".equals(functionName.toLowerCase(java.util.Locale.ROOT))) {
+				return wrapArgs("substr", args);
+			}
+			return super.IGNORE;
+		}
+		// 其余原生支持substr的方言(ch等):起点0归一后必须回写SQL(直接IGNORE会丢弃args修改)
+		if (zeroStart) {
+			return wrapArgs(functionName, args);
 		}
 		return super.IGNORE;
 	}

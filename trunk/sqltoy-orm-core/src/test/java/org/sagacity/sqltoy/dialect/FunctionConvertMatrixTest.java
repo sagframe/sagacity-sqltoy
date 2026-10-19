@@ -161,9 +161,10 @@ public class FunctionConvertMatrixTest {
 		// position形态
 		String position = convert("select position('a' in remark) from t", "oracle");
 		assertTrue(position.contains("instr(remark,'a')"), "position应转instr: " + position);
-		// 4参(occurrence)charindex无法表达:原样保留交由目标库报错,不静默丢弃改变语义
+		// 4参(occurrence)SQLServer 2025以REGEXP_INSTR套用(第二参按正则解释)
 		String fourArg = convert("select instr(remark,'a',1,2) from t", "sqlserver");
-		assertEquals("select instr(remark,'a',1,2) from t", fourArg, "带occurrence的instr应原样保留");
+		assertEquals("select REGEXP_INSTR(remark,'a',1,2) from t", fourArg,
+				"带occurrence的instr应套用REGEXP_INSTR");
 		// 3参(带起始位置)正常转换
 		String threeArg = convert("select instr(remark,'a',2) from t", "sqlserver");
 		assertTrue(threeArg.contains("charindex('a',remark,2)"), "带起始位置的instr应正常转换: " + threeArg);

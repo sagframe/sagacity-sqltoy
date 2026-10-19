@@ -92,6 +92,75 @@ public class FunctionFixRealDbVerificationTest {
 		return FunctionUtils.getDialectSql(sql, dialect);
 	}
 
+	private static String dualFor(String key) {
+		if ("oracle".equals(key)) {
+			return " from dual";
+		}
+		if ("db2".equals(key)) {
+			return " from sysibm.sysdummy1";
+		}
+		if ("hana".equals(key)) {
+			return " from dummy";
+		}
+		return "";
+	}
+
+	@Test
+	@DisplayName("find_in_set投影返回元素序号,首参含逗号为0")
+	public void findInSetProjectionOrdinal() throws Exception {
+		for (Map.Entry<String, Db> entry : DBS.entrySet()) {
+			if (entry.getValue().conn == null) {
+				continue;
+			}
+			String key = entry.getKey();
+			// 元素b在a,b中是第2个元素(字符位置是3,必须还原成序号2)
+			assertEquals(2, intOf(one(key, c("select find_in_set('b','a,b')" + dualFor(key), key))),
+					key + " find_in_set('b','a,b') 投影应为2");
+			assertEquals(1, intOf(one(key, c("select find_in_set('a','a,b')" + dualFor(key), key))),
+					key + " find_in_set('a','a,b') 投影应为1");
+			assertEquals(0, intOf(one(key, c("select find_in_set('c','a,b')" + dualFor(key), key))),
+					key + " find_in_set('c','a,b') 投影应为0");
+			// 位置比较=2:按元素序号比较,而不是补逗号后的字符位置
+			assertEquals(1, intOf(one(key, c(
+					"select case when find_in_set('b','a,b') = 2 then 1 else 0 end" + dualFor(key), key))),
+					key + " find_in_set(...)=2 应按元素序号命中");
+			// 首参含逗号不是完整元素
+			assertEquals(0, intOf(one(key, c("select find_in_set('a,b','a,b')" + dualFor(key), key))),
+					key + " find_in_set('a,b','a,b') 投影应为0");
+		}
+	}
+
+	@Test
+	@DisplayName("instr四参真库执行:原生透传/REGEXP_INSTR套用")
+	public void instrFourArg() throws Exception {
+		for (Map.Entry<String, Db> entry : DBS.entrySet()) {
+			if (entry.getValue().conn == null) {
+				continue;
+			}
+			String key = entry.getKey();
+			// sqlite/clickhouse 无简单四参等价物,保持原样(本题不执行)
+			if ("sqlite".equals(key) || "clickhouse".equals(key)) {
+				continue;
+			}
+			assertEquals(4, intOf(one(key, c("select instr('abcabc','abc',1,2)" + dualFor(key), key))),
+					key + " instr('abcabc','abc',1,2) 应返回第2次出现的绝对位置4");
+		}
+	}
+
+	@Test
+	@DisplayName("substr起点0按从开头截取统一:全库均返回ab")
+	public void substrZeroStartUnified() throws Exception {
+		String base = "select substr('abcdef',0,2)";
+		for (Map.Entry<String, Db> entry : DBS.entrySet()) {
+			if (entry.getValue().conn == null) {
+				continue;
+			}
+			String source = base + dualFor(entry.getKey());
+			assertEquals("ab", str(one(entry.getKey(), c(source, entry.getKey()))),
+					entry.getKey() + " substr(...,0,2) 应从开头取2个字符");
+		}
+	}
+
 	private static Object one(String key, String sql) throws Exception {
 		Db db = DBS.get(key);
 		System.out.println("[" + key + "] " + sql);
@@ -196,6 +265,9 @@ public class FunctionFixRealDbVerificationTest {
 		assertTrue(typeName.contains("TIMESTAMP") && !typeName.contains("DATE"),
 				"current_timestamp应返回TIMESTAMP[WITH TIME ZONE],实际=" + typeName);
 		assertEquals("2026-03-20", str(one("oracle", c("select to_char(date '2026-03-20','yyyy-mm-dd') from dual", "oracle"))));
+		// update 2026-10-20 字符串字面量日期格式化:to_char(to_date(...))定型后真执行
+		assertEquals("14:30:45", str(one("oracle",
+				c("select date_format('2026-03-20 14:30:45','HH24:MI:SS') from dual", "oracle"))));
 		assertEquals("x", str(one("oracle", c("select trim(from '  x  ') from dual", "oracle"))));
 		assertEquals("2026-03-16",
 				dateText(one("oracle", c("select trunc(date '2026-03-20','IW') from dual", "oracle"))));
@@ -210,6 +282,12 @@ public class FunctionFixRealDbVerificationTest {
 				"postgresql"))));
 		assertEquals(2, intOf(one("postgresql", c("select posstr('admin','dmi')", "postgresql"))));
 		assertEquals(0, intOf(one("postgresql", c("select position('a' in 'x in y')", "postgresql"))));
+		// 字符串字面量日期格式化与含时间to_date
+		assertEquals("14:30:45", str(one("postgresql",
+				c("select date_format('2026-03-20 14:30:45','HH24:MI:SS')", "postgresql"))));
+		assertTrue(str(one("postgresql",
+				c("select to_date('2026-03-20 14:30:45','yyyy-MM-dd hh24:mi:ss')", "postgresql")))
+				.startsWith("2026-03-20 14:30:45"), "PG to_date含时间token应保留时分秒");
 	}
 
 	@Test
@@ -229,6 +307,11 @@ public class FunctionFixRealDbVerificationTest {
 				c("select to_char(timestamp('2026-03-20 14:30:45'),'HH:MI') from sysibm.sysdummy1", "db2"))));
 		assertEquals("02:30", str(one("db2",
 				c("select to_char(timestamp('2026-03-20 14:30:45'),'hh:MI') from sysibm.sysdummy1", "db2"))));
+		// 起点0按1-based归一,DB2不得再报SQL0138
+		assertEquals("ab", str(one("db2",
+				c("select substr('abcdef',0,2) from sysibm.sysdummy1", "db2"))));
+		assertEquals("abcdef", str(one("db2",
+				c("select substr('abcdef',0) from sysibm.sysdummy1", "db2"))));
 	}
 
 	@Test
@@ -243,6 +326,10 @@ public class FunctionFixRealDbVerificationTest {
 				c("select to_char(toDateTime('2026-03-20 14:30:45'),'HH:MI')", "clickhouse"))));
 		assertEquals("02:30", str(one("clickhouse",
 				c("select to_char(toDateTime('2026-03-20 14:30:45'),'hh:MI')", "clickhouse"))));
+		// to_date含时间:字符串字面量按SqlToyConstants.getZoneId()解析,避免JDBC会话时区读回+8
+		assertTrue(str(one("clickhouse",
+				c("select to_date('2026-03-20 14:30:45','yyyy-MM-dd hh24:mi:ss')", "clickhouse")))
+				.startsWith("2026-03-20 14:30:45"), "CH to_date含时间应按框架时区解析,不得读回偏移");
 	}
 
 	@Test
@@ -253,6 +340,10 @@ public class FunctionFixRealDbVerificationTest {
 				c("select to_char(to_date('2026-03-20'),'yyyy-mm-dd') from dummy", "hana"))));
 		assertEquals("2026-03-20", dateText(one("hana",
 				c("select to_date('2026-03-20','yyyy-mm-dd') from dummy", "hana"))));
+		// 含时间token须用to_timestamp保留时分秒
+		assertTrue(str(one("hana",
+				c("select to_date('2026-03-20 14:30:45','yyyy-MM-dd hh24:mi:ss') from dummy", "hana")))
+				.startsWith("2026-03-20 14:30:45"), "HANA to_date含时间token应保留时分秒");
 	}
 
 	@Test

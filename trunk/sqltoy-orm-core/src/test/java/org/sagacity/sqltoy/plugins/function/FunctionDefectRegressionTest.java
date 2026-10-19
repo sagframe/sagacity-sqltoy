@@ -12,6 +12,7 @@ import java.util.Arrays;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.sagacity.sqltoy.SqlToyConstants;
 
 /**
  * @description 函数转换缺陷回归:格式模型(Oracle mm/HH、Java HH:mm)、posstr参数序、
@@ -87,6 +88,85 @@ public class FunctionDefectRegressionTest {
 		// update 2026-10-19 sqlserver 2025真库实测:FORMAT不接受varchar首参,字面量须CAST定型
 		assertEquals("select FORMAT(CAST('2026-03-20 14:30:45' AS datetime),'yyyy-MM-dd HH:mm:ss') from t",
 				n(c("select date_format('2026-03-20 14:30:45','yyyy-MM-dd HH:mm:ss') from t", "sqlserver")));
+	}
+
+	@Test
+	@DisplayName("字符串日期字面量在Oracle/PG/H2的日期格式化须显式定型")
+	public void dateLiteralTyping() {
+		// Oracle:to_char('...','hh24..')按数字隐式转换报ORA-01722,包to_date
+		assertEquals(
+				"select to_char(to_date('2026-03-20 14:30:45','yyyy-MM-dd hh24:mi:ss'),'hh24:mi:ss') from t",
+				n(c("select date_format('2026-03-20 14:30:45','HH24:MI:SS') from t", "oracle")));
+		// PG:to_char(unknown,unknown)重载歧义,字面量::timestamp
+		assertEquals("select to_char(('2026-03-20 14:30:45'::timestamp),'hh24:mi:ss') from t",
+				n(c("select date_format('2026-03-20 14:30:45','HH24:MI:SS') from t", "postgresql")));
+		// H2:formatdatetime不接受字符串字面量,CAST AS TIMESTAMP
+		assertEquals(
+				"select formatdatetime(CAST('2026-03-20 14:30:45' AS TIMESTAMP),'HH:mm:ss') from t",
+				n(c("select date_format('2026-03-20 14:30:45','HH24:MI:SS') from t", "h2")));
+	}
+
+	@Test
+	@DisplayName("left/right长度0或负数在Oracle/SQLite不得返回整串")
+	public void leftRightNonPositive() {
+		assertEquals("select substr('abcdef',1,0) from t", n(c("select right('abcdef',0) from t", "oracle")));
+		assertEquals("select substr('abcdef',1,0) from t", n(c("select left('abcdef',-1) from t", "sqlite")));
+	}
+
+	@Test
+	@DisplayName("mid拼写到SQLite须换名为substr")
+	public void midOnSqlite() {
+		assertEquals("select substr('abcdef',2,3) from t", n(c("select mid('abcdef',2,3) from t", "sqlite")));
+	}
+
+	@Test
+	@DisplayName("substr起点0按各库首位统一:0视作从开头")
+	public void substrZeroStart() {
+		// MySQL的0是空串特例,要表达"从开头"须转1
+		assertEquals("select substr('abcdef',1,2) from t", n(c("select substr('abcdef',0,2) from t", "mysql")));
+		assertEquals("select substr('abcdef',1,2) from t", n(c("select substr('abcdef',0,2) from t", "oracle")));
+		assertEquals("select substring('abcdef',1,2) from t",
+				n(c("select substr('abcdef',0,2) from t", "sqlserver")));
+		assertEquals("select substring('abcdef',1,2) from t",
+				n(c("select substr('abcdef',0,2) from t", "postgresql")));
+		assertEquals("select substr('abcdef',1,2) from t", n(c("select substr('abcdef',0,2) from t", "sqlite")));
+		assertEquals("select substr('abcdef',1,2) from t",
+				n(c("select substr('abcdef',0,2) from t", "clickhouse")));
+		// 两参同样:0->1,取整串
+		assertEquals("select substr('abcdef',1) from t", n(c("select substr('abcdef',0) from t", "mysql")));
+	}
+
+	@Test
+	@DisplayName("to_date含时间token在PG/HANA/CH/SQLite保留时分秒")
+	public void toDatePreservesTime() {
+		String src = "select to_date('2026-03-20 14:30:45','yyyy-MM-dd hh24:mi:ss') from t";
+		assertEquals("select to_timestamp('2026-03-20 14:30:45','yyyy-MM-dd hh24:mi:ss') from t",
+				n(c(src, "postgresql")));
+		assertEquals("select to_timestamp('2026-03-20 14:30:45','yyyy-MM-dd hh24:mi:ss') from t", n(c(src, "hana")));
+		assertEquals("select toDateTime('2026-03-20 14:30:45', '" + SqlToyConstants.getZoneId().getId()
+				+ "') from t", n(c(src, "clickhouse")));
+		assertEquals("select datetime('2026-03-20 14:30:45') from t", n(c(src, "sqlite")));
+	}
+
+	@Test
+	@DisplayName("instr四参:有REGEXP_INSTR的库套用,原生库透传,其余原样")
+	public void instrFourArg() {
+		String src = "select instr('abcabc','abc',1,2) from t";
+		// ② REGEXP_INSTR族
+		assertEquals("select REGEXP_INSTR('abcabc','abc',1,2) from t", n(c(src, "sqlserver")));
+		assertEquals("select REGEXP_INSTR('abcabc','abc',1,2) from t", n(c(src, "mysql")));
+		assertEquals("select REGEXP_INSTR('abcabc','abc',1,2) from t", n(c(src, "oceanbase")));
+		assertEquals("select regexp_instr('abcabc','abc',1,2) from t", n(c(src, "postgresql")));
+		assertEquals("select regexp_instr('abcabc','abc',1,2) from t", n(c(src, "opengauss")));
+		// ① 原生四参透传
+		assertEquals(src, n(c(src, "oracle")));
+		assertEquals(src, n(c(src, "db2")));
+		assertEquals(src, n(c(src, "h2")));
+		assertEquals(src, n(c(src, "hana")));
+		// ③ 无简单等价物:原样输出
+		assertEquals(src, n(c(src, "sqlite")));
+		assertEquals(src, n(c(src, "clickhouse")));
+		assertEquals(src, n(c(src, "mysql57")));
 	}
 
 	@Test
@@ -181,6 +261,9 @@ public class FunctionDefectRegressionTest {
 					query(st, c("select to_char(timestamp '2026-03-20 14:30:45','HH:MI') from (select 1) x", "h2")));
 			assertEquals("02:30",
 					query(st, c("select to_char(timestamp '2026-03-20 14:30:45','hh:MI') from (select 1) x", "h2")));
+			// 字符串字面量日期格式化:H2 formatdatetime须CAST定型
+			assertEquals("2026-03-20 14:30:45", query(st,
+					c("select date_format('2026-03-20 14:30:45','yyyy-MM-dd HH:mm:ss') from (select 1) x", "h2")));
 		}
 		try (Connection conn = DriverManager.getConnection("jdbc:sqlite::memory:");
 				Statement st = conn.createStatement()) {
@@ -192,6 +275,9 @@ public class FunctionDefectRegressionTest {
 					query(st, c("select to_char('2026-03-20 14:30:45','HH:MI') from (select 1) x", "sqlite")));
 			assertEquals("02:30",
 					query(st, c("select to_char('2026-03-20 14:30:45','hh:MI') from (select 1) x", "sqlite")));
+			// to_date含时间token:SQLite用datetime保留时分秒
+			assertEquals("2026-03-20 14:30:45", query(st,
+					c("select to_date('2026-03-20 14:30:45','yyyy-MM-dd hh24:mi:ss') from (select 1) x", "sqlite")));
 		}
 	}
 
