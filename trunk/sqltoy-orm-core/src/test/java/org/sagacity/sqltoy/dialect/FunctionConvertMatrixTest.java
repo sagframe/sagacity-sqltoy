@@ -130,9 +130,9 @@ public class FunctionConvertMatrixTest {
 		assertTrue(pg.contains("'yyyy-MM-dd hh24'"), "独立HH应归一为hh24(24小时制): " + pg);
 		String kingbase = convert("select to_char(create_time,'yyyy-MM-dd HH') from t", "kingbase");
 		assertTrue(kingbase.contains("'yyyy-MM-dd hh24'"), "to_char独立HH应归一为hh24: " + kingbase);
-		// HH24为oracle原生token,\bHH\b不得误伤(H与2间无词边界,保持原样大写)
+		// HH24为oracle原生token,\bHH\b不得误伤(H与2间无词边界);大小写等价,断言token形态即可
 		String hh24 = convert("select date_format(create_time,'HH24:mi:ss') from t", "postgresql");
-		assertTrue(hh24.contains("'HH24:mi:ss'"), "oracle原生HH24应保持: " + hh24);
+		assertTrue(hh24.toLowerCase().contains("'hh24:mi:ss'"), "oracle原生HH24应保持: " + hh24);
 		// 冒号邻接形态既有归一不受影响
 		String colon = convert("select date_format(create_time,'yyyy-MM-dd HH:mm:ss') from t", "postgresql");
 		assertTrue(colon.contains("'yyyy-MM-dd hh24:mi:ss'"), "HH:mm:ss冒号邻接归一保持: " + colon);

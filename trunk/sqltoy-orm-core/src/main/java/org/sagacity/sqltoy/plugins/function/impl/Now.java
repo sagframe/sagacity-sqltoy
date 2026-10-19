@@ -78,6 +78,11 @@ public class Now extends IFunction {
 		}
 		if (dialect == DBType.ORACLE || dialect == DBType.OCEANBASE || dialect == DBType.DM
 				|| dialect == DBType.ORACLE11) {
+			// current_timestamp是标准TIMESTAMP WITH TIME ZONE语义,不能退化为sysdate(丢时区/小数秒);
+			// now()/sysdate/getdate等源才按oracle习惯转sysdate
+			if ("current_timestamp".equals(funLow)) {
+				return (args == null || args.length == 0) ? "CURRENT_TIMESTAMP" : wrapArgs("CURRENT_TIMESTAMP", args);
+			}
 			// (H2在now()分支已处理,此处不再重复)
 			return "sysdate";
 		}

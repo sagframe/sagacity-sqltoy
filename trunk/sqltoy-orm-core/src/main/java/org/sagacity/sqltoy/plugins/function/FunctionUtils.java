@@ -115,7 +115,9 @@ public class FunctionUtils {
 		// 时函数名前无任何字符,适配正则\W(函数名)\(恒不命中;入口加空格哨兵使串首函数获得\W
 		// 前缀参与探测与转换(内部全部绝对偏移随哨兵统一平移,无需逐处适配),返回前精确剥离;
 		// 常规SQL以select/insert等关键字开头,行为不变
-		String dialectSql = " ".concat(sqlContent);
+		// update 2026-10-19 串尾同样补哨兵:sysdate/current_date等裸关键字位于整条SQL末尾时
+		// 正则的\W后缀无字符可匹配,原实现漏转换(PG等目标库报函数不存在)
+		String dialectSql = " ".concat(sqlContent).concat(" ");
 		// update 2026-9-14 预检加速(检测不改写,无耦合):常态SQL不含任何可转换函数,原循环
 		// 对每个适配函数各做一次全SQL maskLiterals拷贝(注册函数最多16次);预检在原串的
 		// 单次掩码上做只读正则探测,无任何命中直接返回原串(仅1次拷贝);有命中才进入改写
@@ -142,8 +144,10 @@ public class FunctionUtils {
 				dialectSql = replaceFunction(dialectSql, dbType, function);
 			}
 		}
-		// 剥离入口哨兵(replaceFunction的result恒自串首0位构造,首字符必为哨兵)
-		return dialectSql.substring(1);
+		// 剥离首尾哨兵(replaceFunction的result恒自串首0位构造,首字符必为前导哨兵;
+		// 尾部哨兵用于让串尾裸关键字获得\W后缀,无改写时原样保留)
+		String converted = dialectSql.substring(1);
+		return converted.endsWith(" ") ? converted.substring(0, converted.length() - 1) : converted;
 	}
 
 	/**
@@ -367,6 +371,150 @@ public class FunctionUtils {
 	 * @param arg 日期参数SQL片段(字面量/列/占位符/表达式)
 	 * @return sqlite日期函数可消费的日期文本表达式
 	 */
+	/**
+	 * @description 判断是否为单引号包裹的完整SQL字符串字面量(不含内嵌引号,内嵌情形保守不处理)
+	 * @param value 原始参数
+	 * @return true表示可安全做格式模型改写
+	 */
+	private static boolean isQuotedLiteral(String value) {
+		if (value == null) {
+			return false;
+		}
+		String tmp = value.trim();
+		return tmp.length() > 1 && tmp.startsWith("'") && tmp.endsWith("'")
+				&& tmp.indexOf('\'', 1) == tmp.length() - 1;
+	}
+
+	/**
+	 * @description Java风格时间token归一为Oracle模型:java的HH=24小时/mm=分钟,而Oracle的HH=12小时/mm=月。
+	 *              只归一冒号邻接的"HH:mm"/"HH:mm:ss"与"hh:mm"/"hh:mm:ss"形态,其余Oracle token原样保留;
+	 *              归一后各SQL函数适配器可统一按Oracle模型分派,避免mm被误当分钟
+	 * @param formatArg SQL格式参数(含引号的字面量)
+	 * @return 归一后的格式参数
+	 */
+	public static String normalizeJavaTimePattern(String formatArg) {
+		if (!isQuotedLiteral(formatArg)) {
+			return formatArg;
+		}
+		String tmp = formatArg.trim();
+		String content = tmp.substring(1, tmp.length() - 1);
+		// 含双引号字面量片段时保守跳过,避免改写Oracle/MySQL格式串中的字面文本
+		if (content.indexOf('"') >= 0) {
+			return formatArg;
+		}
+		String normalized = content.replace("HH:mm:ss", "hh24:mi:ss").replace("HH:mm", "hh24:mi")
+				.replace("hh:mm:ss", "hh:mi:ss").replace("hh:mm", "hh:mi");
+		return normalized.equals(content) ? formatArg : "'" + normalized + "'";
+	}
+
+	/**
+	 * @description 将Oracle/Java风格格式模型转换为MySQL % 风格token,供DateFormat(源为mysql date_format)
+	 *              在非%写法时统一走既有%分派。Oracle的mm=月/mi=分钟;java的HH:mm=24小时/分钟;
+	 *              裸HH按Java习惯作24小时,裸hh作12小时;双引号字面量片段原样保留
+	 * @param formatArg SQL格式参数(含引号的字面量)
+	 * @return MySQL % 风格格式参数;已是%风格或非字面量时原样返回
+	 */
+	public static String toMySqlFormat(String formatArg) {
+		if (!isQuotedLiteral(formatArg)) {
+			return formatArg;
+		}
+		String tmp = formatArg.trim();
+		String content = tmp.substring(1, tmp.length() - 1);
+		// 已是MySQL % 风格,保持原有分派
+		if (content.indexOf('%') >= 0) {
+			return formatArg;
+		}
+		StringBuilder out = new StringBuilder(content.length() + 8);
+		for (int i = 0; i < content.length();) {
+			char c = content.charAt(i);
+			// Oracle/MySQL格式串中的双引号字面量片段原样保留
+			if (c == '"') {
+				int end = content.indexOf('"', i + 1);
+				if (end < 0) {
+					out.append(content.substring(i));
+					break;
+				}
+				out.append(content, i, end + 1);
+				i = end + 1;
+				continue;
+			}
+			String rest = content.substring(i);
+			String lower = rest.toLowerCase(Locale.ROOT);
+			if (lower.startsWith("hh24")) {
+				out.append("%H");
+				i += 4;
+				continue;
+			}
+			// java风格时间:HH=24小时、hh=12小时、mm=分钟
+			if (rest.startsWith("HH:mm:ss")) {
+				out.append("%H:%i:%s");
+				i += 9;
+				continue;
+			}
+			if (rest.startsWith("HH:mm")) {
+				out.append("%H:%i");
+				i += 5;
+				continue;
+			}
+			if (rest.startsWith("hh:mm:ss")) {
+				out.append("%h:%i:%s");
+				i += 9;
+				continue;
+			}
+			if (rest.startsWith("hh:mm")) {
+				out.append("%h:%i");
+				i += 5;
+				continue;
+			}
+			if (lower.startsWith("yyyy")) {
+				out.append("%Y");
+				i += 4;
+				continue;
+			}
+			if (lower.startsWith("yy")) {
+				out.append("%y");
+				i += 2;
+				continue;
+			}
+			// 非时间上下文的mm为Oracle的月份
+			if (lower.startsWith("mm")) {
+				out.append("%m");
+				i += 2;
+				continue;
+			}
+			if (lower.startsWith("mi")) {
+				out.append("%i");
+				i += 2;
+				continue;
+			}
+			if (lower.startsWith("dd")) {
+				out.append("%d");
+				i += 2;
+				continue;
+			}
+			if (lower.startsWith("ss")) {
+				out.append("%s");
+				i += 2;
+				continue;
+			}
+			// 裸HH按Java习惯24小时,裸hh按12小时
+			if (rest.startsWith("HH")) {
+				out.append("%H");
+				i += 2;
+				continue;
+			}
+			if (rest.startsWith("hh")) {
+				out.append("%h");
+				i += 2;
+				continue;
+			}
+			out.append(c);
+			i++;
+		}
+		String mapped = out.toString();
+		return mapped.equals(content) ? formatArg : "'" + mapped + "'";
+	}
+
 	/**
 	 * update 2026-10-11 oracle系日期函数的字面量参数包裹:裸字符串字面量按长度启发式包
 	 * to_date(规避oracle默认NLS格式不认ISO串,真库实测ORA-01861);列/表达式原样返回

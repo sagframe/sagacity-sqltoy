@@ -166,14 +166,17 @@ public class CommonFuncDialectTest {
 
 	@Test
 	public void instrMultiSpellingMatrix() {
-		// mysql/db2原生同名同序透传(posstr为db2原生)
+		// db2原生posstr为haystack-first(haystack,needle),db2目标透传
 		assertEquals("select locate('a',name) from t", c("select locate('a',name) from t", "mysql"));
 		assertEquals("select locate('a',name) from t", c("select locate('a',name) from t", "db2"));
-		assertEquals("select posstr('a',name) from t", c("select posstr('a',name) from t", "db2"));
+		assertEquals("select posstr(name,'a') from t", c("select posstr(name,'a') from t", "db2"));
 		// 外来拼写转换
 		assertEquals("select position('a' in name) from t", c("select locate('a',name) from t", "postgresql"));
 		assertEquals("select instr(name,'a',2) from t", c("select locate('a',name,2) from t", "oracle"));
-		assertEquals("select charindex('a',name) from t", c("select posstr('a',name) from t", "sqlserver"));
+		// posstr(haystack,needle)与strpos同序:目标SQLServer为charindex(needle,haystack)
+		assertEquals("select charindex('a',name) from t", c("select posstr(name,'a') from t", "sqlserver"));
+		// posstr到PG转标准position(needle in haystack)
+		assertEquals("select position('a' in name) from t", c("select posstr(name,'a') from t", "postgresql"));
 		assertEquals("select locate(name,'a') from t", c("select locate('a',name) from t", "hana"));
 		assertEquals("select instr(name,'a') from t", c("select locate('a',name) from t", "sqlite"));
 		assertEquals("select position(name,'a') from t", c("select locate('a',name) from t", "clickhouse"));

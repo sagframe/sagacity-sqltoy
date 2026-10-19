@@ -49,7 +49,12 @@ public class Instr extends IFunction {
 		String[] realArgs;
 		String funLow = functionName.toLowerCase(Locale.ROOT);
 		if ("position".equals(funLow)) {
-			realArgs = args[0].split("(?i)\\sin\\s");
+			// position(needle in haystack):按引号/括号感知定位第一个顶层" in ",
+			// 规避字面量或子表达式内的" in "把参数切坏
+			realArgs = splitPositionArgs(args[0]);
+			if (realArgs == null) {
+				return super.IGNORE;
+			}
 		} else {
 			realArgs = args;
 		}
@@ -59,11 +64,11 @@ public class Instr extends IFunction {
 		// hana的locate同序,其余instr系库直接换名;>2参为CH的start_pos/occurrence扩展,
 		// 其余库无对应形态,原样保留交由目标库报错
 
-		// update 2026-10-11 补locate/posstr源函数(mysql与db2用户写法,全量拼写审计):
-		// 两者均为needle-first参数序(needle,haystack[,pos])。mysql系与db2原生同名同序透传;
-		// hana的locate虽原生但参数序相反(haystack在前),同名异序无法辨源,按本框架mysql源惯例统一按mysql序转换(类注释已声明);
-		// 三参仅sqlserver/oracle系/hana支持,pg/sqlite/ch无对应形态响亮保留
-		if ("locate".equals(funLow) || "posstr".equals(funLow)) {
+		// update 2026-10-11 补locate源函数(mysql与db2用户写法):needle-first参数序(needle,haystack[,pos])。
+		// mysql系与db2原生同名同序透传;hana的locate虽原生但参数序相反(haystack在前),
+		// 同名异序无法辨源,按本框架mysql源惯例统一按mysql序转换(类注释已声明);
+		// posstr为DB2原生haystack-first语义,不能与locate同组,见下方strpos分支
+		if ("locate".equals(funLow)) {
 			if (dialect == DBType.MYSQL || dialect == DBType.MYSQL57 || dialect == DBType.TIDB
 					|| dialect == DBType.DORIS || dialect == DBType.STARROCKS || dialect == DBType.DB2) {
 				return super.IGNORE;
@@ -102,14 +107,16 @@ public class Instr extends IFunction {
 			}
 			return super.IGNORE;
 		}
-		if ("strpos".equals(funLow)) {
-			// update 2026-10-11 总扫真库实测:CH无strpos函数(Function strpos does not
-			// exist),从透传列表移除,走下方position(haystack,needle)同序转换
+		if ("strpos".equals(funLow) || "posstr".equals(funLow)) {
+			// strpos与DB2的posstr均为haystack-first:strpos(str,sub)/posstr(source,search)。
+			// update 2026-10-11 总扫真库实测:CH无strpos函数,走下方position(haystack,needle)同序转换
 			if (dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL14 || dialect == DBType.GAUSSDB
 					|| dialect == DBType.OPENGAUSS || dialect == DBType.OSCAR || dialect == DBType.STARDB
 					|| dialect == DBType.MOGDB || dialect == DBType.VASTBASE || dialect == DBType.KINGBASE
 					|| dialect == DBType.HIGHGO) {
-				return super.IGNORE;
+				// pg系原生strpos直接透传;DB2的posstr在PG无同名函数,按标准position改写
+				return "strpos".equals(funLow) ? super.IGNORE
+						: "position(" + realArgs[1] + " in " + realArgs[0] + ")";
 			}
 			if (realArgs.length > 2) {
 				return super.IGNORE;
@@ -118,10 +125,16 @@ public class Instr extends IFunction {
 				return "charindex(" + realArgs[1] + "," + realArgs[0] + ")";
 			}
 			if (dialect == DBType.DB2) {
-				return "locate(" + realArgs[1] + "," + realArgs[0] + ")";
+				// DB2原生posstr直接透传;strpos源转locate(needle,haystack)
+				return "posstr".equals(funLow) ? super.IGNORE
+						: "locate(" + realArgs[1] + "," + realArgs[0] + ")";
 			}
 			if (dialect == DBType.HANA) {
 				return "locate(" + realArgs[0] + "," + realArgs[1] + ")";
+			}
+			if (dialect == DBType.CLICKHOUSE) {
+				// CH无instr/strpos,position(haystack,needle)为原生逗号形态
+				return "position(" + realArgs[0] + "," + realArgs[1] + ")";
 			}
 			return "instr(" + realArgs[0] + "," + realArgs[1] + ")";
 		}
@@ -234,7 +247,8 @@ public class Instr extends IFunction {
 		// (haystack,needle)相反,须对调(真库实测未对调时恒为0)
 		if (dialect == DBType.CLICKHOUSE) {
 			if ("position".equals(funLow)) {
-				return super.IGNORE;
+				// CH的position为position(haystack,needle)逗号形态,不支持 position(sub in str)
+				return "position(" + realArgs[1] + "," + realArgs[0] + ")";
 			}
 			if (realArgs.length == 2) {
 				if ("charindex".equals(funLow)) {
@@ -283,5 +297,63 @@ public class Instr extends IFunction {
 			return super.IGNORE;
 		}
 		return super.IGNORE;
+	}
+
+	/**
+	 * @description 按引号/括号感知切分position(needle in haystack):只认第一个顶层" in ",
+	 *              字面量或子表达式内的" in "不参与切分
+	 * @param arg position括号内的参数原文
+	 * @return [needle,haystack],无法切分返回null
+	 */
+	private static String[] splitPositionArgs(String arg) {
+		if (arg == null) {
+			return null;
+		}
+		int depth = 0;
+		char quote = 0;
+		for (int i = 0; i < arg.length(); i++) {
+			char c = arg.charAt(i);
+			if (quote != 0) {
+				if (c == quote) {
+					// 双写引号为字面量内的转义,跳过
+					if (i + 1 < arg.length() && arg.charAt(i + 1) == quote) {
+						i++;
+					} else {
+						quote = 0;
+					}
+				}
+				continue;
+			}
+			if (c == '\'' || c == '"') {
+				quote = c;
+				continue;
+			}
+			if (c == '(') {
+				depth++;
+				continue;
+			}
+			if (c == ')') {
+				if (depth > 0) {
+					depth--;
+				}
+				continue;
+			}
+			if (depth == 0 && Character.isWhitespace(c)) {
+				int j = i;
+				while (j < arg.length() && Character.isWhitespace(arg.charAt(j))) {
+					j++;
+				}
+				if (j + 2 < arg.length() && (arg.charAt(j) == 'i' || arg.charAt(j) == 'I')
+						&& (arg.charAt(j + 1) == 'n' || arg.charAt(j + 1) == 'N')
+						&& Character.isWhitespace(arg.charAt(j + 2))) {
+					String left = arg.substring(0, i).trim();
+					String right = arg.substring(j + 2).trim();
+					if (!left.isEmpty() && !right.isEmpty()) {
+						return new String[] { left, right };
+					}
+				}
+			}
+		}
+		return null;
 	}
 }

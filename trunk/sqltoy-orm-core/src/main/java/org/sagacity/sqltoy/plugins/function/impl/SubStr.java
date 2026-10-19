@@ -36,7 +36,9 @@ public class SubStr extends IFunction {
 	 */
 	@Override
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
-		if (args == null || args.length == 0) {
+		// 单参substr为非法SQL(各库 substr 至少两参),原样保留交目标库报错,
+		// 不能在这里访问args[1]抛ArrayIndexOutOfBoundsException打断SQL解析
+		if (args == null || args.length < 2) {
 			return super.IGNORE;
 		}
 		// (真库实测语法错),归下方substr族(原生SUBSTR)

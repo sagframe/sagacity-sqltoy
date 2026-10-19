@@ -47,6 +47,9 @@ public class DateFormat extends IFunction {
 		if (args == null || args.length < 2) {
 			return super.IGNORE;
 		}
+		// 非%写法(Oracle/Java风格)统一归一为MySQL %token,后续各分支按既有%分派处理,
+		// 避免SQLServer/SQLite/DB2等分支只认%token而把yyyy-mm-dd原样输出
+		args[1] = FunctionUtils.toMySqlFormat(args[1]);
 		String format;
 		switch (dialect) {
 		case DBType.POSTGRESQL:

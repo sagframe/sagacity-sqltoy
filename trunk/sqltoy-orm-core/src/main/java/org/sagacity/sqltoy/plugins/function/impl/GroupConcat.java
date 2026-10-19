@@ -104,6 +104,11 @@ public class GroupConcat extends IFunction {
 		}
 		@SuppressWarnings("unchecked")
 		List<String> segments = (List<String>) parsed[0];
+		// PG原生string_agg的排序写在括号内(string_agg(x,sep order by y)),不接受within group;
+		// SQLServer风格的string_agg(x,sep) within group(...)转成PG原生形态
+		if (isPgFamily(dbType) && "string_agg".equals(funLow)) {
+			return " string_agg(" + segments.get(0) + "," + (String) parsed[1] + " order by " + orderBy + ") ";
+		}
 		return render(dbType, funLow, twoArgForm, segments, (String) parsed[1], orderBy);
 	}
 
@@ -189,11 +194,20 @@ public class GroupConcat extends IFunction {
 		String expr;
 		if (twoArgForm) {
 			expr = segments.get(0);
+		} else if (dbType == DBType.SQLSERVER && segments.size() > 1) {
+			// group_concat多列语义是字符串拼接:SQLServer的+对数值列会做加法,静默错值;
+			// 用CONCAT承担类型转换,并显式保留MySQL concat"任一参数null则整体null"语义
+			StringBuilder nullCheck = new StringBuilder();
+			for (int i = 0; i < segments.size(); i++) {
+				if (i > 0) {
+					nullCheck.append(" or ");
+				}
+				nullCheck.append(segments.get(i)).append(" is null");
+			}
+			expr = "case when " + nullCheck + " then null else concat(" + String.join(",", segments) + ") end";
 		} else {
 			String joiner;
-			if (dbType == DBType.SQLSERVER) {
-				joiner = " + ";
-			} else if (dbType == DBType.MYSQL || dbType == DBType.TIDB || dbType == DBType.MYSQL57
+			if (dbType == DBType.MYSQL || dbType == DBType.TIDB || dbType == DBType.MYSQL57
 					|| dbType == DBType.H2 || dbType == DBType.DORIS || dbType == DBType.STARROCKS) {
 				joiner = ",";
 			} else {
@@ -273,7 +287,8 @@ public class GroupConcat extends IFunction {
 		// 括号内order by形态string_agg(x,sep order by …)(hana原生支持);sqlserver维持
 		// WITHIN GROUP(2012+官方形态),两库拆分渲染
 		if (dbType == DBType.SQLSERVER) {
-			if ("string_agg".equals(funLow)) {
+			// 原生string_agg无排序时直接透传;括号内order by是PG写法,须转SQLServer的within group
+			if ("string_agg".equals(funLow) && orderBy == null) {
 				return super.IGNORE;
 			}
 			if (orderBy != null) {
@@ -282,7 +297,8 @@ public class GroupConcat extends IFunction {
 			return " string_agg(" + expr + "," + sign + ") ";
 		}
 		if (dbType == DBType.HANA) {
-			if ("string_agg".equals(funLow)) {
+			// HANA的string_agg排序写在括号内,不支持within group;SQLServer风格suffix由此转括号内形态
+			if ("string_agg".equals(funLow) && orderBy == null) {
 				return super.IGNORE;
 			}
 			if (orderBy != null) {
@@ -309,18 +325,25 @@ public class GroupConcat extends IFunction {
 					|| dbType == DBType.OCEANBASE || dbType == DBType.DB2;
 		}
 		if ("string_agg".equals(funLow)) {
-			// update 2026-10-11 hana移出:within group子句hana不支持(实测),带该子句的源
-			// 须经wrapWithSuffix转换;括号内order by的无suffix形态在wrap里仍透传
-			return dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
-					|| dbType == DBType.OPENGAUSS || dbType == DBType.OSCAR || dbType == DBType.STARDB
-					|| dbType == DBType.MOGDB || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE
-					|| dbType == DBType.HIGHGO || dbType == DBType.SQLSERVER;
+			// PG系/HANA虽原生string_agg,但排序语法是括号内order by,不接受within group;
+			// 带suffix的源须转换,不能在此按原生透传。SQLServer原生支持within group
+			return dbType == DBType.SQLSERVER;
 		}
 		if ("group_concat".equals(funLow)) {
 			return dbType == DBType.MYSQL || dbType == DBType.TIDB || dbType == DBType.MYSQL57 || dbType == DBType.H2
 					|| dbType == DBType.DORIS || dbType == DBType.STARROCKS;
 		}
 		return false;
+	}
+
+	/**
+	 * @return 是否PG语法家族(string_agg排序写在括号内)
+	 */
+	private static boolean isPgFamily(int dbType) {
+		return dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
+				|| dbType == DBType.OPENGAUSS || dbType == DBType.OSCAR || dbType == DBType.STARDB
+				|| dbType == DBType.MOGDB || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE
+				|| dbType == DBType.HIGHGO;
 	}
 
 	// 文本中的order by子句拆分:[前段,排序表达式],无order by返回null

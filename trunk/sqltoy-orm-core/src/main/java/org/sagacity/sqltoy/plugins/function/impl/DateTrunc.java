@@ -132,7 +132,9 @@ public class DateTrunc extends IFunction {
 			case "YEAR":
 				return "DATEFROMPARTS(YEAR(" + base + "),1,1)";
 			default:
-				return "DATEADD(week, DATEDIFF(week,0," + base + "),0)";
+				// ISO周一锚定:1900-01-01为周一,按天数差%7回退;不要用DATEDIFF(week),
+				// 它受SET DATEFIRST影响(默认周日),会静默错一天
+				return "DATEADD(day,-((DATEDIFF(day,0," + base + "))%7),CONVERT(date," + base + "))";
 			}
 		}
 		if (dialect == DBType.HANA) {

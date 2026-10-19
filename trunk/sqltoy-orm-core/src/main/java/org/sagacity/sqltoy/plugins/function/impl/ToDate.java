@@ -47,6 +47,10 @@ public class ToDate extends IFunction {
 			return super.IGNORE;
 		}
 		String funLow = functionName.toLowerCase(java.util.Locale.ROOT);
+		// java风格HH:mm归一为Oracle的hh24:mi,后续按Oracle模型映射,避免mm(月)被当分钟
+		if (args.length > 1) {
+			args[1] = FunctionUtils.normalizeJavaTimePattern(args[1]);
+		}
 		// update 2026-10-11 str_to_date源:mysql系原生透传;其余库%token反转为oracle风格后
 		// 按to_date路径走(分支内不再区分源拼写,pg两参透传处以wrapArgs换名保持语义)
 		boolean mysqlSrc = "str_to_date".equals(funLow);
@@ -121,7 +125,13 @@ public class ToDate extends IFunction {
 			// 两参解析方向:PARSEDATETIME(str,格式)
 			// update 2026-9-15 补oracle风格令牌映射:入参'hh24:mi:ss'的hh24/mi为oracle模型,
 			// h2 PARSEDATETIME用java令牌(HH=24小时,mm=分钟),原样透传真库实测报Error parsing
-			String fmt = args[1].replace("HH24", "HH").replace("hh24", "HH").replace("MI", "mm").replace("mi", "mm");
+			// update 2026-10-19 区分Oracle的mm(月)/mi(分)与HH(12小时)/HH24(24小时):
+			// 24小时token先用占位符保护,裸HH才映射为java的hh,最后还原24小时
+			String fmt = args[1].replace("HH24", "@H24@").replace("hh24", "@H24@");
+			fmt = fmt.replace("mm", "MM");
+			fmt = fmt.replace("MI", "@M1@").replace("mi", "@M1@");
+			fmt = fmt.replace("HH", "hh");
+			fmt = fmt.replace("@H24@", "HH").replace("@M1@", "mm").replace("SS", "ss");
 			return "parsedatetime(" + args[0] + "," + fmt + ")";
 		}
 		// update 2026-9-14 补KINGBASE(KingbaseES基于PG,函数语法归PG系)
@@ -150,8 +160,8 @@ public class ToDate extends IFunction {
 			// 原'YYYY-MM-DD HH24:MI:SS'的YYYY/DD/MI/SS残留字面量,STR_TO_DATE报格式错值)
 			String format = args[1].replace("yyyy", "%Y").replace("YYYY", "%Y").replace("yy", "%y").replace("YY", "%y")
 					.replace("MM", "%m").replace("dd", "%d").replace("DD", "%d");
-			format = format.replace("HH24", "%H").replace("hh24", "%H").replace("hh", "%h").replace("HH", "%H")
-					.replace("mm", "%i").replace("mi", "%i").replace("MI", "%i").replace("ss", "%s")
+			format = format.replace("HH24", "%H").replace("hh24", "%H").replace("HH", "%h").replace("hh", "%h")
+					.replace("mm", "%m").replace("mi", "%i").replace("MI", "%i").replace("ss", "%s")
 					.replace("SS", "%s");
 			return "STR_TO_DATE(" + args[0] + "," + format + ")";
 		}

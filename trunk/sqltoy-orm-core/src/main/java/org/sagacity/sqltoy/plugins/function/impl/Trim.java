@@ -53,7 +53,8 @@ public class Trim extends IFunction {
 		// sqlite无FROM形态,但trim/ltrim/rtrim的二参剔除字符集语义与标准一致,可无损映射
 		String arg = args[0].trim();
 		String argLow = arg.toLowerCase(Locale.ROOT);
-		boolean modifierForm = argLow.contains(" from ");
+		// trim(from col)是标准形态,FROM前没有前导空格,须显式识别串首from
+		boolean modifierForm = argLow.startsWith("from ") || argLow.contains(" from ");
 		// update 2026-9-9 rest按实际前导关键字长度截取:原按keyword.length()定长截取,
 		// 对省略BOTH/LEADING/TRAILING关键字的trim('x' from col)形态会把remstr首部误截掉
 		String keyword = "both";
@@ -75,8 +76,14 @@ public class Trim extends IFunction {
 		int fromIdx = rest.toLowerCase(Locale.ROOT).startsWith("from ") ? 0
 				: rest.toLowerCase(Locale.ROOT).indexOf(" from ");
 		if (dialect == DBType.H2) {
-			// H2原生支持标准修饰符形态
+			// H2原生支持标准修饰符形态;trim(from col)显式归一为both空格形态
 			if (modifierForm) {
+				if (fromIdx == 0 && "both".equals(keyword)) {
+					String col = rest.substring(5).trim();
+					if (!col.isEmpty()) {
+						return "trim(both ' ' from " + col + ")";
+					}
+				}
 				return super.IGNORE;
 			}
 			return "trim(both ' ' from " + arg + ")";
