@@ -2246,8 +2246,9 @@ public class DialectFactory {
 				String dialectSql = sqlToyConfig.getSql(dialect);
 				int inCount = (inParamsValue == null) ? 0 : inParamsValue.length;
 				int outCount = (outParamsType == null) ? 0 : outParamsType.length;
-				// sql中问号数量
-				int paramCnt = StringUtil.matchCnt(dialectSql, ARG_PATTERN, 0);
+				// sql中问号数量:按字面量掩码计数,规避存储过程字符串参数内的?被误计
+				int paramCnt = DialectUtils.getQuestionMarkCount(dialectSql,
+						SqlConfigParseUtils.isBackslashEscapeDialect(dbType));
 				// 处理参数注入
 				if (paramCnt != inCount + outCount) {
 					throw new IllegalArgumentException(

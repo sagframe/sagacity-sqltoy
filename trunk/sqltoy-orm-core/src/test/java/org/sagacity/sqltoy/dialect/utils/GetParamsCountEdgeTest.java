@@ -67,6 +67,15 @@ public class GetParamsCountEdgeTest {
 	}
 
 	@Test
+	public void questionMarkCountForStoredProcedure() {
+		// 存储过程只认位置?;字面量内的?不计入
+		assertEquals(1, DialectUtils.getQuestionMarkCount("call p('?', ?)", false));
+		assertEquals(0, DialectUtils.getQuestionMarkCount("call p('?')", false));
+		assertEquals(0, DialectUtils.getQuestionMarkCount("call p(:named)", false),
+				"存储过程不按:name统计位置参数");
+	}
+
+	@Test
 	public void wordPrefixColonInLiteralNeverMatched() {
 		// 行为记录:a:b形式的冒号前是字母,本就不命中SQL_NAMED_PATTERN,修复前后均为1
 		assertEquals(1, DialectUtils.getParamsCount("select 'a:b' from t where a=:p", false));

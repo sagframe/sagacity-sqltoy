@@ -29,14 +29,14 @@ public class MySqlDDLGenerator implements DialectDDLGenerator {
 		if (tableMeta.getForeigns() != null) {
 			for (org.sagacity.sqltoy.config.model.ForeignModel fk : tableMeta.getForeigns()) {
 				if (fk.getConstraintName() != null) {
-					fkNames.add(fk.getConstraintName().toLowerCase());
+					fkNames.add(fk.getConstraintName().toLowerCase(Locale.ROOT));
 				}
 			}
 		}
 		for (org.sagacity.sqltoy.config.model.IndexModel indexModel : tableMeta.getIndexes()) {
 			String indexName = StringUtil.toLowerOrUpper(indexModel.getName(), upperOrLower);
 			// FK同名索引跳过(FK已隐式创建同名索引)
-			if (fkNames.contains(indexName.toLowerCase())) {
+			if (fkNames.contains(indexName.toLowerCase(Locale.ROOT))) {
 				continue;
 			}
 			tableSql.append(",").append(NEWLINE);

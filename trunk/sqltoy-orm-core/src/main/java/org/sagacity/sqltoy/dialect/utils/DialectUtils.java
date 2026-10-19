@@ -4149,6 +4149,22 @@ public class DialectUtils {
 	}
 
 	/**
+	 * 仅统计字面量外的 ? 个数(存储过程等只接受位置参数、不存在 :named 模式的场景)
+	 * 
+	 * @param queryStr
+	 * @param backslashEscape true时\'不终结字面量(mysql系);false时仅''成对转义(标准SQL)
+	 * @return
+	 */
+	public static int getQuestionMarkCount(String queryStr, boolean backslashEscape) {
+		if (StringUtil.isBlank(queryStr)) {
+			return 0;
+		}
+		String sql = SqlConfigParseUtils.clearDblQuestMark(queryStr);
+		String maskedSql = SqlConfigParseUtils.maskLiterals(sql, backslashEscape);
+		return StringUtil.matchCnt(maskedSql, SqlConfigParseUtils.ARG_REGEX);
+	}
+
+	/**
 	 * @param sqlToyContext
 	 * @param entity
 	 * @return 判断主键值是否为空，用于saveOrUpdate判断是否save

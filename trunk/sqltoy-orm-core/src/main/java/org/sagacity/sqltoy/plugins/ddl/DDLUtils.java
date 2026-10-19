@@ -1,5 +1,6 @@
 package org.sagacity.sqltoy.plugins.ddl;
 
+import java.math.BigDecimal;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -87,7 +88,7 @@ public class DDLUtils {
 					foreignTable = entityMeta.getSchema().concat(".").concat(foreignTable);
 				}
 				// 大小写不敏感:@Foreign(table="QS_STAFF")与@Entity(tableName="qs_staff")等场景
-				String realKey = lowerKeyMap.get(foreignTable.toLowerCase());
+				String realKey = lowerKeyMap.get(foreignTable.toLowerCase(Locale.ROOT));
 				if (realKey == null) {
 					realKey = foreignTable;
 				}
@@ -746,7 +747,8 @@ public class DDLUtils {
 		String s1 = v1.trim();
 		String s2 = v2.trim();
 		try {
-			return Double.compare(Double.parseDouble(unquoteBound(s1)), Double.parseDouble(unquoteBound(s2)));
+			// 用BigDecimal避免超过2^53的整数分区边界在Double下被判相等而错序
+			return new BigDecimal(unquoteBound(s1)).compareTo(new BigDecimal(unquoteBound(s2)));
 		} catch (NumberFormatException e) {
 			return s1.compareTo(s2);
 		}
