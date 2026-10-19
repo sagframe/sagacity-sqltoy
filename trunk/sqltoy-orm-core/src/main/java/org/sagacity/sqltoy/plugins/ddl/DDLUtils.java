@@ -63,7 +63,7 @@ public class DDLUtils {
 		for (EntityMeta entityMeta : entitysMetaMap.values()) {
 			String key = entityMeta.getSchemaTable(null, null);
 			nodes.put(key, entityMeta);
-			lowerKeyMap.put(key.toLowerCase(), key);
+			lowerKeyMap.put(key.toLowerCase(Locale.ROOT), key);
 		}
 		// 建边:foreignTable->依赖表
 		Map<String, Set<String>> successors = new HashMap<String, Set<String>>();
