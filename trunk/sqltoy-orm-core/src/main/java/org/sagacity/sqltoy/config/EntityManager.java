@@ -991,6 +991,58 @@ public class EntityManager {
 	}
 
 	/**
+	 * @description AOT 构建期收集实体 @Id 上运行期可能经 Class.forName 实例化的主键生成器类名:
+	 *              内置 strategy/default 别名展开为实现类,带包名的 generator/strategy 归一旧包路径;
+	 *              @bean(name) 由框架 bean 容器保障,不返回
+	 * @param entityClass 实体类
+	 * @return 主键生成器实现类全名集合
+	 */
+	public static Set<String> getIdGeneratorClassNames(Class<?> entityClass) {
+		Set<String> classNames = new LinkedHashSet<>();
+		if (entityClass == null) {
+			return classNames;
+		}
+		for (Field field : entityClass.getDeclaredFields()) {
+			Id id = field.getAnnotation(Id.class);
+			if (id != null) {
+				addIdGeneratorClassName(classNames, id.generator());
+				addIdGeneratorClassName(classNames, id.strategy());
+			}
+			// @BusinessId 与 @Id 使用同一 processIdGenerator 路径,自定义类同样需要 AOT 注册
+			BusinessId businessId = field.getAnnotation(BusinessId.class);
+			if (businessId != null) {
+				addIdGeneratorClassName(classNames, businessId.generator());
+			}
+		}
+		return classNames;
+	}
+
+	private static void addIdGeneratorClassName(Set<String> classNames, String idGenerator) {
+		if (StringUtil.isBlank(idGenerator)) {
+			return;
+		}
+		String generator = idGenerator.trim();
+		if (generator.toLowerCase(Locale.ROOT).startsWith("@bean(")) {
+			return;
+		}
+		String mapped = IdGeneratorsMap.get(generator.toLowerCase(Locale.ROOT));
+		if (mapped != null) {
+			classNames.add(IdGeneratorPackage.concat(mapped));
+			return;
+		}
+		if (!generator.contains(".")) {
+			// 非内置别名且不含包名:运行期同样无法 Class.forName,保持不注册
+			return;
+		}
+		if (generator.startsWith(IdGeneratorOldPackage)
+				|| (generator.startsWith(IdGeneratorOldPackage_v1) && !generator.startsWith(IdGeneratorPackage))) {
+			classNames.add(IdGeneratorPackage.concat(generator.substring(generator.lastIndexOf('.') + 1)));
+		} else {
+			classNames.add(generator);
+		}
+	}
+
+	/**
 	 * 解析主键关联的子表信息配置(外键关联)
 	 * 
 	 * @param sqlToyContext

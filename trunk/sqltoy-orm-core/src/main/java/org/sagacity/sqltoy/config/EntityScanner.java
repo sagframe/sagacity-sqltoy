@@ -42,6 +42,25 @@ public class EntityScanner {
 	 */
 	public static List<Class<?>> scanEntityClasses(String packagePattern, boolean recursive, String charset)
 			throws Exception {
+		return scanClasses(packagePattern, recursive, charset, true);
+	}
+
+	/**
+	 * 扫描指定包路径下的全部可实例化类(供 AOT 注册 resultType DTO/VO 等非实体类)
+	 * 
+	 * @param packagePattern
+	 * @param recursive
+	 * @param charset
+	 * @return
+	 * @throws Exception
+	 */
+	public static List<Class<?>> scanClasses(String packagePattern, boolean recursive, String charset)
+			throws Exception {
+		return scanClasses(packagePattern, recursive, charset, false);
+	}
+
+	private static List<Class<?>> scanClasses(String packagePattern, boolean recursive, String charset,
+			boolean entityOnly) throws Exception {
 		List<Class<?>> result = new ArrayList<>();
 		if (packagePattern == null || packagePattern.isEmpty()) {
 			return result;
@@ -83,11 +102,11 @@ public class EntityScanner {
 						}
 						File dir = new File(filePath);
 						if (dir.exists() && dir.isDirectory()) {
-							scanDirectory(dir, basePackage, relativePattern, result, classLoader);
+							scanDirectory(dir, basePackage, relativePattern, result, classLoader, entityOnly);
 						}
 					}
 				} else if ("jar".equals(protocol)) {
-					scanJar(url, packagePattern, result, charset, classLoader);
+					scanJar(url, packagePattern, result, charset, classLoader, entityOnly);
 				}
 			}
 		} catch (Exception e) {
@@ -108,7 +127,7 @@ public class EntityScanner {
 	 * @param classLoader
 	 */
 	private static void scanDirectory(File dir, String basePackage, String relativePattern, List<Class<?>> result,
-			ClassLoader classLoader) {
+			ClassLoader classLoader, boolean entityOnly) {
 		Path root = dir.toPath();
 		// 构建匹配相对路径的 glob 模式
 		// 只替换包分隔符的 .，保留通配符中的 . 不被替换
@@ -138,7 +157,7 @@ public class EntityScanner {
 					Path normalizedRelative = FileSystems.getDefault().getPath(relativePath);
 					if (matcher.matches(normalizedRelative)) {
 						String className = packagePrefix + pathToClass(root, path);
-						checkAndAdd(className, result, classLoader);
+						checkAndAdd(className, result, classLoader, entityOnly);
 					}
 				} catch (Exception e) {
 					logger.debug("Skip unreadable file: {}", path);
@@ -160,7 +179,7 @@ public class EntityScanner {
 	 * @throws Exception
 	 */
 	private static void scanJar(URL jarUrl, String pattern, List<Class<?>> result, String charset,
-			ClassLoader classLoader) throws Exception {
+			ClassLoader classLoader, boolean entityOnly) throws Exception {
 		String jarPath = FileUtil.getJarPath(jarUrl);
 		String antPattern = pattern.replace('.', '/') + "/**/*.class";
 		try (JarFile jarFile = new JarFile(jarPath)) {
@@ -173,7 +192,7 @@ public class EntityScanner {
 				name = entry.getName();
 				if (name.endsWith(".class") && matchJarPath(name, antPattern)) {
 					className = name.replace("/", ".").replace(".class", "");
-					checkAndAdd(className, result, classLoader);
+					checkAndAdd(className, result, classLoader, entityOnly);
 				}
 			}
 		}
@@ -256,16 +275,27 @@ public class EntityScanner {
 		return false;
 	}
 
-	private static void checkAndAdd(String className, List<Class<?>> result, ClassLoader classLoader) {
+	private static void checkAndAdd(String className, List<Class<?>> result, ClassLoader classLoader,
+			boolean entityOnly) {
 		try {
 			// 不做JVM级类名去重:EntityManager.parseEntityMeta以类名幂等去重,
 			// 静态缓存会导致二次初始化(Spring上下文刷新/热部署/多上下文)扫描结果为空、实体元数据静默丢失,
 			// 且类名先于Class.forName登记会让加载失败的类被永久跳过
 			Class<?> clazz = Class.forName(className, false, classLoader);
-			if (isSqlToyEntity(clazz)) {
-				result.add(clazz);
-				logger.debug("Found entity: {}", className);
+			if (entityOnly) {
+				if (isSqlToyEntity(clazz)) {
+					result.add(clazz);
+					logger.debug("Found entity: {}", className);
+				}
+				return;
 			}
+			// AOT 反射类扫描:跳过接口/注解/匿名/局部/合成类,保留 DTO、VO、record、enum 等可实例化类型
+			if (clazz.isInterface() || clazz.isAnnotation() || clazz.isSynthetic() || clazz.isAnonymousClass()
+					|| clazz.isLocalClass() || clazz.getName().endsWith("package-info")) {
+				return;
+			}
+			result.add(clazz);
+			logger.debug("Found class: {}", className);
 		} catch (Throwable e) {
 			logger.debug("Skip class: {}", className, e);
 		}

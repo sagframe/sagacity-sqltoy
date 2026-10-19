@@ -52,12 +52,28 @@ public class SqltoyAotHintsTest {
 		props.put("spring.sqltoy.sqlInterceptors[0]", "com.sqltoy.NotExistSqlInterceptor");
 		// functionConverts:default 展开为内置函数集,构建期按运行期同语义解析注册
 		props.put("spring.sqltoy.functionConverts[0]", "default");
+		// 人工登记的非 @Entity resultType DTO
+		props.put("spring.sqltoy.nativeReflectionClasses[0]",
+				"org.sagacity.sqltoy.integration.aot.entity.AotTestDto");
+		// VO/DTO 较多时按包批量登记
+		props.put("spring.sqltoy.nativeReflectionPackages[0]", "org.sagacity.sqltoy.integration.aot.dto");
 
 		RuntimeHints hints = applyProcessor(aotLikeBeanFactory(props));
 
 		// 实体:按 packagesToScan 扫描注册,不依赖 SqlToyContext bean 实例化
 		assertTrue(reflectionRegistered(hints, "org.sagacity.sqltoy.integration.aot.entity.AotTestEntity"),
 				"packagesToScan entity reflection hints missing");
+		// update 2026-10-20 @Id(strategy="ulid")/@Id(generator=自定义类) 的生成器类注册
+		assertTrue(reflectionRegistered(hints, "org.sagacity.sqltoy.plugins.id.impl.ULIDGenerator"),
+				"ULIDGenerator reflection hints missing (@Id strategy=ulid)");
+		assertTrue(reflectionRegistered(hints, "org.sagacity.sqltoy.integration.aot.entity.AotTestCustomGenerator"),
+				"custom @Id generator reflection hints missing");
+		assertTrue(reflectionRegistered(hints, "org.sagacity.sqltoy.integration.aot.entity.AotTestDto"),
+				"nativeReflectionClasses DTO reflection hints missing");
+		assertTrue(reflectionRegistered(hints, "org.sagacity.sqltoy.integration.aot.dto.AotTestOrderVO"),
+				"nativeReflectionPackages VO reflection hints missing");
+		assertTrue(reflectionRegistered(hints, "org.sagacity.sqltoy.integration.aot.dto.AotTestUserDTO"),
+				"nativeReflectionPackages DTO reflection hints missing");
 		// 扩展类:按类名配置 + sqlFormater 别名展开
 		assertTrue(reflectionRegistered(hints, AotTestFieldsHandler.class.getName()),
 				"class-name configured extension missing");

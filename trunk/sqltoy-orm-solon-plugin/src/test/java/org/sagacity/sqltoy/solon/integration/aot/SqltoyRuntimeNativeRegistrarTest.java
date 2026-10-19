@@ -2,6 +2,7 @@ package org.sagacity.sqltoy.solon.integration.aot;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Date;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -13,6 +14,7 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.annotation.Column;
 import org.sagacity.sqltoy.config.annotation.Entity;
 import org.sagacity.sqltoy.config.annotation.Id;
+import org.sagacity.sqltoy.plugins.id.IdGenerator;
 import org.sagacity.sqltoy.solon.configure.SqlToyContextProperties;
 
 /**
@@ -23,7 +25,7 @@ public class SqltoyRuntimeNativeRegistrarTest {
 
 	@Entity(tableName = "sqltoy_solon_aot_test")
 	public static class SolonAotTestEntity {
-		@Id
+		@Id(strategy = "ulid")
 		private String id;
 
 		@Column(name = "USER_NAME")
@@ -50,6 +52,43 @@ public class SqltoyRuntimeNativeRegistrarTest {
 	public static class SolonAotTestHandler {
 	}
 
+	/** 非 @Entity 的普通 resultType DTO,验证 nativeReflectionClasses 人工登记 */
+	public static class SolonAotTestDto {
+		private String userName;
+
+		public String getUserName() {
+			return userName;
+		}
+
+		public void setUserName(String userName) {
+			this.userName = userName;
+		}
+	}
+
+	/** 自定义主键生成器夹具 */
+	public static class SolonAotCustomGenerator implements IdGenerator {
+		@Override
+		public Object getId(String tableName, String signature, String[] relatedColumns, Object[] relatedColValue,
+				Date bizDate, String idJavaType, int length, int sequenceSize) {
+			return null;
+		}
+	}
+
+	@Entity(tableName = "sqltoy_solon_aot_custom_id")
+	public static class SolonAotCustomIdEntity {
+		@Id(generator = "org.sagacity.sqltoy.solon.integration.aot.SqltoyRuntimeNativeRegistrarTest$SolonAotCustomGenerator")
+		@Column(name = "ID")
+		private String id;
+
+		public String getId() {
+			return id;
+		}
+
+		public void setId(String id) {
+			this.id = id;
+		}
+	}
+
 	@Test
 	void registersFixedAndConfigDrivenMetadata() {
 		AppContext context = new AppContext();
@@ -65,11 +104,15 @@ public class SqltoyRuntimeNativeRegistrarTest {
 		// 简化别名展开为内置实现类
 		properties.setSqlFormater("default");
 		properties.setCacheType("caffeine");
+		properties.setNativeReflectionClasses(new String[] { SolonAotTestDto.class.getName() });
+		properties.setNativeReflectionPackages(
+				new String[] { "org.sagacity.sqltoy.solon.integration.aot.dto" });
 		context.wrapAndPut(SqlToyContextProperties.class, properties);
 
 		SqlToyContext sqlToyContext = new SqlToyContext();
 		// 走即用即加载路径动态注册实体(与运行期行为一致)
 		sqlToyContext.getEntityManager().getEntityMeta(sqlToyContext, SolonAotTestEntity.class);
+		sqlToyContext.getEntityManager().getEntityMeta(sqlToyContext, SolonAotCustomIdEntity.class);
 		context.wrapAndPut(SqlToyContext.class, sqlToyContext);
 
 		RuntimeNativeMetadata metadata = new RuntimeNativeMetadata();
@@ -91,6 +134,15 @@ public class SqltoyRuntimeNativeRegistrarTest {
 		Set<String> reflection = metadata.getReflection().keySet();
 		assertTrue(reflection.contains(SolonAotTestEntity.class.getName()),
 				"entity reflection missing: " + reflection);
+		// update 2026-10-20 @Id(strategy="ulid")/@Id(generator=自定义类) 的生成器类注册
+		assertTrue(reflection.contains("org.sagacity.sqltoy.plugins.id.impl.ULIDGenerator"),
+				"ULIDGenerator reflection missing: " + reflection);
+		assertTrue(reflection.contains(SolonAotCustomGenerator.class.getName()),
+				"custom @Id generator reflection missing: " + reflection);
+		assertTrue(reflection.contains(SolonAotTestDto.class.getName()),
+				"nativeReflectionClasses DTO reflection missing: " + reflection);
+		assertTrue(reflection.contains("org.sagacity.sqltoy.solon.integration.aot.dto.SolonAotOrderVO"),
+				"nativeReflectionPackages VO reflection missing: " + reflection);
 		assertTrue(reflection.contains(SolonAotTestHandler.class.getName()),
 				"class-name configured extension missing");
 		assertTrue(reflection.contains("org.sagacity.sqltoy.plugins.formater.impl.DefaultSqlFormater"),

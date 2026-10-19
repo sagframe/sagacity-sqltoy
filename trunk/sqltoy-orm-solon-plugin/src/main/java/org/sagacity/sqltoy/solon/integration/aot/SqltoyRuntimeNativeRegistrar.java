@@ -11,6 +11,8 @@ import org.noear.solon.aot.RuntimeNativeRegistrar;
 import org.noear.solon.aot.hint.MemberCategory;
 import org.noear.solon.core.AppContext;
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.config.EntityManager;
+import org.sagacity.sqltoy.config.EntityScanner;
 import org.sagacity.sqltoy.config.model.ColsChainRelativeModel;
 import org.sagacity.sqltoy.config.model.ReverseModel;
 import org.sagacity.sqltoy.config.model.RowsChainRelativeModel;
@@ -21,7 +23,10 @@ import org.sagacity.sqltoy.plugins.id.impl.DefaultIdGenerator;
 import org.sagacity.sqltoy.plugins.id.impl.NanoTimeIdGenerator;
 import org.sagacity.sqltoy.plugins.id.impl.RedisIdGenerator;
 import org.sagacity.sqltoy.plugins.id.impl.SnowflakeIdGenerator;
+import org.sagacity.sqltoy.plugins.id.impl.ULIDGenerator;
 import org.sagacity.sqltoy.plugins.id.impl.UUIDGenerator;
+import org.sagacity.sqltoy.solon.configure.Elastic;
+import org.sagacity.sqltoy.solon.configure.ElasticConfig;
 import org.sagacity.sqltoy.solon.configure.SqlToyContextProperties;
 import org.sagacity.sqltoy.solon.configure.SqlToyContextTaskPoolProperties;
 import org.sagacity.sqltoy.translate.model.CheckerConfigModel;
@@ -62,8 +67,9 @@ public class SqltoyRuntimeNativeRegistrar implements RuntimeNativeRegistrar {
 		// 静态资源
 		Stream.of("sqltoy-translate.xml", "translates/.*", "sqltoy/.*").forEach(metadata::registerResourceInclude);
 		// 通用逻辑
-		Stream.of(SqlToyContextProperties.class, SqlToyContextTaskPoolProperties.class, DefaultIdGenerator.class,
-				NanoTimeIdGenerator.class, RedisIdGenerator.class, SnowflakeIdGenerator.class, UUIDGenerator.class)
+		Stream.of(SqlToyContextProperties.class, SqlToyContextTaskPoolProperties.class, Elastic.class,
+				ElasticConfig.class, DefaultIdGenerator.class, NanoTimeIdGenerator.class, RedisIdGenerator.class,
+				SnowflakeIdGenerator.class, ULIDGenerator.class, UUIDGenerator.class)
 				.forEach(x -> metadata.registerReflection(x, MemberCategory.values()));
 		// XMLUtil.setAttributes 反射赋值的 xml 解析模型类(sql 结果处理器 + 缓存翻译配置)
 		Stream.of(UnpivotModel.class, ColsChainRelativeModel.class, RowsChainRelativeModel.class, ReverseModel.class,
@@ -78,7 +84,13 @@ public class SqltoyRuntimeNativeRegistrar implements RuntimeNativeRegistrar {
 		// sqltoy entity集合
 		context.getBeanAsync(SqlToyContext.class, bean -> {
 			bean.getEntityManager().getAllEntities().entrySet().forEach(entry -> {
-				metadata.registerReflection(entry.getValue().getEntityClass(), MemberCategory.values());
+				Class<?> entityClass = entry.getValue().getEntityClass();
+				metadata.registerReflection(entityClass, MemberCategory.values());
+				// update 2026-10-20 @Id(generator/strategy) 运行期 Class.forName 实例化,
+				// 自定义生成器类不注册则 native 启动/首次写入失败
+				for (String generatorClass : EntityManager.getIdGeneratorClassNames(entityClass)) {
+					registerClassByName(metadata, generatorClass);
+				}
 			});
 		});
 		// 按实际配置动态注册资源pattern与扩展类反射
@@ -87,6 +99,8 @@ public class SqltoyRuntimeNativeRegistrar implements RuntimeNativeRegistrar {
 			registerExtensionClasses(metadata, properties);
 			registerIntegrationClasses(metadata, properties);
 			registerJsonProvider(metadata);
+			registerNativeReflectionClasses(metadata, properties);
+			registerNativeReflectionPackages(metadata, properties);
 		});
 	}
 
@@ -222,6 +236,49 @@ public class SqltoyRuntimeNativeRegistrar implements RuntimeNativeRegistrar {
 		}
 		if (present("com.fasterxml.jackson.databind.ObjectMapper")) {
 			registerClassByName(metadata, "org.sagacity.sqltoy.plugins.json.Jackson2JsonProvider");
+		}
+	}
+
+	/**
+	 * 非 @Entity 的反射类:resultType DTO/VO、SQL按名引用的类等,由应用按全限定类名人工登记;
+	 * 逐个注册 MemberCategory.values(),避免 native 运行期反射字段/方法时
+	 * MissingReflectionRegistrationError
+	 */
+	private void registerNativeReflectionClasses(RuntimeNativeMetadata metadata, SqlToyContextProperties properties) {
+		if (properties.getNativeReflectionClasses() == null) {
+			return;
+		}
+		for (String className : properties.getNativeReflectionClasses()) {
+			if (StringUtil.isBlank(className)) {
+				continue;
+			}
+			registerClassByName(metadata, className.trim());
+		}
+	}
+
+	/**
+	 * 非 @Entity 的反射类包路径:VO/DTO 较多时按包批量扫描,包下全部可实例化类注册
+	 * MemberCategory.values(),避免 native 运行期反射字段/方法时 MissingReflectionRegistrationError
+	 */
+	private void registerNativeReflectionPackages(RuntimeNativeMetadata metadata, SqlToyContextProperties properties) {
+		if (properties.getNativeReflectionPackages() == null) {
+			return;
+		}
+		for (String pkg : properties.getNativeReflectionPackages()) {
+			if (StringUtil.isBlank(pkg)) {
+				continue;
+			}
+			try {
+				List<Class<?>> classes = EntityScanner.scanClasses(pkg.trim(), true, "UTF-8");
+				if (classes != null) {
+					for (Class<?> clazz : classes) {
+						metadata.registerReflection(clazz, MemberCategory.values());
+					}
+				}
+			} catch (Throwable e) {
+				logger.warn("sqltoy aot: native reflection package scan failed for [{}], classes may be incomplete!",
+						pkg, e);
+			}
 		}
 	}
 

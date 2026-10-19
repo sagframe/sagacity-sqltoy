@@ -6,6 +6,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.sagacity.sqltoy.config.EntityManager;
 import org.sagacity.sqltoy.config.EntityScanner;
 import org.sagacity.sqltoy.configure.SqlToyContextProperties;
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
@@ -69,6 +70,8 @@ class SqltoyBeanFactoryInitializationAotProcessor implements BeanFactoryInitiali
 			RuntimeHints hints = context.getRuntimeHints();
 			SqlToyContextProperties properties = bindProperties(beanFactory);
 			registerEntities(hints, properties);
+			registerNativeReflectionClasses(hints, properties);
+			registerNativeReflectionPackages(hints, properties);
 			registerConfiguredResources(hints.resources(), properties);
 			registerExtensionClasses(hints, properties);
 			registerIntegrationClasses(hints, properties);
@@ -126,6 +129,54 @@ class SqltoyBeanFactoryInitializationAotProcessor implements BeanFactoryInitiali
 		}
 		for (Class<?> entityClass : entities) {
 			hints.reflection().registerType(entityClass, MemberCategory.values());
+			// update 2026-10-20 @Id(generator/strategy) 为运行期 Class.forName 实例化,
+			// 自定义生成器类(如 com.x.CustomIdGenerator)不注册则 native 启动/首次写入失败
+			for (String generatorClass : EntityManager.getIdGeneratorClassNames(entityClass)) {
+				registerClassByName(hints, generatorClass);
+			}
+		}
+	}
+
+	/**
+	 * 非 @Entity 的反射类:resultType DTO/VO、SQL按名引用的类等,由应用按全限定类名人工登记;
+	 * 逐个注册 MemberCategory.values(),避免 native 运行期反射字段/方法时
+	 * MissingReflectionRegistrationError
+	 */
+	private void registerNativeReflectionClasses(RuntimeHints hints, SqlToyContextProperties properties) {
+		if (properties.getNativeReflectionClasses() == null) {
+			return;
+		}
+		for (String className : properties.getNativeReflectionClasses()) {
+			if (StringUtil.isBlank(className)) {
+				continue;
+			}
+			registerClassByName(hints, className.trim());
+		}
+	}
+
+	/**
+	 * 非 @Entity 的反射类包路径:VO/DTO 较多时按包批量扫描,包下全部可实例化类注册
+	 * MemberCategory.values(),避免 native 运行期反射字段/方法时 MissingReflectionRegistrationError
+	 */
+	private void registerNativeReflectionPackages(RuntimeHints hints, SqlToyContextProperties properties) {
+		if (properties.getNativeReflectionPackages() == null) {
+			return;
+		}
+		for (String pkg : properties.getNativeReflectionPackages()) {
+			if (StringUtil.isBlank(pkg)) {
+				continue;
+			}
+			try {
+				List<Class<?>> classes = EntityScanner.scanClasses(pkg.trim(), true, "UTF-8");
+				if (classes != null) {
+					for (Class<?> clazz : classes) {
+						hints.reflection().registerType(clazz, MemberCategory.values());
+					}
+				}
+			} catch (Throwable e) {
+				logger.warn("sqltoy aot: native reflection package scan failed for [{}], classes may be incomplete!",
+						pkg, e);
+			}
 		}
 	}
 

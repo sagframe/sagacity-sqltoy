@@ -47,6 +47,17 @@ public class SqlToyContextProperties implements Serializable {
 	private String[] annotatedClasses;
 
 	/**
+	 * GraalVM native 构建期人工指定需要注册反射的类全名(如 resultType DTO/VO、SQL按名引用的类);
+	 * 与 packagesToScan 的区别:packagesToScan 只扫描 @Entity,本属性按类名逐个注册,更灵活
+	 */
+	private String[] nativeReflectionClasses;
+
+	/**
+	 * GraalVM native 构建期需要批量注册反射的包路径(VO/DTO 较多时使用);包下全部可实例化类注册
+	 */
+	private String[] nativeReflectionPackages;
+
+	/**
 	 * 具体的sql.xml 文件资源
 	 */
 	private String[] sqlResources;
@@ -467,6 +478,22 @@ public class SqlToyContextProperties implements Serializable {
 
 	public void setAnnotatedClasses(String[] annotatedClasses) {
 		this.annotatedClasses = stripElementQuotes(annotatedClasses);
+	}
+
+	public String[] getNativeReflectionClasses() {
+		return nativeReflectionClasses;
+	}
+
+	public void setNativeReflectionClasses(String[] nativeReflectionClasses) {
+		this.nativeReflectionClasses = stripElementQuotes(nativeReflectionClasses);
+	}
+
+	public String[] getNativeReflectionPackages() {
+		return nativeReflectionPackages;
+	}
+
+	public void setNativeReflectionPackages(String[] nativeReflectionPackages) {
+		this.nativeReflectionPackages = stripElementQuotes(nativeReflectionPackages);
 	}
 
 	public String getEncoding() {
