@@ -2,6 +2,7 @@ package org.sagacity.sqltoy.dialect;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
@@ -17,36 +18,66 @@ public class DefectReproTest {
 
 	// ============ A1: SqlServerDialectUtils.lockSql 表名未转义+别名分支不全 ============
 
-	/** A1-a 方括号表名被当正则字符类,replaceFirst命中错误位置撕碎SQL */
+	/** A1-a 方括号表名必须按标识符处理,不能被当正则字符类撕碎SQL */
 	@Test
-	public void a1a_bracketTableCorruptsSql() {
+	public void a1a_bracketTableKeepsSql() {
 		String sql = "select [user_id],[user_name] from [user] where [user_id]=?";
 		String result = SqlServerDialectUtils.lockSql(sql, null, LockMode.UPGRADE);
 		System.out.println("[A1a] " + result);
-		// 期望(修复后):hint应加在[user]之后; 当前缺陷:from的r被[user]字符类命中替换
-		boolean corrupted = result.contains("f[user]") || result.contains("om [user]");
-		assertTrue(corrupted || !result.contains("with (rowlock"),
-				"当前行为锚点:方括号表名导致SQL撕碎或hint丢失, result=" + result);
+		assertEquals("select [user_id],[user_name] from [user] with (rowlock xlock) where [user_id]=?", result);
 	}
 
-	/** A1-b schema限定方括号名:正则无命中→静默不加锁(updateFetch语义下=丢失更新) */
+	/** A1-b schema限定方括号名必须能定位并加锁,不能静默无锁 */
 	@Test
-	public void a1b_schemaBracketSilentNoLock() {
+	public void a1b_schemaBracketGetsLock() {
 		String sql = "select * from [dbo].[sys_user] t where t.id=?";
 		String result = SqlServerDialectUtils.lockSql(sql, null, LockMode.UPGRADE);
 		System.out.println("[A1b] " + result);
-		assertFalse(result.contains("with (rowlock"), "当前行为锚点:schema方括号名静默无锁");
+		assertEquals("select * from [dbo].[sys_user] t with (rowlock xlock) where t.id=?", result);
 	}
 
-	/** A1-c 别名+order by后继:hint插在表名与别名之间→T-SQL语法错误 */
+	/** A1-c 别名+order by:表提示必须位于别名之后 */
 	@Test
-	public void a1c_aliasOrderByMisplacedHint() {
+	public void a1c_aliasOrderByHintAfterAlias() {
 		String sql = "select * from my_table t order by t.create_date";
 		String result = SqlServerDialectUtils.lockSql(sql, null, LockMode.UPGRADE);
 		System.out.println("[A1c] " + result);
-		// 正确形态应为 "my_table t with (rowlock xlock)";缺陷形态为 "my_table with (rowlock xlock)  t"
-		assertTrue(result.contains("my_table with (rowlock xlock)  t") || result.contains("my_table with (rowlock"),
-				"当前行为锚点:hint位于别名之前(非法), result=" + result);
+		assertEquals("select * from my_table t with (rowlock xlock) order by t.create_date", result);
+	}
+
+	/** A1-d 无from属于非法加锁诉求:抛明确异常,不能裸StringIndexOutOfBoundsException */
+	@Test
+	public void a1d_noFromThrowsClearException() {
+		IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+				() -> SqlServerDialectUtils.lockSql("select 1", null, LockMode.UPGRADE));
+		System.out.println("[A1d] " + ex.getMessage());
+		assertTrue(ex.getMessage().contains("from clause"), "异常信息应说明缺少from: " + ex.getMessage());
+	}
+
+	/** A1-e 派生表不属于lock简单语境:明确报不支持,不能PatternSyntaxException */
+	@Test
+	public void a1e_derivedTableRejectedClearly() {
+		IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+				() -> SqlServerDialectUtils.lockSql("select * from (select * from t) x", null, LockMode.UPGRADE));
+		System.out.println("[A1e] " + ex.getMessage());
+		assertTrue(ex.getMessage().contains("reference a table directly"), ex.getMessage());
+	}
+
+	/** A1-f 显式tableName:支持schema方括号并加在别名后 */
+	@Test
+	public void a1f_explicitSchemaTableName() {
+		String sql = "select * from [dbo].[sys_user] u where u.id=?";
+		String result = SqlServerDialectUtils.lockSql(sql, "dbo.sys_user", LockMode.UPGRADE);
+		System.out.println("[A1f] " + result);
+		assertEquals("select * from [dbo].[sys_user] u with (rowlock xlock) where u.id=?", result);
+	}
+
+	/** A1-g lock只认第一个from后的表,tableName不覆盖SQL实际表 */
+	@Test
+	public void a1g_firstFromTableWins() {
+		String result = SqlServerDialectUtils.lockSql("select * from t", "other", LockMode.UPGRADE);
+		System.out.println("[A1g] " + result);
+		assertEquals("select * from t with (rowlock xlock)", result);
 	}
 
 	// ============ B4: FunctionUtils.replaceFunction 无参函数IGNORE分支off-by-one ============
