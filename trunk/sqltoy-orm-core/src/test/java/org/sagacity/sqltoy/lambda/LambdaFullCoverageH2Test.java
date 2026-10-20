@@ -826,6 +826,8 @@ public class LambdaFullCoverageH2Test {
 				.selectAll().from(FfUser.class).leftJoin(FfDept.class)
 				.on(FfUser::getDeptId, FfDept::getDeptId)
 				.select(JoinCol.of(FfDept::getStatus).as("status")).find());
+		// G2b 别名必须是普通标识符,防止原始文本拼入SELECT
+		assertThrows(DataAccessException.class, () -> JoinCol.of(FfUser::getStatus).as("x; drop table ff_user"));
 		// G3 外部参数名占用内部p数字命名空间:having与inSql调用时快速失败
 		Map<String, Object> badParams = new HashMap<>();
 		badParams.put("p1", 2);

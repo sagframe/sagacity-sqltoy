@@ -60,6 +60,15 @@ public class NormalSegmentList extends SegmentList {
 	}
 
 	/**
+	 * @description 空分组装配后剔除紧随其前的OR连接符,避免把后续正常条件错误并成OR
+	 */
+	public void removeTrailingOr() {
+		if (!segments.isEmpty() && segments.get(segments.size() - 1) == SqlKeyword.OR) {
+			segments.remove(segments.size() - 1);
+		}
+	}
+
+	/**
 	 * @description 剔除首个满足条件的片段
 	 */
 	private boolean filterFirst(Predicate<SqlSegment> predicate) {

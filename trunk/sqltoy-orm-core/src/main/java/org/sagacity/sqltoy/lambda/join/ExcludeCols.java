@@ -30,6 +30,11 @@ public final class ExcludeCols<T> {
 		if (columns == null || columns.length == 0) {
 			throw new DataAccessException("ExcludeCols.of requires at least one column");
 		}
+		for (LambdaFn<E, ?> column : columns) {
+			if (column == null) {
+				throw new DataAccessException("ExcludeCols.of columns must not contain null elements");
+			}
+		}
 		return new ExcludeCols<>(new ArrayList<>(Arrays.asList(columns)));
 	}
 

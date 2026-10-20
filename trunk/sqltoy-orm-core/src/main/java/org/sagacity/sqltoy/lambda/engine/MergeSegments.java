@@ -13,7 +13,7 @@ import java.util.Map;
  */
 public class MergeSegments implements SqlSegment {
 
-	private final SegmentList normal = new NormalSegmentList();
+	private final NormalSegmentList normal = new NormalSegmentList();
 	private final SegmentList groupBy = new GroupBySegmentList();
 	private final SegmentList having = new HavingSegmentList();
 	private final SegmentList orderBy = new OrderBySegmentList();
@@ -115,6 +115,13 @@ public class MergeSegments implements SqlSegment {
 
 	public void setLastSql(String lastSql) {
 		this.lastSql = lastSql;
+	}
+
+	/**
+	 * @description 空分组未产生SQL时,剔除其前紧邻的OR连接符
+	 */
+	public void removeTrailingOr() {
+		normal.removeTrailingOr();
 	}
 
 	public void add(SqlSegment... sqlSegments) {

@@ -401,6 +401,9 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 
 	@Override
 	public <E> Self orderBy(boolean condition, boolean isAsc, Collection<LambdaFn<E, ?>> columns) {
+		if (columns == null || columns.isEmpty()) {
+			return typedThis;
+		}
 		return addAssembler(resolver -> maybeDo(condition, () -> columns.forEach(column -> {
 			String columnName = orderByColumn(resolver, column);
 			appendSqlSegments(SqlKeyword.ORDER_BY, () -> columnName, isAsc ? SqlKeyword.ASC : SqlKeyword.DESC);
@@ -452,31 +455,22 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 
 	@Override
 	public Self and(boolean condition, Function<Self, Self> function) {
-		return addAssembler(resolver -> {
-			maybeDo(condition, () -> appendSqlSegments(SqlKeyword.AND));
-			addNestedCondition(resolver, condition, function);
-		});
+		return addAssembler(resolver -> addNestedCondition(resolver, condition, function, SqlKeyword.AND));
 	}
 
 	@Override
 	public Self or(boolean condition, Function<Self, Self> function) {
-		return addAssembler(resolver -> {
-			maybeDo(condition, () -> appendSqlSegments(SqlKeyword.OR));
-			addNestedCondition(resolver, condition, function);
-		});
+		return addAssembler(resolver -> addNestedCondition(resolver, condition, function, SqlKeyword.OR));
 	}
 
 	@Override
 	public Self nested(boolean condition, Function<Self, Self> function) {
-		return addAssembler(resolver -> addNestedCondition(resolver, condition, function));
+		return addAssembler(resolver -> addNestedCondition(resolver, condition, function, null));
 	}
 
 	@Override
 	public Self not(boolean condition, Function<Self, Self> function) {
-		return addAssembler(resolver -> {
-			maybeDo(condition, () -> appendSqlSegments(SqlKeyword.NOT));
-			addNestedCondition(resolver, condition, function);
-		});
+		return addAssembler(resolver -> addNestedCondition(resolver, condition, function, SqlKeyword.NOT));
 	}
 
 	@Override
@@ -622,6 +616,9 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 	 * @description 解析字段引用对应的数据库列名
 	 */
 	protected String resolveColumn(ColumnResolver resolver, LambdaFn<?, ?> column) {
+		if (column == null) {
+			throw new DataAccessException("Lambda column reference must not be null");
+		}
 		FieldNature nature = LambdaUtils.extractNature(column);
 		return resolver.columnName(nature.entityClass(), nature.fieldName());
 	}
@@ -792,6 +789,15 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 	 * @description 多重嵌套查询条件:构建独立子条件并整体以括号包裹追加
 	 */
 	protected Self addNestedCondition(ColumnResolver resolver, boolean condition, Function<Self, Self> function) {
+		return addNestedCondition(resolver, condition, function, null);
+	}
+
+	/**
+	 * @description 多重嵌套查询条件:构建独立子条件并整体以括号包裹追加;prefix(AND/OR/NOT)
+	 *              仅当子条件最终非空时才追加,避免空分组留下悬挂的OR/NOT把后续条件错误串联
+	 */
+	protected Self addNestedCondition(ColumnResolver resolver, boolean condition, Function<Self, Self> function,
+			SqlKeyword prefix) {
 		return maybeDo(condition, () -> {
 			Self nested = instance();
 			nested.valueFilter = this.valueFilter;
@@ -802,7 +808,13 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 			String sql = result.getSqlSegment();
 			if (StringUtil.isNotBlank(sql)) {
 				Map<String, Object> params = result.getParams();
+				if (prefix != null) {
+					appendSqlSegments(prefix);
+				}
 				appendSqlSegments(rawSegment("(" + sql.trim() + ")", params));
+			} else {
+				// 空分组前面若已有显式or()连接符,一并剔除,避免其作用到后续正常条件
+				expression.removeTrailingOr();
 			}
 		});
 	}

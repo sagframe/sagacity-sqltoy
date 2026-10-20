@@ -182,6 +182,25 @@ public class LambdaQuerySqlTest {
 	}
 
 	@Test
+	@DisplayName("空OR分组自动丢弃,不得把后续条件并成OR")
+	public void testNestedEmptyOrGroupDropped() {
+		// 组内条件全部被跳过时,OR(...)整体不存在语义,后续条件仍应走AND
+		LambdaQuery<User> query = LambdaQuery.create(User.class).eq(User::getStatus, 1)
+				.or(n -> n.eq(false, User::getType, 2)).eq(User::getId, 4);
+		query.assemble(IDENTITY);
+		assertEquals("status = :p1 AND id = :p2", normalized(query));
+	}
+
+	@Test
+	@DisplayName("空NOT分组自动丢弃,不得把NOT套到后续条件上")
+	public void testNestedEmptyNotGroupDropped() {
+		LambdaQuery<User> query = LambdaQuery.create(User.class).eq(User::getStatus, 1)
+				.not(n -> n.eq(false, User::getType, 2)).eq(User::getId, 4);
+		query.assemble(IDENTITY);
+		assertEquals("status = :p1 AND id = :p2", normalized(query));
+	}
+
+	@Test
 	@DisplayName("accept(inline无括号)与nested(独立分组有括号)对比")
 	public void testAcceptVsNested() {
 		LambdaQuery<User> acceptQuery = LambdaQuery.create(User.class).eq(User::getType, 9)
@@ -542,5 +561,14 @@ public class LambdaQuerySqlTest {
 		LambdaQuery<User> plain = LambdaQuery.create(User.class).eq(User::getStatus, 1);
 		plain.assemble(IDENTITY);
 		assertNull(LambdaConvert.toEntityQuery(plain).getInnerModel().pageOptimize);
+	}
+
+	@Test
+	@DisplayName("自引用CTE/fromFast快速失败,避免递归StackOverflow")
+	public void testSelfReferenceGuards() {
+		LambdaQuery<User> query = LambdaQuery.create(User.class);
+		assertThrows(DataAccessException.class, () -> query.with("x", query));
+		assertThrows(DataAccessException.class, () -> query.withRecursive("x", query, "id"));
+		assertThrows(DataAccessException.class, () -> query.fromFast(query, "t"));
 	}
 }

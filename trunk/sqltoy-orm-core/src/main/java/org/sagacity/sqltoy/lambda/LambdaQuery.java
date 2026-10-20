@@ -94,6 +94,9 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	}
 
 	public static <T> LambdaQuery<T> create(Class<T> entityClass) {
+		if (entityClass == null) {
+			throw new DataAccessException("LambdaQuery entityClass must not be null");
+		}
 		return new LambdaQuery<>(entityClass, new JoinContext(Operate.SELECT, entityClass));
 	}
 
@@ -256,6 +259,9 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 		if (cteQuery == null) {
 			throw new DataAccessException("CTE [" + name + "] requires a non-null inner query");
 		}
+		if (cteQuery == this) {
+			throw new DataAccessException("CTE [" + name + "] cannot reference the query that declares it");
+		}
 		for (CteDef existing : ctes) {
 			if (existing.name.equalsIgnoreCase(name)) {
 				throw new DataAccessException("Duplicate CTE name [" + name + "]");
@@ -282,6 +288,9 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 		requireIdentifier(name, "CTE name");
 		if (cteQuery == null) {
 			throw new DataAccessException("Recursive CTE [" + name + "] requires a non-null inner query");
+		}
+		if (cteQuery == this) {
+			throw new DataAccessException("Recursive CTE [" + name + "] cannot reference the query that declares it");
 		}
 		for (CteDef existing : ctes) {
 			if (existing.name.equalsIgnoreCase(name)) {
@@ -322,6 +331,9 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	public LambdaQuery<T> fromFast(LambdaQuery<?> inner, String alias) {
 		if (inner == null) {
 			throw new DataAccessException("fromFast requires a non-null inner query");
+		}
+		if (inner == this) {
+			throw new DataAccessException("fromFast inner query cannot be the outer query itself");
 		}
 		requireIdentifier(alias, "fromFast alias");
 		// @fast内层必须是完整SELECT..FROM(被分页下推的子查询),强制走join/SQL通道
@@ -703,6 +715,9 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	 * @return 分页查询结果
 	 */
 	public Page<T> findPage(Page<?> page) {
+		if (page == null) {
+			throw new DataAccessException("Lambda findPage page must not be null");
+		}
 		requireDao();
 		assemble(dao::getEntityMeta);
 		if (isJoinMode()) {
@@ -728,6 +743,9 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	 * @return 结果集
 	 */
 	public List<T> findTop(double topSize) {
+		if (topSize <= 0) {
+			throw new DataAccessException("Lambda findTop topSize must be greater than 0");
+		}
 		requireDao();
 		assemble(dao::getEntityMeta);
 		if (isJoinMode()) {
@@ -742,6 +760,9 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	 * @return 结果集
 	 */
 	public List<T> findRandom(double randomSize) {
+		if (randomSize <= 0) {
+			throw new DataAccessException("Lambda findRandom randomSize must be greater than 0");
+		}
 		requireDao();
 		assemble(dao::getEntityMeta);
 		if (isJoinMode()) {

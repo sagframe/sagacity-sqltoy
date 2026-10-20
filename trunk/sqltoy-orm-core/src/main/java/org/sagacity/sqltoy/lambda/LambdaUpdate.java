@@ -71,6 +71,9 @@ public final class LambdaUpdate<T> extends AbstractWhere<T, LambdaUpdate<T>> {
 	}
 
 	public static <T> LambdaUpdate<T> create(Class<T> entityClass) {
+		if (entityClass == null) {
+			throw new DataAccessException("LambdaUpdate entityClass must not be null");
+		}
 		return new LambdaUpdate<>(entityClass, new JoinContext(Operate.UPDATE, null));
 	}
 
@@ -169,6 +172,9 @@ public final class LambdaUpdate<T> extends AbstractWhere<T, LambdaUpdate<T>> {
 	 * @return 自身
 	 */
 	public LambdaUpdate<T> set(boolean condition, LambdaFn<T, ?> column, Object val) {
+		if (column == null) {
+			throw new DataAccessException("Lambda update set column must not be null");
+		}
 		if (condition && valueFilter.test(val)) {
 			setOps.add(new SetOp(column, val, null));
 		}
@@ -188,6 +194,9 @@ public final class LambdaUpdate<T> extends AbstractWhere<T, LambdaUpdate<T>> {
 	 * ignore
 	 */
 	public LambdaUpdate<T> setNull(boolean condition, LambdaFn<T, ?> column) {
+		if (column == null) {
+			throw new DataAccessException("Lambda update setNull column must not be null");
+		}
 		if (condition) {
 			setOps.add(new SetOp(column, null, null));
 		}
@@ -228,6 +237,9 @@ public final class LambdaUpdate<T> extends AbstractWhere<T, LambdaUpdate<T>> {
 	 * ignore
 	 */
 	public LambdaUpdate<T> setExpr(boolean condition, LambdaFn<T, ?> column, String expression, Object value) {
+		if (column == null) {
+			throw new DataAccessException("Lambda update setExpr column must not be null");
+		}
 		if (!condition) {
 			return this;
 		}

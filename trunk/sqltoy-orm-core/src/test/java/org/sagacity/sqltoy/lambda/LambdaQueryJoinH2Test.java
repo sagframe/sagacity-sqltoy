@@ -235,6 +235,57 @@ public class LambdaQueryJoinH2Test {
 				.selectAll(JoinDept.class).from(JoinUser.class).find());
 	}
 
+	@Test
+	@Order(17)
+	@DisplayName("join查询空OR分组:不得把后续条件并成OR扩大结果")
+	public void testJoinEmptyOrGroup() {
+		List<JoinUser> rows = lightDao.lambdaQuery(JoinUser.class).leftJoin(JoinDept.class)
+				.on(JoinUser::getDeptId, JoinDept::getDeptId).eq(JoinUser::getStatus, 1)
+				.or(w -> w.eqIfPresent(JoinDept::getDeptName, null)).eq(JoinUser::getId, 4).find();
+		assertEquals(1, rows.size(), "正确语义应为 status=1 AND id=4,仅赵六一行");
+		assertEquals(Integer.valueOf(4), rows.get(0).getId());
+	}
+
+	@Test
+	@Order(18)
+	@DisplayName("join更新空OR分组:EXISTS子查询内不得把条件并成OR")
+	public void testJoinUpdateEmptyOrGroup() {
+		LambdaUpdate<JoinUser> update = lightDao.lambdaUpdate(JoinUser.class).leftJoin(JoinDept.class)
+				.on(JoinUser::getDeptId, JoinDept::getDeptId).set(JoinUser::getStatus, 5)
+				.eq(JoinUser::getStatus, 1).or(w -> w.eqIfPresent(JoinDept::getDeptName, null))
+				.eq(JoinUser::getId, 4);
+		update.assemble(context::getEntityMeta);
+		String sql = normalized(update.getSql());
+		assertTrue(!sql.contains(" OR "), "空OR分组后不得出现OR: " + sql);
+		assertTrue(sql.contains("j1.STATUS = :p2 AND j1.ID = :p3"), "条件应按AND连接: " + sql);
+	}
+
+	@Test
+	@Order(19)
+	@DisplayName("join setExpr命名参数:单个:name必须绑定value")
+	public void testJoinSetExprNamedParam() {
+		LambdaUpdate<JoinUser> update = lightDao.lambdaUpdate(JoinUser.class).leftJoin(JoinDept.class)
+				.on(JoinUser::getDeptId, JoinDept::getDeptId)
+				.setExpr(JoinUser::getStatus, "status + :inc", 2).eq(JoinDept::getDeptName, "研发部");
+		update.assemble(context::getEntityMeta);
+		String sql = normalized(update.getSql());
+		assertTrue(sql.contains("STATUS = status + :p1"), "命名参数应改写为内部参数: " + sql);
+		assertEquals(2, update.getParams().get("p1"), "命名参数必须绑定到value");
+	}
+
+	@Test
+	@Order(20)
+	@DisplayName("join更新同列重复set:保留最后一次,不得生成重复SET片段")
+	public void testJoinDuplicateSetKeepsLast() {
+		LambdaUpdate<JoinUser> update = lightDao.lambdaUpdate(JoinUser.class).leftJoin(JoinDept.class)
+				.on(JoinUser::getDeptId, JoinDept::getDeptId).set(JoinUser::getStatus, 1)
+				.set(JoinUser::getStatus, 2).eq(JoinDept::getDeptName, "研发部");
+		update.assemble(context::getEntityMeta);
+		String sql = normalized(update.getSql());
+		assertEquals(sql.indexOf("STATUS ="), sql.lastIndexOf("STATUS ="), "同一列只允许一个SET片段: " + sql);
+		assertEquals(2, update.getParams().get("p2"), "重复set应保留最后一次值");
+	}
+
 	private static String normalized(String sql) {
 		return sql == null ? "" : sql.replaceAll("\\s+", " ").trim();
 	}

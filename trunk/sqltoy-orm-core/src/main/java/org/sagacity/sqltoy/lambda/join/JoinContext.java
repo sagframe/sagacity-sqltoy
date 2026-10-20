@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.sagacity.sqltoy.config.model.EntityMeta;
@@ -25,6 +27,11 @@ import org.sagacity.sqltoy.lambda.toolkit.FieldNature;
  * @author zhongxuchen
  */
 public class JoinContext {
+
+	/**
+	 * setExpr中的命名参数(规避PostgreSQL :: 类型转换)
+	 */
+	private static final Pattern SET_EXPR_NAMED_PARAM = Pattern.compile("(?<!:):([A-Za-z_][A-Za-z0-9_]*)");
 
 	public enum Operate {
 		SELECT, UPDATE, DELETE
@@ -222,6 +229,12 @@ public class JoinContext {
 		// 校验set/删除目标/select列所属实体均已参与join
 		for (SetItem setItem : setItems) {
 			requireJoined(setItem.column.entityClass());
+			// 单目标表UPDATE只能更新主表列;若set的是join表同名列,会静默改错目标表列
+			if (!fromClass.equals(setItem.column.entityClass())) {
+				throw new DataAccessException("Join update can only set columns of the target entity ["
+						+ fromClass.getSimpleName() + "] but got [" + setItem.column.entityClass().getSimpleName()
+						+ "]; update the joined table through its own lambdaUpdate");
+			}
 		}
 		for (Class<?> deleteClass : deleteClasses) {
 			requireJoined(deleteClass);
@@ -246,6 +259,9 @@ public class JoinContext {
 	 * @description 注册主表,必须第一个调用
 	 */
 	public void registerFrom(Class<?> entityClass) {
+		if (entityClass == null) {
+			throw new DataAccessException("Lambda from entityClass must not be null");
+		}
 		if (isAssembled()) {
 			throw new DataAccessException(
 					"Join structure cannot be modified after assemble; build joins before execution");
@@ -266,6 +282,9 @@ public class JoinContext {
 	 * @description 注册主表并指定别名(exists子查询使用sq前缀别名)
 	 */
 	public void registerFrom(Class<?> entityClass, String alias) {
+		if (entityClass == null) {
+			throw new DataAccessException("Lambda from entityClass must not be null");
+		}
 		if (fromClass != null) {
 			throw new DataAccessException("Lambda join from entity can only be set once");
 		}
@@ -280,6 +299,9 @@ public class JoinContext {
 	 * @description 注册join表,等待on关联;查询场景未显式from时缺省以结果类型作为主表
 	 */
 	public void registerJoin(SqlKeyword joinKeyword, Class<?> entityClass) {
+		if (entityClass == null) {
+			throw new DataAccessException("Lambda join entityClass must not be null");
+		}
 		if (isAssembled()) {
 			throw new DataAccessException(
 					"Join structure cannot be modified after assemble; build joins before execution");
@@ -313,6 +335,9 @@ public class JoinContext {
 			throw new DataAccessException("on() arguments must be paired join columns (even count)");
 		}
 		for (int i = 0; i < columnPairs.length; i += 2) {
+			if (columnPairs[i] == null || columnPairs[i + 1] == null) {
+				throw new DataAccessException("on() join columns must not contain null");
+			}
 			FieldNature natureA = LambdaUtils.extractNature(columnPairs[i]);
 			FieldNature natureB = LambdaUtils.extractNature(columnPairs[i + 1]);
 			if (!aliasMap.containsKey(natureA.entityClass()) || !aliasMap.containsKey(natureB.entityClass())) {
@@ -429,22 +454,51 @@ public class JoinContext {
 	 */
 	public <E, R> void addSetColumn(LambdaFn<E, R> column, Object value) {
 		checkOperate(Operate.UPDATE, "set");
-		setItems.add(new SetItem(LambdaUtils.extractNature(column), nextParamName(), value, null));
+		FieldNature nature = LambdaUtils.extractNature(column);
+		removeExistingSet(nature);
+		setItems.add(new SetItem(nature, nextParamName(), value, null));
+	}
+
+	/**
+	 * @description 同一列重复set时保留最后一次(与单表通道setFields Map覆盖语义一致)
+	 */
+	private void removeExistingSet(FieldNature nature) {
+		setItems.removeIf(item -> item.column.entityClass() == nature.entityClass()
+				&& item.column.fieldName().equals(nature.fieldName()));
 	}
 
 	/**
 	 * @description 注册update的set表达式(基于当前值计算,如<code>status = status + 1</code>),
-	 *              表达式原文输出,其中单个<code>?</code>替换为命名参数并绑定value
+	 *              表达式原文输出,其中单个<code>?</code>或单个<code>:name</code>替换为内部命名参数并绑定value
 	 */
 	public <E, R> void addSetExpression(LambdaFn<E, R> column, String expression, Object value) {
 		checkOperate(Operate.UPDATE, "setExpr");
+		FieldNature nature = LambdaUtils.extractNature(column);
 		if (value != null && expression.indexOf('?') >= 0) {
+			removeExistingSet(nature);
 			String paramName = nextParamName();
-			setItems.add(new SetItem(LambdaUtils.extractNature(column), paramName, value,
-					expression.replace("?", ":" + paramName)));
-		} else {
-			setItems.add(new SetItem(LambdaUtils.extractNature(column), null, null, expression));
+			setItems.add(new SetItem(nature, paramName, value, expression.replace("?", ":" + paramName)));
+			return;
 		}
+		if (value != null) {
+			Matcher matcher = SET_EXPR_NAMED_PARAM.matcher(expression);
+			if (matcher.find()) {
+				int paramStart = matcher.start();
+				int paramEnd = matcher.end();
+				if (matcher.find()) {
+					throw new DataAccessException(
+							"Lambda setExpr supports only one named parameter when binding a value: " + expression);
+				}
+				removeExistingSet(nature);
+				String paramName = nextParamName();
+				String rewritten = expression.substring(0, paramStart) + ":" + paramName
+						+ expression.substring(paramEnd);
+				setItems.add(new SetItem(nature, paramName, value, rewritten));
+				return;
+			}
+		}
+		removeExistingSet(nature);
+		setItems.add(new SetItem(nature, null, null, expression));
 	}
 
 	/**
@@ -452,6 +506,9 @@ public class JoinContext {
 	 */
 	public void addDeleteClass(Class<?> entityClass) {
 		checkOperate(Operate.DELETE, "deleteTables");
+		if (entityClass == null) {
+			throw new DataAccessException("Lambda delete target entityClass must not be null");
+		}
 		deleteClasses.add(entityClass);
 	}
 

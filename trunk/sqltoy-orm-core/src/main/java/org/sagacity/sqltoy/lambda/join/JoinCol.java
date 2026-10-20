@@ -37,6 +37,9 @@ public final class JoinCol {
 	}
 
 	private JoinCol(LambdaFn<?, ?> column, SqlFunction function, String rawSql) {
+		if (column == null && rawSql == null) {
+			throw new DataAccessException("JoinCol column reference must not be null");
+		}
 		this.column = column;
 		this.function = function;
 		this.rawSql = rawSql;
@@ -89,6 +92,9 @@ public final class JoinCol {
 	 * @return 自身
 	 */
 	public JoinCol as(String alias) {
+		if (alias != null && !alias.matches("[A-Za-z_][A-Za-z0-9_]*")) {
+			throw new DataAccessException("JoinCol alias must be a plain identifier but got: " + alias);
+		}
 		this.alias = alias;
 		return this;
 	}

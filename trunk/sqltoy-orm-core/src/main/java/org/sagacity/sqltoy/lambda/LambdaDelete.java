@@ -39,6 +39,9 @@ public final class LambdaDelete<T> extends AbstractWhere<T, LambdaDelete<T>> {
 	}
 
 	public static <T> LambdaDelete<T> create(Class<T> entityClass) {
+		if (entityClass == null) {
+			throw new DataAccessException("LambdaDelete entityClass must not be null");
+		}
 		return new LambdaDelete<>(entityClass, new JoinContext(Operate.DELETE, null));
 	}
 
