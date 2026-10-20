@@ -1074,6 +1074,12 @@ public class LambdaFullCoverageH2Test {
 		assertEquals(99, lightDao.lambdaQuery(FfUser.class).eq(FfUser::getId, 95).getOne().getStatus().intValue());
 		assertEquals(1, lightDao.lambdaQuery(FfUser.class).eq(FfUser::getId, 96).getOne().getStatus().intValue());
 		assertEquals(1, lightDao.lambdaQuery(FfUser.class).eq(FfUser::getId, 97).getOne().getStatus().intValue());
+		// UPDATE WHERE likeLeft(后缀"%模式"):仅甲模式(96)命中
+		long updatedLeft = lightDao.lambdaUpdate(FfUser.class).set(FfUser::getStatus, 98)
+				.likeLeft(FfUser::getStaffName, "模式").ge(FfUser::getId, 95).update();
+		assertEquals(1L, updatedLeft);
+		assertEquals(98, lightDao.lambdaQuery(FfUser.class).eq(FfUser::getId, 96).getOne().getStatus().intValue());
+		assertEquals(1, lightDao.lambdaQuery(FfUser.class).eq(FfUser::getId, 97).getOne().getStatus().intValue());
 		// DELETE WHERE likeLeft(后缀"%模式"):仅甲模式(96)命中;若退化为包含匹配会误删95/97
 		long deleted = lightDao.lambdaDelete(FfUser.class).likeLeft(FfUser::getStaffName, "模式")
 				.ge(FfUser::getId, 95).delete();
