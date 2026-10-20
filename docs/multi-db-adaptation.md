@@ -242,7 +242,7 @@ private String organName;
 <dependency>
     <groupId>com.sagframe</groupId>
     <artifactId>sagacity-sqltoy-spring-starter</artifactId>
-    <version>6.0.6</version>
+    <version>6.0.8</version>
 </dependency>
 ```
 
