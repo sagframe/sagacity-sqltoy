@@ -17,7 +17,7 @@ English | [简体中文](README.zh-CN.md)
 
 **JPA-style object CRUD + SQL-first querying — one SQL across 25 databases.**
 
-SqlToy is a Java ORM for applications that need both convenient object-based data access and the full power of SQL. Open source and in production since 2008; runs on JDK 17+ with Spring Boot 3/4 (a JDK 8 line is maintained for legacy systems).
+SqlToy is a Java ORM for applications that need both convenient object-based data access and the full power of SQL. Open source and in production since 2008; runs on JDK 17+ with Spring Boot 3/4 (a JDK 8 line is maintained for legacy systems), and compiles to a GraalVM Native Image for cloud-native and XinChuang (domestic-stack) deployments with instant startup and a minimal memory footprint.
 
 ## Why SqlToy?
 
