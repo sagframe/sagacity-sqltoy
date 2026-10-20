@@ -1,4 +1,4 @@
-# 一套 SQL，跑遍 25 种数据库：换库迁移，凭什么首选 SqlToy？
+# 一套 SQL，跑遍 25 种数据库：跨库适配，凭什么首选 SqlToy？
 
 > 一个 ORM，25 种数据库方言。从 Oracle 到达梦、金仓、瀚高、神通，一套 SQL 全库运行；从 count 优化到缓存翻译，把每一次数据库交互都榨出性能。
 
@@ -247,7 +247,8 @@ private String organName;
 ```
 
 - 在线文档：<https://sagframe.github.io/sqltoy-docs/>
-- 换库迁移适配指引：<https://sagframe.github.io/sqltoy-docs/#/introduction/xinchuang>
+- 换库迁移适配指引：<https://sagframe.github.io/sqltoy-docs/#/introduction/db_migration>
+- 英文版（跨库适配主题）：见本仓库 `docs/multi-db-adaptation.en.md`
 - GitHub：<https://github.com/sagframe/sagacity-sqltoy>
 - Gitee：<https://gitee.com/sagacity/sagacity-sqltoy>
 - QQ 交流群：**531812227**
