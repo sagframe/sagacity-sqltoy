@@ -49,7 +49,7 @@ List<StaffVO> staff = lightDao.find("staff_search",
 ## Get Started
 
 📖 [Documentation (English)](https://sagframe.github.io/sqltoy-docs/#/en/) ·
-🚀 [Quickstart lessons](https://github.com/sagframe/sqltoy-quickstart) — seven runnable JUnit lessons, nothing to install ·
+🚀 [Quickstart lessons](https://github.com/sagframe/sqltoy-quickstart) — runnable JUnit lessons from CRUD to cross-database SQL (with a real-database finale), nothing to install ·
 📰 [One SQL across 25 databases](docs/xinchuang-sqltoy.md) (selection article, Chinese)
 
 ```xml
@@ -84,15 +84,14 @@ jdk8 line (legacy)   : 5.6.96.jre8 (final; works with quickvo-maven-plugin)
 | 📄 Dynamic SQL specification | [Online docs · Dynamic SQL](https://sagframe.github.io/sqltoy-docs/#/query/dynamic_sql) |
 | 📄 Detailed manual (Word, Chinese) | `docs/睿智平台SqlToy5.6使用手册.doc` · [6.0 Upgrade Guide](https://sagframe.github.io/sqltoy-docs/#/introduction/upgrade_6.0) |
 | 🚀 Quickstart lessons (start here) | <https://github.com/sagframe/sqltoy-quickstart> |
+| 🚀 Full-feature demos (sharding / multi-datasource / NoSQL / masking / FIFO cache / native) | <https://github.com/sagframe/sqltoy-showcase> |
 | 🚀 Solon demo | <https://github.com/CoCoTeaNet/sqltoy-solon-demo> |
-| 🚀 POJO/DTO strict layering demo | <https://github.com/sagframe/sqltoy-strict> |
-| 🚀 Sharding / NoSQL / xml demos | <https://github.com/sagframe/sqltoy-showcase> |
 | 🔌 quickvo code generator | [quickvo docs](https://sagframe.github.io/sqltoy-docs/#/en/prepare/quickvo) · [gitee](https://gitee.com/sagacity/maven-quickvo-plugin) |
 | 🔌 sqltoy-plus (Lambda enhancements) | Lambda capability merged into core since 6.0.8 ([Lambda conditions](https://sagframe.github.io/sqltoy-docs/#/en/query/lambda_query)); this repo remains as historical reference: <https://gitee.com/gzghde/sqltoy-plus> |
 | 🔌 Admin system scaffold | <https://github.com/CoCoTeaNet/CyreneAdmin> |
 | 🔌 IDEA plugin | <https://github.com/imyuyu/sqltoy-idea-plugin> |
 
-> Chinese-ecosystem mirrors: [Gitee](https://gitee.com/sagacity/sagacity-sqltoy) · [integration demo](https://gitee.com/sagacity/sqltoy-helloworld) · [multi-datasource demo](https://gitee.com/sagacity/sqltoy-showcase/tree/master/trunk/sqltoy-dynamic-datasource)
+> Chinese-ecosystem mirrors: [Gitee](https://gitee.com/sagacity/sagacity-sqltoy) · [showcase on Gitee](https://gitee.com/sagacity/sqltoy-showcase)
 
 ## 💬 Community
 
@@ -754,7 +753,7 @@ Banana|2019-03|13 | 2300|2700
 #### 10.1 Query with Database & Table Sharding (database sharding and table sharding strategies can be used together)
 
 ```xml
-For the sql, see the quickstart project: the com/sqltoy/quickstart/sqltoy-quickstart.sql.xml file
+For the sql, see the quickstart project: the com/sqltoy/lesson/lesson.sql.xml file
 <!-- Database sharding demo -->
 <sql id="qstart_db_sharding_case">
 	<sharding-datasource strategy="hashDataSource" params="userId" />
@@ -785,7 +784,7 @@ For the sql, see the quickstart project: the com/sqltoy/quickstart/sqltoy-quicks
 
 @Sharding configures the database & table sharding strategies on objects via annotations
 
-For a complete demo, see the sqltoy-sharding sub-project of the demo project [sqltoy-showcase](https://github.com/sagframe/sqltoy-showcase) (strategy bean definitions are in its spring-sqltoy-sharding.xml)
+For a complete demo, see `ShardingTest` in the demo project [sqltoy-showcase](https://github.com/sagframe/sqltoy-showcase) (the sharding-strategy beans are defined in its `DataSourceConfig`)
 
 ```java
 package com.sagframe.sqltoy.showcase.vo;
@@ -819,7 +818,7 @@ public class StaffInfoVO extends AbstractStaffInfoVO {
 
 # Integration Guide
 
-## See the quickstart under trunk and read its readme.md to get started
+## See the [sqltoy-quickstart](https://github.com/sagframe/sqltoy-quickstart) project and read its README.md to get started
 
 ```java
 package com.sqltoy.quickstart;

@@ -24,14 +24,9 @@ SqlToy 是 JPA 式对象操作与 SQL 优先查询的融合体，是简单业务
 | 📰 换库迁移选型文章 | [一套 SQL，跑遍 25 种数据库：换库迁移，凭什么首选 SqlToy？](docs/xinchuang-sqltoy.md) |
 | 📄 xml中sql查询完整配置 | [在线文档·动态SQL规范](https://sagframe.github.io/sqltoy-docs/#/query/dynamic_sql) |
 | 📄 WORD版详细手册 | `docs/睿智平台SqlToy5.6使用手册.doc`（6.0 变更见[升级指南](https://sagframe.github.io/sqltoy-docs/#/introduction/upgrade_6.0)） |
-| 🚀 快速集成演示 | <https://gitee.com/sagacity/sqltoy-helloworld> |
-| 🚀 功能演示(quickstart) | <https://github.com/sagframe/sqltoy-quickstart> |
+| 🚀 课程式入门演示(quickstart) | <https://github.com/sagframe/sqltoy-quickstart> |
+| 🚀 全功能演示(showcase:分库分表/多数据源/NoSQL/脱敏/树表/FIFO缓存/native) | <https://github.com/sagframe/sqltoy-showcase> |
 | 🚀 Solon 演示 | <https://github.com/CoCoTeaNet/sqltoy-solon-demo> |
-| 🚀 POJO/DTO 严格分层演示 | <https://github.com/sagframe/sqltoy-strict> |
-| 🚀 分库分表演示 | <https://github.com/sagframe/sqltoy-showcase/tree/master/trunk/sqltoy-sharding> |
-| 🚀 多数据源演示 | <https://gitee.com/sagacity/sqltoy-showcase/tree/master/trunk/sqltoy-dynamic-datasource> |
-| 🚀 NoSQL演示(mongo/es) | <https://github.com/sagframe/sqltoy-showcase/tree/master/trunk/sqltoy-nosql> |
-| 🚀 xml配置演示 | <https://github.com/sagframe/sqltoy-showcase/tree/master/trunk/sqltoy-showcase> |
 | 🔌 quickvo 代码生成工具(官方) | <https://gitee.com/sagacity/maven-quickvo-plugin> |
 | 🔌 sqltoy-plus(Lambda增强) | Lambda 能力已于 6.0.8 并入核心（[Lambda 条件查询与更新](https://sagframe.github.io/sqltoy-docs/#/query/lambda_query)），本仓库为历史参考：<https://gitee.com/gzghde/sqltoy-plus> |
 | 🔌 管理系统脚手架 | <https://github.com/CoCoTeaNet/CyreneAdmin> |
@@ -121,7 +116,7 @@ lightDao.update(staffInfo, "photo");
 lightDao.delete(new StaffInfoVO("S2007"));
 ```
 
-推荐从 [sqltoy-quickstart 的 5 节课程](https://github.com/sagframe/sqltoy-quickstart) 开始（clone 后 `mvn test` 即可运行：内置 H2 内存库 + 嵌入式 Redis，覆盖 CRUD 与 Redis 业务主键、动态条件、分页优化、缓存翻译、跨库 SQL 适配），或从 [sqltoy-helloworld](https://gitee.com/sagacity/sqltoy-helloworld) 集成入门。
+推荐从 [sqltoy-quickstart](https://github.com/sagframe/sqltoy-quickstart) 开始（clone 后 `mvn test` 即可运行：内置 H2 内存库 + 嵌入式 Redis；5 节基础课程覆盖 CRUD 与 Redis 业务主键、动态条件、分页优化、缓存翻译、跨库 SQL 适配，进阶课程覆盖高并发台账、报表零 ETL、函数转换，第 9 课经 docker-compose 在 PostgreSQL/SQL Server/Oracle/MySQL 真库验证同一套 SQL），全功能演示见 [sqltoy-showcase](https://github.com/sagframe/sqltoy-showcase)。
 
 ## 🔍 特性详解
 
@@ -737,7 +732,7 @@ spring.sqltoy.redoDataSources[0]=pgdb
 #### 10.1 查询分库分表（分库和分表策略可以同时使用）
 
 ```xml
-sql参见quickstart项目:com/sqltoy/quickstart/sqltoy-quickstart.sql.xml 文件
+sql参见quickstart项目:com/sqltoy/lesson/lesson.sql.xml 文件
 <!-- 演示分库 -->
 <sql id="qstart_db_sharding_case">
 	<sharding-datasource strategy="hashDataSource" params="userId" />
@@ -768,7 +763,7 @@ sql参见quickstart项目:com/sqltoy/quickstart/sqltoy-quickstart.sql.xml 文件
 
 @Sharding 在对象上通过注解来实现分库分表的策略配置
 
-完整演示参见演示项目 [sqltoy-showcase](https://github.com/sagframe/sqltoy-showcase) 的 sqltoy-sharding 子项目（策略 bean 定义见其 spring-sqltoy-sharding.xml）
+完整演示参见演示项目 [sqltoy-showcase](https://github.com/sagframe/sqltoy-showcase) 的 `ShardingTest`（分库分表策略 bean 定义见其 `DataSourceConfig`）
 
 ```java
 package com.sagframe.sqltoy.showcase.vo;
@@ -802,7 +797,7 @@ public class StaffInfoVO extends AbstractStaffInfoVO {
 
 # 集成说明
 
-## 参见trunk 下面的quickstart,并阅读readme.md进行上手
+## 参见 [sqltoy-quickstart](https://github.com/sagframe/sqltoy-quickstart) 演示项目,并阅读其 README.md 上手
 
 ```java
 package com.sqltoy.quickstart;
