@@ -21,7 +21,7 @@ SqlToy 是 JPA 式对象操作与 SQL 优先查询的融合体，是简单业务
 | 资源 | 地址 |
 | --- | --- |
 | 📖 在线文档（推荐） | <https://sagframe.github.io/sqltoy-docs/> |
-| 📰 换库迁移选型文章 | [一套 SQL，跑遍 25 种数据库：换库迁移，凭什么首选 SqlToy？](docs/xinchuang-sqltoy.md) |
+| 📰 跨库适配选型文章 | [一套 SQL，跑遍 25 种数据库：跨库适配，凭什么首选 SqlToy？](docs/multi-db-adaptation.md) |
 | 📄 xml中sql查询完整配置 | [在线文档·动态SQL规范](https://sagframe.github.io/sqltoy-docs/#/query/dynamic_sql) |
 | 📄 WORD版详细手册 | `docs/睿智平台SqlToy5.6使用手册.doc`（6.0 变更见[升级指南](https://sagframe.github.io/sqltoy-docs/#/introduction/upgrade_6.0)） |
 | 🚀 课程式入门演示(quickstart) | <https://github.com/sagframe/sqltoy-quickstart> |
