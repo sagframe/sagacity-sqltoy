@@ -3,7 +3,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sagframe</groupId>
-	<version>6.0.8.RC2</version>
+	<version>6.0.8</version>
 	<name>sagacity-sqltoy</name>
 	<description>sqltoy core code</description>
 	<artifactId>sagacity-sqltoy</artifactId>
@@ -14,10 +14,10 @@
 		<ehcache.version>3.12.0</ehcache.version>
 		<httpclient5.version>5.6.5</httpclient5.version>
 		<elastic-rest5-client.version>9.5.5</elastic-rest5-client.version>
-		<jackson2.version>2.19.0</jackson2.version>
-		<jackson3.version>3.0.0</jackson3.version>
+		<jackson2.version>2.22.4</jackson2.version>
+		<jackson3.version>3.2.3</jackson3.version>
 		<!-- jackson3 的 databind 要求的最低 jackson-annotations 版本(仅测试期使用,见 dependencies 处说明) -->
-		<jackson3.annotations.version>2.21</jackson3.annotations.version>
+		<jackson3.annotations.version>2.22</jackson3.annotations.version>
 		<fastjson.version>2.0.65</fastjson.version>
 		<mongo.version>5.13.0</mongo.version>
 		<junit-jupiter.version>6.1.3</junit-jupiter.version>
