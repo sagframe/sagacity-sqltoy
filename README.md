@@ -167,6 +167,36 @@ lightDao.save().parallelConfig(ParallelConfig.create().groupSize(5000).maxThread
 lightDao.loadByIds(StaffInfoVO.class,"S2007");
 ```
 
+Native lambda condition query/update/delete (built in since 6.0.8; the former sqltoy-plus capability is merged into core):
+
+```java
+// single-table query: conditions are built from entity property method references — type safe,
+// and a renamed field is caught at compile time
+List<StaffInfoVO> staffList = lightDao.lambdaQuery(StaffInfoVO.class)
+		.eq(StaffInfoVO::getStatus, 1)
+		.like(StaffInfoVO::getStaffName, "Zhang")
+		.orderByDesc(StaffInfoVO::getEntryDate)
+		.find();
+
+// one builder for single-table and multi-table joins
+List<StaffInfoVO> joinList = lightDao.lambdaQuery(StaffInfoVO.class)
+		.leftJoin(OrganInfoVO.class)
+		.on(StaffInfoVO::getOrganId, OrganInfoVO::getOrganId)
+		.eq(StaffInfoVO::getStatus, 1)
+		.find();
+
+// conditional update: set specifies the update fields, then the conditions
+long updated = lightDao.lambdaUpdate(StaffInfoVO.class)
+		.set(StaffInfoVO::getStatus, 2)
+		.eq(StaffInfoVO::getStaffId, "S2007")
+		.update();
+
+// conditional delete
+long deleted = lightDao.lambdaDelete(StaffInfoVO.class)
+		.eq(StaffInfoVO::getStatus, 0)
+		.delete();
+```
+
 ### 2. Object Queries Directly in Code
 
 The uniform rule in sqltoy is that in code you can pass either the sql directly or the sqlId from the corresponding xml file.
@@ -210,6 +240,25 @@ public Long updateByQuery() {
 
 // delete records by condition
 lightDao.deleteByQuery(StaffInfoVO.class, EntityQuery.create().where("status=?").values(0));
+```
+
+Authoring dynamic sql directly with Java text blocks (the same syntax as in xml):
+
+```java
+// Java 13+ text blocks: the sql sits next to the business code, and the #[] dynamic-sql syntax is identical to xml
+// text blocks suit medium-complexity sql; complex sql is still recommended to be defined in xml for unified governance
+String sql = """
+		select t.*, t2.ORGAN_NAME
+		from sqltoy_staff_info t
+		left join sqltoy_organ_info t2 on t.organ_id = t2.ORGAN_ID
+		where #[t.STATUS=1]
+		#[and t.STAFF_NAME like :staffName]
+		#[and t.ENTRY_DATE>=:beginDate]
+		order by t.ENTRY_DATE desc
+		""";
+// exactly the same as the sqlId style: pass the sql text directly, and the parameter object's
+// property names map to the sql named parameters
+List<StaffInfoVO> staffList = lightDao.find(sql, staffVO, StaffInfoVO.class);
 ```
 
 ### 3. Plain SQL Authoring (Discovery and Abstraction of the Essential Rules)

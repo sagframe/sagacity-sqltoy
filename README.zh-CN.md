@@ -146,6 +146,35 @@ lightDao.save().parallelConfig(ParallelConfig.create().groupSize(5000).maxThread
 lightDao.loadByIds(StaffInfoVO.class,"S2007");
 ```
 
+原生lambda条件查询/更新/删除(6.0.8 起内建,原sqltoy-plus能力并入核心):
+
+```java
+// 单表查询:以实体属性方法引用组织条件,类型安全,字段改名编译期自动发现
+List<StaffInfoVO> staffList = lightDao.lambdaQuery(StaffInfoVO.class)
+		.eq(StaffInfoVO::getStatus, 1)
+		.like(StaffInfoVO::getStaffName, "张")
+		.orderByDesc(StaffInfoVO::getEntryDate)
+		.find();
+
+// 多表join统一入口(单表与多表join共用同一构建器)
+List<StaffInfoVO> joinList = lightDao.lambdaQuery(StaffInfoVO.class)
+		.leftJoin(OrganInfoVO.class)
+		.on(StaffInfoVO::getOrganId, OrganInfoVO::getOrganId)
+		.eq(StaffInfoVO::getStatus, 1)
+		.find();
+
+// 条件更新:set指定更新字段+条件
+long updated = lightDao.lambdaUpdate(StaffInfoVO.class)
+		.set(StaffInfoVO::getStatus, 2)
+		.eq(StaffInfoVO::getStaffId, "S2007")
+		.update();
+
+// 条件删除
+long deleted = lightDao.lambdaDelete(StaffInfoVO.class)
+		.eq(StaffInfoVO::getStatus, 0)
+		.delete();
+```
+
 ### 2. 支持代码中对象查询
 
 sqltoy中统一的规则是代码中可以直接传sql也可以是对应xml文件中的sqlId
@@ -189,6 +218,24 @@ public Long updateByQuery() {
 
 // 条件模式进行记录删除
 lightDao.deleteByQuery(StaffInfoVO.class, EntityQuery.create().where("status=?").values(0));
+```
+
+基于 Java 文本块直接编写动态sql(与xml中sql写法完全一致):
+
+```java
+// Java 13+ 文本块:sql与业务代码同屏编写,#[]动态sql语法与xml中完全一致
+// 中等复杂度sql建议用文本块,复杂sql建议xml中定义便于统一治理
+String sql = """
+		select t.*, t2.ORGAN_NAME
+		from sqltoy_staff_info t
+		left join sqltoy_organ_info t2 on t.organ_id = t2.ORGAN_ID
+		where #[t.STATUS=1]
+		#[and t.STAFF_NAME like :staffName]
+		#[and t.ENTRY_DATE>=:beginDate]
+		order by t.ENTRY_DATE desc
+		""";
+// 与sqlId方式完全一致:直接传sql文本,参数对象属性名与sql命名参数对应
+List<StaffInfoVO> staffList = lightDao.find(sql, staffVO, StaffInfoVO.class);
 ```
 
 ### 3. 朴素的sql编写方式(本质规律的发现和抽象)
