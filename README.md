@@ -88,7 +88,7 @@ jdk8 line (legacy)   : 5.6.96.jre8 (final; works with quickvo-maven-plugin)
 | 🚀 POJO/DTO strict layering demo | <https://github.com/sagframe/sqltoy-strict> |
 | 🚀 Sharding / NoSQL / xml demos | <https://github.com/sagframe/sqltoy-showcase> |
 | 🔌 quickvo code generator | [quickvo docs](https://sagframe.github.io/sqltoy-docs/#/en/prepare/quickvo) · [gitee](https://gitee.com/sagacity/maven-quickvo-plugin) |
-| 🔌 sqltoy-plus (Lambda enhancements) | <https://gitee.com/gzghde/sqltoy-plus> |
+| 🔌 sqltoy-plus (Lambda enhancements) | Lambda capability merged into core since 6.0.8 ([Lambda conditions](https://sagframe.github.io/sqltoy-docs/#/en/query/lambda_query)); this repo remains as historical reference: <https://gitee.com/gzghde/sqltoy-plus> |
 | 🔌 Admin system scaffold | <https://github.com/CoCoTeaNet/CyreneAdmin> |
 | 🔌 IDEA plugin | <https://github.com/imyuyu/sqltoy-idea-plugin> |
 
@@ -104,7 +104,7 @@ jdk8 line (legacy)   : 5.6.96.jre8 (final; works with quickvo-maven-plugin)
 
 | Category | Core Capabilities |
 | --- | --- |
-| Object operations | JPA-style CRUD, elastic update, updateFetch / updateSaveFetch, cascades, query hierarchy packaging, tree-table routing |
+| Object operations | JPA-style CRUD, lambda condition query/update/delete (one builder for single-table and joins), elastic update, updateFetch / updateSaveFetch, cascades, query hierarchy packaging, tree-table routing |
 | SQL query | Dynamic SQL (`#[]` + filters), Cache Translate (incl. extra-large FIFO dynamic cache), four-layer pagination (count optimization / cached / fast / parallel), parallel query, stored procedures, streaming query |
 | Data analysis | Row-to-column / column-to-row pivot, grouped totals, year-over-year / period-over-period comparison, tree-sorted aggregation, group concatenation, date and number formatting |
 | Cross-database | 25 dialects (incl. SAP HANA, HighGo), automatic function replacement, virtual-table macro @virtualTable(), multi-dialect sqlId, multi-database adaptation verification |
@@ -116,6 +116,7 @@ jdk8 line (legacy)   : 5.6.96.jre8 (final; works with quickvo-maven-plugin)
 <summary><b>Feature details</b></summary>
 
 ### JPA part
+* Native lambda condition API: build query/update/delete conditions from entity property method references (e.g. User::getStatus) with one builder for single-table and join cases, strict getOne semantics and unconditional update/delete guards (the former sqltoy-plus capability, built in since 6.0.8)
 * JPA-like object-oriented CRUD, with object-level cascade loading, insert and update
 * Supports generating DDL from POJOs and creating tables directly in the database
 * Enhanced update operation with elastic field modification: unlike hibernate's load-then-modify approach, the modification is done in a single database interaction, ensuring data accuracy in high-concurrency scenarios

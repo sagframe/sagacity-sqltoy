@@ -33,7 +33,7 @@ SqlToy 是 JPA 式对象操作与 SQL 优先查询的融合体，是简单业务
 | 🚀 NoSQL演示(mongo/es) | <https://github.com/sagframe/sqltoy-showcase/tree/master/trunk/sqltoy-nosql> |
 | 🚀 xml配置演示 | <https://github.com/sagframe/sqltoy-showcase/tree/master/trunk/sqltoy-showcase> |
 | 🔌 quickvo 代码生成工具(官方) | <https://gitee.com/sagacity/maven-quickvo-plugin> |
-| 🔌 sqltoy-plus(Lambda增强) | <https://gitee.com/gzghde/sqltoy-plus> |
+| 🔌 sqltoy-plus(Lambda增强) | Lambda 能力已于 6.0.8 并入核心（[Lambda 条件查询与更新](https://sagframe.github.io/sqltoy-docs/#/query/lambda_query)），本仓库为历史参考：<https://gitee.com/gzghde/sqltoy-plus> |
 | 🔌 管理系统脚手架 | <https://github.com/CoCoTeaNet/CyreneAdmin> |
 | 🔌 IDEA 插件 | <https://github.com/imyuyu/sqltoy-idea-plugin> |
 
@@ -62,7 +62,7 @@ QQ交流群：**531812227** ｜ [Gitee](https://gitee.com/sagacity/sagacity-sqlt
 
 | 类别 | 核心能力 |
 | --- | --- |
-| 对象操作 | JPA 风格 CRUD、弹性更新、updateFetch / updateSaveFetch、级联、查询层次封装、树形表路由 |
+| 对象操作 | JPA 风格 CRUD、lambda 条件查询/更新/删除（单表与多表 join 统一入口）、弹性更新、updateFetch / updateSaveFetch、级联、查询层次封装、树形表路由 |
 | SQL 查询 | 动态 SQL（`#[]` + filters）、缓存翻译（含超大规模 FIFO 动态缓存）、四层分页优化（count 优化 / 缓存 / 快速 / 并行）、并行查询、存储过程、流式查询 |
 | 数据分析 | 行转列 / 列转行、分组汇总、同比环比、树形排序汇总、分组拼接、日期数字格式化 |
 | 跨数据库 | 25 种方言（含 SAP HANA、瀚高 HighGo）、函数自动替换、虚表宏 @virtualTable()、多方言 sqlId、多库适配验证 |
@@ -74,6 +74,7 @@ QQ交流群：**531812227** ｜ [Gitee](https://gitee.com/sagacity/sagacity-sqlt
 <summary><b>展开功能明细</b></summary>
 
 ### JPA部分
+* 原生 lambda 条件体系：以实体属性方法引用（如 User::getStatus）组织查询/更新/删除条件，单表与多表 join 统一构建器，getOne 严格语义与无条件 update/delete 守卫（原 sqltoy-plus 能力内建，6.0.8 起）
 * 类似JPA的对象化CRUD、对象级联加载和新增、更新
 * 支持通过POJO生成DDL以及直接向数据库创建表
 * 强化update操作，提供弹性字段修改能力，不同于hibernate先load后修改，而是一次数据库交互完成修改，确保了高并发场景下数据的准确性
