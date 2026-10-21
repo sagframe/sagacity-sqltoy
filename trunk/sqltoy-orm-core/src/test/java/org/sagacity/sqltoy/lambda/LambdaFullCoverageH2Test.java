@@ -412,6 +412,79 @@ public class LambdaFullCoverageH2Test {
 
 	@Test
 	@Order(8)
+	@DisplayName("正确写法:A OR B再AND C / A OR (B AND C) / NOT(A OR B)")
+	public void testNormalNestedCombinations() {
+		// (status=1 OR dept=10) AND id<5
+		assertEquals(Arrays.asList(1, 2, 4), ids(lightDao.lambdaQuery(FfUser.class)
+				.nested(l1 -> l1.eq(FfUser::getStatus, 1).or().eq(FfUser::getDeptId, 10))
+				.lt(FfUser::getId, 5).find()));
+
+		// status=0 OR (dept=20 AND salary>2500)
+		assertEquals(Arrays.asList(3, 6), ids(lightDao.lambdaQuery(FfUser.class)
+				.eq(FfUser::getStatus, 0)
+				.or(l1 -> l1.eq(FfUser::getDeptId, 20).gt(FfUser::getSalary, 2500))
+				.lt(FfUser::getId, 90).find()));
+
+		// NOT (status=0 OR dept=10):dept为null的行按SQL三值逻辑排除
+		assertEquals(Arrays.asList(5, 6), ids(lightDao.lambdaQuery(FfUser.class)
+				.not(l1 -> l1.eq(FfUser::getStatus, 0).or().eq(FfUser::getDeptId, 10))
+				.lt(FfUser::getId, 90).find()));
+
+		// (status=1 OR dept=10) AND (salary>=3000 OR salary IS NULL)
+		assertEquals(Arrays.asList(4, 5, 6), ids(lightDao.lambdaQuery(FfUser.class)
+				.nested(l1 -> l1.eq(FfUser::getStatus, 1).or().eq(FfUser::getDeptId, 10))
+				.nested(l2 -> l2.ge(FfUser::getSalary, 3000).or().isNull(FfUser::getSalary))
+				.lt(FfUser::getId, 90).find()));
+
+		// 嵌套内可选条件:全部存在 / 部分跳过 / 全部跳过
+		assertEquals(Arrays.asList(1, 2, 4, 6), ids(lightDao.lambdaQuery(FfUser.class)
+				.nested(l1 -> l1.eq(FfUser::getStatus, 1)
+						.and(l2 -> l2.eq(FfUser::getDeptId, 10).or().ge(FfUser::getSalary, 3000)))
+				.lt(FfUser::getId, 90).find()));
+		assertEquals(Arrays.asList(6), ids(lightDao.lambdaQuery(FfUser.class)
+				.nested(l1 -> l1.eq(FfUser::getStatus, 1).or()
+						.eqIfPresent(FfUser::getStaffName, null).eq(FfUser::getDeptId, 20))
+				.lt(FfUser::getId, 90).find()));
+		assertEquals(Arrays.asList(1, 2, 4, 5, 6), ids(lightDao.lambdaQuery(FfUser.class)
+				.eq(FfUser::getStatus, 1)
+				.nested(l1 -> l1.eqIfPresent(FfUser::getStaffName, null).or()
+						.eqIfPresent(FfUser::getDeptId, null))
+				.lt(FfUser::getId, 90).find()));
+	}
+
+	@Test
+	@Order(8)
+	@DisplayName("三层/四层嵌套:OR/AND交替且分组边界正确")
+	public void testDeeplyNestedLogicGroups() {
+		// ((dept=10 OR status=0) OR (dept=30 AND salary IS NULL)) AND id<90
+		assertEquals(Arrays.asList(1, 2, 3, 5), ids(lightDao.lambdaQuery(FfUser.class)
+				.nested(l1 -> l1
+						.nested(l2 -> l2.eq(FfUser::getDeptId, 10).or().eq(FfUser::getStatus, 0))
+						.or()
+						.nested(l3 -> l3.eq(FfUser::getDeptId, 30)
+								.and(l4 -> l4.isNull(FfUser::getSalary))))
+				.lt(FfUser::getId, 90).find()));
+
+		// ((dept=10 OR (status=0 AND (salary>=3000 OR salary IS NULL)))
+		//   AND (status=1 OR status=0)) AND id<90
+		assertEquals(Arrays.asList(1, 2, 3), ids(lightDao.lambdaQuery(FfUser.class)
+				.nested(l1 -> l1
+						.nested(l2 -> l2.eq(FfUser::getDeptId, 10)
+								.or(l3 -> l3.eq(FfUser::getStatus, 0)
+										.and(l4 -> l4.ge(FfUser::getSalary, 3000).or()
+												.isNull(FfUser::getSalary))))
+						.nested(l5 -> l5.eq(FfUser::getStatus, 1).or().eq(FfUser::getStatus, 0)))
+				.lt(FfUser::getId, 90).find()));
+
+		// 嵌套组内部发生条件跳过:OR随跳过条件消失,组内仍为 AND
+		assertEquals(Arrays.asList(1, 2), ids(lightDao.lambdaQuery(FfUser.class)
+				.nested(l1 -> l1.eq(FfUser::getDeptId, 10).or()
+						.eqIfPresent(FfUser::getStaffName, null).eq(FfUser::getStatus, 1))
+				.lt(FfUser::getId, 90).find()));
+	}
+
+	@Test
+	@Order(8)
 	@DisplayName("逻辑组合:or/and嵌套/not嵌套/二层嵌套/空组丢弃")
 	public void testLogicCombos() {
 		assertEquals(6, lightDao.lambdaQuery(FfUser.class).eq(FfUser::getStatus, 1).or()

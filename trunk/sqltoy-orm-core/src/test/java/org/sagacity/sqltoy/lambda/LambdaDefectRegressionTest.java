@@ -362,6 +362,26 @@ public class LambdaDefectRegressionTest {
 	}
 
 	@Test
+	@DisplayName("P0-12 H2真实执行:正常括号分组(A OR B) AND C 的更新/删除")
+	public void p0NormalNestedOrGroupMustTargetExactRows() throws Exception {
+		resetGuardRows();
+		long updated = defectDao.lambdaUpdate(RegUser.class).set(RegUser::getStatus, 99)
+				.nested(w -> w.eq(RegUser::getStatus, 1).or().eq(RegUser::getId, 2))
+				.eq(RegUser::getId, 3).update();
+		assertEquals(1L, updated, "(status=1 OR id=2) AND id=3 只能更新id=3");
+		assertEquals(1L, defectDao.lambdaQuery(RegUser.class).eq(RegUser::getStatus, 99).count());
+		assertEquals(1L, defectDao.lambdaQuery(RegUser.class).eq(RegUser::getStatus, 1).count(),
+				"id=1不应被更新");
+
+		resetGuardRows();
+		long deleted = defectDao.lambdaDelete(RegUser.class)
+				.nested(w -> w.eq(RegUser::getStatus, 1).or().eq(RegUser::getId, 2))
+				.eq(RegUser::getId, 3).delete();
+		assertEquals(1L, deleted, "(status=1 OR id=2) AND id=3 只能删除id=3");
+		assertEquals(2L, defectDao.lambdaQuery(RegUser.class).count());
+	}
+
+	@Test
 	@DisplayName("P0-11 H2真实执行:被跳过的条件不得扩大删除范围")
 	public void p0SkippedOrConditionMustNotWidenDelete() throws Exception {
 		resetGuardRows();
