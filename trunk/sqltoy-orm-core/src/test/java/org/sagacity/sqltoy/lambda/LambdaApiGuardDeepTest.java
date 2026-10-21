@@ -133,4 +133,17 @@ public class LambdaApiGuardDeepTest {
 		assertThrows(DataAccessException.class, () -> LambdaQuery.create(User.class).findTop(-1));
 		assertThrows(DataAccessException.class, () -> LambdaQuery.create(User.class).findRandom(0));
 	}
+
+	@Test
+	@DisplayName("select/selectAll/orderBy别名非法入参快速失败")
+	@SuppressWarnings("unchecked")
+	public void invalidSelectAndOrderArgumentsRejected() {
+		assertThrows(DataAccessException.class,
+				() -> LambdaQuery.create(User.class).select((LambdaFn<User, ?>) null));
+		assertThrows(DataAccessException.class,
+				() -> LambdaQuery.create(User.class).selectAll((ExcludeCols<?>) null));
+		assertThrows(DataAccessException.class, () -> LambdaQuery.create(User.class).orderByAsc((String) null));
+		assertThrows(DataAccessException.class,
+				() -> LambdaQuery.create(User.class).orderByAsc("userCount; drop table ff_user"));
+	}
 }
