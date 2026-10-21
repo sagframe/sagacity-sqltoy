@@ -146,10 +146,8 @@ public class LambdaNestedConditionGuardTest {
 
 		LambdaQuery<User> havingOnly = LambdaQuery.create(User.class).having("count(1) > 1", null);
 		havingOnly.assemble(IDENTITY);
-		EntityQueryExtend havingInner = LambdaConvert.toEntityQuery(havingOnly).getInnerModel();
-		assertEquals("HAVING count(1) > 1", normSql(havingInner.where),
-				"having-only 不再补 1 = 1，缺 groupBy 时交给数据库报错");
-		assertNull(havingInner.groupBy);
+		assertThrows(DataAccessException.class, () -> LambdaConvert.toEntityQuery(havingOnly),
+				"单表having-only必须快速失败,不能生成 WHERE HAVING");
 	}
 
 	@Test

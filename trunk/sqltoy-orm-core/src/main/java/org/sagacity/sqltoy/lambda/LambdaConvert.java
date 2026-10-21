@@ -31,25 +31,23 @@ public final class LambdaConvert {
 		String groupBy = query.getGroupByColumns();
 		String having = query.getHavingCondition();
 		String orderBy = query.getOrderByColumns();
-		// having-only 没有 groupBy 时 sqltoy 会丢弃 HAVING；没有原生落点，保留合并片段但不补 1 = 1，
-		// 交给运行时暴露。groupBy/orderBy（含 groupBy+having）改用原生子句。
+		// 单表EntityQuery没有聚合select通道,having-only会被错误塞进where生成
+		// "WHERE HAVING ..."非法SQL;此处快速失败,避免运行时才暴露
 		if (StringUtil.isBlank(groupBy) && StringUtil.isNotBlank(having)) {
-			if (StringUtil.isNotBlank(query.getSqlSegment())) {
-				entityQuery.where(query.getSqlSegment());
-			}
-		} else {
-			if (StringUtil.isNotBlank(query.getWhereSql())) {
-				entityQuery.where(query.getWhereSql());
-			}
-			if (StringUtil.isNotBlank(groupBy)) {
-				entityQuery.groupBy(groupBy);
-			}
-			if (StringUtil.isNotBlank(having)) {
-				entityQuery.having(having);
-			}
-			if (StringUtil.isNotBlank(orderBy)) {
-				entityQuery.orderBy(orderBy);
-			}
+			throw new DataAccessException(
+					"Lambda having without groupBy is not supported by the single-table channel; add groupBy or use the join/SQL channel with an aggregate select");
+		}
+		if (StringUtil.isNotBlank(query.getWhereSql())) {
+			entityQuery.where(query.getWhereSql());
+		}
+		if (StringUtil.isNotBlank(groupBy)) {
+			entityQuery.groupBy(groupBy);
+		}
+		if (StringUtil.isNotBlank(having)) {
+			entityQuery.having(having);
+		}
+		if (StringUtil.isNotBlank(orderBy)) {
+			entityQuery.orderBy(orderBy);
 		}
 		if (!query.getParams().isEmpty()) {
 			entityQuery.values(query.getParams());
