@@ -224,12 +224,12 @@ public class LambdaQuerySqlTest {
 	}
 
 	@Test
-	@DisplayName("仅分组排序时以1=1补齐where")
+	@DisplayName("仅分组排序时按独立子句输出,不补1=1")
 	public void testGroupOrderOnly() {
 		LambdaQuery<User> query = LambdaQuery.create(User.class).groupBy(User::getStatus)
 				.orderByDesc(User::getId);
 		query.assemble(IDENTITY);
-		assertEquals("1 = 1 GROUP BY status ORDER BY id DESC", normalized(query));
+		assertEquals("GROUP BY status ORDER BY id DESC", normalized(query));
 	}
 
 	@Test
@@ -238,7 +238,7 @@ public class LambdaQuerySqlTest {
 		LambdaQuery<User> query = LambdaQuery.create(User.class).orderByAsc(User::getId).orderByDesc(User::getName)
 				.groupBy(User::getStatus).groupBy(User::getType);
 		query.assemble(IDENTITY);
-		assertEquals("1 = 1 GROUP BY status,type ORDER BY id ASC,name DESC", normalized(query));
+		assertEquals("GROUP BY status,type ORDER BY id ASC,name DESC", normalized(query));
 	}
 
 	@Test
@@ -249,7 +249,7 @@ public class LambdaQuerySqlTest {
 		LambdaQuery<User> query = LambdaQuery.create(User.class).groupBy(User::getStatus)
 				.having("count(*) > 1").having("sum(age) > :sumAge", havingParams);
 		query.assemble(IDENTITY);
-		assertEquals("1 = 1 GROUP BY status HAVING count(*) > 1 AND sum(age) > :sumAge", normalized(query));
+		assertEquals("GROUP BY status HAVING count(*) > 1 AND sum(age) > :sumAge", normalized(query));
 		assertEquals(10, query.getParams().get("sumAge"));
 	}
 
@@ -500,11 +500,11 @@ public class LambdaQuerySqlTest {
 	}
 
 	@Test
-	@DisplayName("仅having时以1=1承载不丢条件")
+	@DisplayName("仅having时不补1=1,缺groupBy交给运行时暴露")
 	public void testHavingOnly() {
 		LambdaQuery<User> query = LambdaQuery.create(User.class).having("count(*) > 1");
 		query.assemble(IDENTITY);
-		assertEquals("1 = 1 HAVING count(*) > 1", normalized(query));
+		assertEquals("HAVING count(*) > 1", normalized(query));
 	}
 
 	@Test
@@ -514,7 +514,7 @@ public class LambdaQuerySqlTest {
 				.select(JoinCol.count(User::getId).as("total"))
 				.orderByAsc(User::getName).orderByDesc("total");
 		query.assemble(IDENTITY);
-		assertEquals("SELECT COUNT(u1.id) AS total FROM user u1 WHERE 1 = 1 "
+		assertEquals("SELECT COUNT(u1.id) AS total FROM user u1 "
 				+ "ORDER BY u1.name ASC,total DESC", normalized(query.getSql()));
 	}
 

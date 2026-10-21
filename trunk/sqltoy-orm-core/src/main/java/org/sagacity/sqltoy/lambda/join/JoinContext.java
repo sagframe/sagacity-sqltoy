@@ -20,6 +20,7 @@ import org.sagacity.sqltoy.lambda.LambdaFn;
 import org.sagacity.sqltoy.lambda.LambdaUtils;
 import org.sagacity.sqltoy.lambda.engine.SqlKeyword;
 import org.sagacity.sqltoy.lambda.toolkit.FieldNature;
+import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
  * @description 多表join的sql总装上下文:注册期收集实体别名、join步骤、select/set/删除表定义,
@@ -567,21 +568,50 @@ public class JoinContext {
 	}
 
 	/**
-	 * @description 组装完整sql,conditionSql为where条件文本,无条件时以1 = 1补齐
+	 * @description 组装完整sql,conditionSql为where条件文本;兼容旧调用,不做1 = 1补齐
 	 */
 	public String getSql(String conditionSql) {
+		return getSql(conditionSql, null, null, null, null);
+	}
+
+	/**
+	 * @description 组装完整sql:where与groupBy/having/orderBy/last各归其位;无where时不再用1 = 1占位
+	 * @param whereSql          where条件文本(可为null)
+	 * @param groupByColumns    GROUP BY后的列清单(不含关键字)
+	 * @param havingCondition   HAVING后的条件(不含关键字)
+	 * @param orderByColumns    ORDER BY后的列清单(不含关键字)
+	 * @param lastSql           last原始尾部SQL
+	 */
+	public String getSql(String whereSql, String groupByColumns, String havingCondition, String orderByColumns,
+			String lastSql) {
 		if (metaLoader == null) {
 			throw new DataAccessException("Lambda join has not been assembled; getSql() is not available yet");
 		}
-		String whereSql = (conditionSql == null || conditionSql.isEmpty()) ? "1 = 1" : conditionSql;
 		StringBuilder sql = new StringBuilder();
 		switch (operate) {
 		case SELECT:
 			sql.append(SqlKeyword.SELECT.getSqlSegment()).append(" ").append(distinct ? "DISTINCT " : "")
 					.append(buildSelectSql()).append(" ").append(SqlKeyword.FROM.getSqlSegment()).append(" ")
 					.append(buildTableSql());
-			break;
+			if (StringUtil.isNotBlank(whereSql)) {
+				sql.append(" ").append(SqlKeyword.WHERE.getSqlSegment()).append(" ").append(whereSql);
+			}
+			if (StringUtil.isNotBlank(groupByColumns)) {
+				sql.append(" ").append(SqlKeyword.GROUP_BY.getSqlSegment()).append(" ").append(groupByColumns);
+			}
+			if (StringUtil.isNotBlank(havingCondition)) {
+				sql.append(" ").append(SqlKeyword.HAVING.getSqlSegment()).append(" ").append(havingCondition);
+			}
+			if (StringUtil.isNotBlank(orderByColumns)) {
+				sql.append(" ").append(SqlKeyword.ORDER_BY.getSqlSegment()).append(" ").append(orderByColumns);
+			}
+			if (StringUtil.isNotBlank(lastSql)) {
+				sql.append(" ").append(lastSql);
+			}
+			return sql.toString();
 		case UPDATE:
+			requireDmlCondition(whereSql);
+			rejectDmlGrouping(groupByColumns, havingCondition, orderByColumns);
 			if (setItems.isEmpty()) {
 				throw new DataAccessException("Lambda join update requires at least one field set via set()");
 			}
@@ -589,15 +619,32 @@ public class JoinContext {
 					.append(metaLoader.apply(fromClass).getSchemaTable(null, null)).append(" ")
 					.append(SqlKeyword.SET.getSqlSegment()).append(" ").append(buildSetSql()).append(" ")
 					.append(SqlKeyword.WHERE.getSqlSegment()).append(" ")
-					.append(buildExistsRewrite(fromClass, conditionSql));
+					.append(buildExistsRewrite(fromClass, whereSql));
+			if (StringUtil.isNotBlank(lastSql)) {
+				sql.append(" ").append(lastSql);
+			}
 			return sql.toString();
 		case DELETE:
-			return getDeleteSqls(conditionSql).get(0);
+			requireDmlCondition(whereSql);
+			rejectDmlGrouping(groupByColumns, havingCondition, orderByColumns);
+			return getDeleteSqls(whereSql, lastSql).get(0);
 		default:
 			throw new DataAccessException("Unsupported lambda join operate type");
 		}
-		sql.append(" ").append(SqlKeyword.WHERE.getSqlSegment()).append(" ").append(whereSql);
-		return sql.toString();
+	}
+
+	private static void requireDmlCondition(String whereSql) {
+		if (StringUtil.isBlank(whereSql)) {
+			throw new DataAccessException("Conditional join update/delete requires where conditions");
+		}
+	}
+
+	private static void rejectDmlGrouping(String groupByColumns, String havingCondition, String orderByColumns) {
+		if (StringUtil.isNotBlank(groupByColumns) || StringUtil.isNotBlank(havingCondition)
+				|| StringUtil.isNotBlank(orderByColumns)) {
+			throw new DataAccessException(
+					"groupBy/having/orderBy are not supported in join update/delete");
+		}
 	}
 
 	/**
@@ -836,8 +883,11 @@ public class JoinContext {
 			correlations.add("sqd." + lpkAlias + " = " + schemaTable + "." + pkColumn);
 		}
 		String whereText = (conditionSql == null) ? "" : conditionSql.trim();
+		if (whereText.isEmpty()) {
+			throw new DataAccessException("Conditional join update/delete requires where conditions");
+		}
 		String derived = "SELECT " + String.join(", ", pkSelects) + " FROM " + buildTableSql() + " WHERE "
-				+ (whereText.isEmpty() ? "1 = 1" : whereText);
+				+ whereText;
 		return SqlKeyword.EXISTS.getSqlSegment() + " (SELECT 1 FROM (" + derived + ") sqd WHERE "
 				+ String.join(" AND ", correlations) + ")";
 	}
@@ -848,15 +898,31 @@ public class JoinContext {
 	 * @return 删除语句列表
 	 */
 	public List<String> getDeleteSqls(String conditionSql) {
+		return getDeleteSqls(conditionSql, null);
+	}
+
+	/**
+	 * @description 可移植join删除语句列表:where + last,无where时直接拒绝,不补1 = 1
+	 * @param conditionSql where条件文本
+	 * @param lastSql      last原始尾部SQL
+	 * @return 删除语句列表
+	 */
+	public List<String> getDeleteSqls(String conditionSql, String lastSql) {
 		if (metaLoader == null) {
 			throw new DataAccessException("Lambda join has not been assembled; getDeleteSqls() is not available yet");
 		}
+		requireDmlCondition(conditionSql);
 		List<Class<?>> targets = deleteClasses.isEmpty() ? java.util.Collections.singletonList(fromClass)
 				: deleteClasses;
 		List<String> sqls = new ArrayList<>();
 		for (Class<?> target : targets) {
-			sqls.add(SqlKeyword.DELETE.getSqlSegment() + " FROM " + metaLoader.apply(target).getSchemaTable(null, null)
-					+ " WHERE " + buildExistsRewrite(target, conditionSql));
+			String deleteSql = SqlKeyword.DELETE.getSqlSegment() + " FROM "
+					+ metaLoader.apply(target).getSchemaTable(null, null) + " WHERE "
+					+ buildExistsRewrite(target, conditionSql);
+			if (StringUtil.isNotBlank(lastSql)) {
+				deleteSql = deleteSql + " " + lastSql;
+			}
+			sqls.add(deleteSql);
 		}
 		return sqls;
 	}

@@ -167,7 +167,12 @@ public final class LambdaDelete<T> extends AbstractWhere<T, LambdaDelete<T>> {
 	 */
 	public List<String> getDeleteSqls() {
 		requireCondition("delete");
-		return joinContext.getDeleteSqls(getSqlSegment());
+		String whereSql = getWhereSql();
+		if (whereSql == null && isMatchAll()) {
+			// 仅显式matchAll允许无条件:1=1只用于EXISTS派生表,不改变删除目标集
+			whereSql = "1 = 1";
+		}
+		return joinContext.getDeleteSqls(whereSql, getLastSql());
 	}
 
 	/**

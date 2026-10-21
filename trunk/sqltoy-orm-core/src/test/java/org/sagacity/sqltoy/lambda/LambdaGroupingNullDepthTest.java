@@ -286,6 +286,24 @@ public class LambdaGroupingNullDepthTest {
 	}
 
 	@Test
+	@DisplayName("显式or()后接启用但为空的or分组:挂起OR被取消,后续仍为AND")
+	public void explicitOrThenEmptyOrGroup() {
+		LambdaQuery<User> q = query().eq(User::getStatus, 1).or()
+				.or(w -> w.eq(false, User::getType, 2)).eq(User::getId, 4);
+		q.assemble(IDENTITY);
+		assertEquals("status = :p1 AND id = :p2", norm(q));
+	}
+
+	@Test
+	@DisplayName("显式or()后接禁用的or分组:按未发生处理,挂起OR保留")
+	public void explicitOrThenDisabledOrGroup() {
+		LambdaQuery<User> q = query().eq(User::getStatus, 1).or()
+				.or(false, w -> w.eq(User::getType, 2)).eq(User::getId, 4);
+		q.assemble(IDENTITY);
+		assertEquals("status = :p1 OR id = :p2", norm(q));
+	}
+
+	@Test
 	@DisplayName("空NOT分组在首位:不留下前导NOT")
 	public void emptyNotFirst() {
 		LambdaQuery<User> q = query().not(w -> w.eq(false, User::getType, 2)).eq(User::getId, 4);
@@ -360,11 +378,11 @@ public class LambdaGroupingNullDepthTest {
 	}
 
 	@Test
-	@DisplayName("空分组+groupBy:以1=1补齐where")
+	@DisplayName("空分组+groupBy:groupBy按独立子句输出,不补1=1")
 	public void emptyGroupWithGroupBy() {
 		LambdaQuery<User> q = query().or(w -> w.eq(false, User::getType, 2)).groupBy(User::getStatus);
 		q.assemble(IDENTITY);
-		assertEquals("1 = 1 GROUP BY status", norm(q));
+		assertEquals("GROUP BY status", norm(q));
 	}
 
 	@Test
@@ -373,7 +391,7 @@ public class LambdaGroupingNullDepthTest {
 		LambdaQuery<User> q = query().or(w -> w.eq(false, User::getType, 2)).groupBy(User::getStatus)
 				.orderByDesc(User::getId);
 		q.assemble(IDENTITY);
-		assertEquals("1 = 1 GROUP BY status ORDER BY id DESC", norm(q));
+		assertEquals("GROUP BY status ORDER BY id DESC", norm(q));
 	}
 
 	@Test
@@ -411,19 +429,19 @@ public class LambdaGroupingNullDepthTest {
 	}
 
 	@Test
-	@DisplayName("空分组+orderBy:以1=1补齐where")
+	@DisplayName("空分组+orderBy:orderBy按独立子句输出,不补1=1")
 	public void emptyGroupWithOrderBy() {
 		LambdaQuery<User> q = query().or(w -> w.eq(false, User::getType, 2)).orderByAsc(User::getId);
 		q.assemble(IDENTITY);
-		assertEquals("1 = 1 ORDER BY id ASC", norm(q));
+		assertEquals("ORDER BY id ASC", norm(q));
 	}
 
 	@Test
-	@DisplayName("空分组+last:last不丢且以1=1承载")
+	@DisplayName("空分组+last:last不丢,不补1=1")
 	public void emptyGroupWithLast() {
 		LambdaQuery<User> q = query().or(w -> w.eq(false, User::getType, 2)).last("limit 1");
 		q.assemble(IDENTITY);
-		assertEquals("1 = 1 limit 1", norm(q));
+		assertEquals("limit 1", norm(q));
 	}
 
 	@Test

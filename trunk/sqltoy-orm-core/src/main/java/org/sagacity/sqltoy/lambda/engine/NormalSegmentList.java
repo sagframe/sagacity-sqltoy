@@ -60,7 +60,8 @@ public class NormalSegmentList extends SegmentList {
 	}
 
 	/**
-	 * @description 空分组装配后剔除紧随其前的OR连接符,避免把后续正常条件错误并成OR
+	 * @description 空分组装配后取消紧随其前的显式OR连接符(prefix延后拼接的补偿):启用但无谓词的OR分支
+	 *              若保留,会被后续条件当作OR左连接符而扩大结果范围
 	 */
 	public void removeTrailingOr() {
 		if (!segments.isEmpty() && segments.get(segments.size() - 1) == SqlKeyword.OR) {

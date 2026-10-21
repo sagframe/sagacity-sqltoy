@@ -264,6 +264,16 @@ public final class LambdaUpdate<T> extends AbstractWhere<T, LambdaUpdate<T>> {
 		return setFields;
 	}
 
+	@Override
+	public String getSql() {
+		// 显式matchAll的join更新没有where片段,补1=1仅用于EXISTS派生表,保持“无条件更新全部”语义
+		if (isJoinMode() && isMatchAll() && getWhereSql() == null) {
+			return joinContext.getSql("1 = 1", getGroupByColumns(), getHavingCondition(), getOrderByColumns(),
+					getLastSql());
+		}
+		return super.getSql();
+	}
+
 	/**
 	 * @description 按条件更新,无任何条件时须先调用matchAll();至少需要一个set字段
 	 * @return 更新的记录数

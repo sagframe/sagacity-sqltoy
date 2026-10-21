@@ -488,6 +488,34 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 		return expression.getSqlSegment();
 	}
 
+	/**
+	 * @return 仅where条件(不含groupBy/having/orderBy/last);无真实条件返回null
+	 */
+	public String getWhereSql() {
+		return expression.getWhereSql();
+	}
+
+	/**
+	 * @return GROUP BY后的列清单(不含关键字);无分组返回null
+	 */
+	public String getGroupByColumns() {
+		return expression.getGroupByColumns();
+	}
+
+	/**
+	 * @return HAVING后的条件(不含关键字);无having返回null
+	 */
+	public String getHavingCondition() {
+		return expression.getHavingCondition();
+	}
+
+	/**
+	 * @return ORDER BY后的列清单(不含关键字);无排序返回null
+	 */
+	public String getOrderByColumns() {
+		return expression.getOrderByColumns();
+	}
+
 	@Override
 	public Map<String, Object> getParams() {
 		Map<String, Object> params = expression.getParams();
@@ -502,7 +530,8 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 	 */
 	public String getSql() {
 		if (joinContext != null && joinContext.isJoinChannel()) {
-			return joinContext.getSql(expression.getSqlSegment());
+			return joinContext.getSql(getWhereSql(), getGroupByColumns(), getHavingCondition(), getOrderByColumns(),
+					getLastSql());
 		}
 		return getSqlSegment();
 	}
@@ -744,6 +773,13 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 					qualifiedResolverFor(currentMetaLoader));
 			subFn.apply(subQuery);
 			subQuery.assemble(currentMetaLoader);
+			// EXISTS子查询的where后面不能再挂groupBy/having/orderBy/last,否则会生成
+			// "WHERE GROUP BY ..." 这类非法SQL;不补1 = 1,直接快速失败
+			if (subQuery.getGroupByColumns() != null || subQuery.getHavingCondition() != null
+					|| subQuery.getOrderByColumns() != null || subQuery.hasLastSql()) {
+				throw new DataAccessException(
+						"groupBy/having/orderBy/last are not supported inside exists sub-queries; move them to the outer query");
+			}
 			String keyword = negate ? SqlKeyword.NOT_EXISTS.getSqlSegment() : SqlKeyword.EXISTS.getSqlSegment();
 			appendSqlSegments(rawSegment(keyword + " (" + subQuery.existsSql() + ")", subQuery.getParams()));
 		}));
@@ -813,7 +849,8 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 				}
 				appendSqlSegments(rawSegment("(" + sql.trim() + ")", params));
 			} else {
-				// 空分组前面若已有显式or()连接符,一并剔除,避免其作用到后续正常条件
+				// prefix已延后到非空分支才拼接,空分组自身不会写连接符;此处补偿"显式or()后接空分组":
+				// 取消该OR分支,避免其作用到后续条件上扩大结果范围;condition=false的禁用分组不进本分支,挂起OR保持原样
 				expression.removeTrailingOr();
 			}
 		});
@@ -831,6 +868,12 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 		if (expression.hasAggregatePartitions()) {
 			throw new DataAccessException(
 					"groupBy/having/orderBy are not supported inside nested conditions; add them on the query root instead");
+		}
+		// last是真假条件识别之外的裸sql:放进括号会生成"(1 = 1 limit 1)"这类非法条件,
+		// 空白last还会让空分组被当成有效条件、绕过删除/更新的无条件守卫,故与分组/排序同等对待
+		if (expression.hasLastSql()) {
+			throw new DataAccessException(
+					"last() raw sql append is not supported inside nested conditions; add it on the query root instead");
 		}
 	}
 

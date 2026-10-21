@@ -28,8 +28,28 @@ public final class LambdaConvert {
 					"last() raw sql append is not supported in the single-table channel (EntityQuery where cannot carry trailing raw sql); use findTop/findPage or the join channel");
 		}
 		EntityQuery entityQuery = EntityQuery.create();
-		if (StringUtil.isNotBlank(query.getSqlSegment())) {
-			entityQuery.where(query.getSqlSegment());
+		String groupBy = query.getGroupByColumns();
+		String having = query.getHavingCondition();
+		String orderBy = query.getOrderByColumns();
+		// having-only 没有 groupBy 时 sqltoy 会丢弃 HAVING；没有原生落点，保留合并片段但不补 1 = 1，
+		// 交给运行时暴露。groupBy/orderBy（含 groupBy+having）改用原生子句。
+		if (StringUtil.isBlank(groupBy) && StringUtil.isNotBlank(having)) {
+			if (StringUtil.isNotBlank(query.getSqlSegment())) {
+				entityQuery.where(query.getSqlSegment());
+			}
+		} else {
+			if (StringUtil.isNotBlank(query.getWhereSql())) {
+				entityQuery.where(query.getWhereSql());
+			}
+			if (StringUtil.isNotBlank(groupBy)) {
+				entityQuery.groupBy(groupBy);
+			}
+			if (StringUtil.isNotBlank(having)) {
+				entityQuery.having(having);
+			}
+			if (StringUtil.isNotBlank(orderBy)) {
+				entityQuery.orderBy(orderBy);
+			}
 		}
 		if (!query.getParams().isEmpty()) {
 			entityQuery.values(query.getParams());

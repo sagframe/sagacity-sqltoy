@@ -286,6 +286,22 @@ public class LambdaQueryJoinH2Test {
 		assertEquals(2, update.getParams().get("p2"), "重复set应保留最后一次值");
 	}
 
+	@Test
+	@Order(21)
+	@DisplayName("join更新/删除matchAll:显式无条件仍可生成SQL")
+	public void testJoinMatchAllStillGeneratesSql() {
+		LambdaUpdate<JoinUser> update = lightDao.lambdaUpdate(JoinUser.class).leftJoin(JoinDept.class)
+				.on(JoinUser::getDeptId, JoinDept::getDeptId).set(JoinUser::getStatus, 5).matchAll();
+		update.assemble(context::getEntityMeta);
+		assertTrue(normalized(update.getSql()).contains("WHERE 1 = 1"), normalized(update.getSql()));
+
+		LambdaDelete<JoinUser> delete = lightDao.lambdaDelete(JoinUser.class).leftJoin(JoinDept.class)
+				.on(JoinUser::getDeptId, JoinDept::getDeptId).matchAll();
+		delete.assemble(context::getEntityMeta);
+		assertTrue(normalized(delete.getDeleteSqls().get(0)).contains("WHERE 1 = 1"),
+				normalized(delete.getDeleteSqls().get(0)));
+	}
+
 	private static String normalized(String sql) {
 		return sql == null ? "" : sql.replaceAll("\\s+", " ").trim();
 	}

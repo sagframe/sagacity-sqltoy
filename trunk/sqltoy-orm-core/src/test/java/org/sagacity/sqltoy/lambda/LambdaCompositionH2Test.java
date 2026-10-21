@@ -118,7 +118,7 @@ public class LambdaCompositionH2Test {
 		String sql = norm(outer.getSql());
 		assertTrue(sql.startsWith("WITH a AS (SELECT"), sql);
 		assertTrue(sql.contains("), b AS (SELECT"), sql);
-		assertTrue(sql.contains("FROM a c1 WHERE 1 = 1)"), sql);
+		assertTrue(sql.contains("FROM a c1)"), sql);
 	}
 
 	@Test

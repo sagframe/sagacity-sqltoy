@@ -453,7 +453,9 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 		}
 		// union根排序/limit:从首分支剥离,统一追加到union之后,交给sqltoy的count/分页二次包装处理
 		boolean hasTail = hasOrderByOrLastSql();
-		sb.append(hasTail ? joinContext.getSql(getSqlSegmentWithoutOrderBy()) : super.getSql());
+		sb.append(hasTail
+				? joinContext.getSql(getWhereSql(), getGroupByColumns(), getHavingCondition(), null, null)
+				: super.getSql());
 		int branchIndex = 0;
 		for (Object[] u : unions) {
 			branchIndex++;
