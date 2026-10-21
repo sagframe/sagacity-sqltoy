@@ -339,6 +339,39 @@ public class LambdaDefectRegressionTest {
 	}
 
 	@Test
+	@DisplayName("P0-9 H2真实执行:被跳过的条件不得把OR留给后续条件")
+	public void p0SkippedOrConditionMustNotWidenResult() throws Exception {
+		resetGuardRows();
+		List<RegUser> rows = defectDao.lambdaQuery(RegUser.class).eq(RegUser::getStatus, 1)
+				.or().eqIfPresent(RegUser::getName, null).eq(RegUser::getId, 3).find();
+		assertEquals(1, rows.size(), "正确语义应为 status=1 AND id=3,仅1行");
+		assertEquals(1L, defectDao.lambdaQuery(RegUser.class).eq(RegUser::getStatus, 1)
+				.or().eqIfPresent(RegUser::getName, null).eq(RegUser::getId, 3).count(),
+				"count通道也必须取消跳过条件前的OR");
+	}
+
+	@Test
+	@DisplayName("P0-10 H2真实执行:被跳过的条件不得扩大更新范围")
+	public void p0SkippedOrConditionMustNotWidenUpdate() throws Exception {
+		resetGuardRows();
+		long updated = defectDao.lambdaUpdate(RegUser.class).set(RegUser::getStatus, 99)
+				.eq(RegUser::getStatus, 1).or().eqIfPresent(RegUser::getName, null)
+				.eq(RegUser::getId, 3).update();
+		assertEquals(1L, updated, "正确语义应为 status=1 AND id=3,仅更新1行");
+		assertEquals(1L, defectDao.lambdaQuery(RegUser.class).eq(RegUser::getStatus, 99).count());
+	}
+
+	@Test
+	@DisplayName("P0-11 H2真实执行:被跳过的条件不得扩大删除范围")
+	public void p0SkippedOrConditionMustNotWidenDelete() throws Exception {
+		resetGuardRows();
+		long deleted = defectDao.lambdaDelete(RegUser.class).eq(RegUser::getStatus, 1)
+				.or().eqIfPresent(RegUser::getName, null).eq(RegUser::getId, 3).delete();
+		assertEquals(1L, deleted, "正确语义应为 status=1 AND id=3,仅删除1行");
+		assertEquals(2L, defectDao.lambdaQuery(RegUser.class).count(), "应保留id=1、id=2两行");
+	}
+
+	@Test
 	@DisplayName("P1-1 单表查询union:两个分支都必须渲染完整SELECT且可执行")
 	public void p1UnionOfPlainQueriesMustRenderSelects() throws Exception {
 		LambdaQuery<DefUser> q1 = LambdaQuery.create(DefUser.class).eq(DefUser::getStatus, 1);

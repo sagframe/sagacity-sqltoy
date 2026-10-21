@@ -251,6 +251,73 @@ public class LambdaGroupingNullDepthTest {
 	}
 
 	@Test
+	@DisplayName("显式or()后接被跳过的直接条件:OR必须取消")
+	public void explicitOrFollowedBySkippedConditions() {
+		LambdaQuery<User> ifPresent = query().eq(User::getStatus, 1).or()
+				.eqIfPresent(User::getName, null).eq(User::getId, 4);
+		ifPresent.assemble(IDENTITY);
+		assertEquals("status = :p1 AND id = :p2", norm(ifPresent));
+		ifPresent.assemble(IDENTITY);
+		assertEquals("status = :p1 AND id = :p2", norm(ifPresent), "重复assemble不得重新引入OR");
+
+		LambdaQuery<User> emptyIn = query().eq(User::getStatus, 1).or()
+				.inIfPresent(User::getType, java.util.Collections.emptyList()).eq(User::getId, 4);
+		emptyIn.assemble(IDENTITY);
+		assertEquals("status = :p1 AND id = :p2", norm(emptyIn));
+
+		LambdaQuery<User> between = query().eq(User::getStatus, 1).or()
+				.betweenIfPresent(User::getAge, null, null).eq(User::getId, 4);
+		between.assemble(IDENTITY);
+		assertEquals("status = :p1 AND id = :p2", norm(between));
+
+		LambdaQuery<User> blankLike = query().eq(User::getStatus, 1).or()
+				.likeIfPresent(User::getName, " ").eq(User::getId, 4);
+		blankLike.assemble(IDENTITY);
+		assertEquals("status = :p1 AND id = :p2", norm(blankLike));
+
+		LambdaQuery<User> falseCondition = query().eq(User::getStatus, 1).or()
+				.eq(false, User::getType, 2).eq(User::getId, 4);
+		falseCondition.assemble(IDENTITY);
+		assertEquals("status = :p1 AND id = :p2", norm(falseCondition));
+	}
+
+	@Test
+	@DisplayName("更多被跳过条件:notIn/between数组/isNull/exists/inSql/inb")
+	public void explicitOrFollowedByMoreSkippedConditions() {
+		LambdaQuery<User> notIn = query().eq(User::getStatus, 1).or()
+				.notInIfPresent(User::getType, java.util.Collections.emptyList()).eq(User::getId, 4);
+		notIn.assemble(IDENTITY);
+		assertEquals("status = :p1 AND id = :p2", norm(notIn));
+
+		LambdaQuery<User> betweenArray = query().eq(User::getStatus, 1).or()
+				.betweenIfPresent(User::getAge, new Object[0]).eq(User::getId, 4);
+		betweenArray.assemble(IDENTITY);
+		assertEquals("status = :p1 AND id = :p2", norm(betweenArray));
+
+		LambdaQuery<User> isNullFalse = query().eq(User::getStatus, 1).or()
+				.isNull(false, User::getName).eq(User::getId, 4);
+		isNullFalse.assemble(IDENTITY);
+		assertEquals("status = :p1 AND id = :p2", norm(isNullFalse));
+
+		LambdaQuery<User> existsFalse = query().eq(User::getStatus, 1).or()
+				.exists(false, User.class, sub -> sub.eq(User::getType, 2)).eq(User::getId, 4);
+		existsFalse.assemble(IDENTITY);
+		assertEquals("status = :p1 AND id = :p2", norm(existsFalse));
+
+		LambdaQuery<User> inSqlFalse = query().eq(User::getStatus, 1).or()
+				.inSql(false, User::getId, "select 1", null).eq(User::getId, 4);
+		inSqlFalse.assemble(IDENTITY);
+		assertEquals("status = :p1 AND id = :p2", norm(inSqlFalse));
+
+		LambdaQuery<User> inbFalse = query().eq(User::getStatus, 1).or()
+				.inb(false, java.util.Collections.<LambdaFn<User, ?>>singletonList(User::getId),
+						java.util.Collections.<Object[]>singletonList(new Object[] { 1 }))
+				.eq(User::getId, 4);
+		inbFalse.assemble(IDENTITY);
+		assertEquals("status = :p1 AND id = :p2", norm(inbFalse));
+	}
+
+	@Test
 	@DisplayName("首位显式or()后接空分组:不留下前导OR")
 	public void leadingExplicitOrFollowedByEmptyGroup() {
 		LambdaQuery<User> q = query().or().and(w -> w.eq(false, User::getType, 2)).eq(User::getId, 4);

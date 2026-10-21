@@ -147,7 +147,7 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 	@Override
 	public <E, R> Self eq(boolean condition, LambdaFn<E, R> column, Object val) {
 		if (!valueFilter.test(val)) {
-			return typedThis;
+			return skipCondition();
 		}
 		return addCompareSegment(condition, column, SqlCompare.EQ, val);
 	}
@@ -155,7 +155,7 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 	@Override
 	public <E, R> Self ne(boolean condition, LambdaFn<E, R> column, Object val) {
 		if (!valueFilter.test(val)) {
-			return typedThis;
+			return skipCondition();
 		}
 		return addCompareSegment(condition, column, SqlCompare.NE, val);
 	}
@@ -163,7 +163,7 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 	@Override
 	public <E, R> Self gt(boolean condition, LambdaFn<E, R> column, Object val) {
 		if (!valueFilter.test(val)) {
-			return typedThis;
+			return skipCondition();
 		}
 		return addCompareSegment(condition, column, SqlCompare.GT, val);
 	}
@@ -171,7 +171,7 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 	@Override
 	public <E, R> Self ge(boolean condition, LambdaFn<E, R> column, Object val) {
 		if (!valueFilter.test(val)) {
-			return typedThis;
+			return skipCondition();
 		}
 		return addCompareSegment(condition, column, SqlCompare.GE, val);
 	}
@@ -179,7 +179,7 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 	@Override
 	public <E, R> Self lt(boolean condition, LambdaFn<E, R> column, Object val) {
 		if (!valueFilter.test(val)) {
-			return typedThis;
+			return skipCondition();
 		}
 		return addCompareSegment(condition, column, SqlCompare.LT, val);
 	}
@@ -187,7 +187,7 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 	@Override
 	public <E, R> Self le(boolean condition, LambdaFn<E, R> column, Object val) {
 		if (!valueFilter.test(val)) {
-			return typedThis;
+			return skipCondition();
 		}
 		return addCompareSegment(condition, column, SqlCompare.LE, val);
 	}
@@ -198,7 +198,10 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 			throw new DataAccessException("Outer.ref is only supported by eq/ne/gt/ge/lt/le comparisons");
 		}
 		if (!valueFilter.test(val1) || !valueFilter.test(val2)) {
-			return typedThis;
+			return skipCondition();
+		}
+		if (!condition) {
+			return skipCondition();
 		}
 		return addAssembler(resolver -> maybeDo(condition, () -> {
 			String columnName = resolveColumn(resolver, column);
@@ -217,7 +220,10 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 			throw new DataAccessException("Outer.ref is only supported by eq/ne/gt/ge/lt/le comparisons");
 		}
 		if (!valueFilter.test(val1) || !valueFilter.test(val2)) {
-			return typedThis;
+			return skipCondition();
+		}
+		if (!condition) {
+			return skipCondition();
 		}
 		return addAssembler(resolver -> maybeDo(condition, () -> {
 			String columnName = resolveColumn(resolver, column);
@@ -234,7 +240,7 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 	@Override
 	public <E, R> Self like(boolean condition, LambdaFn<E, R> column, Object val) {
 		if (!valueFilter.test(val)) {
-			return typedThis;
+			return skipCondition();
 		}
 		return addCompareSegment(condition, column, SqlCompare.LIKE, wrapLike(val, true, true));
 	}
@@ -242,7 +248,7 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 	@Override
 	public <E, R> Self notLike(boolean condition, LambdaFn<E, R> column, Object val) {
 		if (!valueFilter.test(val)) {
-			return typedThis;
+			return skipCondition();
 		}
 		return addCompareSegment(condition, column, SqlCompare.NOT_LIKE, wrapLike(val, true, true));
 	}
@@ -250,7 +256,7 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 	@Override
 	public <E, R> Self likeLeft(boolean condition, LambdaFn<E, R> column, Object val) {
 		if (!valueFilter.test(val)) {
-			return typedThis;
+			return skipCondition();
 		}
 		return addCompareSegment(condition, column, SqlCompare.LIKE_LEFT, wrapLike(val, true, false));
 	}
@@ -258,7 +264,7 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 	@Override
 	public <E, R> Self likeRight(boolean condition, LambdaFn<E, R> column, Object val) {
 		if (!valueFilter.test(val)) {
-			return typedThis;
+			return skipCondition();
 		}
 		return addCompareSegment(condition, column, SqlCompare.LIKE_RIGHT, wrapLike(val, false, true));
 	}
@@ -295,6 +301,9 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 
 	@Override
 	public <E, R> Self isNull(boolean condition, LambdaFn<E, R> column) {
+		if (!condition) {
+			return skipCondition();
+		}
 		return addAssembler(resolver -> maybeDo(condition, () -> {
 			String columnName = resolveColumn(resolver, column);
 			appendSqlSegments(() -> SqlCompare.IS_NULL.getMetaSql(columnName));
@@ -303,6 +312,9 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 
 	@Override
 	public <E, R> Self isNotNull(boolean condition, LambdaFn<E, R> column) {
+		if (!condition) {
+			return skipCondition();
+		}
 		return addAssembler(resolver -> maybeDo(condition, () -> {
 			String columnName = resolveColumn(resolver, column);
 			appendSqlSegments(() -> SqlCompare.IS_NOT_NULL.getMetaSql(columnName));
@@ -312,7 +324,7 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 	@Override
 	public <E, R> Self in(boolean condition, LambdaFn<E, R> column, Collection<?> coll) {
 		if (!valueFilter.test(coll) || coll.isEmpty()) {
-			return typedThis;
+			return skipCondition();
 		}
 		return addCompareSegment(condition, column, SqlCompare.IN, coll);
 	}
@@ -320,7 +332,7 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 	@Override
 	public <E, R> Self in(boolean condition, LambdaFn<E, R> column, Object... values) {
 		if (!valueFilter.test(values) || values.length == 0) {
-			return typedThis;
+			return skipCondition();
 		}
 		// 归一为list,便于数据库侧按集合展开in参数
 		List<Object> valueList = new ArrayList<>(Arrays.asList(values));
@@ -329,8 +341,11 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 
 	@Override
 	public <E, R> Self inSql(boolean condition, LambdaFn<E, R> column, String subSql, Map<String, Object> paramMap) {
+		if (!condition) {
+			return skipCondition();
+		}
 		if (StringUtil.isBlank(subSql)) {
-			return typedThis;
+			return skipCondition();
 		}
 		checkExternalParamNames(paramMap);
 		return addAssembler(resolver -> maybeDo(condition, () -> {
@@ -341,8 +356,11 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 
 	@Override
 	public <E> Self inb(boolean condition, Collection<LambdaFn<E, ?>> columns, Collection<Object[]> values) {
+		if (!condition) {
+			return skipCondition();
+		}
 		if (columns == null || columns.isEmpty() || values == null || values.isEmpty()) {
-			return typedThis;
+			return skipCondition();
 		}
 		return addAssembler(resolver -> maybeDo(condition, () -> addBatchInCondition(resolver, columns, values)));
 	}
@@ -356,7 +374,7 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 	@Override
 	public <E, R> Self notIn(boolean condition, LambdaFn<E, R> column, Collection<?> coll) {
 		if (!valueFilter.test(coll) || coll.isEmpty()) {
-			return typedThis;
+			return skipCondition();
 		}
 		return addCompareSegment(condition, column, SqlCompare.NOT_IN, coll);
 	}
@@ -364,7 +382,7 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 	@Override
 	public <E, R> Self notIn(boolean condition, LambdaFn<E, R> column, Object... values) {
 		if (!valueFilter.test(values) || values.length == 0) {
-			return typedThis;
+			return skipCondition();
 		}
 		List<Object> valueList = new ArrayList<>(Arrays.asList(values));
 		return addCompareSegment(condition, column, SqlCompare.NOT_IN, valueList);
@@ -688,7 +706,11 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 	 * @description 普通比较条件组装
 	 */
 	private <E, R> Self addCompareSegment(boolean condition, LambdaFn<E, R> column, SqlCompare compare, Object val) {
-		return addAssembler(resolver -> maybeDo(condition, () -> {
+		if (!condition) {
+			// 显式or()后接被跳过条件时,不能把OR留给后续条件
+			return skipCondition();
+		}
+		return addAssembler(resolver -> {
 			String columnName = resolveColumn(resolver, column);
 			if (val instanceof OuterRef) {
 				// 外层列引用内联渲染,不做参数绑定
@@ -697,7 +719,7 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 				return;
 			}
 			appendSqlSegments(new SegmentMeta(compare, columnName, nextParamName(), val));
-		}));
+		});
 	}
 
 	/**
@@ -768,6 +790,9 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 
 	private <E> Self addExistsSegment(boolean condition, Class<E> subEntity,
 			Function<LambdaSubQuery<E>, LambdaSubQuery<E>> subFn, boolean negate) {
+		if (!condition) {
+			return skipCondition();
+		}
 		return addAssembler(resolver -> maybeDo(condition, () -> {
 			LambdaSubQuery<E> subQuery = new LambdaSubQuery<>(subEntity, joinContext.nextSubQueryAlias(), joinContext,
 					qualifiedResolverFor(currentMetaLoader));
@@ -854,6 +879,13 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 				expression.removeTrailingOr();
 			}
 		});
+	}
+
+	/**
+	 * @description 条件被跳过时的清理:按装配顺序移除紧邻的显式OR,避免延迟装配下OR残留到后续条件
+	 */
+	private Self skipCondition() {
+		return addAssembler(resolver -> expression.removeTrailingOr());
 	}
 
 	/**
