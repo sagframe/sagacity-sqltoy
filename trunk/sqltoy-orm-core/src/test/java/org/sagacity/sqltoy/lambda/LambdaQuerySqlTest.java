@@ -582,6 +582,26 @@ public class LambdaQuerySqlTest {
 	}
 
 	@Test
+	@DisplayName("setExpr引号内的?与:name按字面量处理")
+	public void testSetExprLiteralPlaceholder() {
+		LambdaUpdate<User> update = LambdaUpdate.create(User.class)
+				.setExpr(User::getName, "replace(name, '?', '')");
+		update.assemble(IDENTITY);
+		assertEquals("replace(name, '?', '')", update.getSetFields().keySet().iterator().next().split("=", 2)[1]);
+
+		// 双引号标识符与转义引号内的占位符字符同样不计数
+		LambdaUpdate<User> quoted = LambdaUpdate.create(User.class)
+				.setExpr(User::getName, "concat(\"name\", ':delta')");
+		quoted.assemble(IDENTITY);
+		assertEquals("concat(\"name\", ':delta')",
+				quoted.getSetFields().keySet().iterator().next().split("=", 2)[1]);
+
+		// 字面量之外的占位符仍按原规则拒绝
+		assertThrows(DataAccessException.class, () -> LambdaUpdate.create(User.class)
+				.setExpr(User::getName, "replace(name, '?', '') || ?"));
+	}
+
+	@Test
 	@DisplayName("between禁用条件不应因OuterRef产生副作用")
 	public void testDisabledBetweenOuterRef() {
 		assertDoesNotThrow(() -> LambdaQuery.create(User.class)

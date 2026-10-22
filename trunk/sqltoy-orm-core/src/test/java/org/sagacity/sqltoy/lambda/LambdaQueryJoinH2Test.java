@@ -459,6 +459,18 @@ public class LambdaQueryJoinH2Test {
 	}
 
 	@Test
+	@Order(12)
+	@DisplayName("deleteTables重复登记同一目标只生成一条DELETE")
+	public void testDeleteTablesDuplicateTarget() {
+		LambdaDelete<JoinUser> delete = lightDao.lambdaDelete(JoinUser.class).leftJoin(JoinDept.class)
+				.on(JoinUser::getDeptId, JoinDept::getDeptId).deleteTables(JoinUser.class, JoinUser.class)
+				.eq(JoinUser::getStatus, 1);
+		delete.assemble(context::getEntityMeta);
+		assertEquals(1, delete.getDeleteSqls().size());
+		assertTrue(delete.getSql().startsWith("DELETE FROM lambda_join_user"));
+	}
+
+	@Test
 	@Order(10)
 	@DisplayName("join完整性校验:缺on/未参与join的实体")
 	public void testJoinValidation() {

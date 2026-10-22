@@ -398,6 +398,23 @@ public class LambdaExecuteH2Test {
 	}
 
 	@Test
+	@Order(19)
+	@DisplayName("findColumns执行后不污染select列,构建器可继续复用")
+	public void testFindColumnsKeepsBuilderReusable() {
+		LambdaQuery<User> query = lightDao.lambdaQuery(User.class).eq(User::getStatus, 1)
+				.orderByAsc(User::getId);
+		assertEquals(Arrays.asList(1, 1), query.findColumns(User::getStatus));
+		// 单列终端注入的select只对本次有效:复用后仍应返回完整对象
+		List<User> rows = query.find();
+		assertEquals(2, rows.size());
+		assertEquals("张三", rows.get(0).getStaffName());
+		assertEquals(Integer.valueOf(1), rows.get(0).getId());
+		// 同一构建器可再次执行单列终端
+		assertEquals(Arrays.asList(1, 2), query.findColumns(User::getId));
+		assertEquals("张三", lightDao.lambdaQuery(User.class).eq(User::getId, 1).getScalar(User::getStaffName));
+	}
+
+	@Test
 	@Order(18)
 	@DisplayName("单表删除调用deleteTables必须响亮失败")
 	public void testDeleteTablesWithoutJoin() {

@@ -754,7 +754,13 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 					"Lambda findColumns cannot be combined with explicit select(...); call it on a fresh query or use find()");
 		}
 		select(column);
-		List<T> rows = find();
+		List<T> rows;
+		try {
+			rows = find();
+		} finally {
+			// 终端方法注入的select列只对本次取数有效,执行后还原,避免复用构建器时静默只查单列
+			selectFields.remove(selectFields.size() - 1);
+		}
 		List<R> values = new ArrayList<>(rows.size());
 		for (T row : rows) {
 			values.add(column.apply(row));

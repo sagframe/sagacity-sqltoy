@@ -548,7 +548,10 @@ public class JoinContext {
 		if (entityClass == null) {
 			throw new DataAccessException("Lambda delete target entityClass must not be null");
 		}
-		deleteClasses.add(entityClass);
+		// 同一目标重复登记会生成多条相同DELETE,getSql()还会误报多目标;按目标去重
+		if (!deleteClasses.contains(entityClass)) {
+			deleteClasses.add(entityClass);
+		}
 	}
 
 	public List<Class<?>> getDeleteClasses() {

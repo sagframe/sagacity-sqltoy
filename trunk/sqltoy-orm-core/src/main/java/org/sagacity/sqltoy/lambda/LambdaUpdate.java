@@ -276,9 +276,11 @@ public final class LambdaUpdate<T> extends AbstractWhere<T, LambdaUpdate<T>> {
 	 * setExpr在两条通道共用同一套占位符约束,避免单表/join行为不一致或静默丢参
 	 */
 	private static void validateSetExpr(String expression, Object value) {
+		// 引号内的 ? / :name 是字面量而非占位符(如 replace(name, '?', '')),先掩码再统计
+		String code = maskStringLiterals(expression);
 		int placeholders = 0;
-		for (int i = 0; i < expression.length(); i++) {
-			if (expression.charAt(i) == '?') {
+		for (int i = 0; i < code.length(); i++) {
+			if (code.charAt(i) == '?') {
 				placeholders++;
 			}
 		}
@@ -286,11 +288,11 @@ public final class LambdaUpdate<T> extends AbstractWhere<T, LambdaUpdate<T>> {
 			throw new DataAccessException(
 					"Lambda setExpr supports at most one ? placeholder: " + expression);
 		}
-		if (java.util.regex.Pattern.compile(":p\\d+\\b").matcher(expression).find()) {
+		if (java.util.regex.Pattern.compile(":p\\d+\\b").matcher(code).find()) {
 			throw new DataAccessException(
 					"Lambda setExpr must not use internal parameter names like :p1: " + expression);
 		}
-		boolean hasNamedParam = java.util.regex.Pattern.compile(":[A-Za-z_][A-Za-z0-9_]*").matcher(expression).find();
+		boolean hasNamedParam = java.util.regex.Pattern.compile(":[A-Za-z_][A-Za-z0-9_]*").matcher(code).find();
 		if (value == null && (placeholders > 0 || hasNamedParam)) {
 			throw new DataAccessException(
 					"Lambda setExpr has a placeholder but no value; pass a non-null value or remove the placeholder: "
@@ -301,6 +303,45 @@ public final class LambdaUpdate<T> extends AbstractWhere<T, LambdaUpdate<T>> {
 					"Lambda setExpr received a value but the expression contains no ? or :param placeholder: "
 							+ expression);
 		}
+	}
+
+	/**
+	 * @description 将sql单引号/双引号字面量内容替换为空格,保留长度与引号外文本,供占位符统计使用;
+	 *              支持''与反斜杠转义,避免 replace(name, '?', '') 这类合法表达式被判成占位符
+	 */
+	private static String maskStringLiterals(String expression) {
+		StringBuilder masked = new StringBuilder(expression.length());
+		char quote = 0;
+		for (int i = 0; i < expression.length(); i++) {
+			char c = expression.charAt(i);
+			if (quote == 0) {
+				if (c == '\'' || c == '"') {
+					quote = c;
+					masked.append(' ');
+				} else {
+					masked.append(c);
+				}
+				continue;
+			}
+			// 字面量内部:成对引号''或反斜杠转义的引号不结束字面量
+			if (c == '\\' && i + 1 < expression.length()) {
+				masked.append(' ');
+				masked.append(' ');
+				i++;
+			} else if (c == quote) {
+				if (i + 1 < expression.length() && expression.charAt(i + 1) == quote) {
+					masked.append(' ');
+					masked.append(' ');
+					i++;
+				} else {
+					quote = 0;
+					masked.append(' ');
+				}
+			} else {
+				masked.append(' ');
+			}
+		}
+		return masked.toString();
 	}
 
 	/**
