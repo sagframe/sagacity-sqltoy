@@ -57,10 +57,11 @@ public class Trim extends IFunction {
 		// update 2026-10-22 修饰符判定改在掩码串上进行(等长同位):单参trim(' from ')等
 		// 字面量内含" from "文本被误判为修饰符形态,sqlite/starrocks分支据此产出trim(',')
 		// (整个参数被替换为逗号常量、原值丢失,实测执行返回','而非'from');
-		// 掩码由maskNonCode单趟完成:字符串'...'(标准SQL ''转义)、带引号标识符"..."/`...`/[...]
-		// 及--、/*...*/注释一并遮蔽,仅用于判定,内容截取仍用原串;不可分次套用maskLiterals——
-		// 注释内的引号、标识符内的另一种引号会跨引号配对,反而把真实from一起吞掉
-		String maskedArgLow = maskNonCode(argLow);
+		// 掩码由maskQuoted单趟完成:字符串'...'(标准SQL ''转义)与带引号标识符"..."/`...`/[...]
+		// (clearMark剔注释时保留标识符,mysql的"..."默认为字符串故能到达此处)一并遮蔽,仅用于判定,
+		// 内容截取仍用原串;注释无需处理——解析期clearMark已在函数转换前剔除(parseSqlToyConfig链路);
+		// 不可分次套用maskLiterals——标识符内的另一种引号会跨引号配对,反而把真实from一起吞掉
+		String maskedArgLow = maskQuoted(argLow);
 		boolean modifierForm = maskedArgLow.startsWith("from ") || maskedArgLow.contains(" from ");
 		// update 2026-9-9 rest按实际前导关键字长度截取:原按keyword.length()定长截取,
 		// 对省略BOTH/LEADING/TRAILING关键字的trim('x' from col)形态会把remstr首部误截掉
@@ -82,7 +83,7 @@ public class Trim extends IFunction {
 		}
 		// update 2026-10-22 fromIdx同样在掩码串上定位:trim(both ' from ' from col)等字面量内含
 		// " from "时原indexOf会命中字面量内位置而切错参数;掩码串与原串等长同位,索引可直接用于原串
-		String maskedRestLow = maskNonCode(rest.toLowerCase(Locale.ROOT));
+		String maskedRestLow = maskQuoted(rest.toLowerCase(Locale.ROOT));
 		int fromIdx = maskedRestLow.startsWith("from ") ? 0 : maskedRestLow.indexOf(" from ");
 		// update 2026-10-19 真库实测:标准组中 mysql 9.3 对 trim(from x) 报1064语法错、
 		// oracle 23ai 报ORA-30000(两者均要求省略剔除字符时不能保留FROM);省略字符的
@@ -161,16 +162,16 @@ public class Trim extends IFunction {
 
 	/**
 	 * update 2026-10-22 把SQL片段中的非代码文本替换为等长空格(定界符保留、偏移不变),供from关键字判定:
-	 * 单引号字符串(标准SQL '' 成对转义)、双引号/反引号/方括号标识符以及注释(-- 行注释、/* 块注释)
-	 * 均不参与判定。
-	 * 单趟互斥状态机:进入一种引号/注释后,其中出现的其它引号只当内容,规避分次掩码时跨引号配对
-	 * (如注释内的引号与真实from之后的引号配对会把from吞掉);未闭合的引号/注释按既有的字面量惯例
-	 * 遮蔽到串尾(仅出现在畸形sql中)。行注释只遮蔽到换行前,换行保留,避免把换行掩成空格后凭空拼出" from "。
+	 * 单引号字符串(标准SQL '' 成对转义)与双引号/反引号/方括号标识符不参与判定;注释无需处理——
+	 * 解析期clearMark已在函数转换前剔除(parseSqlToyConfig链路),本方法看不到注释。
+	 * 单趟互斥状态机:进入一种引号后,其中出现的其它引号只当内容,规避分次掩码时跨引号配对
+	 * (如标识符"a'b"内的单引号与真实from之后的引号配对会把from吞掉);未闭合的引号按既有的
+	 * 字面量惯例遮蔽到串尾(仅出现在畸形sql中)
 	 *
 	 * @param text 待掩码的sql片段
-	 * @return 等长掩码串;不含任何引号/注释时原样返回
+	 * @return 等长掩码串;不含任何引号时原样返回
 	 */
-	private static String maskNonCode(String text) {
+	private static String maskQuoted(String text) {
 		if (text == null || text.isEmpty()) {
 			return text;
 		}
@@ -180,42 +181,6 @@ public class Trim extends IFunction {
 		int i = 0;
 		while (i < n) {
 			char c = chars[i];
-			// -- 行注释:兼容mysql"后跟空白/行尾才是注释"的约定,避免把a--b这类减法误当注释;
-			// 换行保留,防止跨行凭空拼出" from "
-			if (c == '-' && i + 1 < n && chars[i + 1] == '-'
-					&& (i + 2 >= n || Character.isWhitespace(chars[i + 2]))) {
-				if (result == null) {
-					result = chars.clone();
-				}
-				result[i] = ' ';
-				result[i + 1] = ' ';
-				i += 2;
-				while (i < n && chars[i] != '\n' && chars[i] != '\r') {
-					result[i] = ' ';
-					i++;
-				}
-				continue;
-			}
-			// /*...*/ 块注释:不支持嵌套(嵌套仅PG支持),未闭合按遮蔽到串尾
-			if (c == '/' && i + 1 < n && chars[i + 1] == '*') {
-				if (result == null) {
-					result = chars.clone();
-				}
-				result[i] = ' ';
-				result[i + 1] = ' ';
-				i += 2;
-				while (i < n) {
-					if (chars[i] == '*' && i + 1 < n && chars[i + 1] == '/') {
-						result[i] = ' ';
-						result[i + 1] = ' ';
-						i += 2;
-						break;
-					}
-					result[i] = ' ';
-					i++;
-				}
-				continue;
-			}
 			// 字符串/带引号标识符:''、""、`` 为成对转义(两字符均属内容),未闭合遮蔽到串尾
 			if (c == '\'' || c == '"' || c == '`') {
 				if (result == null) {

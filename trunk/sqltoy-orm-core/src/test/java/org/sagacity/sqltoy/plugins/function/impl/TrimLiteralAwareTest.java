@@ -54,7 +54,7 @@ public class TrimLiteralAwareTest {
 		// 原实现fromIdx命中字面量内位置(拆出chars="'",产物错值),现正确保留完整字面量为剔除集
 	}
 
-	// ---------- maskNonCode扩展能力:标识符/注释/嵌套函数/转义 ----------
+	// ---------- maskQuoted能力:引号标识符/嵌套函数/转义 ----------
 
 	@Test
 	public void doubledQuoteLiteralContainingFrom() {
@@ -75,22 +75,9 @@ public class TrimLiteralAwareTest {
 	}
 
 	@Test
-	public void blockCommentContainingFrom() {
-		// 块注释内的from被遮蔽(注释原文保留在产物中,位置合法)
-		assertEquals("trim(col,x /* the from clause */)", wrap(DBType.SQLITE, "x /* the from clause */ from col"));
-	}
-
-	@Test
-	public void lineCommentNewlineNotFabricatingFrom() {
-		// 行注释遮蔽到换行、换行保留:注释后换行再from的形态不识别(响亮保留)——换行掩成空格会
-		// 把子查询等表达式内换行后的from误判为修饰符(见下例),两害取其轻
-		assertNull(wrap(DBType.SQLITE, "x -- note\nfrom col"));
-	}
-
-	@Test
 	public void subqueryNewlineFromNotMisdetected() {
-		// 换行保留的另一面:参数内子查询换行后的from(非修饰符from)不被" from "误命中,
-		// 真实修饰符from正确定位
+		// 参数内子查询换行后的from(非修饰符from)不被" from "误命中(\n不是空格且掩码不触碰它),
+		// 真实修饰符from正确定位;注释场景无需测试——解析期clearMark已在函数转换前剔除
 		assertEquals("trim(col,(select 1\nfrom t))", wrap(DBType.SQLITE, "(select 1\nfrom t) from col"));
 	}
 
