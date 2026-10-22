@@ -1,7 +1,7 @@
 English | [简体中文](README.zh-CN.md)
 
 <p align="center">
-    <img src="https://img.shields.io/badge/SqlToy-6.0.8-blue" alt="version">
+    <img src="https://img.shields.io/badge/SqlToy-6.0.9-blue" alt="version">
     <a target="_blank" href="LICENSE"><img src="https://img.shields.io/:license-Apache%202.0-blue.svg"></a>
     <a target="_blank" href="https://github.com/sagframe/sagacity-sqltoy/releases"><img src="https://img.shields.io/github/v/release/sagframe/sagacity-sqltoy?logo=github"></a>
     <a href="https://mvnrepository.com/artifact/com.sagframe/sagacity-sqltoy">
@@ -56,7 +56,7 @@ List<StaffVO> staff = lightDao.find("staff_search",
 <dependency>
 	<groupId>com.sagframe</groupId>
 	<artifactId>sagacity-sqltoy-spring-starter</artifactId>
-	<version>6.0.8</version>
+	<version>6.0.9</version>
 </dependency>
 ```
 
