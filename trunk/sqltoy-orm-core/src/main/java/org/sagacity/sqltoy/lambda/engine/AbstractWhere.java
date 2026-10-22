@@ -404,7 +404,11 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 
 	@Override
 	public <E, R> Self in(boolean condition, LambdaFn<E, R> column, Collection<?> coll) {
-		if (coll == null || !acceptValue(condition, coll) || coll.isEmpty()) {
+		if (!condition || coll == null || coll.isEmpty()) {
+			return skipCondition();
+		}
+		rejectOuterRefElements(coll);
+		if (!acceptValue(condition, coll)) {
 			return skipCondition();
 		}
 		return addCompareSegment(condition, column, SqlCompare.IN, coll);
@@ -412,7 +416,11 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 
 	@Override
 	public <E, R> Self in(boolean condition, LambdaFn<E, R> column, Object... values) {
-		if (values == null || !acceptValue(condition, values) || values.length == 0) {
+		if (!condition || values == null || values.length == 0) {
+			return skipCondition();
+		}
+		rejectOuterRefElements(Arrays.asList(values));
+		if (!acceptValue(condition, values)) {
 			return skipCondition();
 		}
 		// 归一为list,便于数据库侧按集合展开in参数
@@ -454,7 +462,11 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 
 	@Override
 	public <E, R> Self notIn(boolean condition, LambdaFn<E, R> column, Collection<?> coll) {
-		if (coll == null || !acceptValue(condition, coll) || coll.isEmpty()) {
+		if (!condition || coll == null || coll.isEmpty()) {
+			return skipCondition();
+		}
+		rejectOuterRefElements(coll);
+		if (!acceptValue(condition, coll)) {
 			return skipCondition();
 		}
 		return addCompareSegment(condition, column, SqlCompare.NOT_IN, coll);
@@ -462,11 +474,27 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 
 	@Override
 	public <E, R> Self notIn(boolean condition, LambdaFn<E, R> column, Object... values) {
-		if (values == null || !acceptValue(condition, values) || values.length == 0) {
+		if (!condition || values == null || values.length == 0) {
+			return skipCondition();
+		}
+		rejectOuterRefElements(Arrays.asList(values));
+		if (!acceptValue(condition, values)) {
 			return skipCondition();
 		}
 		List<Object> valueList = new ArrayList<>(Arrays.asList(values));
 		return addCompareSegment(condition, column, SqlCompare.NOT_IN, valueList);
+	}
+
+	private static void rejectOuterRefElements(Collection<?> values) {
+		if (values == null) {
+			return;
+		}
+		for (Object value : values) {
+			if (value instanceof OuterRef) {
+				throw new DataAccessException(
+						"OuterRef is not supported as an in()/notIn() element; use eq/ne/gt/ge/lt/le for column-to-column comparisons");
+			}
+		}
 	}
 
 	@Override
@@ -965,6 +993,10 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 				if (row[i] == null) {
 					throw new DataAccessException(
 							"Lambda inb tuple values must not contain null; remove the row or use a non-null value");
+				}
+				if (row[i] instanceof OuterRef) {
+					throw new DataAccessException(
+							"OuterRef is not supported as an inb() tuple value; use eq/ne/gt/ge/lt/le for column-to-column comparisons");
 				}
 				if (typeCheck) {
 					LambdaTypeChecker.check(columnList.get(i), row[i], currentMetaLoader, "condition");

@@ -398,6 +398,14 @@ public class LambdaExecuteH2Test {
 	}
 
 	@Test
+	@Order(18)
+	@DisplayName("单表删除调用deleteTables必须响亮失败")
+	public void testDeleteTablesWithoutJoin() {
+		assertThrows(DataAccessException.class,
+				() -> lightDao.lambdaDelete(User.class).deleteTables(User.class).eq(User::getId, 1).delete());
+	}
+
+	@Test
 	@Order(17)
 	@DisplayName("getFirst按orderBy取首条,无匹配返回null")
 	public void testGetFirst() {

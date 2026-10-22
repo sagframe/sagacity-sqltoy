@@ -473,7 +473,6 @@ public class LambdaQuerySqlTest {
 		LambdaQuery<User> conflict = LambdaQuery.create(User.class)
 				.inSql(User::getId, "select id from a where x = :v", paramsA)
 				.inSql(User::getName, "select name from b where y = :v", paramsB);
-		query_assemble:
 		conflict.assemble(IDENTITY);
 		assertThrows(DataAccessException.class, () -> conflict.getParams());
 
@@ -588,6 +587,19 @@ public class LambdaQuerySqlTest {
 		assertDoesNotThrow(() -> LambdaQuery.create(User.class)
 				.between(false, User::getStatus, OuterRef.of(User::getId), 1)
 				.assemble(IDENTITY));
+	}
+
+	@Test
+	@DisplayName("fromCte引用未注册CTE必须失败")
+	public void testFromCteUnknown() {
+		assertThrows(DataAccessException.class, () -> LambdaQuery.create(User.class).fromCte("missing_cte"));
+	}
+
+	@Test
+	@DisplayName("in元素不接受OuterRef")
+	public void testInOuterRef() {
+		assertThrows(DataAccessException.class,
+				() -> LambdaQuery.create(User.class).in(User::getId, OuterRef.of(User::getId)).assemble(IDENTITY));
 	}
 
 	@Test

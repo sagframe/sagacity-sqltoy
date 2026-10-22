@@ -148,6 +148,10 @@ public final class LambdaDelete<T> extends AbstractWhere<T, LambdaDelete<T>> {
 					"LambdaDelete is not bound to a dao; create it via lightDao.lambdaDelete(entityClass) or bind a dao with bind(dao) before executing");
 		}
 		assemble(dao::getEntityMeta);
+		if (!isJoinMode() && !joinContext.getDeleteClasses().isEmpty()) {
+			throw new DataAccessException(
+					"deleteTables() is only supported by join delete; remove it for single-table delete");
+		}
 		if (isJoinMode()) {
 			requireCondition("delete");
 			List<String> deleteSqls = getDeleteSqls();

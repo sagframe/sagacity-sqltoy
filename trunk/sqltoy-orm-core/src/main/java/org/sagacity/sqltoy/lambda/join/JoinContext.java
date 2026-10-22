@@ -286,8 +286,21 @@ public class JoinContext {
 		if (entityClass == null) {
 			throw new DataAccessException("Lambda from entityClass must not be null");
 		}
+		if (isAssembled()) {
+			throw new DataAccessException(
+					"Join structure cannot be modified after assemble; build joins before execution");
+		}
+		if (alias == null || alias.trim().isEmpty()) {
+			throw new DataAccessException("Lambda from alias must not be blank");
+		}
 		if (fromClass != null) {
 			throw new DataAccessException("Lambda join from entity can only be set once");
+		}
+		for (Map.Entry<Class<?>, String> entry : aliasMap.entrySet()) {
+			if (!entry.getKey().equals(entityClass) && alias.equals(entry.getValue())) {
+				throw new DataAccessException(
+						"Lambda from alias [" + alias + "] conflicts with an existing table alias");
+			}
 		}
 		if (!aliasMap.containsKey(entityClass)) {
 			aliasMap.put(entityClass, alias);
@@ -589,9 +602,12 @@ public class JoinContext {
 
 	private void registerAlias(Class<?> entityClass) {
 		if (!aliasMap.containsKey(entityClass)) {
-			String alias = (aliasPrefix != null) ? aliasPrefix + aliasSeq.incrementAndGet()
-					: Character.toLowerCase(entityClass.getSimpleName().charAt(0))
-							+ String.valueOf(aliasSeq.incrementAndGet());
+			String alias;
+			do {
+				alias = (aliasPrefix != null) ? aliasPrefix + aliasSeq.incrementAndGet()
+						: Character.toLowerCase(entityClass.getSimpleName().charAt(0))
+								+ String.valueOf(aliasSeq.incrementAndGet());
+			} while (aliasMap.containsValue(alias));
 			aliasMap.put(entityClass, alias);
 		}
 	}
