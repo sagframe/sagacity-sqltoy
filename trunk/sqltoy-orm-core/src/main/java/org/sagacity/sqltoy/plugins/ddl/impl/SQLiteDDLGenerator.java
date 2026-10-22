@@ -70,7 +70,8 @@ public class SQLiteDDLGenerator implements DialectDDLGenerator {
 			}
 			// SQLite无COMMENT语法,以行注释附加备注
 			if (StringUtil.isNotBlank(colMeta.getComments())) {
-				tableSql.append(" -- ").append(colMeta.getComments());
+				// update 2026-10-22 行注释剔除换行符:注释文本含换行时后半段脱离"--"注释变成SQL文本
+				tableSql.append(" -- ").append(colMeta.getComments().replace("\r", " ").replace("\n", " "));
 			}
 			index++;
 		}
@@ -92,9 +93,10 @@ public class SQLiteDDLGenerator implements DialectDDLGenerator {
 						.append(String.join(",", fk.getForeignColumns())).append(")");
 			}
 		}
-		// 表注释(SQLite无COMMENT语法,以注释形式)
+		// 表注释(SQLite无COMMENT语法,以注释形式;换行剔除同列注释)
 		if (StringUtil.isNotBlank(tableMeta.getRemarks())) {
-			tableSql.append(NEWLINE).append("-- ").append(tableName).append(": ").append(tableMeta.getRemarks());
+			tableSql.append(NEWLINE).append("-- ").append(tableName).append(": ")
+					.append(tableMeta.getRemarks().replace("\r", " ").replace("\n", " "));
 		}
 		return tableSql.toString();
 	}

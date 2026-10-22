@@ -100,15 +100,4 @@ public class ClickHouseDDLGenerator implements DialectDDLGenerator {
 		}
 		return tableSql.toString();
 	}
-
-	private String joinColumns(String[] columns, String upperOrLower) {
-		StringBuilder result = new StringBuilder();
-		for (int i = 0; i < columns.length; i++) {
-			if (i > 0) {
-				result.append(",");
-			}
-			result.append(StringUtil.toLowerOrUpper(columns[i], upperOrLower));
-		}
-		return result.toString();
-	}
 }

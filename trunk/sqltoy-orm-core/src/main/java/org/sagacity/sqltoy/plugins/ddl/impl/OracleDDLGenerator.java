@@ -75,7 +75,8 @@ public class OracleDDLGenerator implements DialectDDLGenerator {
 				}
 			} else if (colMeta.getGeneratedType() == 0 && StringUtil.isNotBlank(colMeta.getDefaultValue())) {
 				tableSql.append(" DEFAULT ");
-				// 裸f建表语法错;故boolean排除出isNotChar的免引号路径,落入下方加引号分支
+				// boolean默认值已在上游wrapTableMeta按方言归一(oracle系/sqlserver的true/false转1/0,
+				// 规避数值承载列裸true字面量报ORA-00904/无效列名)
 				if (DDLUtils.isNotChar(colMeta.getDataType())) {
 					tableSql.append(colMeta.getDefaultValue());
 				} else if (DDLUtils.isDate(colMeta.getDataType())

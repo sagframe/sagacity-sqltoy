@@ -3,7 +3,6 @@ package org.sagacity.sqltoy.plugins.function.impl;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
-import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.plugins.function.IFunction;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 
@@ -55,10 +54,13 @@ public class Trim extends IFunction {
 		String arg = args[0].trim();
 		String argLow = arg.toLowerCase(Locale.ROOT);
 		// trim(from col)是标准形态,FROM前没有前导空格,须显式识别串首from
-		// update 2026-10-22 修饰符判定改在字面量掩码串上进行(等长同位):单参trim(' from ')等
-		// 字面量内含" from "文本被误判为修饰符形态,sqlite/starrocks分支拆参产物语义错值
-		// (trim("'","'")变成剔除引号字符而非去空白);掩码后字面量内文本不参与判定
-		String maskedArgLow = SqlConfigParseUtils.maskLiterals(argLow, false);
+		// update 2026-10-22 修饰符判定改在掩码串上进行(等长同位):单参trim(' from ')等
+		// 字面量内含" from "文本被误判为修饰符形态,sqlite/starrocks分支据此产出trim(',')
+		// (整个参数被替换为逗号常量、原值丢失,实测执行返回','而非'from');
+		// 掩码由maskNonCode单趟完成:字符串'...'(标准SQL ''转义)、带引号标识符"..."/`...`/[...]
+		// 及--、/*...*/注释一并遮蔽,仅用于判定,内容截取仍用原串;不可分次套用maskLiterals——
+		// 注释内的引号、标识符内的另一种引号会跨引号配对,反而把真实from一起吞掉
+		String maskedArgLow = maskNonCode(argLow);
 		boolean modifierForm = maskedArgLow.startsWith("from ") || maskedArgLow.contains(" from ");
 		// update 2026-9-9 rest按实际前导关键字长度截取:原按keyword.length()定长截取,
 		// 对省略BOTH/LEADING/TRAILING关键字的trim('x' from col)形态会把remstr首部误截掉
@@ -80,7 +82,7 @@ public class Trim extends IFunction {
 		}
 		// update 2026-10-22 fromIdx同样在掩码串上定位:trim(both ' from ' from col)等字面量内含
 		// " from "时原indexOf会命中字面量内位置而切错参数;掩码串与原串等长同位,索引可直接用于原串
-		String maskedRestLow = SqlConfigParseUtils.maskLiterals(rest.toLowerCase(Locale.ROOT), false);
+		String maskedRestLow = maskNonCode(rest.toLowerCase(Locale.ROOT));
 		int fromIdx = maskedRestLow.startsWith("from ") ? 0 : maskedRestLow.indexOf(" from ");
 		// update 2026-10-19 真库实测:标准组中 mysql 9.3 对 trim(from x) 报1064语法错、
 		// oracle 23ai 报ORA-30000(两者均要求省略剔除字符时不能保留FROM);省略字符的
@@ -155,5 +157,115 @@ public class Trim extends IFunction {
 			return "rtrim(ltrim(" + col + "))";
 		}
 		return super.IGNORE;
+	}
+
+	/**
+	 * update 2026-10-22 把SQL片段中的非代码文本替换为等长空格(定界符保留、偏移不变),供from关键字判定:
+	 * 单引号字符串(标准SQL '' 成对转义)、双引号/反引号/方括号标识符以及注释(-- 行注释、/* 块注释)
+	 * 均不参与判定。
+	 * 单趟互斥状态机:进入一种引号/注释后,其中出现的其它引号只当内容,规避分次掩码时跨引号配对
+	 * (如注释内的引号与真实from之后的引号配对会把from吞掉);未闭合的引号/注释按既有的字面量惯例
+	 * 遮蔽到串尾(仅出现在畸形sql中)。行注释只遮蔽到换行前,换行保留,避免把换行掩成空格后凭空拼出" from "。
+	 *
+	 * @param text 待掩码的sql片段
+	 * @return 等长掩码串;不含任何引号/注释时原样返回
+	 */
+	private static String maskNonCode(String text) {
+		if (text == null || text.isEmpty()) {
+			return text;
+		}
+		int n = text.length();
+		char[] chars = text.toCharArray();
+		char[] result = null;
+		int i = 0;
+		while (i < n) {
+			char c = chars[i];
+			// -- 行注释:兼容mysql"后跟空白/行尾才是注释"的约定,避免把a--b这类减法误当注释;
+			// 换行保留,防止跨行凭空拼出" from "
+			if (c == '-' && i + 1 < n && chars[i + 1] == '-'
+					&& (i + 2 >= n || Character.isWhitespace(chars[i + 2]))) {
+				if (result == null) {
+					result = chars.clone();
+				}
+				result[i] = ' ';
+				result[i + 1] = ' ';
+				i += 2;
+				while (i < n && chars[i] != '\n' && chars[i] != '\r') {
+					result[i] = ' ';
+					i++;
+				}
+				continue;
+			}
+			// /*...*/ 块注释:不支持嵌套(嵌套仅PG支持),未闭合按遮蔽到串尾
+			if (c == '/' && i + 1 < n && chars[i + 1] == '*') {
+				if (result == null) {
+					result = chars.clone();
+				}
+				result[i] = ' ';
+				result[i + 1] = ' ';
+				i += 2;
+				while (i < n) {
+					if (chars[i] == '*' && i + 1 < n && chars[i + 1] == '/') {
+						result[i] = ' ';
+						result[i + 1] = ' ';
+						i += 2;
+						break;
+					}
+					result[i] = ' ';
+					i++;
+				}
+				continue;
+			}
+			// 字符串/带引号标识符:''、""、`` 为成对转义(两字符均属内容),未闭合遮蔽到串尾
+			if (c == '\'' || c == '"' || c == '`') {
+				if (result == null) {
+					result = chars.clone();
+				}
+				char close = c;
+				i++;
+				while (i < n) {
+					char t = chars[i];
+					if (t == close) {
+						if (i + 1 < n && chars[i + 1] == close) {
+							result[i] = ' ';
+							result[i + 1] = ' ';
+							i += 2;
+							continue;
+						}
+						i++;
+						break;
+					}
+					result[i] = ' ';
+					i++;
+				}
+				continue;
+			}
+			// 方括号标识符:]] 为转义;不按嵌套处理(SQLServer语义,[ ]内不再嵌套,
+			// PG数组下标的嵌套下标只影响遮蔽范围,不影响其外层真实from的定位)
+			if (c == '[') {
+				if (result == null) {
+					result = chars.clone();
+				}
+				i++;
+				while (i < n) {
+					char t = chars[i];
+					if (t == ']') {
+						if (i + 1 < n && chars[i + 1] == ']') {
+							result[i] = ' ';
+							result[i + 1] = ' ';
+							i += 2;
+							continue;
+						}
+						i++;
+						break;
+					}
+					result[i] = ' ';
+					i++;
+				}
+				continue;
+			}
+			i++;
+		}
+		return result == null ? text : new String(result);
 	}
 }

@@ -194,7 +194,10 @@ public class DDLUtils {
 			columnMeta.setAutoIncrement(fieldMeta.isAutoIncrement());
 			columnMeta.setColumnSize(fieldMeta.getLength());
 			columnMeta.setPartitionKey(fieldMeta.isPartitionKey());
-			columnMeta.setDefaultValue(fieldMeta.getDefaultValue());
+			// update 2026-10-22 boolean默认值按目标库归一(数值承载方言的true/false转1/0),
+			// 挂在本单一入口使全部generator的DEFAULT路径共享
+			columnMeta.setDefaultValue(
+					normalizeBooleanDefault(fieldMeta.getDefaultValue(), fieldMeta.getType(), dbType == null ? -1 : dbType));
 			columnMeta.setNullable(fieldMeta.isNullable());
 			columnMeta.setDataType(fieldMeta.getType());
 			columnMeta.setTypeName(fieldMeta.getFieldType());
@@ -1070,8 +1073,33 @@ public class DDLUtils {
 	}
 
 	/**
+	 * update 2026-10-22 boolean默认值按目标库归一:oracle系(BOOLEAN列映射INTEGER)与sqlserver
+	 * (BIT)无true/false字面量,裸DEFAULT true建表报ORA-00904/无效列名(响亮失败),true/false
+	 * 统一转1/0;mysql系(TINYINT(1))/pg系/H2/sqlite等TRUE/FALSE为原生字面量原样保留。
+	 * 仅精确匹配true/false(忽略大小写),生成列表达式等其余形态不受影响
+	 *
+	 * @param defaultValue 原始默认值
+	 * @param dataType      字段JDBC类型
+	 * @param dbType        目标库类型(未知-1原样返回)
+	 * @return 归一后的默认值
+	 */
+	public static String normalizeBooleanDefault(String defaultValue, int dataType, int dbType) {
+		if (defaultValue == null || dataType != Types.BOOLEAN) {
+			return defaultValue;
+		}
+		String tmp = defaultValue.trim();
+		if (!"true".equalsIgnoreCase(tmp) && !"false".equalsIgnoreCase(tmp)) {
+			return defaultValue;
+		}
+		if (isOracleFamily(dbType) || dbType == DBType.SQLSERVER) {
+			return "true".equalsIgnoreCase(tmp) ? "1" : "0";
+		}
+		return defaultValue;
+	}
+
+	/**
 	 * 判断是否是日期函数，对默认值处理时不需要加单引号
-	 * 
+	 *
 	 * @param defaultValue
 	 * @return
 	 */
