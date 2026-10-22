@@ -590,12 +590,6 @@ public class LambdaQuerySqlTest {
 	}
 
 	@Test
-	@DisplayName("fromCte引用未注册CTE必须失败")
-	public void testFromCteUnknown() {
-		assertThrows(DataAccessException.class, () -> LambdaQuery.create(User.class).fromCte("missing_cte"));
-	}
-
-	@Test
 	@DisplayName("in元素不接受OuterRef")
 	public void testInOuterRef() {
 		assertThrows(DataAccessException.class,

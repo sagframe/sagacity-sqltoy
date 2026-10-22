@@ -329,17 +329,6 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	 */
 	public LambdaQuery<T> fromCte(String name) {
 		requireIdentifier(name, "CTE name");
-		boolean declared = false;
-		for (CteDef cte : ctes) {
-			if (cte.name.equalsIgnoreCase(name)) {
-				declared = true;
-				break;
-			}
-		}
-		if (!declared) {
-			throw new DataAccessException("fromCte references an unregistered CTE [" + name
-					+ "]; call with(name, query) before fromCte(name)");
-		}
 		joinContext.registerFrom(getEntityClass());
 		joinContext.setFromRawSource(name);
 		joinContext.forceJoinChannel();
