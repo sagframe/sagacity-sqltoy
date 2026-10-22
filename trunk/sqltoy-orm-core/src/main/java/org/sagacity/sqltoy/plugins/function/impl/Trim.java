@@ -3,6 +3,7 @@ package org.sagacity.sqltoy.plugins.function.impl;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
+import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.plugins.function.IFunction;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 
@@ -54,7 +55,11 @@ public class Trim extends IFunction {
 		String arg = args[0].trim();
 		String argLow = arg.toLowerCase(Locale.ROOT);
 		// trim(from col)是标准形态,FROM前没有前导空格,须显式识别串首from
-		boolean modifierForm = argLow.startsWith("from ") || argLow.contains(" from ");
+		// update 2026-10-22 修饰符判定改在字面量掩码串上进行(等长同位):单参trim(' from ')等
+		// 字面量内含" from "文本被误判为修饰符形态,sqlite/starrocks分支拆参产物语义错值
+		// (trim("'","'")变成剔除引号字符而非去空白);掩码后字面量内文本不参与判定
+		String maskedArgLow = SqlConfigParseUtils.maskLiterals(argLow, false);
+		boolean modifierForm = maskedArgLow.startsWith("from ") || maskedArgLow.contains(" from ");
 		// update 2026-9-9 rest按实际前导关键字长度截取:原按keyword.length()定长截取,
 		// 对省略BOTH/LEADING/TRAILING关键字的trim('x' from col)形态会把remstr首部误截掉
 		String keyword = "both";
@@ -73,8 +78,10 @@ public class Trim extends IFunction {
 				rest = arg;
 			}
 		}
-		int fromIdx = rest.toLowerCase(Locale.ROOT).startsWith("from ") ? 0
-				: rest.toLowerCase(Locale.ROOT).indexOf(" from ");
+		// update 2026-10-22 fromIdx同样在掩码串上定位:trim(both ' from ' from col)等字面量内含
+		// " from "时原indexOf会命中字面量内位置而切错参数;掩码串与原串等长同位,索引可直接用于原串
+		String maskedRestLow = SqlConfigParseUtils.maskLiterals(rest.toLowerCase(Locale.ROOT), false);
+		int fromIdx = maskedRestLow.startsWith("from ") ? 0 : maskedRestLow.indexOf(" from ");
 		// update 2026-10-19 真库实测:标准组中 mysql 9.3 对 trim(from x) 报1064语法错、
 		// oracle 23ai 报ORA-30000(两者均要求省略剔除字符时不能保留FROM);省略字符的
 		// from形态语义即"默认空格",统一改写成单参trim/单向ltrim/rtrim(标准组原生产物,
@@ -147,9 +154,6 @@ public class Trim extends IFunction {
 			}
 			return "rtrim(ltrim(" + col + "))";
 		}
-		// varchar结果读回一律空串(真库实测getString/getBytes均空),外层包::lvarchar定型
-		// (真库实测cast后读回正常);单参与both..from形态均适用
-
 		return super.IGNORE;
 	}
 }

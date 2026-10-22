@@ -92,8 +92,6 @@ public class ToChar extends IFunction {
 			// 2026-9-11 hana的TO_CHAR为oracle兼容格式模型(日期yyyy/MM/dd/hh24/mi/ss与数值9/0双场景)
 		case DBType.HANA:
 		case DBType.ORACLE11: {
-			// 'yyyy-MM-dd'可用);其返回varchar经该容器驱动读回空串,外层包::lvarchar定型
-			// (真库实测cast后lvarchar读回正常)
 			// 日期
 			format = args[1].replace("%Y", "yyyy").replace("%y", "yy").replace("%m", "MM").replace("%d", "dd");
 			// 时间处理
@@ -109,7 +107,6 @@ public class ToChar extends IFunction {
 			// 9/0数值占位时不cast(numericModelPossible=true,数值参数定型绑定原生可解重载)
 			String toCharInner = "to_char(" + FunctionUtils.pgToCharParamCast(dialect, args[0], format, true) + ","
 					+ format + ")";
-			// update 2026-10-12 g8的to_char返回varchar读回空串,包::lvarchar(见case声明注释)
 			return toCharInner;
 		}
 		case DBType.DB2: {
@@ -178,8 +175,8 @@ public class ToChar extends IFunction {
 				format = format.replace("MI", "@M1@").replace("mi", "@M1@");
 				// update 2026-10-19 口径修正:裸HH按框架约定为24小时制(.NET的HH),不再转12小时的hh;
 				// 小写hh保留12小时语义,24小时token已由@H24@占位,最后还原为HH
-				format = format.replace("@H24@", "HH").replace("@M1@", "mm").replace("SS", "ss")
-						.replace("YYYY", "yyyy").replace("YY", "yy").replace("DD", "dd");
+				format = format.replace("@H24@", "HH").replace("@M1@", "mm").replace("SS", "ss").replace("YYYY", "yyyy")
+						.replace("YY", "yy").replace("DD", "dd");
 			}
 			// update 2026-10-4 引号归一:带引号的格式串原样保留(内嵌"字面量"转义不被破坏),
 			// 裸格式才补包裹引号(原裸格式直接输出FORMAT第二参不带引号报语法错)

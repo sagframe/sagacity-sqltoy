@@ -20,8 +20,7 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
  *         (segments,sign,orderBy)三元组后按目标方言渲染;同名原生写法连同子句原样透传。 DISTINCT前缀显式识别:pg
  *         ARRAY_AGG/mysql group_concat/oracle19c+ listagg/db2原生
  *         支持随expr保留;ch以arrayStringConcat(groupArray(expr),sep)承担(2026-10-12
- *         真库实证'admin-user',类内CLICKHOUSE分派,此前类注释"ch无对应"系陈旧声明,
- *         (g8实证:group_concat语法错/listagg内部错/原生list()无此过程)
+ *         真库实证'admin-user',类内CLICKHOUSE分派,此前类注释"ch无对应"系陈旧声明)
  */
 public class GroupConcat extends IFunction {
 	// update 2026-9-15 补listagg:原正则不含listagg,写listagg的SQL从不进入本转换

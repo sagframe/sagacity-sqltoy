@@ -62,10 +62,6 @@ public class Concat extends IFunction {
 		// (text,text)两参遮蔽pg_catalog.concat(VARIADIC "any"),三参起报"function
 		// sys.concat(text, unknown, varchar) does not exist"(concat_ws因sys无同名函数不受影响);
 		// 三参起转||拼接(||实测将null按空串处理,与concat跳过null语义一致)
-		// 内部错误(真库实测concat(name,'-','x')报System or internal error),||拼接原生
-		// 且返回lvarchar读回正常(实测name||'-x'='admin-x'),两参起转(混参两参同样触发)
-		// update 2026-10-13 现行驱动(3.6.5.21)的||为布尔OR(连::lvarchar两端都返回f),
-		// concat混参(列+常量)实测正常,g8改concat全参拼接
 
 		if (dialect == DBType.ORACLE || dialect == DBType.ORACLE11 || dialect == DBType.DB2 || dialect == DBType.SQLITE
 				|| dialect == DBType.OCEANBASE || dialect == DBType.HANA || dialect == DBType.KINGBASE) {

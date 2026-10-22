@@ -69,7 +69,6 @@ public class DateFormat extends IFunction {
 			// 2026-9-11 hana无date_format,TO_CHAR为oracle兼容格式模型(非PG系,pgToCharParamCast原样透传)
 		case DBType.HANA:
 		case DBType.ORACLE11: {
-			// to_char返回varchar经该容器驱动读回空串,外层包::lvarchar定型,真库实测)
 			// 日期
 			format = args[1].replace("%Y", "yyyy").replace("%y", "yy").replace("%m", "MM").replace("%d", "dd");
 			// 时间处理
