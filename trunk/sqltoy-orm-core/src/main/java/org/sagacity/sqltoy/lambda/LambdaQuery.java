@@ -816,9 +816,9 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	 */
 	private <R> R aggregate(JoinCol column, Class<R> resultType) {
 		requireDao();
-		if (!selectFields.isEmpty() || joinContext.hasSelectColumns()) {
+		if (!selectFields.isEmpty() || joinContext.hasSelectColumns() || joinContext.isSelectAll()) {
 			throw new DataAccessException(
-					"Lambda aggregate cannot be combined with select(...) / select(JoinCol...); call it on a fresh query");
+					"Lambda aggregate cannot be combined with select(...) / select(JoinCol...) / selectAll(); call it on a fresh query");
 		}
 		select(column);
 		assemble(dao::getEntityMeta);

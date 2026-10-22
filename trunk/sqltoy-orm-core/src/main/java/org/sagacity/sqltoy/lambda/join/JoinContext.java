@@ -421,6 +421,13 @@ public class JoinContext {
 	}
 
 	/**
+	 * @return 是否设置了无参selectAll();该标记不进入hasSelectColumns,需单独用于聚合状态守卫
+	 */
+	public boolean isSelectAll() {
+		return selectAll;
+	}
+
+	/**
 	 * @return 是否处于join通道(注册了join或select列定义)
 	 */
 	public boolean isJoinChannel() {

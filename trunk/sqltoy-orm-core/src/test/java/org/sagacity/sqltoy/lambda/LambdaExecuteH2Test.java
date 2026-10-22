@@ -363,6 +363,8 @@ public class LambdaExecuteH2Test {
 		assertEquals(0, new BigDecimal("3").compareTo(lightDao.lambdaQuery(User.class).sum(User::getId)));
 		assertEquals(0, new BigDecimal("1.5").compareTo(lightDao.lambdaQuery(User.class).avg(User::getId)));
 		assertThrows(DataAccessException.class,
+				() -> lightDao.lambdaQuery(User.class).selectAll().max(User::getId));
+		assertThrows(DataAccessException.class,
 				() -> lightDao.lambdaQuery(User.class).groupBy(User::getStatus).max(User::getId));
 		assertThrows(DataAccessException.class,
 				() -> lightDao.lambdaQuery(User.class).having("count(1) > 1").sum(User::getId));
