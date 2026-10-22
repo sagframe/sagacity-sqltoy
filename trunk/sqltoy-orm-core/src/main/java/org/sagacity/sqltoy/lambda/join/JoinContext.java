@@ -645,7 +645,12 @@ public class JoinContext {
 		case DELETE:
 			requireDmlCondition(whereSql);
 			rejectDmlGrouping(groupByColumns, havingCondition, orderByColumns);
-			return getDeleteSqls(whereSql, lastSql).get(0);
+			List<String> deleteSqls = getDeleteSqls(whereSql, lastSql);
+			if (deleteSqls.size() > 1) {
+				throw new DataAccessException(
+						"Lambda delete has multiple target tables; getDeleteSqls() must be used instead of getSql()");
+			}
+			return deleteSqls.get(0);
 		default:
 			throw new DataAccessException("Unsupported lambda join operate type");
 		}

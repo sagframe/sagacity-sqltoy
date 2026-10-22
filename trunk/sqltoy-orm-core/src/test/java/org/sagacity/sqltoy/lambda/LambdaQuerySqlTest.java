@@ -567,6 +567,17 @@ public class LambdaQuerySqlTest {
 	}
 
 	@Test
+	@DisplayName("setExpr单表通道占位符与value校验")
+	public void testSetExprPlaceholderGuard() {
+		assertThrows(DataAccessException.class, () -> LambdaUpdate.create(User.class)
+				.setExpr(User::getName, "coalesce(name, ?) || ?", "x"));
+		assertThrows(DataAccessException.class, () -> LambdaUpdate.create(User.class)
+				.setExpr(User::getName, "upper(name)", "x"));
+		assertThrows(DataAccessException.class, () -> LambdaUpdate.create(User.class)
+				.setExpr(User::getName, "coalesce(name, :p1)", "x"));
+	}
+
+	@Test
 	@DisplayName("pageOptimize透传到EntityQuery(单表分页优化:并行count+keep-alive缓存)")
 	public void testPageOptimizeThreading() {
 		PageOptimize po = new PageOptimize().parallel(true).aliveSeconds(120);

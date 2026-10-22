@@ -956,7 +956,8 @@ public class LambdaFullCoverageH2Test {
 				.leftJoin(FfDept.class).on(FfUser::getDeptId, FfDept::getDeptId)
 				.deleteTables(FfUser.class, FfDept.class).eq(FfUser::getId, 1L);
 		multiDelete.assemble(context::getEntityMeta);
-		assertTrue(normalized(multiDelete.getSql()).startsWith("DELETE FROM ff_user WHERE EXISTS"));
+		assertTrue(normalized(multiDelete.getDeleteSqls().get(0)).startsWith("DELETE FROM ff_user WHERE EXISTS"));
+		assertThrows(DataAccessException.class, multiDelete::getSql);
 	}
 
 	@Test

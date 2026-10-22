@@ -267,8 +267,35 @@ public final class LambdaUpdate<T> extends AbstractWhere<T, LambdaUpdate<T>> {
 							+ expression);
 		}
 		// 表达式以延迟操作形式记录,单表由updateByQuery按"属性名=表达式"渲染,join由JoinContext渲染
+		validateSetExpr(trimmed, value);
 		setOps.add(new SetOp(column, value, trimmed));
 		return this;
+	}
+
+	/**
+	 * setExpr在两条通道共用同一套占位符约束,避免单表/join行为不一致或静默丢参
+	 */
+	private static void validateSetExpr(String expression, Object value) {
+		int placeholders = 0;
+		for (int i = 0; i < expression.length(); i++) {
+			if (expression.charAt(i) == '?') {
+				placeholders++;
+			}
+		}
+		if (placeholders > 1) {
+			throw new DataAccessException(
+					"Lambda setExpr supports only one ? placeholder when binding a value: " + expression);
+		}
+		if (java.util.regex.Pattern.compile(":p\\d+\\b").matcher(expression).find()) {
+			throw new DataAccessException(
+					"Lambda setExpr must not use internal parameter names like :p1: " + expression);
+		}
+		if (value != null && placeholders == 0
+				&& !java.util.regex.Pattern.compile(":[A-Za-z_][A-Za-z0-9_]*").matcher(expression).find()) {
+			throw new DataAccessException(
+					"Lambda setExpr received a value but the expression contains no ? or :param placeholder: "
+							+ expression);
+		}
 	}
 
 	/**
