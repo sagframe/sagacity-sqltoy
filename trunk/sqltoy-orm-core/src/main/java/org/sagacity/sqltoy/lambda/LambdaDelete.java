@@ -53,6 +53,13 @@ public final class LambdaDelete<T> extends AbstractWhere<T, LambdaDelete<T>> {
 		return this;
 	}
 
+	/**
+	 * @description 兼容旧版按LightDao类型编译的调用方,保持bind(LightDao)二进制签名
+	 */
+	public LambdaDelete<T> bind(org.sagacity.sqltoy.dao.LightDao dao) {
+		return bind((LambdaDao) dao);
+	}
+
 	@Override
 	protected LambdaDelete<T> instance() {
 		// 嵌套条件与当前对象共享参数序号与join上下文

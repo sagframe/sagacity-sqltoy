@@ -86,6 +86,13 @@ public final class LambdaUpdate<T> extends AbstractWhere<T, LambdaUpdate<T>> {
 		return this;
 	}
 
+	/**
+	 * @description 兼容旧版按LightDao类型编译的调用方,保持bind(LightDao)二进制签名
+	 */
+	public LambdaUpdate<T> bind(org.sagacity.sqltoy.dao.LightDao dao) {
+		return bind((LambdaDao) dao);
+	}
+
 	@Override
 	protected LambdaUpdate<T> instance() {
 		// 嵌套条件与当前对象共享参数序号与join上下文(set操作仅根构建器持有)

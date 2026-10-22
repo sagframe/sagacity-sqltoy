@@ -176,6 +176,9 @@ public class MergeSegments implements SqlSegment {
 	}
 
 	public void add(SqlSegment... sqlSegments) {
+		if (sqlSegments == null || sqlSegments.length == 0) {
+			return;
+		}
 		List<SqlSegment> list = new ArrayList<>(Arrays.asList(sqlSegments));
 		SqlSegment firstSqlSegment = list.get(0);
 		if (MatchSegment.ORDER_BY.match(firstSqlSegment)) {

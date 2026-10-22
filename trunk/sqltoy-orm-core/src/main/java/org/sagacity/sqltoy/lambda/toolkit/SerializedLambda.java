@@ -56,7 +56,7 @@ public class SerializedLambda implements Serializable {
 				return (SerializedLambda) ois.readObject();
 			}
 		} catch (java.io.IOException | ClassNotFoundException e) {
-			throw new DataAccessException(e.getMessage());
+			throw new DataAccessException(e.getMessage(), e);
 		}
 	}
 

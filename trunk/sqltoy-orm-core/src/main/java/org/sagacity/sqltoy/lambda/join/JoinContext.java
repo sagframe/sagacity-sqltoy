@@ -475,13 +475,18 @@ public class JoinContext {
 	public <E, R> void addSetExpression(LambdaFn<E, R> column, String expression, Object value) {
 		checkOperate(Operate.UPDATE, "setExpr");
 		FieldNature nature = LambdaUtils.extractNature(column);
-		if (value != null && expression.indexOf('?') >= 0) {
-			removeExistingSet(nature);
-			String paramName = nextParamName();
-			setItems.add(new SetItem(nature, paramName, value, expression.replace("?", ":" + paramName)));
-			return;
-		}
 		if (value != null) {
+			int placeholderCount = countChar(expression, '?');
+			if (placeholderCount > 1) {
+				throw new DataAccessException(
+						"Lambda setExpr supports only one ? placeholder when binding a value: " + expression);
+			}
+			if (placeholderCount == 1) {
+				removeExistingSet(nature);
+				String paramName = nextParamName();
+				setItems.add(new SetItem(nature, paramName, value, expression.replace("?", ":" + paramName)));
+				return;
+			}
 			Matcher matcher = SET_EXPR_NAMED_PARAM.matcher(expression);
 			if (matcher.find()) {
 				int paramStart = matcher.start();
@@ -497,9 +502,22 @@ public class JoinContext {
 				setItems.add(new SetItem(nature, paramName, value, rewritten));
 				return;
 			}
+			throw new DataAccessException(
+					"Lambda setExpr received a value but the expression contains no ? or :param placeholder: "
+							+ expression);
 		}
 		removeExistingSet(nature);
 		setItems.add(new SetItem(nature, null, null, expression));
+	}
+
+	private static int countChar(String text, char target) {
+		int count = 0;
+		for (int i = 0; i < text.length(); i++) {
+			if (text.charAt(i) == target) {
+				count++;
+			}
+		}
+		return count;
 	}
 
 	/**

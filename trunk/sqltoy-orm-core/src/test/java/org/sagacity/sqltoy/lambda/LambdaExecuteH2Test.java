@@ -348,6 +348,9 @@ public class LambdaExecuteH2Test {
 		assertEquals(1L, lightDao.lambdaQuery(User.class).likeExact(User::getStaffName, "100%").count());
 		assertEquals(1L, lightDao.lambdaQuery(User.class).likeExact(User::getStaffName, "00%").count());
 		assertEquals(0L, lightDao.lambdaQuery(User.class).likeExact(User::getStaffName, "999").count());
+		lightDao.lambdaUpdate(User.class).set(User::getStaffName, "a_b").eq(User::getId, 1).update();
+		assertEquals(1L, lightDao.lambdaQuery(User.class).likeExact(User::getStaffName, "a_b").count());
+		assertEquals(0L, lightDao.lambdaQuery(User.class).likeExact(User::getStaffName, "axb").count());
 		lightDao.lambdaUpdate(User.class).set(User::getStaffName, "张三").eq(User::getId, 1).update();
 	}
 
@@ -359,12 +362,20 @@ public class LambdaExecuteH2Test {
 		assertEquals(1, lightDao.lambdaQuery(User.class).min(User::getId).intValue());
 		assertEquals(0, new BigDecimal("3").compareTo(lightDao.lambdaQuery(User.class).sum(User::getId)));
 		assertEquals(0, new BigDecimal("1.5").compareTo(lightDao.lambdaQuery(User.class).avg(User::getId)));
+		assertThrows(DataAccessException.class,
+				() -> lightDao.lambdaQuery(User.class).groupBy(User::getStatus).max(User::getId));
+		assertThrows(DataAccessException.class,
+				() -> lightDao.lambdaQuery(User.class).having("count(1) > 1").sum(User::getId));
 	}
 
 	@Test
 	@Order(17)
 	@DisplayName("findColumns/getScalar单列终端")
 	public void testSingleColumnTerminals() {
+		assertThrows(DataAccessException.class, () -> lightDao.lambdaQuery(User.class)
+				.select(User::getStaffName).findColumns(User::getStatus));
+		assertThrows(DataAccessException.class, () -> lightDao.lambdaQuery(User.class)
+				.select(User::getStaffName).max(User::getId));
 		List<Integer> statuses = lightDao.lambdaQuery(User.class).eq(User::getStatus, 1)
 				.orderByAsc(User::getId).findColumns(User::getStatus);
 		assertEquals(Arrays.asList(1, 1), statuses);

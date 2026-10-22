@@ -17,7 +17,6 @@ package org.sagacity.sqltoy.lambda;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.lambda.toolkit.FieldNature;
@@ -26,6 +25,7 @@ import org.sagacity.sqltoy.lambda.toolkit.LambdaMeta;
 import org.sagacity.sqltoy.lambda.toolkit.ReflectLambdaMeta;
 import org.sagacity.sqltoy.lambda.toolkit.SerializedLambda;
 import org.sagacity.sqltoy.lambda.toolkit.ShadowLambdaMeta;
+import org.sagacity.sqltoy.model.FIFOMap;
 import org.sagacity.sqltoy.utils.BeanUtil;
 
 /**
@@ -35,9 +35,11 @@ import org.sagacity.sqltoy.utils.BeanUtil;
 public final class LambdaUtils {
 
 	/**
-	 * 解析结果缓存:非捕获型方法引用在jvm内是单例,重复构建同一查询结构时直接命中缓存
+	 * 解析结果缓存:非捕获型方法引用在jvm内是单例,重复构建同一查询结构时直接命中缓存。
+	 * 使用有界accessOrder缓存,避免捕获型lambda导致无界增长;get/put由FIFOMap同步保护,
+	 * 解析(可能含对象序列化)在锁外执行,允许并发重复解析但不会破坏缓存结构
 	 */
-	private static final ConcurrentHashMap<LambdaFn<?, ?>, LambdaMeta> CACHE = new ConcurrentHashMap<>();
+	private static final FIFOMap<LambdaFn<?, ?>, LambdaMeta> CACHE = new FIFOMap<>(2048, 8192, true);
 
 	private LambdaUtils() {
 	}
@@ -47,11 +49,13 @@ public final class LambdaUtils {
 	 * @return 解析后的元信息
 	 */
 	public static <T, R> LambdaMeta extract(LambdaFn<T, R> func) {
-		LambdaMeta meta = CACHE.computeIfAbsent(func, LambdaUtils::doExtract);
-		// 捕获型lambda每次求值产生新实例,缓存设上限避免无界增长(方法引用为jvm单例,不受影响)
-		if (CACHE.size() > 8192) {
-			CACHE.clear();
+		LambdaMeta meta = CACHE.get(func);
+		if (meta != null) {
+			return meta;
 		}
+		// 解析(可能含对象序列化)在锁外执行,FIFOMap只在get/put时短暂持锁
+		meta = doExtract(func);
+		CACHE.put(func, meta);
 		return meta;
 	}
 

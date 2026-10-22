@@ -358,6 +358,22 @@ public class LambdaQueryJoinH2Test {
 
 	@Test
 	@Order(4)
+	@DisplayName("join setExpr只允许一个占位符且value不能静默丢弃")
+	public void testJoinSetExprPlaceholderGuard() {
+		assertThrows(DataAccessException.class,
+				() -> lightDao.lambdaUpdate(JoinUser.class).leftJoin(JoinDept.class)
+						.on(JoinUser::getDeptId, JoinDept::getDeptId)
+						.setExpr(JoinUser::getStaffName, "coalesce(staff_name, ?) || ?", "x")
+						.eq(JoinUser::getId, 1).assemble(context::getEntityMeta));
+		assertThrows(DataAccessException.class,
+				() -> lightDao.lambdaUpdate(JoinUser.class).leftJoin(JoinDept.class)
+						.on(JoinUser::getDeptId, JoinDept::getDeptId)
+						.setExpr(JoinUser::getStaffName, "upper(staff_name)", "x")
+						.eq(JoinUser::getId, 1).assemble(context::getEntityMeta));
+	}
+
+	@Test
+	@Order(4)
 	@DisplayName("join分页查询")
 	public void testJoinFindPage() {		Page<JoinUser> page = lightDao.lambdaQuery(JoinUser.class).leftJoin(JoinDept.class)
 				.on(JoinUser::getDeptId, JoinDept::getDeptId).eq(JoinUser::getStatus, 1)

@@ -404,7 +404,7 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 
 	@Override
 	public <E, R> Self in(boolean condition, LambdaFn<E, R> column, Collection<?> coll) {
-		if (!acceptValue(condition, coll) || coll.isEmpty()) {
+		if (coll == null || !acceptValue(condition, coll) || coll.isEmpty()) {
 			return skipCondition();
 		}
 		return addCompareSegment(condition, column, SqlCompare.IN, coll);
@@ -412,7 +412,7 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 
 	@Override
 	public <E, R> Self in(boolean condition, LambdaFn<E, R> column, Object... values) {
-		if (!acceptValue(condition, values) || values.length == 0) {
+		if (values == null || !acceptValue(condition, values) || values.length == 0) {
 			return skipCondition();
 		}
 		// 归一为list,便于数据库侧按集合展开in参数
@@ -454,7 +454,7 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 
 	@Override
 	public <E, R> Self notIn(boolean condition, LambdaFn<E, R> column, Collection<?> coll) {
-		if (!acceptValue(condition, coll) || coll.isEmpty()) {
+		if (coll == null || !acceptValue(condition, coll) || coll.isEmpty()) {
 			return skipCondition();
 		}
 		return addCompareSegment(condition, column, SqlCompare.NOT_IN, coll);
@@ -462,7 +462,7 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 
 	@Override
 	public <E, R> Self notIn(boolean condition, LambdaFn<E, R> column, Object... values) {
-		if (!acceptValue(condition, values) || values.length == 0) {
+		if (values == null || !acceptValue(condition, values) || values.length == 0) {
 			return skipCondition();
 		}
 		List<Object> valueList = new ArrayList<>(Arrays.asList(values));
@@ -746,6 +746,15 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 	}
 
 	/**
+	 * 嵌套条件/exists子查询继承根构建器的值策略与严格模式
+	 */
+	protected final void inheritSettings(AbstractWhere<?, ?> target) {
+		target.valueFilter = this.valueFilter;
+		target.typeCheck = this.typeCheck;
+		target.strictNull = this.strictNull;
+	}
+
+	/**
 	 * @description 显式指定本次操作使用的数据源(多数据源场景),为null时用dao默认数据源;
 	 *              与sqltoy既有惯例一致(EntityQuery/QueryExecutor/lightDao.update()均有dataSource(...)),
 	 *              单表通道经EntityQuery/EntityUpdate透传、join通道经QueryExecutor/executeSql透传,查询/更新/删除/count全终端生效
@@ -829,7 +838,8 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 		return addAssembler(resolver -> {
 			String columnName = resolveColumn(resolver, column);
 			if (typeCheck) {
-				LambdaTypeChecker.check(column, val, currentMetaLoader, "condition");
+				String operation = (compare == SqlCompare.IN || compare == SqlCompare.NOT_IN) ? "in" : "condition";
+				LambdaTypeChecker.check(column, val, currentMetaLoader, operation);
 			}
 			if (val instanceof OuterRef) {
 				// 外层列引用内联渲染,不做参数绑定
@@ -915,6 +925,7 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 		return addAssembler(resolver -> maybeDo(condition, () -> {
 			LambdaSubQuery<E> subQuery = new LambdaSubQuery<>(subEntity, joinContext.nextSubQueryAlias(), joinContext,
 					qualifiedResolverFor(currentMetaLoader));
+			inheritSettings(subQuery);
 			subFn.apply(subQuery);
 			subQuery.assemble(currentMetaLoader);
 			// EXISTS子查询的where后面不能再挂groupBy/having/orderBy/last,否则会生成
@@ -980,8 +991,7 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 			SqlKeyword prefix) {
 		return maybeDo(condition, () -> {
 			Self nested = instance();
-			nested.valueFilter = this.valueFilter;
-			nested.typeCheck = this.typeCheck;
+			inheritSettings(nested);
 			// exists/notExists等嵌套装配需要元信息加载器,必须随嵌套实例一起传递
 			nested.currentMetaLoader = this.currentMetaLoader;
 			Self result = function.apply(nested);

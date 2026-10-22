@@ -33,6 +33,10 @@ public final class LambdaTypeChecker {
 			if ("set".equals(operation)) {
 				return;
 			}
+			if (!"in".equals(operation)) {
+				throw new DataAccessException("Lambda " + operation
+						+ " does not accept a collection value; use in()/notIn() for collection conditions");
+			}
 			for (Object item : (java.util.Collection<?>) value) {
 				check(column, item, metaLoader, operation);
 			}
@@ -41,6 +45,10 @@ public final class LambdaTypeChecker {
 		if (value.getClass().isArray()) {
 			if ("set".equals(operation)) {
 				return;
+			}
+			if (!"in".equals(operation)) {
+				throw new DataAccessException("Lambda " + operation
+						+ " does not accept an array value; use in()/notIn() for collection conditions");
 			}
 			int length = java.lang.reflect.Array.getLength(value);
 			for (int i = 0; i < length; i++) {

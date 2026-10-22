@@ -112,6 +112,13 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 		return this;
 	}
 
+	/**
+	 * @description 兼容旧版按LightDao类型编译的调用方,保持bind(LightDao)二进制签名
+	 */
+	public LambdaQuery<T> bind(org.sagacity.sqltoy.dao.LightDao dao) {
+		return bind((LambdaDao) dao);
+	}
+
 	@Override
 	protected LambdaQuery<T> instance() {
 		// 嵌套条件与当前对象共享参数序号与join上下文
@@ -738,6 +745,10 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 			throw new DataAccessException(
 					"Lambda findColumns only supports the single-table entity channel; for join use select(JoinCol...) + find");
 		}
+		if (!selectFields.isEmpty()) {
+			throw new DataAccessException(
+					"Lambda findColumns cannot be combined with explicit select(...); call it on a fresh query or use find()");
+		}
 		select(column);
 		List<T> rows = find();
 		List<R> values = new ArrayList<>(rows.size());
@@ -805,8 +816,17 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	 */
 	private <R> R aggregate(JoinCol column, Class<R> resultType) {
 		requireDao();
+		if (!selectFields.isEmpty() || joinContext.hasSelectColumns()) {
+			throw new DataAccessException(
+					"Lambda aggregate cannot be combined with select(...) / select(JoinCol...); call it on a fresh query");
+		}
 		select(column);
 		assemble(dao::getEntityMeta);
+		// 标量聚合按定义只返回一行;groupBy/having会让结果变成多行,必须在执行前拒绝
+		if (getGroupByColumns() != null || getHavingCondition() != null) {
+			throw new DataAccessException(
+					"Lambda aggregate cannot be combined with groupBy/having; use select(JoinCol...) + find() for grouped aggregates");
+		}
 		return dao.query().dataSource(getDataSource()).sql(getSql())
 				.entity((Serializable) new IgnoreKeyCaseMap(getParams())).getValue(resultType);
 	}

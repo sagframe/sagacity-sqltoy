@@ -585,8 +585,15 @@ public class LambdaQuerySqlTest {
 	public void testStrictNullCondition() {
 		assertThrows(DataAccessException.class, () -> LambdaDelete.create(User.class).strict()
 				.eq(User::getStatus, 1).eq(User::getName, null));
+		assertThrows(DataAccessException.class, () -> LambdaQuery.create(User.class)
+				.eq(User::getStatus, Arrays.asList(1, 2)).assemble(IDENTITY));
 		assertThrows(DataAccessException.class, () -> LambdaUpdate.create(User.class).strict()
 				.set(User::getStatus, 2).eq(User::getName, null));
+		assertThrows(DataAccessException.class, () -> LambdaDelete.create(User.class).strict()
+				.nested(n -> n.eq(User::getName, null)).assemble(IDENTITY));
+		// exists子查询也必须继承strict
+		assertThrows(DataAccessException.class, () -> LambdaQuery.create(User.class).strict()
+				.exists(User.class, sub -> sub.eq(User::getName, null)).assemble(IDENTITY));
 
 		LambdaDelete<User> optional = LambdaDelete.create(User.class).strict()
 				.eq(User::getStatus, 1).eqIfPresent(User::getName, null);
