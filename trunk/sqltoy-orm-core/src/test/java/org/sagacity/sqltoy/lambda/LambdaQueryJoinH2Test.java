@@ -370,6 +370,18 @@ public class LambdaQueryJoinH2Test {
 						.on(JoinUser::getDeptId, JoinDept::getDeptId)
 						.setExpr(JoinUser::getStaffName, "upper(staff_name)", "x")
 						.eq(JoinUser::getId, 1).assemble(context::getEntityMeta));
+		// 字面量'?'在join通道同样拒绝:addSetExpression的replace("?")是全量替换,
+		// 会把引号内的'?'一并改写为参数名,有值组合也不例外
+		assertThrows(DataAccessException.class,
+				() -> lightDao.lambdaUpdate(JoinUser.class).leftJoin(JoinDept.class)
+						.on(JoinUser::getDeptId, JoinDept::getDeptId)
+						.setExpr(JoinUser::getStaffName, "replace(staff_name, '?', '') || ?", "x")
+						.eq(JoinUser::getId, 1).assemble(context::getEntityMeta));
+		assertThrows(DataAccessException.class,
+				() -> lightDao.lambdaUpdate(JoinUser.class).leftJoin(JoinDept.class)
+						.on(JoinUser::getDeptId, JoinDept::getDeptId)
+						.setExpr(JoinUser::getStaffName, "replace(staff_name, '?', '')")
+						.eq(JoinUser::getId, 1).assemble(context::getEntityMeta));
 	}
 
 	@Test

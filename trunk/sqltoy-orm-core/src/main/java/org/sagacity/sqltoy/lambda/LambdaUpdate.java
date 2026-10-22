@@ -276,13 +276,24 @@ public final class LambdaUpdate<T> extends AbstractWhere<T, LambdaUpdate<T>> {
 	 * setExpr在两条通道共用同一套占位符约束,避免单表/join行为不一致或静默丢参
 	 */
 	private static void validateSetExpr(String expression, Object value) {
-		// 引号内的 ? / :name 是字面量而非占位符(如 replace(name, '?', '')),先掩码再统计
+		// 引号内的 ? / :name 是字面量而非占位符(如 replace(name, ':x', '')),先掩码再统计
 		String code = maskStringLiterals(expression);
 		int placeholders = 0;
+		int rawQuestionMarks = 0;
 		for (int i = 0; i < code.length(); i++) {
+			if (expression.charAt(i) == '?') {
+				rawQuestionMarks++;
+			}
 			if (code.charAt(i) == '?') {
 				placeholders++;
 			}
+		}
+		// 字面量'?'必须拒绝:两条通道的渲染端都对原文做全量"?"改写(单表updateByQuery、join addSetExpression),
+		// 引号内的'?'会被一并替换成参数名,SQL静默损坏且可能照常执行落库
+		if (rawQuestionMarks != placeholders) {
+			throw new DataAccessException(
+					"Lambda setExpr cannot contain a literal '?' inside quotes: both channels rewrite every '?' in the raw expression into a parameter placeholder; bind the value via a real ? outside quotes or use raw sql: "
+							+ expression);
 		}
 		if (placeholders > 1) {
 			throw new DataAccessException(
@@ -307,7 +318,9 @@ public final class LambdaUpdate<T> extends AbstractWhere<T, LambdaUpdate<T>> {
 
 	/**
 	 * @description 将sql单引号/双引号字面量内容替换为空格,保留长度与引号外文本,供占位符统计使用;
-	 *              支持''与反斜杠转义,避免 replace(name, '?', '') 这类合法表达式被判成占位符
+	 *              支持''与反斜杠转义,避免 replace(name, ':x', '') 这类合法表达式被判成占位符。
+	 *              掩码只用于统计:字面量':name'可安全放行(内核: name识别是字面量感知的),
+	 *              字面量'?'由validateSetExpr单独拒绝(渲染端对原文全量replace会损坏它)
 	 */
 	private static String maskStringLiterals(String expression) {
 		StringBuilder masked = new StringBuilder(expression.length());

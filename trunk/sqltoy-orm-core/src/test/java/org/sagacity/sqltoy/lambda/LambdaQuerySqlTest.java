@@ -582,23 +582,24 @@ public class LambdaQuerySqlTest {
 	}
 
 	@Test
-	@DisplayName("setExpr引号内的?与:name按字面量处理")
+	@DisplayName("setExpr引号内的:name按字面量处理,字面量?必须拒绝")
 	public void testSetExprLiteralPlaceholder() {
-		LambdaUpdate<User> update = LambdaUpdate.create(User.class)
-				.setExpr(User::getName, "replace(name, '?', '')");
-		update.assemble(IDENTITY);
-		assertEquals("replace(name, '?', '')", update.getSetFields().keySet().iterator().next().split("=", 2)[1]);
-
-		// 双引号标识符与转义引号内的占位符字符同样不计数
+		// 字面量':name'安全放行(内核: name识别是字面量感知的),双引号标识符与转义引号内同样不计数
 		LambdaUpdate<User> quoted = LambdaUpdate.create(User.class)
 				.setExpr(User::getName, "concat(\"name\", ':delta')");
 		quoted.assemble(IDENTITY);
 		assertEquals("concat(\"name\", ':delta')",
 				quoted.getSetFields().keySet().iterator().next().split("=", 2)[1]);
 
-		// 字面量之外的占位符仍按原规则拒绝
+		// 字面量'?':两条通道渲染端都会对原文全量replace("?"),引号内的会被改写为参数名,
+		// 单表无值/单表有值/join无值/join有值四种组合均为坏SQL,必须链期拒绝
+		assertThrows(DataAccessException.class, () -> LambdaUpdate.create(User.class)
+				.setExpr(User::getName, "replace(name, '?', '')"));
 		assertThrows(DataAccessException.class, () -> LambdaUpdate.create(User.class)
 				.setExpr(User::getName, "replace(name, '?', '') || ?"));
+		// 有真实占位符且有值的组合此前会静默通过并生成被改写的字面量,同样拒绝
+		assertThrows(DataAccessException.class, () -> LambdaUpdate.create(User.class)
+				.setExpr(User::getName, "replace(name, '?', '') || ?", "x"));
 	}
 
 	@Test
