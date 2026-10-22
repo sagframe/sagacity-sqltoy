@@ -330,6 +330,12 @@ public class LambdaExecuteH2Test {
 				() -> lightDao.lambdaQuery(User.class).in(User::getStatus, "1").find());
 		assertThrows(DataAccessException.class,
 				() -> lightDao.lambdaQuery(User.class).between(User::getStatus, "1", "2").find());
+		assertThrows(DataAccessException.class, () -> lightDao.lambdaQuery(User.class)
+				.inb(User::getId, User::getStatus, Arrays.<Object[]>asList(new Object[] { 1L, "1" }))
+				.find());
+		assertThrows(DataAccessException.class, () -> lightDao.lambdaQuery(User.class)
+				.inb(User::getId, User::getStatus, Arrays.<Object[]>asList(new Object[] { 1L, null }))
+				.find());
 		assertThrows(DataAccessException.class,
 				() -> lightDao.lambdaUpdate(User.class).set(User::getStatus, "0")
 						.eq(User::getId, 1).update());
@@ -364,6 +370,8 @@ public class LambdaExecuteH2Test {
 		assertEquals(0, new BigDecimal("1.5").compareTo(lightDao.lambdaQuery(User.class).avg(User::getId)));
 		assertThrows(DataAccessException.class,
 				() -> lightDao.lambdaQuery(User.class).selectAll().max(User::getId));
+		assertThrows(DataAccessException.class,
+				() -> lightDao.lambdaQuery(User.class).union(lightDao.lambdaQuery(User.class)).max(User::getId));
 		assertThrows(DataAccessException.class,
 				() -> lightDao.lambdaQuery(User.class).groupBy(User::getStatus).max(User::getId));
 		assertThrows(DataAccessException.class,

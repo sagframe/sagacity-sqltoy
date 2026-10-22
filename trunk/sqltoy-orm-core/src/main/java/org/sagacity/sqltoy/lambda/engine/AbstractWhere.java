@@ -223,14 +223,14 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 
 	@Override
 	public <E, R> Self between(boolean condition, LambdaFn<E, R> column, Object val1, Object val2) {
-		if (val1 instanceof OuterRef || val2 instanceof OuterRef) {
-			throw new DataAccessException("Outer.ref is only supported by eq/ne/gt/ge/lt/le comparisons");
-		}
 		if (!acceptValue(condition, val1) || !acceptValue(condition, val2)) {
 			return skipCondition();
 		}
 		if (!condition) {
 			return skipCondition();
+		}
+		if (val1 instanceof OuterRef || val2 instanceof OuterRef) {
+			throw new DataAccessException("OuterRef is only supported by eq/ne/gt/ge/lt/le comparisons");
 		}
 		return addAssembler(resolver -> maybeDo(condition, () -> {
 			String columnName = resolveColumn(resolver, column);
@@ -249,14 +249,14 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 
 	@Override
 	public <E, R> Self notBetween(boolean condition, LambdaFn<E, R> column, Object val1, Object val2) {
-		if (val1 instanceof OuterRef || val2 instanceof OuterRef) {
-			throw new DataAccessException("Outer.ref is only supported by eq/ne/gt/ge/lt/le comparisons");
-		}
 		if (!acceptValue(condition, val1) || !acceptValue(condition, val2)) {
 			return skipCondition();
 		}
 		if (!condition) {
 			return skipCondition();
+		}
+		if (val1 instanceof OuterRef || val2 instanceof OuterRef) {
+			throw new DataAccessException("OuterRef is only supported by eq/ne/gt/ge/lt/le comparisons");
 		}
 		return addAssembler(resolver -> maybeDo(condition, () -> {
 			String columnName = resolveColumn(resolver, column);
@@ -947,7 +947,8 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 	private <E> void addBatchInCondition(ColumnResolver resolver, Collection<LambdaFn<E, ?>> columns,
 			Collection<Object[]> values) {
 		List<String> columnNames = new ArrayList<>();
-		for (LambdaFn<E, ?> column : columns) {
+		List<LambdaFn<E, ?>> columnList = new ArrayList<>(columns);
+		for (LambdaFn<E, ?> column : columnList) {
 			columnNames.add(resolveColumn(resolver, column));
 		}
 		int columnCount = columnNames.size();
@@ -961,6 +962,13 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 			}
 			List<String> columnConditions = new ArrayList<>();
 			for (int i = 0; i < columnCount; i++) {
+				if (row[i] == null) {
+					throw new DataAccessException(
+							"Lambda inb tuple values must not contain null; remove the row or use a non-null value");
+				}
+				if (typeCheck) {
+					LambdaTypeChecker.check(columnList.get(i), row[i], currentMetaLoader, "condition");
+				}
 				String paramName = nextParamName();
 				params.put(paramName, row[i]);
 				columnConditions.add(columnNames.get(i) + " = :" + paramName);

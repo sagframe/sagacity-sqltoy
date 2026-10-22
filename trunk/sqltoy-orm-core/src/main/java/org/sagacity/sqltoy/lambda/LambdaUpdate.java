@@ -284,14 +284,19 @@ public final class LambdaUpdate<T> extends AbstractWhere<T, LambdaUpdate<T>> {
 		}
 		if (placeholders > 1) {
 			throw new DataAccessException(
-					"Lambda setExpr supports only one ? placeholder when binding a value: " + expression);
+					"Lambda setExpr supports at most one ? placeholder: " + expression);
 		}
 		if (java.util.regex.Pattern.compile(":p\\d+\\b").matcher(expression).find()) {
 			throw new DataAccessException(
 					"Lambda setExpr must not use internal parameter names like :p1: " + expression);
 		}
-		if (value != null && placeholders == 0
-				&& !java.util.regex.Pattern.compile(":[A-Za-z_][A-Za-z0-9_]*").matcher(expression).find()) {
+		boolean hasNamedParam = java.util.regex.Pattern.compile(":[A-Za-z_][A-Za-z0-9_]*").matcher(expression).find();
+		if (value == null && (placeholders > 0 || hasNamedParam)) {
+			throw new DataAccessException(
+					"Lambda setExpr has a placeholder but no value; pass a non-null value or remove the placeholder: "
+							+ expression);
+		}
+		if (value != null && placeholders == 0 && !hasNamedParam) {
 			throw new DataAccessException(
 					"Lambda setExpr received a value but the expression contains no ? or :param placeholder: "
 							+ expression);

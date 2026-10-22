@@ -46,7 +46,7 @@ public class HavingSegmentList extends SegmentList {
 					Map<String, Object> merged = new HashMap<>();
 					for (SqlSegment segment : mergeSegments) {
 						if (segment.getParams() != null) {
-							merged.putAll(segment.getParams());
+							mergeParams(merged, segment.getParams());
 						}
 					}
 					return merged;

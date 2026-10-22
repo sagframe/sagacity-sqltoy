@@ -951,13 +951,10 @@ public class LambdaFullCoverageH2Test {
 						Arrays.asList(new Object[] { 1L }, new Object[] { 2L }))
 				.find().size());
 
-		// 多删除目标表sql文本
-		LambdaDelete<FfUser> multiDelete = lightDao.lambdaDelete(FfUser.class)
+		// 多删除目标会逐表重新求值join,第2张表静默删不到;必须快速拒绝,要求分次删除
+		assertThrows(DataAccessException.class, () -> lightDao.lambdaDelete(FfUser.class)
 				.leftJoin(FfDept.class).on(FfUser::getDeptId, FfDept::getDeptId)
-				.deleteTables(FfUser.class, FfDept.class).eq(FfUser::getId, 1L);
-		multiDelete.assemble(context::getEntityMeta);
-		assertTrue(normalized(multiDelete.getDeleteSqls().get(0)).startsWith("DELETE FROM ff_user WHERE EXISTS"));
-		assertThrows(DataAccessException.class, multiDelete::getSql);
+				.deleteTables(FfUser.class, FfDept.class));
 	}
 
 	@Test

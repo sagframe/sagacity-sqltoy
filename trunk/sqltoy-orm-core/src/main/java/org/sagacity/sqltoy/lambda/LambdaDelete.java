@@ -123,6 +123,14 @@ public final class LambdaDelete<T> extends AbstractWhere<T, LambdaDelete<T>> {
 	 */
 	public LambdaDelete<T> deleteTables(Class<?>... entities) {
 		if (entities != null) {
+			java.util.Set<Class<?>> targets = new java.util.LinkedHashSet<>(joinContext.getDeleteClasses());
+			for (Class<?> entity : entities) {
+				targets.add(entity);
+			}
+			if (targets.size() > 1) {
+				throw new DataAccessException(
+						"Lambda delete supports only one target table; multiple DELETE statements would re-evaluate the join after the first delete and silently miss later tables. Delete one table per call");
+			}
 			for (Class<?> entity : entities) {
 				joinContext.addDeleteClass(entity);
 			}

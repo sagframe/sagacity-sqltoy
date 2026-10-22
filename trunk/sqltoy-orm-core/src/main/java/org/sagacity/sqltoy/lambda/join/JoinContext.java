@@ -538,6 +538,10 @@ public class JoinContext {
 		deleteClasses.add(entityClass);
 	}
 
+	public List<Class<?>> getDeleteClasses() {
+		return deleteClasses;
+	}
+
 	/**
 	 * @description 解析实体属性对应的别名限定列名,实体未参与join时抛出异常
 	 */
@@ -944,6 +948,10 @@ public class JoinContext {
 		requireDmlCondition(conditionSql);
 		List<Class<?>> targets = deleteClasses.isEmpty() ? java.util.Collections.singletonList(fromClass)
 				: deleteClasses;
+		if (targets.size() > 1) {
+			throw new DataAccessException(
+					"Lambda delete supports only one target table; multiple DELETE statements cannot share the same join snapshot. Call delete() once per table");
+		}
 		List<String> sqls = new ArrayList<>();
 		for (Class<?> target : targets) {
 			String deleteSql = SqlKeyword.DELETE.getSqlSegment() + " FROM "

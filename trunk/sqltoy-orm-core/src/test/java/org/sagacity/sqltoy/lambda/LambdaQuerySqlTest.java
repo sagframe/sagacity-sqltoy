@@ -1,5 +1,6 @@
 package org.sagacity.sqltoy.lambda;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -574,7 +575,33 @@ public class LambdaQuerySqlTest {
 		assertThrows(DataAccessException.class, () -> LambdaUpdate.create(User.class)
 				.setExpr(User::getName, "upper(name)", "x"));
 		assertThrows(DataAccessException.class, () -> LambdaUpdate.create(User.class)
+				.setExpr(User::getName, "salary * ?"));
+		assertThrows(DataAccessException.class, () -> LambdaUpdate.create(User.class)
+				.setExpr(User::getName, "salary + :delta"));
+		assertThrows(DataAccessException.class, () -> LambdaUpdate.create(User.class)
 				.setExpr(User::getName, "coalesce(name, :p1)", "x"));
+	}
+
+	@Test
+	@DisplayName("between禁用条件不应因OuterRef产生副作用")
+	public void testDisabledBetweenOuterRef() {
+		assertDoesNotThrow(() -> LambdaQuery.create(User.class)
+				.between(false, User::getStatus, OuterRef.of(User::getId), 1)
+				.assemble(IDENTITY));
+	}
+
+	@Test
+	@DisplayName("多次having同名参数不同值必须失败")
+	public void testHavingDuplicateParam() {
+		assertThrows(DataAccessException.class, () -> {
+			LambdaQuery<User> query = LambdaQuery.create(User.class)
+					.having("count(1) > :v", java.util.Map.of("v", 1))
+					.having("sum(age) < :v", java.util.Map.of("v", 2));
+			query.assemble(IDENTITY);
+			// 真实执行顺序是先取SQL(触发having合并)再取参数
+			query.getSql();
+			query.getParams();
+		});
 	}
 
 	@Test

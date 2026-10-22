@@ -191,8 +191,8 @@ public final class LambdaTypeChecker {
 		case "byte[]":
 			return actual == byte[].class;
 		default:
-			// 枚举/UUID/自定义类型按类型名匹配;其他未知类型放行
-			return actual.getSimpleName().equalsIgnoreCase(type) || actual.getName().equalsIgnoreCase(fieldType);
+			// 未知/自定义类型(含JDBC OTHER、特殊TypeHandler)无法可靠判断,放行以避免误报
+			return true;
 		}
 	}
 }

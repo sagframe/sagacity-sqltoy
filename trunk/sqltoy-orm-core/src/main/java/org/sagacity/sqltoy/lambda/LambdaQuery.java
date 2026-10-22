@@ -150,6 +150,10 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 		return !ctes.isEmpty();
 	}
 
+	public boolean isComposed() {
+		return composed;
+	}
+
 	@Override
 	public void assemble(Function<Class<?>, EntityMeta> metaLoader) {
 		// 组合模式:先装配CTE/@fast内层(各自独立paramSeq),按序续号,保证组合后参数名全局唯一不撞号;
@@ -819,6 +823,10 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 		if (!selectFields.isEmpty() || joinContext.hasSelectColumns() || joinContext.isSelectAll()) {
 			throw new DataAccessException(
 					"Lambda aggregate cannot be combined with select(...) / select(JoinCol...) / selectAll(); call it on a fresh query");
+		}
+		if (isComposed()) {
+			throw new DataAccessException(
+					"Lambda aggregate cannot be combined with union/with (composed queries); aggregate each branch first");
 		}
 		select(column);
 		assemble(dao::getEntityMeta);
