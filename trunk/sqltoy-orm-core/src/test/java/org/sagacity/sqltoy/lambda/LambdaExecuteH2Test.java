@@ -27,7 +27,11 @@ import org.sagacity.sqltoy.config.annotation.Column;
 import org.sagacity.sqltoy.config.annotation.Entity;
 import org.sagacity.sqltoy.config.annotation.Id;
 import org.sagacity.sqltoy.dao.LightDao;
+import org.sagacity.sqltoy.dao.SqlToyDao;
+import org.sagacity.sqltoy.dao.SqlToyLazyDao;
+import org.sagacity.sqltoy.dao.impl.DefaultLazyDaoImpl;
 import org.sagacity.sqltoy.dao.impl.DefaultLightDaoImpl;
+import org.sagacity.sqltoy.dao.impl.DefaultSqlToyDaoImpl;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.model.Page;
 
@@ -314,5 +318,85 @@ public class LambdaExecuteH2Test {
 		// 唯一匹配仍正常返回
 		User user = lightDao.lambdaQuery(User.class).eq(User::getId, 1).getOne();
 		assertNotNull(user);
+	}
+
+	@Test
+	@Order(17)
+	@DisplayName("装配期类型校验:Integer字段绑定String快速失败")
+	public void testTypeCheck() {
+		assertThrows(DataAccessException.class,
+				() -> lightDao.lambdaQuery(User.class).eq(User::getStatus, "0").find());
+		assertThrows(DataAccessException.class,
+				() -> lightDao.lambdaQuery(User.class).in(User::getStatus, "1").find());
+		assertThrows(DataAccessException.class,
+				() -> lightDao.lambdaQuery(User.class).between(User::getStatus, "1", "2").find());
+		assertThrows(DataAccessException.class,
+				() -> lightDao.lambdaUpdate(User.class).set(User::getStatus, "0")
+						.eq(User::getId, 1).update());
+		// 显式关闭后只校验SQL可组装,不执行(值仍可能被数据库拒绝)
+		lightDao.lambdaUpdate(User.class).typeCheck(false).set(User::getStatus, "0").eq(User::getId, 1)
+				.assemble(lightDao::getEntityMeta);
+		// Number族之间允许:Long值写Integer字段/Integer查询条件
+		assertEquals(1, lightDao.lambdaQuery(User.class).eq(User::getId, 1L).find().size());
+	}
+
+	@Test
+	@Order(17)
+	@DisplayName("likeExact按字面量匹配%")
+	public void testLikeExactExecution() {
+		lightDao.lambdaUpdate(User.class).set(User::getStaffName, "100%").eq(User::getId, 1).update();
+		assertEquals(1L, lightDao.lambdaQuery(User.class).likeExact(User::getStaffName, "100%").count());
+		assertEquals(1L, lightDao.lambdaQuery(User.class).likeExact(User::getStaffName, "00%").count());
+		assertEquals(0L, lightDao.lambdaQuery(User.class).likeExact(User::getStaffName, "999").count());
+		lightDao.lambdaUpdate(User.class).set(User::getStaffName, "张三").eq(User::getId, 1).update();
+	}
+
+	@Test
+	@Order(17)
+	@DisplayName("聚合标量max/min/sum")
+	public void testAggregateScalars() {
+		assertEquals(2, lightDao.lambdaQuery(User.class).max(User::getId).intValue());
+		assertEquals(1, lightDao.lambdaQuery(User.class).min(User::getId).intValue());
+		assertEquals(0, new BigDecimal("3").compareTo(lightDao.lambdaQuery(User.class).sum(User::getId)));
+		assertEquals(0, new BigDecimal("1.5").compareTo(lightDao.lambdaQuery(User.class).avg(User::getId)));
+	}
+
+	@Test
+	@Order(17)
+	@DisplayName("findColumns/getScalar单列终端")
+	public void testSingleColumnTerminals() {
+		List<Integer> statuses = lightDao.lambdaQuery(User.class).eq(User::getStatus, 1)
+				.orderByAsc(User::getId).findColumns(User::getStatus);
+		assertEquals(Arrays.asList(1, 1), statuses);
+		assertEquals("张三", lightDao.lambdaQuery(User.class).eq(User::getId, 1)
+				.getScalar(User::getStaffName));
+		assertNull(lightDao.lambdaQuery(User.class).eq(User::getId, 999)
+				.getScalar(User::getStaffName));
+		assertThrows(DataAccessException.class,
+				() -> lightDao.lambdaQuery(User.class).eq(User::getStatus, 1).getScalar(User::getStaffName));
+	}
+
+	@Test
+	@Order(17)
+	@DisplayName("getFirst按orderBy取首条,无匹配返回null")
+	public void testGetFirst() {
+		User first = lightDao.lambdaQuery(User.class).eq(User::getStatus, 1)
+				.orderByAsc(User::getId).getFirst();
+		assertEquals(1, first.getId().intValue());
+		assertNull(lightDao.lambdaQuery(User.class).eq(User::getId, 999).getFirst());
+	}
+
+	@Test
+	@Order(17)
+	@DisplayName("SqlToyDao与SqlToyLazyDao均提供lambda入口")
+	public void testLegacyDaoLambdaApi() {
+		DefaultSqlToyDaoImpl sqlToyDao = new DefaultSqlToyDaoImpl();
+		sqlToyDao.setSqlToyContext(context);
+		sqlToyDao.setDataSource(dataSource);
+		SqlToyLazyDao lazyDao = new DefaultLazyDaoImpl(context);
+		assertEquals(1, sqlToyDao.lambdaQuery(User.class).eq(User::getId, 1).getFirst().getId().intValue());
+		assertEquals(1, lazyDao.lambdaQuery(User.class).eq(User::getId, 1).getFirst().getId().intValue());
+		assertEquals(2L, sqlToyDao.lambdaQuery(User.class).eq(User::getStatus, 1).count());
+		assertEquals(2L, lazyDao.lambdaQuery(User.class).eq(User::getStatus, 1).count());
 	}
 }

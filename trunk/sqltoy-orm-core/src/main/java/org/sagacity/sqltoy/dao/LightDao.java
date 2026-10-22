@@ -54,7 +54,7 @@ import org.sagacity.sqltoy.translate.TranslateHandler;
  * @version v1.0,Date:2023-03-15
  */
 @SuppressWarnings({ "rawtypes" })
-public interface LightDao {
+public interface LightDao extends LambdaDao {
 	/**
 	 * es操作
 	 * 

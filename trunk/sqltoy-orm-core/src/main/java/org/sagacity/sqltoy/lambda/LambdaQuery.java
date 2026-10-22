@@ -1,6 +1,9 @@
 package org.sagacity.sqltoy.lambda;
 
 import java.io.Serializable;
+import java.beans.IntrospectionException;
+import java.beans.PropertyDescriptor;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -12,7 +15,7 @@ import javax.sql.DataSource;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.PageOptimize;
 import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
-import org.sagacity.sqltoy.dao.LightDao;
+import org.sagacity.sqltoy.dao.LambdaDao;
 import org.sagacity.sqltoy.dialect.utils.SqlServerDialectUtils;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.lambda.engine.AbstractWhere;
@@ -22,6 +25,7 @@ import org.sagacity.sqltoy.lambda.join.ExcludeCols;
 import org.sagacity.sqltoy.lambda.join.JoinCol;
 import org.sagacity.sqltoy.lambda.join.JoinContext;
 import org.sagacity.sqltoy.lambda.join.JoinContext.Operate;
+import org.sagacity.sqltoy.lambda.toolkit.FieldNature;
 import org.sagacity.sqltoy.link.Query;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.model.Page;
@@ -56,7 +60,7 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	/**
 	 * 绑定的执行dao,为null时终端方法不可用
 	 */
-	private LightDao dao;
+	private LambdaDao dao;
 
 	/**
 	 * select指定的查询属性名列表(单表通道直接使用,join通道渲染为别名.列 AS 属性)
@@ -103,7 +107,7 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	/**
 	 * @description 绑定执行dao,由LightDao的lambdaQuery工厂调用
 	 */
-	public LambdaQuery<T> bind(LightDao dao) {
+	public LambdaQuery<T> bind(LambdaDao dao) {
 		this.dao = dao;
 		return this;
 	}
@@ -710,6 +714,144 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 					+ " records (expected 0 or 1); multiple matches indicate a flawed query condition. Check the condition uniqueness or use find() instead");
 		}
 		return results.get(0);
+	}
+
+	/**
+	 * @return 按当前orderBy取首条记录,无匹配返回null;不校验是否多条(需要严格单条语义请用getOne)
+	 */
+	public T getFirst() {
+		List<T> results = findTop(1);
+		return (results == null || results.isEmpty()) ? null : results.get(0);
+	}
+
+	/**
+	 * @description 查询单列并以列表返回;仅支持单表实体通道,结果按当前排序返回。
+	 *              适合select max/min之外的普通列取数;聚合标量后续单独提供
+	 * @param column 单列属性引用
+	 * @return 单列值列表
+	 */
+	public <R> List<R> findColumns(LambdaFn<T, R> column) {
+		if (column == null) {
+			throw new DataAccessException("Lambda findColumns column must not be null");
+		}
+		if (isJoinMode()) {
+			throw new DataAccessException(
+					"Lambda findColumns only supports the single-table entity channel; for join use select(JoinCol...) + find");
+		}
+		select(column);
+		List<T> rows = find();
+		List<R> values = new ArrayList<>(rows.size());
+		for (T row : rows) {
+			values.add(column.apply(row));
+		}
+		return values;
+	}
+
+	/**
+	 * @description 查询单列单值:无匹配返回null,匹配多条抛出DataAccessException(与getOne一致);
+	 *              仅支持单表实体通道,聚合max/min请使用后续的聚合终端
+	 * @param column 单列属性引用
+	 * @return 单值
+	 */
+	public <R> R getScalar(LambdaFn<T, R> column) {
+		List<R> values = findColumns(column);
+		if (values.size() > 1) {
+			throw new DataAccessException("Lambda getScalar matched " + values.size()
+					+ " records (expected 0 or 1); multiple matches indicate a flawed query condition. Check the condition uniqueness or use findColumns instead");
+		}
+		return values.isEmpty() ? null : values.get(0);
+	}
+
+	/**
+	 * @description 聚合max,返回属性类型对应的值;无记录返回null
+	 * @param column 聚合列
+	 * @return max值
+	 */
+	@SuppressWarnings("unchecked")
+	public <R> R max(LambdaFn<T, R> column) {
+		return aggregate(JoinCol.max(column), (Class<R>) propertyType(column));
+	}
+
+	/**
+	 * @description 聚合min,返回属性类型对应的值;无记录返回null
+	 * @param column 聚合列
+	 * @return min值
+	 */
+	@SuppressWarnings("unchecked")
+	public <R> R min(LambdaFn<T, R> column) {
+		return aggregate(JoinCol.min(column), (Class<R>) propertyType(column));
+	}
+
+	/**
+	 * @description 聚合sum,统一返回BigDecimal;无记录返回null
+	 * @param column 聚合列
+	 * @return sum值
+	 */
+	public BigDecimal sum(LambdaFn<T, ?> column) {
+		return aggregate(JoinCol.sum(column), BigDecimal.class);
+	}
+
+	/**
+	 * @description 聚合avg,统一返回BigDecimal;无记录返回null
+	 * @param column 聚合列
+	 * @return avg值
+	 */
+	public BigDecimal avg(LambdaFn<T, ?> column) {
+		return aggregate(JoinCol.avg(column), BigDecimal.class);
+	}
+
+	/**
+	 * 聚合终端:select子句只放一个聚合列,走SQL通道取第一行第一列
+	 */
+	private <R> R aggregate(JoinCol column, Class<R> resultType) {
+		requireDao();
+		select(column);
+		assemble(dao::getEntityMeta);
+		return dao.query().dataSource(getDataSource()).sql(getSql())
+				.entity((Serializable) new IgnoreKeyCaseMap(getParams())).getValue(resultType);
+	}
+
+	/**
+	 * 从属性引用推断Java类型;无法推断时使用Object.class
+	 */
+	private Class<?> propertyType(LambdaFn<T, ?> column) {
+		try {
+			FieldNature nature = LambdaUtils.extractNature(column);
+			PropertyDescriptor descriptor = new PropertyDescriptor(nature.fieldName(), nature.entityClass());
+			Class<?> type = descriptor.getPropertyType();
+			if (type == null || type == Object.class) {
+				return Object.class;
+			}
+			if (type.isPrimitive()) {
+				if (type == int.class) {
+					return Integer.class;
+				}
+				if (type == long.class) {
+					return Long.class;
+				}
+				if (type == short.class) {
+					return Short.class;
+				}
+				if (type == byte.class) {
+					return Byte.class;
+				}
+				if (type == float.class) {
+					return Float.class;
+				}
+				if (type == double.class) {
+					return Double.class;
+				}
+				if (type == boolean.class) {
+					return Boolean.class;
+				}
+				if (type == char.class) {
+					return Character.class;
+				}
+			}
+			return type;
+		} catch (IntrospectionException | RuntimeException e) {
+			return Object.class;
+		}
 	}
 
 	/**

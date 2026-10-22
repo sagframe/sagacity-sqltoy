@@ -17,6 +17,10 @@ import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
+import org.sagacity.sqltoy.exception.DataAccessException;
+import org.sagacity.sqltoy.lambda.LambdaDelete;
+import org.sagacity.sqltoy.lambda.LambdaQuery;
+import org.sagacity.sqltoy.lambda.LambdaUpdate;
 import org.sagacity.sqltoy.link.Batch;
 import org.sagacity.sqltoy.link.Delete;
 import org.sagacity.sqltoy.link.Elastic;
@@ -55,7 +59,7 @@ import org.sagacity.sqltoy.translate.TranslateHandler;
  * @modify Date:2020-10-20 增加loadAll(list,lock)
  */
 @SuppressWarnings({ "rawtypes" })
-public interface SqlToyLazyDao {
+public interface SqlToyLazyDao extends LambdaDao {
 
 	/**
 	 * 获取sql对应的配置模型
@@ -1143,4 +1147,40 @@ public interface SqlToyLazyDao {
 	 * @return 匹配到的表元数据信息集合，包含表名称、表类型、备注等
 	 */
 	public List<TableMeta> getTables(final String catalog, final String schema, final String tableName);
+
+	/**
+	 * @description lambda查询构建器(已绑定当前dao),与LightDao.lambdaQuery用法一致
+	 * @param entityClass 实体类
+	 * @return 查询构建器
+	 */
+	default <T> LambdaQuery<T> lambdaQuery(Class<T> entityClass) {
+		if (entityClass == null) {
+			throw new DataAccessException("lambdaQuery requires a non-null entity class");
+		}
+		return LambdaQuery.create(entityClass).bind(this);
+	}
+
+	/**
+	 * @description lambda更新构建器(已绑定当前dao),与LightDao.lambdaUpdate用法一致
+	 * @param entityClass 实体类
+	 * @return 更新构建器
+	 */
+	default <T> LambdaUpdate<T> lambdaUpdate(Class<T> entityClass) {
+		if (entityClass == null) {
+			throw new DataAccessException("lambdaUpdate requires a non-null entity class");
+		}
+		return LambdaUpdate.create(entityClass).bind(this);
+	}
+
+	/**
+	 * @description lambda删除构建器(已绑定当前dao),与LightDao.lambdaDelete用法一致
+	 * @param entityClass 实体类
+	 * @return 删除构建器
+	 */
+	default <T> LambdaDelete<T> lambdaDelete(Class<T> entityClass) {
+		if (entityClass == null) {
+			throw new DataAccessException("lambdaDelete requires a non-null entity class");
+		}
+		return LambdaDelete.create(entityClass).bind(this);
+	}
 }

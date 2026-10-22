@@ -8,9 +8,10 @@ import java.util.Map;
 import java.util.function.Function;
 
 import org.sagacity.sqltoy.config.model.EntityMeta;
-import org.sagacity.sqltoy.dao.LightDao;
+import org.sagacity.sqltoy.dao.LambdaDao;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.lambda.engine.AbstractWhere;
+import org.sagacity.sqltoy.lambda.engine.LambdaTypeChecker;
 import org.sagacity.sqltoy.lambda.engine.SqlKeyword;
 import org.sagacity.sqltoy.lambda.join.JoinContext;
 import org.sagacity.sqltoy.lambda.join.JoinContext.Operate;
@@ -33,7 +34,7 @@ public final class LambdaUpdate<T> extends AbstractWhere<T, LambdaUpdate<T>> {
 	/**
 	 * 绑定的执行dao,为null时终端方法不可用
 	 */
-	private LightDao dao;
+	private LambdaDao dao;
 
 	/**
 	 * 延迟set操作列表,装配时按通道物化:单表物化为"属性名=值",join物化为"别名.列 = :pN"
@@ -80,7 +81,7 @@ public final class LambdaUpdate<T> extends AbstractWhere<T, LambdaUpdate<T>> {
 	/**
 	 * @description 绑定执行dao,由LightDao的lambdaUpdate工厂调用
 	 */
-	public LambdaUpdate<T> bind(LightDao dao) {
+	public LambdaUpdate<T> bind(LambdaDao dao) {
 		this.dao = dao;
 		return this;
 	}
@@ -110,6 +111,9 @@ public final class LambdaUpdate<T> extends AbstractWhere<T, LambdaUpdate<T>> {
 			// 先物化set再装配上下文,使set字段所属实体的join校验生效
 			for (SetOp setOp : setOps) {
 				if (setOp.expression == null) {
+					if (typeCheck) {
+						LambdaTypeChecker.check(setOp.column, setOp.value, metaLoader, "set");
+					}
 					joinContext.addSetColumn(setOp.column, setOp.value);
 				} else {
 					joinContext.addSetExpression(setOp.column, setOp.expression, setOp.value);
@@ -119,6 +123,9 @@ public final class LambdaUpdate<T> extends AbstractWhere<T, LambdaUpdate<T>> {
 		} else {
 			for (SetOp setOp : setOps) {
 				if (setOp.expression == null) {
+					if (typeCheck) {
+						LambdaTypeChecker.check(setOp.column, setOp.value, metaLoader, "set");
+					}
 					setFields.put(LambdaUtils.extractProperty(setOp.column), setOp.value);
 				} else {
 					setFields.put(LambdaUtils.extractProperty(setOp.column) + "=" + setOp.expression, setOp.value);

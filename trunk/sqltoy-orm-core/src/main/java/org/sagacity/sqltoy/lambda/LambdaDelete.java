@@ -7,7 +7,7 @@ import java.util.function.Function;
 import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.config.model.EntityMeta;
-import org.sagacity.sqltoy.dao.LightDao;
+import org.sagacity.sqltoy.dao.LambdaDao;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.lambda.engine.AbstractWhere;
 import org.sagacity.sqltoy.lambda.engine.SqlKeyword;
@@ -32,7 +32,7 @@ public final class LambdaDelete<T> extends AbstractWhere<T, LambdaDelete<T>> {
 	/**
 	 * 绑定的执行dao,为null时终端方法不可用
 	 */
-	private LightDao dao;
+	private LambdaDao dao;
 
 	private LambdaDelete(Class<T> entityClass, JoinContext joinContext) {
 		super(entityClass, joinContext);
@@ -48,7 +48,7 @@ public final class LambdaDelete<T> extends AbstractWhere<T, LambdaDelete<T>> {
 	/**
 	 * @description 绑定执行dao,由LightDao的lambdaDelete工厂调用
 	 */
-	public LambdaDelete<T> bind(LightDao dao) {
+	public LambdaDelete<T> bind(LambdaDao dao) {
 		this.dao = dao;
 		return this;
 	}

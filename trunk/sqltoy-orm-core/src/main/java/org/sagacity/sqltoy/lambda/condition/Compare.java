@@ -49,6 +49,26 @@ public interface Compare<Children> {
 	<E, R> Children eq(boolean condition, LambdaFn<E, R> column, Object val);
 
 	/**
+	 * @description 严格等值:val为null时渲染恒假条件1=0,复刻静态SQL <code>column = :p</code>(p=null)
+	 *              恒不匹配的语义;非null时等价eq
+	 * @param column 字段引用
+	 * @param val    值
+	 * @return children
+	 */
+	default <E, R> Children eqStrict(LambdaFn<E, R> column, Object val) {
+		return eqStrict(true, column, val);
+	}
+
+	/**
+	 * @description 严格等值(条件版)
+	 * @param condition 执行条件
+	 * @param column    字段引用
+	 * @param val       值
+	 * @return children
+	 */
+	<E, R> Children eqStrict(boolean condition, LambdaFn<E, R> column, Object val);
+
+	/**
 	 * ignore
 	 */
 	default <E, R> Children ne(LambdaFn<E, R> column, Object val) {
@@ -174,6 +194,33 @@ public interface Compare<Children> {
 	default <E, R> Children likeRight(LambdaFn<E, R> column, Object val) {
 		return likeRight(true, column, val);
 	}
+
+	/**
+	 * 包含匹配,但值中的%按字面量处理
+	 */
+	default <E, R> Children likeExact(LambdaFn<E, R> column, Object val) {
+		return likeExact(true, column, val);
+	}
+
+	<E, R> Children likeExact(boolean condition, LambdaFn<E, R> column, Object val);
+
+	/**
+	 * 后缀匹配(左侧补%),值中的%按字面量处理
+	 */
+	default <E, R> Children likeExactLeft(LambdaFn<E, R> column, Object val) {
+		return likeExactLeft(true, column, val);
+	}
+
+	<E, R> Children likeExactLeft(boolean condition, LambdaFn<E, R> column, Object val);
+
+	/**
+	 * 前缀匹配(右侧补%),值中的%按字面量处理
+	 */
+	default <E, R> Children likeExactRight(LambdaFn<E, R> column, Object val) {
+		return likeExactRight(true, column, val);
+	}
+
+	<E, R> Children likeExactRight(boolean condition, LambdaFn<E, R> column, Object val);
 
 	/**
 	 * LIKE '值%' ,以值开头

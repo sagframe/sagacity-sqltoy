@@ -550,6 +550,23 @@ public class LambdaQuerySqlTest {
 	}
 
 	@Test
+	@DisplayName("likeExact把值中的%按字面量处理并保留方向")
+	public void testLikeExact() {
+		LambdaQuery<User> exact = LambdaQuery.create(User.class).likeExact(User::getName, "100%");
+		exact.assemble(IDENTITY);
+		assertEquals("name LIKE :p1", normalized(exact));
+		assertEquals("%100\\%%", exact.getParams().get("p1"));
+
+		LambdaQuery<User> left = LambdaQuery.create(User.class).likeExactLeft(User::getName, "100%");
+		left.assemble(IDENTITY);
+		assertEquals("%100\\%", left.getParams().get("p1"));
+
+		LambdaQuery<User> right = LambdaQuery.create(User.class).likeExactRight(User::getName, "100%");
+		right.assemble(IDENTITY);
+		assertEquals("100\\%%", right.getParams().get("p1"));
+	}
+
+	@Test
 	@DisplayName("pageOptimize透传到EntityQuery(单表分页优化:并行count+keep-alive缓存)")
 	public void testPageOptimizeThreading() {
 		PageOptimize po = new PageOptimize().parallel(true).aliveSeconds(120);
@@ -561,6 +578,50 @@ public class LambdaQuerySqlTest {
 		LambdaQuery<User> plain = LambdaQuery.create(User.class).eq(User::getStatus, 1);
 		plain.assemble(IDENTITY);
 		assertNull(LambdaConvert.toEntityQuery(plain).getInnerModel().pageOptimize);
+	}
+
+	@Test
+	@DisplayName("strict模式:显式null条件快速失败,eqIfPresent仍可跳过")
+	public void testStrictNullCondition() {
+		assertThrows(DataAccessException.class, () -> LambdaDelete.create(User.class).strict()
+				.eq(User::getStatus, 1).eq(User::getName, null));
+		assertThrows(DataAccessException.class, () -> LambdaUpdate.create(User.class).strict()
+				.set(User::getStatus, 2).eq(User::getName, null));
+
+		LambdaDelete<User> optional = LambdaDelete.create(User.class).strict()
+				.eq(User::getStatus, 1).eqIfPresent(User::getName, null);
+		optional.assemble(IDENTITY);
+		assertEquals("status = :p1", normalized(optional));
+	}
+
+	@Test
+	@DisplayName("eqStrict:null渲染恒假条件,非null等价eq")
+	public void testEqStrict() {
+		LambdaQuery<User> nullValue = LambdaQuery.create(User.class)
+				.eq(User::getStatus, 1).eqStrict(User::getName, null);
+		nullValue.assemble(IDENTITY);
+		assertEquals("status = :p1 AND 1 = 0", normalized(nullValue));
+		assertEquals(1, nullValue.getParams().size());
+
+		LambdaQuery<User> value = LambdaQuery.create(User.class).eqStrict(User::getName, "张三");
+		value.assemble(IDENTITY);
+		assertEquals("name = :p1", normalized(value));
+
+		LambdaQuery<User> disabled = LambdaQuery.create(User.class)
+				.eqStrict(false, User::getName, null).eq(User::getId, 1);
+		disabled.assemble(IDENTITY);
+		assertEquals("id = :p1", normalized(disabled));
+	}
+
+	@Test
+	@DisplayName("ValueFilter.ignore:哨兵值与null均不参与条件")
+	public void testValueFilterIgnore() {
+		LambdaQuery<User> query = LambdaQuery.create(User.class).valueFilter(ValueFilter.ignore(-1))
+				.eq(User::getStatus, 1).eq(User::getAge, -1).eq(User::getType, 0);
+		query.assemble(IDENTITY);
+		assertEquals("status = :p1 AND type = :p2", normalized(query));
+		assertEquals(1, query.getParams().get("p1"));
+		assertEquals(0, query.getParams().get("p2"));
 	}
 
 	@Test

@@ -41,6 +41,10 @@ public class SqlToyDaoSignatureTest {
 		// 检查每个接口方法是否都有实现
 		List<String> missingMethods = new ArrayList<>();
 		for (Method interfaceMethod : interfaceMethods) {
+			// default方法由接口自身提供实现,不要求实现类重复声明
+			if (interfaceMethod.isDefault()) {
+				continue;
+			}
 			String signature = getMethodSignature(interfaceMethod);
 			if (!implMethodSignatures.contains(signature)) {
 				missingMethods.add(signature);
@@ -117,6 +121,10 @@ public class SqlToyDaoSignatureTest {
 		// 检查每个接口方法是否都有实现
 		List<String> missingMethods = new ArrayList<>();
 		for (Method interfaceMethod : interfaceMethods) {
+			// default方法由接口自身提供实现,不要求实现类重复声明
+			if (interfaceMethod.isDefault()) {
+				continue;
+			}
 			String signature = getMethodSignature(interfaceMethod);
 			if (!implMethodSignatures.contains(signature)) {
 				missingMethods.add(signature);

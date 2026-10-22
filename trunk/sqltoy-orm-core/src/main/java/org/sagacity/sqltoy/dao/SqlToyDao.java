@@ -17,6 +17,10 @@ import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
+import org.sagacity.sqltoy.exception.DataAccessException;
+import org.sagacity.sqltoy.lambda.LambdaDelete;
+import org.sagacity.sqltoy.lambda.LambdaQuery;
+import org.sagacity.sqltoy.lambda.LambdaUpdate;
 import org.sagacity.sqltoy.link.Batch;
 import org.sagacity.sqltoy.link.Delete;
 import org.sagacity.sqltoy.link.Elastic;
@@ -106,6 +110,42 @@ public interface SqlToyDao {
 	public SqlToyContext getSqlToyContext();
 
 	public DataSource getDataSource();
+
+	/**
+	 * @description lambda查询构建器(已绑定当前dao),与LightDao.lambdaQuery用法一致
+	 * @param entityClass 实体类
+	 * @return 查询构建器
+	 */
+	default <T> LambdaQuery<T> lambdaQuery(Class<T> entityClass) {
+		if (entityClass == null) {
+			throw new DataAccessException("lambdaQuery requires a non-null entity class");
+		}
+		return LambdaQuery.create(entityClass).bind(new SqlToyDaoLambdaAdapter(this));
+	}
+
+	/**
+	 * @description lambda更新构建器(已绑定当前dao),与LightDao.lambdaUpdate用法一致
+	 * @param entityClass 实体类
+	 * @return 更新构建器
+	 */
+	default <T> LambdaUpdate<T> lambdaUpdate(Class<T> entityClass) {
+		if (entityClass == null) {
+			throw new DataAccessException("lambdaUpdate requires a non-null entity class");
+		}
+		return LambdaUpdate.create(entityClass).bind(new SqlToyDaoLambdaAdapter(this));
+	}
+
+	/**
+	 * @description lambda删除构建器(已绑定当前dao),与LightDao.lambdaDelete用法一致
+	 * @param entityClass 实体类
+	 * @return 删除构建器
+	 */
+	default <T> LambdaDelete<T> lambdaDelete(Class<T> entityClass) {
+		if (entityClass == null) {
+			throw new DataAccessException("lambdaDelete requires a non-null entity class");
+		}
+		return LambdaDelete.create(entityClass).bind(new SqlToyDaoLambdaAdapter(this));
+	}
 
 	public long generateBizId(String signature, int increment);
 

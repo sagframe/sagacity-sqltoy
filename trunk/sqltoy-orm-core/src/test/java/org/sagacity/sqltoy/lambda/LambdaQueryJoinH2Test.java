@@ -349,9 +349,17 @@ public class LambdaQueryJoinH2Test {
 
 	@Test
 	@Order(4)
+	@DisplayName("join通道不支持findColumns/getScalar,快速失败")
+	public void testJoinScalarGuard() {
+		assertThrows(DataAccessException.class,
+				() -> lightDao.lambdaQuery(JoinUser.class).leftJoin(JoinDept.class)
+						.on(JoinUser::getDeptId, JoinDept::getDeptId).findColumns(JoinUser::getStaffName));
+	}
+
+	@Test
+	@Order(4)
 	@DisplayName("join分页查询")
-	public void testJoinFindPage() {
-		Page<JoinUser> page = lightDao.lambdaQuery(JoinUser.class).leftJoin(JoinDept.class)
+	public void testJoinFindPage() {		Page<JoinUser> page = lightDao.lambdaQuery(JoinUser.class).leftJoin(JoinDept.class)
 				.on(JoinUser::getDeptId, JoinDept::getDeptId).eq(JoinUser::getStatus, 1)
 				.orderByAsc(JoinUser::getId).findPage(new Page(2, 1));
 		assertEquals(3L, page.getRecordCount());

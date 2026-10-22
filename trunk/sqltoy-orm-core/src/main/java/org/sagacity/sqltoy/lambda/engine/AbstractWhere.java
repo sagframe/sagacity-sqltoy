@@ -67,6 +67,16 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 	protected ValueFilter valueFilter = ValueFilter.NON_NULL;
 
 	/**
+	 * 严格空值模式:显式条件值为null时快速失败,避免被默认NON_NULL过滤后扩大DML范围
+	 */
+	protected boolean strictNull;
+
+	/**
+	 * 是否在装配期校验条件值与字段Java类型是否兼容;默认开启,可用typeCheck(false)关闭
+	 */
+	protected boolean typeCheck = true;
+
+	/**
 	 * 显式指定的数据源,为null时使用dao默认数据源;单表通道经EntityQuery/EntityUpdate透传,join通道经QueryExecutor/executeSql透传
 	 */
 	protected DataSource dataSource;
@@ -146,15 +156,34 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 
 	@Override
 	public <E, R> Self eq(boolean condition, LambdaFn<E, R> column, Object val) {
-		if (!valueFilter.test(val)) {
+		if (!acceptValue(condition, val)) {
 			return skipCondition();
 		}
 		return addCompareSegment(condition, column, SqlCompare.EQ, val);
 	}
 
+	/**
+	 * @description 严格等值:condition为true且val为null时渲染恒假条件1=0,复刻静态SQL
+	 *              <code>column = :p</code>(p=null)恒不匹配的语义;非null时等价eq
+	 */
+	@Override
+	public <E, R> Self eqStrict(boolean condition, LambdaFn<E, R> column, Object val) {
+		if (!condition) {
+			return skipCondition();
+		}
+		if (val != null) {
+			return addCompareSegment(true, column, SqlCompare.EQ, val);
+		}
+		return addAssembler(resolver -> {
+			// 仍校验字段合法性,避免非法lambda被1=0掩盖
+			resolveColumn(resolver, column);
+			appendSqlSegments(rawSegment("1 = 0", null));
+		});
+	}
+
 	@Override
 	public <E, R> Self ne(boolean condition, LambdaFn<E, R> column, Object val) {
-		if (!valueFilter.test(val)) {
+		if (!acceptValue(condition, val)) {
 			return skipCondition();
 		}
 		return addCompareSegment(condition, column, SqlCompare.NE, val);
@@ -162,7 +191,7 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 
 	@Override
 	public <E, R> Self gt(boolean condition, LambdaFn<E, R> column, Object val) {
-		if (!valueFilter.test(val)) {
+		if (!acceptValue(condition, val)) {
 			return skipCondition();
 		}
 		return addCompareSegment(condition, column, SqlCompare.GT, val);
@@ -170,7 +199,7 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 
 	@Override
 	public <E, R> Self ge(boolean condition, LambdaFn<E, R> column, Object val) {
-		if (!valueFilter.test(val)) {
+		if (!acceptValue(condition, val)) {
 			return skipCondition();
 		}
 		return addCompareSegment(condition, column, SqlCompare.GE, val);
@@ -178,7 +207,7 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 
 	@Override
 	public <E, R> Self lt(boolean condition, LambdaFn<E, R> column, Object val) {
-		if (!valueFilter.test(val)) {
+		if (!acceptValue(condition, val)) {
 			return skipCondition();
 		}
 		return addCompareSegment(condition, column, SqlCompare.LT, val);
@@ -186,7 +215,7 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 
 	@Override
 	public <E, R> Self le(boolean condition, LambdaFn<E, R> column, Object val) {
-		if (!valueFilter.test(val)) {
+		if (!acceptValue(condition, val)) {
 			return skipCondition();
 		}
 		return addCompareSegment(condition, column, SqlCompare.LE, val);
@@ -197,7 +226,7 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 		if (val1 instanceof OuterRef || val2 instanceof OuterRef) {
 			throw new DataAccessException("Outer.ref is only supported by eq/ne/gt/ge/lt/le comparisons");
 		}
-		if (!valueFilter.test(val1) || !valueFilter.test(val2)) {
+		if (!acceptValue(condition, val1) || !acceptValue(condition, val2)) {
 			return skipCondition();
 		}
 		if (!condition) {
@@ -205,6 +234,10 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 		}
 		return addAssembler(resolver -> maybeDo(condition, () -> {
 			String columnName = resolveColumn(resolver, column);
+			if (typeCheck) {
+				LambdaTypeChecker.check(column, val1, currentMetaLoader, "condition");
+				LambdaTypeChecker.check(column, val2, currentMetaLoader, "condition");
+			}
 			String paramName1 = nextParamName();
 			String paramName2 = nextParamName();
 			Map<String, Object> params = new HashMap<>();
@@ -219,7 +252,7 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 		if (val1 instanceof OuterRef || val2 instanceof OuterRef) {
 			throw new DataAccessException("Outer.ref is only supported by eq/ne/gt/ge/lt/le comparisons");
 		}
-		if (!valueFilter.test(val1) || !valueFilter.test(val2)) {
+		if (!acceptValue(condition, val1) || !acceptValue(condition, val2)) {
 			return skipCondition();
 		}
 		if (!condition) {
@@ -227,6 +260,10 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 		}
 		return addAssembler(resolver -> maybeDo(condition, () -> {
 			String columnName = resolveColumn(resolver, column);
+			if (typeCheck) {
+				LambdaTypeChecker.check(column, val1, currentMetaLoader, "condition");
+				LambdaTypeChecker.check(column, val2, currentMetaLoader, "condition");
+			}
 			String paramName1 = nextParamName();
 			String paramName2 = nextParamName();
 			Map<String, Object> params = new HashMap<>();
@@ -239,7 +276,7 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 
 	@Override
 	public <E, R> Self like(boolean condition, LambdaFn<E, R> column, Object val) {
-		if (!valueFilter.test(val)) {
+		if (!acceptValue(condition, val)) {
 			return skipCondition();
 		}
 		return addCompareSegment(condition, column, SqlCompare.LIKE, wrapLike(val, true, true));
@@ -247,7 +284,7 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 
 	@Override
 	public <E, R> Self notLike(boolean condition, LambdaFn<E, R> column, Object val) {
-		if (!valueFilter.test(val)) {
+		if (!acceptValue(condition, val)) {
 			return skipCondition();
 		}
 		return addCompareSegment(condition, column, SqlCompare.NOT_LIKE, wrapLike(val, true, true));
@@ -255,7 +292,7 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 
 	@Override
 	public <E, R> Self likeLeft(boolean condition, LambdaFn<E, R> column, Object val) {
-		if (!valueFilter.test(val)) {
+		if (!acceptValue(condition, val)) {
 			return skipCondition();
 		}
 		return addCompareSegment(condition, column, SqlCompare.LIKE_LEFT, wrapLike(val, true, false));
@@ -263,10 +300,54 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 
 	@Override
 	public <E, R> Self likeRight(boolean condition, LambdaFn<E, R> column, Object val) {
-		if (!valueFilter.test(val)) {
+		if (!acceptValue(condition, val)) {
 			return skipCondition();
 		}
 		return addCompareSegment(condition, column, SqlCompare.LIKE_RIGHT, wrapLike(val, false, true));
+	}
+
+	@Override
+	public <E, R> Self likeExact(boolean condition, LambdaFn<E, R> column, Object val) {
+		if (!acceptValue(condition, val)) {
+			return skipCondition();
+		}
+		return addCompareSegment(condition, column, SqlCompare.LIKE, exactLike(val, true, true));
+	}
+
+	@Override
+	public <E, R> Self likeExactLeft(boolean condition, LambdaFn<E, R> column, Object val) {
+		if (!acceptValue(condition, val)) {
+			return skipCondition();
+		}
+		return addCompareSegment(condition, column, SqlCompare.LIKE, exactLike(val, true, false));
+	}
+
+	@Override
+	public <E, R> Self likeExactRight(boolean condition, LambdaFn<E, R> column, Object val) {
+		if (!acceptValue(condition, val)) {
+			return skipCondition();
+		}
+		return addCompareSegment(condition, column, SqlCompare.LIKE, exactLike(val, false, true));
+	}
+
+	/**
+	 * 构造字面量%的like模式:先转义值中的%,再由中央processLike按已有方向%保留通配符,
+	 * 避免wrapLike因值含%而丢掉单边方向
+	 */
+	private static Object exactLike(Object val, boolean left, boolean right) {
+		if (val instanceof OuterRef) {
+			throw new DataAccessException("likeExact does not support OuterRef values");
+		}
+		String str = String.valueOf(val).replace("%", "\\%");
+		StringBuilder sb = new StringBuilder(str.length() + 2);
+		if (left) {
+			sb.append('%');
+		}
+		sb.append(str);
+		if (right) {
+			sb.append('%');
+		}
+		return sb.toString();
 	}
 
 	/**
@@ -323,7 +404,7 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 
 	@Override
 	public <E, R> Self in(boolean condition, LambdaFn<E, R> column, Collection<?> coll) {
-		if (!valueFilter.test(coll) || coll.isEmpty()) {
+		if (!acceptValue(condition, coll) || coll.isEmpty()) {
 			return skipCondition();
 		}
 		return addCompareSegment(condition, column, SqlCompare.IN, coll);
@@ -331,7 +412,7 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 
 	@Override
 	public <E, R> Self in(boolean condition, LambdaFn<E, R> column, Object... values) {
-		if (!valueFilter.test(values) || values.length == 0) {
+		if (!acceptValue(condition, values) || values.length == 0) {
 			return skipCondition();
 		}
 		// 归一为list,便于数据库侧按集合展开in参数
@@ -373,7 +454,7 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 
 	@Override
 	public <E, R> Self notIn(boolean condition, LambdaFn<E, R> column, Collection<?> coll) {
-		if (!valueFilter.test(coll) || coll.isEmpty()) {
+		if (!acceptValue(condition, coll) || coll.isEmpty()) {
 			return skipCondition();
 		}
 		return addCompareSegment(condition, column, SqlCompare.NOT_IN, coll);
@@ -381,7 +462,7 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 
 	@Override
 	public <E, R> Self notIn(boolean condition, LambdaFn<E, R> column, Object... values) {
-		if (!valueFilter.test(values) || values.length == 0) {
+		if (!acceptValue(condition, values) || values.length == 0) {
 			return skipCondition();
 		}
 		List<Object> valueList = new ArrayList<>(Arrays.asList(values));
@@ -630,6 +711,41 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 	}
 
 	/**
+	 * @description 严格空值模式:显式条件值为null时抛出DataAccessException,避免默认NON_NULL静默跳过条件后
+	 *              扩大update/delete范围;eqIfPresent/likeIfPresent等显式可空语法不受影响
+	 * @return 自身
+	 */
+	public Self strict() {
+		this.strictNull = true;
+		return typedThis;
+	}
+
+	/**
+	 * @description 关闭/开启条件值类型校验;仅在明确需要依赖数据库隐式转换时关闭
+	 * @param enable true开启(默认),false关闭
+	 * @return 自身
+	 */
+	public Self typeCheck(boolean enable) {
+		this.typeCheck = enable;
+		return typedThis;
+	}
+
+	/**
+	 * @description 条件值准入判断:condition=false时直接跳过且不触发strict;strict且值为null时快速失败;
+	 *              否则走实例级ValueFilter
+	 */
+	protected final boolean acceptValue(boolean condition, Object value) {
+		if (!condition) {
+			return false;
+		}
+		if (strictNull && value == null) {
+			throw new DataAccessException(
+					"Lambda strict mode rejects a null condition value; use eqIfPresent/condition=false for optional conditions");
+		}
+		return valueFilter.test(value);
+	}
+
+	/**
 	 * @description 显式指定本次操作使用的数据源(多数据源场景),为null时用dao默认数据源;
 	 *              与sqltoy既有惯例一致(EntityQuery/QueryExecutor/lightDao.update()均有dataSource(...)),
 	 *              单表通道经EntityQuery/EntityUpdate透传、join通道经QueryExecutor/executeSql透传,查询/更新/删除/count全终端生效
@@ -712,6 +828,9 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 		}
 		return addAssembler(resolver -> {
 			String columnName = resolveColumn(resolver, column);
+			if (typeCheck) {
+				LambdaTypeChecker.check(column, val, currentMetaLoader, "condition");
+			}
 			if (val instanceof OuterRef) {
 				// 外层列引用内联渲染,不做参数绑定
 				appendSqlSegments(
@@ -862,6 +981,7 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 		return maybeDo(condition, () -> {
 			Self nested = instance();
 			nested.valueFilter = this.valueFilter;
+			nested.typeCheck = this.typeCheck;
 			// exists/notExists等嵌套装配需要元信息加载器,必须随嵌套实例一起传递
 			nested.currentMetaLoader = this.currentMetaLoader;
 			Self result = function.apply(nested);
