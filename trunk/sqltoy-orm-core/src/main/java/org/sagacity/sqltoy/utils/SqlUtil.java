@@ -1577,9 +1577,8 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @description 剔除sql注释(单引号字符串/双引号及反引号标识符/方括号标识符内部不识别注释),
-	 *              保留 oracle hint 与 mysql 可执行注释形式的块注释,未闭合注释原样保留交数据库报错;
-	 *              末尾分号/逗号及空白按原逻辑剔除
+	 * @description 剔除sql注释(单引号字符串/双引号及反引号标识符/方括号标识符内部不识别注释), 保留 oracle hint 与 mysql
+	 *              可执行注释形式的块注释,未闭合注释原样保留交数据库报错; 末尾分号/逗号及空白按原逻辑剔除
 	 * @param sql             原始sql
 	 * @param backslashEscape true时单引号内的\'为转义(mysql系)
 	 * @return 剔除注释后的sql
@@ -1737,7 +1736,8 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @description 定位Oracle q-quote(q'[...]'/q'{...}'/q'(...)'/q'&lt;...&gt;'/q'!...!')
+	 * @description 定位Oracle
+	 *              q-quote(q'[...]'/q'{...}'/q'(...)'/q'&lt;...&gt;'/q'!...!')
 	 *              的闭合位置
 	 * @return 闭合位置后的下标,非q-quote或未闭合返回-1
 	 */

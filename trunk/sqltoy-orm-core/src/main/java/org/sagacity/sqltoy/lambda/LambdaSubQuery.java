@@ -33,8 +33,8 @@ public final class LambdaSubQuery<E> extends AbstractWhere<E, LambdaSubQuery<E>>
 	 * @description 由AbstractWhere.exists/notExists创建,不直接对外使用
 	 */
 	public LambdaSubQuery(Class<E> subEntity, String alias, JoinContext outerContext, ColumnResolver outerResolver) {
-		super(subEntity, new JoinContext(Operate.SELECT, null, null, outerContext.getParamSeq(),
-				outerContext.getSubQuerySeq()));
+		super(subEntity,
+				new JoinContext(Operate.SELECT, null, null, outerContext.getParamSeq(), outerContext.getSubQuerySeq()));
 		this.alias = alias;
 		this.outerResolver = outerResolver;
 		joinContext.registerFrom(subEntity, alias);

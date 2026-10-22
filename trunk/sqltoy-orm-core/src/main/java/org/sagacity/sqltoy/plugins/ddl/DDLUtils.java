@@ -82,9 +82,8 @@ public class DDLUtils {
 			Set<String> deps = new HashSet<String>();
 			for (Map.Entry<String, ForeignModel> iter : entityMeta.getForeignFields().entrySet()) {
 				String foreignTable = iter.getValue().getForeignTable();
-				if (entityMeta.getSchema() != null
-						&& !foreignTable.toLowerCase(Locale.ROOT)
-								.startsWith(entityMeta.getSchema().toLowerCase(Locale.ROOT).concat("."))) {
+				if (entityMeta.getSchema() != null && !foreignTable.toLowerCase(Locale.ROOT)
+						.startsWith(entityMeta.getSchema().toLowerCase(Locale.ROOT).concat("."))) {
 					foreignTable = entityMeta.getSchema().concat(".").concat(foreignTable);
 				}
 				// 大小写不敏感:@Foreign(table="QS_STAFF")与@Entity(tableName="qs_staff")等场景
@@ -196,8 +195,8 @@ public class DDLUtils {
 			columnMeta.setPartitionKey(fieldMeta.isPartitionKey());
 			// update 2026-10-22 boolean默认值按目标库归一(数值承载方言的true/false转1/0),
 			// 挂在本单一入口使全部generator的DEFAULT路径共享
-			columnMeta.setDefaultValue(
-					normalizeBooleanDefault(fieldMeta.getDefaultValue(), fieldMeta.getType(), dbType == null ? -1 : dbType));
+			columnMeta.setDefaultValue(normalizeBooleanDefault(fieldMeta.getDefaultValue(), fieldMeta.getType(),
+					dbType == null ? -1 : dbType));
 			columnMeta.setNullable(fieldMeta.isNullable());
 			columnMeta.setDataType(fieldMeta.getType());
 			columnMeta.setTypeName(fieldMeta.getFieldType());
@@ -365,8 +364,7 @@ public class DDLUtils {
 			break;
 		case java.sql.Types.CLOB:
 		case java.sql.Types.NCLOB:
-			if (isOracleFamily(dbType) || dbType == DBType.H2
-					|| dbType == DBType.DB2) {
+			if (isOracleFamily(dbType) || dbType == DBType.H2 || dbType == DBType.DB2) {
 				typeName = "CLOB";
 			} else if (dbType == DBType.HANA) {
 				// hana无TEXT类型,大文本为NCLOB(unicode)
@@ -1079,8 +1077,8 @@ public class DDLUtils {
 	 * 仅精确匹配true/false(忽略大小写),生成列表达式等其余形态不受影响
 	 *
 	 * @param defaultValue 原始默认值
-	 * @param dataType      字段JDBC类型
-	 * @param dbType        目标库类型(未知-1原样返回)
+	 * @param dataType     字段JDBC类型
+	 * @param dbType       目标库类型(未知-1原样返回)
 	 * @return 归一后的默认值
 	 */
 	public static String normalizeBooleanDefault(String defaultValue, int dataType, int dbType) {

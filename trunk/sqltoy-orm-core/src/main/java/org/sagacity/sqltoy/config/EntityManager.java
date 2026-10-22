@@ -991,9 +991,9 @@ public class EntityManager {
 	}
 
 	/**
-	 * @description AOT 构建期收集实体 @Id 上运行期可能经 Class.forName 实例化的主键生成器类名:
-	 *              内置 strategy/default 别名展开为实现类,带包名的 generator/strategy 归一旧包路径;
-	 *              @bean(name) 由框架 bean 容器保障,不返回
+	 * @description AOT 构建期收集实体 @Id 上运行期可能经 Class.forName 实例化的主键生成器类名: 内置
+	 *              strategy/default 别名展开为实现类,带包名的 generator/strategy 归一旧包路径;
+	 * @bean(name) 由框架 bean 容器保障,不返回
 	 * @param entityClass 实体类
 	 * @return 主键生成器实现类全名集合
 	 */

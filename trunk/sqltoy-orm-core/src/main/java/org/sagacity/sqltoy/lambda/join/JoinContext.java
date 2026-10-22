@@ -152,8 +152,7 @@ public class JoinContext {
 	final AtomicInteger paramSeq;
 
 	/**
-	 * exists子查询别名序号:按语句独立计数(嵌套子查询共享),保证同一语句内唯一,
-	 * 同时让结构相同的查询生成完全一致的SQL文本以复用缓存
+	 * exists子查询别名序号:按语句独立计数(嵌套子查询共享),保证同一语句内唯一, 同时让结构相同的查询生成完全一致的SQL文本以复用缓存
 	 */
 	private final AtomicInteger subQuerySeq;
 
@@ -624,11 +623,11 @@ public class JoinContext {
 
 	/**
 	 * @description 组装完整sql:where与groupBy/having/orderBy/last各归其位;无where时不再用1 = 1占位
-	 * @param whereSql          where条件文本(可为null)
-	 * @param groupByColumns    GROUP BY后的列清单(不含关键字)
-	 * @param havingCondition   HAVING后的条件(不含关键字)
-	 * @param orderByColumns    ORDER BY后的列清单(不含关键字)
-	 * @param lastSql           last原始尾部SQL
+	 * @param whereSql        where条件文本(可为null)
+	 * @param groupByColumns  GROUP BY后的列清单(不含关键字)
+	 * @param havingCondition HAVING后的条件(不含关键字)
+	 * @param orderByColumns  ORDER BY后的列清单(不含关键字)
+	 * @param lastSql         last原始尾部SQL
 	 */
 	public String getSql(String whereSql, String groupByColumns, String havingCondition, String orderByColumns,
 			String lastSql) {
@@ -695,8 +694,7 @@ public class JoinContext {
 	private static void rejectDmlGrouping(String groupByColumns, String havingCondition, String orderByColumns) {
 		if (StringUtil.isNotBlank(groupByColumns) || StringUtil.isNotBlank(havingCondition)
 				|| StringUtil.isNotBlank(orderByColumns)) {
-			throw new DataAccessException(
-					"groupBy/having/orderBy are not supported in join update/delete");
+			throw new DataAccessException("groupBy/having/orderBy are not supported in join update/delete");
 		}
 	}
 
@@ -939,8 +937,7 @@ public class JoinContext {
 		if (whereText.isEmpty()) {
 			throw new DataAccessException("Conditional join update/delete requires where conditions");
 		}
-		String derived = "SELECT " + String.join(", ", pkSelects) + " FROM " + buildTableSql() + " WHERE "
-				+ whereText;
+		String derived = "SELECT " + String.join(", ", pkSelects) + " FROM " + buildTableSql() + " WHERE " + whereText;
 		return SqlKeyword.EXISTS.getSqlSegment() + " (SELECT 1 FROM (" + derived + ") sqd WHERE "
 				+ String.join(" AND ", correlations) + ")";
 	}

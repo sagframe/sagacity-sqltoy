@@ -161,7 +161,7 @@ public class SqlServerDialectUtils {
 		}
 		// 复用既有注释清理:后续定位基于无注释sql
 		String sql = SqlUtil.clearMark(loadSql, true);
-		LockTableRef tableRef = findLockTable(sql);		// 只看目标表自身是否已有锁提示:子查询/其他join表上的with(nolock)不能抑制目标表加锁
+		LockTableRef tableRef = findLockTable(sql); // 只看目标表自身是否已有锁提示:子查询/其他join表上的with(nolock)不能抑制目标表加锁
 		TableHint existingHint = findTableHint(sql, tableRef);
 		if (hasTableLock(sql, tableRef, existingHint)) {
 			return loadSql;
@@ -291,8 +291,7 @@ public class SqlServerDialectUtils {
 		// 表值函数:from openjson(...)等没有可加锁的基表;旧式表提示from t (nolock)除外
 		if (afterTable < n && sql.charAt(afterTable) == '(') {
 			int close = StringUtil.getSymMarkIndexSkipQuoted("(", ")", sql, afterTable);
-			if (close > afterTable
-					&& TABLE_LOCK_HINT_PATTERN.matcher(sql.substring(afterTable, close + 1)).find()) {
+			if (close > afterTable && TABLE_LOCK_HINT_PATTERN.matcher(sql.substring(afterTable, close + 1)).find()) {
 				LockTableRef oldHintRef = new LockTableRef();
 				oldHintRef.name = identifier.name;
 				oldHintRef.tableEnd = identifier.end;
@@ -439,8 +438,7 @@ public class SqlServerDialectUtils {
 
 	private static boolean isWordAt(String sql, int pos, String word) {
 		int n = sql.length();
-		if (pos < 0 || pos + word.length() > n
-				|| !sql.regionMatches(true, pos, word, 0, word.length())) {
+		if (pos < 0 || pos + word.length() > n || !sql.regionMatches(true, pos, word, 0, word.length())) {
 			return false;
 		}
 		if (pos > 0 && isWordChar(sql.charAt(pos - 1))) {

@@ -89,7 +89,7 @@ public class DDLFactory {
 		case DBType.ORACLE:
 		case DBType.ORACLE11:
 		case DBType.DM:
-		// OceanBase 的 oceanbase 方言继承 OracleDialect,DDL 走 Oracle 生成器
+			// OceanBase 的 oceanbase 方言继承 OracleDialect,DDL 走 Oracle 生成器
 		case DBType.OCEANBASE: {
 			generator = new OracleDDLGenerator();
 			break;

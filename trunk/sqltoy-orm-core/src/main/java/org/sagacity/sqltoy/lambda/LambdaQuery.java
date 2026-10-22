@@ -160,14 +160,12 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 		// 已装配过的内层不把序号回退,避免重复执行/继续追加条件时重新从p1起号
 		int seq = 0;
 		for (CteDef cte : ctes) {
-			cte.query.joinContext.getParamSeq()
-					.set(Math.max(cte.query.joinContext.getParamSeq().get(), seq));
+			cte.query.joinContext.getParamSeq().set(Math.max(cte.query.joinContext.getParamSeq().get(), seq));
 			cte.query.assemble(metaLoader);
 			seq = cte.query.joinContext.getParamSeq().get();
 		}
 		if (fastInner != null) {
-			fastInner.joinContext.getParamSeq()
-					.set(Math.max(fastInner.joinContext.getParamSeq().get(), seq));
+			fastInner.joinContext.getParamSeq().set(Math.max(fastInner.joinContext.getParamSeq().get(), seq));
 			fastInner.assemble(metaLoader);
 			seq = fastInner.joinContext.getParamSeq().get();
 			// @fast派生表:FROM @fast(内层sql),别名由registerFrom(entity,alias)提供
@@ -197,8 +195,7 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 		int unionSeq = joinContext.getParamSeq().get();
 		for (Object[] u : unions) {
 			LambdaQuery<?> unionQuery = (LambdaQuery<?>) u[1];
-			unionQuery.joinContext.getParamSeq()
-					.set(Math.max(unionQuery.joinContext.getParamSeq().get(), unionSeq));
+			unionQuery.joinContext.getParamSeq().set(Math.max(unionQuery.joinContext.getParamSeq().get(), unionSeq));
 			unionQuery.assemble(metaLoader);
 			unionSeq = unionQuery.joinContext.getParamSeq().get();
 		}
@@ -293,8 +290,10 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	/**
 	 * @description 注册递归CTE:WITH RECURSIVE name (列清单) AS
 	 *              (...)(Oracle/SQLServer递归不带RECURSIVE关键字,按dbType适配)。
-	 *              <p>columns为CTE列清单:H2等库的递归CTE强制要求列清单(WITH RECURSIVE t(a,b) AS),
-	 *              PG/MySQL/SQLServer亦标准支持,故递归CTE应显式给出列名(与内层select别名顺序一致)</p>
+	 *              <p>
+	 *              columns为CTE列清单:H2等库的递归CTE强制要求列清单(WITH RECURSIVE t(a,b) AS),
+	 *              PG/MySQL/SQLServer亦标准支持,故递归CTE应显式给出列名(与内层select别名顺序一致)
+	 *              </p>
 	 * @param name     CTE名称
 	 * @param cteQuery 内层查询(base UNION ALL recursive)
 	 * @param columns  CTE列清单,如 "id","pid","name"
@@ -371,7 +370,8 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	}
 
 	/**
-	 * @description UNION ALL组合(不去重,更快);count可复用sqltoy的union-all-count优化,排序/limit语义同union
+	 * @description UNION
+	 *              ALL组合(不去重,更快);count可复用sqltoy的union-all-count优化,排序/limit语义同union
 	 */
 	public LambdaQuery<T> unionAll(LambdaQuery<?> other) {
 		return addUnion("UNION ALL", other);
@@ -428,7 +428,8 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 
 	/**
 	 * @description 组合SQL:[WITH name AS [MATERIALIZED] (inner)... ] mainSql [ UNION
-	 *              [ALL] (other)...][ORDER BY ...][last]。union根的排序/limit必须位于整个union之后,
+	 *              [ALL] (other)...][ORDER BY
+	 *              ...][last]。union根的排序/limit必须位于整个union之后,
 	 *              且只能引用输出列(不使用分支表别名);分支自带排序/limit时按方言包裹成完整的查询表达式
 	 */
 	private String composeSql() {
@@ -468,8 +469,7 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 		}
 		// union根排序/limit:从首分支剥离,统一追加到union之后,交给sqltoy的count/分页二次包装处理
 		boolean hasTail = hasOrderByOrLastSql();
-		sb.append(hasTail
-				? joinContext.getSql(getWhereSql(), getGroupByColumns(), getHavingCondition(), null, null)
+		sb.append(hasTail ? joinContext.getSql(getWhereSql(), getGroupByColumns(), getHavingCondition(), null, null)
 				: super.getSql());
 		int branchIndex = 0;
 		for (Object[] u : unions) {
@@ -490,7 +490,8 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 
 	/**
 	 * @description union分支包裹:普通库用括号;SQLServer不允许set操作数直接带括号且派生表内order by
-	 *              必须伴随TOP/OFFSET,故用派生表包裹并复用sqltoy的legalizeDerivedInnerSql补齐offset 0
+	 *              必须伴随TOP/OFFSET,故用派生表包裹并复用sqltoy的legalizeDerivedInnerSql补齐offset
+	 *              0
 	 */
 	private String wrapUnionBranch(LambdaQuery<?> branch, String branchSql, int branchIndex, int dbType) {
 		if (dbType != DBType.SQLSERVER) {
@@ -736,8 +737,8 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	}
 
 	/**
-	 * @description 查询单列并以列表返回;仅支持单表实体通道,结果按当前排序返回。
-	 *              适合select max/min之外的普通列取数;聚合标量后续单独提供
+	 * @description 查询单列并以列表返回;仅支持单表实体通道,结果按当前排序返回。 适合select
+	 *              max/min之外的普通列取数;聚合标量后续单独提供
 	 * @param column 单列属性引用
 	 * @return 单列值列表
 	 */

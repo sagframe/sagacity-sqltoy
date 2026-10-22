@@ -176,7 +176,7 @@ public class FunctionUtils {
 	 *              逗号或运算符之后),用于find_in_set等需要区分"返回位置"与"返回布尔"的适配器;
 	 *              条件上下文(where/having/when/on/and/or/not)返回false。基于字面量掩码串向前
 	 *              扫描最近的顶层token,列名/函数名等未知token继续向前找上下文关键字。
-	 * @param maskedSql 字面量掩码后的SQL(与原串等长)
+	 * @param maskedSql    字面量掩码后的SQL(与原串等长)
 	 * @param endExclusive 函数名起始位置(不含)
 	 * @return true=投影/值上下文,false=条件上下文
 	 */
@@ -199,9 +199,8 @@ public class FunctionUtils {
 					}
 				}
 				String word = maskedSql.substring(i + 1, end).toLowerCase(Locale.ROOT);
-				if ("select".equals(word) || "then".equals(word) || "else".equals(word)
-						|| "returning".equals(word) || "values".equals(word) || "by".equals(word)
-						|| "distinct".equals(word) || "as".equals(word)) {
+				if ("select".equals(word) || "then".equals(word) || "else".equals(word) || "returning".equals(word)
+						|| "values".equals(word) || "by".equals(word) || "distinct".equals(word) || "as".equals(word)) {
 					return true;
 				}
 				if ("where".equals(word) || "having".equals(word) || "when".equals(word) || "on".equals(word)
@@ -211,8 +210,8 @@ public class FunctionUtils {
 				// 列名/函数名/表名等未知token:继续向前找上下文关键字
 				continue;
 			}
-			if (c == ',' || c == '=' || c == '>' || c == '<' || c == '+' || c == '-' || c == '*' || c == '/'
-					|| c == '%' || c == '|') {
+			if (c == ',' || c == '=' || c == '>' || c == '<' || c == '+' || c == '-' || c == '*' || c == '/' || c == '%'
+					|| c == '|') {
 				return true;
 			}
 			i--;
@@ -432,8 +431,7 @@ public class FunctionUtils {
 			return false;
 		}
 		String tmp = value.trim();
-		return tmp.length() > 1 && tmp.startsWith("'") && tmp.endsWith("'")
-				&& tmp.indexOf('\'', 1) == tmp.length() - 1;
+		return tmp.length() > 1 && tmp.startsWith("'") && tmp.endsWith("'") && tmp.indexOf('\'', 1) == tmp.length() - 1;
 	}
 
 	/**
@@ -472,8 +470,8 @@ public class FunctionUtils {
 
 	/**
 	 * @description Java风格时间token归一为Oracle模型:java的HH=24小时/mm=分钟,而Oracle的HH=12小时/mm=月。
-	 *              只归一冒号邻接的"HH:mm"/"HH:mm:ss"与"hh:mm"/"hh:mm:ss"形态,其余Oracle token原样保留;
-	 *              归一后各SQL函数适配器可统一按Oracle模型分派,避免mm被误当分钟
+	 *              只归一冒号邻接的"HH:mm"/"HH:mm:ss"与"hh:mm"/"hh:mm:ss"形态,其余Oracle
+	 *              token原样保留; 归一后各SQL函数适配器可统一按Oracle模型分派,避免mm被误当分钟
 	 * @param formatArg SQL格式参数(含引号的字面量)
 	 * @return 归一后的格式参数
 	 */
@@ -494,8 +492,8 @@ public class FunctionUtils {
 
 	/**
 	 * @description SQLServer的FORMAT(2012+)要求首参为date/time/numeric,字符串字面量直接
-	 *              传入报"Argument data type varchar is invalid for argument 1 of format function"
-	 *              (2025真库实测);日期格式化场景对单引号字面量显式CAST AS datetime定型,
+	 *              传入报"Argument data type varchar is invalid for argument 1 of
+	 *              format function" (2025真库实测);日期格式化场景对单引号字面量显式CAST AS datetime定型,
 	 *              列/表达式保持原类型(避免datetime2/datetimeoffset精度或时区信息被降级)
 	 * @param arg 日期参数SQL片段
 	 * @return 可被FORMAT消费的日期参数
@@ -508,9 +506,8 @@ public class FunctionUtils {
 	}
 
 	/**
-	 * @description H2的to_char/formatdatetime首参须为日期时间类型,字符串字面量直接传入报
-	 *              "Invalid value for parameter dateTime"(H2 2.4真库实测);字面量CAST定型,
-	 *              列/表达式保持原类型
+	 * @description H2的to_char/formatdatetime首参须为日期时间类型,字符串字面量直接传入报 "Invalid value
+	 *              for parameter dateTime"(H2 2.4真库实测);字面量CAST定型, 列/表达式保持原类型
 	 * @param arg 日期参数SQL片段
 	 * @return 可被H2日期格式化函数消费的参数
 	 */
@@ -522,7 +519,8 @@ public class FunctionUtils {
 	}
 
 	/**
-	 * @description 将Oracle/Java风格格式模型转换为MySQL % 风格token,供DateFormat(源为mysql date_format)
+	 * @description 将Oracle/Java风格格式模型转换为MySQL % 风格token,供DateFormat(源为mysql
+	 *              date_format)
 	 *              在非%写法时统一走既有%分派。Oracle的mm=月/mi=分钟;java的HH:mm=24小时/分钟;
 	 *              裸HH按Java习惯作24小时,裸hh作12小时;双引号字面量片段原样保留
 	 * @param formatArg SQL格式参数(含引号的字面量)

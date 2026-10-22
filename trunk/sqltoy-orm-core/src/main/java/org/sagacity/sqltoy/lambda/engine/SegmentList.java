@@ -63,8 +63,7 @@ public abstract class SegmentList implements SqlSegment {
 	 */
 	public static void mergeParams(Map<String, Object> target, Map<String, Object> source) {
 		for (Map.Entry<String, Object> entry : source.entrySet()) {
-			if (target.containsKey(entry.getKey())
-					&& !Objects.equals(target.get(entry.getKey()), entry.getValue())) {
+			if (target.containsKey(entry.getKey()) && !Objects.equals(target.get(entry.getKey()), entry.getValue())) {
 				throw new org.sagacity.sqltoy.exception.DataAccessException("Duplicate named parameter ["
 						+ entry.getKey()
 						+ "] with different values across condition segments (two inSql/having/cte sharing one param name); use distinct names");

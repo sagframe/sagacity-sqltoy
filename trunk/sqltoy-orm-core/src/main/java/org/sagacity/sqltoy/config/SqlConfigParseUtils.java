@@ -1899,8 +1899,9 @@ public class SqlConfigParseUtils {
 		// 清理sql中的一些注释、以及特殊的符号;字面量转义约定须在clearMark/clearMistyChars前解析,
 		// 避免mysql系\'字面量内的注释标记/换行被误处理
 		boolean backslashEscape = isBackslashEscape(dialect);
-		String originalSql = SqlUtil.clearMistyChars(
-				SqlUtil.clearMark(SqlUtil.uniformFastMarks(querySql), backslashEscape), BLANK, backslashEscape)
+		String originalSql = SqlUtil
+				.clearMistyChars(SqlUtil.clearMark(SqlUtil.uniformFastMarks(querySql), backslashEscape), BLANK,
+						backslashEscape)
 				.concat(BLANK);
 		// update 2026-10-13 虚表宏@virtualTable()按方言展开为伪表或剔除(须在函数/保留字转换前,
 		// 展开后的from dual参与后续统一处理;解析期随SqlToyConfig固化,realDialectFirst惰性层

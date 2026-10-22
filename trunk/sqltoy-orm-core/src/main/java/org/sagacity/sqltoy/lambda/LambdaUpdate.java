@@ -299,8 +299,7 @@ public final class LambdaUpdate<T> extends AbstractWhere<T, LambdaUpdate<T>> {
 							+ expression);
 		}
 		if (placeholders > 1) {
-			throw new DataAccessException(
-					"Lambda setExpr supports at most one ? placeholder: " + expression);
+			throw new DataAccessException("Lambda setExpr supports at most one ? placeholder: " + expression);
 		}
 		if (java.util.regex.Pattern.compile(":p\\d+\\b").matcher(code).find()) {
 			throw new DataAccessException(
@@ -320,8 +319,8 @@ public final class LambdaUpdate<T> extends AbstractWhere<T, LambdaUpdate<T>> {
 	}
 
 	/**
-	 * @description 将sql单引号/双引号字面量内容替换为空格,保留长度与引号外文本,供占位符统计使用;
-	 *              支持''与反斜杠转义,避免 replace(name, ':x', '') 这类合法表达式被判成占位符。
+	 * @description 将sql单引号/双引号字面量内容替换为空格,保留长度与引号外文本,供占位符统计使用; 支持''与反斜杠转义,避免
+	 *              replace(name, ':x', '') 这类合法表达式被判成占位符。
 	 *              掩码只用于统计:字面量':name'可安全放行(内核: name识别是字面量感知的),
 	 *              字面量'?'由validateSetExpr单独拒绝(渲染端对原文全量replace会损坏它)
 	 */

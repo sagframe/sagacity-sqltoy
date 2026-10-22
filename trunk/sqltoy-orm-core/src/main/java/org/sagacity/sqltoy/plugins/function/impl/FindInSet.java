@@ -20,9 +20,8 @@ public class FindInSet extends IFunction {
 	private static Pattern regex = Pattern.compile("(?i)\\W(find_in_set)\\(");
 
 	/**
-	 * 函数闭括号后的比较符子句(裸操作符形态,suffixNeedsParen=false按命中长度消费)。
-	 * update 2026-10-20 扩展为任意位置比较:布尔口径族仍走wrapInternal,
-	 * =1/=2/&gt;1/&lt;3等走整数位置表达式。
+	 * 函数闭括号后的比较符子句(裸操作符形态,suffixNeedsParen=false按命中长度消费)。 update 2026-10-20
+	 * 扩展为任意位置比较:布尔口径族仍走wrapInternal, =1/=2/&gt;1/&lt;3等走整数位置表达式。
 	 */
 	private static Pattern cmpPattern = Pattern.compile("\\s*(=|>=|<=|<>|!=|>|<)\\s*(\\d+)");
 

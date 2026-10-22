@@ -57,14 +57,13 @@ public class SqlWithAnalysis implements Serializable {
 
 	/**
 	 * update 2026-10-19 dbType感知剔除开关:经SqlWithAnalysis(sql,dbType)构造且目标库不支持CTE
-	 * 物化hint时置位,parse()对各CTE的ext区域(as与'('之间文本)做位置级剔除;单参构造恒为false,
-	 * 解析行为与历史版本完全一致
+	 * 物化hint时置位,parse()对各CTE的ext区域(as与'('之间文本)做位置级剔除;单参构造恒为false, 解析行为与历史版本完全一致
 	 */
 	private final boolean stripMaterialized;
 
 	/**
-	 * update 2026-10-19 位置级剔除后的完整sql:headSql+各CTE定义(ext剔除后)+最终tailSql恰为
-	 * " "+原sql的完整拼接,去掉首部补位空格即得;未启用剔除或无with时为null,getAdaptedSql回退原sql
+	 * update 2026-10-19 位置级剔除后的完整sql:headSql+各CTE定义(ext剔除后)+最终tailSql恰为 "
+	 * "+原sql的完整拼接,去掉首部补位空格即得;未启用剔除或无with时为null,getAdaptedSql回退原sql
 	 */
 	private String adaptedSql;
 
@@ -339,8 +338,8 @@ public class SqlWithAnalysis implements Serializable {
 	/**
 	 * update 2026-10-18(2026-10-19改解析器位置级剔除) 按目标库类型保留/剔除CTE物化hint。
 	 * 支持库(PG系)原样返回;不支持库将 "AS [NOT] MATERIALIZED ("改写为"AS (",规避混入PG专有关键字
-	 * 导致的执行报错。剔除复用parse()的CTE精确定位:ext(as与'('之间文本,withPattern仅允许其承载
-	 * 0~2个单词即[not] materialized)是物化hint的唯一合法位置,仅当ext确含materialized才做位置级
+	 * 导致的执行报错。剔除复用parse()的CTE精确定位:ext(as与'('之间文本,withPattern仅允许其承载 0~2个单词即[not]
+	 * materialized)是物化hint的唯一合法位置,仅当ext确含materialized才做位置级
 	 * 替换——派生表别名(非CTE,不进withSqlSet)、字面量文本(findBodyEnd括号配对已规避)绝不会被
 	 * 误剔,无正则启发式。不含materialized关键字时走零开销快速通道。剔除只移除优化hint、不改变
 	 * CTE查询语义,对不支持库本就无物化概念,行为等价于用户未写hint

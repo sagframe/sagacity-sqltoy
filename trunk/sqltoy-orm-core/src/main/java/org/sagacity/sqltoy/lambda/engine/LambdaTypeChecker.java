@@ -23,8 +23,8 @@ public final class LambdaTypeChecker {
 	private LambdaTypeChecker() {
 	}
 
-	public static <T, R> void check(LambdaFn<T, R> column, Object value,
-			Function<Class<?>, EntityMeta> metaLoader, String operation) {
+	public static <T, R> void check(LambdaFn<T, R> column, Object value, Function<Class<?>, EntityMeta> metaLoader,
+			String operation) {
 		if (value == null || value instanceof OuterRef || metaLoader == null) {
 			return;
 		}
@@ -94,9 +94,8 @@ public final class LambdaTypeChecker {
 			if (expected == null || expected.isEmpty()) {
 				expected = "jdbcType=" + fieldMeta.getType();
 			}
-			throw new DataAccessException("Lambda " + operation + " type mismatch: "
-					+ entityClass.getSimpleName() + "." + fieldName + " expects " + expected
-					+ ", but value is " + value.getClass().getName()
+			throw new DataAccessException("Lambda " + operation + " type mismatch: " + entityClass.getSimpleName() + "."
+					+ fieldName + " expects " + expected + ", but value is " + value.getClass().getName()
 					+ "; use typeCheck(false) only when the conversion is intentional");
 		}
 	}

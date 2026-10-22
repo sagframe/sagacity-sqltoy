@@ -102,7 +102,8 @@ public class EntityScanner {
 						}
 						File dir = new File(filePath);
 						if (dir.exists() && dir.isDirectory()) {
-							scanDirectory(dir, basePackage, relativePattern, result, classLoader, entityOnly, recursive);
+							scanDirectory(dir, basePackage, relativePattern, result, classLoader, entityOnly,
+									recursive);
 						}
 					}
 				} else if ("jar".equals(protocol)) {

@@ -92,8 +92,7 @@ public class DateDiff extends IFunction {
 		// update 2026-10-19 oceanbase并入oracle分支:sqltoy的OceanBaseDialect按oracle系生成
 		// (merge into/listagg/to_char同源),OB oracle模式租户无datediff;mysql模式租户按约定
 		// 配dialect=mysql走mysql分支(本机OB CE mysql模式实测:mysql分支datediff(day,...)=19)
-		if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM
-				|| dbType == DBType.OCEANBASE) {
+		if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM || dbType == DBType.OCEANBASE) {
 			// update 2026-9-5 裸字符串字面量参数包to_date(长度启发式同ToDate单参),
 			// 规避TRUNC('2026-01-20')等在默认NLS_DATE_FORMAT(DD-MON-RR)会话下报
 			// ORA-01722/ORA-01861;列/表达式参数原样保留

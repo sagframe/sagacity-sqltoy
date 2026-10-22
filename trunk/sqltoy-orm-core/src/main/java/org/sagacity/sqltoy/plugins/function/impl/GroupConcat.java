@@ -206,8 +206,8 @@ public class GroupConcat extends IFunction {
 			expr = "case when " + nullCheck + " then null else concat(" + String.join(",", segments) + ") end";
 		} else {
 			String joiner;
-			if (dbType == DBType.MYSQL || dbType == DBType.TIDB || dbType == DBType.MYSQL57
-					|| dbType == DBType.H2 || dbType == DBType.DORIS || dbType == DBType.STARROCKS) {
+			if (dbType == DBType.MYSQL || dbType == DBType.TIDB || dbType == DBType.MYSQL57 || dbType == DBType.H2
+					|| dbType == DBType.DORIS || dbType == DBType.STARROCKS) {
 				joiner = ",";
 			} else {
 				joiner = "||";

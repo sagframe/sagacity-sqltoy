@@ -331,8 +331,7 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 	}
 
 	/**
-	 * 构造字面量%的like模式:先转义值中的%,再由中央processLike按已有方向%保留通配符,
-	 * 避免wrapLike因值含%而丢掉单边方向
+	 * 构造字面量%的like模式:先转义值中的%,再由中央processLike按已有方向%保留通配符, 避免wrapLike因值含%而丢掉单边方向
 	 */
 	private static Object exactLike(Object val, boolean left, boolean right) {
 		if (val instanceof OuterRef) {

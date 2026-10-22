@@ -61,17 +61,15 @@ public class Instr extends IFunction {
 		// update 2026-10-20 四参instr(str,sub,pos,occurrence):
 		// ①原生四参库(oracle/dm/db2/h2/hana)透传,由下方既有分支处理;
 		// ②有REGEXP_INSTR的库直接套用(sqlserver2025/mysql8+/oceanbase/pg15+/opengauss/gaussdb),
-		//   注意第二参按目标库正则表达式解释;
+		// 注意第二参按目标库正则表达式解释;
 		// ③其余无简单四参等价物的库(mysql57/tidb/doris/starrocks/pg14/sqlite/clickhouse/kingbase等)
-		//   原样输出,交目标库响亮报错,不静默错值
+		// 原样输出,交目标库响亮报错,不静默错值
 		if ("instr".equals(funLow) && realArgs.length == 4) {
 			if (dialect == DBType.SQLSERVER || dialect == DBType.MYSQL || dialect == DBType.OCEANBASE) {
-				return "REGEXP_INSTR(" + realArgs[0] + "," + realArgs[1] + "," + realArgs[2] + "," + realArgs[3]
-						+ ")";
+				return "REGEXP_INSTR(" + realArgs[0] + "," + realArgs[1] + "," + realArgs[2] + "," + realArgs[3] + ")";
 			}
 			if (dialect == DBType.POSTGRESQL || dialect == DBType.OPENGAUSS || dialect == DBType.GAUSSDB) {
-				return "regexp_instr(" + realArgs[0] + "," + realArgs[1] + "," + realArgs[2] + "," + realArgs[3]
-						+ ")";
+				return "regexp_instr(" + realArgs[0] + "," + realArgs[1] + "," + realArgs[2] + "," + realArgs[3] + ")";
 			}
 		}
 		// update 2026-10-4 补strpos源函数:strpos(str,sub)为pg系原生写法,参数序与instr一致
@@ -80,7 +78,8 @@ public class Instr extends IFunction {
 		// hana的locate同序,其余instr系库直接换名;>2参为CH的start_pos/occurrence扩展,
 		// 其余库无对应形态,原样保留交由目标库报错
 
-		// update 2026-10-11 补locate源函数(mysql与db2用户写法):needle-first参数序(needle,haystack[,pos])。
+		// update 2026-10-11
+		// 补locate源函数(mysql与db2用户写法):needle-first参数序(needle,haystack[,pos])。
 		// mysql系与db2原生同名同序透传;hana的locate虽原生但参数序相反(haystack在前),
 		// 同名异序无法辨源,按本框架mysql源惯例统一按mysql序转换(类注释已声明);
 		// posstr为DB2原生haystack-first语义,不能与locate同组,见下方strpos分支
@@ -131,8 +130,7 @@ public class Instr extends IFunction {
 					|| dialect == DBType.MOGDB || dialect == DBType.VASTBASE || dialect == DBType.KINGBASE
 					|| dialect == DBType.HIGHGO) {
 				// pg系原生strpos直接透传;DB2的posstr在PG无同名函数,按标准position改写
-				return "strpos".equals(funLow) ? super.IGNORE
-						: "position(" + realArgs[1] + " in " + realArgs[0] + ")";
+				return "strpos".equals(funLow) ? super.IGNORE : "position(" + realArgs[1] + " in " + realArgs[0] + ")";
 			}
 			if (realArgs.length > 2) {
 				return super.IGNORE;
@@ -142,8 +140,7 @@ public class Instr extends IFunction {
 			}
 			if (dialect == DBType.DB2) {
 				// DB2原生posstr直接透传;strpos源转locate(needle,haystack)
-				return "posstr".equals(funLow) ? super.IGNORE
-						: "locate(" + realArgs[1] + "," + realArgs[0] + ")";
+				return "posstr".equals(funLow) ? super.IGNORE : "locate(" + realArgs[1] + "," + realArgs[0] + ")";
 			}
 			if (dialect == DBType.HANA) {
 				return "locate(" + realArgs[0] + "," + realArgs[1] + ")";
