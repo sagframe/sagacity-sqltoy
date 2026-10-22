@@ -600,6 +600,10 @@ public class LambdaQuerySqlTest {
 		// 有真实占位符且有值的组合此前会静默通过并生成被改写的字面量,同样拒绝
 		assertThrows(DataAccessException.class, () -> LambdaUpdate.create(User.class)
 				.setExpr(User::getName, "replace(name, '?', '') || ?", "x"));
+
+		// condition=false 整条跳过,字面量?不应产生副作用
+		assertDoesNotThrow(() -> LambdaUpdate.create(User.class)
+				.setExpr(false, User::getName, "replace(name, '?', '')").assemble(IDENTITY));
 	}
 
 	@Test

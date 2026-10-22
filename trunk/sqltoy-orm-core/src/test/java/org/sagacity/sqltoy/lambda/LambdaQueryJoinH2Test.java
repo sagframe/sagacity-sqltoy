@@ -483,6 +483,28 @@ public class LambdaQueryJoinH2Test {
 	}
 
 	@Test
+	@Order(13)
+	@DisplayName("setExpr字面量?改为绑定值后join真实执行")
+	public void testJoinSetExprLiteralQuestionMarkViaValue() throws Exception {
+		try {
+			try (Connection conn = dataSource.getConnection(); Statement st = conn.createStatement()) {
+				st.execute("delete from lambda_join_user where id = 99");
+				st.execute("insert into lambda_join_user values (99,'x?y',10,1)");
+			}
+			assertEquals(1, lightDao.lambdaUpdate(JoinUser.class).innerJoin(JoinDept.class)
+					.on(JoinUser::getDeptId, JoinDept::getDeptId)
+					.setExpr(JoinUser::getStaffName, "replace(staff_name, ?, '')", "?")
+					.eq(JoinUser::getId, 99).update());
+			assertEquals("xy",
+					lightDao.lambdaQuery(JoinUser.class).eq(JoinUser::getId, 99).getScalar(JoinUser::getStaffName));
+		} finally {
+			try (Connection conn = dataSource.getConnection(); Statement st = conn.createStatement()) {
+				st.execute("delete from lambda_join_user where id = 99");
+			}
+		}
+	}
+
+	@Test
 	@Order(10)
 	@DisplayName("join完整性校验:缺on/未参与join的实体")
 	public void testJoinValidation() {

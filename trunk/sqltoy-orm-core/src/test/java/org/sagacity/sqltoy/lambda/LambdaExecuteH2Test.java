@@ -398,6 +398,25 @@ public class LambdaExecuteH2Test {
 	}
 
 	@Test
+	@Order(20)
+	@DisplayName("setExpr字面量?改为绑定值后单表真实执行")
+	public void testSetExprLiteralQuestionMarkViaValue() throws Exception {
+		try {
+			try (Connection conn = dataSource.getConnection(); Statement st = conn.createStatement()) {
+				st.execute("delete from lambda_user where id = 99");
+				st.execute("insert into lambda_user values (99,'x?y',0,0)");
+			}
+			assertEquals(1, lightDao.lambdaUpdate(User.class)
+					.setExpr(User::getStaffName, "replace(staffName, ?, '')", "?").eq(User::getId, 99).update());
+			assertEquals("xy", lightDao.lambdaQuery(User.class).eq(User::getId, 99).getScalar(User::getStaffName));
+		} finally {
+			try (Connection conn = dataSource.getConnection(); Statement st = conn.createStatement()) {
+				st.execute("delete from lambda_user where id = 99");
+			}
+		}
+	}
+
+	@Test
 	@Order(19)
 	@DisplayName("findColumns执行后不污染select列,构建器可继续复用")
 	public void testFindColumnsKeepsBuilderReusable() {

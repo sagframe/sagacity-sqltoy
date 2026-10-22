@@ -224,7 +224,9 @@ public final class LambdaUpdate<T> extends AbstractWhere<T, LambdaUpdate<T>> {
 	 *              单表通道表达式中的字段以属性名书写(执行时自动转为数据库字段),可引用本表其他字段,
 	 *              表达式含单个<code>?</code>或单个<code>:name</code>时绑定value;
 	 *              join通道表达式原样输出(字段请写实际列名),单个<code>?</code>绑定value;
-	 *              注意表达式内不支持=字符(字段赋值等号由框架组装)
+	 *              注意表达式内不支持=字符(字段赋值等号由框架组装);字符串字面量内也不能出现<code>?</code>
+	 *              (两条通道都按文本改写?),需要字面量?时请作为绑定值传入,如
+	 *              <code>.setExpr(col, "replace(name, ?, '')", "?")</code>
 	 * @param column     更新字段引用
 	 * @param expression 计算表达式
 	 * @return 自身
@@ -288,11 +290,12 @@ public final class LambdaUpdate<T> extends AbstractWhere<T, LambdaUpdate<T>> {
 				placeholders++;
 			}
 		}
-		// 字面量'?'必须拒绝:两条通道的渲染端都对原文做全量"?"改写(单表updateByQuery、join addSetExpression),
-		// 引号内的'?'会被一并替换成参数名,SQL静默损坏且可能照常执行落库
+		// 字面量'?'必须拒绝:单表updateByQuery和join有值分支都对原文做全量"?"替换(join无值时则保留裸?,
+		// 执行期报无绑定占位符),引号内的'?'会被一并替换成参数名,SQL静默损坏且可能照常执行落库
 		if (rawQuestionMarks != placeholders) {
 			throw new DataAccessException(
-					"Lambda setExpr cannot contain a literal '?' inside quotes: both channels rewrite every '?' in the raw expression into a parameter placeholder; bind the value via a real ? outside quotes or use raw sql: "
+					"Lambda setExpr cannot contain a literal '?' inside quotes (the update channels rewrite '?' textually); "
+							+ "move it into the bound value, e.g. setExpr(col, \"replace(name, ?, '')\", \"?\"): "
 							+ expression);
 		}
 		if (placeholders > 1) {
