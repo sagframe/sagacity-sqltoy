@@ -36,10 +36,9 @@ public class LeftRight extends IFunction {
 		boolean isLeft = "left".equals(functionName.toLowerCase(Locale.ROOT));
 		// oracle/sqlite无left()/right():substr等效(oracle系字面量日期不涉及,此处为字符串参)
 		if (dialect == DBType.ORACLE || dialect == DBType.ORACLE11 || dialect == DBType.SQLITE) {
-			// update 2026-10-20 真库实测:mysql的left/right(str,0)与负数长度返回空串,
-			// 而oracle的substr(str,-0)返回整串、substr(str,1,0)返回NULL,sqlite的substr(str,-0)
-			// 同样返回整串;长度字面量<=0统一转substr(str,1,0)(sqlite得空串,oracle得空值,
-			// 至少不返回整串);长度表达式原样保留
+			// update 2026-10-20 真库实测:mysql的left/right(str,0)与负数长度返回空串,而oracle的substr(str,-0)返回整串、
+			// substr(str,1,0)返回NULL,sqlite的substr(str,-0)同样返回整串;长度字面量<=0统一转
+			// substr(str,1,0)(sqlite得空串,oracle得空值,至少不返回整串);长度表达式原样保留
 			String count = args[1].trim();
 			if (count.matches("-?\\d+") && Long.parseLong(count) <= 0) {
 				return "substr(" + args[0] + ",1,0)";

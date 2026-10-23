@@ -196,12 +196,10 @@ public class MySqlDialect implements Dialect {
 			DBProfile profile, final Boolean autoCommit, final String tableName) throws Exception {
 		Long updateCnt = DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields,
 				reflectPropsHandler, conn, profile, autoCommit, tableName, true);
-		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
-		// update 2026-9-10 判据保留但豁免oceanbase(mysql模式):ob 4.3.5驱动实测多列ifnull
-		// 包裹形态的批量update对不存在行返回计数1(单条/简单形态/服务端文本协议均正确返回0,
-		// 驱动批量层缺陷),判据被误导致新行跳过insert静默丢行,ob改无条件insert ignore
-		// (对已存在行幂等);真mysql(Connector/J)批量计数实测精确,纯修改场景保留跳过优化;
-		// SR/Doris继承本路径同样适用判据(其计数可靠,且其insert=PK模型整行upsert,
+		// update 2026-9-10 如果修改的记录数量跟总记录数量一致,表示全部是修改
+		// 判据保留但豁免oceanbase(mysql模式):ob 4.3.5驱动实测多列ifnull包裹形态的批量update对不存在行返回计数1
+		// (单条/简单形态/服务端文本协议均正确返回0,驱动批量层缺陷),判据被误导致新行跳过insert静默丢行,ob改无条件insert ignore(对已存在行幂等);
+		// 真mysql(Connector/J)批量计数实测精确,纯修改场景保留跳过优化;SR/Doris继承本路径同样适用判据(其计数可靠,且其insert=PK模型整行upsert,
 		// 若无条件insert会把null字段覆盖写回,判据跳过恰为正确性所需,不可移除)
 		if (updateCnt >= entities.size() && !profile.isOceanBase()) {
 			SqlExecuteStat.debug("update record",

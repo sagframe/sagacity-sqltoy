@@ -102,8 +102,7 @@ public class SqlUtil {
 	// 判断sql是否是merge into 开头
 	public static final Pattern MERGE_INTO_PATTERN = Pattern.compile("^merge\\s+into\\s+");
 
-	// update 2026-9-14
-	// validateInArg去除in参数中的空白:原每次replaceAll("\\s+","")隐式编译,改静态Pattern
+	// update 2026-9-14 validateInArg去除in参数中的空白:原每次replaceAll("\\s+","")隐式编译,改静态Pattern
 	private static final Pattern WHITESPACE_PATTERN = Pattern.compile("\\s+");
 
 	// 只针对比较符号、和(的日期字符加函数
@@ -168,7 +167,7 @@ public class SqlUtil {
 	// convertSqlMap的key含updateByQuery等动态sql,必须有容量上限防止无界内存增长
 	private static final int CONVERT_SQL_CACHE_MAX_SIZE = 2000;
 
-	// sql 注释过滤器(update 2026-9-13 ConcurrentHashMap,与convertSqlMap同并发策略)
+	// update 2026-9-13 sql 注释过滤器(ConcurrentHashMap,与convertSqlMap同并发策略)
 	private static final ConcurrentHashMap<String, String> sqlCommentfilters = new ConcurrentHashMap<>();
 
 	static {
@@ -178,8 +177,7 @@ public class SqlUtil {
 		sqlCommentfilters.put("{", "}");
 	}
 
-	// update 2026-9-13 mssql-jdbc Geometry反射句柄缓存(同ResultUtils.MSSQL_GEO_*模式):
-	// 驱动不在classpath时句柄为null整体回退,避免rs逐行回写时重复Class.forName/getMethod
+	// update 2026-9-13 mssql-jdbc Geometry反射句柄缓存(同ResultUtils.MSSQL_GEO_*模式):驱动不在classpath时句柄为null整体回退,避免rs逐行回写时重复Class.forName/getMethod
 	private static final java.lang.reflect.Method MSSQL_GEOMETRY_PARSE;
 	private static final java.lang.reflect.Method MSSQL_GEOMETRY_SERIALIZE;
 
@@ -522,8 +520,7 @@ public class SqlUtil {
 	}
 
 	/**
-	 * update 2026-9-14
-	 * 数值类型参数赋值(Integer/BigDecimal/BigInteger/Double/Long/Float/Short/Byte)
+	 * update 2026-9-14 数值类型参数赋值(Integer/BigDecimal/BigInteger/Double/Long/Float/Short/Byte)
 	 */
 	private static boolean setNumberParam(DBProfile profile, PreparedStatement pst, int jdbcType, int paramIndex,
 			Object paramValue) throws SQLException {
@@ -723,8 +720,7 @@ public class SqlUtil {
 			PreparedStatement pst, int jdbcType, int paramIndex, Object paramValue) throws SQLException, IOException {
 		if (paramValue instanceof byte[]) {
 			if (jdbcType == java.sql.Types.BLOB) {
-				// update 2026-9-6
-				// 实测PG系:pgjdbc的createBlob抛SQLFeatureNotSupportedException(SQLSTATE 0A000),
+				// update 2026-9-6 实测PG系:pgjdbc的createBlob抛SQLFeatureNotSupportedException(SQLSTATE 0A000),
 				// Hikari等连接池按SQLSTATE黑名单将连接标记为broken并关闭物理连接,导致"catch后setBytes兜底"
 				// 在已死连接上执行报"This connection has been closed.";openGauss系驱动的setBlob亦发送
 				// 大对象oid与bytea列不匹配。PG系bytea列原生接受setBytes,直接绑定不走createBlob/setBlob
@@ -831,9 +827,9 @@ public class SqlUtil {
 			pst.setObject(paramIndex, value);
 			return;
 		}
-		// postgresql系需要用PGobject明确指定向量类型,避免因参数按varchar发送导致无法隐式转换
+		// update 2026-9-10 postgresql系需要用PGobject明确指定向量类型,避免因参数按varchar发送导致无法隐式转换
 		// gaussdb企业版向量类型名为floatvector,其余为vector
-		// update 2026-9-10 vastbase G100 3.0(Build9)实测向量类型名同为floatvector:无vector别名
+		// vastbase G100 3.0(Build9)实测向量类型名同为floatvector:无vector别名
 		// (create table vector(3)报type "vector" does not exist,floatvector(3)建表/字符串隐式
 		// 写入/文本读回/'[..]'::floatvector cast+nvl包裹全部实测可行)
 		String pgTypeName = (profile.getDbType() == DBType.GAUSSDB || profile.getDbType() == DBType.VASTBASE)
@@ -853,8 +849,8 @@ public class SqlUtil {
 	}
 
 	/**
-	 * update 2026-9-6 判定是否为PG系内核方言(PGobject类型包装的适用范围):
-	 * 非PG系(mysql/oracle/db2/sqlserver等)直接以字符串绑定,不得构造PGobject update 2026-9-16
+	 * update 2026-9-16 判定是否为PG系内核方言(PGobject类型包装的适用范围):
+	 * 非PG系(mysql/oracle/db2/sqlserver等)直接以字符串绑定,不得构造PGobject
 	 * 委托DBProfile.isPGFamily静态白名单(单一事实源,消除逐字拷贝)
 	 */
 	private static boolean isPGFamily(Integer dbType) {
@@ -867,7 +863,7 @@ public class SqlUtil {
 	 * type, 反向同理);此前按dbType+classpath静态探测的分支在混合驱动场景(如classpath同时有postgresql与
 	 * opengauss-jdbc,连接走其一)会错配。以连接JDBC URL的scheme段为准(穿透Hikari等连接池代理),
 	 * 对应不上classpath中的驱动类时返回null,由调用方回退setObject(str,Types.OTHER)交服务器按列推断。
-	 * 
+	 *
 	 * @param pst      预编译语句(取其连接的JDBC URL判定驱动来源)
 	 * @param typeName PG扩展类型名(json/jsonb/vector/geometry等)
 	 * @param value    字符串形式的类型值
@@ -917,10 +913,9 @@ public class SqlUtil {
 			rs.updateObject(columnName, value);
 			return;
 		}
-		// gaussdb企业版向量类型名为floatvector,其余为vector
-		// update 2026-9-10 vastbase G100
-		// 3.0实测向量类型名同为floatvector(无vector别名),与setVectorValue同步
-		// update 2026-9-6 按连接URL scheme选择同源驱动PGobject(同setVectorValue,规避跨驱动错配)
+		// update 2026-9-6 gaussdb企业版向量类型名为floatvector,其余为vector
+		// vastbase G100 3.0实测向量类型名同为floatvector(无vector别名),与setVectorValue同步
+		// 按连接URL scheme选同源驱动PGobject,同setVectorValue规避跨驱动错配
 		String pgTypeName = (profile.getDbType() == DBType.GAUSSDB || profile.getDbType() == DBType.VASTBASE)
 				? "floatvector"
 				: "vector";
@@ -1141,11 +1136,11 @@ public class SqlUtil {
 			}
 		} else if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.OCEANBASE
 				|| profile.isOceanBase()) {
-			// update 2026-9-7 实测mysql9的rs回写拒绝字符串(geometry仅收内部格式:
+			// update 2026-9-9 实测mysql9的rs回写拒绝字符串(geometry仅收内部格式:
 			// 4字节小端SRID前缀+小端WKB),编码失败回退字符串交由服务器报原始错误;
-			// update 2026-9-8 实测ob同样:rs回写字符串报"Cannot get geometry object",
+			// 实测ob同样:rs回写字符串报"Cannot get geometry object",
 			// 内部格式字节updateBytes回写实测落库正确(ST_AsText回读一致),ob纳入本分支
-			// update 2026-9-9 编码下沉JtsGeometryCodec经hasJts门控(本类不得含JTS符号引用)
+			// 编码下沉JtsGeometryCodec经hasJts门控(本类不得含JTS符号引用)
 			byte[] geomBytes = GeometryTypeUtil.wktToMysqlInternalBytes(geomStr);
 			if (geomBytes != null) {
 				rs.updateBytes(columnName, geomBytes);
@@ -1419,8 +1414,8 @@ public class SqlUtil {
 			DecryptHandler decryptHandler, ResultSet rs, String[] columnLabels, String[] columnTypes, int[] columnKinds,
 			int[] propertySqlTypes, Method[] setMethods, int[] propTypeValues, String[] propTypes, Class[] genericTypes,
 			Class voClass, boolean ignoreAllEmptySet) throws Exception {
-		// 根据匹配的字段通过java reflection将rs中的值映射到VO中
-		// update 2026-9-14 走BeanUtil.newBean的无参构造器缓存(原逐行getDeclaredConstructor做反射成员查找)
+		// update 2026-9-14 根据匹配的字段通过java reflection将rs中的值映射到VO中
+		// 走BeanUtil.newBean的无参构造器缓存(原逐行getDeclaredConstructor做反射成员查找)
 		Object bean = BeanUtil.newBean(voClass);
 		Object fieldValue;
 		boolean allNull = true;
@@ -1437,9 +1432,9 @@ public class SqlUtil {
 			typeName = propTypes[i];
 			typeValue = propTypeValues[i];
 			if (method != null) {
-				// update 2026-9-8 按下标取值(与labelNames同下标,驱动按下标直达,按label需查找)
+				// update 2026-9-9 按下标取值(与labelNames同下标,驱动按下标直达,按label需查找)
 				// fieldValue = rs.getObject(label);
-				// update 2026-9-9 TEXT_READ列文本化读取(oracle的JSON/VECTOR列getObject直接抛错),
+				// TEXT_READ列文本化读取(oracle的JSON/VECTOR列getObject直接抛错),
 				// getObject/getString均不可用而getBytes即文本),取值后统一经扩展类型归一化
 				// (byte[]形态按列类型解码),与Map路径processResultRow对齐
 				int kind = (columnKinds == null) ? ResultUtils.COLUMN_NORMAL : columnKinds[i];
@@ -2021,8 +2016,8 @@ public class SqlUtil {
 									&& fieldValue.getClass().getTypeName().equals("oracle.sql.TIMESTAMP")) {
 								fieldValue = BeanUtil.oracleTimeStampConvert(fieldValue);
 							}
-							// update 2026-10-10 ext类型归一:pg系json/vector/geometry的PGobject、
-							// EXT_BYTE列的byte[]等驱动专属形态归一为文本/原生数组(与Map/VO路径同口径)
+						// update 2026-10-10 ext类型归一:pg系json/vector/geometry的PGobject、
+						// EXT_BYTE列的byte[]等驱动专属形态归一为文本/原生数组(与Map/VO路径同口径)
 							fieldValue = ResultUtils.normalizeExtTypeValue(fieldValue, dbType,
 									(columnKinds[i] == ResultUtils.COLUMN_EXT_BYTE) ? columnTypes[i] : null);
 						}
@@ -2420,7 +2415,7 @@ public class SqlUtil {
 			// 再设置父节点的记录为非叶子节点(isLeaf=0)
 			StringBuilder updateTrunkLeafSql = new StringBuilder();
 			updateTrunkLeafSql.append("update ").append(tableName);
-			// 支持mysql8 update 2018-5-11
+			// update 2018-5-11 支持mysql8
 			if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.DORIS
 					|| dbType == DBType.STARROCKS) {
 				// update sys_organ_info a inner join (select t.organ_pid from
@@ -2790,8 +2785,8 @@ public class SqlUtil {
 					// rowversion的排除已上收到语句生成与调用方参数过滤(目标库元数据校准判据),
 					// 语句占位符与参数严格1:1,此层按类型跳过反而造成占位符缺参错位
 					setParamsValue(typeHandler, conn, profile, pst, params, paramsType, 0);
-					// 返回update的记录数量
-					// update 2026-9-10 改用executeUpdate返回值(JDBC规范即影响行数):sqlite-jdbc
+					// update 2026-9-10 返回update的记录数量
+					// 改用executeUpdate返回值(JDBC规范即影响行数):sqlite-jdbc
 					// 的getUpdateCount()恒返回0(驱动实现缺陷,update/delete/executeSql计数全部
 					// 失真为0,实测),executeUpdate返回值各驱动均正确
 					this.setResult(Long.valueOf(pst.executeUpdate()));
@@ -3007,8 +3002,8 @@ public class SqlUtil {
 		// "info_x"与表"staff_info"+sql "x"产生相同key,后调用者命中前者缓存得到错误转换结果),
 		// 改用表名与sql中均不可能出现的\u0000作分隔符
 		String key = entityMeta.getTableName() + "\u0000" + sql;
-		// 从缓存中直接获取,避免每次都处理提升效率
-		// update 2026-9-9 单次get判空替代containsKey+get双查找
+		// update 2026-9-9 从缓存中直接获取,避免每次都处理提升效率
+		// 单次get判空替代containsKey+get双查找
 		String cachedSql = convertSqlMap.get(key);
 		if (cachedSql != null) {
 			return cachedSql;
@@ -3350,8 +3345,8 @@ public class SqlUtil {
 			return null;
 		}
 		int fieldType = fieldMeta.getType();
-		// 统一需要处理的字段
-		// update 2026-9-15 fieldType字符串比较忽略大小写:实际VO的fieldType为驼峰
+		// update 2026-9-15 统一需要处理的字段
+		// fieldType字符串比较忽略大小写:实际VO的fieldType为驼峰
 		// (java.time.LocalTime/LocalDate),原全小写常量比较永远不成立,时间字段携带
 		// 驼峰fieldType时分支失灵(实测localdate形态落到current_timestamp)
 		String realFieldType = (fieldMeta.getFieldType() == null) ? ""
@@ -3694,7 +3689,7 @@ public class SqlUtil {
 				return "CONVERT(time(3)," + dateStr + ")";
 			}
 		}
-		// mysql和tidb;update 2026-9-8 oceanbase主流为mysql模式纳入本分支(实测STR_TO_DATE可用,
+		// update 2026-9-8 mysql和tidb;oceanbase主流为mysql模式纳入本分支(实测STR_TO_DATE可用,
 		// 而TO_DATE报"FUNCTION TO_DATE does not exist")
 		if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.TIDB || dbType == DBType.DORIS
 				|| dbType == DBType.STARROCKS || dbType == DBType.OCEANBASE) {
@@ -3719,8 +3714,8 @@ public class SqlUtil {
 				return "STR_TO_DATE(" + dateStr + ",'%H:%i:%s.%f')";
 			}
 		}
-		// postgresql系列
-		// update 2026-10-12 补HIGHGO(PG系全形态真库实测:TO_DATE/TO_TIMESTAMP(含.MS/.US)
+		// update 2026-10-12 postgresql系列
+		// 补HIGHGO(PG系全形态真库实测:TO_DATE/TO_TIMESTAMP(含.MS/.US)
 		// 与::TIME均可用;::TIME带小数被引擎截到整秒,日志形态可接受)
 		if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 				|| dbType == DBType.STARDB || dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB
@@ -3755,8 +3750,8 @@ public class SqlUtil {
 			if (type == 1) {
 				return "TO_DATE(" + dateStr + ",'YYYY-MM-DD')";
 			}
-			// datetime
-			// update 2026-9-15 改TO_TIMESTAMP:KES的PG兼容模式下to_date返回纯DATE会静默截断
+			// update 2026-9-15 datetime
+			// 改TO_TIMESTAMP:KES的PG兼容模式下to_date返回纯DATE会静默截断
 			// 时间部分(日志SQL可执行但比较结果错误),TO_TIMESTAMP在PG/oracle两种模式下均保留时间
 			if (type == 2) {
 				return "TO_TIMESTAMP(" + dateStr + ",'YYYY-MM-DD HH24:MI:SS')";
@@ -3769,8 +3764,8 @@ public class SqlUtil {
 					return "TO_TIMESTAMP(" + dateStr + ",'YYYY-MM-DD HH24:MI:SS.MS')";
 				}
 			}
-			// time/毫秒time
-			// update 2026-9-15 原TIME(TO_TIMESTAMP(纯时间串,'YYYY-MM-DD HH24:MI:SS...'))格式与
+			// update 2026-9-15 time/毫秒time
+			// 原TIME(TO_TIMESTAMP(纯时间串,'YYYY-MM-DD HH24:MI:SS...'))格式与
 			// 输入不匹配必报错(PG模式报invalid value for MM,oracle模式报ORA-01861同类),KES为
 			// PG内核,改与PG分支同款::TIME cast(小数秒由内核自动截断到微秒,无需按长度区分)
 			if (type == 4 || type == 5) {
@@ -3795,8 +3790,8 @@ public class SqlUtil {
 					return "toDateTime64(" + dateStr + ",3)";
 				}
 			}
-			// time/毫秒time
-			// update 2026-9-15 原formatDateTime(toDateTime(纯时间串))中CH无法解析纯时间串
+			// update 2026-9-15 time/毫秒time
+			// 原formatDateTime(toDateTime(纯时间串))中CH无法解析纯时间串
 			// (报Cannot parse datetime),且CH无TIME类型,formatDateTime产出的仍是同一字符串
 			// 属无意义包装,直接返回裸串(字符串比较是CH时间值的唯一可行形态)
 			if (type == 4 || type == 5) {
@@ -3821,8 +3816,8 @@ public class SqlUtil {
 					return "TO_TIMESTAMP(" + dateStr + ",'YYYY-MM-DD HH24:MI:SS.FF3')";
 				}
 			}
-			// time
-			// update 2026-9-15 原'YYYY-MM-DD HH24:MI:SS'格式与纯时间串输入不匹配(误复制自
+			// update 2026-9-15 time
+			// 原'YYYY-MM-DD HH24:MI:SS'格式与纯时间串输入不匹配(误复制自
 			// type2分支),改为与type5一致的纯时间格式
 			if (type == 4) {
 				return "TIME(TO_TIMESTAMP(" + dateStr + ",'HH24:MI:SS'))";

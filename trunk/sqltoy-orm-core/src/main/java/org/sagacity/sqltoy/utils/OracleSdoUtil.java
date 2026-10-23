@@ -71,9 +71,8 @@ public class OracleSdoUtil {
 			return null;
 		}
 		try {
-			// update 2026-9-8 实测Hikari等连接池的代理连接传入ArrayDescriptor/STRUCT构造器
-			// 时UDT类型解析失败("Unable to resolve type",catch后静默null回退setString报
-			// ORA-00932),须unwrap为物理OracleConnection再构造
+			// update 2026-9-8 实测Hikari等连接池的代理连接传入ArrayDescriptor/STRUCT构造器时UDT类型解析失败
+			// ("Unable to resolve type",catch后静默null回退setString报ORA-00932),须unwrap为物理OracleConnection再构造
 			Connection realConn = unwrap(conn);
 			if (realConn == null) {
 				return null;
@@ -100,9 +99,8 @@ public class OracleSdoUtil {
 	}
 
 	/**
-	 * update 2026-9-8 连接池代理连接(实现JDBC4.0 Wrapper)解包为物理OracleConnection:
-	 * oracle.sql描述符类须以物理连接解析UDT类型名,代理连接报Unable to resolve type
-	 * 
+	 * update 2026-9-8 连接池代理连接(实现JDBC4.0 Wrapper)解包为物理OracleConnection:oracle.sql描述符类须以物理连接解析UDT类型名,代理连接报Unable to resolve type
+	 *
 	 * @param conn 池化或物理连接
 	 * @return 物理连接,解包失败返回原连接
 	 */

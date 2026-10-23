@@ -116,9 +116,8 @@ public class DateAdd extends IFunction {
 		// db2:x +/- n UNITs(复数单位)
 		if (dialect == DBType.DB2) {
 			if ("WEEK".equals(unit)) {
-				// update 2026-10-12 DB2的+n DAYS要求n为整数字面量,不接受算术表达式
-				// (1*7报SQLCODE=-182)也不接受带括号的(1)(报-206),原始n预乘7;
-				// 非纯数字(表达式/参数)响亮保留
+				// update 2026-10-12 DB2的+n DAYS要求n为整数字面量,不接受算术表达式(1*7报SQLCODE=-182)也不接受带括号的(1)(报-206),
+				// 原始n预乘7;非纯数字(表达式/参数)响亮保留
 				try {
 					int n7 = Integer.parseInt(n.trim()) * 7;
 					return "(" + base + (sub ? " - " : " + ") + n7 + " DAYS)";

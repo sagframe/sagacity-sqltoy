@@ -94,8 +94,7 @@ public class SqlExecuteTrace implements Serializable {
 	private boolean error = false;
 
 	/**
-	 * 执行的sql和参数 update 2026-9-8 惰性创建+ArrayList:该对象随每条SQL在ThreadLocal中创建(单线程访问,
-	 * 无并发场景),CopyOnWriteArrayList每次add全量复制属错配;多数SQL执行不产生过程日志, 惰性创建避免无谓分配
+	 * update 2026-9-8 执行的sql和参数:惰性创建+ArrayList。该对象随每条SQL在ThreadLocal中创建(单线程访问,无并发场景),CopyOnWriteArrayList每次add全量复制属错配;多数SQL执行不产生过程日志,惰性创建避免无谓分配
 	 */
 	private List<SqlExecuteLog> executeLogs;
 

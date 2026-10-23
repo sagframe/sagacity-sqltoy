@@ -116,7 +116,7 @@ public class ColsChainRelative {
 						if (rowList.get(divedIndex) != null) {
 							divedData = new BigDecimal(rowList.get(divedIndex).toString());
 						}
-						// update 2024-08-30 divedData.equals(BigDecimal.ZERO) 存在bug
+						// update 2024-08-30 divedData.equals(BigDecimal.ZERO) 存在bug,改用compareTo(BigDecimal.ZERO)==0判零
 						if (divedData.compareTo(BigDecimal.ZERO) == 0) {
 							divIsZero = divData.compareTo(BigDecimal.ZERO) == 0;
 							// 插入(8-3+2+2)

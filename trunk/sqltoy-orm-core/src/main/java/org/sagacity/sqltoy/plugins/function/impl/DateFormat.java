@@ -74,14 +74,12 @@ public class DateFormat extends IFunction {
 			// 时间处理
 			format = format.replace("%T", "hh24:mi:ss");
 			format = format.replace("%H", "hh24").replace("%h", "hh").replace("%i", "mi").replace("%s", "ss");
-			// update 2026-10-9 补java风格时间token归一:java的HH=24小时/mm=分钟,oracle模型HH=12小时
-			// /mm=月,原样透传在pg/oracle系静默错值;仅归一冒号邻接的HH:mm/hh:mm形态(HH24等oracle
-			// token不含该子串不受影响,纯日期'yyyy-mm-dd'的裸mm(oracle月)保持)
-			// update 2026-10-9 补独立HH(小时分桶格式'yyyy-MM-dd HH'等无分钟形态,冒号归一不命中):
-			// \b词边界保证不伤oracle原生HH24(H与2间无词边界),HH:mm已被上步消费不会重复命中
+			// update 2026-10-9 补java风格时间token归一:java的HH=24小时/mm=分钟,oracle模型HH=12小时/mm=月,原样透传在pg/oracle系静默错值;
+			// 仅归一冒号邻接的HH:mm/hh:mm形态(HH24等oracle token不含该子串不受影响,纯日期'yyyy-mm-dd'的裸mm(oracle月)保持);
+			// 另补独立HH(小时分桶格式'yyyy-MM-dd HH'等无分钟形态,冒号归一不命中):\b词边界保证不伤oracle原生HH24(H与2间无词边界),HH:mm已被上步消费不会重复命中
 			format = format.replace("HH:mm", "hh24:mi").replace("hh:mm", "hh:mi").replaceAll("\\bHH\\b", "hh24");
-			// update 2026-9-10 PG语法系裸?首参补::timestamp(date_format恒为日期语义,无数值模型
-			// 场景,numericModelPossible=false):vanilla PG对to_char(unknown,unknown)报重载歧义
+			// update 2026-9-10 PG语法系裸?首参补::timestamp(date_format恒为日期语义,无数值模型场景,numericModelPossible=false):
+			// vanilla PG对to_char(unknown,unknown)报重载歧义
 			String dfInner = "to_char(" + FunctionUtils.pgToCharParamCast(dialect, args[0], format, false) + ","
 					+ format + ")";
 			return dfInner;
@@ -92,20 +90,18 @@ public class DateFormat extends IFunction {
 		case DBType.TIDB:
 		case DBType.MYSQL57: {
 			// 日期
-			// update 2026-10-9 补大写oracle惯用形态YYYY/YY/DD/MI/SS(与sqlserver分支口径一致,
-			// 原大写日期token残留字面量致目标库静默输出垃圾文本)
+			// update 2026-10-9 补大写oracle惯用形态YYYY/YY/DD/MI/SS(与sqlserver分支口径一致,原大写日期token残留字面量致目标库静默输出垃圾文本)
 			format = args[1].replace("yyyy", "%Y").replace("YYYY", "%Y").replace("yy", "%y").replace("YY", "%y")
 					.replace("MM", "%m").replace("dd", "%d").replace("DD", "%d");
-			// 时间处理(update 2026-9-5 补java 24小时制HH→%H;需置于hh24/hh映射之后)
+			// update 2026-9-5 时间处理:补java 24小时制HH→%H,需置于hh24/hh映射之后
 			format = format.replace("HH24", "%H").replace("hh24", "%H").replace("hh", "%h").replace("HH", "%H")
 					.replace("mm", "%i").replace("mi", "%i").replace("MI", "%i").replace("ss", "%s")
 					.replace("SS", "%s");
 			return "date_format(" + args[0] + "," + format + ")";
 		}
 		case DBType.H2: {
-			// update 2026-9-5 date_format语义为日期格式化(date转字符串),
-			// 原parsedatetime是解析(string转date)方向相反,修正为formatdatetime
-			// 日期(update 2026-9-9 修正%y两位年误映射为yyyy四位年)
+			// update 2026-9-9 date_format语义为日期格式化(date转字符串);原parsedatetime是解析(string转date)方向相反,修正为formatdatetime
+			// 日期:修正%y两位年误映射为yyyy四位年
 			format = args[1].replace("%Y", "yyyy").replace("%y", "yy").replace("%m", "MM").replace("%d", "dd");
 			// 时间处理
 			format = format.replace("%T", "HH:mm:ss");
@@ -113,25 +109,23 @@ public class DateFormat extends IFunction {
 			return "formatdatetime(" + FunctionUtils.h2DateFormatArg(args[0]) + "," + format + ")";
 		}
 		case DBType.SQLSERVER: {
-			// update 2026-9-6 补sqlserver分支(此前落default原样输出date_format报"不是可识别的内置函数名"):
-			// format串映射到CONVERT的style精度有限,以FORMAT函数(sqlserver 2012+)实现,支持java样式
+			// update 2026-9-6 补sqlserver分支(此前落default原样输出date_format报"不是可识别的内置函数名"):format串映射到CONVERT的style精度有限,
+			// 以FORMAT函数(sqlserver 2012+)实现,支持java样式
 			format = args[1].replace("%Y", "yyyy").replace("%y", "yy").replace("%m", "MM").replace("%d", "dd");
-			// %i/%T的分钟以@M1@承载:update 2026-10-4 %i原直转mm会被下方月份归一mm→MM误改
+			// update 2026-10-4 %i/%T的分钟以@M1@承载:%i原直转mm会被下方月份归一mm→MM误改
 			format = format.replace("%T", "HH:@M1@:ss");
 			format = format.replace("%H", "HH").replace("%h", "hh").replace("%i", "@M1@").replace("%s", "ss");
-			// update 2026-10-4 补oracle格式模型映射与大写形态(原仅识别%token,oracle惯用
-			// 'YYYY-MM-DD HH24:MI:SS'整体透传,.NET token大小写敏感错值);oracle的mm(月)/
-			// mi(分)常全小写书写,月归一须先于分钟摘取(此时分钟尚为mi/MI无歧义),占位符
-			// @M1@不含mi/MI/mm子串,避免替换互相击中(MM/dd/hh/HH与.NET同义无需映射,
-			// 顺序须先YYYY后YY避免子串误替换)
+			// update 2026-10-4 补oracle格式模型映射与大写形态(原仅识别%token,oracle惯用'YYYY-MM-DD HH24:MI:SS'整体透传,.NET token大小写敏感错值);
+			// oracle的mm(月)/mi(分)常全小写书写,月归一须先于分钟摘取(此时分钟尚为mi/MI无歧义),占位符@M1@不含mi/MI/mm子串,
+			// 避免替换互相击中(MM/dd/hh/HH与.NET同义无需映射,顺序须先YYYY后YY避免子串误替换)
 			format = format.replace("HH24", "HH").replace("hh24", "HH");
 			format = format.replace("mm", "MM");
 			format = format.replace("MI", "@M1@");
 			format = format.replace("mi", "@M1@");
 			format = format.replace("@M1@", "mm").replace("SS", "ss").replace("YYYY", "yyyy").replace("YY", "yy")
 					.replace("DD", "dd");
-			// update 2026-10-4 引号归一:带引号的格式串原样保留(oracle的"字面量"双引号转义与
-			// 内嵌单引号字面量不被破坏,原一律剥单引号会丢失内嵌字面量),裸格式才补包裹引号
+			// update 2026-10-4 引号归一:带引号的格式串原样保留(oracle的"字面量"双引号转义与内嵌单引号字面量不被破坏,
+			// 原一律剥单引号会丢失内嵌字面量),裸格式才补包裹引号
 			String fmtArg = format.trim();
 			if (!(fmtArg.length() > 1 && fmtArg.startsWith("'") && fmtArg.endsWith("'"))) {
 				fmtArg = "'" + fmtArg.replace("'", "") + "'";
@@ -146,9 +140,8 @@ public class DateFormat extends IFunction {
 			return "VARCHAR_FORMAT(" + args[0] + "," + format + ")";
 		}
 		case DBType.CLICKHOUSE: {
-			// update 2026-9-9 clickhouse原生支持date_format(formatDateTime的mysql兼容别名,%token同构),
-			// 仅需将java样式token转%形态(原default原样输出,java样式格式串在目标库静默失效)
-			// update 2026-10-9 补大写oracle形态YYYY/YY/DD/MI/SS(同mysql分支)
+			// update 2026-10-9 clickhouse原生支持date_format(formatDateTime的mysql兼容别名,%token同构),仅需将java样式token转%形态
+			// (原default原样输出,java样式格式串在目标库静默失效);补大写oracle形态YYYY/YY/DD/MI/SS(同mysql分支)
 			format = args[1].replace("yyyy", "%Y").replace("YYYY", "%Y").replace("yy", "%y").replace("YY", "%y")
 					.replace("MM", "%m").replace("dd", "%d").replace("DD", "%d");
 			format = format.replace("HH24", "%H").replace("hh24", "%H").replace("hh", "%h").replace("HH", "%H")
@@ -156,21 +149,18 @@ public class DateFormat extends IFunction {
 					.replace("SS", "%s");
 			// update 2026-10-4 补%T(mysql源原生token,时:分:秒),原残留字面%T
 			format = format.replace("%T", "%H:%i:%s");
-			// update 2026-9-11 首参包toDateTime:clickhouse-jdbc将日期参数以String发送,
-			// formatDateTime(String)报Illegal type(26.8实测);toDateTime对Date/DateTime列与
-			// ISO文本参数均兼容(幂等转换)
+			// update 2026-9-11 首参包toDateTime:clickhouse-jdbc将日期参数以String发送,formatDateTime(String)报Illegal type(26.8实测);
+			// toDateTime对Date/DateTime列与ISO文本参数均兼容(幂等转换)
 			return "date_format(toDateTime(" + args[0] + ")," + format + ")";
 		}
 		case DBType.SQLITE: {
-			// update 2026-9-6 sqlite以strftime实现(格式标识差异:Y m d H M S);
-			// JDBC setTimestamp在sqlite存为毫秒Long,strftime直接作用于毫秒返回null,
-			// 须先datetime(ts/1000,'unixepoch')转为日期文本再格式化
+			// update 2026-9-6 sqlite以strftime实现(格式标识差异:Y m d H M S);JDBC setTimestamp在sqlite存为毫秒Long,
+			// strftime直接作用于毫秒返回null,须先datetime(ts/1000,'unixepoch')转为日期文本再格式化
 			format = args[1].replace("%Y", "%Y").replace("%y", "%y").replace("%m", "%m").replace("%d", "%d");
 			format = format.replace("%T", "%H:%M:%S");
 			format = format.replace("%H", "%H").replace("%h", "%H").replace("%i", "%M").replace("%s", "%S");
-			// update 2026-9-10 参数归一收敛至sqliteDateTextExpr:字面量/文本函数表达式透传
-			// (原一律/1000包裹对date('..')等文本形态算出1970垃圾值),列/占位符补'localtime'
-			// (原'unixepoch'UTC墙钟使本地午夜毫秒值偏1天,date_format(:dt)实测'2026-01-14')
+			// update 2026-9-10 参数归一收敛至sqliteDateTextExpr:字面量/文本函数表达式透传(原一律/1000包裹对date('..')等文本形态算出1970垃圾值),
+			// 列/占位符补'localtime'(原'unixepoch'UTC墙钟使本地午夜毫秒值偏1天,date_format(:dt)实测'2026-01-14')
 			return "strftime(" + format + "," + FunctionUtils.sqliteDateTextExpr(args[0]) + ")";
 		}
 		default:

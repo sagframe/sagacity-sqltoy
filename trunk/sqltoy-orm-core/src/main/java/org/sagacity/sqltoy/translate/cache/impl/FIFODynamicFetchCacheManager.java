@@ -133,8 +133,7 @@ public class FIFODynamicFetchCacheManager implements DynamicFecthCacheManager {
 			try {
 				checkAndRemoveTimeoutData();
 			} catch (Throwable t) {
-				// update 2026-9-14 兜底:scheduleAtFixedRate的任务一旦抛出未捕获异常,后续执行会被永久取消
-				// (所有动态缓存的keepAlive检测静默失效,且不再有任何日志),此处必须吞掉并记录
+				// update 2026-9-14 兜底:scheduleAtFixedRate任务一旦抛出未捕获异常,后续执行会被永久取消(所有动态缓存的keepAlive检测静默失效且不再有任何日志),此处必须吞掉并记录
 				logger.error("checkAndRemoveTimeoutData failed, the keepAlive check schedule will continue!", t);
 			}
 		}, 0, CHECK_INTERVAL, TimeUnit.SECONDS);
@@ -156,8 +155,7 @@ public class FIFODynamicFetchCacheManager implements DynamicFecthCacheManager {
 		Long[] initTimeAndKeepAlive;
 		String[] keySplit;
 		String cacheKey;
-		// update 2026-9-14 逐条目隔离:任何单条登记数据的异常(值缺失、cacheKey形态异常、缓存已被移除等)
-		// 不得中断整轮清理,更不能让定时任务因异常被永久取消
+		// update 2026-9-14 逐条目隔离:任何单条登记数据的异常(值缺失、cacheKey形态异常、缓存已被移除等)不得中断整轮清理,更不能让定时任务因异常被永久取消
 		for (Map.Entry<String, Long[]> entry : cacheInitTime.entrySet()) {
 			try {
 				cacheKey = entry.getKey();

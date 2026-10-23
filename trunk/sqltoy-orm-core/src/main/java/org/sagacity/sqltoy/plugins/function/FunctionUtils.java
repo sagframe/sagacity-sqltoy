@@ -28,9 +28,8 @@ public class FunctionUtils {
 	private final static Logger logger = LoggerFactory.getLogger(FunctionUtils.class);
 
 	private final static String funPackage = "org.sagacity.sqltoy.plugins.function.impl.";
-	// 提供默认函数配置
-	// update 2026-9-6 DateDiff(口径统一:两参=d1-d2天差,三参=年月分量差/自然天/完整单位截断)与
-	// Decode(转case when)经14库真实执行验证后默认注册
+	// update 2026-9-6 提供默认函数配置
+	// DateDiff(口径统一:两参=d1-d2天差,三参=年月分量差/自然天/完整单位截断)与 Decode(转case when)经14库真实执行验证后默认注册
 	public final static String[] functions = { funPackage.concat("SubStr"), funPackage.concat("Trim"),
 			funPackage.concat("Instr"), funPackage.concat("Concat"), funPackage.concat("ConcatWs"),
 			funPackage.concat("Nvl"), funPackage.concat("DateFormat"), funPackage.concat("Now"),
@@ -38,14 +37,14 @@ public class FunctionUtils {
 			funPackage.concat("CurrentDate"), funPackage.concat("Length"), funPackage.concat("ToChar"),
 			funPackage.concat("If"), funPackage.concat("GroupConcat"), funPackage.concat("ToNumber"),
 			funPackage.concat("ToDate"), funPackage.concat("DateDiff"), funPackage.concat("Decode"),
-			// update 2026-10-11 补FindInSet(MySQL系原生,其余库以"补逗号+精确子串定位"改写)
+			// update 2026-10-11 FindInSet(MySQL系原生,其余库以"补逗号+精确子串定位"改写)
 			funPackage.concat("FindInSet"),
 			// update 2026-10-11 常用函数补齐:uuid/year-month-day分量提取/last_day/add_months
 			funPackage.concat("Uuid"), funPackage.concat("YearMonthDay"), funPackage.concat("LastDay"),
 			funPackage.concat("AddMonths"),
 			// update 2026-10-11 日期区间加减族:date_add/date_sub/dateadd/adddate/subdate
 			funPackage.concat("DateAdd"),
-			// update 2026-10-11 A方案:left/right、lpad/rpad、EXTRACT/date_part源、日期截断族
+			// update 2026-10-11 left/right、lpad/rpad、EXTRACT/date_part源、日期截断族(A方案)
 			funPackage.concat("LeftRight"), funPackage.concat("Pad"), funPackage.concat("Extract"),
 			funPackage.concat("DateTrunc"),
 			// update 2026-10-11 mod取模(18环境仅sqlserver无mod函数,转%运算符)
@@ -68,7 +67,7 @@ public class FunctionUtils {
 			put("groupconcat", "GroupConcat");
 			put("tonumber", "ToNumber");
 			put("todate", "ToDate");
-			// update 2026-9-9 补齐默认注册列表中缺失的简写映射(原配置datediff/decode简写不生效)
+			// update 2026-9-9 补齐默认注册列表中缺失的简写映射(datediff/decode简写原不生效)
 			put("datediff", "DateDiff");
 			put("decode", "Decode");
 			// update 2026-10-11 常用函数补齐的简写映射
@@ -111,17 +110,14 @@ public class FunctionUtils {
 		int dbType = DataSourceUtils.getDBType(dialect);
 		IFunction function;
 		String dialectLow = dialect.toLowerCase(Locale.ROOT);
-		// update 2026-10-9 修复串首裸函数永不转换:整条sql即函数表达式(如sql片段include的碎片形态)
-		// 时函数名前无任何字符,适配正则\W(函数名)\(恒不命中;入口加空格哨兵使串首函数获得\W
-		// 前缀参与探测与转换(内部全部绝对偏移随哨兵统一平移,无需逐处适配),返回前精确剥离;
-		// 常规SQL以select/insert等关键字开头,行为不变
-		// update 2026-10-19 串尾同样补哨兵:sysdate/current_date等裸关键字位于整条SQL末尾时
-		// 正则的\W后缀无字符可匹配,原实现漏转换(PG等目标库报函数不存在)
+		// update 2026-10-19 入口与串尾各补一个空格哨兵:整条sql即函数表达式(如sql片段include的碎片形态)时函数名前
+		// 无任何字符,适配正则\W(函数名)\(恒不命中,串首哨兵使串首函数获得\W前缀参与探测与转换;
+		// sysdate/current_date等裸关键字位于整条SQL末尾时正则的\W后缀无字符可匹配会漏转换(PG等目标库
+		// 报函数不存在),串尾哨兵同理补\W后缀;内部绝对偏移随哨兵统一平移,返回前精确剥离,常规SQL以select/insert等关键字开头,行为不变
 		String dialectSql = " ".concat(sqlContent).concat(" ");
-		// update 2026-9-14 预检加速(检测不改写,无耦合):常态SQL不含任何可转换函数,原循环
-		// 对每个适配函数各做一次全SQL maskLiterals拷贝(注册函数最多16次);预检在原串的
-		// 单次掩码上做只读正则探测,无任何命中直接返回原串(仅1次拷贝);有命中才进入改写
-		// 循环(结构与原形态一致,改写会变更串长,循环内掩码仍按原逻辑每函数各自重算)
+		// update 2026-9-14 预检加速(检测不改写,无耦合):常态SQL不含任何可转换函数时,原循环对每个适配函数各做一次
+		// 全SQL maskLiterals拷贝(注册函数最多16次);预检在原串的单次掩码上做只读正则探测,无命中直接返回
+		// 原串(仅1次拷贝),有命中才进入改写循环(结构与原形态一致;改写变更串长,循环内掩码仍按原逻辑每函数各自重算)
 		String preCheckMask = null;
 		boolean hasMatch = false;
 		for (int i = 0, n = functionConverts.size(); i < n && !hasMatch; i++) {
@@ -151,9 +147,8 @@ public class FunctionUtils {
 	}
 
 	/**
-	 * update 2026-9-9 方言匹配改为按逗号/分号切分后逐项精确比对:原contains子串匹配存在
-	 * 双向偏差(dialects="oracle11"会被当前方言"oracle"误命中;dialects="oracle"又匹配不上
-	 * 方言"oracle11"),自定义函数须显式枚举适配的方言名
+	 * update 2026-9-9 方言匹配按逗号/分号切分后逐项精确比对(原contains子串匹配存在双向偏差:dialects="oracle11"会被
+	 * 当前方言"oracle"误命中;dialects="oracle"又匹配不上方言"oracle11"),自定义函数须显式枚举适配的方言名
 	 * 
 	 * @param dialects   函数声明的适配方言串,null/空白表示适配所有数据库
 	 * @param dialectLow 当前方言(小写)
@@ -230,8 +225,7 @@ public class FunctionUtils {
 	 */
 	private static String replaceFunction(String sqlContent, int dbType, IFunction function) {
 		String dialectSql = sqlContent;
-		// update 2026-9-5 函数匹配在字面量掩码串上进行(掩码串与原串等长,位置一致),
-		// 内容截取仍基于原串:规避字面量内的函数文本(如'nvl(a,b)')被误转换破坏字面量
+		// update 2026-9-5 函数匹配在字面量掩码串上进行(掩码串与原串等长、位置一致),内容截取仍基于原串:规避字面量内的函数文本(如'nvl(a,b)')被误转换破坏字面量
 		String maskSql = SqlConfigParseUtils.maskLiterals(dialectSql,
 				SqlConfigParseUtils.isBackslashEscapeDialect(dbType));
 		Matcher matcher = function.regex().matcher(maskSql);
@@ -261,9 +255,8 @@ public class FunctionUtils {
 				// 引号感知配对:规避函数参数中字面量内的括号(如nvl(remark,'('))被误当参数终结符
 				endMarkIndex = StringUtil.getSymMarkIndexSkipQuoted("(", ")", dialectSql, matchedIndex);
 				functionParams = dialectSql.substring(dialectSql.indexOf("(", matchedIndex) + 1, endMarkIndex);
-				// 参数中包含同样的函数，通过递归替换;update 2026-10-9 修复参数串首位的嵌套函数
-				// (如nvl(nvl(a,b),c)、nvl(ifnull(a,b),c)的内层)无前导\W字符正则无法命中而漏转换,
-				// 加空格哨兵参与探测与递归后精确剥离(replaceFunction保持串首字符,substring(1)恰好去除哨兵)
+				// update 2026-10-9 参数中包含同样的函数，通过递归替换;参数串首位的嵌套函数(如nvl(nvl(a,b),c)、nvl(ifnull(a,b),c)
+				// 的内层)无前导\W字符正则无法命中而漏转换,加空格哨兵参与探测与递归后精确剥离(replaceFunction保持串首字符,substring(1)恰好去除哨兵)
 				String recursionParams = " ".concat(functionParams);
 				if (StringUtil.matches(recursionParams, function.regex())) {
 					functionParams = replaceFunction(recursionParams, dbType, function).substring(1);
@@ -278,10 +271,9 @@ public class FunctionUtils {
 				endMarkIndex = matcher.end() - 1;
 				functionName = dialectSql.substring(matchedIndex, endMarkIndex);
 			}
-			// update 2026-10-4 尾部子句钩子:在字面量掩码串上探测(掩码与原串等长同位,防字面量内
-			// within group等文本误伤),命中后在原串按平衡括号消费整个子句(防order by f(x)内嵌
-			// 括号截断),suffix原文交由wrapWithSuffix处理;endMarkIndex延伸后,IGNORE/替换两条
-			// 路径与maskSql裁剪自然连带消费suffix,无需平行逻辑
+			// update 2026-10-4 尾部子句钩子:在字面量掩码串上探测(掩码与原串等长同位,防字面量内within group等文本误伤),
+			// 命中后在原串按平衡括号消费整个子句(防order by f(x)内嵌括号截断),suffix原文交由wrapWithSuffix
+			// 处理;endMarkIndex延伸后,IGNORE/替换两条路径与maskSql裁剪自然连带消费suffix,无需平行逻辑
 			String suffix = null;
 			if (hasArgs && function.suffixPattern() != null) {
 				Matcher suffixMatcher = function.suffixPattern().matcher(maskSql);
@@ -296,9 +288,8 @@ public class FunctionUtils {
 							endMarkIndex = closeIdx;
 						}
 					} else {
-						// update 2026-10-11 裸操作符子句(如find_in_set后的">0"):无括号外壳,
-						// 按pattern命中长度消费;matcher以region起点(endMarkIndex+1)为基准,
-						// end()为绝对终点,消费至end()-1与括号形态的closeIdx口径对齐
+						// update 2026-10-11 裸操作符子句(如find_in_set后的">0"):无括号外壳,按pattern命中长度消费;matcher以
+						// region起点(endMarkIndex+1)为基准,end()为绝对终点,消费至end()-1与括号形态的closeIdx口径对齐
 						suffix = dialectSql.substring(endMarkIndex + 1, suffixMatcher.end());
 						endMarkIndex = suffixMatcher.end() - 1;
 					}
@@ -316,8 +307,7 @@ public class FunctionUtils {
 				dialectSql = dialectSql.substring(endMarkIndex + 1);
 				maskSql = maskSql.substring(endMarkIndex + 1);
 			} else if (null == wrapResult) {
-				// update 2026-10-4 修复裸形态IGNORE分隔符重复:IGNORE分支已append至endMarkIndex+1
-				// (含\W分隔符),此处仍从endMarkIndex续接导致分隔符输出两次(sysdate,,name)
+				// update 2026-10-4 裸形态IGNORE分隔符重复:IGNORE分支已append至endMarkIndex+1(含\W分隔符),若仍从endMarkIndex续接会导致分隔符输出两次(sysdate,,name)
 				dialectSql = dialectSql.substring(endMarkIndex + 1);
 				maskSql = maskSql.substring(endMarkIndex + 1);
 			} else {
@@ -352,10 +342,10 @@ public class FunctionUtils {
 	}
 
 	/**
-	 * update 2026-10-18 (6.0.8) 自 setFunctionConverts 抽出的函数类名解析逻辑并公开:
-	 * default/defaults 关键字展开为内置默认集、org.sagacity.sqltoy 旧包路径修正、trim/nvl 等简写展开、
-	 * 按小写类名去重(让自定义同名函数生效),与运行期实例化语义逐字一致; AOT 处理器在构建期经此取得将被 Class.forName
-	 * 实例化的类名清单注册反射 (native 下未注册类无法 Class.forName,配置了 functionConverts 的应用会启动即失败)
+	 * update 2026-10-18 自 setFunctionConverts 抽出的函数类名解析逻辑并公开:default/defaults 关键字展开为内置默认集、
+	 * org.sagacity.sqltoy 旧包路径修正、trim/nvl 等简写展开、按小写类名去重(让自定义同名函数生效),
+	 * 与运行期实例化语义逐字一致;AOT 处理器在构建期经此取得将被 Class.forName 实例化的类名清单注册反射
+	 * (native 下未注册类无法 Class.forName,配置了 functionConverts 的应用会启动即失败)
 	 *
 	 * @param functionAry 原始配置值(可含 default/defaults 关键字、简写、逗号/分号分隔条目)
 	 * @return 解析后的函数实现类全限定名清单(实例化顺序)
@@ -410,13 +400,12 @@ public class FunctionUtils {
 	}
 
 	/**
-	 * update 2026-9-10 sqlite日期参数归一为日期文本:JDBC绑定的日期列/参数为毫秒Long
-	 * (strftime/date等日期函数直接作用于毫秒返回null或垃圾值),须datetime(x/1000,
-	 * 'unixepoch','localtime')转本地墙钟文本——不带'localtime'为UTC墙钟,东八区本地午夜
-	 * 毫秒值被推到前一日16:00,自然天差/日期格式化偏1天(sqlite实测);裸字符串字面量
-	 * ('YYYY-MM-DD[...]')与函数调用表达式(含'(',如to_date/date/strftime等转换产物——
-	 * sqlite日期函数均返回文本,且嵌套转换时外层函数先于内层被改写,前缀白名单不可枚举)
-	 * 已是日期文本,原样保留;仅裸列名/占位符(JDBC绑定为毫秒Long)做归一
+	 * update 2026-9-10 sqlite日期参数归一为日期文本:JDBC绑定的日期列/参数为毫秒Long(strftime/date等日期函数直接作用于
+	 * 毫秒返回null或垃圾值),须datetime(x/1000,'unixepoch','localtime')转本地墙钟文本——不带'localtime'
+	 * 为UTC墙钟,东八区本地午夜毫秒值被推到前一日16:00,自然天差/日期格式化偏1天(sqlite实测);裸字符串字面量
+	 * ('YYYY-MM-DD[...]')与函数调用表达式(含'(',如to_date/date/strftime等转换产物——sqlite日期函数均返回
+	 * 文本,且嵌套转换时外层函数先于内层被改写,前缀白名单不可枚举)已是日期文本,原样保留;仅裸列名/占位符
+	 * (JDBC绑定为毫秒Long)做归一
 	 *
 	 * @param arg 日期参数SQL片段(字面量/列/占位符/表达式)
 	 * @return sqlite日期函数可消费的日期文本表达式
@@ -628,8 +617,8 @@ public class FunctionUtils {
 	}
 
 	/**
-	 * update 2026-10-11 oracle系日期函数的字面量参数包裹:裸字符串字面量按长度启发式包
-	 * to_date(规避oracle默认NLS格式不认ISO串,真库实测ORA-01861);列/表达式原样返回
+	 * update 2026-10-11 oracle系日期函数的字面量参数包裹:裸字符串字面量按长度启发式包to_date(规避oracle默认NLS格式不认
+	 * ISO串,真库实测ORA-01861);列/表达式原样返回
 	 *
 	 * @param arg 日期参数SQL片段
 	 * @return oracle系可直接消费的日期表达式
@@ -650,16 +639,15 @@ public class FunctionUtils {
 	}
 
 	/**
-	 * update 2026-10-11 pg系日期运算的字面量参数定型:裸字符串字面量包::timestamp
-	 * (og7/vastbase真库实测,unknown字面量+interval会按interval解析报错);列/表达式原样返回
+	 * update 2026-10-11 pg系日期运算的字面量参数定型:裸字符串字面量包::timestamp(og7/vastbase真库实测,unknown字面量
+	 * +interval会按interval解析报错);列/表达式原样返回
 	 *
 	 * @param arg 日期参数SQL片段
 	 * @return pg系可直接参与interval运算的表达式
 	 */
 	/**
-	 * update 2026-10-11 日期函数字面量参数的cast定型(瀚高形态):裸字符串字面量包 cast(x as
-	 * date)(瀚高真库实测:last_day/add_months对裸串报类型推断歧义,cast可用;
-	 * 瀚高to_date未验证故不用oracle包裹形态);列/表达式原样返回
+	 * 日期函数字面量参数的cast定型(瀚高形态):裸字符串字面量包 cast(x as date)(瀚高真库实测:
+	 * last_day/add_months对裸串报类型推断歧义,cast可用;瀚高to_date未验证故不用oracle包裹形态);列/表达式原样返回
 	 *
 	 * @param arg 日期参数SQL片段
 	 * @return 可直接参与日期函数的表达式
@@ -705,13 +693,12 @@ public class FunctionUtils {
 	}
 
 	/**
-	 * update 2026-9-10 PG语法系to_char首参为参数占位符时的显式定型:pgjdbc系驱动对日期参数 以UNSPECIFIED
-	 * OID发送,vanilla PG的to_char(unknown,unknown)因timestamp/date/numeric/
-	 * interval多重载报"function is not unique"(postgresql16.15实爆),openGauss/gaussdb误选
-	 * numeric重载报"invalid input syntax for type numeric",og7报"could not determine
-	 * data type",仅vastbase恰好选对——同一SQL四种结局,统一以::timestamp显式定型修复。
-	 * 注意:函数转换发生在命名参数替换为?之前,首参可能是?、:name或#[name]三种占位形态,
-	 * 须保留原token返回(替换为?会破坏参数索引对齐);oracle/dm/oceanbase驱动日期参数定型 发送且无::语法,不在处理范围。
+	 * update 2026-9-10 PG语法系to_char首参为参数占位符时的显式定型:pgjdbc系驱动对日期参数以UNSPECIFIED OID发送,
+	 * vanilla PG的to_char(unknown,unknown)因timestamp/date/numeric/interval多重载报"function is not
+	 * unique"(postgresql16.15实爆),openGauss/gaussdb误选numeric重载报"invalid input syntax for type
+	 * numeric",og7报"could not determine data type",仅vastbase恰好选对——同一SQL四种结局,统一以::timestamp
+	 * 显式定型修复。注意:函数转换发生在命名参数替换为?之前,首参可能是?、:name或#[name]三种占位形态,
+	 * 须保留原token返回(替换为?会破坏参数索引对齐);oracle/dm/oceanbase驱动日期参数定型发送且无::语法,不在处理范围。
 	 *
 	 * @param dialect              目标方言dbType
 	 * @param firstArg             to_char首参SQL片段
@@ -729,16 +716,14 @@ public class FunctionUtils {
 		// 参数占位符三形态:?(已替换)、:name(命名参数)、#[name](sqltoy中括号命名参数)
 		boolean placeholder = "?".equals(argTrim) || argTrim.matches(":[A-Za-z_][A-Za-z0-9_]*")
 				|| argTrim.matches("#\\[[^\\]]+\\]");
-		// update 2026-10-20 字符串日期字面量同样须定型:oracle的to_char('2026-..','hh24:mi:ss')
-		// 按数字隐式转换报ORA-01722,pg的to_char(unknown,unknown)报重载歧义(真库实测);
-		// 仅日期模型处理,数值格式模型(to_char(x,'999.99'))保持原类型
+		// update 2026-10-20 字符串日期字面量同样须定型:oracle的to_char('2026-..','hh24:mi:ss')按数字隐式转换报ORA-01722,
+		// pg的to_char(unknown,unknown)报重载歧义(真库实测);仅日期模型处理,数值格式模型(to_char(x,'999.99'))保持原类型
 		boolean dateLiteral = isQuotedLiteral(argTrim);
 		if (!placeholder && !dateLiteral) {
 			return firstArg;
 		}
-		// update 2026-9-14
-		// 补KINGBASE(KingbaseES基于PG,占位符参数同样存在to_char(unknown,unknown)重载歧义)
-		// update 2026-10-11 补HIGHGO(瀚高PG12内核,同vanilla PG的to_char重载歧义)
+		// update 2026-10-11 pgSyntax方言集补 KINGBASE(KingbaseES基于PG,占位符参数同样存在to_char(unknown,unknown)重载歧义)
+		// 与 HIGHGO(瀚高PG12内核,同vanilla PG的to_char重载歧义)
 		boolean pgSyntax = dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL14 || dialect == DBType.GAUSSDB
 				|| dialect == DBType.MOGDB || dialect == DBType.STARDB || dialect == DBType.OSCAR
 				|| dialect == DBType.OPENGAUSS || dialect == DBType.VASTBASE || dialect == DBType.KINGBASE

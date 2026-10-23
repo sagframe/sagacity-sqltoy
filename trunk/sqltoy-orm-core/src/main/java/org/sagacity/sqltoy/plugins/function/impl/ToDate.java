@@ -18,8 +18,7 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
  *         1参按长度启发式猜测是否含时间,占位符/表达式参数不适用
  */
 public class ToDate extends IFunction {
-	// update 2026-10-11 补str_to_date源拼写(mysql用户写法):mysql系原生透传,其余库将%token
-	// 反转为oracle风格格式模型后按to_date两参路径转换
+	// update 2026-10-11 补str_to_date源拼写(mysql用户写法):mysql系原生透传,其余库将%token反转为oracle风格格式模型后按to_date两参路径转换
 	private static Pattern regex = Pattern.compile("(?i)\\W(to_date|str_to_date)\\(");
 
 	/*
@@ -52,8 +51,8 @@ public class ToDate extends IFunction {
 		if (args.length > 1) {
 			args[1] = FunctionUtils.normalizeJavaTimePattern(args[1]);
 		}
-		// update 2026-10-11 str_to_date源:mysql系原生透传;其余库%token反转为oracle风格后
-		// 按to_date路径走(分支内不再区分源拼写,pg两参透传处以wrapArgs换名保持语义)
+		// update 2026-10-11 str_to_date源:mysql系原生透传;其余库%token反转为oracle风格后按to_date路径走
+		// (分支内不再区分源拼写,pg两参透传处以wrapArgs换名保持语义)
 		boolean mysqlSrc = "str_to_date".equals(funLow);
 		if (mysqlSrc) {
 			if (dialect == DBType.MYSQL || dialect == DBType.MYSQL57 || dialect == DBType.TIDB
@@ -73,9 +72,9 @@ public class ToDate extends IFunction {
 				}
 				return "convert(date," + args[0] + ")";
 			}
-			// update 2026-9-10 两参形态补常用格式模型→CONVERT style映射(原样透传报
-			// 'to_date' is not a recognized built-in function name,sqlserver2022/2025实测):
-			// 覆盖ISO日期/日期时间/紧凑日期/美式,其余格式模型仍原样保留(响亮报错可察)
+			// update 2026-9-10 两参形态补常用格式模型→CONVERT style映射(原样透传报「to_date is not a recognized
+			// built-in function name」,sqlserver2022/2025实测):覆盖ISO日期/日期时间/紧凑日期/美式,
+			// 其余格式模型仍原样保留(响亮报错可察)
 			String fmtLow = args[1].toLowerCase(java.util.Locale.ROOT).replace("'", "").replace(" ", "");
 			if ("yyyy-mm-dd".equals(fmtLow)) {
 				return "convert(date," + args[0] + ",23)";
@@ -101,9 +100,8 @@ public class ToDate extends IFunction {
 			}
 			return "to_date(" + args[0] + ",'yyyy-MM-dd')";
 		}
-		// update 2026-9-15 补db2:db2的TO_DATE必须两参(单参真库实测报SQLCODE=-20448
-		// cannot be interpreted),单参按长度启发式补格式模型(db2支持oracle风格format model,
-		// 与oracle单参同法);两参原样透传
+		// update 2026-9-15 补db2:db2的TO_DATE必须两参(单参真库实测报SQLCODE=-20448 cannot be interpreted),
+		// 单参按长度启发式补格式模型(db2支持oracle风格format model,与oracle单参同法);两参原样透传
 		if (dialect == DBType.DB2) {
 			if (args.length > 1) {
 				return wrapArgs("to_date", args);
@@ -114,8 +112,8 @@ public class ToDate extends IFunction {
 			return "to_date(" + args[0] + ",'yyyy-MM-dd')";
 		}
 		if (dialect == DBType.H2) {
-			// update 2026-9-9 单参原用formatdatetime方向反了:H2的FORMATDATETIME是格式化
-			// (日期→文本,产出VARCHAR),to_date语义为解析(文本→日期),须用PARSEDATETIME,与两参分支一致
+			// update 2026-9-9 单参须用PARSEDATETIME而非FORMATDATETIME:H2的FORMATDATETIME是格式化(日期→文本,产出VARCHAR),
+			// to_date语义为解析(文本→日期),须用PARSEDATETIME,与两参分支一致
 			if (args.length == 1) {
 				if (args[0].length() > 12) {
 					return "parsedatetime(" + args[0] + ",'yyyy-MM-dd HH:mm:ss')";
@@ -123,11 +121,10 @@ public class ToDate extends IFunction {
 					return "parsedatetime(" + args[0] + ",'yyyy-MM-dd')";
 				}
 			}
-			// 两参解析方向:PARSEDATETIME(str,格式)
-			// update 2026-9-15 补oracle风格令牌映射:入参'hh24:mi:ss'的hh24/mi为oracle模型,
-			// h2 PARSEDATETIME用java令牌(HH=24小时,mm=分钟),原样透传真库实测报Error parsing
-			// update 2026-10-19 口径修正:裸HH保持H2的java HH(24小时),小写hh为12小时;
-			// 24小时token先占位、最后还原,MI/mi归一到java分钟mm
+			// update 2026-10-19 两参解析方向:PARSEDATETIME(str,格式)
+			// 补oracle风格令牌映射:入参'hh24:mi:ss'的hh24/mi为oracle模型,h2 PARSEDATETIME用java令牌
+			// (HH=24小时,mm=分钟),原样透传真库实测报Error parsing;口径:裸HH保持H2的java HH(24小时),
+			// 小写hh为12小时;24小时token先占位、最后还原,MI/mi归一到java分钟mm
 			String fmt = args[1].replace("HH24", "@H24@").replace("hh24", "@H24@");
 			fmt = fmt.replace("mm", "MM");
 			fmt = fmt.replace("MI", "@M1@").replace("mi", "@M1@");
@@ -142,8 +139,7 @@ public class ToDate extends IFunction {
 			// pg系2参to_date(text,text)原生支持,原样保留;1参转CAST AS date
 			// (str_to_date源换名to_date,pg无str_to_date)
 			if (args.length > 1) {
-				// update 2026-10-20 pg的to_date只返回date,时间部分被静默截断;
-				// 格式含时间token时改to_timestamp(真库实测14:30:45可保留)
+				// update 2026-10-20 pg的to_date只返回date,时间部分被静默截断;格式含时间token时改to_timestamp(真库实测14:30:45可保留)
 				if (FunctionUtils.hasTimeToken(args[1])) {
 					return wrapArgs("to_timestamp", args);
 				}
@@ -160,31 +156,30 @@ public class ToDate extends IFunction {
 		}
 		if (dialect == DBType.MYSQL || dialect == DBType.TIDB || dialect == DBType.MYSQL57 || dialect == DBType.DORIS
 				|| dialect == DBType.STARROCKS) {
-			// 补充mysql映射:1参DATE()取日期;
+			// update 2026-9-14 补充mysql映射:1参DATE()取日期;
 			// 2参STR_TO_DATE,格式token互换与DateFormat一致(yyyy↔%Y、MM↔%m、dd↔%d、HH24↔%H、
 			// HH↔%H、mm↔%i、mi↔%i、ss↔%s)
-			// update 2026-9-14 补java风格HH(24小时)→%H与mm(分钟)→%i:原链缺这两个token,
-			// to_date(x,'yyyy-MM-dd HH:mm:ss')在串中残留字面HH/mm致STR_TO_DATE解析错值
+			// 补java风格HH(24小时)→%H与mm(分钟)→%i:原链缺这两个token,to_date(x,'yyyy-MM-dd HH:mm:ss')
+			// 在串中残留字面HH/mm致STR_TO_DATE解析错值
 			if (args.length == 1) {
 				return "DATE(" + args[0] + ")";
 			}
-			// update 2026-10-9 补大写oracle惯用形态YYYY/YY/DD/MI/SS(oracle模型大小写不敏感,
-			// 原'YYYY-MM-DD HH24:MI:SS'的YYYY/DD/MI/SS残留字面量,STR_TO_DATE报格式错值)
+			// update 2026-10-9 补大写oracle惯用形态YYYY/YY/DD/MI/SS(oracle模型大小写不敏感,原'YYYY-MM-DD HH24:MI:SS'的
+			// YYYY/DD/MI/SS残留字面量,STR_TO_DATE报格式错值)
 			String format = args[1].replace("yyyy", "%Y").replace("YYYY", "%Y").replace("yy", "%y").replace("YY", "%y")
 					.replace("MM", "%m").replace("dd", "%d").replace("DD", "%d");
-			// update 2026-10-19 口径修正:裸HH为24小时制(%H),小写hh才为12小时(%h)
+			// update 2026-10-19 口径:裸HH为24小时制(%H),小写hh才为12小时(%h)
 			format = format.replace("HH24", "%H").replace("hh24", "%H").replace("HH", "%H").replace("hh", "%h")
 					.replace("mm", "%m").replace("mi", "%i").replace("MI", "%i").replace("ss", "%s")
 					.replace("SS", "%s");
 			return "STR_TO_DATE(" + args[0] + "," + format + ")";
 		}
 		if (dialect == DBType.CLICKHOUSE) {
-			// update 2026-9-11 clickhouse无to_date(原样透传报Unknown function):toDate承担解析
-			// 语义(ISO文本/日期时间类型自动转换);两参形态的格式模型被忽略(CH按ISO及常见格式
-			// 自动解析,其他格式请直用parseDateTimeBestEffort),与sqlite分支同为文本日期体系
-			// update 2026-10-20 格式含时间token时改toDateTime,避免时间被toDate截断;
-			// 字符串字面量按框架时区(SqlToyConstants.getZoneId())解析,避免CH服务端UTC与
-			// JDBC use_time_zone不一致导致读回偏移(列/表达式保持原类型,不做二次转换)
+			// update 2026-10-20 clickhouse无to_date(原样透传报Unknown function):toDate承担解析语义(ISO文本/日期时间类型
+			// 自动转换);两参形态的格式模型被忽略(CH按ISO及常见格式自动解析,其他格式请直用
+			// parseDateTimeBestEffort),与sqlite分支同为文本日期体系;格式含时间token时改toDateTime,
+			// 避免时间被toDate截断;字符串字面量按框架时区(SqlToyConstants.getZoneId())解析,避免CH
+			// 服务端UTC与JDBC use_time_zone不一致导致读回偏移(列/表达式保持原类型,不做二次转换)
 			if (args.length > 1 && FunctionUtils.hasTimeToken(args[1])) {
 				if (FunctionUtils.isQuotedLiteral(args[0])) {
 					String zoneId = SqlToyConstants.getZoneId().getId().replace("'", "''");
@@ -195,9 +190,9 @@ public class ToDate extends IFunction {
 			return "toDate(" + args[0] + ")";
 		}
 		if (dialect == DBType.SQLITE) {
-			// update 2026-9-10 sqlite无to_date(原样透传报no such function):日期即ISO文本,
-			// date()归一即完成解析语义;占位符多为字符串绑定(to_date语义即解析文本)直接
-			// date()包裹,列/表达式经sqliteDateTextExpr归一(字面量与文本函数表达式透传)
+			// update 2026-9-10 sqlite无to_date(原样透传报no such function):日期即ISO文本,date()归一即完成解析语义;
+			// 占位符多为字符串绑定(to_date语义即解析文本)直接date()包裹,列/表达式经sqliteDateTextExpr
+			// 归一(字面量与文本函数表达式透传)
 			String arg0 = args[0].trim();
 			boolean placeholder = "?".equals(arg0) || arg0.matches(":[A-Za-z_][A-Za-z0-9_]*")
 					|| arg0.matches("#\\[[^\\]]+\\]");

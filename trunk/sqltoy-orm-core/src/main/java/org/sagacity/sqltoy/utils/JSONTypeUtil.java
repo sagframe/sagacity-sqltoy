@@ -32,7 +32,7 @@ public class JSONTypeUtil {
 	 * 定义日志
 	 */
 	protected final static Logger logger = LoggerFactory.getLogger(JSONTypeUtil.class);
-	// update 2026-9-16 删除遗留死代码HAS_PG_OBJECT/HAS_VB_OBJECT静态探测块:2026-9-6重构后
+	// update 2026-9-16 删除遗留死代码HAS_PG_OBJECT/HAS_VB_OBJECT静态探测块:重构后
 	// PGobject解析已统筹至DataSourceUtils.resolvePGobjectHolder(按URL
 	// scheme选同源驱动+dbType守卫),
 	// 两个布尔量全文件无任何读取,类加载期的无条件Class.forName探测徒增非PG系项目的类加载开销
@@ -71,9 +71,9 @@ public class JSONTypeUtil {
 				|| dbType == DBType.STARDB || dbType == DBType.OSCAR) {
 			pst.setNull(paramIndex, java.sql.Types.OTHER);
 		} else if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11) {
-			// update 2026-9-6 oracle原生JSON列的null绑定:实测二参setNull(OTHER)报ORA-17004
+			// update 2026-9-7 oracle原生JSON列的null绑定:实测二参setNull(OTHER)报ORA-17004
 			// (ojdbc拒绝OTHER形态),setNull(VARCHAR)/setNull(NULL)/setString(null)均可写入SQL NULL;
-			// update 2026-9-7 21c+服务端以JSON类型setObject绑定(与setJSONValue同因:保证
+			// 21c+服务端以JSON类型setObject绑定(与setJSONValue同因:保证
 			// nvl(?,col)包裹两端类型一致,保持null不覆盖语义)
 			if (bindOracleJson(dbType, pst, paramIndex, null, true)) {
 				return;
@@ -139,8 +139,7 @@ public class JSONTypeUtil {
 	}
 
 	/**
-	 * update 2026-9-6 判定是否为PG系内核方言(PGobject类型包装的适用范围),与SqlUtil.isPGFamily一致 update
-	 * 2026-9-16 委托DBProfile.isPGFamily静态白名单(单一事实源,消除逐字拷贝)
+	 * update 2026-9-6 判定是否为PG系内核方言(PGobject类型包装的适用范围),委托DBProfile.isPGFamily静态白名单(单一事实源,消除逐字拷贝)
 	 */
 	private static boolean isPGFamily(Integer dbType) {
 		return DBProfile.isPGFamily(dbType);
@@ -329,8 +328,8 @@ public class JSONTypeUtil {
 	}
 
 	/**
-	 * 剥除JSON字符串标量的外层引号:文本以引号起始且结束(如h2 json列setString绑定
-	 * 产生的"\"[{...}]\""形态)时解析出标量内部文本,否则原样返回 (update 2026-9-9
+	 * update 2026-9-9 剥除JSON字符串标量的外层引号:文本以引号起始且结束(如h2 json列setString绑定
+	 * 产生的"\"[{...}]\""形态)时解析出标量内部文本,否则原样返回。
 	 * 提升为public:ResultUtils的Map行路径h2 json列byte[]归一同款剥引号)
 	 */
 	public static String unwrapJsonStringScalar(String str) {
@@ -374,7 +373,7 @@ public class JSONTypeUtil {
 	 * update/merge的nvl(?,col)包裹触发ORA-40478"输出值太大(最大值:0)",JSON类型绑定后nvl
 	 * 两端类型一致,"null不覆盖原值"语义得以保持);按服务端版本门控(21c起才有原生json类型),
 	 * 驱动无JSON常量或服务端<21c回退false交由常规setString/setNull(此时varchar绑定本就正确)
-	 * 
+	 *
 	 * @param dbType     数据库类型,参见DataSourceUtils.DBType
 	 * @param pst        预编译语句(用于获取连接解析服务端版本,DBProfile按URL缓存)
 	 * @param paramIndex 参数下标

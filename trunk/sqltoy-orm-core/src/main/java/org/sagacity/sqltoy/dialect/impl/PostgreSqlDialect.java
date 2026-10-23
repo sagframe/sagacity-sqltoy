@@ -295,11 +295,10 @@ public class PostgreSqlDialect implements Dialect {
 			ReflectPropsHandler reflectPropsHandler, String[] forceUpdateFields, Connection conn, DBProfile profile,
 			final Boolean autoCommit, final String tableName) throws Exception {
 		Integer dbType = profile.getDbType();
-		// 暂时不开放，postgresql类型太多,merge 语句中需要case(? as type) as columnName
+		// update 2026-10-12 暂时不开放，postgresql类型太多,merge 语句中需要case(? as type) as columnName
 		// 目前type类型无法完整适配支持
 		// postgresql15 支持merge into
-		// update 2026-10-12 瀚高(PG12内核,真库实测syntax error at or near "merge")
-		// 与pg14同为无merge内核,走先update后saveIgnore兜底
+		// 瀚高(PG12内核,真库实测syntax error at or near "merge")与pg14同为无merge内核,走先update后saveIgnore兜底
 		if (dbType.equals(DBType.POSTGRESQL14) || dbType.equals(DBType.HIGHGO)) {
 			// DBType.POSTGRESQL14
 			Long updateCnt = DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields,
@@ -333,11 +332,11 @@ public class PostgreSqlDialect implements Dialect {
 			final String tableName) throws Exception {
 		Integer dbType = profile.getDbType();
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-		// pg14通过on conflict do nothing实现saveAllIgnoreExist语义,改走saveAll:
+		// update 2026-10-12 pg14通过on conflict do nothing实现saveAllIgnoreExist语义,改走saveAll:
 		// identity主键按rejectId反射,与insertIgnore省略主键列的sql保持占位符与参数对齐
 		// (原走saveAllIgnoreExist按全字段反射,identity时参数比?多一个导致绑定越界;
 		// 且伪造成sequence+DEFAULT会产生COALESCE(?,DEFAULT)非法sql,pg的DEFAULT只能裸用于VALUES项)
-		// update 2026-10-12 瀚高同pg14:on conflict do nothing走saveAll形态
+		// 瀚高同pg14:on conflict do nothing走saveAll形态
 		if (dbType != null && (dbType.intValue() == DBType.POSTGRESQL14 || dbType.intValue() == DBType.HIGHGO)) {
 			PKStrategy pkStrategy = entityMeta.getIdStrategy();
 			boolean isAssignPK = PostgreSqlDialectUtils.allowAssignPKValue(pkStrategy);
@@ -423,8 +422,7 @@ public class PostgreSqlDialect implements Dialect {
 	}
 
 	/**
-	 * update 2026-9-13 private改protected:子类(Kingbase)覆写wait N形态时,本类findBySql/load等
-	 * 继承方法的调用须经虚分派命中子类实现
+	 * update 2026-9-13 private改protected:子类(Kingbase)覆写wait N形态时,本类findBySql/load等继承方法的调用须经虚分派命中子类实现
 	 */
 	protected String getLockSql(String sql, Integer dbType, LockMode lockMode, int lockWaitTimeout) {
 		return DefaultDialectUtils.getLockSql(sql, dbType, lockMode, 0, true, " for update skip locked", false);

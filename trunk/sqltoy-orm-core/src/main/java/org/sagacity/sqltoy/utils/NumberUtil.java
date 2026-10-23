@@ -30,9 +30,8 @@ import org.slf4j.LoggerFactory;
  */
 public class NumberUtil {
 
-	// update 2026-9-14 DecimalFormat非线程安全不能全局共享,且getInstance+applyPattern的
-	// 格式串解析开销显著(格式化列高频路径),按线程缓存(键=pattern|locale|rounding|币种形态,
-	// 键空间=使用中的格式组合,小且有限);线程池场景随线程存续,内存可控
+	// update 2026-9-14 DecimalFormat非线程安全不能全局共享,且getInstance+applyPattern的格式串解析开销显著(格式化列
+	// 高频路径),按线程缓存(键=pattern|locale|rounding|币种形态,键空间=使用中的格式组合,小且有限);线程池场景随线程存续,内存可控
 	private static final ThreadLocal<java.util.HashMap<String, DecimalFormat>> DF_CACHE = new ThreadLocal<java.util.HashMap<String, DecimalFormat>>() {
 		@Override
 		protected java.util.HashMap<String, DecimalFormat> initialValue() {
@@ -161,8 +160,7 @@ public class NumberUtil {
 				return convertToEnglishMoney(tmp, currency);
 			}
 			// locale为null时取sqltoy统一配置的默认区域(未设置则跟随JVM默认区域)
-			// update 2026-9-14 DecimalFormat改走线程内缓存(getDecimalFormat),消除逐值
-			// getInstance+applyPattern的格式串解析开销(格式化列高频路径)
+			// update 2026-9-14 DecimalFormat改走线程内缓存(getDecimalFormat),消除逐值getInstance+applyPattern的格式串解析开销(格式化列高频路径)
 			DecimalFormat df = getDecimalFormat(pattern, (locale == null) ? SqlToyConstants.getLocale() : locale,
 					roundingMode, false);
 			return df.format(tmp);

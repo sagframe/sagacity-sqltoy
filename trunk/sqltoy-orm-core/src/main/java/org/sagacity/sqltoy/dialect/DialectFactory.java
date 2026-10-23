@@ -330,10 +330,9 @@ public class DialectFactory {
 	}
 
 	/**
-	 * update 2026-9-17 查询管线统一预处理(收敛executeSql/insertReturnPrimaryKey/findByQuery/
-	 * updateFetch/fetchStream
+	 * update 2026-9-17 查询管线统一预处理(收敛executeSql/insertReturnPrimaryKey/findByQuery/updateFetch/fetchStream
 	 * 5处同构代码):getUnifyParamsNamedConfig(?转named+sharding表替换)→
-	 * processSql参数组装→doInterceptors拦截器;"改拦截器/参数规整"的改动点由5处降为1处
+	 * processSql参数组装→doInterceptors拦截器;“改拦截器/参数规整”的改动点由5处降为1处
 	 */
 	private PreparedQuery prepareQuery(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
 			final QueryExecutor queryExecutor, final QueryExecutorExtend extend, DBProfile profile,
@@ -355,7 +354,7 @@ public class DialectFactory {
 		// 通过参数处理最终的sql和参数值
 		SqlToyResult queryParam = SqlConfigParseUtils.processSql(realSqlToyConfig.getSql(dialect),
 				extend.getParamsName(), extend.getParamsValue(sqlToyContext, realSqlToyConfig), dialect);
-		// 增加sql执行拦截器 update 2022-9-10
+		// update 2022-9-10 增加sql执行拦截器
 		queryParam = DialectUtils.doInterceptors(sqlToyContext, realSqlToyConfig, operateType, queryParam,
 				interceptorEntityClass, profile);
 		return new PreparedQuery(realSqlToyConfig, queryParam);
@@ -431,7 +430,7 @@ public class DialectFactory {
 										SqlParamsModel sqlParamsModel = SqlConfigParseUtils
 												.processNamedParamsQuery(realSql);
 										realSql = sqlParamsModel.getSql();
-										// update 2021-10-28 增加统一授权传参、根据insert、update 判断自动补充创建人、创建时间、修改人、修改时间等属性值的填充
+										// update 2021-10-28 统一授权传参:根据insert、update 判断自动补充创建人、创建时间、修改人、修改时间等属性值的填充
 										ReflectPropsHandler realPropsHandler = DialectUtils.wrapReflectWithUnifyFields(
 												realSql, reflectPropsHandler, sqlToyContext.getUnifyFieldsHandler());
 										values = BeanUtil.reflectBeansToList(dataSet, sqlParamsModel.getParamsName(),
@@ -511,7 +510,7 @@ public class DialectFactory {
 						SqlToyConfig realSqlToyConfig = prepared.config;
 						SqlToyResult queryParam = prepared.queryParam;
 						String sql = queryParam.getSql();
-						// update 2023-2-19 兼容updateByQuery和deleteByQuery未对clickhouse场景的处理
+						// update 2023-2-19 兼容updateByQuery和deleteByQuery未覆盖clickhouse场景的处理:
 						// clickhouse 删除和修改语法存在特殊性
 						if (dbType == DBType.CLICKHOUSE && extend.entityClass != null) {
 							EntityMeta entityMeta = sqlToyContext.getEntityMeta(extend.entityClass);
@@ -653,9 +652,7 @@ public class DialectFactory {
 						}
 						// 按比例提取
 						else {
-							// update 2026-9-14 删除恒真的 totalCount==null 判断(历史重构残留:totalCount
-							// 上一行刚初始化为null、此处即首次赋值,判断必然成立)
-							// 提取总记录数
+							// update 2026-9-14 提取总记录数(删除恒真的 totalCount==null 判断:totalCount 上一行刚初始化为null、此处即首次赋值,判断必然成立)
 							long preTime = System.currentTimeMillis();
 							totalCount = getCountBySql(sqlToyContext, realSqlToyConfig, queryExecutor, conn, profile);
 							long countRunTime = System.currentTimeMillis() - preTime;
@@ -772,7 +769,7 @@ public class DialectFactory {
 							+ "] has no @Id primary key defined, please check the entity configuration!");
 				}
 				FieldMeta idMeta = (FieldMeta) entityMeta.getFieldMeta(entityMeta.getIdArray()[0]);
-				// 如未定义则使用主键(update 2020-10-16)
+				// update 2020-10-16 如未定义则使用主键
 				if (StringUtil.isBlank(treeModel.getIdField())) {
 					treeModel.idField(idMeta.getColumnName());
 				} else {
@@ -787,7 +784,7 @@ public class DialectFactory {
 				}
 				// 通过实体对象取值给rootId和idValue赋值
 				if (!(treeModel.getEntity() instanceof Type)) {
-					// update 2020-10-19 从手工设定的字段中取值(原本从主键中取值)
+					// update 2020-10-19 从手工设定的字段中取值(不再从主键中取值)
 					if (StringUtil.isBlank(treeModel.getPidValue())) {
 						Object pidValue = BeanUtil.getProperty(treeModel.getEntity(),
 								StringUtil.toHumpStr(treeModel.getPidField(), false));
@@ -806,7 +803,7 @@ public class DialectFactory {
 					throw new IllegalArgumentException("tree table pid field [" + treeModel.getPidField()
 							+ "] has no value assigned, the parent node property is null, please check!");
 				}
-				// update 2022-5-6，boolean类型转出Boolean,在未赋值情况下通过主键类型进行自动补全设置
+				// update 2022-5-6 boolean类型转出Boolean,在未赋值情况下通过主键类型进行自动补全设置
 				if (treeModel.isChar() == null) {
 					// id字段非主键
 					if (!treeModel.getIdField().equalsIgnoreCase(idMeta.getColumnName())) {
@@ -1062,7 +1059,7 @@ public class DialectFactory {
 							SqlToyResult queryParam = SqlConfigParseUtils.processSql(realSqlToyConfig.getSql(dialect),
 									extend.getParamsName(), extend.getParamsValue(sqlToyContext, realSqlToyConfig),
 									dialect);
-							// 增加sql执行拦截器 update 2022-9-10
+							// update 2022-9-10 增加sql执行拦截器
 							queryParam = DialectUtils.doInterceptors(sqlToyContext, realSqlToyConfig,
 									(extend.entityClass == null) ? OperateType.search : OperateType.singleTable,
 									queryParam, extend.entityClass, profile);
@@ -1214,9 +1211,8 @@ public class DialectFactory {
 				throw new DataAccessException("parallel query execution error:" + queryResult.getMessage());
 			}
 			int rowSize = (queryResult.getRows() == null) ? 0 : queryResult.getRows().size();
-			// update 2026-9-14 与串行findPage(L1091-1104)统一超界页处理:原形态始终按请求页号取数并保留该页号,
-			// 仅recordCount==0时回退页号;而串行overPageToFirst=true时会改从第1页取数、=false时结果置空,
-			// 同一配置下并行/串行行为分叉(页号超出总页数时并行返回空数据且页号不回退)
+			// update 2026-9-14 与串行findPage统一超界页处理:原并行形态始终按请求页号取数并保留该页号,仅recordCount==0时回退页号,
+			// 与串行overPageToFirst=true改从第1页取数、=false结果置空的行为分叉(页号超出总页数时并行返回空数据且页号不回退)
 			boolean overPage = isPageOverTotal(pageNo, pageSize, queryResult.getRecordCount());
 			if (overPage) {
 				if (queryResult.getRecordCount() == 0) {
@@ -1466,8 +1462,7 @@ public class DialectFactory {
 			String rejectWithSql = sql;
 			String withSql = "";
 			boolean hasUnion = false;
-			// update 2019-07-23 进行先判定然后再通过逻辑解析with as 相关语法,提升效率
-			// 存在可以简化的 union all 模式(sql xml 文件通过union-all-count 属性由开发者指定)
+			// update 2019-07-23 先判定再通过逻辑解析with as 相关语法提升效率;存在可以简化的 union all 模式(sql xml 文件通过union-all-count 属性由开发者指定)
 			if (sqlToyConfig.isUnionAllCount()) {
 				if (sqlToyConfig.isHasWith()) {
 					SqlWithAnalysis sqlWith = new SqlWithAnalysis(sql);
@@ -1548,7 +1543,7 @@ public class DialectFactory {
 		// 通过参数处理最终的sql和参数值
 		SqlToyResult queryParam = SqlConfigParseUtils.processSql(sql, extend.getParamsName(),
 				extend.getParamsValue(sqlToyContext, sqlToyConfig), dialect);
-		// 增加sql执行拦截器 update 2022-9-10
+		// update 2022-9-10 增加sql执行拦截器
 		queryParam = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig,
 				(extend.entityClass == null) ? OperateType.count : OperateType.singleTable, queryParam,
 				extend.entityClass, profile);
@@ -1622,8 +1617,7 @@ public class DialectFactory {
 			// 启动执行日志
 			SqlExecuteStat.start(BeanUtil.getEntityClass(entityClass).getName(), OperateDetailType.saveOrUpdateAll,
 					entityClass, Long.valueOf(entities.size()), sqlToyContext.isDebug());
-			// 改进说明:利用目前分库分表的策略，针对超大数据集，比如1万条，按2500条记录作为一个并行度(限制最大并行度)进行并行执行
-			// update 2025-12-30将原本自动给主键赋值由true改为false
+			// update 2025-12-30 改进说明:利用目前分库分表的策略，针对超大数据集，比如1万条，按2500条记录作为一个并行度(限制最大并行度)进行并行执行;原本自动给主键赋值由true改为false
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, false, false, SqlType.update, dataSource,
 					parallelConfig, (context, batchModel) -> {
 						ShardingModel shardingModel = batchModel.getShardingModel();

@@ -58,9 +58,9 @@ public class Instr extends IFunction {
 		} else {
 			realArgs = args;
 		}
-		// update 2026-10-20 四参instr(str,sub,pos,occurrence):
+		// update 2026-10-20 四参 instr(str,sub,pos,occurrence) 分三类处理:
 		// ①原生四参库(oracle/dm/db2/h2/hana)透传,由下方既有分支处理;
-		// ②有REGEXP_INSTR的库直接套用(sqlserver2025/mysql8+/oceanbase/pg15+/opengauss/gaussdb),
+		// ②有 REGEXP_INSTR 的库直接套用(sqlserver2025/mysql8+/oceanbase/pg15+/opengauss/gaussdb),
 		// 注意第二参按目标库正则表达式解释;
 		// ③其余无简单四参等价物的库(mysql57/tidb/doris/starrocks/pg14/sqlite/clickhouse/kingbase等)
 		// 原样输出,交目标库响亮报错,不静默错值
@@ -72,14 +72,12 @@ public class Instr extends IFunction {
 				return "regexp_instr(" + realArgs[0] + "," + realArgs[1] + "," + realArgs[2] + "," + realArgs[3] + ")";
 			}
 		}
-		// update 2026-10-4 补strpos源函数:strpos(str,sub)为pg系原生写法,参数序与instr一致
-		// (haystack在前),pg系/clickhouse原生支持直接透传;其余库无strpos(instr可原生透传而
-		// strpos不能,须显式转换),2参形态按instr同序映射:charindex与db2的locate须对调参数,
-		// hana的locate同序,其余instr系库直接换名;>2参为CH的start_pos/occurrence扩展,
-		// 其余库无对应形态,原样保留交由目标库报错
+		// update 2026-10-4 补 strpos 源函数:strpos(str,sub) 为 pg 系原生写法,参数序与 instr 一致(haystack在前),
+		// pg系/clickhouse原生支持直接透传;其余库无strpos(instr可原生透传而 strpos不能,须显式转换),
+		// 2参形态按instr同序映射:charindex与db2的locate须对调参数,hana的locate同序,其余instr系库直接换名;
+		// >2参为CH的start_pos/occurrence扩展,其余库无对应形态,原样保留交由目标库报错
 
-		// update 2026-10-11
-		// 补locate源函数(mysql与db2用户写法):needle-first参数序(needle,haystack[,pos])。
+		// update 2026-10-11 补 locate 源函数(mysql与db2用户写法):needle-first 参数序(needle,haystack[,pos])。
 		// mysql系与db2原生同名同序透传;hana的locate虽原生但参数序相反(haystack在前),
 		// 同名异序无法辨源,按本框架mysql源惯例统一按mysql序转换(类注释已声明);
 		// posstr为DB2原生haystack-first语义,不能与locate同组,见下方strpos分支
@@ -123,8 +121,8 @@ public class Instr extends IFunction {
 			return super.IGNORE;
 		}
 		if ("strpos".equals(funLow) || "posstr".equals(funLow)) {
-			// strpos与DB2的posstr均为haystack-first:strpos(str,sub)/posstr(source,search)。
-			// update 2026-10-11 总扫真库实测:CH无strpos函数,走下方position(haystack,needle)同序转换
+			// update 2026-10-11 strpos与DB2的posstr均为haystack-first:strpos(str,sub)/posstr(source,search)。
+			// 总扫真库实测:CH无strpos函数,走下方position(haystack,needle)同序转换
 			if (dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL14 || dialect == DBType.GAUSSDB
 					|| dialect == DBType.OPENGAUSS || dialect == DBType.OSCAR || dialect == DBType.STARDB
 					|| dialect == DBType.MOGDB || dialect == DBType.VASTBASE || dialect == DBType.KINGBASE
@@ -156,8 +154,8 @@ public class Instr extends IFunction {
 			if ("charindex".equals(funLow)) {
 				return super.IGNORE;
 			}
-			// update 2026-9-5 charindex不支持occurrence参数(instr第4参),
-			// 静默丢弃会改变语义,保持原样交由目标库报错(响亮失败优于静默错误结果)
+			// update 2026-9-5 charindex不支持occurrence参数(instr第4参),静默丢弃会改变语义,
+			// 保持原样交由目标库报错(响亮失败优于静默错误结果)
 			if (realArgs.length > 3) {
 				return super.IGNORE;
 			}
@@ -172,8 +170,8 @@ public class Instr extends IFunction {
 			}
 			return result.append(")").toString();
 		}
-		// update 2026-9-9 Db2 LUW无INSTR函数(LOCATE/POSSTR承担),原分支对instr原样透传会报
-		// 函数不存在;LOCATE(search,source[,start])参数语义与mysql的locate一致,统一转locate
+		// update 2026-9-9 Db2 LUW无INSTR函数(LOCATE/POSSTR承担),原分支对instr原样透传会报函数不存在;
+		// LOCATE(search,source[,start])参数语义与mysql的locate一致,统一转locate
 		if (dialect == DBType.DB2) {
 			if ("position".equals(funLow)) {
 				// position(sub in str):realArgs=[sub,str]
@@ -196,8 +194,8 @@ public class Instr extends IFunction {
 		if (dialect == DBType.MYSQL || dialect == DBType.ORACLE || dialect == DBType.OCEANBASE || dialect == DBType.DM
 				|| dialect == DBType.TIDB || dialect == DBType.ORACLE11 || dialect == DBType.MYSQL57
 				|| dialect == DBType.H2 || dialect == DBType.DORIS || dialect == DBType.STARROCKS) {
-			// update 2026-9-15 补starrocks的position形态:starrocks真库实测不支持position(sub in str)
-			// 关键字语法(Unexpected input 'in'),starrocks原生instr(str,sub)参数序与instr一致,直接换名
+			// update 2026-9-15 补starrocks的position形态:starrocks真库实测不支持position(sub in str)关键字语法
+			// (Unexpected input 'in'),starrocks原生instr(str,sub)参数序与instr一致,直接换名
 			if ("position".equals(funLow) && dialect == DBType.STARROCKS) {
 				return "instr(" + realArgs[1] + "," + realArgs[0] + ")";
 			}
@@ -212,7 +210,7 @@ public class Instr extends IFunction {
 				}
 				return super.IGNORE;
 			}
-			// position mysql、h2也支持 update 2021-11-11
+			// update 2021-11-11 position mysql、h2也支持
 			if (dialect == DBType.MYSQL || dialect == DBType.MYSQL57 || dialect == DBType.H2 || dialect == DBType.DORIS
 					|| dialect == DBType.STARROCKS) {
 				if ("position".equals(funLow)) {
@@ -245,19 +243,19 @@ public class Instr extends IFunction {
 				}
 				return result.append(")").toString();
 			}
-			// update 2026-9-15 补三参instr(str,sub,pos):pg系position(strpos)无起始位参数,
-			// 原样透传报function instr does not exist(pg真库实测);以strpos(substr(str,pos),sub)
-			// 组合表达"从pos起搜索"(命中则加pos-1偏移,未命中为0)
+			// update 2026-9-15 补三参instr(str,sub,pos):pg系position(strpos)无起始位参数,原样透传报
+			// function instr does not exist(pg真库实测);以strpos(substr(str,pos),sub)
+			// 组合表达“从pos起搜索”(命中则加pos-1偏移,未命中为0)
 			if (realArgs.length == 3) {
 				return "(case when strpos(substr(" + realArgs[0] + "," + realArgs[2] + ")," + realArgs[1]
 						+ ")=0 then 0 else strpos(substr(" + realArgs[0] + "," + realArgs[2] + ")," + realArgs[1]
 						+ ")+(" + realArgs[2] + ")-1 end)";
 			}
 		}
-		// update 2026-9-11 clickhouse:无instr函数,position(haystack,needle)逗号形态且参数序
-		// 与instr(str,substr)一致;3/4参的出现次数语义CH无对应,原样保留交目标库响亮报错
-		// update 2026-9-15 补charindex写法:charindex原生参数序(sub,str)与CH的position
-		// (haystack,needle)相反,须对调(真库实测未对调时恒为0)
+		// update 2026-9-15 clickhouse:无instr函数,position(haystack,needle)逗号形态且参数序与instr(str,substr)一致;
+		// 3/4参的出现次数语义CH无对应,原样保留交目标库响亮报错。
+		// 补charindex写法:charindex原生参数序(sub,str)与CH的position(haystack,needle)相反,
+		// 须对调(真库实测未对调时恒为0)
 		if (dialect == DBType.CLICKHOUSE) {
 			if ("position".equals(funLow)) {
 				// CH的position为position(haystack,needle)逗号形态,不支持 position(sub in str)
@@ -270,10 +268,9 @@ public class Instr extends IFunction {
 				return "position(" + realArgs[0] + "," + realArgs[1] + ")";
 			}
 		}
-		// update 2026-9-11 hana:无instr函数,LOCATE(<string>,<substring>[,<start>])参数序与
-		// instr(str,sub[,pos])一致(haystack在前,注意与db2/mysql的locate(needle,haystack)相反);
-		// 第4参occurrence无locate对应形态,原样保留交由目标库报错
-		// update 2026-9-15 hana真库实测并无标准SQL的POSITION(sub in str)形态(报invalid
+		// update 2026-9-15 hana:无instr函数,LOCATE(<string>,<substring>[,<start>])参数序与instr(str,sub[,pos])一致
+		// (haystack在前,注意与db2/mysql的locate(needle,haystack)相反);第4参occurrence无locate对应形态,
+		// 原样保留交由目标库报错。hana真库实测并无标准SQL的POSITION(sub in str)形态(报invalid
 		// name of function or procedure: POSITION,与此前注释假设不符),统一转LOCATE(str,sub)
 		if (dialect == DBType.HANA) {
 			if ("position".equals(funLow)) {
@@ -292,9 +289,9 @@ public class Instr extends IFunction {
 			}
 			return wrapArgs("locate", realArgs);
 		}
-		// update 2026-9-15 补sqlite:sqlite无position形态(真库实测position('cd' in name)把
-		// in name解析为IN子查询报no such table),instr(str,sub)为sqlite原生仅两参;
-		// 三参instr(str,sub,pos)以"substr后移起点+instr+偏移"组合表达;charindex(sub,str)参数序对调
+		// update 2026-9-15 补sqlite:sqlite无position形态(真库实测position('cd' in name)把in name解析为IN子查询报
+		// no such table),instr(str,sub)为sqlite原生仅两参;三参instr(str,sub,pos)以
+		// “substr后移起点+instr+偏移”组合表达;charindex(sub,str)参数序对调
 		if (dialect == DBType.SQLITE) {
 			if ("position".equals(funLow)) {
 				return "instr(" + realArgs[1] + "," + realArgs[0] + ")";

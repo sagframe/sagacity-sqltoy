@@ -135,8 +135,7 @@ public class PageOptimizeUtils {
 			return null;
 		}
 		synchronized (map) {
-			// 为null表示条件初次查询或已经全部过期移除
-			// update 2026-9-8 containsKey+get双查合并为一次get
+			// update 2026-9-8 为null表示条件初次查询或已经全部过期移除;containsKey+get双查合并为一次get
 			Object[] values = map.get(conditionsKey);
 			if (values == null) {
 				return null;

@@ -138,7 +138,7 @@ public class MacroIfLogic {
 				negateResult = false;
 				express = expressions[i].trim();
 				expressLow = express.toLowerCase(Locale.ROOT);
-				// 默认为等于判断(update 2025-4-9 @if(:paramType!=1 && :booleanParam))
+				// update 2025-4-9 默认为等于判断(@if(:paramType!=1 && :booleanParam))
 				compareType = "==";
 				// 匹配对应的判断逻辑符号
 				for (int j = 0; j < compareStr.length; j++) {
@@ -171,7 +171,7 @@ public class MacroIfLogic {
 				} else {
 					leftValue = params[0].trim();
 				}
-				// update 2018-3-29,去除空格增强容错性
+				// update 2018-3-29 去除空格增强容错性
 				if (params.length > 1) {
 					rightValue = params[1].trim();
 					if (isNegate) {
@@ -184,7 +184,7 @@ public class MacroIfLogic {
 						rightValue = "true";
 					}
 				}
-				// 对比值也是动态参数(update 2023-05-05)
+				// update 2023-05-05 对比值也是动态参数
 				if (paramValues != null && hasArg(rightValue, sqlParamType)) {
 					rightObj = paramValues.get(preCount + meter);
 					if (rightObj == null) {
@@ -205,8 +205,7 @@ public class MacroIfLogic {
 					}
 					meter++;
 				}
-				// 计算单个比较的结果(update 2020-09-24 增加数组长度的提取)
-				// !size()/!length()取反前缀也要走长度提取,否则数组被按toString字符串比较
+				// update 2020-09-24 计算单个比较的结果:增加数组长度的提取;!size()/!length()取反前缀也要走长度提取,否则数组被按toString字符串比较
 				if (hasArg && (leftParamLow.startsWith("size(") || leftParamLow.startsWith("length(")
 						|| leftParamLow.startsWith("!size(") || leftParamLow.startsWith("!length("))) {
 					expressResult[i] = compare((leftValue == null) ? 0 : getSize(leftValue), compareType, rightValue,

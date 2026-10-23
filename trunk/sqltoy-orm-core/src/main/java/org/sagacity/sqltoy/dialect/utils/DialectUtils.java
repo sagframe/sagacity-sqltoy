@@ -100,7 +100,7 @@ import org.slf4j.LoggerFactory;
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class DialectUtils {
 
-	// update 2026-9-8 级联loadAll的字段匹配正则缓存(字段名->预编译Pattern)
+	// update 2026-9-8 级联loadAll的字段匹配正则按字段名缓存(字段名->预编译Pattern),避免每次现场编译
 	private static final java.util.concurrent.ConcurrentHashMap<String, Pattern> CASCADE_FIELD_PATTERN_CACHE = new java.util.concurrent.ConcurrentHashMap<>();
 	/**
 	 * 定义日志
@@ -241,7 +241,7 @@ public class DialectUtils {
 		return SqlConfigParseUtils.processSql(pageSql, realParamNamed, realParamValue, dialect);
 	}
 
-	// ==================== update 2026-9-13 分页/top/随机查询三件套骨架 ====================
+	// update 2026-9-13 ==================== 分页/top/随机查询三件套骨架 ====================
 	// 统一"取方言sql→标记原始sql→fast包裹→片段拼装→wrapPageSqlParams→doInterceptors→
 	// findBySql"管线,Default/Oracle/PostgreSql各utils的三件套仅保留SQL片段与包裹形态差异
 
@@ -306,7 +306,7 @@ public class DialectUtils {
 		SqlToyResult queryParam = wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor, wrappedSql, startIndex,
 				endIndex, profile);
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
-		// 增加sql执行拦截器 update 2022-9-10
+		// update 2022-9-10 调用sql执行拦截器(doInterceptors)
 		queryParam = doInterceptors(sqlToyContext, sqlToyConfig, operateType, queryParam, extend.entityClass, profile);
 		return findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(), extend,
 				decryptHandler, conn, profile, columnSkip, fetchSize, maxRows);
@@ -408,9 +408,8 @@ public class DialectUtils {
 		if (updateRowHandler == null) {
 			pst = conn.prepareStatement(lastSql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
 		} else {
-			// update 2026-9-14 DM驱动FORWARD_ONLY+UPDATABLE组合prepare即报-2123无效cursor
-			// name(真库实测),SCROLL_INSENSITIVE+UPDATABLE可用(updateRow正常落库);
-			// 其余库维持FORWARD_ONLY不动
+			// update 2026-9-14 DM驱动FORWARD_ONLY+UPDATABLE组合prepare即报-2123无效cursor name(真库实测),
+			// SCROLL_INSENSITIVE+UPDATABLE可用(updateRow正常落库);其余库维持FORWARD_ONLY不动
 			int rsType = (dbType == DBType.DM) ? ResultSet.TYPE_SCROLL_INSENSITIVE : ResultSet.TYPE_FORWARD_ONLY;
 			pst = conn.prepareStatement(lastSql, rsType, ResultSet.CONCUR_UPDATABLE);
 		}
@@ -506,7 +505,7 @@ public class DialectUtils {
 			int sql_from_index = 0;
 			// sql不以from开头，截取from 后的部分语句
 			if (StringUtil.indexOfIgnoreCase(maskedSql, "from") != 0) {
-				// update 2024-11-8 优化select (day from) as a from xxx 语句的兼容
+				// update 2024-11-8 优化 select (day from) as a from xxx 语句的兼容
 				sql_from_index = SqlUtil.getSymMarkIndexExcludeKeyWords(maskedSql, SELECT_REGEX, FROM_REGEX, 0);
 			}
 			// 剔除order提高运行效率
@@ -541,7 +540,7 @@ public class DialectUtils {
 				isInnerGroup = clearDisturbSql(maskedSql.substring(groupIndex + 1)).lastIndexOf(")") != -1;
 			}
 			final StringBuilder countQueryStr = new StringBuilder();
-			// 是否包含union,update 2024-2-1(改为每次都判断，避免极端情况)
+			// update 2024-2-1 是否包含union,每次都判断,避免极端情况
 			boolean hasUnion = SqlUtil.hasUnion(maskedSql, false);
 			// 不包含distinct和group by 等,则剔除[select * ] from 变成select count(1) from
 			// 性能最优
@@ -637,9 +636,8 @@ public class DialectUtils {
 			QueryExecutor queryExecutor, DBProfile profile, boolean wrapNamed) throws Exception {
 		String dialect = profile.getDialect();
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
-		// update 2026-9-23 realDialectFirst:顶层查询的sqlId变体在连接外按配置方言解析完成
-		// (线程档案未绑定),此处连接档案在手,按真实方言重解析变体(真实方言变体不存在时
-		// 保持原config,配置方言变体不降级为base)
+		// update 2026-9-23 realDialectFirst:顶层查询的sqlId变体在连接外按配置方言解析完成(线程档案未绑定),
+		// 此处连接档案在手,按真实方言重解析变体(真实方言变体不存在时保持原config,配置方言变体不降级为base)
 		sqlToyConfig = sqlToyContext.resolveRealDialectVariant(extend.sql, sqlToyConfig, profile);
 		// 本身就是:named参数形式或sql中没有任何参数
 		boolean isNamed = false;
@@ -864,9 +862,8 @@ public class DialectUtils {
 		SqlExecuteStat.showSql("execute saveOrUpdate sql", realSql, null);
 		final Integer[] updateTypes = entityMeta.getFieldsTypeArray(true);
 		InsertRowCallbackHandler bindHandler = null;
-		// sqlserver的timestamp(rowversion)列不能赋值,merge/insert语句生成时已排除该列,绑定时同步跳过对应参数保持占位符对齐
-		// update 2026-9-5
-		// 判据改按目标库元数据校准(entityMeta.isRowVersionField),规避oracle迁移场景误伤datetime2业务列
+		// update 2026-9-5 sqlserver的timestamp(rowversion)列不能赋值,merge/insert语句生成时已排除该列,绑定时同步跳过对应参数保持占位符对齐
+		// 判据按目标库元数据校准(entityMeta.isRowVersionField),规避oracle迁移场景误伤datetime2业务列
 		if (dbType != null && dbType.intValue() == DBType.SQLSERVER) {
 			// 参数按fieldsArray(true)反射,与fieldMeta一一对应,预计算跳过标志
 			final String[] bindFields = entityMeta.getFieldsArray(true);
@@ -1009,12 +1006,11 @@ public class DialectUtils {
 			} else if (DBType.DM == dbType) {
 				DMDialectUtils.wrapSelectFields(sql, columnName, fieldMeta);
 			} else {
-				// sqlserver(2008+)、oracle(23ai)支持vector类型;sqlserver(2008+)支持geometry类型
+				// update 2026-9-7 sqlserver(2008+)、oracle(23ai)支持vector类型;sqlserver(2008+)支持geometry类型
 				// merge into的using select子查询中显式cast保证类型正确
-				// update 2026-9-6 oracle geometry改由驱动层SDO STRUCT绑定(见SqlUtil.setGeometryValue),
-				// SQL层SDO_UTIL.FROM_WKTGEOMETRY包装在null参数时报ORA-29532,故还原为普通?占位
-				// update 2026-9-7 sqlserver VECTOR同样还原为裸?:实测2025版cast(? as VECTOR)缺维度报
-				// "not a defined system type",而字符串到vector为隐式转换(自SqlServerDialectUtils迁入)
+				// oracle geometry改由驱动层SDO STRUCT绑定(见SqlUtil.setGeometryValue),SQL层SDO_UTIL.FROM_WKTGEOMETRY
+				// 包装在null参数时报ORA-29532,故还原为普通?占位;sqlserver VECTOR同样还原为裸?:实测2025版
+				// cast(? as VECTOR)缺维度报"not a defined system type",而字符串到vector为隐式转换(自SqlServerDialectUtils迁入)
 				int extType = fieldMeta.getType();
 				// 统一模式:先按数据类型分支,再在分支内部按数据库方言处理(与generateInsertSql保持一致)
 				if (extType == JdbcTypes.GEOMETRY) {
@@ -1029,15 +1025,14 @@ public class DialectUtils {
 						sql.append("?");
 					}
 				} else if (extType == JdbcTypes.VECTOR) {
-					// update 2026-9-7 实测sqlserver 2025的cast(? as VECTOR)缺维度报
-					// "not a defined system type",而字符串到vector为隐式转换,维持裸?
+					// update 2026-9-7 实测sqlserver 2025的cast(? as VECTOR)缺维度报"not a defined system type",
+					// 而字符串到vector为隐式转换,维持裸?
 					sql.append("?");
 				} else if (extType == JdbcTypes.JSON || extType == JdbcTypes.JSONB) {
-					// update 2026-9-10 移除服务器级convert(json,?)门控,统一裸?:2025 GA实测
-					// 裸?(按nvarchar传递)+matched update的coalesce包裹对原生json列与nvarchar
-					// 承载列双形态均成立(见下方update环节分派);convert(json,?)产物为json类型值,
-					// 赋给GA服务器上的存量nvarchar承载列反报"Implicit conversion json to
-					// nvarchar not allowed"(服务器级探测无法区分列级承载形态,门控废弃)
+					// update 2026-9-10 移除服务器级convert(json,?)门控,统一裸?:2025 GA实测裸?(按nvarchar传递)+matched update的
+					// coalesce包裹对原生json列与nvarchar承载列双形态均成立(见下方update环节分派);
+					// convert(json,?)产物为json类型值,赋给GA服务器上的存量nvarchar承载列反报
+					// "Implicit conversion json to nvarchar not allowed"(服务器级探测无法区分列级承载形态,门控废弃)
 					sql.append("?");
 				} else {
 					sql.append("?");
@@ -1084,9 +1079,8 @@ public class DialectUtils {
 	}
 
 	/**
-	 * update 2026-9-13 拼装 when matched then update 子句(nvl包裹/sqlserver的isnull、
-	 * coalesce与decimal定长cast等方言分派),同一字段循环内顺带组织非主键列与其values (供when not matched then
-	 * insert子句消费,共享循环是本质复杂度不硬拆)
+	 * update 2026-9-13 拼装 when matched then update 子句(nvl包裹/sqlserver的isnull、coalesce与decimal定长cast等方言分派),
+	 * 同一字段循环内顺带组织非主键列与其values (供when not matched then insert子句消费,共享循环是本质复杂度不硬拆)
 	 *
 	 * @return 是否全部字段都是主键(无update环节,insert子句按全主键形态组织)
 	 */
@@ -1109,7 +1103,7 @@ public class DialectUtils {
 		String[] rejectIdFieldArray = entityMeta.getRejectIdFieldArray(true);
 		// 是否全部是ID,匹配上则无需进行更新，只需将未匹配上的插入即可
 		boolean allIds = (rejectIdFieldArray == null);
-		// update 2024-7-21 增加sqlInterceptor场景下，merge into on (条件) update 需要跳过on 中存在的字段
+		// update 2024-7-21 sqlInterceptor场景下,merge into on (条件) update 需要跳过on中存在的字段
 		// (sqlToyContext为null时为第三方直调工具类的兼容路径,无拦截器可取)
 		IgnoreCaseSet tenantFields = (sqlToyContext == null) ? new IgnoreCaseSet()
 				: getTenantFields(sqlToyContext.getSqlInterceptors(), entityMeta, OperateType.saveOrUpdate);
@@ -1131,8 +1125,7 @@ public class DialectUtils {
 			// update 只针对非主键字段进行修改
 			for (int i = 0; i < rejectIdColumnSize; i++) {
 				fieldMeta = entityMeta.getFieldMeta(rejectIdFieldArray[i]);
-				// update 2026-9-7
-				// sqlserver的rowversion列在update/insert环节均不参与(自SqlServerDialectUtils迁入)
+				// update 2026-9-7 sqlserver的rowversion列在update/insert环节均不参与(自SqlServerDialectUtils迁入)
 				if (DBType.SQLSERVER == dbType && entityMeta.isRowVersionField(fieldMeta)) {
 					continue;
 				}
@@ -1155,14 +1148,12 @@ public class DialectUtils {
 					} else if (fupc.contains(columnName)) {
 						sql.append("tv.").append(columnName);
 					} else {
-						// update 2026-9-8 oracle的SDO_GEOMETRY换full镜像实测:using select裸?
-						// 以驱动STRUCT绑定(MDSYS.SDO_GEOMETRY)定型后,nvl(tv.g,ta.g)同型可行,
-						// 非null更新生效、null参数保留原值(弹性语义完整),统一纳入nvl包裹
+						// update 2026-9-10 oracle的SDO_GEOMETRY换full镜像实测:using select裸?以驱动STRUCT绑定(MDSYS.SDO_GEOMETRY)定型后,
+						// nvl(tv.g,ta.g)同型可行,非null更新生效、null参数保留原值(弹性语义完整),统一纳入nvl包裹
 						// 注意逻辑，nvl(tv.field,ta.field) 不要改变
-						// update 2026-9-10 sqlserver的JSON/JSONB列改coalesce包裹(与getUpdateSql的
-						// SQLSERVER+JSON分派同款):isnull取首参类型(tv侧裸?按nvarchar传递),原生json列
-						// 报"Implicit conversion json to nvarchar not allowed";coalesce按类型优先级
-						// 解析,2025 GA实测裸?+coalesce对原生json列与nvarchar承载列双形态均为
+						// sqlserver的JSON/JSONB列改coalesce包裹(与getUpdateSql的SQLSERVER+JSON分派同款):isnull取首参类型
+						// (tv侧裸?按nvarchar传递),原生json列报"Implicit conversion json to nvarchar not allowed";
+						// coalesce按类型优先级解析,2025 GA实测裸?+coalesce对原生json列与nvarchar承载列双形态均为
 						// 更新生效、null保留原值
 						if (DBType.SQLSERVER == dbType
 								&& (fieldMeta.getType() == JdbcTypes.JSON || fieldMeta.getType() == JdbcTypes.JSONB)) {
@@ -1173,8 +1164,7 @@ public class DialectUtils {
 						// 驱动声明为高精度decimal(BatchUpdateException精度超限,真库实测),
 						// update set的nvl内对tv列按列定义cast定型(同sqlserver decimal模式)
 						if (DBType.SQLSERVER == dbType && fieldMeta.getType() == java.sql.Types.DECIMAL) {
-							// update 2026-9-7 sqlserver经isnull赋值会丢decimal小数位,cast定长保精度
-							// (自SqlServerDialectUtils迁入)
+							// update 2026-9-7 sqlserver经isnull赋值会丢decimal小数位,cast定长保精度(自SqlServerDialectUtils迁入)
 							int decimalLength = (fieldMeta.getLength() > 35) ? fieldMeta.getLength() : 35;
 							int decimalScale = (fieldMeta.getScale() > 5) ? fieldMeta.getScale() : 5;
 							sql.append("(cast(tv.").append(columnName)
@@ -1295,9 +1285,8 @@ public class DialectUtils {
 	}
 
 	/**
-	 * update 2026-9-13 merge into形态saveOrUpdateSql的构建上下文:持有贯穿各拼装阶段的 sql
-	 * builder与跨阶段共享的中间产物(idColumns由on条件段产出、insert子句消费;
-	 * insertRejIdCols/ColValues由matched update段产出、not matched insert子句消费)
+	 * update 2026-9-13 merge into形态saveOrUpdateSql的构建上下文:持有贯穿各拼装阶段的 sql builder与跨阶段共享的中间产物
+	 * (idColumns由on条件段产出、insert子句消费;insertRejIdCols/ColValues由matched update段产出、not matched insert子句消费)
 	 */
 	private static class MergeContext {
 		final StringBuilder sql;
@@ -1547,8 +1536,7 @@ public class DialectUtils {
 		String[] rejectIdFieldArray = entityMeta.getRejectIdFieldArray(true);
 		for (int i = 0, n = rejectIdFieldArray.length; i < n; i++) {
 			fieldMeta = entityMeta.getFieldMeta(rejectIdFieldArray[i]);
-			// 排除sqlserver timestamp类型(update 2026-9-5
-			// 判据改按目标库元数据校准,规避oracle迁移场景误伤datetime2业务列)
+			// update 2026-9-5 排除sqlserver timestamp类型:判据按目标库元数据校准,规避oracle迁移场景误伤datetime2业务列
 			if (!(isMSsql && entityMeta.isRowVersionField(fieldMeta))) {
 				columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
 				if (meter > 0) {
@@ -1561,10 +1549,9 @@ public class DialectUtils {
 					sql.append("?");
 				} else {
 					String defaultColName = columnName;
-					// 注意这里nvl的逻辑是数据弹性修改，请不要随意去除
-					// update 2026-9-7 实测部分库的nvl/isnull对geometry/json类型对物理不支持
-					// (dm -5403参数不兼容/db2 -408值转换失败/ob 5083 Invalid data type/
-					// sqlserver udt转换不支持),这些库组合以coalesce包裹替代(实测coalesce接受
+					// update 2026-9-7 注意这里nvl的逻辑是数据弹性修改，请不要随意去除
+					// 实测部分库的nvl/isnull对geometry/json类型对物理不支持(dm -5403参数不兼容/db2 -408值转换失败/
+					// ob 5083 Invalid data type/sqlserver udt转换不支持),这些库组合以coalesce包裹替代(实测coalesce接受
 					// geometry/json类型对,null不覆盖原值语义完整保持);其余库沿用nullFunction
 					String wrapFunc = nullFunction;
 					// 直赋形态(不包裹null保持函数):部分库扩展类型无法参与类型合并
@@ -1577,12 +1564,10 @@ public class DialectUtils {
 						wrapFunc = "coalesce";
 					} else if (fieldMeta.getType() == JdbcTypes.VECTOR
 							&& (dbType == DBType.OCEANBASE || profile.isOceanBase())) {
-						// update 2026-9-10 ob 4.3.5实测vector列(ob内部为array类型)null保持包裹
-						// 全形态失败:coalesce(?,col)/coalesce(col,?)报"merge array with other type
-						// is not supported"(1235)、ifnull(col,?)报5083 Invalid data type、
-						// case when同报merge array、cast(? as vector)语法不支持——唯一可行形态为
-						// 直赋col=?(null将覆盖原值,ob vector更新的能力边界,与geometry/json的
-						// coalesce可行结论不同)
+						// update 2026-9-10 ob 4.3.5实测vector列(ob内部为array类型)null保持包裹全形态失败:coalesce(?,col)/coalesce(col,?)
+						// 报"merge array with other type is not supported"(1235)、ifnull(col,?)报5083 Invalid data type、
+						// case when同报merge array、cast(? as vector)语法不支持——唯一可行形态为直赋col=?(null将覆盖原值,
+						// ob vector更新的能力边界,与geometry/json的coalesce可行结论不同)
 						directAssign = true;
 					}
 					// 强调:这里必须要加类似nvl(?,col)模式，逻辑就是弹性修改(directAssign直赋形态除外)
@@ -1596,8 +1581,8 @@ public class DialectUtils {
 						if (dbType == DBType.DM) {
 							sql.append("DMGEO.ST_GeomFromText(?,0)");
 						} else if (dbType == DBType.DB2) {
-							// update 2026-9-10 按GSE探测+nativeType分派(12.1起内置引擎与GSE可并存,
-							// 纯版本分派会在GSE列上误选内置函数报-408),详见db2GeomFromTextWrap
+							// update 2026-9-10 按GSE探测+nativeType分派(12.1起内置引擎与GSE可并存,纯版本分派会在GSE列上误选内置函数报-408),
+							// 详见db2GeomFromTextWrap
 							sql.append(DialectExtUtils.db2GeomFromTextWrap(fieldMeta));
 						} else if (dbType == DBType.SQLSERVER) {
 							sql.append("geometry::STGeomFromText(?,0)");
@@ -1617,25 +1602,20 @@ public class DialectUtils {
 						if (dbType == DBType.OCEANBASE || profile.isOceanBase()) {
 							sql.append("?");
 						} else if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57) {
-							// update 2026-9-6 实测mysql 9.x的vector列update裸?+setString报
-							// 类型转换错误,以string_to_vector(?)包装
+							// update 2026-9-6 实测mysql 9.x的vector列update裸?+setString报类型转换错误,以string_to_vector(?)包装
 							sql.append("string_to_vector(?)");
 						} else if (dbType == DBType.GAUSSDB || dbType == DBType.VASTBASE) {
-							// update 2026-9-10 vastbase G100 3.0实测向量类型名为floatvector(无vector
-							// 别名),cast+外层nvl包裹两端同型,null不覆盖原值语义保持
-							// (nvl('[7,8,9]'::floatvector,v)实库验证可行);gaussdb企业版同型floatvector,
+							// update 2026-9-10 vastbase G100 3.0实测向量类型名为floatvector(无vector别名),cast+外层nvl包裹两端同型,
+							// null不覆盖原值语义保持(nvl('[7,8,9]'::floatvector,v)实库验证可行);gaussdb企业版同型floatvector,
 							// 与setVectorValue/OpenGaussDialectUtils既有分派对齐
 							sql.append("cast(? as floatvector)");
 						} else if (dbType == DBType.KINGBASE || dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB
 								|| dbType == DBType.STARDB) {
-							// update 2026-9-7 实测og7内核nvl/coalesce(?,vector)裸?绑定报"could not
-							// convert type vector to text"(unknown参数被内核降解为text),以cast产生
-							// 类型化表达式后nvl两端同型,null不覆盖原值语义完整保持(实库验证null更新
-							// 后原值保留,非null更新生效);kingbase(og同源内核)同型;
-							// update 2026-9-8 og同源内核mogdb/stardb统一纳入该分派
-							// update 2026-9-10 oscar摘除:驱动jar解包实证传统Oscar(com.oscar.Driver)为
-							// 老pgjdbc深度魔改衍生(默认Oracle兼容模式),非og同源内核,无vector类型
-							// 亦无PGobject同构类,cast(? as vector)必败,回归裸?+setString
+							// update 2026-9-10 og7内核nvl/coalesce(?,vector)裸?绑定报"could not convert type vector to text"(unknown参数被内核降解为text),
+							// 以cast产生类型化表达式后nvl两端同型,null不覆盖原值语义完整保持(实库验证null更新后原值保留,非null更新生效);
+							// kingbase(og同源内核)同型;og同源内核mogdb/stardb统一纳入该分派
+							// oscar摘除:驱动jar解包实证传统Oscar(com.oscar.Driver)为老pgjdbc深度魔改衍生(默认Oracle兼容模式),
+							// 非og同源内核,无vector类型亦无PGobject同构类,cast(? as vector)必败,回归裸?+setString
 							// (神通openGauss版走opengauss驱动识别为OPENGAUSS,不落本分派)
 							sql.append("cast(? as vector)");
 						} else {
@@ -1643,9 +1623,8 @@ public class DialectUtils {
 							sql.append("?");
 						}
 					} else if (fieldMeta.getType() == JdbcTypes.JSON || fieldMeta.getType() == JdbcTypes.JSONB) {
-						// update 2026-9-10 oscar摘除:传统Oscar无json类型(json数据以CLOB/VARCHAR列
-						// 承载,社区7.0.8实测),cast(? as json)必败,裸?+setString为正确形态
-						// (驱动jar解包实证非og同源内核,详见上方vector分派注释)
+						// update 2026-9-10 oscar摘除:传统Oscar无json类型(json数据以CLOB/VARCHAR列承载,社区7.0.8实测),cast(? as json)必败,
+						// 裸?+setString为正确形态(驱动jar解包实证非og同源内核,详见上方vector分派注释)
 						if (dbType == DBType.OPENGAUSS || dbType == DBType.GAUSSDB || dbType == DBType.VASTBASE
 								|| dbType == DBType.MOGDB || dbType == DBType.STARDB || dbType == DBType.KINGBASE) {
 							sql.append("cast(? as ").append((fieldMeta.getType() == JdbcTypes.JSONB) ? "jsonb" : "json")
@@ -1734,7 +1713,7 @@ public class DialectUtils {
 				decryptHandler = new DecryptHandler(sqlToyContext.getFieldsSecureProvider(),
 						entityMeta.getSecureColumns());
 			}
-			// 增加sql执行拦截器 update 2022-9-10
+			// update 2022-9-10 调用sql执行拦截器(doInterceptors)
 			sqlToyResult = doInterceptors(sqlToyContext, sqlToyConfig, OperateType.load, sqlToyResult,
 					entity.getClass(), profile);
 			QueryExecutorExtend extend = null;
@@ -1799,7 +1778,7 @@ public class DialectUtils {
 						if (cascadeModel.getCascadeType() == 1) {
 							BeanUtil.setProperty(result, cascadeModel.getProperty(), pkRefDetails);
 						} else {
-							// update 2022-5-18 增加oneToOne 级联数据校验
+							// update 2022-5-18 增加oneToOne级联数据校验
 							if (pkRefDetails.size() > 1) {
 								throw new DataAccessException("@OneToOne cascade query for entity ["
 										+ entityMeta.getEntityClass().getName() + "] returned size="
@@ -1912,7 +1891,7 @@ public class DialectUtils {
 				String sql = wrapLoadAll(entityMeta, idValues.size(), tableName, lockSqlHandler, lockMode, profile);
 				sqlToyResult = new SqlToyResult(sql, realValues);
 			}
-			// 增加sql执行拦截器 update 2022-9-10
+			// update 2022-9-10 调用sql执行拦截器(doInterceptors)
 			SqlToyConfig sqlToyConfig = new SqlToyConfig(DataSourceUtils.getDialect(dbType));
 			sqlToyConfig.setSqlType(SqlType.search);
 			sqlToyConfig.setSql(sqlToyResult.getSql());
@@ -1929,10 +1908,9 @@ public class DialectUtils {
 			if (entitySet == null || entitySet.isEmpty()) {
 				return entitySet;
 			}
-			// 按传入的集合顺序进行排序 update 2022-9-9 由网友夜孤城反馈
-			// update 2026-9-8 重排算法由双层循环逐条比对+ArrayList.remove(整体O(n²)~O(n³),
-			// 万级行明显劣化)改为主键组合键Map一次归位O(n);Arrays.asList的equals/hashCode
-			// 基于元素逐一比较,与原逐字段equals语义一致
+			// update 2026-9-8 按传入的集合顺序进行排序(网友夜孤城反馈);重排算法由双层循环逐条比对+ArrayList.remove(整体O(n²)~O(n³),
+			// 万级行明显劣化)改为主键组合键Map一次归位O(n);Arrays.asList的equals/hashCode基于元素逐一比较,
+			// 与原逐字段equals语义一致
 			List<Object[]> resultIds = BeanUtil.reflectBeansToInnerAry(entitySet, entityMeta.getIdArray(), null, null);
 			Map<List, Object> idEntityMap = new HashMap<>(entitySet.size() * 2);
 			for (int j = 0; j < resultIds.size(); j++) {
@@ -1996,7 +1974,7 @@ public class DialectUtils {
 						}
 						subTableSql.append(ReservedWordsUtil.convertSimpleSql(sql, dbType));
 					} else {
-						// 构造查询语句,update 2019-12-09 使用完整字段
+						// update 2019-12-09 构造查询语句,使用完整字段
 						subTableSql.append(ReservedWordsUtil.convertSimpleSql(mappedMeta.getLoadAllSql(), dbType))
 								.append(" where ");
 						String orderCols = "";
@@ -2321,9 +2299,9 @@ public class DialectUtils {
 					}
 				}
 			}
-			// 主键
-			// update 2026-9-14 值数组由reflectColumns(identity/sequence不赋主键时已排除主键)构造,
-			// 与末尾result回退处同源,同样需长度判定(explicit identity/sequence+generator的配置下越界)
+			// update 2026-9-14 主键
+			// 值数组由reflectColumns(identity/sequence不赋主键时已排除主键)构造,与末尾result回退处同源,
+			// 同样需长度判定(explicit identity/sequence+generator的配置下越界)
 			if (hasId && pkIndex < fullParamValues.length && StringUtil.isBlank(fullParamValues[pkIndex])) {
 				// id通过generator机制产生，设置generator产生的值
 				fullParamValues[pkIndex] = entityMeta.getIdGenerator().getId(entityMeta.getTableName(),
@@ -2354,9 +2332,9 @@ public class DialectUtils {
 		String realInsertSql = sqlToyResult.getSql();
 		SqlExecuteStat.showSql("single record insert", realInsertSql, null);
 		final Object[] paramValues = sqlToyResult.getParamsValue();
-		// update 2026-9-7 sqlserver的rowversion列在insert语句生成时已排除,绑定参数与类型需按reflectColumns
-		// 平行剔除,保持占位符与参数严格1:1(自SqlServerDialectUtils.save迁入;identity/sequence场景参数
-		// 按rejectId反射,类型与参数必须同源,不能直接用fieldsTypeArray)
+		// update 2026-9-7 sqlserver的rowversion列在insert语句生成时已排除,绑定参数与类型需按reflectColumns平行剔除,
+		// 保持占位符与参数严格1:1(自SqlServerDialectUtils.save迁入;identity/sequence场景参数按rejectId反射,
+		// 类型与参数必须同源,不能直接用fieldsTypeArray)
 		Object[] rowBindValues = paramValues;
 		Integer[] rowBindTypes = entityMeta.getFieldsTypeArray(true);
 		if (dbType != null && dbType.intValue() == DBType.SQLSERVER) {
@@ -2382,20 +2360,15 @@ public class DialectUtils {
 		}
 		final Object[] bindValues = rowBindValues;
 		final Integer[] bindTypes = rowBindTypes;
-		// update 2026-9-7 sqlserver的sequence主键通过select
-		// @mySeqVariable结果集回填,不能走getGeneratedKeys
-		// (自SqlServerDialectUtils.save迁入)
+		// update 2026-9-7 sqlserver的sequence主键通过select @mySeqVariable结果集回填,不能走getGeneratedKeys(自SqlServerDialectUtils.save迁入)
 		final boolean isMsSequence = (isSequence && dbType != null && dbType.intValue() == DBType.SQLSERVER);
-		// 对列提示形态prepareStatement即报"Error In Specifying Automatically (Server)
-		// Generated Keys"(serial裸列省略id的列提示取键可用、nvl包装不可用,真库实测),
-		// sequence改会话级currval回取(同hana模式:select seq.currval,同连接同会话可靠);
-		// update 2026-10-13 现行驱动(3.6.5.21)create sequence语法错,sequence策略在g8
-		// 下线(建序列即响亮报错),本分支为老驱动兼容残迹
-		// update 2026-9-11 hana:ngdbc拒绝一切generated-keys
-		// prepare形态(RETURN_GENERATED_KEYS与
-		// String[]列名数组均实测报not supported),identity/sequence主键回填改会话级取值:
-		// identity用CURRENT_IDENTITY_VALUE()(当前会话最近生成值),sequence用CURRVAL
-		// (当前会话最近nextval值),同连接同会话内取值可靠(SPS08实测)
+		// update 2026-9-11 对列提示形态prepareStatement即报"Error In Specifying Automatically (Server) Generated Keys"
+		// (serial裸列省略id的列提示取键可用、nvl包装不可用,真库实测),sequence改会话级currval回取
+		// (同hana模式:select seq.currval,同连接同会话可靠);现行驱动(3.6.5.21)create sequence语法错,
+		// sequence策略在g8下线(建序列即响亮报错),本分支为老驱动兼容残迹
+		// hana:ngdbc拒绝一切generated-keys prepare形态(RETURN_GENERATED_KEYS与String[]列名数组均实测报not supported),
+		// identity/sequence主键回填改会话级取值:identity用CURRENT_IDENTITY_VALUE()(当前会话最近生成值),
+		// sequence用CURRVAL(当前会话最近nextval值),同连接同会话内取值可靠(SPS08实测)
 		final boolean isHana = (dbType != null && dbType.intValue() == DBType.HANA);
 		PreparedStatement pst = null;
 		if ((isIdentity || (isSequence && !isMsSequence)) && !isHana) {
@@ -2415,8 +2388,7 @@ public class DialectUtils {
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
 				SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, profile, pst, bindValues, bindTypes, 0);
 				if (isMsSequence) {
-					// update 2026-9-14 与hana分支同步改try-with-resources:原形态next()抛异常时
-					// close()不执行
+					// update 2026-9-14 与hana分支同步改try-with-resources:原形态next()抛异常时close()不执行
 					try (ResultSet msKeyResult = pst.executeQuery()) {
 						if (msKeyResult != null) {
 							while (msKeyResult.next()) {
@@ -2428,9 +2400,8 @@ public class DialectUtils {
 				}
 				pst.execute();
 				if (isHana && (isIdentity || isSequence)) {
-					// hana会话级主键回填(ngdbc不支持getGeneratedKeys,详见isHana声明处注释)
-					// update 2026-9-14 keyPst改try-with-resources:原形态executeQuery/next异常时
-					// statement不关闭,池化连接上累积泄漏
+					// update 2026-9-14 hana会话级主键回填(ngdbc不支持getGeneratedKeys,详见isHana声明处注释)
+					// keyPst改try-with-resources:原形态executeQuery/next异常时statement不关闭,池化连接上累积泄漏
 					String hanaKeySql = isIdentity ? "select CURRENT_IDENTITY_VALUE() from dummy"
 							: "select " + entityMeta.getSequence() + ".CURRVAL from dummy";
 					try (PreparedStatement keyPst = conn.prepareStatement(hanaKeySql);
@@ -2440,8 +2411,7 @@ public class DialectUtils {
 						}
 					}
 				} else if (isIdentity || isSequence) {
-					// update 2026-9-14 与hana分支同步改try-with-resources:原形态next()抛异常时
-					// close()不执行
+					// update 2026-9-14 与hana分支同步改try-with-resources:原形态next()抛异常时close()不执行
 					try (ResultSet keyResult = pst.getGeneratedKeys()) {
 						if (keyResult != null) {
 							while (keyResult.next()) {
@@ -2479,8 +2449,7 @@ public class DialectUtils {
 				final String[] mappedFields = cascadeModel.getMappedFields();
 				final Object[] mappedFieldValues = BeanUtil.reflectBeanToAry(entity, cascadeModel.getFields());
 				subTableEntityMeta = sqlToyContext.getEntityMeta(cascadeModel.getMappedType());
-				// update 2026-9-7
-				// sqlserver的级联子表按目标库元数据校准rowversion判据(自SqlServerDialectUtils.save迁入)
+				// update 2026-9-7 sqlserver的级联子表按目标库元数据校准rowversion判据(自SqlServerDialectUtils.save迁入)
 				if (dbType != null && dbType.intValue() == DBType.SQLSERVER) {
 					SqlServerDialectUtils.ensureRowVersionMeta(sqlToyContext, conn, profile, null,
 							cascadeModel.getMappedType());
@@ -2550,7 +2519,7 @@ public class DialectUtils {
 		// 字段加密处理
 		handler = getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
-		// update 2022-7-16 增加了默认值代入
+		// update 2022-7-16 增加默认值代入
 		List<Object[]> paramValues = BeanUtil.reflectBeansToInnerAry(entities, reflectColumns,
 				SqlUtilsExt.getDefaultValues(entityMeta, true), handler);
 		// 标识符
@@ -2585,8 +2554,8 @@ public class DialectUtils {
 					}
 				}
 			}
-			// 主键值为null,调用主键生成策略并赋值
-			// update 2026-9-14 同上方save:值数组由reflectColumns构造,需长度判定防越界
+			// update 2026-9-14 主键值为null,调用主键生成策略并赋值
+			// 同上方save:值数组由reflectColumns构造,需长度判定防越界
 			if (hasId && pkIndex < rowData.length && StringUtil.isBlank(rowData[pkIndex])) {
 				rowData[pkIndex] = entityMeta.getIdGenerator().getId(entityMeta.getTableName(), signature,
 						relatedColumnNames, relatedColValue, null, entityMeta.getIdType(), entityMeta.getIdLength(),
@@ -2623,9 +2592,9 @@ public class DialectUtils {
 			realParams = CollectionUtil.arrayToList(sqlToyResult.getParamsValue());
 		}
 		SqlExecuteStat.showSql("batch save [" + realParams.size() + "] rows", realSql, null);
-		// update 2026-9-7 sqlserver的rowversion列在insert语句生成时已排除,绑定参数行与类型数组需按
-		// reflectColumns平行剔除,保持占位符与参数严格1:1(自SqlServerDialectUtils.saveAll迁入;
-		// identity/sequence场景参数本就按rejectId反射,类型必须与参数同源,不能直接用fieldsTypeArray)
+		// update 2026-9-7 sqlserver的rowversion列在insert语句生成时已排除,绑定参数行与类型数组需按reflectColumns平行剔除,
+		// 保持占位符与参数严格1:1(自SqlServerDialectUtils.saveAll迁入;identity/sequence场景参数本就按rejectId反射,
+		// 类型必须与参数同源,不能直接用fieldsTypeArray)
 		Integer[] bindTypes = entityMeta.getFieldsTypeArray(true);
 		List<Object[]> bindParams = realParams;
 		if (dbType != null && dbType.intValue() == DBType.SQLSERVER) {
@@ -2680,7 +2649,7 @@ public class DialectUtils {
 		// 字段加密处理
 		handler = getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
-		// update 2022-7-16 增加默认值代入,insert sql上去除了nvl(?,default) 适应一些框架
+		// update 2022-7-16 增加默认值代入,insert sql上去除了nvl(?,default),适应一些框架
 		List<Object[]> paramValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getFieldsArray(true),
 				SqlUtilsExt.getDefaultValues(entityMeta, true), handler);
 		// 是否存在业务ID
@@ -2746,8 +2715,8 @@ public class DialectUtils {
 			realParams = CollectionUtil.arrayToList(sqlToyResult.getParamsValue());
 		}
 		SqlExecuteStat.showSql("batch insert ignore existed records", realSql, null);
-		// update 2026-9-6 sqlserver的rowversion列在merge/insert语句生成时已按校准判据排除,
-		// 绑定参数行与类型数组需同步剔除该列,保持占位符与参数严格1:1(此前saveAllIgnoreExist路径遗漏)
+		// update 2026-9-6 sqlserver的rowversion列在merge/insert语句生成时已按校准判据排除,绑定参数行与类型数组需同步剔除该列,
+		// 保持占位符与参数严格1:1(此前saveAllIgnoreExist路径遗漏)
 		Integer[] bindTypes = entityMeta.getFieldsTypeArray(true);
 		if (dbType != null && dbType.intValue() == DBType.SQLSERVER) {
 			String[] fields = entityMeta.getFieldsArray(true);
@@ -2864,7 +2833,7 @@ public class DialectUtils {
 		sqlToyConfig.setSqlType(SqlType.update);
 		sqlToyConfig.setSql(updateSql);
 		sqlToyConfig.setParamsName(paramsName);
-		// 增加sql执行拦截器 update 2022-9-10
+		// update 2022-9-10 调用sql执行拦截器(doInterceptors)
 		sqlToyResult = doInterceptors(sqlToyContext, sqlToyConfig, OperateType.update, sqlToyResult, entity.getClass(),
 				profile);
 		return SqlUtil.executeSql(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(), sqlToyResult.getParamsValue(),
@@ -2925,8 +2894,7 @@ public class DialectUtils {
 			final String[] mappedFields = cascadeModel.getMappedFields();
 			final Object[] mappedFieldValues = BeanUtil.reflectBeanToAry(entity, cascadeModel.getFields());
 			subTableEntityMeta = sqlToyContext.getEntityMeta(cascadeModel.getMappedType());
-			// update 2026-9-7
-			// sqlserver的级联子表按目标库元数据校准rowversion判据(自SqlServerDialectUtils.update迁入)
+			// update 2026-9-7 sqlserver的级联子表按目标库元数据校准rowversion判据(自SqlServerDialectUtils.update迁入)
 			if (dbType != null && dbType.intValue() == DBType.SQLSERVER) {
 				SqlServerDialectUtils.ensureRowVersionMeta(sqlToyContext, conn, profile, null,
 						cascadeModel.getMappedType());
@@ -2954,7 +2922,7 @@ public class DialectUtils {
 				sqlToyConfig.setSqlType(SqlType.update);
 				sqlToyConfig.setSql(cascadeModel.getCascadeUpdateSql());
 				sqlToyConfig.setParamsName(mappedFields);
-				// 增加sql执行拦截器 update 2022-9-10
+				// update 2022-9-10 调用sql执行拦截器(doInterceptors)
 				sqlToyResult = doInterceptors(sqlToyContext, sqlToyConfig, OperateType.execute, sqlToyResult,
 						cascadeModel.getMappedType(), profile);
 				SqlUtil.executeSql(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(), sqlToyResult.getParamsValue(),
@@ -2967,17 +2935,16 @@ public class DialectUtils {
 				SqlExecuteStat.debug("cascade update sub table", null);
 				// 回写关联字段赋值
 				BeanUtil.batchSetProperties(subTableData, mappedFields, mappedFieldValues, true);
-				// update 2020-07-30,针对mysql和postgresql、sqlite常用数据库做针对性处理
-				// 这里需要进行修改,mysql\postgresql\sqlite 等存在缺陷(字段值不为null时会报错)
+				// update 2020-07-30 针对mysql和postgresql、sqlite常用数据库做针对性处理:这些库存在缺陷(字段值不为null时会报错),
+				// 这里需要进行修改
 				if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.TIDB
 						|| dbType == DBType.DORIS || dbType == DBType.STARROCKS) {
 					mysqlSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, null, forceUpdateProps, conn,
 							profile);
 				} else if (dbType == DBType.POSTGRESQL14 || dbType == DBType.HIGHGO) {
-					// update 2026-10-12 补HIGHGO:PG12内核无merge(级联子表merge真库报
-					// syntax error at or near "merge"),走pg14形态update+saveIgnore兜底
-					// (与PostgreSqlDialect.saveOrUpdateAll的HIGHGO兜底同因;此静态调用
-					// 不经方言虚分派,须在此显式分派)
+					// update 2026-10-12 补HIGHGO:PG12内核无merge(级联子表merge真库报syntax error at or near "merge"),
+					// 走pg14形态update+saveIgnore兜底(与PostgreSqlDialect.saveOrUpdateAll的HIGHGO兜底同因;
+					// 此静态调用不经方言虚分派,须在此显式分派)
 					postgres14SaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, null, forceUpdateProps,
 							conn, profile);
 				} else if (dbType == DBType.OCEANBASE) {
@@ -3003,9 +2970,8 @@ public class DialectUtils {
 		return updateCnt;
 	}
 
-	// update 2020-07-30
-	// update 级联操作时，子表会涉及saveOrUpdateAll动作,而mysql和postgresql 对应的
-	// ON DUPLICATE KEY UPDATE 当字段为非空时报错，因此需特殊处理
+	// update 2020-07-30 级联操作时,子表会涉及saveOrUpdateAll动作,而mysql和postgresql对应的ON DUPLICATE KEY UPDATE
+	// 当字段为非空时报错,因此需特殊处理
 	private static void mysqlSaveOrUpdateAll(SqlToyContext sqlToyContext, final EntityMeta entityMeta, List<?> entities,
 			ReflectPropsHandler reflectPropsHandler, final String[] forceUpdateFields, Connection conn,
 			DBProfile profile) throws Exception {
@@ -3014,11 +2980,10 @@ public class DialectUtils {
 		final String tableName = entityMeta.getSchemaTable(null, dbType);
 		Long updateCnt = updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropsHandler, conn,
 				profile, null, tableName, true);
-		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
-		// update 2026-9-14
-		// 与MySqlDialect.saveOrUpdateAll(2026-9-10修复)同步豁免oceanbase:ob按mysql
-		// 方言配置时dbType为MYSQL从本方法进入,其驱动批量计数失真会把待新增行判为已修改而跳过insert,
-		// 级联子表静默丢行;真mysql计数精确保留判据,SR/Doris计数可靠且判据跳过为其null保持语义所需
+		// update 2026-9-14 如果修改的记录数量跟总记录数量一致,表示全部是修改
+		// 与MySqlDialect.saveOrUpdateAll同步豁免oceanbase:ob按mysql方言配置时dbType为MYSQL从本方法进入,
+		// 其驱动批量计数失真会把待新增行判为已修改而跳过insert,级联子表静默丢行;
+		// 真mysql计数精确保留判据,SR/Doris计数可靠且判据跳过为其null保持语义所需
 		if (updateCnt >= entities.size() && !profile.isOceanBase()) {
 			logger.debug("updated records of the cascade sub table{} is:{}", tableName, updateCnt);
 			return;
@@ -3027,8 +2992,8 @@ public class DialectUtils {
 		boolean isAssignPK = MySqlDialectUtils.allowAssignPKValue(entityMeta.getIdStrategy(), profile);
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), profile, entityMeta,
 				entityMeta.getIdStrategy(), "NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName);
-		// update 2026-9-14 与DorisDialect.saveAllIgnoreExist(2026-9-6修复)同步:SR/Doris不支持
-		// insert ignore语法(报Unexpected input 'ignore'),其PK/UNIQUE模型insert即整行upsert无需前缀
+		// update 2026-9-14 与DorisDialect.saveAllIgnoreExist同步:SR/Doris不支持insert ignore语法(报Unexpected input 'ignore'),
+		// 其PK/UNIQUE模型insert即整行upsert无需前缀
 		if (dbType != DBType.DORIS && dbType != DBType.STARROCKS) {
 			insertSql = insertSql.replaceFirst("(?i)insert ", "insert ignore ");
 		}
@@ -3170,7 +3135,7 @@ public class DialectUtils {
 				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
 		List<Object[]> paramsValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getFieldsArray(true), null,
 				handler);
-		// 批量回写update公共属性值(update 2026-1-20 移到判主键为null前面，避免数据被移除回写无法对应)
+		// update 2026-1-20 批量回写update公共属性值(移到判主键为null前面,避免数据被移除回写无法对应)
 		BeanUtil.batchBackWriteUnifyFields(entities,
 				BeanUtil.getUnifyFieldIndex(sqlToyContext.getUnifyFieldsHandler(), entityMeta.getFieldsArray(true), 2),
 				paramsValues);
@@ -3328,7 +3293,7 @@ public class DialectUtils {
 					sqlToyConfig.setSql(cascadeModel.getDeleteSubTableSql());
 					sqlToyConfig.setParamsName(cascadeModel.getFields());
 					SqlToyResult sqlToyResult = new SqlToyResult(cascadeModel.getDeleteSubTableSql(), mainFieldValues);
-					// 增加sql执行拦截器 update 2022-9-10
+					// update 2022-9-10 调用sql执行拦截器(doInterceptors)
 					sqlToyResult = doInterceptors(sqlToyContext, sqlToyConfig, OperateType.deleteAll, sqlToyResult,
 							cascadeModel.getMappedType(), profile);
 					SqlUtil.executeSql(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(),
@@ -3344,7 +3309,7 @@ public class DialectUtils {
 		sqlToyConfig.setSql(deleteSql);
 		sqlToyConfig.setParamsName(entityMeta.getIdArray());
 		SqlToyResult sqlToyResult = new SqlToyResult(deleteSql, idValues);
-		// 增加sql执行拦截器 update 2022-9-10
+		// update 2022-9-10 调用sql执行拦截器(doInterceptors)
 		sqlToyResult = doInterceptors(sqlToyContext, sqlToyConfig, OperateType.delete, sqlToyResult, entity.getClass(),
 				profile);
 		return SqlUtil.executeSql(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(), sqlToyResult.getParamsValue(),
@@ -3594,10 +3559,10 @@ public class DialectUtils {
 			}
 			// 取出符合条件的2条记录
 			String queryStr = uniqueSqlHandler.process(entityMeta, realParamNamed, tableName, 2);
-			// update 2023-3-5 优化参数值为null场景，构造成paramName is null
+			// update 2023-3-5 优化参数值为null场景,构造成paramName is null
 			SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(queryStr, realParamNamed, paramValues,
 					profile.getDialect());
-			// 增加sql执行拦截器 update 2022-9-10
+			// update 2022-9-10 调用sql执行拦截器(doInterceptors)
 			SqlToyConfig sqlToyConfig = new SqlToyConfig(DataSourceUtils.getDialect(dbType));
 			sqlToyConfig.setSqlType(SqlType.search);
 			sqlToyConfig.setSql(queryStr);
@@ -4039,9 +4004,8 @@ public class DialectUtils {
 					}
 					if (value != null) {
 						contents = value.toString();
-						// update 2026-9-14 判据与读取侧DecryptHandler统一为StringUtil.isBlank(等价trim判空):
-						// 空白(含纯空格)不加密、保持原值落库;原形态!"".equals(contents)只挡空串,导致纯空格被
-						// 加密而读取侧又不解密,两侧对"空白"的处理漂移
+						// update 2026-9-14 判据与读取侧DecryptHandler统一为StringUtil.isBlank(等价trim判空):空白(含纯空格)不加密、保持原值落库;
+						// 原形态仅按空串判断只挡空串,导致纯空格被加密而读取侧又不解密,两侧对"空白"的处理漂移
 						if (!StringUtil.isBlank(contents)) {
 							// 加密
 							if (SecureType.ENCRYPT.equals(config.getSecureType())) {

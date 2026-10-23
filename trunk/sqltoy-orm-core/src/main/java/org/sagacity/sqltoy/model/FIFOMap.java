@@ -69,10 +69,9 @@ public class FIFOMap<K, V> extends LinkedHashMap<K, V> {
 		return size() > maxCapacity;
 	}
 
-	// update 2026-9-8 增加线程安全:该Map用于缓存翻译的动态缓存(见FIFODynamicFetchCacheManager),
-	// 被结果集翻译热路径多线程并发get/put;accessOrder=true时get也会将节点移到尾部(结构性修改),
-	// LinkedHashMap非线程安全,并发读写可致条目丢失、链表损坏甚至死循环。put内部回调的
-	// removeEldestEntry/size为synchronized可重入调用,无死锁风险
+	// update 2026-9-8 增加线程安全:该Map用于缓存翻译的动态缓存(见FIFODynamicFetchCacheManager),被结果集翻译热路径多线程并发get/put;
+	// accessOrder=true时get也会将节点移到尾部(结构性修改),LinkedHashMap非线程安全,并发读写可致条目丢失、链表损坏甚至死循环;
+	// put内部回调的removeEldestEntry/size为synchronized可重入调用,无死锁风险
 	@Override
 	public synchronized V get(Object key) {
 		return super.get(key);

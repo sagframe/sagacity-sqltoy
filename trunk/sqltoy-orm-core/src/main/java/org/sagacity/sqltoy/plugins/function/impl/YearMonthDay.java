@@ -42,9 +42,7 @@ public class YearMonthDay extends IFunction {
 		// dayofmonth(mysql/db2/h2原生)语义与day完全一致,归一为day处理
 		String part = "dayofmonth".equals(source) ? "day" : source;
 		boolean hms = "hour".equals(part) || "minute".equals(part) || "second".equals(part);
-		// mysql系(含OB)全部分量原生;db2/h2/ch全部分量原生(YEAR/MONTH/DAY/DAYOFMONTH/
-		// HOUR/MINUTE/SECOND均原生);dm的year/month/day原生(10-11真库实测dm.year)
-		// update 2026-10-12 GBase 8s:year()/month()/day()原生(真库探针)
+		// update 2026-10-12 mysql系(含OB)全部分量原生;db2/h2/ch全部分量原生(YEAR/MONTH/DAY/DAYOFMONTH/HOUR/MINUTE/SECOND均原生);dm的year/month/day原生(10-11真库实测dm.year)
 		if (dialect == DBType.MYSQL || dialect == DBType.MYSQL57 || dialect == DBType.TIDB || dialect == DBType.DORIS
 				|| dialect == DBType.STARROCKS || dialect == DBType.OCEANBASE || dialect == DBType.DB2
 				|| dialect == DBType.H2 || dialect == DBType.CLICKHOUSE) {

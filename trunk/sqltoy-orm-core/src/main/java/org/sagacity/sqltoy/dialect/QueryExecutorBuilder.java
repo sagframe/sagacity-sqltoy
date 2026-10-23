@@ -88,8 +88,7 @@ public class QueryExecutorBuilder {
 				&& !BeanUtil.isBaseDataType(extend.paramsValue[0].getClass())) {
 			fullParamValues = BeanUtil.reflectBeanToAry(extend.paramsValue[0], fullParamNames);
 		} else {
-			// update 2023-06-11,兼容查询:names("xxx").values(new Object[]{}),单个参数名，传递的值是数组特殊场景
-			// 校验条件参数合法性(排除参数名称长度为1，数据长度>1)
+			// update 2023-06-11 兼容查询:names("xxx").values(new Object[]{}),单个参数名,传递的值是数组特殊场景;校验条件参数合法性(排除参数名称长度为1，数据长度>1)
 			if (paramsNameSize != paramsValueSize && !(paramsNameSize == 1 && paramsValueSize > 1)) {
 				throw new IllegalArgumentException("param names size [" + paramsNameSize
 						+ "] does not match param values size [" + paramsValueSize + "], please check!");
@@ -435,7 +434,7 @@ public class QueryExecutorBuilder {
 		if (argCount > 0) {
 			// 验证传参数量合法性
 			int valuesSize = (queryExecutorExtend.paramsValue == null) ? 0 : queryExecutorExtend.paramsValue.length;
-			// update 2022-7-18 增强单? 且为in (?) 模式传参兼容性处理
+			// update 2022-7-18 增强单参且为in (?) 模式传参兼容性处理
 			if (argCount == 1 && valuesSize > 1
 					&& StringUtil.matches(sqlToyConfig.getSql(), SqlConfigParseUtils.IN_PATTERN)) {
 				queryExecutorExtend.paramsValue = new Object[] { queryExecutorExtend.paramsValue };

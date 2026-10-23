@@ -56,14 +56,14 @@ public class SqlWithAnalysis implements Serializable {
 	private List<String[]> withSqlSet = null;
 
 	/**
-	 * update 2026-10-19 dbType感知剔除开关:经SqlWithAnalysis(sql,dbType)构造且目标库不支持CTE
-	 * 物化hint时置位,parse()对各CTE的ext区域(as与'('之间文本)做位置级剔除;单参构造恒为false, 解析行为与历史版本完全一致
+	 * update 2026-10-19 dbType感知剔除开关:经SqlWithAnalysis(sql,dbType)构造且目标库不支持CTE物化hint时置位,
+	 * parse()对各CTE的ext区域(as与'('之间文本)做位置级剔除;单参构造恒为false,解析行为与历史版本完全一致
 	 */
 	private final boolean stripMaterialized;
 
 	/**
-	 * update 2026-10-19 位置级剔除后的完整sql:headSql+各CTE定义(ext剔除后)+最终tailSql恰为 "
-	 * "+原sql的完整拼接,去掉首部补位空格即得;未启用剔除或无with时为null,getAdaptedSql回退原sql
+	 * update 2026-10-19 位置级剔除后的完整sql:headSql+各CTE定义(ext剔除后)+最终tailSql恰为" "+原sql的完整拼接,
+	 * 去掉首部补位空格即得;未启用剔除或无with时为null,getAdaptedSql回退原sql
 	 */
 	private String adaptedSql;
 
@@ -157,8 +157,8 @@ public class SqlWithAnalysis implements Serializable {
 		String ext;
 		String cteDef;
 		StringBuilder withSqlBuffer = null;
-		// update 2026-10-19 dbType感知位置级剔除载体:收集headSql+各CTE定义(ext剔除后),与最终
-		// tailSql拼出剔除后的完整sql;未启用剔除时为null,解析走原路径零变化
+		// update 2026-10-19 dbType感知位置级剔除载体:收集headSql+各CTE定义(ext剔除后),与最终tailSql拼出剔除后的完整sql;
+		// 未启用剔除时为null,解析走原路径零变化
 		StringBuilder adaptedBuffer = stripMaterialized ? new StringBuilder() : null;
 		// 单个with
 		Matcher withAsMatcher = SqlToyConstants.withPattern.matcher(maskedTailSql);
@@ -198,15 +198,14 @@ public class SqlWithAnalysis implements Serializable {
 			}
 			parenIdx = groupStr.indexOf("(", asIndex);
 			ext = groupStr.substring(asIndex + 2, parenIdx);
-			// update 2026-9-3 findBodyEnd替代
+			// update 2026-9-3 findBodyEnd替代原getSymMarkIndex配对
 			// endWith = StringUtil.getSymMarkIndex("(", ")", tailSql, withAsMatcher.start()
 			// + asIndex);
 			endWith = findBodyEnd(tailSql, withAsMatcher.start() + asIndex);
 			cteDef = tailSql.substring(withAsMatcher.start() + 1, endWith + 1);
-			// update 2026-10-19 ext位置级剔除:cteDef较groupStr超前1字符(跳过匹配前导\W),ext在
-			// cteDef内起止为[asIndex+1,parenIdx-1);ext确含materialized才整段换单空格(withPattern
-			// 仅允许as与'('间0~2个单词以承载[not] materialized,ext即物化hint唯一合法位置,
-			// 派生表别名/字面量文本不在ext内,绝无误伤),withSqlSet同步存剔除后ext
+			// update 2026-10-19 ext位置级剔除:cteDef较groupStr超前1字符(跳过匹配前导\W),ext在cteDef内起止为[asIndex+1,parenIdx-1);
+			// ext确含materialized才整段换单空格(withPattern仅允许as与'('间0~2个单词以承载[not] materialized,
+			// ext即物化hint唯一合法位置,派生表别名/字面量文本不在ext内,绝无误伤),withSqlSet同步存剔除后ext
 			if (adaptedBuffer != null) {
 				adaptedBuffer.append(headSql);
 				if (StringUtil.indexOfIgnoreCase(ext, "materialized") != -1) {
@@ -251,13 +250,13 @@ public class SqlWithAnalysis implements Serializable {
 			}
 			parenIdx = groupStr.indexOf("(", asIndex);
 			ext = groupStr.substring(asIndex + 2, parenIdx);
-			// update 2026-9-3 findBodyEnd替代
+			// update 2026-9-3 findBodyEnd替代原getSymMarkIndex配对
 			// endWith = StringUtil.getSymMarkIndex("(", ")", tailSql, otherMatcher.start()
 			// + asIndex);
 			endWith = findBodyEnd(tailSql, otherMatcher.start() + asIndex);
 			cteDef = tailSql.substring(0, endWith + 1);
-			// update 2026-10-19 ext位置级剔除:循环CTE的groupStr与cteDef同以0起(otherMatcher.start()
-			// 恒为0,否则已break),ext在cteDef内起止无偏移:[asIndex+2,parenIdx)
+			// update 2026-10-19 ext位置级剔除:循环CTE的groupStr与cteDef同以0起(otherMatcher.start()恒为0,否则已break),
+			// ext在cteDef内起止无偏移:[asIndex+2,parenIdx)
 			if (adaptedBuffer != null) {
 				if (StringUtil.indexOfIgnoreCase(ext, "materialized") != -1) {
 					ext = " ";
@@ -310,12 +309,12 @@ public class SqlWithAnalysis implements Serializable {
 	}
 
 	/**
-	 * update 2026-10-18 目标库是否支持CTE物化hint(AS [NOT] MATERIALIZED)。该语法为PostgreSQL
-	 * 12+引入,同内核衍生库openGauss/金仓/Vastbase/瀚高经本次docker真库实测均支持;GAUSSDB与
-	 * openGauss同内核(verify矩阵gaussdb档案即连opengauss容器),随openGauss实测一并收录。其余库
-	 * (mysql/tidb/sqlserver/oracle/db2/dm/hana/clickhouse等,实测mysql9.3/tidb8.5/mssql2025混入
-	 * 即报语法错误)不支持。白名单保守只收录已实测(或同内核已实测)支持的库,未收录库一律剔除hint
-	 * (仅失去物化优化、不改变查询语义,绝不会因关键字报错);MOGDB/STARDB等openGauss/PG衍生库待 真库实测后可补入
+	 * update 2026-10-18 目标库是否支持CTE物化hint(AS [NOT] MATERIALIZED)。该语法为PostgreSQL 12+引入,
+	 * 同内核衍生库openGauss/金仓/Vastbase/瀚高经docker真库实测均支持;GAUSSDB与openGauss同内核
+	 * (verify矩阵gaussdb档案即连opengauss容器),随openGauss实测一并收录。其余库
+	 * (mysql/tidb/sqlserver/oracle/db2/dm/hana/clickhouse等,实测mysql9.3/tidb8.5/mssql2025混入即报语法错误)不支持。
+	 * 白名单保守只收录已实测(或同内核已实测)支持的库,未收录库一律剔除hint(仅失去物化优化、不改变查询语义,
+	 * 绝不会因关键字报错);MOGDB/STARDB等openGauss/PG衍生库待真库实测后可补入
 	 *
 	 * @param dbType DBType常量
 	 * @return true表示支持,应保留hint
@@ -336,13 +335,12 @@ public class SqlWithAnalysis implements Serializable {
 	}
 
 	/**
-	 * update 2026-10-18(2026-10-19改解析器位置级剔除) 按目标库类型保留/剔除CTE物化hint。
-	 * 支持库(PG系)原样返回;不支持库将 "AS [NOT] MATERIALIZED ("改写为"AS (",规避混入PG专有关键字
-	 * 导致的执行报错。剔除复用parse()的CTE精确定位:ext(as与'('之间文本,withPattern仅允许其承载 0~2个单词即[not]
-	 * materialized)是物化hint的唯一合法位置,仅当ext确含materialized才做位置级
-	 * 替换——派生表别名(非CTE,不进withSqlSet)、字面量文本(findBodyEnd括号配对已规避)绝不会被
-	 * 误剔,无正则启发式。不含materialized关键字时走零开销快速通道。剔除只移除优化hint、不改变
-	 * CTE查询语义,对不支持库本就无物化概念,行为等价于用户未写hint
+	 * update 2026-10-18 按目标库类型保留/剔除CTE物化hint。支持库(PG系)原样返回;不支持库将"AS [NOT] MATERIALIZED ("改写为"AS (",
+	 * 规避混入PG专有关键字导致的执行报错。剔除复用parse()的CTE精确定位:ext(as与'('之间文本,
+	 * withPattern仅允许其承载0~2个单词即[not] materialized)是物化hint的唯一合法位置,仅当ext确含materialized
+	 * 才做位置级替换——派生表别名(非CTE,不进withSqlSet)、字面量文本(findBodyEnd括号配对已规避)绝不会被误剔,无正则启发式。
+	 * 不含materialized关键字时走零开销快速通道。剔除只移除优化hint、不改变CTE查询语义,
+	 * 对不支持库本就无物化概念,行为等价于用户未写hint
 	 *
 	 * @param sql    原始sql(可为整条语句或with片段)
 	 * @param dbType 目标库类型(DBType常量)

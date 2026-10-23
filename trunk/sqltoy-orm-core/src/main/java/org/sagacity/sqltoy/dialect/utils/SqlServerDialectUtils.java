@@ -54,19 +54,18 @@ public class SqlServerDialectUtils {
 	private static final Pattern TABLE_LOCK_HINT_PATTERN = Pattern
 			.compile("(?i)\\b(rowlock|xlock|updlock|holdlock|nolock|readpast|paglock|tablock|tablockx)\\b");
 
-	// update 2026-9-17 offset分页子句匹配(word边界):规避row_offset/offset_id等标识符子串
-	// 以及字面量/别名声明的"offset"被误判为已有分页(修复前contains("offset")子串误判,
-	// 跳过offset 0 rows追加后派生表内order by报"The ORDER BY clause is invalid..."语法错误)
+	// update 2026-9-17 offset分页子句匹配(word边界):规避row_offset/offset_id等标识符子串,以及字面量/别名声明的"offset"被误判为已有分页
+	// (原contains("offset")子串误判,跳过offset 0 rows追加后派生表内order by报"The ORDER BY clause is invalid..."语法错误)
 	private static final Pattern OFFSET_PATTERN = Pattern.compile("(?i)\\boffset\\b");
 
 	/**
 	 * update 2026-9-17 派生表内层SQL合法性处理:mssql要求派生表(子查询)内的order by必须伴随
 	 * top/offset,否则报"The ORDER BY clause is invalid in views, inline functions,
 	 * derived tables, subqueries...";内层存在top级order by且自身无offset分页时,末尾追加offset 0
-	 * rows (offset 0不增删行,随机取数等场景最终行序由外层order by决定);已有offset时不可重复追加
+	 * rows(offset 0不增删行,随机取数等场景最终行序由外层order by决定);已有offset时不可重复追加
 	 * (双offset语法错误);无order by的裸union派生表本已合法,且OFFSET语法必须跟随order by,
-	 * 同样不可追加。判定经clearDisturbSql掩码字面量并剔除括号内容,规避字面量内'order by'/ 'offset'及子查询内order
-	 * by的干扰;offset判定使用word边界正则,避免row_offset/offset_id 等标识符子串误判为已有分页
+	 * 同样不可追加。判定经clearDisturbSql掩码字面量并剔除括号内容,规避字面量内'order by'/'offset'及子查询内order
+	 * by的干扰;offset判定使用word边界正则,避免row_offset/offset_id等标识符子串误判为已有分页
 	 *
 	 * @param innerSql 待放入派生表的内层sql
 	 * @return 合法化后的内层sql(需追加时末尾带" offset 0 rows")
@@ -548,8 +547,7 @@ public class SqlServerDialectUtils {
 					while (rs.next()) {
 						TableMeta tableMeta = new TableMeta();
 						tableMeta.setTableName(rs.getString("TABLE_NAME"));
-						// update 2026-9-11 sysobjects.xtype为CHAR(2),视图值'V '带尾随空格,
-						// 原"V".equals恒不命中致视图被归为TABLE(sqlserver2022实测),trim后判型
+						// update 2026-9-11 sysobjects.xtype为CHAR(2),视图值'V '带尾随空格,原"V".equals恒不命中致视图被归为TABLE(sqlserver2022实测),trim后判型
 						String rawType = rs.getString("TABLE_TYPE");
 						if (rawType != null) {
 							rawType = rawType.trim();

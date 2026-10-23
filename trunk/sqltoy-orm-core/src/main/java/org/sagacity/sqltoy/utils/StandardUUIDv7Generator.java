@@ -217,11 +217,10 @@ public final class StandardUUIDv7Generator {
 	}
 
 	/**
-	 * 生成 64 位安全随机数
+	 * update 2026-9-14 生成 64 位安全随机数
 	 * 
-	 * update 2026-9-14 原实现共用静态ByteBuffer并以synchronized(RANDOM_BYTE_BUFFER)串行化:
-	 * 该锁覆盖"写入+读取"整段,是所有线程产生ID时的全局串行点;改为方法内局部byte[8],
-	 * 去掉对外层锁与共享可变缓冲区的依赖(SecureRandom.nextBytes本身线程安全)
+	 * 原实现共用静态ByteBuffer并以synchronized(RANDOM_BYTE_BUFFER)串行化,锁覆盖「写入+读取」整段,
+	 * 是所有线程产生ID时的全局串行点;改为方法内局部byte[8],去掉对外层锁与共享可变缓冲区依赖(SecureRandom.nextBytes本身线程安全)
 	 * 
 	 * @return 64 位随机数
 	 */

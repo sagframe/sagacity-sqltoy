@@ -103,12 +103,11 @@ public class DefaultDialectUtils {
 		}
 		// 给原始sql标记上特殊的开始和结尾，便于sql拦截器快速定位到原始sql并进行条件补充
 		innerSql = SqlUtilsExt.markOriginalSql(innerSql);
-		// update 2026-9-10 移除sag_row_number随机列,改派生表+order by rand():原形态将随机列
-		// 混入结果集(注入形态居首/包裹形态亦含),单值映射(findRandom的resultType=String/Long
-		// 等按第1列取值)读到随机数而非业务列,多列行更触发ArrayList cannot be cast(mysql系
-		// 实测);order by rand() limit n为mysql/clickhouse/impala系取随机行的标准形态,结果集
-		// 与原始sql列完全一致,VO/Map映射也不再混入sag_row_number键;派生表包裹天然中和
-		// 内层order by/union(原hasOrderByOrUnion双分支统一为单一包裹形态)
+		// update 2026-9-10 移除sag_row_number随机列,改派生表+order by rand():原形态将随机列混入结果集(注入形态居首/
+		// 包裹形态亦含),单值映射(findRandom的resultType=String/Long等按第1列取值)读到随机数而非业务列,
+		// 多列行更触发ArrayList cannot be cast(mysql系实测);order by rand() limit n为mysql/clickhouse/
+		// impala系取随机行的标准形态,结果集与原始sql列完全一致,VO/Map映射也不再混入sag_row_number键;
+		// 派生表包裹天然中和内层order by/union(原hasOrderByOrUnion双分支统一为单一包裹形态)
 		sql.append("select " + SqlToyConstants.INTERMEDIATE_TABLE1 + ".* from (");
 		sql.append(innerSql);
 		sql.append(" )  as " + SqlToyConstants.INTERMEDIATE_TABLE1);
@@ -297,7 +296,7 @@ public class DefaultDialectUtils {
 			}
 			sqlToyResult = SqlConfigParseUtils.processSql(deleteSql.toString(), null, realValues, profile.getDialect());
 		}
-		// 增加sql执行拦截器 update 2022-9-10
+		// update 2022-9-10 增加sql执行拦截器
 		SqlToyConfig sqlToyConfig = new SqlToyConfig(DataSourceUtils.getDialect(dbType));
 		sqlToyConfig.setSqlType(SqlType.delete);
 		sqlToyConfig.setSql(sqlToyResult.getSql());
@@ -379,7 +378,7 @@ public class DefaultDialectUtils {
 		// 组织select * from table for update 语句
 		SqlToyResult queryParam = wrapFetchSql(entityMeta, profile, whereFields, whereParamValues, tableName,
 				lockWaitTimeout);
-		// 增加sql执行拦截器 update 2022-9-10
+		// update 2022-9-10 增加sql执行拦截器
 		queryParam = DialectUtils.doInterceptors(sqlToyContext, null, OperateType.singleTable, queryParam,
 				entity.getClass(), profile);
 		SqlExecuteStat.showSql("execute lock records query", queryParam.getSql(), queryParam.getParamsValue());
@@ -408,9 +407,9 @@ public class DefaultDialectUtils {
 		}
 		final String usfReReadSql = reReadSqlB.toString();
 		final String[] usfReReadProps = usfLocatorProps;
-		// 可编辑结果集
-		// update 2026-9-14 DM驱动FORWARD_ONLY+UPDATABLE组合prepare即报-2123无效cursor
-		// name(真库实测),SCROLL_INSENSITIVE+UPDATABLE可用(updateRow正常落库);其余库维持FORWARD_ONLY
+		// update 2026-9-14 可编辑结果集
+		// DM驱动FORWARD_ONLY+UPDATABLE组合prepare即报-2123无效cursor name(真库实测),
+		// SCROLL_INSENSITIVE+UPDATABLE可用(updateRow正常落库);其余库维持FORWARD_ONLY
 		int usfRsType = (dbType == DBType.DM) ? ResultSet.TYPE_SCROLL_INSENSITIVE : ResultSet.TYPE_FORWARD_ONLY;
 		PreparedStatement pst = conn.prepareStatement(queryParam.getSql(), usfRsType, ResultSet.CONCUR_UPDATABLE);
 		// 设置全局statementTimeout，默认为null
@@ -627,8 +626,8 @@ public class DefaultDialectUtils {
 			return entity;
 		}
 		List rowList = (List) updateResult.get(0);
-		// 覆盖返回值
-		// update 2026-9-10 传入字段注解的jdbcType:回读行值已归一为文本形态(json列=String),
+		// update 2026-9-10 覆盖返回值
+		// 传入字段注解的jdbcType:回读行值已归一为文本形态(json列=String),
 		// 原OTHER类型转换不触发json→POJO/List反序列化,String直设对象属性报argument type
 		// mismatch(vastbase G100真库updateSaveFetch的json对象列实爆,vector/geometry属性同理受益)
 		String[] overrideFields = entityMeta.getFieldsArray(false);
@@ -675,7 +674,7 @@ public class DefaultDialectUtils {
 			}
 			columnName = entityMeta.getColumnName(field);
 			sql.append(ReservedWordsUtil.convertWord(columnName, dbType));
-			// update 2024-8-7 rabbit 反馈,条件值为null的场景
+			// update 2024-8-7 条件值为null的场景(rabbit反馈)
 			if (whereParamValues[index] == null) {
 				sql.append(" is null ");
 			} else {
@@ -1102,7 +1101,7 @@ public class DefaultDialectUtils {
 
 	/**
 	 * update 2026-9-11 oceanbase专用:直查information_schema.tables获取表元数据(规避驱动
-	 * getTables将TABLE_COMMENT预先toString为"[B@hash"的构造缺陷),TABLE_TYPE按JDBC惯例 归一(BASE
+	 * getTables将TABLE_COMMENT预先toString为"[B@hash"的构造缺陷),TABLE_TYPE按JDBC惯例归一(BASE
 	 * TABLE→TABLE);表名匹配语义与默认实现一致(无%时按contains包裹)
 	 *
 	 * @param conn             数据库连接
@@ -1161,7 +1160,7 @@ public class DefaultDialectUtils {
 	}
 
 	/**
-	 * update 2026-9-13 行级锁for update语句模板(收编各方言类私有的getLockSql拷贝): 差异点参数化——是否含skip
+	 * update 2026-9-13 行级锁for update语句模板(收编各方言类私有的getLockSql拷贝):差异点参数化——是否含skip
 	 * locked分支、skip locked的方言形态、UPGRADE是否追加wait N
 	 *
 	 * @param sql               原sql

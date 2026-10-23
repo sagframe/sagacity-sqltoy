@@ -210,7 +210,7 @@ public class EntityMeta implements Serializable {
 	private IgnoreCaseSet secureColumns;
 
 	/**
-	 * sqlserver目标下经数据库元数据校准的rowversion(timestamp)列集合,元素为列名(update 2026-9-5)
+	 * update 2026-9-5 sqlserver目标下经数据库元数据校准的rowversion(timestamp)列集合,元素为列名
 	 * null表示未校准,isRowVersionField回退实体侧type==TIMESTAMP的历史判据;校准后以目标库元数据
 	 * TYPE_NAME=='timestamp'为准,避免oracle等项目迁移场景(实体显式type=TIMESTAMP,sqlserver表列
 	 * 实为datetime2)被误判为rowversion而静默跳过写入
@@ -974,23 +974,17 @@ public class EntityMeta implements Serializable {
 		this.notGeneratedColMeta = notGeneratedColMeta;
 	}
 
-	/**
-	 * update 2026-9-13 是否配置了业务ID生成器(收编各方言utils散布的同义样板判断)
-	 */
+	/** update 2026-9-13 是否配置了业务ID生成器(收编各方言utils散布的同义样板判断) */
 	public boolean hasBusinessIdGenerator() {
 		return businessIdGenerator != null;
 	}
 
-	/**
-	 * update 2026-9-13 是否配置了数据版本字段
-	 */
+	/** update 2026-9-13 是否配置了数据版本字段 */
 	public boolean hasDataVersion() {
 		return dataVersion != null;
 	}
 
-	/**
-	 * update 2026-9-13 是否配置了ID生成器
-	 */
+	/** update 2026-9-13 是否配置了ID生成器 */
 	public boolean hasIdGenerator() {
 		return idGenerator != null;
 	}

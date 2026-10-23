@@ -81,8 +81,7 @@ public class ParamFilterProcessor {
 		if ((filters == null || filters.size() == 0) || values == null || values.length == 0) {
 			return values;
 		}
-		// update 2020-09-08 当全是?模式传参时，在非分页等场景下paramNames会为null导致正常params="*" 的blank过滤无效
-		// 构造出参数便于统一处理
+		// update 2020-09-08 当全是?模式传参时,非分页等场景下paramNames会为null,导致正常params="*" 的blank过滤无效;构造出参数便于统一处理
 		String[] paramsName;
 		if ((paramArgs == null || paramArgs.length == 0)) {
 			paramsName = new String[values.length];
@@ -911,8 +910,8 @@ public class ParamFilterProcessor {
 	}
 
 	/**
-	 * 对参数进行左边或右补%符号,便于like处理,sqltoy在不做处理情况下会默认左右都补%符合,单独一边补%则可以保留索引
-	 * appendStr拼接在补充的%和值之间,如r-like配置append-str=","构成xx,%的树形路由前缀匹配; update 2026-9-10
+	 * update 2026-9-10 对参数进行左边或右补%符号,便于like处理,sqltoy在不做处理情况下会默认左右都补%符合,单独一边补%则可以保留索引
+	 * appendStr拼接在补充的%和值之间,如r-like配置append-str=「,」构成xx,%的树形路由前缀匹配
 	 * appendStr与参数值一致按转义处理后拼接:其中的%转为字面量\%,不做去除连续%处理, 通配符统一仅由本方法补充的%提供,天然避免拼接后出现%%
 	 * 
 	 * @param paramValue

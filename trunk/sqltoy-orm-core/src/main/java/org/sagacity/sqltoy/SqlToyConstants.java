@@ -61,9 +61,9 @@ public class SqlToyConstants {
 	public static final String NULL_SQL_MESSAGE = "sql or sqlId is null!";
 
 	/**
-	 * 判断sql中是否存在union all的表达式 (update 2026-9-4
-	 * 修复\all笔误:\a在正则中为响铃字符,导致默认正则永远无法匹配union all;不区分大小写与UNION_PATTERN保持一致; update
-	 * 2026-9-13 常量化,避免运行期被篡改影响掩码判定)
+	 * update 2026-9-4 判断sql中是否存在union all的表达式
+	 * (修复\all笔误:\a在正则中为响铃字符,导致默认正则永远无法匹配union all;
+	 * 不区分大小写与UNION_PATTERN保持一致;常量化,避免运行期被篡改影响掩码判定)
 	 */
 	public static final String UNION_ALL_REGEX = "(?i)\\W+union\\s+all\\W+";
 
@@ -167,10 +167,8 @@ public class SqlToyConstants {
 	public final static Pattern paramPattern = Pattern.compile(
 			"\\$\\{\\s*[0-9a-zA-Z\u4e00-\u9fa5]+((\\.|\\_)[0-9a-zA-Z\u4e00-\u9fa5]+)*(\\[\\d*(\\,)?\\d*\\])?\\s*\\}");
 
-	// update 2020-9-16 将\\W 替换为[^A-Za-z0-9_:] 增加排除: 适应::jsonb 这种模式场景
-	// update 2021-10-13 增加参数名称为中文场景(应对一些极为不规范的项目场景)
-	// update 2023-8-17 增加支持:itemSet[0].paramName 模式(之前只支持:itemSet[0])
-	// update 2023-12-19 替换为 [^A-Za-z0-9:],将下划线放开
+	// update 2023-12-19 命名参数匹配模式演进:先将\W 替换为[^A-Za-z0-9_:] 增加排除以适应::jsonb 模式场景,
+	// 继而支持中文参数名(应对极为不规范的项目场景)与itemSet[0].paramName 级联模式(原仅支持:itemSet[0]),最终替换为[^A-Za-z0-9:],将下划线放开
 	public final static Pattern SQL_NAMED_PATTERN = Pattern.compile(
 			"[^A-Za-z0-9:\u4e00-\u9fa5]\\:\\s*[a-zA-Z\u4e00-\u9fa5][a-zA-Z0-9_\u4e00-\u9fa5]*(\\.[\\w\u4e00-\u9fa5]+)*(\\[\\d+\\](\\.[a-zA-Z0-9_\u4e00-\u9fa5]+)*)?\\s?");
 	public final static Pattern NOSQL_NAMED_PATTERN = Pattern.compile(
@@ -229,12 +227,12 @@ public class SqlToyConstants {
 	public final static String SQLTOY_PACKAGE = "org.sagacity.sqltoy";
 
 	/**
-	 * LocalDateTime日志/拼接输出格式,消费方:SqlUtil的toSqlLogStr/toSqlString/combineArray。
-	 * update 2026-9-15 决策记录:声明无默认值(null视同"auto"按值精度自适应追加小数秒)仅为
-	 * 未初始化态(单测/工具类直调)语义;生产经SqlToyContext.initialize覆写后恒为配置值 (context默认"yyyy-MM-dd
-	 * HH:mm:ss",有意向后兼容)——固定格式下LocalDateTime输出恒19字符,
+	 * update 2026-9-15 LocalDateTime日志/拼接输出格式,消费方:SqlUtil的toSqlLogStr/toSqlString/combineArray。
+	 * 决策记录:声明无默认值(null视同「auto」按值精度自适应追加小数秒)仅为
+	 * 未初始化态(单测/工具类直调)语义;生产经SqlToyContext.initialize覆写后恒为配置值 (context默认「yyyy-MM-dd
+	 * HH:mm:ss」,有意向后兼容)——固定格式下LocalDateTime输出恒19字符,
 	 * toSqlLogStr的dateType=3小数秒方言分派(TO_TIMESTAMP FF3/FF、pg MS/US、mysql %f等)
-	 * 仅对java.sql.Timestamp(硬编码.SSS)或显式配置"auto"的用户可达,属预期行为勿"修复"
+	 * 仅对java.sql.Timestamp(硬编码.SSS)或显式配置「auto」的用户可达,属预期行为勿「修复」
 	 */
 	public static String localDateTimeFormat;
 

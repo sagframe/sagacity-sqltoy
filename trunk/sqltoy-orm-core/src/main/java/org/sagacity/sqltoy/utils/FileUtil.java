@@ -90,13 +90,11 @@ public class FileUtil {
 	}
 
 	/**
-	 * 将流保存为文件
+	 * update 2026-9-14 将流保存为文件
 	 * 
 	 * @param is
 	 * @param fileName
-	 * @return true表示写入成功;false表示失败(磁盘/权限/目录等异常,已记录日志) update 2026-9-14
-	 *         原返回void,写入失败仅记日志,调用方无从得知数据未落盘(磁盘满静默丢数据);
-	 *         改为返回boolean,与同类的delFile/copyFile返回语义一致,且不改变"不抛异常"的既有契约
+	 * @return true表示写入成功;false表示失败(磁盘/权限/目录等异常,已记录日志);原返回void时写入失败仅记日志,调用方无从得知数据未落盘(磁盘满静默丢数据),改为返回boolean与同类delFile/copyFile返回语义一致,且不改变"不抛异常"的既有契约
 	 */
 	public static boolean putInputStreamToFile(InputStream is, String fileName) {
 		FileOutputStream fos = null;

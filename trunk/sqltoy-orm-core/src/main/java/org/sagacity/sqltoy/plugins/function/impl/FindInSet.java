@@ -20,8 +20,8 @@ public class FindInSet extends IFunction {
 	private static Pattern regex = Pattern.compile("(?i)\\W(find_in_set)\\(");
 
 	/**
-	 * 函数闭括号后的比较符子句(裸操作符形态,suffixNeedsParen=false按命中长度消费)。 update 2026-10-20
-	 * 扩展为任意位置比较:布尔口径族仍走wrapInternal, =1/=2/&gt;1/&lt;3等走整数位置表达式。
+	 * update 2026-10-20 函数闭括号后的比较符子句(裸操作符形态,suffixNeedsParen=false按命中长度消费)。
+	 * 扩展为任意位置比较:布尔口径族仍走wrapInternal, =1/=2/>1/<3等走整数位置表达式。
 	 */
 	private static Pattern cmpPattern = Pattern.compile("\\s*(=|>=|<=|<>|!=|>|<)\\s*(\\d+)");
 
@@ -100,8 +100,7 @@ public class FindInSet extends IFunction {
 		if (isMysqlFamily(dialect)) {
 			return super.IGNORE;
 		}
-		// update 2026-10-20 mysql文档明确find_in_set首参含逗号属不可用/未定义,实测返回0;
-		// 字面量首参含逗号时直接按未命中处理,避免"补逗号+子串定位"把',a,b,'整段误判成元素
+		// update 2026-10-20 mysql文档明确find_in_set首参含逗号属不可用/未定义,实测返回0;字面量首参含逗号时直接按未命中处理,避免「补逗号+子串定位」把',a,b,'整段误判成元素
 		if (isQuotedComma(str)) {
 			return hit ? "(0>0)" : "(0=0)";
 		}

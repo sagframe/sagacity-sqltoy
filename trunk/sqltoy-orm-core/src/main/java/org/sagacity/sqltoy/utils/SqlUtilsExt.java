@@ -118,7 +118,7 @@ public class SqlUtilsExt {
 				return defaultValue;
 			}
 			boolean isBlank = "".equals(defaultValue.trim());
-			// update 2023-2-15增加容错性处理 非字符类型且允许为null，默认值为空白返回null
+			// update 2023-2-15 容错性处理:非字符类型且允许为null时,默认值为空白返回null
 			if (isBlank && nullable) {
 				return null;
 			}
@@ -132,7 +132,7 @@ public class SqlUtilsExt {
 					return null;
 				}
 				// update 2026-9-14 isNumber允许小数形态,经BigDecimal截断小数位(与convertType拆分小数点语义一致),
-				// 此前Integer.valueOf直接解析"12.5"抛NumberFormatException
+				// 此前Integer.valueOf直接解析「12.5」抛NumberFormatException
 				realValue = new BigDecimal(defaultValue).intValue();
 			} else if (jdbcType == java.sql.Types.DATE) {
 				if (isBlank || isCurrentTime(defaultValue)) {
@@ -170,8 +170,7 @@ public class SqlUtilsExt {
 				if (!NumberUtil.isNumber(defaultValue)) {
 					return null;
 				}
-				// update 2026-9-14
-				// isNumber允许小数形态,经BigDecimal截断小数位,此前BigInteger直接解析"12.5"抛NumberFormatException
+				// update 2026-9-14 isNumber允许小数形态,经BigDecimal截断小数位,此前BigInteger直接解析「12.5」抛NumberFormatException
 				realValue = new BigDecimal(defaultValue).toBigInteger();
 			} else if (jdbcType == java.sql.Types.TIME) {
 				if (isBlank || isCurrentTime(defaultValue)) {
@@ -222,8 +221,7 @@ public class SqlUtilsExt {
 					if (!NumberUtil.isNumber(defaultValue)) {
 						return null;
 					}
-					// update 2026-9-14
-					// isNumber允许小数形态,经BigDecimal截断小数位,此前Integer.parseInt直接解析"12.5"抛NumberFormatException
+					// update 2026-9-14 isNumber允许小数形态,经BigDecimal截断小数位,此前Integer.parseInt直接解析「12.5」抛NumberFormatException
 					realValue = Integer.valueOf(new BigDecimal(defaultValue).intValue());
 				}
 			} else {
@@ -256,10 +254,10 @@ public class SqlUtilsExt {
 	 * @return
 	 */
 	public static String signSql(String sql, Integer dbType, SqlToyConfig sqlToyConfig) {
-		// 判断是否打开sql签名,提供开发者通过SqlToyContext
+		// update 2026-9-14 判断是否打开sql签名,提供开发者通过SqlToyContext
 		// dialectConfig设置:sqltoy.open.sqlsign=false 来关闭
 		// elasticsearch类型 不支持
-		// update 2026-9-14 增加dbType判空,避免未识别数据源场景equals抛NPE
+		// 增加dbType判空,避免未识别数据源场景equals抛NPE
 		if (!SqlToyConstants.openSqlSign() || dbType == null || dbType.intValue() == DBType.ES) {
 			return sql;
 		}

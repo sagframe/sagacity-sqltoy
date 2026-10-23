@@ -27,17 +27,14 @@ public class DefaultOverTimeHandler implements OverTimeSqlHandler {
 			new Comparator<OverTimeSql>() {
 				@Override
 				public int compare(OverTimeSql o1, OverTimeSql o2) {
-					// update 2026-9-8 Long.compare替代long差值截断int(超时差>Integer.MAX时
-					// 违反比较器契约)且免装箱
+					// update 2026-9-8 Long.compare替代long差值截断int(超时差>Integer.MAX时违反比较器契约)且免装箱
 					return Long.compare(o1.getTakeTime(), o2.getTakeTime());
 				}
 			});
 
 	/**
-	 * 由慢到快排序(取最慢N条用):update 2026-9-14 由hasSqlId分支的内联比较器提为常量,避免两处排序
-	 * 方向与契约修复再次漂移(历史上曾出现同族比较器漏改)。Long.compare避免long差值截断int
-	 * (超时差>Integer.MAX时违反比较器契约,TimSort会抛Comparison method violates its general
-	 * contract)
+	 * update 2026-9-14 由慢到快排序(取最慢N条用):由hasSqlId分支的内联比较器提为常量,避免两处排序方向与契约修复再次漂移(历史上曾出现同族比较器漏改)
+	 * Long.compare避免long差值截断int(超时差>Integer.MAX时违反比较器契约,TimSort会抛Comparison method violates its general contract)
 	 */
 	private static final Comparator<OverTimeSql> SLOW_FIRST = new Comparator<OverTimeSql>() {
 		@Override
@@ -121,9 +118,8 @@ public class DefaultOverTimeHandler implements OverTimeSqlHandler {
 	 * @return
 	 */
 	private List<OverTimeSql> getSlowest(int size) {
-		// update 2026-9-14 PriorityQueue.iterator()返回堆数组层序而非排序序,原实现取"迭代的最后size个"
-		// 得到的是任意子集而非最慢N条(且add(0,...)头插为O(n²));改为整体排序后取最慢的size条,
-		// 排序方向与hasSqlId分支统一走SLOW_FIRST
+		// update 2026-9-14 PriorityQueue.iterator()返回堆数组层序而非排序序,取"迭代的最后size个"得到的是任意子集而非最慢N条(且add(0,...)头插为O(n²));
+		// 改为整体排序后取最慢的size条,排序方向与hasSqlId分支统一走SLOW_FIRST
 		List<OverTimeSql> all = new ArrayList<OverTimeSql>(queues);
 		Collections.sort(all, SLOW_FIRST);
 		if (all.size() <= size) {

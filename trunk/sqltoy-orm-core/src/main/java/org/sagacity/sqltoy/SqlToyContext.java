@@ -386,31 +386,28 @@ public class SqlToyContext {
 	private boolean executeSqlBlankToNull = true;
 
 	/**
-	 * update 2026-9-23 realDialect优先:开启后sqlId方言变体查找优先按连接探测的真实方言
-	 * (DBProfile.realDialect,典型如OB按mysql方言配置而真实库为oceanbase、代理库场景),
-	 * 真实方言变体不存在时回退原有配置方言查找链;真实方言与配置方言一致时行为不变
+	 * update 2026-9-23 realDialect优先:开启后sqlId方言变体查找优先按连接探测的真实方言(DBProfile.realDialect,典型如OB按mysql方言配置而真实库为oceanbase、代理库场景),真实方言变体不存在时回退原有配置方言查找链;真实方言与配置方言一致时行为不变
 	 */
 	private boolean realDialectFirst = false;
 
 	/**
-	 * sql 日志输出时LocalDateTime类型的输出格式
+	 * update 2026-9-15 sql 日志输出时LocalDateTime类型的输出格式
 	 * <p>
-	 * update 2026-9-15 决策记录:默认固定格式(截到秒)为有意的向后兼容,initialize时覆写
-	 * SqlToyConstants.localDateTimeFormat(JVM级首个context生效)。固定格式下toSqlLogStr/
-	 * toSqlString/combineArray对nano>0的LocalDateTime输出恒为19字符(dateType=2,小数秒
-	 * 被格式化丢弃),方言的TO_TIMESTAMP FF3/US等小数秒分派不触发;需要日志SQL与@loop/NoSQL
-	 * 拼接值保留小数秒精度(等值条件精确匹配)的场景,应显式配置本属性为"auto"(按值精度
-	 * 自适应追加.123/.123456/.123456789)或含小数位占位符的格式(如yyyy-MM-dd HH:mm:ss.SSS)。
-	 * java.sql.Timestamp路径不受本配置影响(硬编码.SSS格式,恒走小数秒分派)
+	 * 决策记录:默认固定格式(截到秒)为有意的向后兼容,initialize时覆写SqlToyConstants.localDateTimeFormat
+	 * (JVM级首个context生效)。固定格式下toSqlLogStr/toSqlString/combineArray对nano>0的LocalDateTime输出恒为
+	 * 19字符(dateType=2,小数秒被格式化丢弃),方言的TO_TIMESTAMP FF3/US等小数秒分派不触发;需要日志SQL与
+	 * @loop/NoSQL拼接值保留小数秒精度(等值条件精确匹配)的场景,应显式配置本属性为"auto"(按值精度自适应
+	 * 追加.123/.123456/.123456789)或含小数位占位符的格式(如yyyy-MM-dd HH:mm:ss.SSS)。java.sql.Timestamp
+	 * 路径不受本配置影响(硬编码.SSS格式,恒走小数秒分派)
 	 */
 	private String localDateTimeFormat = "yyyy-MM-dd HH:mm:ss";
 
 	/**
-	 * sql 日志输出时LocalTime类型的输出格式
+	 * update 2026-9-15 sql 日志输出时LocalTime类型的输出格式
 	 * <p>
-	 * update 2026-9-15 决策记录:同localDateTimeFormat,默认固定格式(截到秒)为有意向后兼容;
-	 * 固定格式下nano>0的LocalTime输出恒为8字符(dateType=4),方言的毫秒time分派 (TO_TIMESTAMP
-	 * FF/CONVERT(time(3))/STR_TO_DATE %f等)不触发,需显式配置"auto"启用
+	 * 决策记录:同localDateTimeFormat,默认固定格式(截到秒)为有意向后兼容;固定格式下nano>0的LocalTime输出
+	 * 恒为8字符(dateType=4),方言的毫秒time分派(TO_TIMESTAMP FF/CONVERT(time(3))/STR_TO_DATE %f等)不触发,
+	 * 需显式配置"auto"启用
 	 */
 	private String localTimeFormat = "HH:mm:ss";
 
@@ -573,7 +570,7 @@ public class SqlToyContext {
 		}
 		// 初始化脚本加载器
 		scriptLoader.initialize(this.debug, delayCheckSeconds, scriptCheckIntervalSeconds, breakWhenSqlRepeat);
-		// 初始化翻译器,update 2021-1-23 增加caffeine缓存支持
+		// update 2021-1-23 初始化翻译器,增加caffeine缓存支持
 		if (translateCacheManager == null && "caffeine".equalsIgnoreCase(this.cacheType)) {
 			translateManager.initialize(this, (TranslateCacheManager) Class.forName(translateCaffeineManagerClass)
 					.getDeclaredConstructor().newInstance(), delayCheckSeconds);
@@ -793,11 +790,10 @@ public class SqlToyContext {
 	}
 
 	/**
-	 * update 2026-9-23 realDialectFirst开启时按连接档案的真实方言重解析sqlId变体:
-	 * 顶层查询的变体在连接外按配置方言解析完成(线程档案未绑定),查询管线统一预处理入口
-	 * 在连接回调内profile在手,由此补齐重解析时机;真实方言与配置方言一致、非sqlId形式
-	 * 或真实方言变体不存在时返回原config(配置方言变体不降级为base)
-	 * 
+	 * update 2026-9-23 realDialectFirst开启时按连接档案的真实方言重解析sqlId变体:顶层查询的变体在连接外按配置方言解析完成
+	 * (线程档案未绑定),查询管线统一预处理入口在连接回调内profile在手,由此补齐重解析时机;真实方言与配置方言
+	 * 一致、非sqlId形式或真实方言变体不存在时返回原config(配置方言变体不降级为base)
+	 *
 	 * @param sqlKey       dao层原始传入的sqlId(或sql内容)
 	 * @param sqlToyConfig 连接外已解析的sql配置模型
 	 * @param profile      当前连接的数据库特征档案(含真实方言)
@@ -815,8 +811,7 @@ public class SqlToyContext {
 		if (variant == null) {
 			return sqlToyConfig;
 		}
-		// update 2026-9-23 标记经realDialect变体匹配选中:其函数/保留字替换方言跟随真实方言
-		// (未命中变体回退base的sql不打标记,保持配置方言行为)
+		// update 2026-9-23 标记经realDialect变体匹配选中:其函数/保留字替换方言跟随真实方言(未命中变体回退base的sql不打标记,保持配置方言行为)
 		variant.markRealDialectMatched();
 		return variant;
 	}

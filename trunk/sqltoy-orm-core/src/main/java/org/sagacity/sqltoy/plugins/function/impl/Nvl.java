@@ -49,8 +49,7 @@ public class Nvl extends IFunction {
 			return super.IGNORE;
 		}
 		String funLow = functionName.toLowerCase(Locale.ROOT);
-		// update 2026-10-4 补oracle源nvl2(a,b,c):非oracle系目标转case when判非空取b否则c
-		// (语义无损);oracle系原生透传;参数个数非3属误用,原样保留响亮报错
+		// update 2026-10-4 补oracle源nvl2(a,b,c):非oracle系转case when判非空取b否则c(语义无损),oracle系原生透传;参数个数非3属误用,原样保留响亮报错
 		if ("nvl2".equals(funLow)) {
 			if (args.length != 3) {
 				return super.IGNORE;
@@ -61,16 +60,14 @@ public class Nvl extends IFunction {
 			}
 			return "case when " + args[0] + " is not null then " + args[1] + " else " + args[2] + " end";
 		}
-		// update 2026-10-4 单参判空:mysql的isnull(expr)为判空语义返回0/1(唯一合法的单参形态),
-		// 原逻辑落到各库映射生成nvl(x)/coalesce(x)/ifnull(x)(均要求>=2参)目标库报参数个数错
+		// update 2026-10-4 单参判空:mysql的isnull(expr)为判空语义返回0/1(唯一合法单参形态);原映射生成nvl(x)/coalesce(x)/ifnull(x)均要求>=2参,目标库报参数个数错
 		if (args.length == 1) {
 			return "case when " + args[0] + " is null then 1 else 0 end";
 		}
 		if (dialect == DBType.SQLSERVER) {
 			return wrapArgs("isnull", args);
 		}
-		// update 2026-9-9 补CLICKHOUSE(原生coalesce,此前落IGNORE原样输出nvl报函数不存在)
-		// update 2026-9-14 补KINGBASE(KingbaseES基于PG,函数语法归PG系)
+		// update 2026-9-14 补CLICKHOUSE(原生coalesce,此前落IGNORE原样输出nvl报函数不存在);补KINGBASE(KingbaseES基于PG,函数语法归PG系)
 		if (dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL14 || dialect == DBType.DB2
 				|| dialect == DBType.OPENGAUSS || dialect == DBType.STARDB || dialect == DBType.OSCAR
 				|| dialect == DBType.GAUSSDB || dialect == DBType.MOGDB || dialect == DBType.VASTBASE
@@ -83,8 +80,7 @@ public class Nvl extends IFunction {
 			// (单参已在上方统一判空处理,此处恒为2参)
 			return wrapArgs("ifnull", args);
 		}
-		// update 2026-9-11 补hana(SPS08实测无NVL函数,报invalid name of function or procedure:
-		// NVL;IFNULL/COALESCE原生支持,ifnull对geometry类型对同样可行)
+		// update 2026-9-11 补hana(SPS08实测无NVL函数,报invalid name of function or procedure: NVL;IFNULL/COALESCE原生支持,ifnull对geometry类型同样可行)
 		if (dialect == DBType.SQLITE || dialect == DBType.HANA) {
 			return wrapArgs("ifnull", args);
 		}

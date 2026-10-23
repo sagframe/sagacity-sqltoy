@@ -46,15 +46,15 @@ public class ConcatWs extends IFunction {
 		if (args == null || args.length < 2) {
 			return super.IGNORE;
 		}
-		// update 2026-9-5 补充OCEANBASE(oracle模式无concat_ws)/DB2/sqlite的||拼接转换
+		// update 2026-9-15 补充OCEANBASE(oracle模式无concat_ws)/DB2/sqlite/hana/clickhouse的||拼接转换
 		// (此前仅oracle系处理,这些库原样输出concat_ws非法;sqlite 3.44+虽已原生提供,
 		// ||拼接仍保留以统一跳过null语义);
-		// update 2026-9-11 补hana(SPS08实测无CONCAT_WS函数,||拼接原生支持且null按空串处理同oracle系)
-		// update 2026-9-15 修复null参数语义:原a||sep||b朴素拼接,参数为null时留下悬挂分隔符
+		// hana(SPS08实测无CONCAT_WS函数,||拼接原生支持且null按空串处理同oracle系)
+		// null参数语义:朴素a||sep||b拼接,参数为null时留下悬挂分隔符
 		// (oracle真库实测concat_ws('-',name,nul_col)得'abcdef-'而非'abcdef');改为逐段case when
 		// 跳过null参数及其分隔符,且前序参数全为null时当前段不加分隔符,与mysql concat_ws契约一致:
 		// ('a',null,'b')='a-b'、(null,'b')='b'、(null,'a','b')='a-b'、('a','','b')='a--b'(空串非null不跳过)
-		// update 2026-9-15 补clickhouse:新版CH(26.8实测)的concat_ws已改为null传播
+		// clickhouse:新版CH(26.8实测)的concat_ws已改为null传播
 		// (concat_ws('-','abc',NULL)返回NULL,与mysql跳过null语义漂移),一并转||拼接
 		if (dialect == DBType.ORACLE || dialect == DBType.ORACLE11 || dialect == DBType.OCEANBASE
 				|| dialect == DBType.DB2 || dialect == DBType.SQLITE || dialect == DBType.HANA
@@ -67,8 +67,8 @@ public class ConcatWs extends IFunction {
 			// 首参null以空串兜底(db2/sqlite的||传播null)
 			StringBuilder result = new StringBuilder("coalesce(").append(args[1].replace("\\'", "''")).append(",")
 					.append(emptyFallback).append(")");
-			// 前序参数集合(判定前序是否全为null:全null时当前段不加分隔符)。
-			// update 2026-9-15 修复前序coalesce链构建漏参:原实现单前序直用表达式,多前序时
+			// update 2026-9-15 前序参数集合(判定前序是否全为null:全null时当前段不加分隔符)。
+			// 修复前序coalesce链构建漏参:单前序直用表达式,多前序时
 			// StringBuilder未含全部前序参数(4参oracle实测ORA-00938),改为显式集合构建;
 			// oracle的coalesce至少两参数,单前序直接用表达式
 			java.util.List<String> prev = new ArrayList<String>();

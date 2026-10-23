@@ -176,14 +176,12 @@ public class SqlXMLConfigParse {
 				sqlFile = (File) resource;
 				fileName = sqlFile.getName();
 				lastModified = Long.valueOf(sqlFile.lastModified());
-				// 调试模式，判断文件的最后修改时间，决定是否重新加载sql
-				// update 2026-9-14 登记键改用绝对路径:原以文件名(basename)为键,不同目录下的同名
-				// .sql.xml会共用一条时间戳记录,互相覆盖比较基准,导致变更漏检或重复解析
+				// update 2026-9-14 调试模式，判断文件的最后修改时间，决定是否重新加载sql
+				// 登记键改用绝对路径(原以文件名basename为键),不同目录同名.sql.xml共用一条时间戳记录互相覆盖比较基准,导致变更漏检或重复解析
 				preModified = filesLastModifyMap.get(getFileKey(sqlFile));
 				// 最后修改时间比上次修改时间大，重新加载sql文件
 				if (preModified == null || lastModified.longValue() > preModified.longValue()) {
-					// update 2026-9-14 时间戳改由parseSingleFile解析成功后记录:原形态此处先写时间戳再解析,
-					// 解析抛异常时时间戳已前进,watcher下一轮不再触发重试(变更被吞,直到文件再次被修改)
+					// update 2026-9-14 时间戳改由parseSingleFile解析成功后记录(原先写时间戳再解析,解析抛异常时时间戳已前进,watcher下一轮不再重试,变更被吞直到文件再次被修改)
 					if (isDebug) {
 						logger.debug("sql file:{} was modified, start reparsing!", fileName);
 					} else {
@@ -216,8 +214,7 @@ public class SqlXMLConfigParse {
 		// 文件型资源的最后修改时间:解析成功后才写入filesLastModifyMap,键为绝对路径(见getFileKey)
 		String parsedFileKey = null;
 		Long parsedModified = null;
-		// update 2026-9-14 解析结果先落本地map、文件整体成功后统一提交缓存:原逐条cache.put在解析中途
-		// 失败时会留下同文件"半新半旧"的缓存状态(已解析的id生效、其余仍是旧版本)
+		// update 2026-9-14 解析结果先落本地map、文件整体成功后统一提交缓存(原逐条cache.put在解析中途失败会留下同文件半新半旧的缓存状态:已解析id生效、其余仍是旧版本)
 		HashMap<String, SqlToyConfig> parsedConfigs = new HashMap<String, SqlToyConfig>();
 		try {
 			String sqlFile;
@@ -265,8 +262,7 @@ public class SqlXMLConfigParse {
 					}
 				}
 			}
-			// update 2026-9-14 解析全部成功后才提交:1)缓存统一提交,解析失败时缓存完全不改动(原逐条
-			// cache.put会留下半新半旧状态);2)时间戳提交后记录,失败则保留旧时间戳,watcher下一轮自动重试
+			// update 2026-9-14 解析全部成功后才提交:缓存统一提交,失败时缓存完全不改动;时间戳提交后记录,失败保留旧时间戳,watcher下一轮自动重试
 			if (!parsedConfigs.isEmpty()) {
 				cache.putAll(parsedConfigs);
 			}
@@ -349,7 +345,7 @@ public class SqlXMLConfigParse {
 	}
 
 	/**
-	 * 解析单个sql element元素,update 2020-7-2 支持外部集成命名空间前缀适配
+	 * update 2020-7-2 解析单个sql element元素,支持外部集成命名空间前缀适配
 	 * 
 	 * @param sqlElt
 	 * @param dialect
@@ -413,10 +409,9 @@ public class SqlXMLConfigParse {
 			}
 			isNoSql = true;
 		}
-		// update 2026-9-24 <sql dialect="xxx">声明本条sql按指定方言形态解析固化:
-		// 加载时按该方言做一次函数/保留字转换,config解析标签=该方言,执行期当前库方言
-		// 与声明一致时getDialectSql按既有早退机制跳过函数替换,异方言查询走既有惰性
-		// 转换+dialectSqlMap缓存反向适配;mql/eql上方强制mongo/es不受影响
+		// update 2026-9-24 <sql dialect="xxx">声明本条sql按指定方言形态解析固化:加载时按该方言做一次函数/保留字转换,
+		// config解析标签=该方言,执行期当前库方言与声明一致时getDialectSql按既有早退机制跳过函数替换,
+		// 异方言查询走既有惰性转换+dialectSqlMap缓存反向适配;mql/eql上方强制mongo/es不受影响
 		else if (sqlElt.hasAttribute("dialect")) {
 			String specDialect = sqlElt.getAttribute("dialect").trim().toLowerCase(Locale.ROOT);
 			if (StringUtil.isNotBlank(specDialect)) {
@@ -1409,7 +1404,7 @@ public class SqlXMLConfigParse {
 		} else if (link.hasAttribute("columns")) {
 			linkModel.setColumns(StringUtil.trimArray(link.getAttribute("columns").split("\\,")));
 		}
-		// update 2021-10-15 支持多列
+		// update 2021-10-15 支持多列(id-columns/group-columns/id-column)
 		if (link.hasAttribute("id-columns")) {
 			linkModel.setGroupColumns(StringUtil.trimArray(link.getAttribute("id-columns").split("\\,")));
 		} else if (link.hasAttribute("group-columns")) {
@@ -1488,7 +1483,7 @@ public class SqlXMLConfigParse {
 				String roundStr = nf.hasAttribute("roundingMode")
 						? nf.getAttribute("roundingMode").toUpperCase(Locale.ROOT)
 						: null;
-				// update 2026-4-30 兼容新的参数名称
+				// update 2026-4-30 兼容新的参数名称(rounding-mode)
 				if (nf.hasAttribute("rounding-mode")) {
 					roundStr = nf.getAttribute("rounding-mode").toUpperCase(Locale.ROOT);
 				}

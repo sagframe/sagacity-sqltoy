@@ -89,7 +89,7 @@ public class TableCascadeModel implements Serializable {
 	 */
 	private String cascadeUpdateSql;
 
-	// update 2025-5-16 提供基于in 批量查询、修改、删除的语句
+	// update 2025-5-16 提供基于in 的批量查询、修改、删除子表语句
 	private String loadBatchSubTableSql;
 
 	private String deleteBatchSubTableSql;

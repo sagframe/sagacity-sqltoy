@@ -153,7 +153,7 @@ public class SqlConfigParseUtils {
 	public final static String ARG_DBL_REGEX = "\\?{2}";
 	public final static Pattern ARG_NAME_PATTERN = Pattern.compile(ARG_REGEX);
 
-	// sql 拼接时判断前部分sql是否是where 结尾,update 2017-12-4 增加(?i)忽视大小写
+	// update 2017-12-4 sql 拼接时判断前部分sql是否是where 结尾,增加(?i)忽视大小写
 	public final static Pattern WHERE_END_PATTERN = Pattern.compile("(?i)\\Wwhere\\s*$");
 	// where 1=1 结尾模式
 	public final static Pattern WHERE_ONE_EQUAL_PATTERN = Pattern.compile("(?i)\\Wwhere\\s*1\\s*=\\s*1\\s*$");
@@ -347,7 +347,6 @@ public class SqlConfigParseUtils {
 			boolean backslashEscape = isBackslashEscapeDialect(resolveDbType(dialect));
 			// 字面量内的?替换为占位符(参数位的?保留),规避字面量?干扰#[]/in(?)/null替换等阶段的参数对位
 			sql = escapeQuestionMarkInLiterals(sql, backslashEscape);
-			// update 2022-7-18
 			int paramCnt = StringUtil.matchCnt(sql, ARG_NAME_PATTERN, 0);
 			// 只有单个? 参数、传递的参数长度大于1、且是 in (?),则将参数转成长度为1的二维数组new Object[]{Object[]} 模式
 			if (paramCnt == 1 && paramsValue.length > 1 && StringUtil.matches(sql, IN_PATTERN)) {
@@ -364,7 +363,7 @@ public class SqlConfigParseUtils {
 		processBlank(sqlToyResult);
 		// 检查 like 对应参数部分，如果参数中不存在%符合则自动两边增加%(同时转义_和%等特殊字符)
 		processLike(sqlToyResult, dialect);
-		// add update 2024-12-12 将@value(?) 参数值中不含?的提前完成处理
+		// update 2024-12-12 将@value(?) 参数值中不含?的提前完成处理
 		processValue(sqlToyResult, dialect, true);
 		// update 2026-10-15 @joinFields
 		// 与@value同位置处理:必须在processSplit/processIn/replaceNull之前,
@@ -385,7 +384,7 @@ public class SqlConfigParseUtils {
 		} else {
 			// 将代表json中的?? 符号换回
 			sqlToyResult.setSql(sqlToyResult.getSql().replace(DBL_QUESTMARK, ARG_DBL_NAME));
-			// 恢复字面量内的?占位符,字面量内容保真(update 2026-9-8 replaceAll改replace,
+			// update 2026-9-8 恢复字面量内的?占位符,字面量内容保真(replaceAll改replace,
 			// 占位符为纯字面量,免每次编译Pattern)
 			sqlToyResult.setSql(sqlToyResult.getSql().replace(LITERAL_QSMARK_PLACEHOLDER, ARG_NAME));
 		}
@@ -976,7 +975,7 @@ public class SqlConfigParseUtils {
 	}
 
 	/**
-	 * @update 2021-04-29 @value放在最后处理，同时兼容replaceNull 造成@value(?) 变成@value(null)的情况
+	 * update 2021-04-29 @value放在最后处理，同时兼容replaceNull 造成@value(?) 变成@value(null)的情况
 	 *         处理直接显示参数值:#[@value(:paramNamed) sql]
 	 * @param sqlToyResult
 	 * @param dialect
@@ -1135,7 +1134,7 @@ public class SqlConfigParseUtils {
 	}
 
 	/**
-	 * @update 2020-09-22 增加sql中的循环功能 处理sql中@loop() 循环,动态组织sql进行替换，具体格式
+	 * update 2020-09-22 增加sql中的循环功能 处理sql中@loop() 循环,动态组织sql进行替换，具体格式
 	 *         <li>loop(:loopAry,loopContent)</li>
 	 *         <li>loop(:loopArgs,loopContent,linkSign)</li>
 	 *         <li>范例:#[or @loop(:beginDates,'(startTime between :beginDates[i] and
@@ -1180,9 +1179,9 @@ public class SqlConfigParseUtils {
 	}
 
 	/**
-	 * 判断当前数据库是否将反斜杠视为转义字符(mysql系), 决定'...'字面量内\'是否终结字面量以及like的ESCAPE子句形态;
+	 * update 2026-9-10 判断当前数据库是否将反斜杠视为转义字符(mysql系), 决定'...'字面量内\'是否终结字面量以及like的ESCAPE子句形态;
 	 * 用户可通过SqlToyContext.backslashEscaping 强制定义:true=ESCAPE '\\'; false=ESCAPE '\'
-	 * update 2026-9-10 解析次序:全局开关 > 真实连接档案(DBProfile,经DataSourceUtils统一获取) >
+	 * 解析次序:全局开关 > 真实连接档案(DBProfile,经DataSourceUtils统一获取) >
 	 * 传入dbType;
 	 * 真实连接dbType比配置方言更可信,kingbase即使mysql兼容sql_mode依旧单斜杠(原actuallyDBType==KINGBASE
 	 * 单点判断被档案判定涵盖),同时覆盖真实连接为mysql系而传入dbType缺失(UNDEFINE)的场景
@@ -1382,10 +1381,10 @@ public class SqlConfigParseUtils {
 		StringBuilder sqlBuilder = null;
 		int lastEnd = 0;
 		String escapeClause = isBackslashEscape ? " ESCAPE '\\\\'" : " ESCAPE '\\'";
-		// clickhouse/impala/tdengine/starrocks/doris的LIKE默认转义符就是\,且不支持ESCAPE子句,
-		// 追加任何ESCAPE都会语法错误(update 2026-9-6 实测starrocks 4.1.4 where子句like后接ESCAPE报
+		// update 2026-9-10 clickhouse/impala/tdengine/starrocks/doris的LIKE默认转义符就是\,且不支持ESCAPE子句,
+		// 追加任何ESCAPE都会语法错误(实测starrocks 4.1.4 where子句like后接ESCAPE报
 		// "Unexpected input 'ESCAPE'",其like默认即按\转义,与clickhouse行为一致;
-		// update 2026-9-10 实测doris 2.1.0同样报ParseException,与starrocks同源引擎一并排除)
+		// 实测doris 2.1.0同样报ParseException,与starrocks同源引擎一并排除)
 		boolean supportEscapeClause = dbType != DBType.CLICKHOUSE && dbType != DBType.IMPALA
 				&& dbType != DBType.TDENGINE && dbType != DBType.STARROCKS && dbType != DBType.DORIS;
 		while (m.find()) {
@@ -1429,7 +1428,7 @@ public class SqlConfigParseUtils {
 	}
 
 	/**
-	 * @update 2020-4-14 修复参数为null时,忽视了匹配的in(?) 处理sql 语句中的in 条件，功能有2类:
+	 * update 2020-4-14 修复参数为null时,忽视了匹配的in(?) 处理sql 语句中的in 条件，功能有2类:
 	 *         <li>1、将字符串类型且条件值为逗号分隔的，将对应的sql 中的 in(?) 替换成in(具体的值)</li>
 	 *         <li>2、如果对应in (?)位置上的参数数据时Object[] 数组类型，则将in (?)替换成 in (?,?),具体问号个数由
 	 *         数组长度决定</li>
@@ -1568,8 +1567,8 @@ public class SqlConfigParseUtils {
 				Object inValueObject = paramsValue[parameterMarkCnt - 1];
 				// 数组或集合数据类型
 				if (inValueObject.getClass().isArray() || inValueObject instanceof Collection) {
-					// update 2012-12-5 增加了对Collection数据类型的处理
-					// update 2024-11-19 增加去除重复功能
+					// update 2024-11-19 增加了对Collection数据类型的处理
+					// 增加去除重复功能
 					if (inValueObject instanceof HashSet) {
 						inParamArray = ((HashSet) inValueObject).toArray();
 					} else if (inValueObject instanceof Collection) {
@@ -1785,8 +1784,7 @@ public class SqlConfigParseUtils {
 				}
 			}
 		}
-		// update 2017-12-4
-		// where 1=1 结尾
+		// update 2017-12-4 where 1=1 结尾
 		index = StringUtil.matchIndex(preSql, WHERE_ONE_EQUAL_PATTERN);
 		if (index >= 0) {
 			// 剔除1=1 进行sql拼接

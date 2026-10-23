@@ -1,11 +1,10 @@
 package org.sagacity.sqltoy.model;
 
 /**
- * update 2026-9-12 优化步骤3:执行级动态参数封装——将Dialect SPI方法上随需求演变
- * 陆续追加的调优型参数(fetchSize/maxRows/queryTimeout/lockMode/lockWaitTimeout/
- * timeout/autoCommit)统一收纳,方法身份的核心参数(上下文/配置/实体/集合/连接等)
- * 仍显式传递;后续新增的可选执行参数只扩充本类,不再逐方法加参。 各字段默认值即既有调用链的最常见取值,默认构造行为零变化。
- * 字段public直取+链式赋值(sqltoy内部模型同风格)。
+ * update 2026-9-12 优化步骤3:执行级动态参数封装——将Dialect SPI方法上随需求演变陆续追加的调优型参数
+ * (fetchSize/maxRows/queryTimeout/lockMode/lockWaitTimeout/timeout/autoCommit)统一收纳,方法身份的
+ * 核心参数(上下文/配置/实体/集合/连接等)仍显式传递;后续新增的可选执行参数只扩充本类,不再逐方法加参。
+ * 各字段默认值即既有调用链的最常见取值,默认构造行为零变化;字段public直取+链式赋值(sqltoy内部模型同风格)。
  */
 public class ExecuteParams {
 

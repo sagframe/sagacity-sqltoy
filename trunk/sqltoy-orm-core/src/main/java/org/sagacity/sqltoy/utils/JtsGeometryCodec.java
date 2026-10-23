@@ -16,12 +16,10 @@ import org.slf4j.LoggerFactory;
 
 /**
  * @project sagacity-sqltoy
- * @description JTS几何编解码实现:update 2026-9-8 自GeometryTypeUtil剥离而来。
- *              本类字节码直接引用org.locationtech类型,仅允许被GeometryTypeUtil门面
- *              在hasJts()探测通过后调用,保证类加载/验证阶段jts-core必在classpath;
- *              公开方法签名只用Object/String/byte[]/Struct,不暴露JTS类型
- *              支持的值形式:WKT/EWKT字符串、postgis EWKB hex字符串、postgis EWKB二进制、
- *              mysql的4字节SRID前缀+WKB二进制、JTS Geometry对象
+ * update 2026-9-8 @description JTS几何编解码实现:自GeometryTypeUtil剥离而来。本类字节码直接引用org.locationtech类型,
+ *              仅允许被GeometryTypeUtil门面在hasJts()探测通过后调用,保证类加载/验证阶段jts-core必在
+ *              classpath;公开方法签名只用Object/String/byte[]/Struct,不暴露JTS类型
+ *              支持的值形式:WKT/EWKT字符串、postgis EWKB hex/二进制、mysql的4字节SRID前缀+WKB二进制、JTS Geometry对象
  * @author zhongxuchen
  * @date 2026-8-28
  */
@@ -159,10 +157,10 @@ public class JtsGeometryCodec {
 	}
 
 	/**
-	 * 将WKT/EWKT文本解析编码为mysql内部格式字节(4字节小端SRID前缀+标准WKB,与getBytes读回形态一致),
-	 * 供mysql系rs回写等拒绝字符串绑定的场景使用(update 2026-9-9 自SqlUtil.toGeometryBytes下沉:
-	 * SqlUtil为全场景入口类,不得含JTS符号引用,无jts-core环境执行instanceof/new即抛NoClassDefFoundError,
-	 * 且catch(Exception)捕不到Error;本类仅经GeometryTypeUtil.hasJts()门控后被加载)
+	 * update 2026-9-9 将WKT/EWKT文本解析编码为mysql内部格式字节(4字节小端SRID前缀+标准WKB,与getBytes读回形态一致),
+	 * 供mysql系rs回写等拒绝字符串绑定的场景使用(自SqlUtil.toGeometryBytes下沉:SqlUtil为全场景入口类,
+	 * 不得含JTS符号引用,无jts-core环境执行instanceof/new即抛NoClassDefFoundError且catch(Exception)
+	 * 捕不到Error;本类仅经GeometryTypeUtil.hasJts()门控后被加载)
 	 *
 	 * @param wkt WKT/EWKT文本
 	 * @return mysql内部格式字节,解析失败返回null

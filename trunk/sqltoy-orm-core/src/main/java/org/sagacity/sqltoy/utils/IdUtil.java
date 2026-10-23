@@ -263,7 +263,7 @@ public class IdUtil {
 			// 补足位数
 			serverIdentity = StringUtil.addLeftZero2Len(serverIdentity, size);
 		}
-		// 无网络无法获取ip场景下 update 2021-09-17
+		// update 2021-09-17 无网络无法获取ip场景下
 		if (serverIdentity == null) {
 			return StringUtil.addLeftZero2Len("1", size);
 		}

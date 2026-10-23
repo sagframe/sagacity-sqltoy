@@ -232,9 +232,8 @@ public class ElasticSearchUtils {
 		}
 		for (String str : rootPath) {
 			root = (JsonObject.of(root)).get(str);
-			// update 2026-9-14 中间节点缺失时循环内即退出:原实现只在循环结束后判空,
-			// 路径中间缺失时下一轮会对null做get(NPE),非对象节点则ClassCastException,
-			// 都无法走到下面给出配置错误提示的分支
+			// update 2026-9-14 中间节点缺失时循环内即退出:原实现只在循环结束后判空,路径中间缺失时下一轮会对null做get
+			// (NPE),非对象节点则ClassCastException,都无法走到下面给出配置错误提示的分支
 			if (root == null) {
 				break;
 			}
@@ -287,8 +286,7 @@ public class ElasticSearchUtils {
 		}
 		for (String str : rootPath) {
 			root = (JsonObject.of(root)).get(str);
-			// update 2026-9-14 与extractSuggestFieldValue同步:中间节点缺失时循环内退出,
-			// 否则下一轮对null做get直接NPE,走不到下面root==null的配置错误提示分支
+			// update 2026-9-14 与extractSuggestFieldValue同步:中间节点缺失时循环内退出,否则下一轮对null做get直接NPE,走不到下面root==null的配置错误提示分支
 			if (root == null) {
 				break;
 			}

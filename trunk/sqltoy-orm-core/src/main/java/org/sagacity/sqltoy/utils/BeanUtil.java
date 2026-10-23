@@ -128,18 +128,18 @@ public class BeanUtil {
 	private static ConcurrentHashMap<Class, PropertyType[]> recordProperties = new ConcurrentHashMap<>();
 
 	/**
-	 * update 2026-9-14 属性匹配方法缓存:matchSetMethods/matchGetMethods原每次查询对voClass
-	 * 做getMethods()全量拷贝+逐属性toLowerCase匹配,按(类+有序属性表)缓存匹配结果
+	 * update 2026-9-14 属性匹配方法缓存:matchSetMethods/matchGetMethods按(类+有序属性表)缓存匹配结果,
+	 * 避免每次查询对voClass做getMethods()全量拷贝+逐属性toLowerCase匹配
 	 * (同一查询反复执行时属性表形态恒定,键空间与查询集同阶);调用方均只读返回数组,可共享
 	 */
 	private static ConcurrentHashMap<String, Method[]> matchSetMethodsCache = new ConcurrentHashMap<>();
 	private static ConcurrentHashMap<String, Method[]> matchGetMethodsCache = new ConcurrentHashMap<>();
 
 	/**
-	 * update 2026-9-14 无参构造器缓存:reflectRowToBean为逐行调用(如ResultUtils.consumeResult),
-	 * 原每行getDeclaredConstructor()做反射成员查找(方法体内无法循环外提升),按voClass缓存
-	 * Constructor实例(Constructor.newInstance线程安全,可跨线程复用); update 2026-9-14
-	 * 提升为public:结果集行循环内逐行反射构造的四处场景统一收编到此缓存
+	 * update 2026-9-14 无参构造器缓存:reflectRowToBean等为逐行调用(如ResultUtils.consumeResult),
+	 * 原每行getDeclaredConstructor()做反射成员查找(方法体内无法循环外提升),
+	 * 按voClass缓存Constructor实例(Constructor.newInstance线程安全,可跨线程复用);
+	 * 提升为public,结果集行循环内逐行反射构造的四处场景统一收编到此缓存
 	 * (SqlUtil.reflectResultRowToVOClass、ResultUtils.consumeResult/wrapQueryResult的自定义
 	 * Map子类、MapperUtils.reflectListToBean),此前均为逐行getDeclaredConstructor()
 	 */
@@ -305,13 +305,13 @@ public class BeanUtil {
 	}
 
 	/**
-	 * <p>
-	 * <li>update 2019-09-05 优化匹配方式，修复setIsXXX的错误</li>
-	 * <li>update 2020-04-09 支持setXXX()并返回对象本身,适配链式操作</li>
-	 * <li>update 2021-03-12 支持property中含下划线跟对象属性进行匹配</li>
+	 * update 2026-9-14 <p>
+	 * <li>优化匹配方式，修复setIsXXX的错误</li>
+	 * <li>支持setXXX()并返回对象本身,适配链式操作</li>
+	 * <li>支持property中含下划线跟对象属性进行匹配</li>
 	 * </p>
 	 *
-	 * 获取指定名称的方法集(update 2026-9-14 结果经(类+有序属性表)缓存,反复查询零重复匹配)
+	 * 获取指定名称的方法集(结果经(类+有序属性表)缓存,反复查询零重复匹配)
 	 *
 	 * @param voClass 目标对象类型
 	 * @param props   属性名称数组，与返回数组位置一一对应
@@ -423,7 +423,7 @@ public class BeanUtil {
 	}
 
 	/**
-	 * 获取指定名称的方法集,不区分大小写(update 2026-9-14 结果经(类+有序属性表)缓存)
+	 * update 2026-9-14 获取指定名称的方法集,不区分大小写(结果经(类+有序属性表)缓存)
 	 *
 	 * @param voClass 目标对象类型(支持Record类型)
 	 * @param props   属性名称数组，与返回数组位置一一对应
@@ -443,7 +443,7 @@ public class BeanUtil {
 	private static Method[] matchGetMethodsInternal(Class voClass, String... props) {
 		int indexSize = props.length;
 		Method[] result = new Method[indexSize];
-		// update 2025/07/30 支持Record类型
+		// 支持Record类型
 		if (voClass.isRecord()) {
 			RecordComponent[] components = voClass.getRecordComponents();
 			String propName;
@@ -566,7 +566,7 @@ public class BeanUtil {
 			for (int j = 0; j < methodCnt; j++) {
 				method = methods[j];
 				methodName = method.getName().toLowerCase(Locale.ROOT);
-				// update 2012-10-25 from equals to ignoreCase
+				// update 2012-10-25 由 equals 改为 ignoreCase 匹配
 				if (!void.class.equals(method.getReturnType()) && method.getParameterTypes().length == 0
 						&& (methodName.equals("get".concat(property)) || methodName.equals("is".concat(property))
 								|| (methodName.startsWith("is") && methodName.equals(property)))) {
@@ -813,7 +813,7 @@ public class BeanUtil {
 		// 4 非数组类型,但传递的参数值是数组类型且长度为1提取出数组中的单一值
 		if (paramValue.getClass().isArray() && typeValue < DataType.aryCharType) {
 			if (typeValue == DataType.stringType && (paramValue instanceof byte[])) {
-				// update 2026-9-9 显式UTF-8(原平台默认字符集,与工程内其余byte[]转文本处不一致)
+				// update 2026-9-9 显式UTF-8字符集(避免沿用平台默认字符集,与工程内其余byte[]转文本处口径不一致)
 				paramValue = new String((byte[]) paramValue, StandardCharsets.UTF_8);
 			} else if (typeValue == DataType.stringType && (paramValue instanceof char[])) {
 				paramValue = new String((char[]) paramValue);
@@ -1048,7 +1048,7 @@ public class BeanUtil {
 			}
 			return DateUtil.asLocalTime(DateUtil.convertDateObject(paramValue));
 		}
-		// update 2025-11-3 增加带时区的时间类型
+		// update 2025-11-3 带时区的时间类型(OffsetTime)分支
 		if (DataType.offsetTimeType == typeValue) {
 			if (paramValue instanceof OffsetTime) {
 				return (OffsetTime) paramValue;
@@ -1159,7 +1159,7 @@ public class BeanUtil {
 		}
 		// 27 clob 类型比较特殊,对外转类型全部转为字符串
 		if (DataType.clobType == typeValue) {
-			// update 2020-6-23 增加兼容性判断
+			// update 2020-6-23 兼容性判断:String 直接返回,其余按 Clob 转文本
 			if (paramValue instanceof String) {
 				return paramValue.toString();
 			}
@@ -1204,7 +1204,7 @@ public class BeanUtil {
 			}
 			return paramValue.toString().toCharArray();
 		}
-		// 32 update by 2020-4-13增加Byte类型的处理
+		// 32 增加Byte类型的处理
 		if (DataType.wrapByteType == typeValue) {
 			return Byte.valueOf(paramValue.toString());
 		}
@@ -1217,7 +1217,7 @@ public class BeanUtil {
 				return convertArray(((Collection) paramValue).toArray(), typeName);
 			} else if (paramValue.getClass().isArray()) {
 				// update 2026-9-11 源值已是java数组(如float[]与Float[]、int[]与Integer[]互转)时
-				// 交由convertArray反射统一装箱/拆箱,修复前原样返回导致setter调用argument type mismatch
+				// 交由convertArray反射统一装箱/拆箱(原样返回会导致setter调用argument type mismatch)
 				return convertArray(paramValue, typeName);
 			} else if (paramValue instanceof String) {
 				// update 2026-9-11 '[a,b]'文本形态还原:数组列值经读路径归一为文本
@@ -1476,8 +1476,8 @@ public class BeanUtil {
 		if ("false".equalsIgnoreCase(boolVar)) {
 			return "0";
 		}
-		// update 2026-9-22 剥离千分位分组逗号:sql中number-format格式化后的"8,888.0000"再映射
-		// 数值属性时,new BigDecimal等解析抛"Character , is neither a decimal digit number...";
+		// update 2026-9-22 剥离千分位分组逗号:sql中number-format格式化后的「8,888.0000」再映射
+		// 数值属性时,new BigDecimal等解析抛「Character , is neither a decimal digit number...」;
 		// 常规值不含逗号,indexOf快速短路保持热路径零正则开销
 		if (boolVar.indexOf(',') >= 0 && StringUtil.matches(boolVar, GROUPING_NUMBER_PATTERN)) {
 			return boolVar.replace(",", "");
@@ -1750,7 +1750,7 @@ public class BeanUtil {
 						int fieldLen = fields.length;
 						// a.b.c[index] 切割后逐级向下取值
 						for (String field : fields) {
-							// 支持map类型 update 2021-01-31
+							// update 2021-01-31 支持map类型
 							if (fieldValue instanceof Map) {
 								if (fieldValue instanceof IgnoreKeyCaseMap) {
 									keyAndIndex = getKeyAndIndex(field);
@@ -1817,8 +1817,8 @@ public class BeanUtil {
 										}
 									}
 								}
-							} // update 2022-5-25 支持将集合的属性直接映射成数组
-								// update 2025-2-26 将instanceof List扩展成Iterable
+							}
+								// update 2022-5-25 支持将集合的属性直接映射成数组,instanceof 由 List 扩展为 Iterable
 							else if (fieldValue instanceof Iterable) {
 								List tmp = null;
 								if (fieldValue instanceof List) {
@@ -2294,8 +2294,8 @@ public class BeanUtil {
 		return resultList;
 	}
 
-	// update 2026-9-8 增加带列jdbcTypes的重载:sql查询映射VO时JSON/JSONB/VECTOR/GEOMETRY列
-	// 需将jdbc值转换为POJO(如json字符串反序列化为对象字段),原硬编码JdbcTypes.OTHER导致
+	// update 2026-9-8 带列jdbcTypes的重载:sql查询映射VO时JSON/JSONB/VECTOR/GEOMETRY列
+	// 需将jdbc值转换为POJO(如json字符串反序列化为对象字段),硬编码JdbcTypes.OTHER会导致
 	// JSON类型标记丢失、反序列化不触发;旧签名委托保持第三方兼容
 	public static <T extends Serializable> T reflectRowToBean(TypeHandler typeHandler, Method[] realMethods,
 			int[] methodTypeValues, String[] methodTypes, Class[] genericTypes, List rowList, int[] indexs,
@@ -2634,18 +2634,18 @@ public class BeanUtil {
 	}
 
 	/**
-	 * 代替PropertyUtil 和BeanUtils的setProperty方法(带列jdbcType语义)
+	 * update 2026-9-14 代替PropertyUtil 和BeanUtils的setProperty方法(带列jdbcType语义)
 	 *
-	 * update 2026-9-10 增加jdbcType入参重载:updateSaveFetch等场景回写的行值已经过
-	 * processResultRow归一(json列=String文本、vector/geometry=文本),原固定OTHER类型转换
+	 * 增加jdbcType入参重载:updateSaveFetch等场景回写的行值已经过
+	 * processResultRow归一(json列=String文本、vector/geometry=文本),固定OTHER类型转换
 	 * 不触发json→POJO/List反序列化与vector/geometry→属性类型转换,String直设对象属性报 argument type
 	 * mismatch(vastbase G100真库json对象列实爆);调用方传FieldMeta.getType()
 	 * (即@Column(type=JdbcTypes.X)注解值,常规列为java.sql.Types码,不命中扩展分支行为不变)
 	 *
-	 * update 2026-9-14 增加map类型支持:直接按key写入,与getProperty的读取语义对称
+	 * 增加map类型支持:直接按key写入,与getProperty的读取语义对称
 	 * (此前map入参只匹配setter必然抛does not have the property异常,而读路径支持map, 混合行数据处理时读/写行为不一致)
 	 *
-	 * update 2026-9-14 map类型key支持xxx.xxx级联形式:逐层深入嵌套map后在叶子层写入,
+	 * map类型key支持xxx.xxx级联形式:逐层深入嵌套map后在叶子层写入,
 	 * 中间层key存在且值为map则深入、不存在则创建HashMap挂入;中间层值不是map(如POJO对象)
 	 * 则剩余key转由标准setProperty按setter写入;整串key(含点号)作为字面key已存在时直接覆盖,
 	 * 与读路径reflectBeanToAry字面key优先的级联取值语义对称
@@ -2857,8 +2857,7 @@ public class BeanUtil {
 	 * @return 实际的实体Class，无法解析时原样返回
 	 */
 	public static Class getEntityClass(Class entityClass) {
-		// update 2020-9-16
-		// 主要规避VO对象{{}}模式初始化，导致Class获取变成了内部类(双括号实例化modifiers会等于0)
+		// update 2020-9-16 主要规避VO对象{{}}模式初始化，导致Class获取变成了内部类(双括号实例化modifiers会等于0)
 		// {{}}实例化得到的class是不正确的，所以这里将==0的进入后续判断
 		if (entityClass == null || entityClass.equals(Object.class) || entityClass.getModifiers() != 0) {
 			return entityClass;
@@ -3072,7 +3071,7 @@ public class BeanUtil {
 						itemList.add(itemEntity);
 					} // oneToOne 直接赋值
 					else {
-						// update 2022-5-18 增加oneToOne 级联数据校验
+						// update 2022-5-18 oneToOne 级联数据校验(返回多于1行即抛异常)
 						if (itemSize > 0) {
 							throw new DataAccessException("please check the @OneToOne cascade configuration of object ["
 									+ mainEntity.getClass().getName()

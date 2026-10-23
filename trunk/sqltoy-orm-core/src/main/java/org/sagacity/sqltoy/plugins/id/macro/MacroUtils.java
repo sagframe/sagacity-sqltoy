@@ -24,8 +24,8 @@ import org.sagacity.sqltoy.utils.StringUtil;
  */
 public class MacroUtils {
 	/**
-	 * 转换器的格式 update 2026-9-15 修复宏名多连字符不分发:原正则[\-]?仅允许单个连字符,@secure-loop-full
-	 * (两个连字符)永远匹配不上宏模式,宏体从不被执行(真库实测原样透传,循环参数被先行 名参转换破坏);改为允许多段"连字符+字母数字"组合
+	 * update 2026-9-15 转换器的格式:宏名允许多段"连字符+字母数字"组合(原正则[\-]?仅允许单个连字符,@secure-loop-full
+	 * 两个连字符永远匹配不上宏模式,宏体从不被执行;真库实测原样透传,循环参数被先行名参转换破坏)
 	 */
 	private static Pattern macroPattern = Pattern.compile("@[a-zA-Z]+[0-9]*(?:\\-[a-zA-Z0-9]+)*\\([\\w\\W]*\\)");
 
@@ -270,9 +270,8 @@ public class MacroUtils {
 					paramsMap.put(key, newItems);
 				}
 			} else {
-				// update 2026-9-14 裸形态不覆盖已解析出的属性列表:同一标记既当整体引用(:x[i])又当
-				// 属性引用(:x[i].prop)时,原实现"后出现者覆盖"会让先出现的形态丢失解析结果,
-				// 导致该形态在循环体内不被替换、标记原样漏进最终sql(执行期未绑定参数)
+				// update 2026-9-14 裸形态不覆盖已解析出的属性列表:同一标记既当整体引用(:x[i])又当属性引用(:x[i].prop)时,
+				// "后出现者覆盖"会让先出现的形态丢失解析结果,导致该形态在循环体内不被替换、标记原样漏进最终sql(执行期未绑定参数);
 				// 裸形态是否存在由调用方用containsBareRef从模板文本判定
 				if (!paramsMap.containsKey(group)) {
 					paramsMap.put(group, new String[] {});
@@ -284,10 +283,9 @@ public class MacroUtils {
 	}
 
 	/**
-	 * 查找标记在模板中实际出现的形态(含标记后紧跟的参数名字符)。 update 2026-9-14
-	 * parseParams要求标记之后是非名字字符,故":x[i]_%"这类标记紧邻用户文本的形态
-	 * (归一化后为":sqlToyLoopAsKey_0A_%")解析不到;此时既不能按标记本身登记/替换(该引用会原样残留
-	 * 内部标记),也不能把下划线等文本吞进参数值(会静默改变语义,如like模式),调用方需据此给出明确报错。
+	 * update 2026-9-14 查找标记在模板中实际出现的形态(含标记后紧跟的参数名字符)。parseParams要求标记之后是非名字字符,
+	 * 故":x[i]_%"这类标记紧邻用户文本的形态(归一化后为":sqlToyLoopAsKey_0A_%")解析不到;此时既不能按标记本身
+	 * 登记/替换(该引用会原样残留内部标记),也不能把下划线等文本吞进参数值(会静默改变语义,如like模式),调用方需据此给出明确报错。
 	 * 
 	 * @param template 模板(已做过标记替换的循环体内容)
 	 * @param marker   标记(如:sqlToyLoopAsKey_0A)

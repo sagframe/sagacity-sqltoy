@@ -172,10 +172,9 @@ public class SqlLoop extends AbstractMacro {
 				for (int j = 0; j < keys.size(); j++) {
 					key = keyNamePrefix + j + "A";
 					loopParamNames = loopParamNamesMap.get(key);
-					// update 2026-9-14 裸形态(:x[i])与属性形态(:x[i].prop)各自独立登记:parseParams对同一
-					// 标记两者共用一条记录,原来按loopParamNames.length二选一,未被选中的形态在循环体中
-					// 原样残留(内部标记进入最终sql,执行期未绑定参数);
-					// 引用后紧跟名字字符(如 like ':x[i]_%')的形态无法与参数名区分,先给出明确报错
+					// update 2026-9-14 裸形态(:x[i])与属性形态(:x[i].prop)各自独立登记:parseParams对同一标记两者共用一条记录,
+					// 原来按loopParamNames.length二选一,未被选中的形态在循环体中原样残留(内部标记进入最终sql,
+					// 执行期未绑定参数);引用后紧跟名字字符(如 like ':x[i]_%')的形态无法与参数名区分,先给出明确报错
 					MacroUtils.validateRefForm(loopContent, key, keys.get(j));
 					if (MacroUtils.containsRef(loopContent, key)) {
 						loopKeyValueMap.put(key, regParamValues.get(j)[i]);
@@ -225,7 +224,7 @@ public class SqlLoop extends AbstractMacro {
 		while (pseudoMarkStart != -1) {
 			// 始终从最后一个#[]进行处理
 			beginMarkIndex = queryStr.lastIndexOf(SqlConfigParseUtils.SQL_PSEUDO_START_MARK);
-			// update 2021-01-17 按照"["和"]" 找对称位置，兼容sql中存在[]场景
+			// update 2021-01-17 按照「[」和「]」找对称位置,兼容sql中存在[]场景
 			endMarkIndex = StringUtil.getSymMarkIndex(SqlConfigParseUtils.SQL_PSEUDO_SYM_START_MARK,
 					SqlConfigParseUtils.SQL_PSEUDO_END_MARK, queryStr, beginMarkIndex);
 			if (endMarkIndex == -1) {
@@ -328,10 +327,9 @@ public class SqlLoop extends AbstractMacro {
 			} else {
 				// 值按原样内联,本宏不做值转义:调用方可能已按目标方言自行转义,框架再转一次会造成二次转义
 				// (值语义被改),故含单引号/反斜杠的值请走参数化(@secure-loop)或由调用方保证安全
-				// update 2026-9-15 日期/时间值拼接感知方言:oracle等库裸日期字符串依赖会话
-				// NLS_DATE_FORMAT(真库实测ORA-01861/01843),线程dbProfile存在时经toSqlLogStr
-				// 按方言包裹转日期函数(仅比较位置包裹,like引号内形态维持原样);无运行时
-				// 上下文(离线API直调)维持原2参裸形态
+				// update 2026-9-15 日期/时间值拼接感知方言:oracle等库裸日期字符串依赖会话NLS_DATE_FORMAT(真库实测
+				// ORA-01861/01843),线程dbProfile存在时经toSqlLogStr按方言包裹转日期函数(仅比较位置包裹,
+				// like引号内形态维持原样);无运行时上下文(离线API直调)维持原2参裸形态
 				if (loopDbType != null) {
 					preSql = preSql
 							.concat(SqlUtil.toSqlLogStr(paramValue, preSql, addSingleQuotation, loopDbType.intValue()));

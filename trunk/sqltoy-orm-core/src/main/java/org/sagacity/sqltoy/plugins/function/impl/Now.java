@@ -12,8 +12,8 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
  * @version v1.0,Date:2013-03-25
  */
 public class Now extends IFunction {
-	// update 2026-10-11 补current_timestamp关键字源拼写(标准SQL写法,pg/oracle/hana/db2用户惯用),
-	// 带括号fsp形态与裸关键字双形态;sqlite的CURRENT_TIMESTAMP为UTC墙钟(东八区差8小时)须转本地
+	// update 2026-10-11 补current_timestamp关键字源拼写(标准SQL写法,pg/oracle/hana/db2用户惯用),带括号fsp形态与裸关键字双形态;
+	// sqlite的CURRENT_TIMESTAMP为UTC墙钟(东八区差8小时)须转本地
 	private static Pattern regex = Pattern.compile(
 			"(?i)\\W(((now|getdate|sysdate|systimestamp|current_timestamp)\\()|(sysdate|systimestamp|current_timestamp)\\W)");
 
@@ -46,18 +46,15 @@ public class Now extends IFunction {
 	@Override
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
 		String funLow = functionName.toLowerCase(java.util.Locale.ROOT);
-		// update 2026-10-11
-		// current_timestamp在sqlite为UTC墙钟,与datetime(now)的localtime策略统一转本地;
-		// 其余库走下方既有分支(mysql系now()等价改名/oracle系sysdate等价/pg的now()/db2的CURRENT
-		// TIMESTAMP等均为该库原生等价物)
+		// update 2026-10-11 current_timestamp在sqlite为UTC墙钟,与datetime(now)的localtime策略统一转本地;
+		// 其余库走下方既有分支(mysql系now()等价改名/oracle系sysdate等价/pg的now()/db2的CURRENT TIMESTAMP等均为该库原生等价物)
 		if ("current_timestamp".equals(funLow) && dialect == DBType.SQLITE) {
 			return "datetime('now','localtime')";
 		}
 		// CURRENT关键字承担(无括号形态,真库探针2026-10-12)
 
-		// update 2026-10-4 补oracle源形态systimestamp(带小数秒,可带精度参数):oracle系原生透传
-		// (返回sysdate会丢精度;裸形态正则带\W后缀,IGNORE会重复其空白字符,须返回同名文本);
-		// 其余库走下方now()同路径分派(fsp/精度参数mysql系保留,其余库不带)
+		// update 2026-10-4 补oracle源形态systimestamp(带小数秒,可带精度参数):oracle系原生透传(返回sysdate会丢精度;
+		// 裸形态正则带\W后缀,IGNORE会重复其空白字符,须返回同名文本);其余库走下方now()同路径分派(fsp/精度参数mysql系保留,其余库不带)
 		if ("systimestamp".equals(funLow) && (dialect == DBType.ORACLE || dialect == DBType.OCEANBASE
 				|| dialect == DBType.DM || dialect == DBType.ORACLE11)) {
 			return functionName;
@@ -67,9 +64,7 @@ public class Now extends IFunction {
 				|| dialect == DBType.STARROCKS) {
 			return wrapArgs("now", args);
 		}
-		// update 2026-9-5 其余支持now()的库不带fsp参数
-		// (mysql特有的now(6)转到这些库需丢弃参数,否则语法非法)
-		// update 2026-9-14 补KINGBASE(KingbaseES基于PG,函数语法归PG系)
+		// update 2026-9-14 其余支持now()的库不带fsp参数(mysql特有的now(6)转到这些库需丢弃参数,否则语法非法);补KINGBASE(KingbaseES基于PG,函数语法归PG系)
 		if (dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL14 || dialect == DBType.GAUSSDB
 				|| dialect == DBType.OPENGAUSS || dialect == DBType.MOGDB || dialect == DBType.STARDB
 				|| dialect == DBType.OSCAR || dialect == DBType.VASTBASE || dialect == DBType.H2
@@ -87,21 +82,18 @@ public class Now extends IFunction {
 			return "sysdate";
 		}
 		if (dialect == DBType.SQLSERVER) {
-			// update 2026-9-15 getdate()不接受精度参数(now(6)的fsp带过去报"getdate function
-			// requires 0 argument(s)"),sqlserver精度形态用sysdatetime()承担
+			// update 2026-9-15 getdate()不接受精度参数(now(6)的fsp带过去报"getdate function requires 0 argument(s)"),sqlserver精度形态用sysdatetime()承担
 			if (args != null && args.length > 0) {
 				return "sysdatetime()";
 			}
 			return wrapArgs("getdate", args);
 		}
-		// update 2026-9-5
-		// 补充DB2/sqlite(此前sysdate/now/getdate在目标原样输出,DB2无这些函数,sqlite用CURRENT_TIMESTAMP)
+		// update 2026-9-5 补充DB2/sqlite(此前sysdate/now/getdate在目标原样输出,DB2无这些函数,sqlite用CURRENT_TIMESTAMP)
 		if (dialect == DBType.DB2) {
 			return "CURRENT TIMESTAMP";
 		}
 		if (dialect == DBType.SQLITE) {
-			// update 2026-10-4 CURRENT_TIMESTAMP为UTC墙钟(东八区差8小时),与sqliteDateTextExpr
-			// 已确立的'localtime'策略统一,取本地墙钟
+			// update 2026-10-4 CURRENT_TIMESTAMP为UTC墙钟(东八区差8小时),与sqliteDateTextExpr已确立的'localtime'策略统一,取本地墙钟
 			return "datetime('now','localtime')";
 		}
 		// 2026-9-11 hana无now()/sysdate/getdate函数,取标准CURRENT_TIMESTAMP

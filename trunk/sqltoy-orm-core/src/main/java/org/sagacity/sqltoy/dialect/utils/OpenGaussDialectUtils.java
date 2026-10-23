@@ -35,8 +35,7 @@ public class OpenGaussDialectUtils {
 		if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
 			return true;
 		}
-		// update 2026-9-6 openGauss(5.0/7.0)无generated as identity列语法,建表用bigserial
-		// (隐式序列默认值),identity策略须省略主键列让默认值生效(实测insert省略id列时自动生成);
+		// update 2026-9-6 openGauss(5.0/7.0)无generated as identity列语法,建表用bigserial(隐式序列默认值),identity策略须省略主键列让默认值生效(实测insert省略id列时自动生成);
 		// 原照搬PG10+返回true会显式含id列插null违反非空(此前openGauss identity被误判不可用)
 		if (pkStrategy.equals(PKStrategy.IDENTITY)) {
 			return false;
@@ -117,9 +116,8 @@ public class OpenGaussDialectUtils {
 		} else if (jdbcType == java.sql.Types.BLOB) {
 			sql.append("cast(? as bytea)");
 		} else if (jdbcType == JdbcTypes.JSON || jdbcType == JdbcTypes.JSONB) {
-			// update 2026-9-10 oscar排除cast:传统Oscar(com.oscar.Driver)无json类型(json数据以
-			// CLOB/VARCHAR列承载),cast(? as json)必败,裸?+setString绑定为正确形态
-			// (驱动jar解包实证非og同源内核,详见DialectUtils同日注释)
+			// update 2026-9-10 oscar排除cast:传统Oscar(com.oscar.Driver)无json类型(json数据以CLOB/VARCHAR列承载),
+			// cast(? as json)必败,裸?+setString绑定为正确形态(驱动jar解包实证非og同源内核,详见DialectUtils同日注释)
 			if (dbType != null && dbType == DBType.OSCAR) {
 				sql.append("?");
 			} else {
@@ -130,8 +128,7 @@ public class OpenGaussDialectUtils {
 			if (dbType != null && dbType == DBType.OSCAR) {
 				sql.append("?");
 			} else {
-				// gaussdb企业版向量类型名为floatvector,其余为vector
-				// update 2026-9-10 vastbase G100 3.0实测向量类型名同为floatvector(无vector别名)
+				// update 2026-9-10 gaussdb企业版向量类型名为floatvector,其余为vector;vastbase G100 3.0实测向量类型名同为floatvector(无vector别名)
 				// cast用于兜底setString等字符串参数场景,PGobject包装参数类型已正确
 				sql.append("cast(? as ")
 						.append(dbType != null && (dbType == DBType.GAUSSDB || dbType == DBType.VASTBASE)

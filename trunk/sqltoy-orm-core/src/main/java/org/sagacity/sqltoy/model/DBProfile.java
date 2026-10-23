@@ -8,7 +8,7 @@ import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 
 /**
- * update 2026-9-6 连接维度的数据库特征档案:以JDBC URL为缓存key(同一URL必然指向同一数据库实例)
+ * update 2026-9-6 连接维度的数据库特征档案:以JDBC URL为缓存key(同一URL必然指向同一数据库实例),
  * 一次性统筹解析并缓存dialect/dbType/productName/majorVersion及PG系扩展类型绑定句柄,
  * 取代此前DataSourceUtils(dialect/dbType)与SqlUtil(PGobjectHolder)各自独立解析与缓存的分散形态。
  * 由DataSourceUtils.getDBProfile(connection)创建,进程级缓存;不缓存运行期可变的属性
@@ -46,16 +46,15 @@ public class DBProfile {
 	private final PGobjectHolder pgObjectHolder;
 
 	/**
-	 * update 2026-9-10 db2的GSE空间扩展schema(DB2GSE)是否存在:12.1起内置空间引擎(非限定
-	 * SYSIBM函数)与GSE扩展可并存(实测12.1.5容器GSE仍启用),且内置ST_GEOMETRY与
-	 * db2gse.ST_GEOMETRY为不同UDT(函数产物与列类型错配报-408),geometry参数化包装须按此
-	 * 探测分派db2gse前缀形态或内置非限定形态;非db2为null,db2探测异常为TRUE(保持既有db2gse形态)
+	 * update 2026-9-10 db2的GSE空间扩展schema(DB2GSE)是否存在:12.1起内置空间引擎(非限定SYSIBM函数)与GSE扩展可并存
+	 * (实测12.1.5容器GSE仍启用),且内置ST_GEOMETRY与db2gse.ST_GEOMETRY为不同UDT(函数产物与列类型错配报-408),
+	 * geometry参数化包装须按此探测分派db2gse前缀形态或内置非限定形态;非db2为null,db2探测异常为TRUE(保持既有db2gse形态)
 	 */
 	private final Boolean hasGseSchema;
 
 	/**
-	 * update 2026-9-10 字符串字面量内反斜杠是否为转义字符(mysql系为true):由DataSourceUtils
-	 * 在构建档案解析出dbType时一并判定,运行期直取,统一供字面量掩码与like ESCAPE子句形态判定;
+	 * update 2026-9-10 字符串字面量内反斜杠是否为转义字符(mysql系为true):由DataSourceUtils在构建档案解析出dbType时一并判定,
+	 * 运行期直取,统一供字面量掩码与like ESCAPE子句形态判定;
 	 * 运行期可变的backslashEscaping全局开关不入本档案(实时语义由SqlConfigParseUtils.isBackslashEscapeDialect分层叠加)
 	 */
 	private final boolean backslashEscape;
@@ -121,19 +120,19 @@ public class DBProfile {
 		return backslashEscape;
 	}
 
-	// ==================== update 2026-9-12 优化步骤1扩容:族判定与声明型事实 ====================
+	// update 2026-9-12 ==================== 优化步骤1扩容:族判定与声明型事实 ====================
 	// 设计原则:DBProfile只承载"可探测/可声明的数据库事实",行为策略仍归Dialect实现;
 	// 全部为getter派生(零新存储字段、零构造签名改动、零行为变化),供操作上下文重构
 	// (步骤3)时作为唯一权威参数消费,替代执行链上(Integer dbType,String dialect)双轨
 	// 与DialectExtUtils.isOceanBaseAsMysql()的ThreadLocal actuallyDBType隐式全局态。
 
 	/**
-	 * 是否为OceanBase系列数据库:按产品名特征判定(mysql租户模式驱动上报 "MySQL
+	 * update 2026-9-14 是否为OceanBase系列数据库:按产品名特征判定(mysql租户模式驱动上报 "MySQL
 	 * 5.7.25-OceanBase_CE...",oracle租户模式产品名同样携带OceanBase字样),
-	 * 独立于dbType——OB按mysql方言配置时执行链dbType解析为MYSQL,但产品名事实不变。 update 2026-9-14
-	 * 已完成收编:DialectExtUtils.isOceanBaseAsMysql()(ThreadLocal的
-	 * actuallyDBType隐式全局态)已删除,vector包装、saveOrUpdateAll计数豁免、geometry wrap、
-	 * getTables元数据绕行等分派点统一改用本方法(经profile参数显式传递,并行场景不依赖线程态)。
+	 * 独立于dbType——OB按mysql方言配置时执行链dbType解析为MYSQL,但产品名事实不变。
+	 * 已完成收编:DialectExtUtils.isOceanBaseAsMysql()(ThreadLocal的actuallyDBType隐式全局态)已删除,
+	 * vector包装、saveOrUpdateAll计数豁免、geometry wrap、getTables元数据绕行等分派点统一改用本方法
+	 * (经profile参数显式传递,并行场景不依赖线程态)。
 	 */
 	public boolean isOceanBase() {
 		return productName != null && productName.toUpperCase(Locale.ROOT).contains("OCEANBASE");
@@ -192,17 +191,16 @@ public class DBProfile {
 	}
 
 	/**
-	 * update 2026-9-12 声明型事实:null判定函数名(弹性修改的nvl(?,col)包裹)。
-	 * 与各方言NVL_FUNCTION常量同源(逐方言核实:OracleDialect/DB2Dialect/DMDialect/
-	 * OceanBaseDialect=nvl,MySqlDialect/TidbDialect/DorisDialect/ClickHouseDialect/
-	 * SqliteDialect/ImpalaDialect/HanaDialect=ifnull,PostgreSqlDialect(含H2继承)=COALESCE,
-	 * OpenGaussDialect(含GaussDB/MogDB/Vastbase/StarDB/Oscar继承)/KingbaseDialect=NVL,
-	 * SqlServerDialect=isnull;DefaultDialect兜底ifnull)。
-	 * 预期在操作上下文重构(步骤3)中收编为唯一传递形态,替代nullFunction字符串参数 在save/update链路的手工逐层传递。
+	 * update 2026-9-14 声明型事实:null判定函数名(弹性修改的nvl(?,col)包裹),与各方言NVL_FUNCTION常量同源(逐方言核实:
+	 * OracleDialect/DB2Dialect/DMDialect/OceanBaseDialect=nvl,MySqlDialect/TidbDialect/DorisDialect/
+	 * ClickHouseDialect/SqliteDialect/ImpalaDialect/HanaDialect=ifnull,PostgreSqlDialect(含H2继承)=COALESCE,
+	 * OpenGaussDialect(含GaussDB/MogDB/Vastbase/StarDB/Oscar继承)/KingbaseDialect=NVL,SqlServerDialect=isnull;
+	 * DefaultDialect兜底ifnull);预期在操作上下文重构(步骤3)中收编为唯一传递形态,
+	 * 替代nullFunction字符串参数在save/update链路的手工逐层传递
 	 */
 	/**
-	 * update 2026-9-14 按SQL标准(ANSI COALESCE)统一空值判定函数:既有各库方言
-	 * (nvl/ifnull/isnull/NVL)全部原生支持COALESCE,不再按库分派;短路求值更优
+	 * 按SQL标准(ANSI COALESCE)统一空值判定函数:既有各库方言(nvl/ifnull/isnull/NVL)全部原生支持COALESCE,
+	 * 不再按库分派;短路求值更优
 	 */
 	public String getNullFunction() {
 		// oracle族保留NVL(扩展类型VECTOR/SDO_GEOMETRY对COALESCE的绑定变量推断
@@ -217,7 +215,7 @@ public class DBProfile {
 	 * update 2026-9-12 声明型事实:驱动是否支持可更新结果集(CONCUR_UPDATABLE)——
 	 * updateSaveFetch/updateFetch行级回写(rs.updateXXX/updateRow)的底层依赖。
 	 * 实测clickhouse与hana(ngdbc)直接拒绝该游标形态,两者方言已显式抛
-	 * UnsupportedOperationException;本事实为步骤3上下文收编后的统一判定依据, 并供上层应用在能力探测场景直取(替代试错)。
+	 * UnsupportedOperationException;本事实为步骤3上下文收编后的统一判定依据,并供上层应用在能力探测场景直取(替代试错)。
 	 */
 	public boolean supportsUpdatableResultSet() {
 		return dbType != DBType.CLICKHOUSE && dbType != DBType.HANA;
@@ -225,11 +223,10 @@ public class DBProfile {
 
 	/**
 	 * update 2026-10-13 声明型事实:该库select常量行所需的虚表(伪表)名。
-	 * 单一事实源为DataSourceUtils.getVirtualTable(Integer),本getter为连接档案持有者的
-	 * 快速获取通道(零新存储字段)。返回空串表示该库原生支持无from select(mysql系/pg系/
-	 * sqlserver等),非空表示需要挂伪表(如oracle系返回"dual"、db2返回"SYSIBM.SYSDUMMY1")。
-	 * 与@virtualTable()宏展开(SqlConfigParseUtils.expandVirtualTable)及各方言Dialect的
-	 * VIRTUAL_TABLE常量同源
+	 * 单一事实源为DataSourceUtils.getVirtualTable(Integer),本getter为连接档案持有者的快速获取通道(零新存储字段)。
+	 * 返回空串表示该库原生支持无from select(mysql系/pg系/sqlserver等),非空表示需要挂伪表
+	 * (如oracle系返回"dual"、db2返回"SYSIBM.SYSDUMMY1")。
+	 * 与@virtualTable()宏展开(SqlConfigParseUtils.expandVirtualTable)及各方言Dialect的VIRTUAL_TABLE常量同源
 	 */
 	public String getVirtualTable() {
 		return DataSourceUtils.getVirtualTable(dbType);
@@ -238,9 +235,9 @@ public class DBProfile {
 	/**
 	 * update 2026-9-12 优化步骤3:构建有效执行视图——显式配置dialect时,执行链的
 	 * dialect/dbType以配置为准(processDataSource既有语义:配置覆盖后getDBType(dialect)),
-	 * 而productName/isOceanBase/pgobjectHolder/backslashEscape/hasGseSchema等
-	 * 真实连接事实保留本档案值——使isOceanBase()等真实库事实在配置覆盖场景(OB按 mysql方言配置)依然可用,替代ThreadLocal
-	 * getActuallyDBType()的独立判据。 本体字段全final,返回新实例;配置值与本体一致时返回自身(零分配)。
+	 * 而productName/isOceanBase/pgobjectHolder/backslashEscape/hasGseSchema等真实连接事实保留本档案值——
+	 * 使isOceanBase()等真实库事实在配置覆盖场景(OB按mysql方言配置)依然可用,替代ThreadLocal
+	 * getActuallyDBType()的独立判据。本体字段全final,返回新实例;配置值与本体一致时返回自身(零分配)。
 	 */
 	public DBProfile asEffective(int effectiveDbType, String effectiveDialect) {
 		if (effectiveDbType == dbType && dialect != null && dialect.equals(effectiveDialect)) {

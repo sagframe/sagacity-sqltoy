@@ -83,7 +83,7 @@ public class SecureSqlLoop extends AbstractMacro {
 		int end = loopValues.length;
 		if (params.length > 3) {
 			start = Integer.parseInt(params[3].trim());
-			// update 2026-9-14 start为负时按0处理:原来直接用作下标会取loopValues[-1]抛数组越界
+			// update 2026-9-14 start为负时按0处理:直接用作下标会取loopValues[-1]抛数组越界
 			if (start < 0) {
 				start = 0;
 			}
@@ -154,10 +154,9 @@ public class SecureSqlLoop extends AbstractMacro {
 				for (int j = 0; j < keys.size(); j++) {
 					key = keyNamePrefix + j + "A";
 					loopParamNames = loopParamNamesMap.get(key);
-					// update 2026-9-14 裸形态(:x[i])与属性形态(:x[i].prop)改为各自独立处理:parseParams对
-					// 同一标记两者共用一条记录,原来按loopParamNames.length二选一,导致未被选中的形态
-					// 在循环体中原样残留(最终sql里出现内部标记,执行期未绑定参数);
-					// 引用后紧跟名字字符(如 like ':x[i]_%')的形态无法与参数名区分,先给出明确报错
+					// update 2026-9-14 裸形态(:x[i])与属性形态(:x[i].prop)各自独立处理:parseParams对同一标记两者共用一条记录,
+					// 原来按loopParamNames.length二选一,导致未被选中的形态在循环体中原样残留(最终sql里出现内部标记,
+					// 执行期未绑定参数);引用后紧跟名字字符(如 like ':x[i]_%')的形态无法与参数名区分,先由validateRefForm给出明确报错
 					MacroUtils.validateRefForm(loopContent, key, keys.get(j));
 					// 裸形态:整体作为参数值
 					if (MacroUtils.containsRef(loopContent, key)) {
@@ -188,12 +187,12 @@ public class SecureSqlLoop extends AbstractMacro {
 	}
 
 	/**
-	 * 按字面量替换循环体内的参数引用,并要求引用之后不是参数名/属性链字符。 update 2026-9-14
-	 * 原实现用replaceAll(key+"."+property):其一,行循环内每次替换都隐式编译正则 (元素数×引用数
-	 * 次编译);其二,连接用的"."是正则的任意字符;其三,没有后边界判断—— 属性名或标记互为前缀时会相互截断(:p[i].id 吃掉
-	 * :p[i].idCard 的前缀、标记_1A 吃掉 _10A、 裸引用吃掉属性引用的前缀),被截断的引用会变成一个从未绑定的参数名(执行期直接失败)。
-	 * 字面量匹配消除正则开销与"."通配;后边界(含".")判断使前缀关系不再相互污染。
-	 * 
+	 * update 2026-9-14 按字面量替换循环体内的参数引用,并要求引用之后不是参数名/属性链字符。原实现用replaceAll(key+"."+property):
+	 * 其一,行循环内每次替换都隐式编译正则(元素数×引用数次编译);其二,连接用的"."是正则的任意字符;其三,没有
+	 * 后边界判断——属性名或标记互为前缀时会相互截断(:p[i].id 吃掉:p[i].idCard 的前缀、标记_1A 吃掉 _10A、
+	 * 裸引用吃掉属性引用的前缀),被截断的引用会变成一个从未绑定的参数名(执行期直接失败)。字面量匹配消除正则
+	 * 开销与"."通配;后边界(含".")判断使前缀关系不再相互污染。
+	 *
 	 * @param content     循环体内容
 	 * @param ref         参数引用(如:sqlToyLoopAsKey_0A 或 :sqlToyLoopAsKey_0A.id)
 	 * @param replacement 替换后的参数名引用(如:sqlLoopKey_S1B)

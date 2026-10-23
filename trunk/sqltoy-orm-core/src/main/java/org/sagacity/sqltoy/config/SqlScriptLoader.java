@@ -71,7 +71,7 @@ public class SqlScriptLoader {
 
 	/**
 	 * update 2026-9-23 realDialect优先(sqltoyContext.realDialectFirst推送):开启后线程上
-	 * 存在连接档案且真实方言不同于查询方言时,sqlId变体查找优先真实方言(真实方言变体 不存在时回退原有配置方言查找链);主要覆盖连接回调内的嵌套解析场景
+	 * 存在连接档案且真实方言不同于查询方言时,sqlId变体查找优先真实方言(真实方言变体不存在时回退原有配置方言查找链);主要覆盖连接回调内的嵌套解析场景
 	 */
 	private boolean realDialectFirst = false;
 
@@ -231,7 +231,7 @@ public class SqlScriptLoader {
 			} else {
 				sleepSeconds = scriptCheckIntervalSeconds.intValue();
 			}
-			// update 2019-08-25 增加独立的文件变更检测程序用于重新加载sql
+			// update 2019-08-25 独立的文件变更检测程序用于重新加载sql
 			if (sleepSeconds > 0 && sleepSeconds <= maxWait) {
 				if (enabledDebug) {
 					logger.debug(
@@ -327,10 +327,9 @@ public class SqlScriptLoader {
 				result = result.clone();
 				result.clearDialectSql();
 				String countSql = result.getCountSql(null);
-				// update 2024-09-19 增加@fast(@include("sqlId")) 场景，result.getSql()
-				// 已经剔除了@fast,导致再次解析时已经无法判断是@fast语句，所以需要拼接上@fast还原原本的sql
-				// SqlToyConfig.setSql(fastPreSql.concat("
-				// (").concat(fastSql).concat(")").concat(fastTailSql)),剔除了@fast
+				// update 2024-09-19 @fast(@include(「sqlId」)) 场景:result.getSql()
+				// 已经剔除了@fast,导致再次解析时无法判断是@fast语句,需拼接上@fast还原原本的sql
+				// (SqlToyConfig.setSql(fastPreSql.concat(「(」).concat(fastSql).concat(「)」).concat(fastTailSql))已剔除@fast)
 				if (result.isHasFast()) {
 					sql = result.getFastPreSql(null).concat(" @fast(").concat(result.getFastSql(null)).concat(") ")
 							.concat(result.getFastTailSql(null));
@@ -596,7 +595,7 @@ public class SqlScriptLoader {
 
 	/**
 	 * update 2026-9-23 realDialect优先(sqltoyContext.realDialectFirst推送)
-	 * 
+	 *
 	 * @param realDialectFirst true表示线程档案的真实方言优先参与sqlId变体查找
 	 */
 	public void setRealDialectFirst(boolean realDialectFirst) {

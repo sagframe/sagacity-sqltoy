@@ -62,10 +62,9 @@ public abstract class IFunction {
 	}
 
 	/**
-	 * update 2026-10-11 尾部子句的两种形态:true=括号子句(如within group (order by …),
-	 * 按平衡括号消费,默认,维持既有适配器语义);false=裸操作符子句(如函数后的">0"比较符,
-	 * 按pattern命中长度消费)。find_in_set的">0/=0"布尔口径适配即此形态:改写产物为boolean,
-	 * 须连带消费比较符以在PG系(_where必须boolean_)同时兼容裸真值与显式比较两种惯用法
+	 * update 2026-10-11 尾部子句的两种形态:true=括号子句(如within group (order by …),按平衡括号消费,默认,维持既有适配器语义);
+	 * false=裸操作符子句(如函数后的">0"比较符,按pattern命中长度消费)。find_in_set的">0/=0"布尔口径适配即此形态:
+	 * 改写产物为boolean,须连带消费比较符以在PG系(_where必须boolean_)同时兼容裸真值与显式比较两种惯用法
 	 *
 	 * @return true按平衡括号消费尾部子句,false按pattern命中长度消费
 	 */
@@ -74,9 +73,9 @@ public abstract class IFunction {
 	}
 
 	/**
-	 * update 2026-10-4 尾部子句钩子:函数调用闭括号之后紧邻的附属子句(如聚合的 within group (order by
-	 * …)),返回null表示本函数不消费尾部子句(默认)。 pattern须以\(*结尾且以\s*开头承担间隔空白;框架在字面量掩码串上探测防误伤,
-	 * 命中后按平衡括号消费整个子句并交由 {@link #wrapWithSuffix} 处理
+	 * update 2026-10-4 尾部子句钩子:函数调用闭括号之后紧邻的附属子句(如聚合的 within group (order by …)),
+	 * 返回null表示本函数不消费尾部子句(默认)。pattern须以\(*结尾且以\s*开头承担间隔空白;
+	 * 框架在字面量掩码串上探测防误伤,命中后按平衡括号消费整个子句并交由 {@link #wrapWithSuffix} 处理
 	 *
 	 * @return 尾部子句的匹配pattern, null表示不处理
 	 */
@@ -85,8 +84,8 @@ public abstract class IFunction {
 	}
 
 	/**
-	 * update 2026-10-4 尾部子句钩子命中时的处理入口,仅当 {@link #suffixPattern()}
-	 * 非null且实际命中时被调用;suffix为原始文本(自子句起始至平衡闭括号,含leading空白)。
+	 * update 2026-10-4 尾部子句钩子命中时的处理入口,仅当 {@link #suffixPattern()} 非null且实际命中时被调用;
+	 * suffix为原始文本(自子句起始至平衡闭括号,含leading空白)。
 	 * 返回null表示连同子句原样保留(同名原生透传的安全兜底)
 	 *
 	 * @param dialect      数据库方言

@@ -574,7 +574,7 @@ public class SqlToyDaoSupport {
 			return null;
 		}
 		Class[] cascades = cascadeTypes;
-		// 当没有指定级联子类默认全部级联加载(update 2020-7-31 缺失了cascades.length == 0 判断)
+		// update 2020-7-31 当没有指定级联子类时默认全部级联加载(cascades.length == 0 判断)
 		if (cascades == null || cascades.length == 0) {
 			cascades = getEntityMeta(entity.getClass()).getCascadeTypes();
 		}
@@ -751,7 +751,7 @@ public class SqlToyDaoSupport {
 	 * @return 实际修改(插入、删除)的记录数量
 	 */
 	protected Long executeSql(final String sqlOrSqlId, final Serializable params) {
-		// update 2025-4-29 兼容executeSql(sql,Object...params) 只有一个参数时的场景
+		// update 2025-4-29 兼容executeSql(sql,Object...params)只有一个参数时的场景
 		if (params == null || BeanUtil.isBaseDataType(params.getClass())) {
 			return executeSql(sqlOrSqlId, null, new Object[] { params }, null, null);
 		} else if (params instanceof Collection) {
@@ -2314,11 +2314,10 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * 针对单表对象查询进行更新操作(update和delete 操作filters过滤是无效的，必须是精准的条件参数)
+	 * update 2021-12-23 针对单表对象查询进行更新操作(update和delete 操作filters过滤是无效的，必须是精准的条件参数),支持update table set field=field+1等计算模式
 	 * 
 	 * @param entityClass  单表对应的实体类
 	 * @param entityUpdate 修改构造对象,通过set(property,value)设置修改字段,where/values设置条件
-	 * @update 2021-12-23 支持update table set field=field+1等计算模式
 	 * @return 实际修改的记录数量
 	 */
 	protected Long updateByQuery(Class entityClass, EntityUpdate entityUpdate) {

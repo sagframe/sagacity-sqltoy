@@ -52,9 +52,8 @@ public class DefaultDataSourceSelector implements DataSourceSelector {
 					// 获取@Primary DataSource
 					result = appContext.getBean(DataSource.class);
 				} catch (Exception e) {
-					// update 2026-9-14 补debug日志:多数据源且无@Primary时容器抛NoUniqueBeanDefinitionException,
-					// 此处的吞掉是有意回退(交由调用方要求sql上显式指定datasource或注入数据源),但原空catch
-					// 让该场景没有任何线索,最终"未获取到数据源"的报错无法判断是缺少@Primary还是配置缺失
+					// update 2026-9-14 补debug日志:多数据源且无@Primary时容器抛NoUniqueBeanDefinitionException,此处吞掉是有意回退(交由调用方要求sql上显式指定datasource或注入数据源),
+					// 但原空catch让该场景没有任何线索,最终"未获取到数据源"的报错无法判断是缺少@Primary还是配置缺失
 					logger.debug(
 							"multiple DataSource beans:{} found and none is @Primary, cannot determine the default dataSource, please specify datasource for the sql or inject one!",
 							dataSources.keySet(), e);

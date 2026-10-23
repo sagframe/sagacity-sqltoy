@@ -52,8 +52,8 @@ public class SubStr extends IFunction {
 				zeroStart = true;
 			}
 		}
-		// (真库实测语法错),归下方substr族(原生SUBSTR)
-		// update 2026-9-14 补KINGBASE(KingbaseES基于PG,函数语法归PG系)
+		// update 2026-9-14 (真库实测语法错),归下方substr族(原生SUBSTR)
+		// 补KINGBASE(KingbaseES基于PG,函数语法归PG系)
 		if (dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL14 || dialect == DBType.GAUSSDB
 				|| dialect == DBType.OPENGAUSS || dialect == DBType.MOGDB || dialect == DBType.VASTBASE
 				|| dialect == DBType.SQLSERVER || dialect == DBType.H2 || dialect == DBType.STARDB
@@ -110,8 +110,8 @@ public class SubStr extends IFunction {
 				|| dialect == DBType.STARROCKS) {
 			return wrapArgs("substr", args);
 		}
-		// 表示不做修改
-		// update 2026-10-4 hana的substr负起点为pg语义(真库实测substr('abcdef',-2)='abcdef'
+		// update 2026-10-4 表示不做修改
+		// hana的substr负起点为pg语义(真库实测substr('abcdef',-2)='abcdef'
 		// 返回整串、substr('abcdef',-2,1)='a',与mysql取末n位/起点串长-n+1不兼容,静默错值),
 		// 负起点字面量转RIGHT/CASE守卫(形态与substring分支一致);非负起点的substr为hana原生
 		// (SUBSTRING别名),保持透传

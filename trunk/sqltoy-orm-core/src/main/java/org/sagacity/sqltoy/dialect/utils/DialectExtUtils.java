@@ -66,7 +66,7 @@ public class DialectExtUtils {
 			EntityMeta entityMeta, PKStrategy pkStrategy, String sequence, boolean isAssignPK, String tableName) {
 		String isNullFunction = profile.getNullFunction();
 		Integer dbType = profile.getDbType();
-		// update 2023-5-13 增加缓存机制，避免每次动态组织insert语句
+		// update 2023-5-13 缓存机制,避免每次动态组织insert语句
 		String sqlCacheKey = getCacheKey(entityMeta, tableName, dbType, pkStrategy);
 		String insertSql = insertSqlCache.get(sqlCacheKey);
 		if (null != insertSql) {
@@ -93,8 +93,7 @@ public class DialectExtUtils {
 		for (int i = 0; i < columnSize; i++) {
 			field = fieldsArray[i];
 			fieldMeta = entityMeta.getFieldMeta(field);
-			// update 2026-9-7 sqlserver的timestamp(rowversion)列不可写入,insert语句排除该列
-			// (判据entityMeta.isRowVersionField按目标库元数据校准,非sqlserver库不启用)
+			// update 2026-9-7 sqlserver的timestamp(rowversion)列不可写入,insert语句排除该列(判据entityMeta.isRowVersionField按目标库元数据校准,非sqlserver库不启用)
 			if (DBType.SQLSERVER == dbType && entityMeta.isRowVersionField(fieldMeta)) {
 				continue;
 			}
@@ -149,8 +148,7 @@ public class DialectExtUtils {
 					if (dbType == DBType.DM) {
 						values.append("DMGEO.ST_GeomFromText(?,0)");
 					} else if (dbType == DBType.DB2) {
-						// update 2026-9-10 按GSE探测+nativeType分派(12.1起内置引擎与GSE可并存,
-						// 纯版本分派会在GSE列上误选内置函数报-408),详见db2GeomFromTextWrap
+						// update 2026-9-10 按GSE探测+nativeType分派(12.1起内置引擎与GSE可并存,纯版本分派会在GSE列上误选内置函数报-408),详见db2GeomFromTextWrap
 						values.append(db2GeomFromTextWrap(fieldMeta));
 					} else if (dbType == DBType.MYSQL || dbType == DBType.OCEANBASE || dbType == DBType.TIDB
 							|| dbType == DBType.MYSQL57) {
@@ -204,8 +202,7 @@ public class DialectExtUtils {
 		sql.append(values);
 		sql.append(")");
 		insertSql = sql.toString();
-		// update 2026-9-8 容量守卫:sqlCacheKey含tableName,分表场景(按天/按值动态表名)下
-		// 每张动态表常驻一条SQL文本,上限256防无界增长(超限退化为每次生成)
+		// update 2026-9-8 容量守卫:sqlCacheKey含tableName,分表场景(按天/按值动态表名)下每张动态表常驻一条SQL文本,上限256防无界增长(超限退化为每次生成)
 		if (insertSqlCache.size() < 256) {
 			insertSqlCache.put(sqlCacheKey, insertSql);
 		}
@@ -379,7 +376,7 @@ public class DialectExtUtils {
 			PKStrategy pkStrategy, String sequence, boolean isAssignPK, String tableName) {
 		String isNullFunction = profile.getNullFunction();
 		Integer dbType = profile.getDbType();
-		// update 2023-5-13 提供缓存方式快速获取sql
+		// update 2023-5-13 缓存方式快速获取sql
 		String sqlCacheKey = getCacheKey(entityMeta, tableName, dbType, pkStrategy);
 		String insertIgnoreSql = insertIgnoreSqlCache.get(sqlCacheKey);
 		if (null != insertIgnoreSql) {
@@ -545,28 +542,24 @@ public class DialectExtUtils {
 	 * @return
 	 */
 	static String getCacheKey(EntityMeta entityMeta, String tableName, int dbType, PKStrategy pkStrategy) {
-		// update 2023-10-24 增加主键策略作为缓存key的组成，因为gaussdb
-		// save单条保存和saveAll批量机制存在差异，save时sequence策略会提前获取sequence值，然后变成了assign策略
-		// update 2026-9-7 rowversion校准状态参与缓存key:避免校准前后(rowVersionColumns判据不同)生成的
-		// 语句命中同一条缓存(与SqlServerDialectUtils.getCacheKey对齐;非sqlserver库恒为null不影响)
+		// update 2026-9-7 缓存key组成:主键策略(save单条与saveAll批量机制存在差异,save时sequence策略提前获取sequence值变成assign策略)
+		// 与rowversion校准状态(避免校准前后rowVersionColumns判据不同生成的语句命中同一条缓存;与SqlServerDialectUtils.getCacheKey对齐,非sqlserver库恒为null不影响)
 		return entityMeta.getEntityClass().getName() + "[" + tableName + "]dbType=" + dbType
 				+ ((pkStrategy == null) ? "" : pkStrategy.getValue()) + "|rv="
 				+ ((entityMeta.getRowVersionColumns() == null) ? -1 : entityMeta.getRowVersionColumns().hashCode());
 	}
 
-	// update 2026-9-14
-	// 原isOceanBaseAsMysql()(读ThreadLocal的actuallyDBType)已删除:各分派点统一改用
-	// DBProfile.isOceanBase()——按产品名判定、由profile参数显式传递,不再依赖线程隐式全局态
-	// (并行等场景下ThreadLocal缺失会误判为真mysql),语义详见DBProfile.isOceanBase的javadoc
+	// update 2026-9-14 原isOceanBaseAsMysql()(读ThreadLocal的actuallyDBType)已删除:各分派点统一改用DBProfile.isOceanBase()
+	// ——按产品名判定、由profile参数显式传递,不再依赖线程隐式全局态(并行等场景下ThreadLocal缺失会误判为真mysql),
+	// 语义详见DBProfile.isOceanBase的javadoc
 
 	/**
-	 * update 2026-9-7 实测DB2 12.1起空间能力可内置为非限定SYSIBM函数(ST_GeomFromText等,
-	 * 需≥8K页表空间);11.5及以下GSE扩展为db2gse.ST_GeomFromText专属形态。 update 2026-9-10 修正为GSE
-	 * schema探测+nativeType分派(取代纯版本分派isDB2BuiltInSpatial):
-	 * 实测12.1.5容器GSE与内置引擎并存,内置ST_GEOMETRY与db2gse.ST_GEOMETRY为不同UDT,
-	 * 纯版本分派在GSE列上误选内置函数报-408(value cannot be assigned); 分派优先级:列nativeType显式声明 >
-	 * 连接档案的DB2GSE schema探测 > 默认GSE形态(保持11.5既有行为); 12.1起首参为CLOB须cast(? as
-	 * CLOB)(setString直绑报-4474,db2gse形态cast亦实测通过),11.5无需cast
+	 * update 2026-9-10 DB2空间函数分派:12.1起空间能力可内置为非限定SYSIBM函数(ST_GeomFromText等,需≥8K页表空间),
+	 * 11.5及以下GSE扩展为db2gse.ST_GeomFromText专属形态;采用GSE schema探测+nativeType分派
+	 * (取代纯版本分派isDB2BuiltInSpatial):实测12.1.5容器GSE与内置引擎并存,内置ST_GEOMETRY与
+	 * db2gse.ST_GEOMETRY为不同UDT,纯版本分派在GSE列上误选内置函数报-408(value cannot be assigned);
+	 * 分派优先级:列nativeType显式声明 > 连接档案的DB2GSE schema探测 > 默认GSE形态(保持11.5既有行为);
+	 * 12.1起首参为CLOB须cast(? as CLOB)(setString直绑报-4474,db2gse形态cast亦实测通过),11.5无需cast
 	 *
 	 * @param fieldMeta geometry字段元数据(nativeType含db2gse/st_geometry时显式分派),可为null
 	 * @return geometry参数化包装表达式,如db2gse.ST_GeomFromText(cast(? as CLOB),0)
