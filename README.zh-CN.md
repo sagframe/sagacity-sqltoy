@@ -243,7 +243,7 @@ List<StaffInfoVO> staffList = lightDao.find(sql, staffVO, StaffInfoVO.class);
 * sqltoy 的写法(一眼就看明白sql的本意,后面变更调整也非常便捷,copy到数据库客户端里稍作调整即可执行)
 * sqltoy条件组织原理很简单: 如 `#[order_id=:orderId]` 等于if(:orderId<>null) sql.append(order_id=:orderId);`#[]`内只要有一个参数为null即剔除
 * 支持多层嵌套:如 `#[and t.order_id=:orderId #[and t.order_type=:orderType]]`
-* 条件判断保留 `#[@if(:param>=xx ||:param<=xx1) sql语句]` 这种@if()高度灵活模式,为特殊复杂场景下提供万能钥匙
+* 条件判断保留 `#[@if(:param>=xx ||:param<=xx1) sql语句]` 这种@if()高度灵活模式,作为特殊复杂场景下的兜底手段
 
 sqltoy 的写法：
 
@@ -333,11 +333,11 @@ where t.ORGAN_ID in (?,?,?)
 
 **分页特点说明**
 
-* 1、快速分页:`@fast()` 实现先取单页数据然后再关联查询，极大提升速度。
+* 1、快速分页:`@fast()` 实现先取单页数据然后再关联查询，显著提升速度。
 * 2、分页优化器:page-optimize 让分页查询由两次变成1.3~1.5次(用缓存实现相同查询条件的总记录数量在一定周期内无需重复查询)
 * 3、sqltoy的分页取总记录的过程不是简单的select count(1) from (原始sql)；而是智能判断是否变成:select count(1) from 'from后语句'，并自动剔除最外层的order by
 * 4、sqltoy支持并行查询：parallel="true"，同时查询总记录数和单页数据,大幅提升性能
-* 5、在极特殊情况下sqltoy分页考虑是最优化的，如:with t1 as (),t2 as @fast(select * from table1) select * from xxx
+* 5、对特殊形态的分页查询也有针对性优化，如:with t1 as (),t2 as @fast(select * from table1) select * from xxx
 这种复杂查询的分页的处理，sqltoy的count查询会是:with t1 as () select count(1) from table1,
 如果是:with t1 as @fast(select * from table1) select * from t1 ,count sql 就是：select count(1) from table1
 
@@ -392,7 +392,7 @@ public void findPageByEntity() {
 
 ### 6. 缓存翻译，减少表关联查询
 
-* 1、 通过缓存翻译:`<translate>` 将代码转化为名称，避免关联查询，极大简化sql并提升查询效率 
+* 1、 通过缓存翻译:`<translate>` 将代码转化为名称，避免关联查询，显著简化sql并提升查询效率 
 * 2、 通过缓存名称模糊匹配:`<cache-arg>` 获取精准的编码作为条件，避免关联like 模糊查询
 * 3、 超大规模数据场景(如平台型电商SKU，百万级以上):FIFO动态缓存，缓存不做全量加载，未命中的key动态批量获取，本地仅保留最常用的数据（参见[在线文档·超大规模主数据缓存](https://sagframe.github.io/sqltoy-docs/#/translate/sqltoy_FIFO_translate)）
 
@@ -986,4 +986,4 @@ public class CrudCaseServiceTest {
 * 2008~2012年，因一直做金融类企业项目，所面对的数据规模基本上是千万级别的，因此sqltoy一直围绕jpa进行sql查询增强，期间已经集成了缓存翻译、快速分页、行列旋转等比其他框架更具特色的查询特性。
 * 2013~2014年，因为了避免让开发者在一个项目中同时使用两种技术，因此在sqltoy中实现了基于对象的crud功能，形成了完整的sqltoy-orm框架。
 * 2014~2017年, 在负责拉卡拉大数据平台过程中，对sqltoy进行了大幅重构，实现了底层结构的合理化，在拉卡拉CRM和日均千万累计达百亿级别的大数据平台上得到了强化和检验。
-* 2018~至今,  在建设SaaS化多租户ERP复杂场景下和flink-cdc结合MPP数据库的实时数仓过程中得到了充分锤炼，sqltoy已经非常完善可靠，开始开源跟大家一起分享和共建！
+* 2018~至今,  在建设SaaS化多租户ERP复杂场景下和flink-cdc结合MPP数据库的实时数仓过程中得到了充分锤炼，sqltoy已日趋成熟稳定，开始开源跟大家一起分享和共建！
