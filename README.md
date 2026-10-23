@@ -25,7 +25,7 @@ SqlToy is a Java ORM for applications that need both convenient object-based dat
 - **Four-layer optimized pagination** — intelligent count rewriting, cached counts for identical filters, `@fast()` page-first joins, and parallel count + fetch.
 - **Cache translate** — resolve codes to names in memory after the query returns; skip the dictionary JOIN on every list page.
 - **One SQL across 25 databases** — automatic function adaptation (`nvl` → `coalesce`/`ifnull`), per-dialect sqlId variants, and replay-against-other-databases verification in tests.
-- **Race-proof ledgers** — `updateFetch` locks the row, updates against its current values and returns the result in a single database interaction.
+- **Race-safe ledgers** — `updateFetch` locks the row, updates against its current values and returns the result in a single database interaction.
 - **Enterprise-grade** — sharding, multi-tenancy, data masking & field encryption, quickvo code generation, GraalVM AOT.
 
 A 30-second look — optional filters, no branching tags:
@@ -266,7 +266,7 @@ List<StaffInfoVO> staffList = lightDao.find(sql, staffVO, StaffInfoVO.class);
 * sqltoy's style (the intent of the sql is obvious at a glance, later changes and adjustments are very convenient, and you can copy it into a database client and execute it with minor tweaks)
 * The principle behind sqltoy condition assembly is simple: e.g. `#[order_id=:orderId]` equals if(:orderId<>null) sql.append(order_id=:orderId); as soon as one parameter inside `#[]` is null, the fragment is removed
 * Supports multi-level nesting: e.g. `#[and t.order_id=:orderId #[and t.order_type=:orderType]]`
-* Condition evaluation retains the highly flexible `#[@if(:param>=xx ||:param<=xx1) sql statement]` @if() pattern, providing a master key for special complex scenarios
+* Condition evaluation retains the highly flexible `#[@if(:param>=xx ||:param<=xx1) sql statement]` @if() pattern, providing a fallback mechanism for special complex scenarios
 
 sqltoy's style:
 
@@ -356,7 +356,7 @@ Then condition values are set via: pst.set(index,value); there is no concatenati
 
 **Pagination highlights**
 
-* 1. Fast Pagination: `@fast()` fetches the single page of data first and then performs the join query, greatly improving speed.
+* 1. Fast Pagination: `@fast()` fetches the single page of data first and then performs the join query, significantly improving speed.
 * 2. Pagination Optimize: page-optimize reduces a paginated query from two executions to about 1.3~1.5 (using a cache, the total record count for identical query conditions need not be re-queried within a certain period)
 * 3. sqltoy's way of getting the total record count for pagination is not a naive select count(1) from (original sql); it intelligently decides whether it can become: select count(1) from 'the statement after from', and automatically strips the outermost order by
 * 4. sqltoy supports parallel query: parallel="true" queries the total record count and the single page of data simultaneously, greatly improving performance
@@ -415,7 +415,7 @@ public void findPageByEntity() {
 
 ### 6. Cache Translation — Eliminating Table JOINs
 
-* 1. Cache translate via `<translate>`: converts codes into names, avoiding JOIN queries, greatly simplifying SQL and improving query efficiency
+* 1. Cache translate via `<translate>`: converts codes into names, avoiding JOIN queries, significantly simplifying SQL and improving query efficiency
 * 2. Fuzzy matching against cache names via `<cache-arg>`: obtains the exact codes as query criteria, avoiding JOIN and LIKE fuzzy queries
 * 3. Ultra-large-scale data scenarios (e.g., platform e-commerce SKUs, over a million entries): FIFO dynamic cache — the cache is not fully loaded; missed keys are dynamically fetched in batches, and only the most frequently used data is kept locally (see [Online Docs · Ultra-Large-Scale Master Data Cache](https://sagframe.github.io/sqltoy-docs/#/translate/sqltoy_FIFO_translate))
 
@@ -1008,4 +1008,4 @@ public class CrudCaseServiceTest {
 * 2008~2012: since I kept working on financial enterprise projects, the data volumes were basically in the tens of millions of rows, so sqltoy continuously focused on enhancing sql queries around jpa. During this period it already integrated cache translation, fast pagination, pivot (row/column rotation), and other query features more distinctive than those of other frameworks.
 * 2013~2014: to avoid making developers use two technologies side by side in one project, sqltoy implemented object-based crud functionality, forming the complete sqltoy-orm framework.
 * 2014~2017: while leading the Lakala big data platform, sqltoy underwent a substantial refactor that rationalized its underlying structure, and it was strengthened and validated on the Lakala CRM and a big data platform with a daily average in the tens of millions, accumulating to the tens-of-billions level.
-* 2018~present: fully tempered in complex scenarios such as building a SaaS multi-tenant ERP and real-time data warehouses combining flink-cdc with MPP databases, sqltoy is now very complete and reliable, and has been open sourced to share and co-build with the community!
+* 2018~present: fully tempered in complex scenarios such as building a SaaS multi-tenant ERP and real-time data warehouses combining flink-cdc with MPP databases, sqltoy is now mature and stable, and has been open sourced to share and co-build with the community!
