@@ -82,7 +82,7 @@ jdk8 line (legacy)   : 5.6.96.jre8 (final; works with quickvo-maven-plugin)
 | 📖 Documentation (English / 中文) | <https://sagframe.github.io/sqltoy-docs/#/en/> · <https://sagframe.github.io/sqltoy-docs/> |
 | 📰 Cross-database adaptation article | [One SQL, every database: how SqlToy makes cross-database adaptation disappear](docs/multi-db-adaptation.en.md) |
 | 📄 Dynamic SQL specification | [Online docs · Dynamic SQL](https://sagframe.github.io/sqltoy-docs/#/query/dynamic_sql) |
-| 📄 Detailed manual (Word, Chinese) | `docs/睿智平台SqlToy5.6使用手册.doc` · [6.0 Upgrade Guide](https://sagframe.github.io/sqltoy-docs/#/introduction/upgrade_6.0) |
+| 📄 Detailed manual (PDF, English) | `docs/sqltoy-ormEnglishManual.pdf` · [6.0 Upgrade Guide](https://sagframe.github.io/sqltoy-docs/#/introduction/upgrade_6.0) |
 | 🚀 Quickstart lessons (start here) | <https://github.com/sagframe/sqltoy-quickstart> |
 | 🚀 Full-feature demos (sharding / multi-datasource / NoSQL / masking / FIFO cache / native) | <https://github.com/sagframe/sqltoy-showcase> |
 | 🚀 Solon demo | <https://github.com/CoCoTeaNet/sqltoy-solon-demo> |
