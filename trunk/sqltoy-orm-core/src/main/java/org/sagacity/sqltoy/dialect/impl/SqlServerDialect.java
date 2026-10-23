@@ -101,11 +101,16 @@ public class SqlServerDialect implements Dialect {
 		if (hasOrderOrUnion) {
 			sql.append(partSql);
 			sql.append(" " + SqlToyConstants.INTERMEDIATE_TABLE + ".* from (");
-			// update 2026-9-17 mssql真库实测:派生表内的order by必须伴随top/offset方能合法,否则报"The ORDER BY clause is invalid in views,
-			// inline functions, derived tables, subqueries...";内层sql末尾追加offset 0 rows使内层排序合法;随机取样的最终行序
-			// 由外层order by NEWID()决定,内层offset 0不增删行不改变行集;内层已含offset的不追加(带offset的排序本已合法,重复追加反致语法错误)
-			// 追加判定收编至legalizeDerivedInnerSql:contains("offset")子串匹配会被row_offset/offset_id等标识符误判(跳过追加致内层order by报语法错误),
-			// 改word边界正则;追加条件精确到top级order by(字面量掩码+括号剔除后判定),union无order by时OFFSET语法必须跟随order by不可追加
+			// update 2026-9-17 mssql真库实测:派生表内的order by必须伴随top/offset方能合法,否则报"The ORDER BY
+			// clause is invalid in views,
+			// inline functions, derived tables, subqueries...";内层sql末尾追加offset 0
+			// rows使内层排序合法;随机取样的最终行序
+			// 由外层order by NEWID()决定,内层offset
+			// 0不增删行不改变行集;内层已含offset的不追加(带offset的排序本已合法,重复追加反致语法错误)
+			// 追加判定收编至legalizeDerivedInnerSql:contains("offset")子串匹配会被row_offset/offset_id等标识符误判(跳过追加致内层order
+			// by报语法错误),
+			// 改word边界正则;追加条件精确到top级order by(字面量掩码+括号剔除后判定),union无order by时OFFSET语法必须跟随order
+			// by不可追加
 			sql.append(SqlServerDialectUtils.legalizeDerivedInnerSql(innerSql));
 			sql.append(") ");
 			sql.append(SqlToyConstants.INTERMEDIATE_TABLE);
@@ -139,8 +144,10 @@ public class SqlServerDialect implements Dialect {
 		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
 		// 存在@fast() 快速分页
 		StringBuilder sql = DialectUtils.openFastWrap(sqlToyConfig, dialect);
-		// update 2026-9-18 与getRandomResult/findTopBySql同源修复:WITH部分剥离置前(T-SQL的WITH必须位于语句最外层;
-		// CTE+union无顶层order by时整条SQL被insert(0)包进派生表,真库报Msg 319 "Incorrect syntax near the keyword 'with'");
+		// update 2026-9-18
+		// 与getRandomResult/findTopBySql同源修复:WITH部分剥离置前(T-SQL的WITH必须位于语句最外层;
+		// CTE+union无顶层order by时整条SQL被insert(0)包进派生表,真库报Msg 319 "Incorrect syntax near
+		// the keyword 'with'");
 		// order/union判定基于剥离后主体,CTE体内order by不再依赖clearDisturbSql剔除
 		if (sqlToyConfig.isHasWith()) {
 			SqlWithAnalysis sqlWith = new SqlWithAnalysis(innerSql);
@@ -164,11 +171,14 @@ public class SqlServerDialect implements Dialect {
 			// 剔除select 和from 之间内容，剔除sql中所有()之间的内容,即剔除所有子查询，再判断是否有order by
 			orderByIndex = StringUtil.matchIndex(DialectUtils.clearDisturbSql(judgeOrderSql), ORDER_BY);
 		}
-		// update 2026-9-18 union派生表包裹改顺序拼装(废弃insert(0)):insert(0)在@fast场景会插到fastPreSql之前破坏结构,
+		// update 2026-9-18
+		// union派生表包裹改顺序拼装(废弃insert(0)):insert(0)在@fast场景会插到fastPreSql之前破坏结构,
 		// 以!isHasFast守卫排除会导致@fast+union落入else分支把order by (select 1)直接追加在union之后
-		// (真库Msg 104 "ORDER BY items must appear in the select list...");顺序拼装对fast前缀无影响,两场景统一合法
+		// (真库Msg 104 "ORDER BY items must appear in the select
+		// list...");顺序拼装对fast前缀无影响,两场景统一合法
 		if (orderByIndex < 0 && SqlUtil.hasUnion(judgeOrderSql, true)) {
-			// update 2026-9-5 真实库验证:sqlserver对union语句直接追加order by会报"ORDER BY items must appear in the select list...",
+			// update 2026-9-5 真实库验证:sqlserver对union语句直接追加order by会报"ORDER BY items must
+			// appear in the select list...",
 			// 需包一层派生表后再挂分页参数
 			sql.append("select * from (");
 			sql.append(innerSql);
@@ -223,8 +233,10 @@ public class SqlServerDialect implements Dialect {
 		if (hasUnion) {
 			sql.append(partSql);
 			sql.append(" " + SqlToyConstants.INTERMEDIATE_TABLE + ".* from (");
-			// update 2026-9-17 与getRandomResult同源修复:派生表内的order by必须伴随top/offset,否则报"The ORDER BY clause is invalid
-			// in views, inline functions, derived tables...";此前带尾部order by的union包派生表直接报语法错误;
+			// update 2026-9-17 与getRandomResult同源修复:派生表内的order by必须伴随top/offset,否则报"The
+			// ORDER BY clause is invalid
+			// in views, inline functions, derived tables...";此前带尾部order
+			// by的union包派生表直接报语法错误;
 			// 经legalizeDerivedInnerSql判定后追加offset 0 rows(不增删行;无order by的裸union派生表本已合法不可追加)
 			sql.append(SqlServerDialectUtils.legalizeDerivedInnerSql(innerSql));
 			sql.append(") as " + SqlToyConstants.INTERMEDIATE_TABLE + " ");
@@ -295,7 +307,8 @@ public class SqlServerDialect implements Dialect {
 	public Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			final ReflectPropsHandler reflectPropsHandler, final String[] forceUpdateFields, Connection conn,
 			DBProfile profile, final Boolean autoCommit, final String tableName) throws Exception {
-		// update 2026-9-7 merge语句统一由DialectUtils.getSaveOrUpdateSql生成(sqlserver的rowversion列排除等特性在其内部按dbType门控);
+		// update 2026-9-7
+		// merge语句统一由DialectUtils.getSaveOrUpdateSql生成(sqlserver的rowversion列排除等特性在其内部按dbType门控);
 		// rowversion判据按目标库元数据校准(每实体首次,幂等)
 		SqlServerDialectUtils.ensureRowVersionMeta(sqlToyContext, conn, profile, tableName, entities.get(0).getClass());
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
@@ -418,7 +431,8 @@ public class SqlServerDialect implements Dialect {
 			insertSql = "set nocount on DECLARE @mySeqVariable as numeric(20)=NEXT VALUE FOR "
 					+ entityMeta.getSequence() + " " + insertSql + " select @mySeqVariable ";
 		}
-		// update 2026-9-7 save执行逻辑统一由DialectUtils.save处理(rowversion参数剔除/sqlserver sequence回填在其内部按dbType门控;
+		// update 2026-9-7 save执行逻辑统一由DialectUtils.save处理(rowversion参数剔除/sqlserver
+		// sequence回填在其内部按dbType门控;
 		// 级联子表通过回调注入sqlserver的insert语句)
 		return DialectUtils.save(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entity,
 				new GenerateSqlHandler() {
@@ -484,7 +498,8 @@ public class SqlServerDialect implements Dialect {
 			final String tableName) throws Exception {
 		// update 2026-9-5 rowversion判据按目标库元数据校准(每实体首次,幂等)
 		SqlServerDialectUtils.ensureRowVersionMeta(sqlToyContext, conn, profile, tableName, entity.getClass());
-		// update 2026-9-7 级联修改统一由DialectUtils.update级联重载处理(子表saveOrUpdateAll通过回调注入sqlserver merge语句;
+		// update 2026-9-7
+		// 级联修改统一由DialectUtils.update级联重载处理(子表saveOrUpdateAll通过回调注入sqlserver merge语句;
 		// 子表rowversion校准在其内部按dbType门控)
 		return DialectUtils.update(sqlToyContext, entity, forceUpdateFields, cascade, new GenerateSqlHandler() {
 			@Override

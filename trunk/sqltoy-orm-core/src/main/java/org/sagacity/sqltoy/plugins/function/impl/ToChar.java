@@ -13,14 +13,15 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
  * @version v1.0,Date:2013-01-02
  */
 public class ToChar extends IFunction {
-	// update 2026-9-9 正则收窄为仅匹配 to_char:原先同时匹配 date_format/FORMATDATETIME 与 DateFormat 职责重叠,
+	// update 2026-9-9 正则收窄为仅匹配 to_char:原先同时匹配 date_format/FORMATDATETIME 与
+	// DateFormat 职责重叠,
 	// date_format 在 H2 目标下先被 DateFormat 正确转为 formatdatetime,再被本函数二次转成 to_char
 	// (H2 2.x 无此函数),最终产物取决于注册顺序,存在链式改写风险
 	private static Pattern regex = Pattern.compile("(?i)\\Wto_char\\(");
 
 	/**
-	 * update 2026-10-9 日期模型标记:格式串含任一标记恒为日期模型(用于数值/日期模型判别);刻意不含 mi:
-	 * 纯分钟格式' mi '不含9/0不进判别,而数值模型的 MI 后缀('999MI')不得误判为日期
+	 * update 2026-10-9 日期模型标记:格式串含任一标记恒为日期模型(用于数值/日期模型判别);刻意不含 mi: 纯分钟格式' mi
+	 * '不含9/0不进判别,而数值模型的 MI 后缀('999MI')不得误判为日期
 	 */
 	private static final Pattern DATE_MODEL_PATTERN = Pattern
 			.compile("(?i)(yyyy|yy|mm|dd|hh|ss|mon|month|day|year|am|pm)|:|%[ymdhis]");
@@ -49,7 +50,8 @@ public class ToChar extends IFunction {
 		case DBType.DORIS:
 		case DBType.STARROCKS:
 		case DBType.MYSQL57: {
-			// update 2026-10-9 数值格式模型分流:to_char(123.45,'999.99')原落 date_format,数值参数静默返回 NULL
+			// update 2026-10-9 数值格式模型分流:to_char(123.45,'999.99')原落 date_format,数值参数静默返回
+			// NULL
 			// (date_format 为日期语义,mysql9 实测);改 CAST AS DECIMAL(20,scale) 保留 oracle 数值模型语义
 			// (scale=小数点后9/0占位数;无千分位分隔,与 oracle 形态一致)。
 			// 数值模型判别精化:含9/0即数值的朴素判据会将日期格式中的字面数字
@@ -101,7 +103,8 @@ public class ToChar extends IFunction {
 			// 仅归一冒号邻接的 HH:mm/hh:mm 形态,HH24 等 oracle token 与纯日期裸 mm 不受影响;
 			// 另补独立 HH(小时分桶等无分钟形态):\b 词边界不伤 HH24,HH:mm 已被上步消费
 			format = format.replace("HH:mm", "hh24:mi").replace("hh:mm", "hh:mi").replaceAll("\\bHH\\b", "hh24");
-			// update 2026-9-10 PG 语法系裸?首参补 ::timestamp:vanilla PG 对 to_char(unknown,unknown) 报重载歧义
+			// update 2026-9-10 PG 语法系裸?首参补 ::timestamp:vanilla PG 对
+			// to_char(unknown,unknown) 报重载歧义
 			// (pgjdbc 日期参数 UNSPECIFIED OID);to_char 兼有数值格式化场景,格式模型含9/0数值占位时
 			// 不 cast(numericModelPossible=true,数值参数定型绑定原生可解重载)
 			String toCharInner = "to_char(" + FunctionUtils.pgToCharParamCast(dialect, args[0], format, true) + ","
@@ -134,7 +137,8 @@ public class ToChar extends IFunction {
 			if (isNumericModel(args[1])) {
 				return "CAST(" + args[0] + " AS Decimal(20," + numericScale(args[1]) + "))";
 			}
-			// update 2026-10-9 clickhouse 无 to_char,以 date_format(formatDateTime 的 mysql 兼容别名)承担,token 与 mysql
+			// update 2026-10-9 clickhouse 无 to_char,以 date_format(formatDateTime 的 mysql
+			// 兼容别名)承担,token 与 mysql
 			// 分支同构(%i分钟/%s秒);补大写 oracle 形态 YYYY/YY/DD/MI/SS(同 mysql 分支,原残留字面量)
 			format = args[1].replace("yyyy", "%Y").replace("YYYY", "%Y").replace("yy", "%y").replace("YY", "%y")
 					.replace("MM", "%m").replace("dd", "%d").replace("DD", "%d");
@@ -144,12 +148,14 @@ public class ToChar extends IFunction {
 					.replace("SS", "%s");
 			// update 2026-10-4 补 %T(mysql 源原生 token,时:分:秒),原残留字面 %T
 			format = format.replace("%T", "%H:%i:%s");
-			// update 2026-9-11 首参包 toDateTime(同 DateFormat 的 CLICKHOUSE 分支:驱动日期参数以 String 发送,
+			// update 2026-9-11 首参包 toDateTime(同 DateFormat 的 CLICKHOUSE 分支:驱动日期参数以 String
+			// 发送,
 			// formatDateTime(String) 报 Illegal type)
 			return "date_format(toDateTime(" + args[0] + ")," + format + ")";
 		}
 		case DBType.SQLSERVER: {
-			// update 2026-9-10 sqlserver 无 to_char(原样透传报 'to_char' is not a recognized built-in function name,
+			// update 2026-9-10 sqlserver 无 to_char(原样透传报 'to_char' is not a recognized
+			// built-in function name,
 			// 2022/2025 实测),以 FORMAT 承担(2012+):.NET 自定义格式 token 与 oracle 模型部分同形
 			// (yyyy/yy/MM/dd 直接一致),差异 token 映射 hh24→HH、mi→mm;数值格式模型(含9/0占位)
 			// 将9映射为0(.NET '000.00' 自定义数值格式);%token 先归一到 oracle 模型再映射
@@ -187,13 +193,15 @@ public class ToChar extends IFunction {
 			return "FORMAT(" + formatArg + "," + fmtArg + ")";
 		}
 		case DBType.SQLITE: {
-			// update 2026-9-10 sqlite 无 to_char,以 strftime 承担(token 映射:yyyy→%Y、MM→%m、dd→%d、hh24→%H、
+			// update 2026-9-10 sqlite 无 to_char,以 strftime 承担(token
+			// 映射:yyyy→%Y、MM→%m、dd→%d、hh24→%H、
 			// hh→%I、mi→%M、ss→%S);参数归一与 DateFormat 同源;数值格式模型(含9/0占位)非 strftime
 			// 语义,原样保留交目标库响亮报错
 			if (isNumericModel(args[1])) {
 				return super.IGNORE;
 			}
-			// update 2026-10-9 补 java 风格时间 token 归一(HH:mm→hh24:mi):java 的 mm=分钟在 sqlite 链无映射原样残留;
+			// update 2026-10-9 补 java 风格时间 token 归一(HH:mm→hh24:mi):java 的 mm=分钟在 sqlite
+			// 链无映射原样残留;
 			// 归一后由下方 hh24→%H、mi→%M 链接手
 			format = args[1].replace("HH:mm", "hh24:mi").replace("hh:mm", "hh:mi");
 			format = format.replace("%Y", "yyyy").replace("%y", "yy").replace("%m", "MM").replace("%d", "dd");
@@ -201,7 +209,8 @@ public class ToChar extends IFunction {
 			format = format.replace("%H", "hh24").replace("%h", "hh").replace("%i", "mi").replace("%s", "ss");
 			format = format.replace("yyyy", "%Y").replace("YYYY", "%Y").replace("yy", "%y").replace("YY", "%y")
 					.replace("MM", "%m").replace("dd", "%d").replace("DD", "%d");
-			// update 2026-10-19 补大写 MI/SS 形态(原 'HH24:MI:SS' 的 MI/SS 残留字面量,strftime 静默输出垃圾文本);
+			// update 2026-10-19 补大写 MI/SS 形态(原 'HH24:MI:SS' 的 MI/SS 残留字面量,strftime
+			// 静默输出垃圾文本);
 			// 口径:裸 HH 为24小时制(%H),小写 hh 才映射12小时(%I)
 			format = format.replace("HH24", "%H").replace("hh24", "%H").replace("HH", "%H").replace("hh", "%I")
 					.replace("mm", "%m").replace("mi", "%M").replace("MI", "%M").replace("ss", "%S")
@@ -214,8 +223,8 @@ public class ToChar extends IFunction {
 	}
 
 	/**
-	 * update 2026-9-11 数值格式模型的小数位数:小数点后9/0占位符个数(无小数点返回0),如'999.99'→2、'999'→0,
-	 * 供 mysql 系/CH 的 CAST AS DECIMAL(20,scale) 数值 to_char 承担
+	 * update 2026-9-11 数值格式模型的小数位数:小数点后9/0占位符个数(无小数点返回0),如'999.99'→2、'999'→0, 供
+	 * mysql 系/CH 的 CAST AS DECIMAL(20,scale) 数值 to_char 承担
 	 */
 	private static int numericScale(String format) {
 		int dot = format.lastIndexOf('.');

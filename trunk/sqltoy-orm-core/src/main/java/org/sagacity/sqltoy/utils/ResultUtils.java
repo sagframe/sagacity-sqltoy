@@ -232,7 +232,8 @@ public class ResultUtils {
 		boolean hasToStrCols = !strTypeCols.isEmpty();
 		// 字段名称统一转大写或小写,默认为default,即不做任何处理
 		String colLabelUpperOrLower = sqlToyContext.getColumnLabelUpperOrLower();
-		// update 2026-9-12 列元数据单点分类收敛为ResultColumnMeta[](resolveColumns查询级一次构建,行循环零新增分配),
+		// update 2026-9-12
+		// 列元数据单点分类收敛为ResultColumnMeta[](resolveColumns查询级一次构建,行循环零新增分配),
 		// labelNames/labelTypes/columnTypeNames为派生数组(供streamResultHandler与VO映射等既有数组形态消费)
 		ResultColumnMeta[] cols = resolveColumns(resultSetMD, 0, columnSize, colLabelUpperOrLower, hasToStrCols,
 				strTypeCols, dbType);
@@ -308,7 +309,8 @@ public class ResultUtils {
 				}
 				realProps = convertRealProps(wrapMapFields(labelNames, fieldsMap, resultType), columnFieldMap);
 				realMethods = BeanUtil.matchSetMethods(resultType, realProps);
-				// update 2026-9-12 构建列jdbcTypes标记(字段注解JSON/JSONB标注优先,查询列类型名兜底),供reflectRowToBean
+				// update 2026-9-12
+				// 构建列jdbcTypes标记(字段注解JSON/JSONB标注优先,查询列类型名兜底),供reflectRowToBean
 				// 按JSON等扩展类型做jdbc值到POJO的转换(原固定OTHER导致json列到对象字段的反序列化不触发);
 				// 双源标记同步收敛到ResultColumnMeta(注解标注覆盖extType,类型名派生值已在resolveColumns预置,
 				// jdbcType反向映射与原检测链一致)
@@ -1376,7 +1378,8 @@ public class ResultUtils {
 	}
 
 	/**
-	 * update 2026-9-12 处理Result单行数据(旧签名,已废弃):并行数组(labelNames/columnTypeNames/columnKinds)
+	 * update 2026-9-12
+	 * 处理Result单行数据(旧签名,已废弃):并行数组(labelNames/columnTypeNames/columnKinds)
 	 * 形态已被ResultColumnMeta[]取代,内部桥接转换后委托新签名;既有调用方(USF锁游标回读、
 	 * getMoreLinkResultSet)逐步迁移后移除。
 	 */
@@ -1525,7 +1528,8 @@ public class ResultUtils {
 		boolean h2 = (dt == DBType.H2);
 		boolean mssql = (dt == DBType.SQLSERVER);
 		boolean mysqlLike = (dt == DBType.MYSQL || dt == DBType.MYSQL57 || dt == DBType.OCEANBASE || dt == DBType.TIDB);
-		// update 2026-9-11 hana的ST_GEOMETRY列getObject返回标准WKB byte[](无mysql的4字节SRID前缀,与ST_AsBinary
+		// update 2026-9-11 hana的ST_GEOMETRY列getObject返回标准WKB
+		// byte[](无mysql的4字节SRID前缀,与ST_AsBinary
 		// 输出同构;getString直接抛「Cannot convert SQL type ST_GEOMETRY to Java type String」,
 		// ngdbc 2.29.11/SPS08实测),归EXT_BYTE经toWKTString通用嗅探解码
 		boolean hana = (dt == DBType.HANA);
@@ -1550,7 +1554,8 @@ public class ResultUtils {
 				// 内置列读回WKT请在查询侧显式ST_AsText(geom)
 				kinds[i] = COLUMN_TEXT_READ;
 			} else if (h2 && "GEOMETRY".equals(t)) {
-				// update 2026-9-8 h2的geometry列getObject返回JTS Geometry对象(非String),getString返回WKT文本,
+				// update 2026-9-8 h2的geometry列getObject返回JTS
+				// Geometry对象(非String),getString返回WKT文本,
 				// 按TEXT_READ归一化为String参与Map/VO映射(与oracle JSON/VECTOR同策略)
 				kinds[i] = COLUMN_TEXT_READ;
 			} else if ((h2 && "JSON".equals(t))
@@ -1666,13 +1671,15 @@ public class ResultUtils {
 
 	/**
 	 * update 2026-9-6 扩展类型(json/vector/geometry)读回值归一化,供Map/数组/流式行调用(这些行形态不经
-	 * BeanUtil.convertType),按值形状识别类型后统一处理,不区分具体数据库(oracle 21c原生JSON
-	 * 与geometry、pg 18.6+pgvector的json/jsonb/vector均已实库验证):
+	 * BeanUtil.convertType),按值形状识别类型后统一处理,不区分具体数据库(oracle 21c原生JSON 与geometry、pg
+	 * 18.6+pgvector的json/jsonb/vector均已实库验证):
 	 * <li>SDO兼容STRUCT(oracle,以及达梦SYSGEO.SDO_GEOMETRY等兼容实现,类型名以SDO_GEOMETRY结尾)
 	 * →geometry,解码为WKT文本(jts解析,失败保留原值)</li>
-	 * <li>达梦ST_GEOMETRY STRUCT(DMGEO/sysgeo.ST_GEOMETRY,读回dm.jdbc.driver.DmdbStruct,
-	 * 属性布局:(版本,标准OGC WKB blob,srid))→geometry,解码为WKT文本(jts解析,失败保留原值)</li>
-	 * <li>oracle vector(oracle.sql.VECTOR,类名含.vector)→vector,'[1,2,3]'文本('[]'形态校验通过才替换)</li>
+	 * <li>达梦ST_GEOMETRY
+	 * STRUCT(DMGEO/sysgeo.ST_GEOMETRY,读回dm.jdbc.driver.DmdbStruct, 属性布局:(版本,标准OGC
+	 * WKB blob,srid))→geometry,解码为WKT文本(jts解析,失败保留原值)</li>
+	 * <li>oracle
+	 * vector(oracle.sql.VECTOR,类名含.vector)→vector,'[1,2,3]'文本('[]'形态校验通过才替换)</li>
 	 * <li>oracle原生JSON实现(oracle.jdbc.driver.json.binary.Oson*Impl与oracle.sql.json.*,类名含.json)
 	 * →JSON,归一为JSON文本</li>
 	 * <li>几何对象类(org.postgis.PGgeometry、microsoft.sql.Geometry等,类名含geometry)→geometry,
@@ -1740,7 +1747,8 @@ public class ResultUtils {
 			}
 			return value;
 		}
-		// update 2026-9-11 java.sql.Array归一为原生java数组(clickhouse向量承载列Array(Float32)与PG系text[]/int[]等
+		// update 2026-9-11
+		// java.sql.Array归一为原生java数组(clickhouse向量承载列Array(Float32)与PG系text[]/int[]等
 		// 数组列,驱动包装对象toString为「Array@hash」垃圾值且泄漏驱动类型):getArray()得到标准java
 		// 数组(text[]→String[]、Array(Float32)→Float[]等,保结构、去驱动依赖),Map结果直接获得结构化
 		// 数组(fastjson序列化为JSON数组、可编程访问);目标形态转换收敛在BeanUtil.convertType按属性
@@ -1905,7 +1913,8 @@ public class ResultUtils {
 	public static List getPivotCategory(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, Connection conn, DBProfile profile) throws Exception {
 		List resultProcessors = new ArrayList();
-		// update 2026-9-12 DialectUtils层已统一按DBProfile传递,本方法仍以(dbType,dialect)对外,构造最小档案下传
+		// update 2026-9-12
+		// DialectUtils层已统一按DBProfile传递,本方法仍以(dbType,dialect)对外,构造最小档案下传
 		// DBProfile profile = new DBProfile(null, dialect, dbType, null, 0, null, null,
 		// false);
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();

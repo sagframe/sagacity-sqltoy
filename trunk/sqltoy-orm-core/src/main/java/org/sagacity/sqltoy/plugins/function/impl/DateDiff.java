@@ -26,8 +26,8 @@ public class DateDiff extends IFunction {
 	 * update 2026-9-5 datediff/timestampdiff 统一口径契约:两参 datediff(d1,d2)=d1-d2 自然天差;
 	 * 三参 datediff/timestampdiff(unit,d1,d2)=d2-d1;DAY=自然天差(去时间),WEEK=天差/7截断,
 	 * HOUR/MINUTE/SECOND=完整单位向零截断,MONTH/YEAR=年月分量差;各库按同一口径转换,保证跨库同值。
-	 * 统一源于各库原生差异:oracle/PG 原保留1位小数与 mysql 整数口径不同值、sqlserver 按边界计数且
-	 * WEEK 受 DATEFIRST 影响、mysql timestampdiff 的 YEAR/MONTH 为完整日历单位、oracle MONTH 带日权重
+	 * 统一源于各库原生差异:oracle/PG 原保留1位小数与 mysql 整数口径不同值、sqlserver 按边界计数且 WEEK 受 DATEFIRST
+	 * 影响、mysql timestampdiff 的 YEAR/MONTH 为完整日历单位、oracle MONTH 带日权重
 	 */
 	private static final String[][] UNIT_CONSTRACTS = { { "DD", "DAY" }, { "MM", "MONTH" }, { "YY", "YEAR" },
 			{ "YYYY", "YEAR" }, { "WW", "WEEK" }, { "HH", "HOUR" }, { "MI", "MINUTE" }, { "SS", "SECOND" } };
@@ -79,16 +79,19 @@ public class DateDiff extends IFunction {
 		}
 		// 原生两参形态直接透传(与 mysql 两参语义一致 d1-d2);三参走各分支转换,避免无谓改写引入语法差异
 
-		// update 2026-10-19 DM/OB 同为 oracle 系并入本分支(OB mysql 模式须配 dialect=mysql 走 mysql 分支,不做自适应)
+		// update 2026-10-19 DM/OB 同为 oracle 系并入本分支(OB mysql 模式须配 dialect=mysql 走 mysql
+		// 分支,不做自适应)
 		if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM || dbType == DBType.OCEANBASE) {
-			// update 2026-9-5 裸字符串字面量参数包 to_date 定型(长度启发式同 ToDate 单参,规避 NLS 会话下 ORA-01722/01861)
+			// update 2026-9-5 裸字符串字面量参数包 to_date 定型(长度启发式同 ToDate 单参,规避 NLS 会话下
+			// ORA-01722/01861)
 			if (args.length == 2) {
 				return "(TRUNC(" + wrapOracleDateExpr(args[0]) + ") - TRUNC(" + wrapOracleDateExpr(args[1]) + "))";
 			}
 			// 三参:d2-d1(oracle日期相减得天数数值,乘系数可表达更小单位)
 			String d1 = wrapOracleDateExpr(realArgs[1]);
 			String d2 = wrapOracleDateExpr(realArgs[2]);
-			// update 2026-9-15 DM 用 CAST AS TIMESTAMP 保留时间(oracle 的 CAST AS DATE 对 timestamp 列返回 INTERVAL 无法数值化)
+			// update 2026-9-15 DM 用 CAST AS TIMESTAMP 保留时间(oracle 的 CAST AS DATE 对
+			// timestamp 列返回 INTERVAL 无法数值化)
 			String castType = (dbType == DBType.DM) ? "TIMESTAMP" : "DATE";
 			// update 2026-9-5 YEAR/MONTH 为年月分量差(弃用 MONTHS_BETWEEN 小数口径)
 			if (unitType.equals("YEAR")) {
@@ -111,7 +114,8 @@ public class DateDiff extends IFunction {
 			}
 			return super.IGNORE;
 		}
-		// update 2026-9-14 VASTBASE date-date 返回 integer(同 vanilla PG,区别于 openGauss 的 interval),归入 PG 分支;
+		// update 2026-9-14 VASTBASE date-date 返回 integer(同 vanilla PG,区别于 openGauss 的
+		// interval),归入 PG 分支;
 		// 原独立分支的 YEAR/MONTH 等写法与 PG 不一致(实测报错),统一按 PG 形态
 		if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.VASTBASE
 				|| dbType == DBType.HIGHGO) {
@@ -143,7 +147,8 @@ public class DateDiff extends IFunction {
 			}
 			return super.IGNORE;
 		}
-		// update 2026-9-14 KINGBASE V9 date 含时间部分(date-date 为小数天,区别于 V8 的 PG12 整数语义),天差统一 trunc 向零截断即为自然天差;
+		// update 2026-9-14 KINGBASE V9 date 含时间部分(date-date 为小数天,区别于 V8 的 PG12
+		// 整数语义),天差统一 trunc 向零截断即为自然天差;
 		// 周=trunc(小数天差/7)与自然天差/7 恒等;年/月/时/分/秒路径与 PG 一致,复用同形态表达式
 		if (dbType == DBType.KINGBASE) {
 			if (args.length == 2) {
@@ -175,7 +180,8 @@ public class DateDiff extends IFunction {
 			if (args.length == 2) {
 				return "DATEDIFF(DAY," + args[1] + "," + args[0] + ")";
 			}
-			// update 2026-9-5 WEEK/HOUR/MINUTE 改自然天差与秒差整除(sqlserver 原生 DATEDIFF 按边界计数且 WEEK 受 DATEFIRST 影响)
+			// update 2026-9-5 WEEK/HOUR/MINUTE 改自然天差与秒差整除(sqlserver 原生 DATEDIFF 按边界计数且 WEEK
+			// 受 DATEFIRST 影响)
 			String unit = getMatchedType(unitType, UNIT_CONSTRACTS);
 			if (unit.equals("WEEK")) {
 				return "(DATEDIFF(DAY," + realArgs[1] + "," + realArgs[2] + ")/7)";
@@ -190,7 +196,8 @@ public class DateDiff extends IFunction {
 			return wrapArgs("DATEDIFF", realArgs);
 		}
 		if (dbType == DBType.H2) {
-			// update 2026-9-6 H2 单位须在首参且不接受字符串日期,参数统一 CAST AS TIMESTAMP/DATE 定型;两参转 DATEDIFF(DAY,d2,d1)
+			// update 2026-9-6 H2 单位须在首参且不接受字符串日期,参数统一 CAST AS TIMESTAMP/DATE 定型;两参转
+			// DATEDIFF(DAY,d2,d1)
 			if (args.length == 2) {
 				return "DATEDIFF(DAY,CAST(" + args[1] + " AS TIMESTAMP),CAST(" + args[0] + " AS TIMESTAMP))";
 			}
@@ -206,8 +213,10 @@ public class DateDiff extends IFunction {
 					+ " AS TIMESTAMP))";
 		}
 		if (dbType == DBType.DB2) {
-			// update 2026-9-10 DB2 无 DATEDIFF/TIMESTAMPDIFF(SQLCODE=-440),以 DAYS()*86400+MIDNIGHT_SECONDS() 换算 epoch 秒差;
-			// 占位符参数(?/:name/#[name])无类型信息报 -245 ambiguous function,统一 CAST AS TIMESTAMP 定型,列/字面量原样保留
+			// update 2026-9-10 DB2 无 DATEDIFF/TIMESTAMPDIFF(SQLCODE=-440),以
+			// DAYS()*86400+MIDNIGHT_SECONDS() 换算 epoch 秒差;
+			// 占位符参数(?/:name/#[name])无类型信息报 -245 ambiguous function,统一 CAST AS TIMESTAMP
+			// 定型,列/字面量原样保留
 			String d1 = wrapDb2DateExpr((args.length == 2) ? args[1] : realArgs[1]);
 			String d2 = wrapDb2DateExpr((args.length == 2) ? args[0] : realArgs[2]);
 			if (args.length == 2) {
@@ -236,10 +245,12 @@ public class DateDiff extends IFunction {
 			return "((DAYS(" + d2 + ") - DAYS(" + d1 + "))*86400" + "+(MIDNIGHT_SECONDS(" + d2 + ") - MIDNIGHT_SECONDS("
 					+ d1 + ")))/" + divisor;
 		}
-		// update 2026-9-10 VASTBASE 已并入 PG 分支(date-date=integer 非 interval),此分支不再含 vastbase
+		// update 2026-9-10 VASTBASE 已并入 PG 分支(date-date=integer 非 interval),此分支不再含
+		// vastbase
 		if (dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.STARDB
 				|| dbType == DBType.GAUSSDB) {
-			// update 2026-9-5 openGauss date-date 返回 interval 且无 datediff,天差经 date_part('day') 提取,周/时/分/秒按 epoch 秒差换算
+			// update 2026-9-5 openGauss date-date 返回 interval 且无 datediff,天差经
+			// date_part('day') 提取,周/时/分/秒按 epoch 秒差换算
 			if (args.length == 2) {
 				return "(date_part('day',(" + args[0] + "::date - " + args[1] + "::date)))";
 			}
@@ -266,7 +277,8 @@ public class DateDiff extends IFunction {
 			return super.IGNORE;
 		}
 		if (dbType == DBType.CLICKHOUSE) {
-			// update 2026-9-11 CH 无 datediff:天差=toDate 相减、年/月=toYear/toMonth 分量差、周=天差/7 intDiv 整除、
+			// update 2026-9-11 CH 无 datediff:天差=toDate 相减、年/月=toYear/toMonth 分量差、周=天差/7
+			// intDiv 整除、
 			// 时/分/秒用 dateDiff 完整单位截断;CH 强类型,参数统一 toDate/toDateTime 显式解析
 			if (args.length == 2) {
 				return "(toDate(" + args[0] + ") - toDate(" + args[1] + "))";
@@ -297,7 +309,8 @@ public class DateDiff extends IFunction {
 			return super.IGNORE;
 		}
 		if (dbType == DBType.SQLITE) {
-			// update 2026-9-6 sqlite 无 datediff;JDBC setTimestamp 在 sqlite 存为毫秒 Long,统一 strftime('%s') 归一 epoch 秒再相减(毫秒须 /1000 转秒)
+			// update 2026-9-6 sqlite 无 datediff;JDBC setTimestamp 在 sqlite 存为毫秒 Long,统一
+			// strftime('%s') 归一 epoch 秒再相减(毫秒须 /1000 转秒)
 			if (args.length == 2) {
 				// update 2026-9-9 两参按 UTC 日界自然天差(epoch 差截断到日界,避免列含时间时偏差)
 				return "(" + toSqliteDayExpr(args[0]) + " - " + toSqliteDayExpr(args[1]) + ")";
@@ -335,7 +348,8 @@ public class DateDiff extends IFunction {
 			return "round((strftime('%s'," + d2 + ") - strftime('%s'," + d1 + "))/" + divisor + ")";
 		}
 		if (dbType == DBType.HANA) {
-			// update 2026-9-11 HANA 无 datediff/timestampdiff,以 DAYS_BETWEEN/SECONDS_BETWEEN 承担;
+			// update 2026-9-11 HANA 无 datediff/timestampdiff,以 DAYS_BETWEEN/SECONDS_BETWEEN
+			// 承担;
 			// BETWEEN 族参数语义为 d2-d1(两参契约 d1-d2 须交换参数);天差先 CAST AS DATE 去时间,
 			// 周=自然天差/7 用 ROUND(x,0,ROUND_DOWN) 向零截断(hana 无 TRUNC 且整数除法得 decimal),
 			// 时/分/秒=完整秒差整除,年/月=YEAR/MONTH 分量差;参数统一 CAST 定型
@@ -373,8 +387,8 @@ public class DateDiff extends IFunction {
 	}
 
 	/**
-	 * update 2026-9-10 db2 占位符参数(?/:name/#[name])无类型信息报 -245 ambiguous function,统一 CAST AS TIMESTAMP 定型;
-	 * 列/字面量参数自带类型原样保留
+	 * update 2026-9-10 db2 占位符参数(?/:name/#[name])无类型信息报 -245 ambiguous function,统一
+	 * CAST AS TIMESTAMP 定型; 列/字面量参数自带类型原样保留
 	 */
 	private String wrapDb2DateExpr(String expr) {
 		if (expr == null) {
@@ -388,25 +402,28 @@ public class DateDiff extends IFunction {
 	}
 
 	/**
-	 * update 2026-9-10 sqlite 自然天差:date() 归一日期文本后取 epoch 秒整除 86400 相减,与 mysql DATEDIFF 日历日口径一致;
-	 * 字面量不带 'utc' 修饰(避免 +8 时区清晨被推到前一 UTC 日),列/毫秒 Long 经 datetime(毫秒/1000,'unixepoch') 归一
+	 * update 2026-9-10 sqlite 自然天差:date() 归一日期文本后取 epoch 秒整除 86400 相减,与 mysql
+	 * DATEDIFF 日历日口径一致; 字面量不带 'utc' 修饰(避免 +8 时区清晨被推到前一 UTC 日),列/毫秒 Long 经
+	 * datetime(毫秒/1000,'unixepoch') 归一
 	 */
 	private String toSqliteDayExpr(String arg) {
-		// 归一逻辑收敛至 FunctionUtils.sqliteDateTextExpr(与 DateFormat/ToChar/ToDate 共用 'localtime' 本地墙钟口径)
+		// 归一逻辑收敛至 FunctionUtils.sqliteDateTextExpr(与 DateFormat/ToChar/ToDate 共用
+		// 'localtime' 本地墙钟口径)
 		return "(CAST(strftime('%s',date(" + FunctionUtils.sqliteDateTextExpr(arg) + ")) AS INTEGER)/86400)";
 	}
 
 	/**
-	 * sqlite 年月分量提取:字面量直接 date(x) 提取(带 'utc' 修饰的三参形态返回 null);
-	 * 毫秒列/表达式经 datetime(毫秒/1000,'unixepoch') 转日期文本
+	 * sqlite 年月分量提取:字面量直接 date(x) 提取(带 'utc' 修饰的三参形态返回 null); 毫秒列/表达式经
+	 * datetime(毫秒/1000,'unixepoch') 转日期文本
 	 */
 	private String toSqliteDateExpr(String arg) {
 		return FunctionUtils.sqliteDateTextExpr(arg);
 	}
 
 	/**
-	 * update 2026-9-10 sqlite 日期参数归一:字面量原样;列/毫秒 Long 经 datetime(毫秒/1000,'unixepoch') 转日期文本;
-	 * 口径统一本地时区:列侧补 'localtime' 还原本地墙钟、字面量侧摘除 'utc' 修饰,两侧同为本地墙钟口径
+	 * update 2026-9-10 sqlite 日期参数归一:字面量原样;列/毫秒 Long 经
+	 * datetime(毫秒/1000,'unixepoch') 转日期文本; 口径统一本地时区:列侧补 'localtime' 还原本地墙钟、字面量侧摘除
+	 * 'utc' 修饰,两侧同为本地墙钟口径
 	 */
 	private String toSqliteEpochExpr(String arg) {
 		// update 2026-9-10 字面量侧摘除 'utc'、列侧补 'localtime',两侧统一本地墙钟口径

@@ -31,7 +31,8 @@ public class SqlServerDDLGenerator implements DialectDDLGenerator {
 		String tableName = StringUtil.toLowerOrUpper(tableMeta.getTableName(), upperOrLower);
 		// update 2026-10-13 分区表:sqlserver分区=分区函数+分区方案模型(无内联PARTITION BY子句),须先建函数/方案,
 		// 聚集索引(或无PK时的表)经ON子句挂到方案上实现分区对齐;边界值来自@PartitionDef
-		// (quickvo从sys.partition_range_values提取),方向来自strategy(RANGE RIGHT/RANGE LEFT,缺省RIGHT);
+		// (quickvo从sys.partition_range_values提取),方向来自strategy(RANGE RIGHT/RANGE
+		// LEFT,缺省RIGHT);
 		// 函数/方案名按pf_/ps_+表名+列名派生(源库原名不在@Partition元数据内,派生名保证脚本可重跑)
 		org.sagacity.sqltoy.config.model.PartitionMeta partitionMeta = tableMeta.getPartitionMeta();
 		String schemeName = null;
@@ -124,7 +125,8 @@ public class SqlServerDDLGenerator implements DialectDDLGenerator {
 			if (StringUtil.isNotBlank(tableMeta.getRemarks())) {
 				// EXEC sys.sp_addextendedproperty N'MS_Description', N'表注释', N'SCHEMA', dbo,
 				// N'table' , 表名 , null, null
-				// update 2026-10-13 字面量必须带N前缀:无N时按库排序规则代码页解析,非中文排序规则(如SQL_Latin1_General_CP1_CI_AS)
+				// update 2026-10-13
+				// 字面量必须带N前缀:无N时按库排序规则代码页解析,非中文排序规则(如SQL_Latin1_General_CP1_CI_AS)
 				// 下中文注释入库即变'?'(真库实测hex=3F3F..)
 				tableSql.append(splitSign);
 				tableSql.append(NEWLINE);

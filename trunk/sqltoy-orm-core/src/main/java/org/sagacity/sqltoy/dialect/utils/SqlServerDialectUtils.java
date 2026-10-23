@@ -54,8 +54,10 @@ public class SqlServerDialectUtils {
 	private static final Pattern TABLE_LOCK_HINT_PATTERN = Pattern
 			.compile("(?i)\\b(rowlock|xlock|updlock|holdlock|nolock|readpast|paglock|tablock|tablockx)\\b");
 
-	// update 2026-9-17 offset分页子句匹配(word边界):规避row_offset/offset_id等标识符子串,以及字面量/别名声明的"offset"被误判为已有分页
-	// (原contains("offset")子串误判,跳过offset 0 rows追加后派生表内order by报"The ORDER BY clause is invalid..."语法错误)
+	// update 2026-9-17
+	// offset分页子句匹配(word边界):规避row_offset/offset_id等标识符子串,以及字面量/别名声明的"offset"被误判为已有分页
+	// (原contains("offset")子串误判,跳过offset 0 rows追加后派生表内order by报"The ORDER BY clause
+	// is invalid..."语法错误)
 	private static final Pattern OFFSET_PATTERN = Pattern.compile("(?i)\\boffset\\b");
 
 	/**
@@ -547,7 +549,8 @@ public class SqlServerDialectUtils {
 					while (rs.next()) {
 						TableMeta tableMeta = new TableMeta();
 						tableMeta.setTableName(rs.getString("TABLE_NAME"));
-						// update 2026-9-11 sysobjects.xtype为CHAR(2),视图值'V '带尾随空格,原"V".equals恒不命中致视图被归为TABLE(sqlserver2022实测),trim后判型
+						// update 2026-9-11 sysobjects.xtype为CHAR(2),视图值'V
+						// '带尾随空格,原"V".equals恒不命中致视图被归为TABLE(sqlserver2022实测),trim后判型
 						String rawType = rs.getString("TABLE_TYPE");
 						if (rawType != null) {
 							rawType = rawType.trim();

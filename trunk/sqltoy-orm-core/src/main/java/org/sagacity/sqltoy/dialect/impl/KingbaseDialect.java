@@ -244,7 +244,8 @@ public class KingbaseDialect extends PostgreSqlDialect {
 	}
 
 	/**
-	 * update 2026-9-13 覆写父类(protected)锁语句:kingbase的UPGRADE模式追加 wait N,经虚分派使继承自父类的findBySql/load/loadAll/updateFetch命中本实现
+	 * update 2026-9-13 覆写父类(protected)锁语句:kingbase的UPGRADE模式追加 wait
+	 * N,经虚分派使继承自父类的findBySql/load/loadAll/updateFetch命中本实现
 	 *
 	 * @param sql
 	 * @param dbType

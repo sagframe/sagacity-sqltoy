@@ -305,7 +305,8 @@ public class BeanUtil {
 	}
 
 	/**
-	 * update 2026-9-14 <p>
+	 * update 2026-9-14
+	 * <p>
 	 * <li>优化匹配方式，修复setIsXXX的错误</li>
 	 * <li>支持setXXX()并返回对象本身,适配链式操作</li>
 	 * <li>支持property中含下划线跟对象属性进行匹配</li>
@@ -1818,7 +1819,7 @@ public class BeanUtil {
 									}
 								}
 							}
-								// update 2022-5-25 支持将集合的属性直接映射成数组,instanceof 由 List 扩展为 Iterable
+							// update 2022-5-25 支持将集合的属性直接映射成数组,instanceof 由 List 扩展为 Iterable
 							else if (fieldValue instanceof Iterable) {
 								List tmp = null;
 								if (fieldValue instanceof List) {
@@ -2642,8 +2643,8 @@ public class BeanUtil {
 	 * mismatch(vastbase G100真库json对象列实爆);调用方传FieldMeta.getType()
 	 * (即@Column(type=JdbcTypes.X)注解值,常规列为java.sql.Types码,不命中扩展分支行为不变)
 	 *
-	 * 增加map类型支持:直接按key写入,与getProperty的读取语义对称
-	 * (此前map入参只匹配setter必然抛does not have the property异常,而读路径支持map, 混合行数据处理时读/写行为不一致)
+	 * 增加map类型支持:直接按key写入,与getProperty的读取语义对称 (此前map入参只匹配setter必然抛does not have the
+	 * property异常,而读路径支持map, 混合行数据处理时读/写行为不一致)
 	 *
 	 * map类型key支持xxx.xxx级联形式:逐层深入嵌套map后在叶子层写入,
 	 * 中间层key存在且值为map则深入、不存在则创建HashMap挂入;中间层值不是map(如POJO对象)

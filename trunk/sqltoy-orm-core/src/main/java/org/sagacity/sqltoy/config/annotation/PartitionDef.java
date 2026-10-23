@@ -24,9 +24,12 @@ public @interface PartitionDef {
 	// 分区所在表空间(oracle等)
 	String tablespace() default "";
 
-	// update 2026-10-13 分区上界(DB2表分区为STARTING..ENDING双边界区间,value为下界);单边界库(mysql系VALUES LESS THAN/pg系/oracle等)不使用,保持空串
+	// update 2026-10-13
+	// 分区上界(DB2表分区为STARTING..ENDING双边界区间,value为下界);单边界库(mysql系VALUES LESS
+	// THAN/pg系/oracle等)不使用,保持空串
 	String endValue() default "";
 
-	// update 2026-10-13 上界是否包含(DB2的ENDING默认INCLUSIVE,显式EXCLUSIVE须置false);仅endValue非空时有意义
+	// update 2026-10-13
+	// 上界是否包含(DB2的ENDING默认INCLUSIVE,显式EXCLUSIVE须置false);仅endValue非空时有意义
 	boolean endInclusive() default true;
 }

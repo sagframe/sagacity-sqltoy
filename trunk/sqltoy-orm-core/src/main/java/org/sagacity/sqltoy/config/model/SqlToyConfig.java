@@ -44,7 +44,8 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	private String dialect;
 
 	/**
-	 * update 2026-9-23 realDialectFirst变体匹配标记:sql经realDialect变体匹配选中时置位(SqlToyContext.resolveRealDialectVariant
+	 * update 2026-9-23
+	 * realDialectFirst变体匹配标记:sql经realDialect变体匹配选中时置位(SqlToyContext.resolveRealDialectVariant
 	 * 与SqlScriptLoader.getSqlConfig线程分支),仅带此标记的sql在getDialectSql收口点按真实方言做函数/保留字转换,
 	 * 未命中变体回退base的sql保持配置方言行为。变体实例只可能经对应方言的匹配路径到达(直接以变体id查询除外),
 	 * 标记为实例固有属性,super.clone自动携带
@@ -612,7 +613,8 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 			if (this.paramsName != null) {
 				cloned.paramsName = this.paramsName.clone();
 			}
-			// update 2026-9-14 translateMap必须深度clone:DialectUtils.getUnifyParamsNamedConfig会对clone后的translateMap就地put动态
+			// update 2026-9-14
+			// translateMap必须深度clone:DialectUtils.getUnifyParamsNamedConfig会对clone后的translateMap就地put动态
 			// translate并改写FieldTranslate的translates数组,浅共享会把本次查询的动态翻译永久写入sqlCache中的配置实例
 			// (后续同sqlId查询被污染)且并发下写非线程安全HashMap;此处按"实际会被改写的字段"同步补齐深拷贝(translates
 			// 数组复制,Translate保留共享引用);注意:原配置无xml翻译声明(空map)时同样必须换成新实例——动态translate查询正是往这个空map里put
@@ -742,12 +744,12 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	}
 
 	/**
-	 * update 2026-9-23 realDialectFirst补齐函数替换遗漏:6个片段getter(sql/countSql/fastSql/fastPreSql/fastTailSql/fastWithSql)
+	 * update 2026-9-23
+	 * realDialectFirst补齐函数替换遗漏:6个片段getter(sql/countSql/fastSql/fastPreSql/fastTailSql/fastWithSql)
 	 * 全部汇聚本私有方法,惰性转换的目标方言在此换算为连接探测的真实方言(线程档案由processDataSource按连接绑定)。
 	 * 仅限经realDialectFirst变体匹配选中的sql(realDialectMatched标记,未命中变体回退base的sql保持配置方言行为),
 	 * 且仅作用于sql形态转换层(函数与保留字),分页等执行策略的dbType分派不受影响;真实方言与查询方言一致、线程无
-	 * 档案(连接外解析)或开关关闭时行为零变化;换算后与解析方言标签不相等从而走转换路径,dialectSqlMap按真实方言
-	 * 缓存仍只转换一次
+	 * 档案(连接外解析)或开关关闭时行为零变化;换算后与解析方言标签不相等从而走转换路径,dialectSqlMap按真实方言 缓存仍只转换一次
 	 *
 	 * @param type       如:sql、fastPage等
 	 * @param sqlContent
@@ -772,7 +774,8 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 		if (convertDialect == null || convertDialect.equals("") || convertDialect.equals(Dialect.UNDEFINE)) {
 			return sqlContent;
 		}
-		// update 2026-10-18 CTE物化hint按目标dbType保留/剔除:AS [NOT] MATERIALIZED仅PG12+及同内核衍生库(openGauss/金仓/
+		// update 2026-10-18 CTE物化hint按目标dbType保留/剔除:AS [NOT]
+		// MATERIALIZED仅PG12+及同内核衍生库(openGauss/金仓/
 		// Vastbase/瀚高,真库实测)支持,其余库混入即报语法错误,对不支持库剔除(仅失物化优化、不改查询语义)。
 		// 方言匹配时跳过函数/保留字转换(原零变化行为)但仍适配物化hint,且直接返回不入缓存(规避setSql后读到陈旧缓存);方言不一致走转换缓存路径
 		int convertDbType = DataSourceUtils.getDBType(convertDialect);

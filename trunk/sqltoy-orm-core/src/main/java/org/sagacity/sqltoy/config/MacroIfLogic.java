@@ -205,7 +205,8 @@ public class MacroIfLogic {
 					}
 					meter++;
 				}
-				// update 2020-09-24 计算单个比较的结果:增加数组长度的提取;!size()/!length()取反前缀也要走长度提取,否则数组被按toString字符串比较
+				// update 2020-09-24
+				// 计算单个比较的结果:增加数组长度的提取;!size()/!length()取反前缀也要走长度提取,否则数组被按toString字符串比较
 				if (hasArg && (leftParamLow.startsWith("size(") || leftParamLow.startsWith("length(")
 						|| leftParamLow.startsWith("!size(") || leftParamLow.startsWith("!length("))) {
 					expressResult[i] = compare((leftValue == null) ? 0 : getSize(leftValue), compareType, rightValue,

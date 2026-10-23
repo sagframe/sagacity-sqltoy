@@ -47,7 +47,8 @@ public class HashShardingStrategy implements ShardingStrategy {
 		}
 		// 单值hash取模
 		Object shardingValue = paramsMap.values().iterator().next();
-		// update 2026-9-15 分片值为null时抛出可定位的异常(原裸NPE无法定位是哪个字段;常见诱因:查询条件参数别名与策略fields字段名不一致、分片字段值本身为null)
+		// update 2026-9-15
+		// 分片值为null时抛出可定位的异常(原裸NPE无法定位是哪个字段;常见诱因:查询条件参数别名与策略fields字段名不一致、分片字段值本身为null)
 		checkShardingValue(paramsMap, shardingValue);
 		int hashCode = shardingValue.hashCode();
 		// hashCode可能为负,负数直接%会得到负key,取不到分表导致数据回落基准表
@@ -84,7 +85,8 @@ public class HashShardingStrategy implements ShardingStrategy {
 	}
 
 	/**
-	 * update 2026-9-15 分片值判空:为null时抛出带字段键信息的IllegalArgumentException(原直接hashCode()裸NPE,无法定位是哪个分片字段缺失)
+	 * update 2026-9-15
+	 * 分片值判空:为null时抛出带字段键信息的IllegalArgumentException(原直接hashCode()裸NPE,无法定位是哪个分片字段缺失)
 	 */
 	private void checkShardingValue(IgnoreCaseLinkedMap<String, Object> paramsMap, Object shardingValue) {
 		if (shardingValue == null) {

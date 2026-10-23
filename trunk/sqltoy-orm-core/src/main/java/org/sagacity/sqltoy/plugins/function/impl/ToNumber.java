@@ -61,7 +61,8 @@ public class ToNumber extends IFunction {
 			return "CAST(" + args[0] + " AS numeric)";
 		}
 		// update 2026-9-11 mysql系/sqlserver/H2/DB2/sqlite:DECIMAL(20,6)精度契约见类注释
-		// 补sqlite(无to_number函数,原样透传报no such function;CAST AS DECIMAL在sqlite按NUMERIC亲和性解析,实测正确返回数值)
+		// 补sqlite(无to_number函数,原样透传报no such function;CAST AS
+		// DECIMAL在sqlite按NUMERIC亲和性解析,实测正确返回数值)
 		// 补hana(无to_number函数,数值转换为TO_DECIMAL/CAST族,CAST契约同mysql系)
 		if (dialect == DBType.MYSQL || dialect == DBType.TIDB || dialect == DBType.MYSQL57 || dialect == DBType.DORIS
 				|| dialect == DBType.STARROCKS || dialect == DBType.H2 || dialect == DBType.SQLSERVER

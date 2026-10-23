@@ -44,7 +44,8 @@ public class ShardingUtils {
 	 */
 	protected final static Logger logger = LoggerFactory.getLogger(ShardingUtils.class);
 
-	// update 2026-9-9 分表名匹配正则缓存:matchReplace为查询执行期热路径(每查询每分表调用),原实现每次Pattern.compile;分表名集合有限,设容量上限防御动态表名场景无界增长
+	// update 2026-9-9
+	// 分表名匹配正则缓存:matchReplace为查询执行期热路径(每查询每分表调用),原实现每次Pattern.compile;分表名集合有限,设容量上限防御动态表名场景无界增长
 	private static final ConcurrentHashMap<String, Pattern> TABLE_PATTERN_CACHE = new ConcurrentHashMap<String, Pattern>();
 
 	private static Pattern tablePatternOf(String sourceTable) {
@@ -56,7 +57,8 @@ public class ShardingUtils {
 	}
 
 	/**
-	 * update 2026-9-15 分库数据源名解析统一入口:策略指定的数据源名无法解析时抛出明确异常;原实现getDataSourceBean返回null后静默透传,
+	 * update 2026-9-15
+	 * 分库数据源名解析统一入口:策略指定的数据源名无法解析时抛出明确异常;原实现getDataSourceBean返回null后静默透传,
 	 * processDataSource(null)回落默认数据源,配错的分库名会致数据静默写错库且无任何报错;名称为空白表示策略未命中,按约定回落默认数据源
 	 */
 	private static DataSource resolveShardingDataSource(SqlToyContext sqlToyContext, Class entityClass,

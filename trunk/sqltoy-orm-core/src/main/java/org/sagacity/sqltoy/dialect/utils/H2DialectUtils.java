@@ -55,7 +55,8 @@ public class H2DialectUtils {
 		} else if (jdbcType == java.sql.Types.DATE) {
 			sql.append("cast(? as DATE)");
 		} else if (jdbcType == java.sql.Types.NUMERIC || jdbcType == java.sql.Types.DECIMAL) {
-			// update 2026-9-14 裸cast(? as DECIMAL)默认标度为0,小数值被取整(h2真库实测88.88四舍五入为89);精度/标度已知按列定义cast,未知时大标度兜底
+			// update 2026-9-14 裸cast(? as
+			// DECIMAL)默认标度为0,小数值被取整(h2真库实测88.88四舍五入为89);精度/标度已知按列定义cast,未知时大标度兜底
 			if (fieldMeta.getPrecision() > 0) {
 				sql.append("cast(? as DECIMAL(" + fieldMeta.getPrecision() + "," + fieldMeta.getScale() + "))");
 			} else {
@@ -87,7 +88,8 @@ public class H2DialectUtils {
 		} else if (jdbcType == JdbcTypes.JSON || jdbcType == JdbcTypes.JSONB) {
 			sql.append("cast(? as JSON)");
 		} else if (jdbcType == JdbcTypes.GEOMETRY) {
-			// update 2026-9-8 实测h2的merge using select子查询对geometry列裸?报"Unknown data type"(参数无法定型),以GEOMETRY cast定型
+			// update 2026-9-8 实测h2的merge using select子查询对geometry列裸?报"Unknown data
+			// type"(参数无法定型),以GEOMETRY cast定型
 			// (H2的GEOMETRY类型接受WKT文本参数)
 			sql.append("cast(? as GEOMETRY)");
 		} else {

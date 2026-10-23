@@ -6,30 +6,33 @@ import java.util.regex.Pattern;
 import org.sagacity.sqltoy.plugins.function.IFunction;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 
-	/**
-	 * @project sagacity-sqltoy
-	 * @description 唯一id生成函数的跨库适配:源拼写补全为uuid/guid/newid/sys_guid四种惯用写法统一进入转换——
-	 * 不能只认mysql的uuid(),dm用户写guid()、sqlserver用户写newid()、oracle用户写sys_guid()同样要能跨库。
-	 * 目标语义=生成唯一id,返回两族形态(36位带连字符/32hex)。适配策略三级:1)优先转库内同质原生函数;
-	 * 2)无原生函数但有随机/散列原语的,用SQL表达式合成唯一id降级(零运维依赖);3)原语也没有但运维可部署的
-	 * (uuid-ossp扩展等),保留用户拼写透传,部署即生效,未部署则响亮报错可察。
-	 * 拼写×方言原生透传矩阵:本库原生拼写原样保留(guid()@dm、newid()@sqlserver、uuid()/get_uuid()返回36位
-	 * 大写带连字符(实证CAFD6E1E-5D4F-4C06-83F1-072940A50A20)、sys_guid()返回32位大写hex(实证
-	 * A06A928E5A2E4F7BB389CD4550F704CD)、另有uuid_short()/uuid_to_bin()/md5(),getObject直读无varchar空串
-	 * 问题),故uuid与sys_guid拼写原样透传,guid拼写转sys_guid(),其余拼写转uuid();get_uuid()/uuid_short()因下划线
-	 * 前缀不进正则,透传即原生生效。数据库能力结论必须以系统目录(sysprocedures)与实际调用为证,不能凭探针报错
-	 * 信息推断。db2(12.1.5容器实测):12.1.3+内建GENERATE_UUID()返回36位带连字符标准UUID(实证
-	 * 2F30BE39-8E19-4CD1-A405-A618DA412998),各拼写归一到generate_uuid();11.5/12.1.0-12.1.2无此函数报
-	 * SQL0440N(响亮)。openGauss系(og5.0/og7.0容器实证):og/gaussdb/mogdb为PG内核,无uuid族函数但有
-	 * random()/md5()/clock_timestamp(),按策略2合成降级——uuid族拼写合成v4形态36位(实证81c38b77-a8a8-4900-
-	 * b6e7-569a8c350a10),sys_guid/guid拼写合成32hex md5(实证1601eb623fc3bca613ef02a4ad417c29);
-	 * uuid_generate_v4/v7为uuid-ossp标准拼写,按策略3透传,运维CREATE EXTENSION后原生生效。oscar/stardb
-	 * 内核非PG系谱未证实,不注入PG语法,维持透传响亮(注入未证实语法=静默错误,比响亮报错更糟)。
-	 * @author zhongxuchen
-	 * @version v1.0,Date:2026-10-11
-	 */
+/**
+ * @project sagacity-sqltoy
+ * @description 唯一id生成函数的跨库适配:源拼写补全为uuid/guid/newid/sys_guid四种惯用写法统一进入转换——
+ *              不能只认mysql的uuid(),dm用户写guid()、sqlserver用户写newid()、oracle用户写sys_guid()同样要能跨库。
+ *              目标语义=生成唯一id,返回两族形态(36位带连字符/32hex)。适配策略三级:1)优先转库内同质原生函数;
+ *              2)无原生函数但有随机/散列原语的,用SQL表达式合成唯一id降级(零运维依赖);3)原语也没有但运维可部署的
+ *              (uuid-ossp扩展等),保留用户拼写透传,部署即生效,未部署则响亮报错可察。
+ *              拼写×方言原生透传矩阵:本库原生拼写原样保留(guid()@dm、newid()@sqlserver、uuid()/get_uuid()返回36位
+ *              大写带连字符(实证CAFD6E1E-5D4F-4C06-83F1-072940A50A20)、sys_guid()返回32位大写hex(实证
+ *              A06A928E5A2E4F7BB389CD4550F704CD)、另有uuid_short()/uuid_to_bin()/md5(),getObject直读无varchar空串
+ *              问题),故uuid与sys_guid拼写原样透传,guid拼写转sys_guid(),其余拼写转uuid();get_uuid()/uuid_short()因下划线
+ *              前缀不进正则,透传即原生生效。数据库能力结论必须以系统目录(sysprocedures)与实际调用为证,不能凭探针报错
+ *              信息推断。db2(12.1.5容器实测):12.1.3+内建GENERATE_UUID()返回36位带连字符标准UUID(实证
+ *              2F30BE39-8E19-4CD1-A405-A618DA412998),各拼写归一到generate_uuid();11.5/12.1.0-12.1.2无此函数报
+ *              SQL0440N(响亮)。openGauss系(og5.0/og7.0容器实证):og/gaussdb/mogdb为PG内核,无uuid族函数但有
+ *              random()/md5()/clock_timestamp(),按策略2合成降级——uuid族拼写合成v4形态36位(实证81c38b77-a8a8-4900-
+ *              b6e7-569a8c350a10),sys_guid/guid拼写合成32hex
+ *              md5(实证1601eb623fc3bca613ef02a4ad417c29);
+ *              uuid_generate_v4/v7为uuid-ossp标准拼写,按策略3透传,运维CREATE
+ *              EXTENSION后原生生效。oscar/stardb
+ *              内核非PG系谱未证实,不注入PG语法,维持透传响亮(注入未证实语法=静默错误,比响亮报错更糟)。
+ * @author zhongxuchen
+ * @version v1.0,Date:2026-10-11
+ */
 public class Uuid extends IFunction {
-	// update 2026-10-11 \W前缀防generateUUIDv4(/uuid_short(等含uuid子串的token误命中;sys_guid(的guid(
+	// update 2026-10-11
+	// \W前缀防generateUUIDv4(/uuid_short(等含uuid子串的token误命中;sys_guid(的guid(
 	// 前为"_"(单词字符)不会被guid分支单独命中,各拼写互不干扰
 	// 拼写审计补全显式列出的扩展/原生拼写:random_uuid(h2)/gen_random_uuid(pg)/uuid_generate_v4
 	// (uuid-ossp扩展)/generateUUIDv4(ch)——下划线前缀使\Wuuid\(不命中(防误命中机制的副作用),须显式列出;

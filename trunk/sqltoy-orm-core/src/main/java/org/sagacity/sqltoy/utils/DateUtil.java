@@ -54,7 +54,8 @@ public class DateUtil {
 			.compile("[\\s\\u00A0\\u202F\\u3000]+");
 
 	private static final java.util.regex.Pattern SPACE_PATTERN = java.util.regex.Pattern.compile("\\s+");
-	// update 2026-9-14 ISO日期时间中日期与时间的分隔符T:dateStr.replaceFirst(「(?i)T」,「 」)每次解析隐式编译,
+	// update 2026-9-14 ISO日期时间中日期与时间的分隔符T:dateStr.replaceFirst(「(?i)T」,「
+	// 」)每次解析隐式编译,
 	// ISO日期时间(2026-09-14T10:00:00)是逐行读取的常见形态,预编译为静态Pattern
 	private final static Pattern ISO_T_PATTERN = Pattern.compile("(?i)T");
 	/**
@@ -785,7 +786,8 @@ public class DateUtil {
 	private static final java.util.concurrent.ConcurrentHashMap<String, DateTimeFormatter> FORMATTER_CACHE = new java.util.concurrent.ConcurrentHashMap<>();
 
 	private static DateTimeFormatter getFormatter(String format, Locale locale) {
-		// update 2026-9-9 locale兜底为默认Locale:DateTimeFormatter.ofPattern(pattern,null)抛NPE,
+		// update 2026-9-9
+		// locale兜底为默认Locale:DateTimeFormatter.ofPattern(pattern,null)抛NPE,
 		// 与各处单参ofPattern(默认Locale)行为保持一致
 		Locale realLocale = (locale == null) ? SqlToyConstants.getLocale() : locale;
 		String key = format.concat("|").concat(realLocale.toString());

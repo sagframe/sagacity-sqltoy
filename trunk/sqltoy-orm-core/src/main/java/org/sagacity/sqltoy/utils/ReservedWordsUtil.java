@@ -70,7 +70,8 @@ public class ReservedWordsUtil {
 		if (reservedWords.isEmpty()) {
 			return sql;
 		}
-		// update 2026-9-15 null防护前置:原null判断位于末尾sqlserver/sqlite分支,而前面的dbType==DBType.XXX比较已触发Integer拆箱,
+		// update 2026-9-15
+		// null防护前置:原null判断位于末尾sqlserver/sqlite分支,而前面的dbType==DBType.XXX比较已触发Integer拆箱,
 		// null入参在到达判断前即NPE(convertWord/convertSql均为null在条件首位短路,本方法对齐该契约:null原样返回)
 		if (dbType == null || dbType == DBType.SQLSERVER || dbType == DBType.SQLITE) {
 			return sql;
@@ -82,7 +83,8 @@ public class ReservedWordsUtil {
 				|| dbType == DBType.IMPALA || dbType == DBType.OCEANBASE) {
 			return sql.replace("[", "`").replace("]", "`");
 		}
-		// update 2026-9-14 补KINGBASE(KingbaseES基于PG,标识符用双引号):原形态落入末尾else被剔除括号,保留字字段(如[desc])会变成裸标识符导致语法错误
+		// update 2026-9-14
+		// 补KINGBASE(KingbaseES基于PG,标识符用双引号):原形态落入末尾else被剔除括号,保留字字段(如[desc])会变成裸标识符导致语法错误
 		if (dbType == DBType.ORACLE || dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14
 				|| dbType == DBType.DB2 || dbType == DBType.DM || dbType == DBType.GAUSSDB || dbType == DBType.MOGDB
 				|| dbType == DBType.STARDB || dbType == DBType.OSCAR || dbType == DBType.OPENGAUSS
@@ -158,7 +160,8 @@ public class ReservedWordsUtil {
 		String keyWord;
 		matcher = pattern.matcher(sql);
 		while (matcher.find()) {
-			// update 2026-9-14 改按关键字组(第3组)位置定位:原实现用matcher.start()+1、match.substring(1)与subSize的定长边界算术,
+			// update 2026-9-14
+			// 改按关键字组(第3组)位置定位:原实现用matcher.start()+1、match.substring(1)与subSize的定长边界算术,
 			// 隐含"首尾边界各消费1个字符"的假定,边界为空匹配时(sql以[col]收尾,或[col]紧邻单词字符)会把引用符号与相邻字符错位并丢空白,输出被改坏的sql;
 			// 关键字组前后各恰好一个单字符引用符号(第2、4组),故替换区间取组前后各一个字符,边界是否命中不再影响定位
 			keyWord = matcher.group(3);

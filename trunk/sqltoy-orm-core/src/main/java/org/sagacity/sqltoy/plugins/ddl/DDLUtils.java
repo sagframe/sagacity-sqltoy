@@ -49,8 +49,7 @@ public class DDLUtils {
 	 * 输出对建表顺序硬依赖(mysql/pg内联FOREIGN KEY于CREATE TABLE,oracle/h2/sqlserver的ALTER ADD
 	 * CONSTRAINT紧跟本表CREATE之后),错序即建表失败;且原输出依赖hash序跨环境不可复现、swotTables
 	 * 全量重建最坏O(n²)。新算法零入度集合按表名字典序出队保证脚本可复现,自环(树表自引用外键,内联合法)
-	 * 不参与排序约束,多外键指向同表去重防入度虚增,节点集外的外表引用忽略,环状残余(互相外键,内联约束下
-	 * 本就无解)按名序追加+warn提示,不吞表不死循环
+	 * 不参与排序约束,多外键指向同表去重防入度虚增,节点集外的外表引用忽略,环状残余(互相外键,内联约束下 本就无解)按名序追加+warn提示,不吞表不死循环
 	 *
 	 * @param entitysMetaMap
 	 * @return 被依赖表在前的表实体列表
@@ -192,7 +191,8 @@ public class DDLUtils {
 			columnMeta.setAutoIncrement(fieldMeta.isAutoIncrement());
 			columnMeta.setColumnSize(fieldMeta.getLength());
 			columnMeta.setPartitionKey(fieldMeta.isPartitionKey());
-			// update 2026-10-22 boolean默认值按目标库归一(数值承载方言的true/false转1/0),挂在本单一入口使全部generator的DEFAULT路径共享
+			// update 2026-10-22
+			// boolean默认值按目标库归一(数值承载方言的true/false转1/0),挂在本单一入口使全部generator的DEFAULT路径共享
 			columnMeta.setDefaultValue(normalizeBooleanDefault(fieldMeta.getDefaultValue(), fieldMeta.getType(),
 					dbType == null ? -1 : dbType));
 			columnMeta.setNullable(fieldMeta.isNullable());
@@ -299,7 +299,7 @@ public class DDLUtils {
 			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 					|| dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.STARDB
 					|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE || dbType == DBType.ORACLE
-						// update 2026-9-14 KINGBASE(KingbaseES基于PG,类型映射归PG系)
+					// update 2026-9-14 KINGBASE(KingbaseES基于PG,类型映射归PG系)
 					|| dbType == DBType.KINGBASE || dbType == DBType.HIGHGO || dbType == DBType.ORACLE11
 					|| dbType == DBType.DM || dbType == DBType.OCEANBASE) {
 				// 精度需跟在TIMESTAMP之后:TIMESTAMP(6) WITH TIME ZONE
@@ -383,7 +383,8 @@ public class DDLUtils {
 			}
 			break;
 		case java.sql.Types.DATE:
-			// update 2026-10-13 Types.DATE按目标库与字段Java类型精化,修复按生成DDL建表后时间部分被静默清零:实测dm的DATE列只存日期
+			// update 2026-10-13
+			// Types.DATE按目标库与字段Java类型精化,修复按生成DDL建表后时间部分被静默清零:实测dm的DATE列只存日期
 			// (与oracle的DATE含时间不同),pg系date列同样只存日期(pg 18.6实测,timestamp写入date列静默截断时间);
 			// java.util.Date/LocalDateTime这类含时间字段(无论@Column未指定type自动探测,还是quickvo生成实体显式
 			// 声明type=DATE)此前均输出DATE列,现按字段Java类型(小写全类名)精化:dm输出DATETIME,pg系输出TIMESTAMP,
@@ -433,17 +434,21 @@ public class DDLUtils {
 				typeName = "VARCHAR";
 				typeName = setLength(typeName, false, colMeta);
 			} else if (dbType == DBType.DB2) {
-				// update 2026-9-10 db2 12.1.2.0/12.1.5.0实测:VECTOR须显式坐标类型双参形态VECTOR(n, FLOAT32),单参VECTOR(n)
-				// 报-104语法错误、裸VECTOR报-901 "Unknown vector coordinate type";维度必填(@Column(length=xxx)),
+				// update 2026-9-10 db2 12.1.2.0/12.1.5.0实测:VECTOR须显式坐标类型双参形态VECTOR(n,
+				// FLOAT32),单参VECTOR(n)
+				// 报-104语法错误、裸VECTOR报-901 "Unknown vector coordinate
+				// type";维度必填(@Column(length=xxx)),
 				// 其他坐标类型(FLOAT64等)经@Column(nativeType=...)覆盖
 				typeName = (colMeta.getColumnSize() > 0) ? ("VECTOR(" + colMeta.getColumnSize() + ", FLOAT32)")
 						: "VECTOR";
 			} else if (dbType == DBType.DORIS) {
-				// update 2026-9-10 doris 4.1.3实测:无VECTOR(n)列类型(解析器类型全集无VECTOR),向量以ARRAY<FLOAT>承载
+				// update 2026-9-10 doris
+				// 4.1.3实测:无VECTOR(n)列类型(解析器类型全集无VECTOR),向量以ARRAY<FLOAT>承载
 				// (近邻检索配VECTOR索引),字符串'[1,2,3]'绑定隐式转换、读回为'[1, 2, 3]'文本均实证可行;维度不进列定义(向量索引声明处约束)
 				typeName = "ARRAY<FLOAT>";
 			} else if (dbType == DBType.CLICKHOUSE) {
-				// update 2026-9-11 clickhouse 26.8.2.7实测:无vector类型族(报Unknown data type family: vector),向量以Array(Float32)
+				// update 2026-9-11 clickhouse 26.8.2.7实测:无vector类型族(报Unknown data type family:
+				// vector),向量以Array(Float32)
 				// 承载(同doris思路):字符串'[1,2,3]'插入隐式解析、读回'[1,2,3]'文本、L2Distance(v,[..])距离检索均实证可行
 				typeName = "Array(Float32)";
 			} else if (dbType == DBType.HANA) {
@@ -641,9 +646,12 @@ public class DDLUtils {
 			tableSql.append(" PARTITIONS ").append(names.length);
 			return;
 		}
-		// update 2026-10-13 DB2表分区为STARTING..ENDING双边界区间语法(非mysql系VALUES LESS THAN):PARTITION <name>
-		// STARTING (<low>) ENDING (<high>)[EXCLUSIVE];MINVALUE/MAXVALUE为DB2关键字不带括号;上界缺失以
-		// /* end value missing */显式标记(建表会失败,提示补全,优于静默生成错误边界);明细按目录SEQNO序原样渲染(DB2无升序强制,不做值排序)
+		// update 2026-10-13 DB2表分区为STARTING..ENDING双边界区间语法(非mysql系VALUES LESS
+		// THAN):PARTITION <name>
+		// STARTING (<low>) ENDING
+		// (<high>)[EXCLUSIVE];MINVALUE/MAXVALUE为DB2关键字不带括号;上界缺失以
+		// /* end value missing
+		// */显式标记(建表会失败,提示补全,优于静默生成错误边界);明细按目录SEQNO序原样渲染(DB2无升序强制,不做值排序)
 		if (dbType == DBType.DB2) {
 			String[] endValues = partitionMeta.getPartitionEndValues();
 			boolean[] endInclusives = partitionMeta.getPartitionEndInclusives();
@@ -771,7 +779,8 @@ public class DDLUtils {
 	}
 
 	/**
-	 * update 2026-10-13 DB2分区边界渲染:MINVALUE/MAXVALUE为DB2关键字不带括号,其余按字面量括号包裹(值引号规则同quotePartitionValue)
+	 * update 2026-10-13
+	 * DB2分区边界渲染:MINVALUE/MAXVALUE为DB2关键字不带括号,其余按字面量括号包裹(值引号规则同quotePartitionValue)
 	 */
 	private static String db2Bound(String value, String keyword) {
 		String v = value.trim();
@@ -1013,7 +1022,8 @@ public class DDLUtils {
 	}
 
 	/**
-	 * update 2026-9-5 判断字段Java类型是否为日期+时间类型(供Types.DATE列类型精化使用):java.time.LocalDateTime与
+	 * update 2026-9-5
+	 * 判断字段Java类型是否为日期+时间类型(供Types.DATE列类型精化使用):java.time.LocalDateTime与
 	 * java.util.Date携带时间部分,LocalDate/java.sql.Date为纯日期;typeName取自FieldMeta.fieldType
 	 * (小写全类名),可能为null(空值按纯日期处理,尊重显式声明)
 	 *
@@ -1032,8 +1042,7 @@ public class DDLUtils {
 	 * update 2026-9-5 判断数据库的DATE列类型是否为纯日期语义:dm的DATE列只存日期(dm 21c实测)、pg及衍生库的date只存日期
 	 * (pg 18.6实测,timestamp写入静默截断时间);oracle的DATE含时间、mysql系无纯DATE列(Types.DATE已统一
 	 * 转DATETIME),均不在精化范围;kingbase/openGauss/MogDB等PG衍生库的date在实例为Oracle兼容模式时含时间
-	 * (此时TIMESTAMP为无损超型),PG模式时只存日期(此时TIMESTAMP修复丢时间),两种模式下输出TIMESTAMP均无损,
-	 * 按安全优先纳入
+	 * (此时TIMESTAMP为无损超型),PG模式时只存日期(此时TIMESTAMP修复丢时间),两种模式下输出TIMESTAMP均无损, 按安全优先纳入
 	 *
 	 * @param dbType
 	 * @return
@@ -1061,8 +1070,10 @@ public class DDLUtils {
 	}
 
 	/**
-	 * update 2026-10-22 boolean默认值按目标库归一:oracle系(BOOLEAN列映射INTEGER)与sqlserver(BIT)无true/false字面量,
-	 * 裸DEFAULT true建表报ORA-00904/无效列名(响亮失败),true/false统一转1/0;mysql系(TINYINT(1))/pg系/H2/
+	 * update 2026-10-22
+	 * boolean默认值按目标库归一:oracle系(BOOLEAN列映射INTEGER)与sqlserver(BIT)无true/false字面量,
+	 * 裸DEFAULT
+	 * true建表报ORA-00904/无效列名(响亮失败),true/false统一转1/0;mysql系(TINYINT(1))/pg系/H2/
 	 * sqlite等TRUE/FALSE为原生字面量原样保留。仅精确匹配true/false(忽略大小写),生成列表达式等其余形态不受影响
 	 *
 	 * @param defaultValue 原始默认值

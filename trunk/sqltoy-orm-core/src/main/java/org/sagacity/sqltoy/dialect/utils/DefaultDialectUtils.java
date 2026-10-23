@@ -103,9 +103,11 @@ public class DefaultDialectUtils {
 		}
 		// 给原始sql标记上特殊的开始和结尾，便于sql拦截器快速定位到原始sql并进行条件补充
 		innerSql = SqlUtilsExt.markOriginalSql(innerSql);
-		// update 2026-9-10 移除sag_row_number随机列,改派生表+order by rand():原形态将随机列混入结果集(注入形态居首/
+		// update 2026-9-10 移除sag_row_number随机列,改派生表+order by
+		// rand():原形态将随机列混入结果集(注入形态居首/
 		// 包裹形态亦含),单值映射(findRandom的resultType=String/Long等按第1列取值)读到随机数而非业务列,
-		// 多列行更触发ArrayList cannot be cast(mysql系实测);order by rand() limit n为mysql/clickhouse/
+		// 多列行更触发ArrayList cannot be cast(mysql系实测);order by rand() limit
+		// n为mysql/clickhouse/
 		// impala系取随机行的标准形态,结果集与原始sql列完全一致,VO/Map映射也不再混入sag_row_number键;
 		// 派生表包裹天然中和内层order by/union(原hasOrderByOrUnion双分支统一为单一包裹形态)
 		sql.append("select " + SqlToyConstants.INTERMEDIATE_TABLE1 + ".* from (");

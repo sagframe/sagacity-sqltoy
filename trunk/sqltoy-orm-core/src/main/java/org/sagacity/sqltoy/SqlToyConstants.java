@@ -168,7 +168,8 @@ public class SqlToyConstants {
 			"\\$\\{\\s*[0-9a-zA-Z\u4e00-\u9fa5]+((\\.|\\_)[0-9a-zA-Z\u4e00-\u9fa5]+)*(\\[\\d*(\\,)?\\d*\\])?\\s*\\}");
 
 	// update 2023-12-19 命名参数匹配模式演进:先将\W 替换为[^A-Za-z0-9_:] 增加排除以适应::jsonb 模式场景,
-	// 继而支持中文参数名(应对极为不规范的项目场景)与itemSet[0].paramName 级联模式(原仅支持:itemSet[0]),最终替换为[^A-Za-z0-9:],将下划线放开
+	// 继而支持中文参数名(应对极为不规范的项目场景)与itemSet[0].paramName
+	// 级联模式(原仅支持:itemSet[0]),最终替换为[^A-Za-z0-9:],将下划线放开
 	public final static Pattern SQL_NAMED_PATTERN = Pattern.compile(
 			"[^A-Za-z0-9:\u4e00-\u9fa5]\\:\\s*[a-zA-Z\u4e00-\u9fa5][a-zA-Z0-9_\u4e00-\u9fa5]*(\\.[\\w\u4e00-\u9fa5]+)*(\\[\\d+\\](\\.[a-zA-Z0-9_\u4e00-\u9fa5]+)*)?\\s?");
 	public final static Pattern NOSQL_NAMED_PATTERN = Pattern.compile(
@@ -227,7 +228,8 @@ public class SqlToyConstants {
 	public final static String SQLTOY_PACKAGE = "org.sagacity.sqltoy";
 
 	/**
-	 * update 2026-9-15 LocalDateTime日志/拼接输出格式,消费方:SqlUtil的toSqlLogStr/toSqlString/combineArray。
+	 * update 2026-9-15
+	 * LocalDateTime日志/拼接输出格式,消费方:SqlUtil的toSqlLogStr/toSqlString/combineArray。
 	 * 决策记录:声明无默认值(null视同「auto」按值精度自适应追加小数秒)仅为
 	 * 未初始化态(单测/工具类直调)语义;生产经SqlToyContext.initialize覆写后恒为配置值 (context默认「yyyy-MM-dd
 	 * HH:mm:ss」,有意向后兼容)——固定格式下LocalDateTime输出恒19字符,

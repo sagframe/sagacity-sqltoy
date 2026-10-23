@@ -389,7 +389,8 @@ public class DataSourceUtils {
 	}
 
 	/**
-	 * update 2026-9-6 方言原始匹配(仅getDBProfile解析链内部使用):产品名匹配+URL特征优先+dialectMap自定义映射,无缓存实时
+	 * update 2026-9-6
+	 * 方言原始匹配(仅getDBProfile解析链内部使用):产品名匹配+URL特征优先+dialectMap自定义映射,无缓存实时
 	 */
 	private static String resolveDialectByMeta(final Connection conn) throws SQLException {
 		String dilectName = Dialect.UNDEFINE;
@@ -533,7 +534,8 @@ public class DataSourceUtils {
 	}
 
 	/**
-	 * update 2026-9-10 db2的GSE空间扩展schema探测(随URL档案每URL一次):12.1起内置空间引擎与 db2gse GSE扩展可并存
+	 * update 2026-9-10 db2的GSE空间扩展schema探测(随URL档案每URL一次):12.1起内置空间引擎与 db2gse
+	 * GSE扩展可并存
 	 * (实测12.1.5容器GSE仍启用、12.1.2容器仅内置),且内置ST_GEOMETRY与db2gse.ST_GEOMETRY为不同UDT
 	 * (函数产物与列类型错配报-408),geometry参数化包装须按GSE存在性分派db2gse前缀或内置非限定形态;
 	 * 非db2为null,探测异常为TRUE(保持既有db2gse形态)。
@@ -553,11 +555,12 @@ public class DataSourceUtils {
 	}
 
 	/**
-	 * update 2026-9-5 JDBC URL schema特征与方言识别名的映射:openGauss/MOGDB/VASTBASE/STARDB等国产PG系内核的
-	 * getDatabaseProductName()误报为PostgreSQL(openGauss 5.0.0实测上报PostgreSQL/9.2.4),仅靠产品名
-	 * 会被误判为postgresql方言,而其saveOrUpdate生成的 ON CONFLICT语法在这些内核默认不解析;
-	 * JDBC URL的schema段(jdbc:opengauss:等)由驱动忠实保留,特征命中以识别名参与后续方言匹配
-	 * (含dialectMap自定义映射)
+	 * update 2026-9-5 JDBC URL
+	 * schema特征与方言识别名的映射:openGauss/MOGDB/VASTBASE/STARDB等国产PG系内核的
+	 * getDatabaseProductName()误报为PostgreSQL(openGauss
+	 * 5.0.0实测上报PostgreSQL/9.2.4),仅靠产品名 会被误判为postgresql方言,而其saveOrUpdate生成的 ON
+	 * CONFLICT语法在这些内核默认不解析; JDBC
+	 * URL的schema段(jdbc:opengauss:等)由驱动忠实保留,特征命中以识别名参与后续方言匹配 (含dialectMap自定义映射)
 	 */
 	private static final Map<String, String> URL_SCHEMA_DIALECT = new HashMap<>();
 	static {
@@ -568,16 +571,19 @@ public class DataSourceUtils {
 		URL_SCHEMA_DIALECT.put("gaussdb", Dialect.GAUSSDB);
 		// update 2026-10-11 瀚高官方驱动URL形态jdbc:highgo://
 		URL_SCHEMA_DIALECT.put("highgo", Dialect.HIGHGO);
-		// update 2026-9-6 DM驱动compatibleMode=oracle时ProductName伪装成Oracle(实测被误判为oracle方言走
+		// update 2026-9-6
+		// DM驱动compatibleMode=oracle时ProductName伪装成Oracle(实测被误判为oracle方言走
 		// Oracle11gDialect,identity列生成nvl(?,null)赋值形态报-2723),URL特征优先纠正
 		// (与openGauss伪装PostgreSQL同构场景)
 		URL_SCHEMA_DIALECT.put("dm", Dialect.DM);
-		// update 2026-9-6 oceanbase的ProductName为"MySQL 5.7.25-OceanBase_CE..."(mysql分支在产品名判定链中
+		// update 2026-9-6 oceanbase的ProductName为"MySQL
+		// 5.7.25-OceanBase_CE..."(mysql分支在产品名判定链中
 		// 先命中被误判mysql方言,ob4.3无string_to_vector等mysql9函数),URL特征jdbc:oceanbase://优先纠正
 		URL_SCHEMA_DIALECT.put("oceanbase", Dialect.OCEANBASE);
 		// update 2026-9-11 SAP HANA的URL schema为jdbc:sap:(产品名HDB不含hana字样,URL特征优先命中)
 		URL_SCHEMA_DIALECT.put("sap", Dialect.HANA);
-		// update 2026-9-17 StarRocks原生驱动(starrocks-connector-j,com.starrocks.jdbc.Driver)的
+		// update 2026-9-17
+		// StarRocks原生驱动(starrocks-connector-j,com.starrocks.jdbc.Driver)的
 		// URL schema为jdbc:starrocks:(FE的9030 MySQL协议端口),产品名依旧伪装MySQL,URL特征优先
 		// 直命中starrocks方言;resolveDialect的引擎探测仅对mysql方言触发,URL命中后自动跳过
 		URL_SCHEMA_DIALECT.put("starrocks", Dialect.STARROCKS);
@@ -608,7 +614,8 @@ public class DataSourceUtils {
 	 * @throws SQLException 获取数据库类型
 	 */
 	public static int getDBType(final Connection conn) throws SQLException {
-		// update 2026-9-6 委托DBProfile统筹缓存(以URL为key,dialect/dbType/productName/majorVersion
+		// update 2026-9-6
+		// 委托DBProfile统筹缓存(以URL为key,dialect/dbType/productName/majorVersion
 		// 及PG系扩展类型句柄一次解析),取代原DBNameTypeMap键式缓存,外部行为不变
 		return getDBProfile(conn).getDbType();
 	}
@@ -691,16 +698,17 @@ public class DataSourceUtils {
 	}
 
 	/**
-	 * update 2026-9-10 方言的引擎探测统一处理:mysql协议方言(mysql系元数据同形)时校正StarRocks/Doris——实测其经mysql
+	 * update 2026-9-10
+	 * 方言的引擎探测统一处理:mysql协议方言(mysql系元数据同形)时校正StarRocks/Doris——实测其经mysql
 	 * 驱动连接时ProductName/Version/URL三信号全部伪装成MySQL(8.0.33/jdbc:mysql)无法靠元数据区分。
 	 * 探测顺序:一级@@version_comment(所有mysql协议引擎均支持,零报错风险)命中doris字样归DORIS——
 	 * current_version()先行的探测在Doris(无此函数,实测2.1.0/4.1.3均无)报HY000/ErrorCode 1105,
-	 * 命中Hikari对mysql驱动的fatal vendor错误码清单,池连接被标记broken逐出引发后续用例
-	 * "Connection is closed"雪崩(真mysql报42000非fatal故此前未暴露);二级current_version()兜底
+	 * 命中Hikari对mysql驱动的fatal vendor错误码清单,池连接被标记broken逐出引发后续用例 "Connection is
+	 * closed"雪崩(真mysql报42000非fatal故此前未暴露);二级current_version()兜底
 	 * StarRocks(SR有该函数探测不报错,返回值校验版本串特征如4.1.4-4a9848e含git哈希后缀,而其
-	 * @@version_comment无产品名仅"4.1.4-4a9848e"无法一级识别),特征不符保持mysql方言并warn,
-	 * 可显式配置dialect覆盖。DialectFactory中DORIS与STARROCKS共用DorisDialect,两家均正确落方言
-	 * (本方法仅在getDBProfile解析时调用,随URL缓存每URL探测一次)
+	 * 
+	 * @@version_comment无产品名仅"4.1.4-4a9848e"无法一级识别),特征不符保持mysql方言并warn, 可显式配置dialect覆盖。DialectFactory中DORIS与STARROCKS共用DorisDialect,两家均正确落方言
+	 *                                                                  (本方法仅在getDBProfile解析时调用,随URL缓存每URL探测一次)
 	 */
 	/**
 	 * update 2026-10-12 PG系引擎探测(仅getDBProfile解析链调用,随URL缓存每URL一次):
@@ -733,7 +741,8 @@ public class DataSourceUtils {
 	}
 
 	private static String resolveDialect(Connection conn, String dialect) {
-		// update 2026-10-12 PG系内核引擎探测:瀚高(vanilla pg驱动场景)的version()与驱动ProductName完全伪装成vanilla
+		// update 2026-10-12 PG系内核引擎探测:瀚高(vanilla
+		// pg驱动场景)的version()与驱动ProductName完全伪装成vanilla
 		// PostgreSQL(实测12.3无任何HighGo标记),但其oracle兼容层在系统目录留有硬指纹(见resolvePgEngine);
 		// 误归postgresql会走pg15+的merge into路径(PG12内核无merge)直接语法错,故须校正
 		if (Dialect.POSTGRESQL.equals(dialect)) {
@@ -873,9 +882,9 @@ public class DataSourceUtils {
 	 * classpath中的驱动类时返回constructor为null的哨兵,由调用方回退setObject(str,OTHER)。
 	 * 注意本匹配的对象是"驱动"而非"数据库":用postgresql官方驱动连openGauss/vastbase等
 	 * PG系库时(pom注释中明示的兼容用法),URL必为jdbc:postgresql:从而解析出org.postgresql的
-	 * PGobject,与实际驱动同源,天然正确;实测openGauss默认SCRAM(sha256)认证下PG官方驱动连接即被拒
-	 * (Invalid SCRAM client initialization),须openGauss侧开启兼容认证方可使用此形态。
-	 * dbType守卫:URL schema未显式建映射时仅PG系dbType才兜底探测org.postgresql.util.PGobject,
+	 * PGobject,与实际驱动同源,天然正确;实测openGauss默认SCRAM(sha256)认证下PG官方驱动连接即被拒 (Invalid SCRAM
+	 * client initialization),须openGauss侧开启兼容认证方可使用此形态。 dbType守卫:URL
+	 * schema未显式建映射时仅PG系dbType才兜底探测org.postgresql.util.PGobject,
 	 * 非PG系(mysql/oracle等)直接返回哨兵,避免对optional依赖的无谓Class.forName
 	 * (纯mysql用户必抛ClassNotFoundException产生误导日志)
 	 */
@@ -1175,8 +1184,8 @@ public class DataSourceUtils {
 	 */
 	/**
 	 * update 2026-9-14 按SQL标准(ANSI COALESCE)统一空值判定函数:
-	 * 既有各库方言(nvl/ifnull/isnull/NVL)全部原生支持COALESCE,不再按库分派;COALESCE为短路求值,
-	 * 较oracle NVL的全参数求值更优。保留方法供dbType-only场景(无DBProfile档案)获取空值函数
+	 * 既有各库方言(nvl/ifnull/isnull/NVL)全部原生支持COALESCE,不再按库分派;COALESCE为短路求值, 较oracle
+	 * NVL的全参数求值更优。保留方法供dbType-only场景(无DBProfile档案)获取空值函数
 	 */
 	public static String getNvlFunction(Integer dbType) {
 		// oracle 23ai实测:COALESCE中对绑定变量按CHAR推断类型,与VECTOR/SDO_GEOMETRY

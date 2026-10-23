@@ -93,7 +93,8 @@ public class DialectExtUtils {
 		for (int i = 0; i < columnSize; i++) {
 			field = fieldsArray[i];
 			fieldMeta = entityMeta.getFieldMeta(field);
-			// update 2026-9-7 sqlserver的timestamp(rowversion)列不可写入,insert语句排除该列(判据entityMeta.isRowVersionField按目标库元数据校准,非sqlserver库不启用)
+			// update 2026-9-7
+			// sqlserver的timestamp(rowversion)列不可写入,insert语句排除该列(判据entityMeta.isRowVersionField按目标库元数据校准,非sqlserver库不启用)
 			if (DBType.SQLSERVER == dbType && entityMeta.isRowVersionField(fieldMeta)) {
 				continue;
 			}
@@ -148,7 +149,8 @@ public class DialectExtUtils {
 					if (dbType == DBType.DM) {
 						values.append("DMGEO.ST_GeomFromText(?,0)");
 					} else if (dbType == DBType.DB2) {
-						// update 2026-9-10 按GSE探测+nativeType分派(12.1起内置引擎与GSE可并存,纯版本分派会在GSE列上误选内置函数报-408),详见db2GeomFromTextWrap
+						// update 2026-9-10
+						// 按GSE探测+nativeType分派(12.1起内置引擎与GSE可并存,纯版本分派会在GSE列上误选内置函数报-408),详见db2GeomFromTextWrap
 						values.append(db2GeomFromTextWrap(fieldMeta));
 					} else if (dbType == DBType.MYSQL || dbType == DBType.OCEANBASE || dbType == DBType.TIDB
 							|| dbType == DBType.MYSQL57) {
@@ -202,7 +204,8 @@ public class DialectExtUtils {
 		sql.append(values);
 		sql.append(")");
 		insertSql = sql.toString();
-		// update 2026-9-8 容量守卫:sqlCacheKey含tableName,分表场景(按天/按值动态表名)下每张动态表常驻一条SQL文本,上限256防无界增长(超限退化为每次生成)
+		// update 2026-9-8
+		// 容量守卫:sqlCacheKey含tableName,分表场景(按天/按值动态表名)下每张动态表常驻一条SQL文本,上限256防无界增长(超限退化为每次生成)
 		if (insertSqlCache.size() < 256) {
 			insertSqlCache.put(sqlCacheKey, insertSql);
 		}
@@ -542,19 +545,22 @@ public class DialectExtUtils {
 	 * @return
 	 */
 	static String getCacheKey(EntityMeta entityMeta, String tableName, int dbType, PKStrategy pkStrategy) {
-		// update 2026-9-7 缓存key组成:主键策略(save单条与saveAll批量机制存在差异,save时sequence策略提前获取sequence值变成assign策略)
+		// update 2026-9-7
+		// 缓存key组成:主键策略(save单条与saveAll批量机制存在差异,save时sequence策略提前获取sequence值变成assign策略)
 		// 与rowversion校准状态(避免校准前后rowVersionColumns判据不同生成的语句命中同一条缓存;与SqlServerDialectUtils.getCacheKey对齐,非sqlserver库恒为null不影响)
 		return entityMeta.getEntityClass().getName() + "[" + tableName + "]dbType=" + dbType
 				+ ((pkStrategy == null) ? "" : pkStrategy.getValue()) + "|rv="
 				+ ((entityMeta.getRowVersionColumns() == null) ? -1 : entityMeta.getRowVersionColumns().hashCode());
 	}
 
-	// update 2026-9-14 原isOceanBaseAsMysql()(读ThreadLocal的actuallyDBType)已删除:各分派点统一改用DBProfile.isOceanBase()
+	// update 2026-9-14
+	// 原isOceanBaseAsMysql()(读ThreadLocal的actuallyDBType)已删除:各分派点统一改用DBProfile.isOceanBase()
 	// ——按产品名判定、由profile参数显式传递,不再依赖线程隐式全局态(并行等场景下ThreadLocal缺失会误判为真mysql),
 	// 语义详见DBProfile.isOceanBase的javadoc
 
 	/**
-	 * update 2026-9-10 DB2空间函数分派:12.1起空间能力可内置为非限定SYSIBM函数(ST_GeomFromText等,需≥8K页表空间),
+	 * update 2026-9-10
+	 * DB2空间函数分派:12.1起空间能力可内置为非限定SYSIBM函数(ST_GeomFromText等,需≥8K页表空间),
 	 * 11.5及以下GSE扩展为db2gse.ST_GeomFromText专属形态;采用GSE schema探测+nativeType分派
 	 * (取代纯版本分派isDB2BuiltInSpatial):实测12.1.5容器GSE与内置引擎并存,内置ST_GEOMETRY与
 	 * db2gse.ST_GEOMETRY为不同UDT,纯版本分派在GSE列上误选内置函数报-408(value cannot be assigned);

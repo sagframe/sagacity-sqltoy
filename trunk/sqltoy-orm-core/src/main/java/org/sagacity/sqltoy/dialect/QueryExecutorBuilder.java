@@ -88,7 +88,8 @@ public class QueryExecutorBuilder {
 				&& !BeanUtil.isBaseDataType(extend.paramsValue[0].getClass())) {
 			fullParamValues = BeanUtil.reflectBeanToAry(extend.paramsValue[0], fullParamNames);
 		} else {
-			// update 2023-06-11 兼容查询:names("xxx").values(new Object[]{}),单个参数名,传递的值是数组特殊场景;校验条件参数合法性(排除参数名称长度为1，数据长度>1)
+			// update 2023-06-11 兼容查询:names("xxx").values(new
+			// Object[]{}),单个参数名,传递的值是数组特殊场景;校验条件参数合法性(排除参数名称长度为1，数据长度>1)
 			if (paramsNameSize != paramsValueSize && !(paramsNameSize == 1 && paramsValueSize > 1)) {
 				throw new IllegalArgumentException("param names size [" + paramsNameSize
 						+ "] does not match param values size [" + paramsValueSize + "], please check!");

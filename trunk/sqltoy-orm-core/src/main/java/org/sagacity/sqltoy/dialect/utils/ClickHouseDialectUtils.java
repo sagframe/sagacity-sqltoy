@@ -90,7 +90,8 @@ public class ClickHouseDialectUtils {
 		boolean needUpdatePk = false;
 		int generatedColCnt = entityMeta.getGeneratedColsCnt();
 		int pkIndex = entityMeta.getIdIndex() - generatedColCnt;
-		// update 2026-9-14 主键恒在fieldsArray末位(计算列→常规列→主键):identity/sequence且不赋主键时值数组已排除主键,
+		// update 2026-9-14
+		// 主键恒在fieldsArray末位(计算列→常规列→主键):identity/sequence且不赋主键时值数组已排除主键,
 		// 此时pkIndex等于值数组长度,按下标回读会越界(save末尾result回退读取必然触发),故以“主键是否在值数组范围内”判定可用性
 		boolean pkInParams = (pkIndex >= 0 && pkIndex < reflectColumns.length);
 		// 是否存在业务ID
@@ -593,7 +594,8 @@ public class ClickHouseDialectUtils {
 				} else if (fieldMeta.getType() == JdbcTypes.JSON || fieldMeta.getType() == JdbcTypes.JSONB
 						|| fieldMeta.getType() == JdbcTypes.VECTOR) {
 					// update 2026-9-11 JSON/VECTOR列直赋(不包ifnull):CH的JSON为动态类型、向量承载为Array(Float32),
-					// ifNull(String参数,JSON/Array列)类型合并失败(同ob vector的merge array类问题),null将覆盖原值为CH更新的能力边界
+					// ifNull(String参数,JSON/Array列)类型合并失败(同ob vector的merge
+					// array类问题),null将覆盖原值为CH更新的能力边界
 					sql.append("?");
 				} else {
 					// 修改时间设置数据库时间nvl(?,current_timestamp)

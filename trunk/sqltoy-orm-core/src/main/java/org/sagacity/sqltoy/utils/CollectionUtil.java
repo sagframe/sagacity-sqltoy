@@ -1577,7 +1577,8 @@ public class CollectionUtil {
 		}
 		boolean isArray = (source.get(0).getClass().isArray()) ? true : false;
 		List result = new ArrayList();
-		// update 2026-9-14 distinct判重改LinkedHashSet(ArrayList.contains为O(n²),语义保持首次出现顺序)
+		// update 2026-9-14
+		// distinct判重改LinkedHashSet(ArrayList.contains为O(n²),语义保持首次出现顺序)
 		Set distinctSet = distinct ? new LinkedHashSet() : null;
 		Object cell;
 		for (int i = 0, n = source.size(); i < n; i++) {

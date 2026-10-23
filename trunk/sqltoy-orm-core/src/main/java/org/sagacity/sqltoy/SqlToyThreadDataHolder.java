@@ -84,7 +84,8 @@ public class SqlToyThreadDataHolder {
 		return count;
 	}
 
-	// update 2026-9-9 各clear方法去除remove()后的set(null):set(null)会重新插入null值entry,使remove清理失效(池化线程残留entry,TransmittableThreadLocal场景还会向子线程传播null项)
+	// update 2026-9-9
+	// 各clear方法去除remove()后的set(null):set(null)会重新插入null值entry,使remove清理失效(池化线程残留entry,TransmittableThreadLocal场景还会向子线程传播null项)
 	public static void clearCounter() {
 		counterThreadLocal.remove();
 	}

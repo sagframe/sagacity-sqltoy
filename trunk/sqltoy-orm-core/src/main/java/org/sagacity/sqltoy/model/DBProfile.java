@@ -46,14 +46,16 @@ public class DBProfile {
 	private final PGobjectHolder pgObjectHolder;
 
 	/**
-	 * update 2026-9-10 db2的GSE空间扩展schema(DB2GSE)是否存在:12.1起内置空间引擎(非限定SYSIBM函数)与GSE扩展可并存
+	 * update 2026-9-10
+	 * db2的GSE空间扩展schema(DB2GSE)是否存在:12.1起内置空间引擎(非限定SYSIBM函数)与GSE扩展可并存
 	 * (实测12.1.5容器GSE仍启用),且内置ST_GEOMETRY与db2gse.ST_GEOMETRY为不同UDT(函数产物与列类型错配报-408),
 	 * geometry参数化包装须按此探测分派db2gse前缀形态或内置非限定形态;非db2为null,db2探测异常为TRUE(保持既有db2gse形态)
 	 */
 	private final Boolean hasGseSchema;
 
 	/**
-	 * update 2026-9-10 字符串字面量内反斜杠是否为转义字符(mysql系为true):由DataSourceUtils在构建档案解析出dbType时一并判定,
+	 * update 2026-9-10
+	 * 字符串字面量内反斜杠是否为转义字符(mysql系为true):由DataSourceUtils在构建档案解析出dbType时一并判定,
 	 * 运行期直取,统一供字面量掩码与like ESCAPE子句形态判定;
 	 * 运行期可变的backslashEscaping全局开关不入本档案(实时语义由SqlConfigParseUtils.isBackslashEscapeDialect分层叠加)
 	 */
@@ -191,7 +193,8 @@ public class DBProfile {
 	}
 
 	/**
-	 * update 2026-9-14 声明型事实:null判定函数名(弹性修改的nvl(?,col)包裹),与各方言NVL_FUNCTION常量同源(逐方言核实:
+	 * update 2026-9-14
+	 * 声明型事实:null判定函数名(弹性修改的nvl(?,col)包裹),与各方言NVL_FUNCTION常量同源(逐方言核实:
 	 * OracleDialect/DB2Dialect/DMDialect/OceanBaseDialect=nvl,MySqlDialect/TidbDialect/DorisDialect/
 	 * ClickHouseDialect/SqliteDialect/ImpalaDialect/HanaDialect=ifnull,PostgreSqlDialect(含H2继承)=COALESCE,
 	 * OpenGaussDialect(含GaussDB/MogDB/Vastbase/StarDB/Oscar继承)/KingbaseDialect=NVL,SqlServerDialect=isnull;

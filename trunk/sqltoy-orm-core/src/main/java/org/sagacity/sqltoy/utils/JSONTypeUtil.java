@@ -139,7 +139,8 @@ public class JSONTypeUtil {
 	}
 
 	/**
-	 * update 2026-9-6 判定是否为PG系内核方言(PGobject类型包装的适用范围),委托DBProfile.isPGFamily静态白名单(单一事实源,消除逐字拷贝)
+	 * update 2026-9-6
+	 * 判定是否为PG系内核方言(PGobject类型包装的适用范围),委托DBProfile.isPGFamily静态白名单(单一事实源,消除逐字拷贝)
 	 */
 	private static boolean isPGFamily(Integer dbType) {
 		return DBProfile.isPGFamily(dbType);
@@ -329,8 +330,8 @@ public class JSONTypeUtil {
 
 	/**
 	 * update 2026-9-9 剥除JSON字符串标量的外层引号:文本以引号起始且结束(如h2 json列setString绑定
-	 * 产生的"\"[{...}]\""形态)时解析出标量内部文本,否则原样返回。
-	 * 提升为public:ResultUtils的Map行路径h2 json列byte[]归一同款剥引号)
+	 * 产生的"\"[{...}]\""形态)时解析出标量内部文本,否则原样返回。 提升为public:ResultUtils的Map行路径h2
+	 * json列byte[]归一同款剥引号)
 	 */
 	public static String unwrapJsonStringScalar(String str) {
 		if (str.startsWith("\"") && str.endsWith("\"")) {

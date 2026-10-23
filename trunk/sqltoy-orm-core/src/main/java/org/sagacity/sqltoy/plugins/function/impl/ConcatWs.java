@@ -46,7 +46,8 @@ public class ConcatWs extends IFunction {
 		if (args == null || args.length < 2) {
 			return super.IGNORE;
 		}
-		// update 2026-9-15 补充OCEANBASE(oracle模式无concat_ws)/DB2/sqlite/hana/clickhouse的||拼接转换
+		// update 2026-9-15
+		// 补充OCEANBASE(oracle模式无concat_ws)/DB2/sqlite/hana/clickhouse的||拼接转换
 		// (此前仅oracle系处理,这些库原样输出concat_ws非法;sqlite 3.44+虽已原生提供,
 		// ||拼接仍保留以统一跳过null语义);
 		// hana(SPS08实测无CONCAT_WS函数,||拼接原生支持且null按空串处理同oracle系)

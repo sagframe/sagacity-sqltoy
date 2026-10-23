@@ -181,7 +181,8 @@ public class SqlXMLConfigParse {
 				preModified = filesLastModifyMap.get(getFileKey(sqlFile));
 				// 最后修改时间比上次修改时间大，重新加载sql文件
 				if (preModified == null || lastModified.longValue() > preModified.longValue()) {
-					// update 2026-9-14 时间戳改由parseSingleFile解析成功后记录(原先写时间戳再解析,解析抛异常时时间戳已前进,watcher下一轮不再重试,变更被吞直到文件再次被修改)
+					// update 2026-9-14
+					// 时间戳改由parseSingleFile解析成功后记录(原先写时间戳再解析,解析抛异常时时间戳已前进,watcher下一轮不再重试,变更被吞直到文件再次被修改)
 					if (isDebug) {
 						logger.debug("sql file:{} was modified, start reparsing!", fileName);
 					} else {
@@ -214,7 +215,8 @@ public class SqlXMLConfigParse {
 		// 文件型资源的最后修改时间:解析成功后才写入filesLastModifyMap,键为绝对路径(见getFileKey)
 		String parsedFileKey = null;
 		Long parsedModified = null;
-		// update 2026-9-14 解析结果先落本地map、文件整体成功后统一提交缓存(原逐条cache.put在解析中途失败会留下同文件半新半旧的缓存状态:已解析id生效、其余仍是旧版本)
+		// update 2026-9-14
+		// 解析结果先落本地map、文件整体成功后统一提交缓存(原逐条cache.put在解析中途失败会留下同文件半新半旧的缓存状态:已解析id生效、其余仍是旧版本)
 		HashMap<String, SqlToyConfig> parsedConfigs = new HashMap<String, SqlToyConfig>();
 		try {
 			String sqlFile;
@@ -262,7 +264,8 @@ public class SqlXMLConfigParse {
 					}
 				}
 			}
-			// update 2026-9-14 解析全部成功后才提交:缓存统一提交,失败时缓存完全不改动;时间戳提交后记录,失败保留旧时间戳,watcher下一轮自动重试
+			// update 2026-9-14
+			// 解析全部成功后才提交:缓存统一提交,失败时缓存完全不改动;时间戳提交后记录,失败保留旧时间戳,watcher下一轮自动重试
 			if (!parsedConfigs.isEmpty()) {
 				cache.putAll(parsedConfigs);
 			}

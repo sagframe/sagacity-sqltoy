@@ -107,7 +107,8 @@ public class GeometryTypeUtil {
 	}
 
 	/**
-	 * update 2026-9-9 将WKT/EWKT文本解析编码为mysql内部格式字节(4字节小端SRID前缀+标准WKB,与getBytes读回形态一致),
+	 * update 2026-9-9
+	 * 将WKT/EWKT文本解析编码为mysql内部格式字节(4字节小端SRID前缀+标准WKB,与getBytes读回形态一致),
 	 * 供mysql系rs回写等拒绝字符串绑定的场景使用(方法自SqlUtil.toGeometryBytes下沉至此,
 	 * 保证SqlUtil字节码不含JTS符号引用)
 	 *

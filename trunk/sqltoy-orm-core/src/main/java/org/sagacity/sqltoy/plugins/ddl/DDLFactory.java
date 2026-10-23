@@ -52,7 +52,8 @@ public class DDLFactory {
 		switch (dbType) {
 		case DBType.MYSQL:
 		case DBType.MYSQL57:
-			// update 2026-10-13 补TIDB(mysql协议,DDL语法与mysql同构;真库实测mysql-full.sql全兼容含TO_DAYS分区):原落default的DefaultDDLGenerator,
+			// update 2026-10-13
+			// 补TIDB(mysql协议,DDL语法与mysql同构;真库实测mysql-full.sql全兼容含TO_DAYS分区):原落default的DefaultDDLGenerator,
 			// 任何DDL生成调用直接抛"DDL generation is not implemented for this dialect"
 		case DBType.TIDB: {
 			generator = new MySqlDDLGenerator();
@@ -76,7 +77,9 @@ public class DDLFactory {
 		case DBType.STARDB:
 		case DBType.OPENGAUSS:
 		case DBType.VASTBASE:
-			// update 2026-9-14 补KINGBASE(KingbaseES基于PG):原落入default的DefaultDDLGenerator,任何DDL生成调用直接抛"DDL generation is not implemented for this dialect"
+			// update 2026-9-14
+			// 补KINGBASE(KingbaseES基于PG):原落入default的DefaultDDLGenerator,任何DDL生成调用直接抛"DDL
+			// generation is not implemented for this dialect"
 		case DBType.KINGBASE:
 		case DBType.HIGHGO:
 		case DBType.POSTGRESQL:

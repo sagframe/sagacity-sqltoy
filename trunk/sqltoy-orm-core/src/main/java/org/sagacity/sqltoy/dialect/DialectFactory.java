@@ -330,7 +330,8 @@ public class DialectFactory {
 	}
 
 	/**
-	 * update 2026-9-17 查询管线统一预处理(收敛executeSql/insertReturnPrimaryKey/findByQuery/updateFetch/fetchStream
+	 * update 2026-9-17
+	 * 查询管线统一预处理(收敛executeSql/insertReturnPrimaryKey/findByQuery/updateFetch/fetchStream
 	 * 5处同构代码):getUnifyParamsNamedConfig(?转named+sharding表替换)→
 	 * processSql参数组装→doInterceptors拦截器;“改拦截器/参数规整”的改动点由5处降为1处
 	 */
@@ -652,7 +653,8 @@ public class DialectFactory {
 						}
 						// 按比例提取
 						else {
-							// update 2026-9-14 提取总记录数(删除恒真的 totalCount==null 判断:totalCount 上一行刚初始化为null、此处即首次赋值,判断必然成立)
+							// update 2026-9-14 提取总记录数(删除恒真的 totalCount==null 判断:totalCount
+							// 上一行刚初始化为null、此处即首次赋值,判断必然成立)
 							long preTime = System.currentTimeMillis();
 							totalCount = getCountBySql(sqlToyContext, realSqlToyConfig, queryExecutor, conn, profile);
 							long countRunTime = System.currentTimeMillis() - preTime;
@@ -1211,7 +1213,8 @@ public class DialectFactory {
 				throw new DataAccessException("parallel query execution error:" + queryResult.getMessage());
 			}
 			int rowSize = (queryResult.getRows() == null) ? 0 : queryResult.getRows().size();
-			// update 2026-9-14 与串行findPage统一超界页处理:原并行形态始终按请求页号取数并保留该页号,仅recordCount==0时回退页号,
+			// update 2026-9-14
+			// 与串行findPage统一超界页处理:原并行形态始终按请求页号取数并保留该页号,仅recordCount==0时回退页号,
 			// 与串行overPageToFirst=true改从第1页取数、=false结果置空的行为分叉(页号超出总页数时并行返回空数据且页号不回退)
 			boolean overPage = isPageOverTotal(pageNo, pageSize, queryResult.getRecordCount());
 			if (overPage) {
@@ -1462,7 +1465,8 @@ public class DialectFactory {
 			String rejectWithSql = sql;
 			String withSql = "";
 			boolean hasUnion = false;
-			// update 2019-07-23 先判定再通过逻辑解析with as 相关语法提升效率;存在可以简化的 union all 模式(sql xml 文件通过union-all-count 属性由开发者指定)
+			// update 2019-07-23 先判定再通过逻辑解析with as 相关语法提升效率;存在可以简化的 union all 模式(sql xml
+			// 文件通过union-all-count 属性由开发者指定)
 			if (sqlToyConfig.isUnionAllCount()) {
 				if (sqlToyConfig.isHasWith()) {
 					SqlWithAnalysis sqlWith = new SqlWithAnalysis(sql);
@@ -1617,7 +1621,8 @@ public class DialectFactory {
 			// 启动执行日志
 			SqlExecuteStat.start(BeanUtil.getEntityClass(entityClass).getName(), OperateDetailType.saveOrUpdateAll,
 					entityClass, Long.valueOf(entities.size()), sqlToyContext.isDebug());
-			// update 2025-12-30 改进说明:利用目前分库分表的策略，针对超大数据集，比如1万条，按2500条记录作为一个并行度(限制最大并行度)进行并行执行;原本自动给主键赋值由true改为false
+			// update 2025-12-30
+			// 改进说明:利用目前分库分表的策略，针对超大数据集，比如1万条，按2500条记录作为一个并行度(限制最大并行度)进行并行执行;原本自动给主键赋值由true改为false
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, false, false, SqlType.update, dataSource,
 					parallelConfig, (context, batchModel) -> {
 						ShardingModel shardingModel = batchModel.getShardingModel();

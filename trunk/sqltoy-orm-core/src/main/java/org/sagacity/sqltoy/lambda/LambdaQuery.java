@@ -454,7 +454,8 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 					sb.append(" (").append(String.join(", ", cte.columns)).append(")");
 				}
 				sb.append(" AS ");
-				// update 2026-10-18 物化hint门禁与SqlWithAnalysis白名单单一事实源对齐:PG12+及openGauss/金仓/Vastbase/瀚高(真库实测支持)才渲染MATERIALIZED,其余库忽略(不渲染即不报错)
+				// update 2026-10-18
+				// 物化hint门禁与SqlWithAnalysis白名单单一事实源对齐:PG12+及openGauss/金仓/Vastbase/瀚高(真库实测支持)才渲染MATERIALIZED,其余库忽略(不渲染即不报错)
 				if (cte.materialized != null && SqlWithAnalysis.supportsCteMaterialized(dbType)) {
 					sb.append(cte.materialized ? "MATERIALIZED " : "NOT MATERIALIZED ");
 				}

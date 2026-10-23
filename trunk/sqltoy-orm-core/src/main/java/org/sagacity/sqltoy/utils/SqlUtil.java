@@ -102,7 +102,8 @@ public class SqlUtil {
 	// 判断sql是否是merge into 开头
 	public static final Pattern MERGE_INTO_PATTERN = Pattern.compile("^merge\\s+into\\s+");
 
-	// update 2026-9-14 validateInArg去除in参数中的空白:原每次replaceAll("\\s+","")隐式编译,改静态Pattern
+	// update 2026-9-14
+	// validateInArg去除in参数中的空白:原每次replaceAll("\\s+","")隐式编译,改静态Pattern
 	private static final Pattern WHITESPACE_PATTERN = Pattern.compile("\\s+");
 
 	// 只针对比较符号、和(的日期字符加函数
@@ -177,7 +178,8 @@ public class SqlUtil {
 		sqlCommentfilters.put("{", "}");
 	}
 
-	// update 2026-9-13 mssql-jdbc Geometry反射句柄缓存(同ResultUtils.MSSQL_GEO_*模式):驱动不在classpath时句柄为null整体回退,避免rs逐行回写时重复Class.forName/getMethod
+	// update 2026-9-13 mssql-jdbc
+	// Geometry反射句柄缓存(同ResultUtils.MSSQL_GEO_*模式):驱动不在classpath时句柄为null整体回退,避免rs逐行回写时重复Class.forName/getMethod
 	private static final java.lang.reflect.Method MSSQL_GEOMETRY_PARSE;
 	private static final java.lang.reflect.Method MSSQL_GEOMETRY_SERIALIZE;
 
@@ -520,7 +522,8 @@ public class SqlUtil {
 	}
 
 	/**
-	 * update 2026-9-14 数值类型参数赋值(Integer/BigDecimal/BigInteger/Double/Long/Float/Short/Byte)
+	 * update 2026-9-14
+	 * 数值类型参数赋值(Integer/BigDecimal/BigInteger/Double/Long/Float/Short/Byte)
 	 */
 	private static boolean setNumberParam(DBProfile profile, PreparedStatement pst, int jdbcType, int paramIndex,
 			Object paramValue) throws SQLException {
@@ -720,7 +723,8 @@ public class SqlUtil {
 			PreparedStatement pst, int jdbcType, int paramIndex, Object paramValue) throws SQLException, IOException {
 		if (paramValue instanceof byte[]) {
 			if (jdbcType == java.sql.Types.BLOB) {
-				// update 2026-9-6 实测PG系:pgjdbc的createBlob抛SQLFeatureNotSupportedException(SQLSTATE 0A000),
+				// update 2026-9-6
+				// 实测PG系:pgjdbc的createBlob抛SQLFeatureNotSupportedException(SQLSTATE 0A000),
 				// Hikari等连接池按SQLSTATE黑名单将连接标记为broken并关闭物理连接,导致"catch后setBytes兜底"
 				// 在已死连接上执行报"This connection has been closed.";openGauss系驱动的setBlob亦发送
 				// 大对象oid与bytea列不匹配。PG系bytea列原生接受setBytes,直接绑定不走createBlob/setBlob
@@ -2016,8 +2020,8 @@ public class SqlUtil {
 									&& fieldValue.getClass().getTypeName().equals("oracle.sql.TIMESTAMP")) {
 								fieldValue = BeanUtil.oracleTimeStampConvert(fieldValue);
 							}
-						// update 2026-10-10 ext类型归一:pg系json/vector/geometry的PGobject、
-						// EXT_BYTE列的byte[]等驱动专属形态归一为文本/原生数组(与Map/VO路径同口径)
+							// update 2026-10-10 ext类型归一:pg系json/vector/geometry的PGobject、
+							// EXT_BYTE列的byte[]等驱动专属形态归一为文本/原生数组(与Map/VO路径同口径)
 							fieldValue = ResultUtils.normalizeExtTypeValue(fieldValue, dbType,
 									(columnKinds[i] == ResultUtils.COLUMN_EXT_BYTE) ? columnTypes[i] : null);
 						}

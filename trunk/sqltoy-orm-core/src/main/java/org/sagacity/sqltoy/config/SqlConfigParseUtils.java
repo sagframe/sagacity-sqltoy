@@ -976,7 +976,8 @@ public class SqlConfigParseUtils {
 
 	/**
 	 * update 2021-04-29 @value放在最后处理，同时兼容replaceNull 造成@value(?) 变成@value(null)的情况
-	 *         处理直接显示参数值:#[@value(:paramNamed) sql]
+	 * 处理直接显示参数值:#[@value(:paramNamed) sql]
+	 * 
 	 * @param sqlToyResult
 	 * @param dialect
 	 * @param hasNotArgRun
@@ -1135,10 +1136,11 @@ public class SqlConfigParseUtils {
 
 	/**
 	 * update 2020-09-22 增加sql中的循环功能 处理sql中@loop() 循环,动态组织sql进行替换，具体格式
-	 *         <li>loop(:loopAry,loopContent)</li>
-	 *         <li>loop(:loopArgs,loopContent,linkSign)</li>
-	 *         <li>范例:#[or @loop(:beginDates,'(startTime between :beginDates[i] and
-	 *         endDates[i])',or)]</li>
+	 * <li>loop(:loopAry,loopContent)</li>
+	 * <li>loop(:loopArgs,loopContent,linkSign)</li>
+	 * <li>范例:#[or @loop(:beginDates,'(startTime between :beginDates[i] and
+	 * endDates[i])',or)]</li>
+	 * 
 	 * @param queryStr
 	 * @param paramsNamed
 	 * @param paramsValue
@@ -1179,10 +1181,10 @@ public class SqlConfigParseUtils {
 	}
 
 	/**
-	 * update 2026-9-10 判断当前数据库是否将反斜杠视为转义字符(mysql系), 决定'...'字面量内\'是否终结字面量以及like的ESCAPE子句形态;
-	 * 用户可通过SqlToyContext.backslashEscaping 强制定义:true=ESCAPE '\\'; false=ESCAPE '\'
-	 * 解析次序:全局开关 > 真实连接档案(DBProfile,经DataSourceUtils统一获取) >
-	 * 传入dbType;
+	 * update 2026-9-10 判断当前数据库是否将反斜杠视为转义字符(mysql系),
+	 * 决定'...'字面量内\'是否终结字面量以及like的ESCAPE子句形态; 用户可通过SqlToyContext.backslashEscaping
+	 * 强制定义:true=ESCAPE '\\'; false=ESCAPE '\' 解析次序:全局开关 >
+	 * 真实连接档案(DBProfile,经DataSourceUtils统一获取) > 传入dbType;
 	 * 真实连接dbType比配置方言更可信,kingbase即使mysql兼容sql_mode依旧单斜杠(原actuallyDBType==KINGBASE
 	 * 单点判断被档案判定涵盖),同时覆盖真实连接为mysql系而传入dbType缺失(UNDEFINE)的场景
 	 * 
@@ -1381,7 +1383,8 @@ public class SqlConfigParseUtils {
 		StringBuilder sqlBuilder = null;
 		int lastEnd = 0;
 		String escapeClause = isBackslashEscape ? " ESCAPE '\\\\'" : " ESCAPE '\\'";
-		// update 2026-9-10 clickhouse/impala/tdengine/starrocks/doris的LIKE默认转义符就是\,且不支持ESCAPE子句,
+		// update 2026-9-10
+		// clickhouse/impala/tdengine/starrocks/doris的LIKE默认转义符就是\,且不支持ESCAPE子句,
 		// 追加任何ESCAPE都会语法错误(实测starrocks 4.1.4 where子句like后接ESCAPE报
 		// "Unexpected input 'ESCAPE'",其like默认即按\转义,与clickhouse行为一致;
 		// 实测doris 2.1.0同样报ParseException,与starrocks同源引擎一并排除)
@@ -1429,9 +1432,10 @@ public class SqlConfigParseUtils {
 
 	/**
 	 * update 2020-4-14 修复参数为null时,忽视了匹配的in(?) 处理sql 语句中的in 条件，功能有2类:
-	 *         <li>1、将字符串类型且条件值为逗号分隔的，将对应的sql 中的 in(?) 替换成in(具体的值)</li>
-	 *         <li>2、如果对应in (?)位置上的参数数据时Object[] 数组类型，则将in (?)替换成 in (?,?),具体问号个数由
-	 *         数组长度决定</li>
+	 * <li>1、将字符串类型且条件值为逗号分隔的，将对应的sql 中的 in(?) 替换成in(具体的值)</li>
+	 * <li>2、如果对应in (?)位置上的参数数据时Object[] 数组类型，则将in (?)替换成 in (?,?),具体问号个数由
+	 * 数组长度决定</li>
+	 * 
 	 * @param sqlToyResult
 	 */
 	private static void processIn(SqlToyResult sqlToyResult) {

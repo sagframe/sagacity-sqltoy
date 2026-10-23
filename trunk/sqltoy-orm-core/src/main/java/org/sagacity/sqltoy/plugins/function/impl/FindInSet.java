@@ -100,7 +100,8 @@ public class FindInSet extends IFunction {
 		if (isMysqlFamily(dialect)) {
 			return super.IGNORE;
 		}
-		// update 2026-10-20 mysql文档明确find_in_set首参含逗号属不可用/未定义,实测返回0;字面量首参含逗号时直接按未命中处理,避免「补逗号+子串定位」把',a,b,'整段误判成元素
+		// update 2026-10-20
+		// mysql文档明确find_in_set首参含逗号属不可用/未定义,实测返回0;字面量首参含逗号时直接按未命中处理,避免「补逗号+子串定位」把',a,b,'整段误判成元素
 		if (isQuotedComma(str)) {
 			return hit ? "(0>0)" : "(0=0)";
 		}

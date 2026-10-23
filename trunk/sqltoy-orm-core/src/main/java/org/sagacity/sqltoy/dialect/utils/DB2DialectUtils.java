@@ -32,7 +32,8 @@ public class DB2DialectUtils {
 		} else if (jdbcType == java.sql.Types.DATE) {
 			sql.append("cast(? as DATE)");
 		} else if (jdbcType == java.sql.Types.NUMERIC || jdbcType == java.sql.Types.DECIMAL) {
-			// update 2026-9-14 裸cast(? as DECIMAL)在db2默认DECIMAL(5,0),小数部分被截断(saveOrUpdateAll真库实测88.88截为88致更新值失真);
+			// update 2026-9-14 裸cast(? as
+			// DECIMAL)在db2默认DECIMAL(5,0),小数部分被截断(saveOrUpdateAll真库实测88.88截为88致更新值失真);
 			// 精度/标度已知按列定义cast(quickvo形态),未知时用大标度兜底(db2最大precision=31)
 			if (fieldMeta.getPrecision() > 0) {
 				sql.append("cast(? as DECIMAL(" + fieldMeta.getPrecision() + "," + fieldMeta.getScale() + "))");
@@ -65,17 +66,21 @@ public class DB2DialectUtils {
 			sql.append("?");
 			// sql.append("cast(? as BLOB(" + length + "))");
 		} else if (jdbcType == JdbcTypes.JSON || jdbcType == JdbcTypes.JSONB) {
-			// update 2026-9-6 实测db2 11.5无JSON类型(cast as JSON报SQLCODE=-204 JSON未定义),JSON以字符列承载直接绑定参数(db2 12的JSON列亦接受字符串隐式转换)
+			// update 2026-9-6 实测db2 11.5无JSON类型(cast as JSON报SQLCODE=-204
+			// JSON未定义),JSON以字符列承载直接绑定参数(db2 12的JSON列亦接受字符串隐式转换)
 			sql.append("?");
 		} else if (jdbcType == JdbcTypes.GEOMETRY) {
-			// update 2026-9-10 实测db2(db2gse扩展,db2se enable_db启用)的ST_Geometry列裸?+setString报类型错误,SQL层以
+			// update 2026-9-10 实测db2(db2gse扩展,db2se
+			// enable_db启用)的ST_Geometry列裸?+setString报类型错误,SQL层以
 			// ST_GeomFromText(wkt,srid)包装,参数按VARCHAR绑定(含null实测通过);按GSE探测+nativeType分派
 			// (12.1起内置引擎与GSE可并存,纯版本分派会在GSE列上误选内置函数报-408),详见DialectExtUtils.db2GeomFromTextWrap
 			sql.append(DialectExtUtils.db2GeomFromTextWrap(fieldMeta));
 		} else if (jdbcType == JdbcTypes.VECTOR) {
 			// update 2026-9-10 db2 12.1.2+支持vector类型,与应用交互采用'[1,2,3]'字符串形式
-			// 实测12.1.2.0/12.1.5.0双版本:cast(? as VECTOR)与cast(? as VECTOR(n,FLOAT32))均报错(-20441/-461,
-			// 参数标记不允许cast到VECTOR);裸?+setString全链路通过(update的nvl/coalesce、merge的using+matched update
+			// 实测12.1.2.0/12.1.5.0双版本:cast(? as VECTOR)与cast(? as
+			// VECTOR(n,FLOAT32))均报错(-20441/-461,
+			// 参数标记不允许cast到VECTOR);裸?+setString全链路通过(update的nvl/coalesce、merge的using+matched
+			// update
 			// 及null保留语义、读回getObject为String文本),改用裸?
 			sql.append("?");
 		} else {

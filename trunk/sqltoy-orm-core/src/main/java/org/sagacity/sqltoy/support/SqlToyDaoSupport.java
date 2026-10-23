@@ -2314,7 +2314,8 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * update 2021-12-23 针对单表对象查询进行更新操作(update和delete 操作filters过滤是无效的，必须是精准的条件参数),支持update table set field=field+1等计算模式
+	 * update 2021-12-23 针对单表对象查询进行更新操作(update和delete
+	 * 操作filters过滤是无效的，必须是精准的条件参数),支持update table set field=field+1等计算模式
 	 * 
 	 * @param entityClass  单表对应的实体类
 	 * @param entityUpdate 修改构造对象,通过set(property,value)设置修改字段,where/values设置条件

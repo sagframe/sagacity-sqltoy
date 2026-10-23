@@ -187,7 +187,8 @@ public class RowsChainRelative {
 						if (divedRowList.get(colIndex) != null) {
 							divedData = new BigDecimal(divedRowList.get(colIndex).toString());
 						}
-						// update 2024-08-30 divedData.equals(BigDecimal.ZERO)存在bug,改用compareTo(BigDecimal.ZERO)判断
+						// update 2024-08-30
+						// divedData.equals(BigDecimal.ZERO)存在bug,改用compareTo(BigDecimal.ZERO)判断
 						if (divedData.compareTo(BigDecimal.ZERO) == 0) {
 							divIsZero = divData.compareTo(BigDecimal.ZERO) == 0;
 							if (format == null) {

@@ -386,7 +386,8 @@ public class SqlToyContext {
 	private boolean executeSqlBlankToNull = true;
 
 	/**
-	 * update 2026-9-23 realDialect优先:开启后sqlId方言变体查找优先按连接探测的真实方言(DBProfile.realDialect,典型如OB按mysql方言配置而真实库为oceanbase、代理库场景),真实方言变体不存在时回退原有配置方言查找链;真实方言与配置方言一致时行为不变
+	 * update 2026-9-23
+	 * realDialect优先:开启后sqlId方言变体查找优先按连接探测的真实方言(DBProfile.realDialect,典型如OB按mysql方言配置而真实库为oceanbase、代理库场景),真实方言变体不存在时回退原有配置方言查找链;真实方言与配置方言一致时行为不变
 	 */
 	private boolean realDialectFirst = false;
 
@@ -396,9 +397,10 @@ public class SqlToyContext {
 	 * 决策记录:默认固定格式(截到秒)为有意的向后兼容,initialize时覆写SqlToyConstants.localDateTimeFormat
 	 * (JVM级首个context生效)。固定格式下toSqlLogStr/toSqlString/combineArray对nano>0的LocalDateTime输出恒为
 	 * 19字符(dateType=2,小数秒被格式化丢弃),方言的TO_TIMESTAMP FF3/US等小数秒分派不触发;需要日志SQL与
-	 * @loop/NoSQL拼接值保留小数秒精度(等值条件精确匹配)的场景,应显式配置本属性为"auto"(按值精度自适应
-	 * 追加.123/.123456/.123456789)或含小数位占位符的格式(如yyyy-MM-dd HH:mm:ss.SSS)。java.sql.Timestamp
-	 * 路径不受本配置影响(硬编码.SSS格式,恒走小数秒分派)
+	 * 
+	 * @loop/NoSQL拼接值保留小数秒精度(等值条件精确匹配)的场景,应显式配置本属性为"auto"(按值精度自适应 追加.123/.123456/.123456789)或含小数位占位符的格式(如yyyy-MM-dd
+	 *                                                            HH:mm:ss.SSS)。java.sql.Timestamp
+	 *                                                            路径不受本配置影响(硬编码.SSS格式,恒走小数秒分派)
 	 */
 	private String localDateTimeFormat = "yyyy-MM-dd HH:mm:ss";
 
@@ -406,8 +408,8 @@ public class SqlToyContext {
 	 * update 2026-9-15 sql 日志输出时LocalTime类型的输出格式
 	 * <p>
 	 * 决策记录:同localDateTimeFormat,默认固定格式(截到秒)为有意向后兼容;固定格式下nano>0的LocalTime输出
-	 * 恒为8字符(dateType=4),方言的毫秒time分派(TO_TIMESTAMP FF/CONVERT(time(3))/STR_TO_DATE %f等)不触发,
-	 * 需显式配置"auto"启用
+	 * 恒为8字符(dateType=4),方言的毫秒time分派(TO_TIMESTAMP FF/CONVERT(time(3))/STR_TO_DATE
+	 * %f等)不触发, 需显式配置"auto"启用
 	 */
 	private String localTimeFormat = "HH:mm:ss";
 
@@ -811,7 +813,8 @@ public class SqlToyContext {
 		if (variant == null) {
 			return sqlToyConfig;
 		}
-		// update 2026-9-23 标记经realDialect变体匹配选中:其函数/保留字替换方言跟随真实方言(未命中变体回退base的sql不打标记,保持配置方言行为)
+		// update 2026-9-23
+		// 标记经realDialect变体匹配选中:其函数/保留字替换方言跟随真实方言(未命中变体回退base的sql不打标记,保持配置方言行为)
 		variant.markRealDialectMatched();
 		return variant;
 	}

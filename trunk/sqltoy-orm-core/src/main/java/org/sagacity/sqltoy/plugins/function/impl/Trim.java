@@ -46,7 +46,8 @@ public class Trim extends IFunction {
 		if (args == null || args.length == 0) {
 			return super.IGNORE;
 		}
-		// update 2026-9-5 修饰符形态(trim(both 'x' from col)等)按目标库分级处理:H2/mysql/oracle/pg/db2原生支持
+		// update 2026-9-5 修饰符形态(trim(both 'x' from
+		// col)等)按目标库分级处理:H2/mysql/oracle/pg/db2原生支持
 		// 标准修饰符形态原样保留;sqlserver的TRIM不支持both/leading/trailing关键字,剔除字符为空格
 		// (或未写)时按语义转ltrim/rtrim/rtrim(ltrim),非空格字符无法表达则原样保留响亮报错;
 		// sqlite无FROM形态,但trim/ltrim/rtrim的二参剔除字符集语义与标准一致,可无损映射
@@ -62,7 +63,8 @@ public class Trim extends IFunction {
 		// 反而把真实from一起吞掉
 		String maskedArgLow = maskQuoted(argLow);
 		boolean modifierForm = maskedArgLow.startsWith("from ") || maskedArgLow.contains(" from ");
-		// update 2026-9-9 rest按实际前导关键字长度截取:原按keyword.length()定长截取,对省略BOTH/LEADING/TRAILING
+		// update 2026-9-9
+		// rest按实际前导关键字长度截取:原按keyword.length()定长截取,对省略BOTH/LEADING/TRAILING
 		// 关键字的trim('x' from col)形态会把remstr首部误截掉
 		String keyword = "both";
 		String rest = "";
@@ -80,11 +82,13 @@ public class Trim extends IFunction {
 				rest = arg;
 			}
 		}
-		// update 2026-10-22 fromIdx同样在掩码串上定位:trim(both ' from ' from col)等字面量内含「 from 」时原indexOf
+		// update 2026-10-22 fromIdx同样在掩码串上定位:trim(both ' from ' from col)等字面量内含「 from
+		// 」时原indexOf
 		// 会命中字面量内位置而切错参数;掩码串与原串等长同位,索引可直接用于原串
 		String maskedRestLow = maskQuoted(rest.toLowerCase(Locale.ROOT));
 		int fromIdx = maskedRestLow.startsWith("from ") ? 0 : maskedRestLow.indexOf(" from ");
-		// update 2026-10-19 真库实测:标准组中 mysql 9.3 对 trim(from x) 报1064语法错、oracle 23ai 报ORA-30000
+		// update 2026-10-19 真库实测:标准组中 mysql 9.3 对 trim(from x) 报1064语法错、oracle 23ai
+		// 报ORA-30000
 		// (两者均要求省略剔除字符时不能保留FROM);省略字符的from形态语义即「默认空格」,统一改写成
 		// 单参trim/单向ltrim/rtrim(标准组原生产物,与trim(both ' ' from x)等价)。
 		// H2/SQLServer/SQLite/StarRocks已有专门分支,不在此处理
@@ -160,8 +164,8 @@ public class Trim extends IFunction {
 	}
 
 	/**
-	 * update 2026-10-22 把SQL片段中的非代码文本替换为等长空格(定界符保留、偏移不变),供from关键字判定:单引号字符串
-	 * (标准SQL ''成对转义)与双引号/反引号/方括号标识符不参与判定;注释无需处理,解析期clearMark
+	 * update 2026-10-22 把SQL片段中的非代码文本替换为等长空格(定界符保留、偏移不变),供from关键字判定:单引号字符串 (标准SQL
+	 * ''成对转义)与双引号/反引号/方括号标识符不参与判定;注释无需处理,解析期clearMark
 	 * 已在函数转换前剔除(parseSqlToyConfig链路),本方法看不到注释。单趟互斥状态机:进入一种引号后,
 	 * 其中出现的其它引号只当内容,规避分次掩码时跨引号配对(如标识符内单引号与真实from后引号配对
 	 * 会把from吞掉);未闭合引号按既有字面量惯例遮蔽到串尾(仅出现在畸形sql中)

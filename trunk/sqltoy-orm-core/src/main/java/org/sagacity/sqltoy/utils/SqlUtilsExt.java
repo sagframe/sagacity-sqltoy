@@ -170,7 +170,8 @@ public class SqlUtilsExt {
 				if (!NumberUtil.isNumber(defaultValue)) {
 					return null;
 				}
-				// update 2026-9-14 isNumber允许小数形态,经BigDecimal截断小数位,此前BigInteger直接解析「12.5」抛NumberFormatException
+				// update 2026-9-14
+				// isNumber允许小数形态,经BigDecimal截断小数位,此前BigInteger直接解析「12.5」抛NumberFormatException
 				realValue = new BigDecimal(defaultValue).toBigInteger();
 			} else if (jdbcType == java.sql.Types.TIME) {
 				if (isBlank || isCurrentTime(defaultValue)) {
@@ -221,7 +222,8 @@ public class SqlUtilsExt {
 					if (!NumberUtil.isNumber(defaultValue)) {
 						return null;
 					}
-					// update 2026-9-14 isNumber允许小数形态,经BigDecimal截断小数位,此前Integer.parseInt直接解析「12.5」抛NumberFormatException
+					// update 2026-9-14
+					// isNumber允许小数形态,经BigDecimal截断小数位,此前Integer.parseInt直接解析「12.5」抛NumberFormatException
 					realValue = Integer.valueOf(new BigDecimal(defaultValue).intValue());
 				}
 			} else {
