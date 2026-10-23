@@ -346,8 +346,7 @@ lightDao.find(sql, MapKit.keys("authedOrganIds","beginDate", "endDate").values(a
 The sql finally executed looks like this:
 select 	*
 from sqltoy_device_order_info t 
-where t.ORDER_ID=?
-      and t.ORGAN_ID in (?,?,?)
+where t.ORGAN_ID in (?,?,?)
       and t.TRANS_DATE>=?
 
 Then condition values are set via: pst.set(index,value); there is no concatenating condition values directly into the sql as string fragments
@@ -802,7 +801,7 @@ Banana|2019-03|13 | 2300|2700
 #### 10.1 Query with Database & Table Sharding (database sharding and table sharding strategies can be used together)
 
 ```xml
-For the sql, see the quickstart project: the com/sqltoy/lesson/lesson.sql.xml file
+<!-- For the sql, see the quickstart project: com/sqltoy/lesson/lesson.sql.xml -->
 <!-- Database sharding demo -->
 <sql id="qstart_db_sharding_case">
 	<sharding-datasource strategy="hashDataSource" params="userId" />
@@ -865,9 +864,9 @@ public class StaffInfoVO extends AbstractStaffInfoVO {
 }
 ```
 
-# Integration Guide
+## Integration Guide
 
-## See the [sqltoy-quickstart](https://github.com/sagframe/sqltoy-quickstart) project and read its README.md to get started
+### See the [sqltoy-quickstart](https://github.com/sagframe/sqltoy-quickstart) project and read its README.md to get started
 
 ```java
 package com.sqltoy.quickstart;
@@ -894,7 +893,7 @@ public class SqlToyApplication {
 }
 ```
 
-## sqltoy-related configuration in application.properties
+### sqltoy-related configuration in application.properties
 
 ```properties
 # sqltoy config
@@ -909,7 +908,7 @@ spring.sqltoy.unifyFieldsHandler=com.sqltoy.plugins.SqlToyUnifyFieldsHandler
 
 ```
 
-## The cache-translate config file sqltoy-translate.xml 
+### The cache-translate config file sqltoy-translate.xml 
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -980,9 +979,9 @@ public class CrudCaseServiceTest {
  }
 ```
 
-# Key Source-Code Guide
+## Key Source-Code Guide
 
-## sqltoy-orm mainly consists of the following parts:
+### sqltoy-orm mainly consists of the following parts:
 
   - SqlToyDaoSupport: the base Dao provided for developers to extend, integrating all database operation methods.
   - LightDao: a convenient Dao for developers, letting them focus solely on writing Service business logic; call lightDao directly in the service.
@@ -993,7 +992,7 @@ public class CrudCaseServiceTest {
   - TranslateManager: the cache translate manager, used to load the cache-translate xml config file and the cache implementation class. sqltoy provides the interface and ships a default ehcache-based local cache implementation, which is the most efficient; a distributed cache such as redis carries too much IO overhead, and cache translation is a high-frequency call — it typically caches relatively stable, infrequently changing data such as staff, organizations, data dictionaries, product categories, and regions.
   - ShardingStrategy: the sharding strategy manager. Since the 4.x version, strategy managers do not need to be explicitly defined; they only need to be defined via spring, and sqltoy manages them dynamically at use time.
 
-## Quick reading guide to understanding sqltoy:
+### Quick reading guide to understanding sqltoy:
 
   - Start from LightDao as the entry point to learn all the features sqltoy provides.
   - SqlToyDaoSupport is the concrete implementation of LightDao's functionality.
@@ -1003,7 +1002,7 @@ public class CrudCaseServiceTest {
   - SqlToyContext: the context of sqltoy configuration; through this class you can see the full picture of sqltoy.
   - PageOptimizeUtils (in the dialect package): you can see the principle behind the default implementation of pagination optimization.
 
-## Project History
+### Project History
 
 * 2007~2008: while building a management system project for the Agricultural Bank of China, there were many query and statistics needs, with numerous query conditions that kept being added, so I kept thinking about how to adapt quickly to such changes. From a rather accidental flash of inspiration I discovered a way of writing dynamic sql more concise than mybatis, which served as a complement to hibernate jpa queries and visibly improved development efficiency. See a blog post written in 2009: https://blog.csdn.net/iteye_2252/article/details/81683940
 * 2008~2012: since I kept working on financial enterprise projects, the data volumes were basically in the tens of millions of rows, so sqltoy continuously focused on enhancing sql queries around jpa. During this period it already integrated cache translation, fast pagination, pivot (row/column rotation), and other query features more distinctive than those of other frameworks.

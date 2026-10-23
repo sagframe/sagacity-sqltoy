@@ -323,8 +323,7 @@ lightDao.find(sql, MapKit.keys("authedOrganIds","beginDate", "endDate").values(a
 最终执行的sql是这样的:
 select 	*
 from sqltoy_device_order_info t 
-where t.ORDER_ID=?
-      and t.ORGAN_ID in (?,?,?)
+where t.ORGAN_ID in (?,?,?)
       and t.TRANS_DATE>=?
 
 然后通过: pst.set(index,value) 设置条件值，不存在将条件直接作为字符串拼接为sql的一部分
@@ -779,7 +778,7 @@ spring.sqltoy.redoDataSources[0]=pgdb
 #### 10.1 查询分库分表（分库和分表策略可以同时使用）
 
 ```xml
-sql参见quickstart项目:com/sqltoy/lesson/lesson.sql.xml 文件
+<!-- sql参见quickstart项目:com/sqltoy/lesson/lesson.sql.xml 文件 -->
 <!-- 演示分库 -->
 <sql id="qstart_db_sharding_case">
 	<sharding-datasource strategy="hashDataSource" params="userId" />
@@ -842,9 +841,9 @@ public class StaffInfoVO extends AbstractStaffInfoVO {
 }
 ```
 
-# 集成说明
+## 集成说明
 
-## 参见 [sqltoy-quickstart](https://github.com/sagframe/sqltoy-quickstart) 演示项目,并阅读其 README.md 上手
+### 参见 [sqltoy-quickstart](https://github.com/sagframe/sqltoy-quickstart) 演示项目,并阅读其 README.md 上手
 
 ```java
 package com.sqltoy.quickstart;
@@ -871,7 +870,7 @@ public class SqlToyApplication {
 }
 ```
 
-## application.properties sqltoy部分配置
+### application.properties sqltoy部分配置
 
 ```properties
 # sqltoy config
@@ -886,7 +885,7 @@ spring.sqltoy.unifyFieldsHandler=com.sqltoy.plugins.SqlToyUnifyFieldsHandler
 
 ```
 
-## 缓存翻译的配置文件sqltoy-translate.xml 
+### 缓存翻译的配置文件sqltoy-translate.xml 
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -958,9 +957,9 @@ public class CrudCaseServiceTest {
  }
 ```
 
-# sqltoy关键代码说明
+## sqltoy关键代码说明
 
-## sqltoy-orm 主要分以下几个部分：
+### sqltoy-orm 主要分以下几个部分：
 
   - SqlToyDaoSupport:提供给开发者Dao继承的基本Dao,集成了所有对数据库操作的方法。
   - LightDao:提供给开发者快捷使用的Dao,让开发者只关注写Service业务逻辑代码，在service中直接调用lightDao
@@ -971,7 +970,7 @@ public class CrudCaseServiceTest {
   - TranslateManager:缓存翻译管理器,用于加载缓存翻译的xml配置文件和缓存实现类，sqltoy提供了接口并提供了默认基于ehcache的本地缓存实现，这样效率是最高的，而redis这种分布式缓存IO开销太大，缓存翻译是一个高频度的调用，一般会缓存注入员工、机构、数据字典、产品品类、地区等相对变化不频繁的稳定数据。
   - ShardingStrategy:分库分表策略管理器，4.x版本之后策略管理器并不需要显式定义，只有通过spring定义，sqltoy会在使用时动态管理。
 
-## 快速阅读理解sqltoy:
+### 快速阅读理解sqltoy:
 
   - 从LightDao作为入口，了解sqltoy提供的所有功能
   - SqlToyDaoSupport 是LightDao 具体功能实现。
@@ -981,7 +980,7 @@ public class CrudCaseServiceTest {
   - SqlToyContext:sqltoy配置的上下文,通过这个类可以看到sqltoy全貌。
   - PageOptimizeUtils(位于dialect包):可以看到分页优化默认实现原理。
 
-## 发展历程
+### 发展历程
 
 * 2007~2008年，做农行的一个管理类项目，因查询统计较多，且查询条件多而且经常要增加条件，就不停想如何快速适应这种变化，一个比较偶然的灵感发现了一套比 mybatis 更简洁的动态sql写法，并作为hibernate jpa 查询方面的补充，显著提升了开发效率。可以看写于2009年的一篇博文: https://blog.csdn.net/iteye_2252/article/details/81683940
 * 2008~2012年，因一直做金融类企业项目，所面对的数据规模基本上是千万级别的，因此sqltoy一直围绕jpa进行sql查询增强，期间已经集成了缓存翻译、快速分页、行列旋转等比其他框架更具特色的查询特性。
