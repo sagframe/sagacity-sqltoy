@@ -350,10 +350,13 @@ public class DialectFactory {
 										SqlExecuteStat.setDialect(profile);
 										String realSql = sqlToyConfig.getSql(dialect);
 										Integer[] fieldTypes = null;
-										List values = dataSet;
+										// update 2026-11-11 分片回调内用本分片实体集:原误用全量dataSet,
+										// 并行分片时每个分片都执行全量数据(跨分片重复执行)
+										List batchEntities = batchModel.getEntities();
+										List values = batchEntities;
 										// sql中存在:named参数模式，通过sql提取参数名称
 										if (sqlToyConfig.getParamsName() != null) {
-											// 替换sql中:name为?并提取参数名称归集成数组
+											// 替换sql:name为?并提取参数名称归集成数组
 											SqlParamsModel sqlParamsModel = SqlConfigParseUtils
 													.processNamedParamsQuery(realSql);
 											realSql = sqlParamsModel.getSql();
@@ -361,9 +364,9 @@ public class DialectFactory {
 											ReflectPropsHandler realPropsHandler = DialectUtils
 													.wrapReflectWithUnifyFields(realSql, reflectPropsHandler,
 															sqlToyContext.getUnifyFieldsHandler());
-											values = BeanUtil.reflectBeansToList(dataSet,
+											values = BeanUtil.reflectBeansToList(batchEntities,
 													sqlParamsModel.getParamsName(), realPropsHandler);
-											fieldTypes = BeanUtil.matchMethodsType(dataSet.get(0).getClass(),
+											fieldTypes = BeanUtil.matchMethodsType(batchEntities.get(0).getClass(),
 													sqlParamsModel.getParamsName());
 										}
 										// 做sql签名
@@ -995,7 +998,7 @@ public class DialectFactory {
 							if (null != pageQueryKey) {
 								// 从缓存中提取总记录数
 								recordCnt = PageOptimizeUtils.getPageTotalCount(realSqlToyConfig, pageOptimize,
-										pageQueryKey, profile.getDialect());
+										pageQueryKey, profile.getDialect(), sqlToyContext, realDataSource);
 								if (recordCnt != null) {
 									if (pageOptimize.isSkipZeroCount() && recordCnt == 0) {
 										SqlExecuteStat.debug("process hint",
@@ -1019,7 +1022,7 @@ public class DialectFactory {
 								// 将并行后得到的总记录数登记到缓存
 								if (null != pageQueryKey) {
 									PageOptimizeUtils.registPageTotalCount(realSqlToyConfig, pageOptimize, pageQueryKey,
-											recordCnt, profile.getDialect());
+											recordCnt, profile.getDialect(), sqlToyContext, realDataSource);
 								}
 							} else {
 								// 非并行且分页缓存未命中，执行count查询
@@ -1033,7 +1036,7 @@ public class DialectFactory {
 								// 将总记录数登记到缓存
 								if (null != pageQueryKey) {
 									PageOptimizeUtils.registPageTotalCount(realSqlToyConfig, pageOptimize, pageQueryKey,
-											recordCnt, profile.getDialect());
+											recordCnt, profile.getDialect(), sqlToyContext, realDataSource);
 								}
 								// pageNo=-1时的提取数据量限制
 								int limitSize = sqlToyContext.getPageFetchSizeLimit();
