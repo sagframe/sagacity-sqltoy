@@ -173,9 +173,10 @@ public class SqlServerDialect implements Dialect {
 		// 会插到fastPreSql之前破坏结构,故以!isHasFast守卫排除,导致@fast+union落入else分支把
 		// order by (select 1)直接追加在union之后(真库Msg 104 "ORDER BY items must appear in
 		// the select list...");顺序拼装对fast前缀天然无影响,两场景统一合法
-		if (orderByIndex < 0 && SqlUtil.hasUnion(judgeOrderSql, true)) {
-			// update 2026-9-5 真实库验证:sqlserver对union语句直接追加order by会报
-			// "ORDER BY items must appear in the select list...",需包一层派生表后再挂分页参数
+		if (orderByIndex < 0 && SqlUtil.hasSetOperation(judgeOrderSql, true)) {
+			// update 2026-11-10 原仅 hasUnion 判定会漏掉 except/intersect:sqlserver 对任意集合语句
+			// 直接追加 order by 均报"ORDER BY items must appear in the select list...",
+			// 统一按集合运算(union/intersect/except)包裹派生表后再挂分页参数
 			sql.append("select * from (");
 			sql.append(innerSql);
 			sql.append(") sag_union_tmp order by (select 1) ");
@@ -220,10 +221,10 @@ public class SqlServerDialect implements Dialect {
 			sql.append(sqlWith.getWithSql());
 			innerSql = sqlWith.getRejectWithSql();
 		}
-		boolean hasUnion = false;
-		if (sqlToyConfig.isHasUnion()) {
-			hasUnion = SqlUtil.hasUnion(innerSql, false);
-		}
+		// update 2026-11-10 与findPageBySql同源:原用isHasUnion+hasUnion只认union,except/intersect落到
+		// else分支变成"select top N ... except ..."(TOP只作用于第一个分支,行数/语义都不对),
+		// 统一按集合运算判定,任意集合语句都包派生表后再套top
+		boolean hasUnion = SqlUtil.hasSetOperation(innerSql, true);
 		// 给原始sql标记上特殊的开始和结尾，便于sql拦截器快速定位到原始sql并进行条件补充
 		innerSql = SqlUtilsExt.markOriginalSql(innerSql);
 		if (hasUnion) {

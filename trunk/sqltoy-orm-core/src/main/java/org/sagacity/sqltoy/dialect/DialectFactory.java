@@ -995,7 +995,7 @@ public class DialectFactory {
 							if (null != pageQueryKey) {
 								// 从缓存中提取总记录数
 								recordCnt = PageOptimizeUtils.getPageTotalCount(realSqlToyConfig, pageOptimize,
-										pageQueryKey);
+										pageQueryKey, profile.getDialect());
 								if (recordCnt != null) {
 									if (pageOptimize.isSkipZeroCount() && recordCnt == 0) {
 										SqlExecuteStat.debug("process hint",
@@ -1019,7 +1019,7 @@ public class DialectFactory {
 								// 将并行后得到的总记录数登记到缓存
 								if (null != pageQueryKey) {
 									PageOptimizeUtils.registPageTotalCount(realSqlToyConfig, pageOptimize, pageQueryKey,
-											recordCnt);
+											recordCnt, profile.getDialect());
 								}
 							} else {
 								// 非并行且分页缓存未命中，执行count查询
@@ -1033,7 +1033,7 @@ public class DialectFactory {
 								// 将总记录数登记到缓存
 								if (null != pageQueryKey) {
 									PageOptimizeUtils.registPageTotalCount(realSqlToyConfig, pageOptimize, pageQueryKey,
-											recordCnt);
+											recordCnt, profile.getDialect());
 								}
 								// pageNo=-1时的提取数据量限制
 								int limitSize = sqlToyContext.getPageFetchSizeLimit();

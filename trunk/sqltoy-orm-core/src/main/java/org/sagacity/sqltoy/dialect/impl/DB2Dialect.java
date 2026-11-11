@@ -5,6 +5,7 @@ import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.sagacity.sqltoy.SqlToyConstants;
@@ -15,6 +16,7 @@ import org.sagacity.sqltoy.callback.GenerateSqlHandler;
 import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.callback.UpdateRowCallback;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
+import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.OperateType;
 import org.sagacity.sqltoy.config.model.PKStrategy;
@@ -67,11 +69,93 @@ public class DB2Dialect implements Dialect {
 	 */
 	public static final String VIRTUAL_TABLE = "SYSIBM.SYSDUMMY1";
 
+	/**
+	 * update 2026-11-10 无FROM的常量/表达式查询(如自定义countSql "select 99")补虚表并追加隔离后缀
+	 *
+	 * <p>
+	 * 判定要点:
+	 * <ol>
+	 * <li>在字面量掩码串上判FROM,避免 {@code select 'a from b'} 把字面量里的from当成已有FROM(真库实测漏补即报错)</li>
+	 * <li>只认<b>顶层</b>(括号深度0)的FROM,避免 {@code select (select max(id) from t)} 因子查询内的FROM漏补虚表
+	 * (顶层无FROM在DB2同样是SQL0104)</li>
+	 * <li>先摘出已有的"with ur"尾缀再补虚表,最后只追加一次UR,避免 {@code select 99 with ur} 拼成
+	 * {@code select 99 with ur FROM SYSIBM.SYSDUMMY1 with ur}</li>
+	 * <li>VALUES形式查询({@code values (1)})本身合法且无需FROM,补虚表反而SQL0104,故排除</li>
+	 * </ol>
+	 * 注:不处理尾分号——sqltoy的sql配置/查询链路不携带语句终止符,为不存在的输入做防御属过度设计
+	 */
 	private String appendWithUR(String sql) {
-		if (SqlToyConstants.db2WithUR()) {
-			return StringUtil.matches(sql, DB2_QUERY_UR_PATTERN) ? sql : sql + DB2_QUERY_APPEND;
+		String maskedSql = SqlConfigParseUtils.maskLiterals(sql, false);
+		String body = sql;
+		String urSuffix = "";
+		// 掩码串与原串等长,匹配位置可直接用于原串截取
+		Matcher urMatcher = DB2_QUERY_UR_PATTERN.matcher(maskedSql);
+		if (urMatcher.find()) {
+			body = sql.substring(0, urMatcher.start());
+			urSuffix = sql.substring(urMatcher.start());
+			maskedSql = maskedSql.substring(0, urMatcher.start());
 		}
-		return sql;
+		String legalSql = body;
+		if (!isValuesQuery(maskedSql) && !hasTopLevelFrom(maskedSql)) {
+			legalSql = body + " FROM " + VIRTUAL_TABLE;
+		}
+		if (urSuffix.isEmpty() && SqlToyConstants.db2WithUR()) {
+			urSuffix = DB2_QUERY_APPEND;
+		}
+		return legalSql + urSuffix;
+	}
+
+	/**
+	 * @param maskedSql 字面量已掩码的sql
+	 * @return 是否为VALUES形式查询(首词为values)。这类查询无需FROM,不能补虚表
+	 */
+	private static boolean isValuesQuery(String maskedSql) {
+		int i = 0;
+		int length = maskedSql.length();
+		while (i < length && Character.isWhitespace(maskedSql.charAt(i))) {
+			i++;
+		}
+		return i + 6 <= length && maskedSql.regionMatches(true, i, "values", 0, 6)
+				&& (i + 6 == length || !isIdentifierChar(maskedSql.charAt(i + 6)));
+	}
+
+	/**
+	 * @param maskedSql 字面量已掩码的sql(掩码后与原文等长,位置偏移一致)
+	 * @return 是否存在顶层(括号深度为0)的FROM子句
+	 *
+	 *         <p>
+	 *         注释无需在此处理:sql在解析期已由{@code SqlUtil.clearMark}剔除--与块注释,
+	 *         到达方言层的sql不含注释(字面量内的注释标记亦原样保留于字面量,已被maskLiterals掩码)
+	 */
+	private static boolean hasTopLevelFrom(String maskedSql) {
+		int depth = 0;
+		int length = maskedSql.length();
+		for (int i = 0; i + 4 <= length; i++) {
+			char c = maskedSql.charAt(i);
+			if (c == '(') {
+				depth++;
+				continue;
+			}
+			if (c == ')') {
+				if (depth > 0) {
+					depth--;
+				}
+				continue;
+			}
+			if (depth != 0 || (c != 'f' && c != 'F') || !maskedSql.regionMatches(true, i, "from", 0, 4)) {
+				continue;
+			}
+			// 词边界:from前/后都不能是标识符字符(排除fromx、afrom等)
+			if ((i == 0 || !isIdentifierChar(maskedSql.charAt(i - 1)))
+					&& (i + 4 == length || !isIdentifierChar(maskedSql.charAt(i + 4)))) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private static boolean isIdentifierChar(char c) {
+		return Character.isLetterOrDigit(c) || c == '_' || c == '$' || c == '#';
 	}
 
 	@Override

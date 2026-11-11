@@ -150,7 +150,16 @@ public class DefaultDialectUtils {
 			useDefault = false;
 		}
 		StringBuilder sql = DialectUtils.openFastWrap(sqlToyConfig, dialect);
-		sql.append(innerSql);
+		// update 2026-11-10 集合语句先包派生表再limit/offset:CH的limit/offset在集合运算尾部绑定右侧SELECT
+		// (分页页行数与偏移整体失效);Impala同族行为——官方UNION文档明确"要让ORDER BY/LIMIT作用于整个结果集,
+		// 须把UNION整条包成子查询再在外层排序/限制",即裸挂LIMIT只作用于最后一个SELECT。
+		// 其余库(DB2/Hana/PG/MySQL/SQLite等标准语义)保持原形态,避免多包一层派生表改变执行计划;
+		// 别名复用SqlToyConstants.INTERMEDIATE_TABLE与其他包裹路径统一
+		if ((dbType == DBType.CLICKHOUSE || dbType == DBType.IMPALA) && SqlUtil.hasSetOperation(innerSql, true)) {
+			sql.append("select * from (").append(innerSql).append(") ").append(SqlToyConstants.INTERMEDIATE_TABLE);
+		} else {
+			sql.append(innerSql);
+		}
 		sql.append(" limit ");
 		sql.append(isNamed ? ":" + SqlToyConstants.PAGE_FIRST_PARAM_NAME : "?");
 		sql.append(useDefault ? " offset " : " , ");
@@ -189,10 +198,19 @@ public class DefaultDialectUtils {
 	public static QueryResult findTopBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, final DecryptHandler decryptHandler, Integer topSize, Connection conn,
 			DBProfile profile, final int fetchSize, final int maxRows) throws Exception {
+		Integer dbType = profile.getDbType();
 		String dialect = profile.getDialect();
 		String innerSql = DialectUtils.markInnerSql(sqlToyConfig, dialect);
 		StringBuilder sql = DialectUtils.openFastWrap(sqlToyConfig, dialect);
-		sql.append(innerSql);
+		// update 2026-11-10 集合语句先包派生表再limit:CH的limit在集合运算尾部绑定右侧SELECT
+		// (A except B limit N的N修饰B,整体不截断,真库实测top2返回全量);Impala同族行为(官方UNION文档:
+		// 要让ORDER BY/LIMIT作用于整体须把UNION包成子查询)。其余库保持原形态(标准语义,无需多包一层)。
+		// 别名复用SqlToyConstants.INTERMEDIATE_TABLE
+		if ((dbType == DBType.CLICKHOUSE || dbType == DBType.IMPALA) && SqlUtil.hasSetOperation(innerSql, true)) {
+			sql.append("select * from (").append(innerSql).append(") ").append(SqlToyConstants.INTERMEDIATE_TABLE);
+		} else {
+			sql.append(innerSql);
+		}
 		sql.append(" limit ");
 		sql.append(topSize);
 		DialectUtils.closeFastWrap(sqlToyConfig, dialect, sql);
