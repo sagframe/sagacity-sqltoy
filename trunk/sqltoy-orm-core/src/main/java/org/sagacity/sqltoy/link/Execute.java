@@ -35,7 +35,7 @@ public class Execute extends BaseLink {
 	/**
 	 * 是否自动提交
 	 */
-	private Boolean autoCommit = false;
+	private Boolean autoCommit;
 
 	/**
 	 * 参数名称
