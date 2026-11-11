@@ -83,7 +83,8 @@ public class DateDiff extends IFunction {
 			return wrapArgs("timestampdiff", realArgs);
 		}
 		// update 2026-9-6 dm与oracle同为oracle系(实测DM也无两参datediff,报-2007),并入oracle分支
-		if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
+		// update 2026-10-19 OB 同为oracle系并入本分支(OB mysql模式须配dialect=mysql走mysql分支,不做自适应)
+		if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM || dbType == DBType.OCEANBASE) {
 			// update 2026-9-5 裸字符串字面量参数包to_date(长度启发式同ToDate单参),
 			// 规避TRUNC('2026-01-20')等在默认NLS_DATE_FORMAT(DD-MON-RR)会话下报
 			// ORA-01722/ORA-01861;列/表达式参数原样保留

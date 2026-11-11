@@ -35,26 +35,61 @@ public class SubStr extends IFunction {
 	 */
 	@Override
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
-		if (args == null || args.length == 0) {
+		// 单参substr为非法SQL(各库 substr 至少两参),原样保留交目标库报错,
+		// 不能在这里访问args[1]抛ArrayIndexOutOfBoundsException打断SQL解析
+		if (args == null || args.length < 2) {
 			return super.IGNORE;
+		}
+		// update 2026-10-20 起点0按"从开头截取"统一:当前接管的SQL方言substr首位均为1
+		// (mysql的0是空串特例/oracle的0当1/pg与sqlserver的0少取1个/db2的0非法),
+		// 字面量0(含+0/-0/00)统一归一为1;未来若接入真正的0-based方言,在首位映射处调整
+		boolean zeroStart = false;
+		String zeroStartArg = args[1].trim();
+		if (zeroStartArg.matches("[+-]?0+(\\.0+)?")) {
+			args[1] = "1";
+			zeroStart = true;
 		}
 		// update 2026-9-14 补KINGBASE(KingbaseES基于PG,函数语法归PG系)
 		if (dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL14 || dialect == DBType.GAUSSDB
 				|| dialect == DBType.OPENGAUSS || dialect == DBType.MOGDB || dialect == DBType.VASTBASE
 				|| dialect == DBType.SQLSERVER || dialect == DBType.H2 || dialect == DBType.STARDB
 				|| dialect == DBType.OSCAR || dialect == DBType.KINGBASE) {
+			// update 2026-10-4 负起点字面量(mysql惯用substr(s,-n)取末n位)统一处理:
+			// 两参转RIGHT(s,n);三参转case守卫形态(start=串长-n+1,串长不足n时取1,mysql语义)。
+			// 原仅sqlserver两参做了RIGHT,pg系substring(s,-n)按"串首之前偏移"返回整串静默错值。
+			// 表达式起点无法判断正负,原样保留交由目标库响亮报错
+			String start = args[1].trim();
+			if (start.startsWith("-") && start.substring(1).matches("\\d+")) {
+				String n = start.substring(1);
+				// sqlserver无length函数(为len),pg系/h2为length
+				String lenFn = (dialect == DBType.SQLSERVER) ? "len" : "length";
+				// update 2026-10-9 对齐mysql负起点契约:|n|超过串长时起点<1返回空串(原两参
+				// RIGHT短串返回整串、三参守卫短串分支返回substring(s,1,len),均与mysql的''
+				// 偏离且静默错值)
+				if (args.length == 2) {
+					return "case when " + lenFn + "(" + args[0] + ")>=" + n + " then RIGHT(" + args[0] + "," + n
+							+ ") else '' end";
+				}
+				return "case when " + lenFn + "(" + args[0] + ")<" + n + " then '' else substring(" + args[0] + ","
+						+ lenFn + "(" + args[0] + ")-" + n + "+1," + args[2] + ") end";
+			}
 			if (dialect == DBType.SQLSERVER && args.length == 2) {
 				// update 2026-9-5 mysql惯用负数起点(substr(s,-2)=末2位):
-				// sqlserver substring负起点语义不同,字面量负数转RIGHT(表达式无法判断,原样处理)
-				String start = args[1].trim();
-				if (start.startsWith("-") && start.substring(1).matches("\\d+")) {
-					return "RIGHT(" + args[0] + "," + start.substring(1) + ")";
-				}
+				// sqlserver substring负起点语义不同,负起点字面量已由上方统一处理(表达式无法判断,原样处理)
 				return "substring(" + args[0] + "," + args[1] + ",len(" + args[0] + "))";
 			}
 			return wrapArgs("substring", args);
 		}
 		if (dialect == DBType.DB2) {
+			// update 2026-10-4 两参负起点字面量转RIGHT(db2 substr起点须>=1,负起点报SQL0138);
+			// 三参负起点走下方守卫仍为响亮报错,不静默错值
+			// 起点0已由入口统一归一为1(见wrap开头),DB2不会再收到0
+			String start = args[1].trim();
+			if (args.length == 2 && start.startsWith("-") && start.substring(1).matches("\\d+")) {
+				// update 2026-10-9 同pg系:|n|超串长时mysql返回空串,RIGHT短串返回整串须守卫
+				String n = start.substring(1);
+				return "case when length(" + args[0] + ")>=" + n + " then RIGHT(" + args[0] + "," + n + ") else '' end";
+			}
 			// update 2026-9-15 db2的substr长度越界直接报SQL0138(真库实测:substr('abcdef',3,100)、
 			// substr('abcdef',10,1)均报错;长度0合法),与mysql/oracle的越界截断''语义不兼容;
 			// 三参用CASE守卫长度(起点越界取0长度,否则取min(长度,剩余长度)),两参同理补长度守卫
@@ -71,7 +106,41 @@ public class SubStr extends IFunction {
 				|| dialect == DBType.STARROCKS) {
 			return wrapArgs("substr", args);
 		}
-		// 表示不做修改
+		// update 2026-10-4 表示不做修改
+		// hana的substr负起点为pg语义(真库实测substr('abcdef',-2)='abcdef'
+		// 返回整串、substr('abcdef',-2,1)='a',与mysql取末n位/起点串长-n+1不兼容,静默错值),
+		// 负起点字面量转RIGHT/CASE守卫(形态与substring分支一致);非负起点的substr为hana原生
+		// (SUBSTRING别名),保持透传
+		if (dialect == DBType.HANA) {
+			String start = args[1].trim();
+			if (start.startsWith("-") && start.substring(1).matches("\\d+")) {
+				String n = start.substring(1);
+				// update 2026-10-9 同pg系:|n|超串长时mysql返回空串,守卫短串分支
+				if (args.length == 2) {
+					return "case when length(" + args[0] + ")>=" + n + " then RIGHT(" + args[0] + "," + n
+							+ ") else '' end";
+				}
+				return "case when length(" + args[0] + ")<" + n + " then '' else substring(" + args[0] + ",length("
+						+ args[0] + ")-" + n + "+1," + args[2] + ") end";
+			}
+			// update 2026-10-11 hana原生形态为substr/substring,substring拼写经wrapArgs换名为substr
+			if (zeroStart || !"substr".equals(functionName.toLowerCase(java.util.Locale.ROOT))) {
+				return wrapArgs("substr", args);
+			}
+			return super.IGNORE;
+		}
+		// update 2026-10-20 sqlite原生substr无substring形态,非substr拼写统一换名为substr
+		// (负起点/三参语义与mysql一致)
+		if (dialect == DBType.SQLITE) {
+			if (zeroStart || !"substr".equals(functionName.toLowerCase(java.util.Locale.ROOT))) {
+				return wrapArgs("substr", args);
+			}
+			return super.IGNORE;
+		}
+		// 其余原生支持substr的方言(ch等):起点0归一后必须回写SQL(直接IGNORE会丢弃args修改)
+		if (zeroStart) {
+			return wrapArgs(functionName, args);
+		}
 		return super.IGNORE;
 	}
 

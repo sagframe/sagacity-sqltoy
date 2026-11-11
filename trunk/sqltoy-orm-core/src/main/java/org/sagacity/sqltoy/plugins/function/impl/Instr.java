@@ -49,9 +49,29 @@ public class Instr extends IFunction {
 		String[] realArgs;
 		String funLow = functionName.toLowerCase(Locale.ROOT);
 		if ("position".equals(funLow)) {
-			realArgs = args[0].split("(?i)\\sin\\s");
+			// position(needle in haystack):按引号/括号感知定位第一个顶层" in ",
+			// 规避字面量或子表达式内的" in "把参数切坏
+			realArgs = splitPositionArgs(args[0]);
+			if (realArgs == null) {
+				return super.IGNORE;
+			}
 		} else {
 			realArgs = args;
+		}
+		// update 2026-10-20 四参 instr(str,sub,pos,occurrence) 分三类处理:
+		// ①原生四参库(oracle/dm/db2/h2/hana)透传,由下方既有分支处理;
+		// ②有 REGEXP_INSTR
+		// 的库直接套用(sqlserver2025/mysql8+/oceanbase/pg15+/opengauss/gaussdb),
+		// 注意第二参按目标库正则表达式解释;
+		// ③其余无简单四参等价物的库(mysql57/tidb/doris/starrocks/pg14/sqlite/clickhouse/kingbase等)
+		// 原样输出,交目标库响亮报错,不静默错值
+		if ("instr".equals(funLow) && realArgs.length == 4) {
+			if (dialect == DBType.SQLSERVER || dialect == DBType.MYSQL || dialect == DBType.OCEANBASE) {
+				return "REGEXP_INSTR(" + realArgs[0] + "," + realArgs[1] + "," + realArgs[2] + "," + realArgs[3] + ")";
+			}
+			if (dialect == DBType.POSTGRESQL || dialect == DBType.OPENGAUSS || dialect == DBType.GAUSSDB) {
+				return "regexp_instr(" + realArgs[0] + "," + realArgs[1] + "," + realArgs[2] + "," + realArgs[3] + ")";
+			}
 		}
 		StringBuilder result = new StringBuilder();
 		if (dialect == DBType.SQLSERVER) {
@@ -155,13 +175,15 @@ public class Instr extends IFunction {
 						+ ")+(" + realArgs[2] + ")-1 end)";
 			}
 		}
-		// update 2026-9-11 clickhouse:无instr函数,position(haystack,needle)逗号形态且参数序
-		// 与instr(str,substr)一致;3/4参的出现次数语义CH无对应,原样保留交目标库响亮报错
-		// update 2026-9-15 补charindex写法:charindex原生参数序(sub,str)与CH的position
-		// (haystack,needle)相反,须对调(真库实测未对调时恒为0)
+		// update 2026-9-15
+		// clickhouse:无instr函数,position(haystack,needle)逗号形态且参数序与instr(str,substr)一致;
+		// 3/4参的出现次数语义CH无对应,原样保留交目标库响亮报错。
+		// 补charindex写法:charindex原生参数序(sub,str)与CH的position(haystack,needle)相反,
+		// 须对调(真库实测未对调时恒为0)
 		if (dialect == DBType.CLICKHOUSE) {
 			if ("position".equals(funLow)) {
-				return super.IGNORE;
+				// CH的position为position(haystack,needle)逗号形态,不支持 position(sub in str)
+				return "position(" + realArgs[1] + "," + realArgs[0] + ")";
 			}
 			if (realArgs.length == 2) {
 				if ("charindex".equals(funLow)) {
@@ -210,5 +232,63 @@ public class Instr extends IFunction {
 			return super.IGNORE;
 		}
 		return super.IGNORE;
+	}
+
+	/**
+	 * @description 按引号/括号感知切分position(needle in haystack):只认第一个顶层" in ",
+	 *              字面量或子表达式内的" in "不参与切分
+	 * @param arg position括号内的参数原文
+	 * @return [needle,haystack],无法切分返回null
+	 */
+	private static String[] splitPositionArgs(String arg) {
+		if (arg == null) {
+			return null;
+		}
+		int depth = 0;
+		char quote = 0;
+		for (int i = 0; i < arg.length(); i++) {
+			char c = arg.charAt(i);
+			if (quote != 0) {
+				if (c == quote) {
+					// 双写引号为字面量内的转义,跳过
+					if (i + 1 < arg.length() && arg.charAt(i + 1) == quote) {
+						i++;
+					} else {
+						quote = 0;
+					}
+				}
+				continue;
+			}
+			if (c == '\'' || c == '"') {
+				quote = c;
+				continue;
+			}
+			if (c == '(') {
+				depth++;
+				continue;
+			}
+			if (c == ')') {
+				if (depth > 0) {
+					depth--;
+				}
+				continue;
+			}
+			if (depth == 0 && Character.isWhitespace(c)) {
+				int j = i;
+				while (j < arg.length() && Character.isWhitespace(arg.charAt(j))) {
+					j++;
+				}
+				if (j + 2 < arg.length() && (arg.charAt(j) == 'i' || arg.charAt(j) == 'I')
+						&& (arg.charAt(j + 1) == 'n' || arg.charAt(j + 1) == 'N')
+						&& Character.isWhitespace(arg.charAt(j + 2))) {
+					String left = arg.substring(0, i).trim();
+					String right = arg.substring(j + 2).trim();
+					if (!left.isEmpty() && !right.isEmpty()) {
+						return new String[] { left, right };
+					}
+				}
+			}
+		}
+		return null;
 	}
 }
