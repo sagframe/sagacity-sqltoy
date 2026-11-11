@@ -11,6 +11,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.dialect.impl.MySqlDialect;
+import org.sagacity.sqltoy.model.DBProfile;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.DateUtil;
@@ -77,7 +78,9 @@ public class MySqlDialectTest {
 		MySqlDialect dialect = new MySqlDialect();
 		try {
 			Long count = dialect.getCountBySql(null, null, query.toString(), paramValues, false,
-					new QueryExecutorExtend(), conn, DBType.MYSQL, "mysql");
+					new QueryExecutorExtend(), conn,
+					new DBProfile("jdbc:mysql://192.168.56.109:3306/vxiplatform", "mysql", DBType.MYSQL, "MySQL", 8,
+							null, null, true));
 			System.err.println(count);
 		} catch (Exception e) {
 			e.printStackTrace();

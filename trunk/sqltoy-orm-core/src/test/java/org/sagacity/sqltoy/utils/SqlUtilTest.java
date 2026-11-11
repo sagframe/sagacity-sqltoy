@@ -17,6 +17,9 @@ public class SqlUtilTest {
 
 	@Test
 	public void testConvertFieldsToCols() {
+		// 显式清空保留字集合建立前置条件:集合为全局静态且put为累加合并,
+		// 其他测试类(如ReservedWordsUtilsTest)put的词会残留,导致convertWord对命中列默认[]包裹
+		ReservedWordsUtil.clear();
 		String sql = "staffName,`sexType`,name,bizStaffName from table where #[t.staffName like ?] and sexType=:sexType";
 		EntityMeta entityMeta = new EntityMeta();
 		entityMeta.setTableName("staff_info");
@@ -95,8 +98,6 @@ public class SqlUtilTest {
 	@Test
 	public void testValidateSqlInArg() {
 		String argValue = "'alter1 table'";
-		boolean hasSqlKeyWord = StringUtil.matches(" " + argValue, SqlUtil.SQL_INJECT_PATTERN);
-		System.err.println(hasSqlKeyWord);
 		System.err.println(SqlUtil.validateInArg(argValue));
 	}
 
@@ -130,48 +131,21 @@ public class SqlUtilTest {
 
 	@Test
 	public void testUniformMarks() {
-		String sql = """
-				select *
-				from sqltoy_order_info soi
-				where 1=1
-				-- @fast_start
-				(
-					select * from table1
-				)
-				-- @fast_end
-				and status=1
-								""";
+		String sql = "select *\nfrom sqltoy_order_info soi\nwhere 1=1\n-- @fast_start\n(\n\tselect * from table1\n)\n-- @fast_end\nand status=1\n";
 		sql = SqlUtil.uniformFastMarks(sql);
 		System.err.println(sql);
 	}
 
 	@Test
 	public void testUniformMarks1() {
-		String sql = """
-				select *
-				from sqltoy_order_info soi
-				where 1=1
-				/*@fast_start*/(
-					select * from table1
-				)/*@fast_end*/
-				and status=1
-								""";
+		String sql = "select *\nfrom sqltoy_order_info soi\nwhere 1=1\n/*@fast_start*/(\n\tselect * from table1\n)/*@fast_end*/\nand status=1\n";
 		sql = SqlUtil.uniformFastMarks(sql);
 		System.err.println(sql);
 	}
 
 	@Test
 	public void testUniformMarksql2() {
-		String sql = """
-				select *
-				from sqltoy_order_info soi
-				where 1=1
-				-- @fast_start
-				(
-					select * from table1
-				)/*@fast_end*/
-				and status=1
-								""";
+		String sql = "select *\nfrom sqltoy_order_info soi\nwhere 1=1\n-- @fast_start\n(\n\tselect * from table1\n)/*@fast_end*/\nand status=1\n";
 		sql = SqlUtil.uniformFastMarks(sql);
 		System.err.println(sql);
 	}
@@ -294,14 +268,9 @@ public class SqlUtilTest {
 	public void testClearDefaultValue() {
 		String[] tests = { "3.14::real", "3.14::double precision", "name::varchar(50)", "price::numeric(10,2)", // 带逗号
 				"age::int", "col::char(10)", "create_time::timestamp(6)", "now()::text", // 不会误删函数括号
-				"id::bigint", "3.14::double precision(10,2)", "3.14::double precision(10,2) as ", """
-								CASE order_status
-						   WHEN 0 THEN '待支付'::text
-						   WHEN 1 THEN '已支付'::text
-						   WHEN 2 THEN '已完成'::text
-						   ELSE '取消'::text
-						END
-								""", "(a+b)::numberic(10,2)", "NULL::text" };
+				"id::bigint", "3.14::double precision(10,2)", "3.14::double precision(10,2) as ",
+				"CASE order_status\n   WHEN 0 THEN '待支付'::text\n   WHEN 1 THEN '已支付'::text\n   WHEN 2 THEN '已完成'::text\n   ELSE '取消'::text\nEND\n",
+				"(a+b)::numberic(10,2)", "NULL::text" };
 		for (String t : tests) {
 			System.out.println(t + "  ->  [" + SqlUtil.clearDefaultValue(t) + "]");
 		}

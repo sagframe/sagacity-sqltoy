@@ -26,7 +26,6 @@ import org.sagacity.sqltoy.demo.domain.DeviceOrderVO;
 import org.sagacity.sqltoy.demo.domain.StaffInfo;
 import org.sagacity.sqltoy.demo.vo.DataRange;
 import org.sagacity.sqltoy.demo.vo.StaffInfoVO;
-import org.sagacity.sqltoy.demo.vo.Student;
 import org.sagacity.sqltoy.demo.vo.TypeShowCase;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.model.IgnoreCaseLinkedMap;
@@ -429,10 +428,8 @@ public class BeanUtilTest {
 	@Test
 	public void testSetValue() {
 		FieldSecureConfig config = new FieldSecureConfig("", null, null, null, 4, 10, 5);
-		if (!SecureType.ENCRYPT.equals(config.getSecureType())) {
-			System.err.println("[" + config.getSecureType() + "]");
-		}
-		if (!config.getSecureType().equals(SecureType.ENCRYPT)) {
+		// secureType为null时getSecureType()返回null,判空后输出(原写法直接equals会NPE)
+		if (config.getSecureType() == null || !SecureType.ENCRYPT.equals(config.getSecureType())) {
 			System.err.println("[" + config.getSecureType() + "]");
 		}
 	}
@@ -474,20 +471,6 @@ public class BeanUtilTest {
 		System.err.println(SqlExecuteStat.fitSqlParams(sql,
 				new Object[] { LocalDateTime.now().plusDays(-10), LocalDateTime.now() }, DBType.ORACLE));
 	}
-
-	@Test
-	public void testRecord() {
-		Student student = new Student("S0001", "chenrenfei", 24, LocalDate.now());
-		System.err.println(JSON.toJSONString(BeanUtil.reflectBeanToAry(student, "age", "id")));
-		List<Object[]> dataSet = new ArrayList();
-		dataSet.add(new Object[] { "S0001", "chrenfei", 32, LocalDate.now() });
-		dataSet.add(new Object[] { "S0002", "zhangsan", 31, LocalDate.now() });
-		System.err.println(JSON.toJSONString(BeanUtil.reflectListToBean(null, dataSet,
-				new String[] { "id", "name", "age", "birthDay", "tel" }, null, Student.class)));
-	}
-
-
-
 
 	// ==================== 并发重构方法测试 ====================
 

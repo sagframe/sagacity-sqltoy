@@ -211,10 +211,7 @@ public class SqlConfigParseUtilsTest {
 
 	@Test
 	public void testSecureLoopTsName() throws Exception {
-		String sql = """
-				selet * from table t1
-				where 1=1 #[(@secure-loop(:nameList ,' t1.name like :nameList[i] ',' or '))]
-				""";
+		String sql = "selet * from table t1\nwhere 1=1 #[(@secure-loop(:nameList ,' t1.name like :nameList[i] ',' or '))]\n";
 		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "nameList" },
 				new Object[] { new String[] { "张三", "李四", "王二" } });
 		System.err.println(result.getSql());
@@ -223,10 +220,7 @@ public class SqlConfigParseUtilsTest {
 
 	@Test
 	public void testSecureLoopTsName1() throws Exception {
-		String sql = """
-				selet * from table t1
-				where 1=1 #[@secure-loop(:nameList ,' t1.name like @value(:nameList[i]) and t.status=:status',' or ')]
-				""";
+		String sql = "selet * from table t1\nwhere 1=1 #[@secure-loop(:nameList ,' t1.name like @value(:nameList[i]) and t.status=:status',' or ')]\n";
 		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "nameList", "status" },
 				new Object[] { new String[] { "张三", "李四", "王二" }, 1 });
 		System.err.println(result.getSql());
@@ -426,12 +420,7 @@ public class SqlConfigParseUtilsTest {
 
 	@Test
 	public void testIfElse() throws Exception {
-		String sql = """
-				select * from table where name=1
-				#[@if(:flag==1) #[and status=:status] #[and saleType is not :saleType] ]
-				#[@elseif(:flag==2) and name like :name]
-				#[@else and orderType=:orderType]
-				""";
+		String sql = "select * from table where name=1\n#[@if(:flag==1) #[and status=:status] #[and saleType is not :saleType] ]\n#[@elseif(:flag==2) and name like :name]\n#[@else and orderType=:orderType]\n";
 		SqlToyResult result = SqlConfigParseUtils.processSql(SqlUtil.clearMark(sql),
 				new String[] { "flag", "status", "name", "orderType", "saleType" },
 				new Object[] { 2, 1, "陈", "SALE", null });
@@ -440,16 +429,7 @@ public class SqlConfigParseUtilsTest {
 
 	@Test
 	public void testInnerIfElse() throws Exception {
-		String sql = """
-				select * from table where name=1
-				#[@if(:flag==1)
-				    #[@if(:operateType==1) and status=:status]
-				    #[@elseif(:operateType==2) and saleType is not :saleType]
-				    #[@else and saleType is :saleType]
-				]
-				#[@elseif(:flag==2) and name like :name]
-				#[@else and orderType=:orderType]
-				""";
+		String sql = "select * from table where name=1\n#[@if(:flag==1)\n    #[@if(:operateType==1) and status=:status]\n    #[@elseif(:operateType==2) and saleType is not :saleType]\n    #[@else and saleType is :saleType]\n]\n#[@elseif(:flag==2) and name like :name]\n#[@else and orderType=:orderType]\n";
 		SqlToyResult result = SqlConfigParseUtils.processSql(SqlUtil.clearMark(sql),
 				new String[] { "flag", "status", "name", "orderType", "saleType", "operateType" },
 				new Object[] { 1, 1, "张", "SALE", null, 1 });
@@ -458,16 +438,7 @@ public class SqlConfigParseUtilsTest {
 
 	@Test
 	public void testInnerIfElseNUll() throws Exception {
-		String sql = """
-				select * from table where name=1
-				#[@if(:flag==1)
-				    #[@if(:operateType==1) and status=:status]
-				    #[@elseif(:operateType==2) and saleType is not :saleType]
-				    #[@else and saleType is :saleType]
-				]
-				#[@elseif(:flag==2) and name like :name]
-				#[@else and orderType=:orderType]
-				""";
+		String sql = "select * from table where name=1\n#[@if(:flag==1)\n    #[@if(:operateType==1) and status=:status]\n    #[@elseif(:operateType==2) and saleType is not :saleType]\n    #[@else and saleType is :saleType]\n]\n#[@elseif(:flag==2) and name like :name]\n#[@else and orderType=:orderType]\n";
 		SqlToyResult result = SqlConfigParseUtils.processSql(SqlUtil.clearMark(sql),
 				new String[] { "flag", "status", "name", "orderType", "saleType", "operateType" },
 				new Object[] { 1, 1, "张", "SALE", null, 1 });
@@ -476,17 +447,7 @@ public class SqlConfigParseUtilsTest {
 
 	@Test
 	public void testMultiInnerIfElse() throws Exception {
-		String sql = """
-				select * from table where 1=1
-				#[@if(:flag==1) and status=:status
-				    #[@if(:operateType==2) and saleType is not :saleType]
-				    #[@else and saleType is :saleType]
-				]
-				#[@elseif(:flag==2) and name like :name]
-				#[@else and orderType=:orderType]
-				#[@if(:tenantId==4) and tenant=1]
-				#[@elseif(:tenantId==3) and tenant=3]
-				""";
+		String sql = "select * from table where 1=1\n#[@if(:flag==1) and status=:status\n    #[@if(:operateType==2) and saleType is not :saleType]\n    #[@else and saleType is :saleType]\n]\n#[@elseif(:flag==2) and name like :name]\n#[@else and orderType=:orderType]\n#[@if(:tenantId==4) and tenant=1]\n#[@elseif(:tenantId==3) and tenant=3]\n";
 		SqlToyResult result = SqlConfigParseUtils.processSql(SqlUtil.clearMark(sql),
 				new String[] { "flag", "status", "name", "orderType", "saleType", "operateType", "tenantId" },
 				new Object[] { 1, 1, "张", "SALE", null, 4, 3 });
@@ -495,18 +456,7 @@ public class SqlConfigParseUtilsTest {
 
 	@Test
 	public void testMultiInnerIfElse1() throws Exception {
-		String sql = """
-				 SELECT t0.*, 'Biz' MODEL_TYPE
-				 FROM table_0 t0
-				 WHERE EXISTS(
-				   SELECT * FROM table_1 t1
-				   LEFT JOIN table_2 t2 ON t2.PK_ID = t1.REF_RULE_API_ID
-				   WHERE t1.REF_DEPEND_ID = t0.PK_ID
-				     AND t1.DEPEND_TYPE='Biz'
-				     #[@if(:refRuleApiId ==1) AND t1.REF_RULE_API_ID IN(:refRuleApiIds)]
-				     #[@else AND t1.REF_RULE_API_ID = :refRuleApiId]
-				 )
-				""";
+		String sql = " SELECT t0.*, 'Biz' MODEL_TYPE\n FROM table_0 t0\n WHERE EXISTS(\n   SELECT * FROM table_1 t1\n   LEFT JOIN table_2 t2 ON t2.PK_ID = t1.REF_RULE_API_ID\n   WHERE t1.REF_DEPEND_ID = t0.PK_ID\n     AND t1.DEPEND_TYPE='Biz'\n     #[@if(:refRuleApiId ==1) AND t1.REF_RULE_API_ID IN(:refRuleApiIds)]\n     #[@else AND t1.REF_RULE_API_ID = :refRuleApiId]\n )\n";
 		Map<String, Object> paramMap = new HashMap<String, Object>();
 		// paramMap.put("refRuleApiIds", new String[] {"1","2"});
 		SqlToyResult result = SqlConfigParseUtils.processSql(sql, paramMap);
@@ -515,21 +465,7 @@ public class SqlConfigParseUtilsTest {
 
 	@Test
 	public void testReversIndex() throws Exception {
-		String sql = """
-				select * from table where name=1
-				#[@if(:flag==1)
-				    and status=1
-
-				    -- 下面的都不成立，或参数都为null,前面的and status=1 会留下
-
-				    #[@if(:operateType==1) and status=:status]
-				    #[@elseif(:operateType==2) and saleType is not :saleType]
-				    --- saleType 为null，去除
-				    #[@else and saleType=:saleType]
-				]
-				#[@elseif(:flag==2) and name like :name]
-				#[@else and orderType=:orderType]
-				""";
+		String sql = "select * from table where name=1\n#[@if(:flag==1)\n    and status=1\n\n    -- 下面的都不成立，或参数都为null,前面的and status=1 会留下\n\n    #[@if(:operateType==1) and status=:status]\n    #[@elseif(:operateType==2) and saleType is not :saleType]\n    --- saleType 为null，去除\n    #[@else and saleType=:saleType]\n]\n#[@elseif(:flag==2) and name like :name]\n#[@else and orderType=:orderType]\n";
 		sql = SqlUtil.clearMark(sql);
 		System.err.println("#[@if(:flag==1) index=" + sql.indexOf("#[@if(:flag==1)"));
 		System.err.println("A=" + sql.lastIndexOf("A"));
@@ -542,21 +478,7 @@ public class SqlConfigParseUtilsTest {
 
 	@Test
 	public void testIfElse1() throws Exception {
-		String sql = """
-				select * from table where name=1
-				-- 非if逻辑场景下,内部动态参数为null，最终为and status=1 也要自动剔除
-				#[and status=1 #[and type=:type] #[and orderName like :orderName] ]
-
-
-				-- flag==1成立，因为内容存在动态参数，所以继续变成#[and status=:status]
-				#[@if(:flag==1) and status=:status]
-
-				-- 成立,因为and status=1 没有动态参数,直接拼接:  and status=1
-				#[@if(:flag==1) and status=1 ]
-
-				#[@else and status in (1,2)]
-
-				""";
+		String sql = "select * from table where name=1\n-- 非if逻辑场景下,内部动态参数为null，最终为and status=1 也要自动剔除\n#[and status=1 #[and type=:type] #[and orderName like :orderName] ]\n\n\n-- flag==1成立，因为内容存在动态参数，所以继续变成#[and status=:status]\n#[@if(:flag==1) and status=:status]\n\n-- 成立,因为and status=1 没有动态参数,直接拼接:  and status=1\n#[@if(:flag==1) and status=1 ]\n\n#[@else and status in (1,2)]\n\n";
 		SqlToyResult result = SqlConfigParseUtils.processSql(SqlUtil.clearMark(sql),
 				new String[] { "flag", "status", "type" }, new Object[] { 1, null, null });
 		System.err.println(JSON.toJSONString(result));
@@ -687,9 +609,9 @@ public class SqlConfigParseUtilsTest {
 		assertEquals("%张\\_三%", result.getParamsValue()[0],
 				"不含%的值应包裹%并转义_");
 
-		// 第二个like值: "A%b_c" → "%A\%b\_c%" (%不在首尾,视为普通字符转义,整体包裹%)
-		assertEquals("%A\\%b\\_c%", result.getParamsValue()[1],
-				"中间的%应转义,首尾无%时应包裹%");
+		// 第二个like值: "A%b_c" → "A%b\_c" (含%时%保留为通配符,仅转义_)
+		assertEquals("A%b\\_c", result.getParamsValue()[1],
+				"含%时%保留为通配符,仅转义_");
 	}
 
 	@Test
