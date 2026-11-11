@@ -5,6 +5,7 @@ import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.plugins.ddl.DDLUtils;
 import org.sagacity.sqltoy.plugins.ddl.DialectDDLGenerator;
+import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
@@ -49,12 +50,24 @@ public abstract class AbstractDorisStarRocksDDLGenerator implements DialectDDLGe
 			return null;
 		}
 		char quote = commentQuote();
+		MppTableMeta mpp = tableMeta.getMppTableMeta();
+		String keyModel = (mpp != null && StringUtil.isNotBlank(mpp.getKeyModel()))
+				? mpp.getKeyModel().toUpperCase(java.util.Locale.ROOT) : null;
+		String[] keyColumns = (mpp != null && mpp.getOrderBy() != null && mpp.getOrderBy().length > 0)
+				? mpp.getOrderBy() : pkColumns(tableMeta);
+		if (keyModel == null && keyColumns != null) {
+			keyModel = (dbType == DBType.DORIS) ? "UNIQUE" : "PRIMARY";
+		}
+		// update 2026-11-11 Doris/StarRocks 均要求键列是 schema 的有序前缀(真库实测非前缀报
+		// "Key columns should be a ordered prefix"/"must be the first few columns"),
+		// 实体 @Id 列若未声明在首位,生成 DDL 会被拒。这里把键列按键序前置,其余列保持原序
+		java.util.List<ColumnMeta> orderedColumns = orderKeyColumnsFirst(tableMeta.getColumns(), keyColumns);
 		StringBuilder tableSql = new StringBuilder();
 		String tableName = StringUtil.toLowerOrUpper(tableMeta.getTableName(), upperOrLower);
 		tableSql.append("CREATE TABLE ").append(tableName).append(NEWLINE);
 		tableSql.append("(").append(NEWLINE);
 		int index = 0;
-		for (ColumnMeta colMeta : tableMeta.getColumns()) {
+		for (ColumnMeta colMeta : orderedColumns) {
 			if (index > 0) {
 				tableSql.append(",").append(NEWLINE);
 			}
@@ -83,24 +96,17 @@ public abstract class AbstractDorisStarRocksDDLGenerator implements DialectDDLGe
 			}
 			index++;
 		}
-		// 主键
-		// OLAP键模型(UNIQUE/PRIMARY/DUPLICATE KEY)即表的主键定义,内联PRIMARY KEY会与之重复导致建表失败
-		if (tableMeta.getMppTableMeta() == null || StringUtil.isBlank(tableMeta.getMppTableMeta().getKeyModel())) {
-			DDLUtils.wrapTablePrimaryKeys(tableMeta, upperOrLower, dbType, tableSql);
-		}
+		// 主键:键模型在列循环前已计算(列须按键序前置),此处仅收尾括号
 		tableSql.append(NEWLINE);
 		tableSql.append(")");
-		MppTableMeta mpp = tableMeta.getMppTableMeta();
-		if (mpp != null) {
-			// ENGINE=OLAP
-			if (StringUtil.isNotBlank(mpp.getEngine())) {
-				tableSql.append(NEWLINE).append("ENGINE = ").append(mpp.getEngine());
-			}
-			// 键模型(UNIQUE/PRIMARY/DUPLICATE/AGGREGATE KEY)
-			if (StringUtil.isNotBlank(mpp.getKeyModel()) && mpp.getOrderBy() != null && mpp.getOrderBy().length > 0) {
-				tableSql.append(NEWLINE).append(mpp.getKeyModel().toUpperCase()).append(" KEY(")
-						.append(joinColumns(mpp.getOrderBy(), upperOrLower)).append(")");
-			}
+		// ENGINE=OLAP
+		if (mpp != null && StringUtil.isNotBlank(mpp.getEngine())) {
+			tableSql.append(NEWLINE).append("ENGINE = ").append(mpp.getEngine());
+		}
+		// 键模型(UNIQUE/PRIMARY/DUPLICATE/AGGREGATE KEY)
+		if (keyModel != null && keyColumns != null) {
+			tableSql.append(NEWLINE).append(keyModel).append(" KEY(").append(joinColumns(keyColumns, upperOrLower))
+					.append(")");
 		}
 		// 表注释(Doris/SR语法:COMMENT须在partition子句之前)
 		if (StringUtil.isNotBlank(tableMeta.getRemarks())) {
@@ -110,10 +116,19 @@ public abstract class AbstractDorisStarRocksDDLGenerator implements DialectDDLGe
 		DDLUtils.wrapTablePartition(tableMeta, upperOrLower, dbType, tableSql);
 
 		// DISTRIBUTED BY HASH(...) [BUCKETS n]
-		if (mpp != null && mpp.getDistributedBy() != null && mpp.getDistributedBy().length > 0) {
-			tableSql.append(NEWLINE).append("DISTRIBUTED BY HASH(")
-					.append(joinColumns(mpp.getDistributedBy(), upperOrLower)).append(")");
-			if (mpp.getBuckets() > 0) {
+		// update 2026-11-10 UNIQUE/AGGREGATE键模型要求hash分布(默认随机分布真库实测报错:Doris
+		// "should not contain random distribution desc"、StarRocks "not support default distribution"),
+		// 未显式指定distribution时按键列hash;DUPLICATE与StarRocks的PRIMARY允许默认分布
+		String[] distributedBy = (mpp != null && mpp.getDistributedBy() != null && mpp.getDistributedBy().length > 0)
+				? mpp.getDistributedBy() : null;
+		if (distributedBy == null && keyModel != null && keyColumns != null && !"DUPLICATE".equals(keyModel)
+				&& !(dbType == DBType.STARROCKS && "PRIMARY".equals(keyModel))) {
+			distributedBy = keyColumns;
+		}
+		if (distributedBy != null) {
+			tableSql.append(NEWLINE).append("DISTRIBUTED BY HASH(").append(joinColumns(distributedBy, upperOrLower))
+					.append(")");
+			if (mpp != null && mpp.getBuckets() > 0) {
 				tableSql.append(" BUCKETS ").append(mpp.getBuckets());
 			}
 		}
@@ -134,6 +149,49 @@ public abstract class AbstractDorisStarRocksDDLGenerator implements DialectDDLGe
 			tableSql.append(NEWLINE).append(")");
 		}
 		return tableSql.toString();
+	}
+
+	/**
+	 * @param tableMeta 表元数据
+	 * @return 主键列名数组;无主键返回null
+	 */
+	private String[] pkColumns(TableMeta tableMeta) {
+		java.util.List<String> pks = new java.util.ArrayList<>();
+		for (ColumnMeta colMeta : tableMeta.getColumns()) {
+			if (colMeta.isPK()) {
+				pks.add(colMeta.getColName());
+			}
+		}
+		return pks.isEmpty() ? null : pks.toArray(new String[0]);
+	}
+
+	/**
+	 * @description 把键列按 keyColumns 的顺序前置为 schema 前缀,其余列保持原始相对顺序;
+	 *              keyColumns 中在表内不存在的列(罕见误配)忽略,无键列时原样返回
+	 * @param columns    全部列(声明序)
+	 * @param keyColumns 有效键列
+	 * @return 重排后的列
+	 */
+	private java.util.List<ColumnMeta> orderKeyColumnsFirst(java.util.List<ColumnMeta> columns, String[] keyColumns) {
+		java.util.List<ColumnMeta> result = new java.util.ArrayList<>();
+		if (keyColumns != null) {
+			for (String key : keyColumns) {
+				for (ColumnMeta colMeta : columns) {
+					// update 2026-11-11 大小写不敏感:注解orderBy是用户原文,列名是实体映射(驼峰转下划线),
+					// 大小写错配时键列漏前置会被Doris/SR以"非有序前缀"拒表
+					if (colMeta.getColName().equalsIgnoreCase(key) && !result.contains(colMeta)) {
+						result.add(colMeta);
+						break;
+					}
+				}
+			}
+		}
+		for (ColumnMeta colMeta : columns) {
+			if (!result.contains(colMeta)) {
+				result.add(colMeta);
+			}
+		}
+		return result;
 	}
 
 	private String joinColumns(String[] columns, String upperOrLower) {
