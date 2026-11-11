@@ -19,6 +19,7 @@ import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.plugins.id.macro.AbstractMacro;
 import org.sagacity.sqltoy.plugins.id.macro.MacroUtils;
 import org.sagacity.sqltoy.plugins.id.macro.impl.Include;
+import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils.Dialect;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
@@ -85,7 +86,10 @@ public class SqlScriptLoader {
 	/**
 	 * 是否初始化过
 	 */
-	private boolean initialized = false;
+	// update 2026-10-22 volatile+initialize/destroy加synchronized:规避多线程并发触发初始化时
+	// 半初始化状态的可见性问题(标志写入与sqlCache发布之间无happens-before,另一线程可能看到initialized=true
+	// 但sqlCache条目不完整)
+	private volatile boolean initialized = false;
 
 	/**
 	 * sql文件变更监测器
@@ -100,7 +104,7 @@ public class SqlScriptLoader {
 	/**
 	 * 是否将sqlResourcesDir下的sql文件解析成具体的文件resourceList
 	 */
-	private static boolean SQLRESOURCESDIRTOLIST = false;
+	private static volatile boolean SQLRESOURCESDIRTOLIST = false;
 
 	/**
 	 * 文件最后修改时间
@@ -142,7 +146,7 @@ public class SqlScriptLoader {
 	 * @param breakWhenSqlRepeat
 	 * @throws Exception
 	 */
-	public void initialize(boolean debug, int delayCheckSeconds, Integer scriptCheckIntervalSeconds,
+	public synchronized void initialize(boolean debug, int delayCheckSeconds, Integer scriptCheckIntervalSeconds,
 			boolean breakWhenSqlRepeat) throws Exception {
 		// 增加路径验证提示,最易配错导致无法加载sql文件
 		checkSqlResourcesDir(sqlResourcesDir);
@@ -394,8 +398,11 @@ public class SqlScriptLoader {
 				}
 				// 限制数量的原因是存在部分代码中的sql会拼接条件参数值，导致不同的sql无限增加
 				// 非@include(:paramName)模式才可以缓存
-				if (!isParamInclude && codeSqlCache.size() < SqlToyConstants.getMaxCodeSqlCount()) {
-					codeSqlCache.put(codeSqlKey, result);
+				// update 2026-11-10 超限改putBounded回收约1/4后继续写入:原size()<max守卫在写满后
+				// 永久停缓存,动态拼接SQL每次全量重新parseSqlToyConfig(性能断崖);
+				// 配置<=0保留旧语义(关闭缓存),避免putBounded"<=0不限制"造成无界增长
+				if (!isParamInclude && SqlToyConstants.getMaxCodeSqlCount() > 0) {
+					CollectionUtil.putBounded(codeSqlCache, codeSqlKey, result, SqlToyConstants.getMaxCodeSqlCount());
 				}
 			}
 		}
@@ -553,7 +560,7 @@ public class SqlScriptLoader {
 	/**
 	 * 进程销毁
 	 */
-	public void destroy() {
+	public synchronized void destroy() {
 		try {
 			if (watcher != null && !watcher.isInterrupted()) {
 				watcher.interrupt();
