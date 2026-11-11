@@ -411,6 +411,9 @@ public class SqliteDialect implements Dialect {
 	}
 
 	private String getLockSql(String sql, Integer dbType, LockMode lockMode) {
-		return DefaultDialectUtils.getLockSql(sql, dbType, lockMode, 0, true, " for update SKIP LOCKED ", false);
+		// update 2026-11-10 sqlite 不支持行锁:任意 lockMode(UPGRADE/UPGRADE_NOWAIT/UPGRADE_SKIPLOCK)均降级为
+		// 无锁读,返回空串不报错——此前拼" for update SKIP LOCKED "产出非法SQL直接报错;
+		// sqlite单写者模型下锁谓词恒为假,乐观锁CAS由UPDATE...WHERE天然承担
+		return "";
 	}
 }

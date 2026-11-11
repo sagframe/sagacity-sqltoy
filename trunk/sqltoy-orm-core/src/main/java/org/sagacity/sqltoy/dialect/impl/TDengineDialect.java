@@ -35,6 +35,21 @@ public class TDengineDialect extends DefaultDialect {
 	 */
 	protected final Logger logger = LoggerFactory.getLogger(TDengineDialect.class);
 
+	/**
+	 * TDengine 无行级锁(实测 SELECT ... FOR UPDATE 报 syntax error near "for update", code 9728)。
+	 * 读操作忽略锁模式并告警,避免 DefaultDialect 拼出 " for update" 坏 SQL;时序库读取本就无需加锁。
+	 *
+	 * @param lockMode 调用方请求的锁模式(null 表示未请求锁)
+	 * @param operate  操作名(用于日志)
+	 * @return 恒为 null,即按无锁执行
+	 */
+	private LockMode ignoreLock(LockMode lockMode, String operate) {
+		if (lockMode != null) {
+			logger.warn("TDengine 不支持行级锁,{} 忽略 LockMode={}(时序库读取无需加锁)", operate, lockMode);
+		}
+		return null;
+	}
+
 	@Override
 	public boolean isUnique(SqlToyContext sqlToyContext, Serializable entity, String[] paramsNamed, Connection conn,
 			DBProfile profile, String tableName, final Integer queryTimeout) {
@@ -70,8 +85,9 @@ public class TDengineDialect extends DefaultDialect {
 	public QueryResult findBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, QueryExecutorExtend queryExecutorExtend, DecryptHandler decryptHandler,
 			Connection conn, LockMode lockMode, DBProfile profile, int fetchSize, int maxRows) throws Exception {
+		// TDengine 无行锁,忽略 lockMode 避免拼出 " for update" 坏 SQL
 		return super.findBySql(sqlToyContext, sqlToyConfig, sql, paramsValue, queryExecutorExtend, decryptHandler, conn,
-				lockMode, profile, fetchSize, maxRows);
+				ignoreLock(lockMode, "findBySql"), profile, fetchSize, maxRows);
 	}
 
 	@Override
@@ -84,16 +100,18 @@ public class TDengineDialect extends DefaultDialect {
 	public Serializable load(SqlToyContext sqlToyContext, Serializable entity, boolean onlySubTables,
 			List<Class> cascadeTypes, LockMode lockMode, int lockWaitTimeout, Connection conn, DBProfile profile,
 			String tableName, final Integer queryTimeout) throws Exception {
-		return super.load(sqlToyContext, entity, onlySubTables, cascadeTypes, lockMode, lockWaitTimeout, conn, profile,
-				tableName, queryTimeout);
+		// TDengine 无行锁,忽略 lockMode
+		return super.load(sqlToyContext, entity, onlySubTables, cascadeTypes, ignoreLock(lockMode, "load"),
+				lockWaitTimeout, conn, profile, tableName, queryTimeout);
 	}
 
 	@Override
 	public List<?> loadAll(SqlToyContext sqlToyContext, List<?> entities, boolean onlySubTables,
 			List<Class> cascadeTypes, LockMode lockMode, final int lockWaitTimeout, Connection conn, DBProfile profile,
 			String tableName, int fetchSize, int maxRows, final Integer queryTimeout) throws Exception {
-		return super.loadAll(sqlToyContext, entities, onlySubTables, cascadeTypes, lockMode, lockWaitTimeout, conn,
-				profile, tableName, fetchSize, maxRows, queryTimeout);
+		// TDengine 无行锁,忽略 lockMode
+		return super.loadAll(sqlToyContext, entities, onlySubTables, cascadeTypes, ignoreLock(lockMode, "loadAll"),
+				lockWaitTimeout, conn, profile, tableName, fetchSize, maxRows, queryTimeout);
 	}
 
 	@Override
