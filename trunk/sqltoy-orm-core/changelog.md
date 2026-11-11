@@ -1,4 +1,16 @@
-﻿# v5.2.9  2022-8-21
+﻿# v5.6.97.jre8 2026-11-11
+1、参照6.0分支(6.0.9/6.0.10)回移缺陷修复,不改变5.6用户使用行为,不引入6.0新特性(lambda体系/JsonProvider/JWT认证/新函数转换器/新方言等均未纳入):
+2、事务与连接安全:executeSql/insertReturnPrimaryKey的autoCommit恢复移入finally、手动提交场景失败补回滚(与batchUpdateByJdbc范式对齐,异常路径连接不再带被改写的提交方式归还池);findByJdbcQuery setter阶段异常关闭已创建statement;Execute链接autoCommit默认值由false改为null(不强制提交语义)
+3、线程安全与缓存:SqlScriptLoader的initialized/SQLRESOURCESDIRTOLIST标志volatile化、initialize/destroy方法synchronized;分页优化总数缓存键sqlId升级为sqlId@dialect(多数据源各方言count不串用);codeSqlCache超限改putBounded回收约1/4继续写入(原写满后永久停缓存);方法匹配缓存加10万上限;缓存键类名改Class对象身份(BeanUtil/MapperUtils,devtools/OSGi类重载场景旧缓存不自愈+类卸载回收,cascadeModels/dtoEntityMapperCache改ClassValue承载)
+4、工具类缺陷:BeanUtil convertType千分位分组逗号剥离(number-format产物"8,888.0000"映射数值属性报错)、primitive long精确解析(原经Double中转雪花ID>2^53静默失真)、科学计数/小数归一、byte[]属性String绑定显式UTF-8;SqlUtil.processResultSet裸List路径补ext列预分类归一(oracle JSON/VECTOR列getObject抛ORA-17004);gaussdb系Long[]数组绑定INTEGER→BIGINT;DataSourceUtils生成键列大小写补齐pg折叠家族;loadAllMapping级联装配O(n*m)改索引分组O(n+m);多列link列元数据提出行循环
+5、动态SQL解析:#[...]片段剔除后清理括号组内悬挂and/or连接符(如"and ( or t.b=:b )"残缺SQL);CTE物化hint按目标库保留/剔除(AS [NOT] MATERIALIZED仅PG系支持,其余库混入即报语法错,ext区域位置级剔除无正则启发式);清除保留字集合测试顺序依赖
+6、分页count与方言执行:count改写器守卫纳入minus/except/intersect集合运算(裸集合查询count(1)被塞进第一个分支致分页记录数静默失真);顶层group by+having子查询误判修复(括号深度扫描);sqlserver分页/top派生表包裹判定扩展为全部集合运算;ClickHouse/Impala的top/分页limit先包派生表再limit;DB2无FROM常量查询补SYSIBM.SYSDUMMY1;CrossDbAdapter自定义countSql改写前clone
+7、DDL生成器:DB2主键列显式NOT NULL(否则SQLCODE=-542);Doris/StarRocks类型映射(TIMESTAMP_WITH_TIMEZONE→TIMESTAMPTZ/DATETIME、TIMESTAMP→DATETIME、Types.DATE补TIDB转DATETIME);Doris/SR无@MppTable时按键模型收口(默认UNIQUE/PRIMARY KEY+键列hash分布)、键列按键序前置为schema有序前缀
+8、函数适配修正(仅既有转换器):ToChar/DateFormat/ToDate的java风格HH:mm归一、独立HH词边界归一、大写oracle形态YYYY/YY/DD/MI/SS、数值/日期模型判别精化、小写mm归位oracle月份、sqlserver的FORMAT引号归一与mm/mi歧义消解;pg系/HANA的to_date时间token改to_timestamp(时间被静默截断);Trim修饰符判定改掩码串(字面量内" from "误判丢原值)+trim(from x)省略字符形态标准组改单参trim;SubStr起点0统一归一为1+负起点字面量全族守卫(对齐mysql契约:|n|超串长返回空串);Instr的position参数引号感知切分+四参REGEXP_INSTR;GroupConcat支持within group(order by)/内嵌order by排序子句跨库渲染;DateDiff的oceanbase并入oracle分支;sqlite日期函数TEXT/INTEGER双形态运行时判别(原对TEXT列数值化致week族/unix_timestamp静默错值)
+9、锁语义降级:sqlite任意lockMode返回空串按普通读执行(原拼" for update SKIP LOCKED "产出非法SQL,乐观锁CAS由UPDATE...WHERE承担);TDengine忽略锁模式并告警(实测FOR UPDATE报syntax error)
+10、测试体系修复:测试源码文本块语法转JDK8字符串拼接(此前mvn test在JDK8下无法编译)、移除record特性测试、修正陈旧断言与错误导入(对齐6.0侧已修正断言:like转义/toCapitalMoney人行规范/H2保留字双引号);新增NestedGroupFormTest(6例)与SqlWithAnalysisMaterializedTest(15例)锁定回移行为;修复后mvn test全量345/352通过(7个失败为H2DialectTest环境问题:h2 2.3.232需JDK11+且指向Mac本地路径)
+
+# v5.2.9  2022-8-21
 1、针对一下产品化的软件(适配多种数据库:mysql\oracle\postgres\db2\mssql),要求在一个数据库场景下可以测试相同的功能是否可以适配不同数据库
 
 # v5.2.8  2022-8-11
