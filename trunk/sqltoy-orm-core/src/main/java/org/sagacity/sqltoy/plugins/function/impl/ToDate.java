@@ -44,6 +44,10 @@ public class ToDate extends IFunction {
 		if (args == null || args.length == 0) {
 			return super.IGNORE;
 		}
+		// java风格HH:mm归一为Oracle的hh24:mi,后续按Oracle模型映射,避免mm(月)被当分钟
+		if (args.length > 1) {
+			args[1] = FunctionUtils.normalizeJavaTimePattern(args[1]);
+		}
 		if (dialect == DBType.SQLSERVER) {
 			if (args.length == 1) {
 				if (args[0].length() > 12) {
