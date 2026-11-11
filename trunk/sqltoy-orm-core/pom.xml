@@ -106,14 +106,14 @@
 			<version>${postgresql.version}</version>
 			<optional>true</optional>
 		</dependency>
-		<!-- openGauss系新包路径驱�?org.opengauss.util.PGobject),兼容包路径场景直接用postgresql驱动 -->
+		<!-- openGauss系新包路径驱动(org.opengauss.util.PGobject),兼容包路径场景直接用postgresql驱动 -->
 		<dependency>
 			<groupId>org.opengauss</groupId>
 			<artifactId>opengauss-jdbc</artifactId>
 			<version>${opengauss.version}</version>
 			<optional>true</optional>
 		</dependency>
-		<!-- JTS拓扑�?geometry空间类型的Java侧几何模�?可选依�?动态探�? -->
+		<!-- JTS拓扑库,geometry空间类型的Java侧几何模型,可选依赖(动态探测) -->
 		<dependency>
 			<groupId>org.locationtech.jts</groupId>
 			<artifactId>jts-core</artifactId>
