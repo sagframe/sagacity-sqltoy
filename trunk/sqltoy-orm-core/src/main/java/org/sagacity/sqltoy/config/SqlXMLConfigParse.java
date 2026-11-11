@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.math.RoundingMode;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -229,6 +230,12 @@ public class SqlXMLConfigParse {
 				// 先取mtime再开流:解析期间文件若再被改动,本次记录的仍是所解析内容对应的版本,下轮会再次触发
 				parsedModified = Long.valueOf(file.lastModified());
 				fileIS = new FileInputStream(file);
+			} else if (xmlFile instanceof URL) {
+				// update 2026-11-11 jar资源按扫描命中的物理URL开流:TCCL.getResourceAsStream只会取首个同名资源,
+				// classes与依赖jar同名时会读到classes,导致jar独有的sqlId静默缺失
+				URL resourceUrl = (URL) xmlFile;
+				sqlFile = resourceUrl.toExternalForm();
+				fileIS = openUrlStream(resourceUrl);
 			} else {
 				sqlFile = (String) xmlFile;
 				fileIS = getResourceAsStream(sqlFile);
@@ -1745,13 +1752,26 @@ public class SqlXMLConfigParse {
 
 	/**
 	 * 获取Resource
-	 * 
+	 *
 	 * @param resource
 	 * @return
 	 */
 	private static InputStream getResourceAsStream(String resource) {
 		return Thread.currentThread().getContextClassLoader().getResourceAsStream(
 				(!resource.isEmpty() && resource.startsWith("/")) ? resource.substring(1) : resource);
+	}
+
+	/**
+	 * 按物理URL打开流:关闭缓存,避免JarFile被JarURLConnection全局缓存占用 (Windows下会锁定jar,影响热部署/临时目录清理)
+	 *
+	 * @param resourceUrl
+	 * @return
+	 * @throws Exception
+	 */
+	private static InputStream openUrlStream(URL resourceUrl) throws Exception {
+		java.net.URLConnection connection = resourceUrl.openConnection();
+		connection.setUseCaches(false);
+		return connection.getInputStream();
 	}
 
 	private static Integer[] trimParamsToInt(String[] paramNames) {

@@ -16,6 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+import org.sagacity.sqltoy.utils.AntPathUtils;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.FileUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -33,6 +34,8 @@ import org.slf4j.LoggerFactory;
  * @modify Date:2020-03-13 调整sql加载策略,jar包中的优先加载,classes下面的加载顺序在jar后面,便于增量发版覆盖
  * @modify Date:2024-08-10 增加了文件路径存在空格等特殊符号的处理
  * @modify Date:2026-05-19 增加Ant风格路径匹配支持,支持classpath*:和**通配符
+ * @modify Date:2026-11-11 jar内的sql资源保留物理URL(扫描结果不再只存逻辑路径),解析时按该URL开流,
+ *         避免classes与jar同名时TCCL总是读到classes、jar独有sqlId静默缺失
  */
 @SuppressWarnings({ "unchecked", "rawtypes" })
 public class SqlResourceScanner {
@@ -233,8 +236,7 @@ public class SqlResourceScanner {
 		if (relativePath.startsWith(File.separator)) {
 			relativePath = relativePath.substring(1);
 		}
-		String[] pathParts = relativePath.split("\\\\|/");
-		return matchAntRecursive(pathParts, 0, patternParts, 0);
+		return AntPathUtils.match(relativePath.replace('\\', '/'), patternParts);
 	}
 
 	/**
@@ -291,100 +293,17 @@ public class SqlResourceScanner {
 				// 提取相对路径进行匹配
 				String relativePath = normalizedRoot.isEmpty() ? entryPath
 						: entryPath.substring(normalizedRoot.length());
-				if (matchAntPattern(relativePath, patternParts)) {
+				// update 2026-11-11 统一使用AntPathUtils,与实体扫描共用同一套**语义
+				if (AntPathUtils.match(relativePath, patternParts)) {
 					if (entryPath.toLowerCase(Locale.ROOT).endsWith(SQLTOY_SQL_FILE_SUFFIX)
 							&& CollectionUtil.notContainsAdd(notRepeatDirs, entryPath)) {
 						// JAR资源优先加载
-						result.add(0, entryPath);
+						// update 2026-11-11 保留entry对应的物理jar URL
+						result.add(0, buildJarEntryUrl(jarUrl, entryPath));
 					}
 				}
 			}
 		}
-	}
-
-	/**
-	 * 检查路径是否匹配Ant模式。
-	 */
-	private static boolean matchAntPattern(String path, String[] patternParts) {
-		String[] pathParts = path.split("/");
-		return matchAntRecursive(pathParts, 0, patternParts, 0);
-	}
-
-	/**
-	 * 递归匹配Ant模式。
-	 */
-	private static boolean matchAntRecursive(String[] pathParts, int pathIndex, String[] patternParts,
-			int patternIndex) {
-		// 模式和路径都匹配完毕
-		if (patternIndex == patternParts.length && pathIndex == pathParts.length) {
-			return true;
-		}
-		// 模式用完但路径还有
-		if (patternIndex >= patternParts.length) {
-			return false;
-		}
-		String pattern = patternParts[patternIndex];
-		// ** 匹配任意层级
-		if ("**".equals(pattern)) {
-			// 尝试匹配0到多个路径段
-			for (int i = pathIndex; i <= pathParts.length; i++) {
-				if (matchAntRecursive(pathParts, i, patternParts, patternIndex + 1)) {
-					return true;
-				}
-			}
-			return false;
-		}
-		// 路径用完但模式还有（且不是**）
-		if (pathIndex >= pathParts.length) {
-			return false;
-		}
-		// 匹配当前段
-		if (matchPattern(pathParts[pathIndex], pattern)) {
-			return matchAntRecursive(pathParts, pathIndex + 1, patternParts, patternIndex + 1);
-		}
-		return false;
-	}
-
-	/**
-	 * 单段通配符匹配（支持*和?）。
-	 */
-	private static boolean matchPattern(String text, String pattern) {
-		if (pattern == null || text == null) {
-			return false;
-		}
-		if (pattern.isEmpty()) {
-			return text.isEmpty();
-		}
-		if ("*".equals(pattern)) {
-			return true;
-		}
-		if (!pattern.contains("*") && !pattern.contains("?")) {
-			return text.equals(pattern);
-		}
-		// 动态规划或贪心匹配
-		int t = 0, p = 0;
-		int starIdx = -1;
-		int matchIdx = 0;
-		while (t < text.length()) {
-			if (p < pattern.length() && pattern.charAt(p) == '*') {
-				starIdx = p;
-				matchIdx = t;
-				p++;
-			} else if (p < pattern.length() && (pattern.charAt(p) == '?' || pattern.charAt(p) == text.charAt(t))) {
-				p++;
-				t++;
-			} else if (starIdx != -1) {
-				p = starIdx + 1;
-				matchIdx++;
-				t = matchIdx;
-			} else {
-				return false;
-			}
-		}
-		while (p < pattern.length() && pattern.charAt(p) == '*') {
-			p++;
-		}
-		return p == pattern.length();
 	}
 
 	/**
@@ -456,7 +375,8 @@ public class SqlResourceScanner {
 										&& sqlFile.toLowerCase(Locale.ROOT).endsWith(SQLTOY_SQL_FILE_SUFFIX)
 										&& !entry.isDirectory()
 										&& CollectionUtil.notContainsAdd(notRepeatDirs, sqlFile)) {
-									result.add(0, sqlFile);
+									// update 2026-11-11 保留entry对应的物理jar URL
+									result.add(0, buildJarEntryUrl(url, sqlFile));
 								}
 							}
 						}
@@ -549,7 +469,8 @@ public class SqlResourceScanner {
 				if (normalizedRes.toLowerCase(Locale.ROOT).endsWith(SQLTOY_SQL_FILE_SUFFIX)
 						&& CollectionUtil.notContainsAdd(notRepeatResources, normalizedRes)) {
 					// jar中的sql优先加载,从而确保直接放于classes目录下面的sql可以实现对之前的覆盖,便于项目增量发版管理
-					result.add(0, normalizedRes);
+					// update 2026-11-11 保留物理jar资源URL,解析时按该URL开流,避免TCCL总是取到classes下的同名文件
+					result.add(0, buildJarEntryUrl(url, normalizedRes));
 				}
 			} else if (url.getProtocol().equals(RESOURCE)) {
 				if (normalizedRes.toLowerCase(Locale.ROOT).endsWith(SQLTOY_SQL_FILE_SUFFIX)
@@ -690,8 +611,25 @@ public class SqlResourceScanner {
 	}
 
 	/**
+	 * 由jar资源URL与entry名称构造精确的物理资源URL(jar:file:/x.jar!/entry), 兼容Spring
+	 * Boot嵌套jar(jar:file:/app.jar!/BOOT-INF/classes!/entry)
+	 *
+	 * @param jarUrl    扫描时命中的jar资源URL(含entry或目录)
+	 * @param entryName jar内entry名称
+	 * @return
+	 * @throws Exception
+	 */
+	private static URL buildJarEntryUrl(URL jarUrl, String entryName) throws Exception {
+		String url = jarUrl.toExternalForm();
+		// 以最后一个"!/"为界截取到jar根(嵌套jar为内层jar根)
+		int markIndex = url.lastIndexOf("!/");
+		String root = (markIndex > -1) ? url.substring(0, markIndex + 2) : url + "!/";
+		return new URL(root.concat(entryName));
+	}
+
+	/**
 	 * 替换全角字符,统一多路径分割符号为逗号
-	 * 
+	 *
 	 * @param resourcesDir
 	 * @return
 	 */
