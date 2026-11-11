@@ -9,6 +9,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.sql.Array;
 import java.sql.Connection;
@@ -22,6 +23,7 @@ import java.time.OffsetTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -70,6 +72,8 @@ import org.slf4j.LoggerFactory;
  * @modify Date:2022-10-19
  *         convertType类型匹配改成int类型的匹配,通过DataType将TypeName转化为int，批量时效率大幅提升
  * @modify Date:2023-08-06 增加对枚举类型的处理
+ * @modify Date:2026-09-22
+ *         convertType数字分支解析前剥离千分位分组逗号(如number-format格式化产物"8,888.0000")
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class BeanUtil {
@@ -81,17 +85,62 @@ public class BeanUtil {
 	public final static Pattern ARRAY_PATTERN = Pattern.compile("\\[\\d+\\]$");
 
 	/**
+	 * 千分位分组数字形态(number-format等格式化产物,如"8,888.0000"、"-12,345,678.9"),
+	 * convertBoolean仅对完整匹配该形态的值剥离分组逗号,避免误伤"1,23"或含逗号普通文本
+	 */
+	private final static Pattern GROUPING_NUMBER_PATTERN = Pattern.compile("^[+-]?\\d{1,3}(,\\d{3})+(\\.\\d+)?$");
+
+	/**
 	 * 保存set方法
 	 */
-	private static ConcurrentHashMap<String, Method> setMethods = new ConcurrentHashMap<>();
+	private static ConcurrentHashMap<ClassKey, Method> setMethods = new ConcurrentHashMap<>();
 
 	/**
 	 * 保存get方法
 	 */
-	private static ConcurrentHashMap<String, Method> getMethods = new ConcurrentHashMap<>();
+	private static ConcurrentHashMap<ClassKey, Method> getMethods = new ConcurrentHashMap<>();
 
 	// 保存pojo的级联关系
-	private static ConcurrentHashMap<String, List> cascadeModels = new ConcurrentHashMap<>();
+	// update 2026-11-10 改ClassValue:条目挂Class自身,类卸载即回收,静态Map不再强引用应用类
+	private static final ClassValue<List> cascadeModels = new ClassValue<List>() {
+		@Override
+		protected List computeValue(Class<?> entityClass) {
+			return parseCascadeModels(entityClass);
+		}
+	};
+
+	/**
+	 * update 2026-11-10 缓存键以Class对象为身份组件(而非类名):Spring Boot devtools重启/OSGi/多war等
+	 * 类重载场景下,同名新类不得命中旧加载器构建的Method缓存(Method.invoke严格校验声明类,
+	 * 旧Method对新实例抛IllegalArgumentException且JVM不重启无法自愈);
+	 * 与noArgConstructors/enumGetKeyMethods既有的Class键先例对齐
+	 */
+	private static final class ClassKey {
+		private final Class<?> type;
+		private final String name;
+
+		ClassKey(Class<?> type, String name) {
+			this.type = type;
+			this.name = name;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) {
+				return true;
+			}
+			if (!(o instanceof ClassKey)) {
+				return false;
+			}
+			ClassKey other = (ClassKey) o;
+			return type.equals(other.type) && name.equals(other.name);
+		}
+
+		@Override
+		public int hashCode() {
+			return type.hashCode() * 31 + name.hashCode();
+		}
+	}
 
 	private static ConcurrentHashMap<Class, Method> enumGetKeyMethods = new ConcurrentHashMap<>();
 	private static ConcurrentHashMap<Class, Integer> enumGetKeyExists = new ConcurrentHashMap<>();
@@ -105,8 +154,13 @@ public class BeanUtil {
 	 * 做getMethods()全量拷贝+逐属性toLowerCase匹配,按(类+有序属性表)缓存匹配结果
 	 * (同一查询反复执行时属性表形态恒定,键空间与查询集同阶);调用方均只读返回数组,可共享
 	 */
-	private static ConcurrentHashMap<String, Method[]> matchSetMethodsCache = new ConcurrentHashMap<>();
-	private static ConcurrentHashMap<String, Method[]> matchGetMethodsCache = new ConcurrentHashMap<>();
+	private static ConcurrentHashMap<ClassKey, Method[]> matchSetMethodsCache = new ConcurrentHashMap<>();
+	private static ConcurrentHashMap<ClassKey, Method[]> matchGetMethodsCache = new ConcurrentHashMap<>();
+
+	// update 2026-11-10 两缓存的key含结果集列标签序列(动态列场景基数不可控),设容量上限防止无界内存增长;
+	// 超限由CollectionUtil.putBounded回收约1/4后继续写入:既不像"超限即永久不缓存"那样让缓存永久失效,
+	// 也不像"超限整体clear"那样丢掉全部热键(保留约3/4既有条目,回收成本摊还后仍为O(1))
+	private static final int METHOD_CACHE_MAX_SIZE = 100000;
 
 	/**
 	 * update 2026-9-14 无参构造器缓存:reflectRowToBean为逐行调用(如ResultUtils.consumeResult),
@@ -291,23 +345,24 @@ public class BeanUtil {
 	 * @return 与属性对应的set方法数组，未匹配到方法的位置为null
 	 */
 	public static Method[] matchSetMethods(Class voClass, String... props) {
-		String cacheKey = matchCacheKey(voClass, props);
+		ClassKey cacheKey = matchCacheKey(voClass, props);
 		Method[] cached = matchSetMethodsCache.get(cacheKey);
 		if (cached != null) {
 			return cached;
 		}
 		Method[] result = matchSetMethodsInternal(voClass, props);
-		matchSetMethodsCache.putIfAbsent(cacheKey, result);
+		// update 2026-11-10 超限回收约1/4而非"不再缓存"/整体clear:缓存始终生效且保留多数热键
+		CollectionUtil.putBounded(matchSetMethodsCache, cacheKey, result, METHOD_CACHE_MAX_SIZE);
 		return result;
 	}
 
-	/** 缓存键:类名+有序属性表(props元素可为null,以NUL占位区分) */
-	private static String matchCacheKey(Class voClass, String... props) {
-		StringBuilder key = new StringBuilder(voClass.getName()).append('#');
+	/** 缓存键:Class对象+有序属性表(props元素可为null,以NUL占位区分),Class为身份组件规避类重载场景旧缓存命中 */
+	private static ClassKey matchCacheKey(Class voClass, String... props) {
+		StringBuilder key = new StringBuilder();
 		for (int i = 0; i < props.length; i++) {
 			key.append(props[i] == null ? "\u0000" : props[i]).append('\u0001');
 		}
-		return key.toString();
+		return new ClassKey(voClass, key.toString());
 	}
 
 	private static Method[] matchSetMethodsInternal(Class voClass, String... props) {
@@ -403,13 +458,14 @@ public class BeanUtil {
 	 * @return 与属性对应的get/is方法数组，未匹配到方法的位置为null
 	 */
 	public static Method[] matchGetMethods(Class voClass, String... props) {
-		String cacheKey = matchCacheKey(voClass, props);
+		ClassKey cacheKey = matchCacheKey(voClass, props);
 		Method[] cached = matchGetMethodsCache.get(cacheKey);
 		if (cached != null) {
 			return cached;
 		}
 		Method[] result = matchGetMethodsInternal(voClass, props);
-		matchGetMethodsCache.putIfAbsent(cacheKey, result);
+		// update 2026-11-10 同matchSetMethodsCache的超限回收策略
+		CollectionUtil.putBounded(matchGetMethodsCache, cacheKey, result, METHOD_CACHE_MAX_SIZE);
 		return result;
 	}
 
@@ -822,7 +878,8 @@ public class BeanUtil {
 			if ("".equals(valueStr.trim())) {
 				return null;
 			}
-			return new BigDecimal(convertBoolean(valueStr));
+			// update 2026-11-10 补trim:与整型分支文本归一口径一致(原" 12.5 "直接抛NumberFormatException)
+			return new BigDecimal(convertBoolean(valueStr).trim());
 		}
 		// 7 Integer第三
 		if (DataType.wrapIntegerType == typeValue) {
@@ -830,7 +887,9 @@ public class BeanUtil {
 			if ("".equals(valueStr.trim())) {
 				return null;
 			}
-			return Integer.valueOf(convertBoolean(valueStr).split("\\.")[0]);
+			// update 2026-11-10 文本归一口径与Long/BigInteger一致:split(".")[0]把科学计数法"1.9E10"截成1,
+			// "1e3"/".5"/首尾空白则直接抛异常
+			return Integer.valueOf(toIntegerText(valueStr));
 		}
 		// 8 第四优先
 		if (DataType.localDateTimeType == typeValue) {
@@ -928,8 +987,9 @@ public class BeanUtil {
 			if ("".equals(valueStr.trim())) {
 				return null;
 			}
-			// 考虑数据库中存在默认值为0.00 的问题，导致new Long() 报错，因为精度而不用Double.parse(原生long则可以)
-			return Long.valueOf(convertBoolean(valueStr).split("\\.")[0]);
+			// update 2026-11-10 文本归一口径与本类Integer/Long/BigInteger分支一致:
+			// 纯整数精确解析,小数/科学计数经BigDecimal向零截断,越界由目标类型parse响亮报错
+			return Long.valueOf(toIntegerText(valueStr));
 		}
 		// 12 第8
 		if (DataType.primitiveIntType == typeValue) {
@@ -937,8 +997,9 @@ public class BeanUtil {
 			if ("".equals(valueStr.trim())) {
 				return 0;
 			}
-			// 防止小数而不使用Integer.parseInt
-			return Double.valueOf(convertBoolean(valueStr)).intValue();
+			// update 2026-11-10 原Double中转在越界时静默饱和为Integer.MAX_VALUE("99999999999"→2147483647),
+			// 改与其他整型分支同口径:小数/科学计数先归一再截断,"防止小数"的诉求由归一层承担
+			return Integer.parseInt(toIntegerText(valueStr));
 		}
 		// 13 第9 字符串转 boolean 型
 		if (DataType.wrapBooleanType == typeValue) {
@@ -981,7 +1042,7 @@ public class BeanUtil {
 			if ("".equals(valueStr.trim())) {
 				return null;
 			}
-			return new BigInteger(convertBoolean(valueStr).split("\\.")[0]);
+			return new BigInteger(toIntegerText(valueStr));
 		}
 		// 17 第13
 		if (DataType.wrapDoubleType == typeValue) {
@@ -1030,8 +1091,10 @@ public class BeanUtil {
 			if ("".equals(valueStr.trim())) {
 				return 0;
 			}
-			// 防止小数而不使用Long.parseLong
-			return Double.valueOf(convertBoolean(valueStr)).longValue();
+			// update 2026-11-10 与其他整型分支统一由toIntegerText归一再精确解析:纯整数(雪花ID>2^53)保精度,
+			// 小数/科学计数("1.9E10"/"1e3"/".5")向零截断,首尾空白容忍;越界显式抛NumberFormatException,
+			// 不用BigDecimal.longValue()口径("9999999999999999999999"会静默取低64位成垃圾值)
+			return Long.parseLong(toIntegerText(valueStr));
 		}
 		// 20
 		if (DataType.primitiveDoubleType == typeValue) {
@@ -1056,7 +1119,9 @@ public class BeanUtil {
 					return new byte[0];
 				}
 			}
-			return paramValue.toString().getBytes();
+			// update 2026-11-10 显式UTF-8:与读侧(byte[]→String)及工程UTF-8口径一致,
+			// 规避平台默认字符集(GBK)下String→byte[]属性绑定写出后读回乱码
+			return paramValue.toString().getBytes(StandardCharsets.UTF_8);
 		}
 		// 22
 		if (DataType.wrapFloatType == typeValue) {
@@ -1424,6 +1489,41 @@ public class BeanUtil {
 		return result;
 	}
 
+	/**
+	 * @description update 2026-11-10 整型目标类型(Integer/Long/BigInteger/原生int/long)的文本归一,
+	 *              由各分支共用同一口径:纯整数文本原样返回,交由目标类型自身的精确解析;
+	 *              小数与科学计数文本先经BigDecimal向零截断,再展开为无指数整数字面量。
+	 *              三件事一次解决:(1)保住>2^53的精确值(split(".")[0]会把"1.9E10"截成1、
+	 *              Double中转会把雪花ID末位改写);(2)".5"/"1."/"1e3"/首尾空白不再抛解析异常;
+	 *              (3)越界一律由目标类型parse响亮报错,不像BigDecimal.longValue()那样静默取低64位
+	 * @param valueStr 待转换文本(调用方已排除空串/全空白)
+	 * @return 纯整数字面量(不含小数点与指数)
+	 */
+	private static String toIntegerText(String valueStr) {
+		String str = convertBoolean(valueStr).trim();
+		// 常规整数(可含正负号):直接交给目标类型精确解析,不做BigDecimal中转
+		if (str.indexOf('.') < 0 && str.indexOf('e') < 0 && str.indexOf('E') < 0) {
+			return str;
+		}
+		// 小数/科学计数:向零截断(与既有Double.xxxValue()截断语义一致)后展开为整数字面量
+		BigDecimal decimal = new BigDecimal(str);
+		// update 2026-11-10 巨大指数防御:setScale(0)/toPlainString会把负scale展开成10^N位整数,
+		// "1e999999999"类异常/恶意数据行会让映射线程挂死或OOM(旧Double路径为Infinity→MAX_VALUE不展开);
+		// 展开位数=precision+max(0,-scale),超过上限直接响亮报错——合法业务数值(含BigInteger的常规
+		// 科学计数形态)远低于该上限,纯数字长串走上方快速路径不经此展开
+		long expandDigits = (long) decimal.precision() + Math.max(0L, -(long) decimal.scale());
+		if (expandDigits > 10000) {
+			throw new NumberFormatException("numeric text expands to " + expandDigits
+					+ " digits, beyond integer conversion limit: " + str);
+		}
+		// 巨大负指数(如1e-999999999):setScale(0)需计算10^scale,触发BigInteger would overflow;
+		// 上方守卫通过后precision≤10000,scale>10000时必有|value|<1,向零截断恒为0,直接短路
+		if (decimal.scale() > 10000) {
+			return "0";
+		}
+		return decimal.setScale(0, RoundingMode.DOWN).toPlainString();
+	}
+
 	public static String convertBoolean(String boolVar) {
 		// 忽略大小写,与字符串转Boolean的判断规则保持一致
 		if ("true".equalsIgnoreCase(boolVar)) {
@@ -1431,6 +1531,12 @@ public class BeanUtil {
 		}
 		if ("false".equalsIgnoreCase(boolVar)) {
 			return "0";
+		}
+		// update 2026-9-22 剥离千分位分组逗号:sql中number-format格式化后的「8,888.0000」再映射
+		// 数值属性时,new BigDecimal等解析抛「Character , is neither a decimal digit number...」;
+		// 常规值不含逗号,indexOf快速短路保持热路径零正则开销
+		if (boolVar.indexOf(',') >= 0 && StringUtil.matches(boolVar, GROUPING_NUMBER_PATTERN)) {
+			return boolVar.replace(",", "");
 		}
 		return boolVar;
 	}
@@ -2470,7 +2576,7 @@ public class BeanUtil {
 			setMapPropertyValue((Map) bean, property, value, jdbcType);
 			return;
 		}
-		String key = bean.getClass().getName().concat(":set").concat(property);
+		ClassKey key = new ClassKey(bean.getClass(), ":set".concat(property));
 		// 利用缓存提升方法匹配效率
 		Method method = setMethods.computeIfAbsent(key, k -> {
 			Method m = matchSetMethods(bean.getClass(), new String[] { property })[0];
@@ -2546,7 +2652,7 @@ public class BeanUtil {
 		if (bean instanceof Map) {
 			return ((Map) bean).get(property);
 		}
-		String key = bean.getClass().getName().concat(":get").concat(property);
+		ClassKey key = new ClassKey(bean.getClass(), ":get".concat(property));
 		// 利用缓存提升方法匹配效率
 		Method method = getMethods.get(key);
 		if (method == null) {
@@ -2589,7 +2695,7 @@ public class BeanUtil {
 			}
 			return result;
 		}
-		String key = bean.getClass().getName().concat(":get").concat(realProperty);
+		ClassKey key = new ClassKey(bean.getClass(), ":get".concat(realProperty));
 		// 利用缓存提升方法匹配效率
 		Method method = getMethods.get(key);
 		if (method == null) {
@@ -2847,55 +2953,58 @@ public class BeanUtil {
 		String[] mainProps = cascadeModel.getFields();
 		String property = cascadeModel.getProperty();
 		String[] mappedFields = cascadeModel.getMappedFields();
-		List<Object[]> itemEntityMappedFieldList = new ArrayList<>();
-		for (Object itemEntity : itemEntities) {
-			itemEntityMappedFieldList.add(reflectBeanToAry(itemEntity, mappedFields, null, null));
+		int fieldLength = mainProps.length;
+		int itemEntitiesSize = itemEntities.size();
+		// update 2026-11-10 子表侧按映射字段值组合建索引,主实体O(1)命中(O(n+m)分组匹配),
+		// 替代原对每主实体×全量子实体的嵌套扫描(1万主×5万子=5亿次equals)。
+		// 匹配语义与原线性扫描逐字节一致:仅当主值非null且equals子值时命中——
+		// 主键值含null的主实体/子实体均不参与匹配,组合键用List的equals/hashCode(逐元素equals)
+		Map<List, List<Integer>> itemIndex = new HashMap<>(itemEntitiesSize * 2);
+		for (int j = 0; j < itemEntitiesSize; j++) {
+			Object[] mappedFieldValues = reflectBeanToAry(itemEntities.get(j), mappedFields, null, null);
+			boolean indexable = true;
+			for (int k = 0; k < fieldLength; k++) {
+				if (null == mappedFieldValues[k]) {
+					indexable = false;
+					break;
+				}
+			}
+			if (!indexable) {
+				continue;
+			}
+			itemIndex.computeIfAbsent(Arrays.asList(mappedFieldValues), key -> new ArrayList<>()).add(j);
 		}
 		List itemList = null;
-		int fieldLength = mainProps.length;
-		boolean isEqual = true;
-		int itemSize = 0;
-		int itemEntitiesSize = itemEntities.size();
-		Object itemEntity;
 		Object[] mainValues;
-		Object[] mappedFieldValues;
 		for (Object mainEntity : mainEntities) {
 			mainValues = reflectBeanToAry(mainEntity, mainProps, null, null);
+			boolean searchable = true;
+			for (int k = 0; k < fieldLength; k++) {
+				if (null == mainValues[k]) {
+					searchable = false;
+					break;
+				}
+			}
+			List<Integer> matchedIndexes = searchable ? itemIndex.get(Arrays.asList(mainValues)) : null;
 			if (isOneToMany) {
 				itemList = new ArrayList();
-			}
-			itemSize = 0;
-			for (int j = 0; j < itemEntitiesSize; j++) {
-				itemEntity = itemEntities.get(j);
-				mappedFieldValues = itemEntityMappedFieldList.get(j);
-				isEqual = true;
-				for (int k = 0; k < fieldLength; k++) {
-					if (null == mainValues[k] || !mainValues[k].equals(mappedFieldValues[k])) {
-						isEqual = false;
-						break;
+				if (matchedIndexes != null) {
+					for (Integer idx : matchedIndexes) {
+						itemList.add(itemEntities.get(idx));
 					}
 				}
-				if (isEqual) {
-					if (isOneToMany) {
-						itemList.add(itemEntity);
-					} // oneToOne 直接赋值
-					else {
-						// update 2022-5-18 增加oneToOne 级联数据校验
-						if (itemSize > 0) {
-							throw new DataAccessException("please check the @OneToOne cascade configuration of object ["
-									+ mainEntity.getClass().getName()
-									+ "], the cascade query returned more than 1 row, which is unexpected!");
-						}
-						setProperty(mainEntity, property, itemEntity);
-					}
-					// 屏蔽掉，兼容ManyToOne、ManyToMany 场景
-					// itemEntities.remove(j);
-					// j--;
-					itemSize++;
+				if (!itemList.isEmpty()) {
+					setProperty(mainEntity, property, itemList);
 				}
-			}
-			if (isOneToMany && (itemList != null && !itemList.isEmpty())) {
-				setProperty(mainEntity, property, itemList);
+			} // oneToOne 直接赋值
+			else if (matchedIndexes != null && !matchedIndexes.isEmpty()) {
+				// update 2022-5-18 oneToOne 级联数据校验(返回多于1行即抛异常)
+				if (matchedIndexes.size() > 1) {
+					throw new DataAccessException("please check the @OneToOne cascade configuration of object ["
+							+ mainEntity.getClass().getName()
+							+ "], the cascade query returned more than 1 row, which is unexpected!");
+				}
+				setProperty(mainEntity, property, itemEntities.get(matchedIndexes.get(0)));
 			}
 		}
 	}
@@ -2928,43 +3037,45 @@ public class BeanUtil {
 
 	/**
 	 * 获取类的级联关系
-	 * 
+	 *
 	 * @param entityClass 实体类型
 	 * @return 级联关系配置模型列表(含oneToMany、oneToOne)，无级联返回空列表
 	 */
 	public static List<TableCascadeModel> getCascadeModels(Class entityClass) {
-		String className = entityClass.getName();
-		// 原子性缓存,避免并发重复解析级联关系
-		return cascadeModels.computeIfAbsent(className, cls -> {
-			List<TableCascadeModel> result = new ArrayList<TableCascadeModel>();
-			Field[] cascadeFields = parseCascadeFields(entityClass);
-			for (Field field : cascadeFields) {
-				TableCascadeModel cascadeModel = new TableCascadeModel();
-				cascadeModel.setProperty(field.getName());
-				OneToMany oneToMany = field.getAnnotation(OneToMany.class);
-				OneToOne oneToOne = field.getAnnotation(OneToOne.class);
-				if (oneToMany != null) {
-					cascadeModel.setCascadeType(1);
-					cascadeModel.setFields(oneToMany.fields());
-					cascadeModel.setMappedFields(oneToMany.mappedFields());
-					cascadeModel.setMappedType(
-							(Class) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0]);
-					if (StringUtil.isNotBlank(oneToMany.notNullField())) {
-						cascadeModel.setNotNullField(oneToMany.notNullField());
-					}
-				} else {
-					cascadeModel.setCascadeType(2);
-					cascadeModel.setFields(oneToOne.fields());
-					cascadeModel.setMappedFields(oneToOne.mappedFields());
-					cascadeModel.setMappedType(field.getType());
-					if (StringUtil.isNotBlank(oneToOne.notNullField())) {
-						cascadeModel.setNotNullField(oneToOne.notNullField());
-					}
+		// update 2026-11-10 改ClassValue承载:缓存条目挂在Class自身(类卸载即回收),
+		// 避免静态Map以类名/Class为键强引用应用类(devtools/OSGi热重载下阻滞加载器回收);解析仍只执行一次
+		return cascadeModels.get(entityClass);
+	}
+
+	private static List parseCascadeModels(Class entityClass) {
+		List<TableCascadeModel> result = new ArrayList<TableCascadeModel>();
+		Field[] cascadeFields = parseCascadeFields(entityClass);
+		for (Field field : cascadeFields) {
+			TableCascadeModel cascadeModel = new TableCascadeModel();
+			cascadeModel.setProperty(field.getName());
+			OneToMany oneToMany = field.getAnnotation(OneToMany.class);
+			OneToOne oneToOne = field.getAnnotation(OneToOne.class);
+			if (oneToMany != null) {
+				cascadeModel.setCascadeType(1);
+				cascadeModel.setFields(oneToMany.fields());
+				cascadeModel.setMappedFields(oneToMany.mappedFields());
+				cascadeModel.setMappedType(
+						(Class) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0]);
+				if (StringUtil.isNotBlank(oneToMany.notNullField())) {
+					cascadeModel.setNotNullField(oneToMany.notNullField());
 				}
-				result.add(cascadeModel);
+			} else {
+				cascadeModel.setCascadeType(2);
+				cascadeModel.setFields(oneToOne.fields());
+				cascadeModel.setMappedFields(oneToOne.mappedFields());
+				cascadeModel.setMappedType(field.getType());
+				if (StringUtil.isNotBlank(oneToOne.notNullField())) {
+					cascadeModel.setNotNullField(oneToOne.notNullField());
+				}
 			}
-			return result;
-		});
+			result.add(cascadeModel);
+		}
+		return result;
 	}
 
 	public static Object getMaybeArrayValue(Map value, String property) {

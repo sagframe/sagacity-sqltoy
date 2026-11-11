@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.sagacity.sqltoy.callback.TreeIdAndPidGet;
 import org.sagacity.sqltoy.config.model.SummaryColMeta;
@@ -1637,5 +1638,31 @@ public class CollectionUtil {
 			return true;
 		}
 		return false;
+	}
+
+	/**
+	 * @description update 2026-11-10 有界缓存写入:容量达到上限时先按迭代顺序回收约1/4,再写入新键。
+	 *              与"超限后不再缓存"相比,回收后缓存立即恢复生效,不会出现"缓存永久失效、每次全量重算"
+	 *              的性能悬崖(动态列/动态sql等高基数键场景);与"超限整体clear"相比,保留约3/4的既有条目
+	 *              (热键不必全部重建),回收成本按写入次数摊还为O(1)。读取路径仍是ConcurrentHashMap无锁get。
+	 * @param cache   目标缓存
+	 * @param key     新键(为null时忽略)
+	 * @param value   新值(为null时忽略,ConcurrentHashMap不允许null值)
+	 * @param maxSize 容量上限,<=0表示不限制
+	 */
+	public static <K, V> void putBounded(ConcurrentHashMap<K, V> cache, K key, V value, int maxSize) {
+		if (cache == null || key == null || value == null) {
+			return;
+		}
+		if (maxSize > 0 && cache.size() >= maxSize) {
+			// 回收约1/4:比例过小会频繁触发回收,过大则退化为整体清空(热点键全部重建)
+			int target = Math.max(1, maxSize >>> 2);
+			Iterator<K> keys = cache.keySet().iterator();
+			for (int removed = 0; removed < target && keys.hasNext(); removed++) {
+				keys.next();
+				keys.remove();
+			}
+		}
+		cache.putIfAbsent(key, value);
 	}
 }

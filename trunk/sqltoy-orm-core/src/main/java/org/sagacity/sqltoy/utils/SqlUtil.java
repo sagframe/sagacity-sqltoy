@@ -1254,7 +1254,9 @@ public class SqlUtil {
 				Array array = conn.createArrayOf("FLOAT", (Float[]) paramValue);
 				pst.setArray(paramIndex, array);
 			} else if (paramValue instanceof Long[]) {
-				Array array = conn.createArrayOf("INTEGER", (Long[]) paramValue);
+				// update 2026-11-10 INTEGER→BIGINT:与SqlUtilsExt.setArray(ResultSet回写路径)及BigInteger[]口径对齐,
+				// openGauss真库实测int4数组无法承载long范围值(4000000000报out of range),回写路径BIGINT则成功
+				Array array = conn.createArrayOf("BIGINT", (Long[]) paramValue);
 				pst.setArray(paramIndex, array);
 			} else {
 				pst.setObject(paramIndex, paramValue, java.sql.Types.ARRAY);
@@ -1837,20 +1839,33 @@ public class SqlUtil {
 			final HashMap<String, String> colFieldMap, final int fetchSize, final int maxRows,
 			final Integer queryTimeout) throws Exception {
 		ResultSet rs = null;
-		PreparedStatement pst = conn.prepareStatement(queryStr, ResultSet.TYPE_FORWARD_ONLY,
-				ResultSet.CONCUR_READ_ONLY);
-		if (fetchSize > 0) {
-			pst.setFetchSize(fetchSize);
-		}
-		if (maxRows > 0) {
-			pst.setMaxRows(maxRows);
-		}
-		if (queryTimeout != null && queryTimeout > 0) {
-			pst.setQueryTimeout(queryTimeout);
-		}
-		// 设置全局statementTimeout，默认为null
-		else if (SqlToyConstants.defaultStatementTimeout != null && SqlToyConstants.defaultStatementTimeout > 0) {
-			pst.setQueryTimeout(SqlToyConstants.defaultStatementTimeout);
+		PreparedStatement pst = null;
+		try {
+			pst = conn.prepareStatement(queryStr, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+			if (fetchSize > 0) {
+				pst.setFetchSize(fetchSize);
+			}
+			if (maxRows > 0) {
+				pst.setMaxRows(maxRows);
+			}
+			if (queryTimeout != null && queryTimeout > 0) {
+				pst.setQueryTimeout(queryTimeout);
+			}
+			// 设置全局statementTimeout，默认为null
+			else if (SqlToyConstants.defaultStatementTimeout != null
+					&& SqlToyConstants.defaultStatementTimeout > 0) {
+				pst.setQueryTimeout(SqlToyConstants.defaultStatementTimeout);
+			}
+		} catch (Exception e) {
+			// update 2026-11-10 setter阶段异常时关闭已创建的statement:
+			// 此前创建到收口(preparedStatementProcess的finally)之间有裸露窗口,异常路径依赖连接归还被池淘汰时兜底回收
+			if (pst != null) {
+				try {
+					pst.close();
+				} catch (Exception ignore) {
+				}
+			}
+			throw e;
 		}
 		Integer dbType = profile.getDbType();
 		List result = (List) preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
@@ -1930,6 +1945,12 @@ public class SqlUtil {
 		} else {
 			// 取得字段列数,在没有rowCallbackHandler用数组返回
 			int rowCnt = rs.getMetaData().getColumnCount();
+			// update 2026-10-10 列读取策略预分类(与reflectResultToVO/ResultUtils.processResultRow
+			// 同口径):oracle的JSON/VECTOR列getObject直接抛ORA-17004/18722须TEXT_READ文本化读取,
+			// h2 json与mysql系geometry/vector等EXT_BYTE列读回byte[]须按列类型解码;此前裸List
+			// 路径遗漏预分类与归一,ext类型列以byte[]/PGobject驱动专属形态静默进入结果行
+			String[] columnTypes = ResultUtils.readColumnTypeNames(rs, rowCnt);
+			int[] columnKinds = ResultUtils.buildColumnKinds(dbType, columnTypes);
 			List items = new ArrayList();
 			Object fieldValue = null;
 			boolean allNull = true;
@@ -1940,8 +1961,13 @@ public class SqlUtil {
 				allNull = true;
 				List rowData = new ArrayList();
 				for (int i = startColIndex; i < rowCnt; i++) {
-					// 处理clob
-					fieldValue = rs.getObject(i + 1);
+					// 处理clob;TEXT_READ列(oracle JSON/VECTOR、db2gse空间列)改文本化读取,
+					// EXT_BYTE列按字节读取后UTF-8解码去尾空白,与processResultRow/VO路径三策略同口径
+					if (columnKinds[i] == ResultUtils.COLUMN_TEXT_READ) {
+						fieldValue = rs.getString(i + 1);
+					} else {
+						fieldValue = rs.getObject(i + 1);
+					}
 					if (fieldValue != null) {
 						allNull = false;
 						if (fieldValue instanceof java.sql.Clob) {
@@ -1954,9 +1980,15 @@ public class SqlUtil {
 							} else {
 								fieldValue = new byte[0];
 							}
-						} else if (convertOracleTimestamp
-								&& fieldValue.getClass().getTypeName().equals("oracle.sql.TIMESTAMP")) {
-							fieldValue = BeanUtil.oracleTimeStampConvert(fieldValue);
+						} else {
+							if (convertOracleTimestamp
+									&& fieldValue.getClass().getTypeName().equals("oracle.sql.TIMESTAMP")) {
+								fieldValue = BeanUtil.oracleTimeStampConvert(fieldValue);
+							}
+							// update 2026-10-10 ext类型归一:pg系json/vector/geometry的PGobject、
+							// EXT_BYTE列的byte[]等驱动专属形态归一为文本/原生数组(与Map/VO路径同口径)
+							fieldValue = ResultUtils.normalizeExtTypeValue(fieldValue, dbType,
+									(columnKinds[i] == ResultUtils.COLUMN_EXT_BYTE) ? columnTypes[i] : null);
 						}
 						// java 特定类型处理
 						if (typeHandler != null) {

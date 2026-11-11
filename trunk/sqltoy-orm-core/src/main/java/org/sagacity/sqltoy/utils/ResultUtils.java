@@ -962,6 +962,18 @@ public class ResultUtils {
 				fieldTranslateCacheHolders, linkLowColumns);
 		DynamicCacheHolder dynamicCacheHolder = new DynamicCacheHolder(batchDynamicCache.getCacheAndTypeForRealMap(),
 				batchDynamicCache.getCacheAndTypeForRealType(), batchDynamicCache.getDynamicCaches());
+		// update 2026-11-10 多列link的列元数据循环外一次构建(与cols预计算口径一致):
+		// 原走废弃桥接签名逐行重建ResultColumnMeta[]并逐列toLowerCase,10万行×10列=百万级分配,
+		// 与processResultRow 2026-9-12"行循环零新增分配"的预计算承诺相悖
+		ResultColumnMeta[] linkCols = new ResultColumnMeta[columnSize];
+		for (int i = 0; i < columnSize; i++) {
+			String label = (labelNames == null) ? null : labelNames[i];
+			String tn = (columnTypeNames == null) ? null : columnTypeNames[i];
+			int kind = (columnKinds == null) ? COLUMN_NORMAL : columnKinds[i];
+			linkCols[i] = new ResultColumnMeta(label, (label == null) ? null : label.toLowerCase(Locale.ROOT),
+					startColIndex + i + 1, tn, tn, ResultColumnMeta.ReadStrategy.of(kind),
+					ResultColumnMeta.ExtType.of(tn), 0, null);
+		}
 		while (rs.next()) {
 			// 对多个link字段取值并进行翻译转义
 			for (int i = 0; i < linkColCnt; i++) {
@@ -983,9 +995,9 @@ public class ResultUtils {
 			// 不相等
 			if (!identity.equals(preIdentity)) {
 				// 提取result中的数据(identity相等时不需要提取)
-				itemRow = processResultRow(dbType, typeHandler, dynamicCacheFetch, dynamicCacheHolder, rs, labelNames,
+				itemRow = processResultRow(dbType, typeHandler, dynamicCacheFetch, dynamicCacheHolder, rs,
 						lowKeyLabelNameMap, columnSize, fieldTranslateCacheHolders, decryptHandler, ignoreAllEmpty,
-						columnTypeNames, columnKinds, startColIndex);
+						linkCols, startColIndex);
 				if (itemRow != null) {
 					// 不相等时先对最后一条记录修改，写入拼接后的字符串
 					// 注:多列link按link-sign拼接为字符串返回,不支持单列link的result-type(List/Array等)配置

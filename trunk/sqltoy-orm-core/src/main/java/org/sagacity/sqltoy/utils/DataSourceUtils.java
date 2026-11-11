@@ -1158,8 +1158,13 @@ public class DataSourceUtils {
 				return CaseType.getCaseType(caseType);
 			}
 		}
-		// postgresql系列数据库默认转小写
-		if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14) {
+		// update 2026-10-12 postgresql系列数据库默认转小写
+		// 补齐pg折叠家族(原仅POSTGRESQL/POSTGRESQL14):getGeneratedKeys列提示在pg折叠内核上
+		// 大小写敏感(opengauss/vastbase的"ID"/"Id"报column does not exist,kingbase混合大小写"Id"
+		// 报错而全大写可过,转小写对全家族安全),按opengauss同内核系谱与原注释声明一并纳入
+		if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.OPENGAUSS
+				|| dbType == DBType.GAUSSDB || dbType == DBType.MOGDB || dbType == DBType.VASTBASE
+				|| dbType == DBType.STARDB || dbType == DBType.OSCAR || dbType == DBType.KINGBASE) {
 			return CaseType.LOWER;
 		}
 		return CaseType.DEFAULT;
