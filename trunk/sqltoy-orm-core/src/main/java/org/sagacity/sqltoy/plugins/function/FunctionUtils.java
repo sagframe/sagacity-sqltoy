@@ -78,19 +78,22 @@ public class FunctionUtils {
 	private static String convertFunctions(String dialect, String sqlContent) {
 		int dbType = DataSourceUtils.getDBType(dialect);
 		IFunction function;
-		String dialectSql = sqlContent;
 		String dialectLow = dialect.toLowerCase(Locale.ROOT);
-		// update 2026-9-14 预检加速(检测不改写,无耦合):常态SQL不含任何可转换函数,原循环
-		// 对每个适配函数各做一次全SQL maskLiterals拷贝(注册函数最多16次);预检在原串的
-		// 单次掩码上做只读正则探测,无任何命中直接返回原串(仅1次拷贝);有命中才进入改写
-		// 循环(结构与原形态一致,改写会变更串长,循环内掩码仍按原逻辑每函数各自重算)
+		// update 2026-10-19 入口与串尾各补一个空格哨兵:整条sql即函数表达式(如sql片段include的碎片形态)时函数名前
+		// 无任何字符,适配正则\W(函数名)\(恒不命中,串首哨兵使串首函数获得\W前缀参与探测与转换;
+		// sysdate/current_date等裸关键字位于整条SQL末尾时正则的\W后缀无字符可匹配会漏转换(PG等目标库
+		// 报函数不存在),串尾哨兵同理补\W后缀;内部绝对偏移随哨兵统一平移,返回前精确剥离,常规SQL以select/insert等关键字开头,行为不变
+		String dialectSql = " ".concat(sqlContent).concat(" ");
+		// update 2026-9-14 预检加速(检测不改写,无耦合):常态SQL不含任何可转换函数时,原循环对每个适配函数各做一次
+		// 全SQL maskLiterals拷贝(注册函数最多16次);预检在原串的单次掩码上做只读正则探测,无命中直接返回
+		// 原串(仅1次拷贝);有命中才进入改写循环(结构与原形态一致;改写变更串长,循环内掩码仍按原逻辑每函数各自重算)
 		String preCheckMask = null;
 		boolean hasMatch = false;
 		for (int i = 0, n = functionConverts.size(); i < n && !hasMatch; i++) {
 			function = functionConverts.get(i);
 			if (matchDialect(function.dialects(), dialectLow)) {
 				if (preCheckMask == null) {
-					preCheckMask = SqlConfigParseUtils.maskLiterals(sqlContent,
+					preCheckMask = SqlConfigParseUtils.maskLiterals(dialectSql,
 							SqlConfigParseUtils.isBackslashEscapeDialect(dbType));
 				}
 				hasMatch = function.regex().matcher(preCheckMask).find();
@@ -106,7 +109,10 @@ public class FunctionUtils {
 				dialectSql = replaceFunction(dialectSql, dbType, function);
 			}
 		}
-		return dialectSql;
+		// 剥离首尾哨兵(replaceFunction的result恒自串首0位构造,首字符必为前导哨兵;
+		// 尾部哨兵用于让串尾裸关键字获得\W后缀,无改写时原样保留)
+		String converted = dialectSql.substring(1);
+		return converted.endsWith(" ") ? converted.substring(0, converted.length() - 1) : converted;
 	}
 
 	/**
@@ -127,6 +133,55 @@ public class FunctionUtils {
 				return true;
 			}
 		}
+		return false;
+	}
+
+	/**
+	 * @description 判断函数是否处于投影/值上下文(select列表、then/else、order/group by、
+	 *              逗号或运算符之后),用于需要区分"返回位置"与"返回布尔"的适配器;
+	 *              条件上下文(where/having/when/on/and/or/not)返回false。基于字面量掩码串向前
+	 *              扫描最近的顶层token,列名/函数名等未知token继续向前找上下文关键字。
+	 * @param maskedSql    字面量掩码后的SQL(与原串等长)
+	 * @param endExclusive 函数名起始位置(不含)
+	 * @return true=投影/值上下文,false=条件上下文
+	 */
+	private static boolean isProjectionContext(String maskedSql, int endExclusive) {
+		int i = endExclusive - 1;
+		while (i >= 0) {
+			char c = maskedSql.charAt(i);
+			if (Character.isWhitespace(c) || c == '(' || c == ')') {
+				i--;
+				continue;
+			}
+			if (Character.isLetterOrDigit(c) || c == '_' || c == '$') {
+				int end = i + 1;
+				while (i >= 0) {
+					char w = maskedSql.charAt(i);
+					if (Character.isLetterOrDigit(w) || w == '_' || w == '$') {
+						i--;
+					} else {
+						break;
+					}
+				}
+				String word = maskedSql.substring(i + 1, end).toLowerCase(Locale.ROOT);
+				if ("select".equals(word) || "then".equals(word) || "else".equals(word) || "returning".equals(word)
+						|| "values".equals(word) || "by".equals(word) || "distinct".equals(word) || "as".equals(word)) {
+					return true;
+				}
+				if ("where".equals(word) || "having".equals(word) || "when".equals(word) || "on".equals(word)
+						|| "and".equals(word) || "or".equals(word) || "not".equals(word) || "case".equals(word)) {
+					return false;
+				}
+				// 列名/函数名/表名等未知token:继续向前找上下文关键字
+				continue;
+			}
+			if (c == ',' || c == '=' || c == '>' || c == '<' || c == '+' || c == '-' || c == '*' || c == '/' || c == '%'
+					|| c == '|') {
+				return true;
+			}
+			i--;
+		}
+		// 无法判定时按条件上下文(保持既有boolean产物)
 		return false;
 	}
 
@@ -171,9 +226,12 @@ public class FunctionUtils {
 				// 引号感知配对:规避函数参数中字面量内的括号(如nvl(remark,'('))被误当参数终结符
 				endMarkIndex = StringUtil.getSymMarkIndexSkipQuoted("(", ")", dialectSql, matchedIndex);
 				functionParams = dialectSql.substring(dialectSql.indexOf("(", matchedIndex) + 1, endMarkIndex);
-				// 参数中包含同样的函数，通过递归替换
-				if (StringUtil.matches(functionParams, function.regex())) {
-					functionParams = replaceFunction(functionParams, dbType, function);
+				// update 2026-10-9
+				// 参数中包含同样的函数，通过递归替换;参数串首位的嵌套函数(如nvl(nvl(a,b),c)、nvl(ifnull(a,b),c)
+				// 的内层)无前导\W字符正则无法命中而漏转换,加空格哨兵参与探测与递归后精确剥离(replaceFunction保持串首字符,substring(1)恰好去除哨兵)
+				String recursionParams = " ".concat(functionParams);
+				if (StringUtil.matches(recursionParams, function.regex())) {
+					functionParams = replaceFunction(recursionParams, dbType, function).substring(1);
 				}
 				if (functionParams == null || functionParams.trim().equals("")) {
 					args = null;
@@ -185,13 +243,44 @@ public class FunctionUtils {
 				endMarkIndex = matcher.end() - 1;
 				functionName = dialectSql.substring(matchedIndex, endMarkIndex);
 			}
-			wrapResult = function.wrap(dbType, functionName, hasArgs, args);
+			// update 2026-10-4 尾部子句钩子:在字面量掩码串上探测(掩码与原串等长同位,防字面量内within group等文本误伤),
+			// 命中后在原串按平衡括号消费整个子句(防order by f(x)内嵌括号截断),suffix原文交由wrapWithSuffix
+			// 处理;endMarkIndex延伸后,IGNORE/替换两条路径与maskSql裁剪自然连带消费suffix,无需平行逻辑
+			String suffix = null;
+			if (hasArgs && function.suffixPattern() != null) {
+				Matcher suffixMatcher = function.suffixPattern().matcher(maskSql);
+				suffixMatcher.region(endMarkIndex + 1, maskSql.length());
+				if (suffixMatcher.lookingAt()) {
+					if (function.suffixNeedsParen()) {
+						// pattern以\(结尾,region为绝对偏移,开括号位置即end()-1
+						int openIdx = suffixMatcher.end() - 1;
+						int closeIdx = StringUtil.getSymMarkIndexSkipQuoted("(", ")", dialectSql, openIdx);
+						if (closeIdx > openIdx) {
+							suffix = dialectSql.substring(endMarkIndex + 1, closeIdx + 1);
+							endMarkIndex = closeIdx;
+						}
+					} else {
+						// 裸操作符子句:无括号外壳,按pattern命中长度消费;matcher以
+						// region起点(endMarkIndex+1)为基准,end()为绝对终点,消费至end()-1与括号形态的closeIdx口径对齐
+						suffix = dialectSql.substring(endMarkIndex + 1, suffixMatcher.end());
+						endMarkIndex = suffixMatcher.end() - 1;
+					}
+				}
+			}
+			boolean projection = isProjectionContext(maskSql, matchedIndex);
+			wrapResult = (suffix == null) ? function.wrap(dbType, functionName, hasArgs, projection, args)
+					: function.wrapWithSuffix(dbType, functionName, suffix, args);
 			if (null == wrapResult) {
 				result.append(dialectSql.substring(0, endMarkIndex + 1));
 			} else {
 				result.append(dialectSql.substring(0, matchedIndex)).append(wrapResult);
 			}
 			if (hasArgs) {
+				dialectSql = dialectSql.substring(endMarkIndex + 1);
+				maskSql = maskSql.substring(endMarkIndex + 1);
+			} else if (null == wrapResult) {
+				// update 2026-10-4
+				// 裸形态IGNORE分隔符重复:IGNORE分支已append至endMarkIndex+1(含\W分隔符),若仍从endMarkIndex续接会导致分隔符输出两次(sysdate,,name)
 				dialectSql = dialectSql.substring(endMarkIndex + 1);
 				maskSql = maskSql.substring(endMarkIndex + 1);
 			} else {
@@ -277,6 +366,309 @@ public class FunctionUtils {
 	 * @param arg 日期参数SQL片段(字面量/列/占位符/表达式)
 	 * @return sqlite日期函数可消费的日期文本表达式
 	 */
+	/**
+	 * @description 判断是否为单引号包裹的完整SQL字符串字面量(不含内嵌引号,内嵌情形保守不处理)
+	 * @param value 原始参数
+	 * @return true表示可安全做格式模型改写
+	 */
+	public static boolean isQuotedLiteral(String value) {
+		if (value == null) {
+			return false;
+		}
+		String tmp = value.trim();
+		return tmp.length() > 1 && tmp.startsWith("'") && tmp.endsWith("'") && tmp.indexOf('\'', 1) == tmp.length() - 1;
+	}
+
+	/**
+	 * @description 判断格式模型是否含时间部分(token:HH/HH24/MI/SS或%H/%i/%s)。
+	 *              供to_date在PG/HANA/CH/SQLite等"date-only解析函数"上决定改用
+	 *              to_timestamp/toDateTime/datetime,避免时间被静默截断
+	 * @param format SQL格式参数(可含引号)
+	 * @return true表示含时间token
+	 */
+	public static boolean hasTimeToken(String format) {
+		if (format == null || format.isEmpty()) {
+			return false;
+		}
+		return java.util.regex.Pattern.compile("(?i)(hh24|hh|mi|ss|%[his])").matcher(format).find();
+	}
+
+	/**
+	 * 日期模型标记(与ToChar的DATE_MODEL_PATTERN同口径):格式含任一标记即日期格式化,
+	 * 即使含0/9也按日期处理(如'yyyy-MM-dd 00:00:00')
+	 */
+	private static final java.util.regex.Pattern DATE_MODEL_PATTERN = java.util.regex.Pattern
+			.compile("(?i)(yyyy|yy|mm|dd|hh|ss|mon|month|day|year|am|pm)|:|%[ymdhis]");
+
+	/**
+	 * @description 判断to_char格式是否数值模型:含9/0且无任何日期模型标记才是数值;
+	 *              日期格式中的字面数字(00:00:00)不得误判为数值模型
+	 * @param format 格式参数
+	 * @return true表示数值格式模型
+	 */
+	public static boolean isNumericFormat(String format) {
+		if (format == null || (format.indexOf('9') < 0 && format.indexOf('0') < 0)) {
+			return false;
+		}
+		return !DATE_MODEL_PATTERN.matcher(format).find();
+	}
+
+	/**
+	 * @description Java风格时间token归一为Oracle模型:java的HH=24小时/mm=分钟,而Oracle的HH=12小时/mm=月。
+	 *              只归一冒号邻接的"HH:mm"/"HH:mm:ss"与"hh:mm"/"hh:mm:ss"形态,其余Oracle
+	 *              token原样保留; 归一后各SQL函数适配器可统一按Oracle模型分派,避免mm被误当分钟
+	 * @param formatArg SQL格式参数(含引号的字面量)
+	 * @return 归一后的格式参数
+	 */
+	public static String normalizeJavaTimePattern(String formatArg) {
+		if (!isQuotedLiteral(formatArg)) {
+			return formatArg;
+		}
+		String tmp = formatArg.trim();
+		String content = tmp.substring(1, tmp.length() - 1);
+		// 含双引号字面量片段时保守跳过,避免改写Oracle/MySQL格式串中的字面文本
+		if (content.indexOf('"') >= 0) {
+			return formatArg;
+		}
+		String normalized = content.replace("HH:mm:ss", "hh24:mi:ss").replace("HH:mm", "hh24:mi")
+				.replace("hh:mm:ss", "hh:mi:ss").replace("hh:mm", "hh:mi");
+		return normalized.equals(content) ? formatArg : "'" + normalized + "'";
+	}
+
+	/**
+	 * @description SQLServer的FORMAT(2012+)要求首参为date/time/numeric,字符串字面量直接
+	 *              传入报"Argument data type varchar is invalid for argument 1 of
+	 *              format function" (2025真库实测);日期格式化场景对单引号字面量显式CAST AS datetime定型,
+	 *              列/表达式保持原类型(避免datetime2/datetimeoffset精度或时区信息被降级)
+	 * @param arg 日期参数SQL片段
+	 * @return 可被FORMAT消费的日期参数
+	 */
+	public static String wrapSqlServerDateFormatArg(String arg) {
+		if (isQuotedLiteral(arg)) {
+			return "CAST(" + arg.trim() + " AS datetime)";
+		}
+		return arg;
+	}
+
+	/**
+	 * @description H2的to_char/formatdatetime首参须为日期时间类型,字符串字面量直接传入报 "Invalid value
+	 *              for parameter dateTime"(H2 2.4真库实测);字面量CAST定型, 列/表达式保持原类型
+	 * @param arg 日期参数SQL片段
+	 * @return 可被H2日期格式化函数消费的参数
+	 */
+	public static String h2DateFormatArg(String arg) {
+		if (isQuotedLiteral(arg)) {
+			return "CAST(" + arg.trim() + " AS TIMESTAMP)";
+		}
+		return arg;
+	}
+
+	/**
+	 * @description 将Oracle/Java风格格式模型转换为MySQL % 风格token,供DateFormat(源为mysql
+	 *              date_format)
+	 *              在非%写法时统一走既有%分派。Oracle的mm=月/mi=分钟;java的HH:mm=24小时/分钟;
+	 *              裸HH按Java习惯作24小时,裸hh作12小时;双引号字面量片段原样保留
+	 * @param formatArg SQL格式参数(含引号的字面量)
+	 * @return MySQL % 风格格式参数;已是%风格或非字面量时原样返回
+	 */
+	public static String toMySqlFormat(String formatArg) {
+		if (!isQuotedLiteral(formatArg)) {
+			return formatArg;
+		}
+		String tmp = formatArg.trim();
+		String content = tmp.substring(1, tmp.length() - 1);
+		// 已是MySQL % 风格,保持原有分派
+		if (content.indexOf('%') >= 0) {
+			return formatArg;
+		}
+		String mapped = toMySqlFormatTokens(content);
+		return mapped.equals(content) ? formatArg : "'" + mapped + "'";
+	}
+
+	/**
+	 * @description update 2026-11-10 格式串token归一(入参即格式串内容,不含引号判定):Oracle/Java风格token转MySQL
+	 *              %token,供带引号字面量({@link #toMySqlFormat(String)})与DateFormat的mysql/clickhouse分支
+	 *              (裸格式:占位符/表达式形态)共用
+	 *
+	 * <p>
+	 * 抽出的原因:两处规则曾分裂——裸"HHmmss"经DateFormat分支replace链映成%H%m%s,而带引号经本类归一层是%H%i%s。
+	 * 现统一由本方法承载token映射,口径单一;已是%风格的内容原样保留(幂等)。
+	 *
+	 * @param format 格式串(不含外层引号)
+	 * @return 归一后的MySQL % 风格格式串
+	 */
+	public static String toMySqlFormatTokens(String format) {
+		if (format == null || format.isEmpty()) {
+			return format;
+		}
+		StringBuilder out = new StringBuilder(format.length() + 8);
+		// 最近一个格式directive(如%H/%h/%Y/%d),字面分隔符不更新它;供小写mm判定是否仍处24小时上下文
+		String lastDirective = null;
+		for (int i = 0; i < format.length();) {
+			char c = format.charAt(i);
+			// Oracle/MySQL格式串中的双引号字面量片段原样保留
+			if (c == '"') {
+				int end = format.indexOf('"', i + 1);
+				if (end < 0) {
+					out.append(format.substring(i));
+					break;
+				}
+				out.append(format, i, end + 1);
+				i = end + 1;
+				continue;
+			}
+			String rest = format.substring(i);
+			String lower = rest.toLowerCase(Locale.ROOT);
+			if (lower.startsWith("hh24")) {
+				out.append("%H");
+				lastDirective = "%H";
+				i += 4;
+				continue;
+			}
+			// java风格时间:HH=24小时、hh=12小时、mm=分钟
+			if (rest.startsWith("HH:mm:ss")) {
+				out.append("%H:%i:%s");
+				lastDirective = "%s";
+				i += 9;
+				continue;
+			}
+			if (rest.startsWith("HH:mm")) {
+				out.append("%H:%i");
+				lastDirective = "%i";
+				i += 5;
+				continue;
+			}
+			if (rest.startsWith("hh:mm:ss")) {
+				out.append("%h:%i:%s");
+				lastDirective = "%s";
+				i += 9;
+				continue;
+			}
+			if (rest.startsWith("hh:mm")) {
+				out.append("%h:%i");
+				lastDirective = "%i";
+				i += 5;
+				continue;
+			}
+			if (lower.startsWith("yyyy")) {
+				out.append("%Y");
+				lastDirective = "%Y";
+				i += 4;
+				continue;
+			}
+			if (lower.startsWith("yy")) {
+				out.append("%y");
+				lastDirective = "%y";
+				i += 2;
+				continue;
+			}
+			// update 2026-11-11 mm语义按大小写分治(先大小写不敏感命中,再按原串大小写决定%m/%i):
+			// - 大写MM恒为月份(java的月份也是MM,殊途同归)
+			// - 小写mm仅最近一个directive为%H(HH/HH24/hh24,java 24小时上下文)时为分钟,字面分隔符不切断该上下文
+			//   (HHmmss/HHmm/HH时mm分/HH-mm/HH mm);其余(小写hh后/串首/日期后)为Oracle月份
+			//   (Oracle格式token大小写不敏感,hhmm=小时+月份)
+			// - 混合大小写(Mm/mM)与两种纯大小写同义归月,不能落到逐字符输出(否则MySQL把"M"/"m"当字面量输出)
+			// 分钟的Oracle正写仍为mi/MI,java 12小时+分钟的hhmm形态按Oracle解释(取舍声明见方法注释)
+			if (lower.startsWith("mm")) {
+				boolean upper = rest.startsWith("MM");
+				boolean after24Hour = !upper && "%H".equals(lastDirective);
+				String directive = after24Hour ? "%i" : "%m";
+				out.append(directive);
+				lastDirective = directive;
+				i += 2;
+				continue;
+			}
+			if (lower.startsWith("mi")) {
+				out.append("%i");
+				lastDirective = "%i";
+				i += 2;
+				continue;
+			}
+			if (lower.startsWith("dd")) {
+				out.append("%d");
+				lastDirective = "%d";
+				i += 2;
+				continue;
+			}
+			if (lower.startsWith("ss")) {
+				out.append("%s");
+				lastDirective = "%s";
+				i += 2;
+				continue;
+			}
+			// 裸HH按Java习惯24小时,裸hh按12小时
+			if (rest.startsWith("HH")) {
+				out.append("%H");
+				lastDirective = "%H";
+				i += 2;
+				continue;
+			}
+			if (rest.startsWith("hh")) {
+				out.append("%h");
+				lastDirective = "%h";
+				i += 2;
+				continue;
+			}
+			out.append(c);
+			i++;
+		}
+		return out.toString();
+	}
+
+	/**
+	 * update 2026-10-11 oracle系日期函数的字面量参数包裹:裸字符串字面量按长度启发式包to_date(规避oracle默认NLS格式不认
+	 * ISO串,真库实测ORA-01861);列/表达式原样返回
+	 *
+	 * @param arg 日期参数SQL片段
+	 * @return oracle系可直接消费的日期表达式
+	 */
+	public static String oracleDateLiteralExpr(String arg) {
+		if (arg == null) {
+			return arg;
+		}
+		String tmp = arg.trim();
+		if (tmp.length() > 2 && tmp.startsWith("'") && tmp.endsWith("'")
+				&& tmp.indexOf((char) 39, 1) == tmp.length() - 1) {
+			if (tmp.length() > 12) {
+				return "to_date(" + tmp + ",'yyyy-MM-dd hh24:mi:ss')";
+			}
+			return "to_date(" + tmp + ",'yyyy-MM-dd')";
+		}
+		return arg;
+	}
+
+	/**
+	 * update 2026-10-11
+	 * pg系日期运算的字面量参数定型:裸字符串字面量包::timestamp(真库实测,unknown字面量
+	 * +interval会按interval解析报错);列/表达式原样返回
+	 *
+	 * @param arg 日期参数SQL片段
+	 * @return pg系可直接参与interval运算的表达式
+	 */
+	public static String castLiteralDate(String arg) {
+		if (arg == null) {
+			return arg;
+		}
+		String tmp = arg.trim();
+		if (tmp.length() > 2 && tmp.startsWith("'") && tmp.endsWith("'")
+				&& tmp.indexOf((char) 39, 1) == tmp.length() - 1) {
+			return "cast(" + tmp + " as date)";
+		}
+		return arg;
+	}
+
+	public static String castLiteralTimestamp(String arg) {
+		if (arg == null) {
+			return arg;
+		}
+		String tmp = arg.trim();
+		if (tmp.length() > 2 && tmp.startsWith("'") && tmp.endsWith("'")
+				&& tmp.indexOf((char) 39, 1) == tmp.length() - 1) {
+			return "(" + tmp + ")::timestamp";
+		}
+		return arg;
+	}
+
 	public static String sqliteDateTextExpr(String arg) {
 		if (arg == null) {
 			return arg;
@@ -290,7 +682,16 @@ public class FunctionUtils {
 		if (tmp.indexOf('(') >= 0) {
 			return tmp;
 		}
-		return "datetime(" + tmp + "/1000,'unixepoch','localtime')";
+		// update 2026-11-10 裸标识符(列名)维持/1000包裹:sqlite列的日期形态存在真歧义——JDBC
+		// setTimestamp绑定(sqltoy ORM主流链路)存毫秒Long,/1000正确;SQL字面量insert存TEXT,
+		// /1000会算出1970。无法静态消解,跟随JDBC绑定主流;字面量/函数/TEXT列场景请以表达式形态
+		// (如date('...'))传入即走透传分支
+		// update 2026-11-11 TEXT/INTEGER 双形态运行时判别:毫秒INTEGER(ORM setTimestamp写入,真库实证
+		// typeof=integer)走/1000归一;TEXT列(外部工具写入或DDL声明TEXT)按本地墙钟文本原样解析。
+		// 原实现对TEXT列把 '2026-11-11 10:00:00'/1000 数值化成2,导致week/weekday/dayofweek/
+		// unix_timestamp 全部静默错值(真库实测:week=0/weekday=3/dow=5/unix=2,正确45/2/4/1794391200)
+		return "case when typeof(" + tmp + ") in ('integer','real') then datetime(" + tmp
+				+ "/1000,'unixepoch','localtime') else datetime(" + tmp + ") end";
 	}
 
 	/**
@@ -318,7 +719,11 @@ public class FunctionUtils {
 		// 参数占位符三形态:?(已替换)、:name(命名参数)、#[name](sqltoy中括号命名参数)
 		boolean placeholder = "?".equals(argTrim) || argTrim.matches(":[A-Za-z_][A-Za-z0-9_]*")
 				|| argTrim.matches("#\\[[^\\]]+\\]");
-		if (!placeholder) {
+		// update 2026-10-20
+		// 字符串日期字面量同样须定型:oracle的to_char('2026-..','hh24:mi:ss')按数字隐式转换报ORA-01722,
+		// pg的to_char(unknown,unknown)报重载歧义(真库实测);仅日期模型处理,数值格式模型(to_char(x,'999.99'))保持原类型
+		boolean dateLiteral = isQuotedLiteral(argTrim);
+		if (!placeholder && !dateLiteral) {
 			return firstArg;
 		}
 		// update 2026-9-14
@@ -326,10 +731,20 @@ public class FunctionUtils {
 		boolean pgSyntax = dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL14 || dialect == DBType.GAUSSDB
 				|| dialect == DBType.MOGDB || dialect == DBType.STARDB || dialect == DBType.OSCAR
 				|| dialect == DBType.OPENGAUSS || dialect == DBType.VASTBASE || dialect == DBType.KINGBASE;
-		if (!pgSyntax) {
+		if (numericModelPossible && isNumericFormat(format)) {
 			return firstArg;
 		}
-		if (numericModelPossible && format != null && (format.indexOf('9') >= 0 || format.indexOf('0') >= 0)) {
+		if (dateLiteral) {
+			if (pgSyntax) {
+				return "(" + argTrim + "::timestamp)";
+			}
+			// oracle/to_char要求日期或数字,字面量按长度启发式包to_date(与ToDate单参同法)
+			if (dialect == DBType.ORACLE || dialect == DBType.ORACLE11) {
+				return oracleDateLiteralExpr(argTrim);
+			}
+			return firstArg;
+		}
+		if (!pgSyntax) {
 			return firstArg;
 		}
 		return "(" + argTrim + "::timestamp)";
