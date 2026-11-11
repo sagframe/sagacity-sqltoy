@@ -2058,6 +2058,118 @@ public class BeanUtil {
 	}
 
 	/**
+	 * update 2026-11-11 VO映射计划:同一(类+有序属性表+列类型+是否自动转换)的set方法、方法类型、
+	 * 泛型、字段注解sqlType只构建一次,避免每次查询都重建;数组构建后只读,可跨线程共享
+	 */
+	private static final class BeanMappingPlan {
+		private final Method[] setMethods;
+		private final String[] methodTypes;
+		private final int[] propertySqlTypes;
+		private final int[] methodTypeValues;
+		private final Class[] genericTypes;
+
+		private BeanMappingPlan(Method[] setMethods, String[] methodTypes, int[] propertySqlTypes,
+				int[] methodTypeValues, Class[] genericTypes) {
+			this.setMethods = setMethods;
+			this.methodTypes = methodTypes;
+			this.propertySqlTypes = propertySqlTypes;
+			this.methodTypeValues = methodTypeValues;
+			this.genericTypes = genericTypes;
+		}
+	}
+
+	private static ConcurrentHashMap<ClassKey, BeanMappingPlan> mappingPlanCache = new ConcurrentHashMap<>();
+
+	// 映射计划key含列类型序列,动态列场景基数不可控,同样设置容量上限
+	private static final int MAPPING_PLAN_CACHE_MAX_SIZE = 20000;
+
+	private static BeanMappingPlan getMappingPlan(Class voClass, String[] properties, String[] columnTypes,
+			boolean autoConvertType) {
+		ClassKey cacheKey = mappingPlanCacheKey(voClass, properties, columnTypes, autoConvertType);
+		BeanMappingPlan plan = mappingPlanCache.get(cacheKey);
+		if (plan != null) {
+			return plan;
+		}
+		plan = buildMappingPlan(voClass, properties, columnTypes, autoConvertType);
+		CollectionUtil.putBounded(mappingPlanCache, cacheKey, plan, MAPPING_PLAN_CACHE_MAX_SIZE);
+		return plan;
+	}
+
+	private static ClassKey mappingPlanCacheKey(Class voClass, String[] properties, String[] columnTypes,
+			boolean autoConvertType) {
+		StringBuilder key = new StringBuilder(autoConvertType ? "1" : "0");
+		for (int i = 0; i < properties.length; i++) {
+			key.append(properties[i] == null ? "\u0000" : properties[i]).append('\u0001');
+		}
+		// 分隔属性表与列类型表,null与空数组需要区分
+		key.append('\u0002');
+		if (columnTypes != null) {
+			for (int i = 0; i < columnTypes.length; i++) {
+				key.append(columnTypes[i] == null ? "\u0000" : columnTypes[i]).append('\u0001');
+			}
+		}
+		return new ClassKey(voClass, key.toString());
+	}
+
+	private static BeanMappingPlan buildMappingPlan(Class voClass, String[] properties, String[] columnTypes,
+			boolean autoConvertType) {
+		int indexSize = properties.length;
+		Method[] realMethods = matchSetMethods(voClass, properties);
+		String[] methodTypes = new String[indexSize];
+		int[] propertySqlTypes = new int[indexSize];
+		int[] methodTypeValues = new int[indexSize];
+		Class[] genericTypes = new Class[indexSize];
+		int columnTypeLength = (columnTypes == null) ? 0 : columnTypes.length;
+		// 自动适配属性的数据类型
+		if (autoConvertType) {
+			Map<String, Integer> fieldTypeMap = getClassFieldMap(voClass, properties);
+			Type[] types;
+			Class methodType;
+			String tmpStr;
+			for (int i = 0; i < indexSize; i++) {
+				propertySqlTypes[i] = java.sql.Types.OTHER;
+				if (null != realMethods[i]) {
+					methodType = realMethods[i].getParameterTypes()[0];
+					methodTypes[i] = methodType.getTypeName();
+					methodTypeValues[i] = DataType.getType(methodType);
+					types = realMethods[i].getGenericParameterTypes();
+					if (properties[i] != null) {
+						tmpStr = properties[i].toLowerCase(Locale.ROOT);
+						// 先取字段注解上的sqlType
+						if (fieldTypeMap.containsKey(tmpStr)) {
+							propertySqlTypes[i] = fieldTypeMap.get(tmpStr);
+						} // 再取sql查询getColumnType对应的类型,目前主要针对JSON/JSONB、VECTOR，预留GEOMETRY
+						else if (columnTypeLength > i && columnTypes[i] != null) {
+							tmpStr = columnTypes[i].toUpperCase(Locale.ROOT);
+							if (tmpStr.equals("JSON")) {
+								propertySqlTypes[i] = JdbcTypes.JSON;
+							} else if (tmpStr.equals("JSONB")) {
+								propertySqlTypes[i] = JdbcTypes.JSONB;
+							} else if (tmpStr.equals("GEOMETRY")) {
+								propertySqlTypes[i] = JdbcTypes.GEOMETRY;
+							} else if (tmpStr.equals("UUID")) {
+								propertySqlTypes[i] = JdbcTypes.UUID;
+							} else if (tmpStr.equals("VECTOR") || tmpStr.equals("FLOATVECTOR")) {
+								// floatvector为gaussdb企业版的向量类型名
+								propertySqlTypes[i] = JdbcTypes.VECTOR;
+							} else if (GeometryTypeUtil.isGeometryTypeName(tmpStr)) {
+								// geometry空间类型(含mysql的POINT等子类型名)
+								propertySqlTypes[i] = JdbcTypes.GEOMETRY;
+							}
+						}
+					}
+					if (types.length > 0) {
+						if (types[0] instanceof ParameterizedType) {
+							genericTypes[i] = (Class) ((ParameterizedType) types[0]).getActualTypeArguments()[0];
+						}
+					}
+				}
+			}
+		}
+		return new BeanMappingPlan(realMethods, methodTypes, propertySqlTypes, methodTypeValues, genericTypes);
+	}
+
+	/**
 	 * 利用java.lang.reflect并结合页面的property， 从对象中取出对应方法的值，组成一个List
 	 * 
 	 * @param typeHandler     自定义类型处理器，非null时优先通过其完成类型转换
@@ -2090,61 +2202,16 @@ public class BeanUtil {
 			Object bean;
 			boolean isArray = false;
 			int notNullRowIndex = 0;
-			int columnTypeLength = (columnTypes == null) ? 0 : columnTypes.length;
 			Object[] rowArray = null;
 			List rowList = null;
 			int indexSize = indexs.length;
-			Method[] realMethods = matchSetMethods(voClass, properties);
-			String[] methodTypes = new String[indexSize];
-			int[] propertySqlTypes = new int[indexSize];
-			int[] methodTypeValues = new int[indexSize];
-			Class[] genericTypes = new Class[indexSize];
-			Map<String, Integer> fieldTypeMap = getClassFieldMap(voClass, properties);
-			Type[] types;
-			Class methodType;
-			// 自动适配属性的数据类型
-			if (autoConvertType) {
-				String tmpStr;
-				for (int i = 0; i < indexSize; i++) {
-					propertySqlTypes[i] = java.sql.Types.OTHER;
-					if (null != realMethods[i]) {
-						methodType = realMethods[i].getParameterTypes()[0];
-						methodTypes[i] = methodType.getTypeName();
-						methodTypeValues[i] = DataType.getType(methodType);
-						types = realMethods[i].getGenericParameterTypes();
-						if (properties[i] != null) {
-							tmpStr = properties[i].toLowerCase(Locale.ROOT);
-							// 先取字段注解上的sqlType
-							if (fieldTypeMap.containsKey(tmpStr)) {
-								propertySqlTypes[i] = fieldTypeMap.get(tmpStr);
-							} // 再取sql查询getColumnType对应的类型,目前主要针对JSON/JSONB、VECTOR，预留GEOMETRY
-							else if (columnTypeLength > i && columnTypes[i] != null) {
-								tmpStr = columnTypes[i].toUpperCase(Locale.ROOT);
-								if (tmpStr.equals("JSON")) {
-									propertySqlTypes[i] = JdbcTypes.JSON;
-								} else if (tmpStr.equals("JSONB")) {
-									propertySqlTypes[i] = JdbcTypes.JSONB;
-								} else if (tmpStr.equals("GEOMETRY")) {
-									propertySqlTypes[i] = JdbcTypes.GEOMETRY;
-								} else if (tmpStr.equals("UUID")) {
-									propertySqlTypes[i] = JdbcTypes.UUID;
-								} else if (tmpStr.equals("VECTOR") || tmpStr.equals("FLOATVECTOR")) {
-									// floatvector为gaussdb企业版的向量类型名
-									propertySqlTypes[i] = JdbcTypes.VECTOR;
-								} else if (GeometryTypeUtil.isGeometryTypeName(tmpStr)) {
-									// geometry空间类型(含mysql的POINT等子类型名)
-									propertySqlTypes[i] = JdbcTypes.GEOMETRY;
-								}
-							}
-						}
-						if (types.length > 0) {
-							if (types[0] instanceof ParameterizedType) {
-								genericTypes[i] = (Class) ((ParameterizedType) types[0]).getActualTypeArguments()[0];
-							}
-						}
-					}
-				}
-			}
+			// update 2026-11-11 映射计划按(类+有序属性表+列类型)缓存:方法类型、泛型、字段注解sqlType只构建一次
+			BeanMappingPlan mappingPlan = getMappingPlan(voClass, properties, columnTypes, autoConvertType);
+			Method[] realMethods = mappingPlan.setMethods;
+			String[] methodTypes = mappingPlan.methodTypes;
+			int[] propertySqlTypes = mappingPlan.propertySqlTypes;
+			int[] methodTypeValues = mappingPlan.methodTypeValues;
+			Class[] genericTypes = mappingPlan.genericTypes;
 
 			Iterator iter = datas.iterator();
 			int index = 0;

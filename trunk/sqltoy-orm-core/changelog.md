@@ -9,6 +9,11 @@
 8、函数适配修正(仅既有转换器):ToChar/DateFormat/ToDate的java风格HH:mm归一、独立HH词边界归一、大写oracle形态YYYY/YY/DD/MI/SS、数值/日期模型判别精化、小写mm归位oracle月份、sqlserver的FORMAT引号归一与mm/mi歧义消解;pg系/HANA的to_date时间token改to_timestamp(时间被静默截断);Trim修饰符判定改掩码串(字面量内" from "误判丢原值)+trim(from x)省略字符形态标准组改单参trim;SubStr起点0统一归一为1+负起点字面量全族守卫(对齐mysql契约:|n|超串长返回空串);Instr的position参数引号感知切分+四参REGEXP_INSTR;GroupConcat支持within group(order by)/内嵌order by排序子句跨库渲染;DateDiff的oceanbase并入oracle分支;sqlite日期函数TEXT/INTEGER双形态运行时判别(原对TEXT列数值化致week族/unix_timestamp静默错值)
 9、锁语义降级:sqlite任意lockMode返回空串按普通读执行(原拼" for update SKIP LOCKED "产出非法SQL,乐观锁CAS由UPDATE...WHERE承担);TDengine忽略锁模式并告警(实测FOR UPDATE报syntax error)
 10、测试体系修复:测试源码文本块语法转JDK8字符串拼接(此前mvn test在JDK8下无法编译)、移除record特性测试、修正陈旧断言与错误导入(对齐6.0侧已修正断言:like转义/toCapitalMoney人行规范/H2保留字双引号);新增NestedGroupFormTest(6例)与SqlWithAnalysisMaterializedTest(15例)锁定回移行为;修复后mvn test全量345/352通过(7个失败为H2DialectTest环境问题:h2 2.3.232需JDK11+且指向Mac本地路径)
+11、分页count缓存隔离再深化(参照6.0于2026-11-11的更新):缓存命名空间由sqlId@方言升级为sqlId+方言+实际数据源(CacheNamespace对象身份比较,WeakReference弱引用动态数据源,阈值1024回收已卸载数据源)——同方言多数据源(分库路由)count不再互相串用;条件key纳入有效租户集合——原实现无参数时直接返回sqlId完全跳过租户信息、authTenants为空时未回退getUserTenantId(与TenantFilterInterceptor口径不一致),租户隔离查询会复用其他租户的count;同一组租户按字典序拼装避免顺序不同产生多份缓存;remove(sqlId)连带清除所有方言与数据源缓存
+12、batchUpdate并行分片修复:分片回调内误用全量dataSet(应为batchModel.getEntities()本分片实体集),并行分片时每个分片都执行全量数据造成跨分片重复执行
+13、资源扫描三连修复(参照6.0于2026-11-11的更新):①jar内sql资源保留物理URL(buildJarEntryUrl构造jar:file:/x.jar!/entry),解析按该URL开流并setUseCaches(false)防Windows锁jar——原只存逻辑路径经TCCL开流,classes与依赖jar同名时恒读到classes、jar独有sqlId静默缺失;②EntityScanner嵌套jar经JarURLConnection.getJarFile()取内层jar——原getJarPath在第一个"!"截断,Spring Boot可执行jar(BOOT-INF/classes或嵌套jar)实体全量漏扫;③目录与jar统一AntPathUtils匹配器(**匹配0层目录)——原PathMatcher glob下"com.foo.**.entity"漏掉"com.foo.entity.X"基包直属类
+14、动态SQL处理热路径性能优化(参照6.0于2026-11-11的更新,语义经SqlConfigParseUtilsEquivalenceTest差分锁定):"?"计数由正则扫描改逐字符计数(免子串拷贝);^锚定模式(and/or/where close/@blank起始)由find全串扫描改lookingAt;$锚定模式(where结尾/where 1=1/set结尾)改末尾256窗口+末字符预判(未命中回退全串保严格等价);括号组内悬挂and/or清理先逐字符探测再替换(预编译Pattern复用,绝大多数sql零正则执行)
+15、VO映射计划缓存(参照6.0于2026-11-11的更新):reflectListToBean的set方法/方法类型/泛型/字段注解sqlType按(类+有序属性表+列类型+是否自动转换)构建一次缓存复用(putBounded上限2万,动态列场景防无界),高频查询免重复反射构建
 
 # v5.2.9  2022-8-21
 1、针对一下产品化的软件(适配多种数据库:mysql\oracle\postgres\db2\mssql),要求在一个数据库场景下可以测试相同的功能是否可以适配不同数据库
