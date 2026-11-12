@@ -18,11 +18,11 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <solon.version>3.7.5</solon.version>
         <redisx.version>1.8.3</redisx.version>
-        <mongo.version>5.2.1</mongo.version>
-        <slf4j.version>2.0.18</slf4j.version>
+        <mongo.version>5.14.0</mongo.version>
+        <slf4j.version>2.0.20</slf4j.version>
         <caffeine.version>2.9.3</caffeine.version>
         <sqltoy.version>5.6.98.jre8</sqltoy.version>
-        <lombok.version>1.18.42</lombok.version>
+        <lombok.version>1.18.48</lombok.version>
         <HikariCP.version>7.0.2</HikariCP.version>
         <mysql.version>9.5.0</mysql.version>
     </properties>

@@ -187,6 +187,10 @@ public class SqlToyContextBuilder {
 		sqlToyContext.setBackslashEscaping(properties.getBackslashEscaping());
 		// 默认区域设置,影响日期、数字格式化解析(为null则使用JVM默认区域)
 		sqlToyContext.setDefaultLocale(properties.getDefaultLocale());
+		// update 2026-11-12 JSON处理器配置(简写别名或全限定类名,未配置按classpath探测)
+		sqlToyContext.setJsonProvider(properties.getJsonProvider());
+		// update 2026-11-12 sqlId变体查找优先按连接探测的真实方言(默认false行为零变化)
+		sqlToyContext.setRealDialectFirst(properties.isRealDialectFirst());
 		// getMetaData().getColumnLabel(i) 结果做大小写处理策略
 		if (null != properties.getColumnLabelUpperOrLower()) {
 			sqlToyContext.setColumnLabelUpperOrLower(properties.getColumnLabelUpperOrLower().toLowerCase(Locale.ROOT));

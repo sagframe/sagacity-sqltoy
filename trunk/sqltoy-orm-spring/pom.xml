@@ -13,10 +13,10 @@
 		<spring-framework.version>5.3.39</spring-framework.version>
 		<spring-data-redis.version>2.7.18</spring-data-redis.version>
 		<spring-data-mongo.version>3.4.18</spring-data-mongo.version>
-		<mongo.version>5.2.1</mongo.version>
-		<slf4j.version>2.0.18</slf4j.version>
+		<mongo.version>5.14.0</mongo.version>
+		<slf4j.version>2.0.20</slf4j.version>
 		<caffeine.version>2.9.3</caffeine.version>
-		<lombok.version>1.18.42</lombok.version>
+		<lombok.version>1.18.48</lombok.version>
 	</properties>
 	<licenses>
 		<license>

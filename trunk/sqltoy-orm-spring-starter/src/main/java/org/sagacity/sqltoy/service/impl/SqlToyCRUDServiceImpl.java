@@ -9,7 +9,7 @@ import java.util.Set;
 import org.sagacity.sqltoy.dao.LightDao;
 import org.sagacity.sqltoy.model.CacheMatchFilter;
 import org.sagacity.sqltoy.model.Page;
-import org.sagacity.sqltoy.model.ParallQuery;
+import org.sagacity.sqltoy.model.ParallelQuery;
 import org.sagacity.sqltoy.model.ParallelConfig;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.TreeTableModel;
@@ -304,9 +304,9 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 
 	@Override
 	@Transactional(propagation = Propagation.SUPPORTS)
-	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String, Object> paramsMap,
+	public <T> List<QueryResult<T>> parallelQuery(List<ParallelQuery> parallQueryList, Map<String, Object> paramsMap,
 			ParallelConfig parallelConfig) {
-		return lightDao.parallQuery(parallQueryList, paramsMap, parallelConfig);
+		return lightDao.parallelQuery(parallQueryList, paramsMap, parallelConfig);
 	}
 
 	/*

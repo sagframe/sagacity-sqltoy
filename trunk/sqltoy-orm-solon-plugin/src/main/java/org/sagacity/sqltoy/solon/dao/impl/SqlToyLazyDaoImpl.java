@@ -36,7 +36,7 @@ import org.sagacity.sqltoy.model.EntityQuery;
 import org.sagacity.sqltoy.model.EntityUpdate;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.Page;
-import org.sagacity.sqltoy.model.ParallQuery;
+import org.sagacity.sqltoy.model.ParallelQuery;
 import org.sagacity.sqltoy.model.ParallelConfig;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
@@ -961,26 +961,26 @@ public class SqlToyLazyDaoImpl extends SolonDaoSupport implements SqlToyLazyDao 
 	}
 
 	@Override
-	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
+	public <T> List<QueryResult<T>> parallelQuery(List<ParallelQuery> parallQueryList, String[] paramNames,
 			Object[] paramValues) {
-		return super.parallQuery(parallQueryList, paramNames, paramValues, null);
+		return super.parallelQuery(parallQueryList, paramNames, paramValues, null);
 	}
 
 	@Override
-	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
+	public <T> List<QueryResult<T>> parallelQuery(List<ParallelQuery> parallQueryList, String[] paramNames,
 			Object[] paramValues, ParallelConfig parallelConfig) {
-		return super.parallQuery(parallQueryList, paramNames, paramValues, parallelConfig);
+		return super.parallelQuery(parallQueryList, paramNames, paramValues, parallelConfig);
 	}
 
 	@Override
-	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String, Object> paramsMap) {
-		return super.parallQuery(parallQueryList, paramsMap, null);
+	public <T> List<QueryResult<T>> parallelQuery(List<ParallelQuery> parallQueryList, Map<String, Object> paramsMap) {
+		return super.parallelQuery(parallQueryList, paramsMap, null);
 	}
 
 	@Override
-	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String, Object> paramsMap,
+	public <T> List<QueryResult<T>> parallelQuery(List<ParallelQuery> parallQueryList, Map<String, Object> paramsMap,
 			ParallelConfig parallelConfig) {
-		return super.parallQuery(parallQueryList, paramsMap, parallelConfig);
+		return super.parallelQuery(parallQueryList, paramsMap, parallelConfig);
 	}
 
 	@Override

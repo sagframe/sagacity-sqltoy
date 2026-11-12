@@ -314,6 +314,20 @@ public class SqlToyContextProperties implements Serializable {
 	private String defaultLocale;
 
 	/**
+	 * update 2026-11-12 JSON处理器的实现类配置(对应6.0的spring.sqltoy.jsonProvider):
+	 * 支持内置简写别名(fastjson2/jackson2)或自定义JsonProvider实现的全限定类名,
+	 * 未配置时按classpath探测(fastjson2优先,jackson2次之);jre8线剔除jackson3(JDK17生态)
+	 */
+	private String jsonProvider;
+
+	/**
+	 * update 2026-11-12 sqlId方言变体查找优先按连接探测的真实方言(对应6.0的spring.sqltoy.realDialectFirst):
+	 * 开启后线程上存在连接档案且真实方言不同于查询方言时优先按真实方言取变体(取不到回退配置方言查找链);
+	 * 真实方言与配置方言一致、线程无档案或开关关闭时行为零变化(默认false)
+	 */
+	private boolean realDialectFirst = false;
+
+	/**
 	 * @return the sqlResourcesDir
 	 */
 	public String getSqlResourcesDir() {
@@ -889,5 +903,33 @@ public class SqlToyContextProperties implements Serializable {
 	 */
 	public void setDefaultLocale(String defaultLocale) {
 		this.defaultLocale = defaultLocale;
+	}
+
+	/**
+	 * @return the jsonProvider
+	 */
+	public String getJsonProvider() {
+		return jsonProvider;
+	}
+
+	/**
+	 * @param jsonProvider the jsonProvider to set
+	 */
+	public void setJsonProvider(String jsonProvider) {
+		this.jsonProvider = jsonProvider;
+	}
+
+	/**
+	 * @return the realDialectFirst
+	 */
+	public boolean isRealDialectFirst() {
+		return realDialectFirst;
+	}
+
+	/**
+	 * @param realDialectFirst the realDialectFirst to set
+	 */
+	public void setRealDialectFirst(boolean realDialectFirst) {
+		this.realDialectFirst = realDialectFirst;
 	}
 }

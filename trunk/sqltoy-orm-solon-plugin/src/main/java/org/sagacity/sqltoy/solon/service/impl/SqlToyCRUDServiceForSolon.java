@@ -14,7 +14,7 @@ import org.sagacity.sqltoy.dao.SqlToyLazyDao;
 import org.sagacity.sqltoy.model.CacheMatchFilter;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.Page;
-import org.sagacity.sqltoy.model.ParallQuery;
+import org.sagacity.sqltoy.model.ParallelQuery;
 import org.sagacity.sqltoy.model.ParallelConfig;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.TreeTableModel;
@@ -162,18 +162,18 @@ public class SqlToyCRUDServiceForSolon implements SqlToyCRUDService {
     }
 
     @Tran
-    public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames, Object[] paramValues) {
-        return this.sqlToyLazyDao.parallQuery(parallQueryList, paramNames, paramValues, (ParallelConfig)null);
+    public <T> List<QueryResult<T>> parallelQuery(List<ParallelQuery> parallQueryList, String[] paramNames, Object[] paramValues) {
+        return this.sqlToyLazyDao.parallelQuery(parallQueryList, paramNames, paramValues, (ParallelConfig)null);
     }
 
     @Tran
-    public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames, Object[] paramValues, ParallelConfig parallelConfig) {
-        return this.sqlToyLazyDao.parallQuery(parallQueryList, paramNames, paramValues, parallelConfig);
+    public <T> List<QueryResult<T>> parallelQuery(List<ParallelQuery> parallQueryList, String[] paramNames, Object[] paramValues, ParallelConfig parallelConfig) {
+        return this.sqlToyLazyDao.parallelQuery(parallQueryList, paramNames, paramValues, parallelConfig);
     }
 
     @Tran
-    public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String, Object> paramsMap, ParallelConfig parallelConfig) {
-        return this.sqlToyLazyDao.parallQuery(parallQueryList, paramsMap, parallelConfig);
+    public <T> List<QueryResult<T>> parallelQuery(List<ParallelQuery> parallQueryList, Map<String, Object> paramsMap, ParallelConfig parallelConfig) {
+        return this.sqlToyLazyDao.parallelQuery(parallQueryList, paramsMap, parallelConfig);
     }
 
     public long generateBizId(String signature, int increment) {
